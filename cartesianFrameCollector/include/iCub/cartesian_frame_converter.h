@@ -1,5 +1,30 @@
-#ifndef C_CARTESIAN_FRAME_CONVERTER
-#define C_CARTESIAN_FRAME_CONVERTER
+// -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
+
+/* 
+ * Copyright (C) 2010 RobotCub Consortium, European Commission FP6 Project IST-004370
+ * Authors: Rea Francesco, Charles Clercq
+ * email:   francesco.rea@iit.it, charles.clercq@iit.it
+ * website: www.robotcub.org 
+ * Permission is granted to copy, distribute, and/or modify this program
+ * under the terms of the GNU General Public License, version 2 or any
+ * later version published by the Free Software Foundation.
+ *
+ * A copy of the license can be found at
+ * http://www.robotcub.org/icub/license/gpl.txt
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details
+ */
+
+/**
+ * @file cartesianFrameConverter.h
+ * @brief A class inherited from the bufferefPort class created in order to read events.
+ */
+
+#ifndef _CARTESIAN_FRAME_CONVERTER_H
+#define _CARTESIAN_FRAME_CONVERTER_H
 
 #include <iostream>
 #include <fstream>
@@ -8,30 +33,29 @@
 #include <ctime>
 #include <list>
 
-#include "unmask.h"
-#include "convert.h"
-#include "sending_buffer.h"
-#include "config.h"
+#include <iCub/unmask.h>
+#include <iCub/convert.h>
+#include <iCub/sending_buffer.h>
+#include <iCub/config.h>
 
 #include <yarp/os/Network.h>
+#include <yarp/os/BufferedPort.h>
 
-//#define _DEBUG
-
-using namespace yarp::os;
-class C_cframeConverter:public BufferedPort<C_sendingBuffer>
-{
+class cframeConverter:public yarp::os::BufferedPort<sendingBuffer> {
 public:
-    C_cframeConverter();
-    ~C_cframeConverter();
-    virtual void onRead(C_sendingBuffer& b);
+    cframeConverter();
+    ~cframeConverter();
+    virtual void onRead(sendingBuffer& b);
 
 private:
-    C_unmask unmask_events;
-    C_converter convert_events;
+    unmask unmask_events;
+    converter convert_events;
 
     clock_t start_u;
     clock_t start_p;
     clock_t stop;
 };
 
-#endif //C_CARTESIAN_FRAME_CONVERTER
+#endif //_CARTESIAN_FRAME_CONVERTER_H
+//----- end-of-file --- ( next line intentionally left blank ) ------------------
+

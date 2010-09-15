@@ -1,3 +1,28 @@
+// -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
+
+/* 
+ * Copyright (C) 2010 RobotCub Consortium, European Commission FP6 Project IST-004370
+ * Authors: Rea Francesco, Charles Clercq
+ * email:   francesco.rea@iit.it, charles.clercq@iit.it
+ * website: www.robotcub.org 
+ * Permission is granted to copy, distribute, and/or modify this program
+ * under the terms of the GNU General Public License, version 2 or any
+ * later version published by the Free Software Foundation.
+ *
+ * A copy of the license can be found at
+ * http://www.robotcub.org/icub/license/gpl.txt
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details
+ */
+
+/**
+ * @file converter.h
+ * @brief A class in charge of converting the input events
+ */
+
 #ifndef C_CONVERTER
 #define C_CONVERTER
 
@@ -10,27 +35,21 @@
 #include <yarp/sig/all.h>
 
 
-#include "config.h"
+#include <iCub/config.h>
 
-//#define _DEBUG
 
-using namespace std;
-using namespace yarp::os;
-using namespace yarp::sig;
-
-class C_converter
-{
+class converter {
 public:
-	C_converter(int, int);
-	~C_converter();
-    ImageOf<PixelMono16> create_frame(list<AER_struct>);
-	void send_frame(ImageOf<PixelMono16>);
+    converter(int, int);
+    ~converter();
+    yarp::sig::ImageOf<yarp::sig::PixelMono16> create_frame(std::list<AER_struct>);
+    void send_frame(yarp::sig::ImageOf<yarp::sig::PixelMono16>);
 private:
     int sign(int);
     float mean_event(int);
 
-    BufferedPort<ImageOf<PixelMono16> > port;
-    ImageOf<PixelMono16> base_img;
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono16> > port;
+    yarp::sig::ImageOf<yarp::sig::PixelMono16> base_img;
 
     int max_amount_of_event;
     int min_amount_of_event;
@@ -43,3 +62,5 @@ private:
     int width;
 };
 #endif //C_CONVERTER
+//----- end-of-file --- ( next line intentionally left blank ) ------------------
+

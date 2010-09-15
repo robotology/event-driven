@@ -1,9 +1,32 @@
-#ifndef C_UNMASK
-#define C_UNMASK
+// -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
-//#ifdef _DEBUG
+/* 
+ * Copyright (C) 2010 RobotCub Consortium, European Commission FP6 Project IST-004370
+ * Authors: Rea Francesco, Charles Clercq
+ * email:   francesco.rea@iit.it, charles.clercq@iit.it
+ * website: www.robotcub.org 
+ * Permission is granted to copy, distribute, and/or modify this program
+ * under the terms of the GNU General Public License, version 2 or any
+ * later version published by the Free Software Foundation.
+ *
+ * A copy of the license can be found at
+ * http://www.robotcub.org/icub/license/gpl.txt
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details
+ */
+
+/**
+ * @file unmask.h
+ * @brief code for unmasking the events
+ */
+
+#ifndef UNMASK_H
+#define UNMASK_H
+
 #include <iostream>
-//#endif
 #include <sstream>
 #include <ctime>
 #include <list>
@@ -11,52 +34,49 @@
 #include <yarp/os/all.h>
 
 //Other dependency
-#include "config.h"
+#include <iCub/config.h>
 
-using namespace std;
-class C_unmask
-{
+class unmask {
 public:
-	//C_unmaskingthread(){};
-	C_unmask();
-	~C_unmask();
+    //unmaskingthread(){};
+    unmask();
+    ~unmask();
 
-	list<AER_struct> unmaskData(char*, int);
+    std::list<AER_struct> unmaskData(char*, int);
 private:
-	/**
-	* @brief This method unmasked the raw which come from the TCP socket
-	* This method have been wrote by the university of zurich. contact : tobi@ini.phys.ethz.ch
-	* @param *evPU A pointer on the raw casted from char* to int*
-	* @param x Set with the x coordinate of the pixel
-	* @param y Set with the y coordinate of the pixel
-	* @param pol Set with the ON/OFF polarity of the pixel.
-	* @param ts ...
-	*/
-	void unmaskEvent(unsigned int, short&, short&, short&);
 
-	int id;
+    /**
+    * @brief This method unmasked the raw which come from the TCP socket
+    * This method have been wrote by the university of zurich. contact : tobi@ini.phys.ethz.ch
+    * @param *evPU A pointer on the raw casted from char* to int*
+    * @param x Set with the x coordinate of the pixel
+    * @param y Set with the y coordinate of the pixel
+    * @param pol Set with the ON/OFF polarity of the pixel.
+    * @param ts ...
+    */
+    void unmaskEvent(unsigned int, short&, short&, short&);
 
-#ifdef _DEBUG
-	int nb_trame;
-#endif
+    int id;
 
-	/*Variables needed by the unmask method*/
-	int sz;
-	char* buffer;
-	unsigned int timestamp;
-	short cartX, cartY, polarity;
+    int nb_trame;
+
+    int sz;
+    char* buffer;
+    unsigned int timestamp;
+    short cartX, cartY, polarity;
 
     int wrapAdd;
-	unsigned int xmask;
-	unsigned int ymask;
-	int yshift;
-	int xshift;
-	int polshift;
-	int polmask;
-	int retinalSize;
-	//**************************************
+    unsigned int xmask;
+    unsigned int ymask;
+    int yshift;
+    int xshift;
+    int polshift;
+    int polmask;
+    int retinalSize;
 
-	FILE* uEvents;
+    FILE* uEvents;
 };
 
-#endif //C_UNMASKINGTHREAD
+#endif //UNMASK_H
+//----- end-of-file --- ( next line intentionally left blank ) ------------------
+

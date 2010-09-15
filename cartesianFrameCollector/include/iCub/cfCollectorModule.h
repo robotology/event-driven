@@ -174,7 +174,7 @@ public:
 };
 
 
-#endif // __DVS_GRABBER_MODULE_H__
+#endif // __CF_COLLECTOR_MODULE_H__
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------
 
