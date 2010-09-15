@@ -158,8 +158,7 @@
 //within project includes
 #include <iCub/device2yarp.h>
 
-class dvsGrabberModule:public yarp::os::RFModule
-{
+class dvsGrabberModule:public yarp::os::RFModule {
     std::string moduleName;                 //name of the module (rootname of ports)
     std::string robotName;                  //name of the robot
     std::string robotPortName;                  //reference to the head of the robot

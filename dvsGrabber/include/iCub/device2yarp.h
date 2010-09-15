@@ -27,7 +27,8 @@
 #define C_DEVICE2YARP
 
 //yarp include
-#include <yarp/os/all.h>
+#include <yarp/os/RateThread.h>
+#include <yarp/os/BufferedPort>
 
 #include <fcntl.h>
 #include <sys/ioctl.h>
@@ -37,7 +38,7 @@
 
 #include "sending_buffer.h"
 
-class C_device2yarp : public RateThread {
+class C_device2yarp : public yarp::os::RateThread {
 public:
     C_device2yarp(string, bool, string);
     ~C_device2yarp();
