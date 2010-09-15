@@ -28,7 +28,7 @@
 
 //yarp include
 #include <yarp/os/RateThread.h>
-#include <yarp/os/BufferedPort>
+#include <yarp/os/BufferedPort.h>
 
 #include <fcntl.h>
 #include <sys/ioctl.h>
