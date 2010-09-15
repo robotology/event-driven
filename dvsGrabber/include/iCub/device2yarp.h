@@ -40,7 +40,7 @@
 
 class C_device2yarp : public yarp::os::RateThread {
 public:
-    C_device2yarp(std::string , bool , std::string);
+    C_device2yarp(std::string deviceNumber, bool save, std::string filename);
     ~C_device2yarp();
     virtual void run();
 
