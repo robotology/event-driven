@@ -73,8 +73,8 @@ bool dvsGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     attach(handlerPort);                  // attach to port
 
     bool _save = false;
-    string deviceNum = "0";
-    string fileName = "raw_events.bin";;
+    std::string deviceNum = "0";
+    std::string fileName = "raw_events.bin";
     D2Y(deviceNum, _save, fileName);
     D2Y.start();
 
@@ -89,6 +89,7 @@ bool dvsGrabberModule::interruptModule() {
 
 bool dvsGrabberModule::close() {
     handlerPort.close();
+    D2Y.stop();
     /* stop the thread */
     return true;
 }
