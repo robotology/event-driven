@@ -19,20 +19,20 @@
  */
 
 /**
- * @file dvsGrabberThread.h
+ * @file cfCollectorThread.h
  * @brief Definition of a thread that receive events from DVS camera and extracts frame-based representations of the readings
  * (see dvsGrabberModule.h).
  */
 
-#ifndef _DVS_GRABBER_THREAD_H_
-#define _DVS_GRABBER_THREAD_H_
+#ifndef _CF_COLLECTOR_THREAD_H_
+#define _CF_COLLECTOR_THREAD_H_
 
 #include <yarp/sig/all.h>
 #include <yarp/dev/all.h>
 #include <yarp/os/all.h>
 #include <iostream>
 
-class dvsGrabberThread : public yarp::os::Thread {
+class cfCollectorThread : public yarp::os::Thread {
 private:
     int psb;
     int width, height;                  // dimension of the extended input image (extending)
@@ -46,12 +46,12 @@ public:
     /**
     * default constructor
     */
-    dvsGrabberThread();
+    cfCollectorThread();
 
     /**
      * destructor
      */
-    ~dvsGrabberThread();
+    ~cfCollectorThread();
 
     bool threadInit();
     void threadRelease();
@@ -80,7 +80,7 @@ public:
 
 };
 
-#endif  //_DVS_GRABBER_THREAD_H_
+#endif  //_CF_COLLECTOR_THREAD_H_
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------
 

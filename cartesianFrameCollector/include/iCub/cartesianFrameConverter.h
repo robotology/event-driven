@@ -35,7 +35,7 @@
 
 #include <iCub/unmask.h>
 #include <iCub/convert.h>
-#include <iCub/sending_buffer.h>
+#include <iCub/sendingBuffer.h>
 #include <iCub/config.h>
 
 #include <yarp/os/Network.h>

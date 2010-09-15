@@ -23,8 +23,8 @@
  * @brief A class in charge of converting the input events
  */
 
-#ifndef C_CONVERTER
-#define C_CONVERTER
+#ifndef _CONVERTER_H
+#define _CONVERTER_H
 
 //std
 #include <iostream>
@@ -61,6 +61,6 @@ private:
     int height;
     int width;
 };
-#endif //C_CONVERTER
+#endif //_CONVERTER_H
 //----- end-of-file --- ( next line intentionally left blank ) ------------------
 
