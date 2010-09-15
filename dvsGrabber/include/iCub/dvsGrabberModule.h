@@ -159,15 +159,15 @@
 #include <iCub/device2yarp.h>
 
 class dvsGrabberModule:public yarp::os::RFModule {
-    std::string moduleName;                 //name of the module (rootname of ports)
-    std::string robotName;                  //name of the robot
+    std::string moduleName;                     //name of the module (rootname of ports)
+    std::string robotName;                      //name of the robot
     std::string robotPortName;                  //reference to the head of the robot
-    std::string handlerPortName;            //name of the handler port (comunication with respond function)
-    int ratethread;                              //time constant for ratethread
+    std::string handlerPortName;                //name of the handler port (comunication with respond function)
+    int ratethread;                             //time constant for ratethread
 
-    yarp::os::Port handlerPort;      // a port to handle messages 
+    yarp::os::Port handlerPort;                 // a port to handle messages 
 
-    dvsGrabberThread* dvsThread; //thread for processing of the input and output of the independent motion detector
+    C_device2yarp D2Y;                          //reference to the ratethread that reads the dvs camera
 
 public:
     bool configure(yarp::os::ResourceFinder &rf); // configure all the module parameters and return true if successful
