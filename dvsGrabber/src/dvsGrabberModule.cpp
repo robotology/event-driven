@@ -75,8 +75,8 @@ bool dvsGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     bool _save = false;
     std::string deviceNum = "0";
     std::string fileName = "raw_events.bin";
-    D2Y(deviceNum, _save, fileName);
-    D2Y.start();
+    D2Y=new C_device2yarp(deviceNum, _save, fileName);
+    D2Y->start();
 
     return true ;       // let the RFModule know everything went well
                         // so that it will then run the module
@@ -89,7 +89,7 @@ bool dvsGrabberModule::interruptModule() {
 
 bool dvsGrabberModule::close() {
     handlerPort.close();
-    D2Y.stop();
+    D2Y->stop();
     /* stop the thread */
     return true;
 }
