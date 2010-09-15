@@ -23,7 +23,7 @@
  * @brief Implementation of the dvsGrabberModule (see header file).
  */
 
-#include "iCub/dvsGrabberModule.h"
+#include <iCub/dvsGrabberModule.h>
 
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -72,7 +72,10 @@ bool dvsGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 
     attach(handlerPort);                  // attach to port
 
-    C_device2yarp D2Y(deviceNum, _save, fileName);
+    bool _save = false;
+    string deviceNum = "0";
+    string fileName = "raw_events.bin";;
+    D2Y(deviceNum, _save, fileName);
     D2Y.start();
 
     return true ;       // let the RFModule know everything went well
