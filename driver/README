@@ -1,0 +1,16 @@
+This is the driver of the DV128, which come from jAER. It have been modified to work without jAER.
+To make, it just type :
+make
+
+To install it, type :
+sudo make install 
+or
+sudo insmod retina.ko
+
+If any modification is done on the driver, it seems that the best way to re-install the driver is to delete it, and to re-install it.
+
+To delete the driver, type :
+sudo rmmod retina
+
+To install it, type :
+sudo insmod retina.ko
