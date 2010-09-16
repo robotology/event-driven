@@ -15,63 +15,70 @@
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details
+ * Public License fo
+ r more details
  */
 
 /**
- * @file dvsGrabberThread.cpp
- * @brief Implementation of the independent log-motion thread (see indLogMotionThread.h).
+ * @file cfCollectorThread.cpp
+ * @brief Implementation of the thread (see header cfCollectorThread.h)
  */
 
-#include <iCub/dvsGrabberThread.h>
+#include <iCub/cfCollectorThread.h>
 #include <cstring>
 
 using namespace yarp::os;
-using namespace yarp::sig;
-using namespace yarp::dev;
 using namespace std;
 
+#define THRATE 30
 
-dvsGrabberThread::dvsGrabberThread(){
+cfCollectorThread::cfCollectorThread():RateThread(30){
     resized=false;
 }
 
-dvsGrabberThread::~dvsGrabberThread() {
+cfCollectorThread::~cfCollectorThread() {
 
 }
 
-bool dvsGrabberThread::threadInit() {
+bool cfCollectorThread::threadInit() {
+    printf("starting the thread.... \n");
     /* open ports */
-
+    printf("opening ports.... \n");
+    outPort.open(getName("/image:o").c_str());
+    printf("starting the converter.... \n");
+    cfConverter=new cFrameConverter();
     return true;
 }
 
-void dvsGrabberThread::setName(string str) {
+void cfCollectorThread::interrupt() {
+    outPort.interrupt();
+}
+
+void cfCollectorThread::setName(string str) {
     this->name=str;
     printf("name: %s", name.c_str());
 }
 
-std::string dvsGrabberThread::getName(const char* p) {
+std::string cfCollectorThread::getName(const char* p) {
     string str(name);
     str.append(p);
     return str;
 }
 
-void dvsGrabberThread::resize(int widthp, int heightp) {
+void cfCollectorThread::resize(int widthp, int heightp) {
 }
 
-void dvsGrabberThread::run() {
-    while (isStopping() != true) {
+void cfCollectorThread::run() {
+
+    if(outPort.getOutputCount()) {
+        *outImage=outPort.prepare();
+        cfConverter->getMonoImage(outImage);
         outPort.write();
     }
+
 }
 
-void dvsGrabberThread::onStop() {
-    outPort.interrupt();
-    //close ports
+void cfCollectorThread::threadRelease() {
     outPort.close();
-}
-
-void dvsGrabberThread::threadRelease() {
 }
 

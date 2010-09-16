@@ -23,25 +23,47 @@
  * @brief A class inherited from the bufferefPort (see header cartesianFrameConverter.h)
  */
 
-#include <iCub/cartesian_frame_converter.h>
+#include <iCub/cartesianFrameConverter.h>
 using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
-cframeConverter::cframeConverter():convert_events(128,128) {
+cFrameConverter::cFrameConverter():convert_events(128,128) {
+    retinalSize=128;
 }
 
-cframeConverter::~cframeConverter() {
+cFrameConverter::~cFrameConverter() {
 }
 
-void cframeConverter::onRead(sendingBuffer& i_ub) {
+void cFrameConverter::onRead(sendingBuffer& i_ub) {
     cout << "C_yarpViewer::onRead(unmaskedbuffer& i_ub)" << endl;
-    start_u = clock();
+    //start_u = clock();
+    //list<AER_struct> datas = unmask_events.unmaskData(i_ub.get_packet(), i_ub.get_sizeOfPacket());
     list<AER_struct> datas = unmask_events.unmaskData(i_ub.get_packet(), i_ub.get_sizeOfPacket());
-    start_p = clock();
-    ImageOf<PixelMono16> frame = convert_events.create_frame(datas);
-    convert_events.send_frame(frame);
-    stop = clock();
+    //start_p = clock();
+    //ImageOf<PixelMono16> frame = convert_events.create_frame(datas);
+    //convert_events.send_frame(frame);
+    //stop = clock();
+    /*
     cout << "Unmask task : " << (stop/CLOCKS_PER_SEC) - (start_u/CLOCKS_PER_SEC) << endl
         << "Printing task : " << (stop/CLOCKS_PER_SEC) - (start_p/CLOCKS_PER_SEC) << endl;
+    */
 }
+
+void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image){
+    image->resize(retinalSize,retinalSize);
+    unsigned char* pImage=image->getRawImage();
+    int imagePadding=image->getPadding();
+    char* pBuffer;unmask_events.getEventBuffer(pBuffer);
+    for(int r=0;r<128;r++){
+        for(int c=1;c<128;c++) {
+            *pImage++ = (unsigned char) *pBuffer++;
+        }
+        pImage+=imagePadding;
+    }
+}
+
+void cFrameConverter::clearMonoImage() {
+    unmask_events.cleanEventBuffer();
+}
+

@@ -24,7 +24,7 @@
  */
 
 
-#include <iCub/sending_buffer.h>
+#include <iCub/sendingBuffer.h>
 using namespace yarp::os;
 
 sendingBuffer::sendingBuffer() {

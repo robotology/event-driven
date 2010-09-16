@@ -37,12 +37,6 @@
 #include <iCub/config.h>
 
 class unmask {
-public:
-    //unmaskingthread(){};
-    unmask();
-    ~unmask();
-
-    std::list<AER_struct> unmaskData(char*, int);
 private:
 
     /**
@@ -56,8 +50,9 @@ private:
     */
     void unmaskEvent(unsigned int, short&, short&, short&);
 
-    int id;
 
+
+    int id;
     int nb_trame;
 
     int sz;
@@ -75,6 +70,27 @@ private:
     int retinalSize;
 
     FILE* uEvents;
+public:
+    /**
+    * @brief Function returns the pointer to the buffer that containes events counts
+    * @param buffer pointer to the buffer of event counts
+    * @return none
+    */
+    void getEventBuffer(char* buffer);
+
+    /**
+    * @brief Function that cleans buffer that containes events counts
+    * @param none
+    * @return none
+    */
+    void cleanEventBuffer();
+
+    //unmaskingthread(){};
+    unmask();
+    ~unmask();
+
+    std::list<AER_struct> unmaskData(char*, int);
+
 };
 
 #endif //UNMASK_H

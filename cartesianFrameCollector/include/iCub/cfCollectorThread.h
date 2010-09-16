@@ -27,21 +27,22 @@
 #ifndef _CF_COLLECTOR_THREAD_H_
 #define _CF_COLLECTOR_THREAD_H_
 
-#include <yarp/sig/all.h>
-#include <yarp/dev/all.h>
-#include <yarp/os/all.h>
+#include <yarp/os/RateThread.h>
+#include <iCub/cartesianFrameConverter.h>
 #include <iostream>
 
-class cfCollectorThread : public yarp::os::Thread {
+
+class cfCollectorThread : public yarp::os::RateThread {
 private:
     int psb;
     int width, height;                  // dimension of the extended input image (extending)
     int height_orig, width_orig;        //original dimension of the input and output images
-    yarp::sig::ImageOf<yarp::sig::PixelRgb> *outImage;      //pointer to the output image
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> > outPort; //port whre the output is sent
+    yarp::sig::ImageOf<yarp::sig::PixelMono> *outImage;      //pointer to the output image
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPort; //port whre the output is sent
     std::string name;       // rootname of all the ports opened by this thread
     bool resized;           // flag to check if the variables have been already resized
 
+    cFrameConverter* cfConverter; //receives real-time events
 public:
     /**
     * default constructor
@@ -56,7 +57,12 @@ public:
     bool threadInit();
     void threadRelease();
     void run(); 
-    void onStop();
+
+
+    /**
+    * function called when the module is poked with an interrupt command
+    */
+    void interrupt();
 
     /**
     * function that set the rootname for the ports that will be opened

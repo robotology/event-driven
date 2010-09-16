@@ -26,7 +26,6 @@
 #ifndef _CONVERTER_H
 #define _CONVERTER_H
 
-//std
 #include <iostream>
 #include <ctime>
 #include <list>
@@ -39,15 +38,11 @@
 
 
 class converter {
-public:
-    converter(int, int);
-    ~converter();
-    yarp::sig::ImageOf<yarp::sig::PixelMono16> create_frame(std::list<AER_struct>);
-    void send_frame(yarp::sig::ImageOf<yarp::sig::PixelMono16>);
 private:
     int sign(int);
     float mean_event(int);
 
+    yarp::sig::ImageOf<yarp::sig::PixelMono>* monoImage;        //image of collection of events
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono16> > port;
     yarp::sig::ImageOf<yarp::sig::PixelMono16> base_img;
 
@@ -60,7 +55,30 @@ private:
 
     int height;
     int width;
+public:
+
+    /**
+    * default constructor
+    */
+    converter(int, int);
+
+    /**
+    * destructor
+    */
+    ~converter();
+
+    /**
+    * @brief creates a frame from a list of events
+    */
+    yarp::sig::ImageOf<yarp::sig::PixelMono16> create_frame(std::list<AER_struct>);
+
+    /**
+    * @brief sends a an image on Pixel16
+    */
+    void send_frame(yarp::sig::ImageOf<yarp::sig::PixelMono16>);
+
 };
+
 #endif //_CONVERTER_H
 //----- end-of-file --- ( next line intentionally left blank ) ------------------
 

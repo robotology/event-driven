@@ -33,31 +33,42 @@ unmask::unmask() {
     xshift = 1;
     polshift = 0;
     polmask = 0x00000001;
-
     retinalSize = 128;
+
+    buffer=new char[retinalSize*retinalSize];
+    memset(buffer,0,retinalSize*retinalSize);
 
     wrapAdd = 0;
     //fopen_s(&fp,"events.txt", "w"); //Use the unmasked_buffer
-    uEvents = fopen("./uevents.txt","w");
+    //uEvents = fopen("./uevents.txt","w");
 }
 
 unmask::~unmask() {
+    delete[] buffer;
+}
+
+void unmask::cleanEventBuffer() {
+    memset(buffer,0,retinalSize*retinalSize);
+}
+
+
+void unmask::getEventBuffer(char* buffer){
+    buffer=this->buffer;
 }
 
 list<AER_struct> unmask::unmaskData(char* i_buffer, int i_sz) {
-//    cout << "Size of the received packet to unmask : " << i_sz << endl;
-    AER_struct sAER;
+    //cout << "Size of the received packet to unmask : " << i_sz << endl;
+    //AER_struct sAER;
     list<AER_struct> l_AER;
     for (int j=0; j<i_sz; j+=4) {
         if((i_buffer[j+3]&0x80)==0x80) {
             // timestamp bit 15 is one -> wrap
             // now we need to increment the wrapAdd
-
             wrapAdd+=0x4000/*L*/; //uses only 14 bit timestamps
             //System.out.println("received wrap event, index:" + eventCounter + " wrapAdd: "+ wrapAdd);
             //NumberOfWrapEvents++;
         }
-        else if  ((i_buffer[j+3]&0x40)==0x40  ) {
+        else if((i_buffer[j+3]&0x40)==0x40) {
             // timestamp bit 14 is one -> wrapAdd reset
             // this firmware version uses reset events to reset timestamps
             //write(file_desc,reset,1);//this.resetTimestamps();
@@ -76,20 +87,20 @@ list<AER_struct> unmask::unmaskData(char* i_buffer, int i_sz) {
             unmaskEvent(blob, cartX, cartY, polarity);
             timestamp = ((part_3)|(part_4<<8))/*&0x7fff*/;
             timestamp+=wrapAdd;
-
-            sAER.x = cartX;
-            sAER.y = cartY;
-            sAER.pol = polarity;
-            sAER.ts = timestamp;
-            l_AER.push_back(sAER);
+            buffer[cartX+cartY*retinalSize]++;
+            //sAER.x = cartX;
+            //sAER.y = cartY;
+            //sAER.pol = polarity;
+            //sAER.ts = timestamp;
+            //l_AER.push_back(sAER);
             //fprintf(uEvents,"%d\t%d\t%d\t%u\n", cartX, cartY, polarity, timestamp);
         }
     }
-    sAER.x = -1.0;
-    sAER.y = -1.0;
-    sAER.pol = -1.0;
-    sAER.ts = 0;
-    l_AER.push_back(sAER);
+    //sAER.x = -1.0;
+    //sAER.y = -1.0;
+    //sAER.pol = -1.0;
+    //sAER.ts = 0;
+    //l_AER.push_back(sAER);
     fprintf(uEvents,"%d\t%d\t%d\t%u\n", -1, -1, -1, -1);
     return l_AER;
 }

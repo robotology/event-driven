@@ -101,7 +101,6 @@ ImageOf<PixelMono16> converter::create_frame(list<AER_struct> i_lAER) {
     return _tmp_cart_img;
 }
 
-
 void converter::send_frame(ImageOf<PixelMono16> i_img) {
     ImageOf<PixelMono16>& tmp = port.prepare();
     tmp = i_img;

@@ -41,15 +41,28 @@
 #include <yarp/os/Network.h>
 #include <yarp/os/BufferedPort.h>
 
-class cframeConverter:public yarp::os::BufferedPort<sendingBuffer> {
+class cFrameConverter:public yarp::os::BufferedPort<sendingBuffer> {
 public:
-    cframeConverter();
-    ~cframeConverter();
-    virtual void onRead(sendingBuffer& b);
+    cFrameConverter();
+    ~cFrameConverter();
+    virtual void onRead(sendingBuffer& b); //overwritten function for handling when event comes
+
+    /**
+    * @brief returns a simple image
+    * @param pixelMono reference to the image contains the counts of events
+    */
+     void getMonoImage(yarp::sig::ImageOf<yarp::sig::PixelMono>* image);
+
+    /**
+    * @brief clears monoImage collection of events
+    * @param pixelMono reference to the image contains the counts of events
+    */
+     void clearMonoImage();
 
 private:
-    unmask unmask_events;
-    converter convert_events;
+    int retinalSize;                                            //dimension of the retina default 128x128
+    unmask unmask_events;           //object in charge of unmasking the events
+    converter convert_events;       //object in charge of converting the events into an image
 
     clock_t start_u;
     clock_t start_p;
