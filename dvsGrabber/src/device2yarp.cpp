@@ -20,17 +20,7 @@
 using namespace std;
 using namespace yarp::os;
 
-C_device2yarp::C_device2yarp(string deviceNum, bool i_bool, string i_fileName):RateThread(10), save(i_bool)
-{
-//	xmask = 0x000000fE;
-//	ymask = 0x00007f00;
-//	yshift = 8;
-//	xshift = 1;
-//	polshift = 0;
-//	polmask = 0x00000001;
-
-//	retinalSize = 128;
-
+device2yarp::device2yarp(string deviceNum, bool i_bool, string i_fileName):RateThread(10), save(i_bool) {
     len=0;
     sz=0;
     memset(buffer, 0, SIZE_OF_DATA);
@@ -41,12 +31,12 @@ C_device2yarp::C_device2yarp(string deviceNum, bool i_bool, string i_fileName):R
     str_buf.str("");
     /* open device file /dev/retina0*/
     str_buf << "/dev/retina" << deviceNum;
-    cout << str_buf.str() << endl;
+    cout <<"name of the file buffer:" <<str_buf.str() << endl;
     file_desc = open(str_buf.str().c_str(), O_RDWR);
-    if (file_desc < 0)
+    if (file_desc < 0) {
         cout << "Can't open device file: %s\n" << str_buf.str() << endl;
-    else
-    {
+    }
+    else {
 #ifdef FAST
         unsigned char bias[] = {0xb8,               //request
                                 0x00, 0x00,         //value
@@ -68,18 +58,18 @@ C_device2yarp::C_device2yarp(string deviceNum, bool i_bool, string i_fileName):R
         unsigned char bias[] = {0xb8,               //request
                                 0x00, 0x00,         //value
                                 0x00, 0x00,          //index
-                                0x00,0x00,0x36,	    // cas
-                                0x10,0xe9,0x8C,		// injGnd
-                                0xFF,0xFF,0xFF,		// reqPd
-                                0x7c,0x7f,0xf5,		// puX
-                                0x00,0x00,0x84,		// diffOff
-                                0x02,0x6d,0xab,		// req
-                                0x00,0x00,0x06,		// refr
-                                0xFF,0xFF,0xFF,		// puY
-                                0x07,0x5c,0x8b,		// diffOn
-                                0x00,0x75,0xc9,		// diff
-                                0x00,0x00,0x33,		// foll
-                                0x00,0x00,0x03}; 	// Pr
+                                0x00,0x00,0x36,     // cas
+                                0x10,0xe9,0x8C,     // injGnd
+                                0xFF,0xFF,0xFF,     // reqPd
+                                0x7c,0x7f,0xf5,     // puX
+                                0x00,0x00,0x84,     // diffOff
+                                0x02,0x6d,0xab,     // req
+                                0x00,0x00,0x06,     // refr
+                                0xFF,0xFF,0xFF,     // puY
+                                0x07,0x5c,0x8b,     // diffOn
+                                0x00,0x75,0xc9,     // diff
+                                0x00,0x00,0x33,     // foll
+                                0x00,0x00,0x03};    // Pr
 #else
 //        unsigned char bias[] = {0xb8,               //request
 //                                0x00, 0x00,         //value
@@ -116,9 +106,7 @@ C_device2yarp::C_device2yarp(string deviceNum, bool i_bool, string i_fileName):R
 
 
         int err = write(file_desc,bias,41); //5+36
-#ifdef _DEBUG
         cout << "Return of the bias writing : " << err << endl;
-#endif
         unsigned char start[5];
         start[0] = 0xb3;
         start[1] = 0;
@@ -126,14 +114,11 @@ C_device2yarp::C_device2yarp(string deviceNum, bool i_bool, string i_fileName):R
         start[3] = 0;
         start[4] = 0;
         err = write(file_desc,start,5);
-#ifdef _DEBUG
         cout << "Return of the start writing : " << err << endl;
-#endif
     }
 }
 
-C_device2yarp::~C_device2yarp()
-{
+device2yarp::~device2yarp() {
     if(save)
         fclose(raw);
 
@@ -146,21 +131,16 @@ C_device2yarp::~C_device2yarp()
     stop[3] = 0;
     stop[4] = 0;
     err = write(file_desc,stop,5);
-//--------------------------------------------------------------------------------------------------------//
-#ifdef _DEBUG
     printf("%d address events read\n",len/4);
-#endif
     close(file_desc);
 }
 
 
 
-void  C_device2yarp::run()
-{
+void  device2yarp::run() {
     /* read address events from device file */
     //sz = read(file_desc,buffer,SIZE_OF_DATA);
     sz = pread(file_desc,buffer,SIZE_OF_DATA,0);
-#ifdef _DEBUG
     cout << "Size of the buffer : " << sz << endl;
     for(int i=0; i<sz; i+=4)
     {
@@ -172,7 +152,6 @@ void  C_device2yarp::run()
             unsigned int timestamp = ((part_3)|(part_4<<8))/*&0x7fff*/;
             printf("%x : %x\n", blob, timestamp);
     }
-#endif
     C_sendingBuffer data2send(buffer, sz);
     C_sendingBuffer& tmp = port.prepare();
     tmp = data2send;

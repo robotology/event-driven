@@ -23,8 +23,8 @@
  * @brief Definition of the ratethread that receives events from DVS camera
  */
 
-#ifndef C_DEVICE2YARP
-#define C_DEVICE2YARP
+#ifndef _DEVICE2YARP_H
+#define _DEVICE2YARP_H
 
 //yarp include
 #include <yarp/os/RateThread.h>
@@ -38,10 +38,10 @@
 
 #include "sending_buffer.h"
 
-class C_device2yarp : public yarp::os::RateThread {
+class device2yarp : public yarp::os::RateThread {
 public:
-    C_device2yarp(std::string deviceNumber, bool save, std::string filename);
-    ~C_device2yarp();
+    device2yarp(std::string deviceNumber, bool save, std::string filename);
+    ~device2yarp();
     virtual void run();
 
 private:
@@ -70,7 +70,7 @@ private:
     std::stringstream str_buf;
 };
 
-#endif //C_DEVICE2YARP
+#endif //_DEVICE2YARP_H
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------
 
