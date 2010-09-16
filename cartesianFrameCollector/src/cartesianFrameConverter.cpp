@@ -36,7 +36,7 @@ cFrameConverter::~cFrameConverter() {
 }
 
 void cFrameConverter::onRead(sendingBuffer& i_ub) {
-    cout << "C_yarpViewer::onRead(unmaskedbuffer& i_ub)" << endl;
+    //cout << "C_yarpViewer::onRead(unmaskedbuffer& i_ub)" << endl;
     //start_u = clock();
     //list<AER_struct> datas = unmask_events.unmaskData(i_ub.get_packet(), i_ub.get_sizeOfPacket());
     list<AER_struct> datas = unmask_events.unmaskData(i_ub.get_packet(), i_ub.get_sizeOfPacket());
@@ -52,12 +52,25 @@ void cFrameConverter::onRead(sendingBuffer& i_ub) {
 
 void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image){
     image->resize(retinalSize,retinalSize);
-    unsigned char* pImage=image->getRawImage();
+    unsigned char* pImage=image->getPixelAddress(retinalSize-1,retinalSize-1);
     int imagePadding=image->getPadding();
-    char* pBuffer;unmask_events.getEventBuffer(pBuffer);
-    for(int r=0;r<128;r++){
-        for(int c=1;c<128;c++) {
-            *pImage++ = (unsigned char) *pBuffer++;
+    double* pBuffer= unmask_events.getEventBuffer();
+    double a=1,b=0;
+    int maxValue=unmask_events.getMaxValue();
+    int minValue=unmask_events.getMinValue();
+    if((maxValue!=0)||(minValue!=0)) {
+        a= 127.0/(maxValue-minValue);
+        b=-127-minValue*a;
+    }
+    //pBuffer+=retinalSize+retinalSize-1;
+    for(int r=0;r<retinalSize;r++){
+        for(int c=0;c<retinalSize;c++) {
+            double value= *pBuffer;
+            *pImage-- = (unsigned char) 127 + floor(value);
+            if(*pImage<1) {
+                printf(".");
+            }
+            pBuffer++;
         }
         pImage+=imagePadding;
     }

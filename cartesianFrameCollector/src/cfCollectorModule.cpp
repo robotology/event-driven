@@ -72,6 +72,10 @@ bool cfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
 
     attach(handlerPort);                  // attach to port
 
+    cfThread=new cfCollectorThread();
+    cfThread->setName(getName().c_str());
+    cfThread->start();
+
     return true ;       // let the RFModule know everything went well
                         // so that it will then run the module
 }
@@ -84,6 +88,8 @@ bool cfCollectorModule::interruptModule() {
 bool cfCollectorModule::close() {
     handlerPort.close();
     /* stop the thread */
+    cfThread->stop();
+    delete cfThread;
     return true;
 }
 

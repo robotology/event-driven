@@ -153,6 +153,7 @@
 #include <yarp/os/Thread.h>
 
 //within project includes
+#include <iCub/cfCollectorThread.h>
 
 class cfCollectorModule:public yarp::os::RFModule {
     std::string moduleName;                     //name of the module (rootname of ports)
@@ -162,7 +163,7 @@ class cfCollectorModule:public yarp::os::RFModule {
     int ratethread;                             //time constant for ratethread
 
     yarp::os::Port handlerPort;                 // a port to handle messages 
-
+    cfCollectorThread* cfThread;                //cfCollectorThread for processing events
 
 public:
     bool configure(yarp::os::ResourceFinder &rf); // configure all the module parameters and return true if successful

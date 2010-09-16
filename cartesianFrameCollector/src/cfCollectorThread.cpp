@@ -28,12 +28,14 @@
 #include <cstring>
 
 using namespace yarp::os;
+using namespace yarp::sig;
 using namespace std;
 
-#define THRATE 30
+#define THRATE 10
 
-cfCollectorThread::cfCollectorThread():RateThread(30){
+cfCollectorThread::cfCollectorThread():RateThread(THRATE){
     resized=false;
+    count=0;
 }
 
 cfCollectorThread::~cfCollectorThread() {
@@ -47,6 +49,8 @@ bool cfCollectorThread::threadInit() {
     outPort.open(getName("/image:o").c_str());
     printf("starting the converter.... \n");
     cfConverter=new cFrameConverter();
+    cfConverter->useCallback();
+    cfConverter->open(getName("/retina:i").c_str());
     return true;
 }
 
@@ -69,11 +73,12 @@ void cfCollectorThread::resize(int widthp, int heightp) {
 }
 
 void cfCollectorThread::run() {
-
+    count++;
     if(outPort.getOutputCount()) {
-        *outImage=outPort.prepare();
-        cfConverter->getMonoImage(outImage);
+        ImageOf<yarp::sig::PixelMono>& outputImage=outPort.prepare();
+        cfConverter->getMonoImage(&outputImage);
         outPort.write();
+        cfConverter->clearMonoImage();
     }
 
 }

@@ -27,6 +27,8 @@
 using namespace std;
 
 unmask::unmask() {
+    minValue=0;
+    maxValue=0;
     xmask = 0x000000fE;
     ymask = 0x00007f00;
     yshift = 8;
@@ -35,9 +37,9 @@ unmask::unmask() {
     polmask = 0x00000001;
     retinalSize = 128;
 
-    buffer=new char[retinalSize*retinalSize];
-    memset(buffer,0,retinalSize*retinalSize);
-
+    buffer=new double[retinalSize*retinalSize];
+    memset(buffer,0,retinalSize*retinalSize*sizeof(double));
+   
     wrapAdd = 0;
     //fopen_s(&fp,"events.txt", "w"); //Use the unmasked_buffer
     //uEvents = fopen("./uevents.txt","w");
@@ -48,12 +50,24 @@ unmask::~unmask() {
 }
 
 void unmask::cleanEventBuffer() {
-    memset(buffer,0,retinalSize*retinalSize);
+    memset(buffer,0,retinalSize*retinalSize*sizeof(double));
+    for(int i=0;i<128*128;i++) {
+        buffer[i]=0;
+    }
+    minValue=0;
+    maxValue=0;
 }
 
+double unmask::getMinValue() {
+    return minValue;
+}
 
-void unmask::getEventBuffer(char* buffer){
-    buffer=this->buffer;
+double unmask::getMaxValue() {
+    return maxValue;
+}
+
+double* unmask::getEventBuffer(){
+    return this->buffer;
 }
 
 list<AER_struct> unmask::unmaskData(char* i_buffer, int i_sz) {
@@ -87,7 +101,20 @@ list<AER_struct> unmask::unmaskData(char* i_buffer, int i_sz) {
             unmaskEvent(blob, cartX, cartY, polarity);
             timestamp = ((part_3)|(part_4<<8))/*&0x7fff*/;
             timestamp+=wrapAdd;
-            buffer[cartX+cartY*retinalSize]++;
+            if((cartX!=127)&&(cartY!=0)) { //removed one pixel which is set once the driver do not work properly
+                if(polarity>0) {
+                    buffer[cartX+cartY*retinalSize]+=5;
+                    if(maxValue<buffer[cartX+cartY*retinalSize]) {
+                        maxValue=buffer[cartX+cartY*retinalSize];
+                    }
+                }
+                else if(polarity<0) {
+                    buffer[cartX+cartY*retinalSize]-=5;
+                    if(minValue>buffer[cartX+cartY*retinalSize]) {
+                        minValue=buffer[cartX+cartY*retinalSize];
+                    }
+                }
+            }
             //sAER.x = cartX;
             //sAER.y = cartY;
             //sAER.pol = polarity;
@@ -101,7 +128,7 @@ list<AER_struct> unmask::unmaskData(char* i_buffer, int i_sz) {
     //sAER.pol = -1.0;
     //sAER.ts = 0;
     //l_AER.push_back(sAER);
-    fprintf(uEvents,"%d\t%d\t%d\t%u\n", -1, -1, -1, -1);
+    //fprintf(uEvents,"%d\t%d\t%d\t%u\n", -1, -1, -1, -1);
     return l_AER;
 }
 

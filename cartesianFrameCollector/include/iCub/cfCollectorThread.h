@@ -28,16 +28,16 @@
 #define _CF_COLLECTOR_THREAD_H_
 
 #include <yarp/os/RateThread.h>
+#include <yarp/sig/all.h>
 #include <iCub/cartesianFrameConverter.h>
 #include <iostream>
 
 
 class cfCollectorThread : public yarp::os::RateThread {
 private:
-    int psb;
-    int width, height;                  // dimension of the extended input image (extending)
+    int count;                          //loop counter of the thread
+    int width, height;                  //dimension of the extended input image (extending)
     int height_orig, width_orig;        //original dimension of the input and output images
-    yarp::sig::ImageOf<yarp::sig::PixelMono> *outImage;      //pointer to the output image
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPort; //port whre the output is sent
     std::string name;       // rootname of all the ports opened by this thread
     bool resized;           // flag to check if the variables have been already resized

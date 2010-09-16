@@ -56,7 +56,7 @@ private:
     int nb_trame;
 
     int sz;
-    char* buffer;
+    double* buffer;
     unsigned int timestamp;
     short cartX, cartY, polarity;
 
@@ -68,15 +68,17 @@ private:
     int polshift;
     int polmask;
     int retinalSize;
+    int minValue;
+    int maxValue;
 
     FILE* uEvents;
 public:
     /**
     * @brief Function returns the pointer to the buffer that containes events counts
-    * @param buffer pointer to the buffer of event counts
-    * @return none
+    * @param none
+    * @return pointer to the buffer of event counts
     */
-    void getEventBuffer(char* buffer);
+    double* getEventBuffer();
 
     /**
     * @brief Function that cleans buffer that containes events counts
@@ -84,6 +86,18 @@ public:
     * @return none
     */
     void cleanEventBuffer();
+    
+    /**
+    * @brief get the min number of negative events
+    * @return minvalue
+    */
+    double getMinValue();
+
+    /**
+    * @brief get the max number of negative events
+    * @return minvalue
+    */
+    double getMaxValue();
 
     //unmaskingthread(){};
     unmask();

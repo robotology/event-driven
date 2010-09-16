@@ -41,7 +41,7 @@ converter::converter(int i_width, int i_height) {
     }
     height = i_height;
     width = i_width;
-    port.open("/image/cartesian:o");
+    //port.open("/image/cartesian:o");
 }
 
 converter::~converter(){
