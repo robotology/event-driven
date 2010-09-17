@@ -30,6 +30,8 @@ using namespace std;
 
 cFrameConverter::cFrameConverter():convert_events(128,128) {
     retinalSize=128;
+    outputWidth=320;
+    outputHeight=240;
 }
 
 cFrameConverter::~cFrameConverter() {
@@ -51,9 +53,10 @@ void cFrameConverter::onRead(sendingBuffer& i_ub) {
 }
 
 void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image){
-    image->resize(retinalSize,retinalSize);
-    unsigned char* pImage=image->getPixelAddress(retinalSize-1,retinalSize-1);
+    image->resize(outputWidth,outputHeight);
+    unsigned char* pImage=image->getRawImage();
     int imagePadding=image->getPadding();
+    int imageRowSize=image->getRowSize();
     double* pBuffer= unmask_events.getEventBuffer();
     double a=1,b=0;
     int maxValue=unmask_events.getMaxValue();
@@ -62,17 +65,27 @@ void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image){
         a= 127.0/(maxValue-minValue);
         b=-127-minValue*a;
     }
-    //pBuffer+=retinalSize+retinalSize-1;
-    for(int r=0;r<retinalSize;r++){
-        for(int c=0;c<retinalSize;c++) {
-            double value= *pBuffer;
-            *pImage-- = (unsigned char) 127 + floor(value);
-            if(*pImage<1) {
-                printf(".");
+    pBuffer+=retinalSize*retinalSize-1;
+    for(int r=0;r<outputHeight;r++){
+        if(r>((outputHeight-retinalSize)/2)&&(r<outputHeight-(outputHeight-retinalSize)/2)) {
+            for(int c=0;c<outputWidth;c++) {
+                if((c<outputWidth-(outputWidth-retinalSize)/2)&&(c>(outputWidth-retinalSize)/2)) {
+                    double value= *pBuffer;
+                    *pImage++ = (unsigned char) 127 + floor(value);
+                    pBuffer--;
+                }
+                else {
+                    *pImage++ = 127;
+                }
             }
-            pBuffer++;
+            pImage+=imagePadding;
         }
-        pImage+=imagePadding;
+        else {
+            for(int c=0;c<outputWidth;c++) {
+                *pImage++ = 127;
+            }
+            pImage+=imagePadding;
+        }
     }
 }
 
