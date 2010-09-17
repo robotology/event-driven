@@ -25,8 +25,13 @@
 
 #include <iCub/unmask.h>
 using namespace std;
+using namespace yarp::os;
 
-unmask::unmask() {
+#define maxPosEvent 1200
+#define responseGradient 50;
+#define UNMASKRATETHREAD 10
+
+unmask::unmask() : RateThread(UNMASKRATETHREAD){
     minValue=0;
     maxValue=0;
     xmask = 0x000000fE;
@@ -37,23 +42,27 @@ unmask::unmask() {
     polmask = 0x00000001;
     retinalSize = 128;
 
-    buffer=new double[retinalSize*retinalSize];
-    memset(buffer,0,retinalSize*retinalSize*sizeof(double));
+    buffer=new int[retinalSize*retinalSize];
+    memset(buffer,0,retinalSize*retinalSize*sizeof(int));
+    fifoEvent=new cart_pos[maxPosEvent];
+    memset(fifoEvent,0,maxPosEvent*sizeof(cart_pos));
    
     wrapAdd = 0;
     //fopen_s(&fp,"events.txt", "w"); //Use the unmasked_buffer
     //uEvents = fopen("./uevents.txt","w");
 }
 
+bool unmask::threadInit() {
+    return true;
+}
+
 unmask::~unmask() {
     delete[] buffer;
+    delete[] fifoEvent;
 }
 
 void unmask::cleanEventBuffer() {
-    memset(buffer,0,retinalSize*retinalSize*sizeof(double));
-    for(int i=0;i<128*128;i++) {
-        buffer[i]=0;
-    }
+    memset(buffer,0,retinalSize*retinalSize*sizeof(int));
     minValue=0;
     maxValue=0;
 }
@@ -66,14 +75,39 @@ double unmask::getMaxValue() {
     return maxValue;
 }
 
-double* unmask::getEventBuffer(){
+int* unmask::getEventBuffer(){
     return this->buffer;
+}
+
+void unmask::run() {
+    //shift right the buffer
+    cart_pos* newLoc;
+    newLoc=&fifoEvent[maxPosEvent-1];
+    cart_pos* prevLoc;
+    prevLoc=&fifoEvent[maxPosEvent-2];
+    if((newLoc->x!=127)&&(newLoc->y!=0)) {
+        //element to be deleted
+        buffer[newLoc->x+newLoc->y*retinalSize]=0;
+    }
+    
+    for(int i=maxPosEvent;i>1;i--) {
+        *newLoc=*prevLoc;
+        newLoc--;prevLoc--;
+    }
+    
+    //create a new posEvent
+    prevLoc++;
+    cart_pos* posStr=new cart_pos;
+    posStr->x=cartX;
+    posStr->y=cartY;
+    *prevLoc=*posStr;
 }
 
 list<AER_struct> unmask::unmaskData(char* i_buffer, int i_sz) {
     //cout << "Size of the received packet to unmask : " << i_sz << endl;
     //AER_struct sAER;
     list<AER_struct> l_AER;
+    
     for (int j=0; j<i_sz; j+=4) {
         if((i_buffer[j+3]&0x80)==0x80) {
             // timestamp bit 15 is one -> wrap
@@ -103,18 +137,20 @@ list<AER_struct> unmask::unmaskData(char* i_buffer, int i_sz) {
             timestamp+=wrapAdd;
             if((cartX!=127)&&(cartY!=0)) { //removed one pixel which is set once the driver do not work properly
                 if(polarity>0) {
-                    buffer[cartX+cartY*retinalSize]+=5;
+                    buffer[cartX+cartY*retinalSize]+=responseGradient;
                     if(maxValue<buffer[cartX+cartY*retinalSize]) {
                         maxValue=buffer[cartX+cartY*retinalSize];
                     }
                 }
                 else if(polarity<0) {
-                    buffer[cartX+cartY*retinalSize]-=5;
+                    buffer[cartX+cartY*retinalSize]-=responseGradient;
                     if(minValue>buffer[cartX+cartY*retinalSize]) {
                         minValue=buffer[cartX+cartY*retinalSize];
                     }
                 }
             }
+            
+            
             //sAER.x = cartX;
             //sAER.y = cartY;
             //sAER.pol = polarity;
@@ -136,4 +172,8 @@ void unmask::unmaskEvent(unsigned int evPU, short& x, short& y, short& pol) {
     x = (short)(retinalSize-1) - (short)((evPU & xmask)>>xshift);
     y = (short) ((evPU & ymask)>>yshift);
     pol = ((short)((evPU & polmask)>>polshift)==0)?-1:1;	//+1 ON, -1 OFF
+}
+
+void unmask::threadRelease() {
+
 }

@@ -51,6 +51,11 @@ typedef struct s_AER_struct {
     unsigned int ts;
 }AER_struct;
 
+typedef struct s_cart_pos {
+    int x;
+    int y;
+}cart_pos;
+
 typedef struct s_GROUP {
     int id;
     std::list<AER_struct> levts;

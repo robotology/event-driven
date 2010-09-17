@@ -33,7 +33,7 @@ using namespace std;
 
 #define THRATE 10
 
-cfCollectorThread::cfCollectorThread():RateThread(THRATE){
+cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
     resized=false;
     count=0;
 }
@@ -78,7 +78,6 @@ void cfCollectorThread::run() {
         ImageOf<yarp::sig::PixelMono>& outputImage=outPort.prepare();
         cfConverter->getMonoImage(&outputImage);
         outPort.write();
-        cfConverter->clearMonoImage();
     }
 
 }

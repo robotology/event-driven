@@ -36,7 +36,7 @@
 //Other dependency
 #include <iCub/config.h>
 
-class unmask {
+class unmask : yarp::os::RateThread{
 private:
 
     /**
@@ -50,13 +50,12 @@ private:
     */
     void unmaskEvent(unsigned int, short&, short&, short&);
 
-
-
     int id;
     int nb_trame;
 
     int sz;
-    double* buffer;
+    int* buffer;
+    cart_pos* fifoEvent;
     unsigned int timestamp;
     short cartX, cartY, polarity;
 
@@ -72,13 +71,14 @@ private:
     int maxValue;
 
     FILE* uEvents;
+
 public:
     /**
     * @brief Function returns the pointer to the buffer that containes events counts
     * @param none
     * @return pointer to the buffer of event counts
     */
-    double* getEventBuffer();
+    int* getEventBuffer();
 
     /**
     * @brief Function that cleans buffer that containes events counts
@@ -99,9 +99,35 @@ public:
     */
     double getMaxValue();
 
-    //unmaskingthread(){};
+    /**
+    * default constructor
+    */
     unmask();
+
+    /**
+    * destructor
+    */
     ~unmask();
+
+    /**
+    * function that initialise the thread
+    */
+    bool threadInit();
+
+    /**
+    * function called when the thread is stopped
+    */
+    void threadRelease();
+
+    /**
+    * function called every time constant defined by rateThread
+    */
+    void run(); 
+
+    /**
+    * function called when the module is poked with an interrupt command
+    */
+    void interrupt();
 
     std::list<AER_struct> unmaskData(char*, int);
 

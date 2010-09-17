@@ -54,10 +54,20 @@ public:
      */
     ~cfCollectorThread();
 
+    /**
+    * function that initialise the thread
+    */
     bool threadInit();
-    void threadRelease();
-    void run(); 
 
+    /**
+    * function called when the thread is stopped
+    */
+    void threadRelease();
+
+    /**
+    * function called every time constant defined by rateThread
+    */
+    void run(); 
 
     /**
     * function called when the module is poked with an interrupt command

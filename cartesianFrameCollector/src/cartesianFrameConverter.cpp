@@ -57,7 +57,7 @@ void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image){
     unsigned char* pImage=image->getRawImage();
     int imagePadding=image->getPadding();
     int imageRowSize=image->getRowSize();
-    double* pBuffer= unmask_events.getEventBuffer();
+    int* pBuffer= unmask_events.getEventBuffer();
     double a=1,b=0;
     int maxValue=unmask_events.getMaxValue();
     int minValue=unmask_events.getMinValue();
@@ -67,9 +67,9 @@ void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image){
     }
     pBuffer+=retinalSize*retinalSize-1;
     for(int r=0;r<outputHeight;r++){
-        if(r>((outputHeight-retinalSize)/2)&&(r<outputHeight-(outputHeight-retinalSize)/2)) {
+        if((r>=(outputHeight-retinalSize)/2)&&(r<outputHeight-(outputHeight-retinalSize)/2)) {
             for(int c=0;c<outputWidth;c++) {
-                if((c<outputWidth-(outputWidth-retinalSize)/2)&&(c>(outputWidth-retinalSize)/2)) {
+                if((c<outputWidth-(outputWidth-retinalSize)/2)&&(c>=(outputWidth-retinalSize)/2)) {
                     double value= *pBuffer;
                     *pImage++ = (unsigned char) 127 + floor(value);
                     pBuffer--;
