@@ -23,8 +23,8 @@
  * @brief Sends the buffer (readings of cameras) on a YARP port
  */
 
-#ifndef C_SENDING_BUFFER
-#define C_SENDING_BUFFER
+#ifndef _SENDING_BUFFER_H
+#define _SENDING_BUFFER_H
 
 #include <yarp/os/Portable.h>
 #include <yarp/os/ConnectionWriter.h>
@@ -32,11 +32,11 @@
 #include "config.h"
 
 
-class C_sendingBuffer:public yarp::os::Portable {
+class sendingBuffer:public yarp::os::Portable {
 public:
-    C_sendingBuffer();
-    C_sendingBuffer(char*, int);
-    ~C_sendingBuffer();
+    sendingBuffer();
+    sendingBuffer(char*, int);
+    ~sendingBuffer();
     virtual bool write(yarp::os::ConnectionWriter&);
     virtual bool read(yarp::os::ConnectionReader&);
 
@@ -50,7 +50,7 @@ private:
     int size_of_the_packet;
 };
 
-#endif //C_SENDING_BUFFER
+#endif //_SENDING_BUFFER_H
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------
 

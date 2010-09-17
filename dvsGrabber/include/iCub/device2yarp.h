@@ -45,7 +45,7 @@ public:
     virtual void run();
 
 private:
-    yarp::os::BufferedPort<C_sendingBuffer> port;
+    yarp::os::BufferedPort<sendingBuffer> port;
     FILE* raw;
 
     int file_desc,len,sz;

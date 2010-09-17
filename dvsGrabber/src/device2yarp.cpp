@@ -152,8 +152,8 @@ void  device2yarp::run() {
             unsigned int timestamp = ((part_3)|(part_4<<8))/*&0x7fff*/;
             printf("%x : %x\n", blob, timestamp);
     }
-    C_sendingBuffer data2send(buffer, sz);
-    C_sendingBuffer& tmp = port.prepare();
+    sendingBuffer data2send(buffer, sz);
+    sendingBuffer& tmp = port.prepare();
     tmp = data2send;
     port.write();
     if(save)

@@ -29,27 +29,27 @@
 using namespace std;
 using namespace yarp::os;
 
-C_sendingBuffer::C_sendingBuffer() {
+sendingBuffer::sendingBuffer() {
     packet = new char[SIZE_OF_DATA];
     size_of_the_packet=0;
 }
 
-C_sendingBuffer::C_sendingBuffer(char* i_data, int i_size) {
+sendingBuffer::sendingBuffer(char* i_data, int i_size) {
     packet = new char[SIZE_OF_DATA];
     memcpy(packet, i_data, SIZE_OF_DATA);
     size_of_the_packet = i_size;
 }
 
-C_sendingBuffer::~C_sendingBuffer() {
+sendingBuffer::~sendingBuffer() {
     delete[] packet;
 }
 
-void C_sendingBuffer::set_data(char* i_data, int i_size) {
+void sendingBuffer::set_data(char* i_data, int i_size) {
     memcpy(packet, i_data, SIZE_OF_DATA);
     size_of_the_packet = i_size;
 }
 
-bool C_sendingBuffer::write(ConnectionWriter& connection) {
+bool sendingBuffer::write(ConnectionWriter& connection) {
     connection.appendInt(BOTTLE_TAG_LIST+BOTTLE_TAG_BLOB+BOTTLE_TAG_INT);
     connection.appendInt(2); // four elements
     connection.appendInt(size_of_the_packet);
@@ -58,7 +58,7 @@ bool C_sendingBuffer::write(ConnectionWriter& connection) {
     return true;
 }
 
-bool C_sendingBuffer::read(yarp::os::ConnectionReader& connection) {
+bool sendingBuffer::read(yarp::os::ConnectionReader& connection) {
     connection.convertTextMode(); // if connection is text-mode, convert!
     int tag = connection.expectInt();
     if (tag!=BOTTLE_TAG_LIST+BOTTLE_TAG_BLOB+BOTTLE_TAG_INT)
