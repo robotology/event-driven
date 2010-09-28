@@ -32,9 +32,12 @@ cFrameConverter::cFrameConverter():convert_events(128,128) {
     retinalSize=128;
     outputWidth=320;
     outputHeight=240;
+    unmask_events.start();
 }
 
 cFrameConverter::~cFrameConverter() {
+    delete &unmask_events;
+    delete &convert_events;
 }
 
 void cFrameConverter::onRead(sendingBuffer& i_ub) {
@@ -70,8 +73,8 @@ void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image){
         if((r>=(outputHeight-retinalSize)/2)&&(r<outputHeight-(outputHeight-retinalSize)/2)) {
             for(int c=0;c<outputWidth;c++) {
                 if((c<outputWidth-(outputWidth-retinalSize)/2)&&(c>=(outputWidth-retinalSize)/2)) {
-                    double value= *pBuffer;
-                    *pImage++ = (unsigned char) 127 + floor(value);
+                    int value= *pBuffer;
+                    *pImage++ = (unsigned char) 127 + value;
                     pBuffer--;
                 }
                 else {

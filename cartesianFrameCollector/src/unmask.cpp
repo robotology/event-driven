@@ -29,7 +29,8 @@ using namespace yarp::os;
 
 #define maxPosEvent 1200
 #define responseGradient 50;
-#define UNMASKRATETHREAD 10
+#define UNMASKRATETHREAD 1
+#define numKilledEvents 50
 
 unmask::unmask() : RateThread(UNMASKRATETHREAD){
     minValue=0;
@@ -67,11 +68,11 @@ void unmask::cleanEventBuffer() {
     maxValue=0;
 }
 
-double unmask::getMinValue() {
+int unmask::getMinValue() {
     return minValue;
 }
 
-double unmask::getMaxValue() {
+int unmask::getMaxValue() {
     return maxValue;
 }
 
@@ -80,27 +81,52 @@ int* unmask::getEventBuffer(){
 }
 
 void unmask::run() {
-    //shift right the buffer
+    /*
     cart_pos* newLoc;
     newLoc=&fifoEvent[maxPosEvent-1];
-    cart_pos* prevLoc;
-    prevLoc=&fifoEvent[maxPosEvent-2];
-    if((newLoc->x!=127)&&(newLoc->y!=0)) {
-        //element to be deleted
-        buffer[newLoc->x+newLoc->y*retinalSize]=0;
+    //extracts newLoc of event to delete them
+    for (int j=0;j<numKilledEvents;j++) {
+        if((newLoc->x!=127)||(newLoc->y!=0)) {
+            //element to be deleted
+            buffer[newLoc->x+newLoc->y*retinalSize]=0;
+        }
+        newLoc--;
     }
-    
-    for(int i=maxPosEvent;i>1;i--) {
+
+    //shift the buffer to the right
+    newLoc=&fifoEvent[maxPosEvent-1];
+    cart_pos* prevLoc;
+    prevLoc=&fifoEvent[maxPosEvent-numKilledEvents];
+    for(int i=maxPosEvent;i>numKilledEvents;i--) {
         *newLoc=*prevLoc;
         newLoc--;prevLoc--;
     }
-    
-    //create a new posEvent
-    prevLoc++;
-    cart_pos* posStr=new cart_pos;
-    posStr->x=cartX;
-    posStr->y=cartY;
-    *prevLoc=*posStr;
+    */
+    cart_pos* newLoc;
+    newLoc=&fifoEvent[maxPosEvent-1];
+    if((newLoc->x>=0)&&(newLoc->y>=0)) {
+        if((newLoc->x!=127)||(newLoc->y!=0)) {
+            //element to be deleted
+            buffer[newLoc->x+newLoc->y*retinalSize]=0;
+        }
+        //shift the buffer to the right
+        newLoc=&fifoEvent[maxPosEvent-1];
+        cart_pos* prevLoc;
+        prevLoc=&fifoEvent[maxPosEvent-2];
+        for(int i=maxPosEvent;i>1;i--) {
+            *newLoc=*prevLoc;
+            newLoc--;prevLoc--;
+        }
+        //create a new posEvent
+        if((cartX>=0)&&(cartY>=0)) {
+            if((cartX!=127)||(cartY!=0)) {
+                cart_pos insertLoc;
+                insertLoc.x=cartX;
+                insertLoc.y=cartY;
+                fifoEvent[0]=insertLoc;
+            }
+        }
+    }
 }
 
 list<AER_struct> unmask::unmaskData(char* i_buffer, int i_sz) {
@@ -135,7 +161,7 @@ list<AER_struct> unmask::unmaskData(char* i_buffer, int i_sz) {
             unmaskEvent(blob, cartX, cartY, polarity);
             timestamp = ((part_3)|(part_4<<8))/*&0x7fff*/;
             timestamp+=wrapAdd;
-            if((cartX!=127)&&(cartY!=0)) { //removed one pixel which is set once the driver do not work properly
+            if((cartX!=127)||(cartY!=0)) { //removed one pixel which is set once the driver do not work properly
                 if(polarity>0) {
                     buffer[cartX+cartY*retinalSize]+=responseGradient;
                     if(maxValue<buffer[cartX+cartY*retinalSize]) {
@@ -148,6 +174,7 @@ list<AER_struct> unmask::unmaskData(char* i_buffer, int i_sz) {
                         minValue=buffer[cartX+cartY*retinalSize];
                     }
                 }
+                
             }
             
             

@@ -36,7 +36,7 @@
 //Other dependency
 #include <iCub/config.h>
 
-class unmask : yarp::os::RateThread{
+class unmask : public yarp::os::RateThread{
 private:
 
     /**
@@ -91,13 +91,13 @@ public:
     * @brief get the min number of negative events
     * @return minvalue
     */
-    double getMinValue();
+    int getMinValue();
 
     /**
     * @brief get the max number of negative events
     * @return minvalue
     */
-    double getMaxValue();
+    int getMaxValue();
 
     /**
     * default constructor
