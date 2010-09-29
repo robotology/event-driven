@@ -167,7 +167,7 @@ class dvsGrabberModule:public yarp::os::RFModule {
 
     yarp::os::Port handlerPort;                 // a port to handle messages 
 
-    C_device2yarp* D2Y;                          //reference to the ratethread that reads the dvs camera
+    device2yarp* D2Y;                          //reference to the ratethread that reads the dvs camera
 
 public:
     bool configure(yarp::os::ResourceFinder &rf); // configure all the module parameters and return true if successful

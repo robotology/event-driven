@@ -75,7 +75,7 @@ bool dvsGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     bool _save = false;
     std::string deviceNum = "0";
     std::string fileName = "raw_events.bin";
-    D2Y=new C_device2yarp(deviceNum, _save, fileName);
+    D2Y=new device2yarp(deviceNum, _save, fileName);
     D2Y->start();
 
     return true ;       // let the RFModule know everything went well
