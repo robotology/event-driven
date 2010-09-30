@@ -111,6 +111,7 @@ void unmask::run() {
     newLoc=&fifoEvent[maxPosEvent-1];
     cart_pos* prevLoc;
     prevLoc=&fifoEvent[maxPosEvent-1-numKilledEvents];
+    int countLoop1=0;
     for(int i=maxPosEvent-1;i>=numKilledEvents;i--) {
         //extracts newLoc of event to delete them
         if(i>maxPosEvent-1-numKilledEvents) {
@@ -118,24 +119,29 @@ void unmask::run() {
                 if((newLoc->x>0)||(newLoc->y>0)) {
                     //element to be deleted
                     buffer[newLoc->x+newLoc->y*retinalSize]=0;
+                    countLoop1++;
                 }
             }
         }
         *newLoc=*prevLoc;
         newLoc--;prevLoc--;
     }
+    printf("counLoop1:%d ", countLoop1);
 
     //adds the new locations to the buffer
     cart_pos* tempLoc;
     cart_pos* copyLoc;
     tempLoc=fifoEvent_temp;
     copyLoc=fifoEvent;
+    int countLoop2=0;
     for(int i=0;i<numKilledEvents;i++) {
         *copyLoc=*tempLoc;
         buffer[tempLoc->x+tempLoc->y*retinalSize]+=responseGradient;
         copyLoc++;
         tempLoc++;
+        countLoop2++;
     }
+    printf("counLoop2:%d \n", countLoop2);
     //reset temporary buffer
     memset(fifoEvent_temp,0,maxPosEvent*sizeof(cart_pos));
     
