@@ -84,7 +84,7 @@ int* unmask::getEventBuffer(){
 }
 
 void unmask::run() {
-    numKilledEvents=1;
+    numKilledEvents=countEvent;
     if(countEvent>0) {
         printf("number of events read: %d \n",countEvent);
     }
