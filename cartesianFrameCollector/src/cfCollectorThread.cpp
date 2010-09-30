@@ -76,6 +76,9 @@ void cfCollectorThread::run() {
     count++;
     if(outPort.getOutputCount()) {
         ImageOf<yarp::sig::PixelMono>& outputImage=outPort.prepare();
+        if(&outputImage==0) {
+            printf("ERROR \n");
+        }
         cfConverter->getMonoImage(&outputImage);
         outPort.write();
     }

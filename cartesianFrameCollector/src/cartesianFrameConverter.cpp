@@ -56,6 +56,9 @@ void cFrameConverter::onRead(sendingBuffer& i_ub) {
 }
 
 void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image){
+    if(image==0) {
+        printf("ERROR");
+    }
     image->resize(outputWidth,outputHeight);
     unsigned char* pImage=image->getRawImage();
     int imagePadding=image->getPadding();

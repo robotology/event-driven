@@ -27,13 +27,14 @@
 using namespace std;
 using namespace yarp::os;
 
-#define maxPosEvent 2000
-#define responseGradient 1;
+#define maxPosEvent 3000
+#define responseGradient 15
 #define UNMASKRATETHREAD 1
 
 unmask::unmask() : RateThread(UNMASKRATETHREAD){
     numKilledEvents=50;
     countEvent=0;
+    countEvent2=0;
     minValue=0;
     maxValue=0;
     xmask = 0x000000fE;
@@ -50,6 +51,8 @@ unmask::unmask() : RateThread(UNMASKRATETHREAD){
     memset(fifoEvent,0,maxPosEvent*sizeof(cart_pos));
     fifoEvent_temp=new cart_pos[maxPosEvent];
     memset(fifoEvent_temp,0,maxPosEvent*sizeof(cart_pos));
+    fifoEvent_temp2=new cart_pos[maxPosEvent];
+    memset(fifoEvent_temp2,0,maxPosEvent*sizeof(cart_pos));
 
     wrapAdd = 0;
     //fopen_s(&fp,"events.txt", "w"); //Use the unmasked_buffer
@@ -84,15 +87,16 @@ int* unmask::getEventBuffer(){
 }
 
 void unmask::run() {
-    numKilledEvents=countEvent;
-    if(countEvent>0) {
-        printf("number of events read: %d \n",countEvent);
+    if(countEvent==0) {
+        return;
     }
-    countEventLocker.wait();
-    countEvent=0;
-    countEventLocker.post();
+    temp1=false; //redirect events in the second bin
 
-    cart_pos* newLoc;
+    numKilledEvents=countEvent;
+    printf("number of events read: %d \n",countEvent);
+    
+
+    
     /*
     newLoc=&fifoEvent[maxPosEvent-1];
     //extracts newLoc of event to delete them
@@ -107,43 +111,92 @@ void unmask::run() {
     }
     */
 
+    cart_pos* newLoc;
     //shift the buffer to the right
     newLoc=&fifoEvent[maxPosEvent-1];
     cart_pos* prevLoc;
     prevLoc=&fifoEvent[maxPosEvent-1-numKilledEvents];
-    int countLoop1=0;
-    for(int i=maxPosEvent-1;i>=numKilledEvents;i--) {
+    
+    for(int i=maxPosEvent-1;i>numKilledEvents;i--) {
         //extracts newLoc of event to delete them
         if(i>maxPosEvent-1-numKilledEvents) {
             if((newLoc->x!=127)||(newLoc->y!=0)) {
                 if((newLoc->x>0)||(newLoc->y>0)) {
                     //element to be deleted
-                    buffer[newLoc->x+newLoc->y*retinalSize]=127;
-                    countLoop1++;
+                    if((newLoc->x>=retinalSize)||(newLoc->y>=retinalSize)) {
+                        printf("ERROR pixel position \n");
+                    }
+                    buffer[newLoc->x+newLoc->y*retinalSize]=0;
                 }
             }
         }
         *newLoc=*prevLoc;
-        newLoc--;prevLoc--;
+        if(newLoc==fifoEvent) {
+            printf("ERROR newLoc limits \n");
+        }
+        if(prevLoc!=fifoEvent) {
+            newLoc--;prevLoc--;
+        }
     }
-    printf("counLoop1:%d ", countLoop1);
 
     //adds the new locations to the buffer
     cart_pos* tempLoc;
     cart_pos* copyLoc;
     tempLoc=fifoEvent_temp;
     copyLoc=fifoEvent;
-    int countLoop2=0;
-    for(int i=0;i<numKilledEvents;i++) {
+    for(int i=0;i<countEvent;i++) {
         *copyLoc=*tempLoc;
         //buffer[tempLoc->x+tempLoc->y*retinalSize]+=responseGradient;
         copyLoc++;
         tempLoc++;
-        countLoop2++;
     }
-    printf("counLoop2:%d \n", countLoop2);
     //reset temporary buffer
     memset(fifoEvent_temp,0,maxPosEvent*sizeof(cart_pos));
+    countEventLocker.wait();
+    countEvent=0;
+    countEventLocker.post();
+
+    //----------------------------------------
+    temp1=true;
+    //-----------------------------------------
+
+    numKilledEvents=countEvent2;
+    newLoc=&fifoEvent[maxPosEvent-1];
+    prevLoc=&fifoEvent[maxPosEvent-1-numKilledEvents];
+    
+    for(int i=maxPosEvent-1;i>numKilledEvents;i--) {
+        //extracts newLoc of event to delete them
+        if(i>maxPosEvent-1-numKilledEvents) {
+            if((newLoc->x!=127)||(newLoc->y!=0)) {
+                if((newLoc->x>0)||(newLoc->y>0)) {
+                    //element to be deleted
+                    if((newLoc->x>=retinalSize)||(newLoc->y>=retinalSize)) {
+                        printf("ERROR pixel position \n");
+                    }
+                    buffer[newLoc->x+newLoc->y*retinalSize]=0;
+                }
+            }
+        }
+        *newLoc=*prevLoc;
+        if(newLoc==fifoEvent) {
+            printf("ERROR newLoc limits \n");
+        }
+        if(prevLoc!=fifoEvent) {
+            newLoc--;prevLoc--;
+        }
+    }
+    tempLoc=fifoEvent_temp2;
+    for(int i=0;i<countEvent2;i++) {
+        *copyLoc=*tempLoc;
+        //buffer[tempLoc->x+tempLoc->y*retinalSize]+=responseGradient;
+        copyLoc++;
+        tempLoc++;
+    }
+    //reset temporary buffer
+    memset(fifoEvent_temp2,0,maxPosEvent*sizeof(cart_pos));
+    countEventLocker2.wait();
+    countEvent2=0;
+    countEventLocker2.post();
     
     /*
     cart_pos* newLoc;
@@ -209,25 +262,28 @@ list<AER_struct> unmask::unmaskData(char* i_buffer, int i_sz) {
             if((cartX!=127)||(cartY!=0)) { //removed one pixel which is set once the driver do not work properly
                 if(polarity>0) {
                     buffer[cartX+cartY*retinalSize]+=responseGradient;
-                    if(maxValue<buffer[cartX+cartY*retinalSize]) {
-                        maxValue=buffer[cartX+cartY*retinalSize];
-                    }
                 }
                 else if(polarity<0) {
                     buffer[cartX+cartY*retinalSize]-=responseGradient;
-                    if(minValue>buffer[cartX+cartY*retinalSize]) {
-                        minValue=buffer[cartX+cartY*retinalSize];
-                    }
                 }
                 //udpates the temporary buffer
                 cart_pos insertLoc;
                 insertLoc.x=cartX;
                 insertLoc.y=cartY;
-                fifoEvent_temp[countEvent]=insertLoc;
+                if(temp1) {
+                    fifoEvent_temp[countEvent]=insertLoc;
+                    countEventLocker.wait();
+                    countEvent++;
+                    countEventLocker.post();
+                }
+                else {
+                    fifoEvent_temp2[countEvent2]=insertLoc;
+                    countEventLocker2.wait();
+                    countEvent2++;
+                    countEventLocker2.post();
+                }
                 //increments the counter of events
-                countEventLocker.wait();
-                countEvent++;
-                countEventLocker.post();
+                
             }
             
             
