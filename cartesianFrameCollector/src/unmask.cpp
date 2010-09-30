@@ -28,7 +28,7 @@ using namespace std;
 using namespace yarp::os;
 
 #define maxPosEvent 2000
-#define responseGradient 5;
+#define responseGradient 1;
 #define UNMASKRATETHREAD 1
 
 unmask::unmask() : RateThread(UNMASKRATETHREAD){
@@ -84,7 +84,7 @@ int* unmask::getEventBuffer(){
 }
 
 void unmask::run() {
-    numKilledEvents=countEvent;
+    numKilledEvents=1;
     if(countEvent>0) {
         printf("number of events read: %d \n",countEvent);
     }
