@@ -56,6 +56,7 @@ private:
     int sz;
     int* buffer;
     cart_pos* fifoEvent;
+    cart_pos* fifoEvent_temp;
     unsigned int timestamp;
     short cartX, cartY, polarity;
 
@@ -69,8 +70,11 @@ private:
     int retinalSize;
     int minValue;
     int maxValue;
+    int countEvent;                     //counter of the number of events saved
+    int numKilledEvents;                //number of the element that have be removed from the buffer
 
     FILE* uEvents;
+    yarp::os::Semaphore countEventLocker;
 
 public:
     /**
