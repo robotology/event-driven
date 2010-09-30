@@ -118,7 +118,7 @@ void unmask::run() {
             if((newLoc->x!=127)||(newLoc->y!=0)) {
                 if((newLoc->x>0)||(newLoc->y>0)) {
                     //element to be deleted
-                    buffer[newLoc->x+newLoc->y*retinalSize]=0;
+                    buffer[newLoc->x+newLoc->y*retinalSize]=127;
                     countLoop1++;
                 }
             }
@@ -136,7 +136,7 @@ void unmask::run() {
     int countLoop2=0;
     for(int i=0;i<numKilledEvents;i++) {
         *copyLoc=*tempLoc;
-        buffer[tempLoc->x+tempLoc->y*retinalSize]+=responseGradient;
+        //buffer[tempLoc->x+tempLoc->y*retinalSize]+=responseGradient;
         copyLoc++;
         tempLoc++;
         countLoop2++;
@@ -208,13 +208,13 @@ list<AER_struct> unmask::unmaskData(char* i_buffer, int i_sz) {
             timestamp+=wrapAdd;
             if((cartX!=127)||(cartY!=0)) { //removed one pixel which is set once the driver do not work properly
                 if(polarity>0) {
-                    //buffer[cartX+cartY*retinalSize]+=responseGradient;
+                    buffer[cartX+cartY*retinalSize]+=responseGradient;
                     if(maxValue<buffer[cartX+cartY*retinalSize]) {
                         maxValue=buffer[cartX+cartY*retinalSize];
                     }
                 }
                 else if(polarity<0) {
-                    //buffer[cartX+cartY*retinalSize]-=responseGradient;
+                    buffer[cartX+cartY*retinalSize]-=responseGradient;
                     if(minValue>buffer[cartX+cartY*retinalSize]) {
                         minValue=buffer[cartX+cartY*retinalSize];
                     }
