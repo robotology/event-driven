@@ -90,7 +90,7 @@ int* unmask::getEventBuffer(){
 }
 
 void unmask::run() {
-    /*
+    
     if(countEvent==0) {
         return;
     }
@@ -107,7 +107,7 @@ void unmask::run() {
         numKilledEvents=maxPosEvent-1;
     }
 
-    */
+    
 
     /*
     newLoc=&fifoEvent[maxPosEvent-1];
@@ -123,7 +123,7 @@ void unmask::run() {
     }
     */
     
-    /*
+    
     int* newLoc;
     //shift the buffer to the right
     newLoc=&fifoEvent[maxPosEvent-1];
@@ -208,7 +208,6 @@ void unmask::run() {
     countEventLocker2.wait();
     countEvent2=0;
     countEventLocker2.post();
-    */
 }
 
 void unmask::unmaskData(char* i_buffer, int i_sz) {
