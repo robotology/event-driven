@@ -64,10 +64,7 @@ void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image){
     double a=1,b=0;
     int maxValue=unmask_events.getMaxValue();
     int minValue=unmask_events.getMinValue();
-    if((maxValue!=0)||(minValue!=0)) {
-        a= 127.0/(maxValue-minValue);
-        b=-127-minValue*a;
-    }
+    
     pBuffer += retinalSize * retinalSize - 1;
     for(int r=0;r<outputHeight;r++){
         if((r>=(outputHeight-retinalSize)/2)&&(r<outputHeight-(outputHeight-retinalSize)/2)) {
@@ -75,15 +72,14 @@ void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image){
                 //drawing the retina and the rest of the image separately
                 if((c<outputWidth-(outputWidth-retinalSize)/2)&&(c>=(outputWidth-retinalSize)/2)) {
                     int value= *pBuffer;
-                    *pImage++ = (unsigned char) 127 - b + a*value + b;
-                    if(127 - b + a* value + b >= 256) {
+                    //value=a * value + b;
+                    *pImage++ = (unsigned char) 127 + value ;
+                    if(127 + value >= 256) {
                         printf("Error \n");
                     }
-                    assert(127 - b + a* value + b < 256);
-                    if(127 - b + a* value + b<0) {
+                    if(127 + value < 0) {
                         printf("Error \n");
                     }
-                    assert(127 - b + a* value + b>=0);
                     pBuffer--;
                 }
                 else {

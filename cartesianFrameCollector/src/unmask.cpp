@@ -28,8 +28,9 @@
 using namespace std;
 using namespace yarp::os;
 
-#define maxPosEvent 5000
+#define maxPosEvent 6000
 #define responseGradient 20
+#define minKillThres 500
 #define UNMASKRATETHREAD 1
 
 unmask::unmask() : RateThread(UNMASKRATETHREAD){
@@ -92,11 +93,15 @@ int* unmask::getEventBuffer(){
 void unmask::run() {
     
     if(countEvent==0) {
-        return;
+        return;//delete events even if there was not any before
     }
+    
     temp1=false; //redirect events in the second bin
+    numKilledEvents=minKillThres;
+    if(countEvent>numKilledEvents) {
+        numKilledEvents=countEvent;
+    }
 
-    numKilledEvents=countEvent;
     try {
         if( maxPosEvent-1-numKilledEvents<=0 ) {
             throw "Buffer overflow";
@@ -149,8 +154,15 @@ void unmask::run() {
     //----------------------------------------
     temp1=true;
     //-----------------------------------------
+    
+    if(countEvent2==0) {
+        return;
+    }
+    numKilledEvents=minKillThres;
+    if(countEvent2>numKilledEvents) {
+        numKilledEvents=countEvent2;
+    }
 
-    numKilledEvents=countEvent2;
     try {
         if( maxPosEvent-1-numKilledEvents<=0 ) {
             throw "Buffer overflow";
@@ -227,14 +239,14 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
             if((cartX!=127)||(cartY!=0)) {      //removed one pixel which is set once the driver do not work properly
                 if(polarity>0) {
                     buffer[cartX+cartY*retinalSize]+=responseGradient;
-                    if(buffer[cartX+cartY*retinalSize]>maxValue) {
-                        maxValue=buffer[cartX+cartY*retinalSize];
+                    if(buffer[cartX+cartY*retinalSize]>127) {
+                        buffer[cartX+cartY*retinalSize]=127;
                     }
                 }
                 else if(polarity<0) {
                     buffer[cartX+cartY*retinalSize]-=responseGradient;
-                    if(buffer[cartX+cartY*retinalSize]<minValue) {
-                        minValue=buffer[cartX+cartY*retinalSize];
+                    if (buffer[cartX+cartY*retinalSize]<-127) {
+                        buffer[cartX+cartY*retinalSize]=-127;
                     }
                 }
                 //udpates the temporary buffer
