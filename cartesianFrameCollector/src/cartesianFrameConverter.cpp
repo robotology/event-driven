@@ -76,10 +76,10 @@ void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image){
                 if((c<outputWidth-(outputWidth-retinalSize)/2)&&(c>=(outputWidth-retinalSize)/2)) {
                     int value= *pBuffer;
                     *pImage++ = (unsigned char) 127 - b + a*value + b;
-                    if(127 - b + a* value + b>=256) {
+                    if(127 - b + a* value + b >= 256) {
                         printf("Error \n");
                     }
-                    assert(127 - b + a* value + b<256);
+                    assert(127 - b + a* value + b < 256);
                     if(127 - b + a* value + b<0) {
                         printf("Error \n");
                     }

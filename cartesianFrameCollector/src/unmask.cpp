@@ -28,8 +28,8 @@
 using namespace std;
 using namespace yarp::os;
 
-#define maxPosEvent 5000
-#define responseGradient 15
+#define maxPosEvent 2000
+#define responseGradient 20
 #define UNMASKRATETHREAD 1
 
 unmask::unmask() : RateThread(UNMASKRATETHREAD){
@@ -91,9 +91,6 @@ int* unmask::getEventBuffer(){
 
 void unmask::run() {
     
-    if(countEvent==0) {
-        return;
-    }
     temp1=false; //redirect events in the second bin
 
     numKilledEvents=countEvent;
@@ -106,23 +103,6 @@ void unmask::run() {
         printf("Exception raised: %s \n",str);
         numKilledEvents=maxPosEvent-1;
     }
-
-    
-
-    /*
-    newLoc=&fifoEvent[maxPosEvent-1];
-    //extracts newLoc of event to delete them
-    for (int j=0;j<numKilledEvents;j++) {
-        if((newLoc->x!=127)||(newLoc->y!=0)) {
-            if((newLoc->x>0)||(newLoc->y>0)) {
-                //element to be deleted
-                buffer[newLoc->x+newLoc->y*retinalSize]=0;
-            }
-        }
-        newLoc--;
-    }
-    */
-    
     
     int* newLoc;
     //shift the buffer to the right
@@ -134,7 +114,7 @@ void unmask::run() {
         //extracts newLoc of event to delete them
         if(i>maxPosEvent-1-numKilledEvents) {
             if(*newLoc!=127) {
-                if(*newLoc>0) {
+                if(*newLoc>=0) {
                     //element to be deleted
                     assert(*newLoc<retinalSize*retinalSize);
                     buffer[*newLoc]=0;
@@ -184,7 +164,7 @@ void unmask::run() {
         //extracts newLoc of event to delete them
         if(i>maxPosEvent-1-numKilledEvents) {
             if(*newLoc!=127) {
-                if(*newLoc>0) {
+                if(*newLoc>=0) {
                     //element to be deleted
                     assert(*newLoc<retinalSize*retinalSize);
                     buffer[*newLoc]=0;
