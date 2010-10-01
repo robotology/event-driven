@@ -68,7 +68,7 @@ void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image){
         a= 127.0/(maxValue-minValue);
         b=-127-minValue*a;
     }
-    pBuffer+=retinalSize*retinalSize-1;
+    pBuffer += retinalSize * retinalSize - 1;
     for(int r=0;r<outputHeight;r++){
         if((r>=(outputHeight-retinalSize)/2)&&(r<outputHeight-(outputHeight-retinalSize)/2)) {
             for(int c=0;c<outputWidth;c++) {
