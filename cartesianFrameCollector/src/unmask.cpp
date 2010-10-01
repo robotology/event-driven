@@ -67,6 +67,8 @@ bool unmask::threadInit() {
 unmask::~unmask() {
     delete[] buffer;
     delete[] fifoEvent;
+    delete[] fifoEvent_temp;
+    delete[] fifoEvent_temp2;
 }
 
 void unmask::cleanEventBuffer() {
@@ -255,16 +257,22 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
                 }
                 //udpates the temporary buffer
                 if(temp1) {
+                    countEventLocker.wait();
+                    if(countEvent>maxPosEvent-1) {
+                        countEvent=maxPosEvent-1;
+                    }
                     fifoEvent_temp[countEvent]=cartX+cartY*retinalSize;
                     //increments the counter of events
-                    countEventLocker.wait();
                     countEvent++;
                     countEventLocker.post();
                 }
                 else {
+                    countEventLocker2.wait();
+                    if(countEvent2>maxPosEvent-1) {
+                        countEvent2=maxPosEvent-1;
+                    }
                     fifoEvent_temp2[countEvent2]=cartX+cartY*retinalSize;
                     //increments the counter of events
-                    countEventLocker2.wait();
                     countEvent2++;
                     countEventLocker2.post();
                 }
