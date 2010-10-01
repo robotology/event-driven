@@ -28,7 +28,7 @@ using namespace std;
 using namespace yarp::os;
 
 #define maxPosEvent 3000
-#define responseGradient 15
+#define responseGradient 1
 #define UNMASKRATETHREAD 1
 
 unmask::unmask() : RateThread(UNMASKRATETHREAD){
