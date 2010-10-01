@@ -55,9 +55,9 @@ private:
 
     int sz;
     int* buffer;
-    cart_pos* fifoEvent;
-    cart_pos* fifoEvent_temp;
-    cart_pos* fifoEvent_temp2;
+    int* fifoEvent;
+    int* fifoEvent_temp;
+    int* fifoEvent_temp2;
     unsigned int timestamp;
     short cartX, cartY, polarity;
 

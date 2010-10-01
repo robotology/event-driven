@@ -32,7 +32,7 @@ using namespace yarp::os;
 #define UNMASKRATETHREAD 1
 
 unmask::unmask() : RateThread(UNMASKRATETHREAD){
-    numKilledEvents=50;
+    numKilledEvents=0;
     countEvent=0;
     countEvent2=0;
     minValue=0;
@@ -47,12 +47,12 @@ unmask::unmask() : RateThread(UNMASKRATETHREAD){
 
     buffer=new int[retinalSize*retinalSize];
     memset(buffer,0,retinalSize*retinalSize*sizeof(int));
-    fifoEvent=new cart_pos[maxPosEvent];
-    memset(fifoEvent,0,maxPosEvent*sizeof(cart_pos));
-    fifoEvent_temp=new cart_pos[maxPosEvent];
-    memset(fifoEvent_temp,0,maxPosEvent*sizeof(cart_pos));
-    fifoEvent_temp2=new cart_pos[maxPosEvent];
-    memset(fifoEvent_temp2,0,maxPosEvent*sizeof(cart_pos));
+    fifoEvent=new int[maxPosEvent];
+    memset(fifoEvent,0,maxPosEvent*sizeof(int));
+    fifoEvent_temp=new int[maxPosEvent];
+    memset(fifoEvent_temp,0,maxPosEvent*sizeof(int));
+    fifoEvent_temp2=new int[maxPosEvent];
+    memset(fifoEvent_temp2,0,maxPosEvent*sizeof(int));
 
     wrapAdd = 0;
     //fopen_s(&fp,"events.txt", "w"); //Use the unmasked_buffer
@@ -95,7 +95,9 @@ void unmask::run() {
     numKilledEvents=countEvent;
     printf("number of events read: %d \n",countEvent);
     
-
+    if(maxPosEvent-1-numKilledEvents<=0) {
+        printf("numKilledEvents greater than buffer \n");
+    }
     
     /*
     newLoc=&fifoEvent[maxPosEvent-1];
@@ -111,22 +113,22 @@ void unmask::run() {
     }
     */
 
-    cart_pos* newLoc;
+    int* newLoc;
     //shift the buffer to the right
     newLoc=&fifoEvent[maxPosEvent-1];
-    cart_pos* prevLoc;
+    int* prevLoc;
     prevLoc=&fifoEvent[maxPosEvent-1-numKilledEvents];
     
     for(int i=maxPosEvent-1;i>numKilledEvents;i--) {
         //extracts newLoc of event to delete them
         if(i>maxPosEvent-1-numKilledEvents) {
-            if((newLoc->x!=127)||(newLoc->y!=0)) {
-                if((newLoc->x>0)||(newLoc->y>0)) {
+            if(*newLoc!=127) {
+                if(*newLoc>0) {
                     //element to be deleted
-                    if((newLoc->x>=retinalSize)||(newLoc->y>=retinalSize)) {
+                    if(*newLoc>=retinalSize*retinalSize) {
                         printf("ERROR pixel position \n");
                     }
-                    buffer[newLoc->x+newLoc->y*retinalSize]=0;
+                    buffer[*newLoc]=0;
                 }
             }
         }
@@ -140,8 +142,8 @@ void unmask::run() {
     }
 
     //adds the new locations to the buffer
-    cart_pos* tempLoc;
-    cart_pos* copyLoc;
+    int* tempLoc;
+    int* copyLoc;
     tempLoc=fifoEvent_temp;
     copyLoc=fifoEvent;
     for(int i=0;i<countEvent;i++) {
@@ -151,7 +153,7 @@ void unmask::run() {
         tempLoc++;
     }
     //reset temporary buffer
-    memset(fifoEvent_temp,0,maxPosEvent*sizeof(cart_pos));
+    memset(fifoEvent_temp,0,maxPosEvent*sizeof(int));
     countEventLocker.wait();
     countEvent=0;
     countEventLocker.post();
@@ -167,25 +169,23 @@ void unmask::run() {
     for(int i=maxPosEvent-1;i>numKilledEvents;i--) {
         //extracts newLoc of event to delete them
         if(i>maxPosEvent-1-numKilledEvents) {
-            if((newLoc->x!=127)||(newLoc->y!=0)) {
-                if((newLoc->x>0)||(newLoc->y>0)) {
+            if(*newLoc!=127) {
+                if(*newLoc>0) {
                     //element to be deleted
-                    if((newLoc->x>=retinalSize)||(newLoc->y>=retinalSize)) {
+                    if(*newLoc>=retinalSize*retinalSize) {
                         printf("ERROR pixel position \n");
                     }
-                    buffer[newLoc->x+newLoc->y*retinalSize]=0;
+                    buffer[*newLoc]=0;
                 }
             }
         }
         *newLoc=*prevLoc;
-        if(newLoc==fifoEvent) {
-            printf("ERROR newLoc limits \n");
-        }
         if(prevLoc!=fifoEvent) {
             newLoc--;prevLoc--;
         }
     }
     tempLoc=fifoEvent_temp2;
+    copyLoc=fifoEvent;
     for(int i=0;i<countEvent2;i++) {
         *copyLoc=*tempLoc;
         //buffer[tempLoc->x+tempLoc->y*retinalSize]+=responseGradient;
@@ -193,7 +193,7 @@ void unmask::run() {
         tempLoc++;
     }
     //reset temporary buffer
-    memset(fifoEvent_temp2,0,maxPosEvent*sizeof(cart_pos));
+    memset(fifoEvent_temp2,0,maxPosEvent*sizeof(int));
     countEventLocker2.wait();
     countEvent2=0;
     countEventLocker2.post();
@@ -267,23 +267,20 @@ list<AER_struct> unmask::unmaskData(char* i_buffer, int i_sz) {
                     buffer[cartX+cartY*retinalSize]-=responseGradient;
                 }
                 //udpates the temporary buffer
-                cart_pos insertLoc;
-                insertLoc.x=cartX;
-                insertLoc.y=cartY;
                 if(temp1) {
-                    fifoEvent_temp[countEvent]=insertLoc;
+                    fifoEvent_temp[countEvent]=cartX+cartY*retinalSize;
+                    //increments the counter of events
                     countEventLocker.wait();
                     countEvent++;
                     countEventLocker.post();
                 }
                 else {
-                    fifoEvent_temp2[countEvent2]=insertLoc;
+                    fifoEvent_temp2[countEvent2]=cartX+cartY*retinalSize;
+                    //increments the counter of events
                     countEventLocker2.wait();
                     countEvent2++;
                     countEventLocker2.post();
                 }
-                //increments the counter of events
-                
             }
             
             
