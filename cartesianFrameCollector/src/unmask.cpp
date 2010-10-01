@@ -28,7 +28,7 @@
 using namespace std;
 using namespace yarp::os;
 
-#define maxPosEvent 2000
+#define maxPosEvent 5000
 #define responseGradient 20
 #define UNMASKRATETHREAD 1
 
@@ -91,6 +91,9 @@ int* unmask::getEventBuffer(){
 
 void unmask::run() {
     
+    if(countEvent==0) {
+        return;
+    }
     temp1=false; //redirect events in the second bin
 
     numKilledEvents=countEvent;
