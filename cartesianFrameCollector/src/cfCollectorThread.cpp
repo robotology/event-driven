@@ -26,6 +26,7 @@
 
 #include <iCub/cfCollectorThread.h>
 #include <cstring>
+#include <cassert>
 
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -76,9 +77,7 @@ void cfCollectorThread::run() {
     count++;
     if(outPort.getOutputCount()) {
         ImageOf<yarp::sig::PixelMono>& outputImage=outPort.prepare();
-        if(&outputImage==0) {
-            printf("ERROR \n");
-        }
+        assert(&outputImage!=0);
         cfConverter->getMonoImage(&outputImage);
         outPort.write();
     }

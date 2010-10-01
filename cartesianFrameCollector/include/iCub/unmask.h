@@ -29,7 +29,6 @@
 #include <iostream>
 #include <sstream>
 #include <ctime>
-#include <list>
 
 #include <yarp/os/all.h>
 
@@ -137,7 +136,13 @@ public:
     */
     void interrupt();
 
-    std::list<AER_struct> unmaskData(char*, int);
+    /**
+    * function that given a reference to the list of char read from the port and the number of packet received
+    * unmasks the event in term of x,y, polarity and time stamp and update the buffer
+    * @param data reference to the vector of char (the read data)
+    * @param size size of the last reading from the port
+    */
+    void unmaskData(char* data, int size);
 
 };
 

@@ -24,11 +24,12 @@
  */
 
 #include <iCub/unmask.h>
+#include <cassert>
 using namespace std;
 using namespace yarp::os;
 
-#define maxPosEvent 3000
-#define responseGradient 1
+#define maxPosEvent 5000
+#define responseGradient 15
 #define UNMASKRATETHREAD 1
 
 unmask::unmask() : RateThread(UNMASKRATETHREAD){
@@ -93,12 +94,16 @@ void unmask::run() {
     temp1=false; //redirect events in the second bin
 
     numKilledEvents=countEvent;
-    printf("number of events read: %d \n",countEvent);
-    
-    if(maxPosEvent-1-numKilledEvents<=0) {
-        printf("numKilledEvents greater than buffer \n");
+    try {
+        if( maxPosEvent-1-numKilledEvents<=0 ) {
+            throw "Buffer overflow";
+        }
     }
-    
+    catch( char * str ) {
+        printf("Exception raised: %s \n",str);
+        numKilledEvents=maxPosEvent-1;
+    }
+
     /*
     newLoc=&fifoEvent[maxPosEvent-1];
     //extracts newLoc of event to delete them
@@ -125,17 +130,12 @@ void unmask::run() {
             if(*newLoc!=127) {
                 if(*newLoc>0) {
                     //element to be deleted
-                    if(*newLoc>=retinalSize*retinalSize) {
-                        printf("ERROR pixel position \n");
-                    }
+                    assert(*newLoc<retinalSize*retinalSize);
                     buffer[*newLoc]=0;
                 }
             }
         }
         *newLoc=*prevLoc;
-        if(newLoc==fifoEvent) {
-            printf("ERROR newLoc limits \n");
-        }
         if(prevLoc!=fifoEvent) {
             newLoc--;prevLoc--;
         }
@@ -148,7 +148,6 @@ void unmask::run() {
     copyLoc=fifoEvent;
     for(int i=0;i<countEvent;i++) {
         *copyLoc=*tempLoc;
-        //buffer[tempLoc->x+tempLoc->y*retinalSize]+=responseGradient;
         copyLoc++;
         tempLoc++;
     }
@@ -163,6 +162,15 @@ void unmask::run() {
     //-----------------------------------------
 
     numKilledEvents=countEvent2;
+    try {
+        if( maxPosEvent-1-numKilledEvents<=0 ) {
+            throw "Buffer overflow";
+        }
+    }
+    catch( char * str ) {
+        printf("Exception raised: %s \n",str);
+        numKilledEvents=maxPosEvent-1;
+    }
     newLoc=&fifoEvent[maxPosEvent-1];
     prevLoc=&fifoEvent[maxPosEvent-1-numKilledEvents];
     
@@ -172,9 +180,7 @@ void unmask::run() {
             if(*newLoc!=127) {
                 if(*newLoc>0) {
                     //element to be deleted
-                    if(*newLoc>=retinalSize*retinalSize) {
-                        printf("ERROR pixel position \n");
-                    }
+                    assert(*newLoc<retinalSize*retinalSize);
                     buffer[*newLoc]=0;
                 }
             }
@@ -188,7 +194,6 @@ void unmask::run() {
     copyLoc=fifoEvent;
     for(int i=0;i<countEvent2;i++) {
         *copyLoc=*tempLoc;
-        //buffer[tempLoc->x+tempLoc->y*retinalSize]+=responseGradient;
         copyLoc++;
         tempLoc++;
     }
@@ -197,40 +202,11 @@ void unmask::run() {
     countEventLocker2.wait();
     countEvent2=0;
     countEventLocker2.post();
-    
-    /*
-    cart_pos* newLoc;
-    newLoc=&fifoEvent[maxPosEvent-1];
-    if((newLoc->x>=0)&&(newLoc->y>=0)) {
-        if((newLoc->x!=127)||(newLoc->y!=0)) {
-            //element to be deleted
-            buffer[newLoc->x+newLoc->y*retinalSize]=0;
-        }
-        //shift the buffer to the right
-        newLoc=&fifoEvent[maxPosEvent-1];
-        cart_pos* prevLoc;
-        prevLoc=&fifoEvent[maxPosEvent-2];
-        for(int i=maxPosEvent;i>1;i--) {
-            *newLoc=*prevLoc;
-            newLoc--;prevLoc--;
-        }
-        //create a new posEvent
-        if((cartX>=0)&&(cartY>=0)) {
-            if((cartX!=127)||(cartY!=0)) {
-                cart_pos insertLoc;
-                insertLoc.x=cartX;
-                insertLoc.y=cartY;
-                fifoEvent[0]=insertLoc;
-            }
-        }
-    }
-    */
 }
 
-list<AER_struct> unmask::unmaskData(char* i_buffer, int i_sz) {
+void unmask::unmaskData(char* i_buffer, int i_sz) {
     //cout << "Size of the received packet to unmask : " << i_sz << endl;
-    //AER_struct sAER;
-    list<AER_struct> l_AER;
+    //AER_struct sAER
     
     for (int j=0; j<i_sz; j+=4) {
         if((i_buffer[j+3]&0x80)==0x80) {
@@ -259,12 +235,18 @@ list<AER_struct> unmask::unmaskData(char* i_buffer, int i_sz) {
             unmaskEvent(blob, cartX, cartY, polarity);
             timestamp = ((part_3)|(part_4<<8))/*&0x7fff*/;
             timestamp+=wrapAdd;
-            if((cartX!=127)||(cartY!=0)) { //removed one pixel which is set once the driver do not work properly
+            if((cartX!=127)||(cartY!=0)) {      //removed one pixel which is set once the driver do not work properly
                 if(polarity>0) {
                     buffer[cartX+cartY*retinalSize]+=responseGradient;
+                    if(buffer[cartX+cartY*retinalSize]>maxValue) {
+                        maxValue=buffer[cartX+cartY*retinalSize];
+                    }
                 }
                 else if(polarity<0) {
                     buffer[cartX+cartY*retinalSize]-=responseGradient;
+                    if(buffer[cartX+cartY*retinalSize]<minValue) {
+                        minValue=buffer[cartX+cartY*retinalSize];
+                    }
                 }
                 //udpates the temporary buffer
                 if(temp1) {
@@ -283,22 +265,10 @@ list<AER_struct> unmask::unmaskData(char* i_buffer, int i_sz) {
                 }
             }
             
-            
-            //sAER.x = cartX;
-            //sAER.y = cartY;
-            //sAER.pol = polarity;
-            //sAER.ts = timestamp;
-            //l_AER.push_back(sAER);
             //fprintf(uEvents,"%d\t%d\t%d\t%u\n", cartX, cartY, polarity, timestamp);
         }
     }
-    //sAER.x = -1.0;
-    //sAER.y = -1.0;
-    //sAER.pol = -1.0;
-    //sAER.ts = 0;
-    //l_AER.push_back(sAER);
     //fprintf(uEvents,"%d\t%d\t%d\t%u\n", -1, -1, -1, -1);
-    return l_AER;
 }
 
 void unmask::unmaskEvent(unsigned int evPU, short& x, short& y, short& pol) {

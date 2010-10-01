@@ -24,6 +24,8 @@
  */
 
 #include <iCub/cartesianFrameConverter.h>
+#include <cassert>
+
 using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
@@ -43,11 +45,8 @@ cFrameConverter::~cFrameConverter() {
 void cFrameConverter::onRead(sendingBuffer& i_ub) {
     //cout << "C_yarpViewer::onRead(unmaskedbuffer& i_ub)" << endl;
     //start_u = clock();
-    //list<AER_struct> datas = unmask_events.unmaskData(i_ub.get_packet(), i_ub.get_sizeOfPacket());
-    list<AER_struct> datas = unmask_events.unmaskData(i_ub.get_packet(), i_ub.get_sizeOfPacket());
+    unmask_events.unmaskData(i_ub.get_packet(), i_ub.get_sizeOfPacket());
     //start_p = clock();
-    //ImageOf<PixelMono16> frame = convert_events.create_frame(datas);
-    //convert_events.send_frame(frame);
     //stop = clock();
     /*
     cout << "Unmask task : " << (stop/CLOCKS_PER_SEC) - (start_u/CLOCKS_PER_SEC) << endl
@@ -56,9 +55,7 @@ void cFrameConverter::onRead(sendingBuffer& i_ub) {
 }
 
 void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image){
-    if(image==0) {
-        printf("ERROR");
-    }
+    assert(image!=0);
     image->resize(outputWidth,outputHeight);
     unsigned char* pImage=image->getRawImage();
     int imagePadding=image->getPadding();
@@ -75,9 +72,18 @@ void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image){
     for(int r=0;r<outputHeight;r++){
         if((r>=(outputHeight-retinalSize)/2)&&(r<outputHeight-(outputHeight-retinalSize)/2)) {
             for(int c=0;c<outputWidth;c++) {
+                //drawing the retina and the rest of the image separately
                 if((c<outputWidth-(outputWidth-retinalSize)/2)&&(c>=(outputWidth-retinalSize)/2)) {
                     int value= *pBuffer;
-                    *pImage++ = (unsigned char) 127 + value;
+                    *pImage++ = (unsigned char) 127 - b + a*value + b;
+                    if(127 - b + a* value + b>=256) {
+                        printf("Error \n");
+                    }
+                    assert(127 - b + a* value + b<256);
+                    if(127 - b + a* value + b<0) {
+                        printf("Error \n");
+                    }
+                    assert(127 - b + a* value + b>=0);
                     pBuffer--;
                 }
                 else {

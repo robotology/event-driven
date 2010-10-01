@@ -101,7 +101,7 @@
  *
  *    Note that the name of this port mirrors whatever is provided by the \c --name parameter value
  *    The port is attached to the terminal so that you can type in commands and receive replies.
- *    The port can be used by other modules but also interactively by a user through the yarp rpc directive, viz.: \c yarp \c rpc \c /visualFilter
+ *    The port can be used by other modules but also interactively by a user through the yarp rpc directive, viz.: \c yarp \c rpc \c /cartesianFrameCollector
  *    This opens a connection from a terminal to the port and allows the user to then type in commands and receive replies.
  *       
  *  - \c /cartesianFrameCollector/image:i \n
@@ -140,7 +140,7 @@
  *
  * Copyright (C) 2010 RobotCub Consortium\n
  * CopyPolicy: Released under the terms of the GNU GPL v2.0.\n
- * This file can be edited at \c $ICUB_ROOT/main/src/modules/visualFilter/include/iCub/visualFilter.h
+ * This file can be edited at \c $ICUB_ROOT/main/src/modules/cartesianFrameCollector/include/iCub/cfCollectorModule.h
  * 
  */
 
