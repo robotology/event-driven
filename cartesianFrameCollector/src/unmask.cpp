@@ -250,8 +250,10 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
                     }
                 }
                 //udpates the temporary buffer
+
                 if(temp1) {
                     countEventLocker.wait();
+                    
                     if(countEvent>maxPosEvent-1) {
                         countEvent=maxPosEvent-1;
                     }
