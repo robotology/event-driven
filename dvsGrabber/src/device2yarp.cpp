@@ -32,7 +32,7 @@ device2yarp::device2yarp(string deviceNum, bool i_bool, string i_fileName):RateT
     /* open device file /dev/retina0*/
     str_buf << "/dev/retina" << deviceNum;
     cout <<"name of the file buffer:" <<str_buf.str() << endl;
-    file_desc = open(str_buf.str().c_str(), O_RDWR);
+    file_desc = open(DEVICE_DILE_NAME, O_RDWR);
     if (file_desc < 0) {
         cout << "Can't open device file: %s\n" << str_buf.str() << endl;
     }
