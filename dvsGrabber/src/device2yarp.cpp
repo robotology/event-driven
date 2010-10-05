@@ -20,25 +20,24 @@
 using namespace std;
 using namespace yarp::os;
 
-device2yarp::device2yarp(string deviceNum, bool i_bool, string i_fileName):RateThread(10), save(i_bool) {
+device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):RateThread(10), save(i_bool) {
     len=0;
     sz=0;
     memset(buffer, 0, SIZE_OF_DATA);
     if(save)
         raw = fopen(i_fileName.c_str(), "wb");
+    int deviceNum=0;
     str_buf << "/icub/retina" << deviceNum << ":o";
     port.open(str_buf.str().c_str());
 
-    cout <<"name of the file buffer:" <<portDeviceName.str() << endl;
-    file_desc = open(portDeviceName.str().c_str(), O_RDWR);
+    cout <<"name of the file buffer:" <<portDeviceName.c_str()<< endl;
+    file_desc = open(portDeviceName.c_str(), O_RDWR);
     if (file_desc < 0) {
-        cout << "Can't open device file: %s\n" << str_buf.str() << endl;
+        printf("Cannot open device file: %s \n",portDeviceName.c_str());
     }
     else {
-
-        
-
-        if (!strcmp(portNameDevice.c_str(),"/dev/retina0") {
+        int err;
+        if (!strcmp(portDeviceName.c_str(),"/dev/retina0")) {
 #ifdef FAST
         unsigned char bias[] = {0xb8,               //request
                                 0x00, 0x00,         //value
@@ -55,6 +54,7 @@ device2yarp::device2yarp(string deviceNum, bool i_bool, string i_fileName):RateT
                                 0x00,0x33,0x45,		// diff
                                 0x00,0x01,0x0f,		// foll
                                 0x00,0x01,0x0f}; 	// Pr               ++ Velocity of the "log circuit"
+        err = write(file_desc,bias,41); //5+36
 #else
 #ifdef SLOW
         unsigned char bias[] = {0xb8,               //request
@@ -73,6 +73,7 @@ device2yarp::device2yarp(string deviceNum, bool i_bool, string i_fileName):RateT
                                 0x00,0x00,0x33,     // foll
                                 0x00,0x00,0x03      // Pr
                                 };
+        err = write(file_desc,bias,41); //5+36
 #else
 //        unsigned char bias[] = {0xb8,               //request
 //                                0x00, 0x00,         //value
@@ -105,12 +106,13 @@ device2yarp::device2yarp(string deviceNum, bool i_bool, string i_fileName):RateT
                                 0x00,0x01,0x10,     // foll
                                 0x00,0x09,0x31      // Pr
                                 };
+        err = write(file_desc,bias,41); //5+36
 #endif //SLOW
 #endif //FAST
         }
 
-        if(!strcmp(portNameDevice.c_str(),"")) {
-
+        if(!strcmp(portDeviceName.c_str(),"/dev/aerfx2_0")) {
+            printf("sending biases as events to the device ... \n");
             /*
             *    biasvalues = {
             *    "cas": 1966, 7AE
@@ -127,7 +129,6 @@ device2yarp::device2yarp(string deviceNum, bool i_bool, string i_fileName):RateT
             *    "Pr": 8, 8
             *}
             */
-
             unsigned char bias[] = {0xb8,               //request
                                 0x00, 0x00,         //value
                                 0x00, 0x00,          //index
@@ -144,9 +145,10 @@ device2yarp::device2yarp(string deviceNum, bool i_bool, string i_fileName):RateT
                                 0x00,0x00,0x13,     // foll
                                 0x00,0x00,0x08      // Pr
                                 };
+            int err = write(file_desc,bias,41); //5+36            
         }
 
-        int err = write(file_desc,bias,41); //5+36
+        //int err = write(file_desc,bias,41); //5+36
         cout << "Return of the bias writing : " << err << endl;
         unsigned char start[5];
         start[0] = 0xb3;
@@ -174,6 +176,11 @@ device2yarp::~device2yarp() {
     err = write(file_desc,stop,5);
     printf("%d address events read\n",len/4);
     close(file_desc);
+}
+
+
+void device2yarp::setDeviceName(string deviceName) {
+    portDeviceName=deviceName;
 }
 
 

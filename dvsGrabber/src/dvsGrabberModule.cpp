@@ -65,6 +65,7 @@ bool dvsGrabberModule::configure(yarp::os::ResourceFinder &rf) {
                            Value("dev/retina"), 
                            "Device name (string)").asString();
     devicePortName         = "/" + deviceName + "0";
+    //printf("trying to connect to the device %s \n",devicePortName);
 
 
 
@@ -85,8 +86,8 @@ bool dvsGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     bool _save = false;
     std::string deviceNum = "0";
     std::string fileName = "raw_events.bin";
-    D2Y=new device2yarp(deviceNum, _save, fileName);
-    D2Y->setDeviceName(devicePortName);
+    D2Y=new device2yarp(devicePortName, _save, fileName);
+    //D2Y->setDeviceName(devicePortName);
     D2Y->start();
 
     return true ;       // let the RFModule know everything went well
