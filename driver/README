@@ -16,4 +16,4 @@ To install it, type :
 sudo insmod retina.ko
 
 Add write permissions for all users to the device, type:
-sudo chmod a+w /dev/retina0 
+sudo chmod a+rw /dev/retina0 
