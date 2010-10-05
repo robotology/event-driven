@@ -29,7 +29,7 @@ using namespace std;
 using namespace yarp::os;
 
 #define maxPosEvent 10000
-#define responseGradient 2
+#define responseGradient 5
 #define minKillThres 1000
 #define UNMASKRATETHREAD 1
 
@@ -92,11 +92,9 @@ int* unmask::getEventBuffer(){
 }
 
 void unmask::run() {
-    printf("run %d \n", countEvent);
     if(countEvent==0) {
         return;//delete events even if there was not any before
     }
-    printf("temp1 false `\n");
     temp1=false; //redirect events in the second bin
     numKilledEvents=minKillThres;
     if(countEvent>numKilledEvents) {
@@ -201,7 +199,6 @@ void unmask::run() {
     }
     //reset temporary buffer
     memset(fifoEvent_temp2,0,maxPosEvent*sizeof(int));
-    
     countEvent2=0;
     
 }
@@ -237,7 +234,6 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
             unmaskEvent(blob, cartX, cartY, polarity);
             timestamp = ((part_3)|(part_4<<8))/*&0x7fff*/;
             timestamp+=wrapAdd;
-            printf("check polarity temp1:%d \n",temp1);
             if((cartX!=127)||(cartY!=0)) {      //removed one pixel which is set once the driver do not work properly
                 if(polarity>0) {
                     buffer[cartX+cartY*retinalSize]+=responseGradient;
@@ -254,29 +250,22 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
                 //udpates the temporary buffer
 
                 if(temp1) {
-                    
-                    
                     if(countEvent>maxPosEvent-1) {
                         countEvent=maxPosEvent-1;
                     }
                     fifoEvent_temp[countEvent]=cartX+cartY*retinalSize;
                     //increments the counter of events
                     countEvent++;
-                    
-                    
                 }
                 else {
-                    
                     if(countEvent2>maxPosEvent-1) {
                         countEvent2=maxPosEvent-1;
                     }
                     fifoEvent_temp2[countEvent2]=cartX+cartY*retinalSize;
                     //increments the counter of events
                     countEvent2++;
-                    
                 }
             }
-            
             //fprintf(uEvents,"%d\t%d\t%d\t%u\n", cartX, cartY, polarity, timestamp);
         }
     }
