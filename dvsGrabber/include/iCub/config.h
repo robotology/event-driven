@@ -31,9 +31,8 @@
 //#define SIZE_OF_DATA 8192
 //#define SIZE_OF_DATA 9216
 //#define SIZE_OF_DATA 16384
-//#define SIZE_OF_DATA 24576
-#define SIZE_OF_DATA 32768
-#define DEVICE_FILE_NAME "/dev/retina0"
+#define SIZE_OF_DATA 24576
+//#define SIZE_OF_DATA 32768
 
 //#define FAST
 #define SLOW
