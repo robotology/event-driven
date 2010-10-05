@@ -28,15 +28,17 @@ device2yarp::device2yarp(string deviceNum, bool i_bool, string i_fileName):RateT
         raw = fopen(i_fileName.c_str(), "wb");
     str_buf << "/icub/retina" << deviceNum << ":o";
     port.open(str_buf.str().c_str());
-    str_buf.str("");
-    /* open device file /dev/retina0*/
-    str_buf << "/dev/retina" << deviceNum;
-    cout <<"name of the file buffer:" <<str_buf.str() << endl;
-    file_desc = open(str_buf.str().c_str(), O_RDWR);
+
+    cout <<"name of the file buffer:" <<portDeviceName.str() << endl;
+    file_desc = open(portDeviceName.str().c_str(), O_RDWR);
     if (file_desc < 0) {
         cout << "Can't open device file: %s\n" << str_buf.str() << endl;
     }
     else {
+
+        
+
+        if (!strcmp(portNameDevice.c_str(),"/dev/retina0") {
 #ifdef FAST
         unsigned char bias[] = {0xb8,               //request
                                 0x00, 0x00,         //value
@@ -69,7 +71,8 @@ device2yarp::device2yarp(string deviceNum, bool i_bool, string i_fileName):RateT
                                 0x07,0x5c,0x8b,     // diffOn
                                 0x00,0x75,0xc9,     // diff
                                 0x00,0x00,0x33,     // foll
-                                0x00,0x00,0x03};    // Pr
+                                0x00,0x00,0x03      // Pr
+                                };
 #else
 //        unsigned char bias[] = {0xb8,               //request
 //                                0x00, 0x00,         //value
@@ -89,21 +92,59 @@ device2yarp::device2yarp(string deviceNum, bool i_bool, string i_fileName):RateT
         unsigned char bias[] = {0xb8,               //request
                                 0x00, 0x00,         //value
                                 0x00, 0x00,          //index
-                                0x00,0x07,0xc8,	    // cas
-                                0x10,0xe9,0x8C,		// injGnd
-                                0xFF,0xFF,0xFF,		// reqPd
-                                0x7c,0x7f,0xf5,		// puX
-                                0x00,0x04,0xfe,		// diffOff
-                                0x04,0xb9,0x56,		// req
-                                0x00,0x09,0x31,		// refr
-                                0xFF,0xFF,0xFF,		// puY
-                                0x01,0xe5,0x20,		// diffOn
-                                0x00,0x26,0xd2,		// diff
-                                0x00,0x01,0x10,		// foll
-                                0x00,0x09,0x31}; 	// Pr
+                                0x00,0x07,0xc8,     // cas
+                                0x10,0xe9,0x8C,     // injGnd
+                                0xFF,0xFF,0xFF,     // reqPd
+                                0x7c,0x7f,0xf5,     // puX
+                                0x00,0x04,0xfe,     // diffOff
+                                0x04,0xb9,0x56,     // req
+                                0x00,0x09,0x31,     // refr
+                                0xFF,0xFF,0xFF,     // puY
+                                0x01,0xe5,0x20,     // diffOn
+                                0x00,0x26,0xd2,     // diff
+                                0x00,0x01,0x10,     // foll
+                                0x00,0x09,0x31      // Pr
+                                };
 #endif //SLOW
 #endif //FAST
+        }
 
+        if(!strcmp(portNameDevice.c_str(),"")) {
+
+            /*
+            *    biasvalues = {
+            *    "cas": 1966, 7AE
+            *    "injGnd": 22703, 58AF
+            *    "reqPd": 16777215, FFFFFF
+            *    "puX": 4368853, 42A9D5
+            *    "diffOff": 3207, C87
+            *    "req": 111347, 1B2F3
+            *    "refr": 0, 0
+            *    "puY": 16777215, FFFFFF
+            *    "diffOn": 483231, 75F9F
+            *    "diff": 28995, 7143
+            *    "foll": 19, 13
+            *    "Pr": 8, 8
+            *}
+            */
+
+            unsigned char bias[] = {0xb8,               //request
+                                0x00, 0x00,         //value
+                                0x00, 0x00,          //index
+                                0x00,0x07,0xAE,     // cas
+                                0x10,0x58,0xAF,     // injGnd
+                                0xFF,0xFF,0xFF,     // reqPd
+                                0x42,0xA9,0xD5,     // puX
+                                0x00,0x0C,0x87,     // diffOff
+                                0x01,0xB2,0xF3,     // req
+                                0x00,0x00,0x00,     // refr
+                                0xFF,0xFF,0xFF,     // puY
+                                0x07,0x5F,0x9F,     // diffOn
+                                0x00,0x71,0x43,     // diff
+                                0x00,0x00,0x13,     // foll
+                                0x00,0x00,0x08      // Pr
+                                };
+        }
 
         int err = write(file_desc,bias,41); //5+36
         cout << "Return of the bias writing : " << err << endl;

@@ -44,6 +44,13 @@ public:
     ~device2yarp();
     virtual void run();
 
+
+    /**
+    * function used to set the name of the port device where biases are sent
+    * @param name name of the port of the device
+    */
+    void setDeviceName(std::string name);
+
 private:
     yarp::os::BufferedPort<sendingBuffer> port;
     FILE* raw;
@@ -64,6 +71,7 @@ private:
     int polshift;
     int polmask;
     int retinalSize;
+    std::string portDeviceName;
 
     bool save;
 

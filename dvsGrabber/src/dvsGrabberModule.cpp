@@ -59,6 +59,16 @@ bool dvsGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     robotPortName         = "/" + robotName + "/head";
 
     /*
+    * get the device name which will be used to read events
+    */
+    deviceName             = rf.check("deviceName", 
+                           Value("dev/retina"), 
+                           "Device name (string)").asString();
+    devicePortName         = "/" + deviceName + "0";
+
+
+
+    /*
     * attach a port of the same name as the module (prefixed with a /) to the module
     * so that messages received from the port are redirected to the respond method
     */
@@ -76,6 +86,7 @@ bool dvsGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     std::string deviceNum = "0";
     std::string fileName = "raw_events.bin";
     D2Y=new device2yarp(deviceNum, _save, fileName);
+    D2Y->setDeviceName(devicePortName);
     D2Y->start();
 
     return true ;       // let the RFModule know everything went well

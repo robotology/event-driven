@@ -162,6 +162,8 @@ class dvsGrabberModule:public yarp::os::RFModule {
     std::string moduleName;                     //name of the module (rootname of ports)
     std::string robotName;                      //name of the robot
     std::string robotPortName;                  //reference to the head of the robot
+    std::string deviceName;                      //name of the device
+    std::string devicePortName;                  //reference to the device port
     std::string handlerPortName;                //name of the handler port (comunication with respond function)
     int ratethread;                             //time constant for ratethread
 
