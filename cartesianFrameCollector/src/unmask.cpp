@@ -28,9 +28,9 @@
 using namespace std;
 using namespace yarp::os;
 
-#define maxPosEvent 6000
-#define responseGradient 20
-#define minKillThres 500
+#define maxPosEvent 10000
+#define responseGradient 2
+#define minKillThres 1000
 #define UNMASKRATETHREAD 1
 
 unmask::unmask() : RateThread(UNMASKRATETHREAD){
@@ -46,6 +46,7 @@ unmask::unmask() : RateThread(UNMASKRATETHREAD){
     polshift = 0;
     polmask = 0x00000001;
     retinalSize = 128;
+    temp1=true;
 
     buffer=new int[retinalSize*retinalSize];
     memset(buffer,0,retinalSize*retinalSize*sizeof(int));
@@ -91,11 +92,11 @@ int* unmask::getEventBuffer(){
 }
 
 void unmask::run() {
-    
+    printf("run %d \n", countEvent);
     if(countEvent==0) {
         return;//delete events even if there was not any before
     }
-    
+    printf("temp1 false `\n");
     temp1=false; //redirect events in the second bin
     numKilledEvents=minKillThres;
     if(countEvent>numKilledEvents) {
@@ -147,9 +148,9 @@ void unmask::run() {
     }
     //reset temporary buffer
     memset(fifoEvent_temp,0,maxPosEvent*sizeof(int));
-    countEventLocker.wait();
+    
     countEvent=0;
-    countEventLocker.post();
+    
 
     //----------------------------------------
     temp1=true;
@@ -200,9 +201,9 @@ void unmask::run() {
     }
     //reset temporary buffer
     memset(fifoEvent_temp2,0,maxPosEvent*sizeof(int));
-    countEventLocker2.wait();
+    
     countEvent2=0;
-    countEventLocker2.post();
+    
 }
 
 void unmask::unmaskData(char* i_buffer, int i_sz) {
@@ -236,6 +237,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
             unmaskEvent(blob, cartX, cartY, polarity);
             timestamp = ((part_3)|(part_4<<8))/*&0x7fff*/;
             timestamp+=wrapAdd;
+            printf("check polarity temp1:%d \n",temp1);
             if((cartX!=127)||(cartY!=0)) {      //removed one pixel which is set once the driver do not work properly
                 if(polarity>0) {
                     buffer[cartX+cartY*retinalSize]+=responseGradient;
@@ -252,7 +254,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
                 //udpates the temporary buffer
 
                 if(temp1) {
-                    countEventLocker.wait();
+                    
                     
                     if(countEvent>maxPosEvent-1) {
                         countEvent=maxPosEvent-1;
@@ -260,17 +262,18 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
                     fifoEvent_temp[countEvent]=cartX+cartY*retinalSize;
                     //increments the counter of events
                     countEvent++;
-                    countEventLocker.post();
+                    
+                    
                 }
                 else {
-                    countEventLocker2.wait();
+                    
                     if(countEvent2>maxPosEvent-1) {
                         countEvent2=maxPosEvent-1;
                     }
                     fifoEvent_temp2[countEvent2]=cartX+cartY*retinalSize;
                     //increments the counter of events
                     countEvent2++;
-                    countEventLocker2.post();
+                    
                 }
             }
             
