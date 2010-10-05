@@ -15,5 +15,9 @@ sudo rmmod retina
 To install it, type :
 sudo insmod retina.ko
 
-Add write permissions for all users to the device, type:
-sudo chmod a+rw /dev/retina0 
+Read the idVendor and idProduct of the device 
+lsusb (may be you can work out the right device using dmesg)
+
+Set the mode with which udev manage the device. Create a file retina.rules in /etc/udev/rules.d and add the following line
+
+SYSFS{idVendor}=="152a", SYSFS{idProduct}=="8400", MODE="666"
