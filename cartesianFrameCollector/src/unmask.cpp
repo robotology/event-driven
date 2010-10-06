@@ -107,6 +107,8 @@ void unmask::run() {
         pointerPixel++;
     }
 
+
+    /*
     temp1=false; //redirect events in the second bin
     numKilledEvents=minKillThres;
     if(countEvent>numKilledEvents) {
@@ -209,7 +211,7 @@ void unmask::run() {
     //reset temporary buffer
     memset(fifoEvent_temp2,0,maxPosEvent*sizeof(int));
     countEvent2=0;
-    
+    */
 }
 
 void unmask::unmaskData(char* i_buffer, int i_sz) {
