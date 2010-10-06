@@ -6,14 +6,14 @@
 
 <module>
    <name>dvsGrabber</name>
-   <parameters>--name </parameters>
+   <parameters>--nameDevice /dev/aerfx2_0 </parameters>
    <node>/powerNode1</node>
    <tag>eventGrabber</tag>
 </module>
 <module>
    <name>cartesianFrameCollector</name>
    <parameters></parameters>
-   <node>powerNode1</node>
+   <node>/powerNode1</node>
    <tag>cartFrameCollector</tag>
 </module>
 <module>
