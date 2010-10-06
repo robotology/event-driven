@@ -29,10 +29,10 @@ using namespace std;
 using namespace yarp::os;
 
 #define maxPosEvent 10000
-#define responseGradient 25
+#define responseGradient 127
 #define minKillThres 1000
 #define UNMASKRATETHREAD 1
-#define constInterval 100000;
+#define constInterval 10000;
 
 unmask::unmask() : RateThread(UNMASKRATETHREAD){
     numKilledEvents=0;
@@ -245,7 +245,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
             timestamp+=wrapAdd;
             if((cartX!=127)||(cartY!=0)) {      //removed one pixel which is set once the driver do not work properly
                 if(polarity>0) {
-                    buffer[cartX+cartY*retinalSize]+=responseGradient;
+                    buffer[cartX+cartY*retinalSize]=responseGradient;
                     timeBuffer[cartX+cartY*retinalSize]=timestamp;
                     lasttimestamp=timestamp;
                     if(buffer[cartX+cartY*retinalSize]>127) {
@@ -253,7 +253,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
                     }
                 }
                 else if(polarity<0) {
-                    buffer[cartX+cartY*retinalSize]-=responseGradient;
+                    buffer[cartX+cartY*retinalSize]=-responseGradient;
                     if (buffer[cartX+cartY*retinalSize]<-127) {
                         buffer[cartX+cartY*retinalSize]=-127;
                     }
