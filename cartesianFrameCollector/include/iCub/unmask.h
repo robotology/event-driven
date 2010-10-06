@@ -54,10 +54,12 @@ private:
 
     int sz;
     int* buffer;
+    unsigned int* timeBuffer;
     int* fifoEvent;
     int* fifoEvent_temp;
     int* fifoEvent_temp2;
     unsigned int timestamp;
+    unsigned int lasttimestamp;
     short cartX, cartY, polarity;
 
     int wrapAdd;

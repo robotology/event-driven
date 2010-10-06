@@ -29,9 +29,10 @@ using namespace std;
 using namespace yarp::os;
 
 #define maxPosEvent 10000
-#define responseGradient 5
+#define responseGradient 25
 #define minKillThres 1000
 #define UNMASKRATETHREAD 1
+#define constInterval 100000;
 
 unmask::unmask() : RateThread(UNMASKRATETHREAD){
     numKilledEvents=0;
@@ -50,6 +51,8 @@ unmask::unmask() : RateThread(UNMASKRATETHREAD){
 
     buffer=new int[retinalSize*retinalSize];
     memset(buffer,0,retinalSize*retinalSize*sizeof(int));
+    timeBuffer=new unsigned int[retinalSize*retinalSize];
+    memset(timeBuffer,0,retinalSize*retinalSize*sizeof(unsigned int));
     fifoEvent=new int[maxPosEvent];
     memset(fifoEvent,0,maxPosEvent*sizeof(int));
     fifoEvent_temp=new int[maxPosEvent];
@@ -68,6 +71,7 @@ bool unmask::threadInit() {
 
 unmask::~unmask() {
     delete[] buffer;
+    delete[] timeBuffer;
     delete[] fifoEvent;
     delete[] fifoEvent_temp;
     delete[] fifoEvent_temp2;
@@ -92,9 +96,17 @@ int* unmask::getEventBuffer(){
 }
 
 void unmask::run() {
-    if(countEvent==0) {
-        return;//delete events even if there was not any before
+    unsigned int* pointerTime=timeBuffer;
+    int* pointerPixel=buffer;
+    for(int j=0;j<retinalSize*retinalSize;j++) {
+        unsigned int timelimit=lasttimestamp - constInterval;
+        if(*pointerTime < timelimit) {
+            *pointerPixel=0;
+        }
+        pointerTime++;
+        pointerPixel++;
     }
+
     temp1=false; //redirect events in the second bin
     numKilledEvents=minKillThres;
     if(countEvent>numKilledEvents) {
@@ -124,7 +136,7 @@ void unmask::run() {
                 if(*newLoc>=0) {
                     //element to be deleted
                     assert(*newLoc<retinalSize*retinalSize);
-                    buffer[*newLoc]=0;
+                    //buffer[*newLoc]=0;
                 }
             }
         }
@@ -154,9 +166,6 @@ void unmask::run() {
     temp1=true;
     //-----------------------------------------
     
-    if(countEvent2==0) {
-        return;
-    }
     numKilledEvents=minKillThres;
     if(countEvent2>numKilledEvents) {
         numKilledEvents=countEvent2;
@@ -237,6 +246,8 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
             if((cartX!=127)||(cartY!=0)) {      //removed one pixel which is set once the driver do not work properly
                 if(polarity>0) {
                     buffer[cartX+cartY*retinalSize]+=responseGradient;
+                    timeBuffer[cartX+cartY*retinalSize]=timestamp;
+                    lasttimestamp=timestamp;
                     if(buffer[cartX+cartY*retinalSize]>127) {
                         buffer[cartX+cartY*retinalSize]=127;
                     }
