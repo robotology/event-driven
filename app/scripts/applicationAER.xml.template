@@ -1,60 +1,38 @@
 <application>
 <name>Poeticon Application </name>
 
-<dependencies>
-	<port>/icub/cam/left</port>
-	<port>/icub/cam/right</port>	
+<dependencies>	
 </dependencies>
 
 <module>
-   <name>iKinGazeCtrl</name>
-   <parameters>--context logpolarAttention/conf --config icubEyes.ini --eyeTiltMin -7.5 --eyeTiltMax 15.0 --ping_robot_tmo 40.0</parameters>
+   <name>dvsGrabber</name>
+   <parameters>--name </parameters>
    <node>/powerNode1</node>
-   <tag>gazeController</tag>
+   <tag>eventGrabber</tag>
 </module>
 <module>
-   <name>logpolarTransform</name>
-   <parameters>--name logPolarTransform/icub/left_cam --xsize 320 --ysize 240 --direction CARTESIAN2LOGPOLAR</parameters>
-   <node>powerNode1</node>
-   <tag>leftLogPolarTransform</tag>
-</module>
-
-<module>
-   <name>logpolarTransform</name>
-   <parameters>--name logPolarTransform/icub/right_cam --xsize 320 --ysixe 240 --direction CARTESIAN2LOGPOLAR</parameters>
-   <node>powerNode1</node>
-   <tag>rightLogPolarTransform</tag>
-</module>
-
-<module>
-   <name>vergence</name>
+   <name>cartesianFrameCollector</name>
    <parameters></parameters>
    <node>powerNode1</node>
-   <tag>vergenceModule</tag>
+   <tag>cartFrameCollector</tag>
+</module>
+<module>
+   <name>yarpView</name>
+   <parameters>--name /eventView --x 000 --ysixe 000 --synch </parameters>
+   <node>console</node>
+   <tag>eventViewer</tag>
 </module>
 
 <connection>
-  <from>/icub/cam/left</from>
-  <to>/logPolarTransform/icub/left_cam/image:i</to>
+  <from>/icub/retina0</from>
+  <to>/cartesianFrameCollector/image:i</to>
+  <protocol>tcp</protocol>
+</connection>
+
+<connection>
+  <from>/cartesianFrameCollector/image:o</from>
+  <to>/eventView</to>
   <protocol>udp</protocol>
-</connection>
-
-<connection>
-  <from>/icub/cam/right</from>
-  <to>/logPolarTransform/icub/right_cam/image:i</to>
-  <protocol>udp</protocol>
-</connection>
-
-<connection>
-  <from>/logPolarTransform/icub/left_cam/image:o</from>
-  <to>/vergence/left:i</to>
-  <protocol>shmem</protocol>
-</connection>
-
-<connection>
-  <from>/logPolarTransform/icub/right_cam/image:o</from>
-  <to>/vergence/right:i</to>
-  <protocol>shmem</protocol>
 </connection>
 
 </application>
