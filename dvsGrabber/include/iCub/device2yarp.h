@@ -51,7 +51,15 @@ public:
     */
     void setDeviceName(std::string name);
 
+
+    void progBias();
+
+    void latchCommit();
+
+    void biasprogtx(time, latch, clock, data);
+
 private:
+
     yarp::os::BufferedPort<sendingBuffer> port;
     FILE* raw;
 

@@ -20,6 +20,14 @@
 using namespace std;
 using namespace yarp::os;
 
+#define timestep 100 //ms
+#define latchexpand 100
+#define LATCH_KEEP 1
+#define LATCH_TRANSPARENT 0
+
+#define CLOCK_LO 0
+#define CLOCK_HI 1
+
 device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):RateThread(10), save(i_bool) {
     len=0;
     sz=0;
@@ -129,9 +137,21 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
             *    "Pr": 8, 8
             *}
             */
-            unsigned char bias[] = {0xb8,               //request
-                                0x00, 0x00,         //value
-                                0x00, 0x00,          //index
+            string biasNames[] = {
+                                "cas",
+                                "injGnd",
+                                "reqPd",
+                                "puX",
+                                "diffOff",
+                                "req",
+                                "refr",
+                                "puY",
+                                "diffOn",
+                                "diff",
+                                "foll",
+                                "Pr"
+                                };
+            unsigned char biasValues[] = {
                                 0x00,0x07,0xAE,     // cas
                                 0x10,0x58,0xAF,     // injGnd
                                 0xFF,0xFF,0xFF,     // reqPd
@@ -145,7 +165,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
                                 0x00,0x00,0x13,     // foll
                                 0x00,0x00,0x08      // Pr
                                 };
-            int err = write(file_desc,bias,41); //5+36            
+            //int err = write(file_desc,bias,41); //5+36            
         }
 
         //int err = write(file_desc,bias,41); //5+36
@@ -210,4 +230,52 @@ void  device2yarp::run() {
         fwrite(buffer, 1, sz, raw);
     }
     memset(buffer, 0, SIZE_OF_DATA);
+}
+
+void programming() {
+    for(int j=0;j<countBias;j++) {
+        progBias(biasName[j],24,biasValue[j]);
+    }
+    latchCommit();
+}
+
+void progBias(string name,int bits,int value) {
+    for (int i=bits-1;i>0;i--) {
+        if(2^i & value)
+            bitvalue = 1;
+        else:
+            bitvalue = 0;
+        progbit(bitvalue);
+    }
+}
+
+void latchCommit() {
+    printf("entering latch_commit");
+    biasprogtx(timestep * latchexpand, LATCH_TRANSPARENT, CLOCK_LO, 0)
+    biasprogtx(timestep * latchexpand, LATCH_KEEP, CLOCK_LO, 0)
+    biasprogtx(timestep * latchexpand, LATCH_KEEP, CLOCK_LO, 0)
+    print("exiting latch_commit");
+}
+
+void progBit(int bitvalue) {
+    //set data
+    biasprogtx(timestep, LATCH_KEEP, CLOCK_LO, bitvalue);
+    //toggle clock
+    biasprogtx(timestep, LATCH_KEEP, CLOCK_HI, bitvalue);
+    biasprogtx(timestep, LATCH_KEEP, CLOCK_LO, bitvalue);
+}
+
+void biasprogtx(int time,int latch,int clock,int data) {
+    addr = 0;
+    if(data) {
+        addr += 0x01;
+    }
+    if(clock) {
+        addr += 0x02;
+    }
+    if (latch) {
+        addr += 0x04;
+    }
+    addr += 0xFF000000
+    //addr = int(sys.argv[1], 16)
 }
