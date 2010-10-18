@@ -51,12 +51,14 @@ public:
     */
     void setDeviceName(std::string name);
 
-
-    void progBias();
+    void progBias(std::string name, int bits, int value);
 
     void latchCommit();
 
-    void biasprogtx(time, latch, clock, data);
+    void progBit(int bitvalue);
+
+    void biasprogtx(int time, int latch, int clock, int data);
+
 
 private:
 

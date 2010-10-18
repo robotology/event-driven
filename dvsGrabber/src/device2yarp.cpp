@@ -22,6 +22,7 @@ using namespace yarp::os;
 
 #define timestep 100 //ms
 #define latchexpand 100
+#define countBias 12
 #define LATCH_KEEP 1
 #define LATCH_TRANSPARENT 0
 
@@ -166,6 +167,10 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
                                 0x00,0x00,0x08      // Pr
                                 };
             //int err = write(file_desc,bias,41); //5+36            
+            for(int j=0;j<countBias;j++) {
+                progBias(biasNames[j],24,biasValues[j]);
+            }
+            latchCommit();
         }
 
         //int err = write(file_desc,bias,41); //5+36
@@ -232,32 +237,31 @@ void  device2yarp::run() {
     memset(buffer, 0, SIZE_OF_DATA);
 }
 
-void programming() {
-    for(int j=0;j<countBias;j++) {
-        progBias(biasName[j],24,biasValue[j]);
-    }
-    latchCommit();
-}
 
-void progBias(string name,int bits,int value) {
+void device2yarp::progBias(string name,int bits,int value) {
+    int bitvalue;
     for (int i=bits-1;i>0;i--) {
-        if(2^i & value)
+        int mask=1;
+        for (int j=0; j<i; j++) {
+            mask*=2;
+        }
+        if (mask & value)
             bitvalue = 1;
-        else:
+        else
             bitvalue = 0;
-        progbit(bitvalue);
+        progBit(bitvalue);
     }
 }
 
-void latchCommit() {
+void device2yarp::latchCommit() {
     printf("entering latch_commit");
-    biasprogtx(timestep * latchexpand, LATCH_TRANSPARENT, CLOCK_LO, 0)
-    biasprogtx(timestep * latchexpand, LATCH_KEEP, CLOCK_LO, 0)
-    biasprogtx(timestep * latchexpand, LATCH_KEEP, CLOCK_LO, 0)
-    print("exiting latch_commit");
+    biasprogtx(timestep * latchexpand, LATCH_TRANSPARENT, CLOCK_LO, 0);
+    biasprogtx(timestep * latchexpand, LATCH_KEEP, CLOCK_LO, 0);
+    biasprogtx(timestep * latchexpand, LATCH_KEEP, CLOCK_LO, 0);
+    printf("exiting latch_commit");
 }
 
-void progBit(int bitvalue) {
+void device2yarp::progBit(int bitvalue) {
     //set data
     biasprogtx(timestep, LATCH_KEEP, CLOCK_LO, bitvalue);
     //toggle clock
@@ -265,17 +269,36 @@ void progBit(int bitvalue) {
     biasprogtx(timestep, LATCH_KEEP, CLOCK_LO, bitvalue);
 }
 
-void biasprogtx(int time,int latch,int clock,int data) {
-    addr = 0;
+void device2yarp::biasprogtx(int time,int latch,int clock,int data) {
+    unsigned char addr[4];
+    unsigned char t[4];
+    int err;
+    //setting the time
+    
+    t[0]= time & 0xFF000000;
+    t[1]= time & 0x00FF0000;
+    t[2]= time & 0x0000FF00;
+    t[3]= time & 0x000000FF;
+    printf("%c,%c, %c, %c",t[0],t[1],t[2],t[3]);
+
+    //setting the addr
+    addr[0] = 0xFF;
+    addr[1] = 0x00;
+    addr[2] = 0x00;
     if(data) {
-        addr += 0x01;
+        addr[3] = 0x01;
     }
     if(clock) {
-        addr += 0x02;
+        addr[3] = 0x02;
     }
     if (latch) {
-        addr += 0x04;
+        addr[3] = 0x04;
     }
-    addr += 0xFF000000
+    
+
+    
     //addr = int(sys.argv[1], 16)
+    err = write(file_desc,t,4); //4 byte time: 1 integer
+    err = write(file_desc,addr,4); //4 byte time: 1 integer
+    
 }
