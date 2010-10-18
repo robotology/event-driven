@@ -62,10 +62,10 @@ bool dvsGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     * get the device name which will be used to read events
     */
     deviceName             = rf.check("deviceName", 
-                           Value("dev/retina"), 
+                           Value("/dev/retina"), 
                            "Device name (string)").asString();
-    devicePortName         = "/" + deviceName + "0";
-    //printf("trying to connect to the device %s \n",devicePortName);
+    devicePortName         =  deviceName ;
+    printf("trying to connect to the device %s \n",devicePortName.c_str());
 
 
 

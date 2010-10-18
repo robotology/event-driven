@@ -38,6 +38,15 @@
 
 #include "sending_buffer.h"
 
+#define u8  uint8_t
+#define u32 uint32_t
+#define u64 uint64_t
+
+struct aer {
+    u32 timestamp;
+    u32 address;
+};
+
 class device2yarp : public yarp::os::RateThread {
 public:
     device2yarp(std::string deviceNumber, bool save, std::string filename);
@@ -59,18 +68,26 @@ public:
 
     void biasprogtx(int time, int latch, int clock, int data);
 
+    void monitor(int secs);
+
+    void sendingBias();
 
 private:
 
     yarp::os::BufferedPort<sendingBuffer> port;
     FILE* raw;
 
+    u64 seqTime;
+    u32 seqAlloced_b;
+    u32 seqSize_b, seqEvents, seqDone_b;
+    struct aer *pseq;
+
     int file_desc,len,sz;
     unsigned char buffer_msg[64];
     short enabled;
     char buffer[SIZE_OF_DATA];
 
-    int err;//détection des erreursm
+    int err;
     unsigned int timestamp;
     short cartX, cartY, polarity;
 
