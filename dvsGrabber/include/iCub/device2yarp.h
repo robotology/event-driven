@@ -78,8 +78,11 @@ private:
     FILE* raw;
 
     u64 seqTime;
+    u64 ec;
     u32 seqAlloced_b;
     u32 seqSize_b, seqEvents, seqDone_b;
+    u32 monBufEvents;
+    struct aer *pseq;
     struct aer *pseq;
 
     int file_desc,len,sz;

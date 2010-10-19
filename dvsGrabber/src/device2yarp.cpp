@@ -36,8 +36,10 @@ using namespace yarp::os;
 device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):RateThread(10), save(i_bool) {
     len=0;
     sz=0;
+    ec = 0;
     memset(buffer, 0, SIZE_OF_DATA);
     const u32 seqAllocChunk_b = 8192 * sizeof(struct aer); //allocating the right dimension for biases
+    const u32 monBufSize_b = 8192 * sizeof(struct aer);
     
 
     pseq = (aer *) malloc(seqAllocChunk_b);
@@ -45,6 +47,11 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
         printf("pseq malloc failed \n");
     }
     seqAlloced_b = seqAllocChunk_b;
+
+    pmon = malloc(monBufSize_b);
+    if ( pmon == NULL ) {
+        printf("pmon malloc failed \n");
+    }
 
     seqEvents = 0;
     seqSize_b = 0;
@@ -249,29 +256,47 @@ void device2yarp::setDeviceName(string deviceName) {
 
 
 void  device2yarp::run() {
-    // read address events from device file 
-    //sz = read(file_desc,buffer,SIZE_OF_DATA);
-    sz = pread(file_desc,buffer,SIZE_OF_DATA,0);
-    cout << "Size of the buffer : " << sz << endl;
-    for(int i=0; i<sz; i+=4)
-    {
-            unsigned int part_1 = 0x00FF&buffer[i];
-            unsigned int part_2 = 0x00FF&buffer[i+1];
-            unsigned int part_3 = 0x00FF&buffer[i+2];
-            unsigned int part_4 = 0x00FF&buffer[i+3];
-            unsigned int blob = (part_1)|(part_2<<8);
-            unsigned int timestamp = ((part_3)|(part_4<<8));
-            //printf("%x : %x\n", blob, timestamp);
+
+    if(strcmp(portDeviceName.c_str(),"/dev/aerfx2_0")) {
+        // read address events from device file which is not /dev/aerfx2_0
+        //sz = read(file_desc,buffer,SIZE_OF_DATA);
+        sz = pread(file_desc,buffer,SIZE_OF_DATA,0);
+        cout << "Size of the buffer : " << sz << endl;
+        for(int i=0; i<sz; i+=4)
+            {
+                unsigned int part_1 = 0x00FF&buffer[i];
+                unsigned int part_2 = 0x00FF&buffer[i+1];
+                unsigned int part_3 = 0x00FF&buffer[i+2];
+                unsigned int part_4 = 0x00FF&buffer[i+3];
+                unsigned int blob = (part_1)|(part_2<<8);
+                unsigned int timestamp = ((part_3)|(part_4<<8));
+                //printf("%x : %x\n", blob, timestamp);
+            }
+        
+    }
+    else {    
+        printf("reading /dev/aerfx2_0 ");
+        int r = read(file_desc, pmon, monBufSize_b);
+        monBufEvents = r / sizeof(struct aer);        
+        ec += monBufEvents;
+        for (int i = 0; i < monBufEvents; i++) {
+            u32 a, t;
+            a = pmon[i].address;
+            t = pmon[i].timestamp * 0.128;
+            printf("a: %d \n",a);
+            printf("t: %d \n",t);
+        }
+        
     }
     sendingBuffer data2send(buffer, sz);
     sendingBuffer& tmp = port.prepare();
     tmp = data2send;
     port.write();
     if(save)
-    {
-        fwrite(&sz, sizeof(int), 1, raw);
-        fwrite(buffer, 1, sz, raw);
-    }
+        {
+            fwrite(&sz, sizeof(int), 1, raw);
+            fwrite(buffer, 1, sz, raw);
+        }
     memset(buffer, 0, SIZE_OF_DATA);
 }
 
