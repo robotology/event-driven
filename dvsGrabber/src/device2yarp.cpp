@@ -21,7 +21,7 @@
 using namespace std;
 using namespace yarp::os;
 
-#define timestep 1000 //10 ms OneSecond/100
+#define timestep 10000 //10 ms OneSecond/100
 #define OneSecond 1000000 //1sec
 #define latchexpand 100
 #define countBias 12
@@ -140,9 +140,9 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
             printf("sending biases as events to the device ... \n");
             /*
             *    biasvalues = {
-            *    "cas": 1966, 7AE
-            *    "injGnd": 22703, 58AF
-            *    "reqPd": 16777215, FFFFFF
+            *    "11" "cas": 1966, 7AE
+            *    "10" "injGnd": 22703, 58AF
+            *    "9" "reqPd": 16777215, FFFFFF
             *    "puX": 4368853, 42A9D5
             *    "diffOff": 3207, C87
             *    "req": 111347, 1B2F3
@@ -154,6 +154,21 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
             *    "Pr": 8, 8
             *}
             */
+
+            int biasValues[]={1966,        // cas
+                              22703,       // injGnd
+                              16777215,    // reqPd
+                              4368853,     // puX
+                              3207,        // diffOff
+                              111347,      // req
+                              0,           // refr
+                              16777215,    // puY
+                              483231,      // diffOn
+                              28995,       // diff 
+                              19,          // foll
+                              8            //Pr 
+            };
+
             string biasNames[] = {
                                 "cas",
                                 "injGnd",
@@ -168,9 +183,9 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
                                 "foll",
                                 "Pr"
                                 };
-            unsigned char biasValues[] = {
+            /*unsigned char biasValues[] = {
                                 0x00,0x07,0xAE,     // cas
-                                0x10,0x58,0xAF,     // injGnd
+                                0x00,0x58,0xAF,     // injGnd
                                 0xFF,0xFF,0xFF,     // reqPd
                                 0x42,0xA9,0xD5,     // puX
                                 0x00,0x0C,0x87,     // diffOff
@@ -182,6 +197,9 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
                                 0x00,0x00,0x13,     // foll
                                 0x00,0x00,0x08      // Pr
                                 };
+            */
+
+            
             //int err = write(file_desc,bias,41); //5+36 
             seqEvents = 0;
             seqSize_b = 0;
@@ -231,11 +249,10 @@ void device2yarp::setDeviceName(string deviceName) {
 
 
 void  device2yarp::run() {
-/*
     // read address events from device file 
     //sz = read(file_desc,buffer,SIZE_OF_DATA);
     sz = pread(file_desc,buffer,SIZE_OF_DATA,0);
-    //cout << "Size of the buffer : " << sz << endl;
+    cout << "Size of the buffer : " << sz << endl;
     for(int i=0; i<sz; i+=4)
     {
             unsigned int part_1 = 0x00FF&buffer[i];
@@ -256,7 +273,6 @@ void  device2yarp::run() {
         fwrite(buffer, 1, sz, raw);
     }
     memset(buffer, 0, SIZE_OF_DATA);
-*/
 }
 
 
@@ -296,11 +312,12 @@ void device2yarp::sendingBias() {
 
 void device2yarp::progBias(string name,int bits,int value) {
     int bitvalue;
-    for (int i=bits-1;i>0;i--) {
+    for (int i=bits-1;i>=0;i--) {
         int mask=1;
         for (int j=0; j<i; j++) {
             mask*=2;
         }
+        printf("mask %d ",mask);
         if (mask & value) {
             bitvalue = 1;
         }
@@ -359,15 +376,25 @@ void device2yarp::biasprogtx(int time,int latch,int clock,int data) {
     if (latch) {
         addr[3] += 0x04;
     }
-    printf("data:0x%x, 0x%x, 0x%x, 0x%x \n",addr[0],addr[1],addr[2],addr[3]);
+    //printf("data:0x%x, 0x%x, 0x%x, 0x%x \n",addr[0],addr[1],addr[2],addr[3]);
     
     
     //u32 seqSize_b = sizeof(struct aer);
     u32 timeToSend, addressToSend;
     timeToSend=time;
-    addressToSend=0xFF000000+0x00000001;
+    addressToSend=0;
+    if(data) {
+        addressToSend += 0x01;
+    }
+    if(clock) {
+        addressToSend += 0x02;
+    }
+    if (latch) {
+        addressToSend += 0x04;
+    }
+    addressToSend+=0xFF000000;
+
     u32 hwival = (u32)(timeToSend * 7.8125);
-    
     //printf("saving the aer.address %x \n", addressToSend);
     pseq[seqEvents].address = addressToSend;
     //printf("saving the aer.time  \n");
