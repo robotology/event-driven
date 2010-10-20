@@ -82,8 +82,9 @@ private:
     u32 seqAlloced_b;
     u32 seqSize_b, seqEvents, seqDone_b;
     u32 monBufEvents;
+    u32 monBufSize_b;
     struct aer *pseq;
-    struct aer *pseq;
+    struct aer *pmon;
 
     int file_desc,len,sz;
     unsigned char buffer_msg[64];

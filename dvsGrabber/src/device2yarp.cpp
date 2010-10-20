@@ -39,7 +39,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
     ec = 0;
     memset(buffer, 0, SIZE_OF_DATA);
     const u32 seqAllocChunk_b = 8192 * sizeof(struct aer); //allocating the right dimension for biases
-    const u32 monBufSize_b = 8192 * sizeof(struct aer);
+    monBufSize_b = 8192 * sizeof(struct aer);
     
 
     pseq = (aer *) malloc(seqAllocChunk_b);
@@ -48,7 +48,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
     }
     seqAlloced_b = seqAllocChunk_b;
 
-    pmon = malloc(monBufSize_b);
+    pmon = (aer *)  malloc(monBufSize_b);
     if ( pmon == NULL ) {
         printf("pmon malloc failed \n");
     }
