@@ -243,7 +243,7 @@ device2yarp::~device2yarp() {
     stop[2] = 0;
     stop[3] = 0;
     stop[4] = 0;
-    err = write(file_desc,stop,5);
+    //err = write(file_desc,stop,5);
     printf("%d address events read\n",len/4);
     close(file_desc);
 }
@@ -256,8 +256,8 @@ void device2yarp::setDeviceName(string deviceName) {
 
 
 void  device2yarp::run() {
-
-    if(strcmp(portDeviceName.c_str(),"/dev/aerfx2_0")) {
+    printf("reading from the device %s \n",portDeviceName.c_str());
+    if(!strcmp(portDeviceName.c_str(),"/dev/aerfx2_0")) {
         // read address events from device file which is not /dev/aerfx2_0
         //sz = read(file_desc,buffer,SIZE_OF_DATA);
         sz = pread(file_desc,buffer,SIZE_OF_DATA,0);
