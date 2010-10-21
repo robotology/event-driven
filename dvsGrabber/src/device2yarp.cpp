@@ -250,24 +250,25 @@ device2yarp::~device2yarp() {
 
 
 void device2yarp::setDeviceName(string deviceName) {
+    printf("saving portDevice \n");
     portDeviceName=deviceName;
 }
 
 
 
-void  device2yarp::run() {
-    printf("reading from the device %s \n",portDeviceName.c_str());
+void  device2yarp::run() {  
     if(!strcmp(portDeviceName.c_str(),"/dev/aerfx2_0")) {
+        printf("device is not /dev/aerfx2_0 \n");
         // read address events from device file which is not /dev/aerfx2_0
         //sz = read(file_desc,buffer,SIZE_OF_DATA);
         sz = pread(file_desc,buffer,SIZE_OF_DATA,0);
         cout << "Size of the buffer : " << sz << endl;
         for(int i=0; i<sz; i+=4)
             {
-                unsigned int part_1 = 0x00FF&buffer[i];
-                unsigned int part_2 = 0x00FF&buffer[i+1];
-                unsigned int part_3 = 0x00FF&buffer[i+2];
-                unsigned int part_4 = 0x00FF&buffer[i+3];
+                unsigned int part_1 = 0x00FF&buffer[i];    //extracting the 1 byte
+                unsigned int part_2 = 0x00FF&buffer[i+1];  //extracting the 2 byte
+                unsigned int part_3 = 0x00FF&buffer[i+2];  //extracting the 3 byte
+                unsigned int part_4 = 0x00FF&buffer[i+3];  //extracting the 4 byte
                 unsigned int blob = (part_1)|(part_2<<8);
                 unsigned int timestamp = ((part_3)|(part_4<<8));
                 //printf("%x : %x\n", blob, timestamp);
@@ -275,28 +276,57 @@ void  device2yarp::run() {
         
     }
     else {    
-        printf("reading /dev/aerfx2_0 ");
         int r = read(file_desc, pmon, monBufSize_b);
         monBufEvents = r / sizeof(struct aer);        
         ec += monBufEvents;
+        int k=0;
+        u32 a, t;
         for (int i = 0; i < monBufEvents; i++) {
-            u32 a, t;
+            //printf("a-");
             a = pmon[i].address;
+            //printf("t-");
             t = pmon[i].timestamp * 0.128;
-            printf("a: %d \n",a);
-            printf("t: %d \n",t);
+            //printf("a: %x  t:%d k: %d nEvents: %d \n",a,t,k,monBufEvents);            
+            char c;
+            c=(char)(a&0x000000FF);buffer[k]=c;
+            long int part_1 = 0x000000FF&buffer[k];k++;  //extracting the 1 byte
+            c=(char)((a&0x0000FF00)>>8); buffer[k]=c;
+            long int part_2 = 0x000000FF&buffer[k];k++;  //extracting the 2 byte
+            c=(char)((a&0x00FF0000)>>16); buffer[k]=c;
+            long int part_3 = 0x000000FF&buffer[k];k++;  //extracting the 3 byte
+            c=(char)((a&0xFF000000)>>24); buffer[k]=c;                 
+            long int part_4 = 0x000000FF&buffer[k];k++;  //extracting the 4 byte
+            long int blob = (part_1)|(part_2<<8)|(part_3<<16)|(part_4<<24);
+
+            c=(char)(t&0x000000FF); buffer[k]=c;
+            long int part_5 = 0x000000FF&buffer[k];k++;  //extracting the 1 byte
+            c=(char)((t&0x0000FF00)>>8); buffer[k]=c;
+            long int part_6 = 0x000000FF&buffer[k];k++;  //extracting the 2 byte
+            c=(char)((t&0x00FF0000)>>16); buffer[k]=c;
+            long int part_7 = 0x000000FF&buffer[k];k++;  //extracting the 3 byte
+            c=(char)((t&0xFF000000)>>24); buffer[k]=c;                 
+            long int part_8 = 0x000000FF&buffer[k];k++;  //extracting the 4 byte
+            long int timestamp = ((part_5)|(part_6<<8)|(part_7<<16)|(part_8<<24));
+            //printf("%d : %d\n", blob, timestamp);
         }
-        
+        sz=monBufEvents*32; //32bits(4*8bits) for every event
     }
-    sendingBuffer data2send(buffer, sz);
-    sendingBuffer& tmp = port.prepare();
-    tmp = data2send;
-    port.write();
-    if(save)
-        {
-            fwrite(&sz, sizeof(int), 1, raw);
-            fwrite(buffer, 1, sz, raw);
-        }
+
+    if(port.getOutputCount()) {
+        //printf("exiting from reading...sending data size: %d \n",sz);
+        sendingBuffer data2send(buffer, sz);    
+        //printf("preparing the port \n");
+        sendingBuffer& tmp = port.prepare();
+        tmp = data2send;
+        port.write();
+        //printf("on the port: data written \n");
+        if(save)
+            {
+                fwrite(&sz, sizeof(int), 1, raw);
+                fwrite(buffer, 1, sz, raw);
+            }
+    }   
+    //resetting buffers    
     memset(buffer, 0, SIZE_OF_DATA);
 }
 
