@@ -43,6 +43,7 @@ unmask::unmask() : RateThread(UNMASKRATETHREAD){
     xmask = 0x000000fE;
     ymask = 0x00007f00;
     yshift = 8;
+    yshift2= 16,
     xshift = 1;
     polshift = 0;
     polmask = 0x00000001;
@@ -214,6 +215,7 @@ void unmask::run() {
     */
 }
 
+/*
 void unmask::unmaskData(char* i_buffer, int i_sz) {
     //cout << "Size of the received packet to unmask : " << i_sz << endl;
     //AER_struct sAER
@@ -222,7 +224,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
         if((i_buffer[j+3]&0x80)==0x80) {
             // timestamp bit 15 is one -> wrap
             // now we need to increment the wrapAdd
-            wrapAdd+=0x4000/*L*/; //uses only 14 bit timestamps
+            wrapAdd+=0x4000; //uses only 14 bit timestamps
             //System.out.println("received wrap event, index:" + eventCounter + " wrapAdd: "+ wrapAdd);
             //NumberOfWrapEvents++;
         }
@@ -243,7 +245,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
             unsigned int part_4 = 0x00FF&i_buffer[j+3];
             unsigned int blob = (part_1)|(part_2<<8);
             unmaskEvent(blob, cartX, cartY, polarity);
-            timestamp = ((part_3)|(part_4<<8))/*&0x7fff*/;
+            timestamp = ((part_3)|(part_4<<8));
             timestamp+=wrapAdd;
             if((cartX!=127)||(cartY!=0)) {      //removed one pixel which is set once the driver do not work properly
                 if(polarity>0) {
@@ -285,12 +287,96 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
     //fprintf(uEvents,"%d\t%d\t%d\t%u\n", -1, -1, -1, -1);
 }
 
+*/
+
+void unmask::unmaskData(char* i_buffer, int i_sz) {
+    //cout << "Size of the received packet to unmask : " << i_sz << endl;
+    //AER_struct sAER
+    
+    for (int j=0; j<i_sz; j+=8) {
+        if((i_buffer[j+3]&0x80)==0x80) {
+            // timestamp bit 15 is one -> wrap
+            // now we need to increment the wrapAdd
+            wrapAdd+=0x4000/*L*/; //uses only 14 bit timestamps
+            //System.out.println("received wrap event, index:" + eventCounter + " wrapAdd: "+ wrapAdd);
+            //NumberOfWrapEvents++;
+        }
+        else if((i_buffer[j+3]&0x40)==0x40) {
+            // timestamp bit 14 is one -> wrapAdd reset
+            // this firmware version uses reset events to reset timestamps
+            //write(file_desc,reset,1);//this.resetTimestamps();
+            //buffer_msg[0] = 6;
+            //write(file_desc,buffer_msg,1);
+            wrapAdd=0;
+            // log.info("got reset event, timestamp " + (0xffff&((short)aeBuffer[i]&0xff | ((short)aeBuffer[i+1]&0xff)<<8)));
+        }
+        else {
+            //unmask the data
+            char part_1 = i_buffer[j];
+            char part_2 = i_buffer[j+1];
+            char part_3 = i_buffer[j+2];
+            char part_4 = i_buffer[j+3];
+            long int blob = (part_1)|(part_2<<8)|(part_3<<16)|(part_4<<24);
+            unmaskEvent(blob, cartX, cartY, polarity);
+            char part_5 = i_buffer[j+4];
+            char part_6 = i_buffer[j+5];
+            char part_7 = i_buffer[j+6];
+            char part_8 = i_buffer[j+7];
+            timestamp = ((part_5)|(part_6<<8))|(part_7<<16)|(part_8<<24);
+            timestamp+=wrapAdd;
+            if((cartX!=127)||(cartY!=0)) {      //removed one pixel which is set once the driver do not work properly
+                if(polarity>0) {
+                    buffer[cartX+cartY*retinalSize]=responseGradient;
+                    timeBuffer[cartX+cartY*retinalSize]=timestamp;
+                    lasttimestamp=timestamp;
+                    if(buffer[cartX+cartY*retinalSize]>127) {
+                        buffer[cartX+cartY*retinalSize]=127;
+                    }
+                }
+                else if(polarity<0) {
+                    buffer[cartX+cartY*retinalSize]=-responseGradient;
+                    if (buffer[cartX+cartY*retinalSize]<-127) {
+                        buffer[cartX+cartY*retinalSize]=-127;
+                    }
+                }
+                //udpates the temporary buffer
+
+                if(temp1) {
+                    if(countEvent>maxPosEvent-1) {
+                        countEvent=maxPosEvent-1;
+                    }
+                    fifoEvent_temp[countEvent]=cartX+cartY*retinalSize;
+                    //increments the counter of events
+                    countEvent++;
+                }
+                else {
+                    if(countEvent2>maxPosEvent-1) {
+                        countEvent2=maxPosEvent-1;
+                    }
+                    fifoEvent_temp2[countEvent2]=cartX+cartY*retinalSize;
+                    //increments the counter of events
+                    countEvent2++;
+                }
+            }
+            //fprintf(uEvents,"%d\t%d\t%d\t%u\n", cartX, cartY, polarity, timestamp);
+        }
+    }
+    //fprintf(uEvents,"%d\t%d\t%d\t%u\n", -1, -1, -1, -1);
+}
+
+
 void unmask::unmaskEvent(unsigned int evPU, short& x, short& y, short& pol) {
     x = (short)(retinalSize-1) - (short)((evPU & xmask)>>xshift);
     y = (short) ((evPU & ymask)>>yshift);
     pol = ((short)((evPU & polmask)>>polshift)==0)?-1:1;	//+1 ON, -1 OFF
 }
 
-void unmask::threadRelease() {
+void unmask::unmaskEvent(long int evPU, short& x, short& y, short& pol) {
+    x = (short)(retinalSize-1) - (short)((evPU & xmasklong)>>xshift);
+    y = (short) ((evPU & ymasklong)>>yshift2);
+    pol = ((short)((evPU & polmask)>>polshift)==0)?-1:1;        //+1 ON, -1 OFF
+}
 
+void unmask::threadRelease() {
+    //no istruction in threadInit
 }
