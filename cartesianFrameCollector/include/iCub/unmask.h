@@ -58,15 +58,19 @@ private:
     int* fifoEvent;
     int* fifoEvent_temp;
     int* fifoEvent_temp2;
-    unsigned int timestamp;
+    unsigned int timestamp;         // 16 bits variable to save the timestamp
+    long int timestamplong;         // variable 32 bits to save the timestamp
     unsigned int lasttimestamp;
     short cartX, cartY, polarity;
 
     int wrapAdd;
-    unsigned int xmask;
-    unsigned int ymask;
-    int yshift;
-    int xshift;
+    unsigned int xmask;             // 16 bits mask for unmasking of the address
+    unsigned int ymask;             // 16 bits mask for unmasking of the address
+    unsigned int xmasklong;         // 32 bits mask for unmasking of the event
+    unsigned int ymasklong;         // 32 bits mask for unmasking of the event
+    int yshift;                     // shift of 8 bits for getting the y in 16 bits address
+    int xshift;                     // shift of 1 bit to get the x in 16 bit (polarity)
+    int yshift2;                     // shift of 16 bits for getting the y in 32 bits address
     int polshift;
     int polmask;
     int retinalSize;
@@ -146,6 +150,13 @@ public:
     */
     void unmaskData(char* data, int size);
 
+    /**
+    * function that given a reference to the list of long int(32 bits) read from the port and the number of packet received
+    * unmasks the event in term of x,y, polarity and time stamp and update the buffer
+    * @param data reference to the vector of 32bit {address, timestamp} (the read data)
+    * @param size size of the last reading from the port
+    */
+    void unmaskEvent(long int evPU, short& x, short& y, short& pol);
 };
 
 #endif //UNMASK_H
