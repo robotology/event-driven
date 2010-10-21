@@ -42,6 +42,7 @@ unmask::unmask() : RateThread(UNMASKRATETHREAD){
     maxValue=0;
     xmask = 0x000000fE;
     ymask = 0x00007f00;
+    xmasklong = 0x000000fE;
     yshift = 8;
     yshift2= 16,
     xshift = 1;
@@ -290,10 +291,9 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
 */
 
 void unmask::unmaskData(char* i_buffer, int i_sz) {
-    //cout << "Size of the received packet to unmask : " << i_sz << endl;
+    //cout << "Size of the received packet to unmask : " << i_sz/8<< endl;
     //AER_struct sAER
-    
-    for (int j=0; j<i_sz; j+=8) {
+    for (int j=0; j<i_sz/8; j+=8) {
         if((i_buffer[j+3]&0x80)==0x80) {
             // timestamp bit 15 is one -> wrap
             // now we need to increment the wrapAdd
@@ -312,18 +312,23 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
         }
         else {
             //unmask the data
-            char part_1 = i_buffer[j];
-            char part_2 = i_buffer[j+1];
-            char part_3 = i_buffer[j+2];
-            char part_4 = i_buffer[j+3];
-            long int blob = (part_1)|(part_2<<8)|(part_3<<16)|(part_4<<24);
+            long int part_1 = 0x000000FF & i_buffer[j];
+            long int part_2 = 0x000000FF & i_buffer[j+1];
+            long int part_3 = 0x000000FF & i_buffer[j+2];
+            long int part_4 = 0x000000FF & i_buffer[j+3];
+            unsigned int blob = (part_1)|(part_2<<8);
+            
             unmaskEvent(blob, cartX, cartY, polarity);
-            char part_5 = i_buffer[j+4];
-            char part_6 = i_buffer[j+5];
-            char part_7 = i_buffer[j+6];
-            char part_8 = i_buffer[j+7];
+
+            long int part_5 = 0x000000FF & i_buffer[j+4];
+            long int part_6 = 0x000000FF & i_buffer[j+5];
+            long int part_7 = 0x000000FF & i_buffer[j+6];
+            long int part_8 = 0x000000FF & i_buffer[j+7];
             timestamp = ((part_5)|(part_6<<8))|(part_7<<16)|(part_8<<24);
             timestamp+=wrapAdd;
+            
+            //printf(" %d : %d \n",blob,timestamp);
+
             if((cartX!=127)||(cartY!=0)) {      //removed one pixel which is set once the driver do not work properly
                 if(polarity>0) {
                     buffer[cartX+cartY*retinalSize]=responseGradient;
@@ -372,8 +377,8 @@ void unmask::unmaskEvent(unsigned int evPU, short& x, short& y, short& pol) {
 }
 
 void unmask::unmaskEvent(long int evPU, short& x, short& y, short& pol) {
-    x = (short)(retinalSize-1) - (short)((evPU & xmasklong)>>xshift);
-    y = (short) ((evPU & ymasklong)>>yshift2);
+    x = (short)(retinalSize-1) - (short)((evPU & xmask)>>xshift);
+    y = (short) ((evPU & ymask)>>yshift2);
     pol = ((short)((evPU & polmask)>>polshift)==0)?-1:1;        //+1 ON, -1 OFF
 }
 

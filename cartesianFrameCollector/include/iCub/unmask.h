@@ -66,8 +66,8 @@ private:
     int wrapAdd;
     unsigned int xmask;             // 16 bits mask for unmasking of the address
     unsigned int ymask;             // 16 bits mask for unmasking of the address
-    unsigned int xmasklong;         // 32 bits mask for unmasking of the event
-    unsigned int ymasklong;         // 32 bits mask for unmasking of the event
+    long int xmasklong;         // 32 bits mask for unmasking of the event
+    long int ymasklong;         // 32 bits mask for unmasking of the event
     int yshift;                     // shift of 8 bits for getting the y in 16 bits address
     int xshift;                     // shift of 1 bit to get the x in 16 bit (polarity)
     int yshift2;                     // shift of 16 bits for getting the y in 32 bits address

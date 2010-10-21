@@ -36,8 +36,9 @@
 
 //#define BUFFER_SIZE 8192
 //#define BUFFER_SIZE 16384
-#define BUFFER_SIZE 24576
+//#define BUFFER_SIZE 24576
 //#define BUFFER_SIZE 32768
+#define BUFFER_SIZE 65536
 
 //logpolar
 #define TAU 1000
