@@ -40,24 +40,21 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
     memset(buffer, 0, SIZE_OF_DATA);
     const u32 seqAllocChunk_b = 8192 * sizeof(struct aer); //allocating the right dimension for biases
     monBufSize_b = 8192 * sizeof(struct aer);
-    
 
     pseq = (aer *) malloc(seqAllocChunk_b);
     if ( pseq == NULL ) {
         printf("pseq malloc failed \n");
     }
+    memset(pseq,0,seqAllocChunk_b);
     seqAlloced_b = seqAllocChunk_b;
-
     pmon = (aer *)  malloc(monBufSize_b);
     if ( pmon == NULL ) {
         printf("pmon malloc failed \n");
     }
+    memset(pmon,0,monBufSize_b);
 
     seqEvents = 0;
     seqSize_b = 0;
-
-    if(save)
-        raw = fopen(i_fileName.c_str(), "wb");
     int deviceNum=0;
     str_buf << "/icub/retina" << deviceNum << ":o";
     port.open(str_buf.str().c_str());
@@ -69,183 +66,71 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
     }
     else {
         int err;
-        if (!strcmp(portDeviceName.c_str(),"/dev/retina0")) {
-#ifdef FAST
-        unsigned char bias[] = {0xb8,               //request
-                                0x00, 0x00,         //value
-                                0x00, 0x00,          //index
-                                0x00,0x07,0xc8,	    // cas
-                                0x10,0xe9,0x8C,		// injGnd
-                                0xFF,0xFF,0xFF,		// reqPd
-                                0x7c,0x7f,0xf5,		// puX
-                                0x00,0x00,0x84,		// diffOff          ++
-                                0x02,0x6d,0xab,		// req
-                                0x00,0x03,0xc9,		// refr             ++ refractory of the pixels
-                                0xFF,0xFF,0xFF,		// puY
-                                0x03,0x34,0x4c,		// diffOn           ++
-                                0x00,0x33,0x45,		// diff
-                                0x00,0x01,0x0f,		// foll
-                                0x00,0x01,0x0f}; 	// Pr               ++ Velocity of the "log circuit"
-        err = write(file_desc,bias,41); //5+36
-#else
-#ifdef SLOW
-        unsigned char bias[] = {0xb8,               //request
-                                0x00, 0x00,         //value
-                                0x00, 0x00,          //index
-                                0x00,0x00,0x36,     // cas
-                                0x10,0xe9,0x8C,     // injGnd
-                                0xFF,0xFF,0xFF,     // reqPd
-                                0x7c,0x7f,0xf5,     // puX
-                                0x00,0x00,0x84,     // diffOff
-                                0x02,0x6d,0xab,     // req
-                                0x00,0x00,0x06,     // refr
-                                0xFF,0xFF,0xFF,     // puY
-                                0x07,0x5c,0x8b,     // diffOn
-                                0x00,0x75,0xc9,     // diff
-                                0x00,0x00,0x33,     // foll
-                                0x00,0x00,0x03      // Pr
-                                };
-        err = write(file_desc,bias,41); //5+36
-#else
-//        unsigned char bias[] = {0xb8,               //request
-//                                0x00, 0x00,         //value
-//                                0x00, 0x00,          //index
-//                                0x00,0x07,0xc8,	    // cas
-//								0x10,0xe9,0x8C,		// injGnd
-//								0xFF,0xFF,0xFF,		// reqPd
-//								0x7c,0x7f,0xf5,		// puX
-//								0x00,0x01,0xbe,		// diffOff
-//								0x04,0xb9,0x56,		// req
-//								0x00,0x09,0x31,		// refr
-//								0xFF,0xFF,0xFF,		// puY
-//								0x01,0xa5,0xae,		// diffOn
-//								0x00,0x1d,0x72,		// diff
-//								0x00,0x01,0x10,		// foll
-//								0x00,0x07,0x5d}; 	// Pr
-        unsigned char bias[] = {0xb8,               //request
-                                0x00, 0x00,         //value
-                                0x00, 0x00,          //index
-                                0x00,0x07,0xc8,     // cas
-                                0x10,0xe9,0x8C,     // injGnd
-                                0xFF,0xFF,0xFF,     // reqPd
-                                0x7c,0x7f,0xf5,     // puX
-                                0x00,0x04,0xfe,     // diffOff
-                                0x04,0xb9,0x56,     // req
-                                0x00,0x09,0x31,     // refr
-                                0xFF,0xFF,0xFF,     // puY
-                                0x01,0xe5,0x20,     // diffOn
-                                0x00,0x26,0xd2,     // diff
-                                0x00,0x01,0x10,     // foll
-                                0x00,0x09,0x31      // Pr
-                                };
-        err = write(file_desc,bias,41); //5+36
-#endif //SLOW
-#endif //FAST
-        }
-        
-        if(!strcmp(portDeviceName.c_str(),"/dev/aerfx2_0")) {
-            printf("sending biases as events to the device ... \n");
-            /*
-            *    biasvalues = {
-            *    "11" "cas": 1966, 7AE
-            *    "10" "injGnd": 22703, 58AF
-            *    "9" "reqPd": 16777215, FFFFFF
-            *    "puX": 4368853, 42A9D5
-            *    "diffOff": 3207, C87
-            *    "req": 111347, 1B2F3
-            *    "refr": 0, 0
-            *    "puY": 16777215, FFFFFF
-            *    "diffOn": 483231, 75F9F
-            *    "diff": 28995, 7143
-            *    "foll": 19, 13
-            *    "Pr": 8, 8
-            *}
-            */
+    }
 
-            int biasValues[]={1966,        // cas
-                              22703,       // injGnd
-                              16777215,    // reqPd
-                              4368853,     // puX
-                              3207,        // diffOff
-                              111347,      // req
-                              0,           // refr
-                              16777215,    // puY
-                              483231,      // diffOn
-                              28995,       // diff 
-                              19,          // foll
-                              8            //Pr 
-            };
+    if(!strcmp(portDeviceName.c_str(),"/dev/aerfx2_0")) {
+        printf("sending biases as events to the device ... \n");
+        /*
+        *    biasvalues = {
+        *    "11" "cas": 1966, 7AE
+        *    "10" "injGnd": 22703, 58AF
+        *    "9" "reqPd": 16777215, FFFFFF
+        *    "puX": 4368853, 42A9D5
+        *    "diffOff": 3207, C87
+        *    "req": 111347, 1B2F3
+        *    "refr": 0, 0
+        *    "puY": 16777215, FFFFFF
+        *    "diffOn": 483231, 75F9F
+        *    "diff": 28995, 7143
+        *    "foll": 19, 13
+        *    "Pr": 8, 8
+        *}
+        */
 
-            string biasNames[] = {
-                                "cas",
-                                "injGnd",
-                                "reqPd",
-                                "puX",
-                                "diffOff",
-                                "req",
-                                "refr",
-                                "puY",
-                                "diffOn",
-                                "diff",
-                                "foll",
-                                "Pr"
-                                };
-            /*unsigned char biasValues[] = {
-                                0x00,0x07,0xAE,     // cas
-                                0x00,0x58,0xAF,     // injGnd
-                                0xFF,0xFF,0xFF,     // reqPd
-                                0x42,0xA9,0xD5,     // puX
-                                0x00,0x0C,0x87,     // diffOff
-                                0x01,0xB2,0xF3,     // req
-                                0x00,0x00,0x00,     // refr
-                                0xFF,0xFF,0xFF,     // puY
-                                0x07,0x5F,0x9F,     // diffOn
-                                0x00,0x71,0x43,     // diff
-                                0x00,0x00,0x13,     // foll
-                                0x00,0x00,0x08      // Pr
-                                };
-            */
+        int biasValues[]={1966,        // cas
+                          22703,       // injGnd
+                          16777215,    // reqPd
+                          4368853,     // puX
+                          3207,        // diffOff
+                          111347,      // req
+                          0,           // refr
+                          16777215,    // puY
+                          483231,      // diffOn
+                          28995,       // diff 
+                          19,          // foll
+                          8            //Pr 
+        };
+
+        string biasNames[] = {
+                            "cas",
+                            "injGnd",
+                            "reqPd",
+                            "puX",
+                            "diffOff",
+                            "req",
+                            "refr",
+                            "puY",
+                            "diffOn",
+                            "diff",
+                            "foll",
+                            "Pr"
+                            };
 
             
-            //int err = write(file_desc,bias,41); //5+36 
-            seqEvents = 0;
-            seqSize_b = 0;
-            for(int j=0;j<countBias;j++) {
-                progBias(biasNames[j],24,biasValues[j]);
-            }
-            latchCommit();
-            monitor(10);
-            sendingBias();
+        //int err = write(file_desc,bias,41); //5+36 
+        seqEvents = 0;
+        seqSize_b = 0;
+        for(int j=0;j<countBias;j++) {
+            progBias(biasNames[j],24,biasValues[j]);
         }
-
-        //int err = write(file_desc,bias,41); //5+36
-        cout << "Return of the bias writing : " << err << endl;
-        unsigned char start[5];
-        start[0] = 0xb3;
-        start[1] = 0;
-        start[2] = 0;
-        start[3] = 0;
-        start[4] = 0;
-        //err = write(file_desc,start,5);
-        cout << "Return of the start writing : " << err << endl;
+        latchCommit();
+        monitor(10);
+        sendingBias();
     }
 }
 
 device2yarp::~device2yarp() {
-    if(save)
-        fclose(raw);
-
     port.close();
-
-    unsigned char stop[5];
-    stop[0] = 0xb4;
-    stop[1] = 0;
-    stop[2] = 0;
-    stop[3] = 0;
-    stop[4] = 0;
-    //err = write(file_desc,stop,5);
-    printf("%d address events read\n",len/4);
-    close(file_desc);
 }
 
 
@@ -279,24 +164,41 @@ void  device2yarp::run() {
         int r = read(file_desc, pmon, monBufSize_b);
         monBufEvents = r / sizeof(struct aer);        
         ec += monBufEvents;
+        int k=0;
+        u32 a, t;
         for (int i = 0; i < monBufEvents; i++) {
-            u32 a, t;
             a = pmon[i].address;
             t = pmon[i].timestamp * 0.128;
-            printf("a: %d \n",a);
-            printf("t: %d \n",t);
+            char c;
+            c=(char)(a&0x000000FF);buffer[k]=c;
+            long int part_1 = 0x000000FF&buffer[k];k++;  //extracting the 1 byte
+            c=(char)((a&0x0000FF00)>>8); buffer[k]=c;
+            long int part_2 = 0x000000FF&buffer[k];k++;  //extracting the 2 byte
+            c=(char)((a&0x00FF0000)>>16); buffer[k]=c;
+            long int part_3 = 0x000000FF&buffer[k];k++;  //extracting the 3 byte
+            c=(char)((a&0xFF000000)>>24); buffer[k]=c;                 
+            long int part_4 = 0x000000FF&buffer[k];k++;  //extracting the 4 byte
+            long int blob = (part_1)|(part_2<<8)|(part_3<<16)|(part_4<<24);
+
+            c=(char)(t&0x000000FF); buffer[k]=c;
+            long int part_5 = 0x000000FF&buffer[k];k++;  //extracting the 1 byte
+            c=(char)((t&0x0000FF00)>>8); buffer[k]=c;
+            long int part_6 = 0x000000FF&buffer[k];k++;  //extracting the 2 byte
+            c=(char)((t&0x00FF0000)>>16); buffer[k]=c;
+            long int part_7 = 0x000000FF&buffer[k];k++;  //extracting the 3 byte
+            c=(char)((t&0xFF000000)>>24); buffer[k]=c;                 
+            long int part_8 = 0x000000FF&buffer[k];k++;  //extracting the 4 byte
+            long int timestamp = ((part_5)|(part_6<<8)|(part_7<<16)|(part_8<<24));
+            //printf("%d : %d\n", blob, timestamp)
         }
-        
+        sz=monBufEvents*32; //32bits(4*8bits) for every event
     }
-    sendingBuffer data2send(buffer, sz);
-    sendingBuffer& tmp = port.prepare();
-    tmp = data2send;
-    port.write();
-    if(save)
-        {
-            fwrite(&sz, sizeof(int), 1, raw);
-            fwrite(buffer, 1, sz, raw);
-        }
+    if(port.getOutputCount()) {
+        sendingBuffer data2send(buffer, sz);
+        sendingBuffer& tmp = port.prepare();
+        tmp = data2send;
+        port.write();
+    }
     memset(buffer, 0, SIZE_OF_DATA);
 }
 
@@ -329,10 +231,6 @@ void device2yarp::sendingBias() {
     printf("seqTime * 0.128: %d \n", (u64)(seqTime * 0.128));
     //printf("TmaxSeqTimeEstima PRIu64  %f %f\n", 
     //  (TmaxSeqTimeEstimate / 1000000), (TmaxSeqTimeEstimate % 1000000));
-
-
-    ////////////////////////////////////////////////////////////
-
 }
 
 void device2yarp::progBias(string name,int bits,int value) {
@@ -349,7 +247,7 @@ void device2yarp::progBias(string name,int bits,int value) {
         else {
             bitvalue = 0;
         }
-        printf("---------------------------- %d \n",bitvalue);
+        //printf("---------------------------- %d \n",bitvalue);
         progBit(bitvalue);
     }
 }
@@ -436,6 +334,4 @@ void device2yarp::biasprogtx(int time,int latch,int clock,int data) {
     //addr = int(sys.argv[1], 16)
     //err = write(file_desc,t,4); //4 byte time: 1 integer
     //err = write(file_desc,addr,4); //4 byte time: 1 integer
-    
-    
 }

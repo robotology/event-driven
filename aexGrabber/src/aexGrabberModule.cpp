@@ -19,11 +19,11 @@
  */
 
 /**
- * @file dvsGrabberModule.cpp
- * @brief Implementation of the dvsGrabberModule (see header file).
+ * @file aexGrabberModule.cpp
+ * @brief Implementation of the aexGrabberModule (see header file).
  */
 
-#include <iCub/dvsGrabberModule.h>
+#include <iCub/aexGrabberModule.h>
 
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -36,12 +36,12 @@ using namespace std;
  *  equivalent of the "open" method.
  */
 
-bool dvsGrabberModule::configure(yarp::os::ResourceFinder &rf) {
+bool aexGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     /* Process all parameters from both command-line and .ini file */
 
     /* get the module name which will form the stem of all module port names */
     moduleName            = rf.check("name", 
-                           Value("/dvsGrabber"), 
+                           Value("/aexGrabber"), 
                            "module name (string)").asString();
     /*
     * before continuing, set the module name before getting any other parameters, 
@@ -62,7 +62,7 @@ bool dvsGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     * get the device name which will be used to read events
     */
     deviceName             = rf.check("deviceName", 
-                           Value("/dev/retina"), 
+                           Value("/dev/aerfx2_0"), 
                            "Device name (string)").asString();
     devicePortName         =  deviceName ;
     printf("trying to connect to the device %s \n",devicePortName.c_str());
@@ -94,19 +94,19 @@ bool dvsGrabberModule::configure(yarp::os::ResourceFinder &rf) {
                         // so that it will then run the module
 }
 
-bool dvsGrabberModule::interruptModule() {
+bool aexGrabberModule::interruptModule() {
     handlerPort.interrupt();
     return true;
 }
 
-bool dvsGrabberModule::close() {
+bool aexGrabberModule::close() {
     handlerPort.close();
     D2Y->stop();
     /* stop the thread */
     return true;
 }
 
-bool dvsGrabberModule::respond(const Bottle& command, Bottle& reply) {
+bool aexGrabberModule::respond(const Bottle& command, Bottle& reply) {
     string helpMessage =  string(getName().c_str()) + 
                         " commands are: \n" +  
                         "help \n" + 
@@ -129,11 +129,11 @@ bool dvsGrabberModule::respond(const Bottle& command, Bottle& reply) {
 }
 
 /* Called periodically every getPeriod() seconds */
-bool dvsGrabberModule::updateModule() {
+bool aexGrabberModule::updateModule() {
     return true;
 }
 
-double dvsGrabberModule::getPeriod() {
+double aexGrabberModule::getPeriod() {
     /* module periodicity (seconds), called implicitly by myModule */
     return 0.0;
 }

@@ -19,19 +19,19 @@
  */
 
 /**
- * @file dvsGrabbberModule.h
- * @brief A module that extracts independent event-driven responses coming from dvs camera Dynamic Vision Sensor, an event-based camera developed at INI)
+ * @file aexGrabbberModule.h
+ * @brief A module that extracts independent event-driven responses coming from AEX event-based camera
  */
 
-#ifndef _DVS_GRABBER_MODULE_H_
-#define _DVS_GRABBER_MODULE_H_
+#ifndef _AEX_GRABBER_MODULE_H_
+#define _AEX_GRABBER_MODULE_H_
 
 /** 
  * @ingroup icub_module
  *
- * \defgroup icub_dvsGrabber dvsGrabber
+ * \defgroup icub_aexGrabber aexGrabber
  *
- * This is a module that extracts independent event-driven response to changes in the luminance sensed by DiffeDVS 
+ * This is a module that extracts independent event-driven response to changes in the luminance sensed 
  * 
  * Event driven asynchronous sensors transmit the local pixel-level changes caused by movement in a scene at the time they occur.
  * The result is a stream of events at microsecond time resolution with very low redundancy that drastically reduces power, data storage and computational requirements.
@@ -65,13 +65,13 @@
  * The following key-value pairs can be specified as command-line parameters by prefixing \c -- to the key 
  * (e.g. \c --from file.ini. The value part can be changed to suit your needs; the default values are shown below. 
  *
- * - \c from \c dvsGrabber.ini \n 
+ * - \c from \c aexGrabber.ini \n 
  *   specifies the configuration file
  *
- * - \c context \c dvsGrabber/conf \n
+ * - \c context \c aexGrabber/conf \n
  *   specifies the sub-path from \c $ICUB_ROOT/icub/app to the configuration file
  *
- * - \c name \c dvsGrabber \n 
+ * - \c name \c aexGrabber \n 
  *   specifies the name of the module (used to form the stem of module port names)  
  *
  * - \c robot \c icub \n 
@@ -94,7 +94,7 @@
  *
  *  <b>Input ports</b>
  *
- *  - \c /dvsGrabber \n
+ *  - \c /aexGrabber \n
  *    This port is used to change the parameters of the module at run time or stop the module. \n
  *    The following commands are available
  * 
@@ -106,14 +106,14 @@
  *    The port can be used by other modules but also interactively by a user through the yarp rpc directive, viz.: \c yarp \c rpc \c /visualFilter
  *    This opens a connection from a terminal to the port and allows the user to then type in commands and receive replies.
  *       
- *  - \c /dvsGrabber/image:i \n
+ *  - \c /aexGrabber/image:i \n
  *
  * <b>Output ports</b>
  *
- *  - \c /dvsGrabber \n
+ *  - \c /aexGrabber \n
  *    see above
  *
- *  - \c /dvsGrabber/image:o \n
+ *  - \c /aexGrabber/image:o \n
  *
  * <b>Port types</b>
  *
@@ -128,7 +128,7 @@
  *
  * \section conf_file_sec Configuration Files
  *
- * \c dvsGrabber.ini  in \c $ICUB_ROOT/app/dvsGrabber/conf \n
+ * \c aexGrabber.ini  in \c $ICUB_ROOT/app/aexGrabber/conf \n
  * 
  * \section tested_os_sec Tested OS
  *
@@ -136,13 +136,13 @@
  *
  * \section example_sec Example Instantiation of the Module
  * 
- * <tt>dvsGrabber --name dvsGrabber --context dvsGrabber/conf --from dvsGrabber.ini --robot icub</tt>
+ * <tt>aexGrabber --name aexGrabber --context aexGrabber/conf --from aexGrabber.ini --robot icub</tt>
  *
  * \author Rea Francesco
  *
  * Copyright (C) 2010 RobotCub Consortium\n
  * CopyPolicy: Released under the terms of the GNU GPL v2.0.\n
- * This file can be edited at \c $ICUB_ROOT/main/src/modules/visualFilter/include/iCub/visualFilter.h
+ * This file can be edited at \c $ICUB_ROOT/contrib/src/eMorph/aexGrabber/include/iCub/aexGrabberModule.h
  * 
  */
 
@@ -158,7 +158,7 @@
 //within project includes
 #include <iCub/device2yarp.h>
 
-class dvsGrabberModule:public yarp::os::RFModule {
+class aexGrabberModule:public yarp::os::RFModule {
     std::string moduleName;                     //name of the module (rootname of ports)
     std::string robotName;                      //name of the robot
     std::string robotPortName;                  //reference to the head of the robot
@@ -181,7 +181,7 @@ public:
 };
 
 
-#endif // __DVS_GRABBER_MODULE_H__
+#endif // __AEX_GRABBER_MODULE_H__
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------
 
