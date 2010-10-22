@@ -20,10 +20,10 @@
   
 /**
  * @file main.cpp
- * @brief main code for the independent motion module
+ * @brief main code for launching the aexGrabber
  */
 
-#include "iCub/dvsGrabberModule.h" 
+#include "iCub/aexGrabberModule.h" 
 
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -34,7 +34,7 @@ int main(int argc, char * argv[])
     Network yarp;
     
     Time::turboBoost();
-    dvsGrabberModule module; 
+    aexGrabberModule module; 
 
     ResourceFinder rf;
     rf.setVerbose(true);
