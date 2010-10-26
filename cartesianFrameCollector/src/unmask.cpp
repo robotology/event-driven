@@ -105,6 +105,9 @@ void unmask::run() {
         if(*pointerTime < timelimit) {
             *pointerPixel=0;
         }
+        if(timelimit<0) {
+            *pointerPixel=0;
+        }
         pointerTime++;
         pointerPixel++;
     }
