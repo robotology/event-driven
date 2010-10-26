@@ -103,7 +103,7 @@ void unmask::run() {
     for(int j=0;j<retinalSize*retinalSize;j++) {
         unsigned int timelimit=lasttimestamp - constInterval;
         if(*pointerTime < timelimit) {
-            *pointerPixel=0;
+            *pointerPixel=127;
         }
         pointerTime++;
         pointerPixel++;
