@@ -103,7 +103,7 @@ void unmask::run() {
     for(int j=0;j<retinalSize*retinalSize;j++) {
         unsigned int timelimit=lasttimestamp - constInterval;
         if(*pointerTime < timelimit) {
-            *pointerPixel=127;
+            *pointerPixel=0;
         }
         pointerTime++;
         pointerPixel++;
@@ -319,7 +319,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
             unsigned int blob = (part_1)|(part_2<<8);
             
             unmaskEvent(blob, cartX, cartY, polarity);
-
+            
             long int part_5 = 0x000000FF & i_buffer[j+4];
             long int part_6 = 0x000000FF & i_buffer[j+5];
             long int part_7 = 0x000000FF & i_buffer[j+6];
@@ -371,8 +371,9 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
 
 
 void unmask::unmaskEvent(unsigned int evPU, short& x, short& y, short& pol) {
-    x = (short)(retinalSize-1) - (short)((evPU & xmask)>>xshift);
-    y = (short) ((evPU & ymask)>>yshift);
+    y = (short)(retinalSize-1) - (short)((evPU & xmask)>>xshift);
+    //y = (short)((evPU & xmask)>>xshift);
+    x = (short) ((evPU & ymask)>>yshift);
     pol = ((short)((evPU & polmask)>>polshift)==0)?-1:1;	//+1 ON, -1 OFF
 }
 
