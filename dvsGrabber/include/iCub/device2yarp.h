@@ -42,10 +42,6 @@
 #define u32 uint32_t
 #define u64 uint64_t
 
-struct aer {
-    u32 timestamp;
-    u32 address;
-};
 
 class device2yarp : public yarp::os::RateThread {
 public:
@@ -60,18 +56,6 @@ public:
     */
     void setDeviceName(std::string name);
 
-    void progBias(std::string name, int bits, int value);
-
-    void latchCommit();
-
-    void progBit(int bitvalue);
-
-    void biasprogtx(int time, int latch, int clock, int data);
-
-    void monitor(int secs);
-
-    void sendingBias();
-
 private:
 
     yarp::os::BufferedPort<sendingBuffer> port;
@@ -79,12 +63,6 @@ private:
 
     u64 seqTime;
     u64 ec;
-    u32 seqAlloced_b;
-    u32 seqSize_b, seqEvents, seqDone_b;
-    u32 monBufEvents;
-    u32 monBufSize_b;
-    struct aer *pseq;
-    struct aer *pmon;
 
     int file_desc,len,sz;
     unsigned char buffer_msg[64];
