@@ -69,11 +69,6 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
     }
     else {
         int err;
-        if (!strcmp(portDeviceName.c_str(),"/dev/retina0")) {
-
- 
-        }
-        
         if(!strcmp(portDeviceName.c_str(),"/dev/aerfx2_0")) {
             printf("sending biases as events to the device ... \n");
             /*
@@ -183,7 +178,7 @@ void  device2yarp::run() {
     monBufEvents = r / sizeof(struct aer);
     //printf("device read %d \n",monBufEvents);
     if(monBufEvents==-1) {
-        printf("device not ready \n");
+        printf("device not ready -1\n");
         return;
     }
     //ec += monBufEvents;
@@ -280,7 +275,6 @@ void device2yarp::progBias(string name,int bits,int value) {
         else {
             bitvalue = 0;
         }
-        //printf("---------------------------- %d \n",bitvalue);
         progBit(bitvalue);
     }
 }
