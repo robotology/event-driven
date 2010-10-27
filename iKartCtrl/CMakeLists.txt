@@ -6,9 +6,9 @@ PROJECT(${PROJECTNAME})
 
 SET(folder_source main.cpp)
 
-SOURCE_GROUP(Source Files FILES ${folder_source})
-
-
+FILE(GLOB folder_source *.cpp)
+FILE(GLOB folder_header *.h)
+SOURCE_GROUP("Source Files" FILES ${folder_source})
 
 FIND_PACKAGE(ICUB)
 FIND_PACKAGE(YARP)
