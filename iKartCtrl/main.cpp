@@ -110,6 +110,7 @@ private:
 	double				linear_speed;
 	double				angular_speed;
 	double				desired_direction;
+	double              pwm_gain;
 
 	//motor variables
 	double              FA;
@@ -144,12 +145,14 @@ public:
                remoteName(_remoteName), localName(_localName) 
 	{
 		board_control_modes = new int [3];
-		ikart_control_type = IKART_CONTROL_NONE;
+		ikart_control_type = IKART_CONTROL_OPENLOOP;
+		//ikart_control_type = IKART_CONTROL_NONE;
 		wdt_timeout = 0.100;
 
 		linear_speed = 1;
 		angular_speed = 0;
 		desired_direction=0;
+		pwm_gain=0;
 
 		FA=0;
 		FB=0;
@@ -225,6 +228,9 @@ public:
 			icmd->setOpenLoopMode(0);
 			icmd->setOpenLoopMode(1);
 			icmd->setOpenLoopMode(2);
+			iopl->setOutput(0,0);
+			iopl->setOutput(1,0);
+			iopl->setOutput(2,0);
 		}
 		if (ikart_control_type == IKART_CONTROL_SPEED)
 		{
@@ -264,8 +270,9 @@ public:
             {                                
 				//received movement command
 				desired_direction = b->get(0).asDouble();
-				linear_speed = b->get(1).asDouble();
-				angular_speed = b->get(2).asDouble();
+				linear_speed = b->get(1).asDouble() / 46000 * 1333;
+				angular_speed = b->get(2).asDouble() / 46000 * 1333;
+				pwm_gain = b->get(3).asDouble() / 65000;
 				wdt_cmd = Time::now();
             }
         }
@@ -277,8 +284,8 @@ public:
 			{
 				if (wdt-wdt_cmd > wdt_timeout)
 				{
-					fprintf(stderr,"No commands received in %f ms. Turning off control. \n",wdt_timeout/1000);
-					ikart_control_type = IKART_CONTROL_NONE; 
+					//fprintf(stderr,"No commands received in %f ms. Turning off control. \n",wdt_timeout/1000);
+					//ikart_control_type = IKART_CONTROL_NONE; 
 				}
 			}
 
@@ -300,6 +307,8 @@ public:
 		if (linear_speed  < -MAX_PWM*ratio) linear_speed  = -MAX_PWM*ratio;
 		if (angular_speed >  MAX_PWM*(1-ratio)) angular_speed = MAX_PWM*(1-ratio);
 		if (angular_speed < -MAX_PWM*(1-ratio)) angular_speed = -MAX_PWM*(1-ratio);
+		if (pwm_gain<0) pwm_gain =0;
+		if (pwm_gain>1)	pwm_gain =1;
 
 		//wheel contribution calculation
 		FA = linear_speed * cos ((150-desired_direction)/ 180.0 * 3.14159265) + angular_speed;
@@ -308,9 +317,9 @@ public:
 
 		if (ikart_control_type == IKART_CONTROL_OPENLOOP)
 		{
-			iopl->setOutput(0,FA);
-			iopl->setOutput(1,FB);
-			iopl->setOutput(2,FC);
+			iopl->setOutput(0,FA*pwm_gain);
+			iopl->setOutput(1,FB*pwm_gain);
+			iopl->setOutput(2,FC*pwm_gain);
 		}
 		else if	(ikart_control_type == IKART_CONTROL_SPEED)
 		{
@@ -384,10 +393,10 @@ public:
 
         // get params from the RF
         ctrlName=rf.check("ctrlName",Value("iKart")).asString();
-        robotName=rf.check("robot",Value("icub")).asString();
+        robotName=rf.check("robot",Value("ikart")).asString();
 
-        remoteName=slash+robotName+"/cartesianController/";
-        localName=slash+ctrlName;
+        remoteName=slash+robotName+"/wheels";
+        localName=slash+ctrlName;//+"/local/";
 
         thr=new CtrlThread(20,rf,remoteName,localName);
         if (!thr->start())
