@@ -1,0 +1,38 @@
+<application>
+<name>Poeticon Application </name>
+
+<dependencies>	
+</dependencies>
+
+<module>
+   <name>dvsGrabber</name>
+   <parameters>--nameDevice /dev/aerfx2_0 </parameters>
+   <node>/powerNode1</node>
+   <tag>eventGrabber</tag>
+</module>
+<module>
+   <name>cartesianFrameCollector</name>
+   <parameters></parameters>
+   <node>/powerNode1</node>
+   <tag>cartFrameCollector</tag>
+</module>
+<module>
+   <name>yarpView</name>
+   <parameters>--name /eventView --x 000 --ysixe 000 --synch </parameters>
+   <node>console</node>
+   <tag>eventViewer</tag>
+</module>
+
+<connection>
+  <from>/icub/retina0</from>
+  <to>/cartesianFrameCollector/image:i</to>
+  <protocol>tcp</protocol>
+</connection>
+
+<connection>
+  <from>/cartesianFrameCollector/image:o</from>
+  <to>/eventView</to>
+  <protocol>udp</protocol>
+</connection>
+
+</application>
