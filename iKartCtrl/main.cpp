@@ -145,7 +145,8 @@ public:
                remoteName(_remoteName), localName(_localName) 
 	{
 		board_control_modes = new int [3];
-		ikart_control_type = IKART_CONTROL_OPENLOOP;
+		ikart_control_type = IKART_CONTROL_SPEED;
+		//ikart_control_type = IKART_CONTROL_OPENLOOP;
 		//ikart_control_type = IKART_CONTROL_NONE;
 		wdt_timeout = 0.100;
 
@@ -270,9 +271,9 @@ public:
             {                                
 				//received movement command
 				desired_direction = b->get(0).asDouble();
-				linear_speed = b->get(1).asDouble() / 46000 * 1333;
-				angular_speed = b->get(2).asDouble() / 46000 * 1333;
-				pwm_gain = b->get(3).asDouble() / 65000;
+				linear_speed = b->get(1).asDouble();
+				angular_speed = b->get(2).asDouble();
+				pwm_gain = b->get(3).asDouble();
 				wdt_cmd = Time::now();
             }
         }
@@ -301,14 +302,26 @@ public:
 */
 
 		//saturators
-		const int MAX_PWM = 1333; // Maximum motor PWM
+		int MAX_VALUE = 0;
+		if (ikart_control_type == IKART_CONTROL_OPENLOOP)
+		{
+			MAX_VALUE = 1333; // Maximum joint PWM
+		}
+		else if	(ikart_control_type == IKART_CONTROL_SPEED)
+		{
+			MAX_VALUE = 10; // Maximum joint speed
+		}
+		
 		const double ratio = 0.7; // This value must be < 1 
-		if (linear_speed  >  MAX_PWM*ratio) linear_speed  = MAX_PWM*ratio;
-		if (linear_speed  < -MAX_PWM*ratio) linear_speed  = -MAX_PWM*ratio;
-		if (angular_speed >  MAX_PWM*(1-ratio)) angular_speed = MAX_PWM*(1-ratio);
-		if (angular_speed < -MAX_PWM*(1-ratio)) angular_speed = -MAX_PWM*(1-ratio);
-		if (pwm_gain<0) pwm_gain =0;
-		if (pwm_gain>1)	pwm_gain =1;
+		linear_speed = linear_speed / 46000 * MAX_VALUE;
+		angular_speed = angular_speed / 46000 * MAX_VALUE;
+		pwm_gain = pwm_gain / 65000 * 1.0;
+		if (linear_speed  >  MAX_VALUE*ratio) linear_speed  = MAX_VALUE*ratio;
+		if (linear_speed  < -MAX_VALUE*ratio) linear_speed  = -MAX_VALUE*ratio;
+		if (angular_speed >  MAX_VALUE*(1-ratio)) angular_speed = MAX_VALUE*(1-ratio);
+		if (angular_speed < -MAX_VALUE*(1-ratio)) angular_speed = -MAX_VALUE*(1-ratio);
+		if (pwm_gain<0) pwm_gain = 0;
+		if (pwm_gain>1)	pwm_gain = 1;
 
 		//wheel contribution calculation
 		FA = linear_speed * cos ((150-desired_direction)/ 180.0 * 3.14159265) + angular_speed;
@@ -323,6 +336,9 @@ public:
 		}
 		else if	(ikart_control_type == IKART_CONTROL_SPEED)
 		{
+			//FA=3;
+			//FB=3;
+			//FC=3;
 			ivel->velocityMove(0,FA);
 			ivel->velocityMove(1,FB);
 			ivel->velocityMove(2,FC);
