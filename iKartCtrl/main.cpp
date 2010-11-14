@@ -163,6 +163,28 @@ public:
 	void set_ikart_control_type(int type)
 	{
 		ikart_control_type = type;
+		
+		if (ikart_control_type == IKART_CONTROL_OPENLOOP)
+		{
+			fprintf(stdout,"iKart in openloop control mode\n");
+			icmd->setOpenLoopMode(0);
+			icmd->setOpenLoopMode(1);
+			icmd->setOpenLoopMode(2);
+			iopl->setOutput(0,0);
+			iopl->setOutput(1,0);
+			iopl->setOutput(2,0);
+		}
+		else if (ikart_control_type == IKART_CONTROL_SPEED)
+		{
+			fprintf(stdout,"iKart in speed control mode\n");
+			icmd->setVelocityMode(0);
+			icmd->setVelocityMode(1);
+			icmd->setVelocityMode(2);
+		}
+		else
+		{
+			fprintf(stdout,"invalid iKart control mode\n");
+		}
 	}
 
 	int get_ikart_control_type()
@@ -222,24 +244,9 @@ public:
         port_movement_control.open((localName+"/control:i").c_str());
 		port_laser_output.open((localName+"/laser:o").c_str());
 
-		//sets the control mode to the joints
-		if (ikart_control_type == IKART_CONTROL_OPENLOOP)
-		{
-			fprintf(stdout,"iKart in openloop control mode\n");
-			icmd->setOpenLoopMode(0);
-			icmd->setOpenLoopMode(1);
-			icmd->setOpenLoopMode(2);
-			iopl->setOutput(0,0);
-			iopl->setOutput(1,0);
-			iopl->setOutput(2,0);
-		}
-		if (ikart_control_type == IKART_CONTROL_SPEED)
-		{
-			fprintf(stdout,"iKart in speed control mode\n");
-			icmd->setVelocityMode(0);
-			icmd->setVelocityMode(1);
-			icmd->setVelocityMode(2);
-		}
+		//set the control type
+		set_ikart_control_type(IKART_CONTROL_SPEED);
+
         return true;
     }
 
