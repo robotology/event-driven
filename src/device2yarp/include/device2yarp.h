@@ -4,8 +4,8 @@
 //yarp include
 #include <yarp/os/all.h>
 
-//#include <fcntl.h>
-//#include <sys/ioctl.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
 #include <iostream>
 #include <cstdlib>
 

@@ -1,2 +1,2 @@
-/home/cclercq/Programs/Events-driven_vision/clercq/device2yarp/driver/retina.ko
-/home/cclercq/Programs/Events-driven_vision/clercq/device2yarp/driver/retina.o
+/home/rea/work/iCub/contrib/src/eMorph/driver/retina.ko
+/home/rea/work/iCub/contrib/src/eMorph/driver/retina.o
