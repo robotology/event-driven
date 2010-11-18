@@ -20,11 +20,11 @@
  */
 
 /**
- * @file cfCollectorThread.cpp
- * @brief Implementation of the thread (see header cfCollectorThread.h)
+ * @file vAlignerThread.cpp
+ * @brief Implementation of the thread (see header vaThread.h)
  */
 
-#include <iCub/cfCollectorThread.h>
+#include <iCub/vAlignerThread.h>
 #include <cstring>
 #include <cassert>
 
@@ -34,61 +34,51 @@ using namespace std;
 
 #define THRATE 10
 
-cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
+vAlignerThread::vAlignerThread() : RateThread(THRATE) {
     resized=false;
     count=0;
 }
 
-cfCollectorThread::~cfCollectorThread() {
+vAlignerThread::~vAlignerThread() {
 
 }
 
-bool cfCollectorThread::threadInit() {
+bool vAlignerThread::threadInit() {
     printf("starting the thread.... \n");
     /* open ports */
     printf("opening ports.... \n");
     outPort.open(getName("/image:o").c_str());
     printf("starting the converter.... \n");
-    cfConverter=new cFrameConverter();
-    cfConverter->useCallback();
-    cfConverter->open(getName("/retina:i").c_str());
     return true;
 }
 
-void cfCollectorThread::interrupt() {
+void vAlignerThread::interrupt() {
     outPort.interrupt();
 }
 
-void cfCollectorThread::setName(string str) {
+void vAlignerThread::setName(string str) {
     this->name=str;
     printf("name: %s", name.c_str());
 }
 
-std::string cfCollectorThread::getName(const char* p) {
+std::string vAlignerThread::getName(const char* p) {
     string str(name);
     str.append(p);
     return str;
 }
 
-void cfCollectorThread::resize(int widthp, int heightp) {
+void vAlignerThread::resize(int widthp, int heightp) {
 }
 
-void cfCollectorThread::run() {
+void vAlignerThread::run() {
     count++;
     if(outPort.getOutputCount()) {
         ImageOf<yarp::sig::PixelMono>& outputImage=outPort.prepare();
-        if(&outputImage!=0) {
-            cfConverter->getMonoImage(&outputImage);
-            outPort.write();
-        }
-        else {
-            printf("reference to the outimage null \n");
-        }
     }
 
 }
 
-void cfCollectorThread::threadRelease() {
+void vAlignerThread::threadRelease() {
     outPort.close();
 }
 

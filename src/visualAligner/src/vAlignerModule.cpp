@@ -19,11 +19,11 @@
  */
 
 /**
- * @file cfCollectorModule.cpp
- * @brief Implementation of the cfCollectorModule (see header file).
+ * @file vAlignerModule.cpp
+ * @brief Implementation of the vAlignerModule (see header file).
  */
 
-#include <iCub/cfCollectorModule.h>
+#include <iCub/vAlignerModule.h>
 
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -36,12 +36,12 @@ using namespace std;
  *  equivalent of the "open" method.
  */
 
-bool cfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
+bool vAlignerModule::configure(yarp::os::ResourceFinder &rf) {
     /* Process all parameters from both command-line and .ini file */
 
     /* get the module name which will form the stem of all module port names */
     moduleName            = rf.check("name", 
-                           Value("/cartesianFrameCollector"), 
+                           Value("/vAligner"), 
                            "module name (string)").asString();
     /*
     * before continuing, set the module name before getting any other parameters, 
@@ -72,28 +72,28 @@ bool cfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
 
     attach(handlerPort);                  // attach to port
 
-    cfThread=new cfCollectorThread();
-    cfThread->setName(getName().c_str());
-    cfThread->start();
+    vaThread=new vAlignerThread();
+    vaThread->setName(getName().c_str());
+    vaThread->start();
 
     return true ;       // let the RFModule know everything went well
                         // so that it will then run the module
 }
 
-bool cfCollectorModule::interruptModule() {
+bool vAlignerModule::interruptModule() {
     handlerPort.interrupt();
     return true;
 }
 
-bool cfCollectorModule::close() {
+bool vAlignerModule::close() {
     handlerPort.close();
     /* stop the thread */
-    cfThread->stop();
-    delete cfThread;
+    vaThread->stop();
+    delete vaThread;
     return true;
 }
 
-bool cfCollectorModule::respond(const Bottle& command, Bottle& reply) {
+bool vAlignerModule::respond(const Bottle& command, Bottle& reply) {
     string helpMessage =  string(getName().c_str()) + 
                         " commands are: \n" +  
                         "help \n" + 
@@ -109,16 +109,15 @@ bool cfCollectorModule::respond(const Bottle& command, Bottle& reply) {
         cout << helpMessage;
         reply.addString("ok");
     }
-    
     return true;
 }
 
 /* Called periodically every getPeriod() seconds */
-bool cfCollectorModule::updateModule() {
+bool vAlignerModule::updateModule() {
     return true;
 }
 
-double cfCollectorModule::getPeriod() {
+double vAlignerModule::getPeriod() {
     /* module periodicity (seconds), called implicitly by myModule */
     return 0.0;
 }

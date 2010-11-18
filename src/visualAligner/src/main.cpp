@@ -20,10 +20,10 @@
   
 /**
  * @file main.cpp
- * @brief main code for the cartesian frame collector of asynchronous events
+ * @brief main code to correctly start the module
  */
 
-#include "iCub/cfCollectorModule.h" 
+#include "iCub/vAlignerModule.h" 
 #include <yarp/os/all.h>
 
 using namespace yarp::os;
@@ -35,12 +35,12 @@ int main(int argc, char * argv[])
     Network yarp;
     
     Time::turboBoost();
-    cfCollectorModule module; 
+    vAlignerModule module; 
 
     ResourceFinder rf;
     rf.setVerbose(true);
-    rf.setDefaultConfigFile("cartesianFrameCollector.ini"); //overridden by --from parameter
-    rf.setDefaultContext("dvsGrabber/conf");   //overridden by --context parameter
+    rf.setDefaultConfigFile("visualAligner.ini"); //overridden by --from parameter
+    rf.setDefaultContext("logPolarAttentionSystem/conf");   //overridden by --context parameter
     rf.configure("ICUB_ROOT", argc, argv);
  
     module.runModule(rf);

@@ -19,20 +19,19 @@
  */
 
 /**
- * @file cfCollectorModule.h
- * @brief A module that read independent asynchronous events from a yarp port and represents them as an image
+ * @file vAlignerModule.h
+ * @brief A module that reads the images from different cameras (DVS, traditional camera) and put together different visual clues
  */
 
-#ifndef _CF_COLLECTOR_MODULE_H_
-#define _CF_COLLECTOR_MODULE_H_
+#ifndef _VISUAL_ALIGNER_MODULE_H_
+#define _VISUAL_ALIGNER_MODULE_H_
 
 /** 
  * @ingroup icub_module
  *
  * \defgroup icub_cartesianFrameCollector cartesianFrameCollector
  *
- * This is a module that reads independent event-driven response to changes in the luminance sensed by DVS cameras.
- * These events are present on a port, they have to be collected during the frame time costant and visualised on an image.
+ * This is a module that reads independently from different camera with different tegnologies ( DVS, traditional colour camera)
  * 
  * \section reference
  * The address-event representation communication protocol AER 0.02, Caltech, Pasadena, CA, Internal Memo, Feb. 1993 [Online]. Available:
@@ -49,8 +48,12 @@
  * V. Dante, P. Del Giudice, and A. M. Whatley, “PCI-AER—hardware and software for interfacing to address-event based neuromorphic systems,” The Neuromorphic Engineer vol. 2, no. 1, pp.
  * 5–6, 2005 [Online]. Available: http://ine-web.org/research/newsletters/index.html
  * 
- *
+ * 
+ * 
  * \section Description
+ * DVS cameras extract event from the scene, these events are represented as images. DVS images coming from the ocular system in the iCub have to be
+ * aligned with images produced by traditional cameras (dragonfly). However these cameras are located in a different position in the iCub's head.
+ * This module defines the geometry of the alignment and puts together the different stereo images.
  *
  * \section lib_sec Libraries
  *
@@ -63,13 +66,13 @@
  * The following key-value pairs can be specified as command-line parameters by prefixing \c -- to the key 
  * (e.g. \c --from file.ini. The value part can be changed to suit your needs; the default values are shown below. 
  *
- * - \c from \c cartesianFramCollector.ini \n 
+ * - \c from \c visualAligner.ini \n 
  *   specifies the configuration file
  *
- * - \c context \c dvsGrabber/conf \n
- *   specifies the sub-path from \c $ICUB_ROOT/icub/app to the configuration file
+ * - \c context \c logPolarAttentionSystem/conf \n
+ *   specifies the sub-path from \c /app to the configuration file
  *
- * - \c name \c cartesianFrameCollector \n 
+ * - \c name \c visualAligner \n 
  *   specifies the name of the module (used to form the stem of module port names)  
  *
  * - \c robot \c icub \n 
@@ -81,7 +84,6 @@
  * The following key-value pairs can be specified as parameters in the configuration file 
  * (they can also be specified as command-line parameters if you so wish). 
  * The value part can be changed to suit your needs; the default values are shown below. 
- *   
  *
  * 
  * \section portsa_sec Ports Accessed
@@ -92,7 +94,7 @@
  *
  *  <b>Input ports</b>
  *
- *  - \c /cartesianFrameCollector \n
+ *  - \c /visualAligner \n
  *    This port is used to change the parameters of the module at run time or stop the module. \n
  *    The following commands are available
  * 
@@ -104,17 +106,19 @@
  *    The port can be used by other modules but also interactively by a user through the yarp rpc directive, viz.: \c yarp \c rpc \c /cartesianFrameCollector
  *    This opens a connection from a terminal to the port and allows the user to then type in commands and receive replies.
  *       
- *  - \c /cartesianFrameCollector/image:i \n
+ *  - \c /visualAligner/dvsLeft:i \n
+ *  - \c /visualAligner/dvsRight:i \n
+ *  - \c /visualAligner/dragonLeft:i \n
+ *  - \c /visualAligner/dragonRight:i \n
  *
  * <b>Output ports</b>
  *
- *  - \c /cartesianFrameCollector \n
+ *  - \c /visualAligner \n
  *    see above
  *
- *  - \c /cartesianFrameCollector/image:o \n
+ *  - \c /visualAligner/image:o \n
  *
  * <b>Port types</b>
- *
  *
  * \section in_files_sec Input Data Files
  *
@@ -126,7 +130,7 @@
  *
  * \section conf_file_sec Configuration Files
  *
- * \c cartesianFrameCollector.ini  in \c $ICUB_ROOT/app/cartesianFrameCollector/conf \n
+ * \c visualAligner.ini  in \c /logPolarAttentionSystem/conf \n
  * 
  * \section tested_os_sec Tested OS
  *
@@ -134,13 +138,12 @@
  *
  * \section example_sec Example Instantiation of the Module
  * 
- * <tt>cartesianFrameCollector --name cartesianFrameCollector --context cartesianFrameCollector/conf --from cartesianFrameCollector.ini --robot icub</tt>
+ * <tt>visualAligner --name /visualAligner --context logPolarAttentionSystem/conf --from visualAligner.ini --robot icub</tt>
  *
  * \author Rea Francesco
  *
  * Copyright (C) 2010 RobotCub Consortium\n
  * CopyPolicy: Released under the terms of the GNU GPL v2.0.\n
- * This file can be edited at \c $ICUB_ROOT/main/src/modules/cartesianFrameCollector/include/iCub/cfCollectorModule.h
  * 
  */
 
@@ -153,9 +156,9 @@
 #include <yarp/os/Thread.h>
 
 //within project includes
-#include <iCub/cfCollectorThread.h>
+#include <iCub/vAlignerThread.h>
 
-class cfCollectorModule:public yarp::os::RFModule {
+class vAlignerModule:public yarp::os::RFModule {
     std::string moduleName;                     //name of the module (rootname of ports)
     std::string robotName;                      //name of the robot
     std::string robotPortName;                  //reference to the head of the robot
@@ -163,7 +166,7 @@ class cfCollectorModule:public yarp::os::RFModule {
     int ratethread;                             //time constant for ratethread
 
     yarp::os::Port handlerPort;                 // a port to handle messages 
-    cfCollectorThread* cfThread;                //cfCollectorThread for processing events
+    vAlignerThread* vaThread;                   //visualAlignerThread for processing events
 
 public:
     bool configure(yarp::os::ResourceFinder &rf); // configure all the module parameters and return true if successful
@@ -175,7 +178,6 @@ public:
 };
 
 
-#endif // __CF_COLLECTOR_MODULE_H__
+#endif // _VISUAL_ALIGNER_MODULE_H__
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------
-

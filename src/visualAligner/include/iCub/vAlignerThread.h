@@ -19,21 +19,21 @@
  */
 
 /**
- * @file cfCollectorThread.h
- * @brief Definition of a thread that receive events from DVS camera and extracts frame-based representations of the readings
- * (see dvsGrabberModule.h).
+ * @file vAlignerThread.h
+ * @brief Definition of a thread that receive cameres information and align them all
+ * (see vAlignerModule.h).
  */
 
-#ifndef _CF_COLLECTOR_THREAD_H_
-#define _CF_COLLECTOR_THREAD_H_
+#ifndef _VISUAL_ALIGNER_THREAD_H_
+#define _VISUAL_ALIGNER_THREAD_H_
 
 #include <yarp/os/RateThread.h>
+#include <yarp/os/BufferedPort.h>
 #include <yarp/sig/all.h>
-#include <iCub/cartesianFrameConverter.h>
 #include <iostream>
 
 
-class cfCollectorThread : public yarp::os::RateThread {
+class vAlignerThread : public yarp::os::RateThread {
 private:
     int count;                          //loop counter of the thread
     int width, height;                  //dimension of the extended input image (extending)
@@ -42,17 +42,16 @@ private:
     std::string name;       // rootname of all the ports opened by this thread
     bool resized;           // flag to check if the variables have been already resized
 
-    cFrameConverter* cfConverter; //receives real-time events
 public:
     /**
     * default constructor
     */
-    cfCollectorThread();
+    vAlignerThread();
 
     /**
      * destructor
      */
-    ~cfCollectorThread();
+    ~vAlignerThread();
 
     /**
     * function that initialise the thread
@@ -96,7 +95,5 @@ public:
 
 };
 
-#endif  //_CF_COLLECTOR_THREAD_H_
-
+#endif  //_VISUAL_ALIGNER_THREAD_H_
 //----- end-of-file --- ( next line intentionally left blank ) ------------------
-
