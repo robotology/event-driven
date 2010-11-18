@@ -27,9 +27,10 @@
 #define _DVS_GRABBER_MODULE_H_
 
 /** 
- * @ingroup icub_module
  *
  * \defgroup icub_dvsGrabber dvsGrabber
+ * @ingroup icub_eMorph
+ *
  *
  * This is a module that extracts independent event-driven response to changes in the luminance sensed by DiffeDVS 
  * 

@@ -17,47 +17,50 @@
 */
 
 /** 
-\defgroup iKartCtrl iKartCtrl
- 
-@ingroup icub_module  
- 
-IKart controller (wheels decoupling prototype).
- 
-Copyright (C) 2010 RobotCub Consortium
- 
-Author: Marco Randazzo
-
-CopyPolicy: Released under the terms of the GNU GPL v2.0.
-
-\section intro_sec Description
- 
-@@@TODO
- 
-\section portsa_sec Ports Accessed
- 
-@@@TODO
- 
-\section portsc_sec Ports Created 
- 
-@@@TODO
-
-\section in_files_sec Input Data Files
-
-@@@TODO
-
-\section out_data_sec Output Data Files 
-
-@@@TODO
- 
-\section conf_file_sec Configuration Files
-
-@@@TODO
-
-\section tested_os_sec Tested OS
-Windows, Linux
-
-\author Marco Randazzo
-*/ 
+ *
+ * \defgroup icub_iKartCtrl iKartCtrl
+ * @ingroup icub_eMorph
+ *
+ *
+ * IKart controller (wheels decoupling prototype).
+ *
+ *Copyright (C) 2010 RobotCub Consortium
+ *
+ * Author: Marco Randazzo
+ *
+ *CopyPolicy: Released under the terms of the GNU GPL v2.0.
+ * 
+ * \section intro_sec Description
+ * 
+ * @@@TODO
+ * 
+ * \section portsa_sec Ports Accessed
+ *  
+ * @@@TODO
+ *
+ * \section portsc_sec Ports Created 
+ *
+ * @@@TODO
+ * 
+ * \section in_files_sec Input Data Files
+ * 
+ * @@@TODO
+ * 
+ * \section out_data_sec Output Data Files 
+ * 
+ * @@@TODO
+ * 
+ * \section conf_file_sec Configuration Files
+ * 
+ * @@@TODO
+ * 
+ * \section tested_os_sec Tested OS
+ * Windows, Linux
+ * 
+ * \author Marco Randazzo
+ * / 
+ * 
+ */
 
 #include <yarp/os/Network.h>
 #include <yarp/os/RFModule.h>

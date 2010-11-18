@@ -27,9 +27,10 @@
 #define _VISUAL_ALIGNER_MODULE_H_
 
 /** 
- * @ingroup icub_module
  *
- * \defgroup icub_cartesianFrameCollector cartesianFrameCollector
+ * \defgroup icub_visualAligner visualAligner
+ * @ingroup icub_eMorph
+ *
  *
  * This is a module that reads independently from different camera with different tegnologies ( DVS, traditional colour camera)
  * 

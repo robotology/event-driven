@@ -14,6 +14,13 @@ using namespace iCub;
 using namespace yarp::sig;
 using namespace yarp::math;
 
+/**
+ *
+ * \defgroup icub_harmonicPathPlanner harmonicPathPlanner
+ * @ingroup icub_eMorph
+ *
+**/
+
 HarmonicFunction::HarmonicFunction(Vector min, Vector max, Vector res, double om=0.9, int maxIter=500, double thresh=1e-4, double plotFac=0.001, bool dispMode=true) :
     convergenceThreshold(thresh),
     omega(om),

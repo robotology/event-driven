@@ -27,9 +27,10 @@
 #define _CF_COLLECTOR_MODULE_H_
 
 /** 
- * @ingroup icub_module
  *
  * \defgroup icub_cartesianFrameCollector cartesianFrameCollector
+ * @ingroup icub_eMorph
+ *
  *
  * This is a module that reads independent event-driven response to changes in the luminance sensed by DVS cameras.
  * These events are present on a port, they have to be collected during the frame time costant and visualised on an image.
