@@ -38,7 +38,12 @@ private:
     int count;                          //loop counter of the thread
     int width, height;                  //dimension of the extended input image (extending)
     int height_orig, width_orig;        //original dimension of the input and output images
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPort; //port whre the output is sent
+    yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelRgb> > leftDragonPort;       //port where the output of the dragonfly left is read
+    yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelRgb> > rightDragonPort;      //port where the output of the dragonfly right is read
+    yarp::sig::ImageOf <yarp::sig::PixelRgb>* leftDragonImage;          //image output of the dragonfly left is saved
+    yarp::sig::ImageOf <yarp::sig::PixelRgb>* rightDragonImage;         //image where the output of the dragonfly right is saved
+    yarp::sig::ImageOf <yarp::sig::PixelRgb>* tmp;                      //temporary image for correct port reading
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> > outPort;              //port whre the output is sent
     std::string name;       // rootname of all the ports opened by this thread
     bool resized;           // flag to check if the variables have been already resized
 
@@ -92,6 +97,13 @@ public:
     * @return height height of the input image
     */
     void resize(int width, int height);
+
+    /**
+    * shift one image with respect to the other 
+    * @param shift number of pixel of shifts
+    * @param outImage reference to the output image
+    */
+    void shift(int shift, yarp::sig::ImageOf<yarp::sig::PixelRgb>& outImage);
 
 };
 
