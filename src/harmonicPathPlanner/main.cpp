@@ -1,6 +1,6 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-      
 /**
-@ingroup icub_module
+@ingroup icub_eMorph
 \defgroup icub_harmonicPathPlanner harmonicPathPlanner
 
 Provides a harmonic function based collision free gradient
