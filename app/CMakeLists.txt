@@ -15,10 +15,10 @@ include(iCubHelpers)
 SET(ICUB_APPLICATIONS_PREFIX "$ENV{ICUB_ROOT}"  CACHE PATH "Application path prefix")
 				
 #add_subdirectory(eMorphApplication)
-#add_subdirectory(iKart)
+add_subdirectory(iKart)
 
 ## make all applications show up as single target
-#icub_app_all()
+icub_app_all()
 
 
 
