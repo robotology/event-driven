@@ -56,7 +56,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
     sz=0;
     ec = 0;
     memset(buffer, 0, SIZE_OF_DATA);
-    const u32 seqAllocChunk_b = 8192 * sizeof(struct aer); //allocating the right dimension for biases
+    /*const u32 seqAllocChunk_b = 8192 * sizeof(struct aer); //allocating the right dimension for biases
     monBufSize_b = 8192 * sizeof(struct aer);
     
 
@@ -73,6 +73,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
 
     seqEvents = 0;
     seqSize_b = 0;
+    */
 
     if(save)
         raw = fopen(i_fileName.c_str(), "wb");
@@ -226,7 +227,7 @@ void  device2yarp::run() {
     memset(buffer, 0, SIZE_OF_DATA);
 }
 
-
+/*
 void device2yarp::sendingBias() {
     printf("-------------------------------------------- \n");
     printf("trying to write to kernel driver %d %d \n", seqDone_b,seqSize_b);
@@ -256,7 +257,9 @@ void device2yarp::sendingBias() {
     //printf("TmaxSeqTimeEstima PRIu64  %f %f\n", 
     //  (TmaxSeqTimeEstimate / 1000000), (TmaxSeqTimeEstimate % 1000000));
 }
+*/
 
+/*
 void device2yarp::progBias(string name,int bits,int value) {
     int bitvalue;
     for (int i=bits-1;i>=0;i--) {
@@ -275,7 +278,9 @@ void device2yarp::progBias(string name,int bits,int value) {
         progBit(bitvalue);
     }
 }
+*/
 
+/*
 void device2yarp::latchCommit() {
     printf("entering latch_commit \n");
     biasprogtx(timestep * latchexpand, LATCH_TRANSPARENT, CLOCK_LO, 0);
@@ -283,7 +288,9 @@ void device2yarp::latchCommit() {
     biasprogtx(timestep * latchexpand, LATCH_KEEP, CLOCK_LO, 0);
     printf("exiting latch_commit \n");
 }
+*/
 
+/*
 void device2yarp::progBit(int bitvalue) {
     //set data
     biasprogtx(timestep, LATCH_KEEP, CLOCK_LO, bitvalue);
@@ -291,13 +298,17 @@ void device2yarp::progBit(int bitvalue) {
     biasprogtx(timestep, LATCH_KEEP, CLOCK_HI, bitvalue);
     biasprogtx(timestep, LATCH_KEEP, CLOCK_LO, bitvalue);
 }
+*/
 
+/*
 void device2yarp::monitor (int secs) {
     printf("entering monitor \n");
     biasprogtx(secs * OneSecond, LATCH_KEEP, CLOCK_LO, 0);
     printf("exiting monitor \n");
 } 
+*/
 
+/*
 void device2yarp::biasprogtx(int time,int latch,int clock,int data) {
     unsigned char addr[4];
     unsigned char t[4];
@@ -357,7 +368,6 @@ void device2yarp::biasprogtx(int time,int latch,int clock,int data) {
     //int w = write(file_desc, ((u8*)pseq), seqSize_b);
     //addr = int(sys.argv[1], 16)
     //err = write(file_desc,t,4); //4 byte time: 1 integer
-    //err = write(file_desc,addr,4); //4 byte time: 1 integer
-    
-    
+    //err = write(file_desc,addr,4); //4 byte time: 1 integer  
 }
+*/

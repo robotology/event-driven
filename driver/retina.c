@@ -16,8 +16,11 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/device.h>
+#include <linux/slab.h>
 #include <asm/uaccess.h>
 
+#define usb_alloc_coherent(a, b, c, d) usb_buffer_alloc(a, b, c, d)
+#define usb_free_coherent(a, b, c, d) usb_buffer_free(a, b, c, d)
 
 /* this is the DVS 128 retina */
 #define USB_RETINA_VENDOR_ID	0x152a

@@ -35,6 +35,7 @@
 #include <iostream>
 #include <sstream>
 #include <cstdlib>
+#include <stdint.h>
 
 #include "sending_buffer.h"
 
