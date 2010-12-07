@@ -21,7 +21,36 @@
 using namespace std;
 using namespace yarp::os;
 
-#define timestep 100 //100 us OneSecond/10000
+/*
+#################################################################
+# time constants
+
+OneSecond = 1000000 # ???
+
+# genova visit timings:
+timestep  = OneSecond // 10000
+latchexpand = 100
+
+# new faster timings, timestep 1us, latch 10 timesteps
+timestep  = OneSecond // 1000000
+latchexpand = 10
+
+# ultra slow
+timestep  = OneSecond // 100
+latchexpand = 100
+
+# very slow 1ms timestep
+timestep  = OneSecond // 1000
+latchexpand = 100
+
+# 10us timestep, 100us latch
+timestep  = OneSecond // 100000
+latchexpand = 8
+reset_pins_expand = 4
+*/
+
+
+#define timestep 10000 //100 us OneSecond/10000
 #define OneSecond 1000000 //1sec
 #define latchexpand 100
 #define countBias 12
@@ -59,6 +88,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
     if(save)
         raw = fopen(i_fileName.c_str(), "wb");
     int deviceNum=0;
+    printf("opening port for sending the read events \n");
     str_buf << "/icub/retina" << deviceNum << ":o";
     port.open(str_buf.str().c_str());
 
@@ -71,7 +101,8 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
         int err;
         if(!strcmp(portDeviceName.c_str(),"/dev/aerfx2_0")) {
             printf("sending biases as events to the device ... \n");
-            /*
+            /*   ORIGINAL VALUES
+             *   from DVS128_PAER.xml, set Tmpdiff128
             *    biasvalues = {
             *    "11" "cas": 1966, 7AE
             *    "10" "injGnd": 22703, 58AF
@@ -88,18 +119,19 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
             *}
             */
 
+            // from DVS128Fast.xml, set Tmpdiff128
             int biasValues[]={1966,        // cas
-                              22703,       // injGnd
+                              1137667,       // injGnd
                               16777215,    // reqPd
-                              4368853,     // puX
-                              3207,        // diffOff
-                              111347,      // req
-                              0,           // refr
+                              8053457,     // puX
+                              133,        // diffOff
+                              160712,      // req
+                              944,           // refr
                               16777215,    // puY
-                              483231,      // diffOn
-                              28995,       // diff 
-                              19,          // foll
-                              8            //Pr 
+                              205255,      // diffOn
+                              3207,       // diff 
+                              278,          // foll
+                              217            //Pr 
             };
 
             string biasNames[] = {
@@ -191,24 +223,40 @@ void  device2yarp::run() {
         t = pmon[i].timestamp * 0.128;
         //printf("a: %x  t:%d k: %d nEvents: %d \n",a,t,k,monBufEvents);            
         char c;
-        c=(char)(a&0x000000FF);buffer[k]=c;
-        long int part_1 = 0x000000FF&buffer[k];k++;  //extracting the 1 byte
-        c=(char)((a&0x0000FF00)>>8); buffer[k]=c;
-        long int part_2 = 0x000000FF&buffer[k];k++;  //extracting the 2 byte
-        c=(char)((a&0x00FF0000)>>16); buffer[k]=c;
-        long int part_3 = 0x000000FF&buffer[k];k++;  //extracting the 3 byte
-        c=(char)((a&0xFF000000)>>24); buffer[k]=c;                 
-        long int part_4 = 0x000000FF&buffer[k];k++;  //extracting the 4 byte
+        c=(char)(a&0x000000FF);
+        buffer[k]=c;
+        long int part_1 = 0x000000FF&buffer[k];
+        k++;  //extracting the 1 byte
+        c=(char)((a&0x0000FF00)>>8);
+        buffer[k]=c;
+        long int part_2 = 0x000000FF&buffer[k];
+        k++;  //extracting the 2 byte
+        c=(char)((a&0x00FF0000)>>16);
+        buffer[k]=c;
+        long int part_3 = 0x000000FF&buffer[k];
+        k++;  //extracting the 3 byte
+        c=(char)((a&0xFF000000)>>24);
+        buffer[k]=c;                 
+        long int part_4 = 0x000000FF&buffer[k];
+        k++;  //extracting the 4 byte
         long int blob = (part_1)|(part_2<<8)|(part_3<<16)|(part_4<<24);
 
-        c=(char)(t&0x000000FF); buffer[k]=c;
-        long int part_5 = 0x000000FF&buffer[k];k++;  //extracting the 1 byte
-        c=(char)((t&0x0000FF00)>>8); buffer[k]=c;
-        long int part_6 = 0x000000FF&buffer[k];k++;  //extracting the 2 byte
-        c=(char)((t&0x00FF0000)>>16); buffer[k]=c;
-        long int part_7 = 0x000000FF&buffer[k];k++;  //extracting the 3 byte
-        c=(char)((t&0xFF000000)>>24); buffer[k]=c;                 
-        long int part_8 = 0x000000FF&buffer[k];k++;  //extracting the 4 byte
+        c=(char)(t&0x000000FF);
+        buffer[k]=c;
+        long int part_5 = 0x000000FF&buffer[k];
+        k++;  //extracting the 1 byte
+        c=(char)((t&0x0000FF00)>>8); 
+        buffer[k]=c;
+        long int part_6 = 0x000000FF&buffer[k];
+        k++;  //extracting the 2 byte
+        c=(char)((t&0x00FF0000)>>16);
+        buffer[k]=c;
+        long int part_7 = 0x000000FF&buffer[k];
+        k++;  //extracting the 3 byte
+        c=(char)((t&0xFF000000)>>24); 
+        buffer[k]=c;                 
+        long int part_8 = 0x000000FF&buffer[k];
+        k++;  //extracting the 4 byte
         long int timestamp = ((part_5)|(part_6<<8)|(part_7<<16)|(part_8<<24));
         //printf("%d : %d\n", blob, timestamp);
     }
