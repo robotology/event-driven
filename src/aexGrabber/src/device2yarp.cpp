@@ -120,7 +120,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
             */
 
             // from DVS128Fast.xml, set Tmpdiff128
-            int biasValues[]={1966,        // cas
+            /*int biasValues[]={1966,        // cas
                               1137667,       // injGnd
                               16777215,    // reqPd
                               8053457,     // puX
@@ -132,6 +132,21 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
                               3207,       // diff 
                               278,          // foll
                               217            //Pr 
+            };
+            */
+
+            int biasValues[]={1966,        // cas
+                              22703,       // injGnd
+                              16777215,    // reqPd
+                              4368853,     // puX
+                              3207,        // diffOff
+                              111347,      // req
+                              0,           // refr
+                              16777215,    // puY
+                              483231,      // diffOn
+                              28995,       // diff 
+                              19,          // foll
+                              8            //Pr 
             };
 
             string biasNames[] = {
@@ -173,7 +188,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
                 progBias(biasNames[j],24,biasValues[j]);
             }
             latchCommit();
-            //monitor(10);
+            monitor(10);
             sendingBias();
         }
     }
@@ -206,14 +221,14 @@ void device2yarp::setDeviceName(string deviceName) {
 
 void  device2yarp::run() {
     
-    //printf("device not recognized \n");
     int r = read(file_desc, pmon, monBufSize_b);    
     monBufEvents = r / sizeof(struct aer);
-    //printf("device read %d \n",monBufEvents);
-    if(monBufEvents==-1) {
-        printf("device not ready -1\n");
+    //printf("r: %d \n",r);
+    if(r==-1) {
+        //printf("device %s not ready. Skipping to the next run \n",portDeviceName.c_str());
         return;
     }
+    //printf("device read %d \n",monBufEvents);
     //ec += monBufEvents;
     int k=0;
     u32 a, t;
@@ -259,7 +274,7 @@ void  device2yarp::run() {
         long int part_8 = 0x000000FF&buffer[k];
         k++;  //extracting the 4 byte
         long int timestamp = ((part_5)|(part_6<<8)|(part_7<<16)|(part_8<<24));
-        printf("address:%d ; timestamp:%d\n", blob, timestamp);
+        //printf("address:%d ; timestamp:%d \n", blob, timestamp);
     }
     sz=monBufEvents*32; //32bits(4*8bits) for every event
 
