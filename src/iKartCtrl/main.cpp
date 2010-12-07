@@ -152,9 +152,7 @@ public:
                remoteName(_remoteName), localName(_localName) 
 	{
 		board_control_modes = new int [3];
-		ikart_control_type = IKART_CONTROL_SPEED;
-		//ikart_control_type = IKART_CONTROL_OPENLOOP;
-		//ikart_control_type = IKART_CONTROL_NONE;
+		ikart_control_type = IKART_CONTROL_NONE;
 		wdt_mov_timeout = 0.100;
 		wdt_joy_timeout = 0.100;
 
@@ -214,6 +212,15 @@ public:
 		else
 		{
 			iKartCtrl_options.fromConfigFile(configFile.c_str());
+			ConstString control_type = iKartCtrl_options.check("control_mode",Value("none"),"type of control for the wheels").asString();
+			if      (control_type == "none")     ikart_control_type = IKART_CONTROL_NONE;
+			else if (control_type == "speed")    ikart_control_type = IKART_CONTROL_SPEED;
+			else if (control_type == "openloop") ikart_control_type = IKART_CONTROL_OPENLOOP;
+			else
+			{
+				printf("Error: unknown type of control required: %s. Closing...\n",control_type);
+				return false;
+			}
 		}
 
 		if (iKartCtrl_options.check("laser")==false)
