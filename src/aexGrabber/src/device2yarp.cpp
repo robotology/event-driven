@@ -148,6 +148,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
                                 "foll",
                                 "Pr"
                                 };
+
             /*unsigned char biasValues[] = {
                                 0x00,0x07,0xAE,     // cas
                                 0x00,0x58,0xAF,     // injGnd
@@ -258,7 +259,7 @@ void  device2yarp::run() {
         long int part_8 = 0x000000FF&buffer[k];
         k++;  //extracting the 4 byte
         long int timestamp = ((part_5)|(part_6<<8)|(part_7<<16)|(part_8<<24));
-        //printf("%d : %d\n", blob, timestamp);
+        printf("address:%d ; timestamp:%d\n", blob, timestamp);
     }
     sz=monBufEvents*32; //32bits(4*8bits) for every event
 
