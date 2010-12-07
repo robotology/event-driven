@@ -17,56 +17,55 @@
 */
 
 /** 
- *
- * \defgroup icub_iKartCtrl iKartCtrl
- * @ingroup icub_eMorph
- *
- *
- * IKart controller (wheels decoupling prototype).
- *
- *Copyright (C) 2010 RobotCub Consortium
- *
- * Author: Marco Randazzo
- *
- *CopyPolicy: Released under the terms of the GNU GPL v2.0.
- * 
- * \section intro_sec Description
- * 
- * @@@TODO
- * 
- * \section portsa_sec Ports Accessed
- *  
- * @@@TODO
- *
- * \section portsc_sec Ports Created 
- *
- * @@@TODO
- * 
- * \section in_files_sec Input Data Files
- * 
- * @@@TODO
- * 
- * \section out_data_sec Output Data Files 
- * 
- * @@@TODO
- * 
- * \section conf_file_sec Configuration Files
- * 
- * @@@TODO
- * 
- * \section tested_os_sec Tested OS
- * Windows, Linux
- * 
- * \author Marco Randazzo
- * / 
- * 
- */
+\defgroup iKartCtrl iKartCtrl
+ 
+@ingroup icub_module  
+ 
+IKart controller (wheels decoupling prototype).
+ 
+Copyright (C) 2010 RobotCub Consortium
+ 
+Author: Marco Randazzo
+
+CopyPolicy: Released under the terms of the GNU GPL v2.0.
+
+\section intro_sec Description
+ 
+@@@TODO
+ 
+\section portsa_sec Ports Accessed
+ 
+@@@TODO
+ 
+\section portsc_sec Ports Created 
+ 
+@@@TODO
+
+\section in_files_sec Input Data Files
+
+@@@TODO
+
+\section out_data_sec Output Data Files 
+
+@@@TODO
+ 
+\section conf_file_sec Configuration Files
+
+@@@TODO
+
+\section tested_os_sec Tested OS
+Windows, Linux
+
+\author Marco Randazzo
+*/ 
 
 #include <yarp/os/Network.h>
 #include <yarp/os/RFModule.h>
 #include <yarp/os/RateThread.h>
 #include <yarp/os/Bottle.h>
 #include <yarp/os/BufferedPort.h>
+#include <yarp/os/ResourceFinder.h>
+#include <yarp/os/Os.h>
 #include <yarp/os/Time.h>
 #include <yarp/sig/Vector.h>
 #include <yarp/math/Math.h>
@@ -107,7 +106,8 @@ private:
 		 
 	int                 *board_control_modes;
     int					ikart_control_type;
-	double              wdt_timeout;
+	double              wdt_mov_timeout;
+	double              wdt_joy_timeout;
 
 	//movement control variables
 	double				linear_speed;
@@ -120,11 +120,15 @@ private:
 	double              FB;
 	double              FC;
 
+	//laser vaiables
+	bool                laser_enabled;
+
 protected:
     ResourceFinder      &rf;
     PolyDriver          *laser_driver;
 	PolyDriver          *control_board_driver;
     BufferedPort<Bottle>            port_movement_control;
+	BufferedPort<Bottle>            port_joystick_control;
 	BufferedPort<yarp::sig::Vector> port_laser_output;
 
     bool ctrlCompletePose;
@@ -151,7 +155,8 @@ public:
 		ikart_control_type = IKART_CONTROL_SPEED;
 		//ikart_control_type = IKART_CONTROL_OPENLOOP;
 		//ikart_control_type = IKART_CONTROL_NONE;
-		wdt_timeout = 0.100;
+		wdt_mov_timeout = 0.100;
+		wdt_joy_timeout = 0.100;
 
 		linear_speed = 1;
 		angular_speed = 0;
@@ -161,6 +166,8 @@ public:
 		FA=0;
 		FB=0;
 		FC=0;
+
+		laser_enabled=true;
     }
 
 	void set_ikart_control_type(int type)
@@ -197,41 +204,70 @@ public:
 
     virtual bool threadInit()
     {
-		laser_driver=new PolyDriver;
-		control_board_driver=new PolyDriver;
-		bool ok = true;
-
-		// open the laser scanner driver
-		Property laser_options;
-		laser_options.fromConfigFile("C:/Software/iCub/main/app/iKart/conf/iKartLaser.ini");
-		laser_options.put("device","laserHokuyo");
-        if (!laser_driver->open(laser_options))
-        {
-			fprintf(stderr,"ERROR: cannot open laser driver...\n");
-            delete laser_driver;    
-            return false;
-		}
-		//open the interface for the laser
-		ok = true;
-		ok = ok & laser_driver->view(iLaser);
-		if(!ok)
+		Property iKartCtrl_options;
+		ConstString configFile=rf.findFile("from");		
+		if (configFile=="") //--from iKartCtrl.ini
 		{
-			fprintf(stderr,"ERROR: cannot view the laser interface\nreturning...\n");
-			//return false;
+			printf("\nError! Cannot find .ini configuration file. \nBy default I'm searching for iKartCtrl.ini\n");
+			return false;
+		}
+		else
+		{
+			iKartCtrl_options.fromConfigFile(configFile.c_str());
+		}
+
+		if (iKartCtrl_options.check("laser")==false)
+		{
+			printf("\nLaser configuration not specified. Tuning off laser.\n");
+			laser_enabled=false;
+		}
+		else
+		{
+			ConstString laser_filename = iKartCtrl_options.find("laser").asString();
+			ConstString laser_config_filename =rf.findFile(laser_filename);		
+			if (laser_config_filename=="") 
+			{
+				printf("\nError! Unable to locate .ini laser configuration file. \nLooking for %s\n",laser_config_filename);
+				return false;
+			}
+			else
+			{
+				Property laser_options;
+				laser_options.fromConfigFile(laser_config_filename.c_str());
+				laser_options.put("CONFIG_PATH",rf.getContextPath().c_str());
+
+				// open the laser scanner driver
+				laser_driver=new PolyDriver;
+				laser_options.put("device","laserHokuyo");
+				if (!laser_driver->open(laser_options))
+				{
+					fprintf(stderr,"ERROR: cannot open laser driver...\n");
+					delete laser_driver;    
+					return false;
+				}
+				//open the interface for the laser
+				bool laser_ok = laser_driver->view(iLaser);
+				if(!laser_ok)
+				{
+					fprintf(stderr,"ERROR: cannot view the laser interface\nreturning...\n");
+					return false;
+				}
+			}
 		}
 
         // open the control board driver
+		control_board_driver=new PolyDriver;
         Property control_board_options("(device remote_controlboard)");
         control_board_options.put("remote",remoteName.c_str());
         control_board_options.put("local",localName.c_str());
         if (!control_board_driver->open(control_board_options))
         {
 			fprintf(stderr,"ERROR: cannot open control board driver...\n");
-            //delete control_board_driver;    
-            //return false;
+            delete control_board_driver;    
+            return false;
         }
         // open the interfaces for the control boards
-		ok = true;
+		bool ok = true;
 		ok = ok & control_board_driver->view(ivel);
 		ok = ok & control_board_driver->view(ienc);
 		ok = ok & control_board_driver->view(iopl);
@@ -245,6 +281,7 @@ public:
 		}
         // open ports
         port_movement_control.open((localName+"/control:i").c_str());
+		port_joystick_control.open((localName+"/joystick:i").c_str());
 		port_laser_output.open((localName+"/laser:o").c_str());
 
 		//set the control type
@@ -274,27 +311,55 @@ public:
 		//port_laser_data.setEnvelope(lastStateStamp);
         port_laser_output.write();
 
-		static double wdt_cmd=Time::now();
-        if (Bottle *b=port_movement_control.read(false))
+		static double wdt_mov_cmd=Time::now();
+		static double wdt_joy_cmd=Time::now();
+		static bool joystick_control = false;
+
+		if (Bottle *b = port_joystick_control.read(false))
         {                
             if (b->size()>=3)
             {                                
-				//received movement command
+				//received a joystick command.
+				//joystick commands have higher priorty respect to movement commands.
 				desired_direction = b->get(0).asDouble();
 				linear_speed = b->get(1).asDouble();
 				angular_speed = b->get(2).asDouble();
 				pwm_gain = b->get(3).asDouble();
-				wdt_cmd = Time::now();
+				wdt_joy_cmd = Time::now();
+				joystick_control = true;
             }
         }
-
+		if (Bottle *b = port_movement_control.read(false))
+		{                
+			if (b->size()>=3)
+			{                                
+				//received a movement command
+				if (joystick_control==false)
+				{	
+					//execute the command only if the joystick is not controlling!
+					desired_direction = b->get(0).asDouble();
+					linear_speed = b->get(1).asDouble();
+					angular_speed = b->get(2).asDouble();
+					pwm_gain = b->get(3).asDouble();
+				}
+				wdt_mov_cmd = Time::now();
+			}
+		}
 		//watchdog on received commands
         double wdt=Time::now();
 
 		if (ikart_control_type != IKART_CONTROL_NONE)
 			{
-				if (wdt-wdt_cmd > wdt_timeout)
+				if (joystick_control == true && wdt-wdt_joy_cmd > wdt_mov_timeout)
 				{
+					//no joystick commands have been received for xx ms. So turn off the joystick control.
+					joystick_control = false;
+				}
+				if (joystick_control == false && wdt-wdt_mov_cmd > wdt_mov_timeout)
+				{
+					//joystick control is currently off and also no commands have been received for xx ms. 
+					//So completely turn off the controller.
+
 					//fprintf(stderr,"No commands received in %f ms. Turning off control. \n",wdt_timeout/1000);
 					//ikart_control_type = IKART_CONTROL_NONE; 
 				}
@@ -372,6 +437,8 @@ public:
         port_movement_control.close();
 		port_laser_output.interrupt();
         port_laser_output.close();
+		port_joystick_control.interrupt();
+        port_joystick_control.close();
     }
 
 	void turn_off_control()
@@ -468,6 +535,8 @@ int main(int argc, char *argv[])
     ResourceFinder rf;
     rf.setVerbose(true);
     rf.configure("ICUB_ROOT",argc,argv);
+	rf.setDefaultContext("iKart/conf");
+	rf.setDefaultConfigFile("iKartCtrl.ini");
 
     if (rf.check("help"))
     {
