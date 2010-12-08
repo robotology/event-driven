@@ -59,17 +59,57 @@ public:
     * @param name name of the port of the device
     */
     void setDeviceName(std::string name);
-
+    
+    /**
+    * function used to append to a list of commands every single bit necessary to program bias
+    */
     void progBias(std::string name, int bits, int value);
 
+    /**
+    * function used to append to a list of bits necessary to send the latch commit
+    */
     void latchCommit();
 
+    /**
+    * function used to append to a list of bits necessary to send the latch commit (version 2)
+    */
+    void latchCommitAEs();
+
+    /**
+    * function used to reset the device to default after a bias is sent
+    */
+    void resetPins();
+
+    /**
+    * function that sents the powerdown to the correct value after the biases have been programmed
+    */
+    void releasePowerdown();
+
+    /**
+    * correct sequence of signals necessary to program a bit
+    * @param bitvalue value of the bit to be programmed
+    */
     void progBit(int bitvalue);
 
-    void biasprogtx(int time, int latch, int clock, int data);
+    /**
+    * correct sequence of signals necessary to program a bit (version 2)
+    * @param bitvalue value of the bit to be programmed
+    */
+    void progBitAEs(int bitvalue);
 
+    
+    void biasprogtx(int time, int latch, int clock, int data);
+    
+
+    /** 
+     * function that monitors the output for seconds
+     * @param secs number of seconds to wait
+     */
     void monitor(int secs);
 
+    /**
+     * fuction that connects to the device and write the sequence of signals to the device
+     */
     void sendingBias();
 
 private:

@@ -49,7 +49,8 @@ latchexpand = 8
 reset_pins_expand = 4
 */
 
-
+#define latchexpand  8
+#define reset_pins_expand  4
 #define timestep 10000 //100 us OneSecond/10000
 #define OneSecond 1000000 //1sec
 #define latchexpand 100
@@ -188,7 +189,8 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
                 progBias(biasNames[j],24,biasValues[j]);
             }
             latchCommit();
-            monitor(10);
+            //monitor(10);
+            //releasePowerdown();
             sendingBias();
         }
     }
@@ -340,6 +342,8 @@ void device2yarp::progBias(string name,int bits,int value) {
             bitvalue = 0;
         }
         progBit(bitvalue);
+        //after each bias value, set pins back to default value
+        //resetPins();
     }
 }
 
@@ -351,12 +355,44 @@ void device2yarp::latchCommit() {
     //printf("exiting latch_commit \n");
 }
 
+void device2yarp::latchCommitAEs() {
+    //printf("entering latch_commit \n");
+    biasprogtx(timestep * latchexpand, LATCH_TRANSPARENT, CLOCK_HI, 0);
+    biasprogtx(timestep * latchexpand, LATCH_KEEP, CLOCK_HI, 0);
+    biasprogtx(timestep * latchexpand, LATCH_KEEP, CLOCK_HI, 0);
+    //printf("exiting latch_commit \n");
+}
+
+void device2yarp::resetPins() {
+    //now
+    biasprogtx(0, LATCH_KEEP, CLOCK_HI, 0);
+    biasprogtx(reset_pins_expand * timestep, LATCH_KEEP, CLOCK_HI, 0);
+    //printf("exiting latch_commit \n");
+}
+
+void device2yarp::releasePowerdown() {
+    //now
+    biasprogtx(0, LATCH_KEEP, CLOCK_HI, 0);
+    biasprogtx(latchexpand * timestep, LATCH_KEEP, CLOCK_HI, 0);
+    //printf("exiting latch_commit \n");
+}
+
 void device2yarp::progBit(int bitvalue) {
     //set data
     biasprogtx(timestep, LATCH_KEEP, CLOCK_LO, bitvalue);
     //toggle clock
     biasprogtx(timestep, LATCH_KEEP, CLOCK_HI, bitvalue);
     biasprogtx(timestep, LATCH_KEEP, CLOCK_LO, bitvalue);
+}
+
+void device2yarp::progBitAEs(int bitvalue) {
+    //set data (now)
+    biasprogtx(0, LATCH_KEEP, CLOCK_HI, bitvalue);
+    //toggle clock
+    biasprogtx(timestep, LATCH_KEEP, CLOCK_LO, bitvalue);
+    biasprogtx(timestep, LATCH_KEEP, CLOCK_HI, bitvalue);
+    //and wait a little
+    biasprogtx(timestep, LATCH_KEEP, CLOCK_HI, bitvalue);
 }
 
 void device2yarp::monitor (int secs) {
