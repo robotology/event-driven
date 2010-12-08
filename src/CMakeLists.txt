@@ -11,4 +11,4 @@ add_subdirectory(iKartCtrl)
 #add_subdirectory(logpolar_frame_converter)
 #add_subdirectory(logpolar_frame_converter_add)
 add_subdirectory(visualAligner)
-
+add_subdirectory(laserScannerGui)
