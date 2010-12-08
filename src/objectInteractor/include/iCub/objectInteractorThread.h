@@ -19,13 +19,13 @@
  */
 
 /**
- * @file vAlignerThread.h
- * @brief Definition of a thread that receive cameres information and align them all
- * (see vAlignerModule.h).
+ * @file oInteractorThread.h
+ * @brief Definition of a thread that allows the robot to perform actions on the environment
+ * (see oInteractorModule.h).
  */
 
-#ifndef _VISUAL_ALIGNER_THREAD_H_
-#define _VISUAL_ALIGNER_THREAD_H_
+#ifndef _OBJECT_INTERACTOR_THREAD_H_
+#define _OBJECT_INTERACTOR_THREAD_H_
 
 #include <yarp/os/RateThread.h>
 #include <yarp/os/BufferedPort.h>
@@ -33,30 +33,21 @@
 #include <iostream>
 
 
-class vAlignerThread : public yarp::os::RateThread {
+class oInteractorThread : public yarp::os::RateThread {
 private:
     int count;                          //loop counter of the thread
-    int width, height;                  //dimension of the extended input image (extending)
-    int height_orig, width_orig;        //original dimension of the input and output images
-    yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelRgb> > leftDragonPort;       //port where the output of the dragonfly left is read
-    yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelRgb> > rightDragonPort;      //port where the output of the dragonfly right is read
-    yarp::sig::ImageOf <yarp::sig::PixelRgb>* leftDragonImage;          //image output of the dragonfly left is saved
-    yarp::sig::ImageOf <yarp::sig::PixelRgb>* rightDragonImage;         //image where the output of the dragonfly right is saved
-    yarp::sig::ImageOf <yarp::sig::PixelRgb>* tmp;                      //temporary image for correct port reading
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> > outPort;              //port whre the output is sent
     std::string name;       // rootname of all the ports opened by this thread
-    bool resized;           // flag to check if the variables have been already resized
 
 public:
     /**
     * default constructor
     */
-    vAlignerThread();
+    oInteractorThread();
 
     /**
      * destructor
      */
-    ~vAlignerThread();
+    ~oInteractorThread();
 
     /**
     * function that initialise the thread
@@ -91,21 +82,7 @@ public:
     */
     std::string getName(const char* p);
 
-    /**
-    * function that sets the width and the height of the images based on the dimension of the input image
-    * @param width width of the input image
-    * @return height height of the input image
-    */
-    void resize(int width, int height);
-
-    /**
-    * shift one image with respect to the other 
-    * @param shift number of pixel of shifts
-    * @param outImage reference to the output image
-    */
-    void shift(int shift, yarp::sig::ImageOf<yarp::sig::PixelRgb>& outImage);
-
 };
 
-#endif  //_VISUAL_ALIGNER_THREAD_H_
+#endif  //_OBJECT_INTERACTOR_THREAD_H_
 //----- end-of-file --- ( next line intentionally left blank ) ------------------

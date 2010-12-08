@@ -23,7 +23,7 @@
  * @brief main code to correctly start the module
  */
 
-#include "iCub/vAlignerModule.h" 
+#include "iCub/objectInteractorModule.h" 
 #include <yarp/os/all.h>
 
 using namespace yarp::os;
@@ -35,11 +35,11 @@ int main(int argc, char * argv[])
     Network yarp;
     
     Time::turboBoost();
-    vAlignerModule module; 
+    oInteractorModule module; 
 
     ResourceFinder rf;
     rf.setVerbose(true);
-    rf.setDefaultConfigFile("visualAligner.ini"); //overridden by --from parameter
+    rf.setDefaultConfigFile("objectInteractor.ini"); //overridden by --from parameter
     rf.setDefaultContext("logPolarAttentionSystem/conf");   //overridden by --context parameter
     rf.configure("ICUB_ROOT", argc, argv);
  

@@ -19,11 +19,11 @@
  */
 
 /**
- * @file vAlignerModule.cpp
- * @brief Implementation of the vAlignerModule (see header file).
+ * @file oInteractorModule.cpp
+ * @brief Implementation of the oInteractorModule (see header file).
  */
 
-#include <iCub/vAlignerModule.h>
+#include <iCub/objectInteractorModule.h>
 
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -36,12 +36,12 @@ using namespace std;
  *  equivalent of the "open" method.
  */
 
-bool vAlignerModule::configure(yarp::os::ResourceFinder &rf) {
+bool oInteractorModule::configure(yarp::os::ResourceFinder &rf) {
     /* Process all parameters from both command-line and .ini file */
 
     /* get the module name which will form the stem of all module port names */
     moduleName            = rf.check("name", 
-                           Value("/vAligner"), 
+                           Value("/oInteractor"), 
                            "module name (string)").asString();
     /*
     * before continuing, set the module name before getting any other parameters, 
@@ -72,28 +72,28 @@ bool vAlignerModule::configure(yarp::os::ResourceFinder &rf) {
 
     attach(handlerPort);                  // attach to port
 
-    vaThread=new vAlignerThread();
-    vaThread->setName(getName().c_str());
-    vaThread->start();
+    oiThread=new oInteractorThread();
+    oiThread->setName(getName().c_str());
+    oiThread->start();
 
     return true ;       // let the RFModule know everything went well
                         // so that it will then run the module
 }
 
-bool vAlignerModule::interruptModule() {
+bool oInteractorModule::interruptModule() {
     handlerPort.interrupt();
     return true;
 }
 
-bool vAlignerModule::close() {
+bool oInteractorModule::close() {
     handlerPort.close();
     /* stop the thread */
-    vaThread->stop();
-    delete vaThread;
+    oiThread->stop();
+    delete oiThread;
     return true;
 }
 
-bool vAlignerModule::respond(const Bottle& command, Bottle& reply) {
+bool oInteractorModule::respond(const Bottle& command, Bottle& reply) {
     string helpMessage =  string(getName().c_str()) + 
                         " commands are: \n" +  
                         "help \n" + 
@@ -113,11 +113,11 @@ bool vAlignerModule::respond(const Bottle& command, Bottle& reply) {
 }
 
 /* Called periodically every getPeriod() seconds */
-bool vAlignerModule::updateModule() {
+bool oInteractorModule::updateModule() {
     return true;
 }
 
-double vAlignerModule::getPeriod() {
+double oInteractorModule::getPeriod() {
     /* module periodicity (seconds), called implicitly by myModule */
     return 0.0;
 }

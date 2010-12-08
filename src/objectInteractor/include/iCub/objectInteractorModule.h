@@ -19,42 +19,24 @@
  */
 
 /**
- * @file vAlignerModule.h
- * @brief A module that reads the images from different cameras (DVS, traditional camera) and put together different visual clues
+ * @file objectInteractorModule.h
+ * @brief A module that allows the robot to interact with the object in order to extract affordances
  */
 
-#ifndef _VISUAL_ALIGNER_MODULE_H_
-#define _VISUAL_ALIGNER_MODULE_H_
+#ifndef _OBJECT_INTERACTOR_MODULE_H_
+#define _OBJECT_INTERACTOR_MODULE_H_
 
 /** 
  *
- * \defgroup icub_visualAligner visualAligner
+ * \defgroup icub_objectInteractor objectInteractor
  * @ingroup icub_eMorph
  *
  *
- * This is a module that reads independently from different camera with different tegnologies ( DVS, traditional colour camera)
- * 
- * \section reference
- * The address-event representation communication protocol AER 0.02, Caltech, Pasadena, CA, Internal Memo, Feb. 1993 [Online]. Available:
- * http://www.ini.uzh.ch/~amw/scx/std002.pdf
- * 
- * S. R. Deiss, T. Delbrück, R. J. Douglas, M. Fischer, M. Mahowald, T. Matthews, and A. M. Whatley, Address-event asynchronous local broadcast protocol, Inst. Neuroinform., Zurich, Switzerland, 1994 [Online].
- * Available: http://www.ini.uzh.ch/~amw/scx/aeprotocol.html
- * 
- * A. M. Whatley, PCI-AER Board Driver, Library & Documentation, Inst. Neuroinform., Zurich, Switzerland, 2007 [Online]. Available:
- * http://www.ini.uzh.ch/~amw/pciaer/
- * 
- * S. R. Deiss, R. J. Douglas, and A. M. Whatley, "A pulse-coded communications infrastructure for neuromorphic systems", in Pulsed Neural Networks, W. Maass and C. M. Bishop, Eds. Cambridge, MA: MIT Press, 1998, ch. 6, pp. 157–178.
- * 
- * V. Dante, P. Del Giudice, and A. M. Whatley, “PCI-AER—hardware and software for interfacing to address-event based neuromorphic systems,” The Neuromorphic Engineer vol. 2, no. 1, pp.
- * 5–6, 2005 [Online]. Available: http://ine-web.org/research/newsletters/index.html
- * 
- * 
+ * This is a module that allows interaction of the robot with objects present in the reaching space of the robot.
  * 
  * \section Description
- * DVS cameras extract event from the scene, these events are represented as images. DVS images coming from the ocular system in the iCub have to be
- * aligned with images produced by traditional cameras (dragonfly). However these cameras are located in a different position in the iCub's head.
- * This module defines the geometry of the alignment and puts together the different stereo images.
+ * Interaction with the objects present in the environment is the starting point in order to extract affordances of the objects and eventually 
+ * to activate reinforcement learning. The module provides a series of behaviour that can be ground on objects of known position in the world.
  *
  * \section lib_sec Libraries
  *
@@ -67,13 +49,13 @@
  * The following key-value pairs can be specified as command-line parameters by prefixing \c -- to the key 
  * (e.g. \c --from file.ini. The value part can be changed to suit your needs; the default values are shown below. 
  *
- * - \c from \c visualAligner.ini \n 
+ * - \c from \c objectInteractor.ini \n 
  *   specifies the configuration file
  *
- * - \c context \c logPolarAttentionSystem/conf \n
+ * - \c context \c eMorph/conf \n
  *   specifies the sub-path from \c /app to the configuration file
  *
- * - \c name \c visualAligner \n 
+ * - \c name \c objectInteractor \n 
  *   specifies the name of the module (used to form the stem of module port names)  
  *
  * - \c robot \c icub \n 
@@ -95,7 +77,7 @@
  *
  *  <b>Input ports</b>
  *
- *  - \c /visualAligner \n
+ *  - \c /objectInteractor \n
  *    This port is used to change the parameters of the module at run time or stop the module. \n
  *    The following commands are available
  * 
@@ -107,17 +89,13 @@
  *    The port can be used by other modules but also interactively by a user through the yarp rpc directive, viz.: \c yarp \c rpc \c /cartesianFrameCollector
  *    This opens a connection from a terminal to the port and allows the user to then type in commands and receive replies.
  *       
- *  - \c /visualAligner/dvsLeft:i \n
- *  - \c /visualAligner/dvsRight:i \n
- *  - \c /visualAligner/dragonLeft:i \n
- *  - \c /visualAligner/dragonRight:i \n
+ *  - \c /objectInteractor/position:o \n
  *
  * <b>Output ports</b>
  *
- *  - \c /visualAligner \n
+ *  - \c /objectInteractor \n
  *    see above
  *
- *  - \c /visualAligner/image:o \n
  *
  * <b>Port types</b>
  *
@@ -131,7 +109,7 @@
  *
  * \section conf_file_sec Configuration Files
  *
- * \c visualAligner.ini  in \c /logPolarAttentionSystem/conf \n
+ * \c objectInteractor.ini  in \c /eMorph/conf \n
  * 
  * \section tested_os_sec Tested OS
  *
@@ -139,7 +117,7 @@
  *
  * \section example_sec Example Instantiation of the Module
  * 
- * <tt>visualAligner --name /visualAligner --context logPolarAttentionSystem/conf --from visualAligner.ini --robot icub</tt>
+ * <tt>objectInteractor --name /objectInteractor --context eMorph/conf --from objectInteractor.ini --robot icub</tt>
  *
  * \author Rea Francesco
  *
@@ -157,9 +135,9 @@
 #include <yarp/os/Thread.h>
 
 //within project includes
-#include <iCub/vAlignerThread.h>
+#include <iCub/objectInteractorThread.h>
 
-class vAlignerModule:public yarp::os::RFModule {
+class oInteractorModule:public yarp::os::RFModule {
     std::string moduleName;                     //name of the module (rootname of ports)
     std::string robotName;                      //name of the robot
     std::string robotPortName;                  //reference to the head of the robot
@@ -167,7 +145,7 @@ class vAlignerModule:public yarp::os::RFModule {
     int ratethread;                             //time constant for ratethread
 
     yarp::os::Port handlerPort;                 // a port to handle messages 
-    vAlignerThread* vaThread;                   //visualAlignerThread for processing events
+    oInteractorThread* oiThread;                   //objectInteractorThread for processing events
 
 public:
     bool configure(yarp::os::ResourceFinder &rf); // configure all the module parameters and return true if successful
@@ -179,6 +157,6 @@ public:
 };
 
 
-#endif // _VISUAL_ALIGNER_MODULE_H__
+#endif // _OBJECT_INTERACTOR_MODULE_H__
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------
