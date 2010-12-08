@@ -119,8 +119,11 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
             *    "Pr": 8, 8
             *}
             */
-#define FAST
+
+
+            //#define FAST
 #ifdef FAST
+            printf("valus from DVS128Fast.xml \n");
             // from DVS128Fast.xml, set Tmpdiff128
             int biasValues[]={1966,        // cas
                               1137667,       // injGnd
@@ -136,7 +139,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
                               217            //Pr 
             };
 #else
-            
+            printf("valus from DVS128_PAER.xml \n");
             int biasValues[]={1966,        // cas
                               22703,       // injGnd
                               16777215,    // reqPd
@@ -192,7 +195,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
             }
             latchCommit();
             //monitor(10);
-            //releasePowerdown();
+            releasePowerdown();
             sendingBias();
         }
     }
@@ -343,9 +346,9 @@ void device2yarp::progBias(string name,int bits,int value) {
         else {
             bitvalue = 0;
         }
-        progBit(bitvalue);
+        progBitAEs(bitvalue);
         //after each bias value, set pins back to default value
-        //resetPins();
+        resetPins();
     }
 }
 
