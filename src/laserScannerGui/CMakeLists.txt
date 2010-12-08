@@ -3,6 +3,11 @@ cmake_minimum_required(VERSION 2.6)
 set(MODULENAME laserScannerGui)
 project(${MODULENAME})
 
+FIND_PACKAGE(ICUB)
+FIND_PACKAGE(YARP)
+SET (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${ICUB_DIR}/conf ${YARP_DIR}/conf)
+FIND_PACKAGE(OpenCV REQUIRED)
+
 include_directories(${YARP_INCLUDE_DIRS})
 include_directories(${ICUB_INCLUDE_DIRS})
 include_directories(${OpenCV_INCLUDE_DIRS})
