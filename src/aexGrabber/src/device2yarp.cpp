@@ -119,9 +119,10 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
             *    "Pr": 8, 8
             *}
             */
-
+#define FAST
+#ifdef FAST
             // from DVS128Fast.xml, set Tmpdiff128
-            /*int biasValues[]={1966,        // cas
+            int biasValues[]={1966,        // cas
                               1137667,       // injGnd
                               16777215,    // reqPd
                               8053457,     // puX
@@ -134,8 +135,8 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
                               278,          // foll
                               217            //Pr 
             };
-            */
-
+#else
+            
             int biasValues[]={1966,        // cas
                               22703,       // injGnd
                               16777215,    // reqPd
@@ -149,6 +150,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
                               19,          // foll
                               8            //Pr 
             };
+#endif
 
             string biasNames[] = {
                                 "cas",
