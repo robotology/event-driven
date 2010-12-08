@@ -1,0 +1,23 @@
+<application>
+<name>LaserScanner Gui Application </name>
+
+<dependencies>	
+<port>/iKart/laser:o</port>
+</dependencies>
+
+<module>
+   <name>laserScannerGui</name>
+   <parameters></parameters>
+   <node>console</node>
+   <stdio>console</stdio>
+   <tag>laserScannerGui</tag>
+</module>
+
+<connection>
+  <from>/iKart/laser:o</from>
+  <to>/laserScannerGui:i</to>
+  <protocol>udp</protocol>
+</connection>
+
+
+</application>
