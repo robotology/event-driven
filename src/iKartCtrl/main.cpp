@@ -89,7 +89,6 @@ using namespace std;
 using namespace yarp;
 using namespace yarp::os;
 using namespace yarp::dev;
-using namespace yarp::sig;
 using namespace yarp::math;
 
 
@@ -310,13 +309,16 @@ public:
     virtual void run()
     {
 		//read laser data
-		yarp::sig::Vector laser_data;
-		iLaser->read(laser_data);
-		yarp::sig::Vector &plaser_data=port_laser_output.prepare();
-        plaser_data=laser_data;
-        //lastStateStamp.update();
-		//port_laser_data.setEnvelope(lastStateStamp);
-        port_laser_output.write();
+		if (laser_enabled)
+		{
+			yarp::sig::Vector laser_data;
+			iLaser->read(laser_data);
+			yarp::sig::Vector &plaser_data=port_laser_output.prepare();
+			plaser_data=laser_data;
+			//lastStateStamp.update();
+			//port_laser_data.setEnvelope(lastStateStamp);
+			port_laser_output.write();
+		}
 
 		static double wdt_mov_cmd=Time::now();
 		static double wdt_joy_cmd=Time::now();
@@ -391,7 +393,7 @@ public:
 		}
 		else if	(ikart_control_type == IKART_CONTROL_SPEED)
 		{
-			MAX_VALUE = 10; // Maximum joint speed
+			MAX_VALUE = 40; // Maximum joint speed
 		}
 		
 		const double ratio = 0.7; // This value must be < 1 
@@ -406,15 +408,18 @@ public:
 		if (pwm_gain>1)	pwm_gain = 1;
 
 		//wheel contribution calculation
-		FA = linear_speed * cos ((150-desired_direction)/ 180.0 * 3.14159265) + angular_speed;
-		FB = linear_speed * cos ((030-desired_direction)/ 180.0 * 3.14159265) + angular_speed;
-		FC = linear_speed * cos ((270-desired_direction)/ 180.0 * 3.14159265) + angular_speed;
+		FA = linear_speed * cos ((150+desired_direction)/ 180.0 * 3.14159265) - angular_speed;
+		FB = linear_speed * cos ((030+desired_direction)/ 180.0 * 3.14159265) - angular_speed;
+		FC = linear_speed * cos ((270+desired_direction)/ 180.0 * 3.14159265) - angular_speed;
+		FA *= pwm_gain;
+		FB *= pwm_gain;
+		FC *= pwm_gain;
 
 		if (ikart_control_type == IKART_CONTROL_OPENLOOP)
 		{
-			iopl->setOutput(0,FA*pwm_gain);
-			iopl->setOutput(1,FB*pwm_gain);
-			iopl->setOutput(2,FC*pwm_gain);
+			iopl->setOutput(0,FA);
+			iopl->setOutput(1,FB);
+			iopl->setOutput(2,FC);
 		}
 		else if	(ikart_control_type == IKART_CONTROL_SPEED)
 		{
