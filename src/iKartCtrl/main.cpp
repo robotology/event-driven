@@ -217,7 +217,7 @@ public:
 			else if (control_type == "openloop") ikart_control_type = IKART_CONTROL_OPENLOOP;
 			else
 			{
-				printf("Error: unknown type of control required: %s. Closing...\n",control_type);
+				printf("Error: unknown type of control required: %s. Closing...\n",control_type.c_str());
 				return false;
 			}
 		}
@@ -233,7 +233,7 @@ public:
 			ConstString laser_config_filename =rf.findFile(laser_filename);		
 			if (laser_config_filename=="") 
 			{
-				printf("\nError! Unable to locate .ini laser configuration file. \nLooking for %s\n",laser_config_filename);
+				printf("\nError! Unable to locate .ini laser configuration file. \nLooking for %s\n",laser_config_filename.c_str());
 				return false;
 			}
 			else
