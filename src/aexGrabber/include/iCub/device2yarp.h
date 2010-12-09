@@ -98,7 +98,7 @@ public:
     void progBitAEs(int bitvalue);
 
     
-    void biasprogtx(int time, int latch, int clock, int data);
+    void biasprogtx(int time, int latch, int clock, int data, int powerdown = 1);
     
 
     /** 

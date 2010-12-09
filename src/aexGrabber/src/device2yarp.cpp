@@ -193,7 +193,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
             for(int j=0;j<countBias;j++) {
                 progBias(biasNames[j],24,biasValues[j]);
             }
-            latchCommit();
+            latchCommitAEs();
             //monitor(10);
             releasePowerdown();
             sendingBias();
@@ -347,9 +347,10 @@ void device2yarp::progBias(string name,int bits,int value) {
             bitvalue = 0;
         }
         progBitAEs(bitvalue);
-        //after each bias value, set pins back to default value
-        resetPins();
+        
     }
+    //after each bias value, set pins back to default value
+    resetPins();
 }
 
 void device2yarp::latchCommit() {
@@ -377,8 +378,8 @@ void device2yarp::resetPins() {
 
 void device2yarp::releasePowerdown() {
     //now
-    biasprogtx(0, LATCH_KEEP, CLOCK_HI, 0);
-    biasprogtx(latchexpand * timestep, LATCH_KEEP, CLOCK_HI, 0);
+    biasprogtx(0, LATCH_KEEP, CLOCK_HI, 0, 0);
+    biasprogtx(latchexpand * timestep, LATCH_KEEP, CLOCK_HI, 0, 0);
     //printf("exiting latch_commit \n");
 }
 
@@ -406,7 +407,7 @@ void device2yarp::monitor (int secs) {
     //printf("exiting monitor \n");
 } 
 
-void device2yarp::biasprogtx(int time,int latch,int clock,int data) {
+void device2yarp::biasprogtx(int time,int latch,int clock,int data, int powerdown ) {
     unsigned char addr[4];
     unsigned char t[4];
     int err;
@@ -431,6 +432,9 @@ void device2yarp::biasprogtx(int time,int latch,int clock,int data) {
     if (latch) {
         addr[3] += 0x04;
     }
+    if (powerdown) {
+        addr[3] += 0x08;
+    }
     //printf("data:0x%x, 0x%x, 0x%x, 0x%x \n",addr[0],addr[1],addr[2],addr[3]);
     
     
@@ -446,6 +450,9 @@ void device2yarp::biasprogtx(int time,int latch,int clock,int data) {
     }
     if (latch) {
         addressToSend += 0x04;
+    }
+    if (powerdown) {
+        addressToSend += 0x08;
     }
     addressToSend+=0xFF000000;
 
@@ -466,6 +473,4 @@ void device2yarp::biasprogtx(int time,int latch,int clock,int data) {
     //addr = int(sys.argv[1], 16)
     //err = write(file_desc,t,4); //4 byte time: 1 integer
     //err = write(file_desc,addr,4); //4 byte time: 1 integer
-    
-    
 }
