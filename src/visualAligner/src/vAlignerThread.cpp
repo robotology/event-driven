@@ -32,8 +32,8 @@ using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
-#define THRATE 10
-#define SHIFTCONST 10
+#define THRATE 30
+#define SHIFTCONST 100
 
 inline void copy_8u_C1R(ImageOf<PixelMono>* src, ImageOf<PixelMono>* dest) {
     int padding = src->getPadding();
