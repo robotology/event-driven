@@ -30,6 +30,7 @@
 
 using namespace yarp::os;
 using namespace yarp::sig;
+using namespace yarp::dev;
 using namespace std;
 
 #define THRATE 30
@@ -74,6 +75,7 @@ vAlignerThread::vAlignerThread() : RateThread(THRATE) {
     count=0;
     leftDragonImage = 0;
     rightDragonImage = 0;
+    shiftValue=20;
 }
 
 vAlignerThread::~vAlignerThread() {
@@ -92,6 +94,24 @@ bool vAlignerThread::threadInit() {
     outPort.open(getName("/image:o").c_str());
     leftDragonPort.open(getName("/leftDragon:i").c_str());
     rightDragonPort.open(getName("/rightDragon:i").c_str());
+    vergencePort.open(getName("/vergence:i").c_str());
+    //initializing gazecontrollerclient
+    Property option;
+    option.put("device","gazecontrollerclient");
+    option.put("remote","/iKinGazeCtrl");
+    string localCon("/client/gaze");
+    localCon.append(getName(""));
+    option.put("local",localCon.c_str());
+
+    clientGazeCtrl=new PolyDriver();
+    clientGazeCtrl->open(option);
+    igaze=NULL;
+
+    if (clientGazeCtrl->isValid()) {
+       clientGazeCtrl->view(igaze);
+    }
+    else
+        return false;
     return true;
 }
 
@@ -99,6 +119,7 @@ void vAlignerThread::interrupt() {
     outPort.interrupt();
     leftDragonPort.interrupt();
     rightDragonPort.interrupt();
+    vergencePort.interrupt();
 }
 
 void vAlignerThread::setName(string str) {
@@ -152,10 +173,17 @@ void vAlignerThread::run() {
                  }
              }
         }
+        
         ImageOf<yarp::sig::PixelRgb>& outputImage=outPort.prepare();
         if(resized) {
-            outputImage.resize(width + SHIFTCONST, height);
-            shift(SHIFTCONST,outputImage);
+            Vector angles(3);
+            bool b = igaze->getAngles(angles);
+            double h, alfa, rightHat, leftHat;
+            printf("azim %f, elevation %f, vergence %f \n",angles[0],angles[1],angles[2]);
+            double vergence = (angles[2] * 3.14) / 180;
+            double version = (angles[0] * 3.14) / 180;
+            outputImage.resize(width + shiftValue, height);
+            shift(shiftValue,outputImage);
             outPort.write();
         }
     }
@@ -167,26 +195,35 @@ void vAlignerThread::shift(int shift, ImageOf<PixelRgb>& outImage) {
     int padding = leftDragonImage->getPadding();
     int paddingOut = outImage.getPadding();
     unsigned char* pOutput=outImage.getRawImage();
+    double d;
+    double centerX=width + shift;
+    double centerY=height;
     if(shift >= 0) {
         for (int row = 0;row < height;row++) {
             //pRight += shift*3;
             for (int col = 0 ; col < shift ; col++) {
-                *pOutput++ = *pLeft++;
-                *pOutput++ = *pLeft++;
-                *pOutput++ = *pLeft++;
+                d=sqrt( (row - centerY) * (row - centerY) 
+                    + (col - centerX) * (col - centerX));
+                *pOutput++ = (unsigned char)(1/d) * *pLeft++;
+                *pOutput++ = (unsigned char)(1/d) * *pLeft++;
+                *pOutput++ = (unsigned char)(1/d) * *pLeft++;
             }
             for (int col = shift ; col < width ; col++) {
-                *pOutput=(unsigned char) floor(0.5 * *pLeft + 0.5 * *pRight);
+                d=sqrt( (row - centerY) * (row - centerY) 
+                    + (col - centerX) * (col - centerX));
+                *pOutput=(unsigned char) floor((1/d) * (0.5 * *pLeft + 0.5 * *pRight));
                 pLeft++;pRight++;pOutput++;
-                *pOutput=(unsigned char) floor(0.5 * *pLeft + 0.5 * *pRight);
+                *pOutput=(unsigned char) floor((1/d) * (0.5 * *pLeft + 0.5 * *pRight));
                 pLeft++;pRight++;pOutput++;
-                *pOutput=(unsigned char) floor(0.5 * *pLeft + 0.5 * *pRight);
+                *pOutput=(unsigned char) floor((1/d) * (0.5 * *pLeft + 0.5 * *pRight));
                 pLeft++;pRight++;pOutput++;
             }
             for(int col = width ; col < width + shift ; col++){
-                *pOutput++ = *pRight++;
-                *pOutput++ = *pRight++;
-                *pOutput++ = *pRight++;
+                d=sqrt( (row - centerY) * (row - centerY) 
+                    + (col - centerX) * (col - centerX));
+                *pOutput++ = (unsigned char)(1/d) * *pRight++;
+                *pOutput++ = (unsigned char)(1/d) * *pRight++;
+                *pOutput++ = (unsigned char)(1/d) * *pRight++;
             }
             //padding
             pLeft += padding;
@@ -199,17 +236,21 @@ void vAlignerThread::shift(int shift, ImageOf<PixelRgb>& outImage) {
         for (int row=0;row<height;row++) {
             pLeft+=shift*3;
             for (int col=0;col<width-shift;col++) {
-                *pOutput=(unsigned char) floor(0.5 * *pLeft + 0.5 * *pRight);
+                d=sqrt( (row - centerY) * (row - centerY) 
+                    + (col - centerX) * (col - centerX));
+                *pOutput=(unsigned char) floor((1/d) * (0.5 * *pLeft + 0.5 * *pRight));
                 pLeft++;pRight++;pOutput++;
-                *pOutput=(unsigned char) floor(0.5 * *pLeft + 0.5 * *pRight);
+                *pOutput=(unsigned char) floor((1/d) * (0.5 * *pLeft + 0.5 * *pRight));
                 pLeft++;pRight++;pOutput++;
-                *pOutput=(unsigned char) floor(0.5 * *pLeft + 0.5 * *pRight);
+                *pOutput=(unsigned char) floor((1/d) * (0.5 * *pLeft + 0.5 * *pRight));
                 pLeft++;pRight++;pOutput++;
             }
             for(int col=width-shift;col<width;col++){
-                *pOutput++=*pRight++;
-                *pOutput++=*pRight++;
-                *pOutput++=*pRight++;
+                d=sqrt( (row - centerY) * (row - centerY) 
+                    + (col - centerX) * (col - centerX));
+                *pOutput++=(unsigned char)(1/d) * *pRight++;
+                *pOutput++=(unsigned char)(1/d) * *pRight++;
+                *pOutput++=(unsigned char)(1/d) * *pRight++;
             }
             //padding
             pLeft+=padding;
@@ -221,8 +262,10 @@ void vAlignerThread::shift(int shift, ImageOf<PixelRgb>& outImage) {
 
 
 void vAlignerThread::threadRelease() {
+    delete clientGazeCtrl;
     outPort.close();
     leftDragonPort.close();
     rightDragonPort.close();
+    vergencePort.close();
 }
 

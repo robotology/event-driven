@@ -30,6 +30,7 @@
 #include <yarp/os/RateThread.h>
 #include <yarp/os/BufferedPort.h>
 #include <yarp/sig/all.h>
+#include <yarp/dev/all.h>
 #include <iostream>
 
 
@@ -40,13 +41,16 @@ private:
     int height_orig, width_orig;        //original dimension of the input and output images
     yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelRgb> > leftDragonPort;       //port where the output of the dragonfly left is read
     yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelRgb> > rightDragonPort;      //port where the output of the dragonfly right is read
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> > outPort;               //port whre the output is sent
+    yarp::os::BufferedPort<yarp::os::Bottle > vergencePort;          //port where the value of the vergence is received
     yarp::sig::ImageOf <yarp::sig::PixelRgb>* leftDragonImage;          //image output of the dragonfly left is saved
     yarp::sig::ImageOf <yarp::sig::PixelRgb>* rightDragonImage;         //image where the output of the dragonfly right is saved
     yarp::sig::ImageOf <yarp::sig::PixelRgb>* tmp;                      //temporary image for correct port reading
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> > outPort;              //port whre the output is sent
-    std::string name;       // rootname of all the ports opened by this thread
-    bool resized;           // flag to check if the variables have been already resized
-
+    std::string name;                   // rootname of all the ports opened by this thread
+    bool resized;                       // flag to check if the variables have been already resized
+    int shiftValue;                          //value of the shift between dragonfly (this is vergence related)
+    yarp::dev::IGazeControl *igaze;         //Ikin controller of the gaze
+    yarp::dev::PolyDriver* clientGazeCtrl;  //polydriver for the gaze controller
 public:
     /**
     * default constructor

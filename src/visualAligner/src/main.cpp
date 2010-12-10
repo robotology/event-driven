@@ -25,6 +25,10 @@
 
 #include "iCub/vAlignerModule.h" 
 #include <yarp/os/all.h>
+#include <yarp/dev/Drivers.h>
+
+
+YARP_DECLARE_DEVICES(icubmod)
 
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -36,6 +40,8 @@ int main(int argc, char * argv[])
     
     Time::turboBoost();
     vAlignerModule module; 
+
+    YARP_REGISTER_DEVICES(icubmod)
 
     ResourceFinder rf;
     rf.setVerbose(true);
