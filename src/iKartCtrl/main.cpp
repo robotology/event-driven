@@ -107,6 +107,7 @@ private:
     int					ikart_control_type;
 	double              wdt_mov_timeout;
 	double              wdt_joy_timeout;
+	int                 timeout_count;
 
 	//movement control variables
 	double				linear_speed;
@@ -154,6 +155,7 @@ public:
 		ikart_control_type = IKART_CONTROL_NONE;
 		wdt_mov_timeout = 0.100;
 		wdt_joy_timeout = 0.100;
+		timeout_count=0;
 
 		linear_speed = 1;
 		angular_speed = 0;
@@ -364,7 +366,14 @@ public:
 			}
 		}
 		//watchdog on received commands
-        double wdt=Time::now();
+        static double wdt_old=Time::now();
+		double wdt=Time::now();
+		//fprintf(stderr,"period: %f\n", wdt-wdt_old);
+		if (wdt-wdt_old > 0.040)
+		{
+			timeout_count++;
+		}
+		wdt_old=wdt;
 
 		if (ikart_control_type != IKART_CONTROL_NONE)
 			{
@@ -474,6 +483,7 @@ public:
         if (t-t0>=PRINT_STATUS_PER)
         {
 			//fprintf (stdout,"alive, time: %f\n",t-t0);
+			fprintf (stdout,"Timeouts: %d\n",timeout_count);
 			fprintf (stdout,"FA: %+.1f\n",FA);
 			fprintf (stdout,"FB: %+.1f\n",FB);
 			fprintf (stdout,"FC: %+.1f\n",FC);
