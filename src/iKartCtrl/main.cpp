@@ -312,12 +312,21 @@ public:
 		if (laser_enabled)
 		{
 			yarp::sig::Vector laser_data;
-			iLaser->read(laser_data);
-			yarp::sig::Vector &plaser_data=port_laser_output.prepare();
-			plaser_data=laser_data;
-			//lastStateStamp.update();
-			//port_laser_data.setEnvelope(lastStateStamp);
-			port_laser_output.write();
+			//fprintf(stderr,"before laser reading\n");
+			int res = iLaser->read(laser_data);
+			//fprintf(stderr,"after laser reading\n");
+			if (res == yarp::dev::IAnalogSensor::AS_OK)
+			{
+				yarp::sig::Vector &plaser_data=port_laser_output.prepare();
+				plaser_data=laser_data;
+				//lastStateStamp.update();
+				//port_laser_data.setEnvelope(lastStateStamp);
+				port_laser_output.write();
+			}
+			else
+			{
+				fprintf(stderr,"Error reading laser data, code: %d\n", res);
+			}
 		}
 
 		static double wdt_mov_cmd=Time::now();
