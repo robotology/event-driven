@@ -6,9 +6,15 @@
 
 <module>
    <name>dvsGrabber</name>
-   <parameters>--nameDevice /dev/aerfx2_0 </parameters>
+   <parameters>--deviceName /dev/aerfx2_0 </parameters>
    <node>/powerNode1</node>
    <tag>eventGrabber</tag>
+</module>
+<module>
+   <name>visualAligner</name>
+   <parameters></parameters>
+   <node>/powerNode1</node>
+   <tag>aligner</tag>
 </module>
 <module>
    <name>cartesianFrameCollector</name>
@@ -28,7 +34,21 @@
   <to>/cartesianFrameCollector/image:i</to>
   <protocol>tcp</protocol>
 </connection>
-
+<connection>
+  <from>/icub/camcalib/left/out</from>
+  <to>/vAligner/leftDragon:i</to>
+  <protocol>udp</protocol>
+</connection>
+<connection>
+  <from>/icub/camcalib/right/out</from>
+  <to>/vAligner/rightDragon:i</to>
+  <protocol>udp</protocol>
+</connection>
+<connection>
+  <from>/vAligner/image:o</from>
+  <to>/alignerView</to>
+  <protocol>udp</protocol>
+</connection>
 <connection>
   <from>/cartesianFrameCollector/image:o</from>
   <to>/eventView</to>
