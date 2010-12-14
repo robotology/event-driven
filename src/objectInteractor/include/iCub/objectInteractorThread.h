@@ -29,15 +29,30 @@
 
 #include <yarp/os/RateThread.h>
 #include <yarp/os/BufferedPort.h>
+#include <yarp/dev/PolyDriver.h>
+#include <yarp/dev/ControlBoardInterfaces.h>
+#include <yarp/dev/CartesianControl.h>
 #include <yarp/sig/all.h>
 #include <iostream>
 
+#include <yarp/dev/Drivers.h>	// new method
+YARP_DECLARE_DEVICES(icubmod)
 
 class oInteractorThread : public yarp::os::RateThread {
 private:
-    int count;                          //loop counter of the thread
-    std::string name;       // rootname of all the ports opened by this thread
+    int count;                                  //loop counter of the thread
+    std::string name;                           // rootname of all the ports opened by this thread
+    std::string robotName;                      // name of the robot
+    yarp::dev::PolyDriver* armRobotDevice;      //device necessary to control the robot arm
+    yarp::dev::PolyDriver* cartCtrlDevice;      //device necessary to control in the cartesian frame of reference
 
+    yarp::dev::IPositionControl *armPos;        //element that encodes the arm position
+    yarp::dev::IEncoders *armEnc;               //element that encodes the encoder values of the arm
+    yarp::dev::ICartesianControl *armCart;      //cartesian control of the arm
+    
+    int jointNum;                               // number of joints controlled
+
+    yarp::os::BufferedPort < yarp::os::Bottle > locationPort;          //port that reads the position of the salient object in the world frame of reference
 public:
     /**
     * default constructor
@@ -68,6 +83,12 @@ public:
     * function called when the module is poked with an interrupt command
     */
     void interrupt();
+
+    /**
+    * function that set the robotname
+    * @param str robotname as a string
+    */
+    void setRobotName(std::string str);
 
     /**
     * function that set the rootname for the ports that will be opened

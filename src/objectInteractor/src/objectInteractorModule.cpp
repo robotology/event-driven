@@ -74,6 +74,7 @@ bool oInteractorModule::configure(yarp::os::ResourceFinder &rf) {
 
     oiThread=new oInteractorThread();
     oiThread->setName(getName().c_str());
+    oiThread->setRobotName(robotName);
     oiThread->start();
 
     return true ;       // let the RFModule know everything went well

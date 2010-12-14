@@ -28,7 +28,8 @@ IF (folder_source)
 
     TARGET_LINK_LIBRARIES(${KEYWORD}  
                           ${YARP_LIBRARIES}
-	
+			  iKin
+			  icubmod			
     	                  )	
 
     INSTALL_TARGETS(/bin ${KEYWORD})

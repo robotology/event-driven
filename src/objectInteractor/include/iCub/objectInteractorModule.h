@@ -145,7 +145,8 @@ class oInteractorModule:public yarp::os::RFModule {
     int ratethread;                             //time constant for ratethread
 
     yarp::os::Port handlerPort;                 // a port to handle messages 
-    oInteractorThread* oiThread;                   //objectInteractorThread for processing events
+    oInteractorThread* oiThread;                //objectInteractorThread for processing events
+    
 
 public:
     bool configure(yarp::os::ResourceFinder &rf); // configure all the module parameters and return true if successful
