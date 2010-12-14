@@ -79,7 +79,7 @@ bool oInteractorModule::configure(yarp::os::ResourceFinder &rf) {
 
     gThread=new graspThread();
     gThread->setName(getName().c_str());
-    gThread->setRobotName(robotName);
+    //gThread->setRobotName(robotName);
     gThread->start();
 
     return true ;       // let the RFModule know everything went well

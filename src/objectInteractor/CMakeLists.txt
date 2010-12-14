@@ -11,6 +11,7 @@ SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${ICUB_DIR}/conf ${YARP_DIR}/conf)
 INCLUDE_DIRECTORIES(
     ${PROJECT_SOURCE_DIR}/include
     ${YARP_INCLUDE_DIRS}
+    ${ICUB_INCLUDE_DIRS}
 )
 
 # Search for source code.
@@ -28,10 +29,10 @@ IF (folder_source)
 
     TARGET_LINK_LIBRARIES(${KEYWORD}  
                           ${YARP_LIBRARIES}
-			  iKin
+                          iKin
                           actionPrimitives
-			  icubmod		
-    	                  )	
+                          icubmod
+                          )	
 
     INSTALL_TARGETS(/bin ${KEYWORD})
 ELSE (folder_source)
