@@ -29,7 +29,8 @@ IF (folder_source)
     TARGET_LINK_LIBRARIES(${KEYWORD}  
                           ${YARP_LIBRARIES}
 			  iKin
-			  icubmod			
+                          actionPrimitives
+			  icubmod		
     	                  )	
 
     INSTALL_TARGETS(/bin ${KEYWORD})

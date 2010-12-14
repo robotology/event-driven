@@ -136,6 +136,7 @@
 
 //within project includes
 #include <iCub/objectInteractorThread.h>
+#include <iCub/graspThread.h>
 
 class oInteractorModule:public yarp::os::RFModule {
     std::string moduleName;                     //name of the module (rootname of ports)
@@ -146,7 +147,7 @@ class oInteractorModule:public yarp::os::RFModule {
 
     yarp::os::Port handlerPort;                 // a port to handle messages 
     oInteractorThread* oiThread;                //objectInteractorThread for processing events
-    
+    graspThread* gThread;                       //thread to perform grasping
 
 public:
     bool configure(yarp::os::ResourceFinder &rf); // configure all the module parameters and return true if successful
