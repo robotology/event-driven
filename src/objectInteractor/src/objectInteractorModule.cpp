@@ -72,15 +72,19 @@ bool oInteractorModule::configure(yarp::os::ResourceFinder &rf) {
 
     attach(handlerPort);                  // attach to port
 
-    oiThread=new oInteractorThread();
+    oiThread = new oInteractorThread();
     oiThread->setName(getName().c_str());
     oiThread->setRobotName(robotName);
     oiThread->start();
 
-    gThread=new graspThread();
+    /*
+    gThread = new graspThread(rf);
+    //gThread->configure(rf);
     gThread->setName(getName().c_str());
     //gThread->setRobotName(robotName);
     gThread->start();
+    */
+
 
     return true ;       // let the RFModule know everything went well
                         // so that it will then run the module

@@ -39,8 +39,17 @@ int main(int argc, char * argv[])
 
     ResourceFinder rf;
     rf.setVerbose(true);
-    rf.setDefaultConfigFile("objectInteractor.ini"); //overridden by --from parameter
-    rf.setDefaultContext("logPolarAttentionSystem/conf");   //overridden by --context parameter
+    rf.setDefaultConfigFile("motorIF.ini"); //overridden by --from parameter
+    rf.setDefaultContext("objectInteractorApp/conf");   //overridden by --context parameter
+    //rf.setVerbose(true);
+    //rf.setDefaultContext("icubDemo2010MotorIF/conf");
+    //rf.setDefaultConfigFile("motorIF.ini");
+    rf.setDefault("hand_sequences_file","hand_sequences.ini");
+    rf.setDefault("table_file","table.ini");
+    rf.setDefault("homography_port","/eye2world");
+    rf.setDefault("opdbServerName","/OPDB/rpc");
+    rf.setDefault("name","icubDemo2010MotorIF");
+    //rf.configure("CHRIS_ROOT",argc,argv);
     rf.configure("ICUB_ROOT", argc, argv);
  
     module.runModule(rf);
