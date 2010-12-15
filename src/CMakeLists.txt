@@ -1,4 +1,5 @@
 add_subdirectory(aexGrabber)
+add_subdirectory(biasInterface)
 #add_subdirectory(binFile2yarp)
 #add_subdirectory(buffer2image)
 #add_subdirectory(cartesian_frame_converter)
