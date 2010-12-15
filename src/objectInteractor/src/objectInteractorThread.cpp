@@ -48,7 +48,7 @@ bool oInteractorThread::threadInit() {
     printf("starting the thread.... \n");
 
     // set up the ARM MOTOR INTERFACE	
-    string localName =  name + "/armCtrl";
+    string localName = "/" + name + "/armCtrl";
     string remoteName;
 
     remoteName = "/" + robotName + "/left_arm";
@@ -68,17 +68,17 @@ bool oInteractorThread::threadInit() {
 
 
     // SET UP the CARTESIAN INTERFACE
-    localName = name + "/cartArm";
+    localName = "/" + name + "/cartArm";
     remoteName = "/" + robotName + "/cartesianController/left_arm";
     //remoteName = "/cartesianSolver/left_arm";
     //remoteName = "/" + robotName + "/cartesianController/right_arm";
 
-    YARP_REGISTER_DEVICES(icubmod)	// to have the cartesianInterface working properly
+
 
     options.clear();
     options.put("device","cartesiancontrollerclient");
-    options.put("local", localName.c_str());                 //local port names
-    options.put("remote", remoteName.c_str());				//where we connect to	 
+    options.put("local", localName.c_str());                //local port names
+    options.put("remote", remoteName.c_str());              //where we connect to	 
     cartCtrlDevice = new PolyDriver(options);
     if (!cartCtrlDevice->isValid()) {
        printf("initialization failed: cartesian controller not available.\n");

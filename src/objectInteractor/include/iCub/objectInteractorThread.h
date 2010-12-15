@@ -36,7 +36,7 @@
 #include <iostream>
 
 #include <yarp/dev/Drivers.h>	// new method
-YARP_DECLARE_DEVICES(icubmod)
+
 
 class oInteractorThread : public yarp::os::RateThread {
 private:
