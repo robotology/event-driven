@@ -78,7 +78,7 @@ bool oInteractorThread::threadInit() {
     options.clear();
     options.put("device","cartesiancontrollerclient");
     options.put("local", localName.c_str());                //local port names
-    options.put("remote", remoteName.c_str());              //where we connect to	 
+    options.put("remote", remoteName.c_str());              //where we connect to
     cartCtrlDevice = new PolyDriver(options);
     if (!cartCtrlDevice->isValid()) {
        printf("initialization failed: cartesian controller not available.\n");
