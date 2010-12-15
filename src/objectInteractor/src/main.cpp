@@ -34,6 +34,7 @@ using namespace yarp::sig;
 int main(int argc, char * argv[])
 {
     Network yarp;
+    YARP_REGISTER_DEVICES(icubmod)
     
     Time::turboBoost();
     oInteractorModule module; 

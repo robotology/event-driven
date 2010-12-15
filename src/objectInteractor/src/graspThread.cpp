@@ -52,8 +52,8 @@ graspThread::graspThread() {
     dTapL.resize(3);           dTapR.resize(3);
     home_xL.resize(3);         home_xR.resize(3);
 
-    //graspOrienL=dcm2axis(palmOrientations["left_down"]);
-    //graspOrienR=dcm2axis(palmOrientations["right_down"]);
+    graspOrienL=dcm2axis((*palmOrientations)["left_down"]);
+    graspOrienR=dcm2axis((*palmOrientations)["right_down"]);
 
     // default values for arm-dependent quantities
     graspDispL[0]=0.0;         graspDispR[0]=0.0;
@@ -105,7 +105,7 @@ graspThread::graspThread() {
 
 
 graspThread::graspThread(ResourceFinder& rf) {
-    configure(rf);
+    
     palmOrientations=new map<string,Matrix>;
     computePalmOrientations();
        
@@ -165,6 +165,8 @@ graspThread::graspThread(ResourceFinder& rf) {
     running=false;
 
     Rand::init();
+
+    configure(rf);
 }
 
 
@@ -182,7 +184,19 @@ void graspThread::threadRelease() {
 }
 
 void graspThread::onStop() {
+    //opdbClient.close();
 
+    if (actionL!=NULL)
+        delete actionL;
+
+    if (actionR!=NULL)
+        delete actionR;        
+
+    if (openPorts)
+    {
+        cmdPort.close();
+        rpcPort.close();
+    }
 }
 
 void graspThread::getArmDependentOptions(Bottle &b, kinematicOffset &_dOffs,
@@ -328,7 +342,7 @@ bool graspThread::configure(ResourceFinder &rf) {
     targetInRangeThres=option.check("target_in_range_thres",Value(1e9)).asDouble();
 
     // get table configuration
-    //tableMan.load(rf.findFile("table_file").c_str());
+    tableMan.load(rf.findFile("table_file").c_str());
 
     // init table parameters transmission
     tableMan.initTxParams(("/"+name+"/table:o").c_str(),
@@ -759,6 +773,7 @@ void graspThread::tap(const Vector &xd) {
 // incapsulates one inside dealing with all the tight time constraints
 void graspThread::run() {
     while (isStopping() != true) {
+        printf("action %0x",action);
         // do it only once
         if (firstRun) {
             goHome();

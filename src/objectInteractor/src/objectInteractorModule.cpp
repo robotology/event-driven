@@ -72,12 +72,15 @@ bool oInteractorModule::configure(yarp::os::ResourceFinder &rf) {
 
     attach(handlerPort);                  // attach to port
 
+    oiThread = 0;
+    /*
     oiThread = new oInteractorThread();
     oiThread->setName(getName().c_str());
     oiThread->setRobotName(robotName);
     oiThread->start();
+    */
 
-    
+    gThread = 0;
     gThread = new graspThread(rf);
     //gThread->configure(rf);
     gThread->setName(getName().c_str());
@@ -98,8 +101,17 @@ bool oInteractorModule::interruptModule() {
 bool oInteractorModule::close() {
     handlerPort.close();
     /* stop the thread */
-    oiThread->stop();
-    delete oiThread;
+    
+    if(oiThread != 0) {
+        oiThread->stop();
+        delete oiThread;
+    }
+
+    if(gThread!=0) {
+        gThread->stop();
+        delete gThread;
+    }
+
     return true;
 }
 

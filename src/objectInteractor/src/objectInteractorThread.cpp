@@ -145,8 +145,12 @@ void oInteractorThread::threadRelease() {
     //closing kinematic interfaces
     armCart->stopControl();
     armPos->stop();
-    armRobotDevice->close();
-    cartCtrlDevice->close();
+    if(armRobotDevice!=0) {
+        armRobotDevice->close();
+    }
+    if(cartCtrlDevice!=0) {
+        cartCtrlDevice->close();
+    }
     delete armPos;
     delete armCart;
     delete armRobotDevice;
