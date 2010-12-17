@@ -31,7 +31,7 @@
  * \defgroup icub_objectInteractor objectInteractor
  * @ingroup icub_eMorph
  *
- *
+
  * This is a module that allows interaction of the robot with objects present in the reaching space of the robot.
  * 
  * \section Description

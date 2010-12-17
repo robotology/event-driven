@@ -379,7 +379,7 @@ bool graspThread::configure(ResourceFinder &rf) {
     {
         cout<<"***** Instantiating primitives for left_arm"<<endl;
         actionL=new ActionPrimitivesLayer2(optionL);
-        //actionL->setExtForceThres(forceCalibTableThresL);
+        actionL->setExtForceThres(forceCalibTableThresL);
         actionL->enableReachingTimeout(reachingTimeout);
 
         if (!actionL->isValid())
