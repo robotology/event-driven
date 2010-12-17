@@ -64,6 +64,94 @@ reset_pins_expand = 4
 
 
 device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):RateThread(10), save(i_bool) {
+    /*   ORIGINAL VALUES
+    *   from DVS128_PAER.xml, set Tmpdiff128
+    *    biasvalues = {
+    *    "11" "cas": 1966, 7AE
+    *    "10" "injGnd": 22703, 58AF
+    *    "9" "reqPd": 16777215, FFFFFF
+    *    "puX": 4368853, 42A9D5
+    *    "diffOff": 3207, C87
+    *    "req": 111347, 1B2F3
+    *    "refr": 0, 0
+    *    "puY": 16777215, FFFFFF
+    *    "diffOn": 483231, 75F9F
+    *    "diff": 28995, 7143
+    *    "foll": 19, 13
+    *    "Pr": 8, 8
+    *}
+    */
+                //#define FAST
+#ifdef FAST
+            
+
+            /*int biasValues[]={1966,        // cas
+                              1137667,       // injGnd
+                              16777215,    // reqPd
+                              8053457,     // puX
+                              133,        // diffOff
+                              160712,      // req
+                              944,           // refr
+                              16777215,    // puY
+                              205255,      // diffOn
+                              3207,       // diff 
+                              278,          // foll
+                              217            //Pr 
+            };*/
+
+             
+            
+            printf("valus from DVS128Fast.xml \n");
+            // from DVS128Fast.xml, set Tmpdiff128
+            cas = 1966;        // cas
+            injg = 1137667;       // injGnd
+            reqPd = 16777215;    // reqPd
+            pux = 8053457;     // puX
+            diffOff = 133;        // diffOff
+            req = 160712;      // req
+            refr = 944;           // refr
+            puy = 16777215;    // puY
+            diffOn = 205255;      // diffOn
+            diff = 3207;       // diff 
+            foll = 278;          // foll
+            pr= 217;            //Pr 
+            
+           
+#else
+            
+            printf("valus from DVS128_PAER.xml \n");
+            cas = 1966;        // cas
+            injg = 22703;       // injGnd
+            reqPd = 16777215;    // reqPd
+            pux = 4368853;     // puX
+            diffoff = 3207;        // diffOff
+            req = 111347;      // req
+            refr = 0;           // refr
+            puy = 16777215;    // puY
+            diffon = 483231;      // diffOn
+            diff = 28995;       // diff 
+            foll = 19;          // foll
+            pr = 8            //Pr 
+            
+            /*
+            int biasValues[]={1966,        // cas
+                              22703,       // injGnd
+                              16777215,    // reqPd
+                              4368853,     // puX
+                              3207,        // diffOff
+                              111347,      // req
+                              0,           // refr
+                              16777215,    // puY
+                              483231,      // diffOn
+                              28995,       // diff 
+                              19,          // foll
+                              8            //Pr 
+            };
+            */
+
+#endif
+            }
+
     len=0;
     sz=0;
     ec = 0;
@@ -102,58 +190,22 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
         int err;
         if(!strcmp(portDeviceName.c_str(),"/dev/aerfx2_0")) {
             printf("sending biases as events to the device ... \n");
-            /*   ORIGINAL VALUES
-             *   from DVS128_PAER.xml, set Tmpdiff128
-            *    biasvalues = {
-            *    "11" "cas": 1966, 7AE
-            *    "10" "injGnd": 22703, 58AF
-            *    "9" "reqPd": 16777215, FFFFFF
-            *    "puX": 4368853, 42A9D5
-            *    "diffOff": 3207, C87
-            *    "req": 111347, 1B2F3
-            *    "refr": 0, 0
-            *    "puY": 16777215, FFFFFF
-            *    "diffOn": 483231, 75F9F
-            *    "diff": 28995, 7143
-            *    "foll": 19, 13
-            *    "Pr": 8, 8
-            *}
-            */
 
 
-            //#define FAST
-#ifdef FAST
-            printf("valus from DVS128Fast.xml \n");
-            // from DVS128Fast.xml, set Tmpdiff128
-            int biasValues[]={1966,        // cas
-                              1137667,       // injGnd
-                              16777215,    // reqPd
-                              8053457,     // puX
-                              133,        // diffOff
-                              160712,      // req
-                              944,           // refr
-                              16777215,    // puY
-                              205255,      // diffOn
-                              3207,       // diff 
-                              278,          // foll
-                              217            //Pr 
+            int biasValues[]={cas,        // cas
+                          injg,       // injGnd
+                          reqPd,    // reqPd
+                          pux,     // puX
+                          diffoff,        // diffOff
+                          req,      // req
+                          refr,           // refr
+                          puy,    // puY
+                          diffon,      // diffOn
+                          diff,       // diff 
+                          foll,          // foll
+                          pr            //Pr 
             };
-#else
-            printf("valus from DVS128_PAER.xml \n");
-            int biasValues[]={1966,        // cas
-                              22703,       // injGnd
-                              16777215,    // reqPd
-                              4368853,     // puX
-                              3207,        // diffOff
-                              111347,      // req
-                              0,           // refr
-                              16777215,    // puY
-                              483231,      // diffOn
-                              28995,       // diff 
-                              19,          // foll
-                              8            //Pr 
-            };
-#endif
+
 
             string biasNames[] = {
                                 "cas",

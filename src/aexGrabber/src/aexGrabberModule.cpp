@@ -124,6 +124,288 @@ bool aexGrabberModule::respond(const Bottle& command, Bottle& reply) {
         cout << helpMessage;
         reply.addString("ok");
     }
+
+    mutex.wait();
+    switch (command.get(0).asVocab()) {
+    case COMMAND_VOCAB_HELP:
+        rec = true;
+        {
+            reply.addString("many");
+            reply.addString("help");
+
+            reply.addString("");
+            reply.addString("set fn \t: general set command ");
+            reply.addString("");
+            reply.addString("");
+
+            reply.addString("");
+            reply.addString("set time <int> \t: setting the costant time between saccadic events (default 3000) ");
+            reply.addString("set k1 <double> \t: setting the coefficients to the default value ");
+            reply.addString("set k1 <double> \t: setting of linear combination coefficient (map1) ");
+            reply.addString("set k2 <double> \t: setting of linear combination coefficient (map2) ");
+            reply.addString("set k3 <double> \t: setting of linear combination coefficient (map3) ");
+            reply.addString("set k4 <double> \t: setting of linear combination coefficient (map4)  ");
+            reply.addString("set k5 <double> \t: setting of linear combination coefficient (map5)  ");
+            reply.addString("set k6 <double> \t: setting of linear combination coefficient (map6)  ");
+            reply.addString("set kc1 <double> \t: setting of linear combination coefficient (mapc1)  ");
+            reply.addString("set kmot <double> \t: setting of linear combination coefficient (flow motion)  ");
+            reply.addString("");
+            reply.addString("get fn \t: general get command ");
+            reply.addString("");
+            reply.addString("");
+            reply.addString("get time <int> \t: getting the timing between saccadic events ");
+            reply.addString("get k1 <double> \t: getting the coefficients to the default value ");
+            reply.addString("get k1 <double> \t: getting of linear combination coefficient (map1) ");
+            reply.addString("get k2 <double> \t: getting of linear combination coefficient (map2) ");
+            reply.addString("get k3 <double> \t: getting of linear combination coefficient (map3) ");
+            reply.addString("get k4 <double> \t: getting of linear combination coefficient (map4)  ");
+            reply.addString("get k5 <double> \t: getting of linear combination coefficient (map5)  ");
+            reply.addString("get k6 <double> \t: getting of linear combination coefficient (map6)  ");
+            reply.addString("get kc1 <double> \t: getting of linear combination coefficient (mapc1)  ");
+            reply.addString("get kmot <double> \t: getting of linear combination coefficient (flow motion)  ");
+
+            reply.addString(" ");
+            reply.addString(" ");
+
+
+            ok = true;
+        }
+        break;
+    case COMMAND_VOCAB_SUSPEND:
+    rec = true;
+        {
+            D2Y->suspend();
+            ok = true;
+        }
+        break;
+    case COMMAND_VOCAB_RESUME:
+    rec = true;
+        {
+            D2Y->resume();
+            ok = true;
+        }
+        break;
+    case COMMAND_VOCAB_NAME:
+        rec = true;
+        {
+            // check and change filter name to pass on to the next filter
+            string fName(command.get(1).asString());
+            string subName;
+            Bottle subCommand;
+            int pos=1;
+            //int pos = fName.find_first_of(filter->getFilterName());
+            if (pos == 0){
+                pos = fName.find_first_of('.');
+                if (pos  > -1){ // there is a subfilter name
+                    subName = fName.substr(pos + 1, fName.size()-1);
+                    subCommand.add(command.get(0));
+                    subCommand.add(Value(subName.c_str()));
+                }
+                for (int i = 2; i < command.size(); i++)
+                    subCommand.add(command.get(i));
+                //ok = filter->respond(subCommand, reply);
+            }
+            else{
+                printf("filter name  does not match top filter name ");
+                ok = false;
+            }
+        }
+        break;
+    case COMMAND_VOCAB_SET:
+        rec = true;
+        {
+            switch(command.get(1).asVocab()) {
+            
+            case COMMAND_VOCAB_PR:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setPR(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_FOLL:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setFOLL(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_DIFF:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setDIFF(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_DIFFON:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setDIFFON(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_PUY:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setPUY(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_REFR:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setREFR(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_REQ:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setREQ(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_DIFFOFF:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setDIFFOFF(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_PUX:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setPUX(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_REQPD:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setREQPD(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_INJGND:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setINJGND(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_CAS:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setCAS(w);
+                ok = true;
+            }
+            break;
+            
+            default: {
+            }
+                break;
+            }
+        }
+        break;
+     
+    case COMMAND_VOCAB_GET:
+        rec = true;
+        {
+            switch(command.get(1).asVocab()) {
+            case COMMAND_VOCAB_PR:{
+                double w = D2Y->getK1();
+                reply.addDouble(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_FOLL:{
+                double w = D2Y->getK2();
+                reply.addDouble(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_DIFF:{
+                double w = D2Y->getK3();
+                reply.addDouble(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_DIFFON:{
+                double w = D2Y->getK4();
+                reply.addDouble(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_PUY:{
+                double w = D2Y->getK5();
+                reply.addDouble(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_REFR:{
+                double w = D2Y->getK6();
+                reply.addDouble(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_REQ:{
+                double w = D2Y->getKC1();
+                reply.addDouble(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_DIFFOFF:{
+                double w = D2Y->getKC1();
+                reply.addDouble(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_PUX:{
+                double w = D2Y->getKC1();
+                reply.addDouble(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_REQPD:{
+                double w = D2Y->getKC1();
+                reply.addDouble(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_INJGND:{
+                double w = D2Y->getKC1();
+                reply.addDouble(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_CAS:{
+                double w = D2Y->getKC1();
+                reply.addDouble(w);
+                ok = true;
+            }
+            break;
+            default: {
+                
+            }
+                break;
+            }
+        }
+        break;
+
+    }
+    mutex.post();
+
+    if (!rec)
+        ok = RFModule::respond(command,reply);
+    
+    if (!ok) {
+        reply.clear();
+        reply.addVocab(COMMAND_VOCAB_FAILED);
+    }
+    else
+        reply.addVocab(COMMAND_VOCAB_OK);
+
+    return ok;
     
     return true;
 }

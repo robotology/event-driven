@@ -147,7 +147,22 @@ private:
 
     bool save;
 
+    Port interfacePort;             //port dedicated to the request of values set through interface
+
     std::stringstream str_buf;
+
+    int pr;
+    int foll;
+    int diff;
+    int diffon;
+    int puy;
+    int refr;
+    int reqPd;
+    int diffoff;
+    int pux;
+    int req;
+    int injg;
+    int cas;
 };
 
 #endif //_DEVICE2YARP_H
