@@ -730,12 +730,12 @@ void graspThread::grasp(const Vector &xd) {
         action->pushAction(xd+*dLift,*graspOrien);
         action->pushWaitState(2.0);
         action->checkActionsDone(f,true);
-        //action->latchWrenchOffset();
-        //action->enableContactDetection();
+        action->latchWrenchOffset();
+        action->enableContactDetection();
         action->pushWaitState(1.0);
         action->pushAction(xd+randOffs,*graspOrien,3.0);
         action->checkActionsDone(f,true);
-        //action->disableContactDetection();
+        action->disableContactDetection();
 
         Vector x,o;
         action->getPose(x,o);
@@ -759,12 +759,11 @@ void graspThread::tap(const Vector &xd) {
     Vector endPos=startPos;
     endPos[1]-=2.0*(*dTap)[1];
 
-    //Vector startOrientation=dcm2axis(palmOrientations[armToBeUsed+"_starttap"]);
-    //Vector stopOrientation=dcm2axis(palmOrientations[armToBeUsed+"_stoptap"]);
-    Vector startOrientation,stopOrientation;
+    Vector startOrientation=dcm2axis((*palmOrientations)[armToBeUsed+"_starttap"]);
+    Vector stopOrientation=dcm2axis((*palmOrientations)[armToBeUsed+"_stoptap"]);
     action->tap(startPos,startOrientation,endPos,stopOrientation,1.0);
     action->pushWaitState(2.0);
-    //action->pushAction(*home_x,dcm2axis(palmOrientations[armToBeUsed+"_down"]),"open_hand",HOMING_PERIOD);
+    action->pushAction(*home_x,dcm2axis((*palmOrientations)[armToBeUsed+"_down"]),"open_hand",HOMING_PERIOD);
     action->checkActionsDone(f,true);
     goHome();
 }
@@ -858,14 +857,14 @@ void graspThread::run() {
     
                         action->pushAction(x0,*graspOrien,"open_hand");
                         action->checkActionsDone(f,true);
-                        //action->latchWrenchOffset();
-                        //action->enableContactDetection();
+                        action->latchWrenchOffset();
+                        action->enableContactDetection();
                         action->pushWaitState(1.0);
                         action->pushAction(x1,*graspOrien,3.0);
                         action->checkActionsDone(f,true);
                         action->pushWaitState(2.0);
-                        //action->disableContactDetection();
-                        //action->checkContact(f);
+                        action->disableContactDetection();
+                        action->checkContact(f);
 
                         if (f) {
                             Vector x,o;
@@ -916,14 +915,14 @@ void graspThread::run() {
 
                             action->pushAction(xd+offs+*graspDisp,*graspOrien,"open_hand");
                             action->checkActionsDone(f,true);
-                            //action->latchWrenchOffset();
-                            //action->enableContactDetection();
+                            action->latchWrenchOffset();
+                            action->enableContactDetection();
                             action->pushWaitState(1.0);
                             action->pushAction(xd+offs,*graspOrien,3.0);
                             action->checkActionsDone(f,true);
-                            //action->disableContactDetection();
+                            action->disableContactDetection();
 
-                            //kinCalib.init(action,xd,*forceCalibKinThres);
+                            kinCalib.init(action,xd,*forceCalibKinThres);
 
                             if (kinCalib.isRunning())
                                 kinCalib.resume();
