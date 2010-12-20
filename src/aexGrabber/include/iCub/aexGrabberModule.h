@@ -147,6 +147,16 @@
  * 
  */
 
+#define COMMAND_VOCAB_HELP VOCAB4('h','e','l','p')
+#define COMMAND_VOCAB_SET VOCAB3('s','e','t')
+#define COMMAND_VOCAB_GET VOCAB3('g','e','t')
+#define COMMAND_VOCAB_RUN VOCAB3('r','u','n')
+#define COMMAND_VOCAB_SUSPEND VOCAB3('s','u','s')
+#define COMMAND_VOCAB_RESUME VOCAB3('r','e','s')
+#define COMMAND_VOCAB_IS VOCAB2('i','s')
+#define COMMAND_VOCAB_FAILED VOCAB4('f','a','i','l')
+#define COMMAND_VOCAB_OK VOCAB2('o','k')
+
 #define COMMAND_VOCAB_PR VOCAB2('p','r')
 #define COMMAND_VOCAB_FOLL VOCAB4('f','o','l','l')
 #define COMMAND_VOCAB_DIFF VOCAB3('d','i','f')
