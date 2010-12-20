@@ -1181,7 +1181,7 @@ void configure(yarp::os::ResourceFinder rf){
     /* Process all parameters from both command-line and .ini file */
     /* get the module name which will form the stem of all module port names */
     _options.portName      = rf.check("name", 
-                           Value("/selectiveAttentionInterface"), 
+                           Value("/biasInterface"), 
                            "module name (string)").asString();
     _options.posX      = rf.check("x", 
                            Value(100), 
