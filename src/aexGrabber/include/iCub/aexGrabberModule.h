@@ -193,7 +193,7 @@ class aexGrabberModule:public yarp::os::RFModule {
     int ratethread;                             //time constant for ratethread
 
     yarp::os::Port handlerPort;                 // a port to handle messages 
-
+    yarp::os::Semaphore mutex;                      //semaphore for the respond function
     device2yarp* D2Y;                          //reference to the ratethread that reads the dvs camera
 
 public:

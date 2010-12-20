@@ -107,6 +107,8 @@ bool aexGrabberModule::close() {
 }
 
 bool aexGrabberModule::respond(const Bottle& command, Bottle& reply) {
+    bool ok = false;
+    bool rec = false; // is the command recognized?
     string helpMessage =  string(getName().c_str()) + 
                         " commands are: \n" +  
                         "help \n" + 
