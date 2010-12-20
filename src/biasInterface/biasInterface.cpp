@@ -141,183 +141,143 @@ static void callback( GtkWidget *widget,gpointer   data ){
 //-------------------------------------------------
 // Call Backs
 //-------------------------------------------------
-static void cb_digits_scale( GtkAdjustment *adj ) {
-    /* Set the number of decimal places to which adj->value is rounded */
+static void cb_digits_pr( GtkAdjustment *adj ) {
     if (_pOutPort!=NULL) {
         Bottle in;
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_K1);
-        bot.addDouble((double) adj->value);
+        bot.addVocab(COMMAND_VOCAB_PR);
+        bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
         _pOutPort->write(bot,in);
     }
 }
 
-static void cb_digits_scale2( GtkAdjustment *adj ) {
-    /* Set the number of decimal places to which adj->value is rounded */
-    //selectiveAttentionModule->processor1->cannyOperator->setThresholdL((double)adj->value);
-    //printf("k2: %f \n",(double) adj->value);
+static void cb_digits_foll( GtkAdjustment *adj ) {
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_K2);
-        bot.addDouble((double) adj->value);
+        bot.addVocab(COMMAND_VOCAB_FOLL);
+        bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
         Bottle in;
         _pOutPort->write(bot,in);
     }
 }
 
-static void cb_digits_scale3( GtkAdjustment *adj ) {
-    /* Set the number of maskSeed */
-    //selectiveAttentionModule->processor1->maskSeed=adj->value;
-    //printf("k3: %f \n",(double) adj->value);
+static void cb_digits_diff( GtkAdjustment *adj ) {
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_K3);
-        bot.addDouble((double) adj->value);
+        bot.addVocab(COMMAND_VOCAB_DIFF);
+        bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
         Bottle in;
         _pOutPort->write(bot,in);
     }
 }
 
-static void cb_digits_scale4( GtkAdjustment *adj ) {
-    /* Set the number of maskSeed */
-    //selectiveAttentionModule->processor1->maskTop=adj->value;
-    //printf("k4: %f \n",(double) adj->value);
+static void cb_digits_diffon( GtkAdjustment *adj ) {
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_K4);
-        bot.addDouble((double) adj->value);
+        bot.addVocab(COMMAND_VOCAB_DIFFON);
+        bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
         Bottle in;
         _pOutPort->write(bot,in);
     }
 }
 
-static void cb_digits_scale5( GtkAdjustment *adj ) {
-    /* Set the number of maskSeed */
-    //selectiveAttentionModule->processor1->maskTop=adj->value;
-    //printf("k5: %f \n",(double) adj->value);
+static void cb_digits_puy( GtkAdjustment *adj ) {
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_K5);
-        bot.addDouble((double) adj->value);
+        bot.addVocab(COMMAND_VOCAB_PUY);
+        bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
         Bottle in;
         _pOutPort->write(bot,in);
     }
 }
 
-static void cb_digits_scale6( GtkAdjustment *adj ) {
-    /* Set the number of maskSeed */
-    //selectiveAttentionModule->processor1->maskTop=adj->value;
+static void cb_digits_refr( GtkAdjustment *adj ) {
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_K6);
-        bot.addDouble((double) adj->value);
+        bot.addVocab(COMMAND_VOCAB_REFR);
+        bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
         Bottle in;
         _pOutPort->write(bot,in);
     }
 }
 
-static void cb_digits_scale11( GtkAdjustment *adj ) {
-    /* Set the number of maskSeed */
-    //selectiveAttentionModule->processor1->maskTop=adj->value;
+static void cb_digits_req( GtkAdjustment *adj ) {
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_KC1);
-        bot.addDouble((double) adj->value);
+        bot.addVocab(COMMAND_VOCAB_REQ);
+        bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
         Bottle in;
         _pOutPort->write(bot,in);
     }
 }
 
-static void cb_digits_scale12( GtkAdjustment *adj ) {
-    /* Set the number of maskSeed */
-    //selectiveAttentionModule->processor1->maskTop=adj->value;
+static void cb_digits_diffoff( GtkAdjustment *adj ) {
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_KC2);
-        bot.addDouble((double) adj->value);
+        bot.addVocab(COMMAND_VOCAB_DIFFOFF);
+        bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
         Bottle in;
         _pOutPort->write(bot,in);
     }
 }
 
-static void cb_digits_scale13( GtkAdjustment *adj ) {
-    /* Set the number of maskSeed */
-    //selectiveAttentionModule->processor1->maskTop=adj->value;
+static void cb_digits_pux( GtkAdjustment *adj ) {
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_KC3);
-        bot.addDouble((double) adj->value);
+        bot.addVocab(COMMAND_VOCAB_PUX);
+        bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
         Bottle in;
         _pOutPort->write(bot,in);
     }
 }
 
-static void cb_digits_scale14( GtkAdjustment *adj ) {
-    /* Set the number of maskSeed */
-    //selectiveAttentionModule->processor1->maskTop=adj->value;
+static void cb_digits_reqpd( GtkAdjustment *adj ) {
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_KC4);
-        bot.addDouble((double) adj->value);
+        bot.addVocab(COMMAND_VOCAB_REQPD);
+        bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
         Bottle in;
         _pOutPort->write(bot,in);
     }
 }
 
-static void cb_digits_scale15( GtkAdjustment *adj ) {
-    /* Set the number of maskSeed */
-    //selectiveAttentionModule->processor1->maskTop=adj->value;
+static void cb_digits_injgnd( GtkAdjustment *adj ) {
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_KC5);
-        bot.addDouble((double) adj->value);
-        //_pOutPort->Content() = _outBottle;
-        Bottle in;
-        _pOutPort->write(bot,in);
-    }
-}
-
-static void cb_digits_scale16( GtkAdjustment *adj ) {
-    /* Set the number of maskSeed */
-    //selectiveAttentionModule->processor1->maskTop=adj->value;
-    if (_pOutPort!=NULL) {
-        yarp::os::Bottle bot; //= _pOutPort->prepare();
-        bot.clear();
-        bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_KC6);
-        bot.addDouble((double) adj->value);
+        bot.addVocab(COMMAND_VOCAB_INJGND);
+        bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
         Bottle in;
         _pOutPort->write(bot,in);
@@ -325,16 +285,15 @@ static void cb_digits_scale16( GtkAdjustment *adj ) {
 }
 
 
-static void cb_digits_scaleMotion( GtkAdjustment *adj ) {
-    /* Set the number of maskSeed */
-    //selectiveAttentionModule->processor1->maskTop=adj->value;
+
+static void cb_digits_cas( GtkAdjustment *adj ) {
     mutex.wait();
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_KMOT);
-        bot.addDouble((double) adj->value);
+        bot.addVocab(COMMAND_VOCAB_CAS);
+        bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
         Bottle in;
         _pOutPort->write(bot,in);
@@ -910,7 +869,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj1), "value_changed",
-                      G_CALLBACK (cb_digits_scale), NULL);
+                      G_CALLBACK (cb_digits_pr), NULL);
     
 
 
@@ -925,7 +884,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj2), "value_changed",
-                      G_CALLBACK (cb_digits_scale2), NULL);
+                      G_CALLBACK (cb_digits_foll), NULL);
 
     label = gtk_label_new ("diff");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
@@ -938,7 +897,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj3), "value_changed",
-                      G_CALLBACK (cb_digits_scale3), NULL);
+                      G_CALLBACK (cb_digits_diff), NULL);
 
 
     label = gtk_label_new ("puY");
@@ -952,7 +911,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj4), "value_changed",
-                      G_CALLBACK (cb_digits_scale4), NULL);
+                      G_CALLBACK (cb_digits_puy), NULL);
 
     label = gtk_label_new ("refr");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
@@ -965,7 +924,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_scale5), NULL);
+                      G_CALLBACK (cb_digits_refr), NULL);
 
     label = gtk_label_new ("req");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
@@ -978,7 +937,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj6), "value_changed",
-                      G_CALLBACK (cb_digits_scale6), NULL);
+                      G_CALLBACK (cb_digits_req), NULL);
 
 
     label = gtk_label_new ("diffOff");
@@ -992,7 +951,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_scale5), NULL);
+                      G_CALLBACK (cb_digits_diffoff), NULL);
 
     label = gtk_label_new ("puX");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
@@ -1005,7 +964,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_scale5), NULL);
+                      G_CALLBACK (cb_digits_pux), NULL);
 
 
         label = gtk_label_new ("reqPd");
@@ -1019,7 +978,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_scale5), NULL);
+                      G_CALLBACK (cb_digits_reqpd), NULL);
 
     label = gtk_label_new ("injGnd");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
@@ -1032,7 +991,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_scale5), NULL);
+                      G_CALLBACK (cb_digits_injgnd), NULL);
 
     label = gtk_label_new ("cas");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
@@ -1045,7 +1004,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_scale5), NULL);
+                      G_CALLBACK (cb_digits_cas), NULL);
 
     gtk_box_pack_start (GTK_BOX (box3), box5, FALSE, FALSE, 0);
     gtk_widget_show (box5);
@@ -1180,7 +1139,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box2), separator, FALSE, TRUE, 10);
     gtk_widget_show (separator);
 
-
+    /*
     label = gtk_label_new ("coefficient motion");
     gtk_box_pack_start (GTK_BOX (box2), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
@@ -1193,6 +1152,7 @@ GtkWidget* createMainWindow(void) {
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adjMotion), "value_changed",
                       G_CALLBACK (cb_digits_scaleMotion), NULL);
+                      */
     
     separator = gtk_hseparator_new ();
     gtk_box_pack_start (GTK_BOX (box2), separator, FALSE, TRUE, 10);
