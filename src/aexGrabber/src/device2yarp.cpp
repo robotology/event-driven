@@ -49,11 +49,12 @@ latchexpand = 8
 reset_pins_expand = 4
 */
 
-#define latchexpand  8
+
 #define reset_pins_expand  4
 #define timestep 10000 //100 us OneSecond/10000
 #define OneSecond 1000000 //1sec
 #define latchexpand 100
+#define powerdownexpand 100
 #define countBias 12
 #define LATCH_KEEP 1
 #define LATCH_TRANSPARENT 0
@@ -249,25 +250,13 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
             //monitor(10);
             releasePowerdown();
             sendingBias();
+            
         }
     }
 }
 
 device2yarp::~device2yarp() {
-    if(save)
-        fclose(raw);
-
-    port.close();
-
-    unsigned char stop[5];
-    stop[0] = 0xb4;
-    stop[1] = 0;
-    stop[2] = 0;
-    stop[3] = 0;
-    stop[4] = 0;
-    //err = write(file_desc,stop,5);
-    printf("%d address events read\n",len/4);
-    close(file_desc);
+   
 }
 
 
@@ -402,7 +391,7 @@ void device2yarp::progBias(string name,int bits,int value) {
         
     }
     //after each bias value, set pins back to default value
-    resetPins();
+    //resetPins();
 }
 
 void device2yarp::latchCommit() {
@@ -434,6 +423,13 @@ void device2yarp::releasePowerdown() {
     biasprogtx(latchexpand * timestep, LATCH_KEEP, CLOCK_HI, 0, 0);
     //printf("exiting latch_commit \n");
 }
+
+
+void device2yarp::setPowerdown() {
+    biasprogtx(0, LATCH_KEEP, CLOCK_HI, 0, 1);
+    biasprogtx(powerdownexpand * timestep, LATCH_KEEP, CLOCK_HI, 0, 1);
+}
+
 
 void device2yarp::progBit(int bitvalue) {
     //set data
@@ -525,4 +521,28 @@ void device2yarp::biasprogtx(int time,int latch,int clock,int data, int powerdow
     //addr = int(sys.argv[1], 16)
     //err = write(file_desc,t,4); //4 byte time: 1 integer
     //err = write(file_desc,addr,4); //4 byte time: 1 integer
+}
+
+void device2yarp::threadRelease() {
+    printf("setting the powerDown \n");
+    const u32 seqAllocChunk_b = 8192 * sizeof(struct aer); //allocating the right dimension for biases
+
+    memset(pseq,0,seqAllocChunk_b);
+    setPowerdown();
+    sendingBias();
+
+     if(save)
+        fclose(raw);
+
+    port.close();
+
+    unsigned char stop[5];
+    stop[0] = 0xb4;
+    stop[1] = 0;
+    stop[2] = 0;
+    stop[3] = 0;
+    stop[4] = 0;
+    //err = write(file_desc,stop,5);
+    printf("%d address events read\n",len/4);
+    close(file_desc);
 }
