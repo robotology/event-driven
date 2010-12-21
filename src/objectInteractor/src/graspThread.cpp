@@ -713,7 +713,7 @@ void graspThread::touch(const Vector &xd) {
 void graspThread::grasp(const Vector &xd) {
     bool f=false;
 
-    //action->grasp(xd,*graspOrien,*graspDisp,*graspRelief);
+    action->grasp(xd,*graspOrien,*graspDisp,*graspRelief);
     action->checkActionsDone(f,true);
     action->areFingersInPosition(f);
 
