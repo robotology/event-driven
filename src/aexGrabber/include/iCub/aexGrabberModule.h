@@ -148,6 +148,7 @@
  */
 
 #define COMMAND_VOCAB_HELP VOCAB4('h','e','l','p')
+#define COMMAND_VOCAB_NAME VOCAB4('n','a','m','e')
 #define COMMAND_VOCAB_SET VOCAB3('s','e','t')
 #define COMMAND_VOCAB_GET VOCAB3('g','e','t')
 #define COMMAND_VOCAB_RUN VOCAB3('r','u','n')
@@ -166,7 +167,7 @@
 #define COMMAND_VOCAB_REQ VOCAB3('r','e','q')
 #define COMMAND_VOCAB_DIFFOFF VOCAB4('d','i','f','f')
 #define COMMAND_VOCAB_PUX VOCAB3('p','u','x')
-#define COMMAND_VOCAB_REQPD VOCAB3('r','e','q') 
+#define COMMAND_VOCAB_REQPD VOCAB4('r','e','q','p') 
 #define COMMAND_VOCAB_INJGND VOCAB4('i','n','j','g')
 #define COMMAND_VOCAB_CAS VOCAB3('c','a','s')
 

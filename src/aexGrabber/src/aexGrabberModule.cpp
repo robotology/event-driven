@@ -315,73 +315,73 @@ bool aexGrabberModule::respond(const Bottle& command, Bottle& reply) {
         {
             switch(command.get(1).asVocab()) {
             case COMMAND_VOCAB_PR:{
-                double w = D2Y->getK1();
+                double w = D2Y->getPR();
                 reply.addDouble(w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_FOLL:{
-                double w = D2Y->getK2();
+                double w = D2Y->getFOLL();
                 reply.addDouble(w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_DIFF:{
-                double w = D2Y->getK3();
+                double w = D2Y->getDIFF();
                 reply.addDouble(w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_DIFFON:{
-                double w = D2Y->getK4();
+                double w = D2Y->getDIFFON();
                 reply.addDouble(w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_PUY:{
-                double w = D2Y->getK5();
+                double w = D2Y->getPUY();
                 reply.addDouble(w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_REFR:{
-                double w = D2Y->getK6();
+                double w = D2Y->getREFR();
                 reply.addDouble(w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_REQ:{
-                double w = D2Y->getKC1();
+                double w = D2Y->getREQ();
                 reply.addDouble(w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_DIFFOFF:{
-                double w = D2Y->getKC1();
+                double w = D2Y->getDIFFOFF();
                 reply.addDouble(w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_PUX:{
-                double w = D2Y->getKC1();
+                double w = D2Y->getPUX();
                 reply.addDouble(w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_REQPD:{
-                double w = D2Y->getKC1();
+                double w = D2Y->getREQPD();
                 reply.addDouble(w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_INJGND:{
-                double w = D2Y->getKC1();
+                double w = D2Y->getINJGND();
                 reply.addDouble(w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_CAS:{
-                double w = D2Y->getKC1();
+                double w = D2Y->getCAS();
                 reply.addDouble(w);
                 ok = true;
             }

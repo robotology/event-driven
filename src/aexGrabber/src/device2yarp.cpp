@@ -132,7 +132,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
             diffon = 483231;      // diffOn
             diff = 28995;       // diff 
             foll = 19;          // foll
-            pr = 8            //Pr 
+            pr = 8;            //Pr 
             
             /*
             int biasValues[]={1966,        // cas
@@ -151,7 +151,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
             */
 
 #endif
-            }
+            
 
     len=0;
     sz=0;

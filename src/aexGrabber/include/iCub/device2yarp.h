@@ -118,6 +118,57 @@ public:
      */
     void sendingBias();
 
+    void setPR(double value) {pr = value;};
+    
+    void setFOLL(double value) {foll = value;};
+
+    void setDIFF(double value) {diff = value;};
+
+    void setDIFFON(double value) {diffon = value;};
+
+    void setPUY(double value) {puy = value;};
+
+    void setREFR(double value) {refr = value;};
+
+    void setREQ(double value) {req = value;};
+
+    void setDIFFOFF(double value) {diffoff = value;};
+    
+    void setPUX(double value) {pux = value;};
+    
+    void setREQPD(double value) {reqPd = value;};
+
+    void setINJGND(double value) {injg = value;};
+
+    void setCAS(double value) {cas = value;};
+
+
+    double getPR() {return pr ;};
+    
+    double getFOLL() {return foll ;};
+
+    double getDIFF() {return diff;};
+
+    double getDIFFON() {return diffon;};
+
+    double getPUY() {return puy;};
+
+    double getREFR() {return refr ;};
+
+    double getREQ() {return req ;};
+
+    double getDIFFOFF() {return diffoff;};
+    
+    double getPUX() {return pux;};
+    
+    double getREQPD() {return reqPd;};
+
+    double getINJGND() {return injg;};
+
+    double getCAS() {return cas;};
+
+
+
 private:
 
     yarp::os::BufferedPort<sendingBuffer> port;
@@ -152,7 +203,7 @@ private:
 
     bool save;
 
-    Port interfacePort;             //port dedicated to the request of values set through interface
+    yarp::os::Port interfacePort;             //port dedicated to the request of values set through interface
 
     std::stringstream str_buf;
 
