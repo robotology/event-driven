@@ -378,7 +378,7 @@ bool graspThread::configure(ResourceFinder &rf) {
     if (partUsed=="both_arms" || partUsed=="left_arm")
     {
         cout<<"***** Instantiating primitives for left_arm"<<endl;
-        actionL=new ActionPrimitivesLayer2(optionL);
+        actionL=new ActionPrimitivesLayer3(optionL);
         actionL->setExtForceThres(forceCalibTableThresL);
         actionL->enableReachingTimeout(reachingTimeout);
 
@@ -394,7 +394,7 @@ bool graspThread::configure(ResourceFinder &rf) {
     if (partUsed=="both_arms" || partUsed=="right_arm")
     {
         cout<<"***** Instantiating primitives for right_arm"<<endl;
-        actionR=new ActionPrimitivesLayer2(optionR);
+        actionR=new ActionPrimitivesLayer3(optionR);
         actionR->setExtForceThres(forceCalibTableThresR);
         actionR->enableReachingTimeout(reachingTimeout);
 
@@ -562,15 +562,12 @@ void graspThread::computePalmOrientations() {
     Rz(1,0)=-Rz(0,1);
     Rz(1,1)=Rz(0,0);
     Rz(2,2)=1.0;
-
-    R = (*palmOrientations)["left_base"];
-    palmOrientations->insert(it, pair<string,Matrix>("left_starttap",R));
-    //palmOrientations["left_starttap"] = palmOrientations["left_base"];
-
     R = (*palmOrientations)["right_base"];
     palmOrientations->insert(it, pair<string,Matrix>("right_starttap",R));
     //palmOrientations["right_starttap"] = palmOrientations["right_base"];
-    
+    R = (*palmOrientations)["left_base"];
+    palmOrientations->insert(it, pair<string,Matrix>("left_starttap",R));
+    //palmOrientations["left_starttap"] = palmOrientations["left_base"];
     
     Rx(1,1)=cos(M_PI/8.0);
     Rx(1,2)=-sin(M_PI/8.0);
@@ -585,7 +582,7 @@ void graspThread::computePalmOrientations() {
     Rx(2,1)=-Rx(1,2);
     Rx(2,2)=Rx(1,1);
     R = (*palmOrientations)["left_starttap"];
-    palmOrientations->insert(it, pair<string,Matrix>("left_stoptap",R));
+    palmOrientations->insert(it, pair<string,Matrix>("left_stoptap",Ry));
     //palmOrientations["left_stoptap"]=palmOrientations["left_starttap"];
 }
 
@@ -764,7 +761,7 @@ void graspThread::tap(const Vector &xd) {
 
     Vector startOrientation=dcm2axis((*palmOrientations)[armToBeUsed+"_starttap"]);
     Vector stopOrientation=dcm2axis((*palmOrientations)[armToBeUsed+"_stoptap"]);
-    action->tap(startPos,startOrientation,endPos,stopOrientation,3.0);
+    action->tap(startPos,startOrientation,endPos,stopOrientation,1.0);
     action->pushWaitState(2.0);
     action->pushAction(*home_x,dcm2axis((*palmOrientations)[armToBeUsed+"_down"]),"open_hand",HOMING_PERIOD);
     action->checkActionsDone(f,true);
