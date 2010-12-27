@@ -42,6 +42,8 @@
 *       layers can be inherited from the base class.
 */
 class ActionPrimitivesLayer3 : public iCub::action::ActionPrimitivesLayer2 {
+protected:
+    bool configuredLayer3;
     virtual void init();
     virtual void alignJointsBounds();
     virtual void postReachCallback();

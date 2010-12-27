@@ -61,6 +61,7 @@ using namespace std;
 
 /************************************************************************/
 void ActionPrimitivesLayer3::init() {
+    configuredLayer3 = false;
     ActionPrimitivesLayer2::init();
 }
 
@@ -82,7 +83,20 @@ void ActionPrimitivesLayer3::run() {
 
 /************************************************************************/
 bool ActionPrimitivesLayer3::open(Property &opt) {
-    return ActionPrimitivesLayer2::open(opt);
+    if (!skipFatherPart)
+        ActionPrimitivesLayer2::open(opt);
+
+    if (configuredLayer3)
+    {
+        printMessage("WARNING: already configured\n");
+        return true;
+    }
+
+    if (configuredLayer2) {
+        return configuredLayer3 = true;
+    }
+    else
+        return false;
 }
 
 
@@ -93,9 +107,8 @@ void ActionPrimitivesLayer3::alignJointsBounds() {
 
 
 /************************************************************************/
-bool ActionPrimitivesLayer3::isValid() const
-{
-    return ActionPrimitivesLayer2::isValid();
+bool ActionPrimitivesLayer3::isValid() const {
+     return (ActionPrimitivesLayer2::isValid() && configuredLayer3);
 }
 
 
