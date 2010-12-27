@@ -53,7 +53,7 @@ public:
     device2yarp(std::string deviceNumber, bool save, std::string filename);
     ~device2yarp();
     virtual void run();
-
+    virtual void threadRelease();
 
     /**
     * function used to set the name of the port device where biases are sent
@@ -82,9 +82,14 @@ public:
     void resetPins();
 
     /**
-    * function that sents the powerdown to the correct value after the biases have been programmed
+    * function that sends the powerdown to the correct value after the biases have been programmed
     */
     void releasePowerdown();
+
+    /**
+    * function that sends the powerdown to the correct value before switching the device off
+    */
+    void setPowerdown();
 
     /**
     * correct sequence of signals necessary to program a bit
