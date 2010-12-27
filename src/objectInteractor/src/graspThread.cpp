@@ -688,13 +688,13 @@ bool graspThread::isTargetInRange(const Vector &xd) {
 void graspThread::point(const Vector &xd) {
     bool f=false;
 
-    //action->latchWrenchOffset();
-    //action->enableContactDetection();
+    action->latchWrenchOffset();
+    action->enableContactDetection();
     action->pushWaitState(1.0);
     action->pushAction(xd,*graspOrien,"open_hand");
     action->checkActionsDone(f,true);
     action->pushWaitState(2.0);
-    //action->disableContactDetection();
+    action->disableContactDetection();
     action->pushAction(*home_x,HOMING_PERIOD);
     action->checkActionsDone(f,true);
     goHome();

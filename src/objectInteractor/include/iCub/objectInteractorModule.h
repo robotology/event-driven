@@ -37,6 +37,83 @@
  * \section Description
  * Interaction with the objects present in the environment is the starting point in order to extract affordances of the objects and eventually 
  * to activate reinforcement learning. The module provides a series of behaviour that can be ground on objects of known position in the world.
+ * The behaviours are sent via commands
+ The commands sent as bottles to the module port /<modName>/cmd:i
+are the following: 
+ 
+(notation: [.] identifies a vocab, <.> specifies a double) 
+ 
+<b>TOUCH</b> 
+format: [touch] <x> <y> <z> 
+action: a touch is executed on the object placed at (x,y,z) 
+cartesian coordinates. These coordinates are previsously 
+modified according to the offsets found during kinematic 
+calibration. 
+ 
+<b>GRASP</b> 
+format: [grasp] <x> <y> <z> 
+action: a grasp is executed on the object placed at (x,y,z) 
+cartesian coordinates; the object is then lifted and released 
+afterwards only in case the grasp was successful. The (x,y,z) 
+coordinates are previsously modified according to the offsets 
+found during kinematic calibration. 
+ 
+<b>TAP</b> 
+format: [tap] <x> <y> <z> 
+action: a tap is executed on the object placed at (x,y,z) 
+cartesian coordinates. These coordinates are previsously 
+modified according to the offsets found during kinematic 
+calibration. 
+ 
+<b>CALIB_TABLE</b> 
+format: [calib] [table] 
+action: the robot will try to find out the table height 
+exploiting the contact detection based on force control. If the 
+contact is detected then the new table height is sent to the 
+eye2world module that is in charge of extracting the 3d 
+coordinated of the object from its 2d projection on the image 
+plane. The file containing the table information is also updated 
+accordingly to avoid calibrating always at start-up. 
+ 
+<b>CALIB_KINEMATIC</b> 
+This command is splitted in two consecutive sub-commands: 
+ 
+format subcmd1: [calib] [kin] [start] [left]/[right] <x> <y> <z> 
+action: the robot reaches the position (x,y,z) with the 
+specified arm and waits for the interaction with human based on 
+force control in order to store the corresponding kinematic 
+offset; in other words, through this command the user can build 
+on-line a map between the 3d input (x,y,z) and the resulting 2d 
+quantity (dx,dy) that is required to compensate for the unknown
+kinematic offsets that affect the reaching on the table. In this
+phase, the user can move the robot arm just by exerting a push 
+on it: the quantities acquired during this exploration will be 
+used by the tap, grasp, etc. (Note that the compensation is 
+achieved only on the position not on the orientation). 
+ 
+format subcmd2: [calib] [kin] [stop] 
+action: terminate the calibration phase and update the map. 
+
+\section lib_sec Libraries 
+- YARP libraries. 
+- \ref ActionPrimitives library. 
+ 
+\section portsa_sec Ports Accessed
+Assumes that \ref icub_iCubInterface (with ICartesianControl 
+interface implemented) is running. 
+ 
+\section portsc_sec Ports Created 
+Aside from the internal ports created by \ref ActionPrimitives 
+library, we also have: 
+ 
+- \e /<modName>/cmd:i receives a bottle containing commands 
+  whose formats are specified in the previous section.
+ 
+- \e /<modName>/rpc remote procedure call. 
+    Recognized remote commands:
+    -[status]: returns 1 iff an action is still under way.
+    -[track] [on]/[off]: enable/disable the tracking mode of the
+     cartesian interface (use with care).
  *
  * \section lib_sec Libraries
  *
@@ -124,6 +201,12 @@
  * Copyright (C) 2010 RobotCub Consortium\n
  * CopyPolicy: Released under the terms of the GNU GPL v2.0.\n
  * 
+ */
+
+
+/**
+ * CHANGE LOG
+ * 27/12/2010 Added a new layer of ActionPrimitives                                                     @author Rea
  */
 
 #include <iostream>
