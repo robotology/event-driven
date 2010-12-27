@@ -32,8 +32,6 @@
 
 
 /**
-* \ingroup ActionPrimitives
-*
 * A derived class defining a second abstraction layer on top of 
 * @ref ActionPrimitivesLayer2 father class. 
 *  
@@ -68,7 +66,7 @@ public:
     */
     virtual ~ActionPrimitivesLayer3();
 
-        /**
+    /**
     * Configure the object.
     * @param opt the Property used to configure the object after its
     *            creation.
