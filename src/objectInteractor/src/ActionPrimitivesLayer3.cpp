@@ -75,6 +75,7 @@ void ActionPrimitivesLayer3::postReachCallback() {
 
 /************************************************************************/
 void ActionPrimitivesLayer3::run() {
+    printf("running \n");
     // call the main run()
     // the order does matter
     ActionPrimitivesLayer2::run();
@@ -93,6 +94,7 @@ bool ActionPrimitivesLayer3::open(Property &opt) {
     }
 
     if (configuredLayer2) {
+        printf("configuredLayer2 \n");
         return configuredLayer3 = true;
     }
     else
@@ -107,8 +109,11 @@ void ActionPrimitivesLayer3::alignJointsBounds() {
 
 
 /************************************************************************/
+
 bool ActionPrimitivesLayer3::isValid() const {
-     return (ActionPrimitivesLayer2::isValid() && configuredLayer3);
+    printf("configuredLayer3 %d \n", configuredLayer3);
+    return (ActionPrimitivesLayer2::isValid() && configuredLayer3);
+
 }
 
 

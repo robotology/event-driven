@@ -384,6 +384,7 @@ bool graspThread::configure(ResourceFinder &rf) {
 
         if (!actionL->isValid())
         {
+            printf("left Action is not valid! \n");
             close();
             return false;
         }
