@@ -75,7 +75,6 @@ void ActionPrimitivesLayer3::postReachCallback() {
 
 /************************************************************************/
 void ActionPrimitivesLayer3::run() {
-    printf("running \n");
     // call the main run()
     // the order does matter
     ActionPrimitivesLayer2::run();
@@ -112,8 +111,8 @@ void ActionPrimitivesLayer3::alignJointsBounds() {
 
 bool ActionPrimitivesLayer3::isValid() const {
     printf("configuredLayer3 %d \n", configuredLayer3);
+    printf("configuredLayer2 %d \n", ActionPrimitivesLayer2::isValid());
     return (ActionPrimitivesLayer2::isValid() && configuredLayer3);
-
 }
 
 
@@ -122,7 +121,7 @@ void ActionPrimitivesLayer3::close()
 {
     if (closed)
         return;
-
+    printf ("Closing ActionPrimitivesLayer2 after Layer3 \n");
     // call the main close()
     // the order does matter
     ActionPrimitivesLayer2::close();

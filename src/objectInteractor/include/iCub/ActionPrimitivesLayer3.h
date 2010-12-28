@@ -61,8 +61,8 @@ public:
     */
     ActionPrimitivesLayer3(yarp::os::Property &opt)  { printf("instantiate general class \n");
         ActionPrimitivesLayer2::init();
-        printf("initi termineated \n");
-        skipFatherPart=true;
+        printf("init terminated \n");
+        skipFatherPart=false;
         ActionPrimitivesLayer2::open(opt);
         printf("opening the interface \n");
     } ;

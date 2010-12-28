@@ -184,19 +184,7 @@ void graspThread::threadRelease() {
 }
 
 void graspThread::onStop() {
-    //opdbClient.close();
-
-    if (actionL!=NULL)
-        delete actionL;
-
-    if (actionR!=NULL)
-        delete actionR;        
-
-    if (openPorts)
-    {
-        cmdPort.close();
-        rpcPort.close();
-    }
+    close();
 }
 
 void graspThread::getArmDependentOptions(Bottle &b, kinematicOffset &_dOffs,
@@ -583,7 +571,7 @@ void graspThread::computePalmOrientations() {
     Rx(2,1)=-Rx(1,2);
     Rx(2,2)=Rx(1,1);
     R = (*palmOrientations)["left_starttap"];
-    palmOrientations->insert(it, pair<string,Matrix>("left_stoptap",Ry));
+    palmOrientations->insert(it, pair<string,Matrix>("left_stoptap",R));
     //palmOrientations["left_stoptap"]=palmOrientations["left_starttap"];
 }
 
