@@ -50,77 +50,6 @@ graspThread::graspThread() {
     dLiftL.resize(3);          dLiftR.resize(3);
     dTouchL.resize(3);         dTouchR.resize(3);
     dTapL.resize(3);           dTapR.resize(3);
-    dPushL.resize(3);          dPushR.resize(3);
-    home_xL.resize(3);         home_xR.resize(3);
-
-    graspOrienL=dcm2axis((*palmOrientations)["left_down"]);
-    graspOrienR=dcm2axis((*palmOrientations)["right_down"]);
-
-    // default values for arm-dependent quantities
-    graspDispL[0]=0.0;         graspDispR[0]=0.0;
-    graspDispL[1]=0.0;         graspDispR[1]=0.0; 
-    graspDispL[2]=0.05;        graspDispR[2]=0.05;
-
-    graspReliefL[0]=0.0;       graspReliefR[0]=0.0; 
-    graspReliefL[1]=0.0;       graspReliefR[1]=0.0; 
-    graspReliefL[2]=0.02;      graspReliefR[2]=0.02;
-
-    dLiftL[0]=0.0;             dLiftR[0]=0.0;  
-    dLiftL[1]=0.0;             dLiftR[1]=0.0;  
-    dLiftL[2]=0.15;            dLiftR[2]=0.15; 
-                                
-    dTouchL[0]=0.0;            dTouchR[0]=0.0;
-    dTouchL[1]=0.0;            dTouchR[1]=0.0;  
-    dTouchL[2]=0.0;            dTouchR[2]=0.0;
-                               
-    dTapL[0]=0.0;              dTapR[0]=0.0;
-    dTapL[1]=0.0;              dTapR[1]=0.0;  
-    dTapL[2]=0.0;              dTapR[2]=0.0;
-
-    dPushL[0]=0.0;              dPushR[0]=0.0;
-    dPushL[1]=0.0;              dPushR[1]=0.0;
-    dPushL[2]=0.0;              dPushR[2]=0.0;
-
-    dropLengthL=0.0;           dropLengthR=0.0;
-    forceCalibTableThresL=1e9; forceCalibTableThresR=1e9;
-    forceCalibKinThresL=1e9;   forceCalibKinThresR=1e9;
-
-    home_xL[0]=-0.29;          home_xR[0]=-0.29;
-    home_xL[1]=-0.21;          home_xR[1]= 0.24;
-    home_xL[2]= 0.11;          home_xR[2]= 0.07;
-
-    action=actionL=actionR = NULL;
-    graspOrien = NULL;
-    graspDisp = NULL;
-    graspRelief = NULL;
-    dOffs = NULL;
-    dLift = NULL;
-    dTouch = NULL;
-    dTap = NULL;
-    dPush = NULL;
-    home_x = NULL;
-    dropLength = NULL;
-
-    openPorts = false;
-    firstRun = true;
-    running = false;
-
-    Rand::init();
-}
-
-
-
-graspThread::graspThread(ResourceFinder& rf) {
-    
-    palmOrientations=new map<string,Matrix>;
-    computePalmOrientations();
-       
-    graspOrienL.resize(4);     graspOrienR.resize(4);
-    graspDispL.resize(4);      graspDispR.resize(3);
-    graspReliefL.resize(4);    graspReliefR.resize(3);
-    dLiftL.resize(3);          dLiftR.resize(3);
-    dTouchL.resize(3);         dTouchR.resize(3);
-    dTapL.resize(3);           dTapR.resize(3);
     dPushL.resize(3);           dPushR.resize(3);
     home_xL.resize(3);         home_xR.resize(3);
 
@@ -160,21 +89,85 @@ graspThread::graspThread(ResourceFinder& rf) {
     home_xL[1]=-0.21;          home_xR[1]= 0.24;
     home_xL[2]= 0.11;          home_xR[2]= 0.07;
 
-    action=actionL=actionR = NULL;
-    graspOrien = NULL;
-    graspDisp = NULL;
-    graspRelief = NULL;
-    dOffs = NULL;
-    dLift = NULL;
-    dTouch = NULL;
-    dTap = NULL;
-    dPush = NULL;
-    home_x = NULL;
-    dropLength = NULL;
+    action=actionL=actionR=NULL;
+    graspOrien=NULL;
+    graspDisp=NULL;
+    graspRelief=NULL;
+    dOffs=NULL;
+    dLift=NULL;
+    dTouch=NULL;
+    dTap=NULL;
+    home_x=NULL;
+    dropLength=NULL;
 
-    openPorts = false;
-    firstRun = true;
-    running = false;
+    openPorts=false;
+    firstRun=true;
+    running=false;
+
+    Rand::init();
+}
+
+
+
+graspThread::graspThread(ResourceFinder& rf) {
+    
+    palmOrientations=new map<string,Matrix>;
+    computePalmOrientations();
+       
+    graspOrienL.resize(4);     graspOrienR.resize(4);
+    graspDispL.resize(4);      graspDispR.resize(3);
+    graspReliefL.resize(4);    graspReliefR.resize(3);
+    dLiftL.resize(3);          dLiftR.resize(3);
+    dTouchL.resize(3);         dTouchR.resize(3);
+    dTapL.resize(3);           dTapR.resize(3);
+    home_xL.resize(3);         home_xR.resize(3);
+
+    graspOrienL=dcm2axis((*palmOrientations)["left_down"]);
+    graspOrienR=dcm2axis((*palmOrientations)["right_down"]);
+
+    // default values for arm-dependent quantities
+    graspDispL[0]=0.0;         graspDispR[0]=0.0;
+    graspDispL[1]=0.0;         graspDispR[1]=0.0; 
+    graspDispL[2]=0.05;        graspDispR[2]=0.05;
+
+    graspReliefL[0]=0.0;       graspReliefR[0]=0.0; 
+    graspReliefL[1]=0.0;       graspReliefR[1]=0.0; 
+    graspReliefL[2]=0.02;      graspReliefR[2]=0.02;
+
+    dLiftL[0]=0.0;             dLiftR[0]=0.0;  
+    dLiftL[1]=0.0;             dLiftR[1]=0.0;  
+    dLiftL[2]=0.15;            dLiftR[2]=0.15; 
+                                
+    dTouchL[0]=0.0;            dTouchR[0]=0.0;
+    dTouchL[1]=0.0;            dTouchR[1]=0.0;  
+    dTouchL[2]=0.0;            dTouchR[2]=0.0;
+                               
+    dTapL[0]=0.0;              dTapR[0]=0.0;
+    dTapL[1]=0.0;              dTapR[1]=0.0;  
+    dTapL[2]=0.0;              dTapR[2]=0.0;
+
+    dropLengthL=0.0;           dropLengthR=0.0;
+    forceCalibTableThresL=1e9; forceCalibTableThresR=1e9;
+    forceCalibKinThresL=1e9;   forceCalibKinThresR=1e9;
+
+    home_xL[0]=-0.29;          home_xR[0]=-0.29;
+    home_xL[1]=-0.21;          home_xR[1]= 0.24;
+    home_xL[2]= 0.11;          home_xR[2]= 0.07;
+
+    action=actionL=actionR=NULL;
+    graspOrien=NULL;
+    graspDisp=NULL;
+    graspRelief=NULL;
+    dOffs=NULL;
+    dLift=NULL;
+    dTouch=NULL;
+    dTap=NULL;
+    home_x=NULL;
+    dropLength=NULL;
+
+    openPorts=false;
+    firstRun=true;
+    running=false;
 
     Rand::init();
 
@@ -260,12 +253,11 @@ void graspThread::getArmDependentOptions(Bottle &b, kinematicOffset &_dOffs,
     if (Bottle *pB=b.find("pushing_displacement").asList())
     {
         int sz=pB->size();
-        int len=_dPush.length();
+        int len=_dTap.length();
         int l=len<sz?len:sz;
-        printf("pushing_displacement \n");
+
         for (int i=0; i<l; i++)
             _dPush[i]=pB->get(i).asDouble();
-        printf("pushing_displacement \n");
     }
 
     if (Bottle *pB=b.find("home_position").asList())
@@ -596,8 +588,8 @@ void graspThread::computePalmOrientations() {
     palmOrientations->insert(it, pair<string,Matrix>("left_stoptap",R));
     //palmOrientations["left_stoptap"]=palmOrientations["left_starttap"];
 
-    Ry(0,0)=cos(M_PI / 2);
-    Ry(0,2)=sin(M_PI / 2);
+    Ry(0,0)=cos((4 * M_PI) / 5);
+    Ry(0,2)=sin((4 * M_PI) / 5);
     Ry(1,1)=1.0;
     Ry(2,0)=-Ry(0,2);
     Ry(2,2)=Ry(0,0);
@@ -799,7 +791,7 @@ void graspThread::push(const Vector &xd) {
 
     Vector startPos = xd + *dPush;
     Vector endPos = startPos;
-    endPos[1] -= 2.0 * (*dPush)[0];
+    endPos[1] -= 2.0 * (*dTap)[0];
 
     Vector startOrientation = dcm2axis((*palmOrientations)[armToBeUsed+"_startpush"]);
     Vector stopOrientation = dcm2axis((*palmOrientations)[armToBeUsed+"_stoppush"]);
@@ -1069,3 +1061,4 @@ bool graspThread::respond(const Bottle &command, Bottle &reply) {
 
     return true;
 }
+
