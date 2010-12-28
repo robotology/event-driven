@@ -792,7 +792,7 @@ void graspThread::tap(const Vector &xd) {
 
     Vector startOrientation=dcm2axis((*palmOrientations)[armToBeUsed+"_starttap"]);
     Vector stopOrientation=dcm2axis((*palmOrientations)[armToBeUsed+"_stoptap"]);
-    action->tap(startPos,startOrientation,endPos,stopOrientation,3.0);
+    action->tap(startPos,startOrientation,endPos,stopOrientation,2.0);
     action->pushWaitState(2.0);
     action->pushAction(*home_x,dcm2axis((*palmOrientations)[armToBeUsed+"_down"]),"open_hand",HOMING_PERIOD);
     action->checkActionsDone(f,true);
@@ -808,7 +808,7 @@ void graspThread::push(const Vector &xd) {
 
     Vector startOrientation = dcm2axis((*palmOrientations)[armToBeUsed+"_startpush"]);
     Vector stopOrientation = dcm2axis((*palmOrientations)[armToBeUsed+"_stoppush"]);
-    action->tap(startPos,startOrientation,endPos,stopOrientation,3.0);
+    action->tap(startPos,startOrientation,endPos,stopOrientation,2.0);
     action->pushWaitState(2.0);
     action->pushAction(*home_x, dcm2axis((*palmOrientations)[armToBeUsed+"_down"]), "open_hand", HOMING_PERIOD);
     action->checkActionsDone(f,true);
@@ -880,7 +880,7 @@ void graspThread::run() {
                     break;
                 }
 
-                              // execute a tap
+                // execute a push
                 case CMD_PUSH: {
                     Vector xd = retrieveTargetAndPrepareArm(b);
     
