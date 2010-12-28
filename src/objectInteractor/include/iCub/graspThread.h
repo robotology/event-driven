@@ -542,7 +542,7 @@ public:
     void getArmDependentOptions(yarp::os::Bottle &b, kinematicOffset &_dOffs,
                                 yarp::sig::Vector &_gDisp, yarp::sig::Vector &_gRelief,
                                 yarp::sig::Vector &_dLift, yarp::sig::Vector &_dTouch,
-                                yarp::sig::Vector &_dTap, yarp::sig::Vector &_home_x, double &_dropLength,
+                                yarp::sig::Vector &_dTap, yarp::sig::Vector &_dPush, yarp::sig::Vector &_home_x, double &_dropLength,
                                 double &_forceCalibTableThres, double &_forceCalibKinThres);
     
     virtual bool configure(yarp::os::ResourceFinder &rf);

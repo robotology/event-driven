@@ -195,9 +195,8 @@ void graspThread::onStop() {
 void graspThread::getArmDependentOptions(Bottle &b, kinematicOffset &_dOffs,
                                 Vector &_gDisp, Vector &_gRelief,
                                 Vector &_dLift, Vector &_dTouch,
-                                Vector &_dTap, Vector &_home_x, double &_dropLength,
-                                double &_forceCalibTableThres, double &_forceCalibKinThres)
-{
+                                Vector &_dTap, Vector &_dPush, Vector &_home_x, double &_dropLength,
+                                double &_forceCalibTableThres, double &_forceCalibKinThres) {
     string kinOffsfileName=b.find("kinematic_offsets_file").asString().c_str();
     _dOffs.load(rf->findFile(kinOffsfileName.c_str()).c_str());
 
@@ -249,6 +248,16 @@ void graspThread::getArmDependentOptions(Bottle &b, kinematicOffset &_dOffs,
 
         for (int i=0; i<l; i++)
             _dTap[i]=pB->get(i).asDouble();
+    }
+
+    if (Bottle *pB=b.find("pushing_displacement").asList())
+    {
+        int sz=pB->size();
+        int len=_dTap.length();
+        int l=len<sz?len:sz;
+
+        for (int i=0; i<l; i++)
+            _dPush[i]=pB->get(i).asDouble();
     }
 
     if (Bottle *pB=b.find("home_position").asList())
@@ -350,7 +359,7 @@ bool graspThread::configure(ResourceFinder &rf) {
     }
     else
         getArmDependentOptions(bLeft,dOffsL,graspDispL,graspReliefL,
-                               dLiftL,dTouchL,dTapL,home_xL,dropLengthL,
+                               dLiftL,dTouchL,dTapL,dPushL,home_xL,dropLengthL,
                                forceCalibTableThresL,forceCalibKinThresL);
 
     // parsing right_arm config options
@@ -362,7 +371,7 @@ bool graspThread::configure(ResourceFinder &rf) {
     }
     else
         getArmDependentOptions(bRight,dOffsR,graspDispR,graspReliefR,
-                               dLiftR,dTouchR,dTapR,home_xR,dropLengthR,
+                               dLiftR,dTouchR,dTapR,dPushR,home_xR,dropLengthR,
                                forceCalibTableThresR,forceCalibKinThresR);
 
     // set up the reaching timeout
@@ -579,8 +588,8 @@ void graspThread::computePalmOrientations() {
     palmOrientations->insert(it, pair<string,Matrix>("left_stoptap",R));
     //palmOrientations["left_stoptap"]=palmOrientations["left_starttap"];
 
-    Ry(0,0)=cos(M_PI/4);
-    Ry(0,2)=sin(M_PI/4);
+    Ry(0,0)=cos((4 * M_PI) / 5);
+    Ry(0,2)=sin((4 * M_PI) / 5);
     Ry(1,1)=1.0;
     Ry(2,0)=-Ry(0,2);
     Ry(2,2)=Ry(0,0);
@@ -780,9 +789,9 @@ void graspThread::tap(const Vector &xd) {
 void graspThread::push(const Vector &xd) {
     bool f = false;
 
-    Vector startPos = xd + *dTap;
+    Vector startPos = xd + *dPush;
     Vector endPos = startPos;
-    endPos[1] -= 2.0*(*dTap)[1];
+    endPos[1] -= 2.0 * (*dTap)[0];
 
     Vector startOrientation = dcm2axis((*palmOrientations)[armToBeUsed+"_startpush"]);
     Vector stopOrientation = dcm2axis((*palmOrientations)[armToBeUsed+"_stoppush"]);
