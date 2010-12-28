@@ -206,7 +206,8 @@ library, we also have:
 
 /**
  * CHANGE LOG
- * 27/12/2010 Added a new layer of ActionPrimitives                                                     @author Rea
+ * 27/12/2010 : Added a new layer of ActionPrimitives                                                     @author Rea
+ * 28/12/2010 : Added push function in graspThread and ActionPrimitivesLayer3                             @author Rea
  */
 
 #include <iostream>

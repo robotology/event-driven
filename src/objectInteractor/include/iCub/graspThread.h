@@ -60,6 +60,7 @@
 #define CMD_TOUCH                   VOCAB4('t','o','u','c')
 #define CMD_GRASP                   VOCAB4('g','r','a','s')
 #define CMD_TAP                     VOCAB3('t','a','p')
+#define CMD_PUSH                    VOCAB4('p','u','s','h')
 #define CMD_CALIB                   VOCAB4('c','a','l','i')
                                     
 #define OPT_TABLE                   VOCAB4('t','a','b','l')
@@ -451,9 +452,9 @@ protected:
     std::string armToBeUsed;
     std::string name;
 
-    ActionPrimitivesLayer3       *actionL;
-    ActionPrimitivesLayer3       *actionR;
-    ActionPrimitivesLayer3       *action;
+    ActionPrimitivesLayer2       *actionL;
+    ActionPrimitivesLayer2       *actionR;
+    ActionPrimitivesLayer2       *action;
 
     //opdbAccessClient              opdbClient;
     std::map<std::string,yarp::sig::Matrix>*            palmOrientations;
@@ -472,6 +473,7 @@ protected:
     yarp::sig::Vector dLiftL,                dLiftR;
     yarp::sig::Vector dTouchL,               dTouchR;
     yarp::sig::Vector dTapL,                 dTapR;
+    yarp::sig::Vector dPushL,                 dPushR;
     yarp::sig::Vector home_xL,               home_xR;
     double dropLengthL,           dropLengthR;
     double forceCalibTableThresL, forceCalibTableThresR;
@@ -483,6 +485,7 @@ protected:
     yarp::sig::Vector *dLift;
     yarp::sig::Vector *dTouch;
     yarp::sig::Vector *dTap;
+    yarp::sig::Vector *dPush;
     yarp::sig::Vector *home_x;
     double *dropLength;
     double *forceCalibKinThres;
@@ -594,6 +597,11 @@ public:
     * taps the target
     */
     void tap(const yarp::sig::Vector &xd);
+
+    /**
+    * pushes the target
+    */
+    void push(const yarp::sig::Vector &xd);
 
     bool close();
 

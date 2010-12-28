@@ -50,6 +50,7 @@ graspThread::graspThread() {
     dLiftL.resize(3);          dLiftR.resize(3);
     dTouchL.resize(3);         dTouchR.resize(3);
     dTapL.resize(3);           dTapR.resize(3);
+    dPushL.resize(3);           dPushR.resize(3);
     home_xL.resize(3);         home_xR.resize(3);
 
     graspOrienL=dcm2axis((*palmOrientations)["left_down"]);
@@ -75,6 +76,10 @@ graspThread::graspThread() {
     dTapL[0]=0.0;              dTapR[0]=0.0;
     dTapL[1]=0.0;              dTapR[1]=0.0;  
     dTapL[2]=0.0;              dTapR[2]=0.0;
+
+    dPushL[0]=0.0;              dPushR[0]=0.0;
+    dPushL[1]=0.0;              dPushR[1]=0.0;
+    dPushL[2]=0.0;              dPushR[2]=0.0;
 
     dropLengthL=0.0;           dropLengthR=0.0;
     forceCalibTableThresL=1e9; forceCalibTableThresR=1e9;
@@ -366,7 +371,7 @@ bool graspThread::configure(ResourceFinder &rf) {
     if (partUsed=="both_arms" || partUsed=="left_arm")
     {
         cout<<"***** Instantiating primitives for left_arm"<<endl;
-        actionL=new ActionPrimitivesLayer3(optionL);
+        actionL=new ActionPrimitivesLayer2(optionL);
         actionL->setExtForceThres(forceCalibTableThresL);
         actionL->enableReachingTimeout(reachingTimeout);
 
@@ -383,7 +388,7 @@ bool graspThread::configure(ResourceFinder &rf) {
     if (partUsed=="both_arms" || partUsed=="right_arm")
     {
         cout<<"***** Instantiating primitives for right_arm"<<endl;
-        actionR=new ActionPrimitivesLayer3(optionR);
+        actionR=new ActionPrimitivesLayer2(optionR);
         actionR->setExtForceThres(forceCalibTableThresR);
         actionR->enableReachingTimeout(reachingTimeout);
 
@@ -573,6 +578,19 @@ void graspThread::computePalmOrientations() {
     R = (*palmOrientations)["left_starttap"];
     palmOrientations->insert(it, pair<string,Matrix>("left_stoptap",R));
     //palmOrientations["left_stoptap"]=palmOrientations["left_starttap"];
+
+    Ry(0,0)=cos(M_PI);
+    Ry(0,2)=sin(M_PI);
+    Ry(1,1)=1.0;
+    Ry(2,0)=-Ry(0,2);
+    Ry(2,2)=Ry(0,0);
+    R = (*palmOrientations)["left_down"] * Ry;
+    palmOrientations->insert(it, pair<string,Matrix>("left_startpush",R));
+    palmOrientations->insert(it, pair<string,Matrix>("left_stoppush",R));
+
+    R = (*palmOrientations)["right_down"] * Ry;
+    palmOrientations->insert(it, pair<string,Matrix>("right_startpush",R));
+    palmOrientations->insert(it, pair<string,Matrix>("right_stoppush",R));
 }
 
 void graspThread::useArm(const int arm) {
@@ -587,7 +605,8 @@ void graspThread::useArm(const int arm) {
         dOffs=&dOffsL;
         dLift=&dLiftL;
         dTouch=&dTouchL;
-        dTap=&dTapL;
+        dTap = &dTapL;
+        dPush = &dPushL;
         home_x=&home_xL;
         dropLength=&dropLengthL;
         forceCalibKinThres=&forceCalibKinThresL;
@@ -604,6 +623,7 @@ void graspThread::useArm(const int arm) {
         dLift=&dLiftR;
         dTouch=&dTouchR;
         dTap=&dTapR;
+        dPush = &dPushR;
         home_x=&home_xR;
         dropLength=&dropLengthR;
         forceCalibKinThres=&forceCalibKinThresR;
@@ -757,6 +777,22 @@ void graspThread::tap(const Vector &xd) {
     goHome();
 }
 
+void graspThread::push(const Vector &xd) {
+    bool f = false;
+
+    Vector startPos = xd + *dTap;
+    Vector endPos = startPos;
+    endPos[1] -= 2.0*(*dTap)[1];
+
+    Vector startOrientation = dcm2axis((*palmOrientations)[armToBeUsed+"_startpush"]);
+    Vector stopOrientation = dcm2axis((*palmOrientations)[armToBeUsed+"_stoppush"]);
+    action->tap(startPos,startOrientation,endPos,stopOrientation,3.0);
+    action->pushWaitState(2.0);
+    action->pushAction(*home_x, dcm2axis((*palmOrientations)[armToBeUsed+"_down"]), "open_hand", HOMING_PERIOD);
+    action->checkActionsDone(f,true);
+    goHome();
+}
+
 // we don't need a thread since the actions library already
 // incapsulates one inside dealing with all the tight time constraints
 void graspThread::run() {
@@ -819,6 +855,22 @@ void graspThread::run() {
                         point(xd);
                     }
                     running=false;
+                    break;
+                }
+
+                              // execute a tap
+                case CMD_PUSH: {
+                    Vector xd = retrieveTargetAndPrepareArm(b);
+    
+                    running = true;
+    
+                    if (isTargetInRange(xd))
+                        push(xd);
+                    else {
+                        cout<<"########## Target out of range ... pointing"<<endl;
+                        point(xd);
+                    }
+                    running = false;
                     break;
                 }
 

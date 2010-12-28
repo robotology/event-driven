@@ -172,20 +172,35 @@ bool ActionPrimitivesLayer3::grasp2(const Vector &x, const Vector &o,
         return false;
 }
 
+/************************************************************************/
+bool ActionPrimitivesLayer3::push(const Vector &x1, const Vector &o1,
+                                 const Vector &x2, const Vector &o2,
+                                 const double execTime) {
+    if (configuredLayer3)
+    {
+        printMessage("start tapping\n");
+        pushAction(x1,o1,"karate_hand");
+        pushAction(x2,o2,execTime);
+        pushAction(x1,o1);
+
+        return true;
+    }
+    else
+        return false;
+}
+
+
 
 /************************************************************************/
 bool ActionPrimitivesLayer3::grasp2(const Vector &x, const Vector &o,
-                                   const Vector &d)
-{
+                                   const Vector &d) {
     return ActionPrimitivesLayer2::grasp(x,o,d);
 }
 
 
 /************************************************************************/
-bool ActionPrimitivesLayer3::touch2(const Vector &x, const Vector &o, const Vector &d)
-{
-    if (configured)
-    {
+bool ActionPrimitivesLayer3::touch2(const Vector &x, const Vector &o, const Vector &d) {
+    if (configured) {
         printMessage("start touching\n");
 
         // latch the offset

@@ -278,7 +278,7 @@ public:
                        const yarp::sig::Vector &d);
 
     /**
-    * Tap the given target (combined action).
+    * push the given target (combined action).
     * @param x1 the fisrt 3-d target position [m]. 
     * @param o1 the first 4-d hand orientation (given in axis-angle 
     *           representation: ax ay az angle in rad).
@@ -286,7 +286,7 @@ public:
     * @param o2 the second 4-d hand orientation (given in axis-angle
     *           representation: ax ay az angle in rad).
     * @param execTime the arm action execution time only while 
-    *          tapping [s] (to be specified iff different from
+    *          pushing [s] (to be specified iff different from
     *          default value).
     * @return true/false on success/fail. 
     *  
@@ -302,7 +302,7 @@ public:
     * It reachs for (x1,o1), then reachs for (x2,o2) and then again
     * for (x1,o1).
     */
-    bool tap2(const yarp::sig::Vector &x1, const yarp::sig::Vector &o1,
+    bool push(const yarp::sig::Vector &x1, const yarp::sig::Vector &o1,
                      const yarp::sig::Vector &x2, const yarp::sig::Vector &o2,
                      const double execTime=ACTIONPRIM_DISABLE_EXECTIME);
 };
