@@ -596,8 +596,8 @@ void graspThread::computePalmOrientations() {
     palmOrientations->insert(it, pair<string,Matrix>("left_stoptap",R));
     //palmOrientations["left_stoptap"]=palmOrientations["left_starttap"];
 
-    Ry(0,0)=cos(M_PI / 2);
-    Ry(0,2)=sin(M_PI / 2);
+    Ry(0,0)=cos(-M_PI / 2);
+    Ry(0,2)=sin(-M_PI / 2);
     Ry(1,1)=1.0;
     Ry(2,0)=-Ry(0,2);
     Ry(2,2)=Ry(0,0);
@@ -605,6 +605,11 @@ void graspThread::computePalmOrientations() {
     palmOrientations->insert(it, pair<string,Matrix>("left_startpush",R));
     palmOrientations->insert(it, pair<string,Matrix>("left_stoppush",R));
 
+    Ry(0,0)=cos(M_PI / 2);
+    Ry(0,2)=sin(M_PI / 2);
+    Ry(1,1)=1.0;
+    Ry(2,0)=-Ry(0,2);
+    Ry(2,2)=Ry(0,0);
     R = (*palmOrientations)["right_down"] * Ry;
     palmOrientations->insert(it, pair<string,Matrix>("right_startpush",R));
     palmOrientations->insert(it, pair<string,Matrix>("right_stoppush",R));
