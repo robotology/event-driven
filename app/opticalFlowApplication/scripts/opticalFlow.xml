@@ -1,0 +1,44 @@
+<application>
+	<name>optical flow computation</name>
+
+	<dependencies>
+	</dependencies>
+
+	<module>
+	   <name>device2yarp</name>
+	   <node>local</node>
+	   <tag>device2yarp</tag>
+	</module>
+	<module>
+	   <name>readRaw</name>
+	   <node>local</node>
+	   <tag>readRaw</tag>
+	</module>
+	<module>
+	   <name>opticalFlowViewer</name>
+	   <node>local</node>
+	   <tag>opticalFlowViewer</tag>
+	</module>
+	<module>
+	   <name>yarpview</name>
+	   <parameters>--name /flowView --x 000 --ysixe 000 --synch </parameters>
+	   <node>local</node>
+	   <tag>flowViewer</tag>
+	</module>
+
+	<connection>
+	  <from>/icub/retina0:o</from>
+	  <to>/image/opticalFlow:i</to>
+	  <protocol>tcp</protocol>
+	</connection>
+	<connection>
+	  <from>/image/opticalFlow:o</from>
+	  <to>/image/opticalFlowViewer:i</to>
+	  <protocol>tcp</protocol>
+	</connection>
+	<connection>
+	  <from>/image/opticalFlowFrame:o</from>
+	  <to>/flowView</to>
+	  <protocol>tcp</protocol>
+	</connection>
+</application>
