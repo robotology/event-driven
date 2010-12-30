@@ -1,0 +1,5 @@
+add_subdirectory(eLucasKanade)
+add_subdirectory(readRaw)
+add_subdirectory(synapse)
+add_subdirectory(vecBuffer)
+add_subdirectory(viewer)
