@@ -13,5 +13,6 @@ add_subdirectory(objectInteractor)
 add_subdirectory(opticalFlow)
 #add_subdirectory(logpolar_frame_converter)
 #add_subdirectory(logpolar_frame_converter_add)
-add_subdirectory(visualAligner)
 add_subdirectory(laserScannerGui)
+add_subdirectory(visualAligner)
+
