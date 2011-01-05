@@ -388,7 +388,7 @@ bool graspThread::configure(ResourceFinder &rf) {
     if (partUsed=="both_arms" || partUsed=="left_arm")
     {
         cout<<"***** Instantiating primitives for left_arm"<<endl;
-        actionL=new ActionPrimitivesLayer2(optionL);
+        actionL=new ActionPrimitivesLayer3(optionL);
         actionL->setExtForceThres(forceCalibTableThresL);
         actionL->enableReachingTimeout(reachingTimeout);
 
@@ -405,7 +405,7 @@ bool graspThread::configure(ResourceFinder &rf) {
     if (partUsed=="both_arms" || partUsed=="right_arm")
     {
         cout<<"***** Instantiating primitives for right_arm"<<endl;
-        actionR=new ActionPrimitivesLayer2(optionR);
+        actionR=new ActionPrimitivesLayer3(optionR);
         actionR->setExtForceThres(forceCalibTableThresR);
         actionR->enableReachingTimeout(reachingTimeout);
 
@@ -734,7 +734,7 @@ void graspThread::point(const Vector &xd) {
 void graspThread::touch(const Vector &xd) {
     bool f=false;
     action->touch(xd,*graspOrien,*dTouch);
-    action->pushWaitState(2.0);
+    action->pushWaitState(1.0);
     action->pushAction(xd+*dTouch,*graspOrien,HOMING_PERIOD);
     action->pushAction(*home_x,"open_hand",HOMING_PERIOD);
     action->checkActionsDone(f,true);
@@ -792,8 +792,8 @@ void graspThread::tap(const Vector &xd) {
 
     Vector startOrientation=dcm2axis((*palmOrientations)[armToBeUsed+"_starttap"]);
     Vector stopOrientation=dcm2axis((*palmOrientations)[armToBeUsed+"_stoptap"]);
-    action->tap(startPos,startOrientation,endPos,stopOrientation,2.0);
-    action->pushWaitState(2.0);
+    action->tap(startPos,startOrientation,endPos,stopOrientation,1.0);
+    action->pushWaitState(1.0);
     action->pushAction(*home_x,dcm2axis((*palmOrientations)[armToBeUsed+"_down"]),"open_hand",HOMING_PERIOD);
     action->checkActionsDone(f,true);
     goHome();
@@ -804,12 +804,12 @@ void graspThread::push(const Vector &xd) {
 
     Vector startPos = xd + *dPush;
     Vector endPos = startPos;
-    endPos[1] -= 2.0 * (*dPush)[0];
+    endPos[0] -= 2.0 * (*dPush)[0];
 
     Vector startOrientation = dcm2axis((*palmOrientations)[armToBeUsed+"_startpush"]);
     Vector stopOrientation = dcm2axis((*palmOrientations)[armToBeUsed+"_stoppush"]);
     action->tap(startPos,startOrientation,endPos,stopOrientation,2.0);
-    action->pushWaitState(2.0);
+    action->pushWaitState(1.0);
     action->pushAction(*home_x, dcm2axis((*palmOrientations)[armToBeUsed+"_down"]), "open_hand", HOMING_PERIOD);
     action->checkActionsDone(f,true);
     goHome();
