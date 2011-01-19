@@ -42,7 +42,7 @@
 #include <yarp/sig/Vector.h>
 #include <yarp/math/Math.h>
 #include <yarp/math/Rand.h>
-#include <iCub/ctrl/ctrlMath.h>
+#include <iCub/ctrl/math.h>
 #include <iCub/action/actionPrimitives.h>
 #include <iCub/ActionPrimitivesLayer3.h>
 #include <yarp/sig/all.h>

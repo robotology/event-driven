@@ -27,7 +27,7 @@
 #ifndef _ACTIONPRIMITIVES_LAYER3_H_
 #define _ACTIONPRIMITIVES_LAYER3_H_
 
-#include <iCub/ctrl/ctrlMath.h>
+#include <iCub/ctrl/math.h>
 #include <iCub/action/actionPrimitives.h>
 
 
