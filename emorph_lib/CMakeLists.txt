@@ -4,6 +4,12 @@ SET(PROJECTNAME eMorphLib)
 PROJECT(${PROJECTNAME})
 
 FIND_PACKAGE(YARP)
+FIND_PACKAGE(ICUB)
+SET(CMAKE_MODULE_PATH ${YARP_DIR}/conf ${CMAKE_MODULE_PATH})
+SET(CMAKE_MODULE_PATH ${ICUB_DIR}/conf ${CMAKE_MODULE_PATH})
+SET(ICUB_CONTRIB $ENV{ICUB_ROOT}/contrib)
+SET(PROJECT_INCLUDE_DIRS
+  ${PROJECT_SOURCE_DIR}/include)
 
 # Find .cpp and .h files automatically.  This is a bit lazy,
 # and in principle it would be better to list these files manually.
@@ -15,7 +21,11 @@ SOURCE_GROUP("Source Files" FILES ${folder_source})
 SOURCE_GROUP("Header Files" FILES ${folder_header})
 
 # Add our include files into our compiler's search path.
-INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/include)
+INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/include
+	${YARP_INCLUDE_DIRS}
+        ${ICUB_INCLUDE_DIRS}
+        ${ICUB_CONTRIB}/include
+)
 
 # Create everything needed to build our executable.
 ADD_LIBRARY(${PROJECTNAME} ${folder_source} ${folder_header})
@@ -26,3 +36,14 @@ ADD_LIBRARY(${PROJECTNAME} ${folder_source} ${folder_header})
 IF(MSVC)
     SET_TARGET_PROPERTIES(${PROJECTNAME} PROPERTIES COMPILE_FLAGS /wd4996)
 ENDIF(MSVC)
+
+TARGET_LINK_LIBRARIES(${PROJECTNAME} ${YARP_LIBRARIES})
+
+# add functionalities like icub_add_library/icub_add_executable
+#include(${ICUB_DIR}/../conf/iCubHelpers.cmake)
+MESSAGE(STATUS "icub_dir: ${ICUB_DIR}")
+include(${ICUB_DIR}/../conf/iCubHelpers.cmake)
+                    
+icub_export_library(${PROJECTNAME} INTERNAL_INCLUDE_DIRS ${PROJECT_INCLUDE_DIRS}
+                                   DESTINATION include/iCub
+                                   FILES ${folder_header})
