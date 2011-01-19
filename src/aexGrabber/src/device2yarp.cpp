@@ -169,12 +169,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
     pmon = (aer *)  malloc(monBufSize_b);
     if ( pmon == NULL ) {
         printf("pmon malloc failed \n");
-    }
-
-    int deviceNum=0;
-    printf("opening port for sending the read events \n");
-    str_buf << "/icub/retina" << deviceNum << ":o";
-    port.open(str_buf.str().c_str());
+    }    
 
     /*
     pseq = (aer *) malloc(seqAllocChunk_b);
@@ -188,7 +183,10 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
 
     if(save)
         raw = fopen(i_fileName.c_str(), "wb");
-    
+    int deviceNum=0;
+    printf("opening port for sending the read events \n");
+    str_buf << "/icub/retina" << deviceNum << ":o";
+    port.open(str_buf.str().c_str());
 
     cout <<"name of the file buffer:" <<portDeviceName.c_str()<< endl;
     file_desc = open(portDeviceName.c_str(), O_RDWR | O_NONBLOCK);
