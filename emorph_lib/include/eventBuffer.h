@@ -27,9 +27,9 @@ const int SIZE_OF_DATA = 32768;
 class eventBuffer : public yarp::os::Portable
 {
 public:
-	eventBuffer();
-	eventBuffer(char*, int);
-	~eventBuffer();
+    eventBuffer();
+    eventBuffer(char*, int);
+    ~eventBuffer();
 
     void operator=(const eventBuffer&);
     eventBuffer(const eventBuffer&);
@@ -37,14 +37,14 @@ public:
     virtual bool write(yarp::os::ConnectionWriter&);
     virtual bool read(yarp::os::ConnectionReader&);
 
-	void set_data(char*, int);
+    void set_data(char*, int);
 
-	char* get_packet(){return packet;};
-	int get_sizeOfPacket(){return size_of_the_packet;};
+    char* get_packet(){return packet;};
+    int get_sizeOfPacket(){return size_of_the_packet;};
 
 private:
-	char* packet;
-	int size_of_the_packet;
+    char* packet;
+    int size_of_the_packet;
 };
 
 
