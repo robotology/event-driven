@@ -296,39 +296,22 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
 void unmask::unmaskData(char* i_buffer, int i_sz) {
     //cout << "Size of the received packet to unmask : " << i_sz/8<< endl;
     //AER_struct sAER
-    for (int j=0; j<i_sz/8; j+=8) {
-        if((i_buffer[j+3]&0x80)==0x80) {
-            // timestamp bit 15 is one -> wrap
-            // now we need to increment the wrapAdd
-            wrapAdd+=0x4000/*L*/; //uses only 14 bit timestamps
-            //System.out.println("received wrap event, index:" + eventCounter + " wrapAdd: "+ wrapAdd);
-            //NumberOfWrapEvents++;
-        }
-        else if((i_buffer[j+3]&0x40)==0x40) {
-            // timestamp bit 14 is one -> wrapAdd reset
-            // this firmware version uses reset events to reset timestamps
-            //write(file_desc,reset,1);//this.resetTimestamps();
-            //buffer_msg[0] = 6;
-            //write(file_desc,buffer_msg,1);
-            wrapAdd=0;
-            // log.info("got reset event, timestamp " + (0xffff&((short)aeBuffer[i]&0xff | ((short)aeBuffer[i+1]&0xff)<<8)));
-        }
-        else {
-            //unmask the data
-            long int part_1 = 0x000000FF & i_buffer[j];
-            long int part_2 = 0x000000FF & i_buffer[j+1];
-            long int part_3 = 0x000000FF & i_buffer[j+2];
-            long int part_4 = 0x000000FF & i_buffer[j+3];
-            unsigned int blob = (part_1)|(part_2<<8);
+
+    assert(num_events % 8 == 0);
+    int num_events = i_sz / 8;
+    
+    uint32_t* buf2 = (uint32_t*)i_buffer;
+
+    for (int evt = 0; evt < num_events; evt++) {
+ 
+            // unmask the data
+            unsigned int blob = buf2[2*evt];
+            unsigned int timestamp = buf2[2*evt + 1];
+
+            // here we zero the higher two bytes of the address!!! Only lower 16bits used!
+            blob &= 0xFFFF;
             
             unmaskEvent(blob, cartX, cartY, polarity);
-            
-            long int part_5 = 0x000000FF & i_buffer[j+4];
-            long int part_6 = 0x000000FF & i_buffer[j+5];
-            long int part_7 = 0x000000FF & i_buffer[j+6];
-            long int part_8 = 0x000000FF & i_buffer[j+7];
-            timestamp = ((part_5)|(part_6<<8))|(part_7<<16)|(part_8<<24);
-            timestamp+=wrapAdd;
             
             //printf(" %d : %d \n",blob,timestamp);
 
@@ -367,7 +350,8 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
                 }
             }
             //fprintf(uEvents,"%d\t%d\t%d\t%u\n", cartX, cartY, polarity, timestamp);
-        }
+
+
     }
     //fprintf(uEvents,"%d\t%d\t%d\t%u\n", -1, -1, -1, -1);
 }

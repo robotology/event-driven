@@ -17,6 +17,7 @@
 
 #include <iCub/device2yarp.h>
 //#include <sys/types.h>
+#include <assert.h>
 
 using namespace std;
 using namespace yarp::os;
@@ -82,6 +83,9 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
     *    "Pr": 8, 8
     *}
     */
+
+
+
                 //#define FAST
 #ifdef FAST
             
@@ -159,18 +163,20 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
     memset(buffer, 0, SIZE_OF_DATA);
     const u32 seqAllocChunk_b = 8192 * sizeof(struct aer); //allocating the right dimension for biases
     monBufSize_b = 8192 * sizeof(struct aer);
-    
 
+    assert(SIZE_OF_DATA >= monBufSize_b);
+
+    pmon = (aer *)  malloc(monBufSize_b);
+    if ( pmon == NULL ) {
+        printf("pmon malloc failed \n");
+    }    
+
+    /*
     pseq = (aer *) malloc(seqAllocChunk_b);
     if ( pseq == NULL ) {
         printf("pseq malloc failed \n");
     }
     seqAlloced_b = seqAllocChunk_b;
-
-    pmon = (aer *)  malloc(monBufSize_b);
-    if ( pmon == NULL ) {
-        printf("pmon malloc failed \n");
-    }
 
     seqEvents = 0;
     seqSize_b = 0;
@@ -223,22 +229,6 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
                                 "Pr"
                                 };
 
-            /*unsigned char biasValues[] = {
-                                0x00,0x07,0xAE,     // cas
-                                0x00,0x58,0xAF,     // injGnd
-                                0xFF,0xFF,0xFF,     // reqPd
-                                0x42,0xA9,0xD5,     // puX
-                                0x00,0x0C,0x87,     // diffOff
-                                0x01,0xB2,0xF3,     // req
-                                0x00,0x00,0x00,     // refr
-                                0xFF,0xFF,0xFF,     // puY
-                                0x07,0x5F,0x9F,     // diffOn
-                                0x00,0x71,0x43,     // diff
-                                0x00,0x00,0x13,     // foll
-                                0x00,0x00,0x08      // Pr
-                                };
-            */
-
             
             //int err = write(file_desc,bias,41); //5+36 
             seqEvents = 0;
@@ -253,6 +243,8 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
             
         }
     }
+    */
+
 }
 
 device2yarp::~device2yarp() {
@@ -278,14 +270,24 @@ void  device2yarp::run() {
     }
     //printf("device read %d \n",monBufEvents);
     //ec += monBufEvents;
-    int k=0;
+    int k = 0;
+
+    int k2 = 0;
+    uint32_t * buf2 = (uint32_t*)buffer;
+ 
     u32 a, t;
+
     for (int i = 0; i < monBufEvents; i++) {
         //printf("a-");
         a = pmon[i].address;
         //printf("t-");
         t = pmon[i].timestamp * 0.128;
-        //printf("a: %x  t:%d k: %d nEvents: %d \n",a,t,k,monBufEvents);            
+        printf("a: %x  t:%d k: %d nEvents: %d \n",a,t,k,monBufEvents);            
+
+        buf2[k2++] = a;
+        buf2[k2++] = t;
+
+        /*
         char c;
         c=(char)(a&0x000000FF);
         buffer[k]=c;
@@ -304,7 +306,9 @@ void  device2yarp::run() {
         long int part_4 = 0x000000FF&buffer[k];
         k++;  //extracting the 4 byte
         long int blob = (part_1)|(part_2<<8)|(part_3<<16)|(part_4<<24);
+        */
 
+        /*
         c=(char)(t&0x000000FF);
         buffer[k]=c;
         long int part_5 = 0x000000FF&buffer[k];
@@ -315,19 +319,20 @@ void  device2yarp::run() {
         k++;  //extracting the 2 byte
         c=(char)((t&0x00FF0000)>>16);
         buffer[k]=c;
-        long int part_7 = 0x000000FF&buffer[k];
         k++;  //extracting the 3 byte
         c=(char)((t&0xFF000000)>>24); 
-        buffer[k]=c;                 
-        long int part_8 = 0x000000FF&buffer[k];
+        buffer[k]=c;                         
         k++;  //extracting the 4 byte
-        long int timestamp = ((part_5)|(part_6<<8)|(part_7<<16)|(part_8<<24));
+        */
+
         //printf("address:%d ; timestamp:%d \n", blob, timestamp);
     }
-    sz=monBufEvents*32; //32bits(4*8bits) for every event
+
+    sz = monBufEvents*sizeof(struct aer); 
+    // sz is size in bytes
 
     if(port.getOutputCount()) {
-        //printf("exiting from reading...sending data size: %d \n",sz);
+        //printf("exiting from reading...sending data size: %d bytes \n",sz);
         sendingBuffer data2send(buffer, sz);    
         //printf("preparing the port \n");
         sendingBuffer& tmp = port.prepare();
@@ -340,6 +345,11 @@ void  device2yarp::run() {
 
 
 void device2yarp::sendingBias() {
+
+    printf("Don't call me! (for now...)");
+    assert(0);
+
+
     printf("-------------------------------------------- \n");
     printf("trying to write to kernel driver %d %d \n", seqDone_b,seqSize_b);
     while (seqDone_b < seqSize_b) {      
@@ -527,11 +537,13 @@ void device2yarp::threadRelease() {
     printf("setting the powerDown \n");
     const u32 seqAllocChunk_b = 8192 * sizeof(struct aer); //allocating the right dimension for biases
 
+    /* Fasnacht says: Don't!
     memset(pseq,0,seqAllocChunk_b);
     setPowerdown();
     sendingBias();
+    */
 
-     if(save)
+    if(save)
         fclose(raw);
 
     port.close();
