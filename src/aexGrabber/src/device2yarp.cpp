@@ -175,6 +175,13 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
     printf("opening port for sending the read events \n");
     str_buf << "/icub/retina" << deviceNum << ":o";
     port.open(str_buf.str().c_str());
+    
+    file_desc = open(portDeviceName.c_str(), O_RDWR | O_NONBLOCK);
+    if (file_desc < 0) {
+        printf("Cannot open device file: %s \n",portDeviceName.c_str());
+    }
+
+    
 
     /*
     pseq = (aer *) malloc(seqAllocChunk_b);
@@ -262,15 +269,15 @@ void device2yarp::setDeviceName(string deviceName) {
 
 
 void  device2yarp::run() {
-    
+    //printf("reading \n");
     int r = read(file_desc, pmon, monBufSize_b);    
     monBufEvents = r / sizeof(struct aer);
-    printf("r: %d \n",r);
+    //printf("r: %d \n",r);
     if(r==-1) {
         //printf("device %s not ready. Skipping to the next run \n",portDeviceName.c_str());
         return;
     }
-    //printf("device read %d \n",monBufEvents);
+    printf("device read %d \n",monBufEvents);
     //ec += monBufEvents;
     int k = 0;
 
@@ -284,7 +291,7 @@ void  device2yarp::run() {
         a = pmon[i].address;
         //printf("t-");
         t = pmon[i].timestamp * 0.128;
-        printf("a: %x  t:%d k: %d nEvents: %d \n",a,t,k,monBufEvents);            
+        //printf("a: %x  t:%d k: %d nEvents: %d \n",a,t,k,monBufEvents);            
 
         buf2[k2++] = a;
         buf2[k2++] = t;
@@ -536,10 +543,11 @@ void device2yarp::biasprogtx(int time,int latch,int clock,int data, int powerdow
 }
 
 void device2yarp::threadRelease() {
-    printf("setting the powerDown \n");
-    const u32 seqAllocChunk_b = 8192 * sizeof(struct aer); //allocating the right dimension for biases
+    
+    
 
     /* Fasnacht says: Don't!
+    const u32 seqAllocChunk_b = 8192 * sizeof(struct aer); //allocating the right dimension for biases
     memset(pseq,0,seqAllocChunk_b);
     setPowerdown();
     sendingBias();
@@ -549,14 +557,5 @@ void device2yarp::threadRelease() {
         fclose(raw);
 
     port.close();
-
-    unsigned char stop[5];
-    stop[0] = 0xb4;
-    stop[1] = 0;
-    stop[2] = 0;
-    stop[3] = 0;
-    stop[4] = 0;
-    //err = write(file_desc,stop,5);
-    printf("%d address events read\n",len/4);
     close(file_desc);
 }
