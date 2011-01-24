@@ -94,6 +94,13 @@ public:
     int* getEventBuffer();
 
     /**
+    * @brief Function returns the pointer to the buffer that containes timestamps
+    * @param none
+    * @return pointer to the buffer of timestamps
+    */
+    unsigned int* getTimeBuffer();
+
+    /**
     * @brief Function that cleans buffer that containes events counts
     * @param none
     * @return none

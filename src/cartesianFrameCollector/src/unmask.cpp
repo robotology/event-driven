@@ -25,9 +25,12 @@
 
 #include <iCub/unmask.h>
 #include <cassert>
-#include <stdint.h>
+
 using namespace std;
 using namespace yarp::os;
+
+
+typedef unsigned long int uint32_t;
 
 
 
@@ -97,8 +100,12 @@ int unmask::getMaxValue() {
     return maxValue;
 }
 
-int* unmask::getEventBuffer(){
-    return this->buffer;
+int* unmask::getEventBuffer() {
+    return buffer;
+}
+
+unsigned int* unmask::getTimeBuffer() {
+    return timeBuffer;
 }
 
 void unmask::run() {
@@ -115,193 +122,14 @@ void unmask::run() {
         pointerTime++;
         pointerPixel++;
     }
-
-
-    /*
-    temp1=false; //redirect events in the second bin
-    numKilledEvents=minKillThres;
-    if(countEvent>numKilledEvents) {
-        numKilledEvents=countEvent;
-    }
-
-    try {
-        if( maxPosEvent-1-numKilledEvents<=0 ) {
-            throw "Buffer overflow";
-        }
-    }
-    catch( char * str ) {
-        printf("Exception raised: %s \n",str);
-        numKilledEvents=maxPosEvent-1;
-    }
-    
-    int* newLoc;
-    //shift the buffer to the right
-    newLoc=&fifoEvent[maxPosEvent-1];
-    int* prevLoc;
-    prevLoc=&fifoEvent[maxPosEvent-1-numKilledEvents];
-    
-    for(int i=maxPosEvent-1;i>numKilledEvents;i--) {
-        //extracts newLoc of event to delete them
-        if(i>maxPosEvent-1-numKilledEvents) {
-            if(*newLoc!=127) {
-                if(*newLoc>=0) {
-                    //element to be deleted
-                    assert(*newLoc<retinalSize*retinalSize);
-                    //buffer[*newLoc]=0;
-                }
-            }
-        }
-        *newLoc=*prevLoc;
-        if(prevLoc!=fifoEvent) {
-            newLoc--;prevLoc--;
-        }
-    }
-
-    //adds the new locations to the buffer
-    int* tempLoc;
-    int* copyLoc;
-    tempLoc=fifoEvent_temp;
-    copyLoc=fifoEvent;
-    for(int i=0;i<countEvent;i++) {
-        *copyLoc=*tempLoc;
-        copyLoc++;
-        tempLoc++;
-    }
-    //reset temporary buffer
-    memset(fifoEvent_temp,0,maxPosEvent*sizeof(int));
-    
-    countEvent=0;
-    
-
-    //----------------------------------------
-    temp1=true;
-    //-----------------------------------------
-    
-    numKilledEvents=minKillThres;
-    if(countEvent2>numKilledEvents) {
-        numKilledEvents=countEvent2;
-    }
-
-    try {
-        if( maxPosEvent-1-numKilledEvents<=0 ) {
-            throw "Buffer overflow";
-        }
-    }
-    catch( char * str ) {
-        printf("Exception raised: %s \n",str);
-        numKilledEvents=maxPosEvent-1;
-    }
-    newLoc=&fifoEvent[maxPosEvent-1];
-    prevLoc=&fifoEvent[maxPosEvent-1-numKilledEvents];
-    
-    for(int i=maxPosEvent-1;i>numKilledEvents;i--) {
-        //extracts newLoc of event to delete them
-        if(i>maxPosEvent-1-numKilledEvents) {
-            if(*newLoc!=127) {
-                if(*newLoc>=0) {
-                    //element to be deleted
-                    assert(*newLoc<retinalSize*retinalSize);
-                    buffer[*newLoc]=0;
-                }
-            }
-        }
-        *newLoc=*prevLoc;
-        if(prevLoc!=fifoEvent) {
-            newLoc--;prevLoc--;
-        }
-    }
-    tempLoc=fifoEvent_temp2;
-    copyLoc=fifoEvent;
-    for(int i=0;i<countEvent2;i++) {
-        *copyLoc=*tempLoc;
-        copyLoc++;
-        tempLoc++;
-    }
-    //reset temporary buffer
-    memset(fifoEvent_temp2,0,maxPosEvent*sizeof(int));
-    countEvent2=0;
-    */
 }
 
-/*
-void unmask::unmaskData(char* i_buffer, int i_sz) {
-    //cout << "Size of the received packet to unmask : " << i_sz << endl;
-    //AER_struct sAER
-    
-    for (int j=0; j<i_sz; j+=4) {
-        if((i_buffer[j+3]&0x80)==0x80) {
-            // timestamp bit 15 is one -> wrap
-            // now we need to increment the wrapAdd
-            wrapAdd+=0x4000; //uses only 14 bit timestamps
-            //System.out.println("received wrap event, index:" + eventCounter + " wrapAdd: "+ wrapAdd);
-            //NumberOfWrapEvents++;
-        }
-        else if((i_buffer[j+3]&0x40)==0x40) {
-            // timestamp bit 14 is one -> wrapAdd reset
-            // this firmware version uses reset events to reset timestamps
-            //write(file_desc,reset,1);//this.resetTimestamps();
-            //buffer_msg[0] = 6;
-            //write(file_desc,buffer_msg,1);
-            wrapAdd=0;
-            // log.info("got reset event, timestamp " + (0xffff&((short)aeBuffer[i]&0xff | ((short)aeBuffer[i+1]&0xff)<<8)));
-        }
-        else {
-            //unmask the data
-            unsigned int part_1 = 0x00FF&i_buffer[j];
-            unsigned int part_2 = 0x00FF&i_buffer[j+1];
-            unsigned int part_3 = 0x00FF&i_buffer[j+2];
-            unsigned int part_4 = 0x00FF&i_buffer[j+3];
-            unsigned int blob = (part_1)|(part_2<<8);
-            unmaskEvent(blob, cartX, cartY, polarity);
-            timestamp = ((part_3)|(part_4<<8));
-            timestamp+=wrapAdd;
-            if((cartX!=127)||(cartY!=0)) {      //removed one pixel which is set once the driver do not work properly
-                if(polarity>0) {
-                    buffer[cartX+cartY*retinalSize]=responseGradient;
-                    timeBuffer[cartX+cartY*retinalSize]=timestamp;
-                    lasttimestamp=timestamp;
-                    if(buffer[cartX+cartY*retinalSize]>127) {
-                        buffer[cartX+cartY*retinalSize]=127;
-                    }
-                }
-                else if(polarity<0) {
-                    buffer[cartX+cartY*retinalSize]=-responseGradient;
-                    if (buffer[cartX+cartY*retinalSize]<-127) {
-                        buffer[cartX+cartY*retinalSize]=-127;
-                    }
-                }
-                //udpates the temporary buffer
-
-                if(temp1) {
-                    if(countEvent>maxPosEvent-1) {
-                        countEvent=maxPosEvent-1;
-                    }
-                    fifoEvent_temp[countEvent]=cartX+cartY*retinalSize;
-                    //increments the counter of events
-                    countEvent++;
-                }
-                else {
-                    if(countEvent2>maxPosEvent-1) {
-                        countEvent2=maxPosEvent-1;
-                    }
-                    fifoEvent_temp2[countEvent2]=cartX+cartY*retinalSize;
-                    //increments the counter of events
-                    countEvent2++;
-                }
-            }
-            //fprintf(uEvents,"%d\t%d\t%d\t%u\n", cartX, cartY, polarity, timestamp);
-        }
-    }
-    //fprintf(uEvents,"%d\t%d\t%d\t%u\n", -1, -1, -1, -1);
-}
-
-*/
 
 void unmask::unmaskData(char* i_buffer, int i_sz) {
     //cout << "Size of the received packet to unmask : " << i_sz/8<< endl;
     //AER_struct sAER
 
-    assert(num_events % 8 == 0);
+    //assert(num_events % 8 == 0);
     int num_events = i_sz / 8;
     
     uint32_t* buf2 = (uint32_t*)i_buffer;
@@ -377,3 +205,78 @@ void unmask::unmaskEvent(long int evPU, short& x, short& y, short& pol) {
 void unmask::threadRelease() {
     //no istruction in threadInit
 }
+
+
+/*
+void unmask::unmaskData(char* i_buffer, int i_sz) {
+    //cout << "Size of the received packet to unmask : " << i_sz << endl;
+    //AER_struct sAER
+    
+    for (int j=0; j<i_sz; j+=4) {
+        if((i_buffer[j+3]&0x80)==0x80) {
+            // timestamp bit 15 is one -> wrap
+            // now we need to increment the wrapAdd
+            wrapAdd+=0x4000; //uses only 14 bit timestamps
+            //System.out.println("received wrap event, index:" + eventCounter + " wrapAdd: "+ wrapAdd);
+            //NumberOfWrapEvents++;
+        }
+        else if((i_buffer[j+3]&0x40)==0x40) {
+            // timestamp bit 14 is one -> wrapAdd reset
+            // this firmware version uses reset events to reset timestamps
+            //write(file_desc,reset,1);//this.resetTimestamps();
+            //buffer_msg[0] = 6;
+            //write(file_desc,buffer_msg,1);
+            wrapAdd=0;
+            // log.info("got reset event, timestamp " + (0xffff&((short)aeBuffer[i]&0xff | ((short)aeBuffer[i+1]&0xff)<<8)));
+        }
+        else {
+            //unmask the data
+            unsigned int part_1 = 0x00FF&i_buffer[j];
+            unsigned int part_2 = 0x00FF&i_buffer[j+1];
+            unsigned int part_3 = 0x00FF&i_buffer[j+2];
+            unsigned int part_4 = 0x00FF&i_buffer[j+3];
+            unsigned int blob = (part_1)|(part_2<<8);
+            unmaskEvent(blob, cartX, cartY, polarity);
+            timestamp = ((part_3)|(part_4<<8));
+            timestamp+=wrapAdd;
+            if((cartX!=127)||(cartY!=0)) {      //removed one pixel which is set once the driver do not work properly
+                if(polarity>0) {
+                    buffer[cartX+cartY*retinalSize]=responseGradient;
+                    timeBuffer[cartX+cartY*retinalSize]=timestamp;
+                    lasttimestamp=timestamp;
+                    if(buffer[cartX+cartY*retinalSize]>127) {
+                        buffer[cartX+cartY*retinalSize]=127;
+                    }
+                }
+                else if(polarity<0) {
+                    buffer[cartX+cartY*retinalSize]=-responseGradient;
+                    if (buffer[cartX+cartY*retinalSize]<-127) {
+                        buffer[cartX+cartY*retinalSize]=-127;
+                    }
+                }
+                //udpates the temporary buffer
+
+                if(temp1) {
+                    if(countEvent>maxPosEvent-1) {
+                        countEvent=maxPosEvent-1;
+                    }
+                    fifoEvent_temp[countEvent]=cartX+cartY*retinalSize;
+                    //increments the counter of events
+                    countEvent++;
+                }
+                else {
+                    if(countEvent2>maxPosEvent-1) {
+                        countEvent2=maxPosEvent-1;
+                    }
+                    fifoEvent_temp2[countEvent2]=cartX+cartY*retinalSize;
+                    //increments the counter of events
+                    countEvent2++;
+                }
+            }
+            //fprintf(uEvents,"%d\t%d\t%d\t%u\n", cartX, cartY, polarity, timestamp);
+        }
+    }
+    //fprintf(uEvents,"%d\t%d\t%d\t%u\n", -1, -1, -1, -1);
+}
+
+*/

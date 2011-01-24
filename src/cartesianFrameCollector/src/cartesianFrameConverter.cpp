@@ -60,7 +60,8 @@ void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image){
     unsigned char* pImage=image->getRawImage();
     int imagePadding=image->getPadding();
     int imageRowSize=image->getRowSize();
-    int* pBuffer= unmask_events.getEventBuffer();
+    int* pBuffer = unmask_events.getEventBuffer();
+    unsigned int* pTime   = unmask_events.getTimeBuffer();
     double a=1,b=0;
     int maxValue=unmask_events.getMaxValue();
     int minValue=unmask_events.getMinValue();
