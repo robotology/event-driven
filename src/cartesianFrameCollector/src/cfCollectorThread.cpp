@@ -33,6 +33,7 @@ using namespace yarp::sig;
 using namespace std;
 
 #define THRATE 10
+#define STAMPINFRAME 10000
 
 cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
     resized=false;
@@ -75,10 +76,12 @@ void cfCollectorThread::resize(int widthp, int heightp) {
 
 void cfCollectorThread::run() {
     count++;
+    unsigned int maxCount = (count + 1) * STAMPINFRAME;
+    unsigned int minCount =  count * STAMPINFRAME;
     if(outPort.getOutputCount()) {
         ImageOf<yarp::sig::PixelMono>& outputImage=outPort.prepare();
         if(&outputImage!=0) {
-            cfConverter->getMonoImage(&outputImage);
+            cfConverter->getMonoImage(&outputImage, minCount, maxCount);
             outPort.write();
         }
         else {

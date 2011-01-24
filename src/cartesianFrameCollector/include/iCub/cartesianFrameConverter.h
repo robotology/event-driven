@@ -50,8 +50,10 @@ public:
     /**
     * @brief returns a simple image
     * @param pixelMono reference to the image contains the counts of events
+    * @param minCount reference to the min timestamp in the frame
+    * @param maxCount reference to the max timestamp in the frame
     */
-     void getMonoImage(yarp::sig::ImageOf<yarp::sig::PixelMono>* image);
+     void getMonoImage(yarp::sig::ImageOf<yarp::sig::PixelMono>* image, unsigned int minCount, unsigned int maxCount);
 
     /**
     * @brief clears monoImage collection of events

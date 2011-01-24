@@ -54,7 +54,7 @@ void cFrameConverter::onRead(sendingBuffer& i_ub) {
     */
 }
 
-void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image){
+void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image, unsigned int minCount, unsigned int maxCount){
     assert(image!=0);
     image->resize(outputWidth,outputHeight);
     unsigned char* pImage=image->getRawImage();
@@ -66,35 +66,19 @@ void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image){
     int maxValue=unmask_events.getMaxValue();
     int minValue=unmask_events.getMinValue();
     
-    pBuffer += retinalSize * retinalSize - 1;
+    //pBuffer += retinalSize * retinalSize - 1;
     for(int r=0;r<outputHeight;r++){
-        if((r>=(outputHeight-retinalSize)/2)&&(r<outputHeight-(outputHeight-retinalSize)/2)) {
-            for(int c=0;c<outputWidth;c++) {
-                //drawing the retina and the rest of the image separately
-                if((c<outputWidth-(outputWidth-retinalSize)/2)&&(c>=(outputWidth-retinalSize)/2)) {
-                    int value= *pBuffer;
-                    //value=a * value + b;
-                    *pImage++ = (unsigned char) 127 + value ;
-                    if(127 + value >= 256) {
-                        printf("Error \n");
-                    }
-                    if(127 + value < 0) {
-                        printf("Error \n");
-                    }
-                    pBuffer--;
-                }
-                else {
-                    *pImage++ = 127;
-                }
+        for(int c=0;c<outputWidth;c++) {
+            //drawing the retina and the rest of the image separately
+            int value= *pBuffer;
+            unsigned int timestamp = *pTime;
+            if((timestamp > minCount) && (timestamp < maxCount)) {
+                //value=a * value + b;
+                *pImage++ = (unsigned char) 127 + value ;
+                pBuffer++;
             }
-            pImage+=imagePadding;
         }
-        else {
-            for(int c=0;c<outputWidth;c++) {
-                *pImage++ = 127;
-            }
-            pImage+=imagePadding;
-        }
+        pImage+=imagePadding;
     }
 }
 
