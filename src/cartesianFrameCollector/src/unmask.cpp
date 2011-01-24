@@ -25,8 +25,12 @@
 
 #include <iCub/unmask.h>
 #include <cassert>
+#include <stdint.h>
 using namespace std;
 using namespace yarp::os;
+
+
+
 
 #define maxPosEvent 10000
 #define responseGradient 127
