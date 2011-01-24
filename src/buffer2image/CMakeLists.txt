@@ -5,6 +5,10 @@ PROJECT(${PROJECTNAME})
 
 SET(YARP_DIR "$ENV{YARP_ROOT}" CACHE LOCATION "where is yarp?")
 FIND_PACKAGE(YARP)
+FIND_PACKAGE(ICUB)
+SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${ICUB_DIR}/conf ${YARP_DIR}/conf)
+
+
 
 FILE(GLOB folder_source src/*.cpp)
 FILE(GLOB folder_header include/*.h)
