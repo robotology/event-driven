@@ -19,8 +19,19 @@
 #include <linux/slab.h>
 #include <asm/uaccess.h>
 
-#define usb_alloc_coherent(a, b, c, d) usb_buffer_alloc(a, b, c, d)
-#define usb_free_coherent(a, b, c, d) usb_buffer_free(a, b, c, d)
+///////////////////////////////////////////////////////////
+// for pre 2.6.35, activate this section by changing 0 to 1
+
+#if 0
+#define usb_alloc_coherent usb_buffer_alloc
+#define usb_free_coherent usb_buffer_free
+#endif
+
+// all this does not work as wished..:
+//#if VERSION = 2 && PATCHLEVEL = 6 && SUBLEVEL < 35
+//#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 35)
+///////////////////////////////////////////////////////////
+
 
 /* this is the DVS 128 retina */
 #define USB_RETINA_VENDOR_ID	0x152a
