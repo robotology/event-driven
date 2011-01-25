@@ -48,6 +48,7 @@ public:
 private:
     char* packet;
     int size_of_the_packet;
+
 };
 
 #endif //_SENDING_BUFFER_H

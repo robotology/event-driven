@@ -51,6 +51,9 @@ using namespace yarp::os;
 
 
 
+
+
+
 device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):RateThread(10), save(i_bool) {
     len=0;
     sz=0;
@@ -195,7 +198,54 @@ void device2yarp::setDeviceName(string deviceName) {
     portDeviceName=deviceName;
 }
 
+void  device2yarp::run() {
+    //printf("reading \n");
+    int r = read(file_desc, pmon, monBufSize_b);    
+    monBufEvents = r / sizeof(struct aer);
+    //printf("r: %d \n",r);
+    if(r==-1) {
+        //printf("device %s not ready. Skipping to the next run \n",portDeviceName.c_str());
+        return;
+    }
+    printf("device read %d \n",monBufEvents);
+    //ec += monBufEvents;
+    int k = 0;
 
+    int k2 = 0;
+    uint32_t * buf2 = (uint32_t*)buffer;
+ 
+    u32 a, t;
+
+    for (int i = 0; i < monBufEvents; i++) {
+        //printf("a-");
+        a = pmon[i].address;
+        //printf("t-");
+        t = pmon[i].timestamp * 0.128;
+        //printf("a: %x  t:%d k: %d nEvents: %d \n",a,t,k,monBufEvents);            
+
+        buf2[k2++] = a;
+        buf2[k2++] = t;
+        
+    }
+
+    sz = monBufEvents*sizeof(struct aer); 
+    // sz is size in bytes
+
+    if(port.getOutputCount()) {
+        //printf("exiting from reading...sending data size: %d bytes \n",sz);
+        sendingBuffer data2send(buffer, sz);    
+        //printf("preparing the port \n");
+        sendingBuffer& tmp = port.prepare();
+        tmp = data2send;
+        port.write();
+    }   
+    //resetting buffers    
+    memset(buffer, 0, SIZE_OF_DATA);
+}
+
+
+
+/*
 void  device2yarp::run() {
     // read address events from device file which is not /dev/aerfx2_0
     //sz = read(file_desc,buffer,SIZE_OF_DATA);
@@ -226,6 +276,7 @@ void  device2yarp::run() {
     //resetting buffers    
     memset(buffer, 0, SIZE_OF_DATA);
 }
+*/
 
 /*
 void device2yarp::sendingBias() {

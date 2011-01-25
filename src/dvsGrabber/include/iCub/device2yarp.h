@@ -44,6 +44,12 @@
 #define u64 uint64_t
 
 
+struct aer {
+    u32 timestamp;
+    u32 address;
+};
+
+
 class device2yarp : public yarp::os::RateThread {
 public:
     device2yarp(std::string deviceNumber, bool save, std::string filename);
@@ -64,12 +70,13 @@ private:
 
     u64 seqTime;
     u64 ec;
+    u32 monBufEvents;
 
     int file_desc,len,sz;
     unsigned char buffer_msg[64];
     short enabled;
     char buffer[SIZE_OF_DATA];
-
+    struct aer *pmon;
     int err;
     unsigned int timestamp;
     short cartX, cartY, polarity;
