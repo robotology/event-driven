@@ -41,7 +41,7 @@ bool dvsGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 
     /* get the module name which will form the stem of all module port names */
     moduleName            = rf.check("name", 
-                           Value("/dvsGrabber"), 
+                           Value("/dvsGrabber2"), 
                            "module name (string)").asString();
     /*
     * before continuing, set the module name before getting any other parameters, 
@@ -62,10 +62,10 @@ bool dvsGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     * get the device name which will be used to read events
     */
     deviceName             = rf.check("deviceName", 
-                           Value("/dev/retina"), 
+                           Value("/dev/retina0"), 
                            "Device name (string)").asString();
     devicePortName         =  deviceName ;
-    printf("trying to connect to the device %s \n",devicePortName.c_str());
+    printf("trying to connect to the %s \n",devicePortName.c_str());
 
 
 
@@ -78,9 +78,8 @@ bool dvsGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 
     if (!handlerPort.open(handlerPortName.c_str())) {           
         cout << getName() << ": Unable to open port " << handlerPortName << endl;  
-        return false;
+        //return false;
     }
-
     attach(handlerPort);                  // attach to port
 
     bool _save = false;
@@ -88,6 +87,7 @@ bool dvsGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     std::string fileName = "raw_events.bin";
     D2Y=new device2yarp(devicePortName, _save, fileName);
     //D2Y->setDeviceName(devicePortName);
+    printf("starting the thread \n");
     D2Y->start();
 
     return true ;       // let the RFModule know everything went well

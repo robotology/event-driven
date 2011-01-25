@@ -71,6 +71,7 @@ private:
     u64 seqTime;
     u64 ec;
     u32 monBufEvents;
+    u32 monBufSize_b;
 
     int file_desc,len,sz;
     unsigned char buffer_msg[64];
