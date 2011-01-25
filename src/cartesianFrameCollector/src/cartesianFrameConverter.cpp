@@ -62,20 +62,19 @@ void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image, unsigned int minCo
     int imageRowSize=image->getRowSize();
     int* pBuffer = unmask_events.getEventBuffer();
     unsigned int* pTime   = unmask_events.getTimeBuffer();
-    double a=1,b=0;
+    double a = 1,b = 0;
     int maxValue=unmask_events.getMaxValue();
     int minValue=unmask_events.getMinValue();
     
     //pBuffer += retinalSize * retinalSize - 1;
-    for(int r=0;r<outputHeight;r++){
-        for(int c=0;c<outputWidth;c++) {
+    for(int r = 0 ; r < retinalSize ; r++){
+        for(int c = 0 ; c < retinalSize ; c++) {
             //drawing the retina and the rest of the image separately
-            int value= *pBuffer;
-            unsigned int timestamp = *pTime;
+            int value= *pBuffer++;
+            unsigned int timestamp = *pTime++;
             if((timestamp > minCount) && (timestamp < maxCount)) {
                 //value=a * value + b;
                 *pImage++ = (unsigned char) 127 + value ;
-                pBuffer++;
             }
         }
         pImage+=imagePadding;
