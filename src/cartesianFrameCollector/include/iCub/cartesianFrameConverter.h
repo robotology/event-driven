@@ -72,8 +72,9 @@ public:
      void clearMonoImage();
 
 private:
-    int retinalSize;                                            //dimension of the retina default 128x128
-    int outputWidth, outputHeight;                              //dimension of the output image default 320x240
+    int retinalSize;                                            // dimension of the retina default 128x128
+    int outputWidth, outputHeight;                              // dimension of the output image default 320x240
+    unsigned long int previousTimeStamp;                        // timestamp at the previous run
     
     unmask unmask_events;           //object in charge of unmasking the events
     converter convert_events;       //object in charge of converting the events into an image

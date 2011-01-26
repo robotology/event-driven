@@ -30,8 +30,6 @@ using namespace std;
 using namespace yarp::os;
 
 
-typedef unsigned long int uint32_t;
-
 
 #define maxPosEvent 10000
 #define responseGradient 127
@@ -147,9 +145,8 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
             // unmask the data
             unsigned long int blob = buf2[2 * evt];
             unsigned long int timestamp = buf2[2 * evt + 1];
-            if( timestamp!=0) {
-                        lasttimestamp = timestamp;
-                    }
+            lasttimestamp = timestamp;
+            
             //printf("%d \n", timestamp);
 
             // here we zero the higher two bytes of the address!!! Only lower 16bits used!

@@ -35,7 +35,7 @@ cFrameConverter::cFrameConverter():convert_events(128,128) {
     outputWidth=320;
     outputHeight=240;
     unmask_events.start();
-    
+    previousTimeStamp = 0;
 }
 
 cFrameConverter::~cFrameConverter() {
@@ -62,9 +62,9 @@ void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image, unsigned long int 
     int imagePadding = image->getPadding();
     int imageRowSize = image->getRowSize();
     
-    /*
+    
     unsigned long int lasttimestamp = getLastTimeStamp();
-    if (lasttimestamp == 0) {   //condition where there were not event between this call and the previous
+    if (lasttimestamp == previousTimeStamp) {   //condition where there were not event between this call and the previous
         for(int r = 0 ; r < retinalSize ; r++){
             for(int c = 0 ; c < retinalSize ; c++) {
                 *pImage++ = (unsigned char) 127;
@@ -73,7 +73,7 @@ void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image, unsigned long int 
         }
         return;
     }
-    */
+    previousTimeStamp = lasttimestamp;
 
     int* pBuffer = unmask_events.getEventBuffer();
     unsigned long int* pTime   = unmask_events.getTimeBuffer();

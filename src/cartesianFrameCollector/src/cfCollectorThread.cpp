@@ -48,13 +48,14 @@ cfCollectorThread::~cfCollectorThread() {
 bool cfCollectorThread::threadInit() {
     printf("starting the thread.... \n");
     /* open ports */
-    printf("opening ports.... \n");
+    printf("opening ports!!!.... \n");
     outPort.open(getName("/image:o").c_str());
-    printf("starting the converter.... \n");
+    printf("starting the converter!!!.... \n");
     cfConverter=new cFrameConverter();
     cfConverter->useCallback();
     cfConverter->open(getName("/retina:i").c_str());
     maxCount = cfConverter->getLastTimeStamp();
+    startTimer = Time::now();
     return true;
 }
 
@@ -78,17 +79,21 @@ void cfCollectorThread::resize(int widthp, int heightp) {
 
 void cfCollectorThread::run() {
     count++;
+    if (count % 1 == 0) {
+         maxCount = cfConverter->getLastTimeStamp();
+         //startTimer = Time::now();
+    }
     endTimer = Time::now();
     double interval = (endTimer - startTimer) * 1000000; //interval in microsecond
     startTimer = Time::now();
     maxCount += interval;
-    minCount =  maxCount - interval;
+    minCount =  maxCount - interval * 1.5;
     if( maxCount >= 2147483647) {
         maxCount = maxCount - 2147483647;
     }
     //maximum value  2147483647 4294967295
     long int l = cfConverter->getLastTimeStamp();
-    printf("maxCount %d %d \n", maxCount, l);
+    printf("interval:%f  %d,%d,%d \n",maxCount,interval,minCount,l);
     assert(maxCount < 2147483647);
     
     if(outPort.getOutputCount()) {
