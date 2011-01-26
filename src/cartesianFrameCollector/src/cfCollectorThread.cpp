@@ -33,11 +33,12 @@ using namespace yarp::sig;
 using namespace std;
 
 #define THRATE 10
-#define STAMPINFRAME 10000
+#define STAMPINFRAME  // 10 ms of period times the us in 1 millisecond + time for computing
 
 cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
     resized=false;
     count=0;
+    minCount = 0; //initialisation of the timestamp limits of the first frame
 }
 
 cfCollectorThread::~cfCollectorThread() {
@@ -53,6 +54,7 @@ bool cfCollectorThread::threadInit() {
     cfConverter=new cFrameConverter();
     cfConverter->useCallback();
     cfConverter->open(getName("/retina:i").c_str());
+    maxCount = cfConverter->getLastTimeStamp();
     return true;
 }
 
@@ -76,8 +78,19 @@ void cfCollectorThread::resize(int widthp, int heightp) {
 
 void cfCollectorThread::run() {
     count++;
-    unsigned int maxCount = (count + 1) * STAMPINFRAME;
-    unsigned int minCount =  count * STAMPINFRAME;
+    endTimer = Time::now();
+    double interval = (endTimer - startTimer) * 1000000; //interval in microsecond
+    startTimer = Time::now();
+    maxCount += interval;
+    minCount =  maxCount - interval;
+    if( maxCount >= 2147483647) {
+        maxCount = maxCount - 2147483647;
+    }
+    //maximum value  2147483647 4294967295
+    long int l = cfConverter->getLastTimeStamp();
+    printf("maxCount %d %d \n", maxCount, l);
+    assert(maxCount < 2147483647);
+    
     if(outPort.getOutputCount()) {
         ImageOf<yarp::sig::PixelMono>& outputImage=outPort.prepare();
         if(&outputImage!=0) {
@@ -89,6 +102,8 @@ void cfCollectorThread::run() {
         }
     }
 
+    minCount = cfConverter->getLastTimeStamp(); //get the last before going to sleep
+    
 }
 
 void cfCollectorThread::threadRelease() {

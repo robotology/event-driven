@@ -35,6 +35,7 @@ cFrameConverter::cFrameConverter():convert_events(128,128) {
     outputWidth=320;
     outputHeight=240;
     unmask_events.start();
+    
 }
 
 cFrameConverter::~cFrameConverter() {
@@ -54,31 +55,55 @@ void cFrameConverter::onRead(sendingBuffer& i_ub) {
     */
 }
 
-void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image, unsigned int minCount, unsigned int maxCount){
+void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image, unsigned long int minCount, unsigned long int maxCount){
     assert(image!=0);
-    image->resize(outputWidth,outputHeight);
-    unsigned char* pImage=image->getRawImage();
-    int imagePadding=image->getPadding();
-    int imageRowSize=image->getRowSize();
-    int* pBuffer = unmask_events.getEventBuffer();
-    unsigned int* pTime   = unmask_events.getTimeBuffer();
-    double a = 1,b = 0;
-    int maxValue=unmask_events.getMaxValue();
-    int minValue=unmask_events.getMinValue();
+    image->resize(retinalSize,retinalSize);
+    unsigned char* pImage = image->getRawImage();
+    int imagePadding = image->getPadding();
+    int imageRowSize = image->getRowSize();
     
+    /*
+    unsigned long int lasttimestamp = getLastTimeStamp();
+    if (lasttimestamp == 0) {   //condition where there were not event between this call and the previous
+        for(int r = 0 ; r < retinalSize ; r++){
+            for(int c = 0 ; c < retinalSize ; c++) {
+                *pImage++ = (unsigned char) 127;
+            }
+            pImage+=imagePadding;
+        }
+        return;
+    }
+    */
+
+    int* pBuffer = unmask_events.getEventBuffer();
+    unsigned long int* pTime   = unmask_events.getTimeBuffer();
+
+    
+    //printf("timestamp: min %d    max %d  \n", minCount, maxCount);
     //pBuffer += retinalSize * retinalSize - 1;
     for(int r = 0 ; r < retinalSize ; r++){
         for(int c = 0 ; c < retinalSize ; c++) {
             //drawing the retina and the rest of the image separately
-            int value= *pBuffer++;
-            unsigned int timestamp = *pTime++;
-            if((timestamp > minCount) && (timestamp < maxCount)) {
-                //value=a * value + b;
-                *pImage++ = (unsigned char) 127 + value ;
+            int value = *pBuffer;
+            unsigned long int timestampactual = *pTime;
+            if ((timestampactual>minCount)&&(timestampactual<maxCount)) {   //(timestampactual != lasttimestamp)
+                *pImage++ = (unsigned char) 127 + value;
+                //*pTime = (unsigned long int) 0;
             }
+            else {
+                *pImage++ = (unsigned char) 127;
+                //*pTime = (unsigned long int) 0;
+            }
+            pBuffer ++;
+            pTime ++;
         }
         pImage+=imagePadding;
     }
+    //unmask_events.setLastTimestamp(0);
+}
+
+unsigned long int cFrameConverter::getLastTimeStamp() {
+    return unmask_events.getLastTimestamp();
 }
 
 void cFrameConverter::clearMonoImage() {

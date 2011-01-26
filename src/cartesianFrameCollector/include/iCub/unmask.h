@@ -54,13 +54,13 @@ private:
 
     int sz;
     int* buffer;
-    unsigned int* timeBuffer;
+    unsigned long int* timeBuffer;
     int* fifoEvent;
     int* fifoEvent_temp;
     int* fifoEvent_temp2;
-    unsigned int timestamp;         // 16 bits variable to save the timestamp
-    long int timestamplong;         // variable 32 bits to save the timestamp
-    unsigned int lasttimestamp;
+    unsigned long int timestamp;         // 16 bits variable to save the timestamp
+    unsigned long int timestamplong;         // variable 32 bits to save the timestamp
+    unsigned long int lasttimestamp;
     short cartX, cartY, polarity;
 
     int wrapAdd;
@@ -98,7 +98,7 @@ public:
     * @param none
     * @return pointer to the buffer of timestamps
     */
-    unsigned int* getTimeBuffer();
+    unsigned long int* getTimeBuffer();
 
     /**
     * @brief Function that cleans buffer that containes events counts
@@ -118,6 +118,17 @@ public:
     * @return minvalue
     */
     int getMaxValue();
+
+    /**
+    * returns the last timestamp
+    */
+    unsigned long int getLastTimestamp();
+
+    /**
+    * force the values of the lasttimestamp 
+    * @param the value to be set
+    */
+     void setLastTimestamp(unsigned long int value);
 
     /**
     * default constructor

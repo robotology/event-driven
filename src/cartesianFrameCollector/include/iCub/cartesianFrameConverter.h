@@ -45,7 +45,11 @@ class cFrameConverter:public yarp::os::BufferedPort<sendingBuffer> {
 public:
     cFrameConverter();
     ~cFrameConverter();
-    virtual void onRead(sendingBuffer& b); //overwritten function for handling when event comes
+
+    /**
+    * overwritten function for handling events as soon as they arrive
+    */
+    virtual void onRead(sendingBuffer& b);
 
     /**
     * @brief returns a simple image
@@ -53,7 +57,13 @@ public:
     * @param minCount reference to the min timestamp in the frame
     * @param maxCount reference to the max timestamp in the frame
     */
-     void getMonoImage(yarp::sig::ImageOf<yarp::sig::PixelMono>* image, unsigned int minCount, unsigned int maxCount);
+     void getMonoImage(yarp::sig::ImageOf<yarp::sig::PixelMono>* image, unsigned long int minCount,unsigned long int maxCount);
+    
+    /**
+    * function that return the last time stamp saved in the buffer
+    * @return the unsigned int representing the last event timestamp
+    */
+     unsigned long int getLastTimeStamp();
 
     /**
     * @brief clears monoImage collection of events

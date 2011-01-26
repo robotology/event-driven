@@ -33,20 +33,19 @@ using namespace yarp::os;
 typedef unsigned long int uint32_t;
 
 
-
-
 #define maxPosEvent 10000
 #define responseGradient 127
 #define minKillThres 1000
 #define UNMASKRATETHREAD 1
-#define constInterval 10000;
+#define constInterval 100000;
 
 unmask::unmask() : RateThread(UNMASKRATETHREAD){
-    numKilledEvents=0;
-    countEvent=0;
-    countEvent2=0;
-    minValue=0;
-    maxValue=0;
+    numKilledEvents = 0;
+    lasttimestamp = 0;
+    countEvent = 0;
+    countEvent2 = 0;
+    minValue = 0;
+    maxValue = 0;
     xmask = 0x000000fE;
     ymask = 0x00007f00;
     xmasklong = 0x000000fE;
@@ -60,7 +59,7 @@ unmask::unmask() : RateThread(UNMASKRATETHREAD){
 
     buffer=new int[retinalSize*retinalSize];
     memset(buffer,0,retinalSize*retinalSize*sizeof(int));
-    timeBuffer=new unsigned int[retinalSize*retinalSize];
+    timeBuffer=new unsigned long int[retinalSize*retinalSize];
     memset(timeBuffer,0,retinalSize*retinalSize*sizeof(unsigned int));
     fifoEvent=new int[maxPosEvent];
     memset(fifoEvent,0,maxPosEvent*sizeof(int));
@@ -100,28 +99,38 @@ int unmask::getMaxValue() {
     return maxValue;
 }
 
+unsigned long int unmask::getLastTimestamp() {
+    return lasttimestamp;
+}
+
+void unmask::setLastTimestamp(unsigned long int value) {
+    lasttimestamp = value;
+}
+
 int* unmask::getEventBuffer() {
     return buffer;
 }
 
-unsigned int* unmask::getTimeBuffer() {
+unsigned long int* unmask::getTimeBuffer() {
     return timeBuffer;
 }
 
 void unmask::run() {
-    unsigned int* pointerTime=timeBuffer;
+    /*
+    unsigned long int* pointerTime=timeBuffer;
+    unsigned long int timelimit = lasttimestamp - constInterval;
+    printf("last:%d \n", lasttimestamp);
     int* pointerPixel=buffer;
     for(int j=0;j<retinalSize*retinalSize;j++) {
-        unsigned int timelimit=lasttimestamp - constInterval;
-        if(*pointerTime < timelimit) {
-            *pointerPixel=0;
-        }
-        if(timelimit<0) {
-            *pointerPixel=0;
+        
+        unsigned long int current = *pointerTime;
+        if ((current <= timelimit)||(current >lasttimestamp)) {
+            *pointerPixel == 0;
         }
         pointerTime++;
         pointerPixel++;
     }
+    */
 }
 
 
@@ -135,35 +144,38 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
     uint32_t* buf2 = (uint32_t*)i_buffer;
 
     for (int evt = 0; evt < num_events; evt++) {
- 
             // unmask the data
-            unsigned int blob = buf2[2*evt];
-            unsigned int timestamp = buf2[2*evt + 1];
+            unsigned long int blob = buf2[2 * evt];
+            unsigned long int timestamp = buf2[2 * evt + 1];
+            if( timestamp!=0) {
+                        lasttimestamp = timestamp;
+                    }
+            //printf("%d \n", timestamp);
 
             // here we zero the higher two bytes of the address!!! Only lower 16bits used!
             blob &= 0xFFFF;
-            
-            unmaskEvent(blob, cartX, cartY, polarity);
-            
+            unmaskEvent((unsigned int) blob, cartX, cartY, polarity);
             //printf(" %d : %d \n",blob,timestamp);
 
             if((cartX!=127)||(cartY!=0)) {      //removed one pixel which is set once the driver do not work properly
-                if(polarity>0) {
-                    buffer[cartX+cartY*retinalSize]=responseGradient;
-                    timeBuffer[cartX+cartY*retinalSize]=timestamp;
-                    lasttimestamp=timestamp;
-                    if(buffer[cartX+cartY*retinalSize]>127) {
-                        buffer[cartX+cartY*retinalSize]=127;
+                if(polarity > 0) {
+                    buffer[cartX + cartY * retinalSize] = responseGradient;
+                    timeBuffer[cartX + cartY * retinalSize] = timestamp;
+                    
+                    if(buffer[cartX + cartY * retinalSize] > 127) {
+                        buffer[cartX + cartY * retinalSize] = 127;
                     }
                 }
-                else if(polarity<0) {
-                    buffer[cartX+cartY*retinalSize]=-responseGradient;
-                    if (buffer[cartX+cartY*retinalSize]<-127) {
-                        buffer[cartX+cartY*retinalSize]=-127;
+                else if(polarity < 0) {
+                    buffer[cartX + cartY * retinalSize] = -responseGradient;
+                    timeBuffer[cartX + cartY * retinalSize] = timestamp;
+                    
+                    if (buffer[cartX + cartY * retinalSize] < -127) {
+                        buffer[cartX + cartY * retinalSize] = -127;
                     }
                 }
+                /*
                 //udpates the temporary buffer
-
                 if(temp1) {
                     if(countEvent>maxPosEvent-1) {
                         countEvent=maxPosEvent-1;
@@ -180,6 +192,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
                     //increments the counter of events
                     countEvent2++;
                 }
+                */
             }
             //fprintf(uEvents,"%d\t%d\t%d\t%u\n", cartX, cartY, polarity, timestamp);
 
@@ -190,16 +203,16 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
 
 
 void unmask::unmaskEvent(unsigned int evPU, short& x, short& y, short& pol) {
-    y = (short)(retinalSize-1) - (short)((evPU & xmask)>>xshift);
-    //y = (short)((evPU & xmask)>>xshift);
-    x = (short) ((evPU & ymask)>>yshift);
-    pol = ((short)((evPU & polmask)>>polshift)==0)?-1:1;	//+1 ON, -1 OFF
+    y = (short)(retinalSize-1) - (short)((evPU & xmask) >> xshift);
+    //y = (short) ((evPU & xmask)>>xshift);
+    x = (short) ((evPU & ymask) >> yshift);
+    pol = ((short)((evPU & polmask) >> polshift)==0)?-1:1;	//+1 ON, -1 OFF
 }
 
 void unmask::unmaskEvent(long int evPU, short& x, short& y, short& pol) {
-    x = (short)(retinalSize-1) - (short)((evPU & xmask)>>xshift);
-    y = (short) ((evPU & ymask)>>yshift2);
-    pol = ((short)((evPU & polmask)>>polshift)==0)?-1:1;        //+1 ON, -1 OFF
+    x = (short)(retinalSize-1) - (short)((evPU & xmask) >> xshift);
+    y = (short) ((evPU & ymask) >> yshift);
+    pol = ((short)((evPU & polmask) >> polshift)==0)?-1:1;        //+1 ON, -1 OFF
 }
 
 void unmask::threadRelease() {
