@@ -187,17 +187,18 @@
 #include <iCub/device2yarp.h>
 
 class aexGrabberModule:public yarp::os::RFModule {
-    std::string moduleName;                     //name of the module (rootname of ports)
-    std::string robotName;                      //name of the robot
-    std::string robotPortName;                  //reference to the head of the robot
-    std::string deviceName;                      //name of the device
-    std::string devicePortName;                  //reference to the device port
-    std::string handlerPortName;                //name of the handler port (comunication with respond function)
-    int ratethread;                             //time constant for ratethread
+    std::string moduleName;                     // name of the module (rootname of ports)
+    std::string robotName;                      // name of the robot
+    std::string binaryName;                     // name of the binary file containing biases
+    std::string robotPortName;                  // reference to the head of the robot
+    std::string deviceName;                     // name of the device
+    std::string devicePortName;                 // reference to the device port
+    std::string handlerPortName;                // name of the handler port (comunication with respond function)
+    int ratethread;                             // time constant for ratethread
 
     yarp::os::Port handlerPort;                 // a port to handle messages 
-    yarp::os::Semaphore mutex;                      //semaphore for the respond function
-    device2yarp* D2Y;                          //reference to the ratethread that reads the dvs camera
+    yarp::os::Semaphore mutex;                  // semaphore for the respond function
+    device2yarp* D2Y;                           // reference to the ratethread that reads the dvs camera
 
 public:
     bool configure(yarp::os::ResourceFinder &rf); // configure all the module parameters and return true if successful
