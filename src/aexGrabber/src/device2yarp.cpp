@@ -170,26 +170,17 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
 #endif
 
     biasFromBinary = false;
-    // time stuff
-    struct timeval tv;
-    u64 Tseqstart, TmaxSeqTimeEstimate, Tnow;
-    
-    int r, w;
     len=0;
     sz=0;
     ec = 0;
+
 #ifdef INPUT_BIN_U32U32LE
     u32 rbuf[2];
 #endif
-    
-    int aexfd;
-    int busy;
     u64 ec = 0;
-    u32 ival, addr, hwival;
+    
     memset(buffer, 0, SIZE_OF_DATA);
-    const u32 seqAllocChunk_b = 8192 * sizeof(struct aer); //allocating the right dimension for biases
     monBufSize_b = 8192 * sizeof(struct aer);
-
     assert(SIZE_OF_DATA >= monBufSize_b);
 
     pmon = (aer *)  malloc(monBufSize_b);
@@ -239,6 +230,15 @@ device2yarp::~device2yarp() {
 
 
 void device2yarp::prepareBiases() {
+    //initialisation
+    const u32 seqAllocChunk_b = 8192 * sizeof(struct aer); //allocating the right dimension for biases
+    int r, w;
+    struct timeval tv;
+    u64 Tseqstart, TmaxSeqTimeEstimate, Tnow;
+    u32 ival, addr, hwival;
+    int aexfd;
+    int busy;
+    //preparing
     if(biasFromBinary) {
         // prebuffer ALL data from stdin (whether present)
         while (1) {
@@ -246,7 +246,6 @@ void device2yarp::prepareBiases() {
                 //fprintf(stderr, "code error 1234: %" PRIu32 " < %" PRIu32 "\n", seqAlloced_b, seqSize_b);
                 exit(1);
             }
-
             // realloc needed?
             if (seqAlloced_b == seqSize_b) {
                 seqAlloced_b += seqAllocChunk_b;
