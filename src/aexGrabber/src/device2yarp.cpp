@@ -102,7 +102,8 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
 
 
 
-//#define FAST
+
+#define FAST
 #ifdef FAST
             /*int biasValues[]={1966,        // cas
                               1137667,       // injGnd
@@ -126,11 +127,11 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
             injg = 1137667;       // injGnd
             reqPd = 16777215;    // reqPd
             pux = 8053457;     // puX
-            diffOff = 133;        // diffOff
+            diffoff = 133;        // diffOff
             req = 160712;      // req
             refr = 944;           // refr
             puy = 16777215;    // puY
-            diffOn = 205255;      // diffOn
+            diffon = 205255;      // diffOn
             diff = 3207;       // diff 
             foll = 278;          // foll
             pr= 217;            //Pr 
@@ -174,9 +175,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
     sz=0;
     ec = 0;
 
-#ifdef INPUT_BIN_U32U32LE
-    u32 rbuf[2];
-#endif
+
     u64 ec = 0;
     
     memset(buffer, 0, SIZE_OF_DATA);
@@ -198,14 +197,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
         printf("Cannot open device file: %s \n",portDeviceName.c_str());
     }
 
-    pseq = (aer *) malloc(seqAllocChunk_b);
-    if ( pseq == NULL ) {
-        printf("pseq malloc failed \n");
-    }
-    seqAlloced_b = seqAllocChunk_b;
-
-    seqEvents = 0;
-    seqSize_b = 0;
+    
 
     if(save)
         raw = fopen(i_fileName.c_str(), "wb");
@@ -238,6 +230,20 @@ void device2yarp::prepareBiases() {
     u32 ival, addr, hwival;
     int aexfd;
     int busy;
+
+#ifdef INPUT_BIN_U32U32LE
+    u32 rbuf[2];
+#endif
+
+    pseq = (aer *) malloc(seqAllocChunk_b);
+    if ( pseq == NULL ) {
+        printf("pseq malloc failed \n");
+    }
+    seqAlloced_b = seqAllocChunk_b;
+
+    seqEvents = 0;
+    seqSize_b = 0;
+
     //preparing
     if(biasFromBinary) {
         // prebuffer ALL data from stdin (whether present)
@@ -318,7 +324,7 @@ void device2yarp::prepareBiases() {
                 exit(1);
             }
         }
-    } /
+    } 
     else {
         // sending biases as variable
         int err;
@@ -370,7 +376,6 @@ void device2yarp::prepareBiases() {
         
         }
     }
-
 }
 
 

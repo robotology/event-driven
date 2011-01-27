@@ -101,7 +101,7 @@ bool aexGrabberModule::configure(yarp::os::ResourceFinder &rf) {
                            Value("none"), 
                            "filename of the binary (string)").asString();
     printf("trying to read %s  for biases \n",devicePortName.c_str());
-    if(!strcmp(binaryName,"none")) {
+    if(!strcmp(binaryName.c_str(),"none")) {
         D2Y->setFromBinary(false);
         FILE* f = fopen(binaryName.c_str(),"r");
         D2Y->setBinaryFile(f);
