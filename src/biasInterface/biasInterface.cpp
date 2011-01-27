@@ -283,6 +283,39 @@ static void cb_digits_cas( GtkAdjustment *adj ) {
     mutex.post();
 }
 
+
+static void callbackSaveButton( GtkWidget *widget,gpointer data ) {
+    printf ("Save button - %s was pressed\n", (char *) data);
+    mutex.wait();
+    if (_pOutPort!=NULL) {
+        yarp::os::Bottle bot; //= _pOutPort->prepare();
+        bot.clear();
+        bot.addVocab(COMMAND_VOCAB_SAVE);
+        bot.addVocab(COMMAND_VOCAB_BIAS);
+        //_pOutPort->Content() = _outBottle;
+        Bottle in;
+        _pOutPort->write(bot,in);
+    }
+    mutex.post();
+}
+
+static void callbackProgBiasButton( GtkWidget *widget,gpointer data ) {
+    printf ("Prog Bias - %s was pressed\n", (char *) data);
+    mutex.wait();
+    if (_pOutPort!=NULL) {
+        yarp::os::Bottle bot; //= _pOutPort->prepare();
+        bot.clear();
+        bot.addVocab(COMMAND_VOCAB_PROG);
+        bot.addVocab(COMMAND_VOCAB_BIAS);
+        //_pOutPort->Content() = _outBottle;
+        Bottle in;
+        _pOutPort->write(bot,in);
+    }
+    mutex.post();
+}
+
+
+
 gint timeout_update_CB(gpointer data) {
     //portFpsData.getStats(av, min, max);
     //portFpsData.reset();
@@ -560,8 +593,9 @@ GtkWidget* createMainWindow(void) {
     // function is NULL and is ignored in the callback function.
     //g_signal_connect (G_OBJECT (window), "delete_event", G_CALLBACK (delete_event), NULL);
     // Box for main window
-    GtkWidget *box;
-    GtkWidget *box2, *box3, *box4, *box5, *box6;
+    GtkWidget *buttonSave, *buttonProgBias;
+    GtkWidget *boxButton;
+    GtkWidget *box, *box2, *box3, *box4, *box5, *box6;
     box = gtk_vbox_new (FALSE, 0); // parameters (gboolean homogeneous_space, gint spacing);
     gtk_container_add (GTK_CONTAINER (window), box);
     // MenuBar for main window
@@ -790,88 +824,29 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box6), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
 
-    /*
-    label = gtk_label_new ("map1 k1:");
-    gtk_box_pack_start (GTK_BOX (box6), label, FALSE, FALSE, 0);
-    gtk_widget_show (label);
     
-    adj11 = gtk_adjustment_new (1.0, 0.0,1.0,0.01, 0, 0);
-    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj11));
-    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
-    scale_set_default_values (GTK_SCALE (hscale));
-    gtk_box_pack_start (GTK_BOX (box6), hscale, TRUE, TRUE, 0);
-    gtk_widget_show (hscale);
-    g_signal_connect (G_OBJECT (adj11), "value_changed",
-                      G_CALLBACK (cb_digits_scale11), NULL);
-    */
-
-    /*
-    label = gtk_label_new ("map2 k2:");
-    gtk_box_pack_start (GTK_BOX (box6), label, FALSE, FALSE, 0);
-    gtk_widget_show (label);
-
-    adj12 = gtk_adjustment_new (0.1, 0.0,1.0,0.01, 0.0, 0.0);
-    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj12));
-    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
-    scale_set_default_values (GTK_SCALE (hscale));
-    gtk_box_pack_start (GTK_BOX (box6), hscale, TRUE, TRUE, 0);
-    gtk_widget_show (hscale);
-    g_signal_connect (G_OBJECT (adj12), "value_changed",
-                      G_CALLBACK (cb_digits_scale12), NULL);
-
-    label = gtk_label_new ("map3: k3");
-    gtk_box_pack_start (GTK_BOX (box6), label, FALSE, FALSE, 0);
-    gtk_widget_show (label);
+    buttonProgBias = gtk_button_new ();
+    g_signal_connect (G_OBJECT (buttonProgBias), "clicked", G_CALLBACK (callbackProgBiasButton),(gpointer) "ProgBias");
+    boxButton = xpm_label_box (NULL, "ProgBias");
+    gtk_widget_show (boxButton);
+    gtk_container_add (GTK_CONTAINER (buttonProgBias), boxButton);
+    gtk_container_add (GTK_CONTAINER (buttonProgBias), box6);
+    gtk_widget_show (buttonProgBias);
+    gtk_box_pack_start (GTK_BOX (box6), buttonProgBias, FALSE, FALSE, 10);
+    gtk_widget_show (buttonProgBias);
     
-    adj13 = gtk_adjustment_new (0.5, 0.0,1.0,0.01, 0.0, 0.0);
-    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj13));
-    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
-    scale_set_default_values (GTK_SCALE (hscale));
-    gtk_box_pack_start (GTK_BOX (box6), hscale, TRUE, TRUE, 0);
-    gtk_widget_show (hscale);
-    g_signal_connect (G_OBJECT (adj13), "value_changed",
-                      G_CALLBACK (cb_digits_scale13), NULL);
-
-
-    label = gtk_label_new ("map4: k4");
-    gtk_box_pack_start (GTK_BOX (box6), label, FALSE, FALSE, 0);
-    gtk_widget_show (label);
     
-    adj14 = gtk_adjustment_new (0.1, 0.0,1.0,0.01, 0.0, 0.0);
-    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj14));
-    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
-    scale_set_default_values (GTK_SCALE (hscale));
-    gtk_box_pack_start (GTK_BOX (box6), hscale, TRUE, TRUE, 0);
-    gtk_widget_show (hscale);
-    g_signal_connect (G_OBJECT (adj14), "value_changed",
-                      G_CALLBACK (cb_digits_scale14), NULL);
-
-    label = gtk_label_new ("map5: k5");
-    gtk_box_pack_start (GTK_BOX (box6), label, FALSE, FALSE, 0);
-    gtk_widget_show (label);
     
-    adj15 = gtk_adjustment_new (0.1, 0.0,1.0,0.01, 0.0, 0.0);
-    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj15));
-    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
-    scale_set_default_values (GTK_SCALE (hscale));
-    gtk_box_pack_start (GTK_BOX (box6), hscale, TRUE, TRUE, 0);
-    gtk_widget_show (hscale);
-    g_signal_connect (G_OBJECT (adj15), "value_changed",
-                      G_CALLBACK (cb_digits_scale15), NULL);
-
-    label = gtk_label_new ("map6: k6");
-    gtk_box_pack_start (GTK_BOX (box6), label, FALSE, FALSE, 0);
-    gtk_widget_show (label);
+    buttonSave = gtk_button_new ();
+    g_signal_connect (G_OBJECT (buttonSave), "clicked", G_CALLBACK (callbackSaveButton), NULL);
+    boxButton = xpm_label_box (NULL, "Save");
+    gtk_widget_show (boxButton);
+    gtk_container_add (GTK_CONTAINER (buttonSave), boxButton);
+    gtk_container_add (GTK_CONTAINER (buttonSave), box6);
+    gtk_box_pack_start (GTK_BOX (box6), buttonSave, FALSE, FALSE, 10);
+    gtk_widget_show (buttonSave);
     
-    adj16 = gtk_adjustment_new (0.5, 0.0,1.0,0.01, 0.0, 0.0);
-    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj16));
-    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
-    scale_set_default_values (GTK_SCALE (hscale));
-    gtk_box_pack_start (GTK_BOX (box6), hscale, TRUE, TRUE, 0);
-    gtk_widget_show (hscale);
-    g_signal_connect (G_OBJECT (adj16), "value_changed",
-                      G_CALLBACK (cb_digits_scale16), NULL);
-    */  
+
 
     gtk_box_pack_start (GTK_BOX (box3), box6, FALSE, FALSE, 0);
     gtk_widget_show (box6);

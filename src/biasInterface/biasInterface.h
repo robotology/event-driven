@@ -47,6 +47,9 @@
 #define COMMAND_VOCAB_REQPD VOCAB3('r','e','q') 
 #define COMMAND_VOCAB_INJGND VOCAB4('i','n','j','g')
 #define COMMAND_VOCAB_CAS VOCAB3('c','a','s')
+#define COMMAND_VOCAB_PROG VOCAB4('p','r','o','g')
+#define COMMAND_VOCAB_BIAS VOCAB4('b','i','a','s')
+#define COMMAND_VOCAB_SAVE VOCAB4('s','a','v','e')
 
 //-------------------------------------------------
 // Callbacks
