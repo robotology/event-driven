@@ -101,6 +101,10 @@ unsigned long int unmask::getLastTimestamp() {
     return lasttimestamp;
 }
 
+unsigned long int unmask::getEldestTimeStamp() {
+    return eldesttimestamp;
+}
+
 void unmask::setLastTimestamp(unsigned long int value) {
     lasttimestamp = value;
 }
@@ -146,6 +150,8 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
             unsigned long int blob = buf2[2 * evt];
             unsigned long int timestamp = buf2[2 * evt + 1];
             lasttimestamp = timestamp;
+            if(evt == 0)
+                eldesttimestamp = timestamp;
             
             //printf("%d \n", timestamp);
 

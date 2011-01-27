@@ -61,6 +61,7 @@ private:
     unsigned long int timestamp;         // 16 bits variable to save the timestamp
     unsigned long int timestamplong;         // variable 32 bits to save the timestamp
     unsigned long int lasttimestamp;
+    unsigned long int eldesttimestamp;        // timestamp of the eldest event in the buffer 
     short cartX, cartY, polarity;
 
     int wrapAdd;
@@ -118,6 +119,11 @@ public:
     * @return minvalue
     */
     int getMaxValue();
+
+    /**
+    * returns the eldest timestamp
+    */
+    unsigned long int getEldestTimeStamp();
 
     /**
     * returns the last timestamp

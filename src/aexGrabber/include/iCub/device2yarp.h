@@ -173,6 +173,7 @@ private:
 
     yarp::os::BufferedPort<sendingBuffer> port;
     FILE* raw;
+    FILE* binInput;
 
     u64 seqTime;
     u64 ec;

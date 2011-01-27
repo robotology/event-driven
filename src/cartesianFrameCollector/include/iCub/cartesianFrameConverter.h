@@ -66,6 +66,12 @@ public:
      unsigned long int getLastTimeStamp();
 
     /**
+    * function that return the last time stamp saved in the buffer
+    * @return the unsigned int representing the last event timestamp
+    */
+     unsigned long int getEldestTimeStamp();
+
+    /**
     * @brief clears monoImage collection of events
     * @param pixelMono reference to the image contains the counts of events
     */

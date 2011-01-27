@@ -54,7 +54,7 @@ bool cfCollectorThread::threadInit() {
     cfConverter=new cFrameConverter();
     cfConverter->useCallback();
     cfConverter->open(getName("/retina:i").c_str());
-    maxCount = cfConverter->getLastTimeStamp();
+    minCount = cfConverter->getEldestTimeStamp();
     startTimer = Time::now();
     return true;
 }
@@ -79,21 +79,22 @@ void cfCollectorThread::resize(int widthp, int heightp) {
 
 void cfCollectorThread::run() {
     count++;
-    if (count % 1 == 0) {
+    /*if (count % 1 == 0) {
          maxCount = cfConverter->getLastTimeStamp();
          //startTimer = Time::now();
     }
+    */
     endTimer = Time::now();
     double interval = (endTimer - startTimer) * 1000000; //interval in microsecond
     startTimer = Time::now();
-    maxCount += interval;
-    minCount =  maxCount - interval * 1.5;
+    minCount += interval;
+    maxCount =  minCount + interval * 2 ;
     if( maxCount >= 2147483647) {
         maxCount = maxCount - 2147483647;
     }
     //maximum value  2147483647 4294967295
     long int l = cfConverter->getLastTimeStamp();
-    printf("interval:%f  %d,%d,%d \n",maxCount,interval,minCount,l);
+    //printf("interval>%f  %d,%d,%d \n",interval,minCount,l,maxCount);
     assert(maxCount < 2147483647);
     
     if(outPort.getOutputCount()) {

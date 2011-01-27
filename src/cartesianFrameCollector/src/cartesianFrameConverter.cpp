@@ -106,6 +106,10 @@ unsigned long int cFrameConverter::getLastTimeStamp() {
     return unmask_events.getLastTimestamp();
 }
 
+unsigned long int cFrameConverter::getEldestTimeStamp() {
+    return unmask_events.getEldestTimeStamp();
+}
+
 void cFrameConverter::clearMonoImage() {
     unmask_events.cleanEventBuffer();
 }
