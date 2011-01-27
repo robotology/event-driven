@@ -62,7 +62,7 @@ void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image, unsigned long int 
     int imagePadding = image->getPadding();
     int imageRowSize = image->getRowSize();
     
-    
+    /*
     unsigned long int lasttimestamp = getLastTimeStamp();
     if (lasttimestamp == previousTimeStamp) {   //condition where there were not event between this call and the previous
         for(int r = 0 ; r < retinalSize ; r++){
@@ -74,6 +74,7 @@ void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image, unsigned long int 
         return;
     }
     previousTimeStamp = lasttimestamp;
+    */
 
     int* pBuffer = unmask_events.getEventBuffer();
     unsigned long int* pTime   = unmask_events.getTimeBuffer();
