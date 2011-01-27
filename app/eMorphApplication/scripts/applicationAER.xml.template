@@ -11,6 +11,12 @@
    <tag>eventGrabber</tag>
 </module>
 <module>
+   <name>biasInterface</name>
+   <parameters> </parameters>
+   <node>/powerNode1</node>
+   <tag>guiInterfaceBias</tag>
+</module>
+<module>
    <name>visualAligner</name>
    <parameters></parameters>
    <node>/powerNode1</node>
@@ -32,6 +38,11 @@
 <connection>
   <from>/icub/retina0</from>
   <to>/cartesianFrameCollector/image:i</to>
+  <protocol>tcp</protocol>
+</connection>
+<connection>
+  <from>/biasInterface/command:o</from>
+  <to>/aexGrabber</to>
   <protocol>tcp</protocol>
 </connection>
 <connection>
