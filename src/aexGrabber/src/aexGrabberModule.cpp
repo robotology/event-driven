@@ -68,6 +68,10 @@ bool aexGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     printf("trying to connect to the device %s \n",devicePortName.c_str());
 
 
+    
+
+
+
 
     /*
     * attach a port of the same name as the module (prefixed with a /) to the module
@@ -89,6 +93,23 @@ bool aexGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     D2Y=new device2yarp(devicePortName, _save, fileName);
     //D2Y->setDeviceName(devicePortName);
     D2Y->start();
+
+    /*
+    * get the file name of binaries when the biases are read from this file
+    */
+    binaryName             = rf.check("file", 
+                           Value("none"), 
+                           "filename of the binary (string)").asString();
+    printf("trying to read %s  for biases \n",devicePortName.c_str());
+    if(!strcmp(binaryName,"none")) {
+        D2Y->setFromBinary(false);
+        FILE* f = fopen(binaryName.c_str(),r);
+        D2Y->setBinaryFile(f);
+    }
+    else {
+        D2Y->setFromBinary(true);
+    }
+
 
     return true ;       // let the RFModule know everything went well
                         // so that it will then run the module
@@ -139,7 +160,6 @@ bool aexGrabberModule::respond(const Bottle& command, Bottle& reply) {
             reply.addString("set fn \t: general set command ");
             reply.addString("");
             reply.addString("");
-
             reply.addString("");
             reply.addString("set time <int> \t: setting the costant time between saccadic events (default 3000) ");
             reply.addString("set k1 <double> \t: setting the coefficients to the default value ");
@@ -152,6 +172,7 @@ bool aexGrabberModule::respond(const Bottle& command, Bottle& reply) {
             reply.addString("set kc1 <double> \t: setting of linear combination coefficient (mapc1)  ");
             reply.addString("set kmot <double> \t: setting of linear combination coefficient (flow motion)  ");
             reply.addString("");
+
             reply.addString("get fn \t: general get command ");
             reply.addString("");
             reply.addString("");
@@ -166,8 +187,13 @@ bool aexGrabberModule::respond(const Bottle& command, Bottle& reply) {
             reply.addString("get kc1 <double> \t: getting of linear combination coefficient (mapc1)  ");
             reply.addString("get kmot <double> \t: getting of linear combination coefficient (flow motion)  ");
 
-            reply.addString(" ");
-            reply.addString(" ");
+            reply.addString("");
+            reply.addString("");
+
+            reply.addString("prog fn \t: general prog command ");
+            reply.addString("");
+            reply.addString("");
+            reply.addString("prog bias \t: asks to reprogram biases ");
 
 
             ok = true;
@@ -216,7 +242,7 @@ bool aexGrabberModule::respond(const Bottle& command, Bottle& reply) {
     case COMMAND_VOCAB_SET:
         rec = true;
         {
-            switch(command.get(1).asVocab()) {
+        switch(command.get(1).asVocab()) {
             
             case COMMAND_VOCAB_PR:{
                 double w = command.get(2).asDouble();
@@ -393,6 +419,23 @@ bool aexGrabberModule::respond(const Bottle& command, Bottle& reply) {
             }
         }
         break;
+    case COMMAND_VOCAB_PROG:
+        rec = true;
+        {
+            switch(command.get(1).asVocab()) {
+            case COMMAND_VOCAB_BIAS:{
+                printf("request of reprogrammming biases arrived \n");
+                D2Y->prepareBiases();
+            }
+            break;
+            default: {
+                
+            }
+                break;
+            }
+        }
+        break;
+
 
     }
     mutex.post();

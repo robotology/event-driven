@@ -104,8 +104,6 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
 
 //#define FAST
 #ifdef FAST
-            
-
             /*int biasValues[]={1966,        // cas
                               1137667,       // injGnd
                               16777215,    // reqPd
@@ -169,8 +167,9 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
                               8            //Pr 
             };
             */
-
 #endif
+
+    biasFromBinary = false;
     // time stuff
     struct timeval tv;
     u64 Tseqstart, TmaxSeqTimeEstimate, Tnow;
@@ -228,143 +227,151 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
         printf("Cannot open device file: %s \n",portDeviceName.c_str());
     }
     else {
-        if(true) {
-            /* prebuffer ALL data from stdin */
-            while (1) {
-                if (seqAlloced_b < seqSize_b) {
-                    //fprintf(stderr, "code error 1234: %" PRIu32 " < %" PRIu32 "\n", seqAlloced_b, seqSize_b);
-                    exit(1);
-                }
-
-                // realloc needed?
-                if (seqAlloced_b == seqSize_b) {
-                    seqAlloced_b += seqAllocChunk_b;
-                    pseq = (aer*)realloc(pseq, seqAlloced_b);
-                    if (pseq == NULL) printf("realloc failed:");
-                }
-
-#ifndef INPUT_BIN_U32U32LE
-                r = fscanf(stdin, "%" PRIu32 " %" PRIu32, &ival, &addr);
-
-                if (r == EOF) {
-                    fprintf(stderr, "parsing input completed.\n");
-                    fclose(ifd);
-                    break;
-                }
-                if (r != 2) {
-                    fprintf(stderr, "input parsing error!!!\n");
-                    exit(1); // FIXME
-                }
-#else
-                r = fread(rbuf, 8, 1, stdin);
-                if (r == 0) {
-                    if (feof(stdin)) {
-                        fprintf(stderr, "parsing input completed.\n");
-                        fclose(stdin);
-                        break;
-                    } else {
-                        fprintf(stderr, "input parsing error!!!\n");
-                        perror("errno");
-                        exit(1);
-                    }
-                }
-                ival = rbuf[0];
-                addr = rbuf[1];
-#endif
-
-                /* timestamp expressed in <ts>*1e-6/128e-9, with <ts> in microseconds */
-                hwival = (u32)(ival * 7.8125);
-                pseq[seqEvents].address = addr;
-                pseq[seqEvents].timestamp = hwival;
-                
-                seqEvents++;
-                seqTime += hwival;
-                seqSize_b += sizeof(struct aer);
-
-
-                assert(seqEvents * sizeof(struct aer) == seqSize_b);
-            } //end of the while
-
-            /* save start of sequencing time */
-            gettimeofday(&tv, NULL);
-            Tnow = ((u64)tv.tv_sec) * 1000000 + ((u64)tv.tv_usec);
-            Tseqstart = Tnow;
-            seqDone_b = 0;
-
-            /* try writing to kernel driver */
-            if (seqDone_b < seqSize_b) {
-                //fprintf(stderr, "calling write fd: %d  sS: %d  sD: %d  ps: %x\n", aexfd, seqSize_b, seqDone_b, (u32)pseq);
-
-                w = write(aexfd, seqDone_b + ((u8*)pseq), seqSize_b - seqDone_b);
-
-                //fprintf(stderr, "wrote: %d\n", w);
-                if (w > 0) {
-                    busy = 1;
-                    seqDone_b += w;
-                } else if (w == 0 || (w < 0 && errno == EAGAIN)) {
-                    /* we were not busy, maybe someone else is... */
-                } else {
-                    perror("invalid write");
-                    exit(1);
-                }
-            }
-
-        }
-        else {
-            int err;
-            if(!strcmp(portDeviceName.c_str(),"/dev/aerfx2_0")) {
-                printf("sending biases as events to the device ... \n");
-                    
-                
-                int biasValues[]={cas,        // cas
-                                  injg,       // injGnd
-                                  reqPd,    // reqPd
-                                  pux,     // puX
-                                  diffoff,        // diffOff
-                                  req,      // req
-                                  refr,           // refr
-                                  puy,    // puY
-                                  diffon,      // diffOn
-                                  diff,       // diff 
-                                  foll,          // foll
-                                  pr            //Pr 
-                };
-
-
-                string biasNames[] = {
-                        "cas",
-                        "injGnd",
-                        "reqPd",
-                        "puX",
-                        "diffOff",
-                        "req",
-                        "refr",
-                        "puY",
-                        "diffOn",
-                        "diff",
-                        "foll",
-                        "Pr"
-                };
-
-            
-                //int err = write(file_desc,bias,41); //5+36 
-                seqEvents = 0;
-                seqSize_b = 0;
-                for(int j=0;j<countBias;j++) {
-                    progBias(biasNames[j],24,biasValues[j]);
-                }
-                latchCommitAEs();
-                //monitor(10);
-                releasePowerdown();
-                sendingBias();
-            
-            }
-        } //end of the else
+         prepareBiases();
     }    
 }
 
+
 device2yarp::~device2yarp() {
    
+}
+
+
+
+void device2yarp::prepareBiases() {
+    if(biasFromBinary) {
+        // prebuffer ALL data from stdin (whether present)
+        while (1) {
+            if (seqAlloced_b < seqSize_b) {
+                //fprintf(stderr, "code error 1234: %" PRIu32 " < %" PRIu32 "\n", seqAlloced_b, seqSize_b);
+                exit(1);
+            }
+
+            // realloc needed?
+            if (seqAlloced_b == seqSize_b) {
+                seqAlloced_b += seqAllocChunk_b;
+                pseq = (aer*)realloc(pseq, seqAlloced_b);
+                if (pseq == NULL) printf("realloc failed:");
+            }
+
+#ifndef INPUT_BIN_U32U32LE
+            r = fscanf(binInput, "%" PRIu32 " %" PRIu32, &ival, &addr);
+
+            if (r == EOF) {
+                fprintf(stderr, "parsing input completed.\n");
+                fclose(ifd);
+                break;
+            }
+            if (r != 2) {
+                fprintf(stderr, "input parsing error!!!\n");
+                exit(1); // FIXME
+            }
+#else
+            r = fread(rbuf, 8, 1, binInput);
+            if (r == 0) {
+                if (feof(binInput)) {
+                    fprintf(stderr, "parsing input completed.\n");
+                    fclose(binInput);
+                    break;
+                } else {
+                    fprintf(stderr, "input parsing error!!!\n");
+                    perror("errno");
+                    exit(1);
+                }
+            }
+            ival = rbuf[0];
+            addr = rbuf[1];
+#endif
+
+            /* timestamp expressed in <ts>*1e-6/128e-9, with <ts> in microseconds */
+            hwival = (u32)(ival * 7.8125);
+            pseq[seqEvents].address = addr;
+            pseq[seqEvents].timestamp = hwival;
+            
+            seqEvents++;
+            seqTime += hwival;
+            seqSize_b += sizeof(struct aer);
+
+
+            assert(seqEvents * sizeof(struct aer) == seqSize_b);
+        } //end of the while
+
+        /* save start of sequencing time */
+        gettimeofday(&tv, NULL);
+        Tnow = ((u64)tv.tv_sec) * 1000000 + ((u64)tv.tv_usec);
+        Tseqstart = Tnow;
+        seqDone_b = 0;
+
+        /* try writing to kernel driver */
+        if (seqDone_b < seqSize_b) {
+            //fprintf(stderr, "calling write fd: %d  sS: %d  sD: %d  ps: %x\n", aexfd, seqSize_b, seqDone_b, (u32)pseq);
+
+            w = write(aexfd, seqDone_b + ((u8*)pseq), seqSize_b - seqDone_b);
+
+            //fprintf(stderr, "wrote: %d\n", w);
+            if (w > 0) {
+                busy = 1;
+                seqDone_b += w;
+            } else if (w == 0 || (w < 0 && errno == EAGAIN)) {
+                /* we were not busy, maybe someone else is... */
+            } else {
+                perror("invalid write");
+                exit(1);
+            }
+        }
+    } /
+    else {
+        // sending biases as variable
+        int err;
+        if(!strcmp(portDeviceName.c_str(),"/dev/aerfx2_0")) {
+            printf("sending biases as events to the device ... \n");
+                
+            
+            int biasValues[]={cas,        // cas
+                              injg,       // injGnd
+                              reqPd,    // reqPd
+                              pux,     // puX
+                              diffoff,        // diffOff
+                              req,      // req
+                              refr,           // refr
+                              puy,    // puY
+                              diffon,      // diffOn
+                              diff,       // diff 
+                              foll,          // foll
+                              pr            //Pr 
+            };
+
+
+            string biasNames[] = {
+                    "cas",
+                    "injGnd",
+                    "reqPd",
+                    "puX",
+                    "diffOff",
+                    "req",
+                    "refr",
+                    "puY",
+                    "diffOn",
+                    "diff",
+                    "foll",
+                    "Pr"
+            };
+
+        
+            //int err = write(file_desc,bias,41); //5+36 
+            seqEvents = 0;
+            seqSize_b = 0;
+            for(int j=0;j<countBias;j++) {
+                progBias(biasNames[j],24,biasValues[j]);
+            }
+            latchCommitAEs();
+            //monitor(10);
+            releasePowerdown();
+            sendingBias();
+        
+        }
+    }
+
 }
 
 

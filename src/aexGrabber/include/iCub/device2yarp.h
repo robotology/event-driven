@@ -56,6 +56,11 @@ public:
     virtual void threadRelease();
 
     /**
+    * function that prepares biases either reading them from file or reading the default value
+    */
+    void prepareBiases();
+
+    /**
     * function used to set the name of the port device where biases are sent
     * @param name name of the port of the device
     */
@@ -118,6 +123,13 @@ public:
      */
     void sendingBias();
 
+    /**
+    * set the flag that regulates whether the biases are read from binary or copied from default values
+    */
+    void setFromBinary(bool value) { biasFromBinary = value; };
+
+    void setBinaryFile(FILE* f) {binInput = f; };
+
     void setPR(double value) {pr = value;};
     
     void setFOLL(double value) {foll = value;};
@@ -174,7 +186,7 @@ private:
     yarp::os::BufferedPort<sendingBuffer> port;
     FILE* raw;
     FILE* binInput;
-
+    bool biasFromBinary;
     u64 seqTime;
     u64 ec;
     u32 seqAlloced_b;
