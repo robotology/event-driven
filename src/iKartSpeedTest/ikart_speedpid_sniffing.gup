@@ -1,0 +1,22 @@
+V4
+XYDISABLED
+ADVANCED
+1000
+1
+I 0
+Esd USB-CAN driver:Device 0, Baudrate 1000, ID len 0, 0x0 -> 0x7ff
+ROLL
+1790135 100 -100
+1
+1
+0
+0
+Red 0 2 0xffff 0x118 6 0xffff S16LE 0 1  01
+NONE
+I 0
+Blue 0 2 0xffff 0x118 4 0xffff S16LE 0 1  23
+NONE
+I 0
+Green 0 2 0xffff 0x128 4 0xffff S16LE 0 1  23
+NONE
+I 0
