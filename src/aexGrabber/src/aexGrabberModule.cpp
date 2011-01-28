@@ -425,6 +425,8 @@ bool aexGrabberModule::respond(const Bottle& command, Bottle& reply) {
             switch(command.get(1).asVocab()) {
             case COMMAND_VOCAB_BIAS:{
                 printf("request of reprogrammming biases arrived \n");
+                D2Y->closeDevice();
+                Time::delay(1);
                 D2Y->prepareBiases();
             }
             break;

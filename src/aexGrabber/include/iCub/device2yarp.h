@@ -65,6 +65,11 @@ public:
     * @param name name of the port of the device
     */
     void setDeviceName(std::string name);
+
+    /**
+     * function that correcly closes the device
+     */
+    void closeDevice();
     
     /**
     * function used to append to a list of commands every single bit necessary to program bias

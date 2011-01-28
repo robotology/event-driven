@@ -67,7 +67,7 @@ reset_pins_expand = 4
 #define INPUT_BIN_U32U32LE
 
 #define reset_pins_expand  4
-#define timestep 10000 //100 us OneSecond/10000
+#define timestep 100 //10 us OneSecond/1000
 #define OneSecond 1000000 //1sec
 #define latchexpand 100
 #define powerdownexpand 100
@@ -170,6 +170,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
             */
 #endif
 
+    this->portDeviceName = portDeviceName;        
     biasFromBinary = false;
     len=0;
     sz=0;
@@ -191,27 +192,11 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
     printf("opening port for sending the read events \n");
     str_buf << "/icub/retina" << deviceNum << ":o";
     port.open(str_buf.str().c_str());
-    
-    file_desc = open(portDeviceName.c_str(), O_RDWR | O_NONBLOCK);
-    if (file_desc < 0) {
-        printf("Cannot open device file: %s \n",portDeviceName.c_str());
-    }
-
-    
-
+      
     if(save)
         raw = fopen(i_fileName.c_str(), "wb");
-
     
-    //opening the device
-    cout <<"name of the file buffer:" <<portDeviceName.c_str()<< endl;
-    file_desc = open(portDeviceName.c_str(), O_RDWR | O_NONBLOCK);
-    if (file_desc < 0) {
-        printf("Cannot open device file: %s \n",portDeviceName.c_str());
-    }
-    else {
-         prepareBiases();
-    }    
+    prepareBiases();    
 }
 
 
@@ -222,6 +207,13 @@ device2yarp::~device2yarp() {
 
 
 void device2yarp::prepareBiases() {
+    //opening the device
+    cout <<"name of the file buffer:" <<portDeviceName.c_str()<< endl;
+    file_desc = open(portDeviceName.c_str(), O_RDWR | O_NONBLOCK);
+    if (file_desc < 0) {
+        printf("Cannot open device file: %s \n",portDeviceName.c_str());
+    }
+    
     //initialisation
     const u32 seqAllocChunk_b = 8192 * sizeof(struct aer); //allocating the right dimension for biases
     int r, w;
@@ -244,9 +236,11 @@ void device2yarp::prepareBiases() {
     seqEvents = 0;
     seqSize_b = 0;
 
-    //preparing
+    
+
+    //preparing the biases
     if(biasFromBinary) {
-        // prebuffer ALL data from stdin (whether present)
+        printf("sendinf biases read from the binary file \n");
         while (1) {
             if (seqAlloced_b < seqSize_b) {
                 //fprintf(stderr, "code error 1234: %" PRIu32 " < %" PRIu32 "\n", seqAlloced_b, seqSize_b);
@@ -326,55 +320,65 @@ void device2yarp::prepareBiases() {
         }
     } 
     else {
-        // sending biases as variable
+        printf("sending biases as following variables.... \n");
+        printf("cas:%d \n",cas);
+        printf("injg:%d \n",injg);
+        printf("reqPd:%d \n",reqPd);
+        printf("pux:%d \n",pux);
+        printf("diffoff:%d \n",diffoff);
+        printf("req:%d \n",req);
+        printf("refr:%d \n",refr);
+        printf("puy:%d \n",puy);
+        printf("diffon:%d \n",diffon);
+        printf("diff:%d \n",diff);
+        printf("foll:%d \n",foll);
+        printf("pr:%d \n",pr);
         int err;
-        if(!strcmp(portDeviceName.c_str(),"/dev/aerfx2_0")) {
-            printf("sending biases as events to the device ... \n");
+        
+        printf("sending biases as events to the device ... \n");
                 
             
-            int biasValues[]={cas,        // cas
-                              injg,       // injGnd
-                              reqPd,    // reqPd
-                              pux,     // puX
-                              diffoff,        // diffOff
-                              req,      // req
-                              refr,           // refr
-                              puy,    // puY
-                              diffon,      // diffOn
-                              diff,       // diff 
-                              foll,          // foll
-                              pr            //Pr 
-            };
+        int biasValues[]={cas,        // cas
+                          injg,       // injGnd
+                          reqPd,    // reqPd
+                          pux,     // puX
+                          diffoff,        // diffOff
+                          req,      // req
+                          refr,           // refr
+                          puy,    // puY
+                          diffon,      // diffOn
+                          diff,       // diff 
+                          foll,          // foll
+                          pr            //Pr 
+        };
+        
 
-
-            string biasNames[] = {
-                    "cas",
-                    "injGnd",
-                    "reqPd",
-                    "puX",
-                    "diffOff",
-                    "req",
-                    "refr",
-                    "puY",
-                    "diffOn",
-                    "diff",
-                    "foll",
-                    "Pr"
-            };
+        string biasNames[] = {
+            "cas",
+            "injGnd",
+            "reqPd",
+            "puX",
+            "diffOff",
+            "req",
+            "refr",
+            "puY",
+            "diffOn",
+            "diff",
+            "foll",
+            "Pr"
+        };
 
         
-            //int err = write(file_desc,bias,41); //5+36 
-            seqEvents = 0;
-            seqSize_b = 0;
-            for(int j=0;j<countBias;j++) {
-                progBias(biasNames[j],24,biasValues[j]);
-            }
-            latchCommitAEs();
-            //monitor(10);
-            releasePowerdown();
-            sendingBias();
-        
+        //int err = write(file_desc,bias,41); //5+36 
+        seqEvents = 0;
+        seqSize_b = 0;
+        for(int j=0;j<countBias;j++) {
+            progBias(biasNames[j],24,biasValues[j]);
         }
+        latchCommitAEs();
+        //monitor(10);
+        releasePowerdown();
+        sendingBias();
     }
 }
 
@@ -384,7 +388,9 @@ void device2yarp::setDeviceName(string deviceName) {
     portDeviceName=deviceName;
 }
 
-
+void device2yarp::closeDevice(){
+    close(file_desc);
+}
 
 void  device2yarp::run() {
     //printf("reading \n");
@@ -395,7 +401,7 @@ void  device2yarp::run() {
         //printf("device %s not ready. Skipping to the next run \n",portDeviceName.c_str());
         return;
     }
-    printf("device read %d \n",monBufEvents);
+    //printf("device read %d \n",monBufEvents);
     //ec += monBufEvents;
     int k = 0;
 
@@ -414,44 +420,6 @@ void  device2yarp::run() {
         buf2[k2++] = a;
         buf2[k2++] = t;
 
-        /*
-        char c;
-        c=(char)(a&0x000000FF);
-        buffer[k]=c;
-        long int part_1 = 0x000000FF&buffer[k];
-        k++;  //extracting the 1 byte
-        c=(char)((a&0x0000FF00)>>8);
-        buffer[k]=c;
-        long int part_2 = 0x000000FF&buffer[k];
-        k++;  //extracting the 2 byte
-        c=(char)((a&0x00FF0000)>>16);
-        buffer[k]=c;
-        long int part_3 = 0x000000FF&buffer[k];
-        k++;  //extracting the 3 byte
-        c=(char)((a&0xFF000000)>>24);
-        buffer[k]=c;                 
-        long int part_4 = 0x000000FF&buffer[k];
-        k++;  //extracting the 4 byte
-        long int blob = (part_1)|(part_2<<8)|(part_3<<16)|(part_4<<24);
-        */
-
-        /*
-        c=(char)(t&0x000000FF);
-        buffer[k]=c;
-        long int part_5 = 0x000000FF&buffer[k];
-        k++;  //extracting the 1 byte
-        c=(char)((t&0x0000FF00)>>8); 
-        buffer[k]=c;
-        long int part_6 = 0x000000FF&buffer[k];
-        k++;  //extracting the 2 byte
-        c=(char)((t&0x00FF0000)>>16);
-        buffer[k]=c;
-        k++;  //extracting the 3 byte
-        c=(char)((t&0xFF000000)>>24); 
-        buffer[k]=c;                         
-        k++;  //extracting the 4 byte
-        */
-
         //printf("address:%d ; timestamp:%d \n", blob, timestamp);
     }
 
@@ -459,9 +427,7 @@ void  device2yarp::run() {
     // sz is size in bytes
 
     if(port.getOutputCount()) {
-        //printf("exiting from reading...sending data size: %d bytes \n",sz);
         sendingBuffer data2send(buffer, sz);    
-        //printf("preparing the port \n");
         sendingBuffer& tmp = port.prepare();
         tmp = data2send;
         port.write();
@@ -472,24 +438,26 @@ void  device2yarp::run() {
 
 
 void device2yarp::sendingBias() {
-
-    printf("Don't call me! (for now...)");
-    assert(0);
-
-
+    int busy;
+    seqDone_b = 0;
     printf("-------------------------------------------- \n");
     printf("trying to write to kernel driver %d %d \n", seqDone_b,seqSize_b);
     while (seqDone_b < seqSize_b) {      
         // try writing to kernel driver 
         printf( "calling write fd: sS: %d  sD: %d \n", seqSize_b, seqDone_b);
         int w = write(file_desc, seqDone_b + ((u8*)pseq), seqSize_b - seqDone_b);
+        
         if (w > 0) {
-           seqDone_b += w;
-           printf("writing accumulator %d \n",seqDone_b);
-        } else {
-           printf("writing error \n");   
-        }
+                busy = 1;
+                seqDone_b += w;
+            } else if (w == 0 || (w < 0 && errno == EAGAIN)) {
+                /* we were not busy, maybe someone else is... */
+            } else {
+                perror("invalid write");
+                exit(1);
+            }
     }
+    
     printf("writing successfully ended \n");
 
     ////////////////////////////////////////////////////////////
@@ -661,9 +629,7 @@ void device2yarp::biasprogtx(int time,int latch,int clock,int data, int powerdow
 }
 
 void device2yarp::threadRelease() {
-    
-    
-
+       
     /* Fasnacht says: Don't!
     const u32 seqAllocChunk_b = 8192 * sizeof(struct aer); //allocating the right dimension for biases
     memset(pseq,0,seqAllocChunk_b);
