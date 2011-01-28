@@ -234,7 +234,7 @@ public:
 			//slow speed
 			//commandProc = new CommandClass(0,2,5.0);
 			//fast speed
-			commandProc = new CommandClass(0,40,4.0);
+			commandProc = new CommandClass(0,80,4.0);
 		}
     }
 
@@ -381,23 +381,25 @@ public:
 						ivel->velocityMove(1,command);
 						ivel->velocityMove(2,command);
 			ienc->getEncoderSpeed(joint,&measure_speed);
-			measure_speed=measure_speed*35.0*1137.5/1000.0;
-			measure_speed=measure_speed*1000.0/256.0/1137.5;
-			double ref_speed=0;
-			ipos->getRefSpeed(joint,&ref_speed);
 			ipid->getOutput(joint,&measure_pwm);
 
-			fprintf (stdout,"%4d cycle: %3d t: %+8.3f cmd: %+8.2f err: %+8.2f sp:%+8.2f pwm:%+8.2f refs:%+8.2f\n",
+			fprintf (stdout,"%4d cycle: %3d t: %+8.3f cmd: %+8.2f err: %+8.2f sp:%+8.2f pwm:%+8.2f \n",
 						     count,
 							 cycle,
 							 t-t1,
-							 command,
-							 command-measure_speed,
+							 command*2,
+							 command*2-measure_speed,
 							 measure_speed,
-							 measure_pwm,
-							 ref_speed);
-			//fprintf (pFile, "%d %d %+.3f %+.2f %+.2f %+.2f %+.2f %+.2f %+.2f\n", count, cycle, t-t1, command, 0, command-measure_speed, measure_speed, measure_pwm, ref_speed);
-
+							 measure_pwm);
+			/*fprintf (pFile, "%d %d %+.3f %+.2f %+.2f %+.2f %+.2f %+.2f\n",
+							 count,
+							 cycle,
+							 t-t1,
+							 command*2,
+							 command*2-measure_speed,
+							 measure_speed,
+							 measure_pwm);
+			*/
 		}
 		else if (control_type == CONTROL_NONE)
 		{
