@@ -52,6 +52,8 @@ unmask::unmask() : RateThread(UNMASKRATETHREAD){
     xshift = 1;
     polshift = 0;
     polmask = 0x00000001;
+    camerashift = 0x00000000;
+    cameramask = 0x0000af00;
     retinalSize = 128;
     temp1=true;
 
@@ -157,7 +159,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
 
             // here we zero the higher two bytes of the address!!! Only lower 16bits used!
             blob &= 0xFFFF;
-            unmaskEvent((unsigned int) blob, cartX, cartY, polarity);
+            unmaskEvent((unsigned int) blob, cartX, cartY, polarity, camera);
             //printf(" %d : %d \n",blob,timestamp);
 
             if((cartX!=127)||(cartY!=0)) {      //removed one pixel which is set once the driver do not work properly
@@ -205,17 +207,19 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
 }
 
 
-void unmask::unmaskEvent(unsigned int evPU, short& x, short& y, short& pol) {
+void unmask::unmaskEvent(unsigned int evPU, short& x, short& y, short& pol, short& camera) {
     y = (short)(retinalSize-1) - (short)((evPU & xmask) >> xshift);
     //y = (short) ((evPU & xmask)>>xshift);
     x = (short) ((evPU & ymask) >> yshift);
     pol = ((short)((evPU & polmask) >> polshift)==0)?-1:1;	//+1 ON, -1 OFF
+    camera = ((short)(evPU & cameramask) >> camerashift);	//0 LEFT, 1 RIGHT
 }
 
-void unmask::unmaskEvent(long int evPU, short& x, short& y, short& pol) {
+void unmask::unmaskEvent(long int evPU, short& x, short& y, short& pol, short& camera) {
     x = (short)(retinalSize-1) - (short)((evPU & xmask) >> xshift);
     y = (short) ((evPU & ymask) >> yshift);
     pol = ((short)((evPU & polmask) >> polshift)==0)?-1:1;        //+1 ON, -1 OFF
+    camera = ((short)(evPU & cameramask) >> camerashift);	//0 LEFT, 1 RIGHT
 }
 
 void unmask::threadRelease() {

@@ -38,16 +38,7 @@
 class unmask : public yarp::os::RateThread{
 private:
 
-    /**
-    * @brief This method unmasked the raw which come from the TCP socket
-    * This method have been wrote by the university of zurich. contact : tobi@ini.phys.ethz.ch
-    * @param *evPU A pointer on the raw casted from char* to int*
-    * @param x Set with the x coordinate of the pixel
-    * @param y Set with the y coordinate of the pixel
-    * @param pol Set with the ON/OFF polarity of the pixel.
-    * @param ts ...
-    */
-    void unmaskEvent(unsigned int, short&, short&, short&);
+    
 
     int id;
     int nb_trame;
@@ -62,19 +53,21 @@ private:
     unsigned long int timestamplong;         // variable 32 bits to save the timestamp
     unsigned long int lasttimestamp;
     unsigned long int eldesttimestamp;        // timestamp of the eldest event in the buffer 
-    short cartX, cartY, polarity;
+    short cartX, cartY, polarity, camera;
 
     int wrapAdd;
-    unsigned int xmask;             // 16 bits mask for unmasking of the address
+    unsigned int xmask;              // 16 bits mask for unmasking of the address
     unsigned int ymask;             // 16 bits mask for unmasking of the address
     long int xmasklong;         // 32 bits mask for unmasking of the event
     long int ymasklong;         // 32 bits mask for unmasking of the event
     int yshift;                     // shift of 8 bits for getting the y in 16 bits address
     int xshift;                     // shift of 1 bit to get the x in 16 bit (polarity)
     int yshift2;                     // shift of 16 bits for getting the y in 32 bits address
-    int polshift;
-    int polmask;
-    int retinalSize;
+    int polshift;                    // shift necessary to cast the unmasked value to short
+    int polmask;                     // mask necessary to extract the polarity
+    int camerashift;                 // shift for cast back into short the camera reference 
+    int cameramask;                  // mask necessary to extract which camera has produced the output
+    int retinalSize;                 // size of the retina
     int minValue;
     int maxValue;
     int countEvent;                     //counter of the number of events saved in the buffer1
@@ -177,10 +170,23 @@ public:
     /**
     * function that given a reference to the list of long int(32 bits) read from the port and the number of packet received
     * unmasks the event in term of x,y, polarity and time stamp and update the buffer
-    * @param data reference to the vector of 32bit {address, timestamp} (the read data)
-    * @param size size of the last reading from the port
+    * @param evPU blob representing the position of the pixel the polarity and the camera produced from
+    * @param x position of the event along the x axis
+    * @param y position of the event along the y axis
+    * @param pol polarity of the event +1, -1
+    * @param camera reference to the camera that has produced the event
     */
-    void unmaskEvent(long int evPU, short& x, short& y, short& pol);
+    void unmaskEvent(long int evPU, short& x, short& y, short& pol, short& camera);
+
+    /**
+    * @brief This method unmasked the raw which come from the TCP socket
+    * This method have been wrote by the university of zurich. contact : tobi@ini.phys.ethz.ch
+    * @param *evPU A pointer on the raw casted from char* to int*
+    * @param x Set with the x coordinate of the pixel
+    * @param y Set with the y coordinate of the pixel
+    * @param pol Set with the ON/OFF polarity of the pixel.
+    */
+    void unmaskEvent(unsigned int evPu, short& x, short& y, short& pol, short& camera);
 };
 
 #endif //UNMASK_H

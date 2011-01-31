@@ -331,10 +331,10 @@ void device2yarp::prepareBiases() {
             }
         }
         //closing the file where the biases are set
-        if(biasFromBinary){
-            printf("closing the file where the biases are saved \n");
-            fclose(binInput);
-        }
+        //if(biasFromBinary){
+        //    printf("closing the file where the biases are saved \n");
+        //    fclose(binInput);
+        //}
     } 
     else {
         printf("sending biases as following variables.... \n");
