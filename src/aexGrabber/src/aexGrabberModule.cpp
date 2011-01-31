@@ -90,9 +90,9 @@ bool aexGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     bool _save = false;
     std::string deviceNum = "0";
     std::string fileName = "raw_events.bin";
-    D2Y=new device2yarp(devicePortName, _save, fileName);
+    
     //D2Y->setDeviceName(devicePortName);
-    D2Y->start();
+    
 
     /*
     * get the file name of binaries when the biases are read from this file
@@ -100,16 +100,23 @@ bool aexGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     binaryName             = rf.check("file", 
                            Value("none"), 
                            "filename of the binary (string)").asString();
-    printf("trying to read %s  for biases \n",devicePortName.c_str());
+    printf("trying to read %s  for biases \n",binaryName.c_str());
+    
+    
     if(!strcmp(binaryName.c_str(),"none")) {
-        D2Y->setFromBinary(false);
-        FILE* f = fopen(binaryName.c_str(),"r");
-        D2Y->setBinaryFile(f);
+        printf("not reading from binary \n");
+        D2Y=new device2yarp(devicePortName, false, fileName);
+        //D2Y->setFromBinary(false);
     }
     else {
-        D2Y->setFromBinary(true);
+        printf("reading from binary \n");
+        //D2Y->setFromBinary(true);
+        D2Y=new device2yarp(devicePortName, true, binaryName);        
+        //D2Y->setBinaryFile(f);
     }
+    
 
+    D2Y->start();
 
     return true ;       // let the RFModule know everything went well
                         // so that it will then run the module

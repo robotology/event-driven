@@ -80,7 +80,7 @@ reset_pins_expand = 4
 
 
 
-device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):RateThread(10), save(i_bool) {
+device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):RateThread(10) {
 
     /*   ORIGINAL VALUES
     *   from DVS128_PAER.xml, set Tmpdiff128
@@ -169,9 +169,10 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
             };
             */
 #endif
+     
+    
 
-    this->portDeviceName = portDeviceName;        
-    biasFromBinary = false;
+    this->portDeviceName = portDeviceName;            
     len=0;
     sz=0;
     ec = 0;
@@ -188,14 +189,22 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
         printf("pmon malloc failed \n");
     }
 
+    // opening the port for sending out events
     int deviceNum=0;
     printf("opening port for sending the read events \n");
     str_buf << "/icub/retina" << deviceNum << ":o";
     port.open(str_buf.str().c_str());
-      
-    if(save)
-        raw = fopen(i_fileName.c_str(), "wb");
-    
+
+    // opening the file when the biases are programmed by file
+    biasFromBinary = i_bool;
+    if(biasFromBinary){   
+        binInput = fopen(i_fileName.c_str(),"r");
+        if (binInput == NULL) {
+            fputs ("File error",stderr);
+            return;
+        }
+    }
+          
     prepareBiases();    
 }
 
@@ -237,10 +246,9 @@ void device2yarp::prepareBiases() {
     seqSize_b = 0;
 
     
-
     //preparing the biases
     if(biasFromBinary) {
-        printf("sendinf biases read from the binary file \n");
+        printf("sending biases read from the binary file \n");
         while (1) {
             if (seqAlloced_b < seqSize_b) {
                 //fprintf(stderr, "code error 1234: %" PRIu32 " < %" PRIu32 "\n", seqAlloced_b, seqSize_b);
@@ -396,24 +404,21 @@ void  device2yarp::run() {
     //printf("reading \n");
     int r = read(file_desc, pmon, monBufSize_b);    
     monBufEvents = r / sizeof(struct aer);
-    //printf("r: %d \n",r);
-    if(r==-1) {
-        //printf("device %s not ready. Skipping to the next run \n",portDeviceName.c_str());
+    printf("r: %d \n",r);
+    if(r == -1) {
+        printf("device %s not ready. Skipping to the next run \n",portDeviceName.c_str());
         return;
     }
     //printf("device read %d \n",monBufEvents);
     //ec += monBufEvents;
     int k = 0;
-
     int k2 = 0;
     uint32_t * buf2 = (uint32_t*)buffer;
- 
     u32 a, t;
 
     for (int i = 0; i < monBufEvents; i++) {
-        //printf("a-");
+        
         a = pmon[i].address;
-        //printf("t-");
         t = pmon[i].timestamp * 0.128;
         //printf("a: %x  t:%d k: %d nEvents: %d \n",a,t,k,monBufEvents);            
 
@@ -423,8 +428,7 @@ void  device2yarp::run() {
         //printf("address:%d ; timestamp:%d \n", blob, timestamp);
     }
 
-    sz = monBufEvents*sizeof(struct aer); 
-    // sz is size in bytes
+    sz = monBufEvents*sizeof(struct aer); // sz is size in bytes
 
     if(port.getOutputCount()) {
         sendingBuffer data2send(buffer, sz);    
@@ -639,6 +643,10 @@ void device2yarp::threadRelease() {
 
     if(save)
         fclose(raw);
+
+    if(biasFromBinary){   
+        fclose(binInput);
+    }
 
     port.close();
     close(file_desc);
