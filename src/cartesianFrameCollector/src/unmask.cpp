@@ -29,8 +29,11 @@
 using namespace std;
 using namespace yarp::os;
 
+#ifndef LINUX
+typedef unsigned long int uint32_t;
+#endif // LINUX
 
-#define MAXVALUE 1294967200 //4294967295
+#define MAXVALUE 4294967295 //4294967295
 #define maxPosEvent 10000
 #define responseGradient 127
 #define minKillThres 1000
