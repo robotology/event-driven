@@ -42,16 +42,16 @@ private:
 
     int sz;
     int* buffer;                          // buffer representing the event in image plane (left)
-    unsigned long int* timeBuffer;        // buffer contains the timestamp of the particular location (left)
+    unsigned long* timeBuffer;        // buffer contains the timestamp of the particular location (left)
     int* bufferRight;                     //buffer representing the event in image plane (right)
-    unsigned long int* timeBufferRight;   // buffer contains the timestamp of the particular location (right)
+    unsigned long* timeBufferRight;   // buffer contains the timestamp of the particular location (right)
     //int* fifoEvent;
     //int* fifoEvent_temp;
     //int* fifoEvent_temp2;
-    unsigned long int timestamp;         // 16 bits variable to save the timestamp
-    unsigned long int timestamplong;         // variable 32 bits to save the timestamp
-    unsigned long int lasttimestamp;
-    unsigned long int eldesttimestamp;        // timestamp of the eldest event in the buffer 
+    unsigned long timestamp;         // 16 bits variable to save the timestamp
+    unsigned long timestamplong;         // variable 32 bits to save the timestamp
+    unsigned long lasttimestamp;
+    unsigned long eldesttimestamp;        // timestamp of the eldest event in the buffer 
     short cartX, cartY, polarity, camera;
 
     int wrapAdd;
@@ -91,7 +91,7 @@ public:
     * @param none
     * @return pointer to the buffer of timestamps
     */
-    unsigned long int* getTimeBuffer();
+    unsigned long* getTimeBuffer();
 
     /**
     * @brief Function that cleans buffer that containes events counts
@@ -115,18 +115,18 @@ public:
     /**
     * returns the eldest timestamp
     */
-    unsigned long int getEldestTimeStamp();
+    unsigned long getEldestTimeStamp();
 
     /**
     * returns the last timestamp
     */
-    unsigned long int getLastTimestamp();
+    unsigned long getLastTimestamp();
 
     /**
     * force the values of the lasttimestamp 
     * @param the value to be set
     */
-     void setLastTimestamp(unsigned long int value);
+     void setLastTimestamp(unsigned long value);
 
     /**
     * default constructor

@@ -42,8 +42,8 @@ private:
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPortRight;       // port whre the output (right) is sent
     std::string name;                   // rootname of all the ports opened by this thread
     bool synchronised;                       // flag to check whether the microsecond counter has been synchronised
-    unsigned long int minCount;              // minimum timestamp allowed for the current frame
-    unsigned long int maxCount;              // maximum timestamp allowed for the current frame
+    unsigned long minCount;              // minimum timestamp allowed for the current frame
+    unsigned long maxCount;              // maximum timestamp allowed for the current frame
     double startTimer;
     double endTimer;
     yarp::os::Semaphore mutex;          // semaphore thar regulates the access to the buffer resource

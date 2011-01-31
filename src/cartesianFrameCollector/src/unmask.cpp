@@ -30,7 +30,7 @@ using namespace std;
 using namespace yarp::os;
 
 #ifndef LINUX
-typedef unsigned long int uint32_t;
+typedef unsigned long uint32_t;
 #endif // LINUX
 
 #define MAXVALUE 4294967295 //4294967295
@@ -63,12 +63,12 @@ unmask::unmask() : RateThread(UNMASKRATETHREAD){
 
     buffer=new int[retinalSize*retinalSize];
     memset(buffer,0,retinalSize*retinalSize*sizeof(int));
-    timeBuffer=new unsigned long int[retinalSize*retinalSize];
-    memset(timeBuffer,0,retinalSize*retinalSize*sizeof(unsigned long int));
+    timeBuffer=new unsigned long[retinalSize*retinalSize];
+    memset(timeBuffer,0,retinalSize*retinalSize*sizeof(unsigned long));
     bufferRight=new int[retinalSize*retinalSize];
     memset(bufferRight,0,retinalSize*retinalSize*sizeof(int));
-    timeBufferRight=new unsigned long int[retinalSize*retinalSize];
-    memset(timeBufferRight,0,retinalSize*retinalSize*sizeof(unsigned long int));
+    timeBufferRight=new unsigned long[retinalSize*retinalSize];
+    memset(timeBufferRight,0,retinalSize*retinalSize*sizeof(unsigned long));
     
     /*fifoEvent=new int[maxPosEvent];
     memset(fifoEvent,0,maxPosEvent*sizeof(int));
@@ -112,15 +112,15 @@ int unmask::getMaxValue() {
     return maxValue;
 }
 
-unsigned long int unmask::getLastTimestamp() {
+unsigned long unmask::getLastTimestamp() {
     return lasttimestamp;
 }
 
-unsigned long int unmask::getEldestTimeStamp() {
+unsigned long unmask::getEldestTimeStamp() {
     return eldesttimestamp;
 }
 
-void unmask::setLastTimestamp(unsigned long int value) {
+void unmask::setLastTimestamp(unsigned long value) {
     lasttimestamp = value;
 }
 
@@ -128,7 +128,7 @@ int* unmask::getEventBuffer() {
     return buffer;
 }
 
-unsigned long int* unmask::getTimeBuffer() {
+unsigned long* unmask::getTimeBuffer() {
     return timeBuffer;
 }
 
@@ -162,8 +162,8 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
     eldesttimestamp = MAXVALUE;
     for (int evt = 0; evt < num_events; evt++) {
         // unmask the data
-        unsigned long int blob = buf2[2 * evt];
-        unsigned long int timestamp = buf2[2 * evt + 1];
+        unsigned long blob = buf2[2 * evt];
+        unsigned long timestamp = buf2[2 * evt + 1];
         lasttimestamp = timestamp;
 
         if (timestamp < eldesttimestamp) {

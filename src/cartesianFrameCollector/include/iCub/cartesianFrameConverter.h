@@ -57,19 +57,19 @@ public:
     * @param minCount reference to the min timestamp in the frame
     * @param maxCount reference to the max timestamp in the frame
     */
-     void getMonoImage(yarp::sig::ImageOf<yarp::sig::PixelMono>* image, unsigned long int minCount,unsigned long int maxCount);
+     void getMonoImage(yarp::sig::ImageOf<yarp::sig::PixelMono>* image, unsigned long minCount,unsigned long maxCount);
     
     /**
     * function that return the last time stamp saved in the buffer
     * @return the unsigned int representing the last event timestamp
     */
-     unsigned long int getLastTimeStamp();
+     unsigned long getLastTimeStamp();
 
     /**
     * function that return the last time stamp saved in the buffer
     * @return the unsigned int representing the last event timestamp
     */
-     unsigned long int getEldestTimeStamp();
+     unsigned long getEldestTimeStamp();
 
     /**
     * @brief clears monoImage collection of events
@@ -80,7 +80,7 @@ public:
 private:
     int retinalSize;                                            // dimension of the retina default 128x128
     int outputWidth, outputHeight;                              // dimension of the output image default 320x240
-    unsigned long int previousTimeStamp;                        // timestamp at the previous run
+    unsigned long previousTimeStamp;                        // timestamp at the previous run
     
     unmask unmask_events;           //object in charge of unmasking the events
     converter convert_events;       //object in charge of converting the events into an image

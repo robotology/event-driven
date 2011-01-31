@@ -55,7 +55,7 @@ void cFrameConverter::onRead(sendingBuffer& i_ub) {
     */
 }
 
-void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image, unsigned long int minCount, unsigned long int maxCount){
+void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image, unsigned long minCount, unsigned long maxCount){
     assert(image!=0);
     image->resize(retinalSize,retinalSize);
     unsigned char* pImage = image->getRawImage();
@@ -77,7 +77,7 @@ void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image, unsigned long int 
     */
 
     int* pBuffer = unmask_events.getEventBuffer();
-    unsigned long int* pTime   = unmask_events.getTimeBuffer();
+    unsigned long* pTime   = unmask_events.getTimeBuffer();
 
     
     //printf("timestamp: min %d    max %d  \n", minCount, maxCount);
@@ -86,7 +86,7 @@ void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image, unsigned long int 
         for(int c = 0 ; c < retinalSize ; c++) {
             //drawing the retina and the rest of the image separately
             int value = *pBuffer;
-            unsigned long int timestampactual = *pTime;
+            unsigned long timestampactual = *pTime;
             if ((timestampactual>minCount)&&(timestampactual<maxCount)) {   //(timestampactual != lasttimestamp)
                 *pImage++ = (unsigned char) 127 + value;
                 //*pTime = (unsigned long int) 0;
@@ -103,11 +103,11 @@ void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image, unsigned long int 
     //unmask_events.setLastTimestamp(0);
 }
 
-unsigned long int cFrameConverter::getLastTimeStamp() {
+unsigned long cFrameConverter::getLastTimeStamp() {
     return unmask_events.getLastTimestamp();
 }
 
-unsigned long int cFrameConverter::getEldestTimeStamp() {
+unsigned long cFrameConverter::getEldestTimeStamp() {
     printf("eldest %d",unmask_events.getEldestTimeStamp());
     return unmask_events.getEldestTimeStamp();
 }
