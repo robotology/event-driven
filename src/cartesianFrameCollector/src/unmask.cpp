@@ -29,11 +29,12 @@
 using namespace std;
 using namespace yarp::os;
 
+#define LINUX
 #ifndef LINUX
 typedef unsigned long uint32_t;
 #endif // LINUX
 
-#define MAXVALUE 4294967295 //4294967295
+#define MAXVALUE 114748364 //4294967295
 #define maxPosEvent 10000
 #define responseGradient 127
 #define minKillThres 1000
@@ -159,17 +160,17 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
     int num_events = i_sz / 8;
     
     uint32_t* buf2 = (uint32_t*)i_buffer;
-    eldesttimestamp = MAXVALUE;
+    //eldesttimestamp = 0;
     for (int evt = 0; evt < num_events; evt++) {
         // unmask the data
         unsigned long blob = buf2[2 * evt];
         unsigned long timestamp = buf2[2 * evt + 1];
         lasttimestamp = timestamp;
 
-        if (timestamp < eldesttimestamp) {
+        if (evt == 0) {
+            printf("%d \n", timestamp);
             eldesttimestamp = timestamp;
         }   
-        //printf("%d \n", timestamp);
         
         // here we zero the higher two bytes of the address!!! Only lower 16bits used!
         blob &= 0xFFFF;

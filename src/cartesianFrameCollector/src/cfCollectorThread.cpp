@@ -81,22 +81,20 @@ void cfCollectorThread::resize(int widthp, int heightp) {
 
 void cfCollectorThread::run() {
     count++;
-    
+    unsigned long int l = cfConverter->getLastTimeStamp();
     if ((cfConverter->getInputCount()) && (count % 1000 == 0)) { 
-        double t = cfConverter->getEldestTimeStamp();
+        minCount = cfConverter->getEldestTimeStamp();
         
-            printf("synchronised! %d \n", t);
-            minCount = t;
-            printf("synchronised! %d \n", minCount);
-            printf("synchronised! %d \n", minCount);
-            printf("synchronised! %d \n", minCount);
-            printf("synchronised! %d \n", minCount);
-            printf("synchronised! %d \n", minCount);
-            printf("synchronised! %d \n", minCount);
-            printf("synchronised! %d \n", minCount);
-            printf("synchronised! %d \n", minCount);
-            startTimer = Time::now();
-            synchronised = true;
+        printf("synchronised! %d \n", minCount);
+        printf("synchronised! %d \n", minCount);
+        printf("synchronised! %d \n", minCount);
+        printf("synchronised! %d \n", minCount);
+        printf("synchronised! %d \n", minCount);
+        printf("synchronised! %d \n", minCount);
+        printf("synchronised! %d \n", minCount);
+        printf("synchronised! %d \n", minCount);
+        startTimer = Time::now();
+        synchronised = true;
         
     }
     
@@ -112,7 +110,7 @@ void cfCollectorThread::run() {
     }
     */
     //maximum value  4294967295
-    long int l = cfConverter->getLastTimeStamp();
+   
     printf("interval>%f  %d,%d,%d \n",interval,minCount,l,maxCount);
     assert(maxCount < MAXVALUE);
     
