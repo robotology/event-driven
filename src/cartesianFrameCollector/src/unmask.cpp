@@ -30,7 +30,7 @@ using namespace std;
 using namespace yarp::os;
 
 
-
+#define MAXVALUE 1294967200 //4294967295
 #define maxPosEvent 10000
 #define responseGradient 127
 #define minKillThres 1000
@@ -40,6 +40,7 @@ using namespace yarp::os;
 unmask::unmask() : RateThread(UNMASKRATETHREAD){
     numKilledEvents = 0;
     lasttimestamp = 0;
+    eldesttimestamp = MAXVALUE;
     countEvent = 0;
     countEvent2 = 0;
     minValue = 0;
@@ -52,21 +53,27 @@ unmask::unmask() : RateThread(UNMASKRATETHREAD){
     xshift = 1;
     polshift = 0;
     polmask = 0x00000001;
-    camerashift = 0x00000000;
-    cameramask = 0x0000af00;
+    camerashift = 16;
+    cameramask = 0x00008000;
     retinalSize = 128;
     temp1=true;
 
     buffer=new int[retinalSize*retinalSize];
     memset(buffer,0,retinalSize*retinalSize*sizeof(int));
     timeBuffer=new unsigned long int[retinalSize*retinalSize];
-    memset(timeBuffer,0,retinalSize*retinalSize*sizeof(unsigned int));
-    fifoEvent=new int[maxPosEvent];
+    memset(timeBuffer,0,retinalSize*retinalSize*sizeof(unsigned long int));
+    bufferRight=new int[retinalSize*retinalSize];
+    memset(bufferRight,0,retinalSize*retinalSize*sizeof(int));
+    timeBufferRight=new unsigned long int[retinalSize*retinalSize];
+    memset(timeBufferRight,0,retinalSize*retinalSize*sizeof(unsigned long int));
+    
+    /*fifoEvent=new int[maxPosEvent];
     memset(fifoEvent,0,maxPosEvent*sizeof(int));
     fifoEvent_temp=new int[maxPosEvent];
     memset(fifoEvent_temp,0,maxPosEvent*sizeof(int));
     fifoEvent_temp2=new int[maxPosEvent];
     memset(fifoEvent_temp2,0,maxPosEvent*sizeof(int));
+    */
 
     wrapAdd = 0;
     //fopen_s(&fp,"events.txt", "w"); //Use the unmasked_buffer
@@ -80,9 +87,12 @@ bool unmask::threadInit() {
 unmask::~unmask() {
     delete[] buffer;
     delete[] timeBuffer;
-    delete[] fifoEvent;
-    delete[] fifoEvent_temp;
-    delete[] fifoEvent_temp2;
+    delete[] bufferRight;
+    delete[] timeBufferRight;
+    
+    //delete[] fifoEvent;
+    //delete[] fifoEvent_temp;
+    //delete[] fifoEvent_temp2;
 }
 
 void unmask::cleanEventBuffer() {
@@ -146,62 +156,80 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
     int num_events = i_sz / 8;
     
     uint32_t* buf2 = (uint32_t*)i_buffer;
-
+    eldesttimestamp = MAXVALUE;
     for (int evt = 0; evt < num_events; evt++) {
-            // unmask the data
-            unsigned long int blob = buf2[2 * evt];
-            unsigned long int timestamp = buf2[2 * evt + 1];
-            lasttimestamp = timestamp;
-            if(evt == 0)
-                eldesttimestamp = timestamp;
-            
-            //printf("%d \n", timestamp);
+        // unmask the data
+        unsigned long int blob = buf2[2 * evt];
+        unsigned long int timestamp = buf2[2 * evt + 1];
+        lasttimestamp = timestamp;
 
-            // here we zero the higher two bytes of the address!!! Only lower 16bits used!
-            blob &= 0xFFFF;
-            unmaskEvent((unsigned int) blob, cartX, cartY, polarity, camera);
-            //printf(" %d : %d \n",blob,timestamp);
-
-            if((cartX!=127)||(cartY!=0)) {      //removed one pixel which is set once the driver do not work properly
-                if(polarity > 0) {
-                    buffer[cartX + cartY * retinalSize] = responseGradient;
-                    timeBuffer[cartX + cartY * retinalSize] = timestamp;
-                    
-                    if(buffer[cartX + cartY * retinalSize] > 127) {
-                        buffer[cartX + cartY * retinalSize] = 127;
-                    }
+        if (timestamp < eldesttimestamp) {
+            eldesttimestamp = timestamp;
+        }   
+        //printf("%d \n", timestamp);
+        
+        // here we zero the higher two bytes of the address!!! Only lower 16bits used!
+        blob &= 0xFFFF;
+        unmaskEvent((unsigned int) blob, cartX, cartY, polarity, camera);
+        //printf(" %d : %d \n",blob,timestamp);
+        
+        //if((cartX!=127)||(cartY!=0)) {      //removed one pixel which is set once the driver do not work properly
+        if(camera == 0) {
+            if(polarity > 0) {
+                buffer[cartX + cartY * retinalSize] = responseGradient;
+                timeBuffer[cartX + cartY * retinalSize] = timestamp;
+                
+                if(buffer[cartX + cartY * retinalSize] > 127) {
+                    buffer[cartX + cartY * retinalSize] = 127;
                 }
-                else if(polarity < 0) {
-                    buffer[cartX + cartY * retinalSize] = -responseGradient;
-                    timeBuffer[cartX + cartY * retinalSize] = timestamp;
-                    
-                    if (buffer[cartX + cartY * retinalSize] < -127) {
-                        buffer[cartX + cartY * retinalSize] = -127;
-                    }
-                }
-                /*
-                //udpates the temporary buffer
-                if(temp1) {
-                    if(countEvent>maxPosEvent-1) {
-                        countEvent=maxPosEvent-1;
-                    }
-                    fifoEvent_temp[countEvent]=cartX+cartY*retinalSize;
-                    //increments the counter of events
-                    countEvent++;
-                }
-                else {
-                    if(countEvent2>maxPosEvent-1) {
-                        countEvent2=maxPosEvent-1;
-                    }
-                    fifoEvent_temp2[countEvent2]=cartX+cartY*retinalSize;
-                    //increments the counter of events
-                    countEvent2++;
-                }
-                */
             }
-            //fprintf(uEvents,"%d\t%d\t%d\t%u\n", cartX, cartY, polarity, timestamp);
-
-
+            else if(polarity < 0) {
+                buffer[cartX + cartY * retinalSize] = -responseGradient;
+                timeBuffer[cartX + cartY * retinalSize] = timestamp;
+                
+                if (buffer[cartX + cartY * retinalSize] < -127) {
+                    buffer[cartX + cartY * retinalSize] = -127;
+                }
+            }
+            /*
+            //udpates the temporary buffer
+            if(temp1) {
+            if(countEvent>maxPosEvent-1) {
+            countEvent=maxPosEvent-1;
+            }
+            fifoEvent_temp[countEvent]=cartX+cartY*retinalSize;
+            //increments the counter of events
+            countEvent++;
+            }
+            else {
+            if(countEvent2>maxPosEvent-1) {
+            countEvent2=maxPosEvent-1;
+            }
+            fifoEvent_temp2[countEvent2]=cartX+cartY*retinalSize;
+            //increments the counter of events
+            countEvent2++;
+            }
+            */
+        }
+        else {
+            if(polarity > 0) {
+                bufferRight[cartX + cartY * retinalSize] = responseGradient;
+                timeBufferRight[cartX + cartY * retinalSize] = timestamp;
+                
+                if(bufferRight[cartX + cartY * retinalSize] > 127) {
+                    bufferRight[cartX + cartY * retinalSize] = 127;
+                }
+            }
+            else if(polarity < 0) {
+                bufferRight[cartX + cartY * retinalSize] = -responseGradient;
+                timeBufferRight[cartX + cartY * retinalSize] = timestamp;
+                
+                if (bufferRight[cartX + cartY * retinalSize] < -127) {
+                    bufferRight[cartX + cartY * retinalSize] = -127;
+                }
+            }
+        }
+        //fprintf(uEvents,"%d\t%d\t%d\t%u\n", cartX, cartY, polarity, timestamp);
     }
     //fprintf(uEvents,"%d\t%d\t%d\t%u\n", -1, -1, -1, -1);
 }

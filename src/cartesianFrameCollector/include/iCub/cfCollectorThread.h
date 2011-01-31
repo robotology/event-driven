@@ -38,11 +38,12 @@ private:
     int count;                          // loop counter of the thread
     int width, height;                  // dimension of the extended input image (extending)
     int height_orig, width_orig;        // original dimension of the input and output images
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPort; //port whre the output is sent
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPort;       // port whre the output (left) is sent
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPortRight;       // port whre the output (right) is sent
     std::string name;                   // rootname of all the ports opened by this thread
-    bool resized;                       // flag to check if the variables have been already resized
-    unsigned int minCount;              // minimum timestamp allowed for the current frame
-    unsigned int maxCount;              // maximum timestamp allowed for the current frame
+    bool synchronised;                       // flag to check whether the microsecond counter has been synchronised
+    unsigned long int minCount;              // minimum timestamp allowed for the current frame
+    unsigned long int maxCount;              // maximum timestamp allowed for the current frame
     double startTimer;
     double endTimer;
     yarp::os::Semaphore mutex;          // semaphore thar regulates the access to the buffer resource

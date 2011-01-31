@@ -37,18 +37,17 @@
 
 class unmask : public yarp::os::RateThread{
 private:
-
-    
-
     int id;
     int nb_trame;
 
     int sz;
-    int* buffer;
-    unsigned long int* timeBuffer;
-    int* fifoEvent;
-    int* fifoEvent_temp;
-    int* fifoEvent_temp2;
+    int* buffer;                          // buffer representing the event in image plane (left)
+    unsigned long int* timeBuffer;        // buffer contains the timestamp of the particular location (left)
+    int* bufferRight;                     //buffer representing the event in image plane (right)
+    unsigned long int* timeBufferRight;   // buffer contains the timestamp of the particular location (right)
+    //int* fifoEvent;
+    //int* fifoEvent_temp;
+    //int* fifoEvent_temp2;
     unsigned long int timestamp;         // 16 bits variable to save the timestamp
     unsigned long int timestamplong;         // variable 32 bits to save the timestamp
     unsigned long int lasttimestamp;

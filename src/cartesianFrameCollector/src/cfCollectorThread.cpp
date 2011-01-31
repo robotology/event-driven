@@ -32,11 +32,12 @@ using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
+#define MAXVALUE 4294967295
 #define THRATE 10
 #define STAMPINFRAME  // 10 ms of period times the us in 1 millisecond + time for computing
 
 cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
-    resized=false;
+    synchronised = false;
     count=0;
     minCount = 0; //initialisation of the timestamp limits of the first frame
 }
@@ -49,7 +50,8 @@ bool cfCollectorThread::threadInit() {
     printf("starting the thread.... \n");
     /* open ports */
     printf("opening ports!!!.... \n");
-    outPort.open(getName("/image:o").c_str());
+    outPort.open(getName("/left:o").c_str());
+    outPortRight.open(getName("/right:o").c_str());
     printf("starting the converter!!!.... \n");
     cfConverter=new cFrameConverter();
     cfConverter->useCallback();
@@ -79,23 +81,40 @@ void cfCollectorThread::resize(int widthp, int heightp) {
 
 void cfCollectorThread::run() {
     count++;
-    /*if (count % 1 == 0) {
-         maxCount = cfConverter->getLastTimeStamp();
-         //startTimer = Time::now();
+    
+    if ((cfConverter->getInputCount()) && (count % 1000 == 0)) { 
+        double t = cfConverter->getEldestTimeStamp();
+        
+            printf("synchronised! %d \n", t);
+            minCount = t;
+            printf("synchronised! %d \n", minCount);
+            printf("synchronised! %d \n", minCount);
+            printf("synchronised! %d \n", minCount);
+            printf("synchronised! %d \n", minCount);
+            printf("synchronised! %d \n", minCount);
+            printf("synchronised! %d \n", minCount);
+            printf("synchronised! %d \n", minCount);
+            printf("synchronised! %d \n", minCount);
+            startTimer = Time::now();
+            synchronised = true;
+        
     }
-    */
+    
+
     endTimer = Time::now();
     double interval = (endTimer - startTimer) * 1000000; //interval in microsecond
     startTimer = Time::now();
-    minCount += interval;
-    maxCount =  minCount + interval * 2 ;
-    if( maxCount >= 2147483647) {
-        maxCount = maxCount - 2147483647;
+    minCount += interval * 0.8;
+    maxCount =  minCount + interval * 3 ;
+    /*if( maxCount >= MAXVALUE) {
+        printf("reached max counter \n");
+        maxCount = maxCount - MAXVALUE;
     }
-    //maximum value  2147483647 4294967295
+    */
+    //maximum value  4294967295
     long int l = cfConverter->getLastTimeStamp();
-    //printf("interval>%f  %d,%d,%d \n",interval,minCount,l,maxCount);
-    assert(maxCount < 2147483647);
+    printf("interval>%f  %d,%d,%d \n",interval,minCount,l,maxCount);
+    assert(maxCount < MAXVALUE);
     
     if(outPort.getOutputCount()) {
         ImageOf<yarp::sig::PixelMono>& outputImage=outPort.prepare();
@@ -108,11 +127,22 @@ void cfCollectorThread::run() {
         }
     }
 
-    minCount = cfConverter->getLastTimeStamp(); //get the last before going to sleep
+    if(outPortRight.getOutputCount()) {
+        ImageOf<yarp::sig::PixelMono>& outputImageRight=outPortRight.prepare();
+        if(&outputImageRight!=0) {
+            cfConverter->getMonoImage(&outputImageRight, minCount, maxCount);
+            outPortRight.write();
+        }
+        else {
+            printf("reference to the outimage null \n");
+        }
+    }
+    //minCount = cfConverter->getLastTimeStamp(); //get the last before going to sleep
     
 }
 
 void cfCollectorThread::threadRelease() {
     outPort.close();
+    outPortRight.close();
 }
 

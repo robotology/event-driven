@@ -108,6 +108,7 @@ unsigned long int cFrameConverter::getLastTimeStamp() {
 }
 
 unsigned long int cFrameConverter::getEldestTimeStamp() {
+    printf("eldest %d",unmask_events.getEldestTimeStamp());
     return unmask_events.getEldestTimeStamp();
 }
 
