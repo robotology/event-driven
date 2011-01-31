@@ -198,11 +198,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
     // opening the file when the biases are programmed by file
     biasFromBinary = i_bool;
     if(biasFromBinary){   
-        binInput = fopen(i_fileName.c_str(),"r");
-        if (binInput == NULL) {
-            fputs ("File error",stderr);
-            return;
-        }
+        
     }
           
     prepareBiases();    
@@ -249,6 +245,15 @@ void device2yarp::prepareBiases() {
     //preparing the biases
     if(biasFromBinary) {
         printf("sending biases read from the binary file \n");
+        //opening the file
+        binInput = fopen(i_fileName.c_str(),"r");
+        if (binInput == NULL) {
+            fputs ("File error",stderr);
+            return;
+        }
+        else {
+            printf("File correctly opened \n");
+        }
         while (1) {
             if (seqAlloced_b < seqSize_b) {
                 //fprintf(stderr, "code error 1234: %" PRIu32 " < %" PRIu32 "\n", seqAlloced_b, seqSize_b);
@@ -275,6 +280,7 @@ void device2yarp::prepareBiases() {
             }
 #else
             r = fread(rbuf, 8, 1, binInput);
+            printf("reading from file %d \n",r);
             if (r == 0) {
                 if (feof(binInput)) {
                     fprintf(stderr, "parsing input completed.\n");
@@ -313,18 +319,23 @@ void device2yarp::prepareBiases() {
         if (seqDone_b < seqSize_b) {
             //fprintf(stderr, "calling write fd: %d  sS: %d  sD: %d  ps: %x\n", aexfd, seqSize_b, seqDone_b, (u32)pseq);
 
-            w = write(aexfd, seqDone_b + ((u8*)pseq), seqSize_b - seqDone_b);
+            w = write(file_desc, seqDone_b + ((u8*)pseq), seqSize_b - seqDone_b);
 
             //fprintf(stderr, "wrote: %d\n", w);
             if (w > 0) {
                 busy = 1;
                 seqDone_b += w;
             } else if (w == 0 || (w < 0 && errno == EAGAIN)) {
-                /* we were not busy, maybe someone else is... */
+                // we were not busy, maybe someone else is... 
             } else {
                 perror("invalid write");
                 exit(1);
             }
+        }
+        //closing the file where the biases are set
+        if(biasFromBinary){
+            printf("closing the file where the biases are saved \n");
+            fclose(binInput);
         }
     } 
     else {
@@ -640,13 +651,6 @@ void device2yarp::threadRelease() {
     setPowerdown();
     sendingBias();
     */
-
-    if(save)
-        fclose(raw);
-
-    if(biasFromBinary){   
-        fclose(binInput);
-    }
 
     port.close();
     close(file_desc);
