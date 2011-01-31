@@ -217,7 +217,8 @@ private:
     int polshift;
     int polmask;
     int retinalSize;
-    std::string portDeviceName;
+    std::string portDeviceName;              // name of the device which the module will connect to
+    std::string biasFileName;                // name of the file that contains the biases
 
     bool save;
 

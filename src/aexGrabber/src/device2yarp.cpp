@@ -105,79 +105,80 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
 
 #define FAST
 #ifdef FAST
-            /*int biasValues[]={1966,        // cas
-                              1137667,       // injGnd
-                              16777215,    // reqPd
-                              8053457,     // puX
-                              133,        // diffOff
-                              160712,      // req
-                              944,           // refr
-                              16777215,    // puY
-                              205255,      // diffOn
-                              3207,       // diff 
-                              278,          // foll
-                              217            //Pr 
-            };*/
+    /*int biasValues[]={1966,        // cas
+      1137667,       // injGnd
+      16777215,    // reqPd
+      8053457,     // puX
+      133,        // diffOff
+      160712,      // req
+      944,           // refr
+      16777215,    // puY
+      205255,      // diffOn
+      3207,       // diff 
+      278,          // foll
+      217            //Pr 
+      };*/
 
              
             
-            printf("valus from DVS128Fast.xml \n");
-            // from DVS128Fast.xml, set Tmpdiff128
-            cas = 1966;        // cas
-            injg = 1137667;       // injGnd
-            reqPd = 16777215;    // reqPd
-            pux = 8053457;     // puX
-            diffoff = 133;        // diffOff
-            req = 160712;      // req
-            refr = 944;           // refr
-            puy = 16777215;    // puY
-            diffon = 205255;      // diffOn
-            diff = 3207;       // diff 
-            foll = 278;          // foll
-            pr= 217;            //Pr 
+    printf("valus from DVS128Fast.xml \n");
+    // from DVS128Fast.xml, set Tmpdiff128
+    cas = 1966;        // cas
+    injg = 1137667;       // injGnd
+    reqPd = 16777215;    // reqPd
+    pux = 8053457;     // puX
+    diffoff = 133;        // diffOff
+    req = 160712;      // req
+    refr = 944;           // refr
+    puy = 16777215;    // puY
+    diffon = 205255;      // diffOn
+    diff = 3207;       // diff 
+    foll = 278;          // foll
+    pr= 217;            //Pr 
             
            
 #else
             
-            printf("valus from DVS128_PAER.xml \n");
-            cas = 1966;        // cas
-            injg = 22703;       // injGnd
-            reqPd = 16777215;    // reqPd
-            pux = 4368853;     // puX
-            diffoff = 3207;        // diffOff
-            req = 111347;      // req
-            refr = 0;           // refr
-            puy = 16777215;    // puY
-            diffon = 483231;      // diffOn
-            diff = 28995;       // diff 
-            foll = 19;          // foll
-            pr = 8;            //Pr 
+    printf("valus from DVS128_PAER.xml \n");
+    cas = 1966;        // cas
+    injg = 22703;       // injGnd
+    reqPd = 16777215;    // reqPd
+    pux = 4368853;     // puX
+    diffoff = 3207;        // diffOff
+    req = 111347;      // req
+    refr = 0;           // refr
+    puy = 16777215;    // puY
+    diffon = 483231;      // diffOn
+    diff = 28995;       // diff 
+    foll = 19;          // foll
+    pr = 8;            //Pr 
             
-            /*
-            int biasValues[]={1966,        // cas
-                              22703,       // injGnd
-                              16777215,    // reqPd
-                              4368853,     // puX
-                              3207,        // diffOff
-                              111347,      // req
-                              0,           // refr
-                              16777215,    // puY
-                              483231,      // diffOn
-                              28995,       // diff 
-                              19,          // foll
-                              8            //Pr 
-            };
-            */
+    /*
+      int biasValues[]={1966,        // cas
+      22703,       // injGnd
+      16777215,    // reqPd
+      4368853,     // puX
+      3207,        // diffOff
+      111347,      // req
+      0,           // refr
+      16777215,    // puY
+      483231,      // diffOn
+      28995,       // diff 
+      19,          // foll
+      8            //Pr 
+      };
+    */
 #endif
      
     
+    // passing the parameter to the class variable
+    this->portDeviceName = portDeviceName;
+    this->biasFileName   = i_fileName;
 
-    this->portDeviceName = portDeviceName;            
+    //initialisation of the module
     len=0;
     sz=0;
     ec = 0;
-
-
     u64 ec = 0;
     
     memset(buffer, 0, SIZE_OF_DATA);
@@ -197,9 +198,6 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
 
     // opening the file when the biases are programmed by file
     biasFromBinary = i_bool;
-    if(biasFromBinary){   
-        
-    }
           
     prepareBiases();    
 }
@@ -246,7 +244,7 @@ void device2yarp::prepareBiases() {
     if(biasFromBinary) {
         printf("sending biases read from the binary file \n");
         //opening the file
-        binInput = fopen(i_fileName.c_str(),"r");
+        binInput = fopen(biasFileName.c_str(),"r");
         if (binInput == NULL) {
             fputs ("File error",stderr);
             return;
