@@ -31,11 +31,25 @@
 #include <yarp/sig/all.h>
 #include <iCub/cartesianFrameConverter.h>
 #include <iostream>
+#include <time.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <inttypes.h>
+
+#define u64 uint64_t
 
 
 class cfCollectorThread : public yarp::os::RateThread {
 private:
+    
     int count;                          // loop counter of the thread
+    struct timeval tvstart,tvend;
+    struct timespec start_time, stop_time;
+    u64 Tnow;
+    
+    double microseconds;
+    double microsecondsPrev;
+    int countDivider;                   // divider of the count
     int width, height;                  // dimension of the extended input image (extending)
     int height_orig, width_orig;        // original dimension of the input and output images
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPort;       // port whre the output (left) is sent
@@ -47,7 +61,8 @@ private:
     double startTimer;
     double endTimer;
     yarp::os::Semaphore mutex;          // semaphore thar regulates the access to the buffer resource
-
+    clock_t endTime,startTime;
+    long T1,T2;
     cFrameConverter* cfConverter; //receives real-time events
 public:
     /**

@@ -81,17 +81,17 @@ private:
 public:
     /**
     * @brief Function returns the pointer to the buffer that containes events counts
-    * @param none
+    * @param indicates whether the required buffer belongs to the left or right camera (LEFT 1, RIGHT 0)
     * @return pointer to the buffer of event counts
     */
-    int* getEventBuffer();
+    int* getEventBuffer(bool camera);
 
     /**
     * @brief Function returns the pointer to the buffer that containes timestamps
-    * @param none
+    * @param indicates whether the required buffer belongs to the left or right camera (LEFT 1, RIGHT 0)
     * @return pointer to the buffer of timestamps
     */
-    unsigned long* getTimeBuffer();
+    unsigned long* getTimeBuffer(bool camera);
 
     /**
     * @brief Function that cleans buffer that containes events counts

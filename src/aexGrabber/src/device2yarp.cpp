@@ -21,6 +21,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+#include <sys/types.h>
 #include <inttypes.h>
 //#include <stdint.h>
 
@@ -29,7 +30,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <math.h>
-#include <sys/types.h>
+
 #include <sys/time.h>
 #include <sched.h>
 
@@ -279,6 +280,7 @@ void device2yarp::prepareBiases() {
 #else
             r = fread(rbuf, 8, 1, binInput);
             printf("reading from file %d \n",r);
+
             if (r == 0) {
                 if (feof(binInput)) {
                     fprintf(stderr, "parsing input completed.\n");
@@ -294,7 +296,7 @@ void device2yarp::prepareBiases() {
             addr = rbuf[1];
 #endif
 
-            /* timestamp expressed in <ts>*1e-6/128e-9, with <ts> in microseconds */
+            /* timestamp expressed in <ts> * 1e-6 / 128e-9, with <ts> in microseconds */
             hwival = (u32)(ival * 7.8125);
             pseq[seqEvents].address = addr;
             pseq[seqEvents].timestamp = hwival;
@@ -316,6 +318,7 @@ void device2yarp::prepareBiases() {
         /* try writing to kernel driver */
         if (seqDone_b < seqSize_b) {
             //fprintf(stderr, "calling write fd: %d  sS: %d  sD: %d  ps: %x\n", aexfd, seqSize_b, seqDone_b, (u32)pseq);
+
 
             w = write(file_desc, seqDone_b + ((u8*)pseq), seqSize_b - seqDone_b);
 
@@ -430,7 +433,6 @@ void  device2yarp::run() {
         a = pmon[i].address;
         t = pmon[i].timestamp * 0.128;
         //printf("a: %x  t:%d k: %d nEvents: %d \n",a,t,k,monBufEvents);            
-
         buf2[k2++] = a;
         buf2[k2++] = t;
 

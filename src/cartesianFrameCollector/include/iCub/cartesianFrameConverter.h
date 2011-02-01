@@ -52,12 +52,13 @@ public:
     virtual void onRead(sendingBuffer& b);
 
     /**
-    * @brief returns a simple image
+    * @brief returns a mono image of the output of the dvs camera (either left or right)
     * @param pixelMono reference to the image contains the counts of events
     * @param minCount reference to the min timestamp in the frame
     * @param maxCount reference to the max timestamp in the frame
+    * @param camera reference to the camera the image belongs LEFT 1, RIGHT 1
     */
-     void getMonoImage(yarp::sig::ImageOf<yarp::sig::PixelMono>* image, unsigned long minCount,unsigned long maxCount);
+    void getMonoImage(yarp::sig::ImageOf<yarp::sig::PixelMono>* image, unsigned long minCount,unsigned long maxCount, bool camera);
     
     /**
     * function that return the last time stamp saved in the buffer

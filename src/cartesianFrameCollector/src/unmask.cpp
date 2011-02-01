@@ -57,7 +57,7 @@ unmask::unmask() : RateThread(UNMASKRATETHREAD){
     xshift = 1;
     polshift = 0;
     polmask = 0x00000001;
-    camerashift = 16;
+    camerashift = 15;
     cameramask = 0x00008000;
     retinalSize = 128;
     temp1=true;
@@ -125,12 +125,18 @@ void unmask::setLastTimestamp(unsigned long value) {
     lasttimestamp = value;
 }
 
-int* unmask::getEventBuffer() {
-    return buffer;
+int* unmask::getEventBuffer(bool camera) {
+    if(camera)
+        return buffer;
+    else
+        return bufferRight;
 }
 
-unsigned long* unmask::getTimeBuffer() {
-    return timeBuffer;
+unsigned long* unmask::getTimeBuffer(bool camera) {
+    if (camera)
+        return timeBuffer;
+    else
+        return timeBufferRight;
 }
 
 void unmask::run() {
@@ -167,18 +173,20 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
         unsigned long timestamp = buf2[2 * evt + 1];
         lasttimestamp = timestamp;
 
-        if (evt == 0) {
-            printf("%d \n", timestamp);
-            eldesttimestamp = timestamp;
+        if (evt == 1) {
+            //printf("evt==0 %d \n", timestamp);
+            eldesttimestamp = 10000;
         }   
         
         // here we zero the higher two bytes of the address!!! Only lower 16bits used!
         blob &= 0xFFFF;
         unmaskEvent((unsigned int) blob, cartX, cartY, polarity, camera);
-        //printf(" %d : %d \n",blob,timestamp);
+        if (camera == -1)
+            camera = 1;
+        printf(" %d : %d : %d \n",blob,timestamp,camera);
         
-        //if((cartX!=127)||(cartY!=0)) {      //removed one pixel which is set once the driver do not work properly
-        if(camera == 0) {
+        //camera: LEFT 0, RIGHT -1
+        if(camera==0) {
             if(polarity > 0) {
                 buffer[cartX + cartY * retinalSize] = responseGradient;
                 timeBuffer[cartX + cartY * retinalSize] = timestamp;
@@ -195,27 +203,9 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
                     buffer[cartX + cartY * retinalSize] = -127;
                 }
             }
-            /*
-            //udpates the temporary buffer
-            if(temp1) {
-            if(countEvent>maxPosEvent-1) {
-            countEvent=maxPosEvent-1;
-            }
-            fifoEvent_temp[countEvent]=cartX+cartY*retinalSize;
-            //increments the counter of events
-            countEvent++;
-            }
-            else {
-            if(countEvent2>maxPosEvent-1) {
-            countEvent2=maxPosEvent-1;
-            }
-            fifoEvent_temp2[countEvent2]=cartX+cartY*retinalSize;
-            //increments the counter of events
-            countEvent2++;
-            }
-            */
         }
         else {
+            printf("#");
             if(polarity > 0) {
                 bufferRight[cartX + cartY * retinalSize] = responseGradient;
                 timeBufferRight[cartX + cartY * retinalSize] = timestamp;
