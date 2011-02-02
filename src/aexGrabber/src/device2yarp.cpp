@@ -68,7 +68,7 @@ reset_pins_expand = 4
 #define INPUT_BIN_U32U32LE
 
 #define reset_pins_expand  4
-#define timestep 100 //10 us OneSecond/1000
+#define timestep 1000 //10 us OneSecond/1000
 #define OneSecond 1000000 //1sec
 #define latchexpand 100
 #define powerdownexpand 100
@@ -183,9 +183,12 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
     u64 ec = 0;
     
     memset(buffer, 0, SIZE_OF_DATA);
-    monBufSize_b = 8192 * sizeof(struct aer);
+    // 8192 number of max event that can be read
+    //SIZE_OF_DATA is SIZE_OF_EVENT * 8bytes
+    monBufSize_b = SIZE_OF_EVENT * sizeof(struct aer);
+    printf("monitor buffer size %d \n", monBufSize_b);
     assert(SIZE_OF_DATA >= monBufSize_b);
-
+    // pmon reads events from the device
     pmon = (aer *)  malloc(monBufSize_b);
     if ( pmon == NULL ) {
         printf("pmon malloc failed \n");
@@ -199,7 +202,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
 
     // opening the file when the biases are programmed by file
     biasFromBinary = i_bool;
-          
+    // preparing and sending biases      
     prepareBiases();    
 }
 
@@ -219,7 +222,7 @@ void device2yarp::prepareBiases() {
     }
     
     //initialisation
-    const u32 seqAllocChunk_b = 8192 * sizeof(struct aer); //allocating the right dimension for biases
+    const u32 seqAllocChunk_b = SIZE_OF_EVENT * sizeof(struct aer); //allocating the right dimension for biases
     int r, w;
     struct timeval tv;
     u64 Tseqstart, TmaxSeqTimeEstimate, Tnow;
@@ -279,7 +282,7 @@ void device2yarp::prepareBiases() {
             }
 #else
             r = fread(rbuf, 8, 1, binInput);
-            printf("reading from file %d \n",r);
+            //printf("reading from file %d \n",r);
 
             if (r == 0) {
                 if (feof(binInput)) {
@@ -416,7 +419,7 @@ void  device2yarp::run() {
     //printf("reading \n");
     int r = read(file_desc, pmon, monBufSize_b);    
     monBufEvents = r / sizeof(struct aer);
-    printf("r: %d \n",r);
+    printf("read: %d \n",r);
     if(r == -1) {
         printf("device %s not ready. Skipping to the next run \n",portDeviceName.c_str());
         return;
@@ -471,8 +474,7 @@ void device2yarp::sendingBias() {
                 perror("invalid write");
                 exit(1);
             }
-    }
-    
+    }    
     printf("writing successfully ended \n");
 
     ////////////////////////////////////////////////////////////
@@ -646,7 +648,7 @@ void device2yarp::biasprogtx(int time,int latch,int clock,int data, int powerdow
 void device2yarp::threadRelease() {
        
     /* Fasnacht says: Don't!
-    const u32 seqAllocChunk_b = 8192 * sizeof(struct aer); //allocating the right dimension for biases
+    const u32 seqAllocChunk_b = SIZE_OF_EVENTS * sizeof(struct aer); //allocating the right dimension for biases
     memset(pseq,0,seqAllocChunk_b);
     setPowerdown();
     sendingBias();
