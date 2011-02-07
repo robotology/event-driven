@@ -15,4 +15,6 @@ add_subdirectory(opticalFlow)
 #add_subdirectory(logpolar_frame_converter_add)
 add_subdirectory(laserScannerGui)
 add_subdirectory(visualAligner)
+add_subdirectory(iKartNav)
+
 
