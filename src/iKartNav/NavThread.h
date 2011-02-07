@@ -25,6 +25,7 @@ public:
 protected:
     bool setOmega(double omega);
     bool setVel(const Vec2D& vel);
+    int abs(int x){ return x>=0?x:-x; }
 
 // data
     // from config
