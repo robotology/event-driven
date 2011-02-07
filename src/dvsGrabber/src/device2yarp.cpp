@@ -50,8 +50,7 @@ using namespace yarp::os;
 #define CLOCK_HI 1
 
 
-
-
+//#define FAST
 
 
 device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):RateThread(10), save(i_bool) {
@@ -62,20 +61,23 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
     sz=0;
     ec = 0;
     memset(buffer, 0, SIZE_OF_DATA);
-    /*const u32 seqAllocChunk_b = 8192 * sizeof(struct aer); //allocating the right dimension for biases
-    monBufSize_b = 8192 * sizeof(struct aer);
+    //const u32 seqAllocChunk_b = 8192 * sizeof(struct aer); //allocating the right dimension for biases
     
-
+    //allocation monitor
+    monBufSize_b = 8192 * sizeof(struct aer);
+    pmon = (aer *)  malloc(monBufSize_b);
+    if ( pmon == NULL ) {
+        printf("pmon malloc failed \n");
+    }
+    
+    /*
     pseq = (aer *) malloc(seqAllocChunk_b);
     if ( pseq == NULL ) {
         printf("pseq malloc failed \n");
     }
     seqAlloced_b = seqAllocChunk_b;
 
-    pmon = (aer *)  malloc(monBufSize_b);
-    if ( pmon == NULL ) {
-        printf("pmon malloc failed \n");
-    }
+    
 
     seqEvents = 0;
     seqSize_b = 0;
@@ -110,10 +112,8 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
                                 0x03,0x34,0x4c,		// diffOn           ++
                                 0x00,0x33,0x45,		// diff
                                 0x00,0x01,0x0f,		// foll
-                                0x00,0x01,0x0f}; 	// Pr               ++ Velocity of the "log circuit"
-        err = write(file_desc,bias,41); //5+36
+                                0x00,0x01,0x0f}; 	// Pr               ++ Velocity of the "log circuit"        
 #else
-#ifdef SLOW
         unsigned char bias[] = {0xb8,               //request
                                 0x00, 0x00,         //value
                                 0x00, 0x00,          //index
@@ -130,42 +130,10 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
                                 0x00,0x00,0x33,     // foll
                                 0x00,0x00,0x03      // Pr
                                 };
-        err = write(file_desc,bias,41); //5+36
-#else
-//        unsigned char bias[] = {0xb8,               //request
-//                                0x00, 0x00,         //value
-//                                0x00, 0x00,          //index
-//                                0x00,0x07,0xc8,	    // cas
-//								0x10,0xe9,0x8C,		// injGnd
-//								0xFF,0xFF,0xFF,		// reqPd
-//								0x7c,0x7f,0xf5,		// puX
-//								0x00,0x01,0xbe,		// diffOff
-//								0x04,0xb9,0x56,		// req
-//								0x00,0x09,0x31,		// refr
-//								0xFF,0xFF,0xFF,		// puY
-//								0x01,0xa5,0xae,		// diffOn
-//								0x00,0x1d,0x72,		// diff
-//								0x00,0x01,0x10,		// foll
-//								0x00,0x07,0x5d}; 	// Pr
-        unsigned char bias[] = {0xb8,               //request
-                                0x00, 0x00,         //value
-                                0x00, 0x00,          //index
-                                0x00,0x07,0xc8,     // cas
-                                0x10,0xe9,0x8C,     // injGnd
-                                0xFF,0xFF,0xFF,     // reqPd
-                                0x7c,0x7f,0xf5,     // puX
-                                0x00,0x04,0xfe,     // diffOff
-                                0x04,0xb9,0x56,     // req
-                                0x00,0x09,0x31,     // refr
-                                0xFF,0xFF,0xFF,     // puY
-                                0x01,0xe5,0x20,     // diffOn
-                                0x00,0x26,0xd2,     // diff
-                                0x00,0x01,0x10,     // foll
-                                0x00,0x09,0x31      // Pr
-                                };
-        err = write(file_desc,bias,41); //5+36
-#endif //SLOW
+        
+
 #endif //FAST
+        err = write(file_desc,bias,41); //5+36
         //int err = write(file_desc,bias,41); //5+36
         cout << "Return of the bias writing : " << err << endl;
         unsigned char start[5];
@@ -206,22 +174,47 @@ void device2yarp::setDeviceName(string deviceName) {
 
 void  device2yarp::run() {
     // read address events from device file which is not /dev/aerfx2_0
-    //sz = read(file_desc,buffer,SIZE_OF_DATA);
-    sz = pread(file_desc,buffer,SIZE_OF_DATA,0);
-    cout << "Size of the buffer : " << sz << endl;
+    sz = read(file_desc,buffer,SIZE_OF_DATA);
+    //int r = pread(file_desc,pmon,monBufSize_b,0);
+    int r = 0;
+    monBufEvents = r / sizeof(struct aer);
+    int monBufBytes = sz / 4;
+
+    cout << "Size of the buffer : " << r <<endl;
+    cout << "Number of events" << monBufEvents << endl;
+    uint32_t * buf2 = (uint32_t*)buffer;
+    u32 a, t;
+    int k2 = 0;
+
+    for (int i = 0 ; i < monBufBytes ; i+=4) {
+        unsigned int part_1 = 0xFF & buffer[i];    //extracting the 1 byte
+        
+        unsigned int part_2 = 0xFF & buffer[i+1];  //extracting the 2 byte
+        
+        unsigned int part_3 = 0xFF & buffer[i+2];  //extracting the 3 byte
+        printf ("part3:%d ",part_3);
+        unsigned int part_4 = 0xFF & buffer[i+3];  //extracting the 4 byte
+        printf (" part4:%d \n",part_4);
+        float blob = (part_1)|(part_2<<8);
+        printf ("blob: %f   \n ",blob);
+        float timestamp = ((part_3)|(part_4<<8));
+        printf ("timestamp %f \n", timestamp);
+    }
+
     /*
-    for(int i=0; i<sz; i+=4) {
-        unsigned int part_1 = 0x00FF&buffer[i];    //extracting the 1 byte
-        unsigned int part_2 = 0x00FF&buffer[i+1];  //extracting the 2 byte
-        unsigned int part_3 = 0x00FF&buffer[i+2];  //extracting the 3 byte
-        unsigned int part_4 = 0x00FF&buffer[i+3];  //extracting the 4 byte
-        unsigned int blob = (part_1)|(part_2<<8);
-        unsigned int timestamp = ((part_3)|(part_4<<8));
-        //printf("%x : %x\n", blob, timestamp);
+    for(int i=0; i < monBufEvents; i++) {       
+        a = pmon[i].address;
+        t = pmon[i].timestamp * 0.128;
+        printf("%x : %x \n", a, t);
+        buf2[k2++] = a;
+        buf2[k2++] = t;
     }
     */
+
+    //sz = monBufEvents*sizeof(struct aer); // sz is size in bytes
+    
     if(port.getOutputCount()) {
-        //printf("exiting from reading...sending data size: %d \n",sz);
+        printf("exiting from reading...sending data size: %d \n",sz);
         sendingBuffer data2send(buffer, sz);    
         //printf("preparing the port \n");
         sendingBuffer& tmp = port.prepare();
