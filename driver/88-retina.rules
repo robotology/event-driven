@@ -1,0 +1,1 @@
+KERNEL=="retina[0-9]", NAME="retina%n", SYMLINK+="usbdevices/%k", MODE="0666", OWNER="root"
