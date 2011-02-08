@@ -156,7 +156,6 @@ void vAlignerThread::run() {
                     ImageOf<yarp::sig::PixelRgb>& outputImage=outPort.prepare();
                     outputImage.resize(width, height);
                     copy_8u_C3R(tmp,leftDragonImage);
-                    //copy_8u_C3R(leftDragonImage,&outputImage);
                  }
              }
         }
@@ -169,7 +168,6 @@ void vAlignerThread::run() {
                  }
                  else {
                     copy_8u_C3R(tmp,rightDragonImage);
-                    //copy_8u_C3R(rightDragonImage,&outputImage);
                  }
              }
         }
@@ -202,28 +200,28 @@ void vAlignerThread::shift(int shift, ImageOf<PixelRgb>& outImage) {
         for (int row = 0;row < height;row++) {
             //pRight += shift*3;
             for (int col = 0 ; col < shift ; col++) {
-                d=sqrt( (row - centerY) * (row - centerY) 
-                    + (col - centerX) * (col - centerX));
-                *pOutput++ = (unsigned char)(1/d) * *pLeft++;
-                *pOutput++ = (unsigned char)(1/d) * *pLeft++;
-                *pOutput++ = (unsigned char)(1/d) * *pLeft++;
+                //d=sqrt( (row - centerY) * (row - centerY) 
+                //    + (col - centerX) * (col - centerX));
+                *pOutput++ = (unsigned char) *pLeft++;
+                *pOutput++ = (unsigned char) *pLeft++;
+                *pOutput++ = (unsigned char) *pLeft++;
             }
             for (int col = shift ; col < width ; col++) {
-                d=sqrt( (row - centerY) * (row - centerY) 
-                    + (col - centerX) * (col - centerX));
-                *pOutput=(unsigned char) floor((1/d) * (0.5 * *pLeft + 0.5 * *pRight));
+                //d=sqrt( (row - centerY) * (row - centerY) 
+                //    + (col - centerX) * (col - centerX));
+                *pOutput=(unsigned char) floor( (0.5 * *pLeft + 0.5 * *pRight));
                 pLeft++;pRight++;pOutput++;
-                *pOutput=(unsigned char) floor((1/d) * (0.5 * *pLeft + 0.5 * *pRight));
+                *pOutput=(unsigned char) floor( (0.5 * *pLeft + 0.5 * *pRight));
                 pLeft++;pRight++;pOutput++;
-                *pOutput=(unsigned char) floor((1/d) * (0.5 * *pLeft + 0.5 * *pRight));
+                *pOutput=(unsigned char) floor( (0.5 * *pLeft + 0.5 * *pRight));
                 pLeft++;pRight++;pOutput++;
             }
             for(int col = width ; col < width + shift ; col++){
-                d=sqrt( (row - centerY) * (row - centerY) 
-                    + (col - centerX) * (col - centerX));
-                *pOutput++ = (unsigned char)(1/d) * *pRight++;
-                *pOutput++ = (unsigned char)(1/d) * *pRight++;
-                *pOutput++ = (unsigned char)(1/d) * *pRight++;
+                //d=sqrt( (row - centerY) * (row - centerY) 
+                //    + (col - centerX) * (col - centerX));
+                *pOutput++ = (unsigned char) *pRight++;
+                *pOutput++ = (unsigned char) *pRight++;
+                *pOutput++ = (unsigned char) *pRight++;
             }
             //padding
             pLeft += padding;
@@ -236,21 +234,21 @@ void vAlignerThread::shift(int shift, ImageOf<PixelRgb>& outImage) {
         for (int row=0;row<height;row++) {
             pLeft+=shift*3;
             for (int col=0;col<width-shift;col++) {
-                d=sqrt( (row - centerY) * (row - centerY) 
-                    + (col - centerX) * (col - centerX));
-                *pOutput=(unsigned char) floor((1/d) * (0.5 * *pLeft + 0.5 * *pRight));
+                //d=sqrt( (row - centerY) * (row - centerY) 
+                //    + (col - centerX) * (col - centerX));
+                *pOutput=(unsigned char) floor( (0.5 * *pLeft + 0.5 * *pRight));
                 pLeft++;pRight++;pOutput++;
-                *pOutput=(unsigned char) floor((1/d) * (0.5 * *pLeft + 0.5 * *pRight));
+                *pOutput=(unsigned char) floor( (0.5 * *pLeft + 0.5 * *pRight));
                 pLeft++;pRight++;pOutput++;
-                *pOutput=(unsigned char) floor((1/d) * (0.5 * *pLeft + 0.5 * *pRight));
+                *pOutput=(unsigned char) floor( (0.5 * *pLeft + 0.5 * *pRight));
                 pLeft++;pRight++;pOutput++;
             }
             for(int col=width-shift;col<width;col++){
-                d=sqrt( (row - centerY) * (row - centerY) 
-                    + (col - centerX) * (col - centerX));
-                *pOutput++=(unsigned char)(1/d) * *pRight++;
-                *pOutput++=(unsigned char)(1/d) * *pRight++;
-                *pOutput++=(unsigned char)(1/d) * *pRight++;
+                //d=sqrt( (row - centerY) * (row - centerY) 
+                //    + (col - centerX) * (col - centerX));
+                *pOutput++=(unsigned char) *pRight++;
+                *pOutput++=(unsigned char) *pRight++;
+                *pOutput++=(unsigned char) *pRight++;
             }
             //padding
             pLeft+=padding;
