@@ -29,10 +29,16 @@
    <tag>cartFrameCollector</tag>
 </module>
 <module>
-   <name>yarpView</name>
+   <name>yarpview</name>
    <parameters>--name /eventView --x 000 --ysixe 000 --synch </parameters>
    <node>console</node>
    <tag>eventViewer</tag>
+</module>
+<module>
+   <name>yarpview</name>
+   <parameters>--name /alignerView --x 000 --ysixe 300 --synch </parameters>
+   <node>console</node>
+   <tag>alignmentView</tag>
 </module>
 
 <connection>
