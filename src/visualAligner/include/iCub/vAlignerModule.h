@@ -148,6 +148,11 @@
  * 
  */
 
+/**
+* CHANGE LOG
+* 08/02/2011 : removed the distance reducing factor                                             @author Rea
+*/
+
 #include <iostream>
 #include <string>
 
