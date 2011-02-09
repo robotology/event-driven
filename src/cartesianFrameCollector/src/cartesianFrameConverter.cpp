@@ -77,8 +77,8 @@ void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image, unsigned long minC
     */
 
     // determining whether the camera is left or right
-    int* pBuffer = unmask_events.getEventBuffer(0);
-    unsigned long* pTime   = unmask_events.getTimeBuffer(0);
+    int* pBuffer = unmask_events.getEventBuffer(camera);
+    unsigned long* pTime   = unmask_events.getTimeBuffer(camera);
     
     //printf("timestamp: min %d    max %d  \n", minCount, maxCount);
     //pBuffer += retinalSize * retinalSize - 1;

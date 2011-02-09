@@ -183,7 +183,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
         unmaskEvent((unsigned int) blob, cartX, cartY, polarity, camera);
         if (camera == -1)
             camera = 1;
-        printf(" %d : %d : %d \n",blob,timestamp,camera);
+        //printf(" %d : %d : %d \n",blob,timestamp,camera);
         
         //camera: LEFT 0, RIGHT -1
         if(camera==0) {
@@ -205,7 +205,6 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
             }
         }
         else {
-            printf("#");
             if(polarity > 0) {
                 bufferRight[cartX + cartY * retinalSize] = responseGradient;
                 timeBufferRight[cartX + cartY * retinalSize] = timestamp;
