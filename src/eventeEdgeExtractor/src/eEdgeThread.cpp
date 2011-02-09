@@ -73,18 +73,18 @@ inline void copy_8u_C3R(ImageOf<PixelRgb>* src, ImageOf<PixelRgb>* dest) {
 eEdgeThread::eEdgeThread() : RateThread(THRATE) {
     resized=false;
     count=0;
-    leftInputImage = 0;
-    rightInputImage = 0;
+    //leftInputImage = 0;
+    //rightInputImage = 0;
     shiftValue=20;
 }
 
 eEdgeThread::~eEdgeThread() {
-    if(leftInputImage !=0) {
-        delete leftInputImage;
-    }
-    if(rightInputImage!=0) {
-        delete rightInputImage;
-    }
+    //if(leftInputImage !=0) {
+    //    delete leftInputImage;
+    //}
+    //if(rightInputImage!=0) {
+    //   delete rightInputImage;
+    //}
 }
 
 bool eEdgeThread::threadInit() {
@@ -92,7 +92,7 @@ bool eEdgeThread::threadInit() {
     /* open ports */
     printf("opening ports.... \n");
     outLeftPort.open(getName("/edgesLeft:o").c_str());
-    outLeftPort.open(getName("/edgesRight:o").c_str());
+    outRightPort.open(getName("/edgesRight:o").c_str());
     inLeftPort.open(getName("/left:i").c_str());
     inRightPort.open(getName("/right:i").c_str());
     return true;
@@ -119,38 +119,43 @@ std::string eEdgeThread::getName(const char* p) {
 void eEdgeThread::resize(int widthp, int heightp) {
     width = widthp;
     height = heightp;
-    leftInputImage = new ImageOf<PixelMono>;
-    leftInputImage->resize(width, height);
-    rightInputImage = new ImageOf<PixelMono>;
-    rightInputImage->resize(width, height);
+    //leftInputImage = new ImageOf<PixelMono>;
+    //leftInputImage->resize(width, height);
+    //rightInputImage = new ImageOf<PixelMono>;
+    //rightInputImage->resize(width, height);
 }
 
-void eEdgeThread::run() {
-    if ((inLeftPort.getInputCount()) && (outLeftPort.getOutputCount())) {
-        leftInputImage = &inLeftPort.prepare();
+void eEdgeThread::run() {    
+
+    if ((inLeftPort.getInputCount()) && (outLeftPort.getOutputCount())) {       
+        ImageOf<PixelMono>& leftInputImage = inLeftPort.prepare();
         ImageOf<PixelMono>& outLeft = outLeftPort.prepare();
-        unsigned char* pin = leftInputImage->getRawImage();
+        unsigned char* pin = leftInputImage.getRawImage();
         unsigned char* pout = outLeft.getRawImage();
-        int padding = leftInputImage->getPadding();
-        for (int r = 0; r < leftInputImage->height(); r++) {
-            for (int c = 0; c < leftInputImage->width() - 3; c++) {
+        int padding = leftInputImage.getPadding();
+        printf("%d %d \n", leftInputImage.height(),leftInputImage.width());
+        for (int r = 0; r < leftInputImage.height(); r++) {
+            for (int c = 0; c < leftInputImage.width() - 3; c++) {
                 unsigned char p1, p2, p3;
                 p1 = *(pin + 1);
                 p2 = *(pin + 2);
-                p3 = *(pin + 3);
-                
-                if((p1 == *pin) && (p2 == *pin) && (p3 == *pin)){
-                    *pout++ = *pin++;
-                }
+                p3 = *(pin + 3);                
+                //if((p1 == *pin) && (p2 == *pin) && (p3 == *pin)){
+                //    *pout++ = *pin++;
+                //}
+                printf("%d",100);
+                *pout++ = 100;
             }
             pin += padding;
             pout += padding;
         }
+        outLeftPort.write();
     }
-
+    
+    /*
     if ((inRightPort.getInputCount()) && (outRightPort.getOutputCount())) {
-        rightInputImage = &inRightPort.prepare();
-        ImageOf<PixelMono>& outRight = inRightPort.prepare();
+        rightInputImage = inRightPort.prepare();
+        ImageOf<PixelMono>& outRight = outRightPort.prepare();
         unsigned char* pin = rightInputImage->getRawImage();
         unsigned char* pout = outRight.getRawImage();
         int padding = rightInputImage->getPadding();
@@ -168,7 +173,10 @@ void eEdgeThread::run() {
             pin += padding;
             pout += padding;
         }
+        outRightPort.write();
     }
+    */
+    
 }
 
 

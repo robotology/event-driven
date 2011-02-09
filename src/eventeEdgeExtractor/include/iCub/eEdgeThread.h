@@ -43,9 +43,9 @@ private:
     yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelMono> > inRightPort;      //port where the right event image is received
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outLeftPort;               //port whre the output edge (left) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outRightPort;               //port whre the output edge (right) is sent
-    yarp::sig::ImageOf <yarp::sig::PixelMono>* leftInputImage;           //image input left 
-    yarp::sig::ImageOf <yarp::sig::PixelMono>* rightInputImage;          //image input right 
-    yarp::sig::ImageOf <yarp::sig::PixelMono>* tmp;                      //temporary image for correct port reading
+    //yarp::sig::ImageOf <yarp::sig::PixelMono>& leftInputImage;           //image input left 
+    //yarp::sig::ImageOf <yarp::sig::PixelMono>& rightInputImage;          //image input right 
+    //yarp::sig::ImageOf <yarp::sig::PixelMono>& tmp;                      //temporary image for correct port reading
     std::string name;                   // rootname of all the ports opened by this thread
     bool resized;                       // flag to check if the variables have been already resized
     int shiftValue;                          //value of the shift between dragonfly (this is vergence related)
