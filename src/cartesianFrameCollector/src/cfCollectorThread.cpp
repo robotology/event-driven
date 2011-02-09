@@ -129,7 +129,9 @@ void cfCollectorThread::run() {
     }
     
     
-    minCount += interval * 0.9;
+    minCount += interval * (50.0 / 62.5);             
+    // this value is simply the ration between the timestamp reported by the aexGrabber (62.5Mhz) 
+    //and the correct timestamp counter clock of FPGA (50 Mhz)
     maxCount =  minCount + interval ;
     //if (l > maxCount)
     //    printf("Error \n");
