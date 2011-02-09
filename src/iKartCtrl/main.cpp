@@ -337,30 +337,30 @@ public:
 
 		if (Bottle *b = port_joystick_control.read(false))
         {                
-            if (b->size()>=3)
+            if (b->get(0).asInt()==1 && b->size()>=3)
             {                                
 				//received a joystick command.
 				//joystick commands have higher priorty respect to movement commands.
-				desired_direction = b->get(0).asDouble();
-				linear_speed = b->get(1).asDouble();
-				angular_speed = b->get(2).asDouble();
-				pwm_gain = b->get(3).asDouble();
+				desired_direction = b->get(1).asDouble();
+				linear_speed = b->get(2).asDouble();
+				angular_speed = b->get(3).asDouble();
+				pwm_gain = b->get(4).asDouble();
 				wdt_joy_cmd = Time::now();
 				joystick_control = true;
             }
         }
 		if (Bottle *b = port_movement_control.read(false))
 		{                
-			if (b->size()>=3)
+			if (b->get(0).asInt()==1 && b->size()>=3)
 			{                                
 				//received a movement command
 				if (joystick_control==false)
 				{	
 					//execute the command only if the joystick is not controlling!
-					desired_direction = b->get(0).asDouble();
-					linear_speed = b->get(1).asDouble();
-					angular_speed = b->get(2).asDouble();
-					pwm_gain = b->get(3).asDouble();
+					desired_direction = b->get(1).asDouble();
+					linear_speed = b->get(2).asDouble();
+					angular_speed = b->get(3).asDouble();
+					pwm_gain = b->get(4).asDouble();
 				}
 				wdt_mov_cmd = Time::now();
 			}
@@ -411,7 +411,7 @@ public:
 		}
 		else if	(ikart_control_type == IKART_CONTROL_SPEED)
 		{
-			MAX_VALUE = 40; // Maximum joint speed
+			MAX_VALUE = 100; // Maximum joint speed (deg/s)
 		}
 		
 		const double ratio = 0.7; // This value must be < 1 
