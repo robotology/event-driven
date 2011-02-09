@@ -33,6 +33,7 @@ using namespace yarp::sig;
 using namespace yarp::dev;
 using namespace std;
 
+#define DIM 10
 #define THRATE 30
 #define SHIFTCONST 100
 
@@ -73,8 +74,8 @@ inline void copy_8u_C3R(ImageOf<PixelRgb>* src, ImageOf<PixelRgb>* dest) {
 eEdgeThread::eEdgeThread() : RateThread(THRATE) {
     resized=false;
     count=0;
-    //leftInputImage = 0;
-    //rightInputImage = 0;
+    leftInputImage = 0;
+    rightInputImage = 0;
     shiftValue=20;
 }
 
@@ -128,26 +129,42 @@ void eEdgeThread::resize(int widthp, int heightp) {
 void eEdgeThread::run() {    
 
     if ((inLeftPort.getInputCount()) && (outLeftPort.getOutputCount())) {       
-        ImageOf<PixelMono>& leftInputImage = inLeftPort.prepare();
+        leftInputImage = inLeftPort.read();
+        
+        unsigned char* pin = leftInputImage->getRawImage();
+        int width = leftInputImage->width();
+        int height = leftInputImage->height();
         ImageOf<PixelMono>& outLeft = outLeftPort.prepare();
-        unsigned char* pin = leftInputImage.getRawImage();
+        outLeft.resize(width,height);
         unsigned char* pout = outLeft.getRawImage();
-        int padding = leftInputImage.getPadding();
-        printf("%d %d \n", leftInputImage.height(),leftInputImage.width());
-        for (int r = 0; r < leftInputImage.height(); r++) {
-            for (int c = 0; c < leftInputImage.width() - 3; c++) {
+        int padding = leftInputImage->getPadding();
+        
+        for (int r = 0; r < height; r++) {
+            for (int c = 0; c < width - 3; c++) {
                 unsigned char p1, p2, p3;
-                p1 = *(pin + 1);
-                p2 = *(pin + 2);
-                p3 = *(pin + 3);                
-                //if((p1 == *pin) && (p2 == *pin) && (p3 == *pin)){
-                //    *pout++ = *pin++;
-                //}
-                printf("%d",100);
-                *pout++ = 100;
+
+                Vector p[DIM];
+                bool paint = true;
+                for (int i=0; i<DIM; i++){
+                    p(i) = (double) *(pin + i);
+                    if(p(i)-254!=0){
+                        paint = false;
+                        break;
+                    }
+                }
+                
+                if(paint){
+                    *pout = 254;
+                }
+                else{
+                    *pout = 127;
+                }
+                pout++;
+                pin++;
+                
             }
-            pin += padding;
-            pout += padding;
+            pin += padding + 3;
+            pout += padding + 3;
         }
         outLeftPort.write();
     }
