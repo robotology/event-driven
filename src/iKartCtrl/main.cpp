@@ -308,11 +308,13 @@ public:
         t0=Time::now();
     }
 
-    double motor_filter(double input, int i)
+    double lp_filter(double input, int i)
     {
-       static double xv[1][3], yv[1][3];
+	   //This is a butterworth low pass first order, with a cut off freqency of 1Hz
+	   //It must be used with a sampling frequency of 50Hz (20ms)
+       static double xv[2][10], yv[2][10];
        xv[0][i] = xv[1][i]; 
-       xv[1][i] = input / 1.689454484e+01;
+       xv[1][i] = input /1.689454484e+01;
        yv[0][i] = yv[1][i]; 
        yv[1][i] =   (xv[0][i] + xv[1][i]) + (  0.8816185924 * yv[0][i]);
        return yv[1][i];
@@ -421,7 +423,7 @@ public:
 		}
 		else if	(ikart_control_type == IKART_CONTROL_SPEED)
 		{
-			MAX_VALUE = 100; // Maximum joint speed (deg/s)
+			MAX_VALUE = 200; // Maximum joint speed (deg/s)
 		}
 		
 		const double ratio = 0.7; // This value must be < 1 
@@ -442,12 +444,11 @@ public:
 		FA *= pwm_gain;
 		FB *= pwm_gain;
 		FC *= pwm_gain;
-
-                //low pass filtering
-                motor_filter(FA,0);
-                motor_filter(FB,1);
-                motor_filter(FC,2);
                 
+		FA  = lp_filter(FA,0);
+        FB  = lp_filter(FB,1);
+        FC  = lp_filter(FC,2);
+
 		if (ikart_control_type == IKART_CONTROL_OPENLOOP)
 		{
 			iopl->setOutput(0,-FA);
