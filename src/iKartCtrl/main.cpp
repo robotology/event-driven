@@ -153,8 +153,8 @@ public:
 	{
 		board_control_modes = new int [3];
 		ikart_control_type = IKART_CONTROL_NONE;
-		wdt_mov_timeout = 0.100;
-		wdt_joy_timeout = 0.100;
+		wdt_mov_timeout = 0.200;
+		wdt_joy_timeout = 0.200;
 		timeout_count=0;
 
 		linear_speed = 1;
@@ -308,6 +308,16 @@ public:
         t0=Time::now();
     }
 
+    double motor_filter(double input, int i)
+    {
+       static double xv[1][3], yv[1][3];
+       xv[0][i] = xv[1][i]; 
+       xv[1][i] = input / 1.689454484e+01;
+       yv[0][i] = yv[1][i]; 
+       yv[1][i] =   (xv[0][i] + xv[1][i]) + (  0.8816185924 * yv[0][i]);
+       return yv[1][i];
+    }
+
     virtual void run()
     {
 		//read laser data
@@ -426,27 +436,32 @@ public:
 		if (pwm_gain>1)	pwm_gain = 1;
 
 		//wheel contribution calculation
-		FA = linear_speed * cos ((150+desired_direction)/ 180.0 * 3.14159265) - angular_speed;
-		FB = linear_speed * cos ((030+desired_direction)/ 180.0 * 3.14159265) - angular_speed;
-		FC = linear_speed * cos ((270+desired_direction)/ 180.0 * 3.14159265) - angular_speed;
+		FA = linear_speed * cos ((150-desired_direction)/ 180.0 * 3.14159265) + angular_speed;
+		FB = linear_speed * cos ((030-desired_direction)/ 180.0 * 3.14159265) + angular_speed;
+		FC = linear_speed * cos ((270-desired_direction)/ 180.0 * 3.14159265) + angular_speed;
 		FA *= pwm_gain;
 		FB *= pwm_gain;
 		FC *= pwm_gain;
 
+                //low pass filtering
+                motor_filter(FA,0);
+                motor_filter(FB,1);
+                motor_filter(FC,2);
+                
 		if (ikart_control_type == IKART_CONTROL_OPENLOOP)
 		{
-			iopl->setOutput(0,FA);
-			iopl->setOutput(1,FB);
-			iopl->setOutput(2,FC);
+			iopl->setOutput(0,-FA);
+			iopl->setOutput(1,-FB);
+			iopl->setOutput(2,-FC);
 		}
 		else if	(ikart_control_type == IKART_CONTROL_SPEED)
 		{
 			//FA=3;
 			//FB=3;
 			//FC=3;
-			ivel->velocityMove(0,FA);
-			ivel->velocityMove(1,FB);
-			ivel->velocityMove(2,FC);
+			ivel->velocityMove(0,-FA);
+			ivel->velocityMove(1,-FB);
+			ivel->velocityMove(2,-FC);
 		}
 		else if (ikart_control_type == IKART_CONTROL_NONE)
 		{
