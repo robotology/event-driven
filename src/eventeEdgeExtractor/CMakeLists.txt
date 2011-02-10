@@ -6,11 +6,15 @@ PROJECT(${KEYWORD})
 FIND_PACKAGE(YARP)
 FIND_PACKAGE(ICUB)
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${ICUB_DIR}/conf ${YARP_DIR}/conf)
+INCLUDE(iCubOptions)
+INCLUDE(iCubHelpers)
 
+FIND_PACKAGE(OpenCV)
 
 INCLUDE_DIRECTORIES(
     ${PROJECT_SOURCE_DIR}/include
     ${YARP_INCLUDE_DIRS}
+	${OpenCV_INCLUDE_DIRS}
 )
 
 # Search for source code.
@@ -29,6 +33,7 @@ IF (folder_source)
     TARGET_LINK_LIBRARIES(${KEYWORD}  
                           ${YARP_LIBRARIES}
                           icubmod
+				${OpenCV_LIBRARIES}
     	                  )	
 
     INSTALL_TARGETS(/bin ${KEYWORD})
