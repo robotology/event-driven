@@ -130,7 +130,6 @@ void eEdgeThread::resize(int widthp, int heightp) {
 }
 
 void eEdgeThread::run() {    
-
     if ((inLeftPort.getInputCount()) && (outLeftPort.getOutputCount())) {       
         leftInputImage = inLeftPort.read();
         
@@ -141,38 +140,85 @@ void eEdgeThread::run() {
         outLeft.resize(width,height);
         unsigned char* pout = outLeft.getRawImage();
         int padding = leftInputImage->getPadding();
+        int rowsize = leftInputImage->getRowSize();
         
-        for (int r = 0; r < height; r++) {
-            for (int c = 0; c < width - 3; c++) {
-                unsigned char p1, p2, p3;
-
+        for (int r = 0; r < (height - DIM); r++) {
+            for (int c = 0; c < (width - DIM); c++) {
+                
                 Vector p(DIM);
-                bool paint = true;
-                /*for (int i=0; i<DIM; i++){
+                bool paint254h = true;
+                for (int i=0; i < DIM; i++){
                     p[i] = (double) *(pin + i);
-                    if(p[i]-254!=0){
-                        paint = false;
+                    if(p[i]!=254){
+                        paint254h = false;
+                        break;
+                    }   
+                }
+                bool paint0h = true;
+                for (int i=0; i < DIM; i++){
+                    p[i] = (double) *(pin + i);
+                    if(p[i]!=0){
+                        paint0h = false;
+                        break;
+                    }
+                }
+                bool paint254v = true;
+                for (int i=0; i<DIM; i++){
+                    p[i] = (double) *(pin + rowsize * i);
+                    if(p[i]!=254){
+                        paint254v = false;
+                        break;
+                    }
+                }
+                bool paint0v = true;
+                for (int i=0; i<DIM; i++){
+                    p[i] = (double) *(pin + rowsize * i);
+                    if(p[i]!=0){
+                        paint0v = false;
                         break;
                     }
                 }
                 
-                if(paint){
+
+                
+                if(paint254h){
                     *pout = 254;
+                }
+                else if(paint0h){
+                    *pout = 0;
+                }
+                else if (paint254v){
+                    *pout = 254;
+                }
+                else if(paint0v){
+                    *pout = 0;
                 }
                 else{
                     *pout = 127;
                 }
-                */
+                
 
-                *pout = *pin;                
+                //*pout = *pin;                
                 pout++;
                 pin++;
             }
-            pin += padding + 3;
-            pout += padding + 3;
+            for (int c=0; c< DIM; c++) {
+                *pout++ = 127 ;
+                pin++;
+            }
+            pin += padding;
+            pout += padding;
+        }
+        for (int r=0; r < DIM; r++) {
+            for (int c = 0; c < width; c ++) {
+                *pout++ = 127; pin++;
+            }
+            pin += padding;
+            pout += padding;
         }
         
-        cvDilate(outLeft.getIplImage(),outLeft.getIplImage(),NULL,4);
+        //cvDilate(outLeft.getIplImage(),outLeft.getIplImage(),NULL,4);
+        //cvErode(outLeft.getIplImage(),outLeft.getIplImage(),NULL,4);
         
         outLeftPort.write();
     }
