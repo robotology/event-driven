@@ -25,6 +25,8 @@
  */
 
 #include <iCub/eEdgeThread.h>
+#include "cxcore.h"
+#include "highgui.h"
 #include <cstring>
 #include <cassert>
 
@@ -143,11 +145,11 @@ void eEdgeThread::run() {
             for (int c = 0; c < width - 3; c++) {
                 unsigned char p1, p2, p3;
 
-                Vector p[DIM];
+                Vector p(DIM);
                 bool paint = true;
-                for (int i=0; i<DIM; i++){
-                    p(i) = (double) *(pin + i);
-                    if(p(i)-254!=0){
+                /*for (int i=0; i<DIM; i++){
+                    p[i] = (double) *(pin + i);
+                    if(p[i]-254!=0){
                         paint = false;
                         break;
                     }
@@ -159,13 +161,18 @@ void eEdgeThread::run() {
                 else{
                     *pout = 127;
                 }
+                */
+
+                *pout = *pin;                
                 pout++;
                 pin++;
-                
             }
             pin += padding + 3;
             pout += padding + 3;
         }
+        
+        cvDilate(outLeft.getIplImage(),outLeft.getIplImage(),NULL,4);
+        
         outLeftPort.write();
     }
     
