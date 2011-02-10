@@ -1,0 +1,30 @@
+<application>
+<name>iKart Main Application</name>
+
+<dependencies>	
+</dependencies>
+
+<module>
+   <name>iCubInterface</name>
+   <parameters>--config iKart/conf/ikart.ini</parameters>
+   <node>console</node>
+   <stdio>console</stdio>
+   <tag>1) iKart's iCubInterface</tag>
+</module>
+
+<module>
+   <name>iKartControl</name>
+   <parameters></parameters>
+   <node>console</node>
+   <stdio>console</stdio>
+   <tag>2) iKart's controller</tag>
+</module>
+
+<connection>
+  <from>/iKart/laser:o</from>
+  <to>/laserScannerGui:i</to>
+  <protocol>udp</protocol>
+</connection>
+
+
+</application>
