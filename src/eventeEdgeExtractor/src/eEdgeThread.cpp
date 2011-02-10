@@ -25,8 +25,9 @@
  */
 
 #include <iCub/eEdgeThread.h>
-#include "cxcore.h"
-#include "highgui.h"
+#include <cxcore.h>
+#include <cv.h>
+#include <highgui.h>
 #include <cstring>
 #include <cassert>
 
