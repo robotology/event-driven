@@ -101,6 +101,7 @@ unmask::~unmask() {
 
 void unmask::cleanEventBuffer() {
     memset(buffer,0,retinalSize*retinalSize*sizeof(int));
+    memset(timeBuffer, 0, retinalSize * retinalSize * sizeof(unsigned long));
     minValue=0;
     maxValue=0;
 }
@@ -170,7 +171,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
     for (int evt = 0; evt < num_events; evt++) {
         // unmask the data
         unsigned long blob = buf2[2 * evt];
-        unsigned long timestamp = buf2[2 * evt + 1];
+        unsigned long timestamp = buf2[2 * evt + 1];        
         lasttimestamp = timestamp;
 
         if (evt == 1) {

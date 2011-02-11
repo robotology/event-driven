@@ -96,14 +96,16 @@ void cfCollectorThread::run() {
     }
     //T2 = times(&stop_time);
     unsigned long int l = cfConverter->getLastTimeStamp();
+    unsigned long int lc = l * 0.125;
+
     gettimeofday(&tvend, NULL);
     Tnow = ((u64)tvend.tv_sec) * 1000000 + ((u64)tvstart.tv_usec);
     
     endTimer = Time::now();
     clock_gettime(CLOCK_REALTIME, &stop_time );
     double diffTime = (endTime - startTime);
-    printf("timeofday>%ld\n", ((tvend.tv_sec * 1000000 + tvend.tv_usec)
-		  - (tvstart.tv_sec * 1000000 + tvstart.tv_usec)));
+    //printf("timeofday>%ld\n", ((tvend.tv_sec * 1000000 + tvend.tv_usec)
+	//	  - (tvstart.tv_sec * 1000000 + tvstart.tv_usec)));
     double interval = (endTimer - startTimer) * 1000000; //interval in microsecond
     //double time = (double)stop_time.tms_utime - start_time.tms_utime;
     microseconds = stop_time.tv_nsec / 1000 ; 
@@ -113,37 +115,38 @@ void cfCollectorThread::run() {
     //T1 = times(&start_time);
     //clock();
     //clock_gettime( CLOCK_REALTIME, &start_time );
+    minCount = minCount + interval ; // * (50.0 / 62.5) * 1.10;
     
-    if ((cfConverter->getInputCount()) && (count % 500 == 0)) { 
-        minCount = l - interval; //cfConverter->getEldestTimeStamp();        
-        printf("synchronised! %d \n", minCount);
-        printf("synchronised! %d \n", minCount);
-        printf("synchronised! %d \n", minCount);
-        printf("synchronised! %d \n", minCount);
-        printf("synchronised! %d \n", minCount);
-        printf("synchronised! %d \n", minCount);
-        printf("synchronised! %d \n", minCount);
-        printf("synchronised! %d \n", minCount);
+    if ((cfConverter->getInputCount()) && (count % 1000 == 0)) { 
+        minCount = l * 1.25 - interval; //cfConverter->getEldestTimeStamp();        
         startTimer = Time::now();
         synchronised = true;    
     }
-    
-    
-    minCount += interval * (50.0 / 62.5);             
+                 
     // this value is simply the ration between the timestamp reported by the aexGrabber (62.5Mhz) 
     //and the correct timestamp counter clock of FPGA (50 Mhz)
     maxCount =  minCount + interval ;
-    //if (l > maxCount)
-    //    printf("Error \n");
-    
-    /*if( maxCount >= MAXVALUE) {
-        printf("reached max counter \n");
-        maxCount = maxCount - MAXVALUE;
+    if( count % 100 == 0) {
+        printf("check! %d,%d,%d \n", minCount, lc, maxCount);
     }
-    */
-    //maximum value  4294967295
-   
-    printf("interval>%f diffTime>%f  %d,%d,%d \n",interval,microseconds - microsecondsPrev,minCount,l,maxCount);
+
+    if (l > maxCount) {
+        printf("Error \n");
+        printf("interval>%f  %d,%d,%d \n",interval,minCount,lc,maxCount);
+        minCount = l * 1.25 - interval; //cfConverter->getEldestTimeStamp();        
+        startTimer = Time::now();
+        synchronised = true;  
+    }
+    
+    if( maxCount >= MAXVALUE) {
+        printf("reached max counter \n");
+        minCount = l * 1.25 - interval * 3 ;
+        if (minCount < 0) minCount = 0;
+    }
+    
+    
+    
+    
     microsecondsPrev = microseconds;
     if(outPort.getOutputCount()) {
         ImageOf<yarp::sig::PixelMono>& outputImage=outPort.prepare();

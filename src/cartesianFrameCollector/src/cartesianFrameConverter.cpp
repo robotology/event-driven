@@ -32,8 +32,8 @@ using namespace std;
 
 cFrameConverter::cFrameConverter():convert_events(128,128) {
     retinalSize=128;
-    outputWidth=320;
-    outputHeight=240;
+    //outputWidth=320;
+    //outputHeight=240;
     unmask_events.start();
     previousTimeStamp = 0;
 }
@@ -87,7 +87,7 @@ void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image, unsigned long minC
             //drawing the retina and the rest of the image separately
             int value = *pBuffer;
             unsigned long timestampactual = *pTime;
-            if ((timestampactual>minCount)&&(timestampactual<maxCount)) {   //(timestampactual != lasttimestamp)
+            if (((timestampactual * 1.25)>minCount)&&((timestampactual * 1.25) < maxCount)) {   //(timestampactual != lasttimestamp)
                 *pImage++ = (unsigned char) 127 + value;
                 //*pTime = (unsigned long int) 0;
             }
