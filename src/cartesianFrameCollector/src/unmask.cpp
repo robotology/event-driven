@@ -172,12 +172,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
         // unmask the data
         unsigned long blob = buf2[2 * evt];
         unsigned long timestamp = buf2[2 * evt + 1];        
-        lasttimestamp = timestamp;
-
-        if (evt == 1) {
-            //printf("evt==0 %d \n", timestamp);
-            eldesttimestamp = 10000;
-        }   
+        lasttimestamp = timestamp;   
         
         // here we zero the higher two bytes of the address!!! Only lower 16bits used!
         blob &= 0xFFFF;
@@ -188,46 +183,58 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
         
         //camera: LEFT 0, RIGHT -1
         if(camera==0) {
-            if(polarity > 0) {
-                buffer[cartX + cartY * retinalSize] = responseGradient;
-                timeBuffer[cartX + cartY * retinalSize] = timestamp;
+            if(timeBuffer[cartX + cartY * retinalSize]< timestamp) {
+                if(polarity > 0) {
+                    buffer[cartX + cartY * retinalSize] = responseGradient;
+                    timeBuffer[cartX + cartY * retinalSize] = timestamp;
                 
-                if(buffer[cartX + cartY * retinalSize] > 127) {
-                    buffer[cartX + cartY * retinalSize] = 127;
+                    if(buffer[cartX + cartY * retinalSize] > 127) {
+                        buffer[cartX + cartY * retinalSize] = 127;
+                    }
+                }
+                else if(polarity < 0) {
+                    buffer[cartX + cartY * retinalSize] = -responseGradient;
+                    timeBuffer[cartX + cartY * retinalSize] = timestamp;
+                
+                    if (buffer[cartX + cartY * retinalSize] < -127) {
+                        buffer[cartX + cartY * retinalSize] = -127;
+                    }
                 }
             }
-            else if(polarity < 0) {
-                buffer[cartX + cartY * retinalSize] = -responseGradient;
-                timeBuffer[cartX + cartY * retinalSize] = timestamp;
-                
-                if (buffer[cartX + cartY * retinalSize] < -127) {
-                    buffer[cartX + cartY * retinalSize] = -127;
-                }
-            }
+            
         }
         else {
-            if(polarity > 0) {
-                bufferRight[cartX + cartY * retinalSize] = responseGradient;
-                timeBufferRight[cartX + cartY * retinalSize] = timestamp;
-                
-                if(bufferRight[cartX + cartY * retinalSize] > 127) {
-                    bufferRight[cartX + cartY * retinalSize] = 127;
+            if (timeBufferRight[cartX + cartY * retinalSize] < timestamp) {
+                if(polarity > 0) {
+                    bufferRight[cartX + cartY * retinalSize] = responseGradient;
+                    timeBufferRight[cartX + cartY * retinalSize] = timestamp;
+                    
+                    if(bufferRight[cartX + cartY * retinalSize] > 127) {
+                        bufferRight[cartX + cartY * retinalSize] = 127;
+                    }
                 }
-            }
-            else if(polarity < 0) {
-                bufferRight[cartX + cartY * retinalSize] = -responseGradient;
-                timeBufferRight[cartX + cartY * retinalSize] = timestamp;
-                
-                if (bufferRight[cartX + cartY * retinalSize] < -127) {
-                    bufferRight[cartX + cartY * retinalSize] = -127;
+                else if(polarity < 0) {
+                    bufferRight[cartX + cartY * retinalSize] = -responseGradient;
+                    timeBufferRight[cartX + cartY * retinalSize] = timestamp;
+                    
+                    if (bufferRight[cartX + cartY * retinalSize] < -127) {
+                        bufferRight[cartX + cartY * retinalSize] = -127;
+                    }
                 }
             }
         }
+        
         //fprintf(uEvents,"%d\t%d\t%d\t%u\n", cartX, cartY, polarity, timestamp);
     }
     //fprintf(uEvents,"%d\t%d\t%d\t%u\n", -1, -1, -1, -1);
 }
 
+
+void unmask::resetTimestamps() {
+    for (int i=0 ; i<retinalSize * retinalSize; i++){
+        timeBuffer[i] = 0;
+    }
+}
 
 void unmask::unmaskEvent(unsigned int evPU, short& x, short& y, short& pol, short& camera) {
     y = (short)(retinalSize-1) - (short)((evPU & xmask) >> xshift);

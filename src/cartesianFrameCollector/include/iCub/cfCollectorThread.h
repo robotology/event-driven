@@ -46,6 +46,8 @@ private:
     struct timeval tvstart,tvend;
     struct timespec start_time, stop_time;
     u64 Tnow;
+    unsigned long int precl;
+    unsigned long int lc;
     
     double microseconds;
     double microsecondsPrev;
@@ -56,6 +58,7 @@ private:
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPortRight;       // port whre the output (right) is sent
     std::string name;                   // rootname of all the ports opened by this thread
     bool synchronised;                       // flag to check whether the microsecond counter has been synchronised
+    bool greaterHalf;                     // indicates whether the counter has passed the half of the range
     unsigned long minCount;              // minimum timestamp allowed for the current frame
     unsigned long maxCount;              // maximum timestamp allowed for the current frame
     double startTimer;

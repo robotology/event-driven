@@ -186,6 +186,12 @@ public:
     * @param pol Set with the ON/OFF polarity of the pixel.
     */
     void unmaskEvent(unsigned int evPu, short& x, short& y, short& pol, short& camera);
+
+
+    /**
+     * function that set to zero the vector of timestamp of positions
+     */
+    void resetTimestamps();
 };
 
 #endif //UNMASK_H

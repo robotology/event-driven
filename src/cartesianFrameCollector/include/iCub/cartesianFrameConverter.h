@@ -78,6 +78,11 @@ public:
     */
      void clearMonoImage();
 
+    /**
+       function that restarts from zero the list of memorised timestamp
+     */
+    resetTimestamps();
+
 private:
     int retinalSize;                                            // dimension of the retina default 128x128
     int outputWidth, outputHeight;                              // dimension of the output image default 320x240

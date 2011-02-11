@@ -55,6 +55,10 @@ void cFrameConverter::onRead(sendingBuffer& i_ub) {
     */
 }
 
+void cFrameConverter::resetTimestamps() {
+    unmask_events.resetTimestamps();
+}
+
 void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image, unsigned long minCount, unsigned long maxCount, bool camera){
     assert(image!=0);
     image->resize(retinalSize,retinalSize);
