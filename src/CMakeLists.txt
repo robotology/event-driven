@@ -18,5 +18,8 @@ add_subdirectory(opticalFlow)
 add_subdirectory(laserScannerGui)
 add_subdirectory(visualAligner)
 add_subdirectory(iKartNav)
+add_subdirectory(iKartBatteryManager)
+add_subdirectory(iKartBatteryDisplay)
+
 
 
