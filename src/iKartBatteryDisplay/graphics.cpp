@@ -1,4 +1,5 @@
 #include <math.h>
+#include <cstring>
 #include "graphics.h"
 
 #ifndef M_PI

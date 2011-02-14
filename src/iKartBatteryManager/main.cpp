@@ -79,6 +79,7 @@ Windows, Linux
 #include <string>
 #include <stdlib.h>
 #include <time.h>
+#include <cstring>
 
 
 YARP_DECLARE_DEVICES(icubmod)
