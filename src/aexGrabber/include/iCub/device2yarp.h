@@ -145,16 +145,20 @@ public:
     void monitor(int secs, int camera = 1);
 
     /**
-     * fuction that connects to the device and write the sequence of signals to the device
-     * @camera reference to the camera (left 1, right 0)
+     * fuction that connects to the device and write the sequence of signals to the device FPGA
+     * no matter what camera has been set the biases go to the board
      */
-    void sendingBias(int camera = 1);
+    void sendingBias();
 
     /**
     * set the flag that regulates whether the biases are read from binary or copied from default values
     */
     void setFromBinary(bool value) { biasFromBinary = value; };
 
+    /**
+     * function that sets the reference of the input binary file
+     * @param f pointer to the FILE of the binary
+     */      
     void setBinaryFile(FILE* f) {binInput = f; };
 
     /**
