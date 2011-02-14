@@ -419,7 +419,9 @@ void  device2yarp::run() {
     //printf("reading \n");
     int r = read(file_desc, pmon, monBufSize_b);    
     monBufEvents = r / sizeof(struct aer);
-    printf("read: %d \n",r);
+    if(r > 0)
+        printf("%d  ",r);
+
     if(r == -1) {
         printf("device %s not ready. Skipping to the next run \n",portDeviceName.c_str());
         return;
