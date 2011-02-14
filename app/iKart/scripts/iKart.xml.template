@@ -1,23 +1,48 @@
 <application>
-<name>iKart Main Application</name>
+<name>iKart_Main_Application</name>
 
 <dependencies>	
+ikart
 </dependencies>
 
 <module>
    <name>iCubInterface</name>
-   <parameters>--config iKart/conf/ikart.ini</parameters>
-   <node>console</node>
-   <stdio>console</stdio>
-   <tag>1) iKart's iCubInterface</tag>
+   <parameters>--context iKart --config conf/iKart.ini</parameters>
+   <node>ikart</node>
+   <stdio>ikart</stdio>
+   <tag>I</tag>
 </module>
 
 <module>
-   <name>iKartControl</name>
+   <name>iKartCtrl</name>
    <parameters></parameters>
-   <node>console</node>
-   <stdio>console</stdio>
-   <tag>2) iKart's controller</tag>
+   <node>ikart</node>
+   <stdio>ikart</stdio>
+   <tag>II</tag>
+</module>
+
+<module>
+   <name>robotMotorGui</name>
+   <parameters>--context /iKart/conf</parameters>
+   <node>ikart</node>
+   <stdio>ikart</stdio>
+   <tag>III</tag>
+</module>
+
+<module>
+   <name>laserScannerGui</name>
+   <parameters></parameters>
+   <node>ikart</node>
+   <stdio>ikart</stdio>
+   <tag>IV</tag>
+</module>
+
+<module>
+   <name>iKartBatteryDisplay</name>
+   <parameters></parameters>
+   <node>ikart</node>
+   <stdio>ikart</stdio>
+   <tag>V</tag>
 </module>
 
 <connection>
