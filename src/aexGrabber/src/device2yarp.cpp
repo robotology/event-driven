@@ -396,12 +396,12 @@ void device2yarp::prepareBiases() {
         seqEvents = 0;
         seqSize_b = 0;
         for(int j=0;j<countBias;j++) {
-            progBias(biasNames[j],24,biasValues[j]);
+            progBias(biasNames[j],24,biasValues[j],1);
         }
-        latchCommitAEs();
+        latchCommitAEs(1);
         //monitor(10);
-        releasePowerdown();
-        sendingBias();
+        releasePowerdown(1);
+        sendingBias(1);
     }
 }
 
