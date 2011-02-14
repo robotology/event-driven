@@ -168,39 +168,56 @@ bool aexGrabberModule::respond(const Bottle& command, Bottle& reply) {
             reply.addString("");
             reply.addString("");
             reply.addString("");
-            reply.addString("set time <int> \t: setting the costant time between saccadic events (default 3000) ");
-            reply.addString("set k1 <double> \t: setting the coefficients to the default value ");
-            reply.addString("set k1 <double> \t: setting of linear combination coefficient (map1) ");
-            reply.addString("set k2 <double> \t: setting of linear combination coefficient (map2) ");
-            reply.addString("set k3 <double> \t: setting of linear combination coefficient (map3) ");
-            reply.addString("set k4 <double> \t: setting of linear combination coefficient (map4)  ");
-            reply.addString("set k5 <double> \t: setting of linear combination coefficient (map5)  ");
-            reply.addString("set k6 <double> \t: setting of linear combination coefficient (map6)  ");
-            reply.addString("set kc1 <double> \t: setting of linear combination coefficient (mapc1)  ");
-            reply.addString("set kmot <double> \t: setting of linear combination coefficient (flow motion)  ");
+            reply.addString("set left pr <int> \t: setting the costant time between saccadic events (default 3000) ");
+            reply.addString("set left foll <double> \t: setting the coefficients to the default value ");
+            reply.addString("set left diff <double> \t: setting of linear combination coefficient (map1) ");
+            reply.addString("set left diffon<double> \t: setting of linear combination coefficient (map2) ");
+            reply.addString("set left puy <double> \t: setting of linear combination coefficient (map3) ");
+            reply.addString("set left refr <double> \t: setting of linear combination coefficient (map4)  ");
+            reply.addString("set left req <double> \t: setting of linear combination coefficient (map5)  ");
+            reply.addString("set left diffoff <double> \t: setting of linear combination coefficient (map6)  ");
+            reply.addString("set left pux <double> \t: setting of linear combination coefficient (mapc1)  ");
+            reply.addString("set left reqpd <double> \t: setting of linear combination coefficient (flow motion)  ");
+            reply.addString("set left injgnd <double> \t: setting of linear combination coefficient (flow motion)  ");
+            reply.addString("set left cas <double> \t: setting of linear combination coefficient (flow motion)  ");
+            reply.addString("");
+            reply.addString("set right pr <int> \t: setting the costant time between saccadic events (default 3000) ");
+            reply.addString("set right foll <double> \t: setting the coefficients to the default value ");
+            reply.addString("set right diff <double> \t: setting of linear combination coefficient (map1) ");
+            reply.addString("set right diffon<double> \t: setting of linear combination coefficient (map2) ");
+            reply.addString("set right puy <double> \t: setting of linear combination coefficient (map3) ");
+            reply.addString("set right refr <double> \t: setting of linear combination coefficient (map4)  ");
+            reply.addString("set right req <double> \t: setting of linear combination coefficient (map5)  ");
+            reply.addString("set right diffoff <double> \t: setting of linear combination coefficient (map6)  ");
+            reply.addString("set right pux <double> \t: setting of linear combination coefficient (mapc1)  ");
+            reply.addString("set right reqpd <double> \t: setting of linear combination coefficient (flow motion)  ");
+            reply.addString("set right injgnd <double> \t: setting of linear combination coefficient (flow motion)  ");
+            reply.addString("set right cas <double> \t: setting of linear combination coefficient (flow motion)  ");
             reply.addString("");
 
             reply.addString("get fn \t: general get command ");
             reply.addString("");
             reply.addString("");
-            reply.addString("get time <int> \t: getting the timing between saccadic events ");
-            reply.addString("get k1 <double> \t: getting the coefficients to the default value ");
-            reply.addString("get k1 <double> \t: getting of linear combination coefficient (map1) ");
-            reply.addString("get k2 <double> \t: getting of linear combination coefficient (map2) ");
-            reply.addString("get k3 <double> \t: getting of linear combination coefficient (map3) ");
-            reply.addString("get k4 <double> \t: getting of linear combination coefficient (map4)  ");
-            reply.addString("get k5 <double> \t: getting of linear combination coefficient (map5)  ");
-            reply.addString("get k6 <double> \t: getting of linear combination coefficient (map6)  ");
-            reply.addString("get kc1 <double> \t: getting of linear combination coefficient (mapc1)  ");
-            reply.addString("get kmot <double> \t: getting of linear combination coefficient (flow motion)  ");
-
+            reply.addString("get left pr <double> \t: setting the costant time between saccadic events (default 3000) ");
+            reply.addString("get left foll <double> \t: setting the coefficients to the default value ");
+            reply.addString("get left diff <double> \t: setting of linear combination coefficient (map1) ");
+            reply.addString("get left diffon<double> \t: setting of linear combination coefficient (map2) ");
+            reply.addString("get left puy <double> \t: setting of linear combination coefficient (map3) ");
+            reply.addString("get left refr <double> \t: setting of linear combination coefficient (map4)  ");
+            reply.addString("get left req <double> \t: setting of linear combination coefficient (map5)  ");
+            reply.addString("get left diffoff <double> \t: setting of linear combination coefficient (map6)  ");
+            reply.addString("get left pux <double> \t: setting of linear combination coefficient (mapc1)  ");
+            reply.addString("get left reqpd <double> \t: setting of linear combination coefficient (flow motion)  ");
+            reply.addString("get left injgnd <double> \t: setting of linear combination coefficient (flow motion)  ");
+            reply.addString("get left cas <double> \t: setting of linear combination coefficient (flow motion)  ");
             reply.addString("");
             reply.addString("");
 
             reply.addString("prog fn \t: general prog command ");
             reply.addString("");
             reply.addString("");
-            reply.addString("prog bias \t: asks to reprogram biases ");
+            reply.addString("prog left bias \t: asks to reprogram biases ");
+            reply.addString("prog right bias \t: asks to reprogram biases ");
 
 
             ok = true;
@@ -335,73 +352,73 @@ bool aexGrabberModule::respond(const Bottle& command, Bottle& reply) {
                 case COMMAND_VOCAB_PR:{
                     double w = command.get(2).asDouble();
                     if(D2Y!=0)
-                        D2Y->setPR(w);
+                        D2Y->setPRRight(w);
                     ok = true;
                 } break;
                 case COMMAND_VOCAB_FOLL:{
                     double w = command.get(2).asDouble();
                     if(D2Y!=0)
-                        D2Y->setFOLL(w);
+                        D2Y->setFOLLRight(w);
                     ok = true;
                 } break;
                 case COMMAND_VOCAB_DIFF:{
                     double w = command.get(2).asDouble();
                     if(D2Y!=0)
-                        D2Y->setDIFF(w);
+                        D2Y->setDIFFRight(w);
                     ok = true;
                 } break;
                 case COMMAND_VOCAB_DIFFON:{
                     double w = command.get(2).asDouble();
                     if(D2Y!=0)
-                        D2Y->setDIFFON(w);
+                        D2Y->setDIFFONRight(w);
                     ok = true;
                 } break;
                 case COMMAND_VOCAB_PUY:{
                     double w = command.get(2).asDouble();
                     if(D2Y!=0)
-                        D2Y->setPUY(w);
+                        D2Y->setPUYRight(w);
                     ok = true;
                 } break;
                 case COMMAND_VOCAB_REFR:{
                     double w = command.get(2).asDouble();
                     if(D2Y!=0)
-                        D2Y->setREFR(w);
+                        D2Y->setREFRRight(w);
                     ok = true;
                 } break;
                 case COMMAND_VOCAB_REQ:{
                     double w = command.get(2).asDouble();
                     if(D2Y!=0)
-                        D2Y->setREQ(w);
+                        D2Y->setREQRight(w);
                     ok = true;
                 } break;
                 case COMMAND_VOCAB_DIFFOFF:{
                     double w = command.get(2).asDouble();
                     if(D2Y!=0)
-                        D2Y->setDIFFOFF(w);
+                        D2Y->setDIFFOFFRight(w);
                     ok = true;
                 } break;
                 case COMMAND_VOCAB_PUX:{
                     double w = command.get(2).asDouble();
                     if(D2Y!=0)
-                        D2Y->setPUX(w);
+                        D2Y->setPUXRight(w);
                     ok = true;
                 } break;
                 case COMMAND_VOCAB_REQPD:{
                     double w = command.get(2).asDouble();
                     if(D2Y!=0)
-                        D2Y->setREQPD(w);
+                        D2Y->setREQPDRight(w);
                     ok = true;
                 } break;
                 case COMMAND_VOCAB_INJGND:{
                     double w = command.get(2).asDouble();
                     if(D2Y!=0)
-                        D2Y->setINJGND(w);
+                        D2Y->setINJGNDRight(w);
                     ok = true;
                 } break;
                 case COMMAND_VOCAB_CAS:{
                     double w = command.get(2).asDouble();
                     if(D2Y!=0)
-                        D2Y->setCAS(w);
+                        D2Y->setCASRight(w);
                     ok = true;
                 } break;
                 default: {

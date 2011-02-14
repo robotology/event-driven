@@ -495,7 +495,7 @@ void device2yarp::sendingBias() {
 
 }
 
-void device2yarp::progBias(string name,int bits,int value) {
+void device2yarp::progBias(string name,int bits,int value, int camera ) {
     int bitvalue;
     for (int i=bits-1;i>=0;i--) {
         int mask=1;
@@ -509,75 +509,75 @@ void device2yarp::progBias(string name,int bits,int value) {
         else {
             bitvalue = 0;
         }
-        progBitAEs(bitvalue);
+        progBitAEs(bitvalue, camera);
         
     }
     //after each bias value, set pins back to default value
     //resetPins();
 }
 
-void device2yarp::latchCommit() {
+void device2yarp::latchCommit(int camera ) {
     //printf("entering latch_commit \n");
-    biasprogtx(timestep * latchexpand, LATCH_TRANSPARENT, CLOCK_LO, 0);
-    biasprogtx(timestep * latchexpand, LATCH_KEEP, CLOCK_LO, 0);
-    biasprogtx(timestep * latchexpand, LATCH_KEEP, CLOCK_LO, 0);
+    biasprogtx(timestep * latchexpand, LATCH_TRANSPARENT, CLOCK_LO, 0, camera);
+    biasprogtx(timestep * latchexpand, LATCH_KEEP, CLOCK_LO, 0, camera);
+    biasprogtx(timestep * latchexpand, LATCH_KEEP, CLOCK_LO, 0, camera);
     //printf("exiting latch_commit \n");
 }
 
-void device2yarp::latchCommitAEs() {
+void device2yarp::latchCommitAEs(int camera ) {
     //printf("entering latch_commit \n");
-    biasprogtx(timestep * latchexpand, LATCH_TRANSPARENT, CLOCK_HI, 0);
-    biasprogtx(timestep * latchexpand, LATCH_KEEP, CLOCK_HI, 0);
-    biasprogtx(timestep * latchexpand, LATCH_KEEP, CLOCK_HI, 0);
+    biasprogtx(timestep * latchexpand, LATCH_TRANSPARENT, CLOCK_HI, 0, camera );
+    biasprogtx(timestep * latchexpand, LATCH_KEEP, CLOCK_HI, 0, camera);
+    biasprogtx(timestep * latchexpand, LATCH_KEEP, CLOCK_HI, 0, camera);
     //printf("exiting latch_commit \n");
 }
 
-void device2yarp::resetPins() {
+void device2yarp::resetPins(int camera ) {
     //now
-    biasprogtx(0, LATCH_KEEP, CLOCK_HI, 0);
-    biasprogtx(reset_pins_expand * timestep, LATCH_KEEP, CLOCK_HI, 0);
+    biasprogtx(0, LATCH_KEEP, CLOCK_HI, 0, camera );
+    biasprogtx(reset_pins_expand * timestep, LATCH_KEEP, CLOCK_HI, 0, camera);
     //printf("exiting latch_commit \n");
 }
 
-void device2yarp::releasePowerdown() {
+void device2yarp::releasePowerdown(int camera ) {
     //now
-    biasprogtx(0, LATCH_KEEP, CLOCK_HI, 0, 0);
-    biasprogtx(latchexpand * timestep, LATCH_KEEP, CLOCK_HI, 0, 0);
+    biasprogtx(0, LATCH_KEEP, CLOCK_HI, 0, 0, camera);
+    biasprogtx(latchexpand * timestep, LATCH_KEEP, CLOCK_HI, 0, 0, camera);
     //printf("exiting latch_commit \n");
 }
 
 
-void device2yarp::setPowerdown() {
-    biasprogtx(0, LATCH_KEEP, CLOCK_HI, 0, 1);
-    biasprogtx(powerdownexpand * timestep, LATCH_KEEP, CLOCK_HI, 0, 1);
+void device2yarp::setPowerdown(int camera ) {
+    biasprogtx(0, LATCH_KEEP, CLOCK_HI, 0, 1, camera);
+    biasprogtx(powerdownexpand * timestep, LATCH_KEEP, CLOCK_HI, 0, 1, camera);
 }
 
 
-void device2yarp::progBit(int bitvalue) {
+void device2yarp::progBit(int bitvalue, int camera ) {
     //set data
-    biasprogtx(timestep, LATCH_KEEP, CLOCK_LO, bitvalue);
+    biasprogtx(timestep, LATCH_KEEP, CLOCK_LO, bitvalue, camera );
     //toggle clock
-    biasprogtx(timestep, LATCH_KEEP, CLOCK_HI, bitvalue);
-    biasprogtx(timestep, LATCH_KEEP, CLOCK_LO, bitvalue);
+    biasprogtx(timestep, LATCH_KEEP, CLOCK_HI, bitvalue, camera);
+    biasprogtx(timestep, LATCH_KEEP, CLOCK_LO, bitvalue, camera);
 }
 
-void device2yarp::progBitAEs(int bitvalue) {
+void device2yarp::progBitAEs(int bitvalue, int camera ) {
     //set data (now)
-    biasprogtx(0, LATCH_KEEP, CLOCK_HI, bitvalue);
+    biasprogtx(0, LATCH_KEEP, CLOCK_HI, bitvalue, camera);
     //toggle clock
-    biasprogtx(timestep, LATCH_KEEP, CLOCK_LO, bitvalue);
-    biasprogtx(timestep, LATCH_KEEP, CLOCK_HI, bitvalue);
+    biasprogtx(timestep, LATCH_KEEP, CLOCK_LO, bitvalue, camera);
+    biasprogtx(timestep, LATCH_KEEP, CLOCK_HI, bitvalue, camera);
     //and wait a little
-    biasprogtx(timestep, LATCH_KEEP, CLOCK_HI, bitvalue);
+    biasprogtx(timestep, LATCH_KEEP, CLOCK_HI, bitvalue, camera);
 }
 
-void device2yarp::monitor (int secs) {
+void device2yarp::monitor (int secs, int camera ) {
     //printf("entering monitor \n");
-    biasprogtx(secs * OneSecond, LATCH_KEEP, CLOCK_LO, 0);
+    biasprogtx(secs * OneSecond, LATCH_KEEP, CLOCK_LO, 0, camera);
     //printf("exiting monitor \n");
 } 
 
-void device2yarp::biasprogtx(int time,int latch,int clock,int data, int powerdown ) {
+void device2yarp::biasprogtx(int time,int latch,int clock,int data, int powerdown, int camera ) {
     unsigned char addr[4];
     unsigned char t[4];
     int err;
@@ -590,21 +590,21 @@ void device2yarp::biasprogtx(int time,int latch,int clock,int data, int powerdow
    
     
     //setting the addr
-    addr[0] = 0xFF;
-    addr[1] = 0x00;
-    addr[2] = 0x00;
-    if(data) {
-        addr[3] += 0x01;
-    }
-    if(clock) {
-        addr[3] += 0x02;
-    }
-    if (latch) {
-        addr[3] += 0x04;
-    }
-    if (powerdown) {
-        addr[3] += 0x08;
-    }
+    //addr[0] = 0xFF;
+    //addr[1] = 0x00;
+    //addr[2] = 0x00;
+    //if(data) {
+    //    addr[3] += 0x01;
+    //}
+    //if(clock) {
+    //    addr[3] += 0x02;
+    //}
+    //if (latch) {
+    //    addr[3] += 0x04;
+    //}
+    //if (powerdown) {
+    //    addr[3] += 0x08;
+    //}
     //printf("data:0x%x, 0x%x, 0x%x, 0x%x \n",addr[0],addr[1],addr[2],addr[3]);
     
     
@@ -612,19 +612,38 @@ void device2yarp::biasprogtx(int time,int latch,int clock,int data, int powerdow
     u32 timeToSend, addressToSend;
     timeToSend=time;
     addressToSend=0;
-    if(data) {
-        addressToSend += 0x01;
+
+    // performing trasmittion differently if the camera is left (1) or right (0)
+    if(camera == 1) {
+        if(data) {
+            addressToSend += 0x01;
+        }
+        if(clock) {
+            addressToSend += 0x02;
+        }
+        if (latch) {
+            addressToSend += 0x04;
+        }
+        if (powerdown) {
+            addressToSend += 0x08;
+        }
+        addressToSend+=0xFF000000;
     }
-    if(clock) {
-        addressToSend += 0x02;
+    else {
+        if(data) {
+            addressToSend += 0x10;
+        }
+        if(clock) {
+            addressToSend += 0x20;
+        }
+        if (latch) {
+            addressToSend += 0x40;
+        }
+        if (powerdown) {
+            addressToSend += 0x80;
+        }
+        addressToSend+=0xFF000000;
     }
-    if (latch) {
-        addressToSend += 0x04;
-    }
-    if (powerdown) {
-        addressToSend += 0x08;
-    }
-    addressToSend+=0xFF000000;
 
     u32 hwival = (u32)(timeToSend * 7.8125);
     //printf("saving the aer.address %x \n", addressToSend);
