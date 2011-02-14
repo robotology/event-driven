@@ -158,6 +158,8 @@
 #define COMMAND_VOCAB_IS VOCAB2('i','s')
 #define COMMAND_VOCAB_FAILED VOCAB4('f','a','i','l')
 #define COMMAND_VOCAB_OK VOCAB2('o','k')
+#define COMMAND_VOCAB_LEFT VOCAB4('l','e','f','t')
+#define COMMAND_VOCAB_RIGHT VOCAB4('r','i','g','h')
 
 #define COMMAND_VOCAB_PR VOCAB2('p','r')
 #define COMMAND_VOCAB_FOLL VOCAB4('f','o','l','l')

@@ -121,7 +121,7 @@ static void callback( GtkWidget *widget,gpointer   data ){
 
 
 //-------------------------------------------------
-// Call Backs
+// Call Backs Left
 //-------------------------------------------------
 static void cb_digits_pr( GtkAdjustment *adj ) {
     if (_pOutPort!=NULL) {
@@ -282,6 +282,172 @@ static void cb_digits_cas( GtkAdjustment *adj ) {
     }
     mutex.post();
 }
+
+//-------------------------------------------------
+// Call Backs Left
+//-------------------------------------------------
+static void cb_digits_prRight( GtkAdjustment *adj ) {
+    if (_pOutPort!=NULL) {
+        Bottle in;
+        yarp::os::Bottle bot; //= _pOutPort->prepare();
+        bot.clear();
+        bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_PR);
+        bot.addInt((int) adj->value);
+        //_pOutPort->Content() = _outBottle;
+        _pOutPort->write(bot,in);
+    }
+}
+
+static void cb_digits_follRight( GtkAdjustment *adj ) {
+    if (_pOutPort!=NULL) {
+        yarp::os::Bottle bot; //= _pOutPort->prepare();
+        bot.clear();
+        bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_FOLL);
+        bot.addInt((int) adj->value);
+        //_pOutPort->Content() = _outBottle;
+        Bottle in;
+        _pOutPort->write(bot,in);
+    }
+}
+
+static void cb_digits_diffRight( GtkAdjustment *adj ) {
+    if (_pOutPort!=NULL) {
+        yarp::os::Bottle bot; //= _pOutPort->prepare();
+        bot.clear();
+        bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_DIFF);
+        bot.addInt((int) adj->value);
+        //_pOutPort->Content() = _outBottle;
+        Bottle in;
+        _pOutPort->write(bot,in);
+    }
+}
+
+static void cb_digits_diffonRight( GtkAdjustment *adj ) {
+    if (_pOutPort!=NULL) {
+        yarp::os::Bottle bot; //= _pOutPort->prepare();
+        bot.clear();
+        bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_DIFFON);
+        bot.addInt((int) adj->value);
+        //_pOutPort->Content() = _outBottle;
+        Bottle in;
+        _pOutPort->write(bot,in);
+    }
+}
+
+static void cb_digits_puyRight( GtkAdjustment *adj ) {
+    if (_pOutPort!=NULL) {
+        yarp::os::Bottle bot; //= _pOutPort->prepare();
+        bot.clear();
+        bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_PUY);
+        bot.addInt((int) adj->value);
+        //_pOutPort->Content() = _outBottle;
+        Bottle in;
+        _pOutPort->write(bot,in);
+    }
+}
+
+static void cb_digits_refrRight( GtkAdjustment *adj ) {
+    if (_pOutPort!=NULL) {
+        yarp::os::Bottle bot; //= _pOutPort->prepare();
+        bot.clear();
+        bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_REFR);
+        bot.addInt((int) adj->value);
+        //_pOutPort->Content() = _outBottle;
+        Bottle in;
+        _pOutPort->write(bot,in);
+    }
+}
+
+static void cb_digits_reqRight( GtkAdjustment *adj ) {
+    if (_pOutPort!=NULL) {
+        yarp::os::Bottle bot; //= _pOutPort->prepare();
+        bot.clear();
+        bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_REQ);
+        bot.addInt((int) adj->value);
+        //_pOutPort->Content() = _outBottle;
+        Bottle in;
+        _pOutPort->write(bot,in);
+    }
+}
+
+static void cb_digits_diffoffRight( GtkAdjustment *adj ) {
+    if (_pOutPort!=NULL) {
+        yarp::os::Bottle bot; //= _pOutPort->prepare();
+        bot.clear();
+        bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_DIFFOFF);
+        bot.addInt((int) adj->value);
+        //_pOutPort->Content() = _outBottle;
+        Bottle in;
+        _pOutPort->write(bot,in);
+    }
+}
+
+static void cb_digits_puxRight( GtkAdjustment *adj ) {
+    if (_pOutPort!=NULL) {
+        yarp::os::Bottle bot; //= _pOutPort->prepare();
+        bot.clear();
+        bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_PUX);
+        bot.addInt((int) adj->value);
+        //_pOutPort->Content() = _outBottle;
+        Bottle in;
+        _pOutPort->write(bot,in);
+    }
+}
+
+static void cb_digits_reqpdRight( GtkAdjustment *adj ) {
+    if (_pOutPort!=NULL) {
+        yarp::os::Bottle bot; //= _pOutPort->prepare();
+        bot.clear();
+        bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_REQPD);
+        bot.addInt((int) adj->value);
+        //_pOutPort->Content() = _outBottle;
+        Bottle in;
+        _pOutPort->write(bot,in);
+    }
+}
+
+static void cb_digits_injgndRight( GtkAdjustment *adj ) {
+    if (_pOutPort!=NULL) {
+        yarp::os::Bottle bot; //= _pOutPort->prepare();
+        bot.clear();
+        bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_INJGND);
+        bot.addInt((int) adj->value);
+        //_pOutPort->Content() = _outBottle;
+        Bottle in;
+        _pOutPort->write(bot,in);
+    }
+}
+
+
+
+static void cb_digits_casRight( GtkAdjustment *adj ) {
+    mutex.wait();
+    if (_pOutPort!=NULL) {
+        yarp::os::Bottle bot; //= _pOutPort->prepare();
+        bot.clear();
+        bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_CAS);
+        bot.addInt((int) adj->value);
+        //_pOutPort->Content() = _outBottle;
+        Bottle in;
+        _pOutPort->write(bot,in);
+    }
+    mutex.post();
+}
+
+
+//----------------------------------------------------------------------------------
 
 
 static void callbackSaveButton( GtkWidget *widget,gpointer data ) {
@@ -702,6 +868,19 @@ GtkWidget* createMainWindow(void) {
     g_signal_connect (G_OBJECT (adj3), "value_changed",
                       G_CALLBACK (cb_digits_diff), NULL);
 
+    label = gtk_label_new ("diffOn");
+    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+    
+    adj3 = gtk_adjustment_new (483231, 0,16777215,1, 0, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj3));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj3), "value_changed",
+                      G_CALLBACK (cb_digits_diffon), NULL);
+
 
     label = gtk_label_new ("puY");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
@@ -835,7 +1014,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj1), "value_changed",
-                      G_CALLBACK (cb_digits_pr), NULL);
+                      G_CALLBACK (cb_digits_prRight), NULL);
     
 
 
@@ -850,7 +1029,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj2), "value_changed",
-                      G_CALLBACK (cb_digits_foll), NULL);
+                      G_CALLBACK (cb_digits_follRight), NULL);
 
     label = gtk_label_new ("diff");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
@@ -863,7 +1042,20 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj3), "value_changed",
-                      G_CALLBACK (cb_digits_diff), NULL);
+                      G_CALLBACK (cb_digits_diffRight), NULL);
+
+    label = gtk_label_new ("diff");
+    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+    
+    adj3 = gtk_adjustment_new (28995, 0,16777215,1, 0, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj3));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj3), "value_changed",
+                      G_CALLBACK (cb_digits_diffonRight), NULL);
 
 
     label = gtk_label_new ("puY");
@@ -877,7 +1069,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj4), "value_changed",
-                      G_CALLBACK (cb_digits_puy), NULL);
+                      G_CALLBACK (cb_digits_puyRight), NULL);
 
     label = gtk_label_new ("refr");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
@@ -890,7 +1082,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_refr), NULL);
+                      G_CALLBACK (cb_digits_refrRight), NULL);
 
     label = gtk_label_new ("req");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
@@ -917,7 +1109,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_diffoff), NULL);
+                      G_CALLBACK (cb_digits_diffoffRight), NULL);
 
     label = gtk_label_new ("puX");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
@@ -930,7 +1122,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_pux), NULL);
+                      G_CALLBACK (cb_digits_puxRight), NULL);
 
 
         label = gtk_label_new ("reqPd");
@@ -944,7 +1136,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_reqpd), NULL);
+                      G_CALLBACK (cb_digits_reqpdRight), NULL);
 
     label = gtk_label_new ("injGnd");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
@@ -957,7 +1149,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_injgnd), NULL);
+                      G_CALLBACK (cb_digits_injgndRight), NULL);
 
     label = gtk_label_new ("cas");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
@@ -970,7 +1162,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_cas), NULL);
+                      G_CALLBACK (cb_digits_casRight), NULL);
 
     gtk_box_pack_start (GTK_BOX (box3), box5, FALSE, FALSE, 0);
     gtk_widget_show (box5);
@@ -989,8 +1181,18 @@ GtkWidget* createMainWindow(void) {
 
     
     buttonProgBias = gtk_button_new ();
-    g_signal_connect (G_OBJECT (buttonProgBias), "clicked", G_CALLBACK (callbackProgBiasButton),(gpointer) "ProgBias");
-    boxButton = xpm_label_box (NULL, "ProgBias");
+    g_signal_connect (G_OBJECT (buttonProgBias), "clicked", G_CALLBACK (callbackProgBiasButton),(gpointer) "Left");
+    boxButton = xpm_label_box (NULL, (gchar*) "ProgBias Left");
+    gtk_widget_show (boxButton);
+    gtk_container_add (GTK_CONTAINER (buttonProgBias), boxButton);
+    gtk_container_add (GTK_CONTAINER (buttonProgBias), box6);
+    gtk_widget_show (buttonProgBias);
+    gtk_box_pack_start (GTK_BOX (box6), buttonProgBias, FALSE, FALSE, 10);
+    gtk_widget_show (buttonProgBias);
+    
+    buttonProgBias = gtk_button_new ();
+    g_signal_connect (G_OBJECT (buttonProgBias), "clicked", G_CALLBACK (callbackProgBiasButton),(gpointer) "Right");
+    boxButton = xpm_label_box (NULL,  (gchar*)"ProgBias Left");
     gtk_widget_show (boxButton);
     gtk_container_add (GTK_CONTAINER (buttonProgBias), boxButton);
     gtk_container_add (GTK_CONTAINER (buttonProgBias), box6);
@@ -1002,7 +1204,7 @@ GtkWidget* createMainWindow(void) {
     
     buttonSave = gtk_button_new ();
     g_signal_connect (G_OBJECT (buttonSave), "clicked", G_CALLBACK (callbackSaveButton), NULL);
-    boxButton = xpm_label_box (NULL, "Save");
+    boxButton = xpm_label_box (NULL,  (gchar*)"Save");
     gtk_widget_show (boxButton);
     gtk_container_add (GTK_CONTAINER (buttonSave), boxButton);
     gtk_container_add (GTK_CONTAINER (buttonSave), box6);
