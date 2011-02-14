@@ -657,7 +657,7 @@ GtkWidget* createMainWindow(void) {
     box5 = gtk_vbox_new (FALSE, 0);
     gtk_container_set_border_width (GTK_CONTAINER (box5), 0);
 
-    label = gtk_label_new ("BIAS:");
+    label = gtk_label_new ("BIAS LEFT:");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
 
@@ -816,7 +816,170 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box3), separator, FALSE, TRUE, 10);
     gtk_widget_show (separator);
 
-    //----------BOX6 SUBSECTION:2
+    // ------------ BOX 5 SUBSECTION 2
+    box5 = gtk_vbox_new (FALSE, 0);
+    gtk_container_set_border_width (GTK_CONTAINER (box5), 0);
+
+    label = gtk_label_new ("BIAS RIGHT:");
+    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+
+    label = gtk_label_new ("Pr");
+    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+    
+    adj1 = gtk_adjustment_new (8, 0,16777215,1, 0, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj1));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj1), "value_changed",
+                      G_CALLBACK (cb_digits_pr), NULL);
+    
+
+
+    label = gtk_label_new ("foll");
+    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+
+    adj2 = gtk_adjustment_new (19, 0,16777215,1, 0, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj2));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj2), "value_changed",
+                      G_CALLBACK (cb_digits_foll), NULL);
+
+    label = gtk_label_new ("diff");
+    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+    
+    adj3 = gtk_adjustment_new (28995, 0,16777215,1, 0, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj3));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj3), "value_changed",
+                      G_CALLBACK (cb_digits_diff), NULL);
+
+
+    label = gtk_label_new ("puY");
+    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+    
+    adj4 = gtk_adjustment_new (16777215, 0.0,16777215,1, 0, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj4));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj4), "value_changed",
+                      G_CALLBACK (cb_digits_puy), NULL);
+
+    label = gtk_label_new ("refr");
+    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+    
+    adj5 = gtk_adjustment_new (0, 0,16777215,1, 0, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj5), "value_changed",
+                      G_CALLBACK (cb_digits_refr), NULL);
+
+    label = gtk_label_new ("req");
+    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+    
+    adj6 = gtk_adjustment_new (111347, 0,16777215,1, 0, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj6));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj6), "value_changed",
+                      G_CALLBACK (cb_digits_req), NULL);
+
+
+    label = gtk_label_new ("diffOff");
+    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+    
+    adj5 = gtk_adjustment_new (3207, 0,16777215,1, 0, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj5), "value_changed",
+                      G_CALLBACK (cb_digits_diffoff), NULL);
+
+    label = gtk_label_new ("puX");
+    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+    
+    adj5 = gtk_adjustment_new (4368853, 0,16777215,1, 0, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj5), "value_changed",
+                      G_CALLBACK (cb_digits_pux), NULL);
+
+
+        label = gtk_label_new ("reqPd");
+    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+    
+    adj5 = gtk_adjustment_new (16777215, 0,16777215,1, 0, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj5), "value_changed",
+                      G_CALLBACK (cb_digits_reqpd), NULL);
+
+    label = gtk_label_new ("injGnd");
+    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+    
+    adj5 = gtk_adjustment_new (22703, 0,16777215,1, 0, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj5), "value_changed",
+                      G_CALLBACK (cb_digits_injgnd), NULL);
+
+    label = gtk_label_new ("cas");
+    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+    
+    adj5 = gtk_adjustment_new (1966, 0,16777215,1, 0, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj5), "value_changed",
+                      G_CALLBACK (cb_digits_cas), NULL);
+
+    gtk_box_pack_start (GTK_BOX (box3), box5, FALSE, FALSE, 0);
+    gtk_widget_show (box5);
+
+    separator = gtk_vseparator_new ();
+    gtk_box_pack_start (GTK_BOX (box3), separator, FALSE, TRUE, 10);
+    gtk_widget_show (separator);
+
+    //----------BOX6 SUBSECTION:3
     box6 = gtk_vbox_new (FALSE, 0);
     gtk_container_set_border_width (GTK_CONTAINER (box6), 0);
 
