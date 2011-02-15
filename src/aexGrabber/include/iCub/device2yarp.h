@@ -29,6 +29,7 @@
 //yarp include
 #include <yarp/os/RateThread.h>
 #include <yarp/os/BufferedPort.h>
+#include <yarp/os/Semaphore.h>
 
 #include <fcntl.h>
 #include <sys/ioctl.h>
@@ -415,7 +416,7 @@ private:
     bool save;
 
     yarp::os::Port interfacePort;             //port dedicated to the request of values set through interface
-    yarp::os::Semaphor mutex;                 //semaphore for file reading
+    yarp::os::Semaphore mutex;                 //semaphore for file reading
 
     std::stringstream str_buf;
 
