@@ -31,6 +31,8 @@
 
 #define COMMAND_VOCAB_SET VOCAB3('s','e','t')
 #define COMMAND_VOCAB_GET VOCAB3('g','e','t')
+#define COMMAND_VOCAB_RIGHT VOCAB4('r','i','g','h')
+#define COMMAND_VOCAB_LEFT VOCAB4('l','e','f','t')
 
 using namespace yarp::os;
 using namespace std;
@@ -129,6 +131,7 @@ static void cb_digits_pr( GtkAdjustment *adj ) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_LEFT);
         bot.addVocab(COMMAND_VOCAB_PR);
         bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
@@ -141,6 +144,7 @@ static void cb_digits_foll( GtkAdjustment *adj ) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_LEFT);
         bot.addVocab(COMMAND_VOCAB_FOLL);
         bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
@@ -154,6 +158,7 @@ static void cb_digits_diff( GtkAdjustment *adj ) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_LEFT);
         bot.addVocab(COMMAND_VOCAB_DIFF);
         bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
@@ -167,6 +172,7 @@ static void cb_digits_diffon( GtkAdjustment *adj ) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_LEFT);
         bot.addVocab(COMMAND_VOCAB_DIFFON);
         bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
@@ -180,6 +186,7 @@ static void cb_digits_puy( GtkAdjustment *adj ) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_LEFT);
         bot.addVocab(COMMAND_VOCAB_PUY);
         bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
@@ -193,6 +200,7 @@ static void cb_digits_refr( GtkAdjustment *adj ) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_LEFT);
         bot.addVocab(COMMAND_VOCAB_REFR);
         bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
@@ -206,6 +214,7 @@ static void cb_digits_req( GtkAdjustment *adj ) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_LEFT);
         bot.addVocab(COMMAND_VOCAB_REQ);
         bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
@@ -219,6 +228,7 @@ static void cb_digits_diffoff( GtkAdjustment *adj ) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_LEFT);
         bot.addVocab(COMMAND_VOCAB_DIFFOFF);
         bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
@@ -232,6 +242,7 @@ static void cb_digits_pux( GtkAdjustment *adj ) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_LEFT);
         bot.addVocab(COMMAND_VOCAB_PUX);
         bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
@@ -245,6 +256,7 @@ static void cb_digits_reqpd( GtkAdjustment *adj ) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_LEFT);
         bot.addVocab(COMMAND_VOCAB_REQPD);
         bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
@@ -258,6 +270,7 @@ static void cb_digits_injgnd( GtkAdjustment *adj ) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_LEFT);
         bot.addVocab(COMMAND_VOCAB_INJGND);
         bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
@@ -274,6 +287,7 @@ static void cb_digits_cas( GtkAdjustment *adj ) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_LEFT);
         bot.addVocab(COMMAND_VOCAB_CAS);
         bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
@@ -292,6 +306,7 @@ static void cb_digits_prRight( GtkAdjustment *adj ) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_RIGHT);
         bot.addVocab(COMMAND_VOCAB_PR);
         bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
@@ -304,6 +319,7 @@ static void cb_digits_follRight( GtkAdjustment *adj ) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_RIGHT);
         bot.addVocab(COMMAND_VOCAB_FOLL);
         bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
@@ -317,6 +333,7 @@ static void cb_digits_diffRight( GtkAdjustment *adj ) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_RIGHT);
         bot.addVocab(COMMAND_VOCAB_DIFF);
         bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
@@ -330,6 +347,7 @@ static void cb_digits_diffonRight( GtkAdjustment *adj ) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_RIGHT);
         bot.addVocab(COMMAND_VOCAB_DIFFON);
         bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
@@ -356,6 +374,7 @@ static void cb_digits_refrRight( GtkAdjustment *adj ) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_RIGHT);
         bot.addVocab(COMMAND_VOCAB_REFR);
         bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
@@ -369,6 +388,7 @@ static void cb_digits_reqRight( GtkAdjustment *adj ) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_RIGHT);
         bot.addVocab(COMMAND_VOCAB_REQ);
         bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
@@ -382,6 +402,7 @@ static void cb_digits_diffoffRight( GtkAdjustment *adj ) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_RIGHT);
         bot.addVocab(COMMAND_VOCAB_DIFFOFF);
         bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
@@ -395,6 +416,7 @@ static void cb_digits_puxRight( GtkAdjustment *adj ) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_RIGHT);
         bot.addVocab(COMMAND_VOCAB_PUX);
         bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
@@ -408,6 +430,7 @@ static void cb_digits_reqpdRight( GtkAdjustment *adj ) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_RIGHT);
         bot.addVocab(COMMAND_VOCAB_REQPD);
         bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
@@ -421,6 +444,7 @@ static void cb_digits_injgndRight( GtkAdjustment *adj ) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_RIGHT);
         bot.addVocab(COMMAND_VOCAB_INJGND);
         bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
@@ -437,6 +461,7 @@ static void cb_digits_casRight( GtkAdjustment *adj ) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_RIGHT);
         bot.addVocab(COMMAND_VOCAB_CAS);
         bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
