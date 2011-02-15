@@ -140,7 +140,7 @@ void cfCollectorThread::run() {
     if (minCount > 1000000) {
         greaterHalf = true;
     }
-    else if((minCount < 1000000)&&(greterHalft)) {
+    else if((minCount < 1000000)&&(greaterHalf)) {
         greaterHalf = false;
         cfConverter->resetTimestamps();
     }
@@ -187,7 +187,6 @@ void cfCollectorThread::run() {
     if(outPortRight.getOutputCount()) {
         ImageOf<yarp::sig::PixelMono>& outputImageRight=outPortRight.prepare();
         if(&outputImageRight!=0) {
-            printf("asking for right image \n");
             cfConverter->getMonoImage(&outputImageRight, minCount, maxCount, 0);
             outPortRight.write();
         }

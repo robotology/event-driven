@@ -81,7 +81,7 @@ public:
     /**
        function that restarts from zero the list of memorised timestamp
      */
-    resetTimestamps();
+    void resetTimestamps();
 
 private:
     int retinalSize;                                            // dimension of the retina default 128x128
