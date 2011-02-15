@@ -401,7 +401,7 @@ void device2yarp::prepareBiases() {
         latchCommitAEs(1);
         //monitor(10);
         releasePowerdown(1);
-        sendingBias(1);
+        sendingBias();
     }
 }
 
@@ -592,21 +592,21 @@ void device2yarp::biasprogtx(int time,int latch,int clock,int data, int powerdow
    
     
     //setting the addr
-    //addr[0] = 0xFF;
-    //addr[1] = 0x00;
-    //addr[2] = 0x00;
-    //if(data) {
-    //    addr[3] += 0x01;
-    //}
-    //if(clock) {
-    //    addr[3] += 0x02;
-    //}
-    //if (latch) {
-    //    addr[3] += 0x04;
-    //}
-    //if (powerdown) {
-    //    addr[3] += 0x08;
-    //}
+    addr[0] = 0xFF;
+    addr[1] = 0x00;
+    addr[2] = 0x00;
+    if(data) {
+        addr[3] += 0x01;
+    }
+    if(clock) {
+        addr[3] += 0x02;
+    }
+    if (latch) {
+        addr[3] += 0x04;
+    }
+    if (powerdown) {
+        addr[3] += 0x08;
+    }
     //printf("data:0x%x, 0x%x, 0x%x, 0x%x \n",addr[0],addr[1],addr[2],addr[3]);
     
     

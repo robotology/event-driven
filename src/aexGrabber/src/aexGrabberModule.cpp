@@ -270,73 +270,73 @@ bool aexGrabberModule::respond(const Bottle& command, Bottle& reply) {
             case COMMAND_VOCAB_LEFT: {
                 switch(command.get(2).asVocab()) {                    
                 case COMMAND_VOCAB_PR:{
-                    double w = command.get(2).asDouble();
+                    double w = command.get(3).asDouble();
                     if(D2Y!=0)
                         D2Y->setPR(w);
                     ok = true;
                 } break;
                 case COMMAND_VOCAB_FOLL:{
-                    double w = command.get(2).asDouble();
+                    double w = command.get(3).asDouble();
                     if(D2Y!=0)
                         D2Y->setFOLL(w);
                     ok = true;
                 } break;
                 case COMMAND_VOCAB_DIFF:{
-                    double w = command.get(2).asDouble();
+                    double w = command.get(3).asDouble();
                     if(D2Y!=0)
                         D2Y->setDIFF(w);
                     ok = true;
                 } break;
                 case COMMAND_VOCAB_DIFFON:{
-                    double w = command.get(2).asDouble();
+                    double w = command.get(3).asDouble();
                     if(D2Y!=0)
                         D2Y->setDIFFON(w);
                     ok = true;
                 } break;
                 case COMMAND_VOCAB_PUY:{
-                    double w = command.get(2).asDouble();
+                    double w = command.get(3).asDouble();
                     if(D2Y!=0)
                         D2Y->setPUY(w);
                     ok = true;
                 } break;
                 case COMMAND_VOCAB_REFR:{
-                    double w = command.get(2).asDouble();
+                    double w = command.get(3).asDouble();
                     if(D2Y!=0)
                         D2Y->setREFR(w);
                     ok = true;
                 } break;
                 case COMMAND_VOCAB_REQ:{
-                    double w = command.get(2).asDouble();
+                    double w = command.get(3).asDouble();
                     if(D2Y!=0)
                         D2Y->setREQ(w);
                     ok = true;
                 } break;
                 case COMMAND_VOCAB_DIFFOFF:{
-                    double w = command.get(2).asDouble();
+                    double w = command.get(3).asDouble();
                     if(D2Y!=0)
                         D2Y->setDIFFOFF(w);
                     ok = true;
                 } break;
                 case COMMAND_VOCAB_PUX:{
-                    double w = command.get(2).asDouble();
+                    double w = command.get(3).asDouble();
                     if(D2Y!=0)
                         D2Y->setPUX(w);
                     ok = true;
                 } break;
                 case COMMAND_VOCAB_REQPD:{
-                    double w = command.get(2).asDouble();
+                    double w = command.get(3).asDouble();
                     if(D2Y!=0)
                         D2Y->setREQPD(w);
                     ok = true;
                 } break;
                 case COMMAND_VOCAB_INJGND:{
-                    double w = command.get(2).asDouble();
+                    double w = command.get(3).asDouble();
                     if(D2Y!=0)
                         D2Y->setINJGND(w);
                     ok = true;
                 } break;
                 case COMMAND_VOCAB_CAS:{
-                    double w = command.get(2).asDouble();
+                    double w = command.get(3).asDouble();
                     if(D2Y!=0)
                         D2Y->setCAS(w);
                     ok = true;
@@ -350,73 +350,73 @@ bool aexGrabberModule::respond(const Bottle& command, Bottle& reply) {
                 switch(command.get(2).asVocab()) {
                     
                 case COMMAND_VOCAB_PR:{
-                    double w = command.get(2).asDouble();
+                    double w = command.get(3).asDouble();
                     if(D2Y!=0)
                         D2Y->setPRRight(w);
                     ok = true;
                 } break;
                 case COMMAND_VOCAB_FOLL:{
-                    double w = command.get(2).asDouble();
+                    double w = command.get(3).asDouble();
                     if(D2Y!=0)
                         D2Y->setFOLLRight(w);
                     ok = true;
                 } break;
                 case COMMAND_VOCAB_DIFF:{
-                    double w = command.get(2).asDouble();
+                    double w = command.get(3).asDouble();
                     if(D2Y!=0)
                         D2Y->setDIFFRight(w);
                     ok = true;
                 } break;
                 case COMMAND_VOCAB_DIFFON:{
-                    double w = command.get(2).asDouble();
+                    double w = command.get(3).asDouble();
                     if(D2Y!=0)
                         D2Y->setDIFFONRight(w);
                     ok = true;
                 } break;
                 case COMMAND_VOCAB_PUY:{
-                    double w = command.get(2).asDouble();
+                    double w = command.get(3).asDouble();
                     if(D2Y!=0)
                         D2Y->setPUYRight(w);
                     ok = true;
                 } break;
                 case COMMAND_VOCAB_REFR:{
-                    double w = command.get(2).asDouble();
+                    double w = command.get(3).asDouble();
                     if(D2Y!=0)
                         D2Y->setREFRRight(w);
                     ok = true;
                 } break;
                 case COMMAND_VOCAB_REQ:{
-                    double w = command.get(2).asDouble();
+                    double w = command.get(3).asDouble();
                     if(D2Y!=0)
                         D2Y->setREQRight(w);
                     ok = true;
                 } break;
                 case COMMAND_VOCAB_DIFFOFF:{
-                    double w = command.get(2).asDouble();
+                    double w = command.get(3).asDouble();
                     if(D2Y!=0)
                         D2Y->setDIFFOFFRight(w);
                     ok = true;
                 } break;
                 case COMMAND_VOCAB_PUX:{
-                    double w = command.get(2).asDouble();
+                    double w = command.get(3).asDouble();
                     if(D2Y!=0)
                         D2Y->setPUXRight(w);
                     ok = true;
                 } break;
                 case COMMAND_VOCAB_REQPD:{
-                    double w = command.get(2).asDouble();
+                    double w = command.get(3).asDouble();
                     if(D2Y!=0)
                         D2Y->setREQPDRight(w);
                     ok = true;
                 } break;
                 case COMMAND_VOCAB_INJGND:{
-                    double w = command.get(2).asDouble();
+                    double w = command.get(3).asDouble();
                     if(D2Y!=0)
                         D2Y->setINJGNDRight(w);
                     ok = true;
                 } break;
                 case COMMAND_VOCAB_CAS:{
-                    double w = command.get(2).asDouble();
+                    double w = command.get(3).asDouble();
                     if(D2Y!=0)
                         D2Y->setCASRight(w);
                     ok = true;
@@ -518,6 +518,7 @@ bool aexGrabberModule::respond(const Bottle& command, Bottle& reply) {
                 D2Y->closeDevice();
                 Time::delay(1);
                 D2Y->prepareBiases();
+                ok = true;
             }
             break;
             default: {
