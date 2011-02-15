@@ -401,7 +401,9 @@ void device2yarp::prepareBiases() {
         latchCommitAEs(1);
         //monitor(10);
         releasePowerdown(1);
+        mutex.wait();
         sendingBias();
+        mutex.post();
     }
 }
 
@@ -417,10 +419,12 @@ void device2yarp::closeDevice(){
 
 void  device2yarp::run() {
     //printf("reading \n");
-    int r = read(file_desc, pmon, monBufSize_b);    
+    mutex.wait();
+    int r = read(file_desc, pmon, monBufSize_b);
+    mutex.post();
     monBufEvents = r / sizeof(struct aer);
     if(r > 0)
-        printf("%d  ",r);
+        printf("d",r);
 
     if(r == -1) {
         printf("device %s not ready. Skipping to the next run \n",portDeviceName.c_str());

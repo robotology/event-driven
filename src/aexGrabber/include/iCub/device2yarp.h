@@ -415,6 +415,7 @@ private:
     bool save;
 
     yarp::os::Port interfacePort;             //port dedicated to the request of values set through interface
+    yarp::os::Semaphor mutex;                 //semaphore for file reading
 
     std::stringstream str_buf;
 
