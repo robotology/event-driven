@@ -61,10 +61,16 @@ public:
     void getMonoImage(yarp::sig::ImageOf<yarp::sig::PixelMono>* image, unsigned long minCount,unsigned long maxCount, bool camera);
     
     /**
-    * function that return the last time stamp saved in the buffer
+    * function that return the last time stamp saved in the buffer for left camera
     * @return the unsigned int representing the last event timestamp
     */
      unsigned long getLastTimeStamp();
+
+    /**
+    * function that return the last time stamp saved in the buffer for right camera
+    * @return the unsigned int representing the last event timestamp
+    */
+     unsigned long getLastTimeStampRight();
 
     /**
     * function that return the last time stamp saved in the buffer

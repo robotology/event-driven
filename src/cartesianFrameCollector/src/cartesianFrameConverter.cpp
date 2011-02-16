@@ -91,7 +91,7 @@ void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image, unsigned long minC
             //drawing the retina and the rest of the image separately
             int value = *pBuffer;
             unsigned long timestampactual = *pTime;
-            if (((timestampactual * 1.25)>minCount)&&((timestampactual * 1.25) < maxCount)) {   //(timestampactual != lasttimestamp)
+            if (((timestampactual * 1.25) > minCount)&&((timestampactual * 1.25) < maxCount)) {   //(timestampactual != lasttimestamp)
                 *pImage++ = (unsigned char) 127 + value;
                 //*pTime = (unsigned long int) 0;
             }
@@ -109,6 +109,10 @@ void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image, unsigned long minC
 
 unsigned long cFrameConverter::getLastTimeStamp() {
     return unmask_events.getLastTimestamp();
+}
+
+unsigned long cFrameConverter::getLastTimeStampRight() {
+    return unmask_events.getLastTimestampRight();
 }
 
 unsigned long cFrameConverter::getEldestTimeStamp() {

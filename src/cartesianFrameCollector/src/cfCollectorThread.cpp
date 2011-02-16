@@ -65,7 +65,6 @@ bool cfCollectorThread::threadInit() {
     microseconds = 0;
     microsecondsPrev = 0;
     gettimeofday(&tvstart, NULL);
-    
     return true;
 }
 
@@ -97,24 +96,27 @@ void cfCollectorThread::run() {
     }
     
     //T2 = times(&stop_time);
-    unsigned long int l = cfConverter->getLastTimeStamp();
-    lc = l * 1.25; //1.25 is the ratio 0.160/0.128
-    
-    
+    unsigned long int lastleft = cfConverter->getLastTimeStamp();
+    lc = lastleft * 1.25; //1.25 is the ratio 0.160/0.128
+    unsigned long int lastright = cfConverter->getLastTimeStampRight();
+    rc = lastright * 1.25;
 
-    gettimeofday(&tvend, NULL);
-    Tnow = ((u64)tvend.tv_sec) * 1000000 + ((u64)tvstart.tv_usec);
+    //gettimeofday(&tvend, NULL);
+    //Tnow = ((u64)tvend.tv_sec) * 1000000 + ((u64)tvstart.tv_usec);
     
     endTimer = Time::now();
-    clock_gettime(CLOCK_REALTIME, &stop_time );
-    double diffTime = (endTime - startTime);
+    double interval = (endTimer - startTimer) * 1000000; //interval in us
+    startTimer = Time::now();
+
+    //clock_gettime(CLOCK_REALTIME, &stop_time );
+    //double diffTime = (endTime - startTime);
     //printf("timeofday>%ld\n", ((tvend.tv_sec * 1000000 + tvend.tv_usec)
 	//	  - (tvstart.tv_sec * 1000000 + tvstart.tv_usec)));
-    double interval = (endTimer - startTimer) * 1000000; //interval in us
+   
     //double time = (double)stop_time.tms_utime - start_time.tms_utime;
-    microseconds = stop_time.tv_nsec / 1000 ; 
-    startTimer = Time::now();
-    gettimeofday(&tvstart, NULL);
+    //microseconds = stop_time.tv_nsec / 1000 ; 
+    
+    //gettimeofday(&tvstart, NULL);
     //startTime = clock();
     //T1 = times(&start_time);
     //clock();
@@ -123,24 +125,27 @@ void cfCollectorThread::run() {
     
     if ((cfConverter->getInputCount()) && (!synchronised)) { 
         minCount = lc - interval * 2; //cfConverter->getEldestTimeStamp();        
-        printf("synchronised! %d,%d,%d,%d \n", minCount, lc, maxCount, lc - precl);
+        minCountRight = rc - interval * 2;
+        printf("synchronised! %d,%d,%d||%d,%d,%d \n", minCount, lc, maxCount, minCountRight, rc, maxCountRight);
         startTimer = Time::now();
         synchronised = true;    
     }
     else if (count % 1000 == 0) {
         minCount = lc - interval * 2; //cfConverter->getEldestTimeStamp();        
-        printf("synchronised! %d,%d,%d,%d \n", minCount, lc, maxCount, lc - precl);
+        minCountRight = rc - interval * 2; 
+        printf("synchronised! %d,%d,%d||%d,%d,%d \n", minCount, lc, maxCount, minCountRight, rc, maxCountRight);
         startTimer = Time::now();
         synchronised = true;  
     }
     else {
         minCount = minCount + interval ; // * (50.0 / 62.5) * 1.10;
+        minCountRight = minCountRight + interval;
     }
 
-    if (minCount > 1000000) {
+    if (minCount > 10000000) {
         greaterHalf = true;
     }
-    else if((minCount < 1000000)&&(greaterHalf)) {
+    else if((minCount < 10000000)&&(greaterHalf)) {
         greaterHalf = false;
         cfConverter->resetTimestamps();
     }
@@ -148,9 +153,10 @@ void cfCollectorThread::run() {
              
     // this value is simply the ration between the timestamp reported by the aexGrabber (62.5Mhz) 
     //and the correct timestamp counter clock of FPGA (50 Mhz)
-    maxCount =  minCount + interval * 3; 
+    maxCount =  minCount + interval * 5;
+    maxCountRight =  minCountRight + interval * 5;
     if( count % 100 == 0) {
-        printf("check! %d,%d,%d,%d \n", minCount, lc, maxCount, precl);
+        printf("greterHalf:%d! %d,%d,%d||%d,%d,%d \n",greaterHalf, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
     }
     precl = lc;
 
@@ -182,12 +188,10 @@ void cfCollectorThread::run() {
         }
     }
 
-    
-
     if(outPortRight.getOutputCount()) {
         ImageOf<yarp::sig::PixelMono>& outputImageRight=outPortRight.prepare();
         if(&outputImageRight!=0) {
-            cfConverter->getMonoImage(&outputImageRight, minCount, maxCount, 0);
+            cfConverter->getMonoImage(&outputImageRight, minCountRight, maxCountRight, 0);
             outPortRight.write();
         }
         else {

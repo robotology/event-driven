@@ -48,6 +48,7 @@ private:
     u64 Tnow;
     unsigned long int precl;
     unsigned long int lc;
+    unsigned long int rc;
     
     double microseconds;
     double microsecondsPrev;
@@ -61,6 +62,8 @@ private:
     bool greaterHalf;                     // indicates whether the counter has passed the half of the range
     unsigned long minCount;              // minimum timestamp allowed for the current frame
     unsigned long maxCount;              // maximum timestamp allowed for the current frame
+    unsigned long minCountRight;
+    unsigned long maxCountRight;
     double startTimer;
     double endTimer;
     yarp::os::Semaphore mutex;          // semaphore thar regulates the access to the buffer resource

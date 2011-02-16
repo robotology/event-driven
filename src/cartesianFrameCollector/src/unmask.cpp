@@ -93,10 +93,6 @@ unmask::~unmask() {
     delete[] timeBuffer;
     delete[] bufferRight;
     delete[] timeBufferRight;
-    
-    //delete[] fifoEvent;
-    //delete[] fifoEvent_temp;
-    //delete[] fifoEvent_temp2;
 }
 
 void unmask::cleanEventBuffer() {
@@ -116,6 +112,10 @@ int unmask::getMaxValue() {
 
 unsigned long unmask::getLastTimestamp() {
     return lasttimestamp;
+}
+
+unsigned long unmask::getLastTimestampRight() {
+    return lasttimestampright;
 }
 
 unsigned long unmask::getEldestTimeStamp() {
@@ -161,8 +161,9 @@ void unmask::run() {
 
 void unmask::unmaskData(char* i_buffer, int i_sz) {
     //cout << "Size of the received packet to unmask : " << i_sz/8<< endl;
+    printf(".");
     //AER_struct sAER
-
+    
     //assert(num_events % 8 == 0);
     int num_events = i_sz / 8;
     
@@ -177,15 +178,16 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
         // here we zero the higher two bytes of the address!!! Only lower 16bits used!
         blob &= 0xFFFF;
         unmaskEvent((unsigned int) blob, cartX, cartY, polarity, camera);
-        printf(" %d : %d : %d \n",blob,timestamp,camera);
-        if (camera == -1)
-            camera = 1;
+        //printf(" %d>%d,%d : %d : %d \n",blob,cartX,cartY,timestamp,camera);
+
+        //camera is unmasked as left 0, right -1. It is converted in left 1, right 0
+        camera = camera + 1;
         
         
         //camera: LEFT 0, RIGHT 1
-        if(camera==0) {
+        if(camera) {
             lasttimestamp = timestamp;
-            if(timeBuffer[cartX + cartY * retinalSize]< timestamp) {
+            if(timeBuffer[cartX + cartY * retinalSize] < timestamp) {
                 if(polarity > 0) {
                     buffer[cartX + cartY * retinalSize] = responseGradient;
                     timeBuffer[cartX + cartY * retinalSize] = timestamp;
@@ -202,8 +204,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
                         buffer[cartX + cartY * retinalSize] = -127;
                     }
                 }
-            }
-            
+            }            
         }
         else {
             lasttimestampright = timestamp;

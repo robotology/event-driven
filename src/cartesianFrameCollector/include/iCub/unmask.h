@@ -50,7 +50,8 @@ private:
     //int* fifoEvent_temp2;
     unsigned long timestamp;         // 16 bits variable to save the timestamp
     unsigned long timestamplong;         // variable 32 bits to save the timestamp
-    unsigned long lasttimestamp;
+    unsigned long lasttimestamp;          //last timestamp acquired for the left camera
+    unsigned long lasttimestampright;     //last timestamp acquired for the right camera
     unsigned long eldesttimestamp;        // timestamp of the eldest event in the buffer 
     short cartX, cartY, polarity, camera;
 
@@ -118,9 +119,14 @@ public:
     unsigned long getEldestTimeStamp();
 
     /**
-    * returns the last timestamp
+    * returns the last timestamp for the left camera
     */
     unsigned long getLastTimestamp();
+
+    /**
+     *  return the last timestamp for the right camera
+     */
+    unsigned long getLastTimestampRight();
 
     /**
     * force the values of the lasttimestamp 
