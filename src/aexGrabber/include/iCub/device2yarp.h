@@ -62,6 +62,11 @@ public:
     void prepareBiases();
 
     /**
+    * function that prepares biases either reading them from file or reading the default value
+    */
+    void prepareBiasesRight();
+
+    /**
     * function used to set the name of the port device where biases are sent
     * @param name name of the port of the device
     */

@@ -513,11 +513,23 @@ bool aexGrabberModule::respond(const Bottle& command, Bottle& reply) {
         rec = true;
         {
             switch(command.get(1).asVocab()) {
-            case COMMAND_VOCAB_BIAS:{
+            case COMMAND_VOCAB_LEFT:{
                 printf("request of reprogrammming biases arrived \n");
                 D2Y->closeDevice();
                 Time::delay(1);
+                D2Y->setFromBinary(false);
                 D2Y->prepareBiases();
+                
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_RIGHT:{
+                printf("request of reprogrammming biases arrived \n");
+                D2Y->closeDevice();
+                Time::delay(1);
+                D2Y->setFromBinary(false);
+                D2Y->prepareBiasesRight();
+                
                 ok = true;
             }
             break;

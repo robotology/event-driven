@@ -136,6 +136,19 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
     diff = 3207;       // diff 
     foll = 278;          // foll
     pr= 217;            //Pr 
+    
+    casRight = 1966;        // cas
+    injgRight = 1137667;       // injGnd
+    reqPdRight = 16777215;    // reqPd
+    puxRight = 8053457;     // puX
+    diffoffRight = 133;        // diffOff
+    reqRight = 160712;      // req
+    refrRight = 944;           // refr
+    puyRight = 16777215;    // puY
+    diffonRight = 205255;      // diffOn
+    diffRight = 3207;       // diff 
+    follRight = 278;          // foll
+    prRight = 217;            //Pr 
             
            
 #else
@@ -153,6 +166,19 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
     diff = 28995;       // diff 
     foll = 19;          // foll
     pr = 8;            //Pr 
+
+    casRight = 1966;        // cas
+    injgRight = 22703;       // injGnd
+    reqPdRight = 16777215;    // reqPd
+    puxRight = 4368853;     // puX
+    diffoffRight = 3207;        // diffOff
+    reqRight = 111347;      // req
+    refrRight = 0;           // refr
+    puyRight = 16777215;    // puY
+    diffonRight = 483231;      // diffOn
+    diffRight = 28995;       // diff 
+    follRight = 19;          // foll
+    prRight = 8;            //Pr 
             
     /*
       int biasValues[]={1966,        // cas
@@ -203,7 +229,8 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
     // opening the file when the biases are programmed by file
     biasFromBinary = i_bool;
     // preparing and sending biases      
-    prepareBiases();    
+    prepareBiases();
+    prepareBiasesRight();
 }
 
 
@@ -401,9 +428,199 @@ void device2yarp::prepareBiases() {
         latchCommitAEs(1);
         //monitor(10);
         releasePowerdown(1);
-        mutex.wait();
         sendingBias();
-        mutex.post();
+    }
+}
+
+void device2yarp::prepareBiasesRight() {
+    //opening the device
+    cout <<"name of the file buffer:" <<portDeviceName.c_str()<< endl;
+    file_desc = open(portDeviceName.c_str(), O_RDWR | O_NONBLOCK);
+    if (file_desc < 0) {
+        printf("Cannot open device file: %s \n",portDeviceName.c_str());
+    }
+    
+    //initialisation
+    const u32 seqAllocChunk_b = SIZE_OF_EVENT * sizeof(struct aer); //allocating the right dimension for biases
+    int r, w;
+    struct timeval tv;
+    u64 Tseqstart, TmaxSeqTimeEstimate, Tnow;
+    u32 ival, addr, hwival;
+    int aexfd;
+    int busy;
+
+#ifdef INPUT_BIN_U32U32LE
+    u32 rbuf[2];
+#endif
+
+    pseq = (aer *) malloc(seqAllocChunk_b);
+    if ( pseq == NULL ) {
+        printf("pseq malloc failed \n");
+    }
+    seqAlloced_b = seqAllocChunk_b;
+
+    seqEvents = 0;
+    seqSize_b = 0;
+
+    
+    //preparing the biases
+    if(biasFromBinary) {
+        printf("sending biases read from the binary file \n");
+        //opening the file
+        binInput = fopen(biasFileName.c_str(),"r");
+        if (binInput == NULL) {
+            fputs ("File error",stderr);
+            return;
+        }
+        else {
+            printf("File correctly opened \n");
+        }
+        while (1) {
+            if (seqAlloced_b < seqSize_b) {
+                //fprintf(stderr, "code error 1234: %" PRIu32 " < %" PRIu32 "\n", seqAlloced_b, seqSize_b);
+                exit(1);
+            }
+            // realloc needed?
+            if (seqAlloced_b == seqSize_b) {
+                seqAlloced_b += seqAllocChunk_b;
+                pseq = (aer*)realloc(pseq, seqAlloced_b);
+                if (pseq == NULL) printf("realloc failed:");
+            }
+
+#ifndef INPUT_BIN_U32U32LE
+            r = fscanf(binInput, "%" PRIu32 " %" PRIu32, &ival, &addr);
+
+            if (r == EOF) {
+                fprintf(stderr, "parsing input completed.\n");
+                fclose(ifd);
+                break;
+            }
+            if (r != 2) {
+                fprintf(stderr, "input parsing error!!!\n");
+                exit(1); // FIXME
+            }
+#else
+            r = fread(rbuf, 8, 1, binInput);
+            //printf("reading from file %d \n",r);
+
+            if (r == 0) {
+                if (feof(binInput)) {
+                    fprintf(stderr, "parsing input completed.\n");
+                    fclose(binInput);
+                    break;
+                } else {
+                    fprintf(stderr, "input parsing error!!!\n");
+                    perror("errno");
+                    exit(1);
+                }
+            }
+            ival = rbuf[0];
+            addr = rbuf[1];
+#endif
+
+            /* timestamp expressed in <ts> * 1e-6 / 128e-9, with <ts> in microseconds */
+            hwival = (u32)(ival * 7.8125);
+            pseq[seqEvents].address = addr;
+            pseq[seqEvents].timestamp = hwival;
+            
+            seqEvents++;
+            seqTime += hwival;
+            seqSize_b += sizeof(struct aer);
+
+
+            assert(seqEvents * sizeof(struct aer) == seqSize_b);
+        } //end of the while
+
+        /* save start of sequencing time */
+        gettimeofday(&tv, NULL);
+        Tnow = ((u64)tv.tv_sec) * 1000000 + ((u64)tv.tv_usec);
+        Tseqstart = Tnow;
+        seqDone_b = 0;
+
+        /* try writing to kernel driver */
+        if (seqDone_b < seqSize_b) {
+            //fprintf(stderr, "calling write fd: %d  sS: %d  sD: %d  ps: %x\n", aexfd, seqSize_b, seqDone_b, (u32)pseq);
+
+
+            w = write(file_desc, seqDone_b + ((u8*)pseq), seqSize_b - seqDone_b);
+
+            //fprintf(stderr, "wrote: %d\n", w);
+            if (w > 0) {
+                busy = 1;
+                seqDone_b += w;
+            } else if (w == 0 || (w < 0 && errno == EAGAIN)) {
+                // we were not busy, maybe someone else is... 
+            } else {
+                perror("invalid write");
+                exit(1);
+            }
+        }
+        //closing the file where the biases are set
+        //if(biasFromBinary){
+        //    printf("closing the file where the biases are saved \n");
+        //    fclose(binInput);
+        //}
+    } 
+    else {
+        printf("sending biases as following variables.... to the RIGHT \n");
+        printf("cas:%d \n",casRight);
+        printf("injg:%d \n",injgRight);
+        printf("reqPd:%d \n",reqPdRight);
+        printf("pux:%d \n",puxRight);
+        printf("diffoff:%d \n",diffoffRight);
+        printf("req:%d \n",reqRight);
+        printf("refr:%d \n",refrRight);
+        printf("puy:%d \n",puyRight);
+        printf("diffon:%d \n",diffonRight);
+        printf("diff:%d \n",diffRight);
+        printf("foll:%d \n",follRight);
+        printf("pr:%d \n",prRight);
+        int err;
+        
+        printf("sending biases as events to the device ... \n");
+                
+            
+        int biasValues[]={casRight,        // cas
+                          injgRight,       // injGnd
+                          reqPdRight,    // reqPd
+                          puxRight,     // puX
+                          diffoffRight,        // diffOff
+                          reqRight,      // req
+                          refrRight,           // refr
+                          puyRight,    // puY
+                          diffonRight,      // diffOn
+                          diffRight,       // diff 
+                          follRight,          // foll
+                          prRight            //Pr 
+        };
+        
+
+        string biasNames[] = {
+            "cas",
+            "injGnd",
+            "reqPd",
+            "puX",
+            "diffOff",
+            "req",
+            "refr",
+            "puY",
+            "diffOn",
+            "diff",
+            "foll",
+            "Pr"
+        };
+
+        
+        //int err = write(file_desc,bias,41); //5+36 
+        seqEvents = 0;
+        seqSize_b = 0;
+        for(int j=0;j<countBias;j++) {
+            progBias(biasNames[j],24,biasValues[j],0);
+        }
+        latchCommitAEs(0);
+        //monitor(10);
+        releasePowerdown(0);
+        sendingBias();
     }
 }
 
@@ -418,16 +635,15 @@ void device2yarp::closeDevice(){
 }
 
 void  device2yarp::run() {
+    
     //printf("reading \n");
-    mutex.wait();
     int r = read(file_desc, pmon, monBufSize_b);
-    mutex.post();
     monBufEvents = r / sizeof(struct aer);
-    if(r > 0)
-        printf("d",r);
+    
+    printf("%d.\n",r);
 
     if(r == -1) {
-        printf("device %s not ready. Skipping to the next run \n",portDeviceName.c_str());
+        printf("x",portDeviceName.c_str());
         return;
     }
     //printf("device read %d \n",monBufEvents);
@@ -503,6 +719,7 @@ void device2yarp::sendingBias() {
 
 void device2yarp::progBias(string name,int bits,int value, int camera ) {
     int bitvalue;
+    
     for (int i=bits-1;i>=0;i--) {
         int mask=1;
         for (int j=0; j<i; j++) {
@@ -524,17 +741,17 @@ void device2yarp::progBias(string name,int bits,int value, int camera ) {
 
 void device2yarp::latchCommit(int camera ) {
     //printf("entering latch_commit \n");
-    biasprogtx(timestep * latchexpand, LATCH_TRANSPARENT, CLOCK_LO, 0, camera);
-    biasprogtx(timestep * latchexpand, LATCH_KEEP, CLOCK_LO, 0, camera);
-    biasprogtx(timestep * latchexpand, LATCH_KEEP, CLOCK_LO, 0, camera);
+    biasprogtx(timestep * latchexpand, LATCH_TRANSPARENT, CLOCK_LO, 0,0, camera);
+    biasprogtx(timestep * latchexpand, LATCH_KEEP, CLOCK_LO, 0,0, camera);
+    biasprogtx(timestep * latchexpand, LATCH_KEEP, CLOCK_LO, 0,0, camera);
     //printf("exiting latch_commit \n");
 }
 
 void device2yarp::latchCommitAEs(int camera ) {
     //printf("entering latch_commit \n");
-    biasprogtx(timestep * latchexpand, LATCH_TRANSPARENT, CLOCK_HI, 0, camera );
-    biasprogtx(timestep * latchexpand, LATCH_KEEP, CLOCK_HI, 0, camera);
-    biasprogtx(timestep * latchexpand, LATCH_KEEP, CLOCK_HI, 0, camera);
+    biasprogtx(timestep * latchexpand, LATCH_TRANSPARENT, CLOCK_HI, 0,0, camera );
+    biasprogtx(timestep * latchexpand, LATCH_KEEP, CLOCK_HI, 0,0, camera);
+    biasprogtx(timestep * latchexpand, LATCH_KEEP, CLOCK_HI, 0,0, camera);
     //printf("exiting latch_commit \n");
 }
 
@@ -561,25 +778,26 @@ void device2yarp::setPowerdown(int camera ) {
 
 void device2yarp::progBit(int bitvalue, int camera ) {
     //set data
-    biasprogtx(timestep, LATCH_KEEP, CLOCK_LO, bitvalue, camera );
+    biasprogtx(timestep, LATCH_KEEP, CLOCK_LO, bitvalue,0, camera );
     //toggle clock
-    biasprogtx(timestep, LATCH_KEEP, CLOCK_HI, bitvalue, camera);
-    biasprogtx(timestep, LATCH_KEEP, CLOCK_LO, bitvalue, camera);
+    biasprogtx(timestep, LATCH_KEEP, CLOCK_HI, bitvalue,0, camera);
+    biasprogtx(timestep, LATCH_KEEP, CLOCK_LO, bitvalue,0, camera);
 }
 
 void device2yarp::progBitAEs(int bitvalue, int camera ) {
+    
     //set data (now)
-    biasprogtx(0, LATCH_KEEP, CLOCK_HI, bitvalue, camera);
+    biasprogtx(0, LATCH_KEEP, CLOCK_HI, bitvalue,0, camera);
     //toggle clock
-    biasprogtx(timestep, LATCH_KEEP, CLOCK_LO, bitvalue, camera);
-    biasprogtx(timestep, LATCH_KEEP, CLOCK_HI, bitvalue, camera);
+    biasprogtx(timestep, LATCH_KEEP, CLOCK_LO, bitvalue,0, camera);
+    biasprogtx(timestep, LATCH_KEEP, CLOCK_HI, bitvalue,0, camera);
     //and wait a little
-    biasprogtx(timestep, LATCH_KEEP, CLOCK_HI, bitvalue, camera);
+    biasprogtx(timestep, LATCH_KEEP, CLOCK_HI, bitvalue,0, camera);
 }
 
 void device2yarp::monitor (int secs, int camera ) {
     //printf("entering monitor \n");
-    biasprogtx(secs * OneSecond, LATCH_KEEP, CLOCK_LO, 0, camera);
+    biasprogtx(secs * OneSecond, LATCH_KEEP, CLOCK_LO, 0,0, camera);
     //printf("exiting monitor \n");
 } 
 
@@ -593,7 +811,6 @@ void device2yarp::biasprogtx(int time,int latch,int clock,int data, int powerdow
     t[1]= time & 0x00FF0000;
     t[2]= time & 0x0000FF00;
     t[3]= time & 0x000000FF;
-   
     
     //setting the addr
     addr[0] = 0xFF;
@@ -617,10 +834,12 @@ void device2yarp::biasprogtx(int time,int latch,int clock,int data, int powerdow
     //u32 seqSize_b = sizeof(struct aer);
     u32 timeToSend, addressToSend;
     timeToSend=time;
-    addressToSend=0;
+    
 
     // performing trasmittion differently if the camera is left (1) or right (0)
-    if(camera == 1) {
+    // keep the clock high for the other eye
+    if(camera) {
+        addressToSend=0x000000060;
         if(data) {
             addressToSend += 0x01;
         }
@@ -636,6 +855,7 @@ void device2yarp::biasprogtx(int time,int latch,int clock,int data, int powerdow
         addressToSend+=0xFF000000;
     }
     else {
+        addressToSend=0x000000006;
         if(data) {
             addressToSend += 0x10;
         }
