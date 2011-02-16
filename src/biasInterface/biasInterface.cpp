@@ -97,24 +97,24 @@ static void deleteObjects() {
 static void callback( GtkWidget *widget,gpointer   data ){
     printf ("Hello again - %s was pressed \n", (char *) data);
     
-    if(!strcmp((char *)data,"OpencvSobel")){
-        printf("OpencvSobel");
-        command->assign("set ocv");
+    if(!strcmp((char *)data,"Buttonl")){
+        printf("Button1");
+        command->assign("set b1");
     }
-    if(!strcmp((char *)data,"ConvolveMax")){
-        printf("ConvolveMax");
-        command->assign("set max");
+    if(!strcmp((char *)data,"Button2")){
+        printf("Button2");
+        command->assign("set b2");
     }
-    if(!strcmp((char *)data,"ConvolveSeq")){
-        printf("ConvolveSeq");
-        command->assign("set seq");
+    if(!strcmp((char *)data,"Button3")){
+        printf("Button3");
+        command->assign("set b3");
     }
-    if(!strcmp((char *)data,"ConvolveFil")){
-        printf("ConvolvFil");
-        command->assign("set fil");
+    if(!strcmp((char *)data,"Button4")){
+        printf("Button4");
+        command->assign("set b4");
     }
-    if(!strcmp((char *)data,"IppSobel")){
-        printf("IppSobel");
+    if(!strcmp((char *)data,"Button5")){
+        printf("b5");
         command->assign("set ipp");
     }
 
@@ -497,6 +497,13 @@ static void callbackProgBiasButton( GtkWidget *widget,gpointer data ) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_PROG);
+        if(!strcmp((char*) data,"left")) {
+            bot.addVocab(COMMAND_VOCAB_LEFT);
+        }
+        else {
+            bot.addVocab(COMMAND_VOCAB_RIGHT);
+        }
+
         bot.addVocab(COMMAND_VOCAB_BIAS);
         //_pOutPort->Content() = _outBottle;
         Bottle in;
@@ -856,7 +863,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj1 = gtk_adjustment_new (8, 0,16777215,1, 0, 0);
+    adj1 = gtk_adjustment_new (8, 0,16777215,10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj1));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -871,7 +878,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
 
-    adj2 = gtk_adjustment_new (19, 0,16777215,1, 0, 0);
+    adj2 = gtk_adjustment_new (19, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj2));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -884,7 +891,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj3 = gtk_adjustment_new (28995, 0,16777215,1, 0, 0);
+    adj3 = gtk_adjustment_new (28995, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj3));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -897,7 +904,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj3 = gtk_adjustment_new (483231, 0,16777215,1, 0, 0);
+    adj3 = gtk_adjustment_new (483231, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj3));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -911,7 +918,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj4 = gtk_adjustment_new (16777215, 0.0,16777215,1, 0, 0);
+    adj4 = gtk_adjustment_new (16777215, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj4));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -924,7 +931,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj5 = gtk_adjustment_new (0, 0,16777215,1, 0, 0);
+    adj5 = gtk_adjustment_new (0, 0,16777215, 10 , 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -937,7 +944,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj6 = gtk_adjustment_new (111347, 0,16777215,1, 0, 0);
+    adj6 = gtk_adjustment_new (111347, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj6));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -951,7 +958,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj5 = gtk_adjustment_new (3207, 0,16777215,1, 0, 0);
+    adj5 = gtk_adjustment_new (3207, 0,16777215, 10 ,1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -964,7 +971,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj5 = gtk_adjustment_new (4368853, 0,16777215,1, 0, 0);
+    adj5 = gtk_adjustment_new (4368853, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -978,7 +985,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj5 = gtk_adjustment_new (16777215, 0,16777215,1, 0, 0);
+    adj5 = gtk_adjustment_new (16777215, 0,16777215,10000, 0, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -991,7 +998,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj5 = gtk_adjustment_new (22703, 0,16777215,1, 0, 0);
+    adj5 = gtk_adjustment_new (22703, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -1004,7 +1011,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj5 = gtk_adjustment_new (1966, 0,16777215,1, 0, 0);
+    adj5 = gtk_adjustment_new (1966, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -1032,7 +1039,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj1 = gtk_adjustment_new (8, 0,16777215,1, 0, 0);
+    adj1 = gtk_adjustment_new (8, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj1));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -1047,7 +1054,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
 
-    adj2 = gtk_adjustment_new (19, 0,16777215,1, 0, 0);
+    adj2 = gtk_adjustment_new (19, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj2));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -1060,7 +1067,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj3 = gtk_adjustment_new (28995, 0,16777215,1, 0, 0);
+    adj3 = gtk_adjustment_new (28995, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj3));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -1073,7 +1080,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj3 = gtk_adjustment_new (28995, 0,16777215,1, 0, 0);
+    adj3 = gtk_adjustment_new (28995, 0,16777215,10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj3));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -1087,7 +1094,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj4 = gtk_adjustment_new (16777215, 0.0,16777215,1, 0, 0);
+    adj4 = gtk_adjustment_new (16777215, 0.0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj4));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -1100,7 +1107,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj5 = gtk_adjustment_new (0, 0,16777215,1, 0, 0);
+    adj5 = gtk_adjustment_new (0, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -1113,7 +1120,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj6 = gtk_adjustment_new (111347, 0,16777215,1, 0, 0);
+    adj6 = gtk_adjustment_new (111347, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj6));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -1127,7 +1134,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj5 = gtk_adjustment_new (3207, 0,16777215,1, 0, 0);
+    adj5 = gtk_adjustment_new (3207, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -1140,7 +1147,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj5 = gtk_adjustment_new (4368853, 0,16777215,1, 0, 0);
+    adj5 = gtk_adjustment_new (4368853, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -1154,7 +1161,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj5 = gtk_adjustment_new (16777215, 0,16777215,1, 0, 0);
+    adj5 = gtk_adjustment_new (16777215, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -1167,7 +1174,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj5 = gtk_adjustment_new (22703, 0,16777215,1, 0, 0);
+    adj5 = gtk_adjustment_new (22703, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -1180,7 +1187,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj5 = gtk_adjustment_new (1966, 0,16777215,1, 0, 0);
+    adj5 = gtk_adjustment_new (1966, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -1217,7 +1224,7 @@ GtkWidget* createMainWindow(void) {
     
     buttonProgBias = gtk_button_new ();
     g_signal_connect (G_OBJECT (buttonProgBias), "clicked", G_CALLBACK (callbackProgBiasButton),(gpointer) "Right");
-    boxButton = xpm_label_box (NULL,  (gchar*)"ProgBias Left");
+    boxButton = xpm_label_box (NULL,  (gchar*)"ProgBias Right");
     gtk_widget_show (boxButton);
     gtk_container_add (GTK_CONTAINER (buttonProgBias), boxButton);
     gtk_container_add (GTK_CONTAINER (buttonProgBias), box6);
