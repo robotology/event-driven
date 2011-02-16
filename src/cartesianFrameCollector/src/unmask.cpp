@@ -177,12 +177,14 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
         // here we zero the higher two bytes of the address!!! Only lower 16bits used!
         blob &= 0xFFFF;
         unmaskEvent((unsigned int) blob, cartX, cartY, polarity, camera);
+        printf(" %d : %d : %d \n",blob,timestamp,camera);
         if (camera == -1)
             camera = 1;
-        //printf(" %d : %d : %d \n",blob,timestamp,camera);
         
-        //camera: LEFT 0, RIGHT -1
+        
+        //camera: LEFT 0, RIGHT 1
         if(camera==0) {
+            lasttimestamp = timestamp;
             if(timeBuffer[cartX + cartY * retinalSize]< timestamp) {
                 if(polarity > 0) {
                     buffer[cartX + cartY * retinalSize] = responseGradient;
@@ -204,6 +206,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
             
         }
         else {
+            lasttimestampright = timestamp;
             if (timeBufferRight[cartX + cartY * retinalSize] < timestamp) {
                 if(polarity > 0) {
                     bufferRight[cartX + cartY * retinalSize] = responseGradient;
