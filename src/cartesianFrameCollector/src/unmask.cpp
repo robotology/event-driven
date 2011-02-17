@@ -162,16 +162,15 @@ void unmask::run() {
 
 void unmask::unmaskData(char* i_buffer, int i_sz) {
     //cout << "Size of the received packet to unmask : " << i_sz/8<< endl;
-    printf(".");
-    count++;
     //AER_struct sAER
-    
+    count++;
     //assert(num_events % 8 == 0);
     int num_events = i_sz / 8;
     
     uint32_t* buf2 = (uint32_t*)i_buffer;
     //eldesttimestamp = 0;
     for (int evt = 0; evt < num_events; evt++) {
+        
         // unmask the data
         unsigned long blob = buf2[2 * evt];
         unsigned long timestamp = buf2[2 * evt + 1];        
@@ -180,9 +179,10 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
         // here we zero the higher two bytes of the address!!! Only lower 16bits used!
         blob &= 0xFFFF;
         unmaskEvent((unsigned int) blob, cartX, cartY, polarity, camera);
-        if (count % 100 == 0) {
-            printf(" %d>%d,%d : %d : %d \n",blob,cartX,cartY,timestamp,camera);
-        }
+        //if(count % 100 == 0) {
+        //    printf(" %d>%d,%d : %d : %d \n",blob,cartX,cartY,timestamp,camera);
+        //}
+        
 
         //camera is unmasked as left 0, right -1. It is converted in left 1, right 0
         camera = camera + 1;
@@ -208,7 +208,8 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
                         buffer[cartX + cartY * retinalSize] = -127;
                     }
                 }
-            }            
+            }
+           
         }
         else {
             lasttimestampright = timestamp;
@@ -230,6 +231,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
                     }
                 }
             }
+            
         }
         
         //fprintf(uEvents,"%d\t%d\t%d\t%u\n", cartX, cartY, polarity, timestamp);
@@ -241,6 +243,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
 void unmask::resetTimestamps() {
     for (int i=0 ; i<retinalSize * retinalSize; i++){
         timeBuffer[i] = 0;
+        timeBufferRight[i] = 0;
     }
 }
 
