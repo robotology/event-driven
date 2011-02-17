@@ -167,13 +167,14 @@ void cfCollectorThread::run() {
         synchronised = true;  
     }*/
     
-    if( minCount >= MAXVALUE) {
+    /*if( minCount >= MAXVALUE) {
         printf("reached max counter \n");
         minCount = lc - interval * 2;
         if (minCount < 0) minCount = 0;
         startTimer = Time::now();
         synchronised = true; 
     }
+    */
     
     
     microsecondsPrev = microseconds;

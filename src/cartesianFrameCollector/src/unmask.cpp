@@ -42,6 +42,7 @@ typedef unsigned long uint32_t;
 #define constInterval 100000;
 
 unmask::unmask() : RateThread(UNMASKRATETHREAD){
+    count = 0;
     numKilledEvents = 0;
     lasttimestamp = 0;
     eldesttimestamp = MAXVALUE;
@@ -162,6 +163,7 @@ void unmask::run() {
 void unmask::unmaskData(char* i_buffer, int i_sz) {
     //cout << "Size of the received packet to unmask : " << i_sz/8<< endl;
     printf(".");
+    count++;
     //AER_struct sAER
     
     //assert(num_events % 8 == 0);
@@ -178,7 +180,9 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
         // here we zero the higher two bytes of the address!!! Only lower 16bits used!
         blob &= 0xFFFF;
         unmaskEvent((unsigned int) blob, cartX, cartY, polarity, camera);
-        //printf(" %d>%d,%d : %d : %d \n",blob,cartX,cartY,timestamp,camera);
+        if (count % 100 == 0) {
+            printf(" %d>%d,%d : %d : %d \n",blob,cartX,cartY,timestamp,camera);
+        }
 
         //camera is unmasked as left 0, right -1. It is converted in left 1, right 0
         camera = camera + 1;

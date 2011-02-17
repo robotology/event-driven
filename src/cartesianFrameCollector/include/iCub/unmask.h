@@ -39,7 +39,8 @@ class unmask : public yarp::os::RateThread{
 private:
     int id;
     int nb_trame;
-
+    int count;                       // counter of the unmasked events
+    
     int sz;
     int* buffer;                          // buffer representing the event in image plane (left)
     unsigned long* timeBuffer;        // buffer contains the timestamp of the particular location (left)
