@@ -91,6 +91,8 @@ using namespace yarp::sig;
 double scale =0.1; //global scale factor 
 int robot_radius = 715/2; //mm
 int laser_position = 245; //mm
+bool verbose = false;
+CvFont font;
 
 void drawGrid(IplImage *img)
 {
@@ -108,26 +110,34 @@ const CvScalar color_black = cvScalar(0,0,0);
 	for (int yi=0; yi<img->height; yi+=step)
 		cvLine(img,cvPoint(0,yi),cvPoint(img->width,yi),color_black);
 */
+	cvPutText(img, "0.5m", cvPoint(img->width/2,float(img->height)/2.0-float(step)*1.0), &font, cvScalar(0, 0, 0, 0));
 	cvCircle(img,cvPoint(img->width/2,img->height/2),step*1,color_black);
+	cvPutText(img, "1m", cvPoint(img->width/2,float(img->height)/2.0-float(step)*2.0), &font, cvScalar(0, 0, 0, 0));
 	cvCircle(img,cvPoint(img->width/2,img->height/2),step*2,color_black);
+	cvPutText(img, "1.5m", cvPoint(img->width/2,float(img->height)/2.0-float(step)*3.0), &font, cvScalar(0, 0, 0, 0));
 	cvCircle(img,cvPoint(img->width/2,img->height/2),step*3,color_black);
+	cvPutText(img, "2m", cvPoint(img->width/2,float(img->height)/2.0-float(step)*4.0), &font, cvScalar(0, 0, 0, 0));
 	cvCircle(img,cvPoint(img->width/2,img->height/2),step*4,color_black);
+	cvPutText(img, "2.5m", cvPoint(img->width/2,float(img->height)/2.0-float(step)*5.0), &font, cvScalar(0, 0, 0, 0));
 	cvCircle(img,cvPoint(img->width/2,img->height/2),step*5,color_black);
+	cvPutText(img, "3.0m", cvPoint(img->width/2,float(img->height)/2.0-float(step)*6.0), &font, cvScalar(0, 0, 0, 0));
+	cvCircle(img,cvPoint(img->width/2,img->height/2),step*6,color_black);
 }
 
 void drawRobot (IplImage *img)
 {
-
+	cvRectangle(img,cvPoint(0,0),cvPoint(img->width,img->height),cvScalar(0,0,0),CV_FILLED);
 	const CvScalar color_black = cvScalar(0,0,0);
 	const CvScalar color_gray  = cvScalar(100,100,100);
 
 	//draw a circle
 	cvCircle(img,cvPoint(img->width/2,img->height/2),(int)(robot_radius*scale),color_gray,CV_FILLED);
+	cvCircle(img,cvPoint(img->width/2,img->height/2),(int)(robot_radius*scale-1),color_black);
+	cvCircle(img,cvPoint(img->width/2,img->height/2),(int)(robot_radius*scale-2),color_black);
 }
 
 void drawLaser(const Vector *v, IplImage *img)
 {
-	if (!v) return;
 const CvScalar color_white = cvScalar(255,255,255);
 const CvScalar color_black = cvScalar(0,0,0);
     cvZero(img);
@@ -140,11 +150,17 @@ const CvScalar color_black = cvScalar(0,0,0);
 	double lenght=0;
 	static double old_time=0;
 
-	double curr_time=yarp::os::Time::now();
-	//fprintf(stderr,"received vector size:%d",v->size());
-	fprintf(stderr,"time:%f\n",curr_time-old_time);
-	old_time = curr_time;
+	if (!v) 
+	{
+		return;
+	}
 
+	double curr_time=yarp::os::Time::now();
+	if (verbose) fprintf(stderr,"received vector size:%d ",v->size());
+	static int timeout_count=0;
+	if (curr_time-old_time > 0.40) timeout_count++;
+	if (verbose) fprintf(stderr,"time:%f timeout:%d\n",curr_time-old_time, timeout_count);
+	old_time = curr_time;
 	for (int i=0; i<1080; i++)
 	{
 		lenght=(*v)[i];
@@ -185,11 +201,13 @@ int main(int argc, char *argv[])
     IplImage *img  = cvCreateImage(cvSize(width,height),IPL_DEPTH_8U,3);
 	IplImage *img2 = cvCreateImage(cvSize(width,height),IPL_DEPTH_8U,3);
     cvNamedWindow("Laser Scanner GUI",CV_WINDOW_AUTOSIZE);
+	cvInitFont(&font, CV_FONT_HERSHEY_SIMPLEX, 0.4, 0.4, 0, 1, CV_AA);
 
     bool exit = false;
     while(!exit)
     {
-        yarp::sig::Vector *v = inPort.read(true);
+        yarp::sig::Vector *v = inPort.read(false);
+		if (v)
         {
             //your drawing func.
             drawLaser(v,img);
@@ -198,8 +216,13 @@ int main(int argc, char *argv[])
             cvAddWeighted(img, 0.7, img2, 0.3, 0.0, img);
             cvShowImage("Laser Scanner GUI",img);
         }
+		Time::delay(0.005);
         //if ESC is pressed, exit.
-        if(cvWaitKey(1) == 27) exit = true;
+		int keypressed = cvWaitKey(1);
+        if(keypressed == 27) exit = true;
+        if(keypressed == '+' && scale <0.5) scale+=0.025;
+		if(keypressed == '-' && scale >0.1) scale-=0.025;
+		if(keypressed == 'v' ) verbose= (!verbose);
     }
 
     inPort.close();
