@@ -30,10 +30,16 @@
 </module>
 <module>
    <name>yarpview</name>
-   <parameters>--name /eventView --x 000 --ysixe 000 --synch </parameters>
+   <parameters>--name /eventViewLeft --x 000 --ysixe 000 --synch </parameters>
    <node>console</node>
-   <tag>eventViewer</tag>
+   <tag>eventViewerLeft</tag>
 </module>
+<module>
+   <name>yarpview</name>
+   <parameters>--name /eventViewRight --x 350 --ysixe 000 --synch </parameters>
+   <node>/icubsrv-emorph</node>
+   <tag>eventViewerRight</tag>
+</module
 <module>
    <name>yarpview</name>
    <parameters>--name /alignerView --x 000 --ysixe 300 --synch </parameters>
@@ -67,8 +73,13 @@
   <protocol>udp</protocol>
 </connection>
 <connection>
-  <from>/cartesianFrameCollector/image:o</from>
-  <to>/eventView</to>
+  <from>/cartesianFrameCollector/left:o</from>
+  <to>/eventViewLeft</to>
+  <protocol>udp</protocol>
+</connection>
+<connection>
+  <from>/cartesianFrameCollector/right:o</from>
+  <to>/eventViewRight</to>
   <protocol>udp</protocol>
 </connection>
 
