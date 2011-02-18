@@ -430,10 +430,13 @@ public:
 		linear_speed = linear_speed / 46000 * MAX_VALUE;
 		angular_speed = angular_speed / 46000 * MAX_VALUE;
 		pwm_gain = pwm_gain / 65000 * 1.0;
-		if (linear_speed  >  MAX_VALUE*ratio) linear_speed  = MAX_VALUE*ratio;
-		if (linear_speed  < -MAX_VALUE*ratio) linear_speed  = -MAX_VALUE*ratio;
-		if (angular_speed >  MAX_VALUE*(1-ratio)) angular_speed = MAX_VALUE*(1-ratio);
-		if (angular_speed < -MAX_VALUE*(1-ratio)) angular_speed = -MAX_VALUE*(1-ratio);
+		if (ikart_control_type == IKART_CONTROL_OPENLOOP)
+		{
+			if (linear_speed  >  MAX_VALUE*ratio) linear_speed  = MAX_VALUE*ratio;
+			if (linear_speed  < -MAX_VALUE*ratio) linear_speed  = -MAX_VALUE*ratio;
+			if (angular_speed >  MAX_VALUE*(1-ratio)) angular_speed = MAX_VALUE*(1-ratio);
+			if (angular_speed < -MAX_VALUE*(1-ratio)) angular_speed = -MAX_VALUE*(1-ratio);
+		}
 		if (pwm_gain<0) pwm_gain = 0;
 		if (pwm_gain>1)	pwm_gain = 1;
 
