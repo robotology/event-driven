@@ -637,13 +637,11 @@ void device2yarp::closeDevice(){
 void  device2yarp::run() {
     
     //printf("reading \n");
-    int r = read(file_desc, pmon, monBufSize_b);
+    r = read(file_desc, pmon, monBufSize_b);
     monBufEvents = r / sizeof(struct aer);
     
-    printf("%d.\n",r);
-
     if(r == -1) {
-        printf("x",portDeviceName.c_str());
+        //printf("x",portDeviceName.c_str());
         return;
     }
     //printf("device read %d \n",monBufEvents);
