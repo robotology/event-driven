@@ -142,12 +142,13 @@ void cfCollectorThread::run() {
         minCountRight = minCountRight + interval;
     }
 
-    if (minCount > 10000000) {
+    if ((lc > 10000000)||(rc>10000000)) {
         greaterHalf = true;
     }
-    else if((minCount < 10000000)&&(greaterHalf)) {
+    else if(((lc < 10000000)||(rc < 10000000))&&(greaterHalf)) {
         greaterHalf = false;
         cfConverter->resetTimestamps();
+        printf("resetting time stamps!!!!!!!!!!!!!");
     }
 
              
