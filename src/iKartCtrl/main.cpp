@@ -219,7 +219,7 @@ public:
 			else if (control_type == "openloop") ikart_control_type = IKART_CONTROL_OPENLOOP;
 			else
 			{
-				printf("Error: unknown type of control required: %s. Closing...\n",control_type.c_str());
+				fprintf(stderr,"Error: unknown type of control required: %s. Closing...\n",control_type.c_str());
 				return false;
 			}
 		}
@@ -293,6 +293,13 @@ public:
 		port_laser_output.open((localName+"/laser:o").c_str());
 
 		//set the control type
+		if (!rf.check("no_start"))
+		{
+			printf("starting motors...");
+			iamp->enableAmp(0);
+			iamp->enableAmp(1);
+			iamp->enableAmp(2);			
+		}
 		set_ikart_control_type(IKART_CONTROL_SPEED);
 
         return true;
@@ -301,9 +308,9 @@ public:
     virtual void afterStart(bool s)
     {
         if (s)
-            cout<<"Thread started successfully"<<endl;
+            printf("Thread started successfully\n");
         else
-            cout<<"Thread did not start"<<endl;
+            printf("Thread did not start\n");
 
         t0=Time::now();
     }
