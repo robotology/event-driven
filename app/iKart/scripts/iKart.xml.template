@@ -10,7 +10,7 @@ ikart
    <parameters>--context iKart --config conf/iKart.ini</parameters>
    <node>ikart</node>
    <stdio>ikart</stdio>
-   <tag>I</tag>
+   <tag>iKartInterface</tag>
 </module>
 
 <module>
@@ -18,7 +18,7 @@ ikart
    <parameters></parameters>
    <node>ikart</node>
    <stdio>ikart</stdio>
-   <tag>I</tag>
+   <tag>iKartInterfaceGui</tag>
 </module>
 
 <module>
@@ -26,7 +26,7 @@ ikart
    <parameters></parameters>
    <node>ikart</node>
    <stdio>ikart</stdio>
-   <tag>II</tag>
+   <tag>iKartCtrl</tag>
 </module>
 
 <module>
@@ -34,7 +34,7 @@ ikart
    <parameters>--context /iKart/conf</parameters>
    <node>ikart</node>
    <stdio>ikart</stdio>
-   <tag>III</tag>
+   <tag>iKartMotorGui</tag>
 </module>
 
 <module>
@@ -42,7 +42,7 @@ ikart
    <parameters></parameters>
    <node>ikart</node>
    <stdio>ikart</stdio>
-   <tag>IV</tag>
+   <tag>laserScannerGui</tag>
 </module>
 
 <module>
@@ -50,14 +50,19 @@ ikart
    <parameters></parameters>
    <node>ikart</node>
    <stdio>ikart</stdio>
-   <tag>V</tag>
+   <tag>iKartBatteryDisplay</tag>
 </module>
 
 <connection>
-  <from>/iKart/laser:o</from>
+  <from>/ikart/laser:o</from>
   <to>/laserScannerGui:i</to>
   <protocol>udp</protocol>
 </connection>
 
+<connection>
+  <from>/joystickCtrl:o</from>
+  <to>/ikart/joystick:i</to>
+  <protocol>udp</protocol>
+</connection>
 
 </application>
