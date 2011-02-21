@@ -164,9 +164,10 @@ const CvScalar color_black = cvScalar(0,0,0);
 	for (int i=0; i<1080; i++)
 	{
 		lenght=(*v)[i];
+		if      (lenght<0)     lenght = 0;
+		else if (lenght>10000) lenght = 10000; //10m maximum
 		angle=i/1080.0*270.0-(90-(360-270)/2);
-//			angle=i;
-//			lenght=i;
+//		lenght=i;
 		double x = lenght*scale*cos(angle/180*3.14);
 		double y =-lenght*scale*sin(angle/180*3.14);
 		CvPoint ray;
