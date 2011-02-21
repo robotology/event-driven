@@ -107,7 +107,8 @@ private:
     int					ikart_control_type;
 	double              wdt_mov_timeout;
 	double              wdt_joy_timeout;
-	int                 timeout_count;
+	int                 timeout_counter;
+	int                 joystick_counter;
 
 	//movement control variables
 	double				linear_speed;
@@ -131,7 +132,7 @@ protected:
 	BufferedPort<Bottle>            port_joystick_control;
 	BufferedPort<yarp::sig::Vector> port_laser_output;
 
-    bool ctrlCompletePose;
+    bool   filter_enabled;
     string remoteName;
     string localName;
 
@@ -152,21 +153,23 @@ public:
                remoteName(_remoteName), localName(_localName) 
 	{
 		board_control_modes = new int [3];
-		ikart_control_type = IKART_CONTROL_NONE;
-		wdt_mov_timeout = 0.200;
-		wdt_joy_timeout = 0.200;
-		timeout_count=0;
+		ikart_control_type  = IKART_CONTROL_NONE;
+		wdt_mov_timeout     = 0.200;
+		wdt_joy_timeout     = 0.200;
+		timeout_counter     = 0;
+		joystick_counter    = 0;
 
-		linear_speed = 1;
-		angular_speed = 0;
-		desired_direction=0;
-		pwm_gain=0;
+		linear_speed        = 1;
+		angular_speed       = 0;
+		desired_direction   = 0;
+		pwm_gain            = 0;
 
-		FA=0;
-		FB=0;
-		FC=0;
+		FA = 0;
+		FB = 0;
+		FC = 0;
 
-		laser_enabled=true;
+		filter_enabled = true;
+		laser_enabled  = true;
     }
 
 	void set_ikart_control_type(int type)
@@ -224,9 +227,15 @@ public:
 			}
 		}
 
+		if (iKartCtrl_options.check("no_filter")==false)
+		{
+			printf("\n'no_filter' option found. Turning off PWM filter.\n");
+			filter_enabled=false;
+		}
+
 		if (iKartCtrl_options.check("laser")==false)
 		{
-			printf("\nLaser configuration not specified. Tuning off laser.\n");
+			printf("\nLaser configuration not specified. Turning off laser.\n");
 			laser_enabled=false;
 		}
 		else
@@ -351,29 +360,29 @@ public:
 		}
 
 		static double wdt_mov_cmd=Time::now();
-		static double wdt_joy_cmd=Time::now();
-		static bool joystick_control = false;
+		static double wdt_joy_cmd=Time::now();		
 
 		if (Bottle *b = port_joystick_control.read(false))
         {                
-            if (b->get(0).asInt()==1 && b->size()>=3)
+            if (b->get(0).asInt()==1)
             {                                
 				//received a joystick command.
-				//joystick commands have higher priorty respect to movement commands.
 				desired_direction = b->get(1).asDouble();
 				linear_speed = b->get(2).asDouble();
 				angular_speed = b->get(3).asDouble();
 				pwm_gain = b->get(4).asDouble();
 				wdt_joy_cmd = Time::now();
-				joystick_control = true;
+				//Joystick commands have higher priorty respect to movement commands.
+				//this make the joystick to take control for 100*20 ms
+				if (pwm_gain>0.01) joystick_counter = 100;
             }
         }
 		if (Bottle *b = port_movement_control.read(false))
 		{                
-			if (b->get(0).asInt()==1 && b->size()>=3)
+			if (b->get(0).asInt()==1)
 			{                                
 				//received a movement command
-				if (joystick_control==false)
+				if (joystick_counter==0)
 				{	
 					//execute the command only if the joystick is not controlling!
 					desired_direction = b->get(1).asDouble();
@@ -384,33 +393,14 @@ public:
 				wdt_mov_cmd = Time::now();
 			}
 		}
+		
 		//watchdog on received commands
         static double wdt_old=Time::now();
 		double wdt=Time::now();
 		//fprintf(stderr,"period: %f\n", wdt-wdt_old);
-		if (wdt-wdt_old > 0.040)
-		{
-			timeout_count++;
-		}
+		if (wdt-wdt_old > 0.040) { timeout_counter++;  }
 		wdt_old=wdt;
-
-		if (ikart_control_type != IKART_CONTROL_NONE)
-			{
-				if (joystick_control == true && wdt-wdt_joy_cmd > wdt_mov_timeout)
-				{
-					//no joystick commands have been received for xx ms. So turn off the joystick control.
-					joystick_control = false;
-				}
-				if (joystick_control == false && wdt-wdt_mov_cmd > wdt_mov_timeout)
-				{
-					//joystick control is currently off and also no commands have been received for xx ms. 
-					//So completely turn off the controller.
-
-					//fprintf(stderr,"No commands received in %f ms. Turning off control. \n",wdt_timeout/1000);
-					//ikart_control_type = IKART_CONTROL_NONE; 
-				}
-			}
-
+		if (joystick_counter>0)  { joystick_counter--; }
 
 	//	icmd->getControlModes(board_control_modes);
 	/*	for (int i=0; i<3; i++)
@@ -420,7 +410,7 @@ public:
 				turn_off_control();
 				break;
 			}
-*/
+	*/
 
 		//saturators
 		int MAX_VALUE = 0;
@@ -433,12 +423,12 @@ public:
 			MAX_VALUE = 200; // Maximum joint speed (deg/s)
 		}
 		
-		const double ratio = 0.7; // This value must be < 1 
 		linear_speed = linear_speed / 46000 * MAX_VALUE;
 		angular_speed = angular_speed / 46000 * MAX_VALUE;
 		pwm_gain = pwm_gain / 65000 * 1.0;
 		if (ikart_control_type == IKART_CONTROL_OPENLOOP)
 		{
+			const double ratio = 0.7; // This value must be < 1 
 			if (linear_speed  >  MAX_VALUE*ratio) linear_speed  = MAX_VALUE*ratio;
 			if (linear_speed  < -MAX_VALUE*ratio) linear_speed  = -MAX_VALUE*ratio;
 			if (angular_speed >  MAX_VALUE*(1-ratio)) angular_speed = MAX_VALUE*(1-ratio);
@@ -454,11 +444,16 @@ public:
 		FA *= pwm_gain;
 		FB *= pwm_gain;
 		FC *= pwm_gain;
-                
-		FA  = lp_filter(FA,0);
-        FB  = lp_filter(FB,1);
-        FC  = lp_filter(FC,2);
+        
+		//Use a low pass filter to obtain smooth control
+		if (filter_enabled)
+		{
+			FA  = lp_filter(FA,0);
+			FB  = lp_filter(FB,1);
+			FC  = lp_filter(FC,2);
+		}
 
+		//Apply the commands
 		if (ikart_control_type == IKART_CONTROL_OPENLOOP)
 		{
 			iopl->setOutput(0,-FA);
@@ -467,9 +462,6 @@ public:
 		}
 		else if	(ikart_control_type == IKART_CONTROL_SPEED)
 		{
-			//FA=3;
-			//FB=3;
-			//FC=3;
 			ivel->velocityMove(0,-FA);
 			ivel->velocityMove(1,-FB);
 			ivel->velocityMove(2,-FC);
@@ -509,7 +501,9 @@ public:
         if (t-t0>=PRINT_STATUS_PER)
         {
 			//fprintf (stdout,"alive, time: %f\n",t-t0);
-			fprintf (stdout,"Timeouts: %d\n",timeout_count);
+			fprintf (stdout,"Timeouts: %d\n",timeout_counter);
+			if (joystick_counter>0) 
+				fprintf (stdout,"Under joystick control (%d)\n",joystick_counter);
 			fprintf (stdout,"FA: %+.1f\n",FA);
 			fprintf (stdout,"FB: %+.1f\n",FB);
 			fprintf (stdout,"FC: %+.1f\n",FC);
@@ -542,7 +536,7 @@ public:
         Time::turboBoost();
 
         // get params from the RF
-        ctrlName=rf.check("ctrlName",Value("iKart")).asString();
+        ctrlName=rf.check("ctrlName",Value("ikart")).asString();
         robotName=rf.check("robot",Value("ikart")).asString();
 
         remoteName=slash+robotName+"/wheels";
