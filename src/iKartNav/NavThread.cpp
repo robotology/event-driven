@@ -83,7 +83,6 @@ bool NavThread::threadInit()
 void NavThread::run()
 {
     static double dVersus=1.0;
-    static const int MKS=VOCAB3('M','K','S');
 
     // (very poor) ODOMETRY
     // only used for target memory
@@ -116,9 +115,14 @@ void NavThread::run()
 
             mTarget=target;
             mHaveTarget=true;
+
+            printf("NEW TARGET H=%lf D=%lf\n",heading,distance);
+            fflush(stdout);
         }
         else if (cmd=="stop")
         {
+            printf("STOP\n");
+            fflush(stdout);
             mHaveTarget=false;
         }
     }
@@ -327,12 +331,18 @@ void NavThread::run()
     // SEND COMMANDS
     yarp::os::Bottle& cmd=mCommandPortO.prepare();
     cmd.clear();
-    //cmd.addVocab(MKS);
+    cmd.addInt(1);
     cmd.addDouble(-mVel.arg());
-    cmd.addDouble(mVel.mod());
-    cmd.addDouble(-mOmega);
+    cmd.addDouble(325000.0*mVel.mod());
+    cmd.addDouble(-2166.6*mOmega);
     cmd.addDouble(1.0); // pwm %
     mCommandPortO.write();
+
+    static unsigned int cycle=0;
+    if (!(++cycle%25))
+    {
+        printf("commands S=%lf H=%lf W=%lf\n",mVel.mod(),-mVel.arg(),-mOmega);
+    }
 }
 
 void NavThread::threadRelease()
