@@ -44,6 +44,13 @@ public:
             {   
                 mNavThread->readLaser(*rangeData);
             }
+
+            static unsigned int cycle=0;
+            if (!(++cycle%100))
+            {
+                printf("laser\n");
+                fflush(stdout);
+            }
         }
     }
     
@@ -55,6 +62,7 @@ public:
     virtual void onStop()
     {
         mLaserPortI.interrupt();
+        mLaserPortI.close();
     }
 
 protected:
