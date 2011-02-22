@@ -333,9 +333,9 @@ void NavThread::run()
     cmd.clear();
     cmd.addInt(1);
     cmd.addDouble(-mVel.arg());
-    cmd.addDouble(325000.0*mVel.mod());
-    cmd.addDouble(-2166.6*mOmega);
-    cmd.addDouble(1.0); // pwm %
+    cmd.addDouble(75000.0*mVel.mod());
+    cmd.addDouble(-500.0*mOmega);
+    cmd.addDouble(65000.0); // pwm %
     mCommandPortO.write();
 
     static unsigned int cycle=0;
