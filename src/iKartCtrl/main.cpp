@@ -229,13 +229,14 @@ public:
 			}
 		}
 
-		if (iKartCtrl_options.check("no_filter"))
+		if (rf.check("no_filter"))
 		{
 			printf("\n'no_filter' option found. Turning off PWM filter.\n");
 			filter_enabled=false;
 		}
 
-		if (iKartCtrl_options.check("laser")==false)
+		if (iKartCtrl_options.check("laser")==false ||
+			rf.check("no_laser")==true)
 		{
 			printf("\nLaser configuration not specified. Turning off laser.\n");
 			laser_enabled=false;
@@ -274,7 +275,7 @@ public:
 			}
 		}
 
-		if (iKartCtrl_options.check("no_motors"))
+		if (rf.check("no_motors"))
 		{
 			printf("\n'no_motors' option found. Skipping motor control part.\n");
 			motors_enabled=false;
@@ -389,7 +390,7 @@ public:
 				wdt_joy_cmd = Time::now();
 				//Joystick commands have higher priorty respect to movement commands.
 				//this make the joystick to take control for 100*20 ms
-				if (pwm_gain>0.01) joystick_counter = 100;
+				if (pwm_gain>10) joystick_counter = 100;
             }
         }
 		if (Bottle *b = port_movement_control.read(false))
@@ -609,8 +610,9 @@ int main(int argc, char *argv[])
 		printf("\n");
         printf("Possible options: \n");
 		printf("'no_filter' disables command filtering.\n");
-		printf("'no_motors' motor interface is not opened. Works with laser on.\n");
-		printf("'laser' starts the laser with the specified configuration file.\n");
+		printf("'no_motors' motor interface will not be opened.\n");
+		printf("'no_laser' laser interface will not be opened.\n");
+		printf("'laser <filename>' starts the laser with the specified configuration file.\n");
 		return 0;
     }
 
