@@ -229,16 +229,7 @@ public:
 			}
 		}
 
-		if (iKartCtrl_options.check("help"))
-		{
-			printf("\nPossible options: \n");
-			printf("'no_filter' disables command filtering.\n");
-			printf("'no_motors' motor interface is not opened. Works with laser on.\n");
-			printf("'laser' starts the laser with the specified configuration file.\n");
-			return false;
-		}
-
-		if (iKartCtrl_options.check("no_filter")==false)
+		if (iKartCtrl_options.check("no_filter"))
 		{
 			printf("\n'no_filter' option found. Turning off PWM filter.\n");
 			filter_enabled=false;
@@ -615,9 +606,12 @@ int main(int argc, char *argv[])
 
     if (rf.check("help"))
     {
-        cout << "Options:" << endl << endl;
-        cout << "\tNo options at the moment"<< endl;
-        return 0;
+		printf("\n");
+        printf("Possible options: \n");
+		printf("'no_filter' disables command filtering.\n");
+		printf("'no_motors' motor interface is not opened. Works with laser on.\n");
+		printf("'laser' starts the laser with the specified configuration file.\n");
+		return 0;
     }
 
     Network yarp;
