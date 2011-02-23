@@ -252,6 +252,7 @@ public:
 			}
 			else
 			{
+				printf("\nOpening the laser interface...\n");
 				Property laser_options;
 				laser_options.fromConfigFile(laser_config_filename.c_str());
 				laser_options.put("CONFIG_PATH",rf.getContextPath().c_str());
@@ -272,6 +273,8 @@ public:
 					fprintf(stderr,"ERROR: cannot view the laser interface\nreturning...\n");
 					return false;
 				}
+				// open the laser output port
+				port_laser_output.open((localName+"/laser:o").c_str());
 			}
 		}
 
@@ -283,6 +286,7 @@ public:
 		if (!motors_enabled) return true;
 
         // open the control board driver
+		printf("\nOpening the motors interface...\n");
 		control_board_driver=new PolyDriver;
         Property control_board_options("(device remote_controlboard)");
         control_board_options.put("remote",remoteName.c_str());
@@ -306,10 +310,9 @@ public:
 			fprintf(stderr,"ERROR: one or more devices has not been viewed\nreturning...\n");
 			//return false;
 		}
-        // open ports
+        // open control input ports
         port_movement_control.open((localName+"/control:i").c_str());
 		port_joystick_control.open((localName+"/joystick:i").c_str());
-		port_laser_output.open((localName+"/laser:o").c_str());
 
 		//set the control type
 		if (!rf.check("no_start"))
@@ -612,7 +615,9 @@ int main(int argc, char *argv[])
 		printf("'no_filter' disables command filtering.\n");
 		printf("'no_motors' motor interface will not be opened.\n");
 		printf("'no_laser' laser interface will not be opened.\n");
+		printf("'no_start' do not automatically enables pwm.\n");
 		printf("'laser <filename>' starts the laser with the specified configuration file.\n");
+		printf("\n");
 		return 0;
     }
 
