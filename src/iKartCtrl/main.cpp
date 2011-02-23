@@ -133,6 +133,7 @@ protected:
 	BufferedPort<yarp::sig::Vector> port_laser_output;
 
     bool   filter_enabled;
+	bool   motors_enabled;
     string remoteName;
     string localName;
 
@@ -170,6 +171,7 @@ public:
 
 		filter_enabled = true;
 		laser_enabled  = true;
+		motors_enabled = true;
     }
 
 	void set_ikart_control_type(int type)
@@ -227,6 +229,15 @@ public:
 			}
 		}
 
+		if (iKartCtrl_options.check("help"))
+		{
+			printf("\nPossible options: \n");
+			printf("'no_filter' disables command filtering.\n");
+			printf("'no_motors' motor interface is not opened. Works with laser on.\n");
+			printf("'laser' starts the laser with the specified configuration file.\n");
+			return false;
+		}
+
 		if (iKartCtrl_options.check("no_filter")==false)
 		{
 			printf("\n'no_filter' option found. Turning off PWM filter.\n");
@@ -271,6 +282,13 @@ public:
 				}
 			}
 		}
+
+		if (iKartCtrl_options.check("no_motors"))
+		{
+			printf("\n'no_motors' option found. Skipping motor control part.\n");
+			motors_enabled=false;
+		}
+		if (!motors_enabled) return true;
 
         // open the control board driver
 		control_board_driver=new PolyDriver;
@@ -357,6 +375,12 @@ public:
 			{
 				fprintf(stderr,"Error reading laser data, code: %d\n", res);
 			}
+		}
+		
+		// if motors are disabled the loop finishes here.
+		if (!motors_enabled)
+		{
+			return;
 		}
 
 		static double wdt_mov_cmd=Time::now();
