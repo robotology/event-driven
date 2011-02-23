@@ -110,18 +110,19 @@ const CvScalar color_black = cvScalar(0,0,0);
 	for (int yi=0; yi<img->height; yi+=step)
 		cvLine(img,cvPoint(0,yi),cvPoint(img->width,yi),color_black);
 */
-	cvPutText(img, "0.5m", cvPoint(img->width/2,float(img->height)/2.0-float(step)*1.0), &font, cvScalar(0, 0, 0, 0));
-	cvCircle(img,cvPoint(img->width/2,img->height/2),step*1,color_black);
-	cvPutText(img, "1m", cvPoint(img->width/2,float(img->height)/2.0-float(step)*2.0), &font, cvScalar(0, 0, 0, 0));
-	cvCircle(img,cvPoint(img->width/2,img->height/2),step*2,color_black);
-	cvPutText(img, "1.5m", cvPoint(img->width/2,float(img->height)/2.0-float(step)*3.0), &font, cvScalar(0, 0, 0, 0));
-	cvCircle(img,cvPoint(img->width/2,img->height/2),step*3,color_black);
-	cvPutText(img, "2m", cvPoint(img->width/2,float(img->height)/2.0-float(step)*4.0), &font, cvScalar(0, 0, 0, 0));
-	cvCircle(img,cvPoint(img->width/2,img->height/2),step*4,color_black);
-	cvPutText(img, "2.5m", cvPoint(img->width/2,float(img->height)/2.0-float(step)*5.0), &font, cvScalar(0, 0, 0, 0));
-	cvCircle(img,cvPoint(img->width/2,img->height/2),step*5,color_black);
-	cvPutText(img, "3.0m", cvPoint(img->width/2,float(img->height)/2.0-float(step)*6.0), &font, cvScalar(0, 0, 0, 0));
-	cvCircle(img,cvPoint(img->width/2,img->height/2),step*6,color_black);
+	char buff [10];
+	int  rad_step=0;
+	if   (scale>0.06) 
+		rad_step=1;
+	else             
+		rad_step=2;
+	for (int rad=0; rad<20; rad+=rad_step)
+	{
+		sprintf (buff,"%3.1fm",float(rad)/2);
+		cvPutText(img, buff, cvPoint(img->width/2,float(img->height)/2.0-float(step)*rad), &font, cvScalar(0, 0, 0, 0));
+		cvCircle(img,cvPoint(img->width/2,img->height/2),step*rad,color_black);
+	}
+
 }
 
 void drawRobot (IplImage *img)
@@ -139,6 +140,7 @@ void drawRobot (IplImage *img)
 void drawLaser(const Vector *v, IplImage *img)
 {
 const CvScalar color_white = cvScalar(255,255,255);
+const CvScalar color_red   = cvScalar(0,0,255);
 const CvScalar color_black = cvScalar(0,0,0);
     cvZero(img);
 	cvRectangle(img,cvPoint(0,0),cvPoint(img->width,img->height),cvScalar(255,0,0),-1);
@@ -180,6 +182,26 @@ const CvScalar color_black = cvScalar(0,0,0);
 		//draw a line
 		cvLine(img,center,ray,color_white,thickness);
 	}
+	/*int thickness = 4;
+	for (int i=0; i<1080; i++)
+	{
+		lenght=(*v)[i];
+		if      (lenght<0)     lenght = 0;
+		else if (lenght>10000) lenght = 10000; //10m maximum
+		angle=i/1080.0*270.0-(90-(360-270)/2);
+//		lenght=i;
+		double x = lenght*scale*cos(angle/180*3.14);
+		double y =-lenght*scale*sin(angle/180*3.14);
+		CvPoint ray;
+		ray.x=int(x);
+		ray.y=int(y);
+		ray.x += center.x;
+		ray.y += center.y;
+
+		int thickness = 4;
+		cvLine(img,ray,ray,color_red,thickness);
+	}*/
+	
 }
 
 
@@ -221,8 +243,16 @@ int main(int argc, char *argv[])
         //if ESC is pressed, exit.
 		int keypressed = cvWaitKey(2); //wait 2ms. Lower values do not work under Linux
         if(keypressed == 27) exit = true;
-        if(keypressed == '+' && scale <0.5) scale+=0.025;
-		if(keypressed == '-' && scale >0.1) scale-=0.025;
+        if(keypressed == 'w' && scale <0.5)
+		{
+			scale+=0.001;
+			printf("new scale factor is:%f\n",scale);
+		}
+		if(keypressed == 's' && scale >0.015) 
+		{
+			scale-=0.001;
+			printf("new scale factor is:%f\n",scale);
+		}
 		if(keypressed == 'v' ) verbose= (!verbose);
     }
 
