@@ -7,7 +7,7 @@ ikart
 
 <module>
    <name>iCubInterface</name>
-   <parameters>--context iKart --from conf/iKart.ini</parameters>
+   <parameters>--context iKart --config conf/iKart.ini</parameters>
    <node>ikart</node>
    <stdio>ikart</stdio>
    <tag>iKartInterface</tag>
