@@ -334,7 +334,7 @@ void NavThread::run()
     cmd.addInt(1);
     cmd.addDouble(-mVel.arg());
     cmd.addDouble(75000.0*mVel.mod());
-    cmd.addDouble(-500.0*mOmega);
+    cmd.addDouble(-1000.0*mOmega);
     cmd.addDouble(65000.0); // pwm %
     mCommandPortO.write();
 
@@ -413,11 +413,15 @@ void NavThread::readLaser(yarp::sig::Vector& rangeData)
     mMemBuffOld=mMemBuffNew;
     mMemBuffNew=swap;
 
+    double range;
+
     for (int i=0; i<mNumSamples; ++i)
     {
-        if (rangeData[i]<mRangeMax)
+        range=0.001*rangeData[i];
+
+        if (range<mRangeMax)
         {
-            mObjects[i]=rfPos+rangeData[i]*Vec2D(mOdoRot+double(i-mNumSamplesByTwo)*mAngularRes);
+            mObjects[i]=rfPos+0.001*range*Vec2D(mOdoRot+double(i-mNumSamplesByTwo)*mAngularRes);
             mIsValid[i]=true;
         }
         else
