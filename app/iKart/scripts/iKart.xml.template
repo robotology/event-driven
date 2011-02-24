@@ -7,7 +7,7 @@ ikart
 
 <module>
    <name>iCubInterface</name>
-   <parameters>--context iKart --config conf/iKart.ini</parameters>
+   <parameters>--context iKart --from conf/iKart.ini</parameters>
    <node>ikart</node>
    <stdio>ikart</stdio>
    <tag>iKartInterface</tag>
@@ -27,6 +27,14 @@ ikart
    <node>ikart</node>
    <stdio>ikart</stdio>
    <tag>iKartCtrl</tag>
+</module>
+
+<module>
+   <name>joystickCtrl</name>
+   <parameters>--context joystickCtrl --from conf/xbox.ini</parameters>
+   <node>ikart</node>
+   <stdio>ikart</stdio>
+   <tag>joystickCtrl</tag>
 </module>
 
 <module>
