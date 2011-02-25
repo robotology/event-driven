@@ -31,7 +31,7 @@ ikart
 
 <module>
    <name>joystickCtrl</name>
-   <parameters>--context joystickCtrl --from conf/xbox.ini</parameters>
+   <parameters>--context joystickCtrl --from conf/xbox_linux.ini</parameters>
    <node>ikart</node>
    <stdio>ikart</stdio>
    <tag>joystickCtrl</tag>
