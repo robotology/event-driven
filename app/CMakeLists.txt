@@ -16,8 +16,6 @@ SET(ICUB_APPLICATIONS_PREFIX "$ENV{ICUB_ROOT}"  CACHE PATH "Application path pre
 				
 
 add_subdirectory(eMorphApplication)
-add_subdirectory(iKart)
-add_subdirectory(laserScannerGui)
 add_subdirectory(objectInteractorApp)
 
 ## make all applications show up as single target
