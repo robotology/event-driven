@@ -10,16 +10,12 @@ add_subdirectory(device2yarp2)
 add_subdirectory(dvsGrabber)
 add_subdirectory(eventEdgeExtractor)
 add_subdirectory(harmonicPathPlanner)
-add_subdirectory(iKartCtrl)
 #add_subdirectory(objectInteractor)
 add_subdirectory(opticalFlow)
 #add_subdirectory(logpolar_frame_converter)
 #add_subdirectory(logpolar_frame_converter_add)
-add_subdirectory(laserScannerGui)
 add_subdirectory(visualAligner)
-add_subdirectory(iKartNav)
-add_subdirectory(iKartBatteryManager)
-add_subdirectory(iKartBatteryDisplay)
+
 
 
 
