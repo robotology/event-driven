@@ -31,6 +31,7 @@
 using namespace yarp::os;
 using namespace yarp::sig;
 using namespace yarp::dev;
+using namespace iCub::iKin;
 using namespace std;
 
 #define THRATE 30
@@ -95,6 +96,7 @@ bool vAlignerThread::threadInit() {
     leftDragonPort.open(getName("/leftDragon:i").c_str());
     rightDragonPort.open(getName("/rightDragon:i").c_str());
     vergencePort.open(getName("/vergence:i").c_str());
+
     //initializing gazecontrollerclient
     Property option;
     option.put("device","gazecontrollerclient");
@@ -112,6 +114,55 @@ bool vAlignerThread::threadInit() {
     }
     else
         return false;
+
+    //initilisation of the torso
+    string torsoPort, headPort;
+  
+    torsoPort = "/" + robotName + "/torso";
+    headPort = "/" + robotName + "/head";
+
+    optionsTorso.put("device", "remote_controlboard");
+    optionsTorso.put("local", "/localTorso");
+    optionsTorso.put("remote", torsoPort.c_str() );
+
+    robotTorso = new PolyDriver(optionsTorso);
+
+    if (!robotTorso->isValid()) {
+        printf("Cannot connect to robot torso\n");
+    }
+    robotTorso->view(encTorso);
+    if ( encTorso==NULL) {
+        printf("Cannot get interface to robot torso\n");
+        robotTorso->close();
+    }
+
+    optionsHead.put("device", "remote_controlboard");
+    optionsHead.put("local", "/localhead");
+    optionsHead.put("remote", headPort.c_str());
+
+    robotHead = new PolyDriver (optionsHead);
+
+    if (!robotHead->isValid()){
+        printf("cannot connect to robot head\n");
+    }
+    robotHead->view(encHead);
+    if (encHead == NULL) {
+        printf("cannot get interface to the head\n");
+        robotHead->close();
+    }
+
+    // initilisation of the reference to the left and right eyes
+    rightEye = new iCubEye("right");
+    leftEye = new iCubEye("left");
+
+    for (int i = 0; i < 8; i++ ){
+        leftEye->releaseLink(i);
+        rightEye->releaseLink(i);
+    }
+  
+	chainRightEye=rightEye->asChain();
+  	chainLeftEye =leftEye->asChain();
+
     return true;
 }
 
@@ -176,7 +227,6 @@ void vAlignerThread::run() {
         if(resized) {
             Vector angles(3);
             bool b = igaze->getAngles(angles);
-            double h, alfa, rightHat, leftHat;
             printf("azim %f, elevation %f, vergence %f \n",angles[0],angles[1],angles[2]);
             double vergence = (angles[2] * 3.14) / 180;
             double version = (angles[0] * 3.14) / 180;
@@ -193,7 +243,6 @@ void vAlignerThread::shift(int shift, ImageOf<PixelRgb>& outImage) {
     int padding = leftDragonImage->getPadding();
     int paddingOut = outImage.getPadding();
     unsigned char* pOutput=outImage.getRawImage();
-    double d;
     double centerX=width + shift;
     double centerY=height;
     if(shift >= 0) {

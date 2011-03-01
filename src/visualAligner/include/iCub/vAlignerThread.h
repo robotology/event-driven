@@ -28,6 +28,7 @@
 #define _VISUAL_ALIGNER_THREAD_H_
 
 #include <yarp/os/RateThread.h>
+#include <iCub/iKin/iKinFwd.h>
 #include <yarp/os/BufferedPort.h>
 #include <yarp/sig/all.h>
 #include <yarp/dev/all.h>
@@ -36,21 +37,28 @@
 
 class vAlignerThread : public yarp::os::RateThread {
 private:
-    int count;                          //loop counter of the thread
-    int width, height;                  //dimension of the extended input image (extending)
-    int height_orig, width_orig;        //original dimension of the input and output images
-    yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelRgb> > leftDragonPort;       //port where the output of the dragonfly left is read
-    yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelRgb> > rightDragonPort;      //port where the output of the dragonfly right is read
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> > outPort;               //port whre the output is sent
-    yarp::os::BufferedPort<yarp::os::Bottle > vergencePort;          //port where the value of the vergence is received
-    yarp::sig::ImageOf <yarp::sig::PixelRgb>* leftDragonImage;          //image output of the dragonfly left is saved
-    yarp::sig::ImageOf <yarp::sig::PixelRgb>* rightDragonImage;         //image where the output of the dragonfly right is saved
-    yarp::sig::ImageOf <yarp::sig::PixelRgb>* tmp;                      //temporary image for correct port reading
-    std::string name;                   // rootname of all the ports opened by this thread
-    bool resized;                       // flag to check if the variables have been already resized
-    int shiftValue;                          //value of the shift between dragonfly (this is vergence related)
-    yarp::dev::IGazeControl *igaze;         //Ikin controller of the gaze
-    yarp::dev::PolyDriver* clientGazeCtrl;  //polydriver for the gaze controller
+    int count;                                                                              // loop counter of the thread
+    int width, height;                                                                      // dimension of the extended input image (extending)
+    int height_orig, width_orig;                                                            // original dimension of the input and output images
+    yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelRgb> > leftDragonPort;       // port where the output of the dragonfly left is read
+    yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelRgb> > rightDragonPort;      // port where the output of the dragonfly right is read
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> > outPort;               // port whre the output is sent
+    yarp::os::BufferedPort<yarp::os::Bottle > vergencePort;                                 // port where the value of the vergence is received
+    yarp::sig::ImageOf <yarp::sig::PixelRgb>* leftDragonImage;                              // image output of the dragonfly left is saved
+    yarp::sig::ImageOf <yarp::sig::PixelRgb>* rightDragonImage;                             // image where the output of the dragonfly right is saved
+    yarp::sig::ImageOf <yarp::sig::PixelRgb>* tmp;                                          // temporary image for correct port reading
+    std::string name;                                                                       // rootname of all the ports opened by this thread
+    bool resized;                                                                           // flag to check if the variables have been already resized
+    int shiftValue;                                                                         // value of the shift between dragonfly (this is vergence related)
+    yarp::dev::IGazeControl *igaze;                                                         // Ikin controller of the gaze
+    yarp::dev::PolyDriver* clientGazeCtrl;                                                  // polydriver for the gaze controller
+    iCub::iKin::iCubEye *leftEye, *rightEye;                                                // reference to the eye kinematics
+    yarp::dev::PolyDriver *robotHead,*robotTorso;                                                      // driver for the torso
+    iCub::iKin::iKinLink *leftLink, *rightLink;                                             // ikinLink of the left and right eye
+    iCub::iKin::iKinChain *chainRightEye,  *chainLeftEye;                                   // ikinChain of the left and right eye
+    yarp::os::Property optionsHead, optionsTorso;                                           // option for the torso
+    yarp::dev::IEncoders *encHead, *encTorso;                                               // encoder for the torso
+    std::string robotName;                                                                  // name of the robot
 public:
     /**
     * default constructor

@@ -32,7 +32,7 @@
  * @ingroup icub_eMorph
  *
  *
- * This is a module that reads independently from different camera with different tegnologies ( DVS, traditional colour camera)
+ * This is a module that reads independently from different cameras with different tegnologies ( DVS, traditional colour camera)
  * 
  * \section reference
  * The address-event representation communication protocol AER 0.02, Caltech, Pasadena, CA, Internal Memo, Feb. 1993 [Online]. Available:
