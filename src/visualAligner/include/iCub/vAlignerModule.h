@@ -151,6 +151,7 @@
 /**
 * CHANGE LOG
 * 08/02/2011 : removed the distance reducing factor                                             @author Rea
+* 29/02/2011 : added the kinematic of the left/right eyes and torso                             @author Rea
 */
 
 #include <iostream>

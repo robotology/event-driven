@@ -173,10 +173,16 @@ void vAlignerThread::interrupt() {
     vergencePort.interrupt();
 }
 
+void vAlignerThread::setRobotname(string str) {
+    robotName = str;
+    printf("robotname: %s \n", robotName.c_str());
+}
+
 void vAlignerThread::setName(string str) {
     this->name=str;
-    printf("name: %s", name.c_str());
+    printf("name: %s \n", name.c_str());
 }
+
 
 std::string vAlignerThread::getName(const char* p) {
     string str(name);

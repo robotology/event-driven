@@ -58,6 +58,7 @@ bool vAlignerModule::configure(yarp::os::ResourceFinder &rf) {
                            "Robot name (string)").asString();
     robotPortName         = "/" + robotName + "/head";
 
+
     /*
     * attach a port of the same name as the module (prefixed with a /) to the module
     * so that messages received from the port are redirected to the respond method
@@ -74,6 +75,7 @@ bool vAlignerModule::configure(yarp::os::ResourceFinder &rf) {
 
     vaThread=new vAlignerThread();
     vaThread->setName(getName().c_str());
+    vaThread->setRobotname(robotName);
     vaThread->start();
 
     return true ;       // let the RFModule know everything went well

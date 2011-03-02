@@ -95,6 +95,12 @@ public:
     * @param str rootname as a string
     */
     void setName(std::string str);
+
+    /**
+    * function that set the robotname for the ports that will be opened
+    * @param str robotname as a string
+    */
+    void setRobotname(std::string str);
     
     /**
     * function that returns the original root name and appends another string iff passed as parameter
