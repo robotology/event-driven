@@ -1,10 +1,12 @@
+# Copyright: (C) 2010 RobotCub Consortium
+# Authors: Francesco Rea
+# CopyPolicy: Released under the terms of the GNU GPL v2.0.
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
+
 
 SET(PROJECTNAME cFrameConverter)
 PROJECT(${PROJECTNAME})
 
-SET(YARP_DIR "$ENV{YARP_ROOT}" CACHE LOCATION "where is yarp?")
-FIND_PACKAGE(YARP)
 
 FILE(GLOB folder_source src/*.cpp)
 FILE(GLOB folder_header include/*.h)

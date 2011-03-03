@@ -1,1 +1,0 @@
-cmd_/home/rea/work/iCub/contrib/src/eMorph/driver/retina.ko := ld -r -m elf_x86_64 -T /usr/src/linux-headers-2.6.32-25-generic/scripts/module-common.lds --build-id -o /home/rea/work/iCub/contrib/src/eMorph/driver/retina.ko /home/rea/work/iCub/contrib/src/eMorph/driver/retina.o /home/rea/work/iCub/contrib/src/eMorph/driver/retina.mod.o

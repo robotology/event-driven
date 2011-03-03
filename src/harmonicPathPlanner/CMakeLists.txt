@@ -1,12 +1,11 @@
+# Copyright: (C) 2010 RobotCub Consortium
+# Authors: Francesco Rea
+# CopyPolicy: Released under the terms of the GNU GPL v2.0.
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
 SET(PROJECTNAME "harmonicPathPlanner")
 PROJECT(${PROJECTNAME})
 
-FIND_PACKAGE(YARP)
-FIND_PACKAGE(ICUB)
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${ICUB_DIR}/conf ${YARP_DIR}/conf)
-FIND_PACKAGE(OpenCV)
 
 INCLUDE_DIRECTORIES(${OPENCV_INCLUDE_DIR}
                     ${YARP_INCLUDE_DIRS} )

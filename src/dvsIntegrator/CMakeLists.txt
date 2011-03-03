@@ -1,37 +1,11 @@
-
-#author Francesco Rea
-
+# Copyright: (C) 2010 RobotCub Consortium
+# Authors: Francesco Rea
+# CopyPolicy: Released under the terms of the GNU GPL v2.0.
+CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
 SET(KEYWORD "dvsIntegrator")
 
 PROJECT(${KEYWORD})
-
-
-FIND_PACKAGE(ICUB)
-FIND_PACKAGE(YARP REQUIRED)
-FIND_PACKAGE(OpenCV REQUIRED)
-#FIND_PACKAGE(ODE REQUIRED)
-FIND_PACKAGE(IPP REQUIRED)
-#FIND_PACKAGE(QT)
-
-#---------- GTK Library -----------------------------
-FIND_PACKAGE(GtkPlus REQUIRED)
-ADD_DEFINITIONS(${GTKPLUS_C_FLAGS})
-LINK_LIBRARIES(${GTKPLUS_LINK_FLAGS})
-INCLUDE_DIRECTORIES(${GTKPLUS_INCLUDE_DIR})
-#---------------------------------------
-
-#---------- LogPolar Library---------------
-#FIND_PACKAGE(LOGPOLAR REQUIRED)
-#LINK_LIBRARIES(${LOGPOLAR_LIBRARIES})
-#INCLUDE_DIRECTORIES(${LOGPOLAR_INCLUDE_DIRS})
-#---------------------------------------
-
-#------ Ikin Lib -------------------
-FIND_PACKAGE(IKIN REQUIRED)
-INCLUDE_DIRECTORIES(${IKIN_INCLUDE_DIRS})
-#----------------------------------
-
 
 #search for includes
 INCLUDE_DIRECTORIES(
