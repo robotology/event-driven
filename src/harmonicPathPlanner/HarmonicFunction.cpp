@@ -53,6 +53,11 @@ HarmonicFunction::~HarmonicFunction() {
 }
 
 void HarmonicFunction::init() {
+    FREESPACE_POTENTIAL = 0.5;
+    OBSTACLE_POTENTIAL = 0.0;//1.0
+    DIRICHLET_POTENTIAL = 0.0;//1.0
+    GOAL_POTENTIAL = 1.0; //-0.3
+
 
     // set map dimensions
     for(int i=0; i<dims; i++) {

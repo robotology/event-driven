@@ -54,10 +54,10 @@ namespace iCub {
         CvScalar goalColor;
         CvScalar dirichletColor;
 
-        const static double FREESPACE_POTENTIAL = 0.5;
-        const static double OBSTACLE_POTENTIAL = 0.0;//1.0
-        const static double DIRICHLET_POTENTIAL = 0.0;//1.0
-        const static double GOAL_POTENTIAL = 1.0; //-0.3
+        double FREESPACE_POTENTIAL;
+        double OBSTACLE_POTENTIAL;//1.0
+        double DIRICHLET_POTENTIAL;//1.0
+        double GOAL_POTENTIAL; //-0.3
         
     public:
         HarmonicFunction(yarp::sig::Vector min, yarp::sig::Vector max, yarp::sig::Vector res, double om, int maxIter, double thresh, double plotFac, bool dispMode);
