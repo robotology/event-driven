@@ -981,7 +981,7 @@ GtkWidget* createMainWindow(void) {
                       G_CALLBACK (cb_digits_pux), NULL);
 
 
-        label = gtk_label_new ("reqPd");
+    label = gtk_label_new ("reqPd");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
