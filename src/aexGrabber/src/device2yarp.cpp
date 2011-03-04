@@ -124,31 +124,31 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
             
     printf("valus from DVS128Fast.xml \n");
     // from DVS128Fast.xml, set Tmpdiff128
-    cas = 1966;        // cas
-    injg = 1137667;       // injGnd
+    cas = 52458;        // cas
+    injg = 101508;       // injGnd
     reqPd = 16777215;    // reqPd
     pux = 8053457;     // puX
     diffoff = 133;        // diffOff
     req = 160712;      // req
     refr = 944;           // refr
     puy = 16777215;    // puY
-    diffon = 205255;      // diffOn
-    diff = 3207;       // diff 
-    foll = 278;          // foll
-    pr= 217;            //Pr 
+    diffon = 639172;      // diffOn
+    diff = 30108;       // diff 
+    foll = 20;          // foll
+    pr= 8;            //Pr 
     
-    casRight = 1966;        // cas
-    injgRight = 1137667;       // injGnd
+    casRight = 52458;        // cas
+    injgRight = 101508;       // injGnd
     reqPdRight = 16777215;    // reqPd
     puxRight = 8053457;     // puX
     diffoffRight = 133;        // diffOff
     reqRight = 160712;      // req
     refrRight = 944;           // refr
     puyRight = 16777215;    // puY
-    diffonRight = 205255;      // diffOn
-    diffRight = 3207;       // diff 
-    follRight = 278;          // foll
-    prRight = 217;            //Pr 
+    diffonRight = 639172;      // diffOn
+    diffRight = 30108;       // diff 
+    follRight = 20;          // foll
+    prRight = 8;            //Pr 
             
            
 #else
@@ -635,7 +635,6 @@ void device2yarp::closeDevice(){
 }
 
 void  device2yarp::run() {
-    
     //printf("reading \n");
     r = read(file_desc, pmon, monBufSize_b);
     monBufEvents = r / sizeof(struct aer);
@@ -645,20 +644,18 @@ void  device2yarp::run() {
         return;
     }
     //printf("device read %d \n",monBufEvents);
-    //ec += monBufEvents;
     int k = 0;
     int k2 = 0;
     uint32_t * buf2 = (uint32_t*)buffer;
     u32 a, t;
 
     for (int i = 0; i < monBufEvents; i++) {
-        
+        // double buffer!!
         a = pmon[i].address;
         t = pmon[i].timestamp * 0.128;
         //printf("a: %x  t:%d k: %d nEvents: %d \n",a,t,k,monBufEvents);            
         buf2[k2++] = a;
         buf2[k2++] = t;
-
         //printf("address:%d ; timestamp:%d \n", blob, timestamp);
     }
 
