@@ -51,6 +51,13 @@ public:
     */
     virtual void onRead(sendingBuffer& b);
 
+
+    /**
+    * function that returns a pointer to read buffer 
+    * @return pointer to the buffer that has to be read
+    */
+    char* getBuffer() { return pcRead; };
+
     /**
     * @brief returns a mono image of the output of the dvs camera (either left or right)
     * @param pixelMono reference to the image contains the counts of events
@@ -91,9 +98,14 @@ public:
 
 private:
     int retinalSize;                                            // dimension of the retina default 128x128
+    int totDim;                                                 // total dimension of the read buffer
     int outputWidth, outputHeight;                              // dimension of the output image default 320x240
-    unsigned long previousTimeStamp;                        // timestamp at the previous run
-    
+    unsigned long previousTimeStamp;                            // timestamp at the previous run
+    char* converterBuffer;                                      // buffer used as saved
+    char* receivedBuffer;                                       // temporarely pointer to the received buffer
+    char* pcRead;                                               // pointer to the location where to read events
+    char* pcBuffer;                                             // pointer where to buffer events
+
     unmask unmask_events;           //object in charge of unmasking the events
     converter convert_events;       //object in charge of converting the events into an image
 

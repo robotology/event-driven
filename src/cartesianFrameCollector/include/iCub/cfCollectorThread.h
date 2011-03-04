@@ -32,10 +32,11 @@
 #include <iCub/cartesianFrameConverter.h>
 #include <iostream>
 #include <time.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <inttypes.h>
+//#include <sys/time.h>
+//#include <sys/types.h>
+//#include <inttypes.h>
 
+typedef unsigned long long int uint64_t;
 #define u64 uint64_t
 
 
@@ -43,8 +44,8 @@ class cfCollectorThread : public yarp::os::RateThread {
 private:
     
     int count;                          // loop counter of the thread
-    struct timeval tvstart,tvend;
-    struct timespec start_time, stop_time;
+    //struct timeval tvstart,tvend;
+    //struct timespec start_time, stop_time;
     u64 Tnow;
     unsigned long int precl;
     unsigned long int lc;
@@ -57,6 +58,8 @@ private:
     int height_orig, width_orig;        // original dimension of the input and output images
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPort;       // port whre the output (left) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPortRight;       // port whre the output (right) is sent
+    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeft;                                 //image representing the signal on the leftcamera
+    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRight;                                 //image representing the signal on the right camera
     std::string name;                   // rootname of all the ports opened by this thread
     bool synchronised;                       // flag to check whether the microsecond counter has been synchronised
     bool greaterHalf;                     // indicates whether the counter has passed the half of the range
@@ -69,7 +72,10 @@ private:
     yarp::os::Semaphore mutex;          // semaphore thar regulates the access to the buffer resource
     clock_t endTime,startTime;
     long T1,T2;
-    cFrameConverter* cfConverter; //receives real-time events
+    cFrameConverter* cfConverter;           //receives real-time events
+    unmask unmask_events;                   // object that unmask events
+    char* bufferRead;                       // buffer of events read from the port
+    char* bufferCopy;                       // local copy of the events read
 public:
     /**
     * default constructor
@@ -120,6 +126,15 @@ public:
     * @return height height of the input image
     */
     void resize(int width, int height);
+
+    /**
+    * @brief returns a mono image of the output of the dvs camera (either left or right)
+    * @param pixelMono reference to the image contains the counts of events
+    * @param minCount reference to the min timestamp in the frame
+    * @param maxCount reference to the max timestamp in the frame
+    * @param camera reference to the camera the image belongs LEFT 1, RIGHT 1
+    */
+    void getMonoImage(yarp::sig::ImageOf<yarp::sig::PixelMono>* image, unsigned long minCount,unsigned long maxCount, bool camera);
 
 };
 

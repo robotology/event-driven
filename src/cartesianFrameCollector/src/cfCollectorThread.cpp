@@ -64,7 +64,7 @@ bool cfCollectorThread::threadInit() {
     //T1 = times(&start_time);
     microseconds = 0;
     microsecondsPrev = 0;
-    gettimeofday(&tvstart, NULL);
+    
     return true;
 }
 
@@ -86,6 +86,28 @@ std::string cfCollectorThread::getName(const char* p) {
 void cfCollectorThread::resize(int widthp, int heightp) {
 }
 
+
+void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsigned long minCount,unsigned long maxCount, bool camera){
+
+}
+
+void cfCollectorThread::run() {
+    // reads the buffer received
+    bufferRead = cfConverter->getBuffer();
+    // saves it into a working buffer
+    memcpy(bufferCopy, bufferRead, 8192);
+    // extract a chunk/unmask the chunk
+    unmask_events.unmaskData(bufferCopy, 8192);
+    // creates a frame 
+    getMonoImage(imageLeft,0,100,1);
+    getMonoImage(imageRight,0,100,0);
+    // passes the fram to the plotter
+    //plotter->setImageLeft();
+    //plotter->setImageRight();
+}
+
+
+/*
 void cfCollectorThread::run() {
     count++;
     if(count == 100000) {
@@ -161,22 +183,6 @@ void cfCollectorThread::run() {
     }
     precl = lc;
 
-    /*if (lc > maxCount) {
-        printf("Error>%f  %d,%d,%d \n",interval,minCount,lc,maxCount);
-        minCount = lc - interval * 2; //cfConverter->getEldestTimeStamp();        
-        startTimer = Time::now();
-        synchronised = true;  
-    }*/
-    
-    /*if( minCount >= MAXVALUE) {
-        printf("reached max counter \n");
-        minCount = lc - interval * 2;
-        if (minCount < 0) minCount = 0;
-        startTimer = Time::now();
-        synchronised = true; 
-    }
-    */
-    
     
     microsecondsPrev = microseconds;
     if(outPort.getOutputCount()) {
@@ -203,6 +209,7 @@ void cfCollectorThread::run() {
     //minCount = cfConverter->getLastTimeStamp(); //get the last before going to sleep
     
 }
+*/
 
 void cfCollectorThread::threadRelease() {
     outPort.close();

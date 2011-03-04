@@ -26,14 +26,22 @@
 #include <iCub/cartesianFrameConverter.h>
 #include <cassert>
 
+#define BUFFERDIM 73728
+#define TH1 24576
+#define TH2 49152
+
 using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
 cFrameConverter::cFrameConverter():convert_events(128,128) {
     retinalSize=128;
-    //outputWidth=320;
-    //outputHeight=240;
+    totDim = 0;
+    pcRead = 0;
+    receivedBuffer = 0;
+    converterBuffer = (char*) malloc(24576); // allocates bytes
+    pcBuffer = converterBuffer;
+    memset(converterBuffer,0,24576);         // set unsigned char
     unmask_events.start();
     previousTimeStamp = 0;
 }
@@ -41,19 +49,48 @@ cFrameConverter::cFrameConverter():convert_events(128,128) {
 cFrameConverter::~cFrameConverter() {
     delete &unmask_events;
     delete &convert_events;
+    delete converterBuffer;
 }
 
 void cFrameConverter::onRead(sendingBuffer& i_ub) {
+    // receives the buffer and saves it
+    int dim = i_ub.get_sizeOfPacket();      // number of bytes received
+    receivedBuffer = i_ub.get_packet();
+    memcpy(pcBuffer,receivedBuffer,dim);
+    if (totDim < TH1) {
+        pcBuffer += dim;
+    }
+    else {
+        pcBuffer = converterBuffer; pcBuffer += TH1;
+        pcRead = converterBuffer;
+    }
+
+    if(totDim > TH2) {
+        pcBuffer = converterBuffer;
+        pcRead += TH2;
+    }
+    else {
+        pcBuffer += dim;
+    }
+    totDim += dim;
+    //cout << "C_yarpViewer::onRead(unmaskedbuffer& i_ub)" << endl;
+    //start_u = clock();
+    //unmask_events.unmaskData(i_ub.get_packet(), i_ub.get_sizeOfPacket());
+    //start_p = clock();
+    //stop = clock();
+}
+
+
+/*
+void cFrameConverter::onRead(sendingBuffer& i_ub) {
+    // receives the buffer and saves it
     //cout << "C_yarpViewer::onRead(unmaskedbuffer& i_ub)" << endl;
     //start_u = clock();
     unmask_events.unmaskData(i_ub.get_packet(), i_ub.get_sizeOfPacket());
     //start_p = clock();
     //stop = clock();
-    /*
-    cout << "Unmask task : " << (stop/CLOCKS_PER_SEC) - (start_u/CLOCKS_PER_SEC) << endl
-        << "Printing task : " << (stop/CLOCKS_PER_SEC) - (start_p/CLOCKS_PER_SEC) << endl;
-    */
 }
+*/
 
 void cFrameConverter::resetTimestamps() {
     unmask_events.resetTimestamps();
