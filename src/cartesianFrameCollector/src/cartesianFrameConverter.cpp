@@ -61,13 +61,15 @@ void cFrameConverter::onRead(sendingBuffer& i_ub) {
         pcBuffer += dim;
     }
     else {
-        pcBuffer = converterBuffer; pcBuffer += TH1;
+        pcBuffer = converterBuffer; 
+        pcBuffer += TH1;
         pcRead = converterBuffer;
     }
 
     if(totDim > TH2) {
         pcBuffer = converterBuffer;
         pcRead += TH2;
+        totDim = 0;
     }
     else {
         pcBuffer += dim;
