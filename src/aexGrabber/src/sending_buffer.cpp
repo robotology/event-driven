@@ -70,3 +70,6 @@ bool sendingBuffer::read(yarp::os::ConnectionReader& connection) {
     connection.expectBlock(packet, SIZE_OF_DATA);
     return true;
 }
+
+
+%
