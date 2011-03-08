@@ -71,5 +71,3 @@ bool sendingBuffer::read(yarp::os::ConnectionReader& connection) {
     return true;
 }
 
-
-%
