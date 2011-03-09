@@ -59,6 +59,12 @@ public:
     char* getBuffer() { return pcRead; };
 
     /**
+    * function that copies a chunk of elements
+    * @param pointer to the buffer that has to be read
+    */
+    void copyChunk(char* pointer);
+
+    /**
     * @brief returns a mono image of the output of the dvs camera (either left or right)
     * @param pixelMono reference to the image contains the counts of events
     * @param minCount reference to the min timestamp in the frame
@@ -97,6 +103,7 @@ public:
     void resetTimestamps();
 
 private:
+    short state;
     int retinalSize;                                            // dimension of the retina default 128x128
     int totDim;                                                 // total dimension of the read buffer
     int outputWidth, outputHeight;                              // dimension of the output image default 320x240

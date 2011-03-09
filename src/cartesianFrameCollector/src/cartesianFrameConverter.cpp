@@ -25,6 +25,7 @@
 
 #include <iCub/cartesianFrameConverter.h>
 #include <cassert>
+#include <cstdlib>
 
 #define BUFFERDIM 73728
 #define TH1 24576
@@ -38,48 +39,66 @@ cFrameConverter::cFrameConverter():convert_events(128,128) {
     retinalSize=128;
     totDim = 0;
     pcRead = 0;
+    state = 0;
     receivedBuffer = 0;
+    printf ("allocating memory \n");
     converterBuffer = (char*) malloc(24576); // allocates bytes
+    if (converterBuffer == 0)
+        printf("null pointer \n");
     pcBuffer = converterBuffer;
-    memset(converterBuffer,0,24576);         // set unsigned char
+    printf("setting memory \n");
+    memset(converterBuffer,0,24500);         // set unsigned char
+    pcRead = converterBuffer;
     unmask_events.start();
+    printf("unmask event just started");
     previousTimeStamp = 0;
 }
 
 cFrameConverter::~cFrameConverter() {
-    delete &unmask_events;
-    delete &convert_events;
-    delete converterBuffer;
+    //delete &unmask_events;
+    //delete &convert_events;
+    printf("freeing memory in the converter \n");
+    //free(converterBuffer);
+}
+
+void cFrameConverter::copyChunk(char* bufferCopy) {        
+    if(pcRead > converterBuffer +  BUFFERDIM - 8192) {
+        memcpy(bufferCopy, pcRead, converterBuffer + BUFFERDIM - pcRead );
+        pcRead = converterBuffer;
+    }
+    else {
+        memcpy(bufferCopy, pcRead, 8192);
+        pcRead += 8192;
+    }
 }
 
 void cFrameConverter::onRead(sendingBuffer& i_ub) {
     // receives the buffer and saves it
-    int dim = i_ub.get_sizeOfPacket();      // number of bytes received
+    int dim = i_ub.get_sizeOfPacket() / 8;      // number of bits received / 8 = bytes received
     receivedBuffer = i_ub.get_packet();
     memcpy(pcBuffer,receivedBuffer,dim);
+    printf("totDim %d \n",totDim);
+    
     if (totDim < TH1) {
         pcBuffer += dim;
     }
-    else {
-        pcBuffer = converterBuffer; 
-        pcBuffer += TH1;
-        pcRead = converterBuffer;
+    else if((totDim>TH1)&&(totDim<TH2)&&(state!=1)){
+        printf("greater than TH1 \n");
+        pcBuffer = converterBuffer + TH1; 
+        pcRead = converterBuffer + TH2;
+        state = 1;
     }
-
-    if(totDim > TH2) {
+    else if(totDim > TH2) {
+        printf("greater that TH2 \n");
         pcBuffer = converterBuffer;
-        pcRead += TH2;
+        pcRead = converterBuffer + TH1;
         totDim = 0;
+        state = 0;
     }
-    else {
-        pcBuffer += dim;
-    }
+    // the thrid part of the buffer is free to avoid overflow
+
     totDim += dim;
-    //cout << "C_yarpViewer::onRead(unmaskedbuffer& i_ub)" << endl;
-    //start_u = clock();
-    //unmask_events.unmaskData(i_ub.get_packet(), i_ub.get_sizeOfPacket());
-    //start_p = clock();
-    //stop = clock();
+    
 }
 
 
@@ -132,12 +151,12 @@ void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image, unsigned long minC
             unsigned long timestampactual = *pTime;
             if (((timestampactual * 1.25) > minCount)&&((timestampactual * 1.25) < maxCount)) {   //(timestampactual != lasttimestamp)
                 *pImage++ = (unsigned char) 127 + value;
-                //*pTime = (unsigned long int) 0;
+               
             }
             else {
                 *pImage++ = (unsigned char) 127;
-                //*pTime = (unsigned long int) 0;
-            }
+               
+                }
             pBuffer ++;
             pTime ++;
         }

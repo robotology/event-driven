@@ -11,10 +11,10 @@ add_subdirectory(dvsGrabber)
 add_subdirectory(eventEdgeExtractor)
 add_subdirectory(harmonicPathPlanner)
 #add_subdirectory(objectInteractor)
-add_subdirectory(opticalFlow)
+#add_subdirectory(opticalFlow)
 #add_subdirectory(logpolar_frame_converter)
 #add_subdirectory(logpolar_frame_converter_add)
-add_subdirectory(visualAligner)
+#add_subdirectory(visualAligner)
 
 
 

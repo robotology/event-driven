@@ -29,7 +29,7 @@
 using namespace std;
 using namespace yarp::os;
 
-//#define LINUX
+#define LINUX
 #ifndef LINUX
 typedef unsigned long uint32_t;
 #endif // LINUX
@@ -161,7 +161,7 @@ void unmask::run() {
 
 
 void unmask::unmaskData(char* i_buffer, int i_sz) {
-    //cout << "Size of the received packet to unmask : " << i_sz/8<< endl;
+    //cout << "Size of the received packet to unmask : " << i_sz / 8<< endl;
     //AER_struct sAER
     count++;
     //assert(num_events % 8 == 0);
@@ -174,7 +174,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
         // unmask the data
         unsigned long blob = buf2[2 * evt];
         unsigned long timestamp = buf2[2 * evt + 1];        
-        lasttimestamp = timestamp;   
+        //lasttimestamp = timestamp;   
         
         // here we zero the higher two bytes of the address!!! Only lower 16bits used!
         blob &= 0xFFFF;
@@ -182,11 +182,10 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
         //if(count % 100 == 0) {
         //    printf(" %d>%d,%d : %d : %d \n",blob,cartX,cartY,timestamp,camera);
         //}
+        cartY = retinalSize - cartY;   //corrected the output of the camera (flipped the image along y axis)
         
-
         //camera is unmasked as left 0, right -1. It is converted in left 1, right 0
         camera = camera + 1;
-        
         
         //camera: LEFT 0, RIGHT 1
         if(camera) {
@@ -231,12 +230,8 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
                     }
                 }
             }
-            
         }
-        
-        //fprintf(uEvents,"%d\t%d\t%d\t%u\n", cartX, cartY, polarity, timestamp);
     }
-    //fprintf(uEvents,"%d\t%d\t%d\t%u\n", -1, -1, -1, -1);
 }
 
 

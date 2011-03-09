@@ -27,6 +27,7 @@
 #include <iCub/cfCollectorThread.h>
 #include <cstring>
 #include <cassert>
+#include <cstdlib>
 #include <time.h>
 
 using namespace yarp::os;
@@ -42,10 +43,14 @@ cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
     greaterHalf = false;
     count=0;
     minCount = 0; //initialisation of the timestamp limits of the first frame
+    idle = false;
+    bufferCopy = (char*) malloc(8192);
+    //bufferRead = (char*) malloc(8192);
 }
 
 cfCollectorThread::~cfCollectorThread() {
-
+    printf("freeing memory in collector");
+    
 }
 
 bool cfCollectorThread::threadInit() {
@@ -58,12 +63,13 @@ bool cfCollectorThread::threadInit() {
     cfConverter=new cFrameConverter();
     cfConverter->useCallback();
     cfConverter->open(getName("/retina:i").c_str());
-    minCount = cfConverter->getEldestTimeStamp();
-    startTimer = Time::now();
-    clock(); //startTime ;
+    printf("opening retina\n");
+    //minCount = cfConverter->getEldestTimeStamp();
+    //startTimer = Time::now();
+    //clock(); //startTime ;
     //T1 = times(&start_time);
-    microseconds = 0;
-    microsecondsPrev = 0;
+    //microseconds = 0;
+    //microsecondsPrev = 0;
     
     return true;
 }
@@ -92,18 +98,21 @@ void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsig
 }
 
 void cfCollectorThread::run() {
-    // reads the buffer received
-    bufferRead = cfConverter->getBuffer();
-    // saves it into a working buffer
-    memcpy(bufferCopy, bufferRead, 8192);
-    // extract a chunk/unmask the chunk
-    unmask_events.unmaskData(bufferCopy, 8192);
-    // creates a frame 
-    getMonoImage(imageLeft,0,100,1);
-    getMonoImage(imageRight,0,100,0);
-    // passes the fram to the plotter
-    //plotter->setImageLeft();
-    //plotter->setImageRight();
+    if(!idle) {
+        // reads the buffer received
+        //bufferRead = cfConverter->getBuffer();    
+        // saves it into a working buffer
+        printf("collecting chunck \n");
+        cfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
+        // extract a chunk/unmask the chunk
+        unmask_events.unmaskData(bufferCopy, 8192);
+        // creates a frame 
+        //getMonoImage(imageLeft,0,100,1);
+        //getMonoImage(imageRight,0,100,0);
+        // passes the fram to the plotter
+        //plotter->setImageLeft();
+        //plotter->setImageRight();
+    }
 }
 
 
@@ -212,7 +221,11 @@ void cfCollectorThread::run() {
 */
 
 void cfCollectorThread::threadRelease() {
+    idle = false;
+    //delete cfConverter;
     outPort.close();
     outPortRight.close();
+    free(bufferCopy);
+    
 }
 

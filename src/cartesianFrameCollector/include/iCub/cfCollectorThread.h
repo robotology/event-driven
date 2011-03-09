@@ -32,11 +32,12 @@
 #include <iCub/cartesianFrameConverter.h>
 #include <iostream>
 #include <time.h>
-//#include <sys/time.h>
-//#include <sys/types.h>
-//#include <inttypes.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <inttypes.h>
+#include <stdlib.h>
 
-typedef unsigned long long int uint64_t;
+//typedef unsigned long long int uint64_t;
 #define u64 uint64_t
 
 
@@ -63,6 +64,7 @@ private:
     std::string name;                   // rootname of all the ports opened by this thread
     bool synchronised;                       // flag to check whether the microsecond counter has been synchronised
     bool greaterHalf;                     // indicates whether the counter has passed the half of the range
+    bool idle;                            // controls idle mode
     unsigned long minCount;              // minimum timestamp allowed for the current frame
     unsigned long maxCount;              // maximum timestamp allowed for the current frame
     unsigned long minCountRight;
