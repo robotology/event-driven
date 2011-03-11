@@ -10,7 +10,7 @@ PROJECT(${KEYWORD})
 #search for includes
 INCLUDE_DIRECTORIES(
     ${PROJECT_SOURCE_DIR}/include
-    ${OPENCV_INCLUDE_DIR}    
+    ${OpenCV_INCLUDE_DIR}    
     #${ODE_INCLUDE_DIRS}	
     ${IPP_INCLUDE_DIRS}	 
     #/opt/intel/ipp/6.1.1.042/em64t/include
@@ -45,14 +45,14 @@ LINK_DIRECTORIES(
 
 IF (WIN32) #required in win
   LINK_LIBRARIES(
-    ${OPENCV_LIBRARIES}
+    ${OpenCV_LIBRARIES}
     ${IDL_LIBRARIES}
     ${IPP_LIBRARIES}  
     ${IKIN_LIBRARIES}
 )	
 ELSE(WIN32) #required in linux
   LINK_LIBRARIES(
-    ${OPENCV_LIBRARIES}
+    ${OpenCV_LIBRARIES}
     ${IDL_LIBRARIES}
     ${IPP_LIBRARIES} 	
     ${IKIN_LIBRARIES}

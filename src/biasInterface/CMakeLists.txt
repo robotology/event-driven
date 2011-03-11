@@ -22,7 +22,7 @@ INCLUDE_DIRECTORIES(
     ${PROJECT_SOURCE_DIR}/include
     ${ICUB_INCLUDE_DIRS}
     ${YARP_INCLUDE_DIRS}
-    ${OPENCV_INCLUDE_DIRS}    		 
+    ${OpenCV_INCLUDE_DIRS}    		 
     ${GtkPlus_INCLUDE_DIRS}
 )
 
