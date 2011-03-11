@@ -191,7 +191,8 @@
 class aexGrabberModule:public yarp::os::RFModule {
     std::string moduleName;                     // name of the module (rootname of ports)
     std::string robotName;                      // name of the robot
-    std::string binaryName;                     // name of the binary file containing biases
+    std::string binaryName;                     // name of the file containing biases
+    std::string binaryNameComplete;             // complete path for the file cointaing biases
     std::string robotPortName;                  // reference to the head of the robot
     std::string deviceName;                     // name of the device
     std::string devicePortName;                 // reference to the device port
