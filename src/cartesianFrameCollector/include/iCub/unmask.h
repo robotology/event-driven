@@ -75,6 +75,7 @@ private:
     int countEvent2;                     //counter of the number of events saved in the buffer2
     int numKilledEvents;                //number of the element that have be removed from the buffer
     bool temp1;                         //boolean flag that indicates where the events have to be saved
+    bool validLeft,validRight;          //flag for validity of the events
 
     FILE* uEvents;
     yarp::os::Semaphore countEventLocker;
@@ -118,6 +119,16 @@ public:
     * returns the eldest timestamp
     */
     unsigned long getEldestTimeStamp();
+
+    /**
+     * return the valid left
+     */ 
+    bool getValidLeft() {return validLeft;};
+
+    /**
+     * return the valid left
+     */ 
+    bool getValidRight() {return validRight;};
 
     /**
     * returns the last timestamp for the left camera

@@ -37,10 +37,13 @@ using namespace std;
 #define MAXVALUE 4294967295
 #define THRATE 30
 #define STAMPINFRAME  // 10 ms of period times the us in 1 millisecond + time for computing
+#define retinalSize 128
+#define CHUNKSIZE 4096
 
 cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
     synchronised = false;
     greaterHalf = false;
+    firstRun = true;
     count=0;
     minCount = 0; //initialisation of the timestamp limits of the first frame
     idle = false;
@@ -63,14 +66,17 @@ bool cfCollectorThread::threadInit() {
     cfConverter=new cFrameConverter();
     cfConverter->useCallback();
     cfConverter->open(getName("/retina:i").c_str());
-    printf("opening retina\n");
+    printf("\n opening retina\n");
     //minCount = cfConverter->getEldestTimeStamp();
-    //startTimer = Time::now();
+    startTimer = Time::now();
     //clock(); //startTime ;
     //T1 = times(&start_time);
     //microseconds = 0;
     //microsecondsPrev = 0;
-    
+    gettimeofday(&tvend, NULL);
+    unmask_events.start();
+    count = 0;
+    microsecondsPrev = 0;
     return true;
 }
 
@@ -94,24 +100,151 @@ void cfCollectorThread::resize(int widthp, int heightp) {
 
 
 void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsigned long minCount,unsigned long maxCount, bool camera){
+    assert(image!=0);
+    image->resize(retinalSize,retinalSize);
+    unsigned char* pImage = image->getRawImage();
+    int imagePadding = image->getPadding();
+    int imageRowSize = image->getRowSize();
+    
+    /*
+    unsigned long int lasttimestamp = getLastTimeStamp();
+    if (lasttimestamp == previousTimeStamp) {   //condition where there were not event between this call and the previous
+        for(int r = 0 ; r < retinalSize ; r++){
+            for(int c = 0 ; c < retinalSize ; c++) {
+                *pImage++ = (unsigned char) 127;
+            }
+            pImage+=imagePadding;
+        }
+        return;
+    }
+    previousTimeStamp = lasttimestamp;
+    */
 
+    // determining whether the camera is left or right
+    int* pBuffer = unmask_events.getEventBuffer(camera);
+    unsigned long* pTime   = unmask_events.getTimeBuffer(camera);
+    
+    //printf("timestamp: min %d    max %d  \n", minCount, maxCount);
+    //pBuffer += retinalSize * retinalSize - 1;
+    for(int r = 0 ; r < retinalSize ; r++){
+        for(int c = 0 ; c < retinalSize ; c++) {
+            //drawing the retina and the rest of the image separately
+            int value = *pBuffer;
+            unsigned long timestampactual = *pTime;
+            if (((timestampactual * 1.25) > minCount)&&((timestampactual * 1.25) < maxCount)) {   //(timestampactual != lasttimestamp)
+                *pImage++ = (unsigned char) 127 + value;
+               
+            }
+            else {
+                *pImage++ = (unsigned char) 127;
+               
+                }
+            pBuffer ++;
+            pTime ++;
+        }
+        pImage+=imagePadding;
+    }
+    //unmask_events.setLastTimestamp(0);
 }
 
+
+
 void cfCollectorThread::run() {
+    count++;
+    //printf("%d, ",count);
     if(!idle) {
+        
         // reads the buffer received
         //bufferRead = cfConverter->getBuffer();    
         // saves it into a working buffer
-        printf("collecting chunck \n");
         cfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
+        //printf("returned 0x%x \n", bufferCopy);
         // extract a chunk/unmask the chunk
-        unmask_events.unmaskData(bufferCopy, 8192);
-        // creates a frame 
-        //getMonoImage(imageLeft,0,100,1);
-        //getMonoImage(imageRight,0,100,0);
-        // passes the fram to the plotter
-        //plotter->setImageLeft();
-        //plotter->setImageRight();
+        unmask_events.unmaskData(bufferCopy, CHUNKSIZE);
+        //printf("returned 0x%x \n", bufferCopy);
+
+        if(cfConverter->isValid()) {
+            //printf("Sychronised Sychronised Sychronised Sychronised ");
+            //firstRun = false;
+            //minCount = unmask_events.getLastTimestamp();
+            //printf("minCount %d \n", minCount);
+            //minCountRight = unmask_events.getLastTimestamp();
+            count = 900;
+        }
+        /*
+        if((firstRun)&&(count>1000) &&(unmask_events.getValidRight())) {
+            printf("Sychronised Sychronised Sychronised Sychronised ");
+            firstRun = false;
+            minCount = unmask_events.getLastTimestampRight();
+            printf("minCount %d \n", minCount);
+            minCountRight = unmask_events.getLastTimestampRight();
+        }
+        */
+        
+ 
+
+        gettimeofday(&tvend, NULL);
+        //Tnow = ((u64)tvend.tv_sec) * 1000000 + ((u64)tvstart.tv_usec);
+        Tnow = ((tvend.tv_sec * 1000000 + tvend.tv_usec)
+                - (tvstart.tv_sec * 1000000 + tvstart.tv_usec));
+        //printf("timeofday>%ld\n",Tnow );
+        gettimeofday(&tvstart, NULL);       
+        endTimer = Time::now();
+        double interval = (endTimer - startTimer) * 1000000; //interval in us
+        startTimer = Time::now();
+
+
+        if (count % 1000 == 0) {
+            minCount = lc - interval * 2; //cfConverter->getEldestTimeStamp();        
+            minCountRight = rc - interval * 2; 
+            printf("synchronised %1f! %d,%d,%d||%d,%d,%d \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
+            startTimer = Time::now();
+            synchronised = true;  
+        }
+        else {
+            // this value is simply the ration between the timestamp reported by the aexGrabber (62.5Mhz) 
+            //and the correct timestamp counter clock of FPGA (50 Mhz)
+            microsecondsPrev = interval;
+            interval = Tnow;
+            minCount = minCount + interval ; // * (50.0 / 62.5) * 1.10;
+            minCountRight = minCountRight + interval;
+        }
+        
+        
+        maxCount =  minCount + interval * 3;
+        maxCountRight =  minCountRight + interval * 3;
+        
+        unsigned long int lastleft = unmask_events.getLastTimestamp();
+        lc = lastleft * 1.25; //1.25 is the ratio 0.160/0.128
+        unsigned long int lastright = unmask_events.getLastTimestampRight();
+        rc = lastright * 1.25; 
+        if( count % 45 == 0) {            
+            printf("greterHalf:%1f! %d,%d,%d||%d,%d,%d \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
+        }        
+        
+        
+        // creates two frames
+        if(outPort.getOutputCount()) {
+            ImageOf<yarp::sig::PixelMono>& outputImage=outPort.prepare();
+            if(&outputImage!=0) {
+                getMonoImage(&outputImage, minCount, maxCount,1);
+                outPort.write();
+            }
+            else {
+                printf("reference to the outimage null \n");
+            }
+        }
+        
+        /*if(outPortRight.getOutputCount()) {
+            ImageOf<yarp::sig::PixelMono>& outputImageRight=outPortRight.prepare();
+            if(&outputImageRight!=0) {
+                getMonoImage(&outputImageRight, minCountRight, maxCountRight, 0);
+                outPortRight.write();
+            }
+            else {
+                printf("reference to the outimage null \n");
+            }
+            }*/
     }
 }
 

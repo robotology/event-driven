@@ -45,6 +45,8 @@ unmask::unmask() : RateThread(UNMASKRATETHREAD){
     count = 0;
     numKilledEvents = 0;
     lasttimestamp = 0;
+    validLeft = false;
+    validRight = false;
     eldesttimestamp = MAXVALUE;
     countEvent = 0;
     countEvent2 = 0;
@@ -162,19 +164,20 @@ void unmask::run() {
 
 void unmask::unmaskData(char* i_buffer, int i_sz) {
     //cout << "Size of the received packet to unmask : " << i_sz / 8<< endl;
+    //printf("pointer 0x%x ",i_buffer);
     //AER_struct sAER
     count++;
     //assert(num_events % 8 == 0);
     int num_events = i_sz / 8;
-    
+    //create a pointer that points every 4 bytes
     uint32_t* buf2 = (uint32_t*)i_buffer;
     //eldesttimestamp = 0;
     for (int evt = 0; evt < num_events; evt++) {
         
-        // unmask the data
+        // unmask the data ( first 4 byte blob, second 4 bytes timestamp)
         unsigned long blob = buf2[2 * evt];
-        unsigned long timestamp = buf2[2 * evt + 1];        
-        //lasttimestamp = timestamp;   
+        unsigned long timestamp = buf2[2 * evt + 1];
+        //printf("0x%x 0x%x \n",blob, timestamp);
         
         // here we zero the higher two bytes of the address!!! Only lower 16bits used!
         blob &= 0xFFFF;
@@ -189,7 +192,12 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
         
         //camera: LEFT 0, RIGHT 1
         if(camera) {
-            lasttimestamp = timestamp;
+            if((cartX!=0) &&( cartY!=0) && (timestamp!=0)) {
+                validLeft =  true;
+            }
+            if(timestamp > lasttimestamp) {
+                lasttimestamp = timestamp;
+            }
             if(timeBuffer[cartX + cartY * retinalSize] < timestamp) {
                 if(polarity > 0) {
                     buffer[cartX + cartY * retinalSize] = responseGradient;
@@ -211,7 +219,12 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
            
         }
         else {
-            lasttimestampright = timestamp;
+            if((cartX!=0) &&( cartY!=0) && (timestamp!=0)) {
+                validRight =  true;
+            }
+            if( timestamp > lasttimestampright){
+                lasttimestampright = timestamp;
+            }
             if (timeBufferRight[cartX + cartY * retinalSize] < timestamp) {
                 if(polarity > 0) {
                     bufferRight[cartX + cartY * retinalSize] = responseGradient;

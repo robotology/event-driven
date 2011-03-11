@@ -27,15 +27,17 @@
 #include <cassert>
 #include <cstdlib>
 
-#define BUFFERDIM 73728
-#define TH1 24576
-#define TH2 49152
+#define BUFFERDIM 36864
+#define TH1 12288
+#define TH2 24576
+#define CHUNKSIZE 4096
 
 using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
 cFrameConverter::cFrameConverter():convert_events(128,128) {
+    valid = false;
     retinalSize=128;
     totDim = 0;
     pcRead = 0;
@@ -62,43 +64,44 @@ cFrameConverter::~cFrameConverter() {
 }
 
 void cFrameConverter::copyChunk(char* bufferCopy) {        
-    if(pcRead > converterBuffer +  BUFFERDIM - 8192) {
+    //printf("copyChunk \n");
+    if(pcRead > converterBuffer +  BUFFERDIM - CHUNKSIZE) {
         memcpy(bufferCopy, pcRead, converterBuffer + BUFFERDIM - pcRead );
         pcRead = converterBuffer;
     }
     else {
-        memcpy(bufferCopy, pcRead, 8192);
-        pcRead += 8192;
+        memcpy(bufferCopy, pcRead, CHUNKSIZE);
+        pcRead += CHUNKSIZE;
     }
 }
 
 void cFrameConverter::onRead(sendingBuffer& i_ub) {
+    valid = true;
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() / 8;      // number of bits received / 8 = bytes received
     receivedBuffer = i_ub.get_packet();
     memcpy(pcBuffer,receivedBuffer,dim);
-    printf("totDim %d \n",totDim);
+    //printf("totDim %d \n",dim);
     
     if (totDim < TH1) {
         pcBuffer += dim;
     }
-    else if((totDim>TH1)&&(totDim<TH2)&&(state!=1)){
-        printf("greater than TH1 \n");
+    else if((totDim>=TH1)&&(totDim<TH2)&&(state!=1)){
+        //printf("greater than TH1 \n");
         pcBuffer = converterBuffer + TH1; 
         pcRead = converterBuffer + TH2;
         state = 1;
     }
-    else if(totDim > TH2) {
-        printf("greater that TH2 \n");
+    else if(totDim >= TH2) {
+        //printf("greater that TH2 \n");
         pcBuffer = converterBuffer;
         pcRead = converterBuffer + TH1;
         totDim = 0;
         state = 0;
     }
     // the thrid part of the buffer is free to avoid overflow
-
     totDim += dim;
-    
+    //printf("pcBuffer: 0x%x pcRead: 0x%x \n", pcBuffer, pcRead);
 }
 
 
@@ -107,6 +110,7 @@ void cFrameConverter::onRead(sendingBuffer& i_ub) {
     // receives the buffer and saves it
     //cout << "C_yarpViewer::onRead(unmaskedbuffer& i_ub)" << endl;
     //start_u = clock();
+    //i_ub.get_sizeOfPacket() size of the packet in bits
     unmask_events.unmaskData(i_ub.get_packet(), i_ub.get_sizeOfPacket());
     //start_p = clock();
     //stop = clock();

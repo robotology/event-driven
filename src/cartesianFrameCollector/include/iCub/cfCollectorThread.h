@@ -45,7 +45,7 @@ class cfCollectorThread : public yarp::os::RateThread {
 private:
     
     int count;                          // loop counter of the thread
-    //struct timeval tvstart,tvend;
+    struct timeval tvstart,tvend;
     //struct timespec start_time, stop_time;
     u64 Tnow;
     unsigned long int precl;
@@ -57,14 +57,15 @@ private:
     int countDivider;                   // divider of the count
     int width, height;                  // dimension of the extended input image (extending)
     int height_orig, width_orig;        // original dimension of the input and output images
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPort;       // port whre the output (left) is sent
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPort;            // port whre the output (left) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPortRight;       // port whre the output (right) is sent
-    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeft;                                 //image representing the signal on the leftcamera
+    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeft;                                  //image representing the signal on the leftcamera
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRight;                                 //image representing the signal on the right camera
     std::string name;                   // rootname of all the ports opened by this thread
     bool synchronised;                       // flag to check whether the microsecond counter has been synchronised
     bool greaterHalf;                     // indicates whether the counter has passed the half of the range
     bool idle;                            // controls idle mode
+    bool firstRun;                        // flag that check whether the run is a first useful run    
     unsigned long minCount;              // minimum timestamp allowed for the current frame
     unsigned long maxCount;              // maximum timestamp allowed for the current frame
     unsigned long minCountRight;

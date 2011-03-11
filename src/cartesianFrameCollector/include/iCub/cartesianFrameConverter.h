@@ -102,7 +102,10 @@ public:
      */
     void resetTimestamps();
 
+    bool isValid(){return valid;};
+
 private:
+    bool valid;
     short state;
     int retinalSize;                                            // dimension of the retina default 128x128
     int totDim;                                                 // total dimension of the read buffer
