@@ -97,12 +97,12 @@ bool aexGrabberModule::configure(yarp::os::ResourceFinder &rf) {
                            Value("none"), 
                            "filename of the binary (string)").asString();
     printf("trying to read %s  for biases \n",binaryName.c_str());
-    bynaryNameComplete = rf.findFile(binaryName);
+    binaryNameComplete = rf.findFile(binaryName.c_str());
     
     
     if(!strcmp(binaryName.c_str(),"none")) {
         printf("not reading from binary \n");
-        D2Y=new device2yarp(devicePortName, false);
+        D2Y=new device2yarp(devicePortName, false,binaryName);
         //D2Y->setFromBinary(false);
     }
     else {
