@@ -228,6 +228,20 @@ void vAlignerThread::run() {
                  }
              }
         }
+
+        if(leftEventPort.getInputCount()) {
+             tmpMono = leftEventPort.read(false);
+             if(tmp!=0) {
+                copy_8u_C3R(tmp,leftEventImage);
+             }
+        }
+
+        if(rightEventPort.getInputCount()) {
+             tmpMono = rightEventPort.read(false);
+             if(tmp!=0) {
+                copy_8u_C3R(tmp,rightEventImage);
+             }
+        }
         
         ImageOf<yarp::sig::PixelRgb>& outputImage=outPort.prepare();
         if(resized) {

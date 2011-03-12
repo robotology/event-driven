@@ -42,10 +42,14 @@ private:
     int height_orig, width_orig;                                                            // original dimension of the input and output images
     yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelRgb> > leftDragonPort;       // port where the output of the dragonfly left is read
     yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelRgb> > rightDragonPort;      // port where the output of the dragonfly right is read
+    yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelMono> > leftEventPort;       // port where the output of the event camera left is read
+    yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelMono> > rightEventPort;      // port where the output of the event camera right is read
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> > outPort;               // port whre the output is sent
     yarp::os::BufferedPort<yarp::os::Bottle > vergencePort;                                 // port where the value of the vergence is received
     yarp::sig::ImageOf <yarp::sig::PixelRgb>* leftDragonImage;                              // image output of the dragonfly left is saved
     yarp::sig::ImageOf <yarp::sig::PixelRgb>* rightDragonImage;                             // image where the output of the dragonfly right is saved
+    yarp::sig::ImageOf <yarp::sig::PixelMono>* leftEventImage;                              // image where the output of the event image left is saved
+    yarp::sig::ImageOf <yarp::sig::PixelMono>* rightEventImage;                             // image where the output of the event image right is saved
     yarp::sig::ImageOf <yarp::sig::PixelRgb>* tmp;                                          // temporary image for correct port reading
     std::string name;                                                                       // rootname of all the ports opened by this thread
     bool resized;                                                                           // flag to check if the variables have been already resized
