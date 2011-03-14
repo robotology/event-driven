@@ -51,6 +51,7 @@ private:
     yarp::sig::ImageOf <yarp::sig::PixelMono>* leftEventImage;                              // image where the output of the event image left is saved
     yarp::sig::ImageOf <yarp::sig::PixelMono>* rightEventImage;                             // image where the output of the event image right is saved
     yarp::sig::ImageOf <yarp::sig::PixelRgb>* tmp;                                          // temporary image for correct port reading
+    yarp::sig::ImageOf <yarp::sig::PixelMono>* tmpMono;
     std::string name;                                                                       // rootname of all the ports opened by this thread
     bool resized;                                                                           // flag to check if the variables have been already resized
     int shiftValue;                                                                         // value of the shift between dragonfly (this is vergence related)
@@ -126,6 +127,13 @@ public:
     * @param outImage reference to the output image
     */
     void shift(int shift, yarp::sig::ImageOf<yarp::sig::PixelRgb>& outImage);
+
+    /**
+     * project the image of the left dvsCamera on the outputimage
+     * @param left image mono
+     * @param output image colour
+     */
+    void projectLeftEvent()
 
 };
 

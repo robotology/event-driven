@@ -86,6 +86,13 @@ vAlignerThread::~vAlignerThread() {
     if(rightDragonImage!=0) {
         delete leftDragonImage;
     }
+    if(tmpMono!=0) {
+        delete tmp;
+    }
+    if(tmp!=0) {
+        delete tmp;
+    }
+        
 }
 
 bool vAlignerThread::threadInit() {
@@ -166,12 +173,6 @@ bool vAlignerThread::threadInit() {
     return true;
 }
 
-void vAlignerThread::interrupt() {
-    outPort.interrupt();
-    leftDragonPort.interrupt();
-    rightDragonPort.interrupt();
-    vergencePort.interrupt();
-}
 
 void vAlignerThread::setRobotname(string str) {
     robotName = str;
@@ -232,14 +233,14 @@ void vAlignerThread::run() {
         if(leftEventPort.getInputCount()) {
              tmpMono = leftEventPort.read(false);
              if(tmp!=0) {
-                copy_8u_C3R(tmp,leftEventImage);
+                copy_8u_C1R(tmpMono,leftEventImage);
              }
         }
 
         if(rightEventPort.getInputCount()) {
              tmpMono = rightEventPort.read(false);
              if(tmp!=0) {
-                copy_8u_C3R(tmp,rightEventImage);
+                copy_8u_C1R(tmpMono,rightEventImage);
              }
         }
         
@@ -252,6 +253,8 @@ void vAlignerThread::run() {
             double version = (angles[0] * 3.14) / 180;
             outputImage.resize(width + shiftValue, height);
             shift(shiftValue,outputImage);
+            projectLeftEvent();
+            projectRightEvent();
             outPort.write();
         }
     }
@@ -328,9 +331,20 @@ void vAlignerThread::shift(int shift, ImageOf<PixelRgb>& outImage) {
 }
 
 
+void vAlignerThread::interrupt() {
+    outPort.interrupt();
+    leftEventPort.interrupt();
+    rightEventPort.interrupt();
+    leftDragonPort.interrupt();
+    rightDragonPort.interrupt();
+    vergencePort.interrupt();
+}
+
 void vAlignerThread::threadRelease() {
     delete clientGazeCtrl;
     outPort.close();
+    leftEventPort.close();
+    rightEventPort.close();
     leftDragonPort.close();
     rightDragonPort.close();
     vergencePort.close();
