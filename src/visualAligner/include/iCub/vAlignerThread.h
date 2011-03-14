@@ -124,18 +124,17 @@ public:
     /**
     * shift one image with respect to the other 
     * @param shift number of pixel of shifts
+    * @param leftEvent image from the leftDvSCamera
+    * @param rightEvent image from the right DVS Camera
     * @param outImage reference to the output image
     */
-    void shift(int shift, yarp::sig::ImageOf<yarp::sig::PixelRgb>& outImage);
+    void shift(int shift, yarp::sig::ImageOf<yarp::sig::PixelMono> leftEvent,yarp::sig::ImageOf<yarp::sig::PixelMono> right, yarp::sig::ImageOf<yarp::sig::PixelRgb>& outImage);
 
-    /**
-     * project the image of the left dvsCamera on the outputimage
-     * @param left image mono
-     * @param output image colour
-     */
-    void projectLeftEvent()
+    
 
 };
 
 #endif  //_VISUAL_ALIGNER_THREAD_H_
+
+
 //----- end-of-file --- ( next line intentionally left blank ) ------------------

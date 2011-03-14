@@ -36,6 +36,8 @@ using namespace std;
 
 #define THRATE 30
 #define SHIFTCONST 100
+#define VERTSHIFT 34
+
 
 inline void copy_8u_C1R(ImageOf<PixelMono>* src, ImageOf<PixelMono>* dest) {
     int padding = src->getPadding();
@@ -76,6 +78,8 @@ vAlignerThread::vAlignerThread() : RateThread(THRATE) {
     count=0;
     leftDragonImage = 0;
     rightDragonImage = 0;
+    leftEventImage = 0;
+    rightEventImage = 0;
     shiftValue=20;
 }
 
@@ -92,7 +96,12 @@ vAlignerThread::~vAlignerThread() {
     if(tmp!=0) {
         delete tmp;
     }
-        
+    if(leftEventImage!=0) {
+        delete leftEventImage;
+    }
+    if(rightDragonImage!=0) {
+        delete leftEventImage;
+    }    
 }
 
 bool vAlignerThread::threadInit() {
@@ -198,6 +207,10 @@ void vAlignerThread::resize(int widthp, int heightp) {
     leftDragonImage->resize(width, height);
     rightDragonImage=new ImageOf<PixelRgb>;
     rightDragonImage->resize(width, height);
+    leftEventImage = new ImageOf<PixelMono>;
+    leftEventImage->resize(width, height);
+    rightEventImage = new ImageOf<PixelMono>;
+    rightEventImage->resize(width, height);
 }
 
 void vAlignerThread::run() {
@@ -232,14 +245,15 @@ void vAlignerThread::run() {
 
         if(leftEventPort.getInputCount()) {
              tmpMono = leftEventPort.read(false);
-             if(tmp!=0) {
-                copy_8u_C1R(tmpMono,leftEventImage);
+             if(tmpMono!=0) {
+                 printf("copying the leftEventImage \n");
+                 copy_8u_C1R(tmpMono,leftEventImage);
              }
         }
 
         if(rightEventPort.getInputCount()) {
              tmpMono = rightEventPort.read(false);
-             if(tmp!=0) {
+             if(tmpMono!=0) {
                 copy_8u_C1R(tmpMono,rightEventImage);
              }
         }
@@ -251,85 +265,142 @@ void vAlignerThread::run() {
             printf("azim %f, elevation %f, vergence %f \n",angles[0],angles[1],angles[2]);
             double vergence = (angles[2] * 3.14) / 180;
             double version = (angles[0] * 3.14) / 180;
-            outputImage.resize(width + shiftValue, height);
-            shift(shiftValue,outputImage);
-            projectLeftEvent();
-            projectRightEvent();
+            outputImage.resize(width + shiftValue, height + VERTSHIFT);
+                 
+            shift(shiftValue, *leftEventImage, *leftEventImage, outputImage);
             outPort.write();
+
         }
     }
 }
 
-void vAlignerThread::shift(int shift, ImageOf<PixelRgb>& outImage) {
+void vAlignerThread::shift(int shift,ImageOf<PixelMono> leftEvent,
+                           ImageOf<PixelMono> rightEvent, ImageOf<PixelRgb>& outImage) {
     unsigned char* pRight = rightDragonImage->getRawImage();
     unsigned char* pLeft = leftDragonImage->getRawImage();
     int padding = leftDragonImage->getPadding();
     int paddingOut = outImage.getPadding();
+    
     unsigned char* pOutput=outImage.getRawImage();
     double centerX=width + shift;
     double centerY=height;
     if(shift >= 0) {
-        for (int row = 0;row < height;row++) {
-            //pRight += shift*3;
-            for (int col = 0 ; col < shift ; col++) {
-                //d=sqrt( (row - centerY) * (row - centerY) 
-                //    + (col - centerX) * (col - centerX));
-                *pOutput++ = (unsigned char) *pLeft++;
-                *pOutput++ = (unsigned char) *pLeft++;
-                *pOutput++ = (unsigned char) *pLeft++;
+        int row = 0;
+        while (row < height + VERTSHIFT) {
+            if(row < VERTSHIFT ){
+
+                int col = 0;
+                while(col < width + shift) {
+                    if(col < width) {
+                        *pOutput++ = (unsigned char) *pLeft *0.5;pLeft++;
+                        *pOutput++ = (unsigned char) *pLeft *0.5;pLeft++;
+                        *pOutput++ = (unsigned char) *pLeft *0.5;pLeft++;
+                    }
+                    else if(col >= width) {
+                        *pOutput++ = (unsigned char) 0;
+                        *pOutput++ = (unsigned char) 0;
+                        *pOutput++ = (unsigned char) 0;
+                            
+                    }
+                    col++;
+                }
+                //padding
+                pLeft += padding;
+                pOutput += paddingOut;
             }
-            for (int col = shift ; col < width ; col++) {
-                //d=sqrt( (row - centerY) * (row - centerY) 
-                //    + (col - centerX) * (col - centerX));
-                *pOutput=(unsigned char) floor( (0.5 * *pLeft + 0.5 * *pRight));
-                pLeft++;pRight++;pOutput++;
-                *pOutput=(unsigned char) floor( (0.5 * *pLeft + 0.5 * *pRight));
-                pLeft++;pRight++;pOutput++;
-                *pOutput=(unsigned char) floor( (0.5 * *pLeft + 0.5 * *pRight));
-                pLeft++;pRight++;pOutput++;
+            
+            else if((row >= VERTSHIFT)&&(row < height)) {
+                int col = 0;
+
+                while(col < width + shift) {
+                    //pRight += shift*3;
+                    if (col < shift) {
+                        //d=sqrt( (row - centerY) * (row - centerY) 
+                        //    + (col - centerX) * (col - centerX));
+                        *pOutput++ = (unsigned char) *pLeft *0.5;pLeft++;
+                        *pOutput++ = (unsigned char) *pLeft *0.5;pLeft++;
+                        *pOutput++ = (unsigned char) *pLeft *0.5;pLeft++;
+                    }
+                    else if((col >= shift)&&(col < width)) {
+                        //d=sqrt( (row - centerY) * (row - centerY) 
+                        //    + (col - centerX) * (col - centerX));
+                        *pOutput=(unsigned char) floor( (*pLeft *0.5 + *pRight *0.5));
+                        pLeft++;pRight++;pOutput++;
+                        *pOutput=(unsigned char) floor( (*pLeft *0.5 + *pRight *0.5));
+                        pLeft++;pRight++;pOutput++;
+                        *pOutput=(unsigned char) floor( (*pLeft *0.5 + *pRight *0.5));
+                        pLeft++;pRight++;pOutput++;
+                    }
+                    else if((col >= width)&&(col < width + shift)){
+                        *pOutput++ = (unsigned char) *pRight *0.5; pRight++;
+                        *pOutput++ = (unsigned char) *pRight *0.5; pRight++;
+                        *pOutput++ = (unsigned char) *pRight *0.5; pRight++;
+                    }
+                    col++;
+                }
+                //padding
+                pLeft += padding;
+                pRight += padding;
+                pOutput += paddingOut;
+            }            
+            else if ((row >= height)&&(row < height + VERTSHIFT)) {
+                int col = 0;
+
+                while(col < width + shift) {
+                    if(col < shift ) {
+                        *pOutput++ = (unsigned char) 0;
+                        *pOutput++ = (unsigned char) 0;
+                        *pOutput++ = (unsigned char) 0;
+                    }
+                    else {
+                        *pOutput++ = (unsigned char) *pRight *0.5;pRight++;
+                        *pOutput++ = (unsigned char) *pRight *0.5;pRight++;
+                        *pOutput++ = (unsigned char) *pRight *0.5;pRight++;
+                    }
+                    col++;
+                }                
+                //padding
+                pRight += padding;
+                pOutput += paddingOut;
             }
-            for(int col = width ; col < width + shift ; col++){
-                //d=sqrt( (row - centerY) * (row - centerY) 
-                //    + (col - centerX) * (col - centerX));
-                *pOutput++ = (unsigned char) *pRight++;
-                *pOutput++ = (unsigned char) *pRight++;
-                *pOutput++ = (unsigned char) *pRight++;
-            }
-            //padding
-            pLeft += padding;
-            pRight += padding;
-            pOutput += paddingOut;
-        }
-    }
-    else {
-        shift=0-shift;
-        for (int row=0;row<height;row++) {
-            pLeft+=shift*3;
-            for (int col=0;col<width-shift;col++) {
-                //d=sqrt( (row - centerY) * (row - centerY) 
-                //    + (col - centerX) * (col - centerX));
-                *pOutput=(unsigned char) floor( (0.5 * *pLeft + 0.5 * *pRight));
-                pLeft++;pRight++;pOutput++;
-                *pOutput=(unsigned char) floor( (0.5 * *pLeft + 0.5 * *pRight));
-                pLeft++;pRight++;pOutput++;
-                *pOutput=(unsigned char) floor( (0.5 * *pLeft + 0.5 * *pRight));
-                pLeft++;pRight++;pOutput++;
-            }
-            for(int col=width-shift;col<width;col++){
-                //d=sqrt( (row - centerY) * (row - centerY) 
-                //    + (col - centerX) * (col - centerX));
-                *pOutput++=(unsigned char) *pRight++;
-                *pOutput++=(unsigned char) *pRight++;
-                *pOutput++=(unsigned char) *pRight++;
-            }
-            //padding
-            pLeft+=padding;
-            pRight+=padding;
-            pOutput+=padding;
+            row ++;
         }
     }
 }
 
+
+    /*
+ }
+        else {
+            shift = -shift;
+        for (int row=0;row<height;row++) {
+            pLeft += shift * 3;
+            int col = 0;
+            while (col < width) {
+                if (col < width - shift) {
+                   //d=sqrt( (row - centerY) * (row - centerY) 
+                    //    + (col - centerX) * (col - centerX));
+                    *pOutput=(unsigned char) floor( (*pLeft>>1 + *pRight>>1));
+                    pLeft++;pRight++;pOutput++;
+                    *pOutput=(unsigned char) floor( (*pLeft>>1 + *pRight>>1));
+                    pLeft++;pRight++;pOutput++;
+                    *pOutput=(unsigned char) floor( (*pLeft>>1 + *pRight>>1));
+                    pLeft++;pRight++;pOutput++;
+                }
+                else if((col >= width-shift)&&(col < width)){
+                    *pOutput++ = (unsigned char) *pRight++;
+                    *pOutput++ = (unsigned char) *pRight++;
+                    *pOutput++ = (unsigned char) *pRight++;
+                }
+                col++;
+            }
+            //padding
+            pLeft   += padding;
+            pRight  += padding;
+            pOutput += padding;
+        }
+
+    */
 
 void vAlignerThread::interrupt() {
     outPort.interrupt();
@@ -349,4 +420,8 @@ void vAlignerThread::threadRelease() {
     rightDragonPort.close();
     vergencePort.close();
 }
+
+
+//----- end-of-file --- ( next line intentionally left blank ) ------------------
+
 
