@@ -49,6 +49,8 @@ cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
     idle = false;
     bufferCopy = (char*) malloc(8192);
     //bufferRead = (char*) malloc(8192);
+
+
 }
 
 cfCollectorThread::~cfCollectorThread() {
@@ -57,16 +59,22 @@ cfCollectorThread::~cfCollectorThread() {
 }
 
 bool cfCollectorThread::threadInit() {
-    printf("starting the thread.... \n");
-    /* open ports */
-    printf("opening ports!!!.... \n");
-    outPort.open(getName("/left:o").c_str());
-    outPortRight.open(getName("/right:o").c_str());
+    printf(" \nstarting the threads.... \n");
+    //outPort.open(getName("/left:o").c_str());
+    //outPortRight.open(getName("/right:o").c_str());
+
+    resize(retinalSize, retinalSize);
     printf("starting the converter!!!.... \n");
     cfConverter=new cFrameConverter();
     cfConverter->useCallback();
     cfConverter->open(getName("/retina:i").c_str());
     printf("\n opening retina\n");
+    printf("starting the plotter \n");
+    pThread = new plotterThread();
+    pThread->setName(getName("").c_str());
+    pThread->start();
+
+
     //minCount = cfConverter->getEldestTimeStamp();
     startTimer = Time::now();
     //clock(); //startTime ;
@@ -96,12 +104,16 @@ std::string cfCollectorThread::getName(const char* p) {
 }
 
 void cfCollectorThread::resize(int widthp, int heightp) {
+    imageLeft = new ImageOf<PixelMono>;
+    imageLeft->resize(widthp,heightp);
+    imageRight = new ImageOf<PixelMono>;
+    imageRight->resize(widthp,heightp);
 }
 
 
 void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsigned long minCount,unsigned long maxCount, bool camera){
     assert(image!=0);
-    image->resize(retinalSize,retinalSize);
+    //image->resize(retinalSize,retinalSize);
     unsigned char* pImage = image->getRawImage();
     int imagePadding = image->getPadding();
     int imageRowSize = image->getRowSize();
@@ -163,26 +175,8 @@ void cfCollectorThread::run() {
         unmask_events.unmaskData(bufferCopy, CHUNKSIZE);
         //printf("returned 0x%x \n", bufferCopy);
 
-        if(cfConverter->isValid()) {
-            //printf("Sychronised Sychronised Sychronised Sychronised ");
-            //firstRun = false;
-            //minCount = unmask_events.getLastTimestamp();
-            //printf("minCount %d \n", minCount);
-            //minCountRight = unmask_events.getLastTimestamp();
-            count = 900;
-        }
-        /*
-        if((firstRun)&&(count>1000) &&(unmask_events.getValidRight())) {
-            printf("Sychronised Sychronised Sychronised Sychronised ");
-            firstRun = false;
-            minCount = unmask_events.getLastTimestampRight();
-            printf("minCount %d \n", minCount);
-            minCountRight = unmask_events.getLastTimestampRight();
-        }
-        */
-        
- 
 
+        //gettin the time between two threads
         gettimeofday(&tvend, NULL);
         //Tnow = ((u64)tvend.tv_sec) * 1000000 + ((u64)tvstart.tv_usec);
         Tnow = ((tvend.tv_sec * 1000000 + tvend.tv_usec)
@@ -192,8 +186,42 @@ void cfCollectorThread::run() {
         endTimer = Time::now();
         double interval = (endTimer - startTimer) * 1000000; //interval in us
         startTimer = Time::now();
+        
 
+        //synchronising the threads at the connection time
+        if ((cfConverter->isValid())&&(!synchronised)) {
+            printf("Sychronised Sychronised Sychronised Sychronised ");
+            //firstRun = false;
+            minCount = lc - interval * 2; 
+            //cfConverter->getEldestTimeStamp();                                                                   
+            minCountRight = rc - interval * 2;
+            printf("synchronised %1f! %d,%d,%d||%d,%d,%d \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
+            startTimer = Time::now();
+            synchronised = true;
+            //minCount = unmask_events.getLastTimestamp();
+            //printf("minCount %d \n", minCount);
+            //minCountRight = unmask_events.getLastTimestamp();
+            count = 900;
+        }
 
+        /*
+        if((firstRun)&&(count>1000) &&(unmask_events.getValidRight())) {
+            printf("Sychronised Sychronised Sychronised Sychronised ");
+            firstRun = false;
+            minCount  minCount = lc - interval * 2; //cfConverter->getEldestTimeStamp();                                                                   
+            minCountRight = rc - interval * 2;
+            printf("synchronised %1f! %d,%d,%d||%d,%d,%d \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
+            startTimer = Time::now();
+            synchronised = true;
+            = unmask_events.getLastTimestampRight();
+            printf("minCount %d \n", minCount);
+            minCountRight = unmask_events.getLastTimestampRight();
+        }
+        */
+        
+ 
+
+        //synchronising the thread every time interval 1000*period of the thread
         if (count % 1000 == 0) {
             minCount = lc - interval * 2; //cfConverter->getEldestTimeStamp();        
             minCountRight = rc - interval * 2; 
@@ -208,9 +236,7 @@ void cfCollectorThread::run() {
             interval = Tnow;
             minCount = minCount + interval ; // * (50.0 / 62.5) * 1.10;
             minCountRight = minCountRight + interval;
-        }
-        
-        
+        }                
         maxCount =  minCount + interval * 3;
         maxCountRight =  minCountRight + interval * 3;
         
@@ -218,13 +244,19 @@ void cfCollectorThread::run() {
         lc = lastleft * 1.25; //1.25 is the ratio 0.160/0.128
         unsigned long int lastright = unmask_events.getLastTimestampRight();
         rc = lastright * 1.25; 
-        if( count % 45 == 0) {            
-            printf("greterHalf:%1f! %d,%d,%d||%d,%d,%d \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
-        }        
+        //resetting time stamps at overflow
+        if ((minCount > 687172078)||(minCountRight > 687172078)) {
+            cfConverter->resetTimestamps();
+            printf("resetting time stamps!!!!!!!!!!!!!");
+        }
+
+        //if( count % 45 == 0) {            
+        //    printf("greterHalf:%1f! %d,%d,%d||%d,%d,%d \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
+        //}        
         
         
         // creates two frames
-        if(outPort.getOutputCount()) {
+        /*if(outPort.getOutputCount()) {
             ImageOf<yarp::sig::PixelMono>& outputImage=outPort.prepare();
             if(&outputImage!=0) {
                 getMonoImage(&outputImage, minCount, maxCount,1);
@@ -235,7 +267,7 @@ void cfCollectorThread::run() {
             }
         }
         
-        /*if(outPortRight.getOutputCount()) {
+        if(outPortRight.getOutputCount()) {
             ImageOf<yarp::sig::PixelMono>& outputImageRight=outPortRight.prepare();
             if(&outputImageRight!=0) {
                 getMonoImage(&outputImageRight, minCountRight, maxCountRight, 0);
@@ -244,7 +276,13 @@ void cfCollectorThread::run() {
             else {
                 printf("reference to the outimage null \n");
             }
-            }*/
+        }
+        */
+
+        getMonoImage(imageLeft,minCount,maxCount,0);
+        getMonoImage(imageRight,minCountRight,maxCountRight,1);
+        pThread->copyLeft(imageLeft);
+        pThread->copyRight(imageRight);
     }
 }
 
@@ -358,6 +396,7 @@ void cfCollectorThread::threadRelease() {
     //delete cfConverter;
     outPort.close();
     outPortRight.close();
+    delete pThread;
     free(bufferCopy);
     
 }

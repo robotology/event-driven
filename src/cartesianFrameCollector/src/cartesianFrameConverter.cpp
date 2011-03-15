@@ -64,7 +64,7 @@ cFrameConverter::~cFrameConverter() {
 }
 
 void cFrameConverter::copyChunk(char* bufferCopy) {        
-    //printf("copyChunk \n");
+    mutex.wait();
     if(pcRead > converterBuffer +  BUFFERDIM - CHUNKSIZE) {
         memcpy(bufferCopy, pcRead, converterBuffer + BUFFERDIM - pcRead );
         pcRead = converterBuffer;
@@ -73,6 +73,7 @@ void cFrameConverter::copyChunk(char* bufferCopy) {
         memcpy(bufferCopy, pcRead, CHUNKSIZE);
         pcRead += CHUNKSIZE;
     }
+    mutex.post();
 }
 
 void cFrameConverter::onRead(sendingBuffer& i_ub) {
@@ -80,8 +81,8 @@ void cFrameConverter::onRead(sendingBuffer& i_ub) {
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() / 8;      // number of bits received / 8 = bytes received
     receivedBuffer = i_ub.get_packet();
+    mutex.wait();
     memcpy(pcBuffer,receivedBuffer,dim);
-    //printf("totDim %d \n",dim);
     
     if (totDim < TH1) {
         pcBuffer += dim;
@@ -101,6 +102,7 @@ void cFrameConverter::onRead(sendingBuffer& i_ub) {
     }
     // the thrid part of the buffer is free to avoid overflow
     totDim += dim;
+    mutex.post();
     //printf("pcBuffer: 0x%x pcRead: 0x%x \n", pcBuffer, pcRead);
 }
 

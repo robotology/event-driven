@@ -30,6 +30,7 @@
 #include <yarp/os/RateThread.h>
 #include <yarp/sig/all.h>
 #include <iCub/cartesianFrameConverter.h>
+#include <iCub/plotterThread.h>
 #include <iostream>
 #include <time.h>
 #include <sys/time.h>
@@ -75,6 +76,7 @@ private:
     yarp::os::Semaphore mutex;          // semaphore thar regulates the access to the buffer resource
     clock_t endTime,startTime;
     long T1,T2;
+    plotterThread* pThread;                  // plotterThread for the trasformation of the event in images
     cFrameConverter* cfConverter;           //receives real-time events
     unmask unmask_events;                   // object that unmask events
     char* bufferRead;                       // buffer of events read from the port
