@@ -643,7 +643,9 @@ void  device2yarp::run() {
         //printf("x",portDeviceName.c_str());
         return;
     }
-    printf("device read %d \n",monBufEvents);
+    if(monBufEvents > 0) {
+        printf("* ");
+    }
     int k = 0;
     int k2 = 0;
     uint32_t * buf2 = (uint32_t*)buffer;
