@@ -113,7 +113,7 @@ bool vAlignerThread::threadInit() {
     rightDragonPort.open(getName("/rightDragon:i").c_str());
     leftDragonPort.open(getName("/leftDvs:i").c_str());
     rightDragonPort.open(getName("/rightDvs:i").c_str());
-vergencePort.open(getName("/vergence:i").c_str());
+    vergencePort.open(getName("/vergence:i").c_str());
 
     //initializing gazecontrollerclient
     Property option;
@@ -278,8 +278,11 @@ void vAlignerThread::run() {
 
 void vAlignerThread::shift(int shift,ImageOf<PixelMono> leftEvent,
                            ImageOf<PixelMono> rightEvent, ImageOf<PixelRgb>& outImage) {
-    unsigned char* pRight = rightDragonImage->getRawImage();
-    unsigned char* pLeft = leftDragonImage->getRawImage();
+    unsigned char* pRightDragon = rightDragonImage->getRawImage();
+    unsigned char* pLeftDragon = leftDragonImage->getRawImage();
+    unsigned char* pRightEvent = rightEventImage->getRawImage();
+    unsigned char* pLeftEvent = leftEventImage->getRawImage();
+    
     int padding = leftDragonImage->getPadding();
     int paddingOut = outImage.getPadding();
     
@@ -294,9 +297,9 @@ void vAlignerThread::shift(int shift,ImageOf<PixelMono> leftEvent,
                 int col = 0;
                 while(col < width + shift) {
                     if(col < width) {
-                        *pOutput++ = (unsigned char) *pLeft *0.5;pLeft++;
-                        *pOutput++ = (unsigned char) *pLeft *0.5;pLeft++;
-                        *pOutput++ = (unsigned char) *pLeft *0.5;pLeft++;
+                        *pOutput++ = (unsigned char) *pLeftDragon *0.5; pLeftDragon++;
+                        *pOutput++ = (unsigned char) *pLeftDragon *0.5; pLeftDragon++;
+                        *pOutput++ = (unsigned char) *pLeftDragon *0.5; pLeftDragon++;
                     }
                     else if(col >= width) {
                         *pOutput++ = (unsigned char) 0;
@@ -307,7 +310,7 @@ void vAlignerThread::shift(int shift,ImageOf<PixelMono> leftEvent,
                     col++;
                 }
                 //padding
-                pLeft += padding;
+                pLeftDragon += padding;
                 pOutput += paddingOut;
             }
             
@@ -319,30 +322,40 @@ void vAlignerThread::shift(int shift,ImageOf<PixelMono> leftEvent,
                     if (col < shift) {
                         //d=sqrt( (row - centerY) * (row - centerY) 
                         //    + (col - centerX) * (col - centerX));
-                        *pOutput++ = (unsigned char) *pLeft *0.5;pLeft++;
-                        *pOutput++ = (unsigned char) *pLeft *0.5;pLeft++;
-                        *pOutput++ = (unsigned char) *pLeft *0.5;pLeft++;
+                        *pOutput++ = (unsigned char) *pLeftDragon *0.5; pLeftDragon++;
+                        *pOutput++ = (unsigned char) *pLeftDragon *0.5; pLeftDragon++;
+                        *pOutput++ = (unsigned char) *pLeftDragon *0.5; pLeftDragon++;
                     }
                     else if((col >= shift)&&(col < width)) {
                         //d=sqrt( (row - centerY) * (row - centerY) 
                         //    + (col - centerX) * (col - centerX));
-                        *pOutput=(unsigned char) floor( (*pLeft *0.5 + *pRight *0.5));
-                        pLeft++;pRight++;pOutput++;
-                        *pOutput=(unsigned char) floor( (*pLeft *0.5 + *pRight *0.5));
-                        pLeft++;pRight++;pOutput++;
-                        *pOutput=(unsigned char) floor( (*pLeft *0.5 + *pRight *0.5));
-                        pLeft++;pRight++;pOutput++;
+                        if((col > 160 - 60)&&(col < 160 + 60) && (row > 120 -60) && (row<120 +60)) {
+                            *pOutput=(unsigned char) floor( (*pLeftDragon *0.25 + *pRightDragon *0.25));
+                            pLeftDragon++; pRightDragon++; pOutput++;
+                            *pOutput=(unsigned char) floor( (*pLeftDragon *0.25 + *pRightDragon *0.25));
+                            pLeftDragon++; pRightDragon++; pOutput++;
+                            *pOutput=(unsigned char) floor( (*pLeftDragon *0.5 + *pRightDragon *0.5));
+                            pLeftDragon++; pRightDragon++; pOutput++;
+                        }
+                        else {
+                            *pOutput=(unsigned char) floor( (*pLeftDragon *0.5 + *pRightDragon *0.5));
+                            pLeftDragon++; pRightDragon++; pOutput++;
+                            *pOutput=(unsigned char) floor( (*pLeftDragon *0.5 + *pRightDragon *0.5));
+                            pLeftDragon++; pRightDragon++; pOutput++;
+                            *pOutput=(unsigned char) floor( (*pLeftDragon *0.5 + *pRightDragon *0.5));
+                            pLeftDragon++;pRightDragon++;pOutput++;
+                        }
                     }
                     else if((col >= width)&&(col < width + shift)){
-                        *pOutput++ = (unsigned char) *pRight *0.5; pRight++;
-                        *pOutput++ = (unsigned char) *pRight *0.5; pRight++;
-                        *pOutput++ = (unsigned char) *pRight *0.5; pRight++;
+                        *pOutput++ = (unsigned char) *pRightDragon *0.5; pRightDragon++;
+                        *pOutput++ = (unsigned char) *pRightDragon *0.5; pRightDragon++;
+                        *pOutput++ = (unsigned char) *pRightDragon *0.5; pRightDragon++;
                     }
                     col++;
                 }
                 //padding
-                pLeft += padding;
-                pRight += padding;
+                pLeftDragon += padding;
+                pRightDragon += padding;
                 pOutput += paddingOut;
             }            
             else if ((row >= height)&&(row < height + VERTSHIFT)) {
@@ -355,14 +368,14 @@ void vAlignerThread::shift(int shift,ImageOf<PixelMono> leftEvent,
                         *pOutput++ = (unsigned char) 0;
                     }
                     else {
-                        *pOutput++ = (unsigned char) *pRight *0.5;pRight++;
-                        *pOutput++ = (unsigned char) *pRight *0.5;pRight++;
-                        *pOutput++ = (unsigned char) *pRight *0.5;pRight++;
+                        *pOutput++ = (unsigned char) *pRightDragon *0.5; pRightDragon++;
+                        *pOutput++ = (unsigned char) *pRightDragon *0.5; pRightDragon++;
+                        *pOutput++ = (unsigned char) *pRightDragon *0.5; pRightDragon++;
                     }
                     col++;
                 }                
                 //padding
-                pRight += padding;
+                pRightDragon += padding;
                 pOutput += paddingOut;
             }
             row ++;
@@ -370,39 +383,6 @@ void vAlignerThread::shift(int shift,ImageOf<PixelMono> leftEvent,
     }
 }
 
-
-    /*
- }
-        else {
-            shift = -shift;
-        for (int row=0;row<height;row++) {
-            pLeft += shift * 3;
-            int col = 0;
-            while (col < width) {
-                if (col < width - shift) {
-                   //d=sqrt( (row - centerY) * (row - centerY) 
-                    //    + (col - centerX) * (col - centerX));
-                    *pOutput=(unsigned char) floor( (*pLeft>>1 + *pRight>>1));
-                    pLeft++;pRight++;pOutput++;
-                    *pOutput=(unsigned char) floor( (*pLeft>>1 + *pRight>>1));
-                    pLeft++;pRight++;pOutput++;
-                    *pOutput=(unsigned char) floor( (*pLeft>>1 + *pRight>>1));
-                    pLeft++;pRight++;pOutput++;
-                }
-                else if((col >= width-shift)&&(col < width)){
-                    *pOutput++ = (unsigned char) *pRight++;
-                    *pOutput++ = (unsigned char) *pRight++;
-                    *pOutput++ = (unsigned char) *pRight++;
-                }
-                col++;
-            }
-            //padding
-            pLeft   += padding;
-            pRight  += padding;
-            pOutput += padding;
-        }
-
-    */
 
 void vAlignerThread::interrupt() {
     outPort.interrupt();
