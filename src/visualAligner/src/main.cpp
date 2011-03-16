@@ -46,7 +46,7 @@ int main(int argc, char * argv[])
     ResourceFinder rf;
     rf.setVerbose(true);
     rf.setDefaultConfigFile("visualAligner.ini"); //overridden by --from parameter
-    rf.setDefaultContext("logPolarAttentionSystem/conf");   //overridden by --context parameter
+    rf.setDefaultContext("eMorphApplication/conf");   //overridden by --context parameter
     rf.configure("ICUB_ROOT", argc, argv);
  
     module.runModule(rf);

@@ -39,6 +39,7 @@ using namespace std;
 #define THRATE 30
 #define SHIFTCONST 100
 #define VERTSHIFT 34
+#define retinalSize 128
 
 /************************************************************************/
 bool getCamPrj(const string &configFile, const string &type, Matrix **Prj)
@@ -240,14 +241,14 @@ bool vAlignerThread::threadInit() {
         //cxl=Prj(0,2);
         //cyl=Prj(1,2);
         invPrjL=new Matrix(pinv(Prj.transposed()).transposed());
-        printf("found the matrix of projection of left %f %f %f", Prj(0,0),Prj(1,1),Prj(2,2));
+        printf("found the matrix of projection of left %f %f %f \n", Prj(0,0),Prj(1,1),Prj(2,2));
     }
     if (getCamPrj(configFile,"CAMERA_CALIBRATION_RIGHT",&PrjR)) {
         Matrix &Prj=*PrjR;
         //cxl=Prj(0,2);
         //cyl=Prj(1,2);
         invPrjR=new Matrix(pinv(Prj.transposed()).transposed());
-        printf("found the matrix of projection of right %f %f %f", Prj(0,0),Prj(1,1),Prj(2,2));
+        printf("found the matrix of projection of right %f %f %f \n", Prj(0,0),Prj(1,1),Prj(2,2));
     }
 
 	chainRightEye=rightEye->asChain();
@@ -282,9 +283,9 @@ void vAlignerThread::resize(int widthp, int heightp) {
     rightDragonImage=new ImageOf<PixelRgb>;
     rightDragonImage->resize(width, height);
     leftEventImage = new ImageOf<PixelMono>;
-    leftEventImage->resize(width, height);
+    leftEventImage->resize(retinalSize, retinalSize);
     rightEventImage = new ImageOf<PixelMono>;
-    rightEventImage->resize(width, height);
+    rightEventImage->resize(retinalSize, retinalSize);
 }
 
 void vAlignerThread::run() {
@@ -319,7 +320,7 @@ void vAlignerThread::run() {
 
         if(leftEventPort.getInputCount()) {
              tmpMono = leftEventPort.read(false);
-             if(tmpMono!=0) {
+             if((tmpMono!=0)&&(resized)) {
                  printf("copying the leftEventImage \n");
                  copy_8u_C1R(tmpMono,leftEventImage);
              }
@@ -327,7 +328,8 @@ void vAlignerThread::run() {
 
         if(rightEventPort.getInputCount()) {
              tmpMono = rightEventPort.read(false);
-             if(tmpMono!=0) {
+             if((tmpMono!=0)&&(resized)) {
+                printf("copying the leftEventImage \n");
                 copy_8u_C1R(tmpMono,rightEventImage);
              }
         }
@@ -339,11 +341,9 @@ void vAlignerThread::run() {
             printf("azim %f, elevation %f, vergence %f \n",angles[0],angles[1],angles[2]);
             double vergence = (angles[2] * 3.14) / 180;
             double version = (angles[0] * 3.14) / 180;
-            outputImage.resize(width + shiftValue, height + VERTSHIFT);
-                 
-            shift(shiftValue, *leftEventImage, *leftEventImage, outputImage);
+            outputImage.resize(width + shiftValue, height + VERTSHIFT);                 
+            shift(shiftValue, *leftEventImage, *rightEventImage, outputImage);
             outPort.write();
-
         }
     }
 }
@@ -356,6 +356,8 @@ void vAlignerThread::shift(int shift,ImageOf<PixelMono> leftEvent,
     unsigned char* pLeftEvent = leftEventImage->getRawImage();
     
     int padding = leftDragonImage->getPadding();
+    int paddingEvent = leftEventImage->getPadding();
+    printf("paddingEvent %d \n", paddingEvent);
     int paddingOut = outImage.getPadding();
     
     unsigned char* pOutput=outImage.getRawImage();
@@ -365,7 +367,6 @@ void vAlignerThread::shift(int shift,ImageOf<PixelMono> leftEvent,
         int row = 0;
         while (row < height + VERTSHIFT) {
             if(row < VERTSHIFT ){
-
                 int col = 0;
                 while(col < width + shift) {
                     if(col < width) {
@@ -388,7 +389,13 @@ void vAlignerThread::shift(int shift,ImageOf<PixelMono> leftEvent,
             
             else if((row >= VERTSHIFT)&&(row < height)) {
                 int col = 0;
-
+                if ((row > 120 - 64) && (row < 120 + 64)) {
+                    eventLeft = true;
+                }
+                else {
+                    eventLeft = false;
+                }
+                    
                 while(col < width + shift) {
                     //pRight += shift*3;
                     if (col < shift) {
@@ -401,13 +408,14 @@ void vAlignerThread::shift(int shift,ImageOf<PixelMono> leftEvent,
                     else if((col >= shift)&&(col < width)) {
                         //d=sqrt( (row - centerY) * (row - centerY) 
                         //    + (col - centerX) * (col - centerX));
-                        if((col > 160 - 60)&&(col < 160 + 60) && (row > 120 -60) && (row<120 +60)) {
-                            *pOutput=(unsigned char) floor( (*pLeftDragon *0.25 + *pRightDragon *0.25));
+                        if((col >= 160 - 64)&&(col < 160 + 64) && (row >= 120 - 64) && (row < 120 + 64)) {
+                            *pOutput=(unsigned char) floor( (*pLeftDragon *0.25 + *pRightDragon *0.25 + *pLeftEvent *0.5));
+                            pLeftDragon++; pRightDragon++; pOutput++; 
+                            *pOutput=(unsigned char) floor( (*pLeftDragon *0.25 + *pRightDragon *0.25 + *pLeftEvent *0.5));
                             pLeftDragon++; pRightDragon++; pOutput++;
-                            *pOutput=(unsigned char) floor( (*pLeftDragon *0.25 + *pRightDragon *0.25));
+                            *pOutput=(unsigned char) floor( (*pLeftDragon *0.25 + *pRightDragon *0.25 + *pLeftEvent *0.5));
                             pLeftDragon++; pRightDragon++; pOutput++;
-                            *pOutput=(unsigned char) floor( (*pLeftDragon *0.5 + *pRightDragon *0.5));
-                            pLeftDragon++; pRightDragon++; pOutput++;
+                            pLeftEvent++;
                         }
                         else {
                             *pOutput=(unsigned char) floor( (*pLeftDragon *0.5 + *pRightDragon *0.5));
@@ -426,6 +434,9 @@ void vAlignerThread::shift(int shift,ImageOf<PixelMono> leftEvent,
                     col++;
                 }
                 //padding
+                if(eventLeft) {
+                    pLeftEvent += paddingEvent;
+                }
                 pLeftDragon += padding;
                 pRightDragon += padding;
                 pOutput += paddingOut;
