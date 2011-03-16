@@ -168,8 +168,8 @@ bool vAlignerThread::threadInit() {
     outPort.open(getName("/image:o").c_str());
     leftDragonPort.open(getName("/leftDragon:i").c_str());
     rightDragonPort.open(getName("/rightDragon:i").c_str());
-    leftDragonPort.open(getName("/leftDvs:i").c_str());
-    rightDragonPort.open(getName("/rightDvs:i").c_str());
+    leftEventPort.open(getName("/leftDvs:i").c_str());
+    rightEventPort.open(getName("/rightDvs:i").c_str());
     vergencePort.open(getName("/vergence:i").c_str());
 
     //initializing gazecontrollerclient
