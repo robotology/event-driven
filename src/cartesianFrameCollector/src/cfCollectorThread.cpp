@@ -35,7 +35,7 @@ using namespace yarp::sig;
 using namespace std;
 
 #define MAXVALUE 4294967295
-#define THRATE 30
+#define THRATE 10
 #define STAMPINFRAME  // 10 ms of period times the us in 1 millisecond + time for computing
 #define retinalSize 128
 #define CHUNKSIZE 4096
@@ -187,7 +187,11 @@ void cfCollectorThread::run() {
         double interval = (endTimer - startTimer) * 1000000; //interval in us
         startTimer = Time::now();
         
-
+        unsigned long int lastleft = unmask_events.getLastTimestamp();
+        lc = lastleft * 1.25; //1.25 is the ratio 0.160/0.128
+        unsigned long int lastright = unmask_events.getLastTimestampRight();
+        rc = lastright * 1.25; 
+        
         //synchronising the threads at the connection time
         if ((cfConverter->isValid())&&(!synchronised)) {
             printf("Sychronised Sychronised Sychronised Sychronised ");
@@ -203,22 +207,6 @@ void cfCollectorThread::run() {
             //minCountRight = unmask_events.getLastTimestamp();
             count = 900;
         }
-
-        /*
-        if((firstRun)&&(count>1000) &&(unmask_events.getValidRight())) {
-            printf("Sychronised Sychronised Sychronised Sychronised ");
-            firstRun = false;
-            minCount  minCount = lc - interval * 2; //cfConverter->getEldestTimeStamp();                                                                   
-            minCountRight = rc - interval * 2;
-            printf("synchronised %1f! %d,%d,%d||%d,%d,%d \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
-            startTimer = Time::now();
-            synchronised = true;
-            = unmask_events.getLastTimestampRight();
-            printf("minCount %d \n", minCount);
-            minCountRight = unmask_events.getLastTimestampRight();
-        }
-        */
-        
  
 
         //synchronising the thread every time interval 1000*period of the thread
@@ -240,14 +228,12 @@ void cfCollectorThread::run() {
         maxCount =  minCount + interval * 3;
         maxCountRight =  minCountRight + interval * 3;
         
-        unsigned long int lastleft = unmask_events.getLastTimestamp();
-        lc = lastleft * 1.25; //1.25 is the ratio 0.160/0.128
-        unsigned long int lastright = unmask_events.getLastTimestampRight();
-        rc = lastright * 1.25; 
+        
         //resetting time stamps at overflow
         if ((minCount > 687172078)||(minCountRight > 687172078)) {
             cfConverter->resetTimestamps();
             printf("resetting time stamps!!!!!!!!!!!!!");
+            count = 999;
         }
 
         //if( count % 45 == 0) {            
@@ -396,8 +382,8 @@ void cfCollectorThread::threadRelease() {
     //delete cfConverter;
     outPort.close();
     outPortRight.close();
-    delete pThread;
-    free(bufferCopy);
+    //delete pThread;
+    //free(bufferCopy);
     
 }
 

@@ -321,7 +321,6 @@ void vAlignerThread::run() {
         if(leftEventPort.getInputCount()) {
              tmpMono = leftEventPort.read(false);
              if((tmpMono!=0)&&(resized)) {
-                 printf("copying the leftEventImage \n");
                  copy_8u_C1R(tmpMono,leftEventImage);
              }
         }
@@ -329,7 +328,6 @@ void vAlignerThread::run() {
         if(rightEventPort.getInputCount()) {
              tmpMono = rightEventPort.read(false);
              if((tmpMono!=0)&&(resized)) {
-                printf("copying the leftEventImage \n");
                 copy_8u_C1R(tmpMono,rightEventImage);
              }
         }
@@ -338,7 +336,7 @@ void vAlignerThread::run() {
         if(resized) {
             Vector angles(3);
             bool b = igaze->getAngles(angles);
-            printf("azim %f, elevation %f, vergence %f \n",angles[0],angles[1],angles[2]);
+            //printf("azim %f, elevation %f, vergence %f \n",angles[0],angles[1],angles[2]);
             double vergence = (angles[2] * 3.14) / 180;
             double version = (angles[0] * 3.14) / 180;
             outputImage.resize(width + shiftValue, height + VERTSHIFT);                 
