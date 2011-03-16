@@ -53,6 +53,7 @@ private:
     yarp::sig::ImageOf <yarp::sig::PixelRgb>* tmp;                                          // temporary image for correct port reading
     yarp::sig::ImageOf <yarp::sig::PixelMono>* tmpMono;
     std::string name;                                                                       // rootname of all the ports opened by this thread
+    std::string configFile;
     bool resized;                                                                           // flag to check if the variables have been already resized
     int shiftValue;                                                                         // value of the shift between dragonfly (this is vergence related)
     yarp::dev::IGazeControl *igaze;                                                         // Ikin controller of the gaze
@@ -63,12 +64,15 @@ private:
     iCub::iKin::iKinChain *chainRightEye,  *chainLeftEye;                                   // ikinChain of the left and right eye
     yarp::os::Property optionsHead, optionsTorso;                                           // option for the torso
     yarp::dev::IEncoders *encHead, *encTorso;                                               // encoder for the torso
+    yarp::sig::Matrix *invPrjL, *invPrjR;                                                   // inverse of prjection matrix
+    yarp::sig::Matrix *PrjL, *PrjR;                                                         // projection matrix
     std::string robotName;                                                                  // name of the robot
 public:
     /**
     * default constructor
+    * @param _configFile name of the file of eyes configuraration
     */
-    vAlignerThread();
+    vAlignerThread(std::string _configFile);
 
     /**
      * destructor

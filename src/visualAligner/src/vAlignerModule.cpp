@@ -70,10 +70,19 @@ bool vAlignerModule::configure(yarp::os::ResourceFinder &rf) {
         cout << getName() << ": Unable to open port " << handlerPortName << endl;  
         return false;
     }
-
     attach(handlerPort);                  // attach to port
+    
+    if (rf.check("config")) {
+        configFileDragon=rf.findFile(rf.find("config").asString().c_str());
+        if (configFileDragon=="") {
+            return false;
+        }
+    }
+    else {
+        configFileDragon.clear();
+    }
 
-    vaThread=new vAlignerThread();
+    vaThread=new vAlignerThread(configFileDragon);
     vaThread->setName(getName().c_str());
     vaThread->setRobotname(robotName);
     vaThread->start();

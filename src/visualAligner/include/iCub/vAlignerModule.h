@@ -152,6 +152,8 @@
 * CHANGE LOG
 * 08/02/2011 : removed the distance reducing factor                                             @author Rea
 * 29/02/2011 : added the kinematic of the left/right eyes and torso                             @author Rea
+* 15/03/2011 : added the software vertical alignment of the left and right dragonfly            @author Rea
+* 16/03/2011 : added the config file for left and right dragonfly                               @author Rea
 */
 
 #include <iostream>
@@ -166,14 +168,16 @@
 #include <iCub/vAlignerThread.h>
 
 class vAlignerModule:public yarp::os::RFModule {
-    std::string moduleName;                     //name of the module (rootname of ports)
-    std::string robotName;                      //name of the robot
-    std::string robotPortName;                  //reference to the head of the robot
-    std::string handlerPortName;                //name of the handler port (comunication with respond function)
-    int ratethread;                             //time constant for ratethread
+    std::string moduleName;                     // name of the module (rootname of ports)
+    std::string robotName;                      // name of the robot
+    std::string robotPortName;                  // reference to the head of the robot
+    std::string handlerPortName;                // name of the handler port (comunication with respond function)
+    std::string configFileDragon;               // name of the configFile for dragonfly cameras
+    std::string configFileDvs;                  // name of the config file for DVS cameras
+    int ratethread;                             // time constant for ratethread
 
     yarp::os::Port handlerPort;                 // a port to handle messages 
-    vAlignerThread* vaThread;                   //visualAlignerThread for processing events
+    vAlignerThread* vaThread;                   // visualAlignerThread for processing events
 
 public:
     bool configure(yarp::os::ResourceFinder &rf); // configure all the module parameters and return true if successful

@@ -27,16 +27,68 @@
 #include <iCub/vAlignerThread.h>
 #include <cstring>
 #include <cassert>
+#include <yarp/math/SVD.h>
 
 using namespace yarp::os;
 using namespace yarp::sig;
 using namespace yarp::dev;
 using namespace iCub::iKin;
+using namespace yarp::math;
 using namespace std;
 
 #define THRATE 30
 #define SHIFTCONST 100
 #define VERTSHIFT 34
+
+/************************************************************************/
+bool getCamPrj(const string &configFile, const string &type, Matrix **Prj)
+{
+    *Prj=NULL;
+
+    if (configFile.size())
+    {
+        Property par;
+        par.fromConfigFile(configFile.c_str());
+
+        Bottle parType=par.findGroup(type.c_str());
+        string warning="Intrinsic parameters for "+type+" group not found";
+
+        if (parType.size())
+        {
+            if (parType.check("w") && parType.check("h") &&
+                parType.check("fx") && parType.check("fy"))
+            {
+                // we suppose that the center distorsion is already compensated
+                double cx = parType.find("w").asDouble() / 2.0;
+                double cy = parType.find("h").asDouble() / 2.0;
+                double fx = parType.find("fx").asDouble();
+                double fy = parType.find("fy").asDouble();
+
+                Matrix K=eye(3,3);
+                Matrix Pi=zeros(3,4);
+
+                K(0,0)=fx; K(1,1)=fy;
+                K(0,2)=cx; K(1,2)=cy; 
+                
+                Pi(0,0)=Pi(1,1)=Pi(2,2)=1.0; 
+
+                *Prj=new Matrix;
+                **Prj=K*Pi;
+
+                return true;
+            }
+            else
+                fprintf(stdout,"%s\n",warning.c_str());
+        }
+        else
+            fprintf(stdout,"%s\n",warning.c_str());
+    }
+
+    return false;
+}
+
+/**********************************************************************************/
+
 
 
 inline void copy_8u_C1R(ImageOf<PixelMono>* src, ImageOf<PixelMono>* dest) {
@@ -54,6 +106,8 @@ inline void copy_8u_C1R(ImageOf<PixelMono>* src, ImageOf<PixelMono>* dest) {
         psrc += padding;
     }
 }
+
+/**********************************************************************************/
 
 inline void copy_8u_C3R(ImageOf<PixelRgb>* src, ImageOf<PixelRgb>* dest) {
     int padding = src->getPadding();
@@ -73,14 +127,17 @@ inline void copy_8u_C3R(ImageOf<PixelRgb>* src, ImageOf<PixelRgb>* dest) {
     }
 }
 
-vAlignerThread::vAlignerThread() : RateThread(THRATE) {
-    resized=false;
-    count=0;
+/**********************************************************************************/
+
+vAlignerThread::vAlignerThread(string _configFile) : RateThread(THRATE) {
+    resized = false;
+    count = 0;
     leftDragonImage = 0;
     rightDragonImage = 0;
     leftEventImage = 0;
     rightEventImage = 0;
-    shiftValue=20;
+    shiftValue = 20;
+    configFile =  _configFile;
 }
 
 vAlignerThread::~vAlignerThread() {
@@ -177,7 +234,22 @@ bool vAlignerThread::threadInit() {
         leftEye->releaseLink(i);
         rightEye->releaseLink(i);
     }
-  
+    // get camera projection matrix from the configFile
+    if (getCamPrj(configFile,"CAMERA_CALIBRATION_LEFT",&PrjL)) {
+        Matrix &Prj=*PrjL;
+        //cxl=Prj(0,2);
+        //cyl=Prj(1,2);
+        invPrjL=new Matrix(pinv(Prj.transposed()).transposed());
+        printf("found the matrix of projection of left %f %f %f", Prj(0,0),Prj(1,1),Prj(2,2));
+    }
+    if (getCamPrj(configFile,"CAMERA_CALIBRATION_RIGHT",&PrjR)) {
+        Matrix &Prj=*PrjR;
+        //cxl=Prj(0,2);
+        //cyl=Prj(1,2);
+        invPrjR=new Matrix(pinv(Prj.transposed()).transposed());
+        printf("found the matrix of projection of right %f %f %f", Prj(0,0),Prj(1,1),Prj(2,2));
+    }
+
 	chainRightEye=rightEye->asChain();
   	chainLeftEye =leftEye->asChain();
 
