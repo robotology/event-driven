@@ -173,7 +173,7 @@ class vAlignerModule:public yarp::os::RFModule {
     std::string robotPortName;                  // reference to the head of the robot
     std::string handlerPortName;                // name of the handler port (comunication with respond function)
     std::string configFileDragon;               // name of the configFile for dragonfly cameras
-    std::string configFileDvs;                  // name of the config file for DVS cameras
+    std::string configFileDVS;                  // name of the config file for DVS cameras
     int ratethread;                             // time constant for ratethread
 
     yarp::os::Port handlerPort;                 // a port to handle messages 

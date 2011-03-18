@@ -72,14 +72,24 @@ bool vAlignerModule::configure(yarp::os::ResourceFinder &rf) {
     }
     attach(handlerPort);                  // attach to port
     
-    if (rf.check("config")) {
-        configFileDragon=rf.findFile(rf.find("config").asString().c_str());
+    if (rf.check("configDragon")) {
+        configFileDragon=rf.findFile(rf.find("configDragon").asString().c_str());
         if (configFileDragon=="") {
             return false;
         }
     }
     else {
         configFileDragon.clear();
+    }
+
+    if (rf.check("configDVS")) {
+        configFileDVS=rf.findFile(rf.find("configDVS").asString().c_str());
+        if (configFileDVS=="") {
+            return false;
+        }
+    }
+    else {
+        configFileDVS.clear();
     }
 
     vaThread=new vAlignerThread(configFileDragon);
