@@ -70,8 +70,6 @@ private:
     yarp::os::Property optionsHead, optionsTorso;                                           // option for the torso
     yarp::dev::IEncoders *encHead, *encTorso;                                               // encoder for the torso
     yarp::sig::Matrix *invPrjLeftDragon, *invPrjRightDragon;                                // inverse of prjection matrix for the left and right Dragon
-    yarp::sig::Matrix *PrjLeftDragon, *PrjRightDragon;                                      // projection matrix for the left and right dragonfly cameras
-    yarp::sig::Matrix *invPrjLeftDragon, *invPrjRightDragon;                                // inverse of prjection matrix for the left and right Dragon
     yarp::sig::Matrix *invPrjLeftDVS, *invPrjRightDVS;                                   // inverse of prjection matrix for the left and right DVS
     yarp::sig::Matrix *PrjLeftDVS, *PrjRightDVS;                                            // projection matrix for the left and right DVS cameras
     std::string robotName;                                                                  // name of the robot
