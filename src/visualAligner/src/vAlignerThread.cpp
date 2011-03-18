@@ -227,9 +227,6 @@ bool vAlignerThread::threadInit() {
         robotHead->close();
     }
 
-    // initilisation of the reference to the left and right eyes
-    // Instantiate objects
-    neck=new iCubHeadCenter();
     rightEye = new iCubEye("right");
     leftEye = new iCubEye("left");
 
