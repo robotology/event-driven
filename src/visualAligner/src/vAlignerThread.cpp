@@ -130,7 +130,7 @@ inline void copy_8u_C3R(ImageOf<PixelRgb>* src, ImageOf<PixelRgb>* dest) {
 
 /**********************************************************************************/
 
-vAlignerThread::vAlignerThread(string _configFile) : RateThread(THRATE) {
+vAlignerThread::vAlignerThread(string _configDragon) : RateThread(THRATE) {
     resized = false;
     count = 0;
     leftDragonImage = 0;
@@ -138,7 +138,7 @@ vAlignerThread::vAlignerThread(string _configFile) : RateThread(THRATE) {
     leftEventImage = 0;
     rightEventImage = 0;
     shiftValue = 20;
-    configFile =  _configFile;
+    configDragon =  _configDragon;
 }
 
 vAlignerThread::~vAlignerThread() {
@@ -258,7 +258,7 @@ bool vAlignerThread::threadInit() {
         invPrjLeftDVS=new Matrix(pinv(Prj.transposed()).transposed());
         printf("found the matrix of projection of left %f %f %f \n", Prj(0,0),Prj(1,1),Prj(2,2));
     }
-    if (getCamPrj(configDragon,"CAMERA_CALIBRATION_RIGHT",&PrjRightDVS)) {
+    if (getCamPrj(configDVS,"CAMERA_CALIBRATION_RIGHT",&PrjRightDVS)) {
         Matrix &Prj=*PrjRightDVS;
         //cxl=Prj(0,2);
         //cyl=Prj(1,2);
