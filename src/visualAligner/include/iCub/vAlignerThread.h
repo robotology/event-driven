@@ -32,7 +32,15 @@
 #include <yarp/os/BufferedPort.h>
 #include <yarp/sig/all.h>
 #include <yarp/dev/all.h>
+#include <iCub/ctrl/minJerkCtrl.h>
+#include <iCub/ctrl/pids.h>
+
+#include <iCub/utils.h>
+
+using namespace iCub::ctrl;
+
 #include <iostream>
+
 
 
 class vAlignerThread : public yarp::os::RateThread {
@@ -60,7 +68,6 @@ private:
     yarp::dev::IGazeControl* igaze;                                                         // Ikin controller of the gaze
     yarp::dev::PolyDriver* clientGazeCtrl;                                                  // polydriver for the gaze controller
     iCub::iKin::iCubEye *leftEye, *rightEye;                                                // reference to the eye kinematics
-    iCub::iKin::iCubHeadCenter *neck;
     yarp::dev::PolyDriver *robotHead,*robotTorso;                                           // driver for the torso
     iCub::iKin::iKinLink *leftLink, *rightLink;                                             // ikinLink of the left and right eye
     iCub::iKin::iKinChain *chainRightEye,  *chainLeftEye;                                   // ikinChain of the left and right eye
