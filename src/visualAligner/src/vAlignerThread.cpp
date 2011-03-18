@@ -237,24 +237,38 @@ bool vAlignerThread::threadInit() {
         leftEye->releaseLink(i);
         rightEye->releaseLink(i);
     }
-    // get camera projection matrix from the configFile
-    if (getCamPrj(configFile,"CAMERA_CALIBRATION_LEFT",&PrjL)) {
-        Matrix &Prj=*PrjL;
+    // get camera projection matrix for the Dragonfly from the configDragon
+    if (getCamPrj(configDragon,"CAMERA_CALIBRATION_LEFT",&PrjLeftDragon)) {
+        Matrix &Prj=*PrjLeftDragon;
         //cxl=Prj(0,2);
         //cyl=Prj(1,2);
-        invPrjL=new Matrix(pinv(Prj.transposed()).transposed());
+        invPrjLeftDragon=new Matrix(pinv(Prj.transposed()).transposed());
         printf("found the matrix of projection of left %f %f %f \n", Prj(0,0),Prj(1,1),Prj(2,2));
     }
-    if (getCamPrj(configFile,"CAMERA_CALIBRATION_RIGHT",&PrjR)) {
-        Matrix &Prj=*PrjR;
+    if (getCamPrj(configDragon,"CAMERA_CALIBRATION_RIGHT",&PrjRightDragon)) {
+        Matrix &Prj=*PrjRightDragon;
         //cxl=Prj(0,2);
         //cyl=Prj(1,2);
-        invPrjR=new Matrix(pinv(Prj.transposed()).transposed());
+        invPrjRightDragon=new Matrix(pinv(Prj.transposed()).transposed());
+        printf("found the matrix of projection of right %f %f %f \n", Prj(0,0),Prj(1,1),Prj(2,2));
+    }
+
+    // get camera projection matrix for the DVS camera from the configDVS
+    if (getCamPrj(configDVS,"CAMERA_CALIBRATION_LEFT",&PrjLeftDVS)) {
+        Matrix &Prj=*PrjLeftDVS;
+        //cxl=Prj(0,2);
+        //cyl=Prj(1,2);
+        invPrjLeftDVS=new Matrix(pinv(Prj.transposed()).transposed());
+        printf("found the matrix of projection of left %f %f %f \n", Prj(0,0),Prj(1,1),Prj(2,2));
+    }
+    if (getCamPrj(configDragon,"CAMERA_CALIBRATION_RIGHT",&PrjRightDVS)) {
+        Matrix &Prj=*PrjRightDVS;
+        //cxl=Prj(0,2);
+        //cyl=Prj(1,2);
+        invPrjRightDVS=new Matrix(pinv(Prj.transposed()).transposed());
         printf("found the matrix of projection of right %f %f %f \n", Prj(0,0),Prj(1,1),Prj(2,2));
     }
     
-    // Get the chain objects
-    chainNeck=neck->asChain();
     chainRightEye=rightEye->asChain();
     chainLeftEye =leftEye->asChain();
 

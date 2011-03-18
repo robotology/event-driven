@@ -32,12 +32,7 @@
 #include <yarp/os/BufferedPort.h>
 #include <yarp/sig/all.h>
 #include <yarp/dev/all.h>
-#include <iCub/ctrl/minJerkCtrl.h>
-#include <iCub/ctrl/pids.h>
 
-#include <iCub/utils.h>
-
-using namespace iCub::ctrl;
 
 #include <iostream>
 
@@ -61,7 +56,8 @@ private:
     yarp::sig::ImageOf <yarp::sig::PixelRgb>* tmp;                                          // temporary image for correct port reading
     yarp::sig::ImageOf <yarp::sig::PixelMono>* tmpMono;
     std::string name;                                                                       // rootname of all the ports opened by this thread
-    std::string configFile;
+    std::string configDragon;                                                                 // config file where parameter of dragonfly cameras are set
+    std::string configDVS;                                                                 // config file where parameter of DVS cameras are set
     bool resized;                                                                           // flag to check if the variables have been already resized
     bool eventLeft;                                                                         // flag for the presence of the left event image in the image
     int shiftValue;                                                                         // value of the shift between dragonfly (this is vergence related)
@@ -73,8 +69,9 @@ private:
     iCub::iKin::iKinChain *chainRightEye,  *chainLeftEye;                                   // ikinChain of the left and right eye
     yarp::os::Property optionsHead, optionsTorso;                                           // option for the torso
     yarp::dev::IEncoders *encHead, *encTorso;                                               // encoder for the torso
-    yarp::sig::Matrix *invPrjL, *invPrjR;                                                   // inverse of prjection matrix
-    yarp::sig::Matrix *PrjL, *PrjR;                                                         // projection matrix
+    yarp::sig::Matrix *invPrjLeftDragon, *invPrjRightDragon;                                // inverse of prjection matrix for the left and right Dragon
+    yarp::sig::Matrix *PrjLeftDragon, *PrjRightDragon;                                      // projection matrix for the left and right dragonfly cameras
+    yarp::sig::Matrix *PrjLeftDVS, *PrjRightDVS;                                            // projection matrix for the left and right DVS cameras
     std::string robotName;                                                                  // name of the robot
 public:
     /**
