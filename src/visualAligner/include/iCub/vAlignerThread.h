@@ -57,10 +57,11 @@ private:
     bool resized;                                                                           // flag to check if the variables have been already resized
     bool eventLeft;                                                                         // flag for the presence of the left event image in the image
     int shiftValue;                                                                         // value of the shift between dragonfly (this is vergence related)
-    yarp::dev::IGazeControl *igaze;                                                         // Ikin controller of the gaze
+    yarp::dev::IGazeControl* igaze;                                                         // Ikin controller of the gaze
     yarp::dev::PolyDriver* clientGazeCtrl;                                                  // polydriver for the gaze controller
     iCub::iKin::iCubEye *leftEye, *rightEye;                                                // reference to the eye kinematics
-    yarp::dev::PolyDriver *robotHead,*robotTorso;                                                      // driver for the torso
+    iCub::iKin::iCubHeadCenter *neck;
+    yarp::dev::PolyDriver *robotHead,*robotTorso;                                           // driver for the torso
     iCub::iKin::iKinLink *leftLink, *rightLink;                                             // ikinLink of the left and right eye
     iCub::iKin::iKinChain *chainRightEye,  *chainLeftEye;                                   // ikinChain of the left and right eye
     yarp::os::Property optionsHead, optionsTorso;                                           // option for the torso

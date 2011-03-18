@@ -228,6 +228,8 @@ bool vAlignerThread::threadInit() {
     }
 
     // initilisation of the reference to the left and right eyes
+    // Instantiate objects
+    neck=new iCubHeadCenter();
     rightEye = new iCubEye("right");
     leftEye = new iCubEye("left");
 
@@ -250,9 +252,11 @@ bool vAlignerThread::threadInit() {
         invPrjR=new Matrix(pinv(Prj.transposed()).transposed());
         printf("found the matrix of projection of right %f %f %f \n", Prj(0,0),Prj(1,1),Prj(2,2));
     }
-
-	chainRightEye=rightEye->asChain();
-  	chainLeftEye =leftEye->asChain();
+    
+    // Get the chain objects
+    chainNeck=neck->asChain();
+    chainRightEye=rightEye->asChain();
+    chainLeftEye =leftEye->asChain();
 
     return true;
 }
