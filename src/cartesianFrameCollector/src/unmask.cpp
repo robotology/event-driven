@@ -43,6 +43,7 @@ typedef unsigned long uint32_t;
 
 unmask::unmask() : RateThread(UNMASKRATETHREAD){
     count = 0;
+    verbosity = false;
     numKilledEvents = 0;
     lasttimestamp = 0;
     validLeft = false;
@@ -195,9 +196,15 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
             if((cartX!=0) &&( cartY!=0) && (timestamp!=0)) {
                 validLeft =  true;
             }
+           
             if(timestamp > lasttimestamp) {
                 lasttimestamp = timestamp;
             }
+            if(verbosity) {
+                printf("%d", lasttimestamp);
+            }
+            
+
             if(timeBuffer[cartX + cartY * retinalSize] < timestamp) {
                 if(polarity > 0) {
                     buffer[cartX + cartY * retinalSize] = responseGradient;
@@ -222,9 +229,12 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
             if((cartX!=0) &&( cartY!=0) && (timestamp!=0)) {
                 validRight =  true;
             }
+
             if( timestamp > lasttimestampright){
                 lasttimestampright = timestamp;
             }
+           
+
             if (timeBufferRight[cartX + cartY * retinalSize] < timestamp) {
                 if(polarity > 0) {
                     bufferRight[cartX + cartY * retinalSize] = responseGradient;
@@ -253,6 +263,9 @@ void unmask::resetTimestamps() {
         timeBuffer[i] = 0;
         timeBufferRight[i] = 0;
     }
+    lasttimestamp = 0;
+    lasttimestampright = 0;
+    verbosity = true;
 }
 
 void unmask::unmaskEvent(unsigned int evPU, short& x, short& y, short& pol, short& camera) {
