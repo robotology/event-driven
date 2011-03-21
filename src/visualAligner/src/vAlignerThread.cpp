@@ -293,9 +293,34 @@ bool vAlignerThread::threadInit() {
         printf("found the matrix of projection of right %f %f %f \n", Prj(0,0),Prj(1,1),Prj(2,2));
     }
     
-    chainRightEye=rightEye->asChain();
-    chainLeftEye =leftEye->asChain();
-
+    chainRightEye = rightEye->asChain();
+    chainLeftEye = leftEye->asChain();
+    chainRightEyeDragon = rightEyeDragon->asChain();
+    chainLeftEyeDragon = leftEyeDragon->asChain();
+    for (int i = 0; i < 3; i++) {
+        chainRightEyeDragon->popLink();
+        chainLeftEyeDragon->popLink();
+    }
+    double _A = 0;
+    double _D = 0;
+    double _Alpha = 0;
+    double _Offset = 0;
+    double _Min = 0;
+    double _Max = 0;
+    // adding the 5th link common to left and right
+    iKinLink* link = new iKinLink( -54.0,82.5, -M_PI / 2, 90.0, 35.0, 145.0);
+    chainRightEyeDragon->pushLink(*link);
+    chainLeftEyeDragon->pushLink(*link);
+    // adding the 6th link different from the left and right
+    iKinLink* leftLink = new iKinLink( 0.0, 34, -M_PI / 2 , 0.0, -35, 15);
+    iKinLink* rightLink = new iKinLink( 0.0, -34, -M_PI / 2 , 0.0, -35, 15);
+    chainRightEyeDragon->pushLink(*rightLink);
+    chainLeftEyeDragon->pushLink(*leftLink);
+    // adding the last rotation for the 7th link (different between left and right)
+    leftLink = new iKinLink( 0, 0, M_PI / 2, -90, -140, -40);
+    rightLink = new iKinLink( 0, 0, M_PI / 2, -90, -140, -40); 
+    chainRightEyeDragon->pushLink(*rightLink);
+    chainLeftEyeDragon->pushLink(*leftLink);
     return true;
 }
 
@@ -395,7 +420,6 @@ void vAlignerThread::remap(ImageOf<PixelMono> event,ImageOf<PixelMono> result, b
     Matrix  *invPrj=(isLeft?invPrjLeftDragon:invPrjRightDragon);
     iCubEye *eye=(isLeft?leftEyeDragon:rightEyeDragon);
     
-
     if (invPrj) {
         int u = 160, v = 120, z = 0.5;
         
@@ -411,8 +435,8 @@ void vAlignerThread::remap(ImageOf<PixelMono> event,ImageOf<PixelMono> result, b
         q[3]=head[0];
         q[4]=head[1];
         q[5]=head[2];
-        q[6]=head[3];
-            
+        q[6]=head[3];  
+          
         if (isLeft)
             q[7]=head[4]+head[5] / 2.0;
         else

@@ -69,6 +69,7 @@ private:
     yarp::dev::PolyDriver *robotHead,*robotTorso;                                           // driver for the torso
     iCub::iKin::iKinLink *leftLink, *rightLink;                                             // ikinLink of the left and right eye
     iCub::iKin::iKinChain *chainRightEye,  *chainLeftEye;                                   // ikinChain of the left and right eye
+    iCub::iKin::iKinChain *chainRightEyeDragon,  *chainLeftEyeDragon;                                   // ikinChain of the left and right eye (dragonfly)
     yarp::os::Property optionsHead, optionsTorso;                                           // option for the torso
     yarp::dev::IEncoders *encHead, *encTorso;                                               // encoder for the torso
     yarp::sig::Matrix *invPrjLeftDragon, *invPrjRightDragon;                                // inverse of prjection matrix for the left and right Dragon
