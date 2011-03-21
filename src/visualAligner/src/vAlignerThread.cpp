@@ -229,10 +229,37 @@ bool vAlignerThread::threadInit() {
 
     rightEye = new iCubEye("right");
     leftEye = new iCubEye("left");
+    // remove constraints on the links
+    // we use the chains for logging purpose
+    leftEye->setAllConstraints(false);
+    rightEye->setAllConstraints(false);
+    // release links
+    leftEye->releaseLink(0);
+    rightEye->releaseLink(0);
+    leftEye->releaseLink(1);
+    rightEye->releaseLink(1);
+    leftEye->releaseLink(2);
+    rightEye->releaseLink(2);
+
+    rightEyeDragon = new iCubEye("right");
+    leftEyeDragon = new iCubEye("left");
+    // remove constraints on the links
+    // we use the chains for logging purpose
+    leftEyeDragon->setAllConstraints(false);
+    rightEyeDragon->setAllConstraints(false);
+
+    // release links
+   
+    leftEyeDragon->releaseLink(1);
+    rightEyeDragon->releaseLink(1);
+    leftEyeDragon->releaseLink(2);
+    rightEyeDragon->releaseLink(2);
 
     for (int i = 0; i < 8; i++ ){
         leftEye->releaseLink(i);
         rightEye->releaseLink(i);
+        leftEyeDragon->releaseLink(i);
+        rightEyeDragon->releaseLink(i);
     }
     // get camera projection matrix for the Dragonfly from the configDragon
     if (getCamPrj(configDragon,"CAMERA_CALIBRATION_LEFT",&PrjLeftDragon)) {
@@ -354,11 +381,65 @@ void vAlignerThread::run() {
             //printf("azim %f, elevation %f, vergence %f \n",angles[0],angles[1],angles[2]);
             double vergence = (angles[2] * 3.14) / 180;
             double version = (angles[0] * 3.14) / 180;
-            outputImage.resize(width + shiftValue, height + VERTSHIFT);                 
-            shift(shiftValue, *leftEventImage, *rightEventImage, outputImage);
+            outputImage.resize(width + shiftValue, height + VERTSHIFT);  
+            remap(*leftEventImage, *eventImage,1);
+            remap(*rightEventImage, *eventImage,0);
+            shift(shiftValue, *eventImage, *rightEventImage, outputImage);
             outPort.write();
         }
     }
+}
+
+void vAlignerThread::remap(ImageOf<PixelMono> event,ImageOf<PixelMono> result, bool isLeft) {
+    
+    Matrix  *invPrj=(isLeft?invPrjLeftDragon:invPrjRightDragon);
+    iCubEye *eye=(isLeft?leftEyeDragon:rightEyeDragon);
+    
+
+    if (invPrj) {
+        int u = 160, v = 120, z = 0.5;
+        
+        Vector torso(3);
+        igaze->getAngles(torso);
+        Vector head(4);
+        igaze->getAngles(head);
+        
+        Vector q(8);
+        q[0]=torso[0];
+        q[1]=torso[1];
+        q[2]=torso[2];
+        q[3]=head[0];
+        q[4]=head[1];
+        q[5]=head[2];
+        q[6]=head[3];
+            
+        if (isLeft)
+            q[7]=head[4]+head[5] / 2.0;
+        else
+            q[7]=head[4]-head[5] / 2.0;
+        
+        
+        Vector x(3);
+        x[0]=z * u;
+        x[1]=z * v;
+        x[2]=z;
+            
+        printf("applying the inverse projection \n");
+        // find the 3D position from the 2D projection,
+        // knowing the distance z from the camera
+        Vector xe = yarp::math::operator *(*invPrj, x);
+        xe[3]=1.0;  // impose homogeneous coordinates                
+        
+        // update position wrt the root frame
+        Vector xo = yarp::math::operator *(eye->getH(q),xe);
+            
+        //fp.resize(3,0.0);
+        //fp[0]=xo[0];
+        //fp[1]=xo[1];
+        //fp[2]=xo[2];
+        printf("object left eye %f,%f,%f \n",xo[0],xo[1],xo[2]);
+    }
+    
 }
 
 void vAlignerThread::shift(int shift,ImageOf<PixelMono> leftEvent,

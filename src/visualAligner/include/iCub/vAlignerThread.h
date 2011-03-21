@@ -53,6 +53,7 @@ private:
     yarp::sig::ImageOf <yarp::sig::PixelRgb>* rightDragonImage;                             // image where the output of the dragonfly right is saved
     yarp::sig::ImageOf <yarp::sig::PixelMono>* leftEventImage;                              // image where the output of the event image left is saved
     yarp::sig::ImageOf <yarp::sig::PixelMono>* rightEventImage;                             // image where the output of the event image right is saved
+    yarp::sig::ImageOf <yarp::sig::PixelMono>* eventImage;
     yarp::sig::ImageOf <yarp::sig::PixelRgb>* tmp;                                          // temporary image for correct port reading
     yarp::sig::ImageOf <yarp::sig::PixelMono>* tmpMono;
     std::string name;                                                                       // rootname of all the ports opened by this thread
@@ -64,6 +65,7 @@ private:
     yarp::dev::IGazeControl* igaze;                                                         // Ikin controller of the gaze
     yarp::dev::PolyDriver* clientGazeCtrl;                                                  // polydriver for the gaze controller
     iCub::iKin::iCubEye *leftEye, *rightEye;                                                // reference to the eye kinematics
+    iCub::iKin::iCubEye *leftEyeDragon, *rightEyeDragon;
     yarp::dev::PolyDriver *robotHead,*robotTorso;                                           // driver for the torso
     iCub::iKin::iKinLink *leftLink, *rightLink;                                             // ikinLink of the left and right eye
     iCub::iKin::iKinChain *chainRightEye,  *chainLeftEye;                                   // ikinChain of the left and right eye
@@ -140,6 +142,16 @@ public:
     * @param outImage reference to the output image
     */
     void shift(int shift, yarp::sig::ImageOf<yarp::sig::PixelMono> leftEvent,yarp::sig::ImageOf<yarp::sig::PixelMono> right, yarp::sig::ImageOf<yarp::sig::PixelRgb>& outImage);
+
+
+    /**
+    * remap event image on top of a dragonfly view
+    * @param shift number of pixel of shifts
+    * @param leftEvent image from the leftDvSCamera
+    * @param rightEvent image from the right DVS Camera
+    * @param outImage reference to the output image
+    */
+    void remap(yarp::sig::ImageOf<yarp::sig::PixelMono> eventImage,yarp::sig::ImageOf<yarp::sig::PixelMono> result,bool camera);
 
     
 
