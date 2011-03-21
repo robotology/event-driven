@@ -231,8 +231,9 @@ void cfCollectorThread::run() {
         
         //resetting time stamps at overflow
         if ((minCount > 687172078)||(minCountRight > 687172078)) {
+           printf("resetting time stamps!!!!!!!!!!!!! %d %d    ", minCount, minCountRight);
             cfConverter->resetTimestamps();
-            printf("resetting time stamps!!!!!!!!!!!!!");
+            
             count = 999;
         }
 

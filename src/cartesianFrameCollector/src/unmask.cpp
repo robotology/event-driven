@@ -195,9 +195,9 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
             if((cartX!=0) &&( cartY!=0) && (timestamp!=0)) {
                 validLeft =  true;
             }
-            //if(timestamp > lasttimestamp) {
+            if(timestamp > lasttimestamp) {
                 lasttimestamp = timestamp;
-                //}
+            }
             if(timeBuffer[cartX + cartY * retinalSize] < timestamp) {
                 if(polarity > 0) {
                     buffer[cartX + cartY * retinalSize] = responseGradient;
@@ -222,9 +222,9 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
             if((cartX!=0) &&( cartY!=0) && (timestamp!=0)) {
                 validRight =  true;
             }
-            //if( timestamp > lasttimestampright){
+            if( timestamp > lasttimestampright){
                 lasttimestampright = timestamp;
-                //}
+            }
             if (timeBufferRight[cartX + cartY * retinalSize] < timestamp) {
                 if(polarity > 0) {
                     bufferRight[cartX + cartY * retinalSize] = responseGradient;
