@@ -24,6 +24,6 @@ include(iCubHelpers)
 SET(NESTED_BUILD TRUE)
 SET(EMORPHLIB_DIR "${ICUB_ROOT}/contrib/src/eMorph/emorph_lib")
 
-#ADD_SUBDIRECTORY(emorph_lib)
+ADD_SUBDIRECTORY(emorph_lib)
 ADD_SUBDIRECTORY(src)
 ADD_SUBDIRECTORY(app)
