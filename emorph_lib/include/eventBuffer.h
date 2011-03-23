@@ -6,7 +6,7 @@
  *
  * Interface for the event-based camera of the emorph project.
  *
- * Author: Giorgio Metta
+ * Author: Giorgio Metta, Francesco Rea
  * Copyright (C) 2010 RobotCub Consortium
  * CopyPolicy: Released under the terms of the GNU GPL v2.0.
 */
@@ -19,7 +19,7 @@
 #include <yarp/os/all.h>
 #include <cstring>
 
-const int SIZE_OF_DATA = 32768;
+const int SIZE_OF_DATA = 65536; 
 
 /**
  *
