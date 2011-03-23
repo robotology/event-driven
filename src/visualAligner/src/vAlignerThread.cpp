@@ -191,9 +191,27 @@ bool vAlignerThread::threadInit() {
     else
         return false;
 
+    //initialising the head polydriver
+    printf("starting the polydrive for the head.... \n");
+    Property optHead("(device remote_controlboard)");
+    string remoteHeadName="/"+robotName+"/head";
+    string localHeadName="/"+name+"/head";
+    optHead.put("remote",remoteHeadName.c_str());
+    optHead.put("local",localHeadName.c_str());
+    robotHead =new PolyDriver(optHead);
+    if (!robotHead->isValid()) {
+        fprintf(stdout,"Head device driver not available!\n");
+        delete robotHead;
+        return false;
+    }
+    robotHead->view(encHead);
+
     //initilisation of the torso
     string torsoPort, headPort;
-  
+    Property optPolyTorso("(device remote_controlboard)");
+    optPolyTorso.put("remote",("/"+robotName+"/torso").c_str());
+    optPolyTorso.put("local",("/"+name+"/torso/position").c_str());
+    
     torsoPort = "/" + robotName + "/torso";
     headPort = "/" + robotName + "/head";
 
@@ -201,7 +219,7 @@ bool vAlignerThread::threadInit() {
     optionsTorso.put("local", "/localTorso");
     optionsTorso.put("remote", torsoPort.c_str() );
 
-    robotTorso = new PolyDriver(optionsTorso);
+    robotTorso = new PolyDriver(optPolyTorso);
 
     if (!robotTorso->isValid()) {
         printf("Cannot connect to robot torso\n");
@@ -211,7 +229,9 @@ bool vAlignerThread::threadInit() {
         printf("Cannot get interface to robot torso\n");
         robotTorso->close();
     }
+    
 
+    /*
     optionsHead.put("device", "remote_controlboard");
     optionsHead.put("local", "/localhead");
     optionsHead.put("remote", headPort.c_str());
@@ -226,13 +246,16 @@ bool vAlignerThread::threadInit() {
         printf("cannot get interface to the head\n");
         robotHead->close();
     }
+    */
 
     rightEye = new iCubEye("right");
     leftEye = new iCubEye("left");
     // remove constraints on the links
     // we use the chains for logging purpose
-    leftEye->setAllConstraints(false);
-    rightEye->setAllConstraints(false);
+    //leftEye->setAllConstraints(false);
+    //rightEye->setAllConstraints(false);
+
+
     // release links
     leftEye->releaseLink(0);
     rightEye->releaseLink(0);
@@ -424,9 +447,17 @@ void vAlignerThread::remap(ImageOf<PixelMono> event,ImageOf<PixelMono> result, b
         int u = 160, v = 120, z = 0.5;
         
         Vector torso(3);
-        igaze->getAngles(torso);
-        Vector head(4);
-        igaze->getAngles(head);
+        encTorso->getEncoder(0,&torso[0]);
+        encTorso->getEncoder(1,&torso[1]);
+        encTorso->getEncoder(2,&torso[2]);
+  
+        Vector head(5); 
+        encHead->getEncoder(0,&head[0]);
+        encHead->getEncoder(1,&head[1]);
+        encHead->getEncoder(2,&head[2]);
+        encHead->getEncoder(3,&head[3]);
+        encHead->getEncoder(4,&head[4]);
+        
         
         Vector q(8);
         q[0]=torso[0];
@@ -436,11 +467,12 @@ void vAlignerThread::remap(ImageOf<PixelMono> event,ImageOf<PixelMono> result, b
         q[4]=head[1];
         q[5]=head[2];
         q[6]=head[3];  
-          
-        if (isLeft)
-            q[7]=head[4]+head[5] / 2.0;
-        else
-            q[7]=head[4]-head[5] / 2.0;
+        q[7]=head[4];
+        
+        //if (isLeft)
+        //    q[7]=head[4]+head[5] / 2.0;
+        //else
+        //    q[7]=head[4]-head[5] / 2.0;
         
         
         Vector x(3);
@@ -448,7 +480,6 @@ void vAlignerThread::remap(ImageOf<PixelMono> event,ImageOf<PixelMono> result, b
         x[1]=z * v;
         x[2]=z;
             
-        printf("applying the inverse projection \n");
         // find the 3D position from the 2D projection,
         // knowing the distance z from the camera
         Vector xe = yarp::math::operator *(*invPrj, x);
