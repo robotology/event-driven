@@ -6,6 +6,9 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 SET(PROJECTNAME device2yarp)
 PROJECT(${PROJECTNAME})
 
+# first find the iCub package
+find_package(ICUB)
+set(CMAKE_MODULE_PATH ${ICUB_MODULE_PATH} ${CMAKE_MODULE_PATH})
 INCLUDE(iCubOptions)
 INCLUDE(iCubHelpers)
 

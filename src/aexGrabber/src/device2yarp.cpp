@@ -34,6 +34,10 @@
 #include <sys/time.h>
 #include <sched.h>
 
+#define SIZE_OF_EVENT 8192
+//#define SIZE_OF_DATA 65536
+#define SLOW
+
 using namespace std;
 using namespace yarp::os;
 
@@ -664,8 +668,8 @@ void  device2yarp::run() {
     sz = monBufEvents*sizeof(struct aer); // sz is size in bytes
 
     if(port.getOutputCount()) {
-        sendingBuffer data2send(buffer, sz);    
-        sendingBuffer& tmp = port.prepare();
+        eventBuffer data2send(buffer, sz);    
+        eventBuffer& tmp = port.prepare();
         tmp = data2send;
         port.write();
     }   

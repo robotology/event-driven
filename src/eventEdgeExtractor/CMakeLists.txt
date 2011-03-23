@@ -5,6 +5,9 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
 SET(KEYWORD "eEdgeExtractor")
 PROJECT(${KEYWORD})
+# first find the iCub package
+find_package(ICUB)
+set(CMAKE_MODULE_PATH ${ICUB_MODULE_PATH} ${CMAKE_MODULE_PATH})
 
 INCLUDE(iCubOptions)
 INCLUDE(iCubHelpers)

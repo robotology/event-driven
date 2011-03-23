@@ -38,7 +38,7 @@
 #include <cstdlib>
 #include <stdint.h>
 
-#include "sending_buffer.h"
+#include <iCub/eventBuffer.h>
 
 #define u8  uint8_t
 #define u32 uint32_t
@@ -386,7 +386,7 @@ public:
 
 private:
 
-    yarp::os::BufferedPort<sendingBuffer> port;
+    yarp::os::BufferedPort<eventBuffer> port;
     int r;                                           //dimension of the received buffer of event for display
     FILE* raw;
     FILE* binInput;

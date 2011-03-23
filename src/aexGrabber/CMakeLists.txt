@@ -6,10 +6,14 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 SET(KEYWORD "aexGrabber")
 PROJECT(${KEYWORD})
 
+message("ICUB_INCLUDE_DIRS ${ICUB_INCLUDE_DIRS}")
+message("INTERNAL_INCLUDE_DIRS ${INTERNAL_INCLUDE_DIRS}")
 
 INCLUDE_DIRECTORIES(
     ${PROJECT_SOURCE_DIR}/include
+    ${ICUB_INCLUDE_DIRS}
     ${YARP_INCLUDE_DIRS}
+    ${ICUB_DIR}/include
 )
 
 # Search for source code.
@@ -25,7 +29,10 @@ IF (folder_source)
         ${folder_header}
     )
 
-    TARGET_LINK_LIBRARIES(${KEYWORD} ${YARP_LIBRARIES})	
+    TARGET_LINK_LIBRARIES(${KEYWORD} 
+      ${YARP_LIBRARIES} 
+      eMorphLib                      
+    )	
 
     INSTALL_TARGETS(/bin ${KEYWORD})
 ELSE (folder_source)

@@ -14,6 +14,9 @@
  */
 
 #include "device2yarp.h"
+#include <sys/types.h>
+
+
 //#define FAST
 C_device2yarp::C_device2yarp(bool i_bool, string i_fileName):RateThread(10), save(i_bool)
 {
@@ -45,35 +48,34 @@ C_device2yarp::C_device2yarp(bool i_bool, string i_fileName):RateThread(10), sav
                                 0x00, 0x00,         //value
                                 0x00, 0x00,          //index
                                 0x00,0x07,0xc8,	    // cas
-								0x10,0xe9,0x8C,		// injGnd
-								0xFF,0xFF,0xFF,		// reqPd
-								0x7c,0x7f,0xf5,		// puX
-								0x00,0x00,0x84,		// diffOff
-								0x02,0x6d,0xab,		// req
-								0x00,0x03,0xc9,		// refr
-								0xFF,0xFF,0xFF,		// puY
-								0x03,0x34,0x4c,		// diffOn
-								0x00,0x33,0x45,		// diff
-								0x00,0x01,0x0f,		// foll
-								0x00,0x01,0x0f}; 	// Pr
+				0x10,0xe9,0x8C,		// injGnd
+				0xFF,0xFF,0xFF,		// reqPd
+				0x7c,0x7f,0xf5,		// puX
+				0x00,0x00,0x84,		// diffOff
+				0x02,0x6d,0xab,		// req
+				0x00,0x03,0xc9,		// refr
+				0xFF,0xFF,0xFF,		// puY
+				0x03,0x34,0x4c,		// diffOn
+				0x00,0x33,0x45,		// diff
+				0x00,0x01,0x0f,		// foll
+				0x00,0x01,0x0f}; 	// Pr
 #else
         unsigned char bias[] = {0xb8,               //request
                                 0x00, 0x00,         //value
                                 0x00, 0x00,          //index
                                 0x00,0x00,0x36,	    // cas
-								0x10,0xe9,0x8C,		// injGnd
-								0xFF,0xFF,0xFF,		// reqPd
-								0x7c,0x7f,0xf5,		// puX
-								0x00,0x00,0x84,		// diffOff
-								0x02,0x6d,0xab,		// req
-								0x00,0x00,0x06,		// refr
-								0xFF,0xFF,0xFF,		// puY
-								0x07,0x5c,0x8b,		// diffOn
-								0x00,0x75,0xc9,		// diff
-								0x00,0x00,0x33,		// foll
-								0x00,0x00,0x03}; 	// Pr
+				0x10,0xe9,0x8C,		// injGnd
+				0xFF,0xFF,0xFF,		// reqPd
+				0x7c,0x7f,0xf5,		// puX
+				0x00,0x00,0x84,		// diffOff
+				0x02,0x6d,0xab,		// req
+				0x00,0x00,0x06,		// refr
+				0xFF,0xFF,0xFF,		// puY
+				0x07,0x5c,0x8b,		// diffOn
+				0x00,0x75,0xc9,		// diff
+				0x00,0x00,0x33,		// foll
+				0x00,0x00,0x03}; 	// Pr
 #endif //FAST
-
 
         int err = write(file_desc,bias,41); //5+36
 #ifdef _DEBUG
@@ -122,6 +124,25 @@ void  C_device2yarp::run()
 #ifdef _DEBUG
     printf("\tSize of the received data %d\n", sz);
 #endif
+
+    for (int i = 0 ; i < sz/8 ; i+=8) {
+      u8 part_1 = buffer[i*8];    //extracting the 1 byte      
+      u8 part_2 = buffer[i*8+1];  //extracting the 2 byte
+      u8 part_3 = buffer[i*8+2];  //extracting the 3 byte	
+      u8 part_4 = buffer[i*8+3];  //extracting the 4 byte
+      u8 blob = (part_1<<24)|(part_2<<16)|(part_3<<8)|(part_4);
+      //printf ("blob: %x    \n",blob);
+      part_1 = buffer[i*8+4];    //extracting the 1 byte
+      printf ("%x ", part_1);
+      part_2 = buffer[i*8+5];   //extracting the 2 byte
+      part_3 = buffer[i*8+6];   //extracting the 3 byte	
+      part_4 = buffer[i*8+7];   //extracting the 4 byte
+      
+      u32 timestamp = (part_1<<24)|(part_2<<16)|(part_3<<8)|(part_4);
+      printf ("timestamp %x \n", timestamp);
+    }
+
+
     len += sz;
     C_sendingBuffer data2send(buffer, sz);
     C_sendingBuffer& tmp = port.prepare();
