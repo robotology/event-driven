@@ -188,3 +188,6 @@ void cFrameConverter::clearMonoImage() {
     unmask_events.cleanEventBuffer();
 }
 
+
+//----- end-of-file --- ( next line intentionally left blank ) ------------------
+

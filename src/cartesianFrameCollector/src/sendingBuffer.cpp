@@ -62,3 +62,6 @@ bool sendingBuffer::read(ConnectionReader& connection) {
     connection.expectBlock(packet, BUFFER_SIZE);
     return true;
 }
+
+//----- end-of-file --- ( next line intentionally left blank ) ------------------
+

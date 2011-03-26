@@ -41,13 +41,17 @@ private:
     
     int width, height;                  // dimension of the extended input image (extending)
     int height_orig, width_orig;        // original dimension of the input and output images
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > leftPort;            // port whre the output (left) is sent
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > rightPort;       // port whre the output (right) is sent
-    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeft;                                  //image representing the signal on the leftcamera
-    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRight;                                 //image representing the signal on the right camera
-    std::string name;                   // rootname of all the ports opened by this thread
-    bool synchronised;                       // flag to check whether the microsecond counter has been synchronised
-                          // local copy of the events read
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > leftPort;                 // port whre the output (left) is sent
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > rightPort;                // port whre the output (right) is sent
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > leftIntPort;              // port whre the output (left integral) is sent
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > rightIntPort;             // port whre the output (right integral) is sent
+    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeft;                                        //image representing the signal on the leftcamera
+    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRight;                                       //image representing the signal on the right camera
+    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeftInt;                                     //image representing the signal on the leftcamera (integrated)
+    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRightInt;                                    //image representing the signal on the right camera (integrated)
+    std::string name;                           // rootname of all the ports opened by this thread
+    bool synchronised;                          // flag to check whether the microsecond counter has been synchronised
+                                                // local copy of the events read
 public:
     /**
     * default constructor
@@ -111,6 +115,12 @@ public:
      */
     void copyRight(yarp::sig::ImageOf<yarp::sig::PixelMono>* img);
 
+    /**
+    * function that integrates the current dvs image with previous images
+    * @param imgIn image of the current dvs camera
+    * @param output of the process
+    */
+    void integrateImage(yarp::sig::ImageOf<yarp::sig::PixelMono>* imgIn, yarp::sig::ImageOf<yarp::sig::PixelMono>* imgOut);
 
 };
 

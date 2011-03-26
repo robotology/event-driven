@@ -124,3 +124,6 @@ double cfCollectorModule::getPeriod() {
     return 0.0;
 }
 
+
+//----- end-of-file --- ( next line intentionally left blank ) ------------------
+

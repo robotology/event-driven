@@ -126,3 +126,6 @@ float converter::mean_event(int i_nE) {
         mean_time_loop = mean_time_loop + (1/number_of_data)*((float)i_nE-mean_time_loop);
     return mean_time_loop;
 }
+
+//----- end-of-file --- ( next line intentionally left blank ) ------------------
+

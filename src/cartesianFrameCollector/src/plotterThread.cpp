@@ -54,13 +54,17 @@ bool plotterThread::threadInit() {
     printf("\n starting the thread.... \n");
     /* open ports */
     leftPort.open(getName("/left:o").c_str());
-    rightPort.open(getName("/right:o").c_str());    
+    leftIntPort.open(getName("/leftInt:o").c_str());
+    rightPort.open(getName("/right:o").c_str());
+    rightIntPort.open(getName("/rightInt:o").c_str());
     return true;
 }
 
 void plotterThread::interrupt() {
     leftPort.interrupt();
+    leftIntPort.interrupt();
     rightPort.interrupt();
+    rightIntPort.interrupt();
 }
 
 void plotterThread::setName(string str) {
@@ -109,25 +113,75 @@ void plotterThread::copyRight(ImageOf<PixelMono>* image) {
 
 
 void plotterThread::run() {
-
+    count++;
     imageLeft  = &leftPort.prepare();
     imageLeft->resize(retinalSize, retinalSize);
     imageRight = &rightPort.prepare();
     imageRight->resize(retinalSize, retinalSize);
     synchronised = true;
 
+    
     if(leftPort.getOutputCount()) {
         leftPort.write();
     }
     if(rightPort.getOutputCount()) {
         rightPort.write();
     }
+    if (leftIntPort.getOutputCount()) {
+        ImageOf<PixelMono>& leftInt = leftIntPort.prepare();
+        leftInt.resize(imageLeftInt->width(), imageLeftInt->height());
+        if(count % 10 == 0) {
+            leftInt.copy(*imageLeft);
+        }
+        else {
+            integrateImage(imageLeft, imageLeftInt);
+            leftInt.copy(*imageLeftInt);
+        }
+        
+    }
+    if (rightIntPort.getOutputCount()) {
+        ImageOf<PixelMono>& rightInt = rightIntPort.prepare();
+        rightInt.resize(imageRightInt->width(), imageRightInt->height());
+        if(count % 10 == 0) {
+            rightInt.copy(*imageRight);
+        }
+        else {
+            integrateImage(imageRight, imageRightInt);
+            rightInt.copy(*imageRightInt);
+        }
+    }
+}
+
+
+void plotterThread::integrateImage(ImageOf<PixelMono>* imageIn, ImageOf<PixelMono>* imageOut){
+    int padding= imageIn->getPadding();
+    unsigned char* pimagein = imageIn->getRawImage();
+    unsigned char* pimageout = imageOut->getRawImage();
+    
+    if(imageRight != 0) {
+        for(int r = 0;r < retinalSize; r++) {
+            for(int c = 0;c < retinalSize; c++) {
+                if ((*pimageout == 127)&&(*pimagein == 127)){
+                    *pimageout = 0;
+                }
+                else {
+                    *pimageout = 255;
+                }
+                pimageout++;
+                pimagein++;
+            }
+            pimageout += padding;
+            pimagein += padding;
+        }
+    }
 }
 
 
 void plotterThread::threadRelease() {
     leftPort.close();
+    leftIntPort.close();
     rightPort.close();
+    rightIntPort.close();
 }
 
 
