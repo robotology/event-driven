@@ -25,6 +25,7 @@
 
 #include <eventConversion.h>
 #include <cassert>
+#include <cstring>
 
 using namespace std;
 using namespace yarp::os;

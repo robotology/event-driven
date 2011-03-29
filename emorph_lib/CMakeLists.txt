@@ -19,6 +19,7 @@ FILE(GLOB folder_header include/*.h)
 SOURCE_GROUP("Source Files" FILES ${folder_source})
 SOURCE_GROUP("Header Files" FILES ${folder_header})
 
+message ("YARP_INCLUDE_DIRS ${YARP_INCLUDE_DIRS} ")
 # Add our include files into our compiler's search path.
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/include
 	${YARP_INCLUDE_DIRS}

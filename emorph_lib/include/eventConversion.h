@@ -14,6 +14,15 @@
 #ifndef __evenConversionh__
 #define __evenConversionh__
 
+
+#include <iostream>
+#include <sstream>
+#include <ctime>
+
+
+#include <yarp/os/all.h>
+
+
 /** 
  * a simple class to handle event unmasking.
  */
