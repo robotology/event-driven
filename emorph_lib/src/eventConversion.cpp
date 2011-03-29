@@ -23,7 +23,7 @@
  * @brief A class for unmasking the event (see the header unmask.h)
  */
 
-#include <iCub/eventConversion.h>
+#include <eventConversion.h>
 #include <cassert>
 
 using namespace std;
