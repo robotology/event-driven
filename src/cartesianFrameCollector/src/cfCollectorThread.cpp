@@ -35,7 +35,7 @@ using namespace yarp::sig;
 using namespace std;
 
 #define MAXVALUE 4294967295
-#define THRATE 10
+#define THRATE 5
 #define STAMPINFRAME  // 10 ms of period times the us in 1 millisecond + time for computing
 #define retinalSize 128
 #define CHUNKSIZE 4096
@@ -163,8 +163,7 @@ void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsig
 
 void cfCollectorThread::run() {
     count++;
-    //printf("%d, ",count);
-    if(!idle) {
+    if(true) {
         
         // reads the buffer received
         //bufferRead = cfConverter->getBuffer();    
@@ -231,7 +230,7 @@ void cfCollectorThread::run() {
         
         //resetting time stamps at overflow
         if ((minCount > 687172078)||(minCountRight > 687172078)) {
-           printf("resetting time stamps!!!!!!!!!!!!! %d %d    ", minCount, minCountRight);
+           printf("resetting time stamps!!!!!!!!!!!!! %d %d   \n ", minCount, minCountRight);
             cfConverter->resetTimestamps(); 
             count = 999;
         }

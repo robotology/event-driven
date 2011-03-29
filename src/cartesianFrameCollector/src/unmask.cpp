@@ -24,6 +24,7 @@
  */
 
 #include <iCub/unmask.h>
+#include <math.h>
 #include <cassert>
 
 using namespace std;
@@ -43,7 +44,7 @@ typedef unsigned long uint32_t;
 
 unmask::unmask() : RateThread(UNMASKRATETHREAD){
     count = 0;
-    verbosity = false;
+    verb = false;
     numKilledEvents = 0;
     lasttimestamp = 0;
     validLeft = false;
@@ -164,6 +165,12 @@ void unmask::run() {
 
 
 void unmask::unmaskData(char* i_buffer, int i_sz) {
+    
+    
+    printf("%d \n",lasttimestamp);
+    
+
+
     //cout << "Size of the received packet to unmask : " << i_sz / 8<< endl;
     //printf("pointer 0x%x ",i_buffer);
     //AER_struct sAER
@@ -193,18 +200,21 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
         
         //camera: LEFT 0, RIGHT 1
         if(camera) {
+
+            
             if((cartX!=0) &&( cartY!=0) && (timestamp!=0)) {
                 validLeft =  true;
             }
-           
+            
             if(timestamp > lasttimestamp) {
                 lasttimestamp = timestamp;
+                
             }
-            if(verbosity) {
-                printf("%d", lasttimestamp);
+            if(verb) {
+                printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> %d \n",timestamp);
             }
             
-
+            
             if(timeBuffer[cartX + cartY * retinalSize] < timestamp) {
                 if(polarity > 0) {
                     buffer[cartX + cartY * retinalSize] = responseGradient;
@@ -230,6 +240,10 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
                 validRight =  true;
             }
 
+
+            if(verb) {
+                printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> %d",timestamp);
+            }
             if( timestamp > lasttimestampright){
                 lasttimestampright = timestamp;
             }
@@ -259,13 +273,15 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
 
 
 void unmask::resetTimestamps() {
-    for (int i=0 ; i<retinalSize * retinalSize; i++){
+    /*for (int i=0 ; i<retinalSize * retinalSize; i++){
         timeBuffer[i] = 0;
         timeBufferRight[i] = 0;
-    }
+        }*/
+    verb = true;
     lasttimestamp = 0;
     lasttimestampright = 0;
-    verbosity = true;
+    printf("resetting time stamps in function \n");
+    
 }
 
 void unmask::unmaskEvent(unsigned int evPU, short& x, short& y, short& pol, short& camera) {

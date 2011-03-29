@@ -76,7 +76,7 @@ private:
     int numKilledEvents;                //number of the element that have be removed from the buffer
     bool temp1;                         //boolean flag that indicates where the events have to be saved
     bool validLeft,validRight;          //flag for validity of the events
-    bool verbosity;
+    bool verb;
     FILE* uEvents;
     yarp::os::Semaphore countEventLocker;
     yarp::os::Semaphore countEventLocker2;

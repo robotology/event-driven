@@ -120,6 +120,7 @@ void cFrameConverter::onRead(sendingBuffer& i_ub) {
 */
 
 void cFrameConverter::resetTimestamps() {
+    printf("resetting timestamps in cFrameConverter \n");
     unmask_events.resetTimestamps();
 }
 
