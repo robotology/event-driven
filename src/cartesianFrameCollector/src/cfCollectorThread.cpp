@@ -49,8 +49,8 @@ cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
     idle = false;
     bufferCopy = (char*) malloc(8192);
     //bufferRead = (char*) malloc(8192);
-
-
+    countStop = 0;
+    verb = false;
 }
 
 cfCollectorThread::~cfCollectorThread() {
@@ -171,7 +171,8 @@ void cfCollectorThread::run() {
         cfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
         //printf("returned 0x%x \n", bufferCopy);
         // extract a chunk/unmask the chunk
-        unmask_events.unmaskData(bufferCopy, CHUNKSIZE);
+        printf("verb %d \n", verb);
+        unmask_events.unmaskData(bufferCopy, CHUNKSIZE,verb);
         //printf("returned 0x%x \n", bufferCopy);
 
 
@@ -187,6 +188,7 @@ void cfCollectorThread::run() {
         startTimer = Time::now();
         
         unsigned long int lastleft = unmask_events.getLastTimestamp();
+        
         lc = lastleft * 1.25; //1.25 is the ratio 0.160/0.128
         unsigned long int lastright = unmask_events.getLastTimestampRight();
         rc = lastright * 1.25; 
@@ -227,12 +229,24 @@ void cfCollectorThread::run() {
         maxCount =  minCount + interval * 3;
         maxCountRight =  minCountRight + interval * 3;
         
-        
+        if(count % 100 == 0) {                        
+            if (lcprev == lc) { 
+                countStop++;
+            }
+            lcprev = lc;
+        }
+        printf("countStop %d lcprev %d lc %d",countStop, lcprev,lc);
         //resetting time stamps at overflow
-        if ((minCount > 687172078)||(minCountRight > 687172078)) {
-           printf("resetting time stamps!!!!!!!!!!!!! %d %d   \n ", minCount, minCountRight);
+        if (countStop == 15) {
+            //printf("resetting time stamps!!!!!!!!!!!!! %d %d   \n ", minCount, minCountRight);
+            printf(" \n 0 \n" );
             cfConverter->resetTimestamps(); 
-            count = 999;
+            verb = true;
+            //count = 999;
+        }
+        if(countStop == 16) {
+            verb = false;
+            countStop = 0;
         }
 
         //if( count % 45 == 0) {            

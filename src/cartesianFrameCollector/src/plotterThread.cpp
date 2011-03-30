@@ -43,6 +43,10 @@ plotterThread::plotterThread() : RateThread(THRATE) {
     count=0;
     imageLeft = 0;
     imageRight = 0;
+    imageLeftInt = new ImageOf<PixelMono>;
+    imageLeftInt->resize(retinalSize,retinalSize);
+    imageRightInt = new ImageOf<PixelMono>;
+    imageRightInt->resize(retinalSize,retinalSize);
 }
 
 plotterThread::~plotterThread() {
@@ -130,25 +134,29 @@ void plotterThread::run() {
     if (leftIntPort.getOutputCount()) {
         ImageOf<PixelMono>& leftInt = leftIntPort.prepare();
         leftInt.resize(imageLeftInt->width(), imageLeftInt->height());
-        if(count % 10 == 0) {
-            leftInt.copy(*imageLeft);
+        if(count % 100 == 0) {
+            imageLeftInt->copy(*imageLeft);
         }
         else {
-            integrateImage(imageLeft, imageLeftInt);
-            leftInt.copy(*imageLeftInt);
+	  integrateImage(imageLeft, imageLeftInt);
+	  //leftInt.copy(*imageLeftInt);
         }
+	leftInt.copy(*imageLeftInt);
+	leftIntPort.write();
         
     }
     if (rightIntPort.getOutputCount()) {
         ImageOf<PixelMono>& rightInt = rightIntPort.prepare();
         rightInt.resize(imageRightInt->width(), imageRightInt->height());
-        if(count % 10 == 0) {
-            rightInt.copy(*imageRight);
+        if(count % 100 == 0) {
+            imageRightInt->copy(*imageRight);
         }
         else {
-            integrateImage(imageRight, imageRightInt);
-            rightInt.copy(*imageRightInt);
+	  integrateImage(imageRight, imageRightInt);
+	  //rightInt.copy(*imageRightInt);
         }
+	rightInt.copy(*imageRightInt);
+	rightIntPort.write();
     }
 }
 
@@ -158,17 +166,24 @@ void plotterThread::integrateImage(ImageOf<PixelMono>* imageIn, ImageOf<PixelMon
     unsigned char* pimagein = imageIn->getRawImage();
     unsigned char* pimageout = imageOut->getRawImage();
     
-    if(imageRight != 0) {
+    if(imageIn != 0) {
         for(int r = 0;r < retinalSize; r++) {
             for(int c = 0;c < retinalSize; c++) {
-                if ((*pimageout == 127)&&(*pimagein == 127)){
-                    *pimageout = 0;
-                }
-                else {
-                    *pimageout = 255;
-                }
-                pimageout++;
-                pimagein++;
+	      /*if ((*pimageout > 50) &&(*pimageout < 200)) {
+		*pimageout = 0;
+		
+	      }
+	      else {
+		*pimageout = 255;
+	      }
+	      */
+	      if((*pimageout != 127)||(*pimagein!=127)) {
+		*pimageout = 255;
+	      }
+
+
+	      pimageout++;
+	      pimagein++;
             }
             pimageout += padding;
             pimagein += padding;

@@ -181,8 +181,9 @@ public:
     * unmasks the event in term of x,y, polarity and time stamp and update the buffer
     * @param data reference to the vector of char (the read data)
     * @param size size of the last reading from the port
+    * @param reset reset the timestamp
     */
-    void unmaskData(char* data, int size);
+    void unmaskData(char* data, int size, bool reset);
 
     /**
     * function that given a reference to the list of long int(32 bits) read from the port and the number of packet received

@@ -164,13 +164,18 @@ void unmask::run() {
 }
 
 
-void unmask::unmaskData(char* i_buffer, int i_sz) {
-    
-    
-    printf("%d \n",lasttimestamp);
-    
+void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
+    printf("%d|", verb);  
 
-
+    /*if(verb) {
+         printf("+++++++++%d \n",lasttimestamp);
+    }
+    else {
+        printf(">>>>>>>%d \n",lasttimestamp);
+    }
+    */
+    
+   
     //cout << "Size of the received packet to unmask : " << i_sz / 8<< endl;
     //printf("pointer 0x%x ",i_buffer);
     //AER_struct sAER
@@ -211,7 +216,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
                 
             }
             if(verb) {
-                printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> %d \n",timestamp);
+                lasttimestamp = 0;
             }
             
             
@@ -242,7 +247,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
 
 
             if(verb) {
-                printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> %d",timestamp);
+                timestamp = 0;
             }
             if( timestamp > lasttimestampright){
                 lasttimestampright = timestamp;
@@ -280,8 +285,7 @@ void unmask::resetTimestamps() {
     verb = true;
     lasttimestamp = 0;
     lasttimestampright = 0;
-    printf("resetting time stamps in function \n");
-    
+    printf("\n 2 verb:%d \n",verb);    
 }
 
 void unmask::unmaskEvent(unsigned int evPU, short& x, short& y, short& pol, short& camera) {

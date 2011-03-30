@@ -51,10 +51,12 @@ private:
     u64 Tnow;
     unsigned long int precl;
     unsigned long int lc;
+    unsigned long int lcprev;
     unsigned long int rc;
     
     double microseconds;
     double microsecondsPrev;
+    int countStop;                      // counter of equal timestamp
     int countDivider;                   // divider of the count
     int width, height;                  // dimension of the extended input image (extending)
     int height_orig, width_orig;        // original dimension of the input and output images
@@ -63,6 +65,7 @@ private:
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeft;                                  //image representing the signal on the leftcamera
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRight;                                 //image representing the signal on the right camera
     std::string name;                   // rootname of all the ports opened by this thread
+    bool verb;
     bool synchronised;                       // flag to check whether the microsecond counter has been synchronised
     bool greaterHalf;                     // indicates whether the counter has passed the half of the range
     bool idle;                            // controls idle mode
