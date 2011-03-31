@@ -30,7 +30,7 @@
 using namespace std;
 using namespace yarp::os;
 
-#define LINUX
+//#define LINUX
 #ifndef LINUX
 typedef unsigned long uint32_t;
 #endif // LINUX
