@@ -819,7 +819,6 @@ void graspThread::push(const Vector &xd) {
 // incapsulates one inside dealing with all the tight time constraints
 void graspThread::run() {
     while (isStopping() != true) {
-        printf("action %0x",action);
         // do it only once
         if (firstRun) {
             goHome();
