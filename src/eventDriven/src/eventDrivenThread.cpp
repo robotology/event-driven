@@ -58,12 +58,11 @@ bool eventDrivenThread::threadInit() {
         cout << ": unable to open port to send unmasked events "  << endl;
         return false;  // unable to open; let RFModule know so that it won't run
     }
-<<<<<<< .mine
+
 
     return true;
     
-=======
->>>>>>> .r11123
+
 }
 
 void eventDrivenThread::setName(string str) {
@@ -84,15 +83,14 @@ void eventDrivenThread::setInputPortName(string InpPort) {
 
 void eventDrivenThread::run() {
     
-<<<<<<< .mine
-    //printf("Thread started! \n");
+
     while (isStopping() != true)  {                
         
         if(EportIn.hasNewEvent) { 
-=======
+
     while (isStopping() != true) {
         if(EportIn.hasNewEvent) {
->>>>>>> .r11123
+
             //printf("New event received! \n");         
             currentEvent = EportIn.event; // shallow copy
             unmaskEvent.unmaskData(currentEvent.get_packet(), currentEvent.get_sizeOfPacket());
