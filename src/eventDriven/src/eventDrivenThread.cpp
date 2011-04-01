@@ -84,11 +84,7 @@ void eventDrivenThread::setInputPortName(string InpPort) {
 void eventDrivenThread::run() {
     
 
-    while (isStopping() != true)  {                
-        
-        if(EportIn.hasNewEvent) { 
-
-    while (isStopping() != true) {
+   while (isStopping() != true) {
         if(EportIn.hasNewEvent) {
 
             //printf("New event received! \n");         
