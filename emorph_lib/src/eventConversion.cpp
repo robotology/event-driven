@@ -30,10 +30,10 @@
 using namespace std;
 using namespace yarp::os;
 
-//#define LINUX
-#ifndef LINUX
+
+#ifndef  __linux__ || linux || LINUX
 typedef unsigned long uint32_t;
-#endif // LINUX
+#endif
 
 #define MAXVALUE 114748364 //4294967295
 #define maxPosEvent 10000
