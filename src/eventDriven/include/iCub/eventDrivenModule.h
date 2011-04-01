@@ -136,12 +136,6 @@
  */
 
 
-/**
- * CHANGE LOG:
- * 24/03/11 : moved multiple addition out of the loop                                 @author Rea
- * 28/03/11 : added the command to represent the 3d position on the image plane       @author Rea
- */
-
 #include <iostream>
 #include <string>
 
@@ -169,9 +163,9 @@ class eventDrivenModule:public yarp::os::RFModule {
     std::string handlerPortName;             // name of handler port
     std::string configFile;                  // name of the configFile that the resource Finder will seek
     
-    yarp::os::Port handlerPort;      // a port to handle messages 
-    /* pointer to a new thread to be created and started in configure() and stopped in close() */
-    eventDrivenThread *edThread;
+    yarp::os::Port handlerPort;              // a port to handle messages 
+    /*  */
+    eventDrivenThread *edThread;             // pointer to a new thread to be created and started in configure() and stopped in close()
 
 public:
     /**
@@ -189,7 +183,7 @@ public:
     /**
     *  close and shut down the eventDriven
     */
-    bool close();                           
+    bool close();
 
     /**
     *  to respond through rpc port
@@ -203,8 +197,6 @@ public:
     *  unimplemented
     */
     double getPeriod();
-
-    
 
     /**
     *  unimplemented

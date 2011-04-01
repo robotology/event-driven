@@ -34,21 +34,20 @@
 #include <yarp/os/RateThread.h>
 #include <iostream>
 
-#include "/usr/local/src/robot/iCub/contrib/src/eMorph/emorph_lib/include/eventBuffer.h"
-#include "/usr/local/src/robot/iCub/contrib/src/eMorph/emorph_lib/include/eventConversion.h"
+#include <eventBuffer.h>
+#include <eventConversion.h>
 
 
 template <class eventBuffer>
+
 class eventPort : public yarp::os::BufferedPort<eventBuffer> {
 
 public:
     eventBuffer event;
     bool hasNewEvent;
-
     virtual void onRead(eventBuffer& event) {
-    hasNewEvent = true;             // to be set to false once done with the events
+        hasNewEvent = true;             // to be set to false once done with the events
     }
-
 };
 
 
@@ -62,13 +61,10 @@ private:
     std::string robot;              // name of the robot
     std::string configFile;         // name of the configFile where the parameter of the camera are set
     std::string inputPortName;      // name of input port for incoming events, typically from aexGrabber
-    
 
-    eventPort<eventBuffer> EportIn;              // buffered port listening to events through callback
-
+    eventPort<eventBuffer> EportIn;                                                  // buffered port listening to events through callback
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > eventPlot;     // output port to plot event    
-    
-    std::string name;               // rootname of all the ports opened by this thread
+    std::string name;                                                                // rootname of all the ports opened by this thread
     
 public:
     /**
@@ -90,7 +86,7 @@ public:
     /**
     *  initialises the thread
     */
-    bool threadInit();     
+    bool threadInit();
 
     /**
     *  correctly releases the thread
@@ -107,7 +103,10 @@ public:
     */
     void onStop();
 
-    
+    /*
+    * function that sets the rootname of all the ports that are going to be created by the thread
+    * @param str rootnma
+    */
     void setName(std::string str);
     
     /**
@@ -117,6 +116,9 @@ public:
     */
     std::string getName(const char* p);
 
+    /*
+    * function that sets the inputPort name
+    */
     void setInputPortName(std::string inpPrtName);
 
     /**
@@ -127,8 +129,6 @@ public:
     */
     void plotEventBuffer(int* buffer, int dim1, int dim2);
 
-
-    
 };
 
 #endif  //_EVENTDRIVEN_THREAD_H_

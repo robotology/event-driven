@@ -89,9 +89,7 @@ bool eventDrivenModule::configure(yarp::os::ResourceFinder &rf) {
 
     /* create the thread and pass pointers to the module parameters */
     edThread = new eventDrivenThread(robotName, configFile);
-    
     edThread->setName(getName().c_str());
-
     edThread->setInputPortName(inputPortName.c_str());
     
     /* now start the thread to do the work */
@@ -101,14 +99,12 @@ bool eventDrivenModule::configure(yarp::os::ResourceFinder &rf) {
                         // so that it will then run the module
 }
 
-bool eventDrivenModule::interruptModule()
-{
+bool eventDrivenModule::interruptModule() {
     handlerPort.interrupt();
     return true;
 }
 
-bool eventDrivenModule::close()
-{
+bool eventDrivenModule::close() {
     handlerPort.close();
     /* stop the thread */
     printf("stopping the thread \n");
@@ -118,26 +114,23 @@ bool eventDrivenModule::close()
 
 bool eventDrivenModule::respond(const Bottle& command, Bottle& reply) 
 {
-	string helpMessage =  string(getName().c_str()) + 
-		        " commands are: \n" +  
-		        "help \n" +
-			"size <int> <int> -to change, if allowed, size (width, height) of eventDriven to <int> <int> \n" + 
-			"place <int> -to place, if allowed, input image's center (horz, vert) in eventDriven refernce frame \n" +
-		        "quit \n";
+    string helpMessage =  string(getName().c_str()) + 
+                " commands are: \n" +  
+                "help \n" +
+            "size <int> <int> -to change, if allowed, size (width, height) of eventDriven to <int> <int> \n" + 
+            "place <int> -to place, if allowed, input image's center (horz, vert) in eventDriven refernce frame \n" +
+                "quit \n";
+    reply.clear(); 
 
-	reply.clear(); 
-
-
-	if (command.get(0).asString()=="quit") {
-		reply.addString("quitting");
-		return false;     
-	}
-	else if (command.get(0).asString()=="help") {
-		cout << helpMessage;
-		reply.addString("ok");
-	}
-	
-
+    if (command.get(0).asString()=="quit") {
+        reply.addString("quitting");
+        return false;     
+    }
+    else if (command.get(0).asString()=="help") {
+        cout << helpMessage;
+        reply.addString("ok");
+    }
+    
     return true;
 }
 

@@ -32,15 +32,13 @@ using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
-/**************************************************************************/
 eventDrivenThread::eventDrivenThread():currentEvent(),unmaskEvent() {
-    robot = "icub";    
+    robot = "icub";
 }
 
 eventDrivenThread::eventDrivenThread(string _robot, string _configFile):currentEvent(),unmaskEvent()  {
     robot = _robot;
     configFile = _configFile;
-    
 }
 
 eventDrivenThread::~eventDrivenThread() {
@@ -49,20 +47,16 @@ eventDrivenThread::~eventDrivenThread() {
 
 bool eventDrivenThread::threadInit() {
     /* open ports */ 
-
     EportIn.useCallback();          // to enable the port listening to events via callback
     
     if (!EportIn.open(getName(inputPortName.c_str()).c_str())) {
         cout <<": unable to open port for reading events  "  << endl;
         return false;  // unable to open; let RFModule know so that it won't run
     }
-
-    
     if (!eventPlot.open(getName("/AER:o").c_str())) {
         cout << ": unable to open port to send unmasked events "  << endl;
         return false;  // unable to open; let RFModule know so that it won't run
     }
-    
 }
 
 void eventDrivenThread::setName(string str) {
@@ -78,15 +72,13 @@ std::string eventDrivenThread::getName(const char* p) {
 }
 
 void eventDrivenThread::setInputPortName(string InpPort) {
-
     this->inputPortName = InpPort;
 }
 
 void eventDrivenThread::run() {
     
-    while (isStopping() != true)  {                
-        
-        if(EportIn.hasNewEvent) { 
+    while (isStopping() != true) {
+        if(EportIn.hasNewEvent) {
             //printf("New event received! \n");         
             currentEvent = EportIn.event; // shallow copy
             unmaskEvent.unmaskData(currentEvent.get_packet(), currentEvent.get_sizeOfPacket());
@@ -95,13 +87,11 @@ void eventDrivenThread::run() {
             plotEventBuffer(eventsBuf,128,128);
             EportIn.hasNewEvent = false;
             //printf("New event processed! \n");  
-        }                      
+        }
     }
 }
 
 void eventDrivenThread::plotEventBuffer(int* buffer, int dim1, int dim2) {
-
-    
     ImageOf<yarp::sig::PixelMono>& imageForEventBuffer = eventPlot.prepare();
     unsigned char* imageTmp = imageForEventBuffer.getRawImage();
     int* bufTmp = buffer;
@@ -122,7 +112,6 @@ void eventDrivenThread::threadRelease() {
 
 void eventDrivenThread::onStop() {
     EportIn.interrupt();
-    
     EportIn.close();
 }
 
