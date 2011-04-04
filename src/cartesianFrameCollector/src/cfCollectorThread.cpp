@@ -171,8 +171,9 @@ void cfCollectorThread::run() {
         cfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
         //printf("returned 0x%x \n", bufferCopy);
         // extract a chunk/unmask the chunk
-        printf("verb %d \n", verb);
+       
         unmask_events.unmaskData(bufferCopy, CHUNKSIZE,verb);
+        verb = false;
         //printf("returned 0x%x \n", bufferCopy);
 
 
@@ -235,16 +236,14 @@ void cfCollectorThread::run() {
             }
             lcprev = lc;
         }
-        printf("countStop %d lcprev %d lc %d",countStop, lcprev,lc);
+        printf("countStop %d lcprev %d lc %d \n",countStop, lcprev,lc);
         //resetting time stamps at overflow
-        if (countStop == 15) {
+        if (countStop == 10) {
             //printf("resetting time stamps!!!!!!!!!!!!! %d %d   \n ", minCount, minCountRight);
-            printf(" \n 0 \n" );
             cfConverter->resetTimestamps(); 
             verb = true;
-            //count = 999;
         }
-        if(countStop == 16) {
+        if(countStop == 11) {
             verb = false;
             countStop = 0;
         }

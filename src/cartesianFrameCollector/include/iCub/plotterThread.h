@@ -38,7 +38,7 @@
 class plotterThread : public yarp::os::RateThread {
 private:    
     int count;                          // loop counter of the thread
-    
+    float lambda;                       // integration factor
     int width, height;                  // dimension of the extended input image (extending)
     int height_orig, width_orig;        // original dimension of the input and output images
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > leftPort;                 // port whre the output (left) is sent

@@ -41,12 +41,15 @@ using namespace std;
 plotterThread::plotterThread() : RateThread(THRATE) {
     synchronised = false;
     count=0;
+    lambda = 0.8;
     imageLeft = 0;
     imageRight = 0;
     imageLeftInt = new ImageOf<PixelMono>;
     imageLeftInt->resize(retinalSize,retinalSize);
+    imageLeftInt->zero();
     imageRightInt = new ImageOf<PixelMono>;
     imageRightInt->resize(retinalSize,retinalSize);
+    imageRightInt->zero();
 }
 
 plotterThread::~plotterThread() {
@@ -148,7 +151,7 @@ void plotterThread::run() {
     if (rightIntPort.getOutputCount()) {
         ImageOf<PixelMono>& rightInt = rightIntPort.prepare();
         rightInt.resize(imageRightInt->width(), imageRightInt->height());
-        if(count % 100 == 0) {
+        if(count % 1== 0) {
             imageRightInt->copy(*imageRight);
         }
         else {
@@ -169,18 +172,17 @@ void plotterThread::integrateImage(ImageOf<PixelMono>* imageIn, ImageOf<PixelMon
     if(imageIn != 0) {
         for(int r = 0;r < retinalSize; r++) {
             for(int c = 0;c < retinalSize; c++) {
-	      /*if ((*pimageout > 50) &&(*pimageout < 200)) {
-		*pimageout = 0;
-		
-	      }
-	      else {
-		*pimageout = 255;
-	      }
-	      */
-	      if((*pimageout != 127)||(*pimagein!=127)) {
-		*pimageout = 255;
+	      
+	      // if(*pimageout == 0) *pimageout = 127;
+	      
+	      if(*pimagein!=127) {
+		*pimagein = 255;
 	      }
 
+
+	      *pimageout = lambda * *pimageout + (1 - lambda) * *pimagein;
+	      
+	      if(*pimageout!= 127) *pimageout = 255;
 
 	      pimageout++;
 	      pimagein++;
