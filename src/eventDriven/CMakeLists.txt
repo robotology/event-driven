@@ -6,10 +6,15 @@ SET(KEYWORD "eventDriven")
 PROJECT(${KEYWORD})
 cmake_minimum_required(VERSION 2.6)
 
+
+set(ICUB_CONTRIB_DIRS $ENV{ICUB_DIR}/include)
+message ("CONTRIB ${ICUB_CONTRIB_DIRS}")
+
 INCLUDE_DIRECTORIES(
     ${PROJECT_SOURCE_DIR}/include
     ${YARP_INCLUDE_DIRS} 	
     ${ICUB_INCLUDE_DIRS}	
+    ${ICUB_CONTRIB_DIRS}
 )
 
 # Search for source code.
