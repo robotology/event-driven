@@ -139,6 +139,16 @@ int* unmask::getEventBuffer(bool camera) {
         return bufferRight;
 }
 
+void unmask::resetTimestamps() {
+    for (int i=0 ; i<retinalSize * retinalSize; i++){
+        timeBuffer[i] = 0;
+        timeBufferRight[i] = 0;
+    }
+    //verb = true;
+    //lasttimestamp = 0;
+    //lasttimestampright = 0;  
+}
+
 unsigned long* unmask::getTimeBuffer(bool camera) {
     if (camera)
         return timeBuffer;
@@ -166,17 +176,6 @@ void unmask::run() {
 
 
 void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
-    printf("%d|", verb);  
-
-    /*if(verb) {
-         printf("+++++++++%d \n",lasttimestamp);
-    }
-    else {
-        printf(">>>>>>>%d \n",lasttimestamp);
-    }
-    */
-    
-   
     //cout << "Size of the received packet to unmask : " << i_sz / 8<< endl;
     //printf("pointer 0x%x ",i_buffer);
     //AER_struct sAER
@@ -212,13 +211,14 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
                 validLeft =  true;
             }
             
-            if(timestamp > lasttimestamp) {
-                lasttimestamp = timestamp;
-                
-            }
             if(verb) {
                 lasttimestamp = 0;
+                resetTimestamps();
             }
+            else if(timestamp > lasttimestamp) {
+                lasttimestamp = timestamp;
+            }
+            
             
             
             if(timeBuffer[cartX + cartY * retinalSize] < timestamp) {
@@ -246,11 +246,11 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
                 validRight =  true;
             }
 
-
             if(verb) {
-                timestamp = 0;
+               lasttimestampright = 0;
+               resetTimestamps();
             }
-            if( timestamp > lasttimestampright){
+            else if( timestamp > lasttimestampright){
                 lasttimestampright = timestamp;
             }
            
@@ -278,16 +278,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
 }
 
 
-void unmask::resetTimestamps() {
-    /*for (int i=0 ; i<retinalSize * retinalSize; i++){
-        timeBuffer[i] = 0;
-        timeBufferRight[i] = 0;
-        }*/
-    verb = true;
-    lasttimestamp = 0;
-    lasttimestampright = 0;
-    printf("\n 2 verb:%d \n",verb);    
-}
+
 
 void unmask::unmaskEvent(unsigned int evPU, short& x, short& y, short& pol, short& camera) {
     y = (short)(retinalSize-1) - (short)((evPU & xmask) >> xshift);

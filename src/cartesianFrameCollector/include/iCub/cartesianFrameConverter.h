@@ -112,6 +112,7 @@ private:
     int outputWidth, outputHeight;                              // dimension of the output image default 320x240
     unsigned long previousTimeStamp;                            // timestamp at the previous run
     char* converterBuffer;                                      // buffer used as saved
+    char* converterBuffer_copy;                                 // copy of the buffer pointer, points to the location for freeing
     char* receivedBuffer;                                       // temporarely pointer to the received buffer
     char* pcRead;                                               // pointer to the location where to read events
     char* pcBuffer;                                             // pointer where to buffer events

@@ -41,7 +41,7 @@ using namespace std;
 plotterThread::plotterThread() : RateThread(THRATE) {
     synchronised = false;
     count=0;
-    lambda = 0.8;
+    lambda = 0.9;
     imageLeft = 0;
     imageRight = 0;
     imageLeftInt = new ImageOf<PixelMono>;
@@ -137,13 +137,12 @@ void plotterThread::run() {
     if (leftIntPort.getOutputCount()) {
         ImageOf<PixelMono>& leftInt = leftIntPort.prepare();
         leftInt.resize(imageLeftInt->width(), imageLeftInt->height());
-        if(count % 100 == 0) {
-            imageLeftInt->copy(*imageLeft);
-        }
+        if(count % 1000 == 0) {
+	  imageLeftInt->copy(*imageLeft);
+	}
         else {
 	  integrateImage(imageLeft, imageLeftInt);
-	  //leftInt.copy(*imageLeftInt);
-        }
+	}
 	leftInt.copy(*imageLeftInt);
 	leftIntPort.write();
         
@@ -151,13 +150,12 @@ void plotterThread::run() {
     if (rightIntPort.getOutputCount()) {
         ImageOf<PixelMono>& rightInt = rightIntPort.prepare();
         rightInt.resize(imageRightInt->width(), imageRightInt->height());
-        if(count % 1== 0) {
-            imageRightInt->copy(*imageRight);
-        }
+        if(count % 1000 == 0) {
+	  imageRightInt->copy(*imageRight);
+	}
         else {
 	  integrateImage(imageRight, imageRightInt);
-	  //rightInt.copy(*imageRightInt);
-        }
+	}
 	rightInt.copy(*imageRightInt);
 	rightIntPort.write();
     }
@@ -175,14 +173,13 @@ void plotterThread::integrateImage(ImageOf<PixelMono>* imageIn, ImageOf<PixelMon
 	      
 	      // if(*pimageout == 0) *pimageout = 127;
 	      
-	      if(*pimagein!=127) {
-		*pimagein = 255;
-	      }
-
-
-	      *pimageout = lambda * *pimageout + (1 - lambda) * *pimagein;
+	      //if(*pimagein != 127) {
+	      //*pimagein = 255;
+	      //}
 	      
-	      if(*pimageout!= 127) *pimageout = 255;
+	      if ((*pimageout!=127)||(*pimagein!=127)) {	  
+		*pimageout = 255;
+	      }
 
 	      pimageout++;
 	      pimagein++;
@@ -195,10 +192,11 @@ void plotterThread::integrateImage(ImageOf<PixelMono>* imageIn, ImageOf<PixelMon
 
 
 void plotterThread::threadRelease() {
-    leftPort.close();
-    leftIntPort.close();
-    rightPort.close();
-    rightIntPort.close();
+  printf("plotterThread: portClosing \n");  
+  leftPort.close();
+  leftIntPort.close();
+  rightPort.close();
+  rightIntPort.close();
 }
 
 

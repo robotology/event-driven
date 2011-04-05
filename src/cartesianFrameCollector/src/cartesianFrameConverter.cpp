@@ -44,12 +44,13 @@ cFrameConverter::cFrameConverter():convert_events(128,128) {
     state = 0;
     receivedBuffer = 0;
     printf ("allocating memory \n");
-    converterBuffer = (char*) malloc(24576); // allocates bytes
+    converterBuffer_copy = (char*) malloc(24576); // allocates bytes
+    converterBuffer = converterBuffer_copy;
     if (converterBuffer == 0)
         printf("null pointer \n");
     pcBuffer = converterBuffer;
     printf("setting memory \n");
-    memset(converterBuffer,0,24500);         // set unsigned char
+    memset(converterBuffer,0,24576);         // set unsigned char
     pcRead = converterBuffer;
     unmask_events.start();
     printf("unmask event just started");
@@ -57,10 +58,12 @@ cFrameConverter::cFrameConverter():convert_events(128,128) {
 }
 
 cFrameConverter::~cFrameConverter() {
+    printf("cFrameConverter:stopping the unmasker \n");
+    unmask_events.stop();
     //delete &unmask_events;
     //delete &convert_events;
-    printf("freeing memory in the converter \n");
-    //free(converterBuffer);
+    printf("cFrameConverter:freeing converterBuffer \n");
+    //free(converterBuffer_copy);
 }
 
 void cFrameConverter::copyChunk(char* bufferCopy) {        
@@ -120,7 +123,6 @@ void cFrameConverter::onRead(sendingBuffer& i_ub) {
 */
 
 void cFrameConverter::resetTimestamps() {
-    printf("\n 1 \n");
     unmask_events.resetTimestamps();
 }
 
@@ -131,19 +133,6 @@ void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image, unsigned long minC
     int imagePadding = image->getPadding();
     int imageRowSize = image->getRowSize();
     
-    /*
-    unsigned long int lasttimestamp = getLastTimeStamp();
-    if (lasttimestamp == previousTimeStamp) {   //condition where there were not event between this call and the previous
-        for(int r = 0 ; r < retinalSize ; r++){
-            for(int c = 0 ; c < retinalSize ; c++) {
-                *pImage++ = (unsigned char) 127;
-            }
-            pImage+=imagePadding;
-        }
-        return;
-    }
-    previousTimeStamp = lasttimestamp;
-    */
 
     // determining whether the camera is left or right
     int* pBuffer = unmask_events.getEventBuffer(camera);

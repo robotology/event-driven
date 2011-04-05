@@ -15,8 +15,7 @@
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License fo
- r more details
+ * Public License for more details
  */
 
 /**
@@ -163,7 +162,7 @@ void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsig
 
 void cfCollectorThread::run() {
     count++;
-    if(true) {
+    if(!idle) {
         
         // reads the buffer received
         //bufferRead = cfConverter->getBuffer();    
@@ -173,7 +172,10 @@ void cfCollectorThread::run() {
         // extract a chunk/unmask the chunk
        
         unmask_events.unmaskData(bufferCopy, CHUNKSIZE,verb);
-        verb = false;
+        if(verb) {
+            verb = false;
+            countStop = 0;
+        }
         //printf("returned 0x%x \n", bufferCopy);
 
 
@@ -189,7 +191,6 @@ void cfCollectorThread::run() {
         startTimer = Time::now();
         
         unsigned long int lastleft = unmask_events.getLastTimestamp();
-        
         lc = lastleft * 1.25; //1.25 is the ratio 0.160/0.128
         unsigned long int lastright = unmask_events.getLastTimestampRight();
         rc = lastright * 1.25; 
@@ -217,7 +218,7 @@ void cfCollectorThread::run() {
             minCountRight = rc - interval * 2; 
             printf("synchronised %1f! %d,%d,%d||%d,%d,%d \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
             startTimer = Time::now();
-            synchronised = true;  
+            synchronised = true; 
         }
         else {
             // this value is simply the ration between the timestamp reported by the aexGrabber (62.5Mhz) 
@@ -236,22 +237,19 @@ void cfCollectorThread::run() {
             }
             lcprev = lc;
         }
-        printf("countStop %d lcprev %d lc %d \n",countStop, lcprev,lc);
+        //printf("countStop %d lcprev %d lc %d \n",countStop, lcprev,lc);
         //resetting time stamps at overflow
         if (countStop == 10) {
             //printf("resetting time stamps!!!!!!!!!!!!! %d %d   \n ", minCount, minCountRight);
-            cfConverter->resetTimestamps(); 
+            //cfConverter->resetTimestamps(); 
             verb = true;
+            printf("countStop %d %d \n",countStop, verb );
         }
-        if(countStop == 11) {
-            verb = false;
-            countStop = 0;
-        }
+        //if(countStop == 11) {
+        //    verb = false;
+        //    countStop = 0;
+        //}
 
-        //if( count % 45 == 0) {            
-        //    printf("greterHalf:%1f! %d,%d,%d||%d,%d,%d \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
-        //}        
-        
         
         // creates two frames
         /*if(outPort.getOutputCount()) {
@@ -277,8 +275,8 @@ void cfCollectorThread::run() {
         }
         */
 
-        getMonoImage(imageLeft,minCount,maxCount,0);
-        getMonoImage(imageRight,minCountRight,maxCountRight,1);
+        getMonoImage(imageRight,minCount,maxCount,0);
+        getMonoImage(imageLeft,minCountRight,maxCountRight,1);
         pThread->copyLeft(imageLeft);
         pThread->copyRight(imageRight);
     }
@@ -391,12 +389,18 @@ void cfCollectorThread::run() {
 
 void cfCollectorThread::threadRelease() {
     idle = false;
-    //delete cfConverter;
+    printf("Threadrelease:freeing bufferCopy \n");
+    //free(bufferCopy);
+    printf("Threadrelease:closing ports \n");
     outPort.close();
     outPortRight.close();
-    //delete pThread;
-    //free(bufferCopy);
-    
+    printf("Threadrelease:deleting images \n");
+    delete imageRight;
+    delete imageLeft;
+    printf("Threadrelease:stopping plotterThread \n");
+    pThread->stop();
+    printf("Threadrelease:deleting converter \n");
+    delete cfConverter;
 }
 
 
