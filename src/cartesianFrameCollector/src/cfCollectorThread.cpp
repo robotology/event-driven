@@ -34,7 +34,7 @@ using namespace yarp::sig;
 using namespace std;
 
 #define MAXVALUE 4294967295
-#define THRATE 5
+#define THRATE 3
 #define STAMPINFRAME  // 10 ms of period times the us in 1 millisecond + time for computing
 #define retinalSize 128
 #define CHUNKSIZE 4096
@@ -214,8 +214,8 @@ void cfCollectorThread::run() {
 
         //synchronising the thread every time interval 1000*period of the thread
         if (count % 1000 == 0) {
-            minCount = lc - interval * 2; //cfConverter->getEldestTimeStamp();        
-            minCountRight = rc - interval * 2; 
+            minCount = lc - interval * 3; //cfConverter->getEldestTimeStamp();        
+            minCountRight = rc - interval * 3; 
             printf("synchronised %1f! %d,%d,%d||%d,%d,%d \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
             startTimer = Time::now();
             synchronised = true; 
@@ -228,8 +228,8 @@ void cfCollectorThread::run() {
             minCount = minCount + interval ; // * (50.0 / 62.5) * 1.10;
             minCountRight = minCountRight + interval;
         }                
-        maxCount =  minCount + interval * 3;
-        maxCountRight =  minCountRight + interval * 3;
+        maxCount =  minCount + interval * 4;
+        maxCountRight =  minCountRight + interval * 4;
         
         if(count % 100 == 0) {                        
             if (lcprev == lc) { 
@@ -245,35 +245,6 @@ void cfCollectorThread::run() {
             verb = true;
             printf("countStop %d %d \n",countStop, verb );
         }
-        //if(countStop == 11) {
-        //    verb = false;
-        //    countStop = 0;
-        //}
-
-        
-        // creates two frames
-        /*if(outPort.getOutputCount()) {
-            ImageOf<yarp::sig::PixelMono>& outputImage=outPort.prepare();
-            if(&outputImage!=0) {
-                getMonoImage(&outputImage, minCount, maxCount,1);
-                outPort.write();
-            }
-            else {
-                printf("reference to the outimage null \n");
-            }
-        }
-        
-        if(outPortRight.getOutputCount()) {
-            ImageOf<yarp::sig::PixelMono>& outputImageRight=outPortRight.prepare();
-            if(&outputImageRight!=0) {
-                getMonoImage(&outputImageRight, minCountRight, maxCountRight, 0);
-                outPortRight.write();
-            }
-            else {
-                printf("reference to the outimage null \n");
-            }
-        }
-        */
 
         getMonoImage(imageRight,minCount,maxCount,0);
         getMonoImage(imageLeft,minCountRight,maxCountRight,1);

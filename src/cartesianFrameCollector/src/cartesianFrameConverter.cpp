@@ -27,10 +27,10 @@
 #include <cassert>
 #include <cstdlib>
 
-#define BUFFERDIM 36864
-#define TH1 12288
-#define TH2 24576
-#define CHUNKSIZE 4096
+#define BUFFERDIM 24576  //36864
+#define TH1 16384
+#define TH2 8192
+#define CHUNKSIZE 8192
 
 using namespace yarp::os;
 using namespace yarp::sig;
