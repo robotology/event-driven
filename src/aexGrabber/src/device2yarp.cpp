@@ -82,10 +82,10 @@ reset_pins_expand = 4
 
 #define CLOCK_LO 0
 #define CLOCK_HI 1
+#define THRATE 5
 
 
-
-device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName = " "):RateThread(10) {
+device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName = " "):RateThread(THRATE) {
 
     /*   ORIGINAL VALUES
     *   from DVS128_PAER.xml, set Tmpdiff128
@@ -667,7 +667,7 @@ void  device2yarp::run() {
 
     sz = monBufEvents*sizeof(struct aer); // sz is size in bytes
 
-    if(port.getOutputCount()) {
+    if(port.getOutputCount()&&(sz!=0)) {
         eventBuffer data2send(buffer, sz);    
         eventBuffer& tmp = port.prepare();
         tmp = data2send;
