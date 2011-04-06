@@ -34,6 +34,19 @@
 #define COMMAND_VOCAB_RIGHT VOCAB4('r','i','g','h')
 #define COMMAND_VOCAB_LEFT VOCAB4('l','e','f','t')
 
+#define PR_DEFAULT_VALUE 5
+#define FOL_DEFAULT_VALUEL 20
+#define DIFF_DEFAULT_VALUE 30108
+#define DIFFON_DEFAULT_VALUE 639172
+#define PUY_DEFAULT_VALUE 16777215
+#define REFR_DEFAULT_VALUE 944
+#define REQ_DEFAULT_VALUE 160712
+#define DIFFOF_DEFAULT_VALUEF 133
+#define PUX_DEFAULT_VALUE 8053457
+#define REQPD_DEFAULT_VALUE 16777215 
+#define INJGND_DEFAULT_VALUE 101508
+#define CAS_DEFAULT_VALUE 52458
+
 using namespace yarp::os;
 using namespace std;
 
@@ -863,7 +876,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj1 = gtk_adjustment_new (8, 0,16777215,10, 1000, 0);
+    adj1 = gtk_adjustment_new (PR_DEFAULT_VALUE, 0,16777215,10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj1));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -878,7 +891,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
 
-    adj2 = gtk_adjustment_new (20, 0,16777215, 10, 1000, 0);
+    adj2 = gtk_adjustment_new (FOLL_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj2));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -891,7 +904,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj3 = gtk_adjustment_new (30108, 0,16777215, 10, 1000, 0);
+    adj3 = gtk_adjustment_new (DIFF_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj3));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -904,7 +917,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj3 = gtk_adjustment_new (639172, 0,16777215, 10, 1000, 0);
+    adj3 = gtk_adjustment_new (DIFFON_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj3));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -918,7 +931,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj4 = gtk_adjustment_new (16777215, 0,16777215, 10, 1000, 0);
+    adj4 = gtk_adjustment_new (PUY_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj4));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -931,7 +944,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj5 = gtk_adjustment_new (944, 0,16777215, 10 , 1000, 0);
+    adj5 = gtk_adjustment_new (REFR_DEFAULT_VALUE, 0,16777215, 10 , 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -944,7 +957,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj6 = gtk_adjustment_new (160712, 0,16777215, 10, 1000, 0);
+    adj6 = gtk_adjustment_new (REQ_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj6));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -958,7 +971,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj5 = gtk_adjustment_new (133, 0,16777215, 10 ,1000, 0);
+    adj5 = gtk_adjustment_new (DIFFOFF_DEFAULT_VALUE, 0,16777215, 10 ,1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -971,7 +984,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj5 = gtk_adjustment_new (8053457, 0,16777215, 10, 1000, 0);
+    adj5 = gtk_adjustment_new (PUX_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -985,7 +998,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj5 = gtk_adjustment_new (16777215, 0,16777215,10000, 0, 0);
+    adj5 = gtk_adjustment_new (REQPD_DEFAULT_VALUE, 0,16777215,10000, 0, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -998,7 +1011,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj5 = gtk_adjustment_new (101508, 0,16777215, 10, 1000, 0);
+    adj5 = gtk_adjustment_new (INJGND_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -1011,7 +1024,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj5 = gtk_adjustment_new (52458, 0,16777215, 10, 1000, 0);
+    adj5 = gtk_adjustment_new (CAS_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -1039,7 +1052,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj1 = gtk_adjustment_new (5, 0,16777215, 10, 1000, 0);
+    adj1 = gtk_adjustment_new (PR_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj1));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -1054,7 +1067,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
 
-    adj2 = gtk_adjustment_new (20, 0,16777215, 10, 1000, 0);
+    adj2 = gtk_adjustment_new (FOLL_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj2));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -1067,7 +1080,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj3 = gtk_adjustment_new (30108, 0,16777215, 10, 1000, 0);
+    adj3 = gtk_adjustment_new (DIFF_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj3));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -1080,7 +1093,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj3 = gtk_adjustment_new (639172, 0,16777215,10, 1000, 0);
+    adj3 = gtk_adjustment_new (DIFFON_DEFAULT_VALUE, 0,16777215,10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj3));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -1094,7 +1107,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj4 = gtk_adjustment_new (16777215, 0.0,16777215, 10, 1000, 0);
+    adj4 = gtk_adjustment_new (PUY_DEFAULT_VALUE, 0.0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj4));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -1107,7 +1120,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj5 = gtk_adjustment_new (944, 0,16777215, 10, 1000, 0);
+    adj5 = gtk_adjustment_new (REFR_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -1120,7 +1133,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj6 = gtk_adjustment_new (160712, 0,16777215, 10, 1000, 0);
+    adj6 = gtk_adjustment_new (REQ_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj6));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -1134,7 +1147,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj5 = gtk_adjustment_new (133, 0,16777215, 10, 1000, 0);
+    adj5 = gtk_adjustment_new (DIFFOFF_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -1147,7 +1160,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj5 = gtk_adjustment_new (8053457, 0,16777215, 10, 1000, 0);
+    adj5 = gtk_adjustment_new (PUX_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -1161,7 +1174,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj5 = gtk_adjustment_new (16777215, 0,16777215, 10, 1000, 0);
+    adj5 = gtk_adjustment_new (REQPD_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -1174,7 +1187,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj5 = gtk_adjustment_new (101508, 0,16777215, 10, 1000, 0);
+    adj5 = gtk_adjustment_new (INJGND_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
@@ -1187,7 +1200,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj5 = gtk_adjustment_new (52458, 0,16777215, 10, 1000, 0);
+    adj5 = gtk_adjustment_new (CAS_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
