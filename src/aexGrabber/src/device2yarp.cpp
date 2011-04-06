@@ -34,10 +34,6 @@
 #include <sys/time.h>
 #include <sched.h>
 
-#define SIZE_OF_EVENT 8192
-//#define SIZE_OF_DATA 65536
-#define SLOW
-
 using namespace std;
 using namespace yarp::os;
 
@@ -112,16 +108,16 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName =
 #ifdef FAST
     /*int biasValues[]={1966,        // cas
       1137667,       // injGnd
-      16777215,    // reqPd
-      8053457,     // puX
-      133,        // diffOff
-      160712,      // req
+      16777215,      // reqPd
+      8053457,       // puX
+      133,           // diffOff
+      160712,        // req
       944,           // refr
-      16777215,    // puY
-      205255,      // diffOn
-      3207,       // diff 
-      278,          // foll
-      217            //Pr 
+      16777215,      // puY
+      205255,        // diffOn
+      3207,          // diff 
+      278,           // foll
+      217            // Pr 
       };*/
 
              
@@ -129,60 +125,60 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName =
     printf("valus from DVS128Fast.xml \n");
     // from DVS128Fast.xml, set Tmpdiff128
     cas = 52458;        // cas
-    injg = 101508;       // injGnd
-    reqPd = 16777215;    // reqPd
-    pux = 8053457;     // puX
-    diffoff = 133;        // diffOff
-    req = 160712;      // req
-    refr = 944;           // refr
-    puy = 16777215;    // puY
-    diffon = 639172;      // diffOn
+    injg = 101508;      // injGnd
+    reqPd = 16777215;   // reqPd
+    pux = 8053457;      // puX
+    diffoff = 133;      // diffOff
+    req = 160712;       // req
+    refr = 944;         // refr
+    puy = 16777215;     // puY
+    diffon = 639172;    // diffOn
     diff = 30108;       // diff 
     foll = 20;          // foll
-    pr= 8;            //Pr 
+    pr= 8;              // Pr 
     
     casRight = 52458;        // cas
-    injgRight = 101508;       // injGnd
-    reqPdRight = 16777215;    // reqPd
-    puxRight = 8053457;     // puX
-    diffoffRight = 133;        // diffOff
-    reqRight = 160712;      // req
-    refrRight = 944;           // refr
-    puyRight = 16777215;    // puY
-    diffonRight = 639172;      // diffOn
+    injgRight = 101508;      // injGnd
+    reqPdRight = 16777215;   // reqPd
+    puxRight = 8053457;      // puX
+    diffoffRight = 133;      // diffOff
+    reqRight = 160712;       // req
+    refrRight = 944;         // refr
+    puyRight = 16777215;     // puY
+    diffonRight = 639172;    // diffOn
     diffRight = 30108;       // diff 
     follRight = 20;          // foll
-    prRight = 8;            //Pr 
+    prRight = 8;             // Pr 
             
            
 #else
             
     printf("valus from DVS128_PAER.xml \n");
-    cas = 1966;        // cas
+    cas = 1966;         // cas
     injg = 22703;       // injGnd
-    reqPd = 16777215;    // reqPd
-    pux = 4368853;     // puX
-    diffoff = 3207;        // diffOff
-    req = 111347;      // req
+    reqPd = 16777215;   // reqPd
+    pux = 4368853;      // puX
+    diffoff = 3207;     // diffOff
+    req = 111347;       // req
     refr = 0;           // refr
-    puy = 16777215;    // puY
-    diffon = 483231;      // diffOn
+    puy = 16777215;     // puY
+    diffon = 483231;    // diffOn
     diff = 28995;       // diff 
     foll = 19;          // foll
-    pr = 8;            //Pr 
+    pr = 8;             // Pr 
 
     casRight = 1966;        // cas
-    injgRight = 22703;       // injGnd
-    reqPdRight = 16777215;    // reqPd
+    injgRight = 22703;      // injGnd
+    reqPdRight = 16777215;  // reqPd
     puxRight = 4368853;     // puX
-    diffoffRight = 3207;        // diffOff
+    diffoffRight = 3207;    // diffOff
     reqRight = 111347;      // req
-    refrRight = 0;           // refr
+    refrRight = 0;          // refr
     puyRight = 16777215;    // puY
-    diffonRight = 483231;      // diffOn
-    diffRight = 28995;       // diff 
-    follRight = 19;          // foll
-    prRight = 8;            //Pr 
+    diffonRight = 483231;   // diffOn
+    diffRight = 28995;      // diff 
+    follRight = 19;         // foll
+    prRight = 8;            // Pr 
             
     /*
       int biasValues[]={1966,        // cas
@@ -196,9 +192,40 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName =
       483231,      // diffOn
       28995,       // diff 
       19,          // foll
-      8            //Pr 
+      8            // Pr 
       };
     */
+#endif
+
+
+#define WIEN
+#ifdef WIEN
+    printf("valus from WIEN \n");
+    cas = 52458;         // cas
+    injg = 101508;       // injGnd
+    reqPd = 16777215;    // reqPd
+    pux = 8053457;       // puX
+    diffoff = 133;       // diffOff
+    req = 160712;        // req
+    refr = 944;          // refr
+    puy = 16777215;      // puY
+    diffon = 639172;     // diffOn
+    diff = 30108;        // diff 
+    foll = 20;           // foll
+    pr = 5;              // Pr 
+
+    casRight = 52458;         // cas
+    injgRight = 101508;       // injGnd
+    reqPdRight = 16777215;    // reqPd
+    puxRight = 8053457;       // puX
+    diffoffRight = 133;       // diffOff
+    reqRight = 160712;        // req
+    refrRight = 944;          // refr
+    puyRight = 16777215;      // puY
+    diffonRight = 639172;     // diffOn
+    diffRight = 30108;        // diff 
+    follRight = 20;           // foll
+    prRight = 5;              // Pr 
 #endif
      
     
@@ -639,6 +666,7 @@ void device2yarp::closeDevice(){
 }
 
 void  device2yarp::run() {
+    //printf("reading \n");
     r = read(file_desc, pmon, monBufSize_b);
     monBufEvents = r / sizeof(struct aer);
     
@@ -666,9 +694,9 @@ void  device2yarp::run() {
 
     sz = monBufEvents*sizeof(struct aer); // sz is size in bytes
 
-    if(port.getOutputCount()&&(sz!=0)) {
-        eventBuffer data2send(buffer, sz);    
-        eventBuffer& tmp = port.prepare();
+    if ((port.getOutputCount())&&(sz > 0)) {
+        sendingBuffer data2send(buffer, sz);    
+        sendingBuffer& tmp = port.prepare();
         tmp = data2send;
         port.write();
     }   
