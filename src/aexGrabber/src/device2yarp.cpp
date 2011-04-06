@@ -82,7 +82,7 @@ reset_pins_expand = 4
 
 #define CLOCK_LO 0
 #define CLOCK_HI 1
-#define THRATE 5
+#define THRATE 15
 
 
 device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName = " "):RateThread(THRATE) {
@@ -639,7 +639,6 @@ void device2yarp::closeDevice(){
 }
 
 void  device2yarp::run() {
-    //printf("reading \n");
     r = read(file_desc, pmon, monBufSize_b);
     monBufEvents = r / sizeof(struct aer);
     
@@ -648,7 +647,7 @@ void  device2yarp::run() {
         return;
     }
     if(monBufEvents > 0) {
-        printf("* ");
+        printf("%d \n", monBufEvents);
     }
     int k = 0;
     int k2 = 0;
