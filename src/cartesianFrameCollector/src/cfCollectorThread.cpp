@@ -34,10 +34,10 @@ using namespace yarp::sig;
 using namespace std;
 
 #define MAXVALUE 4294967295
-#define THRATE 3
+#define THRATE 5
 #define STAMPINFRAME  // 10 ms of period times the us in 1 millisecond + time for computing
 #define retinalSize 128
-#define CHUNKSIZE 4096
+#define CHUNKSIZE 8192
 
 cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
     synchronised = false;
@@ -46,7 +46,7 @@ cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
     count=0;
     minCount = 0; //initialisation of the timestamp limits of the first frame
     idle = false;
-    bufferCopy = (char*) malloc(8192);
+    bufferCopy = (char*) malloc(CHUNKSIZE);
     //bufferRead = (char*) malloc(8192);
     countStop = 0;
     verb = false;
@@ -199,9 +199,9 @@ void cfCollectorThread::run() {
         if ((cfConverter->isValid())&&(!synchronised)) {
             printf("Sychronised Sychronised Sychronised Sychronised ");
             //firstRun = false;
-            minCount = lc - interval * 2; 
+            minCount = lc - interval * 7; 
             //cfConverter->getEldestTimeStamp();                                                                   
-            minCountRight = rc - interval * 2;
+            minCountRight = rc - interval * 7;
             printf("synchronised %1f! %d,%d,%d||%d,%d,%d \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
             startTimer = Time::now();
             synchronised = true;
@@ -214,8 +214,8 @@ void cfCollectorThread::run() {
 
         //synchronising the thread every time interval 1000*period of the thread
         if (count % 1000 == 0) {
-            minCount = lc - interval * 3; //cfConverter->getEldestTimeStamp();        
-            minCountRight = rc - interval * 3; 
+            minCount = lc - interval * 7; //cfConverter->getEldestTimeStamp();        
+            minCountRight = rc - interval * 7; 
             printf("synchronised %1f! %d,%d,%d||%d,%d,%d \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
             startTimer = Time::now();
             synchronised = true; 
@@ -228,8 +228,8 @@ void cfCollectorThread::run() {
             minCount = minCount + interval ; // * (50.0 / 62.5) * 1.10;
             minCountRight = minCountRight + interval;
         }                
-        maxCount =  minCount + interval * 4;
-        maxCountRight =  minCountRight + interval * 4;
+        maxCount =  minCount + interval * 5;
+        maxCountRight =  minCountRight + interval * 5;
         
         if(count % 100 == 0) {                        
             if (lcprev == lc) { 

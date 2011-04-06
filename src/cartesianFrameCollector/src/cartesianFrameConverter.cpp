@@ -28,8 +28,8 @@
 #include <cstdlib>
 
 #define BUFFERDIM 24576  //36864
-#define TH1 16384
-#define TH2 8192
+#define TH1 8192 //12
+#define TH2 16384  
 #define CHUNKSIZE 8192
 
 using namespace yarp::os;
