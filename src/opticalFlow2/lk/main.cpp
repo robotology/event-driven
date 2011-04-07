@@ -16,7 +16,7 @@ int main(int argc, char* argv[])
         std::string param(argv[1]);
         if (param=="--R")
         {
-            channel=0x80;
+            channel=1;
             argc=0;
         }
         else if (param=="--L")
@@ -65,11 +65,11 @@ int main(int argc, char* argv[])
         
         printf("Number of byte successfully read : %d\n",res);
         
-        int type=6;
+        int type=8;
         switch((int)version)
         {
-            case 0:     printf("No #!AER-DAT version header found, assuming 16 bit addresses\n");
-                        type=6;
+            case 0:     printf("No #!AER-DAT version header found, assuming 32 bit addresses\n");
+                        type=8;
                         break;
 
             case 1:     printf("Addresses are 16 bit\n");
@@ -81,12 +81,12 @@ int main(int argc, char* argv[])
                         break;
 
             default:    printf("Unknown file version %f\n",version);
-                        type=6;
+                        type=8;
                         break;
         }
 
         Unmask unmask(channel);
-        unmask.unmaskData(buffer,size-bof,type);
+        unmask.unmaskData((unsigned int*)buffer,size-bof);
     }
     else
     {

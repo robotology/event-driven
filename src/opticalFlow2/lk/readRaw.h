@@ -16,7 +16,7 @@ public:
     
     virtual void onRead(eventBuffer& eb)
     {
-        objUnmask.unmaskData((unsigned char*)(eb.get_packet()),eb.get_sizeOfPacket(),4);
+        objUnmask.unmaskData((unsigned int*)(eb.get_packet()),eb.get_sizeOfPacket());
     }
 
 private:

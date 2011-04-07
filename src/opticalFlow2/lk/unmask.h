@@ -9,7 +9,7 @@ public:
 	Unmask(int channel);
 	~Unmask();
     
-    void unmaskData(unsigned char* buffer,int size,int type);
+    void unmaskData(unsigned int* buffer,int size);
 
 private:
     int mChannel;

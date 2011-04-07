@@ -28,88 +28,39 @@ Unmask::~Unmask()
     delete objSynapse; 
 }
 
-void Unmask::unmaskData(unsigned char* buffer,int size,int type)
+void Unmask::unmaskData(unsigned int* buffer,int size)
 {
+    size/=4;
+
     int x;
     int y;
-    int polarity;
-    int timeStamp;
     int camera;
+    
+    //int polarity;
+    //unsigned long timeStamp;
+    
+    int blob;
 
-    if (type==4)
+    for (int j=0; j<size; j+=2)
     {
-        for (int j=0; j<size; j+=type)
+        blob=(int)buffer[j];
+
+        camera=(0x8000 & blob)>>15;
+
+        if (camera==mChannel)
         {
-            if (buffer[j+3]&0x80)
-            {
-                mWrapAdd+=0x4000;
-            }
-            else if (buffer[j+3]&0x40)
-            {
-                mWrapAdd=0;
-            }
-            else
-            {
-                x=buffer[j]>>1;
-                y=buffer[j+1]&0x7F;
-                
-                if (x>=5 && y>=5 && x<=122 && y<=122)
-                {
-                    polarity=(buffer[j]&0x01)?1:-1;
-                    timeStamp=((buffer[j+3]<<8)|buffer[j+2])+mWrapAdd;
-
-                    objSynapse->filter(x,y,polarity,timeStamp);
-                }
-            }
-        }
-
-        return;
-    }
-
-    if (type==6)
-    {
-        for (int j=0; j<size; j+=type)
-        {
-            x=buffer[j+1]>>1;
-            y=buffer[j]&0x7F;
+            //y=(0x7F00 & blob)>>8;
+            //x=(0x00FE & blob)>>1;
             
+            x=127-((0x7F00 & blob)>>8);
+            y=127-((0x00FE & blob)>>1);
+
             if (x>=5 && y>=5 && x<=122 && y<=122)
             {
-                polarity=(buffer[j+1]&0x01)?1:-1;
-                timeStamp=(buffer[j+2]<<24)|(buffer[j+3]<<16)|(buffer[j+4]<<8)|buffer[j+5];
+                //polarity=0x0001 & blob;
+                //timeStamp=buffer[j+1];
 
-                objSynapse->filter(x,y,polarity,timeStamp);
-            }
-        }
-
-        return;
-    }
-
-    if (type==8)
-    {
-        for (int j=0; j<size; j+=type)
-        {
-            x=buffer[j+3]>>1;
-            y=127-(buffer[j+2]&0x7F);
-            camera=buffer[j+2]&0x80;
-
-            if (camera==mChannel)
-            {
-                if (x>=5 && y>=5 && x<=122 && y<=122)
-                {
-                    polarity=(buffer[j+3]&0x01)?1:-1;
-                    timeStamp=(buffer[j+4]<<24)|(buffer[j+5]<<16)|(buffer[j+6]<<8)|buffer[j+7];
-
-                    objSynapse->filter(x,y,polarity,timeStamp);
-
-                    //static double timeStartClock=yarp::os::Time::now();
-                    //static double timeStartStamp=1E-6*double(timeStamp);
-
-                    //double timeClockNow=yarp::os::Time::now()-timeStartClock;
-                    //double timeStampNow=1E-6*double(timeStamp)-timeStartStamp;
-
-                    //if (timeStampNow>timeClockNow) yarp::os::Time::delay(timeStampNow-timeClockNow);
-                }
+                objSynapse->filter(x,y,(0x0001 & blob),buffer[j+1]);
             }
         }
     }

@@ -44,15 +44,13 @@ void opticalFlowViewer::onRead(vecBuffer& data)
     if (vx!=0.0 || vy!=0.0)
     {
         double norm=15.0/std::sqrt(vx*vx+vy*vy);
-        mVx(x,y)+=norm*vx;
-        mVy(x,y)+=norm*vy;
+        mVx(x,y)=norm*vx;
+        mVy(x,y)=norm*vy;
     }
-    /*
     else
     {
         mVx(x,y)=mVy(x,y)=0.0;
     }
-    */
 
     if (timeDiff>=TNK_TIME)
     {
@@ -70,17 +68,7 @@ void opticalFlowViewer::onRead(vecBuffer& data)
                     X=2+4*x;
                     Y=2+4*y;
 
-                    /*
-                    //Y=2+4*(HEIGHT-1-y);
-                    X=4*x;
-                    Y=4*y;
-                    for (int XX=X; XX<X+4; ++XX)
-                        for (int YY=Y; YY<Y+4; ++YY)
-                            img(XX,YY)=128+int(32.0*mVx(x,y));
-                    */
-
-                    //img(X,Y)=mBlack;
-                    yarp::sig::draw::addSegment(img,mBlack,X,Y,X+int(mVx(x,y)+0.5),Y+int(mVy(x,y)+0.5));
+                    yarp::sig::draw::addSegment(img,mBlack,X,511-Y,X+int(mVx(x,y)+0.5),511-Y-int(mVy(x,y)+0.5));
                 }
             }
         }
