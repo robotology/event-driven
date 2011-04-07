@@ -78,7 +78,7 @@ reset_pins_expand = 4
 
 #define CLOCK_LO 0
 #define CLOCK_HI 1
-#define THRATE 15
+#define THRATE 5
 
 
 device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName = " "):RateThread(THRATE) {
