@@ -52,6 +52,7 @@ private:
     unsigned long int precl;
     unsigned long int lc;
     unsigned long int lcprev;
+    unsigned long int rcprev;
     unsigned long int rc;
     
     double microseconds;

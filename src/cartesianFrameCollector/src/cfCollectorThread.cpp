@@ -236,6 +236,10 @@ void cfCollectorThread::run() {
                 countStop++;
             }
             lcprev = lc;
+            if (rcprev == rc) { 
+                countStop++;
+            }
+            rcprev = rc;
         }
         //printf("countStop %d lcprev %d lc %d \n",countStop, lcprev,lc);
         //resetting time stamps at overflow
