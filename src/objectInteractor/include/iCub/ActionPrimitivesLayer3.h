@@ -52,19 +52,21 @@ public:
     /**
     * Default Constructor. 
     */
-    ActionPrimitivesLayer3() : ActionPrimitivesLayer2() {printf("instantiate general class"); };
+    ActionPrimitivesLayer3() : ActionPrimitivesLayer2() {
+        printf("instantiate general class");
+    };
 
     /**
     * Constructor. 
     * @param opt the Property used to configure the object after its
     *            creation.
     */
-    ActionPrimitivesLayer3(yarp::os::Property &opt)  { printf("instantiate general class \n");
-        ActionPrimitivesLayer2::init();
+    ActionPrimitivesLayer3(yarp::os::Property &opt)  { 
+        printf("instantiate general class with property \n");
+        ActionPrimitivesLayer3::init();
         printf("init terminated \n");
         skipFatherPart=false;
-        ActionPrimitivesLayer2::open(opt);
-        printf("opening the interface \n");
+        ActionPrimitivesLayer3::open(opt);
     } ;
 
     /**

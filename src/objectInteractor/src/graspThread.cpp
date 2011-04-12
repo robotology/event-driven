@@ -388,9 +388,10 @@ bool graspThread::configure(ResourceFinder &rf) {
     if (partUsed=="both_arms" || partUsed=="left_arm")
     {
         cout<<"***** Instantiating primitives for left_arm"<<endl;
-        actionL=new ActionPrimitivesLayer3(optionL);
+        actionL=new ActionPrimitivesLayer2(optionL);
         actionL->setExtForceThres(forceCalibTableThresL);
         actionL->enableReachingTimeout(reachingTimeout);
+ 
 
         if (!actionL->isValid())
         {
@@ -405,12 +406,13 @@ bool graspThread::configure(ResourceFinder &rf) {
     if (partUsed=="both_arms" || partUsed=="right_arm")
     {
         cout<<"***** Instantiating primitives for right_arm"<<endl;
-        actionR=new ActionPrimitivesLayer3(optionR);
+        actionR=new ActionPrimitivesLayer2(optionR);
         actionR->setExtForceThres(forceCalibTableThresR);
         actionR->enableReachingTimeout(reachingTimeout);
 
         if (!actionR->isValid())
         {
+            printf("right Action is not valid! \n");
             close();
             return false;
         }

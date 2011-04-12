@@ -61,6 +61,7 @@ using namespace std;
 
 /************************************************************************/
 void ActionPrimitivesLayer3::init() {
+    printf("initialisation in ACTIONPRIMITIVES3 \n");
     configuredLayer3 = false;
     ActionPrimitivesLayer2::init();
 }
@@ -83,8 +84,11 @@ void ActionPrimitivesLayer3::run() {
 
 /************************************************************************/
 bool ActionPrimitivesLayer3::open(Property &opt) {
-    if (!skipFatherPart)
+    printf("OPENING in ACTIONPRIMITIVESLAYER3 \n");
+    if (!skipFatherPart) {
         ActionPrimitivesLayer2::open(opt);
+        printf("not skipping the father part; opening layer2 ");
+    }
 
     if (configuredLayer3)
     {
@@ -93,11 +97,13 @@ bool ActionPrimitivesLayer3::open(Property &opt) {
     }
 
     if (configuredLayer2) {
-        printf("configuredLayer2 \n");
+        printf("openCHECK: configuredLayer2  \n");
         return configuredLayer3 = true;
     }
-    else
+    else {
+        printf("openCHECK: NOT configuredLayer2 \n");
         return false;
+    }
 }
 
 

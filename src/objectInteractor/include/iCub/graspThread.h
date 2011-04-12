@@ -452,9 +452,9 @@ protected:
     std::string armToBeUsed;
     std::string name;
 
-    ActionPrimitivesLayer3       *actionL;
-    ActionPrimitivesLayer3       *actionR;
-    ActionPrimitivesLayer3       *action;
+    ActionPrimitivesLayer2       *actionL;
+    ActionPrimitivesLayer2       *actionR;
+    ActionPrimitivesLayer2       *action;
 
     //opdbAccessClient              opdbClient;
     std::map<std::string,yarp::sig::Matrix>*            palmOrientations;

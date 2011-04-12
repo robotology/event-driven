@@ -361,6 +361,7 @@ void device2yarp::prepareBiases() {
             hwival = (u32)(ival * 7.8125);
             pseq[seqEvents].address = addr;
             pseq[seqEvents].timestamp = hwival;
+            printf("addr %d    hwival %d", addr, hwival);
             
             seqEvents++;
             seqTime += hwival;
