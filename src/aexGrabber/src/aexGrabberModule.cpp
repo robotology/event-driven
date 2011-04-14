@@ -564,6 +564,6 @@ bool aexGrabberModule::updateModule() {
 
 double aexGrabberModule::getPeriod() {
     /* module periodicity (seconds), called implicitly by myModule */
-    return 0.0;
+    return 1.0;
 }
 
