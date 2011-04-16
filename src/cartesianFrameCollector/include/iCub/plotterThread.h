@@ -47,6 +47,8 @@ private:
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > rightIntPort;             // port whre the output (right integral) is sent
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeft;                                        //image representing the signal on the leftcamera
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRight;                                       //image representing the signal on the right camera
+    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeftBW;                                       //image representing the signal on the right camera
+    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRightBW;                                       //image representing the signal on the right camera   
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeftInt;                                     //image representing the signal on the leftcamera (integrated)
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRightInt;                                    //image representing the signal on the right camera (integrated)
     std::string name;                           // rootname of all the ports opened by this thread
@@ -119,8 +121,11 @@ public:
     * function that integrates the current dvs image with previous images
     * @param imgIn image of the current dvs camera
     * @param output of the process
+    * @param imageBW black and white image
     */
-    void integrateImage(yarp::sig::ImageOf<yarp::sig::PixelMono>* imgIn, yarp::sig::ImageOf<yarp::sig::PixelMono>* imgOut);
+    void integrateImage(yarp::sig::ImageOf<yarp::sig::PixelMono>* imgIn, yarp::sig::ImageOf<yarp::sig::PixelMono>* imgOut, yarp::sig::ImageOf<yarp::sig::PixelMono>* imgBW );
+    
+    
 
 };
 

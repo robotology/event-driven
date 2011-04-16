@@ -234,11 +234,13 @@ void cfCollectorThread::run() {
         if(count % 100 == 0) {                        
             if (lcprev == lc) { 
                 countStop++;
+                printf("*");
+            }            
+            else if (rcprev == rc) { 
+                countStop++;
+                printf("*");
             }
             lcprev = lc;
-            if (rcprev == rc) { 
-                countStop++;
-            }
             rcprev = rc;
         }
         //printf("countStop %d lcprev %d lc %d \n",countStop, lcprev,lc);
@@ -369,9 +371,6 @@ void cfCollectorThread::threadRelease() {
     printf("Threadrelease:closing ports \n");
     outPort.close();
     outPortRight.close();
-    printf("Threadrelease:deleting images \n");
-    delete imageRight;
-    delete imageLeft;
     printf("Threadrelease:stopping plotterThread \n");
     pThread->stop();
     printf("Threadrelease:deleting converter \n");

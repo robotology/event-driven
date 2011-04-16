@@ -50,11 +50,20 @@ plotterThread::plotterThread() : RateThread(THRATE) {
     imageRightInt = new ImageOf<PixelMono>;
     imageRightInt->resize(retinalSize,retinalSize);
     imageRightInt->zero();
+    imageLeftBW = new ImageOf<PixelMono>;
+    imageLeftBW->resize(retinalSize,retinalSize);
+    imageLeftBW->zero();
+    imageRightBW = new ImageOf<PixelMono>;
+    imageRightBW->resize(retinalSize,retinalSize);
+    imageRightBW->zero();
 }
 
 plotterThread::~plotterThread() {
     printf("freeing memory in collector");
-    
+    delete imageLeftInt;
+    delete imageRightInt;
+    delete imageLeftBW;
+    delete imageRightBW;
 }
 
 bool plotterThread::threadInit() {
@@ -141,9 +150,9 @@ void plotterThread::run() {
 	  imageLeftInt->copy(*imageLeft);
 	}
         else {
-	  integrateImage(imageLeft, imageLeftInt);
+	  integrateImage(imageLeft, imageLeftInt,imageLeftBW);
 	}
-	leftInt.copy(*imageLeftInt);
+	leftInt.copy(*imageLeftBW);
 	leftIntPort.write();
         
     }
@@ -154,19 +163,19 @@ void plotterThread::run() {
 	  imageRightInt->copy(*imageRight);
 	}
         else {
-	  integrateImage(imageRight, imageRightInt);
+	  integrateImage(imageRight, imageRightInt,imageRightBW);
 	}
-	rightInt.copy(*imageRightInt);
+	rightInt.copy(*imageRightBW);
 	rightIntPort.write();
     }
 }
 
 
-void plotterThread::integrateImage(ImageOf<PixelMono>* imageIn, ImageOf<PixelMono>* imageOut){
+void plotterThread::integrateImage(ImageOf<PixelMono>* imageIn, ImageOf<PixelMono>* imageOut, ImageOf<PixelMono>* imageBW){
     int padding= imageIn->getPadding();
     unsigned char* pimagein = imageIn->getRawImage();
     unsigned char* pimageout = imageOut->getRawImage();
-    
+    unsigned char* pimagebw = imageBW->getRawImage();
     if(imageIn != 0) {
         for(int r = 0;r < retinalSize; r++) {
             for(int c = 0;c < retinalSize; c++) {
@@ -180,12 +189,19 @@ void plotterThread::integrateImage(ImageOf<PixelMono>* imageIn, ImageOf<PixelMon
 	      if ((*pimageout!=127)||(*pimagein!=127)) {	  
 		*pimageout = 255;
 	      }
+	      
+	      if(*pimageout > 128)
+		*pimagebw = 0;
+	      else
+		*pimagebw = 255;
 
 	      pimageout++;
 	      pimagein++;
+	      pimagebw++;
             }
             pimageout += padding;
             pimagein += padding;
+	    pimagebw += padding;
         }
     }
 }
