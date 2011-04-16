@@ -90,7 +90,7 @@ bool cfCollectorModule::close() {
     handlerPort.close();
     /* stop the thread */
     cfThread->stop();
-    delete cfThread;
+    //delete cfThread;
     return true;
 }
 

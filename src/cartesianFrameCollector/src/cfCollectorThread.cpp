@@ -34,7 +34,7 @@ using namespace yarp::sig;
 using namespace std;
 
 #define MAXVALUE 4294967295
-#define THRATE 5
+#define THRATE 3
 #define STAMPINFRAME  // 10 ms of period times the us in 1 millisecond + time for computing
 #define retinalSize 128
 #define CHUNKSIZE 8192
@@ -54,7 +54,7 @@ cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
 
 cfCollectorThread::~cfCollectorThread() {
     printf("freeing memory in collector");
-    
+    delete bufferCopy;
 }
 
 bool cfCollectorThread::threadInit() {
@@ -371,9 +371,11 @@ void cfCollectorThread::threadRelease() {
     printf("Threadrelease:closing ports \n");
     outPort.close();
     outPortRight.close();
-    printf("Threadrelease:stopping plotterThread \n");
+    delete imageLeft;
+    delete imageRight;
+    printf("Threadrelease         stopping plotterThread \n");
     pThread->stop();
-    printf("Threadrelease:deleting converter \n");
+    printf("Threadrelease         deleting converter \n");
     delete cfConverter;
 }
 
