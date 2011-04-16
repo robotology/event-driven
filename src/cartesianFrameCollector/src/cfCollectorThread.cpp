@@ -199,9 +199,9 @@ void cfCollectorThread::run() {
         if ((cfConverter->isValid())&&(!synchronised)) {
             printf("Sychronised Sychronised Sychronised Sychronised ");
             //firstRun = false;
-            minCount = lc - interval * 7; 
+            minCount = lc - interval * 10; 
             //cfConverter->getEldestTimeStamp();                                                                   
-            minCountRight = rc - interval * 7;
+            minCountRight = rc - interval * 10;
             printf("synchronised %1f! %d,%d,%d||%d,%d,%d \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
             startTimer = Time::now();
             synchronised = true;
@@ -213,9 +213,9 @@ void cfCollectorThread::run() {
  
 
         //synchronising the thread every time interval 1000*period of the thread
-        if (count % 1000 == 0) {
-            minCount = lc - interval * 7; //cfConverter->getEldestTimeStamp();        
-            minCountRight = rc - interval * 7; 
+        if (count % 5000 == 0) {
+            minCount = lc - interval * 10; //cfConverter->getEldestTimeStamp();        
+            minCountRight = rc - interval * 10; 
             printf("synchronised %1f! %d,%d,%d||%d,%d,%d \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
             startTimer = Time::now();
             synchronised = true; 
@@ -228,8 +228,8 @@ void cfCollectorThread::run() {
             minCount = minCount + interval ; // * (50.0 / 62.5) * 1.10;
             minCountRight = minCountRight + interval;
         }                
-        maxCount =  minCount + interval * 5;
-        maxCountRight =  minCountRight + interval * 5;
+        maxCount =  minCount + interval * 7;
+        maxCountRight =  minCountRight + interval * 7;
         
         if(count % 100 == 0) {                        
             if (lcprev == lc) { 
