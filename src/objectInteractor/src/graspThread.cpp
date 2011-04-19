@@ -181,8 +181,6 @@ graspThread::graspThread(ResourceFinder& rf) {
     configure(rf);
 }
 
-
-
 graspThread::~graspThread() {
 
 }
@@ -291,7 +289,7 @@ void graspThread::getArmDependentOptions(Bottle &b, kinematicOffset &_dOffs,
 
 void graspThread::setName(string str) {
     this->name=str;
-    printf("name: %s", name.c_str());
+    printf("name: %s \n", name.c_str());
 }
 
 std::string graspThread::getName(const char* p) {
@@ -403,10 +401,12 @@ bool graspThread::configure(ResourceFinder &rf) {
             useArm(USE_LEFT);
     }
 
+    
+    /*
     if (partUsed=="both_arms" || partUsed=="right_arm")
     {
         cout<<"***** Instantiating primitives for right_arm"<<endl;
-        actionR=new ActionPrimitivesLayer2(optionR);
+        actionR=new ActionPrimitivesLayer3(optionR);
         actionR->setExtForceThres(forceCalibTableThresR);
         actionR->enableReachingTimeout(reachingTimeout);
 
@@ -418,7 +418,8 @@ bool graspThread::configure(ResourceFinder &rf) {
         }
         else
             useArm(USE_RIGHT);
-    }        
+    } 
+    */
 
     // access the opdb to retrieve the close_hand sequence
     /*
@@ -667,7 +668,7 @@ void graspThread::goHome() {
         useArm(USE_RIGHT);
         action->pushAction(*home_x,"open_hand",HOMING_PERIOD);
         action->checkActionsDone(f,true);
-        action->enableArmWaving(*home_x);
+        //action->enableArmWaving(*home_x);
     }
 
     if (partUsed=="both_arms" || partUsed=="left_arm")
@@ -675,9 +676,8 @@ void graspThread::goHome() {
         useArm(USE_LEFT);
         action->pushAction(*home_x,"open_hand",HOMING_PERIOD);
         action->checkActionsDone(f,true);
-        action->enableArmWaving(*home_x);
+        //action->enableArmWaving(*home_x);
     }
-
     setTrackingMode(latchTrackMode);
 }
 

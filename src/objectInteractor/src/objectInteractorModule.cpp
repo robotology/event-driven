@@ -62,7 +62,7 @@ bool oInteractorModule::configure(yarp::os::ResourceFinder &rf) {
     * attach a port of the same name as the module (prefixed with a /) to the module
     * so that messages received from the port are redirected to the respond method
     */
-    handlerPortName =  "";
+    handlerPortName =  "/";
     handlerPortName += getName();         // use getName() rather than a literal 
 
     if (!handlerPort.open(handlerPortName.c_str())) {           
@@ -81,13 +81,11 @@ bool oInteractorModule::configure(yarp::os::ResourceFinder &rf) {
     */
 
     gThread = 0;
-    gThread = new graspThread(rf);
-    //gThread->configure(rf);
-    gThread->setName(getName().c_str());
-    //gThread->setRobotName(robotName);
+    gThread = new graspThread(rf);    
+    gThread->setName(getName().c_str());    
     gThread->start();
-    
-
+    ////gThread->configure(rf);
+    ////gThread->setRobotName(robotName);
 
     return true ;       // let the RFModule know everything went well
                         // so that it will then run the module
@@ -141,6 +139,6 @@ bool oInteractorModule::updateModule() {
 
 double oInteractorModule::getPeriod() {
     /* module periodicity (seconds), called implicitly by myModule */
-    return 0.0;
+    return 1.0;
 }
 
