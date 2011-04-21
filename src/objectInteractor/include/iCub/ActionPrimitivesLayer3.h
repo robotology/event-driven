@@ -152,12 +152,43 @@ public:
     virtual bool touch(const yarp::sig::Vector &x, const yarp::sig::Vector &o,
                        const yarp::sig::Vector &d);
 
+
+
+    /**
+    * Tap the given target (combined action).
+    * @param x1 the fisrt 3-d target position [m]. 
+    * @param o1 the first 4-d hand orientation (given in axis-angle 
+    *           representation: ax ay az angle in rad).
+    * @param x2 the second 3-d target position [m]. 
+    * @param o2 the second 4-d hand orientation (given in axis-angle
+    *           representation: ax ay az angle in rad).
+    * @param execTime the arm action execution time only while 
+    *          tapping [s] (to be specified iff different from
+    *          default value).
+    * @return true/false on success/fail. 
+    *  
+    * @note internal implementation (pseudo-code): 
+    * @code 
+    * ...
+    * pushAction(x1,o1,"karate_hand");
+    * pushAction(x2,o2,execTime);
+    * pushAction(x1,o1); 
+    * ... 
+    * @endcode 
+    *  
+    * It reachs for (x1,o1), then reachs for (x2,o2) and then again
+    * for (x1,o1).
+    */
+    virtual bool tap(const yarp::sig::Vector &x1, const yarp::sig::Vector &o1,
+                     const yarp::sig::Vector &x2, const yarp::sig::Vector &o2,
+                     const double execTime=ACTIONPRIM_DISABLE_EXECTIME);
+
     /**
     * Latch the wrench to compensate for offset in the sensor 
     * measures. 
     * @return true/false on success/fail. 
     */
-    virtual bool latchWrenchOffset();
+    //virtual bool latchWrenchOffset();
 
     /**
     * Retrieve the current wrench on the end-effector.
@@ -187,13 +218,13 @@ public:
     * Self-explaining :)
     * @return true/false on success/fail. 
     */
-    virtual bool enableContactDetection();
+    //virtual bool enableContactDetection();
 
     /**
     * Self-explaining :)
     * @return true/false on success/fail. 
     */
-    virtual bool disableContactDetection();
+    //virtual bool disableContactDetection();
 
     /**
     * Self-explaining :) 

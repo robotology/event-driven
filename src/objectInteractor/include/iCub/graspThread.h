@@ -379,7 +379,7 @@ public:
 class kinematicCalibrator : public RateThread
 {
 protected:
-    ActionPrimitivesLayer2 *action;
+    ActionPrimitivesLayer3 *action;
 
     double forceThres;
     double gain;
@@ -400,7 +400,7 @@ public:
         x.resize(3,0.0);
     }
 
-    void init(ActionPrimitivesLayer2 *_action, const Vector &_x0,
+    void init(ActionPrimitivesLayer3 *_action, const Vector &_x0,
               const double thres)
     {
         action=_action;
@@ -452,9 +452,9 @@ protected:
     std::string armToBeUsed;
     std::string name;
 
-    ActionPrimitivesLayer2       *actionL;
-    ActionPrimitivesLayer2       *actionR;
-    ActionPrimitivesLayer2       *action;
+    ActionPrimitivesLayer3       *actionL;
+    ActionPrimitivesLayer3       *actionR;
+    ActionPrimitivesLayer3       *action;
 
     //opdbAccessClient              opdbClient;
     std::map<std::string,yarp::sig::Matrix>*            palmOrientations;

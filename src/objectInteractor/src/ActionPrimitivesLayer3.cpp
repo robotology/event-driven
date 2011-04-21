@@ -183,16 +183,41 @@ bool ActionPrimitivesLayer3::push(const Vector &x1, const Vector &o1,
                                  const Vector &x2, const Vector &o2,
                                  const double execTime) {
     if (configuredLayer3) {
-        printMessage("start tapping\n");
+        printMessage("start pushing in Layer3\n");
         disableTorsoDof();
+        latchWrenchOffset();
+        enableContactDetection();
         pushAction(x1,o1,"karate_hand");
         pushAction(x2,o2,execTime);
         pushAction(x1,o1);
+        disableContactDetection();
         enableTorsoDof();
         return true;
     }
     else
         return false;
+}
+
+/************************************************************************/
+
+bool ActionPrimitivesLayer3::tap(const Vector &x1, const Vector &o1,
+                                 const Vector &x2, const Vector &o2,
+                                 const double execTime)
+{
+    if (configured) {
+        printMessage("start tapping of Layer3 \n");
+        bool wrench = ActionPrimitivesLayer2::latchWrenchOffset();
+        printf("wrench %d", wrench);
+        bool enabled = ActionPrimitivesLayer2::enableContactDetection();
+        printf("enabled %d", enabled);
+        pushAction(x1,o1,"karate_hand");
+        pushAction(x2,o2,ACTIONPRIM_DISABLE_EXECTIME);
+        pushAction(x1,o1);
+        ActionPrimitivesLayer2::disableContactDetection();
+        return true;
+    }
+    else
+        return false; 
 }
 
 
@@ -224,9 +249,9 @@ bool ActionPrimitivesLayer3::touch2(const Vector &x, const Vector &o, const Vect
 }
 
 /************************************************************************/
-bool ActionPrimitivesLayer3::latchWrenchOffset() {
-    return ActionPrimitivesLayer2::latchWrenchOffset();
-}
+//bool ActionPrimitivesLayer3::latchWrenchOffset() {
+//    return ActionPrimitivesLayer2::latchWrenchOffset();
+//}
 
 
 /************************************************************************/
@@ -248,15 +273,15 @@ bool ActionPrimitivesLayer3::setExtForceThres(const double thres) {
 
 
 /************************************************************************/
-bool ActionPrimitivesLayer3::enableContactDetection() {
-    return ActionPrimitivesLayer2::enableContactDetection();
-}
+//bool ActionPrimitivesLayer3::enableContactDetection() {
+//    return ActionPrimitivesLayer2::enableContactDetection();
+//}
 
 
 /************************************************************************/
-bool ActionPrimitivesLayer3::disableContactDetection() {
-    return ActionPrimitivesLayer2::disableContactDetection();
-}
+//bool ActionPrimitivesLayer3::disableContactDetection() {
+//    return ActionPrimitivesLayer2::disableContactDetection();
+//}
 
 
 /************************************************************************/

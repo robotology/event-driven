@@ -381,12 +381,15 @@ bool graspThread::configure(ResourceFinder &rf) {
                                forceCalibTableThresR,forceCalibKinThresR);
 
     // set up the reaching timeout
-    double reachingTimeout=2.0 * option.check("default_exec_time",Value("3.0")).asDouble();
+    double reachingTimeout= option.check("default_exec_time",Value("3.0")).asDouble();
+    if (reachingTimeout < 2.0) {
+        reachingTimeout = 2.0;
+    }
 
     if (partUsed=="both_arms" || partUsed=="left_arm")
     {
         cout<<"***** Instantiating primitives for left_arm"<<endl;
-        actionL=new ActionPrimitivesLayer2(optionL);
+        actionL=new ActionPrimitivesLayer3(optionL);
         actionL->setExtForceThres(forceCalibTableThresL);
         actionL->enableReachingTimeout(reachingTimeout);
  
@@ -402,7 +405,7 @@ bool graspThread::configure(ResourceFinder &rf) {
     }
 
     
-    /*
+    
     if (partUsed=="both_arms" || partUsed=="right_arm")
     {
         cout<<"***** Instantiating primitives for right_arm"<<endl;
@@ -419,7 +422,7 @@ bool graspThread::configure(ResourceFinder &rf) {
         else
             useArm(USE_RIGHT);
     } 
-    */
+    
 
     // access the opdb to retrieve the close_hand sequence
     /*
@@ -599,8 +602,8 @@ void graspThread::computePalmOrientations() {
     palmOrientations->insert(it, pair<string,Matrix>("left_stoptap",R));
     //palmOrientations["left_stoptap"]=palmOrientations["left_starttap"];
 
-    Ry(0,0)=cos(-M_PI / 2);
-    Ry(0,2)=sin(-M_PI / 2);
+    Ry(0,0)=cos(-M_PI / 2 + M_PI / 5);
+    Ry(0,2)=sin(-M_PI / 2 + M_PI / 5);
     Ry(1,1)=1.0;
     Ry(2,0)=-Ry(0,2);
     Ry(2,2)=Ry(0,0);
@@ -808,10 +811,16 @@ void graspThread::push(const Vector &xd) {
     Vector endPos = startPos;
     endPos[0] -= 2.0 * (*dPush)[0];
 
+
     Vector startOrientation = dcm2axis((*palmOrientations)[armToBeUsed+"_startpush"]);
     Vector stopOrientation = dcm2axis((*palmOrientations)[armToBeUsed+"_stoppush"]);
+    
     action->tap(startPos,startOrientation,endPos,stopOrientation,2.0);
     action->pushWaitState(1.0);
+    //action->checkActionsDone(f,true);
+    //action->pushWaitState(2.0);
+    //action->disableContactDetection();
+    //action->checkContact(f);
     action->pushAction(*home_x, dcm2axis((*palmOrientations)[armToBeUsed+"_down"]), "open_hand", HOMING_PERIOD);
     action->checkActionsDone(f,true);
     goHome();
