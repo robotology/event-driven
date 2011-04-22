@@ -172,7 +172,9 @@ void plotterThread::run() {
 	leftInt.copy(*imageLeftBW);
 	leftIntPort.write();
 	leftGray.copy(*imageLeftGray);
-	leftGrayPort.write();        
+	leftGrayPort.write(); 
+	ul = floor(positionLeft/retinalSize);
+	vl = positionLeft%retinalSize;       
     }
     
     if (rightIntPort.getOutputCount()) {
@@ -190,12 +192,10 @@ void plotterThread::run() {
 	rightIntPort.write();
 	rightGray.copy(*imageRightGray);
 	rightGrayPort.write();
+	ur = floor(positionRight/retinalSize);
+	vr = positionLeft%retinalSize;
     }
 
-    ul = floor(positionLeft/128.0);
-    vl = positionLeft%128;
-    ur = floor(positionRight/128.0);
-    vr = positionLeft%128;
     Bottle& eventBottle = eventPort.prepare();
     if (( ul!= 0) && ( vl!= 0) && ( ur!= 0) && ( vr!= 0)) {
       eventBottle.addInt(ul);
