@@ -28,6 +28,7 @@
 #define _PLOTTER_THREAD_H_
 
 #include <yarp/os/RateThread.h>
+#include <yarp/os/Bottle.h>
 #include <yarp/sig/all.h>
 #include <iCub/cartesianFrameConverter.h>
 #include <iostream>
@@ -45,12 +46,17 @@ private:
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > rightPort;                // port whre the output (right) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > leftIntPort;              // port whre the output (left integral) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > rightIntPort;             // port whre the output (right integral) is sent
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > leftGrayPort;              // port whre the output (left integral) is sent
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > rightGrayPort;             // port whre the output (right integral) is sent
+    yarp::os::BufferedPort<yarp::os::Bottle > eventPort;
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeft;                                        //image representing the signal on the leftcamera
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRight;                                       //image representing the signal on the right camera
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeftBW;                                       //image representing the signal on the right camera
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRightBW;                                       //image representing the signal on the right camera   
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeftInt;                                     //image representing the signal on the leftcamera (integrated)
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRightInt;                                    //image representing the signal on the right camera (integrated)
+    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeftGray;                                     //image representing the signal on the leftcamera (integrated)
+    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRightGray;                                    //image representing the signal on the right camera (integrated)
     std::string name;                           // rootname of all the ports opened by this thread
     bool synchronised;                          // flag to check whether the microsecond counter has been synchronised
                                                 // local copy of the events read
@@ -123,7 +129,7 @@ public:
     * @param output of the process
     * @param imageBW black and white image
     */
-    void integrateImage(yarp::sig::ImageOf<yarp::sig::PixelMono>* imgIn, yarp::sig::ImageOf<yarp::sig::PixelMono>* imgOut, yarp::sig::ImageOf<yarp::sig::PixelMono>* imgBW );
+    int integrateImage(yarp::sig::ImageOf<yarp::sig::PixelMono>* imgIn, yarp::sig::ImageOf<yarp::sig::PixelMono>* imgOut, yarp::sig::ImageOf<yarp::sig::PixelMono>* imgBW, yarp::sig::ImageOf<yarp::sig::PixelMono>* imgGray );
     
     
 

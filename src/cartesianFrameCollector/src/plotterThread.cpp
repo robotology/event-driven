@@ -56,6 +56,12 @@ plotterThread::plotterThread() : RateThread(THRATE) {
     imageRightBW = new ImageOf<PixelMono>;
     imageRightBW->resize(retinalSize,retinalSize);
     imageRightBW->zero();
+    imageLeftGray = new ImageOf<PixelMono>;
+    imageLeftGray->resize(retinalSize,retinalSize);
+    imageLeftGray->zero();
+    imageRightGray = new ImageOf<PixelMono>;
+    imageRightGray->resize(retinalSize,retinalSize);
+    imageRightGray->zero();
 }
 
 plotterThread::~plotterThread() {
@@ -64,15 +70,20 @@ plotterThread::~plotterThread() {
     delete imageRightInt;
     delete imageLeftBW;
     delete imageRightBW;
+    delete imageLeftGray;
+    delete imageRightGray;
 }
 
 bool plotterThread::threadInit() {
     printf("\n starting the thread.... \n");
     /* open ports */
     leftPort.open(getName("/left:o").c_str());
-    leftIntPort.open(getName("/leftInt:o").c_str());
     rightPort.open(getName("/right:o").c_str());
+    leftIntPort.open(getName("/leftInt:o").c_str());
     rightIntPort.open(getName("/rightInt:o").c_str());
+    leftGrayPort.open(getName("/leftGray:o").c_str());
+    rightGrayPort.open(getName("/rightGray:o").c_str());
+    eventPort.open(getName("/event:o").c_str());
     return true;
 }
 
@@ -143,39 +154,67 @@ void plotterThread::run() {
     if(rightPort.getOutputCount()) {
         rightPort.write();
     }
-    if (leftIntPort.getOutputCount()) {
+
+    int positionLeft = 0, positionRight = 0;
+    int ul = 0, vl = 0, ur = 0, vr = 0;
+
+    if ((leftIntPort.getOutputCount())&&(leftGrayPort.getOutputCount())) {
         ImageOf<PixelMono>& leftInt = leftIntPort.prepare();
+	ImageOf<PixelMono>& leftGray = leftGrayPort.prepare();
         leftInt.resize(imageLeftInt->width(), imageLeftInt->height());
-        if(count % 1000 == 0) {
+        if(count % 500 == 0) {
 	  imageLeftInt->copy(*imageLeft);
+	  imageLeftGray->zero();
 	}
         else {
-	  integrateImage(imageLeft, imageLeftInt,imageLeftBW);
+	  positionLeft = integrateImage(imageLeft, imageLeftInt,imageLeftBW, imageLeftGray);
 	}
 	leftInt.copy(*imageLeftBW);
 	leftIntPort.write();
-        
+	leftGray.copy(*imageLeftGray);
+	leftGrayPort.write();        
     }
+    
     if (rightIntPort.getOutputCount()) {
         ImageOf<PixelMono>& rightInt = rightIntPort.prepare();
+	ImageOf<PixelMono>& rightGray = rightGrayPort.prepare();
         rightInt.resize(imageRightInt->width(), imageRightInt->height());
-        if(count % 1000 == 0) {
+        if(count % 500 == 0) {
 	  imageRightInt->copy(*imageRight);
+	  imageRightGray->zero();
 	}
         else {
-	  integrateImage(imageRight, imageRightInt,imageRightBW);
+	  positionRight = integrateImage(imageRight, imageRightInt,imageRightBW, imageRightGray);
 	}
 	rightInt.copy(*imageRightBW);
 	rightIntPort.write();
+	rightGray.copy(*imageRightGray);
+	rightGrayPort.write();
+    }
+
+    ul = floor(positionLeft/128.0);
+    vl = positionLeft%128;
+    ur = floor(positionRight/128.0);
+    vr = positionLeft%128;
+    Bottle& eventBottle = eventPort.prepare();
+    if (( ul!= 0) && ( vl!= 0) && ( ur!= 0) && ( vr!= 0)) {
+      eventBottle.addInt(ul);
+      eventBottle.addInt(vl);
+      eventBottle.addInt(ur);
+      eventBottle.addInt(vr);
+      eventPort.write();
+      printf("positionLeft %d-%d, positionRight %d \n", (int) floor(positionLeft/128.0),positionLeft%128, positionRight);
     }
 }
 
 
-void plotterThread::integrateImage(ImageOf<PixelMono>* imageIn, ImageOf<PixelMono>* imageOut, ImageOf<PixelMono>* imageBW){
+int plotterThread::integrateImage(ImageOf<PixelMono>* imageIn, ImageOf<PixelMono>* imageOut, ImageOf<PixelMono>* imageBW, ImageOf<PixelMono>* imageGray){
     int padding= imageIn->getPadding();
     unsigned char* pimagein = imageIn->getRawImage();
     unsigned char* pimageout = imageOut->getRawImage();
     unsigned char* pimagebw = imageBW->getRawImage();
+    unsigned char* pimagegray = imageGray->getRawImage();
+    int point = 0;
     if(imageIn != 0) {
         for(int r = 0;r < retinalSize; r++) {
             for(int c = 0;c < retinalSize; c++) {
@@ -185,16 +224,44 @@ void plotterThread::integrateImage(ImageOf<PixelMono>* imageIn, ImageOf<PixelMon
 	      //if(*pimagein != 127) {
 	      //*pimagein = 255;
 	      //}
-	      
+	      unsigned char v = *pimageout;
+
 	      if ((*pimageout!=127)||(*pimagein!=127)) {	  
-		*pimageout = 255;
+		 *pimageout = 250;
+	      }
+	      if ((*pimageout!=127) && (*pimagein == 127)){
+	      	 *pimageout = 127;
+	      }	 	     
+	      
+	      if(*pimageout > 128) {
+		*pimagebw = 255;
+	      }
+	      else {
+		*pimagebw = 0;
 	      }
 	      
-	      if(*pimageout > 128)
-		*pimagebw = 0;
-	      else
-		*pimagebw = 255;
 
+	      unsigned char value = *pimagegray;
+	      unsigned char valuebw = *pimagebw;
+	      if(valuebw >  130){
+	      	value+=10;
+		if (value >= 100){ 
+		    value = 234;
+		    point = r * retinalSize + c ;
+		}
+		//imagegray = value;
+	      }
+	      //else if(valuebw < 120){
+	      //value--;
+	      //if (value <= 10) { 
+	      //  value = 10;
+	      //}
+		//imagegray = value;
+	      //}
+	      *pimagegray = value;
+
+
+	      pimagegray++;
 	      pimageout++;
 	      pimagein++;
 	      pimagebw++;
@@ -202,8 +269,10 @@ void plotterThread::integrateImage(ImageOf<PixelMono>* imageIn, ImageOf<PixelMon
             pimageout += padding;
             pimagein += padding;
 	    pimagebw += padding;
+	    pimagegray += padding;
         }
     }
+    return point;
 }
 
 
