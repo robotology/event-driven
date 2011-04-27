@@ -6,22 +6,27 @@
 
 	<module>
 	   <name>readRaw</name>
-		<parameters>DVS128-2010-12-14T10-05-09+0100-0_lineFiltered.dat</parameters>
 	   <node>local</node>
 	   <tag>readRaw</tag>
 	</module>
-	<module>
+	
+      <module>
 	   <name>opticalFlowViewer</name>
 	   <node>local</node>
 	   <tag>opticalFlowViewer</tag>
 	</module>
 	<module>
 	   <name>yarpview</name>
-	   <parameters>--name /flowView --x 000 --ysixe 000 --synch </parameters>
+	   <parameters>--name /flowView --synch </parameters>
 	   <node>local</node>
 	   <tag>flowViewer</tag>
 	</module>
 
+	<connection>
+	  <from>/icub/retina0:o</from>
+	  <to>/image/opticalFlow:i</to>
+	  <protocol>tcp</protocol>
+	</connection>
 	<connection>
 	  <from>/image/opticalFlow:o</from>
 	  <to>/image/opticalFlowViewer:i</to>
