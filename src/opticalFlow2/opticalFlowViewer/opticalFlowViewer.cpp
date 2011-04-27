@@ -2,22 +2,22 @@
 
 opticalFlowViewer::opticalFlowViewer()
 {
-    mVx.resize(WIDTH,HEIGHT);
-    mVy.resize(WIDTH,HEIGHT);
-    mVx.zero();
-    mVy.zero();
-
-    indQuiv=0;
-
-    mBlack=0;
-
-    mBaseImg.resize(4*WIDTH,4*HEIGHT);
-    
-    for(int x=0; x<4*WIDTH; ++x)
+    for (int x=0; x<XDIM; ++x)
     {
-        for(int y=0; y<4*HEIGHT; ++y)
+        for (int y=0; y<YDIM; ++y)
         {
-            mBaseImg(x,y)=128;
+            mMapVx[x][y]=0.0;
+            mMapVy[x][y]=0.0;
+        }
+    }
+
+    mBaseImg.resize(4*XDIM,4*YDIM);
+    
+    for(int x=0; x<4*XDIM; ++x)
+    {
+        for(int y=0; y<4*YDIM; ++y)
+        {
+            mBaseImg(x,y)=255;
         }
     }
 
@@ -40,17 +40,15 @@ void opticalFlowViewer::onRead(vecBuffer& data)
 
     double vx=data.get_vx();
     double vy=data.get_vy();
+
+    //printf("%d  %d  %lf  %lf\n",x,y,vx,vy);
+    //fflush(stdout);
     
-    if (vx!=0.0 || vy!=0.0)
-    {
-        double norm=15.0/std::sqrt(vx*vx+vy*vy);
-        mVx(x,y)=norm*vx;
-        mVy(x,y)=norm*vy;
-    }
-    else
-    {
-        mVx(x,y)=mVy(x,y)=0.0;
-    }
+    mMapVx[x][y]+=vx;
+    mMapVy[x][y]+=vy;
+    double norm;
+
+    int hx,hy;
 
     if (timeDiff>=TNK_TIME)
     {
@@ -59,24 +57,33 @@ void opticalFlowViewer::onRead(vecBuffer& data)
         
         int X,Y;
 
-        for (int x=0; x<WIDTH; ++x)
+        for (int x=0; x<XDIM; ++x)
         {
-            for (int y=0; y<HEIGHT; ++y)
+            for (int y=0; y<YDIM; ++y)
             {
-                if (mVx(x,y)!=0.0 || mVy(x,y)!=0.0)
-                {
-                    X=2+4*x;
-                    Y=2+4*y;
+                vx=mMapVx[x][y];
+                vy=mMapVy[x][y];
+                norm=vx*vx+vy*vy;
 
-                    yarp::sig::draw::addSegment(img,mBlack,X,511-Y,X+int(mVx(x,y)+0.5),511-Y-int(mVy(x,y)+0.5));
+                if (norm>0.0)
+                {
+                    X=2+4*x;        
+                    Y=2+4*y;
+                    norm=15.0/sqrt(norm);
+
+                    hx=X+int(norm*vx+0.5);
+                    hy=511-Y-int(norm*vy+0.5);
+
+                    static const yarp::sig::PixelMono16 black=0;
+                    yarp::sig::draw::addSegment(img,black,X,511-Y,hx,hy);
+                    yarp::sig::draw::addCircle(img,black,hx,hy,2);
                 }
+
+                mMapVx[x][y]=mMapVy[x][y]=0.0;
             }
         }
         
         mPort.write();
-
-        mVx.zero();
-        mVy.zero();
         
         mTimeStart=yarp::os::Time::now();
     }

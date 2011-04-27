@@ -28,6 +28,7 @@ int main(int argc, char* argv[])
 
     if(argc==2)
     {
+        /*
         FILE* data = fopen(argv[1],"rb");
         int bof=ftell(data);
 
@@ -87,6 +88,11 @@ int main(int argc, char* argv[])
 
         Unmask unmask(channel);
         unmask.unmaskData((unsigned int*)buffer,size-bof);
+        */
+
+        Unmask unmask(0);
+        //unmask.unmaskData((unsigned int*)buffer,size-bof);
+        unmask.unmaskFile(argv[1]);
     }
     else
     {

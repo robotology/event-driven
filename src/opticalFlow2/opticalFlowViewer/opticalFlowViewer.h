@@ -9,11 +9,10 @@
 #include "vecBuffer.h"
 
 #define TNK_TIME 0.04    // 25 fps
-//#define TNK_TIME 0.01666 // 60 fps
-//#define TNK_TIME 0.005   // 200 fps
+//#define TNK_TIME 0.02 // 50 fps
 
-#define HEIGHT 128
-#define WIDTH  128
+#define XDIM 128
+#define YDIM 128
 
 class opticalFlowViewer:public yarp::os::BufferedPort<vecBuffer>
 {
@@ -26,14 +25,11 @@ private:
     double mTimeStart;
     double mTimeCurrent;
 
-    yarp::sig::Matrix mVx;
-    yarp::sig::Matrix mVy;
-
-    int indQuiv;
+    double mMapVx[128][128];
+    double mMapVy[128][128];
 
     yarp::os::BufferedPort< yarp::sig::ImageOf<yarp::sig::PixelMono16> > mPort;
     yarp::sig::ImageOf<yarp::sig::PixelMono16> mBaseImg;
-    yarp::sig::PixelMono16 mBlack;
 };
 
 #endif //OPTICALFLOWVIEWER
