@@ -11,7 +11,7 @@
 	   <tag>optflowCompute</tag>
 	</module>
 	<module>
-	   <name>ofViewer</name>
+	   <name>ofviewer</name>
 	   <node>local</node>
 	   <tag>optflowView</tag>
 	</module>
