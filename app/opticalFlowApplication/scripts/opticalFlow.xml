@@ -5,40 +5,36 @@
 	</dependencies>
 
 	<module>
-	   <name>device2yarp</name>
+	   <name>lk</name>
+	   <parameters>--L</parameters>
 	   <node>local</node>
-	   <tag>device2yarp</tag>
+	   <tag>optflowCompute</tag>
 	</module>
 	<module>
-	   <name>readRaw</name>
+	   <name>ofViewer</name>
 	   <node>local</node>
-	   <tag>readRaw</tag>
-	</module>
-	<module>
-	   <name>opticalFlowViewer</name>
-	   <node>local</node>
-	   <tag>opticalFlowViewer</tag>
+	   <tag>optflowView</tag>
 	</module>
 	<module>
 	   <name>yarpview</name>
-	   <parameters>--name /flowView --x 000 --ysixe 000 --synch </parameters>
+	   <parameters>--name /optflow/viewer:i --synch </parameters>
 	   <node>local</node>
-	   <tag>flowViewer</tag>
+	   <tag>optflowDisplay</tag>
 	</module>
 
 	<connection>
 	  <from>/icub/retina0:o</from>
-	  <to>/image/opticalFlow:i</to>
+	  <to>/optflow/events:i</to>
 	  <protocol>tcp</protocol>
 	</connection>
 	<connection>
-	  <from>/image/opticalFlow:o</from>
-	  <to>/image/opticalFlowViewer:i</to>
+	  <from>/optflow/vectors:o</from>
+	  <to>/optflow/vectors:i</to>
 	  <protocol>tcp</protocol>
 	</connection>
 	<connection>
-	  <from>/image/opticalFlowFrame:o</from>
-	  <to>/flowView</to>
+	  <from>/optflow/viewer:o</from>
+	  <to>/optflow/viewer:i</to>
 	  <protocol>tcp</protocol>
 	</connection>
 </application>
