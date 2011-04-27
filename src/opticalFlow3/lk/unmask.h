@@ -10,6 +10,7 @@ public:
 	~Unmask();
     
     void unmaskData(unsigned int* buffer,int size);
+    void unmaskFile(const char *fileName);
 
 private:
     int mChannel;

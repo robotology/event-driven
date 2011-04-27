@@ -34,6 +34,9 @@ Synapse::~Synapse()
 
 void Synapse::filter(int x0,int y0,int p,unsigned int t)
 {
+    //printf("%d  %d  %d  %u\n",x0,y0,p,t);
+    //fflush(stdout);
+
     const unsigned int timeWindow=10000; // 10 ms
     static const double ONE_BY_TAU=1.0/double(timeWindow);
     static const double THR=2.0;

@@ -40,10 +40,15 @@ void opticalFlowViewer::onRead(vecBuffer& data)
 
     double vx=data.get_vx();
     double vy=data.get_vy();
+
+    //printf("%d  %d  %lf  %lf\n",x,y,vx,vy);
+    //fflush(stdout);
     
     mMapVx[x][y]+=vx;
     mMapVy[x][y]+=vy;
     double norm;
+
+    int hx,hy;
 
     if (timeDiff>=TNK_TIME)
     {
@@ -60,14 +65,18 @@ void opticalFlowViewer::onRead(vecBuffer& data)
                 vy=mMapVy[x][y];
                 norm=vx*vx+vy*vy;
 
-                if (norm>10.0)
+                if (norm>0.0)
                 {
                     X=2+4*x;        
                     Y=2+4*y;
                     norm=15.0/sqrt(norm);
 
+                    hx=X+int(norm*vx+0.5);
+                    hy=511-Y-int(norm*vy+0.5);
+
                     static const yarp::sig::PixelMono16 black=0;
-                    yarp::sig::draw::addSegment(img,black,X,511-Y,X+int(norm*vx+0.5),511-Y-int(norm*vy+0.5));
+                    yarp::sig::draw::addSegment(img,black,X,511-Y,hx,hy);
+                    yarp::sig::draw::addCircle(img,black,hx,hy,2);
                 }
 
                 mMapVx[x][y]=mMapVy[x][y]=0.0;
