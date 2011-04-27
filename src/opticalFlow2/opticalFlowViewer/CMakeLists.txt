@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.6)
 
-SET(PROJECTNAME viewer)
+SET(PROJECTNAME opticalFlowViewer)
 PROJECT(${PROJECTNAME})
 
 FIND_PACKAGE(YARP)

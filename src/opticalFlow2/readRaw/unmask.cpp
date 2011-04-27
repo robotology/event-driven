@@ -47,7 +47,7 @@ void Unmask::unmaskData(unsigned int* buffer,int size)
 
         camera=(0x8000 & blob)>>15;
 
-        if (camera==mChannel)
+        if (camera==mChannel || mChannel==-1)
         {
             //y=(0x7F00 & blob)>>8;
             //x=(0x00FE & blob)>>1;
