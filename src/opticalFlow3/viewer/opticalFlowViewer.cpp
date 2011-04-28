@@ -79,6 +79,7 @@ void opticalFlowViewer::onRead(vecBuffer& data)
 
     if (timeDiff>=TNK_TIME)
     {
+        mTimeStart=mTimeCurrent;
         //yarp::sig::ImageOf<yarp::sig::PixelMono>& img=mPort.prepare();
         yarp::sig::ImageOf<yarp::sig::PixelRgb>& img=mPort.prepare();
         img=mBaseImg;
@@ -132,7 +133,5 @@ void opticalFlowViewer::onRead(vecBuffer& data)
         }
         
         mPort.write();
-        
-        mTimeStart=yarp::os::Time::now();
     }
 }
