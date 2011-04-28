@@ -17,19 +17,24 @@
 class opticalFlowViewer:public yarp::os::BufferedPort<vecBuffer>
 {
 public:
-    opticalFlowViewer();
+    opticalFlowViewer(bool color);
     ~opticalFlowViewer();
     virtual void onRead(vecBuffer &);
 
 private:
+    bool mColor;
     double mTimeStart;
     double mTimeCurrent;
 
     double mMapVx[128][128];
     double mMapVy[128][128];
 
-    yarp::os::BufferedPort< yarp::sig::ImageOf<yarp::sig::PixelMono16> > mPort;
-    yarp::sig::ImageOf<yarp::sig::PixelMono16> mBaseImg;
+    yarp::sig::PixelRgb mPalette[65][65];
+
+    //yarp::os::BufferedPort< yarp::sig::ImageOf<yarp::sig::PixelMono> > mPort;
+    //yarp::sig::ImageOf<yarp::sig::PixelMono> mBaseImg;
+    yarp::os::BufferedPort< yarp::sig::ImageOf<yarp::sig::PixelRgb> > mPort;
+    yarp::sig::ImageOf<yarp::sig::PixelRgb> mBaseImg;
 };
 
 #endif //OPTICALFLOWVIEWER

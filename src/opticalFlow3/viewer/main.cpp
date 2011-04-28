@@ -6,7 +6,17 @@ int main(int argc, char *argv[])
 {
 	yarp::os::Network yarp;
 	
-	opticalFlowViewer optFviewer;
+    bool color=false;
+
+    if (argc==2)
+    {
+        if (std::string(argv[1])=="--color")
+        {
+            color=true;
+        }
+    }
+
+	opticalFlowViewer optFviewer(color);
 	optFviewer.useCallback();
 	optFviewer.open("/optflow/vectors:i");
     
