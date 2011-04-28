@@ -173,8 +173,8 @@ void plotterThread::run() {
 	leftIntPort.write();
 	leftGray.copy(*imageLeftGray);
 	leftGrayPort.write(); 
-	ul = floor(positionLeft/retinalSize);
-	vl = positionLeft%retinalSize;       
+	vl = floor(positionLeft/retinalSize);
+	ul = positionLeft%retinalSize;       
     }
     
     if ((rightIntPort.getOutputCount())||(rightGrayPort.getOutputCount())) {
@@ -192,8 +192,8 @@ void plotterThread::run() {
 	rightIntPort.write();
 	rightGray.copy(*imageRightGray);
 	rightGrayPort.write();
-	ur = floor(positionRight/retinalSize);
-	vr = positionRight%retinalSize;
+	vr = floor(positionRight/retinalSize);
+	ur = positionRight%retinalSize;
     }
 
     //Bottle& eventBottle = eventPort.prepare();
@@ -216,7 +216,7 @@ void plotterThread::run() {
       centroidStereo.push_back(vr);
       eventPort.write();
       
-      printf("positionLeft %d-%d, positionRight %d \n", (int) floor(positionLeft/128.0),positionLeft%128, positionRight);
+      //printf("positionLeft %d-%d, positionRight %d \n", (int) floor(positionLeft/128.0),positionLeft%128, positionRight);
     }
 }
 
