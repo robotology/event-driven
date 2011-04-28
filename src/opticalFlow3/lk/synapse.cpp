@@ -60,7 +60,7 @@ void Synapse::filter(int x0,int y0,int p,unsigned int t)
             pG=p?mMapGaussian[x-x0+NEIGH][y-y0+NEIGH]:-mMapGaussian[x-x0+NEIGH][y-y0+NEIGH];
             dT=double(t-mMapTime[x][y]);
             mMapTime[x][y]=t;
-            It[x][y]=pG/(dT>1.0?dT:1.0);
+            It[x][y]=pG;//(dT>1.0?dT:1.0);
         
             decay=exp(-ONE_BY_TAU*dT);
 
