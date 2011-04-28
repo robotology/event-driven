@@ -177,7 +177,7 @@ void plotterThread::run() {
 	vl = positionLeft%retinalSize;       
     }
     
-    if ((rightIntPort.getOutputCount())||(leftGrayPort.getOutputCount())) {
+    if ((rightIntPort.getOutputCount())||(rightGrayPort.getOutputCount())) {
         ImageOf<PixelMono>& rightInt = rightIntPort.prepare();
 	ImageOf<PixelMono>& rightGray = rightGrayPort.prepare();
         rightInt.resize(imageRightInt->width(), imageRightInt->height());
@@ -193,16 +193,29 @@ void plotterThread::run() {
 	rightGray.copy(*imageRightGray);
 	rightGrayPort.write();
 	ur = floor(positionRight/retinalSize);
-	vr = positionLeft%retinalSize;
+	vr = positionRight%retinalSize;
     }
 
-    Bottle& eventBottle = eventPort.prepare();
+    //Bottle& eventBottle = eventPort.prepare();
+    Vector& centroidStereo = eventPort.prepare();
     if (( ul!= 0) && ( vl!= 0) && ( ur!= 0) && ( vr!= 0)) {
-      eventBottle.addInt(ul);
-      eventBottle.addInt(vl);
-      eventBottle.addInt(ur);
-      eventBottle.addInt(vr);
+      //eventBottle.addInt(ul);
+      //eventBottle.addInt(vl);
+      //eventBottle.addInt(ur);
+      //eventBottle.addInt(vr);
+      //eventPort.write();
+      ul = (((((ul - 64)/ 128.0)/ 7.4) * 4) * 320) + 160;
+      vl = (((((vl - 64)/ 128.0)/ 7.4) * 4) * 240) + 120;
+      ur = (((((ur - 64)/ 128.0)/ 7.4) * 4) * 320) + 160;
+      vr = (((((vr - 64)/ 128.0)/ 7.4) * 4) * 240) + 120;
+      centroidStereo.clear();
+
+      centroidStereo.push_back(ul);
+      centroidStereo.push_back(vl);
+      centroidStereo.push_back(ur);
+      centroidStereo.push_back(vr);
       eventPort.write();
+      
       printf("positionLeft %d-%d, positionRight %d \n", (int) floor(positionLeft/128.0),positionLeft%128, positionRight);
     }
 }
@@ -244,7 +257,7 @@ int plotterThread::integrateImage(ImageOf<PixelMono>* imageIn, ImageOf<PixelMono
 	      unsigned char value = *pimagegray;
 	      unsigned char valuebw = *pimagebw;
 	      if(valuebw >  130){
-	      	value+=10;
+	      	value+=25;
 		if (value >= 100){ 
 		    value = 234;
 		    point = r * retinalSize + c ;

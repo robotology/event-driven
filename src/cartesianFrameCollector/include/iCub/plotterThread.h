@@ -48,7 +48,7 @@ private:
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > rightIntPort;             // port whre the output (right integral) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > leftGrayPort;              // port whre the output (left integral) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > rightGrayPort;             // port whre the output (right integral) is sent
-    yarp::os::BufferedPort<yarp::os::Bottle > eventPort;
+    yarp::os::BufferedPort<yarp::sig::Vector > eventPort;
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeft;                                        //image representing the signal on the leftcamera
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRight;                                       //image representing the signal on the right camera
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeftBW;                                       //image representing the signal on the right camera
