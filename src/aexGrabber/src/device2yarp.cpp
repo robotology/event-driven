@@ -1,3 +1,4 @@
+
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /*
@@ -36,6 +37,11 @@
 
 using namespace std;
 using namespace yarp::os;
+
+extern int errno; 
+//EAGAIN		11	/* Resource temporarily unavailable */
+
+
 
 /*
 #################################################################
@@ -103,22 +109,22 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName =
 
 
 
-
+    /*
 #define FAST
 #ifdef FAST
-    /*int biasValues[]={1966,        // cas
-      1137667,       // injGnd
-      16777215,      // reqPd
-      8053457,       // puX
-      133,           // diffOff
-      160712,        // req
-      944,           // refr
-      16777215,      // puY
-      205255,        // diffOn
-      3207,          // diff 
-      278,           // foll
-      217            // Pr 
-      };*/
+    //int biasValues[]={1966,        // cas
+      //1137667,       // injGnd
+      //16777215,      // reqPd
+      //8053457,       // puX
+      //133,           // diffOff
+      //160712,        // req
+      //944,           // refr
+      //16777215,      // puY
+      //205255,        // diffOn
+      //3207,          // diff 
+      //278,           // foll
+      //217            // Pr 
+      //};
 
              
             
@@ -180,27 +186,29 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName =
     follRight = 19;         // foll
     prRight = 8;            // Pr 
             
-    /*
-      int biasValues[]={1966,        // cas
-      22703,       // injGnd
-      16777215,    // reqPd
-      4368853,     // puX
-      3207,        // diffOff
-      111347,      // req
-      0,           // refr
-      16777215,    // puY
-      483231,      // diffOn
-      28995,       // diff 
-      19,          // foll
-      8            // Pr 
-      };
-    */
+    
+    // int biasValues[]={1966,        // cas
+    // 22703,       // injGnd
+    // 16777215,    // reqPd
+    // 4368853,     // puX
+    // 3207,        // diffOff
+    // 111347,      // req
+    // 0,           // refr
+    // 16777215,    // puY
+    // 483231,      // diffOn
+    // 28995,       // diff 
+    // 19,          // foll
+    // 8            // Pr 
+    // };
+    
 #endif
+
+*/
 
 
 #define WIEN
 #ifdef WIEN
-    printf("valus from WIEN \n");
+    printf("values from WIEN \n");
     cas = 52458;         // cas
     injg = 101508;       // injGnd
     reqPd = 16777215;    // reqPd
@@ -274,7 +282,7 @@ device2yarp::~device2yarp() {
 void device2yarp::prepareBiases() {
     //opening the device
     cout <<"name of the file buffer:" <<portDeviceName.c_str()<< endl;
-    file_desc = open(portDeviceName.c_str(), O_RDWR | O_NONBLOCK);
+    file_desc = open(portDeviceName.c_str(), O_RDWR | O_NONBLOCK | O_SYNC );
     if (file_desc < 0) {
         printf("Cannot open device file: %s \n",portDeviceName.c_str());
     }
@@ -361,7 +369,6 @@ void device2yarp::prepareBiases() {
             hwival = (u32)(ival * 7.8125);
             pseq[seqEvents].address = addr;
             pseq[seqEvents].timestamp = hwival;
-            printf("addr %d    hwival %d", addr, hwival);
             
             seqEvents++;
             seqTime += hwival;
@@ -668,16 +675,35 @@ void device2yarp::closeDevice(){
 
 void  device2yarp::run() {
     //printf("reading \n");
+
     r = read(file_desc, pmon, monBufSize_b);
-    monBufEvents = r / sizeof(struct aer);
+    //printf("called read() with monBufSize_b == %d -> retval: %d\n", (int)monBufSize_b, (int)r);
+
+ 
     
-    if(r == -1) {
-        //printf("x",portDeviceName.c_str());
-        return;
+    if(r < 0) {
+        if (errno == EAGAIN) {
+            // everything ok, just no data available at the moment...
+            // we will be called again in a few miliseconds..
+            return;
+        } else {
+            printf("error reading from aerfx2: %d\n", (int)errno);
+            perror("perror:");
+            return;
+        }
     }
-    if(monBufEvents > 0) {
-        printf("%d \n", monBufEvents);
+    
+
+   int sizeofstructaer = sizeof(struct aer);
+
+    if (r % sizeofstructaer != 0) {
+        printf("ERROR: read %d bytes from the AEX!!!\n", r);
     }
+    monBufEvents = r / sizeofstructaer;
+ 
+
+    //printf("%d \n", monBufEvents);
+
     int k = 0;
     int k2 = 0;
     uint32_t * buf2 = (uint32_t*)buffer;
@@ -690,12 +716,13 @@ void  device2yarp::run() {
         //printf("a: %x  t:%d k: %d nEvents: %d \n",a,t,k,monBufEvents);            
         buf2[k2++] = a;
         buf2[k2++] = t;
-        //printf("address:%d ; timestamp:%d \n", blob, timestamp);
+        //if(i == 1000)
+        //    printf("address:%d ; timestamp:%d \n", a, t);
     }
 
     sz = monBufEvents*sizeof(struct aer); // sz is size in bytes
 
-    if ((port.getOutputCount())&&(sz > 0)) {
+    if (port.getOutputCount()) {
         sendingBuffer data2send(buffer, sz);    
         sendingBuffer& tmp = port.prepare();
         tmp = data2send;
