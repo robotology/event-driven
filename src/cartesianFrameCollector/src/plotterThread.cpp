@@ -81,8 +81,8 @@ bool plotterThread::threadInit() {
     rightPort.open(getName("/right:o").c_str());
     leftIntPort.open(getName("/leftInt:o").c_str());
     rightIntPort.open(getName("/rightInt:o").c_str());
-    leftGrayPort.open(getName("/leftGray:o").c_str());
-    rightGrayPort.open(getName("/rightGray:o").c_str());
+    leftGrayPort.open(getName("/leftGrey:o").c_str());
+    rightGrayPort.open(getName("/rightGrey:o").c_str());
     eventPort.open(getName("/event:o").c_str());
     return true;
 }
@@ -158,7 +158,7 @@ void plotterThread::run() {
     int positionLeft = 0, positionRight = 0;
     int ul = 0, vl = 0, ur = 0, vr = 0;
 
-    if ((leftIntPort.getOutputCount())&&(leftGrayPort.getOutputCount())) {
+    if ((leftIntPort.getOutputCount())||(leftGrayPort.getOutputCount())) {
         ImageOf<PixelMono>& leftInt = leftIntPort.prepare();
 	ImageOf<PixelMono>& leftGray = leftGrayPort.prepare();
         leftInt.resize(imageLeftInt->width(), imageLeftInt->height());
@@ -177,7 +177,7 @@ void plotterThread::run() {
 	vl = positionLeft%retinalSize;       
     }
     
-    if (rightIntPort.getOutputCount()) {
+    if ((rightIntPort.getOutputCount())||(leftGrayPort.getOutputCount())) {
         ImageOf<PixelMono>& rightInt = rightIntPort.prepare();
 	ImageOf<PixelMono>& rightGray = rightGrayPort.prepare();
         rightInt.resize(imageRightInt->width(), imageRightInt->height());
