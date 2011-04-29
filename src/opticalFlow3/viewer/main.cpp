@@ -23,8 +23,9 @@ int main(int argc, char *argv[])
     std::string in;
     while(true)
     {
-        std::cin >> in;
-        if (in=="quit") break;
+        yarp::os::Time::delay (0.002);
+//        std::cin >> in;
+  //      if (in=="quit") break;
     }
 	
     optFviewer.close();
