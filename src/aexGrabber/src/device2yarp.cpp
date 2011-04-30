@@ -949,8 +949,8 @@ void device2yarp::biasprogtx(int time,int latch,int clock,int data, int powerdow
 }
 
 bool device2yarp::setDumpFile(std::string value) {
-    dumpFile = value;
-    fout.open(dumpFile);
+    dumpfile = value;
+    fout.open(dumpfile.c_str());
     bool ret = fout.is_open();
     if (!ret)
         cout << "unable to open file" << endl;

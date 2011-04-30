@@ -197,6 +197,8 @@ class aexGrabberModule:public yarp::os::RFModule {
     std::string deviceName;                     // name of the device
     std::string devicePortName;                 // reference to the device port
     std::string handlerPortName;                // name of the handler port (comunication with respond function)
+    std::string dumpName;
+    std::string dumpNameComplete;
     int ratethread;                             // time constant for ratethread
 
     yarp::os::Port handlerPort;                 // a port to handle messages 

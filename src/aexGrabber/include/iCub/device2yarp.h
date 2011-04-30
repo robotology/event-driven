@@ -37,6 +37,7 @@
 #include <sstream>
 #include <cstdlib>
 #include <stdint.h>
+#include <fstream>
 
 #include "sending_buffer.h"
 
@@ -319,7 +320,7 @@ public:
     /**
     * reference to the name of the file where events are dumped
     */
-    void setDumpFile(std::string value);
+    bool setDumpFile(std::string value);
 
     /**
     * function that returns the bias for Left camera
@@ -395,7 +396,6 @@ public:
 
 
 private:
-    ofstream       fout;
     yarp::os::BufferedPort<sendingBuffer> port;
     int r;                                           //dimension of the received buffer of event for display
     FILE* raw;
@@ -422,13 +422,13 @@ private:
     unsigned int xmask;                     // mask for extracting the x position
     unsigned int ymask;                     // mask for extracting the y position
     int yshift;                             // mask for extracting the x position
-    int xshift                              // mask for extracting the y position
+    int xshift;                              // mask for extracting the y position
     int polshift;                           // shift to determine polarity
     int polmask;                            // mask to determine polarity
     int retinalSize;                        // dimension of the retina
     std::string portDeviceName;             // name of the device which the module will connect to
     std::string biasFileName;               // name of the file that contains the biases
-    st::string dumpfile;                    // name of the file where events are going to be dumped
+    std::string dumpfile;                    // name of the file where events are going to be dumped
 
     bool save;                              // bool that indicates whether the 
 
@@ -436,7 +436,7 @@ private:
     yarp::os::Semaphore mutex;              //semaphore for file reading
 
     std::stringstream str_buf;
-    ofstream fout;                          //reference to the object for output file stream
+    std::ofstream fout;                          //reference to the object for output file stream
 
     int pr;                                 //bias left dvs
     int foll;                               //bias left dvs
