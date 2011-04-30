@@ -236,7 +236,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName =
     prRight = 5;              // Pr 
 #endif
      
-    
+    save = false;
     // passing the parameter to the class variable
     this->portDeviceName = portDeviceName;
     this->biasFileName   = i_fileName;
@@ -714,6 +714,9 @@ void  device2yarp::run() {
         a = pmon[i].address;
         t = pmon[i].timestamp * 0.128;
         //printf("a: %x  t:%d k: %d nEvents: %d \n",a,t,k,monBufEvents);            
+        if (save) {
+            fout << a << "   " << t;
+        }
         buf2[k2++] = a;
         buf2[k2++] = t;
         //if(i == 1000)
@@ -937,7 +940,6 @@ void device2yarp::biasprogtx(int time,int latch,int clock,int data, int powerdow
     //printf("number of saved events %d as tot %d ",seqEvents,seqSize_b);
     seqTime += hwival;
     seqSize_b += sizeof(struct aer);
-    
 
     //printf("writing the event");
     //int w = write(file_desc, ((u8*)pseq), seqSize_b);
@@ -946,9 +948,17 @@ void device2yarp::biasprogtx(int time,int latch,int clock,int data, int powerdow
     //err = write(file_desc,addr,4); //4 byte time: 1 integer
 }
 
+bool device2yarp::setDumpFile(std::string value) {
+    dumpFile = value;
+    fout.open(dumpFile);
+    bool ret = fout.is_open();
+    if (!ret)
+        cout << "unable to open file" << endl;
+    return ret;
+}
+
 void device2yarp::threadRelease() {
-       
-    /* Fasnacht says: Don't!
+    /* it is better not to set the powerdown at the end!
     const u32 seqAllocChunk_b = SIZE_OF_EVENTS * sizeof(struct aer); //allocating the right dimension for biases
     memset(pseq,0,seqAllocChunk_b);
     setPowerdown();

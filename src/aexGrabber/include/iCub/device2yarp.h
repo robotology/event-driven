@@ -312,6 +312,16 @@ public:
     void setCASRight(double value) {casRight = value;};
 
     /**
+    * indicates whether the event has to be saved in a file
+    */
+    void setDumpEvent(bool value) { save = value; };
+
+    /**
+    * reference to the name of the file where events are dumped
+    */
+    void setDumpFile(std::string value);
+
+    /**
     * function that returns the bias for Left camera
     * @return value of the bias
     */
@@ -385,72 +395,74 @@ public:
 
 
 private:
-
+    ofstream       fout;
     yarp::os::BufferedPort<sendingBuffer> port;
     int r;                                           //dimension of the received buffer of event for display
     FILE* raw;
     FILE* binInput;
-    bool biasFromBinary;
+    bool biasFromBinary;                            // indicates whether the bias programmed are read from a file
     u64 seqTime;
     u64 ec;
     u32 seqAlloced_b;
     u32 seqSize_b, seqEvents, seqDone_b;
     u32 monBufEvents;
     u32 monBufSize_b;
-    struct aer *pseq;
-    struct aer *pmon;
+    struct aer *pseq;                               //pointer to the sequence of events 
+    struct aer *pmon;                               //pointer to the sequence of events (monitor)
 
     int file_desc,len,sz;
     unsigned char buffer_msg[64];
     short enabled;
-    char buffer[SIZE_OF_DATA];
+    char buffer[SIZE_OF_DATA];                      // buffer of char to be set on the outport
 
     int err;
     unsigned int timestamp;
     short cartX, cartY, polarity;
 
-    unsigned int xmask;
-    unsigned int ymask;
-    int yshift;
-    int xshift;
-    int polshift;
-    int polmask;
-    int retinalSize;
-    std::string portDeviceName;              // name of the device which the module will connect to
-    std::string biasFileName;                // name of the file that contains the biases
+    unsigned int xmask;                     // mask for extracting the x position
+    unsigned int ymask;                     // mask for extracting the y position
+    int yshift;                             // mask for extracting the x position
+    int xshift                              // mask for extracting the y position
+    int polshift;                           // shift to determine polarity
+    int polmask;                            // mask to determine polarity
+    int retinalSize;                        // dimension of the retina
+    std::string portDeviceName;             // name of the device which the module will connect to
+    std::string biasFileName;               // name of the file that contains the biases
+    st::string dumpfile;                    // name of the file where events are going to be dumped
 
-    bool save;
+    bool save;                              // bool that indicates whether the 
 
-    yarp::os::Port interfacePort;             //port dedicated to the request of values set through interface
-    yarp::os::Semaphore mutex;                 //semaphore for file reading
+    yarp::os::Port interfacePort;           //port dedicated to the request of values set through interface
+    yarp::os::Semaphore mutex;              //semaphore for file reading
 
     std::stringstream str_buf;
+    ofstream fout;                          //reference to the object for output file stream
 
-    int pr;
-    int foll;
-    int diff;
-    int diffon;
-    int puy;
-    int refr;
-    int reqPd;
-    int diffoff;
-    int pux;
-    int req;
-    int injg;
-    int cas;
+    int pr;                                 //bias left dvs
+    int foll;                               //bias left dvs
+    int diff;                               //bias left dvs
+    int diffon;                             //bias left dvs
+    int puy;                                //bias left dvs
+    int refr;                               //bias left dvs
+    int reqPd;                              //bias left dvs
+    int diffoff;                            //bias left dvs
+    int pux;                                //bias left dvs
+    int req;                                //bias left dvs
+    int injg;                               //bias left dvs
+    int cas;                                //bias left dvs
 
-    int prRight;
-    int follRight;
-    int diffRight;
-    int diffonRight;
-    int puyRight;
-    int refrRight;
-    int reqPdRight;
-    int diffoffRight;
-    int puxRight;
-    int reqRight;
-    int injgRight;
-    int casRight;
+    int prRight;                            //bias right dvs
+    int follRight;                          //bias right dvs
+    int diffRight;                          //bias right dvs
+    int diffonRight;                        //bias right dvs
+    int puyRight;                           //bias right dvs
+    int refrRight;                          //bias right dvs
+    int reqPdRight;                         //bias right dvs
+    int diffoffRight;                       //bias right dvs
+    int puxRight;                           //bias right dvs
+    int reqRight;                           //bias right dvs
+    int injgRight;                          //bias right dvs
+    int casRight;                           //bias right dvs
 
 };
 

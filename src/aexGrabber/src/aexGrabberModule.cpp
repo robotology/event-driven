@@ -98,6 +98,17 @@ bool aexGrabberModule::configure(yarp::os::ResourceFinder &rf) {
                            "filename of the binary (string)").asString();
     printf("trying to read %s  for biases \n",binaryName.c_str());
     binaryNameComplete = rf.findFile(binaryName.c_str());
+
+    /*
+    * get the file name of binaries when the biases are read from this file
+    */
+    dumpNameComplete = NULL;
+    dumpName             = rf.check("file", 
+                           Value("none"), 
+                           "filename of the binary (string)").asString();
+    printf("trying to save events in %s  \n",dumpName.c_str());
+    dumpNameComplete = rf.findFile(dumpName.c_str());
+
     
     
     if(!strcmp(binaryName.c_str(),"none")) {
@@ -111,7 +122,13 @@ bool aexGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         D2Y=new device2yarp(devicePortName, true, binaryNameComplete);        
         //D2Y->setBinaryFile(f);
     }
-    
+    if (dumpNameComplete != NULL) {
+        D2Y->setDumpEvent(true);
+        D2Y->setDumpFile(dumpNameComplete);
+    }
+    else {
+        D2Y->setDumpEvent(false);
+    }
 
     D2Y->start();
 
