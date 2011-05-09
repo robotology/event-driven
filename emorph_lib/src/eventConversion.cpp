@@ -188,6 +188,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
         //    printf(" %d>%d,%d : %d : %d \n",blob,cartX,cartY,timestamp,camera);
         //}
         cartY = retinalSize - cartY;   //corrected the output of the camera (flipped the image along y axis)
+        cartX = retinalSize - cartX;
         
         //camera is unmasked as left 0, right -1. It is converted in left 1, right 0
         camera = camera + 1;
