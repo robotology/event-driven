@@ -120,18 +120,28 @@ void opticalFlowViewer::onRead(vecBuffer& data)
                 {
                     vx*=mGain;
                     vy*=mGain;
-                    norm=sqrt(vx*vx+vy*vy);
+                    norm=vx*vx+vy*vy;
 
                     if (norm>=16384.0)
                     {
                         norm=127.9/sqrt(norm);
                         px=128+int(vx*norm);
                         py=128+int(vy*norm);
+
+                        if (px<0 || px>255 || py<0 || py>255)
+                        {
+                            printf("1    %d   %d    \n",px,py);
+                        }
                     }
                     else
                     {
                         px=128+int(vx);
                         py=128+int(vy);
+
+                        if (px<0 || px>255 || py<0 || py>255)
+                        {
+                            printf("2    %d   %d    \n",px,py);
+                        }
                     }
 
                     img(x,127-y)=mPalette[px][py];
