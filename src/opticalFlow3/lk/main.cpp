@@ -103,7 +103,7 @@ int main(int argc, char* argv[])
         std::string in;
         while(true)
         {
-          yarp::os::Time::delay (0.002);
+          yarp::os::Time::delay(1.0);
           std::cin >> in;
           if (in=="quit") break;
         }
