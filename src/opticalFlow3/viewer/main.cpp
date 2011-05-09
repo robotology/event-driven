@@ -1,22 +1,19 @@
 #include "opticalFlowViewer.h"
 #include <string>
 #include <iostream>
+#include <yarp/os/ResourceFinder.h>
 
 int main(int argc, char *argv[])
 {
 	yarp::os::Network yarp;
 	
-    bool color=false;
+    yarp::os::ResourceFinder rf;
+    rf.setVerbose();
+    rf.configure("ICUB_ROOT",argc,argv);
 
-    if (argc==2)
-    {
-        if (std::string(argv[1])=="--color")
-        {
-            color=true;
-        }
-    }
+    double gain=rf.check("gain")?rf.find("gain").asDouble():8.5;
 
-	opticalFlowViewer optFviewer(color);
+	opticalFlowViewer optFviewer(gain);
 	optFviewer.useCallback();
 	optFviewer.open("/optflow/vectors:i");
     
