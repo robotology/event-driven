@@ -14,7 +14,9 @@ add_subdirectory(cartesianFrameCollector)
 #add_subdirectory(device2yarp)
 add_subdirectory(device2yarp2)
 add_subdirectory(dvsGrabber)
-#add_subdirectory(eventDriven)
+
+
+add_subdirectory(eventDriven)
 #add_subdirectory(eventEdgeExtractor)
 add_subdirectory(harmonicPathPlanner)
 add_subdirectory(objectInteractor)

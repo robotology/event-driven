@@ -34,8 +34,8 @@
 #include <yarp/os/RateThread.h>
 #include <iostream>
 
-#include <eventBuffer.h>
-#include <eventConversion.h>
+#include <iCub/eventBuffer.h>
+#include <iCub/eventConversion.h>
 
 
 template <class eventBuffer>
