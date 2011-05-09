@@ -11,6 +11,12 @@ int main(int argc, char *argv[])
     rf.setVerbose();
     rf.configure("ICUB_ROOT",argc,argv);
 
+    if (rf.check("help"))
+    {
+        printf("usage: %s [--gain <gain>]\n",argv[0]);
+        return EXIT_SUCCESS;
+    }
+
     double gain=rf.check("gain")?rf.find("gain").asDouble():8.5;
 
 	opticalFlowViewer optFviewer(gain);
@@ -20,9 +26,9 @@ int main(int argc, char *argv[])
     std::string in;
     while(true)
     {
-        yarp::os::Time::delay (0.002);
-//        std::cin >> in;
-  //      if (in=="quit") break;
+        yarp::os::Time::delay(1.0);
+        std::cin >> in;
+        if (in=="quit") break;
     }
 	
     optFviewer.close();
