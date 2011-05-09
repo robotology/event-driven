@@ -10,6 +10,7 @@ PROJECT(${KEYWORD})
 INCLUDE_DIRECTORIES(
     ${PROJECT_SOURCE_DIR}/include
     ${YARP_INCLUDE_DIRS}
+    ${OpenCV_INCLUDE_DIRS}
 )
 
 # Search for source code.
@@ -25,7 +26,10 @@ IF (folder_source)
         ${folder_header}
     )
 
-    TARGET_LINK_LIBRARIES(${KEYWORD}                                     	${YARP_LIBRARIES})	
+    TARGET_LINK_LIBRARIES(${KEYWORD} 
+      ${YARP_LIBRARIES}
+      ${OpenCV_LIBRARIES}
+      )	
 
     INSTALL_TARGETS(/bin ${KEYWORD})
 ELSE (folder_source)

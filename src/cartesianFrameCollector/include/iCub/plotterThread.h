@@ -48,6 +48,9 @@ private:
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > rightIntPort;             // port whre the output (right integral) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > leftGrayPort;              // port whre the output (left integral) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > rightGrayPort;             // port whre the output (right integral) is sent
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > leftThresholdPort;              // port whre the output (left integral) is sent
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > rightThresholdPort;             // port whre the output (r
+
     yarp::os::BufferedPort<yarp::sig::Vector > eventPort;
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeft;                                        //image representing the signal on the leftcamera
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRight;                                       //image representing the signal on the right camera
@@ -55,8 +58,10 @@ private:
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRightBW;                                       //image representing the signal on the right camera   
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeftInt;                                     //image representing the signal on the leftcamera (integrated)
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRightInt;                                    //image representing the signal on the right camera (integrated)
-    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeftGray;                                     //image representing the signal on the leftcamera (integrated)
-    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRightGray;                                    //image representing the signal on the right camera (integrated)
+    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeftGrey;                                     //image representing the signal on the leftcamera (integrated)
+    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRightGrey;                                    //image representing the signal on the right camera (integrated)
+    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeftThreshold;                                     //image representing the signal on the leftcamera (threshold)
+    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRightThreshold;                                    //image representing the signal on the right camera (threshold)
     std::string name;                           // rootname of all the ports opened by this thread
     bool synchronised;                          // flag to check whether the microsecond counter has been synchronised
                                                 // local copy of the events read
@@ -129,7 +134,9 @@ public:
     * @param output of the process
     * @param imageBW black and white image
     */
-    int integrateImage(yarp::sig::ImageOf<yarp::sig::PixelMono>* imgIn, yarp::sig::ImageOf<yarp::sig::PixelMono>* imgOut, yarp::sig::ImageOf<yarp::sig::PixelMono>* imgBW, yarp::sig::ImageOf<yarp::sig::PixelMono>* imgGray );
+    int integrateImage(yarp::sig::ImageOf<yarp::sig::PixelMono>* imgIn,  yarp::sig::ImageOf<yarp::sig::PixelMono>* imgOut,
+                       yarp::sig::ImageOf<yarp::sig::PixelMono>* imgBW, yarp::sig::ImageOf<yarp::sig::PixelMono>* imgGray,  
+                       yarp::sig::ImageOf<yarp::sig::PixelMono>* imgTh );
     
     
 

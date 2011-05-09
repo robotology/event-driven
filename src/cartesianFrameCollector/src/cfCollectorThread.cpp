@@ -35,12 +35,14 @@ using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
+#define COUNTERRATIO 1.25       //1.25 is the ratio 0.160/0.128
 #define MAXVALUE 4294967295
 #define THRATE 10
 #define STAMPINFRAME  // 10 ms of period times the us in 1 millisecond + time for computing
 #define retinalSize 128
 #define CHUNKSIZE 8192
 #define dim_window 10
+#define synch_time 10000
 
 cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
     synchronised = false;
@@ -145,7 +147,7 @@ void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsig
             //drawing the retina and the rest of the image separately
             int value = *pBuffer;
             unsigned long timestampactual = *pTime;
-            if (((timestampactual * 1.25) > minCount)&&((timestampactual * 1.25) < maxCount)) {   //(timestampactual != lasttimestamp)
+            if (((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)) {   //(timestampactual != lasttimestamp)
                 *pImage++ = (unsigned char) 127 + value;
                
             }
@@ -194,9 +196,16 @@ void cfCollectorThread::run() {
         startTimer = Time::now();
         
         unsigned long int lastleft = unmask_events.getLastTimestamp();
-        lc = lastleft * 1.25; //1.25 is the ratio 0.160/0.128
+        lc = lastleft * COUNTERRATIO; 
         unsigned long int lastright = unmask_events.getLastTimestampRight();
-        rc = lastright * 1.25; 
+        rc = lastright * COUNTERRATIO;
+
+	if((lc >= 4294967295) || (rc >= 4294967295)) {
+	  verb = true;
+	  printf("wrapping  \n" );
+	}
+
+ 
         
         //synchronising the threads at the connection time
         if ((cfConverter->isValid())&&(!synchronised)) {
@@ -211,15 +220,16 @@ void cfCollectorThread::run() {
             //minCount = unmask_events.getLastTimestamp();
             //printf("minCount %d \n", minCount);
             //minCountRight = unmask_events.getLastTimestamp();
-            count = 900;
+            count = synch_time - 200;
         }
  
 
         //synchronising the thread every time interval 1000*period of the thread
-        if (count % 50 == 0) {
+        //if (count % synch_time == 0) {
+	if (count == synch_time) {
             minCount = lc - interval * dim_window; //cfConverter->getEldestTimeStamp();        
             minCountRight = rc - interval * dim_window; 
-            //printf("synchronised %1f! %d,%d,%d||%d,%d,%d \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
+            printf("synchronised %1f! %d,%d,%d||%d,%d,%d \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
             startTimer = Time::now();
             synchronised = true; 
         }
@@ -238,23 +248,36 @@ void cfCollectorThread::run() {
         if(count % 100 == 0) {                        
             if (lcprev == lc) { 
                 countStop++;
-                printf("*");
-            }            
+		printf("countStop %d \n", countStop);
+	    }            
             else if (rcprev == rc) { 
                 countStop++;
-                printf("*");
+                printf("countStop %d \n", countStop);
             }
+	    else {
+	      countStop--;
+	      printf("countStop %d \n", countStop);
+	      if(countStop<= 0)
+		countStop = 0;
+	    }
             lcprev = lc;
             rcprev = rc;
         }
         //printf("countStop %d lcprev %d lc %d \n",countStop, lcprev,lc);
-        //resetting time stamps at overflow
-        if (countStop == 10) {
+        
+	
+	//resetting time stamps at overflow
+        if (countStop == 40) {
             //printf("resetting time stamps!!!!!!!!!!!!! %d %d   \n ", minCount, minCountRight);
             //cfConverter->resetTimestamps(); 
             verb = true;
             printf("countStop %d %d \n",countStop, verb );
+	    count = synch_time - 200;
         }
+	
+
+	
+
 
         getMonoImage(imageRight,minCount,maxCount,0);
         getMonoImage(imageLeft,minCountRight,maxCountRight,1);

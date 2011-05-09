@@ -29,6 +29,9 @@
 #include <cstring>
 #include <cassert>
 #include <cstdlib>
+#include <cv.h>
+#include <highgui.h>
+#include <cxcore.h>
 
 
 using namespace yarp::os;
@@ -56,12 +59,18 @@ plotterThread::plotterThread() : RateThread(THRATE) {
     imageRightBW = new ImageOf<PixelMono>;
     imageRightBW->resize(retinalSize,retinalSize);
     imageRightBW->zero();
-    imageLeftGray = new ImageOf<PixelMono>;
-    imageLeftGray->resize(retinalSize,retinalSize);
-    imageLeftGray->zero();
-    imageRightGray = new ImageOf<PixelMono>;
-    imageRightGray->resize(retinalSize,retinalSize);
-    imageRightGray->zero();
+    imageLeftGrey = new ImageOf<PixelMono>;
+    imageLeftGrey->resize(retinalSize,retinalSize);
+    imageLeftGrey->zero();
+    imageRightGrey = new ImageOf<PixelMono>;
+    imageRightGrey->resize(retinalSize,retinalSize);
+    imageRightGrey->zero();
+    imageLeftThreshold = new ImageOf<PixelMono>;
+    imageLeftThreshold->resize(retinalSize,retinalSize);
+    imageLeftThreshold->zero();
+    imageRightThreshold = new ImageOf<PixelMono>;
+    imageRightThreshold->resize(retinalSize,retinalSize);
+    imageRightThreshold->zero();
 }
 
 plotterThread::~plotterThread() {
@@ -70,8 +79,10 @@ plotterThread::~plotterThread() {
     delete imageRightInt;
     delete imageLeftBW;
     delete imageRightBW;
-    delete imageLeftGray;
-    delete imageRightGray;
+    delete imageLeftGrey;
+    delete imageRightGrey;
+    delete imageLeftThreshold;
+    delete imageRightThreshold;
 }
 
 bool plotterThread::threadInit() {
@@ -160,18 +171,18 @@ void plotterThread::run() {
 
     if ((leftIntPort.getOutputCount())||(leftGrayPort.getOutputCount())) {
         ImageOf<PixelMono>& leftInt = leftIntPort.prepare();
-	ImageOf<PixelMono>& leftGray = leftGrayPort.prepare();
+	ImageOf<PixelMono>& leftGrey = leftGrayPort.prepare();
         leftInt.resize(imageLeftInt->width(), imageLeftInt->height());
         if(count % 500 == 0) {
 	  imageLeftInt->copy(*imageLeft);
-	  imageLeftGray->zero();
+	  imageLeftGrey->zero();
 	}
         else {
-	  positionLeft = integrateImage(imageLeft, imageLeftInt,imageLeftBW, imageLeftGray);
+	  positionLeft = integrateImage(imageLeft, imageLeftInt,imageLeftBW, imageLeftGrey, imageLeftThreshold);
 	}
 	leftInt.copy(*imageLeftBW);
 	leftIntPort.write();
-	leftGray.copy(*imageLeftGray);
+	leftGrey.copy(*imageLeftThreshold);
 	leftGrayPort.write(); 
 	vl = floor(positionLeft/retinalSize);
 	ul = positionLeft%retinalSize;       
@@ -179,18 +190,18 @@ void plotterThread::run() {
     
     if ((rightIntPort.getOutputCount())||(rightGrayPort.getOutputCount())) {
         ImageOf<PixelMono>& rightInt = rightIntPort.prepare();
-	ImageOf<PixelMono>& rightGray = rightGrayPort.prepare();
+	ImageOf<PixelMono>& rightGrey = rightGrayPort.prepare();
         rightInt.resize(imageRightInt->width(), imageRightInt->height());
         if(count % 500 == 0) {
 	  imageRightInt->copy(*imageRight);
-	  imageRightGray->zero();
+	  imageRightGrey->zero();
 	}
         else {
-	  positionRight = integrateImage(imageRight, imageRightInt,imageRightBW, imageRightGray);
+	  positionRight = integrateImage(imageRight, imageRightInt,imageRightBW, imageRightGrey, imageRightThreshold);
 	}
 	rightInt.copy(*imageRightBW);
 	rightIntPort.write();
-	rightGray.copy(*imageRightGray);
+	rightGrey.copy(*imageRightThreshold);
 	rightGrayPort.write();
 	vr = floor(positionRight/retinalSize);
 	ur = positionRight%retinalSize;
@@ -221,12 +232,14 @@ void plotterThread::run() {
 }
 
 
-int plotterThread::integrateImage(ImageOf<PixelMono>* imageIn, ImageOf<PixelMono>* imageOut, ImageOf<PixelMono>* imageBW, ImageOf<PixelMono>* imageGray){
+int plotterThread::integrateImage(ImageOf<PixelMono>* imageIn, ImageOf<PixelMono>* imageOut, ImageOf<PixelMono>* imageBW, ImageOf<PixelMono>* imageGrey,ImageOf<PixelMono>* imageThreshold ){
     int padding= imageIn->getPadding();
+    int centroidX, centroidY;
     unsigned char* pimagein = imageIn->getRawImage();
     unsigned char* pimageout = imageOut->getRawImage();
     unsigned char* pimagebw = imageBW->getRawImage();
-    unsigned char* pimagegray = imageGray->getRawImage();
+    unsigned char* pimagegray = imageGrey->getRawImage();
+    //unsigned char* pimagethreshold = imageThreshold->getRawImage();
     int point = 0;
     if(imageIn != 0) {
         for(int r = 0;r < retinalSize; r++) {
@@ -257,11 +270,13 @@ int plotterThread::integrateImage(ImageOf<PixelMono>* imageIn, ImageOf<PixelMono
 	      unsigned char value = *pimagegray;
 	      unsigned char valuebw = *pimagebw;
 	      if(valuebw >  130){
-	      	value+=25;
-		if (value >= 100){ 
-		    value = 234;
-		    point = r * retinalSize + c ;
-		}
+	      	value+=16;
+		if(value>200)
+		  value=200;
+		//if (value >= 100){ 
+		//    value = 255;
+		//    point = r * retinalSize + c ;
+		//}
 		//imagegray = value;
 	      }
 	      //else if(valuebw < 120){
@@ -284,8 +299,32 @@ int plotterThread::integrateImage(ImageOf<PixelMono>* imageIn, ImageOf<PixelMono
 	    pimagebw += padding;
 	    pimagegray += padding;
         }
+	cvSmooth(imageGrey->getIplImage(),imageThreshold->getIplImage(), CV_BLUR, 5, 5);
+	cvThreshold(imageThreshold->getIplImage(),imageThreshold->getIplImage(), 100,255, CV_THRESH_BINARY);
+	//calculating the centroid
+	unsigned char* pimageth = imageThreshold->getRawImage();
+	int sumX = 0,sumY = 0 ,countX = 0,countY = 0;
+	for(int r = 0;r < retinalSize; r++) {
+	  for(int c = 0;c < retinalSize; c++) {
+	    
+	    if(*pimageth > 127) {
+	      countX++;
+	      countY++;
+	      sumX += c;
+	      sumY += r;
+
+	      
+	    }
+	    pimageth++;
+	  }
+	  pimageth += padding;
+	}
+	if((countX!=0) && (countY!=0)) {
+	  centroidX = (int) floor(sumX / countX);
+	  centroidY = (int )floor(sumY / countY);
+	}
     }
-    return point;
+    return  centroidY * retinalSize + centroidX;
 }
 
 
