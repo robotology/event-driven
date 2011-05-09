@@ -21,6 +21,7 @@
 #include <assert.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <inttypes.h>
 
 #include <sys/types.h>
 #include <inttypes.h>
@@ -678,8 +679,6 @@ void  device2yarp::run() {
 
     r = read(file_desc, pmon, monBufSize_b);
     //printf("called read() with monBufSize_b == %d -> retval: %d\n", (int)monBufSize_b, (int)r);
-
- 
     
     if(r < 0) {
         if (errno == EAGAIN) {
@@ -700,28 +699,38 @@ void  device2yarp::run() {
         printf("ERROR: read %d bytes from the AEX!!!\n", r);
     }
     monBufEvents = r / sizeofstructaer;
- 
-
-    //printf("%d \n", monBufEvents);
+    if ((r<1000) && (r>0))
+        printf("%d \n",r);
 
     int k = 0;
     int k2 = 0;
     uint32_t * buf2 = (uint32_t*)buffer;
     u32 a, t;
+    int alow, ahigh;
+    int tlow, thigh;
 
     for (int i = 0; i < monBufEvents; i++) {
         // double buffer!!
         a = pmon[i].address;
         t = pmon[i].timestamp * 0.128;
-        //printf("a: %x  t:%d k: %d nEvents: %d \n",a,t,k,monBufEvents);            
-        if (save) {
-            fout << a << "   " << t;
-        }
+        //alow = a&0xFFFF0000;
+        //tlow = t&0xFFFF0000;
+        //ahigh = (a&0xFFFF0000);
+        //thigh = (t&0xFFFF0000);
+        
+        printf("a: %llu  t:%llu  \n",a,t);            
+        fprintf(fout,"%08X %08X\n",a,t); 
+        //if (save) {
+        //    fout<<hex<<a<<" "<<hex<<t<<endl;
+        //}
+
+
         buf2[k2++] = a;
         buf2[k2++] = t;
         //if(i == 1000)
         //    printf("address:%d ; timestamp:%d \n", a, t);
     }
+
 
     sz = monBufEvents*sizeof(struct aer); // sz is size in bytes
 
@@ -731,6 +740,8 @@ void  device2yarp::run() {
         tmp = data2send;
         port.write();
     }   
+
+
     //resetting buffers    
     memset(buffer, 0, SIZE_OF_DATA);
 }
@@ -950,12 +961,18 @@ void device2yarp::biasprogtx(int time,int latch,int clock,int data, int powerdow
 
 bool device2yarp::setDumpFile(std::string value) {
     dumpfile = value;
-    fout.open(dumpfile.c_str());
-    bool ret = fout.is_open();
-    if (!ret)
-        cout << "unable to open file" << endl;
-    return ret;
+    //fout.open(dumpfile.c_str());
+    //bool ret = fout.is_open();
+    //if (!ret)
+    //    cout << "unable to open file" << endl;
+
+    fout = fopen(dumpfile.c_str(),"w");
+    if(fout!=NULL)
+        return true;
+    else
+        return false;
 }
+
 
 void device2yarp::threadRelease() {
     /* it is better not to set the powerdown at the end!

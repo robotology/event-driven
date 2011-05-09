@@ -42,6 +42,7 @@
 #include "sending_buffer.h"
 
 #define u8  uint8_t
+#define u16 uint16_t
 #define u32 uint32_t
 #define u64 uint64_t
 
@@ -436,7 +437,7 @@ private:
     yarp::os::Semaphore mutex;              //semaphore for file reading
 
     std::stringstream str_buf;
-    std::ofstream fout;                          //reference to the object for output file stream
+    FILE* fout;                          //reference to the object for output file stream
 
     int pr;                                 //bias left dvs
     int foll;                               //bias left dvs
