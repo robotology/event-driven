@@ -1,0 +1,9 @@
+FILE(REMOVE_RECURSE
+"CMakeFiles/app-eMorphVisualAttention"
+"../../f-eMorphVisualAttention"
+)
+
+# Per-language clean rules from dependency scanning.
+FOREACH(lang)
+  INCLUDE(CMakeFiles/app-eMorphVisualAttention.dir/cmake_clean_${lang}.cmake OPTIONAL)
+ENDFOREACH(lang)
