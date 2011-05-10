@@ -21,6 +21,7 @@ SET(ICUB_APPLICATIONS_PREFIX "$ENV{ICUB_ROOT}"  CACHE PATH "Application path pre
 add_subdirectory(eMorphApplication)
 add_subdirectory(objectInteractorApp)
 add_subdirectory(opticalFlowApplication)
+add_subdirectory(eMorphVisualAttention)
 
 ## make all applications show up as single target
 icub_app_all()
