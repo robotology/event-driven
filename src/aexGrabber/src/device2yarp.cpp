@@ -718,8 +718,8 @@ void  device2yarp::run() {
         //ahigh = (a&0xFFFF0000);
         //thigh = (t&0xFFFF0000);
         
-        printf("a: %llu  t:%llu  \n",a,t);            
-        fprintf(fout,"%08X %08X\n",a,t); 
+        //printf("a: %llu  t:%llu  \n",a,t);            
+        //fprintf(fout,"%08X %08X\n",a,t); 
         //if (save) {
         //    fout<<hex<<a<<" "<<hex<<t<<endl;
         //}
