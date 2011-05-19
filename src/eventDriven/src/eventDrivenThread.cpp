@@ -32,13 +32,13 @@ using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
-eventDrivenThread::eventDrivenThread():currentEvent(),unmaskEvent() {
+eventDrivenThread::eventDrivenThread() {
     robot = "icub";
 }
 
-eventDrivenThread::eventDrivenThread(string _robot, string _configFile):currentEvent(),unmaskEvent()  {
+eventDrivenThread::eventDrivenThread(string _robot, string _configFile) {
     robot = _robot;
-    configFile = _configFile;
+    configFile = _configFile;    
 }
 
 eventDrivenThread::~eventDrivenThread() {
@@ -47,8 +47,8 @@ eventDrivenThread::~eventDrivenThread() {
 
 bool eventDrivenThread::threadInit() {
     /* open ports */ 
-    EportIn.hasNewEvent = false;
-    EportIn.useCallback();          // to enable the port listening to events via callback
+    //EportIn.hasNewEvent = false;
+    //EportIn.useCallback();          // to enable the port listening to events via callback
     
     if (!EportIn.open(getName(inputPortName.c_str()).c_str())) {
         cout <<": unable to open port for reading events  "  << endl;
@@ -81,37 +81,64 @@ void eventDrivenThread::setInputPortName(string InpPort) {
     this->inputPortName = InpPort;
 }
 
-void eventDrivenThread::run() {
-    
-
+void eventDrivenThread::run() {   
    while (isStopping() != true) {
-        if(EportIn.hasNewEvent) {
-
-            //printf("New event received! \n");         
-            currentEvent = EportIn.event; // shallow copy
-            unmaskEvent.unmaskData(currentEvent.get_packet(), currentEvent.get_sizeOfPacket());
-            timeBuf = unmaskEvent.getTimeBuffer(true); // why true??
-            eventsBuf = unmaskEvent.getEventBuffer(true); // why true??
-            plotEventBuffer(eventsBuf,128,128);
-            EportIn.hasNewEvent = false;
-            //printf("New event processed! \n");  
-        }
+       //if(EportIn.hasNewEvent) {
+           
+           //printf("New event received! \n");         
+           //currentEvent = EportIn.event; // shallow copy           
+           currentEvent = EportIn.read(true);    
+           unmaskEvent.unmaskData(currentEvent->get_packet(), currentEvent->get_sizeOfPacket());
+           timeBuf = unmaskEvent.getTimeBuffer(true);      // why true??
+           eventsBuf = unmaskEvent.getEventBuffer(true);   // why true??
+           plotEventBuffer(eventsBuf,128,128);
+           //EportIn.hasNewEvent = false;
+            //_old printf("New event processed! \n");  
+           //}
+       
     }
 }
 
 void eventDrivenThread::plotEventBuffer(int* buffer, int dim1, int dim2) {
     ImageOf<yarp::sig::PixelMono>& imageForEventBuffer = eventPlot.prepare();
+    imageForEventBuffer.resize(dim1, dim2);
+    //imageForEventBuffer.zero();
     unsigned char* imageTmp = imageForEventBuffer.getRawImage();
     int* bufTmp = buffer;
     for(int i = 0; i < dim1; ++i) {
         for(int j = 0; j < dim2; ++j) {
-            *imageTmp = *bufTmp;
+            
+            if(*bufTmp != 0){
+                if(*bufTmp>0){
+                    //printf("%d \n", *bufTmp);
+                    if(*imageTmp < 250){
+                        *imageTmp = (*imageTmp)+5;
+                        //*imageTmp = 255;
+                    }
+                    if(*bufTmp >= 1)
+                        *bufTmp = *bufTmp - 1 ;
+                }
+                else {
+                    if(*imageTmp < 250){
+                        *imageTmp = (*imageTmp)+5;
+                        //*imageTmp = 255;
+                    }
+                    if(*bufTmp <= -1)
+                        *bufTmp = *bufTmp + 1 ;
+                    
+                }
+                      
+            }
+            else {
+                if(*imageTmp>=1)
+                    *imageTmp = *imageTmp - 1;
+                
+            }
             imageTmp++;
             bufTmp++;
         }
     } 
     eventPlot.write();   
-
 }
 
 void eventDrivenThread::threadRelease() {
@@ -121,5 +148,7 @@ void eventDrivenThread::threadRelease() {
 void eventDrivenThread::onStop() {
     EportIn.interrupt();
     EportIn.close();
+    eventPlot.interrupt();
+    eventPlot.close();
 }
 

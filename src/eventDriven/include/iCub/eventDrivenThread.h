@@ -41,7 +41,6 @@
 template <class eventBuffer>
 
 class eventPort : public yarp::os::BufferedPort<eventBuffer> {
-
 public:
     eventBuffer event;
     bool hasNewEvent;
@@ -56,13 +55,13 @@ private:
     unsigned long* timeBuf;         // buffer for timestamp, ?? Stack
     int* eventsBuf;                 // buffer for events
     
-    eventBuffer currentEvent;       // the current event that will be read and unmasked 
+    eventBuffer* currentEvent;       // the current event that will be read and unmasked 
     unmask unmaskEvent;             // to unmask the event           
     std::string robot;              // name of the robot
     std::string configFile;         // name of the configFile where the parameter of the camera are set
     std::string inputPortName;      // name of input port for incoming events, typically from aexGrabber
 
-    eventPort<eventBuffer> EportIn;                                                  // buffered port listening to events through callback
+    yarp::os::BufferedPort<eventBuffer> EportIn;                                                  // buffered port listening to events through callback
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > eventPlot;     // output port to plot event    
     std::string name;                                                                // rootname of all the ports opened by this thread
     
