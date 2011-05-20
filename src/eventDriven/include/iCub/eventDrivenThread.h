@@ -54,8 +54,10 @@ class eventDrivenThread : public yarp::os::Thread {
 private:
     unsigned long* timeBuf;         // buffer for timestamp, ?? Stack
     int* eventsBuf;                 // buffer for events
-    
-    eventBuffer* currentEvent;       // the current event that will be read and unmasked 
+    unsigned long* timeBufRight;    // buffer for timestamp, ?? Stack
+    int* eventsBufRight;            // buffer for events
+    int* leakLeft;                  // leaky integrator and fire for the left eye
+    eventBuffer* currentEvent;      // the current event that will be read and unmasked 
     unmask unmaskEvent;             // to unmask the event           
     std::string robot;              // name of the robot
     std::string configFile;         // name of the configFile where the parameter of the camera are set

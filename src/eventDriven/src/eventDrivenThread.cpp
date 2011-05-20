@@ -27,6 +27,8 @@
 #include <yarp/math/SVD.h>
 #include <cstring>
 
+#define LEAK_TH 1000
+
 using namespace yarp::dev;
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -41,15 +43,19 @@ eventDrivenThread::eventDrivenThread(string _robot, string _configFile) {
     configFile = _configFile;    
 }
 
-eventDrivenThread::~eventDrivenThread() {
-    // do nothing 
+eventDrivenThread::~eventDrivenThread() { 
 }
 
 bool eventDrivenThread::threadInit() {
     /* open ports */ 
     //EportIn.hasNewEvent = false;
     //EportIn.useCallback();          // to enable the port listening to events via callback
+    leakLeft = new int[128*128];
     
+    for (int j = 0; j<128*128; j++) {
+        leakLeft[j]=0;
+    } 
+
     if (!EportIn.open(getName(inputPortName.c_str()).c_str())) {
         cout <<": unable to open port for reading events  "  << endl;
         return false;  // unable to open; let RFModule know so that it won't run
@@ -58,7 +64,6 @@ bool eventDrivenThread::threadInit() {
         cout << ": unable to open port to send unmasked events "  << endl;
         return false;  // unable to open; let RFModule know so that it won't run
     }
-
 
     return true;
     
@@ -87,15 +92,21 @@ void eventDrivenThread::run() {
            
            //printf("New event received! \n");         
            //currentEvent = EportIn.event; // shallow copy           
-           currentEvent = EportIn.read(true);    
-           unmaskEvent.unmaskData(currentEvent->get_packet(), currentEvent->get_sizeOfPacket());
-           timeBuf = unmaskEvent.getTimeBuffer(true);      // why true??
-           eventsBuf = unmaskEvent.getEventBuffer(true);   // why true??
-           plotEventBuffer(eventsBuf,128,128);
+           currentEvent   = EportIn.read(true);    
+           if(currentEvent!=NULL){
+               unmaskEvent.unmaskData(currentEvent->get_packet(), currentEvent->get_sizeOfPacket());
+               printf("getting buffer left after unmasking \n");
+               timeBuf        = unmaskEvent.getTimeBuffer(1);      // why true??
+               eventsBuf      = unmaskEvent.getEventBuffer(1);     // why true??
+               printf("getting buffer right after unmasking \n");
+               timeBufRight   = unmaskEvent.getTimeBuffer(0);    // why true??
+               eventsBufRight = unmaskEvent.getEventBuffer(0);   // why true??
+               printf("plotting events \n");
+               plotEventBuffer(eventsBuf,128,128);
+           }
            //EportIn.hasNewEvent = false;
-            //_old printf("New event processed! \n");  
+           //_old printf("New event processed! \n");  
            //}
-       
     }
 }
 
@@ -107,13 +118,17 @@ void eventDrivenThread::plotEventBuffer(int* buffer, int dim1, int dim2) {
     int* bufTmp = buffer;
     for(int i = 0; i < dim1; ++i) {
         for(int j = 0; j < dim2; ++j) {
-            
+            int* leakPointer = &leakLeft[i * dim1 + j];
             if(*bufTmp != 0){
+                (*leakPointer) = (*leakPointer) + 1;
+                if((*leakPointer) > LEAK_TH){
+                    printf("leak_th passed %d %d \n", i,j);
+                    (*leakPointer) = 0;
+                    printf("leak_th passed %d %d \n", i,j);
+                }
                 if(*bufTmp>0){
-                    //printf("%d \n", *bufTmp);
                     if(*imageTmp < 250){
                         *imageTmp = (*imageTmp)+5;
-                        //*imageTmp = 255;
                     }
                     if(*bufTmp >= 1)
                         *bufTmp = *bufTmp - 1 ;
@@ -121,7 +136,6 @@ void eventDrivenThread::plotEventBuffer(int* buffer, int dim1, int dim2) {
                 else {
                     if(*imageTmp < 250){
                         *imageTmp = (*imageTmp)+5;
-                        //*imageTmp = 255;
                     }
                     if(*bufTmp <= -1)
                         *bufTmp = *bufTmp + 1 ;
@@ -130,6 +144,10 @@ void eventDrivenThread::plotEventBuffer(int* buffer, int dim1, int dim2) {
                       
             }
             else {
+                leakLeft[i * dim1 + j]--;
+                if(*leakPointer < 0){
+                    *leakPointer = 0;
+                }
                 if(*imageTmp>=1)
                     *imageTmp = *imageTmp - 1;
                 
@@ -142,7 +160,8 @@ void eventDrivenThread::plotEventBuffer(int* buffer, int dim1, int dim2) {
 }
 
 void eventDrivenThread::threadRelease() {
-    // nothing   
+    delete[] leakLeft;
+    
 }
 
 void eventDrivenThread::onStop() {
