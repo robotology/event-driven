@@ -32,15 +32,15 @@ using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
-eventDrivenThread::eventDrivenThread():unmaskOneEvent(),currentEvent() {
+eventDrivenThread::eventDrivenThread():currentEvent() {
     robot = "icub";
     
     
 }
 
-eventDrivenThread::eventDrivenThread(string _robot, string _configFile):unmaskOneEvent(),currentEvent()  {
+eventDrivenThread::eventDrivenThread(string _robot, string _configFile):currentEvent()  {
     robot = _robot;
-    configFile = _configFile;
+    configFile = _configFile;    
 }
 
 eventDrivenThread::~eventDrivenThread() {
@@ -49,14 +49,10 @@ eventDrivenThread::~eventDrivenThread() {
 
 bool eventDrivenThread::threadInit() {
 
-    srand ( time(NULL) ); // To REMOVE later
-    //eventCoord = new Port;
-    /* open ports */ 
-    //EportIn.hasNewEvent = false;
-    //EportIn.useCallback();          // to enable the port listening to events via callback
+   
+    EportIn.useCallback();          // to enable the port listening to events via callback
 
     
-    dumpedF.open("dumped.dat",ios::app);
     if (!EportIn.open(getName(inputPortName.c_str()).c_str())) {
         cout <<": unable to open port for reading events  "  << endl;
         return false;  // unable to open; let RFModule know so that it won't run
@@ -65,7 +61,7 @@ bool eventDrivenThread::threadInit() {
         cout << ": unable to open port to send unmasked events "  << endl;
         return false;  // unable to open; let RFModule know so that it won't run
     }
-    if (!eventCoord.open(getName("/eCoord:o").c_str())) {
+    if (!EportIn.eventCoord.open(getName("/eCoord:o").c_str())) {
         cout << ": unable to open port to send event coordinates "  << endl;
         return false;  // unable to open; let RFModule know so that it won't run
     }
@@ -96,68 +92,14 @@ void eventDrivenThread::run() {
    
    while (isStopping() != true) {
        
+          // 
+            plotEventBuffer(EportIn.bufTmp); 
+            Time::delay(.1);
+          
             
-            
-            //eventBuffer* tmp = EportIn.read(false);            
-            currentEvent = *EportIn.read(true);//*tmp; // deep copy
-            
-            if(currentEvent.get_sizeOfPacket()> 0) {
-
-                //dumpedF.write(reinterpret_cast<char *>(currentEvent.get_packet()),currentEvent.get_sizeOfPacket());
-                                
-                //int randEve = rand()%(currentEvent.get_sizeOfPacket());
-                unsigned int takeOneEvent; 
-                //takeOneEvent = *(currentEvent.get_packet()+randEve * sizeof(unsigned int) / sizeof(char));
-                printf("New event received! \n");
-                short oneX,oneY,onePol, camera;
-                //unmaskOneEvent.unmaskEvent(takeOneEvent,oneX,oneY,onePol,camera);
-                unmaskOneEvent.unmaskData(currentEvent.get_packet(), currentEvent.get_sizeOfPacket());
-
-                int* bufTmp = unmaskOneEvent.getEventBuffer(true);
-                //Bottle& coord = eventCoord.prepare();
-                                
-                int maxVal = -128; int maxX = -1; int maxY = -1;
-                for(int i = 0; i < 128; ++i) {
-                    for(int j = 0; j < 128; ++j) {
-                        if ((*bufTmp) > BUCKET_THRESHOLD && (*bufTmp) > maxVal ) {
-                            maxVal = *bufTmp;
-                            maxX = i;
-                            maxY = j;
-                        }
-                        bufTmp++;
-                    }
-                }
-        
-                if(maxVal < -127) {
-                    printf("No points above threshold!\n");
-                }
-                else {
-                    //Bottle coord, rep;
-                    //rep.clear(); coord.clear();
-                    printf("prepare \t");
-                    Bottle& coord = eventCoord.prepare();                    
-                    coord.addVocab(COMMAND_VOCAB_PSAC);
-                    coord.addInt(maxX);
-                    coord.addInt(maxY);                    
-                    //eventCoord.write(coord,rep);
-                    eventCoord.write();
-                    printf("finish \t");
-                    //coord.clear();
-                }
-                maxVal = -128;
-                //coord.clear();
-
-                //timeBuf = unmaskEvent.getTimeBuffer(true); // why true??
-                //eventsBuf = unmaskEvent.getEventBuffer(true); // why true??
-                //plotEventBuffer(eventsBuf,128,128);
-                //printf("The random %d event in the packet received was: X:%d \t Y:%d \t P:%d \t C:%d\n",randEve,oneX,oneY,onePol,camera);
-                //EportIn.hasNewEvent = false;
-                //printf("New event processed! \n"); 
-             }
-            //else printf("Something is wrong. Read a zero sized packet??\n");
     }
 }
-
+/*
 void eventDrivenThread::plotEventBuffer(int* buffer, int dim1, int dim2) {
     ImageOf<yarp::sig::PixelMono>& imageForEventBuffer = eventPlot.prepare();
     unsigned char* imageTmp = imageForEventBuffer.getRawImage();
@@ -171,21 +113,66 @@ void eventDrivenThread::plotEventBuffer(int* buffer, int dim1, int dim2) {
     } 
     eventPlot.write();   
 
+}*/
+
+void eventDrivenThread::plotEventBuffer(int* buffer) {
+    if(eventPlot.getOutputCount()) {
+        printf("plotting \n");
+        yarp::sig::ImageOf<yarp::sig::PixelMono>& imageForEventBuffer = eventPlot.prepare();   
+        imageForEventBuffer.resize(IMAGE_WD,IMAGE_HT);
+        imageForEventBuffer.zero();
+        
+        unsigned char* imageT = imageForEventBuffer.getRawImage();    
+        int padding =  imageForEventBuffer.getPadding();
+        int* bufT = buffer;
+    
+        for(int i = 0; i < IMAGE_HT; ++i) {
+            for(int j = 0; j < IMAGE_WD; ++j) {
+                
+                if(*bufT != 0){
+                    if(*bufT>0){
+                        if(*imageT < 250){
+                            *imageT = (*imageT) + 5;
+                        }
+                        if(*bufT >= 1)
+                            *bufT = *bufT - 1 ;
+                    }
+                    else {
+                        if(*imageT < 250){
+                            *imageT = (*imageT) + 5;
+                        }
+                        if(*bufT <= -1)
+                            *bufT = *bufT + 1 ;                    
+                    }
+                    
+                      
+                }
+                else {
+                    if(*imageT>=1)
+                        *imageT = *imageT - 1;
+                    
+                }
+                imageT++;
+                bufT++;                
+            }
+            imageT += padding;
+        }        
+        eventPlot.write();
+    }
 }
 
 void eventDrivenThread::threadRelease() {
     // nothing
-    //delete eventCoord;
-    dumpedF.close();
+    
     
       
 }
 
 void eventDrivenThread::onStop() {
     EportIn.interrupt();
-    eventCoord.interrupt();
+    EportIn.eventCoord.interrupt();
 
-    eventCoord.close();
+    EportIn.eventCoord.close();
     EportIn.close();
 }
 

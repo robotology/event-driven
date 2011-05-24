@@ -36,28 +36,131 @@
 #include <fstream>
 #include <time.h>
 
-//#include <iCub/iKin/iKinFwd.h>
 #include <iCub/eventBuffer.h>
 #include <iCub/eventConversion.h>
 
 #define BUCKET_THRESHOLD 113
 #define COMMAND_VOCAB_PSAC VOCAB4('p','s','a','c')
+#define IMAGE_WD 128
+#define IMAGE_HT 128
 
-/*
+
 template <class eventBuffer>
 
 class eventPort : public yarp::os::BufferedPort<eventBuffer> {
 
 public:
-    eventBuffer event;
-    bool hasNewEvent;
-    virtual void onRead(eventBuffer& event) {
-        printf("Callback for the new packet received! \n");
-        printf("Size of new packet is: %d \n", event.get_sizeOfPacket());
-        hasNewEvent = true;             // to be set to false once done with the events
+    eventBuffer packet;
+    int* bufTmp;
+    int* bufTmpRight;
+    yarp::os::BufferedPort<yarp::os::Bottle > eventCoord;                               // for coordinates of events above threshold 
+    unmask unmaskOneEvent; 
+    yarp::sig::ImageOf<yarp::sig::PixelMono>* eventReceivedRight;        //Image of event received
+    yarp::sig::ImageOf<yarp::sig::PixelMono>* eventReceivedLeft;        //Image of event received
+    //yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > eventPlot;     // output port to plot event
+    
+      
+
+    eventPort() {
+        eventReceivedRight = new yarp::sig::ImageOf<yarp::sig::PixelMono>;
+        eventReceivedLeft = new yarp::sig::ImageOf<yarp::sig::PixelMono>;
+
+        eventReceivedRight->resize(IMAGE_WD,IMAGE_HT);
+        eventReceivedLeft->resize(IMAGE_WD,IMAGE_HT);
+    
+    }   
+    ~eventPort() {
+        delete eventReceivedRight;
+        delete eventReceivedLeft;
+    }
+
+
+    /*
+    void plotEventBuffer(int* buffer) {
+    yarp::sig::ImageOf<yarp::sig::PixelMono>& imageForEventBuffer = eventPlot.prepare();
+    unsigned char* imageTmp = imageForEventBuffer.getRawImage();
+    int* bufTmp = buffer;
+    for(int i = 0; i < IMAGE_HT; ++i) {
+        for(int j = 0; j < IMAGE_WD; ++j) {
+            *imageTmp = *bufTmp;
+            imageTmp++;
+            bufTmp++;
+        }
+    } 
+    eventPlot.write();   
+
+    }*/
+
+
+
+
+
+/*************************************************/
+
+    virtual void onRead(eventBuffer& packet) {
+        
+        int packetSize = packet.get_sizeOfPacket();
+        if(packetSize<1) {
+            return;
+        }
+
+        short oneX,oneY,onePol, camera;
+
+        unmaskOneEvent.unmaskData(packet.get_packet(), packetSize);
+        bufTmp = unmaskOneEvent.getEventBuffer(true);  // true for left camera
+        bufTmpRight = unmaskOneEvent.getEventBuffer(false);  // false for right camera
+
+        int maxVal = -IMAGE_WD -1; 
+        int maxX = -1; 
+        int maxY = -1;
+    
+        int maxValR = -IMAGE_WD -1; 
+        int maxXR = -1; 
+        int maxYR = -1;
+
+        for(int i = 0; i < IMAGE_HT; ++i) {
+            for(int j = 0; j < IMAGE_WD; ++j) {
+                if ((*bufTmp) > BUCKET_THRESHOLD && (*bufTmp) > maxVal ) {
+                    maxVal = *bufTmp;
+                    maxX = i;
+                    maxY = j;
+                }
+                if ((*bufTmpRight) > BUCKET_THRESHOLD && (*bufTmpRight) > maxVal ) {
+                    maxValR = *bufTmpRight;
+                    maxXR = i;
+                    maxYR = j;
+                }
+                bufTmpRight++;
+                bufTmp++;
+            }
+        }
+
+        if(maxVal < -IMAGE_WD) {
+            printf("No points above threshold!\n");
+        }
+        else {
+
+            yarp::os::Bottle& coord = eventCoord.prepare();
+            coord.clear();                    
+            coord.addInt(maxVal);
+            coord.addInt(maxX);
+            coord.addInt(maxY);
+            coord.addString(" R:");
+            coord.addInt(maxValR);
+            coord.addInt(maxXR);
+            coord.addInt(maxYR);                    
+            eventCoord.write();
+            
+            
+        }
+        maxVal = -IMAGE_WD -1;        
+        
+        packetSize = 0; 
+        //yarp::os::Time::delay(.05);    
+             
     }
 };
-*/
+
 
 class eventDrivenThread : public yarp::os::Thread {
 private:
@@ -65,18 +168,13 @@ private:
     int* eventsBuf;                 // buffer for events
     
     eventBuffer currentEvent;       // the current event that will be read and unmasked 
-    unmask unmaskOneEvent;             // to unmask the event           
+    
     std::string robot;              // name of the robot
     std::string configFile;         // name of the configFile where the parameter of the camera are set
     std::string inputPortName;      // name of input port for incoming events, typically from aexGrabber
 
-    std::fstream dumpedF;
-    
-    
-    //eventPort<eventBuffer> EportIn;                                                  // buffered port listening to events through callback
-    yarp::os::BufferedPort<eventBuffer > EportIn;
+    eventPort<eventBuffer> EportIn;                                                  // buffered port listening to events through callback
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > eventPlot;     // output port to plot event
-    yarp::os::BufferedPort<yarp::os::Bottle > eventCoord;                               // for coordinates of events above threshold    
     std::string name;                                                                // rootname of all the ports opened by this thread
     
 public:
@@ -140,7 +238,7 @@ public:
     * @param dim1   first dimension of the event buffer
     * @param dim2   second dimension of the event buffer
     */
-    void plotEventBuffer(int* buffer, int dim1, int dim2);
+    void plotEventBuffer(int* buffer);
 
 };
 
