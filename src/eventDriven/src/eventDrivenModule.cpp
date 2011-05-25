@@ -109,6 +109,7 @@ bool eventDrivenModule::close() {
     /* stop the thread */
     printf("stopping the thread \n");
     edThread->stop();
+    printf("correctly stopped the thread \n ");
     return true;
 }
 

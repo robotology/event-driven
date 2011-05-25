@@ -65,6 +65,10 @@ bool eventDrivenThread::threadInit() {
         cout << ": unable to open port to send event coordinates "  << endl;
         return false;  // unable to open; let RFModule know so that it won't run
     }
+    if (!EportIn.pcSz.open(getName("/packetSize:o").c_str())) {
+        cout << ": unable to open port to send packet size "  << endl;
+        return false;  // unable to open; let RFModule know so that it won't run
+    }
 
     return true;
     

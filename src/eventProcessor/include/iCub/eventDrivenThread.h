@@ -32,6 +32,7 @@
 #include <yarp/os/all.h>
 #include <yarp/dev/all.h>
 #include <yarp/os/RateThread.h>
+#include <yarp/os/Semaphore.h>
 #include <iostream>
 #include <fstream>
 #include <time.h>
@@ -57,7 +58,10 @@ public:
     unmask unmaskOneEvent; 
     yarp::sig::ImageOf<yarp::sig::PixelMono>* eventReceivedRight;        //Image of event received
     yarp::sig::ImageOf<yarp::sig::PixelMono>* eventReceivedLeft;        //Image of event received
+    yarp::os::BufferedPort<yarp::os::Bottle > pcSz; 
     //yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > eventPlot;     // output port to plot event
+
+    yarp::os::Semaphore readMutex;
     
       
 
@@ -67,7 +71,8 @@ public:
 
         eventReceivedRight->resize(IMAGE_WD,IMAGE_HT);
         eventReceivedLeft->resize(IMAGE_WD,IMAGE_HT);
-    
+        
+            
     }   
     ~eventPort() {
         delete eventReceivedRight;
@@ -99,11 +104,17 @@ public:
 
     virtual void onRead(eventBuffer& packet) {
         
+        //readMutex.wait();
         int packetSize = packet.get_sizeOfPacket();
         if(packetSize<1) {
             return;
         }
+        yarp::os::Bottle& b = pcSz.prepare();
+        b.clear();
+        b.addInt(packetSize);
+        pcSz.write();
 
+        printf("%d\n",packetSize);
         short oneX,oneY,onePol, camera;
 
         unmaskOneEvent.unmaskData(packet.get_packet(), packetSize);
@@ -154,8 +165,8 @@ public:
             
         }
         maxVal = -IMAGE_WD -1;        
-        
-        packetSize = 0; 
+        packetSize = 0;
+        //readMutex.post(); 
         //yarp::os::Time::delay(.05);    
              
     }

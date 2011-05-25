@@ -27,7 +27,7 @@
 #include <yarp/math/SVD.h>
 #include <cstring>
 
-#define LEAK_TH 1000
+#define LEAK_TH 300
 
 using namespace yarp::dev;
 using namespace yarp::os;
@@ -64,7 +64,10 @@ bool eventDrivenThread::threadInit() {
         cout << ": unable to open port to send unmasked events "  << endl;
         return false;  // unable to open; let RFModule know so that it won't run
     }
-
+    if (!commandOut.open(getName("/command:o").c_str())) {
+        cout <<": unable to open port for sending commands  "  << endl;
+        return false;  // unable to open; let RFModule know so that it won't run
+    }
     return true;
     
 
@@ -93,17 +96,18 @@ void eventDrivenThread::run() {
            //printf("New event received! \n");         
            //currentEvent = EportIn.event; // shallow copy           
            currentEvent   = EportIn.read(true);    
-           if(currentEvent!=NULL){
+           
+           if((currentEvent!=0)&&(currentEvent->get_sizeOfPacket() != 0)){
+               printf("processing train of events %d \n",currentEvent->get_sizeOfPacket() );
                unmaskEvent.unmaskData(currentEvent->get_packet(), currentEvent->get_sizeOfPacket());
-               printf("getting buffer left after unmasking \n");
-               timeBuf        = unmaskEvent.getTimeBuffer(1);      // why true??
-               eventsBuf      = unmaskEvent.getEventBuffer(1);     // why true??
-               printf("getting buffer right after unmasking \n");
-               timeBufRight   = unmaskEvent.getTimeBuffer(0);    // why true??
-               eventsBufRight = unmaskEvent.getEventBuffer(0);   // why true??
-               printf("plotting events \n");
-               plotEventBuffer(eventsBuf,128,128);
+               
+               //timeBuf        = unmaskEvent.getTimeBuffer(1);      // why true??
+               //eventsBuf      = unmaskEvent.getEventBuffer(1);     // why true??
+               //timeBufRight   = unmaskEvent.getTimeBuffer(0);    // why true??
+               //eventsBufRight = unmaskEvent.getEventBuffer(0);   // why true??               
+               //plotEventBuffer(eventsBuf,128,128);
            }
+           Time::delay(0.5);
            //EportIn.hasNewEvent = false;
            //_old printf("New event processed! \n");  
            //}
@@ -111,57 +115,80 @@ void eventDrivenThread::run() {
 }
 
 void eventDrivenThread::plotEventBuffer(int* buffer, int dim1, int dim2) {
-    ImageOf<yarp::sig::PixelMono>& imageForEventBuffer = eventPlot.prepare();
-    imageForEventBuffer.resize(dim1, dim2);
-    //imageForEventBuffer.zero();
-    unsigned char* imageTmp = imageForEventBuffer.getRawImage();
-    int* bufTmp = buffer;
-    for(int i = 0; i < dim1; ++i) {
-        for(int j = 0; j < dim2; ++j) {
-            int* leakPointer = &leakLeft[i * dim1 + j];
-            if(*bufTmp != 0){
-                (*leakPointer) = (*leakPointer) + 1;
-                if((*leakPointer) > LEAK_TH){
-                    printf("leak_th passed %d %d \n", i,j);
-                    (*leakPointer) = 0;
-                    printf("leak_th passed %d %d \n", i,j);
-                }
-                if(*bufTmp>0){
-                    if(*imageTmp < 250){
-                        *imageTmp = (*imageTmp)+5;
+    if(eventPlot.getOutputCount()) {
+        printf("plotting \n");
+        ImageOf<yarp::sig::PixelMono>& imageForEventBuffer = eventPlot.prepare();   
+        imageForEventBuffer.resize(dim1, dim2);
+        imageForEventBuffer.zero();
+        
+        unsigned char* imageTmp = imageForEventBuffer.getRawImage();    
+        int padding =  imageForEventBuffer.getPadding();
+        int* bufTmp = buffer;
+    
+        for(int i = 0; i < dim1; ++i) {
+            for(int j = 0; j < dim2; ++j) {
+                
+                //int* leakPointer = &leakLeft[i * dim1 + j];
+                if(*bufTmp != 0){
+                    //(*leakPointer) = (*leakPointer) + 1;
+                    
+                    /*
+                    if((*leakPointer) > LEAK_TH){
+                        //commandOut.clear();
+                        if(commandOut.getOutputCount()) {
+                            Bottle& b = commandOut.prepare();
+                            b.clear();
+                            b.addString("SAC_MONO");
+                            b.addInt(i);
+                            b.addInt(j);
+                            b.addDouble(0.5);
+                            printf("leak_th passed %d %d \n", i,j);
+                            commandOut.write();
+                        }
+                        
+                        //(*leakPointer) = 0;
+                        printf("leak_th passed %d %d \n", i,j);
                     }
-                    if(*bufTmp >= 1)
-                        *bufTmp = *bufTmp - 1 ;
+                    */
+                    
+                    
+                    if(*bufTmp>0){
+                        if(*imageTmp < 250){
+                            *imageTmp = (*imageTmp) + 5;
+                        }
+                        if(*bufTmp >= 1)
+                            *bufTmp = *bufTmp - 1 ;
+                    }
+                    else {
+                        if(*imageTmp < 250){
+                            *imageTmp = (*imageTmp) + 5;
+                        }
+                        if(*bufTmp <= -1)
+                            *bufTmp = *bufTmp + 1 ;                    
+                    }
+                    
+                      
                 }
                 else {
-                    if(*imageTmp < 250){
-                        *imageTmp = (*imageTmp)+5;
-                    }
-                    if(*bufTmp <= -1)
-                        *bufTmp = *bufTmp + 1 ;
+                    //leakLeft[i * dim1 + j]--;
+                    //if(*leakPointer < 0){
+                    //    *leakPointer = 0;
+                    //}
+                    if(*imageTmp>=1)
+                        *imageTmp = *imageTmp - 1;
                     
                 }
-                      
+                imageTmp++;
+                bufTmp++;                
             }
-            else {
-                leakLeft[i * dim1 + j]--;
-                if(*leakPointer < 0){
-                    *leakPointer = 0;
-                }
-                if(*imageTmp>=1)
-                    *imageTmp = *imageTmp - 1;
-                
-            }
-            imageTmp++;
-            bufTmp++;
-        }
-    } 
-    eventPlot.write();   
+            imageTmp += padding;
+        }        
+        eventPlot.write();
+    }
 }
 
 void eventDrivenThread::threadRelease() {
-    delete[] leakLeft;
-    
+    //delete[] leakLeft;    
 }
 
 void eventDrivenThread::onStop() {
@@ -169,5 +196,8 @@ void eventDrivenThread::onStop() {
     EportIn.close();
     eventPlot.interrupt();
     eventPlot.close();
+    commandOut.interrupt();
+    commandOut.close();
+    printf("closed all the ports \n");
 }
 

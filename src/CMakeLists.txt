@@ -3,7 +3,7 @@
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 cmake_minimum_required(VERSION 2.6)
 
-
+add_subdirectory(angel2SAC)
 add_subdirectory(aexGrabber)
 add_subdirectory(biasInterface)
 #add_subdirectory(binFile2yarp)
@@ -14,9 +14,10 @@ add_subdirectory(cartesianFrameCollector)
 #add_subdirectory(device2yarp)
 add_subdirectory(device2yarp2)
 add_subdirectory(dvsGrabber)
-
+add_subdirectory(disparitySelector)
 
 add_subdirectory(eventDriven)
+add_subdirectory(eventProcessor)
 #add_subdirectory(eventEdgeExtractor)
 add_subdirectory(harmonicPathPlanner)
 add_subdirectory(objectInteractor)

@@ -65,6 +65,7 @@ private:
 
     yarp::os::BufferedPort<eventBuffer> EportIn;                                                  // buffered port listening to events through callback
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > eventPlot;     // output port to plot event    
+    yarp::os::BufferedPort<yarp::os::Bottle> commandOut;                             // bottle of the position to the gazeArbiter
     std::string name;                                                                // rootname of all the ports opened by this thread
     
 public:
