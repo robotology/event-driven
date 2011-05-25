@@ -40,9 +40,9 @@ using namespace std;
 #define THRATE 10
 #define STAMPINFRAME  // 10 ms of period times the us in 1 millisecond + time for computing
 #define retinalSize 128
-#define CHUNKSIZE 8192
-#define dim_window 10
-#define synch_time 10000
+#define CHUNKSIZE 2048
+#define dim_window 5
+#define synch_time 1000
 
 cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
     synchronised = false;
@@ -202,7 +202,7 @@ void cfCollectorThread::run() {
 
 	if((lc >= 4294967295) || (rc >= 4294967295)) {
 	  verb = true;
-	  printf("wrapping  \n" );
+	  printf("wrapping %d, %d \n",lc,rc );
 	}
 
  
@@ -245,15 +245,16 @@ void cfCollectorThread::run() {
         maxCount =  minCount + interval * dim_window;
         maxCountRight =  minCountRight + interval * dim_window;
         
-        if(count % 100 == 0) {                        
+        if(count % 100 == 0) { 
+	  //printf("countStop %d lcprev %d lc %d \n",countStop, lcprev,lc);
             if (lcprev == lc) { 
                 countStop++;
 		printf("countStop %d \n", countStop);
 	    }            
-            else if (rcprev == rc) { 
-                countStop++;
-                printf("countStop %d \n", countStop);
-            }
+            //else if (rcprev == rc) { 
+            //    countStop++;
+            //    printf("countStop %d \n", countStop);
+            //}
 	    else {
 	      countStop--;
 	      printf("countStop %d \n", countStop);
@@ -263,11 +264,11 @@ void cfCollectorThread::run() {
             lcprev = lc;
             rcprev = rc;
         }
-        //printf("countStop %d lcprev %d lc %d \n",countStop, lcprev,lc);
+        
         
 	
 	//resetting time stamps at overflow
-        if (countStop == 40) {
+        if (countStop == 10) {
             //printf("resetting time stamps!!!!!!!!!!!!! %d %d   \n ", minCount, minCountRight);
             //cfConverter->resetTimestamps(); 
             verb = true;

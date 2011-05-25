@@ -82,7 +82,8 @@ void cFrameConverter::copyChunk(char* bufferCopy) {
 void cFrameConverter::onRead(sendingBuffer& i_ub) {
     valid = true;
     // receives the buffer and saves it
-    int dim = i_ub.get_sizeOfPacket() / 8;      // number of bits received / 8 = bytes received
+    int dim = i_ub.get_sizeOfPacket() ;      // number of bits received / 8 = bytes received
+    printf("dim: %d \n", dim);
     receivedBuffer = i_ub.get_packet();
     mutex.wait();
     memcpy(pcBuffer,receivedBuffer,dim);
