@@ -397,7 +397,8 @@ public:
 
 
 private:
-    yarp::os::BufferedPort<sendingBuffer> port;
+    yarp::os::BufferedPort<sendingBuffer> port;              //port sending events
+    yarp::os::BufferedPort<yarp::os::Bottle> portDimension;  //port sending dimension of packets   
     int r;                                           //dimension of the received buffer of event for display
     FILE* raw;
     FILE* binInput;

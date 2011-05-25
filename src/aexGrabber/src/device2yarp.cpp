@@ -265,6 +265,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName =
     printf("opening port for sending the read events \n");
     str_buf << "/icub/retina" << deviceNum << ":o";
     port.open(str_buf.str().c_str());
+    portDimension.open("/aexGrabber/dim:o");
 
     // opening the file when the biases are programmed by file
     biasFromBinary = i_bool;
@@ -699,8 +700,7 @@ void  device2yarp::run() {
         printf("ERROR: read %d bytes from the AEX!!!\n", r);
     }
     monBufEvents = r / sizeofstructaer;
-    if ((r<1000) && (r>0))
-        printf("%d \n",r);
+    printf("%d \n",r);
 
     int k = 0;
     int k2 = 0;
@@ -719,10 +719,11 @@ void  device2yarp::run() {
         //thigh = (t&0xFFFF0000);
         
         //printf("a: %llu  t:%llu  \n",a,t);            
-        //fprintf(fout,"%08X %08X\n",a,t); 
-        //if (save) {
-        //    fout<<hex<<a<<" "<<hex<<t<<endl;
-        //}
+        //
+        if (save) {
+            fprintf(fout,"%08X %08X\n",a,t); 
+            //fout<<hex<<a<<" "<<hex<<t<<endl;
+        }
 
 
         buf2[k2++] = a;
@@ -741,6 +742,13 @@ void  device2yarp::run() {
         port.write();
     }   
 
+    if (portDimension.getOutputCount()) {
+        
+        Bottle& b = portDimension.prepare();
+        b.clear();
+        b.addInt(r);
+        portDimension.write();
+    }  
 
     //resetting buffers    
     memset(buffer, 0, SIZE_OF_DATA);
