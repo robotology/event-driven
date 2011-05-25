@@ -26,7 +26,7 @@
 /** 
  * a simple class to handle event unmasking.
  */
-class unmask: public yarp::os::RateThread {
+class unmask {    ///: public yarp::os::RateThread {
 private:
     int id;
     int nb_trame;
@@ -150,22 +150,22 @@ public:
     /**
     * function that initialise the thread
     */
-    bool threadInit();
+    //bool threadInit();
 
     /**
     * function called when the thread is stopped
     */
-    void threadRelease();
+    //void threadRelease();
 
     /**
     * function called every time constant defined by rateThread
     */
-    void run(); 
+    //void run(); 
 
     /**
     * function called when the module is poked with an interrupt command
     */
-    void interrupt();
+    //void interrupt();
 
     /**
     * function that given a reference to the list of char read from the port and the number of packet received

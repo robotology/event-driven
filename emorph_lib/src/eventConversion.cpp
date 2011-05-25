@@ -42,7 +42,7 @@ typedef unsigned long uint32_t;
 #define UNMASKRATETHREAD 1
 #define constInterval 100000;
 
-unmask::unmask() : RateThread(UNMASKRATETHREAD){
+unmask::unmask(){ // : RateThread(UNMASKRATETHREAD){
     count = 0;
     verbosity = false;
     numKilledEvents = 0;
@@ -89,9 +89,11 @@ unmask::unmask() : RateThread(UNMASKRATETHREAD){
     //uEvents = fopen("./uevents.txt","w");
 }
 
+/*
 bool unmask::threadInit() {
     return true;
 }
+*/
 
 unmask::~unmask() {
     delete[] buffer;
@@ -145,8 +147,11 @@ unsigned long* unmask::getTimeBuffer(bool camera) {
         return timeBufferRight;
 }
 
+
+
+/*
 void unmask::run() {
-    /*
+    
     unsigned long int* pointerTime=timeBuffer;
     unsigned long int timelimit = lasttimestamp - constInterval;
     printf("last:%d \n", lasttimestamp);
@@ -160,8 +165,9 @@ void unmask::run() {
         pointerTime++;
         pointerPixel++;
     }
-    */
+    
 }
+*/
 
 
 void unmask::unmaskData(char* i_buffer, int i_sz) {
@@ -285,9 +291,12 @@ void unmask::unmaskEvent(long int evPU, short& x, short& y, short& pol, short& c
     camera = ((short)(evPU & cameramask) >> camerashift);	//0 LEFT, 1 RIGHT
 }
 
+
+/*
 void unmask::threadRelease() {
     //no istruction in threadInit
 }
+*/
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------
 
