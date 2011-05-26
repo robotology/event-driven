@@ -28,6 +28,7 @@
 #include <cstring>
 
 #define LEAK_TH 300
+#define BUCKET_THRESHOLD 112
 
 using namespace yarp::dev;
 using namespace yarp::os;
@@ -36,11 +37,13 @@ using namespace std;
 
 eventDrivenThread::eventDrivenThread() {
     robot = "icub";
+    zerod = false;
 }
 
 eventDrivenThread::eventDrivenThread(string _robot, string _configFile) {
     robot = _robot;
     configFile = _configFile;    
+    zerod = false;
 }
 
 eventDrivenThread::~eventDrivenThread() { 
@@ -48,8 +51,8 @@ eventDrivenThread::~eventDrivenThread() {
 
 bool eventDrivenThread::threadInit() {
     /* open ports */ 
-    //EportIn.hasNewEvent = false;
-    //EportIn.useCallback();          // to enable the port listening to events via callback
+    EportIn.hasNewEvent = false;
+    EportIn.useCallback();          // to enable the port listening to events via callback
     leakLeft = new int[128*128];
     
     for (int j = 0; j<128*128; j++) {
@@ -65,6 +68,10 @@ bool eventDrivenThread::threadInit() {
         return false;  // unable to open; let RFModule know so that it won't run
     }
     if (!commandOut.open(getName("/command:o").c_str())) {
+        cout <<": unable to open port for sending commands  "  << endl;
+        return false;  // unable to open; let RFModule know so that it won't run
+    }
+    if (!pcSz.open(getName("/packetSize:o").c_str())) {
         cout <<": unable to open port for sending commands  "  << endl;
         return false;  // unable to open; let RFModule know so that it won't run
     }
@@ -91,35 +98,93 @@ void eventDrivenThread::setInputPortName(string InpPort) {
 
 void eventDrivenThread::run() {   
    while (isStopping() != true) {
-       //if(EportIn.hasNewEvent) {
-           
-           //printf("New event received! \n");         
-           //currentEvent = EportIn.event; // shallow copy           
-           currentEvent   = EportIn.read(true);    
-           
-           if((currentEvent!=0)&&(currentEvent->get_sizeOfPacket() != 0)){
-               printf("processing train of events %d \n",currentEvent->get_sizeOfPacket() );
-               unmaskEvent.unmaskData(currentEvent->get_packet(), currentEvent->get_sizeOfPacket());
+       if(EportIn.hasNewEvent) {
+           EportIn.setHasNewEvent(false);
+           currentEventTrain = &EportIn.eventTrain; // shallow copy           
+           //currentEvent   = EportIn.read(true);    
+           int dim = currentEventTrain->get_sizeOfPacket() ;      // number of bits received / 8 = bytes received
+                     
+           if(currentEventTrain->get_sizeOfPacket() != 0) {
+         
+               unmaskEvent.unmaskData(currentEventTrain->get_packet(), currentEventTrain->get_sizeOfPacket());
                
-               //timeBuf        = unmaskEvent.getTimeBuffer(1);      // why true??
-               //eventsBuf      = unmaskEvent.getEventBuffer(1);     // why true??
-               //timeBufRight   = unmaskEvent.getTimeBuffer(0);    // why true??
-               //eventsBufRight = unmaskEvent.getEventBuffer(0);   // why true??               
-               //plotEventBuffer(eventsBuf,128,128);
+               //timeBuf        = unmaskEvent.getTimeBuffer(1);      
+               eventsBuf      = unmaskEvent.getEventBuffer(1);     
+               //timeBufRight   = unmaskEvent.getTimeBuffer(0);   
+               //eventsBufRight = unmaskEvent.getEventBuffer(0);                 
+               plotEventBuffer(eventsBuf,128,128);
+              
+               /*
+               if(pcSz.getOutputCount()) {
+                   int packetSize = currentEvent->get_sizeOfPacket();
+                   yarp::os::Bottle& b = pcSz.prepare();
+                   b.clear();
+                   b.addInt(packetSize);
+                   pcSz.write();
+               }
+               */
+               
+               
+               //unmaskEvent.unmaskData(packet.get_packet(), packetSize);
+               //int* bufTmp = unmaskEvent.getEventBuffer(true);        // true for left camera
+               //int* bufTmpRight = unmaskEvent.getEventBuffer(false);  // false for right camera
+               
+            
+               
+               
+               /*
+                 for(int i = 0; i < IMAGE_HT; ++i) {
+                 for(int j = 0; j < IMAGE_WD; ++j) {
+                 if ((*bufTmp) > BUCKET_THRESHOLD && (*bufTmp) > maxVal ) {
+                 maxVal = *bufTmp;
+                 maxX = i;
+                 maxY = j;
+                 }
+                 if ((*bufTmpRight) > BUCKET_THRESHOLD && (*bufTmpRight) > maxVal ) {
+                 maxValR = *bufTmpRight;
+                 maxXR = i;
+                 maxYR = j;
+                 }
+                 bufTmpRight++;
+                 bufTmp++;
+                 }
+                 }
+                 
+                 if(maxVal < -IMAGE_WD) {
+                 printf("No points above threshold!\n");
+                 }
+                 else {
+                 
+                 yarp::os::Bottle& coord = commandOut.prepare();
+                 coord.clear();                    
+                 coord.addInt(maxVal);
+                 coord.addInt(maxX);
+                 coord.addInt(maxY);
+                 coord.addString(" R:");
+                 coord.addInt(maxValR);
+                 coord.addInt(maxXR);
+                 coord.addInt(maxYR);                    
+                 commandOut.write();
+                 
+                 
+                 }
+                 maxVal = -IMAGE_WD -1;        
+                 packetSize = 0;
+               */
            }
-           Time::delay(0.5);
-           //EportIn.hasNewEvent = false;
-           //_old printf("New event processed! \n");  
-           //}
+       }                                  
     }
 }
 
 void eventDrivenThread::plotEventBuffer(int* buffer, int dim1, int dim2) {
     if(eventPlot.getOutputCount()) {
-        printf("plotting \n");
+        
         ImageOf<yarp::sig::PixelMono>& imageForEventBuffer = eventPlot.prepare();   
         imageForEventBuffer.resize(dim1, dim2);
-        imageForEventBuffer.zero();
+        if(!zerod) {
+            imageForEventBuffer.zero();
+            zerod = true;
+        }
         
         unsigned char* imageTmp = imageForEventBuffer.getRawImage();    
         int padding =  imageForEventBuffer.getPadding();
@@ -150,18 +215,46 @@ void eventDrivenThread::plotEventBuffer(int* buffer, int dim1, int dim2) {
                         printf("leak_th passed %d %d \n", i,j);
                     }
                     */
-                    
-                    
+                                        
                     if(*bufTmp>0){
-                        if(*imageTmp < 250){
-                            *imageTmp = (*imageTmp) + 5;
+                        if(*imageTmp < 254){
+                            *imageTmp = (*imageTmp) + 1;
+                        }
+                        else {
+                            //resetting the response
+                            *imageTmp = 0;
+                            //sending out the location
+                            if(commandOut.getOutputCount()) {
+                                Bottle& b = commandOut.prepare();
+                                b.clear();
+                                b.addString("SAC_MONO");
+                                b.addInt(i);
+                                b.addInt(j);
+                                b.addDouble(0.5);
+                                
+                                commandOut.write();
+                            }
                         }
                         if(*bufTmp >= 1)
                             *bufTmp = *bufTmp - 1 ;
                     }
                     else {
-                        if(*imageTmp < 250){
-                            *imageTmp = (*imageTmp) + 5;
+                        if(*imageTmp < 254){
+                            *imageTmp = (*imageTmp) + 1;
+                        }
+                        else {
+                            //resetting the response
+                            *imageTmp = 0;
+                            //sending out the location
+                            if(commandOut.getOutputCount()) {
+                                Bottle& b = commandOut.prepare();
+                                b.clear();
+                                b.addString("SAC_MONO");
+                                b.addInt(i);
+                                b.addInt(j);
+                                b.addDouble(0.5);   
+                                commandOut.write();
+                            }
                         }
                         if(*bufTmp <= -1)
                             *bufTmp = *bufTmp + 1 ;                    
@@ -174,8 +267,8 @@ void eventDrivenThread::plotEventBuffer(int* buffer, int dim1, int dim2) {
                     //if(*leakPointer < 0){
                     //    *leakPointer = 0;
                     //}
-                    if(*imageTmp>=1)
-                        *imageTmp = *imageTmp - 1;
+                    if(*imageTmp>=5)
+                        *imageTmp = *imageTmp - 5;
                     
                 }
                 imageTmp++;

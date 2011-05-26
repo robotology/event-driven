@@ -37,33 +37,47 @@
 #include <iCub/eventBuffer.h>
 #include <iCub/eventConversion.h>
 
+#define IMAGE_WD 128
+#define IMAGE_HT 128
 
-template <class eventBuffer>
+//template <class eventBuffer>
+
 
 class eventPort : public yarp::os::BufferedPort<eventBuffer> {
 public:
-    eventBuffer event;
-    bool hasNewEvent;
-    virtual void onRead(eventBuffer& event) {
-        hasNewEvent = true;             // to be set to false once done with the events
+    eventBuffer eventTrain;                       // object made by the train of events
+    yarp::os::Semaphore mutex;                    // Semaphore for the flage variable
+    bool hasNewEvent;                             // flag that indicates whether there are new events
+    virtual void onRead(eventBuffer& eventTrain) {
+        setHasNewEvent(true);             // to be set to false once done with the events
+        // receives the buffer and saves it
+        this->eventTrain = eventTrain;
+    }
+
+    void setHasNewEvent(bool value){
+        mutex.wait();
+        hasNewEvent = value;
+        mutex.post();
     }
 };
 
 
 class eventDrivenThread : public yarp::os::Thread {
 private:
+    bool zerod;                     // flag for resetting the image
     unsigned long* timeBuf;         // buffer for timestamp, ?? Stack
     int* eventsBuf;                 // buffer for events
     unsigned long* timeBufRight;    // buffer for timestamp, ?? Stack
     int* eventsBufRight;            // buffer for events
     int* leakLeft;                  // leaky integrator and fire for the left eye
-    eventBuffer* currentEvent;      // the current event that will be read and unmasked 
+    eventBuffer* currentEventTrain; // the current event that will be read and unmasked 
     unmask unmaskEvent;             // to unmask the event           
     std::string robot;              // name of the robot
     std::string configFile;         // name of the configFile where the parameter of the camera are set
     std::string inputPortName;      // name of input port for incoming events, typically from aexGrabber
 
-    yarp::os::BufferedPort<eventBuffer> EportIn;                                                  // buffered port listening to events through callback
+    yarp::os::BufferedPort<yarp::os::Bottle > pcSz;
+    eventPort EportIn;                                                  // buffered port listening to events through callback
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > eventPlot;     // output port to plot event    
     yarp::os::BufferedPort<yarp::os::Bottle> commandOut;                             // bottle of the position to the gazeArbiter
     std::string name;                                                                // rootname of all the ports opened by this thread
