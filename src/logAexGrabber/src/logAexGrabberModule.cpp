@@ -113,13 +113,13 @@ bool logAexGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     
     if(!strcmp(binaryName.c_str(),"none")) {
         printf("not reading from binary \n");
-        D2Y=new device2yarp(devicePortName, false,binaryName);
+        D2Y=new logAexGrabberThread(devicePortName, false,binaryName);
         //D2Y->setFromBinary(false);
     }
     else {
         printf("reading from binary \n");
         //D2Y->setFromBinary(true);
-        D2Y=new device2yarp(devicePortName, true, binaryNameComplete);        
+        D2Y=new logAexGrabberThread(devicePortName, true, binaryNameComplete);        
         //D2Y->setBinaryFile(f);
     }
     if (strcmp(dumpNameComplete.c_str(),"" )) {

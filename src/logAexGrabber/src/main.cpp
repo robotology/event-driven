@@ -1,7 +1,7 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /* 
- * Copyright (C) 2010 RobotCub Consortium, European Commission FP6 Project IST-004370
+ * Copyright (C) 2011 RobotCub Consortium, European Commission FP6 Project IST-004370
  * Authors: Francesco Rea
  * email:   francesco.rea@iit.it
  * website: www.robotcub.org 
@@ -20,10 +20,10 @@
   
 /**
  * @file main.cpp
- * @brief main code for launching the aexGrabber
+ * @brief main code for launching the logAexGrabber
  */
 
-#include "iCub/aexGrabberModule.h" 
+#include "iCub/logAexGrabberModule.h" 
 
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -34,7 +34,7 @@ int main(int argc, char * argv[])
     Network yarp;
     
     Time::turboBoost();
-    aexGrabberModule module; 
+    logAexGrabberModule module; 
 
     ResourceFinder rf;
     rf.setVerbose(true);

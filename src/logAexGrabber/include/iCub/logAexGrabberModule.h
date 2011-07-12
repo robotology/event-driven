@@ -186,7 +186,7 @@
 #include <yarp/os/Thread.h>
 
 //within project includes
-#include <iCub/device2yarp.h>
+#include <iCub/logAexGrabberThread.h>
 
 class logAexGrabberModule:public yarp::os::RFModule {
     std::string moduleName;                     // name of the module (rootname of ports)
@@ -203,7 +203,7 @@ class logAexGrabberModule:public yarp::os::RFModule {
 
     yarp::os::Port handlerPort;                 // a port to handle messages 
     yarp::os::Semaphore mutex;                  // semaphore for the respond function
-    device2yarp* D2Y;                           // reference to the ratethread that reads the dvs camera
+    logAexGrabberThread* D2Y;                   // reference to the ratethread that reads the dvs camera
 
 public:
     bool configure(yarp::os::ResourceFinder &rf); // configure all the module parameters and return true if successful

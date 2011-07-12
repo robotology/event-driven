@@ -411,6 +411,11 @@ private:
     u32 monBufSize_b;
     struct aer *pseq;                               //pointer to the sequence of events 
     struct aer *pmon;                               //pointer to the sequence of events (monitor)
+    struct aer *pmonEM;                               //pointer to the sequence of events (emission measure)
+    struct aer *pmonCD;                               //pointer to the sequence of events (change detector)
+    struct aer *pmonIF;                               //pointer to the sequence of events (integrate & fire)
+    
+    
 
     int file_desc,len,sz;
     unsigned char buffer_msg[64];
@@ -424,13 +429,13 @@ private:
     unsigned int xmask;                     // mask for extracting the x position
     unsigned int ymask;                     // mask for extracting the y position
     int yshift;                             // mask for extracting the x position
-    int xshift;                              // mask for extracting the y position
+    int xshift;                             // mask for extracting the y position
     int polshift;                           // shift to determine polarity
     int polmask;                            // mask to determine polarity
     int retinalSize;                        // dimension of the retina
     std::string portDeviceName;             // name of the device which the module will connect to
     std::string biasFileName;               // name of the file that contains the biases
-    std::string dumpfile;                    // name of the file where events are going to be dumped
+    std::string dumpfile;                   // name of the file where events are going to be dumped
 
     bool save;                              // bool that indicates whether the 
 
@@ -438,7 +443,7 @@ private:
     yarp::os::Semaphore mutex;              //semaphore for file reading
 
     std::stringstream str_buf;
-    FILE* fout;                          //reference to the object for output file stream
+    FILE* fout;                             //reference to the object for output file stream
 
     int pr;                                 //bias left dvs
     int foll;                               //bias left dvs
