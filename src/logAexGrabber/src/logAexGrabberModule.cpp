@@ -1,7 +1,7 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /* 
- * Copyright (C) 2010 RobotCub Consortium, European Commission FP6 Project IST-004370
+ * Copyright (C) 2011 RobotCub Consortium, European Commission FP6 Project IST-004370
  * Authors: Francesco Rea
  * email:   francesco.rea@iit.it
  * website: www.robotcub.org 
@@ -19,11 +19,11 @@
  */
 
 /**
- * @file aexGrabberModule.cpp
- * @brief Implementation of the aexGrabberModule (see header file).
+ * @file logAexGrabberModule.cpp
+ * @brief Implementation of the logAexGrabberModule (see header file).
  */
 
-#include <iCub/aexGrabberModule.h>
+#include <iCub/logAexGrabberModule.h>
 
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -36,7 +36,7 @@ using namespace std;
  *  equivalent of the "open" method.
  */
 
-bool aexGrabberModule::configure(yarp::os::ResourceFinder &rf) {
+bool logAexGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     /* Process all parameters from both command-line and .ini file */
 
     /* get the module name which will form the stem of all module port names */
@@ -136,19 +136,19 @@ bool aexGrabberModule::configure(yarp::os::ResourceFinder &rf) {
                         // so that it will then run the module
 }
 
-bool aexGrabberModule::interruptModule() {
+bool logAexGrabberModule::interruptModule() {
     handlerPort.interrupt();
     return true;
 }
 
-bool aexGrabberModule::close() {
+bool logAexGrabberModule::close() {
     handlerPort.close();
     D2Y->stop();
     /* stop the thread */
     return true;
 }
 
-bool aexGrabberModule::respond(const Bottle& command, Bottle& reply) {
+bool logAexGrabberModule::respond(const Bottle& command, Bottle& reply) {
     bool ok = false;
     bool rec = false; // is the command recognized?
     string helpMessage =  string(getName().c_str()) + 
@@ -575,11 +575,11 @@ bool aexGrabberModule::respond(const Bottle& command, Bottle& reply) {
 }
 
 /* Called periodically every getPeriod() seconds */
-bool aexGrabberModule::updateModule() {
+bool logAexGrabberModule::updateModule() {
     return true;
 }
 
-double aexGrabberModule::getPeriod() {
+double logAexGrabberModule::getPeriod() {
     /* module periodicity (seconds), called implicitly by myModule */
     return 1.0;
 }

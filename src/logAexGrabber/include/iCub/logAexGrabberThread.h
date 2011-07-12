@@ -1,8 +1,8 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /* 
- * Copyright (C) 2010 RobotCub Consortium, European Commission FP6 Project IST-004370
- * Authors: Rea Francesco, Charles Clercq
+ * Copyright (C) 2011 RobotCub Consortium, European Commission FP6 Project IST-004370
+ * Authors: Rea Francesco
  * email:   francesco.rea@iit.it, charles.clercq@iit.it
  * website: www.robotcub.org 
  * Permission is granted to copy, distribute, and/or modify this program
@@ -19,12 +19,12 @@
  */
 
 /**
- * @file device2yarp.h
+ * @file logAexGrabberThread.h
  * @brief Definition of the ratethread that receives events from DVS camera
  */
 
-#ifndef _DEVICE2YARP_H
-#define _DEVICE2YARP_H
+#ifndef _LOG_AEX_GRABBER_THREAD_H
+#define _LOG_AEX_GRABBER_THREAD_H
 
 //yarp include
 #include <yarp/os/RateThread.h>
@@ -51,10 +51,10 @@ struct aer {
     u32 address;
 };
 
-class device2yarp : public yarp::os::RateThread {
+class logAexGrabberThread: public yarp::os::RateThread {
 public:
-    device2yarp(std::string deviceNumber, bool save, std::string filename);
-    ~device2yarp();
+    logAexGrabberThread(std::string deviceNumber, bool save, std::string filename);
+    ~logAexGrabberThread();
     virtual void run();
     virtual void threadRelease();
 
@@ -468,7 +468,7 @@ private:
 
 };
 
-#endif //_DEVICE2YARP_H
+#endif //_LOG_AEX_GRABBER_THREAD_H
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------
 

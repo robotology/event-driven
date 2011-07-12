@@ -1,7 +1,7 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /* 
- * Copyright (C) 2010 RobotCub Consortium, European Commission FP6 Project IST-004370
+ * Copyright (C) 2011 RobotCub Consortium, European Commission FP6 Project IST-004370
  * Authors: Rea Francesco
  * email:   francesco.rea@iit.it
  * website: www.robotcub.org 
@@ -19,16 +19,16 @@
  */
 
 /**
- * @file aexGrabbberModule.h
+ * @file logAexGrabbberModule.h
  * @brief A module that extracts independent event-driven responses coming from AEX event-based camera
  */
 
-#ifndef _AEX_GRABBER_MODULE_H_
-#define _AEX_GRABBER_MODULE_H_
+#ifndef _LOG_AEX_GRABBER_MODULE_H_
+#define _LOG_AEX_GRABBER_MODULE_H_
 
 /** 
  *
- * \defgroup icub_aexGrabber aexGrabber
+ * \defgroup icub_logAexGrabber logAexGrabber
  * @ingroup icub_eMorph
  *
  *
@@ -66,13 +66,13 @@
  * The following key-value pairs can be specified as command-line parameters by prefixing \c -- to the key 
  * (e.g. \c --from file.ini. The value part can be changed to suit your needs; the default values are shown below. 
  *
- * - \c from \c aexGrabber.ini \n 
+ * - \c from \c logAexGrabber.ini \n 
  *   specifies the configuration file
  *
- * - \c context \c aexGrabber/conf \n
+ * - \c context \c logAexGrabber/conf \n
  *   specifies the sub-path from \c $ICUB_ROOT/icub/app to the configuration file
  *
- * - \c name \c aexGrabber \n 
+ * - \c name \c logAexGrabber \n 
  *   specifies the name of the module (used to form the stem of module port names)  
  *
  * - \c robot \c icub \n 
@@ -95,7 +95,7 @@
  *
  *  <b>Input ports</b>
  *
- *  - \c /aexGrabber \n
+ *  - \c /logAexGrabber \n
  *    This port is used to change the parameters of the module at run time or stop the module. \n
  *    The following commands are available
  * 
@@ -107,14 +107,14 @@
  *    The port can be used by other modules but also interactively by a user through the yarp rpc directive, viz.: \c yarp \c rpc \c /visualFilter
  *    This opens a connection from a terminal to the port and allows the user to then type in commands and receive replies.
  *       
- *  - \c /aexGrabber/image:i \n
+ *  - \c /logAexGrabber/image:i \n
  *
  * <b>Output ports</b>
  *
- *  - \c /aexGrabber \n
+ *  - \c /logAexGrabber \n
  *    see above
  *
- *  - \c /aexGrabber/image:o \n
+ *  - \c /logAexGrabber/image:o \n
  *
  * <b>Port types</b>
  *
@@ -129,7 +129,7 @@
  *
  * \section conf_file_sec Configuration Files
  *
- * \c aexGrabber.ini  in \c $ICUB_ROOT/app/aexGrabber/conf \n
+ * \c logAexGrabber.ini  in \c $ICUB_ROOT/app/logAexGrabber/conf \n
  * 
  * \section tested_os_sec Tested OS
  *
@@ -137,13 +137,13 @@
  *
  * \section example_sec Example Instantiation of the Module
  * 
- * <tt>aexGrabber --name aexGrabber --context aexGrabber/conf --from aexGrabber.ini --robot icub</tt>
+ * <tt>logAexGrabber --name logAexGrabber --context logAexGrabber/conf --from logAexGrabber.ini --robot icub</tt>
  *
  * \author Rea Francesco
  *
  * Copyright (C) 2010 RobotCub Consortium\n
  * CopyPolicy: Released under the terms of the GNU GPL v2.0.\n
- * This file can be edited at \c $ICUB_ROOT/contrib/src/eMorph/aexGrabber/include/iCub/aexGrabberModule.h
+ * This file can be edited at \c $ICUB_ROOT/contrib/src/eMorph/logAexGrabber/include/iCub/logAexGrabberModule.h
  * 
  */
 
@@ -188,7 +188,7 @@
 //within project includes
 #include <iCub/device2yarp.h>
 
-class aexGrabberModule:public yarp::os::RFModule {
+class logAexGrabberModule:public yarp::os::RFModule {
     std::string moduleName;                     // name of the module (rootname of ports)
     std::string robotName;                      // name of the robot
     std::string binaryName;                     // name of the file containing biases

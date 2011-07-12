@@ -1,20 +1,25 @@
 
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
-/*
- * This class use the USB retina driver wrote by
- * Martin Ebner, IGI / TU Graz (ebner at igi.tugraz.at)
+
+/* 
+ * Copyright (C) 2011 RobotCub Consortium, European Commission FP6 Project IST-004370
+ * Authors: Francesco Rea
+ * email:   francesco.rea@iit.it
+ * website: www.robotcub.org 
+ * Permission is granted to copy, distribute, and/or modify this program
+ * under the terms of the GNU General Public License, version 2 or any
+ * later version published by the Free Software Foundation.
  *
- *  The term of the contract of the used source is :
+ * A copy of the license can be found at
+ * http://www.robotcub.org/icub/license/gpl.txt
  *
- *	This program is free software; you can redistribute it and/or
- *	modify it under the terms of the GNU General Public License as
- *	published by the Free Software Foundation, version 2.
- *
- * This driver is based on the 2.6.3 version of drivers/usb/usb-skeleton.c
- * (Copyright (C) 2001-2004 Greg Kroah-Hartman (greg@kroah.com))
- *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details
  */
+
 
 #include <iCub/device2yarp.h>
 //#include <sys/types.h>
