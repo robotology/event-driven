@@ -1,9 +1,9 @@
-# Copyright: (C) 2010 RobotCub Consortium
-# Authors: Giorgio Metta
+# Copyright: (C) 2011 RobotCub Consortium
+# Authors: Francesco Rea 
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
-SET(KEYWORD "aexGrabber")
+SET(KEYWORD "logAexGrabber")
 PROJECT(${KEYWORD})
 
 message("ICUB_INCLUDE_DIRS ${ICUB_INCLUDE_DIRS}")
