@@ -3,7 +3,7 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /* 
- * Copyright (C) 2010 RobotCub Consortium, European Commission FP6 Project IST-004370
+ * Copyright (C) 2011 RobotCub Consortium, European Commission FP6 Project IST-004370
  * Authors: Rea Francesco
  * email:   francesco.rea@iit.it
  * website: www.robotcub.org 
@@ -21,11 +21,11 @@
  */
 
 /**
- * @file cfCollectorThread.cpp
- * @brief Implementation of the thread (see header cfCollectorThread.h)
+ * @file lfCollectorThread.cpp
+ * @brief Implementation of the thread (see header lfCollectorThread.h)
  */
 
-#include <iCub/cfCollectorThread.h>
+#include <iCub/lfCollectorThread.h>
 #include <cstring>
 #include <cassert>
 #include <cstdlib>
@@ -44,7 +44,7 @@ using namespace std;
 #define dim_window 5
 #define synch_time 1000
 
-cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
+lfCollectorThread::lfCollectorThread() : RateThread(THRATE) {
     synchronised = false;
     greaterHalf = false;
     firstRun = true;
@@ -57,12 +57,12 @@ cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
     verb = false;
 }
 
-cfCollectorThread::~cfCollectorThread() {
+lfCollectorThread::~lfCollectorThread() {
     printf("freeing memory in collector");
     delete bufferCopy;
 }
 
-bool cfCollectorThread::threadInit() {
+bool lfCollectorThread::threadInit() {
     printf(" \nstarting the threads.... \n");
     //outPort.open(getName("/left:o").c_str());
     //outPortRight.open(getName("/right:o").c_str());
@@ -92,22 +92,22 @@ bool cfCollectorThread::threadInit() {
     return true;
 }
 
-void cfCollectorThread::interrupt() {
+void lfCollectorThread::interrupt() {
     outPort.interrupt();
 }
 
-void cfCollectorThread::setName(string str) {
+void lfCollectorThread::setName(string str) {
     this->name=str;
     printf("name: %s", name.c_str());
 }
 
-std::string cfCollectorThread::getName(const char* p) {
+std::string lfCollectorThread::getName(const char* p) {
     string str(name);
     str.append(p);
     return str;
 }
 
-void cfCollectorThread::resize(int widthp, int heightp) {
+void lfCollectorThread::resize(int widthp, int heightp) {
     imageLeft = new ImageOf<PixelMono>;
     imageLeft->resize(widthp,heightp);
     imageRight = new ImageOf<PixelMono>;
@@ -115,7 +115,7 @@ void cfCollectorThread::resize(int widthp, int heightp) {
 }
 
 
-void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsigned long minCount,unsigned long maxCount, bool camera){
+void lfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsigned long minCount,unsigned long maxCount, bool camera){
     assert(image!=0);
     //image->resize(retinalSize,retinalSize);
     unsigned char* pImage = image->getRawImage();
@@ -165,7 +165,7 @@ void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsig
 
 
 
-void cfCollectorThread::run() {
+void lfCollectorThread::run() {
     count++;
     if(!idle) {
         
@@ -289,7 +289,7 @@ void cfCollectorThread::run() {
 
 
 /*
-void cfCollectorThread::run() {
+void lfCollectorThread::run() {
     count++;
     if(count == 100000) {
         count = 0;
@@ -392,7 +392,7 @@ void cfCollectorThread::run() {
 }
 */
 
-void cfCollectorThread::threadRelease() {
+void lfCollectorThread::threadRelease() {
     idle = false;
     printf("Threadrelease:freeing bufferCopy \n");
     //free(bufferCopy);

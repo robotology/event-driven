@@ -1,7 +1,7 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /* 
- * Copyright (C) 2010 RobotCub Consortium, European Commission FP6 Project IST-004370
+ * Copyright (C) 2011 RobotCub Consortium, European Commission FP6 Project IST-004370
  * Authors: Rea Francesco, Charles Clercq
  * email:   francesco.rea@iit.it, charles.clercq@iit.it
  * website: www.robotcub.org 
@@ -42,9 +42,12 @@ private:
     int count;                       // counter of the unmasked events
     
     int sz;
-    int* buffer;                          // buffer representing the event in image plane (left)
+    int* buffer;                      // buffer representing the event in image plane (left)
+    int* bufferCD;                      // buffer representing the event in image plane (changedetector)
+    int* bufferEM;                      // buffer representing the event in image plane (em)
+    int* bufferIF;                      // buffer representing the event in image plane (integratefire)
     unsigned long* timeBuffer;        // buffer contains the timestamp of the particular location (left)
-    int* bufferRight;                     //buffer representing the event in image plane (right)
+    int* bufferRight;                 //buffer representing the event in image plane (right)
     unsigned long* timeBufferRight;   // buffer contains the timestamp of the particular location (right)
     //int* fifoEvent;
     //int* fifoEvent_temp;
@@ -205,6 +208,13 @@ public:
     * @param pol Set with the ON/OFF polarity of the pixel.
     */
     void unmaskEvent(unsigned int evPu, short& x, short& y, short& pol, short& camera);
+
+    /**
+     * @brief this method sorts the event out into the 3 classes of measures
+     * @param evPu A pointer on the row casted from char* to int*
+     * @param evClass the class which the measure belongs to
+     */
+    void sortEvent(long int evPu, short& evClass);
 
 
     /**

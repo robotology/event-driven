@@ -1,9 +1,9 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /* 
- * Copyright (C) 2010 RobotCub Consortium, European Commission FP6 Project IST-004370
- * Authors: Rea Francesco, Charles Clercq
- * email:   francesco.rea@iit.it, charles.clercq@iit.it
+ * Copyright (C) 2011 RobotCub Consortium, European Commission FP6 Project IST-004370
+ * Authors: Rea Francesco
+ * email:   francesco.rea@iit.it
  * website: www.robotcub.org 
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
@@ -19,11 +19,11 @@
  */
 
 /**
- * @file cartesianFrameConverter.cpp
- * @brief A class inherited from the bufferefPort (see header cartesianFrameConverter.h)
+ * @file logpolarFrameConverter.cpp
+ * @brief A class inherited from the bufferefPort (see header logpolarFrameConverter.h)
  */
 
-#include <iCub/cartesianFrameConverter.h>
+#include <iCub/logpolarFrameConverter.h>
 #include <cassert>
 #include <cstdlib>
 

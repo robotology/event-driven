@@ -19,12 +19,12 @@
  */
 
 /**
- * @file cartesianFrameConverter.h
+ * @file logpolarFrameConverter.h
  * @brief A class inherited from the bufferefPort class created in order to read events.
  */
 
-#ifndef _CARTESIAN_FRAME_CONVERTER_H
-#define _CARTESIAN_FRAME_CONVERTER_H
+#ifndef _LOGPOLAR_FRAME_CONVERTER_H
+#define _LOGPOLAR_FRAME_CONVERTER_H
 
 #include <iostream>
 #include <fstream>
@@ -125,6 +125,6 @@ private:
     clock_t stop;
 };
 
-#endif //_CARTESIAN_FRAME_CONVERTER_H
+#endif //_LOGPOLAR_FRAME_CONVERTER_H
 //----- end-of-file --- ( next line intentionally left blank ) ------------------
 

@@ -1,7 +1,7 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /* 
- * Copyright (C) 2010 RobotCub Consortium, European Commission FP6 Project IST-004370
+ * Copyright (C) 2011 RobotCub Consortium, European Commission FP6 Project IST-004370
  * Authors: Francesco Rea
  * email:   francesco.rea@iit.it
  * website: www.robotcub.org 
@@ -19,11 +19,11 @@
  */
 
 /**
- * @file cfCollectorModule.cpp
- * @brief Implementation of the cfCollectorModule (see header file).
+ * @file lfCollectorModule.cpp
+ * @brief Implementation of the lfCollectorModule (see header file).
  */
 
-#include <iCub/cfCollectorModule.h>
+#include <iCub/lfCollectorModule.h>
 
 
 using namespace yarp::os;
@@ -37,7 +37,7 @@ using namespace std;
  *  equivalent of the "open" method.
  */
 
-bool cfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
+bool lfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
     /* Process all parameters from both command-line and .ini file */
 
     /* get the module name which will form the stem of all module port names */
@@ -49,7 +49,7 @@ bool cfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
     * specifically the port names which are dependent on the module name
     */
     setName(moduleName.c_str());
-
+    
     /*
     * get the robot name which will form the stem of the robot ports names
     * and append the specific part and device required
@@ -73,7 +73,7 @@ bool cfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
 
     attach(handlerPort);                  // attach to port
 
-    cfThread=new cfCollectorThread();
+    cfThread=new lfCollectorThread();
     cfThread->setName(getName().c_str());
     cfThread->start();
 
@@ -81,12 +81,12 @@ bool cfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
                         // so that it will then run the module
 }
 
-bool cfCollectorModule::interruptModule() {
+bool lfCollectorModule::interruptModule() {
     handlerPort.interrupt();
     return true;
 }
 
-bool cfCollectorModule::close() {
+bool lfCollectorModule::close() {
     handlerPort.close();
     /* stop the thread */
     cfThread->stop();
@@ -94,7 +94,7 @@ bool cfCollectorModule::close() {
     return true;
 }
 
-bool cfCollectorModule::respond(const Bottle& command, Bottle& reply) {
+bool lfCollectorModule::respond(const Bottle& command, Bottle& reply) {
     string helpMessage =  string(getName().c_str()) + 
                         " commands are: \n" +  
                         "help \n" + 
@@ -115,11 +115,11 @@ bool cfCollectorModule::respond(const Bottle& command, Bottle& reply) {
 }
 
 /* Called periodically every getPeriod() seconds */
-bool cfCollectorModule::updateModule() {
+bool lfCollectorModule::updateModule() {
     return true;
 }
 
-double cfCollectorModule::getPeriod() {
+double lfCollectorModule::getPeriod() {
     /* module periodicity (seconds), called implicitly by myModule */
     return 1.0;
 }

@@ -1,7 +1,7 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /* 
- * Copyright (C) 2010 RobotCub Consortium, European Commission FP6 Project IST-004370
+ * Copyright (C) 2011 RobotCub Consortium, European Commission FP6 Project IST-004370
  * Authors: Francesco Rea
  * email:   francesco.rea@iit.it
  * website: www.robotcub.org 
@@ -20,10 +20,10 @@
   
 /**
  * @file main.cpp
- * @brief main code for the cartesian frame collector of asynchronous events
+ * @brief main code for the logpolar frame collector of asynchronous events
  */
 
-#include "iCub/cfCollectorModule.h" 
+#include "iCub/lfCollectorModule.h" 
 #include <yarp/os/all.h>
 
 using namespace yarp::os;
@@ -35,12 +35,12 @@ int main(int argc, char * argv[])
     Network yarp;
     
     Time::turboBoost();
-    cfCollectorModule module; 
+    lfCollectorModule module; 
 
     ResourceFinder rf;
     rf.setVerbose(true);
-    rf.setDefaultConfigFile("cartesianFrameCollector.ini"); //overridden by --from parameter
-    rf.setDefaultContext("dvsGrabber/conf");   //overridden by --context parameter
+    rf.setDefaultConfigFile("logpolarFrameCollector.ini"); //overridden by --from parameter
+    rf.setDefaultContext("eMorphApplication/conf");        //overridden by --context parameter
     rf.configure("ICUB_ROOT", argc, argv);
  
     module.runModule(rf);

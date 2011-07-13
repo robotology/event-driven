@@ -1,7 +1,7 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /* 
- * Copyright (C) 2010 RobotCub Consortium, European Commission FP6 Project IST-004370
+ * Copyright (C) 2011 RobotCub Consortium, European Commission FP6 Project IST-004370
  * Authors: Rea Francesco
  * email:   francesco.rea@iit.it
  * website: www.robotcub.org 
@@ -19,17 +19,17 @@
  */
 
 /**
- * @file cfCollectorThread.h
+ * @file lfCollectorThread.h
  * @brief Definition of a thread that receive events from DVS camera and extracts frame-based representations of the readings
  * (see dvsGrabberModule.h).
  */
 
-#ifndef _CF_COLLECTOR_THREAD_H_
-#define _CF_COLLECTOR_THREAD_H_
+#ifndef _LF_COLLECTOR_THREAD_H_
+#define _LF_COLLECTOR_THREAD_H_
 
 #include <yarp/os/RateThread.h>
 #include <yarp/sig/all.h>
-#include <iCub/cartesianFrameConverter.h>
+#include <iCub/logpolarFrameConverter.h>
 #include <iCub/plotterThread.h>
 #include <iostream>
 #include <time.h>
@@ -42,7 +42,7 @@
 #define u64 uint64_t
 
 
-class cfCollectorThread : public yarp::os::RateThread {
+class lfCollectorThread : public yarp::os::RateThread {
 private:
     
     int count;                          // loop counter of the thread
@@ -89,12 +89,12 @@ public:
     /**
     * default constructor
     */
-    cfCollectorThread();
+    lfCollectorThread();
 
     /**
      * destructor
      */
-    ~cfCollectorThread();
+    ~lfCollectorThread();
 
     /**
     * function that initialise the thread

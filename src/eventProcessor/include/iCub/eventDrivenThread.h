@@ -114,7 +114,7 @@ public:
         b.addInt(packetSize);
         pcSz.write();
 
-        printf("%d\n",packetSize);
+        //printf("%d\n",packetSize);
         short oneX,oneY,onePol, camera;
 
         unmaskOneEvent.unmaskData(packet.get_packet(), packetSize);

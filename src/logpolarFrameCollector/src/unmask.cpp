@@ -70,6 +70,13 @@ unmask::unmask() : RateThread(UNMASKRATETHREAD){
 
     buffer=new int[retinalSize*retinalSize];
     memset(buffer,0,retinalSize*retinalSize*sizeof(int));
+    bufferEM=new int[retinalSize*retinalSize];
+    memset(bufferEM,0,retinalSize*retinalSize*sizeof(int));
+    bufferCD=new int[retinalSize*retinalSize];
+    memset(bufferCD,0,retinalSize*retinalSize*sizeof(int));
+    bufferIF=new int[retinalSize*retinalSize];
+    memset(bufferIF,0,retinalSize*retinalSize*sizeof(int));
+
     timeBuffer=new unsigned long[retinalSize*retinalSize];
     memset(timeBuffer,0,retinalSize*retinalSize*sizeof(unsigned long));
     bufferRight=new int[retinalSize*retinalSize];
@@ -194,7 +201,24 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
         
         // here we zero the higher two bytes of the address!!! Only lower 16bits used!
         blob &= 0xFFFF;
-        unmaskEvent((unsigned int) blob, cartX, cartY, polarity, camera);
+        sortEvent((unsigned int) blob, eventClass);
+        
+        switch(eventClass) {
+        case 0:  // class CD change detector
+            unmaskEvent(eventClass, (unsigned int) blob, cartX, cartY, polarity);
+            break;
+            
+        case 1:  // class EM 
+            unmaskEvent(eventClass, (unsigned int) blob, cartX, cartY, polarity);
+            break;
+            
+        case 2:  //class IF integrate &fire
+            unmaskEvent(eventClass, (unsigned int) blob, cartX, cartY, polarity);
+            break;
+        }
+            
+        
+        
         //if(count % 100 == 0) {
         //    printf(" %d>%d,%d : %d : %d \n",blob,cartX,cartY,timestamp,camera);
         //}
@@ -204,13 +228,10 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
         camera = camera + 1;
         
         //camera: LEFT 0, RIGHT 1
-        if(camera) {
-
-            
+        if(camera) {            
             if((cartX!=0) &&( cartY!=0) && (timestamp!=0)) {
                 validLeft =  true;
-            }
-            
+            }            
             if(verb) {
                 lasttimestamp = 0;
                 resetTimestamps();
@@ -218,9 +239,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
             else if(timestamp > lasttimestamp) {
                 lasttimestamp = timestamp;
             }
-            
-            
-            
+                        
             if(timeBuffer[cartX + cartY * retinalSize] < timestamp) {
                 if(polarity > 0) {
                     buffer[cartX + cartY * retinalSize] = responseGradient;

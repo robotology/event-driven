@@ -97,8 +97,8 @@ void eventDrivenThread::run() {
    while (isStopping() != true) {
        
           // 
-            plotEventBuffer(EportIn.bufTmp); 
-            Time::delay(.1);
+           // plotEventBuffer(EportIn.bufTmp); 
+            //Time::delay(.1);
           
             
     }
