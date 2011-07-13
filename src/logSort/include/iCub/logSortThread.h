@@ -1,7 +1,7 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /* 
- * Copyright (C) 2010 RobotCub Consortium, European Commission FP6 Project IST-004370
+ * Copyright (C) 2011 RobotCub Consortium, European Commission FP6 Project IST-004370
  * Authors: Rea Francesco
  * email:   francesco.rea@iit.it
  * website: www.robotcub.org 
@@ -19,17 +19,17 @@
  */
 
 /**
- * @file cfCollectorThread.h
- * @brief Definition of a thread that receive events from DVS camera and extracts frame-based representations of the readings
+ * @file logSortThread.h
+ * @brief Definition of a thread that receive events from DVS camera and sort them based on the logpolar mapping
  * (see dvsGrabberModule.h).
  */
 
-#ifndef _CF_COLLECTOR_THREAD_H_
-#define _CF_COLLECTOR_THREAD_H_
+#ifndef _LOG_SORT_THREAD_H_
+#define _LOG_SORT_THREAD_H_
 
 #include <yarp/os/RateThread.h>
 #include <yarp/sig/all.h>
-#include <iCub/cartesianFrameConverter.h>
+#include <iCub/logFrameConverter.h>
 #include <iCub/plotterThread.h>
 #include <iostream>
 #include <time.h>
@@ -42,7 +42,7 @@
 #define u64 uint64_t
 
 
-class cfCollectorThread : public yarp::os::RateThread {
+class logSortThread : public yarp::os::RateThread {
 private:
     
     int count;                          // loop counter of the thread
@@ -81,20 +81,20 @@ private:
     clock_t endTime,startTime;
     long T1,T2;
     plotterThread* pThread;                  // plotterThread for the trasformation of the event in images
-    cFrameConverter* cfConverter;           //receives real-time events
-    unmask unmask_events;                   // object that unmask events
+    logFrameConverter* lfConverter;           //receives real-time events
+    logUnmask unmask_events;                   // object that unmask events
     char* bufferRead;                       // buffer of events read from the port
     char* bufferCopy;                       // local copy of the events read
 public:
     /**
     * default constructor
     */
-    cfCollectorThread();
+    logSortThread();
 
     /**
      * destructor
      */
-    ~cfCollectorThread();
+    ~logSortThread();
 
     /**
     * function that initialise the thread
@@ -147,7 +147,7 @@ public:
 
 };
 
-#endif  //_CF_COLLECTOR_THREAD_H_
+#endif  //_LOG_SORT_THREAD_H_
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------
 

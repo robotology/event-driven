@@ -1,7 +1,7 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /* 
- * Copyright (C) 2010 RobotCub Consortium, European Commission FP6 Project IST-004370
+ * Copyright (C) 2011 RobotCub Consortium, European Commission FP6 Project IST-004370
  * Authors: Rea Francesco
  * email:   francesco.rea@iit.it
  * website: www.robotcub.org 
@@ -19,12 +19,12 @@
  */
 
 /**
- * @file cfCollectorModule.h
+ * @file logSortModule.h
  * @brief A module that read independent asynchronous events from a yarp port and represents them as an image
  */
 
-#ifndef _CF_COLLECTOR_MODULE_H_
-#define _CF_COLLECTOR_MODULE_H_
+#ifndef _LOG_SORT_MODULE_H_
+#define _LOG_SORT_MODULE_H_
 
 /** 
  *
@@ -141,7 +141,7 @@
  *
  * Copyright (C) 2010 RobotCub Consortium\n
  * CopyPolicy: Released under the terms of the GNU GPL v2.0.\n
- * This file can be edited at \c $ICUB_ROOT/main/src/modules/cartesianFrameCollector/include/iCub/cfCollectorModule.h
+ * This file can be edited at \c $ICUB_ROOT/main/src/modules/cartesianFrameCollector/include/iCub/logSortModule.h
  * 
  */
 
@@ -154,9 +154,9 @@
 #include <yarp/os/Thread.h>
 
 //within project includes
-#include <iCub/cfCollectorThread.h>
+#include <iCub/logSortThread.h>
 
-class cfCollectorModule:public yarp::os::RFModule {
+class logSortModule:public yarp::os::RFModule {
     std::string moduleName;                     //name of the module (rootname of ports)
     std::string robotName;                      //name of the robot
     std::string robotPortName;                  //reference to the head of the robot
@@ -164,7 +164,7 @@ class cfCollectorModule:public yarp::os::RFModule {
     int ratethread;                             //time constant for ratethread
 
     yarp::os::Port handlerPort;                 // a port to handle messages 
-    cfCollectorThread* cfThread;                //cfCollectorThread for processing events
+    logSortThread* lsThread;                //logSortThread for processing events
 
 public:
     bool configure(yarp::os::ResourceFinder &rf); // configure all the module parameters and return true if successful
@@ -176,7 +176,7 @@ public:
 };
 
 
-#endif // __CF_COLLECTOR_MODULE_H__
+#endif // __LOG_SORT_MODULE_H__
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------
 

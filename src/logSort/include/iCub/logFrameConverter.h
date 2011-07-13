@@ -1,8 +1,8 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /* 
- * Copyright (C) 2010 RobotCub Consortium, European Commission FP6 Project IST-004370
- * Authors: Rea Francesco, Charles Clercq
+ * Copyright (C) 2011 RobotCub Consortium, European Commission FP6 Project IST-004370
+ * Authors: Rea Francesco
  * email:   francesco.rea@iit.it, charles.clercq@iit.it
  * website: www.robotcub.org 
  * Permission is granted to copy, distribute, and/or modify this program
@@ -19,12 +19,12 @@
  */
 
 /**
- * @file cartesianFrameConverter.h
+ * @file logFrameConverter.h
  * @brief A class inherited from the bufferefPort class created in order to read events.
  */
 
-#ifndef _CARTESIAN_FRAME_CONVERTER_H
-#define _CARTESIAN_FRAME_CONVERTER_H
+#ifndef _LOG_FRAME_CONVERTER_H
+#define _LOG_FRAME_CONVERTER_H
 
 #include <iostream>
 #include <fstream>
@@ -33,7 +33,7 @@
 #include <ctime>
 #include <list>
 
-#include <iCub/unmask.h>
+#include <iCub/logUnmask.h>
 #include <iCub/convert.h>
 #include <iCub/sendingBuffer.h>
 #include <iCub/config.h>
@@ -41,10 +41,10 @@
 #include <yarp/os/Network.h>
 #include <yarp/os/BufferedPort.h>
 
-class cFrameConverter:public yarp::os::BufferedPort<sendingBuffer> {
+class logFrameConverter:public yarp::os::BufferedPort<sendingBuffer> {
 public:
-    cFrameConverter();
-    ~cFrameConverter();
+    logFrameConverter();
+    ~logFrameConverter();
 
     /**
     * overwritten function for handling events as soon as they arrive
@@ -117,7 +117,7 @@ private:
     char* pcRead;                                               // pointer to the location where to read events
     char* pcBuffer;                                             // pointer where to buffer events
 
-    unmask unmask_events;           // object in charge of unmasking the events
+    logUnmask unmask_events;           // object in charge of unmasking the events
     converter convert_events;       // object in charge of converting the events into an image
     yarp::os::Semaphore mutex;      // semaphore for thehandling resource buffer
     clock_t start_u;
@@ -125,6 +125,6 @@ private:
     clock_t stop;
 };
 
-#endif //_CARTESIAN_FRAME_CONVERTER_H
+#endif //_LOG_FRAME_CONVERTER_H
 //----- end-of-file --- ( next line intentionally left blank ) ------------------
 

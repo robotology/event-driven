@@ -1,7 +1,7 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /* 
- * Copyright (C) 2010 RobotCub Consortium, European Commission FP6 Project IST-004370
+ * Copyright (C) 2011 RobotCub Consortium, European Commission FP6 Project IST-004370
  * Authors: Francesco Rea
  * email:   francesco.rea@iit.it
  * website: www.robotcub.org 
@@ -19,11 +19,11 @@
  */
 
 /**
- * @file cfCollectorModule.cpp
- * @brief Implementation of the cfCollectorModule (see header file).
+ * @file logSortModule.cpp
+ * @brief Implementation of the logSortModule (see header file).
  */
 
-#include <iCub/cfCollectorModule.h>
+#include <iCub/logSortModule.h>
 
 
 using namespace yarp::os;
@@ -37,7 +37,7 @@ using namespace std;
  *  equivalent of the "open" method.
  */
 
-bool cfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
+bool logSortModule::configure(yarp::os::ResourceFinder &rf) {
     /* Process all parameters from both command-line and .ini file */
 
     /* get the module name which will form the stem of all module port names */
@@ -73,28 +73,28 @@ bool cfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
 
     attach(handlerPort);                  // attach to port
 
-    cfThread=new cfCollectorThread();
-    cfThread->setName(getName().c_str());
-    cfThread->start();
+    lsThread=new logSortThread();
+    lsThread->setName(getName().c_str());
+    lsThread->start();
 
     return true ;       // let the RFModule know everything went well
                         // so that it will then run the module
 }
 
-bool cfCollectorModule::interruptModule() {
+bool logSortModule::interruptModule() {
     handlerPort.interrupt();
     return true;
 }
 
-bool cfCollectorModule::close() {
+bool logSortModule::close() {
     handlerPort.close();
     /* stop the thread */
-    cfThread->stop();
+    lsThread->stop();
     //delete cfThread;
     return true;
 }
 
-bool cfCollectorModule::respond(const Bottle& command, Bottle& reply) {
+bool logSortModule::respond(const Bottle& command, Bottle& reply) {
     string helpMessage =  string(getName().c_str()) + 
                         " commands are: \n" +  
                         "help \n" + 
@@ -115,11 +115,11 @@ bool cfCollectorModule::respond(const Bottle& command, Bottle& reply) {
 }
 
 /* Called periodically every getPeriod() seconds */
-bool cfCollectorModule::updateModule() {
+bool logSortModule::updateModule() {
     return true;
 }
 
-double cfCollectorModule::getPeriod() {
+double logSortModule::getPeriod() {
     /* module periodicity (seconds), called implicitly by myModule */
     return 1.0;
 }

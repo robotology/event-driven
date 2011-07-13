@@ -3,7 +3,7 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /* 
- * Copyright (C) 2010 RobotCub Consortium, European Commission FP6 Project IST-004370
+ * Copyright (C) 2011 RobotCub Consortium, European Commission FP6 Project IST-004370
  * Authors: Rea Francesco
  * email:   francesco.rea@iit.it
  * website: www.robotcub.org 
@@ -21,11 +21,11 @@
  */
 
 /**
- * @file cfCollectorThread.cpp
- * @brief Implementation of the thread (see header cfCollectorThread.h)
+ * @file logSortThread.cpp
+ * @brief Implementation of the thread (see header logSortThread.h)
  */
 
-#include <iCub/cfCollectorThread.h>
+#include <iCub/logSortThread.h>
 #include <cstring>
 #include <cassert>
 #include <cstdlib>
@@ -44,7 +44,7 @@ using namespace std;
 #define dim_window 5
 #define synch_time 1000
 
-cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
+logSortThread::logSortThread() : RateThread(THRATE) {
     synchronised = false;
     greaterHalf = false;
     firstRun = true;
@@ -57,21 +57,21 @@ cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
     verb = false;
 }
 
-cfCollectorThread::~cfCollectorThread() {
+logSortThread::~logSortThread() {
     printf("freeing memory in collector");
     delete bufferCopy;
 }
 
-bool cfCollectorThread::threadInit() {
+bool logSortThread::threadInit() {
     printf(" \nstarting the threads.... \n");
     //outPort.open(getName("/left:o").c_str());
     //outPortRight.open(getName("/right:o").c_str());
 
     resize(retinalSize, retinalSize);
     printf("starting the converter!!!.... \n");
-    cfConverter=new cFrameConverter();
-    cfConverter->useCallback();
-    cfConverter->open(getName("/retina:i").c_str());
+    lfConverter = new logFrameConverter();
+    lfConverter->useCallback();
+    lfConverter->open(getName("/retina:i").c_str());
     printf("\n opening retina\n");
     printf("starting the plotter \n");
     pThread = new plotterThread();
@@ -79,7 +79,7 @@ bool cfCollectorThread::threadInit() {
     pThread->start();
 
 
-    //minCount = cfConverter->getEldestTimeStamp();
+    //minCount = lfConverter->getEldestTimeStamp();
     startTimer = Time::now();
     //clock(); //startTime ;
     //T1 = times(&start_time);
@@ -92,22 +92,22 @@ bool cfCollectorThread::threadInit() {
     return true;
 }
 
-void cfCollectorThread::interrupt() {
+void logSortThread::interrupt() {
     outPort.interrupt();
 }
 
-void cfCollectorThread::setName(string str) {
+void logSortThread::setName(string str) {
     this->name=str;
     printf("name: %s", name.c_str());
 }
 
-std::string cfCollectorThread::getName(const char* p) {
+std::string logSortThread::getName(const char* p) {
     string str(name);
     str.append(p);
     return str;
 }
 
-void cfCollectorThread::resize(int widthp, int heightp) {
+void logSortThread::resize(int widthp, int heightp) {
     imageLeft = new ImageOf<PixelMono>;
     imageLeft->resize(widthp,heightp);
     imageRight = new ImageOf<PixelMono>;
@@ -115,7 +115,7 @@ void cfCollectorThread::resize(int widthp, int heightp) {
 }
 
 
-void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsigned long minCount,unsigned long maxCount, bool camera){
+void logSortThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsigned long minCount,unsigned long maxCount, bool camera){
     assert(image!=0);
     //image->resize(retinalSize,retinalSize);
     unsigned char* pImage = image->getRawImage();
@@ -165,18 +165,18 @@ void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsig
 
 
 
-void cfCollectorThread::run() {
+void logSortThread::run() {
     count++;
     if(!idle) {
         
         // reads the buffer received
-        //bufferRead = cfConverter->getBuffer();    
+        //bufferRead = lfConverter->getBuffer();    
         // saves it into a working buffer
-        cfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
+        lfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
         //printf("returned 0x%x \n", bufferCopy);
         // extract a chunk/unmask the chunk
        
-        unmask_events.unmaskData(bufferCopy, CHUNKSIZE,verb);
+        unmask_events.logUnmaskData(bufferCopy, CHUNKSIZE,verb);
         if(verb) {
             verb = false;
             countStop = 0;
@@ -208,11 +208,11 @@ void cfCollectorThread::run() {
  
         
         //synchronising the threads at the connection time
-        if ((cfConverter->isValid())&&(!synchronised)) {
+        if ((lfConverter->isValid())&&(!synchronised)) {
 	    printf("Sychronised Sychronised Sychronised Sychronised ");
             //firstRun = false;
             minCount = lc - interval * dim_window; 
-            //cfConverter->getEldestTimeStamp();                                                                   
+            //lfConverter->getEldestTimeStamp();                                                                   
             minCountRight = rc - interval * dim_window;
             printf("synchronised %1f! %d,%d,%d||%d,%d,%d \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
             startTimer = Time::now();
@@ -227,7 +227,7 @@ void cfCollectorThread::run() {
         //synchronising the thread every time interval 1000*period of the thread
         //if (count % synch_time == 0) {
 	if (count == synch_time) {
-            minCount = lc - interval * dim_window; //cfConverter->getEldestTimeStamp();        
+            minCount = lc - interval * dim_window; //lfConverter->getEldestTimeStamp();        
             minCountRight = rc - interval * dim_window; 
             printf("synchronised %1f! %d,%d,%d||%d,%d,%d \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
             startTimer = Time::now();
@@ -270,7 +270,7 @@ void cfCollectorThread::run() {
 	//resetting time stamps at overflow
         if (countStop == 10) {
             //printf("resetting time stamps!!!!!!!!!!!!! %d %d   \n ", minCount, minCountRight);
-            //cfConverter->resetTimestamps(); 
+            //lfConverter->resetTimestamps(); 
             verb = true;
             printf("countStop %d %d \n",countStop, verb );
 	    count = synch_time - 200;
@@ -289,7 +289,7 @@ void cfCollectorThread::run() {
 
 
 /*
-void cfCollectorThread::run() {
+void logSortThread::run() {
     count++;
     if(count == 100000) {
         count = 0;
@@ -299,9 +299,9 @@ void cfCollectorThread::run() {
     }
     
     //T2 = times(&stop_time);
-    unsigned long int lastleft = cfConverter->getLastTimeStamp();
+    unsigned long int lastleft = lfConverter->getLastTimeStamp();
     lc = lastleft * 1.25; //1.25 is the ratio 0.160/0.128
-    unsigned long int lastright = cfConverter->getLastTimeStampRight();
+    unsigned long int lastright = lfConverter->getLastTimeStampRight();
     rc = lastright * 1.25;
 
     //gettimeofday(&tvend, NULL);
@@ -326,15 +326,15 @@ void cfCollectorThread::run() {
     //clock_gettime( CLOCK_REALTIME, &start_time );
     
     
-    if ((cfConverter->getInputCount()) && (!synchronised)) { 
-        minCount = lc - interval * 2; //cfConverter->getEldestTimeStamp();        
+    if ((lfConverter->getInputCount()) && (!synchronised)) { 
+        minCount = lc - interval * 2; //lfConverter->getEldestTimeStamp();        
         minCountRight = rc - interval * 2;
         printf("synchronised! %d,%d,%d||%d,%d,%d \n", minCount, lc, maxCount, minCountRight, rc, maxCountRight);
         startTimer = Time::now();
         synchronised = true;    
     }
     else if (count % 1000 == 0) {
-        minCount = lc - interval * 2; //cfConverter->getEldestTimeStamp();        
+        minCount = lc - interval * 2; //lfConverter->getEldestTimeStamp();        
         minCountRight = rc - interval * 2; 
         printf("synchronised! %d,%d,%d||%d,%d,%d \n", minCount, lc, maxCount, minCountRight, rc, maxCountRight);
         startTimer = Time::now();
@@ -350,7 +350,7 @@ void cfCollectorThread::run() {
     }
     else if(((lc < 10000000)||(rc < 10000000))&&(greaterHalf)) {
         greaterHalf = false;
-        cfConverter->resetTimestamps();
+        lfConverter->resetTimestamps();
         printf("resetting time stamps!!!!!!!!!!!!!");
     }
 
@@ -369,7 +369,7 @@ void cfCollectorThread::run() {
     if(outPort.getOutputCount()) {
         ImageOf<yarp::sig::PixelMono>& outputImage=outPort.prepare();
         if(&outputImage!=0) {
-            cfConverter->getMonoImage(&outputImage, minCount, maxCount,1);
+            lfConverter->getMonoImage(&outputImage, minCount, maxCount,1);
             outPort.write();
         }
         else {
@@ -380,19 +380,19 @@ void cfCollectorThread::run() {
     if(outPortRight.getOutputCount()) {
         ImageOf<yarp::sig::PixelMono>& outputImageRight=outPortRight.prepare();
         if(&outputImageRight!=0) {
-            cfConverter->getMonoImage(&outputImageRight, minCountRight, maxCountRight, 0);
+            lfConverter->getMonoImage(&outputImageRight, minCountRight, maxCountRight, 0);
             outPortRight.write();
         }
         else {
             printf("reference to the outimage null \n");
         }
     }
-    //minCount = cfConverter->getLastTimeStamp(); //get the last before going to sleep
+    //minCount = lfConverter->getLastTimeStamp(); //get the last before going to sleep
     
 }
 */
 
-void cfCollectorThread::threadRelease() {
+void logSortThread::threadRelease() {
     idle = false;
     printf("Threadrelease:freeing bufferCopy \n");
     //free(bufferCopy);
@@ -404,7 +404,7 @@ void cfCollectorThread::threadRelease() {
     printf("Threadrelease         stopping plotterThread \n");
     pThread->stop();
     printf("Threadrelease         deleting converter \n");
-    delete cfConverter;
+    delete lfConverter;
 }
 
 

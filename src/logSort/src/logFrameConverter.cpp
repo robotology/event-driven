@@ -1,9 +1,9 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /* 
- * Copyright (C) 2010 RobotCub Consortium, European Commission FP6 Project IST-004370
- * Authors: Rea Francesco, Charles Clercq
- * email:   francesco.rea@iit.it, charles.clercq@iit.it
+ * Copyright (C) 2011 RobotCub Consortium, European Commission FP6 Project IST-004370
+ * Authors: Rea Francesco
+ * email:   francesco.rea@iit.it
  * website: www.robotcub.org 
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
@@ -19,11 +19,11 @@
  */
 
 /**
- * @file cartesianFrameConverter.cpp
- * @brief A class inherited from the bufferefPort (see header cartesianFrameConverter.h)
+ * @file logFrameConverter.cpp
+ * @brief A class inherited from the bufferefPort (see header logFrameConverter.h)
  */
 
-#include <iCub/cartesianFrameConverter.h>
+#include <iCub/logFrameConverter.h>
 #include <cassert>
 #include <cstdlib>
 
@@ -36,7 +36,7 @@ using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
-cFrameConverter::cFrameConverter():convert_events(128,128) {
+logFrameConverter::logFrameConverter():convert_events(128,128) {
     valid = false;
     retinalSize=128;
     totDim = 0;
@@ -57,16 +57,16 @@ cFrameConverter::cFrameConverter():convert_events(128,128) {
     previousTimeStamp = 0;
 }
 
-cFrameConverter::~cFrameConverter() {
-    printf("cFrameConverter:stopping the unmasker \n");
+logFrameConverter::~logFrameConverter() {
+    printf("logFrameConverter:stopping the unmasker \n");
     unmask_events.stop();
     //delete &unmask_events;
     //delete &convert_events;
-    printf("cFrameConverter:freeing converterBuffer \n");
+    printf("logFrameConverter:freeing converterBuffer \n");
     //free(converterBuffer_copy);
 }
 
-void cFrameConverter::copyChunk(char* bufferCopy) {        
+void logFrameConverter::copyChunk(char* bufferCopy) {        
     mutex.wait();
     if(pcRead > converterBuffer +  BUFFERDIM - CHUNKSIZE) {
         memcpy(bufferCopy, pcRead, converterBuffer + BUFFERDIM - pcRead );
@@ -79,7 +79,7 @@ void cFrameConverter::copyChunk(char* bufferCopy) {
     mutex.post();
 }
 
-void cFrameConverter::onRead(sendingBuffer& i_ub) {
+void logFrameConverter::onRead(sendingBuffer& i_ub) {
     valid = true;
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() ;      // number of bits received / 8 = bytes received
@@ -112,7 +112,7 @@ void cFrameConverter::onRead(sendingBuffer& i_ub) {
 
 
 /*
-void cFrameConverter::onRead(sendingBuffer& i_ub) {
+void logFrameConverter::onRead(sendingBuffer& i_ub) {
     // receives the buffer and saves it
     //cout << "C_yarpViewer::onRead(unmaskedbuffer& i_ub)" << endl;
     //start_u = clock();
@@ -123,11 +123,11 @@ void cFrameConverter::onRead(sendingBuffer& i_ub) {
 }
 */
 
-void cFrameConverter::resetTimestamps() {
+void logFrameConverter::resetTimestamps() {
     unmask_events.resetTimestamps();
 }
 
-void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image, unsigned long minCount, unsigned long maxCount, bool camera){
+void logFrameConverter::getMonoImage(ImageOf<PixelMono>* image, unsigned long minCount, unsigned long maxCount, bool camera){
     assert(image!=0);
     image->resize(retinalSize,retinalSize);
     unsigned char* pImage = image->getRawImage();
@@ -162,19 +162,19 @@ void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image, unsigned long minC
     //unmask_events.setLastTimestamp(0);
 }
 
-unsigned long cFrameConverter::getLastTimeStamp() {
+unsigned long logFrameConverter::getLastTimeStamp() {
     return unmask_events.getLastTimestamp();
 }
 
-unsigned long cFrameConverter::getLastTimeStampRight() {
+unsigned long logFrameConverter::getLastTimeStampRight() {
     return unmask_events.getLastTimestampRight();
 }
 
-unsigned long cFrameConverter::getEldestTimeStamp() {
+unsigned long logFrameConverter::getEldestTimeStamp() {
     return unmask_events.getEldestTimeStamp();
 }
 
-void cFrameConverter::clearMonoImage() {
+void logFrameConverter::clearMonoImage() {
     unmask_events.cleanEventBuffer();
 }
 
