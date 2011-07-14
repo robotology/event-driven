@@ -67,12 +67,12 @@ private:
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRight;                                 //image representing the signal on the right camera
     std::string name;                   // rootname of all the ports opened by this thread
     bool verb;
-    bool synchronised;                       // flag to check whether the microsecond counter has been synchronised
-    bool greaterHalf;                     // indicates whether the counter has passed the half of the range
-    bool idle;                            // controls idle mode
-    bool firstRun;                        // flag that check whether the run is a first useful run    
-    unsigned long minCount;              // minimum timestamp allowed for the current frame
-    unsigned long maxCount;              // maximum timestamp allowed for the current frame
+    bool synchronised;                  // flag to check whether the microsecond counter has been synchronised
+    bool greaterHalf;                   // indicates whether the counter has passed the half of the range
+    bool idle;                          // controls idle mode
+    bool firstRun;                      // flag that check whether the run is a first useful run    
+    unsigned long minCount;             // minimum timestamp allowed for the current frame
+    unsigned long maxCount;             // maximum timestamp allowed for the current frame
     unsigned long minCountRight;
     unsigned long maxCountRight;
     double startTimer;
