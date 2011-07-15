@@ -32,7 +32,8 @@ using namespace yarp::os;
 
 //#define LINUX
 //#ifndef LINUX
-#ifndef __linux__ || linux              // posix compliant and for GCC
+// #ifndef __linux__ || linux
+#ifndef __linux__              // posix compliant and for GCC
 typedef unsigned long uint32_t;
 #endif 
 
@@ -42,6 +43,7 @@ typedef unsigned long uint32_t;
 #define minKillThres 1000
 #define UNMASKRATETHREAD 1
 #define constInterval 100000;
+
 
 logUnmask::logUnmask() : RateThread(UNMASKRATETHREAD){
     count = 0;
@@ -88,9 +90,200 @@ logUnmask::logUnmask() : RateThread(UNMASKRATETHREAD){
     wrapAdd = 0;
     //fopen_s(&fp,"events.txt", "w"); //Use the logUnmasked_buffer
     //uEvents = fopen("./uevents.txt","w");
+
+    logChip_LUT = new feature[648]; // all the position in the logchip times 4 features 
 }
 
 bool logUnmask::threadInit() {
+    // initialising the logChip_LUT
+
+    
+    /*  // structure of the LUT for logpolar Chip
+    logChip_LUT[0  ][0] = 1 ; logChip_LUT[0  ][1] = 0 ; logChip_LUT[0  ][2] = 0 ; logChip_LUT[0 ][3] = 1;
+    logChip_LUT[1  ][0] = 1 ; logChip_LUT[1  ][1] = 0 ; logChip_LUT[1  ][2] = 0 ; logChip_LUT[1 ][3] = 0;
+    logChip_LUT[6  ][0] = 5 ; logChip_LUT[6  ][1] = 0 ; logChip_LUT[6  ][2] = 0 ; logChip_LUT[6 ][3] = 1;
+    logChip_LUT[10 ][0] = 2 ; logChip_LUT[10 ][1] = 0 ; logChip_LUT[10 ][2] = 0 ; logChip_LUT[10][3] = 1;
+    logChip_LUT[11 ][0] = 2 ; logChip_LUT[11 ][1] = 0 ; logChip_LUT[11 ][2] = 0 ; logChip_LUT[11][3] = 0;
+    logChip_LUT[12 ][0] = 1 ; logChip_LUT[12 ][1] = 0 ; logChip_LUT[12 ][2] = 2 ; logChip_LUT[12][3] = 1;
+    logChip_LUT[13 ][0] = 1 ; logChip_LUT[13 ][1] = 0 ; logChip_LUT[13 ][2] = 2 ; logChip_LUT[13][3] = 0;
+    logChip_LUT[18 ][0] = 5 ; logChip_LUT[18 ][1] = 0 ; logChip_LUT[18 ][2] = 2 ; logChip_LUT[18][3] = 1;
+    logChip_LUT[22 ][0] = 2 ; logChip_LUT[22 ][1] = 0 ; logChip_LUT[22 ][2] = 2 ; logChip_LUT[22][3] = 1;
+    logChip_LUT[23 ][0] = 2 ; logChip_LUT[23 ][1] = 0 ; logChip_LUT[23 ][2] = 2 ; logChip_LUT[23][3] = 0;
+    logChip_LUT[24 ][0] = 1 ; logChip_LUT[24 ][1] = 0 ; logChip_LUT[24 ][2] = 4 ; logChip_LUT[24][3] = 1;
+    logChip_LUT[25 ][0] = 1 ; logChip_LUT[25 ][1] = 0 ; logChip_LUT[25 ][2] = 4 ; logChip_LUT[25][3] = 0;
+    logChip_LUT[30 ][0] = 5 ; logChip_LUT[30 ][1] = 0 ; logChip_LUT[30 ][2] = 4 ; logChip_LUT[30][3] = 1;
+    logChip_LUT[34 ][0] = 2 ; logChip_LUT[34 ][1] = 0 ; logChip_LUT[34 ][2] = 4 ; logChip_LUT[34][3] = 1;
+    logChip_LUT[35 ][0] = 2 ; logChip_LUT[35 ][1] = 0 ; logChip_LUT[35 ][2] = 4 ; logChip_LUT[35][3] = 0;
+
+    logChip_LUT[38 ][0] = 0 ; logChip_LUT[38 ][1] = 0 ; logChip_LUT[38 ][2] = 0 ; logChip_LUT[38 ][3] = 1;
+    logChip_LUT[39 ][0] = 0 ; logChip_LUT[39 ][1] = 0 ; logChip_LUT[39 ][2] = 0 ; logChip_LUT[39 ][3] = 0;
+    logChip_LUT[50 ][0] = 0 ; logChip_LUT[50 ][1] = 0 ; logChip_LUT[50 ][2] = 2 ; logChip_LUT[50 ][3] = 1;
+    logChip_LUT[51 ][0] = 0 ; logChip_LUT[51 ][1] = 0 ; logChip_LUT[51 ][2] = 2 ; logChip_LUT[51 ][3] = 0;
+    logChip_LUT[62 ][0] = 0 ; logChip_LUT[62 ][1] = 0 ; logChip_LUT[62 ][2] = 4 ; logChip_LUT[62 ][3] = 1;
+    logChip_LUT[63 ][0] = 0 ; logChip_LUT[63 ][1] = 0 ; logChip_LUT[63 ][2] = 4 ; logChip_LUT[63 ][3] = 0; 
+
+    logChip_LUT[216][0] = 0 ; logChip_LUT[216][1] = 0 ; logChip_LUT[216][2] = 4 ; logChip_LUT[63 ][3] = 0;
+    logChip_LUT[217][0] = 0 ; logChip_LUT[217][1] = 0 ; logChip_LUT[217][2] = 4 ; logChip_LUT[63 ][3] = 0;
+    logChip_LUT[222][0] = 0 ; logChip_LUT[222][1] = 0 ; logChip_LUT[222][2] = 4 ; logChip_LUT[63 ][3] = 0;
+    logChip_LUT[226][0] = 0 ; logChip_LUT[226][1] = 0 ; logChip_LUT[226][2] = 4 ; logChip_LUT[63 ][3] = 0;
+    logChip_LUT[227][0] = 0 ; logChip_LUT[227][1] = 0 ; logChip_LUT[227][2] = 4 ; logChip_LUT[63 ][3] = 0;
+    logChip_LUT[228][0] = 0 ; logChip_LUT[228][1] = 0 ; logChip_LUT[228][2] = 4 ; logChip_LUT[63 ][3] = 0;
+    logChip_LUT[229][0] = 0 ; logChip_LUT[229][1] = 0 ; logChip_LUT[229][2] = 4 ; logChip_LUT[63 ][3] = 0;
+    logChip_LUT[232][0] = 0 ; logChip_LUT[232][1] = 0 ; logChip_LUT[63 ][2] = 4 ; logChip_LUT[63 ][3] = 0;
+    logChip_LUT[233][0] = 0 ; logChip_LUT[233][1] = 0 ; logChip_LUT[63 ][2] = 4 ; logChip_LUT[63 ][3] = 0;
+    logChip_LUT[234][0] = 0 ; logChip_LUT[234][1] = 0 ; logChip_LUT[63 ][2] = 4 ; logChip_LUT[63 ][3] = 0;
+    logChip_LUT[235][0] = 0 ; logChip_LUT[235][1] = 0 ; logChip_LUT[63 ][2] = 4 ; logChip_LUT[63 ][3] = 0;
+    logChip_LUT[238][0] = 0 ; logChip_LUT[238][1] = 0 ; logChip_LUT[63 ][2] = 4 ; logChip_LUT[63 ][3] = 0;
+    logChip_LUT[239][0] = 0 ; logChip_LUT[239][1] = 0 ; logChip_LUT[63 ][2] = 4 ; logChip_LUT[63 ][3] = 0;
+    logChip_LUT[240][0] = 0 ; logChip_LUT[240][1] = 0 ; logChip_LUT[63 ][2] = 4 ; logChip_LUT[63 ][3] = 0;
+    logChip_LUT[241][0] = 0 ; logChip_LUT[241][1] = 0 ; logChip_LUT[63 ][2] = 4 ; logChip_LUT[63 ][3] = 0;
+    logChip_LUT[246][0] = 0 ; logChip_LUT[246][1] = 0 ; logChip_LUT[63 ][2] = 4 ; logChip_LUT[63 ][3] = 0;
+    logChip_LUT[250][0] = 0 ; logChip_LUT[250][1] = 0 ; logChip_LUT[63 ][2] = 4 ; logChip_LUT[63 ][3] = 0;
+    logChip_LUT[251][0] = 0 ; logChip_LUT[251][1] = 0 ; logChip_LUT[63 ][2] = 4 ; logChip_LUT[63 ][3] = 0;
+    */
+
+    int type, metax, metay, pol;  // feature listed in the same order as in the LUT
+
+    for (int x = 0; x < 36; x++ ) {
+        for (int y = 0; y < 18; y++) {
+            
+            if ((x-2) % 6 == 0){
+                // CD
+                type  = 0;
+                metax = (int) (x - 2) / 6;
+                metay = (int) (y - 1) / 3;
+                if(x == 20) {
+                    pol = 0;
+                }
+                else if(x == 21) {
+                    pol = 1;
+                }
+                else if(x % 2 == 0) {
+                    pol = 1;
+                }
+                else {
+                    pol = 0; 
+                }
+            } // CD            
+            
+            if (((x - 6) % 12 == 0) && ((y >= 12) || (y <= 5))) {
+                // IF
+                type  = 5;
+                metax = (int) (x - 6) / 6;
+                metay = (y % 2 == 0) ? y / 3 : (y / 3) - 1;
+                if(x % 2 == 0) {
+                    pol = 1;
+                }
+                else {
+                    pol = 0; 
+                }
+            } // IF
+            
+            
+            // EM 
+            if((y >= 6) && (y < 12) && (x >= 12) && (x < 24)) {
+                //fovea
+                if((x >= 16) && (x < 20)) {
+                    //inner columns
+                    if (y % 3 == 0) {
+                        type = 2;
+                        metax = (x < 18)     ? 2 : 3;
+                        metay = (y % 2 == 0) ? 2 : 3;
+                        if((x == 16) || (x == 19)) {
+                            pol = 1;
+                        }
+                        else {
+                            pol = 0;
+                        }
+                    }                      
+                    else {
+                        type = 4;
+                        metax = (x < 18)     ? 2 : 3;
+                        metay = (y % 2 == 0) ? 2 : 3;
+                        if((x == 16)||(x == 19)) {
+                            pol = 1;
+                        }
+                        else {
+                            pol = 0;
+                        }
+                    }                    
+                }  // inner columns
+                else {
+                    //outer columns
+                    if (y % 3 == 0) { 
+                        type = 1;
+                        metax = (x < 18)     ? 2 : 3;                        
+                        metay = (y % 2 == 0) ? 2 : 3;                      
+                        if((x == 12)||(x == 23)) {
+                            pol = 1;
+                        }
+                        else {
+                            pol = 0;
+                        }
+                    }
+                    else { 
+                        type = 3 ;
+                        metax = (x < 18)     ? 2 : 3;
+                        metay = (y % 2 == 0) ? 2 : 3;
+                        if((x == 12)||(x == 23)) {
+                            pol = 1;
+                        }
+                        else {
+                            pol = 0;
+                        }
+                    }
+                } // outer columns                           
+            }// fovea                
+            else {
+                //periphery
+                if ( ( x       % 6 == 0 ) && (  y % 3      == 0) ) {
+                    type = 1;
+                    metax =  x / 6;
+                    metay =  y / 3;
+                    if (x % 2 == 0) {
+                        pol = 1;
+                    }
+                    else {
+                        pol = 0;
+                    }
+                }
+                if ( ((x - 10) % 6 == 0 ) && (  y % 3      == 0) ) {
+                    type = 2 ;
+                    metax = (x - 10) / 6;
+                    metay =  y / 3;
+                    if (x % 2 == 0) {
+                        pol = 1;
+                    }
+                    else {
+                        pol = 0;
+                    }
+                }
+                if ( ( x       % 6 == 0 ) && ( (y - 5) % 3 == 0) ) { 
+                    type= 3;
+                    metax =  x / 6;
+                    metay = (y - 5)  / 3;
+                    if (x % 2 == 0) {
+                        pol = 1;
+                    }
+                    else {
+                        pol = 0;
+                    }
+                }
+                if ( ((x - 10) % 6 == 0 ) && ( (y - 5) % 3 == 0) ) {
+                    type= 4;
+                    metax = (x - 10) / 6;
+                    metay = (y - 5)  / 3;
+                    if (x % 2 == 0) {
+                        pol = 1;
+                    }
+                    else {
+                        pol = 0;
+                    }
+                }
+            } // periphery             
+            logChip_LUT[y * 36 + x][0] = type ; logChip_LUT[y * 36 + x][1] = metax ; logChip_LUT[y * 36 + x][2] = metay ; logChip_LUT[y * 36 + x][3] = pol;
+        }
+    }
     return true;
 }
 
@@ -99,6 +292,7 @@ logUnmask::~logUnmask() {
     delete[] timeBuffer;
     delete[] bufferRight;
     delete[] timeBufferRight;
+    delete[] logChip_LUT;
 }
 
 void logUnmask::cleanEventBuffer() {
