@@ -167,16 +167,13 @@ void logSortThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsigned 
 
 void logSortThread::run() {
     count++;
-    if(!idle) {
-        
+    if(!idle) { 
         // reads the buffer received
-        //bufferRead = lfConverter->getBuffer();    
         // saves it into a working buffer
         lfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
         //printf("returned 0x%x \n", bufferCopy);
-        // extract a chunk/unmask the chunk
-       
-        unmask_events.logUnmaskData(bufferCopy, CHUNKSIZE,verb);
+        // extract a chunk/unmask the chunk       
+        unmask_events.logUnmaskData(bufferCopy,CHUNKSIZE,verb);
         if(verb) {
             verb = false;
             countStop = 0;
@@ -195,7 +192,10 @@ void logSortThread::run() {
         double interval = (endTimer - startTimer) * 1000000; //interval in us
         startTimer = Time::now();
         
-        unsigned long int lastleft = unmask_events.getLastTimestamp();
+        
+
+	/*
+	unsigned long int lastleft = unmask_events.getLastTimestamp();
         lc = lastleft * COUNTERRATIO; 
         unsigned long int lastright = unmask_events.getLastTimestampRight();
         rc = lastright * COUNTERRATIO;
@@ -273,19 +273,39 @@ void logSortThread::run() {
             //lfConverter->resetTimestamps(); 
             verb = true;
             printf("countStop %d %d \n",countStop, verb );
+	  
 	    count = synch_time - 200;
         }
+
+	*/
 	
-
+	int dimCD;
+	char* pCD;
+	getCD(pCD,dimCD);
+	sendBuffer(portCD, pCD, dimCD);
 	
-
-
-        getMonoImage(imageRight,minCount,maxCount,0);
-        getMonoImage(imageLeft,minCountRight,maxCountRight,1);
-        pThread->copyLeft(imageLeft);
-        pThread->copyRight(imageRight);
+	int dimCD;
+	char* pCD;
+	getCD(pCD,dimCD);
+	sendBuffer(portCD, pCD, dimCD);
+	 
+	
+        //getMonoImage(imageRight,minCount,maxCount,0);
+        //getMonoImage(imageLeft,minCountRight,maxCountRight,1);
+        //pThread->copyLeft(imageLeft);
+        //pThread->copyRight(imageRight);
     }
 }
+
+void logSortThread::sendBuffer(BufferedPort<Bottle>* port, char* bffer, int* sz) {
+  if (port.getOutputCount()) {
+    sendingBuffer data2send(buffer, sz);    
+    sendingBuffer& tmp = port.prepare();
+    tmp = data2send;
+    port.write();
+  }      
+}
+
 
 
 /*

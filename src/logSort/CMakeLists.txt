@@ -10,7 +10,8 @@ PROJECT(${KEYWORD})
 INCLUDE_DIRECTORIES(
     ${PROJECT_SOURCE_DIR}/include
     ${YARP_INCLUDE_DIRS}
-    ${OpenCV_INCLUDE_DIRS}
+    ${OpenCV_INCLUDE_DIRS}    
+    ${ICUB_INCLUDE_DIRS}
 )
 
 # Search for source code.
@@ -26,7 +27,8 @@ IF (folder_source)
         ${folder_header}
     )
 
-    TARGET_LINK_LIBRARIES(${KEYWORD} 
+    TARGET_LINK_LIBRARIES(${KEYWORD}
+      eMorphLib
       ${YARP_LIBRARIES}
       ${OpenCV_LIBRARIES}
       )	

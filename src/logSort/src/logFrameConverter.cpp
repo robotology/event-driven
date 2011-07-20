@@ -94,34 +94,21 @@ void logFrameConverter::onRead(sendingBuffer& i_ub) {
     else if((totDim>=TH1)&&(totDim<TH2)&&(state!=1)){
         //printf("greater than TH1 \n");
         pcBuffer = converterBuffer + TH1; 
-        pcRead = converterBuffer + TH2;
-        state = 1;
+        pcRead   = converterBuffer + TH2;
+        state    = 1;
     }
     else if(totDim >= TH2) {
         //printf("greater that TH2 \n");
         pcBuffer = converterBuffer;
-        pcRead = converterBuffer + TH1;
-        totDim = 0;
-        state = 0;
+        pcRead   = converterBuffer + TH1;
+        totDim   = 0;
+        state    = 0;
     }
     // the thrid part of the buffer is free to avoid overflow
     totDim += dim;
     mutex.post();
     //printf("pcBuffer: 0x%x pcRead: 0x%x \n", pcBuffer, pcRead);
 }
-
-
-/*
-void logFrameConverter::onRead(sendingBuffer& i_ub) {
-    // receives the buffer and saves it
-    //cout << "C_yarpViewer::onRead(unmaskedbuffer& i_ub)" << endl;
-    //start_u = clock();
-    //i_ub.get_sizeOfPacket() size of the packet in bits
-    unmask_events.unmaskData(i_ub.get_packet(), i_ub.get_sizeOfPacket());
-    //start_p = clock();
-    //stop = clock();
-}
-*/
 
 void logFrameConverter::resetTimestamps() {
     unmask_events.resetTimestamps();

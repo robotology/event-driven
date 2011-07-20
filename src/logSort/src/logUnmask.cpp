@@ -99,6 +99,7 @@ bool logUnmask::threadInit() {
 
     
     /*  // structure of the LUT for logpolar Chip
+        // type, metaX, metaY, polarity
     logChip_LUT[0  ][0] = 1 ; logChip_LUT[0  ][1] = 0 ; logChip_LUT[0  ][2] = 0 ; logChip_LUT[0 ][3] = 1;
     logChip_LUT[1  ][0] = 1 ; logChip_LUT[1  ][1] = 0 ; logChip_LUT[1  ][2] = 0 ; logChip_LUT[1 ][3] = 0;
     logChip_LUT[6  ][0] = 5 ; logChip_LUT[6  ][1] = 0 ; logChip_LUT[6  ][2] = 0 ; logChip_LUT[6 ][3] = 1;
@@ -147,7 +148,7 @@ bool logUnmask::threadInit() {
     for (int x = 0; x < 36; x++ ) {
         for (int y = 0; y < 18; y++) {
             
-            if ((x-2) % 6 == 0){
+            if( ((x - 2) % 6 == 0) || ((x - 3) % 6 == 0)){
                 // CD
                 type  = 0;
                 metax = (int) (x - 2) / 6;
@@ -166,22 +167,34 @@ bool logUnmask::threadInit() {
                 }
             } // CD            
             
-            if (((x - 6) % 12 == 0) && ((y >= 12) || (y <= 5))) {
-                // IF
+            else if (((x - 6) % 12 == 0) && ( 
+                                             ((y >= 12) || (y <= 6))
+                                             &&
+                                             ((x <= 12) || (x >= 24))
+                                             )
+                     ){
+                // IFON
                 type  = 5;
                 metax = (int) (x - 6) / 6;
                 metay = (y % 2 == 0) ? y / 3 : (y / 3) - 1;
-                if(x % 2 == 0) {
-                    pol = 1;
-                }
-                else {
-                    pol = 0; 
-                }
-            } // IF
+                pol = 1;                                  
+            } // IFON
             
-            
+            else if (((x - 7) % 12 == 0) && ( 
+                                             ((y >= 12) || (y <= 6))
+                                             &&
+                                             ((x <= 12) || (x >= 24))
+                                             )
+                     ){
+                // IFOFF
+                type  = 5;
+                metax = (int) (x - 6) / 6;
+                metay = (y % 2 == 0) ? y / 3 : (y / 3) - 1;
+                pol = 0;                                  
+            } // IFOFF
+
             // EM 
-            if((y >= 6) && (y < 12) && (x >= 12) && (x < 24)) {
+            else if((y >= 6) && (y < 12) && (x >= 12) && (x < 24)) {
                 //fovea
                 if((x >= 16) && (x < 20)) {
                     //inner columns
@@ -247,7 +260,18 @@ bool logUnmask::threadInit() {
                         pol = 0;
                     }
                 }
-                if ( ((x - 10) % 6 == 0 ) && (  y % 3      == 0) ) {
+                else if ( ((x - 1 ) % 6 == 0 ) && (  y % 3      == 0) ) {
+                    type = 1;
+                    metax =  x / 6;
+                    metay =  y / 3;
+                    if (x % 2 == 0) {
+                        pol = 1;
+                    }
+                    else {
+                        pol = 0;
+                    }
+                }
+                else if ( ((x - 10) % 6 == 0 ) && (  y % 3      == 0) ) {
                     type = 2 ;
                     metax = (x - 10) / 6;
                     metay =  y / 3;
@@ -258,7 +282,18 @@ bool logUnmask::threadInit() {
                         pol = 0;
                     }
                 }
-                if ( ( x       % 6 == 0 ) && ( (y - 5) % 3 == 0) ) { 
+                else if ( ((x - 11) % 6 == 0 ) && (  y % 3      == 0) ) {
+                    type = 2 ;
+                    metax = (x - 10) / 6;
+                    metay =  y / 3;
+                    if (x % 2 == 0) {
+                        pol = 1;
+                    }
+                    else {
+                        pol = 0;
+                    }
+                }
+                else if ( ( x       % 6 == 0 ) && ( (y - 5) % 3 == 0) ) { 
                     type= 3;
                     metax =  x / 6;
                     metay = (y - 5)  / 3;
@@ -269,7 +304,29 @@ bool logUnmask::threadInit() {
                         pol = 0;
                     }
                 }
-                if ( ((x - 10) % 6 == 0 ) && ( (y - 5) % 3 == 0) ) {
+                else if ( ((x - 1)       % 6 == 0 ) && ( (y - 5) % 3 == 0) ) { 
+                    type= 3;
+                    metax =  x / 6;
+                    metay = (y - 5)  / 3;
+                    if (x % 2 == 0) {
+                        pol = 1;
+                    }
+                    else {
+                        pol = 0;
+                    }
+                }
+                else if ( ((x - 10) % 6 == 0 ) && ( (y - 5) % 3 == 0) ) {
+                    type= 4;
+                    metax = (x - 10) / 6;
+                    metay = (y - 5)  / 3;
+                    if (x % 2 == 0) {
+                        pol = 1;
+                    }
+                    else {
+                        pol = 0;
+                    }
+                }
+                else if ( ((x - 11) % 6 == 0 ) && ( (y - 5) % 3 == 0) ) {
                     type= 4;
                     metax = (x - 10) / 6;
                     metay = (y - 5)  / 3;
@@ -281,7 +338,14 @@ bool logUnmask::threadInit() {
                     }
                 }
             } // periphery             
+            
+            // saving the extracted information in a LUT respecting the order 
+            // type, metax, metay, polarity
             logChip_LUT[y * 36 + x][0] = type ; logChip_LUT[y * 36 + x][1] = metax ; logChip_LUT[y * 36 + x][2] = metay ; logChip_LUT[y * 36 + x][3] = pol;
+            
+            //if((true) && ( y == 11)) {
+            //    printf(" %d %d > %d %d %d %d \n", x, y, metax, metay, pol, type);
+            //}
         }
     }
     return true;
@@ -379,6 +443,7 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
     //create a pointer that points every 4 bytes
     uint32_t* buf2 = (uint32_t*)i_buffer;
     //eldesttimestamp = 0;
+
     for (int evt = 0; evt < num_events; evt++) {
         
         // logUnmask the data ( first 4 byte blob, second 4 bytes timestamp)
@@ -396,18 +461,30 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         cartX = retinalSize - cartX;
         
         switch (type) {
-        case 0: //CD
+        case 0:{ //CD
+            printf("Unmasked CD \n");
+        }
             break;
-        case 1: //EM1
+        case 1:{ //EM1
+            printf("Unmasked EM1 \n");
+        }
             break;
-        case 2: //EM2
+        case 2:{ //EM2
+            printf("Unmasked EM2 \n");
+        }
             break;
-        case 3: //EM3
+        case 3:{ //EM3
+            printf("Unmasked EM3 \n");
+        }
             break;
-        case 4: //EM4
+        case 4:{ //EM4
+            printf("Unmasked EM4 \n");
+        }
             break;
-        case 5: //IF
+        case 5:{ //IF
+            printf("Unmasked IF \n");
             break;
+        }
         }
         
         /*
@@ -487,135 +564,63 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
 
 
 
-void logUnmask::logUnmaskEvent(unsigned int evPU, short& x, short& y, short& pol, short& type) {
-    y = (short)(retinalSize-1) - (short)((evPU & xmask) >> xshift);
+void logUnmask::logUnmaskEvent(unsigned int evPU, short& metax, short& metay, short& pol, short& type) {
+    int y = (short)(retinalSize-1) - (short)((evPU & xmask) >> xshift);
     //y = (short) ((evPU & xmask)>>xshift);
-    x = (short) ((evPU & ymask) >> yshift);
-    pol = ((short)((evPU & polmask) >> polshift)==0)?-1:1;	//+1 ON, -1 OFF
-    type = ((short)(evPU & cameramask) >> camerashift);	//0 LEFT, 1 RIGHT
+    int x = (short) ((evPU & ymask) >> yshift);
+    
+    // 2.extractiong features 
+    int position =  y * 36 + x;
+    
+    //feature* pFeature = logChip_LUT;
+    //pFeature += position;
+    //short* pcols = pFeature;
+    //type  = pcols;
+    //pcols++;
+    //metax = pcols;
+    //pcols++;
+    //metay = pcols;
+    //pcols++;
+    //pol   = pcols;    
+
+    type  = logChip_LUT[position][0];
+    metax = logChip_LUT[position][1];
+    metay = logChip_LUT[position][2];
+    pol   = logChip_LUT[position][3];
+    
+    //printf("unmasked event %d %d %d %d \n",type, metax, metay, pol);
+
+    //pol = ((short)((evPU & polmask) >> polshift)==0)?-1:1;	//+1 ON, -1 OFF
+    //type = ((short)(evPU & cameramask) >> camerashift);	//0 LEFT, 1 RIGHT
 }
 
-
-
-/*
-
 void logUnmask::logUnmaskEvent(long int evPU, short& metax, short& metay, short& pol, short& type) {
-    int x    = (short)(retinalSize-1) - (short)((evPU & xmask) >> xshift);
+    // unmasking through LUT    
+    // 1.determining the position in the LUT
+    int x    = (short) (retinalSize-1) - (short)((evPU & xmask) >> xshift);
     int y    = (short) ((evPU & ymask) >> yshift);
-    pol  = ((short)((evPU & polmask) >> polshift)==0)?-1:1;        //+1 ON, -1 OFF
-    //determining whether the address is in fovea or in periphery
-
-    if ((x-2)%6==0){
-        // CD
-        type = 0;
-        x = (int) (x - 2) / 6;
-        y = (int) (y - 1) / 3;
-    }
+    x = 10;
+    y = 11;
+    // 2.extractiong features 
+    int position =  y * 36 + x;
     
-    if ((x-6)%12==0)&&((y>=12)||(y<=5)) {
-        // IF
-        type =  5;
-        x = (int) (x - 6) / 6;
-        if (y % 2 == 0)
-            y = (int)  y / 3;
-        else
-            y = (int)  (y / 3) - 1; 
-    }
+    //feature* pFeature = logChip_LUT;
+    //pFeature += position;
+    //short* pcols = pFeature;
+    //type  = pcols;
+    //pcols++;
+    //metax = pcols;
+    //pcols++;
+    //metay = pcols;
+    //pcols++;
+    //pol   = pcols;    
 
-    if((y>=6)&&(y<12)&&(x>=12)&&(x<24)) {
-        //fovea
-        if((x >= 16) && (x < 20)) {
-            //inner columns
-            if (y % 3 == 0) {
-                type = 2;
-                if (x < 18) {
-                    x = 2;
-                }
-                else{
-                    x = 3;
-                }
-                if(y % 2 == 0) {
-                    y = 2;
-                }
-                else {
-                    y = 3;
-                }
-            }
-            
-            if (y % 3 != 0) {
-                type = 4;
-                if (x < 18) {
-                    x = 2;
-                }
-                else{
-                    x = 3;
-                }
-                if(y % 2 == 0) {
-                    y = 2;
-                }
-                else {
-                    y = 3;
-                }
-        }
-        else {
-            //outer columns
-            if (y % 3 == 0) { 
-                type = 1;
-                if (x < 18) {
-                    x = 2;
-                }
-                else{
-                    x = 3;
-                }
-                if(y % 2 == 0) {
-                    y = 2;
-                }
-                else {
-                    y = 3;
-                }
-            }
-            if (y % 3 != 0){ 
-                type=  3 ;
-                if (x < 18) {
-                    x = 2;
-                }
-                else{
-                    x = 3;
-                }
-                if(y % 2 == 0) {
-                    y = 2;
-                }
-                else {
-                    y = 3;
-                }
-            }
-        }        
-    }
-    else {
-        //periphery
-        if ( ( x       % 6 == 0 ) && (  x % 3      == 0) ) {
-            type = 1;
-        }
-        if ( ((x - 10) % 6 == 0 ) && (  x % 3      == 0) ) {
-            type = 2 ;
-        }
-        if ( ( x       % 6 == 0 ) && ( (x - 5) % 3 == 0) ) { 
-            type= 3;
-        if ( ((x - 10) % 6 == 0 ) && ( (x - 5) % 3 == 0) ) {
-            type= 4;
-        }
-    }
-}
-
-*/
-
-void logUnmask::logUnmaskEvent(long int evPU, short& metax, short& metay, short& pol, short& type) {
-    //unmasking through LUT
+    type  = logChip_LUT[position][0];
+    metax = logChip_LUT[position][1];
+    metay = logChip_LUT[position][2];
+    pol   = logChip_LUT[position][3];
     
-    int x    = (short)(retinalSize-1) - (short)((evPU & xmask) >> xshift);
-    int y    = (short) ((evPU & ymask) >> yshift);
-    pol  = ((short)((evPU & polmask) >> polshift)==0)?-1:1;        //+1 ON, -1 OFF
-    //determining whether the address is in fovea or in periphery
+    //printf("unmasked event %d %d %d %d \n",type, metax, metay, pol);
 }
 
 
@@ -624,79 +629,6 @@ void logUnmask::threadRelease() {
 }
 
 
-/*
-void logUnmask::logUnmaskData(char* i_buffer, int i_sz) {
-    //cout << "Size of the received packet to logUnmask : " << i_sz << endl;
-    //AER_struct sAER
-    
-    for (int j=0; j<i_sz; j+=4) {
-        if((i_buffer[j+3]&0x80)==0x80) {
-            // timestamp bit 15 is one -> wrap
-            // now we need to increment the wrapAdd
-            wrapAdd+=0x4000; //uses only 14 bit timestamps
-            //System.out.println("received wrap event, index:" + eventCounter + " wrapAdd: "+ wrapAdd);
-            //NumberOfWrapEvents++;
-        }
-        else if((i_buffer[j+3]&0x40)==0x40) {
-            // timestamp bit 14 is one -> wrapAdd reset
-            // this firmware version uses reset events to reset timestamps
-            //write(file_desc,reset,1);//this.resetTimestamps();
-            //buffer_msg[0] = 6;
-            //write(file_desc,buffer_msg,1);
-            wrapAdd=0;
-            // log.info("got reset event, timestamp " + (0xffff&((short)aeBuffer[i]&0xff | ((short)aeBuffer[i+1]&0xff)<<8)));
-        }
-        else {
-            //logUnmask the data
-            unsigned int part_1 = 0x00FF&i_buffer[j];
-            unsigned int part_2 = 0x00FF&i_buffer[j+1];
-            unsigned int part_3 = 0x00FF&i_buffer[j+2];
-            unsigned int part_4 = 0x00FF&i_buffer[j+3];
-            unsigned int blob = (part_1)|(part_2<<8);
-            logUnmaskEvent(blob, cartX, cartY, polarity);
-            timestamp = ((part_3)|(part_4<<8));
-            timestamp+=wrapAdd;
-            if((cartX!=127)||(cartY!=0)) {      //removed one pixel which is set once the driver do not work properly
-                if(polarity>0) {
-                    buffer[cartX+cartY*retinalSize]=responseGradient;
-                    timeBuffer[cartX+cartY*retinalSize]=timestamp;
-                    lasttimestamp=timestamp;
-                    if(buffer[cartX+cartY*retinalSize]>127) {
-                        buffer[cartX+cartY*retinalSize]=127;
-                    }
-                }
-                else if(polarity<0) {
-                    buffer[cartX+cartY*retinalSize]=-responseGradient;
-                    if (buffer[cartX+cartY*retinalSize]<-127) {
-                        buffer[cartX+cartY*retinalSize]=-127;
-                    }
-                }
-                //udpates the temporary buffer
-
-                if(temp1) {
-                    if(countEvent>maxPosEvent-1) {
-                        countEvent=maxPosEvent-1;
-                    }
-                    fifoEvent_temp[countEvent]=cartX+cartY*retinalSize;
-                    //increments the counter of events
-                    countEvent++;
-                }
-                else {
-                    if(countEvent2>maxPosEvent-1) {
-                        countEvent2=maxPosEvent-1;
-                    }
-                    fifoEvent_temp2[countEvent2]=cartX+cartY*retinalSize;
-                    //increments the counter of events
-                    countEvent2++;
-                }
-            }
-            //fprintf(uEvents,"%d\t%d\t%d\t%u\n", cartX, cartY, polarity, timestamp);
-        }
-    }
-    //fprintf(uEvents,"%d\t%d\t%d\t%u\n", -1, -1, -1, -1);
-}
-
-*/
 
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------

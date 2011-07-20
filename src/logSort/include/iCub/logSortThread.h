@@ -37,6 +37,7 @@
 #include <sys/types.h>
 #include <inttypes.h>
 #include <stdlib.h>
+#include <sendingBuffer.h>
 
 //typedef unsigned long long int uint64_t;
 #define u64 uint64_t
