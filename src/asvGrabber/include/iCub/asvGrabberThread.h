@@ -192,7 +192,7 @@ public:
     * function that sets the bias
     * @param value value of the bias
     */
-    void setSynTau(double value) {SynThr = value;};
+    void setSynTau(double value) {SynTau = value;};
     
     /**
     * function that sets the bias

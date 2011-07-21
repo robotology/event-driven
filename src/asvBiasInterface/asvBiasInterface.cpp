@@ -248,6 +248,19 @@ static void cb_digits_CDSf( GtkAdjustment *adj ) {
     }
 }
 
+static void cb_digits_CDPr( GtkAdjustment *adj ) {
+    if (_pOutPort!=NULL) {
+        yarp::os::Bottle bot; //= _pOutPort->prepare();
+        bot.clear();
+        bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_CDP);
+        bot.addInt((int) adj->value);
+        //_pOutPort->Content() = _outBottle;
+        Bottle in;
+        _pOutPort->write(bot,in);
+    }
+}
+
 static void cb_digits_ReqPuX( GtkAdjustment *adj ) {
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
@@ -945,7 +958,7 @@ GtkWidget* createMainWindow(void) {
     box5 = gtk_vbox_new (FALSE, 0);
     gtk_container_set_border_width (GTK_CONTAINER (box5), 0);
 
-    label = gtk_label_new ("BIAS LEFT:");
+    label = gtk_label_new ("BIAS:");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
 
@@ -1043,6 +1056,18 @@ GtkWidget* createMainWindow(void) {
     g_signal_connect (G_OBJECT (adj6), "value_changed",
                       G_CALLBACK (cb_digits_CDSf), NULL);
 
+    label = gtk_label_new ("CDPr");
+    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+    
+    adj6 = gtk_adjustment_new (CDP_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj6));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj6), "value_changed",
+                      G_CALLBACK (cb_digits_CDPr), NULL);
 
     label = gtk_label_new ("ReqPuX");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
