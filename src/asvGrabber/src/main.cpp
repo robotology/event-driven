@@ -1,7 +1,7 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /* 
- * Copyright (C) 2010 RobotCub Consortium, European Commission FP6 Project IST-004370
+ * Copyright (C) 2011 RobotCub Consortium, European Commission FP6 Project IST-004370
  * Authors: Francesco Rea
  * email:   francesco.rea@iit.it
  * website: www.robotcub.org 
@@ -20,10 +20,10 @@
   
 /**
  * @file main.cpp
- * @brief main code for launching the aexGrabber
+ * @brief main code for launching the asvGrabber
  */
 
-#include "iCub/aexGrabberModule.h" 
+#include <iCub/asvGrabberModule.h>
 
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -34,11 +34,11 @@ int main(int argc, char * argv[])
     Network yarp;
     
     Time::turboBoost();
-    aexGrabberModule module; 
+    asvGrabberModule module; 
 
     ResourceFinder rf;
     rf.setVerbose(true);
-    rf.setDefaultConfigFile("aexGrabber.ini"); //overridden by --from parameter
+    rf.setDefaultConfigFile("asvGrabber.ini"); //overridden by --from parameter
     rf.setDefaultContext("eMorphApplication/conf");   //overridden by --context parameter
     rf.configure("ICUB_ROOT", argc, argv);
  

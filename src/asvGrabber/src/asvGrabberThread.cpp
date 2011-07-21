@@ -1,4 +1,3 @@
-
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /*
@@ -16,7 +15,25 @@
  *
  */
 
-#include <iCub/device2yarp.h>
+/* 
+ * Copyright (C) 2011 RobotCub Consortium, European Commission FP6 Project IST-004370
+ * Authors: Francesco Rea
+ * email:   francesco.rea@iit.it
+ * website: www.robotcub.org 
+ * Permission is granted to copy, distribute, and/or modify this program
+ * under the terms of the GNU General Public License, version 2 or any
+ * later version published by the Free Software Foundation.
+ *
+ * A copy of the license can be found at
+ * http://www.robotcub.org/icub/license/gpl.txt
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details
+ */
+
+#include <iCub/asvGrabberThread.h>
 //#include <sys/types.h>
 #include <assert.h>
 #include <unistd.h>
@@ -88,7 +105,7 @@ reset_pins_expand = 4
 #define THRATE 5
 
 
-device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName = " "):RateThread(THRATE) {
+asvGrabberThread::asvGrabberThread(string portDeviceName, bool i_bool, string i_fileName = " "):RateThread(THRATE) {
 
     /*   ORIGINAL VALUES
     *   from DVS128_PAER.xml, set Tmpdiff128
@@ -275,13 +292,13 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName =
 }
 
 
-device2yarp::~device2yarp() {
+asvGrabberThread::~asvGrabberThread() {
    
 }
 
 
 
-void device2yarp::prepareBiases() {
+void asvGrabberThread::prepareBiases() {
     //opening the device
     cout <<"name of the file buffer:" <<portDeviceName.c_str()<< endl;
     file_desc = open(portDeviceName.c_str(), O_RDWR | O_NONBLOCK | O_SYNC );
@@ -473,7 +490,7 @@ void device2yarp::prepareBiases() {
     }
 }
 
-void device2yarp::prepareBiasesRight() {
+void asvGrabberThread::prepareBiasesRight() {
     //opening the device
     cout <<"name of the file buffer:" <<portDeviceName.c_str()<< endl;
     file_desc = open(portDeviceName.c_str(), O_RDWR | O_NONBLOCK);
@@ -666,16 +683,16 @@ void device2yarp::prepareBiasesRight() {
 }
 
 
-void device2yarp::setDeviceName(string deviceName) {
+void asvGrabberThread::setDeviceName(string deviceName) {
     printf("saving portDevice \n");
     portDeviceName=deviceName;
 }
 
-void device2yarp::closeDevice(){
+void asvGrabberThread::closeDevice(){
     close(file_desc);
 }
 
-void  device2yarp::run() {
+void  asvGrabberThread::run() {
     //printf("reading \n");
 
     r = read(file_desc, pmon, monBufSize_b);
@@ -755,7 +772,7 @@ void  device2yarp::run() {
 }
 
 
-void device2yarp::sendingBias() {
+void asvGrabberThread::sendingBias() {
     int busy;
     seqDone_b = 0;
     printf("-------------------------------------------- \n");
@@ -795,7 +812,7 @@ void device2yarp::sendingBias() {
 
 }
 
-void device2yarp::progBias(string name,int bits,int value, int camera ) {
+void asvGrabberThread::progBias(string name,int bits,int value, int camera ) {
     int bitvalue;
     
     for (int i=bits-1;i>=0;i--) {
@@ -817,7 +834,7 @@ void device2yarp::progBias(string name,int bits,int value, int camera ) {
     //resetPins();
 }
 
-void device2yarp::latchCommit(int camera ) {
+void asvGrabberThread::latchCommit(int camera ) {
     //printf("entering latch_commit \n");
     biasprogtx(timestep * latchexpand, LATCH_TRANSPARENT, CLOCK_LO, 0,0, camera);
     biasprogtx(timestep * latchexpand, LATCH_KEEP, CLOCK_LO, 0,0, camera);
@@ -825,7 +842,7 @@ void device2yarp::latchCommit(int camera ) {
     //printf("exiting latch_commit \n");
 }
 
-void device2yarp::latchCommitAEs(int camera ) {
+void asvGrabberThread::latchCommitAEs(int camera ) {
     //printf("entering latch_commit \n");
     biasprogtx(timestep * latchexpand, LATCH_TRANSPARENT, CLOCK_HI, 0,0, camera );
     biasprogtx(timestep * latchexpand, LATCH_KEEP, CLOCK_HI, 0,0, camera);
@@ -833,14 +850,14 @@ void device2yarp::latchCommitAEs(int camera ) {
     //printf("exiting latch_commit \n");
 }
 
-void device2yarp::resetPins(int camera ) {
+void asvGrabberThread::resetPins(int camera ) {
     //now
     biasprogtx(0, LATCH_KEEP, CLOCK_HI, 0, camera );
     biasprogtx(reset_pins_expand * timestep, LATCH_KEEP, CLOCK_HI, 0, camera);
     //printf("exiting latch_commit \n");
 }
 
-void device2yarp::releasePowerdown(int camera ) {
+void asvGrabberThread::releasePowerdown(int camera ) {
     //now
     biasprogtx(0, LATCH_KEEP, CLOCK_HI, 0, 0, camera);
     biasprogtx(latchexpand * timestep, LATCH_KEEP, CLOCK_HI, 0, 0, camera);
@@ -848,13 +865,13 @@ void device2yarp::releasePowerdown(int camera ) {
 }
 
 
-void device2yarp::setPowerdown(int camera ) {
+void asvGrabberThread::setPowerdown(int camera ) {
     biasprogtx(0, LATCH_KEEP, CLOCK_HI, 0, 1, camera);
     biasprogtx(powerdownexpand * timestep, LATCH_KEEP, CLOCK_HI, 0, 1, camera);
 }
 
 
-void device2yarp::progBit(int bitvalue, int camera ) {
+void asvGrabberThread::progBit(int bitvalue, int camera ) {
     //set data
     biasprogtx(timestep, LATCH_KEEP, CLOCK_LO, bitvalue,0, camera );
     //toggle clock
@@ -862,7 +879,7 @@ void device2yarp::progBit(int bitvalue, int camera ) {
     biasprogtx(timestep, LATCH_KEEP, CLOCK_LO, bitvalue,0, camera);
 }
 
-void device2yarp::progBitAEs(int bitvalue, int camera ) {
+void asvGrabberThread::progBitAEs(int bitvalue, int camera ) {
     
     //set data (now)
     biasprogtx(0, LATCH_KEEP, CLOCK_HI, bitvalue,0, camera);
@@ -873,13 +890,13 @@ void device2yarp::progBitAEs(int bitvalue, int camera ) {
     biasprogtx(timestep, LATCH_KEEP, CLOCK_HI, bitvalue,0, camera);
 }
 
-void device2yarp::monitor (int secs, int camera ) {
+void asvGrabberThread::monitor (int secs, int camera ) {
     //printf("entering monitor \n");
     biasprogtx(secs * OneSecond, LATCH_KEEP, CLOCK_LO, 0,0, camera);
     //printf("exiting monitor \n");
 } 
 
-void device2yarp::biasprogtx(int time,int latch,int clock,int data, int powerdown, int camera ) {
+void asvGrabberThread::biasprogtx(int time,int latch,int clock,int data, int powerdown, int camera ) {
     unsigned char addr[4];
     unsigned char t[4];
     int err;
@@ -967,7 +984,7 @@ void device2yarp::biasprogtx(int time,int latch,int clock,int data, int powerdow
     //err = write(file_desc,addr,4); //4 byte time: 1 integer
 }
 
-bool device2yarp::setDumpFile(std::string value) {
+bool asvGrabberThread::setDumpFile(std::string value) {
     dumpfile = value;
     //fout.open(dumpfile.c_str());
     //bool ret = fout.is_open();
@@ -982,7 +999,7 @@ bool device2yarp::setDumpFile(std::string value) {
 }
 
 
-void device2yarp::threadRelease() {
+void asvGrabberThread::threadRelease() {
     /* it is better not to set the powerdown at the end!
     const u32 seqAllocChunk_b = SIZE_OF_EVENTS * sizeof(struct aer); //allocating the right dimension for biases
     memset(pseq,0,seqAllocChunk_b);
