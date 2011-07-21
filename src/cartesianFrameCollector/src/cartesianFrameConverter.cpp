@@ -27,10 +27,10 @@
 #include <cassert>
 #include <cstdlib>
 
-#define BUFFERDIM 6144  //36864
-#define TH1 2048 //12
-#define TH2 4096  
-#define CHUNKSIZE 2048
+#define BUFFERDIM 24576 
+#define TH1 8192 
+#define TH2 16384
+#define CHUNKSIZE 8192 
 
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -83,9 +83,11 @@ void cFrameConverter::onRead(sendingBuffer& i_ub) {
     valid = true;
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() ;      // number of bits received / 8 = bytes received
-    printf("dim: %d \n", dim);
-    receivedBuffer = i_ub.get_packet();
+    printf("dim %d \n", dim);
+
+    
     mutex.wait();
+    receivedBuffer = i_ub.get_packet();
     memcpy(pcBuffer,receivedBuffer,dim);
     
     if (totDim < TH1) {
@@ -107,6 +109,7 @@ void cFrameConverter::onRead(sendingBuffer& i_ub) {
     // the thrid part of the buffer is free to avoid overflow
     totDim += dim;
     mutex.post();
+    
     //printf("pcBuffer: 0x%x pcRead: 0x%x \n", pcBuffer, pcRead);
 }
 

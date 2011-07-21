@@ -1,0 +1,106 @@
+<application>
+<name>ASV Application </name>
+
+<dependencies>	
+</dependencies>
+
+<module>
+   <name>asvGrabber</name>
+   <parameters>--deviceName /dev/aerfx2_0 </parameters>
+   <node>/powerNode1</node>
+   <tag>asvGrabber</tag>
+</module>
+<module>
+   <name>asvBiasInterface</name>
+   <parameters> </parameters>
+   <node>/powerNode1</node>
+   <tag>guiASVInterfaceBias</tag>
+</module>
+<module>
+   <name>logSort</name>
+   <parameters></parameters>
+   <node>/powerNode1</node>
+   <tag>asvSorter</tag>
+</module>
+<module>
+   <name>cartesianFrameCollector</name>
+   <parameters>--name frameEM</parameters>
+   <node>/powerNode1</node>
+   <tag>cartFrameCollectorEM</tag>
+</module>
+<module>
+   <name>cartesianFrameCollector</name>
+   <parameters>--name frameIF</parameters>
+   <node>/powerNode1</node>
+   <tag>cartFrameCollectorIF</tag>
+</module>
+<module>
+   <name>cartesianFrameCollector</name>
+   <parameters>--name frameCD</parameters>
+   <node>/powerNode1</node>
+   <tag>cartFrameCollectorCD</tag>
+</module>
+<module>
+   <name>yarpview</name>
+   <parameters>--name /eventViewEM --x 000 --ysixe 000 --synch </parameters>
+   <node>console</node>
+   <tag>EMViewer</tag>
+</module>
+<module>
+   <name>yarpview</name>
+   <parameters>--name /eventViewIF --x 350 --ysixe 000 --synch </parameters>
+   <node>/console</node>
+   <tag>IFViewer</tag>
+</module
+<module>
+   <name>yarpview</name>
+   <parameters>--name /eventViewCD --x 000 --ysixe 300 --synch </parameters>
+   <node>console</node>
+   <tag>CDViewer</tag>
+</module>
+
+<connection>
+  <from>/icub/retina0</from>
+  <to>/logSort/event:i</to>
+  <protocol>tcp</protocol>
+</connection>
+<connection>
+  <from>/logSort/em:o</from>
+  <to>/rameEM/image:i</to>
+  <protocol>tcp</protocol>
+</connection>
+<connection>
+  <from>/logSort/if:o</from>
+  <to>/frameIF/image:i</to>
+  <protocol>tcp</protocol>
+</connection>
+<connection>
+  <from>/logSort/cd:o</from>
+  <to>/frameCD/image:i</to>
+  <protocol>tcp</protocol>
+</connection>	
+<connection>
+  <from>/biasInterface/command:o</from>
+  <to>/asvGrabber</to>
+  <protocol>tcp</protocol>
+</connection>
+
+
+<connection>
+  <from>/frameEM/left:o</from>
+  <to>/EMViewer</to>
+  <protocol>udp</protocol>
+</connection>
+<connection>
+  <from>/frameIF/left:o</from>
+  <to>/IFViewer</to>
+  <protocol>udp</protocol>
+</connection
+<connection>
+  <from>/frameCD/left:o</from>
+  <to>/CDViewer</to>
+  <protocol>udp</protocol>
+</connection
+
+
+</application>
