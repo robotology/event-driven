@@ -1,9 +1,9 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /* 
- * Copyright (C) 2010 RobotCub Consortium, European Commission FP6 Project IST-004370
- * Authors: Rea Francesco, Charles Clercq
- * email:   francesco.rea@iit.it, charles.clercq@iit.it
+ * Copyright (C) 2011 RobotCub Consortium, European Commission FP6 Project IST-004370
+ * Authors: Rea Francesco
+ * email:   francesco.rea@iit.it
  * website: www.robotcub.org 
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
@@ -19,12 +19,12 @@
  */
 
 /**
- * @file unmask.h
+ * @file logUnmask.h
  * @brief code for unmasking the events
  */
 
-#ifndef UNMASK_H
-#define UNMASK_H
+#ifndef LOG_UNMASK_H
+#define LOG_UNMASK_H
 
 #include <iostream>
 #include <sstream>
@@ -35,7 +35,9 @@
 //Other dependency
 #include <iCub/config.h>
 
-class unmask : public yarp::os::RateThread{
+#define feature short[4];
+
+class logUnmask : public yarp::os::RateThread{
 private:
     int id;
     int nb_trame;
@@ -80,6 +82,8 @@ private:
     FILE* uEvents;
     yarp::os::Semaphore countEventLocker;
     yarp::os::Semaphore countEventLocker2;
+
+    feature* logChip_LUT;
 
 public:
     /**
@@ -149,12 +153,12 @@ public:
     /**
     * default constructor
     */
-    unmask();
+    logUnmask();
 
     /**
     * destructor
     */
-    ~unmask();
+    ~logUnmask();
 
     /**
     * function that initialise the thread
@@ -183,7 +187,7 @@ public:
     * @param size size of the last reading from the port
     * @param reset reset the timestamp
     */
-    void unmaskData(char* data, int size, bool reset);
+    void logUnmaskData(char* data, int size, bool reset);
 
     /**
     * function that given a reference to the list of long int(32 bits) read from the port and the number of packet received
@@ -194,7 +198,7 @@ public:
     * @param pol polarity of the event +1, -1
     * @param camera reference to the camera that has produced the event
     */
-    void unmaskEvent(long int evPU, short& x, short& y, short& pol, short& camera);
+    void logUnmaskEvent(long int evPU, short& x, short& y, short& pol, short& camera);
 
     /**
     * @brief This method unmasked the raw which come from the TCP socket
@@ -204,8 +208,21 @@ public:
     * @param y Set with the y coordinate of the pixel
     * @param pol Set with the ON/OFF polarity of the pixel.
     */
-    void unmaskEvent(unsigned int evPu, short& x, short& y, short& pol, short& camera);
+    void logUnmaskEvent(unsigned int evPu, short& x, short& y, short& pol, short& camera);
 
+    /**
+     * @brief function that returns the pointer to the buffer of CHANGE DETECTOR EVENT
+     * @param pointerCD char* pointer to the beginning of the buffer
+     * @param dimCD number of the events counted in the buffer
+     */     
+    void getCD(char* pointerCD, int* dimCD);
+    
+    /**
+     * @brief function that returns the pointer to the buffer of INTEGRATE 'n' FIRE EVENT
+     * @param pointerIF char* pointer to the beginning of the buffer
+     * @param dimIF number of the events counted in the buffer
+     */     
+    void getIF(char* pointerIF, int* dimIF);
 
     /**
      * function that set to zero the vector of timestamp of positions
@@ -213,6 +230,6 @@ public:
     void resetTimestamps();
 };
 
-#endif //UNMASK_H
+#endif //LOG_UNMASK_H
 //----- end-of-file --- ( next line intentionally left blank ) ------------------
 

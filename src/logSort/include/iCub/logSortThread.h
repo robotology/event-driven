@@ -37,7 +37,7 @@
 #include <sys/types.h>
 #include <inttypes.h>
 #include <stdlib.h>
-#include <sendingBuffer.h>
+#include <iCub/eventBuffer.h>
 
 //typedef unsigned long long int uint64_t;
 #define u64 uint64_t
@@ -62,10 +62,14 @@ private:
     int countDivider;                   // divider of the count
     int width, height;                  // dimension of the extended input image (extending)
     int height_orig, width_orig;        // original dimension of the input and output images
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPort;            // port whre the output (left) is sent
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPortRight;       // port whre the output (right) is sent
-    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeft;                                  //image representing the signal on the leftcamera
-    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRight;                                 //image representing the signal on the right camera
+
+    yarp::os::BufferedPort <yarp::sig::ImageOf<yarp::sig::PixelMono> > outPort;           // port whre the output (left) is sent
+    yarp::os::BufferedPort <yarp::sig::ImageOf<yarp::sig::PixelMono> > outPortRight;      // port whre the output (right) is sent
+    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeft;                                  // image representing the signal on the leftcamera
+    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRight;                                 // image representing the signal on the right camera
+    yarp::os::BufferedPort <eventBuffer>* portCD;                                       // port where CHANGE DETECTOR events are sent
+    yarp::os::BufferedPort <eventBuffer>* portIF;                                       // port wgere INTEGRATE 'n' FIRE events are sent
+
     std::string name;                   // rootname of all the ports opened by this thread
     bool verb;
     bool synchronised;                  // flag to check whether the microsecond counter has been synchronised
@@ -81,11 +85,13 @@ private:
     yarp::os::Semaphore mutex;          // semaphore thar regulates the access to the buffer resource
     clock_t endTime,startTime;
     long T1,T2;
-    plotterThread* pThread;                  // plotterThread for the trasformation of the event in images
-    logFrameConverter* lfConverter;           //receives real-time events
-    logUnmask unmask_events;                   // object that unmask events
-    char* bufferRead;                       // buffer of events read from the port
-    char* bufferCopy;                       // local copy of the events read
+    plotterThread* pThread;             // plotterThread for the trasformation of the event in images
+    logFrameConverter* lfConverter;     // receives real-time events
+    logUnmask unmask_events;            // object that unmask events
+    char* bufferRead;                   // buffer of events read from the port
+    char* bufferCopy;                   // local copy of the events read
+
+    
 public:
     /**
     * default constructor
@@ -145,6 +151,16 @@ public:
     * @param camera reference to the camera the image belongs LEFT 1, RIGHT 1
     */
     void getMonoImage(yarp::sig::ImageOf<yarp::sig::PixelMono>* image, unsigned long minCount,unsigned long maxCount, bool camera);
+
+    /**
+     * @brief functiont that sends on a specific port bytes stored into a buffer
+     * @param output port where bytes are sent
+     * @param buffer collection of bytes that are going to be sent
+     * @sz    dimension of the buffer to be sent
+     */
+    void sendBuffer(yarp::os::BufferedPort<eventBuffer>* port, char* buffer, int sz);
+    
+
 
 };
 

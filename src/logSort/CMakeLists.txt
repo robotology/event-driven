@@ -1,4 +1,4 @@
-# Copyright: (C) 2010 RobotCub Consortium
+# Copyright: (C) 2011 RobotCub Consortium
 # Authors: Francesco Rea
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
@@ -6,13 +6,17 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 SET(KEYWORD "logSort")
 PROJECT(${KEYWORD})
 
+set(ICUB_CONTRIB_DIRS $ENV{ICUB_DIR}/include)
+MESSAGE("_INCLUDE_DIRS ${ICUB_CONTRIB_DIRS}")
 
 INCLUDE_DIRECTORIES(
     ${PROJECT_SOURCE_DIR}/include
     ${YARP_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS}    
-    ${ICUB_INCLUDE_DIRS}
+    ${ICUB_INCLUDE_DIRS}    
+    ${ICUB_CONTRIB_DIRS}
 )
+
 
 # Search for source code.
 FILE(GLOB folder_source src/*.cpp src/*.cc src/*.c)

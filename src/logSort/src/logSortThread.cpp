@@ -43,6 +43,7 @@ using namespace std;
 #define CHUNKSIZE 2048
 #define dim_window 5
 #define synch_time 1000
+#define SIZE_PACKET 8192
 
 logSortThread::logSortThread() : RateThread(THRATE) {
     synchronised = false;
@@ -281,13 +282,13 @@ void logSortThread::run() {
 	
 	int dimCD;
 	char* pCD;
-	getCD(pCD,dimCD);
-	sendBuffer(portCD, pCD, dimCD);
+	unmask_events.getCD(pCD,&dimCD);
+        sendBuffer(portCD, pCD, dimCD);
 	
-	int dimCD;
-	char* pCD;
-	getCD(pCD,dimCD);
-	sendBuffer(portCD, pCD, dimCD);
+	//int dimIF;
+	//char* pIF;
+	//unmask_events.getIF(pIF,&dimIF);
+	//sendBuffer(portIF, pIF, dimIF);
 	 
 	
         //getMonoImage(imageRight,minCount,maxCount,0);
@@ -297,12 +298,16 @@ void logSortThread::run() {
     }
 }
 
-void logSortThread::sendBuffer(BufferedPort<Bottle>* port, char* bffer, int* sz) {
-  if (port.getOutputCount()) {
-    sendingBuffer data2send(buffer, sz);    
-    sendingBuffer& tmp = port.prepare();
+void logSortThread::sendBuffer(BufferedPort<eventBuffer>* port, char* buffer, int sz) {
+  if (port->getOutputCount()) {
+    char tmpBuffer[SIZE_PACKET];
+    for (int i = 0; i< sz; i++) {
+      tmpBuffer[i] = *buffer++;
+    }
+    eventBuffer data2send(tmpBuffer, sz);    
+    eventBuffer& tmp = port->prepare();
     tmp = data2send;
-    port.write();
+    port->write();
   }      
 }
 
