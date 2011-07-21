@@ -164,7 +164,7 @@ asvGrabberThread::asvGrabberThread(string portDeviceName, bool i_bool, string i_
     // opening the port for sending out events
     int deviceNum=0;
     printf("opening port for sending the read events \n");
-    str_buf << "/icub/retina" << deviceNum << ":o";
+    str_buf << "/icub/retinaASV:o";
     port.open(str_buf.str().c_str());
     portDimension.open("/aexGrabber/dim:o");
 
@@ -591,10 +591,10 @@ void  asvGrabberThread::run() {
    int sizeofstructaer = sizeof(struct aer);
 
     if (r % sizeofstructaer != 0) {
-        printf("ERROR: read %d bytes from the AEX!!!\n", r);
+      //printf("ERROR: read %d bytes from the AEX!!!\n", r);
     }
     monBufEvents = r / sizeofstructaer;
-    printf("%d \n",r);
+    //printf("%d \n",r);
 
     int k = 0;
     int k2 = 0;
