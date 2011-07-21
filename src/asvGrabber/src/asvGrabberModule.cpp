@@ -170,6 +170,7 @@ bool asvGrabberModule::respond(const Bottle& command, Bottle& reply) {
     }
 
     mutex.wait();
+    
     switch (command.get(0).asVocab()) {
     case COMMAND_VOCAB_HELP:
         rec = true;
@@ -280,6 +281,7 @@ bool asvGrabberModule::respond(const Bottle& command, Bottle& reply) {
     case COMMAND_VOCAB_SET:
         rec = true;
         {
+            
             switch(command.get(1).asVocab()) {
                                 
             case COMMAND_VOCAB_SYTH:{
@@ -294,7 +296,8 @@ bool asvGrabberModule::respond(const Bottle& command, Bottle& reply) {
             } break;
             
             
-            } break;
+            } // closing the inner switch
+            
             
         } break; //closing the SET
     case COMMAND_VOCAB_GET:
@@ -514,8 +517,11 @@ bool asvGrabberModule::respond(const Bottle& command, Bottle& reply) {
         }
         break;
 
-        }
-    }
+    } //end of the outer switch
+
+
+
+
     mutex.post();
     
     if (!rec)
