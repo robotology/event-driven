@@ -46,6 +46,8 @@
 #define u32 uint32_t
 #define u64 uint64_t
 
+#define SIZE_OF_EVENT 8192
+
 struct aer {
     u32 timestamp;
     u32 address;
@@ -170,150 +172,6 @@ public:
     void setBinaryFile(FILE* f) {binInput = f; };
 
     /**
-    * function that sets the bias
-    * @param value value of the bias
-    */
-    void setPR(double value) {pr = value;};
-    
-    /**
-    * function that sets the bias
-    * @param value value of the bias
-    */
-    void setFOLL(double value) {foll = value;};
-
-    /**
-    * function that sets the bias
-    * @param value value of the bias
-    */
-    void setDIFF(double value) {diff = value;};
-
-    /**
-    * function that sets the bias
-    * @param value value of the bias
-    */
-    void setDIFFON(double value) {diffon = value;};
-
-    /**
-    * function that sets the bias
-    * @param value value of the bias
-    */
-    void setPUY(double value) {puy = value;};
-
-    /**
-    * function that sets the bias
-    * @param value value of the bias
-    */
-    void setREFR(double value) {refr = value;};
-
-    /**
-    * function that sets the bias
-    * @param value value of the bias
-    */
-    void setREQ(double value) {req = value;};
-
-    /**
-    * function that sets the bias
-    * @param value value of the bias
-    */
-    void setDIFFOFF(double value) {diffoff = value;};
-    
-    /**
-    * function that sets the bias
-    * @param value value of the bias
-    */
-    void setPUX(double value) {pux = value;};
-    
-    /**
-    * function that sets the bias
-    * @param value value of the bias
-    */
-    void setREQPD(double value) {reqPd = value;};
-
-    /**
-    * function that sets the bias
-    * @param value value of the bias
-    */
-    void setINJGND(double value) {injg = value;};
-
-    /**
-    * function that sets the bias
-    * @param value value of the bias
-    */
-    void setCAS(double value) {cas = value;};
-
-    /**
-    * function that sets the bias Right
-    * @param value value of the bias
-    */
-    void setPRRight(double value) {prRight = value;};
-    
-    /**
-    * function that sets the bias Right
-    * @param value value of the bias
-    */
-    void setFOLLRight(double value) {follRight = value;};
-
-    /**
-    * function that sets the bias Right
-    * @param value value of the bias
-    */
-    void setDIFFRight(double value) {diffRight = value;};
-
-    /**
-    * function that sets the bias Right
-    * @param value value of the bias
-    */
-    void setDIFFONRight(double value) {diffonRight = value;};
-
-    /**
-    * function that sets the bias Right
-    * @param value value of the bias
-    */
-    void setPUYRight(double value) {puyRight = value;};
-
-    /**
-    * function that sets the bias Right
-    * @param value value of the bias
-    */
-    void setREFRRight(double value) {refrRight = value;};
-
-    /**
-    * function that sets the bias Right
-    * @param value value of the bias
-    */
-    void setREQRight(double value) {reqRight = value;};
-
-    /**
-    * function that sets the bias Right
-    * @param value value of the bias
-    */
-    void setDIFFOFFRight(double value) {diffoffRight = value;};
-    
-    /**
-    * function that sets the bias Right
-    * @param value value of the bias
-    */
-    void setPUXRight(double value) {puxRight = value;};
-    
-    /**
-    * function that sets the bias Right
-    * @param value value of the bias
-    */
-    void setREQPDRight(double value) {reqPdRight = value;};
-
-    /**
-    * function that sets the bias Right
-    * @param value value of the bias
-    */
-    void setINJGNDRight(double value) {injgRight = value;};
-
-    /**
-    * function that sets the bias Right
-    * @param value value of the bias
-    */
-    void setCASRight(double value) {casRight = value;};
-
-    /**
     * indicates whether the event has to be saved in a file
     */
     void setDumpEvent(bool value) { save = value; };
@@ -324,85 +182,365 @@ public:
     bool setDumpFile(std::string value);
 
     /**
-    * function that returns the bias for Left camera
-    * @return value of the bias
+    * function that sets the bias
+    * @param value value of the bias
     */
-    double getPR() {return pr ;};
+    void setSynThr(double value) {SynThr = value;};
+
     
     /**
-    * function that returns the bias for Left camera
-    * @return value of the bias
+    * function that sets the bias
+    * @param value value of the bias
     */
-    double getFOLL() {return foll ;};
-
-    /**
-    * function that returns the bias for Left camera
-    * @return value of the bias
-    */
-    double getDIFF() {return diff;};
-
-    /**
-    * function that returns the bias for Left camera
-    * @return value of the bias
-    */
-    double getDIFFON() {return diffon;};
-
-    /**
-    * function that returns the bias for Left camera
-    * @return value of the bias
-    */
-    double getPUY() {return puy;};
-
-    /**
-    * function that returns the bias for Left camera
-    * @return value of the bias
-    */
-    double getREFR() {return refr ;};
-
-    /**
-    * function that returns the bias for Left camera
-    * @return value of the bias
-    */
-    double getREQ() {return req ;};
-
-    /**
-    * function that returns the bias for Left camera
-    * @return value of the bias
-    */
-    double getDIFFOFF() {return diffoff;};
+    void setSynTau(double value) {SynThr = value;};
     
     /**
-    * function that returns the bias for Left camera
-    * @return value of the bias
+    * function that sets the bias
+    * @param value value of the bias
     */
-    double getPUX() {return pux;};
+    void setSynPxlTau(double value) {SynPxlTau = value;};
     
     /**
-    * function that returns the bias for Left camera
-    * @return value of the bias
+    * function that sets the bias
+    * @param value value of the bias
     */
-    double getREQPD() {return reqPd;};
+    void setSynPxlThr(double value) {SynPxlThr = value;};
 
     /**
-    * function that returns the bias for Left camera
-    * @return value of the bias
+    * function that sets the bias
+    * @param value value of the bias
     */
-    double getINJGND() {return injg;};
+    void setTestPbias(double value) {testPbias = value;};
 
     /**
-    * function that returns the bias for Left camera
+    * function that sets the bias
+    * @param value value of the bias
+    */
+    void setCDRefr(double value) {CDRefr= value;};
+
+    /**
+    * function that sets the bias
+    * @param value value of the bias
+    */
+    void setCDSf(double value) {CDSf = value;};
+
+    /**
+    * function that sets the bias
+    * @param value value of the bias
+    */
+    void setCDPr(double value) {CDPr = value;};
+
+    /**
+    * function that sets the bias
+    * @param value value of the bias
+    */
+    void setReqPuX(double value) {ReqPuX = value;};
+
+    /**
+    * function that sets the bias
+    * @param value value of the bias
+    */
+    void setReqPuY(double value) {ReqPuY = value;};
+
+    /**
+    * function that sets the bias
+    * @param value value of the bias
+    */
+    void setIFRf(double value) {IFRf = value;};
+
+    /**
+    * function that sets the bias
+    * @param value value of the bias
+    */
+    void setIFThr(double value) {IFThr = value;};
+
+
+    /**
+    * function that sets the bias
+    * @param value value of the bias
+    */
+    void setIFLk(double value) {IFLk = value;};
+
+
+    /**
+    * function that sets the bias
+    * @param value value of the bias
+    */
+    void setCDOffThr(double value) {CDOffThr = value;};
+
+    /**
+    * function that sets the bias
+    * @param value value of the bias
+    */
+    void setSynPxlW(double value) {SynPxlW = value;};
+    
+    /**
+    * function that sets the bias
+    * @param value value of the bias
+    */
+    void setCDOnThr(double value) {CDOnThr = value;};
+
+    /**
+    * function that sets the bias
+    * @param value value of the bias
+    */
+    void setCDDiff(double value) {CDDiff = value;};
+    
+    /**
+    * function that sets the bias
+    * @param value value of the bias
+    */
+    void setEMCompH(double value) {EMCompH = value;};
+    
+    /**
+    * function that sets the bias
+    * @param value value of the bias
+    */
+    void setEMCompT(double value) {EMCompT = value;};
+
+    /**
+    * function that sets the bias
+    * @param value value of the bias
+    */
+    void setCDIoff(double value) {CDIoff = value;};
+
+    /**
+    * function that sets the bias
+    * @param value value of the bias
+    */
+    void setCDRGnd(double value) {CDRGnd = value;};
+
+    /**
+    * function that sets the bias
+    * @param value value of the bias
+    */
+    void setSelf(double value) {self = value;};
+    
+    /**
+    * function that sets the bias
+    * @param value value of the bias
+    */
+    void setFollBias(double value) {FollBias = value;};
+
+    /**
+    * function that sets the bias
+    * @param value value of the bias
+    */
+    void setArbPd(double value) {ArbPd = value;};
+
+    /**
+    * function that sets the bias
+    * @param value value of the bias
+    */
+    void setEMVrefL(double value) {EMVrefL = value;};
+
+    /**
+    * function that sets the bias
+    * @param value value of the bias
+    */
+    void setCDCas(double value) {CDCas = value;};
+
+
+    /**
+    * function that sets the bias
+    * @param value value of the bias
+    */
+    void setEMVrefH(double value) {EMVrefH = value;};
+
+
+    /**
+    * function that sets the bias
+    * @param value value of the bias
+    */
+    void setI2V(double value) {I2V = value;};
+
+
+    //***************************************************************************
+    
+    /**
+    * function that returns the bias 
     * @return value of the bias
     */
-    double getCAS() {return cas;};
+    double getSynThr() {return SynThr ;};
+    
+    /**
+    * function that returns the bias 
+    * @return value of the bias
+    */
+    double getSynTau() {return SynTau ;};
 
+    /**
+    * function that returns the bias 
+    * @return value of the bias
+    */
+    double getSynPxlTau() {return SynPxlTau ;};
+
+    /**
+    * function that returns the bias 
+    * @return value of the bias
+    */
+    double getSynPxlThr() {return SynPxlThr ;};
+    
+    /**
+    * function that returns the bias 
+    * @return value of the bias
+    */
+    double getTestPBias() {return testPbias ;};
+
+    /**
+    * function that returns the bias 
+    * @return value of the bias
+    */
+    double getCDRefr() {return CDRefr ;};
+
+    /**
+    * function that returns the bias 
+    * @return value of the bias
+    */
+    double getCDSf() {return CDSf ;};
+    
+    /**
+    * function that returns the bias 
+    * @return value of the bias
+    */
+    double getCDPr() {return CDPr ;};
+    
+    /**
+    * function that returns the bias 
+    * @return value of the bias
+    */
+    double getReqPuX() {return ReqPuX ;};
+
+    /**
+    * function that returns the bias 
+    * @return value of the bias
+    */
+    double getReqPuY() {return ReqPuY ;};
+
+    /**
+    * function that returns the bias 
+    * @return value of the bias
+    */
+    double getIFRf() {return IFRf ;};
+
+    /**
+    * function that returns the bias 
+    * @return value of the bias
+    */
+    double getIFThr() {return IFThr ;};
+
+    /**
+    * function that returns the bias 
+    * @return value of the bias
+    */
+    double getIFLk() {return IFLk ;};
+
+    /**
+    * function that returns the bias 
+    * @return value of the bias
+    */
+    double getCDOffThr() {return CDOffThr; };
+    
+    /**
+    * function that returns the bias 
+    * @return value of the bias
+    */
+    double getSynPxlW() {return SynPxlW; };
+
+    /**
+    * function that returns the bias 
+    * @return value of the bias
+    */
+    double getSynW() {return SynW; };
+    
+    /**
+    * function that returns the bias 
+    * @return value of the bias
+    */
+    double getCDOnThr() {return CDOnThr; };
+
+    /**
+    * function that returns the bias 
+    * @return value of the bias
+    */
+    double getCDDiff() {return CDDiff ;};
+    
+    /**
+    * function that returns the bias 
+    * @return value of the bias
+    */
+    double getEMCompH() {return EMCompH ;};
+
+    /**
+    * function that returns the bias 
+    * @return value of the bias
+    */
+    double getEMCompT() {return EMCompT ;};
+
+    /**
+    * function that returns the bias 
+    * @return value of the bias
+    */
+    double getCDIoff() {return CDIoff ;};
+
+    /**
+    * function that returns the bias 
+    * @return value of the bias
+    */
+    double getCDRGnd() {return CDRGnd ;};
+
+    /**
+    * function that returns the bias 
+    * @return value of the bias
+    */
+    double getSelf() {return self ;};
+    
+    /**
+    * function that returns the bias 
+    * @return value of the bias
+    */
+    double getFollBias() {return FollBias ;};
+    
+    /**
+    * function that returns the bias 
+    * @return value of the bias
+    */
+    double getArbPd() {return ArbPd ;};
+
+
+    /**
+    * function that returns the bias 
+    * @return value of the bias
+    */
+    double getEMVrefL() {return EMVrefL ;};
+    
+
+    /**
+    * function that returns the bias 
+    * @return value of the bias
+    */
+    double getCDCas() {return CDCas ;};
+
+
+    /**
+    * function that returns the bias 
+    * @return value of the bias
+    */
+    double getEMVrefH() {return EMVrefH ;};
+
+    /**
+    * function that returns the bias 
+    * @return value of the bias
+    */
+    double getI2V() {return I2V ;};
 
 private:
-    yarp::os::BufferedPort<sendingBuffer> port;              //port sending events
+    yarp::os::BufferedPort<eventBuffer> port;                //port sending events
     yarp::os::BufferedPort<yarp::os::Bottle> portDimension;  //port sending dimension of packets   
-    int r;                                           //dimension of the received buffer of event for display
+    int r;                                                   //dimension of the received buffer of event for display
     FILE* raw;
     FILE* binInput;
-    bool biasFromBinary;                            // indicates whether the bias programmed are read from a file
+    bool biasFromBinary;                                     // indicates whether the bias programmed are read from a file
     u64 seqTime;
     u64 ec;
     u32 seqAlloced_b;
@@ -439,33 +577,35 @@ private:
 
     std::stringstream str_buf;
     FILE* fout;                          //reference to the object for output file stream
-
-    int pr;                                 //bias left dvs
-    int foll;                               //bias left dvs
-    int diff;                               //bias left dvs
-    int diffon;                             //bias left dvs
-    int puy;                                //bias left dvs
-    int refr;                               //bias left dvs
-    int reqPd;                              //bias left dvs
-    int diffoff;                            //bias left dvs
-    int pux;                                //bias left dvs
-    int req;                                //bias left dvs
-    int injg;                               //bias left dvs
-    int cas;                                //bias left dvs
-
-    int prRight;                            //bias right dvs
-    int follRight;                          //bias right dvs
-    int diffRight;                          //bias right dvs
-    int diffonRight;                        //bias right dvs
-    int puyRight;                           //bias right dvs
-    int refrRight;                          //bias right dvs
-    int reqPdRight;                         //bias right dvs
-    int diffoffRight;                       //bias right dvs
-    int puxRight;                           //bias right dvs
-    int reqRight;                           //bias right dvs
-    int injgRight;                          //bias right dvs
-    int casRight;                           //bias right dvs
-
+    int SynThr;      
+    int SynTau;  
+    int SynPxlTau;
+    int SynPxlThr;
+    int CDRefr;    
+    int CDSf;   
+    int CDPr;
+    int ReqPuX;
+    int ReqPuY;
+    int IFRf;
+    int IFThr;     
+    int IFLk;
+    int CDOffThr;
+    int SynPxlW;
+    int testPbias;
+    int SynW;
+    int CDOnThr;
+    int CDDiff;
+    int EMCompH;
+    int EMCompT;
+    int CDIoff;
+    int CDRGnd;
+    int self;
+    int FollBias;
+    int ArbPd;
+    int EMVrefL;
+    int CDCas;
+    int EMVrefH;
+    int I2V;
 };
 
 #endif //_ASV_GRABBER_THREAD_H

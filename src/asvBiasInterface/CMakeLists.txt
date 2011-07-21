@@ -1,21 +1,15 @@
-# Copyright: (C) 2010 RobotCub Consortium
+# Copyright: (C) 2011 RobotCub Consortium
 # Authors: Francesco Rea
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
-SET(KEYWORD "biasInterface")
+SET(KEYWORD "asvBiasInterface")
 PROJECT(${KEYWORD})
 
 
 LINK_LIBRARIES(${GtkPlus_LIBRARIES})
 LINK_DIRECTORIES(${GTKPLUS_LIBRARY_DIR})
 INCLUDE_DIRECTORIES(${GtkPlus_INCLUDE_DIRS})
-
-#set up gthread
-#ADD_DEFINITIONS(${GTHREAD_C_FLAGS})
-#LINK_LIBRARIES(${Gthread_LIBRARIES})
-#INCLUDE_DIRECTORIES(${Gthread_INCLUDE_DIRS})
-
 
 #search for includes
 INCLUDE_DIRECTORIES(
@@ -25,7 +19,6 @@ INCLUDE_DIRECTORIES(
     ${OpenCV_INCLUDE_DIRS}    		 
     ${GtkPlus_INCLUDE_DIRS}
 )
-
 
 # Search for source code.
 FILE(GLOB folder_source *.cpp *.cc .c)

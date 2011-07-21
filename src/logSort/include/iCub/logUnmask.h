@@ -35,36 +35,36 @@
 //Other dependency
 #include <iCub/config.h>
 
-#define feature short[4];
+typedef short feature[4];
 
 class logUnmask : public yarp::os::RateThread{
 private:
     int id;
     int nb_trame;
-    int count;                       // counter of the unmasked events
+    int count;                            // counter of the unmasked events
     
     int sz;
     int* buffer;                          // buffer representing the event in image plane (left)
-    unsigned long* timeBuffer;        // buffer contains the timestamp of the particular location (left)
-    int* bufferRight;                     //buffer representing the event in image plane (right)
-    unsigned long* timeBufferRight;   // buffer contains the timestamp of the particular location (right)
+    unsigned long* timeBuffer;            // buffer contains the timestamp of the particular location (left)
+    int* bufferRight;                     // buffer representing the event in image plane (right)
+    unsigned long* timeBufferRight;       // buffer contains the timestamp of the particular location (right)
     //int* fifoEvent;
     //int* fifoEvent_temp;
     //int* fifoEvent_temp2;
-    unsigned long timestamp;         // 16 bits variable to save the timestamp
-    unsigned long timestamplong;         // variable 32 bits to save the timestamp
-    unsigned long lasttimestamp;          //last timestamp acquired for the left camera
-    unsigned long lasttimestampright;     //last timestamp acquired for the right camera
+    unsigned long timestamp;              // 16 bits variable to save the timestamp
+    unsigned long timestamplong;          // variable 32 bits to save the timestamp
+    unsigned long lasttimestamp;          // last timestamp acquired for the left camera
+    unsigned long lasttimestampright;     // last timestamp acquired for the right camera
     unsigned long eldesttimestamp;        // timestamp of the eldest event in the buffer 
-    short cartX, cartY, polarity, camera;
+    short cartX, cartY, polarity, type;
 
     int wrapAdd;
     unsigned int xmask;              // 16 bits mask for unmasking of the address
-    unsigned int ymask;             // 16 bits mask for unmasking of the address
-    long int xmasklong;         // 32 bits mask for unmasking of the event
-    long int ymasklong;         // 32 bits mask for unmasking of the event
-    int yshift;                     // shift of 8 bits for getting the y in 16 bits address
-    int xshift;                     // shift of 1 bit to get the x in 16 bit (polarity)
+    unsigned int ymask;              // 16 bits mask for unmasking of the address
+    long int xmasklong;              // 32 bits mask for unmasking of the event
+    long int ymasklong;              // 32 bits mask for unmasking of the event
+    int yshift;                      // shift of 8 bits for getting the y in 16 bits address
+    int xshift;                      // shift of 1 bit to get the x in 16 bit (polarity)
     int yshift2;                     // shift of 16 bits for getting the y in 32 bits address
     int polshift;                    // shift necessary to cast the unmasked value to short
     int polmask;                     // mask necessary to extract the polarity
@@ -74,7 +74,7 @@ private:
     int minValue;
     int maxValue;
     int countEvent;                     //counter of the number of events saved in the buffer1
-    int countEvent2;                     //counter of the number of events saved in the buffer2
+    int countEvent2;                    //counter of the number of events saved in the buffer2
     int numKilledEvents;                //number of the element that have be removed from the buffer
     bool temp1;                         //boolean flag that indicates where the events have to be saved
     bool validLeft,validRight;          //flag for validity of the events
@@ -215,7 +215,7 @@ public:
      * @param pointerCD char* pointer to the beginning of the buffer
      * @param dimCD number of the events counted in the buffer
      */     
-    void getCD(char* pointerCD, int* dimCD);
+    void getCD(char* pointerCD, int* dimCD) {};
     
     /**
      * @brief function that returns the pointer to the buffer of INTEGRATE 'n' FIRE EVENT

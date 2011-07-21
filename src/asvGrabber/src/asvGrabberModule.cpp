@@ -113,13 +113,13 @@ bool asvGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     
     if(!strcmp(binaryName.c_str(),"none")) {
         printf("not reading from binary \n");
-        D2Y=new device2yarp(devicePortName, false,binaryName);
+        D2Y=new asvGrabberThread(devicePortName, false,binaryName);
         //D2Y->setFromBinary(false);
     }
     else {
         printf("reading from binary \n");
         //D2Y->setFromBinary(true);
-        D2Y=new device2yarp(devicePortName, true, binaryNameComplete);        
+        D2Y=new asvGrabberThread(devicePortName, true, binaryNameComplete);        
         //D2Y->setBinaryFile(f);
     }
     if (strcmp(dumpNameComplete.c_str(),"" )) {
@@ -283,78 +283,14 @@ bool asvGrabberModule::respond(const Bottle& command, Bottle& reply) {
             switch(command.get(1).asVocab()) {
             case COMMAND_VOCAB_LEFT: {
                 switch(command.get(2).asVocab()) {                    
-                case COMMAND_VOCAB_PR:{
+                case COMMAND_VOCAB_SYTH:{
                     double w = command.get(3).asDouble();
                     if(D2Y!=0)
-                        D2Y->setPR(w);
+                        D2Y->setSynThr(w);
                     ok = true;
                 } break;
-                case COMMAND_VOCAB_FOLL:{
-                    double w = command.get(3).asDouble();
-                    if(D2Y!=0)
-                        D2Y->setFOLL(w);
-                    ok = true;
-                } break;
-                case COMMAND_VOCAB_DIFF:{
-                    double w = command.get(3).asDouble();
-                    if(D2Y!=0)
-                        D2Y->setDIFF(w);
-                    ok = true;
-                } break;
-                case COMMAND_VOCAB_DIFFON:{
-                    double w = command.get(3).asDouble();
-                    if(D2Y!=0)
-                        D2Y->setDIFFON(w);
-                    ok = true;
-                } break;
-                case COMMAND_VOCAB_PUY:{
-                    double w = command.get(3).asDouble();
-                    if(D2Y!=0)
-                        D2Y->setPUY(w);
-                    ok = true;
-                } break;
-                case COMMAND_VOCAB_REFR:{
-                    double w = command.get(3).asDouble();
-                    if(D2Y!=0)
-                        D2Y->setREFR(w);
-                    ok = true;
-                } break;
-                case COMMAND_VOCAB_REQ:{
-                    double w = command.get(3).asDouble();
-                    if(D2Y!=0)
-                        D2Y->setREQ(w);
-                    ok = true;
-                } break;
-                case COMMAND_VOCAB_DIFFOFF:{
-                    double w = command.get(3).asDouble();
-                    if(D2Y!=0)
-                        D2Y->setDIFFOFF(w);
-                    ok = true;
-                } break;
-                case COMMAND_VOCAB_PUX:{
-                    double w = command.get(3).asDouble();
-                    if(D2Y!=0)
-                        D2Y->setPUX(w);
-                    ok = true;
-                } break;
-                case COMMAND_VOCAB_REQPD:{
-                    double w = command.get(3).asDouble();
-                    if(D2Y!=0)
-                        D2Y->setREQPD(w);
-                    ok = true;
-                } break;
-                case COMMAND_VOCAB_INJGND:{
-                    double w = command.get(3).asDouble();
-                    if(D2Y!=0)
-                        D2Y->setINJGND(w);
-                    ok = true;
-                } break;
-                case COMMAND_VOCAB_CAS:{
-                    double w = command.get(3).asDouble();
-                    if(D2Y!=0)
-                        D2Y->setCAS(w);
-                    ok = true;
-                } break;                    
+                
+                                    
                 default: {
                 } break;
                 } //closing the switch internal
@@ -363,78 +299,13 @@ bool asvGrabberModule::respond(const Bottle& command, Bottle& reply) {
             case COMMAND_VOCAB_RIGHT:{
                 switch(command.get(2).asVocab()) {
                     
-                case COMMAND_VOCAB_PR:{
+                case COMMAND_VOCAB_SYTH:{
                     double w = command.get(3).asDouble();
                     if(D2Y!=0)
-                        D2Y->setPRRight(w);
+                        D2Y->setSynThr(w);
                     ok = true;
                 } break;
-                case COMMAND_VOCAB_FOLL:{
-                    double w = command.get(3).asDouble();
-                    if(D2Y!=0)
-                        D2Y->setFOLLRight(w);
-                    ok = true;
-                } break;
-                case COMMAND_VOCAB_DIFF:{
-                    double w = command.get(3).asDouble();
-                    if(D2Y!=0)
-                        D2Y->setDIFFRight(w);
-                    ok = true;
-                } break;
-                case COMMAND_VOCAB_DIFFON:{
-                    double w = command.get(3).asDouble();
-                    if(D2Y!=0)
-                        D2Y->setDIFFONRight(w);
-                    ok = true;
-                } break;
-                case COMMAND_VOCAB_PUY:{
-                    double w = command.get(3).asDouble();
-                    if(D2Y!=0)
-                        D2Y->setPUYRight(w);
-                    ok = true;
-                } break;
-                case COMMAND_VOCAB_REFR:{
-                    double w = command.get(3).asDouble();
-                    if(D2Y!=0)
-                        D2Y->setREFRRight(w);
-                    ok = true;
-                } break;
-                case COMMAND_VOCAB_REQ:{
-                    double w = command.get(3).asDouble();
-                    if(D2Y!=0)
-                        D2Y->setREQRight(w);
-                    ok = true;
-                } break;
-                case COMMAND_VOCAB_DIFFOFF:{
-                    double w = command.get(3).asDouble();
-                    if(D2Y!=0)
-                        D2Y->setDIFFOFFRight(w);
-                    ok = true;
-                } break;
-                case COMMAND_VOCAB_PUX:{
-                    double w = command.get(3).asDouble();
-                    if(D2Y!=0)
-                        D2Y->setPUXRight(w);
-                    ok = true;
-                } break;
-                case COMMAND_VOCAB_REQPD:{
-                    double w = command.get(3).asDouble();
-                    if(D2Y!=0)
-                        D2Y->setREQPDRight(w);
-                    ok = true;
-                } break;
-                case COMMAND_VOCAB_INJGND:{
-                    double w = command.get(3).asDouble();
-                    if(D2Y!=0)
-                        D2Y->setINJGNDRight(w);
-                    ok = true;
-                } break;
-                case COMMAND_VOCAB_CAS:{
-                    double w = command.get(3).asDouble();
-                    if(D2Y!=0)
-                        D2Y->setCASRight(w);
-                    ok = true;
-                } break;
+                
                 default: {
                 } break;
                 }
@@ -444,78 +315,180 @@ bool asvGrabberModule::respond(const Bottle& command, Bottle& reply) {
         rec = true;
         {
             switch(command.get(1).asVocab()) {
-            case COMMAND_VOCAB_PR:{
-                double w = D2Y->getPR();
+            case COMMAND_VOCAB_SYTH:{
+                double w = D2Y->getSynThr();
+                reply.addDouble(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_SYTA:{
+                double w = D2Y->getSynTau();
+                reply.addDouble(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_SYPA:{
+                double w = D2Y->getSynPxlTau();
+                reply.addDouble(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_SYPH:{
+                double w = D2Y->getSynPxlThr();
+                reply.addDouble(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_TPB:{
+                double w = D2Y->getTestPBias();
+                reply.addDouble(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_CDR:{
+                double w = D2Y->getCDRefr();
+                reply.addDouble(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_CDS:{
+                double w = D2Y->getCDSf();
+                reply.addDouble(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_CDP:{
+                double w = D2Y->getCDPr();
+                reply.addDouble(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_RPX:{
+                double w = D2Y->getReqPuX();
+                reply.addDouble(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_RPY :{
+                double w = D2Y->getReqPuY();
+                reply.addDouble(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_IFR :{
+                double w = D2Y->getIFRf();
+                reply.addDouble(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_IFT :{
+                double w = D2Y->getIFThr();
+                reply.addDouble(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_IFL :{
+                double w = D2Y->getIFLk();
+                reply.addDouble(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_CDOF:{
+                double w = D2Y->getCDOffThr();
+                reply.addDouble(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_SYPW:{
+                double w = D2Y->getSynPxlW();
+                reply.addDouble(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_SYW:{
+                double w = D2Y->getSynW();
+                reply.addDouble(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_CDON:{
+                double w = D2Y->getCDOnThr();
+                reply.addDouble(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_CDD:{
+                double w = D2Y->getCDDiff();
+                reply.addDouble(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_EMCH:{
+                double w = D2Y->getEMCompH();
+                reply.addDouble(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_EMCT:{
+                double w = D2Y->getEMCompT();
+                reply.addDouble(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_CDI:{
+                double w = D2Y->getCDIoff();
+                reply.addDouble(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_CDRG:{
+                double w = D2Y->getCDRGnd();
+                reply.addDouble(w);
+                ok = true;
+            }
+            break;
+            case COMMAND_VOCAB_SELF:{
+                double w = D2Y->getSelf();
                 reply.addDouble(w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_FOLL:{
-                double w = D2Y->getFOLL();
+                double w = D2Y->getFollBias();
                 reply.addDouble(w);
                 ok = true;
             }
             break;
-            case COMMAND_VOCAB_DIFF:{
-                double w = D2Y->getDIFF();
+            case COMMAND_VOCAB_ARBP:{
+                double w = D2Y->getArbPd();
                 reply.addDouble(w);
                 ok = true;
             }
             break;
-            case COMMAND_VOCAB_DIFFON:{
-                double w = D2Y->getDIFFON();
+            case COMMAND_VOCAB_EMVL:{
+                double w = D2Y->getEMVrefL();
                 reply.addDouble(w);
                 ok = true;
             }
             break;
-            case COMMAND_VOCAB_PUY:{
-                double w = D2Y->getPUY();
+            case COMMAND_VOCAB_CDC :{
+                double w = D2Y->getCDCas();
                 reply.addDouble(w);
                 ok = true;
             }
             break;
-            case COMMAND_VOCAB_REFR:{
-                double w = D2Y->getREFR();
+            case COMMAND_VOCAB_EMVH:{
+                double w = D2Y->getEMVrefH();
                 reply.addDouble(w);
                 ok = true;
             }
             break;
-            case COMMAND_VOCAB_REQ:{
-                double w = D2Y->getREQ();
+            case COMMAND_VOCAB_I2V:{
+                double w = D2Y->getI2V();
                 reply.addDouble(w);
                 ok = true;
             }
-            break;
-            case COMMAND_VOCAB_DIFFOFF:{
-                double w = D2Y->getDIFFOFF();
-                reply.addDouble(w);
-                ok = true;
-            }
-            break;
-            case COMMAND_VOCAB_PUX:{
-                double w = D2Y->getPUX();
-                reply.addDouble(w);
-                ok = true;
-            }
-            break;
-            case COMMAND_VOCAB_REQPD:{
-                double w = D2Y->getREQPD();
-                reply.addDouble(w);
-                ok = true;
-            }
-            break;
-            case COMMAND_VOCAB_INJGND:{
-                double w = D2Y->getINJGND();
-                reply.addDouble(w);
-                ok = true;
-            }
-            break;
-            case COMMAND_VOCAB_CAS:{
-                double w = D2Y->getCAS();
-                reply.addDouble(w);
-                ok = true;
-            }
-            break;
+            break;;
             default: {
                 
             }

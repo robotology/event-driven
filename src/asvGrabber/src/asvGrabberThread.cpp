@@ -109,7 +109,8 @@ asvGrabberThread::asvGrabberThread(string portDeviceName, bool i_bool, string i_
 
     SynThr       = 52458;         
     SynTau       = 101508;       
-    SynPxlTau    = 16777215;    
+    SynPxlTau    = 16777215;
+    SynPxlThr    = 16777215;
     testPbias    = 16777215;
     CDRefr       = 8053457;       
     CDSf         = 133;       
@@ -120,7 +121,6 @@ asvGrabberThread::asvGrabberThread(string portDeviceName, bool i_bool, string i_
     IFThr        = 30108;      
     IFLk         = 20;        
     CDOffThr     = 5;          
-
     SynPxlW      = 52458;     
     SynW         = 101508;    
     CDOnThr      = 16777215; 
@@ -135,7 +135,7 @@ asvGrabberThread::asvGrabberThread(string portDeviceName, bool i_bool, string i_
     EMVrefL      = 20;           
     CDCas        = 5;            
     EMVrefH      = 5;
-    l2V          = 5;
+    I2V          = 5;
 
      
     save = false;
@@ -343,12 +343,13 @@ void asvGrabberThread::prepareBiases() {
 	printf("EMVrefL      = 20\n");           
 	printf("CDCas        = 5\n");            
 	printf("EMVrefH      = 5\n");        
-	printf("l2V       = 16777215\n")
+	printf("l2V       = 16777215\n");
            
         int biasValues[]={SynThr,      
                           SynTau,  
                           SynPxlTau,
 			  SynPxlThr,
+			  testPbias,
                           CDRefr,    
                           CDSf,   
                           CDPr,    
@@ -357,10 +358,8 @@ void asvGrabberThread::prepareBiases() {
                           IFRf,    
                           IFThr,       
                           IFLk,        
-                          IFLk,
 			  CDOffThr,
 			  SynPxlW,
-			  testPbias,
 			  SynW,
 			  CDOnThr,
 			  CDDiff,
@@ -374,7 +373,7 @@ void asvGrabberThread::prepareBiases() {
 			  EMVrefL,
 			  CDCas,
 			  EMVrefH,
-			  l2V
+			  I2V
         };
         
 
@@ -408,7 +407,7 @@ void asvGrabberThread::prepareBiases() {
 	  "EMVrefL",
 	  "CDCas",
 	  "EMVrefH",
-	  "l2V"
+	  "I2V"
         };
 
         
@@ -556,65 +555,7 @@ void asvGrabberThread::prepareBiasesRight() {
         //}
     } 
     else {
-        printf("sending biases as following variables.... to the RIGHT \n");
-        printf("cas:%d \n",casRight);
-        printf("injg:%d \n",injgRight);
-        printf("reqPd:%d \n",reqPdRight);
-        printf("pux:%d \n",puxRight);
-        printf("diffoff:%d \n",diffoffRight);
-        printf("req:%d \n",reqRight);
-        printf("refr:%d \n",refrRight);
-        printf("puy:%d \n",puyRight);
-        printf("diffon:%d \n",diffonRight);
-        printf("diff:%d \n",diffRight);
-        printf("foll:%d \n",follRight);
-        printf("pr:%d \n",prRight);
-        int err;
         
-        printf("sending biases as events to the device ... \n");
-                
-            
-        int biasValues[]={casRight,        // cas
-                          injgRight,       // injGnd
-                          reqPdRight,    // reqPd
-                          puxRight,     // puX
-                          diffoffRight,        // diffOff
-                          reqRight,      // req
-                          refrRight,           // refr
-                          puyRight,    // puY
-                          diffonRight,      // diffOn
-                          diffRight,       // diff 
-                          follRight,          // foll
-                          prRight            //Pr 
-        };
-        
-
-        string biasNames[] = {
-            "cas",
-            "injGnd",
-            "reqPd",
-            "puX",
-            "diffOff",
-            "req",
-            "refr",
-            "puY",
-            "diffOn",
-            "diff",
-            "foll",
-            "Pr"
-        };
-
-        
-        //int err = write(file_desc,bias,41); //5+36 
-        seqEvents = 0;
-        seqSize_b = 0;
-        for(int j=0;j<countBias;j++) {
-            progBias(biasNames[j],24,biasValues[j],0);
-        }
-        latchCommitAEs(0);
-        //monitor(10);
-        releasePowerdown(0);
-        sendingBias();
     }
 }
 
@@ -689,8 +630,8 @@ void  asvGrabberThread::run() {
     sz = monBufEvents*sizeof(struct aer); // sz is size in bytes
 
     if (port.getOutputCount()) {
-        sendingBuffer data2send(buffer, sz);    
-        sendingBuffer& tmp = port.prepare();
+        eventBuffer data2send(buffer, sz);    
+        eventBuffer& tmp = port.prepare();
         tmp = data2send;
         port.write();
     }   

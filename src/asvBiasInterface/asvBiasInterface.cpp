@@ -1,7 +1,7 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /* 
- * Copyright (C) 2009 RobotCub Consortium, European Commission FP6 Project IST-004370
+ * Copyright (C) 2011 RobotCub Consortium, European Commission FP6 Project IST-004370
  * Authors: Rea Francesco
  * email:   francesco.rea@iit.it
  * website: www.robotcub.org 
@@ -18,7 +18,8 @@
  * Public License for more details
  */
 
-#include "biasInterface.h"
+
+#include "asvBiasInterface.h"
 
 #include <yarp/os/Property.h> 
 #include <yarp/os/Network.h> 
@@ -34,18 +35,36 @@
 #define COMMAND_VOCAB_RIGHT VOCAB4('r','i','g','h')
 #define COMMAND_VOCAB_LEFT VOCAB4('l','e','f','t')
 
-#define PR_DEFAULT_VALUE       5
-#define FOLL_DEFAULT_VALUE     20
-#define DIFF_DEFAULT_VALUE     30108
-#define DIFFON_DEFAULT_VALUE   639172
-#define PUY_DEFAULT_VALUE      16777215
-#define REFR_DEFAULT_VALUE     944
-#define REQ_DEFAULT_VALUE      160712
-#define DIFFOFF_DEFAULT_VALUE  133
-#define PUX_DEFAULT_VALUE      8053457
-#define REQPD_DEFAULT_VALUE    16777215 
-#define INJGND_DEFAULT_VALUE   101508
-#define CAS_DEFAULT_VALUE      52458
+#define SYTH_DEFAULT_VALUE    8053457
+#define SYTA_DEFAULT_VALUE    8053457
+#define SYPA_DEFAULT_VALUE    8053457
+#define SYPH_DEFAULT_VALUE    8053457
+#define TBP_DEFAULT_VALUE     8053457
+#define CDR_DEFAULT_VALUE     8053457
+#define CDS_DEFAULT_VALUE     8053457
+#define CDP_DEFAULT_VALUE     8053457
+#define RPX_DEFAULT_VALUE     8053457
+#define RPY_DEFAULT_VALUE     8053457
+#define IFR_DEFAULT_VALUE     8053457
+#define IFT_DEFAULT_VALUE     8053457
+#define IFL_DEFAULT_VALUE     8053457
+#define CDOF_DEFAULT_VALUE    8053457
+#define SYPW_DEFAULT_VALUE    8053457
+#define SYW_DEFAULT_VALUE     8053457
+#define CDON_DEFAULT_VALUE    8053457
+#define CDD_DEFAULT_VALUE     8053457
+#define EMCH_DEFAULT_VALUE    8053457
+#define EMCT_DEFAULT_VALUE    8053457
+#define CDI_DEFAULT_VALUE     8053457
+#define CDRG_DEFAULT_VALUE    8053457
+#define SELF_DEFAULT_VALUE    8053457
+#define FOLL_DEFAULT_VALUE    8053457
+#define ARBP_DEFAULT_VALUE    8053457
+#define EMVL_DEFAULT_VALUE    8053457
+#define CDC_DEFAULT_VALUE     8053457
+#define EMVH_DEFAULT_VALUE    8053457
+#define I2V_DEFAULT_VALUE     8053457
+
 
 using namespace yarp::os;
 using namespace std;
@@ -138,41 +157,25 @@ static void callback( GtkWidget *widget,gpointer   data ){
 //-------------------------------------------------
 // Call Backs Left
 //-------------------------------------------------
-static void cb_digits_pr( GtkAdjustment *adj ) {
+static void cb_digits_SynThr( GtkAdjustment *adj ) {
     if (_pOutPort!=NULL) {
         Bottle in;
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_LEFT);
-        bot.addVocab(COMMAND_VOCAB_PR);
+        bot.addVocab(COMMAND_VOCAB_SYTH);
         bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
         _pOutPort->write(bot,in);
     }
 }
 
-static void cb_digits_foll( GtkAdjustment *adj ) {
+static void cb_digits_SynTau( GtkAdjustment *adj ) {
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_LEFT);
-        bot.addVocab(COMMAND_VOCAB_FOLL);
-        bot.addInt((int) adj->value);
-        //_pOutPort->Content() = _outBottle;
-        Bottle in;
-        _pOutPort->write(bot,in);
-    }
-}
-
-static void cb_digits_diff( GtkAdjustment *adj ) {
-    if (_pOutPort!=NULL) {
-        yarp::os::Bottle bot; //= _pOutPort->prepare();
-        bot.clear();
-        bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_LEFT);
-        bot.addVocab(COMMAND_VOCAB_DIFF);
+        bot.addVocab(COMMAND_VOCAB_SYTA);
         bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
         Bottle in;
@@ -180,13 +183,12 @@ static void cb_digits_diff( GtkAdjustment *adj ) {
     }
 }
 
-static void cb_digits_diffon( GtkAdjustment *adj ) {
+static void cb_digits_SynPxlTau( GtkAdjustment *adj ) {
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_LEFT);
-        bot.addVocab(COMMAND_VOCAB_DIFFON);
+        bot.addVocab(COMMAND_VOCAB_SYPA);
         bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
         Bottle in;
@@ -194,13 +196,12 @@ static void cb_digits_diffon( GtkAdjustment *adj ) {
     }
 }
 
-static void cb_digits_puy( GtkAdjustment *adj ) {
+static void cb_digits_SynPxlThr( GtkAdjustment *adj ) {
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_LEFT);
-        bot.addVocab(COMMAND_VOCAB_PUY);
+        bot.addVocab(COMMAND_VOCAB_SYPH);
         bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
         Bottle in;
@@ -208,13 +209,12 @@ static void cb_digits_puy( GtkAdjustment *adj ) {
     }
 }
 
-static void cb_digits_refr( GtkAdjustment *adj ) {
+static void cb_digits_testPbias( GtkAdjustment *adj ) {
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_LEFT);
-        bot.addVocab(COMMAND_VOCAB_REFR);
+        bot.addVocab(COMMAND_VOCAB_TPB);
         bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
         Bottle in;
@@ -222,13 +222,12 @@ static void cb_digits_refr( GtkAdjustment *adj ) {
     }
 }
 
-static void cb_digits_req( GtkAdjustment *adj ) {
+static void cb_digits_CDRefr( GtkAdjustment *adj ) {
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_LEFT);
-        bot.addVocab(COMMAND_VOCAB_REQ);
+        bot.addVocab(COMMAND_VOCAB_CDR);
         bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
         Bottle in;
@@ -236,13 +235,12 @@ static void cb_digits_req( GtkAdjustment *adj ) {
     }
 }
 
-static void cb_digits_diffoff( GtkAdjustment *adj ) {
+static void cb_digits_CDSf( GtkAdjustment *adj ) {
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_LEFT);
-        bot.addVocab(COMMAND_VOCAB_DIFFOFF);
+        bot.addVocab(COMMAND_VOCAB_CDS);
         bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
         Bottle in;
@@ -250,13 +248,12 @@ static void cb_digits_diffoff( GtkAdjustment *adj ) {
     }
 }
 
-static void cb_digits_pux( GtkAdjustment *adj ) {
+static void cb_digits_ReqPuX( GtkAdjustment *adj ) {
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_LEFT);
-        bot.addVocab(COMMAND_VOCAB_PUX);
+        bot.addVocab(COMMAND_VOCAB_RPX);
         bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
         Bottle in;
@@ -264,13 +261,12 @@ static void cb_digits_pux( GtkAdjustment *adj ) {
     }
 }
 
-static void cb_digits_reqpd( GtkAdjustment *adj ) {
+static void cb_digits_ReqPuY( GtkAdjustment *adj ) {
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_LEFT);
-        bot.addVocab(COMMAND_VOCAB_REQPD);
+        bot.addVocab(COMMAND_VOCAB_RPY);
         bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
         Bottle in;
@@ -278,13 +274,25 @@ static void cb_digits_reqpd( GtkAdjustment *adj ) {
     }
 }
 
-static void cb_digits_injgnd( GtkAdjustment *adj ) {
+static void cb_digits_IFRf( GtkAdjustment *adj ) {
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_LEFT);
-        bot.addVocab(COMMAND_VOCAB_INJGND);
+        bot.addVocab(COMMAND_VOCAB_IFR);
+        bot.addInt((int) adj->value);
+        //_pOutPort->Content() = _outBottle;
+        Bottle in;
+        _pOutPort->write(bot,in);
+    }
+}
+
+static void cb_digits_IFThr( GtkAdjustment *adj ) {
+    if (_pOutPort!=NULL) {
+        yarp::os::Bottle bot; //= _pOutPort->prepare();
+        bot.clear();
+        bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_IFT);
         bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
         Bottle in;
@@ -294,14 +302,13 @@ static void cb_digits_injgnd( GtkAdjustment *adj ) {
 
 
 
-static void cb_digits_cas( GtkAdjustment *adj ) {
+static void cb_digits_IFLk( GtkAdjustment *adj ) {
     mutex.wait();
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_LEFT);
-        bot.addVocab(COMMAND_VOCAB_CAS);
+        bot.addVocab(COMMAND_VOCAB_IFL);
         bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
         Bottle in;
@@ -310,172 +317,118 @@ static void cb_digits_cas( GtkAdjustment *adj ) {
     mutex.post();
 }
 
-//-------------------------------------------------
-// Call Backs Left
-//-------------------------------------------------
-static void cb_digits_prRight( GtkAdjustment *adj ) {
-    if (_pOutPort!=NULL) {
-        Bottle in;
-        yarp::os::Bottle bot; //= _pOutPort->prepare();
-        bot.clear();
-        bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_RIGHT);
-        bot.addVocab(COMMAND_VOCAB_PR);
-        bot.addInt((int) adj->value);
-        //_pOutPort->Content() = _outBottle;
-        _pOutPort->write(bot,in);
-    }
-}
-
-static void cb_digits_follRight( GtkAdjustment *adj ) {
-    if (_pOutPort!=NULL) {
-        yarp::os::Bottle bot; //= _pOutPort->prepare();
-        bot.clear();
-        bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_RIGHT);
-        bot.addVocab(COMMAND_VOCAB_FOLL);
-        bot.addInt((int) adj->value);
-        //_pOutPort->Content() = _outBottle;
-        Bottle in;
-        _pOutPort->write(bot,in);
-    }
-}
-
-static void cb_digits_diffRight( GtkAdjustment *adj ) {
-    if (_pOutPort!=NULL) {
-        yarp::os::Bottle bot; //= _pOutPort->prepare();
-        bot.clear();
-        bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_RIGHT);
-        bot.addVocab(COMMAND_VOCAB_DIFF);
-        bot.addInt((int) adj->value);
-        //_pOutPort->Content() = _outBottle;
-        Bottle in;
-        _pOutPort->write(bot,in);
-    }
-}
-
-static void cb_digits_diffonRight( GtkAdjustment *adj ) {
-    if (_pOutPort!=NULL) {
-        yarp::os::Bottle bot; //= _pOutPort->prepare();
-        bot.clear();
-        bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_RIGHT);
-        bot.addVocab(COMMAND_VOCAB_DIFFON);
-        bot.addInt((int) adj->value);
-        //_pOutPort->Content() = _outBottle;
-        Bottle in;
-        _pOutPort->write(bot,in);
-    }
-}
-
-static void cb_digits_puyRight( GtkAdjustment *adj ) {
-    if (_pOutPort!=NULL) {
-        yarp::os::Bottle bot; //= _pOutPort->prepare();
-        bot.clear();
-        bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_PUY);
-        bot.addInt((int) adj->value);
-        //_pOutPort->Content() = _outBottle;
-        Bottle in;
-        _pOutPort->write(bot,in);
-    }
-}
-
-static void cb_digits_refrRight( GtkAdjustment *adj ) {
-    if (_pOutPort!=NULL) {
-        yarp::os::Bottle bot; //= _pOutPort->prepare();
-        bot.clear();
-        bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_RIGHT);
-        bot.addVocab(COMMAND_VOCAB_REFR);
-        bot.addInt((int) adj->value);
-        //_pOutPort->Content() = _outBottle;
-        Bottle in;
-        _pOutPort->write(bot,in);
-    }
-}
-
-static void cb_digits_reqRight( GtkAdjustment *adj ) {
-    if (_pOutPort!=NULL) {
-        yarp::os::Bottle bot; //= _pOutPort->prepare();
-        bot.clear();
-        bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_RIGHT);
-        bot.addVocab(COMMAND_VOCAB_REQ);
-        bot.addInt((int) adj->value);
-        //_pOutPort->Content() = _outBottle;
-        Bottle in;
-        _pOutPort->write(bot,in);
-    }
-}
-
-static void cb_digits_diffoffRight( GtkAdjustment *adj ) {
-    if (_pOutPort!=NULL) {
-        yarp::os::Bottle bot; //= _pOutPort->prepare();
-        bot.clear();
-        bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_RIGHT);
-        bot.addVocab(COMMAND_VOCAB_DIFFOFF);
-        bot.addInt((int) adj->value);
-        //_pOutPort->Content() = _outBottle;
-        Bottle in;
-        _pOutPort->write(bot,in);
-    }
-}
-
-static void cb_digits_puxRight( GtkAdjustment *adj ) {
-    if (_pOutPort!=NULL) {
-        yarp::os::Bottle bot; //= _pOutPort->prepare();
-        bot.clear();
-        bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_RIGHT);
-        bot.addVocab(COMMAND_VOCAB_PUX);
-        bot.addInt((int) adj->value);
-        //_pOutPort->Content() = _outBottle;
-        Bottle in;
-        _pOutPort->write(bot,in);
-    }
-}
-
-static void cb_digits_reqpdRight( GtkAdjustment *adj ) {
-    if (_pOutPort!=NULL) {
-        yarp::os::Bottle bot; //= _pOutPort->prepare();
-        bot.clear();
-        bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_RIGHT);
-        bot.addVocab(COMMAND_VOCAB_REQPD);
-        bot.addInt((int) adj->value);
-        //_pOutPort->Content() = _outBottle;
-        Bottle in;
-        _pOutPort->write(bot,in);
-    }
-}
-
-static void cb_digits_injgndRight( GtkAdjustment *adj ) {
-    if (_pOutPort!=NULL) {
-        yarp::os::Bottle bot; //= _pOutPort->prepare();
-        bot.clear();
-        bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_RIGHT);
-        bot.addVocab(COMMAND_VOCAB_INJGND);
-        bot.addInt((int) adj->value);
-        //_pOutPort->Content() = _outBottle;
-        Bottle in;
-        _pOutPort->write(bot,in);
-    }
-}
-
-
-
-static void cb_digits_casRight( GtkAdjustment *adj ) {
+static void cb_digits_CDOffThr( GtkAdjustment *adj ) {
     mutex.wait();
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_RIGHT);
-        bot.addVocab(COMMAND_VOCAB_CAS);
+        bot.addVocab(COMMAND_VOCAB_CDOF);
+        bot.addInt((int) adj->value);
+        //_pOutPort->Content() = _outBottle;
+        Bottle in;
+        _pOutPort->write(bot,in);
+    }
+    mutex.post();
+}
+
+static void cb_digits_SynPxlW( GtkAdjustment *adj ) {
+    mutex.wait();
+    if (_pOutPort!=NULL) {
+        yarp::os::Bottle bot; //= _pOutPort->prepare();
+        bot.clear();
+        bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_SYPW);
+        bot.addInt((int) adj->value);
+        //_pOutPort->Content() = _outBottle;
+        Bottle in;
+        _pOutPort->write(bot,in);
+    }
+    mutex.post();
+}
+
+static void cb_digits_SynW( GtkAdjustment *adj ) {
+    mutex.wait();
+    if (_pOutPort!=NULL) {
+        yarp::os::Bottle bot; //= _pOutPort->prepare();
+        bot.clear();
+        bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_SYW);
+        bot.addInt((int) adj->value);
+        //_pOutPort->Content() = _outBottle;
+        Bottle in;
+        _pOutPort->write(bot,in);
+    }
+    mutex.post();
+}
+
+static void cb_digits_CDOnThr( GtkAdjustment *adj ) {
+    mutex.wait();
+    if (_pOutPort!=NULL) {
+        yarp::os::Bottle bot; //= _pOutPort->prepare();
+        bot.clear();
+        bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_CDON);
+        bot.addInt((int) adj->value);
+        //_pOutPort->Content() = _outBottle;
+        Bottle in;
+        _pOutPort->write(bot,in);
+    }
+    mutex.post();
+}
+
+static void cb_digits_CDDiff( GtkAdjustment *adj ) {
+    mutex.wait();
+    if (_pOutPort!=NULL) {
+        yarp::os::Bottle bot; //= _pOutPort->prepare();
+        bot.clear();
+        bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_CDD);
+        bot.addInt((int) adj->value);
+        //_pOutPort->Content() = _outBottle;
+        Bottle in;
+        _pOutPort->write(bot,in);
+    }
+    mutex.post();
+}
+
+static void cb_digits_EMCompH( GtkAdjustment *adj ) {
+    mutex.wait();
+    if (_pOutPort!=NULL) {
+        yarp::os::Bottle bot; //= _pOutPort->prepare();
+        bot.clear();
+        bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_EMCH);
+        bot.addInt((int) adj->value);
+        //_pOutPort->Content() = _outBottle;
+        Bottle in;
+        _pOutPort->write(bot,in);
+    }
+    mutex.post();
+}
+
+static void cb_digits_EMCompT( GtkAdjustment *adj ) {
+    mutex.wait();
+    if (_pOutPort!=NULL) {
+        yarp::os::Bottle bot; //= _pOutPort->prepare();
+        bot.clear();
+        bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_EMCT);
+        bot.addInt((int) adj->value);
+        //_pOutPort->Content() = _outBottle;
+        Bottle in;
+        _pOutPort->write(bot,in);
+    }
+    mutex.post();
+}
+
+static void cb_digits_CDIoff( GtkAdjustment *adj ) {
+    mutex.wait();
+    if (_pOutPort!=NULL) {
+        yarp::os::Bottle bot; //= _pOutPort->prepare();
+        bot.clear();
+        bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_CDI);
         bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;
         Bottle in;
@@ -485,7 +438,131 @@ static void cb_digits_casRight( GtkAdjustment *adj ) {
 }
 
 
-//----------------------------------------------------------------------------------
+static void cb_digits_CDRGnd( GtkAdjustment *adj ) {
+    mutex.wait();
+    if (_pOutPort!=NULL) {
+        yarp::os::Bottle bot; //= _pOutPort->prepare();
+        bot.clear();
+        bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_CDRG);
+        bot.addInt((int) adj->value);
+        //_pOutPort->Content() = _outBottle;
+        Bottle in;
+        _pOutPort->write(bot,in);
+    }
+    mutex.post();
+}
+
+static void cb_digits_Self( GtkAdjustment *adj ) {
+    mutex.wait();
+    if (_pOutPort!=NULL) {
+        yarp::os::Bottle bot; //= _pOutPort->prepare();
+        bot.clear();
+        bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_SELF);
+        bot.addInt((int) adj->value);
+        //_pOutPort->Content() = _outBottle;
+        Bottle in;
+        _pOutPort->write(bot,in);
+    }
+    mutex.post();
+}
+
+static void cb_digits_Foll( GtkAdjustment *adj ) {
+    mutex.wait();
+    if (_pOutPort!=NULL) {
+        yarp::os::Bottle bot; //= _pOutPort->prepare();
+        bot.clear();
+        bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_FOLL);
+        bot.addInt((int) adj->value);
+        //_pOutPort->Content() = _outBottle;
+        Bottle in;
+        _pOutPort->write(bot,in);
+    }
+    mutex.post();
+}
+
+static void cb_digits_ArbPd( GtkAdjustment *adj ) {
+    mutex.wait();
+    if (_pOutPort!=NULL) {
+        yarp::os::Bottle bot; //= _pOutPort->prepare();
+        bot.clear();
+        bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_ARBP);
+        bot.addInt((int) adj->value);
+        //_pOutPort->Content() = _outBottle;
+        Bottle in;
+        _pOutPort->write(bot,in);
+    }
+    mutex.post();
+}
+
+static void cb_digits_EMVrefL( GtkAdjustment *adj ) {
+    mutex.wait();
+    if (_pOutPort!=NULL) {
+        yarp::os::Bottle bot; //= _pOutPort->prepare();
+        bot.clear();
+        bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_EMVL);
+        bot.addInt((int) adj->value);
+        //_pOutPort->Content() = _outBottle;
+        Bottle in;
+        _pOutPort->write(bot,in);
+    }
+    mutex.post();
+}
+
+static void cb_digits_CDCas( GtkAdjustment *adj ) {
+    mutex.wait();
+    if (_pOutPort!=NULL) {
+        yarp::os::Bottle bot; //= _pOutPort->prepare();
+        bot.clear();
+        bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_CDC);
+        bot.addInt((int) adj->value);
+        //_pOutPort->Content() = _outBottle;
+        Bottle in;
+        _pOutPort->write(bot,in);
+    }
+    mutex.post();
+}
+
+static void cb_digits_EMVrefH( GtkAdjustment *adj ) {
+    mutex.wait();
+    if (_pOutPort!=NULL) {
+        yarp::os::Bottle bot; //= _pOutPort->prepare();
+        bot.clear();
+        bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_EMVH);
+        bot.addInt((int) adj->value);
+        //_pOutPort->Content() = _outBottle;
+        Bottle in;
+        _pOutPort->write(bot,in);
+    }
+    mutex.post();
+}
+
+static void cb_digits_I2V( GtkAdjustment *adj ) {
+    mutex.wait();
+    if (_pOutPort!=NULL) {
+        yarp::os::Bottle bot; //= _pOutPort->prepare();
+        bot.clear();
+        bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_I2V);
+        bot.addInt((int) adj->value);
+        //_pOutPort->Content() = _outBottle;
+        Bottle in;
+        _pOutPort->write(bot,in);
+    }
+    mutex.post();
+}
+
+// ----------------- CALL BACK RIGHT -------------------------------------------
+
+
+
+// ---------------------------------------------------------------------------------
 
 
 static void callbackSaveButton( GtkWidget *widget,gpointer data ) {
@@ -872,166 +949,166 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
 
-    label = gtk_label_new ("Pr");
+    label = gtk_label_new ("SynThr");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj1 = gtk_adjustment_new (PR_DEFAULT_VALUE, 0,16777215,10, 1000, 0);
+    adj1 = gtk_adjustment_new (SYTH_DEFAULT_VALUE, 0,16777215,10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj1));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj1), "value_changed",
-                      G_CALLBACK (cb_digits_pr), NULL);
+                      G_CALLBACK (cb_digits_SynThr), NULL);
     
 
 
-    label = gtk_label_new ("foll");
+    label = gtk_label_new ("SynTau");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
 
-    adj2 = gtk_adjustment_new (FOLL_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    adj2 = gtk_adjustment_new (SYTA_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj2));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj2), "value_changed",
-                      G_CALLBACK (cb_digits_foll), NULL);
+                      G_CALLBACK (cb_digits_SynTau), NULL);
 
-    label = gtk_label_new ("diff");
+    label = gtk_label_new ("SynPxlTau");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj3 = gtk_adjustment_new (DIFF_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    adj3 = gtk_adjustment_new (SYPA_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj3));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj3), "value_changed",
-                      G_CALLBACK (cb_digits_diff), NULL);
+                      G_CALLBACK (cb_digits_SynPxlTau), NULL);
 
-    label = gtk_label_new ("diffOn");
+    label = gtk_label_new ("SynPxlThr");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj3 = gtk_adjustment_new (DIFFON_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    adj3 = gtk_adjustment_new (SYPH_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj3));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj3), "value_changed",
-                      G_CALLBACK (cb_digits_diffon), NULL);
+                      G_CALLBACK (cb_digits_SynPxlThr), NULL);
 
 
-    label = gtk_label_new ("puY");
+    label = gtk_label_new ("testPBias");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj4 = gtk_adjustment_new (PUY_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    adj4 = gtk_adjustment_new (TBP_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj4));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj4), "value_changed",
-                      G_CALLBACK (cb_digits_puy), NULL);
+                      G_CALLBACK (cb_digits_testPbias), NULL);
 
-    label = gtk_label_new ("refr");
+    label = gtk_label_new ("CDRefr");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj5 = gtk_adjustment_new (REFR_DEFAULT_VALUE, 0,16777215, 10 , 1000, 0);
+    adj5 = gtk_adjustment_new (CDR_DEFAULT_VALUE, 0,16777215, 10 , 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_refr), NULL);
+                      G_CALLBACK (cb_digits_CDRefr), NULL);
 
-    label = gtk_label_new ("req");
+    label = gtk_label_new ("CDSf");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj6 = gtk_adjustment_new (REQ_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    adj6 = gtk_adjustment_new (CDS_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj6));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj6), "value_changed",
-                      G_CALLBACK (cb_digits_req), NULL);
+                      G_CALLBACK (cb_digits_CDSf), NULL);
 
 
-    label = gtk_label_new ("diffOff");
+    label = gtk_label_new ("ReqPuX");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj5 = gtk_adjustment_new (DIFFOFF_DEFAULT_VALUE, 0,16777215, 10 ,1000, 0);
+    adj5 = gtk_adjustment_new (RPX_DEFAULT_VALUE, 0,16777215, 10 ,1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_diffoff), NULL);
+                      G_CALLBACK (cb_digits_ReqPuX), NULL);
 
-    label = gtk_label_new ("puX");
+    label = gtk_label_new ("ReqPuY");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj5 = gtk_adjustment_new (PUX_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    adj5 = gtk_adjustment_new (RPY_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_pux), NULL);
+                      G_CALLBACK (cb_digits_ReqPuY), NULL);
 
 
-    label = gtk_label_new ("reqPd");
+    label = gtk_label_new ("IFRf");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj5 = gtk_adjustment_new (REQPD_DEFAULT_VALUE, 0,16777215,10000, 0, 0);
+    adj5 = gtk_adjustment_new (IFR_DEFAULT_VALUE, 0,16777215,10000, 0, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_reqpd), NULL);
+                      G_CALLBACK (cb_digits_IFRf), NULL);
 
-    label = gtk_label_new ("injGnd");
+    label = gtk_label_new ("IFThr");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj5 = gtk_adjustment_new (INJGND_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    adj5 = gtk_adjustment_new (IFT_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_injgnd), NULL);
+                      G_CALLBACK (cb_digits_IFThr), NULL);
 
-    label = gtk_label_new ("cas");
+    label = gtk_label_new ("IFLk");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj5 = gtk_adjustment_new (CAS_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    adj5 = gtk_adjustment_new (IFL_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_cas), NULL);
+                      G_CALLBACK (cb_digits_IFLk), NULL);
 
     gtk_box_pack_start (GTK_BOX (box3), box5, FALSE, FALSE, 0);
     gtk_widget_show (box5);
@@ -1044,170 +1121,223 @@ GtkWidget* createMainWindow(void) {
     box5 = gtk_vbox_new (FALSE, 0);
     gtk_container_set_border_width (GTK_CONTAINER (box5), 0);
 
-    label = gtk_label_new ("BIAS RIGHT:");
+    label = gtk_label_new ("BIAS :");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
 
-    label = gtk_label_new ("Pr");
+    label = gtk_label_new ("CDOffThr");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj1 = gtk_adjustment_new (PR_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    adj1 = gtk_adjustment_new (CDOF_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj1));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj1), "value_changed",
-                      G_CALLBACK (cb_digits_prRight), NULL);
+                      G_CALLBACK (cb_digits_CDOffThr), NULL);
     
 
 
-    label = gtk_label_new ("foll");
+    label = gtk_label_new ("SynPxlW");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
 
-    adj2 = gtk_adjustment_new (FOLL_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    adj2 = gtk_adjustment_new (SYPW_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj2));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj2), "value_changed",
-                      G_CALLBACK (cb_digits_follRight), NULL);
+                      G_CALLBACK (cb_digits_SynPxlW), NULL);
 
-    label = gtk_label_new ("diff");
+    label = gtk_label_new ("SynW");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj3 = gtk_adjustment_new (DIFF_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    adj3 = gtk_adjustment_new (SYW_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj3));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj3), "value_changed",
-                      G_CALLBACK (cb_digits_diffRight), NULL);
+                      G_CALLBACK (cb_digits_SynW), NULL);
 
-    label = gtk_label_new ("diffOn");
+    label = gtk_label_new ("CDOnThr");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj3 = gtk_adjustment_new (DIFFON_DEFAULT_VALUE, 0,16777215,10, 1000, 0);
+    adj3 = gtk_adjustment_new (CDON_DEFAULT_VALUE, 0,16777215,10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj3));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj3), "value_changed",
-                      G_CALLBACK (cb_digits_diffonRight), NULL);
+                      G_CALLBACK (cb_digits_CDOnThr), NULL);
 
 
-    label = gtk_label_new ("puY");
+    label = gtk_label_new ("CDDiff");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj4 = gtk_adjustment_new (PUY_DEFAULT_VALUE, 0.0,16777215, 10, 1000, 0);
+    adj4 = gtk_adjustment_new (CDD_DEFAULT_VALUE, 0.0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj4));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj4), "value_changed",
-                      G_CALLBACK (cb_digits_puyRight), NULL);
+                      G_CALLBACK (cb_digits_CDDiff), NULL);
 
-    label = gtk_label_new ("refr");
+    label = gtk_label_new ("EMCompH");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj5 = gtk_adjustment_new (REFR_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    adj5 = gtk_adjustment_new (EMCH_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_refrRight), NULL);
+                      G_CALLBACK (cb_digits_EMCompH), NULL);
 
-    label = gtk_label_new ("req");
+    label = gtk_label_new ("EMCompT");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj6 = gtk_adjustment_new (REQ_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    adj6 = gtk_adjustment_new (EMCT_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj6));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj6), "value_changed",
-                      G_CALLBACK (cb_digits_req), NULL);
+                      G_CALLBACK (cb_digits_EMCompT), NULL);
 
 
-    label = gtk_label_new ("diffOff");
+    label = gtk_label_new ("CDIoff");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj5 = gtk_adjustment_new (DIFFOFF_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    adj5 = gtk_adjustment_new (CDI_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_diffoffRight), NULL);
+                      G_CALLBACK (cb_digits_CDIoff), NULL);
 
-    label = gtk_label_new ("puX");
+    label = gtk_label_new ("CDRGnd");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj5 = gtk_adjustment_new (PUX_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    adj5 = gtk_adjustment_new (CDR_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_puxRight), NULL);
+                      G_CALLBACK (cb_digits_CDRGnd), NULL);
 
 
-        label = gtk_label_new ("reqPd");
+    label = gtk_label_new ("self");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj5 = gtk_adjustment_new (REQPD_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    adj5 = gtk_adjustment_new (SELF_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_reqpdRight), NULL);
+                      G_CALLBACK (cb_digits_Self), NULL);
 
-    label = gtk_label_new ("injGnd");
+    label = gtk_label_new ("Foll");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj5 = gtk_adjustment_new (INJGND_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    adj5 = gtk_adjustment_new (FOLL_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_injgndRight), NULL);
+                      G_CALLBACK (cb_digits_Foll), NULL);
 
-    label = gtk_label_new ("cas");
+    label = gtk_label_new ("ArbPd");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj5 = gtk_adjustment_new (CAS_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    adj5 = gtk_adjustment_new (ARBP_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_casRight), NULL);
+                      G_CALLBACK (cb_digits_ArbPd), NULL);
+
+    label = gtk_label_new ("EMVrefL");
+    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+    
+    adj5 = gtk_adjustment_new (EMVL_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj5), "value_changed",
+                      G_CALLBACK (cb_digits_EMVrefL), NULL);
+
+    label = gtk_label_new ("CDCas");
+    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+    
+    adj5 = gtk_adjustment_new (CDC_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj5), "value_changed",
+                      G_CALLBACK (cb_digits_CDCas), NULL);
+
+    label = gtk_label_new ("EMVrefH");
+    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+    
+    adj5 = gtk_adjustment_new (EMVH_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj5), "value_changed",
+                      G_CALLBACK (cb_digits_EMVrefH), NULL);
+
+    label = gtk_label_new ("I2V");
+    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+    
+    adj5 = gtk_adjustment_new (I2V_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj5), "value_changed",
+                      G_CALLBACK (cb_digits_I2V), NULL);
+
 
     gtk_box_pack_start (GTK_BOX (box3), box5, FALSE, FALSE, 0);
     gtk_widget_show (box5);
@@ -1335,7 +1465,7 @@ void configure(yarp::os::ResourceFinder rf){
     /* Process all parameters from both command-line and .ini file */
     /* get the module name which will form the stem of all module port names */
     _options.portName      = rf.check("name", 
-                           Value("/biasInterface"), 
+                           Value("/asvBiasInterface"), 
                            "module name (string)").asString();
     _options.posX      = rf.check("x", 
                            Value(100), 
@@ -1417,7 +1547,7 @@ int myMain(int argc, char* argv[]) {
     yarp::os::ResourceFinder* rf;
     rf=new ResourceFinder();
     rf->setVerbose(true);
-    rf->setDefaultConfigFile("biasInterface.ini"); //overridden by --from parameter
+    rf->setDefaultConfigFile("asvBiasInterface.ini"); //overridden by --from parameter
     rf->setDefaultContext("eMorphApp/conf");   //overridden by --context parameter
     rf->configure("ICUB_ROOT", argc, argv);
     configure(*rf);
@@ -1493,7 +1623,7 @@ int main(int argc, char* argv[]) {
 #endif
 
 void printHelp() {
-    g_print("biasInterface usage:\n");
+    g_print("asvBiasInterface usage:\n");
     g_print("--name: input port name (default: /selAttentionInterface)\n");
 }
 
