@@ -290,15 +290,181 @@ bool asvGrabberModule::respond(const Bottle& command, Bottle& reply) {
                     D2Y->setSynThr(w);
                 ok = true;
             } break;
-            
+            case COMMAND_VOCAB_SYTA:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setSynTau(w);
+                ok = true;
+            } break;
+            case COMMAND_VOCAB_SYPA:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setSynPxlTau(w);
+                ok = true;
+            } break;
+            case COMMAND_VOCAB_SYPH:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setSynPxlThr(w);
+                ok = true;
+            } break;
+            case COMMAND_VOCAB_TPB:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setTestPbias(w);
+                ok = true;
+            } break;
+            case COMMAND_VOCAB_CDR:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setCDRefr(w);
+                ok = true;
+            } break;
+            case COMMAND_VOCAB_CDS:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setCDSf(w);
+                ok = true;
+            } break;
+            case COMMAND_VOCAB_CDP:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setCDPr(w);
+                ok = true;
+            } break;
+            case COMMAND_VOCAB_RPX:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setReqPuX(w);
+                ok = true;
+            } break;
+            case COMMAND_VOCAB_RPY:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setReqPuY(w);
+                ok = true;
+            } break;
+            case COMMAND_VOCAB_IFR:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setIFRf(w);
+                ok = true;
+            } break;
+            case COMMAND_VOCAB_IFT:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setIFThr(w);
+                ok = true;
+            } break;
+            case COMMAND_VOCAB_IFL:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setIFLk(w);
+                ok = true;
+            } break;
+            case COMMAND_VOCAB_CDOF:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setCDOffThr(w);
+                ok = true;
+            } break;
+            case COMMAND_VOCAB_SYPW:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setSynPxlW(w);
+                ok = true;
+            } break;
+            case COMMAND_VOCAB_SYW:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setSynW(w);
+                ok = true;
+            } break;
+            case COMMAND_VOCAB_CDON:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setCDOnThr(w);
+                ok = true;
+            } break;
+            case COMMAND_VOCAB_CDD:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setCDDiff(w);
+                ok = true;
+            } break;
+            case COMMAND_VOCAB_EMCH:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setEMCompH(w);
+                ok = true;
+            } break;
+            case COMMAND_VOCAB_EMCT:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setEMCompT(w);
+                ok = true;
+            } break;
+            case COMMAND_VOCAB_CDI:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setCDIoff(w);
+                ok = true;
+            } break;
+            case COMMAND_VOCAB_CDRG:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setCDRGnd(w);
+                ok = true;
+            } break;
+            case COMMAND_VOCAB_SELF:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setSelf(w);
+                ok = true;
+            } break;
+            case COMMAND_VOCAB_FOLL:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setFollBias(w);
+                ok = true;
+            } break;
+            case COMMAND_VOCAB_ARBP:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setArbPd(w);
+                ok = true;
+            } break;
+            case COMMAND_VOCAB_EMVL:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setEMVrefL(w);
+                ok = true;
+            } break;
+            case COMMAND_VOCAB_CDC:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setCDCas(w);
+                ok = true;
+            } break;
+            case COMMAND_VOCAB_EMVH:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setEMVrefH(w);
+                ok = true;
+            } break;
+            case COMMAND_VOCAB_I2V:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setI2V(w);
+                ok = true;
+            } break;
             
             default: {
             } break;
             
             
             } // closing the inner switch
-            
-            
+                       
         } break; //closing the SET
     case COMMAND_VOCAB_GET:
         rec = true;

@@ -273,7 +273,13 @@ public:
     * @param value value of the bias
     */
     void setSynPxlW(double value) {SynPxlW = value;};
-    
+
+    /**
+    * function that sets the bias
+    * @param value value of the bias
+    */
+    void setSynW(double value) {SynW = value;};
+
     /**
     * function that sets the bias
     * @param value value of the bias
