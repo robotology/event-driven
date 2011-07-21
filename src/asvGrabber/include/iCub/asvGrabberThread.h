@@ -192,7 +192,7 @@ public:
     * function that sets the bias
     * @param value value of the bias
     */
-    void setSynTau(double value) {SynTau = value;};
+    void setSynTau(double value) {SynTau = value; printf("tau %f \n",value);};
     
     /**
     * function that sets the bias
