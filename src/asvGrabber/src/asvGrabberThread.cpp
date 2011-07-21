@@ -316,34 +316,34 @@ void asvGrabberThread::prepareBiases() {
 
         int err;                
 
-        printf("SynThr       = 52458\n");         
-	printf("SynTau       = 101508\n");       
-	printf("SynPxlTau    = 16777215\n");    
-	printf("CDRefr       = 8053457\n");       
-	printf("CDSf         = 133\n");       
-	printf("CDPr         = 160712\n");    
-	printf("ReqPuX       = 944\n");       
-	printf("ReqPuY       = 16777215\n");  
-	printf("IFRf         = 639172\n");    
-	printf("IFThr        = 30108\n");      
-	printf("IFLk         = 20\n");        
-	printf("CDOffThr     = 5\n");          	
-	printf("SynPxlW      = 52458\n");     
-	printf("testPbias      = 52458\n");
-	printf("SynW         = 101508\n");    
-	printf("CDOnThr      = 16777215\n"); 
-	printf("CDDiff       = 8053457\n");  
-	printf("EMCompH      = 133\n");     
-	printf("EMCompT      = 160712\n");       
-	printf("CDIoff       = 944\n");        
-	printf("CDRGnd       = 16777215\n");  
-	printf("self       = 16777215\n");
-	printf("FollBias     = 639172\n");   
-	printf("ArbPd        = 30108\n");       
-	printf("EMVrefL      = 20\n");           
-	printf("CDCas        = 5\n");            
-	printf("EMVrefH      = 5\n");        
-	printf("l2V       = 16777215\n");
+        printf("SynThr       = %d \n", SynThr);         
+	printf("SynTau       = %d \n", SynTau);       
+	printf("SynPxlTau    = %d \n", SynPxlTau);    
+	printf("CDRefr       = %d \n", CDRefr);       
+	printf("CDSf         = %d \n", CDSf);       
+	printf("CDPr         = %d \n", CDPr);    
+	printf("ReqPuX       = %d \n", ReqPuX);       
+	printf("ReqPuY       = %d \n", ReqPuY);  
+	printf("IFRf         = %d \n", IFRf);    
+	printf("IFThr        = %d \n", IFThr);      
+	printf("IFLk         = %d \n", IFLk);        
+	printf("CDOffThr     = %d \n", CDOffThr);          	
+	printf("SynPxlW      = %d \n", SynPxlW);     
+	printf("testPbias    = %d \n", testPbias);
+	printf("SynW         = %d \n", SynW);    
+	printf("CDOnThr      = %d \n", CDOnThr); 
+	printf("CDDiff       = %d \n", CDDiff);  
+	printf("EMCompH      = %d \n", EMCompH);     
+	printf("EMCompT      = %d \n", EMCompT);       
+	printf("CDIoff       = %d \n", CDIoff);        
+	printf("CDRGnd       = %d \n", CDRGnd);  
+	printf("self         = %d \n", self);
+	printf("FollBias     = %d \n", FollBias);   
+	printf("ArbPd        = %d \n", ArbPd);       
+	printf("EMVrefL      = %d \n", EMVrefL);           
+	printf("CDCas        = %d \n", CDCas);            
+	printf("EMVrefH      = %d \n", EMVrefH);        
+	printf("l2V          = %d \n", l2V);
            
         int biasValues[]={SynThr,      
                           SynTau,  
