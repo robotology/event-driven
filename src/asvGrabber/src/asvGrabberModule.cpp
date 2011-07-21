@@ -281,36 +281,22 @@ bool asvGrabberModule::respond(const Bottle& command, Bottle& reply) {
         rec = true;
         {
             switch(command.get(1).asVocab()) {
-            case COMMAND_VOCAB_LEFT: {
-                switch(command.get(2).asVocab()) {                    
-                case COMMAND_VOCAB_SYTH:{
-                    double w = command.get(3).asDouble();
-                    if(D2Y!=0)
-                        D2Y->setSynThr(w);
-                    ok = true;
-                } break;
-                
-                                    
-                default: {
-                } break;
-                } //closing the switch internal
+                                
+            case COMMAND_VOCAB_SYTH:{
+                double w = command.get(2).asDouble();
+                if(D2Y!=0)
+                    D2Y->setSynThr(w);
+                ok = true;
+            } break;
+            
+            
+            default: {
+            } break;
+            
             
             } break;
-            case COMMAND_VOCAB_RIGHT:{
-                switch(command.get(2).asVocab()) {
-                    
-                case COMMAND_VOCAB_SYTH:{
-                    double w = command.get(3).asDouble();
-                    if(D2Y!=0)
-                        D2Y->setSynThr(w);
-                    ok = true;
-                } break;
-                
-                default: {
-                } break;
-                }
-            } break; //closing the RIGHT
-            } break; //closing the SET
+            
+        } break; //closing the SET
     case COMMAND_VOCAB_GET:
         rec = true;
         {
