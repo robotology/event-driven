@@ -17,7 +17,7 @@ include(iCubHelpers)
 # default prefix for applications
 SET(ICUB_APPLICATIONS_PREFIX "$ENV{ICUB_ROOT}"  CACHE PATH "Application path prefix")
 				
-
+add_subdirectory(asvApplication)
 add_subdirectory(eMorphApplication)
 add_subdirectory(objectInteractorApp)
 add_subdirectory(opticalFlowApplication)
