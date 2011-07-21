@@ -96,7 +96,7 @@ reset_pins_expand = 4
 #define OneSecond 1000000 //1sec
 #define latchexpand 100
 #define powerdownexpand 100
-#define countBias 12
+#define countBias 28
 #define LATCH_KEEP 1
 #define LATCH_TRANSPARENT 0
 
@@ -107,152 +107,36 @@ reset_pins_expand = 4
 
 asvGrabberThread::asvGrabberThread(string portDeviceName, bool i_bool, string i_fileName = " "):RateThread(THRATE) {
 
-    /*   ORIGINAL VALUES
-    *   from DVS128_PAER.xml, set Tmpdiff128
-    *    biasvalues = {
-    *    "11" "cas": 1966, 7AE
-    *    "10" "injGnd": 22703, 58AF
-    *    "9" "reqPd": 16777215, FFFFFF
-    *    "puX": 4368853, 42A9D5
-    *    "diffOff": 3207, C87
-    *    "req": 111347, 1B2F3
-    *    "refr": 0, 0
-    *    "puY": 16777215, FFFFFF
-    *    "diffOn": 483231, 75F9F
-    *    "diff": 28995, 7143
-    *    "foll": 19, 13
-    *    "Pr": 8, 8
-    *}
-    */
+    SynThr       = 52458;         
+    SynTau       = 101508;       
+    SynPxlTau    = 16777215;    
+    testPbias    = 16777215;
+    CDRefr       = 8053457;       
+    CDSf         = 133;       
+    CDPr         = 160712;    
+    ReqPuX       = 944;       
+    ReqPuY       = 16777215;  
+    IFRf         = 639172;    
+    IFThr        = 30108;      
+    IFLk         = 20;        
+    CDOffThr     = 5;          
 
+    SynPxlW      = 52458;     
+    SynW         = 101508;    
+    CDOnThr      = 16777215; 
+    CDDiff       = 8053457;  
+    EMCompH      = 133;     
+    EMCompT      = 160712;       
+    CDIoff       = 944;        
+    CDRGnd       = 16777215;
+    self         = 16777215;
+    FollBias     = 639172;   
+    ArbPd        = 30108;       
+    EMVrefL      = 20;           
+    CDCas        = 5;            
+    EMVrefH      = 5;
+    l2V          = 5;
 
-
-    /*
-#define FAST
-#ifdef FAST
-    //int biasValues[]={1966,        // cas
-      //1137667,       // injGnd
-      //16777215,      // reqPd
-      //8053457,       // puX
-      //133,           // diffOff
-      //160712,        // req
-      //944,           // refr
-      //16777215,      // puY
-      //205255,        // diffOn
-      //3207,          // diff 
-      //278,           // foll
-      //217            // Pr 
-      //};
-
-             
-            
-    printf("valus from DVS128Fast.xml \n");
-    // from DVS128Fast.xml, set Tmpdiff128
-    cas = 52458;        // cas
-    injg = 101508;      // injGnd
-    reqPd = 16777215;   // reqPd
-    pux = 8053457;      // puX
-    diffoff = 133;      // diffOff
-    req = 160712;       // req
-    refr = 944;         // refr
-    puy = 16777215;     // puY
-    diffon = 639172;    // diffOn
-    diff = 30108;       // diff 
-    foll = 20;          // foll
-    pr= 8;              // Pr 
-    
-    casRight = 52458;        // cas
-    injgRight = 101508;      // injGnd
-    reqPdRight = 16777215;   // reqPd
-    puxRight = 8053457;      // puX
-    diffoffRight = 133;      // diffOff
-    reqRight = 160712;       // req
-    refrRight = 944;         // refr
-    puyRight = 16777215;     // puY
-    diffonRight = 639172;    // diffOn
-    diffRight = 30108;       // diff 
-    follRight = 20;          // foll
-    prRight = 8;             // Pr 
-            
-           
-#else
-            
-    printf("valus from DVS128_PAER.xml \n");
-    cas = 1966;         // cas
-    injg = 22703;       // injGnd
-    reqPd = 16777215;   // reqPd
-    pux = 4368853;      // puX
-    diffoff = 3207;     // diffOff
-    req = 111347;       // req
-    refr = 0;           // refr
-    puy = 16777215;     // puY
-    diffon = 483231;    // diffOn
-    diff = 28995;       // diff 
-    foll = 19;          // foll
-    pr = 8;             // Pr 
-
-    casRight = 1966;        // cas
-    injgRight = 22703;      // injGnd
-    reqPdRight = 16777215;  // reqPd
-    puxRight = 4368853;     // puX
-    diffoffRight = 3207;    // diffOff
-    reqRight = 111347;      // req
-    refrRight = 0;          // refr
-    puyRight = 16777215;    // puY
-    diffonRight = 483231;   // diffOn
-    diffRight = 28995;      // diff 
-    follRight = 19;         // foll
-    prRight = 8;            // Pr 
-            
-    
-    // int biasValues[]={1966,        // cas
-    // 22703,       // injGnd
-    // 16777215,    // reqPd
-    // 4368853,     // puX
-    // 3207,        // diffOff
-    // 111347,      // req
-    // 0,           // refr
-    // 16777215,    // puY
-    // 483231,      // diffOn
-    // 28995,       // diff 
-    // 19,          // foll
-    // 8            // Pr 
-    // };
-    
-#endif
-
-*/
-
-
-#define WIEN
-#ifdef WIEN
-    printf("values from WIEN \n");
-    cas = 52458;         // cas
-    injg = 101508;       // injGnd
-    reqPd = 16777215;    // reqPd
-    pux = 8053457;       // puX
-    diffoff = 133;       // diffOff
-    req = 160712;        // req
-    refr = 944;          // refr
-    puy = 16777215;      // puY
-    diffon = 639172;     // diffOn
-    diff = 30108;        // diff 
-    foll = 20;           // foll
-    pr = 5;              // Pr 
-
-    casRight = 52458;         // cas
-    injgRight = 101508;       // injGnd
-    reqPdRight = 16777215;    // reqPd
-    puxRight = 8053457;       // puX
-    diffoffRight = 133;       // diffOff
-    reqRight = 160712;        // req
-    refrRight = 944;          // refr
-    puyRight = 16777215;      // puY
-    diffonRight = 639172;     // diffOn
-    diffRight = 30108;        // diff 
-    follRight = 20;           // foll
-    prRight = 5;              // Pr 
-#endif
      
     save = false;
     // passing the parameter to the class variable
@@ -429,59 +313,111 @@ void asvGrabberThread::prepareBiases() {
     } 
     else {
         printf("sending biases as following variables.... \n");
-        printf("cas:%d \n",cas);
-        printf("injg:%d \n",injg);
-        printf("reqPd:%d \n",reqPd);
-        printf("pux:%d \n",pux);
-        printf("diffoff:%d \n",diffoff);
-        printf("req:%d \n",req);
-        printf("refr:%d \n",refr);
-        printf("puy:%d \n",puy);
-        printf("diffon:%d \n",diffon);
-        printf("diff:%d \n",diff);
-        printf("foll:%d \n",foll);
-        printf("pr:%d \n",pr);
-        int err;
-        
-        printf("sending biases as events to the device ... \n");
-                
-            
-        int biasValues[]={cas,        // cas
-                          injg,       // injGnd
-                          reqPd,    // reqPd
-                          pux,     // puX
-                          diffoff,        // diffOff
-                          req,      // req
-                          refr,           // refr
-                          puy,    // puY
-                          diffon,      // diffOn
-                          diff,       // diff 
-                          foll,          // foll
-                          pr            //Pr 
+
+        int err;                
+
+        printf("SynThr       = 52458\n");         
+	printf("SynTau       = 101508\n");       
+	printf("SynPxlTau    = 16777215\n");    
+	printf("CDRefr       = 8053457\n");       
+	printf("CDSf         = 133\n");       
+	printf("CDPr         = 160712\n");    
+	printf("ReqPuX       = 944\n");       
+	printf("ReqPuY       = 16777215\n");  
+	printf("IFRf         = 639172\n");    
+	printf("IFThr        = 30108\n");      
+	printf("IFLk         = 20\n");        
+	printf("CDOffThr     = 5\n");          	
+	printf("SynPxlW      = 52458\n");     
+	printf("testPbias      = 52458\n");
+	printf("SynW         = 101508\n");    
+	printf("CDOnThr      = 16777215\n"); 
+	printf("CDDiff       = 8053457\n");  
+	printf("EMCompH      = 133\n");     
+	printf("EMCompT      = 160712\n");       
+	printf("CDIoff       = 944\n");        
+	printf("CDRGnd       = 16777215\n");  
+	printf("self       = 16777215\n");
+	printf("FollBias     = 639172\n");   
+	printf("ArbPd        = 30108\n");       
+	printf("EMVrefL      = 20\n");           
+	printf("CDCas        = 5\n");            
+	printf("EMVrefH      = 5\n");        
+	printf("l2V       = 16777215\n")
+           
+        int biasValues[]={SynThr,      
+                          SynTau,  
+                          SynPxlTau,
+			  SynPxlThr,
+                          CDRefr,    
+                          CDSf,   
+                          CDPr,    
+                          ReqPuX,   
+                          ReqPuY,
+                          IFRf,    
+                          IFThr,       
+                          IFLk,        
+                          IFLk,
+			  CDOffThr,
+			  SynPxlW,
+			  testPbias,
+			  SynW,
+			  CDOnThr,
+			  CDDiff,
+			  EMCompH,
+			  EMCompT,
+			  CDIoff,
+			  CDRGnd,
+			  self,
+			  FollBias,
+			  ArbPd,
+			  EMVrefL,
+			  CDCas,
+			  EMVrefH,
+			  l2V
         };
         
 
         string biasNames[] = {
-            "cas",
-            "injGnd",
-            "reqPd",
-            "puX",
-            "diffOff",
-            "req",
-            "refr",
-            "puY",
-            "diffOn",
-            "diff",
-            "foll",
-            "Pr"
+	  "SynThr",      
+	  "SynTau",  
+	  "SynPxlTau",  
+	  "SysPxlThr",
+	  "testPbias",
+	  "CDRefr",    
+	  "CDSf",   
+	  "CDPr",    
+	  "ReqPuX",   
+	  "ReqPuY",
+	  "IFRf",    
+	  "IFThr",       
+	  "IFLk",        
+	  "IFLk",
+	  "CDOffThr",
+	  "SynPxlW",
+	  "SynW",
+	  "CDOnThr",
+	  "CDDiff",
+	  "EMCompH",
+	  "EMCompT",
+	  "CDIoff",
+	  "CDRGnd",
+	  "self"
+	  "FollBias",
+	  "ArbPd",
+	  "EMVrefL",
+	  "CDCas",
+	  "EMVrefH",
+	  "l2V"
         };
 
         
         //int err = write(file_desc,bias,41); //5+36 
+	printf("sending biases as events to the device ... \n");
         seqEvents = 0;
         seqSize_b = 0;
-        for(int j=0;j<countBias;j++) {
-            progBias(biasNames[j],24,biasValues[j],1);
+        for(int j = 0; j < countBias; j++) {
+            progBias(biasNames[j], countBias, biasValues[j],1);
         }
         latchCommitAEs(1);
         //monitor(10);
