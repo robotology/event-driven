@@ -343,7 +343,7 @@ void asvGrabberThread::prepareBiases() {
 	printf("EMVrefL      = %d \n", EMVrefL);           
 	printf("CDCas        = %d \n", CDCas);            
 	printf("EMVrefH      = %d \n", EMVrefH);        
-	printf("l2V          = %d \n", l2V);
+	printf("I2V          = %d \n", I2V);
            
         int biasValues[]={SynThr,      
                           SynTau,  
