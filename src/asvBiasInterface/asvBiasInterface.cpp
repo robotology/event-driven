@@ -35,35 +35,37 @@
 #define COMMAND_VOCAB_RIGHT VOCAB4('r','i','g','h')
 #define COMMAND_VOCAB_LEFT VOCAB4('l','e','f','t')
 
+
+
+
 #define SYTH_DEFAULT_VALUE    8053457
 #define SYTA_DEFAULT_VALUE    8053457
 #define SYPA_DEFAULT_VALUE    8053457
 #define SYPH_DEFAULT_VALUE    8053457
-#define TBP_DEFAULT_VALUE     8053457
-#define CDR_DEFAULT_VALUE     8053457
-#define CDS_DEFAULT_VALUE     8053457
-#define CDP_DEFAULT_VALUE     8053457
+#define TBP_DEFAULT_VALUE     16777215
+#define CDR_DEFAULT_VALUE     944
+#define CDS_DEFAULT_VALUE     20
+#define CDP_DEFAULT_VALUE     5
 #define RPX_DEFAULT_VALUE     8053457
-#define RPY_DEFAULT_VALUE     8053457
-#define IFR_DEFAULT_VALUE     8053457
-#define IFT_DEFAULT_VALUE     8053457
-#define IFL_DEFAULT_VALUE     8053457
-#define CDOF_DEFAULT_VALUE    8053457
-#define SYPW_DEFAULT_VALUE    8053457
-#define SYW_DEFAULT_VALUE     8053457
-#define CDON_DEFAULT_VALUE    8053457
-#define CDD_DEFAULT_VALUE     8053457
-#define EMCH_DEFAULT_VALUE    8053457
-#define EMCT_DEFAULT_VALUE    8053457
-#define CDI_DEFAULT_VALUE     8053457
-#define CDRG_DEFAULT_VALUE    8053457
-#define SELF_DEFAULT_VALUE    8053457
-#define FOLL_DEFAULT_VALUE    8053457
-#define ARBP_DEFAULT_VALUE    8053457
-#define EMVL_DEFAULT_VALUE    8053457
-#define CDC_DEFAULT_VALUE     8053457
-#define EMVH_DEFAULT_VALUE    8053457
-#define I2V_DEFAULT_VALUE     8053457
+#define RPY_DEFAULT_VALUE     16777215
+#define IFR_DEFAULT_VALUE     639172
+#define IFT_DEFAULT_VALUE     30108
+#define IFL_DEFAULT_VALUE     20
+#define CDOF_DEFAULT_VALUE    133
+#define SYPW_DEFAULT_VALUE    0
+#define SYW_DEFAULT_VALUE     0
+#define CDON_DEFAULT_VALUE    639172
+#define CDD_DEFAULT_VALUE     30108
+#define EMCH_DEFAULT_VALUE    30108
+#define EMCT_DEFAULT_VALUE    30108
+#define CDI_DEFAULT_VALUE     160712
+#define CDRG_DEFAULT_VALUE    101508
+#define SELF_DEFAULT_VALUE    500
+#define FOLL_DEFAULT_VALUE    52458
+#define ARBP_DEFAULT_VALUE    16777215
+#define EMVL_DEFAULT_VALUE    160712
+#define CDC_DEFAULT_VALUE     52458
+#define EMVH_DEFAULT_VALUE    52458
 
 
 using namespace yarp::os;
@@ -556,20 +558,6 @@ static void cb_digits_EMVrefH( GtkAdjustment *adj ) {
     mutex.post();
 }
 
-static void cb_digits_I2V( GtkAdjustment *adj ) {
-    mutex.wait();
-    if (_pOutPort!=NULL) {
-        yarp::os::Bottle bot; //= _pOutPort->prepare();
-        bot.clear();
-        bot.addVocab(COMMAND_VOCAB_SET);
-        bot.addVocab(COMMAND_VOCAB_I2V);
-        bot.addInt((int) adj->value);
-        //_pOutPort->Content() = _outBottle;
-        Bottle in;
-        _pOutPort->write(bot,in);
-    }
-    mutex.post();
-}
 
 // ----------------- CALL BACK RIGHT -------------------------------------------
 
@@ -1349,19 +1337,6 @@ GtkWidget* createMainWindow(void) {
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj5), "value_changed",
                       G_CALLBACK (cb_digits_EMVrefH), NULL);
-
-    label = gtk_label_new ("I2V");
-    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
-    gtk_widget_show (label);
-    
-    adj5 = gtk_adjustment_new (I2V_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
-    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
-    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
-    scale_set_default_values (GTK_SCALE (hscale));
-    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
-    gtk_widget_show (hscale);
-    g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_I2V), NULL);
 
 
     gtk_box_pack_start (GTK_BOX (box3), box5, FALSE, FALSE, 0);

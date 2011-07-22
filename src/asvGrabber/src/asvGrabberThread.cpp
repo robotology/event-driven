@@ -107,36 +107,34 @@ reset_pins_expand = 4
 
 asvGrabberThread::asvGrabberThread(string portDeviceName, bool i_bool, string i_fileName = " "):RateThread(THRATE) {
 
-    SynThr       = 52458;         
-    SynTau       = 101508;       
-    SynPxlTau    = 16777215;
-    SynPxlThr    = 16777215;
+    SynThr       = 8053457;         
+    SynTau       = 8053457;       
+    SynPxlTau    = 8053457;
+    SynPxlThr    = 8053457;
     testPbias    = 16777215;
-    CDRefr       = 8053457;       
-    CDSf         = 133;       
-    CDPr         = 160712;    
-    ReqPuX       = 944;       
+    CDRefr       = 944;       
+    CDSf         = 20;       
+    CDPr         = 5;    
+    ReqPuX       = 8053457;       
     ReqPuY       = 16777215;  
     IFRf         = 639172;    
     IFThr        = 30108;      
     IFLk         = 20;        
-    CDOffThr     = 5;          
-    SynPxlW      = 52458;     
-    SynW         = 101508;    
-    CDOnThr      = 16777215; 
-    CDDiff       = 8053457;  
-    EMCompH      = 133;     
-    EMCompT      = 160712;       
-    CDIoff       = 944;        
-    CDRGnd       = 16777215;
-    self         = 16777215;
-    FollBias     = 639172;   
-    ArbPd        = 30108;       
-    EMVrefL      = 20;           
-    CDCas        = 5;            
-    EMVrefH      = 5;
-    I2V          = 5;
-
+    CDOffThr     = 133;          
+    SynPxlW      = 0;     
+    SynW         = 0;    
+    CDOnThr      = 639172; 
+    CDDiff       = 30108;  
+    EMCompH      = 30108;     
+    EMCompT      = 30108;       
+    CDIoff       = 160712;        
+    CDRGnd       = 101508;
+    self         = 500;
+    FollBias     = 52458;   
+    ArbPd        = 16777215;       
+    EMVrefL      = 160712;           
+    CDCas        = 52458;            
+    EMVrefH      = 52458;
      
     save = false;
     // passing the parameter to the class variable
@@ -343,7 +341,6 @@ void asvGrabberThread::prepareBiases() {
 	printf("EMVrefL      = %d \n", EMVrefL);           
 	printf("CDCas        = %d \n", CDCas);            
 	printf("EMVrefH      = %d \n", EMVrefH);        
-	printf("I2V          = %d \n", I2V);
            
         int biasValues[]={SynThr,      
                           SynTau,  
@@ -372,8 +369,7 @@ void asvGrabberThread::prepareBiases() {
 			  ArbPd,
 			  EMVrefL,
 			  CDCas,
-			  EMVrefH,
-			  I2V
+			  EMVrefH
         };
         
 
@@ -406,8 +402,7 @@ void asvGrabberThread::prepareBiases() {
 	  "ArbPd",
 	  "EMVrefL",
 	  "CDCas",
-	  "EMVrefH",
-	  "I2V"
+	  "EMVrefH"
         };
 
         
