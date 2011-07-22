@@ -35,9 +35,6 @@
 #define COMMAND_VOCAB_RIGHT VOCAB4('r','i','g','h')
 #define COMMAND_VOCAB_LEFT VOCAB4('l','e','f','t')
 
-
-
-
 #define SYTH_DEFAULT_VALUE    8053457
 #define SYTA_DEFAULT_VALUE    8053457
 #define SYPA_DEFAULT_VALUE    8053457
@@ -119,7 +116,26 @@ static void deleteObjects() {
     delete command;
 }
 
-
+static double dec2current(int value) {
+    double step = 4.5; // every bit is converted in 4.5pA
+    int bits = 24;
+    int bitvalue;
+    double current = 0;
+    for (int i = bits - 1 ; i >= 0 ; i--) {
+        int mask = 1;
+        for (int j = 0; j < i; j++) {
+            mask *= 2;
+        }
+        if (mask & value) {
+            bitvalue = 1;
+        }
+        else {
+            bitvalue = 0;
+        }
+        current += bitvalue * mask * step;   
+    }
+    return current; //in pA
+}
 
 
 //-------------------------------------------------
@@ -153,6 +169,186 @@ static void callback( GtkWidget *widget,gpointer   data ){
     }
 
 }
+
+static void enter_callbackSYTH( GtkWidget *widget, GtkWidget *entry ) {
+    const gchar *entry_text;
+    entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
+    printf ("Entry contents : %s\n", entry_text);
+}
+
+static void enter_callbackSYTA( GtkWidget *widget, GtkWidget *entry ) {
+    const gchar *entry_text;
+    entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
+    printf ("Entry contents  : %s\n", entry_text);
+}
+
+static void enter_callbackSYPA( GtkWidget *widget, GtkWidget *entry ) {
+    const gchar *entry_text;
+    entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
+    printf ("Entry contents  : %s\n", entry_text);
+}
+
+static void enter_callbackSYPH( GtkWidget *widget, GtkWidget *entry ) {
+    const gchar *entry_text;
+    entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
+    printf ("Entry contents : %s\n", entry_text);
+}
+
+static void enter_callbackTBP( GtkWidget *widget, GtkWidget *entry ) {
+    const gchar *entry_text;
+    entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
+    printf ("Entry contents  : %s\n", entry_text);
+}
+
+static void enter_callbackCDR( GtkWidget *widget, GtkWidget *entry ) {
+    const gchar *entry_text;
+    entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
+    printf ("Entry contents  : %s\n", entry_text);
+}
+
+static void enter_callbackCDS( GtkWidget *widget, GtkWidget *entry ) {
+    const gchar *entry_text;
+    entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
+    printf ("Entry contents  : %s\n", entry_text);
+}
+
+static void enter_callbackCDP( GtkWidget *widget, GtkWidget *entry ) {
+    const gchar *entry_text;
+    entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
+    printf ("Entry contents  : %s\n", entry_text);
+}
+
+static void enter_callbackRPX( GtkWidget *widget, GtkWidget *entry ) {
+    const gchar *entry_text;
+    entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
+    printf ("Entry contents  : %s\n", entry_text);
+}
+
+static void enter_callbackRPY( GtkWidget *widget, GtkWidget *entry ) {
+    const gchar *entry_text;
+    entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
+    printf ("Entry contents  : %s\n", entry_text);
+}
+
+static void enter_callbackIFR( GtkWidget *widget, GtkWidget *entry ) {
+    const gchar *entry_text;
+    entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
+    printf ("Entry contents  : %s\n", entry_text);
+}
+
+static void enter_callbackIFT( GtkWidget *widget, GtkWidget *entry ) {
+    const gchar *entry_text;
+    entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
+    printf ("Entry contents  : %s\n", entry_text);
+}
+
+static void enter_callbackIFL( GtkWidget *widget, GtkWidget *entry ) {
+    const gchar *entry_text;
+    entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
+    printf ("Entry contents  : %s\n", entry_text);
+}
+
+static void enter_callbackCDOF( GtkWidget *widget, GtkWidget *entry ) {
+    const gchar *entry_text;
+    entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
+    printf ("Entry contents  : %s\n", entry_text);
+}
+
+static void enter_callbackSYPW( GtkWidget *widget, GtkWidget *entry ) {
+    const gchar *entry_text;
+    entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
+    printf ("Entry contents  : %s\n", entry_text);
+}
+
+static void enter_callbackSYW( GtkWidget *widget, GtkWidget *entry ) {
+    const gchar *entry_text;
+    entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
+    printf ("Entry contents  : %s\n", entry_text);
+}
+
+static void enter_callbackCDON( GtkWidget *widget, GtkWidget *entry ) {
+    const gchar *entry_text;
+    entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
+    printf ("Entry contents  : %s\n", entry_text);
+}
+
+static void enter_callbackCDD( GtkWidget *widget, GtkWidget *entry ) {
+    const gchar *entry_text;
+    entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
+    printf ("Entry contents  : %s\n", entry_text);
+}
+
+static void enter_callbackEMCH( GtkWidget *widget, GtkWidget *entry ) {
+    const gchar *entry_text;
+    entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
+    printf ("Entry contents  : %s\n", entry_text);
+}
+
+static void enter_callbackEMCT( GtkWidget *widget, GtkWidget *entry ) {
+    const gchar *entry_text;
+    entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
+    printf ("Entry contents  : %s\n", entry_text);
+}
+
+static void enter_callbackCDI( GtkWidget *widget, GtkWidget *entry ) {
+    const gchar *entry_text;
+    entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
+    printf ("Entry contents  : %s\n", entry_text);
+}
+
+static void enter_callbackCDRG( GtkWidget *widget, GtkWidget *entry ) {
+    const gchar *entry_text;
+    entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
+    printf ("Entry contents  : %s\n", entry_text);
+}
+
+static void enter_callbackSELF( GtkWidget *widget, GtkWidget *entry ) {
+    const gchar *entry_text;
+    entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
+    printf ("Entry contents  : %s\n", entry_text);
+}
+
+static void enter_callbackFOLL( GtkWidget *widget, GtkWidget *entry ) {
+    const gchar *entry_text;
+    entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
+    printf ("Entry contents  : %s\n", entry_text);
+}
+
+static void enter_callbackARBP( GtkWidget *widget, GtkWidget *entry ) {
+    const gchar *entry_text;
+    entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
+    printf ("Entry contents  : %s\n", entry_text);
+}
+
+static void enter_callbackEMVL( GtkWidget *widget, GtkWidget *entry ) {
+    const gchar *entry_text;
+    entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
+    printf ("Entry contents  : %s\n", entry_text);
+}
+
+static void enter_callbackCDC( GtkWidget *widget, GtkWidget *entry ) {
+    const gchar *entry_text;
+    entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
+    printf ("Entry contents  : %s\n", entry_text);
+}
+
+static void enter_callbackEMVH( GtkWidget *widget, GtkWidget *entry ) {
+    const gchar *entry_text;
+    entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
+    printf ("Entry contents  : %s\n", entry_text);
+}
+
+/*static void entry_toggle_editable( GtkWidget *checkbutton, GtkWidget *entry ) {
+    gtk_editable_set_editable (GTK_EDITABLE (entry),
+                               GTK_TOGGLE_BUTTON (checkbutton)->active);
+}
+
+static void entry_toggle_visibility( GtkWidget *checkbutton, GtkWidget *entry ) {
+    gtk_entry_set_visibility (GTK_ENTRY (entry),
+                              GTK_TOGGLE_BUTTON (checkbutton)->active);
+}
+*/
+
 
 
 
@@ -606,6 +802,460 @@ static void callbackProgBiasButton( GtkWidget *widget,gpointer data ) {
 
 
 gint timeout_update_CB(gpointer data) {
+    c++;
+    switch(c) {
+        case 0: {
+            if(_pOutPort->getOutputCount()) {
+                    yarp::os::Bottle bot; //= _pOutPort->prepare();
+                    bot.clear();
+                    bot.addVocab(COMMAND_VOCAB_GET);
+                    bot.addVocab(COMMAND_VOCAB_SYTH);
+                    //_pOutPort->Content() = _outBottle;
+                    Bottle in;
+                    _pOutPort->write(bot,in);
+                    double value=in.get(2).asDouble();
+                    //mutex.wait();
+                    gtk_adjustment_set_value(GTK_ADJUSTMENT (adj1),value);
+                    //mutex.post();
+            }
+        }
+        break;
+        case 1: {
+            if(_pOutPort->getOutputCount()) {
+                    yarp::os::Bottle bot; //= _pOutPort->prepare();
+                    bot.clear();
+                    bot.addVocab(COMMAND_VOCAB_GET);
+                    bot.addVocab(COMMAND_VOCAB_SYTA);
+                    //_pOutPort->Content() = _outBottle;
+                    Bottle in;
+                    _pOutPort->write(bot,in);
+                    double value=in.get(2).asDouble();
+                    mutex.wait();
+                    gtk_adjustment_set_value(GTK_ADJUSTMENT (adj2),value);
+                    mutex.post();
+            }
+        }
+        break;
+        case 2: {
+            if(_pOutPort->getOutputCount()) {
+                    yarp::os::Bottle bot; //= _pOutPort->prepare();
+                    bot.clear();
+                    bot.addVocab(COMMAND_VOCAB_GET);
+                    bot.addVocab(COMMAND_VOCAB_SYPA);
+                    //_pOutPort->Content() = _outBottle;
+                    Bottle in;
+                    _pOutPort->write(bot,in);
+                    double value=in.get(2).asDouble();
+                    mutex.wait();
+                    gtk_adjustment_set_value(GTK_ADJUSTMENT (adj3),value);
+                    mutex.post();
+            }
+        }
+        break;
+        case 3: {
+            if(_pOutPort->getOutputCount()) {
+                    yarp::os::Bottle bot; //= _pOutPort->prepare();
+                    bot.clear();
+                    bot.addVocab(COMMAND_VOCAB_GET);
+                    bot.addVocab(COMMAND_VOCAB_SYPH);
+                    //_pOutPort->Content() = _outBottle;
+                    Bottle in;
+                    _pOutPort->write(bot,in);
+                    double value=in.get(2).asDouble();
+                    mutex.wait();
+                    gtk_adjustment_set_value(GTK_ADJUSTMENT (adj4),value);
+                    mutex.post();
+            }
+        }
+        break;
+        case 4: {
+            if(_pOutPort->getOutputCount()) {
+                    yarp::os::Bottle bot; //= _pOutPort->prepare();
+                    bot.clear();
+                    bot.addVocab(COMMAND_VOCAB_GET);
+                    bot.addVocab(COMMAND_VOCAB_TPB);
+                    //_pOutPort->Content() = _outBottle;
+                    Bottle in;
+                    _pOutPort->write(bot,in);
+                    double value=in.get(2).asDouble();
+                    mutex.wait();
+                    gtk_adjustment_set_value(GTK_ADJUSTMENT (adj5),value);
+                    mutex.post();
+            }
+        }
+        break;
+        case 5: {
+            if(_pOutPort->getOutputCount()) {
+                    yarp::os::Bottle bot; //= _pOutPort->prepare();
+                    bot.clear();
+                    bot.addVocab(COMMAND_VOCAB_GET);
+                    bot.addVocab(COMMAND_VOCAB_CDR);
+                    //_pOutPort->Content() = _out5Bottle;
+                    Bottle in;
+                    _pOutPort->write(bot,in);
+                    double value=in.get(2).asDouble();
+                    mutex.wait();
+                    gtk_adjustment_set_value(GTK_ADJUSTMENT (adj6),value);
+                    mutex.post();
+            }
+        }
+        break;
+        case 6: {
+            if(_pOutPort->getOutputCount()) {
+                    yarp::os::Bottle bot; //= _pOutPort->prepare();
+                    bot.clear();
+                    bot.addVocab(COMMAND_VOCAB_GET);
+                    bot.addVocab(COMMAND_VOCAB_CDS);
+                    //_pOutPort->Content() = _outBottle;
+                    Bottle in;
+                    _pOutPort->write(bot,in);
+                    double value=in.get(2).asDouble();
+                    mutex.wait();
+                    gtk_adjustment_set_value(GTK_ADJUSTMENT (adj7),value);
+                    mutex.post();
+           }
+        }
+        break;
+        case 7: {
+            if(_pOutPort->getOutputCount()) {
+                    yarp::os::Bottle bot; //= _pOutPort->prepare();
+                    bot.clear();
+                    bot.addVocab(COMMAND_VOCAB_GET);
+                    bot.addVocab(COMMAND_VOCAB_CDP);
+                    //_pOutPort->Content() = _outBottle;
+                    Bottle in;
+                    _pOutPort->write(bot,in);
+                    double value=in.get(2).asDouble();
+                    mutex.wait();
+                    gtk_adjustment_set_value(GTK_ADJUSTMENT (adj8),value);
+                    mutex.post();
+            }
+        }
+        break;
+        case 8: {
+            if(_pOutPort->getOutputCount()) {
+                    yarp::os::Bottle bot; //= _pOutPort->prepare();
+                    bot.clear();
+                    bot.addVocab(COMMAND_VOCAB_GET);
+                    bot.addVocab(COMMAND_VOCAB_RPX);
+                    //_pOutPort->Content() = _outBottle;
+                    Bottle in;
+                    _pOutPort->write(bot,in);
+                    double value=in.get(2).asDouble();
+                    mutex.wait();
+                    gtk_adjustment_set_value(GTK_ADJUSTMENT (adj9),value);
+                    mutex.post();
+            }
+        }
+        break;
+        case 9: {
+            if(_pOutPort->getOutputCount()) {
+                    yarp::os::Bottle bot; //= _pOutPort->prepare();
+                    bot.clear();
+                    bot.addVocab(COMMAND_VOCAB_GET);
+                    bot.addVocab(COMMAND_VOCAB_RPY);
+                    //_pOutPort->Content() = _outBottle;
+                    Bottle in;
+                    _pOutPort->write(bot,in);
+                    double value=in.get(2).asDouble();
+                    mutex.wait();
+                    gtk_adjustment_set_value(GTK_ADJUSTMENT (adj10),value);
+                    mutex.post();
+            }
+        }
+        break;
+        case 10: {
+            if(_pOutPort->getOutputCount()) {
+                    yarp::os::Bottle bot; //= _pOutPort->prepare();
+                    bot.clear();
+                    bot.addVocab(COMMAND_VOCAB_GET);
+                    bot.addVocab(COMMAND_VOCAB_IFR);
+                    //_pOutPort->Content() = _outBottle;
+                    Bottle in;
+                    _pOutPort->write(bot,in);
+                    double value=in.get(2).asDouble();
+                    mutex.wait();
+                    gtk_adjustment_set_value(GTK_ADJUSTMENT (adj11),value);
+                    mutex.post();
+            }
+        }
+        break;
+        case 11: {
+            if(_pOutPort->getOutputCount()) {
+                    yarp::os::Bottle bot; //= _pOutPort->prepare();
+                    bot.clear();
+                    bot.addVocab(COMMAND_VOCAB_GET);
+                    bot.addVocab(COMMAND_VOCAB_IFT);
+                    //_pOutPort->Content() = _out5Bottle;
+                    Bottle in;
+                    _pOutPort->write(bot,in);
+                    double value=in.get(2).asDouble();
+                    mutex.wait();
+                    gtk_adjustment_set_value(GTK_ADJUSTMENT (adj12),value);
+                    mutex.post();
+            }
+        }
+        break;
+        case 12: {
+            if(_pOutPort->getOutputCount()) {
+                    yarp::os::Bottle bot; //= _pOutPort->prepare();
+                    bot.clear();
+                    bot.addVocab(COMMAND_VOCAB_GET);
+                    bot.addVocab(COMMAND_VOCAB_IFL);
+                    //_pOutPort->Content() = _outBottle;
+                    Bottle in;
+                    _pOutPort->write(bot,in);
+                    double value=in.get(2).asDouble();
+                    mutex.wait();
+                    gtk_adjustment_set_value(GTK_ADJUSTMENT (adj13),value);
+                    mutex.post();
+            }
+        }
+        break;
+        case 13: {
+            if(_pOutPort->getOutputCount()) {
+                    yarp::os::Bottle bot; //= _pOutPort->prepare();
+                    bot.clear();
+                    bot.addVocab(COMMAND_VOCAB_GET);
+                    bot.addVocab(COMMAND_VOCAB_CDOF);
+                    //_pOutPort->Content() = _outBottle;
+                    Bottle in;
+                    _pOutPort->write(bot,in);
+                    double value=in.get(2).asDouble();
+                    mutex.wait();
+                    gtk_adjustment_set_value(GTK_ADJUSTMENT (adj14),value);
+                    mutex.post();
+            }
+        }
+        break;
+        case 14: {
+            if(_pOutPort->getOutputCount()) {
+                    yarp::os::Bottle bot; //= _pOutPort->prepare();
+                    bot.clear();
+                    bot.addVocab(COMMAND_VOCAB_GET);
+                    bot.addVocab(COMMAND_VOCAB_SYPW);
+                    //_pOutPort->Content() = _outBottle;
+                    Bottle in;
+                    _pOutPort->write(bot,in);
+                    double value=in.get(2).asDouble();
+                    mutex.wait();
+                    gtk_adjustment_set_value(GTK_ADJUSTMENT (adj15),value);
+                    mutex.post();
+            }
+        }
+        break;
+        case 15: {
+            if(_pOutPort->getOutputCount()) {
+                    yarp::os::Bottle bot; //= _pOutPort->prepare();
+                    bot.clear();
+                    bot.addVocab(COMMAND_VOCAB_GET);
+                    bot.addVocab(COMMAND_VOCAB_SYW);
+                    //_pOutPort->Content() = _outBottle;
+                    Bottle in;
+                    _pOutPort->write(bot,in);
+                    double value=in.get(2).asDouble();
+                    mutex.wait();
+                    gtk_adjustment_set_value(GTK_ADJUSTMENT (adj16),value);
+                    mutex.post();
+            }
+        }
+        break;
+        case 16: {
+            if(_pOutPort->getOutputCount()) {
+                    yarp::os::Bottle bot; //= _pOutPort->prepare();
+                    bot.clear();
+                    bot.addVocab(COMMAND_VOCAB_GET);
+                    bot.addVocab(COMMAND_VOCAB_CDON);
+                    //_pOutPort->Content() = _outBottle;
+                    Bottle in;
+                    _pOutPort->write(bot,in);
+                    double value=in.get(2).asDouble();
+                    mutex.wait();
+                    gtk_adjustment_set_value(GTK_ADJUSTMENT (adj17),value);
+                    mutex.post();
+            }
+        }
+        break;
+        case 17: {
+            if(_pOutPort->getOutputCount()) {
+                    yarp::os::Bottle bot; //= _pOutPort->prepare();
+                    bot.clear();
+                    bot.addVocab(COMMAND_VOCAB_GET);
+                    bot.addVocab(COMMAND_VOCAB_CDD);
+                    //_pOutPort->Content() = _outBottle;
+                    Bottle in;
+                    _pOutPort->write(bot,in);
+                    double value=in.get(2).asDouble();
+                    mutex.wait();
+                    gtk_adjustment_set_value(GTK_ADJUSTMENT (adj18),value);
+                    mutex.post();
+            }
+        }
+        break;
+        case 18: {
+            if(_pOutPort->getOutputCount()) {
+                    yarp::os::Bottle bot; //= _pOutPort->prepare();
+                    bot.clear();
+                    bot.addVocab(COMMAND_VOCAB_GET);
+                    bot.addVocab(COMMAND_VOCAB_EMCH);
+                    //_pOutPort->Content() = _outBottle;
+                    Bottle in;
+                    _pOutPort->write(bot,in);
+                    double value=in.get(2).asDouble();
+                    mutex.wait();
+                    gtk_adjustment_set_value(GTK_ADJUSTMENT (adj19),value);
+                    mutex.post();
+            }
+        }
+        break;
+        case 19: {
+            if(_pOutPort->getOutputCount()) {
+                    yarp::os::Bottle bot; //= _pOutPort->prepare();
+                    bot.clear();
+                    bot.addVocab(COMMAND_VOCAB_GET);
+                    bot.addVocab(COMMAND_VOCAB_EMCT);
+                    //_pOutPort->Content() = _outBottle;
+                    Bottle in;
+                    _pOutPort->write(bot,in);
+                    double value=in.get(2).asDouble();
+                    mutex.wait();
+                    gtk_adjustment_set_value(GTK_ADJUSTMENT (adj20),value);
+                    mutex.post();
+            }
+        }
+        break;
+        case 20: {
+            if(_pOutPort->getOutputCount()) {
+                    yarp::os::Bottle bot; //= _pOutPort->prepare();
+                    bot.clear();
+                    bot.addVocab(COMMAND_VOCAB_GET);
+                    bot.addVocab(COMMAND_VOCAB_CDI);
+                    //_pOutPort->Content() = _outBottle;
+                    Bottle in;
+                    _pOutPort->write(bot,in);
+                    double value=in.get(2).asDouble();
+                    mutex.wait();
+                    gtk_adjustment_set_value(GTK_ADJUSTMENT (adj21),value);
+                    mutex.post();
+            }
+        }
+        break;
+        case 21: {
+            if(_pOutPort->getOutputCount()) {
+                    yarp::os::Bottle bot; //= _pOutPort->prepare();
+                    bot.clear();
+                    bot.addVocab(COMMAND_VOCAB_GET);
+                    bot.addVocab(COMMAND_VOCAB_CDRG);
+                    //_pOutPort->Content() = _outBottle;
+                    Bottle in;
+                    _pOutPort->write(bot,in);
+                    double value=in.get(2).asDouble();
+                    mutex.wait();
+                    gtk_adjustment_set_value(GTK_ADJUSTMENT (adj22),value);
+                    mutex.post();
+            }
+        }
+        break;
+        case 22: {
+            if(_pOutPort->getOutputCount()) {
+                    yarp::os::Bottle bot; //= _pOutPort->prepare();
+                    bot.clear();
+                    bot.addVocab(COMMAND_VOCAB_GET);
+                    bot.addVocab(COMMAND_VOCAB_SELF);
+                    //_pOutPort->Content() = _outBottle;
+                    Bottle in;
+                    _pOutPort->write(bot,in);
+                    double value=in.get(2).asDouble();
+                    mutex.wait();
+                    gtk_adjustment_set_value(GTK_ADJUSTMENT (adj23),value);
+                    mutex.post();
+            }
+        }
+        break;
+        case 23: {
+            if(_pOutPort->getOutputCount()) {
+                    yarp::os::Bottle bot; //= _pOutPort->prepare();
+                    bot.clear();
+                    bot.addVocab(COMMAND_VOCAB_GET);
+                    bot.addVocab(COMMAND_VOCAB_FOLL);
+                    //_pOutPort->Content() = _outBottle;
+                    Bottle in;
+                    _pOutPort->write(bot,in);
+                    double value=in.get(2).asDouble();
+                    mutex.wait();
+                    gtk_adjustment_set_value(GTK_ADJUSTMENT (adj24),value);
+                    mutex.post();
+            }
+        }
+        break;
+        case 24: {
+            if(_pOutPort->getOutputCount()) {
+                    yarp::os::Bottle bot; //= _pOutPort->prepare();
+                    bot.clear();
+                    bot.addVocab(COMMAND_VOCAB_GET);
+                    bot.addVocab(COMMAND_VOCAB_ARBP);
+                    //_pOutPort->Content() = _outBottle;
+                    Bottle in;
+                    _pOutPort->write(bot,in);
+                    double value=in.get(2).asDouble();
+                    mutex.wait();
+                    gtk_adjustment_set_value(GTK_ADJUSTMENT (adj25),value);
+                    mutex.post();
+            }
+        }
+        break;
+        case 25: {
+            if(_pOutPort->getOutputCount()) {
+                    yarp::os::Bottle bot; //= _pOutPort->prepare();
+                    bot.clear();
+                    bot.addVocab(COMMAND_VOCAB_GET);
+                    bot.addVocab(COMMAND_VOCAB_EMVL);
+                    //_pOutPort->Content() = _outBottle;
+                    Bottle in;
+                    _pOutPort->write(bot,in);
+                    double value=in.get(2).asDouble();
+                    mutex.wait();
+                    gtk_adjustment_set_value(GTK_ADJUSTMENT (adj26),value);
+                    mutex.post();
+            }
+        }
+        break;
+        case 26: {
+            if(_pOutPort->getOutputCount()) {
+                    yarp::os::Bottle bot; //= _pOutPort->prepare();
+                    bot.clear();
+                    bot.addVocab(COMMAND_VOCAB_GET);
+                    bot.addVocab(COMMAND_VOCAB_CDC);
+                    //_pOutPort->Content() = _outBottle;
+                    Bottle in;
+                    _pOutPort->write(bot,in);
+                    double value=in.get(2).asDouble();
+                    mutex.wait();
+                    gtk_adjustment_set_value(GTK_ADJUSTMENT (adj27),value);
+                    mutex.post();
+            }
+        }
+        break;
+        case 27: {
+            if(_pOutPort->getOutputCount()) {
+                    yarp::os::Bottle bot; //= _pOutPort->prepare();
+                    bot.clear();
+                    bot.addVocab(COMMAND_VOCAB_GET);
+                    bot.addVocab(COMMAND_VOCAB_EMVH);
+                    //_pOutPort->Content() = _outBottle;
+                    Bottle in;
+                    _pOutPort->write(bot,in);
+                    double value=in.get(2).asDouble();
+                    mutex.wait();
+                    gtk_adjustment_set_value(GTK_ADJUSTMENT (adj28),value);
+                    mutex.post();
+            }
+        }
+        break;
+        default: {
+                    c=-1;
+                 }
+    }
     //portFpsData.getStats(av, min, max);
     //portFpsData.reset();
     gchar *msg;
@@ -881,10 +1531,15 @@ GtkWidget* createMainWindow(void) {
     // as defined above. The data passed to the callback
     // function is NULL and is ignored in the callback function.
     //g_signal_connect (G_OBJECT (window), "delete_event", G_CALLBACK (delete_event), NULL);
+    
     // Box for main window
     GtkWidget *buttonSave, *buttonProgBias;
     GtkWidget *boxButton;
-    GtkWidget *box, *box2, *box3, *box4, *box5, *box6;
+    GtkWidget *box, *box2, *box3, *box4, *box5, *box6, *box7;
+    // init text boxes
+    
+    gint tmp_pos;
+
     box = gtk_vbox_new (FALSE, 0); // parameters (gboolean homogeneous_space, gint spacing);
     gtk_container_add (GTK_CONTAINER (window), box);
     // MenuBar for main window
@@ -918,6 +1573,7 @@ GtkWidget* createMainWindow(void) {
     GtkWidget *scrollbar;
     GtkWidget *separator;
     GtkWidget *label;
+    
     //GtkWidget *scale;
     
     
@@ -946,41 +1602,390 @@ GtkWidget* createMainWindow(void) {
     box5 = gtk_vbox_new (FALSE, 0);
     gtk_container_set_border_width (GTK_CONTAINER (box5), 0);
 
-    label = gtk_label_new ("BIAS:");
+    label = gtk_label_new ("BIAS CD:");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
 
-    label = gtk_label_new ("SynThr");
+    label = gtk_label_new ("CDSf");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
     
-    adj1 = gtk_adjustment_new (SYTH_DEFAULT_VALUE, 0,16777215,10, 1000, 0);
-    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj1));
+    //gtk_entry_set_text (GTK_ENTRY (entry), "hello");
+    entryCDS = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (entryCDS), 50);
+    g_signal_connect (entryCDS, "activate",
+		      G_CALLBACK (enter_callbackCDS),
+		      entryCDS);
+    tmp_pos = GTK_ENTRY (entryCDS)->text_length;
+    gchar* tCDS = new gchar();
+    g_ascii_dtostr(tCDS,24,dec2current(CDS_DEFAULT_VALUE));
+    gtk_editable_insert_text (GTK_EDITABLE (entryCDS), tCDS , -1, &tmp_pos);
+    gtk_editable_select_region (GTK_EDITABLE (entryCDS),
+			        0, GTK_ENTRY (entryCDS)->text_length);
+    gtk_box_pack_start (GTK_BOX (box5), entryCDS, TRUE, TRUE, 0);
+    gtk_widget_show (entryCDS);
+    
+    adj7 = gtk_adjustment_new (CDS_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj7));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
-    g_signal_connect (G_OBJECT (adj1), "value_changed",
-                      G_CALLBACK (cb_digits_SynThr), NULL);
+    g_signal_connect (G_OBJECT (adj7), "value_changed",
+                      G_CALLBACK (cb_digits_CDSf), NULL);
     
-
-
-    label = gtk_label_new ("SynTau");
+    label = gtk_label_new ("CDCas");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
 
-    adj2 = gtk_adjustment_new (SYTA_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
-    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj2));
+    entryCDS = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (entryCDS), 50);
+    g_signal_connect (entryCDS, "activate",
+		      G_CALLBACK (enter_callbackCDS),
+		      entryCDS);
+    tmp_pos = GTK_ENTRY (entryCDS)->text_length;
+    g_ascii_dtostr(tCDS,24,dec2current(CDS_DEFAULT_VALUE));
+    gtk_editable_insert_text (GTK_EDITABLE (entryCDS), tCDS , -1, &tmp_pos);
+    gtk_editable_select_region (GTK_EDITABLE (entryCDS),
+			        0, GTK_ENTRY (entryCDS)->text_length);
+    gtk_box_pack_start (GTK_BOX (box5), entryCDS, TRUE, TRUE, 0);
+    gtk_widget_show (entryCDS);
+    
+    adj27 = gtk_adjustment_new (CDC_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj27));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
-    g_signal_connect (G_OBJECT (adj2), "value_changed",
-                      G_CALLBACK (cb_digits_SynTau), NULL);
+    g_signal_connect (G_OBJECT (adj27), "value_changed",
+                      G_CALLBACK (cb_digits_CDCas), NULL);
+
+
+    label = gtk_label_new ("CDPr");
+    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+
+    entryCDS = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (entryCDS), 50);
+    g_signal_connect (entryCDS, "activate",
+		      G_CALLBACK (enter_callbackCDS),
+		      entryCDS);
+    tmp_pos = GTK_ENTRY (entryCDS)->text_length;
+    g_ascii_dtostr(tCDS,24,dec2current(CDS_DEFAULT_VALUE));
+    gtk_editable_insert_text (GTK_EDITABLE (entryCDS), tCDS , -1, &tmp_pos);
+    gtk_editable_select_region (GTK_EDITABLE (entryCDS),
+			        0, GTK_ENTRY (entryCDS)->text_length);
+    gtk_box_pack_start (GTK_BOX (box5), entryCDS, TRUE, TRUE, 0);
+    gtk_widget_show (entryCDS);
+    
+    adj8 = gtk_adjustment_new (CDP_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj8));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj8), "value_changed",
+                      G_CALLBACK (cb_digits_CDPr), NULL);
+
+    label = gtk_label_new ("CDRefr");
+    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+
+    entryCDS = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (entryCDS), 50);
+    g_signal_connect (entryCDS, "activate",
+		      G_CALLBACK (enter_callbackCDS),
+		      entryCDS);
+    tmp_pos = GTK_ENTRY (entryCDS)->text_length;
+    g_ascii_dtostr(tCDS,24,dec2current(CDS_DEFAULT_VALUE));
+    gtk_editable_insert_text (GTK_EDITABLE (entryCDS), tCDS , -1, &tmp_pos);
+    gtk_editable_select_region (GTK_EDITABLE (entryCDS),
+			        0, GTK_ENTRY (entryCDS)->text_length);
+    gtk_box_pack_start (GTK_BOX (box5), entryCDS, TRUE, TRUE, 0);
+    gtk_widget_show (entryCDS);
+    
+    adj6 = gtk_adjustment_new (CDR_DEFAULT_VALUE, 0,16777215, 10 , 1000, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj6));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj6), "value_changed",
+                      G_CALLBACK (cb_digits_CDRefr), NULL);
+
+    label = gtk_label_new ("CDRGnd");
+    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+
+    entryCDS = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (entryCDS), 50);
+    g_signal_connect (entryCDS, "activate",
+		      G_CALLBACK (enter_callbackCDS),
+		      entryCDS);
+    tmp_pos = GTK_ENTRY (entryCDS)->text_length;
+    g_ascii_dtostr(tCDS,24,dec2current(CDS_DEFAULT_VALUE));
+    gtk_editable_insert_text (GTK_EDITABLE (entryCDS), tCDS , -1, &tmp_pos);
+    gtk_editable_select_region (GTK_EDITABLE (entryCDS),
+			        0, GTK_ENTRY (entryCDS)->text_length);
+    gtk_box_pack_start (GTK_BOX (box5), entryCDS, TRUE, TRUE, 0);
+    gtk_widget_show (entryCDS);
+    
+    adj22 = gtk_adjustment_new (CDR_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj22));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj22), "value_changed",
+                      G_CALLBACK (cb_digits_CDRGnd), NULL);
+
+    label = gtk_label_new ("CDOnThr");
+    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+
+    entryCDS = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (entryCDS), 50);
+    g_signal_connect (entryCDS, "activate",
+		      G_CALLBACK (enter_callbackCDS),
+		      entryCDS);
+    tmp_pos = GTK_ENTRY (entryCDS)->text_length;
+    g_ascii_dtostr(tCDS,24,dec2current(CDS_DEFAULT_VALUE));
+    gtk_editable_insert_text (GTK_EDITABLE (entryCDS), tCDS , -1, &tmp_pos);
+    gtk_editable_select_region (GTK_EDITABLE (entryCDS),
+			        0, GTK_ENTRY (entryCDS)->text_length);
+    gtk_box_pack_start (GTK_BOX (box5), entryCDS, TRUE, TRUE, 0);
+    gtk_widget_show (entryCDS);
+    
+    adj17 = gtk_adjustment_new (CDON_DEFAULT_VALUE, 0,16777215,10, 1000, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj17));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj17), "value_changed",
+                      G_CALLBACK (cb_digits_CDOnThr), NULL);
+
+    label = gtk_label_new ("CDOffThr");
+    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+
+    entryCDS = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (entryCDS), 50);
+    g_signal_connect (entryCDS, "activate",
+		      G_CALLBACK (enter_callbackCDS),
+		      entryCDS);
+    tmp_pos = GTK_ENTRY (entryCDS)->text_length;
+    g_ascii_dtostr(tCDS,24,dec2current(CDS_DEFAULT_VALUE));
+    gtk_editable_insert_text (GTK_EDITABLE (entryCDS), tCDS , -1, &tmp_pos);
+    gtk_editable_select_region (GTK_EDITABLE (entryCDS),
+			        0, GTK_ENTRY (entryCDS)->text_length);
+    gtk_box_pack_start (GTK_BOX (box5), entryCDS, TRUE, TRUE, 0);
+    gtk_widget_show (entryCDS);
+    
+    adj14 = gtk_adjustment_new (CDOF_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj14));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj14), "value_changed",
+                      G_CALLBACK (cb_digits_CDOffThr), NULL);
+    
+    label = gtk_label_new ("CDDiff");
+    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+
+    entryCDS = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (entryCDS), 50);
+    g_signal_connect (entryCDS, "activate",
+		      G_CALLBACK (enter_callbackCDS),
+		      entryCDS);
+    tmp_pos = GTK_ENTRY (entryCDS)->text_length;
+    g_ascii_dtostr(tCDS,24,dec2current(CDS_DEFAULT_VALUE));
+    gtk_editable_insert_text (GTK_EDITABLE (entryCDS), tCDS , -1, &tmp_pos);
+    gtk_editable_select_region (GTK_EDITABLE (entryCDS),
+			        0, GTK_ENTRY (entryCDS)->text_length);
+    gtk_box_pack_start (GTK_BOX (box5), entryCDS, TRUE, TRUE, 0);
+    gtk_widget_show (entryCDS);
+    
+    adj18 = gtk_adjustment_new (CDD_DEFAULT_VALUE, 0.0,16777215, 10, 1000, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj18));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj18), "value_changed",
+                      G_CALLBACK (cb_digits_CDDiff), NULL);
+
+    label = gtk_label_new ("CDIoff");
+    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+
+    entryCDS = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (entryCDS), 50);
+    g_signal_connect (entryCDS, "activate",
+		      G_CALLBACK (enter_callbackCDS),
+		      entryCDS);
+    tmp_pos = GTK_ENTRY (entryCDS)->text_length;
+    g_ascii_dtostr(tCDS,24,dec2current(CDS_DEFAULT_VALUE));
+    gtk_editable_insert_text (GTK_EDITABLE (entryCDS), tCDS , -1, &tmp_pos);
+    gtk_editable_select_region (GTK_EDITABLE (entryCDS),
+			        0, GTK_ENTRY (entryCDS)->text_length);
+    gtk_box_pack_start (GTK_BOX (box5), entryCDS, TRUE, TRUE, 0);
+    gtk_widget_show (entryCDS);
+    
+    adj21 = gtk_adjustment_new (CDI_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj21));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj21), "value_changed",
+                      G_CALLBACK (cb_digits_CDIoff), NULL);
+
+    label = gtk_label_new ("self");
+    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+
+    entryCDS = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (entryCDS), 50);
+    g_signal_connect (entryCDS, "activate",
+		      G_CALLBACK (enter_callbackCDS),
+		      entryCDS);
+    tmp_pos = GTK_ENTRY (entryCDS)->text_length;
+    g_ascii_dtostr(tCDS,24,dec2current(CDS_DEFAULT_VALUE));
+    gtk_editable_insert_text (GTK_EDITABLE (entryCDS), tCDS , -1, &tmp_pos);
+    gtk_editable_select_region (GTK_EDITABLE (entryCDS),
+			        0, GTK_ENTRY (entryCDS)->text_length);
+    gtk_box_pack_start (GTK_BOX (box5), entryCDS, TRUE, TRUE, 0);
+    gtk_widget_show (entryCDS);
+    
+    adj23 = gtk_adjustment_new (SELF_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj23));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj23), "value_changed",
+                      G_CALLBACK (cb_digits_Self), NULL);
+
+    gtk_box_pack_start (GTK_BOX (box3), box5, FALSE, FALSE, 0);
+    gtk_widget_show (box5);
+
+    separator = gtk_vseparator_new ();
+    gtk_box_pack_start (GTK_BOX (box3), separator, FALSE, TRUE, 10);
+    gtk_widget_show (separator);
+
+    // ------------ BOX 5 SUBSECTION 2
+    box5 = gtk_vbox_new (FALSE, 0);
+    gtk_container_set_border_width (GTK_CONTAINER (box5), 0);
+
+    label = gtk_label_new ("BIAS IF :");
+    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+
+    label = gtk_label_new ("IFRf");
+    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+
+    entryCDS = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (entryCDS), 50);
+    g_signal_connect (entryCDS, "activate",
+		      G_CALLBACK (enter_callbackCDS),
+		      entryCDS);
+    tmp_pos = GTK_ENTRY (entryCDS)->text_length;
+    g_ascii_dtostr(tCDS,24,dec2current(CDS_DEFAULT_VALUE));
+    gtk_editable_insert_text (GTK_EDITABLE (entryCDS), tCDS , -1, &tmp_pos);
+    gtk_editable_select_region (GTK_EDITABLE (entryCDS),
+			        0, GTK_ENTRY (entryCDS)->text_length);
+    gtk_box_pack_start (GTK_BOX (box5), entryCDS, TRUE, TRUE, 0);
+    gtk_widget_show (entryCDS);
+    
+    adj11 = gtk_adjustment_new (IFR_DEFAULT_VALUE, 0,16777215,10000, 0, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj11));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj11), "value_changed",
+                      G_CALLBACK (cb_digits_IFRf), NULL);
+
+    label = gtk_label_new ("IFThr");
+    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+
+    entryCDS = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (entryCDS), 50);
+    g_signal_connect (entryCDS, "activate",
+		      G_CALLBACK (enter_callbackCDS),
+		      entryCDS);
+    tmp_pos = GTK_ENTRY (entryCDS)->text_length;
+    g_ascii_dtostr(tCDS,24,dec2current(CDS_DEFAULT_VALUE));
+    gtk_editable_insert_text (GTK_EDITABLE (entryCDS), tCDS , -1, &tmp_pos);
+    gtk_editable_select_region (GTK_EDITABLE (entryCDS),
+			        0, GTK_ENTRY (entryCDS)->text_length);
+    gtk_box_pack_start (GTK_BOX (box5), entryCDS, TRUE, TRUE, 0);
+    gtk_widget_show (entryCDS);
+    
+    adj12 = gtk_adjustment_new (IFT_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj12));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj12), "value_changed",
+                      G_CALLBACK (cb_digits_IFThr), NULL);
+
+    label = gtk_label_new ("IFLk");
+    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+
+    entryCDS = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (entryCDS), 50);
+    g_signal_connect (entryCDS, "activate",
+		      G_CALLBACK (enter_callbackCDS),
+		      entryCDS);
+    tmp_pos = GTK_ENTRY (entryCDS)->text_length;
+    g_ascii_dtostr(tCDS,24,dec2current(CDS_DEFAULT_VALUE));
+    gtk_editable_insert_text (GTK_EDITABLE (entryCDS), tCDS , -1, &tmp_pos);
+    gtk_editable_select_region (GTK_EDITABLE (entryCDS),
+			        0, GTK_ENTRY (entryCDS)->text_length);
+    gtk_box_pack_start (GTK_BOX (box5), entryCDS, TRUE, TRUE, 0);
+    gtk_widget_show (entryCDS);
+    
+    adj13 = gtk_adjustment_new (IFL_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj13));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj13), "value_changed",
+                      G_CALLBACK (cb_digits_IFLk), NULL);
+    
+    separator = gtk_hseparator_new ();
+    gtk_box_pack_start (GTK_BOX (box5), separator, FALSE, TRUE, 10);
+    gtk_widget_show (separator);
+
+    label = gtk_label_new ("BIAS SYNPXL :");
+    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
 
     label = gtk_label_new ("SynPxlTau");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
+
+    entryCDS = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (entryCDS), 50);
+    g_signal_connect (entryCDS, "activate",
+		      G_CALLBACK (enter_callbackCDS),
+		      entryCDS);
+    tmp_pos = GTK_ENTRY (entryCDS)->text_length;
+    g_ascii_dtostr(tCDS,24,dec2current(CDS_DEFAULT_VALUE));
+    gtk_editable_insert_text (GTK_EDITABLE (entryCDS), tCDS , -1, &tmp_pos);
+    gtk_editable_select_region (GTK_EDITABLE (entryCDS),
+			        0, GTK_ENTRY (entryCDS)->text_length);
+    gtk_box_pack_start (GTK_BOX (box5), entryCDS, TRUE, TRUE, 0);
+    gtk_widget_show (entryCDS);
     
     adj3 = gtk_adjustment_new (SYPA_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj3));
@@ -994,350 +1999,141 @@ GtkWidget* createMainWindow(void) {
     label = gtk_label_new ("SynPxlThr");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
-    
-    adj3 = gtk_adjustment_new (SYPH_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
-    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj3));
-    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
-    scale_set_default_values (GTK_SCALE (hscale));
-    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
-    gtk_widget_show (hscale);
-    g_signal_connect (G_OBJECT (adj3), "value_changed",
-                      G_CALLBACK (cb_digits_SynPxlThr), NULL);
 
-
-    label = gtk_label_new ("testPBias");
-    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
-    gtk_widget_show (label);
+    entryCDS = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (entryCDS), 50);
+    g_signal_connect (entryCDS, "activate",
+		      G_CALLBACK (enter_callbackCDS),
+		      entryCDS);
+    tmp_pos = GTK_ENTRY (entryCDS)->text_length;
+    g_ascii_dtostr(tCDS,24,dec2current(CDS_DEFAULT_VALUE));
+    gtk_editable_insert_text (GTK_EDITABLE (entryCDS), tCDS , -1, &tmp_pos);
+    gtk_editable_select_region (GTK_EDITABLE (entryCDS),
+			        0, GTK_ENTRY (entryCDS)->text_length);
+    gtk_box_pack_start (GTK_BOX (box5), entryCDS, TRUE, TRUE, 0);
+    gtk_widget_show (entryCDS);
     
-    adj4 = gtk_adjustment_new (TBP_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    adj4 = gtk_adjustment_new (SYPH_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj4));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj4), "value_changed",
-                      G_CALLBACK (cb_digits_testPbias), NULL);
+                      G_CALLBACK (cb_digits_SynPxlThr), NULL);
 
-    label = gtk_label_new ("CDRefr");
+    label = gtk_label_new ("SynPxlW");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
-    
-    adj5 = gtk_adjustment_new (CDR_DEFAULT_VALUE, 0,16777215, 10 , 1000, 0);
-    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
+
+    entryCDS = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (entryCDS), 50);
+    g_signal_connect (entryCDS, "activate",
+		      G_CALLBACK (enter_callbackCDS),
+		      entryCDS);
+    tmp_pos = GTK_ENTRY (entryCDS)->text_length;
+    g_ascii_dtostr(tCDS,24,dec2current(CDS_DEFAULT_VALUE));
+    gtk_editable_insert_text (GTK_EDITABLE (entryCDS), tCDS , -1, &tmp_pos);
+    gtk_editable_select_region (GTK_EDITABLE (entryCDS),
+			        0, GTK_ENTRY (entryCDS)->text_length);
+    gtk_box_pack_start (GTK_BOX (box5), entryCDS, TRUE, TRUE, 0);
+    gtk_widget_show (entryCDS);
+
+    adj15 = gtk_adjustment_new (SYPW_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj15));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
-    g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_CDRefr), NULL);
-
-    label = gtk_label_new ("CDSf");
-    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
-    gtk_widget_show (label);
+    g_signal_connect (G_OBJECT (adj15), "value_changed",
+                      G_CALLBACK (cb_digits_SynPxlW), NULL);
     
-    adj6 = gtk_adjustment_new (CDS_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
-    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj6));
-    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
-    scale_set_default_values (GTK_SCALE (hscale));
-    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
-    gtk_widget_show (hscale);
-    g_signal_connect (G_OBJECT (adj6), "value_changed",
-                      G_CALLBACK (cb_digits_CDSf), NULL);
-
-    label = gtk_label_new ("CDPr");
-    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
-    gtk_widget_show (label);
-    
-    adj6 = gtk_adjustment_new (CDP_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
-    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj6));
-    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
-    scale_set_default_values (GTK_SCALE (hscale));
-    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
-    gtk_widget_show (hscale);
-    g_signal_connect (G_OBJECT (adj6), "value_changed",
-                      G_CALLBACK (cb_digits_CDPr), NULL);
-
-    label = gtk_label_new ("ReqPuX");
-    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
-    gtk_widget_show (label);
-    
-    adj5 = gtk_adjustment_new (RPX_DEFAULT_VALUE, 0,16777215, 10 ,1000, 0);
-    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
-    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
-    scale_set_default_values (GTK_SCALE (hscale));
-    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
-    gtk_widget_show (hscale);
-    g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_ReqPuX), NULL);
-
-    label = gtk_label_new ("ReqPuY");
-    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
-    gtk_widget_show (label);
-    
-    adj5 = gtk_adjustment_new (RPY_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
-    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
-    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
-    scale_set_default_values (GTK_SCALE (hscale));
-    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
-    gtk_widget_show (hscale);
-    g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_ReqPuY), NULL);
-
-
-    label = gtk_label_new ("IFRf");
-    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
-    gtk_widget_show (label);
-    
-    adj5 = gtk_adjustment_new (IFR_DEFAULT_VALUE, 0,16777215,10000, 0, 0);
-    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
-    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
-    scale_set_default_values (GTK_SCALE (hscale));
-    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
-    gtk_widget_show (hscale);
-    g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_IFRf), NULL);
-
-    label = gtk_label_new ("IFThr");
-    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
-    gtk_widget_show (label);
-    
-    adj5 = gtk_adjustment_new (IFT_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
-    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
-    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
-    scale_set_default_values (GTK_SCALE (hscale));
-    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
-    gtk_widget_show (hscale);
-    g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_IFThr), NULL);
-
-    label = gtk_label_new ("IFLk");
-    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
-    gtk_widget_show (label);
-    
-    adj5 = gtk_adjustment_new (IFL_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
-    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
-    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
-    scale_set_default_values (GTK_SCALE (hscale));
-    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
-    gtk_widget_show (hscale);
-    g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_IFLk), NULL);
-
-    gtk_box_pack_start (GTK_BOX (box3), box5, FALSE, FALSE, 0);
-    gtk_widget_show (box5);
-
-    separator = gtk_vseparator_new ();
-    gtk_box_pack_start (GTK_BOX (box3), separator, FALSE, TRUE, 10);
+    separator = gtk_hseparator_new ();
+    gtk_box_pack_start (GTK_BOX (box5), separator, FALSE, TRUE, 10);
     gtk_widget_show (separator);
-
-    // ------------ BOX 5 SUBSECTION 2
-    box5 = gtk_vbox_new (FALSE, 0);
-    gtk_container_set_border_width (GTK_CONTAINER (box5), 0);
-
-    label = gtk_label_new ("BIAS :");
-    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
-    gtk_widget_show (label);
-
-    label = gtk_label_new ("CDOffThr");
-    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
-    gtk_widget_show (label);
     
-    adj1 = gtk_adjustment_new (CDOF_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    label = gtk_label_new ("BIAS SYN :");
+    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+
+    label = gtk_label_new ("SynThr");
+    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+
+    entryCDS = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (entryCDS), 50);
+    g_signal_connect (entryCDS, "activate",
+		      G_CALLBACK (enter_callbackCDS),
+		      entryCDS);
+    tmp_pos = GTK_ENTRY (entryCDS)->text_length;
+    g_ascii_dtostr(tCDS,24,dec2current(CDS_DEFAULT_VALUE));
+    gtk_editable_insert_text (GTK_EDITABLE (entryCDS), tCDS , -1, &tmp_pos);
+    gtk_editable_select_region (GTK_EDITABLE (entryCDS),
+			        0, GTK_ENTRY (entryCDS)->text_length);
+    gtk_box_pack_start (GTK_BOX (box5), entryCDS, TRUE, TRUE, 0);
+    gtk_widget_show (entryCDS);
+    
+    adj1 = gtk_adjustment_new (SYTH_DEFAULT_VALUE, 0,16777215,10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj1));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj1), "value_changed",
-                      G_CALLBACK (cb_digits_CDOffThr), NULL);
-    
+                      G_CALLBACK (cb_digits_SynThr), NULL);
 
-
-    label = gtk_label_new ("SynPxlW");
+    label = gtk_label_new ("SynTau");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
 
-    adj2 = gtk_adjustment_new (SYPW_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    entryCDS = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (entryCDS), 50);
+    g_signal_connect (entryCDS, "activate",
+		      G_CALLBACK (enter_callbackCDS),
+		      entryCDS);
+    tmp_pos = GTK_ENTRY (entryCDS)->text_length;
+    g_ascii_dtostr(tCDS,24,dec2current(CDS_DEFAULT_VALUE));
+    gtk_editable_insert_text (GTK_EDITABLE (entryCDS), tCDS , -1, &tmp_pos);
+    gtk_editable_select_region (GTK_EDITABLE (entryCDS),
+			        0, GTK_ENTRY (entryCDS)->text_length);
+    gtk_box_pack_start (GTK_BOX (box5), entryCDS, TRUE, TRUE, 0);
+    gtk_widget_show (entryCDS);
+
+    adj2 = gtk_adjustment_new (SYTA_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
     hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj2));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
     g_signal_connect (G_OBJECT (adj2), "value_changed",
-                      G_CALLBACK (cb_digits_SynPxlW), NULL);
+                      G_CALLBACK (cb_digits_SynTau), NULL);
 
     label = gtk_label_new ("SynW");
     gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
     gtk_widget_show (label);
+
+    entryCDS = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (entryCDS), 50);
+    g_signal_connect (entryCDS, "activate",
+		      G_CALLBACK (enter_callbackCDS),
+		      entryCDS);
+    tmp_pos = GTK_ENTRY (entryCDS)->text_length;
+    g_ascii_dtostr(tCDS,24,dec2current(CDS_DEFAULT_VALUE));
+    gtk_editable_insert_text (GTK_EDITABLE (entryCDS), tCDS , -1, &tmp_pos);
+    gtk_editable_select_region (GTK_EDITABLE (entryCDS),
+			        0, GTK_ENTRY (entryCDS)->text_length);
+    gtk_box_pack_start (GTK_BOX (box5), entryCDS, TRUE, TRUE, 0);
+    gtk_widget_show (entryCDS);
     
-    adj3 = gtk_adjustment_new (SYW_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
-    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj3));
+    adj16 = gtk_adjustment_new (SYW_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj16));
     gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
     scale_set_default_values (GTK_SCALE (hscale));
     gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
     gtk_widget_show (hscale);
-    g_signal_connect (G_OBJECT (adj3), "value_changed",
+    g_signal_connect (G_OBJECT (adj16), "value_changed",
                       G_CALLBACK (cb_digits_SynW), NULL);
-
-    label = gtk_label_new ("CDOnThr");
-    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
-    gtk_widget_show (label);
     
-    adj3 = gtk_adjustment_new (CDON_DEFAULT_VALUE, 0,16777215,10, 1000, 0);
-    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj3));
-    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
-    scale_set_default_values (GTK_SCALE (hscale));
-    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
-    gtk_widget_show (hscale);
-    g_signal_connect (G_OBJECT (adj3), "value_changed",
-                      G_CALLBACK (cb_digits_CDOnThr), NULL);
-
-
-    label = gtk_label_new ("CDDiff");
-    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
-    gtk_widget_show (label);
-    
-    adj4 = gtk_adjustment_new (CDD_DEFAULT_VALUE, 0.0,16777215, 10, 1000, 0);
-    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj4));
-    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
-    scale_set_default_values (GTK_SCALE (hscale));
-    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
-    gtk_widget_show (hscale);
-    g_signal_connect (G_OBJECT (adj4), "value_changed",
-                      G_CALLBACK (cb_digits_CDDiff), NULL);
-
-    label = gtk_label_new ("EMCompH");
-    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
-    gtk_widget_show (label);
-    
-    adj5 = gtk_adjustment_new (EMCH_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
-    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
-    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
-    scale_set_default_values (GTK_SCALE (hscale));
-    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
-    gtk_widget_show (hscale);
-    g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_EMCompH), NULL);
-
-    label = gtk_label_new ("EMCompT");
-    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
-    gtk_widget_show (label);
-    
-    adj6 = gtk_adjustment_new (EMCT_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
-    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj6));
-    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
-    scale_set_default_values (GTK_SCALE (hscale));
-    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
-    gtk_widget_show (hscale);
-    g_signal_connect (G_OBJECT (adj6), "value_changed",
-                      G_CALLBACK (cb_digits_EMCompT), NULL);
-
-
-    label = gtk_label_new ("CDIoff");
-    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
-    gtk_widget_show (label);
-    
-    adj5 = gtk_adjustment_new (CDI_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
-    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
-    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
-    scale_set_default_values (GTK_SCALE (hscale));
-    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
-    gtk_widget_show (hscale);
-    g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_CDIoff), NULL);
-
-    label = gtk_label_new ("CDRGnd");
-    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
-    gtk_widget_show (label);
-    
-    adj5 = gtk_adjustment_new (CDR_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
-    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
-    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
-    scale_set_default_values (GTK_SCALE (hscale));
-    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
-    gtk_widget_show (hscale);
-    g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_CDRGnd), NULL);
-
-
-    label = gtk_label_new ("self");
-    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
-    gtk_widget_show (label);
-    
-    adj5 = gtk_adjustment_new (SELF_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
-    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
-    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
-    scale_set_default_values (GTK_SCALE (hscale));
-    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
-    gtk_widget_show (hscale);
-    g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_Self), NULL);
-
-    label = gtk_label_new ("Foll");
-    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
-    gtk_widget_show (label);
-    
-    adj5 = gtk_adjustment_new (FOLL_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
-    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
-    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
-    scale_set_default_values (GTK_SCALE (hscale));
-    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
-    gtk_widget_show (hscale);
-    g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_Foll), NULL);
-
-    label = gtk_label_new ("ArbPd");
-    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
-    gtk_widget_show (label);
-    
-    adj5 = gtk_adjustment_new (ARBP_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
-    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
-    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
-    scale_set_default_values (GTK_SCALE (hscale));
-    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
-    gtk_widget_show (hscale);
-    g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_ArbPd), NULL);
-
-    label = gtk_label_new ("EMVrefL");
-    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
-    gtk_widget_show (label);
-    
-    adj5 = gtk_adjustment_new (EMVL_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
-    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
-    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
-    scale_set_default_values (GTK_SCALE (hscale));
-    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
-    gtk_widget_show (hscale);
-    g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_EMVrefL), NULL);
-
-    label = gtk_label_new ("CDCas");
-    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
-    gtk_widget_show (label);
-    
-    adj5 = gtk_adjustment_new (CDC_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
-    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
-    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
-    scale_set_default_values (GTK_SCALE (hscale));
-    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
-    gtk_widget_show (hscale);
-    g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_CDCas), NULL);
-
-    label = gtk_label_new ("EMVrefH");
-    gtk_box_pack_start (GTK_BOX (box5), label, FALSE, FALSE, 0);
-    gtk_widget_show (label);
-    
-    adj5 = gtk_adjustment_new (EMVH_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
-    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
-    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
-    scale_set_default_values (GTK_SCALE (hscale));
-    gtk_box_pack_start (GTK_BOX (box5), hscale, TRUE, TRUE, 0);
-    gtk_widget_show (hscale);
-    g_signal_connect (G_OBJECT (adj5), "value_changed",
-                      G_CALLBACK (cb_digits_EMVrefH), NULL);
-
 
     gtk_box_pack_start (GTK_BOX (box3), box5, FALSE, FALSE, 0);
     gtk_widget_show (box5);
@@ -1346,7 +2142,266 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box3), separator, FALSE, TRUE, 10);
     gtk_widget_show (separator);
 
-    //----------BOX6 SUBSECTION:3
+    //----------BOX7 SUBSECTION:3 of BOX3
+    box7 = gtk_vbox_new (FALSE, 0);
+    gtk_container_set_border_width (GTK_CONTAINER (box7), 0);
+
+    label = gtk_label_new ("BIAS EM:");
+    gtk_box_pack_start (GTK_BOX (box7), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+
+    label = gtk_label_new ("EMCompH");
+    gtk_box_pack_start (GTK_BOX (box7), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+
+    entryCDS = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (entryCDS), 50);
+    g_signal_connect (entryCDS, "activate",
+		      G_CALLBACK (enter_callbackCDS),
+		      entryCDS);
+    tmp_pos = GTK_ENTRY (entryCDS)->text_length;
+    g_ascii_dtostr(tCDS,24,dec2current(CDS_DEFAULT_VALUE));
+    gtk_editable_insert_text (GTK_EDITABLE (entryCDS), tCDS , -1, &tmp_pos);
+    gtk_editable_select_region (GTK_EDITABLE (entryCDS),
+			        0, GTK_ENTRY (entryCDS)->text_length);
+    gtk_box_pack_start (GTK_BOX (box5), entryCDS, TRUE, TRUE, 0);
+    gtk_widget_show (entryCDS);
+    
+    adj19 = gtk_adjustment_new (EMCH_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj19));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box7), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj19), "value_changed",
+                      G_CALLBACK (cb_digits_EMCompH), NULL);
+
+    label = gtk_label_new ("EMCompT");
+    gtk_box_pack_start (GTK_BOX (box7), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+
+    entryCDS = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (entryCDS), 50);
+    g_signal_connect (entryCDS, "activate",
+		      G_CALLBACK (enter_callbackCDS),
+		      entryCDS);
+    tmp_pos = GTK_ENTRY (entryCDS)->text_length;
+    g_ascii_dtostr(tCDS,24,dec2current(CDS_DEFAULT_VALUE));
+    gtk_editable_insert_text (GTK_EDITABLE (entryCDS), tCDS , -1, &tmp_pos);
+    gtk_editable_select_region (GTK_EDITABLE (entryCDS),
+			        0, GTK_ENTRY (entryCDS)->text_length);
+    gtk_box_pack_start (GTK_BOX (box5), entryCDS, TRUE, TRUE, 0);
+    gtk_widget_show (entryCDS);
+    
+    adj20 = gtk_adjustment_new (EMCT_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj20));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box7), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj20), "value_changed",
+                      G_CALLBACK (cb_digits_EMCompT), NULL);
+
+    label = gtk_label_new ("EMVrefL");
+    gtk_box_pack_start (GTK_BOX (box7), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+
+    entryCDS = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (entryCDS), 50);
+    g_signal_connect (entryCDS, "activate",
+		      G_CALLBACK (enter_callbackCDS),
+		      entryCDS);
+    tmp_pos = GTK_ENTRY (entryCDS)->text_length;
+    g_ascii_dtostr(tCDS,24,dec2current(CDS_DEFAULT_VALUE));
+    gtk_editable_insert_text (GTK_EDITABLE (entryCDS), tCDS , -1, &tmp_pos);
+    gtk_editable_select_region (GTK_EDITABLE (entryCDS),
+			        0, GTK_ENTRY (entryCDS)->text_length);
+    gtk_box_pack_start (GTK_BOX (box5), entryCDS, TRUE, TRUE, 0);
+    gtk_widget_show (entryCDS);
+    
+    adj26 = gtk_adjustment_new (EMVL_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj26));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box7), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj26), "value_changed",
+                      G_CALLBACK (cb_digits_EMVrefL), NULL); 
+
+    label = gtk_label_new ("EMVrefH");
+    gtk_box_pack_start (GTK_BOX (box7), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+
+    entryCDS = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (entryCDS), 50);
+    g_signal_connect (entryCDS, "activate",
+		      G_CALLBACK (enter_callbackCDS),
+		      entryCDS);
+    tmp_pos = GTK_ENTRY (entryCDS)->text_length;
+    g_ascii_dtostr(tCDS,24,dec2current(CDS_DEFAULT_VALUE));
+    gtk_editable_insert_text (GTK_EDITABLE (entryCDS), tCDS , -1, &tmp_pos);
+    gtk_editable_select_region (GTK_EDITABLE (entryCDS),
+			        0, GTK_ENTRY (entryCDS)->text_length);
+    gtk_box_pack_start (GTK_BOX (box7), entryCDS, TRUE, TRUE, 0);
+    gtk_widget_show (entryCDS);
+    
+    adj28 = gtk_adjustment_new (EMVH_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj28));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box7), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj28), "value_changed",
+                      G_CALLBACK (cb_digits_EMVrefH), NULL);
+    
+    separator = gtk_hseparator_new ();
+    gtk_box_pack_start (GTK_BOX (box7), separator, FALSE, TRUE, 10);
+    gtk_widget_show (separator);
+
+    label = gtk_label_new ("BIAS EXTRA :");
+    gtk_box_pack_start (GTK_BOX (box7), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+
+    label = gtk_label_new ("Foll");
+    gtk_box_pack_start (GTK_BOX (box7), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+
+    entryCDS = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (entryCDS), 50);
+    g_signal_connect (entryCDS, "activate",
+		      G_CALLBACK (enter_callbackCDS),
+		      entryCDS);
+    tmp_pos = GTK_ENTRY (entryCDS)->text_length;
+    g_ascii_dtostr(tCDS,24,dec2current(CDS_DEFAULT_VALUE));
+    gtk_editable_insert_text (GTK_EDITABLE (entryCDS), tCDS , -1, &tmp_pos);
+    gtk_editable_select_region (GTK_EDITABLE (entryCDS),
+			        0, GTK_ENTRY (entryCDS)->text_length);
+    gtk_box_pack_start (GTK_BOX (box7), entryCDS, TRUE, TRUE, 0);
+    gtk_widget_show (entryCDS);
+    
+    adj24 = gtk_adjustment_new (FOLL_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj24));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box7), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj24), "value_changed",
+                      G_CALLBACK (cb_digits_Foll), NULL);
+
+    label = gtk_label_new ("ReqPuX");
+    gtk_box_pack_start (GTK_BOX (box7), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+
+    entryCDS = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (entryCDS), 50);
+    g_signal_connect (entryCDS, "activate",
+		      G_CALLBACK (enter_callbackCDS),
+		      entryCDS);
+    tmp_pos = GTK_ENTRY (entryCDS)->text_length;
+    g_ascii_dtostr(tCDS,24,dec2current(CDS_DEFAULT_VALUE));
+    gtk_editable_insert_text (GTK_EDITABLE (entryCDS), tCDS , -1, &tmp_pos);
+    gtk_editable_select_region (GTK_EDITABLE (entryCDS),
+			        0, GTK_ENTRY (entryCDS)->text_length);
+    gtk_box_pack_start (GTK_BOX (box7), entryCDS, TRUE, TRUE, 0);
+    gtk_widget_show (entryCDS);
+    
+    adj9 = gtk_adjustment_new (RPX_DEFAULT_VALUE, 0,16777215, 10 ,1000, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj9));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box7), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj9), "value_changed",
+                      G_CALLBACK (cb_digits_ReqPuX), NULL);
+
+    label = gtk_label_new ("ReqPuY");
+    gtk_box_pack_start (GTK_BOX (box7), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+
+    entryCDS = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (entryCDS), 50);
+    g_signal_connect (entryCDS, "activate",
+		      G_CALLBACK (enter_callbackCDS),
+		      entryCDS);
+    tmp_pos = GTK_ENTRY (entryCDS)->text_length;
+    g_ascii_dtostr(tCDS,24,dec2current(CDS_DEFAULT_VALUE));
+    gtk_editable_insert_text (GTK_EDITABLE (entryCDS), tCDS , -1, &tmp_pos);
+    gtk_editable_select_region (GTK_EDITABLE (entryCDS),
+			        0, GTK_ENTRY (entryCDS)->text_length);
+    gtk_box_pack_start (GTK_BOX (box7), entryCDS, TRUE, TRUE, 0);
+    gtk_widget_show (entryCDS);
+    
+    adj10 = gtk_adjustment_new (RPY_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj10));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box7), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj10), "value_changed",
+                      G_CALLBACK (cb_digits_ReqPuY), NULL);
+    
+    label = gtk_label_new ("ArbPd");
+    gtk_box_pack_start (GTK_BOX (box7), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+
+    entryCDS = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (entryCDS), 50);
+    g_signal_connect (entryCDS, "activate",
+		      G_CALLBACK (enter_callbackCDS),
+		      entryCDS);
+    tmp_pos = GTK_ENTRY (entryCDS)->text_length;
+    g_ascii_dtostr(tCDS,24,dec2current(CDS_DEFAULT_VALUE));
+    gtk_editable_insert_text (GTK_EDITABLE (entryCDS), tCDS , -1, &tmp_pos);
+    gtk_editable_select_region (GTK_EDITABLE (entryCDS),
+			        0, GTK_ENTRY (entryCDS)->text_length);
+    gtk_box_pack_start (GTK_BOX (box7), entryCDS, TRUE, TRUE, 0);
+    gtk_widget_show (entryCDS);
+    
+    adj25 = gtk_adjustment_new (ARBP_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj25));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box7), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj25), "value_changed",
+                      G_CALLBACK (cb_digits_ArbPd), NULL);
+
+    label = gtk_label_new ("testPBias");
+    gtk_box_pack_start (GTK_BOX (box7), label, FALSE, FALSE, 0);
+    gtk_widget_show (label);
+    
+    entryCDS = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (entryCDS), 50);
+    g_signal_connect (entryCDS, "activate",
+		      G_CALLBACK (enter_callbackCDS),
+		      entryCDS);
+    tmp_pos = GTK_ENTRY (entryCDS)->text_length;
+    g_ascii_dtostr(tCDS,24,dec2current(CDS_DEFAULT_VALUE));
+    gtk_editable_insert_text (GTK_EDITABLE (entryCDS), tCDS , -1, &tmp_pos);
+    gtk_editable_select_region (GTK_EDITABLE (entryCDS),
+			        0, GTK_ENTRY (entryCDS)->text_length);
+    gtk_box_pack_start (GTK_BOX (box7), entryCDS, TRUE, TRUE, 0);
+    gtk_widget_show (entryCDS);
+    
+    adj5 = gtk_adjustment_new (TBP_DEFAULT_VALUE, 0,16777215, 10, 1000, 0);
+    hscale = gtk_hscale_new (GTK_ADJUSTMENT (adj5));
+    gtk_widget_set_size_request (GTK_WIDGET (hscale), 200, -1);
+    scale_set_default_values (GTK_SCALE (hscale));
+    gtk_box_pack_start (GTK_BOX (box7), hscale, TRUE, TRUE, 0);
+    gtk_widget_show (hscale);
+    g_signal_connect (G_OBJECT (adj5), "value_changed",
+                      G_CALLBACK (cb_digits_testPbias), NULL);
+    
+    
+    gtk_box_pack_start (GTK_BOX (box3), box7, FALSE, FALSE, 0);
+    gtk_widget_show (box7);
+
+    separator = gtk_vseparator_new ();
+    gtk_box_pack_start (GTK_BOX (box3), separator, FALSE, TRUE, 10);
+    gtk_widget_show (separator);
+
+
+    //----------BOX6 SUBSECTION:4 of BOX3
     box6 = gtk_vbox_new (FALSE, 0);
     gtk_container_set_border_width (GTK_CONTAINER (box6), 0);
 
@@ -1438,9 +2493,7 @@ GtkWidget* createMainWindow(void) {
                       G_CALLBACK (cb_digits_scaleMotion), NULL);
                       */
     
-    separator = gtk_hseparator_new ();
-    gtk_box_pack_start (GTK_BOX (box2), separator, FALSE, TRUE, 10);
-    gtk_widget_show (separator);
+    
 
 
     //gtk_container_add (GTK_CONTAINER (box2), boxSliders);

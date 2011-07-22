@@ -63,7 +63,6 @@
 #define COMMAND_VOCAB_EMVL   VOCAB4('e','m','v','l')
 #define COMMAND_VOCAB_CDC    VOCAB3('c','d','c')
 #define COMMAND_VOCAB_EMVH   VOCAB4('e','m','v','h')
-#define COMMAND_VOCAB_I2V    VOCAB3('i','2','v')
 
 #define COMMAND_VOCAB_SAVE   VOCAB4('s','a','v','e')
 #define COMMAND_VOCAB_BIAS   VOCAB4('b','i','a','s')
@@ -130,9 +129,18 @@ void printHelp();
 // Global Variables
 //-------------------------------------------------
 // main window 
-GtkObject *adj1, *adj2,*adj3, *adj4,*adj5, *adj6;
-GtkObject *adj11, *adj12,*adj13, *adj14,*adj15, *adj16;
+GtkObject *adj1,  *adj2,  *adj3,  *adj4,  *adj5;
+GtkObject *adj6,  *adj7,  *adj8,  *adj9;
+GtkObject *adj10, *adj11, *adj12, *adj13, *adj14, *adj15, *adj16;
+GtkObject *adj17, *adj18, *adj19, *adj20, *adj21, *adj22, *adj23;
+GtkObject *adj24, *adj25, *adj26, *adj27, *adj28;
 GtkObject *adjMotion;
+GtkWidget *entrySYTH, *entrySYTA, *entrySYPA, *entrySYPH, *entryTPB ; 
+GtkWidget *entryCDR , *entryCDS , *entryCDP , *entryRPX , *entryRPY ; 
+GtkWidget *entryIFR , *entryIFT , *entryIFL , *entryCDOF, *entrySYPW; 
+GtkWidget *entrySYW , *entryCDON, *entryCDD , *entryEMCH, *entryEMCT; 
+GtkWidget *entryCDI , *entryCDRG, *entrySELF, *entryFOLL, *entryARBP; 
+GtkWidget *entryEMVL, *entryCDC , *entryEMVH;   
 yarp::os::Semaphore mutex;
 int c=0;
 
