@@ -97,6 +97,7 @@ reset_pins_expand = 4
 #define latchexpand 100
 #define powerdownexpand 100
 #define countBias 28
+#define countBits 24
 #define LATCH_KEEP 1
 #define LATCH_TRANSPARENT 0
 
@@ -315,38 +316,40 @@ void asvGrabberThread::prepareBiases() {
         int err;                
 
         printf("SynThr       = %d \n", SynThr);         
-	printf("SynTau       = %d \n", SynTau);       
-	printf("SynPxlTau    = %d \n", SynPxlTau);    
-	printf("CDRefr       = %d \n", CDRefr);       
-	printf("CDSf         = %d \n", CDSf);       
-	printf("CDPr         = %d \n", CDPr);    
-	printf("ReqPuX       = %d \n", ReqPuX);       
-	printf("ReqPuY       = %d \n", ReqPuY);  
-	printf("IFRf         = %d \n", IFRf);    
-	printf("IFThr        = %d \n", IFThr);      
-	printf("IFLk         = %d \n", IFLk);        
-	printf("CDOffThr     = %d \n", CDOffThr);          	
-	printf("SynPxlW      = %d \n", SynPxlW);     
-	printf("testPbias    = %d \n", testPbias);
-	printf("SynW         = %d \n", SynW);    
-	printf("CDOnThr      = %d \n", CDOnThr); 
-	printf("CDDiff       = %d \n", CDDiff);  
-	printf("EMCompH      = %d \n", EMCompH);     
-	printf("EMCompT      = %d \n", EMCompT);       
-	printf("CDIoff       = %d \n", CDIoff);        
-	printf("CDRGnd       = %d \n", CDRGnd);  
-	printf("self         = %d \n", self);
-	printf("FollBias     = %d \n", FollBias);   
-	printf("ArbPd        = %d \n", ArbPd);       
-	printf("EMVrefL      = %d \n", EMVrefL);           
-	printf("CDCas        = %d \n", CDCas);            
-	printf("EMVrefH      = %d \n", EMVrefH);        
+        printf("SynTau       = %d \n", SynTau);       
+        printf("SynPxlTau    = %d \n", SynPxlTau);    
+        printf("SynPxlThr    = %d \n", SynPxlThr);
+        printf("testPbias    = %d \n", testPbias);
+        printf("CDRefr       = %d \n", CDRefr);       
+        printf("CDSf         = %d \n", CDSf);       
+        printf("CDPr         = %d \n", CDPr);    
+        printf("ReqPuX       = %d \n", ReqPuX);       
+        printf("ReqPuY       = %d \n", ReqPuY);  
+        printf("IFRf         = %d \n", IFRf);    
+        printf("IFThr        = %d \n", IFThr);      
+        printf("IFLk         = %d \n", IFLk);        
+        printf("CDOffThr     = %d \n", CDOffThr);          	
+        printf("SynPxlW      = %d \n", SynPxlW);     
+        
+        printf("SynW         = %d \n", SynW);    
+        printf("CDOnThr      = %d \n", CDOnThr); 
+        printf("CDDiff       = %d \n", CDDiff);  
+        printf("EMCompH      = %d \n", EMCompH);     
+        printf("EMCompT      = %d \n", EMCompT);       
+        printf("CDIoff       = %d \n", CDIoff);        
+        printf("CDRGnd       = %d \n", CDRGnd);  
+        printf("self         = %d \n", self);
+        printf("FollBias     = %d \n", FollBias);   
+        printf("ArbPd        = %d \n", ArbPd);       
+        printf("EMVrefL      = %d \n", EMVrefL);           
+        printf("CDCas        = %d \n", CDCas);            
+        printf("EMVrefH      = %d \n", EMVrefH);        
            
-        int biasValues[]={SynThr,      
+        int biasValues[]={SynThr,      // last to be programmed
                           SynTau,  
                           SynPxlTau,
-			  SynPxlThr,
-			  testPbias,
+                          SynPxlThr,
+                          testPbias,
                           CDRefr,    
                           CDSf,   
                           CDPr,    
@@ -355,64 +358,67 @@ void asvGrabberThread::prepareBiases() {
                           IFRf,    
                           IFThr,       
                           IFLk,        
-			  CDOffThr,
-			  SynPxlW,
-			  SynW,
-			  CDOnThr,
-			  CDDiff,
-			  EMCompH,
-			  EMCompT,
-			  CDIoff,
-			  CDRGnd,
-			  self,
-			  FollBias,
-			  ArbPd,
-			  EMVrefL,
-			  CDCas,
-			  EMVrefH
+                          CDOffThr,
+                          SynPxlW,
+                          SynW,
+                          CDOnThr,
+                          CDDiff,
+                          EMCompH,
+                          EMCompT,
+                          CDIoff,
+                          CDRGnd,
+                          self,
+                          FollBias,
+                          ArbPd,
+                          EMVrefL,
+                          CDCas,
+                          EMVrefH    // first to be programmed
         };
         
 
         string biasNames[] = {
-	  "SynThr",      
-	  "SynTau",  
-	  "SynPxlTau",  
-	  "SysPxlThr",
-	  "testPbias",
-	  "CDRefr",    
-	  "CDSf",   
-	  "CDPr",    
-	  "ReqPuX",   
-	  "ReqPuY",
-	  "IFRf",    
-	  "IFThr",       
-	  "IFLk",        
-	  "IFLk",
-	  "CDOffThr",
-	  "SynPxlW",
-	  "SynW",
-	  "CDOnThr",
-	  "CDDiff",
-	  "EMCompH",
-	  "EMCompT",
-	  "CDIoff",
-	  "CDRGnd",
-	  "self"
-	  "FollBias",
-	  "ArbPd",
-	  "EMVrefL",
-	  "CDCas",
-	  "EMVrefH"
+            "SynThr",      
+            "SynTau",  
+            "SynPxlTau",  
+            "SysPxlThr",
+            "testPbias",
+            "CDRefr",    
+            "CDSf",   
+            "CDPr",    
+            "ReqPuX",   
+            "ReqPuY",
+            "IFRf",    
+            "IFThr",       
+            "IFLk",        
+            "CDOffThr",
+            "SynPxlW",
+            "SynW",
+            "CDOnThr",
+            "CDDiff",
+            "EMCompH",
+            "EMCompT",
+            "CDIoff",
+            "CDRGnd",
+            "self",
+            "FollBias",
+            "ArbPd",
+            "EMVrefL",
+            "CDCas",
+            "EMVrefH"
         };
 
         
         //int err = write(file_desc,bias,41); //5+36 
-	printf("sending biases as events to the device ... \n");
+        printf("sending biases as events to the device ... \n");
         seqEvents = 0;
         seqSize_b = 0;
-        for(int j = 0; j < countBias; j++) {
-            progBias(biasNames[j], countBias, biasValues[j],1);
+        // inverse order programmming
+        for(int j = countBias - 1; j >= 0 ; j--) {
+            //printf("%s \n", biasNames[j].c_str());
+            progBias(biasNames[j], countBits, biasValues[j],1);
         }
+        // fake bias to simulate 12 clock ticks
+        progBias(biasNames[0], 12, biasValues[0],1);
         latchCommitAEs(1);
         //monitor(10);
         releasePowerdown(1);
@@ -687,10 +693,10 @@ void asvGrabberThread::sendingBias() {
 void asvGrabberThread::progBias(string name,int bits,int value, int camera ) {
     int bitvalue;
     
-    for (int i=bits-1;i>=0;i--) {
+    for (int i = bits-1; i >= 0;i--) {
         int mask=1;
         for (int j=0; j<i; j++) {
-            mask*=2;
+            mask *= 2;
         }
         //printf("mask %d ",mask);
         if (mask & value) {

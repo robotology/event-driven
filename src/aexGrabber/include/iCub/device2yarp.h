@@ -26,6 +26,8 @@
 #ifndef _DEVICE2YARP_H
 #define _DEVICE2YARP_H
 
+#define __STDC_LIMIT_MACROS
+
 //yarp include
 #include <yarp/os/RateThread.h>
 #include <yarp/os/BufferedPort.h>
