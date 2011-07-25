@@ -67,7 +67,8 @@ bool dvsGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     devicePortName         =  deviceName ;
     printf("trying to connect to the %s \n",devicePortName.c_str());
 
-
+    
+   
 
     /*
     * attach a port of the same name as the module (prefixed with a /) to the module
@@ -83,10 +84,29 @@ bool dvsGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     attach(handlerPort);                  // attach to port
 
     bool _save = false;
-    std::string deviceNum = "0";
-    std::string fileName = "raw_events.bin";
-    D2Y=new device2yarp(devicePortName, _save, fileName);
-    //D2Y->setDeviceName(devicePortName);
+    string deviceNum = "0";
+    string fileName = "raw_events.bin";
+    /*
+     * get the name of the file where events are saved
+     */
+    std::string dumpNameComplete = "";
+    std::string dumpName;
+
+    dumpName = rf.check("dumpFile", 
+                        Value("none"), 
+                        "filename of the binary (string)").asString();
+    printf("trying to save events in %s  \n",dumpName.c_str());
+    dumpNameComplete = rf.findFile(dumpName.c_str());
+    
+    if(!strcmp(dumpName.c_str(),"none")) {
+        printf("not reading from binary \n");
+        D2Y=new device2yarp(devicePortName, false,dumpNameComplete);
+    }
+    else {
+        printf("reading from binary \n");
+        //D2Y->setFromBinary(true);
+        D2Y=new device2yarp(devicePortName, true, dumpNameComplete);     
+    }
     printf("starting the thread \n");
     D2Y->start();
 

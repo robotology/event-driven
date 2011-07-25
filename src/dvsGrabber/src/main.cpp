@@ -38,8 +38,8 @@ int main(int argc, char * argv[])
 
     ResourceFinder rf;
     rf.setVerbose(true);
-    rf.setDefaultConfigFile("dvsGrabber.ini"); //overridden by --from parameter
-    rf.setDefaultContext("dvsGrabber/conf");   //overridden by --context parameter
+    rf.setDefaultConfigFile("dvsGrabber.ini");        //overridden by --from parameter
+    rf.setDefaultContext("eMorphApplication/conf");   //overridden by --context parameter
     rf.configure("ICUB_ROOT", argc, argv);
  
     module.runModule(rf);

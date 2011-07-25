@@ -54,7 +54,6 @@ using namespace yarp::os;
 
 
 device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):RateThread(10), save(i_bool) {
-
     printf("initialising the module \n");
     
     len=0;
@@ -76,15 +75,18 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
         printf("pseq malloc failed \n");
     }
     seqAlloced_b = seqAllocChunk_b;
-
-    
-
     seqEvents = 0;
     seqSize_b = 0;
     */
 
-    if(save)
+    if(save) {
+        printf("Opening the file to dump down all the events \n");
         raw = fopen(i_fileName.c_str(), "wb");
+    }
+    else {
+        printf("Saving option not activated \n");
+        
+    }
     int deviceNum=0;
     str_buf << "/icub/retina" << deviceNum << ":o";
     port.open(str_buf.str().c_str());
@@ -175,31 +177,29 @@ void device2yarp::setDeviceName(string deviceName) {
 void  device2yarp::run() {
     // read address events from device file which is not /dev/aerfx2_0
     sz = read(file_desc,buffer,SIZE_OF_DATA);
+    if (sz == -1) return;
     //int r = pread(file_desc,pmon,monBufSize_b,0);
-    int r = 0;
-    monBufEvents = r / sizeof(struct aer);
+    //int r = 0;
+    monBufEvents =  sz / sizeof(struct aer);
     int monBufBytes = sz / 4;
 
-    cout << "Size of the buffer : " << r <<endl;
-    cout << "Number of events" << monBufEvents << endl;
+    cout << "Size of the buffer : " << sz <<endl;
+    cout << "Number of events : " << monBufEvents << endl;
     uint32_t * buf2 = (uint32_t*)buffer;
     u32 a, t;
     int k2 = 0;
 
     for (int i = 0 ; i < monBufBytes ; i+=4) {
-        unsigned int part_1 = 0xFF & buffer[i];    //extracting the 1 byte
-        
-        unsigned int part_2 = 0xFF & buffer[i+1];  //extracting the 2 byte
-        
+        unsigned int part_1 = 0xFF & buffer[i];    //extracting the 1 byte        
+        unsigned int part_2 = 0xFF & buffer[i+1];  //extracting the 2 byte        
         unsigned int part_3 = 0xFF & buffer[i+2];  //extracting the 3 byte
-        printf ("part3:%d ",part_3);
         unsigned int part_4 = 0xFF & buffer[i+3];  //extracting the 4 byte
-        printf (" part4:%d \n",part_4);
-        float blob = (part_1)|(part_2<<8);
-        printf ("blob: %f   \n ",blob);
-        float timestamp = ((part_3)|(part_4<<8));
-        printf ("timestamp %f \n", timestamp);
+        //float blob = (part_1)|(part_2<<8);
+        a = (part_1)|(part_2<<8);
+        //float timestamp = ((part_3)|(part_4<<8));
+        t = ((part_3)|(part_4<<8));
     }
+
 
     /*
     for(int i=0; i < monBufEvents; i++) {       
@@ -211,8 +211,18 @@ void  device2yarp::run() {
     }
     */
 
+    if(save){
+        printf("Saving in file \n");
+        fprintf(raw,"%08X %08X\n",a,t); 
+        //fwrite(&sz, sizeof(int), 1, raw);
+        //fwrite(buffer, 1, sz, raw);
+    }
+    else {
+        printf("NOT saving in file \n");
+    }
+
     //sz = monBufEvents*sizeof(struct aer); // sz is size in bytes
-    
+  
     if(port.getOutputCount()) {
         printf("exiting from reading...sending data size: %d \n",sz);
         sendingBuffer data2send(buffer, sz);    
@@ -221,10 +231,7 @@ void  device2yarp::run() {
         tmp = data2send;
         port.write();
         //printf("on the port: data written \n");
-        if(save){
-                fwrite(&sz, sizeof(int), 1, raw);
-                fwrite(buffer, 1, sz, raw);
-        }
+        
     }
     //resetting buffers    
     memset(buffer, 0, SIZE_OF_DATA);
