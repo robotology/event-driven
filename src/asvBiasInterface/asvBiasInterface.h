@@ -129,11 +129,11 @@ void printHelp();
 // Global Variables
 //-------------------------------------------------
 // main window 
-GtkObject *adj1,  *adj2,  *adj3,  *adj4,  *adj5;
-GtkObject *adj6,  *adj7,  *adj8,  *adj9;
-GtkObject *adj10, *adj11, *adj12, *adj13, *adj14, *adj15, *adj16;
-GtkObject *adj17, *adj18, *adj19, *adj20, *adj21, *adj22, *adj23;
-GtkObject *adj24, *adj25, *adj26, *adj27, *adj28;
+GtkObject *adjSYTH,  *adjSYTA,  *adjSYPA,  *adjSYPH,  *adjTPB;
+GtkObject *adjCDR,  *adjCDS,  *adjCDP,  *adjRPX;
+GtkObject *adjRPY, *adjIFR, *adjIFT, *adjIFL, *adjCDOF, *adjSYPW, *adjSYW;
+GtkObject *adjCDON, *adjCDD, *adjEMCH, *adjEMCT, *adjCDI, *adjCDRG, *adjSELF;
+GtkObject *adjFOLL, *adjARBP, *adjEMVL, *adjCDC, *adjEMVH;
 GtkObject *adjMotion;
 GtkWidget *entrySYTH, *entrySYTA, *entrySYPA, *entrySYPH, *entryTPB ; 
 GtkWidget *entryCDR , *entryCDS , *entryCDP , *entryRPX , *entryRPY ; 
