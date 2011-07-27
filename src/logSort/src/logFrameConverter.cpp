@@ -67,6 +67,7 @@ logFrameConverter::~logFrameConverter() {
 }
 
 void logFrameConverter::copyChunk(char* bufferCopy) {        
+    
     mutex.wait();
     if(pcRead > converterBuffer +  BUFFERDIM - CHUNKSIZE) {
         memcpy(bufferCopy, pcRead, converterBuffer + BUFFERDIM - pcRead );
@@ -77,9 +78,11 @@ void logFrameConverter::copyChunk(char* bufferCopy) {
         pcRead += CHUNKSIZE;
     }
     mutex.post();
+ 
 }
 
 void logFrameConverter::onRead(sendingBuffer& i_ub) {
+    printf("reading \n");
     valid = true;
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() ;      // number of bits received / 8 = bytes received

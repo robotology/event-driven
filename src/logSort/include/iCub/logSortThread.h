@@ -37,7 +37,7 @@
 #include <sys/types.h>
 #include <inttypes.h>
 #include <stdlib.h>
-#include <iCub/eventBuffer.h>
+#include <iCub/sendingBuffer.h>
 
 //typedef unsigned long long int uint64_t;
 #define u64 uint64_t
@@ -67,9 +67,10 @@ private:
     yarp::os::BufferedPort <yarp::sig::ImageOf<yarp::sig::PixelMono> > outPortRight;      // port whre the output (right) is sent
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeft;                                  // image representing the signal on the leftcamera
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRight;                                 // image representing the signal on the right camera
-    yarp::os::BufferedPort <eventBuffer>* portCD;                                       // port where CHANGE DETECTOR events are sent
-    yarp::os::BufferedPort <eventBuffer>* portIF;                                       // port wgere INTEGRATE 'n' FIRE events are sent
-
+    yarp::os::BufferedPort <sendingBuffer> portCD;                                         // port where CHANGE DETECTOR events are sent
+    yarp::os::BufferedPort <sendingBuffer> portIF;                                         // port where INTEGRATE 'n' FIRE events are sent
+    yarp::os::BufferedPort <sendingBuffer> portEM;                                         // port where EM events are sent  
+    
     std::string name;                   // rootname of all the ports opened by this thread
     bool verb;
     bool synchronised;                  // flag to check whether the microsecond counter has been synchronised
@@ -158,7 +159,7 @@ public:
      * @param buffer collection of bytes that are going to be sent
      * @sz    dimension of the buffer to be sent
      */
-    void sendBuffer(yarp::os::BufferedPort<eventBuffer>* port, char* buffer, int sz);
+    void sendBuffer(yarp::os::BufferedPort<sendingBuffer>* port, char* buffer, int sz);
     
 
 

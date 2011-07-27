@@ -39,8 +39,8 @@ int main(int argc, char * argv[])
 
     ResourceFinder rf;
     rf.setVerbose(true);
-    rf.setDefaultConfigFile("logSortCollector.ini"); //overridden by --from parameter
-    rf.setDefaultContext("eMorph/conf");   //overridden by --context parameter
+    rf.setDefaultConfigFile("logSort.ini");           //overridden by --from parameter
+    rf.setDefaultContext("eMorphApplication/conf");   //overridden by --context parameter
     rf.configure("ICUB_ROOT", argc, argv);
  
     module.runModule(rf);

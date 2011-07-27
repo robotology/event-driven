@@ -461,30 +461,30 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         cartX = retinalSize - cartX;
         
         switch (type) {
-        case 0:{ //CD
-            printf("Unmasked CD \n");
-        }
+            case 0:{ //CD
+                //printf("Unmasked CD \n");
+            }
             break;
-        case 1:{ //EM1
-            printf("Unmasked EM1 \n");
-        }
+            case 1:{ //EM1
+                //printf("Unmasked EM1 \n");
+            }
             break;
-        case 2:{ //EM2
-            printf("Unmasked EM2 \n");
-        }
+            case 2:{ //EM2
+                //printf("Unmasked EM2 \n");
+            }
             break;
-        case 3:{ //EM3
-            printf("Unmasked EM3 \n");
-        }
+            case 3:{ //EM3
+                //printf("Unmasked EM3 \n");
+            }
             break;
-        case 4:{ //EM4
-            printf("Unmasked EM4 \n");
-        }
+            case 4:{ //EM4
+                //printf("Unmasked EM4 \n");
+            }
             break;
-        case 5:{ //IF
-            printf("Unmasked IF \n");
-            break;
-        }
+            case 5:{ //IF
+                //printf("Unmasked IF \n");
+            }
+            break;            
         }
         
         /*

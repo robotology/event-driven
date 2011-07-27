@@ -32,6 +32,12 @@ sendingBuffer::sendingBuffer() {
     size_of_the_packet=0;
 }
 
+sendingBuffer::sendingBuffer(char* i_data, int i_size) {
+    packet = new char[SIZE_OF_DATA];
+    memcpy(packet, i_data, SIZE_OF_DATA);
+    size_of_the_packet = i_size;
+}
+
 sendingBuffer::~sendingBuffer() {
     delete[] packet;
 }

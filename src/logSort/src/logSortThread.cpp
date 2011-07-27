@@ -1,5 +1,3 @@
-
-
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /* 
@@ -59,38 +57,41 @@ logSortThread::logSortThread() : RateThread(THRATE) {
 }
 
 logSortThread::~logSortThread() {
-    printf("freeing memory in collector");
-    delete bufferCopy;
+  printf("freeing memory in collector");
+  delete bufferCopy;
 }
 
 bool logSortThread::threadInit() {
-    printf(" \nstarting the threads.... \n");
-    //outPort.open(getName("/left:o").c_str());
-    //outPortRight.open(getName("/right:o").c_str());
-
-    resize(retinalSize, retinalSize);
-    printf("starting the converter!!!.... \n");
-    lfConverter = new logFrameConverter();
-    lfConverter->useCallback();
-    lfConverter->open(getName("/retina:i").c_str());
-    printf("\n opening retina\n");
-    printf("starting the plotter \n");
-    pThread = new plotterThread();
-    pThread->setName(getName("").c_str());
-    pThread->start();
-
-
-    //minCount = lfConverter->getEldestTimeStamp();
-    startTimer = Time::now();
-    //clock(); //startTime ;
-    //T1 = times(&start_time);
-    //microseconds = 0;
-    //microsecondsPrev = 0;
-    gettimeofday(&tvend, NULL);
-    unmask_events.start();
-    count = 0;
-    microsecondsPrev = 0;
-    return true;
+  //printf(" \nstarting the threads.... \n");
+  portCD.open(getName("/CD:o").c_str());
+  portEM.open(getName("/EM:o").c_str());
+  portIF.open(getName("/IF:o").c_str());
+  
+  //outPortRight.open(getName("/right:o").c_str());
+  //resize(retinalSize, retinalSize);
+  printf("starting the converter!!!.... \n");
+  lfConverter = new logFrameConverter();
+  lfConverter->useCallback();
+  lfConverter->open(getName("/retina:i").c_str());
+  printf("\n opening retina\n");
+  printf("starting the plotter \n");
+  pThread = new plotterThread();
+  pThread->setName(getName("").c_str());
+  pThread->start();
+  
+  
+  //minCount = lfConverter->getEldestTimeStamp();
+  startTimer = Time::now();
+  //clock(); //startTime ;
+  //T1 = times(&start_time);
+  //microseconds = 0;
+  //microsecondsPrev = 0;
+  gettimeofday(&tvend, NULL);
+  unmask_events.start();
+  count = 0;
+  microsecondsPrev = 0;
+  printf("Initialisation ended \n");
+  return true;
 }
 
 void logSortThread::interrupt() {
@@ -174,7 +175,9 @@ void logSortThread::run() {
         lfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
         //printf("returned 0x%x \n", bufferCopy);
         // extract a chunk/unmask the chunk       
+
         unmask_events.logUnmaskData(bufferCopy,CHUNKSIZE,verb);
+
         if(verb) {
             verb = false;
             countStop = 0;
@@ -283,11 +286,12 @@ void logSortThread::run() {
 	int dimCD;
 	char* pCD;
 	unmask_events.getCD(pCD,&dimCD);
-        sendBuffer(portCD, pCD, dimCD);
+        sendBuffer(&portCD, pCD, dimCD);
+
 	
 	//int dimIF;
 	//char* pIF;
-	//unmask_events.getIF(pIF,&dimIF);
+	//unmask_events.getIF(pIF,&dimIF);z
 	//sendBuffer(portIF, pIF, dimIF);
 	 
 	
@@ -298,17 +302,17 @@ void logSortThread::run() {
     }
 }
 
-void logSortThread::sendBuffer(BufferedPort<eventBuffer>* port, char* buffer, int sz) {
+void logSortThread::sendBuffer(BufferedPort<sendingBuffer>* port, char* buffer, int sz) {
   if (port->getOutputCount()) {
     char tmpBuffer[SIZE_PACKET];
     for (int i = 0; i< sz; i++) {
       tmpBuffer[i] = *buffer++;
     }
-    eventBuffer data2send(tmpBuffer, sz);    
-    eventBuffer& tmp = port->prepare();
+    sendingBuffer data2send(tmpBuffer, sz);    
+    sendingBuffer& tmp = port->prepare();
     tmp = data2send;
     port->write();
-  }      
+  }     
 }
 
 
@@ -423,6 +427,9 @@ void logSortThread::threadRelease() {
     //free(bufferCopy);
     printf("Threadrelease:closing ports \n");
     outPort.close();
+    portCD.close();
+    portEM.close();
+    portIF.close();
     outPortRight.close();
     delete imageLeft;
     delete imageRight;

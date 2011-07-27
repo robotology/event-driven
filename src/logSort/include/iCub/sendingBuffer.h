@@ -30,10 +30,13 @@
 //#include <yarp/os/Portable.h>
 #include <yarp/os/all.h>
 #include <iCub/config.h>
+#define SIZE_OF_DATA 65536
+//#include "config.h"
 
 class sendingBuffer : public yarp::os::Portable {
 public:
     sendingBuffer();
+    sendingBuffer(char*, int);
     ~sendingBuffer();
     virtual bool write(yarp::os::ConnectionWriter&);
     virtual bool read(yarp::os::ConnectionReader&);

@@ -7,20 +7,37 @@ SET(KEYWORD "logSort")
 PROJECT(${KEYWORD})
 
 set(ICUB_CONTRIB_DIRS $ENV{ICUB_DIR}/include)
-MESSAGE("_INCLUDE_DIRS ${ICUB_CONTRIB_DIRS}")
 
 INCLUDE_DIRECTORIES(
     ${PROJECT_SOURCE_DIR}/include
     ${YARP_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS}    
     ${ICUB_INCLUDE_DIRS}    
-    ${ICUB_CONTRIB_DIRS}
+    #${ICUB_CONTRIB_DIRS}
 )
 
 
 # Search for source code.
-FILE(GLOB folder_source src/*.cpp src/*.cc src/*.c)
-FILE(GLOB folder_header include/iCub/*.h)
+FILE(GLOB folder_source 
+  src/convert.cpp 
+  src/logFrameConverter.cpp
+  src/logSortModule.cpp
+  src/logSortThread.cpp
+  src/logUnmask.cpp
+  src/main.cpp
+  src/plotterThread.cpp
+  src/sendingBuffer.cpp
+  )
+FILE(GLOB folder_header 
+  include/iCub/config.h
+  include/iCub/convert.h
+  include/iCub/logFrameConverter.h
+  include/iCub/logSortModule.h
+  include/iCub/logSortThread.h
+  include/iCub/logUnmask.h
+  include/iCub/plotterThread.h
+  include/iCub/sendingBuffer.h
+  )
 SOURCE_GROUP("Source Files" FILES ${folder_source})
 SOURCE_GROUP("Header Files" FILES ${folder_header})
 
@@ -32,7 +49,7 @@ IF (folder_source)
     )
 
     TARGET_LINK_LIBRARIES(${KEYWORD}
-      eMorphLib
+      #eMorphLib
       ${YARP_LIBRARIES}
       ${OpenCV_LIBRARIES}
       )	
