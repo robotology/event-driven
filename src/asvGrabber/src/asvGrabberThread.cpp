@@ -1,3 +1,4 @@
+
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /*
@@ -631,8 +632,8 @@ void  asvGrabberThread::run() {
     sz = monBufEvents*sizeof(struct aer); // sz is size in bytes
 
     if (port.getOutputCount()) {
-        eventBuffer data2send(buffer, sz);    
-        eventBuffer& tmp = port.prepare();
+        sendingBuffer data2send(buffer, sz);    
+        sendingBuffer& tmp = port.prepare();
         tmp = data2send;
         port.write();
     }   

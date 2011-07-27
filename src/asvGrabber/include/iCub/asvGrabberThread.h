@@ -39,7 +39,7 @@
 #include <stdint.h>
 #include <fstream>
 
-#include <iCub/eventBuffer.h>
+#include <iCub/sending_buffer.h>
 
 #define u8  uint8_t
 #define u16 uint16_t
@@ -47,6 +47,7 @@
 #define u64 uint64_t
 
 #define SIZE_OF_EVENT 8192
+#define SIZE_OF_DATA 65536
 
 struct aer {
     u32 timestamp;
@@ -541,7 +542,7 @@ public:
     double getI2V() {return I2V ;};
 
 private:
-    yarp::os::BufferedPort<eventBuffer> port;                //port sending events
+    yarp::os::BufferedPort<sendingBuffer> port;                //port sending events
     yarp::os::BufferedPort<yarp::os::Bottle> portDimension;  //port sending dimension of packets   
     int r;                                                   //dimension of the received buffer of event for display
     FILE* raw;
