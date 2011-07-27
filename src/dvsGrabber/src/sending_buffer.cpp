@@ -36,7 +36,7 @@ sendingBuffer::sendingBuffer() {
 
 sendingBuffer::sendingBuffer(char* i_data, int i_size) {
     packet = new char[SIZE_OF_DATA];
-    memcpy(packet, i_data, SIZE_OF_DATA);
+    memcpy(packet, i_data, i_size);
     size_of_the_packet = i_size;
 }
 
@@ -53,7 +53,7 @@ bool sendingBuffer::write(ConnectionWriter& connection) {
     connection.appendInt(BOTTLE_TAG_LIST+BOTTLE_TAG_BLOB+BOTTLE_TAG_INT);
     connection.appendInt(2); // four elements
     connection.appendInt(size_of_the_packet);
-    connection.appendBlock (packet, SIZE_OF_DATA);
+    connection.appendBlock (packet, size_of_the_packet);
     connection.convertTextMode(); // if connection is text-mode, convert!
     return true;
 }
@@ -67,6 +67,6 @@ bool sendingBuffer::read(yarp::os::ConnectionReader& connection) {
     if (ct!=2)
         return false;
     size_of_the_packet = connection.expectInt();
-    connection.expectBlock(packet, SIZE_OF_DATA);
+    connection.expectBlock(packet, size_of_the_packet);
     return true;
 }
