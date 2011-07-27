@@ -28,6 +28,7 @@
 
 #include <string.h>
 #include <sstream>
+#include <cstdlib>
 
 
 #define COMMAND_VOCAB_SET VOCAB3('s','e','t')
@@ -138,6 +139,13 @@ static double dec2current(int value) {
 }
 
 
+static double current2dec(double value) {
+    double step = 4.5; // every bit is converted in 4.5pA
+    double current = value / step;
+    return current; //in decimal
+}
+
+
 //-------------------------------------------------
 // Main Window Callbacks
 //-------------------------------------------------
@@ -173,7 +181,9 @@ static void callback( GtkWidget *widget,gpointer   data ){
 static void enter_callbackSYTH( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
-    printf ("Entry contents : %s\n", entry_text);
+    printf ("Entry contents :%s \n",entry_text);
+    double current =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjSYTH,current2dec(current));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -190,6 +200,8 @@ static void enter_callbackSYTA( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
+    double current =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjSYTA,current2dec(current));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -206,6 +218,8 @@ static void enter_callbackSYPA( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
+    double current =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjSYPA,current2dec(current));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -222,6 +236,8 @@ static void enter_callbackSYPH( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents : %s\n", entry_text);
+    double current =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjSYPH,current2dec(current));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -238,6 +254,8 @@ static void enter_callbackTPB( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
+    double current =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjTPB,current2dec(current));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -254,6 +272,8 @@ static void enter_callbackCDR( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
+    double current =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjCDR,current2dec(current));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -270,6 +290,8 @@ static void enter_callbackCDS( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
+    double current =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjCDS,current2dec(current));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -286,6 +308,8 @@ static void enter_callbackCDP( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
+    double current =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjCDP,current2dec(current));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -302,6 +326,8 @@ static void enter_callbackRPX( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
+    double current =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjRPX,current2dec(current));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -318,6 +344,8 @@ static void enter_callbackRPY( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
+    double current =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjRPY,current2dec(current));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -334,6 +362,8 @@ static void enter_callbackIFR( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
+    double current =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjIFR,current2dec(current));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -350,6 +380,8 @@ static void enter_callbackIFT( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
+    double current =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjIFT,current2dec(current));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -366,6 +398,8 @@ static void enter_callbackIFL( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
+    double current =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjIFL,current2dec(current));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -382,6 +416,8 @@ static void enter_callbackCDOF( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
+    double current =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjCDOF,current2dec(current));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -398,6 +434,8 @@ static void enter_callbackSYPW( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
+    double current =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjSYPW,current2dec(current));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -414,6 +452,8 @@ static void enter_callbackSYW( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
+    double current =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjSYW,current2dec(current));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -430,6 +470,8 @@ static void enter_callbackCDON( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
+    double current =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjCDON,current2dec(current));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -446,6 +488,8 @@ static void enter_callbackCDD( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
+    double current =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjCDD,current2dec(current));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -462,6 +506,8 @@ static void enter_callbackEMCH( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
+    double current =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjEMCH,current2dec(current));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -478,6 +524,8 @@ static void enter_callbackEMCT( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
+    double current =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjEMCT,current2dec(current));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -494,6 +542,8 @@ static void enter_callbackCDI( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
+    double current =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjCDI,current2dec(current));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -510,6 +560,8 @@ static void enter_callbackCDRG( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
+    double current =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjCDRG,current2dec(current));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -526,6 +578,8 @@ static void enter_callbackSELF( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
+    double current =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjSELF,current2dec(current));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -542,6 +596,8 @@ static void enter_callbackFOLL( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
+    double current =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjFOLL,current2dec(current));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -558,6 +614,8 @@ static void enter_callbackARBP( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
+    double current =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjARBP,current2dec(current));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -574,6 +632,8 @@ static void enter_callbackEMVL( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
+    double current =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjEMVL,current2dec(current));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -590,6 +650,8 @@ static void enter_callbackCDC( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
+    double current = g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjCDC,current2dec(current));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -606,6 +668,8 @@ static void enter_callbackEMVH( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
+    double current =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjEMVH,current2dec(current));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -616,6 +680,12 @@ static void enter_callbackEMVH( GtkWidget *widget, GtkWidget *entry ) {
         Bottle in;
         _pOutPort->write(bot,in);
     }
+}
+
+static void enter_callbackSAVELOAD( GtkWidget *widget, GtkWidget *entry ) {
+    printf(" changed the name of the file \n");
+    entry_file = gtk_entry_get_text (GTK_ENTRY (entry));   
+    printf ("Entry contents SAVE & LOAD  : %s\n", entry_file);
 }
 
 /*static void entry_toggle_editable( GtkWidget *checkbutton, GtkWidget *entry ) {
@@ -1140,6 +1210,213 @@ static void callbackSaveButton( GtkWidget *widget,gpointer data ) {
         _pOutPort->write(bot,in);
     }
     mutex.post();
+
+    //saving in local file
+    if(entry_file != NULL) {
+        printf("trying to save the following file %s \n", entry_file);    
+        fout = fopen(entry_file,"w");
+        int value = gtk_adjustment_get_value((GtkAdjustment*)adjSYTH);
+        fprintf(fout,"%d \n", value);
+        value = gtk_adjustment_get_value((GtkAdjustment*)adjSYTA);
+        fprintf(fout,"%d \n", value);
+        value = gtk_adjustment_get_value((GtkAdjustment*)adjSYPA);
+        fprintf(fout,"%d \n", value);
+        value = gtk_adjustment_get_value((GtkAdjustment*)adjSYPH);
+        fprintf(fout,"%d \n", value);
+        value = gtk_adjustment_get_value((GtkAdjustment*)adjTPB);
+        fprintf(fout,"%d \n", value);
+        value = gtk_adjustment_get_value((GtkAdjustment*)adjCDR);
+        fprintf(fout,"%d \n", value);
+        value = gtk_adjustment_get_value((GtkAdjustment*)adjCDS);
+        fprintf(fout,"%d \n", value);
+        value = gtk_adjustment_get_value((GtkAdjustment*)adjCDP);
+        fprintf(fout,"%d \n", value);
+        value = gtk_adjustment_get_value((GtkAdjustment*)adjRPX);
+        fprintf(fout,"%d \n", value);
+        value = gtk_adjustment_get_value((GtkAdjustment*)adjRPY);
+        fprintf(fout,"%d \n", value);
+        value = gtk_adjustment_get_value((GtkAdjustment*)adjIFR);
+        fprintf(fout,"%d \n", value);
+        value = gtk_adjustment_get_value((GtkAdjustment*)adjIFT);
+        fprintf(fout,"%d \n", value);
+        value = gtk_adjustment_get_value((GtkAdjustment*)adjIFL);
+        fprintf(fout,"%d \n", value);
+        value = gtk_adjustment_get_value((GtkAdjustment*)adjCDOF);
+        fprintf(fout,"%d \n", value);
+        value = gtk_adjustment_get_value((GtkAdjustment*)adjSYPW);
+        fprintf(fout,"%d \n", value);
+        value = gtk_adjustment_get_value((GtkAdjustment*)adjSYW);
+        fprintf(fout,"%d \n", value);
+        value = gtk_adjustment_get_value((GtkAdjustment*)adjCDON);
+        fprintf(fout,"%d \n", value);
+        value = gtk_adjustment_get_value((GtkAdjustment*)adjCDD);
+        fprintf(fout,"%d \n", value);
+        value = gtk_adjustment_get_value((GtkAdjustment*)adjEMCH);
+        fprintf(fout,"%d \n", value);
+        value = gtk_adjustment_get_value((GtkAdjustment*)adjEMCT);
+        fprintf(fout,"%d \n", value);
+        value = gtk_adjustment_get_value((GtkAdjustment*)adjCDI);
+        fprintf(fout,"%d \n", value);
+        value = gtk_adjustment_get_value((GtkAdjustment*)adjCDRG);
+        fprintf(fout,"%d \n", value);
+        value = gtk_adjustment_get_value((GtkAdjustment*)adjSELF);
+        fprintf(fout,"%d \n", value);
+        value = gtk_adjustment_get_value((GtkAdjustment*)adjFOLL);
+        fprintf(fout,"%d \n", value);
+        value = gtk_adjustment_get_value((GtkAdjustment*)adjARBP);
+        fprintf(fout,"%d \n", value);
+        value = gtk_adjustment_get_value((GtkAdjustment*)adjEMVL);
+        fprintf(fout,"%d \n", value);
+        value = gtk_adjustment_get_value((GtkAdjustment*)adjCDC);
+        fprintf(fout,"%d \n", value);
+        value = gtk_adjustment_get_value((GtkAdjustment*)adjEMVH);
+        fprintf(fout,"%d \n", value);
+        fclose(fout);
+        printf("biases file correctly saved \n");
+    }
+}
+
+static void callbackLoadButton( GtkWidget *widget,gpointer data ) {
+    printf ("Load button - %s was pressed\n", (char *) data);
+    mutex.wait();
+    if (_pOutPort!=NULL) {
+        yarp::os::Bottle bot; //= _pOutPort->prepare();
+        bot.clear();
+        bot.addVocab(COMMAND_VOCAB_LOAD);
+        bot.addVocab(COMMAND_VOCAB_BIAS);
+        //_pOutPort->Content() = _outBottle;
+        Bottle in;
+        _pOutPort->write(bot,in);
+    }
+    mutex.post();
+    
+    //loading in local file
+    if(entry_file!=NULL){
+        //char str[80];
+        int current;
+        printf("trying to read from the %s \n", entry_file);
+        fout = fopen(entry_file,"r");
+        std::string str;
+        printf("scanning the file \n");
+        
+        fscanf (fout, "%s", &str[0]);
+        current = atoi(str.c_str());
+        printf("biasSYTH %d \n",current);
+        gtk_adjustment_set_value((GtkAdjustment*)adjSYTH,current);
+        fscanf (fout, "%s", &str[0]);
+        current = atoi(str.c_str());
+        printf("biasSYTA %d \n",current);
+        gtk_adjustment_set_value((GtkAdjustment*)adjSYTA,current);
+        fscanf (fout, "%s", &str[0]);
+        current = atoi(str.c_str());
+        printf("biasSYPA %d \n",current);
+        gtk_adjustment_set_value((GtkAdjustment*)adjSYPA,current);
+        fscanf (fout, "%s", &str[0]);
+        current = atoi(str.c_str());
+        printf("biasSYPH %d \n",current);
+        gtk_adjustment_set_value((GtkAdjustment*)adjSYPH,current);
+         fscanf (fout, "%s", &str[0]);
+        current = atoi(str.c_str());
+        printf("biasTPB %d \n",current);
+        gtk_adjustment_set_value((GtkAdjustment*)adjTPB,current);
+        fscanf (fout, "%s", &str[0]);
+        current = atoi(str.c_str());
+        printf("biasCDR %d \n",current);
+        gtk_adjustment_set_value((GtkAdjustment*)adjCDR,current);
+        fscanf (fout, "%s", &str[0]);
+        current = atoi(str.c_str());
+        printf("biasCDS %d \n",current);
+        gtk_adjustment_set_value((GtkAdjustment*)adjCDS,current);
+        fscanf (fout, "%s", &str[0]);
+        current = atoi(str.c_str());
+        printf("biasCDP %d \n",current);
+        gtk_adjustment_set_value((GtkAdjustment*)adjCDP,current);
+         fscanf (fout, "%s", &str[0]);
+        current = atoi(str.c_str());
+        printf("biasRPX %d \n",current);
+        gtk_adjustment_set_value((GtkAdjustment*)adjRPX,current);
+        fscanf (fout, "%s", &str[0]);
+        current = atoi(str.c_str());
+        printf("biasRPY %d \n",current);
+        gtk_adjustment_set_value((GtkAdjustment*)adjRPY,current);
+        fscanf (fout, "%s", &str[0]);
+        current = atoi(str.c_str());
+        printf("biasIFR %d \n",current);
+        gtk_adjustment_set_value((GtkAdjustment*)adjIFR,current);
+        fscanf (fout, "%s", &str[0]);
+        current = atoi(str.c_str());
+        printf("biasIFT %d \n",current);
+        gtk_adjustment_set_value((GtkAdjustment*)adjIFT,current);
+         fscanf (fout, "%s", &str[0]);
+        current = atoi(str.c_str());
+        printf("biasIFL %d \n",current);
+        gtk_adjustment_set_value((GtkAdjustment*)adjIFL,current);
+        fscanf (fout, "%s", &str[0]);
+        current = atoi(str.c_str());
+        printf("biasCDOF %d \n",current);
+        gtk_adjustment_set_value((GtkAdjustment*)adjCDOF,current);
+        fscanf (fout, "%s", &str[0]);
+        current = atoi(str.c_str());
+        printf("biasSYPW %d \n",current);
+        gtk_adjustment_set_value((GtkAdjustment*)adjSYPW,current);
+        fscanf (fout, "%s", &str[0]);
+        current = atoi(str.c_str());
+        printf("biasSYW %d \n",current);
+        gtk_adjustment_set_value((GtkAdjustment*)adjSYW,current);
+         fscanf (fout, "%s", &str[0]);
+        current = atoi(str.c_str());
+        printf("biasCDON %d \n",current);
+        gtk_adjustment_set_value((GtkAdjustment*)adjCDON,current);
+        fscanf (fout, "%s", &str[0]);
+        current = atoi(str.c_str());
+        printf("biasCDD %d \n",current);
+        gtk_adjustment_set_value((GtkAdjustment*)adjCDD,current);
+        fscanf (fout, "%s", &str[0]);
+        current = atoi(str.c_str());
+        printf("biasEMCH %d \n",current);
+        gtk_adjustment_set_value((GtkAdjustment*)adjEMCH,current);
+        fscanf (fout, "%s", &str[0]);
+        current = atoi(str.c_str());
+        printf("biasEMCT %d \n",current);
+        gtk_adjustment_set_value((GtkAdjustment*)adjEMCT,current);
+         fscanf (fout, "%s", &str[0]);
+        current = atoi(str.c_str());
+        printf("biasCDI %d \n",current);
+        gtk_adjustment_set_value((GtkAdjustment*)adjCDI,current);
+        fscanf (fout, "%s", &str[0]);
+        current = atoi(str.c_str());
+        printf("biasCDRG %d \n",current);
+        gtk_adjustment_set_value((GtkAdjustment*)adjCDRG,current);
+        fscanf (fout, "%s", &str[0]);
+        current = atoi(str.c_str());
+        printf("biasSELF %d \n",current);
+        gtk_adjustment_set_value((GtkAdjustment*)adjSELF,current);
+        fscanf (fout, "%s", &str[0]);
+        current = atoi(str.c_str());
+        printf("biasFOLL %d \n",current);
+        gtk_adjustment_set_value((GtkAdjustment*)adjFOLL,current);
+         fscanf (fout, "%s", &str[0]);
+        current = atoi(str.c_str());
+        printf("biasARBP %d \n",current);
+        gtk_adjustment_set_value((GtkAdjustment*)adjARBP,current);
+        fscanf (fout, "%s", &str[0]);
+        current = atoi(str.c_str());
+        printf("biasEMVL %d \n",current);
+        gtk_adjustment_set_value((GtkAdjustment*)adjEMVL,current);
+        fscanf (fout, "%s", &str[0]);
+        current = atoi(str.c_str());
+        printf("biasCDC %d \n",current);
+        gtk_adjustment_set_value((GtkAdjustment*)adjCDC,current);
+        fscanf (fout, "%s", &str[0]);
+        current = atoi(str.c_str());
+        printf("biasEMVH %d \n",current);
+        gtk_adjustment_set_value((GtkAdjustment*)adjEMVH,current);
+        
+        
+        //char* pstr = &str[0];
+        printf("successfully scanned! \n");
+        fclose(fout); 
+    }
 }
 
 static void callbackProgBiasButton( GtkWidget *widget,gpointer data ) {
@@ -1898,7 +2175,7 @@ GtkWidget* createMainWindow(void) {
     //g_signal_connect (G_OBJECT (window), "delete_event", G_CALLBACK (delete_event), NULL);
     
     // Box for main window
-    GtkWidget *buttonSave, *buttonProgBias;
+    GtkWidget *buttonSave,*buttonLoad, *buttonProgBias;
     GtkWidget *boxButton;
     GtkWidget *box, *box2, *box3, *box4, *box5, *box6, *box7;
     // init text boxes
@@ -2785,6 +3062,8 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box6), buttonProgBias, FALSE, FALSE, 10);
     gtk_widget_show (buttonProgBias);
     
+    
+    
     buttonProgBias = gtk_button_new ();
     g_signal_connect (G_OBJECT (buttonProgBias), "clicked", G_CALLBACK (callbackProgBiasButton),(gpointer) "right");
     boxButton = xpm_label_box (NULL,  (gchar*)"ProgBias Right");
@@ -2805,8 +3084,28 @@ GtkWidget* createMainWindow(void) {
     gtk_container_add (GTK_CONTAINER (buttonSave), box6);
     gtk_box_pack_start (GTK_BOX (box6), buttonSave, FALSE, FALSE, 10);
     gtk_widget_show (buttonSave);
-    
 
+    entrySAVELOAD = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (entrySAVELOAD), 50);
+    gtk_entry_set_text (GTK_ENTRY (entrySAVELOAD), "filename");
+    g_signal_connect (entrySAVELOAD, "activate",
+		      G_CALLBACK (enter_callbackSAVELOAD),
+		      entrySAVELOAD);
+    tmp_pos = GTK_ENTRY (entrySAVELOAD)->text_length;
+    gtk_editable_insert_text (GTK_EDITABLE (entrySAVELOAD), ".txt" , -1, &tmp_pos);
+    gtk_editable_select_region (GTK_EDITABLE (entrySAVELOAD),
+			        0, GTK_ENTRY (entrySAVELOAD)->text_length);
+    gtk_box_pack_start (GTK_BOX (box6), entrySAVELOAD, TRUE, TRUE, 0);
+    gtk_widget_show (entrySAVELOAD);
+
+    buttonLoad = gtk_button_new ();
+    g_signal_connect (G_OBJECT (buttonLoad), "clicked", G_CALLBACK (callbackLoadButton), NULL);
+    boxButton = xpm_label_box (NULL,  (gchar*)"Load");
+    gtk_widget_show (boxButton);
+    gtk_container_add (GTK_CONTAINER (buttonLoad), boxButton);
+    gtk_container_add (GTK_CONTAINER (buttonLoad), box6);
+    gtk_box_pack_start (GTK_BOX (box6), buttonLoad, FALSE, FALSE, 10);
+    gtk_widget_show (buttonLoad);        
 
     gtk_box_pack_start (GTK_BOX (box3), box6, FALSE, FALSE, 0);
     gtk_widget_show (box6);

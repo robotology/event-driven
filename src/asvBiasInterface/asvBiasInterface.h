@@ -65,6 +65,7 @@
 #define COMMAND_VOCAB_EMVH   VOCAB4('e','m','v','h')
 
 #define COMMAND_VOCAB_SAVE   VOCAB4('s','a','v','e')
+#define COMMAND_VOCAB_LOAD   VOCAB4('l','o','a','d')
 #define COMMAND_VOCAB_BIAS   VOCAB4('b','i','a','s')
 #define COMMAND_VOCAB_PROG   VOCAB4('p','r','o','g')
 
@@ -140,8 +141,14 @@ GtkWidget *entryCDR , *entryCDS , *entryCDP , *entryRPX , *entryRPY ;
 GtkWidget *entryIFR , *entryIFT , *entryIFL , *entryCDOF, *entrySYPW; 
 GtkWidget *entrySYW , *entryCDON, *entryCDD , *entryEMCH, *entryEMCT; 
 GtkWidget *entryCDI , *entryCDRG, *entrySELF, *entryFOLL, *entryARBP; 
-GtkWidget *entryEMVL, *entryCDC , *entryEMVH;   
+GtkWidget *entryEMVL, *entryCDC , *entryEMVH;
+GtkWidget *entrySAVELOAD;
+
+FILE* fout;                                                                      // file where the biases are saved
+std::string filename;                                                            // name of the file where biases are saved
+const gchar *entry_file;
 yarp::os::Semaphore mutex;
+
 int c=0;
 
 //-------------------------------------------------
