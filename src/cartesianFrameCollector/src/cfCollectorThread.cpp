@@ -31,17 +31,18 @@
 #include <cstdlib>
 #include <time.h>
 
+
 using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
 #define COUNTERRATIO 1.25       //1.25 is the ratio 0.160/0.128
 #define MAXVALUE 4294967295
-#define THRATE 10
+#define THRATE 5
 #define STAMPINFRAME  // 10 ms of period times the us in 1 millisecond + time for computing
 #define retinalSize 128
-#define CHUNKSIZE 8192
-#define dim_window 5
+#define CHUNKSIZE 1024 //65536 //8192
+#define dim_window 10
 #define synch_time 500
 
 cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
@@ -55,6 +56,8 @@ cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
     //bufferRead = (char*) malloc(8192);
     countStop = 0;
     verb = false;
+    string i_fileName("events.log");
+    raw = fopen(i_fileName.c_str(), "wb");
 }
 
 cfCollectorThread::~cfCollectorThread() {
@@ -168,22 +171,13 @@ void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsig
 void cfCollectorThread::run() {
   count++;
   if(!idle) {
-    
-    if(verb) {
-      // fprintf(fout,"%08X %08X\n",a,t); 
-    }
 
-    
-    
     // reads the buffer received
     //bufferRead = cfConverter->getBuffer();    
     // saves it into a working buffer
     cfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
     // extract a chunk/unmask the chunk
     unmask_events.unmaskData(bufferCopy,CHUNKSIZE,verb);
-    
-    
-
     if(verb) {
       verb = false;
       countStop = 0;
@@ -205,6 +199,13 @@ void cfCollectorThread::run() {
     lc = lastleft * COUNTERRATIO; 
     unsigned long int lastright = unmask_events.getLastTimestampRight();
     rc = lastright * COUNTERRATIO;
+
+    if(true){
+      //printf("Saving in file \n");
+      fprintf(raw,"%08X \n",lc); 
+      //fwrite(&sz, sizeof(int), 1, raw);
+      //fwrite(buffer, 1, sz, raw);
+    }
     
     if((lc >= 4294967295) || (rc >= 4294967295)) {
       verb = true;
@@ -253,7 +254,7 @@ void cfCollectorThread::run() {
     
     if(count % 100 == 0) { 
       //printf("countStop %d lcprev %d lc %d \n",countStop, lcprev,lc);
-      if ((lcprev == lc)||(rcprev == rc)) { 
+      if ((lcprev == lc)&&(rcprev == rc)) { 
 	countStop++;
 	printf("countStop %d \n", countStop);
       }            
@@ -263,7 +264,7 @@ void cfCollectorThread::run() {
       //}
       else {
 	countStop--;
-	printf("countStop %d \n", countStop);
+	//printf("countStop %d \n", countStop);
 	if(countStop<= 0)
 	  countStop = 0;
       }
@@ -275,10 +276,10 @@ void cfCollectorThread::run() {
       
     //resetting time stamps at overflow
     if (countStop == 10) {
-      //printf("resetting time stamps!!!!!!!!!!!!! %d %d   \n ", minCount, minCountRight);
+      printf("resetting time stamps!!!!!!!!!!!!! %d %d   \n ", minCount, minCountRight);
       //cfConverter->resetTimestamps(); 
       verb = true;
-      printf("countStop %d %d \n",countStop, verb );
+      //printf("countStop %d %d \n",countStop, verb );
       count = synch_time - 200;
     }
     
@@ -286,8 +287,7 @@ void cfCollectorThread::run() {
     getMonoImage(imageRight,minCount,maxCount,0);
     getMonoImage(imageLeft,minCountRight,maxCountRight,1);
     pThread->copyLeft(imageLeft);
-    pThread->copyRight(imageRight);
-    
+    pThread->copyRight(imageRight);    
   }
 }
 

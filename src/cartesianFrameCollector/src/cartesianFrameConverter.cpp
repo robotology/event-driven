@@ -27,10 +27,20 @@
 #include <cassert>
 #include <cstdlib>
 
-#define BUFFERDIM 24576 
-#define TH1 8192 
-#define TH2 16384
-#define CHUNKSIZE 8192 
+//#define BUFFERDIM 24576 
+//#define TH1 8192 
+//#define TH2 16384
+//#define CHUNKSIZE 8192  
+
+//#define CHUNKSIZE 65536 
+//#define TH1       65536
+//#define TH2       131072
+//#define BUFFERDIM 196608
+
+#define CHUNKSIZE 1024 
+#define TH1       1024
+#define TH2       2048
+#define BUFFERDIM 3072
 
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -44,13 +54,13 @@ cFrameConverter::cFrameConverter():convert_events(128,128) {
     state = 0;
     receivedBuffer = 0;
     printf ("allocating memory \n");
-    converterBuffer_copy = (char*) malloc(24576); // allocates bytes
+    converterBuffer_copy = (char*) malloc(BUFFERDIM); // allocates bytes
     converterBuffer = converterBuffer_copy;
     if (converterBuffer == 0)
         printf("null pointer \n");
     pcBuffer = converterBuffer;
     printf("setting memory \n");
-    memset(converterBuffer,0,24576);         // set unsigned char
+    memset(converterBuffer,0,BUFFERDIM);              // set unsigned char
     pcRead = converterBuffer;
     unmask_events.start();
     printf("unmask event just started");
@@ -67,6 +77,7 @@ cFrameConverter::~cFrameConverter() {
 }
 
 void cFrameConverter::copyChunk(char* bufferCopy) {        
+    //printf("copy \n ");
     mutex.wait();
     if(pcRead > converterBuffer +  BUFFERDIM - CHUNKSIZE) {
         memcpy(bufferCopy, pcRead, converterBuffer + BUFFERDIM - pcRead );
@@ -77,17 +88,38 @@ void cFrameConverter::copyChunk(char* bufferCopy) {
         pcRead += CHUNKSIZE;
     }
     mutex.post();
+    //printf("copy chunk: ended \n ");
 }
 
 void cFrameConverter::onRead(sendingBuffer& i_ub) {
     valid = true;
+    //printf("onRead ");
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() ;      // number of bits received / 8 = bytes received
-    printf("dim %d \n", dim);
-
-    
+    //printf("dim %d \n", dim);
+   
     mutex.wait();
     receivedBuffer = i_ub.get_packet();
+    /*
+    unsigned int blob, timestamp;
+    for (int i = 0 ; i < dim ; i+=4) {
+        unsigned int part_1 = 0xFF & receivedBuffer[i];    //extracting the 1 byte        
+        unsigned int part_2 = 0xFF & receivedBuffer[i+1];  //extracting the 2 byte        
+        unsigned int part_3 = 0xFF & receivedBuffer[i+2];  //extracting the 3 byte
+        unsigned int part_4 = 0xFF & receivedBuffer[i+3];  //extracting the 4 byte
+        //float blob = (part_1)|(part_2<<8);
+        blob      = (part_1)|(part_2<<8);          //16bits
+        //float timestamp = ((part_3)|(part_4<<8));
+        timestamp = ((part_3)|(part_4<<8));        //16bits
+        printf(">>>>>>>>> %08X %08X \n",blob,timestamp); 
+        if(i == 100){
+            //printf("Saving in file \n");
+            //printf(">>>>>>>>> %08X %08X \n",blob,timestamp); 
+            //fwrite(&sz, sizeof(int), 1, raw);
+            //fwrite(buffer, 1, sz, raw);
+        }
+    }
+    */
     memcpy(pcBuffer,receivedBuffer,dim);
     
     if (totDim < TH1) {
@@ -109,7 +141,7 @@ void cFrameConverter::onRead(sendingBuffer& i_ub) {
     // the thrid part of the buffer is free to avoid overflow
     totDim += dim;
     mutex.post();
-    
+    //printf("onRead: ended \n");
     //printf("pcBuffer: 0x%x pcRead: 0x%x \n", pcBuffer, pcRead);
 }
 
@@ -137,7 +169,6 @@ void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image, unsigned long minC
     int imagePadding = image->getPadding();
     int imageRowSize = image->getRowSize();
     
-
     // determining whether the camera is left or right
     int* pBuffer = unmask_events.getEventBuffer(camera);
     unsigned long* pTime   = unmask_events.getTimeBuffer(camera);

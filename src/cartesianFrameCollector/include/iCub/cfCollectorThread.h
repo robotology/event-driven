@@ -32,6 +32,7 @@
 #include <iCub/cartesianFrameConverter.h>
 #include <iCub/plotterThread.h>
 #include <iostream>
+#include <fstream>
 #include <time.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -54,7 +55,7 @@ private:
     unsigned long int lcprev;
     unsigned long int rcprev;
     unsigned long int rc;
-    
+    FILE* raw;                          // file dumper for debug
     double microseconds;
     double microsecondsPrev;
     int countStop;                      // counter of equal timestamp
