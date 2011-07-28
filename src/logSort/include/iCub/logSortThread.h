@@ -92,7 +92,7 @@ private:
     char* bufferRead;                   // buffer of events read from the port
     char* bufferCopy;                   // local copy of the events read
     char* flagCopy;                     // copy of the unreadBuffer
-    
+    char* resultCopy;                   // buffer resulting out of the selection
 public:
     /**
     * default constructor
@@ -167,7 +167,7 @@ public:
      * @param  buffer of flags
      * @return dimension of the buffer to unmask
      */
-    int selectUnreadBuffer(char* bufferCopy, char* flagCopy);
+    int selectUnreadBuffer(char* bufferCopy, char* flagCopy, char* resultCopy);
 };
 
 #endif  //_LOG_SORT_THREAD_H_

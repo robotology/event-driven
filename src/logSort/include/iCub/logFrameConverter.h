@@ -62,7 +62,7 @@ public:
     * function that copies a chunk of elements
     * @param pointer to the buffer that has to be read
     */
-    void copyChunk(char* pointerCopy,char* flagPointer);
+    void copyChunk(char* pointerCopy, char* pointerFlag);
 
     /**
     * @brief returns a mono image of the output of the dvs camera (either left or right)

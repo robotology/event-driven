@@ -27,10 +27,13 @@
 #include <cassert>
 #include <cstdlib>
 
-#define BUFFERDIM 128 //6144  //36864
-#define TH1 32 //2048 //12
-#define TH2 64//4096  
-#define CHUNKSIZE 32//2048
+
+// note that bufferdim has to be 1 chunksize bigger TH3 to avoid overflows
+#define BUFFERDIM 4096 //6144  //36864
+#define TH1 1024 //2048 //12
+#define TH2 2048 //4096  
+#define TH3 3072
+#define CHUNKSIZE 1024//2048
 
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -54,8 +57,10 @@ logFrameConverter::logFrameConverter():convert_events(128,128) {
     printf("setting memory \n");
     memset(converterBuffer,0,BUFFERDIM);         // set unsigned char
     memset(unreadBuffer,  0, BUFFERDIM);        
-        pcBuffer = converterBuffer;
-    pcRead = converterBuffer;
+    pcBuffer = converterBuffer;
+    pcRead   = converterBuffer + TH1;
+    flagCopy = unreadBuffer;
+    flagRead = unreadBuffer + TH1;
     unmask_events.start();
     printf("unmask event just started");
     previousTimeStamp = 0;
@@ -74,53 +79,79 @@ logFrameConverter::~logFrameConverter() {
 
 void logFrameConverter::copyChunk(char* bufferCopy, char* flagBuffer) {            
     mutex.wait();    
-    if(pcRead > converterBuffer +  BUFFERDIM - CHUNKSIZE) {
+    if(pcRead >= converterBuffer +  BUFFERDIM - CHUNKSIZE) {
         memcpy(bufferCopy, pcRead, converterBuffer + BUFFERDIM - pcRead );
-        pcRead = converterBuffer;
-        flagCopy = flagBuffer;
+        memset(flagCopy, 0, converterBuffer + BUFFERDIM - pcRead);
+        pcRead   = converterBuffer;
+        flagCopy = unreadBuffer;
     }
     else {
         memcpy(bufferCopy, pcRead, CHUNKSIZE);
-        memset(flagCopy, 1, CHUNKSIZE);
+        memcpy(flagBuffer,flagCopy, CHUNKSIZE);
+        memset(flagCopy, 0, CHUNKSIZE);
         pcRead   += CHUNKSIZE;
         flagCopy += CHUNKSIZE;
     }
-    countBuffer -= CHUNKSIZE;
+    //countBuffer -= CHUNKSIZE;
+    //flagBuffer = flagCopy;
     mutex.post(); 
 }
 
 void logFrameConverter::onRead(sendingBuffer& i_ub) {
+
+    // pcBuffer where the new reading is copied
+    // pcRead   pointer to the chunk that is exported
+    // in this version the pcBuffer is behind one chunckSize respect the pcRead
+
+    // there is a second couple of pointers for the unreadBuffer that move tighly with the previous couple 
+
+
     valid = true;
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() ;      // number of bits received / 8 = bytes received
-    printf("reading %d \n", dim);
-    countBuffer += dim;
-    receivedBuffer = i_ub.get_packet();
-    mutex.wait();
-    memcpy(pcBuffer,receivedBuffer,dim);
-    memset(flagRead, 1, dim);
-    
-    if (totDim < TH1) {
-        pcBuffer += dim;
-        flagRead += dim;
+    if(dim == 0){
+        return;
     }
-    else if((totDim>=TH1)&&(totDim<TH2)&&(state!=1)){
-        //printf("greater than TH1 \n");
+
+    printf("reading %d \n", dim); 
+    mutex.wait();
+    receivedBuffer = i_ub.get_packet();
+    memcpy(pcBuffer,receivedBuffer,dim);
+    memset(flagRead,1,dim);
+    
+    //if (totDim < TH1) {
+    //    pcBuffer += dim;
+    //    flagRead += dim;
+    //}
+    //else 
+    
+    pcBuffer += dim;
+    flagRead += dim;
+    totDim   += dim;
+        
+    if((totDim>=TH1)&&(totDim<TH2)&&(state!=1)){
         pcBuffer = converterBuffer + TH1; 
-        flagRead = unreadBuffer + TH1;
+        flagRead = unreadBuffer    + TH1;
         pcRead   = converterBuffer + TH2;
+        flagCopy = unreadBuffer    + TH2;
         state    = 1;
     }
-    else if(totDim >= TH2) {
-        //printf("greater that TH2 \n");
+    else if((totDim >= TH2)&&(totDim < TH3)&&(state!=2)) {
+        pcBuffer = converterBuffer + TH2;
+        flagRead = unreadBuffer    + TH2;
+        pcRead   = converterBuffer;
+        flagCopy = unreadBuffer   ;       
+        state    = 2;
+    }
+    else if(totDim >= TH3) {
         pcBuffer = converterBuffer;
-        flagRead = unreadBuffer;
+        flagRead = unreadBuffer   ;
         pcRead   = converterBuffer + TH1;
+        flagCopy = unreadBuffer    + TH1;
         totDim   = 0;
         state    = 0;
     }
-    // the thrid part of the buffer is free to avoid overflow
-    totDim += dim;
+    // the thrid part of the buffer is free to avoid overflow    
     mutex.post();
     //printf("pcBuffer: 0x%x pcRead: 0x%x \n", pcBuffer, pcRead);
 }

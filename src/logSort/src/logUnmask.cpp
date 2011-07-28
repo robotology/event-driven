@@ -41,7 +41,7 @@ using namespace yarp::os;
 #define minKillThres 1000
 #define UNMASKRATETHREAD 1
 #define constInterval 100000;
-#define SIZE_OF_EVENT 8192
+#define SIZE_OF_EVENT 128
 
 
 logUnmask::logUnmask() : RateThread(UNMASKRATETHREAD){
@@ -408,17 +408,17 @@ int logUnmask::getMaxValue() {
 }
 
 void logUnmask::getCD(aer* pointerCD, int* dimCD) {
-    printf("counted CD %d \n", countCD);
+    //printf("counted CD %d \n", countCD);
     pointerCD = bufferCD;
 }
 
 void logUnmask::getIF(aer* pointerIF, int* dimCD) {
-    printf("counted IF %d \n", countIF);
+    //printf("counted IF %d \n", countIF);
     pointerIF = bufferIF;
 }
 
 void logUnmask::getEM(aer* pointerEM, int* dimCD) {
-    printf("counted EM %d \n", countEM);
+    //printf("counted EM %d \n", countEM);
     pointerEM = bufferEM;
 }
 
@@ -502,14 +502,16 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         // here we zero the higher two bytes of the address!!! Only lower 16bits used!
         blob &= 0xFFFF;
         type = -1;
-        
+  
         bool save = true;
         if((timestamp != 0) || (blob != 0)) {
+            printf("%08X %08X \n",blob,timestamp);
             if (save) {
                 fprintf(fout,"%08X %08X\n",blob,timestamp); 
                 //fout<<hex<<a<<" "<<hex<<t<<endl;
             }
             logUnmaskEvent((unsigned int) blob, cartX, cartY, polarity, type);
+            
         }
 
         //if(count % 100 == 0) {
@@ -624,8 +626,6 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         */
     }
 }
-
-
 
 
 void logUnmask::logUnmaskEvent(unsigned int evPU, short& metax, short& metay, short& pol, short& type) {

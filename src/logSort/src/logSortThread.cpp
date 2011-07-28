@@ -38,7 +38,7 @@ using namespace std;
 #define THRATE 30
 #define STAMPINFRAME  // 10 ms of period times the us in 1 millisecond + time for computing
 #define retinalSize 128
-#define CHUNKSIZE 2048
+#define CHUNKSIZE 1024
 #define dim_window 5
 #define synch_time 1000
 #define SIZE_PACKET 8192
@@ -50,15 +50,19 @@ logSortThread::logSortThread() : RateThread(THRATE) {
     count=0;
     minCount = 0; //initialisation of the timestamp limits of the first frame
     idle = false;
-    bufferCopy = (char*) malloc(CHUNKSIZE);
+    bufferCopy   = (char*) malloc(CHUNKSIZE);
+    flagCopy     = (char*) malloc(CHUNKSIZE);
+    resultCopy   = (char*) malloc(CHUNKSIZE);
     //bufferRead = (char*) malloc(8192);
     countStop = 0;
-    verb = false;
+    verb = false;    
 }
 
 logSortThread::~logSortThread() {
   printf("freeing memory in collector");
   delete bufferCopy;
+  delete flagCopy;
+  delete resultCopy;
 }
 
 bool logSortThread::threadInit() {
@@ -165,18 +169,24 @@ void logSortThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsigned 
     //unmask_events.setLastTimestamp(0);
 }
 
-int logSortThread::selectUnreadBuffer(char* bufferCopy, char* flagCopy){
-    char* resultCopy;    
+int logSortThread::selectUnreadBuffer(char* bufferCopy, char* flagCopy, char* resultCopy){    
     char* bufferCopy_copy = bufferCopy;
     char* flagCopy_copy   = flagCopy;
     int sum = 0; // counter of the number of unread
     for(int i = 0; i < CHUNKSIZE; i++) {
-        sum = *flagCopy_copy;
+        if(*flagCopy_copy!=0) {
+            sum++;
+        }
     }
-    resultCopy = (char*) malloc(sum);
+    if(sum > 0)
+        printf("not read elements %d \n", sum);
     for(int i = 0; i < CHUNKSIZE; i++) {
-
+        if(*flagCopy_copy) {
+            *resultCopy = *bufferCopy_copy;
+            resultCopy++; bufferCopy_copy++;    
+        }
     }
+    return sum;
 }
 
 void logSortThread::run() {
@@ -184,20 +194,23 @@ void logSortThread::run() {
     if(!idle) { 
         // reads the buffer received
         // saves it into a working buffer
+        //printf("returned 0x%x 0x%x \n", bufferCopy, flagCopy);
         lfConverter->copyChunk(bufferCopy, flagCopy);//memcpy(bufferCopy, bufferRead, 8192);
-        //printf("returned 0x%x \n", bufferCopy);
-        int unreadDim = selectUnreadBuffer(bufferCopy, flagCopy);
-        
-        // extract a chunk/unmask the chunk       
-        unmask_events.logUnmaskData(bufferCopy,unreadDim,verb);
-
-        if(verb) {
-            verb = false;
-            countStop = 0;
+        int unreadDim = selectUnreadBuffer(bufferCopy, flagCopy, resultCopy);
+        if(unreadDim!=0) {
+           printf("Unmasking events:  %d \n", unreadDim);
+           // extract a chunk/unmask the chunk       
+           unmask_events.logUnmaskData(resultCopy,unreadDim,verb);
         }
-        printf("countBuffer %d \n", lfConverter->getCountBuffer());
+           
+        //if(verb) {
+        //    verb = false;
+        //    countStop = 0;
+        //}
+        //printf("countBuffer %d \n", lfConverter->getCountBuffer());
 
 
+        /*
         //gettin the time between two threads
         gettimeofday(&tvend, NULL);
         //Tnow = ((u64)tvend.tv_sec) * 1000000 + ((u64)tvstart.tv_usec);
@@ -208,6 +221,7 @@ void logSortThread::run() {
         endTimer = Time::now();
         double interval = (endTimer - startTimer) * 1000000; //interval in us
         startTimer = Time::now();
+        */
         
         
 
