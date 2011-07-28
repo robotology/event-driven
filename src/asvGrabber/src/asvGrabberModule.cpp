@@ -196,19 +196,7 @@ bool asvGrabberModule::respond(const Bottle& command, Bottle& reply) {
             reply.addString("set left injgnd <double> \t: setting of linear combination coefficient (flow motion)  ");
             reply.addString("set left cas <double> \t: setting of linear combination coefficient (flow motion)  ");
             reply.addString("");
-            reply.addString("set right pr <int> \t: setting the costant time between saccadic events (default 3000) ");
-            reply.addString("set right foll <double> \t: setting the coefficients to the default value ");
-            reply.addString("set right diff <double> \t: setting of linear combination coefficient (map1) ");
-            reply.addString("set right diffon<double> \t: setting of linear combination coefficient (map2) ");
-            reply.addString("set right puy <double> \t: setting of linear combination coefficient (map3) ");
-            reply.addString("set right refr <double> \t: setting of linear combination coefficient (map4)  ");
-            reply.addString("set right req <double> \t: setting of linear combination coefficient (map5)  ");
-            reply.addString("set right diffoff <double> \t: setting of linear combination coefficient (map6)  ");
-            reply.addString("set right pux <double> \t: setting of linear combination coefficient (mapc1)  ");
-            reply.addString("set right reqpd <double> \t: setting of linear combination coefficient (flow motion)  ");
-            reply.addString("set right injgnd <double> \t: setting of linear combination coefficient (flow motion)  ");
-            reply.addString("set right cas <double> \t: setting of linear combination coefficient (flow motion)  ");
-            reply.addString("");
+            
 
             reply.addString("get fn \t: general get command ");
             reply.addString("");
@@ -450,12 +438,6 @@ bool asvGrabberModule::respond(const Bottle& command, Bottle& reply) {
                 double w = command.get(2).asDouble();
                 if(D2Y!=0)
                     D2Y->setEMVrefH(w);
-                ok = true;
-            } break;
-            case COMMAND_VOCAB_I2V:{
-                double w = command.get(2).asDouble();
-                if(D2Y!=0)
-                    D2Y->setI2V(w);
                 ok = true;
             } break;
             

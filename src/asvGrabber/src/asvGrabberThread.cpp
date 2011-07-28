@@ -596,7 +596,7 @@ void  asvGrabberThread::run() {
       //printf("ERROR: read %d bytes from the AEX!!!\n", r);
     }
     monBufEvents = r / sizeofstructaer;
-    //printf("%d \n",r);
+    printf("%d \n",r);
 
     int k = 0;
     int k2 = 0;

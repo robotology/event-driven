@@ -355,12 +355,6 @@ public:
     void setEMVrefH(double value) {EMVrefH = value;};
 
 
-    /**
-    * function that sets the bias
-    * @param value value of the bias
-    */
-    void setI2V(double value) {I2V = value;};
-
 
     //***************************************************************************
     
