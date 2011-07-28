@@ -5,11 +5,14 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
 SET(KEYWORD "cartesianFrameCollector")
 PROJECT(${KEYWORD})
+cmake_minimum_required(VERSION 2.6)
 
+set(ICUB_CONTRIB_DIRS $ENV{ICUB_DIR}/include)
 
 INCLUDE_DIRECTORIES(
     ${PROJECT_SOURCE_DIR}/include
-    ${YARP_INCLUDE_DIRS}
+    ${YARP_INCLUDE_DIRS} 	
+    ${ICUB_CONTRIB_DIRS}
     ${OpenCV_INCLUDE_DIRS}
 )
 
@@ -26,7 +29,8 @@ IF (folder_source)
         ${folder_header}
     )
 
-    TARGET_LINK_LIBRARIES(${KEYWORD} 
+    TARGET_LINK_LIBRARIES(${KEYWORD}        
+      eMorphLib
       ${YARP_LIBRARIES}
       ${OpenCV_LIBRARIES}
       )	

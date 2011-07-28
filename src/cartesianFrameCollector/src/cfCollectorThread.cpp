@@ -89,7 +89,7 @@ bool cfCollectorThread::threadInit() {
     //microseconds = 0;
     //microsecondsPrev = 0;
     gettimeofday(&tvend, NULL);
-    unmask_events.start();
+    //unmask_events.start();
     count = 0;
     microsecondsPrev = 0;
     return true;

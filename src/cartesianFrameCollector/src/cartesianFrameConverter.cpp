@@ -91,7 +91,7 @@ void cFrameConverter::copyChunk(char* bufferCopy) {
     //printf("copy chunk: ended \n ");
 }
 
-void cFrameConverter::onRead(sendingBuffer& i_ub) {
+void cFrameConverter::onRead(eventBuffer& i_ub) {
     valid = true;
     //printf("onRead ");
     // receives the buffer and saves it
@@ -147,7 +147,7 @@ void cFrameConverter::onRead(sendingBuffer& i_ub) {
 
 
 /*
-void cFrameConverter::onRead(sendingBuffer& i_ub) {
+void cFrameConverter::onRead(eventBuffer& i_ub) {
     // receives the buffer and saves it
     //cout << "C_yarpViewer::onRead(unmaskedbuffer& i_ub)" << endl;
     //start_u = clock();

@@ -33,15 +33,17 @@
 #include <ctime>
 #include <list>
 
-#include <iCub/unmask.h>
+
 #include <iCub/convert.h>
-#include <iCub/sendingBuffer.h>
+#include <iCub/eventBuffer.h>
+//#include <iCub/eventConversion.h>
+#include <iCub/unmask.h> // Should use library instead of this
 #include <iCub/config.h>
 
 #include <yarp/os/Network.h>
 #include <yarp/os/BufferedPort.h>
 
-class cFrameConverter:public yarp::os::BufferedPort<sendingBuffer> {
+class cFrameConverter:public yarp::os::BufferedPort<eventBuffer> {
 public:
     cFrameConverter();
     ~cFrameConverter();
@@ -49,7 +51,7 @@ public:
     /**
     * overwritten function for handling events as soon as they arrive
     */
-    virtual void onRead(sendingBuffer& b);
+    virtual void onRead(eventBuffer& b);
 
 
     /**
