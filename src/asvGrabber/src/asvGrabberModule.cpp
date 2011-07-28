@@ -620,12 +620,6 @@ bool asvGrabberModule::respond(const Bottle& command, Bottle& reply) {
                 ok = true;
             }
             break;
-            case COMMAND_VOCAB_I2V:{
-                double w = D2Y->getI2V();
-                reply.addDouble(w);
-                ok = true;
-            }
-            break;;
             default: {
                 
             }

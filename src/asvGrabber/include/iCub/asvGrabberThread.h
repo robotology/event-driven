@@ -529,18 +529,15 @@ public:
     */
     double getEMVrefH() {return EMVrefH ;};
 
-    /**
-    * function that returns the bias 
-    * @return value of the bias
-    */
-    double getI2V() {return I2V ;};
+
 
 private:
-    yarp::os::BufferedPort<sendingBuffer> port;                //port sending events
+    yarp::os::BufferedPort<sendingBuffer> port;              //port sending events
     yarp::os::BufferedPort<yarp::os::Bottle> portDimension;  //port sending dimension of packets   
     int r;                                                   //dimension of the received buffer of event for display
     FILE* raw;
     FILE* binInput;
+    FILE* fout;                                              // file for dumping the events out
     bool biasFromBinary;                                     // indicates whether the bias programmed are read from a file
     u64 seqTime;
     u64 ec;
@@ -577,7 +574,7 @@ private:
     yarp::os::Semaphore mutex;              //semaphore for file reading
 
     std::stringstream str_buf;
-    FILE* fout;                          //reference to the object for output file stream
+                              //reference to the object for output file stream
     int SynThr;      
     int SynTau;  
     int SynPxlTau;
