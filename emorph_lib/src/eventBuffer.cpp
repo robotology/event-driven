@@ -38,11 +38,11 @@ eventBuffer::~eventBuffer()
     delete[] packet;
 }
 
-/*void eventBuffer::operator=(const eventBuffer& buffer) {
+void eventBuffer::operator=(const eventBuffer& buffer) {
     if (buffer.size_of_the_packet > 0)
         memcpy(packet, buffer.packet, sizeof(char) * buffer.size_of_the_packet);
     size_of_the_packet = buffer.size_of_the_packet;
-}*/
+}
 
 void eventBuffer::set_data(char* i_data, int i_size)
 {
