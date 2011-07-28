@@ -27,16 +27,17 @@
 #include <cassert>
 #include <cstdlib>
 
-#define BUFFERDIM 6144  //36864
-#define TH1 2048 //12
-#define TH2 4096  
-#define CHUNKSIZE 2048
+#define BUFFERDIM 128 //6144  //36864
+#define TH1 32 //2048 //12
+#define TH2 64//4096  
+#define CHUNKSIZE 32//2048
 
 using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
 logFrameConverter::logFrameConverter():convert_events(128,128) {
+    countBuffer = 0;
     valid = false;
     retinalSize=128;
     totDim = 0;
@@ -44,13 +45,16 @@ logFrameConverter::logFrameConverter():convert_events(128,128) {
     state = 0;
     receivedBuffer = 0;
     printf ("allocating memory \n");
-    converterBuffer_copy = (char*) malloc(24576); // allocates bytes
+    converterBuffer_copy = (char*) malloc(BUFFERDIM); // allocates bytes
+    unreadBuffer         = (char*) malloc(BUFFERDIM); // allocates flag buffer
     converterBuffer = converterBuffer_copy;
     if (converterBuffer == 0)
         printf("null pointer \n");
-    pcBuffer = converterBuffer;
+    
     printf("setting memory \n");
-    memset(converterBuffer,0,24576);         // set unsigned char
+    memset(converterBuffer,0,BUFFERDIM);         // set unsigned char
+    memset(unreadBuffer,  0, BUFFERDIM);        
+        pcBuffer = converterBuffer;
     pcRead = converterBuffer;
     unmask_events.start();
     printf("unmask event just started");
@@ -63,12 +67,13 @@ logFrameConverter::~logFrameConverter() {
     //delete &unmask_events;
     //delete &convert_events;
     printf("logFrameConverter:freeing converterBuffer \n");
-    //free(converterBuffer_copy);
+    free(converterBuffer_copy);
+    printf("logFrameConverter:freeing unreadBuffer \n");
+    free(unreadBuffer);
 }
 
-void logFrameConverter::copyChunk(char* bufferCopy) {        
-    
-    mutex.wait();
+void logFrameConverter::copyChunk(char* bufferCopy) {            
+    mutex.wait();    
     if(pcRead > converterBuffer +  BUFFERDIM - CHUNKSIZE) {
         memcpy(bufferCopy, pcRead, converterBuffer + BUFFERDIM - pcRead );
         pcRead = converterBuffer;
@@ -77,16 +82,16 @@ void logFrameConverter::copyChunk(char* bufferCopy) {
         memcpy(bufferCopy, pcRead, CHUNKSIZE);
         pcRead += CHUNKSIZE;
     }
-    mutex.post();
- 
+    countBuffer -= CHUNKSIZE;
+    mutex.post(); 
 }
 
 void logFrameConverter::onRead(sendingBuffer& i_ub) {
-    printf("reading \n");
     valid = true;
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() ;      // number of bits received / 8 = bytes received
-    printf("dim: %d \n", dim);
+    printf("reading %d \n", dim);
+    countBuffer += dim;
     receivedBuffer = i_ub.get_packet();
     mutex.wait();
     memcpy(pcBuffer,receivedBuffer,dim);

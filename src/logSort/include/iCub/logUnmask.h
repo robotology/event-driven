@@ -29,8 +29,20 @@
 #include <iostream>
 #include <sstream>
 #include <ctime>
-
+#include <cstdlib>
+#include <sys/types.h>
 #include <yarp/os/all.h>
+
+#ifndef __linux__                 // posix compliant and for GCC
+typedef unsigned long uint32_t;
+#endif 
+
+#define u32 uint32_t
+
+struct aer {
+    u32 timestamp;
+    u32 address;
+};
 
 //Other dependency
 #include <iCub/config.h>
@@ -42,12 +54,20 @@ private:
     int id;
     int nb_trame;
     int count;                            // counter of the unmasked events
-    
+    FILE* fout;                           // file for dumping the events out
     int sz;
     int* buffer;                          // buffer representing the event in image plane (left)
     unsigned long* timeBuffer;            // buffer contains the timestamp of the particular location (left)
     int* bufferRight;                     // buffer representing the event in image plane (right)
     unsigned long* timeBufferRight;       // buffer contains the timestamp of the particular location (right)
+    u32 monBufSize_b;                     // dimension of the event buffers
+    u32 countCD;                          // dimension of the event buffers
+    u32 countEM;                          // dimension of the event buffers
+    u32 countIF;                          // dimension of the event buffers
+    struct aer* bufferCD;                 // buffer for change detector
+    struct aer* bufferEM;                 // buffer for EM
+    struct aer* bufferIF;                 // buffer for integrate and fire
+
     //int* fifoEvent;
     //int* fifoEvent_temp;
     //int* fifoEvent_temp2;
@@ -215,14 +235,21 @@ public:
      * @param pointerCD char* pointer to the beginning of the buffer
      * @param dimCD number of the events counted in the buffer
      */     
-    void getCD(char* pointerCD, int* dimCD) {};
+    void getCD(aer* pointerCD, int* dimCD);
     
     /**
      * @brief function that returns the pointer to the buffer of INTEGRATE 'n' FIRE EVENT
      * @param pointerIF char* pointer to the beginning of the buffer
      * @param dimIF number of the events counted in the buffer
      */     
-    void getIF(char* pointerIF, int* dimIF);
+    void getIF(aer* pointerIF, int* dimIF);
+
+    /**
+     * @brief function that returns the pointer to the buffer of EMs
+     * @param pointerEM char* pointer to the beginning of the buffer
+     * @param dimIF number of the events counted in the buffer
+     */     
+    void getEM(aer* pointerIF, int* dimEM);
 
     /**
      * function that set to zero the vector of timestamp of positions

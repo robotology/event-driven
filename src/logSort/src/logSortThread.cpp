@@ -35,7 +35,7 @@ using namespace std;
 
 #define COUNTERRATIO 1.25       //1.25 is the ratio 0.160/0.128
 #define MAXVALUE 4294967295
-#define THRATE 10
+#define THRATE 30
 #define STAMPINFRAME  // 10 ms of period times the us in 1 millisecond + time for computing
 #define retinalSize 128
 #define CHUNKSIZE 2048
@@ -139,7 +139,7 @@ void logSortThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsigned 
     */
 
     // determining whether the camera is left or right
-    int* pBuffer = unmask_events.getEventBuffer(camera);
+    int* pBuffer           = unmask_events.getEventBuffer(camera);
     unsigned long* pTime   = unmask_events.getTimeBuffer(camera);
     
     //printf("timestamp: min %d    max %d  \n", minCount, maxCount);
@@ -182,7 +182,7 @@ void logSortThread::run() {
             verb = false;
             countStop = 0;
         }
-        //printf("returned 0x%x \n", bufferCopy);
+        printf("countBuffer %d \n", lfConverter->getCountBuffer());
 
 
         //gettin the time between two threads
@@ -284,9 +284,9 @@ void logSortThread::run() {
 	*/
 	
 	int dimCD;
-	char* pCD;
+	aer* pCD;
 	unmask_events.getCD(pCD,&dimCD);
-        sendBuffer(&portCD, pCD, dimCD);
+    sendBuffer(&portCD, pCD, dimCD);
 
 	
 	//int dimIF;
@@ -302,13 +302,15 @@ void logSortThread::run() {
     }
 }
 
-void logSortThread::sendBuffer(BufferedPort<sendingBuffer>* port, char* buffer, int sz) {
+void logSortThread::sendBuffer(BufferedPort<sendingBuffer>* port, aer* buffer, int sz) {
   if (port->getOutputCount()) {
     char tmpBuffer[SIZE_PACKET];
-    for (int i = 0; i< sz; i++) {
-      tmpBuffer[i] = *buffer++;
+    int szSent = sz * 8; // dimension of the event times the bytes per event
+    char* pBuffer = (char*) buffer;
+    for (int i = 0; i< szSent; i++) {
+      tmpBuffer[i] = *pBuffer++;
     }
-    sendingBuffer data2send(tmpBuffer, sz);    
+    sendingBuffer data2send(tmpBuffer, szSent);    
     sendingBuffer& tmp = port->prepare();
     tmp = data2send;
     port->write();
@@ -431,8 +433,8 @@ void logSortThread::threadRelease() {
     portEM.close();
     portIF.close();
     outPortRight.close();
-    delete imageLeft;
-    delete imageRight;
+    //delete imageLeft;
+    //delete imageRight;
     printf("Threadrelease         stopping plotterThread \n");
     pThread->stop();
     printf("Threadrelease         deleting converter \n");

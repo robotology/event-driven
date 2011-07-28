@@ -159,9 +159,8 @@ public:
      * @param buffer collection of bytes that are going to be sent
      * @sz    dimension of the buffer to be sent
      */
-    void sendBuffer(yarp::os::BufferedPort<sendingBuffer>* port, char* buffer, int sz);
+    void sendBuffer(yarp::os::BufferedPort<sendingBuffer>* port, aer* buffer, int sz);
     
-
 
 };
 

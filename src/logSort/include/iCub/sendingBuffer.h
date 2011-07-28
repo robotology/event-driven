@@ -33,6 +33,19 @@
 #define SIZE_OF_DATA 65536
 //#include "config.h"
 
+/*
+#ifndef __linux__                 // posix compliant and for GCC
+typedef unsigned long uint32_t;
+#endif 
+
+#define u32 uint32_t
+
+struct aer {
+    u32 timestamp;
+    u32 address;z
+};
+*/
+
 class sendingBuffer : public yarp::os::Portable {
 public:
     sendingBuffer();

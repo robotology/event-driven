@@ -33,9 +33,7 @@ using namespace yarp::os;
 //#define LINUX
 //#ifndef LINUX
 // #ifndef __linux__ || linux
-#ifndef __linux__              // posix compliant and for GCC
-typedef unsigned long uint32_t;
-#endif 
+
 
 #define MAXVALUE 114748364 //4294967295
 #define maxPosEvent 10000
@@ -43,10 +41,14 @@ typedef unsigned long uint32_t;
 #define minKillThres 1000
 #define UNMASKRATETHREAD 1
 #define constInterval 100000;
+#define SIZE_OF_EVENT 8192
 
 
 logUnmask::logUnmask() : RateThread(UNMASKRATETHREAD){
     count = 0;
+    countCD = 0;
+    countEM = 0;
+    countIF = 0;
     verb = false;
     numKilledEvents = 0;
     lasttimestamp = 0;
@@ -87,6 +89,30 @@ logUnmask::logUnmask() : RateThread(UNMASKRATETHREAD){
     memset(fifoEvent_temp2,0,maxPosEvent*sizeof(int));
     */
 
+    monBufSize_b = SIZE_OF_EVENT * sizeof(struct aer);
+    bufferCD = (aer *)  malloc(monBufSize_b);
+    if ( bufferCD == NULL ) {
+        printf("pmon malloc failed \n");
+    }
+    else {
+        printf("bufferCD successfully created \n");
+    }
+    bufferEM = (aer *)  malloc(monBufSize_b);
+    if ( bufferEM == NULL ) {
+        printf("pmon malloc failed \n");
+    }
+    else {
+        printf("bufferEM successfully created \n");
+    }
+
+    bufferIF = (aer *)  malloc(monBufSize_b);
+    if ( bufferIF == NULL ) {
+        printf("pmon malloc failed \n");
+    }
+    else {
+        printf("bufferIF successfully created \n");
+    }
+
     wrapAdd = 0;
     //fopen_s(&fp,"events.txt", "w"); //Use the logUnmasked_buffer
     //uEvents = fopen("./uevents.txt","w");
@@ -94,12 +120,25 @@ logUnmask::logUnmask() : RateThread(UNMASKRATETHREAD){
     logChip_LUT = new feature[648]; // all the position in the logchip times 4 features 
 }
 
+logUnmask::~logUnmask() {
+    printf("logUnmask : freeing memory allocated by buffers \n");
+    delete[] buffer;
+    delete[] timeBuffer;
+    delete[] bufferRight;
+    delete[] timeBufferRight;
+    delete[] logChip_LUT;
+    printf("logUnmask : freeing memory allocated by event buffers \n");
+    delete bufferCD;
+    delete bufferIF;
+    delete bufferEM;
+}
+
 bool logUnmask::threadInit() {
     // initialising the logChip_LUT
-
+    fout = fopen("dump.txt", "w");
     
     /*  // structure of the LUT for logpolar Chip
-        // type, metaX, metaY, polarity
+    // type, metaX, metaY, polarity
     logChip_LUT[0  ][0] = 1 ; logChip_LUT[0  ][1] = 0 ; logChip_LUT[0  ][2] = 0 ; logChip_LUT[0 ][3] = 1;
     logChip_LUT[1  ][0] = 1 ; logChip_LUT[1  ][1] = 0 ; logChip_LUT[1  ][2] = 0 ; logChip_LUT[1 ][3] = 0;
     logChip_LUT[6  ][0] = 5 ; logChip_LUT[6  ][1] = 0 ; logChip_LUT[6  ][2] = 0 ; logChip_LUT[6 ][3] = 1;
@@ -351,13 +390,7 @@ bool logUnmask::threadInit() {
     return true;
 }
 
-logUnmask::~logUnmask() {
-    delete[] buffer;
-    delete[] timeBuffer;
-    delete[] bufferRight;
-    delete[] timeBufferRight;
-    delete[] logChip_LUT;
-}
+
 
 void logUnmask::cleanEventBuffer() {
     memset(buffer,0,retinalSize*retinalSize*sizeof(int));
@@ -372,6 +405,21 @@ int logUnmask::getMinValue() {
 
 int logUnmask::getMaxValue() {
     return maxValue;
+}
+
+void logUnmask::getCD(aer* pointerCD, int* dimCD) {
+    printf("counted CD %d \n", countCD);
+    pointerCD = bufferCD;
+}
+
+void logUnmask::getIF(aer* pointerIF, int* dimCD) {
+    printf("counted IF %d \n", countIF);
+    pointerIF = bufferIF;
+}
+
+void logUnmask::getEM(aer* pointerEM, int* dimCD) {
+    printf("counted EM %d \n", countEM);
+    pointerEM = bufferEM;
 }
 
 unsigned long logUnmask::getLastTimestamp() {
@@ -449,11 +497,21 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         // logUnmask the data ( first 4 byte blob, second 4 bytes timestamp)
         unsigned long blob      = buf2[2 * evt];
         unsigned long timestamp = buf2[2 * evt + 1];
-        //printf("0x%x 0x%x \n",blob, timestamp);
         
+                
         // here we zero the higher two bytes of the address!!! Only lower 16bits used!
         blob &= 0xFFFF;
-        logUnmaskEvent((unsigned int) blob, cartX, cartY, polarity, type);
+        type = -1;
+        
+        bool save = true;
+        if((timestamp != 0) || (blob != 0)) {
+            if (save) {
+                fprintf(fout,"%08X %08X\n",blob,timestamp); 
+                //fout<<hex<<a<<" "<<hex<<t<<endl;
+            }
+            logUnmaskEvent((unsigned int) blob, cartX, cartY, polarity, type);
+        }
+
         //if(count % 100 == 0) {
         //    printf(" %d>%d,%d : %d : %d \n",blob,cartX,cartY,timestamp,camera);
         //}
@@ -463,26 +521,32 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         switch (type) {
             case 0:{ //CD
                 //printf("Unmasked CD \n");
+                countCD++;
             }
             break;
             case 1:{ //EM1
                 //printf("Unmasked EM1 \n");
+                countEM++;
             }
             break;
             case 2:{ //EM2
                 //printf("Unmasked EM2 \n");
+                countEM++;
             }
             break;
             case 3:{ //EM3
                 //printf("Unmasked EM3 \n");
+                countEM++;
             }
             break;
             case 4:{ //EM4
                 //printf("Unmasked EM4 \n");
+                countEM++;
             }
             break;
             case 5:{ //IF
                 //printf("Unmasked IF \n");
+                countIF++;
             }
             break;            
         }
@@ -568,7 +632,6 @@ void logUnmask::logUnmaskEvent(unsigned int evPU, short& metax, short& metay, sh
     int y = (short)(retinalSize-1) - (short)((evPU & xmask) >> xshift);
     //y = (short) ((evPU & xmask)>>xshift);
     int x = (short) ((evPU & ymask) >> yshift);
-    
     // 2.extractiong features 
     int position =  y * 36 + x;
     
@@ -599,8 +662,6 @@ void logUnmask::logUnmaskEvent(long int evPU, short& metax, short& metay, short&
     // 1.determining the position in the LUT
     int x    = (short) (retinalSize-1) - (short)((evPU & xmask) >> xshift);
     int y    = (short) ((evPU & ymask) >> yshift);
-    x = 10;
-    y = 11;
     // 2.extractiong features 
     int position =  y * 36 + x;
     
@@ -626,6 +687,9 @@ void logUnmask::logUnmaskEvent(long int evPU, short& metax, short& metay, short&
 
 void logUnmask::threadRelease() {
     //no istruction in threadInit
+    printf("closing the dumping file");
+    fclose(fout);
+    printf("successfully close the dumping file \n");
 }
 
 

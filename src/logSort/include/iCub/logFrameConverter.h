@@ -92,6 +92,11 @@ public:
      unsigned long getEldestTimeStamp();
 
     /**
+     * function that returns the counter of the pushes and pops in the buffer
+     */
+    int getCountBuffer() { return countBuffer; };
+
+    /**
     * @brief clears monoImage collection of events
     * @param pixelMono reference to the image contains the counts of events
     */
@@ -110,9 +115,11 @@ private:
     int retinalSize;                                            // dimension of the retina default 128x128
     int totDim;                                                 // total dimension of the read buffer
     int outputWidth, outputHeight;                              // dimension of the output image default 320x240
+    int countBuffer;                                            // counter of pushes and pops in the buffer
     unsigned long previousTimeStamp;                            // timestamp at the previous run
     char* converterBuffer;                                      // buffer used as saved
     char* converterBuffer_copy;                                 // copy of the buffer pointer, points to the location for freeing
+    char* unreadBuffer;                                         // flag buffer that indicates which element of the buffer has been read
     char* receivedBuffer;                                       // temporarely pointer to the received buffer
     char* pcRead;                                               // pointer to the location where to read events
     char* pcBuffer;                                             // pointer where to buffer events
