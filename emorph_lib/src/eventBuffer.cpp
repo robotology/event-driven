@@ -38,11 +38,11 @@ eventBuffer::~eventBuffer()
     delete[] packet;
 }
 
-void eventBuffer::operator=(const eventBuffer& buffer) {
+/*void eventBuffer::operator=(const eventBuffer& buffer) {
     if (buffer.size_of_the_packet > 0)
         memcpy(packet, buffer.packet, sizeof(char) * buffer.size_of_the_packet);
     size_of_the_packet = buffer.size_of_the_packet;
-}
+}*/
 
 void eventBuffer::set_data(char* i_data, int i_size)
 {
@@ -55,7 +55,7 @@ bool eventBuffer::write(yarp::os::ConnectionWriter& connection)
     connection.appendInt(BOTTLE_TAG_LIST + BOTTLE_TAG_BLOB + BOTTLE_TAG_INT);
     connection.appendInt(2);        // four elements
     connection.appendInt(size_of_the_packet);
-    connection.appendBlock(packet, size_of_the_packet);
+    connection.appendBlock(packet, (size_of_the_packet+7)/8*8);
     connection.convertTextMode();   // if connection is text-mode, convert!
     return true;
 
@@ -71,7 +71,7 @@ bool eventBuffer::read(yarp::os::ConnectionReader& connection)
     if (ct!=2)
         return false;
     size_of_the_packet = connection.expectInt();
-    connection.expectBlock(packet, size_of_the_packet);
+    connection.expectBlock(packet, (size_of_the_packet+7)/8*8);
     return true;
 }
 
