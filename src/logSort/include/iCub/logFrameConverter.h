@@ -62,7 +62,7 @@ public:
     * function that copies a chunk of elements
     * @param pointer to the buffer that has to be read
     */
-    void copyChunk(char* pointer);
+    void copyChunk(char* pointerCopy,char* flagPointer);
 
     /**
     * @brief returns a mono image of the output of the dvs camera (either left or right)
@@ -123,6 +123,8 @@ private:
     char* receivedBuffer;                                       // temporarely pointer to the received buffer
     char* pcRead;                                               // pointer to the location where to read events
     char* pcBuffer;                                             // pointer where to buffer events
+    char *flagCopy, *flagRead;                                  // pointer to the location of reading and copying 
+    
 
     logUnmask unmask_events;           // object in charge of unmasking the events
     converter convert_events;       // object in charge of converting the events into an image

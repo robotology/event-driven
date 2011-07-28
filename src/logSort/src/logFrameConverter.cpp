@@ -72,15 +72,18 @@ logFrameConverter::~logFrameConverter() {
     free(unreadBuffer);
 }
 
-void logFrameConverter::copyChunk(char* bufferCopy) {            
+void logFrameConverter::copyChunk(char* bufferCopy, char* flagBuffer) {            
     mutex.wait();    
     if(pcRead > converterBuffer +  BUFFERDIM - CHUNKSIZE) {
         memcpy(bufferCopy, pcRead, converterBuffer + BUFFERDIM - pcRead );
         pcRead = converterBuffer;
+        flagCopy = flagBuffer;
     }
     else {
         memcpy(bufferCopy, pcRead, CHUNKSIZE);
-        pcRead += CHUNKSIZE;
+        memset(flagCopy, 1, CHUNKSIZE);
+        pcRead   += CHUNKSIZE;
+        flagCopy += CHUNKSIZE;
     }
     countBuffer -= CHUNKSIZE;
     mutex.post(); 
@@ -95,19 +98,23 @@ void logFrameConverter::onRead(sendingBuffer& i_ub) {
     receivedBuffer = i_ub.get_packet();
     mutex.wait();
     memcpy(pcBuffer,receivedBuffer,dim);
+    memset(flagRead, 1, dim);
     
     if (totDim < TH1) {
         pcBuffer += dim;
+        flagRead += dim;
     }
     else if((totDim>=TH1)&&(totDim<TH2)&&(state!=1)){
         //printf("greater than TH1 \n");
         pcBuffer = converterBuffer + TH1; 
+        flagRead = unreadBuffer + TH1;
         pcRead   = converterBuffer + TH2;
         state    = 1;
     }
     else if(totDim >= TH2) {
         //printf("greater that TH2 \n");
         pcBuffer = converterBuffer;
+        flagRead = unreadBuffer;
         pcRead   = converterBuffer + TH1;
         totDim   = 0;
         state    = 0;

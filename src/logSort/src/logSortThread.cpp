@@ -165,18 +165,31 @@ void logSortThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsigned 
     //unmask_events.setLastTimestamp(0);
 }
 
+int logSortThread::selectUnreadBuffer(char* bufferCopy, char* flagCopy){
+    char* resultCopy;    
+    char* bufferCopy_copy = bufferCopy;
+    char* flagCopy_copy   = flagCopy;
+    int sum = 0; // counter of the number of unread
+    for(int i = 0; i < CHUNKSIZE; i++) {
+        sum = *flagCopy_copy;
+    }
+    resultCopy = (char*) malloc(sum);
+    for(int i = 0; i < CHUNKSIZE; i++) {
 
+    }
+}
 
 void logSortThread::run() {
     count++;
     if(!idle) { 
         // reads the buffer received
         // saves it into a working buffer
-        lfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
+        lfConverter->copyChunk(bufferCopy, flagCopy);//memcpy(bufferCopy, bufferRead, 8192);
         //printf("returned 0x%x \n", bufferCopy);
+        int unreadDim = selectUnreadBuffer(bufferCopy, flagCopy);
+        
         // extract a chunk/unmask the chunk       
-
-        unmask_events.logUnmaskData(bufferCopy,CHUNKSIZE,verb);
+        unmask_events.logUnmaskData(bufferCopy,unreadDim,verb);
 
         if(verb) {
             verb = false;

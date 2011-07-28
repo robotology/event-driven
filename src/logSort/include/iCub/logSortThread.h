@@ -91,7 +91,7 @@ private:
     logUnmask unmask_events;            // object that unmask events
     char* bufferRead;                   // buffer of events read from the port
     char* bufferCopy;                   // local copy of the events read
-
+    char* flagCopy;                     // copy of the unreadBuffer
     
 public:
     /**
@@ -157,11 +157,17 @@ public:
      * @brief functiont that sends on a specific port bytes stored into a buffer
      * @param output port where bytes are sent
      * @param buffer collection of bytes that are going to be sent
-     * @sz    dimension of the buffer to be sent
+     * @param sz    dimension of the buffer to be sent
      */
     void sendBuffer(yarp::os::BufferedPort<sendingBuffer>* port, aer* buffer, int sz);
     
-
+    /**
+     * @brief function that selects which element of the buffer is unread
+     * @param  chunk of events (read and unread)
+     * @param  buffer of flags
+     * @return dimension of the buffer to unmask
+     */
+    int selectUnreadBuffer(char* bufferCopy, char* flagCopy);
 };
 
 #endif  //_LOG_SORT_THREAD_H_
