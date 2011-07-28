@@ -32,9 +32,13 @@ using namespace yarp::os;
 
 //#define LINUX
 //#ifndef LINUX
-#ifndef __linux__ || linux              // posix compliant and for GCC
+#ifndef __linux__            // posix compliant and for GCC
 typedef unsigned long uint32_t;
 #endif 
+
+#ifndef linux
+typedef unsigned long uint32_t;
+#endif
 
 #define MAXVALUE 114748364 //4294967295
 #define maxPosEvent 10000
@@ -282,7 +286,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
                 //fwrite(buffer, 1, sz, raw);
                 //}
                 timestamp = (unsigned long) t;
-                //printf("->->->->->->->->-> %04d %04d %08X \n",cartX, cartY ,t);
+                printf("->->->->->->->->-> %04d %04d %08X \n",cartX, cartY ,t);
                 //printf("lastTimeStamp %08X \n", timestamp);
             }                
         }
