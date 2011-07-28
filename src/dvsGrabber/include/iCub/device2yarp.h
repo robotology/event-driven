@@ -37,17 +37,26 @@
 #include <cstdlib>
 #include <stdint.h>
 
-#include "sending_buffer.h"
+#include <iCub/eventBuffer.h>
+//#include "sending_buffer.h"
+#include "config.h"
 
 #define u8  uint8_t
+#define u16 uint16_t
 #define u32 uint32_t
 #define u64 uint64_t
 
 
+/*
 struct aer {
     u32 timestamp;
     u32 address;
 };
+*/
+struct aer {
+    u16 timestamp;
+    u16 address;
+    };
 
 
 class device2yarp : public yarp::os::RateThread {
@@ -65,7 +74,7 @@ public:
 
 private:
 
-    yarp::os::BufferedPort<sendingBuffer> port;
+    yarp::os::BufferedPort<eventBuffer> port;
     FILE* raw;
 
     u64 seqTime;

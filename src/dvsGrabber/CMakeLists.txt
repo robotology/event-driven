@@ -5,11 +5,13 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
 SET(KEYWORD "dvsGrabber")
 PROJECT(${KEYWORD})
-
+set(ICUB_CONTRIB_DIRS $ENV{ICUB_DIR}/include)
 
 INCLUDE_DIRECTORIES(
     ${PROJECT_SOURCE_DIR}/include
     ${YARP_INCLUDE_DIRS}
+    ${ICUB_INCLUDE_DIRS}
+    ${ICUB_CONTRIB_DIRS}
 )
 
 # Search for source code.
@@ -25,7 +27,9 @@ IF (folder_source)
         ${folder_header}
     )
 
-    TARGET_LINK_LIBRARIES(${KEYWORD}                                     	${YARP_LIBRARIES})	
+  TARGET_LINK_LIBRARIES(${KEYWORD}                                     	
+    ${YARP_LIBRARIES}
+    eMorphLib)	
 
     INSTALL_TARGETS(/bin ${KEYWORD})
 ELSE (folder_source)

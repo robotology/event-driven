@@ -48,12 +48,13 @@ using namespace yarp::os;
 
 #define CLOCK_LO 0
 #define CLOCK_HI 1
+#define THRATE   5
 
 
 //#define FAST
 
 
-device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):RateThread(10), save(i_bool) {
+device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):RateThread(THRATE), save(i_bool) {
     printf("initialising the module \n");
     
     len=0;
@@ -63,7 +64,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
     //const u32 seqAllocChunk_b = 8192 * sizeof(struct aer); //allocating the right dimension for biases
     
     //allocation monitor
-    monBufSize_b = 8192 * sizeof(struct aer);
+    monBufSize_b = SIZE_OF_EVENT * sizeof(struct aer);
     pmon = (aer *)  malloc(monBufSize_b);
     if ( pmon == NULL ) {
         printf("pmon malloc failed \n");
@@ -176,63 +177,79 @@ void device2yarp::setDeviceName(string deviceName) {
 
 void  device2yarp::run() {
     // read address events from device file which is not /dev/aerfx2_0
-    sz = read(file_desc,buffer,SIZE_OF_DATA);
-    if (sz == -1) return;
+    sz = read(file_desc,buffer,1024);
+    //printf("Size read from file %d\n",sz);
+    //SIZE_OF_DATA
     //int r = pread(file_desc,pmon,monBufSize_b,0);
     //int r = 0;
-    monBufEvents =  sz / sizeof(struct aer);
-    int monBufBytes = sz / 4;
+    monBufEvents    = sz / sizeof(struct aer);
+    int monBufBytes = sz / 8;
 
     cout << "Size of the buffer : " << sz <<endl;
-    cout << "Number of events : " << monBufEvents << endl;
-    uint32_t * buf2 = (uint32_t*)buffer;
+    //cout << "Number of events : " << monBufEvents << endl;
+    //printf("Number of events: %d \n",monBufBytes);
+
+    uint16_t * buf1 = (uint16_t*)buffer;
     u32 a, t;
     int k2 = 0;
-
-    for (int i = 0 ; i < monBufBytes ; i+=4) {
-        unsigned int part_1 = 0xFF & buffer[i];    //extracting the 1 byte        
-        unsigned int part_2 = 0xFF & buffer[i+1];  //extracting the 2 byte        
-        unsigned int part_3 = 0xFF & buffer[i+2];  //extracting the 3 byte
-        unsigned int part_4 = 0xFF & buffer[i+3];  //extracting the 4 byte
-        //float blob = (part_1)|(part_2<<8);
-        a = (part_1)|(part_2<<8);
-        //float timestamp = ((part_3)|(part_4<<8));
-        t = ((part_3)|(part_4<<8));
-    }
-
-
+    unsigned int blob, timestamp;
     /*
-    for(int i=0; i < monBufEvents; i++) {       
-        a = pmon[i].address;
-        t = pmon[i].timestamp * 0.128;
-        printf("%x : %x \n", a, t);
-        buf2[k2++] = a;
-        buf2[k2++] = t;
+    if(save) {
+        printf("saving \n");
+        for (int i = 0 ; i < sz ; i+=4) {
+            unsigned int part_1 = 0xFF & buffer[i];    //extracting the 1 byte        
+            unsigned int part_2 = 0xFF & buffer[i+1];  //extracting the 2 byte        
+            unsigned int part_3 = 0xFF & buffer[i+2];  //extracting the 3 byte
+            unsigned int part_4 = 0xFF & buffer[i+3];  //extracting the 4 byte
+            //float blob = (part_1)|(part_2<<8);
+            blob      = (part_1)|(part_2<<8);          //16bits
+            //float timestamp = ((part_3)|(part_4<<8));
+            timestamp = ((part_3)|(part_4<<8));        //16bits
+            
+            //printf("Saving in file \n");
+            fprintf(raw,"%08X %08X \n",blob,timestamp);
+            //printf("%08X %08X \n",blob,timestamp);
+            //fwrite(&sz, sizeof(int), 1, raw);
+            //fwrite(buffer, 1, sz, raw);
+       
+            //buf1[k2++] = blob;
+            //buf1[k2++] = timestamp;
+        }
     }
     */
 
-    if(save){
-        printf("Saving in file \n");
-        fprintf(raw,"%08X %08X\n",a,t); 
-        //fwrite(&sz, sizeof(int), 1, raw);
-        //fwrite(buffer, 1, sz, raw);
+    /*
+    for(int i=0; i < monBufEvents; i++) {       
+        blob      = pmon[i].address;
+        timestamp = pmon[i].timestamp;
+        printf("%x : %x \n", blob, timestamp);
+        //buf2[k2++] = a;
+        //buf2[k2++] = t;
+        if(save){
+            //printf("Saving in file \n");
+            fprintf(raw,"%08X %08X\n",blob,timestamp); 
+            //fwrite(&sz, sizeof(int), 1, raw);
+            //fwrite(buffer, 1, sz, raw);
+        }
+        buf1[k2++] = blob;
+        buf1[k2++] = timestamp;
     }
-    else {
-        printf("NOT saving in file \n");
-    }
+    */
+    
 
-    //sz = monBufEvents*sizeof(struct aer); // sz is size in bytes
-  
+    //int szSent = monBufEvents*sizeof(struct aer); // sz is size in bytes
+    
     if(port.getOutputCount()) {
-        printf("exiting from reading...sending data size: %d \n",sz);
-        sendingBuffer data2send(buffer, sz);    
+        //printf("exiting from reading...sending data size: %d \n",sz);
+        eventBuffer data2send(buffer, sz);    
         //printf("preparing the port \n");
-        sendingBuffer& tmp = port.prepare();
+        eventBuffer& tmp = port.prepare();
         tmp = data2send;
         port.write();
         //printf("on the port: data written \n");
         
     }
+    
     //resetting buffers    
     memset(buffer, 0, SIZE_OF_DATA);
 }
