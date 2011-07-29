@@ -119,6 +119,28 @@ void logFrameConverter::onRead(sendingBuffer& i_ub) {
     memcpy(pcBuffer,receivedBuffer,dim);
     memset(flagRead,1,dim);
     
+    //verbosity 
+    uint32_t* buf2 = (uint32_t*)receivedBuffer;
+    int num_events = dim / 8;
+    for (int evt = 0; evt < num_events; evt++) {
+        
+        // logUnmask the data ( first 4 byte blob, second 4 bytes timestamp)
+        unsigned long blob      = buf2[2 * evt];
+        unsigned long timestamp = buf2[2 * evt + 1];
+        
+                
+        // here we zero the higher two bytes of the address!!! Only lower 16bits used!
+        blob &= 0xFFFF;
+         
+        printf("logFrameConverter: read rough data events : %08X %08X \n",blob,timestamp);
+        //if (save) {
+        //    fprintf(fout,"%08X %08X\n",blob,timestamp); 
+            //fout<<hex<<a<<" "<<hex<<t<<endl;
+        //}
+        
+        
+    }
+    
     //if (totDim < TH1) {
     //    pcBuffer += dim;
     //    flagRead += dim;
