@@ -19,12 +19,12 @@
  */
 
 /**
- * @file convert.h
- * @brief A file where the config elements are stored
+ * @file config.h
+ * @brief Simple header file for configuration. Intentionally separated for estetic purposes.
  */
 
-#ifndef __CONFIG_H
-#define __CONFIG_H
+#ifndef CONFIG_H
+#define CONFIG_H
 
 #include <list>
 #include <cstring>
@@ -34,16 +34,19 @@
 
 #define SIZE_RECT 15
 
-//#define BUFFER_SIZE 8192
-//#define BUFFER_SIZE 16384
-//#define BUFFER_SIZE 24576
-//#define BUFFER_SIZE 32768
-#define BUFFER_SIZE 65536
+#define SIZE_OF_EVENT 8192  //default:8192 
+// SIZE_OF_DATA = 8byte * SIZE_OF_EVENT
 
-//logpolar
-#define TAU 1000
-#define THRESHOLD 2
-#define TMAX 1000
+//#define SIZE_OF_DATA 1024
+//#define SIZE_OF_DATA 2048
+//#define SIZE_OF_DATA 4096
+//#define SIZE_OF_DATA 8192
+//#define SIZE_OF_DATA 9216
+//#define SIZE_OF_DATA 16384
+//#define SIZE_OF_DATA 24576
+//#define SIZE_OF_DATA 32768
+#define SIZE_OF_DATA 65536
+//#define SIZE_OF_DATA 131072
 
 typedef struct s_AER_struct {
     int x;
@@ -65,6 +68,11 @@ typedef struct s_GROUP {
     int c_y;
 }t_GROUP;
 
-#endif //__CONFIG_H
+//#define FAST
+#define SLOW
+//#define _DEBUG
+
+#endif //CONFIG_H
+
 //----- end-of-file --- ( next line intentionally left blank ) ------------------
 

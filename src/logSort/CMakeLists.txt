@@ -26,17 +26,17 @@ FILE(GLOB folder_source
   src/logUnmask.cpp
   src/main.cpp
   src/plotterThread.cpp
-  src/sendingBuffer.cpp
+  src/sending_buffer.cpp
   )
 FILE(GLOB folder_header 
+  include/iCub/convert.h	  
   include/iCub/config.h
-  include/iCub/convert.h
   include/iCub/logFrameConverter.h
   include/iCub/logSortModule.h
   include/iCub/logSortThread.h
   include/iCub/logUnmask.h
   include/iCub/plotterThread.h
-  include/iCub/sendingBuffer.h
+  include/iCub/sending_buffer.h
   )
 SOURCE_GROUP("Source Files" FILES ${folder_source})
 SOURCE_GROUP("Header Files" FILES ${folder_header})

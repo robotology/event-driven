@@ -30,6 +30,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <cstring>
 #include <ctime>
 #include <list>
 
@@ -40,6 +41,7 @@
 
 #include <yarp/os/Network.h>
 #include <yarp/os/BufferedPort.h>
+#include <yarp/sig/all.h>
 
 class logFrameConverter:public yarp::os::BufferedPort<sendingBuffer> {
 public:
