@@ -38,7 +38,7 @@ using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
-#define THRATE 40 
+#define THRATE 40
 #define retinalSize 128
 
 plotterThread::plotterThread() : RateThread(THRATE) {
@@ -299,6 +299,7 @@ int plotterThread::integrateImage(ImageOf<PixelMono>* imageIn, ImageOf<PixelMono
 	    pimagebw += padding;
 	    pimagegray += padding;
         }
+    
 	cvSmooth(imageGrey->getIplImage(),imageThreshold->getIplImage(), CV_BLUR, 5, 5);
 	cvThreshold(imageThreshold->getIplImage(),imageThreshold->getIplImage(), 100,255, CV_THRESH_BINARY);
 	//calculating the centroid

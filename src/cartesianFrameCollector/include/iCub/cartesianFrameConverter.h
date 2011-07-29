@@ -125,6 +125,8 @@ private:
     clock_t start_u;
     clock_t start_p;
     clock_t stop;
+
+    FILE* readEvents;
 };
 
 #endif //_CARTESIAN_FRAME_CONVERTER_H

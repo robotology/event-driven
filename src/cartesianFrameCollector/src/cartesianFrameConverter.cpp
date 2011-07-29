@@ -65,6 +65,7 @@ cFrameConverter::cFrameConverter():convert_events(128,128) {
     unmask_events.start();
     printf("unmask event just started");
     previousTimeStamp = 0;
+    readEvents = fopen("./readEvents","w");
 }
 
 cFrameConverter::~cFrameConverter() {
@@ -77,7 +78,6 @@ cFrameConverter::~cFrameConverter() {
 }
 
 void cFrameConverter::copyChunk(char* bufferCopy) {        
-    //printf("copy \n ");
     mutex.wait();
     if(pcRead > converterBuffer +  BUFFERDIM - CHUNKSIZE) {
         memcpy(bufferCopy, pcRead, converterBuffer + BUFFERDIM - pcRead );
@@ -100,7 +100,7 @@ void cFrameConverter::onRead(eventBuffer& i_ub) {
    
     mutex.wait();
     receivedBuffer = i_ub.get_packet();
-    /*
+    
     unsigned int blob, timestamp;
     for (int i = 0 ; i < dim ; i+=4) {
         unsigned int part_1 = 0xFF & receivedBuffer[i];    //extracting the 1 byte        
@@ -111,7 +111,7 @@ void cFrameConverter::onRead(eventBuffer& i_ub) {
         blob      = (part_1)|(part_2<<8);          //16bits
         //float timestamp = ((part_3)|(part_4<<8));
         timestamp = ((part_3)|(part_4<<8));        //16bits
-        printf(">>>>>>>>> %08X %08X \n",blob,timestamp); 
+        fprintf(readEvents,"%08X %08X \n",blob,timestamp); 
         if(i == 100){
             //printf("Saving in file \n");
             //printf(">>>>>>>>> %08X %08X \n",blob,timestamp); 
@@ -119,7 +119,10 @@ void cFrameConverter::onRead(eventBuffer& i_ub) {
             //fwrite(buffer, 1, sz, raw);
         }
     }
-    */
+    printf("Out of first packet \n");
+
+
+    
     memcpy(pcBuffer,receivedBuffer,dim);
     
     if (totDim < TH1) {
@@ -140,9 +143,13 @@ void cFrameConverter::onRead(eventBuffer& i_ub) {
     }
     // the thrid part of the buffer is free to avoid overflow
     totDim += dim;
+
+    
+
     mutex.post();
     //printf("onRead: ended \n");
     //printf("pcBuffer: 0x%x pcRead: 0x%x \n", pcBuffer, pcRead);
+   
 }
 
 

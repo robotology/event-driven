@@ -58,6 +58,7 @@ cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
     verb = false;
     string i_fileName("events.log");
     raw = fopen(i_fileName.c_str(), "wb");
+    lc = rc = 0;	
 }
 
 cfCollectorThread::~cfCollectorThread() {
@@ -150,16 +151,22 @@ void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsig
             //drawing the retina and the rest of the image separately
             int value = *pBuffer;
             unsigned long timestampactual = *pTime;
+	    //if(minCount>0 && maxCount > 0 && timestampactual>0)
+	    //printf("actualTS%ld val%ld max%ld min%ld  are\n",timestampactual,timestampactual * COUNTERRATIO,minCount,maxCount);
             if (((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)) {   //(timestampactual != lasttimestamp)
-                *pImage++ = (unsigned char) 127 + value;
+                *pImage = (unsigned char) (127 + value);
+		//if(value>0)printf("event%d val%d buf%d\n",*pImage,value,*pBuffer);
+		pImage++;
                
             }
             else {
-                *pImage++ = (unsigned char) 127;
+                *pImage = (unsigned char) 127 ;
+		//printf("NOT event%d \n",*pImage);
+		pImage++;
                
                 }
-            pBuffer ++;
-            pTime ++;
+            pBuffer++;
+            pTime++;
         }
         pImage+=imagePadding;
     }
@@ -170,13 +177,18 @@ void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsig
 
 void cfCollectorThread::run() {
   count++;
+	//printf("%d \n",count);
   if(!idle) {
 
     // reads the buffer received
     //bufferRead = cfConverter->getBuffer();    
     // saves it into a working buffer
+    //printf("copying chunk \n");
     cfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
     // extract a chunk/unmask the chunk
+    //printf("unmasking Data \n");
+    //printf("verb %d \n",verb);
+    verb = false;
     unmask_events.unmaskData(bufferCopy,CHUNKSIZE,verb);
     if(verb) {
       verb = false;
@@ -200,28 +212,29 @@ void cfCollectorThread::run() {
     unsigned long int lastright = unmask_events.getLastTimestampRight();
     rc = lastright * COUNTERRATIO;
 
-    if(true){
+    /*if(true){
       //printf("Saving in file \n");
       fprintf(raw,"%08X \n",lc); 
       //fwrite(&sz, sizeof(int), 1, raw);
       //fwrite(buffer, 1, sz, raw);
-    }
+    }*/
+
+
     
+ 
     if((lc >= 4294967295) || (rc >= 4294967295)) {
       verb = true;
-      printf("wrapping %d, %d \n",lc,rc );
+      //printf("wrapping %d, %d \n",lc,rc );
     }
-    
-    
     
     //synchronising the threads at the connection time
     if ((cfConverter->isValid())&&(!synchronised)) {
-      printf("Sychronised Sychronised Sychronised Sychronised ");
+      printf("Sychronising ");
       //firstRun = false;
       minCount = lc - interval * dim_window; 
       //cfConverter->getEldestTimeStamp();                                                                   
       minCountRight = rc - interval * dim_window;
-      printf("synchronised %1f! %d,%d,%d||%d,%d,%d \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
+      //printf("synchronised %1f! %d,%d,%d||%d,%d,%d \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
       startTimer = Time::now();
       synchronised = true;
       //minCount = unmask_events.getLastTimestamp();
@@ -232,11 +245,15 @@ void cfCollectorThread::run() {
     
     
     //synchronising the thread every time interval 1000*period of the thread
-    //if (count % synch_time == 0) {
-    if (count == synch_time) {
+    else if (count % synch_time == 0) {
+    //if (count == synch_time) {
+      printf("Sychronised Sychronised Sychronised Sychronised ");
       minCount = lc - interval * dim_window; //cfConverter->getEldestTimeStamp();        
-      minCountRight =  rc - interval * dim_window; 
-      printf("synchronised %1f! %d,%d,%d||%d,%d,%d \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
+      minCountRight =  rc - interval * dim_window;
+      //maxCount = lc; 
+      //maxCountRight = rc;
+		 
+      //printf("synchronised %1f! %d,%d,%d||%d,%d,%d \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
       startTimer = Time::now();
       synchronised = true; 
     }
@@ -248,15 +265,15 @@ void cfCollectorThread::run() {
       minCount = minCount + interval ; // * (50.0 / 62.5) * 1.10;
       minCountRight = minCount + interval;  // minCountRight + interval;
     }   
-    
-    maxCount =  minCount + interval * dim_window;
-    maxCountRight =  minCountRight + interval * dim_window;
+    maxCount =  minCount + interval * (dim_window+2);
+    maxCountRight =  minCountRight + interval * (dim_window+2);
+    if (count % synch_time == 0) printf("synchronised %1f! %lu,%lu,%lu,%lu||%lu,%lu,%lu \n",interval, minCount,lc,unmask_events.getLastTimestamp(), maxCount, minCountRight, rc, maxCountRight);
     
     if(count % 100 == 0) { 
       //printf("countStop %d lcprev %d lc %d \n",countStop, lcprev,lc);
       if ((lcprev == lc)&&(rcprev == rc)) { 
 	countStop++;
-	printf("countStop %d \n", countStop);
+	//printf("countStop %d \n", countStop);
       }            
       //else if (rcprev == rc) { 
       //    countStop++;
@@ -273,7 +290,7 @@ void cfCollectorThread::run() {
     }
     
     
-      
+    /*  
     //resetting time stamps at overflow
     if (countStop == 10) {
       printf("resetting time stamps!!!!!!!!!!!!! %d %d   \n ", minCount, minCountRight);
@@ -281,13 +298,16 @@ void cfCollectorThread::run() {
       verb = true;
       //printf("countStop %d %d \n",countStop, verb );
       count = synch_time - 200;
-    }
+    }*/
     
     
-    getMonoImage(imageRight,minCount,maxCount,0);
-    getMonoImage(imageLeft,minCountRight,maxCountRight,1);
+    getMonoImage(imageRight,minCountRight,maxCountRight,0);
+    getMonoImage(imageLeft,minCount,maxCount,1);
     pThread->copyLeft(imageLeft);
-    pThread->copyRight(imageRight);    
+    pThread->copyRight(imageRight);
+	
+
+    
   }
 }
 

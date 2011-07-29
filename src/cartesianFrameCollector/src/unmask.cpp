@@ -98,7 +98,7 @@ unmask::unmask() : RateThread(UNMASKRATETHREAD){
 
     wrapAdd = 0;
     //fopen_s(&fp,"events.txt", "w"); //Use the unmasked_buffer
-    //uEvents = fopen("./uevents.txt","w");
+    uEvents = fopen("./uevents","w");
 }
 
 bool unmask::threadInit() {
@@ -244,7 +244,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
         }
         else {  //in dvsMode
                 //buffer += 3; //checking a flag
-            if((i_buffer[i + 3] & 0x80) == 0x80) {
+            /*if((i_buffer[i + 3] & 0x80) == 0x80) {
                 // timestamp bit 15 is one -> wrap;
                 // now we need to increment the wrapAdd                
                 //uses only 14 bit timestamps
@@ -262,7 +262,8 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
                 //lasttimestamp = 0;
                 // log.info("got reset event, timestamp " + (0xffff&((short)aeBuffer[i]&0xff | ((short)aeBuffer[i+1]&0xff)<<8)));
             }
-            else {
+            else */
+            {
                 //buffer -= 3;  //returning to the first byte of the event
                 unsigned int part_1 = 0xFF & i_buffer[i];    //extracting the 1 byte        
                 //buffer++;
@@ -274,9 +275,14 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
                 //buffer++;
                 
                 blob      = (part_1)|(part_2<<8);          //16bits
-                unmaskEvent( (unsigned int) blob, cartX, cartY, polarity);
+                //printf("Bolob is%x \n",blob);
+                polarity =0;
+                unmaskEvent( blob, cartX, cartY, polarity); 
+                //if((cartX<128 && cartY <128 && cartX >0 && cartY>0)) 
+                //printf("cartX %d cartY%d polarity%d\n",cartX,cartY,polarity);
                 //float timestamp = ((part_3)|(part_4<<8));
                 t = ((part_3)|(part_4<<8)); //&0x7fff//        //16bits
+                unsigned long tempT = t;
                 t += wrapAdd;
                 
                 //if(i == 100){
@@ -286,8 +292,11 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
                 //fwrite(buffer, 1, sz, raw);
                 //}
                 timestamp = (unsigned long) t;
-                printf("->->->->->->->->-> %04d %04d %08X \n",cartX, cartY ,t);
+                //if(!(cartX == 0 && cartY == 127 && t == 0))
+                {printf("%04d %04d %08X \n",cartX, cartY ,t);
+                fprintf(uEvents,"%08X %08X \n",blob,tempT);}
                 //printf("lastTimeStamp %08X \n", timestamp);
+                camera = 0;
             }                
         }
         
@@ -301,8 +310,8 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
         //printf("lastTimeStamp %08X \n", lasttimestamp);
         //camera is unmasked as left 0, right -1. It is converted in left 1, right 0
         camera = camera + 1;
-        
-        //camera: LEFT 0, RIGHT 1
+        //printf("Camera %d polarity %d  \n", camera, polarity);
+        //camera: LEFT 1, RIGHT 0
         if(camera) {            
             if((cartX!=0) &&( cartY!=0) && (timestamp!=0)) {
                 validLeft =  true;
@@ -312,25 +321,25 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
                 lasttimestamp = 0;
                 resetTimestamps();
             }
-            //else if(timestamp > lasttimestamp) {
-            lasttimestamp = timestamp;
-            //}
+            else if(timestamp > lasttimestamp) {
+                lasttimestamp = timestamp;
+            }
             
             if(timeBuffer[cartX + cartY * retinalSize] < timestamp) {
                 if(polarity > 0) {
-                    buffer[cartX + cartY * retinalSize] = responseGradient;
+                    this->buffer[cartX + cartY * retinalSize] = responseGradient;
                     timeBuffer[cartX + cartY * retinalSize] = timestamp;
                     
-                    if(buffer[cartX + cartY * retinalSize] > 127) {
-                        buffer[cartX + cartY * retinalSize] = 127;
+                    if(this->buffer[cartX + cartY * retinalSize] > 127) {
+                        this->buffer[cartX + cartY * retinalSize] = 127;
                     }
                 }
                 else if(polarity < 0) {
-                    buffer[cartX + cartY * retinalSize] = -responseGradient;
+                    this->buffer[cartX + cartY * retinalSize] = -responseGradient;
                     timeBuffer[cartX + cartY * retinalSize] = timestamp;
                     
-                    if (buffer[cartX + cartY * retinalSize] < -127) {
-                        buffer[cartX + cartY * retinalSize] = -127;
+                    if (this->buffer[cartX + cartY * retinalSize] < -127) {
+                        this->buffer[cartX + cartY * retinalSize] = -127;
                     }
                 }
             }           
@@ -365,7 +374,8 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
                     }
                 }
             }
-        } //end camera             
+        } //end camera
+            
     } //end of for    
 }
 
@@ -384,18 +394,24 @@ void unmask::unmaskEvent(unsigned int evPU, short& x, short& y, short& pol, shor
     x =       (short) ((evPU & ymaskshort)      >> yshift);
     pol =    ((short) ((evPU & polmaskshort)    >> polshift)==0)?-1:1;	//+1 ON, -1 OFF
     camera = ((short) ( evPU & cameramaskshort) >> camerashift);	        //0 LEFT, 1 RIGHT
+    //printf("1evPU%x polmask%x polshift%x \n"); 
+    
 }
 
 void unmask::unmaskEvent(unsigned int evPU, short& x, short& y, short& pol) {
     y =       (short) (retinalSize - 1) - (short)((evPU & xmaskshort) >> xshift);
     x =       (short) ((evPU & ymaskshort)      >> yshift);
     pol =    ((short) ((evPU & polmaskshort)    >> polshift)==0)?-1:1;	//+1 ON, -1 OFF
+    //printf("2evPU%x polmask%x polshift%x \n",evPU, polmask,polshift);     
+    
+    
 }
 
 void unmask::unmaskEvent(long int evPU, short& x, short& y, short& pol, short& camera) {
     x =       (short) (retinalSize - 1) - (short)((evPU & xmask) >> xshift);
     y =       (short) ((evPU & ymask)      >> yshift2);
     pol =    ((short) ((evPU & polmask)    >> polshift)==0)?-1:1;    //+1 ON, -1 OFF
+    //printf("3evPU%x polmask%x polshift%x \n"); 
     camera = ((short) ( evPU & cameramask) >> camerashift);	         //0 LEFT, 1 RIGHT
 }
 
