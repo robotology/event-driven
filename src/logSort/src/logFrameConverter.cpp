@@ -29,11 +29,11 @@
 
 
 // note that bufferdim has to be 1 chunksize bigger TH3 to avoid overflows
-#define BUFFERDIM 4096 //6144  //36864
-#define TH1 1024 //2048 //12
-#define TH2 2048 //4096  
-#define TH3 3072
-#define CHUNKSIZE 1024//2048
+#define BUFFERDIM 65536 //4096 //6144  //36864
+#define TH1 16384 //1024 //2048 //12
+#define TH2 32768 //2048 //4096  
+#define TH3 49152 //3072
+#define CHUNKSIZE 16384 //1024//2048
 
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -64,6 +64,7 @@ logFrameConverter::logFrameConverter():convert_events(128,128) {
     unmask_events.start();
     printf("unmask event just started");
     previousTimeStamp = 0;
+    fout = fopen("dump.txt", "w+");
 }
 
 logFrameConverter::~logFrameConverter() {
@@ -75,6 +76,7 @@ logFrameConverter::~logFrameConverter() {
     free(converterBuffer_copy);
     printf("logFrameConverter:freeing unreadBuffer \n");
     free(unreadBuffer);
+    fclose(fout);
 }
 
 void logFrameConverter::copyChunk(char* bufferCopy, char* flagBuffer) {            
@@ -86,8 +88,8 @@ void logFrameConverter::copyChunk(char* bufferCopy, char* flagBuffer) {
         flagCopy = unreadBuffer;
     }
     else {
-        memcpy(bufferCopy, pcRead, CHUNKSIZE);
-        memcpy(flagBuffer,flagCopy, CHUNKSIZE);
+        memcpy(bufferCopy, pcRead,   CHUNKSIZE);
+        memcpy(flagBuffer, flagCopy, CHUNKSIZE);
         memset(flagCopy, 0, CHUNKSIZE);
         pcRead   += CHUNKSIZE;
         flagCopy += CHUNKSIZE;
@@ -116,30 +118,37 @@ void logFrameConverter::onRead(sendingBuffer& i_ub) {
     printf("reading %d \n", dim); 
     mutex.wait();
     receivedBuffer = i_ub.get_packet();
+    //pcBuffer = i_ub.get_packet();
+    //struct aer *pmon;
+    //pmon = (aer*) receivedBuffer;
     memcpy(pcBuffer,receivedBuffer,dim);
     memset(flagRead,1,dim);
     
-    //verbosity 
-    uint32_t* buf2 = (uint32_t*)receivedBuffer;
-    int num_events = dim / 8;
+    //verbosity
+    /*
+    //uint32_t* buf2 = (uint32_t*)receivedBuffer;
+    uint32_t* buf2 = (uint32_t*)pcBuffer;
+    int num_events = dim / 8; 
+    u32 a, t;  
     for (int evt = 0; evt < num_events; evt++) {
+        //a = pmon[evt].address;
+        //t = pmon[evt].timestamp * 0.128;
         
-        // logUnmask the data ( first 4 byte blob, second 4 bytes timestamp)
+        // logUnmask the data ( first 4 bytes blob, second 4 bytes timestamp)
         unsigned long blob      = buf2[2 * evt];
-        unsigned long timestamp = buf2[2 * evt + 1];
-        
+        unsigned long timestamp = buf2[2 * evt + 1];        
                 
         // here we zero the higher two bytes of the address!!! Only lower 16bits used!
-        blob &= 0xFFFF;
-         
-        printf("logFrameConverter: read rough data events : %08X %08X \n",blob,timestamp);
-        //if (save) {
-        //    fprintf(fout,"%08X %08X\n",blob,timestamp); 
+        //blob &= 0xFFFF;
+        //printf("logFrameConverter: read rough data events : %08X %08X \n",blob,timestamp);
+        bool save = true;
+        if (save) {
+            fprintf(fout,">%08X %08X \n",blob,timestamp); 
             //fout<<hex<<a<<" "<<hex<<t<<endl;
-        //}
-        
-        
+        }        
     }
+    */
+    
     
     //if (totDim < TH1) {
     //    pcBuffer += dim;

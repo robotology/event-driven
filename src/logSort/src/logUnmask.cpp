@@ -488,6 +488,7 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
     count++;
     //assert(num_events % 8 == 0);
     int num_events = i_sz / 8;
+    printf("logUnmakData: unmasking %d  \n", num_events);
     //create a pointer that points every 4 bytes
     uint32_t* buf2 = (uint32_t*)i_buffer;
     //eldesttimestamp = 0;
@@ -500,19 +501,19 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         
                 
         // here we zero the higher two bytes of the address!!! Only lower 16bits used!
-        blob &= 0xFFFF;
+        //blob &= 0xFFFF;
         type = -1;
   
-        bool save = true;
-        if((timestamp != 0) || (blob != 0)) {
-            printf("%08X %08X \n",blob,timestamp);
-            if (save) {
-                fprintf(fout,"%08X %08X\n",blob,timestamp); 
-                //fout<<hex<<a<<" "<<hex<<t<<endl;
-            }
-            logUnmaskEvent((unsigned int) blob, cartX, cartY, polarity, type);
-            
+        bool save = false;
+        
+        printf("%08X %08X \n",blob,timestamp);
+        if (save) {
+            fprintf(fout,"%08X %08X\n",blob,timestamp); 
+            //fout<<hex<<a<<" "<<hex<<t<<endl;
         }
+        logUnmaskEvent((unsigned int) blob, cartX, cartY, polarity, type);
+        
+        
 
         //if(count % 100 == 0) {
         //    printf(" %d>%d,%d : %d : %d \n",blob,cartX,cartY,timestamp,camera);
@@ -522,32 +523,32 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         
         switch (type) {
             case 0:{ //CD
-                //printf("Unmasked CD \n");
+                printf("Unmasked CD \n");
                 countCD++;
             }
             break;
             case 1:{ //EM1
-                //printf("Unmasked EM1 \n");
+                printf("Unmasked EM1 \n");
                 countEM++;
             }
             break;
             case 2:{ //EM2
-                //printf("Unmasked EM2 \n");
+                printf("Unmasked EM2 \n");
                 countEM++;
             }
             break;
             case 3:{ //EM3
-                //printf("Unmasked EM3 \n");
+                printf("Unmasked EM3 \n");
                 countEM++;
             }
             break;
             case 4:{ //EM4
-                //printf("Unmasked EM4 \n");
+                printf("Unmasked EM4 \n");
                 countEM++;
             }
             break;
             case 5:{ //IF
-                //printf("Unmasked IF \n");
+                printf("Unmasked IF \n");
                 countIF++;
             }
             break;            

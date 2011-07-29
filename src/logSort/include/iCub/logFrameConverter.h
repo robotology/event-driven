@@ -43,6 +43,8 @@
 #include <yarp/os/BufferedPort.h>
 #include <yarp/sig/all.h>
 
+
+
 class logFrameConverter:public yarp::os::BufferedPort<sendingBuffer> {
 public:
     logFrameConverter();
@@ -112,6 +114,7 @@ public:
     bool isValid(){return valid;};
 
 private:
+    FILE* fout;                                                 // file for dumping at the on read
     bool valid;
     short state;
     int retinalSize;                                            // dimension of the retina default 128x128

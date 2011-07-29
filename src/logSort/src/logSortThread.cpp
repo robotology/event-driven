@@ -35,10 +35,10 @@ using namespace std;
 
 #define COUNTERRATIO 1.25       //1.25 is the ratio 0.160/0.128
 #define MAXVALUE 4294967295
-#define THRATE 30
+#define THRATE 5
 #define STAMPINFRAME  // 10 ms of period times the us in 1 millisecond + time for computing
 #define retinalSize 128
-#define CHUNKSIZE 1024
+#define CHUNKSIZE 16384 //1024
 #define dim_window 5
 #define synch_time 1000
 #define SIZE_PACKET 8192
@@ -172,19 +172,28 @@ void logSortThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsigned 
 int logSortThread::selectUnreadBuffer(char* bufferCopy, char* flagCopy, char* resultCopy){    
     char* bufferCopy_copy = bufferCopy;
     char* flagCopy_copy   = flagCopy;
+    char* resultCopy_copy = resultCopy;
     int sum = 0; // counter of the number of unread
+    // TODO: the next loop can be removed
     for(int i = 0; i < CHUNKSIZE; i++) {
         if(*flagCopy_copy!=0) {
             sum++;
         }
+        flagCopy_copy++;
     }
-    if(sum > 0)
-        printf("not read elements %d \n", sum);
+    printf("not read elements %d \n", sum);
+    flagCopy_copy = flagCopy;
+    bufferCopy_copy = bufferCopy;
+
     for(int i = 0; i < CHUNKSIZE; i++) {
-        if(*flagCopy_copy) {
-            *resultCopy = *bufferCopy_copy;
-            resultCopy++; bufferCopy_copy++;    
+        
+        if(*flagCopy_copy!=0) {
+            printf("char:%d %d \n", *flagCopy_copy,*bufferCopy_copy );
+            *resultCopy_copy = *bufferCopy_copy;
+            resultCopy_copy++;    
         }
+        bufferCopy_copy++;
+        flagCopy_copy++;
     }
     return sum;
 }
@@ -195,7 +204,7 @@ void logSortThread::run() {
         // reads the buffer received
         // saves it into a working buffer
         //printf("returned 0x%x 0x%x \n", bufferCopy, flagCopy);
-        lfConverter->copyChunk(bufferCopy, flagCopy);//memcpy(bufferCopy, bufferRead, 8192);
+        lfConverter->copyChunk(bufferCopy, flagCopy);
         int unreadDim = selectUnreadBuffer(bufferCopy, flagCopy, resultCopy);
         if(unreadDim!=0) {
            printf("Unmasking events:  %d \n", unreadDim);
