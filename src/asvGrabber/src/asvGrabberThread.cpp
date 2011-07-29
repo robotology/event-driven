@@ -117,8 +117,8 @@ asvGrabberThread::asvGrabberThread(string portDeviceName, bool i_bool, string i_
     CDRefr       = 944;       
     CDSf         = 20;       
     CDPr         = 5;    
-    ReqPuX       = 8053457;       
-    ReqPuY       = 16777215;  
+    ReqPuX       = 3297256;       
+    ReqPuY       = 4073081;  
     IFRf         = 639172;    
     IFThr        = 30108;      
     IFLk         = 20;        
@@ -133,7 +133,7 @@ asvGrabberThread::asvGrabberThread(string portDeviceName, bool i_bool, string i_
     CDRGnd       = 101508;
     self         = 500;
     FollBias     = 52458;   
-    ArbPd        = 16777215;       
+    ArbPd        = 9503855;       
     EMVrefL      = 160712;           
     CDCas        = 52458;            
     EMVrefH      = 52458;

@@ -29,7 +29,7 @@
 #include <yarp/os/Portable.h>
 #include <yarp/os/ConnectionWriter.h>
 #include <cstring>
-//#include "config.h"
+#include <iCub/config.h>
 
 
 class sendingBuffer:public yarp::os::Portable {

@@ -26,7 +26,7 @@
 #include <iCub/sending_buffer.h>
 #include <yarp/os/Bottle.h>
 
-#define SIZE_OF_DATA 65536
+//#define SIZE_OF_DATA 65536
 
 using namespace std;
 using namespace yarp::os;
