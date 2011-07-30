@@ -50,13 +50,15 @@ using namespace yarp::os;
 #define CLOCK_HI 1
 #define THRATE   5
 
+#define KERNELDEVICEREAD 32768
+
 
 //#define FAST
 
 
 device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):RateThread(THRATE), save(i_bool) {
     printf("initialising the module \n");
-    
+    verbosity = false;
     len=0;
     sz=0;
     ec = 0;
@@ -177,7 +179,8 @@ void device2yarp::setDeviceName(string deviceName) {
 
 void  device2yarp::run() {
     // read address events from device file which is not /dev/aerfx2_0
-    sz = read(file_desc,buffer,1024);
+    sz = read(file_desc,buffer,KERNELDEVICEREAD);
+
     //printf("Size read from file %d\n",sz);
     //SIZE_OF_DATA
     //int r = pread(file_desc,pmon,monBufSize_b,0);
@@ -185,7 +188,7 @@ void  device2yarp::run() {
     monBufEvents    = sz / sizeof(struct aer);
     int monBufBytes = sz / 8;
 
-    cout << "Size of the buffer : " << sz <<endl;
+    cout << sz <<"  bytes"<<endl;
     //cout << "Number of events : " << monBufEvents << endl;
     //printf("Number of events: %d \n",monBufBytes);
 
@@ -193,20 +196,22 @@ void  device2yarp::run() {
     u32 a, t;
     int k2 = 0;
     unsigned int blob, timestamp;
-    /*
-    if(save) {
+    
+    if(save && monBufEvents>0) {
         printf("saving \n");
         for (int i = 0 ; i < sz ; i+=4) {
-            unsigned int part_1 = 0xFF & buffer[i];    //extracting the 1 byte        
-            unsigned int part_2 = 0xFF & buffer[i+1];  //extracting the 2 byte        
-            unsigned int part_3 = 0xFF & buffer[i+2];  //extracting the 3 byte
-            unsigned int part_4 = 0xFF & buffer[i+3];  //extracting the 4 byte
+            unsigned int part_1 = 0xFF & *(buffer+i);    //extracting the 1 byte        
+            unsigned int part_2 = 0xFF & *(buffer+i+1);  //extracting the 2 byte        
+            unsigned int part_3 = 0xFF & *(buffer+i+2);  //extracting the 3 byte
+            unsigned int part_4 = 0xFF & *(buffer+i+3);  //extracting the 4 byte
             //float blob = (part_1)|(part_2<<8);
             blob      = (part_1)|(part_2<<8);          //16bits
             //float timestamp = ((part_3)|(part_4<<8));
             timestamp = ((part_3)|(part_4<<8));        //16bits
             
-            //printf("Saving in file \n");
+            if(verbosity){
+                printf("%08X %08X \n",blob,timestamp);
+            }
             fprintf(raw,"%08X %08X \n",blob,timestamp);
             //printf("%08X %08X \n",blob,timestamp);
             //fwrite(&sz, sizeof(int), 1, raw);
@@ -216,25 +221,6 @@ void  device2yarp::run() {
             //buf1[k2++] = timestamp;
         }
     }
-    */
-
-    /*
-    for(int i=0; i < monBufEvents; i++) {       
-        blob      = pmon[i].address;
-        timestamp = pmon[i].timestamp;
-        printf("%x : %x \n", blob, timestamp);
-        //buf2[k2++] = a;
-        //buf2[k2++] = t;
-        if(save){
-            //printf("Saving in file \n");
-            fprintf(raw,"%08X %08X\n",blob,timestamp); 
-            //fwrite(&sz, sizeof(int), 1, raw);
-            //fwrite(buffer, 1, sz, raw);
-        }
-        buf1[k2++] = blob;
-        buf1[k2++] = timestamp;
-    }
-    */
     
 
     //int szSent = monBufEvents*sizeof(struct aer); // sz is size in bytes

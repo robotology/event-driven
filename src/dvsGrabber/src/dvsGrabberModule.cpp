@@ -67,9 +67,6 @@ bool dvsGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     devicePortName         =  deviceName ;
     printf("trying to connect to the %s \n",devicePortName.c_str());
 
-    
-   
-
     /*
     * attach a port of the same name as the module (prefixed with a /) to the module
     * so that messages received from the port are redirected to the respond method
@@ -95,8 +92,13 @@ bool dvsGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     dumpName = rf.check("dumpFile", 
                         Value("none"), 
                         "filename of the binary (string)").asString();
+
     printf("trying to save events in %s  \n",dumpName.c_str());
-    dumpNameComplete = rf.findFile(dumpName.c_str());
+    
+
+    //dumpNameComplete = "contrib/src/eMorph/src/dvsGrabber/xyz";
+    //dumpName = "xyz.dat";
+    //dumpNameComplete = "/usr/local/src/robot/iCub/contrib/src/eMorph/src/dvsGrabber/xyz.dat";
     
     if(!strcmp(dumpName.c_str(),"none")) {
         printf("not reading from binary \n");
@@ -104,9 +106,20 @@ bool dvsGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     }
     else {
         printf("reading from binary \n");
+        dumpNameComplete = rf.findFile(dumpName.c_str());
         //D2Y->setFromBinary(true);
         D2Y=new device2yarp(devicePortName, true, dumpNameComplete);     
     }
+
+    if (rf.check("verbosity")) {
+        D2Y->setVerbosity(true);
+        printf("verbosity required \n");
+    }
+    else {
+        printf("verbosity  not required \n");
+        //the default value for arbiter->visualCorrection is false
+    }
+
     printf("starting the thread \n");
     D2Y->start();
 

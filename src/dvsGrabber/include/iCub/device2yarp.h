@@ -72,6 +72,12 @@ public:
     */
     void setDeviceName(std::string name);
 
+    /**
+     * @brief function that sets verbosity parameter
+     * @param value value to assign
+     */
+    void setVerbosity(bool value) { verbosity = value; };
+
 private:
 
     yarp::os::BufferedPort<eventBuffer> port;
@@ -101,6 +107,7 @@ private:
     std::string portDeviceName;
 
     bool save;
+    bool verbosity;                                            // flag that indicates whether to write events out
 
     std::stringstream str_buf;
 };

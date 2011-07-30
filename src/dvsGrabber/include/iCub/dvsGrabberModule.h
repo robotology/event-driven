@@ -147,6 +147,11 @@
  * 
  */
 
+/**
+ * CHANGE LOG
+ * 30/07/2011 : added verbosity parameter and forcing the resource finder to find the name of the dumpFile             @author Rea
+ */
+
 #include <iostream>
 #include <string>
 
