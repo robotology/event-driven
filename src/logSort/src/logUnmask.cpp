@@ -506,7 +506,7 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
   
         bool save = false;
         
-        printf("%08X %08X \n",blob,timestamp);
+        //printf("%08X %08X \n",blob,timestamp);
         if (save) {
             fprintf(fout,"%08X %08X\n",blob,timestamp); 
             //fout<<hex<<a<<" "<<hex<<t<<endl;

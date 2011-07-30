@@ -175,20 +175,20 @@ int logSortThread::selectUnreadBuffer(char* bufferCopy, char* flagCopy, char* re
     char* resultCopy_copy = resultCopy;
     int sum = 0; // counter of the number of unread
     // TODO: the next loop can be removed
-    for(int i = 0; i < CHUNKSIZE; i++) {
-        if(*flagCopy_copy!=0) {
-            sum++;
-        }
-        flagCopy_copy++;
-    }
-    printf("not read elements %d \n", sum);
-    flagCopy_copy = flagCopy;
-    bufferCopy_copy = bufferCopy;
+    //for(int i = 0; i < CHUNKSIZE; i++) {
+    //    if(*flagCopy_copy!=0) {
+    //        sum++;
+    //    }
+    //    flagCopy_copy++;
+    //}
+    //printf("not read elements %d \n", sum);
 
+    flagCopy_copy = flagCopy;
     for(int i = 0; i < CHUNKSIZE; i++) {
         
         if(*flagCopy_copy!=0) {
-            printf("char:%d %d \n", *flagCopy_copy,*bufferCopy_copy );
+            sum++;
+            //printf("char:%d %d \n", *flagCopy_copy,*bufferCopy_copy );
             *resultCopy_copy = *bufferCopy_copy;
             resultCopy_copy++;    
         }
@@ -207,7 +207,7 @@ void logSortThread::run() {
         lfConverter->copyChunk(bufferCopy, flagCopy);
         int unreadDim = selectUnreadBuffer(bufferCopy, flagCopy, resultCopy);
         if(unreadDim!=0) {
-           printf("Unmasking events:  %d \n", unreadDim);
+            //printf("Unmasking events:  %d \n", unreadDim);
            // extract a chunk/unmask the chunk       
            unmask_events.logUnmaskData(resultCopy,unreadDim,verb);
         }
