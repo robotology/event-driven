@@ -319,10 +319,11 @@ void logSortThread::run() {
 
 	*/
 	
-	int dimCD;
+	int* dimCD;
 	aer* pCD;
-	unmask_events.getCD(pCD,&dimCD);
-    sendBuffer(&portCD, pCD, dimCD);
+	unmask_events.getCD(pCD, dimCD);
+    sendBuffer(&portCD, pCD, *dimCD);
+    *dimCD = 0;
 
 	
 	//int dimIF;

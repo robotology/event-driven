@@ -61,9 +61,9 @@ private:
     int* bufferRight;                     // buffer representing the event in image plane (right)
     unsigned long* timeBufferRight;       // buffer contains the timestamp of the particular location (right)
     u32 monBufSize_b;                     // dimension of the event buffers
-    u32 countCD;                          // dimension of the event buffers
-    u32 countEM;                          // dimension of the event buffers
-    u32 countIF;                          // dimension of the event buffers
+    int countCD;                          // dimension of the event buffers
+    int countEM;                          // dimension of the event buffers
+    int countIF;                          // dimension of the event buffers
     struct aer* bufferCD;                 // buffer for change detector
     struct aer* bufferEM;                 // buffer for EM
     struct aer* bufferIF;                 // buffer for integrate and fire

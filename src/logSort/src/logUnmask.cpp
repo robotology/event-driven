@@ -410,6 +410,7 @@ int logUnmask::getMaxValue() {
 void logUnmask::getCD(aer* pointerCD, int* dimCD) {
     //printf("counted CD %d \n", countCD);
     pointerCD = bufferCD;
+    dimCD = &countCD;
 }
 
 void logUnmask::getIF(aer* pointerIF, int* dimCD) {
@@ -488,7 +489,7 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
     count++;
     //assert(num_events % 8 == 0);
     int num_events = i_sz / 8;
-    printf("logUnmakData: unmasking %d  \n", num_events);
+    //printf("logUnmakData: unmasking %d  \n", num_events);
     //create a pointer that points every 4 bytes
     uint32_t* buf2 = (uint32_t*)i_buffer;
     //eldesttimestamp = 0;
@@ -520,35 +521,41 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         //}
         cartY = retinalSize - cartY;   //corrected the output of the camera (flipped the image along y axis)
         cartX = retinalSize - cartX;
+
+        struct aer* temp;
         
         switch (type) {
             case 0:{ //CD
-                printf("Unmasked CD \n");
+                //printf("Unmasked CD \n");
+                temp = &bufferCD[countCD];
+                temp->address   = blob;
+                temp->timestamp = timestamp;
                 countCD++;
+                
             }
             break;
             case 1:{ //EM1
-                printf("Unmasked EM1 \n");
+                //printf("Unmasked EM1 \n");
                 countEM++;
             }
             break;
             case 2:{ //EM2
-                printf("Unmasked EM2 \n");
+                //printf("Unmasked EM2 \n");
                 countEM++;
             }
             break;
             case 3:{ //EM3
-                printf("Unmasked EM3 \n");
+                //printf("Unmasked EM3 \n");
                 countEM++;
             }
             break;
             case 4:{ //EM4
-                printf("Unmasked EM4 \n");
+                //printf("Unmasked EM4 \n");
                 countEM++;
             }
             break;
             case 5:{ //IF
-                printf("Unmasked IF \n");
+                //printf("Unmasked IF \n");
                 countIF++;
             }
             break;            
