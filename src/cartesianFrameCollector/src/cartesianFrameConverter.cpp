@@ -27,20 +27,25 @@
 #include <cassert>
 #include <cstdlib>
 
-//#define BUFFERDIM 24576 
+//#define BUFFERDIM 32768
 //#define TH1 8192 
 //#define TH2 16384
-//#define CHUNKSIZE 8192  
+//#define TH3 24576
+//#define CHUNKSIZE 8192 
 
-//#define CHUNKSIZE 65536 
-//#define TH1       65536
-//#define TH2       131072
-//#define BUFFERDIM 196608
+#define CHUNKSIZE 32768 
+#define TH1       32768  
+#define TH2       65536
+#define TH3       98304
+#define BUFFERDIM 131702
 
-#define CHUNKSIZE 1024 
-#define TH1       1024
-#define TH2       2048
-#define BUFFERDIM 3072
+
+
+//#define CHUNKSIZE 1024 
+//#define TH1       1024
+//#define TH2       2048
+//#define TH3       3072
+//#define BUFFERDIM 4096
 
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -74,12 +79,12 @@ cFrameConverter::~cFrameConverter() {
     //delete &unmask_events;
     //delete &convert_events;
     printf("cFrameConverter:freeing converterBuffer \n");
-    //free(converterBuffer_copy);
+    free(converterBuffer_copy);
 }
 
 void cFrameConverter::copyChunk(char* bufferCopy) {        
     mutex.wait();
-    if(pcRead > converterBuffer +  BUFFERDIM - CHUNKSIZE) {
+    if(pcRead >= converterBuffer +  BUFFERDIM - CHUNKSIZE) {
         memcpy(bufferCopy, pcRead, converterBuffer + BUFFERDIM - pcRead );
         pcRead = converterBuffer;
     }
@@ -88,42 +93,29 @@ void cFrameConverter::copyChunk(char* bufferCopy) {
         pcRead += CHUNKSIZE;
     }
     mutex.post();
-    //printf("copy chunk: ended \n ");
 }
+
 
 void cFrameConverter::onRead(eventBuffer& i_ub) {
     valid = true;
     //printf("onRead ");
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() ;      // number of bits received / 8 = bytes received
-    //printf("dim %d \n", dim);
+    printf("dim %d \n", dim);
    
     mutex.wait();
-    receivedBuffer = i_ub.get_packet();
-    
-    unsigned int blob, timestamp;
-    for (int i = 0 ; i < dim ; i+=4) {
-        unsigned int part_1 = 0xFF & receivedBuffer[i];    //extracting the 1 byte        
-        unsigned int part_2 = 0xFF & receivedBuffer[i+1];  //extracting the 2 byte        
-        unsigned int part_3 = 0xFF & receivedBuffer[i+2];  //extracting the 3 byte
-        unsigned int part_4 = 0xFF & receivedBuffer[i+3];  //extracting the 4 byte
-        //float blob = (part_1)|(part_2<<8);
-        blob      = (part_1)|(part_2<<8);          //16bits
-        //float timestamp = ((part_3)|(part_4<<8));
-        timestamp = ((part_3)|(part_4<<8));        //16bits
-        fprintf(readEvents,"%08X %08X \n",blob,timestamp); 
-        if(i == 100){
-            //printf("Saving in file \n");
-            //printf(">>>>>>>>> %08X %08X \n",blob,timestamp); 
-            //fwrite(&sz, sizeof(int), 1, raw);
-            //fwrite(buffer, 1, sz, raw);
-        }
-    }
-    printf("Out of first packet \n");
-
-
-    
+    receivedBuffer = i_ub.get_packet();    
     memcpy(pcBuffer,receivedBuffer,dim);
+
+
+    int num_events = dim / 8 ;
+    uint32_t* buf2 = (uint32_t*)receivedBuffer;
+    for (int evt = 0; evt < num_events; evt++) {
+        unsigned long blob      = buf2[2 * evt];
+        unsigned long t         = buf2[2 * evt + 1];
+        printf("0x%08x 0x%08x \n",blob, t);
+    }
+
     
     if (totDim < TH1) {
         pcBuffer += dim;
@@ -152,6 +144,49 @@ void cFrameConverter::onRead(eventBuffer& i_ub) {
    
 }
 
+
+/*
+void cFrameConverter::onRead(eventBuffer& i_ub) {
+    valid = true;
+    //printf("onRead ");
+    // receives the buffer and saves it
+    int dim = i_ub.get_sizeOfPacket() ;      // number of bits received / 8 = bytes received
+    //printf("dim %d \n", dim);
+   
+    mutex.wait();
+    receivedBuffer = i_ub.get_packet();
+
+ 
+    memcpy(pcBuffer,receivedBuffer,dim);
+    
+    
+    pcBuffer += dim;
+    totDim += dim;
+    
+    if((totDim>=TH1)&&(totDim<TH2)&&(state!=1)){
+        pcBuffer = converterBuffer + TH1; 
+        pcRead = converterBuffer + TH2;
+        state = 1;
+    }else if((totDim >= TH2)&&(totDim < TH3)&&(state!=2)) {
+        pcBuffer = converterBuffer + TH2;
+        pcRead   = converterBuffer;       
+        state    = 2;
+    }
+    else if(totDim >= TH3) {
+        pcBuffer = converterBuffer;
+        pcRead   = converterBuffer + TH1;
+        totDim   = 0;
+        state    = 0;
+    }
+    // after the thrid part of the buffer is free to avoid overflow
+     
+
+    mutex.post();
+    //printf("onRead: ended \n");
+    //printf("pcBuffer: 0x%x pcRead: 0x%x \n", pcBuffer, pcRead);
+   
+}
+*/
 
 /*
 void cFrameConverter::onRead(eventBuffer& i_ub) {

@@ -36,14 +36,15 @@ using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
-#define COUNTERRATIO 1.25       //1.25 is the ratio 0.160/0.128
+#define INTERVFACTOR 500
+#define COUNTERRATIO 1 //1.25       //1.25 is the ratio 0.160/0.128
 #define MAXVALUE 4294967295
 #define THRATE 5
 #define STAMPINFRAME  // 10 ms of period times the us in 1 millisecond + time for computing
 #define retinalSize 128
-#define CHUNKSIZE 1024 //65536 //8192
-#define dim_window 10
-#define synch_time 500
+#define CHUNKSIZE 8192 //32768 //65536 //8192
+#define dim_window 5
+#define synch_time 1
 
 cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
     synchronised = false;
@@ -53,7 +54,6 @@ cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
     minCount = 0; //initialisation of the timestamp limits of the first frame
     idle = false;
     bufferCopy = (char*) malloc(CHUNKSIZE);
-    //bufferRead = (char*) malloc(8192);
     countStop = 0;
     verb = false;
     string i_fileName("events.log");
@@ -98,6 +98,7 @@ bool cfCollectorThread::threadInit() {
 
 void cfCollectorThread::interrupt() {
     outPort.interrupt();
+    outPortRight.interrupt();
 }
 
 void cfCollectorThread::setName(string str) {
@@ -177,9 +178,10 @@ void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsig
 
 void cfCollectorThread::run() {
   count++;
-	//printf("%d \n",count);
+	
   if(!idle) {
-
+    interTimer = Time::now();
+    double interval2 = (interTimer - startTimer)* 1000000;
     // reads the buffer received
     //bufferRead = cfConverter->getBuffer();    
     // saves it into a working buffer
@@ -204,7 +206,9 @@ void cfCollectorThread::run() {
     //printf("timeofday>%ld\n",Tnow );
     gettimeofday(&tvstart, NULL);       
     endTimer = Time::now();
-    double interval = (endTimer - startTimer) * 1000000; //interval in us
+    double interval  = (endTimer - startTimer) * 1000000; //interval in us
+    double procInter = interval -interval2;
+    //printf("procInter %f \n", procInter);
     startTimer = Time::now();
     
     unsigned long int lastleft = unmask_events.getLastTimestamp();
@@ -247,9 +251,9 @@ void cfCollectorThread::run() {
     //synchronising the thread every time interval 1000*period of the thread
     else if (count % synch_time == 0) {
     //if (count == synch_time) {
-      printf("Sychronised Sychronised Sychronised Sychronised ");
-      minCount = lc - interval * dim_window; //cfConverter->getEldestTimeStamp();        
-      minCountRight =  rc - interval * dim_window;
+      //printf("Sychronised Sychronised Sychronised Sychronised ");
+      minCount      = lc - interval * dim_window; //cfConverter->getEldestTimeStamp();        
+      minCountRight = rc - interval * dim_window;
       //maxCount = lc; 
       //maxCountRight = rc;
 		 
@@ -262,12 +266,13 @@ void cfCollectorThread::run() {
       //and the correct timestamp counter clock of FPGA (50 Mhz)
       microsecondsPrev = interval;
       interval = Tnow;
-      minCount = minCount + interval ; // * (50.0 / 62.5) * 1.10;
-      minCountRight = minCount + interval;  // minCountRight + interval;
-    }   
-    maxCount =  minCount + interval * (dim_window+2);
+      minCount      = minCount + interval * INTERVFACTOR; // * (50.0 / 62.5) * 1.10;
+      minCountRight = minCount + interval * INTERVFACTOR;  // minCountRight + interval;
+    } 
+    //printf("minCount %d interval %f \n", minCount, interval);
+    maxCount      =  minCount      + interval * (dim_window+2);
     maxCountRight =  minCountRight + interval * (dim_window+2);
-    if (count % synch_time == 0) printf("synchronised %1f! %lu,%lu,%lu,%lu||%lu,%lu,%lu \n",interval, minCount,lc,unmask_events.getLastTimestamp(), maxCount, minCountRight, rc, maxCountRight);
+    
     
     if(count % 100 == 0) { 
       //printf("countStop %d lcprev %d lc %d \n",countStop, lcprev,lc);
@@ -301,12 +306,10 @@ void cfCollectorThread::run() {
     }*/
     
     
-    getMonoImage(imageRight,minCountRight,maxCountRight,0);
+    //getMonoImage(imageRight,minCountRight,maxCountRight,0);
     getMonoImage(imageLeft,minCount,maxCount,1);
     pThread->copyLeft(imageLeft);
-    pThread->copyRight(imageRight);
-	
-
+    //pThread->copyRight(imageRight);
     
   }
 }
@@ -418,17 +421,26 @@ void cfCollectorThread::run() {
 
 void cfCollectorThread::threadRelease() {
     idle = false;
-    printf("Threadrelease:freeing bufferCopy \n");
+    printf("cfCollectorThread release:freeing bufferCopy \n");
     //free(bufferCopy);
-    printf("Threadrelease:closing ports \n");
+    printf("cfCollectorThread release:closing ports \n");
     outPort.close();
     outPortRight.close();
-    delete imageLeft;
-    delete imageRight;
-    printf("Threadrelease         stopping plotterThread \n");
+    //delete imageLeft;
+    //delete imageRight;
+    printf("cFCollectorThread release         stopping plotterThread \n");
     pThread->stop();
-    printf("Threadrelease         deleting converter \n");
+    printf("cfCollectorThread release         deleting converter \n");
     delete cfConverter;
+    printf("correctly freed memory from the cfCollector \n");
+    printf("correctly freed memory from the cfCollector \n");
+    printf("correctly freed memory from the cfCollector \n");
+    printf("correctly freed memory from the cfCollector \n");
+    printf("correctly freed memory from the cfCollector \n");
+    printf("correctly freed memory from the cfCollector \n");
+    printf("correctly freed memory from the cfCollector \n");
+    printf("correctly freed memory from the cfCollector \n");
+    
 }
 
 
