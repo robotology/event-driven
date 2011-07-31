@@ -43,6 +43,7 @@ using namespace std;
 #define synch_time 1000
 #define SIZE_PACKET 8192
 
+
 logSortThread::logSortThread() : RateThread(THRATE) {
     synchronised = false;
     greaterHalf = false;
@@ -211,7 +212,7 @@ void logSortThread::run() {
            // extract a chunk/unmask the chunk       
            unmask_events.logUnmaskData(resultCopy,unreadDim,verb);
         }
-           
+
         //if(verb) {
         //    verb = false;
         //    countStop = 0;
@@ -234,16 +235,16 @@ void logSortThread::run() {
         
         
 
-	/*
-	unsigned long int lastleft = unmask_events.getLastTimestamp();
+        /*
+          unsigned long int lastleft = unmask_events.getLastTimestamp();
         lc = lastleft * COUNTERRATIO; 
         unsigned long int lastright = unmask_events.getLastTimestampRight();
         rc = lastright * COUNTERRATIO;
-
-	if((lc >= 4294967295) || (rc >= 4294967295)) {
-	  verb = true;
-	  printf("wrapping %d, %d \n",lc,rc );
-	}
+        
+        if((lc >= 4294967295) || (rc >= 4294967295)) {
+        verb = true;
+        printf("wrapping %d, %d \n",lc,rc );
+        }
 
  
         
@@ -266,7 +267,7 @@ void logSortThread::run() {
 
         //synchronising the thread every time interval 1000*period of the thread
         //if (count % synch_time == 0) {
-	if (count == synch_time) {
+        if (count == synch_time) {
             minCount = lc - interval * dim_window; //lfConverter->getEldestTimeStamp();        
             minCountRight = rc - interval * dim_window; 
             printf("synchronised %1f! %d,%d,%d||%d,%d,%d \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
@@ -286,7 +287,7 @@ void logSortThread::run() {
         maxCountRight =  minCountRight + interval * dim_window;
         
         if(count % 100 == 0) { 
-	  //printf("countStop %d lcprev %d lc %d \n",countStop, lcprev,lc);
+        //printf("countStop %d lcprev %d lc %d \n",countStop, lcprev,lc);
             if (lcprev == lc) { 
                 countStop++;
 		printf("countStop %d \n", countStop);
@@ -307,7 +308,7 @@ void logSortThread::run() {
         
         
 	
-	//resetting time stamps at overflow
+        //resetting time stamps at overflow
         if (countStop == 10) {
             //printf("resetting time stamps!!!!!!!!!!!!! %d %d   \n ", minCount, minCountRight);
             //lfConverter->resetTimestamps(); 
@@ -317,19 +318,21 @@ void logSortThread::run() {
 	    count = synch_time - 200;
         }
 
-	*/
+	    */
 	
-	int* dimCD;
-	aer* pCD;
-	unmask_events.getCD(pCD, dimCD);
-    sendBuffer(&portCD, pCD, *dimCD);
-    *dimCD = 0;
-
+        int dimCD;
+        aer* pCD;
+        //TODO : code MUTEXes in these lines! Strictly Necessary!
+        unmask_events.getCD(&pCD, &dimCD);
+        //printf("dimCD :  %d \n", dimCD);
+        sendBuffer(&portCD, pCD, dimCD);
+        unmask_events.resetCD();
+ 
 	
-	//int dimIF;
-	//char* pIF;
-	//unmask_events.getIF(pIF,&dimIF);z
-	//sendBuffer(portIF, pIF, dimIF);
+        //int dimIF;
+        //char* pIF;
+        //unmask_events.getIF(pIF,&dimIF);z
+        //sendBuffer(portIF, pIF, dimIF);
 	 
 	
         //getMonoImage(imageRight,minCount,maxCount,0);
@@ -340,17 +343,17 @@ void logSortThread::run() {
 }
 
 void logSortThread::sendBuffer(BufferedPort<sendingBuffer>* port, aer* buffer, int sz) {
-  if (port->getOutputCount()) {
-    char tmpBuffer[SIZE_PACKET];
+  if (port->getOutputCount()) {   
     int szSent = sz * 8; // dimension of the event times the bytes per event
     char* pBuffer = (char*) buffer;
-    for (int i = 0; i< szSent; i++) {
-      tmpBuffer[i] = *pBuffer++;
-    }
-    sendingBuffer data2send(tmpBuffer, szSent);    
+    
+    printf("sent: %d \n", szSent);
+    sendingBuffer data2send(pBuffer, szSent);    
     sendingBuffer& tmp = port->prepare();
-    tmp = data2send;
+    tmp = data2send;   
     port->write();
+ 
+    
   }     
 }
 

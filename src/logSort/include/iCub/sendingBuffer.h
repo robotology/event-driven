@@ -30,7 +30,7 @@
 //#include <yarp/os/Portable.h>
 #include <yarp/os/all.h>
 #include <iCub/config.h>
-#define SIZE_OF_DATA 65536
+//#define SIZE_OF_DATA 65536
 //#include "config.h"
 
 /*

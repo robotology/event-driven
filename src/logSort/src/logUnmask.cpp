@@ -407,10 +407,9 @@ int logUnmask::getMaxValue() {
     return maxValue;
 }
 
-void logUnmask::getCD(aer* pointerCD, int* dimCD) {
-    //printf("counted CD %d \n", countCD);
-    pointerCD = bufferCD;
-    dimCD = &countCD;
+void logUnmask::getCD(aer** pointerCD, int* dimCD) {
+    *pointerCD = bufferCD;
+    *dimCD = countCD;
 }
 
 void logUnmask::getIF(aer* pointerIF, int* dimCD) {
@@ -526,11 +525,13 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         
         switch (type) {
             case 0:{ //CD
-                //printf("Unmasked CD \n");
-                temp = &bufferCD[countCD];
-                temp->address   = blob;
-                temp->timestamp = timestamp;
-                countCD++;
+                //printf("Unmasked CD %x \n", bufferCD);
+                if((blob!=0)||(timestamp!=0)) {
+                    temp = &bufferCD[countCD];
+                    temp->address   = blob;
+                    temp->timestamp = timestamp;
+                    countCD++;
+                }
                 
             }
             break;

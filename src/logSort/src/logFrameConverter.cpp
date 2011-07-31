@@ -111,11 +111,12 @@ void logFrameConverter::onRead(sendingBuffer& i_ub) {
     valid = true;
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() ;      // number of bits received / 8 = bytes received
+    //printf("reading %d \n", dim);
     if(dim == 0){
         return;
     }
 
-    printf("reading %d \n", dim); 
+     
     mutex.wait();
     receivedBuffer = i_ub.get_packet();
     //pcBuffer = i_ub.get_packet();

@@ -39,9 +39,15 @@ typedef unsigned long uint32_t;
 
 #define u32 uint32_t
 
-struct aer {
+/*struct aer {
     u32 timestamp;
     u32 address;
+};
+*/
+
+struct aer {
+    u32 address;
+    u32 timestamp;
 };
 
 //Other dependency
@@ -235,7 +241,12 @@ public:
      * @param pointerCD char* pointer to the beginning of the buffer
      * @param dimCD number of the events counted in the buffer
      */     
-    void getCD(aer* pointerCD, int* dimCD);
+    void getCD(aer** pointerCD, int* dimCD);
+    
+    /**
+     * @brief function that resets the counter of CDs
+     */     
+    void resetCD() {countCD = 0; };
     
     /**
      * @brief function that returns the pointer to the buffer of INTEGRATE 'n' FIRE EVENT
