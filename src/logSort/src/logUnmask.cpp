@@ -539,27 +539,52 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
             break;
             case 1:{ //EM1
                 //printf("Unmasked EM1 \n");
-                countEM++;
+                if((blob!=0)||(timestamp!=0)) {
+                    temp = &bufferEM[countEM];
+                    temp->address   = blob;
+                    temp->timestamp = timestamp;
+                    countEM++;
+                }
             }
             break;
             case 2:{ //EM2
                 //printf("Unmasked EM2 \n");
-                countEM++;
+                if((blob!=0)||(timestamp!=0)) {
+                    temp = &bufferEM[countEM];
+                    temp->address   = blob;
+                    temp->timestamp = timestamp;
+                    countEM++;
+                }
             }
             break;
             case 3:{ //EM3
                 //printf("Unmasked EM3 \n");
-                countEM++;
+                if((blob!=0)||(timestamp!=0)) { 
+                    temp = &bufferEM[countEM];
+                    temp->address   = blob;
+                    temp->timestamp = timestamp;
+                    countEM++;
+                }
             }
             break;
             case 4:{ //EM4
                 //printf("Unmasked EM4 \n");
-                countEM++;
+                if((blob!=0)||(timestamp!=0)) {
+                    temp = &bufferEM[countEM];
+                    temp->address   = blob;
+                    temp->timestamp = timestamp;
+                    countEM++;
+                }
             }
             break;
             case 5:{ //IF
                 //printf("Unmasked IF \n");
-                countIF++;
+                if((blob!=0)||(timestamp!=0)) {
+                    temp = &bufferIF[countIF];
+                    temp->address   = blob;
+                    temp->timestamp = timestamp;
+                    countIF++;
+                }
             }
             break;            
         }

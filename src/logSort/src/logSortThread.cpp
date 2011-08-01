@@ -328,17 +328,21 @@ void logSortThread::run() {
         //printf("dimCD :  %d \n", dim);
         sendBuffer(&portCD, pCD, dim);
         unmask_events.resetCD();
-
-        unmask_events.getEM(&pCD, &dim);
-        //printf("dimEM :  %d \n", dim);
+        
+        printf("asking for EXPOSURE MEASURES \n");
+        unmask_events.getEM(&pEM, &dim);
+        printf("dimEM :  %d \n", dim);
         sendBuffer(&portEM, pEM, dim);
         unmask_events.resetEM();
 
+        
+        printf("asking for INTEGRATE & FIRE events \n");
         unmask_events.getIF(&pIF, &dim);
         //printf("dimIF :  %d \n", dim);
         sendBuffer(&portIF, pIF, dim);
         unmask_events.resetIF();
  
+        printf("sent events out \n");
 	
         //int dimIF;
         //char* pIF;
@@ -357,8 +361,7 @@ void logSortThread::sendBuffer(BufferedPort<eventBuffer>* port, aer* buffer, int
   if (port->getOutputCount()) {   
     int szSent = sz * 8; // dimension of the event times the bytes per event
     char* pBuffer = (char*) buffer;
-    
-    printf("sent: %d \n", szSent);
+    printf("sending : %d 0x%x \n", szSent, buffer);
     eventBuffer data2send(pBuffer, szSent);    
     eventBuffer& tmp = port->prepare();
     tmp = data2send;   
