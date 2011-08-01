@@ -82,6 +82,7 @@ private:
     bool validLeft,validRight;       // flag for validity of the events
     bool verb;                       // flag that indicates whether timestamp in forced to renewal 
     bool dvsMode;                    // flag that initialises the typology of unmaske
+    bool asvMode;                    // flag that represent the operational mode of the ASV chip
     FILE* uEvents;
     yarp::os::Semaphore countEventLocker;
     yarp::os::Semaphore countEventLocker2;

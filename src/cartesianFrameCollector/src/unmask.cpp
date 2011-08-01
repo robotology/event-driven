@@ -51,6 +51,7 @@ unmask::unmask() : RateThread(UNMASKRATETHREAD){
     count = 0;
     verb       = false;
     dvsMode    = false;
+    asvMode    = true;
     validLeft  = false;
     validRight = false;
     temp1      = true;
@@ -336,11 +337,19 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
             
             if(timeBuffer[cartX + cartY * retinalSize] < timestamp) {
                 if(polarity > 0) {
-                    buffer[cartX + cartY * retinalSize] = responseGradient;
+                    buffer[cartX + cartY * retinalSize]     = responseGradient;
                     timeBuffer[cartX + cartY * retinalSize] = timestamp;
                     
                     if(buffer[cartX + cartY * retinalSize] > 127) {
                         buffer[cartX + cartY * retinalSize] = 127;
+                    }
+                    if ((cartX<=2)||(cartX>4)&&((cartY<=2)||(cartY>4))&&(asvMode)) {
+                      buffer[cartX + 1 + cartY * retinalSize]       = responseGradient;
+                      timeBuffer[cartX + 1  + cartY * retinalSize]  = timestamp;
+                      buffer[cartX + (cartY + 1)  * retinalSize]    = responseGradient;
+                      timeBuffer[cartX + (cartY + 1) * retinalSize] = timestamp;
+                      buffer[cartX + 1 + (cartY + 1) * retinalSize]       = responseGradient;
+                      timeBuffer[cartX + 1  + (cartY + 1) * retinalSize]  = timestamp;                      
                     }
                 }
                 else if(polarity < 0) {
@@ -349,6 +358,15 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
                     
                     if (buffer[cartX + cartY * retinalSize] < -127) {
                         buffer[cartX + cartY * retinalSize] = -127;
+                    }
+                    
+                    if ((cartX<=2)||(cartX>4)&&((cartY<=2)||(cartY>4))&&(asvMode)) {
+                      buffer[cartX + 1 + cartY * retinalSize]       = -responseGradient;
+                      timeBuffer[cartX + 1  + cartY * retinalSize]  = timestamp;
+                      buffer[cartX + (cartY + 1)  * retinalSize]    = -responseGradient;
+                      timeBuffer[cartX + (cartY + 1) * retinalSize] = timestamp;
+                      buffer[cartX + 1 + (cartY + 1) * retinalSize]       = -responseGradient;
+                      timeBuffer[cartX + 1  + (cartY + 1) * retinalSize]  = timestamp;                      
                     }
                 }
             }           
