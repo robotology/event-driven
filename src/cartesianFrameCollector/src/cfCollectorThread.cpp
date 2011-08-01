@@ -36,13 +36,13 @@ using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
-#define INTERVFACTOR 500
+#define INTERVFACTOR 1
 #define COUNTERRATIO 1 //1.25       //1.25 is the ratio 0.160/0.128
 #define MAXVALUE 4294967295
 #define THRATE 5
 #define STAMPINFRAME  // 10 ms of period times the us in 1 millisecond + time for computing
 #define retinalSize 128
-#define CHUNKSIZE 8192 //32768 //65536 //8192
+#define CHUNKSIZE 32768 //65536 //8192
 #define dim_window 5
 #define synch_time 1
 
@@ -185,10 +185,9 @@ void cfCollectorThread::run() {
     // reads the buffer received
     //bufferRead = cfConverter->getBuffer();    
     // saves it into a working buffer
-    //printf("copying chunk \n");
     cfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
     // extract a chunk/unmask the chunk
-    //printf("unmasking Data \n");
+
     //printf("verb %d \n",verb);
     verb = false;
     unmask_events.unmaskData(bufferCopy,CHUNKSIZE,verb);
@@ -257,7 +256,7 @@ void cfCollectorThread::run() {
       //maxCount = lc; 
       //maxCountRight = rc;
 		 
-      //printf("synchronised %1f! %d,%d,%d||%d,%d,%d \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
+      printf("synchronised %1f! %d,%d,%d||%d,%d,%d \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
       startTimer = Time::now();
       synchronised = true; 
     }

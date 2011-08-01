@@ -333,7 +333,6 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
             }
             else if(timestamp > lasttimestamp) {
                 lasttimestamp = timestamp;
-                printf("*\n");
             }
             
             if(timeBuffer[cartX + cartY * retinalSize] < timestamp) {

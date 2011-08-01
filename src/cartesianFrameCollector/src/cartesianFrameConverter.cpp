@@ -101,20 +101,20 @@ void cFrameConverter::onRead(eventBuffer& i_ub) {
     //printf("onRead ");
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() ;      // number of bits received / 8 = bytes received
-    printf("dim %d \n", dim);
+    //printf("dim %d \n", dim);
    
     mutex.wait();
     receivedBuffer = i_ub.get_packet();    
     memcpy(pcBuffer,receivedBuffer,dim);
 
 
-    int num_events = dim / 8 ;
-    uint32_t* buf2 = (uint32_t*)receivedBuffer;
-    for (int evt = 0; evt < num_events; evt++) {
-        unsigned long blob      = buf2[2 * evt];
-        unsigned long t         = buf2[2 * evt + 1];
-        printf("0x%08x 0x%08x \n",blob, t);
-    }
+    //int num_events = dim / 8 ;
+    //uint32_t* buf2 = (uint32_t*)receivedBuffer;
+    //for (int evt = 0; evt < num_events; evt++) {
+    //    unsigned long blob      = buf2[2 * evt];
+    //    unsigned long t         = buf2[2 * evt + 1];
+    //    printf("0x%08x 0x%08x \n",blob, t);
+    //}
 
     
     if (totDim < TH1) {
