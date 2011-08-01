@@ -204,8 +204,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
     uint16_t* buf1 = (uint16_t*)i_buffer;
 
     unsigned long timestamp;
-    
-    
+       
     
     //for (int i = 0 ; i < i_sz ; i+=4) {
     //    unsigned int part_1 = 0xFF & i_buffer[i];    //extracting the 1 byte        
