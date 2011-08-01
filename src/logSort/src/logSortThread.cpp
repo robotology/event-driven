@@ -320,13 +320,24 @@ void logSortThread::run() {
 
 	    */
 	
-        int dimCD;
-        aer* pCD;
+        int dim;
+        aer *pCD, *pEM, *pIF;
+
         //TODO : code MUTEXes in these lines! Strictly Necessary!
-        unmask_events.getCD(&pCD, &dimCD);
-        //printf("dimCD :  %d \n", dimCD);
-        sendBuffer(&portCD, pCD, dimCD);
+        unmask_events.getCD(&pCD, &dim);
+        //printf("dimCD :  %d \n", dim);
+        sendBuffer(&portCD, pCD, dim);
         unmask_events.resetCD();
+
+        unmask_events.getEM(&pCD, &dim);
+        //printf("dimEM :  %d \n", dim);
+        sendBuffer(&portEM, pEM, dim);
+        unmask_events.resetEM();
+
+        unmask_events.getIF(&pIF, &dim);
+        //printf("dimIF :  %d \n", dim);
+        sendBuffer(&portIF, pIF, dim);
+        unmask_events.resetIF();
  
 	
         //int dimIF;

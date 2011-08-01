@@ -242,11 +242,35 @@ public:
      * @param dimCD number of the events counted in the buffer
      */     
     void getCD(aer** pointerCD, int* dimCD);
+
+    /**
+     * @brief function that returns the pointer to the buffer of Integrate & Fire
+     * @param pointerIF char* pointer to the beginning of the buffer
+     * @param dimIF number of the events counted in the buffer
+     */     
+    void getIF(aer** pointerIF, int* dimIF);
+
+    /**
+     * @brief function that returns the pointer to the buffer of EXPOSURE MEASURE
+     * @param pointerEM char* pointer to the beginning of the buffer
+     * @param dimEM number of the events counted in the buffer
+     */     
+    void getEM(aer** pointerEM, int* dimEM);
     
     /**
      * @brief function that resets the counter of CDs
      */     
     void resetCD() {countCD = 0; };
+
+    /**
+     * @brief function that resets the counter of IFs
+     */     
+    void resetIF() {countIF = 0; };
+
+    /**
+     * @brief function that resets the counter of EMs
+     */     
+    void resetEM() {countEM = 0; };
     
     /**
      * @brief function that returns the pointer to the buffer of INTEGRATE 'n' FIRE EVENT

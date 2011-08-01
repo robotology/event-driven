@@ -114,6 +114,9 @@ public:
      */
     void resetTimestamps();
 
+    /**
+     * @brief return whether the unmasking is valid
+     */
     bool isValid(){return valid;};
 
 private:

@@ -412,14 +412,16 @@ void logUnmask::getCD(aer** pointerCD, int* dimCD) {
     *dimCD = countCD;
 }
 
-void logUnmask::getIF(aer* pointerIF, int* dimCD) {
+void logUnmask::getIF(aer** pointerIF, int* dimIF) {
     //printf("counted IF %d \n", countIF);
-    pointerIF = bufferIF;
+    *pointerIF = bufferIF;
+    *dimIF = countIF;
 }
 
-void logUnmask::getEM(aer* pointerEM, int* dimCD) {
+void logUnmask::getEM(aer** pointerEM, int* dimEM) {
     //printf("counted EM %d \n", countEM);
-    pointerEM = bufferEM;
+    *pointerEM = bufferEM;
+    *dimEM = countEM;
 }
 
 unsigned long logUnmask::getLastTimestamp() {
