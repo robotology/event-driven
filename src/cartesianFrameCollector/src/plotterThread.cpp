@@ -45,27 +45,29 @@ plotterThread::plotterThread() : RateThread(THRATE) {
     synchronised = false;
     count=0;
     lambda = 0.9;
-    imageLeft = 0;
-    imageRight = 0;
-    imageLeftInt = new ImageOf<PixelMono>;
+    imageLeft      = new ImageOf<PixelMono>;
+    imageLeft->resize(retinalSize,retinalSize);
+    imageRight     = new ImageOf<PixelMono>;
+    imageLeft->resize(retinalSize,retinalSize);
+    imageLeftInt   = new ImageOf<PixelMono>;
     imageLeftInt->resize(retinalSize,retinalSize);
     imageLeftInt->zero();
-    imageRightInt = new ImageOf<PixelMono>;
+    imageRightInt  = new ImageOf<PixelMono>;
     imageRightInt->resize(retinalSize,retinalSize);
     imageRightInt->zero();
-    imageLeftBW = new ImageOf<PixelMono>;
+    imageLeftBW    = new ImageOf<PixelMono>;
     imageLeftBW->resize(retinalSize,retinalSize);
     imageLeftBW->zero();
-    imageRightBW = new ImageOf<PixelMono>;
+    imageRightBW   = new ImageOf<PixelMono>;
     imageRightBW->resize(retinalSize,retinalSize);
     imageRightBW->zero();
-    imageLeftGrey = new ImageOf<PixelMono>;
+    imageLeftGrey  = new ImageOf<PixelMono>;
     imageLeftGrey->resize(retinalSize,retinalSize);
     imageLeftGrey->zero();
     imageRightGrey = new ImageOf<PixelMono>;
     imageRightGrey->resize(retinalSize,retinalSize);
     imageRightGrey->zero();
-    imageLeftThreshold = new ImageOf<PixelMono>;
+    imageLeftThreshold  = new ImageOf<PixelMono>;
     imageLeftThreshold->resize(retinalSize,retinalSize);
     imageLeftThreshold->zero();
     imageRightThreshold = new ImageOf<PixelMono>;
@@ -122,7 +124,7 @@ void plotterThread::resize(int widthp, int heightp) {
 void plotterThread::copyLeft(ImageOf<PixelMono>* image) {
     int padding= image->getPadding();
     unsigned char* pimage = image->getRawImage();
-    unsigned char* pleft = imageLeft->getRawImage();
+    unsigned char* pleft  = imageLeft->getRawImage();
     if(imageLeft != 0) {
         for(int r = 0;r < retinalSize; r++) {
             for(int c = 0; c < retinalSize; c++) {

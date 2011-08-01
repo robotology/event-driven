@@ -43,7 +43,7 @@ using namespace std;
 #define STAMPINFRAME  // 10 ms of period times the us in 1 millisecond + time for computing
 #define retinalSize 128
 #define CHUNKSIZE 32768 //65536 //8192
-#define dim_window 5
+#define dim_window 15
 #define synch_time 1
 
 cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
@@ -432,14 +432,6 @@ void cfCollectorThread::threadRelease() {
     printf("cfCollectorThread release         deleting converter \n");
     delete cfConverter;
     printf("correctly freed memory from the cfCollector \n");
-    printf("correctly freed memory from the cfCollector \n");
-    printf("correctly freed memory from the cfCollector \n");
-    printf("correctly freed memory from the cfCollector \n");
-    printf("correctly freed memory from the cfCollector \n");
-    printf("correctly freed memory from the cfCollector \n");
-    printf("correctly freed memory from the cfCollector \n");
-    printf("correctly freed memory from the cfCollector \n");
-    
 }
 
 
