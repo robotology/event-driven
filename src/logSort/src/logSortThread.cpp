@@ -342,14 +342,14 @@ void logSortThread::run() {
     }
 }
 
-void logSortThread::sendBuffer(BufferedPort<sendingBuffer>* port, aer* buffer, int sz) {
+void logSortThread::sendBuffer(BufferedPort<eventBuffer>* port, aer* buffer, int sz) {
   if (port->getOutputCount()) {   
     int szSent = sz * 8; // dimension of the event times the bytes per event
     char* pBuffer = (char*) buffer;
     
     printf("sent: %d \n", szSent);
-    sendingBuffer data2send(pBuffer, szSent);    
-    sendingBuffer& tmp = port->prepare();
+    eventBuffer data2send(pBuffer, szSent);    
+    eventBuffer& tmp = port->prepare();
     tmp = data2send;   
     port->write();
  

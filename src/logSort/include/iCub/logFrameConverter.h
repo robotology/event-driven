@@ -34,10 +34,12 @@
 #include <ctime>
 #include <list>
 
+#include <iCub/eventBuffer.h>
+
 #include <iCub/logUnmask.h>
 #include <iCub/convert.h>
-#include <iCub/sendingBuffer.h>
-#include <iCub/config.h>
+//#include <iCub/sendingBuffer.h>
+//#include <iCub/config.h>
 
 #include <yarp/os/Network.h>
 #include <yarp/os/BufferedPort.h>
@@ -45,15 +47,16 @@
 
 
 
-class logFrameConverter:public yarp::os::BufferedPort<sendingBuffer> {
+class logFrameConverter:public yarp::os::BufferedPort<eventBuffer> {
 public:
     logFrameConverter();
+   
     ~logFrameConverter();
 
     /**
     * overwritten function for handling events as soon as they arrive
     */
-    virtual void onRead(sendingBuffer& b);
+    virtual void onRead(eventBuffer& b);
 
 
     /**

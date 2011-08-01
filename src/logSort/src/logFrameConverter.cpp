@@ -99,7 +99,7 @@ void logFrameConverter::copyChunk(char* bufferCopy, char* flagBuffer) {
     mutex.post(); 
 }
 
-void logFrameConverter::onRead(sendingBuffer& i_ub) {
+void logFrameConverter::onRead(eventBuffer& i_ub) {
 
     // pcBuffer where the new reading is copied
     // pcRead   pointer to the chunk that is exported
