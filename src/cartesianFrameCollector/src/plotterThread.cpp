@@ -1,4 +1,3 @@
-
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /* 
@@ -76,6 +75,8 @@ plotterThread::plotterThread() : RateThread(THRATE) {
 }
 
 plotterThread::~plotterThread() {
+    delete imageLeft;
+    delete imageRight;
     printf("freeing memory in collector");
     delete imageLeftInt;
     delete imageRightInt;
