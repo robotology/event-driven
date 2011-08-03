@@ -608,7 +608,8 @@ void  asvGrabberThread::run() {
     for (int i = 0; i < monBufEvents; i++) {
         // double buffer!!
         a = pmon[i].address;
-        t = pmon[i].timestamp * 0.128;
+        //t = pmon[i].timestamp * 0.128;   // this instruction is valid only for AEX not the iHead
+        t = pmon[i].timestamp;
         //alow = a&0xFFFF0000;
         //tlow = t&0xFFFF0000;
         //ahigh = (a&0xFFFF0000);
@@ -870,7 +871,7 @@ bool asvGrabberThread::setDumpFile(std::string value) {
     //if (!ret)
     //    cout << "unable to open file" << endl;
 
-    fout = fopen(dumpfile.c_str(),"w");
+    fout = fopen(dumpfile.c_str(),"w+");
     if(fout!=NULL)
         return true;
     else
