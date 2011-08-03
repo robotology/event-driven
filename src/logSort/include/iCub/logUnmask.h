@@ -83,6 +83,7 @@ private:
     unsigned long lasttimestampright;     // last timestamp acquired for the right camera
     unsigned long eldesttimestamp;        // timestamp of the eldest event in the buffer 
     short cartX, cartY, polarity, type;
+    short maxx, maxy;
 
     int wrapAdd;
     unsigned int xmask;              // 16 bits mask for unmasking of the address
@@ -224,7 +225,7 @@ public:
     * @param pol polarity of the event +1, -1
     * @param camera reference to the camera that has produced the event
     */
-    void logUnmaskEvent(long int evPU, short& x, short& y, short& pol, short& camera);
+    void logUnmaskEvent(unsigned long evPU, short& x, short& y, short& pol, short& camera);
 
     /**
     * @brief This method unmasked the raw which come from the TCP socket
@@ -235,6 +236,8 @@ public:
     * @param pol Set with the ON/OFF polarity of the pixel.
     */
     void logUnmaskEvent(unsigned int evPu, short& x, short& y, short& pol, short& camera);
+
+    void logMaskEvent(short metax, short metay, short pol, unsigned long int& evPU);
 
     /**
      * @brief function that returns the pointer to the buffer of CHANGE DETECTOR EVENT
