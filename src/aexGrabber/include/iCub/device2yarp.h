@@ -32,6 +32,7 @@
 #include <yarp/os/RateThread.h>
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/Semaphore.h>
+#include <yarp/os/Time.h>
 
 #include <fcntl.h>
 #include <sys/ioctl.h>
@@ -40,6 +41,7 @@
 #include <cstdlib>
 #include <stdint.h>
 #include <fstream>
+
 
 #include "sending_buffer.h"
 
@@ -401,7 +403,8 @@ public:
 private:
     yarp::os::BufferedPort<sendingBuffer> port;              //port sending events
     yarp::os::BufferedPort<yarp::os::Bottle> portDimension;  //port sending dimension of packets   
-    int r;                                           //dimension of the received buffer of event for display
+    int r;                                          //dimension of the received buffer of event for display
+    int countAEs;                                   //counter of the received AEs
     FILE* raw;
     FILE* binInput;
     bool biasFromBinary;                            // indicates whether the bias programmed are read from a file
@@ -414,6 +417,9 @@ private:
     struct aer *pseq;                               //pointer to the sequence of events 
     struct aer *pmon;                               //pointer to the sequence of events (monitor)
 
+    double startInt;                                //time variable for the start of acquisition
+    double stopInt;                                  //time variable for the end of acquisition
+    
     int file_desc,len,sz;
     unsigned char buffer_msg[64];
     short enabled;

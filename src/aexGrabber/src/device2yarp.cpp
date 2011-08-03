@@ -85,7 +85,7 @@ reset_pins_expand = 4
 
 #define CLOCK_LO 0
 #define CLOCK_HI 1
-#define THRATE 5
+#define THRATE 1
 
 
 device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName = " "):RateThread(THRATE) {
@@ -243,6 +243,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName =
     this->biasFileName   = i_fileName;
 
     //initialisation of the module
+    countAEs = 0;
     len=0;
     sz=0;
     ec = 0;
@@ -272,6 +273,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName =
     // preparing and sending biases      
     prepareBiases();
     prepareBiasesRight();
+    startInt=Time::now();
 }
 
 
@@ -700,6 +702,7 @@ void  device2yarp::run() {
         printf("ERROR: read %d bytes from the AEX!!!\n", r);
     }
     monBufEvents = r / sizeofstructaer;
+    countAEs += monBufEvents; 
     printf("%d \n",r);
 
     int k = 0;
@@ -712,7 +715,8 @@ void  device2yarp::run() {
     for (int i = 0; i < monBufEvents; i++) {
         // double buffer!!
         a = pmon[i].address;
-        t = pmon[i].timestamp * 0.128;
+        //  t = pmon[i].timestamp * 0.128;    // <--------- this instruction is valid only for AEX but it is not valid for iHead!!!!!!!
+        t = pmon[i].timestamp;
         //alow = a&0xFFFF0000;
         //tlow = t&0xFFFF0000;
         //ahigh = (a&0xFFFF0000);
@@ -733,7 +737,7 @@ void  device2yarp::run() {
     }
 
 
-    sz = monBufEvents*sizeof(struct aer); // sz is size in bytes
+    sz = monBufEvents * sizeof(struct aer); // sz is size in bytes
 
     if (port.getOutputCount()) {
         sendingBuffer data2send(buffer, sz);    
@@ -989,7 +993,10 @@ void device2yarp::threadRelease() {
     setPowerdown();
     sendingBias();
     */
-
+    stopInt=Time::now();
+    double diff = stopInt - startInt;
+    printf("the grabber has collected %d AEs in %f seconds \n",countAEs,diff);
     port.close();
     close(file_desc);
+
 }
