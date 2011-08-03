@@ -325,24 +325,19 @@ void logSortThread::run() {
 
         //TODO : code MUTEXes in these lines! Strictly Necessary!
         unmask_events.getCD(&pCD, &dim);
-        //printf("dimCD :  %d \n", dim);
+        printf("dimCD :  %d \n", dim);
         sendBuffer(&portCD, pCD, dim);
         unmask_events.resetCD();
         
-        printf("asking for EXPOSURE MEASURES \n");
         unmask_events.getEM(&pEM, &dim);
         printf("dimEM :  %d \n", dim);
         sendBuffer(&portEM, pEM, dim);
         unmask_events.resetEM();
 
-        
-        printf("asking for INTEGRATE & FIRE events \n");
         unmask_events.getIF(&pIF, &dim);
-        //printf("dimIF :  %d \n", dim);
+        printf("dimIF :  %d \n", dim);
         sendBuffer(&portIF, pIF, dim);
         unmask_events.resetIF();
- 
-        printf("sent events out \n");
 	
         //int dimIF;
         //char* pIF;

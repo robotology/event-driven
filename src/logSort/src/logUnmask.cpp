@@ -380,7 +380,13 @@ bool logUnmask::threadInit() {
             
             // saving the extracted information in a LUT respecting the order 
             // type, metax, metay, polarity
-            logChip_LUT[y * 36 + x][0] = type ; logChip_LUT[y * 36 + x][1] = metax ; logChip_LUT[y * 36 + x][2] = metay ; logChip_LUT[y * 36 + x][3] = pol;
+            logChip_LUT[y * 36 + x][0] = type;
+            logChip_LUT[y * 36 + x][1] = metax;
+            logChip_LUT[y * 36 + x][2] = metay;
+            logChip_LUT[y * 36 + x][3] = pol;
+            
+            printf("%03%d %03%d   >     %03%d %03%d %03%d %03%d\n",x,y,type, metax, metay, pol );
+
             
             //if((true) && ( y == 11)) {
             //    printf(" %d %d > %d %d %d %d \n", x, y, metax, metay, pol, type);
