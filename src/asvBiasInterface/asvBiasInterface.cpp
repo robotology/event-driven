@@ -1445,6 +1445,7 @@ static void callbackProgBiasButton( GtkWidget *widget,gpointer data ) {
 
 gint timeout_update_CB(gpointer data) {
     c++;
+    printf("c %d", c);
     switch(c) {
         case 0: {
             if(_pOutPort->getOutputCount()) {
@@ -1456,9 +1457,10 @@ gint timeout_update_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(2).asDouble();
-                    //mutex.wait();
+                    printf("getting SYTH %f", value);
+                    mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjSYTH),value);
-                    //mutex.post();
+                    mutex.post();
             }
         }
         break;
@@ -1472,6 +1474,7 @@ gint timeout_update_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(2).asDouble();
+                    printf("getting SYTA %f", value);
                     mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjSYTA),value);
                     mutex.post();
@@ -1488,6 +1491,7 @@ gint timeout_update_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(2).asDouble();
+                    printf("getting SYPA %f", value);
                     mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjSYPA),value);
                     mutex.post();
@@ -1504,6 +1508,7 @@ gint timeout_update_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(2).asDouble();
+                    printf("getting SYPH %f", value);
                     mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjSYPH),value);
                     mutex.post();
@@ -1520,6 +1525,7 @@ gint timeout_update_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(2).asDouble();
+                    printf("getting TPB %f", value);
                     mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjTPB),value);
                     mutex.post();
@@ -1536,6 +1542,7 @@ gint timeout_update_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(2).asDouble();
+                    printf("getting CDR %f", value);
                     mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjCDR),value);
                     mutex.post();
@@ -1552,6 +1559,7 @@ gint timeout_update_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(2).asDouble();
+                    printf("getting CDS %f", value);
                     mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjCDS),value);
                     mutex.post();
@@ -1568,6 +1576,7 @@ gint timeout_update_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(2).asDouble();
+                    printf("getting CDP %f", value);
                     mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjCDP),value);
                     mutex.post();
@@ -1584,6 +1593,7 @@ gint timeout_update_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(2).asDouble();
+                    printf("getting RPX  %f", value);
                     mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjRPX),value);
                     mutex.post();
@@ -1600,6 +1610,7 @@ gint timeout_update_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(2).asDouble();
+                    printf("getting RPY %f", value);
                     mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjRPY),value);
                     mutex.post();
@@ -1616,6 +1627,7 @@ gint timeout_update_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(2).asDouble();
+                    printf("getting IFR %f", value);
                     mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjIFR),value);
                     mutex.post();
@@ -1632,6 +1644,7 @@ gint timeout_update_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(2).asDouble();
+                    printf("getting IFT %f", value);
                     mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjIFT),value);
                     mutex.post();
@@ -1648,6 +1661,7 @@ gint timeout_update_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(2).asDouble();
+                    printf("getting IFL %f", value);
                     mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjIFL),value);
                     mutex.post();
@@ -1664,6 +1678,7 @@ gint timeout_update_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(2).asDouble();
+                    printf("getting CDOF %f", value);
                     mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjCDOF),value);
                     mutex.post();
@@ -1680,6 +1695,7 @@ gint timeout_update_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(2).asDouble();
+                    printf("getting SYPW %f", value);
                     mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjSYPW),value);
                     mutex.post();
@@ -1696,6 +1712,7 @@ gint timeout_update_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(2).asDouble();
+                    printf("getting SYW %f", value);
                     mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjSYW),value);
                     mutex.post();
@@ -1712,6 +1729,7 @@ gint timeout_update_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(2).asDouble();
+                    printf("getting CDON %f", value);
                     mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjCDON),value);
                     mutex.post();
@@ -1728,6 +1746,7 @@ gint timeout_update_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(2).asDouble();
+                    printf("getting CDD %f", value);
                     mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjCDD),value);
                     mutex.post();
@@ -1744,6 +1763,7 @@ gint timeout_update_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(2).asDouble();
+                    printf("getting EMCH %f", value);
                     mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjEMCH),value);
                     mutex.post();
@@ -1760,6 +1780,7 @@ gint timeout_update_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(2).asDouble();
+                    printf("getting EMCT %f", value);
                     mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjEMCT),value);
                     mutex.post();
@@ -1776,6 +1797,7 @@ gint timeout_update_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(2).asDouble();
+                    printf("getting CDI %f", value);
                     mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjCDI),value);
                     mutex.post();
@@ -1792,6 +1814,7 @@ gint timeout_update_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(2).asDouble();
+                    printf("getting CDRG %f", value);
                     mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjCDRG),value);
                     mutex.post();
@@ -1808,6 +1831,7 @@ gint timeout_update_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(2).asDouble();
+                    printf("getting SELF %f", value);
                     mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjSELF),value);
                     mutex.post();
@@ -1824,6 +1848,7 @@ gint timeout_update_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(2).asDouble();
+                    printf("getting FOLL %f", value);
                     mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjFOLL),value);
                     mutex.post();
@@ -1840,6 +1865,7 @@ gint timeout_update_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(2).asDouble();
+                    printf("getting ARPB %f", value);
                     mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjARBP),value);
                     mutex.post();
@@ -1856,6 +1882,7 @@ gint timeout_update_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(2).asDouble();
+                    printf("getting EMVL %f", value);
                     mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjEMVL),value);
                     mutex.post();
@@ -1872,6 +1899,7 @@ gint timeout_update_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(2).asDouble();
+                    printf("getting CDC %f", value);
                     mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjCDC),value);
                     mutex.post();
@@ -1888,6 +1916,7 @@ gint timeout_update_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(2).asDouble();
+                    printf("getting EMVH %f", value);
                     mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjEMVH),value);
                     mutex.post();
