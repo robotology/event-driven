@@ -1443,9 +1443,9 @@ static void callbackProgBiasButton( GtkWidget *widget,gpointer data ) {
 
 
 
-gint timeout_update_CB(gpointer data) {
+gint timeout_CB(gpointer data) {
     c++;
-    printf("c %d", c);
+    printf("c %d \n", c);
     switch(c) {
         case 0: {
             if(_pOutPort->getOutputCount()) {
@@ -1456,11 +1456,12 @@ gint timeout_update_CB(gpointer data) {
                     //_pOutPort->Content() = _outBottle;
                     Bottle in;
                     _pOutPort->write(bot,in);
-                    double value=in.get(2).asDouble();
+                    printf("       in bottle %s", in.toString().c_str());
+                    double value=in.get(0).asDouble();
                     printf("getting SYTH %f", value);
-                    mutex.wait();
+                    //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjSYTH),value);
-                    mutex.post();
+                    //mutex.post();
             }
         }
         break;
@@ -1473,11 +1474,11 @@ gint timeout_update_CB(gpointer data) {
                     //_pOutPort->Content() = _outBottle;
                     Bottle in;
                     _pOutPort->write(bot,in);
-                    double value=in.get(2).asDouble();
+                    double value=in.get(0).asDouble();
                     printf("getting SYTA %f", value);
-                    mutex.wait();
+                    //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjSYTA),value);
-                    mutex.post();
+                    //mutex.post();
             }
         }
         break;
@@ -1490,11 +1491,11 @@ gint timeout_update_CB(gpointer data) {
                     //_pOutPort->Content() = _outBottle;
                     Bottle in;
                     _pOutPort->write(bot,in);
-                    double value=in.get(2).asDouble();
+                    double value=in.get(0).asDouble();
                     printf("getting SYPA %f", value);
-                    mutex.wait();
+                    //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjSYPA),value);
-                    mutex.post();
+                    //mutex.post();
             }
         }
         break;
@@ -1507,11 +1508,11 @@ gint timeout_update_CB(gpointer data) {
                     //_pOutPort->Content() = _outBottle;
                     Bottle in;
                     _pOutPort->write(bot,in);
-                    double value=in.get(2).asDouble();
+                    double value=in.get(0).asDouble();
                     printf("getting SYPH %f", value);
-                    mutex.wait();
+                    //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjSYPH),value);
-                    mutex.post();
+                    //mutex.post();
             }
         }
         break;
@@ -1524,11 +1525,11 @@ gint timeout_update_CB(gpointer data) {
                     //_pOutPort->Content() = _outBottle;
                     Bottle in;
                     _pOutPort->write(bot,in);
-                    double value=in.get(2).asDouble();
+                    double value=in.get(0).asDouble();
                     printf("getting TPB %f", value);
-                    mutex.wait();
+                    //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjTPB),value);
-                    mutex.post();
+                    //mutex.post();
             }
         }
         break;
@@ -1541,11 +1542,11 @@ gint timeout_update_CB(gpointer data) {
                     //_pOutPort->Content() = _out5Bottle;
                     Bottle in;
                     _pOutPort->write(bot,in);
-                    double value=in.get(2).asDouble();
+                    double value=in.get(0).asDouble();
                     printf("getting CDR %f", value);
-                    mutex.wait();
+                    //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjCDR),value);
-                    mutex.post();
+                    //mutex.post();
             }
         }
         break;
@@ -1558,11 +1559,11 @@ gint timeout_update_CB(gpointer data) {
                     //_pOutPort->Content() = _outBottle;
                     Bottle in;
                     _pOutPort->write(bot,in);
-                    double value=in.get(2).asDouble();
+                    double value=in.get(0).asDouble();
                     printf("getting CDS %f", value);
-                    mutex.wait();
+                    //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjCDS),value);
-                    mutex.post();
+                    //mutex.post();
            }
         }
         break;
@@ -1575,11 +1576,11 @@ gint timeout_update_CB(gpointer data) {
                     //_pOutPort->Content() = _outBottle;
                     Bottle in;
                     _pOutPort->write(bot,in);
-                    double value=in.get(2).asDouble();
+                    double value=in.get(0).asDouble();
                     printf("getting CDP %f", value);
-                    mutex.wait();
+                    //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjCDP),value);
-                    mutex.post();
+                    //mutex.post();
             }
         }
         break;
@@ -1592,11 +1593,11 @@ gint timeout_update_CB(gpointer data) {
                     //_pOutPort->Content() = _outBottle;
                     Bottle in;
                     _pOutPort->write(bot,in);
-                    double value=in.get(2).asDouble();
+                    double value=in.get(0).asDouble();
                     printf("getting RPX  %f", value);
-                    mutex.wait();
+                    //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjRPX),value);
-                    mutex.post();
+                    //mutex.post();
             }
         }
         break;
@@ -1609,11 +1610,11 @@ gint timeout_update_CB(gpointer data) {
                     //_pOutPort->Content() = _outBottle;
                     Bottle in;
                     _pOutPort->write(bot,in);
-                    double value=in.get(2).asDouble();
+                    double value=in.get(0).asDouble();
                     printf("getting RPY %f", value);
-                    mutex.wait();
+                    //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjRPY),value);
-                    mutex.post();
+                    //mutex.post();
             }
         }
         break;
@@ -1626,11 +1627,11 @@ gint timeout_update_CB(gpointer data) {
                     //_pOutPort->Content() = _outBottle;
                     Bottle in;
                     _pOutPort->write(bot,in);
-                    double value=in.get(2).asDouble();
+                    double value=in.get(0).asDouble();
                     printf("getting IFR %f", value);
-                    mutex.wait();
+                    //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjIFR),value);
-                    mutex.post();
+                    //mutex.post();
             }
         }
         break;
@@ -1643,11 +1644,11 @@ gint timeout_update_CB(gpointer data) {
                     //_pOutPort->Content() = _out5Bottle;
                     Bottle in;
                     _pOutPort->write(bot,in);
-                    double value=in.get(2).asDouble();
+                    double value=in.get(0).asDouble();
                     printf("getting IFT %f", value);
-                    mutex.wait();
+                    //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjIFT),value);
-                    mutex.post();
+                    //mutex.post();
             }
         }
         break;
@@ -1660,11 +1661,11 @@ gint timeout_update_CB(gpointer data) {
                     //_pOutPort->Content() = _outBottle;
                     Bottle in;
                     _pOutPort->write(bot,in);
-                    double value=in.get(2).asDouble();
+                    double value=in.get(0).asDouble();
                     printf("getting IFL %f", value);
-                    mutex.wait();
+                    //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjIFL),value);
-                    mutex.post();
+                    //mutex.post();
             }
         }
         break;
@@ -1677,11 +1678,11 @@ gint timeout_update_CB(gpointer data) {
                     //_pOutPort->Content() = _outBottle;
                     Bottle in;
                     _pOutPort->write(bot,in);
-                    double value=in.get(2).asDouble();
+                    double value=in.get(0).asDouble();
                     printf("getting CDOF %f", value);
-                    mutex.wait();
+                    //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjCDOF),value);
-                    mutex.post();
+                    //mutex.post();
             }
         }
         break;
@@ -1694,11 +1695,11 @@ gint timeout_update_CB(gpointer data) {
                     //_pOutPort->Content() = _outBottle;
                     Bottle in;
                     _pOutPort->write(bot,in);
-                    double value=in.get(2).asDouble();
+                    double value=in.get(0).asDouble();
                     printf("getting SYPW %f", value);
-                    mutex.wait();
+                    //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjSYPW),value);
-                    mutex.post();
+                    //mutex.post();
             }
         }
         break;
@@ -1711,11 +1712,11 @@ gint timeout_update_CB(gpointer data) {
                     //_pOutPort->Content() = _outBottle;
                     Bottle in;
                     _pOutPort->write(bot,in);
-                    double value=in.get(2).asDouble();
+                    double value=in.get(0).asDouble();
                     printf("getting SYW %f", value);
-                    mutex.wait();
+                    //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjSYW),value);
-                    mutex.post();
+                    //mutex.post();
             }
         }
         break;
@@ -1728,11 +1729,11 @@ gint timeout_update_CB(gpointer data) {
                     //_pOutPort->Content() = _outBottle;
                     Bottle in;
                     _pOutPort->write(bot,in);
-                    double value=in.get(2).asDouble();
+                    double value=in.get(0).asDouble();
                     printf("getting CDON %f", value);
-                    mutex.wait();
+                    //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjCDON),value);
-                    mutex.post();
+                    //mutex.post();
             }
         }
         break;
@@ -1745,11 +1746,11 @@ gint timeout_update_CB(gpointer data) {
                     //_pOutPort->Content() = _outBottle;
                     Bottle in;
                     _pOutPort->write(bot,in);
-                    double value=in.get(2).asDouble();
+                    double value=in.get(0).asDouble();
                     printf("getting CDD %f", value);
-                    mutex.wait();
+                    //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjCDD),value);
-                    mutex.post();
+                    //mutex.post();
             }
         }
         break;
@@ -1762,11 +1763,11 @@ gint timeout_update_CB(gpointer data) {
                     //_pOutPort->Content() = _outBottle;
                     Bottle in;
                     _pOutPort->write(bot,in);
-                    double value=in.get(2).asDouble();
+                    double value=in.get(0).asDouble();
                     printf("getting EMCH %f", value);
-                    mutex.wait();
+                    //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjEMCH),value);
-                    mutex.post();
+                    //mutex.post();
             }
         }
         break;
@@ -1779,11 +1780,11 @@ gint timeout_update_CB(gpointer data) {
                     //_pOutPort->Content() = _outBottle;
                     Bottle in;
                     _pOutPort->write(bot,in);
-                    double value=in.get(2).asDouble();
+                    double value=in.get(0).asDouble();
                     printf("getting EMCT %f", value);
-                    mutex.wait();
+                    //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjEMCT),value);
-                    mutex.post();
+                    //mutex.post();
             }
         }
         break;
@@ -1796,11 +1797,11 @@ gint timeout_update_CB(gpointer data) {
                     //_pOutPort->Content() = _outBottle;
                     Bottle in;
                     _pOutPort->write(bot,in);
-                    double value=in.get(2).asDouble();
+                    double value=in.get(0).asDouble();
                     printf("getting CDI %f", value);
-                    mutex.wait();
+                    //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjCDI),value);
-                    mutex.post();
+                    //mutex.post();
             }
         }
         break;
@@ -1813,11 +1814,11 @@ gint timeout_update_CB(gpointer data) {
                     //_pOutPort->Content() = _outBottle;
                     Bottle in;
                     _pOutPort->write(bot,in);
-                    double value=in.get(2).asDouble();
+                    double value=in.get(0).asDouble();
                     printf("getting CDRG %f", value);
-                    mutex.wait();
+                    //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjCDRG),value);
-                    mutex.post();
+                    //mutex.post();
             }
         }
         break;
@@ -1830,11 +1831,11 @@ gint timeout_update_CB(gpointer data) {
                     //_pOutPort->Content() = _outBottle;
                     Bottle in;
                     _pOutPort->write(bot,in);
-                    double value=in.get(2).asDouble();
+                    double value=in.get(0).asDouble();
                     printf("getting SELF %f", value);
-                    mutex.wait();
+                    //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjSELF),value);
-                    mutex.post();
+                    //mutex.post();
             }
         }
         break;
@@ -1847,11 +1848,11 @@ gint timeout_update_CB(gpointer data) {
                     //_pOutPort->Content() = _outBottle;
                     Bottle in;
                     _pOutPort->write(bot,in);
-                    double value=in.get(2).asDouble();
+                    double value=in.get(0).asDouble();
                     printf("getting FOLL %f", value);
-                    mutex.wait();
+                    //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjFOLL),value);
-                    mutex.post();
+                    //mutex.post();
             }
         }
         break;
@@ -1864,11 +1865,11 @@ gint timeout_update_CB(gpointer data) {
                     //_pOutPort->Content() = _outBottle;
                     Bottle in;
                     _pOutPort->write(bot,in);
-                    double value=in.get(2).asDouble();
+                    double value=in.get(0).asDouble();
                     printf("getting ARPB %f", value);
-                    mutex.wait();
+                    //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjARBP),value);
-                    mutex.post();
+                    //mutex.post();
             }
         }
         break;
@@ -1881,11 +1882,11 @@ gint timeout_update_CB(gpointer data) {
                     //_pOutPort->Content() = _outBottle;
                     Bottle in;
                     _pOutPort->write(bot,in);
-                    double value=in.get(2).asDouble();
+                    double value=in.get(0).asDouble();
                     printf("getting EMVL %f", value);
-                    mutex.wait();
+                    //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjEMVL),value);
-                    mutex.post();
+                    //mutex.post();
             }
         }
         break;
@@ -1898,11 +1899,11 @@ gint timeout_update_CB(gpointer data) {
                     //_pOutPort->Content() = _outBottle;
                     Bottle in;
                     _pOutPort->write(bot,in);
-                    double value=in.get(2).asDouble();
+                    double value=in.get(0).asDouble();
                     printf("getting CDC %f", value);
-                    mutex.wait();
+                    //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjCDC),value);
-                    mutex.post();
+                    //mutex.post();
             }
         }
         break;
@@ -1915,11 +1916,12 @@ gint timeout_update_CB(gpointer data) {
                     //_pOutPort->Content() = _outBottle;
                     Bottle in;
                     _pOutPort->write(bot,in);
-                    double value=in.get(2).asDouble();
+                    double value=in.get(0).asDouble();
                     printf("getting EMVH %f", value);
-                    mutex.wait();
+                    //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjEMVH),value);
-                    mutex.post();
+                    
+                    //mutex.post();
             }
         }
         break;
@@ -1927,6 +1929,7 @@ gint timeout_update_CB(gpointer data) {
                     c=-1;
                  }
     }
+
     //portFpsData.getStats(av, min, max);
     //portFpsData.reset();
     gchar *msg;
@@ -1946,10 +1949,10 @@ gint timeout_update_CB(gpointer data) {
     return TRUE;
 }
 
-gint timeout_CB (gpointer data) {
-    c++;
-    return TRUE;
-}
+//gint timeout_CB (gpointer data) {
+//    c++;
+//    return TRUE;
+//}
 
 
 gboolean delete_event( GtkWidget *widget, GdkEvent *event, gpointer data ) {
@@ -3200,7 +3203,7 @@ GtkWidget* createMainWindow(void) {
 
     frame = gdk_pixbuf_new (GDK_COLORSPACE_RGB, FALSE, 8, 320, 240);
     // TimeOut used to refresh the screen
-    timeout_ID = gtk_timeout_add (100, timeout_CB, NULL);
+    timeout_ID = gtk_timeout_add (100,timeout_CB, NULL);
 
     mainWindow=window;
 
