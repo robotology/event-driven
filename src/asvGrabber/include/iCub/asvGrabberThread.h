@@ -30,6 +30,7 @@
 #include <yarp/os/RateThread.h>
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/Semaphore.h>
+#include <yarp/os/Time.h>
 
 #include <fcntl.h>
 #include <sys/ioctl.h>
@@ -570,40 +571,41 @@ private:
 
     bool save;                              // bool that indicates whether the 
 
-    yarp::os::Port interfacePort;           //port dedicated to the request of values set through interface
-    yarp::os::Semaphore mutex;              //semaphore for file reading
-
-    std::stringstream str_buf;
-                              //reference to the object for output file stream
-    int SynThr;      
-    int SynTau;  
-    int SynPxlTau;
-    int SynPxlThr;
-    int CDRefr;    
-    int CDSf;   
-    int CDPr;
-    int ReqPuX;
-    int ReqPuY;
-    int IFRf;
-    int IFThr;     
-    int IFLk;
-    int CDOffThr;
-    int SynPxlW;
-    int testPbias;
-    int SynW;
-    int CDOnThr;
-    int CDDiff;
-    int EMCompH;
-    int EMCompT;
-    int CDIoff;
-    int CDRGnd;
-    int self;
-    int FollBias;
-    int ArbPd;
-    int EMVrefL;
-    int CDCas;
-    int EMVrefH;
-    int I2V;
+    yarp::os::Port interfacePort;           // port dedicated to the request of values set through interface
+    yarp::os::Semaphore mutex;              // semaphore for file reading
+    double startTime;               // time of the programming
+    double stopTime;                // stop time for the timing
+    std::stringstream str_buf;              // reference to the object for output file stream 
+                              
+    int SynThr;                             // value programmed for the bias    
+    int SynTau;                             // value programmed for the bias    
+    int SynPxlTau;                          // value programmed for the bias
+    int SynPxlThr;                          // value programmed for the bias
+    int CDRefr;                             // value programmed for the bias                                // value programmed for the bias
+    int CDSf;                               // value programmed for the bias
+    int CDPr;                             // value programmed for the bias
+    int ReqPuX;                             // value programmed for the bias
+    int ReqPuY;                             // value programmed for the bias
+    int IFRf;                             // value programmed for the bias
+    int IFThr;                                  // value programmed for the bias
+    int IFLk;                             // value programmed for the bias
+    int CDOffThr;                             // value programmed for the bias
+    int SynPxlW;                             // value programmed for the bias
+    int testPbias;                             // value programmed for the bias
+    int SynW;                             // value programmed for the bias
+    int CDOnThr;                             // value programmed for the bias
+    int CDDiff;                             // value programmed for the bias
+    int EMCompH;                             // value programmed for the bias
+    int EMCompT;                             // value programmed for the bias
+    int CDIoff;                             // value programmed for the bias
+    int CDRGnd;                             // value programmed for the bias                             // value programmed for the bias
+    int self;                             // value programmed for the bias
+    int FollBias;                             // value programmed for the bias
+    int ArbPd;                             // value programmed for the bias
+    int EMVrefL;                             // value programmed for the bias
+    int CDCas;                             // value programmed for the bias
+    int EMVrefH;                             // value programmed for the bias
+    int I2V;                             // value programmed for the bias
 };
 
 #endif //_ASV_GRABBER_THREAD_H

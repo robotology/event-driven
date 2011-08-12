@@ -455,167 +455,195 @@ bool asvGrabberModule::respond(const Bottle& command, Bottle& reply) {
             case COMMAND_VOCAB_SYTH:{
                 double w = D2Y->getSynThr();
                 reply.addDouble(w);
+                printf ("                         %f \n", w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_SYTA:{
                 double w = D2Y->getSynTau();
                 reply.addDouble(w);
+                printf ("                         %f \n", w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_SYPA:{
                 double w = D2Y->getSynPxlTau();
                 reply.addDouble(w);
+                printf ("                         %f \n", w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_SYPH:{
                 double w = D2Y->getSynPxlThr();
                 reply.addDouble(w);
+                printf ("                         %f \n", w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_TPB:{
                 double w = D2Y->getTestPBias();
                 reply.addDouble(w);
+                printf ("                         %f \n", w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_CDR:{
                 double w = D2Y->getCDRefr();
+                printf ("                         %f \n", w);
                 reply.addDouble(w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_CDS:{
                 double w = D2Y->getCDSf();
+                printf ("                         %f \n", w);
                 reply.addDouble(w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_CDP:{
                 double w = D2Y->getCDPr();
+                printf ("                         %f \n", w);
                 reply.addDouble(w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_RPX:{
                 double w = D2Y->getReqPuX();
+                printf ("                         %f \n", w);
                 reply.addDouble(w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_RPY :{
                 double w = D2Y->getReqPuY();
+                printf ("                         %f \n", w);
                 reply.addDouble(w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_IFR :{
                 double w = D2Y->getIFRf();
+                printf ("                         %f \n", w);
                 reply.addDouble(w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_IFT :{
                 double w = D2Y->getIFThr();
+                printf ("                         %f \n", w);
                 reply.addDouble(w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_IFL :{
                 double w = D2Y->getIFLk();
+                printf ("                         %f \n", w);
                 reply.addDouble(w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_CDOF:{
                 double w = D2Y->getCDOffThr();
+                printf ("                         %f \n", w);
                 reply.addDouble(w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_SYPW:{
                 double w = D2Y->getSynPxlW();
+                printf ("                         %f \n", w);
                 reply.addDouble(w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_SYW:{
                 double w = D2Y->getSynW();
+                printf ("                         %f \n", w);
                 reply.addDouble(w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_CDON:{
                 double w = D2Y->getCDOnThr();
+                printf ("                         %f \n", w);
                 reply.addDouble(w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_CDD:{
                 double w = D2Y->getCDDiff();
+                printf ("                         %f \n", w);
                 reply.addDouble(w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_EMCH:{
                 double w = D2Y->getEMCompH();
+                printf ("                         %f \n", w);
                 reply.addDouble(w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_EMCT:{
                 double w = D2Y->getEMCompT();
+                printf ("                         %f \n", w);
                 reply.addDouble(w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_CDI:{
                 double w = D2Y->getCDIoff();
+                printf ("                         %f \n", w);
                 reply.addDouble(w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_CDRG:{
                 double w = D2Y->getCDRGnd();
+                printf ("                         %f \n", w);
                 reply.addDouble(w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_SELF:{
                 double w = D2Y->getSelf();
+                printf ("                         %f \n", w);
                 reply.addDouble(w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_FOLL:{
                 double w = D2Y->getFollBias();
+                printf ("                         %f \n", w);
                 reply.addDouble(w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_ARBP:{
                 double w = D2Y->getArbPd();
+                printf ("                         %f \n", w);
                 reply.addDouble(w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_EMVL:{
                 double w = D2Y->getEMVrefL();
+                printf ("                         %f \n", w);
                 reply.addDouble(w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_CDC :{
                 double w = D2Y->getCDCas();
+                printf ("                         %f \n", w);
                 reply.addDouble(w);
                 ok = true;
             }
             break;
             case COMMAND_VOCAB_EMVH:{
                 double w = D2Y->getEMVrefH();
+                printf ("                         %f \n", w);
                 reply.addDouble(w);
                 ok = true;
             }
@@ -623,7 +651,7 @@ bool asvGrabberModule::respond(const Bottle& command, Bottle& reply) {
             default: {
                 
             }
-                break;
+            break;
             }
         }
         break;
@@ -666,8 +694,9 @@ bool asvGrabberModule::respond(const Bottle& command, Bottle& reply) {
 
     mutex.post();
     
-    if (!rec)
+    if (!rec) {
         ok = RFModule::respond(command,reply);
+    }
     
     if (!ok) {
         reply.clear();
@@ -678,7 +707,7 @@ bool asvGrabberModule::respond(const Bottle& command, Bottle& reply) {
 
     return ok;
     
-    return true;
+  //return true;
 }
 
 /* Called periodically every getPeriod() seconds */

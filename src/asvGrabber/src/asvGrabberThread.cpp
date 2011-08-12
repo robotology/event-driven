@@ -117,8 +117,8 @@ asvGrabberThread::asvGrabberThread(string portDeviceName, bool i_bool, string i_
     CDRefr       = 944;       
     CDSf         = 20;       
     CDPr         = 5;    
-    ReqPuX       = 3297256;       
-    ReqPuY       = 4073081;  
+    ReqPuX       = 16777215;       
+    ReqPuY       = 8053457; //8053457;  
     IFRf         = 639172;    
     IFThr        = 30108;      
     IFLk         = 20;        
@@ -133,7 +133,7 @@ asvGrabberThread::asvGrabberThread(string portDeviceName, bool i_bool, string i_
     CDRGnd       = 101508;
     self         = 500;
     FollBias     = 52458;   
-    ArbPd        = 9503855;       
+    ArbPd        = 8053457; //9503855;       
     EMVrefL      = 160712;           
     CDCas        = 52458;            
     EMVrefH      = 52458;
@@ -424,6 +424,7 @@ void asvGrabberThread::prepareBiases() {
         //monitor(10);
         releasePowerdown(1);
         sendingBias();
+        startTime = Time::now();
     }
 }
 
@@ -574,6 +575,9 @@ void asvGrabberThread::closeDevice(){
 void  asvGrabberThread::run() {
     //printf("reading \n");
 
+    stopTime = Time::now();
+    double timediff = stopTime - startTime;
+    
     r = read(file_desc, pmon, monBufSize_b);
     //printf("called read() with monBufSize_b == %d -> retval: %d\n", (int)monBufSize_b, (int)r);
     
@@ -596,7 +600,12 @@ void  asvGrabberThread::run() {
       //printf("ERROR: read %d bytes from the AEX!!!\n", r);
     }
     monBufEvents = r / sizeofstructaer;
-    printf("%d \n",r);
+    if(timediff >= 3.0) {
+        printf("+ %d \n",r);
+    }
+    else {
+        printf("  %d \n",r);
+    }
 
     int k = 0;
     int k2 = 0;
@@ -610,6 +619,8 @@ void  asvGrabberThread::run() {
         a = pmon[i].address;
         //t = pmon[i].timestamp * 0.128;   // this instruction is valid only for AEX not the iHead
         t = pmon[i].timestamp;
+        //if(a<14336)
+        //    printf("address:%08X ; timestamp:%08X \n", a, t);
         //alow = a&0xFFFF0000;
         //tlow = t&0xFFFF0000;
         //ahigh = (a&0xFFFF0000);
@@ -617,12 +628,11 @@ void  asvGrabberThread::run() {
         
         //printf("a: %llu  t:%llu  \n",a,t);            
         //
-        if (save) {
+        if ((save) && (timediff > 3.0)) {
             fprintf(fout,"%08X %08X\n",a,t); 
             //fout<<hex<<a<<" "<<hex<<t<<endl;
         }
-
-
+       
         buf2[k2++] = a;
         buf2[k2++] = t;
         //if(i == 1000)
