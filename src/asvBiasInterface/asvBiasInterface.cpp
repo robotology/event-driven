@@ -1279,6 +1279,8 @@ static void callbackSaveButton( GtkWidget *widget,gpointer data ) {
 static void callbackLoadButton( GtkWidget *widget,gpointer data ) {
     printf ("Load button - %s was pressed\n", (char *) data);
     mutex.wait();
+    c = 100;
+    printf("c %d \n", c);
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -1422,6 +1424,8 @@ static void callbackLoadButton( GtkWidget *widget,gpointer data ) {
 static void callbackProgBiasButton( GtkWidget *widget,gpointer data ) {
     printf ("Prog Bias - %s was pressed\n", (char *) data);
     mutex.wait();
+    c = -1;
+    printf("c = -1 \n");
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -1445,7 +1449,7 @@ static void callbackProgBiasButton( GtkWidget *widget,gpointer data ) {
 
 gint timeout_CB(gpointer data) {
     c++;
-    printf("c %d \n", c);
+    //printf("c %d \n", c);
     switch(c) {
         case 0: {
             if(_pOutPort->getOutputCount()) {
@@ -2177,8 +2181,8 @@ static void scale_set_default_values( GtkScale *scale ) {
 void updateStatusbar(GtkWidget *statusbar, gchar *msg) {
     GtkStatusbar *sb=GTK_STATUSBAR (statusbar);
 
-    gtk_statusbar_pop (sb, 0); // clear any previous message, underflow is allowed 
-    gtk_statusbar_push (sb, 0, msg);
+    //gtk_statusbar_pop (sb, 0); // clear any previous message, underflow is allowed 
+    //gtk_statusbar_push (sb, 0, msg);
 }
 
 //-------------------------------------------------
@@ -3195,10 +3199,10 @@ GtkWidget* createMainWindow(void) {
     //gtk_container_add (GTK_CONTAINER (box2), boxSliders);
     gtk_box_pack_start(GTK_BOX(box), box2,FALSE,FALSE, 10);
     // StatusBar for main window
-    statusbar = gtk_statusbar_new ();
+    //statusbar = gtk_statusbar_new ();
     //updateStatusbar(GTK_STATUSBAR (statusbar));
-    gtk_box_pack_start (GTK_BOX (box), statusbar, FALSE, TRUE, 0);
-    gtk_widget_size_request(statusbar, &actualSize);
+    //gtk_box_pack_start (GTK_BOX (box), statusbar, FALSE, TRUE, 0);
+    //gtk_widget_size_request(statusbar, &actualSize);
     //_occupiedHeight += 2*(actualSize.height);*/
 
     frame = gdk_pixbuf_new (GDK_COLORSPACE_RGB, FALSE, 8, 320, 240);
