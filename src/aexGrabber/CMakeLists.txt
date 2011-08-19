@@ -1,5 +1,5 @@
 # Copyright: (C) 2010 RobotCub Consortium
-# Authors: Giorgio Metta
+# Authors: Giorgio Metta, Rea Francesco
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
@@ -8,12 +8,14 @@ PROJECT(${KEYWORD})
 
 message("ICUB_INCLUDE_DIRS ${ICUB_INCLUDE_DIRS}")
 message("INTERNAL_INCLUDE_DIRS ${INTERNAL_INCLUDE_DIRS}")
+set(ICUB_CONTRIB_DIRS $ENV{ICUB_DIR}/include)
 
 INCLUDE_DIRECTORIES(
     ${PROJECT_SOURCE_DIR}/include
     ${ICUB_INCLUDE_DIRS}
     ${YARP_INCLUDE_DIRS}
     ${ICUB_DIR}/include
+	${ICUB_CONTRIB_DIR}
 )
 
 # Search for source code.
