@@ -313,6 +313,10 @@ void asvGrabberThread::prepareBiases() {
     } 
     else {
         printf("sending biases as following variables.... \n");
+        if(save) {
+            close(fout);
+            fout = fopen(dumpfile.c_str(),"w+");
+        }
 
         int err;                
 
