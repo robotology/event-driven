@@ -311,7 +311,7 @@ static void cb_digits_cas( GtkAdjustment *adj ) {
 }
 
 //-------------------------------------------------
-// Call Backs Left
+// Call Backs Right
 //-------------------------------------------------
 static void cb_digits_prRight( GtkAdjustment *adj ) {
     if (_pOutPort!=NULL) {
@@ -374,6 +374,7 @@ static void cb_digits_puyRight( GtkAdjustment *adj ) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SET);
+        bot.addVocab(COMMAND_VOCAB_RIGHT);
         bot.addVocab(COMMAND_VOCAB_PUY);
         bot.addInt((int) adj->value);
         //_pOutPort->Content() = _outBottle;

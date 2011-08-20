@@ -35,21 +35,21 @@
 #include "viewerResources.h"
 #include <string>
 
-#define COMMAND_VOCAB_PR VOCAB2('p','r')
-#define COMMAND_VOCAB_FOLL VOCAB4('f','o','l','l')
-#define COMMAND_VOCAB_DIFF VOCAB3('d','i','f')
-#define COMMAND_VOCAB_DIFFON VOCAB4('d','i','f','n')
-#define COMMAND_VOCAB_PUY VOCAB3('p','u','y')
-#define COMMAND_VOCAB_REFR VOCAB4('r','e','f','r')
-#define COMMAND_VOCAB_REQ VOCAB3('r','e','q')
+#define COMMAND_VOCAB_PR      VOCAB2('p','r')
+#define COMMAND_VOCAB_FOLL    VOCAB4('f','o','l','l')
+#define COMMAND_VOCAB_DIFF    VOCAB3('d','i','f')
+#define COMMAND_VOCAB_DIFFON  VOCAB4('d','i','f','n')
+#define COMMAND_VOCAB_PUY     VOCAB3('p','u','y')
+#define COMMAND_VOCAB_REFR    VOCAB4('r','e','f','r')
+#define COMMAND_VOCAB_REQ     VOCAB3('r','e','q')
 #define COMMAND_VOCAB_DIFFOFF VOCAB4('d','i','f','f')
-#define COMMAND_VOCAB_PUX VOCAB3('p','u','x')
-#define COMMAND_VOCAB_REQPD VOCAB3('r','e','q') 
-#define COMMAND_VOCAB_INJGND VOCAB4('i','n','j','g')
-#define COMMAND_VOCAB_CAS VOCAB3('c','a','s')
-#define COMMAND_VOCAB_PROG VOCAB4('p','r','o','g')
-#define COMMAND_VOCAB_BIAS VOCAB4('b','i','a','s')
-#define COMMAND_VOCAB_SAVE VOCAB4('s','a','v','e')
+#define COMMAND_VOCAB_PUX     VOCAB3('p','u','x')
+#define COMMAND_VOCAB_REQPD   VOCAB4('r','e','q','p') 
+#define COMMAND_VOCAB_INJGND  VOCAB4('i','n','j','g')
+#define COMMAND_VOCAB_CAS     VOCAB3('c','a','s')
+#define COMMAND_VOCAB_PROG    VOCAB4('p','r','o','g')
+#define COMMAND_VOCAB_BIAS    VOCAB4('b','i','a','s')
+#define COMMAND_VOCAB_SAVE    VOCAB4('s','a','v','e')
 
 //-------------------------------------------------
 // Callbacks
