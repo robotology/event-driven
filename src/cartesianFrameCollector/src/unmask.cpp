@@ -51,7 +51,7 @@ unmask::unmask() : RateThread(UNMASKRATETHREAD){
     count = 0;
     verb       = false;
     dvsMode    = false;
-    asvMode    = true;
+    asvMode    = false; //TODO : make this variable a parameter in the command line
     validLeft  = false;
     validRight = false;
     temp1      = true;
@@ -152,13 +152,29 @@ int* unmask::getEventBuffer(bool camera) {
 }
 
 void unmask::resetTimestamps() {
-    for (int i=0 ; i<retinalSize * retinalSize; i++){
+    for (int i=0 ; i < retinalSize * retinalSize; i++){
         timeBuffer[i] = 0;
         timeBufferRight[i] = 0;
     }
     //verb = true;
-    //lasttimestamp = 0;
-    //lasttimestampright = 0;  
+    lasttimestamp = 0;
+    lasttimestampright = 0;  
+}
+
+void unmask::resetTimestampLeft() {
+    for (int i=0 ; i < retinalSize * retinalSize; i++){
+        timeBuffer[i] = 0;
+    }
+    //verb = true;
+    lasttimestamp = 0;  
+}
+
+void unmask::resetTimestampRight() {
+    for (int i=0 ; i < retinalSize * retinalSize; i++){
+        timeBufferRight[i] = 0;
+    }
+    //verb = true;
+    lasttimestampright = 0;  
 }
 
 unsigned long* unmask::getTimeBuffer(bool camera) {
@@ -241,8 +257,8 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
             //unmaskEvent((unsigned int) blob, cartX, cartY, polarity, camera);
             unmaskEvent( (unsigned int) blob, cartX, cartY, polarity, camera);
             timestamp =  (unsigned long) t;
-            //if(blob!=0 | timestamp!=0)
-            //    printf(">>>>>>>>> %08X %08X \n",blob,t);
+            if(timestamp < 0)
+                printf(">>>>>>>>> %08X %08X \n",blob,t);
         }
         else {  //in dvsMode
             unsigned int blob, t;
@@ -321,15 +337,19 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
         //printf("Camera %d polarity %d  \n", camera, polarity);
         //camera: LEFT 1, RIGHT 0
 
-        
         if(camera) {            
             if((cartX!=0) &&( cartY!=0) && (timestamp!=0)) {
                 validLeft =  true;
             }
             
+
+            //TODO:: remove verb if not necessary
             if(verb) {
-                lasttimestamp = 0;
-                resetTimestamps();
+                //for (int i = 0; i < 2; i ++) {
+                //printf("%llu \n", lasttimestamp);
+                    //}
+                //lasttimestamp = 0;
+                //resetTimestamps();
             }
             else if(timestamp > lasttimestamp) {
                 lasttimestamp = timestamp;
@@ -376,9 +396,14 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
                 validRight =  true;
             }
             
+            
+            //TODO : remove if not necessary
             if(verb) {
-                lasttimestampright = 0;
-                resetTimestamps();
+                //for (int i = 0; i < 2; i ++) {
+                //printf("%llu \n", lasttimestamp);
+                    //}
+                //lasttimestampright = 0;
+                //resetTimestamps();
             }
             else if( timestamp > lasttimestampright){
                 lasttimestampright = timestamp;
@@ -401,10 +426,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
                     }
                 }
             }
-        } //end camera
-        
-        
-            
+        } //end camera            
     } //end of for    
 }
 

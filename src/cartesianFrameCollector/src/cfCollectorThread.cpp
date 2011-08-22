@@ -36,14 +36,14 @@ using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
-#define INTERVFACTOR 1
+#define INTERVFACTOR 6.25
 #define COUNTERRATIO 1 //1.25       //1.25 is the ratio 0.160/0.128
 #define MAXVALUE 4294967295
 #define THRATE 5
 #define STAMPINFRAME  // 10 ms of period times the us in 1 millisecond + time for computing
 #define retinalSize 128
 #define CHUNKSIZE 32768 //65536 //8192
-#define dim_window 15
+#define dim_window 1
 #define synch_time 1
 
 cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
@@ -59,6 +59,8 @@ cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
     string i_fileName("events.log");
     raw = fopen(i_fileName.c_str(), "wb");
     lc = rc = 0;	
+    minCount = 0;
+    minCountRight = 0;
 }
 
 cfCollectorThread::~cfCollectorThread() {
@@ -93,6 +95,8 @@ bool cfCollectorThread::threadInit() {
     //unmask_events.start();
     count = 0;
     microsecondsPrev = 0;
+    minCount = 0;
+    minCountRight= 0;
     return true;
 }
 
@@ -186,10 +190,47 @@ void cfCollectorThread::run() {
     //bufferRead = cfConverter->getBuffer();    
     // saves it into a working buffer
     cfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
-    // extract a chunk/unmask the chunk
+  
 
-    //printf("verb %d \n",verb);
-    verb = false;
+    //getting the time
+    endTimer = Time::now();
+    double interval  = (endTimer - startTimer) * 1000000; //interval in us
+    double procInter = interval -interval2;
+    //printf("procInter %f \n", procInter);
+    startTimer = Time::now();
+
+    //check for wrapping of the left and right timestamp
+    if(maxCount >= 4294967268  ) {
+      verb = true;
+      unmask_events.resetTimestampLeft();
+      printf("wrapping left %llu \n",lc);
+      printf("wrapping left %llu \n",lc);
+      printf("wrapping left %llu \n",lc);
+      printf("wrapping left %llu \n",lc);
+      printf("wrapping left %llu \n",lc);
+      printf("wrapping left %llu \n",lc);
+      printf("wrapping left %llu \n",lc);
+      minCount = 0;
+      maxCount      =  minCount      + interval * INTERVFACTOR* (dim_window);
+   
+    }
+    if(maxCountRight >= 4294967268) {
+      verb = true;
+      unmask_events.resetTimestampRight();
+      printf("wrapping right %llu \n",rc);
+      printf("wrapping right %llu \n",rc);
+      printf("wrapping right %llu \n",rc);
+      printf("wrapping right %llu \n",rc);
+      printf("wrapping right %llu \n",rc);
+      printf("wrapping right %llu \n",rc);
+
+      minCountRight = 0;
+      maxCountRight = minCountRight + interval * INTERVFACTOR* (dim_window);
+    }
+
+    // extract a chunk/unmask the chunk
+    printf("verb %d \n",verb);
+    //verb = false;
     unmask_events.unmaskData(bufferCopy,CHUNKSIZE,verb);
     if(verb) {
       verb = false;
@@ -204,39 +245,28 @@ void cfCollectorThread::run() {
 	    - (tvstart.tv_sec * 1000000 + tvstart.tv_usec));
     //printf("timeofday>%ld\n",Tnow );
     gettimeofday(&tvstart, NULL);       
-    endTimer = Time::now();
-    double interval  = (endTimer - startTimer) * 1000000; //interval in us
-    double procInter = interval -interval2;
-    //printf("procInter %f \n", procInter);
-    startTimer = Time::now();
     
-    unsigned long int lastleft = unmask_events.getLastTimestamp();
-    lc = lastleft * COUNTERRATIO; 
-    unsigned long int lastright = unmask_events.getLastTimestampRight();
-    rc = lastright * COUNTERRATIO;
-
+    
+    
     /*if(true){
       //printf("Saving in file \n");
       fprintf(raw,"%08X \n",lc); 
       //fwrite(&sz, sizeof(int), 1, raw);
       //fwrite(buffer, 1, sz, raw);
     }*/
-
-
-    
- 
-    if((lc >= 4294967295) || (rc >= 4294967295)) {
-      verb = true;
-      //printf("wrapping %d, %d \n",lc,rc );
-    }
     
     //synchronising the threads at the connection time
     if ((cfConverter->isValid())&&(!synchronised)) {
       printf("Sychronising ");
-      //firstRun = false;
-      minCount = lc - interval * dim_window; 
+      unsigned long int lastleft  = unmask_events.getLastTimestamp();
+      lc = lastleft  * COUNTERRATIO; 
+      unsigned long int lastright = unmask_events.getLastTimestampRight();
+      rc = lastright * COUNTERRATIO;
+
+      //TODO :  Check for negative values of minCount not allowed!!!!!!
+      minCount = lc - interval * INTERVFACTOR* dim_window; 
       //cfConverter->getEldestTimeStamp();                                                                   
-      minCountRight = rc - interval * dim_window;
+      minCountRight = rc - interval * INTERVFACTOR* dim_window;
       //printf("synchronised %1f! %d,%d,%d||%d,%d,%d \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
       startTimer = Time::now();
       synchronised = true;
@@ -248,36 +278,47 @@ void cfCollectorThread::run() {
     
     
     //synchronising the thread every time interval 1000*period of the thread
-    else if (count % synch_time == 0) {
+    else if ((count % synch_time == 0) && (minCount < 4294500000)) {
+      unsigned long int lastleft = unmask_events.getLastTimestamp();
+      lc = lastleft * COUNTERRATIO; 
+      unsigned long int lastright = unmask_events.getLastTimestampRight();
+      rc = lastright * COUNTERRATIO;
+
     //if (count == synch_time) {
       //printf("Sychronised Sychronised Sychronised Sychronised ");
-      minCount      = lc - interval * dim_window; //cfConverter->getEldestTimeStamp();        
-      minCountRight = rc - interval * dim_window;
+      if( lc > interval* INTERVFACTOR * dim_window)
+	minCount      = lc - interval* INTERVFACTOR * dim_window; //cfConverter->getEldestTimeStamp();        
+      else
+	minCount = 0;
+      if( rc > interval* INTERVFACTOR * dim_window)
+	minCountRight = rc - interval* INTERVFACTOR * dim_window;
+      else
+	minCountRight = 0;
       //maxCount = lc; 
       //maxCountRight = rc;
 		 
-      printf("synchronised %1f! %d,%d,%d||%d,%d,%d \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
+      printf("synchronised %1f! %llu,%llu,%llu||%llu,%llu,%llu \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
       startTimer = Time::now();
       synchronised = true; 
     }
     else {
-      // this value is simply the ration between the timestamp reported by the aexGrabber (62.5Mhz) 
+      // this value is simply the ration between the timestamp reported by the aexGrabber (6.25Mhz) 
       //and the correct timestamp counter clock of FPGA (50 Mhz)
       microsecondsPrev = interval;
       interval = Tnow;
-      minCount      = minCount + interval * INTERVFACTOR; // * (50.0 / 62.5) * 1.10;
+      minCount      = minCount + interval * INTERVFACTOR; // * (50.0 MHz FPGA Counter Clock / 6.25 Mhz ;
       minCountRight = minCount + interval * INTERVFACTOR;  // minCountRight + interval;
     } 
     //printf("minCount %d interval %f \n", minCount, interval);
-    maxCount      =  minCount      + interval * (dim_window+2);
-    maxCountRight =  minCountRight + interval * (dim_window+2);
+    maxCount      =  minCount      + interval * INTERVFACTOR* (dim_window);
+    maxCountRight =  minCountRight + interval * INTERVFACTOR* (dim_window);
     
     
     if(count % 100 == 0) { 
       //printf("countStop %d lcprev %d lc %d \n",countStop, lcprev,lc);
       if ((lcprev == lc)&&(rcprev == rc)) { 
 	countStop++;
-	//printf("countStop %d \n", countStop);
+	printf("countStop %d \n", countStop);
       }            
       //else if (rcprev == rc) { 
       //    countStop++;
@@ -285,7 +326,7 @@ void cfCollectorThread::run() {
       //}
       else {
 	countStop--;
-	//printf("countStop %d \n", countStop);
+	printf("countStop %d \n", countStop);
 	if(countStop<= 0)
 	  countStop = 0;
       }
@@ -294,21 +335,21 @@ void cfCollectorThread::run() {
     }
     
     
-    /*  
+      
     //resetting time stamps at overflow
     if (countStop == 10) {
-      printf("resetting time stamps!!!!!!!!!!!!! %d %d   \n ", minCount, minCountRight);
+      //printf("resetting time stamps!!!!!!!!!!!!! %d %d   \n ", minCount, minCountRight);
       //cfConverter->resetTimestamps(); 
-      verb = true;
+      //verb = true;
       //printf("countStop %d %d \n",countStop, verb );
       count = synch_time - 200;
-    }*/
+    }
     
     
-    //getMonoImage(imageRight,minCountRight,maxCountRight,0);
+    getMonoImage(imageRight,minCountRight,maxCountRight,0);
     getMonoImage(imageLeft,minCount,maxCount,1);
     pThread->copyLeft(imageLeft);
-    //pThread->copyRight(imageRight);
+    pThread->copyRight(imageRight);
     
   }
 }

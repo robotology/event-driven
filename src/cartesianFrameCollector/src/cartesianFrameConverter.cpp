@@ -96,6 +96,8 @@ void cFrameConverter::copyChunk(char* bufferCopy) {
 }
 
 
+/*
+// reading out from a circular buffer with 2 entry points
 void cFrameConverter::onRead(eventBuffer& i_ub) {
     valid = true;
     //printf("onRead ");
@@ -140,12 +142,13 @@ void cFrameConverter::onRead(eventBuffer& i_ub) {
 
     mutex.post();
     //printf("onRead: ended \n");
-    //printf("pcBuffer: 0x%x pcRead: 0x%x \n", pcBuffer, pcRead);
-   
+    //printf("pcBuffer: 0x%x pcRead: 0x%x \n", pcBuffer, pcRead); 
 }
+*/
 
 
-/*
+
+// reading out from a circular buffer with 3 entry points
 void cFrameConverter::onRead(eventBuffer& i_ub) {
     valid = true;
     //printf("onRead ");
@@ -186,7 +189,7 @@ void cFrameConverter::onRead(eventBuffer& i_ub) {
     //printf("pcBuffer: 0x%x pcRead: 0x%x \n", pcBuffer, pcRead);
    
 }
-*/
+
 
 /*
 void cFrameConverter::onRead(eventBuffer& i_ub) {

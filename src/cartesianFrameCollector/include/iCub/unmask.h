@@ -226,6 +226,16 @@ public:
      * function that set to zero the vector of timestamp of positions
      */
     void resetTimestamps();
+
+    /**
+     * function that set to zero the vector of timestamp of positions
+     */
+    void resetTimestampLeft();
+    
+    /**
+     * function that set to zero the vector of timestamp of positions
+     */
+    void resetTimestampRight();
 };
 
 #endif //UNMASK_H
