@@ -23,6 +23,13 @@
 #include <yarp/os/all.h>
 
 
+/**
+ * CHANCE LOG
+ * 22/08/11 : made the unmasking class as general as possible                               author Rea
+ * 22/08/11 : added two function for timestamp reset
+ */
+
+
 /** 
  * a simple class to handle event unmasking.
  */
@@ -201,7 +208,18 @@ public:
      * function that set to zero the vector of timestamp of positions
      */
     void resetTimestamps();
+
+    /**
+     * function that set to zero the vector of timestamp  (left)
+     */
+    void resetTimestampLeft();
+    
+    /**
+     * function that set to zero the vector of timestamp  (right)
+     */
+    void resetTimestampRight();
 };
 
 #endif /* __evenConversionh__ */
+
 //----- end-of-file --- ( next line intentionally left blank ) ------------------

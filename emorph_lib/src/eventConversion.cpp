@@ -197,71 +197,8 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
         cartX = retinalSize - cartX;
         
         //camera is unmasked as left 0, right -1. It is converted in left 1, right 0
-        camera = camera + 1;
-        
-        //camera: LEFT 0, RIGHT 1
-        if(camera) {
-            if((cartX!=0) &&( cartY!=0) && (timestamp!=0)) {
-                validLeft =  true;
-            }
-           
-            if(timestamp > lasttimestamp) {
-                lasttimestamp = timestamp;
-            }
-            if(verbosity) {
-                printf("%d", lasttimestamp);
-            }
-            
+        camera = camera + 1;        //camera: LEFT 0, RIGHT 1
 
-            if(timeBuffer[cartX + cartY * retinalSize] < timestamp) {
-                if(polarity > 0) {
-                    buffer[cartX + cartY * retinalSize] = responseGradient;
-                    timeBuffer[cartX + cartY * retinalSize] = timestamp;
-                
-                    if(buffer[cartX + cartY * retinalSize] > 127) {
-                        buffer[cartX + cartY * retinalSize] = 127;
-                    }
-                }
-                else if(polarity < 0) {
-                    buffer[cartX + cartY * retinalSize] = -responseGradient;
-                    timeBuffer[cartX + cartY * retinalSize] = timestamp;
-                
-                    if (buffer[cartX + cartY * retinalSize] < -127) {
-                        buffer[cartX + cartY * retinalSize] = -127;
-                    }
-                }
-            }
-           
-        }
-        else {
-            if((cartX!=0) &&( cartY!=0) && (timestamp!=0)) {
-                validRight =  true;
-            }
-
-            if( timestamp > lasttimestampright){
-                lasttimestampright = timestamp;
-            }
-           
-
-            if (timeBufferRight[cartX + cartY * retinalSize] < timestamp) {
-                if(polarity > 0) {
-                    bufferRight[cartX + cartY * retinalSize] = responseGradient;
-                    timeBufferRight[cartX + cartY * retinalSize] = timestamp;
-                    
-                    if(bufferRight[cartX + cartY * retinalSize] > 127) {
-                        bufferRight[cartX + cartY * retinalSize] = 127;
-                    }
-                }
-                else if(polarity < 0) {
-                    bufferRight[cartX + cartY * retinalSize] = -responseGradient;
-                    timeBufferRight[cartX + cartY * retinalSize] = timestamp;
-                    
-                    if (bufferRight[cartX + cartY * retinalSize] < -127) {
-                        bufferRight[cartX + cartY * retinalSize] = -127;
-                    }
-                }
-            }
-        }
     }
 }
 
@@ -274,6 +211,20 @@ void unmask::resetTimestamps() {
     lasttimestamp = 0;
     lasttimestampright = 0;
     verbosity = true;
+}
+
+void unmask::resetTimestampLeft() {
+    for (int i=0 ; i<retinalSize * retinalSize; i++){
+        timeBuffer[i] = 0;
+    }
+    lasttimestamp = 0;
+}
+
+void unmask::resetTimestampRight() {
+    for (int i=0 ; i<retinalSize * retinalSize; i++){
+        timeBufferRight[i] = 0;
+    }
+    lasttimestampright = 0;
 }
 
 void unmask::unmaskEvent(unsigned int evPU, short& x, short& y, short& pol, short& camera) {
