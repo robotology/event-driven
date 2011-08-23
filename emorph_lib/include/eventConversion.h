@@ -26,7 +26,8 @@
 /**
  * CHANCE LOG
  * 22/08/11 : made the unmasking class as general as possible                               author Rea
- * 22/08/11 : added two function for timestamp reset
+ * 22/08/11 : added two functions for timestamp reset
+ * 23/08/11 : added different unmasking for dvs cameras without iHead                       author Rea    
  */
 
 
@@ -55,26 +56,31 @@ private:
     short cartX, cartY, polarity, camera;
 
     int wrapAdd;
-    unsigned int xmask;              // 16 bits mask for unmasking of the address
-    unsigned int ymask;             // 16 bits mask for unmasking of the address
-    long int xmasklong;         // 32 bits mask for unmasking of the event
-    long int ymasklong;         // 32 bits mask for unmasking of the event
-    int yshift;                     // shift of 8 bits for getting the y in 16 bits address
-    int xshift;                     // shift of 1 bit to get the x in 16 bit (polarity)
-    int yshift2;                     // shift of 16 bits for getting the y in 32 bits address
-    int polshift;                    // shift necessary to cast the unmasked value to short
-    int polmask;                     // mask necessary to extract the polarity
-    int camerashift;                 // shift for cast back into short the camera reference 
-    int cameramask;                  // mask necessary to extract which camera has produced the output
-    int retinalSize;                 // size of the retina
+    unsigned int xmask;            // 16 bits mask for unmasking of the address
+    unsigned int ymask;            // 16 bits mask for unmasking of the address
+    unsigned int xmaskshort;       // 16 bits mask for unmasking of the address
+    unsigned int ymaskshort;       // 16 bits mask for unmasking of the address
+    unsigned int polmaskshort;     // 16 bits mask for unmasking of the address
+    long int xmasklong;            // 32 bits mask for unmasking of the event
+    long int ymasklong;            // 32 bits mask for unmasking of the event
+    int yshift;                    // shift of 8 bits for getting the y in 16 bits address
+    int xshift;                    // shift of 1 bit to get the x in 16 bit (polarity)
+    int yshift2;                   // shift of 16 bits for getting the y in 32 bits address
+    int polshift;                  // shift necessary to cast the unmasked value to short
+    int polmask;                   // mask necessary to extract the polarity
+    int camerashift;               // shift for cast back into short the camera reference 
+    int cameramask;                // mask necessary to extract which camera has produced the output
+    int retinalSize;               // size of the retina
     int minValue;
     int maxValue;
-    int countEvent;                     //counter of the number of events saved in the buffer1
-    int countEvent2;                     //counter of the number of events saved in the buffer2
-    int numKilledEvents;                //number of the element that have be removed from the buffer
-    bool temp1;                         //boolean flag that indicates where the events have to be saved
-    bool validLeft,validRight;          //flag for validity of the events
+    int countEvent;                //counter of the number of events saved in the buffer1
+    int countEvent2;               //counter of the number of events saved in the buffer2
+    int numKilledEvents;           //number of the element that have be removed from the buffer
+    bool temp1;                    //boolean flag that indicates where the events have to be saved
+    bool validLeft,validRight;     //flag for validity of the events
     bool verbosity;
+    bool dvsMode;                  // flag that initialises the typology of unmasking
+
     FILE* uEvents;
     yarp::os::Semaphore countEventLocker;
     yarp::os::Semaphore countEventLocker2;
@@ -203,6 +209,15 @@ public:
     */
     void unmaskEvent(unsigned int evPu, short& x, short& y, short& pol, short& camera);
 
+    /**
+    * @brief This method unmasked the raw which come from the TCP socket from unsigned int (16 bits)
+    * This method have been wrote by the university of zurich. contact : tobi@ini.phys.ethz.ch
+    * @param *evPU A pointer on the raw casted from char* to int*
+    * @param x Set with the x coordinate of the pixel
+    * @param y Set with the y coordinate of the pixel
+    * @param pol Set with the ON/OFF polarity of the pixel.
+    */
+    void unmaskEvent(unsigned int evPu, short& x, short& y, short& pol);
 
     /**
      * function that set to zero the vector of timestamp of positions
