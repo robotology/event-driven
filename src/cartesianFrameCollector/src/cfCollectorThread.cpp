@@ -36,7 +36,7 @@ using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
-#define INTERVFACTOR 6.25
+#define INTERVFACTOR 6.24
 #define COUNTERRATIO 1 //1.25       //1.25 is the ratio 0.160/0.128
 #define MAXVALUE 4294967295
 #define THRATE 5
@@ -317,9 +317,11 @@ void cfCollectorThread::run() {
     maxCountRight =  minCountRight + interval * INTERVFACTOR* (dim_window);
     
     
+    //---- preventer for fixed  addresses ----//
+    
     if(count % synch_time == 0) { 
       //printf("countStop %d lcprev %d lc %d \n",countStop, lcprev,lc);
-      if ((lcprev == lc)&&(rcprev == rc)) { 
+      if ((lcprev == lc)||(rcprev == rc)) { 
 	countStop++;
 	printf("countStop %d \n", countStop);
       }            
@@ -340,12 +342,17 @@ void cfCollectorThread::run() {
     
       
     //resetting time stamps at overflow
-    if (countStop == 2) {
+    if (countStop == 10) {
       //printf("resetting time stamps!!!!!!!!!!!!! %d %d   \n ", minCount, minCountRight);
       unmask_events.resetTimestampLeft(); 
       unmask_events.resetTimestampRight();
-      minCount = 0;
+      minCount      = 0;
       minCountRight = 0;
+      maxCount      =  minCount      + interval * INTERVFACTOR* (dim_window);
+      maxCountRight =  minCountRight + interval * INTERVFACTOR* (dim_window);
+      
+      //maxCount      = 4294967268;
+      //maxCountRight = 4294967268;
       countStop = 0;
       //verb = true;
       printf("countStop resetting %llu \n",unmask_events.getLastTimestamp() );
@@ -353,6 +360,8 @@ void cfCollectorThread::run() {
       
     }
     
+    // ----------- preventer end    --------------------- //
+
     
     getMonoImage(imageRight,minCountRight,maxCountRight,0);
     getMonoImage(imageLeft,minCount,maxCount,1);
