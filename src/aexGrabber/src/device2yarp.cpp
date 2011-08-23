@@ -703,7 +703,7 @@ void  device2yarp::run() {
     }
     monBufEvents = r / sizeofstructaer;
     countAEs += monBufEvents; 
-    printf("%d \n",r);
+    //printf("%d \n",r);
 
     int k = 0;
     int k2 = 0;
