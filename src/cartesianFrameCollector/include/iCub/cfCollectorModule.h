@@ -147,10 +147,10 @@
 
 
 /**
- * \section CHANGE LOG 
+ * \section change_log CHANGE LOG 
  * 
- * 25/07/11 : added common interface between DVS on USB and AEX on IHEAD                                                author Rea \n
- * 30/07/11 : corrected the circular buffer using three thresholds                                                      author Rea \n 
+ * 25/07/11 : added common interface between DVS on USB and AEX on IHEAD                                                <b>author:Rea<\b> \n
+ * 30/07/11 : corrected the circular buffer using three thresholds                                                      <b>author:Rea<\b> \n 
 */
 
 #include <iostream>
