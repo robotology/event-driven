@@ -59,77 +59,84 @@ int main(int argc, char * argv[]) {
     
     
     YARP_REGISTER_DEVICES(icubmod)
-    Network yarp;
-
+        //Network yarp;
+    yarp::os::Network::init();
     Time::turboBoost(); 
-
+    
     ResourceFinder rf;
     rf.setVerbose(true);
     rf.setDefaultConfigFile("angel2SAC.ini");         //overridden by --from parameter
     rf.setDefaultContext("eMorphApplication/conf");   //overridden by --context parameter
     rf.configure("ICUB_ROOT", argc, argv);    
 
-    string ctrlName = "local";
+    string ctrlName = "microsacTest";
     string robotName=rf.check("robot",Value("icub")).asString().c_str();
     string partName=rf.check("part",Value("head")).asString().c_str();
     Property optHead("(device remote_controlboard)");
     PolyDriver  *drvHead;
     IEncoders   *encHead;
-    string remoteHeadName="/"+robotName+"/"+partName;
-    string localHeadName="/"+ctrlName+"/"+partName;
+    string remoteHeadName = "/"+robotName+"/"+partName;
+    string localHeadName  = "/"+ctrlName+"/"+partName;
     optHead.put("remote",remoteHeadName.c_str());
+    optHead.put("device", "remote_controlboard");
     optHead.put("local",localHeadName.c_str());
     drvHead =new PolyDriver(optHead);
-    if (!drvHead->open(optHead)) {
-        
-        return false;
+    bool res = drvHead->open(optHead);
+    if (res) {
+        printf("Error in opening the optHead %d \n", res);
+        //return false;
+    }
+    else {
+        printf("Successfully opened the polydriver optHead \n");
     }
 
     if (!drvHead->isValid()) {
-        fprintf(stdout,"Head device driver not available!\n");
-        
+        fprintf(stdout,"Head device driver not available!\n");      
+        printf("Head device driver not available! \n");      
         delete drvHead;
         return false;
     }
+    else {
+        printf("safely asserting that the drvHead is valid \n");
+    }
     drvHead->view(encHead);
     
-
-    // ------------------------------------------------------------ 
+    
+    //------------------------------------------------ 
     //IPositionControl  *posTorso;
 
-    /*Property options;
-
-    yarp::os::Network::init();
-  
+    Property options;
     IDebugInterface   *iDbg = NULL;
     //PolyDriver *debugDd;
     PolyDriver *partsdd[MAX_NUMBER_ACTIVATED];
     PolyDriver *debugdd[MAX_NUMBER_ACTIVATED];
-    char *partsName[1];
+    
     int n = 0;
+    //string pName("head");
+    //partsName[0] = (const) pName.c_str();
   
     std::string portLocalName2;
     std::string robotPartPort= "/";
     robotPartPort += robotName.c_str();
     robotPartPort += "/";
-    robotPartPort += partsName[n];
+    robotPartPort += partName;
     
     std::string robotPartDebugPort= "/";
     robotPartDebugPort += robotName.c_str();
     robotPartDebugPort += "/debug/";
-    robotPartDebugPort += partsName[n];
+    robotPartDebugPort += partName;
     
     //checking existence of the port
     int ind = 0;
     string portLocalName;
     portLocalName="/";
     portLocalName+=robotName.c_str();
-    portLocalName+="/robotMotorGui";
+    portLocalName+="/microsaccTest";
     char tmp[80];
     sprintf(tmp, "%d", ind);
     portLocalName+=tmp;
     portLocalName+="/";
-    portLocalName+=partsName[n];
+    portLocalName+=partName;
     
     options.put("local", portLocalName.c_str());	
     options.put("device", "remote_controlboard");
@@ -137,12 +144,15 @@ int main(int argc, char * argv[]) {
     options.put("carrier", "udp");
     partsdd[n] = new PolyDriver(options);
     
+    
     if (debug_param_enabled) {
         Property debugOptions;
         portLocalName2=portLocalName;
         // the following complex line of code performs a substring substitution (see example below)
         // "/icub/robotMotorGui2/right_arm" -> "/icub/robotMotorGui2/debug/right_arm"
-        portLocalName2.replace(portLocalName2.find(partsName[n]),strlen(partsName[n]),std::string("debug/")+std::string(partsName[n]));
+        portLocalName2.replace(portLocalName2.find(partName),
+                               strlen(partName.c_str()),
+                               std::string("debug/")+std::string(partName));
         debugOptions.put("local", portLocalName2.c_str());	
         debugOptions.put("device", "debugInterfaceClient");
         debugOptions.put("remote", robotPartPort.c_str());
@@ -150,13 +160,20 @@ int main(int argc, char * argv[]) {
         debugdd[n] = new PolyDriver(debugOptions);
         if(debugdd[n]->isValid() == false) {
             fprintf(stderr, "Problems opening the debug client \n");
-        }	
+            printf("Problems opening the debug client \n");
+        }
+        else {
+            printf("safely asserting that the debug is valid \n");
+        }
     }
     else {
         debugdd[n]=0;
     }
     
-    */
+    
+    
+    printf("success after all the tests \n");
+    
     return 0;
 }
 
