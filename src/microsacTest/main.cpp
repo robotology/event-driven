@@ -102,9 +102,11 @@ int main(int argc, char * argv[]) {
     drvHead->view(encHead);
     
     
+    
     //------------------------------------------------ 
     //IPositionControl  *posTorso;
 
+    
     Property options;
     IDebugInterface   *iDbg = NULL;
     //PolyDriver *debugDd;
@@ -170,7 +172,16 @@ int main(int argc, char * argv[]) {
         debugdd[n]=0;
     }
     
-    
+    debugdd[n]->view(iDbg);
+    double dtf3 = 0;
+    double dtf4 = 0;
+    double dtf5 = 0;
+    iDbg->getDebugReferencePosition(3,&dtf3);
+    iDbg->getDebugReferencePosition(4,&dtf4);
+    iDbg->getDebugReferencePosition(5,&dtf5);
+    printf("%f ", dtf3);
+    printf("%f ", dtf4);
+    printf("%f ", dtf5);
     
     printf("success after all the tests \n");
     
