@@ -33,9 +33,8 @@
 #include <sys/types.h>
 #include <yarp/os/all.h>
 
-#ifndef __linux__                 // posix compliant and for GCC
 typedef unsigned long uint32_t;
-#endif 
+
 
 #define u32 uint32_t
 

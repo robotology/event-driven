@@ -32,13 +32,13 @@ using namespace yarp::os;
 
 //#define LINUX
 //#ifndef LINUX
-#ifndef __linux__            // posix compliant and for GCC
+//#ifndef __linux__            // posix compliant and for GCC
 typedef unsigned long uint32_t;
-#endif 
+typedef unsigned int  uint16_t;
 
-#ifndef linux
-typedef unsigned long uint32_t;
-#endif
+//#ifndef linux
+//typedef unsigned long uint32_t;
+//#endif
 
 #define MAXVALUE 114748364 //4294967295
 #define maxPosEvent 10000
