@@ -26,22 +26,21 @@
 #include <iCub/unmask.h>
 #include <math.h>
 #include <cassert>
-
+#include <inttypes.h>
 
 using namespace std;
 using namespace yarp::os;
 
-//#define LINUX
-//#ifndef LINUX
-//#ifndef __linux__            // posix compliant and for GCC
 
-#ifndef uint32_t
-typedef unsigned long uint32_t;
-#endif
+//#if defined (USE_INTTYPES_H)
+//#include <inttypes.h>
+//#else
+//typedef unsigned long uint32_t;
+//#endif
 
-#ifndef uint16_t
-typedef unsigned int  uint16_t;
-#endif
+//#ifndef uint16_t
+//typedef unsigned int  uint16_t;
+//#endif
 
 
 
