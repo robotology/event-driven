@@ -40,7 +40,7 @@ print "Counted", len(data), "lines."
 
 for i in range (0,size):
 	data2 = data[i].rsplit("\n")
-	print "data2: \n", data2
+	#print "data2: \n", data2
 	dataS = data2[0].split(' ')
 	#print "dataS1: ", hex2dec(dataS[0]) #address
 	#print "dataS2: ", hex2dec(dataS[1]) #timestamp
