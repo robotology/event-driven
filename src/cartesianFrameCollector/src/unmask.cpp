@@ -27,18 +27,21 @@
 #include <math.h>
 #include <cassert>
 
+
 using namespace std;
 using namespace yarp::os;
 
 //#define LINUX
 //#ifndef LINUX
 //#ifndef __linux__            // posix compliant and for GCC
-typedef unsigned long uint32_t;
-typedef unsigned int  uint16_t;
 
-//#ifndef linux
+//#ifndef 
 //typedef unsigned long uint32_t;
 //#endif
+
+//typedef unsigned int  uint16_t;
+
+
 
 #define MAXVALUE 114748364 //4294967295
 #define maxPosEvent 10000
@@ -257,8 +260,8 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
             //unmaskEvent((unsigned int) blob, cartX, cartY, polarity, camera);
             unmaskEvent( (unsigned int) blob, cartX, cartY, polarity, camera);
             timestamp =  (unsigned long) t;
-            if(timestamp < 0)
-                printf(">>>>>>>>> %08X %08X \n",blob,t);
+            //if(timestamp < 0)
+            //    printf(">>>>>>>>> %08X %08X \n",blob,t);
         }
         else {  //in dvsMode
             unsigned int blob, t;
