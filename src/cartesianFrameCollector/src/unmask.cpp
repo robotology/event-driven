@@ -35,11 +35,13 @@ using namespace yarp::os;
 //#ifndef LINUX
 //#ifndef __linux__            // posix compliant and for GCC
 
-//#ifndef 
-//typedef unsigned long uint32_t;
-//#endif
+#ifndef uint32_t
+typedef unsigned long uint32_t;
+#endif
 
-//typedef unsigned int  uint16_t;
+#ifndef uint16_t
+typedef unsigned int  uint16_t;
+#endif
 
 
 
