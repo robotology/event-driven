@@ -1,19 +1,19 @@
 <application>
-<name>Poeticon Application </name>
+<name>eMorph Application </name>
 
 <dependencies>	
 </dependencies>
 
 <module>
-   <name>dvsGrabber</name>
+   <name>aexGrabber</name>
    <parameters>--deviceName /dev/aerfx2_0 </parameters>
-   <node>/powerNode1</node>
+   <node>/pc104</node>
    <tag>eventGrabber</tag>
 </module>
 <module>
    <name>biasInterface</name>
    <parameters> </parameters>
-   <node>/powerNode1</node>
+   <node>/console</node>
    <tag>guiInterfaceBias</tag>
 </module>
 <module>
@@ -37,9 +37,9 @@
 <module>
    <name>yarpview</name>
    <parameters>--name /eventViewRight --x 350 --ysixe 000 --synch </parameters>
-   <node>/icubsrv-emorph</node>
+   <node>/console</node>
    <tag>eventViewerRight</tag>
-</module
+</module>
 <module>
    <name>yarpview</name>
    <parameters>--name /alignerView --x 000 --ysixe 300 --synch </parameters>
