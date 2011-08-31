@@ -41,6 +41,8 @@ using namespace std;
 #define THRATE 30
 #define SHIFTCONST 100
 
+inline convertChar2bits
+
 inline void copy_8u_C1R(ImageOf<PixelMono>* src, ImageOf<PixelMono>* dest) {
     int padding = src->getPadding();
     int channels = src->getPixelCode();
@@ -97,7 +99,7 @@ bool efExtractorThread::threadInit() {
     inRightPort.open(getName("/right:i").c_str());
     
     /*opening the file of the mapping and creating the LUT*/
-    pFile = fopen ("myfile.txt","w");
+    pFile = fopen (mapURL.c_str(),"rb");
     
     if (pFile!=NULL) {
         long lSize;
@@ -105,15 +107,23 @@ bool efExtractorThread::threadInit() {
         // obtain file size:
         fseek (pFile , 0 , SEEK_END);
         lSize = ftell (pFile);
-        rewind (pFile);
+        printf("dimension of the file %lu \n", lSize);
+        rewind(pFile);
         // saving into the buffer
         char * buffer;
-        buffer = (char*) malloc (sizeof(char)*lSize);
+        buffer = (char*) malloc (sizeof(char) * lSize);
         //fputs ("fopen example",pFile);
         printf("The file was correctly opened \n");
         result = fread (buffer,1,lSize,pFile);        
+        printf(" Saved the data of the file into the buffer lSize:%lu \n", lSize);
+        // checking the content of the buffer
+        for (int i = 0; i < lSize; i++) {
+            printf("%c \n", *buffer);
+            buffer++;
+        }
     }
-
+    
+    printf("initialisation correctly ended \n");
     return true;
 }
 
