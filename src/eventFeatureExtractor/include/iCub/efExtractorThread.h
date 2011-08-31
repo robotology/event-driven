@@ -47,7 +47,7 @@ private:
     yarp::sig::ImageOf <yarp::sig::PixelMono>* rightInputImage;          //image input right 
     //yarp::sig::ImageOf <yarp::sig::PixelMono>& tmp;                    //temporary image for correct port reading
     std::string name;                   // rootname of all the ports opened by this thread
-    std::string mode;                   // mode name and name of the map
+    std::string mapURL;                   // mode name and name of the map
     bool resized;                       // flag to check if the variables have been already resized
     int shiftValue;                     // value of the shift between dragonfly (this is vergence related)
     FILE * pFile;                       // file that contains the rules for the LUT
@@ -86,7 +86,7 @@ public:
     * function that set operating mode
     * @param str name of the mode
     */
-    void setMode(std::string str) { mode = str; };
+    void setMapURL(std::string str) { mapURL = str; };
 
     /**
     * function that set the rootname for the ports that will be opened
