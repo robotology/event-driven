@@ -81,7 +81,8 @@ bool efExtractorModule::configure(yarp::os::ResourceFinder &rf) {
 
     attach(handlerPort);                  // attach to port
 
-    efeThread=new efExtractorThread();
+    efeThread = new efExtractorThread();
+    efeThread->setMode(mapNameComplete);
     efeThread->setName(getName().c_str());
     efeThread->start();
 

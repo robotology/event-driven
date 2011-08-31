@@ -28,6 +28,7 @@
 #include <cxcore.h>
 #include <cv.h>
 #include <highgui.h>
+#include <stdio.h>
 #include <cstring>
 #include <cassert>
 
@@ -94,16 +95,27 @@ bool efExtractorThread::threadInit() {
     outRightPort.open(getName("/edgesRight:o").c_str());
     inLeftPort.open(getName("/left:i").c_str());
     inRightPort.open(getName("/right:i").c_str());
+    
+    /*opening the file of the mapping and creating the LUT*/
+    pFile = fopen ("myfile.txt","w");
+    
+    if (pFile!=NULL) {
+        long lSize;
+        size_t result;        
+        // obtain file size:
+        fseek (pFile , 0 , SEEK_END);
+        lSize = ftell (pFile);
+        rewind (pFile);
+        // saving into the buffer
+        char * buffer;
+        buffer = (char*) malloc (sizeof(char)*lSize);
+        //fputs ("fopen example",pFile);
+        printf("The file was correctly opened \n");
+        result = fread (buffer,1,lSize,pFile);        
+    }
+
     return true;
 }
-
-void efExtractorThread::interrupt() {
-    outLeftPort.interrupt();
-    outRightPort.interrupt();
-    inLeftPort.interrupt();
-    inRightPort.interrupt();
-}
-
 
 void efExtractorThread::setName(string str) {
     this->name=str;
@@ -246,12 +258,20 @@ void efExtractorThread::run() {
     
 }
 
-
+void efExtractorThread::interrupt() {
+    outLeftPort.interrupt();
+    outRightPort.interrupt();
+    inLeftPort.interrupt();
+    inRightPort.interrupt();
+}
 
 void efExtractorThread::threadRelease() {
+    /* closing the ports*/
     outLeftPort.close();
     outRightPort.close();
     inLeftPort.close();
     inRightPort.close();
+    /* closing the file */
+    fclose (pFile);
 }
 

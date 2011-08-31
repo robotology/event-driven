@@ -49,8 +49,8 @@ private:
     std::string name;                   // rootname of all the ports opened by this thread
     std::string mode;                   // mode name and name of the map
     bool resized;                       // flag to check if the variables have been already resized
-    int shiftValue;                     //value of the shift between dragonfly (this is vergence related)
-    
+    int shiftValue;                     // value of the shift between dragonfly (this is vergence related)
+    FILE * pFile;                       // file that contains the rules for the LUT
 public:
     /**
     * default constructor
