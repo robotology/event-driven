@@ -83,12 +83,7 @@ efExtractorThread::efExtractorThread() : RateThread(THRATE) {
 }
 
 efExtractorThread::~efExtractorThread() {
-    //if(leftInputImage !=0) {
-    //    delete leftInputImage;
-    //}
-    //if(rightInputImage!=0) {
-    //   delete rightInputImage;
-    //}
+ 
 }
 
 bool efExtractorThread::threadInit() {
@@ -108,6 +103,7 @@ void efExtractorThread::interrupt() {
     inLeftPort.interrupt();
     inRightPort.interrupt();
 }
+
 
 void efExtractorThread::setName(string str) {
     this->name=str;

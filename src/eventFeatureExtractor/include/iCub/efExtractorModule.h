@@ -79,7 +79,8 @@
  *
  * - \c robot \c icub \n 
  *   specifies the name of the robot (used to form the root of robot port names)
- *
+ * 
+ * - \c mode \c intensity,horizontal66,vertical66
  *
  * <b>Configuration File Parameters</b>
  *
@@ -132,7 +133,7 @@
  *
  * \section conf_file_sec Configuration Files
  *
- * \c efExtractor.ini  in \c /logPolarAttentionSystem/conf \n
+ * \c efExtractor.ini  in \c /eMorphApplication/conf \n
  * 
  * \section tested_os_sec Tested OS
  *
@@ -151,7 +152,9 @@
 
 /**
 * /section change_log CHANGE LOG
-* 24/08/2011 : created the module                                                                       /author Rea \n
+* @24/08/11 : created the module                                                                       /author Rea \n
+* @31/08/11 : added parameter mode for the command line                                                /author Rea \n 
+*
 */
 
 #include <iostream>
@@ -170,6 +173,8 @@ class efExtractorModule:public yarp::os::RFModule {
     std::string robotName;                      //name of the robot
     std::string robotPortName;                  //reference to the head of the robot
     std::string handlerPortName;                //name of the handler port (comunication with respond function)
+    std::string mapName;                        //name of the operating mode corresponds to the map
+    std::string mapNameComplete;                //name of complete of the map 
     int ratethread;                             //time constant for ratethread
 
     yarp::os::Port handlerPort;                 // a port to handle messages 

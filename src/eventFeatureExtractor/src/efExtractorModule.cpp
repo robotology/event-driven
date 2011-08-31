@@ -57,6 +57,16 @@ bool efExtractorModule::configure(yarp::os::ResourceFinder &rf) {
                            "Robot name (string)").asString();
     robotPortName         = "/" + robotName + "/head";
 
+
+    /*
+    * set the operating mode which correspond as well with the file map saved in conf
+    */
+    mapName             = rf.check("mode", 
+                                   Value("intensity"), 
+                                   "file map name (string)").asString();
+    mapName += ".txt";
+    mapNameComplete = rf.findFile(mapName.c_str());
+
     /*
     * attach a port of the same name as the module (prefixed with a /) to the module
     * so that messages received from the port are redirected to the respond method
