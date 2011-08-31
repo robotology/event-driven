@@ -179,14 +179,31 @@ int main(int argc, char * argv[]) {
     iDbg->getDebugReferencePosition(3,&dtf3);
     iDbg->getDebugReferencePosition(4,&dtf4);
     iDbg->getDebugReferencePosition(5,&dtf5);
-    printf("%f ", dtf3);
-    printf("%f ", dtf4);
-    printf("%f ", dtf5);
+    printf("%f \n", dtf3);
+    printf("%f \n", dtf4);
+    printf("%f \n", dtf5);
+
+    //-----------------------------------------
+    double posA = 0.5;
+    double posB = -0.5;
+    
+    double starttime = Time::now();
+    double endtime   = Time::now();
+    double diff = endtime - starttime;
+    while(true) {
+        iDbg->setDebugReferencePosition(4,posA);
+        Time::delay(0.01);
+        iDbg->setDebugReferencePosition(4,posB);
+        Time::delay(0.01);
+        endtime   = Time::now();
+        diff = endtime - starttime;
+    }
     
     printf("success after all the tests \n");
     
     return 0;
 }
+
 
 
 
