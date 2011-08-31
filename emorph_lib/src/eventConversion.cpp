@@ -26,14 +26,10 @@
 #include <eventConversion.h>
 #include <cassert>
 #include <cstring>
+#include <inttypes.h>
 
 using namespace std;
 using namespace yarp::os;
-
-
-#ifndef  __linux__ || linux || LINUX
-typedef unsigned long uint32_t;
-#endif
 
 #define MAXVALUE 114748364 //4294967295
 #define maxPosEvent 10000
