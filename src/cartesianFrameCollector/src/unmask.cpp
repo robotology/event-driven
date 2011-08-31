@@ -32,18 +32,6 @@ using namespace std;
 using namespace yarp::os;
 
 
-//#if defined (USE_INTTYPES_H)
-//#include <inttypes.h>
-//#else
-//typedef unsigned long uint32_t;
-//#endif
-
-//#ifndef uint16_t
-//typedef unsigned int  uint16_t;
-//#endif
-
-
-
 #define MAXVALUE 114748364 //4294967295
 #define maxPosEvent 10000
 #define responseGradient 127
