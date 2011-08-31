@@ -41,7 +41,9 @@ using namespace std;
 #define THRATE 30
 #define SHIFTCONST 100
 
-inline convertChar2bits
+inline void convertChar2bits() {
+
+}
 
 inline void copy_8u_C1R(ImageOf<PixelMono>* src, ImageOf<PixelMono>* dest) {
     int padding = src->getPadding();
