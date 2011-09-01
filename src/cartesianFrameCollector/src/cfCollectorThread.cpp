@@ -44,7 +44,7 @@ using namespace std;
 #define retinalSize 128
 #define CHUNKSIZE 32768 //65536 //8192
 #define dim_window 1
-#define synch_time 1000
+#define synch_time 10000
 
 cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
     synchronised = false;
