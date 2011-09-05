@@ -226,19 +226,49 @@ void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image, unsigned long minC
             int value = *pBuffer;
             unsigned long timestampactual = *pTime;
             if (((timestampactual * 1.25) > minCount)&&((timestampactual * 1.25) < maxCount)) {   //(timestampactual != lasttimestamp)
-                *pImage++ = (unsigned char) 127 + value;
+                *pImage = (unsigned char) 127 + value;
                
             }
             else {
-                *pImage++ = (unsigned char) 127;
+                *pImage = (unsigned char) 127;
                
                 }
+            // Connect nearby points in the image provided they lie on a line. primitive method  here just to check
+            int dist = 20;
+            bool lookForHor,lookForVert,lookForSlantLeft, lookForSlantRight;
+            lookForHor = lookForVert = lookForSlantLeft = lookForSlantRight = true;
+            
+            if(r>dist && c >dist){
+                for(int i=1;i<=dist;++i){
+                if(lookForSlantLeft && *(image->getPixelAddress(r-i,c-i)) == 127 && *(image->getPixelAddress(r-i-1,c-i-1)) == *(image->getPixelAddress(r,c))){
+                *pImage = *(image->getPixelAddress(r-i-1,c-i-1));
+                lookForSlantLeft = false;
+                }
+                if(lookForVert && *(image->getPixelAddress(r-i,c)) == 127 && *(image->getPixelAddress(r-i-1,c)) == *(image->getPixelAddress(r,c))){
+                *pImage = *(image->getPixelAddress(r-i-1,c));
+                lookForVert = false;
+                }
+                if(lookForHor && *(image->getPixelAddress(r,c-i)) == 127 && *(image->getPixelAddress(r,c-i-1)) == *(image->getPixelAddress(r,c))){
+                *pImage = *(image->getPixelAddress(r,c-i-1));
+                lookForHor = false;
+                }
+                if(lookForSlantRight && *(image->getPixelAddress(r-i,c+i)) == 127 && *(image->getPixelAddress(r-i-1,c+i+1)) == *(image->getPixelAddress(r,c))){
+                *pImage = *(image->getPixelAddress(r-i-1,c+i+1));
+                lookForSlantRight = false;
+                }
+                }
+                
+            }
+            pImage++;
             pBuffer ++;
             pTime ++;
         }
         pImage+=imagePadding;
     }
+
+    
     //unmask_events.setLastTimestamp(0);
+    
 }
 
 unsigned long cFrameConverter::getLastTimeStamp() {

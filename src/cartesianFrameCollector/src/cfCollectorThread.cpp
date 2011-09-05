@@ -286,17 +286,17 @@ void cfCollectorThread::run() {
       unsigned long int lastright = unmask_events.getLastTimestampRight();
       rc = lastright * COUNTERRATIO;
 
-    //if (count == synch_time) {
+      //if (count == synch_time) {
       //printf("Sychronised Sychronised Sychronised Sychronised ");
       if( lc > interval* INTERVFACTOR * dim_window)
-	minCount      = lc - interval* INTERVFACTOR * dim_window; //cfConverter->getEldestTimeStamp();        
+          minCount      = lc - interval* INTERVFACTOR * dim_window; //cfConverter->getEldestTimeStamp();        
       else
-	minCount = 0;
-
+          minCount = 0;
+      
       if( rc > interval* INTERVFACTOR * dim_window)
-	minCountRight = rc - interval* INTERVFACTOR * dim_window;
+          minCountRight = rc - interval* INTERVFACTOR * dim_window;
       else
-	minCountRight = 0;
+          minCountRight = 0;
       //maxCount = lc; 
       //maxCountRight = rc;
 		 
@@ -319,24 +319,29 @@ void cfCollectorThread::run() {
     
     //---- preventer for fixed  addresses ----//
     
-    if(count % synch_time == 0) { 
-      //printf("countStop %d lcprev %d lc %d \n",countStop, lcprev,lc);
-      if ((lcprev == lc)||(rcprev == rc)) { 
-	countStop++;
-	printf("countStop %d \n", countStop);
-      }            
-      //else if (rcprev == rc) { 
-      //    countStop++;
-      //    printf("countStop %d \n", countStop);
-      //}
-      else {
-	countStop--;
-	printf("countStop %d \n", countStop);
-	if(countStop<= 0)
-	  countStop = 0;
-      }
-      lcprev = lc;
-      rcprev = rc;
+    if(count % 100 == 0) { 
+        unsigned long int lastleft = unmask_events.getLastTimestamp();
+        lc = lastleft * COUNTERRATIO; 
+        unsigned long int lastright = unmask_events.getLastTimestampRight();
+        rc = lastright * COUNTERRATIO;
+        //printf("countStop %d lcprev %d lc %d \n",countStop, lcprev,lc);
+        if ((lcprev == lc)||(rcprev == rc)) { 
+            countStop++;
+            printf("countStop %d \n", countStop);
+        }            
+        //else if (rcprev == rc) { 
+        //    countStop++;
+        //    printf("countStop %d \n", countStop);
+        //}
+        else {
+            countStop--;
+            //printf("countStop %d \n", countStop);
+            if(countStop<= 0) {
+                countStop = 0;
+            }
+        }
+        lcprev = lc;
+        rcprev = rc;
     }
     
     
