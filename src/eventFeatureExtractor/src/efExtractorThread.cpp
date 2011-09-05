@@ -41,8 +41,21 @@ using namespace std;
 #define THRATE 30
 #define SHIFTCONST 100
 
-inline void convertChar2bits() {
+#define ADDRESS 0x40000
+#define X_MASK 0x000000FE
+#define X_MASK_DEC    254
+#define X_SHIFT 1
+#define Y_MASK 0x00007F00
+#define Y_MASK_DEC  32512    
+#define Y_SHIFT 8
+#define POLARITY_MASK 0x00000001
+#define POLARITY_SHIFT 0
 
+inline int convertChar2Dec(char value) {
+    if (value > 60)
+        return value - 97 + 10;
+    else
+        return value - 48;
 }
 
 inline void copy_8u_C1R(ImageOf<PixelMono>* src, ImageOf<PixelMono>* dest) {
@@ -99,10 +112,11 @@ bool efExtractorThread::threadInit() {
     outRightPort.open(getName("/edgesRight:o").c_str());
     inLeftPort.open(getName("/left:i").c_str());
     inRightPort.open(getName("/right:i").c_str());
+
+    lut = new int[128 * 128];
     
     /*opening the file of the mapping and creating the LUT*/
-    pFile = fopen (mapURL.c_str(),"rb");
-    
+    pFile = fopen (mapURL.c_str(),"rb");    
     if (pFile!=NULL) {
         long lSize;
         size_t result;        
@@ -119,9 +133,60 @@ bool efExtractorThread::threadInit() {
         result = fread (buffer,1,lSize,pFile);        
         printf(" Saved the data of the file into the buffer lSize:%lu \n", lSize);
         // checking the content of the buffer
-        for (int i = 0; i < lSize; i++) {
-            printf("%c \n", *buffer);
+        long word = 0;
+        long input = -1, output = -1;
+        short x, y;
+        for (int i = 0; i < lSize; i++) {            
+            
+            int value = convertChar2Dec(*buffer);
+            if(*buffer == 10) {
+                //sac words
+                if(word < 500000) {
+                    word -= 262144;
+                }
+                else if(word < 1000000) {
+                    word -= 524288;
+                }    
+                else {
+                    word -= 1114112;
+                }
+
+                x = word & 0x001F;
+                y = word >> 5;
+                printf("sac: %d --> %d %d \n", word, x, y);
+                output = y * 32 + x;
+                word = 0;
+            }
+            else if(*buffer == 32) {
+                //angel words
+                if(word < 500000) {
+                    word -= 262144;
+                }
+                else if(word < 1000000) {
+                    word -= 524288;
+                }    
+                else {
+                    word -= 1114112;
+                }                
+                
+                x = (word & X_MASK) >> X_SHIFT;
+                y = (word & Y_MASK) >> Y_SHIFT;
+                printf("angel: %d --> %d %d \n", word, x, y);
+                input = y * 128 + x;;
+                word = 0;
+            }
+            else{
+                //printf("%d,%d ", value, word );
+                word = word << 4;
+                word += value;
+            }
             buffer++;
+            if((input != -1) && (output!=-1)) {
+                printf("%d-->%d \n", input, output);
+                input  = -1;
+                output = -1;
+            }
+            
         }
     }
     
