@@ -232,7 +232,7 @@ void cfCollectorThread::run() {
 
     // extract a chunk/unmask the chunk
     //printf("verb %d \n",verb);
-    verb = false;
+    
     unmask_events.unmaskData(bufferCopy,CHUNKSIZE,verb);
     if(verb) {
       verb = false;
@@ -281,9 +281,9 @@ void cfCollectorThread::run() {
     
     //synchronising the thread every time interval 1000*period of the thread
     else if ((count % synch_time == 0) && (minCount < 4294500000)) {
-      unsigned long int lastleft = unmask_events.getLastTimestamp();
+      unsigned long lastleft = unmask_events.getLastTimestamp();
       lc = lastleft * COUNTERRATIO; 
-      unsigned long int lastright = unmask_events.getLastTimestampRight();
+      unsigned long lastright = unmask_events.getLastTimestampRight();
       rc = lastright * COUNTERRATIO;
 
       //if (count == synch_time) {
@@ -320,14 +320,14 @@ void cfCollectorThread::run() {
     //---- preventer for fixed  addresses ----//
     
     if(count % 100 == 0) { 
-        unsigned long int lastleft = unmask_events.getLastTimestamp();
+        unsigned long lastleft = unmask_events.getLastTimestamp();
         lc = lastleft * COUNTERRATIO; 
-        unsigned long int lastright = unmask_events.getLastTimestampRight();
+        unsigned long lastright = unmask_events.getLastTimestampRight();
         rc = lastright * COUNTERRATIO;
         //printf("countStop %d lcprev %d lc %d \n",countStop, lcprev,lc);
         if ((lcprev == lc)||(rcprev == rc)) { 
             countStop++;
-            printf("countStop %d \n", countStop);
+            printf("countStop %d %lu %lu %lu %lu \n", countStop, lc, lcprev, rc, rcprev);
         }            
         //else if (rcprev == rc) { 
         //    countStop++;
@@ -351,6 +351,11 @@ void cfCollectorThread::run() {
       //printf("resetting time stamps!!!!!!!!!!!!! %d %d   \n ", minCount, minCountRight);
       unmask_events.resetTimestampLeft(); 
       unmask_events.resetTimestampRight();
+      cfConverter->reset();
+      unsigned long lastleft = unmask_events.getLastTimestamp();
+      lc = lastleft * COUNTERRATIO; 
+      unsigned long lastright = unmask_events.getLastTimestampRight();
+      rc = lastright * COUNTERRATIO;
       minCount      = 0;
       minCountRight = 0;
       maxCount      =  minCount      + interval * INTERVFACTOR* (dim_window);
@@ -359,8 +364,8 @@ void cfCollectorThread::run() {
       //maxCount      = 4294967268;
       //maxCountRight = 4294967268;
       countStop = 0;
-      //verb = true;
-      printf("countStop resetting %llu \n",unmask_events.getLastTimestamp() );
+      verb = true;
+      printf("countStop resetting %llu %llu %llu \n",unmask_events.getLastTimestamp(), lc, rc );
       count = synch_time - 200;
       
     }

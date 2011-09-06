@@ -198,7 +198,10 @@ void unmask::run() {
 void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
     //AER_struct sAER
     count++;
-    
+    if(verb)
+        printf("Unmasking with the timestamp %llu \n", lasttimestamp);
+
+
     int num_events;
     if(dvsMode) {
         num_events = i_sz / 4;    // pointing to events made of 4 bytes
@@ -338,12 +341,13 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
             //TODO:: remove verb if not necessary
             if(verb) {
                 //for (int i = 0; i < 2; i ++) {
-                //printf("%llu \n", lasttimestamp);
+                //printf("verb is true %llu %llu \n", timestamp, lasttimestamp);
                     //}
                 //lasttimestamp = 0;
                 //resetTimestamps();
             }
-            else if(timestamp > lasttimestamp) {
+
+            if(timestamp > lasttimestamp) {
                 lasttimestamp = timestamp;
             }
             
@@ -397,7 +401,8 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
                 //lasttimestampright = 0;
                 //resetTimestamps();
             }
-            else if( timestamp > lasttimestampright){
+
+            if( timestamp > lasttimestampright){
                 lasttimestampright = timestamp;
             }           
             if (timeBufferRight[cartX + cartY * retinalSize] < timestamp) {
@@ -435,7 +440,7 @@ void unmask::unmaskEvent(unsigned int evPU, short& x, short& y, short& pol, shor
     y =       (short) (retinalSize - 1) - (short)((evPU & xmaskshort) >> xshift);
     //y = (short) ((evPU & xmask)>>xshift);
     x =       (short) ((evPU & ymaskshort)      >> yshift);
-    pol =    ((short) ((evPU & polmaskshort)    >> polshift)==0)?-1:1;	//+1 ON, -1 OFF
+    pol =    ((short) ((evPU & polmaskshort)    >> polshift)==0)?1:-1;	//+1 ON, -1 OFF
     camera = ((short) ( evPU & cameramaskshort) >> camerashift);	        //0 LEFT, 1 RIGHT
     //printf("1evPU%x polmask%x polshift%x \n"); 
     

@@ -50,11 +50,11 @@ private:
     struct timeval tvstart,tvend;
     //struct timespec start_time, stop_time;
     u64 Tnow;
-    unsigned long int precl;
-    unsigned long int lc;
-    unsigned long int lcprev;
-    unsigned long int rcprev;
-    unsigned long int rc;
+    unsigned long precl;
+    unsigned long lc;
+    unsigned long lcprev;
+    unsigned long rcprev;
+    unsigned long rc;
     FILE* raw;                          // file dumper for debug
     double microseconds;
     double microsecondsPrev;

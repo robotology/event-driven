@@ -67,7 +67,7 @@ cFrameConverter::cFrameConverter():convert_events(128,128) {
     printf("setting memory \n");
     memset(converterBuffer,0,BUFFERDIM);              // set unsigned char
     pcRead = converterBuffer;
-    unmask_events.start();
+    //unmask_events.start();
     printf("unmask event just started");
     previousTimeStamp = 0;
     readEvents = fopen("./readEvents","w");
@@ -75,11 +75,15 @@ cFrameConverter::cFrameConverter():convert_events(128,128) {
 
 cFrameConverter::~cFrameConverter() {
     printf("cFrameConverter:stopping the unmasker \n");
-    unmask_events.stop();
+    //unmask_events.stop();
     //delete &unmask_events;
     //delete &convert_events;
     printf("cFrameConverter:freeing converterBuffer \n");
     free(converterBuffer_copy);
+}
+
+void cFrameConverter::reset() {
+    memset(converterBuffer_copy,0,BUFFERDIM);
 }
 
 void cFrameConverter::copyChunk(char* bufferCopy) {        
@@ -204,7 +208,7 @@ void cFrameConverter::onRead(eventBuffer& i_ub) {
 */
 
 void cFrameConverter::resetTimestamps() {
-    unmask_events.resetTimestamps();
+    //unmask_events.resetTimestamps();
 }
 
 void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image, unsigned long minCount, unsigned long maxCount, bool camera){
@@ -215,8 +219,10 @@ void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image, unsigned long minC
     int imageRowSize = image->getRowSize();
     
     // determining whether the camera is left or right
-    int* pBuffer = unmask_events.getEventBuffer(camera);
-    unsigned long* pTime   = unmask_events.getTimeBuffer(camera);
+    // int* pBuffer = unmask_events.getEventBuffer(camera);
+    int* pBuffer = 0;
+    // unsigned long* pTime   = unmask_events.getTimeBuffer(camera);
+    unsigned long* pTime;
     
     //printf("timestamp: min %d    max %d  \n", minCount, maxCount);
     //pBuffer += retinalSize * retinalSize - 1;
@@ -272,19 +278,22 @@ void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image, unsigned long minC
 }
 
 unsigned long cFrameConverter::getLastTimeStamp() {
-    return unmask_events.getLastTimestamp();
+    //return unmask_events.getLastTimestamp();
+    return 0;
 }
 
 unsigned long cFrameConverter::getLastTimeStampRight() {
-    return unmask_events.getLastTimestampRight();
+    //return unmask_events.getLastTimestampRight();
+    return 0;
 }
 
 unsigned long cFrameConverter::getEldestTimeStamp() {
-    return unmask_events.getEldestTimeStamp();
+    //return unmask_events.getEldestTimeStamp();
+    return 0;
 }
 
 void cFrameConverter::clearMonoImage() {
-    unmask_events.cleanEventBuffer();
+    //unmask_events.cleanEventBuffer();
 }
 
 
