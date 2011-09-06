@@ -623,6 +623,14 @@ void  asvGrabberThread::run() {
     for (int i = 0; i < monBufEvents; i++) {
         // double buffer!!
         a = pmon[i].address;
+        if((i==0)&&(a>0xFFFF)) {
+            printf("WARNING \n");
+            printf("WARNING \n");
+            printf("WARNING \n");
+            printf("WARNING \n");
+            printf("WARNING \n");
+            printf("WARNING \n");
+        }
         //t = pmon[i].timestamp * 0.128;   // this instruction is valid only for AEX not the iHead
         t = pmon[i].timestamp;
         //if(a<14336)
@@ -644,7 +652,11 @@ void  asvGrabberThread::run() {
         //if(i == 1000)
         //    printf("address:%d ; timestamp:%d \n", a, t);
     }
-
+    
+    // check in the print out of the packet
+    if ((save) && (timediff > 3.0)) {
+        fprintf(fout,"||||||||||||||||||||||||||||| \n"); 
+    }
 
     sz = monBufEvents*sizeof(struct aer); // sz is size in bytes
 
