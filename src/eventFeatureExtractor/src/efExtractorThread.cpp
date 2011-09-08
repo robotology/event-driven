@@ -113,7 +113,14 @@ bool efExtractorThread::threadInit() {
     inLeftPort.open(getName("/left:i").c_str());
     inRightPort.open(getName("/right:i").c_str());
 
+    printf("allocating memory for the LUT \n");
     lut = new int[128 * 128];
+    printf("initialising memory for LUT \n");
+    for(int i = 0; i < 128 * 128; i++) {
+        lut[i] = -1;
+        printf("i: %d  value : %d \n",i,lut[i]);
+    } 
+    printf("initialised memory for LUT \n");
     
     /*opening the file of the mapping and creating the LUT*/
     pFile = fopen (mapURL.c_str(),"rb");    
@@ -183,10 +190,10 @@ bool efExtractorThread::threadInit() {
             buffer++;
             if((input != -1) && (output!=-1)) {
                 printf("%d-->%d \n", input, output);
+                lut[input] = output;
                 input  = -1;
                 output = -1;
-            }
-            
+            }            
         }
     }
     
@@ -214,125 +221,20 @@ void efExtractorThread::resize(int widthp, int heightp) {
     //rightInputImage->resize(width, height);
 }
 
-void efExtractorThread::run() {    
-    if ((inLeftPort.getInputCount()) && (outLeftPort.getOutputCount())) {       
-        leftInputImage = inLeftPort.read();
-        
-        unsigned char* pin = leftInputImage->getRawImage();
-        int width = leftInputImage->width();
-        int height = leftInputImage->height();
-        ImageOf<PixelMono>& outLeft = outLeftPort.prepare();
-        outLeft.resize(width,height);
-        unsigned char* pout = outLeft.getRawImage();
-        int padding = leftInputImage->getPadding();
-        int rowsize = leftInputImage->getRowSize();
-        
-        for (int r = 0; r < (height - DIM); r++) {
-            for (int c = 0; c < (width - DIM); c++) {
-                
-                Vector p(DIM);
-                bool paint254h = true;
-                for (int i=0; i < DIM; i++){
-                    p[i] = (double) *(pin + i);
-                    if(p[i]!=254){
-                        paint254h = false;
-                        break;
-                    }   
-                }
-                bool paint0h = true;
-                for (int i=0; i < DIM; i++){
-                    p[i] = (double) *(pin + i);
-                    if(p[i]!=0){
-                        paint0h = false;
-                        break;
-                    }
-                }
-                bool paint254v = true;
-                for (int i=0; i<DIM; i++){
-                    p[i] = (double) *(pin + rowsize * i);
-                    if(p[i]!=254){
-                        paint254v = false;
-                        break;
-                    }
-                }
-                bool paint0v = true;
-                for (int i=0; i<DIM; i++){
-                    p[i] = (double) *(pin + rowsize * i);
-                    if(p[i]!=0){
-                        paint0v = false;
-                        break;
-                    }
-                }
-                
-
-                
-                if(paint254h){
-                    *pout = 254;
-                }
-                else if(paint0h){
-                    *pout = 0;
-                }
-                else if (paint254v){
-                    *pout = 254;
-                }
-                else if(paint0v){
-                    *pout = 0;
-                }
-                else{
-                    *pout = 127;
-                }
-                
-
-                //*pout = *pin;                
-                pout++;
-                pin++;
-            }
-            for (int c=0; c< DIM; c++) {
-                *pout++ = 127 ;
-                pin++;
-            }
-            pin += padding;
-            pout += padding;
+void efExtractorThread::run() {   
+    count++;
+    if(!idle) { 
+        // reads the buffer received
+        // saves it into a working buffer
+        //printf("returned 0x%x 0x%x \n", bufferCopy, flagCopy);
+        lfConverter->copyChunk(bufferCopy, flagCopy);
+        int unreadDim = selectUnreadBuffer(bufferCopy, flagCopy, resultCopy);
+        if(unreadDim!=0) {
+            //printf("Unmasking events:  %d \n", unreadDim);
+            // extract a chunk/unmask the chunk       
+            unmask_events.logUnmaskData(resultCopy,unreadDim,verb);
         }
-        for (int r=0; r < DIM; r++) {
-            for (int c = 0; c < width; c ++) {
-                *pout++ = 127; pin++;
-            }
-            pin += padding;
-            pout += padding;
-        }
-        
-        //cvDilate(outLeft.getIplImage(),outLeft.getIplImage(),NULL,4);
-        //cvErode(outLeft.getIplImage(),outLeft.getIplImage(),NULL,4);
-        
-        outLeftPort.write();
-    }
-    
-    /*
-    if ((inRightPort.getInputCount()) && (outRightPort.getOutputCount())) {
-        rightInputImage = inRightPort.prepare();
-        ImageOf<PixelMono>& outRight = outRightPort.prepare();
-        unsigned char* pin = rightInputImage->getRawImage();
-        unsigned char* pout = outRight.getRawImage();
-        int padding = rightInputImage->getPadding();
-        for (int r = 0; r < rightInputImage->height(); r++) {
-            for (int c = 0; c < rightInputImage->width() - 3; c++) {
-                unsigned char p1, p2, p3;
-                p1 = *(pin + 1);
-                p2 = *(pin + 2);
-                p3 = *(pin + 3);
-                
-                if((p1 == *pin) && (p2 == *pin) && (p3 == *pin)){
-                    *pout++ = *pin++;
-                }
-            }
-            pin += padding;
-            pout += padding;
-        }
-        outRightPort.write();
-    }
-    */
-    
+    } 
 }
 
 void efExtractorThread::interrupt() {
@@ -349,6 +251,7 @@ void efExtractorThread::threadRelease() {
     inLeftPort.close();
     inRightPort.close();
     /* closing the file */
+    delete[] lut;
     fclose (pFile);
 }
 
