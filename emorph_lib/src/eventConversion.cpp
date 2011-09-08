@@ -19,7 +19,7 @@
  */
 
 /**
- * @file unmask.cpp
+ * @file unmask.cppy
  * @brief A class for unmasking the event (see the header unmask.h)
  */
 
@@ -30,6 +30,7 @@
 
 using namespace std;
 using namespace yarp::os;
+
 
 #define MAXVALUE 114748364 //4294967295
 #define maxPosEvent 10000
