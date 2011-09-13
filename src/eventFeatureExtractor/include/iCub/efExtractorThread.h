@@ -34,11 +34,16 @@
 #include <iostream>
 
 
+//within project includes
+#include <iCub/cartesianFrameConverter.h>
+
+
 class efExtractorThread : public yarp::os::RateThread {
 private:
-    int count;                          //loop counter of the thread
-    int width, height;                  //dimension of the extended input image (extending)
-    int height_orig, width_orig;        //original dimension of the input and output images
+    bool idle;                          // flag that exclude code from the execution loop
+    int count;                          // loop counter of the thread
+    int width, height;                  // dimension of the extended input image (extending)
+    int height_orig, width_orig;        // original dimension of the input and output images
     yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelMono> > inLeftPort;       //port where the left event image is received
     yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelMono> > inRightPort;      //port where the right event image is received
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outLeftPort;               //port whre the output edge (left) is sent
@@ -46,12 +51,16 @@ private:
     yarp::sig::ImageOf <yarp::sig::PixelMono>* leftInputImage;           //image input left 
     yarp::sig::ImageOf <yarp::sig::PixelMono>* rightInputImage;          //image input right 
     //yarp::sig::ImageOf <yarp::sig::PixelMono>& tmp;                    //temporary image for correct port reading
-    std::string name;                   // rootname of all the ports opened by this thread
-    std::string mapURL;                 // mode name and name of the map
-    bool resized;                       // flag to check if the variables have been already resized
-    int shiftValue;                     // value of the shift between dragonfly (this is vergence related)
-    FILE * pFile;                       // file that contains the rules for the LUT
-    int* lut;                          // lut that route the event in a different location 
+    std::string name;                     // rootname of all the ports opened by this thread
+    std::string mapURL;                   // mode name and name of the map
+    bool resized;                         // flag to check if the variables have been already resized
+    int shiftValue;                       // value of the shift between dragonfly (this is vergence related)
+    FILE * pFile;                         // file that contains the rules for the LUT
+    int* lut;                             // lut that route the event in a different location 
+    cFrameConverter* cfConverter;         // cartesian frame converter
+    char* bufferCopy;                     // local copy of the events read
+    char* flagCopy;                       // copy of the unreadBuffer
+    char* resultCopy;                     // buffer resulting out of the selection
 public:
     /**
     * default constructor

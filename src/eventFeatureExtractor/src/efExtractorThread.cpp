@@ -1,23 +1,21 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
-/* 
- * Copyright (C) 2011 RobotCub Consortium, European Commission FP6 Project IST-004370
- * Authors: Rea Francesco
- * email:   francesco.rea@iit.it
- * website: www.robotcub.org 
- * Permission is granted to copy, distribute, and/or modify this program
- * under the terms of the GNU General Public License, version 2 or any
- * later version published by the Free Software Foundation.
- *
- * A copy of the license can be found at
- * http://www.robotcub.org/icub/license/gpl.txt
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License fo
- r more details
- */
+/*
+  * Copyright (C)2011  Department of Robotics Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
+  * Author:Francesco Rea
+  * email: francesco.rea@iit.it
+  * Permission is granted to copy, distribute, and/or modify this program
+  * under the terms of the GNU General Public License, version 2 or any
+  * later version published by the Free Software Foundation.
+  *
+  * A copy of the license can be found at
+  * http://www.robotcub.org/icub/license/gpl.txt
+  *
+  * This program is distributed in the hope that it will be useful, but
+  * WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+  * Public License for more details
+*/
 
 /**
  * @file efExtractorThread.cpp
@@ -25,6 +23,8 @@
  */
 
 #include <iCub/efExtractorThread.h>
+#include <iCub/cartesianFrameConverter.h>
+
 #include <cxcore.h>
 #include <cv.h>
 #include <highgui.h>
@@ -50,6 +50,8 @@ using namespace std;
 #define Y_SHIFT 8
 #define POLARITY_MASK 0x00000001
 #define POLARITY_SHIFT 0
+
+#define CHUNKSIZE 32768
 
 inline int convertChar2Dec(char value) {
     if (value > 60)
@@ -98,10 +100,13 @@ efExtractorThread::efExtractorThread() : RateThread(THRATE) {
     leftInputImage = 0;
     rightInputImage = 0;
     shiftValue=20;
+
+    idle = false;
+    bufferCopy = (char*) malloc(CHUNKSIZE);
 }
 
 efExtractorThread::~efExtractorThread() {
- 
+    free(bufferCopy);
 }
 
 bool efExtractorThread::threadInit() {
@@ -113,12 +118,16 @@ bool efExtractorThread::threadInit() {
     inLeftPort.open(getName("/left:i").c_str());
     inRightPort.open(getName("/right:i").c_str());
 
+    cfConverter=new cFrameConverter();
+    cfConverter->useCallback();
+    cfConverter->open(getName("/retina:i").c_str());
+
     printf("allocating memory for the LUT \n");
     lut = new int[128 * 128];
     printf("initialising memory for LUT \n");
     for(int i = 0; i < 128 * 128; i++) {
         lut[i] = -1;
-        printf("i: %d  value : %d \n",i,lut[i]);
+        //printf("i: %d  value : %d \n",i,lut[i]);
     } 
     printf("initialised memory for LUT \n");
     
@@ -160,7 +169,7 @@ bool efExtractorThread::threadInit() {
 
                 x = word & 0x001F;
                 y = word >> 5;
-                printf("sac: %d --> %d %d \n", word, x, y);
+                //printf("sac output: %d --> %d %d \n", word, x, y);
                 output = y * 32 + x;
                 word = 0;
             }
@@ -178,7 +187,7 @@ bool efExtractorThread::threadInit() {
                 
                 x = (word & X_MASK) >> X_SHIFT;
                 y = (word & Y_MASK) >> Y_SHIFT;
-                printf("angel: %d --> %d %d \n", word, x, y);
+                //printf("angel input: %d --> %d %d \n", word, x, y);
                 input = y * 128 + x;;
                 word = 0;
             }
@@ -189,7 +198,8 @@ bool efExtractorThread::threadInit() {
             }
             buffer++;
             if((input != -1) && (output!=-1)) {
-                printf("%d-->%d \n", input, output);
+                printf("lut : %d-->%d \n", input, output);
+
                 lut[input] = output;
                 input  = -1;
                 output = -1;
@@ -223,18 +233,20 @@ void efExtractorThread::resize(int widthp, int heightp) {
 
 void efExtractorThread::run() {   
     count++;
+    printf("counter %d \n", count);
+    bool flagCopy;
     if(!idle) { 
         // reads the buffer received
         // saves it into a working buffer
         //printf("returned 0x%x 0x%x \n", bufferCopy, flagCopy);
-        lfConverter->copyChunk(bufferCopy, flagCopy);
-        int unreadDim = selectUnreadBuffer(bufferCopy, flagCopy, resultCopy);
-        if(unreadDim!=0) {
-            //printf("Unmasking events:  %d \n", unreadDim);
-            // extract a chunk/unmask the chunk       
-            unmask_events.logUnmaskData(resultCopy,unreadDim,verb);
-        }
-    } 
+        cfConverter->copyChunk(bufferCopy);
+        //int unreadDim = selectUnreadBuffer(bufferCopy, flagCopy, resultCopy);
+
+        //printf("Unmasking events:  %d \n", unreadDim);
+        // extract a chunk/unmask the chunk       
+        //unmask_events.logUnmaskData(resultCopy,unreadDim,verb);
+    }
+    
 }
 
 void efExtractorThread::interrupt() {
@@ -250,6 +262,9 @@ void efExtractorThread::threadRelease() {
     outRightPort.close();
     inLeftPort.close();
     inRightPort.close();
+    
+    delete cfConverter;
+    
     /* closing the file */
     delete[] lut;
     fclose (pFile);
