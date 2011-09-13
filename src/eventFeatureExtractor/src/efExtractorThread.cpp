@@ -40,7 +40,7 @@ using namespace std;
 #define DIM 10
 #define THRATE 30
 #define SHIFTCONST 100
-
+#define RETINA_SIZE 128
 #define ADDRESS 0x40000
 #define X_MASK 0x000000FE
 #define X_MASK_DEC    254
@@ -122,10 +122,12 @@ bool efExtractorThread::threadInit() {
     cfConverter->useCallback();
     cfConverter->open(getName("/retina:i").c_str());
 
+    eventBuffer = new AER_struct[CHUNKSIZE>>3];
+
     printf("allocating memory for the LUT \n");
-    lut = new int[128 * 128];
+    lut = new int[RETINA_SIZE * RETINA_SIZE];
     printf("initialising memory for LUT \n");
-    for(int i = 0; i < 128 * 128; i++) {
+    for(int i = 0; i < RETINA_SIZE * RETINA_SIZE; i++) {
         lut[i] = -1;
         //printf("i: %d  value : %d \n",i,lut[i]);
     } 
@@ -235,18 +237,32 @@ void efExtractorThread::run() {
     count++;
     printf("counter %d \n", count);
     bool flagCopy;
-    if(!idle) { 
+    if(!idle) {
+        ImageOf<PixelMono>& left = outLeftPort.prepare();
+        
         // reads the buffer received
-        // saves it into a working buffer
+        // saves it into a working buffer        
         //printf("returned 0x%x 0x%x \n", bufferCopy, flagCopy);
         cfConverter->copyChunk(bufferCopy);
         //int unreadDim = selectUnreadBuffer(bufferCopy, flagCopy, resultCopy);
 
         //printf("Unmasking events:  %d \n", unreadDim);
         // extract a chunk/unmask the chunk       
-        //unmask_events.logUnmaskData(resultCopy,unreadDim,verb);
+        unmask_events.unmaskData(bufferCopy,CHUNKSIZE,eventBuffer);
+        
+        AER_struct* iterEvent = eventBuffer;
+        unsigned char* pLeft = left.getRawImage();
+        for(int i=0; i < 10; i++ ) {
+            printf(" %d %d \n",iterEvent->x,iterEvent->y );
+            int x = iterEvent->x;
+            int y = iterEvent->y;
+            pLeft[x + y * RETINA_SIZE]++;
+            if(pLeft[x + y * RETINA_SIZE]>255) {
+                pLeft[x + y * RETINA_SIZE] = 255;
+            }
+            iterEvent++;
+        }
     }
-    
 }
 
 void efExtractorThread::interrupt() {
@@ -263,6 +279,7 @@ void efExtractorThread::threadRelease() {
     inLeftPort.close();
     inRightPort.close();
     
+    delete[] eventBuffer;
     delete cfConverter;
     
     /* closing the file */

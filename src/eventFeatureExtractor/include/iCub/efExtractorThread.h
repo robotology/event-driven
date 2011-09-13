@@ -32,7 +32,7 @@
 #include <yarp/sig/all.h>
 #include <yarp/dev/all.h>
 #include <iostream>
-
+#include <iCub/eventConversion.h>
 
 //within project includes
 #include <iCub/cartesianFrameConverter.h>
@@ -48,9 +48,9 @@ private:
     yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelMono> > inRightPort;      //port where the right event image is received
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outLeftPort;               //port whre the output edge (left) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outRightPort;               //port whre the output edge (right) is sent
-    yarp::sig::ImageOf <yarp::sig::PixelMono>* leftInputImage;           //image input left 
-    yarp::sig::ImageOf <yarp::sig::PixelMono>* rightInputImage;          //image input right 
-    //yarp::sig::ImageOf <yarp::sig::PixelMono>& tmp;                    //temporary image for correct port reading
+    yarp::sig::ImageOf <yarp::sig::PixelMono>* leftInputImage;           // image input left 
+    yarp::sig::ImageOf <yarp::sig::PixelMono>* rightInputImage;          // image input right 
+    //yarp::sig::ImageOf <yarp::sig::PixelMono>& tmp;                      // temporary image for correct port reading
     std::string name;                     // rootname of all the ports opened by this thread
     std::string mapURL;                   // mode name and name of the map
     bool resized;                         // flag to check if the variables have been already resized
@@ -58,9 +58,11 @@ private:
     FILE * pFile;                         // file that contains the rules for the LUT
     int* lut;                             // lut that route the event in a different location 
     cFrameConverter* cfConverter;         // cartesian frame converter
+    unmask unmask_events;                 // object that unmasks the event
     char* bufferCopy;                     // local copy of the events read
     char* flagCopy;                       // copy of the unreadBuffer
     char* resultCopy;                     // buffer resulting out of the selection
+    AER_struct* eventBuffer;                    // list of unmasked events
 public:
     /**
     * default constructor
