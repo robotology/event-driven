@@ -19,15 +19,22 @@
 #include <sstream>
 #include <ctime>
 
-
 #include <yarp/os/all.h>
+
+typedef struct s_AER_struct {
+    int x;
+    int y;
+    int pol;
+    unsigned int ts;
+}AER_struct;
 
 
 /**
- * CHANCE LOG
- * 22/08/11 : made the unmasking class as general as possible                               author Rea
- * 22/08/11 : added two functions for timestamp reset
- * 23/08/11 : added different unmasking for dvs cameras without iHead                       author Rea    
+ * \section change_log CHANCE LOG
+ * 22/08/11 : made the unmasking class as general as possible                               \author Rea \n
+ * 22/08/11 : added two functions for timestamp reset                                       \author Rea \n
+ * 23/08/11 : added different unmasking for dvs cameras without iHead                       \author Rea \n   
+ * 13/09/11 : added an pointer to the unmasked  for the method unmaskData                   \author Rea \n         
  */
 
 
@@ -73,11 +80,11 @@ private:
     int retinalSize;               // size of the retina
     int minValue;
     int maxValue;
-    int countEvent;                //counter of the number of events saved in the buffer1
-    int countEvent2;               //counter of the number of events saved in the buffer2
-    int numKilledEvents;           //number of the element that have be removed from the buffer
-    bool temp1;                    //boolean flag that indicates where the events have to be saved
-    bool validLeft,validRight;     //flag for validity of the events
+    int countEvent;                // counter of the number of events saved in the buffer1
+    int countEvent2;               // counter of the number of events saved in the buffer2
+    int numKilledEvents;           // number of the element that have be removed from the buffer
+    bool temp1;                    // boolean flag that indicates where the events have to be saved
+    bool validLeft,validRight;     // flag for validity of the events
     bool verbosity;
     bool dvsMode;                  // flag that initialises the typology of unmasking
 
@@ -179,6 +186,15 @@ public:
     * function called when the module is poked with an interrupt command
     */
     //void interrupt();
+
+    /**
+    * function that given a reference to the list of char read from the port and the number of packet received
+    * unmasks the event in term of x,y, polarity and time stamp and update the buffer
+    * @param data reference to the vector of char (the read data)
+    * @param size size of the last reading from the port
+    * @param output pointer to the collection of event unmasked
+    */
+    void unmaskData(char* data, int size, AER_struct* output);
 
     /**
     * function that given a reference to the list of char read from the port and the number of packet received
