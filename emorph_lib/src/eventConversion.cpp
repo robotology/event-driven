@@ -174,7 +174,7 @@ void unmask::run() {
 void unmask::unmaskData(char* i_buffer, int i_sz, AER_struct* output) {
     //cout << "Size of the received packet to unmask : " << i_sz / 8<< endl;
     //printf("pointer 0x%x ",i_buffer);
-    //AER_struct sAER
+    AER_struct* iterEvent = output;
     count++;
     //assert(num_events % 8 == 0);
     int num_events = i_sz / 8;
@@ -269,6 +269,11 @@ void unmask::unmaskData(char* i_buffer, int i_sz, AER_struct* output) {
             
         //camera is unmasked as left 0, right -1. It is converted in left 1, right 0
         camera = camera + 1;        //camera: LEFT 0, RIGHT 1
+
+        //adding a new event to the list
+        iterEvent->x = cartX;
+        iterEvent->y = cartY;
+        iterEvent++;
     }
 }
 
@@ -396,6 +401,22 @@ void unmask::resetTimestampRight() {
     }
     lasttimestampright = 0;
 }
+
+
+/**
+ * @brief masking of a 32bit address event with camera information
+ */
+void unmask::maskEvent( short x, short y, short pol, short camera,unsigned long& evPU ) {
+    //y = (short)(retinalSize-1) - (short)((evPU & xmask) >> xshift);
+    //y = (short) ((evPU & xmask)>>xshift);
+    //x = (short) ((evPU & ymask) >> yshift);
+    //pol = ((short)((evPU & polmask) >> polshift)==0)?-1:1;	//+1 ON, -1 OFF
+    //camera = ((short)(evPU & cameramask) >> camerashift);	//0 LEFT, 1 RIGHT
+    pol = pol==
+    eventPU = y << xshift + x << yshift + pol << polshif 
+
+}
+
 
 /**
  * @brief unmasking of a 16bit address event with camera information
