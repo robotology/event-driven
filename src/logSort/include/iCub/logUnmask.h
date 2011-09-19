@@ -33,7 +33,7 @@
 #include <sys/types.h>
 #include <yarp/os/all.h>
 
-typedef unsigned long uint32_t;
+//typedef unsigned long uint32_t;
 
 
 #define u32 uint32_t
