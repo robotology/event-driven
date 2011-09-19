@@ -210,7 +210,7 @@ public:
     * @param evPU blob representing the position of the pixel the polarity and the camera produced from
     * @param x position of the event along the x axis
     * @param y position of the event along the y axis
-    * @param pol polarity of the event +1, -1
+    * @param pol polarity of the even4t +1, -1
     * @param camera reference to the camera that has produced the event
     */
     void unmaskEvent(long int evPU, short& x, short& y, short& pol, short& camera);
@@ -234,6 +234,17 @@ public:
     * @param pol Set with the ON/OFF polarity of the pixel.
     */
     void unmaskEvent(unsigned int evPu, short& x, short& y, short& pol);
+
+    /**
+     * @brief masking of a 32bit address event with camera information
+     * @param x coordinate x to mask
+     * @param y coordinate y to mask
+     * @param pol polarity to mask
+     * @param camera reference to the camera (left 1, right 0)
+     * @param evPu output of the masking
+     */
+    void maskEvent( short x, short y, short pol, short camera,unsigned long& evPU ) ;
+
 
     /**
      * function that set to zero the vector of timestamp of positions

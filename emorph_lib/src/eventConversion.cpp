@@ -412,9 +412,7 @@ void unmask::maskEvent( short x, short y, short pol, short camera,unsigned long&
     //x = (short) ((evPU & ymask) >> yshift);
     //pol = ((short)((evPU & polmask) >> polshift)==0)?-1:1;	//+1 ON, -1 OFF
     //camera = ((short)(evPU & cameramask) >> camerashift);	//0 LEFT, 1 RIGHT
-    pol = pol==
-    eventPU = y << xshift + x << yshift + pol << polshif 
-
+    evPU = y << xshift + x << yshift + pol << polshift;
 }
 
 
