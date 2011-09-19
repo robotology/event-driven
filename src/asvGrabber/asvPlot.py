@@ -24,6 +24,13 @@ def hex2dec(s):
 	#
 	return int(s, 16)
 
+#
+def int2bin(n, count=24):
+	#
+	"""returns the binary of integer n, using count number of digits"""
+	#
+	return "".join([str((n >> y) & 1) for y in range(count-1, -1, -1)])
+
 #initilization
 xMask  = hex2dec("FF")
 yMask  = hex2dec("7F00")
@@ -36,7 +43,15 @@ size = len(data)
 x = zeros(size, int)
 y = zeros(size, int)
 print "Counted", len(data), "lines."
-
+err_address        = 0
+overflow_address   = 0
+first_wrong        = 0
+previous_timestamp = 0;
+previous_address   = 0;
+timestamp          = 0;
+address            = 0;
+diff               = 0;
+lastTimestamp      = 0
 
 for i in range (0,size):
 	data2 = data[i].rsplit("\n")
@@ -45,8 +60,31 @@ for i in range (0,size):
 	#print "dataS1: ", hex2dec(dataS[0]) #address
 	#print "dataS2: ", hex2dec(dataS[1]) #timestamp
 	#print "dataS: \n", dataS
+	previous_address = address;
 	address   = hex2dec(dataS[0])
+
+	previous_timestamp = timestamp;
 	timestamp = hex2dec(dataS[1])
+	
+	if i==0 :
+		print "FIRST timestamp:" ,timestamp ;
+		lastTimestamp = timestamp
+	#print "address:" , int2bin(address,32);
+	if address < 14448:
+		err_address = err_address + 1
+		#x[i] = 255;
+		#y[i] = 255;
+	if address > 65535 and not(first_wrong):
+	        overflow_address = overflow_address + 1
+		print "block:",dataS[1], ":",previous_timestamp, " diff:",(previous_timestamp - lastTimestamp) * 160
+		lastTimestmap = previous_timestamp;
+		first_wrong = 1
+		#x[i] = 255;
+		#y[i] = 255;
+	if address <= 65535 and previous_address <= 65535:
+		first_wrong = 0
+	# enable if when filtering of correctness is active
+        #if address > 14448 and address < 65535:
 	x[i] = (address & xMask) 
 	x[i] = x[i] >> xShift
 	y[i] = (address & yMask)
@@ -60,6 +98,8 @@ for i in range (0,size):
 
 print x
 print y
+print "WARNING: number of events  smaller than 3870", err_address
+print "WARNING: number of address greater than FFFF", overflow_address
 
 #ax = host_subplot(111, axes_class=AA.Axes)#
 #fig = plt.figure()
