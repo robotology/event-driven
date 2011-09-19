@@ -36,7 +36,7 @@ using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
-#define INTERVFACTOR 6.25
+#define INTERVFACTOR 6.24
 #define COUNTERRATIO 1 //1.25       //1.25 is the ratio 0.160/0.128
 #define MAXVALUE 4294967295
 #define THRATE 5
