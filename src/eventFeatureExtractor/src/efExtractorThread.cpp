@@ -252,16 +252,24 @@ void efExtractorThread::run() {
         
         AER_struct* iterEvent = eventBuffer;
         unsigned char* pLeft = left.getRawImage();
-        for(int i=0; i < 10; i++ ) {
+        int padding = left.getPadding();
+        for(int i = 0; i < 10; i++ ) {
             printf(" %d %d \n",iterEvent->x,iterEvent->y );
             int x = iterEvent->x;
             int y = iterEvent->y;
             pLeft[x + y * RETINA_SIZE]++;
-            if(pLeft[x + y * RETINA_SIZE]>255) {
+            if(pLeft[x + y * RETINA_SIZE] > 255) {
                 pLeft[x + y * RETINA_SIZE] = 255;
             }
             iterEvent++;
         }
+        
+        pLeft = left.getRawImage();
+        for (int i = 0; i< RETINA_SIZE * RETINA_SIZE; i++) {
+            *pLeft = *pLeft - CONST_DECREMENT;
+            pLeft++;
+        }
+        pLeft += padding;
     }
 }
 
