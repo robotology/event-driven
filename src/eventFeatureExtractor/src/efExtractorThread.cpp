@@ -50,6 +50,7 @@ using namespace std;
 #define Y_SHIFT 8
 #define POLARITY_MASK 0x00000001
 #define POLARITY_SHIFT 0
+#define CONST_DECREMENT 5
 
 #define CHUNKSIZE 32768
 
@@ -250,6 +251,7 @@ void efExtractorThread::run() {
         // extract a chunk/unmask the chunk       
         unmask_events.unmaskData(bufferCopy,CHUNKSIZE,eventBuffer);
         
+        //storing the respons in a temp. image
         AER_struct* iterEvent = eventBuffer;
         unsigned char* pLeft = left.getRawImage();
         int padding = left.getPadding();
@@ -257,9 +259,13 @@ void efExtractorThread::run() {
             printf(" %d %d \n",iterEvent->x,iterEvent->y );
             int x = iterEvent->x;
             int y = iterEvent->y;
-            pLeft[x + y * RETINA_SIZE]++;
-            if(pLeft[x + y * RETINA_SIZE] > 255) {
-                pLeft[x + y * RETINA_SIZE] = 255;
+            int pos = lut[x + y * RETINA_SIZE];
+            pLeft[pos]++;
+            if(pLeft[pos] > 255) {
+                pLeft[pos] = 255;
+                //only if the number of event greater the 255 send event out
+                //unmasking
+                //unmask_events.maskEvent();
             }
             iterEvent++;
         }
