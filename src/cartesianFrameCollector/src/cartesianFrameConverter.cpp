@@ -100,7 +100,7 @@ void cFrameConverter::copyChunk(char* bufferCopy) {
 }
 
 
-/*
+
 // reading out from a circular buffer with 2 entry points
 void cFrameConverter::onRead(eventBuffer& i_ub) {
     valid = true;
@@ -112,16 +112,6 @@ void cFrameConverter::onRead(eventBuffer& i_ub) {
     mutex.wait();
     receivedBuffer = i_ub.get_packet();    
     memcpy(pcBuffer,receivedBuffer,dim);
-
-
-    //int num_events = dim / 8 ;
-    //uint32_t* buf2 = (uint32_t*)receivedBuffer;
-    //for (int evt = 0; evt < num_events; evt++) {
-    //    unsigned long blob      = buf2[2 * evt];
-    //    unsigned long t         = buf2[2 * evt + 1];
-    //    printf("0x%08x 0x%08x \n",blob, t);
-    //}
-
     
     if (totDim < TH1) {
         pcBuffer += dim;
@@ -148,11 +138,11 @@ void cFrameConverter::onRead(eventBuffer& i_ub) {
     //printf("onRead: ended \n");
     //printf("pcBuffer: 0x%x pcRead: 0x%x \n", pcBuffer, pcRead); 
 }
-*/
 
 
 
 
+/*
 // reading out from a circular buffer with 3 entry points
 void cFrameConverter::onRead(eventBuffer& i_ub) {
     valid = true;
@@ -192,7 +182,7 @@ void cFrameConverter::onRead(eventBuffer& i_ub) {
     //printf("pcBuffer: 0x%x pcRead: 0x%x \n", pcBuffer, pcRead);
    
 }
-
+*/
 
 
 /*

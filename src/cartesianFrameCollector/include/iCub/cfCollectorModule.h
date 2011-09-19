@@ -149,9 +149,11 @@
 /**
  * \section change_log CHANGE LOG 
  * 
- * 25/07/11 : added common interface between DVS on USB and AEX on IHEAD                                                \author Rea \n
- * 30/07/11 : corrected the circular buffer using three thresholds                                                      \author Rea \n 
-*/
+ * 25/07/11 : added common interface between DVS on USB and AEX on IHEAD                                                \author:Rea \n
+ * 30/07/11 : corrected the circular buffer using three thresholds                                                      \author:Rea \n 
+ * 12/09/11 : added the stereo flag for stereo synchronization                                                          \author:Rea \n
+ * 19/09/11 : added logpolar representation of the read coordinates                                                     \author:Rea \n
+ */
 
 #include <iostream>
 #include <string>
@@ -170,6 +172,7 @@ class cfCollectorModule:public yarp::os::RFModule {
     std::string robotPortName;                  //reference to the head of the robot
     std::string handlerPortName;                //name of the handler port (comunication with respond function)
     int ratethread;                             //time constant for ratethread
+    int synchPeriod;                            // synchronization period between events and viewer
 
     yarp::os::Port handlerPort;                 // a port to handle messages 
     cfCollectorThread* cfThread;                //cfCollectorThread for processing events

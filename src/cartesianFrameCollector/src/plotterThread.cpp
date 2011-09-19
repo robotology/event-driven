@@ -1,7 +1,7 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /* 
- * Copyright (C) 2011 RobotCub Consortium, European Commission FP6 Project IST-004370
+ * Copyright (C) 2010 RobotCub Consortium, European Commission FP6 Project IST-004370
  * Authors: Rea Francesco
  * email:   francesco.rea@iit.it
  * website: www.robotcub.org 
@@ -47,7 +47,7 @@ plotterThread::plotterThread() : RateThread(THRATE) {
     imageLeft      = new ImageOf<PixelMono>;
     imageLeft->resize(retinalSize,retinalSize);
     imageRight     = new ImageOf<PixelMono>;
-    imageLeft->resize(retinalSize,retinalSize);
+    imageRight->resize(retinalSize,retinalSize);
     imageLeftInt   = new ImageOf<PixelMono>;
     imageLeftInt->resize(retinalSize,retinalSize);
     imageLeftInt->zero();
@@ -128,10 +128,10 @@ void plotterThread::copyLeft(ImageOf<PixelMono>* image) {
     unsigned char* pleft  = imageLeft->getRawImage();
     if(imageLeft != 0) {
         for(int r = 0;r < retinalSize; r++) {
-            for(int c = 0; c < retinalSize; c++) {
+            for(int c = 0; c < retinalSize; c++) {                
                 *pleft++ = *pimage++;
             }
-            pleft += padding;
+            pleft  += padding;
             pimage += padding;
         }
     }
@@ -149,7 +149,7 @@ void plotterThread::copyRight(ImageOf<PixelMono>* image) {
             pright += padding;
             pimage += padding;
         }
-    }
+    }    
 }
 
 

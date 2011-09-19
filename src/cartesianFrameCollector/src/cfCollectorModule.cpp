@@ -57,8 +57,8 @@ bool cfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
     robotName             = rf.check("robot", 
                            Value("icub"), 
                            "Robot name (string)").asString();
-    robotPortName         = "/" + robotName + "/head";
-
+    robotPortName         = "/" + robotName + "/head";\
+    
     /*
     * attach a port of the same name as the module (prefixed with a /) to the module
     * so that messages received from the port are redirected to the respond method
@@ -72,9 +72,39 @@ bool cfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
     }
 
     attach(handlerPort);                  // attach to port
+    
 
+    // --------------------------------------------
     cfThread=new cfCollectorThread();
     cfThread->setName(getName().c_str());
+    
+    /*
+    * set the period between two successive synchronisations between viewer and events
+    */
+    synchPeriod            = rf.check("synchPeriod", 
+                           Value(10000), 
+                           "synchronisation period (int)").asInt();
+    cfThread->setSynchPeriod(synchPeriod);
+
+    
+    /* checking whether the module synchronizes with single camera or stereo camera
+     */
+    if( rf.check("stereo")) {
+        cfThread->setStereo(true);
+    }
+    else {
+        cfThread->setStereo(false);
+    }
+    
+    /**
+     * checking whether the viewer represent log-polar information
+     */
+    if( rf.check("logpolar")) {
+        cfThread->setLogPolar(true);
+    }
+    else {
+        cfThread->setLogPolar(false);
+    }
     cfThread->start();
 
     return true ;       // let the RFModule know everything went well

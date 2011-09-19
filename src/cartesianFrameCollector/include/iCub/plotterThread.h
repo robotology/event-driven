@@ -1,7 +1,7 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /* 
- * Copyright (C) 2011 RobotCub Consortium, European Commission FP6 Project IST-004370
+ * Copyright (C) 2010 RobotCub Consortium, European Commission FP6 Project IST-004370
  * Authors: Rea Francesco
  * email:   francesco.rea@iit.it
  * website: www.robotcub.org 
@@ -64,7 +64,7 @@ private:
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRightThreshold;                                    //image representing the signal on the right camera (threshold)
     std::string name;                           // rootname of all the ports opened by this thread
     bool synchronised;                          // flag to check whether the microsecond counter has been synchronised
-                                                // local copy of the events read
+    bool stereo;                                // flag indicating the stereo characteristic of the synchronization
 public:
     /**
     * default constructor
@@ -101,6 +101,14 @@ public:
     * @param str rootname as a string
     */
     void setName(std::string str);
+
+    /**
+    * function that set the stereo mode for event synchronization
+    * @param value boolean to be assigned
+    */
+    void setStereo(bool value){ stereo = value;};
+
+    
     
     /**
     * function that returns the original root name and appends another string iff passed as parameter

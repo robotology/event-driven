@@ -44,7 +44,7 @@ using namespace std;
 #define retinalSize 128
 #define CHUNKSIZE 32768 //65536 //8192
 #define dim_window 1
-#define synch_time 10000
+#define synch_time 1
 
 cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
     synchronised = false;
@@ -73,6 +73,8 @@ bool cfCollectorThread::threadInit() {
     //outPort.open(getName("/left:o").c_str());
     //outPortRight.open(getName("/right:o").c_str());
 
+    fout = fopen("./dump.txt","w+");
+
     resize(retinalSize, retinalSize);
     printf("starting the converter!!!.... \n");
     cfConverter=new cFrameConverter();
@@ -82,6 +84,7 @@ bool cfCollectorThread::threadInit() {
     printf("starting the plotter \n");
     pThread = new plotterThread();
     pThread->setName(getName("").c_str());
+    pThread->setStereo(stereo);
     pThread->start();
 
 
@@ -162,14 +165,31 @@ void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsig
                 *pImage = (unsigned char) (127 + value);
 		//if(value>0)printf("event%d val%d buf%d\n",*pImage,value,*pBuffer);
 		pImage++;
+		if ((stereo) && (r < 7) && (r >= 16) && (c < 7) && (c >= 16)) {
+		  *pImage = (unsigned char) (127 + value);
+		  pImage += imageRowSize;
+		  *pImage = (unsigned char) (127 + value);
+		  pImage--;
+		  *pImage = (unsigned char) (127 + value);
+		  pImage -= (imageRowSize + 1);
+		}
                
             }
             else {
                 *pImage = (unsigned char) 127 ;
 		//printf("NOT event%d \n",*pImage);
 		pImage++;
+		
+		if ((stereo) && (r < 7) && (r >= 16) && (c < 7) && (c >= 16)) {
+		  *pImage = (unsigned char) 127;
+		  pImage += imageRowSize;
+		  *pImage = (unsigned char) 127 + value;
+		  pImage--;
+		  *pImage = (unsigned char) 127 + value;
+		  pImage -= (imageRowSize + 1);
+		}
                
-                }
+	    }
             pBuffer++;
             pTime++;
         }
@@ -190,7 +210,17 @@ void cfCollectorThread::run() {
     //bufferRead = cfConverter->getBuffer();    
     // saves it into a working buffer
     cfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
-  
+    
+    // saving the buffer into the file
+    int num_events = CHUNKSIZE / 8 ;
+    uint32_t* buf2 = (uint32_t*)bufferCopy;
+    fprintf(fout,"##############");
+    for (int evt = 0; evt < num_events; evt++) {
+        unsigned long blob      = buf2[2 * evt];
+        unsigned long t         = buf2[2 * evt + 1];
+        fprintf(fout,"0x%08x 0x%08x \n",blob, t);
+    }
+    
 
     //getting the time
     endTimer = Time::now();
@@ -238,7 +268,6 @@ void cfCollectorThread::run() {
       verb = false;
       countStop = 0;
     }
-    
     
     //gettin the time between two threads
     gettimeofday(&tvend, NULL);
@@ -318,28 +347,40 @@ void cfCollectorThread::run() {
     
     
     //---- preventer for fixed  addresses ----//
-    
     if(count % 100 == 0) { 
         unsigned long lastleft = unmask_events.getLastTimestamp();
         lc = lastleft * COUNTERRATIO; 
         unsigned long lastright = unmask_events.getLastTimestampRight();
         rc = lastright * COUNTERRATIO;
         //printf("countStop %d lcprev %d lc %d \n",countStop, lcprev,lc);
-        if ((lcprev == lc)||(rcprev == rc)) { 
+	if (stereo) {
+	  if ((lcprev == lc)||(rcprev == rc)) {
+	    //if (lcprev == lc) {
             countStop++;
             printf("countStop %d %lu %lu %lu %lu \n", countStop, lc, lcprev, rc, rcprev);
-        }            
-        //else if (rcprev == rc) { 
-        //    countStop++;
-        //    printf("countStop %d \n", countStop);
-        //}
-        else {
+	  }            
+	  else {
             countStop--;
             //printf("countStop %d \n", countStop);
             if(countStop<= 0) {
-                countStop = 0;
+	      countStop = 0;
             }
-        }
+	  }
+	}
+	else {
+	  if (lcprev == lc) {
+	    //if (lcprev == lc) {
+            countStop++;
+            printf("countStop %d %lu %lu %lu %lu \n", countStop, lc, lcprev, rc, rcprev);
+	  }            
+	  else {
+            countStop--;
+            //printf("countStop %d \n", countStop);
+            if(countStop<= 0) {
+	      countStop = 0;
+            }
+	  }
+	}
         lcprev = lc;
         rcprev = rc;
     }
@@ -372,12 +413,14 @@ void cfCollectorThread::run() {
     
     // ----------- preventer end    --------------------- //
 
-    
     getMonoImage(imageRight,minCountRight,maxCountRight,0);
     getMonoImage(imageLeft,minCount,maxCount,1);
-    pThread->copyLeft(imageLeft);
-    pThread->copyRight(imageRight);
-    
+    if(imageLeft != 0) {
+      pThread->copyLeft(imageLeft);
+    }
+    if(imageRight != 0) {
+      pThread->copyRight(imageRight);
+    }
   }
 }
 
