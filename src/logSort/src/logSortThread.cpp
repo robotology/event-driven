@@ -33,7 +33,7 @@ using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
-#define COUNTERRATIO 1.25       //1.25 is the ratio 0.160/0.128
+#define COUNTERRATIO 6.25       //1.25 is the ratio 0.160/0.128
 #define MAXVALUE 4294967295
 #define THRATE 5
 #define STAMPINFRAME  // 10 ms of period times the us in 1 millisecond + time for computing
@@ -304,9 +304,7 @@ void logSortThread::run() {
 	    }
             lcprev = lc;
             rcprev = rc;
-        }
-        
-        
+        }        
 	
         //resetting time stamps at overflow
         if (countStop == 10) {
@@ -325,17 +323,17 @@ void logSortThread::run() {
 
         //TODO : code MUTEXes in these lines! Strictly Necessary!
         unmask_events.getCD(&pCD, &dim);
-        printf("dimCD :  %d \n", dim);
+        //printf("dimCD :  %d \n", dim);
         sendBuffer(&portCD, pCD, dim);
         unmask_events.resetCD();
         
         unmask_events.getEM(&pEM, &dim);
-        printf("dimEM :  %d \n", dim);
+        //printf("dimEM :  %d \n", dim);
         sendBuffer(&portEM, pEM, dim);
         unmask_events.resetEM();
 
         unmask_events.getIF(&pIF, &dim);
-        printf("dimIF :  %d \n", dim);
+        //printf("dimIF :  %d \n", dim);
         sendBuffer(&portIF, pIF, dim);
         unmask_events.resetIF();
 	
@@ -356,13 +354,11 @@ void logSortThread::sendBuffer(BufferedPort<eventBuffer>* port, aer* buffer, int
   if (port->getOutputCount()) {   
     int szSent = sz * 8; // dimension of the event times the bytes per event
     char* pBuffer = (char*) buffer;
-    printf("sending : %d 0x%x \n", szSent, buffer);
+    //printf("sending : %d 0x%x \n", szSent, buffer);
     eventBuffer data2send(pBuffer, szSent);    
     eventBuffer& tmp = port->prepare();
     tmp = data2send;   
-    port->write();
- 
-    
+    port->write();    
   }     
 }
 

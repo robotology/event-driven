@@ -30,11 +30,6 @@
 using namespace std;
 using namespace yarp::os;
 
-//#define LINUX
-//#ifndef LINUX
-// #ifndef __linux__ || linux
-
-
 #define MAXVALUE 114748364 //4294967295
 #define maxPosEvent 10000
 #define responseGradient 127
@@ -44,6 +39,35 @@ using namespace yarp::os;
 #define SIZE_OF_EVENT 128
 #define X_DIMENSION 144
 #define Y_DIMENSION 72
+
+
+inline int flipBits( int blob, int bits) {
+    int out = 0;
+    short bitvalue;
+ 
+    for (int i = bits - 1 ; i >= 0 ; i--) {
+        int mask = 1;
+        int maskout = 1;
+        for (int j = 0; j < i; j++) {
+            mask *= 2;
+        }
+        for (int j = 0; j < bits - 1 - i; j++) {
+            maskout *= 2;
+        }
+        
+        if (mask & blob) {
+            bitvalue = 1;
+        }
+        else {
+            bitvalue = 0;
+        }
+        //printf("%d %d;", bitvalue, out);
+        
+        out += bitvalue * maskout;
+    } 
+    //printf("\n");
+    return out;     
+}
 
 
 logUnmask::logUnmask() : RateThread(UNMASKRATETHREAD){
@@ -63,12 +87,12 @@ logUnmask::logUnmask() : RateThread(UNMASKRATETHREAD){
     countEvent2 = 0;
     minValue = 0;
     maxValue = 0;
-    xmask = 0x000000fE;
+    xmask = 0x000000ff;
     ymask = 0x00007f00;
-    xmasklong = 0x000000fE;
+    xmasklong = 0x000000ff;
     yshift = 8;
     yshift2= 16,
-    xshift = 1;
+    xshift = 0;
     polshift = 0;
     polmask = 0x00000001;
     camerashift = 15;
@@ -352,9 +376,7 @@ bool logUnmask::threadInit() {
             logChip_LUT[y * X_DIMENSION + x][3] = pol;
 
             
-            if((x == 100) && ( y == 11)) {
-                printf(" %d %d > %d %d %d %d \n", x, y, metax, metay, pol, type);
-            }
+            fprintf(fout," %d %d > %d %d %d %d \n", x, y, metax, metay, pol, type);
         }
     }
     return true;
@@ -476,29 +498,45 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         blob &= 0xFFFF;
         type = -1;
   
-        bool save = false;
-        
-        
+        // saving the events
+        bool save = false;                
         if (save) {
             fprintf(fout,"%08X %08X\n",blob,timestamp); 
             //fout<<hex<<a<<" "<<hex<<t<<endl;
         }
-        logUnmaskEvent((unsigned long) blob, cartX, cartY, polarity, type);
-        
-        
 
-        //if(count % 100 == 0) {
-        //    printf(" %d>%d,%d : %d : %d \n",blob,cartX,cartY,timestamp,camera);
+        int x    = (short)((blob & xmask) >> xshift);
+        x -= 112;
+        int y    = (short)((blob & ymask) >> yshift);
+        int flipy = flipBits(y,7);
+        y = flipy - 56;
+        //if(evt % 100 == 0) {
+        //   printf("####### \n %08X %d %d \n",blob, x, y);
         //}
+        
+        logUnmaskEvent((unsigned long)blob, cartX, cartY, polarity, type);
+        
         //cartY = retinalSize - cartY;   //corrected the output of the camera (flipped the image along y axis)
         //cartX = retinalSize - cartX;
-        short metaX = 1;
-        short metaY = 1;
-        short pol = polarity;
+        short metaX, metaY, pol;
         unsigned long int newBlob;
-
+        if((x >= 144)||(y >= 72)) {
+            metaX = 0;
+            metaY = 0;
+            pol   = 0;
+        }
+        else{    
+            metaX = cartX;
+            metaY = cartY;
+            pol   = polarity;
+        }
+        
+        //if(evt % 100 == 0) {
+        //    printf(" %08X>%d,%d   \n",blob,cartX,cartY);
+        //    printf(" %d %d %d %d %08X  \n",cartY, cartX, metaY, metaX ,newBlob);
+        //}
+        
         logMaskEvent((short)metaX,(short)metaY,(short)pol,newBlob);
-        printf(" %d %d %d %d %08X %08X \n",cartX, cartY, metaX, metaY ,newBlob,timestamp);
 
         struct aer* temp;
         
@@ -648,7 +686,7 @@ void logUnmask::logUnmaskEvent(unsigned int evPU, short& metax, short& metay, sh
     //y = (short) ((evPU & xmask)>>xshift);
     int x = (short) ((evPU & ymask) >> yshift);
     // 2.extractiong features 
-    int position =  y * 36 + x;
+    int position =  y * X_DIMENSION + x;
     
     //feature* pFeature = logChip_LUT;
     //pFeature += position;
@@ -675,14 +713,18 @@ void logUnmask::logUnmaskEvent(unsigned int evPU, short& metax, short& metay, sh
 void logUnmask::logUnmaskEvent(unsigned long evPU, short& metax, short& metay, short& pol, short& type) {
     // unmasking through LUT    
     // 1.determining the position in the LUT
-    int x    = (short)((evPU & xmask) >> xshift);
-    int y    = (short)((evPU & ymask) >> yshift);
+    int x     = (short)((evPU & xmask) >> xshift);
+    int y     = (short)((evPU & ymask) >> yshift);
+    //printf("y %d ", y);
+    int flipy = flipBits(y,7);
+    //printf("   flipy %d \n", flipy);
+    y = y - 56;
+    x = x - 112;
+    if((y < 0) || (x < 0)) {
+        return;
+    }
     // 2.extractiong features 
-    int position =  y * 36 + x;
-    if(x>maxx) maxx = x;
-    if(y>maxy) maxy = y;
-    printf("x=%d y=%d %d %d \n", x,y, maxx, maxy);
-    
+    int position =  y * X_DIMENSION + x;
 
     
     //feature* pFeature = logChip_LUT;
@@ -705,12 +747,14 @@ void logUnmask::logUnmaskEvent(unsigned long evPU, short& metax, short& metay, s
 }
 
 void logUnmask::logMaskEvent( short metax, short metay, short pol, unsigned long int& evPU) {
-    metax += retinalSize +1;
+    //metax += retinalSize +1;
     evPU = 0;
-    evPU += (metax << xshift)   & xmask;
-    evPU += (metay << yshift)   & ymask;
-    evPU += (pol   << polshift) & polmask;    
+    evPU += (metax << xshift)   ;//& xmask;   //shifting one bit
+    evPU += (metay << yshift)   ;//& ymask;   // shifting 8 bits
+    evPU += (pol   << polshift) ;//& polmask;    
 }
+
+
 
 
 void logUnmask::threadRelease() {
