@@ -39,7 +39,7 @@
 #define TH3       98304
 #define BUFFERDIM 131702
 
-
+#define VERBOSE
 
 //#define CHUNKSIZE 1024 
 //#define TH1       1024
@@ -71,16 +71,10 @@ cFrameConverter::cFrameConverter():convert_events(128,128) {
     printf("unmask event just started");
     previousTimeStamp = 0;
     readEvents = fopen("./readEvents","w");
+    fout = fopen("dump.txt", "w+");
 }
 
-cFrameConverter::~cFrameConverter() {
-    printf("cFrameConverter:stopping the unmasker \n");
-    //unmask_events.stop();
-    //delete &unmask_events;
-    //delete &convert_events;
-    printf("cFrameConverter:freeing converterBuffer \n");
-    free(converterBuffer_copy);
-}
+
 
 void cFrameConverter::reset() {
     memset(converterBuffer_copy,0,BUFFERDIM);
@@ -108,9 +102,14 @@ void cFrameConverter::onRead(eventBuffer& i_ub) {
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() ;      // number of bits received / 8 = bytes received
     //printf("dim %d \n", dim);
-   
+  
+
+
+ 
     mutex.wait();
     receivedBuffer = i_ub.get_packet();    
+
+    //mem copying
     memcpy(pcBuffer,receivedBuffer,dim);
     
     if (totDim < TH1) {
@@ -132,9 +131,19 @@ void cFrameConverter::onRead(eventBuffer& i_ub) {
     // the thrid part of the buffer is free to avoid overflow
     totDim += dim;
 
-    
-
     mutex.post();
+
+#ifdef VERBOSE
+    int num_events = dim >> 3 ;
+    uint32_t* buf2 = (uint32_t*)receivedBuffer;
+    //plotting out
+    for (int evt = 0; evt < num_events; evt++) {
+        unsigned long blob      = buf2[2 * evt];
+        unsigned long t         = buf2[2 * evt + 1];
+        fprintf(fout,">>>>>>>>> %08X %08X \n",blob,t);        
+    }
+#endif /* VERBOSE */
+
     //printf("onRead: ended \n");
     //printf("pcBuffer: 0x%x pcRead: 0x%x \n", pcBuffer, pcRead); 
 }
@@ -286,6 +295,15 @@ void cFrameConverter::clearMonoImage() {
     //unmask_events.cleanEventBuffer();
 }
 
+cFrameConverter::~cFrameConverter() {
+    printf("cFrameConverter:stopping the unmasker \n");
+    //unmask_events.stop();
+    //delete &unmask_events;
+    //delete &convert_events;
+    printf("cFrameConverter:freeing converterBuffer \n");
+    free(converterBuffer_copy);
+    fclose(fout);
+}
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------
 

@@ -135,7 +135,7 @@ private:
     clock_t stop;
 
     FILE* readEvents;
-   
+    FILE* fout;
 };
 
 #endif //_CARTESIAN_FRAME_CONVERTER_H

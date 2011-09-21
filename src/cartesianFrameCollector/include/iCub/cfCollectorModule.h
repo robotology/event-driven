@@ -149,10 +149,11 @@
 /**
  * \section change_log CHANGE LOG 
  * 
- * 25/07/11 : added common interface between DVS on USB and AEX on IHEAD                                                \author:Rea \n
- * 30/07/11 : corrected the circular buffer using three thresholds                                                      \author:Rea \n 
- * 12/09/11 : added the stereo flag for stereo synchronization                                                          \author:Rea \n
- * 19/09/11 : added logpolar representation of the read coordinates                                                     \author:Rea \n
+ * 25/07/11 : added common interface between DVS on USB and AEX on IHEAD                                                \author Rea \n
+ * 30/07/11 : corrected the circular buffer using three thresholds                                                      \author Rea \n 
+ * 12/09/11 : added the stereo flag for stereo synchronization                                                          \author Rea \n
+ * 19/09/11 : added logpolar representation of the read coordinates                                                     \author Rea \n
+ * 21/09/11 : added the VERBOSE mode for plotting out debugging messages                                                \author Rea \n
  */
 
 #include <iostream>
@@ -165,6 +166,8 @@
 
 //within project includes
 #include <iCub/cfCollectorThread.h>
+
+
 
 class cfCollectorModule:public yarp::os::RFModule {
     std::string moduleName;                     //name of the module (rootname of ports)
