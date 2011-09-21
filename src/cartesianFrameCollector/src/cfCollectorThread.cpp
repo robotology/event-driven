@@ -214,12 +214,15 @@ void cfCollectorThread::run() {
     // saving the buffer into the file
     int num_events = CHUNKSIZE / 8 ;
     uint32_t* buf2 = (uint32_t*)bufferCopy;
+
+#ifdef VERBOSE
     fprintf(fout,"##############");
     for (int evt = 0; evt < num_events; evt++) {
         unsigned long blob      = buf2[2 * evt];
         unsigned long t         = buf2[2 * evt + 1];
         fprintf(fout,"0x%08x 0x%08x \n",blob, t);
     }
+#endif
     
 
     //getting the time
@@ -294,7 +297,8 @@ void cfCollectorThread::run() {
       unsigned long int lastright = unmask_events.getLastTimestampRight();
       rc = lastright * COUNTERRATIO;
 
-      //TODO :  Check for negative values of minCount not allowed!!!!!!
+      //TODO : Check for negative values of minCount not allowed!!!!!!
+
       minCount = lc - interval * INTERVFACTOR* dim_window; 
       //cfConverter->getEldestTimeStamp();                                                                   
       minCountRight = rc - interval * INTERVFACTOR* dim_window;
