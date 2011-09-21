@@ -163,7 +163,7 @@ logUnmask::~logUnmask() {
 
 bool logUnmask::threadInit() {
     // initialising the logChip_LUT
-    fout = fopen("dump.txt", "w");
+    fout = fopen("asvLUT.txt", "w");
     
     /*  // structure of the LUT for logpolar Chip
     // type, metaX, metaY, polarity
