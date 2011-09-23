@@ -67,6 +67,9 @@ private:
     int yshift;                     // shift of 8 bits for getting the y in 16 bits address
     int xshift;                     // shift of 1 bit to get the x in 16 bit (polarity)
     int yshift2;                     // shift of 16 bits for getting the y in 32 bits address
+    int xmaskshort;
+    int ymaskshort;
+    int polmaskshort;
     int polshift;                    // shift necessary to cast the unmasked value to short
     int polmask;                     // mask necessary to extract the polarity
     int camerashift;                 // shift for cast back into short the camera reference 
@@ -77,9 +80,11 @@ private:
     int countEvent;                     //counter of the number of events saved in the buffer1
     int countEvent2;                     //counter of the number of events saved in the buffer2
     int numKilledEvents;                //number of the element that have be removed from the buffer
+    bool dvsMode;
     bool temp1;                         //boolean flag that indicates where the events have to be saved
     bool validLeft,validRight;          //flag for validity of the events
     bool verb;
+    bool asvMode; 
     FILE* uEvents;
     yarp::os::Semaphore countEventLocker;
     yarp::os::Semaphore countEventLocker2;
@@ -208,6 +213,9 @@ public:
     * @param pol Set with the ON/OFF polarity of the pixel.
     */
     void unmaskEvent(unsigned int evPu, short& x, short& y, short& pol, short& camera);
+
+
+    void unmaskEvent(unsigned int evPU, short& x, short& y, short& pol);
 
     /**
      * @brief this method sorts the event out into the 3 classes of measures

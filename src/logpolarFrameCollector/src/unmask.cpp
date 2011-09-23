@@ -45,6 +45,8 @@ typedef unsigned long uint32_t;
 
 unmask::unmask() : RateThread(UNMASKRATETHREAD){
     count = 0;
+    dvsMode = false;
+    asvMode = true;
     verb = false;
     numKilledEvents = 0;
     lasttimestamp = 0;
@@ -183,6 +185,240 @@ void unmask::run() {
 
 
 void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
+    //AER_struct sAER
+    count++;
+    if(verb)
+        printf("Unmasking with the timestamp %llu \n", lasttimestamp);
+
+
+    int num_events;
+    if(dvsMode) {
+        num_events = i_sz / 4;    // pointing to events made of 4 bytes
+    }
+    else {
+        num_events = i_sz / 8;    // pointing to events made of 8 bytes
+    }
+    //cout << "Number of the received events : " << num_events<< endl;
+    
+    //create a pointer that points every 4 bytes and 2 bytes (DVS mode) 
+    uint32_t* buf2 = (uint32_t*)i_buffer;
+    uint16_t* buf1 = (uint16_t*)i_buffer;
+
+    unsigned long timestamp;
+       
+    
+    //for (int i = 0 ; i < i_sz ; i+=4) {
+    //    unsigned int part_1 = 0xFF & i_buffer[i];    //extracting the 1 byte        
+    //    unsigned int part_2 = 0xFF & i_buffer[i+1];  //extracting the 2 byte        
+    //    unsigned int part_3 = 0xFF & i_buffer[i+2];  //extracting the 3 byte
+    //    unsigned int part_4 = 0xFF & i_buffer[i+3];  //extracting the 4 byte
+    //    //float blob = (part_1)|(part_2<<8);
+    //    blob      = (part_1)|(part_2<<8);          //16bits
+    //    //float timestamp = ((part_3)|(part_4<<8));
+    //    timestamp = ((part_3)|(part_4<<8));        //16bits
+    //    printf(">>>>>>>>> %08X %08X \n",blob,timestamp);
+        //if(i == 100){
+            //printf("Saving in file \n");
+            //printf("---> %08X %08X \n",blob,timestamp); 
+            //fwrite(&sz, sizeof(int), 1, raw);
+            //fwrite(buffer, 1, sz, raw);
+        //}
+    //}
+    
+
+    
+    //eldesttimestamp = 0;
+    int i = 0;
+    for (int evt = 0; evt < num_events; evt++) {
+        if(!dvsMode) {
+            // unmask the data ( first 4 byte blob, second 4 bytes timestamp)
+            unsigned long blob      = buf2[2 * evt];
+            unsigned long t         = buf2[2 * evt + 1];
+            //printf("0x%x 0x%x \n",blob, timestamp);
+            
+            // here we zero the higher two bytes of the address!!! Only lower 16bits used!
+            blob &= 0xFFFF;
+            //unmaskEvent((unsigned int) blob, cartX, cartY, polarity, camera);
+            unmaskEvent( (unsigned int) blob, cartX, cartY, polarity, camera);
+            timestamp =  (unsigned long) t;
+            //if(timestamp < 0)
+            //    printf(">>>>>>>>> %08X %08X \n",blob,t);
+        }
+        else {  //in dvsMode
+            unsigned int blob, t;
+            //buffer += 3; //checking a flag
+            if((i_buffer[i + 3] & 0x80) == 0x80) {
+                // timestamp bit 15 is one -> wrap;
+                // now we need to increment the wrapAdd                
+                //uses only 14 bit timestamps
+                wrapAdd += 0x4000;                     
+                //System.out.println("received wrap event, index:" + eventCounter + " wrapAdd: "+ wrapAdd);
+                //NumberOfWrapEvents++;
+            }
+            else if  ((i_buffer[i + 3] & 0x40) == 0x40  ) {
+                // timestamp bit 14 is one -> wrapAdd reset
+                // this firmware version uses reset events to reset timestamps
+                // write(file_desc,reset,1);//this.resetTimestamps();
+                //            buffer_msg[0] = 6;
+                //            write(file_desc,buffer_msg,1);
+                wrapAdd = 0;
+                //lasttimestamp = 0;
+                // log.info("got reset event, timestamp " + (0xffff&((short)aeBuffer[i]&0xff | ((short)aeBuffer[i+1]&0xff)<<8)));
+            }
+            else 
+            {
+                //buffer -= 3;  //returning to the first byte of the event
+                unsigned int part_1 = 0xFF & i_buffer[i];    //extracting the 1 byte        
+                //buffer++;
+                unsigned int part_2 = 0xFF & i_buffer[i + 1];  //extracting the 2 byte        
+                //buffer++;
+                unsigned int part_3 = 0xFF & i_buffer[i + 2];  //extracting the 3 byte
+                //buffer++;
+                unsigned int part_4 = 0xFF & i_buffer[i + 3];  //extracting the 4 byte
+                //buffer++;
+                
+                blob      = (part_1)|(part_2<<8);          //16bits
+                //printf("Bolob is%x \n",blob);
+                polarity =0;
+                unmaskEvent( blob, cartX, cartY, polarity); 
+                short temp = cartX;
+                cartX = -cartY;
+                cartY = temp;
+                //if((cartX<128 && cartY <128 && cartX >0 && cartY>0)) 
+                //printf("cartX %d cartY%d polarity%d\n",cartX,cartY,polarity);
+                //float timestamp = ((part_3)|(part_4<<8));
+                t = ((part_3)|(part_4<<8)); //&0x7fff//        //16bits
+                unsigned long tempT = t;
+                t += wrapAdd;
+                
+                //if(i == 100){
+                //printf("Saving in file \n");
+                //printf("---> %08X %08X \n",blob,timestamp); 
+                //fwrite(&sz, sizeof(int), 1, raw);
+                //fwrite(buffer, 1, sz, raw);
+                //}
+                timestamp = (unsigned long) t;
+                //if(!(cartX == 0 && cartY == 127 && t == 0))
+                
+                //printf("%04d %04d %08X \n",cartX, cartY ,t);
+                //fprintf(uEvents,"%08X %08X \n",blob,tempT);
+                
+                //printf("lastTimeStamp %08X \n", timestamp);
+                camera = 0;
+            }                
+        }
+        
+        i += 4; // increment the counter for DVS of 4bytes
+        
+        
+        // filling the image buffer after the unmasking                
+        cartY = retinalSize - cartY;   //corrected the output of the camera (flipped the image along y axis)
+        cartX = retinalSize - cartX;
+        //printf("cartX %d cartY %d \n", cartX, cartY);
+        //printf("lastTimeStamp %08X \n", lasttimestamp);
+        //camera is unmasked as left 0, right -1. It is converted in left 1, right 0
+        camera = camera + 1;
+        //printf("Camera %d polarity %d  \n", camera, polarity);
+        //camera: LEFT 1, RIGHT 0
+
+        if(camera) {            
+            if((cartX!=0) &&( cartY!=0) && (timestamp!=0)) {
+                validLeft =  true;
+            }
+            
+
+            //TODO:: remove verb if not necessary
+            if(verb) {
+                //for (int i = 0; i < 2; i ++) {
+                //printf("verb is true %llu %llu \n", timestamp, lasttimestamp);
+                    //}
+                //lasttimestamp = 0;
+                //resetTimestamps();
+            }
+
+            if(timestamp > lasttimestamp) {
+                lasttimestamp = timestamp;
+            }
+            
+            if(timeBuffer[cartX + cartY * retinalSize] < timestamp) {
+                if(polarity > 0) {
+                    buffer[cartX + cartY * retinalSize]     = responseGradient;
+                    timeBuffer[cartX + cartY * retinalSize] = timestamp;
+                    
+                    if(buffer[cartX + cartY * retinalSize] > 127) {
+                        buffer[cartX + cartY * retinalSize] = 127;
+                    }
+                    if ((cartX<=2)||(cartX>4)&&((cartY<=2)||(cartY>4))&&(asvMode)) {
+                      buffer[cartX + 1 + cartY * retinalSize]       = responseGradient;
+                      timeBuffer[cartX + 1  + cartY * retinalSize]  = timestamp;
+                      buffer[cartX + (cartY + 1)  * retinalSize]    = responseGradient;
+                      timeBuffer[cartX + (cartY + 1) * retinalSize] = timestamp;
+                      buffer[cartX + 1 + (cartY + 1) * retinalSize]       = responseGradient;
+                      timeBuffer[cartX + 1  + (cartY + 1) * retinalSize]  = timestamp;                      
+                    }
+                }
+                else if(polarity < 0) {
+                    buffer[cartX + cartY * retinalSize] = -responseGradient;
+                    timeBuffer[cartX + cartY * retinalSize] = timestamp;
+                    
+                    if (buffer[cartX + cartY * retinalSize] < -127) {
+                        buffer[cartX + cartY * retinalSize] = -127;
+                    }
+                    
+                    if ((cartX<=2)||(cartX>4)&&((cartY<=2)||(cartY>4))&&(asvMode)) {
+                      buffer[cartX + 1 + cartY * retinalSize]       = -responseGradient;
+                      timeBuffer[cartX + 1  + cartY * retinalSize]  = timestamp;
+                      buffer[cartX + (cartY + 1)  * retinalSize]    = -responseGradient;
+                      timeBuffer[cartX + (cartY + 1) * retinalSize] = timestamp;
+                      buffer[cartX + 1 + (cartY + 1) * retinalSize]       = -responseGradient;
+                      timeBuffer[cartX + 1  + (cartY + 1) * retinalSize]  = timestamp;                      
+                    }
+                }
+            }           
+        }
+        else {
+            if((cartX!=0) &&( cartY!=0) && (timestamp!=0)) {
+                validRight =  true;
+            }
+            
+            
+            //TODO : remove if not necessary
+            if(verb) {
+                //for (int i = 0; i < 2; i ++) {
+                //printf("%llu \n", lasttimestamp);
+                    //}
+                //lasttimestampright = 0;
+                //resetTimestamps();
+            }
+
+            if( timestamp > lasttimestampright){
+                lasttimestampright = timestamp;
+            }           
+            if (timeBufferRight[cartX + cartY * retinalSize] < timestamp) {
+                if(polarity > 0) {
+                    bufferRight[cartX + cartY * retinalSize] = responseGradient;
+                    timeBufferRight[cartX + cartY * retinalSize] = timestamp;
+                    
+                    if(bufferRight[cartX + cartY * retinalSize] > 127) {
+                        bufferRight[cartX + cartY * retinalSize] = 127;
+                    }
+                }
+                else if(polarity < 0) {
+                    bufferRight[cartX + cartY * retinalSize] = -responseGradient;
+                    timeBufferRight[cartX + cartY * retinalSize] = timestamp;
+                    
+                    if (bufferRight[cartX + cartY * retinalSize] < -127) {
+                        bufferRight[cartX + cartY * retinalSize] = -127;
+                    }
+                }
+            }
+        } //end camera            
+    } //end of for    
+}
+
+
+/*
+void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
     //cout << "Size of the received packet to unmask : " << i_sz / 8<< endl;
     //printf("pointer 0x%x ",i_buffer);
     //AER_struct sAER
@@ -295,8 +531,14 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
         }
     }
 }
+*/
 
-
+void unmask::unmaskEvent(unsigned int evPU, short& x, short& y, short& pol) {
+    y =       (short) (retinalSize - 1) - (short)((evPU & xmaskshort) >> xshift);
+    x =       (short) ((evPU & ymaskshort)      >> yshift);
+    pol =    ((short) ((evPU & polmaskshort)    >> polshift)==0)?-1:1;	//+1 ON, -1 OFF
+    //printf("2evPU%x polmask%x polshift%x \n",evPU, polmask,polshift);        
+}
 
 
 void unmask::unmaskEvent(unsigned int evPU, short& x, short& y, short& pol, short& camera) {
