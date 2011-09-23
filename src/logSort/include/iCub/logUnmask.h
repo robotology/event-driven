@@ -52,7 +52,7 @@ struct aer {
 //Other dependency
 #include <iCub/config.h>
 
-typedef short feature[4];
+typedef int feature[4];
 
 class logUnmask : public yarp::os::RateThread{
 private:
@@ -81,8 +81,8 @@ private:
     unsigned long lasttimestamp;          // last timestamp acquired for the left camera
     unsigned long lasttimestampright;     // last timestamp acquired for the right camera
     unsigned long eldesttimestamp;        // timestamp of the eldest event in the buffer 
-    short cartX, cartY, polarity, type;
-    short maxx, maxy;
+    int cartX, cartY, polarity, type;
+    int maxx, maxy;
 
     int wrapAdd;
     unsigned int xmask;              // 16 bits mask for unmasking of the address
@@ -224,7 +224,7 @@ public:
     * @param pol polarity of the event +1, -1
     * @param camera reference to the camera that has produced the event
     */
-    void logUnmaskEvent(unsigned long evPU, short& x, short& y, short& pol, short& camera);
+    void logUnmaskEvent(unsigned long evPU, int& x, int& y, int& pol, int& camera);
 
     /**
     * @brief This method unmasked the raw which come from the TCP socket
@@ -234,9 +234,12 @@ public:
     * @param y Set with the y coordinate of the pixel
     * @param pol Set with the ON/OFF polarity of the pixel.
     */
-    void logUnmaskEvent(unsigned int evPu, short& x, short& y, short& pol, short& camera);
+    void logUnmaskEvent(unsigned int evPu, int& x, int& y, int& pol, int& camera);
 
-    void logMaskEvent(short metax, short metay, short pol, unsigned long int& evPU);
+    /**
+     * @brief masking the coordinates into a 32bits address 
+     */
+    void logMaskEvent(int metax, int metay, int pol, unsigned long & evPU);
 
     /**
      * @brief function that returns the pointer to the buffer of CHANGE DETECTOR EVENT

@@ -330,6 +330,10 @@ int plotterThread::integrateImage(ImageOf<PixelMono>* imageIn, ImageOf<PixelMono
 
 void plotterThread::threadRelease() {
   printf("plotterThread: portClosing \n");  
+  leftPort.interrupt();
+  leftIntPort.interrupt();
+  rightPort.interrupt();
+  rightIntPort.interrupt();
   leftPort.close();
   leftIntPort.close();
   rightPort.close();
