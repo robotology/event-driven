@@ -88,7 +88,7 @@ private:
     long T1,T2;
     plotterThread* pThread;                 // plotterThread for the trasformation of the event in images
     cFrameConverter* cfConverter;           // receives real-time events
-    unmask unmask_events;                   // object that unmask events
+    unmask* unmask_events;                   // object that unmask events
     char* bufferRead;                       // buffer of events read from the port
     char* bufferCopy;                       // local copy of the events read
     FILE* fout;                             // file for temporarely savings of events

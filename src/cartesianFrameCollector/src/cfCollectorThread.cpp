@@ -77,18 +77,23 @@ bool cfCollectorThread::threadInit() {
 
     resize(retinalSize, retinalSize);
     printf("starting the converter!!!.... \n");
+    
     cfConverter=new cFrameConverter();
     cfConverter->useCallback();
     cfConverter->open(getName("/retina:i").c_str());
     cfConverter->setRetinalSize(retinalSize);
+    
     printf("\n opening retina\n");
     printf("starting the plotter \n");
+    
     pThread = new plotterThread();
     pThread->setName(getName("").c_str());
     pThread->setStereo(stereo);
     pThread->setRetinalSize(retinalSize);
     pThread->start();
-    unmask_events.setRetinalSize(retinalSize);
+    
+    unmask_events = new unmask();
+    unmask_events->setRetinalSize(retinalSize);
 
     //minCount = cfConverter->getEldestTimeStamp();
     startTimer = Time::now();
@@ -151,8 +156,8 @@ void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsig
     */
 
     // determining whether the camera is left or right
-    int* pBuffer = unmask_events.getEventBuffer(camera);
-    unsigned long* pTime   = unmask_events.getTimeBuffer(camera);
+    int* pBuffer = unmask_events->getEventBuffer(camera);
+    unsigned long* pTime   = unmask_events->getTimeBuffer(camera);
     
     //printf("timestamp: min %d    max %d  \n", minCount, maxCount);
     //pBuffer += retinalSize * retinalSize - 1;
@@ -197,7 +202,7 @@ void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsig
         }
         pImage+=imagePadding;
     }
-    //unmask_events.setLastTimestamp(0);
+    //unmask_events->setLastTimestamp(0);
 }
 
 
@@ -237,29 +242,29 @@ void cfCollectorThread::run() {
     //check for wrapping of the left and right timestamp
     if(maxCount >= 4294967268  ) {
       verb = true;
-      unmask_events.resetTimestampLeft();
-      unmask_events.resetTimestampRight();
-      printf("wrapping left %llu %llu \n",lc,unmask_events.getLastTimestamp());
-      printf("wrapping left %llu %llu\n",lc,unmask_events.getLastTimestamp());
-      printf("wrapping left %llu %llu\n",lc,unmask_events.getLastTimestamp());
-      printf("wrapping left %llu %llu\n",lc,unmask_events.getLastTimestamp());
-      printf("wrapping left %llu %llu\n",lc,unmask_events.getLastTimestamp());
-      printf("wrapping left %llu %llu\n",lc,unmask_events.getLastTimestamp());
-      printf("wrapping left %llu %llu\n",lc,unmask_events.getLastTimestamp());
+      unmask_events->resetTimestampLeft();
+      unmask_events->resetTimestampRight();
+      printf("wrapping left %llu %llu \n",lc,unmask_events->getLastTimestamp());
+      printf("wrapping left %llu %llu\n",lc,unmask_events->getLastTimestamp());
+      printf("wrapping left %llu %llu\n",lc,unmask_events->getLastTimestamp());
+      printf("wrapping left %llu %llu\n",lc,unmask_events->getLastTimestamp());
+      printf("wrapping left %llu %llu\n",lc,unmask_events->getLastTimestamp());
+      printf("wrapping left %llu %llu\n",lc,unmask_events->getLastTimestamp());
+      printf("wrapping left %llu %llu\n",lc,unmask_events->getLastTimestamp());
       minCount = 0;
       maxCount      =  minCount      + interval * INTERVFACTOR* (dim_window);
    
     }
     if(maxCountRight >= 4294967268) {
       verb = true;
-      unmask_events.resetTimestampRight();
-      unmask_events.resetTimestampLeft();
-      printf("wrapping right %llu %llu\n",rc,unmask_events.getLastTimestampRight());
-      printf("wrapping right %llu %llu\n",rc,unmask_events.getLastTimestampRight());
-      printf("wrapping right %llu %llu\n",rc,unmask_events.getLastTimestampRight());
-      printf("wrapping right %llu %llu\n",rc,unmask_events.getLastTimestampRight());
-      printf("wrapping right %llu %llu\n",rc,unmask_events.getLastTimestampRight());
-      printf("wrapping right %llu %llu\n",rc,unmask_events.getLastTimestampRight());
+      unmask_events->resetTimestampRight();
+      unmask_events->resetTimestampLeft();
+      printf("wrapping right %llu %llu\n",rc,unmask_events->getLastTimestampRight());
+      printf("wrapping right %llu %llu\n",rc,unmask_events->getLastTimestampRight());
+      printf("wrapping right %llu %llu\n",rc,unmask_events->getLastTimestampRight());
+      printf("wrapping right %llu %llu\n",rc,unmask_events->getLastTimestampRight());
+      printf("wrapping right %llu %llu\n",rc,unmask_events->getLastTimestampRight());
+      printf("wrapping right %llu %llu\n",rc,unmask_events->getLastTimestampRight());
 
       minCountRight = 0;
       maxCountRight = minCountRight + interval * INTERVFACTOR* (dim_window);
@@ -268,7 +273,7 @@ void cfCollectorThread::run() {
     // extract a chunk/unmask the chunk
     //printf("verb %d \n",verb);
     
-    unmask_events.unmaskData(bufferCopy,CHUNKSIZE,verb);
+    unmask_events->unmaskData(bufferCopy,CHUNKSIZE,verb);
     if(verb) {
       verb = false;
       countStop = 0;
@@ -294,9 +299,9 @@ void cfCollectorThread::run() {
     //synchronising the threads at the connection time
     if ((cfConverter->isValid())&&(!synchronised)) {
       printf("Sychronising ");
-      unsigned long int lastleft  = unmask_events.getLastTimestamp();
+      unsigned long int lastleft  = unmask_events->getLastTimestamp();
       lc = lastleft  * COUNTERRATIO; 
-      unsigned long int lastright = unmask_events.getLastTimestampRight();
+      unsigned long int lastright = unmask_events->getLastTimestampRight();
       rc = lastright * COUNTERRATIO;
 
       //TODO : Check for negative values of minCount not allowed!!!!!!
@@ -307,18 +312,18 @@ void cfCollectorThread::run() {
       //printf("synchronised %1f! %d,%d,%d||%d,%d,%d \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
       startTimer = Time::now();
       synchronised = true;
-      //minCount = unmask_events.getLastTimestamp();
+      //minCount = unmask_events->getLastTimestamp();
       //printf("minCount %d \n", minCount);
-      //minCountRight = unmask_events.getLastTimestamp();
+      //minCountRight = unmask_events->getLastTimestamp();
       count = synch_time - 200;
     }
     
     
     //synchronising the thread every time interval 1000*period of the thread
     else if ((count % synch_time == 0) && (minCount < 4294500000)) {
-      unsigned long lastleft = unmask_events.getLastTimestamp();
+      unsigned long lastleft = unmask_events->getLastTimestamp();
       lc = lastleft * COUNTERRATIO; 
-      unsigned long lastright = unmask_events.getLastTimestampRight();
+      unsigned long lastright = unmask_events->getLastTimestampRight();
       rc = lastright * COUNTERRATIO;
 
       //if (count == synch_time) {
@@ -354,9 +359,9 @@ void cfCollectorThread::run() {
     
     //---- preventer for fixed  addresses ----//
     if(count % 100 == 0) { 
-        unsigned long lastleft = unmask_events.getLastTimestamp();
+        unsigned long lastleft = unmask_events->getLastTimestamp();
         lc = lastleft * COUNTERRATIO; 
-        unsigned long lastright = unmask_events.getLastTimestampRight();
+        unsigned long lastright = unmask_events->getLastTimestampRight();
         rc = lastright * COUNTERRATIO;
         //printf("countStop %d lcprev %d lc %d \n",countStop, lcprev,lc);
 	if (stereo) {
@@ -396,12 +401,12 @@ void cfCollectorThread::run() {
     //resetting time stamps at overflow
     if (countStop == 10) {
       //printf("resetting time stamps!!!!!!!!!!!!! %d %d   \n ", minCount, minCountRight);
-      unmask_events.resetTimestampLeft(); 
-      unmask_events.resetTimestampRight();
+      unmask_events->resetTimestampLeft(); 
+      unmask_events->resetTimestampRight();
       cfConverter->reset();
-      unsigned long lastleft = unmask_events.getLastTimestamp();
+      unsigned long lastleft = unmask_events->getLastTimestamp();
       lc = lastleft * COUNTERRATIO; 
-      unsigned long lastright = unmask_events.getLastTimestampRight();
+      unsigned long lastright = unmask_events->getLastTimestampRight();
       rc = lastright * COUNTERRATIO;
       minCount      = 0;
       minCountRight = 0;
@@ -412,21 +417,21 @@ void cfCollectorThread::run() {
       //maxCountRight = 4294967268;
       countStop = 0;
       verb = true;
-      printf("countStop resetting %llu %llu %llu \n",unmask_events.getLastTimestamp(), lc, rc );
+      printf("countStop resetting %llu %llu %llu \n",unmask_events->getLastTimestamp(), lc, rc );
       count = synch_time - 200;
       
     }
     
     // ----------- preventer end    --------------------- //
 
-    getMonoImage(imageRight,minCountRight,maxCountRight,0);
-    getMonoImage(imageLeft,minCount,maxCount,1);
-    if(imageLeft != 0) {
-      pThread->copyLeft(imageLeft);
-    }
-    if(imageRight != 0) {
-      pThread->copyRight(imageRight);
-    }
+    //getMonoImage(imageRight,minCountRight,maxCountRight,0);
+    //getMonoImage(imageLeft,minCount,maxCount,1);
+    //if(imageLeft != 0) {
+    //  pThread->copyLeft(imageLeft);
+    //}
+    //if(imageRight != 0) {
+    //  pThread->copyRight(imageRight);
+    //}
   }
 }
 
