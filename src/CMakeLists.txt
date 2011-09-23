@@ -1,4 +1,4 @@
-# Copyright: (C) 2010 RobotCub Consortium
+#Copyright: (C) 2010 RobotCub Consortium
 # Authors: Francesco Rea
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 cmake_minimum_required(VERSION 2.6)
@@ -19,12 +19,13 @@ add_subdirectory(dvsGrabber)
 #add_subdirectory(disparitySelector)
 
 add_subdirectory(eventDriven)
-add_subdirectory(eventProcessor)
+#add_subdirectory(eventProcessor)
 add_subdirectory(eventFeatureExtractor)
+#add_subdirectory(fakeEvent)
 add_subdirectory(harmonicPathPlanner)
 
-#add_subdirectory(logpolarFrameCollector)
-#add_subdirectory(logSort)
+add_subdirectory(logpolarFrameCollector)
+add_subdirectory(logSort)
 #add_subdirectory(objectInteractor)
 add_subdirectory(opticalFlow2)
 add_subdirectory(opticalFlow3)
