@@ -695,7 +695,7 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
 }
 
 
-void logUnmask::logUnmaskEvent(unsigned int evPU, int& metax, int& metay, int& pol, int& type) {
+void logUnmask::logUnmaskEvent(unsigned int evPU, short& metax, short& metay, short& pol, short& type) {
     int y = (retinalSize-1) - ((evPU & xmask) >> xshift);
     //y = (short) ((evPU & xmask)>>xshift);
     int x = ((evPU & ymask) >> yshift);
@@ -724,7 +724,7 @@ void logUnmask::logUnmaskEvent(unsigned int evPU, int& metax, int& metay, int& p
     //type = ((short)(evPU & cameramask) >> camerashift);	//0 LEFT, 1 RIGHT
 }
 
-void logUnmask::logUnmaskEvent(unsigned long evPU, int& metax, int& metay, int& pol, int& type) {
+void logUnmask::logUnmaskEvent(unsigned long evPU, short& metax, short& metay, short& pol, short& type) {
     //unmasking through LUT    
     // 1.determining the position in the LUT
     int x     = ((evPU & xmask) >> xshift);
@@ -773,7 +773,7 @@ void logUnmask::logUnmaskEvent(unsigned long evPU, int& metax, int& metay, int& 
     //printf("unmasked event %d %d %d %d from %d %d \n",type, metax, metay, pol, x, y);
 }
 
-void logUnmask::logMaskEvent( int metax, int metay, int pol, unsigned long& evPU) {
+void logUnmask::logMaskEvent( short metax, short metay, short pol, unsigned long& evPU) {
     //metax += retinalSize +1;
     evPU = 0;
     evPU += (metax & 0x0000007f ) << 1   ;//& xmask;   //shifting one bit
