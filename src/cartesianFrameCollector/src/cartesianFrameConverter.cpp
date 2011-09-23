@@ -140,7 +140,7 @@ void cFrameConverter::onRead(eventBuffer& i_ub) {
     for (int evt = 0; evt < num_events; evt++) {
         unsigned long blob      = buf2[2 * evt];
         unsigned long t         = buf2[2 * evt + 1];
-        fprintf(fout,">>>>>>>>> %08X %08X \n",blob,t);        
+        fprintf(fout,"%08X %08X \n",blob,t);        
     }
 #endif /* VERBOSE */
 

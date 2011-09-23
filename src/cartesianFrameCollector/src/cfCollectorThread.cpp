@@ -41,7 +41,7 @@ using namespace std;
 #define MAXVALUE 4294967295
 #define THRATE 5
 #define STAMPINFRAME  // 10 ms of period times the us in 1 millisecond + time for computing
-#define retinalSize 128
+//#define retinalSize 128
 #define CHUNKSIZE 32768 //65536 //8192
 #define dim_window 1
 #define synch_time 1
@@ -80,13 +80,15 @@ bool cfCollectorThread::threadInit() {
     cfConverter=new cFrameConverter();
     cfConverter->useCallback();
     cfConverter->open(getName("/retina:i").c_str());
+    cfConverter->setRetinalSize(retinalSize);
     printf("\n opening retina\n");
     printf("starting the plotter \n");
     pThread = new plotterThread();
     pThread->setName(getName("").c_str());
     pThread->setStereo(stereo);
+    pThread->setRetinalSize(retinalSize);
     pThread->start();
-
+    unmask_events.setRetinalSize(retinalSize);
 
     //minCount = cfConverter->getEldestTimeStamp();
     startTimer = Time::now();
@@ -165,14 +167,14 @@ void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsig
                 *pImage = (unsigned char) (127 + value);
 		//if(value>0)printf("event%d val%d buf%d\n",*pImage,value,*pBuffer);
 		pImage++;
-		if ((stereo) && (r < 7) && (r >= 16) && (c < 7) && (c >= 16)) {
-		  *pImage = (unsigned char) (127 + value);
-		  pImage += imageRowSize;
-		  *pImage = (unsigned char) (127 + value);
-		  pImage--;
-		  *pImage = (unsigned char) (127 + value);
-		  pImage -= (imageRowSize + 1);
-		}
+		//if ((stereo) && (r < 7) && (r >= 16) && (c < 7) && (c >= 16)) {
+		//  *pImage = (unsigned char) (127 + value);
+		//  pImage += imageRowSize;
+		//  *pImage = (unsigned char) (127 + value);
+		//pImage--;
+		//  *pImage = (unsigned char) (127 + value);
+		//  pImage -= (imageRowSize + 1);
+		//}
                
             }
             else {
@@ -180,14 +182,14 @@ void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsig
 		//printf("NOT event%d \n",*pImage);
 		pImage++;
 		
-		if ((stereo) && (r < 7) && (r >= 16) && (c < 7) && (c >= 16)) {
-		  *pImage = (unsigned char) 127;
-		  pImage += imageRowSize;
-		  *pImage = (unsigned char) 127 + value;
-		  pImage--;
-		  *pImage = (unsigned char) 127 + value;
-		  pImage -= (imageRowSize + 1);
-		}
+		//if ((stereo) && (r < 7) && (r >= 16) && (c < 7) && (c >= 16)) {
+		//  *pImage = (unsigned char) 127;
+		//  pImage += imageRowSize;
+		//  *pImage = (unsigned char) 127 + value;
+		//  pImage--;
+		//  *pImage = (unsigned char) 127 + value;
+		//  pImage -= (imageRowSize + 1);
+		//}
                
 	    }
             pBuffer++;

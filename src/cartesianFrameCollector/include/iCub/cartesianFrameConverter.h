@@ -114,6 +114,15 @@ public:
      */
     bool isValid(){return valid;};
 
+
+    /**
+     * @brief function thatset the dimension of the output image
+     * @param value the dimension in pixels of the retina device
+     */
+    void setRetinalSize(int value) {
+        retinalSize = value;
+    }
+
 private:
     bool valid;
     short state;

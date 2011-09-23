@@ -86,6 +86,14 @@ bool cfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
                            "synchronisation period (int)").asInt();
     cfThread->setSynchPeriod(synchPeriod);
 
+    /*
+    * set the retinaSize (considering squared retina)
+    */
+    retinalSize            = rf.check("retinalSize", 
+                           Value(128), 
+                           "retinalSize (int)").asInt();
+    cfThread->setRetinalSize(synchPeriod);
+
     
     /* checking whether the module synchronizes with single camera or stereo camera
      */

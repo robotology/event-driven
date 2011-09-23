@@ -154,7 +154,8 @@
  * 12/09/11 : added the stereo flag for stereo synchronization                                                          \author Rea \n
  * 19/09/11 : added logpolar representation of the read coordinates                                                     \author Rea \n
  * 21/09/11 : added the VERBOSE mode for plotting out debugging messages                                                \author Rea \n
- */
+ * 23/09/11 : added parameter in order to define retina dimension                                                       \author Rea \n      
+*/
 
 #include <iostream>
 #include <string>
@@ -176,6 +177,7 @@ class cfCollectorModule:public yarp::os::RFModule {
     std::string handlerPortName;                //name of the handler port (comunication with respond function)
     int ratethread;                             //time constant for ratethread
     int synchPeriod;                            // synchronization period between events and viewer
+    int retinalSize;
 
     yarp::os::Port handlerPort;                 // a port to handle messages 
     cfCollectorThread* cfThread;                //cfCollectorThread for processing events

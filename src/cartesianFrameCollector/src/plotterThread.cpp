@@ -38,12 +38,12 @@ using namespace yarp::sig;
 using namespace std;
 
 #define THRATE 40
-#define retinalSize 128
+//#define retinalSize 128
 
 plotterThread::plotterThread() : RateThread(THRATE) {
     synchronised = false;
     count=0;
-    lambda = 0.9;
+    
     imageLeft      = new ImageOf<PixelMono>;
     imageLeft->resize(retinalSize,retinalSize);
     imageRight     = new ImageOf<PixelMono>;

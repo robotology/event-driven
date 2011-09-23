@@ -153,6 +153,15 @@ public:
      void setLastTimestamp(unsigned long value);
 
     /**
+     * @brief function thatset the dimension of the output image
+     * @param value the dimension in pixels of the retina device
+     */
+    void setRetinalSize(int value) {
+        retinalSize = value;
+    }
+    
+    
+    /**
     * default constructor
     */
     unmask();

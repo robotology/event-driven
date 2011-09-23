@@ -39,9 +39,10 @@
 class plotterThread : public yarp::os::RateThread {
 private:    
     int count;                          // loop counter of the thread
-    float lambda;                       // integration factor
-    int width, height;                  // dimension of the extended input image (extending)
-    int height_orig, width_orig;        // original dimension of the input and output images
+    //float lambda;                       // integration factor
+    //int width, height;                  // dimension of the extended input image (extending)
+    //int height_orig, width_orig;        // original dimension of the input and output images
+    int retinalSize;
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > leftPort;                 // port whre the output (left) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > rightPort;                // port whre the output (right) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > leftIntPort;              // port whre the output (left integral) is sent
@@ -146,6 +147,13 @@ public:
                        yarp::sig::ImageOf<yarp::sig::PixelMono>* imgBW, yarp::sig::ImageOf<yarp::sig::PixelMono>* imgGray,  
                        yarp::sig::ImageOf<yarp::sig::PixelMono>* imgTh );
     
+    /**
+     * @brief function thatset the dimension of the output image
+     * @param value the dimension in pixels of the retina device
+     */
+    void setRetinalSize(int value) {
+        retinalSize = value;
+    }
     
 
 };
