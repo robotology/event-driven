@@ -408,7 +408,7 @@ int logUnmask::getMaxValue() {
 
 void logUnmask::getCD(aer** pointerCD, int* dimCD) {
     *pointerCD = bufferCD;
-            
+    /*        
     for (int i = 0; i <= countCD ; i++) {
         
         unsigned long blob      = (u32) bufferCD[i].address;
@@ -416,6 +416,7 @@ void logUnmask::getCD(aer** pointerCD, int* dimCD) {
         fprintf(fout,"%d > %08x %08x \n",i,blob,timestamp);
         //copyEvent++;
     }
+    */
     *dimCD = countCD;
 }
 
@@ -568,7 +569,7 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
                 bufferCD[countCD].address   = (u32) newBlob;
                 bufferCD[countCD].timestamp = (u32) timestamp;
                 //printf("%08X %08X  \n",bufferCD[count].address,bufferCD[count].timestamp);
-                fprintf(fout,"%d %08X %08X\n",countCD,bufferCD[countCD].address,bufferCD[countCD].timestamp);
+                //fprintf(fout,"%d %08X %08X\n",countCD,bufferCD[countCD].address,bufferCD[countCD].timestamp);
                 countCD++;
             }                
         }

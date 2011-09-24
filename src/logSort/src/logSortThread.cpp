@@ -325,7 +325,7 @@ void logSortThread::run() {
 
         //TODO : code MUTEXes in these lines! Strictly Necessary!
         unmask_events.getCD(&pCD, &dim);
-        printf("dimCD :  %x \n", pCD);
+        //printf("dimCD :  %x \n", pCD);
         sendBuffer(&portCD, pCD, dim);
         unmask_events.resetCD();
 
