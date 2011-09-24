@@ -57,6 +57,7 @@ logSortThread::logSortThread() : RateThread(THRATE) {
     //bufferRead = (char*) malloc(8192);
     countStop = 0;
     verb = false;    
+    fout = fopen("sentEvents.txt", "w+");
 }
 
 logSortThread::~logSortThread() {
@@ -64,6 +65,7 @@ logSortThread::~logSortThread() {
   delete bufferCopy;
   delete flagCopy;
   delete resultCopy;
+  fclose(fout);
 }
 
 bool logSortThread::threadInit() {
@@ -323,10 +325,11 @@ void logSortThread::run() {
 
         //TODO : code MUTEXes in these lines! Strictly Necessary!
         unmask_events.getCD(&pCD, &dim);
-        //printf("dimCD :  %d \n", dim);
+        printf("dimCD :  %x \n", pCD);
         sendBuffer(&portCD, pCD, dim);
         unmask_events.resetCD();
-        
+
+        /*
         unmask_events.getEM(&pEM, &dim);
         //printf("dimEM :  %d \n", dim);
         sendBuffer(&portEM, pEM, dim);
@@ -336,30 +339,41 @@ void logSortThread::run() {
         //printf("dimIF :  %d \n", dim);
         sendBuffer(&portIF, pIF, dim);
         unmask_events.resetIF();
-	
-        //int dimIF;
-        //char* pIF;
-        //unmask_events.getIF(pIF,&dimIF);z
-        //sendBuffer(portIF, pIF, dimIF);
-	 
-	
-        //getMonoImage(imageRight,minCount,maxCount,0);
-        //getMonoImage(imageLeft,minCountRight,maxCountRight,1);
-        //pThread->copyLeft(imageLeft);
-        //pThread->copyRight(imageRight);
+        */
     }
 }
 
 void logSortThread::sendBuffer(BufferedPort<eventBuffer>* port, aer* buffer, int sz) {
-  if (port->getOutputCount()) {   
     int szSent = sz * 8; // dimension of the event times the bytes per event
-    char* pBuffer = (char*) buffer;
-    //printf("sending : %d 0x%x \n", szSent, buffer);
-    eventBuffer data2send(pBuffer, szSent);    
-    eventBuffer& tmp = port->prepare();
-    tmp = data2send;   
-    port->write();    
-  }     
+    //aer* copyEvent = buffer;
+    
+    //for (int i = 0; i < sz; i++) {
+    //    u32 blob      = buffer[i].address;
+    //    u32 timestamp = buffer[i].timestamp;
+    //    fprintf(fout,"%08x %08x \n",blob,timestamp);
+    //    //copyEvent++;
+    //}
+    
+    
+    //unsigned char* copyBuffer = (unsigned char*) buffer;
+    //for (int i = 0; i < szSent; i++) {
+    //    if (*copyBuffer < 0) {
+    //        *copyBuffer = 256 - *copyBuffer;
+    //    }
+    //    fprintf(fout," %d %X \n",*copyBuffer, *copyBuffer);
+    //    copyBuffer++;
+    //}
+    
+    
+    if (port->getOutputCount()) {           
+        char* pBuffer = (char*) buffer;
+       
+        //printf("sending : %d 0x%x \n", szSent, buffer);
+        eventBuffer data2send(pBuffer, szSent);    
+        eventBuffer& tmp = port->prepare();
+        tmp = data2send;   
+        port->write();    
+    }     
 }
 
 

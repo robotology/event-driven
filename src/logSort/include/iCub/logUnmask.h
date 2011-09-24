@@ -85,16 +85,16 @@ private:
     int maxx, maxy;
 
     int wrapAdd;
-    unsigned int xmask;              // 16 bits mask for unmasking of the address
-    unsigned int ymask;              // 16 bits mask for unmasking of the address
+    unsigned short xmask;              // 16 bits mask for unmasking of the address
+    unsigned short ymask;              // 16 bits mask for unmasking of the address
     long int xmasklong;              // 32 bits mask for unmasking of the event
     long int ymasklong;              // 32 bits mask for unmasking of the event
-    int yshift;                      // shift of 8 bits for getting the y in 16 bits address
-    int xshift;                      // shift of 1 bit to get the x in 16 bit (polarity)
-    int yshift2;                     // shift of 16 bits for getting the y in 32 bits address
-    int polshift;                    // shift necessary to cast the unmasked value to short
+    short yshift;                      // shift of 8 bits for getting the y in 16 bits address
+    short xshift;                      // shift of 1 bit to get the x in 16 bit (polarity)
+    short yshift2;                     // shift of 16 bits for getting the y in 32 bits address
+    short polshift;                    // shift necessary to cast the unmasked value to short
     int polmask;                     // mask necessary to extract the polarity
-    int camerashift;                 // shift for cast back into short the camera reference 
+    short camerashift;                 // shift for cast back into short the camera reference 
     int cameramask;                  // mask necessary to extract which camera has produced the output
     int retinalSize;                 // size of the retina
     int minValue;

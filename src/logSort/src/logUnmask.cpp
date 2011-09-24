@@ -170,7 +170,7 @@ logUnmask::~logUnmask() {
 
 bool logUnmask::threadInit() {
     // initialising the logChip_LUT
-    fout = fopen("asvLUT.txt", "w");
+    fout = fopen("dump.txt", "w");
     
     /*  // structure of the LUT for logpolar Chip
     // type, metaX, metaY, polarity
@@ -383,11 +383,9 @@ bool logUnmask::threadInit() {
             logChip_LUT[y * X_DIMENSION + x][3] = pol;
 
             
-            fprintf(fout," %d %d    %d %d %d %d \n", x, y, metax, metay, pol, type);
+            //fprintf(fout," %d %d    %d %d %d %d \n", x, y, metax, metay, pol, type);
         }        
     }
-
-
     return true;
 }
 
@@ -410,6 +408,14 @@ int logUnmask::getMaxValue() {
 
 void logUnmask::getCD(aer** pointerCD, int* dimCD) {
     *pointerCD = bufferCD;
+            
+    for (int i = 0; i <= countCD ; i++) {
+        
+        unsigned long blob      = (u32) bufferCD[i].address;
+        unsigned long timestamp = (u32) bufferCD[i].timestamp;
+        fprintf(fout,"%d > %08x %08x \n",i,blob,timestamp);
+        //copyEvent++;
+    }
     *dimCD = countCD;
 }
 
@@ -508,7 +514,7 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         }
                 
         // here we zero the higher two bytes of the address!!! Only lower 16bits used!
-        blob &= 0xFFFF;
+        //blob &= 0xFFFF;
         type = -1;
   
         // saving the events
@@ -518,9 +524,9 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
             //fout<<hex<<a<<" "<<hex<<t<<endl;
         }
 
-        int x    = ((blob & xmask) >> xshift);
+        short x    = ((blob & xmask) >> xshift);
         x -= 112;
-        int y    = ((blob & ymask) >> yshift);
+        short y    = ((blob & ymask) >> yshift);
         int flipy = flipBits(y,7);
         y = flipy - 56;
         if(evt % 100 == 0) {
@@ -547,79 +553,83 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         logMaskEvent(metaX,metaY,pol,newBlob);
         if(evt % 100 == 0) {
             printf(" %08X>%d,%d   \n",blob,cartX,cartY);
-            printf(" %d %d %d %d %08X  \n",cartY, cartX, metaY, metaX ,newBlob);
+            printf(" %d %d %d %d %08X %08X  \n",cartY, cartX, metaY, metaX ,newBlob, timestamp);
         }
         
-        
-
         struct aer* temp;
         
         switch (type) {
-            case 0:{ //CD
-                //printf("Unmasked CD %x \n", bufferCD);
-                if((blob!=0)||(timestamp!=0)) {
-                    temp = &bufferCD[countCD];
-                    temp->address   = blob;
-                    temp->timestamp = timestamp;
-                    countCD++;
-                }
-                
-            }
-            break;
-            case 1:{ //EM1
-                //printf("Unmasked EM1 \n");
-                if((blob!=0)||(timestamp!=0)) {
-                    temp = &bufferEM[countEM];
-                    temp->address   = blob;
-                    temp->timestamp = timestamp;
-                    countEM++;
-                }
-            }
-            break;
-            case 2:{ //EM2
-                //printf("Unmasked EM2 \n");
-                if((blob!=0)||(timestamp!=0)) {
-                    temp = &bufferEM[countEM];
-                    temp->address   = blob;
-                    temp->timestamp = timestamp;
-                    countEM++;
-                }
-            }
-            break;
-            case 3:{ //EM3
-                //printf("Unmasked EM3 \n");
-                if((blob!=0)||(timestamp!=0)) { 
-                    temp = &bufferEM[countEM];
-                    temp->address   = blob;
-                    temp->timestamp = timestamp;
-                    countEM++;
-                }
-            }
-            break;
-            case 4:{ //EM4
-                //printf("Unmasked EM4 \n");
-                if((blob!=0)||(timestamp!=0)) {
-                    temp = &bufferEM[countEM];
-                    temp->address   = blob;
-                    temp->timestamp = timestamp;
-                    countEM++;
-                }
-            }
-            break;
-            case 5:{ //IF
-                //printf("Unmasked IF \n");
-                if((blob!=0)||(timestamp!=0)) {
-                    temp = &bufferIF[countIF];
-                    temp->address   = blob;
-                    temp->timestamp = timestamp;
-                    countIF++;
-                }
-            }
-            break;            
+        case 0:{ //CD
+            
+            //if((newBlob!=0)||(timestamp!=0)) {
+            if (true){
+                //temp = &bufferCD[countCD];                    
+                printf("Unmasked CD  %x \n", bufferCD);
+                bufferCD[countCD].address   = (u32) newBlob;
+                bufferCD[countCD].timestamp = (u32) timestamp;
+                //printf("%08X %08X  \n",bufferCD[count].address,bufferCD[count].timestamp);
+                fprintf(fout,"%d %08X %08X\n",countCD,bufferCD[countCD].address,bufferCD[countCD].timestamp);
+                countCD++;
+            }                
         }
+            break;
+            /*
+        case 1:{ //EM1
+            //printf("Unmasked EM1 \n");
+            if((blob!=0)||(timestamp!=0)) {
+                temp = &bufferEM[countEM];
+                temp->address   = blob;
+                temp->timestamp = timestamp;
+                countEM++;
+            }
+        }
+            break;
+        case 2:{ //EM2
+                //printf("Unmasked EM2 \n");
+            if((blob!=0)||(timestamp!=0)) {
+                temp = &bufferEM[countEM];
+                temp->address   = blob;
+                temp->timestamp = timestamp;
+                    countEM++;
+            }
+        }
+            break;
+        case 3:{ //EM3
+            //printf("Unmasked EM3 \n");
+            if((blob!=0)||(timestamp!=0)) { 
+                temp = &bufferEM[countEM];
+                temp->address   = blob;
+                temp->timestamp = timestamp;
+                countEM++;
+            }
+        }
+            break;
+        case 4:{ //EM4
+            //printf("Unmasked EM4 \n");
+            if((blob!=0)||(timestamp!=0)) {
+                temp = &bufferEM[countEM];
+                temp->address   = blob;
+                temp->timestamp = timestamp;
+                countEM++;
+            }
+        }
+            break;
+        case 5:{ //IF
+            //printf("Unmasked IF \n");
+            if((blob!=0)||(timestamp!=0)) {
+                temp = &bufferIF[countIF];
+                temp->address   = blob;
+                temp->timestamp = timestamp;
+                countIF++;
+            }
+        }
+            break;
+            */
+        }
+        
 
         
-        
+     
         /*
         //camera: LEFT 0, RIGHT 1
         if(camera) {            
@@ -685,7 +695,7 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
                     timeBufferRight[cartX + cartY * retinalSize] = timestamp;
                     
                     if (bufferRight[cartX + cartY * retinalSize] < -127) {
-                        bufferRight[cartX + cartY * retinalSize] = -127;
+-                        bufferRight[cartX + cartY * retinalSize] = -127;
                     }
                 }
             }
@@ -727,10 +737,10 @@ void logUnmask::logUnmaskEvent(unsigned int evPU, short& metax, short& metay, sh
 void logUnmask::logUnmaskEvent(unsigned long evPU, short& metax, short& metay, short& pol, short& type) {
     //unmasking through LUT    
     // 1.determining the position in the LUT
-    int x     = ((evPU & xmask) >> xshift);
-    int y     = ((evPU & ymask) >> yshift);
+    short x     = ((evPU & xmask) >> xshift);
+    short y     = ((evPU & ymask) >> yshift);
     //printf("y %d ", y);
-    int flipy = flipBits(y,7);
+    short flipy = flipBits(y,7);
     //printf("   flipy %d \n", flipy);
     y = flipy - 56;
     x = x - 112;

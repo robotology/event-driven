@@ -39,6 +39,7 @@
 #include <sys/types.h>
 #include <inttypes.h>
 #include <stdlib.h>
+#include <cstdlib>
 
 //#include <iCub/sendingBuffer.h>
 
@@ -96,6 +97,8 @@ private:
     char* bufferCopy;                   // local copy of the events read
     char* flagCopy;                     // copy of the unreadBuffer
     char* resultCopy;                   // buffer resulting out of the selection
+
+    FILE *fout;
 public:
     /**
     * default constructor
