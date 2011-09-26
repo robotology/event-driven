@@ -26,6 +26,15 @@
 #include <iCub/cartesianFrameConverter.h>
 #include <cassert>
 #include <cstdlib>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <ctime>
+#include <list>
+#include <sys/types.h>
+#include <inttypes.h>
+
 
 //#define BUFFERDIM 32768
 //#define TH1 8192 

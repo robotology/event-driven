@@ -26,10 +26,14 @@
 #ifndef UNMASK_H
 #define UNMASK_H
 
+// general includes
 #include <iostream>
 #include <sstream>
 #include <ctime>
+#include <sys/types.h>
+#include <inttypes.h>
 
+// yarp includes
 #include <yarp/os/all.h>
 
 //Other dependency

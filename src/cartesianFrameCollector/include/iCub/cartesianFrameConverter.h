@@ -26,12 +26,6 @@
 #ifndef _CARTESIAN_FRAME_CONVERTER_H
 #define _CARTESIAN_FRAME_CONVERTER_H
 
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <string>
-#include <ctime>
-#include <list>
 
 
 #include <iCub/convert.h>

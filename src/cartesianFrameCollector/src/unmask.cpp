@@ -201,8 +201,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
     //AER_struct sAER
     count++;
     if(verb)
-        printf("Unmasking with the timestamp %llu \n", lasttimestamp);
-
+        printf("Unmasking with the timestamp %lu \n", lasttimestamp);
 
     int num_events;
     if(dvsMode) {

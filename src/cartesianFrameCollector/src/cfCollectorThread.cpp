@@ -249,13 +249,13 @@ void cfCollectorThread::run() {
       verb = true;
       unmask_events->resetTimestampLeft();
       unmask_events->resetTimestampRight();
-      printf("wrapping left %llu %llu \n",lc,unmask_events->getLastTimestamp());
-      printf("wrapping left %llu %llu\n",lc,unmask_events->getLastTimestamp());
-      printf("wrapping left %llu %llu\n",lc,unmask_events->getLastTimestamp());
-      printf("wrapping left %llu %llu\n",lc,unmask_events->getLastTimestamp());
-      printf("wrapping left %llu %llu\n",lc,unmask_events->getLastTimestamp());
-      printf("wrapping left %llu %llu\n",lc,unmask_events->getLastTimestamp());
-      printf("wrapping left %llu %llu\n",lc,unmask_events->getLastTimestamp());
+      printf("wrapping left %lu %lu \n",lc,unmask_events->getLastTimestamp());
+      printf("wrapping left %lu %lu\n",lc,unmask_events->getLastTimestamp());
+      printf("wrapping left %lu %lu\n",lc,unmask_events->getLastTimestamp());
+      printf("wrapping left %lu %lu\n",lc,unmask_events->getLastTimestamp());
+      printf("wrapping left %lu %lu\n",lc,unmask_events->getLastTimestamp());
+      printf("wrapping left %lu %lu\n",lc,unmask_events->getLastTimestamp());
+      printf("wrapping left %lu %lu\n",lc,unmask_events->getLastTimestamp());
       minCount = 0;
       maxCount      =  minCount      + interval * INTERVFACTOR* (dim_window);
    
@@ -264,12 +264,12 @@ void cfCollectorThread::run() {
       verb = true;
       unmask_events->resetTimestampRight();
       unmask_events->resetTimestampLeft();
-      printf("wrapping right %llu %llu\n",rc,unmask_events->getLastTimestampRight());
-      printf("wrapping right %llu %llu\n",rc,unmask_events->getLastTimestampRight());
-      printf("wrapping right %llu %llu\n",rc,unmask_events->getLastTimestampRight());
-      printf("wrapping right %llu %llu\n",rc,unmask_events->getLastTimestampRight());
-      printf("wrapping right %llu %llu\n",rc,unmask_events->getLastTimestampRight());
-      printf("wrapping right %llu %llu\n",rc,unmask_events->getLastTimestampRight());
+      printf("wrapping right %lu %lu\n",rc,unmask_events->getLastTimestampRight());
+      printf("wrapping right %lu %lu\n",rc,unmask_events->getLastTimestampRight());
+      printf("wrapping right %lu %lu\n",rc,unmask_events->getLastTimestampRight());
+      printf("wrapping right %lu %lu\n",rc,unmask_events->getLastTimestampRight());
+      printf("wrapping right %lu %lu\n",rc,unmask_events->getLastTimestampRight());
+      printf("wrapping right %lu %lu\n",rc,unmask_events->getLastTimestampRight());
 
       minCountRight = 0;
       maxCountRight = minCountRight + interval * INTERVFACTOR* (dim_window);
@@ -345,7 +345,7 @@ void cfCollectorThread::run() {
       //maxCount = lc; 
       //maxCountRight = rc;
 		 
-      printf("synchronised %1f! %llu,%llu,%llu||%llu,%llu,%llu \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
+      //printf("synchronised %1f! %llu,%llu,%llu||%llu,%llu,%llu \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
       startTimer = Time::now();
       synchronised = true; 
     }
