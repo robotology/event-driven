@@ -348,12 +348,7 @@ void logSortThread::sendBuffer(BufferedPort<eventBuffer>* port, aer* buffer, int
     int szSent = sz * 8; // dimension of the event times the bytes per event
     //aer* copyEvent = buffer;
     
-    //for (int i = 0; i < sz; i++) {
-    //    u32 blob      = buffer[i].address;
-    //    u32 timestamp = buffer[i].timestamp;
-    //    fprintf(fout,"%08x %08x \n",blob,timestamp);
-        //copyEvent++;
-    //}
+ 
     
     
     //unsigned char* copyBuffer = (unsigned char*) buffer;
@@ -369,6 +364,13 @@ void logSortThread::sendBuffer(BufferedPort<eventBuffer>* port, aer* buffer, int
     if (port->getOutputCount()) {           
         char* pBuffer = (char*) buffer;
        
+        for (int i = 0; i < sz; i++) {
+            u32 blob      = buffer[i].address;
+            u32 timestamp = buffer[i].timestamp;
+            fprintf(fout,"%08x %08x \n",blob,timestamp);
+            //copyEvent++;
+        }
+
         //printf("sending : %d 0x%x \n", szSent, buffer);
         eventBuffer data2send(pBuffer, szSent);    
         eventBuffer& tmp = port->prepare();

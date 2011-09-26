@@ -243,9 +243,9 @@ bool logUnmask::threadInit() {
             } // CD            
             
             else if (((x - 6) % 12 == 0) && ( 
-                                             ((y >= 12) || (y <= 6))
+                                             ((y < 24) || (y >= 48))
                                              &&
-                                             ((x <= 12) || (x >= 24))
+                                             ((x < 48) || (x >= 96))
                                              )
                      ){
                 // IFON
@@ -256,9 +256,9 @@ bool logUnmask::threadInit() {
             } // IFON
             
             else if (((x - 7) % 12 == 0) && ( 
-                                             ((y >= 12) || (y <= 6))
+                                             ((y < 24) || (y >= 48))
                                              &&
-                                             ((x <= 12) || (x >= 24))
+                                             ((x < 48) || (x >= 96))
                                              )
                      ){
                 // IFOFF
@@ -713,6 +713,14 @@ void logUnmask::logUnmaskEvent(unsigned int evPU, short& metax, short& metay, sh
     // 2.extractiong features 
     int position =  y * X_DIMENSION + x;
     
+    if((x == 50)&&(y = 22)){
+        printf("Error %d %d \n",x,y );
+    }
+
+        if((x == 51)&&(y = 22)){
+        printf("Error %d %d \n",x,y );
+    }
+
     //feature* pFeature = logChip_LUT;
     //pFeature += position;
     //short* pcols = pFeature;
@@ -750,6 +758,16 @@ void logUnmask::logUnmaskEvent(unsigned long evPU, short& metax, short& metay, s
     }
     // 2.extractiong features 
     int position =  y * X_DIMENSION + x;
+ 
+    if((x == 50)&&(y == 22)){
+        printf("Error %d %d \n",x,y );
+    }
+    if((x == 50)&&(y == 23)){
+        printf("Error %d %d \n",x,y );
+    }
+    if((x == 50)&&(y == 24)){
+        printf("Error %d %d \n",x,y );
+    }
     
     //feature* pFeature = logChip_LUT;
     //pFeature += position;
