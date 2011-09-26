@@ -25,7 +25,7 @@
 
 #include <iCub/logUnmask.h>
 #include <math.h>
-#include <cassert>
+
 
 using namespace std;
 using namespace yarp::os;
@@ -521,8 +521,8 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         // saving the events
         bool save = false;                
         if (save) {
-            fprintf(fout,"%08X %08X\n",blob,timestamp); 
-            //fout<<hex<<a<<" "<<hex<<t<<endl;
+            //            fprintf(fout,"%08X %08X\n",blob,timestamp); 
+            fprintf(fout, " %lu %lu \n", blob, timestamp );
         }
 
         unsigned short x    = ((blob & xmask) >> xshift);

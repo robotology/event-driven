@@ -30,7 +30,11 @@
 #include <sstream>
 #include <ctime>
 #include <cstdlib>
+#include <inttypes.h>
 #include <sys/types.h>
+#include <cassert>
+
+// yarp includes
 #include <yarp/os/all.h>
 
 //typedef unsigned long uint32_t;
