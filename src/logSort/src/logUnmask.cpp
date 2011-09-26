@@ -553,26 +553,23 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         }
         
         logMaskEvent(metaX,metaY,pol,newBlob);
-        if(newBlob > 0x18FF ) {
-            printf(" Error : %08X>%d,%d   \n",blob,cartX,cartY);
-            printf(" %d %d %d %d %08X %08X  \n",cartY, cartX, metaY, metaX ,newBlob, timestamp);
-        }
+        //if(newBlob > 0x18FF ) {
+        //    printf(" Error : %08X>%d,%d   \n",blob,cartX,cartY);
+        //    printf(" %d %d %d %d %08X %08X  \n",cartY, cartX, metaY, metaX ,newBlob, timestamp);
+        //}
         
         struct aer* temp;
         
         switch (type) {
-        case 0:{ //CD
-            
+        case 0:{ //CD            
             //if((newBlob!=0)||(timestamp!=0)) {
-            if (true){
                 //temp = &bufferCD[countCD];                    
                 //printf("Unmasked CD  %x \n", bufferCD);
-                bufferCD[countCD].address   = (u32) newBlob;
-                bufferCD[countCD].timestamp = (u32) timestamp;
-                //printf("%08X %08X  \n",bufferCD[count].address,bufferCD[count].timestamp);
-                //fprintf(fout,"%d %08X %08X\n",countCD,bufferCD[countCD].address,bufferCD[countCD].timestamp);
-                countCD++;
-            }                
+            bufferCD[countCD].address   = (u32) newBlob;
+            bufferCD[countCD].timestamp = (u32) timestamp;
+            //printf("%08X %08X  \n",bufferCD[count].address,bufferCD[count].timestamp);
+            //fprintf(fout,"%d %08X %08X\n",countCD,bufferCD[countCD].address,bufferCD[countCD].timestamp);
+            countCD++;                
         }
             break;
             /*
@@ -616,18 +613,20 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
             }
         }
             break;
+            */
         case 5:{ //IF
             //printf("Unmasked IF \n");
-            if((blob!=0)||(timestamp!=0)) {
-                temp = &bufferIF[countIF];
-                temp->address   = blob;
-                temp->timestamp = timestamp;
-                countIF++;
-            }
-        }
-            break;
-            */
-        }
+            //if((blob!=0)||(timestamp!=0)) {
+                //temp = &bufferIF[countIF];
+                //temp->address   = blob;
+                //temp->timestamp = timestamp;
+            bufferIF[countIF].address   = (u32) newBlob;
+            bufferIF[countIF].timestamp = (u32) timestamp;
+            countIF++;
+                //}
+        }// case 5
+            break;            
+        }// end of switch
         
 
         
@@ -793,11 +792,9 @@ void logUnmask::logMaskEvent( short metax, short metay, short pol, unsigned long
     evPU += (pol   << polshift) ;//& polmask;    
 }
 
-
-
 void logUnmask::threadRelease() {
     //no istruction in threadInit
-    printf("closing the dumping file");
+    printf("closing the dumping file \n");
     fclose(fout);
     printf("successfully close the dumping file \n");
 }

@@ -325,7 +325,7 @@ void logSortThread::run() {
 
         //TODO : code MUTEXes in these lines! Strictly Necessary!
         unmask_events.getCD(&pCD, &dim);
-        printf("dimCD :  %d \n", dim);
+        //printf("dimCD :  %d \n", dim);
         sendBuffer(&portCD, pCD, dim);
         unmask_events.resetCD();
 
@@ -497,6 +497,7 @@ void logSortThread::threadRelease() {
     //delete imageRight;
     printf("Threadrelease         stopping plotterThread \n");
     pThread->stop();
+    printf("Thread releas         stopping unmaskThread \n");
     printf("Threadrelease         deleting converter \n");
     delete lfConverter;
 }
