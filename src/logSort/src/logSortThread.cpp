@@ -325,7 +325,7 @@ void logSortThread::run() {
 
         //TODO : code MUTEXes in these lines! Strictly Necessary!
         unmask_events.getCD(&pCD, &dim);
-        //printf("dimCD :  %x \n", pCD);
+        printf("dimCD :  %d \n", dim);
         sendBuffer(&portCD, pCD, dim);
         unmask_events.resetCD();
 
@@ -334,12 +334,13 @@ void logSortThread::run() {
         //printf("dimEM :  %d \n", dim);
         sendBuffer(&portEM, pEM, dim);
         unmask_events.resetEM();
+        */
 
         unmask_events.getIF(&pIF, &dim);
         //printf("dimIF :  %d \n", dim);
         sendBuffer(&portIF, pIF, dim);
         unmask_events.resetIF();
-        */
+        
     }
 }
 
@@ -351,7 +352,7 @@ void logSortThread::sendBuffer(BufferedPort<eventBuffer>* port, aer* buffer, int
     //    u32 blob      = buffer[i].address;
     //    u32 timestamp = buffer[i].timestamp;
     //    fprintf(fout,"%08x %08x \n",blob,timestamp);
-    //    //copyEvent++;
+        //copyEvent++;
     //}
     
     

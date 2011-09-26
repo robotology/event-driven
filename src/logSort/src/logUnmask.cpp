@@ -170,7 +170,7 @@ logUnmask::~logUnmask() {
 
 bool logUnmask::threadInit() {
     // initialising the logChip_LUT
-    fout = fopen("dump.txt", "w");
+    fout = fopen("asvLUT.txt", "w");
     
     /*  // structure of the LUT for logpolar Chip
     // type, metaX, metaY, polarity
@@ -383,7 +383,7 @@ bool logUnmask::threadInit() {
             logChip_LUT[y * X_DIMENSION + x][3] = pol;
 
             
-            //fprintf(fout," %d %d    %d %d %d %d \n", x, y, metax, metay, pol, type);
+            fprintf(fout," %d %d    %d %d %d %d \n", x, y, metax, metay, pol, type);
         }        
     }
     return true;
@@ -525,14 +525,15 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
             //fout<<hex<<a<<" "<<hex<<t<<endl;
         }
 
-        short x    = ((blob & xmask) >> xshift);
+        unsigned short x    = ((blob & xmask) >> xshift);
         x -= 112;
-        short y    = ((blob & ymask) >> yshift);
+        unsigned short y    = ((blob & ymask) >> yshift);        
         int flipy = flipBits(y,7);
         y = flipy - 56;
-        if(evt % 100 == 0) {
-           printf("####### \n %08X %d %d \n",blob, x, y);
-        }
+        
+        //if(evt % 100 == 0) {
+        //   printf("####### \n %08X %d %d \n",blob, x, y);
+        //}
         
         logUnmaskEvent((unsigned long)blob, cartX, cartY, polarity, type);
         
@@ -552,8 +553,8 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         }
         
         logMaskEvent(metaX,metaY,pol,newBlob);
-        if(evt % 100 == 0) {
-            printf(" %08X>%d,%d   \n",blob,cartX,cartY);
+        if(newBlob > 0x18FF ) {
+            printf(" Error : %08X>%d,%d   \n",blob,cartX,cartY);
             printf(" %d %d %d %d %08X %08X  \n",cartY, cartX, metaY, metaX ,newBlob, timestamp);
         }
         
@@ -565,7 +566,7 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
             //if((newBlob!=0)||(timestamp!=0)) {
             if (true){
                 //temp = &bufferCD[countCD];                    
-                printf("Unmasked CD  %x \n", bufferCD);
+                //printf("Unmasked CD  %x \n", bufferCD);
                 bufferCD[countCD].address   = (u32) newBlob;
                 bufferCD[countCD].timestamp = (u32) timestamp;
                 //printf("%08X %08X  \n",bufferCD[count].address,bufferCD[count].timestamp);
@@ -750,7 +751,6 @@ void logUnmask::logUnmaskEvent(unsigned long evPU, short& metax, short& metay, s
     }
     // 2.extractiong features 
     int position =  y * X_DIMENSION + x;
-
     
     //feature* pFeature = logChip_LUT;
     //pFeature += position;
@@ -777,8 +777,9 @@ void logUnmask::logUnmaskEvent(unsigned long evPU, short& metax, short& metay, s
         metay = 0;
         pol = 0;
     }
-    if((metax > 24)|(metay > 24)){
-        printf("Error in max dimension out \n");
+    if((metax > 24)||(metay > 24)){
+        //printf("Error in max dimension out \n");
+        metax = 0; metay = 0;
     }
   
     //printf("unmasked event %d %d %d %d from %d %d \n",type, metax, metay, pol, x, y);
