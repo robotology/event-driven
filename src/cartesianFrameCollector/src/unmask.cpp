@@ -337,11 +337,14 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
             cartY = 0;
         }
 
+        //correcting the orientation of the camera
         //cartY = retinalSize - cartY;   //corrected the output of the camera (flipped the image along y axis)
         //cartX = retinalSize - cartX;
+
         //if(cartX!=0)
         //    printf("retinalSize %d cartX %d cartY %d camera %d \n",retinalSize,cartX, cartY,camera);
         //printf("lastTimeStamp %08X \n", lasttimestamp);
+
         //camera is unmasked as left 0, right -1. It is converted in left 1, right 0
         camera = camera + 1;
         //printf("Camera %d polarity %d  \n", camera, polarity);
@@ -475,7 +478,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
     }*/
 
 void unmask::unmaskEvent(unsigned int evPU, short& x, short& y, short& pol, short& camera) {
-    y =       (short) (retinalSize - 1) - (short)((evPU & xmaskshort) >> xshift);
+    y =       (short)((evPU & xmaskshort) >> xshift);
     //y = (short) ((evPU & xmask)>>xshift);
     x =       (short) ((evPU & ymaskshort)      >> yshift);
     pol =    ((short) ((evPU & polmaskshort)    >> polshift)==0)?1:-1;	//+1 ON, -1 OFF
@@ -494,7 +497,7 @@ void unmask::unmaskEvent(unsigned int evPU, short& x, short& y, short& pol) {
 void unmask::unmaskEvent(long int evPU, short& x, short& y, short& pol, short& camera) {
     //x =      (short) (retinalSize - 1) - (short)((evPU & xmask) >> xshift);
     x =      (short) ((evPU & xmask)      >> xshift);
-    y =      (short) ((evPU & ymask)      >> yshift2);
+    y =      (short) ((evPU & ymask)      >> yshift);
     pol =    (short) ((evPU & polmask)    >> polshift)==0?-1:1;
                       //+1 ON, -1 OFF
     //printf("3evPU%x polmask%x polshift%x \n"); 
