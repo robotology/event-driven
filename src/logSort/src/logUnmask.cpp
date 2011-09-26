@@ -25,7 +25,7 @@
 
 #include <iCub/logUnmask.h>
 #include <math.h>
-
+#include <cassert>
 
 using namespace std;
 using namespace yarp::os;
@@ -145,13 +145,14 @@ logUnmask::logUnmask() : RateThread(UNMASKRATETHREAD){
     //fopen_s(&fp,"events.txt", "w"); //Use the logUnmasked_buffer
     //uEvents = fopen("./uevents.txt","w");
 
+    // setting all the entries to -1 to avoid unexpected mappings
     logChip_LUT = new feature[X_DIMENSION * Y_DIMENSION]; // all the position in the logchip times 4 features (144 by 72)
     feature* plogChip = logChip_LUT;
     for (int i = 0; i< X_DIMENSION * Y_DIMENSION; i++) {
-        plogChip[i][0] = 0;
-        plogChip[i][1] = 0;
-        plogChip[i][2] = 0;
-        plogChip[i][3] = 0;
+        plogChip[i][0] = -1;
+        plogChip[i][1] = -1;
+        plogChip[i][2] = -1;
+        plogChip[i][3] = -1;
     }
 }
 
@@ -521,8 +522,8 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         // saving the events
         bool save = false;                
         if (save) {
-            //            fprintf(fout,"%08X %08X\n",blob,timestamp); 
-            fprintf(fout, " %lu %lu \n", blob, timestamp );
+            fprintf(fout,"%08X %08X\n",blob,timestamp); 
+            //fout<<hex<<a<<" "<<hex<<t<<endl;
         }
 
         unsigned short x    = ((blob & xmask) >> xshift);
@@ -572,48 +573,56 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
             countCD++;                
         }
             break;
-            /*
+           
         case 1:{ //EM1
             //printf("Unmasked EM1 \n");
             if((blob!=0)||(timestamp!=0)) {
-                temp = &bufferEM[countEM];
-                temp->address   = blob;
-                temp->timestamp = timestamp;
+                //temp = &bufferEM[countEM];
+                //temp->address   = blob;
+                //temp->timestamp = timestamp;
+                bufferEM[countEM].address   = (u32) newBlob;
+                bufferEM[countEM].timestamp = (u32) timestamp;
                 countEM++;
             }
-        }
+        } //EM1
             break;
         case 2:{ //EM2
                 //printf("Unmasked EM2 \n");
             if((blob!=0)||(timestamp!=0)) {
-                temp = &bufferEM[countEM];
-                temp->address   = blob;
-                temp->timestamp = timestamp;
-                    countEM++;
+                //temp = &bufferEM[countEM];
+                //temp->address   = blob;
+                //temp->timestamp = timestamp;
+                bufferEM[countEM].address   = (u32) newBlob;
+                bufferEM[countEM].timestamp = (u32) timestamp;
+                countEM++;
             }
-        }
+        } // EM2
             break;
         case 3:{ //EM3
             //printf("Unmasked EM3 \n");
             if((blob!=0)||(timestamp!=0)) { 
-                temp = &bufferEM[countEM];
-                temp->address   = blob;
-                temp->timestamp = timestamp;
+                //temp = &bufferEM[countEM];
+                //temp->address   = blob;
+                //temp->timestamp = timestamp;
+                bufferEM[countEM].address   = (u32) newBlob;
+                bufferEM[countEM].timestamp = (u32) timestamp;
                 countEM++;
             }
-        }
+        } //EM3
             break;
         case 4:{ //EM4
             //printf("Unmasked EM4 \n");
             if((blob!=0)||(timestamp!=0)) {
-                temp = &bufferEM[countEM];
-                temp->address   = blob;
-                temp->timestamp = timestamp;
+                //temp = &bufferEM[countEM];
+                //temp->address   = blob;
+                //temp->timestamp = timestamp;
+                bufferEM[countEM].address   = (u32) newBlob;
+                bufferEM[countEM].timestamp = (u32) timestamp;
                 countEM++;
             }
-        }
+        } //EM4
             break;
-            */
+            
         case 5:{ //IF
             //printf("Unmasked IF \n");
             //if((blob!=0)||(timestamp!=0)) {
@@ -625,7 +634,8 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
             countIF++;
                 //}
         }// case 5
-            break;            
+            break;
+            
         }// end of switch
         
 
