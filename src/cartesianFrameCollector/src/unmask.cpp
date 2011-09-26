@@ -39,6 +39,8 @@ using namespace yarp::os;
 #define UNMASKRATETHREAD 1
 #define constInterval 100000;
 
+
+//TODO : remove inheretance of this class from ratethread. No reason to be ratethread
 unmask::unmask() : RateThread(UNMASKRATETHREAD){
     count = 0;
     verb       = false;
@@ -71,16 +73,7 @@ unmask::unmask() : RateThread(UNMASKRATETHREAD){
     camerashift = 15;    
     retinalSize = 128;
     
-    buffer         = new int[retinalSize*retinalSize];    
-    bufferRight    = new int[retinalSize*retinalSize];
-    timeBuffer     = new unsigned long[retinalSize*retinalSize];        
-    timeBufferRight= new unsigned long[retinalSize*retinalSize];
     
-    memset(buffer ,         0,retinalSize*retinalSize*sizeof(int));
-    memset(bufferRight,     0,retinalSize*retinalSize*sizeof(int));
-    memset(timeBuffer,      0,retinalSize*retinalSize*sizeof(unsigned long));
-    memset(timeBufferRight, 0,retinalSize*retinalSize*sizeof(unsigned long));
-
     /*fifoEvent=new int[maxPosEvent];
     memset(fifoEvent,0,maxPosEvent*sizeof(int));
     fifoEvent_temp=new int[maxPosEvent];
@@ -95,14 +88,23 @@ unmask::unmask() : RateThread(UNMASKRATETHREAD){
 }
 
 bool unmask::threadInit() {
+    buffer         = new int[retinalSize*retinalSize];    
+    bufferRight    = new int[retinalSize*retinalSize];
+    timeBuffer     = new unsigned long[retinalSize*retinalSize];        
+    timeBufferRight= new unsigned long[retinalSize*retinalSize];
+    
+    memset(buffer ,         0,retinalSize*retinalSize*sizeof(int));
+    memset(bufferRight,     0,retinalSize*retinalSize*sizeof(int));
+    memset(timeBuffer,      0,retinalSize*retinalSize*sizeof(unsigned long));
+    memset(timeBufferRight, 0,retinalSize*retinalSize*sizeof(unsigned long));
+
+    printf("initialisation of unmask object correctly ended \n");
+
     return true;
 }
 
 unmask::~unmask() {
-    delete[] buffer;
-    delete[] timeBuffer;
-    delete[] bufferRight;
-    delete[] timeBufferRight;
+
 }
 
 void unmask::cleanEventBuffer() {
@@ -252,7 +254,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
             //unmaskEvent((unsigned int) blob, cartX, cartY, polarity, camera);
             unmaskEvent( (unsigned int) blob, cartX, cartY, polarity, camera);
             timestamp =  (unsigned long) t;
-            //if(timestamp < 0)
+            //if((blob!=0) && (t!=0))
             //    printf(">>>>>>>>> %08X %08X \n",blob,t);
         }
         else {  //in dvsMode
@@ -322,10 +324,24 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
         i += 4; // increment the counter for DVS of 4bytes
         
         
-        // filling the image buffer after the unmasking                
-        cartY = retinalSize - cartY;   //corrected the output of the camera (flipped the image along y axis)
-        cartX = retinalSize - cartX;
-        //printf("cartX %d cartY %d \n", cartX, cartY);
+        // filling the image buffer after the unmasking  
+
+        //checking outoflimits in dimension
+        assert(cartX < retinalSize);
+        assert(cartX > 0 );
+        assert(cartY < retinalSize);
+        assert(cartY > 0);
+        if((cartX < 0)||(cartX > retinalSize)){
+            cartX = 0;
+        }
+        if((cartY < 0)||(cartY> retinalSize)){
+            cartY = 0;
+        }
+
+        //cartY = retinalSize - cartY;   //corrected the output of the camera (flipped the image along y axis)
+        //cartX = retinalSize - cartX;
+        //if(cartX!=0)
+        //    printf("retinalSize %d cartX %d cartY %d camera %d \n",retinalSize,cartX, cartY,camera);
         //printf("lastTimeStamp %08X \n", lasttimestamp);
         //camera is unmasked as left 0, right -1. It is converted in left 1, right 0
         camera = camera + 1;
@@ -359,6 +375,17 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
                     if(buffer[cartX + cartY * retinalSize] > 127) {
                         buffer[cartX + cartY * retinalSize] = 127;
                     }
+
+                    if(!((cartX>=7)&&(cartX<16)&&(cartY>=7)&&(cartY<16))){
+                        buffer[cartX + 1 + cartY * retinalSize]       = responseGradient;
+                        timeBuffer[cartX + 1  + cartY * retinalSize]  = timestamp;
+                        buffer[cartX + (cartY + 1)  * retinalSize]    = responseGradient;
+                        timeBuffer[cartX + (cartY + 1) * retinalSize] = timestamp;
+                        buffer[cartX + 1 + (cartY + 1) * retinalSize]       = responseGradient;
+                        timeBuffer[cartX + 1  + (cartY + 1) * retinalSize]  = timestamp;      
+                    }
+                    
+                    /*
                     if ((cartX<=2)||(cartX>4)&&((cartY<=2)||(cartY>4))&&(asvMode)) {
                       buffer[cartX + 1 + cartY * retinalSize]       = responseGradient;
                       timeBuffer[cartX + 1  + cartY * retinalSize]  = timestamp;
@@ -367,6 +394,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
                       buffer[cartX + 1 + (cartY + 1) * retinalSize]       = responseGradient;
                       timeBuffer[cartX + 1  + (cartY + 1) * retinalSize]  = timestamp;                      
                     }
+                    */
                 }
                 else if(polarity < 0) {
                     buffer[cartX + cartY * retinalSize] = -responseGradient;
@@ -376,6 +404,16 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
                         buffer[cartX + cartY * retinalSize] = -127;
                     }
                     
+                    if(!((cartX>=7)&&(cartX<16)&&(cartY>=7)&&(cartY<16))){
+                        buffer[cartX + 1 + cartY * retinalSize]       = -responseGradient;
+                        timeBuffer[cartX + 1  + cartY * retinalSize]  = timestamp;
+                        buffer[cartX + (cartY + 1)  * retinalSize]    = -responseGradient;
+                        timeBuffer[cartX + (cartY + 1) * retinalSize] = timestamp;
+                        buffer[cartX + 1 + (cartY + 1) * retinalSize]       = -responseGradient;
+                        timeBuffer[cartX + 1  + (cartY + 1) * retinalSize]  = timestamp;      
+                    }
+                    
+                    /*
                     if ((cartX<=2)||(cartX>4)&&((cartY<=2)||(cartY>4))&&(asvMode)) {
                       buffer[cartX + 1 + cartY * retinalSize]       = -responseGradient;
                       timeBuffer[cartX + 1  + cartY * retinalSize]  = timestamp;
@@ -384,6 +422,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
                       buffer[cartX + 1 + (cartY + 1) * retinalSize]       = -responseGradient;
                       timeBuffer[cartX + 1  + (cartY + 1) * retinalSize]  = timestamp;                      
                     }
+                    */
                 }
             }           
         }
@@ -442,29 +481,32 @@ void unmask::unmaskEvent(unsigned int evPU, short& x, short& y, short& pol, shor
     x =       (short) ((evPU & ymaskshort)      >> yshift);
     pol =    ((short) ((evPU & polmaskshort)    >> polshift)==0)?1:-1;	//+1 ON, -1 OFF
     camera = ((short) ( evPU & cameramaskshort) >> camerashift);	        //0 LEFT, 1 RIGHT
-    //printf("1evPU%x polmask%x polshift%x \n"); 
-    
+    //printf("1evPU%x polmask%x polshift%x \n");    
 }
 
 void unmask::unmaskEvent(unsigned int evPU, short& x, short& y, short& pol) {
     y =       (short) (retinalSize - 1) - (short)((evPU & xmaskshort) >> xshift);
     x =       (short) ((evPU & ymaskshort)      >> yshift);
     pol =    ((short) ((evPU & polmaskshort)    >> polshift)==0)?-1:1;	//+1 ON, -1 OFF
-    //printf("2evPU%x polmask%x polshift%x \n",evPU, polmask,polshift);     
-    
-    
+    //printf("2evPU%x polmask%x polshift%x \n",evPU, polmask,polshift);         
 }
 
+/* function used fro AEX extracting pixelcoordinates,  polarity and camera*/
 void unmask::unmaskEvent(long int evPU, short& x, short& y, short& pol, short& camera) {
-    x =       (short) (retinalSize - 1) - (short)((evPU & xmask) >> xshift);
-    y =       (short) ((evPU & ymask)      >> yshift2);
-    pol =    ((short) ((evPU & polmask)    >> polshift)==0)?-1:1;    //+1 ON, -1 OFF
+    //x =      (short) (retinalSize - 1) - (short)((evPU & xmask) >> xshift);
+    x =      (short) ((evPU & xmask)      >> xshift);
+    y =      (short) ((evPU & ymask)      >> yshift2);
+    pol =    (short) ((evPU & polmask)    >> polshift)==0?-1:1;
+                      //+1 ON, -1 OFF
     //printf("3evPU%x polmask%x polshift%x \n"); 
     camera = ((short) ( evPU & cameramask) >> camerashift);	         //0 LEFT, 1 RIGHT
 }
 
 void unmask::threadRelease() {
-    //no istruction in threadInit
+    delete[] buffer;
+    delete[] timeBuffer;
+    delete[] bufferRight;
+    delete[] timeBufferRight;
 }
 
 

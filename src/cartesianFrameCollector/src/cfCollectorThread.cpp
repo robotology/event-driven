@@ -1,5 +1,3 @@
-
-
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /* 
@@ -47,25 +45,26 @@ using namespace std;
 #define synch_time 1
 
 cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
-    synchronised = false;
-    greaterHalf = false;
-    firstRun = true;
-    count=0;
-    minCount = 0; //initialisation of the timestamp limits of the first frame
-    idle = false;
-    bufferCopy = (char*) malloc(CHUNKSIZE);
-    countStop = 0;
-    verb = false;
-    string i_fileName("events.log");
-    raw = fopen(i_fileName.c_str(), "wb");
-    lc = rc = 0;	
-    minCount = 0;
-    minCountRight = 0;
+  retinalSize = 128;  //default value before setting 
+  synchronised = false;
+  greaterHalf = false;
+  firstRun = true;
+  count=0;
+  minCount = 0; //initialisation of the timestamp limits of the first frame
+  idle = false;
+  bufferCopy = (char*) malloc(CHUNKSIZE);
+  countStop = 0;
+  verb = false;
+  string i_fileName("events.log");
+  raw = fopen(i_fileName.c_str(), "wb");
+  lc = rc = 0;	
+  minCount = 0;
+  minCountRight = 0;
 }
 
 cfCollectorThread::~cfCollectorThread() {
-    printf("freeing memory in collector");
-    delete bufferCopy;
+  printf("freeing memory in collector");
+  delete bufferCopy;
 }
 
 bool cfCollectorThread::threadInit() {
@@ -80,8 +79,9 @@ bool cfCollectorThread::threadInit() {
     
     cfConverter=new cFrameConverter();
     cfConverter->useCallback();
-    cfConverter->open(getName("/retina:i").c_str());
     cfConverter->setRetinalSize(retinalSize);
+    cfConverter->open(getName("/retina:i").c_str());
+    
     
     printf("\n opening retina\n");
     printf("starting the plotter \n");
@@ -94,6 +94,7 @@ bool cfCollectorThread::threadInit() {
     
     unmask_events = new unmask();
     unmask_events->setRetinalSize(retinalSize);
+    unmask_events->start();
 
     //minCount = cfConverter->getEldestTimeStamp();
     startTimer = Time::now();
@@ -102,11 +103,13 @@ bool cfCollectorThread::threadInit() {
     //microseconds = 0;
     //microsecondsPrev = 0;
     gettimeofday(&tvend, NULL);
-    //unmask_events.start();
+
     count = 0;
     microsecondsPrev = 0;
     minCount = 0;
     minCountRight= 0;
+
+    printf("Initialisation in collector thread correctly ended \n");
     return true;
 }
 
@@ -136,7 +139,8 @@ void cfCollectorThread::resize(int widthp, int heightp) {
 
 void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsigned long minCount,unsigned long maxCount, bool camera){
     assert(image!=0);
-    //image->resize(retinalSize,retinalSize);
+    //printf("retinalSize in getMonoImage %d \n", retinalSize);
+    image->resize(retinalSize,retinalSize);
     unsigned char* pImage = image->getRawImage();
     int imagePadding = image->getPadding();
     int imageRowSize = image->getRowSize();
@@ -202,6 +206,7 @@ void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsig
         }
         pImage+=imagePadding;
     }
+    //printf("end of the function get in mono \n");
     //unmask_events->setLastTimestamp(0);
 }
 
@@ -270,9 +275,9 @@ void cfCollectorThread::run() {
       maxCountRight = minCountRight + interval * INTERVFACTOR* (dim_window);
     }
 
+
     // extract a chunk/unmask the chunk
-    //printf("verb %d \n",verb);
-    
+    // printf("verb %d \n",verb);
     unmask_events->unmaskData(bufferCopy,CHUNKSIZE,verb);
     if(verb) {
       verb = false;
@@ -423,15 +428,17 @@ void cfCollectorThread::run() {
     }
     
     // ----------- preventer end    --------------------- //
+    getMonoImage(imageLeft,minCount,maxCount,1);
+    if(imageLeft != 0) {
+      //printf("copying image \n");
+      pThread->copyLeft(imageLeft);
+      //printf("end copying image \n");
+    }
 
-    //getMonoImage(imageRight,minCountRight,maxCountRight,0);
-    //getMonoImage(imageLeft,minCount,maxCount,1);
-    //if(imageLeft != 0) {
-    //  pThread->copyLeft(imageLeft);
-    //}
-    //if(imageRight != 0) {
-    //  pThread->copyRight(imageRight);
-    //}
+    getMonoImage(imageRight,minCountRight,maxCountRight,0);
+    if(imageRight != 0) {
+      pThread->copyRight(imageRight);
+    }
   }
 }
 

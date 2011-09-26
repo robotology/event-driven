@@ -42,7 +42,7 @@ private:
     //float lambda;                       // integration factor
     //int width, height;                  // dimension of the extended input image (extending)
     //int height_orig, width_orig;        // original dimension of the input and output images
-    int retinalSize;
+    int retinalSize;                     // dimension of the squared retina
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > leftPort;                 // port whre the output (left) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > rightPort;                // port whre the output (right) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > leftIntPort;              // port whre the output (left integral) is sent
@@ -107,9 +107,7 @@ public:
     * function that set the stereo mode for event synchronization
     * @param value boolean to be assigned
     */
-    void setStereo(bool value){ stereo = value;};
-
-    
+    void setStereo(bool value){ stereo = value;};    
     
     /**
     * function that returns the original root name and appends another string iff passed as parameter
