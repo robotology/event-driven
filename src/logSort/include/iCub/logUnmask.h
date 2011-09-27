@@ -289,7 +289,7 @@ public:
      */     
     void resetEM1() {countEM1 = 0; };
 
-        /**
+    /**
      * @brief function that resets the counter of EMs
      */     
     void resetEM2() {countEM2 = 0; };
@@ -299,10 +299,16 @@ public:
      */     
     void resetEM3() {countEM3 = 0; };
 
-        /**
+    /**
      * @brief function that resets the counter of EMs
      */     
     void resetEM4() {countEM4 = 0; };
+
+    /**
+     * @brief function that resets the counter of EMs
+     */     
+    void resetTOTEM() {memset(cartEM, 0, retinalSize * retinalSize * sizeof(unsigned long)); };
+
     
     /**
      * @brief function that returns the pointer to the buffer of INTEGRATE 'n' FIRE EVENT

@@ -196,12 +196,13 @@ logUnmask::~logUnmask() {
     delete[] timeBufferRight;
     delete[] logChip_LUT;
     printf("logUnmask : freeing memory allocated by event buffers \n");
-    delete bufferCD;
-    delete bufferIF;
-    delete bufferEM1;
-    delete bufferEM2;
-    delete bufferEM3;
-    delete bufferEM4;
+    delete[] bufferCD;
+    delete[] bufferIF;
+    delete[] bufferEM1;
+    delete[] bufferEM2;
+    delete[] bufferEM3;
+    delete[] bufferEM4;
+    delete[] cartEM;
 }
 
 bool logUnmask::threadInit() {
@@ -649,7 +650,7 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
                 //temp = &bufferEM[countEM];
                 //temp->address   = blob;
                 //temp->timestamp = timestamp;
-                printf("EM1 metax %d metay %d \n", metaX, metaY);
+                //printf("EM1 metax %d metay %d \n", metaX, metaY);
                 bufferEM1[countEM1].address   = (u32) newBlob;
                 bufferEM1[countEM1].timestamp = (u32) timestamp;
                 countEM1++;
@@ -659,7 +660,7 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         case 2:{ //EM2
                 //printf("Unmasked EM2 \n");
             if((blob!=0)||(timestamp!=0)) {
-                printf("EM2 metax %d metay %d \n", metaX, metaY);
+                //printf("EM2 metax %d metay %d \n", metaX, metaY);
                 //temp = &bufferEM[countEM];
                 //temp->address   = blob;
                 //temp->timestamp = timestamp;
@@ -672,7 +673,7 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         case 3:{ //EM3
             //printf("Unmasked EM3 \n");
             if((blob!=0)||(timestamp!=0)) {
-                printf("EM3 metax %d metay %d \n", metaX, metaY);
+                //printf("EM3 metax %d metay %d \n", metaX, metaY);
                 //temp = &bufferEM[countEM];
                 //temp->address   = blob;
                 //temp->timestamp = timestamp;
@@ -685,7 +686,7 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         case 4:{ //EM4
             //printf("Unmasked EM4 \n");
             if((blob!=0)||(timestamp!=0)) {
-                printf("EM4 metax %d metay %d \n", metaX, metaY);
+                //printf("EM4 metax %d metay %d \n", metaX, metaY);
                 //temp = &bufferEM[countEM];
                 //temp->address   = blob;
                 //temp->timestamp = timestamp;
