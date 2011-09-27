@@ -36,7 +36,7 @@ using namespace yarp::os;
 #define minKillThres 1000
 #define UNMASKRATETHREAD 1
 #define constInterval 100000;
-#define SIZE_OF_EVENT 128
+#define SIZE_OF_EVENT 512
 #define X_DIMENSION 144
 #define Y_DIMENSION 72
 
@@ -601,9 +601,9 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         int flipy = flipBits(y,7);
         y = flipy - 56;
         
-        if(evt % 100 == 0) {
-           printf("####### \n %08X %d %d \n",blob, x, y);
-        }
+        //if(evt % 100 == 0) {
+        //   printf("####### \n %08X %d %d \n",blob, x, y);
+        //}
         
         logUnmaskEvent((unsigned long)blob, cartX, cartY, polarity, type);
         
@@ -623,10 +623,10 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         }
         
         logMaskEvent(metaX,metaY,pol,newBlob);
-        if(evt %100 == 0 ) {
-            printf(" Error : %08X>%d,%d   \n",blob,cartX,cartY);
-            printf(" %d %d %d %d %d %08X %08X  \n",cartY, cartX, metaY, metaX ,type,newBlob, timestamp);
-        }
+        //if(evt %100 == 0 ) {
+        //    printf(" Error : %08X>%d,%d   \n",blob,cartX,cartY);
+        //    printf(" %d %d %d %d %d %08X %08X  \n",cartY, cartX, metaY, metaX ,type,newBlob, timestamp);
+        //}
         
         struct aer* temp;
         
@@ -785,7 +785,8 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         }
         */
     } // end of for every event
-    // serching the couples in EM1
+    printf(" - - - - - - - - - - - - - - \n");
+    // searching the couples in EM1
     for(int i = 0; i< countEM1 ; i++){
         unsigned long blob = bufferEM1[i].address;
         unsigned long timestampFound;
@@ -793,7 +794,7 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         timestampFound = look4opposite(bufferEM1,i,countEM1);
         long diff =  timestampFound - timestamp;
         long absdiff = std::abs(diff);
-        printf("look4opposite EM1: %08x %08x %d \n", timestamp,timestampFound, absdiff);
+        printf("look4opposite EM1 %d: %08x %08x > %08x %d \n",i,blob, timestamp,timestampFound, absdiff);
         if(absdiff != 0) {
             unsigned short x    = ((blob & 0x00FF) >> 1);
             unsigned short y    = ((blob & 0x7F00) >> 8);
@@ -805,6 +806,8 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
             }
         }
     }
+    printf(" - - - - - - - - - - - - - - \n");
+    // searching the couples in EM2
     for(int i = 0; i< countEM2 ; i++){
         unsigned long blob = bufferEM2[i].address;
         unsigned long timestampFound;
@@ -812,25 +815,29 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         timestampFound = look4opposite(bufferEM2,i,countEM2);
         long diff =  timestampFound - timestamp;
         long absdiff = std::abs(diff);
-        printf("look4opposite EM2: %08x %08x %d \n", timestamp,timestampFound, absdiff);
+        printf("look4opposite EM2 %d: %08x %08x > %08x %d \n",i,blob, timestamp,timestampFound, absdiff);
     }
+    printf(" - - - - - - - - - - - - - - \n");
+    // searching the couples in EM3
     for(int i = 0; i< countEM3 ; i++){
         unsigned long blob = bufferEM3[i].address;
         unsigned long timestampFound;
         unsigned long timestamp = bufferEM3[i].timestamp;
         timestampFound = look4opposite(bufferEM3,i,countEM1);
         long diff =  timestampFound - timestamp;
-        long absdiff = std::abs(diff);
-        printf("look4opposite EM3: %08x %08x %d \n", timestamp,timestampFound, absdiff);
+        long absdiff = std::abs(diff);        
+        printf("look4opposite EM3 %d: %08x %08x > %08x %d \n",i,blob, timestamp,timestampFound, absdiff);
     }
+    printf(" - - - - - - - - - - - - - - \n");
+    // searching the couples in EM4
     for(int i = 0; i< countEM4 ; i++){
         unsigned long blob = bufferEM4[i].address;
         unsigned long timestampFound;
         unsigned long timestamp = bufferEM4[i].timestamp;
         timestampFound = look4opposite(bufferEM4,i,countEM1);
         long diff =  timestampFound - timestamp;
-        long absdiff = std::abs(diff);
-        printf("look4opposite EM4: %08x %08x %d \n", timestamp,timestampFound, absdiff);
+        long absdiff = std::abs(diff);        
+        printf("look4opposite EM4 %d: %08x %08x > %08x %d \n",i,blob, timestamp,timestampFound, absdiff);
     }
 }
 

@@ -340,12 +340,13 @@ void logSortThread::run() {
 
         //printf("dimEM :  %d \n", dim);
         //sendBuffer(&portEM, pEM, dim);
-        if(count % 10 == 0){
+        if(count % 1000 == 0){
             printf("_________________ \n");
             unmask_events.resetEM1();
             unmask_events.resetEM2();
             unmask_events.resetEM3();
             unmask_events.resetEM4();
+            unmask_events.resetTOTEM();
         }
 
         unmask_events.getIF(&pIF, &dim);
