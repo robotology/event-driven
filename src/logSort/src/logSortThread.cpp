@@ -328,13 +328,11 @@ void logSortThread::run() {
         //printf("dimCD :  %d \n", dim);
         sendBuffer(&portCD, pCD, dim);
         unmask_events.resetCD();
-
-        /*
-        unmask_events.getEM(&pEM, &dim);
+        
+        //unmask_events.getEM(&pEM, &dim);
         //printf("dimEM :  %d \n", dim);
-        sendBuffer(&portEM, pEM, dim);
-        unmask_events.resetEM();
-        */
+        //sendBuffer(&portEM, pEM, dim);
+        //unmask_events.resetEM();
 
         unmask_events.getIF(&pIF, &dim);
         //printf("dimIF :  %d \n", dim);

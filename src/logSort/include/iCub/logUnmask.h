@@ -71,15 +71,22 @@ private:
     unsigned long* timeBufferRight;       // buffer contains the timestamp of the particular location (right)
     u32 monBufSize_b;                     // dimension of the event buffers
     int countCD;                          // dimension of the event buffers
-    int countEM;                          // dimension of the event buffers
+    int countEM1;                         // dimension of the event buffers
+    int countEM2;                         // dimension of the event buffers
+    int countEM3;                         // dimension of the event buffers
+    int countEM4;                         // dimension of the event buffers
     int countIF;                          // dimension of the event buffers
     struct aer* bufferCD;                 // buffer for change detector
-    struct aer* bufferEM;                 // buffer for EM
     struct aer* bufferIF;                 // buffer for integrate and fire
+    struct aer* bufferEM1;                // buffer for EM1
+    struct aer* bufferEM2;                // buffer for EM2
+    struct aer* bufferEM3;                // buffer for EM3
+    struct aer* bufferEM4;                // buffer for EM4
 
     //int* fifoEvent;
     //int* fifoEvent_temp;
     //int* fifoEvent_temp2;
+
     unsigned long timestamp;              // 16 bits variable to save the timestamp
     unsigned long timestamplong;          // variable 32 bits to save the timestamp
     unsigned long lasttimestamp;          // last timestamp acquired for the left camera
@@ -279,21 +286,38 @@ public:
     /**
      * @brief function that resets the counter of EMs
      */     
-    void resetEM() {countEM = 0; };
+    void resetEM1() {countEM1 = 0; };
+
+        /**
+     * @brief function that resets the counter of EMs
+     */     
+    void resetEM2() {countEM2 = 0; };
+
+        /**
+     * @brief function that resets the counter of EMs
+     */     
+    void resetEM3() {countEM3 = 0; };
+
+        /**
+     * @brief function that resets the counter of EMs
+     */     
+    void resetEM4() {countEM4 = 0; };
     
     /**
      * @brief function that returns the pointer to the buffer of INTEGRATE 'n' FIRE EVENT
      * @param pointerIF char* pointer to the beginning of the buffer
      * @param dimIF number of the events counted in the buffer
-     */     
+     */   
     void getIF(aer* pointerIF, int* dimIF);
 
-    /**
-     * @brief function that returns the pointer to the buffer of EMs
-     * @param pointerEM char* pointer to the beginning of the buffer
-     * @param dimIF number of the events counted in the buffer
-     */     
-    void getEM(aer* pointerIF, int* dimEM);
+    /** 
+     * @brief function that extract the timestamp value of the opposite blob
+     * @param buffer buffer in which the search is carried out
+     * @param position of the original blob. Search is carried out after
+     * @param number of event saved in the buffer
+     */
+    unsigned long look4opposite(aer* buffer,int initPos, int countTOT);       
+    
 
     /**
      * function that set to zero the vector of timestamp of positions

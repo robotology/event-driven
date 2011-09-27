@@ -72,11 +72,15 @@ inline int flipBits( int blob, int bits) {
 
 logUnmask::logUnmask() : RateThread(UNMASKRATETHREAD){
     count = 0;
-    maxx = 0;
-    maxy = 0;
-    countCD = 0;
-    countEM = 0;
-    countIF = 0;
+    maxx  = 0;
+    maxy  = 0;
+    countCD  = 0;
+    countEM1 = 0;
+    countEM2 = 0;
+    countEM3 = 0;
+    countEM4 = 0;
+    countIF  = 0;
+
     verb = false;
     numKilledEvents = 0;
     lasttimestamp = 0;
@@ -125,12 +129,36 @@ logUnmask::logUnmask() : RateThread(UNMASKRATETHREAD){
     else {
         printf("bufferCD successfully created \n");
     }
-    bufferEM = (aer *)  malloc(monBufSize_b);
-    if ( bufferEM == NULL ) {
+    
+    bufferEM1 = (aer *)  malloc(monBufSize_b);
+    if ( bufferEM1 == NULL ) {
         printf("pmon malloc failed \n");
     }
     else {
-        printf("bufferEM successfully created \n");
+        printf("bufferEM1 successfully created \n");
+    }
+
+    bufferEM2 = (aer *)  malloc(monBufSize_b);
+    if ( bufferEM2 == NULL ) {
+        printf("pmon malloc failed \n");
+    }
+    else {
+        printf("bufferEM2 successfully created \n");
+    }
+    bufferEM3 = (aer *)  malloc(monBufSize_b);
+    if ( bufferEM3 == NULL ) {
+        printf("pmon malloc failed \n");
+    }
+    else {
+        printf("bufferEM3 successfully created \n");
+    }
+    
+    bufferEM4 = (aer *)  malloc(monBufSize_b);
+    if ( bufferEM4 == NULL ) {
+        printf("pmon malloc failed \n");
+    }
+    else {
+        printf("bufferEM4 successfully created \n");
     }
 
     bufferIF = (aer *)  malloc(monBufSize_b);
@@ -166,7 +194,10 @@ logUnmask::~logUnmask() {
     printf("logUnmask : freeing memory allocated by event buffers \n");
     delete bufferCD;
     delete bufferIF;
-    delete bufferEM;
+    delete bufferEM1;
+    delete bufferEM2;
+    delete bufferEM3;
+    delete bufferEM4;
 }
 
 bool logUnmask::threadInit() {
@@ -429,8 +460,8 @@ void logUnmask::getIF(aer** pointerIF, int* dimIF) {
 
 void logUnmask::getEM(aer** pointerEM, int* dimEM) {
     //printf("counted EM %d \n", countEM);
-    *pointerEM = bufferEM;
-    *dimEM = countEM;
+    //*pointerEM = bufferEM;
+    //*dimEM = countEM;
 }
 
 unsigned long logUnmask::getLastTimestamp() {
@@ -580,9 +611,10 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
                 //temp = &bufferEM[countEM];
                 //temp->address   = blob;
                 //temp->timestamp = timestamp;
-                bufferEM[countEM].address   = (u32) newBlob;
-                bufferEM[countEM].timestamp = (u32) timestamp;
-                countEM++;
+                
+                bufferEM1[countEM1].address   = (u32) newBlob;
+                bufferEM1[countEM1].timestamp = (u32) timestamp;
+                countEM1++;
             }
         } //EM1
             break;
@@ -592,9 +624,9 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
                 //temp = &bufferEM[countEM];
                 //temp->address   = blob;
                 //temp->timestamp = timestamp;
-                bufferEM[countEM].address   = (u32) newBlob;
-                bufferEM[countEM].timestamp = (u32) timestamp;
-                countEM++;
+                bufferEM2[countEM2].address   = (u32) newBlob;
+                bufferEM2[countEM2].timestamp = (u32) timestamp;
+                countEM2++;
             }
         } // EM2
             break;
@@ -604,9 +636,9 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
                 //temp = &bufferEM[countEM];
                 //temp->address   = blob;
                 //temp->timestamp = timestamp;
-                bufferEM[countEM].address   = (u32) newBlob;
-                bufferEM[countEM].timestamp = (u32) timestamp;
-                countEM++;
+                bufferEM3[countEM3].address   = (u32) newBlob;
+                bufferEM3[countEM3].timestamp = (u32) timestamp;
+                countEM3++;
             }
         } //EM3
             break;
@@ -616,9 +648,9 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
                 //temp = &bufferEM[countEM];
                 //temp->address   = blob;
                 //temp->timestamp = timestamp;
-                bufferEM[countEM].address   = (u32) newBlob;
-                bufferEM[countEM].timestamp = (u32) timestamp;
-                countEM++;
+                bufferEM4[countEM4].address   = (u32) newBlob;
+                bufferEM4[countEM4].timestamp = (u32) timestamp;
+                countEM4++;
             }
         } //EM4
             break;
@@ -637,9 +669,17 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
             break;
             
         }// end of switch
-        
 
-        
+
+        // serching the couples in EM1
+        for(int i = 0; i< countEM1 ; i++){
+            unsigned long blob;
+            unsigned long timestampFound;
+            unsigned long timestamp;
+            timestampFound = look4opposite(bufferEM1,i,countEM1);
+            printf("%08x %08x \n", blob,timestampFound);
+            //unsigned long diff = abs(timestampFound - timestamp);
+        }
      
         /*
         //camera: LEFT 0, RIGHT 1
@@ -715,6 +755,29 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
     }
 }
 
+unsigned long logUnmask::look4opposite(aer* buffer,int initPos, int countTOT){
+    unsigned long targetBlob;
+    unsigned long blob = buffer[initPos].address;
+    if (blob % 2 == 0) {
+        targetBlob = blob + 1;
+    }
+    else {
+        targetBlob = blob - 1;
+    }
+    bool found = false;
+    int i;
+    for (i = initPos + 1; (i< countTOT) && (!found); i++) {
+        if(buffer[i].address == targetBlob) {
+            found = true;
+        }        
+    }
+    if(found) {
+        return buffer[i].address;
+    }
+    else {
+        return buffer[initPos].address;
+    }
+}
 
 void logUnmask::logUnmaskEvent(unsigned int evPU, short& metax, short& metay, short& pol, short& type) {
     int y = (retinalSize-1) - ((evPU & xmask) >> xshift);
@@ -768,16 +831,6 @@ void logUnmask::logUnmaskEvent(unsigned long evPU, short& metax, short& metay, s
     }
     // 2.extractiong features 
     int position =  y * X_DIMENSION + x;
- 
-    if((x == 50)&&(y == 22)){
-        printf("Error %d %d \n",x,y );
-    }
-    if((x == 50)&&(y == 23)){
-        printf("Error %d %d \n",x,y );
-    }
-    if((x == 50)&&(y == 24)){
-        printf("Error %d %d \n",x,y );
-    }
     
     //feature* pFeature = logChip_LUT;
     //pFeature += position;
