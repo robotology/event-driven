@@ -104,15 +104,19 @@ logUnmask::logUnmask() : RateThread(UNMASKRATETHREAD){
     retinalSize = 128;
     temp1=true;
 
-    buffer=new int[retinalSize*retinalSize];
-    memset(buffer,0,retinalSize*retinalSize*sizeof(int));
-    timeBuffer=new unsigned long[retinalSize*retinalSize];
-    memset(timeBuffer,0,retinalSize*retinalSize*sizeof(unsigned long));
-    bufferRight=new int[retinalSize*retinalSize];
-    memset(bufferRight,0,retinalSize*retinalSize*sizeof(int));
-    timeBufferRight=new unsigned long[retinalSize*retinalSize];
-    memset(timeBufferRight,0,retinalSize*retinalSize*sizeof(unsigned long));
+    buffer          = new int[retinalSize * retinalSize];      
+    bufferRight     = new int[retinalSize * retinalSize];    
+    timeBufferRight = new unsigned long[retinalSize * retinalSize];
+    timeBuffer      = new unsigned long[retinalSize * retinalSize];    
+    cartEM          = new unsigned long[retinalSize * retinalSize];
+
+    memset(buffer,         0, retinalSize * retinalSize * sizeof(int));
+    memset(timeBuffer,     0, retinalSize * retinalSize * sizeof(unsigned long));
+    memset(bufferRight,    0, retinalSize * retinalSize * sizeof(int));
+    memset(timeBufferRight,0, retinalSize * retinalSize * sizeof(unsigned long));
+    memset(cartEM,         0, retinalSize * retinalSize * sizeof(unsigned long));
     
+
     /*fifoEvent=new int[maxPosEvent];
     memset(fifoEvent,0,maxPosEvent*sizeof(int));
     fifoEvent_temp=new int[maxPosEvent];
@@ -124,7 +128,7 @@ logUnmask::logUnmask() : RateThread(UNMASKRATETHREAD){
     monBufSize_b = SIZE_OF_EVENT * sizeof(struct aer);
     bufferCD = (aer *)  malloc(monBufSize_b);
     if ( bufferCD == NULL ) {
-        printf("pmon malloc failed \n");
+        printf("bufferCD malloc failed \n");
     }
     else {
         printf("bufferCD successfully created \n");
@@ -132,7 +136,7 @@ logUnmask::logUnmask() : RateThread(UNMASKRATETHREAD){
     
     bufferEM1 = (aer *)  malloc(monBufSize_b);
     if ( bufferEM1 == NULL ) {
-        printf("pmon malloc failed \n");
+        printf("bufferEM1 malloc failed \n");
     }
     else {
         printf("bufferEM1 successfully created \n");
@@ -140,14 +144,14 @@ logUnmask::logUnmask() : RateThread(UNMASKRATETHREAD){
 
     bufferEM2 = (aer *)  malloc(monBufSize_b);
     if ( bufferEM2 == NULL ) {
-        printf("pmon malloc failed \n");
+        printf("bufferEM2 malloc failed \n");
     }
     else {
         printf("bufferEM2 successfully created \n");
     }
     bufferEM3 = (aer *)  malloc(monBufSize_b);
     if ( bufferEM3 == NULL ) {
-        printf("pmon malloc failed \n");
+        printf("bufferEM3 malloc failed \n");
     }
     else {
         printf("bufferEM3 successfully created \n");
@@ -163,7 +167,7 @@ logUnmask::logUnmask() : RateThread(UNMASKRATETHREAD){
 
     bufferIF = (aer *)  malloc(monBufSize_b);
     if ( bufferIF == NULL ) {
-        printf("pmon malloc failed \n");
+        printf("bufferIF malloc failed \n");
     }
     else {
         printf("bufferIF successfully created \n");
@@ -250,10 +254,19 @@ bool logUnmask::threadInit() {
     */
 
     int type, metax, metay, pol;  // feature listed in the same order as in the LUT
+    bool fovea;
 
     for (int x = 0; x < X_DIMENSION; x++ ) {
         for (int y = 0; y < Y_DIMENSION; y++) {
-
+            
+            if((y >= 24) && (y < 48) && (x >= 48) && (x < 96)) {
+                fovea = true;
+            }
+            else {
+                fovea = false;
+            }
+            
+            // ------------  CD --------------------------------
             if( ((x - 2) % 6 == 0) || ((x - 3) % 6 == 0)){
             // CD
                 type  = 0;
@@ -274,34 +287,58 @@ bool logUnmask::threadInit() {
 
             } // CD            
             
-            else if (((x - 6) % 12 == 0) && ( 
-                                             ((y < 24) || (y >= 48))
-                                             &&
-                                             ((x < 48) || (x >= 96))
+            // ------------------  IF   ---------------------------
+            // if is only present in perifery
+            /*if(!fovea) {
+                if (((x - 6) % 12 == 0) && ( 
+                                            ((y < 24) || (y >= 48))
+                                            &&
+                                            ((x < 48) || (x >= 96))
                                              )
-                     ){
-                // IFON
-                type  = 5;
-                metax = (int) (x - 6) / 6;
-                metay = (int)  y / 3 ;
-                pol = 1;                                  
-            } // IFON
-            
-            else if (((x - 7) % 12 == 0) && ( 
-                                             ((y < 24) || (y >= 48))
-                                             &&
-                                             ((x < 48) || (x >= 96))
+                    ){
+                    // IFON
+                    type  = 5;
+                    metax = (int) (x - 6) / 6;
+                    metay = (int)  y / 3 ;
+                    pol = 1;                                  
+                } // IFON
+                
+                if (((x - 7) % 12 == 0) && ( 
+                                            ((y < 24) || (y >= 48))
+                                            &&
+                                            ((x < 48) || (x >= 96))
                                              )
-                     ){
-                // IFOFF
-                type  = 5;
-                metax = (int) (x - 7) / 6;
-                metay = (int) (y / 3) - 1;
-                pol = 0;                                  
-            } // IFOFF      
+                    ){
+                    // IFOFF
+                    type  = 5;
+                    metax = (int) (x - 7) / 6;
+                    metay = (int) (y / 3) - 1;
+                    pol = 0;                                  
+                } // IFOFF  
+            }
+            */
+
+            if(!fovea) {
+                if ((x - 6) % 12 == 0){
+                    // IFON
+                    type  = 5;
+                    metax = (int) (x - 6) / 6;
+                    metay = (int)  y / 3 ;
+                    pol = 1;                                  
+                } // IFON
+                
+                if ((x - 7) % 12 == 0){
+                    // IFOFF
+                    type  = 5;
+                    metax = (int) (x - 7) / 6;
+                    metay = (int) (y / 3) - 1;
+                    pol = 0;                                  
+                } // IFOFF  
+            }
             
+            // ----------------   EM    --------------------------            
             // EM 
-            else if((y >= 24) && (y < 48) && (x >= 48) && (x < 96)) {
+            if(fovea) {
                 //fovea
                 if(((x - 48 + 3 ) / 6) % 2!= 0)  {
                     //inner columns
@@ -356,38 +393,38 @@ bool logUnmask::threadInit() {
             }// fovea                
             else {
                 //periphery
-                if ( ( x       % 6 == 0 ) && (  y % 3      == 0) ) {
+                if ( ( x            % 12 == 0 ) && (  y % 6      == 0) ) {
                     type = 1;
                     metax =  x / 6;
                     metay =  y / 3;
                     pol = 1;
                 }
-                else if ( ((x - 1 ) % 6 == 0 ) && (  y % 3      == 0) ) {
+                else if ( ((x - 1 ) % 12 == 0 ) && (  y % 6      == 0) ) {
                     type = 1;
                     metax =  x / 6;
                     metay =  y / 3;
                     pol = 0;
                 }
-                else if ( ((x - 10) % 6 == 0 ) && (  y % 3      == 0) ) {
+                else if ( ((x - 10) % 12 == 0 ) && (  y % 6      == 0) ) {
                     type = 2 ;
                     metax = (x - 10) / 6;
                     metay =  y / 3;
                     pol = 1;
                     
                 }
-                else if ( ((x - 11) % 6 == 0 ) && (  y % 3      == 0) ) {
+                else if ( ((x - 11) % 12 == 0 ) &&  (  y % 6      == 0) ) {
                     type = 2 ;
                     metax = (x - 10) / 6;
                     metay =  y / 3;
                     pol = 0;
                 }
-                else if ( ( x       % 6 == 0 ) && ( (y - 5) % 3 == 0) ) { 
+                else if ( ( x       % 12 == 0 ) &&  ( (y - 5) % 6 == 0) ) { 
                     type= 3;
                     metax =  x / 6;
                     metay = (y - 5)  / 3;
                     pol = 1;
                 }
-                else if ( ((x - 1)       % 6 == 0 ) && ( (y - 5) % 3 == 0) ) { 
+                else if ( ((x - 1)  % 12 == 0 ) && ( (y - 5) % 6 == 0) ) { 
                     type= 3;
                     metax =  x / 6;
                     metay = (y - 5)  / 3;
@@ -460,8 +497,8 @@ void logUnmask::getIF(aer** pointerIF, int* dimIF) {
 
 void logUnmask::getEM(aer** pointerEM, int* dimEM) {
     //printf("counted EM %d \n", countEM);
-    //*pointerEM = bufferEM;
-    //*dimEM = countEM;
+    *pointerEM = bufferEM1;
+    *dimEM = countEM1;
 }
 
 unsigned long logUnmask::getLastTimestamp() {
@@ -563,9 +600,9 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         int flipy = flipBits(y,7);
         y = flipy - 56;
         
-        //if(evt % 100 == 0) {
-        //   printf("####### \n %08X %d %d \n",blob, x, y);
-        //}
+        if(evt % 100 == 0) {
+           printf("####### \n %08X %d %d \n",blob, x, y);
+        }
         
         logUnmaskEvent((unsigned long)blob, cartX, cartY, polarity, type);
         
@@ -585,10 +622,10 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         }
         
         logMaskEvent(metaX,metaY,pol,newBlob);
-        //if(newBlob > 0x18FF ) {
-        //    printf(" Error : %08X>%d,%d   \n",blob,cartX,cartY);
-        //    printf(" %d %d %d %d %08X %08X  \n",cartY, cartX, metaY, metaX ,newBlob, timestamp);
-        //}
+        if(evt %100 == 0 ) {
+            printf(" Error : %08X>%d,%d   \n",blob,cartX,cartY);
+            printf(" %d %d %d %d %d %08X %08X  \n",cartY, cartX, metaY, metaX ,type,newBlob, timestamp);
+        }
         
         struct aer* temp;
         
@@ -597,6 +634,7 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
             //if((newBlob!=0)||(timestamp!=0)) {
                 //temp = &bufferCD[countCD];                    
                 //printf("Unmasked CD  %x \n", bufferCD);
+            //printf("CD \n");
             bufferCD[countCD].address   = (u32) newBlob;
             bufferCD[countCD].timestamp = (u32) timestamp;
             //printf("%08X %08X  \n",bufferCD[count].address,bufferCD[count].timestamp);
@@ -611,7 +649,7 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
                 //temp = &bufferEM[countEM];
                 //temp->address   = blob;
                 //temp->timestamp = timestamp;
-                
+                printf("EM1 metax %d metay %d \n", metaX, metaY);
                 bufferEM1[countEM1].address   = (u32) newBlob;
                 bufferEM1[countEM1].timestamp = (u32) timestamp;
                 countEM1++;
@@ -621,6 +659,7 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         case 2:{ //EM2
                 //printf("Unmasked EM2 \n");
             if((blob!=0)||(timestamp!=0)) {
+                printf("EM2 metax %d metay %d \n", metaX, metaY);
                 //temp = &bufferEM[countEM];
                 //temp->address   = blob;
                 //temp->timestamp = timestamp;
@@ -632,7 +671,8 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
             break;
         case 3:{ //EM3
             //printf("Unmasked EM3 \n");
-            if((blob!=0)||(timestamp!=0)) { 
+            if((blob!=0)||(timestamp!=0)) {
+                printf("EM3 metax %d metay %d \n", metaX, metaY);
                 //temp = &bufferEM[countEM];
                 //temp->address   = blob;
                 //temp->timestamp = timestamp;
@@ -645,6 +685,7 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         case 4:{ //EM4
             //printf("Unmasked EM4 \n");
             if((blob!=0)||(timestamp!=0)) {
+                printf("EM4 metax %d metay %d \n", metaX, metaY);
                 //temp = &bufferEM[countEM];
                 //temp->address   = blob;
                 //temp->timestamp = timestamp;
@@ -670,16 +711,6 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
             
         }// end of switch
 
-
-        // serching the couples in EM1
-        for(int i = 0; i< countEM1 ; i++){
-            unsigned long blob;
-            unsigned long timestampFound;
-            unsigned long timestamp;
-            timestampFound = look4opposite(bufferEM1,i,countEM1);
-            printf("%08x %08x \n", blob,timestampFound);
-            //unsigned long diff = abs(timestampFound - timestamp);
-        }
      
         /*
         //camera: LEFT 0, RIGHT 1
@@ -746,12 +777,59 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
                     timeBufferRight[cartX + cartY * retinalSize] = timestamp;
                     
                     if (bufferRight[cartX + cartY * retinalSize] < -127) {
--                        bufferRight[cartX + cartY * retinalSize] = -127;
+                        bufferRight[cartX + cartY * retinalSize] = -127;
                     }
                 }
             }
         }
         */
+    } // end of for every event
+    // serching the couples in EM1
+    for(int i = 0; i< countEM1 ; i++){
+        unsigned long blob = bufferEM1[i].address;
+        unsigned long timestampFound;
+        unsigned long timestamp = bufferEM1[i].timestamp;
+        timestampFound = look4opposite(bufferEM1,i,countEM1);
+        long diff =  timestampFound - timestamp;
+        long absdiff = std::abs(diff);
+        printf("look4opposite EM1: %08x %08x %d \n", timestamp,timestampFound, absdiff);
+        if(absdiff != 0) {
+            unsigned short x    = ((blob & 0x00FF) >> 1);
+            unsigned short y    = ((blob & 0x7F00) >> 8);
+            if(cartEM[x + y * retinalSize]= 0) {
+                cartEM[x + y * retinalSize] = absdiff;
+            }
+            else {
+                cartEM[x + y * retinalSize] = (cartEM[x + y * retinalSize] + absdiff)/2; 
+            }
+        }
+    }
+    for(int i = 0; i< countEM2 ; i++){
+        unsigned long blob = bufferEM2[i].address;
+        unsigned long timestampFound;
+        unsigned long timestamp = bufferEM2[i].timestamp;
+        timestampFound = look4opposite(bufferEM2,i,countEM2);
+        long diff =  timestampFound - timestamp;
+        long absdiff = std::abs(diff);
+        printf("look4opposite EM2: %08x %08x %d \n", timestamp,timestampFound, absdiff);
+    }
+    for(int i = 0; i< countEM3 ; i++){
+        unsigned long blob = bufferEM3[i].address;
+        unsigned long timestampFound;
+        unsigned long timestamp = bufferEM3[i].timestamp;
+        timestampFound = look4opposite(bufferEM3,i,countEM1);
+        long diff =  timestampFound - timestamp;
+        long absdiff = std::abs(diff);
+        printf("look4opposite EM3: %08x %08x %d \n", timestamp,timestampFound, absdiff);
+    }
+    for(int i = 0; i< countEM4 ; i++){
+        unsigned long blob = bufferEM4[i].address;
+        unsigned long timestampFound;
+        unsigned long timestamp = bufferEM4[i].timestamp;
+        timestampFound = look4opposite(bufferEM4,i,countEM1);
+        long diff =  timestampFound - timestamp;
+        long absdiff = std::abs(diff);
+        printf("look4opposite EM4: %08x %08x %d \n", timestamp,timestampFound, absdiff);
     }
 }
 
@@ -772,10 +850,10 @@ unsigned long logUnmask::look4opposite(aer* buffer,int initPos, int countTOT){
         }        
     }
     if(found) {
-        return buffer[i].address;
+        return buffer[i].timestamp;
     }
     else {
-        return buffer[initPos].address;
+        return buffer[initPos].timestamp;
     }
 }
 
@@ -785,14 +863,6 @@ void logUnmask::logUnmaskEvent(unsigned int evPU, short& metax, short& metay, sh
     int x = ((evPU & ymask) >> yshift);
     // 2.extractiong features 
     int position =  y * X_DIMENSION + x;
-    
-    if((x == 50)&&(y = 22)){
-        printf("Error %d %d \n",x,y );
-    }
-
-        if((x == 51)&&(y = 22)){
-        printf("Error %d %d \n",x,y );
-    }
 
     //feature* pFeature = logChip_LUT;
     //pFeature += position;

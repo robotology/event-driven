@@ -327,12 +327,22 @@ void logSortThread::run() {
         unmask_events.getCD(&pCD, &dim);
         //printf("dimCD :  %d \n", dim);
         sendBuffer(&portCD, pCD, dim);
-        unmask_events.resetCD();
+        //unmask_events.resetCD();
         
         //unmask_events.getEM(&pEM, &dim);
+        //for (int i = 0; i < dim; i++) {
+        //    u32 blob      = pEM[i].address;
+        //    u32 timestamp = pEM[i].timestamp;
+        //    fprintf(fout,"%08x %08x \n",blob,timestamp);
+            //copyEvent++;
+        //}                                       
+        //unmask_events.resetEM1();
+
         //printf("dimEM :  %d \n", dim);
         //sendBuffer(&portEM, pEM, dim);
-        //unmask_events.resetEM();
+        if(count % 25 == 0){
+            unmask_events.resetEM1();
+        }
 
         unmask_events.getIF(&pIF, &dim);
         //printf("dimIF :  %d \n", dim);
@@ -346,7 +356,7 @@ void logSortThread::sendBuffer(BufferedPort<eventBuffer>* port, aer* buffer, int
     int szSent = sz * 8; // dimension of the event times the bytes per event
     //aer* copyEvent = buffer;
     
- 
+    
     
     
     //unsigned char* copyBuffer = (unsigned char*) buffer;

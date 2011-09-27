@@ -82,6 +82,7 @@ private:
     struct aer* bufferEM2;                // buffer for EM2
     struct aer* bufferEM3;                // buffer for EM3
     struct aer* bufferEM4;                // buffer for EM4
+    unsigned long* cartEM;                 // mean value across EMs in cartesian space
 
     //int* fifoEvent;
     //int* fifoEvent_temp;
@@ -98,16 +99,16 @@ private:
     int wrapAdd;
     unsigned short xmask;              // 16 bits mask for unmasking of the address
     unsigned short ymask;              // 16 bits mask for unmasking of the address
-    long int xmasklong;              // 32 bits mask for unmasking of the event
-    long int ymasklong;              // 32 bits mask for unmasking of the event
+    long int xmasklong;                // 32 bits mask for unmasking of the event
+    long int ymasklong;                // 32 bits mask for unmasking of the event
     short yshift;                      // shift of 8 bits for getting the y in 16 bits address
     short xshift;                      // shift of 1 bit to get the x in 16 bit (polarity)
     short yshift2;                     // shift of 16 bits for getting the y in 32 bits address
     short polshift;                    // shift necessary to cast the unmasked value to short
-    int polmask;                     // mask necessary to extract the polarity
+    int polmask;                       // mask necessary to extract the polarity
     short camerashift;                 // shift for cast back into short the camera reference 
-    int cameramask;                  // mask necessary to extract which camera has produced the output
-    int retinalSize;                 // size of the retina
+    int cameramask;                    // mask necessary to extract which camera has produced the output
+    int retinalSize;                   // size of the retina
     int minValue;
     int maxValue;
     int countEvent;                     //counter of the number of events saved in the buffer1
