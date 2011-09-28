@@ -40,7 +40,7 @@
 #include <stdint.h>
 #include <fstream>
 
-#include <iCub/sending_buffer.h>
+#include <iCub/eventBuffer.h>
 
 #define u8  uint8_t
 #define u16 uint16_t
@@ -533,7 +533,7 @@ public:
 
 
 private:
-    yarp::os::BufferedPort<sendingBuffer> port;              //port sending events
+    yarp::os::BufferedPort<eventBuffer> port;              //port sending events
     yarp::os::BufferedPort<yarp::os::Bottle> portDimension;  //port sending dimension of packets   
     int r;                                                   //dimension of the received buffer of event for display
     FILE* raw;
@@ -556,6 +556,8 @@ private:
 
     int err;
     unsigned int timestamp;
+    unsigned long previous_timestamp;
+    unsigned long previous_blob;
     short cartX, cartY, polarity;
 
     unsigned int xmask;                     // mask for extracting the x position

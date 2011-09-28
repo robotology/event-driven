@@ -8,12 +8,13 @@ PROJECT(${KEYWORD})
 
 message("ICUB_INCLUDE_DIRS ${ICUB_INCLUDE_DIRS}")
 message("INTERNAL_INCLUDE_DIRS ${INTERNAL_INCLUDE_DIRS}")
-
+set(ICUB_CONTRIB_DIRS $ENV{ICUB_DIR}/include)
 INCLUDE_DIRECTORIES(
     ${PROJECT_SOURCE_DIR}/include
     #${ICUB_INCLUDE_DIRS}
     ${YARP_INCLUDE_DIRS}
     ${ICUB_DIR}/include
+	${ICUB_CONTRIB_DIR}
 )
 
 # Search for source code.
@@ -30,7 +31,7 @@ IF (folder_source)
     )
     TARGET_LINK_LIBRARIES(${KEYWORD} 
       ${YARP_LIBRARIES} 
-      #eMorphLib                      
+      eMorphLib                      
     )	
     INSTALL_TARGETS(/bin ${KEYWORD})
 ELSE (folder_source)

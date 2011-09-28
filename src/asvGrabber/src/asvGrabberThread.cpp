@@ -606,12 +606,12 @@ void  asvGrabberThread::run() {
       //printf("ERROR: read %d bytes from the AEX!!!\n", r);
     }
     monBufEvents = r / sizeofstructaer;
-    if(timediff >= 3.0) {
-        printf("+ %d \n",r);
+    if((timediff >= 3.0)&(timediff<=3.1)) {
+        printf("Starting to SAVE \n");
     }
-    else {
-        printf("  %d \n",r);
-    }
+
+    //        printf("  %d \n",r);
+
 
     int k = 0;
     int k2 = 0;
@@ -619,22 +619,28 @@ void  asvGrabberThread::run() {
     u32 a, t;
     int alow, ahigh;
     int tlow, thigh;
+    unsigned long diff;
 
     for (int i = 0; i < monBufEvents; i++) {
         // double buffer!!
         a = pmon[i].address;
-        if((i==0)&&(a>0xFFFF)) {
-            printf("WARNING \n");
-            printf("WARNING \n");
-            printf("WARNING \n");
-            printf("WARNING \n");
-            printf("WARNING \n");
-            printf("WARNING \n");
-        }
+        //if((a>0xFFFF) && (timediff > 3.0)) {
+            //fprintf(fout,"WARNING \n");
+        //    a = 0;
+        //    char* tmpBuf = (char*) pmon;
+        //    tmpBuf--;
+        //    pmon = (aer*) tmpBuf;
+        //}
         //t = pmon[i].timestamp * 0.128;   // this instruction is valid only for AEX not the iHead
         t = pmon[i].timestamp;
-        //if(a<14336)
-        //    printf("address:%08X ; timestamp:%08X \n", a, t);
+        diff = t - previous_timestamp;
+        if((diff > 100000000)&&(a<0x0000FFFF)) {
+            printf("error :%08X ; timestamp:%08X \n", previous_timestamp, t);
+        }
+        if(a<0x0000FFFF){
+            previous_timestamp = t;
+        }
+        
         //alow = a&0xFFFF0000;
         //tlow = t&0xFFFF0000;
         //ahigh = (a&0xFFFF0000);
@@ -652,17 +658,18 @@ void  asvGrabberThread::run() {
         //if(i == 1000)
         //    printf("address:%d ; timestamp:%d \n", a, t);
     }
+
     
     // check in the print out of the packet
-    if ((save) && (timediff > 3.0)) {
-        fprintf(fout,"||||||||||||||||||||||||||||| \n"); 
-    }
+    //if ((save) && (timediff > 3.0)) {
+    //fprintf(fout,"||||||||||||||||||||||||||||| \n"); 
+    //}
 
     sz = monBufEvents*sizeof(struct aer); // sz is size in bytes
 
     if (port.getOutputCount()) {
-        sendingBuffer data2send(buffer, sz);    
-        sendingBuffer& tmp = port.prepare();
+        eventBuffer data2send(buffer, sz);    
+        eventBuffer& tmp = port.prepare();
         tmp = data2send;
         port.write();
     }   
