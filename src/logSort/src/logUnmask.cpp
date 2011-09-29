@@ -654,7 +654,7 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
             countCD++;                
         }
             break;
-            /*   
+               
         case 1:{ //EM1
             //printf("Unmasked EM1 \n");
             if((blob!=0)||(timestamp!=0)) {
@@ -707,8 +707,8 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
             }
         } //EM4
         break;
-            */
-            /*    
+            
+                
         case 5:{ //IF
             //printf("Unmasked IF \n");
             //if((blob!=0)||(timestamp!=0)) {
@@ -720,84 +720,10 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
             countIF++;
                 //}
         }// case 5
-            break;
-            */
-            
-        }// end of switch
-
-     
-        /*
-        //camera: LEFT 0, RIGHT 1
-        if(camera) {            
-            if((cartX!=0) &&( cartY!=0) && (timestamp!=0)) {
-                validLeft =  true;
-            }
-            
-            if(verb) {
-                lasttimestamp = 0;
-                resetTimestamps();
-            }
-            else if(timestamp > lasttimestamp) {
-                lasttimestamp = timestamp;
-            }
-            
-            
-            
-            if(timeBuffer[cartX + cartY * retinalSize] < timestamp) {
-                if(polarity > 0) {
-                    buffer[cartX + cartY * retinalSize] = responseGradient;
-                    timeBuffer[cartX + cartY * retinalSize] = timestamp;
-                
-                    if(buffer[cartX + cartY * retinalSize] > 127) {
-                        buffer[cartX + cartY * retinalSize] = 127;
-                    }
-                }
-                else if(polarity < 0) {
-                    buffer[cartX + cartY * retinalSize] = -responseGradient;
-                    timeBuffer[cartX + cartY * retinalSize] = timestamp;
-                
-                    if (buffer[cartX + cartY * retinalSize] < -127) {
-                        buffer[cartX + cartY * retinalSize] = -127;
-                    }
-                }
-            }
-           
-        }
-        else {
-            if((cartX!=0) &&( cartY!=0) && (timestamp!=0)) {
-                validRight =  true;
-            }
-
-            if(verb) {
-               lasttimestampright = 0;
-               resetTimestamps();
-            }
-            else if( timestamp > lasttimestampright){
-                lasttimestampright = timestamp;
-            }
-           
-
-            if (timeBufferRight[cartX + cartY * retinalSize] < timestamp) {
-                if(polarity > 0) {
-                    bufferRight[cartX + cartY * retinalSize] = responseGradient;
-                    timeBufferRight[cartX + cartY * retinalSize] = timestamp;
-                    
-                    if(bufferRight[cartX + cartY * retinalSize] > 127) {
-                        bufferRight[cartX + cartY * retinalSize] = 127;
-                    }
-                }
-                else if(polarity < 0) {
-                    bufferRight[cartX + cartY * retinalSize] = -responseGradient;
-                    timeBufferRight[cartX + cartY * retinalSize] = timestamp;
-                    
-                    if (bufferRight[cartX + cartY * retinalSize] < -127) {
-                        bufferRight[cartX + cartY * retinalSize] = -127;
-                    }
-                }
-            }
-        }
-        */
+            break;    
+        }// end of switch    
     } // end of for every event
+
     //printf(" - - - - - - - - - - - - - - \n");
     // searching the couples in EM1
     /*

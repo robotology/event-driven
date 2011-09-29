@@ -33,15 +33,16 @@ using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
-#define COUNTERRATIO 6.25       //1.25 is the ratio 0.160/0.128
-#define MAXVALUE 4294967295
-#define THRATE 5
-#define STAMPINFRAME  // 10 ms of period times the us in 1 millisecond + time for computing
-#define retinalSize 128
-#define CHUNKSIZE 8192 //16384 //1024
-#define dim_window 5
-#define synch_time 1000
-#define SIZE_PACKET 8192
+#define COUNTERRATIO  1             // deprecated 1.25 is the ratio 0.160/0.128
+#define MAXVALUE      4294967295    // max value for wrapping
+#define THRATE        5             // ratethread period
+#define STAMPINFRAME                // 10 ms of period times the us in 1 millisecond + time for computing
+#define retinalSize   128           // deprecated
+#define CHUNKSIZE     8192          //16384 //1024  // dimension of the received packet
+#define dim_window    5             // deprecated 
+#define synch_time    1000          // deprecated
+#define SIZE_PACKET   8192          // deprecated
+#define RESET_COUNTER 200           // counter for the resetting of the EM buffer
 
 
 logSortThread::logSortThread() : RateThread(THRATE) {
