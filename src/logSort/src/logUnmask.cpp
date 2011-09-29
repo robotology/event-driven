@@ -36,7 +36,7 @@ using namespace yarp::os;
 #define minKillThres 1000
 #define UNMASKRATETHREAD 1
 #define constInterval 100000;
-#define SIZE_OF_EVENT 512
+#define SIZE_OF_EVENT 1024
 #define X_DIMENSION 144
 #define Y_DIMENSION 72
 
@@ -84,6 +84,7 @@ logUnmask::logUnmask() : RateThread(UNMASKRATETHREAD){
     verb = false;
     numKilledEvents = 0;
     lasttimestamp = 0;
+    previous_timestamp = 0;
     validLeft = false;
     validRight = false;
     eldesttimestamp = MAXVALUE;
@@ -338,60 +339,62 @@ bool logUnmask::threadInit() {
             }
             
             // ----------------   EM    --------------------------            
-            // EM 
+            // EM             
             if(fovea) {
                 //fovea
-                if(((x - 48 + 3 ) / 6) % 2!= 0)  {
-                    //inner columns
-                    if (y % 3 == 0) {
-                        type = 2;
-                        metax = x / 6 ;
-                        metay = y / 3;
-                        if(x % 2 == 0 ) {
-                            pol = 1;
-                        }
+                if(((x -2) %6 != 0)&&((x-3) % 6 != 0)) {    // avoiding CD position in fovea
+                    if(((x - 48 + 3 ) / 6) % 2!= 0)  {
+                        //inner columns
+                        if (y % 3 == 0) {
+                            type = 2;
+                            metax = x / 6 ;
+                            metay = y / 3;
+                            if(x % 2 == 0 ) {
+                                pol = 1;
+                            }
+                            else {
+                                pol = 0;
+                            }
+                        }                      
                         else {
-                            pol = 0;
-                        }
-                    }                      
+                            type = 4;
+                            metax = x / 6;
+                            metay = y / 3;
+                            if(x % 2 == 0) {
+                                pol = 1;
+                            }
+                            else {
+                                pol = 0;
+                            }
+                        }                    
+                    }  // inner columns
                     else {
-                        type = 4;
-                        metax = x / 6;
-                        metay = y / 3;
-                        if(x % 2 == 0) {
-                            pol = 1;
+                        //outer columns
+                        if (y % 3 == 0) { 
+                            type = 1;
+                            metax = x / 6;                        
+                            metay = y / 3;                      
+                            if(x % 2 == 0) {
+                                pol = 1;
+                            }
+                            else {
+                                pol = 0;
+                            }
                         }
-                        else {
+                        else { 
+                            type = 3 ;
+                            metax = x / 6;
+                            metay = y / 3;
+                            if(x % 2 == 0) {
+                                pol = 1;
+                            }
+                            else {
                             pol = 0;
+                            }
                         }
-                    }                    
-                }  // inner columns
-                else {
-                    //outer columns
-                    if (y % 3 == 0) { 
-                        type = 1;
-                        metax = x / 6;                        
-                        metay = y / 3;                      
-                        if(x % 2 == 0) {
-                            pol = 1;
-                        }
-                        else {
-                            pol = 0;
-                        }
-                    }
-                    else { 
-                        type = 3 ;
-                        metax = x / 6;
-                        metay = y / 3;
-                        if(x % 2 == 0) {
-                            pol = 1;
-                        }
-                        else {
-                            pol = 0;
-                        }
-                    }
-                } // outer columns                           
-            }// fovea                
+                    } // end outer colums
+                } // end if not CD                         
+            }// end fovea                
             else {
                 //periphery
                 if ( ( x            % 12 == 0 ) && (  y % 6      == 0) ) {
@@ -443,7 +446,8 @@ bool logUnmask::threadInit() {
                     metay = (y - 5)  / 3;
                     pol = 0;
                 }
-            } // periphery             
+            } // periphery  
+            
             
             // saving the extracted information in a LUT respecting the order 
             // type, metax, metay, polarity
@@ -571,7 +575,7 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
     //printf("logUnmakData: unmasking %d  \n", num_events);
     //create a pointer that points every 4 bytes
     uint32_t* buf2 = (uint32_t*)i_buffer;
-    //eldesttimestamp = 0;
+    //eldesttimestamp = 0;   
 
     for (int evt = 0; evt < num_events; evt++) {
         
@@ -579,6 +583,8 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         unsigned long blob      = buf2[2 * evt];
         unsigned long timestamp = buf2[2 * evt + 1];
         
+        lasttimestamp = timestamp;
+
         //check for addresses greater than 0x0000FFFF
         if(blob > 0x0000FFFF) {
             continue; //skipping this event continuing with the rest of the block
@@ -601,7 +607,7 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         int flipy = flipBits(y,7);
         y = flipy - 56;
         
-        //if(evt % 100 == 0) {
+        //if((evt % 100 == 0)||(evt % 100 == 0)) {
         //   printf("####### \n %08X %d %d \n",blob, x, y);
         //}
         
@@ -623,10 +629,15 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         }
         
         logMaskEvent(metaX,metaY,pol,newBlob);
-        //if(evt %100 == 0 ) {
-        //    printf(" Error : %08X>%d,%d   \n",blob,cartX,cartY);
-        //    printf(" %d %d %d %d %d %08X %08X  \n",cartY, cartX, metaY, metaX ,type,newBlob, timestamp);
-        //}
+        unsigned long timestamp_diff = timestamp - previous_timestamp;
+        if((timestamp_diff > 1000000000 )&&(timestamp != 0)&&(timestamp > previous_timestamp)) {
+            printf(" Error : %08X>%d,%d   \n",blob,cartX,cartY);
+            printf(" %d %d %d %d %d %08X %08X : %d \n",cartY, cartX, metaY, metaX ,type,previous_timestamp, timestamp, timestamp_diff);
+        }
+        if(timestamp!=0) {
+            previous_timestamp = timestamp;
+        }
+     
         
         struct aer* temp;
         
@@ -637,13 +648,13 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
                 //printf("Unmasked CD  %x \n", bufferCD);
             //printf("CD \n");
             bufferCD[countCD].address   = (u32) newBlob;
-            bufferCD[countCD].timestamp = (u32) timestamp;
-            //printf("%08X %08X  \n",bufferCD[count].address,bufferCD[count].timestamp);
+            bufferCD[countCD].timestamp = timestamp;
+            //printf("%08X %08X  \n",bufferCD[countCD].address,timestamp);
             //fprintf(fout,"%d %08X %08X\n",countCD,bufferCD[countCD].address,bufferCD[countCD].timestamp);
             countCD++;                
         }
             break;
-           
+            /*   
         case 1:{ //EM1
             //printf("Unmasked EM1 \n");
             if((blob!=0)||(timestamp!=0)) {
@@ -695,8 +706,9 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
                 countEM4++;
             }
         } //EM4
-            break;
-            
+        break;
+            */
+            /*    
         case 5:{ //IF
             //printf("Unmasked IF \n");
             //if((blob!=0)||(timestamp!=0)) {
@@ -709,6 +721,7 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
                 //}
         }// case 5
             break;
+            */
             
         }// end of switch
 
@@ -785,8 +798,9 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         }
         */
     } // end of for every event
-    printf(" - - - - - - - - - - - - - - \n");
+    //printf(" - - - - - - - - - - - - - - \n");
     // searching the couples in EM1
+    /*
     for(int i = 0; i< countEM1 ; i++){
         unsigned long blob = bufferEM1[i].address;
         unsigned long timestampFound;
@@ -794,20 +808,23 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         timestampFound = look4opposite(bufferEM1,i,countEM1);
         long diff =  timestampFound - timestamp;
         long absdiff = std::abs(diff);
-        printf("look4opposite EM1 %d: %08x %08x > %08x %d \n",i,blob, timestamp,timestampFound, absdiff);
-        if(absdiff != 0) {
-            unsigned short x    = ((blob & 0x00FF) >> 1);
-            unsigned short y    = ((blob & 0x7F00) >> 8);
-            if(cartEM[x + y * retinalSize]= 0) {
-                cartEM[x + y * retinalSize] = absdiff;
-            }
-            else {
-                cartEM[x + y * retinalSize] = (cartEM[x + y * retinalSize] + absdiff)/2; 
-            }
-        }
-    }
+        //printf("look4opposite EM1 %d: %08x %08x > %08x %d \n",i,blob, timestamp,timestampFound, absdiff);
+        //if(absdiff != 0) {
+        //    unsigned short x    = ((blob & 0x00FF) >> 1);
+        //    unsigned short y    = ((blob & 0x7F00) >> 8);
+        //    if(cartEM[x + y * retinalSize]= 0) {
+        //        cartEM[x + y * retinalSize] = absdiff;
+        //    }
+        //    else {
+        //        cartEM[x + y * retinalSize] = (cartEM[x + y * retinalSize] + absdiff)/2; 
+         //   }
+         //   }
+         }
+
     printf(" - - - - - - - - - - - - - - \n");
+    */
     // searching the couples in EM2
+    /*
     for(int i = 0; i< countEM2 ; i++){
         unsigned long blob = bufferEM2[i].address;
         unsigned long timestampFound;
@@ -817,8 +834,10 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         long absdiff = std::abs(diff);
         printf("look4opposite EM2 %d: %08x %08x > %08x %d \n",i,blob, timestamp,timestampFound, absdiff);
     }
-    printf(" - - - - - - - - - - - - - - \n");
+    */
+    //printf(" - - - - - - - - - - - - - - \n");
     // searching the couples in EM3
+    /*
     for(int i = 0; i< countEM3 ; i++){
         unsigned long blob = bufferEM3[i].address;
         unsigned long timestampFound;
@@ -828,8 +847,11 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         long absdiff = std::abs(diff);        
         printf("look4opposite EM3 %d: %08x %08x > %08x %d \n",i,blob, timestamp,timestampFound, absdiff);
     }
+    
     printf(" - - - - - - - - - - - - - - \n");
+    */
     // searching the couples in EM4
+    /*
     for(int i = 0; i< countEM4 ; i++){
         unsigned long blob = bufferEM4[i].address;
         unsigned long timestampFound;
@@ -838,7 +860,7 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         long diff =  timestampFound - timestamp;
         long absdiff = std::abs(diff);        
         printf("look4opposite EM4 %d: %08x %08x > %08x %d \n",i,blob, timestamp,timestampFound, absdiff);
-    }
+        }*/
 }
 
 unsigned long logUnmask::look4opposite(aer* buffer,int initPos, int countTOT){

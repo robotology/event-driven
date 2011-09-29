@@ -134,8 +134,7 @@ private:
     char* receivedBuffer;                                       // temporarely pointer to the received buffer
     char* pcRead;                                               // pointer to the location where to read events
     char* pcBuffer;                                             // pointer where to buffer events
-    char *flagCopy, *flagRead;                                  // pointer to the location of reading and copying 
-    
+    char *flagCopy, *flagRead;                                  // pointer to the location of reading and copying  
 
     logUnmask unmask_events;           // object in charge of unmasking the events
     converter convert_events;       // object in charge of converting the events into an image

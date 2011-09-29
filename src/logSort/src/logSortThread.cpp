@@ -38,7 +38,7 @@ using namespace std;
 #define THRATE 5
 #define STAMPINFRAME  // 10 ms of period times the us in 1 millisecond + time for computing
 #define retinalSize 128
-#define CHUNKSIZE 16384 //1024
+#define CHUNKSIZE 8192 //16384 //1024
 #define dim_window 5
 #define synch_time 1000
 #define SIZE_PACKET 8192
@@ -203,6 +203,7 @@ int logSortThread::selectUnreadBuffer(char* bufferCopy, char* flagCopy, char* re
 
 void logSortThread::run() {
     count++;
+    double tinit = Time::now();
     if(!idle) { 
         // reads the buffer received
         // saves it into a working buffer
@@ -235,7 +236,8 @@ void logSortThread::run() {
         startTimer = Time::now();
         */
         
-        
+        //unsigned long int lastleft = unmask_events.getLastTimestamp();
+        //printf("lastTimestamp %08x \n", lastleft);
 
         /*
           unsigned long int lastleft = unmask_events.getLastTimestamp();
@@ -327,7 +329,7 @@ void logSortThread::run() {
         unmask_events.getCD(&pCD, &dim);
         //printf("dimCD :  %d \n", dim);
         sendBuffer(&portCD, pCD, dim);
-        //unmask_events.resetCD();
+        unmask_events.resetCD();
         
         //unmask_events.getEM(&pEM, &dim);
         //for (int i = 0; i < dim; i++) {
@@ -340,29 +342,31 @@ void logSortThread::run() {
 
         //printf("dimEM :  %d \n", dim);
         //sendBuffer(&portEM, pEM, dim);
-        if(count % 1000 == 0){
+        if(count % 200 == 0){
             printf("_________________ \n");
             unmask_events.resetEM1();
             unmask_events.resetEM2();
             unmask_events.resetEM3();
             unmask_events.resetEM4();
-            unmask_events.resetTOTEM();
+            //unmask_events.resetTOTEM();
         }
-
+        /*
         unmask_events.getIF(&pIF, &dim);
         //printf("dimIF :  %d \n", dim);
         sendBuffer(&portIF, pIF, dim);
         unmask_events.resetIF();
-        
+        */
+    }
+    double tend = Time::now();
+    double difftime = tend - tinit;
+    if(difftime > 0.05) {
+        printf("time: %f \n", difftime);
     }
 }
 
 void logSortThread::sendBuffer(BufferedPort<eventBuffer>* port, aer* buffer, int sz) {
     int szSent = sz * 8; // dimension of the event times the bytes per event
     //aer* copyEvent = buffer;
-    
-    
-    
     
     //unsigned char* copyBuffer = (unsigned char*) buffer;
     //for (int i = 0; i < szSent; i++) {
@@ -377,12 +381,14 @@ void logSortThread::sendBuffer(BufferedPort<eventBuffer>* port, aer* buffer, int
     if (port->getOutputCount()) {           
         char* pBuffer = (char*) buffer;
        
-        for (int i = 0; i < sz; i++) {
+        /*for (int i = 0; i < sz; i++) {
             u32 blob      = buffer[i].address;
             u32 timestamp = buffer[i].timestamp;
             fprintf(fout,"%08x %08x \n",blob,timestamp);
             //copyEvent++;
         }
+        */
+        
 
         //printf("sending : %d 0x%x \n", szSent, buffer);
         eventBuffer data2send(pBuffer, szSent);    

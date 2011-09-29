@@ -29,11 +29,25 @@
 
 
 // note that bufferdim has to be 1 chunksize bigger TH3 to avoid overflows
-#define BUFFERDIM 65536 //4096 //6144  //36864
-#define TH1 16384 //1024 //2048 //12
-#define TH2 32768 //2048 //4096  
-#define TH3 49152 //3072
-#define CHUNKSIZE 16384 //1024//2048
+//#define BUFFERDIM 65536 //4096 //6144  //36864
+//#define TH1 16384 //1024 //2048 //12
+//#define TH2 32768 //2048 //4096  
+//#define TH3 49152 //3072
+//#define CHUNKSIZE 16384 //1024//2048
+
+//#define VERBOSE
+
+//#define CHUNKSIZE 32768 
+//#define TH1       32768  
+//#define TH2       65536
+//#define TH3       98304
+//#define BUFFERDIM 131702
+
+#define CHUNKSIZE 8192 
+#define TH1       8192  
+#define TH2       16384
+#define TH3       24576
+#define BUFFERDIM 32768
 
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -64,7 +78,7 @@ logFrameConverter::logFrameConverter():convert_events(128,128) {
     unmask_events.start();
     printf("unmask event just started");
     previousTimeStamp = 0;
-    fout = fopen("dump.txt", "w+");
+    fout = fopen("dumpConverter.txt", "w+");
 }
 
 logFrameConverter::~logFrameConverter() {
@@ -79,10 +93,15 @@ logFrameConverter::~logFrameConverter() {
     fclose(fout);
 }
 
+
+
+
+
 void logFrameConverter::copyChunk(char* bufferCopy, char* flagBuffer) {            
     mutex.wait();    
     if(pcRead >= converterBuffer +  BUFFERDIM - CHUNKSIZE) {
-        memcpy(bufferCopy, pcRead, converterBuffer + BUFFERDIM - pcRead );
+        memcpy(bufferCopy, pcRead,  converterBuffer + BUFFERDIM - pcRead );
+        memcpy(flagBuffer, flagCopy,converterBuffer + BUFFERDIM - pcRead );
         memset(flagCopy, 0, converterBuffer + BUFFERDIM - pcRead);
         pcRead   = converterBuffer;
         flagCopy = unreadBuffer;
@@ -99,6 +118,66 @@ void logFrameConverter::copyChunk(char* bufferCopy, char* flagBuffer) {
     mutex.post(); 
 }
 
+
+
+// reading out from a circular buffer with 2 entry points
+void logFrameConverter::onRead(eventBuffer& i_ub) {
+    valid = true;
+    //printf("onRead ");
+    // receives the buffer and saves it
+    int dim = i_ub.get_sizeOfPacket() ;      // number of bits received / 8 = bytes received
+    //printf("dim %d \n", dim);
+ 
+    mutex.wait();
+    receivedBuffer = i_ub.get_packet();    
+
+    //mem copying
+    memcpy(pcBuffer,receivedBuffer,dim);
+    memset(flagRead,1,dim);
+    
+    if (totDim < TH1) {
+        pcBuffer += dim;
+        flagRead += dim;
+    }
+    else if((totDim>=TH1)&&(totDim<TH2)&&(state!=1)){
+        //printf("greater than TH1 \n");
+        pcBuffer = converterBuffer + TH1;
+        flagRead = unreadBuffer    + TH1;
+        pcRead   = converterBuffer + TH2;
+        flagCopy = unreadBuffer    + TH2;
+        state = 1;
+    }
+    else if(totDim >= TH2) {
+        //printf("greater that TH2 \n");
+        pcBuffer = converterBuffer;
+        flagRead = unreadBuffer;
+        pcRead   = converterBuffer + TH1;
+        flagCopy = unreadBuffer    + TH1;
+        totDim = 0;
+        state = 0;
+    }
+    // the thrid part of the buffer is free to avoid overflow
+    totDim += dim;
+    mutex.post();
+
+#ifdef VERBOSE
+    int num_events = dim >> 3 ;
+    uint32_t* buf2 = (uint32_t*)receivedBuffer;
+    //plotting out
+    for (int evt = 0; evt < num_events; evt++) {
+        unsigned long blob      = buf2[2 * evt];
+        unsigned long t         = buf2[2 * evt + 1];
+        fprintf(fout,"%08X %08X \n",blob,t);        
+    }
+#endif 
+
+    //printf("onRead: ended \n");
+    //printf("pcBuffer: 0x%x pcRead: 0x%x \n", pcBuffer, pcRead); 
+}
+
+
+/*
+//three entry points
 void logFrameConverter::onRead(eventBuffer& i_ub) {
 
     // pcBuffer where the new reading is copied
@@ -115,25 +194,27 @@ void logFrameConverter::onRead(eventBuffer& i_ub) {
     if(dim == 0){
         return;
     }
-
      
     mutex.wait();
     receivedBuffer = i_ub.get_packet();
+
     //pcBuffer = i_ub.get_packet();
     //struct aer *pmon;
     //pmon = (aer*) receivedBuffer;
     memcpy(pcBuffer,receivedBuffer,dim);
     memset(flagRead,1,dim);
-    
+
+#ifdef VERBOSE
     //verbosity
-    /*
-    //uint32_t* buf2 = (uint32_t*)receivedBuffer;
+    //reading the received buffer
+    //uint32_t* buf2 = (uint32_t*)receivedBuffer;    
+    //reading the copied buffer
     uint32_t* buf2 = (uint32_t*)pcBuffer;
     int num_events = dim / 8; 
     u32 a, t;  
     for (int evt = 0; evt < num_events; evt++) {
         //a = pmon[evt].address;
-        //t = pmon[evt].timestamp * 0.128;
+        //t = pmon[evt].timestamp;
         
         // logUnmask the data ( first 4 bytes blob, second 4 bytes timestamp)
         unsigned long blob      = buf2[2 * evt];
@@ -144,12 +225,12 @@ void logFrameConverter::onRead(eventBuffer& i_ub) {
         //printf("logFrameConverter: read rough data events : %08X %08X \n",blob,timestamp);
         bool save = true;
         if (save) {
-            fprintf(fout,">%08X %08X \n",blob,timestamp); 
+            fprintf(fout,"%08X %08X \n",blob,timestamp); 
             //fout<<hex<<a<<" "<<hex<<t<<endl;
         }        
     }
-    */
-    
+    fprintf(fout, "######## \n");
+#endif
     
     //if (totDim < TH1) {
     //    pcBuffer += dim;
@@ -187,6 +268,50 @@ void logFrameConverter::onRead(eventBuffer& i_ub) {
     mutex.post();
     //printf("pcBuffer: 0x%x pcRead: 0x%x \n", pcBuffer, pcRead);
 }
+*/
+
+
+/*
+// reading out from a circular buffer with 3 entry points
+void cFrameConverter::onRead(eventBuffer& i_ub) {
+    valid = true;
+    //printf("onRead ");
+    // receives the buffer and saves it
+    int dim = i_ub.get_sizeOfPacket() ;      // number of bits received / 8 = bytes received
+    //printf("dim %d \n", dim);
+   
+    mutex.wait();
+    receivedBuffer = i_ub.get_packet(); 
+    memcpy(pcBuffer,receivedBuffer,dim);
+    
+    
+    pcBuffer += dim;
+    
+    
+    if((totDim>=TH1)&&(totDim<TH2)&&(state!=1)){
+        pcBuffer = converterBuffer + TH1; 
+        pcRead = converterBuffer + TH2;
+        state = 1;
+    }else if((totDim >= TH2)&&(totDim < TH3)&&(state!=2)) {
+        pcBuffer = converterBuffer + TH2;
+        pcRead   = converterBuffer;       
+        state    = 2;
+    }
+    else if(totDim >= TH3) {
+        pcBuffer = converterBuffer;
+        pcRead   = converterBuffer + TH1;
+        totDim   = 0;
+        state    = 0;
+    }
+    // after the thrid part of the buffer is free to avoid overflow
+    totDim += dim; 
+
+    mutex.post();
+    //printf("onRead: ended \n");
+    //printf("pcBuffer: 0x%x pcRead: 0x%x \n", pcBuffer, pcRead);
+   
+}
+*/
 
 void logFrameConverter::resetTimestamps() {
     unmask_events.resetTimestamps();

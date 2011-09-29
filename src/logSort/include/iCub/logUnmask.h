@@ -88,6 +88,7 @@ private:
     //int* fifoEvent_temp;
     //int* fifoEvent_temp2;
 
+    unsigned long previous_timestamp;     // timestamp for the previous event
     unsigned long timestamp;              // 16 bits variable to save the timestamp
     unsigned long timestamplong;          // variable 32 bits to save the timestamp
     unsigned long lasttimestamp;          // last timestamp acquired for the left camera
