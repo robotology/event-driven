@@ -82,7 +82,7 @@ private:
     struct aer* bufferEM2;                // buffer for EM2
     struct aer* bufferEM3;                // buffer for EM3
     struct aer* bufferEM4;                // buffer for EM4
-    unsigned long* cartEM;                 // mean value across EMs in cartesian space
+    struct aer* cartEM;                 // vector of mean values across EMs in cartesian space
 
     //int* fifoEvent;
     //int* fifoEvent_temp;
@@ -304,13 +304,17 @@ public:
      * @brief function that resets the counter of EMs
      */     
     void resetEM4() {countEM4 = 0; };
+    
+    /**
+     *  function that takes the average value of different EM typologies
+    */
+    void addBufferEM(aer* event);
 
     /**
      * @brief function that resets the counter of EMs
      */     
     void resetTOTEM() {memset(cartEM, 0, retinalSize * retinalSize * sizeof(unsigned long)); };
 
-    
     /**
      * @brief function that returns the pointer to the buffer of INTEGRATE 'n' FIRE EVENT
      * @param pointerIF char* pointer to the beginning of the buffer

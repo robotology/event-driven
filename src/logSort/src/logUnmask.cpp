@@ -109,13 +109,13 @@ logUnmask::logUnmask() : RateThread(UNMASKRATETHREAD){
     bufferRight     = new int[retinalSize * retinalSize];    
     timeBufferRight = new unsigned long[retinalSize * retinalSize];
     timeBuffer      = new unsigned long[retinalSize * retinalSize];    
-    cartEM          = new unsigned long[retinalSize * retinalSize];
+    cartEM          = new aer[24 * 24];
 
     memset(buffer,         0, retinalSize * retinalSize * sizeof(int));
     memset(timeBuffer,     0, retinalSize * retinalSize * sizeof(unsigned long));
     memset(bufferRight,    0, retinalSize * retinalSize * sizeof(int));
     memset(timeBufferRight,0, retinalSize * retinalSize * sizeof(unsigned long));
-    memset(cartEM,         0, retinalSize * retinalSize * sizeof(unsigned long));
+    memset(cartEM,         0, 24 * 24 * sizeof(aer));
     
 
     /*fifoEvent=new int[maxPosEvent];
@@ -506,6 +506,11 @@ void logUnmask::getEM(aer** pointerEM, int* dimEM) {
     *dimEM = countEM1 + countEM2 + countEM3 + countEM4;
 }
 
+void logUnmask::addBufferEM(aer* event){
+    //extracts coordinate in the output image size
+    // compare with the  event was inside
+}
+
 unsigned long logUnmask::getLastTimestamp() {
     return lasttimestamp;
 }
@@ -728,7 +733,7 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
 
     //printf(" - - - - - - - - - - - - - - \n");
     // searching the couples in EM1
-    /*
+    
     for(int i = 0; i< countEM1 ; i++){
         unsigned long blob = bufferEM1[i].address;
         unsigned long timestampFound;
@@ -736,6 +741,14 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         timestampFound = look4opposite(bufferEM1,i,countEM1);
         long diff =  timestampFound - timestamp;
         long absdiff = std::abs(diff);
+        int numbits = 4;
+        int max = 10000;
+        int min = 0;
+        int value = floor((absdiff /(max - min)) * 2^numbits);
+
+        bufferEM1[1].address = bufferEM1[1].address + 65535;
+        addBufferEM(bufferEM1);
+        
         //printf("look4opposite EM1 %d: %08x %08x > %08x %d \n",i,blob, timestamp,timestampFound, absdiff);
         //if(absdiff != 0) {
         //    unsigned short x    = ((blob & 0x00FF) >> 1);
@@ -747,10 +760,10 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         //        cartEM[x + y * retinalSize] = (cartEM[x + y * retinalSize] + absdiff)/2; 
          //   }
          //   }
-         }
+    }
 
     printf(" - - - - - - - - - - - - - - \n");
-    */
+    
     // searching the couples in EM2
     /*
     for(int i = 0; i< countEM2 ; i++){
@@ -795,9 +808,11 @@ unsigned long logUnmask::look4opposite(aer* buffer,int initPos, int countTOT){
     unsigned long targetBlob;
     unsigned long blob = buffer[initPos].address;
     if (blob % 2 == 0) {
+        // high event looking for low
         targetBlob = blob + 1;
     }
     else {
+        //high event looking for high
         targetBlob = blob - 1;
     }
     bool found = false;
