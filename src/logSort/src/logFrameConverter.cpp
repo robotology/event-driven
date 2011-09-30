@@ -93,10 +93,6 @@ logFrameConverter::~logFrameConverter() {
     fclose(fout);
 }
 
-
-
-
-
 void logFrameConverter::copyChunk(char* bufferCopy, char* flagBuffer) {            
     mutex.wait();  
     char* limit = converterBuffer +  BUFFERDIM - CHUNKSIZE;
@@ -148,8 +144,6 @@ void logFrameConverter::copyChunk(char* bufferCopy, char* flagBuffer) {
     //flagBuffer = flagCopy;
     mutex.post(); 
 }
-
-
 
 // reading out from a circular buffer with 2 entry points
 void logFrameConverter::onRead(eventBuffer& i_ub) {
@@ -207,8 +201,6 @@ void logFrameConverter::onRead(eventBuffer& i_ub) {
     // the thrid part of the buffer is free to avoid overflow
     totDim += dim;
     mutex.post();
-
- 
 
     //printf("onRead: ended \n");
     //printf("pcBuffer: 0x%x pcRead: 0x%x \n", pcBuffer, pcRead); 
