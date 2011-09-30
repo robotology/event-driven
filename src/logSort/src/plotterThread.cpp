@@ -103,6 +103,8 @@ void plotterThread::interrupt() {
     leftIntPort.interrupt();
     rightPort.interrupt();
     rightIntPort.interrupt();
+    leftGrayPort.interrupt();
+    rightGrayPort.interrupt();
 }
 
 void plotterThread::setName(string str) {

@@ -183,16 +183,14 @@ int logSortThread::selectUnreadBuffer(char* bufferCopy, char* flagCopy, char* re
     //char* flagCopy_copy   = flagCopy;
     //char* resultCopy_copy = resultCopy;
     int sum = 0; // counter of the number of unread
-    printf("in selectUnreadBuffer 0x%x 0x%x \n", bufferCopy, flagCopy);
+    //printf("in selectUnreadBuffer 0x%x 0x%x \n",bufferCopy, &bufferCopy);
 
 #ifdef VERBOSE
     fprintf(fout,"bbbbbbbbbbbbbbbbbbbbbbbb \n");
     int num_events = CHUNKSIZE >> 3 ;
     uint32_t* buf2 = (uint32_t*)bufferCopy;
     uint32_t* bufflag = (uint32_t*) flagCopy;
-    if(num_events > 0){
-        fprintf(fout, "* \n");
-    }
+
     //plotting out
     for (int evt = 0; evt < num_events; evt++) {
         unsigned long blob      = buf2[2 * evt];
@@ -206,40 +204,53 @@ int logSortThread::selectUnreadBuffer(char* bufferCopy, char* flagCopy, char* re
     }
 #endif
 
+    
+
+    //printf("in selectUnreadBuffer2 0x%x 0x%x \n",bufferCopy, &bufferCopy);
+
     //searching for flag == 1
     //flagCopy_copy = flagCopy;
     for(int i = 0; i < CHUNKSIZE; i++) {
-        
-        if(*bufferCopy!=0) {
-            sum++;
-            //if(*bufferCopy != 0) {
-            printf("char:%d %d \n", *flagCopy,*bufferCopy );
-                //}
-                *resultCopy = *bufferCopy;
-                //resultCopy++;    
+        int value = *flagCopy;
+        if(*flagCopy==1) {
+            sum++;            
+            //printf("char:%d %d ----------->", *flagCopy,*bufferCopy );               
+            *resultCopy = *bufferCopy;            
+            resultCopy++;
+            //*flagCopy = 0;  // it is not necessary because already reset in the copychunk
+            //printf("flagCopy %d \n", *flagCopy);
         }
         bufferCopy++;
         flagCopy++;
     }
+
+    resultCopy -= sum;
+    flagCopy -= CHUNKSIZE;
+    bufferCopy -= CHUNKSIZE;
     
-    //#ifdef VERBOSE
-    //fprintf(fout, "rrrrrrrrrrrrrrrrrrrrrrrr \n" );
-    //num_events = CHUNKSIZE >> 3 ;
-    //buf2 = (uint32_t*)resultCopy;
-    //if(num_events > 0){
-    //    printf("num_events %d \n", num_events);
-    //}
+    
+#ifdef VERBOSE
+        fprintf(fout, "rrrrrrrrrrrrrrrrrrrrrrrr \n" );
+    num_events = CHUNKSIZE >> 3 ;
+    buf2 = (uint32_t*)resultCopy;
+    bufflag = (uint32_t*) flagCopy;
     //plotting out
-    //for (int evt = 0; evt < num_events; evt++) {
-    //    unsigned long blob      = buf2[2 * evt];
-    //    unsigned long t         = buf2[2 * evt + 1];
-    //    if(blob!=0)
-    //        fprintf(fout,"%08X %08X \n",blob,t);        
-    //}
-    //#endif
+    for (int evt = 0; evt < num_events; evt++) {
+        unsigned long blob      = buf2[2 * evt];
+        unsigned long t         = buf2[2 * evt + 1];
+        unsigned long flag1     = bufflag[2 * evt];
+        unsigned long flag2     = bufflag[2 * evt + 1];
+        if(blob!=0){
+            fprintf(fout,"%08X %08X \n",blob,t); 
+            fprintf(fout,"%08X %08X \n",flag1,flag2);
+        }
+    }
+    fprintf(fout, "-------------------------------- \n" );
+#endif
+
     
     //resetting flags
-    memset(flagCopy, 0, CHUNKSIZE);
+    //memset(flagCopy, 0, CHUNKSIZE);
 
 
     return sum;
@@ -251,9 +262,9 @@ void logSortThread::run() {
     if(!idle) { 
         // reads the buffer received
         // saves it into a working buffer
-        printf("returned 0x%x 0x%x \n", bufferCopy, flagCopy);
+        //printf("returned 0x%x 0x%x \n", bufferCopy, flagCopy);
         lfConverter->copyChunk(bufferCopy, flagCopy);
-        printf("after copy chunk 0x%x 0x%x \n", bufferCopy, flagCopy);
+        //printf("after copy chunk 0x%x 0x%x \n", bufferCopy, flagCopy);
         int unreadDim = selectUnreadBuffer(bufferCopy, flagCopy, resultCopy);
 
 
@@ -382,8 +393,9 @@ void logSortThread::run() {
         
         unmask_events.getEM(&pEM, &dim);
         if (dim > 0) {
-            printf("dimEM : %d \n", dim);
+            printf("dimEM :             %d \n", dim);
         }
+
         //for (int i = 0; i < dim; i++) {
         //    u32 blob      = pEM[i].address;
         //    u32 timestamp = pEM[i].timestamp;
@@ -405,7 +417,7 @@ void logSortThread::run() {
         
         unmask_events.getIF(&pIF, &dim);
         if (dim > 0) {
-            printf("dimIF :  %d \n", dim);
+            printf("dimIF :                                 %d \n", dim);
         }
         sendBuffer(&portIF, pIF, dim);
         unmask_events.resetIF();

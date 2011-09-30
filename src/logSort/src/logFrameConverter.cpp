@@ -101,12 +101,12 @@ void logFrameConverter::copyChunk(char* bufferCopy, char* flagBuffer) {
     mutex.wait();  
     char* limit = converterBuffer +  BUFFERDIM - CHUNKSIZE;
     int value = limit - pcRead;
-    printf("value =  %d \n");
+    //printf("value =  %d \n");
     if(pcRead >= limit) {
         memcpy(bufferCopy, pcRead,  limit-pcRead );
         memset(pcRead, 0, limit-pcRead );
         memcpy(flagBuffer, flagCopy,limit - pcRead );
-        //memset(flagCopy, 0, converterBuffer + BUFFERDIM - pcRead);
+        memset(flagCopy, 0, converterBuffer + BUFFERDIM - pcRead);
         pcRead   = converterBuffer;
         flagCopy = unreadBuffer;
     }
@@ -115,9 +115,8 @@ void logFrameConverter::copyChunk(char* bufferCopy, char* flagBuffer) {
         
         memcpy(bufferCopy, pcRead,   CHUNKSIZE);
         memset(pcRead, 0, CHUNKSIZE);  // zeroing events already read
-        memcpy(flagBuffer, flagCopy, CHUNKSIZE);
-        
-        //memset(flagCopy, 0, CHUNKSIZE);
+        memcpy(flagBuffer, flagCopy, CHUNKSIZE);        
+        memset(flagCopy, 0, CHUNKSIZE);
         pcRead   += CHUNKSIZE;
  
         

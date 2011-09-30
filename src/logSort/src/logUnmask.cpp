@@ -611,9 +611,9 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         
         logUnmaskEvent((unsigned long)blob, cartX, cartY, polarity, type);
 
-        //if((evt % 1 == 0)||(evt % 1 == 0)) {
-            printf("####### \n %08X %d %d > %d %d %d \n",blob, x, y, cartX, cartY, type);
-            //}
+        
+        //    printf("####### \n %08X %d %d > %d %d %d \n",blob, x, y, cartX, cartY, type);
+        
         
         //cartY = retinalSize - cartY;   //corrected the output of the camera (flipped the image along y axis)
         //cartX = retinalSize - cartX;
