@@ -92,12 +92,12 @@ logUnmask::logUnmask() : RateThread(UNMASKRATETHREAD){
     countEvent2 = 0;
     minValue = 0;
     maxValue = 0;
-    xmask = 0x000000ff;
+    xmask = 0x000000ff;      // masking for asv
     ymask = 0x00007f00;
     xmasklong = 0x000000ff;
     yshift = 8;
     yshift2= 16,
-    xshift = 0;
+        xshift = 0;          // shift for asv
     polshift = 0;
     polmask = 0x00000001;
     camerashift = 15;
@@ -507,9 +507,32 @@ void logUnmask::getEM(aer** pointerEM, int* dimEM) {
 }
 
 void logUnmask::addBufferEM(aer* event){
-    //extracts coordinate in the output image size
+    // extracts coordinate in the output image size
+    unsigned long current_blob      = event->address;
+    unsigned long current_timestamp = event->timestamp;
+    unsigned int current_value      = (current_timestamp & 0xffff0000) >> 16;
+    unsigned short x = (current_blob & 0x00FE) >> 1;
+    unsigned short y = (current_blob & 0xFF00) >> 8;
+     
     // compare with the  event was inside
+    int position = x + y * 24;
+    if((cartEM[position].address == 0)&&(cartEM[position].timestamp == 0)){
+        cartEM[position].address   = event->address;
+        cartEM[position].timestamp = event->timestamp;
+    }
+    else {
+        //taking the mean value of the two events;
+        unsigned long old_blob      = cartEM[position].address;
+        unsigned long old_timestamp = cartEM[position].timestamp;
+        unsigned int  old_value     = (old_timestamp & 0xffff0000) >> 16;
+        unsigned int  new_value     = (int)floor((current_value + old_value)/2);
+        unsigned long new_timestamp = (old_timestamp + current_timestamp) >> 1;
+        unsigned long new_blob      = (new_value << 16) & old_blob; 
+        cartEM[position].address    = new_blob;
+        cartEM[position].timestamp  = new_timestamp;
+    }
 }
+
 
 unsigned long logUnmask::getLastTimestamp() {
     return lasttimestamp;
