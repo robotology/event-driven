@@ -503,7 +503,7 @@ void logUnmask::getIF(aer** pointerIF, int* dimIF) {
 void logUnmask::getEM(aer** pointerEM, int* dimEM) {
     //printf("counted EM %d \n", countEM);
     *pointerEM = bufferEM1;
-    *dimEM = countEM1;
+    *dimEM = countEM1 + countEM2 + countEM3 + countEM4;
 }
 
 unsigned long logUnmask::getLastTimestamp() {
@@ -607,11 +607,13 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         int flipy = flipBits(y,7);
         y = flipy - 56;
         
-        //if((evt % 100 == 0)||(evt % 100 == 0)) {
-        //   printf("####### \n %08X %d %d \n",blob, x, y);
-        //}
+
         
         logUnmaskEvent((unsigned long)blob, cartX, cartY, polarity, type);
+
+        //if((evt % 1 == 0)||(evt % 1 == 0)) {
+            printf("####### \n %08X %d %d > %d %d %d \n",blob, x, y, cartX, cartY, type);
+            //}
         
         //cartY = retinalSize - cartY;   //corrected the output of the camera (flipped the image along y axis)
         //cartX = retinalSize - cartX;

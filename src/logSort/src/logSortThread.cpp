@@ -45,6 +45,8 @@ using namespace std;
 #define RESET_COUNTER 200           // counter for the resetting of the EM buffer
 
 
+#define VERBOSE
+
 logSortThread::logSortThread() : RateThread(THRATE) {
     synchronised = false;
     greaterHalf = false;
@@ -53,8 +55,11 @@ logSortThread::logSortThread() : RateThread(THRATE) {
     minCount = 0; //initialisation of the timestamp limits of the first frame
     idle = false;
     bufferCopy   = (char*) malloc(CHUNKSIZE);
+    memset(bufferCopy, 0, CHUNKSIZE);
     flagCopy     = (char*) malloc(CHUNKSIZE);
+    memset(flagCopy, 0, CHUNKSIZE);
     resultCopy   = (char*) malloc(CHUNKSIZE);
+    memset(resultCopy, 0, CHUNKSIZE);
     //bufferRead = (char*) malloc(8192);
     countStop = 0;
     verb = false;    
@@ -174,31 +179,69 @@ void logSortThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsigned 
 }
 
 int logSortThread::selectUnreadBuffer(char* bufferCopy, char* flagCopy, char* resultCopy){    
-    char* bufferCopy_copy = bufferCopy;
-    char* flagCopy_copy   = flagCopy;
-    char* resultCopy_copy = resultCopy;
+    //char* bufferCopy_copy = bufferCopy;
+    //char* flagCopy_copy   = flagCopy;
+    //char* resultCopy_copy = resultCopy;
     int sum = 0; // counter of the number of unread
-    // TODO: the next loop can be removed
-    //for(int i = 0; i < CHUNKSIZE; i++) {
-    //    if(*flagCopy_copy!=0) {
-    //        sum++;
-    //    }
-    //    flagCopy_copy++;
-    //}
-    //printf("not read elements %d \n", sum);
+    printf("in selectUnreadBuffer 0x%x 0x%x \n", bufferCopy, flagCopy);
 
-    flagCopy_copy = flagCopy;
+#ifdef VERBOSE
+    fprintf(fout,"bbbbbbbbbbbbbbbbbbbbbbbb \n");
+    int num_events = CHUNKSIZE >> 3 ;
+    uint32_t* buf2 = (uint32_t*)bufferCopy;
+    uint32_t* bufflag = (uint32_t*) flagCopy;
+    if(num_events > 0){
+        fprintf(fout, "* \n");
+    }
+    //plotting out
+    for (int evt = 0; evt < num_events; evt++) {
+        unsigned long blob      = buf2[2 * evt];
+        unsigned long t         = buf2[2 * evt + 1];
+        unsigned long flag1     = bufflag[2 * evt];
+        unsigned long flag2     = bufflag[2 * evt + 1];
+        if(blob!=0) {
+            fprintf(fout,"%08X %08X \n",blob,t);
+            fprintf(fout,"%08X %08X \n",flag1,flag2);
+        }
+    }
+#endif
+
+    //searching for flag == 1
+    //flagCopy_copy = flagCopy;
     for(int i = 0; i < CHUNKSIZE; i++) {
         
-        if(*flagCopy_copy!=0) {
+        if(*bufferCopy!=0) {
             sum++;
-            //printf("char:%d %d \n", *flagCopy_copy,*bufferCopy_copy );
-            *resultCopy_copy = *bufferCopy_copy;
-            resultCopy_copy++;    
+            //if(*bufferCopy != 0) {
+            printf("char:%d %d \n", *flagCopy,*bufferCopy );
+                //}
+                *resultCopy = *bufferCopy;
+                //resultCopy++;    
         }
-        bufferCopy_copy++;
-        flagCopy_copy++;
+        bufferCopy++;
+        flagCopy++;
     }
+    
+    //#ifdef VERBOSE
+    //fprintf(fout, "rrrrrrrrrrrrrrrrrrrrrrrr \n" );
+    //num_events = CHUNKSIZE >> 3 ;
+    //buf2 = (uint32_t*)resultCopy;
+    //if(num_events > 0){
+    //    printf("num_events %d \n", num_events);
+    //}
+    //plotting out
+    //for (int evt = 0; evt < num_events; evt++) {
+    //    unsigned long blob      = buf2[2 * evt];
+    //    unsigned long t         = buf2[2 * evt + 1];
+    //    if(blob!=0)
+    //        fprintf(fout,"%08X %08X \n",blob,t);        
+    //}
+    //#endif
+    
+    //resetting flags
+    memset(flagCopy, 0, CHUNKSIZE);
+
+
     return sum;
 }
 
@@ -208,11 +251,14 @@ void logSortThread::run() {
     if(!idle) { 
         // reads the buffer received
         // saves it into a working buffer
-        //printf("returned 0x%x 0x%x \n", bufferCopy, flagCopy);
+        printf("returned 0x%x 0x%x \n", bufferCopy, flagCopy);
         lfConverter->copyChunk(bufferCopy, flagCopy);
+        printf("after copy chunk 0x%x 0x%x \n", bufferCopy, flagCopy);
         int unreadDim = selectUnreadBuffer(bufferCopy, flagCopy, resultCopy);
+
+
         if(unreadDim!=0) {
-            //printf("Unmasking events:  %d \n", unreadDim);
+           printf("Unmasking events:  %d \n", unreadDim);
            // extract a chunk/unmask the chunk       
            unmask_events.logUnmaskData(resultCopy,unreadDim,verb);
         }
@@ -328,11 +374,16 @@ void logSortThread::run() {
 
         //TODO : code MUTEXes in these lines! Strictly Necessary!
         unmask_events.getCD(&pCD, &dim);
-        //printf("dimCD :  %d \n", dim);
+        if (dim > 0) {
+            printf("dimCD :  %d \n", dim);
+        }
         sendBuffer(&portCD, pCD, dim);
         unmask_events.resetCD();
         
-        //unmask_events.getEM(&pEM, &dim);
+        unmask_events.getEM(&pEM, &dim);
+        if (dim > 0) {
+            printf("dimEM : %d \n", dim);
+        }
         //for (int i = 0; i < dim; i++) {
         //    u32 blob      = pEM[i].address;
         //    u32 timestamp = pEM[i].timestamp;
@@ -351,12 +402,14 @@ void logSortThread::run() {
             unmask_events.resetEM4();
             //unmask_events.resetTOTEM();
         }
-        /*
+        
         unmask_events.getIF(&pIF, &dim);
-        //printf("dimIF :  %d \n", dim);
+        if (dim > 0) {
+            printf("dimIF :  %d \n", dim);
+        }
         sendBuffer(&portIF, pIF, dim);
         unmask_events.resetIF();
-        */
+        
     }
     double tend = Time::now();
     double difftime = tend - tinit;

@@ -35,7 +35,7 @@
 //#define TH3 49152 //3072
 //#define CHUNKSIZE 16384 //1024//2048
 
-//#define VERBOSE
+#define VERBOSE
 
 //#define CHUNKSIZE 32768 
 //#define TH1       32768  
@@ -98,21 +98,53 @@ logFrameConverter::~logFrameConverter() {
 
 
 void logFrameConverter::copyChunk(char* bufferCopy, char* flagBuffer) {            
-    mutex.wait();    
-    if(pcRead >= converterBuffer +  BUFFERDIM - CHUNKSIZE) {
-        memcpy(bufferCopy, pcRead,  converterBuffer + BUFFERDIM - pcRead );
-        memcpy(flagBuffer, flagCopy,converterBuffer + BUFFERDIM - pcRead );
-        memset(flagCopy, 0, converterBuffer + BUFFERDIM - pcRead);
+    mutex.wait();  
+    char* limit = converterBuffer +  BUFFERDIM - CHUNKSIZE;
+    int value = limit - pcRead;
+    printf("value =  %d \n");
+    if(pcRead >= limit) {
+        memcpy(bufferCopy, pcRead,  limit-pcRead );
+        memset(pcRead, 0, limit-pcRead );
+        memcpy(flagBuffer, flagCopy,limit - pcRead );
+        //memset(flagCopy, 0, converterBuffer + BUFFERDIM - pcRead);
         pcRead   = converterBuffer;
         flagCopy = unreadBuffer;
     }
-    else {
+    else {        
+               flagCopy += CHUNKSIZE;
+        
         memcpy(bufferCopy, pcRead,   CHUNKSIZE);
+        memset(pcRead, 0, CHUNKSIZE);  // zeroing events already read
         memcpy(flagBuffer, flagCopy, CHUNKSIZE);
-        memset(flagCopy, 0, CHUNKSIZE);
+        
+        //memset(flagCopy, 0, CHUNKSIZE);
         pcRead   += CHUNKSIZE;
-        flagCopy += CHUNKSIZE;
+ 
+        
     }
+
+#ifdef VERBOSE
+    int num_events = CHUNKSIZE >> 3 ;
+    uint32_t* buf2 = (uint32_t*)bufferCopy;
+    uint32_t* bufflag = (uint32_t*) flagBuffer;
+    uint32_t* bufflag2 = (uint32_t*) flagCopy;
+    //plotting out
+    for (int evt = 0; evt < num_events; evt++) {
+        unsigned long blob      = buf2[2 * evt];
+        unsigned long t         = buf2[2 * evt + 1];
+        unsigned long flag1     = bufflag[2 * evt];
+        unsigned long flag2     = bufflag[2 * evt + 1];
+        unsigned long flag1b     = bufflag2[2 * evt];
+        unsigned long flag2b     = bufflag2[2 * evt + 1];
+        if(blob != 0) {
+            fprintf(fout,"%08X %08X \n",blob,t);
+            fprintf(fout,"%08X %08X  \n",flag1,flag2);
+            fprintf(fout,"%08X %08X  \n",flag1b,flag2b);
+        }
+    }
+    fprintf(fout,"################## \n");
+#endif
+    
     //countBuffer -= CHUNKSIZE;
     //flagBuffer = flagCopy;
     mutex.post(); 
@@ -126,14 +158,31 @@ void logFrameConverter::onRead(eventBuffer& i_ub) {
     //printf("onRead ");
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() ;      // number of bits received / 8 = bytes received
-    //printf("dim %d \n", dim);
- 
+    printf("dim %d \n", dim);
+    
+    if(dim == 0) {
+        return;
+    }
+
+    fprintf(fout, "iiiiiiiiiiiiiiiiiiii \n");
+    
     mutex.wait();
     receivedBuffer = i_ub.get_packet();    
 
     //mem copying
     memcpy(pcBuffer,receivedBuffer,dim);
     memset(flagRead,1,dim);
+
+    //#ifdef VERBOSE
+    //int num_events = dim >> 3 ;
+    //uint32_t* buf2 = (uint32_t*)pcBuffer;
+    //plotting out
+    //    for (int evt = 0; evt < num_events; evt++) {
+    //        unsigned long blob      = buf2[2 * evt];
+    //        unsigned long t         = buf2[2 * evt + 1];
+    //        fprintf(fout,"%08X %08X \n",blob,t);        
+    //    }
+    //#endif
     
     if (totDim < TH1) {
         pcBuffer += dim;
@@ -160,16 +209,7 @@ void logFrameConverter::onRead(eventBuffer& i_ub) {
     totDim += dim;
     mutex.post();
 
-#ifdef VERBOSE
-    int num_events = dim >> 3 ;
-    uint32_t* buf2 = (uint32_t*)receivedBuffer;
-    //plotting out
-    for (int evt = 0; evt < num_events; evt++) {
-        unsigned long blob      = buf2[2 * evt];
-        unsigned long t         = buf2[2 * evt + 1];
-        fprintf(fout,"%08X %08X \n",blob,t);        
-    }
-#endif 
+ 
 
     //printf("onRead: ended \n");
     //printf("pcBuffer: 0x%x pcRead: 0x%x \n", pcBuffer, pcRead); 
