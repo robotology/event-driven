@@ -186,8 +186,7 @@ public:
     bool configure(yarp::os::ResourceFinder &rf); // configure all the module parameters and return true if successful
     bool interruptModule();                       // interrupt, e.g., the ports 
     bool close();                                 // close and shut down the module
-    bool respond(const yarp::os::Bottle& command, yarp::os::Bottle& reply);
-    double getPeriod(); 
+    bool respond(const yarp::os::Bottle& command, yarp::os::Bottle& reply); 
     bool updateModule();
 };
 
