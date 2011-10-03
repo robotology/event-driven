@@ -67,6 +67,7 @@ private:
     unsigned int ymaskshort;
     unsigned int polmaskshort;
     unsigned int cameramaskshort;
+    unsigned int expmask;            // mask for the exposure measure
     long int xmasklong;              // 32 bits mask for unmasking of the event
     long int ymasklong;              // 32 bits mask for unmasking of the event
     int yshift;                      // shift of 8 bits for getting the y in 16 bits address
@@ -75,6 +76,7 @@ private:
     int polshift;                    // shift necessary to cast the unmasked value to short
     int polmask;                     // mask necessary to extract the polarity
     int camerashift;                 // shift for cast back into short the camera reference 
+    int expshift;                    // shift for the exposure measure
     int cameramask;                  // mask necessary to extract which camera has produced the output
     int retinalSize;                 // size of the retina
     int minValue;

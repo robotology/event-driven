@@ -103,6 +103,15 @@ bool lfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
     else {
         lfThread->setStereo(false);
     }
+
+    /* checking whether the module synchronizes with single camera or stereo camera
+     */
+    if( rf.check("em")) {
+        lfThread->setEM(true);
+    }
+    else {
+        lfThread->setEM(false);
+    }
     
     /**
      * checking whether the viewer represent log-polar information

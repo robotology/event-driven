@@ -32,7 +32,7 @@ using namespace std;
 using namespace yarp::os;
 
 
-#define MAXVALUE 114748364 //4294967295
+#define MAXVALUE 4294967295
 #define maxPosEvent 10000
 #define responseGradient 127
 #define minKillThres 1000
@@ -53,23 +53,25 @@ unmask::unmask() : RateThread(UNMASKRATETHREAD){
     numKilledEvents = 0;
     lasttimestamp = 0;
     eldesttimestamp = MAXVALUE;
-    countEvent  = 0;
-    countEvent2 = 0;
-    minValue    = 0;
-    maxValue    = 0;
-    xmask       = 0x000000fE;
-    ymask       = 0x00007f00;
-    xmasklong   = 0x000000fE;
-    polmask     = 0x00000001;
-    cameramask  = 0x00008000;
-    xmaskshort  = 0x00fE;
-    ymaskshort  = 0x7f00;
-    polmaskshort= 0x0001;
+    countEvent      = 0;
+    countEvent2     = 0;
+    minValue        = 0;
+    maxValue        = 0;
+    xmask           = 0x000000fE;
+    ymask           = 0x00007f00;
+    xmasklong       = 0x000000fE;
+    polmask         = 0x00000001;
+    cameramask      = 0x00008000;
+    expmask         = 0xFFFF0000;
+    xmaskshort      = 0x00fE;
+    ymaskshort      = 0x7f00;
+    polmaskshort    = 0x0001;
     cameramaskshort = 0x8000;    
     yshift      = 8;
-    yshift2     = 16,
+    yshift2     = 16;
     xshift      = 1;
     polshift    = 0;
+    expshift    = 16;
     camerashift = 15;    
     retinalSize = 128;
     
@@ -240,21 +242,33 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
 
     
     //eldesttimestamp = 0;
+    int emValue;
     int i = 0;
+    int increment = responseGradient;
     for (int evt = 0; evt < num_events; evt++) {
         if(!dvsMode) {
             // unmask the data ( first 4 byte blob, second 4 bytes timestamp)
             unsigned long blob      = buf2[2 * evt];
             unsigned long t         = buf2[2 * evt + 1];
             //printf("0x%x 0x%x \n",blob, timestamp);
-            
+            bool EMflag = true;
+            if(EMflag) {
+                emValue = (blob & expmask) >> expshift;
+                increment = emValue - 127;
+                increment = -100;
+                if(blob!=0){
+                    printf("blob:%08x             timestamp: %llu  emValue:%d \n", blob,t, emValue);
+                }
+            }
+
             // here we zero the higher two bytes of the address!!! Only lower 16bits used!
             blob &= 0xFFFF;
             //unmaskEvent((unsigned int) blob, cartX, cartY, polarity, camera);
             unmaskEvent( (unsigned int) blob, cartX, cartY, polarity, camera);
             timestamp =  (unsigned long) t;
-            //if((blob!=0) && (t!=0))
-            //    printf(">>>>>>>>> %08X %08X \n",blob,t);
+            //if((blob!=0) && (t!=0) && (EMflag)) {
+            //    printf(">>>>>>>>> %08X %08X %d %d \n",blob,t,cartX, cartY);
+            //}
         }
         else {  //in dvsMode
             unsigned int blob, t;
@@ -324,7 +338,6 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
         
         
         // filling the image buffer after the unmasking  
-
         //checking outoflimits in dimension
         assert(cartX < retinalSize);
         assert(cartX > 0 );
@@ -332,8 +345,10 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
         assert(cartY > 0);
         if((cartX < 0)||(cartX > retinalSize)){
             cartX = 0;
+            printf("error \n");
         }
         if((cartY < 0)||(cartY> retinalSize)){
+            printf("error \n");
             cartY = 0;
         }
 
@@ -348,13 +363,12 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
         //camera is unmasked as left 0, right -1. It is converted in left 1, right 0
         camera = camera + 1;
         //printf("Camera %d polarity %d  \n", camera, polarity);
-        //camera: LEFT 1, RIGHT 0
+        //camera: LEFT 1, RIGHT 0        
 
-        if(camera) {            
+        if(true) {            
             if((cartX!=0) &&( cartY!=0) && (timestamp!=0)) {
                 validLeft =  true;
             }
-            
 
             //TODO:: remove verb if not necessary
             if(verb) {
@@ -369,9 +383,10 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
                 lasttimestamp = timestamp;
             }
             
-            if(timeBuffer[cartX + cartY * retinalSize] < timestamp) {
-                if(polarity > 0) {
-                    buffer[cartX + cartY * retinalSize]     = responseGradient;
+            //if(timeBuffer[cartX + cartY * retinalSize] < timestamp) {
+            if(true){
+                if(true) {
+                    buffer[cartX + cartY * retinalSize]     = increment;
                     timeBuffer[cartX + cartY * retinalSize] = timestamp;
                     
                     if(buffer[cartX + cartY * retinalSize] > 127) {
@@ -379,40 +394,29 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
                     }
 
                     if(!((cartX>=7)&&(cartX<16)&&(cartY>=7)&&(cartY<16))){
-                        buffer[cartX + 1 + cartY * retinalSize]       = responseGradient;
+                        buffer[cartX + 1 + cartY * retinalSize]       = increment;
                         timeBuffer[cartX + 1  + cartY * retinalSize]  = timestamp;
-                        buffer[cartX + (cartY + 1)  * retinalSize]    = responseGradient;
+                        buffer[cartX + (cartY + 1)  * retinalSize]    = increment;
                         timeBuffer[cartX + (cartY + 1) * retinalSize] = timestamp;
-                        buffer[cartX + 1 + (cartY + 1) * retinalSize]       = responseGradient;
+                        buffer[cartX + 1 + (cartY + 1) * retinalSize]       = increment;
                         timeBuffer[cartX + 1  + (cartY + 1) * retinalSize]  = timestamp;      
-                    }
-                    
-                    /*
-                    if ((cartX<=2)||(cartX>4)&&((cartY<=2)||(cartY>4))&&(asvMode)) {
-                      buffer[cartX + 1 + cartY * retinalSize]       = responseGradient;
-                      timeBuffer[cartX + 1  + cartY * retinalSize]  = timestamp;
-                      buffer[cartX + (cartY + 1)  * retinalSize]    = responseGradient;
-                      timeBuffer[cartX + (cartY + 1) * retinalSize] = timestamp;
-                      buffer[cartX + 1 + (cartY + 1) * retinalSize]       = responseGradient;
-                      timeBuffer[cartX + 1  + (cartY + 1) * retinalSize]  = timestamp;                      
-                    }
-                    */
+                    }                                       
                 }
                 else if(polarity < 0) {
-                    buffer[cartX + cartY * retinalSize] = -responseGradient;
-                    timeBuffer[cartX + cartY * retinalSize] = timestamp;
+                    buffer[cartX + cartY * retinalSize]     = -increment;
+                    timeBuffer[cartX + cartY * retinalSize] =  timestamp;
                     
                     if (buffer[cartX + cartY * retinalSize] < -127) {
                         buffer[cartX + cartY * retinalSize] = -127;
                     }
                     
                     if(!((cartX>=7)&&(cartX<16)&&(cartY>=7)&&(cartY<16))){
-                        buffer[cartX + 1 + cartY * retinalSize]       = -responseGradient;
-                        timeBuffer[cartX + 1  + cartY * retinalSize]  = timestamp;
-                        buffer[cartX + (cartY + 1)  * retinalSize]    = -responseGradient;
-                        timeBuffer[cartX + (cartY + 1) * retinalSize] = timestamp;
-                        buffer[cartX + 1 + (cartY + 1) * retinalSize]       = -responseGradient;
-                        timeBuffer[cartX + 1  + (cartY + 1) * retinalSize]  = timestamp;      
+                        buffer[cartX + 1 + cartY * retinalSize]       = -increment;
+                        timeBuffer[cartX + 1  + cartY * retinalSize]  =  timestamp;
+                        buffer[cartX + (cartY + 1)  * retinalSize]    = -increment;
+                        timeBuffer[cartX + (cartY + 1) * retinalSize] =  timestamp;
+                        buffer[cartX + 1 + (cartY + 1) * retinalSize]       = -increment;
+                        timeBuffer[cartX + 1  + (cartY + 1) * retinalSize]  =  timestamp;      
                     }
                     
                     /*
@@ -448,7 +452,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
             }           
             if (timeBufferRight[cartX + cartY * retinalSize] < timestamp) {
                 if(polarity > 0) {
-                    bufferRight[cartX + cartY * retinalSize] = responseGradient;
+                    bufferRight[cartX + cartY * retinalSize]     = increment;
                     timeBufferRight[cartX + cartY * retinalSize] = timestamp;
                     
                     if(bufferRight[cartX + cartY * retinalSize] > 127) {
@@ -456,8 +460,8 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
                     }
                 }
                 else if(polarity < 0) {
-                    bufferRight[cartX + cartY * retinalSize] = -responseGradient;
-                    timeBufferRight[cartX + cartY * retinalSize] = timestamp;
+                    bufferRight[cartX + cartY * retinalSize]     = -increment;
+                    timeBufferRight[cartX + cartY * retinalSize] =  timestamp;
                     
                     if (bufferRight[cartX + cartY * retinalSize] < -127) {
                         bufferRight[cartX + cartY * retinalSize] = -127;

@@ -76,6 +76,7 @@ private:
     bool firstRun;                       // flag that check whether the run is a first useful run    
     bool logPolar;                       // flag that indicates whether the viewer represent logpolar information
     bool stereo;                         // flag that indicates whether the synchronization is stereo 
+    bool EMflag;                         // flag for different algorithm in exposure measure
     unsigned long minCount;              // minimum timestamp allowed for the current frame
     unsigned long maxCount;              // maximum timestamp allowed for the current frame
     unsigned long minCountRight;
@@ -177,6 +178,11 @@ public:
      */
     void setLogPolar(int value) {logPolar = value; };
     
+    /**
+     * @brief function that sets the value of the EM flag
+     * @param value flagvalue to be assigned
+     */
+    void setEM(int value) { EMflag = value; };
 };
 
 #endif  //_CF_COLLECTOR_THREAD_H_

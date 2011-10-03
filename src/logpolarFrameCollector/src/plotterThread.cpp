@@ -15,8 +15,7 @@
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License fo
- r more details
+ * Public License for more details
  */
 
 /**
@@ -43,7 +42,7 @@ using namespace std;
 plotterThread::plotterThread() : RateThread(THRATE) {
     synchronised = false;
     count=0;
-    retinalSize = 128;   //default value retinal size before setting    
+    retinalSize = 24;   //default value retinal size before setting    
 }
 
 plotterThread::~plotterThread() {
@@ -271,9 +270,9 @@ int plotterThread::integrateImage(ImageOf<PixelMono>* imageIn, ImageOf<PixelMono
 	      }
 	      
           
-	      unsigned char value = *pimagegray;
+	      unsigned char value   = *pimagegray;
 	      unsigned char valuebw = *pimagebw;
-	      if(valuebw >  130){
+	      if(valuebw >  130) {
               value+=16;
               if(value>200)
                   value=200;

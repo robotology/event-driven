@@ -34,14 +34,14 @@ using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
-#define INTERVFACTOR 6.24
+#define INTERVFACTOR 6.25
 #define COUNTERRATIO 1 //1.25       //1.25 is the ratio 0.160/0.128
 #define MAXVALUE 4294967295
 #define THRATE 5
 #define STAMPINFRAME  // 10 ms of period times the us in 1 millisecond + time for computing
 //#define retinalSize 128
 #define CHUNKSIZE 32768 //65536 //8192
-#define dim_window 1
+#define dim_window 2
 #define synch_time 1
 
 
@@ -163,7 +163,15 @@ void lfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsig
     // determining whether the camera is left or right
     int* pBuffer = unmask_events->getEventBuffer(camera);
     unsigned long* pTime   = unmask_events->getTimeBuffer(camera);
-    
+    //printf("lfColllectorThread: ptime :%lu \n",*pTime);
+    int defaultValue;
+    EMflag = true;
+    if(EMflag) {
+        defaultValue = 0;
+    }
+    else {
+        defaultValue = 127;
+    }
     //printf("timestamp: min %d    max %d  \n", minCount, maxCount);
     //pBuffer += retinalSize * retinalSize - 1;
     for(int r = 0 ; r < retinalSize ; r++){
@@ -171,37 +179,38 @@ void lfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsig
             //drawing the retina and the rest of the image separately
             int value = *pBuffer;
             unsigned long timestampactual = *pTime;
-	    //if(minCount>0 && maxCount > 0 && timestampactual>0)
-	    //printf("actualTS%ld val%ld max%ld min%ld  are\n",timestampactual,timestampactual * COUNTERRATIO,minCount,maxCount);
-            if (((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)) {   //(timestampactual != lasttimestamp)
-                *pImage = (unsigned char) (127 + value);
-		//if(value>0)printf("event%d val%d buf%d\n",*pImage,value,*pBuffer);
-		pImage++;
-		//if ((stereo) && (r < 7) && (r >= 16) && (c < 7) && (c >= 16)) {
-		//  *pImage = (unsigned char) (127 + value);
-		//  pImage += imageRowSize;
-		//  *pImage = (unsigned char) (127 + value);
-		//pImage--;
-		//  *pImage = (unsigned char) (127 + value);
-		//  pImage -= (imageRowSize + 1);
-		//}
-               
+            //if(minCount>0 && maxCount > 0 && timestampactual>0)
+            //printf("actualTS%ld val%ld max%ld min%ld  are\n",timestampactual,timestampactual * COUNTERRATIO,minCount,maxCount);
+            if (((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)) {   //(timestampactual != lasttimestamp) 
+                //*pImage = (unsigned char) (127 + value);
+                *pImage = (unsigned char) 255;
+                //if(value>0)printf("event%d val%d buf%d\n",*pImage,value,*pBuffer);
+                pImage++;
+                //if ((stereo) && (r < 7) && (r >= 16) && (c < 7) && (c >= 16)) {
+                //  *pImage = (unsigned char) (127 + value);
+                //  pImage += imageRowSize;
+                //  *pImage = (unsigned char) (127 + value);
+                //pImage--;
+                //  *pImage = (unsigned char) (127 + value);
+                //  pImage -= (imageRowSize + 1);
+                //}
+                
             }
             else {
-                *pImage = (unsigned char) 127 ;
-		//printf("NOT event%d \n",*pImage);
-		pImage++;
-		
-		//if ((stereo) && (r < 7) && (r >= 16) && (c < 7) && (c >= 16)) {
-		//  *pImage = (unsigned char) 127;
-		//  pImage += imageRowSize;
-		//  *pImage = (unsigned char) 127 + value;
-		//  pImage--;
-		//  *pImage = (unsigned char) 127 + value;
-		//  pImage -= (imageRowSize + 1);
-		//}
-               
-	    }
+                *pImage = (unsigned char) defaultValue ;
+                //printf("NOT event%d \n",*pImage);
+                pImage++;
+                
+                //if ((stereo) && (r < 7) && (r >= 16) && (c < 7) && (c >= 16)) {
+                //  *pImage = (unsigned char) 127;
+                //  pImage += imageRowSize;
+                //  *pImage = (unsigned char) 127 + value;
+                //  pImage--;
+                //  *pImage = (unsigned char) 127 + value;
+                //  pImage -= (imageRowSize + 1);
+                //}
+                
+            }
             pBuffer++;
             pTime++;
         }
@@ -304,7 +313,7 @@ void lfCollectorThread::run() {
     
     //synchronising the threads at the connection time
     if ((lfConverter->isValid())&&(!synchronised)) {
-      printf("Sychronising ");
+        // printf("Sychronising ");
       unsigned long int lastleft  = unmask_events->getLastTimestamp();
       lc = lastleft  * COUNTERRATIO; 
       unsigned long int lastright = unmask_events->getLastTimestampRight();
@@ -322,9 +331,7 @@ void lfCollectorThread::run() {
       //printf("minCount %d \n", minCount);
       //minCountRight = unmask_events->getLastTimestamp();
       count = synch_time - 200;
-    }
-    
-    
+    }    
     //synchronising the thread every time interval 1000*period of the thread
     else if ((count % synch_time == 0) && (minCount < 4294500000)) {
       unsigned long lastleft = unmask_events->getLastTimestamp();
@@ -346,7 +353,7 @@ void lfCollectorThread::run() {
       //maxCount = lc; 
       //maxCountRight = rc;
 		 
-      //printf("synchronised %1f! %llu,%llu,%llu||%llu,%llu,%llu \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
+      printf("synchronised %1f! %llu,%llu,%llu||%llu,%llu,%llu \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
       startTimer = Time::now();
       synchronised = true; 
     }
@@ -359,8 +366,8 @@ void lfCollectorThread::run() {
       minCountRight = minCount + interval * INTERVFACTOR;  // minCountRight + interval;
     } 
     //printf("minCount %d interval %f \n", minCount, interval);
-    maxCount      =  minCount      + interval * INTERVFACTOR* (dim_window);
-    maxCountRight =  minCountRight + interval * INTERVFACTOR* (dim_window);
+    maxCount      =  minCount      + interval * INTERVFACTOR* (dim_window + 1);
+    maxCountRight =  minCountRight + interval * INTERVFACTOR* (dim_window + 1);
     
     
     //---- preventer for fixed  addresses ----//
@@ -370,42 +377,40 @@ void lfCollectorThread::run() {
         unsigned long lastright = unmask_events->getLastTimestampRight();
         rc = lastright * COUNTERRATIO;
         //printf("countStop %d lcprev %d lc %d \n",countStop, lcprev,lc);
-	if (stereo) {
-	  if ((lcprev == lc)||(rcprev == rc)) {
-	    //if (lcprev == lc) {
-            countStop++;
-            printf("countStop %d %lu %lu %lu %lu \n", countStop, lc, lcprev, rc, rcprev);
-	  }            
-	  else {
-            countStop--;
-            //printf("countStop %d \n", countStop);
-            if(countStop<= 0) {
+        if (stereo) {
+            if ((lcprev == lc)||(rcprev == rc)) {
+                //if (lcprev == lc) {
+                countStop++;
+                printf("countStop %d %lu %lu %lu %lu \n", countStop, lc, lcprev, rc, rcprev);
+            }            
+            else {
+                countStop--;
+                //printf("countStop %d \n", countStop);
+                if(countStop<= 0) {
 	      countStop = 0;
+                }
             }
-	  }
-	}
-	else {
-	  if (lcprev == lc) {
-	    //if (lcprev == lc) {
-            countStop++;
-            printf("countStop %d %lu %lu %lu %lu \n", countStop, lc, lcprev, rc, rcprev);
-	  }            
-	  else {
-            countStop--;
-            //printf("countStop %d \n", countStop);
-            if(countStop<= 0) {
-	      countStop = 0;
+        }
+        else {
+            if (lcprev == lc) {
+                //if (lcprev == lc) {
+                countStop++;
+                printf("countStop %d %lu %lu %lu %lu \n", countStop, lc, lcprev, rc, rcprev);
+            }            
+            else {
+                countStop--;
+                //printf("countStop %d \n", countStop);
+                if(countStop<= 0) {
+                    countStop = 0;
+                }
             }
-	  }
-	}
+        }
         lcprev = lc;
         rcprev = rc;
     }
-    
-    
       
     //resetting time stamps at overflow
-    if (countStop == 10) {
+    if (countStop == 40) {
       //printf("resetting time stamps!!!!!!!!!!!!! %d %d   \n ", minCount, minCountRight);
       unmask_events->resetTimestampLeft(); 
       unmask_events->resetTimestampRight();
@@ -416,8 +421,8 @@ void lfCollectorThread::run() {
       rc = lastright * COUNTERRATIO;
       minCount      = 0;
       minCountRight = 0;
-      maxCount      =  minCount      + interval * INTERVFACTOR* (dim_window);
-      maxCountRight =  minCountRight + interval * INTERVFACTOR* (dim_window);
+      maxCount      =  minCount      + interval * INTERVFACTOR* (dim_window + 1);
+      maxCountRight =  minCountRight + interval * INTERVFACTOR* (dim_window + 1);
       
       //maxCount      = 4294967268;
       //maxCountRight = 4294967268;
@@ -431,15 +436,13 @@ void lfCollectorThread::run() {
     // ----------- preventer end    --------------------- //
     getMonoImage(imageLeft,minCount,maxCount,1);
     if(imageLeft != 0) {
-      //printf("copying image \n");
-      pThread->copyLeft(imageLeft);
-      //printf("end copying image \n");
+        pThread->copyLeft(imageLeft);
     }
 
-    getMonoImage(imageRight,minCountRight,maxCountRight,0);
-    if(imageRight != 0) {
-      pThread->copyRight(imageRight);
-    }
+    //getMonoImage(imageRight,minCountRight,maxCountRight,0);
+    //if(imageRight != 0) {
+    //    pThread->copyRight(imageRight);
+    //}
   }
 }
 
