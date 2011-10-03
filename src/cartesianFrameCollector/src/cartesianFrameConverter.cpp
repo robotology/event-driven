@@ -36,11 +36,11 @@
 #include <inttypes.h>
 
 
-//#define BUFFERDIM 32768
+//#define CHUNKSIZE 8192 
 //#define TH1 8192 
 //#define TH2 16384
 //#define TH3 24576
-//#define CHUNKSIZE 8192 
+//#define BUFFERDIM 24576 //32768
 
 #define CHUNKSIZE 32768 
 #define TH1       32768  
@@ -148,7 +148,7 @@ void cFrameConverter::onRead(eventBuffer& i_ub) {
         unsigned long t         = buf2[2 * evt + 1];
         fprintf(fout,"%08X %08X \n",blob,t);        
     }
-#endif /* VERBOSE */
+#endif 
 
     //printf("onRead: ended \n");
     //printf("pcBuffer: 0x%x pcRead: 0x%x \n", pcBuffer, pcRead); 
@@ -199,18 +199,6 @@ void cFrameConverter::onRead(eventBuffer& i_ub) {
 }
 */
 
-
-/*
-void cFrameConverter::onRead(eventBuffer& i_ub) {
-    // receives the buffer and saves it
-    //cout << "C_yarpViewer::onRead(unmaskedbuffer& i_ub)" << endl;
-    //start_u = clock();
-    //i_ub.get_sizeOfPacket() size of the packet in bits
-    unmask_events.unmaskData(i_ub.get_packet(), i_ub.get_sizeOfPacket());
-    //start_p = clock();
-    //stop = clock();
-}
-*/
 
 void cFrameConverter::resetTimestamps() {
     //unmask_events.resetTimestamps();
