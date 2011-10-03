@@ -406,7 +406,7 @@ void logSortThread::run() {
 
         //printf("dimEM :  %d \n", dim);
         sendBuffer(&portEM, pEM, dim);
-        if(count % 200 == 0){
+        if(count % 1000 == 0){
             //printf("_________________ \n");
             unmask_events.resetEM1();
             unmask_events.resetEM2();

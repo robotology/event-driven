@@ -508,12 +508,13 @@ void logUnmask::getEM(aer** pointerEM, int* dimEM) {
     aer* pEM = new aer[24 * 24];
     for (int pos = 0; pos < 24 * 24; pos++){
         if(cartEM[pos].address != 0) {
-            printf("cartEM[pos] %08x \n",cartEM[pos].address);
+            //printf("cartEM[pos] %08x \n",cartEM[pos].address);
             pEM[*dimEM] = cartEM[pos];
             (*dimEM)++;            
         }
     }
     *pointerEM = pEM;
+    delete[] pEM;
     memset(cartEM,0, 24 * 24 * sizeof(aer));
 }
 
@@ -648,14 +649,10 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         unsigned short y    = ((blob & ymask) >> yshift);        
         int flipy = flipBits(y,7);
         y = flipy - 56;
-        
-
-        
+                
         logUnmaskEvent((unsigned long)blob, cartX, cartY, polarity, type);
-
         
-        //    printf("####### \n %08X %d %d > %d %d %d \n",blob, x, y, cartX, cartY, type);
-        
+        //    printf("####### \n %08X %d %d > %d %d %d \n",blob, x, y, cartX, cartY, type);        
         
         //cartY = retinalSize - cartY;   //corrected the output of the camera (flipped the image along y axis)
         //cartX = retinalSize - cartX;
@@ -841,7 +838,7 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
     // searching the couples in EM3
     
     for(int i = 0; i< countEM3 ; i++){
-    printf("analysing EM3 position %d \n", countEM3);
+        //printf("analysing EM3 position %d \n", countEM3);
         unsigned long blob = bufferEM3[i].address;
         unsigned long timestampFound;
         unsigned long timestamp = bufferEM3[i].timestamp;
@@ -855,18 +852,21 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         double max = 10000000;
         double min = 0;
         int value = floor(((double)absdiff /(max - min)) * 256.0);
+        if(value > 255) {
+            value = 255;
+        }
         //printf("    buffer.address %08x   ",bufferEM3[i].address);
         //printf("value %lu binaryvalue %d    ", absdiff,value);
         bufferEM3[i].address = bufferEM3[i].address + (value<<16);
         //printf(" buffer.address %08x \n",bufferEM3[i].address);
         addBufferEM(&bufferEM3[i]);
     }    
-    printf(" - - - - - - - - - - - - - - \n");
+    //printf(" - - - - - - - - - - - - - - \n");
     
 
     // searching the couples in EM4
     for(int i = 0; i< countEM4 ; i++){
-    printf("analysing EM4 position %d \n", countEM4);
+        //printf("analysing EM4 position %d \n", countEM4);
         unsigned long blob = bufferEM4[i].address;
         unsigned long timestampFound;
         unsigned long timestamp = bufferEM4[i].timestamp;
@@ -880,6 +880,9 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         double max = 10000000;
         double min = 0;
         int value = floor(((double)absdiff /(max - min)) * 256.0);
+        if(value > 255) {
+            value = 255;
+        }
         //printf("    buffer.address %08x   ",bufferEM1[i].address);
         //printf("value %lu binaryvalue %d    ", absdiff,value);
         bufferEM4[i].address = bufferEM4[i].address + (value<<16);
