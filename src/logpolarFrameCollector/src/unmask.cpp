@@ -63,6 +63,9 @@ unmask::unmask() : RateThread(UNMASKRATETHREAD){
     yshift = 8;
     yshift2= 16,
     xshift = 1;
+    xmaskshort  = 0x00fE;
+    ymaskshort  = 0x7f00;
+    polmaskshort= 0x0001;
     polshift = 0;
     polmask = 0x00000001;
     camerashift = 15;
