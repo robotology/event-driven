@@ -502,8 +502,19 @@ void logUnmask::getIF(aer** pointerIF, int* dimIF) {
 
 void logUnmask::getEM(aer** pointerEM, int* dimEM) {
     //printf("counted EM %d \n", countEM);
-    *pointerEM = bufferEM1;
-    *dimEM = countEM1 + countEM2 + countEM3 + countEM4;
+    //*pointerEM = bufferEM1;
+    //*dimEM = countEM1 + countEM2 + countEM3 + countEM4;
+    *dimEM = 0;
+    aer* pEM = new aer[24 * 24];
+    for (int pos = 0; pos < 24 * 24; pos++){
+        if(cartEM[pos].address != 0) {
+            printf("cartEM[pos] %08x \n",cartEM[pos].address);
+            pEM[*dimEM] = cartEM[pos];
+            (*dimEM)++;            
+        }
+    }
+    *pointerEM = pEM;
+    memset(cartEM,0, 24 * 24 * sizeof(aer));
 }
 
 void logUnmask::addBufferEM(aer* event){
@@ -514,7 +525,7 @@ void logUnmask::addBufferEM(aer* event){
    
     unsigned short x = (current_blob & 0x00FE) >> 1;
     unsigned short y = (current_blob & 0xFF00) >> 8;
-    printf("current_blob %x position x %d y %d value %d \n",current_blob, x, y, current_value);
+    printf("current_blob %08x position x %d y %d value %d \n",current_blob, x, y, current_value);
     
      
     // compare with the  event was inside
@@ -595,7 +606,6 @@ void logUnmask::run() {
     }
     */
 }
-
 
 void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
     //cout << "Size of the received packet to logUnmask : " << i_sz / 8<< endl;
@@ -762,7 +772,7 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
     // searching the couples in EM1
     
     for(int i = 0; i< countEM1 ; i++){
-        printf("analysing EM1 position %d \n", countEM1);
+        //printf("analysing EM1 position %d \n", countEM1);
         unsigned long blob = bufferEM1[i].address;
         unsigned long timestampFound;
         unsigned long timestamp = bufferEM1[i].timestamp;
@@ -776,10 +786,13 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         double max = 10000000;
         double min = 0;
         int value = floor(((double)absdiff /(max - min)) * 256.0);
-        printf("    buffer.address %08x   ",bufferEM1[i].address);
-        printf("value %lu binaryvalue %d    ", absdiff,value);
+        if(value > 255) {
+            value = 255;
+        }
+        //printf("    buffer.address %08x   ",bufferEM1[i].address);
+        //printf("value %lu binaryvalue %d    ", absdiff,value);
         bufferEM1[i].address = bufferEM1[i].address + (value<<16);
-        printf(" buffer.address %08x \n",bufferEM1[i].address);
+        //printf(" buffer.address %08x \n",bufferEM1[i].address);
         addBufferEM(&bufferEM1[i]);
         
         //printf("look4opposite EM1 %d: %08x %08x > %08x %d \n",i,blob, timestamp,timestampFound, absdiff);
@@ -795,46 +808,84 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
          //   }
     }
 
-    printf(" - - - - - - - - - - - - - - \n");
+    //printf(" - - - - - - - - - - - - - - \n");
     
-    // searching the couples in EM2
-    /*
+    // searching the couples in EM2    
     for(int i = 0; i< countEM2 ; i++){
+        //printf("analysing EM2 position %d \n", countEM2);
         unsigned long blob = bufferEM2[i].address;
         unsigned long timestampFound;
         unsigned long timestamp = bufferEM2[i].timestamp;
         timestampFound = look4opposite(bufferEM2,i,countEM2);
         long diff =  timestampFound - timestamp;
-        long absdiff = std::abs(diff);
-        printf("look4opposite EM2 %d: %08x %08x > %08x %d \n",i,blob, timestamp,timestampFound, absdiff);
+        unsigned long absdiff = std::abs(diff);
+        if(absdiff == 0) {
+            continue;
+        }
+        int numbits = 256;        
+        double max = 10000000;
+        double min = 0;
+        int value = floor(((double)absdiff /(max - min)) * 256.0);
+        if(value > 255) {
+            value = 255;
+        }
+        //printf("    buffer.address %08x   ",bufferEM2[i].address);
+        //printf("value %lu binaryvalue %d    ", absdiff,value);
+        bufferEM2[i].address = bufferEM2[i].address + (value<<16);
+        //printf(" buffer.address %08x \n",bufferEM1[i].address);
+        addBufferEM(&bufferEM2[i]);
     }
-    */
+    
+
     //printf(" - - - - - - - - - - - - - - \n");
     // searching the couples in EM3
-    /*
+    
     for(int i = 0; i< countEM3 ; i++){
+    printf("analysing EM3 position %d \n", countEM3);
         unsigned long blob = bufferEM3[i].address;
         unsigned long timestampFound;
         unsigned long timestamp = bufferEM3[i].timestamp;
-        timestampFound = look4opposite(bufferEM3,i,countEM1);
+        timestampFound = look4opposite(bufferEM3,i,countEM3);
         long diff =  timestampFound - timestamp;
-        long absdiff = std::abs(diff);        
-        printf("look4opposite EM3 %d: %08x %08x > %08x %d \n",i,blob, timestamp,timestampFound, absdiff);
-    }
-    
+        unsigned long absdiff = std::abs(diff);
+        if(absdiff == 0) {
+            continue;
+        }
+        int numbits = 256;        
+        double max = 10000000;
+        double min = 0;
+        int value = floor(((double)absdiff /(max - min)) * 256.0);
+        //printf("    buffer.address %08x   ",bufferEM3[i].address);
+        //printf("value %lu binaryvalue %d    ", absdiff,value);
+        bufferEM3[i].address = bufferEM3[i].address + (value<<16);
+        //printf(" buffer.address %08x \n",bufferEM3[i].address);
+        addBufferEM(&bufferEM3[i]);
+    }    
     printf(" - - - - - - - - - - - - - - \n");
-    */
+    
+
     // searching the couples in EM4
-    /*
     for(int i = 0; i< countEM4 ; i++){
+    printf("analysing EM4 position %d \n", countEM4);
         unsigned long blob = bufferEM4[i].address;
         unsigned long timestampFound;
         unsigned long timestamp = bufferEM4[i].timestamp;
-        timestampFound = look4opposite(bufferEM4,i,countEM1);
+        timestampFound = look4opposite(bufferEM4,i,countEM4);
         long diff =  timestampFound - timestamp;
-        long absdiff = std::abs(diff);        
-        printf("look4opposite EM4 %d: %08x %08x > %08x %d \n",i,blob, timestamp,timestampFound, absdiff);
-        }*/
+        unsigned long absdiff = std::abs(diff);
+        if(absdiff == 0) {
+            continue;
+        }
+        int numbits = 256;        
+        double max = 10000000;
+        double min = 0;
+        int value = floor(((double)absdiff /(max - min)) * 256.0);
+        //printf("    buffer.address %08x   ",bufferEM1[i].address);
+        //printf("value %lu binaryvalue %d    ", absdiff,value);
+        bufferEM4[i].address = bufferEM4[i].address + (value<<16);
+        //printf(" buffer.address %08x \n",bufferEM1[i].address);
+        addBufferEM(&bufferEM4[i]);
+    }    
 }
 
 unsigned long logUnmask::look4opposite(aer* buffer,int initPos, int countTOT){

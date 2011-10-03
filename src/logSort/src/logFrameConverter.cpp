@@ -151,13 +151,13 @@ void logFrameConverter::onRead(eventBuffer& i_ub) {
     //printf("onRead ");
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() ;      // number of bits received / 8 = bytes received
-    printf("dim %d \n", dim);
+    //printf("dim %d \n", dim);
     
     if(dim == 0) {
         return;
     }
 
-    fprintf(fout, "iiiiiiiiiiiiiiiiiiii \n");
+    //fprintf(fout, "iiiiiiiiiiiiiiiiiiii \n");
     
     mutex.wait();
     receivedBuffer = i_ub.get_packet();    
