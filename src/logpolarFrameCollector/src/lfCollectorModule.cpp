@@ -1,7 +1,7 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /* 
- * Copyright (C) 2011 RobotCub Consortium, European Commission FP6 Project IST-004370
+ * Copyright (C) 2010 RobotCub Consortium, European Commission FP6 Project IST-004370
  * Authors: Francesco Rea
  * email:   francesco.rea@iit.it
  * website: www.robotcub.org 
@@ -19,8 +19,8 @@
  */
 
 /**
- * @file lfCollectorModule.cpp
- * @brief Implementation of the lfCollectorModule (see header file).
+ * @file cfCollectorModule.cpp
+ * @brief Implementation of the cfCollectorModule (see header file).
  */
 
 #include <iCub/lfCollectorModule.h>
@@ -49,7 +49,7 @@ bool lfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
     * specifically the port names which are dependent on the module name
     */
     setName(moduleName.c_str());
-    
+
     /*
     * get the robot name which will form the stem of the robot ports names
     * and append the specific part and device required
@@ -57,8 +57,8 @@ bool lfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
     robotName             = rf.check("robot", 
                            Value("icub"), 
                            "Robot name (string)").asString();
-    robotPortName         = "/" + robotName + "/head";
-
+    robotPortName         = "/" + robotName + "/head";\
+    
     /*
     * attach a port of the same name as the module (prefixed with a /) to the module
     * so that messages received from the port are redirected to the respond method
@@ -72,10 +72,48 @@ bool lfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
     }
 
     attach(handlerPort);                  // attach to port
+    
 
-    cfThread=new lfCollectorThread();
-    cfThread->setName(getName().c_str());
-    cfThread->start();
+    // --------------------------------------------
+    lfThread=new lfCollectorThread();
+    lfThread->setName(getName().c_str());
+    
+    /*
+    * set the period between two successive synchronisations between viewer and events
+    */
+    synchPeriod            = rf.check("synchPeriod", 
+                           Value(10000), 
+                           "synchronisation period (int)").asInt();
+    lfThread->setSynchPeriod(synchPeriod);
+
+    /*
+    * set the retinaSize (considering squared retina)
+    */
+    retinalSize            = rf.check("retinalSize", 
+                           Value(128), 
+                           "retinalSize (int)").asInt();
+    lfThread->setRetinalSize(retinalSize);
+
+    
+    /* checking whether the module synchronizes with single camera or stereo camera
+     */
+    if( rf.check("stereo")) {
+        lfThread->setStereo(true);
+    }
+    else {
+        lfThread->setStereo(false);
+    }
+    
+    /**
+     * checking whether the viewer represent log-polar information
+     */
+    if( rf.check("logpolar")) {
+        lfThread->setLogPolar(true);
+    }
+    else {
+        lfThread->setLogPolar(false);
+    }
+    lfThread->start();
 
     return true ;       // let the RFModule know everything went well
                         // so that it will then run the module
@@ -89,8 +127,9 @@ bool lfCollectorModule::interruptModule() {
 bool lfCollectorModule::close() {
     handlerPort.close();
     /* stop the thread */
-    cfThread->stop();
-    //delete cfThread;
+    lfThread->stop();
+    printf("stopped the collector thread \n");
+    //delete lfThread;
     return true;
 }
 
@@ -119,10 +158,6 @@ bool lfCollectorModule::updateModule() {
     return true;
 }
 
-double lfCollectorModule::getPeriod() {
-    /* module periodicity (seconds), called implicitly by myModule */
-    return 1.0;
-}
 
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------

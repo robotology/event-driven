@@ -1,7 +1,7 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /* 
- * Copyright (C) 2011 RobotCub Consortium, European Commission FP6 Project IST-004370
+ * Copyright (C) 2010 RobotCub Consortium, European Commission FP6 Project IST-004370
  * Authors: Rea Francesco
  * email:   francesco.rea@iit.it
  * website: www.robotcub.org 
@@ -39,9 +39,10 @@
 class plotterThread : public yarp::os::RateThread {
 private:    
     int count;                          // loop counter of the thread
-    float lambda;                       // integration factor
-    int width, height;                  // dimension of the extended input image (extending)
-    int height_orig, width_orig;        // original dimension of the input and output images
+    //float lambda;                       // integration factor
+    //int width, height;                  // dimension of the extended input image (extending)
+    //int height_orig, width_orig;        // original dimension of the input and output images
+    int retinalSize;                     // dimension of the squared retina
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > leftPort;                 // port whre the output (left) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > rightPort;                // port whre the output (right) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > leftIntPort;              // port whre the output (left integral) is sent
@@ -64,7 +65,7 @@ private:
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRightThreshold;                                    //image representing the signal on the right camera (threshold)
     std::string name;                           // rootname of all the ports opened by this thread
     bool synchronised;                          // flag to check whether the microsecond counter has been synchronised
-                                                // local copy of the events read
+    bool stereo;                                // flag indicating the stereo characteristic of the synchronization
 public:
     /**
     * default constructor
@@ -101,6 +102,12 @@ public:
     * @param str rootname as a string
     */
     void setName(std::string str);
+
+    /**
+    * function that set the stereo mode for event synchronization
+    * @param value boolean to be assigned
+    */
+    void setStereo(bool value){ stereo = value;};    
     
     /**
     * function that returns the original root name and appends another string iff passed as parameter
@@ -138,6 +145,13 @@ public:
                        yarp::sig::ImageOf<yarp::sig::PixelMono>* imgBW, yarp::sig::ImageOf<yarp::sig::PixelMono>* imgGray,  
                        yarp::sig::ImageOf<yarp::sig::PixelMono>* imgTh );
     
+    /**
+     * @brief function thatset the dimension of the output image
+     * @param value the dimension in pixels of the retina device
+     */
+    void setRetinalSize(int value) {
+        retinalSize = value;
+    }
     
 
 };

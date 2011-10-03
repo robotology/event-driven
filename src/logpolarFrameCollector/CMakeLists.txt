@@ -6,11 +6,12 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 SET(KEYWORD "logpolarFrameCollector")
 PROJECT(${KEYWORD})
 
-
+set(ICUB_CONTRIB_DIRS $ENV{ICUB_DIR}/include)
 INCLUDE_DIRECTORIES(
     ${PROJECT_SOURCE_DIR}/include
     ${YARP_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS}
+    ${ICUB_CONTRIB_DIRS}    
 )
 
 # Search for source code.
@@ -29,6 +30,7 @@ IF (folder_source)
     TARGET_LINK_LIBRARIES(${KEYWORD} 
       ${YARP_LIBRARIES}
       ${OpenCV_LIBRARIES}
+      eMorphLib
       )	
 
     INSTALL_TARGETS(/bin ${KEYWORD})

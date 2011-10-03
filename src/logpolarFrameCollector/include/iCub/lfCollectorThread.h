@@ -1,7 +1,7 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /* 
- * Copyright (C) 2011 RobotCub Consortium, European Commission FP6 Project IST-004370
+ * Copyright (C) 2010 RobotCub Consortium, European Commission FP6 Project IST-004370
  * Authors: Rea Francesco
  * email:   francesco.rea@iit.it
  * website: www.robotcub.org 
@@ -19,7 +19,7 @@
  */
 
 /**
- * @file lfCollectorThread.h
+ * @file cfCollectorThread.h
  * @brief Definition of a thread that receive events from DVS camera and extracts frame-based representations of the readings
  * (see dvsGrabberModule.h).
  */
@@ -32,6 +32,7 @@
 #include <iCub/logpolarFrameConverter.h>
 #include <iCub/plotterThread.h>
 #include <iostream>
+#include <fstream>
 #include <time.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -49,42 +50,48 @@ private:
     struct timeval tvstart,tvend;
     //struct timespec start_time, stop_time;
     u64 Tnow;
-    unsigned long int precl;
-    unsigned long int lc;
-    unsigned long int lcprev;
-    unsigned long int rcprev;
-    unsigned long int rc;
-    
+    unsigned long precl;
+    unsigned long lc;
+    unsigned long lcprev;
+    unsigned long rcprev;
+    unsigned long rc;
+    FILE* raw;                          // file dumper for debug
     double microseconds;
     double microsecondsPrev;
     int countStop;                      // counter of equal timestamp
     int countDivider;                   // divider of the count
+    int retinalSize;                    // dimension of the retina device
     int width, height;                  // dimension of the extended input image (extending)
     int height_orig, width_orig;        // original dimension of the input and output images
+    int synchPeriod;                    // synchronization period between events and viewer
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPort;            // port whre the output (left) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPortRight;       // port whre the output (right) is sent
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeft;                                  //image representing the signal on the leftcamera
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRight;                                 //image representing the signal on the right camera
     std::string name;                   // rootname of all the ports opened by this thread
     bool verb;
-    bool synchronised;                       // flag to check whether the microsecond counter has been synchronised
-    bool greaterHalf;                     // indicates whether the counter has passed the half of the range
-    bool idle;                            // controls idle mode
-    bool firstRun;                        // flag that check whether the run is a first useful run    
+    bool synchronised;                   // flag to check whether the microsecond counter has been synchronised
+    bool greaterHalf;                    // indicates whether the counter has passed the half of the range
+    bool idle;                           // controls idle mode
+    bool firstRun;                       // flag that check whether the run is a first useful run    
+    bool logPolar;                       // flag that indicates whether the viewer represent logpolar information
+    bool stereo;                         // flag that indicates whether the synchronization is stereo 
     unsigned long minCount;              // minimum timestamp allowed for the current frame
     unsigned long maxCount;              // maximum timestamp allowed for the current frame
     unsigned long minCountRight;
     unsigned long maxCountRight;
     double startTimer;
+    double interTimer;
     double endTimer;
     yarp::os::Semaphore mutex;          // semaphore thar regulates the access to the buffer resource
     clock_t endTime,startTime;
     long T1,T2;
-    plotterThread* pThread;                  // plotterThread for the trasformation of the event in images
-    cFrameConverter* cfConverter;           //receives real-time events
-    unmask unmask_events;                   // object that unmask events
+    plotterThread* pThread;                 // plotterThread for the trasformation of the event in images
+    lFrameConverter* lfConverter;           // receives real-time events
+    unmask* unmask_events;                   // object that unmask events
     char* bufferRead;                       // buffer of events read from the port
     char* bufferCopy;                       // local copy of the events read
+    FILE* fout;                             // file for temporarely savings of events
 public:
     /**
     * default constructor
@@ -145,6 +152,31 @@ public:
     */
     void getMonoImage(yarp::sig::ImageOf<yarp::sig::PixelMono>* image, unsigned long minCount,unsigned long maxCount, bool camera);
 
+    /**
+     * @brief function that describes whether the synchronization is stereo
+     * @param value boolean value to assign to the variable
+     */
+    void setStereo(bool value) {stereo = value; };
+
+    /**
+     * @brief function thatset the dimension of the output image
+     * @param value the dimension in pixels of the retina device
+     */
+    void setRetinalSize(int value) {
+        retinalSize = value;
+    }
+
+    /**
+     * @brief function that sets the synchronization period between the events and viewer
+     * @param value integer representing the synchronization period (minim. 1 runcycle)
+     */
+    void setSynchPeriod(int value) {synchPeriod = value; };
+
+    /**
+     * @brief function that indicates whether the viewer reppresent logpolar information
+     */
+    void setLogPolar(int value) {logPolar = value; };
+    
 };
 
 #endif  //_CF_COLLECTOR_THREAD_H_

@@ -19,37 +19,33 @@
  */
 
 /**
- * @file logpolarFrameConverter.h
+ * @file cartesianFrameConverter.h
  * @brief A class inherited from the bufferefPort class created in order to read events.
  */
 
 #ifndef _LOGPOLAR_FRAME_CONVERTER_H
 #define _LOGPOLAR_FRAME_CONVERTER_H
 
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <string>
-#include <ctime>
-#include <list>
 
-#include <iCub/unmask.h>
+
 #include <iCub/convert.h>
-#include <iCub/sendingBuffer.h>
+#include <iCub/eventBuffer.h>
+//#include <iCub/eventConversion.h>
+#include <iCub/unmask.h> // Should use library instead of this
 #include <iCub/config.h>
 
 #include <yarp/os/Network.h>
 #include <yarp/os/BufferedPort.h>
 
-class cFrameConverter:public yarp::os::BufferedPort<sendingBuffer> {
+class lFrameConverter:public yarp::os::BufferedPort<eventBuffer> {
 public:
-    cFrameConverter();
-    ~cFrameConverter();
+    lFrameConverter();
+    ~lFrameConverter();
 
     /**
     * overwritten function for handling events as soon as they arrive
     */
-    virtual void onRead(sendingBuffer& b);
+    virtual void onRead(eventBuffer& b);
 
 
     /**
@@ -102,7 +98,24 @@ public:
      */
     void resetTimestamps();
 
+    /* 
+     *function that resets the buffer of conversion
+     */
+    void reset();
+
+    /**
+     * function return whether the conversion is valid
+     */
     bool isValid(){return valid;};
+
+
+    /**
+     * @brief function thatset the dimension of the output image
+     * @param value the dimension in pixels of the retina device
+     */
+    void setRetinalSize(int value) {
+        retinalSize = value;
+    }
 
 private:
     bool valid;
@@ -117,14 +130,17 @@ private:
     char* pcRead;                                               // pointer to the location where to read events
     char* pcBuffer;                                             // pointer where to buffer events
 
-    unmask unmask_events;           // object in charge of unmasking the events
+    //unmask unmask_events;           // object in charge of unmasking the events
     converter convert_events;       // object in charge of converting the events into an image
     yarp::os::Semaphore mutex;      // semaphore for thehandling resource buffer
     clock_t start_u;
     clock_t start_p;
     clock_t stop;
+
+    FILE* readEvents;
+    FILE* fout;
 };
 
-#endif //_LOGPOLAR_FRAME_CONVERTER_H
+#endif //_CARTESIAN_FRAME_CONVERTER_H
 //----- end-of-file --- ( next line intentionally left blank ) ------------------
 
