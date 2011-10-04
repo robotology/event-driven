@@ -23,10 +23,11 @@
  * @brief A class inherited from the bufferefPort (see header logFrameConverter.h)
  */
 
-#include <iCub/logFrameConverter.h>
 #include <cassert>
 #include <cstdlib>
 
+#include <iCub/config.h>
+#include <iCub/logFrameConverter.h>
 
 // note that bufferdim has to be 1 chunksize bigger TH3 to avoid overflows
 //#define BUFFERDIM 65536 //4096 //6144  //36864
@@ -35,13 +36,13 @@
 //#define TH3 49152 //3072
 //#define CHUNKSIZE 16384 //1024//2048
 
-#define VERBOSE
+//#define VERBOSE
 
-#define CHUNKSIZE 32768 
-#define TH1       32768  
-#define TH2       65536
-#define TH3       98304
-#define BUFFERDIM 131702
+//#define CHUNKSIZE 32768 
+//#define TH1       32768  
+//#define TH2       65536
+//#define TH3       98304
+//#define BUFFERDIM 131702
 
 //#define CHUNKSIZE 8192 
 //#define TH1       8192  
@@ -116,7 +117,6 @@ void logFrameConverter::copyChunk(char* bufferCopy, char* flagBuffer) {
     mutex.post(); 
 
 #ifdef VERBOSE
-    printf("Verbose in copychunk");
     int num_events = CHUNKSIZE >> 3 ;
     uint32_t* buf2 = (uint32_t*)bufferCopy;
     uint32_t* bufflag = (uint32_t*) flagBuffer;
@@ -145,7 +145,7 @@ void logFrameConverter::copyChunk(char* bufferCopy, char* flagBuffer) {
 // reading out from a circular buffer with 2 entry points
 void logFrameConverter::onRead(eventBuffer& i_ub) {
     valid = true;
-    printf("onRead ");
+    //printf("onRead ");
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() ;      // number of bits received / 8 = bytes received
     //printf("dim %d \n", dim);

@@ -23,11 +23,13 @@
  * @brief Implementation of the thread (see header logSortThread.h)
  */
 
-#include <iCub/logSortThread.h>
 #include <cstring>
 #include <cassert>
 #include <cstdlib>
 #include <time.h>
+
+#include <iCub/logSortThread.h>
+#include <iCub/config.h>
 
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -38,10 +40,10 @@ using namespace std;
 #define THRATE        5             // ratethread period
 #define STAMPINFRAME                // 10 ms of period times the us in 1 millisecond + time for computing
 #define retinalSize   128           // deprecated
-#define CHUNKSIZE     32768//8192          //16384 //1024  // dimension of the received packet
+//#define CHUNKSIZE     32768//8192          //16384 //1024  // dimension of the received packet
 #define dim_window    5             // deprecated 
 #define synch_time    1000          // deprecated
-#define SIZE_PACKET   8192          // deprecated
+//#define SIZE_PACKET   8192          // deprecated
 #define RESET_COUNTER 200           // counter for the resetting of the EM buffer
 
 
@@ -55,11 +57,11 @@ logSortThread::logSortThread() : RateThread(THRATE) {
     minCount = 0; //initialisation of the timestamp limits of the first frame
     idle = false;
     bufferCopy   = (char*) malloc(CHUNKSIZE);
-    memset(bufferCopy, 0, CHUNKSIZE);
     flagCopy     = (char*) malloc(CHUNKSIZE);
-    memset(flagCopy, 0, CHUNKSIZE);
     resultCopy   = (char*) malloc(CHUNKSIZE);
+    memset(bufferCopy, 0, CHUNKSIZE);
     memset(resultCopy, 0, CHUNKSIZE);
+    memset(flagCopy,   0, CHUNKSIZE);
     //bufferRead = (char*) malloc(8192);
     countStop = 0;
     verb = false;    
@@ -202,9 +204,7 @@ int logSortThread::selectUnreadBuffer(char* bufferCopy, char* flagCopy, char* re
             fprintf(fout,"%08X %08X \n",flag1,flag2);
         }
     }
-#endif
-
-    
+#endif    
 
     //printf("in selectUnreadBuffer2 0x%x 0x%x \n",bufferCopy, &bufferCopy);
 
@@ -225,7 +225,7 @@ int logSortThread::selectUnreadBuffer(char* bufferCopy, char* flagCopy, char* re
     }
 
     resultCopy -= sum;
-    flagCopy -= CHUNKSIZE;
+    flagCopy   -= CHUNKSIZE;
     bufferCopy -= CHUNKSIZE;
     
     
@@ -260,19 +260,26 @@ void logSortThread::run() {
     count++;
     //printf("initialised the timer \n");
     double tinit = Time::now();
+    double tend;
+    double difftime1, difftime2;
     if(!idle) { 
         // reads the buffer received
         // saves it into a working buffer
-        printf("returned 0x%x 0x%x \n", bufferCopy, flagCopy);
+        //printf("returned 0x%x 0x%x \n", bufferCopy, flagCopy);
         lfConverter->copyChunk(bufferCopy, flagCopy);
-        printf("after copy chunk 0x%x 0x%x \n", bufferCopy, flagCopy);
+        //printf("after copy chunk 0x%x 0x%x \n", bufferCopy, flagCopy);
         int unreadDim = selectUnreadBuffer(bufferCopy, flagCopy, resultCopy);
 
         if(unreadDim!=0) {
-           printf("Unmasking events:  %d \n", unreadDim);
+            //printf("Unmasking events:  %d \n", unreadDim);
            // extract a chunk/unmask the chunk       
            unmask_events.logUnmaskData(resultCopy,unreadDim,verb);
         }
+
+        // ---  time measure --- //
+        tend = Time::now();
+        difftime1 = tend - tinit;
+        // --------------------- //
 
         //if(verb) {
         //    verb = false;
@@ -325,7 +332,6 @@ void logSortThread::run() {
             //minCountRight = unmask_events.getLastTimestamp();
             count = synch_time - 200;
         }
- 
 
         //synchronising the thread every time interval 1000*period of the thread
         //if (count % synch_time == 0) {
@@ -380,22 +386,22 @@ void logSortThread::run() {
 
 	    */
 	
-        int dim;
+        int dimCD, dimEM, dimIF;
         aer *pCD, *pEM, *pIF;
 
         //TODO : code MUTEXes in these lines! Strictly Necessary!
-        unmask_events.getCD(&pCD, &dim);
-        if (dim > 0) {
-            printf("dimCD :  %d \n", dim);
+        unmask_events.getCD(&pCD, &dimCD);
+        if (dimCD > 0) {
+            //printf("dimCD :  %d \n", dim);
+            sendBuffer(&portCD, pCD, dimCD);
+            unmask_events.resetCD();
         }
-        sendBuffer(&portCD, pCD, dim);
-        unmask_events.resetCD();
         
         // ----------------------------------------------- 
-        /*
-        unmask_events.getEM(&pEM, &dim);
-        if (dim > 0) {
-            printf("dimEM :             %d \n", dim);
+        
+        unmask_events.getEM(&pEM, &dimEM);
+        if (dimEM > 0) {
+            //printf("dimEM :             %d \n", dim);
         }
 
         //for (int i = 0; i < dim; i++) {
@@ -406,7 +412,7 @@ void logSortThread::run() {
         //}                                       
 
         //printf("dimEM :  %d \n", dim);
-        sendBuffer(&portEM, pEM, dim);
+        sendBuffer(&portEM, pEM, dimEM);
         if(count % 1000 == 0){
             //printf("_________________ \n");
             unmask_events.resetEM1();
@@ -415,24 +421,26 @@ void logSortThread::run() {
             unmask_events.resetEM4();
             //unmask_events.resetTOTEM();
         }
-        */
+        
         // --------------------------------------------
         
-        /*
-        unmask_events.getIF(&pIF, &dim);
-        if (dim > 0) {
+        
+        unmask_events.getIF(&pIF, &dimIF);
+        if (dimIF > 0) {
             //printf("dimIF :                                 %d \n", dim);
+            sendBuffer(&portIF, pIF, dimIF);
+            unmask_events.resetIF();
         }
-        sendBuffer(&portIF, pIF, dim);
-        unmask_events.resetIF();
-        */
-    }
+
+        
+   
     
-    // measuring execution time of the module
-    double tend = Time::now();
-    double difftime = tend - tinit;
-    if(difftime > 0.05) {
-        printf("time: %f \n", difftime);
+        // measuring execution time of the module
+        tend = Time::now();
+        difftime2 = tend - tinit;
+        if(count % 100 == 0) {
+            printf("time us: %f %f %d %d %d \n", difftime1 * 1000000, difftime2 * 1000000, dimCD, dimEM, dimIF);
+        }
     }
 }
 
@@ -443,7 +451,7 @@ void logSortThread::sendBuffer(BufferedPort<eventBuffer>* port, aer* buffer, int
     int szSent = sz * 8; // dimension of the event times the bytes per event
     //aer* copyEvent = buffer;
     
-    //unsigned char* copyBuffer = (unsigned char*) buffer;
+    // unsigned char* copyBuffer = (unsigned char*) buffer;
     //for (int i = 0; i < szSent; i++) {
     //    if (*copyBuffer < 0) {
     //        *copyBuffer = 256 - *copyBuffer;
@@ -456,11 +464,11 @@ void logSortThread::sendBuffer(BufferedPort<eventBuffer>* port, aer* buffer, int
     if (port->getOutputCount()) {           
         char* pBuffer = (char*) buffer;
        
-        //for (int i = 0; i < sz; i++) {
-        //    u32 blob      = buffer[i].address;
-        //    u32 timestamp = buffer[i].timestamp;
-        //    fprintf(fout,"%08x %08x \n",blob,timestamp);
-        //}
+        /*for (int i = 0; i < sz; i++) {
+            u32 blob      = buffer[i].address;
+            u32 timestamp = buffer[i].timestamp;
+            fprintf(fout,"%08x %08x \n",blob,timestamp);
+            }*/
                
         //printf("sending : %d 0x%x \n", szSent, buffer);
         eventBuffer data2send(pBuffer, szSent);    

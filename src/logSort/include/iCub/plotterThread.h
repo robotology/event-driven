@@ -34,8 +34,6 @@
 #include <iostream>
 
 
-
-
 class plotterThread : public yarp::os::RateThread {
 private:    
     int count;                          // loop counter of the thread

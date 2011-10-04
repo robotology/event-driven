@@ -28,25 +28,44 @@
 
 #include <list>
 #include <cstring>
+#include <inttypes.h>
 
 #define MAX_THREAD 4
 #define USE_PACKET_SEQUENCE_NUMBER 1
-
 #define SIZE_RECT 15
 
-#define SIZE_OF_EVENT 8192  //default:8192 
-// SIZE_OF_DATA = 8byte * SIZE_OF_EVENT
+//#define SIZE_OF_DATA  32768 // SIZE_OF_DATA = 8byte * SIZE_OF_EVENT
 
-//#define SIZE_OF_DATA 1024
-//#define SIZE_OF_DATA 2048
-//#define SIZE_OF_DATA 4096
-//#define SIZE_OF_DATA 8192
-//#define SIZE_OF_DATA 9216
-//#define SIZE_OF_DATA 16384
-//#define SIZE_OF_DATA 24576
-//#define SIZE_OF_DATA 32768
-#define SIZE_OF_DATA 65536
-//#define SIZE_OF_DATA 131072
+#define EVENTS128            // defines the dimension of the buffers
+
+#ifdef EVENTS4096
+ #define SIZE_OF_EVENT 4096   //default:8192  CHUNKSIZE / 8  
+ #define CHUNKSIZE     32768 
+ #define TH1           32768  
+ #define TH2           65536
+ #define TH3           98304
+ #define BUFFERDIM     131702
+#endif
+    
+#ifdef EVENTS1024
+ #define SIZE_OF_EVENT 1024   //default:8192  CHUNKSIZE / 8  
+ #define CHUNKSIZE     8192 
+ #define TH1           8192  
+ #define TH2           16384
+ #define TH3           24576
+ #define BUFFERDIM     32768
+#endif
+
+#ifdef EVENTS128
+ #define SIZE_OF_EVENT 128   //default:8192  CHUNKSIZE / 8  
+ #define CHUNKSIZE     1024 
+ #define TH1           1024  
+ #define TH2           2048
+ #define TH3           3072
+ #define BUFFERDIM     4096
+#endif
+
+
 
 typedef struct s_AER_struct {
     int x;
@@ -67,6 +86,13 @@ typedef struct s_GROUP {
     int c_x;
     int c_y;
 }t_GROUP;
+
+#define u32 uint32_t
+
+struct aer {
+    u32 address;
+    u32 timestamp;
+};
 
 //#define FAST
 #define SLOW

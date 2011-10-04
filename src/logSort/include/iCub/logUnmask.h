@@ -40,7 +40,7 @@
 //typedef unsigned long uint32_t;
 
 
-#define u32 uint32_t
+
 
 /*struct aer {
     u32 timestamp;
@@ -48,13 +48,11 @@
 };
 */
 
-struct aer {
-    u32 address;
-    u32 timestamp;
-};
+
 
 //Other dependency
 #include <iCub/config.h>
+#include <iCub/processingThread.h>
 
 typedef short feature[4];
 
@@ -82,7 +80,8 @@ private:
     struct aer* bufferEM2;                // buffer for EM2
     struct aer* bufferEM3;                // buffer for EM3
     struct aer* bufferEM4;                // buffer for EM4
-    struct aer* cartEM;                 // vector of mean values across EMs in cartesian space
+    //struct aer* cartEM;                   // vector of mean values across EMs in cartesian space
+    //struct aer* pEM;                      // pointer to EM vector  
 
     //int* fifoEvent;
     //int* fifoEvent_temp;
@@ -123,6 +122,7 @@ private:
     yarp::os::Semaphore countEventLocker2;
 
     feature* logChip_LUT;
+    processingThread * pThread;
 
 public:
     /**
@@ -310,10 +310,7 @@ public:
     */
     void addBufferEM(aer* event);
 
-    /**
-     * @brief function that resets the counter of EMs
-     */     
-    void resetTOTEM() {memset(cartEM, 0, retinalSize * retinalSize * sizeof(unsigned long)); };
+    
 
     /**
      * @brief function that returns the pointer to the buffer of INTEGRATE 'n' FIRE EVENT

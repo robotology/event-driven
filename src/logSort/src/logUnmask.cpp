@@ -23,9 +23,11 @@
  * @brief A class for unmasking the logEvent (see the header unmask.h)
  */
 
-#include <iCub/logUnmask.h>
 #include <math.h>
 #include <cassert>
+
+#include <iCub/logUnmask.h>
+#include <iCub/config.h>
 
 using namespace std;
 using namespace yarp::os;
@@ -36,7 +38,7 @@ using namespace yarp::os;
 #define minKillThres 1000
 #define UNMASKRATETHREAD 1
 #define constInterval 100000
-#define SIZE_OF_EVENT 4096 //1024        // CHUNKSIZE / 8     
+//#define SIZE_OF_EVENT 4096 //1024        // CHUNKSIZE / 8     
 #define X_DIMENSION 144
 #define Y_DIMENSION 72
 
@@ -81,41 +83,48 @@ logUnmask::logUnmask() : RateThread(UNMASKRATETHREAD){
     countEM4 = 0;
     countIF  = 0;
 
-    verb = false;
-    numKilledEvents = 0;
-    lasttimestamp = 0;
-    previous_timestamp = 0;
-    validLeft = false;
+    verb       = false;
+    validLeft  = false;
     validRight = false;
+    temp1      = true;
+
+    numKilledEvents    = 0;
+    lasttimestamp      = 0;
+    previous_timestamp = 0;
+
     eldesttimestamp = MAXVALUE;
-    countEvent = 0;
+    countEvent  = 0;
     countEvent2 = 0;
-    minValue = 0;
-    maxValue = 0;
-    xmask = 0x000000ff;      // masking for asv
-    ymask = 0x00007f00;
-    xmasklong = 0x000000ff;
-    yshift = 8;
-    yshift2= 16,
-        xshift = 0;          // shift for asv
+    minValue    = 0;
+    maxValue    = 0;
+
+    xmask       = 0x000000ff;      // masking for asv
+    ymask       = 0x00007f00;
+    xmasklong   = 0x000000ff;
+    polmask     = 0x00000001;
+    cameramask  = 0x00008000;
+    
+    yshift   = 8;
+    yshift2  = 16;
+    xshift   = 0;          // shift for asv
     polshift = 0;
-    polmask = 0x00000001;
     camerashift = 15;
-    cameramask = 0x00008000;
     retinalSize = 128;
-    temp1=true;
+
 
     buffer          = new int[retinalSize * retinalSize];      
     bufferRight     = new int[retinalSize * retinalSize];    
     timeBufferRight = new unsigned long[retinalSize * retinalSize];
     timeBuffer      = new unsigned long[retinalSize * retinalSize];    
-    cartEM          = new aer[24 * 24];
+    //cartEM          = new aer[24 * 24];
+    //pEM             = new aer[24 * 24];
 
     memset(buffer,         0, retinalSize * retinalSize * sizeof(int));
     memset(timeBuffer,     0, retinalSize * retinalSize * sizeof(unsigned long));
     memset(bufferRight,    0, retinalSize * retinalSize * sizeof(int));
     memset(timeBufferRight,0, retinalSize * retinalSize * sizeof(unsigned long));
-    memset(cartEM,         0, 24 * 24 * sizeof(aer));
+    //memset(cartEM,         0, 24 * 24 * sizeof(aer));
+    //memset(pEM,            0, 24 * 24 * sizeof(aer));
     
 
     /*fifoEvent=new int[maxPosEvent];
@@ -187,6 +196,7 @@ logUnmask::logUnmask() : RateThread(UNMASKRATETHREAD){
         plogChip[i][2] = -1;
         plogChip[i][3] = -1;
     }
+
 }
 
 logUnmask::~logUnmask() {
@@ -203,7 +213,8 @@ logUnmask::~logUnmask() {
     delete[] bufferEM2;
     delete[] bufferEM3;
     delete[] bufferEM4;
-    delete[] cartEM;
+    //delete[] cartEM;
+    //delete[] pEM;
 }
 
 bool logUnmask::threadInit() {
@@ -460,6 +471,13 @@ bool logUnmask::threadInit() {
             fprintf(fout," %d %d    %d %d %d %d \n", x, y, metax, metay, pol, type);
         }        
     }
+
+    //starting processing thread    
+    pThread = new processingThread();
+    pThread->setEM(bufferEM1, bufferEM2, bufferEM3, bufferEM4);
+    pThread->start();
+    
+    
     return true;
 }
 
@@ -482,16 +500,13 @@ int logUnmask::getMaxValue() {
 
 void logUnmask::getCD(aer** pointerCD, int* dimCD) {
     *pointerCD = bufferCD;
-    /*        
-    for (int i = 0; i <= countCD ; i++) {
-        
+    *dimCD = countCD;     
+    /*for (int i = 0; i <= countCD ; i++) {        
         unsigned long blob      = (u32) bufferCD[i].address;
         unsigned long timestamp = (u32) bufferCD[i].timestamp;
         fprintf(fout,"%d > %08x %08x \n",i,blob,timestamp);
-        //copyEvent++;
-    }
-    */
-    *dimCD = countCD;
+        }*/
+    
 }
 
 void logUnmask::getIF(aer** pointerIF, int* dimIF) {
@@ -500,12 +515,13 @@ void logUnmask::getIF(aer** pointerIF, int* dimIF) {
     *dimIF = countIF;
 }
 
+/*
 void logUnmask::getEM(aer** pointerEM, int* dimEM) {
     //printf("counted EM %d \n", countEM);
     //*pointerEM = bufferEM1;
     //*dimEM = countEM1 + countEM2 + countEM3 + countEM4;
     *dimEM = 0;
-    aer* pEM = new aer[24 * 24];
+    
     for (int pos = 0; pos < 24 * 24; pos++){
         if(cartEM[pos].address != 0) {
             //printf("cartEM[pos] %08x \n",cartEM[pos].address);
@@ -514,38 +530,13 @@ void logUnmask::getEM(aer** pointerEM, int* dimEM) {
         }
     }
     *pointerEM = pEM;
-    delete[] pEM;
+    //delete[] pEM;
     memset(cartEM,0, 24 * 24 * sizeof(aer));
 }
+*/
 
-void logUnmask::addBufferEM(aer* event){
-    // extracts coordinate in the output image size
-    unsigned long current_blob      = event->address;
-    unsigned long current_timestamp = event->timestamp;
-    unsigned int current_value      = (current_blob & 0xffff0000) >> 16;
-   
-    unsigned short x = (current_blob & 0x00FE) >> 1;
-    unsigned short y = (current_blob & 0xFF00) >> 8;
-    printf("current_blob %08x position x %d y %d value %d \n",current_blob, x, y, current_value);
-         
-    // compare with the  event was inside
-    int position = x + y * 24;
-    if((cartEM[position].address == 0)&&(cartEM[position].timestamp == 0)){
-        cartEM[position].address   = event->address;
-        cartEM[position].timestamp = event->timestamp;
-    }
-    else {
-        //taking the mean value of the two events;
-        unsigned long old_blob      = cartEM[position].address;
-        unsigned long old_timestamp = cartEM[position].timestamp;
-        unsigned int  old_value     = (old_blob & 0xffff0000) >> 16;
-        unsigned int  new_value     = (int)floor((current_value + old_value)/2);
-        printf("old_blob %x old_value %d current_value %d  new_value %d \n",old_blob, old_value,current_value, new_value);
-        unsigned long new_timestamp = (old_timestamp + current_timestamp) >> 1;
-        unsigned long new_blob      = (new_value << 16) & old_blob; 
-        cartEM[position].address    = new_blob;
-        cartEM[position].timestamp  = new_timestamp;
-    }
+void logUnmask::getEM(aer** pointerEM, int* dimEM) {
+
 }
 
 
@@ -628,30 +619,30 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
             //fout<<hex<<a<<" "<<hex<<t<<endl;
         }
 
-        unsigned short x    = ((blob & xmask) >> xshift);
-        x -= 112;
-        unsigned short y    = ((blob & ymask) >> yshift);        
-        int flipy = flipBits(y,7);
-        y = flipy - 56;
+        //unsigned short x    = ((blob & xmask) >> xshift);
+        //x -= 112;
+        //unsigned short y    = ((blob & ymask) >> yshift);        
+        //int flipy = flipBits(y,7);
+        //y = flipy - 56;
+        //printf("####### \n %08X %d %d > %d %d %d \n",blob, x, y, cartX, cartY, type);
                 
-        logUnmaskEvent((unsigned long)blob, cartX, cartY, polarity, type);
-        
-        //    printf("####### \n %08X %d %d > %d %d %d \n",blob, x, y, cartX, cartY, type);        
+        logUnmaskEvent((unsigned long)blob, cartX, cartY, polarity, type);               
         
         //cartY = retinalSize - cartY;   //corrected the output of the camera (flipped the image along y axis)
         //cartX = retinalSize - cartX;
         int metaX, metaY, pol;
         unsigned long int newBlob;
-        if((x >= 144)||(y >= 72)) {
-            metaX = 0;
-            metaY = 0;
-            pol   = 0;
-        }
-        else{    
+
+        //if((x >= 144)||(y >= 72)) {
+        //    metaX = 0;
+        //    metaY = 0;
+        //    pol   = 0;
+        //}
+        //else{    
             metaX = cartX;
             metaY = cartY;
             pol   = polarity;
-        }
+            //}
         
         logMaskEvent(metaX,metaY,pol,newBlob);
         unsigned long timestamp_diff = timestamp - previous_timestamp;
@@ -679,7 +670,7 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
             countCD++;                
         }
             break;
-            /*       
+                       
         case 1:{ //EM1
             //printf("Unmasked EM1 \n");
             if((blob!=0)||(timestamp!=0)) {
@@ -732,8 +723,8 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
             }
         } //EM4
         break;
-            */    
-            /*        
+                
+                    
         case 5:{ //IF
             //printf("Unmasked IF \n");
             //if((blob!=0)||(timestamp!=0)) {
@@ -746,161 +737,10 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
                 //}
         }// case 5
             break;
-            */
+                
         }// end of switch    
     } // end of for every event
 
-    //printf(" - - - - - - - - - - - - - - \n");
-    // searching the couples in EM1
-    /*
-    for(int i = 0; i< countEM1 ; i++){
-        //printf("analysing EM1 position %d \n", countEM1);
-        unsigned long blob = bufferEM1[i].address;
-        unsigned long timestampFound;
-        unsigned long timestamp = bufferEM1[i].timestamp;
-        timestampFound = look4opposite(bufferEM1,i,countEM1);
-        long diff =  timestampFound - timestamp;
-        unsigned long absdiff = std::abs(diff);
-        if(absdiff == 0) {
-            continue;
-        }
-        int numbits = 256;        
-        double max = 10000000;
-        double min = 0;
-        int value = floor(((double)absdiff /(max - min)) * 256.0);
-        if(value > 255) {
-            value = 255;
-        }
-        //printf("    buffer.address %08x   ",bufferEM1[i].address);
-        //printf("value %lu binaryvalue %d    ", absdiff,value);
-        bufferEM1[i].address = bufferEM1[i].address + (value<<16);
-        //printf(" buffer.address %08x \n",bufferEM1[i].address);
-        addBufferEM(&bufferEM1[i]);
-        
-        //printf("look4opposite EM1 %d: %08x %08x > %08x %d \n",i,blob, timestamp,timestampFound, absdiff);
-        //if(absdiff != 0) {
-        //    unsigned short x    = ((blob & 0x00FF) >> 1);
-        //    unsigned short y    = ((blob & 0x7F00) >> 8);
-        //    if(cartEM[x + y * retinalSize]= 0) {
-        //        cartEM[x + y * retinalSize] = absdiff;
-        //    }
-        //    else {
-        //        cartEM[x + y * retinalSize] = (cartEM[x + y * retinalSize] + absdiff)/2; 
-         //   }
-         //   }
-    }
-
-    //printf(" - - - - - - - - - - - - - - \n");
-    
-    // searching the couples in EM2    
-    for(int i = 0; i< countEM2 ; i++){
-        //printf("analysing EM2 position %d \n", countEM2);
-        unsigned long blob = bufferEM2[i].address;
-        unsigned long timestampFound;
-        unsigned long timestamp = bufferEM2[i].timestamp;
-        timestampFound = look4opposite(bufferEM2,i,countEM2);
-        long diff =  timestampFound - timestamp;
-        unsigned long absdiff = std::abs(diff);
-        if(absdiff == 0) {
-            continue;
-        }
-        int numbits = 256;        
-        double max = 10000000;
-        double min = 0;
-        int value = floor(((double)absdiff /(max - min)) * 256.0);
-        if(value > 255) {
-            value = 255;
-        }
-        //printf("    buffer.address %08x   ",bufferEM2[i].address);
-        //printf("value %lu binaryvalue %d    ", absdiff,value);
-        bufferEM2[i].address = bufferEM2[i].address + (value<<16);
-        //printf(" buffer.address %08x \n",bufferEM1[i].address);
-        addBufferEM(&bufferEM2[i]);
-    }
-    
-
-    //printf(" - - - - - - - - - - - - - - \n");
-    // searching the couples in EM3
-    
-    for(int i = 0; i< countEM3 ; i++){
-        //printf("analysing EM3 position %d \n", countEM3);
-        unsigned long blob = bufferEM3[i].address;
-        unsigned long timestampFound;
-        unsigned long timestamp = bufferEM3[i].timestamp;
-        timestampFound = look4opposite(bufferEM3,i,countEM3);
-        long diff =  timestampFound - timestamp;
-        unsigned long absdiff = std::abs(diff);
-        if(absdiff == 0) {
-            continue;
-        }
-        int numbits = 256;        
-        double max = 10000000;
-        double min = 0;
-        int value = floor(((double)absdiff /(max - min)) * 256.0);
-        if(value > 255) {
-            value = 255;
-        }
-        //printf("    buffer.address %08x   ",bufferEM3[i].address);
-        //printf("value %lu binaryvalue %d    ", absdiff,value);
-        bufferEM3[i].address = bufferEM3[i].address + (value<<16);
-        //printf(" buffer.address %08x \n",bufferEM3[i].address);
-        addBufferEM(&bufferEM3[i]);
-    }    
-    //printf(" - - - - - - - - - - - - - - \n");
-    
-
-    // searching the couples in EM4
-    for(int i = 0; i< countEM4 ; i++){
-        //printf("analysing EM4 position %d \n", countEM4);
-        unsigned long blob = bufferEM4[i].address;
-        unsigned long timestampFound;
-        unsigned long timestamp = bufferEM4[i].timestamp;
-        timestampFound = look4opposite(bufferEM4,i,countEM4);
-        long diff =  timestampFound - timestamp;
-        unsigned long absdiff = std::abs(diff);
-        if(absdiff == 0) {
-            continue;
-        }
-        int numbits = 256;        
-        double max = 10000000;
-        double min = 0;
-        int value = floor(((double)absdiff /(max - min)) * 256.0);
-        if(value > 255) {
-            value = 255;
-        }
-        //printf("    buffer.address %08x   ",bufferEM1[i].address);
-        //printf("value %lu binaryvalue %d    ", absdiff,value);
-        bufferEM4[i].address = bufferEM4[i].address + (value<<16);
-        //printf(" buffer.address %08x \n",bufferEM1[i].address);
-        addBufferEM(&bufferEM4[i]);
-    } 
-    */
-}
-
-unsigned long logUnmask::look4opposite(aer* buffer,int initPos, int countTOT){
-    unsigned long targetBlob;
-    unsigned long blob = buffer[initPos].address;
-    if (blob % 2 == 0) {
-        // high event looking for low
-        targetBlob = blob + 1;
-    }
-    else {
-        //high event looking for high
-        targetBlob = blob - 1;
-    }
-    bool found = false;
-    int i;
-    for (i = initPos + 1; (i< countTOT) && (!found); i++) {
-        if(buffer[i].address == targetBlob) {
-            found = true;
-        }        
-    }
-    if(found) {
-        return buffer[i].timestamp;
-    }
-    else {
-        return buffer[initPos].timestamp;
-    }
 }
 
 void logUnmask::logUnmaskEvent(unsigned int evPU, short& metax, short& metay, short& pol, short& type) {
@@ -994,6 +834,7 @@ void logUnmask::threadRelease() {
     printf("closing the dumping file \n");
     fclose(fout);
     printf("successfully close the dumping file \n");
+    pThread->stop();
 }
 
 

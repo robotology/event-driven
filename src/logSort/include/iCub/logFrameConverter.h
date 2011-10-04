@@ -38,13 +38,10 @@
 
 #include <iCub/logUnmask.h>
 #include <iCub/convert.h>
-//#include <iCub/sendingBuffer.h>
-//#include <iCub/config.h>
 
 #include <yarp/os/Network.h>
 #include <yarp/os/BufferedPort.h>
 #include <yarp/sig/all.h>
-
 
 
 class logFrameConverter:public yarp::os::BufferedPort<eventBuffer> {
