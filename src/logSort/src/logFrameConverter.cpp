@@ -37,17 +37,17 @@
 
 #define VERBOSE
 
-//#define CHUNKSIZE 32768 
-//#define TH1       32768  
-//#define TH2       65536
-//#define TH3       98304
-//#define BUFFERDIM 131702
+#define CHUNKSIZE 32768 
+#define TH1       32768  
+#define TH2       65536
+#define TH3       98304
+#define BUFFERDIM 131702
 
-#define CHUNKSIZE 8192 
-#define TH1       8192  
-#define TH2       16384
-#define TH3       24576
-#define BUFFERDIM 32768
+//#define CHUNKSIZE 8192 
+//#define TH1       8192  
+//#define TH2       16384
+//#define TH3       24576
+//#define BUFFERDIM 32768
 
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -71,10 +71,10 @@ logFrameConverter::logFrameConverter():convert_events(128,128) {
     printf("setting memory \n");
     memset(converterBuffer,0,BUFFERDIM);         // set unsigned char
     memset(unreadBuffer,  0, BUFFERDIM);        
-    pcBuffer = converterBuffer;
-    pcRead   = converterBuffer + TH1;
-    flagCopy = unreadBuffer;
-    flagRead = unreadBuffer + TH1;
+    pcBuffer = converterBuffer;      //saving events
+    pcRead   = converterBuffer + TH1;//reading events
+    flagCopy = unreadBuffer;         //saving flag
+    flagRead = unreadBuffer + TH1;   //reading flag
     unmask_events.start();
     printf("unmask event just started");
     previousTimeStamp = 0;
@@ -97,28 +97,26 @@ void logFrameConverter::copyChunk(char* bufferCopy, char* flagBuffer) {
     mutex.wait();  
     char* limit = converterBuffer +  BUFFERDIM - CHUNKSIZE;
     int value = limit - pcRead;
-    //printf("value =  %d \n");
     if(pcRead >= limit) {
-        memcpy(bufferCopy, pcRead,  limit-pcRead );
-        memset(pcRead, 0, limit-pcRead );
-        memcpy(flagBuffer, flagCopy,limit - pcRead );
-        memset(flagCopy, 0, converterBuffer + BUFFERDIM - pcRead);
-        pcRead   = converterBuffer;
+        memcpy(bufferCopy, pcRead, converterBuffer +  BUFFERDIM - pcRead );
+        memset(pcRead, 0,   converterBuffer +  BUFFERDIM - pcRead );
+        memcpy(flagBuffer,flagRead,converterBuffer +  BUFFERDIM - pcRead );
+        memset(flagRead, 0, converterBuffer +  BUFFERDIM  - pcRead);
+        pcRead   = converterBuffer + TH1; 
         flagCopy = unreadBuffer;
     }
-    else {        
-               flagCopy += CHUNKSIZE;
-        
+    else {       
         memcpy(bufferCopy, pcRead,   CHUNKSIZE);
         memset(pcRead, 0, CHUNKSIZE);  // zeroing events already read
-        memcpy(flagBuffer, flagCopy, CHUNKSIZE);        
-        memset(flagCopy, 0, CHUNKSIZE);
+        memcpy(flagBuffer, flagRead, CHUNKSIZE);        
+        memset(flagRead, 0, CHUNKSIZE);
         pcRead   += CHUNKSIZE;
- 
-        
+        flagCopy += CHUNKSIZE;
     }
+    mutex.post(); 
 
 #ifdef VERBOSE
+    printf("Verbose in copychunk");
     int num_events = CHUNKSIZE >> 3 ;
     uint32_t* buf2 = (uint32_t*)bufferCopy;
     uint32_t* bufflag = (uint32_t*) flagBuffer;
@@ -142,13 +140,12 @@ void logFrameConverter::copyChunk(char* bufferCopy, char* flagBuffer) {
     
     //countBuffer -= CHUNKSIZE;
     //flagBuffer = flagCopy;
-    mutex.post(); 
 }
 
 // reading out from a circular buffer with 2 entry points
 void logFrameConverter::onRead(eventBuffer& i_ub) {
     valid = true;
-    //printf("onRead ");
+    printf("onRead ");
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() ;      // number of bits received / 8 = bytes received
     //printf("dim %d \n", dim);
@@ -164,9 +161,9 @@ void logFrameConverter::onRead(eventBuffer& i_ub) {
 
     //mem copying
     memcpy(pcBuffer,receivedBuffer,dim);
-    memset(flagRead,1,dim);
+    memset(flagCopy,1,dim);
 
-    //#ifdef VERBOSE
+#ifdef VERBOSE
     //int num_events = dim >> 3 ;
     //uint32_t* buf2 = (uint32_t*)pcBuffer;
     //plotting out
@@ -175,26 +172,26 @@ void logFrameConverter::onRead(eventBuffer& i_ub) {
     //        unsigned long t         = buf2[2 * evt + 1];
     //        fprintf(fout,"%08X %08X \n",blob,t);        
     //    }
-    //#endif
+#endif
     
     if (totDim < TH1) {
         pcBuffer += dim;
-        flagRead += dim;
+        flagCopy += dim;
     }
     else if((totDim>=TH1)&&(totDim<TH2)&&(state!=1)){
         //printf("greater than TH1 \n");
         pcBuffer = converterBuffer + TH1;
-        flagRead = unreadBuffer    + TH1;
+        flagCopy = unreadBuffer    + TH1;
         pcRead   = converterBuffer + TH2;
-        flagCopy = unreadBuffer    + TH2;
+        flagRead = unreadBuffer    + TH2;
         state = 1;
     }
     else if(totDim >= TH2) {
         //printf("greater that TH2 \n");
         pcBuffer = converterBuffer;
-        flagRead = unreadBuffer;
+        flagCopy = unreadBuffer;
         pcRead   = converterBuffer + TH1;
-        flagCopy = unreadBuffer    + TH1;
+        flagRead = unreadBuffer    + TH1;
         totDim = 0;
         state = 0;
     }
@@ -367,7 +364,7 @@ void logFrameConverter::getMonoImage(ImageOf<PixelMono>* image, unsigned long mi
             //drawing the retina and the rest of the image separately
             int value = *pBuffer;
             unsigned long timestampactual = *pTime;
-            if (((timestampactual * 1.25) > minCount)&&((timestampactual * 1.25) < maxCount)) {   //(timestampactual != lasttimestamp)
+            if ((timestampactual  > minCount)&&(timestampactual  < maxCount)) {   //(timestampactual != lasttimestamp)
                 *pImage++ = (unsigned char) 127 + value;
                
             }

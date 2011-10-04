@@ -30,13 +30,13 @@
 using namespace std;
 using namespace yarp::os;
 
-#define MAXVALUE 114748364 //4294967295
+#define MAXVALUE 4294967295
 #define maxPosEvent 10000
 #define responseGradient 127
 #define minKillThres 1000
 #define UNMASKRATETHREAD 1
-#define constInterval 100000;
-#define SIZE_OF_EVENT 1024
+#define constInterval 100000
+#define SIZE_OF_EVENT 4096 //1024        // CHUNKSIZE / 8     
 #define X_DIMENSION 144
 #define Y_DIMENSION 72
 
@@ -527,8 +527,7 @@ void logUnmask::addBufferEM(aer* event){
     unsigned short x = (current_blob & 0x00FE) >> 1;
     unsigned short y = (current_blob & 0xFF00) >> 8;
     printf("current_blob %08x position x %d y %d value %d \n",current_blob, x, y, current_value);
-    
-     
+         
     // compare with the  event was inside
     int position = x + y * 24;
     if((cartEM[position].address == 0)&&(cartEM[position].timestamp == 0)){
@@ -591,21 +590,6 @@ unsigned long* logUnmask::getTimeBuffer(bool camera) {
 }
 
 void logUnmask::run() {
-    /*
-    unsigned long int* pointerTime=timeBuffer;
-    unsigned long int timelimit = lasttimestamp - constInterval;
-    printf("last:%d \n", lasttimestamp);
-    int* pointerPixel=buffer;
-    for(int j=0;j<retinalSize*retinalSize;j++) {
-        
-        unsigned long int current = *pointerTime;
-        if ((current <= timelimit)||(current >lasttimestamp)) {
-            *pointerPixel == 0;
-        }
-        pointerTime++;
-        pointerPixel++;
-    }
-    */
 }
 
 void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
@@ -695,7 +679,7 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
             countCD++;                
         }
             break;
-               
+            /*       
         case 1:{ //EM1
             //printf("Unmasked EM1 \n");
             if((blob!=0)||(timestamp!=0)) {
@@ -748,8 +732,8 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
             }
         } //EM4
         break;
-            
-                
+            */    
+            /*        
         case 5:{ //IF
             //printf("Unmasked IF \n");
             //if((blob!=0)||(timestamp!=0)) {
@@ -761,13 +745,14 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
             countIF++;
                 //}
         }// case 5
-            break;    
+            break;
+            */
         }// end of switch    
     } // end of for every event
 
     //printf(" - - - - - - - - - - - - - - \n");
     // searching the couples in EM1
-    
+    /*
     for(int i = 0; i< countEM1 ; i++){
         //printf("analysing EM1 position %d \n", countEM1);
         unsigned long blob = bufferEM1[i].address;
@@ -888,7 +873,8 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         bufferEM4[i].address = bufferEM4[i].address + (value<<16);
         //printf(" buffer.address %08x \n",bufferEM1[i].address);
         addBufferEM(&bufferEM4[i]);
-    }    
+    } 
+    */
 }
 
 unsigned long logUnmask::look4opposite(aer* buffer,int initPos, int countTOT){
@@ -987,8 +973,8 @@ void logUnmask::logUnmaskEvent(unsigned long evPU, short& metax, short& metay, s
         metay = 0;
         pol = 0;
     }
-    if((metax > 24)||(metay > 24)){
-        //printf("Error in max dimension out \n");
+    if((metax >= 24)||(metay >= 24)){
+        printf("Error in max dimension out \n");
         metax = 0; metay = 0;
     }
   

@@ -38,7 +38,7 @@ using namespace std;
 #define THRATE        5             // ratethread period
 #define STAMPINFRAME                // 10 ms of period times the us in 1 millisecond + time for computing
 #define retinalSize   128           // deprecated
-#define CHUNKSIZE     8192          //16384 //1024  // dimension of the received packet
+#define CHUNKSIZE     32768//8192          //16384 //1024  // dimension of the received packet
 #define dim_window    5             // deprecated 
 #define synch_time    1000          // deprecated
 #define SIZE_PACKET   8192          // deprecated
@@ -258,18 +258,18 @@ int logSortThread::selectUnreadBuffer(char* bufferCopy, char* flagCopy, char* re
 
 void logSortThread::run() {
     count++;
+    //printf("initialised the timer \n");
     double tinit = Time::now();
     if(!idle) { 
         // reads the buffer received
         // saves it into a working buffer
-        //printf("returned 0x%x 0x%x \n", bufferCopy, flagCopy);
+        printf("returned 0x%x 0x%x \n", bufferCopy, flagCopy);
         lfConverter->copyChunk(bufferCopy, flagCopy);
-        //printf("after copy chunk 0x%x 0x%x \n", bufferCopy, flagCopy);
+        printf("after copy chunk 0x%x 0x%x \n", bufferCopy, flagCopy);
         int unreadDim = selectUnreadBuffer(bufferCopy, flagCopy, resultCopy);
 
-
         if(unreadDim!=0) {
-            //printf("Unmasking events:  %d \n", unreadDim);
+           printf("Unmasking events:  %d \n", unreadDim);
            // extract a chunk/unmask the chunk       
            unmask_events.logUnmaskData(resultCopy,unreadDim,verb);
         }
@@ -386,12 +386,13 @@ void logSortThread::run() {
         //TODO : code MUTEXes in these lines! Strictly Necessary!
         unmask_events.getCD(&pCD, &dim);
         if (dim > 0) {
-            //printf("dimCD :  %d \n", dim);
+            printf("dimCD :  %d \n", dim);
         }
         sendBuffer(&portCD, pCD, dim);
         unmask_events.resetCD();
         
         // ----------------------------------------------- 
+        /*
         unmask_events.getEM(&pEM, &dim);
         if (dim > 0) {
             printf("dimEM :             %d \n", dim);
@@ -414,25 +415,25 @@ void logSortThread::run() {
             unmask_events.resetEM4();
             //unmask_events.resetTOTEM();
         }
+        */
         // --------------------------------------------
         
-        
+        /*
         unmask_events.getIF(&pIF, &dim);
         if (dim > 0) {
             //printf("dimIF :                                 %d \n", dim);
         }
         sendBuffer(&portIF, pIF, dim);
         unmask_events.resetIF();
-        
+        */
     }
     
     // measuring execution time of the module
-    
-    //double tend = Time::now();
-    //double difftime = tend - tinit;
-    //if(difftime > 0.05) {
-        //printf("time: %f \n", difftime);
-    //}
+    double tend = Time::now();
+    double difftime = tend - tinit;
+    if(difftime > 0.05) {
+        printf("time: %f \n", difftime);
+    }
 }
 
 /**
