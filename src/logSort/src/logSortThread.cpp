@@ -392,7 +392,7 @@ void logSortThread::run() {
         //TODO : code MUTEXes in these lines! Strictly Necessary!
         unmask_events.getCD(&pCD, &dimCD);
         if (dimCD > 0) {
-            //printf("dimCD :  %d \n", dim);
+            printf("dimCD :  %d \n", dimCD);
             sendBuffer(&portCD, pCD, dimCD);
             unmask_events.resetCD();
         }
@@ -401,7 +401,7 @@ void logSortThread::run() {
         
         unmask_events.getEM(&pEM, &dimEM);
         if (dimEM > 0) {
-            //printf("dimEM :             %d \n", dim);
+            printf("dimEM :             %d \n", dimEM);
         }
 
         //for (int i = 0; i < dim; i++) {
@@ -411,7 +411,7 @@ void logSortThread::run() {
             //copyEvent++;
         //}                                       
 
-        //printf("dimEM :  %d \n", dim);
+        //printf("dimEM :  %d \n", dimEM);
         sendBuffer(&portEM, pEM, dimEM);
         if(count % 1000 == 0){
             //printf("_________________ \n");
@@ -427,7 +427,7 @@ void logSortThread::run() {
         
         unmask_events.getIF(&pIF, &dimIF);
         if (dimIF > 0) {
-            //printf("dimIF :                                 %d \n", dim);
+            printf("dimIF :                                 %d \n", dimIF);
             sendBuffer(&portIF, pIF, dimIF);
             unmask_events.resetIF();
         }
@@ -438,9 +438,9 @@ void logSortThread::run() {
         // measuring execution time of the module
         tend = Time::now();
         difftime2 = tend - tinit;
-        if(count % 100 == 0) {
-            printf("time us: %f %f %d %d %d \n", difftime1 * 1000000, difftime2 * 1000000, dimCD, dimEM, dimIF);
-        }
+        //if(count % 100 == 0) {
+        //    printf("time us: %f %f %d %d %d \n", difftime1 * 1000000, difftime2 * 1000000, dimCD, dimEM, dimIF);
+        //}
     }
 }
 

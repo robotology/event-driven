@@ -477,7 +477,6 @@ bool logUnmask::threadInit() {
     pThread->setEM(bufferEM1, bufferEM2, bufferEM3, bufferEM4);
     pThread->start();
     
-    
     return true;
 }
 
@@ -536,7 +535,7 @@ void logUnmask::getEM(aer** pointerEM, int* dimEM) {
 */
 
 void logUnmask::getEM(aer** pointerEM, int* dimEM) {
-
+    pThread->getEM(pointerEM, dimEM);
 }
 
 
@@ -681,11 +680,12 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
                 bufferEM1[countEM1].address   = (u32) newBlob;
                 bufferEM1[countEM1].timestamp = (u32) timestamp;
                 countEM1++;
+                pThread->setCountEM1(countEM1);
             }
         } //EM1
             break;
         case 2:{ //EM2
-                //printf("Unmasked EM2 \n");
+            //printf("Unmasked EM2 \n");
             if((blob!=0)||(timestamp!=0)) {
                 //printf("EM2 metax %d metay %d \n", metaX, metaY);
                 //temp = &bufferEM[countEM];
@@ -694,6 +694,7 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
                 bufferEM2[countEM2].address   = (u32) newBlob;
                 bufferEM2[countEM2].timestamp = (u32) timestamp;
                 countEM2++;
+                pThread->setCountEM2(countEM2);
             }
         } // EM2
             break;
@@ -707,6 +708,7 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
                 bufferEM3[countEM3].address   = (u32) newBlob;
                 bufferEM3[countEM3].timestamp = (u32) timestamp;
                 countEM3++;
+                pThread->setCountEM3(countEM3);
             }
         } //EM3
             break;
@@ -720,6 +722,7 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
                 bufferEM4[countEM4].address   = (u32) newBlob;
                 bufferEM4[countEM4].timestamp = (u32) timestamp;
                 countEM4++;
+                pThread->setCountEM4(countEM4);
             }
         } //EM4
         break;

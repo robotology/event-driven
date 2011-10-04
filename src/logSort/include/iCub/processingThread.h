@@ -29,6 +29,7 @@
 
 #include <yarp/os/RateThread.h>
 #include <yarp/os/Bottle.h>
+#include <yarp/os/Semaphore.h>
 #include <yarp/sig/all.h>
 #include <iostream>
 #include <string>
@@ -55,7 +56,9 @@ private:
     struct aer* bufferEM4;               // local copy of the events read
     struct aer* cartEM;                  // vector of mean values across EMs in cartesian space
     struct aer* pEM;                     // pointer to EM vector  
-    struct aer* pointerEM;         
+    struct aer* pointerEM; 
+    yarp::os::Semaphore mutex;           // semaphore for interaction in the buffer
+    FILE* fout;                          // dumping file for debug
 public:
     /**
     * default constructor
@@ -113,6 +116,31 @@ public:
      * @param bufferEM4 pointer to the buffer of events
      */
     void setEM(aer* bufferEM1, aer* bufferEM2, aer* bufferEM3, aer* bufferEM4); 
+
+    /**
+     * function that set the counter of event EM1
+     * @param value value to assign to the local variable
+     */
+    void setCountEM1(int value) { mutex.wait(); countEM1 = value;mutex.post();};
+
+    /**
+     * function that set the counter of event EM2
+     * @param value value to assign to the local variable
+     */
+    void setCountEM2(int value) { mutex.wait();countEM1 = value;mutex.post(); };
+    
+    /**
+     * function that set the counter of event EM3
+     * @param value value to assign to the local variable
+     */
+    void setCountEM3(int value) { mutex.wait();countEM3 = value; mutex.post(); };
+    
+        /**
+     * function that set the counter of event EM4
+     * @param value value to assign to the local variable
+     */
+    void setCountEM4(int value) { mutex.wait();countEM4 = value; mutex.post(); };
+
 
     /**
      * function that returns the pointer to the buffer of mean exposure measures

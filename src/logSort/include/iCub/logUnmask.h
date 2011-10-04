@@ -308,9 +308,7 @@ public:
     /**
      *  function that takes the average value of different EM typologies
     */
-    void addBufferEM(aer* event);
-
-    
+    void addBufferEM(aer* event);    
 
     /**
      * @brief function that returns the pointer to the buffer of INTEGRATE 'n' FIRE EVENT
