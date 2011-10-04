@@ -28,7 +28,7 @@
 #include <cassert>
 #include <cstdlib>
 #include <time.h>
-
+#include <iCub/config.h>
 
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -40,7 +40,7 @@ using namespace std;
 #define THRATE 5
 #define STAMPINFRAME  // 10 ms of period times the us in 1 millisecond + time for computing
 //#define retinalSize 128
-#define CHUNKSIZE 32768 //65536 //8192
+//#define CHUNKSIZE 32768 //65536 //8192
 #define dim_window 2
 #define synch_time 1
 

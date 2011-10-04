@@ -255,7 +255,6 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
             if(EMflag) {
                 emValue = (blob & expmask) >> expshift;
                 increment = emValue - 127;
-                increment = -100;
                 if(blob!=0){
                     printf("blob:%08x             timestamp: %llu  emValue:%d \n", blob,t, emValue);
                 }

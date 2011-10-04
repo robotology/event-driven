@@ -42,12 +42,6 @@
 //#define TH3 24576
 //#define CHUNKSIZE 8192 
 
-#define CHUNKSIZE 32768 
-#define TH1       32768  
-#define TH2       65536
-#define TH3       98304
-#define BUFFERDIM 131702
-
 #define VERBOSE
 
 //#define CHUNKSIZE 1024 
