@@ -42,7 +42,7 @@
 //#define TH3 24576
 //#define CHUNKSIZE 8192 
 
-#define VERBOSE
+//#define VERBOSE
 
 //#define CHUNKSIZE 1024 
 //#define TH1       1024
