@@ -106,7 +106,7 @@ public:
     /**
      * @brief function that resets the counter of EMs
      */     
-    void resetTOTEM() {memset(cartEM, 0, retinalSize * retinalSize * sizeof(unsigned long)); };
+    void resetTOTEM();
 
     /**
      * function that passes the pointer to EM buffers

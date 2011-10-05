@@ -304,6 +304,11 @@ public:
      * @brief function that resets the counter of EMs
      */     
     void resetEM4() {countEM4 = 0; };
+
+    /**
+     * @brief function that resets EM cartesian space representation
+     */     
+    void resetTOTEM() {pThread->resetTOTEM(); };
     
     /**
      *  function that takes the average value of different EM typologies

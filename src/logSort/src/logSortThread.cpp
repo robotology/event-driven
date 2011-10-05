@@ -413,13 +413,13 @@ void logSortThread::run() {
 
         //printf("dimEM :  %d \n", dimEM);
         sendBuffer(&portEM, pEM, dimEM);
-        if(count % 1000 == 0){
-            //printf("_________________ \n");
+        if(count % 100 == 0){
+            printf("_____________________________________ \n");            
             unmask_events.resetEM1();
             unmask_events.resetEM2();
             unmask_events.resetEM3();
             unmask_events.resetEM4();
-            //unmask_events.resetTOTEM();
+            unmask_events.resetTOTEM();
         }
         
         // --------------------------------------------

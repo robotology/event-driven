@@ -40,8 +40,8 @@ using namespace yarp::sig;
 using namespace std;
 
 #define THRATE 30 
-#define MAXLIMIT 4000000000
-#define MINLIMIT   10000000
+#define MAXLIMIT   4000000
+#define MINLIMIT   0
 //#define retinalSize 128
 
 processingThread::processingThread() : RateThread(THRATE) {
@@ -82,34 +82,39 @@ void processingThread::setName(string str) {
 }
 
 std::string processingThread::getName(const char* p) {
-  string str(name);
-  str.append(p);
-  return str;
+    string str(name);
+    str.append(p);
+    return str;
+}
+
+void processingThread::resetTOTEM() {
+    memset(cartEM,  0, 24 * 24 * sizeof(aer));
+    memset(pEM,     0, 24 * 24 * sizeof(aer));  
 }
 
 void processingThread::getEM(aer** pointerEM, int* dimEM) {
-  //printf("counted EM %d \n", countEM);
-  //*pointerEM = bufferEM1;
-  //*dimEM = countEM1 + countEM2 + countEM3 + countEM4;
-  *dimEM = 0;
-  
-  for (int pos = 0; pos < 24 * 24; pos++){
-    if(cartEM[pos].address != 0) {
-      //printf("cartEM[pos] %08x \n",cartEM[pos].address);
-      pEM[*dimEM] = cartEM[pos];
-      (*dimEM)++;            
+    //printf("counted EM %d \n", countEM);
+    //*pointerEM = bufferEM1;
+    //*dimEM = countEM1 + countEM2 + countEM3 + countEM4;
+    *dimEM = 0;
+    
+    for (int pos = 0; pos < 24 * 24; pos++){
+        if(cartEM[pos].address != 0) {
+            //printf("cartEM[pos] %08x \n",cartEM[pos].address);
+            pEM[*dimEM] = cartEM[pos];
+            (*dimEM)++;            
+        }
     }
-  }
-  *pointerEM = pEM;
-  //delete[] pEM;
-  memset(cartEM,0, 24 * 24 * sizeof(aer));
+    *pointerEM = pEM;
+    //delete[] pEM;
+    memset(cartEM,0, 24 * 24 * sizeof(aer));
 }
 
 void processingThread::setEM(aer* bEM1, aer* bEM2, aer* bEM3, aer* bEM4) {
-  bufferEM1 = bEM1;
-  bufferEM2 = bEM2;
-  bufferEM3 = bEM3;
-  bufferEM4 = bEM4;
+    bufferEM1 = bEM1;
+    bufferEM2 = bEM2;
+    bufferEM3 = bEM3;
+    bufferEM4 = bEM4;
 }
 
 void processingThread::addBufferEM(aer* event){
@@ -134,9 +139,9 @@ void processingThread::addBufferEM(aer* event){
         unsigned long old_timestamp = cartEM[position].timestamp;
         unsigned int  old_value     = (old_blob & 0xffff0000) >> 16;
         unsigned int  new_value     = (int)floor((current_value + old_value)/2);
-        printf("old_blob %x old_value %d current_value %d  new_value %d \n",old_blob, old_value,current_value, new_value);
-        unsigned long new_timestamp = (old_timestamp + current_timestamp) >> 1;
-        unsigned long new_blob      = (new_value << 16) & old_blob; 
+        //printf("old_blob %x old_value %d current_value %d  new_value %d \n",old_blob, old_value,current_value, new_value);
+        unsigned long new_timestamp = current_timestamp; //(old_timestamp + current_timestamp) >> 1;
+        unsigned long new_blob      = (new_value << 16) | (old_blob & 0x0000FFFF) ; 
         cartEM[position].address    = new_blob;
         cartEM[position].timestamp  = new_timestamp;
     }
@@ -145,28 +150,35 @@ void processingThread::addBufferEM(aer* event){
 
 unsigned long processingThread::look4opposite(aer* buffer,int initPos, int countTOT){
     unsigned long targetBlob;
-    unsigned long blob = buffer[initPos].address;
+    unsigned long blob      = buffer[initPos].address;
+    unsigned long timestamp = buffer[initPos].timestamp;
+    //printf("\n \n analising %08x in countCount -->",blob, countTOT );
     if (blob % 2 == 0) {
-      // high event looking for low
-      targetBlob = blob + 1;
+        //printf(" even \n");
+        // high event looking for low
+        targetBlob = blob + 1;
     }
     else {
-      return 0;
-      //low event looking for high
-      targetBlob = blob - 1;
+        //printf(" odd");
+        return timestamp;
+        //low event looking for high
+        targetBlob = blob - 1;
     }
     bool found = false;
-    int i;
-    for (i = initPos + 1; (i< countTOT) && (!found); i++) {
+    int i = initPos + 1;
+    while ((i< countTOT) && (!found)) {
         if(buffer[i].address == targetBlob) {
             found = true;
         }        
+        i++;
     }
     if(found) {
-        return buffer[i].timestamp;
+        //printf("found \n");
+        return (unsigned long) buffer[i].timestamp;
     }
     else {
-        return buffer[initPos].timestamp;
+        //printf("notFound \n");
+        return (unsigned long) buffer[initPos].timestamp;
     }
 }
 
@@ -176,7 +188,9 @@ void processingThread::run() {
     //printf(" - - - - - - - - - - - - - - \n");
     // searching the couples in EM1
     unsigned long maxdiff = 0, mindiff = 0xFFFFFFFF;
-    for(int i = 0; i< countEM1 ; i++){
+    aer* tmp = new aer;
+
+    for(int i = 0; i< countEM1-1 ; i++){
         //printf("analysing EM1 position %d \n", countEM1);
         unsigned long blob = bufferEM1[i].address;
         unsigned long timestampFound;
@@ -184,38 +198,30 @@ void processingThread::run() {
         timestampFound = look4opposite(bufferEM1,i,countEM1);
         long diff =  timestampFound - timestamp;
         unsigned long absdiff = std::abs(diff);
+
         if(absdiff == 0) {
             continue;
         }
+        printf("EM1 - 1.buffer.address %08x   ",bufferEM1[i].address,bufferEM1[i].timestamp, timestampFound);
+        printf("2.value %lu \n ",absdiff);
         if (absdiff > maxdiff){ maxdiff = absdiff; }
         if (absdiff < mindiff){ mindiff = absdiff; }
         int numbits = 256;        
         double max = MAXLIMIT;
         double min = MINLIMIT;
-        int value = floor(((double)absdiff /(max - min)) * 256.0);
+        int value = floor(((double)absdiff /(max - min)) * numbits);
         if(value > 255) {
             value = 255;
         }
-        printf("    buffer.address %08x   ",bufferEM1[i].address);
-        printf("value %lu binaryvalue %d   \n ", absdiff,value);
-        printf("shifted16 %08x \n",value<<16 );
-        bufferEM1[i].address = bufferEM1[i].address | (value<<16);
-        printf(" buffer.address %08x \n",bufferEM1[i].address);
-        addBufferEM(&bufferEM1[i]);
         
-        //printf("look4opposite EM1 %d: %08x %08x > %08x %d \n",i,blob, timestamp,timestampFound, absdiff);
-        //if(absdiff != 0) {
-        //    unsigned short x    = ((blob & 0x00FF) >> 1);
-        //    unsigned short y    = ((blob & 0x7F00) >> 8);
-        //    if(cartEM[x + y * retinalSize]= 0) {
-        //        cartEM[x + y * retinalSize] = absdiff;
-        //    }
-        //    else {
-        //        cartEM[x + y * retinalSize] = (cartEM[x + y * retinalSize] + absdiff)/2; 
-         //   }
-         //   }
+        tmp->address = (bufferEM1[i].address & 0x0000FFFF) | (value<<16);
+        tmp->timestamp = timestamp;
+        printf("3.buffer.address %08x %d \n",tmp->address,value);
+        addBufferEM(tmp);
+        
     }
 
+    
     //printf(" - - - - - - - - - - - - - - \n");
     // searching the couples in EM2    
     for(int i = 0; i< countEM2 ; i++){
@@ -226,9 +232,12 @@ void processingThread::run() {
         timestampFound = look4opposite(bufferEM2,i,countEM2);
         long diff =  timestampFound - timestamp;
         unsigned long absdiff = std::abs(diff);
+
         if(absdiff == 0) {
             continue;
         }
+        printf("EM2 - 1.buffer.address %08x   ",bufferEM2[i].address);
+        printf("2.value %lu    \n ", absdiff);
         if (absdiff > maxdiff){ maxdiff = absdiff; }
         if (absdiff < mindiff){ mindiff = absdiff; }
 
@@ -239,10 +248,9 @@ void processingThread::run() {
         if(value > 255) {
             value = 255;
         }
-        printf("    buffer.address %08x   ",bufferEM2[i].address);
-        printf("value %lu binaryvalue %d    \n ", absdiff,value);
+        
         bufferEM2[i].address = (bufferEM2[i].address & 0x0000FFFF) | (value<<16);
-        printf(" buffer.address %08x \n",bufferEM1[i].address);
+        printf("3.buffer.address %08x %d \n",bufferEM2[i].address, value);
         addBufferEM(&bufferEM2[i]);
     }
     
@@ -258,9 +266,12 @@ void processingThread::run() {
         timestampFound = look4opposite(bufferEM3,i,countEM3);
         long diff =  timestampFound - timestamp;
         unsigned long absdiff = std::abs(diff);
+
         if(absdiff == 0) {
             continue;
         }
+        printf("EM3 - 1.buffer.address %08x   ",bufferEM3[i].address);
+        printf("2.value %lu   \n", absdiff);
         if (absdiff > maxdiff){ maxdiff = absdiff; }
         if (absdiff < mindiff){ mindiff = absdiff; }
 
@@ -271,10 +282,9 @@ void processingThread::run() {
         if(value > 255) {
             value = 255;
         }
-        printf("    buffer.address %08x   ",bufferEM3[i].address);
-        printf("value %lu binaryvalue %d     \n", absdiff,value);
+        
         bufferEM3[i].address = (bufferEM3[i].address & 0x0000FFF) | (value<<16);
-        printf(" buffer.address %08x \n",bufferEM3[i].address);
+        printf("3.buffer.address %08x %d \n",bufferEM3[i].address, value);
         addBufferEM(&bufferEM3[i]);
     }    
     //printf(" - - - - - - - - - - - - - - \n");
@@ -292,6 +302,8 @@ void processingThread::run() {
         if(absdiff == 0) {
             continue;
         }
+        printf("EM4 - 1.buffer.address %08x   ",bufferEM4[i].address);
+        printf("2.value %lu  \n ", absdiff);
         int numbits = 256;        
         double max = MAXLIMIT;
         double min = MINLIMIT;
@@ -301,12 +313,15 @@ void processingThread::run() {
         }
         if (absdiff > maxdiff){ maxdiff = absdiff; }
         if (absdiff < mindiff){ mindiff = absdiff; }
-        printf("    buffer.address %08x   ",bufferEM1[i].address);
-        printf("value %lu binaryvalue %d   \n ", absdiff,value);
+        
         bufferEM4[i].address = (bufferEM4[i].address & 0x0000FFFF) | (value<<16);
-        printf(" buffer.address %08x \n",bufferEM1[i].address);
+        printf("3.buffer.address %08x %d \n",bufferEM4[i].address, value);
         addBufferEM(&bufferEM4[i]);
-    }  
+    } 
+    
+    
+    delete tmp;
+    
     if(maxdiff != 0)
       printf("limits:  maxdiff  %lu \n", maxdiff);
     if(mindiff != 0xFFFFFFFF)
