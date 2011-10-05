@@ -255,9 +255,9 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
             if(EMflag) {
                 emValue = (blob & expmask) >> expshift;
                 increment = emValue - 127;
-                if(blob!=0){
-                    printf("blob:%08x             timestamp: %llu  emValue:%d \n", blob,t, emValue);
-                }
+                //if((blob!=0)&&(emValue!=0)){
+                //    printf("blob:%08x             timestamp: %llu  emValue:%d \n", blob,t, emValue);
+                //}
             }
 
             // here we zero the higher two bytes of the address!!! Only lower 16bits used!

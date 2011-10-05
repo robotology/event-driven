@@ -353,7 +353,7 @@ void lfCollectorThread::run() {
       //maxCount = lc; 
       //maxCountRight = rc;
 		 
-      printf("synchronised %1f! %llu,%llu,%llu||%llu,%llu,%llu \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
+      //printf("synchronised %1f! %llu,%llu,%llu||%llu,%llu,%llu \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
       startTimer = Time::now();
       synchronised = true; 
     }
