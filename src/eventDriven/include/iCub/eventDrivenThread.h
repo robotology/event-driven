@@ -28,6 +28,17 @@
 #ifndef _EVENTDRIVEN_THREAD_H_
 #define _EVENTDRIVEN_THREAD_H_
 
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <ctime>
+#include <list>
+
+
+
+#include <yarp/os/Network.h>
+#include <yarp/os/BufferedPort.h>
 #include <yarp/sig/all.h>
 #include <yarp/os/all.h>
 #include <yarp/dev/all.h>
@@ -45,24 +56,30 @@
 
 class eventPort : public yarp::os::BufferedPort<eventBuffer> {
 public:
+
+    eventPort(){};
+    ~eventPort(){};
     eventBuffer eventTrain;                       // object made by the train of events
     yarp::os::Semaphore mutex;                    // Semaphore for the flage variable
     bool hasNewEvent;                             // flag that indicates whether there are new events
-    virtual void onRead(eventBuffer& eventTrain) {
-        setHasNewEvent(true);             // to be set to false once done with the events
+    virtual void onRead(eventBuffer& eT) {
+        //mutex.wait();
+        //setHasNewEvent(true);             // to be set to false once done with the events
+        printf("Received new packet \n");
         // receives the buffer and saves it
-        this->eventTrain = eventTrain;
+        //this->eventTrain = eT;
+        //mutex.post();
     }
 
     void setHasNewEvent(bool value){
-        mutex.wait();
+        //mutex.wait();
         hasNewEvent = value;
-        mutex.post();
+        //mutex.post();
     }
 };
 
 
-class eventDrivenThread : public yarp::os::Thread {
+class eventDrivenThread : public yarp::os::RateThread  {
 private:
     bool zerod;                     // flag for resetting the image
     unsigned long* timeBuf;         // buffer for timestamp, ?? Stack
@@ -77,7 +94,7 @@ private:
     std::string inputPortName;      // name of input port for incoming events, typically from aexGrabber
 
     yarp::os::BufferedPort<yarp::os::Bottle > pcSz;
-    eventPort EportIn;                                                  // buffered port listening to events through callback
+    eventPort* EportIn;                                                  // buffered port listening to events through callback
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > eventPlot;     // output port to plot event    
     yarp::os::BufferedPort<yarp::os::Bottle> commandOut;                             // bottle of the position to the gazeArbiter
     std::string name;                                                                // rootname of all the ports opened by this thread
@@ -117,7 +134,7 @@ public:
     /**
     *  on stopping of the thread
     */
-    void onStop();
+    //void onStop();
 
     /*
     * function that sets the rootname of all the ports that are going to be created by the thread

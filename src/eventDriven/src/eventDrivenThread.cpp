@@ -29,18 +29,19 @@
 
 #define LEAK_TH 300
 #define BUCKET_THRESHOLD 112
+#define THRATE 5
 
 using namespace yarp::dev;
 using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
-eventDrivenThread::eventDrivenThread() {
+eventDrivenThread::eventDrivenThread():RateThread(THRATE) {
     robot = "icub";
     zerod = false;
 }
 
-eventDrivenThread::eventDrivenThread(string _robot, string _configFile) {
+eventDrivenThread::eventDrivenThread(string _robot, string _configFile):RateThread(THRATE){
     robot = _robot;
     configFile = _configFile;    
     zerod = false;
@@ -50,23 +51,26 @@ eventDrivenThread::~eventDrivenThread() {
 }
 
 bool eventDrivenThread::threadInit() {
-    /* open ports */ 
-    EportIn.hasNewEvent = false;
-    EportIn.useCallback();          // to enable the port listening to events via callback
+    /* open ports */
+    EportIn = new eventPort();
+    
+    EportIn->hasNewEvent = false;
+    EportIn->useCallback();          // to enable the port listening to events via callback
+    if (!EportIn->open(getName(inputPortName.c_str()).c_str())) {
+        cout <<": unable to open port for reading events  "  << endl;
+        return false;  // unable to open; let RFModule know so that it won't run
+    }
     leakLeft = new int[128*128];
     
     for (int j = 0; j<128*128; j++) {
         leakLeft[j]=0;
     } 
 
-    if (!EportIn.open(getName(inputPortName.c_str()).c_str())) {
-        cout <<": unable to open port for reading events  "  << endl;
-        return false;  // unable to open; let RFModule know so that it won't run
-    }
-    if (!eventPlot.open(getName("/AER:o").c_str())) {
+    
+    /*if (!eventPlot.open(getName("/AER:o").c_str())) {
         cout << ": unable to open port to send unmasked events "  << endl;
         return false;  // unable to open; let RFModule know so that it won't run
-    }
+    }*/
     if (!commandOut.open(getName("/command:o").c_str())) {
         cout <<": unable to open port for sending commands  "  << endl;
         return false;  // unable to open; let RFModule know so that it won't run
@@ -75,6 +79,8 @@ bool eventDrivenThread::threadInit() {
         cout <<": unable to open port for sending commands  "  << endl;
         return false;  // unable to open; let RFModule know so that it won't run
     }
+
+    //unmaskEvent.start();
     return true;
     
 
@@ -97,22 +103,25 @@ void eventDrivenThread::setInputPortName(string InpPort) {
 }
 
 void eventDrivenThread::run() {   
-   while (isStopping() != true) {
-       if(EportIn.hasNewEvent) {
-           EportIn.setHasNewEvent(false);
-           currentEventTrain = &EportIn.eventTrain; // shallow copy           
-           //currentEvent   = EportIn.read(true);    
+   //while (isStopping() != true) 
+    /*{
+       if(EportIn->hasNewEvent) {
+           currentEventTrain = &EportIn->eventTrain; // shallow copy           
+           //currentEvent   = EportIn->read(true);    
            int dim = currentEventTrain->get_sizeOfPacket() ;      // number of bits received / 8 = bytes received
                      
            if(currentEventTrain->get_sizeOfPacket() != 0) {
          
                unmaskEvent.unmaskData(currentEventTrain->get_packet(), currentEventTrain->get_sizeOfPacket());
                
-               //timeBuf        = unmaskEvent.getTimeBuffer(1);      
-               eventsBuf      = unmaskEvent.getEventBuffer(1);     
+               timeBuf        = unmaskEvent.getTimeBuffer(true);      
+               eventsBuf      = unmaskEvent.getEventBuffer(true);
+                printf("Done with current packet of size%d",dim);
+                EportIn->setHasNewEvent(false);
+                
                //timeBufRight   = unmaskEvent.getTimeBuffer(0);   
                //eventsBufRight = unmaskEvent.getEventBuffer(0);                 
-               plotEventBuffer(eventsBuf,128,128);
+               //plotEventBuffer(eventsBuf,128,128);
               
                /*
                if(pcSz.getOutputCount()) {
@@ -171,11 +180,11 @@ void eventDrivenThread::run() {
                  maxVal = -IMAGE_WD -1;        
                  packetSize = 0;
                */
-           }
+/*           }
        }                                  
-    }
+    }*/
 }
-
+/*
 void eventDrivenThread::plotEventBuffer(int* buffer, int dim1, int dim2) {
     if(eventPlot.getOutputCount()) {
         
@@ -197,7 +206,7 @@ void eventDrivenThread::plotEventBuffer(int* buffer, int dim1, int dim2) {
                 if(*bufTmp != 0){
                     //(*leakPointer) = (*leakPointer) + 1;
                     
-                    /*
+                    
                     if((*leakPointer) > LEAK_TH){
                         //commandOut.clear();
                         if(commandOut.getOutputCount()) {
@@ -214,7 +223,7 @@ void eventDrivenThread::plotEventBuffer(int* buffer, int dim1, int dim2) {
                         //(*leakPointer) = 0;
                         printf("leak_th passed %d %d \n", i,j);
                     }
-                    */
+                    
                                         
                     if(*bufTmp>0){
                         if(*imageTmp < 254){
@@ -279,18 +288,19 @@ void eventDrivenThread::plotEventBuffer(int* buffer, int dim1, int dim2) {
         eventPlot.write();
     }
 }
-
+*/
 void eventDrivenThread::threadRelease() {
-    //delete[] leakLeft;    
+    delete[] leakLeft;
+    delete EportIn;    
 }
 
-void eventDrivenThread::onStop() {
-    EportIn.interrupt();
-    EportIn.close();
+/*void eventDrivenThread::onStop() {
+    EportIn->interrupt();
+    EportIn->close();
     eventPlot.interrupt();
     eventPlot.close();
     commandOut.interrupt();
     commandOut.close();
     printf("closed all the ports \n");
-}
+}*/
 

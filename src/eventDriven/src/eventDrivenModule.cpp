@@ -118,8 +118,6 @@ bool eventDrivenModule::respond(const Bottle& command, Bottle& reply)
     string helpMessage =  string(getName().c_str()) + 
                 " commands are: \n" +  
                 "help \n" +
-            "size <int> <int> -to change, if allowed, size (width, height) of eventDriven to <int> <int> \n" + 
-            "place <int> -to place, if allowed, input image's center (horz, vert) in eventDriven refernce frame \n" +
                 "quit \n";
     reply.clear(); 
 
