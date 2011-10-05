@@ -182,8 +182,8 @@ void lfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsig
             //if(minCount>0 && maxCount > 0 && timestampactual>0)
             //printf("actualTS%ld val%ld max%ld min%ld  are\n",timestampactual,timestampactual * COUNTERRATIO,minCount,maxCount);
             if (((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)) {   //(timestampactual != lasttimestamp) 
-                //*pImage = (unsigned char) (127 + value);
-                *pImage = (unsigned char) 255;
+                *pImage = (unsigned char) (127 + value);
+                //*pImage = (unsigned char) 255;
                 //if(value>0)printf("event%d val%d buf%d\n",*pImage,value,*pBuffer);
                 pImage++;
                 //if ((stereo) && (r < 7) && (r >= 16) && (c < 7) && (c >= 16)) {
