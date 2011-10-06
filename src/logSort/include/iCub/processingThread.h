@@ -54,9 +54,10 @@ private:
     struct aer* bufferEM2;               // local copy of the events read
     struct aer* bufferEM3;               // local copy of the events read
     struct aer* bufferEM4;               // local copy of the events read
-    struct aer* cartEM;                  // vector of mean values across EMs in cartesian space
+    struct aer* cartEM;                  // vector of mean values across EMs in cartesian space    
     struct aer* pEM;                     // pointer to EM vector  
     struct aer* pointerEM; 
+    int* cartCount;               // cartesian mapping of the EMs counter
     yarp::os::Semaphore mutex;           // semaphore for interaction in the buffer
     FILE* fout;                          // dumping file for debug
 public:

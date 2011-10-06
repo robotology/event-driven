@@ -392,7 +392,7 @@ void logSortThread::run() {
         //TODO : code MUTEXes in these lines! Strictly Necessary!
         unmask_events.getCD(&pCD, &dimCD);
         if (dimCD > 0) {
-            printf("dimCD :  %d \n", dimCD);
+            //printf("dimCD :  %d \n", dimCD);
             sendBuffer(&portCD, pCD, dimCD);
             unmask_events.resetCD();
         }
@@ -401,20 +401,19 @@ void logSortThread::run() {
         
         unmask_events.getEM(&pEM, &dimEM);
         if (dimEM > 0) {
-            printf("dimEM :             %d \n", dimEM);
+            //printf("dimEM :             %d \n", dimEM);
         }
 
-        //for (int i = 0; i < dim; i++) {
-        //    u32 blob      = pEM[i].address;
-        //    u32 timestamp = pEM[i].timestamp;
-        //    fprintf(fout,"%08x %08x \n",blob,timestamp);
-            //copyEvent++;
-        //}                                       
+        for (int i = 0; i < dimEM; i++) {
+            u32 blob      = pEM[i].address;
+            u32 timestamp = pEM[i].timestamp;
+            fprintf(fout,"%08x %08x \n",blob,timestamp);
+        }                                       
 
         //printf("dimEM :  %d \n", dimEM);
         sendBuffer(&portEM, pEM, dimEM);
         if(count % 100 == 0){
-            printf("_____________________________________ \n");            
+            //printf("_____________________________________ \n");            
             unmask_events.resetEM1();
             unmask_events.resetEM2();
             unmask_events.resetEM3();
