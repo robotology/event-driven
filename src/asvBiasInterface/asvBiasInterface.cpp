@@ -31,10 +31,14 @@
 #include <cstdlib>
 
 
-#define COMMAND_VOCAB_SET VOCAB3('s','e','t')
-#define COMMAND_VOCAB_GET VOCAB3('g','e','t')
+#define COMMAND_VOCAB_ON    VOCAB2('o','n')
+#define COMMAND_VOCAB_OFF   VOCAB3('o','f','f')
+#define COMMAND_VOCAB_SET   VOCAB3('s','e','t')
+#define COMMAND_VOCAB_GET   VOCAB3('g','e','t')
 #define COMMAND_VOCAB_RIGHT VOCAB4('r','i','g','h')
-#define COMMAND_VOCAB_LEFT VOCAB4('l','e','f','t')
+#define COMMAND_VOCAB_LEFT  VOCAB4('l','e','f','t')
+#define COMMAND_VOCAB_DUMP  VOCAB4('d','u','m','p')
+
 
 #define SYTH_DEFAULT_VALUE    8053457
 #define SYTA_DEFAULT_VALUE    8053457
@@ -1445,6 +1449,27 @@ static void callbackProgBiasButton( GtkWidget *widget,gpointer data ) {
     mutex.post();
 }
 
+static void callbackDumpButton( GtkWidget *widget,gpointer data ) {
+    printf ("Dump Button - %s was pressed\n", (char *) data);
+    mutex.wait();
+    if (_pOutPort!=NULL) {
+        yarp::os::Bottle bot; //= _pOutPort->prepare();
+        bot.clear();
+        bot.addVocab(COMMAND_VOCAB_DUMP);
+        if(!strcmp((char*) data,"on")) {
+            bot.addVocab(COMMAND_VOCAB_ON);
+        }
+        else {
+            bot.addVocab(COMMAND_VOCAB_OFF);
+        }
+
+        //bot.addVocab(COMMAND_VOCAB_BIAS);
+        //_pOutPort->Content() = _outBottle;
+        Bottle in;
+        _pOutPort->write(bot,in);
+    }
+    mutex.post();
+}
 
 
 gint timeout_CB(gpointer data) {
@@ -1462,7 +1487,7 @@ gint timeout_CB(gpointer data) {
                     _pOutPort->write(bot,in);
                     printf("       in bottle %s", in.toString().c_str());
                     double value=in.get(0).asDouble();
-                    printf("getting SYTH %f", value);
+                    printf("getting SYTH %f \n", value);
                     //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjSYTH),value);
                     //mutex.post();
@@ -1496,7 +1521,7 @@ gint timeout_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(0).asDouble();
-                    printf("getting SYPA %f", value);
+                    printf("getting SYPA %f \n", value);
                     //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjSYPA),value);
                     //mutex.post();
@@ -1530,7 +1555,7 @@ gint timeout_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(0).asDouble();
-                    printf("getting TPB %f", value);
+                    printf("getting TPB %f \n", value);
                     //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjTPB),value);
                     //mutex.post();
@@ -1547,7 +1572,7 @@ gint timeout_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(0).asDouble();
-                    printf("getting CDR %f", value);
+                    printf("getting CDR %f \n", value);
                     //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjCDR),value);
                     //mutex.post();
@@ -1564,7 +1589,7 @@ gint timeout_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(0).asDouble();
-                    printf("getting CDS %f", value);
+                    printf("getting CDS %f \n", value);
                     //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjCDS),value);
                     //mutex.post();
@@ -1581,7 +1606,7 @@ gint timeout_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(0).asDouble();
-                    printf("getting CDP %f", value);
+                    printf("getting CDP %f \n", value);
                     //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjCDP),value);
                     //mutex.post();
@@ -1598,7 +1623,7 @@ gint timeout_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(0).asDouble();
-                    printf("getting RPX  %f", value);
+                    printf("getting RPX  %f \n", value);
                     //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjRPX),value);
                     //mutex.post();
@@ -1615,7 +1640,7 @@ gint timeout_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(0).asDouble();
-                    printf("getting RPY %f", value);
+                    printf("getting RPY %f \n", value);
                     //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjRPY),value);
                     //mutex.post();
@@ -1632,7 +1657,7 @@ gint timeout_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(0).asDouble();
-                    printf("getting IFR %f", value);
+                    printf("getting IFR %f \n", value);
                     //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjIFR),value);
                     //mutex.post();
@@ -1649,7 +1674,7 @@ gint timeout_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(0).asDouble();
-                    printf("getting IFT %f", value);
+                    printf("getting IFT %f \n", value);
                     //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjIFT),value);
                     //mutex.post();
@@ -1666,7 +1691,7 @@ gint timeout_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(0).asDouble();
-                    printf("getting IFL %f", value);
+                    printf("getting IFL %f \n", value);
                     //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjIFL),value);
                     //mutex.post();
@@ -1683,7 +1708,7 @@ gint timeout_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(0).asDouble();
-                    printf("getting CDOF %f", value);
+                    printf("getting CDOF %f \n", value);
                     //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjCDOF),value);
                     //mutex.post();
@@ -1700,7 +1725,7 @@ gint timeout_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(0).asDouble();
-                    printf("getting SYPW %f", value);
+                    printf("getting SYPW %f \n", value);
                     //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjSYPW),value);
                     //mutex.post();
@@ -1717,7 +1742,7 @@ gint timeout_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(0).asDouble();
-                    printf("getting SYW %f", value);
+                    printf("getting SYW %f \n", value);
                     //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjSYW),value);
                     //mutex.post();
@@ -1734,7 +1759,7 @@ gint timeout_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(0).asDouble();
-                    printf("getting CDON %f", value);
+                    printf("getting CDON %f \n", value);
                     //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjCDON),value);
                     //mutex.post();
@@ -1751,7 +1776,7 @@ gint timeout_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(0).asDouble();
-                    printf("getting CDD %f", value);
+                    printf("getting CDD %f \n", value);
                     //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjCDD),value);
                     //mutex.post();
@@ -1768,7 +1793,7 @@ gint timeout_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(0).asDouble();
-                    printf("getting EMCH %f", value);
+                    printf("getting EMCH %f \n", value);
                     //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjEMCH),value);
                     //mutex.post();
@@ -1785,7 +1810,7 @@ gint timeout_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(0).asDouble();
-                    printf("getting EMCT %f", value);
+                    printf("getting EMCT %f \n", value);
                     //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjEMCT),value);
                     //mutex.post();
@@ -1802,7 +1827,7 @@ gint timeout_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(0).asDouble();
-                    printf("getting CDI %f", value);
+                    printf("getting CDI %f \n", value);
                     //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjCDI),value);
                     //mutex.post();
@@ -1819,7 +1844,7 @@ gint timeout_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(0).asDouble();
-                    printf("getting CDRG %f", value);
+                    printf("getting CDRG %f \n", value);
                     //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjCDRG),value);
                     //mutex.post();
@@ -1836,7 +1861,7 @@ gint timeout_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(0).asDouble();
-                    printf("getting SELF %f", value);
+                    printf("getting SELF %f \n", value);
                     //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjSELF),value);
                     //mutex.post();
@@ -1853,7 +1878,7 @@ gint timeout_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(0).asDouble();
-                    printf("getting FOLL %f", value);
+                    printf("getting FOLL %f \n", value);
                     //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjFOLL),value);
                     //mutex.post();
@@ -1870,7 +1895,7 @@ gint timeout_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(0).asDouble();
-                    printf("getting ARPB %f", value);
+                    printf("getting ARPB %f \n", value);
                     //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjARBP),value);
                     //mutex.post();
@@ -1887,7 +1912,7 @@ gint timeout_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(0).asDouble();
-                    printf("getting EMVL %f", value);
+                    printf("getting EMVL %f \n", value);
                     //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjEMVL),value);
                     //mutex.post();
@@ -1904,7 +1929,7 @@ gint timeout_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(0).asDouble();
-                    printf("getting CDC %f", value);
+                    printf("getting CDC %f \n", value);
                     //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjCDC),value);
                     //mutex.post();
@@ -1921,14 +1946,13 @@ gint timeout_CB(gpointer data) {
                     Bottle in;
                     _pOutPort->write(bot,in);
                     double value=in.get(0).asDouble();
-                    printf("getting EMVH %f", value);
+                    printf("getting EMVH %f \n", value);
                     //mutex.wait();
                     gtk_adjustment_set_value(GTK_ADJUSTMENT (adjEMVH),value);
                     
                     //mutex.post();
             }
-        }
-        break;
+        }        break;
         default: {
                     c=-1;
                  }
@@ -2211,7 +2235,7 @@ GtkWidget* createMainWindow(void) {
     //g_signal_connect (G_OBJECT (window), "delete_event", G_CALLBACK (delete_event), NULL);
     
     // Box for main window
-    GtkWidget *buttonSave,*buttonLoad, *buttonProgBias;
+    GtkWidget *buttonSave,*buttonLoad, *buttonProgBias, *buttonDumpOn, *buttonDumpOff;
     GtkWidget *boxButton;
     GtkWidget *box, *box2, *box3, *box4, *box5, *box6, *box7;
     // init text boxes
@@ -3121,6 +3145,15 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box6), buttonSave, FALSE, FALSE, 10);
     gtk_widget_show (buttonSave);
 
+    buttonLoad = gtk_button_new ();
+    g_signal_connect (G_OBJECT (buttonLoad), "clicked", G_CALLBACK (callbackLoadButton), NULL);
+    boxButton = xpm_label_box (NULL,  (gchar*)"Load");
+    gtk_widget_show (boxButton);
+    gtk_container_add (GTK_CONTAINER (buttonLoad), boxButton);
+    gtk_container_add (GTK_CONTAINER (buttonLoad), box6);
+    gtk_box_pack_start (GTK_BOX (box6), buttonLoad, FALSE, FALSE, 10);
+    gtk_widget_show (buttonLoad);  
+
     entrySAVELOAD = gtk_entry_new ();
     gtk_entry_set_max_length (GTK_ENTRY (entrySAVELOAD), 50);
     gtk_entry_set_text (GTK_ENTRY (entrySAVELOAD), "filename");
@@ -3133,15 +3166,24 @@ GtkWidget* createMainWindow(void) {
 			        0, GTK_ENTRY (entrySAVELOAD)->text_length);
     gtk_box_pack_start (GTK_BOX (box6), entrySAVELOAD, TRUE, TRUE, 0);
     gtk_widget_show (entrySAVELOAD);
-
-    buttonLoad = gtk_button_new ();
-    g_signal_connect (G_OBJECT (buttonLoad), "clicked", G_CALLBACK (callbackLoadButton), NULL);
-    boxButton = xpm_label_box (NULL,  (gchar*)"Load");
+    
+    buttonDumpOn = gtk_button_new ();
+    g_signal_connect (G_OBJECT (buttonDumpOn), "clicked", G_CALLBACK (callbackDumpButton),(gpointer) "on");
+    boxButton = xpm_label_box (NULL,  (gchar*)"DumpOn");
     gtk_widget_show (boxButton);
-    gtk_container_add (GTK_CONTAINER (buttonLoad), boxButton);
-    gtk_container_add (GTK_CONTAINER (buttonLoad), box6);
-    gtk_box_pack_start (GTK_BOX (box6), buttonLoad, FALSE, FALSE, 10);
-    gtk_widget_show (buttonLoad);        
+    gtk_container_add (GTK_CONTAINER (buttonDumpOn), boxButton);
+    gtk_container_add (GTK_CONTAINER (buttonDumpOn), box6);
+    gtk_box_pack_start (GTK_BOX (box6), buttonDumpOn, FALSE, FALSE, 10);
+    gtk_widget_show (buttonDumpOn);  
+    
+    buttonDumpOff = gtk_button_new ();
+    g_signal_connect (G_OBJECT (buttonDumpOff), "clicked", G_CALLBACK (callbackDumpButton),(gpointer) "off");
+    boxButton = xpm_label_box (NULL,  (gchar*)"DumpOff");
+    gtk_widget_show (boxButton);
+    gtk_container_add (GTK_CONTAINER (buttonDumpOff), boxButton);
+    gtk_container_add (GTK_CONTAINER (buttonDumpOff), box6);
+    gtk_box_pack_start (GTK_BOX (box6), buttonDumpOff, FALSE, FALSE, 10);
+    gtk_widget_show (buttonDumpOff);  
 
     gtk_box_pack_start (GTK_BOX (box3), box6, FALSE, FALSE, 0);
     gtk_widget_show (box6);
