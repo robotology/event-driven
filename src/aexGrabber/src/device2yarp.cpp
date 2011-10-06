@@ -815,8 +815,7 @@ void device2yarp::progBias(string name,int bits,int value, int camera ) {
         else {
             bitvalue = 0;
         }
-        progBitAEs(bitvalue, camera);
-        
+        progBitAEs(bitvalue, camera);        
     }
     //after each bias value, set pins back to default value
     //resetPins();
