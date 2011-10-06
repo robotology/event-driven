@@ -610,7 +610,7 @@ void  asvGrabberThread::run() {
         printf("Starting to SAVE \n");
     }
 
-    //        printf("  %d \n",r);
+    //printf("  %d \n",r);
 
 
     int k = 0;

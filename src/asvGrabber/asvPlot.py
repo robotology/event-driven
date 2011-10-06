@@ -71,18 +71,23 @@ except getopt.error:
 for a in options[:]:
     if a[0] == "--asv": 
         print "ASV mode active"
-        xMask  = hex2dec("FF")
-	yMask  = hex2dec("7F00")
-	xShift = 0
-	yShift = 8
+        xMask   = hex2dec("FF")
+	yMask   = hex2dec("7F00")
+	xShift  = 0
+	yShift  = 8
+	xoffset = -112
+	yoffset = -56
+	reverseBits = 1
     else:
         print "AEX mode active"
-        xMask  = hex2dec("FE")
-	yMask  = hex2dec("7F00")
-	xShift = 1
-	yShift = 8
-
-
+        xMask   = hex2dec("FE")
+	yMask   = hex2dec("7F00")
+	xShift  = 1
+	yShift  = 8
+	xoffset = 0
+	yoffset = 0
+	reverseBits = 0
+ 
 #initilization
 
 
@@ -146,10 +151,16 @@ for i in range (0,size):
 	x[i] = x[i] >> xShift
 	y[i] = (address & yMask)
 	y[i] = y[i] >> yShift
-	yflip = flipBits(y[i],7);
-	#print "yFlip:", yflip, "y:", y[i]
-	y[i] = yflip - 56
-	x[i] = x[i] - 112
+
+	if a[0] == "--asv": 
+		yflip = flipBits(y[i],7)
+	else:
+		yflip = y[i]
+	
+	y[i] = yflip + yoffset
+	        #print "yFlip:", yflip, "y:", y[i]
+	#y[i] = y[i] + offsety	
+	x[i] = x[i]  + xoffset
 
 #x = array( [0,1,2,3,4,5,6,7,8,9])
 #y = array( [0,1,2,3,4,5,6,7,8,9])

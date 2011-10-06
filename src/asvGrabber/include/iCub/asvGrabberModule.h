@@ -189,10 +189,10 @@
 #define COMMAND_VOCAB_OK      VOCAB2('o','k')
 #define COMMAND_VOCAB_LEFT    VOCAB4('l','e','f','t')
 #define COMMAND_VOCAB_RIGHT   VOCAB4('r','i','g','h')
-
-
-#define COMMAND_VOCAB_BIAS VOCAB4('b','i','a','s')
-
+#define COMMAND_VOCAB_BIAS    VOCAB4('b','i','a','s')
+#define COMMAND_VOCAB_DUMP    VOCAB4('d','u','m','p')
+#define COMMAND_VOCAB_OFF     VOCAB3('o','f','f')
+#define COMMAND_VOCAB_ON      VOCAB2('o','n')
 
 #include <iostream>
 #include <string>

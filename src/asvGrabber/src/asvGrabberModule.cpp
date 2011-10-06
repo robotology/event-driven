@@ -221,7 +221,9 @@ bool asvGrabberModule::respond(const Bottle& command, Bottle& reply) {
             reply.addString("");
             reply.addString("prog left bias \t: asks to reprogram biases ");
             reply.addString("prog right bias \t: asks to reprogram biases ");
-
+            
+            reply.addString("dump on  \t: asks to reprogram biases ");
+            reply.addString("dump off \t: asks to reprogram biases ");
 
             ok = true;
         }
@@ -678,7 +680,7 @@ bool asvGrabberModule::respond(const Bottle& command, Bottle& reply) {
                 
                 ok = true;
             }
-            break;
+                break;
             default: {
                 
             }
@@ -686,11 +688,29 @@ bool asvGrabberModule::respond(const Bottle& command, Bottle& reply) {
             }
         }
         break;
-
+    case COMMAND_VOCAB_DUMP:
+        rec = true;
+        printf("recognised the command DUMP \n");
+        {
+            switch(command.get(1).asVocab()) {
+                case COMMAND_VOCAB_ON: {
+                        printf("request of start dumping events arrived \n");
+                        D2Y->setDumpEvent(true);
+                        D2Y->setDumpFile("dump.txt");
+                        ok = true;
+                    }
+                    break;
+                case COMMAND_VOCAB_RIGHT: {
+                        printf("request of stop dumping events arrived \n");
+                        D2Y->setDumpEvent(false);
+                        ok = true;
+                    }
+                    break;
+                }
+        }
+        break;
+    
     } //end of the outer switch
-
-
-
 
     mutex.post();
     
