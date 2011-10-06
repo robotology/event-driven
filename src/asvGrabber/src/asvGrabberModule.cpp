@@ -67,12 +67,6 @@ bool asvGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     devicePortName         =  deviceName ;
     printf("trying to connect to the device %s \n",devicePortName.c_str());
 
-
-    
-
-
-
-
     /*
     * attach a port of the same name as the module (prefixed with a /) to the module
     * so that messages received from the port are redirected to the respond method
@@ -695,12 +689,13 @@ bool asvGrabberModule::respond(const Bottle& command, Bottle& reply) {
             switch(command.get(1).asVocab()) {
                 case COMMAND_VOCAB_ON: {
                         printf("request of start dumping events arrived \n");
-                        D2Y->setDumpEvent(true);
                         D2Y->setDumpFile("dump.txt");
+                        D2Y->setDumpEvent(true);
+                        printf("success in opening the dump file \n");
                         ok = true;
                     }
                     break;
-                case COMMAND_VOCAB_RIGHT: {
+                case COMMAND_VOCAB_OFF: {
                         printf("request of stop dumping events arrived \n");
                         D2Y->setDumpEvent(false);
                         ok = true;

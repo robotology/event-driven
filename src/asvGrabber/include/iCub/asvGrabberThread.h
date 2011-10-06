@@ -556,27 +556,28 @@ private:
 
     int err;
     unsigned int timestamp;
-    unsigned long previous_timestamp;
-    unsigned long previous_blob;
+    unsigned long previous_timestamp;       // timestamp for the previous event
+    unsigned long lasttimestamp;            // latest timestamp
+    unsigned long previous_blob;            // address for the previous address
     short cartX, cartY, polarity;
 
     unsigned int xmask;                     // mask for extracting the x position
     unsigned int ymask;                     // mask for extracting the y position
     int yshift;                             // mask for extracting the x position
-    int xshift;                              // mask for extracting the y position
+    int xshift;                             // mask for extracting the y position
     int polshift;                           // shift to determine polarity
     int polmask;                            // mask to determine polarity
     int retinalSize;                        // dimension of the retina
     std::string portDeviceName;             // name of the device which the module will connect to
     std::string biasFileName;               // name of the file that contains the biases
-    std::string dumpfile;                    // name of the file where events are going to be dumped
+    std::string dumpfile;                   // name of the file where events are going to be dumped
 
     bool save;                              // bool that indicates whether the 
 
     yarp::os::Port interfacePort;           // port dedicated to the request of values set through interface
     yarp::os::Semaphore mutex;              // semaphore for file reading
-    double startTime;               // time of the programming
-    double stopTime;                // stop time for the timing
+    double startTime;                       // time of the programming
+    double stopTime;                        // stop time for the timing
     std::stringstream str_buf;              // reference to the object for output file stream 
                               
     int SynThr;                             // value programmed for the bias    

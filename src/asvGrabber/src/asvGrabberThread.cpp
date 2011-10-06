@@ -1,4 +1,3 @@
-
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /*
@@ -563,9 +562,6 @@ void asvGrabberThread::prepareBiasesRight() {
         //    fclose(binInput);
         //}
     } 
-    else {
-        
-    }
 }
 
 
@@ -580,9 +576,13 @@ void asvGrabberThread::closeDevice(){
 
 void  asvGrabberThread::run() {
     //printf("reading \n");
-
+    
+    // section of time counter to avoid saving during bias programming
     stopTime = Time::now();
     double timediff = stopTime - startTime;
+    if((timediff >= 3.0)&(timediff<=3.1)) {
+        printf("Starting to SAVE \n");
+    }
     
     r = read(file_desc, pmon, monBufSize_b);
     //printf("called read() with monBufSize_b == %d -> retval: %d\n", (int)monBufSize_b, (int)r);
@@ -599,18 +599,14 @@ void  asvGrabberThread::run() {
         }
     }
     
-
-   int sizeofstructaer = sizeof(struct aer);
+    int sizeofstructaer = sizeof(struct aer);
 
     if (r % sizeofstructaer != 0) {
       //printf("ERROR: read %d bytes from the AEX!!!\n", r);
     }
     monBufEvents = r / sizeofstructaer;
-    if((timediff >= 3.0)&(timediff<=3.1)) {
-        printf("Starting to SAVE \n");
-    }
 
-    //printf("  %d \n",r);
+    printf("  %d \n",r);
 
 
     int k = 0;
@@ -622,8 +618,8 @@ void  asvGrabberThread::run() {
     unsigned long diff;
 
     for (int i = 0; i < monBufEvents; i++) {
-        // double buffer!!
         a = pmon[i].address;
+        
         //if((a>0xFFFF) && (timediff > 3.0)) {
             //fprintf(fout,"WARNING \n");
         //    a = 0;
@@ -632,7 +628,10 @@ void  asvGrabberThread::run() {
         //    pmon = (aer*) tmpBuf;
         //}
         //t = pmon[i].timestamp * 0.128;   // this instruction is valid only for AEX not the iHead
+        
         t = pmon[i].timestamp;
+        //printf("timestamp %08X \n", t);
+        
         diff = t - previous_timestamp;
         if((diff > 100000000)&&(a<0x0000FFFF)) {
             printf("error :%08X ; timestamp:%08X \n", previous_timestamp, t);
@@ -662,7 +661,7 @@ void  asvGrabberThread::run() {
     
     // check in the print out of the packet
     //if ((save) && (timediff > 3.0)) {
-    //fprintf(fout,"||||||||||||||||||||||||||||| \n"); 
+    //    fprintf(fout,"||||||||||||||||||||||||||||| \n"); 
     //}
 
     sz = monBufEvents*sizeof(struct aer); // sz is size in bytes
@@ -907,10 +906,14 @@ bool asvGrabberThread::setDumpFile(std::string value) {
     //    cout << "unable to open file" << endl;
 
     fout = fopen(dumpfile.c_str(),"w+");
-    if(fout!=NULL)
+    if(fout!=NULL) {
+        printf("correctly opened \n");
         return true;
-    else
+    }
+    else {
+        printf("file not opened \n ");
         return false;
+    }
 }
 
 
