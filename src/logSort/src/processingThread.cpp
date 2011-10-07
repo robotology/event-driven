@@ -203,11 +203,11 @@ void processingThread::run() {
         unsigned long timestamp = bufferEM1[i].timestamp;
         timestampFound = look4opposite(bufferEM1,i,countEM1);
         long diff =  timestampFound - timestamp;
-        unsigned long absdiff = std::abs(diff);
-
-        if(absdiff == 0) {
+        if(diff == 0) {
             continue;
         }
+        double absdiff = 1.0 / std::abs(diff);
+
         //printf("EM1 - 1.buffer.address %08x   ",bufferEM1[i].address,bufferEM1[i].timestamp, timestampFound);
         //printf("2.value %lu \n ",absdiff);
         if (absdiff > maxdiff){ maxdiff = absdiff; }
@@ -216,8 +216,8 @@ void processingThread::run() {
         double max = MAXLIMIT;
         double min = MINLIMIT;
         // grayscale  = 1 / exposure_measure
-        int value = floor(1/
-                    ((double)absdiff /(max - min)) * numbits
+        int value = floor(
+                    (absdiff /(max - min)) * numbits
                           );
         if(value > 255) {
             value = 255;
@@ -226,21 +226,23 @@ void processingThread::run() {
         tmp->address = (bufferEM1[i].address & 0x0000FFFF) | (value<<16);
         tmp->timestamp = timestamp;
         //printf("3.buffer.address %08x %d \n",tmp->address,value);
-        addBufferEM(tmp);
-        
+        addBufferEM(tmp);        
     }
 
     
     //printf(" - - - - - - - - - - - - - - \n");
     // searching the couples in EM2    
-    for(int i = 0; i< countEM2 ; i++){
+    for(int i = 0; i< countEM2 - 1 ; i++){
         //printf("analysing EM2 position %d \n", countEM2);
         unsigned long blob = bufferEM2[i].address;
         unsigned long timestampFound;
         unsigned long timestamp = bufferEM2[i].timestamp;
         timestampFound = look4opposite(bufferEM2,i,countEM2);
         long diff =  timestampFound - timestamp;
-        unsigned long absdiff = std::abs(diff);
+        if(diff == 0) {
+            continue;
+        }
+        double absdiff = 1.0 / std::abs(diff);
 
         if(absdiff == 0) {
             continue;
@@ -254,8 +256,8 @@ void processingThread::run() {
         double max = MAXLIMIT;
         double min = MINLIMIT;
         // grayscale  = 1 / exposure_measure
-        int value = floor(1/
-                          ((double)absdiff /(max - min)) * 256.0
+        int value = floor(
+                          (absdiff /(max - min)) * 256.0
                           );
         if(value > 255) {
             value = 255;
@@ -270,18 +272,19 @@ void processingThread::run() {
     //printf(" - - - - - - - - - - - - - - \n");
     // searching the couples in EM3
     
-    for(int i = 0; i< countEM3 ; i++){
+    for(int i = 0; i< countEM3 - 1 ; i++){
         //printf("analysing EM3 position %d \n", countEM3);
         unsigned long blob = bufferEM3[i].address;
         unsigned long timestampFound;
         unsigned long timestamp = bufferEM3[i].timestamp;
         timestampFound = look4opposite(bufferEM3,i,countEM3);
         long diff =  timestampFound - timestamp;
-        unsigned long absdiff = std::abs(diff);
-
-        if(absdiff == 0) {
+        if(diff == 0) {
             continue;
         }
+        double absdiff = 1.0 / std::abs(diff);
+
+
         //printf("EM3 - 1.buffer.address %08x   ",bufferEM3[i].address);
         //printf("2.value %lu   \n", absdiff);
         if (absdiff > maxdiff){ maxdiff = absdiff; }
@@ -291,8 +294,8 @@ void processingThread::run() {
         double max = MAXLIMIT;
         double min = MINLIMIT;
         // grayscale  = 1 / exposure_measure
-        int value = floor(1/
-                          ((double)absdiff /(max - min)) * numbits
+        int value = floor(
+                          (absdiff /(max - min)) * numbits
                           );
         if(value > 255) {
             value = 255;
@@ -306,7 +309,7 @@ void processingThread::run() {
     
 
     // searching the couples in EM4
-    for(int i = 0; i< countEM4 ; i++){
+    for(int i = 0; i< countEM4 - 1; i++){
         //printf("analysing EM4 position %d \n", countEM4);
         unsigned long blob = bufferEM4[i].address;
         unsigned long timestampFound;
@@ -323,8 +326,8 @@ void processingThread::run() {
         double max = MAXLIMIT;
         double min = MINLIMIT;
         // grayscale  = 1 / exposure_measure
-        int value = floor( 1/
-                          ((double)absdiff /(max - min)) * numbits
+        int value = floor( 
+                          (absdiff /(max - min)) * numbits
                           );
         if(value > 255) {
             value = 255;

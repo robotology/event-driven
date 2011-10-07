@@ -154,6 +154,11 @@ void logFrameConverter::onRead(eventBuffer& i_ub) {
         return;
     }
 
+    if(dim > CHUNKSIZE - 1){
+        printf("buffer limit reached \n");
+        dim = CHUNKSIZE - 1;
+    }
+    
     //fprintf(fout, "iiiiiiiiiiiiiiiiiiii \n");
     
     mutex.wait();

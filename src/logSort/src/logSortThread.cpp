@@ -402,25 +402,17 @@ void logSortThread::run() {
         unmask_events.getEM(&pEM, &dimEM);
         if (dimEM > 0) {
             //printf("dimEM :             %d \n", dimEM);
-        }
-
-        for (int i = 0; i < dimEM; i++) {
-            u32 blob      = pEM[i].address;
-            u32 timestamp = pEM[i].timestamp;
-            fprintf(fout,"%08x %08x \n",blob,timestamp);
-        }                                       
+        }                                    
 
         //printf("dimEM :  %d \n", dimEM);
         sendBuffer(&portEM, pEM, dimEM);
-        if(count % 100 == 0){
-            //printf("_____________________________________ \n");            
+        if(count % 100 == 0){            
             unmask_events.resetEM1();
             unmask_events.resetEM2();
             unmask_events.resetEM3();
             unmask_events.resetEM4();
             unmask_events.resetTOTEM();
-        }
-        
+        }        
         // --------------------------------------------
         
         
@@ -431,6 +423,12 @@ void logSortThread::run() {
             unmask_events.resetIF();
         }
 
+
+        for (int i = 0; i < dimIF; i++) {
+            u32 blob      = pIF[i].address;
+            u32 timestamp = pIF[i].timestamp;
+            fprintf(fout,"%08x %08x \n",blob,timestamp);
+        }   
         
    
     

@@ -36,7 +36,7 @@
 
 //#define SIZE_OF_DATA  32768 // SIZE_OF_DATA = 8byte * SIZE_OF_EVENT
 
-#define EVENTS128            // defines the dimension of the buffers
+#define EVENTS1024            // defines the dimension of the buffers
 
 #ifdef EVENTS4096
  #define SIZE_OF_EVENT 4096   //default:8192  CHUNKSIZE / 8  
@@ -55,6 +55,25 @@
  #define TH3           24576
  #define BUFFERDIM     32768
 #endif
+
+#ifdef EVENTS512
+ #define SIZE_OF_EVENT 512   //default:8192  CHUNKSIZE / 8  
+ #define CHUNKSIZE     4096 
+ #define TH1           4096  
+ #define TH2           8192
+ #define TH3           12288
+ #define BUFFERDIM     16384
+#endif
+
+#ifdef EVENTS256
+ #define SIZE_OF_EVENT 256   //default:8192  CHUNKSIZE / 8  
+ #define CHUNKSIZE     2048 
+ #define TH1           2048  
+ #define TH2           4096
+ #define TH3           6144
+ #define BUFFERDIM     8192
+#endif
+
 
 #ifdef EVENTS128
  #define SIZE_OF_EVENT 128   //default:8192  CHUNKSIZE / 8  
