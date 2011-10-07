@@ -29,7 +29,7 @@
 #include <string.h>
 #include <sstream>
 #include <cstdlib>
-
+#include <cmath>
 
 #define COMMAND_VOCAB_ON    VOCAB2('o','n')
 #define COMMAND_VOCAB_OFF   VOCAB3('o','f','f')
@@ -142,6 +142,25 @@ static double dec2current(int value) {
     return current; //in pA
 }
 
+static double current2voltage(double I) {
+    //current is expressed in pA
+    double Ut = 25;  //mV
+    double k  = 0.7; 
+    double I0 = 3.0; // pA
+ 
+    double voltage = (Ut / k) * log(I / I0) * 1000; 
+    return voltage; //in V
+}
+
+static double voltage2current(double V) {
+    // voltage is expressed in V
+    double Ut = 0.025;  //mV
+    double k  = 0.7; 
+    double I0 = 3.0; // pA
+    
+    double current = I0 * exp ((k * V) / Ut);
+    return current; 
+}
 
 static double current2dec(double value) {
     double step = 4.5; // every bit is converted in 4.5pA
@@ -186,8 +205,8 @@ static void enter_callbackSYTH( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents :%s \n",entry_text);
-    double current =g_ascii_strtod(entry_text,NULL);
-    gtk_adjustment_set_value((GtkAdjustment*)adjSYTH,current2dec(current));
+    double voltage =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjSYTH,current2dec(voltage2current(voltage)));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -204,8 +223,8 @@ static void enter_callbackSYTA( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
-    double current =g_ascii_strtod(entry_text,NULL);
-    gtk_adjustment_set_value((GtkAdjustment*)adjSYTA,current2dec(current));
+    double voltage =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjSYTA,current2dec(voltage2current(voltage)));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -222,8 +241,8 @@ static void enter_callbackSYPA( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
-    double current =g_ascii_strtod(entry_text,NULL);
-    gtk_adjustment_set_value((GtkAdjustment*)adjSYPA,current2dec(current));
+    double voltage =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjSYPA,current2dec(voltage2current(voltage)));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -240,8 +259,8 @@ static void enter_callbackSYPH( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents : %s\n", entry_text);
-    double current =g_ascii_strtod(entry_text,NULL);
-    gtk_adjustment_set_value((GtkAdjustment*)adjSYPH,current2dec(current));
+    double voltage =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjSYPH,current2dec(voltage2current(voltage)));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -258,8 +277,8 @@ static void enter_callbackTPB( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
-    double current =g_ascii_strtod(entry_text,NULL);
-    gtk_adjustment_set_value((GtkAdjustment*)adjTPB,current2dec(current));
+    double voltage =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjTPB,current2dec(voltage2current(voltage)));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -276,8 +295,8 @@ static void enter_callbackCDR( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
-    double current =g_ascii_strtod(entry_text,NULL);
-    gtk_adjustment_set_value((GtkAdjustment*)adjCDR,current2dec(current));
+    double voltage =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjCDR,current2dec(voltage2current(voltage)));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -294,8 +313,8 @@ static void enter_callbackCDS( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
-    double current =g_ascii_strtod(entry_text,NULL);
-    gtk_adjustment_set_value((GtkAdjustment*)adjCDS,current2dec(current));
+    double voltage =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjCDS,current2dec(voltage2current(voltage)));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -312,8 +331,8 @@ static void enter_callbackCDP( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
-    double current =g_ascii_strtod(entry_text,NULL);
-    gtk_adjustment_set_value((GtkAdjustment*)adjCDP,current2dec(current));
+    double voltage =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjCDP,current2dec(voltage2current(voltage)));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -330,8 +349,8 @@ static void enter_callbackRPX( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
-    double current =g_ascii_strtod(entry_text,NULL);
-    gtk_adjustment_set_value((GtkAdjustment*)adjRPX,current2dec(current));
+    double voltage =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjRPX,current2dec(voltage2current(voltage)));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -348,8 +367,8 @@ static void enter_callbackRPY( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
-    double current =g_ascii_strtod(entry_text,NULL);
-    gtk_adjustment_set_value((GtkAdjustment*)adjRPY,current2dec(current));
+    double voltage =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjRPY,current2dec(voltage2current(voltage)));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -366,8 +385,8 @@ static void enter_callbackIFR( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
-    double current =g_ascii_strtod(entry_text,NULL);
-    gtk_adjustment_set_value((GtkAdjustment*)adjIFR,current2dec(current));
+    double voltage =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjIFR,current2dec(voltage2current(voltage)));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -384,8 +403,8 @@ static void enter_callbackIFT( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
-    double current =g_ascii_strtod(entry_text,NULL);
-    gtk_adjustment_set_value((GtkAdjustment*)adjIFT,current2dec(current));
+    double voltage =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjIFT,current2dec(voltage2current(voltage)));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -402,8 +421,8 @@ static void enter_callbackIFL( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
-    double current =g_ascii_strtod(entry_text,NULL);
-    gtk_adjustment_set_value((GtkAdjustment*)adjIFL,current2dec(current));
+    double voltage =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjIFL,current2dec(voltage2current(voltage)));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -420,8 +439,8 @@ static void enter_callbackCDOF( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
-    double current =g_ascii_strtod(entry_text,NULL);
-    gtk_adjustment_set_value((GtkAdjustment*)adjCDOF,current2dec(current));
+    double voltage =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjCDOF,current2dec(voltage2current(voltage)));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -438,8 +457,8 @@ static void enter_callbackSYPW( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
-    double current =g_ascii_strtod(entry_text,NULL);
-    gtk_adjustment_set_value((GtkAdjustment*)adjSYPW,current2dec(current));
+    double voltage =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjSYPW,current2dec(voltage2current(voltage)));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -456,8 +475,8 @@ static void enter_callbackSYW( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
-    double current =g_ascii_strtod(entry_text,NULL);
-    gtk_adjustment_set_value((GtkAdjustment*)adjSYW,current2dec(current));
+    double voltage =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjSYW,current2dec(voltage2current(voltage)));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -474,8 +493,8 @@ static void enter_callbackCDON( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
-    double current =g_ascii_strtod(entry_text,NULL);
-    gtk_adjustment_set_value((GtkAdjustment*)adjCDON,current2dec(current));
+    double voltage =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjCDON,current2dec(voltage2current(voltage)));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -492,8 +511,8 @@ static void enter_callbackCDD( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
-    double current =g_ascii_strtod(entry_text,NULL);
-    gtk_adjustment_set_value((GtkAdjustment*)adjCDD,current2dec(current));
+    double voltage =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjCDD,current2dec(voltage2current(voltage)));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -510,8 +529,8 @@ static void enter_callbackEMCH( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
-    double current =g_ascii_strtod(entry_text,NULL);
-    gtk_adjustment_set_value((GtkAdjustment*)adjEMCH,current2dec(current));
+    double voltage =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjEMCH,current2dec(voltage2current(voltage)));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -528,8 +547,8 @@ static void enter_callbackEMCT( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
-    double current =g_ascii_strtod(entry_text,NULL);
-    gtk_adjustment_set_value((GtkAdjustment*)adjEMCT,current2dec(current));
+    double voltage =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjEMCT,current2dec(voltage2current(voltage)));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -546,8 +565,8 @@ static void enter_callbackCDI( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
-    double current =g_ascii_strtod(entry_text,NULL);
-    gtk_adjustment_set_value((GtkAdjustment*)adjCDI,current2dec(current));
+    double voltage =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjCDI,current2dec(voltage2current(voltage)));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -564,8 +583,8 @@ static void enter_callbackCDRG( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
-    double current =g_ascii_strtod(entry_text,NULL);
-    gtk_adjustment_set_value((GtkAdjustment*)adjCDRG,current2dec(current));
+    double voltage =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjCDRG,current2dec(voltage2current(voltage)));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -582,8 +601,8 @@ static void enter_callbackSELF( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
-    double current =g_ascii_strtod(entry_text,NULL);
-    gtk_adjustment_set_value((GtkAdjustment*)adjSELF,current2dec(current));
+    double voltage =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjSELF,current2dec(voltage2current(voltage)));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -600,8 +619,8 @@ static void enter_callbackFOLL( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
-    double current =g_ascii_strtod(entry_text,NULL);
-    gtk_adjustment_set_value((GtkAdjustment*)adjFOLL,current2dec(current));
+    double voltage =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjFOLL,current2dec(voltage2current(voltage)));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -618,8 +637,8 @@ static void enter_callbackARBP( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
-    double current =g_ascii_strtod(entry_text,NULL);
-    gtk_adjustment_set_value((GtkAdjustment*)adjARBP,current2dec(current));
+    double voltage =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjARBP,current2dec(voltage2current(voltage)));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -636,8 +655,8 @@ static void enter_callbackEMVL( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
-    double current =g_ascii_strtod(entry_text,NULL);
-    gtk_adjustment_set_value((GtkAdjustment*)adjEMVL,current2dec(current));
+    double voltage =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjEMVL,current2dec(voltage2current(voltage)));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -654,8 +673,8 @@ static void enter_callbackCDC( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
-    double current = g_ascii_strtod(entry_text,NULL);
-    gtk_adjustment_set_value((GtkAdjustment*)adjCDC,current2dec(current));
+    double voltage = g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjCDC,current2dec(voltage2current(voltage)));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -672,8 +691,8 @@ static void enter_callbackEMVH( GtkWidget *widget, GtkWidget *entry ) {
     const gchar *entry_text;
     entry_text = gtk_entry_get_text (GTK_ENTRY (entry));
     printf ("Entry contents  : %s\n", entry_text);
-    double current =g_ascii_strtod(entry_text,NULL);
-    gtk_adjustment_set_value((GtkAdjustment*)adjEMVH,current2dec(current));
+    double voltage =g_ascii_strtod(entry_text,NULL);
+    gtk_adjustment_set_value((GtkAdjustment*)adjEMVH,current2dec(voltage2current(voltage)));
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -721,7 +740,7 @@ static void cb_digits_SynThr( GtkAdjustment *adj ) {
         _pOutPort->write(bot,in);
     }
     gchar* tpoint = new gchar();
-    g_ascii_dtostr(tpoint,24,dec2current((int) adj->value));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current((int) adj->value)));
     gtk_entry_set_text (GTK_ENTRY (entrySYTH), tpoint);
 }
 
@@ -737,7 +756,7 @@ static void cb_digits_SynTau( GtkAdjustment *adj ) {
         _pOutPort->write(bot,in);
     }
     gchar* tpoint = new gchar();
-    g_ascii_dtostr(tpoint,24,dec2current((int) adj->value));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current((int) adj->value)));
     gtk_entry_set_text (GTK_ENTRY (entrySYTA), tpoint);
 }
 
@@ -753,7 +772,7 @@ static void cb_digits_SynPxlTau( GtkAdjustment *adj ) {
         _pOutPort->write(bot,in);
     }
     gchar* tpoint = new gchar();
-    g_ascii_dtostr(tpoint,24,dec2current((int) adj->value));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current((int) adj->value)));
     gtk_entry_set_text (GTK_ENTRY (entrySYPA), tpoint);
 }
 
@@ -769,7 +788,7 @@ static void cb_digits_SynPxlThr( GtkAdjustment *adj ) {
         _pOutPort->write(bot,in);
     }
     gchar* tpoint = new gchar();
-    g_ascii_dtostr(tpoint,24,dec2current((int) adj->value));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current((int) adj->value)));
     gtk_entry_set_text (GTK_ENTRY (entrySYPH), tpoint);
 }
 
@@ -785,7 +804,7 @@ static void cb_digits_testPbias( GtkAdjustment *adj ) {
         _pOutPort->write(bot,in);
     }
     gchar* tpoint = new gchar();
-    g_ascii_dtostr(tpoint,24,dec2current((int) adj->value));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current((int) adj->value)));
     gtk_entry_set_text (GTK_ENTRY (entryTPB), tpoint);
 }
 
@@ -801,7 +820,7 @@ static void cb_digits_CDRefr( GtkAdjustment *adj ) {
         _pOutPort->write(bot,in);
     }
     gchar* tpoint = new gchar();
-    g_ascii_dtostr(tpoint,24,dec2current((int) adj->value));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current((int) adj->value)));
     gtk_entry_set_text (GTK_ENTRY (entryCDR), tpoint);
 }
 
@@ -817,7 +836,7 @@ static void cb_digits_CDSf( GtkAdjustment *adj ) {
         _pOutPort->write(bot,in);
     }
     gchar* tpoint = new gchar();
-    g_ascii_dtostr(tpoint,24,dec2current((int) adj->value));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current((int) adj->value)));
     gtk_entry_set_text (GTK_ENTRY (entryCDS), tpoint);
 }
 
@@ -833,7 +852,7 @@ static void cb_digits_CDPr( GtkAdjustment *adj ) {
         _pOutPort->write(bot,in);
     }
     gchar* tpoint = new gchar();
-    g_ascii_dtostr(tpoint,24,dec2current((int) adj->value));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current((int) adj->value)));
     gtk_entry_set_text (GTK_ENTRY (entryCDP), tpoint);
 }
 
@@ -849,7 +868,7 @@ static void cb_digits_ReqPuX( GtkAdjustment *adj ) {
         _pOutPort->write(bot,in);
     }
     gchar* tpoint = new gchar();
-    g_ascii_dtostr(tpoint,24,dec2current((int) adj->value));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current((int) adj->value)));
     gtk_entry_set_text (GTK_ENTRY (entryRPX), tpoint);
 }
 
@@ -865,7 +884,7 @@ static void cb_digits_ReqPuY( GtkAdjustment *adj ) {
         _pOutPort->write(bot,in);
     }
     gchar* tpoint = new gchar();
-    g_ascii_dtostr(tpoint,24,dec2current((int) adj->value));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current((int) adj->value)));
     gtk_entry_set_text (GTK_ENTRY (entryRPY), tpoint);
 }
 
@@ -881,7 +900,7 @@ static void cb_digits_IFRf( GtkAdjustment *adj ) {
         _pOutPort->write(bot,in);
     }
     gchar* tpoint = new gchar();
-    g_ascii_dtostr(tpoint,24,dec2current((int) adj->value));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current((int) adj->value)));
     gtk_entry_set_text (GTK_ENTRY (entryIFR), tpoint);
 }
 
@@ -897,7 +916,7 @@ static void cb_digits_IFThr( GtkAdjustment *adj ) {
         _pOutPort->write(bot,in);
     }
     gchar* tpoint = new gchar();
-    g_ascii_dtostr(tpoint,24,dec2current((int) adj->value));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current((int) adj->value)));
     gtk_entry_set_text (GTK_ENTRY (entryIFT), tpoint);
 }
 
@@ -917,7 +936,7 @@ static void cb_digits_IFLk( GtkAdjustment *adj ) {
     }
     mutex.post();
     gchar* tpoint = new gchar();
-    g_ascii_dtostr(tpoint,24,dec2current((int) adj->value));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current((int) adj->value)));
     gtk_entry_set_text (GTK_ENTRY (entryIFL), tpoint);
 }
 
@@ -935,7 +954,7 @@ static void cb_digits_CDOffThr( GtkAdjustment *adj ) {
     }
     mutex.post();
     gchar* tpoint = new gchar();
-    g_ascii_dtostr(tpoint,24,dec2current((int) adj->value));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current((int) adj->value)));
     gtk_entry_set_text (GTK_ENTRY (entryCDOF), tpoint);
 }
 
@@ -953,7 +972,7 @@ static void cb_digits_SynPxlW( GtkAdjustment *adj ) {
     }
     mutex.post();
     gchar* tpoint = new gchar();
-    g_ascii_dtostr(tpoint,24,dec2current((int) adj->value));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current((int) adj->value)));
     gtk_entry_set_text (GTK_ENTRY (entrySYPW), tpoint);
 }
 
@@ -971,7 +990,7 @@ static void cb_digits_SynW( GtkAdjustment *adj ) {
     }
     mutex.post();
     gchar* tpoint = new gchar();
-    g_ascii_dtostr(tpoint,24,dec2current((int) adj->value));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current((int) adj->value)));
     gtk_entry_set_text (GTK_ENTRY (entrySYW), tpoint);
 }
 
@@ -990,7 +1009,7 @@ static void cb_digits_CDOnThr( GtkAdjustment *adj ) {
     }
     mutex.post();
     gchar* tpoint = new gchar();
-    g_ascii_dtostr(tpoint,24,dec2current((int) adj->value));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current((int) adj->value)));
     gtk_entry_set_text (GTK_ENTRY (entryCDON), tpoint);
 }
 
@@ -1008,7 +1027,7 @@ static void cb_digits_CDDiff( GtkAdjustment *adj ) {
     }
     mutex.post();
     gchar* tpoint = new gchar();
-    g_ascii_dtostr(tpoint,24,dec2current((int) adj->value));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current((int) adj->value)));
     gtk_entry_set_text (GTK_ENTRY (entryCDD), tpoint);
 }
 
@@ -1026,7 +1045,7 @@ static void cb_digits_EMCompH( GtkAdjustment *adj ) {
     }
     mutex.post();
     gchar* tpoint = new gchar();
-    g_ascii_dtostr(tpoint,24,dec2current((int) adj->value));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current((int) adj->value)));
     gtk_entry_set_text (GTK_ENTRY (entryEMCH), tpoint);
 }
 
@@ -1044,7 +1063,7 @@ static void cb_digits_EMCompT( GtkAdjustment *adj ) {
     }
     mutex.post();
     gchar* tpoint = new gchar();
-    g_ascii_dtostr(tpoint,24,dec2current((int) adj->value));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current((int) adj->value)));
     gtk_entry_set_text (GTK_ENTRY (entryEMCT), tpoint);
 }
 
@@ -1062,7 +1081,7 @@ static void cb_digits_CDIoff( GtkAdjustment *adj ) {
     }
     mutex.post();
     gchar* tpoint = new gchar();
-    g_ascii_dtostr(tpoint,24,dec2current((int) adj->value));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current((int) adj->value)));
     gtk_entry_set_text (GTK_ENTRY (entryCDI), tpoint);
 }
 
@@ -1081,7 +1100,7 @@ static void cb_digits_CDRGnd( GtkAdjustment *adj ) {
     }
     mutex.post();
     gchar* tpoint = new gchar();
-    g_ascii_dtostr(tpoint,24,dec2current((int) adj->value));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current((int) adj->value)));
     gtk_entry_set_text (GTK_ENTRY (entryCDRG), tpoint);
 }
 
@@ -1099,7 +1118,7 @@ static void cb_digits_Self( GtkAdjustment *adj ) {
     }
     mutex.post();
     gchar* tpoint = new gchar();
-    g_ascii_dtostr(tpoint,24,dec2current((int) adj->value));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current((int) adj->value)));
     gtk_entry_set_text (GTK_ENTRY (entrySELF), tpoint);
 }
 
@@ -1117,7 +1136,7 @@ static void cb_digits_Foll( GtkAdjustment *adj ) {
     }
     mutex.post();
     gchar* tpoint = new gchar();
-    g_ascii_dtostr(tpoint,24,dec2current((int) adj->value));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current((int) adj->value)));
     gtk_entry_set_text (GTK_ENTRY (entryFOLL), tpoint);
 }
 
@@ -1135,7 +1154,7 @@ static void cb_digits_ArbPd( GtkAdjustment *adj ) {
     }
     mutex.post();
     gchar* tpoint = new gchar();
-    g_ascii_dtostr(tpoint,24,dec2current((int) adj->value));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current((int) adj->value)));
     gtk_entry_set_text (GTK_ENTRY (entryARBP), tpoint);
 }
 
@@ -1153,7 +1172,7 @@ static void cb_digits_EMVrefL( GtkAdjustment *adj ) {
     }
     mutex.post();
     gchar* tpoint = new gchar();
-    g_ascii_dtostr(tpoint,24,dec2current((int) adj->value));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current((int) adj->value)));
     gtk_entry_set_text (GTK_ENTRY (entryEMVL), tpoint);
 }
 
@@ -1171,7 +1190,7 @@ static void cb_digits_CDCas( GtkAdjustment *adj ) {
     }
     mutex.post();
     gchar* tpoint = new gchar();
-    g_ascii_dtostr(tpoint,24,dec2current((int) adj->value));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current((int) adj->value)));
     gtk_entry_set_text (GTK_ENTRY (entryCDC), tpoint);
 }
 
@@ -1189,7 +1208,7 @@ static void cb_digits_EMVrefH( GtkAdjustment *adj ) {
     }
     mutex.post();
     gchar* tpoint = new gchar();
-    g_ascii_dtostr(tpoint,24,dec2current((int) adj->value));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current((int) adj->value)));
     gtk_entry_set_text (GTK_ENTRY (entryEMVH), tpoint);
 }
 
@@ -1485,7 +1504,7 @@ gint timeout_CB(gpointer data) {
                     //_pOutPort->Content() = _outBottle;
                     Bottle in;
                     _pOutPort->write(bot,in);
-                    printf("       in bottle %s", in.toString().c_str());
+                    //printf("       in bottle %s", in.toString().c_str());
                     double value=in.get(0).asDouble();
                     printf("getting SYTH %f \n", value);
                     //mutex.wait();
@@ -1494,7 +1513,7 @@ gint timeout_CB(gpointer data) {
             }
         }
         break;
-        case 1: {
+        case 11: {
             if(_pOutPort->getOutputCount()) {
                     yarp::os::Bottle bot; //= _pOutPort->prepare();
                     bot.clear();
@@ -1511,7 +1530,7 @@ gint timeout_CB(gpointer data) {
             }
         }
         break;
-        case 2: {
+        case 22: {
             if(_pOutPort->getOutputCount()) {
                     yarp::os::Bottle bot; //= _pOutPort->prepare();
                     bot.clear();
@@ -1528,7 +1547,7 @@ gint timeout_CB(gpointer data) {
             }
         }
         break;
-        case 3: {
+        case 33: {
             if(_pOutPort->getOutputCount()) {
                     yarp::os::Bottle bot; //= _pOutPort->prepare();
                     bot.clear();
@@ -1545,7 +1564,7 @@ gint timeout_CB(gpointer data) {
             }
         }
         break;
-        case 4: {
+        case 44: {
             if(_pOutPort->getOutputCount()) {
                     yarp::os::Bottle bot; //= _pOutPort->prepare();
                     bot.clear();
@@ -1562,7 +1581,7 @@ gint timeout_CB(gpointer data) {
             }
         }
         break;
-        case 5: {
+        case 55: {
             if(_pOutPort->getOutputCount()) {
                     yarp::os::Bottle bot; //= _pOutPort->prepare();
                     bot.clear();
@@ -1579,7 +1598,7 @@ gint timeout_CB(gpointer data) {
             }
         }
         break;
-        case 6: {
+        case 66: {
             if(_pOutPort->getOutputCount()) {
                     yarp::os::Bottle bot; //= _pOutPort->prepare();
                     bot.clear();
@@ -1596,7 +1615,7 @@ gint timeout_CB(gpointer data) {
            }
         }
         break;
-        case 7: {
+        case 77: {
             if(_pOutPort->getOutputCount()) {
                     yarp::os::Bottle bot; //= _pOutPort->prepare();
                     bot.clear();
@@ -1613,7 +1632,7 @@ gint timeout_CB(gpointer data) {
             }
         }
         break;
-        case 8: {
+        case 88: {
             if(_pOutPort->getOutputCount()) {
                     yarp::os::Bottle bot; //= _pOutPort->prepare();
                     bot.clear();
@@ -1630,7 +1649,7 @@ gint timeout_CB(gpointer data) {
             }
         }
         break;
-        case 9: {
+        case 99: {
             if(_pOutPort->getOutputCount()) {
                     yarp::os::Bottle bot; //= _pOutPort->prepare();
                     bot.clear();
@@ -1647,7 +1666,7 @@ gint timeout_CB(gpointer data) {
             }
         }
         break;
-        case 10: {
+        case 100: {
             if(_pOutPort->getOutputCount()) {
                     yarp::os::Bottle bot; //= _pOutPort->prepare();
                     bot.clear();
@@ -1664,7 +1683,7 @@ gint timeout_CB(gpointer data) {
             }
         }
         break;
-        case 11: {
+        case 110: {
             if(_pOutPort->getOutputCount()) {
                     yarp::os::Bottle bot; //= _pOutPort->prepare();
                     bot.clear();
@@ -1681,7 +1700,7 @@ gint timeout_CB(gpointer data) {
             }
         }
         break;
-        case 12: {
+        case 120: {
             if(_pOutPort->getOutputCount()) {
                     yarp::os::Bottle bot; //= _pOutPort->prepare();
                     bot.clear();
@@ -1698,7 +1717,7 @@ gint timeout_CB(gpointer data) {
             }
         }
         break;
-        case 13: {
+        case 130: {
             if(_pOutPort->getOutputCount()) {
                     yarp::os::Bottle bot; //= _pOutPort->prepare();
                     bot.clear();
@@ -1715,7 +1734,7 @@ gint timeout_CB(gpointer data) {
             }
         }
         break;
-        case 14: {
+        case 140: {
             if(_pOutPort->getOutputCount()) {
                     yarp::os::Bottle bot; //= _pOutPort->prepare();
                     bot.clear();
@@ -1732,7 +1751,7 @@ gint timeout_CB(gpointer data) {
             }
         }
         break;
-        case 15: {
+        case 150: {
             if(_pOutPort->getOutputCount()) {
                     yarp::os::Bottle bot; //= _pOutPort->prepare();
                     bot.clear();
@@ -1749,7 +1768,7 @@ gint timeout_CB(gpointer data) {
             }
         }
         break;
-        case 16: {
+        case 160: {
             if(_pOutPort->getOutputCount()) {
                     yarp::os::Bottle bot; //= _pOutPort->prepare();
                     bot.clear();
@@ -1766,7 +1785,7 @@ gint timeout_CB(gpointer data) {
             }
         }
         break;
-        case 17: {
+        case 170: {
             if(_pOutPort->getOutputCount()) {
                     yarp::os::Bottle bot; //= _pOutPort->prepare();
                     bot.clear();
@@ -1783,7 +1802,7 @@ gint timeout_CB(gpointer data) {
             }
         }
         break;
-        case 18: {
+        case 180: {
             if(_pOutPort->getOutputCount()) {
                     yarp::os::Bottle bot; //= _pOutPort->prepare();
                     bot.clear();
@@ -1800,7 +1819,7 @@ gint timeout_CB(gpointer data) {
             }
         }
         break;
-        case 19: {
+        case 190: {
             if(_pOutPort->getOutputCount()) {
                     yarp::os::Bottle bot; //= _pOutPort->prepare();
                     bot.clear();
@@ -1817,7 +1836,7 @@ gint timeout_CB(gpointer data) {
             }
         }
         break;
-        case 20: {
+        case 200: {
             if(_pOutPort->getOutputCount()) {
                     yarp::os::Bottle bot; //= _pOutPort->prepare();
                     bot.clear();
@@ -1834,7 +1853,7 @@ gint timeout_CB(gpointer data) {
             }
         }
         break;
-        case 21: {
+        case 210: {
             if(_pOutPort->getOutputCount()) {
                     yarp::os::Bottle bot; //= _pOutPort->prepare();
                     bot.clear();
@@ -1851,7 +1870,7 @@ gint timeout_CB(gpointer data) {
             }
         }
         break;
-        case 22: {
+        case 220: {
             if(_pOutPort->getOutputCount()) {
                     yarp::os::Bottle bot; //= _pOutPort->prepare();
                     bot.clear();
@@ -1868,7 +1887,7 @@ gint timeout_CB(gpointer data) {
             }
         }
         break;
-        case 23: {
+        case 230: {
             if(_pOutPort->getOutputCount()) {
                     yarp::os::Bottle bot; //= _pOutPort->prepare();
                     bot.clear();
@@ -1885,7 +1904,7 @@ gint timeout_CB(gpointer data) {
             }
         }
         break;
-        case 24: {
+        case 240: {
             if(_pOutPort->getOutputCount()) {
                     yarp::os::Bottle bot; //= _pOutPort->prepare();
                     bot.clear();
@@ -1902,7 +1921,7 @@ gint timeout_CB(gpointer data) {
             }
         }
         break;
-        case 25: {
+        case 250: {
             if(_pOutPort->getOutputCount()) {
                     yarp::os::Bottle bot; //= _pOutPort->prepare();
                     bot.clear();
@@ -1919,7 +1938,7 @@ gint timeout_CB(gpointer data) {
             }
         }
         break;
-        case 26: {
+        case 260: {
             if(_pOutPort->getOutputCount()) {
                     yarp::os::Bottle bot; //= _pOutPort->prepare();
                     bot.clear();
@@ -1936,7 +1955,7 @@ gint timeout_CB(gpointer data) {
             }
         }
         break;
-        case 27: {
+        case 270: {
             if(_pOutPort->getOutputCount()) {
                     yarp::os::Bottle bot; //= _pOutPort->prepare();
                     bot.clear();
@@ -1952,9 +1971,14 @@ gint timeout_CB(gpointer data) {
                     
                     //mutex.post();
             }
-        }        break;
+        } 
+        break;
+    case 271: {
+        c = -1;
+    }
+        break;
         default: {
-                    c=-1;
+            //c=-1;
                  }
     }
 
@@ -3249,7 +3273,7 @@ GtkWidget* createMainWindow(void) {
 
     frame = gdk_pixbuf_new (GDK_COLORSPACE_RGB, FALSE, 8, 320, 240);
     // TimeOut used to refresh the screen
-    timeout_ID = gtk_timeout_add (100,timeout_CB, NULL);
+    timeout_ID = gtk_timeout_add (30000,timeout_CB, NULL);
 
     mainWindow=window;
 
