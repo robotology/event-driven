@@ -2344,7 +2344,7 @@ GtkWidget* createMainWindow(void) {
 		      entryCDS);
     tmp_pos = GTK_ENTRY (entryCDS)->text_length;
     
-    g_ascii_dtostr(tpoint,24,dec2current(CDS_DEFAULT_VALUE));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current(CDS_DEFAULT_VALUE)));
     gtk_editable_insert_text (GTK_EDITABLE (entryCDS), tpoint , -1, &tmp_pos);
     gtk_editable_select_region (GTK_EDITABLE (entryCDS),
 			        0, GTK_ENTRY (entryCDS)->text_length);
@@ -2370,7 +2370,7 @@ GtkWidget* createMainWindow(void) {
 		      G_CALLBACK (enter_callbackCDC),
 		      entryCDC);
     tmp_pos = GTK_ENTRY (entryCDC)->text_length;
-    g_ascii_dtostr(tpoint,24,dec2current(CDC_DEFAULT_VALUE));
+                   g_ascii_dtostr(tpoint,24,current2voltage(dec2current(CDC_DEFAULT_VALUE)));
     gtk_editable_insert_text (GTK_EDITABLE (entryCDC), tpoint , -1, &tmp_pos);
     gtk_editable_select_region (GTK_EDITABLE (entryCDC),
 			        0, GTK_ENTRY (entryCDC)->text_length);
@@ -2397,7 +2397,7 @@ GtkWidget* createMainWindow(void) {
 		      G_CALLBACK (enter_callbackCDP),
 		      entryCDP);
     tmp_pos = GTK_ENTRY (entryCDP)->text_length;
-    g_ascii_dtostr(tpoint,24,dec2current(CDP_DEFAULT_VALUE));
+                   g_ascii_dtostr(tpoint,24,current2voltage(dec2current(CDP_DEFAULT_VALUE)));
     gtk_editable_insert_text (GTK_EDITABLE (entryCDP), tpoint , -1, &tmp_pos);
     gtk_editable_select_region (GTK_EDITABLE (entryCDP),
 			        0, GTK_ENTRY (entryCDP)->text_length);
@@ -2423,7 +2423,7 @@ GtkWidget* createMainWindow(void) {
 		      G_CALLBACK (enter_callbackCDR),
 		      entryCDR);
     tmp_pos = GTK_ENTRY (entryCDR)->text_length;
-    g_ascii_dtostr(tpoint,24,dec2current(CDR_DEFAULT_VALUE));
+                   g_ascii_dtostr(tpoint,24,current2voltage(dec2current(CDR_DEFAULT_VALUE)));
     gtk_editable_insert_text (GTK_EDITABLE (entryCDR), tpoint , -1, &tmp_pos);
     gtk_editable_select_region (GTK_EDITABLE (entryCDR),
 			        0, GTK_ENTRY (entryCDR)->text_length);
@@ -2449,7 +2449,7 @@ GtkWidget* createMainWindow(void) {
 		      G_CALLBACK (enter_callbackCDRG),
 		      entryCDRG);
     tmp_pos = GTK_ENTRY (entryCDRG)->text_length;
-    g_ascii_dtostr(tpoint,24,dec2current(CDRG_DEFAULT_VALUE));
+                   g_ascii_dtostr(tpoint,24,current2voltage(dec2current(CDRG_DEFAULT_VALUE)));
     gtk_editable_insert_text (GTK_EDITABLE (entryCDRG), tpoint , -1, &tmp_pos);
     gtk_editable_select_region (GTK_EDITABLE (entryCDRG),
 			        0, GTK_ENTRY (entryCDRG)->text_length);
@@ -2475,7 +2475,7 @@ GtkWidget* createMainWindow(void) {
 		      G_CALLBACK (enter_callbackCDON),
 		      entryCDON);
     tmp_pos = GTK_ENTRY (entryCDON)->text_length;
-    g_ascii_dtostr(tpoint,24,dec2current(CDON_DEFAULT_VALUE));
+                   g_ascii_dtostr(tpoint,24,current2voltage(dec2current(CDON_DEFAULT_VALUE)));
     gtk_editable_insert_text (GTK_EDITABLE (entryCDON), tpoint , -1, &tmp_pos);
     gtk_editable_select_region (GTK_EDITABLE (entryCDON),
 			        0, GTK_ENTRY (entryCDON)->text_length);
@@ -2501,7 +2501,7 @@ GtkWidget* createMainWindow(void) {
 		      G_CALLBACK (enter_callbackCDOF),
 		      entryCDOF);
     tmp_pos = GTK_ENTRY (entryCDOF)->text_length;
-    g_ascii_dtostr(tpoint,24,dec2current(CDOF_DEFAULT_VALUE));
+                   g_ascii_dtostr(tpoint,24,current2voltage(dec2current(CDOF_DEFAULT_VALUE)));
     gtk_editable_insert_text (GTK_EDITABLE (entryCDOF), tpoint , -1, &tmp_pos);
     gtk_editable_select_region (GTK_EDITABLE (entryCDOF),
 			        0, GTK_ENTRY (entryCDOF)->text_length);
@@ -2527,7 +2527,7 @@ GtkWidget* createMainWindow(void) {
 		      G_CALLBACK (enter_callbackCDD),
 		      entryCDD);
     tmp_pos = GTK_ENTRY (entryCDD)->text_length;
-    g_ascii_dtostr(tpoint,24,dec2current(CDD_DEFAULT_VALUE));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current(CDD_DEFAULT_VALUE)));
     gtk_editable_insert_text (GTK_EDITABLE (entryCDD), tpoint , -1, &tmp_pos);
     gtk_editable_select_region (GTK_EDITABLE (entryCDD),
 			        0, GTK_ENTRY (entryCDD)->text_length);
@@ -2553,7 +2553,7 @@ GtkWidget* createMainWindow(void) {
 		      G_CALLBACK (enter_callbackCDI),
 		      entryCDI);
     tmp_pos = GTK_ENTRY (entryCDI)->text_length;
-    g_ascii_dtostr(tpoint,24,dec2current(CDI_DEFAULT_VALUE));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current(CDI_DEFAULT_VALUE)));
     gtk_editable_insert_text (GTK_EDITABLE (entryCDI), tpoint , -1, &tmp_pos);
     gtk_editable_select_region (GTK_EDITABLE (entryCDI),
 			        0, GTK_ENTRY (entryCDI)->text_length);
@@ -2579,7 +2579,7 @@ GtkWidget* createMainWindow(void) {
 		      G_CALLBACK (enter_callbackSELF),
 		      entrySELF);
     tmp_pos = GTK_ENTRY (entrySELF)->text_length;
-    g_ascii_dtostr(tpoint,24,dec2current(SELF_DEFAULT_VALUE));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current(SELF_DEFAULT_VALUE)));
     gtk_editable_insert_text (GTK_EDITABLE (entrySELF), tpoint , -1, &tmp_pos);
     gtk_editable_select_region (GTK_EDITABLE (entrySELF),
 			        0, GTK_ENTRY (entrySELF)->text_length);
@@ -2620,7 +2620,7 @@ GtkWidget* createMainWindow(void) {
 		      G_CALLBACK (enter_callbackIFR),
 		      entryIFR);
     tmp_pos = GTK_ENTRY (entryIFR)->text_length;
-    g_ascii_dtostr(tpoint,24,dec2current(IFR_DEFAULT_VALUE));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current(IFR_DEFAULT_VALUE)));
     gtk_editable_insert_text (GTK_EDITABLE (entryIFR), tpoint , -1, &tmp_pos);
     gtk_editable_select_region (GTK_EDITABLE (entryIFR),
 			        0, GTK_ENTRY (entryIFR)->text_length);
@@ -2646,7 +2646,7 @@ GtkWidget* createMainWindow(void) {
 		      G_CALLBACK (enter_callbackIFT),
 		      entryIFT);
     tmp_pos = GTK_ENTRY (entryIFT)->text_length;
-    g_ascii_dtostr(tpoint,24,dec2current(IFT_DEFAULT_VALUE));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current(IFT_DEFAULT_VALUE)));
     gtk_editable_insert_text (GTK_EDITABLE (entryIFT), tpoint , -1, &tmp_pos);
     gtk_editable_select_region (GTK_EDITABLE (entryIFT),
 			        0, GTK_ENTRY (entryIFT)->text_length);
@@ -2672,7 +2672,7 @@ GtkWidget* createMainWindow(void) {
 		      G_CALLBACK (enter_callbackIFL),
 		      entryIFL);
     tmp_pos = GTK_ENTRY (entryIFL)->text_length;
-    g_ascii_dtostr(tpoint,24,dec2current(IFL_DEFAULT_VALUE));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current(IFL_DEFAULT_VALUE)));
     gtk_editable_insert_text (GTK_EDITABLE (entryIFL), tpoint , -1, &tmp_pos);
     gtk_editable_select_region (GTK_EDITABLE (entryIFL),
 			        0, GTK_ENTRY (entryIFL)->text_length);
@@ -2706,7 +2706,7 @@ GtkWidget* createMainWindow(void) {
 		      G_CALLBACK (enter_callbackSYPA),
 		      entrySYPA);
     tmp_pos = GTK_ENTRY (entrySYPA)->text_length;
-    g_ascii_dtostr(tpoint,24,dec2current(SYPA_DEFAULT_VALUE));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current(SYPA_DEFAULT_VALUE)));
     gtk_editable_insert_text (GTK_EDITABLE (entrySYPA), tpoint , -1, &tmp_pos);
     gtk_editable_select_region (GTK_EDITABLE (entrySYPA),
 			        0, GTK_ENTRY (entrySYPA)->text_length);
@@ -2732,7 +2732,7 @@ GtkWidget* createMainWindow(void) {
 		      G_CALLBACK (enter_callbackSYPH),
 		      entrySYPH);
     tmp_pos = GTK_ENTRY (entrySYPH)->text_length;
-    g_ascii_dtostr(tpoint,24,dec2current(SYPH_DEFAULT_VALUE));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current(SYPH_DEFAULT_VALUE)));
     gtk_editable_insert_text (GTK_EDITABLE (entrySYPH), tpoint , -1, &tmp_pos);
     gtk_editable_select_region (GTK_EDITABLE (entrySYPH),
 			        0, GTK_ENTRY (entrySYPH)->text_length);
@@ -2758,10 +2758,10 @@ GtkWidget* createMainWindow(void) {
 		      G_CALLBACK (enter_callbackSYPW),
 		      entrySYPW);
     tmp_pos = GTK_ENTRY (entrySYPW)->text_length;
-    g_ascii_dtostr(tpoint,24,dec2current(SYPW_DEFAULT_VALUE));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current(SYPW_DEFAULT_VALUE)));
     gtk_editable_insert_text (GTK_EDITABLE (entrySYPW), tpoint , -1, &tmp_pos);
     gtk_editable_select_region (GTK_EDITABLE (entrySYPW),
-			        0, GTK_ENTRY (entrySYPW)->text_length);
+                                0, GTK_ENTRY (entrySYPW)->text_length);
     gtk_box_pack_start (GTK_BOX (box5), entrySYPW, TRUE, TRUE, 0);
     gtk_widget_show (entrySYPW);
 
@@ -2792,7 +2792,7 @@ GtkWidget* createMainWindow(void) {
 		      G_CALLBACK (enter_callbackSYTH),
 		      entrySYTH);
     tmp_pos = GTK_ENTRY (entrySYTH)->text_length;
-    g_ascii_dtostr(tpoint,24,dec2current(SYTH_DEFAULT_VALUE));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current(SYTH_DEFAULT_VALUE)));
     gtk_editable_insert_text (GTK_EDITABLE (entrySYTH), tpoint , -1, &tmp_pos);
     gtk_editable_select_region (GTK_EDITABLE (entrySYTH),
 			        0, GTK_ENTRY (entrySYTH)->text_length);
@@ -2818,7 +2818,7 @@ GtkWidget* createMainWindow(void) {
 		      G_CALLBACK (enter_callbackSYTA),
 		      entrySYTA);
     tmp_pos = GTK_ENTRY (entrySYTA)->text_length;
-    g_ascii_dtostr(tpoint,24,dec2current(SYTA_DEFAULT_VALUE));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current(SYTA_DEFAULT_VALUE)));
     gtk_editable_insert_text (GTK_EDITABLE (entrySYTA), tpoint , -1, &tmp_pos);
     gtk_editable_select_region (GTK_EDITABLE (entrySYTA),
 			        0, GTK_ENTRY (entrySYTA)->text_length);
@@ -2844,7 +2844,7 @@ GtkWidget* createMainWindow(void) {
 		      G_CALLBACK (enter_callbackSYW),
 		      entrySYW);
     tmp_pos = GTK_ENTRY (entrySYW)->text_length;
-    g_ascii_dtostr(tpoint,24,dec2current(SYW_DEFAULT_VALUE));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current(SYW_DEFAULT_VALUE)));
     gtk_editable_insert_text (GTK_EDITABLE (entrySYW), tpoint , -1, &tmp_pos);
     gtk_editable_select_region (GTK_EDITABLE (entrySYW),
 			        0, GTK_ENTRY (entrySYW)->text_length);
@@ -2886,7 +2886,7 @@ GtkWidget* createMainWindow(void) {
 		      G_CALLBACK (enter_callbackEMCH),
 		      entryEMCH);
     tmp_pos = GTK_ENTRY (entryEMCH)->text_length;
-    g_ascii_dtostr(tpoint,24,dec2current(EMCH_DEFAULT_VALUE));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current(EMCH_DEFAULT_VALUE)));
     gtk_editable_insert_text (GTK_EDITABLE (entryEMCH), tpoint , -1, &tmp_pos);
     gtk_editable_select_region (GTK_EDITABLE (entryEMCH),
 			        0, GTK_ENTRY (entryEMCH)->text_length);
@@ -2912,7 +2912,7 @@ GtkWidget* createMainWindow(void) {
 		      G_CALLBACK (enter_callbackEMCT),
 		      entryEMCT);
     tmp_pos = GTK_ENTRY (entryEMCT)->text_length;
-    g_ascii_dtostr(tpoint,24,dec2current(EMCT_DEFAULT_VALUE));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current(EMCT_DEFAULT_VALUE)));
     gtk_editable_insert_text (GTK_EDITABLE (entryEMCT), tpoint , -1, &tmp_pos);
     gtk_editable_select_region (GTK_EDITABLE (entryEMCT),
 			        0, GTK_ENTRY (entryEMCT)->text_length);
@@ -2938,7 +2938,7 @@ GtkWidget* createMainWindow(void) {
 		      G_CALLBACK (enter_callbackEMVL),
 		      entryEMVL);
     tmp_pos = GTK_ENTRY (entryEMVL)->text_length;
-    g_ascii_dtostr(tpoint,24,dec2current(EMVL_DEFAULT_VALUE));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current(EMVL_DEFAULT_VALUE)));
     gtk_editable_insert_text (GTK_EDITABLE (entryEMVL), tpoint , -1, &tmp_pos);
     gtk_editable_select_region (GTK_EDITABLE (entryEMVL),
 			        0, GTK_ENTRY (entryEMVL)->text_length);
@@ -2964,7 +2964,7 @@ GtkWidget* createMainWindow(void) {
 		      G_CALLBACK (enter_callbackEMVH),
 		      entryEMVH);
     tmp_pos = GTK_ENTRY (entryEMVH)->text_length;
-    g_ascii_dtostr(tpoint,24,dec2current(EMVH_DEFAULT_VALUE));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current(EMVH_DEFAULT_VALUE)));
     gtk_editable_insert_text (GTK_EDITABLE (entryEMVH), tpoint , -1, &tmp_pos);
     gtk_editable_select_region (GTK_EDITABLE (entryEMVH),
 			        0, GTK_ENTRY (entryEMVH)->text_length);
@@ -2998,7 +2998,7 @@ GtkWidget* createMainWindow(void) {
 		      G_CALLBACK (enter_callbackFOLL),
 		      entryFOLL);
     tmp_pos = GTK_ENTRY (entryFOLL)->text_length;
-    g_ascii_dtostr(tpoint,24,dec2current(FOLL_DEFAULT_VALUE));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current(FOLL_DEFAULT_VALUE)));
     gtk_editable_insert_text (GTK_EDITABLE (entryFOLL), tpoint , -1, &tmp_pos);
     gtk_editable_select_region (GTK_EDITABLE (entryFOLL),
 			        0, GTK_ENTRY (entryFOLL)->text_length);
@@ -3024,7 +3024,7 @@ GtkWidget* createMainWindow(void) {
 		      G_CALLBACK (enter_callbackRPX),
 		      entryRPX);
     tmp_pos = GTK_ENTRY (entryRPX)->text_length;
-    g_ascii_dtostr(tpoint,24,dec2current(RPX_DEFAULT_VALUE));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current(RPX_DEFAULT_VALUE)));
     gtk_editable_insert_text (GTK_EDITABLE (entryRPX), tpoint , -1, &tmp_pos);
     gtk_editable_select_region (GTK_EDITABLE (entryRPX),
 			        0, GTK_ENTRY (entryRPX)->text_length);
@@ -3050,7 +3050,7 @@ GtkWidget* createMainWindow(void) {
 		      G_CALLBACK (enter_callbackRPY),
 		      entryRPY);
     tmp_pos = GTK_ENTRY (entryRPY)->text_length;
-    g_ascii_dtostr(tpoint,24,dec2current(RPY_DEFAULT_VALUE));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current(RPY_DEFAULT_VALUE)));
     gtk_editable_insert_text (GTK_EDITABLE (entryRPY), tpoint , -1, &tmp_pos);
     gtk_editable_select_region (GTK_EDITABLE (entryRPY),
 			        0, GTK_ENTRY (entryRPY)->text_length);
@@ -3076,7 +3076,7 @@ GtkWidget* createMainWindow(void) {
 		      G_CALLBACK (enter_callbackARBP),
 		      entryARBP);
     tmp_pos = GTK_ENTRY (entryARBP)->text_length;
-    g_ascii_dtostr(tpoint,24,dec2current(ARBP_DEFAULT_VALUE));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current(ARBP_DEFAULT_VALUE)));
     gtk_editable_insert_text (GTK_EDITABLE (entryARBP), tpoint , -1, &tmp_pos);
     gtk_editable_select_region (GTK_EDITABLE (entryARBP),
 			        0, GTK_ENTRY (entryARBP)->text_length);
@@ -3102,7 +3102,7 @@ GtkWidget* createMainWindow(void) {
 		      G_CALLBACK (enter_callbackTPB),
 		      entryTPB);
     tmp_pos = GTK_ENTRY (entryTPB)->text_length;
-    g_ascii_dtostr(tpoint,24,dec2current(TPB_DEFAULT_VALUE));
+    g_ascii_dtostr(tpoint,24,current2voltage(dec2current(TPB_DEFAULT_VALUE)));
     gtk_editable_insert_text (GTK_EDITABLE (entryTPB), tpoint , -1, &tmp_pos);
     gtk_editable_select_region (GTK_EDITABLE (entryTPB),
 			        0, GTK_ENTRY (entryTPB)->text_length);
