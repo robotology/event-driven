@@ -148,13 +148,13 @@ static double current2voltage(double I) {
     double k  = 0.7; 
     double I0 = 3.0; // pA
  
-    double voltage = (Ut / k) * log(I / I0) * 1000; 
+    double voltage = ((Ut / k) * log(I / I0) )/ 1000; 
     return voltage; //in V
 }
 
 static double voltage2current(double V) {
     // voltage is expressed in V
-    double Ut = 0.025;  //mV
+    double Ut = 0.025;  //V
     double k  = 0.7; 
     double I0 = 3.0; // pA
     
