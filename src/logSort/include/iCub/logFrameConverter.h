@@ -64,9 +64,17 @@ public:
 
     /**
     * function that copies a chunk of elements
-    * @param pointer to the buffer that has to be read
+    * @param pointerCopy pointer to the buffer that has to be read
+    * @param pointerFlag pointer to the buffer of flags 
     */
     void copyChunk(char* pointerCopy, char* pointerFlag);
+
+    /**
+    * function that copies a chunk of elements
+    * @param pointerCopy pointer to the buffer that has to be read
+    * @param dimPacket dimension of the packet to be read 
+    */
+    void copyChunk(char* pointerCopy, int dimPacket);
 
     /**
     * @brief returns a mono image of the output of the dvs camera (either left or right)
@@ -101,6 +109,11 @@ public:
     int getCountBuffer() { return countBuffer; };
 
     /**
+     * function that returns the dimension of the last read packet
+     */
+    int getPacketSize() { return dimPacket; };
+
+    /**
     * @brief clears monoImage collection of events
     * @param pixelMono reference to the image contains the counts of events
     */
@@ -124,6 +137,7 @@ private:
     int totDim;                                                 // total dimension of the read buffer
     int outputWidth, outputHeight;                              // dimension of the output image default 320x240
     int countBuffer;                                            // counter of pushes and pops in the buffer
+    int dimPacket;                                              // dimension of the last read packate          
     unsigned long previousTimeStamp;                            // timestamp at the previous run
     char* converterBuffer;                                      // buffer used as saved
     char* converterBuffer_copy;                                 // copy of the buffer pointer, points to the location for freeing

@@ -30,25 +30,11 @@
 #include <iCub/logFrameConverter.h>
 
 // note that bufferdim has to be 1 chunksize bigger TH3 to avoid overflows
-//#define BUFFERDIM 65536 //4096 //6144  //36864
-//#define TH1 16384 //1024 //2048 //12
-//#define TH2 32768 //2048 //4096  
-//#define TH3 49152 //3072
-//#define CHUNKSIZE 16384 //1024//2048
+
 
 //#define VERBOSE
 
-//#define CHUNKSIZE 32768 
-//#define TH1       32768  
-//#define TH2       65536
-//#define TH3       98304
-//#define BUFFERDIM 131702
 
-//#define CHUNKSIZE 8192 
-//#define TH1       8192  
-//#define TH2       16384
-//#define TH3       24576
-//#define BUFFERDIM 32768
 
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -72,10 +58,11 @@ logFrameConverter::logFrameConverter():convert_events(128,128) {
     printf("setting memory \n");
     memset(converterBuffer,0,BUFFERDIM);         // set unsigned char
     memset(unreadBuffer,  0, BUFFERDIM);        
-    pcBuffer = converterBuffer;      //saving events
-    pcRead   = converterBuffer + TH1;//reading events
-    flagCopy = unreadBuffer;         //saving flag
-    flagRead = unreadBuffer + TH1;   //reading flag
+    pcBuffer = converterBuffer;        //saving events
+    //pcRead   = converterBuffer + TH1;//reading events
+    pcRead   = converterBuffer;        //reading events
+    flagCopy = unreadBuffer;           //saving flag
+    flagRead = unreadBuffer + TH1;     //reading flag
     unmask_events.start();
     printf("unmask event just started");
     previousTimeStamp = 0;
@@ -92,6 +79,12 @@ logFrameConverter::~logFrameConverter() {
     printf("logFrameConverter:freeing unreadBuffer \n");
     free(unreadBuffer);
     fclose(fout);
+}
+
+void logFrameConverter::copyChunk(char* bufferCopy, int packetSize) {
+    mutex.wait();
+    memcpy(bufferCopy, pcRead, packetSize);
+    mutex.post();
 }
 
 void logFrameConverter::copyChunk(char* bufferCopy, char* flagBuffer) {            
@@ -142,6 +135,35 @@ void logFrameConverter::copyChunk(char* bufferCopy, char* flagBuffer) {
     //flagBuffer = flagCopy;
 }
 
+void logFrameConverter::onRead(eventBuffer& i_ub) {
+    valid = true;
+    //printf("onRead ");
+    // receives the buffer and saves it
+    int dim = i_ub.get_sizeOfPacket() ;      // number of bits received / 8 = bytes received
+    //printf("dim %d \n", dim);
+    
+    if(dim == 0) {
+        return;
+    }
+
+    if(dim > CHUNKSIZE - 1){
+        printf("buffer limit reached \n");
+        dim = CHUNKSIZE - 1;
+    }
+    
+    //fprintf(fout, "iiiiiiiiiiiiiiiiiiii \n");
+    
+    mutex.wait();
+    receivedBuffer = i_ub.get_packet();    
+    //mem copying
+    memcpy(pcBuffer,receivedBuffer,dim);
+    dimPacket = dim;    
+    mutex.post();
+    //printf("onRead: ended \n");
+    //printf("pcBuffer: 0x%x pcRead: 0x%x \n", pcBuffer, pcRead); 
+}
+
+/*
 // reading out from a circular buffer with 2 entry points
 void logFrameConverter::onRead(eventBuffer& i_ub) {
     valid = true;
@@ -207,7 +229,7 @@ void logFrameConverter::onRead(eventBuffer& i_ub) {
     //printf("onRead: ended \n");
     //printf("pcBuffer: 0x%x pcRead: 0x%x \n", pcBuffer, pcRead); 
 }
-
+*/
 
 /*
 //three entry points

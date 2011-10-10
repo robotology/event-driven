@@ -84,8 +84,6 @@
  #define BUFFERDIM     4096
 #endif
 
-
-
 typedef struct s_AER_struct {
     int x;
     int y;

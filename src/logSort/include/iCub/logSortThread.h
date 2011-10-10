@@ -87,6 +87,7 @@ private:
     unsigned long maxCountRight;
     double startTimer;
     double endTimer;
+    double maxlimit,minlimit;
     yarp::os::Semaphore mutex;          // semaphore thar regulates the access to the buffer resource
     clock_t endTime,startTime;
     long T1,T2;

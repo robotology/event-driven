@@ -39,9 +39,9 @@ using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
-#define THRATE 30 
-#define MAXLIMIT   4000000
-#define MINLIMIT   0
+#define THRATE 5 
+//#define MAXLIMIT   1
+//#define MINLIMIT   0
 //#define retinalSize 128
 
 processingThread::processingThread() : RateThread(THRATE) {
@@ -62,6 +62,9 @@ processingThread::processingThread() : RateThread(THRATE) {
     memset(cartEM,    0, 24 * 24 * sizeof(aer));
     memset(pEM,       0, 24 * 24 * sizeof(aer));
     memset(cartCount, 0, 24 * 24 * sizeof(int));
+
+    maxlimit = 0.01;
+    minlimit = 0.001;
 }
 
 processingThread::~processingThread() {
@@ -206,18 +209,20 @@ void processingThread::run() {
         if(diff == 0) {
             continue;
         }
-        double absdiff = 1.0 / std::abs(diff);
+        unsigned long absdiff = std::abs(diff);
+        double invertedDiff   = (double) absdiff / 1000000;
+        invertedDiff = 1.0 / invertedDiff ;
 
-        //printf("EM1 - 1.buffer.address %08x   ",bufferEM1[i].address,bufferEM1[i].timestamp, timestampFound);
-        //printf("2.value %lu \n ",absdiff);
-        if (absdiff > maxdiff){ maxdiff = absdiff; }
-        if (absdiff < mindiff){ mindiff = absdiff; }
+        printf("EM1 - 1.buffer.address %08x   ",bufferEM1[i].address,bufferEM1[i].timestamp, timestampFound);
+        printf("2.value %lu %f \n ",absdiff, invertedDiff);
+        if (invertedDiff > maxdiff){ maxdiff = invertedDiff; }
+        if (invertedDiff < mindiff){ mindiff = invertedDiff; }
         int numbits = 256;        
-        double max = MAXLIMIT;
-        double min = MINLIMIT;
+        double max = 0.1;
+        double min = 0.001;
         // grayscale  = 1 / exposure_measure
         int value = floor(
-                    (absdiff /(max - min)) * numbits
+                          ((double)invertedDiff /(max - min)) * numbits
                           );
         if(value > 255) {
             value = 255;
@@ -242,22 +247,22 @@ void processingThread::run() {
         if(diff == 0) {
             continue;
         }
-        double absdiff = 1.0 / std::abs(diff);
+        unsigned long absdiff = std::abs(diff);
+        double invertedDiff   = (double) absdiff / 1000000;
+        invertedDiff = 1.0 / invertedDiff ;
 
-        if(absdiff == 0) {
-            continue;
-        }
+
         //printf("EM2 - 1.buffer.address %08x   ",bufferEM2[i].address);
         //printf("2.value %lu    \n ", absdiff);
-        if (absdiff > maxdiff){ maxdiff = absdiff; }
-        if (absdiff < mindiff){ mindiff = absdiff; }
+        if (invertedDiff > maxdiff){ maxdiff = invertedDiff; }
+        if (invertedDiff < mindiff){ mindiff = invertedDiff; }
 
         int numbits = 256;        
-        double max = MAXLIMIT;
-        double min = MINLIMIT;
+        double max = 0.1;
+        double min = 0.001;
         // grayscale  = 1 / exposure_measure
         int value = floor(
-                          (absdiff /(max - min)) * 256.0
+                          (invertedDiff /(max - min)) * 256.0
                           );
         if(value > 255) {
             value = 255;
@@ -282,20 +287,21 @@ void processingThread::run() {
         if(diff == 0) {
             continue;
         }
-        double absdiff = 1.0 / std::abs(diff);
-
+        unsigned long absdiff = std::abs(diff);
+        double invertedDiff   = (double) absdiff / 1000000;
+        invertedDiff = 1.0 / invertedDiff ;
 
         //printf("EM3 - 1.buffer.address %08x   ",bufferEM3[i].address);
         //printf("2.value %lu   \n", absdiff);
-        if (absdiff > maxdiff){ maxdiff = absdiff; }
-        if (absdiff < mindiff){ mindiff = absdiff; }
+        if (invertedDiff > maxdiff){ maxdiff = invertedDiff; }
+        if (invertedDiff < mindiff){ mindiff = invertedDiff; }
 
         int numbits = 256;        
-        double max = MAXLIMIT;
-        double min = MINLIMIT;
+        double max = 0.1;
+        double min = 0.001;
         // grayscale  = 1 / exposure_measure
         int value = floor(
-                          (absdiff /(max - min)) * numbits
+                          (invertedDiff /(max - min)) * numbits
                           );
         if(value > 255) {
             value = 255;
@@ -316,24 +322,31 @@ void processingThread::run() {
         unsigned long timestamp = bufferEM4[i].timestamp;
         timestampFound = look4opposite(bufferEM4,i,countEM4);
         long diff =  timestampFound - timestamp;
-        unsigned long absdiff = std::abs(diff);
-        if(absdiff == 0) {
+        if(diff == 0) {
             continue;
         }
+
+        unsigned long absdiff = std::abs(diff);
+        double invertedDiff   = (double) absdiff / 1000000;
+        invertedDiff = 1.0 / invertedDiff ;
+        
+
+
+        if (invertedDiff > maxdiff){ maxdiff = invertedDiff; }
+        if (invertedDiff < mindiff){ mindiff = invertedDiff; }
+
         //printf("EM4 - 1.buffer.address %08x   ",bufferEM4[i].address);
         //printf("2.value %lu  \n ", absdiff);
         int numbits = 256;        
-        double max = MAXLIMIT;
-        double min = MINLIMIT;
+        double max = 0.1;
+        double min = 0.001;
         // grayscale  = 1 / exposure_measure
         int value = floor( 
-                          (absdiff /(max - min)) * numbits
+                          (invertedDiff /(max - min)) * numbits
                           );
         if(value > 255) {
             value = 255;
         }
-        if (absdiff > maxdiff){ maxdiff = absdiff; }
-        if (absdiff < mindiff){ mindiff = absdiff; }
         
         bufferEM4[i].address = (bufferEM4[i].address & 0x0000FFFF) | (value<<16);
         //printf("3.buffer.address %08x %d \n",bufferEM4[i].address, value);
@@ -343,10 +356,12 @@ void processingThread::run() {
     
     delete tmp;
     
-    if(maxdiff != 0)
-      printf("limits:  maxdiff  %lu \n", maxdiff);
-    if(mindiff != 0xFFFFFFFF)
-      printf("limits: mindiff %lu \n", mindiff);
+    //if(maxdiff != 0) {
+    //  printf("limits:  maxdiff  %lu \n", maxdiff);
+    //}
+    //if(mindiff != 0xFFFFFFFF){
+    //  printf("limits: mindiff %lu \n", mindiff);
+    //}
 }
 
 

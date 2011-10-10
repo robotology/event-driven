@@ -46,6 +46,7 @@ private:
     int countEM4;                        // counter of bytes in the bufferEM1
     int dimEM;
     float lambda;                        // integration factor
+    float maxlimit, minlimit;            // limits of the normalization
     int width, height;                   // dimension of the extended input image (extending)
     int height_orig, width_orig;         // original dimension of the input and output images
     std::string name;                         // nameroot for ports

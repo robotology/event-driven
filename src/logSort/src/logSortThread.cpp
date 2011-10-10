@@ -90,9 +90,9 @@ bool logSortThread::threadInit() {
   lfConverter->open(getName("/retina:i").c_str());
   printf("\n opening retina\n");
   printf("starting the plotter \n");
-  pThread = new plotterThread();
-  pThread->setName(getName("").c_str());
-  pThread->start();
+  //pThread = new plotterThread();
+  //pThread->setName(getName("").c_str());
+  //pThread->start();
   
   
   //minCount = lfConverter->getEldestTimeStamp();
@@ -224,13 +224,13 @@ int logSortThread::selectUnreadBuffer(char* bufferCopy, char* flagCopy, char* re
         flagCopy++;
     }
 
+#ifdef VERBOSE
+
     resultCopy -= sum;
     flagCopy   -= CHUNKSIZE;
     bufferCopy -= CHUNKSIZE;
-    
-    
-#ifdef VERBOSE
-        fprintf(fout, "rrrrrrrrrrrrrrrrrrrrrrrr \n" );
+
+    fprintf(fout, "rrrrrrrrrrrrrrrrrrrrrrrr \n" );
     num_events = CHUNKSIZE >> 3 ;
     buf2 = (uint32_t*)resultCopy;
     bufflag = (uint32_t*) flagCopy;
@@ -266,20 +266,25 @@ void logSortThread::run() {
         // reads the buffer received
         // saves it into a working buffer
         //printf("returned 0x%x 0x%x \n", bufferCopy, flagCopy);
-        lfConverter->copyChunk(bufferCopy, flagCopy);
-        //printf("after copy chunk 0x%x 0x%x \n", bufferCopy, flagCopy);
-        int unreadDim = selectUnreadBuffer(bufferCopy, flagCopy, resultCopy);
-
-        if(unreadDim!=0) {
-            //printf("Unmasking events:  %d \n", unreadDim);
-           // extract a chunk/unmask the chunk       
-           unmask_events.logUnmaskData(resultCopy,unreadDim,verb);
-        }
+        int dimPacket = lfConverter->getPacketSize();
+        printf("number of bytes %d \n",dimPacket);
+        lfConverter->copyChunk(bufferCopy, dimPacket);
+        //lfConverter->copyChunk(bufferCopy, flagCopy, dimPacket );
 
         // ---  time measure --- //
         tend = Time::now();
         difftime1 = tend - tinit;
         // --------------------- //
+
+        //printf("after copy chunk 0x%x 0x%x \n", bufferCopy, flagCopy);
+        //int unreadDim = selectUnreadBuffer(bufferCopy, flagCopy, resultCopy);
+
+       
+        //printf("Unmasking events:  %d \n", unreadDim);
+        // extract a chunk/unmask the chunk       
+        //unmask_events.logUnmaskData(resultCopy,unreadDim,verb);
+        unmask_events.logUnmaskData(bufferCopy,dimPacket,verb);
+        
 
         //if(verb) {
         //    verb = false;
@@ -396,9 +401,15 @@ void logSortThread::run() {
             sendBuffer(&portCD, pCD, dimCD);
             unmask_events.resetCD();
         }
+
+        for (int i = 0; i < dimCD; i++) {
+            u32 blob      = pCD[i].address;
+            u32 timestamp = pCD[i].timestamp;
+            fprintf(fout,"%08x %08x \n",blob,timestamp);
+        }
         
         // ----------------------------------------------- 
-        
+        /*
         unmask_events.getEM(&pEM, &dimEM);
         if (dimEM > 0) {
             //printf("dimEM :             %d \n", dimEM);
@@ -412,32 +423,26 @@ void logSortThread::run() {
             unmask_events.resetEM3();
             unmask_events.resetEM4();
             unmask_events.resetTOTEM();
-        }        
+        }
+        */
         // --------------------------------------------
         
         
         unmask_events.getIF(&pIF, &dimIF);
         if (dimIF > 0) {
-            printf("dimIF :                                 %d \n", dimIF);
+            //printf("dimIF :                                 %d \n", dimIF);
             sendBuffer(&portIF, pIF, dimIF);
             unmask_events.resetIF();
         }
-
-
-        for (int i = 0; i < dimIF; i++) {
-            u32 blob      = pIF[i].address;
-            u32 timestamp = pIF[i].timestamp;
-            fprintf(fout,"%08x %08x \n",blob,timestamp);
-        }   
         
-   
     
         // measuring execution time of the module
         tend = Time::now();
         difftime2 = tend - tinit;
-        //if(count % 100 == 0) {
-        //    printf("time us: %f %f %d %d %d \n", difftime1 * 1000000, difftime2 * 1000000, dimCD, dimEM, dimIF);
-        //}
+        if(count % 100 == 0) {
+            printf("time us: %f %f %d %d %d \n", difftime1 * 1000000, (difftime2 - difftime1) * 1000000, dimCD, dimEM, dimIF);
+            printf("dim: CD %d  EM %d  IF %d  TOT %d \n",dimCD, dimEM, dimIF, dimCD + dimEM + dimIF );
+        }
     }
 }
 
