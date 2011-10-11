@@ -213,8 +213,8 @@ void processingThread::run() {
         double invertedDiff   = (double) absdiff / 1000000;
         invertedDiff = 1.0 / invertedDiff ;
 
-        printf("EM1 - 1.buffer.address %08x   ",bufferEM1[i].address,bufferEM1[i].timestamp, timestampFound);
-        printf("2.value %lu %f \n ",absdiff, invertedDiff);
+        //printf("EM1 - 1.buffer.address %08x   ",bufferEM1[i].address,bufferEM1[i].timestamp, timestampFound);
+        //printf("2.value %lu %f \n ",absdiff, invertedDiff);
         if (invertedDiff > maxdiff){ maxdiff = invertedDiff; }
         if (invertedDiff < mindiff){ mindiff = invertedDiff; }
         int numbits = 256;        

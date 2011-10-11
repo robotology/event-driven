@@ -477,7 +477,7 @@ bool logUnmask::threadInit() {
     //starting processing thread    
     pThread = new processingThread();
     pThread->setEM(bufferEM1, bufferEM2, bufferEM3, bufferEM4);
-    //pThread->start();
+    pThread->start();
     
     return true;
 }

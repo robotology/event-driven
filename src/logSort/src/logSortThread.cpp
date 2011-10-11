@@ -283,112 +283,7 @@ void logSortThread::run() {
         // extract a chunk/unmask the chunk       
         unmask_events.logUnmaskData(resultCopy,unreadDim,verb);
         //unmask_events.logUnmaskData(bufferCopy,dimPacket,verb);
-        
 
-        //if(verb) {
-        //    verb = false;
-        //    countStop = 0;
-        //}
-        //printf("countBuffer %d \n", lfConverter->getCountBuffer());
-
-
-        /*
-        //gettin the time between two threads
-        gettimeofday(&tvend, NULL);
-        //Tnow = ((u64)tvend.tv_sec) * 1000000 + ((u64)tvstart.tv_usec);
-        Tnow = ((tvend.tv_sec * 1000000 + tvend.tv_usec)
-                - (tvstart.tv_sec * 1000000 + tvstart.tv_usec));
-        //printf("timeofday>%ld\n",Tnow );
-        gettimeofday(&tvstart, NULL);       
-        endTimer = Time::now();
-        double interval = (endTimer - startTimer) * 1000000; //interval in us
-        startTimer = Time::now();
-        */
-        
-        //unsigned long int lastleft = unmask_events.getLastTimestamp();
-        //printf("lastTimestamp %08x \n", lastleft);
-
-        /*
-          unsigned long int lastleft = unmask_events.getLastTimestamp();
-        lc = lastleft * COUNTERRATIO; 
-        unsigned long int lastright = unmask_events.getLastTimestampRight();
-        rc = lastright * COUNTERRATIO;
-        
-        if((lc >= 4294967295) || (rc >= 4294967295)) {
-        verb = true;
-        printf("wrapping %d, %d \n",lc,rc );
-        }
-
- 
-        
-        //synchronising the threads at the connection time
-        if ((lfConverter->isValid())&&(!synchronised)) {
-	    printf("Sychronised Sychronised Sychronised Sychronised ");
-            //firstRun = false;
-            minCount = lc - interval * dim_window; 
-            //lfConverter->getEldestTimeStamp();                                                                   
-            minCountRight = rc - interval * dim_window;
-            printf("synchronised %1f! %d,%d,%d||%d,%d,%d \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
-            startTimer = Time::now();
-            synchronised = true;
-            //minCount = unmask_events.getLastTimestamp();
-            //printf("minCount %d \n", minCount);
-            //minCountRight = unmask_events.getLastTimestamp();
-            count = synch_time - 200;
-        }
-
-        //synchronising the thread every time interval 1000*period of the thread
-        //if (count % synch_time == 0) {
-        if (count == synch_time) {
-            minCount = lc - interval * dim_window; //lfConverter->getEldestTimeStamp();        
-            minCountRight = rc - interval * dim_window; 
-            printf("synchronised %1f! %d,%d,%d||%d,%d,%d \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
-            startTimer = Time::now();
-            synchronised = true; 
-        }
-        else {
-            // this value is simply the ration between the timestamp reported by the aexGrabber (62.5Mhz) 
-            //and the correct timestamp counter clock of FPGA (50 Mhz)
-            microsecondsPrev = interval;
-            interval = Tnow;
-            minCount = minCount + interval ; // * (50.0 / 62.5) * 1.10;
-            minCountRight = minCountRight + interval;
-        }   
-             
-        maxCount =  minCount + interval * dim_window;
-        maxCountRight =  minCountRight + interval * dim_window;
-        
-        if(count % 100 == 0) { 
-        //printf("countStop %d lcprev %d lc %d \n",countStop, lcprev,lc);
-            if (lcprev == lc) { 
-                countStop++;
-		printf("countStop %d \n", countStop);
-	    }            
-            //else if (rcprev == rc) { 
-            //    countStop++;
-            //    printf("countStop %d \n", countStop);
-            //}
-	    else {
-	      countStop--;
-	      printf("countStop %d \n", countStop);
-	      if(countStop<= 0)
-		countStop = 0;
-	    }
-            lcprev = lc;
-            rcprev = rc;
-        }        
-	
-        //resetting time stamps at overflow
-        if (countStop == 10) {
-            //printf("resetting time stamps!!!!!!!!!!!!! %d %d   \n ", minCount, minCountRight);
-            //lfConverter->resetTimestamps(); 
-            verb = true;
-            printf("countStop %d %d \n",countStop, verb );
-	  
-	    count = synch_time - 200;
-        }
-
-	    */
 	
         int dimCD, dimEM, dimIF;
         aer *pCD, *pEM, *pIF;
@@ -397,7 +292,7 @@ void logSortThread::run() {
         unmask_events.getCD(&pCD, &dimCD);
         //printf("pCD %x", pCD);
         if (dimCD > 0) {
-            printf("dimCD :  %d \n", dimCD);
+            //printf("dimCD :  %d \n", dimCD);
             sendBuffer(&portCD, pCD, dimCD);
             unmask_events.resetCD();
         }
@@ -412,7 +307,7 @@ void logSortThread::run() {
 
         
         // ----------------------------------------------- 
-        /*
+        
         unmask_events.getEM(&pEM, &dimEM);
         if (dimEM > 0) {
             //printf("dimEM :             %d \n", dimEM);
@@ -427,16 +322,16 @@ void logSortThread::run() {
             unmask_events.resetEM4();
             unmask_events.resetTOTEM();
         }
-        */
+        
         // --------------------------------------------
         
-        /*
+        
         unmask_events.getIF(&pIF, &dimIF);
         if (dimIF > 0) {
             //printf("dimIF :                                 %d \n", dimIF);
             sendBuffer(&portIF, pIF, dimIF);
             unmask_events.resetIF();
-            }*/
+        }
         
     
         // measuring execution time of the module
@@ -444,7 +339,7 @@ void logSortThread::run() {
         difftime2 = tend - tinit;
         if(count % 100 == 0) {
             //printf("time us: %f %f %d %d %d \n", difftime1 * 1000000, (difftime2 - difftime1) * 1000000, dimCD, dimEM, dimIF);
-            //printf("dim: CD %d  EM %d  IF %d  TOT %d \n",dimCD, dimEM, dimIF, dimCD + dimEM + dimIF );
+            printf("dim: CD %d  EM %d  IF %d  TOT %d \n",dimCD, dimEM, dimIF, dimCD + dimEM + dimIF );
         }
     }
 }
