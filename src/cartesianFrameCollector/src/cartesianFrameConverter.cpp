@@ -34,6 +34,7 @@
 #include <list>
 #include <sys/types.h>
 #include <inttypes.h>
+#include <iCub/config.h>
 
 
 //#define CHUNKSIZE 8192 
@@ -42,11 +43,11 @@
 //#define TH3 24576
 //#define BUFFERDIM 24576 //32768
 
-#define CHUNKSIZE 32768 
-#define TH1       32768  
-#define TH2       65536
-#define TH3       98304
-#define BUFFERDIM 131702
+//#define CHUNKSIZE 32768 
+//#define TH1       32768  
+//#define TH2       65536
+//#define TH3       98304
+//#define BUFFERDIM 131702
 
 //#define VERBOSE
 
@@ -61,11 +62,11 @@ using namespace yarp::sig;
 using namespace std;
 
 cFrameConverter::cFrameConverter():convert_events(128,128) {
-    valid = false;
-    retinalSize=128;
-    totDim = 0;
-    pcRead = 0;
-    state = 0;
+    valid       = false;
+    retinalSize = 128;
+    totDim      = 0;
+    pcRead      = 0;
+    state       = 0;
     receivedBuffer = 0;
     printf ("allocating memory \n");
     converterBuffer_copy = (char*) malloc(BUFFERDIM); // allocates bytes
@@ -239,24 +240,23 @@ void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image, unsigned long minC
             
             if(r>dist && c >dist){
                 for(int i=1;i<=dist;++i){
-                if(lookForSlantLeft && *(image->getPixelAddress(r-i,c-i)) == 127 && *(image->getPixelAddress(r-i-1,c-i-1)) == *(image->getPixelAddress(r,c))){
-                *pImage = *(image->getPixelAddress(r-i-1,c-i-1));
-                lookForSlantLeft = false;
-                }
-                if(lookForVert && *(image->getPixelAddress(r-i,c)) == 127 && *(image->getPixelAddress(r-i-1,c)) == *(image->getPixelAddress(r,c))){
-                *pImage = *(image->getPixelAddress(r-i-1,c));
-                lookForVert = false;
-                }
-                if(lookForHor && *(image->getPixelAddress(r,c-i)) == 127 && *(image->getPixelAddress(r,c-i-1)) == *(image->getPixelAddress(r,c))){
-                *pImage = *(image->getPixelAddress(r,c-i-1));
-                lookForHor = false;
-                }
-                if(lookForSlantRight && *(image->getPixelAddress(r-i,c+i)) == 127 && *(image->getPixelAddress(r-i-1,c+i+1)) == *(image->getPixelAddress(r,c))){
-                *pImage = *(image->getPixelAddress(r-i-1,c+i+1));
-                lookForSlantRight = false;
-                }
-                }
-                
+                    if(lookForSlantLeft && *(image->getPixelAddress(r-i,c-i)) == 127 && *(image->getPixelAddress(r-i-1,c-i-1)) == *(image->getPixelAddress(r,c))){
+                        *pImage = *(image->getPixelAddress(r-i-1,c-i-1));
+                        lookForSlantLeft = false;
+                    }
+                    if(lookForVert && *(image->getPixelAddress(r-i,c)) == 127 && *(image->getPixelAddress(r-i-1,c)) == *(image->getPixelAddress(r,c))){
+                        *pImage = *(image->getPixelAddress(r-i-1,c));
+                        lookForVert = false;
+                    }
+                    if(lookForHor && *(image->getPixelAddress(r,c-i)) == 127 && *(image->getPixelAddress(r,c-i-1)) == *(image->getPixelAddress(r,c))){
+                        *pImage = *(image->getPixelAddress(r,c-i-1));
+                        lookForHor = false;
+                    }
+                    if(lookForSlantRight && *(image->getPixelAddress(r-i,c+i)) == 127 && *(image->getPixelAddress(r-i-1,c+i+1)) == *(image->getPixelAddress(r,c))){
+                        *pImage = *(image->getPixelAddress(r-i-1,c+i+1));
+                        lookForSlantRight = false;
+                    }
+                }                
             }
             pImage++;
             pBuffer ++;

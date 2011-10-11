@@ -163,7 +163,22 @@ public:
     void setRetinalSize(int value) {
         retinalSize = value;
     }
-    
+        
+    /**
+     * @brief function that set the flag for the ASV chip
+     * @param value value to assign to the flag
+     */
+    void setASVMode(bool value) {
+        asvMode = value;
+    } 
+
+    /**
+     * @brief function that set the flag for the portable DVS chip
+     * @param value value to assign to the flag
+     */
+    void setDVSMode(bool value) {
+        dvsMode = value;
+    } 
     
     /**
     * default constructor

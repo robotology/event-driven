@@ -95,7 +95,8 @@ bool cfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
     cfThread->setRetinalSize(retinalSize);
 
     
-    /* checking whether the module synchronizes with single camera or stereo camera
+    /* 
+     *checking whether the module synchronizes with single camera or stereo camera
      */
     if( rf.check("stereo")) {
         cfThread->setStereo(true);
@@ -103,7 +104,30 @@ bool cfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
     else {
         cfThread->setStereo(false);
     }
+
+    /* 
+     *checking whether the module synchronizes with single camera or stereo camera
+     */
+    if( rf.check("asvMode")) {
+        cfThread->setASVMode(true);
+        cfThread->setDVSMode(false);
+    }
+    else {
+        cfThread->setASVMode(false);
+        cfThread->setDVSMode(false);
+    }
     
+        /* checking whether the module synchronizes with single camera or stereo camera
+     */
+    if( rf.check("dvsMode")) {
+        cfThread->setDVSMode(true);
+        cfThread->setASVMode(false);
+    }
+    else {
+        cfThread->setDVSMode(false);
+        cfThread->setASVMode(false);
+    }
+
     /**
      * checking whether the viewer represent log-polar information
      */

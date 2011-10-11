@@ -167,6 +167,22 @@ public:
     }
 
     /**
+     * @brief function that set the flag for the ASV chip
+     * @param value value to assign to the flag
+     */
+    void setASVMode(bool value) {
+        //asvFlag = value;
+    } 
+
+    /**
+     * @brief function that set the flag for the portable DVS chip
+     * @param value value to assign to the flag
+     */
+    void setDVSMode(bool value) {
+        //asvFlag = value;
+    } 
+
+    /**
      * @brief function that sets the synchronization period between the events and viewer
      * @param value integer representing the synchronization period (minim. 1 runcycle)
      */

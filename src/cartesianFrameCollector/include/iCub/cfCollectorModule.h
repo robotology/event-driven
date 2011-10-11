@@ -75,7 +75,18 @@
  *
  * - \c robot \c icub \n 
  *   specifies the name of the robot (used to form the root of robot port names)
+ * 
+ * - \c asvMode \n
+ *   activates the ASV mode
  *
+ * - \c dvsMode \n
+ *   acrivates the DVS mode
+ * 
+ * - \c stereo
+ *   enables the right output as well and analyses timestamp coming from another camera
+ * 
+ * - \c retinalSize \c 128 \n 
+ *   set the dimension of chip to define the size of the representation 
  *
  * <b>Configuration File Parameters</b>
  *

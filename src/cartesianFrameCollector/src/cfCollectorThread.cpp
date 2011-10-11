@@ -44,14 +44,15 @@ using namespace std;
 #define dim_window 1
 #define synch_time 1
 
+#define VERBOSE
 
 cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
-  retinalSize = 128;  //default value before setting 
+  retinalSize  = 128;  //default value before setting 
   synchronised = false;
-  greaterHalf = false;
-  firstRun = true;
-  count=0;
-  minCount = 0; //initialisation of the timestamp limits of the first frame
+  greaterHalf  = false;
+  firstRun     = true;
+  count        = 0;
+  minCount     = 0; //initialisation of the timestamp limits of the first frame
   idle = false;
   bufferCopy = (char*) malloc(CHUNKSIZE);
   countStop = 0;
@@ -59,7 +60,7 @@ cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
   string i_fileName("events.log");
   raw = fopen(i_fileName.c_str(), "wb");
   lc = rc = 0;	
-  minCount = 0;
+  minCount      = 0;
   minCountRight = 0;
 }
 
@@ -82,7 +83,6 @@ bool cfCollectorThread::threadInit() {
     cfConverter->useCallback();
     cfConverter->setRetinalSize(retinalSize);
     cfConverter->open(getName("/retina:i").c_str());
-    
     
     printf("\n opening retina\n");
     printf("starting the plotter \n");
@@ -426,22 +426,26 @@ void cfCollectorThread::run() {
     }
     
     // ----------- preventer end    --------------------- //
+    
     getMonoImage(imageLeft,minCount,maxCount,1);
     if(imageLeft != 0) {
       //printf("copying image \n");
       pThread->copyLeft(imageLeft);
       //printf("end copying image \n");
     }
-
-    getMonoImage(imageRight,minCountRight,maxCountRight,0);
-    if(imageRight != 0) {
-      pThread->copyRight(imageRight);
+    
+    if(stereo) {
+        getMonoImage(imageRight,minCountRight,maxCountRight,0);
+        if(imageRight != 0) {
+            pThread->copyRight(imageRight);
+        }
     }
   }
 }
 
 void cfCollectorThread::threadRelease() {
     idle = false;
+    fclose(fout);
     printf("cfCollectorThread release:freeing bufferCopy \n");
     //free(bufferCopy);
     printf("cfCollectorThread release:closing ports \n");

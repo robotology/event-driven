@@ -40,6 +40,12 @@
 //#define BUFFER_SIZE 32768
 #define BUFFER_SIZE 65536
 
+#define CHUNKSIZE 32768 
+#define TH1       32768  
+#define TH2       65536
+#define TH3       98304
+#define BUFFERDIM 131702
+
 //logpolar
 #define TAU 1000
 #define THRESHOLD 2
