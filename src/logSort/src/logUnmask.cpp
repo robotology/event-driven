@@ -135,7 +135,18 @@ logUnmask::logUnmask() : RateThread(UNMASKRATETHREAD){
     memset(fifoEvent_temp2,0,maxPosEvent*sizeof(int));
     */
 
+    // setting all the entries to -1 to avoid unexpected mappings
+    logChip_LUT = new feature[X_DIMENSION * Y_DIMENSION]; // all the position in the logchip times 4 features (144 by 72)
+    feature* plogChip = logChip_LUT;
+    for (int i = 0; i< X_DIMENSION * Y_DIMENSION; i++) {
+        plogChip[i][0] = -1;
+        plogChip[i][1] = -1;
+        plogChip[i][2] = -1;
+        plogChip[i][3] = -1;
+    }
+
     monBufSize_b = SIZE_OF_EVENT * sizeof(struct aer);
+
     bufferCD = (aer *)  malloc(monBufSize_b);
     if ( bufferCD == NULL ) {
         printf("bufferCD malloc failed \n");
@@ -187,15 +198,6 @@ logUnmask::logUnmask() : RateThread(UNMASKRATETHREAD){
     //fopen_s(&fp,"events.txt", "w"); //Use the logUnmasked_buffer
     //uEvents = fopen("./uevents.txt","w");
 
-    // setting all the entries to -1 to avoid unexpected mappings
-    logChip_LUT = new feature[X_DIMENSION * Y_DIMENSION]; // all the position in the logchip times 4 features (144 by 72)
-    feature* plogChip = logChip_LUT;
-    for (int i = 0; i< X_DIMENSION * Y_DIMENSION; i++) {
-        plogChip[i][0] = -1;
-        plogChip[i][1] = -1;
-        plogChip[i][2] = -1;
-        plogChip[i][3] = -1;
-    }
 
 }
 
@@ -592,7 +594,9 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
     //printf("logUnmakData: unmasking %d  \n", num_events);
     //create a pointer that points every 4 bytes
     uint32_t* buf2 = (uint32_t*)i_buffer;
-    //eldesttimestamp = 0;   
+    //eldesttimestamp = 0; 
+
+    
 
     for (int evt = 0; evt < num_events; evt++) {
         
@@ -612,13 +616,13 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         type = -1;
   
         // saving the events
-        bool save = false;                
+        bool save = true;                
         if (save) {
-            fprintf(fout,"%08X %08X\n",blob,timestamp); 
+            fprintf(fout,"=%08X %08X\n",blob,timestamp); 
             //fout<<hex<<a<<" "<<hex<<t<<endl;
         }
 
-        //unsigned short x    = ((blob & xmask) >> xshift);
+        // unsigned short x    = ((blob & xmask) >> xshift);
         //x -= 112;
         //unsigned short y    = ((blob & ymask) >> yshift);        
         //int flipy = flipBits(y,7);
@@ -642,108 +646,151 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
             metaY = cartY;
             pol   = polarity;
             //}
-        
+            
         logMaskEvent(metaX,metaY,pol,newBlob);
+        
         unsigned long timestamp_diff = timestamp - previous_timestamp;
-        if((timestamp_diff > 1000000000 )&&(timestamp != 0)&&(timestamp > previous_timestamp)) {
-            printf(" Error : %08X>%d,%d   \n",blob,cartX,cartY);
-            printf(" %d %d %d %d %d %08X %08X : %d \n",cartY, cartX, metaY, metaX ,type,previous_timestamp, timestamp, timestamp_diff);
-        }
+        //printf(" Error : %08X>%d,%d   \n",blob,cartX,cartY);
+        //fprintf(fout," %d %d %d %d %d %08X %08X : %d \n",cartY, cartX, metaY, metaX ,type,previous_timestamp, timestamp, timestamp_diff);
+        
+        //if((timestamp_diff > 1000000000 )&&(timestamp != 0)&&(timestamp > previous_timestamp)) {
+        //    printf(" Error : %08X>%d,%d   \n",blob,cartX,cartY);
+        //    printf(" %d %d %d %d %d %08X %08X : %d \n",cartY, cartX, metaY, metaX ,type,previous_timestamp, timestamp, timestamp_diff);
+        //}
+
         if(timestamp!=0) {
             previous_timestamp = timestamp;
         }
+            
      
         
-        struct aer* temp;
-        
+        struct aer* temp;        
         switch (type) {
         case 0:{ //CD            
             //if((newBlob!=0)||(timestamp!=0)) {
-                //temp = &bufferCD[countCD];                    
-                //printf("Unmasked CD  %x \n", bufferCD);
+            //temp = &bufferCD[countCD];                    
+            //printf("Unmasked CD  %x \n", bufferCD);
             //printf("CD \n");
-            bufferCD[countCD].address   = (u32) newBlob;
-            bufferCD[countCD].timestamp = timestamp;
-            //printf("%08X %08X  \n",bufferCD[countCD].address,timestamp);
-            //fprintf(fout,"%d %08X %08X\n",countCD,bufferCD[countCD].address,bufferCD[countCD].timestamp);
-            countCD++;                
+            mutex.wait();
+            if(countCD < SIZE_OF_EVENT) {
+                bufferCD[countCD].address   = (u32) newBlob;
+                bufferCD[countCD].timestamp = timestamp;
+                //printf("%08X %08X  \n",bufferCD[countCD].address,timestamp);
+                fprintf(fout,">%d %08X %08X\n",countCD,bufferCD[countCD].address,bufferCD[countCD].timestamp);
+                countCD++;   
+            }
+            else {
+                printf("bufferCD overflow prevented! %d \n", countCD);
+            }
+            mutex.post();
         }
             break;
-                       
+            
         case 1:{ //EM1
             //printf("Unmasked EM1 \n");
             if((blob!=0)||(timestamp!=0)) {
-                //temp = &bufferEM[countEM];
-                //temp->address   = blob;
-                //temp->timestamp = timestamp;
-                //printf("EM1 metax %d metay %d \n", metaX, metaY);
-                bufferEM1[countEM1].address   = (u32) newBlob;
-                bufferEM1[countEM1].timestamp = (u32) timestamp;
-                countEM1++;
-                pThread->setCountEM1(countEM1);
+                mutex.wait();
+                if(countEM1 < SIZE_OF_EVENT) {
+                    //temp = &bufferEM[countEM];
+                    //temp->address   = blob;
+                    //temp->timestamp = timestamp;
+                    //printf("EM1 metax %d metay %d \n", metaX, metaY);
+                    bufferEM1[countEM1].address   = (u32) newBlob;
+                    bufferEM1[countEM1].timestamp = (u32) timestamp;
+                    countEM1++;
+                    pThread->setCountEM1(countEM1);
+                }
+                else {
+                    printf("bufferEM1 overflow prevented! %d \n", countEM1);
+                }
+                mutex.post();
             }
         } //EM1
             break;
         case 2:{ //EM2
             //printf("Unmasked EM2 \n");
             if((blob!=0)||(timestamp!=0)) {
-                //printf("EM2 metax %d metay %d \n", metaX, metaY);
-                //temp = &bufferEM[countEM];
-                //temp->address   = blob;
-                //temp->timestamp = timestamp;
-                bufferEM2[countEM2].address   = (u32) newBlob;
-                bufferEM2[countEM2].timestamp = (u32) timestamp;
-                countEM2++;
-                pThread->setCountEM2(countEM2);
-            }
+                mutex.wait();
+                if(countEM2 < SIZE_OF_EVENT) {
+                    //printf("EM2 metax %d metay %d \n", metaX, metaY);
+                    //temp = &bufferEM[countEM];
+                    //temp->address   = blob;
+                    //temp->timestamp = timestamp;
+                    bufferEM2[countEM2].address   = (u32) newBlob;
+                    bufferEM2[countEM2].timestamp = (u32) timestamp;
+                    countEM2++;
+                    pThread->setCountEM2(countEM2);
+                }
+                else {
+                    printf("bufferCD overflow prevented! %d \n", countEM2);
+                }
+                mutex.post();
+            }               
         } // EM2
             break;
         case 3:{ //EM3
             //printf("Unmasked EM3 \n");
             if((blob!=0)||(timestamp!=0)) {
-                //printf("EM3 metax %d metay %d \n", metaX, metaY);
-                //temp = &bufferEM[countEM];
-                //temp->address   = blob;
-                //temp->timestamp = timestamp;
-                bufferEM3[countEM3].address   = (u32) newBlob;
-                bufferEM3[countEM3].timestamp = (u32) timestamp;
-                countEM3++;
-                pThread->setCountEM3(countEM3);
-            }
+                mutex.wait();
+                if(countEM3 < SIZE_OF_EVENT) {
+                    //printf("EM3 metax %d metay %d \n", metaX, metaY);
+                    //temp = &bufferEM[countEM];
+                    //temp->address   = blob;
+                    //temp->timestamp = timestamp;
+                    bufferEM3[countEM3].address   = (u32) newBlob;
+                    bufferEM3[countEM3].timestamp = (u32) timestamp;
+                    countEM3++;
+                    pThread->setCountEM3(countEM3);
+                }
+                else {
+                    printf("bufferEM3 overflow prevented! %d \n", countEM3);
+                }
+                mutex.post();
+            } // end if blob            
         } //EM3
-            break;
+        break;
         case 4:{ //EM4
             //printf("Unmasked EM4 \n");
             if((blob!=0)||(timestamp!=0)) {
-                //printf("EM4 metax %d metay %d \n", metaX, metaY);
-                //temp = &bufferEM[countEM];
-                //temp->address   = blob;
-                //temp->timestamp = timestamp;
-                bufferEM4[countEM4].address   = (u32) newBlob;
-                bufferEM4[countEM4].timestamp = (u32) timestamp;
-                countEM4++;
-                pThread->setCountEM4(countEM4);
+                mutex.wait();
+                if(countEM4 < SIZE_OF_EVENT) {
+                    //printf("EM4 metax %d metay %d \n", metaX, metaY);
+                    //temp = &bufferEM[countEM];
+                    //temp->address   = blob;
+                    //temp->timestamp = timestamp;
+                    bufferEM4[countEM4].address   = (u32) newBlob;
+                    bufferEM4[countEM4].timestamp = (u32) timestamp;
+                    countEM4++;
+                    pThread->setCountEM4(countEM4);
+                }
+                else {
+                    printf("bufferEM4 overflow prevented! %d \n", countEM4);
+                }
+                mutex.post();
             }
         } //EM4
-        break;
-                
-                    
+            break;           
         case 5:{ //IF
-            //printf("Unmasked IF \n");
-            //if((blob!=0)||(timestamp!=0)) {
-                //temp = &bufferIF[countIF];
-                //temp->address   = blob;
-                //temp->timestamp = timestamp;
-            bufferIF[countIF].address   = (u32) newBlob;
-            bufferIF[countIF].timestamp = (u32) timestamp;
-            countIF++;
-                //}
+                //printf("Unmasked IF \n");
+                if((blob!=0)||(timestamp!=0)) {
+                    mutex.wait();
+                    if(countIF < SIZE_OF_EVENT) {
+                        //temp = &bufferIF[countIF];
+                        //temp->address   = blob;
+                        //temp->timestamp = timestamp;
+                        bufferIF[countIF].address   = (u32) newBlob;
+                        bufferIF[countIF].timestamp = (u32) timestamp;
+                        countIF++;
+                    }
+                    else {
+                        printf("bufferIF overflow prevented! %d \n", countIF);
+                    }
+                    mutex.post();
+                }
         }// case 5
-            break;
-                
-        }// end of switch    
-    } // end of for every event
-
+            break;             
+        }// end of switch            
+    } // end of for every event    
 }
 
 void logUnmask::logUnmaskEvent(unsigned int evPU, short& metax, short& metay, short& pol, short& type) {
@@ -770,7 +817,6 @@ void logUnmask::logUnmaskEvent(unsigned int evPU, short& metax, short& metay, sh
     pol   = logChip_LUT[position][3];
     
     //printf("unmasked event %d %d %d %d \n",type, metax, metay, pol);
-
     //pol = ((short)((evPU & polmask) >> polshift)==0)?-1:1;	//+1 ON, -1 OFF
     //type = ((short)(evPU & cameramask) >> camerashift);	//0 LEFT, 1 RIGHT
 }
@@ -811,6 +857,8 @@ void logUnmask::logUnmaskEvent(unsigned long evPU, short& metax, short& metay, s
     pol   = logChip_LUT[position][3];
   
     if (type > 6) {
+        printf("error in logUnmask Event %d %d \n ",x,y);
+        printf("%d %d %d %d %x \n", type, metax, metay,pol, logChip_LUT);
         type  = 0;
         metax = 0;
         metay = 0;

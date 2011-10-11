@@ -32,9 +32,7 @@
 // note that bufferdim has to be 1 chunksize bigger TH3 to avoid overflows
 
 
-//#define VERBOSE
-
-
+#define VERBOSE
 
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -58,11 +56,19 @@ logFrameConverter::logFrameConverter():convert_events(128,128) {
     printf("setting memory \n");
     memset(converterBuffer,0,BUFFERDIM);         // set unsigned char
     memset(unreadBuffer,  0, BUFFERDIM);        
+
+    pcBuffer = converterBuffer + TH1;        //saving events
+    pcRead   = converterBuffer ;//reading events
+    //pcRead   = converterBuffer;        //reading events
+    flagCopy = unreadBuffer + TH1;           //saving flag
+    flagRead = unreadBuffer;
+    /*
     pcBuffer = converterBuffer;        //saving events
-    //pcRead   = converterBuffer + TH1;//reading events
-    pcRead   = converterBuffer;        //reading events
+    pcRead   = converterBuffer + TH1;//reading events
+    //pcRead   = converterBuffer;        //reading events
     flagCopy = unreadBuffer;           //saving flag
     flagRead = unreadBuffer + TH1;     //reading flag
+    */
     unmask_events.start();
     printf("unmask event just started");
     previousTimeStamp = 0;
@@ -87,6 +93,7 @@ void logFrameConverter::copyChunk(char* bufferCopy, int packetSize) {
     mutex.post();
 }
 
+
 void logFrameConverter::copyChunk(char* bufferCopy, char* flagBuffer) {            
     mutex.wait();  
     char* limit = converterBuffer +  BUFFERDIM - CHUNKSIZE;
@@ -96,24 +103,34 @@ void logFrameConverter::copyChunk(char* bufferCopy, char* flagBuffer) {
         memset(pcRead, 0,   converterBuffer +  BUFFERDIM - pcRead );
         memcpy(flagBuffer,flagRead,converterBuffer +  BUFFERDIM - pcRead );
         memset(flagRead, 0, converterBuffer +  BUFFERDIM  - pcRead);
+        /*
         pcRead   = converterBuffer + TH1; 
-        flagCopy = unreadBuffer;
+        //flagCopy = unreadBuffer ;
+        flagRead = converterBuffer + TH1; 
+        */
+        pcRead   = converterBuffer; 
+        flagRead = unreadBuffer;
+        
     }
-    else {       
+    else {   
+        //flagRead += CHUNKSIZE;
         memcpy(bufferCopy, pcRead,   CHUNKSIZE);
-        memset(pcRead, 0, CHUNKSIZE);  // zeroing events already read
         memcpy(flagBuffer, flagRead, CHUNKSIZE);        
+        memset(pcRead,   0, CHUNKSIZE);  // zeroing events already read
         memset(flagRead, 0, CHUNKSIZE);
+        //flagCopy += CHUNKSIZE;
+        flagRead += CHUNKSIZE;
         pcRead   += CHUNKSIZE;
-        flagCopy += CHUNKSIZE;
+        
     }
     mutex.post(); 
 
-#ifdef VERBOSE
+        
+#ifdef NOT_VERBOSE
     int num_events = CHUNKSIZE >> 3 ;
     uint32_t* buf2 = (uint32_t*)bufferCopy;
     uint32_t* bufflag = (uint32_t*) flagBuffer;
-    uint32_t* bufflag2 = (uint32_t*) flagCopy;
+    uint32_t* bufflag2 = (uint32_t*) flagRead;
     //plotting out
     for (int evt = 0; evt < num_events; evt++) {
         unsigned long blob      = buf2[2 * evt];
@@ -124,17 +141,19 @@ void logFrameConverter::copyChunk(char* bufferCopy, char* flagBuffer) {
         unsigned long flag2b     = bufflag2[2 * evt + 1];
         if(blob != 0) {
             fprintf(fout,"%08X %08X \n",blob,t);
-            fprintf(fout,"%08X %08X  \n",flag1,flag2);
-            fprintf(fout,"%08X %08X  \n",flag1b,flag2b);
+            //fprintf(fout,"%08X %08X  \n",flag1,flag2);
+            //fprintf(fout,"%08X %08X  \n",flag1b,flag2b);
         }
     }
     fprintf(fout,"################## \n");
 #endif
     
+    
     //countBuffer -= CHUNKSIZE;
     //flagBuffer = flagCopy;
 }
 
+/*
 void logFrameConverter::onRead(eventBuffer& i_ub) {
     valid = true;
     //printf("onRead ");
@@ -159,11 +178,25 @@ void logFrameConverter::onRead(eventBuffer& i_ub) {
     memcpy(pcBuffer,receivedBuffer,dim);
     dimPacket = dim;    
     mutex.post();
+
+#ifdef VERBOSE
+    int num_events = dim >> 3 ;
+    uint32_t* buf2 = (uint32_t*)pcBuffer;
+    //plotting out
+    for (int evt = 0; evt < num_events; evt++) {
+        unsigned long blob      = buf2[2 * evt];
+        unsigned long t         = buf2[2 * evt + 1];
+        fprintf(fout,"%08X %08X \n",blob,t);        
+    }
+#endif
+
+
     //printf("onRead: ended \n");
     //printf("pcBuffer: 0x%x pcRead: 0x%x \n", pcBuffer, pcRead); 
 }
+*/
 
-/*
+
 // reading out from a circular buffer with 2 entry points
 void logFrameConverter::onRead(eventBuffer& i_ub) {
     valid = true;
@@ -190,16 +223,22 @@ void logFrameConverter::onRead(eventBuffer& i_ub) {
     memcpy(pcBuffer,receivedBuffer,dim);
     memset(flagCopy,1,dim);
 
+    
 #ifdef VERBOSE
-    //int num_events = dim >> 3 ;
-    //uint32_t* buf2 = (uint32_t*)pcBuffer;
+    int num_events = dim >> 3 ;
+    uint32_t* buf2    = (uint32_t*)pcBuffer;
+    uint32_t* bufflag = (uint32_t*)flagCopy;
     //plotting out
-    //    for (int evt = 0; evt < num_events; evt++) {
-    //        unsigned long blob      = buf2[2 * evt];
-    //        unsigned long t         = buf2[2 * evt + 1];
-    //        fprintf(fout,"%08X %08X \n",blob,t);        
-    //    }
+    for (int evt = 0; evt < num_events; evt++) {
+        unsigned long blob      = buf2[2 * evt];
+        unsigned long t         = buf2[2 * evt + 1];
+        unsigned long blobflag  = bufflag[2 * evt];
+        unsigned long tflag     = bufflag[2 * evt + 1];
+        fprintf(fout,"%08X %08X \n",blob,t);        
+        //fprintf(fout,"%08X %08X \n",blobflag,tflag);
+    }
 #endif
+    
     
     if (totDim < TH1) {
         pcBuffer += dim;
@@ -209,16 +248,26 @@ void logFrameConverter::onRead(eventBuffer& i_ub) {
         //printf("greater than TH1 \n");
         pcBuffer = converterBuffer + TH1;
         flagCopy = unreadBuffer    + TH1;
+        /*
         pcRead   = converterBuffer + TH2;
         flagRead = unreadBuffer    + TH2;
+        */
+        pcRead = converterBuffer;
+        flagRead = unreadBuffer;
+
         state = 1;
     }
     else if(totDim >= TH2) {
         //printf("greater that TH2 \n");
         pcBuffer = converterBuffer;
         flagCopy = unreadBuffer;
+        /*
         pcRead   = converterBuffer + TH1;
         flagRead = unreadBuffer    + TH1;
+        */
+        pcRead   = converterBuffer + TH1;
+        flagRead = unreadBuffer    + TH1;
+        
         totDim = 0;
         state = 0;
     }
@@ -229,7 +278,7 @@ void logFrameConverter::onRead(eventBuffer& i_ub) {
     //printf("onRead: ended \n");
     //printf("pcBuffer: 0x%x pcRead: 0x%x \n", pcBuffer, pcRead); 
 }
-*/
+
 
 /*
 //three entry points

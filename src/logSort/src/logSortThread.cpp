@@ -266,10 +266,10 @@ void logSortThread::run() {
         // reads the buffer received
         // saves it into a working buffer
         //printf("returned 0x%x 0x%x \n", bufferCopy, flagCopy);
-        int dimPacket = lfConverter->getPacketSize();
-        printf("number of bytes %d \n",dimPacket);
-        lfConverter->copyChunk(bufferCopy, dimPacket);
-        //lfConverter->copyChunk(bufferCopy, flagCopy, dimPacket );
+        //int dimPacket = lfConverter->getPacketSize();
+        //printf("number of bytes %d \n",dimPacket);
+        //lfConverter->copyChunk(bufferCopy, dimPacket);                   
+        lfConverter->copyChunk(bufferCopy, flagCopy);
 
         // ---  time measure --- //
         tend = Time::now();
@@ -277,13 +277,12 @@ void logSortThread::run() {
         // --------------------- //
 
         //printf("after copy chunk 0x%x 0x%x \n", bufferCopy, flagCopy);
-        //int unreadDim = selectUnreadBuffer(bufferCopy, flagCopy, resultCopy);
+        int unreadDim = selectUnreadBuffer(bufferCopy, flagCopy, resultCopy);
+        //printf("Unmasking events:  %d < %d in %x \n", unreadDim,CHUNKSIZE, resultCopy);
 
-       
-        //printf("Unmasking events:  %d \n", unreadDim);
         // extract a chunk/unmask the chunk       
-        //unmask_events.logUnmaskData(resultCopy,unreadDim,verb);
-        unmask_events.logUnmaskData(bufferCopy,dimPacket,verb);
+        unmask_events.logUnmaskData(resultCopy,unreadDim,verb);
+        //unmask_events.logUnmaskData(bufferCopy,dimPacket,verb);
         
 
         //if(verb) {
@@ -396,17 +395,21 @@ void logSortThread::run() {
 
         //TODO : code MUTEXes in these lines! Strictly Necessary!
         unmask_events.getCD(&pCD, &dimCD);
+        //printf("pCD %x", pCD);
         if (dimCD > 0) {
-            //printf("dimCD :  %d \n", dimCD);
+            printf("dimCD :  %d \n", dimCD);
             sendBuffer(&portCD, pCD, dimCD);
             unmask_events.resetCD();
         }
 
-        for (int i = 0; i < dimCD; i++) {
-            u32 blob      = pCD[i].address;
-            u32 timestamp = pCD[i].timestamp;
-            fprintf(fout,"%08x %08x \n",blob,timestamp);
-        }
+
+        //aer* pointer = (aer*) bufferCopy;
+        //for (int i = 0; i < dimCD; i++) {
+        //    u32 blob      = pCD[i].address;
+        //    u32 timestamp = pCD[i].timestamp;
+        //    fprintf(fout,"%08x %08x \n",blob,timestamp);
+        //}
+
         
         // ----------------------------------------------- 
         /*
@@ -427,21 +430,21 @@ void logSortThread::run() {
         */
         // --------------------------------------------
         
-        
+        /*
         unmask_events.getIF(&pIF, &dimIF);
         if (dimIF > 0) {
             //printf("dimIF :                                 %d \n", dimIF);
             sendBuffer(&portIF, pIF, dimIF);
             unmask_events.resetIF();
-        }
+            }*/
         
     
         // measuring execution time of the module
         tend = Time::now();
         difftime2 = tend - tinit;
         if(count % 100 == 0) {
-            printf("time us: %f %f %d %d %d \n", difftime1 * 1000000, (difftime2 - difftime1) * 1000000, dimCD, dimEM, dimIF);
-            printf("dim: CD %d  EM %d  IF %d  TOT %d \n",dimCD, dimEM, dimIF, dimCD + dimEM + dimIF );
+            //printf("time us: %f %f %d %d %d \n", difftime1 * 1000000, (difftime2 - difftime1) * 1000000, dimCD, dimEM, dimIF);
+            //printf("dim: CD %d  EM %d  IF %d  TOT %d \n",dimCD, dimEM, dimIF, dimCD + dimEM + dimIF );
         }
     }
 }
@@ -469,7 +472,7 @@ void logSortThread::sendBuffer(BufferedPort<eventBuffer>* port, aer* buffer, int
         /*for (int i = 0; i < sz; i++) {
             u32 blob      = buffer[i].address;
             u32 timestamp = buffer[i].timestamp;
-            fprintf(fout,"%08x %08x \n",blob,timestamp);
+            fprintf(fout,">%08x %08x \n",blob,timestamp);
             }*/
                
         //printf("sending : %d 0x%x \n", szSent, buffer);

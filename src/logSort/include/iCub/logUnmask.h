@@ -120,6 +120,7 @@ private:
     FILE* uEvents;
     yarp::os::Semaphore countEventLocker;
     yarp::os::Semaphore countEventLocker2;
+    yarp::os::Semaphore mutex;
 
     feature* logChip_LUT;
     processingThread * pThread;
@@ -278,32 +279,32 @@ public:
     /**
      * @brief function that resets the counter of CDs
      */     
-    void resetCD() {countCD = 0; };
+    void resetCD() { mutex.wait();countCD = 0;mutex.post(); };
 
     /**
      * @brief function that resets the counter of IFs
      */     
-    void resetIF() {countIF = 0; };
+    void resetIF() {mutex.wait();countIF = 0;mutex.post(); };
 
     /**
      * @brief function that resets the counter of EMs
      */     
-    void resetEM1() {countEM1 = 0; };
+    void resetEM1() {mutex.wait();countEM1 = 0;mutex.post(); };
 
     /**
      * @brief function that resets the counter of EMs
      */     
-    void resetEM2() {countEM2 = 0; };
+    void resetEM2() {mutex.wait();countEM2 = 0;mutex.post(); };
 
         /**
      * @brief function that resets the counter of EMs
      */     
-    void resetEM3() {countEM3 = 0; };
+    void resetEM3() {mutex.wait();countEM3 = 0;mutex.post(); };
 
     /**
      * @brief function that resets the counter of EMs
      */     
-    void resetEM4() {countEM4 = 0; };
+    void resetEM4() {mutex.wait();countEM4 = 0;mutex.post(); };
 
     /**
      * @brief function that resets EM cartesian space representation
