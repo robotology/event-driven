@@ -176,7 +176,7 @@ public:
     /**
     * indicates whether the event has to be saved in a file
     */
-    void setDumpEvent(bool value) { save = value; };
+    void setDumpEvent(bool value);
 
     /**
     * reference to the name of the file where events are dumped

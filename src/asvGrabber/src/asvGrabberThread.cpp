@@ -421,13 +421,13 @@ void asvGrabberThread::prepareBiases() {
         // inverse order programmming
         for(int j = countBias - 1; j >= 0 ; j--) {
             //printf("%s \n", biasNames[j].c_str());
-            progBias(biasNames[j], countBits, biasValues[j],1);
+            progBias(biasNames[j], countBits, biasValues[j],0);
         }
         // fake bias to simulate 12 clock ticks
-        progBias(biasNames[0], 12, biasValues[0],1);
-        latchCommitAEs(1);
+        progBias(biasNames[0], 12, biasValues[0],0);
+        latchCommitAEs(0);
         //monitor(10);
-        releasePowerdown(1);
+        releasePowerdown(0);
         sendingBias();
         startTime = Time::now();
     }
@@ -896,6 +896,14 @@ void asvGrabberThread::biasprogtx(int time,int latch,int clock,int data, int pow
     //addr = int(sys.argv[1], 16)
     //err = write(file_desc,t,4); //4 byte time: 1 integer
     //err = write(file_desc,addr,4); //4 byte time: 1 integer
+}
+
+void asvGrabberThread::setDumpEvent(bool value) {
+    save = value;
+    if(!value) {
+        if(fout!=NULL)
+            fclose(fout);
+    }
 }
 
 bool asvGrabberThread::setDumpFile(std::string value) {
