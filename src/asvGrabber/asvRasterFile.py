@@ -70,35 +70,28 @@ except getopt.error:
 print 'Opts:',options
 print 'Extra parameters:',xarguments
 
-fileFlag = 0
-for a in options[:]:
-	
-	if a[0] == "--file":
-		print "reading from file"
-		fileFlag = 1
-	
-	if a[0] == "--asv": 
-        	print "ASV mode active"
-        	xMask   = hex2dec("FF")
-		yMask   = hex2dec("7F00")
-		xShift  = 0
-		yShift  = 8
-		xoffset = -112
-		yoffset = -56
-		reverseBits = 1
-    	else:
-        	print "AEX mode active"
-        	xMask   = hex2dec("FE")
-		yMask   = hex2dec("7F00")
-		xShift  = 1
-		yShift  = 8
-		xoffset = 0
-		yoffset = 0
-		reverseBits = 0
-		
-	
-#if a[0] == "--mmin":	
-#`	print "min metapixel"
+fileFlag = 1
+asvFlag  = 1
+aexFlag  = 0	
+
+if asvFlag == 1: 
+        print "ASV mode active"
+        xMask   = hex2dec("FF")
+	yMask   = hex2dec("7F00")
+	xShift  = 0
+	yShift  = 8
+	xoffset = -112
+	yoffset = -56
+	reverseBits = 1
+if aexFlag == 1:
+        print "AEX mode active"
+        xMask   = hex2dec("FE")
+	yMask   = hex2dec("7F00")
+	xShift  = 1
+	yShift  = 8
+	xoffset = 0
+	yoffset = 0
+	reverseBits = 0
 	
  
 #initilization
@@ -223,7 +216,7 @@ for i in range (0,size):
 		y[countEvent] = (address & yMask)
 		y[countEvent] = y[countEvent] >> yShift
 
-		if a[0] == "--asv": 
+		if asvFlag: 
 			yflip = flipBits(y[countEvent],7)
 		else:
 			yflip = y[countEvent]
@@ -266,8 +259,8 @@ print "WARNING: number of address greater than FFFF", overflow_address
 # plot of the events in Raster form
 # extracting metapixels in required range
 
-limitPixelMin = metaPixelMin * 12 * 2
-limitPixelMax = metaPixelMax * 12 * 2
+limitPixelMin = 12 * 3
+limitPixelMax = 12 * 2
 #timestampMin  = limitPixelMin
 #timestampMax  = limitPixelMax 
 #p.plot(xRaster[0:12],yRaster[0:12],'o',xRaster[12:24],yRaster[12:24],'ro',xRaster[24:50],yRaster[24:50],'mo')
