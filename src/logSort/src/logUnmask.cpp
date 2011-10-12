@@ -273,6 +273,8 @@ bool logUnmask::threadInit() {
 
     for (int x = 0; x < X_DIMENSION; x++ ) {
         for (int y = 0; y < Y_DIMENSION; y++) {
+
+
             
             if((y >= 24) && (y < 48) && (x >= 48) && (x < 96)) {
                 fovea = true;
@@ -469,10 +471,14 @@ bool logUnmask::threadInit() {
             logChip_LUT[y * X_DIMENSION + x][2] = metay;
             logChip_LUT[y * X_DIMENSION + x][3] = pol;
 
-            
+            printf("%d %d \n", x, y);
             fprintf(fout,"# %d %d %d %d %d %d \n", x, y, metax, metay, pol, type);
+
+           
         }        
     }
+
+     fclose(fout);
 
     //starting processing thread    
     pThread = new processingThread();
@@ -616,7 +622,7 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         type = -1;
   
         // saving the events
-        bool save = true;                
+        bool save = false;                
         if (save) {
             fprintf(fout,"=%08X %08X\n",blob,timestamp); 
             //fout<<hex<<a<<" "<<hex<<t<<endl;
@@ -676,7 +682,7 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
                 bufferCD[countCD].address   = (u32) newBlob;
                 bufferCD[countCD].timestamp = timestamp;
                 //printf("%08X %08X  \n",bufferCD[countCD].address,timestamp);
-                fprintf(fout,">%d %08X %08X\n",countCD,bufferCD[countCD].address,bufferCD[countCD].timestamp);
+                //fprintf(fout,">%d %08X %08X\n",countCD,bufferCD[countCD].address,bufferCD[countCD].timestamp);
                 countCD++;   
             }
             else {
