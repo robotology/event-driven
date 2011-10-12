@@ -13,7 +13,7 @@ def readfile(filename,buffer):
 			break
 		arr.append(line)
 		buffer = buffer + 1
-		print line,buffer     # notice comma
+		#print line,buffer     # notice comma
 	f.close()
 	return arr
 

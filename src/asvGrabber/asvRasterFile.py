@@ -178,7 +178,7 @@ for i in range (0,size):
 		previous_timestamp = timestamp;
 		timestamp = hex2dec(dataS[1])
 		if(timestamp - previous_timestamp > 38000):
-			print "address1:" , dataS[0], timestamp -  previous_timestamp
+			print "address diff:" , dataS[0], timestamp -  previous_timestamp
 		
 	
 		if countEvent==0 :
@@ -210,8 +210,8 @@ for i in range (0,size):
 		x[countEvent] = (address & xMask) 
 		x[countEvent] = x[countEvent] >> xShift
 	
-		if(x[countEvent] == 0):
-			print "address2:" , dataS[0], timestamp -  previous_timestamp	
+		#if(x[countEvent] == 0):
+		#	print "address2:" , dataS[0], timestamp -  previous_timestamp	
 
 		y[countEvent] = (address & yMask)
 		y[countEvent] = y[countEvent] >> yShift
@@ -236,7 +236,6 @@ for i in range (0,size):
 			ty = type [position] 		
 
 			#print "mx", mx, "my", my, "po", po, "ty", ty
-
 	
 			yRaster[countEvent] = (mx * 72 + my) * 12 + ty * 2 + po		
 			xRaster[countEvent] = (timestamp - firstTimestamp) * 160 #ns
