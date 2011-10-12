@@ -470,7 +470,7 @@ bool logUnmask::threadInit() {
             logChip_LUT[y * X_DIMENSION + x][3] = pol;
 
             
-            fprintf(fout," %d %d    %d %d %d %d \n", x, y, metax, metay, pol, type);
+            fprintf(fout,"# %d %d %d %d %d %d \n", x, y, metax, metay, pol, type);
         }        
     }
 
