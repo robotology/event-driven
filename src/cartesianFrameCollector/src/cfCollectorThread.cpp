@@ -44,7 +44,7 @@ using namespace std;
 #define dim_window 1
 #define synch_time 1
 
-#define VERBOSE
+//#define VERBOSE
 
 cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
   retinalSize  = 128;  //default value before setting 

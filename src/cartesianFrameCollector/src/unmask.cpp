@@ -376,7 +376,8 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
                     if(buffer[cartX + cartY * retinalSize] > 127) {
                         buffer[cartX + cartY * retinalSize] = 127;
                     }
-
+  
+                    /*
                     if(asvMode){
                         if(!((cartX>=7)&&(cartX<16)&&(cartY>=7)&&(cartY<16))){
                             buffer[cartX + 1 + cartY * retinalSize]       = responseGradient;
@@ -386,7 +387,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
                             buffer[cartX + 1 + (cartY + 1) * retinalSize]       = responseGradient;
                             timeBuffer[cartX + 1  + (cartY + 1) * retinalSize]  = timestamp;      
                         }
-                    }
+                        }*/
                     
                 }
                 else if(polarity < 0) {
