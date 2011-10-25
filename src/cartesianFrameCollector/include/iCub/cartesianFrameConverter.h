@@ -123,6 +123,8 @@ private:
     int retinalSize;                                            // dimension of the retina default 128x128
     int totDim;                                                 // total dimension of the read buffer
     int outputWidth, outputHeight;                              // dimension of the output image default 320x240
+    int receivedBufferSize;                                     // dimension of the received packet
+    
     unsigned long previousTimeStamp;                            // timestamp at the previous run
     char* converterBuffer;                                      // buffer used as saved
     char* converterBuffer_copy;                                 // copy of the buffer pointer, points to the location for freeing

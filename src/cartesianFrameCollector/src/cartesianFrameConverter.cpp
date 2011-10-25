@@ -37,25 +37,7 @@
 #include <iCub/config.h>
 
 
-//#define CHUNKSIZE 8192 
-//#define TH1 8192 
-//#define TH2 16384
-//#define TH3 24576
-//#define BUFFERDIM 24576 //32768
 
-//#define CHUNKSIZE 32768 
-//#define TH1       32768  
-//#define TH2       65536
-//#define TH3       98304
-//#define BUFFERDIM 131702
-
-//#define VERBOSE
-
-//#define CHUNKSIZE 1024 
-//#define TH1       1024
-//#define TH2       2048
-//#define TH3       3072
-//#define BUFFERDIM 4096
 
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -104,7 +86,96 @@ void cFrameConverter::copyChunk(char* bufferCopy) {
 }
 
 
+// reading out from a circular buffer with 2 entry points and wrapping
+void cFrameConverter::onRead(eventBuffer& i_ub) {
+    valid = true;
 
+    // receives the buffer and saves it
+    int dim = i_ub.get_sizeOfPacket() ;      // number of bits received / 8 = bytes received
+
+    receivedBufferSize = dim;
+    mutex.wait();
+    receivedBuffer = i_ub.get_packet(); 
+    
+    // the thrid part of the buffer is free to avoid overflow
+    //totDim += dim;
+    int overflow = 0;
+         
+      
+    int removeLater=0;
+    /*
+    if (totDim < TH1) {
+        pcBuffer += dim;
+    }
+    else if((totDim>=TH1)&&(totDim<TH2)&&(state!=1)){
+        //printf("greater than TH1 \n");
+        pcBuffer = converterBuffer + TH1; 
+        pcRead = converterBuffer + TH2;
+        state = 1;
+        removeLater =2;
+    }
+    else if(totDim >= TH2) {
+        //printf("greater that TH2 \n");
+        pcBuffer = converterBuffer;
+        pcRead = converterBuffer + TH1;
+        totDim = 0;
+        state = 0;
+        removeLater=3;
+    }
+
+    totDim += dim;
+    //mem copying
+    memcpy(pcBuffer,receivedBuffer,dim);
+    */
+    
+    int status = 0;
+    
+    if(totDim < TH1 && (totDim+dim) > TH1){
+       pcRead = converterBuffer+TH2;
+       status = 1;
+       memcpy(pcBuffer,receivedBuffer,dim);
+       status = 2;
+       pcBuffer += dim;
+       totDim   += dim;
+       removeLater = 1; 
+    }
+    else if(totDim < TH2 && (totDim + dim) > TH2){
+        pcRead = converterBuffer;
+        status = 3;
+        memcpy(pcBuffer,receivedBuffer,dim);
+        status = 4;
+        pcBuffer += dim;
+        totDim   += dim;
+        removeLater = 2; 
+    }
+    else if((totDim + dim) > TH3){
+        pcRead   = converterBuffer + TH1;
+        overflow = totDim+dim - TH3;
+        status = 5;
+        memcpy(pcBuffer,receivedBuffer,dim-overflow);
+        status = 6;
+        //wrap overflown
+        memcpy(converterBuffer,receivedBuffer - overflow + dim, overflow);  
+        status = 7;      
+        pcBuffer = converterBuffer + overflow;
+        pcRead = converterBuffer + TH2;
+        totDim = overflow;
+        removeLater = 3; 
+    }
+    else { // general case where no boundaries are crossed
+    status = 8;
+        memcpy(pcBuffer,receivedBuffer,dim);
+        status = 9;
+        pcBuffer += dim;
+        totDim += dim;
+    }
+    mutex.post();
+
+    //printf("onRead: ended \n");
+    //printf("pcBuffer: 0x%x pcRead: 0x%x \n", pcBuffer, pcRead); 
+}
+
+/*
 // reading out from a circular buffer with 2 entry points
 void cFrameConverter::onRead(eventBuffer& i_ub) {
     valid = true;
@@ -154,8 +225,7 @@ void cFrameConverter::onRead(eventBuffer& i_ub) {
     //printf("onRead: ended \n");
     //printf("pcBuffer: 0x%x pcRead: 0x%x \n", pcBuffer, pcRead); 
 }
-
-
+*/
 
 
 /*
