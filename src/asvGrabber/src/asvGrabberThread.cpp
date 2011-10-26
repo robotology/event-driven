@@ -105,6 +105,8 @@ reset_pins_expand = 4
 #define CLOCK_HI 1
 #define THRATE 5
 
+#define BIAS_BUFFER 2730
+
 
 asvGrabberThread::asvGrabberThread(string portDeviceName, bool i_bool, string i_fileName = " "):RateThread(THRATE) {
 
@@ -424,7 +426,7 @@ void asvGrabberThread::prepareBiases() {
             progBias(biasNames[j], countBits, biasValues[j],0);
         }
         // fake bias to simulate 12 clock ticks
-        progBias(biasNames[0], 12, biasValues[0],0);
+        progBias(biasNames[0], 12, BIAS_BUFFER,0);
         latchCommitAEs(0);
         //monitor(10);
         releasePowerdown(0);
