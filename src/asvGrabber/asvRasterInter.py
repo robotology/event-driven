@@ -90,9 +90,6 @@ for a in options[:]:
  
 #initilization
 
-
- 
-#execution
 data = sys.stdin.readlines()
 size = len(data)
 x = zeros(size, int)
@@ -102,16 +99,19 @@ print "Counted", len(data), "lines."
 err_address        = 0
 overflow_address   = 0
 first_wrong        = 0
-previous_timestamp = 0;
-previous_address   = 0;
-timestamp          = 0;
-address            = 0;
-diff               = 0;
+previous_timestamp = 0
+previous_address   = 0
+timestamp          = 0
+address            = 0
+diff               = 0
 lastTimestamp      = 0
+
+#execution
 
 for i in range (0,size):
 	data2 = data[i].rsplit("\n")
-	#print "data2: \n", data2
+	
+	print "data2[0]: \n", data2[0]
 	dataS = data2[0].split(' ')
 	#print "dataS1: ", hex2dec(dataS[0]) #address
 	#print "dataS2: ", hex2dec(dataS[1]) #timestamp

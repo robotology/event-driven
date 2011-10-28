@@ -243,7 +243,6 @@ for i in range (0,size):
 			ty = type [position] 		
 
 			#print "mx", mx, "my", my, "po", po, "ty", ty
-
 	
 			yRaster[countEvent] = (mx * 72 + my) * 12 + ty * 2 + po		
 			xRaster[countEvent] = (timestamp - firstTimestamp) * 160 #ns
@@ -271,7 +270,7 @@ limitPixelMax = metaPixelMax * 12 * 2
 #timestampMin  = limitPixelMin
 #timestampMax  = limitPixelMax 
 #p.plot(xRaster[0:12],yRaster[0:12],'o',xRaster[12:24],yRaster[12:24],'ro',xRaster[24:50],yRaster[24:50],'mo')
-#p.plot(xRaster,yRaster,'o')
+p.plot(xRaster,yRaster,'o')
 
 #for i, ax in enumerate(event.canvas.figure.axes): # Get the axes
 #	ax.set_xlim(lims)
@@ -279,7 +278,7 @@ limitPixelMax = metaPixelMax * 12 * 2
 #p.axis([timestampMin, timestampMax,metaPixelMin * 12 , (metaPixelMax + 1) * 12])
 #pylab.show()
 #plt.draw()
-#p.show()
+p.show()
 
 # plot of the event in the Raster form 
 #rasterPlot.plot(x[:], y[0:12],'o',x[], y[12:24],'ro',x, y[24:36],'mo')
