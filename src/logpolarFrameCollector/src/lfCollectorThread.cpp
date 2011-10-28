@@ -110,6 +110,8 @@ bool lfCollectorThread::threadInit() {
     minCount = 0;
     minCountRight= 0;
 
+    
+
     printf("Initialisation in collector thread correctly ended \n");
     return true;
 }
@@ -131,10 +133,12 @@ std::string lfCollectorThread::getName(const char* p) {
 }
 
 void lfCollectorThread::resize(int widthp, int heightp) {
-    imageLeft = new ImageOf<PixelMono>;
-    imageLeft->resize(widthp,heightp);
+    imageLeft  = new ImageOf<PixelMono>;
     imageRight = new ImageOf<PixelMono>;
+    imageLeft ->resize(widthp,heightp);    
     imageRight->resize(widthp,heightp);
+    imageLeft ->zero();
+    imageRight->zero();
 }
 
 
@@ -197,7 +201,7 @@ void lfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsig
                 
             }
             else {
-                *pImage = (unsigned char) defaultValue ;
+                //*pImage = (unsigned char) defaultValue ;
                 //printf("NOT event%d \n",*pImage);
                 pImage++;
                 

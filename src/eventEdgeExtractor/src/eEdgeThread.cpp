@@ -41,37 +41,40 @@ using namespace std;
 #define SHIFTCONST 100
 
 inline void copy_8u_C1R(ImageOf<PixelMono>* src, ImageOf<PixelMono>* dest) {
-    int padding = src->getPadding();
-    int channels = src->getPixelCode();
-    int width = src->width();
-    int height = src->height();
+    //int padding = src->getPadding();
+    //int channels = src->getPixelCode();
+    //int width = src->width();
+    //int height = src->height();
     unsigned char* psrc = src->getRawImage();
     unsigned char* pdest = dest->getRawImage();
-    for (int r=0; r < height; r++) {
-        for (int c=0; c < width; c++) {
-            *pdest++ = (unsigned char) *psrc++;
-        }
-        pdest += padding;
-        psrc += padding;
-    }
+    //for (int r=0; r < height; r++) {
+        //for (int c=0; c < width; c++) {
+            //*pdest++ = (unsigned char) *psrc++;
+        //}
+        //pdest += padding;
+        //psrc += padding;
+    //}
+
+    memcpy(psrc, pdest, (src->getRowSize())*(src->height())*(src->getPixelCode()));
 }
 
 inline void copy_8u_C3R(ImageOf<PixelRgb>* src, ImageOf<PixelRgb>* dest) {
-    int padding = src->getPadding();
-    int channels = src->getPixelCode();
-    int width = src->width();
-    int height = src->height();
+    //int padding = src->getPadding();
+    //int channels = src->getPixelCode();
+    //int width = src->width();
+    //int height = src->height();
     unsigned char* psrc = src->getRawImage();
     unsigned char* pdest = dest->getRawImage();
-    for (int r=0; r < height; r++) {
-        for (int c=0; c < width; c++) {
-            *pdest++ = (unsigned char) *psrc++;
-            *pdest++ = (unsigned char) *psrc++;
-            *pdest++ = (unsigned char) *psrc++;
-        }
-        pdest += padding;
-        psrc += padding;
-    }
+    //for (int r=0; r < height; r++) {
+        //for (int c=0; c < width; c++) {
+            //*pdest++ = (unsigned char) *psrc++;
+            //*pdest++ = (unsigned char) *psrc++;
+            //*pdest++ = (unsigned char) *psrc++;
+        //}
+        //pdest += padding;
+        //psrc += padding;
+    //}
+    memcpy(psrc, pdest, (src->getRowSize())*(src->height())*(src->getPixelCode()));
 }
 
 eEdgeThread::eEdgeThread() : RateThread(THRATE) {

@@ -55,11 +55,11 @@ using namespace yarp::sig;
 using namespace std;
 
 lFrameConverter::lFrameConverter():convert_events(128,128) {
-    valid = false;
-    retinalSize=128;
-    totDim = 0;
-    pcRead = 0;
-    state = 0;
+    valid          = false;
+    retinalSize    = 128;
+    totDim         = 0;
+    pcRead         = 0;
+    state          = 0;
     receivedBuffer = 0;
     printf ("allocating memory \n");
     converterBuffer_copy = (char*) malloc(BUFFERDIM); // allocates bytes

@@ -40,6 +40,10 @@
 #include <iCub/eventBuffer.h>
 #include <iCub/eventConversion.h>
 
+#include <cv.h>
+#include <cvaux.h>
+#include <highgui.h>
+
 #define BUCKET_THRESHOLD 113
 #define COMMAND_VOCAB_PSAC VOCAB4('p','s','a','c')
 #define IMAGE_WD 128
@@ -56,27 +60,21 @@ public:
     int* bufTmpRight;
     yarp::os::BufferedPort<yarp::os::Bottle > eventCoord;                               // for coordinates of events above threshold 
     unmask unmaskOneEvent; 
-    yarp::sig::ImageOf<yarp::sig::PixelMono>* eventReceivedRight;        //Image of event received
-    yarp::sig::ImageOf<yarp::sig::PixelMono>* eventReceivedLeft;        //Image of event received
     yarp::os::BufferedPort<yarp::os::Bottle > pcSz; 
     //yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > eventPlot;     // output port to plot event
 
     yarp::os::Semaphore readMutex;
+
+    
     
       
 
     eventPort() {
-        eventReceivedRight = new yarp::sig::ImageOf<yarp::sig::PixelMono>;
-        eventReceivedLeft = new yarp::sig::ImageOf<yarp::sig::PixelMono>;
-
-        eventReceivedRight->resize(IMAGE_WD,IMAGE_HT);
-        eventReceivedLeft->resize(IMAGE_WD,IMAGE_HT);
-        
+             
             
     }   
     ~eventPort() {
-        delete eventReceivedRight;
-        delete eventReceivedLeft;
+        
     }
 
 
@@ -170,6 +168,14 @@ public:
         //yarp::os::Time::delay(.05);    
              
     }
+
+    /**
+    * function that converts an event (set of tuples (x, y, polarity) into a binary image frame
+    * @param eventBuf pointer to event buffer
+    * @param eventSize size of the event
+    * @param retImage pointer to openCV image thus formed
+    */
+    void event2Frame(int* buff, int eventSize, IplImage* retImage) ;
 };
 
 
@@ -187,6 +193,7 @@ private:
     eventPort<eventBuffer> EportIn;                                                  // buffered port listening to events through callback
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > eventPlot;     // output port to plot event
     std::string name;                                                                // rootname of all the ports opened by this thread
+    IplImage* eventFrame;
     
 public:
     /**
@@ -250,6 +257,8 @@ public:
     * @param dim2   second dimension of the event buffer
     */
     void plotEventBuffer(int* buffer);
+
+    
 
 };
 

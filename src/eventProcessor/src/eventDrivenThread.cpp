@@ -70,6 +70,8 @@ bool eventDrivenThread::threadInit() {
         return false;  // unable to open; let RFModule know so that it won't run
     }
 
+    eventFrame = cvCreateImage(cvSize(128,128),IPL_DEPTH_8U, 1 ); // to remove hard coded value
+
     return true;
     
 
@@ -97,8 +99,10 @@ void eventDrivenThread::run() {
    while (isStopping() != true) {
        
           // 
-           // plotEventBuffer(EportIn.bufTmp); 
-            //Time::delay(.1);
+
+            //plotEventBuffer(EportIn.bufTmp);
+            EportIn.event2Frame(EportIn.bufTmp,EportIn.packet.get_sizeOfPacket(),eventFrame); 
+            Time::delay(.1);
           
             
     }
@@ -163,6 +167,29 @@ void eventDrivenThread::plotEventBuffer(int* buffer) {
         }        
         eventPlot.write();
     }
+}
+
+
+template <class eventBuffer>
+void eventPort<eventBuffer>::event2Frame(int* buff, int eventSize, IplImage* retImage) {
+
+    uchar* tmpRetImg = (uchar*)retImage->imageData;
+    uchar* originImage = tmpRetImg;
+    int widthRetImage = retImage->widthStep;
+    unsigned int* thisEvent = buff;
+    short int x,y,polarity,camera;
+    x = y = polarity = camera = 0;
+    for(int i = 0; i < eventSize; ++i) {
+        unmaskOneEvent.unmaskEvent(*thisEvent,x,y,polarity,camera);
+        if(polarity > .5 || polarity <-.5) {
+            *(originImage + y*widthRetImage + x) = 255;
+        }
+        else {
+            *(originImage + y*widthRetImage + x) = 0;
+        }
+        thisEvent++;
+    }            
+
 }
 
 void eventDrivenThread::threadRelease() {

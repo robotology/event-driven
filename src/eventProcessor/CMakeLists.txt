@@ -15,6 +15,7 @@ INCLUDE_DIRECTORIES(
     ${YARP_INCLUDE_DIRS} 	
     ${ICUB_INCLUDE_DIRS}	
     ${ICUB_CONTRIB_DIRS}
+    ${OPENCV_INCLUDE_DIR}
 )
 
 # Search for source code.
@@ -35,6 +36,7 @@ IF (folder_source)
       iKin
       eMorphLib
       ${YARP_LIBRARIES}
+      ${OpenCV_LIBS}
       )	
 
     INSTALL_TARGETS(/bin ${KEYWORD})
