@@ -75,7 +75,8 @@ private:
     bool idle;                           // controls idle mode
     bool firstRun;                       // flag that check whether the run is a first useful run    
     bool logPolar;                       // flag that indicates whether the viewer represent logpolar information
-    bool stereo;                         // flag that indicates whether the synchronization is stereo 
+    bool stereo;                         // flag that indicates whether the synchronization is stereo
+    bool asvFlag, dvsFlag;               // flag for operating mode
     unsigned long minCount;              // minimum timestamp allowed for the current frame
     unsigned long maxCount;              // maximum timestamp allowed for the current frame
     unsigned long minCountRight;
@@ -171,7 +172,10 @@ public:
      * @param value value to assign to the flag
      */
     void setASVMode(bool value) {
-        //asvFlag = value;
+        asvFlag = value;
+        printf("setting ASVMode \n");
+        //unmask_events->setASVMode(value);
+        printf("success in setting ASVMode \n");
     } 
 
     /**
@@ -179,7 +183,8 @@ public:
      * @param value value to assign to the flag
      */
     void setDVSMode(bool value) {
-        //asvFlag = value;
+        dvsFlag = value;
+        //unmask_events->setDVSMode(value);
     } 
 
     /**

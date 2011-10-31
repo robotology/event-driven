@@ -95,6 +95,8 @@ bool cfCollectorThread::threadInit() {
     
     unmask_events = new unmask();
     unmask_events->setRetinalSize(retinalSize);
+    unmask_events->setASVMode(asvFlag);
+    unmask_events->setDVSMode(dvsFlag);
     unmask_events->start();
 
     //minCount = cfConverter->getEldestTimeStamp();

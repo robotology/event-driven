@@ -39,7 +39,7 @@ using namespace std;
 
 bool cfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
     /* Process all parameters from both command-line and .ini file */
-
+    printf("initialization of the main thread \n");
     /* get the module name which will form the stem of all module port names */
     moduleName            = rf.check("name", 
                            Value("/cartesianFrameCollector"), 
@@ -70,14 +70,16 @@ bool cfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
         cout << getName() << ": Unable to open port " << handlerPortName << endl;  
         return false;
     }
-
+    printf("attaching handler port2 \n");
     attach(handlerPort);                  // attach to port
     
-
     // --------------------------------------------
+    printf("starting cfCollector Thread \n");
     cfThread=new cfCollectorThread();
     cfThread->setName(getName().c_str());
     
+    printf("name of the cfThread correctly set \n");
+
     /*
     * set the period between two successive synchronisations between viewer and events
     */
@@ -86,9 +88,12 @@ bool cfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
                            "synchronisation period (int)").asInt();
     cfThread->setSynchPeriod(synchPeriod);
 
+
+    
     /*
     * set the retinaSize (considering squared retina)
     */
+    printf("looking for the retinalSize \n");
     retinalSize            = rf.check("retinalSize", 
                            Value(128), 
                            "retinalSize (int)").asInt();
@@ -108,16 +113,19 @@ bool cfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
     /* 
      *checking whether the module synchronizes with single camera or stereo camera
      */
+    printf("Looking for asvMode ... \n");
     if( rf.check("asvMode")) {
+        printf("setting asvMode = true, dvsMode = false \n");
         cfThread->setASVMode(true);
         cfThread->setDVSMode(false);
     }
     else {
+        printf("setting asvMode = false, dvsMode = false \n");
         cfThread->setASVMode(false);
-        cfThread->setDVSMode(false);
     }
+
     
-        /* checking whether the module synchronizes with single camera or stereo camera
+    /* checking whether the module synchronizes with single camera or stereo camera
      */
     if( rf.check("dvsMode")) {
         cfThread->setDVSMode(true);
@@ -125,7 +133,6 @@ bool cfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
     }
     else {
         cfThread->setDVSMode(false);
-        cfThread->setASVMode(false);
     }
 
     /**
