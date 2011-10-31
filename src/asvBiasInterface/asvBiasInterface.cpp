@@ -1233,11 +1233,18 @@ static void callbackSaveButton( GtkWidget *widget,gpointer data ) {
         _pOutPort->write(bot,in);
     }
     mutex.post();
+    
 
     //saving in local file
     if(entry_file != NULL) {
+        std::string filename("/home/icub/");
+        filename.append(entry_file);
+        filename.append(".txt");
         printf("trying to save the following file %s \n", entry_file);    
-        fout = fopen(entry_file,"w");
+        fout = fopen(filename.c_str(),"w");
+        if(fout == NULL) {
+            return;
+        }
         int value = gtk_adjustment_get_value((GtkAdjustment*)adjSYTH);
         fprintf(fout,"%d \n", value);
         value = gtk_adjustment_get_value((GtkAdjustment*)adjSYTA);
@@ -1317,10 +1324,16 @@ static void callbackLoadButton( GtkWidget *widget,gpointer data ) {
     
     //loading in local file
     if(entry_file!=NULL){
+        std::string filename("/home/icub/");
+        filename.append(entry_file);
+        filename.append(".txt");
         //char str[80];
         int current;
         printf("trying to read from the %s \n", entry_file);
-        fout = fopen(entry_file,"r");
+        fout = fopen(filename.c_str(),"r");
+        if(fout == NULL ) {
+            return;
+        }
         std::string str;
         printf("scanning the file \n");
         
