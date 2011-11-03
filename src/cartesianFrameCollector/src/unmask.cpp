@@ -325,6 +325,10 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
         // filling the image buffer after the unmasking  
 
         //checking outoflimits in dimension
+
+        //correcting the orientation of the camera
+        cartY = retinalSize - cartY - 1;   //corrected the output of the camera (flipped the image along y axis)
+
         assert(cartX < retinalSize);
         assert(cartX > 0 );
         assert(cartY < retinalSize);
@@ -335,9 +339,8 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
         if((cartY < 0)||(cartY> retinalSize)){
             cartY = 0;
         }
-
-        //correcting the orientation of the camera
-        //cartY = retinalSize - cartY;   //corrected the output of the camera (flipped the image along y axis)
+                
+        
         //cartX = retinalSize - cartX;
 
         //if(cartX!=0)
@@ -378,10 +381,8 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
                     if(buffer[cartX + cartY * retinalSize] > 127) {
                         buffer[cartX + cartY * retinalSize] = 127;
                     }
-  
                     
-                    if(asvMode){
-                        
+                    if(asvMode){                        
                         if(!((cartX>=7)&&(cartX<16)&&(cartY>=7)&&(cartY<16))){
                             buffer[cartX + 1 + cartY * retinalSize]       = responseGradient;
                             timeBuffer[cartX + 1  + cartY * retinalSize]  = timestamp;
@@ -451,7 +452,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
                 }
             }
         } //end camera            
-    } //end of for    
+    } //end of for   
 }
 
 
