@@ -369,34 +369,34 @@ void cfCollectorThread::run() {
         unsigned long lastright = unmask_events->getLastTimestampRight();
         rc = lastright * COUNTERRATIO;
         //printf("countStop %d lcprev %d lc %d \n",countStop, lcprev,lc);
-	if (stereo) {
-	  if ((lcprev == lc)||(rcprev == rc)) {
-	    //if (lcprev == lc) {
-            countStop++;
-            printf("countStop %d %lu %lu %lu %lu \n", countStop, lc, lcprev, rc, rcprev);
-	  }            
-	  else {
-            countStop--;
-            //printf("countStop %d \n", countStop);
-            if(countStop<= 0) {
-	      countStop = 0;
+        if (stereo) {
+            if ((lcprev == lc)||(rcprev == rc)) {
+                //if (lcprev == lc) {
+                countStop++;
+                printf("countStop %d %lu %lu %lu %lu \n", countStop, lc, lcprev, rc, rcprev);
+            }            
+            else {
+                countStop--;
+                //printf("countStop %d \n", countStop);
+                if(countStop<= 0) {
+                    countStop = 0;
+                }
             }
-	  }
-	}
-	else {
-	  if (lcprev == lc) {
-	    //if (lcprev == lc) {
-            countStop++;
-            printf("countStop %d %lu %lu %lu %lu \n", countStop, lc, lcprev, rc, rcprev);
-	  }            
-	  else {
-            countStop--;
-            //printf("countStop %d \n", countStop);
-            if(countStop<= 0) {
-	      countStop = 0;
+        }
+        else {
+            if (lcprev == lc) {
+                //if (lcprev == lc) {
+                countStop++;
+                printf("countStop %d %lu %lu %lu %lu \n", countStop, lc, lcprev, rc, rcprev);
+            }            
+            else {
+                countStop--;
+                //printf("countStop %d \n", countStop);
+                if(countStop<= 0) {
+                    countStop = 0;
+                }
             }
-	  }
-	}
+        }
         lcprev = lc;
         rcprev = rc;
     }
@@ -431,9 +431,7 @@ void cfCollectorThread::run() {
     
     getMonoImage(imageLeft,minCount,maxCount,1);
     if(imageLeft != 0) {
-      //printf("copying image \n");
       pThread->copyLeft(imageLeft);
-      //printf("end copying image \n");
     }
     
     if(stereo) {

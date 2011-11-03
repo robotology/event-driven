@@ -34,7 +34,7 @@ using namespace yarp::os;
 
 #define MAXVALUE 114748364 //4294967295
 #define maxPosEvent 10000
-#define responseGradient 127
+#define responseGradient 127  //default : 127
 #define minKillThres 1000
 #define UNMASKRATETHREAD 1
 #define constInterval 100000;
