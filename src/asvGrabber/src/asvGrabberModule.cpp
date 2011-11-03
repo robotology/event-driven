@@ -116,14 +116,17 @@ bool asvGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         D2Y=new asvGrabberThread(devicePortName, true, binaryNameComplete);        
         //D2Y->setBinaryFile(f);
     }
+    printf("dumpEventSet \n");
     if (strcmp(dumpNameComplete.c_str(),"" )) {
+        printf("set dumping event true \n");
         D2Y->setDumpEvent(true);
         D2Y->setDumpFile(dumpNameComplete);
     }
     else {
+        printf("set dumping event false \n");
         D2Y->setDumpEvent(false);
     }
-
+    printf("starting the processor \n");
     D2Y->start();
 
     return true ;       // let the RFModule know everything went well

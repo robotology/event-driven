@@ -140,6 +140,7 @@ asvGrabberThread::asvGrabberThread(string portDeviceName, bool i_bool, string i_
     EMVrefH      = 52458;
      
     save = false;
+    fout = 0;
     // passing the parameter to the class variable
     this->portDeviceName = portDeviceName;
     this->biasFileName   = i_fileName;
@@ -564,6 +565,8 @@ void asvGrabberThread::prepareBiasesRight() {
         //    fclose(binInput);
         //}
     } 
+    
+    printf("success in initilization \n");
 }
 
 
@@ -902,6 +905,7 @@ void asvGrabberThread::biasprogtx(int time,int latch,int clock,int data, int pow
 
 void asvGrabberThread::setDumpEvent(bool value) {
     save = value;
+    
     if(!value) {
         if(fout!=NULL)
             fclose(fout);
