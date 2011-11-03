@@ -971,6 +971,15 @@ void device2yarp::biasprogtx(int time,int latch,int clock,int data, int powerdow
     //err = write(file_desc,addr,4); //4 byte time: 1 integer
 }
 
+void device2yarp::setDumpEvent(bool value) {
+    save = value;
+    
+    if(!value) {
+        if(fout!=NULL)
+            fclose(fout);
+    }
+}
+
 bool device2yarp::setDumpFile(std::string value) {
     dumpfile = value;
     //fout.open(dumpfile.c_str());
