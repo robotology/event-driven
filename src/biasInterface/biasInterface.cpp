@@ -1257,7 +1257,45 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box6), buttonSave, FALSE, FALSE, 10);
     gtk_widget_show (buttonSave);
     
+ buttonLoad = gtk_button_new ();
+    g_signal_connect (G_OBJECT (buttonLoad), "clicked", G_CALLBACK (callbackLoadButton), NULL);
+    boxButton = xpm_label_box (NULL,  (gchar*)"Load");
+    gtk_widget_show (boxButton);
+    gtk_container_add (GTK_CONTAINER (buttonLoad), boxButton);
+    gtk_container_add (GTK_CONTAINER (buttonLoad), box6);
+    gtk_box_pack_start (GTK_BOX (box6), buttonLoad, FALSE, FALSE, 10);
+    gtk_widget_show (buttonLoad);  
 
+    entrySAVELOAD = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (entrySAVELOAD), 50);
+    gtk_entry_set_text (GTK_ENTRY (entrySAVELOAD), "filename");
+    g_signal_connect (entrySAVELOAD, "activate",
+		      G_CALLBACK (enter_callbackSAVELOAD),
+		      entrySAVELOAD);
+    tmp_pos = GTK_ENTRY (entrySAVELOAD)->text_length;
+    gtk_editable_insert_text (GTK_EDITABLE (entrySAVELOAD), ".txt" , -1, &tmp_pos);
+    gtk_editable_select_region (GTK_EDITABLE (entrySAVELOAD),
+			        0, GTK_ENTRY (entrySAVELOAD)->text_length);
+    gtk_box_pack_start (GTK_BOX (box6), entrySAVELOAD, TRUE, TRUE, 0);
+    gtk_widget_show (entrySAVELOAD);
+    
+    buttonDumpOn = gtk_button_new ();
+    g_signal_connect (G_OBJECT (buttonDumpOn), "clicked", G_CALLBACK (callbackDumpButton),(gpointer) "on");
+    boxButton = xpm_label_box (NULL,  (gchar*)"DumpOn");
+    gtk_widget_show (boxButton);
+    gtk_container_add (GTK_CONTAINER (buttonDumpOn), boxButton);
+    gtk_container_add (GTK_CONTAINER (buttonDumpOn), box6);
+    gtk_box_pack_start (GTK_BOX (box6), buttonDumpOn, FALSE, FALSE, 10);
+    gtk_widget_show (buttonDumpOn);  
+    
+    buttonDumpOff = gtk_button_new ();
+    g_signal_connect (G_OBJECT (buttonDumpOff), "clicked", G_CALLBACK (callbackDumpButton),(gpointer) "off");
+    boxButton = xpm_label_box (NULL,  (gchar*)"DumpOff");
+    gtk_widget_show (boxButton);
+    gtk_container_add (GTK_CONTAINER (buttonDumpOff), boxButton);
+    gtk_container_add (GTK_CONTAINER (buttonDumpOff), box6);
+    gtk_box_pack_start (GTK_BOX (box6), buttonDumpOff, FALSE, FALSE, 10);
+    gtk_widget_show (buttonDumpOff);  
 
     gtk_box_pack_start (GTK_BOX (box3), box6, FALSE, FALSE, 0);
     gtk_widget_show (box6);
