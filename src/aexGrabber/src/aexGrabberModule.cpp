@@ -233,6 +233,8 @@ bool aexGrabberModule::respond(const Bottle& command, Bottle& reply) {
             reply.addString("prog left bias \t: asks to reprogram biases ");
             reply.addString("prog right bias \t: asks to reprogram biases ");
 
+            reply.addString("dump on \t: asks to start dumping event in default file ");
+            reply.addString("dump off \t: asks to stop dumping event in default file ");
 
             ok = true;
         }
@@ -523,7 +525,7 @@ bool aexGrabberModule::respond(const Bottle& command, Bottle& reply) {
             }
         }
         break;
-    case COMMAND_VOCAB_PROG:
+        case COMMAND_VOCAB_PROG:
         rec = true;
         {
             switch(command.get(1).asVocab()) {
@@ -554,7 +556,28 @@ bool aexGrabberModule::respond(const Bottle& command, Bottle& reply) {
             }
         }
         break;
-
+        case COMMAND_VOCAB_DUMP:
+            rec = true;
+            printf("recognised the command DUMP \n");
+            {
+                switch(command.get(1).asVocab()) {
+                case COMMAND_VOCAB_ON: {
+                    printf("request of start dumping events arrived \n");
+                    D2Y->setDumpFile("dump.txt");
+                    D2Y->setDumpEvent(true);
+                    printf("success in opening the dump file \n");
+                    ok = true;
+                }
+                    break;
+                case COMMAND_VOCAB_OFF: {
+                    printf("request of stop dumping events arrived \n");
+                    D2Y->setDumpEvent(false);
+                    ok = true;
+                }
+                    break;
+                }
+            }
+            break;            
         }
     }
     mutex.post();
