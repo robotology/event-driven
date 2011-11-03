@@ -28,11 +28,14 @@
 #include <string.h>
 #include <sstream>
 
-
-#define COMMAND_VOCAB_SET VOCAB3('s','e','t')
-#define COMMAND_VOCAB_GET VOCAB3('g','e','t')
+#define COMMAND_VOCAB_ON    VOCAB2('o','n')
+#define COMMAND_VOCAB_OFF   VOCAB3('o','f','f')
+#define COMMAND_VOCAB_SET   VOCAB3('s','e','t')
+#define COMMAND_VOCAB_GET   VOCAB3('g','e','t')
 #define COMMAND_VOCAB_RIGHT VOCAB4('r','i','g','h')
-#define COMMAND_VOCAB_LEFT VOCAB4('l','e','f','t')
+#define COMMAND_VOCAB_LEFT  VOCAB4('l','e','f','t')
+#define COMMAND_VOCAB_LOAD  VOCAB4('l','o','a','d')
+#define COMMAND_VOCAB_DUMP  VOCAB4('d','u','m','p')
 
 #define PR_DEFAULT_VALUE       5
 #define FOLL_DEFAULT_VALUE     20
@@ -504,6 +507,41 @@ static void callbackSaveButton( GtkWidget *widget,gpointer data ) {
     mutex.post();
 }
 
+static void callbackLoadButton( GtkWidget *widget,gpointer data ) {
+    printf ("Load button - %s was pressed\n", (char *) data);
+    mutex.wait();
+    c = 100;
+    printf("c %d \n", c);
+    if (_pOutPort!=NULL) {
+        yarp::os::Bottle bot; //= _pOutPort->prepare();
+        bot.clear();
+        bot.addVocab(COMMAND_VOCAB_LOAD);
+        bot.addVocab(COMMAND_VOCAB_BIAS);
+        //_pOutPort->Content() = _outBottle;
+        Bottle in;
+        _pOutPort->write(bot,in);
+    }
+    mutex.post();
+    
+    //loading in local file
+    if(entry_file!=NULL){
+        std::string filename("/home/icub/");
+        filename.append(entry_file);
+        filename.append(".txt");
+        //char str[80];
+        int current;
+        printf("trying to read from the %s \n", entry_file);
+        fout = fopen(filename.c_str(),"r");
+        if(fout == NULL ) {
+            return;
+        }
+        std::string str;
+        printf("scanning the file \n");
+        
+
+    }
+}
+
 static void callbackProgBiasButton( GtkWidget *widget,gpointer data ) {
     printf ("Prog Bias - %s was pressed\n", (char *) data);
     mutex.wait();
@@ -526,7 +564,27 @@ static void callbackProgBiasButton( GtkWidget *widget,gpointer data ) {
     mutex.post();
 }
 
+static void callbackDumpButton( GtkWidget *widget,gpointer data ) {
+    printf ("Dump Button - %s was pressed\n", (char *) data);
+    mutex.wait();
+    if (_pOutPort!=NULL) {
+        yarp::os::Bottle bot; //= _pOutPort->prepare();
+        bot.clear();
+        bot.addVocab(COMMAND_VOCAB_DUMP);
+        if(!strcmp((char*) data,"on")) {
+            bot.addVocab(COMMAND_VOCAB_ON);
+        }
+        else {
+            bot.addVocab(COMMAND_VOCAB_OFF);
+        }
 
+        //bot.addVocab(COMMAND_VOCAB_BIAS);
+        //_pOutPort->Content() = _outBottle;
+        Bottle in;
+        _pOutPort->write(bot,in);
+    }
+    mutex.post();
+}
 
 gint timeout_update_CB(gpointer data) {
     //portFpsData.getStats(av, min, max);
@@ -546,6 +604,12 @@ gint timeout_update_CB(gpointer data) {
     //g_free(msg);
     //gdk_threads_leave();
     return TRUE;
+}
+
+static void enter_callbackSAVELOAD( GtkWidget *widget, GtkWidget *entry ) {
+    printf(" changed the name of the file \n");
+    entry_file = gtk_entry_get_text (GTK_ENTRY (entry));   
+    printf ("Entry contents SAVE & LOAD  : %s\n", entry_file);
 }
 
 gint timeout_CB (gpointer data) {
@@ -805,9 +869,10 @@ GtkWidget* createMainWindow(void) {
     // function is NULL and is ignored in the callback function.
     //g_signal_connect (G_OBJECT (window), "delete_event", G_CALLBACK (delete_event), NULL);
     // Box for main window
-    GtkWidget *buttonSave, *buttonProgBias;
+    GtkWidget *buttonSave, *buttonProgBias, *buttonLoad, *buttonDumpOn, *buttonDumpOff;
     GtkWidget *boxButton;
     GtkWidget *box, *box2, *box3, *box4, *box5, *box6;
+    gint tmp_pos;
     box = gtk_vbox_new (FALSE, 0); // parameters (gboolean homogeneous_space, gint spacing);
     gtk_container_add (GTK_CONTAINER (window), box);
     // MenuBar for main window
