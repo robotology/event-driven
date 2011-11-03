@@ -89,7 +89,8 @@ reset_pins_expand = 4
 
 
 device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName = " "):RateThread(THRATE) {
-
+  fout = 0;
+  
     /*   ORIGINAL VALUES
     *   from DVS128_PAER.xml, set Tmpdiff128
     *    biasvalues = {
