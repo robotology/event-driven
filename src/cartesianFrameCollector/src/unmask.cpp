@@ -329,10 +329,10 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
         //correcting the orientation of the camera
         cartY = retinalSize - cartY - 1;   //corrected the output of the camera (flipped the image along y axis)
 
-        assert(cartX < retinalSize);
-        assert(cartX > 0 );
-        assert(cartY < retinalSize);
-        assert(cartY > 0);
+        //assert(cartX < retinalSize);
+        //assert(cartX >= 0 );
+        //assert(cartY < retinalSize);
+        //assert(cartY >= 0);
         if((cartX < 0)||(cartX > retinalSize)){
             cartX = 0;
         }
