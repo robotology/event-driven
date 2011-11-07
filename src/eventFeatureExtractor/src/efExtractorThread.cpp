@@ -50,7 +50,7 @@ using namespace std;
 #define Y_SHIFT 8
 #define POLARITY_MASK 0x00000001
 #define POLARITY_SHIFT 0
-#define CONST_DECREMENT 5
+#define CONST_DECREMENT 1
 
 #define CHUNKSIZE 32768
 
@@ -118,12 +118,13 @@ bool efExtractorThread::threadInit() {
     outRightPort.open(getName("/edgesRight:o").c_str());
     inLeftPort.open(getName("/left:i").c_str());
     inRightPort.open(getName("/right:i").c_str());
+    outEventPort.open(getName("/event:o").c_str());
 
     cfConverter=new cFrameConverter();
     cfConverter->useCallback();
     cfConverter->open(getName("/retina:i").c_str());
 
-    eventBuffer = new AER_struct[CHUNKSIZE>>3];
+    eventFeaBuffer = new AER_struct[CHUNKSIZE>>3];
 
     printf("allocating memory for the LUT \n");
     lut = new int[RETINA_SIZE * RETINA_SIZE];
@@ -132,10 +133,11 @@ bool efExtractorThread::threadInit() {
         lut[i] = -1;
         //printf("i: %d  value : %d \n",i,lut[i]);
     } 
-    printf("initialised memory for LUT \n");
+    printf("successfully initialised memory for LUT \n");
     
     /*opening the file of the mapping and creating the LUT*/
     pFile = fopen (mapURL.c_str(),"rb");    
+    fout  = fopen ("lut.txt","w+");
     if (pFile!=NULL) {
         long lSize;
         size_t result;        
@@ -155,9 +157,11 @@ bool efExtractorThread::threadInit() {
         long word = 0;
         long input = -1, output = -1;
         short x, y;
+        
         for (int i = 0; i < lSize; i++) {            
             
             int value = convertChar2Dec(*buffer);
+            //loking for EOL
             if(*buffer == 10) {
                 //sac words
                 if(word < 500000) {
@@ -176,7 +180,8 @@ bool efExtractorThread::threadInit() {
                 output = y * 32 + x;
                 word = 0;
             }
-            else if(*buffer == 32) {
+            //looking for space
+            else if(*buffer == 32)  {
                 //angel words
                 if(word < 500000) {
                     word -= 262144;
@@ -191,7 +196,7 @@ bool efExtractorThread::threadInit() {
                 x = (word & X_MASK) >> X_SHIFT;
                 y = (word & Y_MASK) >> Y_SHIFT;
                 //printf("angel input: %d --> %d %d \n", word, x, y);
-                input = y * 128 + x;;
+                input = y * 128 + x;
                 word = 0;
             }
             else{
@@ -202,7 +207,7 @@ bool efExtractorThread::threadInit() {
             buffer++;
             if((input != -1) && (output!=-1)) {
                 printf("lut : %d-->%d \n", input, output);
-
+                fprintf(fout,"%d %d \n", input, output);
                 lut[input] = output;
                 input  = -1;
                 output = -1;
@@ -236,10 +241,13 @@ void efExtractorThread::resize(int widthp, int heightp) {
 
 void efExtractorThread::run() {   
     count++;
-    printf("counter %d \n", count);
+    //printf("counter %d \n", count);
     bool flagCopy;
-    if(!idle) {
+    if((!idle)&&(outLeftPort.getOutputCount())) {
+        
         ImageOf<PixelMono>& left = outLeftPort.prepare();
+        left.resize(32, 32);
+        left.zero();
         
         // reads the buffer received
         // saves it into a working buffer        
@@ -249,33 +257,62 @@ void efExtractorThread::run() {
 
         //printf("Unmasking events:  %d \n", unreadDim);
         // extract a chunk/unmask the chunk       
-        unmask_events.unmaskData(bufferCopy,CHUNKSIZE,eventBuffer);
+        unmask_events.unmaskData(bufferCopy,CHUNKSIZE,eventFeaBuffer);
         
-        //storing the respons in a temp. image
-        AER_struct* iterEvent = eventBuffer;
+        //storing the response in a temp. image
+        AER_struct* iterEvent = eventFeaBuffer;
         unsigned char* pLeft = left.getRawImage();
-        int padding = left.getPadding();
-        for(int i = 0; i < 10; i++ ) {
-            printf(" %d %d \n",iterEvent->x,iterEvent->y );
-            int x = iterEvent->x;
-            int y = iterEvent->y;
+        int padding    = left.getPadding();
+        int rowsizeOut = left.getRowSize();
+        // visiting a discrete number of events
+        for(int i = 0; i < CHUNKSIZE>>3; i++ ) {
+            //printf(" %d %d \n",iterEvent->x,iterEvent->y );
+            int x = iterEvent->x - 1;
+            int y = iterEvent->y - 1;
+            //printf("pointing in the lut at position %d \n", x + y * RETINA_SIZE);
             int pos = lut[x + y * RETINA_SIZE];
-            pLeft[pos]++;
-            if(pLeft[pos] > 255) {
-                pLeft[pos] = 255;
-                //only if the number of event greater the 255 send event out
-                //unmasking
-                //unmask_events.maskEvent();
+            if(pos == -1) {
+                printf("not mapped event %d \n",x + y * RETINA_SIZE);
             }
-            iterEvent++;
-        }
+            else {
+                
+                pLeft[pos] = pLeft[pos] + 25;
+                
+                if(pLeft[pos] >= 255) {
+                    pLeft[pos] = 255;
+                    //only if the number of event greater the 255 send event out
+                    //unmasking
+                    //unmask_events.maskEvent();
+                }            
+                iterEvent++;            
+            }
+        } //end of for
         
+        // leaking section of the algorithm
+        /*
         pLeft = left.getRawImage();
         for (int i = 0; i< RETINA_SIZE * RETINA_SIZE; i++) {
-            *pLeft = *pLeft - CONST_DECREMENT;
+            if(*pLeft > CONST_DECREMENT) {
+                *pLeft = *pLeft - CONST_DECREMENT;
+            }
             pLeft++;
         }
         pLeft += padding;
+        */
+        outLeftPort.write();
+
+
+        //building feature events
+        char* buffer;
+        int sz = CHUNKSIZE;
+
+        // sending events 
+        if (outEventPort.getOutputCount()) {
+            eventBuffer data2send(buffer, sz);    
+            eventBuffer& tmp = outEventPort.prepare();
+            tmp = data2send;
+            outEventPort.write();
+        }
     }
 }
 
@@ -284,6 +321,7 @@ void efExtractorThread::interrupt() {
     outRightPort.interrupt();
     inLeftPort.interrupt();
     inRightPort.interrupt();
+    outEventPort.interrupt();
 }
 
 void efExtractorThread::threadRelease() {
@@ -292,8 +330,9 @@ void efExtractorThread::threadRelease() {
     outRightPort.close();
     inLeftPort.close();
     inRightPort.close();
-    
-    delete[] eventBuffer;
+    outEventPort.close();
+
+    delete[] eventFeaBuffer;
     delete cfConverter;
     
     /* closing the file */

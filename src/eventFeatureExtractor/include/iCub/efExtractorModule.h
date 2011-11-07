@@ -154,6 +154,7 @@
 * 24/08/11 : created the module                                                                       \author Rea \n
 * 31/08/11 : added parameter mode for the command line                                                \author Rea \n 
 * 13/09/11 : added the eventBuffer that contains the collection of unmasked events                    \author Rea \n
+* 07/11/11 : corrected the output for debug images                                                    \author Rea \n   
 */
 
 #include <iostream>
