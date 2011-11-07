@@ -3,7 +3,7 @@
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 cmake_minimum_required(VERSION 2.6)
 
-#add_subdirectory(angel2SAC)
+add_subdirectory(angel2SAC)
 add_subdirectory(aexGrabber)
 add_subdirectory(asvGrabber)
 add_subdirectory(asvBiasInterface)
@@ -26,6 +26,7 @@ add_subdirectory(harmonicPathPlanner)
 
 add_subdirectory(logpolarFrameCollector)
 add_subdirectory(logSort)
+add_subdirectory(microsacTest)
 #add_subdirectory(objectInteractor)
 add_subdirectory(opticalFlow2)
 add_subdirectory(opticalFlow3)
