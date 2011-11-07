@@ -105,7 +105,6 @@ int main(int argc, char * argv[]) {
     
     //------------------------------------------------ 
     //IPositionControl  *posTorso;
-
     
     Property options;
     IDebugInterface   *iDbg = NULL;
@@ -184,21 +183,39 @@ int main(int argc, char * argv[]) {
     printf("%f \n", dtf5);
 
     //-----------------------------------------
-    double posA = 0.5;
-    double posB = -0.5;
+    double posA = -0.25;
+    double posB = 0.25;
     
     double starttime = Time::now();
     double endtime   = Time::now();
     double diff = endtime - starttime;
-    while(true) {
+    /*while(true) {
         iDbg->setDebugReferencePosition(4,posA);
-        Time::delay(0.01);
+        Time::delay(0.03);
         iDbg->setDebugReferencePosition(4,posB);
+        Time::delay(0.03);
+        endtime   = Time::now();
+        diff = endtime - starttime;
+    }*/
+
+    double pos=0;
+    bool up=true;
+    while(true) {
+        
+        iDbg->setDebugReferencePosition(4,pos);
         Time::delay(0.01);
+
+        if (up==true) pos=pos+0.16;
+        else          pos=pos-0.16;
+
+        //0.4 & 0.1666
+        if (pos>=0.4) up = false;
+        if (pos<=-0.4) up =true;
+
         endtime   = Time::now();
         diff = endtime - starttime;
     }
-    
+  
     printf("success after all the tests \n");
     
     return 0;
