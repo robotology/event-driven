@@ -18,8 +18,10 @@
 #include <iostream>
 #include <sstream>
 #include <ctime>
-
+#include <inttypes.h>
 #include <yarp/os/all.h>
+
+#define u32 uint32_t
 
 typedef struct s_AER_struct {
     int x;
@@ -29,12 +31,18 @@ typedef struct s_AER_struct {
 }AER_struct;
 
 
+struct aer {
+    u32 address;
+    u32 timestamp;
+};
+
 /**
  * \section change_log CHANCE LOG
  * 22/08/11 : made the unmasking class as general as possible                               \author Rea \n
  * 22/08/11 : added two functions for timestamp reset                                       \author Rea \n
  * 23/08/11 : added different unmasking for dvs cameras without iHead                       \author Rea \n   
  * 13/09/11 : added an pointer to the unmasked  for the method unmaskData                   \author Rea \n         
+ * 08/11/11 : added a new structure for handling events as 32bit address and 32bits times   \author Rea \n
  */
 
 
