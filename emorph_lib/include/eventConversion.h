@@ -30,7 +30,6 @@ typedef struct s_AER_struct {
     unsigned int ts;
 }AER_struct;
 
-
 struct aer {
     u32 address;
     u32 timestamp;
@@ -43,7 +42,8 @@ struct aer {
  * 23/08/11 : added different unmasking for dvs cameras without iHead                       \author Rea \n   
  * 13/09/11 : added an pointer to the unmasked  for the method unmaskData                   \author Rea \n         
  * 08/11/11 : added a new structure for handling events as 32bit address and 32bits times   \author Rea \n
- */
+ * 08/11/11 : added unmaskData function that returns buffer of aer events                   \author Rea \n       
+*/
 
 
 /** 
@@ -200,10 +200,19 @@ public:
     * unmasks the event in term of x,y, polarity and time stamp and update the buffer
     * @param data reference to the vector of char (the read data)
     * @param size size of the last reading from the port
-    * @param output pointer to the collection of event unmasked
+    * @param output pointer to the collection of event unmasked as AER_struct
     */
     void unmaskData(char* data, int size, AER_struct* output);
-
+    
+    /**
+    * function that given a reference to the list of char read from the port and the number of packet received
+    * unmasks the event in term of x,y, polarity and time stamp and update the buffer
+    * @param data reference to the vector of char (the read data)
+    * @param size size of the last reading from the port
+    * @param output pointer to the collection of event unmasked as aer struct
+    */
+    void unmaskData(char* data, int size, aer* output);
+    
     /**
     * function that given a reference to the list of char read from the port and the number of packet received
     * unmasks the event in term of x,y, polarity and time stamp and update the buffer
