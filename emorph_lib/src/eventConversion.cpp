@@ -271,8 +271,9 @@ void unmask::unmaskData(char* i_buffer, int i_sz, AER_struct* output) {
         camera = camera + 1;        //camera: LEFT 0, RIGHT 1
 
         //adding a new event to the list
-        iterEvent->x = cartX;
-        iterEvent->y = cartY;
+        iterEvent->x  = cartX;
+        iterEvent->y  = cartY;
+        iterEvent->ts = timestamp;
         iterEvent++;
     }
 }
@@ -525,7 +526,11 @@ void unmask::maskEvent( short x, short y, short pol, short camera,unsigned long&
     //x = (short) ((evPU & ymask) >> yshift);
     //pol = ((short)((evPU & polmask) >> polshift)==0)?-1:1;	//+1 ON, -1 OFF
     //camera = ((short)(evPU & cameramask) >> camerashift);	//0 LEFT, 1 RIGHT
-    evPU = y << xshift + x << yshift + pol << polshift;
+    //evPU = y << xshift + x << yshift + pol << polshift;
+    evPU = pol;
+    evPU = evPU | (x << xshift);
+    evPU = evPU | (y << yshift);
+    evPU = evPU | (camera << camerashift);
 }
 
 
