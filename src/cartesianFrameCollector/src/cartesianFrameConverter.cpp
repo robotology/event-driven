@@ -36,8 +36,7 @@
 #include <inttypes.h>
 #include <iCub/config.h>
 
-
-
+//#define VERBOSE
 
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -89,13 +88,24 @@ void cFrameConverter::copyChunk(char* bufferCopy) {
 // reading out from a circular buffer with 2 entry points and wrapping
 void cFrameConverter::onRead(eventBuffer& i_ub) {
     valid = true;
-    printf("onRead wrapping \n");
+
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() ;      // number of bits received / 8 = bytes received
 
     receivedBufferSize = dim;
     mutex.wait();
     receivedBuffer = i_ub.get_packet(); 
+
+#ifdef VERBOSE
+    int num_events = dim >> 3 ;
+    uint32_t* buf2 = (uint32_t*)receivedBuffer;
+    //plotting out
+    for (int evt = 0; evt < num_events; evt++) {
+        unsigned long blob      = buf2[2 * evt];
+        unsigned long t         = buf2[2 * evt + 1];
+        fprintf(fout,"%08X %08X \n",blob,t);        
+    }
+#endif 
     
     // the thrid part of the buffer is free to avoid overflow
     //totDim += dim;
