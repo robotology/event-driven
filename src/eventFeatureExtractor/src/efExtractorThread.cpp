@@ -41,6 +41,7 @@ using namespace std;
 #define THRATE 30
 #define SHIFTCONST 100
 #define RETINA_SIZE 128
+#define FEATUR_SIZE 32
 #define ADDRESS 0x40000
 #define X_MASK 0x000000FE
 #define X_MASK_DEC    254
@@ -123,6 +124,17 @@ bool efExtractorThread::threadInit() {
     cfConverter=new cFrameConverter();
     cfConverter->useCallback();
     cfConverter->open(getName("/retina:i").c_str());
+
+    int SIZE_OF_EVENT = CHUNKSIZE >> 3; // every event is composed by 4bytes address and 4 bytes timestamp
+    monBufSize_b = SIZE_OF_EVENT * sizeof(struct aer);
+
+    bufferFEA = (aer *)  malloc(monBufSize_b);
+    if ( bufferFEA == NULL ) {
+        printf("bufferFEA malloc failed \n");
+    }
+    else {
+        printf("bufferFEA successfully created \n");
+    }
 
     eventFeaBuffer = new AER_struct[CHUNKSIZE>>3];
 
@@ -243,10 +255,9 @@ void efExtractorThread::run() {
     count++;
     //printf("counter %d \n", count);
     bool flagCopy;
-    if((!idle)&&(outLeftPort.getOutputCount())) {
-        
-        ImageOf<PixelMono>& left = outLeftPort.prepare();
-        left.resize(32, 32);
+    if(!idle) {
+        ImageOf<PixelMono>& left = outLeftPort.prepare();       
+        left.resize(FEATUR_SIZE, FEATUR_SIZE);
         left.zero();
         
         // reads the buffer received
@@ -264,28 +275,54 @@ void efExtractorThread::run() {
         unsigned char* pLeft = left.getRawImage();
         int padding    = left.getPadding();
         int rowsizeOut = left.getRowSize();
+        unsigned long ts;
+        short pol;
+        aer* bufferFEA_copy = bufferFEA;
         // visiting a discrete number of events
         for(int i = 0; i < CHUNKSIZE>>3; i++ ) {
+            ts  = iterEvent->ts;
+            pol = iterEvent->pol;
             //printf(" %d %d \n",iterEvent->x,iterEvent->y );
-            int x = iterEvent->x - 1;
-            int y = iterEvent->y - 1;
+            int x = RETINA_SIZE - iterEvent->x ;
+            int y = RETINA_SIZE - iterEvent->y ;
             //printf("pointing in the lut at position %d \n", x + y * RETINA_SIZE);
-            int pos = lut[x + y * RETINA_SIZE];
+            int pos = lut[x + y * RETINA_SIZE];            
+
             if(pos == -1) {
                 printf("not mapped event %d \n",x + y * RETINA_SIZE);
             }
             else {
+                //creating an event
+                short xevent_tmp        = pos / FEATUR_SIZE;
+                short xevent  = 32 - xevent_tmp;
+                short yevent_tmp        = pos - xevent_tmp * FEATUR_SIZE;
+                short yevent = yevent_tmp;
+                short polevent      = pol;
+                short cameraevent   = 0;
+                unsigned long blob  = 0;
+                //if(ts!=0) {
+                //    printf(" %d %d %d %08x %08x \n",pos, yevent, xevent,blob, ts);
+                //}
+                unmask_events.maskEvent(xevent, yevent, polevent, cameraevent, blob);
+
                 
-                pLeft[pos] = pLeft[pos] + 25;
+                bufferFEA_copy->address   = (u32) blob;
+                bufferFEA_copy->timestamp = (u32) ts;                
+                //fprintf(fout,"%08X %08X \n",bufferFEA_copy->address,ts);
+                bufferFEA_copy++; // jumping to the next event(u32,u32)
                 
-                if(pLeft[pos] >= 255) {
-                    pLeft[pos] = 255;
-                    //only if the number of event greater the 255 send event out
-                    //unmasking
-                    //unmask_events.maskEvent();
-                }            
+                if (outLeftPort.getOutputCount()){
+                    //creating the debug image
+                    pLeft[pos] = pLeft[pos] + 5;                
+                    if(pLeft[pos] >= 255) {
+                        pLeft[pos] = 255;
+                        //only if the number of event greater the 255 send event out
+                        //unmasking
+                        //unmask_events.maskEvent();
+                    }
+                } //end of outLeftPort.getOutputCount
                 iterEvent++;            
-            }
+            } //end of else
         } //end of for
         
         // leaking section of the algorithm
@@ -303,12 +340,10 @@ void efExtractorThread::run() {
 
 
         //building feature events
-        char* buffer;
-        int sz = CHUNKSIZE;
-
+        char* buffer = (char*) bufferFEA;
         // sending events 
-        if (outEventPort.getOutputCount()) {
-            eventBuffer data2send(buffer, sz);    
+        if (outEventPort.getOutputCount()) {            
+            eventBuffer data2send(buffer, CHUNKSIZE);    
             eventBuffer& tmp = outEventPort.prepare();
             tmp = data2send;
             outEventPort.write();
@@ -333,6 +368,7 @@ void efExtractorThread::threadRelease() {
     outEventPort.close();
 
     delete[] eventFeaBuffer;
+    delete bufferFEA;
     delete cfConverter;
     
     /* closing the file */

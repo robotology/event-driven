@@ -155,6 +155,7 @@
 * 31/08/11 : added parameter mode for the command line                                                \author Rea \n 
 * 13/09/11 : added the eventBuffer that contains the collection of unmasked events                    \author Rea \n
 * 07/11/11 : corrected the output for debug images                                                    \author Rea \n   
+* 08/11/11 : added lines that send the feature events on the yarp network                             \author Rea \n
 */
 
 #include <iostream>

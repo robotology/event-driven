@@ -52,7 +52,7 @@ private:
     yarp::os::BufferedPort<eventBuffer> outEventPort;                                    // port sending events
     yarp::sig::ImageOf <yarp::sig::PixelMono>* leftInputImage;                           // image input left 
     yarp::sig::ImageOf <yarp::sig::PixelMono>* rightInputImage;                          // image input right 
-    //yarp::sig::ImageOf <yarp::sig::PixelMono>& tmp;                                    // temporary image for correct port reading
+    
     std::string name;                     // rootname of all the ports opened by this thread
     std::string mapURL;                   // mode name and name of the map
     bool resized;                         // flag to check if the variables have been already resized
@@ -60,12 +60,16 @@ private:
     FILE *pFile;                          // file that contains the rules for the LUT
     FILE *fout;                           // file where the extracted LUT is saved
     int* lut;                             // lut that route the event in a different location 
+    int monBufSize_b;                     // dimension of the bufferFEA in bytes
+    
     cFrameConverter* cfConverter;         // cartesian frame converter
     unmask unmask_events;                 // object that unmasks the event
     char* bufferCopy;                     // local copy of the events read
     char* flagCopy;                       // copy of the unreadBuffer
     char* resultCopy;                     // buffer resulting out of the selection
-    AER_struct* eventFeaBuffer;              // list of unmasked events
+    char* buffer;                         // buffer where the events to send are stored
+    AER_struct* eventFeaBuffer;           // list of unmasked events
+    aer* bufferFEA;                       // buffer storing events as aer struct
 public:
     /**
     * default constructor
