@@ -1209,7 +1209,60 @@ void posfull45(FILE *pfile) {
                 // to SAC chip
                 fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, true) , 0x80000 | SACcreateAddress(xout,yout));
                 fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, false), 0x80000 | SACcreateAddress(xout,yout));
-                
+
+                yout = yin>>2 - 1;
+                xout = xin>>2 + 1;
+
+                // monitoring
+                fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, true) , 0x110000 | SACcreateAddress(xout,yout));
+                fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, false), 0x110000 | SACcreateAddress(xout,yout));
+                // to SAC chip
+                fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, true) , 0x80000 | SACcreateAddress(xout,yout));
+                fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, false), 0x80000 | SACcreateAddress(xout,yout));                                
+            }
+
+            if (xin%4 == 3 - yin%4 - 1){
+                yout = yin>>2;
+                xout = xin>>2;
+
+                // monitoring
+                fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, true) , 0x110000 | SACcreateAddress(xout,yout));
+                fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, false), 0x110000 | SACcreateAddress(xout,yout));
+                // to SAC chip
+                fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, true) , 0x80000 | SACcreateAddress(xout,yout));
+                fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, false), 0x80000 | SACcreateAddress(xout,yout));
+
+                yout = yin>>2 - 1;
+                xout = xin>>2 + 1;
+
+                // monitoring
+                fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, true) , 0x110000 | SACcreateAddress(xout,yout));
+                fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, false), 0x110000 | SACcreateAddress(xout,yout));
+                // to SAC chip
+                fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, true) , 0x80000 | SACcreateAddress(xout,yout));
+                fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, false), 0x80000 | SACcreateAddress(xout,yout));                                
+            }
+
+            if (xin%4 + 1 == 3 - yin%4){
+                yout = yin>>2;
+                xout = xin>>2;
+
+                // monitoring
+                fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, true) , 0x110000 | SACcreateAddress(xout,yout));
+                fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, false), 0x110000 | SACcreateAddress(xout,yout));
+                // to SAC chip
+                fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, true) , 0x80000 | SACcreateAddress(xout,yout));
+                fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, false), 0x80000 | SACcreateAddress(xout,yout));
+
+                yout = yin>>2 - 1;
+                xout = xin>>2 + 1;
+
+                // monitoring
+                fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, true) , 0x110000 | SACcreateAddress(xout,yout));
+                fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, false), 0x110000 | SACcreateAddress(xout,yout));
+                // to SAC chip
+                fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, true) , 0x80000 | SACcreateAddress(xout,yout));
+                fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, false), 0x80000 | SACcreateAddress(xout,yout));                                
             }
         }
     }
@@ -1228,17 +1281,7 @@ void negative45(FILE *pfile) {
                 fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, false), 0x110000 | SACcreateAddress(xout,yout));
                 // to SAC chip
                 fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, true) , 0x80000 | SACcreateAddress(xout,yout));
-                fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, false), 0x80000 | SACcreateAddress(xout,yout));
-                
-                yout = yin>>2 - 1;
-                xout = xin>>2 + 1;
-
-                // monitoring
-                fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, true) , 0x110000 | SACcreateAddress(xout,yout));
-                fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, false), 0x110000 | SACcreateAddress(xout,yout));
-                // to SAC chip
-                fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, true) , 0x80000 | SACcreateAddress(xout,yout));
-                fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, false), 0x80000 | SACcreateAddress(xout,yout));
+                fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, false), 0x80000 | SACcreateAddress(xout,yout));                                
                 
             }
         }
