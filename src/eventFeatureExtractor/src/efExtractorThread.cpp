@@ -51,7 +51,7 @@ using namespace std;
 #define Y_SHIFT 8
 #define POLARITY_MASK 0x00000001
 #define POLARITY_SHIFT 0
-#define CONST_DECREMENT 1
+#define CONST_DECREMENT 5
 
 #define CHUNKSIZE 32768
 
@@ -227,8 +227,9 @@ bool efExtractorThread::threadInit() {
             }            
         }
     }
-
-
+    
+    leftInputImage = new ImageOf<PixelMono>;
+    leftInputImage->resize(FEATUR_SIZE, FEATUR_SIZE);
     //initialisation of the memory image
     unsigned char* pLeft = leftInputImage->getRawImage();
     int rowsize = leftInputImage->getRowSize();
@@ -268,8 +269,11 @@ void efExtractorThread::run() {
     //printf("counter %d \n", count);
     bool flagCopy;
     if(!idle) {
-        ImageOf<PixelMono>& left = outLeftPort.prepare();       
+        
+        ImageOf<PixelMono> &left = outLeftPort.prepare();  
         left.resize(FEATUR_SIZE, FEATUR_SIZE);
+        unsigned char* pLeft = left.getRawImage(); 
+        
         //left.zero();
         
         //for(int r = 0 ; r < FEATUR_SIZE ; r++){
@@ -290,10 +294,9 @@ void efExtractorThread::run() {
         
         //storing the response in a temp. image
         AER_struct* iterEvent = eventFeaBuffer;
-        unsigned char* pLeft = left.getRawImage();
+        
         unsigned char* pMemL  = leftInputImage->getRawImage();
-        int padding    = left.getPadding();
-        int rowsizeOut = left.getRowSize();
+
         unsigned long ts;
         short pol;
         aer* bufferFEA_copy = bufferFEA;
@@ -334,12 +337,17 @@ void efExtractorThread::run() {
                 
                 
                 if (outLeftPort.getOutputCount()){
+                        
+                    int padding    = left.getPadding();
+                    int rowsizeOut = left.getRowSize();
+                    float lambda   = 0.6;
+                    int deviance   = 40;
                     //creating the debug image
                     if((pol > 0)&&(pLeft[pos] <= 215)){
                         //pLeft[pos] = 0.6 * pLeft[pos] + 0.4 * (pLeft[pos] + 40);
-                        pMemL[pos] = 0.6 * pMemL[pos] + 0.4 * (pMemL[pos] + 40);
+                        pMemL[pos] = (1 - lambda) * pMemL[pos] + lambda * (pMemL[pos] + deviance);
                         pLeft[pos] = pMemL[pos];
-                        if(pLeft[pos] > 152) {
+                        if(pMemL[pos] > 152) {
                             bufferFEA_copy->address   = (u32) blob;
                             bufferFEA_copy->timestamp = (u32) ts;                
                             //fprintf(fout,"%08X %08X \n",bufferFEA_copy->address,ts);
@@ -349,9 +357,9 @@ void efExtractorThread::run() {
                     }
                     if((pol<0)&&(pLeft[pos] >= 40)){ 
                         //pLeft[pos] = 0.6 * pLeft[pos] + 0.4 * (pLeft[pos] - 40);
-                        pMemL[pos] = 0.6 * pMemL[pos] + 0.4 * (pMemL[pos] - 40);
+                        pMemL[pos] = (1 - lambda) * pMemL[pos] + lambda * (pMemL[pos] - deviance);
                         pLeft[pos] = pMemL[pos];
-                        if(pLeft[pos] < 102) {
+                        if(pMemL[pos] < 102) {
                             bufferFEA_copy->address   = (u32) blob;
                             bufferFEA_copy->timestamp = (u32) ts;                
                             //fprintf(fout,"%08X %08X \n",bufferFEA_copy->address,ts);
@@ -361,20 +369,31 @@ void efExtractorThread::run() {
                     }
                 } //end of outLeftPort.getOutputCount
                 iterEvent++;            
-            } //end of else
+            } //end of if
         } //end of for
         
-        // leaking section of the algorithm
-        /*
-        pLeft = left.getRawImage();
-        for (int i = 0; i< RETINA_SIZE * RETINA_SIZE; i++) {
-            if(*pLeft > CONST_DECREMENT) {
-                *pLeft = *pLeft - CONST_DECREMENT;
+        
+        // leaking section of the algorithm    
+        //pLeft = left.getRawImage();
+        
+        pMemL  = leftInputImage->getRawImage();
+        pLeft  = left.getRawImage();
+        int padding = leftInputImage->getPadding();
+        for (int i = 0; i< FEATUR_SIZE * FEATUR_SIZE; i++) {
+            if(*pMemL >= 127 + CONST_DECREMENT) {                
+                *pMemL -= CONST_DECREMENT;
             }
+            else if(*pMemL <= 127 - CONST_DECREMENT) {
+                *pMemL += CONST_DECREMENT;
+            }
+            
+            pMemL++;
+            *pLeft = *pMemL;
             pLeft++;
         }
+        pMemL += padding;                
         pLeft += padding;
-        */
+        
         outLeftPort.write();
 
 
@@ -388,7 +407,7 @@ void efExtractorThread::run() {
             tmp = data2send;
             outEventPort.write();
         }
-    }
+    } //end of idle
 }
 
 void efExtractorThread::interrupt() {
