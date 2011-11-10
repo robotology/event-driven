@@ -1387,7 +1387,8 @@ int main(int argc, char * argv[])
     printf("--mode mapping81 \n");
     printf("options : horizontal54, horizontal55, horizontal66, horizfull66, horizontal1010 \n");  
     printf("options : vertical54, vertical55, vertical66, vertfull66, vertical1010 \n");
-    printf("options : positive45, negative45, cross, cross00, cross11, cross22, cross33 \n");
+    printf("options : positive45, negative45, posfull45, negfull45 \n");
+    printf("cross, cross00, cross11, cross22, cross33 \n");
     
     // get the mode of the mapping 
     std::string mappingName;
@@ -1465,6 +1466,14 @@ int main(int argc, char * argv[])
     else if(!strcmp("positive45.txt",mappingName.c_str())){
         printf("on file %s \n", mappingName.c_str());        
         positive45(pfile);
+    }
+    else if(!strcmp("negfull45.txt",mappingName.c_str())){
+        printf("on file %s \n", mappingName.c_str());        
+        negfull45(pfile);
+    }
+    else if(!strcmp("posfull45.txt",mappingName.c_str())){
+        printf("on file %s \n", mappingName.c_str());        
+        posfull45(pfile);
     }
     else if(!strcmp("cross00.txt",mappingName.c_str())){
         printf("on file %s \n", mappingName.c_str());        
