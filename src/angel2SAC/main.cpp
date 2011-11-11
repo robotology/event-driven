@@ -100,8 +100,9 @@ int TmpDiff128AngelcreateAddress(int x, int y, bool polarity){
 
 void mapping81(FILE *pfile) {
     int xout,yout;
-    for(int xin = 0; xin < TmpDiff128AngelX_SIZE; xin++) {
-        for(int yin = 0; yin < TmpDiff128AngelY_SIZE; yin++) {            
+    
+    for(int yin = 0; yin < TmpDiff128AngelY_SIZE; yin++) {            
+        for(int xin = 0; xin < TmpDiff128AngelX_SIZE; xin++) {
             // monitoring
             fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, true) , 0x110000 | SACcreateAddress(xin>>2, yin>>2));
             fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, false), 0x110000 | SACcreateAddress(xin>>2, yin>>2));
@@ -114,8 +115,9 @@ void mapping81(FILE *pfile) {
 
 void horizontal54(FILE *pfile) {
     int xout,yout;
-    for(int xin = 0; xin < TmpDiff128AngelX_SIZE; xin++) {
-        for(int yin = 0; yin < TmpDiff128AngelY_SIZE; yin++) {
+    
+    for(int yin = 0; yin < TmpDiff128AngelY_SIZE; yin++) {
+        for(int xin = 0; xin < TmpDiff128AngelX_SIZE; xin++) {
             if((yin%4 == MODEA)||(yin%4 == MODEB)) {
                 if ((xin%4 == 0)&&(xin >= 4)){
                     yout = yin>>2;
@@ -154,8 +156,9 @@ void horizontal54(FILE *pfile) {
 
 void horizontal55(FILE *pfile) {
     int xout,yout;
-    for(int xin = 0; xin < TmpDiff128AngelX_SIZE; xin++) {
-        for(int yin = 0; yin < TmpDiff128AngelY_SIZE; yin++) {
+    
+    for(int yin = 0; yin < TmpDiff128AngelY_SIZE; yin++) {
+        for(int xin = 0; xin < TmpDiff128AngelX_SIZE; xin++) {
             if((yin%4==MODEA)||(yin%4==MODEB)) {                
                 //-----------------------------------------------------------------------------------------------------------------------
                 if ((xin%4 == 0)&&(xin>=4)){
@@ -216,8 +219,9 @@ void horizontal55(FILE *pfile) {
 
 void horizontal66(FILE *pfile) {
     int xout,yout;
-    for(int xin = 0; xin < TmpDiff128AngelX_SIZE; xin++) {
-        for(int yin = 0; yin < TmpDiff128AngelY_SIZE; yin++) {
+    
+    for(int yin = 0; yin < TmpDiff128AngelY_SIZE; yin++) {
+        for(int xin = 0; xin < TmpDiff128AngelX_SIZE; xin++) {
             if((yin %4 == MODEA)||(yin % 4 == MODEB)) {                
                 //-----------------------------------------------------------------------------------------------------------------------
                 if ((xin % 4 == 0)&&(xin >= 4)){
@@ -334,9 +338,10 @@ void horizontal66(FILE *pfile) {
 
 void horizfull66(FILE *pfile) {
     int xout,yout;
-    for(int xin = 0; xin < TmpDiff128AngelX_SIZE; xin++) {
-        for(int yin = 0; yin < TmpDiff128AngelY_SIZE; yin++) {
-            if((yin %4 == MODEA)||(yin % 4 == MODEB)) {                
+    
+    for(int yin = 0; yin < TmpDiff128AngelY_SIZE; yin++) {
+        for(int xin = 0; xin < TmpDiff128AngelX_SIZE; xin++) {
+            //if((yin %4 == MODEA)||(yin % 4 == MODEB)) {                
                 //-----------------------------------------------------------------------------------------------------------------------
                 if ((xin % 4 == 0)){
                     
@@ -453,15 +458,16 @@ void horizfull66(FILE *pfile) {
                 }
                 */
                 //-----------------------------------------------------------------------------------------------------------------------
-            }
+                // }
         }
     }
 }
 
 void horizontal1010(FILE *pfile) {
     int xout,yout;
-    for(int xin = 0; xin < TmpDiff128AngelX_SIZE; xin++) {
-        for(int yin = 0; yin < TmpDiff128AngelY_SIZE; yin++) {
+    
+    for(int yin = 0; yin < TmpDiff128AngelY_SIZE; yin++) {
+        for(int xin = 0; xin < TmpDiff128AngelX_SIZE; xin++) {
             if((yin%8==MODEA)||(yin%8==MODEB)||(xin%8==MODEC)||(xin%8==MODED)) {                
                 //-----------------------------------------------------------------------------------------------------------------------
                 if ((xin%8 == 0)&&(xin>=8)){
@@ -651,8 +657,9 @@ void horizontal1010(FILE *pfile) {
 
 void vertical54(FILE *pfile) {
     int xout,yout;
-    for(int xin = 0; xin < TmpDiff128AngelX_SIZE; xin++) {
-        for(int yin = 0; yin < TmpDiff128AngelY_SIZE; yin++) {
+    
+    for(int yin = 0; yin < TmpDiff128AngelY_SIZE; yin++) {
+        for(int xin = 0; xin < TmpDiff128AngelX_SIZE; xin++) {
             if((xin%4 == MODEA)||(xin%4 == MODEB)){
                 if ((yin %4 == 0)&&(yin >= 4)){
                     // monitoring
@@ -688,8 +695,9 @@ void vertical54(FILE *pfile) {
 
 void vertical55(FILE *pfile) {
     int xout,yout;
-    for(int xin = 0; xin < TmpDiff128AngelX_SIZE; xin++) {
-        for(int yin = 0; yin < TmpDiff128AngelY_SIZE; yin++) {
+    
+    for(int yin = 0; yin < TmpDiff128AngelY_SIZE; yin++) {
+        for(int xin = 0; xin < TmpDiff128AngelX_SIZE; xin++) {
             if((xin%4 == MODEA)||(xin%4 == MODEB)){
                 if ((yin%4 == 0)&&(yin>=4)){
 
@@ -753,8 +761,9 @@ void vertical55(FILE *pfile) {
 
 void vertical66(FILE *pfile) {
     int xout,yout;
-    for(int xin = 0; xin < TmpDiff128AngelX_SIZE; xin++) {
-        for(int yin = 0; yin < TmpDiff128AngelY_SIZE; yin++) {
+    for(int yin = 0; yin < TmpDiff128AngelY_SIZE; yin++) {
+        for(int xin = 0; xin < TmpDiff128AngelX_SIZE; xin++) {
+        
             if((xin%4 == MODEA)||(xin%4 == MODEB)){
                 if ((yin%4 == 0)&&(yin>=4)){
 
@@ -873,9 +882,10 @@ void vertical66(FILE *pfile) {
 
 void vertfull66(FILE *pfile) {
     int xout,yout;
-    for(int xin = 0; xin < TmpDiff128AngelX_SIZE; xin++) {
-        for(int yin = 0; yin < TmpDiff128AngelY_SIZE; yin++) {
-            if((xin%4 == MODEA)||(xin%4 == MODEB)){
+    
+    for(int yin = 0; yin < TmpDiff128AngelY_SIZE; yin++) {
+        for(int xin = 0; xin < TmpDiff128AngelX_SIZE; xin++) {
+            //if((xin%4 == MODEA)||(xin%4 == MODEB)){
                 if ((yin%4 == 0)){
 
                     xout = xin>>2;
@@ -998,7 +1008,7 @@ void vertfull66(FILE *pfile) {
                     fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, false), 0x80000 | SACcreateAddress(xout,yout));
                 }
                 */
-            }
+                //}
         }
     }
 }
@@ -1380,8 +1390,8 @@ void negative45(FILE *pfile) {
 
 void negfull45(FILE *pfile) {
     int xout,yout;
-    for(int xin = 0; xin < TmpDiff128AngelX_SIZE; xin++) {
-        for(int yin = 0; yin < TmpDiff128AngelY_SIZE; yin++) {
+    for(int yin = 0; yin < TmpDiff128AngelY_SIZE; yin++) {
+        for(int xin = 0; xin < TmpDiff128AngelX_SIZE; xin++) {        
             if (xin%4 == yin%4){
                 yout = yin>>2;
                 xout = xin>>2;
