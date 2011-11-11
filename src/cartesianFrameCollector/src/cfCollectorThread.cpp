@@ -47,26 +47,28 @@ using namespace std;
 //#define VERBOSE
 
 cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
-  retinalSize  = 128;  //default value before setting 
-  synchronised = false;
-  greaterHalf  = false;
-  firstRun     = true;
-  count        = 0;
-  minCount     = 0; //initialisation of the timestamp limits of the first frame
-  idle = false;
-  bufferCopy = (char*) malloc(CHUNKSIZE);
-  countStop = 0;
-  verb = false;
-  string i_fileName("events.log");
-  raw = fopen(i_fileName.c_str(), "wb");
-  lc = rc = 0;	
-  minCount      = 0;
-  minCountRight = 0;
+    responseGradient = 127;
+    retinalSize  = 128;  //default value before setting 
+  
+    synchronised = false;
+    greaterHalf  = false;
+    firstRun     = true;
+    count        = 0;
+    minCount     = 0; //initialisation of the timestamp limits of the first frame
+    idle = false;
+    bufferCopy = (char*) malloc(CHUNKSIZE);
+    countStop = 0;
+    verb = false;
+    string i_fileName("events.log");
+    raw = fopen(i_fileName.c_str(), "wb");
+    lc = rc = 0;	
+    minCount      = 0;
+    minCountRight = 0;
 }
 
 cfCollectorThread::~cfCollectorThread() {
-  printf("freeing memory in collector");
-  delete bufferCopy;
+    printf("freeing memory in collector");
+    delete bufferCopy;
 }
 
 bool cfCollectorThread::threadInit() {
@@ -95,6 +97,7 @@ bool cfCollectorThread::threadInit() {
     
     unmask_events = new unmask();
     unmask_events->setRetinalSize(retinalSize);
+    unmask_events->setResponseGradient(responseGradient);
     unmask_events->setASVMode(asvFlag);
     unmask_events->setDVSMode(dvsFlag);
     unmask_events->start();

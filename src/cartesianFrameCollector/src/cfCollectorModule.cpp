@@ -100,6 +100,16 @@ bool cfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
     cfThread->setRetinalSize(retinalSize);
 
     
+    /*
+    * set the retinaSize (considering squared retina)
+    */
+    printf("looking for the responseGradient \n");
+    responseGradient       = rf.check("responseGradient", 
+                           Value(127), 
+                           "responseGradient (int)").asInt();
+    cfThread->setResponseGradient(responseGradient);
+
+    
     /* 
      *checking whether the module synchronizes with single camera or stereo camera
      */

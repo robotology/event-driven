@@ -55,7 +55,7 @@ private:
     unsigned long lcprev;
     unsigned long rcprev;
     unsigned long rc;
-    FILE* raw;                          // file dumper for debug
+    
     double microseconds;
     double microsecondsPrev;
     int countStop;                      // counter of equal timestamp
@@ -64,6 +64,7 @@ private:
     int width, height;                  // dimension of the extended input image (extending)
     int height_orig, width_orig;        // original dimension of the input and output images
     int synchPeriod;                    // synchronization period between events and viewer
+    int responseGradient;               // responseGradient parameter
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPort;            // port whre the output (left) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPortRight;       // port whre the output (right) is sent
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeft;                                  //image representing the signal on the leftcamera
@@ -84,15 +85,16 @@ private:
     double startTimer;
     double interTimer;
     double endTimer;
-    yarp::os::Semaphore mutex;          // semaphore thar regulates the access to the buffer resource
+    yarp::os::Semaphore mutex;           // semaphore thar regulates the access to the buffer resource
     clock_t endTime,startTime;
     long T1,T2;
-    plotterThread* pThread;                 // plotterThread for the trasformation of the event in images
-    cFrameConverter* cfConverter;           // receives real-time events
-    unmask* unmask_events;                   // object that unmask events
-    char* bufferRead;                       // buffer of events read from the port
-    char* bufferCopy;                       // local copy of the events read
-    FILE* fout;                             // file for temporarely savings of events
+    plotterThread* pThread;              // plotterThread for the trasformation of the event in images
+    cFrameConverter* cfConverter;        // receives real-time events
+    unmask* unmask_events;               // object that unmask events
+    char* bufferRead;                    // buffer of events read from the port
+    char* bufferCopy;                    // local copy of the events read
+    FILE* fout;                          // file for temporarely savings of events
+    FILE* raw;                           // file dumper for debug
 public:
     /**
     * default constructor
@@ -197,6 +199,11 @@ public:
      * @brief function that indicates whether the viewer reppresent logpolar information
      */
     void setLogPolar(int value) {logPolar = value; };
+
+    /**
+     * @brief function that indicates whether the viewer reppresent logpolar information
+     */
+    void setResponseGradient(int value) {responseGradient = value; }; 
     
 };
 

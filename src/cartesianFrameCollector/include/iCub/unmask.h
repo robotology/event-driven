@@ -82,6 +82,7 @@ private:
     int countEvent;                  // counter of the number of events saved in the buffer1
     int countEvent2;                 // counter of the number of events saved in the buffer2
     int numKilledEvents;             // number of the element that have be removed from the buffer
+    int responseGradient;            // dimension of the responseGradient
     bool temp1;                      // boolean flag that indicates where the events have to be saved
     bool validLeft,validRight;       // flag for validity of the events
     bool verb;                       // flag that indicates whether timestamp in forced to renewal 
@@ -162,6 +163,14 @@ public:
      */
     void setRetinalSize(int value) {
         retinalSize = value;
+    }
+
+    /**
+     * @brief function that sets the response gradient
+     * @param value the dimension of the gradient
+     */
+    void setResponseGradient(int value) {
+        responseGradient = value;
     }
         
     /**

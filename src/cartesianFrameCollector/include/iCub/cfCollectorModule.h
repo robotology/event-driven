@@ -88,6 +88,9 @@
  * - \c retinalSize \c 128 \n 
  *   set the dimension of chip to define the size of the representation 
  *
+ * - \c responseGradient \c 127 \n 
+ *   set the dimension of pixel gradient in the image as response of any received event * 
+ *
  * <b>Configuration File Parameters</b>
  *
  * The following key-value pairs can be specified as parameters in the configuration file 
@@ -188,8 +191,8 @@ class cfCollectorModule:public yarp::os::RFModule {
     std::string handlerPortName;                //name of the handler port (comunication with respond function)
     int ratethread;                             //time constant for ratethread
     int synchPeriod;                            // synchronization period between events and viewer
-    int retinalSize;
-
+    int retinalSize;                            // dimension of the retina
+    int responseGradient;                       // amplitude of the response gradient for every event in the image
     yarp::os::Port handlerPort;                 // a port to handle messages 
     cfCollectorThread* cfThread;                //cfCollectorThread for processing events
 

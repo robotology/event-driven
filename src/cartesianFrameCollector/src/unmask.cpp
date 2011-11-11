@@ -34,7 +34,7 @@ using namespace yarp::os;
 
 #define MAXVALUE 114748364 //4294967295
 #define maxPosEvent 10000
-#define responseGradient 127  //default : 127
+//#define responseGradient 127  //default : 127
 #define minKillThres 1000
 #define UNMASKRATETHREAD 1
 #define constInterval 100000;
@@ -72,7 +72,7 @@ unmask::unmask() : RateThread(UNMASKRATETHREAD){
     polshift    = 0;
     camerashift = 15;    
     retinalSize = 128;
-    
+    responseGradient = 127;
     
     /*fifoEvent=new int[maxPosEvent];
     memset(fifoEvent,0,maxPosEvent*sizeof(int));
