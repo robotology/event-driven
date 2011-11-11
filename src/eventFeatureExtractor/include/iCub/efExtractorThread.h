@@ -62,6 +62,8 @@ private:
     int* lut;                             // lut that route the event in a different location 
     int monBufSize_b;                     // dimension of the bufferFEA in bytes
     int countEvent;                       // counter of event that are going to be sent
+    int countMap;                         // counter of the mapped events
+
     cFrameConverter* cfConverter;         // cartesian frame converter
     unmask unmask_events;                 // object that unmasks the event
     char* bufferCopy;                     // local copy of the events read
