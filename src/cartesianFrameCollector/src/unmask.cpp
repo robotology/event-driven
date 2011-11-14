@@ -375,7 +375,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
             
             if(timeBuffer[cartX + cartY * retinalSize] < timestamp) {
                 if(polarity > 0) {
-                    buffer[cartX + cartY * retinalSize]     = responseGradient;
+                    buffer[cartX + cartY * retinalSize]     += responseGradient;
                     timeBuffer[cartX + cartY * retinalSize] = timestamp;
                     
                     if(buffer[cartX + cartY * retinalSize] > 127) {
@@ -395,7 +395,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
                     
                 }
                 else if(polarity < 0) {
-                    buffer[cartX + cartY * retinalSize] = -responseGradient;
+                    buffer[cartX + cartY * retinalSize] -= responseGradient;
                     timeBuffer[cartX + cartY * retinalSize] = timestamp;
                     
                     if (buffer[cartX + cartY * retinalSize] < -127) {
@@ -415,12 +415,12 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
                 }
             }           
         }
-        else {
+        else { // --------  camera right ------------------------
+            
             if((cartX!=0) &&( cartY!=0) && (timestamp!=0)) {
                 validRight =  true;
             }
-            
-            
+                        
             //TODO : remove if not necessary
             if(verb) {
                 //for (int i = 0; i < 2; i ++) {

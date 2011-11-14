@@ -120,6 +120,18 @@ bool cfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
         cfThread->setStereo(false);
     }
 
+
+    /* 
+     *set option for mapping three states into 3baseline graylevels
+     */
+    if( rf.check("tristate")) {
+        cfThread->setTristate(true);
+    }
+    else {
+        cfThread->setTristate(false);
+    }
+
+
     /* 
      *checking whether the module synchronizes with single camera or stereo camera
      */

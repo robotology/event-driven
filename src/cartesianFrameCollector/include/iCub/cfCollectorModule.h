@@ -89,7 +89,11 @@
  *   set the dimension of chip to define the size of the representation 
  *
  * - \c responseGradient \c 127 \n 
- *   set the dimension of pixel gradient in the image as response of any received event * 
+ *   set the dimension of pixel gradient in the image as response of any received event 
+ *
+ * - \c tristate \n 
+ *   option that allows the representation to be mapped to 3 level -127,0, 127 
+ *
  *
  * <b>Configuration File Parameters</b>
  *

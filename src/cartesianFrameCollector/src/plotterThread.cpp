@@ -249,54 +249,54 @@ int plotterThread::integrateImage(ImageOf<PixelMono>* imageIn, ImageOf<PixelMono
         for(int r = 0;r < retinalSize; r++) {
             for(int c = 0;c < retinalSize; c++) {
 	      
-	      // if(*pimageout == 0) *pimageout = 127;
-	      
-	      //if(*pimagein != 127) {
-	      //*pimagein = 255;
-	      //}
-	      unsigned char v = *pimageout;
-
-	      if ((*pimageout!=127)||(*pimagein!=127)) {	  
-              *pimageout = 250;
-	      }
-	      if ((*pimageout!=127) && (*pimagein == 127)){
-              *pimageout = 127;
-	      }	 	     
-	      
-	      if(*pimageout > 128) {
-              *pimagebw = 255;
-	      }
-	      else {
-              *pimagebw = 0;
-	      }
-	      
-          
-	      unsigned char value = *pimagegray;
-	      unsigned char valuebw = *pimagebw;
-	      if(valuebw >  130){
-              value+=16;
-              if(value>200)
-                  value=200;
-              //if (value >= 100){ 
-              //    value = 255;
-              //    point = r * retinalSize + c ;
-              //}
-              //imagegray = value;
-	      }
-	      //else if(valuebw < 120){
-	      //value--;
-	      //if (value <= 10) { 
-	      //  value = 10;
-	      //}
-          //imagegray = value;
-	      //}
-	      *pimagegray = value;
-          
-          
-	      pimagegray++;
-	      pimageout++;
-	      pimagein++;
-	      pimagebw++;
+                // if(*pimageout == 0) *pimageout = 127;
+                
+                //if(*pimagein != 127) {
+                //*pimagein = 255;
+                //}
+                unsigned char v = *pimageout;
+                
+                if ((*pimageout!=127)||(*pimagein!=127)) {	  
+                    *pimageout = 250;
+                }
+                if ((*pimageout!=127) && (*pimagein == 127)){
+                    *pimageout = 127;
+                }	 	     
+                
+                if(*pimageout > 128) {
+                    *pimagebw = 255;
+                }
+                else {
+                    *pimagebw = 0;
+                }
+                
+                
+                unsigned char value = *pimagegray;
+                unsigned char valuebw = *pimagebw;
+                if(valuebw >  130){
+                    value+=16;
+                    if(value>200)
+                        value=200;
+                    //if (value >= 100){ 
+                    //    value = 255;
+                    //    point = r * retinalSize + c ;
+                    //}
+                    //imagegray = value;
+                }
+                //else if(valuebw < 120){
+                //value--;
+                //if (value <= 10) { 
+                //  value = 10;
+                //}
+                //imagegray = value;
+                //}
+                *pimagegray = value;
+                
+                
+                pimagegray++;
+                pimageout++;
+                pimagein++;
+                pimagebw++;
             }
             pimageout += padding;
             pimagein += padding;

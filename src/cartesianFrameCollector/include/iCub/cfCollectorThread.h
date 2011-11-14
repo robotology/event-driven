@@ -78,6 +78,7 @@ private:
     bool logPolar;                       // flag that indicates whether the viewer represent logpolar information
     bool stereo;                         // flag that indicates whether the synchronization is stereo
     bool asvFlag, dvsFlag;               // flag for operating mode
+    bool tristate;                       // option that represent the image with three baselines
     unsigned long minCount;              // minimum timestamp allowed for the current frame
     unsigned long maxCount;              // maximum timestamp allowed for the current frame
     unsigned long minCountRight;
@@ -186,6 +187,15 @@ public:
      */
     void setDVSMode(bool value) {
         dvsFlag = value;
+        //unmask_events->setDVSMode(value);
+    } 
+
+    /**
+     * @brief function that set the option that maps events in three states
+     * @param value value to assign to the flag
+     */
+    void setTristate(bool value) {
+        tristate = value;
         //unmask_events->setDVSMode(value);
     } 
 

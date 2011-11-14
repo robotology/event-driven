@@ -175,40 +175,85 @@ void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsig
         for(int c = 0 ; c < retinalSize ; c++) {
             //drawing the retina and the rest of the image separately
             int value = *pBuffer;
+            
             unsigned long timestampactual = *pTime;
-	    //if(minCount>0 && maxCount > 0 && timestampactual>0)
-	    //printf("actualTS%ld val%ld max%ld min%ld  are\n",timestampactual,timestampactual * COUNTERRATIO,minCount,maxCount);
-            if (((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)) {   //(timestampactual != lasttimestamp)
-                *pImage = (unsigned char) (127 + value);
-		//if(value>0)printf("event%d val%d buf%d\n",*pImage,value,*pBuffer);
-		pImage++;
-		//if ((stereo) && (r < 7) && (r >= 16) && (c < 7) && (c >= 16)) {
-		//  *pImage = (unsigned char) (127 + value);
-		//  pImage += imageRowSize;
-		//  *pImage = (unsigned char) (127 + value);
-		//pImage--;
-		//  *pImage = (unsigned char) (127 + value);
-		//  pImage -= (imageRowSize + 1);
-		//}
-               
+            //bool tristateView = false;
+            
+            if(tristate) {
+
+                //if(minCount>0 && maxCount > 0 && timestampactual>0)
+                //printf("actualTS%ld val%ld max%ld min%ld  are\n",timestampactual,timestampactual * COUNTERRATIO,minCount,maxCount);
+                if (((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)) {   //(timestampactual != lasttimestamp)
+                    *pImage = (unsigned char) (127 + value);
+                    //if(value>0)printf("event%d val%d buf%d\n",*pImage,value,*pBuffer);
+                    pImage++;
+                    //if ((stereo) && (r < 7) && (r >= 16) && (c < 7) && (c >= 16)) {
+                    //  *pImage = (unsigned char) (127 + value);
+                    //  pImage += imageRowSize;
+                    //  *pImage = (unsigned char) (127 + value);
+                    //pImage--;
+                    //  *pImage = (unsigned char) (127 + value);
+                    //  pImage -= (imageRowSize + 1);
+                    //}
+                    
+                }
+                else {
+                    *pImage = (unsigned char) 127 ;
+                    //printf("NOT event%d \n",*pImage);
+                    pImage++;
+                    
+                    //if ((stereo) && (r < 7) && (r >= 16) && (c < 7) && (c >= 16)) {
+                    //  *pImage = (unsigned char) 127;
+                    //  pImage += imageRowSize;
+                    //  *pImage = (unsigned char) 127 + value;
+                    //  pImage--;
+                    //  *pImage = (unsigned char) 127 + value;
+                    //  pImage -= (imageRowSize + 1);
+                    //}
+                    
+                }
+                pBuffer++;
+                pTime++;
             }
+            // branch !tristateView
             else {
-                *pImage = (unsigned char) 127 ;
-		//printf("NOT event%d \n",*pImage);
-		pImage++;
-		
-		//if ((stereo) && (r < 7) && (r >= 16) && (c < 7) && (c >= 16)) {
-		//  *pImage = (unsigned char) 127;
-		//  pImage += imageRowSize;
-		//  *pImage = (unsigned char) 127 + value;
-		//  pImage--;
-		//  *pImage = (unsigned char) 127 + value;
-		//  pImage -= (imageRowSize + 1);
-		//}
-               
-	    }
-            pBuffer++;
-            pTime++;
+                if(*pBuffer>0){
+                    *pBuffer = *pBuffer - 10;                                       
+                }
+                //if(minCount>0 && maxCount > 0 && timestampactual>0)
+                //printf("actualTS%ld val%ld max%ld min%ld  are\n",timestampactual,timestampactual * COUNTERRATIO,minCount,maxCount);
+                if (((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)) {   //(timestampactual != lasttimestamp)
+                    *pImage = (unsigned char) abs(value * 2);
+                    //if(value>0)printf("event%d val%d buf%d\n",*pImage,value,*pBuffer);
+                    pImage++;
+                    //if ((stereo) && (r < 7) && (r >= 16) && (c < 7) && (c >= 16)) {
+                    //  *pImage = (unsigned char) (127 + value);
+                    //  pImage += imageRowSize;
+                    //  *pImage = (unsigned char) (127 + value);
+                    //pImage--;
+                    //  *pImage = (unsigned char) (127 + value);
+                    //  pImage -= (imageRowSize + 1);
+                    //}
+                    
+                }
+                else {
+                    *pImage = (unsigned char) 0 ;
+                    //printf("NOT event%d \n",*pImage);
+                    pImage++;
+                    
+                    //if ((stereo) && (r < 7) && (r >= 16) && (c < 7) && (c >= 16)) {
+                    //  *pImage = (unsigned char) 127;
+                    //  pImage += imageRowSize;
+                    //  *pImage = (unsigned char) 127 + value;
+                    //  pImage--;
+                    //  *pImage = (unsigned char) 127 + value;
+                    //  pImage -= (imageRowSize + 1);
+                    //}
+                    
+                }
+                pBuffer++;
+                pTime++;
+            }            
         }
         pImage+=imagePadding;
     }
