@@ -180,6 +180,16 @@ void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsig
             //bool tristateView = false;
             
             if(tristate) {
+                // decreasing the spatial response without removing it
+                if(count % 10 == 0) {
+                    if(*pBuffer > 20){
+                        *pBuffer = *pBuffer - 1;                                       
+                    }
+                    else if(*pBuffer < -20){
+                        *pBuffer = *pBuffer + 1;                                       
+                    }
+                }
+                
 
                 //if(minCount>0 && maxCount > 0 && timestampactual>0)
                 //printf("actualTS%ld val%ld max%ld min%ld  are\n",timestampactual,timestampactual * COUNTERRATIO,minCount,maxCount);
@@ -217,8 +227,9 @@ void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsig
             }
             // branch !tristateView
             else {
-                if(*pBuffer>0){
-                    *pBuffer = *pBuffer - 10;                                       
+                // decreasing the spatial response without removing 
+                if((*pBuffer > 20) && (count % 10 == 0)){
+                    *pBuffer = *pBuffer - 1;                                       
                 }
                 //if(minCount>0 && maxCount > 0 && timestampactual>0)
                 //printf("actualTS%ld val%ld max%ld min%ld  are\n",timestampactual,timestampactual * COUNTERRATIO,minCount,maxCount);
@@ -295,6 +306,7 @@ void cfCollectorThread::run() {
     //printf("procInter %f \n", procInter);
     startTimer = Time::now();
 
+    
     //check for wrapping of the left and right timestamp
     if(maxCount >= 4294967268  ) {
       verb = true;
@@ -325,7 +337,7 @@ void cfCollectorThread::run() {
       minCountRight = 0;
       maxCountRight = minCountRight + interval * INTERVFACTOR* (dim_window);
     }
-
+    
 
     // extract a chunk/unmask the chunk
     // printf("verb %d \n",verb);
