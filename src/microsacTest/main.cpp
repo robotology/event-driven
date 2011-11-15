@@ -44,6 +44,7 @@
 #include <stdio.h>
 #include <string>
 #include <cstring>
+#include <cstdlib>
 
 YARP_DECLARE_DEVICES(icubmod)
 
@@ -56,7 +57,9 @@ static int MAX_NUMBER_ACTIVATED = 1;
 
 int main(int argc, char * argv[]) {
     bool debug_param_enabled = true;
-    
+
+    // initialize random seed: 
+    srand ( time(NULL) );
     
     YARP_REGISTER_DEVICES(icubmod)
         //Network yarp;
@@ -198,20 +201,30 @@ int main(int argc, char * argv[]) {
         diff = endtime - starttime;
     }*/
 
-    double pos=0;
-    bool up=true;
+    double pos4 = 0;
+    double pos3 = 0;
+    bool up = true;
     while(true) {
-        
-        iDbg->setDebugReferencePosition(4,pos);
+        double val = (rand() % 10 ) * 0.1  - 0.05;
+        //printf("val %f \n", val);
+        pos3 = val;
+        iDbg->setDebugReferencePosition(3,pos3);       
+        iDbg->setDebugReferencePosition(4,pos4);
         Time::delay(0.01);
 
-        if (up==true) pos=pos+0.16;
-        else          pos=pos-0.16;
-
+        if (up) {
+            pos4 = pos4 + 0.16;
+        }
+        else {
+            pos4 = pos4 - 0.16;
+        }
         //0.4 & 0.1666
-        if (pos>=0.4) up = false;
-        if (pos<=-0.4) up =true;
-
+        if (pos4 >= 0.4){
+            up = false;
+        }
+        if (pos4 <= -0.4) {
+            up =true;
+        }
         endtime   = Time::now();
         diff = endtime - starttime;
     }
