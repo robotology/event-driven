@@ -274,7 +274,7 @@ bool logUnmask::threadInit() {
     for (int x = 0; x < X_DIMENSION; x++ ) {
         for (int y = 0; y < Y_DIMENSION; y++) {
 
-
+            // determining whether we are mapping a pixel of the fovea
             
             if((y >= 24) && (y < 48) && (x >= 48) && (x < 96)) {
                 fovea = true;
@@ -289,59 +289,33 @@ bool logUnmask::threadInit() {
                 type  = 0;
                 metax = (int) (x - 2) / 6;
                 metay = (int) (y - 1) / 3;
+                /*
                 if((x == 57)||(x == 69)||(x == 81)||(x == 93)) {
                     pol = 0;
                 }
                 else if((x == 58)||(x == 70)||(x == 82)||(x == 94)) {
                     pol = 1;
                 }
-                else if(x % 2 == 0) {
-                    pol = 1;
+                
+                else*/
+                if(x % 2 == 0) {
+                    pol = 0;
                 }
                 else {
-                    pol = 0; 
+                    pol = 1; 
                 }
 
             } // CD            
             
             // ------------------  IF   ---------------------------
             // if is only present in perifery
-            /*if(!fovea) {
-                if (((x - 6) % 12 == 0) && ( 
-                                            ((y < 24) || (y >= 48))
-                                            &&
-                                            ((x < 48) || (x >= 96))
-                                             )
-                    ){
-                    // IFON
-                    type  = 5;
-                    metax = (int) (x - 6) / 6;
-                    metay = (int)  y / 3 ;
-                    pol = 1;                                  
-                } // IFON
-                
-                if (((x - 7) % 12 == 0) && ( 
-                                            ((y < 24) || (y >= 48))
-                                            &&
-                                            ((x < 48) || (x >= 96))
-                                             )
-                    ){
-                    // IFOFF
-                    type  = 5;
-                    metax = (int) (x - 7) / 6;
-                    metay = (int) (y / 3) - 1;
-                    pol = 0;                                  
-                } // IFOFF  
-            }
-            */
-
             if(!fovea) {
                 if ((x - 6) % 12 == 0){
                     // IFON
                     type  = 5;
                     metax = (int) (x - 6) / 6;
                     metay = (int)  y / 3 ;
-                    pol = 1;                                  
+                    pol = 0;                                  
                 } // IFON
                 
                 if ((x - 7) % 12 == 0){
@@ -349,7 +323,7 @@ bool logUnmask::threadInit() {
                     type  = 5;
                     metax = (int) (x - 7) / 6;
                     metay = (int) (y / 3) - 1;
-                    pol = 0;                                  
+                    pol = 1;                                  
                 } // IFOFF  
             }
             
@@ -357,12 +331,14 @@ bool logUnmask::threadInit() {
             // EM             
             if(fovea) {
                 //fovea
-                if(((x -2) %6 != 0)&&((x-3) % 6 != 0)) {    // avoiding CD position in fovea
-                    if(((x - 48 + 3 ) / 6) % 2!= 0)  {
-                        //inner columns
+                if(((x -2) % 6 != 0) && ((x-3) % 6 != 0)) {    // avoiding CD position in fovea
+                    //if(((x - 48 + 3 ) / 6) % 2!= 0)  {
+                    if(((x - 48 ) / 3) % 2 != 0) {
+                        //second half of the photoreceptor
                         if (y % 3 == 0) {
+                            // EM2
                             type = 2;
-                            metax = x / 6 ;
+                            metax = x / 6;
                             metay = y / 3;
                             if(x % 2 == 0 ) {
                                 pol = 1;
@@ -372,6 +348,7 @@ bool logUnmask::threadInit() {
                             }
                         }                      
                         else {
+                            // EM4
                             type = 4;
                             metax = x / 6;
                             metay = y / 3;
@@ -382,10 +359,11 @@ bool logUnmask::threadInit() {
                                 pol = 0;
                             }
                         }                    
-                    }  // inner columns
+                    }  // 
                     else {
-                        //outer columns
+                        // first part of the photoreceptor
                         if (y % 3 == 0) { 
+                            // EM1
                             type = 1;
                             metax = x / 6;                        
                             metay = y / 3;                      
@@ -397,14 +375,15 @@ bool logUnmask::threadInit() {
                             }
                         }
                         else { 
-                            type = 3 ;
+                            // EM3
+                            type = 3;
                             metax = x / 6;
                             metay = y / 3;
                             if(x % 2 == 0) {
                                 pol = 1;
                             }
                             else {
-                            pol = 0;
+                                pol = 0;
                             }
                         }
                     } // end outer colums
@@ -472,7 +451,7 @@ bool logUnmask::threadInit() {
             logChip_LUT[y * X_DIMENSION + x][3] = pol;
 
             printf("%d %d \n", x, y);
-            fprintf(fout,"# %d %d %d %d %d %d \n", x, y, metax, metay, pol, type);
+            fprintf(fout," %d %d %d %d %d %d \n", x, y, metax, metay, pol, type);
 
            
         }        
