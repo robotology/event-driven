@@ -204,7 +204,14 @@ int main(int argc, char * argv[]) {
     double pos4 = 0;
     double pos3 = 0;
     bool up = true;
+    int counter = 0;
     while(true) {
+        counter++;
+        if(counter % 100 == 0){
+            //microsaccade
+            iDbg->setDebugReferencePosition(4,pos4 * 6); //max horizontal microsaccade 6* 0.16 = 0.96 almost 1 degree
+            Time::delay(0.02);
+        }
         double val = (rand() % 10 ) * 0.1  - 0.05;
         //printf("val %f \n", val);
         pos3 = val;
