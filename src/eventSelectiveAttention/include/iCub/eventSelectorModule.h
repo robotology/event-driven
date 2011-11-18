@@ -145,7 +145,13 @@
  * 
  */
 
-
+/**
+ * CHANGE LOG
+ * 18/11/11 : added the function to allocate in the feature map the relative train of events 
+ * 
+ *
+ */
+  
 
 #include <iostream>
 #include <string>

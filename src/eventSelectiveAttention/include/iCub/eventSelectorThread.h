@@ -26,10 +26,6 @@
 #ifndef _EVENT_SELECTOR_THREAD_H_
 #define _EVENT_SELECTOR_THREAD_H_
 
-#include <yarp/os/RateThread.h>
-#include <yarp/sig/all.h>
-#include <iCub/eventCartesianCollector.h>
-#include <iCub/plotterThread.h>
 #include <iostream>
 #include <fstream>
 #include <time.h>
@@ -37,6 +33,15 @@
 #include <sys/types.h>
 #include <inttypes.h>
 #include <stdlib.h>
+
+//yarp includes
+#include <yarp/os/RateThread.h>
+#include <yarp/sig/all.h>
+
+//within the project includes
+#include <iCub/eventCartesianCollector.h>
+#include <iCub/plotterThread.h>
+//#include <iCub/unmask.h>
 
 //typedef unsigned long long int uint64_t;
 #define u64 uint64_t
@@ -70,16 +75,16 @@ private:
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRight;                                 //image representing the signal on the right camera
     std::string name;                   // rootname of all the ports opened by this thread
     bool verb;
-    bool synchronised;                   // flag to check whether the microsecond counter has been synchronised
-    bool greaterHalf;                    // indicates whether the counter has passed the half of the range
-    bool idle;                           // controls idle mode
-    bool firstRun;                       // flag that check whether the run is a first useful run    
-    bool logPolar;                       // flag that indicates whether the viewer represent logpolar information
-    bool stereo;                         // flag that indicates whether the synchronization is stereo
-    bool asvFlag, dvsFlag;               // flag for operating mode
-    bool tristate;                       // option that represent the image with three baselines
-    unsigned long minCount;              // minimum timestamp allowed for the current frame
-    unsigned long maxCount;              // maximum timestamp allowed for the current frame
+    bool synchronised;                  // flag to check whether the microsecond counter has been synchronised
+    bool greaterHalf;                   // indicates whether the counter has passed the half of the range
+    bool idle;                          // controls idle mode
+    bool firstRun;                      // flag that check whether the run is a first useful run    
+    bool logPolar;                      // flag that indicates whether the viewer represent logpolar information
+    bool stereo;                        // flag that indicates whether the synchronization is stereo
+    bool asvFlag, dvsFlag;              // flag for operating mode
+    bool tristate;                      // option that represent the image with three baselines
+    unsigned long minCount;             // minimum timestamp allowed for the current frame
+    unsigned long maxCount;             // maximum timestamp allowed for the current frame
     unsigned long minCountRight;
     unsigned long maxCountRight;
     double startTimer;
@@ -95,6 +100,8 @@ private:
     char* bufferCopy;                    // local copy of the events read
     FILE* fout;                          // file for temporarely savings of events
     FILE* raw;                           // file dumper for debug
+    int* featureMap;                     // map of the feature;
+    unsigned long* timestampMap;          
 public:
     /**
     * default constructor
@@ -214,6 +221,13 @@ public:
      */
     void setResponseGradient(int value) {responseGradient = value; }; 
     
+    /*
+     * @brief function that given a train of events represent them in the spatial domaain
+     * @param buffer pointer to the train of events
+     * @param w weight associated to the particolar feature map whose events belong to.
+     */ 
+    void spatialSelection(AER_struct* buffer,double w);
+
 };
 
 #endif  //_CF_COLLECTOR_THREAD_H_

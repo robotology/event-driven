@@ -47,7 +47,7 @@ using namespace std;
 
 eventSelectorThread::eventSelectorThread() : RateThread(THRATE) {
     responseGradient = 127;
-    retinalSize  = 128;  //default value before setting 
+    retinalSize      = 128;  //default value before setting 
   
     synchronised = false;
     greaterHalf  = false;
@@ -271,6 +271,9 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, uns
     //unmask_events->setLastTimestamp(0);
 }
 
+void eventSelectorThread::spatialSelection(AER_struct* buffer,double w ) {
+
+}
 
 
 void eventSelectorThread::run() {
@@ -278,7 +281,7 @@ void eventSelectorThread::run() {
 	
   if(!idle) {
     interTimer = Time::now();
-    double interval2 = (interTimer - startTimer)* 1000000;
+    double interval2 = (interTimer - startTimer) * 1000000;
     // reads the buffer received
     //bufferRead = cfConverter->getBuffer();    
     // saves it into a working buffer
@@ -289,14 +292,14 @@ void eventSelectorThread::run() {
     uint32_t* buf2 = (uint32_t*)bufferCopy;
 
 #ifdef VERBOSE
-    fprintf(fout,"##############");
+    fprintf(fout,"############## \n");
     for (int evt = 0; evt < num_events; evt++) {
         unsigned long blob      = buf2[2 * evt];
         unsigned long t         = buf2[2 * evt + 1];
-        fprintf(fout,"0x%08x 0x%08x \n",blob, t);
+        fprintf(fout,"%08x %08x \n",blob, t);
     }
 #endif
-    
+
 
     //getting the time
     endTimer = Time::now();
@@ -340,11 +343,18 @@ void eventSelectorThread::run() {
 
     // extract a chunk/unmask the chunk
     // printf("verb %d \n",verb);
-    unmask_events->unmaskData(bufferCopy,CHUNKSIZE);
+    AER_struct* output;
+    unmask_events->unmaskData(bufferCopy,CHUNKSIZE, output);
     if(verb) {
       verb = false;
       countStop = 0;
     }
+
+        // spatial processing
+    double w1 = 0, w2 = 0, w3 = 0, w4 = 0;
+    spatialSelection(output, w1);
+
+
     
     //gettin the time between two threads
     gettimeofday(&tvend, NULL);

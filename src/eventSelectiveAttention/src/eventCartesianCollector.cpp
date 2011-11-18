@@ -67,7 +67,7 @@ eventCartesianCollector::eventCartesianCollector() {
     printf("unmask event just started");
     previousTimeStamp = 0;
     readEvents = fopen("./readEvents","w");
-    fout = fopen("dump.txt", "w+");
+    fout = fopen("dumpCollector.txt", "w+");
 }
 
 void eventCartesianCollector::reset() {

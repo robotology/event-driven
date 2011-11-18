@@ -41,7 +41,7 @@ bool eventSelectorModule::configure(yarp::os::ResourceFinder &rf) {
     printf("initialization of the main thread \n");
     /* get the module name which will form the stem of all module port names */
     moduleName            = rf.check("name", 
-                           Value("/cartesianFrameCollector"), 
+                           Value("/eventSelectiveAttention"), 
                            "module name (string)").asString();
     /*
     * before continuing, set the module name before getting any other parameters, 
@@ -73,11 +73,11 @@ bool eventSelectorModule::configure(yarp::os::ResourceFinder &rf) {
     attach(handlerPort);                  // attach to port
     
     // --------------------------------------------
-    printf("starting cfCollector Thread \n");
+    printf("starting eventSelective attention thread \n");
     cfThread=new eventSelectorThread();
     cfThread->setName(getName().c_str());
     
-    printf("name of the cfThread correctly set \n");
+    printf("name of the eventSelectorThread correctly set \n");
 
     /*
     * set the period between two successive synchronisations between viewer and events
@@ -86,7 +86,6 @@ bool eventSelectorModule::configure(yarp::os::ResourceFinder &rf) {
                            Value(10000), 
                            "synchronisation period (int)").asInt();
     cfThread->setSynchPeriod(synchPeriod);
-
 
     
     /*
