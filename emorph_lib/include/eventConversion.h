@@ -37,12 +37,13 @@ struct aer {
 
 /**
  * \section change_log CHANCE LOG
- * 22/08/11 : made the unmasking class as general as possible                               \author Rea \n
- * 22/08/11 : added two functions for timestamp reset                                       \author Rea \n
- * 23/08/11 : added different unmasking for dvs cameras without iHead                       \author Rea \n   
- * 13/09/11 : added an pointer to the unmasked  for the method unmaskData                   \author Rea \n         
- * 08/11/11 : added a new structure for handling events as 32bit address and 32bits times   \author Rea \n
- * 08/11/11 : added unmaskData function that returns buffer of aer events                   \author Rea \n       
+ * 22/08/11 : made the unmasking class as general as possible                               author : Rea \n
+ * 22/08/11 : added two functions for timestamp reset                                       author : Rea \n
+ * 23/08/11 : added different unmasking for dvs cameras without iHead                       author : Rea \n   
+ * 13/09/11 : added an pointer to the unmasked  for the method unmaskData                   author : Rea \n         
+ * 08/11/11 : added a new structure for handling events as 32bit address and 32bits times   author : Rea \n
+ * 08/11/11 : added unmaskData function that returns buffer of aer events                   author : Rea \n       
+ * 18/11/11 : setRetinalSize function added for a correct unmasking                         author : Rea \n
 */
 
 
@@ -57,16 +58,16 @@ private:
     
     int sz;
     int* buffer;                          // buffer representing the event in image plane (left)
-    unsigned long* timeBuffer;        // buffer contains the timestamp of the particular location (left)
+    unsigned long* timeBuffer;            // buffer contains the timestamp of the particular location (left)
     int* bufferRight;                     //buffer representing the event in image plane (right)
-    unsigned long* timeBufferRight;   // buffer contains the timestamp of the particular location (right)
+    unsigned long* timeBufferRight;       // buffer contains the timestamp of the particular location (right)
     //int* fifoEvent;
     //int* fifoEvent_temp;
     //int* fifoEvent_temp2;
-    unsigned long timestamp;         // 16 bits variable to save the timestamp
-    unsigned long timestamplong;         // variable 32 bits to save the timestamp
-    unsigned long lasttimestamp;          //last timestamp acquired for the left camera
-    unsigned long lasttimestampright;     //last timestamp acquired for the right camera
+    unsigned long timestamp;              // 16 bits variable to save the timestamp
+    unsigned long timestamplong;          // variable 32 bits to save the timestamp
+    unsigned long lasttimestamp;          // last timestamp acquired for the left camera
+    unsigned long lasttimestampright;     // last timestamp acquired for the right camera
     unsigned long eldesttimestamp;        // timestamp of the eldest event in the buffer 
     short cartX, cartY, polarity, camera;
 
@@ -164,6 +165,12 @@ public:
     * @param the value to be set
     */
      void setLastTimestamp(unsigned long value);
+
+    /**
+    * sets the dimension of the retina necessary for a correct unmasking 
+    * @param value integer of the dimension of the retina
+    */
+     void setRetinalSize(int value);
 
     /**
     * default constructor

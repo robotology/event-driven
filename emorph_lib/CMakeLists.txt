@@ -12,7 +12,10 @@ SET(PROJECT_INCLUDE_DIRS
 
 # Find .cpp and .h files automatically.  This is a bit lazy,
 # and in principle it would be better to list these files manually.
-FILE(GLOB folder_source src/*.cpp)
+FILE(GLOB folder_source 
+  src/eventBuffer.cpp
+  src/eventConversion.cpp
+)
 FILE(GLOB folder_header include/*.h)
 
 # Declare groups of source and header files -- makes things pretty in MSVC.

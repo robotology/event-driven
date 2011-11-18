@@ -19,7 +19,7 @@
  */
 
 /**
- * @file unmask.cppy
+ * @file unmask.cpp
  * @brief A class for unmasking the event (see the header unmask.h)
  */
 
@@ -275,6 +275,11 @@ void unmask::unmaskData(char* i_buffer, int i_sz, AER_struct* output) {
         iterEvent->y  = cartY;
         iterEvent->ts = timestamp;
         iterEvent++;
+
+        if(timestamp > lasttimestamp) {
+            lasttimestamp = timestamp;
+        }
+
     }
 }
 
@@ -388,6 +393,10 @@ void unmask::unmaskData(char* i_buffer, int i_sz, aer* output) {
         iterAer->address   = blob;
         iterAer->timestamp = timestamp;
         iterAer++;
+
+        if(timestamp > lasttimestamp) {
+            lasttimestamp = timestamp;
+        }
     }
 }
 
@@ -489,6 +498,10 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
             
         //camera is unmasked as left 0, right -1. It is converted in left 1, right 0
         camera = camera + 1;        //camera: LEFT 0, RIGHT 1
+
+        if(timestamp > lasttimestamp) {
+            lasttimestamp = timestamp;
+        }
     }
 }
 
