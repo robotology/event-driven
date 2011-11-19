@@ -101,7 +101,8 @@ private:
     FILE* fout;                          // file for temporarely savings of events
     FILE* raw;                           // file dumper for debug
     int* featureMap;                     // map of the feature;
-    unsigned long* timestampMap;          
+    unsigned long* timestampMap;         // timestamp reference for the map of the feature 
+    AER_struct* unmaskedEvents;          // trained of unmasked events
 public:
     /**
     * default constructor
@@ -221,12 +222,13 @@ public:
      */
     void setResponseGradient(int value) {responseGradient = value; }; 
     
-    /*
+    /**
      * @brief function that given a train of events represent them in the spatial domaain
-     * @param buffer pointer to the train of events
-     * @param w weight associated to the particolar feature map whose events belong to.
+     * @param buffer    pointer to the train of events
+     * @param dimension size of the buffer of event passed as input  
+     * @param w         weight associated to the particolar feature map whose events belong to.
      */ 
-    void spatialSelection(AER_struct* buffer,double w);
+    void spatialSelection(AER_struct* buffer,int dimension, double w);
 
 };
 

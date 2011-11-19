@@ -43,7 +43,7 @@ using namespace std;
 #define dim_window 1
 #define synch_time 1
 
-//#define VERBOSE
+#define VERBOSE
 
 eventSelectorThread::eventSelectorThread() : RateThread(THRATE) {
     responseGradient = 127;
@@ -95,7 +95,7 @@ bool eventSelectorThread::threadInit() {
     pThread->start();
     
     unmask_events = new unmask();
-    //unmask_events->setRetinalSize(retinalSize);
+    unmask_events->setRetinalSize(32);
     //unmask_events->setResponseGradient(responseGradient);
     //unmask_events->setASVMode(asvFlag);
     //unmask_events->setDVSMode(dvsFlag);
@@ -113,6 +113,14 @@ bool eventSelectorThread::threadInit() {
     microsecondsPrev = 0;
     minCount = 0;
     minCountRight= 0;
+
+    featureMap = (int*) malloc(32 * 32 * sizeof(int));
+    memset(featureMap,0, 32 * 32 * sizeof(int));
+    timestampMap = (unsigned long*) malloc(32 * 32 * sizeof(unsigned long) );
+    memset(timestampMap,0, 32 * 32 * sizeof(unsigned long));
+
+    unmaskedEvents = (AER_struct*) malloc (CHUNKSIZE * sizeof(int));
+    memset(unmaskedEvents, 0, CHUNKSIZE * sizeof(int));
 
     printf("Initialisation in collector thread correctly ended \n");
     return true;
@@ -165,8 +173,10 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, uns
     */
 
     // determining whether the camera is left or right
-    int* pBuffer = unmask_events->getEventBuffer(camera);
-    unsigned long* pTime   = unmask_events->getTimeBuffer(camera);
+    //int* pBuffer = unmask_events->getEventBuffer(camera);
+    //unsigned long* pTime   = unmask_events->getTimeBuffer(camera);
+    int* pBuffer           = featureMap;
+    unsigned long* pTime   = timestampMap;
     
     //printf("timestamp: min %d    max %d  \n", minCount, maxCount);
     //pBuffer += retinalSize * retinalSize - 1;
@@ -271,14 +281,46 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, uns
     //unmask_events->setLastTimestamp(0);
 }
 
-void eventSelectorThread::spatialSelection(AER_struct* buffer,double w ) {
+void eventSelectorThread::spatialSelection(AER_struct* buffer,int numberOfEvents, double w ) {
+    // in the list of unmasked event updates the saliency map and the timestamp map 
+    AER_struct* iter = buffer; // generated the iterator of the buffer
+    int inputRetinaSize = 32;
+    
+    
+    for (int i = 0; i < numberOfEvents; i++) {        
+          if((iter->x != 128) && (iter->y != 1)){
+              //printf("%02d %02d  ", iter->x, iter->y);    
 
+              int pos = (inputRetinaSize - 1 - iter->x) + (inputRetinaSize - 1 - iter->y) * inputRetinaSize;
+              if(pos >= 32*32) {
+                  printf("Error %d %d \n", iter->x, iter->y);
+              }
+              if(iter->pol > 0) {
+                  featureMap[pos]   = featureMap[pos] + 127;
+                  if(featureMap[pos] > 127) {
+                      featureMap[pos] = 127;
+                  }
+              }
+              else {
+                  featureMap[pos]   = featureMap[pos] - 127;
+                  if(featureMap[pos] < -127) {
+                      featureMap[pos] = -127;
+                  }
+              }
+              
+              //printf (" %08X \n", iter->ts);
+              timestampMap[pos] = iter->ts;            
+        }        
+        iter++;
+    }
+    
+    
 }
 
 
 void eventSelectorThread::run() {
   count++;
-	
+  
   if(!idle) {
     interTimer = Time::now();
     double interval2 = (interTimer - startTimer) * 1000000;
@@ -291,14 +333,6 @@ void eventSelectorThread::run() {
     int num_events = CHUNKSIZE / 8 ;
     uint32_t* buf2 = (uint32_t*)bufferCopy;
 
-#ifdef VERBOSE
-    fprintf(fout,"############## \n");
-    for (int evt = 0; evt < num_events; evt++) {
-        unsigned long blob      = buf2[2 * evt];
-        unsigned long t         = buf2[2 * evt + 1];
-        fprintf(fout,"%08x %08x \n",blob, t);
-    }
-#endif
 
 
     //getting the time
@@ -343,16 +377,34 @@ void eventSelectorThread::run() {
 
     // extract a chunk/unmask the chunk
     // printf("verb %d \n",verb);
-    AER_struct* output;
-    unmask_events->unmaskData(bufferCopy,CHUNKSIZE, output);
+   
+    unmask_events->unmaskData(bufferCopy,CHUNKSIZE, unmaskedEvents);
     if(verb) {
       verb = false;
       countStop = 0;
     }
 
-        // spatial processing
+        
+#ifdef VERBOSE
+    int num_events2 = CHUNKSIZE>>3;
+    AER_struct* iter = unmaskedEvents;
+    for (int evt = 0; evt < num_events2; evt++) {
+        //unsigned long blob      = buf2[2 * evt];
+        //unsigned long t         = buf2[2 * evt + 1];
+        if(iter->ts!=0) {
+            fprintf(fout," %08x \n", iter->ts);
+        }
+        //if((iter->x >=32) || (iter->y >= 32)) {
+        //    printf("Error after unmasking %d %d \n", iter->x, iter->y);
+        //}
+        iter++;
+    }
+#endif
+    
+
+    // spatial processing
     double w1 = 0, w2 = 0, w3 = 0, w4 = 0;
-    spatialSelection(output, w1);
+    spatialSelection(unmaskedEvents,CHUNKSIZE>>3,w1);
 
 
     
@@ -364,8 +416,7 @@ void eventSelectorThread::run() {
     //printf("timeofday>%ld\n",Tnow );
     gettimeofday(&tvstart, NULL);       
     
-    
-    
+        
     /*if(true){
       //printf("Saving in file \n");
       fprintf(raw,"%08X \n",lc); 
@@ -517,6 +568,9 @@ void eventSelectorThread::threadRelease() {
     fclose(fout);
     printf("eventSelectorThread release:freeing bufferCopy \n");
     //free(bufferCopy);
+    free(featureMap);
+    free(timestampMap); 
+    free(unmaskedEvents); 
     printf("eventSelectorThread release:closing ports \n");
     outPort.close();
     outPortRight.close();

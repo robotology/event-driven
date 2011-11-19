@@ -35,7 +35,7 @@
 #include <inttypes.h>
 //#include <iCub/config.h>
 
-//#define VERBOSE
+#define VERBOSE
 
 #define CHUNKSIZE 32768 
 #define TH1       32768  
@@ -91,9 +91,12 @@ void eventCartesianCollector::copyChunk(char* bufferCopy) {
 // reading out from a circular buffer with 2 entry points and wrapping
 void eventCartesianCollector::onRead(eventBuffer& i_ub) {
     valid = true;
+    
+    //printf("OnRead ");
 
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() ;      // number of bits received / 8 = bytes received
+    //printf("%d \n", dim);
 
     receivedBufferSize = dim;
     mutex.wait();
@@ -108,6 +111,7 @@ void eventCartesianCollector::onRead(eventBuffer& i_ub) {
         unsigned long t         = buf2[2 * evt + 1];
         fprintf(fout,"%08X %08X \n",blob,t);        
     }
+    fprintf(fout, "############# \n");
 #endif 
     
     // the thrid part of the buffer is free to avoid overflow
@@ -116,30 +120,7 @@ void eventCartesianCollector::onRead(eventBuffer& i_ub) {
          
       
     int removeLater=0;
-    /*
-    if (totDim < TH1) {
-        pcBuffer += dim;
-    }
-    else if((totDim>=TH1)&&(totDim<TH2)&&(state!=1)){
-        //printf("greater than TH1 \n");
-        pcBuffer = converterBuffer + TH1; 
-        pcRead = converterBuffer + TH2;
-        state = 1;
-        removeLater =2;
-    }
-    else if(totDim >= TH2) {
-        //printf("greater that TH2 \n");
-        pcBuffer = converterBuffer;
-        pcRead = converterBuffer + TH1;
-        totDim = 0;
-        state = 0;
-        removeLater=3;
-    }
-
-    totDim += dim;
-    //mem copying
-    memcpy(pcBuffer,receivedBuffer,dim);
-    */
+    
     
     int status = 0;
     
@@ -177,7 +158,7 @@ void eventCartesianCollector::onRead(eventBuffer& i_ub) {
     }
     else { // general case where no boundaries are crossed
     status = 8;
-        memcpy(pcBuffer,receivedBuffer,dim);
+    memcpy(pcBuffer,receivedBuffer,dim);
         status = 9;
         pcBuffer += dim;
         totDim += dim;
@@ -192,10 +173,10 @@ void eventCartesianCollector::onRead(eventBuffer& i_ub) {
 // reading out from a circular buffer with 2 entry points
 void eventCartesianCollector::onRead(eventBuffer& i_ub) {
     valid = true;
-    //printf("onRead ");
+    printf("onRead   ");
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() ;      // number of bits received / 8 = bytes received
-    //printf("dim %d \n", dim);
+    printf("dim %d ", dim);
  
     mutex.wait();
     receivedBuffer = i_ub.get_packet();    
@@ -224,6 +205,8 @@ void eventCartesianCollector::onRead(eventBuffer& i_ub) {
 
     mutex.post();
 
+    printf("%d \n", totDim);
+
 #ifdef VERBOSE
     int num_events = dim >> 3 ;
     uint32_t* buf2 = (uint32_t*)receivedBuffer;
@@ -235,7 +218,7 @@ void eventCartesianCollector::onRead(eventBuffer& i_ub) {
     }
 #endif 
 
-    //printf("onRead: ended \n");
+    printf("onRead: ended \n");
     //printf("pcBuffer: 0x%x pcRead: 0x%x \n", pcBuffer, pcRead); 
 }
 */
