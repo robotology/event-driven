@@ -27,7 +27,7 @@ typedef struct s_AER_struct {
     int x;
     int y;
     int pol;
-    unsigned int ts;
+    unsigned long ts;
 }AER_struct;
 
 struct aer {
@@ -44,6 +44,8 @@ struct aer {
  * 08/11/11 : added a new structure for handling events as 32bit address and 32bits times   author : Rea \n
  * 08/11/11 : added unmaskData function that returns buffer of aer events                   author : Rea \n       
  * 18/11/11 : setRetinalSize function added for a correct unmasking                         author : Rea \n
+ * 19/11/11 : changed the type of the timestamp in the AER_struct                           author : Rea \n
+ * 19/11/11 : subtracted 1 to the cartX and cartY position in the unmaskData                author : Rea \n             
 */
 
 
@@ -170,7 +172,7 @@ public:
     * sets the dimension of the retina necessary for a correct unmasking 
     * @param value integer of the dimension of the retina
     */
-     void setRetinalSize(int value);
+     void setRetinalSize(int value){retinalSize = value; };
 
     /**
     * default constructor

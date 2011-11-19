@@ -264,16 +264,17 @@ void unmask::unmaskData(char* i_buffer, int i_sz, AER_struct* output) {
         
 
         // processing of the event
-        cartY = retinalSize - cartY;   //corrected the output of the camera (flipped the image along y axis)
-        cartX = retinalSize - cartX;
+        cartY = retinalSize - cartY - 1;   //corrected the output of the camera (flipped the image along y axis)
+        cartX = retinalSize - cartX - 1;
             
         //camera is unmasked as left 0, right -1. It is converted in left 1, right 0
         camera = camera + 1;        //camera: LEFT 0, RIGHT 1
 
         //adding a new event to the list
-        iterEvent->x  = cartX;
-        iterEvent->y  = cartY;
-        iterEvent->ts = timestamp;
+        iterEvent->x   = cartX;
+        iterEvent->y   = cartY;
+        iterEvent->pol = polarity;
+        iterEvent->ts  = timestamp;
         iterEvent++;
 
         if(timestamp > lasttimestamp) {
