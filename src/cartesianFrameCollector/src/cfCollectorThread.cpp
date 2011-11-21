@@ -34,7 +34,7 @@ using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
-#define INTERVFACTOR 6.24
+#define INTERVFACTOR 6.25
 #define COUNTERRATIO 1 //1.25       //1.25 is the ratio 0.160/0.128
 #define MAXVALUE 4294967295
 #define THRATE 5
@@ -181,11 +181,11 @@ void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsig
             
             if(tristate) {
                 // decreasing the spatial response without removing it
-                if(count % 10 == 0) {
-                    if(*pBuffer > 20){
+                if(count % 1 == 0) {
+                    if(*pBuffer > 1){
                         *pBuffer = *pBuffer - 1;                                       
                     }
-                    else if(*pBuffer < -20){
+                    else if(*pBuffer < -1){
                         *pBuffer = *pBuffer + 1;                                       
                     }
                 }
@@ -228,7 +228,7 @@ void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsig
             // branch !tristateView
             else {
                 // decreasing the spatial response without removing 
-                if((*pBuffer > 20) && (count % 10 == 0)){
+                if((*pBuffer > 20) && (count % 1 == 0)){
                     *pBuffer = *pBuffer - 1;                                       
                 }
                 //if(minCount>0 && maxCount > 0 && timestampactual>0)
