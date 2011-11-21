@@ -34,7 +34,7 @@ using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
-#define INTERVFACTOR 6.25
+#define INTERVFACTOR 6.25           // resolution 160ns = 6.25Mhz, 128ns = 7.8125Mhz
 #define COUNTERRATIO 1 //1.25       //1.25 is the ratio 0.160/0.128
 #define MAXVALUE 4294967295
 #define THRATE 5
@@ -181,11 +181,11 @@ void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsig
             
             if(tristate) {
                 // decreasing the spatial response without removing it
-                if(count % 1 == 0) {
-                    if(*pBuffer > 1){
+                if(count % 10 == 0) {
+                    if(*pBuffer > 20){
                         *pBuffer = *pBuffer - 1;                                       
                     }
-                    else if(*pBuffer < -1){
+                    else if(*pBuffer < -20){
                         *pBuffer = *pBuffer + 1;                                       
                     }
                 }
@@ -228,7 +228,7 @@ void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsig
             // branch !tristateView
             else {
                 // decreasing the spatial response without removing 
-                if((*pBuffer > 20) && (count % 1 == 0)){
+                if((*pBuffer > 20) && (count % 10 == 0)){
                     *pBuffer = *pBuffer - 1;                                       
                 }
                 //if(minCount>0 && maxCount > 0 && timestampactual>0)
@@ -383,15 +383,15 @@ void cfCollectorThread::run() {
       //minCount = unmask_events->getLastTimestamp();
       //printf("minCount %d \n", minCount);
       //minCountRight = unmask_events->getLastTimestamp();
-      count = synch_time - 200;
+      count = synchPeriod - 200;
     }
-    else if ((count % synch_time == 0) && (minCount < 4294500000)) {
+    else if ((count % synchPeriod == 0) && (minCount < 4294500000)) {
       unsigned long lastleft = unmask_events->getLastTimestamp();
       lc = lastleft * COUNTERRATIO; 
       unsigned long lastright = unmask_events->getLastTimestampRight();
       rc = lastright * COUNTERRATIO;
 
-      //if (count == synch_time) {
+      //if (count == synchPeriod) {
       //printf("Sychronised Sychronised Sychronised Sychronised ");
       if( lc > interval* INTERVFACTOR * dim_window)
           minCount      = lc - interval* INTERVFACTOR * dim_window; //cfConverter->getEldestTimeStamp();        
@@ -483,7 +483,7 @@ void cfCollectorThread::run() {
       countStop = 0;
       verb = true;
       printf("countStop resetting %llu %llu %llu \n",unmask_events->getLastTimestamp(), lc, rc );
-      count = synch_time - 200;
+      count = synchPeriod - 200;
       
     }
     
