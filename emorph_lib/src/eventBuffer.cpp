@@ -55,7 +55,8 @@ bool eventBuffer::write(yarp::os::ConnectionWriter& connection)
     connection.appendInt(BOTTLE_TAG_LIST + BOTTLE_TAG_BLOB + BOTTLE_TAG_INT);
     connection.appendInt(2);        // four elements
     connection.appendInt(size_of_the_packet);
-    connection.appendBlock(packet, (size_of_the_packet+7)/8*8);
+    int ceilSizeOfPacket = (size_of_the_packet+7)/8*8;   // the nearest multiple of 8 greater or equal to size_of_the_packet
+    connection.appendBlock(packet,ceilSizeOfPacket);
     connection.convertTextMode();   // if connection is text-mode, convert!
     return true;
 
@@ -71,7 +72,8 @@ bool eventBuffer::read(yarp::os::ConnectionReader& connection)
     if (ct!=2)
         return false;
     size_of_the_packet = connection.expectInt();
-    connection.expectBlock(packet, (size_of_the_packet+7)/8*8);
+    int ceilSizeOfPacket = (size_of_the_packet+7)/8*8; // the nearest multiple of 8 greater or equal to size_of_the_packet
+    connection.expectBlock(packet, ceilSizeOfPacket);
     return true;
 }
 
