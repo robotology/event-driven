@@ -58,6 +58,12 @@ struct aer {
     u32 address;
 };
 
+struct atom {
+    u32 data;
+};
+
+
+
 class device2yarp : public yarp::os::RateThread {
 public:
     device2yarp(std::string deviceNumber, bool save, std::string filename);
@@ -404,25 +410,27 @@ public:
 
 
 private:
-    yarp::os::BufferedPort<eventBuffer> port;              //port sending events
-    //yarp::os::BufferedPort<sendingBuffer> port;              //port sending events
-    yarp::os::BufferedPort<yarp::os::Bottle> portDimension;  //port sending dimension of packets   
-    int r;                                          //dimension of the received buffer of event for display
-    int countAEs;                                   //counter of the received AEs
+    yarp::os::BufferedPort<eventBuffer> port;                  // port sending events
+    //yarp::os::BufferedPort<sendingBuffer> port;              // port sending events
+    yarp::os::BufferedPort<yarp::os::Bottle> portDimension;    // port sending dimension of packets   
+    int r;                                         // dimension of the received buffer of event for display
+    int countAEs;                                  // counter of the received AEs
     FILE* raw;
     FILE* binInput;
-    bool biasFromBinary;                            // indicates whether the bias programmed are read from a file
+    bool biasFromBinary;                           // indicates whether the bias programmed are read from a file
     u64 seqTime;
     u64 ec;
     u32 seqAlloced_b;
     u32 seqSize_b, seqEvents, seqDone_b;
     u32 monBufEvents;
-    u32 monBufSize_b;
-    struct aer *pseq;                               //pointer to the sequence of events 
-    struct aer *pmon;                               //pointer to the sequence of events (monitor)
+    u32 monBufSize_b;                               // size of the buffer of aer data allocated
+    u32 monBufSize_a;                               // size of the buffer of atoms allocated
+    struct aer *pseq;                               // pointer to the sequence of events 
+    struct aer *pmon;                               // pointer to the sequence of events (monitor)
+    struct atom *pmonatom;                          // pointer to the atomic data structur
 
-    double startInt;                                //time variable for the start of acquisition
-    double stopInt;                                  //time variable for the end of acquisition
+    double startInt;                                // time variable for the start of acquisition
+    double stopInt;                                 // time variable for the end of acquisition
     
     int file_desc,len,sz;
     unsigned char buffer_msg[64];
@@ -430,27 +438,33 @@ private:
     char buffer[SIZE_OF_DATA];                      // buffer of char to be set on the outport
 
     int err;
+    int countErrors;                        // error counter
+    int countData;
+    int countInWraps;                       // counter of events between two wraps around
+    int maxCountInWraps;                    // counter of events between two wraps around
+    int minCountInWraps;                    // counter of events between two wraps around
     unsigned int timestamp;
     short cartX, cartY, polarity;
 
     unsigned int xmask;                     // mask for extracting the x position
     unsigned int ymask;                     // mask for extracting the y position
     int yshift;                             // mask for extracting the x position
-    int xshift;                              // mask for extracting the y position
+    int xshift;                             // mask for extracting the y position
     int polshift;                           // shift to determine polarity
     int polmask;                            // mask to determine polarity
     int retinalSize;                        // dimension of the retina
     std::string portDeviceName;             // name of the device which the module will connect to
     std::string biasFileName;               // name of the file that contains the biases
-    std::string dumpfile;                    // name of the file where events are going to be dumped
+    std::string dumpfile;                   // name of the file where events are going to be dumped
 
     bool save;                              // bool that indicates whether the 
+    bool firstWrap;                         // flag that indicates the first wrap
 
     yarp::os::Port interfacePort;           //port dedicated to the request of values set through interface
     yarp::os::Semaphore mutex;              //semaphore for file reading
 
     std::stringstream str_buf;
-    FILE* fout;                          //reference to the object for output file stream
+    FILE* fout;                             //reference to the object for output file stream
 
     int pr;                                 //bias left dvs
     int foll;                               //bias left dvs

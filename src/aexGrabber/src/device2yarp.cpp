@@ -90,7 +90,10 @@ reset_pins_expand = 4
 
 device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName = " "):RateThread(THRATE) {
   fout = 0;
-  
+  countErrors = 0;
+  countInWraps = 0;
+  minCountInWraps = 16777215;
+  maxCountInWraps = 0;
     /*   ORIGINAL VALUES
     *   from DVS128_PAER.xml, set Tmpdiff128
     *    biasvalues = {
@@ -245,6 +248,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName =
 
     //initialisation of the module
     countAEs = 0;
+    countData = 0;
     len=0;
     sz=0;
     ec = 0;
@@ -254,12 +258,16 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName =
     // 8192 number of max event that can be read
     //SIZE_OF_DATA is SIZE_OF_EVENT * 8bytes
     monBufSize_b = SIZE_OF_EVENT * sizeof(struct aer);
-    printf("monitor buffer size %d \n", monBufSize_b);
-    assert(SIZE_OF_DATA >= monBufSize_b);
+    monBufSize_a = SIZE_OF_EVENT * 2 * sizeof(struct atom);
+   
     // pmon reads events from the device
     pmon = (aer *)  malloc(monBufSize_b);
     if ( pmon == NULL ) {
         printf("pmon malloc failed \n");
+    }
+    pmonatom = (atom *) malloc(monBufSize_a);
+    if ( pmonatom == NULL ) {
+        printf("pmon atom  malloc failed \n");
     }
 
     // opening the port for sending out events
@@ -679,9 +687,9 @@ void device2yarp::closeDevice(){
 }
 
 void  device2yarp::run() {
-    //printf("reading \n");
+  //printf("reading \n");
 
-    r = read(file_desc, pmon, monBufSize_b);
+    r = read(file_desc, pmonatom, monBufSize_b);
     //printf("called read() with monBufSize_b == %d -> retval: %d\n", (int)monBufSize_b, (int)r);
     
     if(r < 0) {
@@ -697,12 +705,16 @@ void  device2yarp::run() {
     }
     
 
-   int sizeofstructaer = sizeof(struct aer);
+    int sizeofstructaer  = sizeof(struct aer);
+    int sizeofstructatom = sizeof(struct atom);
 
-    if (r % sizeofstructaer != 0) {
-        printf("ERROR: read %d bytes from the AEX!!!\n", r);
+    if (r % sizeofstructatom != 0) {
+      printf("ERROR: read %d bytes from the AEX!!!\n", r);
+      //if (save) {
+      //  fprintf(fout, "ERROR \n");
+      //	}
     }
-    monBufEvents = r / sizeofstructaer;
+    monBufEvents = r / (sizeofstructatom);
     countAEs += monBufEvents; 
     //printf("%d \n",r);
 
@@ -710,36 +722,178 @@ void  device2yarp::run() {
     int k2 = 0;
     uint32_t * buf2 = (uint32_t*)buffer;
     u32 a, t;
+    u32 tempA, tempA_unmasked, tempB, tempB_unmasked;
+    u32 tempC_unmasked;
     int alow, ahigh;
     int tlow, thigh;
-
-    for (int i = 0; i < monBufEvents; i++) {
+    int lastTSindex = -1;
+    int lastAEindex = -1;
+    
+    
+    for (int i = 0; i < monBufEvents; i++ ) {
         // double buffer!!
-        a = pmon[i].address;
+        //a = 0xCAFECAFE;
+        t = 0xDEADDEAD;
+        tempA = pmonatom[i].data;
+	tempA_unmasked = (tempA & 0xFC000000) >> 26;
+	tempC_unmasked = (tempA & 0x04000000) >> 26;
+	if(tempC_unmasked)
+	  printf("GAEP ERROR \n");
+		
+	if(tempA_unmasked == 0x00 ){
+	  a = tempA;
+	  
+	  if((countData - lastAEindex != 2) && (lastAEindex != -1)) {
+	    printf("ERROR AE 1 > %d %d %08X \n",  countData, lastAEindex, a);
+	    countErrors++;
+	    //a = 0xDEADDEAD;
+	  }
+	  lastAEindex = countData;
+	  countInWraps++;
+	  
+	  if (save) {	  
+            fprintf(fout," %08X ",a);
+	  }
+	  
+	  buf2[k2++] = a;   // passing the address event to the data flow to send
+	}
+	else if (tempA_unmasked == 0x20) {
+	  tempB_unmasked = tempA_unmasked & 0x01;
+	  if(tempB_unmasked == 1) {
+	    printf("GAEP ERROR!!!!!!! \n");
+	  }
+	  t = tempA;
+	  if((countData - lastTSindex != 2) && (lastTSindex != -1) && ( t != 0x80000000)) {
+	    a = 0xDEADDEAD;
+	    printf("ERROR TS 1 > %d %d %08X \n", countData, lastTSindex, t);
+	    countErrors++;
+	  }
+	  lastTSindex = countData;
+	  //if(t == 0x80000000) {
+	    //printf(" * \n");
+	    //lastTSindex = -1;
+	  //}
+
+	  if (save) {	  
+            fprintf(fout,"\n %08X ",t);
+	  }
+	  if(k2!=0) {
+	    buf2[k2++] = t; // passing the timestamp to the data flow to send
+	  }
+	}
+	else if(tempA_unmasked == 0x22) {
+	  
+	  tempB_unmasked = tempA_unmasked & 0x01;
+	  if(tempB_unmasked == 1) {
+	    printf("GAEP ERROR!!!!!!! \n");
+	  }
+	  printf("wrap around \n");
+	  a = 0xCAFECAFE;
+	  t = tempA;
+	  lastTSindex = -1;
+	  lastAEindex = -1;
+	  if((countInWraps > maxCountInWraps) && (!firstWrap)) {
+	    maxCountInWraps = countInWraps;
+	  }
+	  if((countInWraps < minCountInWraps) && (!firstWrap)) {	    
+	    minCountInWraps = countInWraps;
+	  }
+	  
+	  if(firstWrap) {
+	    firstWrap = false;
+	  }
+	  else {
+	    double maxRate = (double) maxCountInWraps / (0xFFFFFF * 0.0001);
+	    double minRate = (double) minCountInWraps / (0xFFFFFF * 0.0001);
+	    printf("max data rate received  %f   ; min data rate received %f  \n", maxRate, minRate);
+	  }
+	  countInWraps = 0;
+
+	  if (save) {	  
+            fprintf(fout,"\n %08X ",t);
+	  }	  	  	  
+	}
+
+	countData++;
+	
+	
+
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
         //  t = pmon[i].timestamp * 0.128;    // <--------- this instruction is valid only for AEX but it is not valid for iHead!!!!!!!
-        t = pmon[i].timestamp;
+
+	/*
+        tempB = pmon[i].timestamp;
+	tempB_unmasked = (tempB & 0xFC000000) >> 26;
+	if( tempB_unmasked == 0x00) {
+	  a = tempB;
+	  
+	  if((countData - lastAEindex != 2)&& (lastAEindex != -1))  {
+	    printf("ERROR AE 2 > %d %d %08X \n", countData, lastAEindex, a);
+	    countErrors++;
+	  }
+	  lastAEindex = countData;
+	}
+	else  if(tempB_unmasked == 0x20) {
+	  t = tempB;
+	  if((countData - lastTSindex != 2) && (lastTSindex != -1)&& ( t != 0x80000000)) {
+	    printf("ERROR TS 2 > %d %d %08X \n", countData, lastTSindex, t);
+	    countErrors++;
+	  }
+	  lastTSindex = countData;
+	  a = 0xDEADDEAD;
+	  if(t == 0x80000000) {
+	    printf(" * \n");
+	    lastTSindex = -1;
+	  }
+
+	  if (save) {	  
+            fprintf(fout,"\n %08X ",t);
+	  }
+	}
+	else  if(tempB_unmasked == 0x22) {
+	  printf("wrap around \n");
+	  a = 0xCAFECAFE;
+	  t = tempB;
+	  lastTSindex = countData;	  
+
+	  if (save) {	  
+            fprintf(fout,"\n %08X ",t);
+	  }
+	}
+	*/
+	
+  
         //alow = a&0xFFFF0000;
         //tlow = t&0xFFFF0000;
         //ahigh = (a&0xFFFF0000);
         //thigh = (t&0xFFFF0000);
         
         //printf("a: %llu  t:%llu  \n",a,t);            
-        //
-        if (save) {
-            fprintf(fout,"%08X %08X\n",a,t); 
+        /*
+        if (save) {	  
+            fprintf(fout,"%08X ",t); 
+	    if(a!=0xFFFFFFFF) {
+	      fprintf(fout,"%08X \n",a); 
+	    }
             //fout<<hex<<a<<" "<<hex<<t<<endl;
-        }
+	    }
+	*/
 
 
-        buf2[k2++] = a;
-        buf2[k2++] = t;
+        //buf2[k2++] = a;
+        //buf2[k2++] = t;
+
+	//countData++;
         //if(i == 1000)
         //    printf("address:%d ; timestamp:%d \n", a, t);
     }
 
 
     sz = monBufEvents * sizeof(struct aer); // sz is size in bytes
-
+    char* buf = (char*) buf2;
 
     if (port.getOutputCount()) {
         eventBuffer data2send(buffer, sz);    
@@ -976,8 +1130,10 @@ void device2yarp::setDumpEvent(bool value) {
     save = value;
     
     if(!value) {
-        if(fout!=NULL)
-            fclose(fout);
+      if(fout!=NULL) {
+	fclose(fout);
+	printf("closing the file \n");
+      }
     }
 }
 
@@ -1005,7 +1161,10 @@ void device2yarp::threadRelease() {
     */
     stopInt=Time::now();
     double diff = stopInt - startInt;
-    printf("the grabber has collected %d AEs in %f seconds \n",countAEs,diff);
+    double maxRate = (double) maxCountInWraps / (0xFFFFFF);
+    double minRate = (double) minCountInWraps / (0xFFFFFF);
+    printf("max data rate received  %f  ; min data rate received %f \n", maxRate, minRate);
+    printf("the grabber has collected %d AEs (%d errors) in %f seconds \n",countAEs,countErrors,diff);
     port.close();
     close(file_desc);
 
