@@ -90,6 +90,7 @@ reset_pins_expand = 4
 device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName = " "):RateThread(THRATE) {
 
   // initialization of the paramenters
+  t_prev       = 0;
   fout         = 0;
   countErrors  = 0;
   countInWraps = 0;
@@ -97,6 +98,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName =
   maxCountInWraps = 0;
   countLostAE     = 0;
   wrapOccured     = false;
+  
 
     /*   ORIGINAL VALUES
     *   from DVS128_PAER.xml, set Tmpdiff128
@@ -797,10 +799,11 @@ void  device2yarp::run() {
 	  printf("GAEP ERROR!!!!!!! \n");
 	}	
 	
-	// checking for undetected wrap add
-	if(tempA - t < 0) {
-	  printf("undetected wrap_add \n");
+	// checking for undetected wrap around
+	if((t & 0x00FFFFFF) < (t_prev & 0x00FFFFFF )) {
+        printf("undetected wrap_around %08X %08X \n", t_prev & 0x00FFFFFF, t & 0x00FFFFFF);
 	}
+	t_prev = t;
 
 	//checking for missed addresses
 	if((countData - lastTSindex != 2) && (lastTSindex != -1) && ( t != 0x80000000)) {
@@ -867,7 +870,7 @@ void  device2yarp::run() {
 	  double lostRate = (double) countLostAE     / (0xFFFFFF * 0.001);
 	  double dataRate = (double) countInWraps    / (0xFFFFFF * 0.001);
 	  printf("max data rate received  %f kAE/s   ; min data rate received %f kAE/s \n", maxRate, minRate);
-	  printf("data rate received %f kAE/s    ;  data rate lost %f kAE/s    ;    LOR %f% \n", dataRate, lostRate, (lostRate / dataRate) * 100.0);
+	  printf("data rate received %f kAE/s    ;  data rate lost %f kAE/s    ;    LOR %f% \n", dataRate, lostRate, (lostRate / (lostRate + dataRate)) * 100.0);
 	}
 	countInWraps = 0;
 	countLostAE = 0;
