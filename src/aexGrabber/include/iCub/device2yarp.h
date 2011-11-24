@@ -420,6 +420,7 @@ private:
     bool biasFromBinary;                           // indicates whether the bias programmed are read from a file
     u64 seqTime;
     u64 ec;
+    u32 t_prev;                                    //value of the previous timestamp
     u32 seqAlloced_b;
     u32 seqSize_b, seqEvents, seqDone_b;
     u32 monBufEvents;
@@ -441,6 +442,7 @@ private:
     int countErrors;                        // error counter
     int countData;
     int countInWraps;                       // counter of events between two wraps around
+    int countLostAE;                        // counter of the lost event addresses
     int maxCountInWraps;                    // counter of events between two wraps around
     int minCountInWraps;                    // counter of events between two wraps around
     unsigned int timestamp;
@@ -459,6 +461,7 @@ private:
 
     bool save;                              // bool that indicates whether the 
     bool firstWrap;                         // flag that indicates the first wrap
+    bool wrapOccured;                       // flag that indicates if in the block of events a TS_WA is present
 
     yarp::os::Port interfacePort;           //port dedicated to the request of values set through interface
     yarp::os::Semaphore mutex;              //semaphore for file reading
