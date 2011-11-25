@@ -68,7 +68,7 @@ latchexpand = 100
 # 10us timestep, 100us latch
 timestep  = OneSecond // 100000
 latchexpand = 8
-reset_pins_expand = 4
+reset_pins_expand = 4 
 */
 
 #define INPUT_BIN_U32U32LE
@@ -86,6 +86,17 @@ reset_pins_expand = 4
 #define CLOCK_HI 1
 #define THRATE 1
 
+
+static const char* byte_to_binary( int x ) {
+    static char b[27];
+    b[0] = '\0';
+    int z;
+    
+    for (z =67108864 ; z > 0; z >>= 1) {
+        strcat(b, ((x & z) == z) ? "1" : "0");
+    }
+    return b;
+}
 
 device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName = " "):RateThread(THRATE) {
 
@@ -759,131 +770,131 @@ void  device2yarp::run() {
       }
       // ---------- ADDRESS EVENT -----------------
       else if(tempA_unmasked == 0x00 ){
-	a = tempA;
-	
-	if((countData - lastAEindex != 2) && (lastAEindex != -1)) {
-	  printf("ERROR AE 1 > %d %d %08X \n",  countData, lastAEindex, a);
-	  countErrors++;
-	  //a = 0xDEADDEAD;
-	}
-	lastAEindex = countData;
-	countInWraps++;
-	
-	if (save) {	  
-	  fprintf(fout," %08X ",a);
-	}
-	
-	buf2[k2++] = a;   // passing the address event to the data flow to send
+          a = tempA;
+          
+          if((countData - lastAEindex != 2) && (lastAEindex != -1)) {
+              printf("ERROR AE 1 > %d %d %08X \n",  countData, lastAEindex, a);
+              countErrors++;
+              //a = 0xDEADDEAD;
+          }
+          lastAEindex = countData;
+          countInWraps++;
+          
+          if (save) {	  
+              fprintf(fout," %08X ",a);
+          }
+          
+          buf2[k2++] = a;   // passing the address event to the data flow to send
       }
       // -------------- TIMESTAMP EVENT ----------------
       else if (tempA_unmasked == 0x20) {
-	t = tempA;
-
-	tempC_unmasked = (tempA & 0x03000000) >> 24; // buffer overflow
-	if(tempC_unmasked == 0x01)
-	  printf("BUFFER OVERFLOW  \n");
-	//time stamp sequence error
-	tempC_unmasked = (tempA & 0x03000000) >> 24; // timestamp error
-	if(tempC_unmasked == 0x02)
-	  printf("TIMESTAMP ERROR %08X \n",tempA);
-	//address event sequence error
-	tempC_unmasked = (tempA & 0x03000000) >> 24; // address error
-	if(tempC_unmasked == 0x03)
-	  printf("ADDRESS ERROR %08X \n", tempA);
-	
-
-
-	// if TS, check the 26th bit for GAEP error
-	tempB_unmasked = tempA_unmasked & 0x01;
-	if(tempB_unmasked == 1) {
-	  printf("GAEP ERROR!!!!!!! \n");
-	}	
-	
-	// checking for undetected wrap around
-	if((t & 0x00FFFFFF) < (t_prev & 0x00FFFFFF )) {
-        printf("undetected wrap_around %08X %08X \n", t_prev & 0x00FFFFFF, t & 0x00FFFFFF);
-	}
-	t_prev = t;
-
-	//checking for missed addresses
-	if((countData - lastTSindex != 2) && (lastTSindex != -1) && ( t != 0x80000000)) {
-	  a = 0xDEADDEAD;
-	  printf("ERROR TS 1 > %d %d %08X \n", countData, lastTSindex, t);
-	  countErrors++;
-	}
-	lastTSindex = countData;
-	
-	//if(t == 0x80000000) {
-	//printf(" * \n");
-	//lastTSindex = -1;
-	//}
-	
-	if (save) {	  
-	  fprintf(fout,"\n %08X ",t);
-	}
-
-	//copying the atomic block to send
-	//if(k2!=0) {
-	buf2[k2++] = t; // passing the timestamp to the data flow to send
-	//}
+          t = tempA;
+          
+          tempC_unmasked = (tempA & 0x03000000) >> 24; // buffer overflow
+          if(tempC_unmasked == 0x01)
+              printf("BUFFER OVERFLOW  \n");
+          //time stamp sequence error
+          tempC_unmasked = (tempA & 0x03000000) >> 24; // timestamp error
+          if(tempC_unmasked == 0x02)
+              printf("TIMESTAMP ERROR %08X \n",tempA);
+          //address event sequence error
+          tempC_unmasked = (tempA & 0x03000000) >> 24; // address error
+          if(tempC_unmasked == 0x03)
+              printf("ADDRESS ERROR %08X \n", tempA);
+          
+          
+          
+          // if TS, check the 26th bit for GAEP error
+          tempB_unmasked = tempA_unmasked & 0x01;
+          if(tempB_unmasked == 1) {
+              printf("GAEP ERROR!!!!!!! \n");
+          }	
+          
+          // checking for undetected wrap around
+          if((t & 0x00FFFFFF) < (t_prev & 0x00FFFFFF )) {
+              printf("undetected wrap_around %08X %08X > %s %s > %08X \n", t_prev & 0x00FFFFFF, t & 0x00FFFFFF, byte_to_binary(t_prev & 0x00FFFFFF),byte_to_binary(t & 0x00FFFFFF),  (t_prev & 0x00FFFFFF) - (t & 0x00FFFFFF));
+          }
+          t_prev = t;
+          
+          //checking for missed addresses
+          if((countData - lastTSindex != 2) && (lastTSindex != -1) && ( t != 0x80000000)) {
+              a = 0xDEADDEAD;
+              printf("ERROR TS 1 > %d %d %08X \n", countData, lastTSindex, t);
+              countErrors++;
+          }
+          lastTSindex = countData;
+          
+          //if(t == 0x80000000) {
+          //printf(" * \n");
+          //lastTSindex = -1;
+          //}
+          
+          if (save) {	  
+              fprintf(fout,"\n %08X ",t);
+          }
+          
+          //copying the atomic block to send
+          //if(k2!=0) {
+          buf2[k2++] = t; // passing the timestamp to the data flow to send
+          //}
       }
       // --------------- TIMESTAMP WRAP AROUND ------------
       else if(tempA_unmasked == 0x22) {
-	wrapOccured = true;
-	// if TS, check the 26th bit for GAEP error  
-	tempB_unmasked = tempA_unmasked & 0x01;
-	if(tempB_unmasked == 1) {
-	  printf("GAEP ERROR!!!!!!! \n");
-	}
-
-	tempC_unmasked = (tempA & 0x03000000) >> 24; // buffer overflow
-	if(tempC_unmasked == 0x01)
-	  printf("BUFFER OVERFLOW \n");
-	//time stamp sequence error
-	tempC_unmasked = (tempA & 0x03000000) >> 24; // timestamp error
-	if(tempC_unmasked == 0x02)
-	  printf("TIMESTAMP ERROR %08X \n", tempA);
-	//address event sequence error
-	tempC_unmasked = (tempA & 0x03000000) >> 24; // address error
-	if(tempC_unmasked == 0x03)
-	  printf("ADDRESS ERROR %08X \n", tempA);
-	
-	
-	printf("wrap around \n");
-	a = 0xCAFECAFE;
-	t = tempA;
-	lastTSindex = -1;
-	lastAEindex = -1;
-	if((countInWraps > maxCountInWraps) && (!firstWrap)) {
-	  maxCountInWraps = countInWraps;
-	}
-	if((countInWraps < minCountInWraps) && (!firstWrap)) {	    
-	  minCountInWraps = countInWraps;
-	}
-	
-	if(firstWrap) {
-	  firstWrap = false;
-	}
-	else {
-	  double maxRate = (double)  maxCountInWraps / (0xFFFFFF * 0.001);
-	  double minRate = (double)  minCountInWraps / (0xFFFFFF * 0.001);
-	  double lostRate = (double) countLostAE     / (0xFFFFFF * 0.001);
-	  double dataRate = (double) countInWraps    / (0xFFFFFF * 0.001);
-	  printf("max data rate received  %f kAE/s   ; min data rate received %f kAE/s \n", maxRate, minRate);
-	  printf("data rate received %f kAE/s    ;  data rate lost %f kAE/s    ;    LOR %f% \n", dataRate, lostRate, (lostRate / (lostRate + dataRate)) * 100.0);
-	}
-	countInWraps = 0;
-	countLostAE = 0;
-	
-	// if(k2!=0) {	    
-	buf2[k2++] = t; // passing the timestamp to the data flow to send	    
-	buf2[k2++] = a;
-	//buf2[k2++] = t;	    
-	//}
-	
-	if (save) {	  
-	  fprintf(fout,"\n %08X ",t);
-	}	  	  	  
+          wrapOccured = true;
+          // if TS, check the 26th bit for GAEP error  
+          tempB_unmasked = tempA_unmasked & 0x01;
+          if(tempB_unmasked == 1) {
+              printf("GAEP ERROR!!!!!!! \n");
+          }
+          
+          tempC_unmasked = (tempA & 0x03000000) >> 24; // buffer overflow
+          if(tempC_unmasked == 0x01)
+              printf("BUFFER OVERFLOW \n");
+          //time stamp sequence error
+          tempC_unmasked = (tempA & 0x03000000) >> 24; // timestamp error
+          if(tempC_unmasked == 0x02)
+              printf("TIMESTAMP ERROR %08X \n", tempA);
+          //address event sequence error
+          tempC_unmasked = (tempA & 0x03000000) >> 24; // address error
+          if(tempC_unmasked == 0x03)
+              printf("ADDRESS ERROR %08X \n", tempA);
+          
+          
+          printf("wrap around \n");
+          a = 0xCAFECAFE;
+          t = tempA;
+          lastTSindex = -1;
+          lastAEindex = -1;
+          if((countInWraps > maxCountInWraps) && (!firstWrap)) {
+              maxCountInWraps = countInWraps;
+          }
+          if((countInWraps < minCountInWraps) && (!firstWrap)) {	    
+              minCountInWraps = countInWraps;
+          }
+          
+          if(firstWrap) {
+              firstWrap = false;
+          }
+          else {
+              double maxRate = (double)  maxCountInWraps / (0xFFFFFF * 0.001);
+              double minRate = (double)  minCountInWraps / (0xFFFFFF * 0.001);
+              double lostRate = (double) countLostAE     / (0xFFFFFF * 0.001);
+              double dataRate = (double) countInWraps    / (0xFFFFFF * 0.001);
+              printf("max data rate received  %f kAE/s   ; min data rate received %f kAE/s \n", maxRate, minRate);
+              printf("data rate received %f kAE/s    ;  data rate lost %f kAE/s    ;    LOR %f% \n", dataRate, lostRate, (lostRate / (lostRate + dataRate)) * 100.0);
+          }
+          countInWraps = 0;
+          countLostAE = 0;
+          
+          // if(k2!=0) {	    
+          buf2[k2++] = t; // passing the timestamp to the data flow to send	    
+          buf2[k2++] = a;
+          //buf2[k2++] = t;	    
+          //}
+          
+          if (save) {	  
+              fprintf(fout,"\n %08X ",t);
+          }	  	  	  
       }
       
       countData++;
@@ -895,17 +906,17 @@ void  device2yarp::run() {
     char* buf = (char*) buf2;
     
     if (port.getOutputCount()) {
-      if (wrapOccured) {
-	sz += 8;
-      }
-      eventBuffer data2send(buffer, sz);  //adding 8 bytes for extra word 0xCAFECAFE and TS_WA    
-      eventBuffer& tmp = port.prepare();
-      tmp = data2send;
-      port.write();
+        if (wrapOccured) {
+            sz += 8;
+        }
+        eventBuffer data2send(buffer, sz);  //adding 8 bytes for extra word 0xCAFECAFE and TS_WA    
+        eventBuffer& tmp = port.prepare();
+        tmp = data2send;
+        port.write();
     }   
-
+    
     wrapOccured = false;
-
+    
     if (portDimension.getOutputCount()) {
         
         Bottle& b = portDimension.prepare();
@@ -913,7 +924,7 @@ void  device2yarp::run() {
         b.addInt(r);
         portDimension.write();
     }  
-
+    
     //resetting buffers    
     memset(buffer, 0, SIZE_OF_DATA);
 }
