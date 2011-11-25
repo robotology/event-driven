@@ -243,15 +243,44 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
     for (int evt = 0; evt < num_events; evt++) {
         if(!dvsMode) {
             // unmask the data ( first 4 byte blob, second 4 bytes timestamp)
-            unsigned long blob      = buf2[2 * evt];
-            unsigned long t         = buf2[2 * evt + 1];
+            //unsigned long blob      = buf2[2 * evt];
+            //unsigned long t         = buf2[2 * evt + 1];
+
+            // unmask the data ( first 4 byte ts, second 4 bytes blob)
+            unsigned long t      = buf2[2 * evt];
+            unsigned long blob   = buf2[2 * evt + 1];
+            /*
+            if(t == 0x88000000) {
+                printf("Wrap Around!!!! \n");
+                if(wrapOcc == false) {
+                    printf("LasTimestamp \n");
+                    lasttimestamp = 0;
+                    lasttimestampright = 0;
+                    wrapOcc = true;
+                }
+                //buf2[2 * evt] = 0;       // removing the TS_WA from the buffer               
+                continue;
+            } 
+            */
+           
+            
+            //
+            /*if (t > 0x00000100) {
+                wrapOcc = false;
+            }
+            */
+            
             //printf("0x%x 0x%x \n",blob, timestamp);
             
             // here we zero the higher two bytes of the address!!! Only lower 16bits used!
             blob &= 0xFFFF;
+            t &= 0x00FFFFFF;
             //unmaskEvent((unsigned int) blob, cartX, cartY, polarity, camera);
             unmaskEvent( (unsigned int) blob, cartX, cartY, polarity, camera);
             timestamp =  (unsigned long) t;
+
+            
+
             //if((blob!=0) && (t!=0))
             //    printf(">>>>>>>>> %08X %08X \n",blob,t);
         }
@@ -368,10 +397,10 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
             }
 
             
-
             if(timestamp > lasttimestamp) {
                 lasttimestamp = timestamp;
             }
+            
             
             if(timeBuffer[cartX + cartY * retinalSize] < timestamp) {
                 if(polarity > 0) {
@@ -432,10 +461,11 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
 
             if( timestamp > lasttimestampright){
                 lasttimestampright = timestamp;
-            }           
+            }    
+            
             if (timeBufferRight[cartX + cartY * retinalSize] < timestamp) {
                 if(polarity > 0) {
-                    bufferRight[cartX + cartY * retinalSize] = responseGradient;
+                    bufferRight[cartX + cartY * retinalSize] += responseGradient;
                     timeBufferRight[cartX + cartY * retinalSize] = timestamp;
                     
                     if(bufferRight[cartX + cartY * retinalSize] > 127) {
@@ -443,7 +473,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
                     }
                 }
                 else if(polarity < 0) {
-                    bufferRight[cartX + cartY * retinalSize] = -responseGradient;
+                    bufferRight[cartX + cartY * retinalSize] -= responseGradient;
                     timeBufferRight[cartX + cartY * retinalSize] = timestamp;
                     
                     if (bufferRight[cartX + cartY * retinalSize] < -127) {

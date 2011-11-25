@@ -34,14 +34,14 @@ using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
-#define INTERVFACTOR 6.25           // resolution 160ns = 6.25Mhz, 128ns = 7.8125Mhz
+#define INTERVFACTOR 1              // resolution 160ns = 6.25Mhz, 128ns = 7.8125Mhz ... gaep 1us
 #define COUNTERRATIO 1 //1.25       //1.25 is the ratio 0.160/0.128
-#define MAXVALUE 4294967295
+#define MAXVALUE 0xFFFFFF //4294967295
 #define THRATE 5
 #define STAMPINFRAME  // 10 ms of period times the us in 1 millisecond + time for computing
 //#define retinalSize 128
 #define CHUNKSIZE 32768 //65536 //8192
-#define dim_window 1
+#define dim_window 5
 #define synch_time 1
 
 //#define VERBOSE
@@ -301,43 +301,34 @@ void cfCollectorThread::run() {
 
     //getting the time
     endTimer = Time::now();
-    double interval  = (endTimer - startTimer) * 1000000; //interval in us
+    //double interval  = (endTimer - startTimer) * 1000000; //interval in us
+    double interval  = 5 * 1000;
     double procInter = interval -interval2;
     //printf("procInter %f \n", procInter);
     startTimer = Time::now();
 
-    
+#ifdef WRAP_COS
     //check for wrapping of the left and right timestamp
-    if(maxCount >= 4294967268  ) {
+    if(maxCount >= (MAXVALUE - 1000) ) {
       verb = true;
       unmask_events->resetTimestampLeft();
       unmask_events->resetTimestampRight();
       printf("wrapping left %lu %lu \n",lc,unmask_events->getLastTimestamp());
-      printf("wrapping left %lu %lu\n",lc,unmask_events->getLastTimestamp());
-      printf("wrapping left %lu %lu\n",lc,unmask_events->getLastTimestamp());
-      printf("wrapping left %lu %lu\n",lc,unmask_events->getLastTimestamp());
-      printf("wrapping left %lu %lu\n",lc,unmask_events->getLastTimestamp());
-      printf("wrapping left %lu %lu\n",lc,unmask_events->getLastTimestamp());
-      printf("wrapping left %lu %lu\n",lc,unmask_events->getLastTimestamp());
+     
       minCount = 0;
       maxCount      =  minCount      + interval * INTERVFACTOR* (dim_window);
    
     }
-    if(maxCountRight >= 4294967268) {
+    if(maxCountRight >= (MAXVALUE - 1000)) {
       verb = true;
       unmask_events->resetTimestampRight();
       unmask_events->resetTimestampLeft();
-      printf("wrapping right %lu %lu\n",rc,unmask_events->getLastTimestampRight());
-      printf("wrapping right %lu %lu\n",rc,unmask_events->getLastTimestampRight());
-      printf("wrapping right %lu %lu\n",rc,unmask_events->getLastTimestampRight());
-      printf("wrapping right %lu %lu\n",rc,unmask_events->getLastTimestampRight());
-      printf("wrapping right %lu %lu\n",rc,unmask_events->getLastTimestampRight());
       printf("wrapping right %lu %lu\n",rc,unmask_events->getLastTimestampRight());
 
       minCountRight = 0;
       maxCountRight = minCountRight + interval * INTERVFACTOR* (dim_window);
     }
-    
+#endif
 
     // extract a chunk/unmask the chunk
     // printf("verb %d \n",verb);
@@ -433,7 +424,7 @@ void cfCollectorThread::run() {
             if ((lcprev == lc)||(rcprev == rc)) {
                 //if (lcprev == lc) {
                 countStop++;
-                printf("countStop %d %lu %lu %lu %lu \n", countStop, lc, lcprev, rc, rcprev);
+                printf("countStop %d %08X %08X %08X %08X \n", countStop, lc, lcprev, rc, rcprev);
             }            
             else {
                 countStop--;
@@ -447,7 +438,7 @@ void cfCollectorThread::run() {
             if (lcprev == lc) {
                 //if (lcprev == lc) {
                 countStop++;
-                printf("countStop %d %lu %lu %lu %lu \n", countStop, lc, lcprev, rc, rcprev);
+                printf("countStop %d %08X %08X %08X %08X \n", countStop, lc, lcprev, rc, rcprev);
             }            
             else {
                 countStop--;
@@ -462,9 +453,9 @@ void cfCollectorThread::run() {
     }
     
     
-      
+    
     //resetting time stamps at overflow
-    if (countStop == 10) {
+    if (countStop == 1) {
       //printf("resetting time stamps!!!!!!!!!!!!! %d %d   \n ", minCount, minCountRight);
       unmask_events->resetTimestampLeft(); 
       unmask_events->resetTimestampRight();
@@ -485,7 +476,8 @@ void cfCollectorThread::run() {
       printf("countStop resetting %llu %llu %llu \n",unmask_events->getLastTimestamp(), lc, rc );
       count = synchPeriod - 200;
       
-    }
+      }
+    
     
     // ----------- preventer end    --------------------- //
     

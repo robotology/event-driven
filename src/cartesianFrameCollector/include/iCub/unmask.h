@@ -88,6 +88,7 @@ private:
     bool verb;                       // flag that indicates whether timestamp in forced to renewal 
     bool dvsMode;                    // flag that initialises the typology of unmaske
     bool asvMode;                    // flag that represent the operational mode of the ASV chip
+    bool wrapOcc;                    // flag that indicates when a wrapAraund has just occured
     FILE* uEvents;
     yarp::os::Semaphore countEventLocker;
     yarp::os::Semaphore countEventLocker2;
