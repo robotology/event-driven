@@ -101,8 +101,11 @@ bool asvGrabberModule::configure(yarp::os::ResourceFinder &rf) {
                            Value("none"), 
                            "filename of the binary (string)").asString();
     printf("trying to save events in %s  \n",dumpName.c_str());
-    dumpNameComplete = rf.findFile(dumpName.c_str());
-
+    dumpNameComplete  = rf.findFile(dumpName.c_str());
+    dumpPathDirectory = rf.getContextPath();
+    string pathDirectory = dumpPathDirectory.substr(0,  52);
+    printf("saving directory %s  \n",dumpPathDirectory.c_str());
+    
     
     
     if(!strcmp(binaryName.c_str(),"none")) {

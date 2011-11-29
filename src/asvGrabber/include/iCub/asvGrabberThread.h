@@ -79,6 +79,12 @@ public:
     void setDeviceName(std::string name);
 
     /**
+    * function used to set the path of the working directory
+    * @param value working directory path to be set
+    */
+    void setWorkingDirectory(std::string value) { workingDirectory = value; };
+
+    /**
      * function that correcly closes the device
      */
     void closeDevice();
@@ -571,6 +577,8 @@ private:
     std::string portDeviceName;             // name of the device which the module will connect to
     std::string biasFileName;               // name of the file that contains the biases
     std::string dumpfile;                   // name of the file where events are going to be dumped
+    std::string workingDirectory;           // path where the files will be saved
+    
 
     bool save;                              // bool that indicates whether the 
 

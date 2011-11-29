@@ -912,14 +912,18 @@ void asvGrabberThread::setDumpEvent(bool value) {
     }
 }
 
+
+
 bool asvGrabberThread::setDumpFile(std::string value) {
     dumpfile = value;
     //fout.open(dumpfile.c_str());
     //bool ret = fout.is_open();
     //if (!ret)
     //    cout << "unable to open file" << endl;
+    
 
-    fout = fopen(dumpfile.c_str(),"w+");
+    string fullpath = workingDirectory + dumpfile;
+    fout = fopen(fullpath.c_str(),"w+");
     if(fout!=NULL) {
         printf("correctly opened \n");
         return true;

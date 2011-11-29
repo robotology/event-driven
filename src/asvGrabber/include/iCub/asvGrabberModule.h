@@ -146,6 +146,13 @@
  * This file can be edited at \c $ICUB_ROOT/contrib/src/eMorph/asvGrabber/include/iCub/asvGrabberModule.h
  * 
  */
+
+/**
+ * CHANGE LOG
+ *  29/11/11 : added the directory of the dumped file as additional information for newer dumpFiles                 author : Rea \n
+ */
+
+
 #define COMMAND_VOCAB_SYTH    VOCAB4('s','y','t','h')
 #define COMMAND_VOCAB_SYTA    VOCAB4('s','y','t','a')
 #define COMMAND_VOCAB_SYPA    VOCAB4('s','y','p','a')
@@ -215,8 +222,9 @@ class asvGrabberModule:public yarp::os::RFModule {
     std::string deviceName;                       // name of the device
     std::string devicePortName;                   // reference to the device port
     std::string handlerPortName;                  // name of the handler port (comunication with respond function)
-    std::string dumpName;
-    std::string dumpNameComplete;
+    std::string dumpName;                         // name of the dump file
+    std::string dumpNameComplete;                 // complete name of the dump file
+    std::string dumpPathDirectory;                // path directory where dump file are saved
     int ratethread;                               // time constant for ratethread
 
     yarp::os::Port handlerPort;                   // a port to handle messages 
