@@ -369,7 +369,6 @@ void processingThread::run() {
 
 void processingThread::threadRelease() {
   printf("processingThread: releasing \n");  
-
 }
 
 

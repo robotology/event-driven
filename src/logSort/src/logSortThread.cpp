@@ -282,17 +282,18 @@ void logSortThread::run() {
 
         // extract a chunk/unmask the chunk       
         unmask_events.logUnmaskData(resultCopy,unreadDim,verb);
-        //unmask_events.logUnmaskData(bufferCopy,dimPacket,verb);
+        //unmask_events.logUnmaskData(bufferCopy,dimpacket,verb);
 
 	
         int dimCD, dimEM, dimIF;
         aer *pCD, *pEM, *pIF;
 
         //TODO : code MUTEXes in these lines! Strictly Necessary!
+                                                
         unmask_events.getCD(&pCD, &dimCD);
         //printf("pCD %x", pCD);
         if (dimCD > 0) {
-            //printf("dimCD :  %d \n", dimCD);
+            printf("dimCD :  %d \n", dimCD);
             sendBuffer(&portCD, pCD, dimCD);
             unmask_events.resetCD();
         }
@@ -307,7 +308,7 @@ void logSortThread::run() {
 
         
         // ----------------------------------------------- 
-        
+        /*
         unmask_events.getEM(&pEM, &dimEM);
         if (dimEM > 0) {
             //printf("dimEM :             %d \n", dimEM);
@@ -322,25 +323,26 @@ void logSortThread::run() {
             unmask_events.resetEM4();
             unmask_events.resetTOTEM();
         }
-        
+        */
         // --------------------------------------------
         
-        
+        /*
         unmask_events.getIF(&pIF, &dimIF);
         if (dimIF > 0) {
             //printf("dimIF :                                 %d \n", dimIF);
             sendBuffer(&portIF, pIF, dimIF);
             unmask_events.resetIF();
         }
+        */
         
     
         // measuring execution time of the module
-        tend = Time::now();
-        difftime2 = tend - tinit;
-        if(count % 100 == 0) {
+        //tend = Time::now();
+        //difftime2 = tend - tinit;
+        //if(count % 100 == 0) {
             //printf("time us: %f %f %d %d %d \n", difftime1 * 1000000, (difftime2 - difftime1) * 1000000, dimCD, dimEM, dimIF);
-            printf("dim: CD %d  EM %d  IF %d  TOT %d \n",dimCD, dimEM, dimIF, dimCD + dimEM + dimIF );
-        }
+            //printf("dim: CD %d  EM %d  IF %d  TOT %d \n",dimCD, dimEM, dimIF, dimCD + dimEM + dimIF );
+        //}
     }
 }
 
@@ -496,10 +498,10 @@ void logSortThread::threadRelease() {
     outPortRight.close();
     //delete imageLeft;
     //delete imageRight;
-    printf("Threadrelease         stopping plotterThread \n");
-    pThread->stop();
-    printf("Thread releas         stopping unmaskThread \n");
-    printf("Threadrelease         deleting converter \n");
+    //printf("logSortThread release         stopping plotterThread \n");
+    //pThread->stop();
+    printf("logSortThread release         stopping unmaskThread \n");
+    printf("logSortThread release         deleting converter \n");
     delete lfConverter;
 }
 

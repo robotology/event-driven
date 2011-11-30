@@ -88,7 +88,9 @@ private:
     double startTimer;
     double endTimer;
     double maxlimit,minlimit;
+    
     yarp::os::Semaphore mutex;          // semaphore thar regulates the access to the buffer resource
+
     clock_t endTime,startTime;
     long T1,T2;
     plotterThread* pThread;             // plotterThread for the trasformation of the event in images
@@ -131,6 +133,8 @@ public:
     */
     void interrupt();
 
+
+    
     /**
     * function that set the rootname for the ports that will be opened
     * @param str rootname as a string

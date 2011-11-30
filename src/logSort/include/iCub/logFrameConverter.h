@@ -50,6 +50,27 @@ public:
    
     ~logFrameConverter();
 
+    
+    /**
+     * function that changes the semaphore affected by the copy
+     * @param previousSemaphore semaphore id that was in charge of handling copy chunk
+     * @param newerSemaphore semaphore id that will be in charge of handling copy chunk
+     */
+    void commuteSemaphore(int previousSemaphore, int newerSemaphore) {
+        semaphore_id = newerSemaphore;
+    }
+
+    /**
+     * function that call the wait function of the semaphore in charge of copychunk
+     */
+    void waitSemaphore();
+
+    /**
+     * function that call the post function of the semaphore in charge of copychunk
+     */
+    void postSemaphore(); 
+    
+
     /**
     * overwritten function for handling events as soon as they arrive
     */
@@ -149,7 +170,14 @@ private:
 
     logUnmask unmask_events;           // object in charge of unmasking the events
     converter convert_events;       // object in charge of converting the events into an image
+    int semaphore_id;                   // identifier of the semaphore in charge of copying chunk of event
+
     yarp::os::Semaphore mutex;      // semaphore for thehandling resource buffer
+    yarp::os::Semaphore mutex1;         // semaphore thar regulates the access to the section 1 buffer resource
+    yarp::os::Semaphore mutex2;         // semaphore thar regulates the access to the section 2 buffer resource
+    yarp::os::Semaphore mutex3;         // semaphore thar regulates the access to the section 3 the buffer resource
+    int countSemaphore;                 // counter for the semaphore in onRead function
+
     clock_t start_u;
     clock_t start_p;
     clock_t stop;

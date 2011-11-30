@@ -39,6 +39,7 @@ using namespace yarp::sig;
 using namespace std;
 
 logFrameConverter::logFrameConverter():convert_events(128,128) {
+    countSemaphore = 0;
     countBuffer = 0;
     valid = false;
     retinalSize=128;
@@ -87,6 +88,49 @@ logFrameConverter::~logFrameConverter() {
     fclose(fout);
 }
 
+void logFrameConverter::waitSemaphore() {
+    switch(semaphore_id) {
+
+    case 1 : {
+        mutex1.wait();
+    }
+        break;
+
+    case 2 : {
+        mutex2.wait();
+    }
+        break;
+
+    case 3 : {
+        mutex3.wait();
+    }
+        break;
+
+    }
+}
+
+void logFrameConverter::postSemaphore() {
+    switch(semaphore_id) {
+
+    case 1 : {
+        mutex1.post();
+    }
+        break;
+
+    case 2 : {
+        mutex2.post();
+    }
+        break;
+
+    case 3 : {
+        mutex3.post();
+    }
+        break;
+
+    }
+}
+
+
 void logFrameConverter::copyChunk(char* bufferCopy, int packetSize) {
     mutex.wait();
     memcpy(bufferCopy, pcRead, packetSize);
@@ -95,7 +139,27 @@ void logFrameConverter::copyChunk(char* bufferCopy, int packetSize) {
 
 
 void logFrameConverter::copyChunk(char* bufferCopy, char* flagBuffer) {            
-    mutex.wait();  
+    int count = countSemaphore % 3 + 1;
+
+    //mutex.wait()  
+    switch(count) {
+    case 1 : {
+        mutex1.wait();
+    }
+        break;
+        
+    case 2 : {
+        mutex2.wait();
+    }
+        break;
+        
+    case 3 : {
+        mutex3.wait();
+    }
+        break;
+    }
+    
+    
     char* limit = converterBuffer +  BUFFERDIM - CHUNKSIZE;
     int value = limit - pcRead;
     if(pcRead >= limit) {
@@ -110,9 +174,13 @@ void logFrameConverter::copyChunk(char* bufferCopy, char* flagBuffer) {
         */
         pcRead   = converterBuffer; 
         flagRead = unreadBuffer;
+
+        countSemaphore++;
         
     }
-    else {   
+    else {
+
+ 
         //flagRead += CHUNKSIZE;
         memcpy(bufferCopy, pcRead,   CHUNKSIZE);
         memcpy(flagBuffer, flagRead, CHUNKSIZE);        
@@ -120,11 +188,29 @@ void logFrameConverter::copyChunk(char* bufferCopy, char* flagBuffer) {
         memset(flagRead, 0, CHUNKSIZE);
         //flagCopy += CHUNKSIZE;
         flagRead += CHUNKSIZE;
-        pcRead   += CHUNKSIZE;
-        
-    }
-    mutex.post(); 
+        pcRead   += CHUNKSIZE;            
 
+        countSemaphore++;
+
+    }
+
+
+    switch(count) {
+    case 1 : {
+        mutex1.post();
+    }
+        break;            
+    case 2 : {
+        mutex2.post();
+    }
+        break;            
+    case 3 : {
+        mutex3.post();
+    }
+        break;            
+    }
+    
+    //mutex.post();
         
 #ifdef NOT_VERBOSE
     int num_events = CHUNKSIZE >> 3 ;
@@ -152,6 +238,79 @@ void logFrameConverter::copyChunk(char* bufferCopy, char* flagBuffer) {
     //countBuffer -= CHUNKSIZE;
     //flagBuffer = flagCopy;
 }
+
+
+/*
+void logFrameConverter::copyChunk(char* bufferCopy, char* flagBuffer) {            
+    int count = countSemaphore % 3 + 1;
+
+    mutex.wait(); 
+   
+    char* limit = converterBuffer +  BUFFERDIM - CHUNKSIZE;
+    int value = limit - pcRead;
+    if(pcRead >= limit) {
+        memcpy(bufferCopy, pcRead, converterBuffer +  BUFFERDIM - pcRead );
+        memset(pcRead, 0,   converterBuffer +  BUFFERDIM - pcRead );
+        memcpy(flagBuffer,flagRead,converterBuffer +  BUFFERDIM - pcRead );
+        memset(flagRead, 0, converterBuffer +  BUFFERDIM  - pcRead);
+        
+        //pcRead   = converterBuffer + TH1; 
+        //flagCopy = unreadBuffer ;
+        //flagRead = converterBuffer + TH1; 
+        
+        pcRead   = converterBuffer; 
+        flagRead = unreadBuffer;
+
+        countSemaphore++;
+        
+    }
+    else {
+
+ 
+        //flagRead += CHUNKSIZE;
+        memcpy(bufferCopy, pcRead,   CHUNKSIZE);
+        memcpy(flagBuffer, flagRead, CHUNKSIZE);        
+        memset(pcRead,   0, CHUNKSIZE);  // zeroing events already read
+        memset(flagRead, 0, CHUNKSIZE);
+        //flagCopy += CHUNKSIZE;
+        flagRead += CHUNKSIZE;
+        pcRead   += CHUNKSIZE;            
+
+        countSemaphore++;
+
+    }
+
+    
+    mutex.post();
+        
+#ifdef NOT_VERBOSE
+    int num_events = CHUNKSIZE >> 3 ;
+    uint32_t* buf2 = (uint32_t*)bufferCopy;
+    uint32_t* bufflag = (uint32_t*) flagBuffer;
+    uint32_t* bufflag2 = (uint32_t*) flagRead;
+    //plotting out
+    for (int evt = 0; evt < num_events; evt++) {
+        unsigned long blob      = buf2[2 * evt];
+        unsigned long t         = buf2[2 * evt + 1];
+        unsigned long flag1     = bufflag[2 * evt];
+        unsigned long flag2     = bufflag[2 * evt + 1];
+        unsigned long flag1b     = bufflag2[2 * evt];
+        unsigned long flag2b     = bufflag2[2 * evt + 1];
+        if(blob != 0) {
+            fprintf(fout,"%08X %08X \n",blob,t);
+            //fprintf(fout,"%08X %08X  \n",flag1,flag2);
+            //fprintf(fout,"%08X %08X  \n",flag1b,flag2b);
+        }
+    }
+    fprintf(fout,"################## \n");
+#endif
+    
+    
+    //countBuffer -= CHUNKSIZE;
+    //flagBuffer = flagCopy;
+}
+*/
+
 
 /*
 void logFrameConverter::onRead(eventBuffer& i_ub) {
@@ -196,7 +355,7 @@ void logFrameConverter::onRead(eventBuffer& i_ub) {
 }
 */
 
-
+/*
 // reading out from a circular buffer with 2 entry points
 void logFrameConverter::onRead(eventBuffer& i_ub) {
     valid = true;
@@ -235,7 +394,7 @@ void logFrameConverter::onRead(eventBuffer& i_ub) {
         unsigned long blobflag  = bufflag[2 * evt];
         unsigned long tflag     = bufflag[2 * evt + 1];
         fprintf(fout,"%08X %08X \n",blob,t);        
-        //fprintf(fout,"%08X %08X \n",blobflag,tflag);
+        fprintf(fout,"%08X %08X \n",blobflag,tflag);
     }
 #endif
     
@@ -248,10 +407,10 @@ void logFrameConverter::onRead(eventBuffer& i_ub) {
         //printf("greater than TH1 \n");
         pcBuffer = converterBuffer + TH1;
         flagCopy = unreadBuffer    + TH1;
-        /*
-        pcRead   = converterBuffer + TH2;
-        flagRead = unreadBuffer    + TH2;
-        */
+        
+        //pcRead   = converterBuffer + TH2;
+        //flagRead = unreadBuffer    + TH2;
+        
         pcRead = converterBuffer;
         flagRead = unreadBuffer;
 
@@ -261,10 +420,10 @@ void logFrameConverter::onRead(eventBuffer& i_ub) {
         //printf("greater that TH2 \n");
         pcBuffer = converterBuffer;
         flagCopy = unreadBuffer;
-        /*
-        pcRead   = converterBuffer + TH1;
-        flagRead = unreadBuffer    + TH1;
-        */
+        
+        //pcRead   = converterBuffer + TH1;
+        //flagRead = unreadBuffer    + TH1;
+        
         pcRead   = converterBuffer + TH1;
         flagRead = unreadBuffer    + TH1;
         
@@ -278,6 +437,118 @@ void logFrameConverter::onRead(eventBuffer& i_ub) {
     //printf("onRead: ended \n");
     //printf("pcBuffer: 0x%x pcRead: 0x%x \n", pcBuffer, pcRead); 
 }
+
+*/
+
+
+
+// reading out from a circular buffer with 2 entry points and wrapping
+void logFrameConverter::onRead(eventBuffer& i_ub) {
+    valid = true;
+
+    mutex.wait();
+    // receives the buffer and saves it
+    int dim = i_ub.get_sizeOfPacket() ;      // number of bits received / 8 = bytes received
+    //receivedBufferSize = dim;
+    receivedBuffer = i_ub.get_packet();
+    mutex.post();
+
+#ifdef VERBOSE
+    int num_events = dim >> 3 ;
+    uint32_t* buf2 = (uint32_t*)receivedBuffer;
+    //plotting out
+    for (int evt = 0; evt < num_events; evt++) {
+        unsigned long blob      = buf2[2 * evt];
+        unsigned long t         = buf2[2 * evt + 1];
+        fprintf(fout,"%08X %08X \n",blob,t);        
+    }
+#endif 
+    
+    // the thrid part of the buffer is free to avoid overflow
+    //totDim += dim;
+    int overflow    = 0;      
+    int removeLater = 0;
+    int status      = 0;
+    
+    if(totDim < TH1 && (totDim+dim) > TH1){
+        
+        mutex3.wait();
+        pcRead   = converterBuffer + TH2;
+        flagRead = unreadBuffer    + TH2;
+        mutex3.post();
+        
+        commuteSemaphore(1,2);
+        waitSemaphore();                
+        status = 1;
+        memcpy(pcBuffer,receivedBuffer,dim);
+        memset(flagCopy,1,dim);
+        status = 2;
+        pcBuffer += dim;
+        flagCopy += dim;
+        totDim   += dim;
+        removeLater = 1;
+        postSemaphore();
+    }
+    else if(totDim < TH2 && (totDim + dim) > TH2){
+        mutex1.wait();
+        pcRead = converterBuffer;
+        flagRead = unreadBuffer;
+        mutex1.post();
+
+        commuteSemaphore(2,3);
+        waitSemaphore();
+        status = 3;
+        memcpy(pcBuffer,receivedBuffer,dim);
+        memset(flagCopy,1,dim);
+        status = 4;
+        pcBuffer += dim;
+        flagCopy += dim;
+        totDim   += dim;
+        removeLater = 2; 
+        postSemaphore();
+    }
+    else if((totDim + dim) > TH3){
+        mutex2.wait();
+        pcRead   = converterBuffer + TH1;
+        flagRead = unreadBuffer    + TH1;
+        mutex2.post();
+
+
+        commuteSemaphore(3,1);
+        waitSemaphore();    
+        overflow = totDim+dim - TH3;
+        status = 5;
+        memcpy(pcBuffer,receivedBuffer,dim-overflow);
+        memset(flagCopy,1,dim-overflow);
+        status = 6;
+        //wrap overflown
+        memcpy(converterBuffer,receivedBuffer - overflow + dim, overflow);  
+        status = 7;      
+        pcBuffer = converterBuffer + overflow;
+        flagCopy = unreadBuffer    + overflow;
+        //pcRead = converterBuffer + TH2;
+        //flagRead = unreadBuffer  + TH2;
+        totDim = overflow;
+        removeLater = 3; 
+        postSemaphore();
+    }
+    else { // general case where no boundaries are crossed
+        waitSemaphore();
+        status = 8;
+        memcpy(pcBuffer,receivedBuffer,dim);
+        memset(flagCopy,1,dim);
+        status = 9;
+        pcBuffer += dim;
+        flagCopy += dim;
+        totDim += dim;
+        postSemaphore();
+    }
+    mutex.post();
+
+    //printf("onRead: ended \n");
+    //printf("pcBuffer: 0x%x pcRead: 0x%x \n", pcBuffer, pcRead); 
+}
+
 
 
 /*

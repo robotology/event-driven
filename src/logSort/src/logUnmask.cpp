@@ -627,15 +627,18 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         //    pol   = 0;
         //}
         //else{    
-            metaX = cartX;
-            metaY = cartY;
-            pol   = polarity;
+        metaX = cartX;
+        metaY = cartY;
+        //after unmasking polarity is 0: off events 1:on events
+        pol   = polarity;
+        
             //}
-            
-        logMaskEvent(metaX,metaY,pol,newBlob);
+        
+        // logMaskEvent takes as input 0:off events 1:on events
+        logMaskEvent(metaX,metaY,pol,newBlob);        
         
         unsigned long timestamp_diff = timestamp - previous_timestamp;
-        //printf(" Error : %08X>%d,%d   \n",blob,cartX,cartY);
+        //printf(" Error : %08X>%d,%d,%d   %08X \n",blob, cartX, cartY, polarity, newBlob);
         //fprintf(fout," %d %d %d %d %d %08X %08X : %d \n",cartY, cartX, metaY, metaX ,type,previous_timestamp, timestamp, timestamp_diff);
         
         //if((timestamp_diff > 1000000000 )&&(timestamp != 0)&&(timestamp > previous_timestamp)) {
@@ -646,9 +649,7 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
         if(timestamp!=0) {
             previous_timestamp = timestamp;
         }
-            
-     
-        
+                    
         struct aer* temp;        
         switch (type) {
         case 0:{ //CD            
@@ -670,7 +671,7 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
             mutex.post();
         }
             break;
-            
+            /*    
         case 1:{ //EM1
             //printf("Unmasked EM1 \n");
             if((blob!=0)||(timestamp!=0)) {
@@ -773,7 +774,8 @@ void logUnmask::logUnmaskData(char* i_buffer, int i_sz, bool verb) {
                     mutex.post();
                 }
         }// case 5
-            break;             
+            break;
+            */
         }// end of switch            
     } // end of for every event    
 }
@@ -859,18 +861,26 @@ void logUnmask::logUnmaskEvent(unsigned long evPU, short& metax, short& metay, s
 
 void logUnmask::logMaskEvent( short metax, short metay, short pol, unsigned long& evPU) {
     //metax += retinalSize +1;
+    //evPU = 0;
+    //evPU += (pol   << polshift) ;
+    //evPU += (metax & 0x0000007f ) << 1   ;//& xmask;   //shifting one bit
+    //evPU += (metay & 0x000000ff ) << 8   ;//& ymask;   // shifting 8 bits
+    //& polmask;   
+
     evPU = 0;
-    evPU += (metax & 0x0000007f ) << 1   ;//& xmask;   //shifting one bit
-    evPU += (metay & 0x000000ff ) << 8   ;//& ymask;   // shifting 8 bits
-    evPU += (pol   << polshift) ;//& polmask;    
+    evPU |= pol;
+    evPU |= (metax & 0x0000007f ) << 1;
+    evPU |= (metay & 0x000000ff ) << 8;
+ 
 }
 
 void logUnmask::threadRelease() {
     //no istruction in threadInit
-    printf("closing the dumping file \n");
-    fclose(fout);
-    printf("successfully close the dumping file \n");
+    printf("logUnmask::threadRelease closing the dumping file \n");
+    //fclose(fout);
+    printf("logUnmask::threadRelease successfully close the dumping file \n");
     pThread->stop();
+    printf("logUnmask::threadRelease: success in stoping processing thread");
 }
 
 
