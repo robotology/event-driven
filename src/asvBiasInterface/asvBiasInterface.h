@@ -142,11 +142,12 @@ GtkWidget *entryIFR , *entryIFT , *entryIFL , *entryCDOF, *entrySYPW;
 GtkWidget *entrySYW , *entryCDON, *entryCDD , *entryEMCH, *entryEMCT; 
 GtkWidget *entryCDI , *entryCDRG, *entrySELF, *entryFOLL, *entryARBP; 
 GtkWidget *entryEMVL, *entryCDC , *entryEMVH;
-GtkWidget *entrySAVELOAD;
+GtkWidget *entrySAVELOAD, *entryDUMP;
 
 FILE* fout;                                                                      // file where the biases are saved
 std::string filename;                                                            // name of the file where biases are saved
-const gchar *entry_file;
+const gchar *entry_file;                                                         // name of the file where biased are saved
+const gchar *entry_dump;                                                         // name of the file where the events will be dumped
 yarp::os::Semaphore mutex;
 
 int c=0;

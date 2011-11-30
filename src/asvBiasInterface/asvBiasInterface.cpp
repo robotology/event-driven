@@ -706,9 +706,15 @@ static void enter_callbackEMVH( GtkWidget *widget, GtkWidget *entry ) {
 }
 
 static void enter_callbackSAVELOAD( GtkWidget *widget, GtkWidget *entry ) {
-    printf(" changed the name of the file \n");
+    printf(" changed the name of the file for SAVE/LOAD \n");
     entry_file = gtk_entry_get_text (GTK_ENTRY (entry));   
     printf ("Entry contents SAVE & LOAD  : %s\n", entry_file);
+}
+
+static void enter_callbackDUMP( GtkWidget *widget, GtkWidget *entry ) {
+    printf(" changed the name of the file for DUMP \n");
+    entry_dump = gtk_entry_get_text (GTK_ENTRY (entry));   
+    printf ("Entry contents DUMP : %s\n", entry_dump);
 }
 
 /*static void entry_toggle_editable( GtkWidget *checkbutton, GtkWidget *entry ) {
@@ -1495,10 +1501,10 @@ static void callbackDumpButton( GtkWidget *widget,gpointer data ) {
             bot.addVocab(COMMAND_VOCAB_OFF);
         }
 
-        //bot.addVocab(COMMAND_VOCAB_BIAS);
-        //_pOutPort->Content() = _outBottle;
+        bot.addString(entry_dump);
         Bottle in;
         _pOutPort->write(bot,in);
+        printf("response : %s \n", in.toString().c_str());
     }
     mutex.post();
 }
@@ -3159,8 +3165,7 @@ GtkWidget* createMainWindow(void) {
     gtk_box_pack_start (GTK_BOX (box6), buttonProgBias, FALSE, FALSE, 10);
     gtk_widget_show (buttonProgBias);
     
-    
-    
+        
     buttonProgBias = gtk_button_new ();
     g_signal_connect (G_OBJECT (buttonProgBias), "clicked", G_CALLBACK (callbackProgBiasButton),(gpointer) "right");
     boxButton = xpm_label_box (NULL,  (gchar*)"ProgBias Right");
@@ -3170,8 +3175,10 @@ GtkWidget* createMainWindow(void) {
     gtk_widget_show (buttonProgBias);
     gtk_box_pack_start (GTK_BOX (box6), buttonProgBias, FALSE, FALSE, 10);
     gtk_widget_show (buttonProgBias);
-    
-    
+
+    separator = gtk_hseparator_new ();
+    gtk_box_pack_start (GTK_BOX (box6), separator, FALSE, TRUE, 10);
+    gtk_widget_show (separator);    
     
     buttonSave = gtk_button_new ();
     g_signal_connect (G_OBJECT (buttonSave), "clicked", G_CALLBACK (callbackSaveButton), NULL);
@@ -3193,7 +3200,7 @@ GtkWidget* createMainWindow(void) {
 
     entrySAVELOAD = gtk_entry_new ();
     gtk_entry_set_max_length (GTK_ENTRY (entrySAVELOAD), 50);
-    gtk_entry_set_text (GTK_ENTRY (entrySAVELOAD), "filename");
+    gtk_entry_set_text (GTK_ENTRY (entrySAVELOAD), "bias");
     g_signal_connect (entrySAVELOAD, "activate",
 		      G_CALLBACK (enter_callbackSAVELOAD),
 		      entrySAVELOAD);
@@ -3203,6 +3210,10 @@ GtkWidget* createMainWindow(void) {
 			        0, GTK_ENTRY (entrySAVELOAD)->text_length);
     gtk_box_pack_start (GTK_BOX (box6), entrySAVELOAD, TRUE, TRUE, 0);
     gtk_widget_show (entrySAVELOAD);
+
+    separator = gtk_hseparator_new ();
+    gtk_box_pack_start (GTK_BOX (box6), separator, FALSE, TRUE, 10);
+    gtk_widget_show (separator);    
     
     buttonDumpOn = gtk_button_new ();
     g_signal_connect (G_OBJECT (buttonDumpOn), "clicked", G_CALLBACK (callbackDumpButton),(gpointer) "on");
@@ -3220,7 +3231,20 @@ GtkWidget* createMainWindow(void) {
     gtk_container_add (GTK_CONTAINER (buttonDumpOff), boxButton);
     gtk_container_add (GTK_CONTAINER (buttonDumpOff), box6);
     gtk_box_pack_start (GTK_BOX (box6), buttonDumpOff, FALSE, FALSE, 10);
-    gtk_widget_show (buttonDumpOff);  
+    gtk_widget_show (buttonDumpOff);
+
+    entryDUMP = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (entryDUMP), 50);
+    gtk_entry_set_text (GTK_ENTRY (entryDUMP), "dump");
+    g_signal_connect (entryDUMP, "activate",
+		      G_CALLBACK (enter_callbackDUMP),
+		      entryDUMP);
+    tmp_pos = GTK_ENTRY (entryDUMP)->text_length;
+    gtk_editable_insert_text (GTK_EDITABLE (entryDUMP), ".txt" , -1, &tmp_pos);
+    gtk_editable_select_region (GTK_EDITABLE (entryDUMP),
+			        0, GTK_ENTRY (entryDUMP)->text_length);
+    gtk_box_pack_start (GTK_BOX (box6), entryDUMP, TRUE, TRUE, 0);
+    gtk_widget_show (entryDUMP);
 
     gtk_box_pack_start (GTK_BOX (box3), box6, FALSE, FALSE, 0);
     gtk_widget_show (box6);
