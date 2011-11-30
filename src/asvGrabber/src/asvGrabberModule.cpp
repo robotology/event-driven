@@ -104,6 +104,7 @@ bool asvGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     dumpNameComplete  = rf.findFile(dumpName.c_str());
     dumpPathDirectory = rf.getContextPath();
     string pathDirectory = dumpPathDirectory.substr(0,  52);
+    pathDirectory += "/";
     printf("saving directory %s  \n",dumpPathDirectory.c_str());
     
     
@@ -124,6 +125,7 @@ bool asvGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         printf("set dumping event true \n");
         D2Y->setDumpEvent(true);
         D2Y->setDumpFile(dumpNameComplete);
+        D2Y->setWorkingDirectory(pathDirectory);
     }
     else {
         printf("set dumping event false \n");

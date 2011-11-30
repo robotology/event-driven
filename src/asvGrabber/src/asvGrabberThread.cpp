@@ -607,11 +607,11 @@ void  asvGrabberThread::run() {
     int sizeofstructaer = sizeof(struct aer);
 
     if (r % sizeofstructaer != 0) {
-      //printf("ERROR: read %d bytes from the AEX!!!\n", r);
+      printf("ERROR: read %d bytes from the AEX!!!\n", r);
     }
     monBufEvents = r / sizeofstructaer;
 
-    printf("  %d \n",r);
+    //printf("  %d \n",r);
 
 
     int k = 0;
@@ -904,14 +904,12 @@ void asvGrabberThread::biasprogtx(int time,int latch,int clock,int data, int pow
 }
 
 void asvGrabberThread::setDumpEvent(bool value) {
-    save = value;
-    
+    save = value;    
     if(!value) {
         if(fout!=NULL)
             fclose(fout);
     }
 }
-
 
 
 bool asvGrabberThread::setDumpFile(std::string value) {
@@ -925,7 +923,7 @@ bool asvGrabberThread::setDumpFile(std::string value) {
     string fullpath = workingDirectory + dumpfile;
     fout = fopen(fullpath.c_str(),"w+");
     if(fout!=NULL) {
-        printf("correctly opened \n");
+        printf("correctly opened %s \n", fullpath.c_str());
         return true;
     }
     else {
