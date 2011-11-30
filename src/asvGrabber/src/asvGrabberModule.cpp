@@ -695,7 +695,8 @@ bool asvGrabberModule::respond(const Bottle& command, Bottle& reply) {
             switch(command.get(1).asVocab()) {
                 case COMMAND_VOCAB_ON: {
                         printf("request of start dumping events arrived \n");
-                        D2Y->setDumpFile("dump.txt");
+                        string filename = (string) command.get(2).asString(); 
+                        D2Y->setDumpFile(filename);
                         D2Y->setDumpEvent(true);
                         printf("success in opening the dump file \n");
                         ok = true;
