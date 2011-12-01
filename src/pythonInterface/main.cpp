@@ -177,7 +177,7 @@ int main(int argc, char * argv[])
                 bot.addVocab(fetchCommand(valueCommand));
             }
             else if(!strcmp(typeCommand.c_str(),"int")) {
-                printf("      this is the integer \n");
+                printf("      this is the intege %s. \n", valueCommand.c_str());
                 bot.addInt(atoi(valueCommand.c_str()));
             }            
             foundComma = requestList.find(',');            
@@ -197,8 +197,9 @@ int main(int argc, char * argv[])
             printf("       valueCommand : %s \n", valueCommand.c_str());
             bot.addVocab(fetchCommand(valueCommand));
         }
-        else if(!strcmp(typeCommand.c_str(),"int")) {
-            printf("      this is the integer \n");
+        else if(!strcmp(typeCommand.c_str(),"int")) { 
+            valueCommand = subpart.substr(foundColon + 1);
+            printf("      this is the integer %s \n", valueCommand.c_str());
             bot.addInt(atoi(valueCommand.c_str()));
         }            
         outPort.write(bot,in);
