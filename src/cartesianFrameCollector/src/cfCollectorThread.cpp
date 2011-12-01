@@ -365,9 +365,9 @@ void cfCollectorThread::run() {
 
       //TODO : Check for negative values of minCount not allowed!!!!!!
 
-      minCount = lc - interval * INTERVFACTOR* dim_window; 
+      minCount = lc > interval * INTERVFACTOR * dim_window ? lc - interval * INTERVFACTOR* dim_window : 0; 
       //cfConverter->getEldestTimeStamp();                                                                   
-      minCountRight = rc - interval * INTERVFACTOR* dim_window;
+      minCountRight = rc > interval * INTERVFACTOR* dim_window ? rc - interval * INTERVFACTOR* dim_window : 0;
       //printf("synchronised %1f! %d,%d,%d||%d,%d,%d \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
       startTimer = Time::now();
       synchronised = true;
@@ -385,12 +385,12 @@ void cfCollectorThread::run() {
       //if (count == synchPeriod) {
       //printf("Sychronised Sychronised Sychronised Sychronised ");
       if( lc > interval* INTERVFACTOR * dim_window)
-          minCount      = lc - interval* INTERVFACTOR * dim_window; //cfConverter->getEldestTimeStamp();        
+          minCount      = lc - interval * INTERVFACTOR * dim_window; //cfConverter->getEldestTimeStamp();        
       else
           minCount = 0;
       
       if( rc > interval* INTERVFACTOR * dim_window)
-          minCountRight = rc - interval* INTERVFACTOR * dim_window;
+          minCountRight = rc - interval * INTERVFACTOR * dim_window;
       else
           minCountRight = 0;
       //maxCount = lc; 
@@ -405,16 +405,23 @@ void cfCollectorThread::run() {
       //and the correct timestamp counter clock of FPGA (50 Mhz)
       microsecondsPrev = interval;
       interval = Tnow;
-      minCount      = minCount + interval * INTERVFACTOR; // * (50.0 MHz FPGA Counter Clock / 6.25 Mhz ;
-      minCountRight = minCount + interval * INTERVFACTOR;  // minCountRight + interval;
+      //if(unmask_events->getWrapOcc()) {
+      //    minCount = 0;
+      //    maxCount = 0;
+      //    cfConverter->reset();
+      //}
+      //else{
+          minCount      = minCount + interval * INTERVFACTOR; // * (50.0 MHz FPGA Counter Clock / 6.25 Mhz ;
+          minCountRight = minCount + interval * INTERVFACTOR;  // minCountRight + interval;
+          //}
     } 
     //printf("minCount %d interval %f \n", minCount, interval);
-    maxCount      =  minCount      + interval * INTERVFACTOR* (dim_window);
-    maxCountRight =  minCountRight + interval * INTERVFACTOR* (dim_window);
+    maxCount      =  minCount      + (interval + 1) * INTERVFACTOR* (dim_window);
+    maxCountRight =  minCountRight + (interval + 1) * INTERVFACTOR* (dim_window);
     
     
     //---- preventer for fixed  addresses ----//
-    if(count % 100 == 0) { 
+    if(count % 10 == 0) { 
         unsigned long lastleft = unmask_events->getLastTimestamp();
         lc = lastleft * COUNTERRATIO; 
         unsigned long lastright = unmask_events->getLastTimestampRight();

@@ -171,6 +171,8 @@ void unmask::resetTimestampRight() {
     lasttimestampright = 0;  
 }
 
+
+
 unsigned long* unmask::getTimeBuffer(bool camera) {
     if (camera)
         return timeBuffer;
@@ -250,24 +252,27 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
             unsigned long t      = buf2[2 * evt];
             unsigned long blob   = buf2[2 * evt + 1];
             
-            if(t == 0x88000000) {
+            /*if(t == 0x88000000) {
                 printf("Wrap Around!!!! \n");
+                
                 if(!wrapOcc) {
                     printf("LasTimestamp \n");
-                    lasttimestamp = 0;
-                    lasttimestampright = 0;
+                    //lasttimestamp = 0;
+                    //lasttimestampright = 0;
                     wrapOcc = true;
+                    resetTimestampLeft(); 
+                    resetTimestampRight();
                 }
                 //buf2[2 * evt] = 0;       // removing the TS_WA from the buffer               
                 continue;
-            } 
+                } */
             
            
             
             //
-            if (t > 0x00000100) {
-                wrapOcc = false;
-            }
+            //if (t > 0x00000100) {
+            //    wrapOcc = false;
+            //}
             
             
             //printf("0x%x 0x%x \n",blob, timestamp);

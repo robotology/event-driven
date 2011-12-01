@@ -128,6 +128,13 @@ public:
     int getMaxValue();
 
     /**
+     * @brief return when a wrap around event is occured
+     */
+    bool getWrapOcc(){
+        return wrapOcc;
+    }
+
+    /**
     * returns the eldest timestamp
     */
     unsigned long getEldestTimeStamp();
