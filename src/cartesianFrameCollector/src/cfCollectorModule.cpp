@@ -88,7 +88,6 @@ bool cfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
                            "synchronisation period (int)").asInt();
     cfThread->setSynchPeriod(synchPeriod);
 
-
     
     /*
     * set the retinaSize (considering squared retina)

@@ -249,10 +249,10 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
             // unmask the data ( first 4 byte ts, second 4 bytes blob)
             unsigned long t      = buf2[2 * evt];
             unsigned long blob   = buf2[2 * evt + 1];
-            /*
+            
             if(t == 0x88000000) {
                 printf("Wrap Around!!!! \n");
-                if(wrapOcc == false) {
+                if(!wrapOcc) {
                     printf("LasTimestamp \n");
                     lasttimestamp = 0;
                     lasttimestampright = 0;
@@ -261,14 +261,14 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
                 //buf2[2 * evt] = 0;       // removing the TS_WA from the buffer               
                 continue;
             } 
-            */
+            
            
             
             //
-            /*if (t > 0x00000100) {
+            if (t > 0x00000100) {
                 wrapOcc = false;
             }
-            */
+            
             
             //printf("0x%x 0x%x \n",blob, timestamp);
             
