@@ -19,4 +19,4 @@ def readfile(filename,buffer):
 
 
 
-buffer = readfile("/tmp/asvTOT.txt", 0)
+buffer = readfile("/home/icub/asv/dump/asvTOT.txt", 0)

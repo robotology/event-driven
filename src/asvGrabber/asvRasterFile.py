@@ -2,18 +2,10 @@
 
 import sys
 import getopt,string 
-#import numpy as np
 from numpy import *
-import matplotlib as mplot
+#import matplotlib as mplot
 from decimal import *
-#import mplot.pyplot as pplot
-#import matplotlib.pyplot as plt
-import pylab as p
-#import pylab as rasterPlot
-#from mpl_toolkits.axes_grid1 import host_subplot
-
-#/usr/bin/env python
-
+from pylab import *
 
 #
 #
@@ -325,25 +317,25 @@ for i in range (0,size):
 print "data loaded"
 
 
-#p.plot(xRaster,yRaster,'.')
-#figure()
-#plot(xCdOn,yCdOn,'.r',xCdOff,yCdOff,'.b')
-#hold(True)
-#plot(xEM1L,yEM1L,'.g',xEM1H,yEM1H,'.g')
-#plot(xEM2L,yEM2L,'.y',xEM2H,yEM2H,'.y')
-#plot(xEM3L,yEM3L,'.g',xEM3H,yEM3H,'.g')
-#plot(xEM4L,yEM4L,'.y',xEM4H,yEM4H,'.y')
-#plot(xIFOn,yIFOn,'.m',xIFOff,yIFOff,'.c')
-#show()
 
-p.plot(xCdOn,yCdOn,'.r',xCdOff,yCdOff,'.b')
-p.hold(True)
-p.plot(xEM1L,yEM1L,'.g',xEM1H,yEM1H,'.g')
-p.plot(xEM2L,yEM2L,'.y',xEM2H,yEM2H,'.y')
-p.plot(xEM3L,yEM3L,'.g',xEM3H,yEM3H,'.g')
-p.plot(xEM4L,yEM4L,'.y',xEM4H,yEM4H,'.y')
-p.plot(xIFOn,yIFOn,'.m',xIFOff,yIFOff,'.c')
-p.show()
+figure()
+plot(xCdOn,yCdOn,'.r',xCdOff,yCdOff,'.b')
+hold(True)
+plot(xEM1L,yEM1L,'.g',xEM1H,yEM1H,'.g')
+plot(xEM2L,yEM2L,'.y',xEM2H,yEM2H,'.y')
+plot(xEM3L,yEM3L,'.g',xEM3H,yEM3H,'.g')
+plot(xEM4L,yEM4L,'.y',xEM4H,yEM4H,'.y')
+plot(xIFOn,yIFOn,'.m',xIFOff,yIFOff,'.c')
+show()
+
+#p.plot(xCdOn,yCdOn,'.r',xCdOff,yCdOff,'.b')
+#p.hold(True)
+#p.plot(xEM1L,yEM1L,'.g',xEM1H,yEM1H,'.g')
+#p.plot(xEM2L,yEM2L,'.y',xEM2H,yEM2H,'.y')
+#p.plot(xEM3L,yEM3L,'.g',xEM3H,yEM3H,'.g')
+#p.plot(xEM4L,yEM4L,'.y',xEM4H,yEM4H,'.y')
+#p.plot(xIFOn,yIFOn,'.m',xIFOff,yIFOff,'.c')
+#p.show()
 #ax = host_subplot(111, axes_class=AA.Axes)#
 #fig = plt.figure()
 #ax = fig.add_subplot(111)

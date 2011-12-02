@@ -704,12 +704,14 @@ void asvGrabberThread::sendingBias() {
         if (w > 0) {
                 busy = 1;
                 seqDone_b += w;
-            } else if (w == 0 || (w < 0 && errno == EAGAIN)) {
-                /* we were not busy, maybe someone else is... */
-            } else {
-                perror("invalid write");
-                exit(1);
-            }
+        } 
+        else if (w == 0 || (w < 0 && errno == EAGAIN)) {
+            printf("we were not busy, maybe someone else is.. \n");
+            /* we were not busy, maybe someone else is... */
+        } else {
+            perror("invalid write");
+            exit(1);
+        }
     }    
     printf("writing successfully ended \n");
 
