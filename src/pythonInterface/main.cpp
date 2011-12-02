@@ -179,7 +179,12 @@ int main(int argc, char * argv[])
             else if(!strcmp(typeCommand.c_str(),"int")) {
                 printf("      this is the intege %s. \n", valueCommand.c_str());
                 bot.addInt(atoi(valueCommand.c_str()));
-            }            
+            }
+            else if(!strcmp(typeCommand.c_str(),"string")) { 
+                valueCommand = subpart.substr(foundColon + 1);
+                printf("      this is the string %s \n", valueCommand.c_str());
+                bot.addString(valueCommand.c_str());
+            }
             foundComma = requestList.find(',');            
             foundSemicolon = requestList.find(';');
         }
@@ -201,7 +206,12 @@ int main(int argc, char * argv[])
             valueCommand = subpart.substr(foundColon + 1);
             printf("      this is the integer %s \n", valueCommand.c_str());
             bot.addInt(atoi(valueCommand.c_str()));
-        }            
+        }
+        else if(!strcmp(typeCommand.c_str(),"string")) { 
+            valueCommand = subpart.substr(foundColon + 1);
+            printf("      this is the string %s \n", valueCommand.c_str());
+            bot.addString(valueCommand.c_str());
+        }
         outPort.write(bot,in);
         printf("Answer : %s \n", in.toString().c_str());
         bot.clear();
