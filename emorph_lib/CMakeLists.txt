@@ -6,6 +6,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 SET(PROJECTNAME eMorphLib)
 PROJECT(${PROJECTNAME})
 
+ADD_SUBDIRECTORY(emorphTest)
 
 SET(PROJECT_INCLUDE_DIRS
   ${PROJECT_SOURCE_DIR}/include)
@@ -15,6 +16,7 @@ SET(PROJECT_INCLUDE_DIRS
 FILE(GLOB folder_source 
   src/eventBuffer.cpp
   src/eventConversion.cpp
+  src/comm.cpp
 )
 FILE(GLOB folder_header include/*.h)
 
