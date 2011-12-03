@@ -229,7 +229,7 @@ protected:
     int yCog;
 
 public:
-    ClusterEvent();    
+    ClusterEvent();
     ClusterEvent(const ClusterEvent &event);
     ClusterEvent(const yarp::os::Bottle &packets, const int pos=0);
 
@@ -247,6 +247,78 @@ public:
     void setYCog(const int yCog)       { this->yCog=yCog;       }
 
     int getLength() { return 1; }
+    yarp::os::Bottle   encode();
+    yarp::os::Property getContent();
+};
+
+
+/**************************************************************************/
+class ClusterEventFeatures1 : public ClusterEvent
+{
+public:
+    ClusterEventFeatures1();
+    ClusterEventFeatures1(const yarp::os::Bottle &packets, const int pos=0);
+
+    int getLength() { return 2; }
+    yarp::os::Bottle encode();
+};
+
+
+/**************************************************************************/
+class ClusterEventFeatures2 : public ClusterEventFeatures1
+{
+protected:
+    int shapeType;
+    int xSize;
+    int ySize;
+
+public:
+    ClusterEventFeatures2();
+    ClusterEventFeatures2(const ClusterEventFeatures2 &event);
+    ClusterEventFeatures2(const yarp::os::Bottle &packets, const int pos=0);
+
+    ClusterEventFeatures2 &operator=(const ClusterEventFeatures2 &event);
+    bool operator==(const ClusterEventFeatures2 &event);
+
+    int getShapeType()                     { return shapeType;          }
+    int getXSize()                         { return xSize;              }
+    int getYSize()                         { return ySize;              }
+
+    void setShapeType(const int shapeType) { this->shapeType=shapeType; }
+    void setXSize(const int xSize)         { this->xSize=xSize;         }
+    void setYSize(const int ySize)         { this->ySize=ySize;         }
+
+    int getLength() { return 3; }
+    yarp::os::Bottle   encode();
+    yarp::os::Property getContent();
+};
+
+
+/**************************************************************************/
+class ClusterEventFeatures3 : public ClusterEventFeatures2
+{
+protected:
+    int shapeProb;
+    int xVel;
+    int yVel;
+
+public:
+    ClusterEventFeatures3();
+    ClusterEventFeatures3(const ClusterEventFeatures3 &event);
+    ClusterEventFeatures3(const yarp::os::Bottle &packets, const int pos=0);
+
+    ClusterEventFeatures3 &operator=(const ClusterEventFeatures3 &event);
+    bool operator==(const ClusterEventFeatures3 &event);
+
+    int getShapeProb()                     { return shapeProb;          }
+    int getXVel()                          { return xVel;               }
+    int getYVel()                          { return yVel;               }
+
+    void setShapeProb(const int shapeProb) { this->shapeProb=shapeProb; }
+    void setXVel(const int xVel)           { this->xVel=xVel;           }
+    void setYVel(const int yVel)           { this->yVel=yVel;           }
+
+    int getLength() { return 4; }
     yarp::os::Bottle   encode();
     yarp::os::Property getContent();
 };

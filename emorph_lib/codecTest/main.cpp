@@ -27,7 +27,7 @@ using namespace yarp::os;
 using namespace emorph::ecodec;
 
 void printPacket(const Bottle &packets)
-{
+{    
     for (int i=0; i<packets.size(); i++)
     {
         cout<<hex<<setw(8)<<setfill('0')
@@ -85,6 +85,36 @@ int main()
     cle.setYCog(87);
     cout<<cle.getContent().toString().c_str()<<endl;
 
+    ClusterEventFeatures1 clef1;
+    clef1.setChannel(0);
+    clef1.setNumAE(3746323);
+    clef1.setXCog(24);
+    clef1.setYCog(73);
+    cout<<clef1.getContent().toString().c_str()<<endl;
+
+    ClusterEventFeatures2 clef2;
+    clef2.setChannel(1);
+    clef2.setNumAE(785675486);
+    clef2.setXCog(25);
+    clef2.setYCog(62);
+    clef2.setShapeType(43);
+    clef2.setXSize(67);
+    clef2.setYSize(59);
+    cout<<clef2.getContent().toString().c_str()<<endl;
+
+    ClusterEventFeatures3 clef3;
+    clef3.setChannel(0);
+    clef3.setNumAE(9434223);
+    clef3.setXCog(24);
+    clef3.setYCog(67);
+    clef3.setShapeType(41);
+    clef3.setShapeProb(44);
+    clef3.setXSize(67);
+    clef3.setYSize(59);
+    clef3.setXVel(68);
+    clef3.setYVel(43);
+    cout<<clef3.getContent().toString().c_str()<<endl;
+
     cout<<endl;
 
     // encode events within packets
@@ -95,6 +125,9 @@ int main()
     packets.append(aef.encode());
     packets.append(ae3df.encode());
     packets.append(cle.encode());
+    packets.append(clef1.encode());
+    packets.append(clef2.encode());
+    packets.append(clef3.encode());
     printPacket(packets);
 
     // network comes into play here
@@ -104,10 +137,15 @@ int main()
     // receive the packets and
     // decode events
     eEventQueue q;
-    if (eEvent::decode(packets,q))
+    double t0=Time::now();
+    bool ok=eEvent::decode(packets,q);
+    double t1=Time::now();
+
+    if (ok)
     {
         for (size_t i=0; i<q.size(); i++)
             cout<<q[i]->getContent().toString().c_str()<<endl;
+        cout<<"decoded in "<<t1-t0<<" [s]"<<endl;
     }
     else
         cout<<"unrecognized packets!"<<endl;
