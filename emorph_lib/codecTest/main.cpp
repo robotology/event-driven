@@ -20,7 +20,7 @@
 #include <iomanip>
 #include <string>
 
-#include <iCub/eventCodec.h>
+#include "eventCodec.h"
 
 using namespace std;
 using namespace yarp::os;
