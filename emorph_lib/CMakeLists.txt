@@ -6,9 +6,6 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 SET(PROJECTNAME eMorphLib)
 PROJECT(${PROJECTNAME})
 
-
-#ADD_SUBDIRECTORY(emorphTest)
-
 SET(PROJECT_INCLUDE_DIRS
   ${PROJECT_SOURCE_DIR}/include)
 
@@ -35,8 +32,6 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/include
 
 # Create everything needed to build our executable.
 ADD_LIBRARY(${PROJECTNAME} ${folder_source} ${folder_header})
-#INSTALL(TARGETS ${PROJECTNAME} DESTINATION lib)
-#INSTALL(FILES ${folder_header} DESTINATION include/iCub)
 
 # Makes VS a bit quiter wrt warnings.
 IF(MSVC)
@@ -45,8 +40,6 @@ ENDIF(MSVC)
 
 TARGET_LINK_LIBRARIES(${PROJECTNAME} ${YARP_LIBRARIES})
 
-# add functionalities like icub_add_library/icub_add_executable
-#include(${ICUB_DIR}/../conf/iCubHelpers.cmake)
 MESSAGE(STATUS "icub_dir: ${ICUB_DIR}")
 include(${ICUB_DIR}/../conf/iCubHelpers.cmake)
                     
