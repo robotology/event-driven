@@ -4,7 +4,7 @@
 #include <iomanip>
 #include <string>
 
-#include "comm.h"
+#include <iCub/comm.h>
 
 using namespace std;
 using namespace yarp::os;
