@@ -88,7 +88,7 @@ public:
     void setStamp(const int stamp) { this->stamp=stamp; }
 
     int getLength() { return 1; }
-    yarp::os::Bottle encode();
+    yarp::os::Bottle   encode();
     yarp::os::Property getContent();
 };
 
@@ -121,7 +121,7 @@ public:
     void setY(const int y)               { this->y=y;               }
 
     int getLength() { return 1; }
-    yarp::os::Bottle encode();
+    yarp::os::Bottle   encode();
     yarp::os::Property getContent();
 };
 
@@ -151,7 +151,7 @@ public:
     void setYFlow(const int yFlow)             { this->yFlow=yFlow;             }
 
     int getLength() { return 2; }
-    yarp::os::Bottle encode();
+    yarp::os::Bottle   encode();
     yarp::os::Property getContent();
 };
 
@@ -184,7 +184,7 @@ public:
     void setY(const int y)                 { this->y=y;                 }
 
     int getLength() { return 1; }
-    yarp::os::Bottle encode();
+    yarp::os::Bottle   encode();
     yarp::os::Property getContent();
 };
 
@@ -214,27 +214,42 @@ public:
     void setYFlow(const int yFlow)             { this->yFlow=yFlow;             }
 
     int getLength() { return 2; }
-    yarp::os::Bottle encode();
+    yarp::os::Bottle   encode();
     yarp::os::Property getContent();
 };
 
 
-///**************************************************************************/
-//class ClusterEvent : public eEvent
-//{
-//};
-//
-//
-///**************************************************************************/
-//class ClusterEvent3D : public eEvent
-//{
-//};
-//
-//
-///**************************************************************************/
-//class TimeStamp : public eEvent
-//{
-//};
+/**************************************************************************/
+class ClusterEvent : public eEvent
+{
+protected:
+    int channel;
+    int numAE;
+    int xCog;
+    int yCog;
+
+public:
+    ClusterEvent();    
+    ClusterEvent(const ClusterEvent &event);
+    ClusterEvent(const yarp::os::Bottle &packets, const int pos=0);
+
+    ClusterEvent &operator=(const ClusterEvent &event);
+    bool operator==(const ClusterEvent &event);
+
+    int getChannel()                   { return channel;        }
+    int getNumAE()                     { return numAE;          }
+    int getXCog()                      { return xCog;           }
+    int getYCog()                      { return yCog;           }
+
+    void setChannel(const int channel) { this->channel=channel; }
+    void setNumAE(const int numAE)     { this->numAE=numAE;     }
+    void setXCog(const int xCog)       { this->xCog=xCog;       }
+    void setYCog(const int yCog)       { this->yCog=yCog;       }
+
+    int getLength() { return 1; }
+    yarp::os::Bottle   encode();
+    yarp::os::Property getContent();
+};
 
 
 }

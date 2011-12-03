@@ -78,6 +78,15 @@ int main()
     ae3df.setYFlow(90);    
     cout<<ae3df.getContent().toString().c_str()<<endl;
 
+    ClusterEvent cle;
+    cle.setChannel(1);
+    cle.setNumAE(34);
+    cle.setXCog(11);
+    cle.setYCog(87);
+    cout<<cle.getContent().toString().c_str()<<endl;
+
+    cout<<endl;
+
     // encode events within packets
     Bottle packets;
     packets.append(ts.encode());
@@ -85,10 +94,12 @@ int main()
     packets.append(ae3d.encode());
     packets.append(aef.encode());
     packets.append(ae3df.encode());
+    packets.append(cle.encode());
     printPacket(packets);
 
     // network comes into play here
     // ...
+    cout<<endl;
 
     // receive the packets and
     // decode events

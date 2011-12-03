@@ -27,6 +27,7 @@ namespace emorph
 namespace ecodec
 {
 
+
 /**************************************************************************/
 eEvent *factoryTimeStamp(const Bottle &packets, const int pos=0)
 {
@@ -96,6 +97,21 @@ eEvent *factoryAddressEvent3DFeatures(const Bottle &packets, const int pos=0)
         return static_cast<eEvent*>(pEvent);
 }
 
+
+/**************************************************************************/
+eEvent *factoryClusterEvent(const Bottle &packets, const int pos=0)
+{
+    ClusterEvent *pEvent=new ClusterEvent(packets,pos);
+    if (!pEvent->isValid())
+    {
+        delete pEvent;
+        return NULL;
+    }
+    else
+        return static_cast<eEvent*>(pEvent);
+}
+
+
 }
 
 }
@@ -113,6 +129,7 @@ bool eEvent::decode(const Bottle &packets, eEventQueue &events)
         else if (pEvent=factoryAddressEventFeatures(packets,pos))   { }
         else if (pEvent=factoryAddressEvent3D(packets,pos))         { }
         else if (pEvent=factoryAddressEvent3DFeatures(packets,pos)) { }
+        else if (pEvent=factoryClusterEvent(packets,pos))           { }
 
         if (pEvent==NULL)
             return false;
@@ -668,3 +685,108 @@ Property AddressEvent3DFeatures::getContent()
 
     return prop;
 }
+
+
+/**************************************************************************/
+ClusterEvent::ClusterEvent()
+{
+    valid=true;
+    type="CLE";
+    channel=0;
+    numAE=0;
+    xCog=0;
+    yCog=0;
+}
+
+
+/**************************************************************************/
+ClusterEvent::ClusterEvent(const ClusterEvent &event)
+{
+    valid=event.valid;
+    type=event.type;
+    channel=event.channel;
+    numAE=event.numAE;
+    xCog=event.xCog;
+    yCog=event.yCog;
+}
+
+
+/**************************************************************************/
+ClusterEvent::ClusterEvent(const Bottle &packets, const int pos)
+{
+    valid=false;
+
+    // check length
+    if ((pos+getLength()-1)<packets.size())
+    {
+        int word0=packets.get(pos).asInt();
+
+        // check type and fill fields
+        if ((word0>>26)==8)
+        {
+            int shrw=word0;
+            channel=shrw&0x01;
+
+            shrw>>=1;
+            xCog=shrw&0x7f;
+
+            shrw>>=7;
+            yCog=shrw&0xff;
+
+            shrw>>=8;
+            numAE=shrw&0xff;
+
+            type="CLE";
+            valid=true;
+        }
+    }
+}
+
+
+/**************************************************************************/
+ClusterEvent &ClusterEvent::operator=(const ClusterEvent &event)
+{
+    valid=event.valid;
+    type=event.type;
+    channel=event.channel;
+    numAE=event.numAE;
+    xCog=event.xCog;
+    yCog=event.yCog;
+
+    return *this;
+}
+
+
+/**************************************************************************/
+bool ClusterEvent::operator==(const ClusterEvent &event)
+{
+    return ((valid==event.valid)&&(type==event.type)&&(channel==event.channel)&&
+            (numAE==event.numAE)&&(xCog==event.xCog)&&(yCog==event.yCog));
+}
+
+
+/**************************************************************************/
+Bottle ClusterEvent::encode()
+{
+    int word0=(8<<26)|((numAE&0xff)<<16)|((yCog&0xff)<<8)|((xCog&0x7f)<<1)|(channel&0x01);
+
+    Bottle ret;
+    ret.addInt(word0);
+    return ret;
+}
+
+
+/**************************************************************************/
+Property ClusterEvent::getContent()
+{
+    Property prop;
+    prop.put("type",type.c_str());
+    prop.put("channel",channel);
+    prop.put("numAE",numAE);
+    prop.put("xCog",xCog);
+    prop.put("yCog",yCog);
+
+    return prop;
+}
+
+
