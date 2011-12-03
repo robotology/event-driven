@@ -1,6 +1,6 @@
 
-#ifndef __EMORPH_COMM_H__
-#define __EMORPH_COMM_H__
+#ifndef __EMORPH_EVENTCODEC_H__
+#define __EMORPH_EVENTCODEC_H__
 
 #include <yarp/os/all.h>
 #include <string>
@@ -9,7 +9,7 @@
 namespace emorph
 {
 
-namespace comm
+namespace ecodec
 {
 
 

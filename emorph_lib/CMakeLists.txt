@@ -17,7 +17,7 @@ SET(PROJECT_INCLUDE_DIRS
 FILE(GLOB folder_source 
   src/eventBuffer.cpp
   src/eventConversion.cpp
-  src/comm.cpp
+  src/eventCodec.cpp
 )
 FILE(GLOB folder_header include/*.h)
 

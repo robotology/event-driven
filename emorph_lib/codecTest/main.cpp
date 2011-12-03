@@ -4,11 +4,11 @@
 #include <iomanip>
 #include <string>
 
-#include <iCub/comm.h>
+#include <iCub/eventCodec.h>
 
 using namespace std;
 using namespace yarp::os;
-using namespace emorph::comm;
+using namespace emorph::ecodec;
 
 void printPacket(const Bottle &packets)
 {

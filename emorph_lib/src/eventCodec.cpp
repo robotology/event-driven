@@ -1,14 +1,14 @@
 
-#include "comm.h"
+#include "eventCodec.h"
 
 using namespace yarp::os;
-using namespace emorph::comm;
+using namespace emorph::ecodec;
 
 
 namespace emorph
 {
 
-namespace comm
+namespace ecodec
 {
 
 /**************************************************************************/

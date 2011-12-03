@@ -4,7 +4,7 @@
 # 
 
 cmake_minimum_required(VERSION 2.6)
-set(PROJECTNAME emorphTest)
+set(PROJECTNAME codecTest)
 project(${PROJECTNAME})
 
 find_package(YARP)
