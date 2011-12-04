@@ -19,6 +19,7 @@
 #include <iostream>
 #include <iomanip>
 #include <string>
+#include <typeinfo>
 
 #include "eventCodec.h"
 
@@ -203,11 +204,33 @@ int main()
     bool ok=eEvent::decode(packets,rxQueue);
     double t1=Time::now();
 
+    // insert mismatches deliberately
+    // to check the operator==() functionality
+    for (size_t i=0; i<rxQueue.size(); i++)
+    {
+        // to identify the type of the packet
+        // user can rely on the getType() method
+        if (rxQueue[i]->getType()=="AE")
+        {
+            AddressEvent* ptr=dynamic_cast<AddressEvent*>(rxQueue[i]);
+            if (ptr!=NULL)
+            {
+                int xOld=ptr->getX();
+                int xNew=xOld+1;
+                ptr->setX(xNew);
+
+                cout<<"packet #"<<i<<": changed x from "
+                    <<xOld<<" to "<<xNew<<endl;
+                cout<<endl;
+            }
+        }
+    }
+
     if (ok)
     {
         for (size_t i=0; i<rxQueue.size(); i++)
             cout<<rxQueue[i]->getContent().toString().c_str()<<endl;
-        cout<<"decoded in "<<t1-t0<<" [s]"<<endl;
+        cout<<"decoded in "<<t1-t0<<" [s]"<<endl;        
 
         // ensure the equality
         cout<<endl;

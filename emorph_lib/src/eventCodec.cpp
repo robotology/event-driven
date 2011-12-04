@@ -320,7 +320,7 @@ bool TimeStamp::operator==(const TimeStamp &event)
 
 
 /**************************************************************************/
-Bottle TimeStamp::encode()
+Bottle TimeStamp::encode() const
 {
     int word0=(32<<26)|(stamp&0x00ffffff);
 
@@ -331,7 +331,7 @@ Bottle TimeStamp::encode()
 
 
 /**************************************************************************/
-Property TimeStamp::getContent()
+Property TimeStamp::getContent() const
 {
     Property prop;
     prop.put("type",type.c_str());
@@ -419,7 +419,7 @@ bool AddressEvent::operator==(const AddressEvent &event)
 
 
 /**************************************************************************/
-Bottle AddressEvent::encode()
+Bottle AddressEvent::encode() const
 {
     int word0=(0<<26)|((channel&0x01)<<16)|((y&0xff)<<8)|((x&0x7f)<<1)|(polarity&0x01);
 
@@ -430,7 +430,7 @@ Bottle AddressEvent::encode()
 
 
 /**************************************************************************/
-Property AddressEvent::getContent()
+Property AddressEvent::getContent() const
 {
     Property prop;
     prop.put("type",type.c_str());
@@ -537,7 +537,7 @@ bool AddressEventFeatures::operator==(const AddressEventFeatures &event)
 
 
 /**************************************************************************/
-Bottle AddressEventFeatures::encode()
+Bottle AddressEventFeatures::encode() const
 {
     int word0=(2<<26)|((channel&0x01)<<16)|((y&0xff)<<8)|((x&0x7f)<<1)|(polarity&0x01);
     int word1=(3<<26)|((yFlow&0xff)<<16)|((xFlow&0xff)<<8)|(orientation&0xff);
@@ -550,7 +550,7 @@ Bottle AddressEventFeatures::encode()
 
 
 /**************************************************************************/
-Property AddressEventFeatures::getContent()
+Property AddressEventFeatures::getContent() const
 {
     Property prop=AddressEvent::getContent();
     prop.put("orientation",orientation);
@@ -639,7 +639,7 @@ bool AddressEvent3D::operator==(const AddressEvent3D &event)
 
 
 /**************************************************************************/
-Bottle AddressEvent3D::encode()
+Bottle AddressEvent3D::encode() const
 {
     int word0=(1<<26)|((disparity&0xff)<<16)|((y&0xff)<<8)|((x&0x7f)<<1)|(polarity&0x01);
 
@@ -650,7 +650,7 @@ Bottle AddressEvent3D::encode()
 
 
 /**************************************************************************/
-Property AddressEvent3D::getContent()
+Property AddressEvent3D::getContent() const
 {
     Property prop;
     prop.put("type",type.c_str());
@@ -758,7 +758,7 @@ bool AddressEvent3DFeatures::operator==(const AddressEvent3DFeatures &event)
 
 
 /**************************************************************************/
-Bottle AddressEvent3DFeatures::encode()
+Bottle AddressEvent3DFeatures::encode() const
 {
     int word0=(4<<26)|((disparity&0xff)<<16)|((y&0xff)<<8)|((x&0x7f)<<1)|(polarity&0x01);
     int word1=(3<<26)|((yFlow&0xff)<<16)|((xFlow&0xff)<<8)|(orientation&0xff);
@@ -771,7 +771,7 @@ Bottle AddressEvent3DFeatures::encode()
 
 
 /**************************************************************************/
-Property AddressEvent3DFeatures::getContent()
+Property AddressEvent3DFeatures::getContent() const
 {
     Property prop=AddressEvent3D::getContent();
     prop.put("orientation",orientation);
@@ -860,7 +860,7 @@ bool ClusterEvent::operator==(const ClusterEvent &event)
 
 
 /**************************************************************************/
-Bottle ClusterEvent::encode()
+Bottle ClusterEvent::encode() const
 {
     int word0=(8<<26)|((numAE&0x03ff)<<16)|((yCog&0xff)<<8)|((xCog&0x7f)<<1)|(channel&0x01);
 
@@ -871,7 +871,7 @@ Bottle ClusterEvent::encode()
 
 
 /**************************************************************************/
-Property ClusterEvent::getContent()
+Property ClusterEvent::getContent() const
 {
     Property prop;
     prop.put("type",type.c_str());
@@ -925,7 +925,7 @@ ClusterEventFeatures1::ClusterEventFeatures1(const Bottle &packets, const int po
 
 
 /**************************************************************************/
-Bottle ClusterEventFeatures1::encode()
+Bottle ClusterEventFeatures1::encode() const
 {
     int word0=(9<<26)|((yCog&0xff)<<8)|((xCog&0x7f)<<1)|(channel&0x01);
     int word1=(10<<26)|(numAE&0x00ffffff);
@@ -1032,7 +1032,7 @@ bool ClusterEventFeatures2::operator==(const ClusterEventFeatures2 &event)
 
 
 /**************************************************************************/
-Bottle ClusterEventFeatures2::encode()
+Bottle ClusterEventFeatures2::encode() const
 {
     int word0=(9<<26)|((yCog&0xff)<<8)|((xCog&0x7f)<<1)|(channel&0x01);
     int word1=(11<<26)|(numAE&0x00ffffff);
@@ -1047,7 +1047,7 @@ Bottle ClusterEventFeatures2::encode()
 
 
 /**************************************************************************/
-Property ClusterEventFeatures2::getContent()
+Property ClusterEventFeatures2::getContent() const
 {
     Property prop=ClusterEventFeatures1::getContent();
     prop.put("shapeType",shapeType);
@@ -1171,7 +1171,7 @@ bool ClusterEventFeatures3::operator==(const ClusterEventFeatures3 &event)
 
 
 /**************************************************************************/
-Bottle ClusterEventFeatures3::encode()
+Bottle ClusterEventFeatures3::encode() const
 {
     int word0=(9<<26)|((yCog&0xff)<<8)|((xCog&0x7f)<<1)|(channel&0x01);
     int word1=(11<<26)|(numAE&0x00ffffff);
@@ -1188,7 +1188,7 @@ Bottle ClusterEventFeatures3::encode()
 
 
 /**************************************************************************/
-Property ClusterEventFeatures3::getContent()
+Property ClusterEventFeatures3::getContent() const
 {
     Property prop=ClusterEventFeatures2::getContent();
     prop.put("shapeProb",shapeProb);
@@ -1277,7 +1277,7 @@ bool ClusterEvent3D::operator==(const ClusterEvent3D &event)
 
 
 /**************************************************************************/
-Bottle ClusterEvent3D::encode()
+Bottle ClusterEvent3D::encode() const
 {
     int word0=(16<<26)|((disparity&0xff)<<16)|((yCog&0xff)<<8)|((xCog&0x7f)<<1)|(channel&0x01);
 
@@ -1288,7 +1288,7 @@ Bottle ClusterEvent3D::encode()
 
 
 /**************************************************************************/
-Property ClusterEvent3D::getContent()
+Property ClusterEvent3D::getContent() const
 {
     Property prop;
     prop.put("type",type.c_str());
@@ -1383,7 +1383,7 @@ bool ClusterEvent3DFeatures1::operator==(const ClusterEvent3DFeatures1 &event)
 
 
 /**************************************************************************/
-Bottle ClusterEvent3DFeatures1::encode()
+Bottle ClusterEvent3DFeatures1::encode() const
 {
     int word0=(17<<26)|((disparity&0xff)<<16)|((yCog&0xff)<<8)|((xCog&0x7f)<<1)|(channel&0x01);
     int word1=(10<<26)|(numAE&0x00ffffff);
@@ -1396,7 +1396,7 @@ Bottle ClusterEvent3DFeatures1::encode()
 
 
 /**************************************************************************/
-Property ClusterEvent3DFeatures1::getContent()
+Property ClusterEvent3DFeatures1::getContent() const
 {
     Property prop=ClusterEvent3D::getContent();
     prop.put("numAE",numAE);
@@ -1506,7 +1506,7 @@ bool ClusterEvent3DFeatures2::operator==(const ClusterEvent3DFeatures2 &event)
 
 
 /**************************************************************************/
-Bottle ClusterEvent3DFeatures2::encode()
+Bottle ClusterEvent3DFeatures2::encode() const
 {
     int word0=(17<<26)|((disparity&0xff)<<16)|((yCog&0xff)<<8)|((xCog&0x7f)<<1)|(channel&0x01);
     int word1=(11<<26)|(numAE&0x00ffffff);
@@ -1521,7 +1521,7 @@ Bottle ClusterEvent3DFeatures2::encode()
 
 
 /**************************************************************************/
-Property ClusterEvent3DFeatures2::getContent()
+Property ClusterEvent3DFeatures2::getContent() const
 {
     Property prop=ClusterEvent3DFeatures1::getContent();
     prop.put("shapeType",shapeType);
@@ -1651,7 +1651,7 @@ bool ClusterEvent3DFeatures3::operator==(const ClusterEvent3DFeatures3 &event)
 
 
 /**************************************************************************/
-Bottle ClusterEvent3DFeatures3::encode()
+Bottle ClusterEvent3DFeatures3::encode() const
 {
     int word0=(17<<26)|((disparity&0xff)<<16)|((yCog&0xff)<<8)|((xCog&0x7f)<<1)|(channel&0x01);
     int word1=(11<<26)|(numAE&0x00ffffff);
@@ -1668,7 +1668,7 @@ Bottle ClusterEvent3DFeatures3::encode()
 
 
 /**************************************************************************/
-Property ClusterEvent3DFeatures3::getContent()
+Property ClusterEvent3DFeatures3::getContent() const
 {
     Property prop=ClusterEvent3DFeatures2::getContent();
     prop.put("shapeProb",shapeProb);

@@ -42,13 +42,13 @@ protected:
 
 public:
     eEvent() : valid(false), type("") { }
-    bool isValid()        { return valid; }
-    std::string getType() { return type;  }
+    bool isValid() const        { return valid; }
+    std::string getType() const { return type;  }
 
-    virtual int getLength()=0;
+    virtual int getLength() const=0;
     virtual bool operator==(const eEvent &event)=0;
-    virtual yarp::os::Bottle encode()=0;
-    virtual yarp::os::Property getContent()=0;
+    virtual yarp::os::Bottle   encode() const=0;
+    virtual yarp::os::Property getContent() const=0;
 
     static bool decode(const yarp::os::Bottle &packets, eEventQueue &events);
 };
@@ -91,13 +91,13 @@ public:
     TimeStamp &operator=(const TimeStamp &event);
     bool operator==(const TimeStamp &event);    
 
-    int getStamp()                 { return stamp;      }
+    int getStamp() const           { return stamp;      }
     void setStamp(const int stamp) { this->stamp=stamp; }
 
-    int getLength() { return 1; }
+    int getLength() const { return 1; }
     bool operator==(const eEvent &event) { return operator==(dynamic_cast<const TimeStamp&>(event)); }
-    yarp::os::Bottle   encode();
-    yarp::os::Property getContent();
+    yarp::os::Bottle   encode() const;
+    yarp::os::Property getContent() const;
 };
 
 
@@ -118,20 +118,20 @@ public:
     AddressEvent &operator=(const AddressEvent &event);
     bool operator==(const AddressEvent &event);
 
-    int getChannel()                     { return channel;          }
-    int getPolarity()                    { return polarity;         }
-    int getX()                           { return x;                }
-    int getY()                           { return y;                }
+    int getChannel() const               { return channel;          }
+    int getPolarity() const              { return polarity;         }
+    int getX() const                     { return x;                }
+    int getY() const                     { return y;                }
 
     void setChannel(const int channel)   { this->channel=channel;   }
     void setPolarity(const int polarity) { this->polarity=polarity; }
     void setX(const int x)               { this->x=x;               }
     void setY(const int y)               { this->y=y;               }
 
-    int getLength() { return 1; }
+    int getLength() const { return 1; }
     bool operator==(const eEvent &event) { return operator==(dynamic_cast<const AddressEvent&>(event)); }
-    yarp::os::Bottle   encode();
-    yarp::os::Property getContent();
+    yarp::os::Bottle   encode() const ;
+    yarp::os::Property getContent() const;
 };
 
 
@@ -151,18 +151,18 @@ public:
     AddressEventFeatures &operator=(const AddressEventFeatures &event);
     bool operator==(const AddressEventFeatures &event);
 
-    int getOrientation()                       { return orientation;            }
-    int getXFlow()                             { return xFlow;                  }
-    int getYFlow()                             { return yFlow;                  }
+    int getOrientation() const                 { return orientation;            }
+    int getXFlow() const                       { return xFlow;                  }
+    int getYFlow() const                       { return yFlow;                  }
 
     void setOrientation(const int orientation) { this->orientation=orientation; }
     void setXFlow(const int xFlow)             { this->xFlow=xFlow;             }
     void setYFlow(const int yFlow)             { this->yFlow=yFlow;             }
 
-    int getLength() { return 2; }
+    int getLength() const { return 2; }
     bool operator==(const eEvent &event) { return operator==(dynamic_cast<const AddressEventFeatures&>(event)); }
-    yarp::os::Bottle   encode();
-    yarp::os::Property getContent();
+    yarp::os::Bottle   encode() const;
+    yarp::os::Property getContent() const;
 };
 
 
@@ -183,20 +183,20 @@ public:
     AddressEvent3D &operator=(const AddressEvent3D &event);
     bool operator==(const AddressEvent3D &event);
 
-    int getDisparity()                     { return disparity;          }
-    int getPolarity()                      { return polarity;           }
-    int getX()                             { return x;                  }
-    int getY()                             { return y;                  }
+    int getDisparity() const               { return disparity;          }
+    int getPolarity() const                { return polarity;           }
+    int getX() const                       { return x;                  }
+    int getY() const                       { return y;                  }
 
     void setDisparity(const int disparity) { this->disparity=disparity; }
     void setPolarity(const int polarity)   { this->polarity=polarity;   }
     void setX(const int x)                 { this->x=x;                 }
     void setY(const int y)                 { this->y=y;                 }
 
-    int getLength() { return 1; }
+    int getLength() const { return 1; }
     bool operator==(const eEvent &event) { return operator==(dynamic_cast<const AddressEvent3D&>(event)); }
-    yarp::os::Bottle   encode();
-    yarp::os::Property getContent();
+    yarp::os::Bottle   encode() const;
+    yarp::os::Property getContent() const;
 };
 
 
@@ -216,18 +216,18 @@ public:
     AddressEvent3DFeatures &operator=(const AddressEvent3DFeatures &event);
     bool operator==(const AddressEvent3DFeatures &event);
 
-    int getOrientation()                       { return orientation;            }
-    int getXFlow()                             { return xFlow;                  }
-    int getYFlow()                             { return yFlow;                  }
+    int getOrientation() const                 { return orientation;            }
+    int getXFlow() const                       { return xFlow;                  }
+    int getYFlow() const                       { return yFlow;                  }
 
     void setOrientation(const int orientation) { this->orientation=orientation; }
     void setXFlow(const int xFlow)             { this->xFlow=xFlow;             }
     void setYFlow(const int yFlow)             { this->yFlow=yFlow;             }
 
-    int getLength() { return 2; }
+    int getLength() const { return 2; }
     bool operator==(const eEvent &event) { return operator==(dynamic_cast<const AddressEvent3DFeatures&>(event)); }
-    yarp::os::Bottle   encode();
-    yarp::os::Property getContent();
+    yarp::os::Bottle   encode() const;
+    yarp::os::Property getContent() const;
 };
 
 
@@ -248,20 +248,20 @@ public:
     ClusterEvent &operator=(const ClusterEvent &event);
     bool operator==(const ClusterEvent &event);
 
-    int getChannel()                   { return channel;        }
-    int getNumAE()                     { return numAE;          }
-    int getXCog()                      { return xCog;           }
-    int getYCog()                      { return yCog;           }
+    int getChannel() const             { return channel;        }
+    int getNumAE() const               { return numAE;          }
+    int getXCog() const                { return xCog;           }
+    int getYCog() const                { return yCog;           }
 
     void setChannel(const int channel) { this->channel=channel; }
     void setNumAE(const int numAE)     { this->numAE=numAE;     }
     void setXCog(const int xCog)       { this->xCog=xCog;       }
     void setYCog(const int yCog)       { this->yCog=yCog;       }
 
-    int getLength() { return 1; }
+    int getLength() const { return 1; }
     bool operator==(const eEvent &event) { return operator==(dynamic_cast<const ClusterEvent&>(event)); }
-    yarp::os::Bottle   encode();
-    yarp::os::Property getContent();
+    yarp::os::Bottle   encode() const;
+    yarp::os::Property getContent() const;
 };
 
 
@@ -272,8 +272,8 @@ public:
     ClusterEventFeatures1();
     ClusterEventFeatures1(const yarp::os::Bottle &packets, const int pos=0);
 
-    int getLength() { return 2; }
-    yarp::os::Bottle encode();
+    int getLength() const { return 2; }
+    yarp::os::Bottle encode() const;
 };
 
 
@@ -293,18 +293,18 @@ public:
     ClusterEventFeatures2 &operator=(const ClusterEventFeatures2 &event);
     bool operator==(const ClusterEventFeatures2 &event);
 
-    int getShapeType()                     { return shapeType;          }
-    int getXSize()                         { return xSize;              }
-    int getYSize()                         { return ySize;              }
+    int getShapeType() const               { return shapeType;          }
+    int getXSize() const                   { return xSize;              }
+    int getYSize() const                   { return ySize;              }
 
     void setShapeType(const int shapeType) { this->shapeType=shapeType; }
     void setXSize(const int xSize)         { this->xSize=xSize;         }
     void setYSize(const int ySize)         { this->ySize=ySize;         }
 
-    int getLength() { return 3; }
+    int getLength() const { return 3; }
     bool operator==(const eEvent &event) { return operator==(dynamic_cast<const ClusterEventFeatures2&>(event)); }
-    yarp::os::Bottle   encode();
-    yarp::os::Property getContent();
+    yarp::os::Bottle   encode() const;
+    yarp::os::Property getContent() const;
 };
 
 
@@ -324,18 +324,18 @@ public:
     ClusterEventFeatures3 &operator=(const ClusterEventFeatures3 &event);
     bool operator==(const ClusterEventFeatures3 &event);
 
-    int getShapeProb()                     { return shapeProb;          }
-    int getXVel()                          { return xVel;               }
-    int getYVel()                          { return yVel;               }
+    int getShapeProb() const               { return shapeProb;          }
+    int getXVel() const                    { return xVel;               }
+    int getYVel() const                    { return yVel;               }
 
     void setShapeProb(const int shapeProb) { this->shapeProb=shapeProb; }
     void setXVel(const int xVel)           { this->xVel=xVel;           }
     void setYVel(const int yVel)           { this->yVel=yVel;           }
 
-    int getLength() { return 4; }
+    int getLength() const { return 4; }
     bool operator==(const eEvent &event) { return operator==(dynamic_cast<const ClusterEventFeatures3&>(event)); }
-    yarp::os::Bottle   encode();
-    yarp::os::Property getContent();
+    yarp::os::Bottle   encode() const;
+    yarp::os::Property getContent() const;
 };
 
 
@@ -356,20 +356,20 @@ public:
     ClusterEvent3D &operator=(const ClusterEvent3D &event);
     bool operator==(const ClusterEvent3D &event);
 
-    int getChannel()                       { return channel;            }
-    int getDisparity()                     { return disparity;          }
-    int getXCog()                          { return xCog;               }
-    int getYCog()                          { return yCog;               }
+    int getChannel() const                 { return channel;            }
+    int getDisparity() const               { return disparity;          }
+    int getXCog() const                    { return xCog;               }
+    int getYCog() const                    { return yCog;               }
 
     void setChannel(const int channel)     { this->channel=channel;     }
     void setDisparity(const int disparity) { this->disparity=disparity; }
     void setXCog(const int xCog)           { this->xCog=xCog;           }
     void setYCog(const int yCog)           { this->yCog=yCog;           }
 
-    int getLength() { return 1; }
+    int getLength() const { return 1; }
     bool operator==(const eEvent &event) { return operator==(dynamic_cast<const ClusterEvent3D&>(event)); }
-    yarp::os::Bottle   encode();
-    yarp::os::Property getContent();
+    yarp::os::Bottle   encode() const;
+    yarp::os::Property getContent() const;
 };
 
 
@@ -387,13 +387,13 @@ public:
     ClusterEvent3DFeatures1 &operator=(const ClusterEvent3DFeatures1 &event);
     bool operator==(const ClusterEvent3DFeatures1 &event);
 
-    int  getNumAE()                { return numAE;      }
+    int  getNumAE() const          { return numAE;      }
     void setNumAE(const int numAE) { this->numAE=numAE; }
 
-    int getLength() { return 2; }
+    int getLength() const { return 2; }
     bool operator==(const eEvent &event) { return operator==(dynamic_cast<const ClusterEvent3DFeatures1&>(event)); }
-    yarp::os::Bottle   encode();
-    yarp::os::Property getContent();
+    yarp::os::Bottle   encode() const;
+    yarp::os::Property getContent() const;
 };
 
 
@@ -413,18 +413,18 @@ public:
     ClusterEvent3DFeatures2 &operator=(const ClusterEvent3DFeatures2 &event);
     bool operator==(const ClusterEvent3DFeatures2 &event);
 
-    int getShapeType()                     { return shapeType;          }
-    int getXSize()                         { return xSize;              }
-    int getYSize()                         { return ySize;              }
+    int getShapeType() const               { return shapeType;          }
+    int getXSize() const                   { return xSize;              }
+    int getYSize() const                   { return ySize;              }
 
     void setShapeType(const int shapeType) { this->shapeType=shapeType; }
     void setXSize(const int xSize)         { this->xSize=xSize;         }
     void setYSize(const int ySize)         { this->ySize=ySize;         }
 
-    int getLength() { return 3; }
+    int getLength() const { return 3; }
     bool operator==(const eEvent &event) { return operator==(dynamic_cast<const ClusterEvent3DFeatures2&>(event)); }
-    yarp::os::Bottle   encode();
-    yarp::os::Property getContent();
+    yarp::os::Bottle   encode() const;
+    yarp::os::Property getContent() const;
 };
 
 
@@ -444,18 +444,18 @@ public:
     ClusterEvent3DFeatures3 &operator=(const ClusterEvent3DFeatures3 &event);
     bool operator==(const ClusterEvent3DFeatures3 &event);
 
-    int getShapeProb()                     { return shapeProb;          }
-    int getXVel()                          { return xVel;               }
-    int getYVel()                          { return yVel;               }
+    int getShapeProb() const               { return shapeProb;          }
+    int getXVel() const                    { return xVel;               }
+    int getYVel() const                    { return yVel;               }
 
     void setShapeProb(const int shapeProb) { this->shapeProb=shapeProb; }
     void setXVel(const int xVel)           { this->xVel=xVel;           }
     void setYVel(const int yVel)           { this->yVel=yVel;           }
 
-    int getLength() { return 4; }
+    int getLength() const { return 4; }
     bool operator==(const eEvent &event) { return operator==(dynamic_cast<const ClusterEvent3DFeatures3&>(event)); }
-    yarp::os::Bottle   encode();
-    yarp::os::Property getContent();
+    yarp::os::Bottle   encode() const;
+    yarp::os::Property getContent() const;
 };
 
 
