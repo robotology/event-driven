@@ -154,6 +154,62 @@ eEvent *factoryClusterEventFeatures3(const Bottle &packets, const int pos=0)
 }
 
 
+/**************************************************************************/
+eEvent *factoryClusterEvent3D(const Bottle &packets, const int pos=0)
+{
+    ClusterEvent3D *pEvent=new ClusterEvent3D(packets,pos);
+    if (!pEvent->isValid())
+    {
+        delete pEvent;
+        return NULL;
+    }
+    else
+        return static_cast<eEvent*>(pEvent);
+}
+
+
+/**************************************************************************/
+eEvent *factoryClusterEvent3DFeatures1(const Bottle &packets, const int pos=0)
+{
+    ClusterEvent3DFeatures1 *pEvent=new ClusterEvent3DFeatures1(packets,pos);
+    if (!pEvent->isValid())
+    {
+        delete pEvent;
+        return NULL;
+    }
+    else
+        return static_cast<eEvent*>(pEvent);
+}
+
+
+/**************************************************************************/
+eEvent *factoryClusterEvent3DFeatures2(const Bottle &packets, const int pos=0)
+{
+    ClusterEvent3DFeatures2 *pEvent=new ClusterEvent3DFeatures2(packets,pos);
+    if (!pEvent->isValid())
+    {
+        delete pEvent;
+        return NULL;
+    }
+    else
+        return static_cast<eEvent*>(pEvent);
+}
+
+
+/**************************************************************************/
+eEvent *factoryClusterEvent3DFeatures3(const Bottle &packets, const int pos=0)
+{
+    ClusterEvent3DFeatures3 *pEvent=new ClusterEvent3DFeatures3(packets,pos);
+    if (!pEvent->isValid())
+    {
+        delete pEvent;
+        return NULL;
+    }
+    else
+        return static_cast<eEvent*>(pEvent);
+}
+
+
 }
 
 }
@@ -166,15 +222,19 @@ bool eEvent::decode(const Bottle &packets, eEventQueue &events)
     while (pos<packets.size())
     {
         eEvent *pEvent=NULL;
-        if (pEvent=factoryTimeStamp(packets,pos))                   { }
-        else if (pEvent=factoryAddressEvent(packets,pos))           { }
-        else if (pEvent=factoryAddressEventFeatures(packets,pos))   { }
-        else if (pEvent=factoryAddressEvent3D(packets,pos))         { }
-        else if (pEvent=factoryAddressEvent3DFeatures(packets,pos)) { }
-        else if (pEvent=factoryClusterEvent(packets,pos))           { }
-        else if (pEvent=factoryClusterEventFeatures1(packets,pos))  { }
-        else if (pEvent=factoryClusterEventFeatures2(packets,pos))  { }
-        else if (pEvent=factoryClusterEventFeatures3(packets,pos))  { }
+        if (pEvent=factoryTimeStamp(packets,pos))                    { }
+        else if (pEvent=factoryAddressEvent(packets,pos))            { }
+        else if (pEvent=factoryAddressEventFeatures(packets,pos))    { }
+        else if (pEvent=factoryAddressEvent3D(packets,pos))          { }
+        else if (pEvent=factoryAddressEvent3DFeatures(packets,pos))  { }
+        else if (pEvent=factoryClusterEvent(packets,pos))            { }
+        else if (pEvent=factoryClusterEventFeatures1(packets,pos))   { }
+        else if (pEvent=factoryClusterEventFeatures2(packets,pos))   { }
+        else if (pEvent=factoryClusterEventFeatures3(packets,pos))   { }
+        else if (pEvent=factoryClusterEvent3D(packets,pos))          { }
+        else if (pEvent=factoryClusterEvent3DFeatures1(packets,pos)) { }
+        else if (pEvent=factoryClusterEvent3DFeatures2(packets,pos)) { }
+        else if (pEvent=factoryClusterEvent3DFeatures3(packets,pos)) { }
 
         if (pEvent==NULL)
             return false;
@@ -317,17 +377,16 @@ AddressEvent::AddressEvent(const Bottle &packets, const int pos)
         // check type and fill fields
         if ((word0>>26)==0)
         {
-            int shrw=word0;
-            polarity=shrw&0x01;
+            polarity=word0&0x01;
 
-            shrw>>=1;
-            x=shrw&0x7f;
+            word0>>=1;
+            x=word0&0x7f;
 
-            shrw>>=7;
-            y=shrw&0xff;
+            word0>>=7;
+            y=word0&0xff;
 
-            shrw>>=8;
-            channel=shrw&0x01;
+            word0>>=8;
+            channel=word0&0x01;
 
             type="AE";
             valid=true;
@@ -423,27 +482,25 @@ AddressEventFeatures::AddressEventFeatures(const Bottle &packets, const int pos)
         if (((word0>>26)==2)&&((word1>>26)==3))
         {
             // word0
-            int shrw=word0;
-            polarity=shrw&0x01;
+            polarity=word0&0x01;
 
-            shrw>>=1;
-            x=shrw&0x7f;
+            word0>>=1;
+            x=word0&0x7f;
 
-            shrw>>=7;
-            y=shrw&0xff;
+            word0>>=7;
+            y=word0&0xff;
 
-            shrw>>=8;
-            channel=shrw&0x01;
+            word0>>=8;
+            channel=word0&0x01;
 
             // word1
-            shrw=word1;
-            orientation=shrw&0xff;
+            orientation=word1&0xff;
 
-            shrw>>=8;
-            xFlow=shrw&0xff;
+            word1>>=8;
+            xFlow=word1&0xff;
 
-            shrw>>=8;
-            yFlow=shrw&0xff;
+            word1>>=8;
+            yFlow=word1&0xff;
 
             type="AE-F";
             valid=true;
@@ -540,17 +597,16 @@ AddressEvent3D::AddressEvent3D(const Bottle &packets, const int pos)
         // check type and fill fields
         if ((word0>>26)==1)
         {
-            int shrw=word0;
-            polarity=shrw&0x01;
+            polarity=word0&0x01;
 
-            shrw>>=1;
-            x=shrw&0x7f;
+            word0>>=1;
+            x=word0&0x7f;
 
-            shrw>>=7;
-            y=shrw&0xff;
+            word0>>=7;
+            y=word0&0xff;
 
-            shrw>>=8;
-            disparity=shrw&0xff;
+            word0>>=8;
+            disparity=word0&0xff;
 
             type="3D-AE";
             valid=true;
@@ -646,27 +702,25 @@ AddressEvent3DFeatures::AddressEvent3DFeatures(const Bottle &packets, const int 
         if (((word0>>26)==4)&&((word1>>26)==3))
         {
             // word0
-            int shrw=word0;
-            polarity=shrw&0x01;
+            polarity=word0&0x01;
 
-            shrw>>=1;
-            x=shrw&0x7f;
+            word0>>=1;
+            x=word0&0x7f;
 
-            shrw>>=7;
-            y=shrw&0xff;
+            word0>>=7;
+            y=word0&0xff;
 
-            shrw>>=8;
-            disparity=shrw&0xff;
+            word0>>=8;
+            disparity=word0&0xff;
 
             // word1
-            shrw=word1;
-            orientation=shrw&0xff;
+            orientation=word1&0xff;
 
-            shrw>>=8;
-            xFlow=shrw&0xff;
+            word1>>=8;
+            xFlow=word1&0xff;
 
-            shrw>>=8;
-            yFlow=shrw&0xff;
+            word1>>=8;
+            yFlow=word1&0xff;
 
             type="3D-AE-F";
             valid=true;
@@ -764,17 +818,16 @@ ClusterEvent::ClusterEvent(const Bottle &packets, const int pos)
         // check type and fill fields
         if ((word0>>26)==8)
         {
-            int shrw=word0;
-            channel=shrw&0x01;
+            channel=word0&0x01;
 
-            shrw>>=1;
-            xCog=shrw&0x7f;
+            word0>>=1;
+            xCog=word0&0x7f;
 
-            shrw>>=7;
-            yCog=shrw&0xff;
+            word0>>=7;
+            yCog=word0&0xff;
 
-            shrw>>=8;
-            numAE=shrw&0xff;
+            word0>>=8;
+            numAE=word0&0x03ff;
 
             type="CLE";
             valid=true;
@@ -808,7 +861,7 @@ bool ClusterEvent::operator==(const ClusterEvent &event)
 /**************************************************************************/
 Bottle ClusterEvent::encode()
 {
-    int word0=(8<<26)|((numAE&0xff)<<16)|((yCog&0xff)<<8)|((xCog&0x7f)<<1)|(channel&0x01);
+    int word0=(8<<26)|((numAE&0x03ff)<<16)|((yCog&0xff)<<8)|((xCog&0x7f)<<1)|(channel&0x01);
 
     Bottle ret;
     ret.addInt(word0);
@@ -852,18 +905,16 @@ ClusterEventFeatures1::ClusterEventFeatures1(const Bottle &packets, const int po
         if (((word0>>26)==9)&&((word1>>26)==10))
         {
             // word0
-            int shrw=word0;
-            channel=shrw&0x01;
+            channel=word0&0x01;
 
-            shrw>>=1;
-            xCog=shrw&0x7f;
+            word0>>=1;
+            xCog=word0&0x7f;
 
-            shrw>>=7;
-            yCog=shrw&0xff;
+            word0>>=7;
+            yCog=word0&0xff;
 
             // word1
-            shrw=word1;
-            numAE=shrw&0x00ffffff;
+            numAE=word1&0x00ffffff;
 
             type="CLE-F1";
             valid=true;
@@ -926,28 +977,25 @@ ClusterEventFeatures2::ClusterEventFeatures2(const Bottle &packets, const int po
         if (((word0>>26)==9)&&((word1>>26)==11)&&((word2>>26)==12))
         {
             // word0
-            int shrw=word0;
-            channel=shrw&0x01;
+            channel=word0&0x01;
 
-            shrw>>=1;
-            xCog=shrw&0x7f;
+            word0>>=1;
+            xCog=word0&0x7f;
 
-            shrw>>=7;
-            yCog=shrw&0xff;
+            word0>>=7;
+            yCog=word0&0xff;
 
             // word1
-            shrw=word1;
-            numAE=shrw&0x00ffffff;
+            numAE=word1&0x00ffffff;
 
             // word2
-            shrw=word2;
-            xSize=shrw&0xff;
+            xSize=word2&0xff;
 
-            shrw>>=8;
-            ySize=shrw&0xff;
+            word2>>=8;
+            ySize=word2&0xff;
 
-            shrw>>=8;
-            shapeType=shrw&0xff;
+            word2>>=8;
+            shapeType=word2&0xff;
 
             type="CLE-F2";
             valid=true;
@@ -1009,18 +1057,6 @@ Property ClusterEventFeatures2::getContent()
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 /**************************************************************************/
 ClusterEventFeatures3::ClusterEventFeatures3() : ClusterEventFeatures2()
 {
@@ -1067,38 +1103,34 @@ ClusterEventFeatures3::ClusterEventFeatures3(const Bottle &packets, const int po
             ((word2>>26)==13)&&((word3>>26)==14))
         {
             // word0
-            int shrw=word0;
-            channel=shrw&0x01;
+            channel=word0&0x01;
 
-            shrw>>=1;
-            xCog=shrw&0x7f;
+            word0>>=1;
+            xCog=word0&0x7f;
 
-            shrw>>=7;
-            yCog=shrw&0xff;
+            word0>>=7;
+            yCog=word0&0xff;
 
             // word1
-            shrw=word1;
-            numAE=shrw&0x00ffffff;
+            numAE=word1&0x00ffffff;
 
             // word2
-            shrw=word2;
-            xSize=shrw&0xff;
+            xSize=word2&0xff;
 
-            shrw>>=8;
-            ySize=shrw&0xff;
+            word2>>=8;
+            ySize=word2&0xff;
 
-            shrw>>=8;
-            shapeType=shrw&0xff;
+            word2>>=8;
+            shapeType=word2&0xff;
 
             // word3
-            shrw=word3;
-            xVel=shrw&0xff;
+            xVel=word3&0xff;
 
-            shrw>>=8;
-            yVel=shrw&0xff;
+            word3>>=8;
+            yVel=word3&0xff;
 
-            shrw>>=8;
-            shapeProb=shrw&0xff;
+            word3>>=8;
+            shapeProb=word3&0xff;
 
             type="CLE-F3";
             valid=true;
@@ -1158,6 +1190,486 @@ Bottle ClusterEventFeatures3::encode()
 Property ClusterEventFeatures3::getContent()
 {
     Property prop=ClusterEventFeatures2::getContent();
+    prop.put("shapeProb",shapeProb);
+    prop.put("xVel",xVel);
+    prop.put("yVel",yVel);
+
+    return prop;
+}
+
+
+/**************************************************************************/
+ClusterEvent3D::ClusterEvent3D()
+{
+    valid=true;
+    type="3D-CLE";
+    channel=0;
+    disparity=0;
+    xCog=0;
+    yCog=0;
+}
+
+
+/**************************************************************************/
+ClusterEvent3D::ClusterEvent3D(const ClusterEvent3D &event)
+{
+    valid=event.valid;
+    type=event.type;
+    channel=event.channel;
+    disparity=event.disparity;
+    xCog=event.xCog;
+    yCog=event.yCog;
+}
+
+
+/**************************************************************************/
+ClusterEvent3D::ClusterEvent3D(const Bottle &packets, const int pos)
+{
+    valid=false;
+
+    // check length
+    if ((pos+getLength()-1)<packets.size())
+    {
+        int word0=packets.get(pos).asInt();
+
+        // check type and fill fields
+        if ((word0>>26)==16)
+        {
+            channel=word0&0x01;
+
+            word0>>=1;
+            xCog=word0&0x7f;
+
+            word0>>=7;
+            yCog=word0&0xff;
+
+            word0>>=8;
+            disparity=word0&0xff;
+
+            type="3D-CLE";
+            valid=true;
+        }
+    }
+}
+
+
+/**************************************************************************/
+ClusterEvent3D &ClusterEvent3D::operator=(const ClusterEvent3D &event)
+{
+    valid=event.valid;
+    type=event.type;
+    channel=event.channel;
+    disparity=event.disparity;
+    xCog=event.xCog;
+    yCog=event.yCog;
+
+    return *this;
+}
+
+
+/**************************************************************************/
+bool ClusterEvent3D::operator==(const ClusterEvent3D &event)
+{
+    return ((valid==event.valid)&&(type==event.type)&&(channel==event.channel)&&
+            (disparity==event.disparity)&&(xCog==event.xCog)&&(yCog==event.yCog));
+}
+
+
+/**************************************************************************/
+Bottle ClusterEvent3D::encode()
+{
+    int word0=(16<<26)|((disparity&0xff)<<16)|((yCog&0xff)<<8)|((xCog&0x7f)<<1)|(channel&0x01);
+
+    Bottle ret;
+    ret.addInt(word0);
+    return ret;
+}
+
+
+/**************************************************************************/
+Property ClusterEvent3D::getContent()
+{
+    Property prop;
+    prop.put("type",type.c_str());
+    prop.put("channel",channel);
+    prop.put("disparity",disparity);
+    prop.put("xCog",xCog);
+    prop.put("yCog",yCog);
+
+    return prop;
+}
+
+
+/**************************************************************************/
+ClusterEvent3DFeatures1::ClusterEvent3DFeatures1() : ClusterEvent3D()
+{
+    type="3D-CLE-F1";
+    numAE=0;
+}
+
+
+/**************************************************************************/
+ClusterEvent3DFeatures1::ClusterEvent3DFeatures1(const ClusterEvent3DFeatures1 &event)
+{
+    valid=event.valid;
+    type=event.type;
+    channel=event.channel;
+    disparity=event.disparity;
+    numAE=event.numAE;
+    xCog=event.xCog;
+    yCog=event.yCog;
+}
+
+
+/**************************************************************************/
+ClusterEvent3DFeatures1::ClusterEvent3DFeatures1(const Bottle &packets, const int pos)
+{
+    valid=false;
+
+    // check length
+    if ((pos+getLength()-1)<packets.size())
+    {
+        int word0=packets.get(pos).asInt();
+        int word1=packets.get(pos+1).asInt();
+
+        // check type and fill fields
+        if (((word0>>26)==17)&&((word1>>26)==10))
+        {
+            // word0
+            channel=word0&0x01;
+
+            word0>>=1;
+            xCog=word0&0x7f;
+
+            word0>>=7;
+            yCog=word0&0xff;
+
+            word0>>=8;
+            disparity=word0&0xff;
+
+            // word1
+            numAE=word1&0x00ffffff;
+
+            type="3D-CLE-F1";
+            valid=true;
+        }
+    }
+}
+
+
+/**************************************************************************/
+ClusterEvent3DFeatures1 &ClusterEvent3DFeatures1::operator=(const ClusterEvent3DFeatures1 &event)
+{
+    valid=event.valid;
+    type=event.type;
+    channel=event.channel;
+    disparity=event.disparity;
+    numAE=event.numAE;
+    xCog=event.xCog;
+    yCog=event.yCog;
+
+    return *this;
+}
+
+
+/**************************************************************************/
+bool ClusterEvent3DFeatures1::operator==(const ClusterEvent3DFeatures1 &event)
+{
+    return ((valid==event.valid)&&(type==event.type)&&(channel==event.channel)&&
+            (disparity==event.disparity)&&(numAE==event.numAE)&&
+            (xCog==event.xCog)&&(yCog==event.yCog));
+}
+
+
+/**************************************************************************/
+Bottle ClusterEvent3DFeatures1::encode()
+{
+    int word0=(17<<26)|((disparity&0xff)<<16)|((yCog&0xff)<<8)|((xCog&0x7f)<<1)|(channel&0x01);
+    int word1=(10<<26)|(numAE&0x00ffffff);
+
+    Bottle ret;
+    ret.addInt(word0);
+    ret.addInt(word1);
+    return ret;
+}
+
+
+/**************************************************************************/
+Property ClusterEvent3DFeatures1::getContent()
+{
+    Property prop=ClusterEvent3D::getContent();
+    prop.put("numAE",numAE);
+
+    return prop;
+}
+
+
+/**************************************************************************/
+ClusterEvent3DFeatures2::ClusterEvent3DFeatures2() : ClusterEvent3DFeatures1()
+{
+    type="3D-CLE-F2";
+    shapeType=0;
+    xSize=0;
+    ySize=0;
+}
+
+
+/**************************************************************************/
+ClusterEvent3DFeatures2::ClusterEvent3DFeatures2(const ClusterEvent3DFeatures2 &event)
+{
+    valid=event.valid;
+    type=event.type;
+    channel=event.channel;
+    disparity=event.disparity;
+    numAE=event.numAE;
+    xCog=event.xCog;
+    yCog=event.yCog;
+    shapeType=event.shapeType;
+    xSize=event.xSize;
+    ySize=event.ySize;
+}
+
+
+/**************************************************************************/
+ClusterEvent3DFeatures2::ClusterEvent3DFeatures2(const Bottle &packets, const int pos)
+{
+    valid=false;
+
+    // check length
+    if ((pos+getLength()-1)<packets.size())
+    {
+        int word0=packets.get(pos).asInt();
+        int word1=packets.get(pos+1).asInt();
+        int word2=packets.get(pos+2).asInt();
+
+        // check type and fill fields
+        if (((word0>>26)==17)&&((word1>>26)==11)&&((word2>>26)==12))
+        {
+            // word0
+            channel=word0&0x01;
+
+            word0>>=1;
+            xCog=word0&0x7f;
+
+            word0>>=7;
+            yCog=word0&0xff;
+
+            word0>>=8;
+            disparity=word0&0xff;
+
+            // word1
+            numAE=word1&0x00ffffff;
+
+            // word2
+            xSize=word2&0xff;
+
+            word2>>=8;
+            ySize=word2&0xff;
+
+            word2>>=8;
+            shapeType=word2&0xff;
+
+            type="3D-CLE-F2";
+            valid=true;
+        }
+    }
+}
+
+
+/**************************************************************************/
+ClusterEvent3DFeatures2 &ClusterEvent3DFeatures2::operator=(const ClusterEvent3DFeatures2 &event)
+{
+    valid=event.valid;
+    type=event.type;
+    channel=event.channel;
+    disparity=event.disparity;
+    numAE=event.numAE;
+    xCog=event.xCog;
+    yCog=event.yCog;
+    shapeType=event.shapeType;
+    xSize=event.xSize;
+    ySize=event.ySize;
+
+    return *this;
+}
+
+
+/**************************************************************************/
+bool ClusterEvent3DFeatures2::operator==(const ClusterEvent3DFeatures2 &event)
+{
+    return ((valid==event.valid)&&(type==event.type)&&(channel==event.channel)&&
+            (disparity==event.disparity)&&(numAE==event.numAE)&&(xCog==event.xCog)&&
+            (yCog==event.yCog)&&(shapeType==event.shapeType)&&(xSize==event.xSize)&&
+            (ySize==event.ySize));
+}
+
+
+/**************************************************************************/
+Bottle ClusterEvent3DFeatures2::encode()
+{
+    int word0=(17<<26)|((disparity&0xff)<<16)|((yCog&0xff)<<8)|((xCog&0x7f)<<1)|(channel&0x01);
+    int word1=(11<<26)|(numAE&0x00ffffff);
+    int word2=(12<<26)|((shapeType&0xff)<<16)|((ySize&0xff)<<8)|(xSize&0xff);
+
+    Bottle ret;
+    ret.addInt(word0);
+    ret.addInt(word1);
+    ret.addInt(word2);
+    return ret;
+}
+
+
+/**************************************************************************/
+Property ClusterEvent3DFeatures2::getContent()
+{
+    Property prop=ClusterEvent3DFeatures1::getContent();
+    prop.put("shapeType",shapeType);
+    prop.put("xSize",xSize);
+    prop.put("ySize",ySize);
+
+    return prop;
+}
+
+
+/**************************************************************************/
+ClusterEvent3DFeatures3::ClusterEvent3DFeatures3() : ClusterEvent3DFeatures2()
+{
+    type="3D-CLE-F3";
+    shapeProb=0;
+    xVel=0;
+    yVel=0;
+}
+
+
+/**************************************************************************/
+ClusterEvent3DFeatures3::ClusterEvent3DFeatures3(const ClusterEvent3DFeatures3 &event)
+{
+    valid=event.valid;
+    type=event.type;
+    channel=event.channel;
+    disparity=event.disparity;
+    numAE=event.numAE;
+    xCog=event.xCog;
+    yCog=event.yCog;
+    shapeType=event.shapeType;
+    xSize=event.xSize;
+    ySize=event.ySize;
+    shapeProb=event.shapeProb;
+    xVel=event.xVel;
+    yVel=event.yVel;
+}
+
+
+/**************************************************************************/
+ClusterEvent3DFeatures3::ClusterEvent3DFeatures3(const Bottle &packets, const int pos)
+{
+    valid=false;
+
+    // check length
+    if ((pos+getLength()-1)<packets.size())
+    {
+        int word0=packets.get(pos).asInt();
+        int word1=packets.get(pos+1).asInt();
+        int word2=packets.get(pos+2).asInt();
+        int word3=packets.get(pos+3).asInt();
+
+        // check type and fill fields
+        if (((word0>>26)==17)&&((word1>>26)==11)&&
+            ((word2>>26)==13)&&((word3>>26)==14))
+        {
+            // word0
+            channel=word0&0x01;
+
+            word0>>=1;
+            xCog=word0&0x7f;
+
+            word0>>=7;
+            yCog=word0&0xff;
+
+            word0>>=8;
+            disparity=word0&0xff;
+
+            // word1
+            numAE=word1&0x00fffff;
+
+            // word2
+            xSize=word2&0xff;
+
+            word2>>=8;
+            ySize=word2&0xff;
+
+            word2>>=8;
+            shapeType=word2&0xff;
+
+            // word3
+            xVel=word3&0xff;
+
+            word3>>=8;
+            yVel=word3&0xff;
+
+            word3>>=8;
+            shapeProb=word3&0xff;
+
+            type="3D-CLE-F3";
+            valid=true;
+        }
+    }
+}
+
+
+/**************************************************************************/
+ClusterEvent3DFeatures3 &ClusterEvent3DFeatures3::operator=(const ClusterEvent3DFeatures3 &event)
+{
+    valid=event.valid;
+    type=event.type;
+    channel=event.channel;
+    disparity=event.disparity;
+    numAE=event.numAE;
+    xCog=event.xCog;
+    yCog=event.yCog;
+    shapeType=event.shapeType;
+    xSize=event.xSize;
+    ySize=event.ySize;
+    shapeProb=event.shapeProb;
+    xVel=event.xVel;
+    yVel=event.yVel;
+
+    return *this;
+}
+
+
+/**************************************************************************/
+bool ClusterEvent3DFeatures3::operator==(const ClusterEvent3DFeatures3 &event)
+{
+    return ((valid==event.valid)&&(type==event.type)&&(channel==event.channel)&&
+            (disparity==event.disparity)&&(numAE==event.numAE)&&(xCog==event.xCog)&&
+            (yCog==event.yCog)&&(shapeType==event.shapeType)&&(xSize==event.xSize)&&
+            (ySize==event.ySize)&&(shapeProb=event.shapeProb)&&(xVel==event.xVel)&&
+            (yVel==event.yVel));
+}
+
+
+/**************************************************************************/
+Bottle ClusterEvent3DFeatures3::encode()
+{
+    int word0=(17<<26)|((disparity&0xff)<<16)|((yCog&0xff)<<8)|((xCog&0x7f)<<1)|(channel&0x01);
+    int word1=(11<<26)|(numAE&0x00ffffff);
+    int word2=(13<<26)|((shapeType&0xff)<<16)|((ySize&0xff)<<8)|(xSize&0xff);
+    int word3=(14<<26)|((shapeProb&0xff)<<16)|((yVel&0xff)<<8)|(xVel&0xff);
+
+    Bottle ret;
+    ret.addInt(word0);
+    ret.addInt(word1);
+    ret.addInt(word2);
+    ret.addInt(word3);
+    return ret;
+}
+
+
+/**************************************************************************/
+Property ClusterEvent3DFeatures3::getContent()
+{
+    Property prop=ClusterEvent3DFeatures2::getContent();
     prop.put("shapeProb",shapeProb);
     prop.put("xVel",xVel);
     prop.put("yVel",yVel);

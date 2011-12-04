@@ -94,7 +94,7 @@ int main()
 
     ClusterEventFeatures2 clef2;
     clef2.setChannel(1);
-    clef2.setNumAE(785675486);
+    clef2.setNumAE(7856754);
     clef2.setXCog(25);
     clef2.setYCog(62);
     clef2.setShapeType(43);
@@ -115,6 +115,46 @@ int main()
     clef3.setYVel(43);
     cout<<clef3.getContent().toString().c_str()<<endl;
 
+    ClusterEvent3D cle3d;
+    cle3d.setChannel(0);
+    cle3d.setDisparity(67);
+    cle3d.setXCog(13);
+    cle3d.setYCog(91);    
+    cout<<cle3d.getContent().toString().c_str()<<endl;
+
+    ClusterEvent3DFeatures1 cle3df1;
+    cle3df1.setChannel(1);
+    cle3df1.setDisparity(68);
+    cle3df1.setNumAE(5767433);
+    cle3df1.setXCog(24);
+    cle3df1.setYCog(73);
+    cout<<cle3df1.getContent().toString().c_str()<<endl;
+
+    ClusterEvent3DFeatures2 cle3df2;
+    cle3df2.setChannel(0);
+    cle3df2.setDisparity(69);
+    cle3df2.setNumAE(7856754);
+    cle3df2.setXCog(51);
+    cle3df2.setYCog(59);
+    cle3df2.setShapeType(44);
+    cle3df2.setXSize(12);
+    cle3df2.setYSize(33);
+    cout<<cle3df2.getContent().toString().c_str()<<endl;
+
+    ClusterEvent3DFeatures3 cle3df3;
+    cle3df3.setChannel(1);
+    cle3df3.setDisparity(70);
+    cle3df3.setNumAE(263543);
+    cle3df3.setXCog(26);
+    cle3df3.setYCog(73);
+    cle3df3.setShapeType(74);
+    cle3df3.setShapeProb(89);
+    cle3df3.setXSize(12);
+    cle3df3.setYSize(9);
+    cle3df3.setXVel(78);
+    cle3df3.setYVel(43);
+    cout<<cle3df3.getContent().toString().c_str()<<endl;
+
     cout<<endl;
 
     // encode events within packets
@@ -128,6 +168,10 @@ int main()
     packets.append(clef1.encode());
     packets.append(clef2.encode());
     packets.append(clef3.encode());
+    packets.append(cle3d.encode());
+    packets.append(cle3df1.encode());
+    packets.append(cle3df2.encode());
+    packets.append(cle3df3.encode());
     printPacket(packets);
 
     // network comes into play here

@@ -324,6 +324,122 @@ public:
 };
 
 
+/**************************************************************************/
+class ClusterEvent3D : public eEvent
+{
+protected:
+    int channel;
+    int disparity;
+    int xCog;
+    int yCog;
+
+public:
+    ClusterEvent3D();
+    ClusterEvent3D(const ClusterEvent3D &event);
+    ClusterEvent3D(const yarp::os::Bottle &packets, const int pos=0);
+
+    ClusterEvent3D &operator=(const ClusterEvent3D &event);
+    bool operator==(const ClusterEvent3D &event);
+
+    int getChannel()                       { return channel;            }
+    int getDisparity()                     { return disparity;          }
+    int getXCog()                          { return xCog;               }
+    int getYCog()                          { return yCog;               }
+
+    void setChannel(const int channel)     { this->channel=channel;     }
+    void setDisparity(const int disparity) { this->disparity=disparity; }
+    void setXCog(const int xCog)           { this->xCog=xCog;           }
+    void setYCog(const int yCog)           { this->yCog=yCog;           }
+
+    int getLength() { return 1; }
+    yarp::os::Bottle   encode();
+    yarp::os::Property getContent();
+};
+
+
+/**************************************************************************/
+class ClusterEvent3DFeatures1 : public ClusterEvent3D
+{
+protected:
+    int numAE;
+
+public:
+    ClusterEvent3DFeatures1();
+    ClusterEvent3DFeatures1(const ClusterEvent3DFeatures1 &event);
+    ClusterEvent3DFeatures1(const yarp::os::Bottle &packets, const int pos=0);
+
+    ClusterEvent3DFeatures1 &operator=(const ClusterEvent3DFeatures1 &event);
+    bool operator==(const ClusterEvent3DFeatures1 &event);
+
+    int  getNumAE()                { return numAE;      }
+    void setNumAE(const int numAE) { this->numAE=numAE; }
+
+    int getLength() { return 2; }
+    yarp::os::Bottle   encode();
+    yarp::os::Property getContent();
+};
+
+
+/**************************************************************************/
+class ClusterEvent3DFeatures2 : public ClusterEvent3DFeatures1
+{
+protected:
+    int shapeType;
+    int xSize;
+    int ySize;
+
+public:
+    ClusterEvent3DFeatures2();
+    ClusterEvent3DFeatures2(const ClusterEvent3DFeatures2 &event);
+    ClusterEvent3DFeatures2(const yarp::os::Bottle &packets, const int pos=0);
+
+    ClusterEvent3DFeatures2 &operator=(const ClusterEvent3DFeatures2 &event);
+    bool operator==(const ClusterEvent3DFeatures2 &event);
+
+    int getShapeType()                     { return shapeType;          }
+    int getXSize()                         { return xSize;              }
+    int getYSize()                         { return ySize;              }
+
+    void setShapeType(const int shapeType) { this->shapeType=shapeType; }
+    void setXSize(const int xSize)         { this->xSize=xSize;         }
+    void setYSize(const int ySize)         { this->ySize=ySize;         }
+
+    int getLength() { return 3; }
+    yarp::os::Bottle   encode();
+    yarp::os::Property getContent();
+};
+
+
+/**************************************************************************/
+class ClusterEvent3DFeatures3 : public ClusterEvent3DFeatures2
+{
+protected:
+    int shapeProb;
+    int xVel;
+    int yVel;
+
+public:
+    ClusterEvent3DFeatures3();
+    ClusterEvent3DFeatures3(const ClusterEvent3DFeatures3 &event);
+    ClusterEvent3DFeatures3(const yarp::os::Bottle &packets, const int pos=0);
+
+    ClusterEvent3DFeatures3 &operator=(const ClusterEvent3DFeatures3 &event);
+    bool operator==(const ClusterEvent3DFeatures3 &event);
+
+    int getShapeProb()                     { return shapeProb;          }
+    int getXVel()                          { return xVel;               }
+    int getYVel()                          { return yVel;               }
+
+    void setShapeProb(const int shapeProb) { this->shapeProb=shapeProb; }
+    void setXVel(const int xVel)           { this->xVel=xVel;           }
+    void setYVel(const int yVel)           { this->yVel=yVel;           }
+
+    int getLength() { return 4; }
+    yarp::os::Bottle   encode();
+    yarp::os::Property getContent();
+};
+
+
 }
 
 }
