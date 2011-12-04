@@ -156,8 +156,8 @@ int main()
     cout<<cle3df3.getContent().toString().c_str()<<endl;
 
     // keep trace of sent events
-    // but set owner to false since
-    // objects have been defined statically
+    // but set ownership to false since
+    // events have been defined statically
     eEventQueue txQueue(false);
     txQueue.push_back(&ts);
     txQueue.push_back(&ae);
@@ -198,7 +198,7 @@ int main()
 
     // receive the packets and
     // decode events
-    eEventQueue rxQueue;
+    eEventQueue rxQueue;    // the ownership is true by default
     double t0=Time::now();
     bool ok=eEvent::decode(packets,rxQueue);
     double t1=Time::now();
@@ -211,8 +211,8 @@ int main()
 
         // ensure the equality
         cout<<endl;
-        cout<<"sent #"<<txQueue.size()<<" packets"<<endl;
-        cout<<"received #"<<rxQueue.size()<<" packets"<<endl;
+        cout<<"#"<<txQueue.size()<<" packets sent"<<endl;
+        cout<<"#"<<rxQueue.size()<<" packets received"<<endl;
         cout<<"testing equalities ..."<<endl;
 
         size_t len=std::min(txQueue.size(),rxQueue.size());
