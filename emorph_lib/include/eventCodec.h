@@ -46,6 +46,7 @@ public:
     std::string getType() { return type;  }
 
     virtual int getLength()=0;
+    virtual bool operator==(const eEvent &event)=0;
     virtual yarp::os::Bottle encode()=0;
     virtual yarp::os::Property getContent()=0;
 
@@ -64,8 +65,14 @@ private:
     eEventQueue(const eEventQueue&);
     eEventQueue &operator=(const eEventQueue&);
 
+protected:
+    bool owner;
+
 public:
-    eEventQueue() { }
+    eEventQueue()                   { owner=true;        }
+    eEventQueue(const bool _owner)  { owner=_owner;      }
+    void setOwner(const bool owner) { this->owner=owner; }
+    bool getOwner()                 { return owner;      }
     ~eEventQueue();
 };
 
@@ -82,12 +89,13 @@ public:
     TimeStamp(const yarp::os::Bottle &packets, const int pos=0);
 
     TimeStamp &operator=(const TimeStamp &event);
-    bool operator==(const TimeStamp &event);
+    bool operator==(const TimeStamp &event);    
 
     int getStamp()                 { return stamp;      }
     void setStamp(const int stamp) { this->stamp=stamp; }
 
     int getLength() { return 1; }
+    bool operator==(const eEvent &event) { return operator==(dynamic_cast<const TimeStamp&>(event)); }
     yarp::os::Bottle   encode();
     yarp::os::Property getContent();
 };
@@ -121,6 +129,7 @@ public:
     void setY(const int y)               { this->y=y;               }
 
     int getLength() { return 1; }
+    bool operator==(const eEvent &event) { return operator==(dynamic_cast<const AddressEvent&>(event)); }
     yarp::os::Bottle   encode();
     yarp::os::Property getContent();
 };
@@ -151,6 +160,7 @@ public:
     void setYFlow(const int yFlow)             { this->yFlow=yFlow;             }
 
     int getLength() { return 2; }
+    bool operator==(const eEvent &event) { return operator==(dynamic_cast<const AddressEventFeatures&>(event)); }
     yarp::os::Bottle   encode();
     yarp::os::Property getContent();
 };
@@ -184,6 +194,7 @@ public:
     void setY(const int y)                 { this->y=y;                 }
 
     int getLength() { return 1; }
+    bool operator==(const eEvent &event) { return operator==(dynamic_cast<const AddressEvent3D&>(event)); }
     yarp::os::Bottle   encode();
     yarp::os::Property getContent();
 };
@@ -214,6 +225,7 @@ public:
     void setYFlow(const int yFlow)             { this->yFlow=yFlow;             }
 
     int getLength() { return 2; }
+    bool operator==(const eEvent &event) { return operator==(dynamic_cast<const AddressEvent3DFeatures&>(event)); }
     yarp::os::Bottle   encode();
     yarp::os::Property getContent();
 };
@@ -247,6 +259,7 @@ public:
     void setYCog(const int yCog)       { this->yCog=yCog;       }
 
     int getLength() { return 1; }
+    bool operator==(const eEvent &event) { return operator==(dynamic_cast<const ClusterEvent&>(event)); }
     yarp::os::Bottle   encode();
     yarp::os::Property getContent();
 };
@@ -289,6 +302,7 @@ public:
     void setYSize(const int ySize)         { this->ySize=ySize;         }
 
     int getLength() { return 3; }
+    bool operator==(const eEvent &event) { return operator==(dynamic_cast<const ClusterEventFeatures2&>(event)); }
     yarp::os::Bottle   encode();
     yarp::os::Property getContent();
 };
@@ -319,6 +333,7 @@ public:
     void setYVel(const int yVel)           { this->yVel=yVel;           }
 
     int getLength() { return 4; }
+    bool operator==(const eEvent &event) { return operator==(dynamic_cast<const ClusterEventFeatures3&>(event)); }
     yarp::os::Bottle   encode();
     yarp::os::Property getContent();
 };
@@ -352,6 +367,7 @@ public:
     void setYCog(const int yCog)           { this->yCog=yCog;           }
 
     int getLength() { return 1; }
+    bool operator==(const eEvent &event) { return operator==(dynamic_cast<const ClusterEvent3D&>(event)); }
     yarp::os::Bottle   encode();
     yarp::os::Property getContent();
 };
@@ -375,6 +391,7 @@ public:
     void setNumAE(const int numAE) { this->numAE=numAE; }
 
     int getLength() { return 2; }
+    bool operator==(const eEvent &event) { return operator==(dynamic_cast<const ClusterEvent3DFeatures1&>(event)); }
     yarp::os::Bottle   encode();
     yarp::os::Property getContent();
 };
@@ -405,6 +422,7 @@ public:
     void setYSize(const int ySize)         { this->ySize=ySize;         }
 
     int getLength() { return 3; }
+    bool operator==(const eEvent &event) { return operator==(dynamic_cast<const ClusterEvent3DFeatures2&>(event)); }
     yarp::os::Bottle   encode();
     yarp::os::Property getContent();
 };
@@ -435,6 +453,7 @@ public:
     void setYVel(const int yVel)           { this->yVel=yVel;           }
 
     int getLength() { return 4; }
+    bool operator==(const eEvent &event) { return operator==(dynamic_cast<const ClusterEvent3DFeatures3&>(event)); }
     yarp::os::Bottle   encode();
     yarp::os::Property getContent();
 };

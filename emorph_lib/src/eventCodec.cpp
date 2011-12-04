@@ -250,9 +250,10 @@ bool eEvent::decode(const Bottle &packets, eEventQueue &events)
 /**************************************************************************/
 eEventQueue::~eEventQueue()
 {
-    for (size_t i=0; i<size(); i++)
-        if ((*this)[i]!=NULL)
-            delete (*this)[i];
+    if (owner)
+        for (size_t i=0; i<size(); i++)
+            if ((*this)[i]!=NULL)
+                delete (*this)[i];
 
     clear();
 }

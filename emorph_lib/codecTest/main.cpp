@@ -33,7 +33,7 @@ void printPacket(const Bottle &packets)
         cout<<hex<<setw(8)<<setfill('0')
             <<packets.get(i).asInt()<<" ";
     }
-    cout<<endl;
+    cout<<dec<<endl;
 }
 
 
@@ -155,6 +155,24 @@ int main()
     cle3df3.setYVel(43);
     cout<<cle3df3.getContent().toString().c_str()<<endl;
 
+    // keep trace of sent events
+    // but set owner to false since
+    // objects have been defined statically
+    eEventQueue txQueue(false);
+    txQueue.push_back(&ts);
+    txQueue.push_back(&ae);
+    txQueue.push_back(&ae3d);
+    txQueue.push_back(&aef);
+    txQueue.push_back(&ae3df);
+    txQueue.push_back(&cle);
+    txQueue.push_back(&clef1);
+    txQueue.push_back(&clef2);
+    txQueue.push_back(&clef3);
+    txQueue.push_back(&cle3d);
+    txQueue.push_back(&cle3df1);
+    txQueue.push_back(&cle3df2);
+    txQueue.push_back(&cle3df3);
+
     cout<<endl;
 
     // encode events within packets
@@ -180,22 +198,32 @@ int main()
 
     // receive the packets and
     // decode events
-    eEventQueue q;
+    eEventQueue rxQueue;
     double t0=Time::now();
-    bool ok=eEvent::decode(packets,q);
+    bool ok=eEvent::decode(packets,rxQueue);
     double t1=Time::now();
 
     if (ok)
     {
-        for (size_t i=0; i<q.size(); i++)
-            cout<<q[i]->getContent().toString().c_str()<<endl;
+        for (size_t i=0; i<rxQueue.size(); i++)
+            cout<<rxQueue[i]->getContent().toString().c_str()<<endl;
         cout<<"decoded in "<<t1-t0<<" [s]"<<endl;
+
+        // ensure the equality
+        cout<<endl;
+        cout<<"sent #"<<txQueue.size()<<" packets"<<endl;
+        cout<<"received #"<<rxQueue.size()<<" packets"<<endl;
+        cout<<"testing equalities ..."<<endl;
+
+        size_t len=std::min(txQueue.size(),rxQueue.size());
+        for (size_t i=0; i<len; i++)
+            cout<<"#"<<i<<": "<<(*(txQueue[i])==*(rxQueue[i])?"ok":"no!")<<endl;
     }
     else
         cout<<"unrecognized packets!"<<endl;
 
-    // whenever q is destructed the memory
-    // allocated for the decoded events will
+    // whenever rxQueue is disposed the
+    // memory allocated for events will
     // be automatically released!
 
     return 0;
