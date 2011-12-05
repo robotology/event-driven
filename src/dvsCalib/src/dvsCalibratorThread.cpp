@@ -73,9 +73,9 @@ bool dvsCalibratorThread::threadInit() {
     isLeftCameraActive = isRightCameraActive = false;
     count = 0;
     maxEventsInFrame = 0;
-    expectedWindowSize[0]= expectedWindowSize[1]=5;
+    expectedWindowSize[0]= expectedWindowSize[1]=3;
     clearingDistance=  2;
-    percentOfWindowFilled = 25;
+    percentOfWindowFilled = 20;
     refreshOfSummationRate = 20;
     
     

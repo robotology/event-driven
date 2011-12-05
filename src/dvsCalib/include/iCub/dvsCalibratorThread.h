@@ -26,8 +26,8 @@
 #ifndef _CARTESIAN_FRAME_INTEGRATOR_THREAD_H_
 #define _CARTESIAN_FRAME_INTEGRATOR_THREAD_H_
 
-//#define USE_OPEN_CV_WINDOW
-#define USE_OPEN_CV_CORRECTION
+#define USE_OPEN_CV_WINDOW
+//#define USE_OPEN_CV_CORRECTION
 #include <yarp/sig/all.h>
 #include <yarp/os/all.h>
 #include <iostream>
