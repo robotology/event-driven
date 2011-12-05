@@ -16,6 +16,7 @@ add_subdirectory   (cartesianFrameCollector)
 #add_subdirectory  (device2yarp)
 add_subdirectory   (device2yarp2)
 add_subdirectory   (dvsGrabber)
+add_subdirectory   (dvsCalib)
 #add_subdirectory  (disparitySelector)
 
 add_subdirectory   (eventDriven)
