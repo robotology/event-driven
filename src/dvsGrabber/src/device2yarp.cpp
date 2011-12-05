@@ -81,52 +81,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
     seqEvents = 0;
     seqSize_b = 0;
     */
-
     
-}
-
-device2yarp::~device2yarp() {
-    //if(save)
-    //    fclose(raw);
-
-    //port.close();
-
-
-}
-
-void device2yarp::threadRelease() {
-    if(save) {
-        fclose(raw);
-    }
-    port.close();
-
-    unsigned char stop[5];
-    stop[0] = 0xb4;
-    stop[1] = 0;
-    stop[2] = 0;
-    stop[3] = 0;
-    stop[4] = 0;
-    //err = write(file_desc,stop,5);
-    printf("%d address events read\n",len/4);
-    close(file_desc);
-
-}
-
-bool device2yarp::threadInit() {
-    if(save) {
-        printf("Opening the file to dump down all the events \n");
-        raw = fopen(i_fileName.c_str(), "wb");
-    }
-    else {
-        printf("Saving option not activated \n");
-        
-    }
-    //int deviceNum = 1;
-    str_buf << "/icub/retina" << deviceNum << ":o";
-    port.open(str_buf.str().c_str());
-
-
-
     cout <<"name of the file buffer:" <<portDeviceName.c_str()<< endl;
 
     file_desc = open(portDeviceName.c_str(), O_RDWR | O_NONBLOCK);
@@ -183,6 +138,53 @@ bool device2yarp::threadInit() {
         err = write(file_desc,start,5);
         cout << "Return of the start writing : " << err << endl;
     }
+
+    
+}
+
+device2yarp::~device2yarp() {
+    //if(save)
+    //    fclose(raw);
+
+    //port.close();
+
+
+}
+
+void device2yarp::threadRelease() {
+    if(save) {
+        fclose(raw);
+    }
+    port.close();
+
+    unsigned char stop[5];
+    stop[0] = 0xb4;
+    stop[1] = 0;
+    stop[2] = 0;
+    stop[3] = 0;
+    stop[4] = 0;
+    //err = write(file_desc,stop,5);
+    printf("%d address events read\n",len/4);
+    close(file_desc);
+
+}
+
+bool device2yarp::threadInit() {
+    if(save) {
+        printf("Opening the file to dump down all the events \n");
+        raw = fopen(i_fileName.c_str(), "wb");
+    }
+    else {
+        printf("Saving option not activated \n");
+        
+    }
+    //int deviceNum = 1;
+    str_buf << "/icub/retina" << deviceNum << ":o";
+    port.open(str_buf.str().c_str());
+
+
+
+    
     
     return true;
 }
