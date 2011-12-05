@@ -46,25 +46,32 @@
 #define u32 uint32_t
 #define u64 uint64_t
 
-
-/*
-struct aer {
-    u32 timestamp;
-    u32 address;
-};
-*/
 struct aer {
     u16 timestamp;
     u16 address;
-    };
+};
 
 
 class device2yarp : public yarp::os::RateThread {
 public:
     device2yarp(std::string deviceNumber, bool save, std::string filename);
+    
     ~device2yarp();
+    
+    /**
+     * main active function of the thread
+     */
     virtual void run();
+    
+    /**
+    * function that initialise the thread
+    */
+    bool threadInit();
 
+    /**
+    * function called when the thread is stopped
+    */
+    void threadRelease();
 
     /**
     * function used to set the name of the port device where biases are sent
@@ -78,6 +85,12 @@ public:
      */
     void setVerbosity(bool value) { verbosity = value; };
 
+     /**
+     * @brief function that sets the incremental number of the port device for multiple devices
+     * @param value value to assign
+     */
+    void setDeviceNumber(int value) { deviceNum = value; };
+
 private:
 
     yarp::os::BufferedPort<eventBuffer> port;
@@ -88,6 +101,7 @@ private:
     u32 monBufEvents;
     u32 monBufSize_b;
 
+    int deviceNum;                               // number to append to the port name for multiple devices
     int file_desc,len,sz;
     unsigned char buffer_msg[64];
     short enabled;
@@ -105,9 +119,10 @@ private:
     int polmask;
     int retinalSize;
     std::string portDeviceName;
-
+    std::string i_fileName;                      // name of the file where to save
+    
     bool save;
-    bool verbosity;                                            // flag that indicates whether to write events out
+    bool verbosity;                              // flag that indicates whether to write events out
 
     std::stringstream str_buf;
 };

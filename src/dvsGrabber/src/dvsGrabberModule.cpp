@@ -67,6 +67,14 @@ bool dvsGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     devicePortName         =  deviceName ;
     printf("trying to connect to the %s \n",devicePortName.c_str());
 
+       /*
+    * get the number to attach to the portname
+    */
+    deviceNumber             = rf.check("retinaNumber", 
+                           Value(0), 
+                           "Device number (int)").asInt();
+    printf("opening port with device number %d \n", deviceNumber);
+
     /*
     * attach a port of the same name as the module (prefixed with a /) to the module
     * so that messages received from the port are redirected to the respond method
@@ -120,6 +128,7 @@ bool dvsGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         //the default value for arbiter->visualCorrection is false
     }
 
+    D2Y->setDeviceNumber(deviceNumber);
     printf("starting the thread \n");
     D2Y->start();
 
