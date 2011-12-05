@@ -38,6 +38,9 @@
 
 //Other dependency
 #include <iCub/config.h>
+#include <iCub/eventCodec.h>
+
+using namespace emorph::ecodec;
 
 class unmask : public yarp::os::RateThread{
 private:
@@ -236,6 +239,14 @@ public:
     * @param reset reset the timestamp
     */
     void unmaskData(char* data, int size, bool reset);
+
+
+    /**
+    * function that given a reference to bottle of events 
+    * unmasks any event using the data type protocol and update the buffer
+    * @param packets reference to the bottle that contains single events
+    */
+    void unmaskData(yarp::os::Bottle* packets);
 
     /**
     * function that given a reference to the list of long int(32 bits) read from the port and the number of packet received
