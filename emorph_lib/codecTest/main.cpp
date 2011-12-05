@@ -178,19 +178,8 @@ int main()
 
     // encode events within packets
     Bottle packets;
-    packets.append(ts.encode());
-    packets.append(ae.encode());
-    packets.append(ae3d.encode());
-    packets.append(aef.encode());
-    packets.append(ae3df.encode());
-    packets.append(cle.encode());
-    packets.append(clef1.encode());
-    packets.append(clef2.encode());
-    packets.append(clef3.encode());
-    packets.append(cle3d.encode());
-    packets.append(cle3df1.encode());
-    packets.append(cle3df2.encode());
-    packets.append(cle3df3.encode());
+    for (size_t i=0; i<txQueue.size(); i++)
+        packets.append(txQueue[i]->encode());
     printPacket(packets);
 
     // network comes into play here
@@ -205,7 +194,7 @@ int main()
     double t1=Time::now();
 
     // insert mismatches deliberately
-    // to check the operator==() functionality
+    // to check the functionality of operator==()
     for (size_t i=0; i<rxQueue.size(); i++)
     {
         // to identify the type of the packet
