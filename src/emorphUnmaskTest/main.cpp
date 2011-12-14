@@ -235,8 +235,8 @@ int main()
         cout<<"unrecognized packets!"<<endl;
 
     // whenever rxQueue is disposed the
-    // memory allocated for events will
-    // be automatically released!
+    // memory allocated for events is
+    // automatically released!
 
     return 0;
 }
