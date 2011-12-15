@@ -62,6 +62,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
     len=0;
     sz=0;
     ec = 0;
+    numberOfTimeWraps = 0;
     memset(buffer, 0, SIZE_OF_DATA);
     //const u32 seqAllocChunk_b = 8192 * sizeof(struct aer); //allocating the right dimension for biases
     
@@ -138,6 +139,8 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName):
         err = write(file_desc,start,5);
         cout << "Return of the start writing : " << err << endl;
     }
+    
+    
 
     
 }
@@ -155,6 +158,8 @@ void device2yarp::threadRelease() {
     if(save) {
         fclose(raw);
     }
+    fclose(tmpFile);
+    port.interrupt();
     port.close();
 
     unsigned char stop[5];
@@ -178,13 +183,11 @@ bool device2yarp::threadInit() {
         printf("Saving option not activated \n");
         
     }
+    tmpFile = fopen("log.txt","wb");
     //int deviceNum = 1;
     str_buf << "/icub/retina" << deviceNum << ":o";
     port.open(str_buf.str().c_str());
-
-
-
-    
+    packetsSent.clear();
     
     return true;
 }
@@ -200,60 +203,51 @@ void device2yarp::setDeviceName(string deviceName) {
 void  device2yarp::run() {
     // read address events from device file which is not /dev/aerfx2_0
     sz = read(file_desc,buffer,KERNELDEVICEREAD);
-
-    //printf("Size read from file %d\n",sz);
-    //SIZE_OF_DATA
-    //int r = pread(file_desc,pmon,monBufSize_b,0);
-    //int r = 0;
-    monBufEvents    = sz / sizeof(struct aer);
-    int monBufBytes = sz / 8;
-
-    cout << sz <<"  bytes"<<endl;
-    //cout << "Number of events : " << monBufEvents << endl;
-    //printf("Number of events: %d \n",monBufBytes);
-
-    uint16_t * buf1 = (uint16_t*)buffer;
-    u32 a, t;
-    int k2 = 0;
-    unsigned int blob, timestamp;
+    int countRealEvents =0;
     
-    if(save && monBufEvents>0) {
-        printf("saving \n");
-        for (int i = 0 ; i < sz ; i+=4) {
-            unsigned int part_1 = 0xFF & *(buffer+i);    //extracting the 1 byte        
-            unsigned int part_2 = 0xFF & *(buffer+i+1);  //extracting the 2 byte        
-            unsigned int part_3 = 0xFF & *(buffer+i+2);  //extracting the 3 byte
-            unsigned int part_4 = 0xFF & *(buffer+i+3);  //extracting the 4 byte
-            //float blob = (part_1)|(part_2<<8);
-            blob      = (part_1)|(part_2<<8);          //16bits
-            //float timestamp = ((part_3)|(part_4<<8));
-            timestamp = ((part_3)|(part_4<<8));        //16bits
-            
-            if(verbosity){
-                printf("%08X %08X \n",blob,timestamp);
-            }
-            fprintf(raw,"%08X %08X \n",blob,timestamp);
-            //printf("%08X %08X \n",blob,timestamp);
-            //fwrite(&sz, sizeof(int), 1, raw);
-            //fwrite(buffer, 1, sz, raw);
-       
-            //buf1[k2++] = blob;
-            //buf1[k2++] = timestamp;
+    cout << sz <<"  bytes"<<endl;    
+    Bottle& newBuffer = port.prepare();
+    
+    for (int i = 0 ; i < sz ; i+=4) {
+        u32 adrs, ts, tag;
+        unsigned int part_1 = 0xFF & *(buffer+i);    //extracting the 1 byte        
+        unsigned int part_2 = 0xFF & *(buffer+i+1);  //extracting the 2 byte        
+        unsigned int part_3 = 0xFF & *(buffer+i+2);  //extracting the 3 byte
+        unsigned int part_4 = 0xFF & *(buffer+i+3);  //extracting the 4 byte
+        if(part_3 == 0 && part_4 == 0 && part_1 == 0 && part_2 == 0){
+            continue;
         }
+        countRealEvents++;
+        adrs = 0x0000FFFF & (part_1|part_2<<8);
+        if(numberOfTimeWraps >= 1<<12){
+            ts = 0x88000000;
+            numberOfTimeWraps = 0;
+        }
+        else {
+            ts = 0x80000000;
+            if(part_4 >= 0xB0  ) {
+                    numberOfTimeWraps++;      
+                    
+                }
+            else 
+            {
+                ts = ts | ((part_3)|(part_4<<8));                
+            }             
+            ts = numberOfTimeWraps<<14 | ts; 
+        }     
+         
+        //newBuffer[countRealEvents] = ts;
+        //newBuffer[countRealEvents+1] = adrs;
+        newBuffer.addInt(ts);
+        newBuffer.addInt(adrs);
+        fprintf(tmpFile,"%08X \t %08X \t\t%08X%08X %u\n",ts,adrs,part_4,part_3,numberOfTimeWraps);
+        
+        
     }
     
-
-    //int szSent = monBufEvents*sizeof(struct aer); // sz is size in bytes
     
     if(port.getOutputCount()) {
-        //printf("exiting from reading...sending data size: %d \n",sz);
-        eventBuffer data2send(buffer, sz);    
-        //printf("preparing the port \n");
-        eventBuffer& tmp = port.prepare();
-        tmp = data2send;
-        port.write();
-        //printf("on the port: data written \n");
-        
+        port.write();        
     }
     
     //resetting buffers    

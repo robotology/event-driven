@@ -38,6 +38,7 @@
 #include <stdint.h>
 
 #include <iCub/eventBuffer.h>
+#include <iCub/eventCodec.h>
 //#include "sending_buffer.h"
 #include "config.h"
 
@@ -93,7 +94,8 @@ public:
 
 private:
 
-    yarp::os::BufferedPort<eventBuffer> port;
+    //yarp::os::BufferedPort<eventBuffer> port;
+    yarp::os::BufferedPort<yarp::os::Bottle > port;
     FILE* raw;
 
     u64 seqTime;
@@ -106,8 +108,12 @@ private:
     unsigned char buffer_msg[64];
     short enabled;
     char buffer[SIZE_OF_DATA];
+    //u32 newBuffer[SIZE_OF_DATA];
+    yarp::os::Bottle packetsSent;
+    FILE* tmpFile;
     struct aer *pmon;
     int err;
+    int numberOfTimeWraps;                       // 14 are bits used for timestamp, 26 are bits at our disposal, so actual time = 2^14 * #timeWraps + timeStamp, hence this counter tracks till 2^12
     unsigned int timestamp;
     short cartX, cartY, polarity;
 
@@ -125,6 +131,8 @@ private:
     bool verbosity;                              // flag that indicates whether to write events out
 
     std::stringstream str_buf;
+    emorph::ecodec::AddressEvent adEv;
+    emorph::ecodec::TimeStamp tmSt;
 };
 
 #endif //_DEVICE2YARP_H
