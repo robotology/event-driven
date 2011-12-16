@@ -3,7 +3,7 @@
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
-SET(KEYWORD "dvsCalibrator")
+SET(KEYWORD "dvsCalib")
 PROJECT(${KEYWORD})
 cmake_minimum_required(VERSION 2.6)
 
@@ -11,7 +11,8 @@ set(ICUB_CONTRIB_DIRS $ENV{ICUB_DIR}/include)
 
 INCLUDE_DIRECTORIES(
     ${PROJECT_SOURCE_DIR}/include
-    ${YARP_INCLUDE_DIRS} 	
+    ${YARP_INCLUDE_DIRS} 
+    ${ICUB_INCLUDE_DIRS}    	
     ${ICUB_CONTRIB_DIRS}
     ${OpenCV_INCLUDE_DIRS}
 )

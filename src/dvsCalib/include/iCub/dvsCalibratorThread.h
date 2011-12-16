@@ -42,7 +42,7 @@
 
 
 //#include <iCub/logPolar.h>
-
+#include <iCub/sfCreatorThread.h>
 
 
 
@@ -54,7 +54,7 @@
 #endif
 
 #define MONO_PIXEL_SIZE 1
-#define THRATE_CART_FRAME_INT 25
+#define THRATE_DVS_CALIB 100
 
 // patches for now
 #ifndef YARP_IMAGE_ALIGN
@@ -79,14 +79,14 @@ private:
     
     std::string name;                                                                       // rootname of all the ports opened by this thread
     
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > inputPortLeft;        //input port for images from the left camera 
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > inputPortRight;       //input port for images from the right camera 
+    //yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > inputPortLeft;        //input port for images from the left camera 
+    //yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > inputPortRight;       //input port for images from the right camera 
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outputPortLeft;       //output port for images from the left camera 
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outputPortRight;      //output port for images from the right camera   
     
     yarp::sig::ImageOf<yarp::sig::PixelMono>* inputImageLeft;                               // instantaneous image from left camera
     yarp::sig::ImageOf<yarp::sig::PixelMono>* inputImageRight;                              // instantaneous image from right camera
-    yarp::sig::ImageOf<yarp::sig::PixelMono>* temporalVariation;                            // for each pixel, this stores the time since last firing
+    yarp::sig::ImageOf<yarp::sig::PixelMono>* tempVariation;                            // for each pixel, this stores the time since last firing
     
     int width;                                                                              // width of the image
     int height;                                                                             // height of the image 
@@ -124,6 +124,8 @@ private:
 	IplImage* mapx, *mapy;
 	int countOfBoardNbr;
 	bool calibrationDoneForRightCamera,calibrationDoneForLeftCamera;
+	
+	sfCreatorThread* spatialFrameCreatorThread;
     
 
 public:

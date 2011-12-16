@@ -35,11 +35,11 @@ using namespace std;
 
 
 
-dvsCalibratorThread::dvsCalibratorThread() : RateThread(THRATE_CART_FRAME_INT) {
+dvsCalibratorThread::dvsCalibratorThread() : RateThread(THRATE_DVS_CALIB) {
     printf("cTor\n");
     inputImageLeft          = new ImageOf<PixelMono>; 
     inputImageRight         = new ImageOf<PixelMono>;
-    temporalVariation       = new ImageOf<PixelMono>;
+    tempVariation           = new ImageOf<PixelMono>;
     binsOfPoint             = new int[IMG_WIDTH*IMG_HEIGHT*2];
 	traversalTable          = new bool[IMG_WIDTH*IMG_HEIGHT];    
 }
@@ -52,6 +52,7 @@ dvsCalibratorThread::~dvsCalibratorThread() {
 
 bool dvsCalibratorThread::threadInit() {
     printf("\nInit\n");
+    /*
     if (!inputPortLeft.open(getName("/cartesianImageLeft:i").c_str())) {
         cout <<": unable to open port "  << endl;
         return false;  // unable to open; let RFModule know so that it won't run
@@ -60,6 +61,7 @@ bool dvsCalibratorThread::threadInit() {
         cout <<": unable to open port "  << endl;
         return false;  // unable to open; let RFModule know so that it won't run
     } 
+    */
     if (!outputPortLeft.open(getName("/cartesianImageLeft:o").c_str())) {
         cout <<": unable to open port "  << endl;
         return false;  // unable to open; let RFModule know so that it won't run
@@ -112,6 +114,13 @@ bool dvsCalibratorThread::threadInit() {
     cvNamedWindow("centroidWindow");
     cvNamedWindow("out");
 #endif  
+
+    inputImageLeft->resize(128,128);
+    inputImageLeft->zero();
+    tempVariation->resize(128,128);
+    tempVariation->zero();
+    spatialFrameCreatorThread = new sfCreatorThread();
+    spatialFrameCreatorThread->start();    
     
     return true;
        
@@ -129,12 +138,13 @@ std::string dvsCalibratorThread::getName(const char* p) {
 }
 
 void dvsCalibratorThread::resize(int width, int height) {
-    printf("\nresize\n");
     this->width     = width;
     this->height    = height;
     // we can assume second camera (if active) has same dimension
-    temporalVariation->resize(width,height);
-    temporalVariation->zero();
+    printf("resizing tempVariation for dvsCalib\n");
+    //tempVariation->resize(128,128);
+    //tempVariation->zero();
+    printf("Done with temporal varaition\n");
     nbrOfBoardsVisited = 0; 
     
     
@@ -157,7 +167,8 @@ void dvsCalibratorThread::resize(int width, int height) {
      cvInitUndistortMap(intrinsic,distortion,mapx,mapy);
 
 #endif   
-    resized = false;
+    resized = true;
+    printf("\nresized\n");
     
 }
 
@@ -195,13 +206,13 @@ void dvsCalibratorThread::run() {
 
   
   // We calibrate N (here 2) cameras serially, using same resources
-  
+/*  
   while(inputPortRight.getInputCount() && !calibrationDoneForRightCamera){          
     isRightCameraActive = true;
     inputImageRight   = inputPortRight.read(true);
     if(inputImageRight != NULL){ 
         if(!resized){
-            resize(inputImageRight->width(),inputImageRight->height());
+            resize(128,128);//inputImageRight->width(),inputImageRight->height());
             resized = true;
         }
         count++;
@@ -212,9 +223,9 @@ void dvsCalibratorThread::run() {
         int nbrOfCorners;
         if(count%refreshOfSummationRate == 0){
             findCorners(CAMERA_RIGHT);  
-            outputPortRight.prepare()= *temporalVariation;
+            outputPortRight.prepare()= *tempVariation;
             outputPortRight.write();
-            temporalVariation->zero();
+            tempVariation->zero();
         }
         else {
             integrateCurrentFrame(inputImageRight);
@@ -225,18 +236,38 @@ void dvsCalibratorThread::run() {
   }
   if(calibrationDoneForRightCamera){    // free some resources for next camera in the queue
     count = 0;
-    temporalVariation->zero();
+    tempVariation->zero();
     resized = false;
   }
-  
-  while((!calibrationDoneForLeftCamera) && inputPortLeft.getInputCount()){          
+*/  
+  while((!calibrationDoneForLeftCamera) ){//&& inputPortLeft.getInputCount()){ 
+    //printf("In calibration for left \n");         
     isLeftCameraActive = true;
-    inputImageLeft   = inputPortLeft.read(true);
+    //inputImageLeft   = inputPortLeft.read(true);
+    //inputImageLeft->zero();
+    //printf("Fetching the current image \n");
+    if(spatialFrameCreatorThread->spatialFrameCreatorLeft->isSFCreatorInitialized() && (!(spatialFrameCreatorThread->spatialFrameCreatorLeft->getIsAccessing()))){
+        spatialFrameCreatorThread->spatialFrameCreatorLeft->setIsAccessing(true);
+        //while(spatialFrameCreator->getIsUpdating()) ;
+        inputImageLeft = spatialFrameCreatorThread->getTheImage(true); //spatialFrameCreatorLeft->getMonoImage();
+        //printf("Got the mono image \n");
+        spatialFrameCreatorThread->spatialFrameCreatorLeft->setIsAccessing(false);
+        cvNamedWindow("imageGot");
+        cvShowImage("imageGot",(IplImage*)inputImageLeft->getIplImage());
+        cvWaitKey(2);        
+    }
+    else{
+        //printf("Got NO mono image \n");
+        continue;
+    }
     if(inputImageLeft != NULL){ 
         if(!resized){
-            resize(inputImageLeft->width(),inputImageLeft->height());
+            printf("Resizing\n");
+            resize(128,128);//inputImageLeft->width(),inputImageLeft->height());
             resized = true;
         }
+        
+        
 #ifdef USE_OPEN_CV_CORRECTION
         IplImage* cloneInput = cvCloneImage((IplImage*)inputImageLeft->getIplImage());
         cvRemap( cloneInput, (IplImage*)inputImageLeft->getIplImage(), mapx, mapy );
@@ -257,13 +288,15 @@ void dvsCalibratorThread::run() {
         int padding = inputImageLeft->getPadding();
         
         int nbrOfCorners;
+        printf("Find corners or integrate\n");
         if(count%refreshOfSummationRate == 0){
             findCorners(CAMERA_LEFT);  
-            outputPortLeft.prepare()= *temporalVariation;
+            outputPortLeft.prepare()= *tempVariation;
             outputPortLeft.write();
-            temporalVariation->zero();
+            tempVariation->zero();
         }
         else {
+            printf("integrate\n");
             integrateCurrentFrame(inputImageLeft);
         }
      }
@@ -272,7 +305,7 @@ void dvsCalibratorThread::run() {
   }
   if(calibrationDoneForLeftCamera){    // free some resources for next camera in the queue
     count = 0;
-    temporalVariation->zero();
+    tempVariation->zero();
   }
         
     
@@ -283,9 +316,9 @@ void dvsCalibratorThread::run() {
 
 void dvsCalibratorThread::findCorners(int whichCamera){
  
+    printf("\nFindingCorners\n");
     
-    
-    now = (IplImage*)temporalVariation->getIplImage();
+    now = (IplImage*)tempVariation->getIplImage();
     uchar* ptrCurrentImage = (uchar*)now->imageData;
     int counterForThreshold =0;
     int actualWidth = now->width;
@@ -393,6 +426,7 @@ void dvsCalibratorThread::findCorners(int whichCamera){
 	    }
 	                                                                                   
     }
+    printf("\nFound Corners\n");
     
 }
 
@@ -408,11 +442,14 @@ void dvsCalibratorThread::prepareToCalibrate(int nbrOfCorners, int* arrayOfCorne
     */
     // check the required nbr of points
     if(nbrOfCorners != REQUIRED_CORNERS_COUNT){
-        printf("Not exact points, %d nbr of points were detected! \n",nbrOfCorners);
+        //printf("Not exact points, %d nbr of points were detected! \n",nbrOfCorners);
         return;
     }
     else{
-        printf("Going to use this board!This is %d th board visited\n",nbrOfBoardsVisited);
+        printf("Going to use this board!This is %d th board visited Press esc to refuse and return to accept\n",nbrOfBoardsVisited);
+        //IplImage* tmpImage = cvCreateImage(cvSize(128,128),8,1);
+        char val=cvWaitKey(0);
+        if(val==13 || val=='y'){
         for(int i=0; i<REQUIRED_CORNERS_COUNT; ++i){
             printf(":%d,%d\t",*(arrayOfCorners+2*i),*(arrayOfCorners+2*i+1));
         }
@@ -429,7 +466,10 @@ void dvsCalibratorThread::prepareToCalibrate(int nbrOfCorners, int* arrayOfCorne
 	
 	    }
 	    CV_MAT_ELEM( *point_counts, int, nbrOfBoardsVisited, 0 ) = REQUIRED_CORNERS_COUNT;
-	    nbrOfBoardsVisited += 1;
+	    nbrOfBoardsVisited += 1;}
+	    else if(val==27){
+	        //neglect
+	    }
 	    return;
 	}
     
@@ -537,9 +577,9 @@ int dvsCalibratorThread::findBlob(IplImage* origImgFB,int posWidth,int posHeight
 }
  
 void dvsCalibratorThread::integrateCurrentFrame(ImageOf<PixelMono>* currentFrame){
-
-    uchar* ptrCurrentImage = currentFrame->getRawImage();
-    uchar* ptrTmpVariation = temporalVariation->getRawImage();
+    printf("Integrating \n");
+    uchar* ptrCurrentImage = (uchar*)currentFrame->getRawImage();
+    uchar* ptrTmpVariation = (uchar*)tempVariation->getRawImage();
     int padCurrentImage = currentFrame->getPadding();
     float weightageOfFrame = 1.0/(255.0);
     float wtForVal;
@@ -565,23 +605,24 @@ void dvsCalibratorThread::integrateCurrentFrame(ImageOf<PixelMono>* currentFrame
 
 void dvsCalibratorThread::threadRelease() {
     printf("freeing memory in integrator");
+    delete spatialFrameCreatorThread;
 #ifdef USE_OPEN_CV_WINDOW
     cvDestroyWindow("imageNow");
     cvDestroyWindow("centroidWindow");
     cvDestroyWindow("out");
 #endif
-    inputPortLeft.interrupt();
-    inputPortRight.interrupt();
+    //inputPortLeft.interrupt();
+    //inputPortRight.interrupt();
     outputPortLeft.interrupt();
     outputPortRight.interrupt();
-    inputPortLeft.close();
-    inputPortRight.close();
+    //inputPortLeft.close();
+    //inputPortRight.close();
     outputPortLeft.close();
     outputPortRight.close();
     
     delete inputImageLeft;
     delete inputImageRight;
-    delete temporalVariation;
+    delete tempVariation;
     delete [] binsOfPoint;
     delete [] traversalTable;
     cvReleaseMat(&image_points);
