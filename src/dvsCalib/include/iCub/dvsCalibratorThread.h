@@ -33,6 +33,14 @@
 #include <iostream>
 #include <yarp/os/Stamp.h>
 
+ #include <stdlib.h>
+ #include <stdio.h>
+ #include <gsl/gsl_rng.h>
+ #include <gsl/gsl_randist.h>
+ #include <gsl/gsl_vector.h>
+ #include <gsl/gsl_blas.h>
+ #include <gsl/gsl_multifit_nlin.h>
+
 //#include <yarp/sig/IplImage.h>
 
 #include <cv.h>
@@ -43,6 +51,7 @@
 
 //#include <iCub/logPolar.h>
 #include <iCub/sfCreatorThread.h>
+//#include <iCub/LMCurveFit.h>
 
 
 
@@ -126,6 +135,17 @@ private:
 	bool calibrationDoneForRightCamera,calibrationDoneForLeftCamera;
 	
 	sfCreatorThread* spatialFrameCreatorThread;
+	
+	//LMCurveFit* LMCurveFitter;
+	
+	const gsl_multifit_fdfsolver_type *T;
+       gsl_multifit_fdfsolver *s;
+       int status;
+       unsigned int iter;
+       size_t n;// = N;
+       size_t p;// = 3;
+       gsl_matrix *covar;
+       gsl_multifit_function_fdf f;
     
 
 public:
@@ -210,6 +230,7 @@ public:
     */
     void prepareToCalibrate(int nbrOfCorners, int* arrayOfCorners);
 
+    bool fitTheData(double* valueOfPoints, gsl_vector* fittedParams);
 
      /* to suspend and resume the thread processing
     */

@@ -23,10 +23,26 @@
  */
 
 #include <iCub/dvsCalibratorThread.h>
+
 #include <cstring>
 #include <cassert>
 #include <cstdlib>
 #include <time.h>
+
+#include "fittingModel.cpp"
+
+
+ void
+     print_state (size_t iter, gsl_multifit_fdfsolver * s)
+     {
+       printf ("iter: %3d x = %f %f %f %f f(x) = %f\n",
+               (int)iter,
+               gsl_vector_get (s->x, 0), 
+               gsl_vector_get (s->x, 1),
+               gsl_vector_get (s->x, 2), 
+               gsl_vector_get (s->x, 3),
+               gsl_blas_dnrm2 (s->f));
+     }
 
 
 using namespace yarp::os;
@@ -41,7 +57,8 @@ dvsCalibratorThread::dvsCalibratorThread() : RateThread(THRATE_DVS_CALIB) {
     inputImageRight         = new ImageOf<PixelMono>;
     tempVariation           = new ImageOf<PixelMono>;
     binsOfPoint             = new int[IMG_WIDTH*IMG_HEIGHT*2];
-	traversalTable          = new bool[IMG_WIDTH*IMG_HEIGHT];    
+	traversalTable          = new bool[IMG_WIDTH*IMG_HEIGHT];  
+	
 }
 
 dvsCalibratorThread::~dvsCalibratorThread() {
@@ -120,8 +137,24 @@ bool dvsCalibratorThread::threadInit() {
     tempVariation->resize(128,128);
     tempVariation->zero();
     spatialFrameCreatorThread = new sfCreatorThread();
-    spatialFrameCreatorThread->start();    
+    spatialFrameCreatorThread->start();   
     
+    /*const int pts = LM_NBR_OF_POINTS;
+    double dataPts[pts];
+    double sigmaPts[pts];
+    // This is the data to be fitted /
+    gsl_rng* randgen = gsl_rng_alloc(gsl_rng_default);
+       for (int i = 0; i < pts; i++)
+         {
+           double t = i;
+           double ran = gsl_ran_gaussian (randgen, 0.1);
+           dataPts[i] = 1.0 + 5 * exp (-0.1 * t) 
+                      + ran;
+           sigmaPts[i] = 0.1;
+           printf ("data: %u %g %g %f \n", i, dataPts[i], sigmaPts[i],ran);
+         };
+    LMCurveFitter           = new LMCurveFit(3,pts,dataPts,sigmaPts);  
+    */
     return true;
        
 }
@@ -176,6 +209,50 @@ void dvsCalibratorThread::resize(int width, int height) {
 
 void dvsCalibratorThread::run() {
 
+   //LMCurveFitter->initializeLM();
+   //LMCurveFitter->solveLM();
+   
+   //////////////////////////////////////////////////////////////////////
+   // Let us assume K1 = .2 K2 = .05
+   double fakeK1 = .001;
+   double fakeK2 = .0005;
+   gsl_rng * r;
+     
+       gsl_rng_env_setup();
+     
+       const gsl_rng_type *ty = gsl_rng_default;
+       r = gsl_rng_alloc (ty);
+   double yV[N];
+   double thetasFake[N];
+   double PIby4 = 3.14159/4.0;
+   double theta = 0.0;
+   double rNought = 1.01*1.4142;
+   double stepTheta = 3.14159/(2.0*N);
+        for (int i = 0; i < N; i++)
+         {
+           double t = i;
+           double rOfStrLine = rNought  * cos(theta- PIby4);//1.0 + 5 * exp (-0.1 * t)  * gsl_ran_gaussian( r, .1)
+                      //+ gsl_ran_gaussian (r, 0.1);
+           //sigma[i] = 0.1;
+           yV[i] = rOfStrLine*(1.0 + fakeK1*rOfStrLine*rOfStrLine + fakeK2*rOfStrLine*rOfStrLine*rOfStrLine*rOfStrLine);
+           thetasFake[i] = theta;
+           theta += stepTheta;
+           printf ("data:: %d %f\n", (int)i, yV[i]);
+         };
+         gsl_vector* retVect;
+         fitTheData(yV,retVect);
+   
+   setThetasOfPolarCoord(thetasFake);
+   
+   
+   
+   //////////////////////////////////////////////////////////////////////
+   
+   
+   
+   
+   
+   cvWaitKey(0);
   
   // Use it!
   /*  
@@ -254,10 +331,14 @@ void dvsCalibratorThread::run() {
         spatialFrameCreatorThread->spatialFrameCreatorLeft->setIsAccessing(false);
         cvNamedWindow("imageGot");
         cvShowImage("imageGot",(IplImage*)inputImageLeft->getIplImage());
-        cvWaitKey(2);        
+        cvWaitKey(2);
+        //if(cvWaitKey(20) == 27) {
+            IplImage* copyIm = cvCloneImage((IplImage*)inputImageLeft->getIplImage());
+            cvSaveImage("imageRcvd.jpg",copyIm);
+            //}        
     }
     else{
-        //printf("Got NO mono image \n");
+        printf("Got NO mono image \n");
         continue;
     }
     if(inputImageLeft != NULL){ 
@@ -312,7 +393,89 @@ void dvsCalibratorThread::run() {
 }
   
 
+bool dvsCalibratorThread::fitTheData(double* valueOfPoints, gsl_vector* fittedParams){
 
+    n= N;
+        p = NBR_PARAMETERS;
+     
+       covar = gsl_matrix_alloc (NBR_PARAMETERS, NBR_PARAMETERS);
+       double y[N], sigma[N];
+       struct dataE d = { n, y, sigma};
+       
+       double x_init[NBR_PARAMETERS] = { 1.0, PI/4.2, .001,.001 };
+       gsl_vector_view x = gsl_vector_view_array (x_init, NBR_PARAMETERS);
+       const gsl_rng_type * type;
+       
+     
+       f.f = &modelFunction;
+       f.df = &derivativeModelFunction;
+       f.fdf = &modelFunctionAndDerivative;
+       f.n = n;
+       f.p = NBR_PARAMETERS;
+       f.params = &d;
+     
+       /* This is the data to be fitted */
+     
+        
+       for (int i = 0; i < n; i++)
+         {
+            y[i] = valueOfPoints[i];
+           double t = i;
+           //y[i] = 1.0 + 5 * exp (-0.1 * t) 
+                      //+ gsl_ran_gaussian (r, 0.1);
+           sigma[i] = 0.1;
+           //printf ("data: %u %g %g\n", i, y[i], sigma[i]);
+         };
+     
+       T = gsl_multifit_fdfsolver_lmsder;
+       s = gsl_multifit_fdfsolver_alloc (T, n, NBR_PARAMETERS);
+       gsl_multifit_fdfsolver_set (s, &f, &x.vector);
+     
+       print_state (iter, s);
+     
+       do
+         {
+           iter++;
+           status = gsl_multifit_fdfsolver_iterate (s);
+     
+           printf ("status = %s\n", gsl_strerror (status));
+     
+           print_state (iter, s);
+     
+           if (status)
+             break;
+     
+           status = gsl_multifit_test_delta (s->dx, s->x,
+                                             1e-3, 1e-3);
+         }
+       while (status == GSL_CONTINUE && iter < 1000);
+     
+       gsl_multifit_covar (s->J, 0.0, covar);
+     
+     #define FIT(i) gsl_vector_get(s->x, i)
+     #define ERR(i) sqrt(gsl_matrix_get(covar,i,i))
+     
+       { 
+         double chi = gsl_blas_dnrm2(s->f);
+         double dof = n - NBR_PARAMETERS;
+         double c = GSL_MAX_DBL(1, chi / sqrt(dof)); 
+     
+         printf("chisq/dof = %g\n",  pow(chi, 2.0) / dof);
+     
+         printf ("R0      = %.5f +/- %.5f\n", FIT(0), c*ERR(0));
+         printf ("phi = %.5f +/- %.5f\n", FIT(1), c*ERR(1));
+         printf ("K1     = %.5f +/- %.5f\n", FIT(2), c*ERR(2));
+         printf ("K2     = %.5f +/- %.5f\n", FIT(3), c*ERR(3));
+       }
+     
+       printf ("status = %s\n", gsl_strerror (status));
+       fittedParams = s->x;
+     
+       gsl_multifit_fdfsolver_free (s);
+       gsl_matrix_free (covar);
+       //gsl_rng_free (r);
+
+}
 
 void dvsCalibratorThread::findCorners(int whichCamera){
  
