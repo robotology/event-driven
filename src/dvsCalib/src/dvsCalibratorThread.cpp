@@ -35,7 +35,7 @@
  void
      print_state (size_t iter, gsl_multifit_fdfsolver * s)
      {
-       printf ("iter: %3d x = %f %f %f %f f(x) = %f\n",
+       printf ("iter: %3d x = %f %f %f %f Norm = %f\n",
                (int)iter,
                gsl_vector_get (s->x, 0), 
                gsl_vector_get (s->x, 1),
@@ -239,10 +239,11 @@ void dvsCalibratorThread::run() {
            theta += stepTheta;
            printf ("data:: %d %f\n", (int)i, yV[i]);
          };
+         setThetasOfPolarCoord(thetasFake);
          gsl_vector* retVect;
          fitTheData(yV,retVect);
    
-   setThetasOfPolarCoord(thetasFake);
+   
    
    
    
@@ -402,7 +403,7 @@ bool dvsCalibratorThread::fitTheData(double* valueOfPoints, gsl_vector* fittedPa
        double y[N], sigma[N];
        struct dataE d = { n, y, sigma};
        
-       double x_init[NBR_PARAMETERS] = { 1.0, PI/4.2, .001,.001 };
+       double x_init[NBR_PARAMETERS] = { 1.0, PI/12.0, .001,.001 };
        gsl_vector_view x = gsl_vector_view_array (x_init, NBR_PARAMETERS);
        const gsl_rng_type * type;
        
@@ -446,7 +447,7 @@ bool dvsCalibratorThread::fitTheData(double* valueOfPoints, gsl_vector* fittedPa
              break;
      
            status = gsl_multifit_test_delta (s->dx, s->x,
-                                             1e-3, 1e-3);
+                                             1e-8, 1e-8);
          }
        while (status == GSL_CONTINUE && iter < 1000);
      
@@ -460,12 +461,12 @@ bool dvsCalibratorThread::fitTheData(double* valueOfPoints, gsl_vector* fittedPa
          double dof = n - NBR_PARAMETERS;
          double c = GSL_MAX_DBL(1, chi / sqrt(dof)); 
      
-         printf("chisq/dof = %g\n",  pow(chi, 2.0) / dof);
+         printf("chisq/dof = %f\n",  pow(chi, 2.0) / dof);
      
-         printf ("R0      = %.5f +/- %.5f\n", FIT(0), c*ERR(0));
-         printf ("phi = %.5f +/- %.5f\n", FIT(1), c*ERR(1));
-         printf ("K1     = %.5f +/- %.5f\n", FIT(2), c*ERR(2));
-         printf ("K2     = %.5f +/- %.5f\n", FIT(3), c*ERR(3));
+         printf ("R0      = %f +/- %f\n", FIT(0), c*ERR(0));
+         printf ("phi = %f +/- %f\n", FIT(1), c*ERR(1));
+         printf ("K1     = %f +/- %5f\n", FIT(2), c*ERR(2));
+         printf ("K2     = %f +/- %f\n", FIT(3), c*ERR(3));
        }
      
        printf ("status = %s\n", gsl_strerror (status));
