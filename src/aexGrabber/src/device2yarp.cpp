@@ -704,9 +704,9 @@ void device2yarp::closeDevice(){
 }
 
 void  device2yarp::run() {
-  //printf("reading \n");
 
     r = read(file_desc, pmonatom, monBufSize_b);
+    //r = read(file_desc, &buffer, monBufSize_b);
     //printf("called read() with monBufSize_b == %d -> retval: %d\n", (int)monBufSize_b, (int)r);
     
     if(r < 0) {
@@ -733,7 +733,8 @@ void  device2yarp::run() {
 
     int k = 0;
     int k2 = 0;
-    uint32_t * buf2 = (uint32_t*)buffer;
+    uint32_t *     buf2 = (uint32_t*)          buffer;
+    unsigned char* buf1 = (unsigned char*)     pmonatom;
     u32 a, t, c;
     u32 tempA, tempA_unmasked, tempB, tempB_unmasked;
     u32 tempC_unmasked;
@@ -745,9 +746,31 @@ void  device2yarp::run() {
     
     
     for (int i = 0; i < monBufEvents; i++ ) {
-        // double buffer!!
-        t = 0xDEADDEAD;
+
         tempA = pmonatom[i].data;
+        
+        // dumping any single char
+        /*
+        if(save){
+            fprintf(fout,"%02X ", *buf1);
+            buf1++;
+            fprintf(fout,"%02X ", *buf1);
+            buf1++;
+            fprintf(fout,"%02X ", *buf1);
+            buf1++;
+            fprintf(fout,"%02X ", *buf1);
+            buf1++;
+        }
+        */
+
+        // dumping the atom as it is
+        /*
+        if(save) {
+            fprintf(fout, "     %08X  \n",tempA);
+        }
+        */
+        
+        // running statistic of the received train of events
         tempA_unmasked = (tempA & 0xFC000000) >> 26;
         
         // ------ CONTROL MESSAGE  ------------
@@ -887,7 +910,7 @@ void  device2yarp::run() {
             
             if (save) {	  
                 fprintf(fout,"\n %08X ",t);
-                fprintf(fout," %08X ",0xCAFECAFE);
+                //fprintf(fout," %08X ",0xCAFECAFE);
             }	  	  	  
         }
         
@@ -901,9 +924,9 @@ void  device2yarp::run() {
     char* buf = (char*) buf2;
     
     if (port.getOutputCount()) {
-        if (wrapOccured) {
-            sz += 8;
-        }
+        //if (wrapOccured) {
+        //    sz += 8;
+        //}
         eventBuffer data2send(buffer, sz);  //adding 8 bytes for extra word 0xCAFECAFE and TS_WA    
         eventBuffer& tmp = port.prepare();
         tmp = data2send;

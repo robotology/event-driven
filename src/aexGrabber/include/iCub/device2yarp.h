@@ -59,7 +59,7 @@ struct aer {
 };
 
 struct atom {
-    u16 data;
+    u32 data;
 };
 
 
