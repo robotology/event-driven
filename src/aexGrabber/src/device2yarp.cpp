@@ -798,7 +798,7 @@ void  device2yarp::run() {
             countInWraps++;
             
             if (save) {	  
-                fprintf(fout," %08X ",a);
+                fprintf(fout,"%08X \n",a);
             }
             
             buf2[k2++] = a;   // passing the address event to the data flow to send
@@ -844,7 +844,7 @@ void  device2yarp::run() {
             lastTSindex = countData;
             
             if (save) {	  
-                fprintf(fout,"\n %08X ",t);
+                fprintf(fout,"%08X ",t);
             }
           
             //copying the atomic block to send
@@ -909,7 +909,7 @@ void  device2yarp::run() {
             
             
             if (save) {	  
-                fprintf(fout,"\n %08X ",t);
+                fprintf(fout,"%08X\n",t);
                 //fprintf(fout," %08X ",0xCAFECAFE);
             }	  	  	  
         }
