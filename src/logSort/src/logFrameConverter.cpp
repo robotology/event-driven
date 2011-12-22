@@ -143,7 +143,7 @@ void logFrameConverter::copyChunk(char* bufferCopy, int packetSize) {
 
 void logFrameConverter::copyChunk(char* bufferCopy, char* flagBuffer) {            
     int count = countSemaphore % 3 + 1;
-    printf("countSemaphore :  %d \n", count);
+    //printf("countSemaphore :  %d \n", count);
 
     //mutex.wait()  
     switch(count) {
