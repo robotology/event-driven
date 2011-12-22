@@ -61,7 +61,8 @@ private:
     unsigned long lasttimestamp;          // last timestamp acquired for the left camera
     unsigned long lasttimestampright;     // last timestamp acquired for the right camera
     unsigned long eldesttimestamp;        // timestamp of the eldest event in the buffer 
-    short cartX, cartY, polarity, camera;
+    short cartX, cartY, polarity;         // address x, y and polarity event information
+    short camera;                // camera information event information
 
     int wrapAdd;
     unsigned int xmask;              // 16 bits mask for unmasking of the address

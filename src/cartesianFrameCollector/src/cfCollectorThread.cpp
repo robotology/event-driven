@@ -29,7 +29,6 @@
 #include <cstdlib>
 #include <time.h>
 
-
 using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
@@ -272,7 +271,20 @@ void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsig
     //unmask_events->setLastTimestamp(0);
 }
 
-
+int cfCollectorThread::prepareUnmasking(char* bufferCopy, Bottle* res) {
+    // navigate the 32bit words in the bufferCopy and create a bottle outofvalid
+    int numberofwords = CHUNKSIZE / 4; //4bytes made a 32bits word
+    u32* pointerWord = (u32*) bufferCopy;
+    int countValid  = 0;
+    for (int i = 0; i< numberofwords; i ++) {
+        if(*pointerWord != 0) {
+            //this is a valide word
+            //res->append(*pointerWord);
+            countValid++;
+        }
+    }
+    return countValid;
+}
 
 void cfCollectorThread::run() {
   count++;

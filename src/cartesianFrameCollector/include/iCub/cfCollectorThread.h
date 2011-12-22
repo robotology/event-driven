@@ -28,6 +28,7 @@
 #define _CF_COLLECTOR_THREAD_H_
 
 #include <yarp/os/RateThread.h>
+#include <yarp/os/Bottle.h>
 #include <yarp/sig/all.h>
 #include <iCub/cartesianFrameConverter.h>
 #include <iCub/plotterThread.h>
@@ -41,7 +42,7 @@
 
 //typedef unsigned long long int uint64_t;
 #define u64 uint64_t
-
+typedef yarp::os::NetUint32 u32;
 
 class cfCollectorThread : public yarp::os::RateThread {
 private:
@@ -214,6 +215,11 @@ public:
      * @brief function that indicates whether the viewer reppresent logpolar information
      */
     void setResponseGradient(int value) {responseGradient = value; }; 
+    
+    /**
+     * @brief function that given a section of the buffer creates a bottle
+     */
+    int prepareUnmasking(char* bufferCopy, yarp::os::Bottle* res);
     
 };
 
