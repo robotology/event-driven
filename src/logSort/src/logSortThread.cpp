@@ -43,7 +43,6 @@ using namespace std;
 //#define CHUNKSIZE     32768//8192          //16384 //1024  // dimension of the received packet
 #define dim_window    5             // deprecated 
 #define synch_time    1000          // deprecated
-//#define SIZE_PACKET   8192          // deprecated
 #define RESET_COUNTER 200           // counter for the resetting of the EM buffer
 
 

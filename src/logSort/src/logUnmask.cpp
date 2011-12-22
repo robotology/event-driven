@@ -450,7 +450,7 @@ bool logUnmask::threadInit() {
             logChip_LUT[y * X_DIMENSION + x][2] = metay;
             logChip_LUT[y * X_DIMENSION + x][3] = pol;
 
-            printf("%d %d \n", x, y);
+            //printf("%d %d \n", x, y);
             fprintf(fout," %d %d %d %d %d %d \n", x, y, metax, metay, pol, type);
 
            

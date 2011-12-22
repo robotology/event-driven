@@ -39,7 +39,8 @@ using namespace yarp::sig;
 using namespace std;
 
 logFrameConverter::logFrameConverter():convert_events(128,128) {
-    countSemaphore = 0;
+    countSemaphore = 0; // initial section in the onRead - 1 
+    semaphore_id   = 2; // initial section in the copyChunk
     countBuffer = 0;
     valid = false;
     retinalSize=128;
@@ -89,6 +90,7 @@ logFrameConverter::~logFrameConverter() {
 }
 
 void logFrameConverter::waitSemaphore() {
+    //printf("waitSemaphore  %d \n",semaphore_id);
     switch(semaphore_id) {
 
     case 1 : {
@@ -110,6 +112,7 @@ void logFrameConverter::waitSemaphore() {
 }
 
 void logFrameConverter::postSemaphore() {
+    //printf("postSemaphore  %d \n",semaphore_id);
     switch(semaphore_id) {
 
     case 1 : {
@@ -140,6 +143,7 @@ void logFrameConverter::copyChunk(char* bufferCopy, int packetSize) {
 
 void logFrameConverter::copyChunk(char* bufferCopy, char* flagBuffer) {            
     int count = countSemaphore % 3 + 1;
+    printf("countSemaphore :  %d \n", count);
 
     //mutex.wait()  
     switch(count) {
@@ -478,6 +482,7 @@ void logFrameConverter::onRead(eventBuffer& i_ub) {
         mutex3.post();
         
         commuteSemaphore(1,2);
+        mutex1.wait();
         waitSemaphore();                
         status = 1;
         memcpy(pcBuffer,receivedBuffer,dim);
@@ -488,6 +493,7 @@ void logFrameConverter::onRead(eventBuffer& i_ub) {
         totDim   += dim;
         removeLater = 1;
         postSemaphore();
+        mutex1.post();
     }
     else if(totDim < TH2 && (totDim + dim) > TH2){
         mutex1.wait();
@@ -496,6 +502,7 @@ void logFrameConverter::onRead(eventBuffer& i_ub) {
         mutex1.post();
 
         commuteSemaphore(2,3);
+        mutex2.wait();
         waitSemaphore();
         status = 3;
         memcpy(pcBuffer,receivedBuffer,dim);
@@ -506,6 +513,7 @@ void logFrameConverter::onRead(eventBuffer& i_ub) {
         totDim   += dim;
         removeLater = 2; 
         postSemaphore();
+        mutex2.post();
     }
     else if((totDim + dim) > TH3){
         mutex2.wait();
@@ -515,6 +523,7 @@ void logFrameConverter::onRead(eventBuffer& i_ub) {
 
 
         commuteSemaphore(3,1);
+        mutex3.wait();
         waitSemaphore();    
         overflow = totDim+dim - TH3;
         status = 5;
@@ -531,6 +540,7 @@ void logFrameConverter::onRead(eventBuffer& i_ub) {
         totDim = overflow;
         removeLater = 3; 
         postSemaphore();
+        mutex3.post();
     }
     else { // general case where no boundaries are crossed
         waitSemaphore();
