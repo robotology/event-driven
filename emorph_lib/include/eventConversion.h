@@ -21,7 +21,9 @@
 #include <inttypes.h>
 #include <yarp/os/all.h>
 
-#define u32 uint32_t
+//#define u32 uint32_t
+typedef yarp::os::NetUint32 u32;
+
 
 typedef struct s_AER_struct {
     int x;
@@ -45,7 +47,7 @@ struct aer {
  * 08/11/11 : added unmaskData function that returns buffer of aer events                   author : Rea \n       
  * 18/11/11 : setRetinalSize function added for a correct unmasking                         author : Rea \n
  * 19/11/11 : changed the type of the timestamp in the AER_struct                           author : Rea \n
- * 19/11/11 : subtracted 1 to the cartX and cartY position in the unmaskData                author : Rea \n             
+ * 19/11/11 : subtracted 1 to the cartX and cartY position in the unmaskData                author : Rea \n          * 22/12/11 : made the unsigned 32 bit platform independent                                 author : Rea \n     
 */
 
 
@@ -56,8 +58,8 @@ class unmask {    ///: public yarp::os::RateThread {
 private:
     int id;
     int nb_trame;
-    int count;                       // counter of the unmasked events
-    
+    int count;                            // counter of the unmasked events
+
     int sz;
     int* buffer;                          // buffer representing the event in image plane (left)
     unsigned long* timeBuffer;            // buffer contains the timestamp of the particular location (left)
