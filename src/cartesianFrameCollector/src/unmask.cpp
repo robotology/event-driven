@@ -162,7 +162,6 @@ void unmask::resetTimestampLeft() {
     for (int i=0 ; i < retinalSize * retinalSize; i++){
         timeBuffer[i] = 0;
     }
-    //verb = true;
     lasttimestamp = 0;  
 }
 
@@ -170,7 +169,6 @@ void unmask::resetTimestampRight() {
     for (int i=0 ; i < retinalSize * retinalSize; i++){
         timeBufferRight[i] = 0;
     }
-    //verb = true;
     lasttimestampright = 0;  
 }
 
@@ -403,6 +401,9 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
                 //buf2[2 * evt] = 0;       // removing the TS_WA from the buffer               
                 continue;
                 */
+                resetTimestampLeft(); 
+                resetTimestampRight();
+                    
             }
             else if(v_unmasked == 0x00) {
                 //if (v!=0) {

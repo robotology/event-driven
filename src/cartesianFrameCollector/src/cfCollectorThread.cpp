@@ -279,7 +279,9 @@ int cfCollectorThread::prepareUnmasking(char* bufferCopy, Bottle* res) {
     for (int i = 0; i< numberofwords; i ++) {
         if(*pointerWord != 0) {
             //this is a valide word
-            //res->append(*pointerWord);
+            Bottle tmp;
+            tmp.addInt(*pointerWord);
+            res->append(tmp);
             countValid++;
         }
     }
