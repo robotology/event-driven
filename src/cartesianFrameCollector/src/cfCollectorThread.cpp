@@ -195,31 +195,12 @@ void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsig
                 if (((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)) {   //(timestampactual != lasttimestamp)
                     *pImage = (unsigned char) (127 + value);
                     //if(value>0)printf("event%d val%d buf%d\n",*pImage,value,*pBuffer);
-                    pImage++;
-                    //if ((stereo) && (r < 7) && (r >= 16) && (c < 7) && (c >= 16)) {
-                    //  *pImage = (unsigned char) (127 + value);
-                    //  pImage += imageRowSize;
-                    //  *pImage = (unsigned char) (127 + value);
-                    //pImage--;
-                    //  *pImage = (unsigned char) (127 + value);
-                    //  pImage -= (imageRowSize + 1);
-                    //}
-                    
+                    pImage++;                    
                 }
                 else {
                     *pImage = (unsigned char) 127 ;
                     //printf("NOT event%d \n",*pImage);
-                    pImage++;
-                    
-                    //if ((stereo) && (r < 7) && (r >= 16) && (c < 7) && (c >= 16)) {
-                    //  *pImage = (unsigned char) 127;
-                    //  pImage += imageRowSize;
-                    //  *pImage = (unsigned char) 127 + value;
-                    //  pImage--;
-                    //  *pImage = (unsigned char) 127 + value;
-                    //  pImage -= (imageRowSize + 1);
-                    //}
-                    
+                    pImage++;                    
                 }
                 pBuffer++;
                 pTime++;
@@ -235,31 +216,12 @@ void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsig
                 if (((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)) {   //(timestampactual != lasttimestamp)
                     *pImage = (unsigned char) abs(value * 2);
                     //if(value>0)printf("event%d val%d buf%d\n",*pImage,value,*pBuffer);
-                    pImage++;
-                    //if ((stereo) && (r < 7) && (r >= 16) && (c < 7) && (c >= 16)) {
-                    //  *pImage = (unsigned char) (127 + value);
-                    //  pImage += imageRowSize;
-                    //  *pImage = (unsigned char) (127 + value);
-                    //pImage--;
-                    //  *pImage = (unsigned char) (127 + value);
-                    //  pImage -= (imageRowSize + 1);
-                    //}
-                    
+                    pImage++;                   
                 }
                 else {
                     *pImage = (unsigned char) 0 ;
                     //printf("NOT event%d \n",*pImage);
                     pImage++;
-                    
-                    //if ((stereo) && (r < 7) && (r >= 16) && (c < 7) && (c >= 16)) {
-                    //  *pImage = (unsigned char) 127;
-                    //  pImage += imageRowSize;
-                    //  *pImage = (unsigned char) 127 + value;
-                    //  pImage--;
-                    //  *pImage = (unsigned char) 127 + value;
-                    //  pImage -= (imageRowSize + 1);
-                    //}
-                    
                 }
                 pBuffer++;
                 pTime++;
@@ -277,12 +239,17 @@ int cfCollectorThread::prepareUnmasking(char* bufferCopy, Bottle* res) {
     u32* pointerWord = (u32*) bufferCopy;
     int countValid  = 0;
     for (int i = 0; i< numberofwords; i ++) {
+        
         if(*pointerWord != 0) {
-            //this is a valide word
+            //this is a valid word
             Bottle tmp;
             tmp.addInt(*pointerWord);
+            if(i == 100) {
+                printf("%08X \n", *pointerWord);
+            }
             res->append(tmp);
             countValid++;
+            pointerWord++;
         }
     }
     return countValid;
@@ -298,6 +265,10 @@ void cfCollectorThread::run() {
     //bufferRead = cfConverter->getBuffer();    
     // saves it into a working buffer
     cfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
+    Bottle codecBottle;
+    
+    //int countValid = prepareUnmasking(bufferCopy, &codecBottle, u);
+    //printf("countValid: %d \n", countValid);
     
     // saving the buffer into the file
     int num_events = CHUNKSIZE / 8 ;
