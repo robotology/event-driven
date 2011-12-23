@@ -178,6 +178,7 @@ int main()
 
     // encode events within packets
     Bottle packets;
+    cout<<"encoding events within packets"<<endl;
     for (size_t i=0; i<txQueue.size(); i++)
         packets.append(txQueue[i]->encode());
     printPacket(packets);
@@ -188,10 +189,11 @@ int main()
 
     // receive the packets and
     // decode events
+    cout<<"decoding events"<<endl;
     eEventQueue rxQueue;    // the ownership is true by default
-    double t0=Time::now();
-    bool ok=eEvent::decode(packets,rxQueue);
-    double t1=Time::now();
+    double t0 = Time::now();
+    bool   ok = eEvent::decode(packets,rxQueue);
+    double t1 = Time::now();
 
     // insert mismatches deliberately
     // to check the functionality of operator==()
