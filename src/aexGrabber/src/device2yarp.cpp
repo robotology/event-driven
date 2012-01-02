@@ -292,6 +292,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName =
     printf("opening port for sending the read events \n");
     str_buf << "/icub/retina" << deviceNum << ":o";
     port.open(str_buf.str().c_str());
+    portEventBottle.open("/aexGrabber/eventBottle:o");
     portDimension.open("/aexGrabber/dim:o");
 
     // opening the file when the biases are programmed by file
@@ -706,6 +707,7 @@ void device2yarp::closeDevice(){
 void  device2yarp::run() {
 
     r = read(file_desc, pmonatom, monBufSize_b);
+    //printf("received %d bytes \n", r);
     //r = read(file_desc, &buffer, monBufSize_b);
     //printf("called read() with monBufSize_b == %d -> retval: %d\n", (int)monBufSize_b, (int)r);
     
@@ -901,12 +903,11 @@ void  device2yarp::run() {
             }
             countInWraps = 0;
             countLostAE = 0;
-          
+            t_prev = 0;
             	    
             buf2[k2++] = t; // passing the timestamp to the data flow to send	    
             //buf2[k2++] = a;
-            countEventSent++;  
-            
+            countEventSent++;              
             
             if (save) {	  
                 fprintf(fout,"%08X\n",t);
@@ -924,19 +925,23 @@ void  device2yarp::run() {
     char* buf = (char*) buf2;
     
     if (port.getOutputCount()) {
-        //if (wrapOccured) {
-        //    sz += 8;
-        //}
         eventBuffer data2send(buffer, sz);  //adding 8 bytes for extra word 0xCAFECAFE and TS_WA    
         eventBuffer& tmp = port.prepare();
         tmp = data2send;
         port.write();
     }   
+
+    if (portEventBottle.getOutputCount()) {       
+        printf("Sending the bottle %d bytes \n", sz);
+        eventBottle data2send(buffer, sz);
+        eventBottle& tmp = portEventBottle.prepare(); 
+        tmp = data2send;
+        portEventBottle.write();
+    }   
     
     wrapOccured = false;
     
     if (portDimension.getOutputCount()) {
-        
         Bottle& b = portDimension.prepare();
         b.clear();
         b.addInt(r);

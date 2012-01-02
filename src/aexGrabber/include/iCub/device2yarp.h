@@ -43,7 +43,7 @@
 #include <fstream>
 
 #include <iCub/eventBuffer.h>
-//#include "sending_buffer.h"
+#include <iCub/eventBottle.h>
 
 #define u8  uint8_t
 #define u16 uint16_t
@@ -413,6 +413,7 @@ private:
     yarp::os::BufferedPort<eventBuffer> port;                  // port sending events
     //yarp::os::BufferedPort<sendingBuffer> port;              // port sending events
     yarp::os::BufferedPort<yarp::os::Bottle> portDimension;    // port sending dimension of packets   
+    yarp::os::BufferedPort<eventBottle> portEventBottle;       // port sending events as bottle
     int r;                                         // dimension of the received buffer of event for display
     int countAEs;                                  // counter of the received AEs
     FILE* raw;
