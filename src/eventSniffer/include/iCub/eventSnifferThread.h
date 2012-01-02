@@ -63,6 +63,7 @@ private:
     int height_orig, width_orig;        // original dimension of the input and output images
     int synchPeriod;                    // synchronization period between events and viewer
     int responseGradient;               // responseGradient parameter
+    eventBottleHandler* bottleHandler;  // handler for the received bottle
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPort;            // port whre the output (left) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPortRight;       // port whre the output (right) is sent
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeft;                                  //image representing the signal on the leftcamera

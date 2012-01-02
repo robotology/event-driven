@@ -114,6 +114,11 @@ bool eventSnifferThread::threadInit() {
     minCount = 0;
     minCountRight= 0;
 
+    bottleHandler = new eventBottleHandler();
+    bottleHandler->useCallback();
+    bottleHandler->setRetinalSize(retinalSize);
+    bottleHandler->open(getName("/retina:i").c_str());
+
     printf("Initialisation in collector thread correctly ended \n");
     return true;
 }
