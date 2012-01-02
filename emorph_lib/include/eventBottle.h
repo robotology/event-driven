@@ -19,7 +19,7 @@
 #include <yarp/os/all.h>
 #include <cstring>
 
-const int SIZE_OF_DATA = 65536; 
+//const int SIZE_OF_DATA = 65536; 
 
 /**
  * portable class for the bottle of events
@@ -30,19 +30,20 @@ public:
     eventBottle(char*, int);
     ~eventBottle();
 
-    void operator=(const eventBottle&);
+    void operator =(const eventBottle&);
     eventBottle(const eventBottle&);
 
     virtual bool write(yarp::os::ConnectionWriter&);
-    virtual bool read(yarp::os::ConnectionReader&);
+    virtual bool read (yarp::os::ConnectionReader&);
 
     void set_data(char*, int);
 
-    yarp::os::Bottle* get_packet(){return packet;};
-    int get_sizeOfPacket(){return size_of_the_packet;};
+    char* get_packet()    { return packetPointer;      };
+    int get_sizeOfPacket(){ return size_of_the_packet; };
 
 private:
     yarp::os::Bottle* packet;
+    char* packetPointer;
     int size_of_the_packet;
 };
 
