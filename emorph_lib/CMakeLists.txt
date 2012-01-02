@@ -15,8 +15,11 @@ FILE(GLOB folder_source
   src/eventBuffer.cpp
   src/eventConversion.cpp
   src/eventCodec.cpp
+  src/eventBottle.cpp
 )
-FILE(GLOB folder_header include/*.h)
+FILE(GLOB folder_header 
+  include/*.h
+)
 
 # Declare groups of source and header files -- makes things pretty in MSVC.
 SOURCE_GROUP("Source Files" FILES ${folder_source})
