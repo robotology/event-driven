@@ -42,7 +42,7 @@ bool eventSnifferModule::configure(yarp::os::ResourceFinder &rf) {
     printf("initialization of the main thread \n");
     /* get the module name which will form the stem of all module port names */
     moduleName            = rf.check("name", 
-                           Value("/cartesianFrameCollector"), 
+                           Value("/eventSniffer"), 
                            "module name (string)").asString();
     /*
     * before continuing, set the module name before getting any other parameters, 
@@ -75,8 +75,8 @@ bool eventSnifferModule::configure(yarp::os::ResourceFinder &rf) {
     
     // --------------------------------------------
     printf("starting cfCollector Thread \n");
-    //cfThread=new cfCollectorThread();
-    //cfThread->setName(getName().c_str());
+    esThread=new eventSnifferThread();
+    esThread->setName(getName().c_str());
     
     printf("name of the cfThread correctly set \n");
 
@@ -165,7 +165,12 @@ bool eventSnifferModule::configure(yarp::os::ResourceFinder &rf) {
     else {
         //cfThread->setLogPolar(false);
     }
-    //cfThread->start();
+    esThread->start();
+
+    bottleHandler = new eventBottleHandler();
+    bottleHandler->useCallback();
+    bottleHandler->setRetinalSize(retinalSize);
+    bottleHandler->open(getName("/retina:i").c_str());
 
     return true ;       // let the RFModule know everything went well
                         // so that it will then run the module

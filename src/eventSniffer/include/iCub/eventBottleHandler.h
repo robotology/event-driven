@@ -131,7 +131,8 @@ private:
     char* receivedBuffer;                                       // temporarely pointer to the received buffer
     char* pcRead;                                               // pointer to the location where to read events
     char* pcBuffer;                                             // pointer where to buffer events
-
+    yarp::os::Bottle* receivedBottle;                           // pointer to the received bottle
+    
     //unmask unmask_events;         // object in charge of unmasking the events
     //converter convert_events;       // object in charge of converting the events into an image
     yarp::os::Semaphore mutex;      // semaphore for thehandling resource buffer

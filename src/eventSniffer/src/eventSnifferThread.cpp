@@ -45,7 +45,7 @@ using namespace std;
 
 //#define VERBOSE
 
-cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
+eventSnifferThread::eventSnifferThread() : RateThread(THRATE) {
     responseGradient = 127;
     retinalSize  = 128;  //default value before setting 
   
@@ -65,12 +65,12 @@ cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
     minCountRight = 0;
 }
 
-cfCollectorThread::~cfCollectorThread() {
+eventSnifferThread::~eventSnifferThread() {
     printf("freeing memory in collector");
     delete bufferCopy;
 }
 
-bool cfCollectorThread::threadInit() {
+bool eventSnifferThread::threadInit() {
     printf(" \nstarting the threads.... \n");
     //outPort.open(getName("/left:o").c_str());
     //outPortRight.open(getName("/right:o").c_str());
@@ -118,23 +118,23 @@ bool cfCollectorThread::threadInit() {
     return true;
 }
 
-void cfCollectorThread::interrupt() {
+void eventSnifferThread::interrupt() {
     outPort.interrupt();
     outPortRight.interrupt();
 }
 
-void cfCollectorThread::setName(string str) {
+void eventSnifferThread::setName(string str) {
     this->name=str;
     printf("name: %s", name.c_str());
 }
 
-std::string cfCollectorThread::getName(const char* p) {
+std::string eventSnifferThread::getName(const char* p) {
     string str(name);
     str.append(p);
     return str;
 }
 
-void cfCollectorThread::resize(int widthp, int heightp) {
+void eventSnifferThread::resize(int widthp, int heightp) {
     imageLeft = new ImageOf<PixelMono>;
     imageLeft->resize(widthp,heightp);
     imageRight = new ImageOf<PixelMono>;
@@ -142,98 +142,11 @@ void cfCollectorThread::resize(int widthp, int heightp) {
 }
 
 
-void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsigned long minCount,unsigned long maxCount, bool camera){
-    assert(image!=0);
-    //printf("retinalSize in getMonoImage %d \n", retinalSize);
-    image->resize(retinalSize,retinalSize);
-    unsigned char* pImage = image->getRawImage();
-    int imagePadding = image->getPadding();
-    int imageRowSize = image->getRowSize();
-    
-    /*
-    unsigned long int lasttimestamp = getLastTimeStamp();
-    if (lasttimestamp == previousTimeStamp) {   //condition where there were not event between this call and the previous
-        for(int r = 0 ; r < retinalSize ; r++){
-            for(int c = 0 ; c < retinalSize ; c++) {
-                *pImage++ = (unsigned char) 127;
-            }
-            pImage+=imagePadding;
-        }
-        return;
-    }
-    previousTimeStamp = lasttimestamp;
-    */
+void eventSnifferThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsigned long minCount,unsigned long maxCount, bool camera){
 
-    // determining whether the camera is left or right
-    //int* pBuffer = unmask_events->getEventBuffer(camera);
-    //unsigned long* pTime   = unmask_events->getTimeBuffer(camera);
-    
-    //printf("timestamp: min %d    max %d  \n", minCount, maxCount);
-    //pBuffer += retinalSize * retinalSize - 1;
-    for(int r = 0 ; r < retinalSize ; r++){
-        for(int c = 0 ; c < retinalSize ; c++) {
-            //drawing the retina and the rest of the image separately
-            int value = *pBuffer;
-            
-            unsigned long timestampactual = *pTime;
-            //bool tristateView = false;
-            
-            if(tristate) {
-                // decreasing the spatial response without removing it
-                if(count % 10 == 0) {
-                    if(*pBuffer > 20){
-                        *pBuffer = *pBuffer - 1;                                       
-                    }
-                    else if(*pBuffer < -20){
-                        *pBuffer = *pBuffer + 1;                                       
-                    }
-                }
-                
-
-                //if(minCount>0 && maxCount > 0 && timestampactual>0)
-                //printf("actualTS%ld val%ld max%ld min%ld  are\n",timestampactual,timestampactual * COUNTERRATIO,minCount,maxCount);
-                if (((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)) {   //(timestampactual != lasttimestamp)
-                    *pImage = (unsigned char) (127 + value);
-                    //if(value>0)printf("event%d val%d buf%d\n",*pImage,value,*pBuffer);
-                    pImage++;                    
-                }
-                else {
-                    *pImage = (unsigned char) 127 ;
-                    //printf("NOT event%d \n",*pImage);
-                    pImage++;                    
-                }
-                pBuffer++;
-                pTime++;
-            }
-            // branch !tristateView
-            else {
-                // decreasing the spatial response without removing 
-                if((*pBuffer > 20) && (count % 10 == 0)){
-                    *pBuffer = *pBuffer - 1;                                       
-                }
-                //if(minCount>0 && maxCount > 0 && timestampactual>0)
-                //printf("actualTS%ld val%ld max%ld min%ld  are\n",timestampactual,timestampactual * COUNTERRATIO,minCount,maxCount);
-                if (((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)) {   //(timestampactual != lasttimestamp)
-                    *pImage = (unsigned char) abs(value * 2);
-                    //if(value>0)printf("event%d val%d buf%d\n",*pImage,value,*pBuffer);
-                    pImage++;                   
-                }
-                else {
-                    *pImage = (unsigned char) 0 ;
-                    //printf("NOT event%d \n",*pImage);
-                    pImage++;
-                }
-                pBuffer++;
-                pTime++;
-            }            
-        }
-        pImage+=imagePadding;
-    }
-    //printf("end of the function get in mono \n");
-    //unmask_events->setLastTimestamp(0);
 }
 
-int cfCollectorThread::prepareUnmasking(char* bufferCopy, Bottle* res) {
+int eventSnifferThread::prepareUnmasking(char* bufferCopy, Bottle* res) {
     // navigate the 32bit words in the bufferCopy and create a bottle outofvalid
     int numberofwords = CHUNKSIZE / 4; //4bytes made a 32bits word
     u32* pointerWord = (u32*) bufferCopy;
@@ -255,252 +168,27 @@ int cfCollectorThread::prepareUnmasking(char* bufferCopy, Bottle* res) {
     return countValid;
 }
 
-void cfCollectorThread::run() {
-  count++;
-	
-  if(!idle) {
-    interTimer = Time::now();
-    double interval2 = (interTimer - startTimer)* 1000000;
-    // reads the buffer received
-    //bufferRead = cfConverter->getBuffer();    
-    // saves it into a working buffer
-    //cfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
-    Bottle codecBottle;
+void eventSnifferThread::run() {
+  
     
-    //int countValid = prepareUnmasking(bufferCopy, &codecBottle, u);
-    //printf("countValid: %d \n", countValid);
-    
-    // saving the buffer into the file
-    int num_events = CHUNKSIZE / 8 ;
-    //uint32_t* buf2 = (uint32_t*)bufferCopy;
-
-#ifdef VERBOSE
-    fprintf(fout,"##############");
-    for (int evt = 0; evt < num_events; evt++) {
-        unsigned long blob      = buf2[2 * evt];
-        unsigned long t         = buf2[2 * evt + 1];
-        fprintf(fout,"0x%08x 0x%08x \n",blob, t);
-    }
-#endif
     
 
-    //getting the time
-    endTimer = Time::now();
-    //double interval  = (endTimer - startTimer) * 1000000; //interval in us
-    double interval  = 5 * 1000;
-    double procInter = interval -interval2;
-    //printf("procInter %f \n", procInter);
-    startTimer = Time::now();
-
-#ifdef WRAP_COS
-    //check for wrapping of the left and right timestamp
-    if(maxCount >= (MAXVALUE - 1000) ) {
-      verb = true;
-      //unmask_events->resetTimestampLeft();
-      //unmask_events->resetTimestampRight();
-      //printf("wrapping left %lu %lu \n",lc,unmask_events->getLastTimestamp());
-     
-      minCount = 0;
-      maxCount      =  minCount      + interval * INTERVFACTOR* (dim_window);
-   
-    }
-    if(maxCountRight >= (MAXVALUE - 1000)) {
-      verb = true;
-      //unmask_events->resetTimestampRight();
-      //unmask_events->resetTimestampLeft();
-      printf("wrapping right %lu %lu\n",rc,unmask_events->getLastTimestampRight());
-
-      minCountRight = 0;
-      maxCountRight = minCountRight + interval * INTERVFACTOR* (dim_window);
-    }
-#endif
-
-    // extract a chunk/unmask the chunk
-    // printf("verb %d \n",verb);
-    //unmask_events->unmaskData(bufferCopy,CHUNKSIZE,verb);
-    if(verb) {
-      verb = false;
-      countStop = 0;
-    }
-    
-    //gettin the time between two threads
-    gettimeofday(&tvend, NULL);
-    //Tnow = ((u64)tvend.tv_sec) * 1000000 + ((u64)tvstart.tv_usec);
-    Tnow = ((tvend.tv_sec * 1000000 + tvend.tv_usec)
-	    - (tvstart.tv_sec * 1000000 + tvstart.tv_usec));
-    //printf("timeofday>%ld\n",Tnow );
-    gettimeofday(&tvstart, NULL);       
-    
-    
-    
-    /*if(true){
-      //printf("Saving in file \n");
-      fprintf(raw,"%08X \n",lc); 
-      //fwrite(&sz, sizeof(int), 1, raw);
-      //fwrite(buffer, 1, sz, raw);
-    }*/
-    
-    //synchronising the threads at the connection time
-    if ((cfConverter->isValid())&&(!synchronised)) {
-      printf("Sychronising ");
-      //unsigned long int lastleft  = unmask_events->getLastTimestamp();
-      lc = lastleft  * COUNTERRATIO; 
-      //unsigned long int lastright = unmask_events->getLastTimestampRight();
-      rc = lastright * COUNTERRATIO;
-
-      //TODO : Check for negative values of minCount not allowed!!!!!!
-
-      minCount = lc > interval * INTERVFACTOR * dim_window ? lc - interval * INTERVFACTOR* dim_window : 0; 
-      //cfConverter->getEldestTimeStamp();                                                                   
-      minCountRight = rc > interval * INTERVFACTOR* dim_window ? rc - interval * INTERVFACTOR* dim_window : 0;
-      //printf("synchronised %1f! %d,%d,%d||%d,%d,%d \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
-      startTimer = Time::now();
-      synchronised = true;
-      //minCount = unmask_events->getLastTimestamp();
-      //printf("minCount %d \n", minCount);
-      //minCountRight = unmask_events->getLastTimestamp();
-      count = synchPeriod - 200;
-    }
-    else if ((count % synchPeriod == 0) && (minCount < 4294500000)) {
-        //unsigned long lastleft = unmask_events->getLastTimestamp();
-      lc = lastleft * COUNTERRATIO; 
-      //unsigned long lastright = unmask_events->getLastTimestampRight();
-      rc = lastright * COUNTERRATIO;
-
-      //if (count == synchPeriod) {
-      //printf("Sychronised Sychronised Sychronised Sychronised ");
-      if( lc > interval* INTERVFACTOR * dim_window)
-          minCount      = lc - interval * INTERVFACTOR * dim_window; //cfConverter->getEldestTimeStamp();        
-      else
-          minCount = 0;
-      
-      if( rc > interval* INTERVFACTOR * dim_window)
-          minCountRight = rc - interval * INTERVFACTOR * dim_window;
-      else
-          minCountRight = 0;
-      //maxCount = lc; 
-      //maxCountRight = rc;
-		 
-      //printf("synchronised %1f! %llu,%llu,%llu||%llu,%llu,%llu \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
-      startTimer = Time::now();
-      synchronised = true; 
-    }
-    else {
-      // this value is simply the ration between the timestamp reported by the aexGrabber (6.25Mhz) 
-      //and the correct timestamp counter clock of FPGA (50 Mhz)
-      microsecondsPrev = interval;
-      interval = Tnow;
-      //if(unmask_events->getWrapOcc()) {
-      //    minCount = 0;
-      //    maxCount = 0;
-      //    cfConverter->reset();
-      //}
-      //else{
-          minCount      = minCount + interval * INTERVFACTOR; // * (50.0 MHz FPGA Counter Clock / 6.25 Mhz ;
-          minCountRight = minCount + interval * INTERVFACTOR;  // minCountRight + interval;
-          //}
-    } 
-    //printf("minCount %d interval %f \n", minCount, interval);
-    maxCount      =  minCount      + (interval + 1) * INTERVFACTOR* (dim_window);
-    maxCountRight =  minCountRight + (interval + 1) * INTERVFACTOR* (dim_window);
-    
-    
-    //---- preventer for fixed  addresses ----//
-    if(count % 10 == 0) { 
-        //unsigned long lastleft = unmask_events->getLastTimestamp();
-        lc = lastleft * COUNTERRATIO; 
-        //unsigned long lastright = unmask_events->getLastTimestampRight();
-        rc = lastright * COUNTERRATIO;
-        //printf("countStop %d lcprev %d lc %d \n",countStop, lcprev,lc);
-        if (stereo) {
-            if ((lcprev == lc)||(rcprev == rc)) {
-                //if (lcprev == lc) {
-                countStop++;
-                printf("countStop %d %08X %08X %08X %08X \n", countStop, lc, lcprev, rc, rcprev);
-            }            
-            else {
-                countStop--;
-                //printf("countStop %d \n", countStop);
-                if(countStop<= 0) {
-                    countStop = 0;
-                }
-            }
-        }
-        else {
-            if (lcprev == lc) {
-                //if (lcprev == lc) {
-                countStop++;
-                printf("countStop %d %08X %08X %08X %08X \n", countStop, lc, lcprev, rc, rcprev);
-            }            
-            else {
-                countStop--;
-                //printf("countStop %d \n", countStop);
-                if(countStop<= 0) {
-                    countStop = 0;
-                }
-            }
-        }
-        lcprev = lc;
-        rcprev = rc;
-    }
-    
-    
-    
-    //resetting time stamps at overflow
-    if (countStop == 1) {
-      //printf("resetting time stamps!!!!!!!!!!!!! %d %d   \n ", minCount, minCountRight);
-      //unmask_events->resetTimestampLeft(); 
-      //unmask_events->resetTimestampRight();
-      cfConverter->reset();
-      //unsigned long lastleft = unmask_events->getLastTimestamp();
-      lc = lastleft * COUNTERRATIO; 
-      unsigned long lastright = unmask_events->getLastTimestampRight();
-      //rc = lastright * COUNTERRATIO;
-      minCount      = 0;
-      minCountRight = 0;
-      maxCount      =  minCount      + interval * INTERVFACTOR* (dim_window);
-      maxCountRight =  minCountRight + interval * INTERVFACTOR* (dim_window);
-      
-      //maxCount      = 4294967268;
-      //maxCountRight = 4294967268;
-      countStop = 0;
-      verb = true;
-      printf("countStop resetting %llu %llu %llu \n",unmask_events->getLastTimestamp(), lc, rc );
-      count = synchPeriod - 200;
-      
-      }
-    
-    
-    // ----------- preventer end    --------------------- //
-    
-    getMonoImage(imageLeft,minCount,maxCount,1);
-    if(imageLeft != 0) {
-      pThread->copyLeft(imageLeft);
-    }
-    
-    if(stereo) {
-        getMonoImage(imageRight,minCountRight,maxCountRight,0);
-        if(imageRight != 0) {
-            pThread->copyRight(imageRight);
-        }
-    }
-  }
 }
 
-void cfCollectorThread::threadRelease() {
+void eventSnifferThread::threadRelease() {
     idle = false;
     fclose(fout);
-    printf("cfCollectorThread release:freeing bufferCopy \n");
+    printf("eventSnifferThread release:freeing bufferCopy \n");
     //free(bufferCopy);
-    printf("cfCollectorThread release:closing ports \n");
+    printf("eventSnifferThread release:closing ports \n");
     outPort.close();
     outPortRight.close();
     //delete imageLeft;
     //delete imageRight;
     printf("cFCollectorThread release         stopping plotterThread \n");
-    pThread->stop();
-    printf("cfCollectorThread release         deleting converter \n");
-    delete cfConverter;
+    //pThread->stop();
+    printf("eventSnifferThread release         deleting converter \n");
+    //delete cfConverter;
     printf("correctly freed memory from the cfCollector \n");
 }
 

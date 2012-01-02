@@ -41,7 +41,7 @@
 //#define u64 uint64_t
 typedef yarp::os::NetUint32 u32;
 
-class cfCollectorThread : public yarp::os::RateThread {
+class eventSnifferThread : public yarp::os::RateThread {
 private:
     
     int count;                          // loop counter of the thread
@@ -98,12 +98,12 @@ public:
     /**
     * default constructor
     */
-    cfCollectorThread();
+    eventSnifferThread();
 
     /**
      * destructor
      */
-    ~cfCollectorThread();
+    ~eventSnifferThread();
 
     /**
     * function that initialise the thread

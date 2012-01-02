@@ -35,7 +35,7 @@
 
 //#include <iCub/config.h>
 
-//#define VERBOSE
+#define VERBOSE
 #define BUFFERDIM 1000
 #define CHUNKSIZE 1000
 
@@ -46,6 +46,7 @@ using namespace yarp::sig;
 using namespace std;
 
 eventBottleHandler::eventBottleHandler() {
+    
     valid       = false;
     retinalSize = 128;
     totDim      = 0;
@@ -62,7 +63,7 @@ eventBottleHandler::eventBottleHandler() {
     memset(converterBuffer,0,BUFFERDIM);              // set unsigned char
     pcRead = converterBuffer;
     //unmask_events.start();
-    printf("unmask event just started");
+    printf("unmask event just started \n");
     previousTimeStamp = 0;
     readEvents = fopen("./readEvents","w");
     fout = fopen("dumpCartCollector.txt", "w+");
@@ -89,36 +90,35 @@ void eventBottleHandler::copyChunk(char* bufferCopy) {
 
 
 // reading out from a circular buffer with 2 entry points and wrapping
-void eventBottleHandler::onRead(eventBottle& i_ub) {
+void eventBottleHandler::onRead(eventBottle& i_ub) {    
     valid = true;
 
-    // receives the buffer and saves it
-    int dim = i_ub.get_sizeOfPacket() ;      // number of bits received / 8 = bytes received
-
-    receivedBufferSize = dim;
+    
     mutex.wait();
-    //receivedBuffer = i_ub.get_packet(); 
-
+    /*
+    // receives the buffer and saves it
+    int dim = i_ub.get_sizeOfPacket() ;      // number of words
+    printf("eventBottleHandler:  %d \n", dim);
+    
+    receivedBufferSize = dim;
+    receivedBuffer = i_ub.get_packet();
+    //receivedBottle = (Bottle*) receivedBuffer;
+    
+    
 #ifdef VERBOSE
     int num_events = dim >> 3 ;
-    uint32_t* buf2 = (uint32_t*)receivedBuffer;
     //plotting out
-    for (int evt = 0; evt < num_events; evt++) {
-        unsigned long blob      = buf2[2 * evt];
-        unsigned long t         = buf2[2 * evt + 1];
-        fprintf(fout,"%08X %08X \n",blob,t);        
+    for (int i=0; i < receivedBottle->size(); i++) {
+        fprintf(fout,"%08X \n", receivedBottle->get(i).asInt());      
     }
 #endif 
     
     // the thrid part of the buffer is free to avoid overflow
     //totDim += dim;
-    int overflow = 0;
-         
-      
-    int removeLater=0;
-    
+    int overflow = 0;               
+    int removeLater=0;    
     int status = 0;
-
+    */
     mutex.post();
 
     //printf("onRead: ended \n");

@@ -173,6 +173,7 @@
 
 //within project includes
 #include <iCub/eventSnifferThread.h>
+#include <iCub/eventBottleHandler.h>
 
 class eventSnifferModule:public yarp::os::RFModule {
     std::string moduleName;                     //name of the module (rootname of ports)
@@ -184,7 +185,8 @@ class eventSnifferModule:public yarp::os::RFModule {
     int retinalSize;                            // dimension of the retina
     int responseGradient;                       // amplitude of the response gradient for every event in the image
     yarp::os::Port handlerPort;                 // a port to handle messages 
-    //eventSnifferThread* cfThread;                //cfCollectorThread for processing events
+    eventSnifferThread* esThread;               // cfCollectorThread for processing events
+    eventBottleHandler* bottleHandler;          // handler for the received bottle
 
 public:
     bool configure(yarp::os::ResourceFinder &rf); // configure all the module parameters and return true if successful
