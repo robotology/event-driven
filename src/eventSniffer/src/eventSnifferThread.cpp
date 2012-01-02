@@ -87,19 +87,6 @@ bool eventSnifferThread::threadInit() {
     
     printf("\n opening retina\n");
     printf("starting the plotter \n");
-    
-    //pThread = new plotterThread();
-    //pThread->setName(getName("").c_str());
-    //pThread->setStereo(stereo);
-    //pThread->setRetinalSize(retinalSize);
-    //pThread->start();
-    
-    //unmask_events = new unmask();
-    //unmask_events->setRetinalSize(retinalSize);
-    //unmask_events->setResponseGradient(responseGradient);
-    //unmask_events->setASVMode(asvFlag);
-    //unmask_events->setDVSMode(dvsFlag);
-    //unmask_events->start();
 
     //minCount = cfConverter->getEldestTimeStamp();
     startTimer = Time::now();
@@ -188,13 +175,8 @@ void eventSnifferThread::threadRelease() {
     printf("eventSnifferThread release:closing ports \n");
     outPort.close();
     outPortRight.close();
-    //delete imageLeft;
-    //delete imageRight;
-    printf("cFCollectorThread release         stopping plotterThread \n");
-    //pThread->stop();
-    printf("eventSnifferThread release         deleting converter \n");
-    //delete cfConverter;
-    printf("correctly freed memory from the cfCollector \n");
+    delete bottleHandler;
+    printf("correctly freed memory from the bottleHandler \n");
 }
 
 

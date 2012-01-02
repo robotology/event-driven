@@ -95,15 +95,15 @@ void eventBottleHandler::onRead(eventBottle& i_ub) {
 
     
     mutex.wait();
-    /*
+    
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() ;      // number of words
     printf("eventBottleHandler:  %d \n", dim);
     
     receivedBufferSize = dim;
     receivedBuffer = i_ub.get_packet();
-    //receivedBottle = (Bottle*) receivedBuffer;
-    
+    receivedBottle = (Bottle*) receivedBuffer;
+    /*
     
 #ifdef VERBOSE
     int num_events = dim >> 3 ;
