@@ -18,7 +18,7 @@ FILE(GLOB folder_source
   src/eventBottle.cpp
 )
 FILE(GLOB folder_header 
-  include/*.h
+  include/iCub/emorph/*.h
 )
 
 # Declare groups of source and header files -- makes things pretty in MSVC.
@@ -33,7 +33,7 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/include
         ${ICUB_CONTRIB}/include
 )
 
-# Create everything needed to build our executable.
+# Create everything needed to build our library
 ADD_LIBRARY(${PROJECTNAME} ${folder_source} ${folder_header})
 
 # Makes VS a bit quiter wrt warnings.
@@ -43,9 +43,10 @@ ENDIF(MSVC)
 
 TARGET_LINK_LIBRARIES(${PROJECTNAME} ${YARP_LIBRARIES})
 
-MESSAGE(STATUS "icub_dir: ${ICUB_DIR}")
-include(${ICUB_DIR}/../conf/iCubHelpers.cmake)
+#MESSAGE(STATUS "icub_dir: ${ICUB_DIR}")
+#include(${ICUB_DIR}/../conf/iCubHelpers.cmake)
                     
-icub_export_library(${PROJECTNAME} INTERNAL_INCLUDE_DIRS ${PROJECT_INCLUDE_DIRS}
-                                   DESTINATION include/iCub
-                                   FILES ${folder_header})
+#icub_export_library(${PROJECTNAME} INTERNAL_INCLUDE_DIRS ${PROJECT_INCLUDE_DIRS}
+#                                   DESTINATION include/iCub
+#                                   FILES ${folder_header})
+
