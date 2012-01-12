@@ -38,7 +38,7 @@
 
 //Other dependency
 #include <iCub/config.h>
-#include <iCub/eventCodec.h>
+#include <iCub/emorph/eventCodec.h>
 
 using namespace emorph::ecodec;
 

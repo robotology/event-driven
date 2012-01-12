@@ -9,14 +9,14 @@ PROJECT(${KEYWORD})
 find_package(ICUB)
 set(CMAKE_MODULE_PATH ${ICUB_MODULE_PATH} ${CMAKE_MODULE_PATH})
 
-INCLUDE(iCubOptions)
-INCLUDE(iCubHelpers)
-
+#INCLUDE(iCubOptions)
+#INCLUDE(iCubHelpers)
 
 INCLUDE_DIRECTORIES(
     ${PROJECT_SOURCE_DIR}/include
     ${YARP_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS}
+    ${EMORPHLIB_INCLUDE_DIRS}
 )
 
 # Search for source code.

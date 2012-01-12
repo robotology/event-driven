@@ -18,6 +18,7 @@ INCLUDE_DIRECTORIES(
     ${YARP_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS}    		 
     ${GtkPlus_INCLUDE_DIRS}
+    ${EMORPHLIB_INCLUDE_DIRS}
 )
 
 # Search for source code.

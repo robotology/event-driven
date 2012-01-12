@@ -9,6 +9,7 @@ PROJECT(${KEYWORD})
 INCLUDE_DIRECTORIES(
     ${PROJECT_SOURCE_DIR}/include
     ${YARP_INCLUDE_DIRS}
+    ${EMORPHLIB_INCLUDE_DIRS}
 )
 
 # Search for source code.

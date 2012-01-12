@@ -36,7 +36,6 @@
 #include <list>
 
 
-
 #include <yarp/os/Network.h>
 #include <yarp/os/BufferedPort.h>
 #include <yarp/sig/all.h>
@@ -45,8 +44,8 @@
 #include <yarp/os/RateThread.h>
 #include <iostream>
 
-#include <iCub/eventBuffer.h>
-#include <iCub/eventConversion.h>
+#include <iCub/emorph/eventBuffer.h>
+#include <iCub/emorph/eventConversion.h>
 
 #define IMAGE_WD 128
 #define IMAGE_HT 128

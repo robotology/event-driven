@@ -9,14 +9,14 @@ project(${PROJECTNAME})
 
 find_package(YARP)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${YARP_MODULE_PATH})
-set(ICUB_CONTRIB_DIRS $ENV{ICUB_DIR}/include)
+#set(ICUB_CONTRIB_DIRS $ENV{ICUB_DIR}/include)
 
 include_directories(
     ${PROJECT_SOURCE_DIR}/include
     ${ICUB_INCLUDE_DIRS}
     ${YARP_INCLUDE_DIRS}
     ${ICUB_DIR}/include
-    ${ICUB_CONTRIB_DIR}
+    ${EMORPHLIB_INCLUDE_DIRS}
 )
 
 set(folder_source main.cpp)

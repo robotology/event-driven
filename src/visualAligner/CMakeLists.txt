@@ -10,6 +10,7 @@ INCLUDE_DIRECTORIES(
     ${PROJECT_SOURCE_DIR}/include
     ${iKin_INCLUDE_DIRS}
     ${YARP_INCLUDE_DIRS}
+    ${EMORPHLIB_INCLUDE_DIRS}
 )
 
 # Search for source code.

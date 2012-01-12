@@ -42,8 +42,9 @@
 #include <stdint.h>
 #include <fstream>
 
-#include <iCub/eventBuffer.h>
-#include <iCub/eventBottle.h>
+//within the emorph project includes
+#include <iCub/emorph/eventBuffer.h>
+#include <iCub/emorph/eventBottle.h>
 
 #define u8  uint8_t
 #define u16 uint16_t

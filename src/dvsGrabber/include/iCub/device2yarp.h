@@ -37,9 +37,8 @@
 #include <cstdlib>
 #include <stdint.h>
 
-#include <iCub/eventBuffer.h>
-#include <iCub/eventCodec.h>
-//#include "sending_buffer.h"
+#include <iCub/emorph/eventBuffer.h>
+#include <iCub/emorph/eventCodec.h>
 #include "config.h"
 
 #define u8  uint8_t

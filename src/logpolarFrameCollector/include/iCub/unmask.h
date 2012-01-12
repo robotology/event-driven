@@ -30,8 +30,11 @@
 #include <iostream>
 #include <sstream>
 #include <ctime>
+
 #include <sys/types.h>
 #include <inttypes.h>
+#include <cassert>
+
 
 // yarp includes
 #include <yarp/os/all.h>

@@ -2,8 +2,8 @@
 
 /* 
  * Copyright (C) 2010 RobotCub Consortium, European Commission FP6 Project IST-004370
- * Authors: Rea Francesco, Charles Clercq
- * email:   francesco.rea@iit.it, charles.clercq@iit.it
+ * Authors: Rea Francesco
+ * email:   francesco.rea@iit.it
  * website: www.robotcub.org 
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
@@ -25,12 +25,10 @@
 
 #include <iCub/unmask.h>
 #include <math.h>
-#include <cassert>
 #include <inttypes.h>
 
 using namespace std;
 using namespace yarp::os;
-
 
 #define MAXVALUE 4294967295
 #define maxPosEvent 10000

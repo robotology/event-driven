@@ -11,16 +11,8 @@ PROJECT(${KEYWORD})
 INCLUDE_DIRECTORIES(
     ${PROJECT_SOURCE_DIR}/include
     ${OpenCV_INCLUDE_DIR}    
-    #${ODE_INCLUDE_DIRS}	
-    ${IPP_INCLUDE_DIRS}	 
-    #/opt/intel/ipp/6.1.1.042/em64t/include
-    #---linux    
-    #$ENV{QT_INCLUDE_DIR}/include
-    #$ENV{QT_INCLUDE_DIR}/include/Qt
-    #$ENV{QT_INCLUDE_DIR}/include/Qt3Support 
-    #--windows
-    $ENV{QT_INCLUDE_DIR}
-)
+    ${EMORPHLIB_INCLUDE_DIRS}	
+    )
 
 IF(NOT IPP_INCLUDE_DIRS)
 	MESSAGE(ERROR ": No IPP_INCLUDE_DIR found. Please check it out")	

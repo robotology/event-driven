@@ -6,14 +6,14 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 SET(KEYWORD "logSort")
 PROJECT(${KEYWORD})
 
-set(ICUB_CONTRIB_DIRS $ENV{ICUB_DIR}/include)
+#set(ICUB_CONTRIB_DIRS $ENV{ICUB_DIR}/include)
 
 INCLUDE_DIRECTORIES(
     ${PROJECT_SOURCE_DIR}/include
     ${YARP_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS}    
     ${ICUB_INCLUDE_DIRS}    
-    ${ICUB_CONTRIB_DIRS}
+    ${EMORPHLIB_INCLUDE_DIRS}
 )
 
 
@@ -28,6 +28,7 @@ FILE(GLOB folder_source
   src/plotterThread.cpp
   src/processingThread.cpp
   )
+
 FILE(GLOB folder_header 
   include/iCub/convert.h	  
   include/iCub/logFrameConverter.h

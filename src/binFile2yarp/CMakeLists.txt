@@ -3,7 +3,6 @@
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
-
 # support library for emorph devices and interfaces
 FIND_PACKAGE(EMORPHLIB REQUIRED)
 LINK_LIBRARIES(${EMORPHLIB_LIBRARIES})

@@ -8,7 +8,9 @@ PROJECT(${PROJECTNAME})
 
 
 INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIR}
-                    ${YARP_INCLUDE_DIRS} )
+                    ${YARP_INCLUDE_DIRS} 
+		    ${EMORPHLIB_INCLUDE_DIRS}
+		    )
 
 # Search for source code.
 FILE(GLOB folder_source *.cpp)

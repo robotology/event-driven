@@ -7,13 +7,14 @@ SET(KEYWORD "cartesianFrameCollector")
 PROJECT(${KEYWORD})
 cmake_minimum_required(VERSION 2.6)
 
-set(ICUB_CONTRIB_DIRS $ENV{ICUB_DIR}/include)
+#set(ICUB_CONTRIB_DIRS $ENV{ICUB_DIR}/include)
 
 INCLUDE_DIRECTORIES(
     ${PROJECT_SOURCE_DIR}/include
     ${YARP_INCLUDE_DIRS} 	
     ${ICUB_CONTRIB_DIRS}
     ${OpenCV_INCLUDE_DIRS}
+    ${EMORPHLIB_INCLUDE_DIRS}
 )
 
 # Search for source code.

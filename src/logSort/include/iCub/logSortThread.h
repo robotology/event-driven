@@ -28,7 +28,8 @@
 #define _LOG_SORT_THREAD_H_
 
 
-#include <iCub/eventBuffer.h>
+#include <iCub/emorph/eventBuffer.h>
+
 #include <yarp/os/RateThread.h>
 #include <yarp/sig/all.h>
 #include <iCub/logFrameConverter.h>
@@ -41,7 +42,6 @@
 #include <stdlib.h>
 #include <cstdlib>
 
-//#include <iCub/sendingBuffer.h>
 
 //typedef unsigned long long int uint64_t;
 #define u64 uint64_t

@@ -34,7 +34,7 @@
 #include <ctime>
 #include <list>
 
-#include <iCub/eventBuffer.h>
+#include <iCub/emorph/eventBuffer.h>
 
 #include <iCub/logUnmask.h>
 #include <iCub/convert.h>

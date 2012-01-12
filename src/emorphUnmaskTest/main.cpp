@@ -21,7 +21,7 @@
 #include <string>
 #include <typeinfo>
 
-#include <iCub/eventCodec.h>
+#include <iCub/emorph/eventCodec.h>
 
 using namespace std;
 using namespace yarp::os;
