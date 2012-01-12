@@ -15,6 +15,7 @@ INCLUDE_DIRECTORIES(
     ${YARP_INCLUDE_DIRS} 	
     ${ICUB_CONTRIB_DIRS}
     ${OpenCV_INCLUDE_DIRS}
+    ${EMORPHLIB_INCLUDE_DIRS}
 )
 
 # Search for source code.

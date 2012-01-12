@@ -29,7 +29,7 @@
 
 
 //#include <iCub/convert.h>
-#include <iCub/eventBottle.h>
+#include <iCub/emorph/eventBottle.h>
 ///#include <iCub/unmask.h> // Should use library instead of this
 //#include <iCub/config.h>
 
