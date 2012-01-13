@@ -39,8 +39,6 @@
 #define BUFFERDIM 1000
 #define CHUNKSIZE 1000
 
-
-
 using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
@@ -98,20 +96,23 @@ void eventBottleHandler::onRead(eventBottle& i_ub) {
     
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() ;      // number of words
-    printf("eventBottleHandler:  %d \n", dim);
+    printf("eventBottleHandler::  %d \n", dim);
     
     receivedBufferSize = dim;
-    receivedBuffer = i_ub.get_packet();
-    receivedBottle = (Bottle*) receivedBuffer;
-    /*
+    receivedBottle = i_ub.get_packet();
+    //receivedBottle = (Bottle*) receivedBuffer;
+    
     
 #ifdef VERBOSE
     int num_events = dim >> 3 ;
+    printf("size of the received bottle %d \n",receivedBottle->size() );
     //plotting out
     for (int i=0; i < receivedBottle->size(); i++) {
         fprintf(fout,"%08X \n", receivedBottle->get(i).asInt());      
     }
-#endif 
+#endif
+
+    /*
     
     // the thrid part of the buffer is free to avoid overflow
     //totDim += dim;

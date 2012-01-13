@@ -21,6 +21,7 @@ add_subdirectory   (dvsGrabber)
 #add_subdirectory  (disparitySelector)
 
 add_subdirectory   (eventDriven)
+add_subdirectory   (eventSniffer) 
 add_subdirectory   (emorphUnmaskTest)
 #add_subdirectory  (eventProcessor)
 #add_subdirectory  (eventFeatureExtractor)
