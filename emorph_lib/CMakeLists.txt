@@ -18,7 +18,10 @@ FILE(GLOB folder_source
   src/eventBottle.cpp
 )
 FILE(GLOB folder_header 
-  include/iCub/emorph/*.h
+  include/iCub/emorph/eventBottle.h
+  include/iCub/emorph/eventBuffer.h
+  include/iCub/emorph/eventCodec.h
+  include/iCub/emorph/eventConversion.h
 )
 
 # Declare groups of source and header files -- makes things pretty in MSVC.
@@ -26,8 +29,9 @@ SOURCE_GROUP("Source Files" FILES ${folder_source})
 SOURCE_GROUP("Header Files" FILES ${folder_header})
 
 message ("YARP_INCLUDE_DIRS ${YARP_INCLUDE_DIRS} ")
+message ("PROJECT_SOURCE_DIR ${PROJECT_SOURCE_DIR}")
 # Add our include files into our compiler's search path.
-INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/include
+INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/include/iCub/emorph
 	${YARP_INCLUDE_DIRS}
         ${ICUB_INCLUDE_DIRS}
         ${ICUB_CONTRIB}/include
