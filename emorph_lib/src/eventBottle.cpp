@@ -111,7 +111,10 @@ bool eventBottle::write(yarp::os::ConnectionWriter& connection) {
     connection.appendInt(2);        // four elements
     connection.appendInt(size_of_the_packet);
     int ceilSizeOfPacket = size_of_the_packet * 4;   // number of 32bit word times 4bytes
+    size_t binaryDim;
+    packetPointer = (char*) packet->toBinary(&binaryDim);
     connection.appendBlock(packetPointer,ceilSizeOfPacket); //casting bottle into char*
+    //packet->write(connection);
     connection.convertTextMode();   // if connection is text-mode, convert!
     return true;
 }
@@ -120,13 +123,17 @@ bool eventBottle::read(yarp::os::ConnectionReader& connection) {
     connection.convertTextMode();   // if connection is text-mode, convert!
     int tag = connection.expectInt();
     if (tag != BOTTLE_TAG_LIST+BOTTLE_TAG_BLOB+BOTTLE_TAG_INT)
-        return false;
+       return false;
     int ct = connection.expectInt();
     if (ct!=2)
         return false;
     size_of_the_packet = connection.expectInt();
     int ceilSizeOfPacket = size_of_the_packet * 4; // number of 32 bit word times 4bytes
+    
     connection.expectBlock(packetPointer, ceilSizeOfPacket);
+    packet->fromBinary(packetPointer,ceilSizeOfPacket);
+    //packet->read(connection);
+    
     return true;
 }
 

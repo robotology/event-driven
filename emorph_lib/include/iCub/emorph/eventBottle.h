@@ -19,7 +19,6 @@
 #include <yarp/os/all.h>
 #include <cstring>
 
-//const int SIZE_OF_DATA = 65536; 
 
 /**
  * portable class for the bottle of events
@@ -38,7 +37,7 @@ public:
 
     void set_data(char*, int);
 
-    char* get_packet()    { return packetPointer;      };
+    yarp::os::Bottle* get_packet()    { return packet; };
     int get_sizeOfPacket(){ return size_of_the_packet; };
 
 private:
