@@ -735,7 +735,8 @@ void  device2yarp::run() {
 
     int k = 0;
     int k2 = 0;
-    uint32_t *     buf2 = (uint32_t*)          buffer;
+    char*       pBuffer = &buffer[0];
+    uint32_t *     buf2 = (uint32_t*)          pBuffer;
     unsigned char* buf1 = (unsigned char*)     pmonatom;
     u32 a, t, c;
     u32 tempA, tempA_unmasked, tempB, tempB_unmasked;
@@ -932,8 +933,16 @@ void  device2yarp::run() {
     }   
 
     if (portEventBottle.getOutputCount()) {       
+        printf("beginning of the sending \n");
+        Bottle* b = new Bottle();
+        b->clear();
+        b->addInt(1);
+        b->addInt(2);
+        printf("new bottle %s \n", b->toString().c_str());
+        
         printf("Sending the bottle %d bytes \n", sz);
-        eventBottle data2send(buffer, sz);
+        printf("Sending %d \n", *pBuffer);
+        eventBottle data2send(pBuffer, sz);
         eventBottle& tmp = portEventBottle.prepare(); 
         tmp = data2send;
         portEventBottle.write();
