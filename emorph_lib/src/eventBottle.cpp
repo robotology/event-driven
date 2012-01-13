@@ -113,6 +113,7 @@ bool eventBottle::write(yarp::os::ConnectionWriter& connection) {
     int ceilSizeOfPacket = size_of_the_packet * 4;   // number of 32bit word times 4bytes
     size_t binaryDim;
     packetPointer = (char*) packet->toBinary(&binaryDim);
+    printf("dimension of the bottle in bytes \n");
     connection.appendBlock(packetPointer,ceilSizeOfPacket); //casting bottle into char*
     //packet->write(connection);
     connection.convertTextMode();   // if connection is text-mode, convert!
