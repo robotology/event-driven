@@ -307,7 +307,7 @@ void logSortThread::run() {
 
         
         // ----------------------------------------------- 
-        /*
+        
         unmask_events.getEM(&pEM, &dimEM);
         if (dimEM > 0) {
             //printf("dimEM :             %d \n", dimEM);
@@ -322,17 +322,17 @@ void logSortThread::run() {
             unmask_events.resetEM4();
             unmask_events.resetTOTEM();
         }
-        */
+        
         // --------------------------------------------
         
-        /*
+        
         unmask_events.getIF(&pIF, &dimIF);
         if (dimIF > 0) {
             //printf("dimIF :                                 %d \n", dimIF);
             sendBuffer(&portIF, pIF, dimIF);
             unmask_events.resetIF();
         }
-        */
+        
         
     
         // measuring execution time of the module

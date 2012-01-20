@@ -441,6 +441,63 @@ bool logUnmask::threadInit() {
                     pol = 0;
                 }
             } // periphery  
+
+            // covering with -1 regions that are blank            
+            if(!fovea){
+                int posX = x / 12;
+                int withinX = x - posX * 12;
+                switch(withinX) {
+                case 4:{
+                    type  = -1;
+                    metax = -1;
+                    metay = -1;
+                    pol   = -1;
+                }break;                
+                case 5:{
+                    type  = -1;
+                    metax = -1;
+                    metay = -1;
+                    pol   = -1;
+                }break;                
+                case 8:{
+                    type  = -1;
+                    metax = -1;
+                    metay = -1;
+                    pol   = -1;
+                }break;
+                case 9:{
+                    type  = -1;
+                    metax = -1;
+                    metay = -1;
+                    pol   = -1;
+                }break;
+                }
+
+                int posY    = y / 6;
+                int withinY = y - posY * 6;
+                switch(withinY) {
+                case 2:{
+                    type  = -1;
+                    metax = -1;
+                    metay = -1;
+                    pol   = -1;
+                }break;                
+                case 3:{
+                    type  = -1;
+                    metax = -1;
+                    metay = -1;
+                    pol   = -1;
+                }break;                
+                case 4:{
+                    type  = -1;
+                    metax = -1;
+                    metay = -1;
+                    pol   = -1;
+                }break;                
+                }
+                
+            }
+           
             
             
             // saving the extracted information in a LUT respecting the order 
@@ -451,7 +508,7 @@ bool logUnmask::threadInit() {
             logChip_LUT[y * X_DIMENSION + x][3] = pol;
 
             //printf("%d %d \n", x, y);
-            fprintf(fout," %d %d %d %d %d %d \n", x, y, metax, metay, pol, type);
+            fprintf(fout,"# %d %d %d %d %d %d \n", x, y, metax, metay, pol, type);
 
            
         }        
