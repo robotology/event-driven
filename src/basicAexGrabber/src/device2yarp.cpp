@@ -1,4 +1,3 @@
-
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /*
@@ -701,9 +700,9 @@ void  device2yarp::run() {
 
     if (r % sizeofstructaer != 0) {
         printf("ERROR: read %d bytes from the AEX!!!\n", r);
-	if (save) {
-	  fprintf(fout, "ERROR \n");
-	}
+        if (save) {
+            fprintf(fout, "ERROR \n");
+        }
     }
     monBufEvents = r / sizeofstructaer;
     countAEs += monBufEvents; 
@@ -743,7 +742,6 @@ void  device2yarp::run() {
 
     sz = monBufEvents * sizeof(struct aer); // sz is size in bytes
 
-
     if (port.getOutputCount()) {
         eventBuffer data2send(buffer, sz);    
         eventBuffer& tmp = port.prepare();
@@ -751,8 +749,7 @@ void  device2yarp::run() {
         port.write();
     }   
 
-    if (portDimension.getOutputCount()) {
-        
+    if (portDimension.getOutputCount()) {       
         Bottle& b = portDimension.prepare();
         b.clear();
         b.addInt(r);
