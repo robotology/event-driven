@@ -248,6 +248,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName =
     sz=0;
     ec = 0;
     u64 ec = 0;
+    packetNum = 0;
     
     memset(buffer, 0, SIZE_OF_DATA);
     // 8192 number of max event that can be read
@@ -679,7 +680,7 @@ void device2yarp::closeDevice(){
 
 void  device2yarp::run() {
     //printf("reading \n");
-
+    packetNum++;
     r = read(file_desc, pmon, monBufSize_b);
     //printf("called read() with monBufSize_b == %d -> retval: %d\n", (int)monBufSize_b, (int)r);
     
@@ -699,7 +700,7 @@ void  device2yarp::run() {
    int sizeofstructaer = sizeof(struct aer);
 
     if (r % sizeofstructaer != 0) {
-        printf("ERROR: read %d bytes from the AEX!!!\n", r);
+        printf("ERROR in packet %d: read %d bytes from the AEX!!!\n",packetNum,r);
         if (save) {
             fprintf(fout, "ERROR \n");
         }
@@ -732,14 +733,12 @@ void  device2yarp::run() {
             //fout<<hex<<a<<" "<<hex<<t<<endl;
         }
 
-
         buf2[k2++] = a;
         buf2[k2++] = t;
         //if(i == 1000)
         //    printf("address:%d ; timestamp:%d \n", a, t);
     }
-
-
+    
     sz = monBufEvents * sizeof(struct aer); // sz is size in bytes
 
     if (port.getOutputCount()) {

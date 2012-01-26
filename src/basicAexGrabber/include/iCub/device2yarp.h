@@ -414,6 +414,7 @@ private:
     yarp::os::BufferedPort<yarp::os::Bottle> portDimension;    // port sending dimension of packets   
     int r;                                         // dimension of the received buffer of event for display
     int countAEs;                                  // counter of the received AEs
+    int packetNum;
     FILE* raw;
     FILE* binInput;
     bool biasFromBinary;                           // indicates whether the bias programmed are read from a file
