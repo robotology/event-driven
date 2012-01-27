@@ -702,7 +702,7 @@ void  device2yarp::run() {
     if (r % sizeofstructaer != 0) {
         printf("ERROR in packet %d: read %d bytes from the AEX!!!\n",packetNum,r);
         if (save) {
-            fprintf(fout, "ERROR \n");
+            fprintf(fout, "#ERROR packet %d \n", packetNum);
         }
     }
     monBufEvents = r / sizeofstructaer;
