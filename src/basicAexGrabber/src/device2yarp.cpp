@@ -738,6 +738,8 @@ void  device2yarp::run() {
         //if(i == 1000)
         //    printf("address:%d ; timestamp:%d \n", a, t);
     }
+
+    fprintf(fout, "# endofpacket number %d \n", packetNum);
     
     sz = monBufEvents * sizeof(struct aer); // sz is size in bytes
 
