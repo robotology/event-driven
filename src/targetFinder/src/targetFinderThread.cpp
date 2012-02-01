@@ -187,7 +187,7 @@ bool targetFinderThread::threadInit() {
     printf("opening ports.... \n");
     outLeftPort.open(getName("/edgesLeft:o").c_str());
     outRightPort.open(getName("/edgesRight:o").c_str());
-    inLeftPort.open(getName("/left:i").c_str());
+    inPort.open(getName("/coord:i").c_str());
     inRightPort.open(getName("/right:i").c_str());
     outEventPort.open(getName("/event:o").c_str());
 
@@ -466,29 +466,48 @@ void targetFinderThread::resize(int widthp, int heightp) {
     //rightInputImage->resize(width, height);
 }
 
-void targetFinderThread::run() {   
-    
+void targetFinderThread::run() {
+    Bottle* b  = inPort.read(false);
+    if(b!=NULL) {
+        printf("b bottle : \n");
+        printf("%s \n", b->toString().c_str());
+        for (int i = 0; i < 12; i++) {
+            double value = b->get(i).asDouble();
+            printf(" %f ", value);
+        }
+        printf("\n");
+    }
 }
 
 void targetFinderThread::interrupt() {
     outLeftPort.interrupt();
     outRightPort.interrupt();
-    inLeftPort.interrupt();
+    inPort.interrupt();
     inRightPort.interrupt();
     outEventPort.interrupt();
 }
 
 void targetFinderThread::threadRelease() {
+    printf("targetFinderThread::threadRelease \n");
     /* closing the ports*/
     outLeftPort.close();
     outRightPort.close();
-    inLeftPort.close();
+    inPort.close();
     inRightPort.close();
     outEventPort.close();
 
     
     /* closing the file */
     delete[] lut;
-    fclose (pFile);
+    if(pFile!=NULL) {
+        fclose (pFile); 
+    }
+
+    if(fout!=NULL) {
+        fclose (fout); 
+    }
+    if(fdebug!=NULL) {
+        fclose (fdebug); 
+    }
 }
 
