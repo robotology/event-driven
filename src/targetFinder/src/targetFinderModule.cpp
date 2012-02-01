@@ -56,7 +56,24 @@ bool targetFinderModule::configure(yarp::os::ResourceFinder &rf) {
                            "Robot name (string)").asString();
     robotPortName         = "/" + robotName + "/head";
 
+    configName             = rf.check("config", 
+                           Value("icubEyes.ini"), 
+                           "Config file for intrinsic parameters (string)").asString();
+    printf("configFile: %s \n", configName.c_str());
 
+    if (strcmp(configName.c_str(),"")) {
+        printf("looking for the config file \n");
+        configFile=rf.findFile(configName.c_str());
+        printf("config file %s \n", configFile.c_str());
+        if (configFile=="") {
+            printf("ERROR: file not found");
+            return false;
+        }
+    }
+    else {
+        configFile.clear();
+    }
+    
     /*
     * set the operating mode which correspond as well with the file map saved in conf
     */
@@ -82,6 +99,8 @@ bool targetFinderModule::configure(yarp::os::ResourceFinder &rf) {
 
     tf = new targetFinderThread();
     tf->setMapURL(mapNameComplete);
+    tf->setRobotName(robotName);
+    tf->setConfigFile(configFile);
     tf->setName(getName().c_str());
     tf->start();
 

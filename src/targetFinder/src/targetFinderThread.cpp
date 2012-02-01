@@ -59,6 +59,7 @@ using namespace yarp::os;
 using namespace yarp::sig;
 using namespace yarp::dev;
 using namespace yarp::math;
+using namespace iCub::ctrl;
 using namespace std;
 
 
@@ -204,11 +205,146 @@ bool targetFinderThread::threadInit() {
         //printf("i: %d  value : %d \n",i,lut[i]);
     }
     printf("successfully initialised memory for LUT \n");
+
+
+
+    printf("counted the number of mapping %d \n", countMap);
+
+    
+    printf("\n starting the thread.... \n");
+    
+    eyeL = new iCubEye("left");
+    eyeR = new iCubEye("right");    
+    
+    // remove constraints on the links
+    // we use the chains for logging purpose
+    //eyeL->setAllConstraints(false);
+    //eyeR->setAllConstraints(false);
+    
+    // release links
+    eyeL->releaseLink(0);
+    eyeR->releaseLink(0);
+    eyeL->releaseLink(1);
+    eyeR->releaseLink(1);
+    eyeL->releaseLink(2);
+    eyeR->releaseLink(2);
+    
+    // if it isOnWings, move the eyes on top of the head 
+    isOnWings = true;
+    
+    if (isOnWings) {
+        printf("changing the structure of the chain \n");
+        iKinChain* eyeChain = eyeL->asChain();
+        //eyeChain->rmLink(7);
+        //eyeChain->rmLink(6); ;
+        iKinLink* link = &(eyeChain-> operator ()(5));
+        //double d_value = link->getD();
+        //printf("d value %f \n", d_value);
+        //double a_value = link->getA();
+        //printf("a value %f \n", a_value);
+        link->setD(0.145);
+        link = &(eyeChain-> operator ()(6));
+        link->setD(0.0);
+        //eyeChain->blockLink(6,0.0);
+        //eyeChain->blockLink(7,0.0);
+        //link = &(eyeChain-> operator ()(6));
+        //link->setA(0.0);
+        //link->setD(0.034);
+        //link->setAlpha(0.0);
+        //double d_value = link->getD();
+        //printf("d value %f \n", d_value);
+        //iKinLink twistLink(0.0,0.034,M_PI/2.0,0.0,-22.0*CTRL_DEG2RAD,  84.0*CTRL_DEG2RAD);
+        //*eyeChain << twistLink;
+        //eyeL->releaseLink(6);
+        
+    }
+    else {
+        printf("isOnWing false \n");
+    }
+    
+    // get camera projection matrix from the configFile
+    printf("trying to extract camera parameter from %s \n", configFile.c_str());
+    if (getCamPrj(configFile,"CAMERA_CALIBRATION_LEFT",&PrjL)) {
+        Matrix &Prj = *PrjL;
+        double cxl=Prj(0,2);
+        double cyl=Prj(1,2);
+        printf("center %f,%f \n", cxl, cyl);
+        invPrjL=new Matrix(pinv(Prj.transposed()).transposed());
+    }
+    if (getCamPrj(configFile,"CAMERA_CALIBRATION_RIGHT",&PrjR)) {
+        Matrix &Prj = *PrjR;
+        double cxr=Prj(0,2);
+        double cyr=Prj(1,2);
+        printf("center %f,%f \n", cxr, cyr);
+        invPrjR=new Matrix(pinv(Prj.transposed()).transposed());
+    }
+    
+    //initializing gazecontrollerclient
+    Property option;
+    option.put("device","gazecontrollerclient");
+    option.put("remote","/iKinGazeCtrl");
+    string localCon("/client/gaze/");
+    localCon.append(getName(""));
+    option.put("local",localCon.c_str());
+    
+    clientGazeCtrl=new PolyDriver();
+    clientGazeCtrl->open(option);
+    igaze=NULL;
+    
+    if (clientGazeCtrl->isValid()) {
+        clientGazeCtrl->view(igaze);
+    }
+    else {
+        return false;
+    }
+        
+    igaze->storeContext(&originalContext);
+    
+    if(blockNeckPitchValue != -1) {
+        igaze->blockNeckPitch(blockNeckPitchValue);
+        printf("pitch fixed at %f \n",blockNeckPitchValue);
+    }
+    else {
+        printf("pitch free to change\n");
+    }
+        
+    string headPort = "/" + robot + "/head";
+    string nameLocal("local");
+    
+    //initialising the head polydriver
+    optionsHead.put("device", "remote_controlboard");
+    optionsHead.put("local", "/localhead");
+    optionsHead.put("remote", headPort.c_str());
+    robotHead = new PolyDriver (optionsHead);
+    
+    printf("starting the polydrive for the head.... \n");
+    if (!robotHead->isValid()){
+        printf("cannot connect to robot head\n");
+    }
+    else {
+        printf("succes in starting the polyfrive for the head. \n");
+    }
+    robotHead->view(encHead);
+    
+    //initialising the torso polydriver
+    printf("starting the polydrive for the torso.... \n");
+    Property optPolyTorso("(device remote_controlboard)");
+    optPolyTorso.put("remote",("/"+robot+"/torso").c_str());
+    optPolyTorso.put("local",("/"+nameLocal+"/torso/position").c_str());
+    polyTorso = new PolyDriver;
+    if (!polyTorso->open(optPolyTorso)) {
+        return false;
+    }
+    else {
+        printf("success in starting the polydrive for the torso. \n");
+    }
+    polyTorso->view(encTorso);
     
     /*opening the file of the mapping and creating the LUT*/
     pFile = fopen (mapURL.c_str(),"rb");    
     fout  = fopen ("lut.txt","w+");
     fdebug  = fopen ("dumpSet.txt","w+");
+    
     if (pFile!=NULL) {
         long lSize;
         size_t result;        
@@ -311,124 +447,9 @@ bool targetFinderThread::threadInit() {
                 } //end of while
             }            
         }
-        printf("counted the number of mapping %d \n", countMap);
 
-
-        printf("starting the thread.... \n");
-        
-        eyeL = new iCubEye("left");
-        eyeR = new iCubEye("right");    
-        
-        // remove constraints on the links
-        // we use the chains for logging purpose
-        //eyeL->setAllConstraints(false);
-        //eyeR->setAllConstraints(false);
-        
-        // release links
-        eyeL->releaseLink(0);
-        eyeR->releaseLink(0);
-        eyeL->releaseLink(1);
-        eyeR->releaseLink(1);
-        eyeL->releaseLink(2);
-        eyeR->releaseLink(2);
-        
-        // if it isOnWings, move the eyes on top of the head 
-        bool isOnWings = true;
-        
-        if (isOnWings) {
-            printf("changing the structure of the chain \n");
-            iKinChain* eyeChain = eyeL->asChain();
-            //eyeChain->rmLink(7);
-            //eyeChain->rmLink(6); ;
-            iKinLink* link = &(eyeChain-> operator ()(5));
-            //double d_value = link->getD();
-            //printf("d value %f \n", d_value);
-            //double a_value = link->getA();
-            //printf("a value %f \n", a_value);
-            link->setD(0.145);
-            link = &(eyeChain-> operator ()(6));
-            link->setD(0.0);
-            //eyeChain->blockLink(6,0.0);
-            //eyeChain->blockLink(7,0.0);
-            //link = &(eyeChain-> operator ()(6));
-            //link->setA(0.0);
-            //link->setD(0.034);
-            //link->setAlpha(0.0);
-            //double d_value = link->getD();
-            //printf("d value %f \n", d_value);
-            //iKinLink twistLink(0.0,0.034,M_PI/2.0,0.0,-22.0*CTRL_DEG2RAD,  84.0*CTRL_DEG2RAD);
-            //*eyeChain << twistLink;
-            //eyeL->releaseLink(6);
-            
-        }
-        else {
-            printf("isOnWing false \n");
-        }
-        
-        // get camera projection matrix from the configFile
-        if (getCamPrj(configFile,"CAMERA_CALIBRATION_LEFT",&PrjL)) {
-            Matrix &Prj = *PrjL;
-            //cxl=Prj(0,2);
-            //cyl=Prj(1,2);
-            invPrjL=new Matrix(pinv(Prj.transposed()).transposed());
-        }
-        
-        //initializing gazecontrollerclient
-        Property option;
-        option.put("device","gazecontrollerclient");
-        option.put("remote","/iKinGazeCtrl");
-        string localCon("/client/gaze/");
-        localCon.append(getName(""));
-        option.put("local",localCon.c_str());
-        
-        clientGazeCtrl=new PolyDriver();
-        clientGazeCtrl->open(option);
-        igaze=NULL;
-        
-        if (clientGazeCtrl->isValid()) {
-            clientGazeCtrl->view(igaze);
-        }
-        else {
-            return false;
-        }
         
         
-        igaze->storeContext(&originalContext);
-        
-        if(blockNeckPitchValue != -1) {
-            igaze->blockNeckPitch(blockNeckPitchValue);
-            printf("pitch fixed at %f \n",blockNeckPitchValue);
-        }
-        else {
-            printf("pitch free to change\n");
-        }
-        
-        
-        string headPort = "/" + robot + "/head";
-        string nameLocal("local");
-        
-        //initialising the head polydriver
-        optionsHead.put("device", "remote_controlboard");
-        optionsHead.put("local", "/localhead");
-        optionsHead.put("remote", headPort.c_str());
-        robotHead = new PolyDriver (optionsHead);
-        
-        if (!robotHead->isValid()){
-            printf("cannot connect to robot head\n");
-        }
-        robotHead->view(encHead);
-        
-        //initialising the torso polydriver
-        printf("starting the polydrive for the torso.... \n");
-        Property optPolyTorso("(device remote_controlboard)");
-        optPolyTorso.put("remote",("/"+robot+"/torso").c_str());
-        optPolyTorso.put("local",("/"+nameLocal+"/torso/position").c_str());
-        polyTorso=new PolyDriver;
-        if (!polyTorso->open(optPolyTorso))
-            {
-                return false;
-            }
-        polyTorso->view(encTorso);
     }
     
     leftInputImage = new ImageOf<PixelMono>;
@@ -467,15 +488,167 @@ void targetFinderThread::resize(int widthp, int heightp) {
 }
 
 void targetFinderThread::run() {
+    int u, v;
+    float zDistance = 1.5;
     Bottle* b  = inPort.read(false);
     if(b!=NULL) {
-        printf("b bottle : \n");
-        printf("%s \n", b->toString().c_str());
-        for (int i = 0; i < 12; i++) {
-            double value = b->get(i).asDouble();
-            printf(" %f ", value);
+        //printf("b bottle : \n");
+        //printf("%s \n", b->toString().c_str());
+        for (int i = 0; i < b->size(); i++) {
+            valueInput[i] = b->get(i).asDouble();
+            //printf(" %f ", valueInput[i]);
         }
-        printf("\n");
+        //printf("\n");
+        
+        Vector pxl(2);
+        pxl[0] = 100;
+        pxl[1] = 100;
+        Vector pxr(2);
+        pxr[0] = 100;
+        pxr[1] = 100;
+
+        Vector torso(3);        
+        encTorso->getEncoder(0,&torso[0]);
+        encTorso->getEncoder(1,&torso[1]);
+        encTorso->getEncoder(2,&torso[2]);
+        
+        Vector head(6);
+        encHead->getEncoder(0,&head[0]);
+        encHead->getEncoder(1,&head[1]);
+        encHead->getEncoder(2,&head[2]);
+        encHead->getEncoder(3,&head[3]);
+        encHead->getEncoder(4,&head[4]);
+        encHead->getEncoder(4,&head[5]);
+        
+
+        Vector qL(8);
+        qL[0]=torso[0]; printf("%f \n", qL[0]);
+        qL[1]=torso[1]; printf("%f \n", qL[1]);
+        qL[2]=torso[2]; printf("%f \n", qL[2]);
+        qL[3]=head[0];  printf("%f \n", qL[3]);
+        qL[4]=head[1];  printf("%f \n", qL[4]);
+        qL[5]=head[2];  printf("%f \n", qL[5]);
+        qL[6]=head[3];  printf("%f \n", qL[6]);
+        qL[7]=head[4]+head[5]/2.0;
+
+        Vector qR=qL;
+        qR[7]-=head[5];
+
+        
+        Matrix HL=SE3inv(eyeL->getH(qL));
+        Matrix HR=SE3inv(eyeR->getH(qR));
+        //printf("HR : \n"); printf("%s \n", HR.toString().c_str());
+        
+
+        //printf("inverse of rototraslation matrix 4by4 \n");
+        Matrix tmp=zeros(3,4); tmp(2,2)=1.0;
+        tmp(0,2)=pxl[0]; tmp(1,2)=pxl[1];
+        Matrix AL=(*PrjL - tmp) * HL;
+        
+        //printf("matrixAL created \n");
+        tmp(0,2)=pxr[0]; tmp(1,2)=pxr[1];
+        Matrix AR=(*PrjR - tmp) * HR;
+
+        //printf("matrixAR created \n");
+
+        Matrix A(4,3);
+        Vector b(4);
+        for (int i=0; i<2; i++)
+        {
+            b[i]=-AL(i,3);
+            b[i+2]=-AR(i,3);
+
+            for (int j=0; j<3; j++)
+            {
+                A(i,j)=AL(i,j);
+                A(i+2,j)=AR(i,j);
+            }
+        }
+
+        // solve the least-squares problem
+        printf("Solving the least-squares problem with pseudoinvers \n");
+        
+        Vector x(3);
+        x=pinv(A)*b;
+        printf("x: \n"); printf(" %s \n",x.toString().c_str());
+        
+        /*
+        bool isLeft = true;  // TODO : the left drive is hardcoded but in the future might be either left or right
+        
+        Matrix  *invPrj = (isLeft?invPrjL:invPrjR);
+        iCubEye *eye = (isLeft?eye:eyeR);               
+        
+        //function that calculates the 3DPoint where to redirect saccade and add the offset
+        Vector torso(3);
+        printf("vector torso \n");
+        encTorso->getEncoder(0,&torso[0]);
+        encTorso->getEncoder(1,&torso[1]);
+        encTorso->getEncoder(2,&torso[2]);
+        printf("read the torso values \n");
+        Vector head(5);
+        encHead->getEncoder(0,&head[0]);
+        encHead->getEncoder(1,&head[1]);
+        encHead->getEncoder(2,&head[2]);
+        encHead->getEncoder(3,&head[3]);
+        encHead->getEncoder(4,&head[4]);
+        printf("reading the head values \n");
+        
+        
+        Vector x(3);
+        x[0] = zDistance * u;
+        x[1] = zDistance * v;
+        x[2] = zDistance;
+        printf("assigned the value to the vector x \n");
+        
+        
+        // find the 3D position from the 2D projection,
+        // knowing the distance z from the camera
+        Vector xe = yarp::math::operator *(*invPrj, x);
+        xe[3] = 1.0;  // impose homogeneous coordinates 
+        printf("imposing homogeneous coordinates \n");
+        
+        Vector xo;
+        if(isOnWings) {
+            
+            Vector qw(8);
+            double ratio = M_PI /180; 
+            qw[0]=torso[0] * ratio;
+            qw[1]=torso[1] * ratio;
+            qw[2]=torso[2] * ratio;
+            qw[3]=head[0]  * ratio;
+            qw[4]=head[1]  * ratio;
+            qw[5]=head[2]  * ratio;
+            qw[6]=0.0 * CTRL_DEG2RAD;
+            qw[7]=0.0 * CTRL_DEG2RAD;
+            
+            double ver = head[5];
+            xo = yarp::math::operator *(eye->getH(qw),xe);
+            //printf("0:%f 1:%f 2:%f 3:%f 4:%f 5:%f 6:%f 7:%f \n", q[0],q[1],q[2],q[3],q[4],q[5],q[6],q[7]);
+        }
+        else {    
+            
+            Vector q(8);
+            double ratio = M_PI /180;
+            q[0]=torso[0] * ratio;
+            q[1]=torso[1] * ratio;
+            q[2]=torso[2] * ratio;
+            q[3]=head[0]  * ratio;
+            q[4]=head[1]  * ratio;
+            q[5]=head[2]  * ratio;
+            q[6]=head[3]  * ratio;
+            q[7]=head[4]  * ratio;
+            double ver = head[5];
+            
+            xo = yarp::math::operator *(eye->getH(q),xe);
+            //printf("0:%f 1:%f 2:%f 3:%f 4:%f 5:%f 6:%f 7:%f \n", q[0],q[1],q[2],q[3],q[4],q[5],q[6],q[7]);
+        }
+        
+        // update position wrt the root frame        
+        //Vector xo = yarp::math::operator *(eye->getH(q),xe);
+        printf("fixation point estimated %f %f %f \n",xo[0], xo[1], xo[2]);
+
+        */
+        
     }
 }
 
@@ -496,7 +669,12 @@ void targetFinderThread::threadRelease() {
     inRightPort.close();
     outEventPort.close();
 
-    
+ 
+    delete eyeL;
+    delete eyeR;
+    igaze->restoreContext(originalContext);
+    delete clientGazeCtrl;
+   
     /* closing the file */
     delete[] lut;
     if(pFile!=NULL) {

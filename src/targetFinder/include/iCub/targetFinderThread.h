@@ -44,9 +44,11 @@
 #include <yarp/math/SVD.h>
 
 
+
 class targetFinderThread : public yarp::os::RateThread {
 private:
     bool idle;                          // flag that exclude code from the execution loop
+    bool isOnWings;
     int count;                          // loop counter of the thread
     int width, height;                  // dimension of the extended input image (extending)
     int height_orig, width_orig;        // original dimension of the input and output images
@@ -84,6 +86,7 @@ private:
 
     int originalContext;                    // original context for the gaze Controller
     double blockNeckPitchValue;             // value for blocking the pitch of the neck
+    double valueInput[12];                  // vector of 12 values read from the input port
 
     char* bufferCopy;                       // local copy of the events read
     char* flagCopy;                         // copy of the unreadBuffer
@@ -132,6 +135,18 @@ public:
     * @param str rootname as a string
     */
     void setName(std::string str);
+
+    /**
+    * function that set the robotname for the ports to which the module connects
+    * @param str robotname as a string
+    */
+    void setRobotName(std::string str) {robot = str; };
+
+    /**
+    * function that set the confiFile
+    * @param str robotname as a string
+    */
+    void setConfigFile(std::string str) {configFile = str; };
     
     /**
     * function that returns the original root name and appends another string iff passed as parameter

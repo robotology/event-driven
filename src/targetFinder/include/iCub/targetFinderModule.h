@@ -145,16 +145,19 @@
 #include <iCub/targetFinderThread.h>
 
 class targetFinderModule:public yarp::os::RFModule {
-    std::string moduleName;                     //name of the module (rootname of ports)
-    std::string robotName;                      //name of the robot
-    std::string robotPortName;                  //reference to the head of the robot
-    std::string handlerPortName;                //name of the handler port (comunication with respond function)
-    std::string mapName;                        //name of the operating mode corresponds to the map
-    std::string mapNameComplete;                //name of complete of the map 
-    int ratethread;                             //time constant for ratethread
+    std::string moduleName;                     // name of the module (rootname of ports)
+    std::string robotName;                      // name of the robot
+    std::string robotPortName;                  // reference to the head of the robot
+    std::string handlerPortName;                // name of the handler port (comunication with respond function)
+    std::string mapName;                        // name of the operating mode corresponds to the map
+    std::string mapNameComplete;                // name of complete of the map 
+    std::string configName;                     // name of the configuration file for camera 
+    std::string configFile;                     // configuration file of cameras (LEFT RIGHT)
+    
+    int ratethread;                             // time constant for ratethread
 
     yarp::os::Port handlerPort;                 // a port to handle messages 
-    targetFinderThread* tf;                     //targetFinderThread for processing events
+    targetFinderThread* tf;                     // targetFinderThread for processing events
 
 public:
     bool configure(yarp::os::ResourceFinder &rf); // configure all the module parameters and return true if successful
