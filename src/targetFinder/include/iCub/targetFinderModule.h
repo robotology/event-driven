@@ -165,6 +165,6 @@ public:
 };
 
 
-#endif // _EF_EXTRACTOR_MODULE_H__
+#endif // _TARGET_FINDER_MODULE_H__
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------

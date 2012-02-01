@@ -22,20 +22,6 @@
  * @brief Implementation of the thread (see header targetFinderThread.h)
  */
 
-#include <iCub/targetFinderThread.h>
-
-
-#include <cxcore.h>
-#include <cv.h>
-#include <highgui.h>
-#include <stdio.h>
-#include <cstring>
-#include <cassert>
-
-using namespace yarp::os;
-using namespace yarp::sig;
-using namespace yarp::dev;
-using namespace std;
 
 #define DIM 10
 #define THRATE 30
@@ -55,7 +41,28 @@ using namespace std;
 
 #define CHUNKSIZE 32768
 
-#define VERBOSE
+//#define VERBOSE
+
+
+#include <iCub/targetFinderThread.h>
+
+#include <cxcore.h>
+#include <cv.h>
+#include <highgui.h>
+#include <stdio.h>
+#include <cstring>
+#include <cassert>
+
+
+using namespace iCub::iKin;
+using namespace yarp::os;
+using namespace yarp::sig;
+using namespace yarp::dev;
+using namespace yarp::math;
+using namespace std;
+
+
+/*******************************************************************/
 
 inline int convertChar2Dec(char value) {
     if (value > 60)
@@ -63,6 +70,8 @@ inline int convertChar2Dec(char value) {
     else
         return value - 48;
 }
+
+/**********************************************************************/
 
 inline void copy_8u_C1R(ImageOf<PixelMono>* src, ImageOf<PixelMono>* dest) {
     int padding = src->getPadding();
@@ -79,6 +88,8 @@ inline void copy_8u_C1R(ImageOf<PixelMono>* src, ImageOf<PixelMono>* dest) {
         psrc += padding;
     }
 }
+
+/************************************************************************/
 
 inline void copy_8u_C3R(ImageOf<PixelRgb>* src, ImageOf<PixelRgb>* dest) {
     int padding = src->getPadding();
@@ -98,6 +109,59 @@ inline void copy_8u_C3R(ImageOf<PixelRgb>* src, ImageOf<PixelRgb>* dest) {
     }
 }
 
+
+/************************************************************************/
+
+bool getCamPrj(const string &configFile, const string &type, Matrix **Prj)
+{
+    *Prj=NULL;
+
+    if (configFile.size())
+    {
+        Property par;
+        par.fromConfigFile(configFile.c_str());
+
+        Bottle parType=par.findGroup(type.c_str());
+        string warning="Intrinsic parameters for "+type+" group not found";
+
+        if (parType.size())
+        {
+            if (parType.check("w") && parType.check("h") &&
+                parType.check("fx") && parType.check("fy"))
+            {
+                // we suppose that the center distorsion is already compensated
+                double cx = parType.find("w").asDouble() / 2.0;
+                double cy = parType.find("h").asDouble() / 2.0;
+                double fx = parType.find("fx").asDouble();
+                double fy = parType.find("fy").asDouble();
+
+                Matrix K  = eye(3,3);
+                Matrix Pi = zeros(3,4);
+
+                K(0,0) = fx;
+                K(1,1) = fy;
+                K(0,2) = cx;
+                K(1,2) = cy; 
+                
+                Pi(0,0) = Pi(1,1) = Pi(2,2) = 1.0;
+
+                *Prj = new Matrix;
+                **Prj = K * Pi;
+
+                return true;
+            }
+            else
+                fprintf(stdout,"%s\n",warning.c_str());
+        }
+        else
+            fprintf(stdout,"%s\n",warning.c_str());
+    }
+
+    return false;
+}
+
+/**********************************************************************************/
+
 targetFinderThread::targetFinderThread() : RateThread(THRATE) {
     resized = false;
     count           = 0;
@@ -108,6 +172,9 @@ targetFinderThread::targetFinderThread() : RateThread(THRATE) {
 
     idle = false;
     bufferCopy = (char*) malloc(CHUNKSIZE);
+
+    
+
 }
 
 targetFinderThread::~targetFinderThread() {
@@ -124,7 +191,6 @@ bool targetFinderThread::threadInit() {
     inRightPort.open(getName("/right:i").c_str());
     outEventPort.open(getName("/event:o").c_str());
 
-    
 
     int SIZE_OF_EVENT = CHUNKSIZE >> 3; // every event is composed by 4bytes address and 4 bytes timestamp
     monBufSize_b = SIZE_OF_EVENT * sizeof(struct aer);
@@ -246,6 +312,123 @@ bool targetFinderThread::threadInit() {
             }            
         }
         printf("counted the number of mapping %d \n", countMap);
+
+
+        printf("starting the thread.... \n");
+        
+        eyeL = new iCubEye("left");
+        eyeR = new iCubEye("right");    
+        
+        // remove constraints on the links
+        // we use the chains for logging purpose
+        //eyeL->setAllConstraints(false);
+        //eyeR->setAllConstraints(false);
+        
+        // release links
+        eyeL->releaseLink(0);
+        eyeR->releaseLink(0);
+        eyeL->releaseLink(1);
+        eyeR->releaseLink(1);
+        eyeL->releaseLink(2);
+        eyeR->releaseLink(2);
+        
+        // if it isOnWings, move the eyes on top of the head 
+        bool isOnWings = true;
+        
+        if (isOnWings) {
+            printf("changing the structure of the chain \n");
+            iKinChain* eyeChain = eyeL->asChain();
+            //eyeChain->rmLink(7);
+            //eyeChain->rmLink(6); ;
+            iKinLink* link = &(eyeChain-> operator ()(5));
+            //double d_value = link->getD();
+            //printf("d value %f \n", d_value);
+            //double a_value = link->getA();
+            //printf("a value %f \n", a_value);
+            link->setD(0.145);
+            link = &(eyeChain-> operator ()(6));
+            link->setD(0.0);
+            //eyeChain->blockLink(6,0.0);
+            //eyeChain->blockLink(7,0.0);
+            //link = &(eyeChain-> operator ()(6));
+            //link->setA(0.0);
+            //link->setD(0.034);
+            //link->setAlpha(0.0);
+            //double d_value = link->getD();
+            //printf("d value %f \n", d_value);
+            //iKinLink twistLink(0.0,0.034,M_PI/2.0,0.0,-22.0*CTRL_DEG2RAD,  84.0*CTRL_DEG2RAD);
+            //*eyeChain << twistLink;
+            //eyeL->releaseLink(6);
+            
+        }
+        else {
+            printf("isOnWing false \n");
+        }
+        
+        // get camera projection matrix from the configFile
+        if (getCamPrj(configFile,"CAMERA_CALIBRATION_LEFT",&PrjL)) {
+            Matrix &Prj = *PrjL;
+            //cxl=Prj(0,2);
+            //cyl=Prj(1,2);
+            invPrjL=new Matrix(pinv(Prj.transposed()).transposed());
+        }
+        
+        //initializing gazecontrollerclient
+        Property option;
+        option.put("device","gazecontrollerclient");
+        option.put("remote","/iKinGazeCtrl");
+        string localCon("/client/gaze/");
+        localCon.append(getName(""));
+        option.put("local",localCon.c_str());
+        
+        clientGazeCtrl=new PolyDriver();
+        clientGazeCtrl->open(option);
+        igaze=NULL;
+        
+        if (clientGazeCtrl->isValid()) {
+            clientGazeCtrl->view(igaze);
+        }
+        else {
+            return false;
+        }
+        
+        
+        igaze->storeContext(&originalContext);
+        
+        if(blockNeckPitchValue != -1) {
+            igaze->blockNeckPitch(blockNeckPitchValue);
+            printf("pitch fixed at %f \n",blockNeckPitchValue);
+        }
+        else {
+            printf("pitch free to change\n");
+        }
+        
+        
+        string headPort = "/" + robot + "/head";
+        string nameLocal("local");
+        
+        //initialising the head polydriver
+        optionsHead.put("device", "remote_controlboard");
+        optionsHead.put("local", "/localhead");
+        optionsHead.put("remote", headPort.c_str());
+        robotHead = new PolyDriver (optionsHead);
+        
+        if (!robotHead->isValid()){
+            printf("cannot connect to robot head\n");
+        }
+        robotHead->view(encHead);
+        
+        //initialising the torso polydriver
+        printf("starting the polydrive for the torso.... \n");
+        Property optPolyTorso("(device remote_controlboard)");
+        optPolyTorso.put("remote",("/"+robot+"/torso").c_str());
+        optPolyTorso.put("local",("/"+nameLocal+"/torso/position").c_str());
+        polyTorso=new PolyDriver;
+        if (!polyTorso->open(optPolyTorso))
+            {
+                return false;
+            }
+        polyTorso->view(encTorso);
     }
     
     leftInputImage = new ImageOf<PixelMono>;

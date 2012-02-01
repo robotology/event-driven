@@ -27,14 +27,21 @@
 #ifndef _TARGET_FINDER_THREAD_H_
 #define _TARGET_FINDER_THREAD_H_
 
+#include <iostream>
+
 #include <yarp/os/RateThread.h>
 #include <yarp/os/BufferedPort.h>
 #include <yarp/sig/all.h>
 #include <yarp/dev/all.h>
-#include <iostream>
+
 #include <iCub/emorph/eventConversion.h>
 #include <iCub/emorph/eventBuffer.h>
-
+#include <iCub/iKin/iKinInv.h>
+#include <iCub/iKin/iKinIpOpt.h>
+#include <iCub/iKin/iKinFwd.h>
+#include <iCub/ctrl/pids.h>
+#include <yarp/math/Math.h>
+#include <yarp/math/SVD.h>
 
 
 class targetFinderThread : public yarp::os::RateThread {
@@ -43,6 +50,7 @@ private:
     int count;                          // loop counter of the thread
     int width, height;                  // dimension of the extended input image (extending)
     int height_orig, width_orig;        // original dimension of the input and output images
+    std::string configFile;             // configuration file of cameras (LEFT RIGHT)
     yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelMono> > inLeftPort;       // port where the left event image is received
     yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelMono> > inRightPort;      // port where the right event image is received
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outLeftPort;       // port whre the output edge (left) is sent
@@ -50,24 +58,37 @@ private:
     yarp::os::BufferedPort<eventBuffer> outEventPort;                                    // port sending events
     yarp::sig::ImageOf <yarp::sig::PixelMono>* leftInputImage;                           // image input left 
     yarp::sig::ImageOf <yarp::sig::PixelMono>* rightInputImage;                          // image input right 
+    std::string robot;                      // name of the robot read by the ResourceFinder
     
-    std::string name;                     // rootname of all the ports opened by this thread
-    std::string mapURL;                   // mode name and name of the map
-    bool resized;                         // flag to check if the variables have been already resized
-    int shiftValue;                       // value of the shift between dragonfly (this is vergence related)
-    FILE *pFile;                          // file that contains the rules for the LUT
-    FILE *fout;                           // file where the extracted LUT is saved
-    FILE *fdebug;                         // file for debug
-    int* lut;                             // lut that route the event in a different location 
-    int monBufSize_b;                     // dimension of the bufferFEA in bytes
-    int countEvent;                       // counter of event that are going to be sent
-    int countMap;                         // counter of the mapped events
+    std::string name;                       // rootname of all the ports opened by this thread
+    std::string mapURL;                     // mode name and name of the map
+    bool resized;                           // flag to check if the variables have been already resized
+    int shiftValue;                         // value of the shift between dragonfly (this is vergence related)
+    FILE *pFile;                            // file that contains the rules for the LUT
+    FILE *fout;                             // file where the extracted LUT is saved
+    FILE *fdebug;                           // file for debug
+    int* lut;                               // lut that route the event in a different location 
+    int monBufSize_b;                       // dimension of the bufferFEA in bytes
+    int countEvent;                         // counter of event that are going to be sent
+    int countMap;                           // counter of the mapped events
 
- 
-    char* bufferCopy;                     // local copy of the events read
-    char* flagCopy;                       // copy of the unreadBuffer
-    char* resultCopy;                     // buffer resulting out of the selection
-    char* buffer;                         // buffer where the events to send are stored
+    iCub::iKin::iCubEye *eyeL;
+    iCub::iKin::iCubEye *eyeR;
+    yarp::sig::Matrix *invPrjL, *invPrjR;   // inverse of prjection matrix
+    yarp::sig::Matrix *PrjL, *PrjR;         // projection matrix
+    yarp::os::Property optionsHead;
+    yarp::dev::IGazeControl *igaze;                 // Ikin controller of the gaze
+    yarp::dev::PolyDriver* clientGazeCtrl;          // polydriver for the gaze controller
+    yarp::dev::PolyDriver *polyTorso, *robotHead;   // polydriver for the control of the head
+    yarp::dev::IEncoders *encTorso, *encHead;       // measure of the encoder  (head and torso)
+
+    int originalContext;                    // original context for the gaze Controller
+    double blockNeckPitchValue;             // value for blocking the pitch of the neck
+
+    char* bufferCopy;                       // local copy of the events read
+    char* flagCopy;                         // copy of the unreadBuffer
+    char* resultCopy;                       // buffer resulting out of the selection
+    char* buffer;                           // buffer where the events to send are stored
 
 public:
     /**
