@@ -121,6 +121,12 @@ bool targetFinderModule::close() {
 }
 
 bool targetFinderModule::respond(const Bottle& command, Bottle& reply) {
+
+    reply.clear();
+
+    bool ok = false;
+    bool rec = false; // is the command recognized?
+
     string helpMessage =  string(getName().c_str()) + 
                         " commands are: \n" +  
                         "help \n" + 
@@ -136,7 +142,71 @@ bool targetFinderModule::respond(const Bottle& command, Bottle& reply) {
         cout << helpMessage;
         reply.addString("ok");
     }
-    return true;
+
+    respondLock.wait();
+    switch (command.get(0).asVocab()) {
+    case COMMAND_VOCAB_HELP:
+        rec = true;
+        {
+            //reply.addString("many");    // what used to work
+            reply.addString("help");
+            reply.addString("commands are:");
+            reply.addString(" help  : to get help");
+            reply.addString(" quit  : to quit the module");
+            reply.addString(" ");
+            reply.addString(" ");
+            reply.addString(" sus   ");
+            reply.addString(" sus   ");
+            reply.addString(" ");
+            reply.addString(" ");
+            reply.addString(" ");
+            reply.addString(" ");
+            //reply.addString(helpMessage.c_str());
+            ok = true;
+        }
+        break;
+    case COMMAND_VOCAB_QUIT:
+        rec = true;
+        {
+            reply.addString("quitting");
+            ok = false;
+        }
+        break;
+    
+    
+    case COMMAND_VOCAB_SUSPEND:
+        {            
+            reply.addString("suspending");
+            ok = true;
+            tf->suspend();
+        }
+        break;
+    case COMMAND_VOCAB_RESUME:
+        {
+            reply.addString("resuming");
+            ok = true;
+            tf->resume();
+        }
+        break;
+    default:
+        rec = false;
+        ok  = false;
+    }    
+    
+    respondLock.post();
+    if (!rec){
+        ok = RFModule::respond(command,reply);
+    }
+    
+    if (!ok) {
+        reply.clear();
+        reply.addVocab(COMMAND_VOCAB_FAILED);
+    }
+    else
+        reply.addVocab(COMMAND_VOCAB_OK);
+
+    return ok;
+    
 }
 
 /* Called periodically every getPeriod() seconds */

@@ -172,9 +172,7 @@ targetFinderThread::targetFinderThread() : RateThread(THRATE) {
     shiftValue      = 20;
 
     idle = false;
-    bufferCopy = (char*) malloc(CHUNKSIZE);
-
-    
+    bufferCopy = (char*) malloc(CHUNKSIZE); 
 
 }
 
@@ -186,12 +184,11 @@ bool targetFinderThread::threadInit() {
     printf("starting the thread.... \n");
     /* open ports */
     printf("opening ports.... \n");
-    outLeftPort.open(getName("/edgesLeft:o").c_str());
+    outPort.open(getName("/coord:o").c_str());
     outRightPort.open(getName("/edgesRight:o").c_str());
     inPort.open(getName("/coord:i").c_str());
     inRightPort.open(getName("/right:i").c_str());
     outEventPort.open(getName("/event:o").c_str());
-
 
     int SIZE_OF_EVENT = CHUNKSIZE >> 3; // every event is composed by 4bytes address and 4 bytes timestamp
     monBufSize_b = SIZE_OF_EVENT * sizeof(struct aer);
@@ -205,16 +202,11 @@ bool targetFinderThread::threadInit() {
         //printf("i: %d  value : %d \n",i,lut[i]);
     }
     printf("successfully initialised memory for LUT \n");
-
-
-
-    printf("counted the number of mapping %d \n", countMap);
-
-    
+    printf("counted the number of mapping %d \n", countMap);    
     printf("\n starting the thread.... \n");
     
-    eyeL = new iCubEye("left");
-    eyeR = new iCubEye("right");    
+    eyeL = new iCubEye("left_v2");
+    eyeR = new iCubEye("right_v2");    
     
     // remove constraints on the links
     // we use the chains for logging purpose
@@ -230,7 +222,7 @@ bool targetFinderThread::threadInit() {
     eyeR->releaseLink(2);
     
     // if it isOnWings, move the eyes on top of the head 
-    isOnWings = true;
+    isOnWings = false;
     
     if (isOnWings) {
         printf("changing the structure of the chain \n");
@@ -244,7 +236,9 @@ bool targetFinderThread::threadInit() {
         //printf("a value %f \n", a_value);
         link->setD(0.145);
         link = &(eyeChain-> operator ()(6));
-        link->setD(0.0);
+        link->setD(0.034);
+        //link->setD(0.0);
+        
         //eyeChain->blockLink(6,0.0);
         //eyeChain->blockLink(7,0.0);
         //link = &(eyeChain-> operator ()(6));
@@ -256,6 +250,21 @@ bool targetFinderThread::threadInit() {
         //iKinLink twistLink(0.0,0.034,M_PI/2.0,0.0,-22.0*CTRL_DEG2RAD,  84.0*CTRL_DEG2RAD);
         //*eyeChain << twistLink;
         //eyeL->releaseLink(6);
+
+        /***************************************************/
+        
+        iKinChain* eyeChainR = eyeR->asChain();
+        //eyeChain->rmLink(7);
+        //eyeChain->rmLink(6); ;
+        iKinLink* linkR = &(eyeChainR-> operator ()(5));
+        //double d_value = link->getD();
+        //printf("d value %f \n", d_value);
+        //double a_value = link->getA();
+        //printf("a value %f \n", a_value);
+        linkR->setD(0.145);
+        linkR = &(eyeChainR-> operator ()(6));
+        //linkR->setD(0.0);
+        linkR->setD(-0.034);
         
     }
     else {
@@ -296,10 +305,10 @@ bool targetFinderThread::threadInit() {
     }
     else {
         return false;
-    }
-        
+    }        
     igaze->storeContext(&originalContext);
-    
+   
+    blockNeckPitchValue = -1;
     if(blockNeckPitchValue != -1) {
         igaze->blockNeckPitch(blockNeckPitchValue);
         printf("pitch fixed at %f \n",blockNeckPitchValue);
@@ -446,10 +455,7 @@ bool targetFinderThread::threadInit() {
                     }
                 } //end of while
             }            
-        }
-
-        
-        
+        }        
     }
     
     leftInputImage = new ImageOf<PixelMono>;
@@ -489,23 +495,30 @@ void targetFinderThread::resize(int widthp, int heightp) {
 
 void targetFinderThread::run() {
     int u, v;
-    float zDistance = 1.5;
+    float zDistance = 10.5;
     Bottle* b  = inPort.read(false);
     if(b!=NULL) {
-        //printf("b bottle : \n");
+        printf("*************************************************** \n");
         //printf("%s \n", b->toString().c_str());
         for (int i = 0; i < b->size(); i++) {
             valueInput[i] = b->get(i).asDouble();
             //printf(" %f ", valueInput[i]);
         }
         //printf("\n");
-        
+
+        u = valueInput[0];
+        v = valueInput[1];
         Vector pxl(2);
-        pxl[0] = 100;
-        pxl[1] = 100;
+        pxl[0] = 160; //valueInput[0]; 
+        printf("%f ", valueInput[0]);
+        pxl[1] = 120; //valueInput[1]; 
+        printf("%f ", valueInput[1]);
         Vector pxr(2);
-        pxr[0] = 100;
-        pxr[1] = 100;
+        pxr[0] = 160; //valueInput[6]; 
+        printf("%f ", valueInput[6]);
+        pxr[1] = 120; //valueInput[7]; 
+        printf("%f ", valueInput[7]);
+        printf("\n");
 
         Vector torso(3);        
         encTorso->getEncoder(0,&torso[0]);
@@ -519,8 +532,51 @@ void targetFinderThread::run() {
         encHead->getEncoder(3,&head[3]);
         encHead->getEncoder(4,&head[4]);
         encHead->getEncoder(4,&head[5]);
-        
 
+        Vector xo;
+        Vector qw(8);
+        Vector q(8);
+
+        if(isOnWings) {
+            
+            
+            double ratio = M_PI /180; 
+            qw[0]=torso[0] * ratio;
+            qw[1]=torso[1] * ratio;
+            qw[2]=torso[2] * ratio;
+            qw[3]=head[0]  * ratio;
+            qw[4]=head[1]  * ratio;
+            qw[5]=head[2]  * ratio;
+            qw[6]=0.0 * CTRL_DEG2RAD;
+            qw[7]=0.0 * CTRL_DEG2RAD;
+            
+            double ver = head[5];
+            //xo = yarp::math::operator *(eye->getH(qw),xe);
+            //printf("0:%f 1:%f 2:%f 3:%f 4:%f 5:%f 6:%f 7:%f \n", q[0],q[1],q[2],q[3],q[4],q[5],q[6],q[7]);
+        }
+        else {    
+            
+            
+            double ratio = M_PI /180;
+            q[0]=torso[0] * ratio;
+            q[1]=torso[1] * ratio;
+            q[2]=torso[2] * ratio;
+            q[3]=head[0]  * ratio;
+            q[4]=head[1]  * ratio;
+            q[5]=head[2]  * ratio;
+            q[6]=head[3]  * ratio;
+            q[7]=head[4]  * ratio;
+            double ver = head[5];
+            
+            //xo = yarp::math::operator *(eye->getH(q),xe);
+            //printf("0:%f 1:%f 2:%f 3:%f 4:%f 5:%f 6:%f 7:%f \n", q[0],q[1],q[2],q[3],q[4],q[5],q[6],q[7]);
+        }
+                 
+
+        head[3] = 0;
+        head[4] = 0;
+        head[5] = 0;
+        
         Vector qL(8);
         qL[0]=torso[0]; printf("%f \n", qL[0]);
         qL[1]=torso[1]; printf("%f \n", qL[1]);
@@ -529,25 +585,24 @@ void targetFinderThread::run() {
         qL[4]=head[1];  printf("%f \n", qL[4]);
         qL[5]=head[2];  printf("%f \n", qL[5]);
         qL[6]=head[3];  printf("%f \n", qL[6]);
-        qL[7]=head[4]+head[5]/2.0;
+        qL[7]=head[4] + head[5] / 2.0; printf("%f \n", qL[7]);
 
         Vector qR=qL;
-        qR[7]-=head[5];
+        qR[7]-=head[5]; printf("%f \n", qR[7]);
 
-        
         Matrix HL=SE3inv(eyeL->getH(qL));
         Matrix HR=SE3inv(eyeR->getH(qR));
-        //printf("HR : \n"); printf("%s \n", HR.toString().c_str());
+        printf("HL : \n"); printf("%s \n", HL.toString().c_str());
+        printf("HR : \n"); printf("%s \n", HR.toString().c_str());        
         
-
         //printf("inverse of rototraslation matrix 4by4 \n");
-        Matrix tmp=zeros(3,4); tmp(2,2)=1.0;
-        tmp(0,2)=pxl[0]; tmp(1,2)=pxl[1];
-        Matrix AL=(*PrjL - tmp) * HL;
+        Matrix tmp = zeros(3,4); tmp(2,2) = 1.0;
+        tmp(0,2)  = pxl[0]; tmp(1,2) = pxl[1];
+        Matrix AL =(*PrjL - tmp) * HL;
         
         //printf("matrixAL created \n");
-        tmp(0,2)=pxr[0]; tmp(1,2)=pxr[1];
-        Matrix AR=(*PrjR - tmp) * HR;
+        tmp(0,2)  = pxr[0]; tmp(1,2) = pxr[1];
+        Matrix AR = (*PrjR - tmp) * HR;
 
         //printf("matrixAR created \n");
 
@@ -555,29 +610,36 @@ void targetFinderThread::run() {
         Vector b(4);
         for (int i=0; i<2; i++)
         {
-            b[i]=-AL(i,3);
-            b[i+2]=-AR(i,3);
+            b[i]   = -AL(i,3);
+            b[i+2] = -AR(i,3);
 
             for (int j=0; j<3; j++)
             {
-                A(i,j)=AL(i,j);
-                A(i+2,j)=AR(i,j);
+                A(i,j)   = AL(i,j);
+                A(i+2,j) = AR(i,j);
             }
         }
 
         // solve the least-squares problem
         printf("Solving the least-squares problem with pseudoinvers \n");
+        printf("A =   \n");
+        printf(" %s  \n", A.toString().c_str());
+        printf("b =   \n");
+        printf(" %s  \n", b.toString().c_str());
         
         Vector x(3);
-        x=pinv(A)*b;
-        printf("x: \n"); printf(" %s \n",x.toString().c_str());
+        x = pinv(A) * b;
         
-        /*
+        printf("x: \n"); printf(" %s \n",x.toString().c_str());        
+
+        //*******************************************************************************/
+        
         bool isLeft = true;  // TODO : the left drive is hardcoded but in the future might be either left or right
         
         Matrix  *invPrj = (isLeft?invPrjL:invPrjR);
-        iCubEye *eye = (isLeft?eye:eyeR);               
+        iCubEye *eye = (isLeft?eyeL:eyeR);               
         
+        /*
         //function that calculates the 3DPoint where to redirect saccade and add the offset
         Vector torso(3);
         printf("vector torso \n");
@@ -592,68 +654,71 @@ void targetFinderThread::run() {
         encHead->getEncoder(3,&head[3]);
         encHead->getEncoder(4,&head[4]);
         printf("reading the head values \n");
+        */
         
-        
-        Vector x(3);
-        x[0] = zDistance * u;
-        x[1] = zDistance * v;
-        x[2] = zDistance;
+        Vector x2(3);
+        x2[0] = zDistance * u;
+        x2[1] = zDistance * v;
+        x2[2] = zDistance;
         printf("assigned the value to the vector x \n");
         
         
         // find the 3D position from the 2D projection,
         // knowing the distance z from the camera
-        Vector xe = yarp::math::operator *(*invPrj, x);
+        Vector xe = yarp::math::operator *(*invPrj, x2);
         xe[3] = 1.0;  // impose homogeneous coordinates 
         printf("imposing homogeneous coordinates \n");
         
-        Vector xo;
-        if(isOnWings) {
-            
-            Vector qw(8);
-            double ratio = M_PI /180; 
-            qw[0]=torso[0] * ratio;
-            qw[1]=torso[1] * ratio;
-            qw[2]=torso[2] * ratio;
-            qw[3]=head[0]  * ratio;
-            qw[4]=head[1]  * ratio;
-            qw[5]=head[2]  * ratio;
-            qw[6]=0.0 * CTRL_DEG2RAD;
-            qw[7]=0.0 * CTRL_DEG2RAD;
-            
-            double ver = head[5];
-            xo = yarp::math::operator *(eye->getH(qw),xe);
-            //printf("0:%f 1:%f 2:%f 3:%f 4:%f 5:%f 6:%f 7:%f \n", q[0],q[1],q[2],q[3],q[4],q[5],q[6],q[7]);
-        }
-        else {    
-            
-            Vector q(8);
-            double ratio = M_PI /180;
-            q[0]=torso[0] * ratio;
-            q[1]=torso[1] * ratio;
-            q[2]=torso[2] * ratio;
-            q[3]=head[0]  * ratio;
-            q[4]=head[1]  * ratio;
-            q[5]=head[2]  * ratio;
-            q[6]=head[3]  * ratio;
-            q[7]=head[4]  * ratio;
-            double ver = head[5];
-            
-            xo = yarp::math::operator *(eye->getH(q),xe);
-            //printf("0:%f 1:%f 2:%f 3:%f 4:%f 5:%f 6:%f 7:%f \n", q[0],q[1],q[2],q[3],q[4],q[5],q[6],q[7]);
-        }
         
+        if(isOnWings) {
+            xo = yarp::math::operator *(eye->getH(qw),xe);
+        }
+        else {
+            xo = yarp::math::operator *(eye->getH(q),xe);
+        }
+
         // update position wrt the root frame        
         //Vector xo = yarp::math::operator *(eye->getH(q),xe);
         printf("fixation point estimated %f %f %f \n",xo[0], xo[1], xo[2]);
 
-        */
         
+        
+        /*
+        Vector start(3);
+        start[0] = -0.5;
+        start[1] = 0.0;
+        start[2] = 0.35;
+        */
+       
+        
+        igaze->lookAtFixationPoint(xo);
+        
+        bool done;
+        igaze->checkMotionDone(&done);
+        while (!done) {
+            igaze->checkMotionDone(&done);
+            printf(".");
+            Time::delay(0.1);
+        }
+        printf("\n");      
+        
+        Time::delay(0.5);
+        
+        if(outPort.getOutputCount()) {
+            Vector angleVector(2);
+            igaze->getAngles(angleVector);
+            Bottle& angleBottle = outPort.prepare();
+            angleBottle.clear();
+            angleBottle.add(angleVector[0]);
+            angleBottle.add(angleVector[1]);
+            outPort.write();
+
+        }
     }
 }
 
 void targetFinderThread::interrupt() {
-    outLeftPort.interrupt();
+    outPort.interrupt();
     outRightPort.interrupt();
     inPort.interrupt();
     inRightPort.interrupt();
@@ -663,7 +728,7 @@ void targetFinderThread::interrupt() {
 void targetFinderThread::threadRelease() {
     printf("targetFinderThread::threadRelease \n");
     /* closing the ports*/
-    outLeftPort.close();
+    outPort.close();
     outRightPort.close();
     inPort.close();
     inRightPort.close();

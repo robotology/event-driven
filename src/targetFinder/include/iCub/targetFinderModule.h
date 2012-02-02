@@ -132,6 +132,13 @@
 * /section change_log CHANGE LOG
 * 01/02/12 : created the module                                                                       author: Rea \n
 */
+#define COMMAND_VOCAB_FAILED        VOCAB4('f','a','i','l')
+#define COMMAND_VOCAB_HELP          VOCAB4('h','e','l','p')
+#define COMMAND_VOCAB_QUIT          VOCAB4('q','u','i','t')
+#define COMMAND_VOCAB_SUSPEND       VOCAB3('s','u','s')
+#define COMMAND_VOCAB_RESUME        VOCAB3('r','e','s')
+#define COMMAND_VOCAB_OK            VOCAB2('o','k')
+
 
 #include <iostream>
 #include <string>
@@ -155,7 +162,7 @@ class targetFinderModule:public yarp::os::RFModule {
     std::string configFile;                     // configuration file of cameras (LEFT RIGHT)
     
     int ratethread;                             // time constant for ratethread
-
+    yarp::os::Semaphore respondLock;            // to lock updating through respond
     yarp::os::Port handlerPort;                 // a port to handle messages 
     targetFinderThread* tf;                     // targetFinderThread for processing events
 
