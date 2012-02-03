@@ -20,7 +20,6 @@ add_subdirectory   (device2yarp2)
 add_subdirectory   (dvsGrabber)
 #add_subdirectory   (dvsCalibrator)
 #add_subdirectory  (disparitySelector)
-
 add_subdirectory   (eventDriven)
 add_subdirectory   (eventSniffer) 
 add_subdirectory   (emorphUnmaskTest)
@@ -29,13 +28,19 @@ add_subdirectory   (emorphUnmaskTest)
 #add_subdirectory  (fakeEvent)
 add_subdirectory   (harmonicPathPlanner)
 
+
 #add_subdirectory  (logpolarFrameCollector)
 add_subdirectory   (logSort)
 add_subdirectory   (microsacTest)
 #add_subdirectory  (objectInteractor)
-add_subdirectory   (opticalFlow2)
-add_subdirectory   (opticalFlow3)
 add_subdirectory   (pythonInterface)
 #add_subdirectory  (logpolar_frame_converter)
 #add_subdirectory  (logpolar_frame_converter_add)
 add_subdirectory   (visualAligner)
+
+
+# ------------- SUBFOLDERS ---------------------
+#add_subdirectory   (opticalFlow)
+#add_subdirectory   (opticalFlow2)
+#add_subdirectory   (opticalFlow3)
+add_subdirectory   (eventOpticalFlow)
