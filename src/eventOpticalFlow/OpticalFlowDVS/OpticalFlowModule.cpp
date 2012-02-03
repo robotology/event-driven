@@ -143,7 +143,7 @@ bool OpticalFlowModule::updateModule(){
 }
 
 double OpticalFlowModule::getPeriod(){
-    return .005;
+    return .001;
 }
 
 OpticalFlowModule::~OpticalFlowModule(){
