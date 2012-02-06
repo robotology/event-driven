@@ -47,12 +47,14 @@ struct aer {
  * 08/11/11 : added unmaskData function that returns buffer of aer events                   author : Rea \n       
  * 18/11/11 : setRetinalSize function added for a correct unmasking                         author : Rea \n
  * 19/11/11 : changed the type of the timestamp in the AER_struct                           author : Rea \n
- * 19/11/11 : subtracted 1 to the cartX and cartY position in the unmaskData                author : Rea \n          * 22/12/11 : made the unsigned 32 bit platform independent                                 author : Rea \n     
+ * 19/11/11 : subtracted 1 to the cartX and cartY position in the unmaskData                author : Rea \n          
+ * 22/12/11 : made the unsigned 32 bit platform independent                                 author : Rea \n     
+ * 06/02/12 : swap the first 4bytes with the second 4bytes, new protocol of GAEP            author : Rea \n
 */
 
 
 /** 
- * a simple class to handle event unmasking.
+ * a simple class to handle events and  unmasking them.
  */
 class unmask {    ///: public yarp::os::RateThread {
 private:
@@ -102,8 +104,8 @@ private:
     bool dvsMode;                  // flag that initialises the typology of unmasking
 
     FILE* uEvents;
-    yarp::os::Semaphore countEventLocker;
-    yarp::os::Semaphore countEventLocker2;
+    //yarp::os::Semaphore countEventLocker;
+    //yarp::os::Semaphore countEventLocker2;
 
 public:
     /**

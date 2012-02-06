@@ -184,19 +184,17 @@ void unmask::unmaskData(char* i_buffer, int i_sz, AER_struct* output) {
     int i = 0;
     for (int evt = 0; evt < num_events; evt++) {
         if(!dvsMode) {
-            // unmask the data ( first 4 byte blob, second 4 bytes timestamp)
-            unsigned long blob = buf2[2 * evt];
-            unsigned long t    = buf2[2 * evt + 1];
+            // Beware : change in 06/02/12
+            // before : unmask the data ( first 4 byte blob, second 4 bytes timestamp)
+            // now    : unmask the data ( first 4 byte timestamp, second 4 bytes blob)
+            unsigned long t    = buf2[2 * evt];
+            unsigned long blob = buf2[2 * evt + 1];
             //printf("0x%x 0x%x \n",blob, timestamp);
             
             // here we zero the higher two bytes of the address!!! Only lower 16bits used!
             blob &= 0xFFFF;
             unmaskEvent((unsigned int) blob, cartX, cartY, polarity, camera);
             timestamp = (unsigned long) t;
-            //if(count % 100 == 0) {
-            //    printf(" %d>%d,%d : %d : %d \n",blob,cartX,cartY,timestamp,camera);
-            //}
-            
         }
         else { //in DVS mode
             unsigned int blob, t;
@@ -280,7 +278,6 @@ void unmask::unmaskData(char* i_buffer, int i_sz, AER_struct* output) {
         if(timestamp > lasttimestamp) {
             lasttimestamp = timestamp;
         }
-
     }
 }
 
