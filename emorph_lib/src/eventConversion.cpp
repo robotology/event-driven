@@ -171,7 +171,7 @@ void unmask::run() {
 */
 
 
-void unmask::unmaskData(char* i_buffer, int i_sz, AER_struct* output) {
+int unmask::unmaskData(char* i_buffer, int i_sz, AER_struct* output) {
     //cout << "Size of the received packet to unmask : " << i_sz / 8<< endl;
     //printf("pointer 0x%x ",i_buffer);
     AER_struct* iterEvent = output;
@@ -183,83 +183,20 @@ void unmask::unmaskData(char* i_buffer, int i_sz, AER_struct* output) {
     //eldesttimestamp = 0;
     int i = 0;
     for (int evt = 0; evt < num_events; evt++) {
-        if(!dvsMode) {
-            // Beware : change in 06/02/12
-            // before : unmask the data ( first 4 byte blob, second 4 bytes timestamp)
-            // now    : unmask the data ( first 4 byte timestamp, second 4 bytes blob)
-            unsigned long t    = buf2[2 * evt];
-            unsigned long blob = buf2[2 * evt + 1];
-            //printf("0x%x 0x%x \n",blob, timestamp);
-            
-            // here we zero the higher two bytes of the address!!! Only lower 16bits used!
-            blob &= 0xFFFF;
-            unmaskEvent((unsigned int) blob, cartX, cartY, polarity, camera);
-            timestamp = (unsigned long) t;
-        }
-        else { //in DVS mode
-            unsigned int blob, t;
-            //buffer += 3; //checking a flag
-            if((i_buffer[i + 3] & 0x80) == 0x80) {
-                // timestamp bit 15 is one -> wrap;
-                // now we need to increment the wrapAdd                
-                //uses only 14 bit timestamps
-                wrapAdd += 0x4000;                     
-                //System.out.println("received wrap event, index:" + eventCounter + " wrapAdd: "+ wrapAdd);
-                //NumberOfWrapEvents++;
-            }
-            else if  ((i_buffer[i + 3] & 0x40) == 0x40  ) {
-                // timestamp bit 14 is one -> wrapAdd reset
-                // this firmware version uses reset events to reset timestamps
-                // write(file_desc,reset,1);//this.resetTimestamps();
-                //            buffer_msg[0] = 6;
-                //            write(file_desc,buffer_msg,1);
-                wrapAdd = 0;
-                //lasttimestamp = 0;
-                // log.info("got reset event, timestamp " + (0xffff&((short)aeBuffer[i]&0xff | ((short)aeBuffer[i+1]&0xff)<<8)));
-            }
-            else 
-            {
-                //buffer -= 3;  //returning to the first byte of the event
-                unsigned int part_1 = 0xFF & i_buffer[i];    //extracting the 1 byte        
-                //buffer++;
-                unsigned int part_2 = 0xFF & i_buffer[i + 1];  //extracting the 2 byte        
-                //buffer++;
-                unsigned int part_3 = 0xFF & i_buffer[i + 2];  //extracting the 3 byte
-                //buffer++;
-                unsigned int part_4 = 0xFF & i_buffer[i + 3];  //extracting the 4 byte
-                //buffer++;
-                
-                blob      = (part_1)|(part_2<<8);          //16bits
-                //printf("Bolob is%x \n",blob);
-                polarity =0;
-                unmaskEvent( blob, cartX, cartY, polarity); 
-                short temp = cartX;
-                cartX = -cartY;
-                cartY = temp;
-                //if((cartX<128 && cartY <128 && cartX >0 && cartY>0)) 
-                //printf("cartX %d cartY%d polarity%d\n",cartX,cartY,polarity);
-                //float timestamp = ((part_3)|(part_4<<8));
-                t = ((part_3)|(part_4<<8)); //&0x7fff//        //16bits
-                unsigned long tempT = t;
-                t += wrapAdd;
-                
-                //if(i == 100){
-                //printf("Saving in file \n");
-                //printf("---> %08X %08X \n",blob,timestamp); 
-                //fwrite(&sz, sizeof(int), 1, raw);
-                //fwrite(buffer, 1, sz, raw);
-                //}
-                timestamp = (unsigned long) t;
-                //if(!(cartX == 0 && cartY == 127 && t == 0))
-                
-                //printf("%04d %04d %08X \n",cartX, cartY ,t);
-                //fprintf(uEvents,"%08X %08X \n",blob,tempT);
-                
-                //printf("lastTimeStamp %08X \n", timestamp);
-                camera = 0;
-            }             
-        }
         
+        // Beware : change in 06/02/12
+        // before : unmask the data ( first 4 byte blob, second 4 bytes timestamp)
+        // now    : unmask the data ( first 4 byte timestamp, second 4 bytes blob)
+        unsigned long t    = buf2[2 * evt];
+        unsigned long blob = buf2[2 * evt + 1];
+        if ((t == 0) && (blob == 0))  continue;
+        //printf("0x%x 0x%x \n",blob, timestamp);
+        
+        i = i + 1;
+        // here we zero the higher two bytes of the address!!! Only lower 16bits used!
+        blob &= 0xFFFF;
+        unmaskEvent((unsigned int) blob, cartX, cartY, polarity, camera);
+        timestamp = (unsigned long) t;
 
         // processing of the event
         cartY = retinalSize - cartY - 1;   //corrected the output of the camera (flipped the image along y axis)
@@ -280,6 +217,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz, AER_struct* output) {
             lasttimestamp = timestamp;
         }
     }
+    return i;
 }
 
 
@@ -295,84 +233,16 @@ void unmask::unmaskData(char* i_buffer, int i_sz, aer* output) {
     //eldesttimestamp = 0;
     int i = 0;
     for (int evt = 0; evt < num_events; evt++) {
-        if(!dvsMode) {
-            // unmask the data ( first 4 byte blob, second 4 bytes timestamp)
-            unsigned long blob = buf2[2 * evt];
-            unsigned long t    = buf2[2 * evt + 1];
-            //printf("0x%x 0x%x \n",blob, timestamp);
-            
-            // here we zero the higher two bytes of the address!!! Only lower 16bits used!
-            blob &= 0xFFFF;
-            unmaskEvent((unsigned int) blob, cartX, cartY, polarity, camera);
-            timestamp = (unsigned long) t;
-            //if(count % 100 == 0) {
-            //    printf(" %d>%d,%d : %d : %d \n",blob,cartX,cartY,timestamp,camera);
-            //}
-            
-        }
-        else { //in DVS mode
-            unsigned int blob, t;
-            //buffer += 3; //checking a flag
-            if((i_buffer[i + 3] & 0x80) == 0x80) {
-                // timestamp bit 15 is one -> wrap;
-                // now we need to increment the wrapAdd                
-                //uses only 14 bit timestamps
-                wrapAdd += 0x4000;                     
-                //System.out.println("received wrap event, index:" + eventCounter + " wrapAdd: "+ wrapAdd);
-                //NumberOfWrapEvents++;
-            }
-            else if  ((i_buffer[i + 3] & 0x40) == 0x40  ) {
-                // timestamp bit 14 is one -> wrapAdd reset
-                // this firmware version uses reset events to reset timestamps
-                // write(file_desc,reset,1);//this.resetTimestamps();
-                //            buffer_msg[0] = 6;
-                //            write(file_desc,buffer_msg,1);
-                wrapAdd = 0;
-                //lasttimestamp = 0;
-                // log.info("got reset event, timestamp " + (0xffff&((short)aeBuffer[i]&0xff | ((short)aeBuffer[i+1]&0xff)<<8)));
-            }
-            else 
-            {
-                //buffer -= 3;  //returning to the first byte of the event
-                unsigned int part_1 = 0xFF & i_buffer[i];    //extracting the 1 byte        
-                //buffer++;
-                unsigned int part_2 = 0xFF & i_buffer[i + 1];  //extracting the 2 byte        
-                //buffer++;
-                unsigned int part_3 = 0xFF & i_buffer[i + 2];  //extracting the 3 byte
-                //buffer++;
-                unsigned int part_4 = 0xFF & i_buffer[i + 3];  //extracting the 4 byte
-                //buffer++;
-                
-                blob      = (part_1)|(part_2<<8);          //16bits
-                //printf("Bolob is%x \n",blob);
-                polarity =0;
-                unmaskEvent( blob, cartX, cartY, polarity); 
-                short temp = cartX;
-                cartX = -cartY;
-                cartY = temp;
-                //if((cartX<128 && cartY <128 && cartX >0 && cartY>0)) 
-                //printf("cartX %d cartY%d polarity%d\n",cartX,cartY,polarity);
-                //float timestamp = ((part_3)|(part_4<<8));
-                t = ((part_3)|(part_4<<8)); //&0x7fff//        //16bits
-                unsigned long tempT = t;
-                t += wrapAdd;
-                
-                //if(i == 100){
-                //printf("Saving in file \n");
-                //printf("---> %08X %08X \n",blob,timestamp); 
-                //fwrite(&sz, sizeof(int), 1, raw);
-                //fwrite(buffer, 1, sz, raw);
-                //}
-                timestamp = (unsigned long) t;
-                //if(!(cartX == 0 && cartY == 127 && t == 0))
-                
-                //printf("%04d %04d %08X \n",cartX, cartY ,t);
-                //fprintf(uEvents,"%08X %08X \n",blob,tempT);
-                
-                //printf("lastTimeStamp %08X \n", timestamp);
-                camera = 0;
-            }             
-        }
+
+        // unmask the data ( first 4 byte blob, second 4 bytes timestamp)
+        unsigned long blob = buf2[2 * evt];
+        unsigned long t    = buf2[2 * evt + 1];
+        //printf("0x%x 0x%x \n",blob, timestamp);
+        
+        // here we zero the higher two bytes of the address!!! Only lower 16bits used!
+        blob &= 0xFFFF;
+        unmaskEvent((unsigned int) blob, cartX, cartY, polarity, camera);
+        timestamp = (unsigned long) t;
         
 
         // processing of the event
@@ -384,12 +254,12 @@ void unmask::unmaskData(char* i_buffer, int i_sz, aer* output) {
 
         //adding a new event to the list
         
-        u32 blob = polarity;
-        blob     = blob | cartX  << xshift;
-        blob     = blob | cartY  << yshift;
-        blob     = blob | camera << camerashift;
+        u32 address = polarity;
+        address     = address | cartX  << xshift;
+        address     = address | cartY  << yshift;
+        address     = address | camera << camerashift;
  
-        iterAer->address   = blob;
+        iterAer->address   = address;
         iterAer->timestamp = timestamp;
         iterAer++;
 
@@ -424,7 +294,6 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
             //if(count % 100 == 0) {
             //    printf(" %d>%d,%d : %d : %d \n",blob,cartX,cartY,timestamp,camera);
             //}
-            
         }
         else { //in DVS mode
             unsigned int blob, t;

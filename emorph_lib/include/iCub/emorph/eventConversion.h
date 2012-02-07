@@ -222,7 +222,7 @@ public:
     * @param size size of the last reading from the port
     * @param output pointer to the collection of event unmasked as AER_struct
     */
-    void unmaskData(char* data, int size, AER_struct* output);
+    int unmaskData(char* data, int size, AER_struct* output);
     
     /**
     * function that given a reference to the list of char read from the port and the number of packet received
