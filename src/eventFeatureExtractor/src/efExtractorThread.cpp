@@ -51,7 +51,7 @@ using namespace std;
 #define Y_SHIFT 8
 #define POLARITY_MASK 0x00000001
 #define POLARITY_SHIFT 0
-#define CONST_DECREMENT 10
+#define CONST_DECREMENT 1
 
 #define CHUNKSIZE 32768
 
@@ -108,7 +108,8 @@ efExtractorThread::efExtractorThread() : RateThread(THRATE) {
     lastTimestampLeft = 0;
 
     idle = false;
-    bufferCopy = (char*) malloc(CHUNKSIZE);
+    bufferCopy  = (char*) malloc(CHUNKSIZE);
+    bufferCopy2 = (char*) malloc(CHUNKSIZE);
 }
 
 efExtractorThread::~efExtractorThread() {
@@ -330,11 +331,33 @@ void efExtractorThread::run() {
         // saves it into a working buffer        
         //printf("returned 0x%x 0x%x \n", bufferCopy, flagCopy);
         cfConverter->copyChunk(bufferCopy);
+#ifdef VERBOSE
+        int num_events = CHUNKSIZE >> 3 ;
+        uint32_t* buf2 = (uint32_t*)bufferCopy;
+        //plotting out
+        int countEvent = 0;
+        uint32_t* bufCopy2 = (uint32_t*)bufferCopy2;
+        for (int evt = 0; evt < num_events; evt++) {
+            unsigned long t      = buf2[2 * evt];
+            unsigned long blob   = buf2[2 * evt + 1];
+            if(t == 0) continue;
+            if ((t < 0x8000000) && (t>0)){
+                continue;
+            }
+            *bufCopy2 = buf2[2 *evt]; bufCopy2++;
+            *bufCopy2 = buf2[2 * evt + 1]; bufCopy2++;
+            countEvent++;
+            fprintf(fdebug,"%08X %08X \n",t,blob);        
+        }
+        fprintf(fdebug,"------------------------ \n"); 
+#endif 
+        
         //int unreadDim = selectUnreadBuffer(bufferCopy, flagCopy, resultCopy);
 
         //printf("Unmasking events:  %d \n", unreadDim);
         // extract a chunk/unmask the chunk       
-        unmask_events.unmaskData(bufferCopy,CHUNKSIZE,eventFeaBuffer);
+        int dim = unmask_events.unmaskData(bufferCopy2,countEvent * 8,eventFeaBuffer);
+        //printf("event converted %d whereas %d \n", dim, countEvent);
         
         //storing the response in a temp. image
         AER_struct* iterEvent = eventFeaBuffer;  //<------------ using the pointer to the unmasked events!
@@ -347,25 +370,26 @@ void efExtractorThread::run() {
         // visiting a discrete number of events
         int countUnmapped = 0;
         
-        for(int i = 0; i < CHUNKSIZE>>3; i++ ) {
+        for(int i = 0; i < countEvent; i++ ) {
             ts  = iterEvent->ts;
             pol = iterEvent->pol;
             cam = iterEvent->cam;
-            if(cam==1) {
-                if(ts > lastTimestampLeft) {
+            //printf("cam %d \n", cam);
+            if(cam!=0) {
+                if(true) {
                     lastTimestampLeft = ts;
-                    printf(" %d %d \n",iterEvent->x,iterEvent->y );
+                    //printf(" %d %d %08x \n",iterEvent->x,iterEvent->y, ts );
                     int x = RETINA_SIZE - iterEvent->x;
                     int y = RETINA_SIZE - iterEvent->y;
                     //if((x >127)||(x<0)||(y>127)||(y<0)) break;
-                    int posImage     = 0 * rowSize + 0;
+                    int posImage     = y * rowSize + x;
                 
                     if (outLeftPort.getOutputCount()){
                     
                         int padding    = leftOutputImage->getPadding();
                         int rowsizeOut = leftOutputImage->getRowSize();
                         float lambda   = 1.0;
-                        int deviance   = 10;
+                        int deviance   = 50;
                         //creating the debug image
                         if((pol > 0)&&(pLeft[posImage] <= (255 - deviance))){
                             //pLeft[pos] = 0.6 * pLeft[pos] + 0.4 * (pLeft[pos] + 40);
@@ -405,9 +429,8 @@ void efExtractorThread::run() {
                             
                         }
                     
-                        outLeftPort.prepare() = *leftOutputImage;
-                        outLeftPort.write();
-                    }
+
+                    } //end of if outLeftPort
                 }
                 
                 
@@ -417,39 +440,38 @@ void efExtractorThread::run() {
                 
                 //printf("\n");
                 iterEvent++;            
-                ////end of if
-            } //end of for i
-            
-
-
-            
-            /*
-            // leaking section of the algorithm    
-            pMemL  = leftInputImage->getRawImage();
-            pLeft  = leftOutputImage->getRawImage();
-            int padding = leftOutputImage->getPadding();
-            for (int i = 0; i< FEATUR_SIZE * FEATUR_SIZE; i++) {
-                if(*pLeft >= 127 + CONST_DECREMENT) {                
-                    *pLeft -= CONST_DECREMENT;
-                }
-                else if(*pLeft <= 127 - CONST_DECREMENT) {
-                    *pLeft += CONST_DECREMENT;
-                }
-                else{
-                    *pLeft = 127;
-                }
                 
-                pLeft++;
-                //*pLeft = *pMemL;
-                //pLeft++;
+            } //end of if cam!=0  
+        } //end for i
+
+        
+        outLeftPort.prepare() = *leftOutputImage;
+        outLeftPort.write();
+
+        /*
+        // leaking section of the algorithm    
+        pMemL  = leftInputImage->getRawImage();
+        pLeft  = leftOutputImage->getRawImage();
+        int padding = leftOutputImage->getPadding();
+        for (int i = 0; i< FEATUR_SIZE * FEATUR_SIZE; i++) {
+            if(*pLeft >= 127 + CONST_DECREMENT) {                
+                *pLeft -= CONST_DECREMENT;
             }
-            //pMemL += padding;                
-            pLeft += padding;
-            */
+            else if(*pLeft <= 127 - CONST_DECREMENT) {
+                *pLeft += CONST_DECREMENT;
+            }
+            else{
+                *pLeft = 127;
+            }
             
-            
-           
-        } //end if
+            pLeft++;
+            //*pLeft = *pMemL;
+            //pLeft++;
+        }
+        //pMemL += padding;                
+        pLeft += padding;
+        */
+        
         
         /*
         //building feature events
@@ -546,6 +568,8 @@ void efExtractorThread::threadRelease() {
     delete[] eventFeaBuffer;
     delete bufferFEA;
     delete cfConverter;
+    //delete bufferCopy;
+    //delete bufferCopy2;
     
     /* closing the file */
     delete[] lut;

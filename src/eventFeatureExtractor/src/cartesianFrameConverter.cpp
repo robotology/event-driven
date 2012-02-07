@@ -27,17 +27,18 @@
 #include <cassert>
 #include <cstdlib>
 
-//#define BUFFERDIM 32768
+
+//#define CHUNKSIZE 8192
 //#define TH1 8192 
 //#define TH2 16384
 //#define TH3 24576
-//#define CHUNKSIZE 8192 
+//#define BUFFERDIM 32768 
 
 #define CHUNKSIZE 32768 
 #define TH1       32768  
 #define TH2       65536
 #define TH3       98304
-#define BUFFERDIM 131702
+#define BUFFERDIM 131072
 
 #define VERBOSE
 
@@ -103,17 +104,17 @@ void cFrameConverter::onRead(eventBuffer& i_ub) {
 
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() ;      // number of bits received / 8 = bytes received
-    printf("dim %d \n", dim);
+    //printf("dim %d \n", dim);
     //receivedBufferSize = dim;
     mutex.wait();
     receivedBuffer = i_ub.get_packet(); 
     uint32_t* buf1 = (uint32_t*)receivedBuffer;
 
-    // check for packet lost. If the first byte is not 0x80 there is an error
+    // check for bytes lost. If the first byte is not 0x80 there is an error
     if(*buf1 < 0x80000000) {
         fprintf(readEvents,"wrong packet \n");
         fprintf(readEvents,"----------------------- \n");
-        printf("wrong packet \n");
+        //printf("wrong packet \n");
         mutex.post();
         return;
     }

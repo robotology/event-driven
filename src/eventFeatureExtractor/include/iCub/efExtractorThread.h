@@ -70,6 +70,7 @@ private:
     cFrameConverter* cfConverter;         // cartesian frame converter
     unmask unmask_events;                 // object that unmasks the event
     char* bufferCopy;                     // local copy of the events read
+    char* bufferCopy2;                    // second copy where only correct events are saved
     char* flagCopy;                       // copy of the unreadBuffer
     char* resultCopy;                     // buffer resulting out of the selection
     char* buffer;                         // buffer where the events to send are stored
