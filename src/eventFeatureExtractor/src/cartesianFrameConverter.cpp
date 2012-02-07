@@ -103,18 +103,30 @@ void cFrameConverter::onRead(eventBuffer& i_ub) {
 
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() ;      // number of bits received / 8 = bytes received
+    printf("dim %d \n", dim);
     //receivedBufferSize = dim;
     mutex.wait();
     receivedBuffer = i_ub.get_packet(); 
+    uint32_t* buf1 = (uint32_t*)receivedBuffer;
+
+    // check for packet lost. If the first byte is not 0x80 there is an error
+    if(*buf1 < 0x80000000) {
+        fprintf(readEvents,"wrong packet \n");
+        fprintf(readEvents,"----------------------- \n");
+        printf("wrong packet \n");
+        mutex.post();
+        return;
+    }
+
 
 #ifdef VERBOSE
     int num_events = dim >> 3 ;
     uint32_t* buf2 = (uint32_t*)receivedBuffer;
     //plotting out
     for (int evt = 0; evt < num_events; evt++) {
-        unsigned long blob      = buf2[2 * evt];
-        unsigned long t         = buf2[2 * evt + 1];
-        fprintf(readEvents,"%08X %08X \n",blob,t);        
+        unsigned long t     = buf2[2 * evt];
+        unsigned long blob  = buf2[2 * evt + 1];
+        fprintf(readEvents,"%08X %08X \n",t, blob);        
     }
     fprintf(readEvents,"----------------------- \n");
 #endif 
