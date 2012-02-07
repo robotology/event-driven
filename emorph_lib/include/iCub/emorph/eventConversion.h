@@ -14,7 +14,6 @@
 #ifndef __evenConversionh__
 #define __evenConversionh__
 
-
 #include <iostream>
 #include <sstream>
 #include <ctime>
@@ -24,11 +23,20 @@
 //#define u32 uint32_t
 typedef yarp::os::NetUint32 u32;
 
-
+/* //structure before 07/02/12
 typedef struct s_AER_struct {
     int x;
     int y;
     int pol;
+    unsigned long ts;
+}AER_struct;
+*/
+
+typedef struct s_AER_struct {
+    short x;
+    short y;
+    short pol;
+    short cam;
     unsigned long ts;
 }AER_struct;
 
@@ -50,6 +58,7 @@ struct aer {
  * 19/11/11 : subtracted 1 to the cartX and cartY position in the unmaskData                author : Rea \n          
  * 22/12/11 : made the unsigned 32 bit platform independent                                 author : Rea \n     
  * 06/02/12 : swap the first 4bytes with the second 4bytes, new protocol of GAEP            author : Rea \n
+ * 07/02/12 : made the AER_struct of short and added the camera information                 author : Rea \n
 */
 
 
@@ -65,17 +74,15 @@ private:
     int sz;
     int* buffer;                          // buffer representing the event in image plane (left)
     unsigned long* timeBuffer;            // buffer contains the timestamp of the particular location (left)
-    int* bufferRight;                     //buffer representing the event in image plane (right)
+    int* bufferRight;                     // buffer representing the event in image plane (right)
     unsigned long* timeBufferRight;       // buffer contains the timestamp of the particular location (right)
-    //int* fifoEvent;
-    //int* fifoEvent_temp;
-    //int* fifoEvent_temp2;
+
     unsigned long timestamp;              // 16 bits variable to save the timestamp
     unsigned long timestamplong;          // variable 32 bits to save the timestamp
     unsigned long lasttimestamp;          // last timestamp acquired for the left camera
     unsigned long lasttimestampright;     // last timestamp acquired for the right camera
     unsigned long eldesttimestamp;        // timestamp of the eldest event in the buffer 
-    short cartX, cartY, polarity, camera;
+    short cartX, cartY, polarity, camera; // unmasked information of a single event
 
     int wrapAdd;
     unsigned int xmask;            // 16 bits mask for unmasking of the address

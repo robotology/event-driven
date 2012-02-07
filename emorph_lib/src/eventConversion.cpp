@@ -272,6 +272,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz, AER_struct* output) {
         iterEvent->x   = cartX;
         iterEvent->y   = cartY;
         iterEvent->pol = polarity;
+        iterEvent->cam = camera;
         iterEvent->ts  = timestamp;
         iterEvent++;
 
