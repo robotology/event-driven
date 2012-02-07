@@ -32,7 +32,7 @@
 
 #include <yarp/os/all.h>
 #include <yarp/sig/all.h>
-#include <iCub/eventConversion.h>
+#include <iCub/emorph/eventConversion.h>
 
 //#include <iCub/config.h>
 

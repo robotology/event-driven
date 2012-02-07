@@ -92,7 +92,7 @@ void eventCartesianCollector::copyChunk(char* bufferCopy) {
 void eventCartesianCollector::onRead(eventBuffer& i_ub) {
     valid = true;
     
-    //printf("OnRead ");
+    //printf("eventCartesianCollector:: OnRead ");
 
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() ;      // number of bits received / 8 = bytes received

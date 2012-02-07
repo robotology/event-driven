@@ -100,6 +100,7 @@ private:
     char* bufferCopy;                    // local copy of the events read
     FILE* fout;                          // file for temporarely savings of events
     FILE* raw;                           // file dumper for debug
+    unsigned char* saliencyMap;           // saliencyMap collection of responses in different feature maps
     int* featureMap;                     // map of the feature;
     unsigned long* timestampMap;         // timestamp reference for the map of the feature 
     AER_struct* unmaskedEvents;          // trained of unmasked events

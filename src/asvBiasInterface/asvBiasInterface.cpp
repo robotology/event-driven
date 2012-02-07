@@ -1492,7 +1492,7 @@ static void callbackDumpButton( GtkWidget *widget,gpointer data ) {
     mutex.wait();
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
-        bot.clear();
+        bot.clear(); 
         bot.addVocab(COMMAND_VOCAB_DUMP);
         if(!strcmp((char*) data,"on")) {
             bot.addVocab(COMMAND_VOCAB_ON);

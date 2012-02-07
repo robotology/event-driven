@@ -26,11 +26,8 @@
 #define _EVENT_CARTESIAN_COLLECTOR_H
 
 
-//#include <iCub/convert.h>
-#include <iCub/eventBuffer.h>
-#include <iCub/eventConversion.h>
-//#include <iCub/unmask.h> 
-//#include <iCub/config.h>
+#include <iCub/emorph/eventBuffer.h>
+#include <iCub/emorph/eventConversion.h>
 
 #include <yarp/os/Network.h>
 #include <yarp/os/BufferedPort.h>

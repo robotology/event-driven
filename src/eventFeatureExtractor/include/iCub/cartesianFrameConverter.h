@@ -37,8 +37,7 @@
 
 
 #include <iCub/convert.h>
-#include <iCub/eventBuffer.h>
-//#include <iCub/unmask.h>        // Should use library instead of this
+#include <iCub/emorph/eventBuffer.h>
 
 #include <yarp/os/Network.h>
 #include <yarp/os/BufferedPort.h>

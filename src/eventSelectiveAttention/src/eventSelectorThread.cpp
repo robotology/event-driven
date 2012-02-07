@@ -47,7 +47,7 @@ using namespace std;
 
 eventSelectorThread::eventSelectorThread() : RateThread(THRATE) {
     responseGradient = 127;
-    retinalSize      = 128;  //default value before setting 
+    retinalSize      = 32;  //default value before setting 
   
     synchronised = false;
     greaterHalf  = false;
@@ -78,8 +78,8 @@ bool eventSelectorThread::threadInit() {
     fout = fopen("./dump.txt","w+");
 
     resize(retinalSize, retinalSize);
-    printf("starting the converter!!!.... \n");
-    
+
+    printf("starting the first collector!!!.... \n");    
     cfConverter = new eventCartesianCollector();
     cfConverter->useCallback();
     cfConverter->setRetinalSize(retinalSize);
@@ -144,7 +144,7 @@ std::string eventSelectorThread::getName(const char* p) {
 
 void eventSelectorThread::resize(int widthp, int heightp) {
     imageLeft = new ImageOf<PixelMono>;
-    imageLeft->resize(widthp,heightp);
+    imageLeft->resize(32,32);
     imageRight = new ImageOf<PixelMono>;
     imageRight->resize(widthp,heightp);
 }
@@ -273,8 +273,8 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, uns
                 }
                 pBuffer++;
                 pTime++;
-            }            
-        }
+            } // end !tristate            
+        } // end inner loop
         pImage+=imagePadding;
     }
     //printf("end of the function get in mono \n");
@@ -312,9 +312,7 @@ void eventSelectorThread::spatialSelection(AER_struct* buffer,int numberOfEvents
               timestampMap[pos] = iter->ts;            
         }        
         iter++;
-    }
-    
-    
+    }    
 }
 
 
@@ -332,8 +330,6 @@ void eventSelectorThread::run() {
     // saving the buffer into the file
     int num_events = CHUNKSIZE / 8 ;
     uint32_t* buf2 = (uint32_t*)bufferCopy;
-
-
 
     //getting the time
     endTimer = Time::now();
@@ -405,8 +401,6 @@ void eventSelectorThread::run() {
     // spatial processing
     double w1 = 0, w2 = 0, w3 = 0, w4 = 0;
     spatialSelection(unmaskedEvents,CHUNKSIZE>>3,w1);
-
-
     
     //gettin the time between two threads
     gettimeofday(&tvend, NULL);
@@ -567,7 +561,8 @@ void eventSelectorThread::threadRelease() {
     idle = false;
     fclose(fout);
     printf("eventSelectorThread release:freeing bufferCopy \n");
-    //free(bufferCopy);
+
+    free(saliencyMap);
     free(featureMap);
     free(timestampMap); 
     free(unmaskedEvents); 

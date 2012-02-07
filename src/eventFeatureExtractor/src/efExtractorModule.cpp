@@ -37,6 +37,15 @@ using namespace std;
 bool efExtractorModule::configure(yarp::os::ResourceFinder &rf) {
     /* Process all parameters from both command-line and .ini file */
 
+    if(rf.check("help")) {
+        printf("Help \n");
+        printf("====  \n");
+        printf("--name : name of the module \n");
+        printf("--mode : (intensity) mapping to be used \n");
+        printf("press CTRL-C to continue...");
+        return true;
+    }
+
     /* get the module name which will form the stem of all module port names */
     moduleName            = rf.check("name", 
                            Value("/eventFeatureExtractor"), 
