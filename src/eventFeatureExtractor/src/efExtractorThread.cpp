@@ -51,7 +51,7 @@ using namespace std;
 #define Y_SHIFT 8
 #define POLARITY_MASK 0x00000001
 #define POLARITY_SHIFT 0
-#define CONST_DECREMENT 1
+#define CONST_DECREMENT 10
 
 #define CHUNKSIZE 32768
 
@@ -315,6 +315,8 @@ void efExtractorThread::resize(int widthp, int heightp) {
 void efExtractorThread::run() {   
     count++;
     countEvent = 0;
+    int countEventLeft = 0;
+    int countEventRight = 0;
     //printf("counter %d \n", count);
     bool flagCopy;
     if(!idle) {
@@ -381,7 +383,8 @@ void efExtractorThread::run() {
             pol = iterEvent->pol;
             cam = iterEvent->cam;
             //printf("cam %d \n", cam);
-            if(true) {
+            if(cam==1) {
+                countEventLeft++;
                 
                 lastTimestampLeft = ts;
                 //printf(" %d %d %08x \n",iterEvent->x,iterEvent->y, ts );
@@ -395,7 +398,7 @@ void efExtractorThread::run() {
                     int padding    = leftOutputImage->getPadding();
                     int rowsizeOut = leftOutputImage->getRowSize();
                     float lambda   = 1.0;
-                    int deviance   = 127;
+                    int deviance   = 10;
                     //creating the debug image
                     if(pol > 0){
                         //if(pLeft[posImage] <= (255 - deviance)) {
@@ -453,12 +456,13 @@ void efExtractorThread::run() {
                 //printf("pointing in the lut at position %d %d %d \n",x, y, x + y * RETINA_SIZE);
                 // extra output positions are pointed by i
                 
-                
-                //printf("\n");
-                iterEvent++;            
+            
                 
             } //end of if cam!=0  
-            else if(cam==1) {
+            else if(cam==0) {
+                countEventRight++;
+                
+                
                 lastTimestampRight = ts;
                 //printf(" %d %d %08x \n",iterEvent->x,iterEvent->y, ts );
                 int x = RETINA_SIZE - iterEvent->x;
@@ -471,7 +475,7 @@ void efExtractorThread::run() {
                     int padding    = rightOutputImage->getPadding();
                     int rowsizeOut = rightOutputImage->getRowSize();
                     float lambda   = 1.0;
-                    int deviance   = 127;
+                    int deviance   = 10;
                     //creating the debug image
                     if(pol > 0){
                         //pLeft[pos] = 0.6 * pLeft[pos] + 0.4 * (pLeft[pos] + 40);
@@ -523,17 +527,21 @@ void efExtractorThread::run() {
                 } //end of if outLeftPort                
             }
             else {
-                printf("error in the camera value \n");
+                printf("error in the camera value %d \n", cam);
             }
+
+                            
+            //printf("\n");
+            iterEvent++;
         } //end for i
-        
+
+        //printf("         countLeft %d \n" , countEventLeft);
+        //printf("         countRight %d \n", countEventRight);
         
         outLeftPort.prepare() = *leftOutputImage;
         outLeftPort.write();
         outRightPort.prepare() = *rightOutputImage;
         outRightPort.write();
-        
-        
         
         // leaking section of the algorithm    
         pMemL  = leftInputImage->getRawImage();
