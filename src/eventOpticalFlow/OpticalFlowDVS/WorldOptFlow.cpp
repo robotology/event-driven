@@ -202,7 +202,9 @@ void WorldOptFlow::calVelocities(CameraEvent ** evntBffr, int bffrSize){
 				vlctyBuffer.emptyBuffer();
 			}
 
+
 			Bottle & b = outBPort -> prepare();
+			b.clear();
 			b.addInt(evtClm - SPATIAL_MARGINE_ADDUP);
 			b.addInt(evtRw - SPATIAL_MARGINE_ADDUP);
 			b.addDouble(*velocity);
