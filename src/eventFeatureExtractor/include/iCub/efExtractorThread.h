@@ -45,7 +45,8 @@ private:
     int count;                          // loop counter of the thread
     int width, height;                  // dimension of the extended input image (extending)
     int height_orig, width_orig;        // original dimension of the input and output images
-    unsigned long lastTimestampLeft;    // last timestamp received for left camera
+    unsigned long lastTimestampLeft;     // last timestamp received for left camera
+    unsigned long lastTimestampRight;
     yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelMono> > inLeftPort;       // port where the left event image is received
     yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelMono> > inRightPort;      // port where the right event image is received
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outLeftPort;       // port whre the output edge (left) is sent
@@ -54,6 +55,7 @@ private:
     yarp::sig::ImageOf <yarp::sig::PixelMono>* leftInputImage;                           // image input left 
     yarp::sig::ImageOf <yarp::sig::PixelMono>* rightInputImage;                          // image input right 
     yarp::sig::ImageOf <yarp::sig::PixelMono>* leftOutputImage;                           // image output left 
+    yarp::sig::ImageOf <yarp::sig::PixelMono>* rightOutputImage;                           // image output left 
     
     std::string name;                     // rootname of all the ports opened by this thread
     std::string mapURL;                   // mode name and name of the map

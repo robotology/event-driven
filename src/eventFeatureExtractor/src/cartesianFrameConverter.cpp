@@ -40,7 +40,7 @@
 #define TH3       98304
 #define BUFFERDIM 131072
 
-#define VERBOSE
+//#define VERBOSE
 
 //#define CHUNKSIZE 1024 
 //#define TH1       1024
@@ -112,8 +112,11 @@ void cFrameConverter::onRead(eventBuffer& i_ub) {
 
     // check for bytes lost. If the first byte is not 0x80 there is an error
     if(*buf1 < 0x80000000) {
+        //printf("wrong packet \n");
+#ifdef VERBOSE
         fprintf(readEvents,"wrong packet \n");
         fprintf(readEvents,"----------------------- \n");
+#endif
         //printf("wrong packet \n");
         mutex.post();
         return;

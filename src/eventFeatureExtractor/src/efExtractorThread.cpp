@@ -38,7 +38,7 @@ using namespace yarp::dev;
 using namespace std;
 
 #define DIM 10
-#define THRATE 30
+#define THRATE 20
 #define SHIFTCONST 100
 #define RETINA_SIZE 128
 #define FEATUR_SIZE 32
@@ -266,21 +266,26 @@ bool efExtractorThread::threadInit() {
     
     leftInputImage  = new ImageOf<PixelMono>;
     leftOutputImage = new ImageOf<PixelMono>;
+    rightOutputImage = new ImageOf<PixelMono>;
     //leftInputImage->resize(FEATUR_SIZE, FEATUR_SIZE);
     leftInputImage->resize(128,128);
     leftOutputImage->resize(128,128);
+    rightOutputImage->resize(128,128);
     int padding = leftInputImage->getPadding();
     //initialisation of the memory image
     unsigned char* pLeft   = leftInputImage->getRawImage();
     unsigned char* pLeftOut = leftOutputImage->getRawImage();
+    unsigned char* pRightOut = rightOutputImage->getRawImage();
     int rowsize = leftInputImage->getRowSize();
     for(int r = 0 ; r < 128 ; r++){
         for(int c = 0 ; c < 128 ; c++){
             *pLeft  = 127; pLeft++;
             *pLeftOut = 127; pLeftOut++;
+            *pRightOut = 127; pRightOut++;
         }
         pLeft +=  padding;
         pLeftOut += padding;
+        pRightOut += padding;
     }
     
     printf("initialisation correctly ended \n");
@@ -318,6 +323,7 @@ void efExtractorThread::run() {
         //left.resize(128, 128);
         //left.zero();
         unsigned char* pLeft = leftOutputImage->getRawImage(); 
+        unsigned char* pRight = rightOutputImage->getRawImage();
         
         //left.zero();
         
@@ -331,7 +337,7 @@ void efExtractorThread::run() {
         // saves it into a working buffer        
         //printf("returned 0x%x 0x%x \n", bufferCopy, flagCopy);
         cfConverter->copyChunk(bufferCopy);
-#ifdef VERBOSE
+
         int num_events = CHUNKSIZE >> 3 ;
         uint32_t* buf2 = (uint32_t*)bufferCopy;
         //plotting out
@@ -340,17 +346,17 @@ void efExtractorThread::run() {
         for (int evt = 0; evt < num_events; evt++) {
             unsigned long t      = buf2[2 * evt];
             unsigned long blob   = buf2[2 * evt + 1];
-            if(t == 0) continue;
-            if ((t < 0x8000000) && (t>0)){
-                continue;
+            
+            if(t > 0x80000000) {          
+                *bufCopy2 = buf2[2 *evt]; bufCopy2++;
+                *bufCopy2 = buf2[2 * evt + 1]; bufCopy2++;
+                countEvent++;
+#ifdef VERBOSE
+                fprintf(fdebug,"%08X %08X \n",t,blob);        
+#endif
             }
-            *bufCopy2 = buf2[2 *evt]; bufCopy2++;
-            *bufCopy2 = buf2[2 * evt + 1]; bufCopy2++;
-            countEvent++;
-            fprintf(fdebug,"%08X %08X \n",t,blob);        
         }
-        fprintf(fdebug,"------------------------ \n"); 
-#endif 
+        
         
         //int unreadDim = selectUnreadBuffer(bufferCopy, flagCopy, resultCopy);
 
@@ -375,85 +381,165 @@ void efExtractorThread::run() {
             pol = iterEvent->pol;
             cam = iterEvent->cam;
             //printf("cam %d \n", cam);
-            if(cam!=0) {
-                if(true) {
-                    lastTimestampLeft = ts;
-                    //printf(" %d %d %08x \n",iterEvent->x,iterEvent->y, ts );
-                    int x = RETINA_SIZE - iterEvent->x;
-                    int y = RETINA_SIZE - iterEvent->y;
-                    //if((x >127)||(x<0)||(y>127)||(y<0)) break;
-                    int posImage     = y * rowSize + x;
+            if(true) {
                 
-                    if (outLeftPort.getOutputCount()){
+                lastTimestampLeft = ts;
+                //printf(" %d %d %08x \n",iterEvent->x,iterEvent->y, ts );
+                int x = RETINA_SIZE - iterEvent->x;
+                int y = RETINA_SIZE - iterEvent->y;
+                //if((x >127)||(x<0)||(y>127)||(y<0)) break;
+                int posImage     = y * rowSize + x;
+                
+                if (outLeftPort.getOutputCount()){
                     
-                        int padding    = leftOutputImage->getPadding();
-                        int rowsizeOut = leftOutputImage->getRowSize();
-                        float lambda   = 1.0;
-                        int deviance   = 50;
-                        //creating the debug image
-                        if((pol > 0)&&(pLeft[posImage] <= (255 - deviance))){
+                    int padding    = leftOutputImage->getPadding();
+                    int rowsizeOut = leftOutputImage->getRowSize();
+                    float lambda   = 1.0;
+                    int deviance   = 127;
+                    //creating the debug image
+                    if(pol > 0){
+                        //if(pLeft[posImage] <= (255 - deviance)) {
                             //pLeft[pos] = 0.6 * pLeft[pos] + 0.4 * (pLeft[pos] + 40);
-                            pLeft[posImage] =  (unsigned int) pLeft[posImage] + deviance;
-                            //pMemL[pos] = (int)((1 - lambda) * (double) pMemL[pos] + lambda * (double) (pMemL[pos] + deviance));
-                            //pLeft[posImage] = pMemL[posImage];
-                            
-                            //  if(pMemL[pos] > 127 + 70) {
-                            //  bufferFEA_copy->address   = (u32) blob;
-                            //  bufferFEA_copy->timestamp = (u32) ts;
-                            //  #ifdef VERBOSE
-                            //  fprintf(fdebug,"%08X %08X \n",blob,ts);  
-                            //  #endif
-                              
-                              //fprintf(fout,"%08X %08X \n",bufferFEA_copy->address,ts);
-                            //  bufferFEA_copy++; // jumping to the next event(u32,u32)
-                            //  countEvent++;
+                        //    pLeft[posImage] =  pLeft[posImage] + deviance;
+                        //}
+                        //else {
+                            pLeft[posImage] = 255;
+                            //}
+                        //pMemL[pos] = (int)((1 - lambda) * (double) pMemL[pos] + lambda * (double) (pMemL[pos] + deviance));
+                        //pLeft[posImage] = pMemL[posImage];
+                        
+                        //  if(pMemL[pos] > 127 + 70) {
+                        //  bufferFEA_copy->address   = (u32) blob;
+                        //  bufferFEA_copy->timestamp = (u32) ts;
+                        //  #ifdef VERBOSE
+                        //  fprintf(fdebug,"%08X %08X \n",blob,ts);  
+                        //  #endif
+                        
+                        //fprintf(fout,"%08X %08X \n",bufferFEA_copy->address,ts);
+                        //  bufferFEA_copy++; // jumping to the next event(u32,u32)
+                        //  countEvent++;
                              // }
-                            
-                        }
-                        if((pol<0)&&(pLeft[posImage] >= deviance)){ 
-                            //pLeft[pos] = 0.6 * pLeft[pos] + 0.4 * (pLeft[pos] - 40);
-                            //pMemL[pos] = (int) ((1 - lambda) * (double) pMemL[pos] + lambda * (double)(pMemL[pos] - deviance));
-                            pLeft[posImage] =  (unsigned int) pLeft[posImage] - deviance;
-                            //pLeft[posImage] = pMemL[posImage];
-                            
-                            //  if(pMemL[pos] < 127 - 70) {
-                            //  bufferFEA_copy->address   = (u32) blob;
-                            //  bufferFEA_copy->timestamp = (u32) ts;                
-                            //  #ifdef VERBOSE
-                            //  fprintf(fdebug,"%08X %08X \n",blob,ts);  
-                            //  #endif                                
-                              //fprintf(fout,"%08X %08X \n",bufferFEA_copy->address,ts);
-                            //  bufferFEA_copy++; // jumping to the next event(u32,u32)
-                             // countEvent++; 
-                             // }
-                            
+                        
+                    }
+                    if(pol<0){ 
+                        //pLeft[pos] = 0.6 * pLeft[pos] + 0.4 * (pLeft[pos] - 40);
+                        //pMemL[pos] = (int) ((1 - lambda) * (double) pMemL[pos] + lambda * (double)(pMemL[pos] - deviance));
+                        //if(pLeft[posImage] >= deviance) {
+                        //pLeft[posImage] =  pLeft[posImage] - deviance;
+                        //}
+                        //else {
+                             pLeft[posImage] = 0;
+                        //}
+                        //pLeft[posImage] = pMemL[posImage];
+                        
+                        //  if(pMemL[pos] < 127 - 70) {
+                        //  bufferFEA_copy->address   = (u32) blob;
+                        //  bufferFEA_copy->timestamp = (u32) ts;                
+                        //  #ifdef VERBOSE
+                        //  fprintf(fdebug,"%08X %08X \n",blob,ts);  
+                        //  #endif                                
+                        //fprintf(fout,"%08X %08X \n",bufferFEA_copy->address,ts);
+                        //  bufferFEA_copy++; // jumping to the next event(u32,u32)
+                        // countEvent++; 
+                        // }
+                        
                         }
                     
-
-                    } //end of if outLeftPort
-                }
+                    
+                } //end of if outLeftPort
                 
+            
                 
                 //printf("pointing in the lut at position %d %d %d \n",x, y, x + y * RETINA_SIZE);
                 // extra output positions are pointed by i
-
+                
                 
                 //printf("\n");
                 iterEvent++;            
                 
             } //end of if cam!=0  
+            else if(cam==1) {
+                lastTimestampRight = ts;
+                //printf(" %d %d %08x \n",iterEvent->x,iterEvent->y, ts );
+                int x = RETINA_SIZE - iterEvent->x;
+                int y = RETINA_SIZE - iterEvent->y;
+                //if((x >127)||(x<0)||(y>127)||(y<0)) break;
+                int posImage     = y * rowSize + x;
+                
+                if (outRightPort.getOutputCount()){
+                    
+                    int padding    = rightOutputImage->getPadding();
+                    int rowsizeOut = rightOutputImage->getRowSize();
+                    float lambda   = 1.0;
+                    int deviance   = 127;
+                    //creating the debug image
+                    if(pol > 0){
+                        //pLeft[pos] = 0.6 * pLeft[pos] + 0.4 * (pLeft[pos] + 40);
+                        //if(pRight[posImage] <= (255 - deviance)) {
+                        //    pRight[posImage] =  pRight[posImage] + deviance;
+                        //}
+                        //else {
+                            pRight[posImage] = 255;
+                            //}
+                        //pMemL[pos] = (int)((1 - lambda) * (double) pMemL[pos] + lambda * (double) (pMemL[pos] + deviance));
+                        //pLeft[posImage] = pMemL[posImage];
+                        
+                        //  if(pMemL[pos] > 127 + 70) {
+                        //  bufferFEA_copy->address   = (u32) blob;
+                        //  bufferFEA_copy->timestamp = (u32) ts;
+                        //  #ifdef VERBOSE
+                        //  fprintf(fdebug,"%08X %08X \n",blob,ts);  
+                        //  #endif
+                        
+                        //fprintf(fout,"%08X %08X \n",bufferFEA_copy->address,ts);
+                        //  bufferFEA_copy++; // jumping to the next event(u32,u32)
+                        //  countEvent++;
+                             // }
+                        
+                    }
+                    if(pol<0){ 
+                        //pLeft[pos] = 0.6 * pLeft[pos] + 0.4 * (pLeft[pos] - 40);
+                        //pMemL[pos] = (int) ((1 - lambda) * (double) pMemL[pos] + lambda * (double)(pMemL[pos] - deviance));
+                        //if(pRight[posImage] >= deviance) {
+                        //    pRight[posImage] =  pRight[posImage] - deviance;
+                        //}
+                        //else {
+                            pRight[posImage] = 0;
+                            //}
+                        //pLeft[posImage] = pMemL[posImage];
+                        
+                        //  if(pMemL[pos] < 127 - 70) {
+                        //  bufferFEA_copy->address   = (u32) blob;
+                        //  bufferFEA_copy->timestamp = (u32) ts;                
+                        //  #ifdef VERBOSE
+                        //  fprintf(fdebug,"%08X %08X \n",blob,ts);  
+                        //  #endif                                
+                        //fprintf(fout,"%08X %08X \n",bufferFEA_copy->address,ts);
+                        //  bufferFEA_copy++; // jumping to the next event(u32,u32)
+                        // countEvent++; 
+                        // }
+                        
+                    }                                        
+                } //end of if outLeftPort                
+            }
+            else {
+                printf("error in the camera value \n");
+            }
         } //end for i
-
+        
         
         outLeftPort.prepare() = *leftOutputImage;
         outLeftPort.write();
-
-        /*
+        outRightPort.prepare() = *rightOutputImage;
+        outRightPort.write();
+        
+        
+        
         // leaking section of the algorithm    
         pMemL  = leftInputImage->getRawImage();
         pLeft  = leftOutputImage->getRawImage();
         int padding = leftOutputImage->getPadding();
-        for (int i = 0; i< FEATUR_SIZE * FEATUR_SIZE; i++) {
+        for (int i = 0; i< 128 * 128; i++) {
             if(*pLeft >= 127 + CONST_DECREMENT) {                
                 *pLeft -= CONST_DECREMENT;
             }
@@ -463,14 +549,24 @@ void efExtractorThread::run() {
             else{
                 *pLeft = 127;
             }
+            if(*pRight >= 127 + CONST_DECREMENT) {                
+                *pRight -= CONST_DECREMENT;
+            }
+            else if(*pRight <= 127 - CONST_DECREMENT) {
+                *pRight += CONST_DECREMENT;
+            }
+            else{
+                *pRight = 127;
+            }
             
             pLeft++;
+            pRight++;
             //*pLeft = *pMemL;
             //pLeft++;
         }
         //pMemL += padding;                
         pLeft += padding;
-        */
+        pRight+= padding;
         
         
         /*
