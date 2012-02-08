@@ -20,8 +20,8 @@
 
 #include <math.h>
 
-#include <iCub/eventBuffer.h>
-#include <iCub/eventConversion.h>
+#include <iCub/emorph/eventBuffer.h>
+#include <iCub/emorph/eventConversion.h>
 #include <yarp/os/Network.h>
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/Semaphore.h>
