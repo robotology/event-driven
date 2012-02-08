@@ -29,7 +29,7 @@
 #include <yarp/os/ResourceFinder.h>
 #include <yarp/sig/Image.h>
 #include <yarp/sig/Matrix.h>
-#include <iCub/eventBuffer.h>
+#include <iCub/emorph/eventBuffer.h>
 #include <yarp/sig/Matrix.h>
 
 #include "param.h"

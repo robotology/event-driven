@@ -121,6 +121,7 @@ bool OpticalFlowModule::configure(ResourceFinder & rf){
 bool OpticalFlowModule::interruptModule(){
     inputPort->interrupt();
     outFlowPort.interrupt();
+    bottleFlowPort.interrupt();
     outWrldMdlPort.interrupt();
     return true;
 }
@@ -129,6 +130,7 @@ bool OpticalFlowModule::close(){
 
     inputPort->close();
     outFlowPort.close();
+    bottleFlowPort.close();
     outWrldMdlPort.close();
     cout << "Optical Flow Module: close function is called. " << endl;
     return true;
@@ -143,7 +145,7 @@ bool OpticalFlowModule::updateModule(){
 }
 
 double OpticalFlowModule::getPeriod(){
-    return .001;
+    return .005;
 }
 
 OpticalFlowModule::~OpticalFlowModule(){
