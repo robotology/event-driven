@@ -122,6 +122,8 @@ bool efExtractorThread::threadInit() {
     printf("opening ports.... \n");
     outLeftPort.open(getName("/edgesLeft:o").c_str());
     outRightPort.open(getName("/edgesRight:o").c_str());
+    outFeaLeftPort.open(getName("/feaLeft:o").c_str());
+    outFeaRightPort.open(getName("/feaRight:o").c_str());
     inLeftPort.open(getName("/left:i").c_str());
     inRightPort.open(getName("/right:i").c_str());
     outEventPort.open(getName("/event:o").c_str());
@@ -267,18 +269,24 @@ bool efExtractorThread::threadInit() {
     leftInputImage  = new ImageOf<PixelMono>;
     leftOutputImage = new ImageOf<PixelMono>;
     rightOutputImage = new ImageOf<PixelMono>;
+    leftFeaOutputImage = new ImageOf<PixelMono>;
+    rightFeaOutputImage = new ImageOf<PixelMono>;
     //leftInputImage->resize(FEATUR_SIZE, FEATUR_SIZE);
-    leftInputImage->resize(128,128);
-    leftOutputImage->resize(128,128);
-    rightOutputImage->resize(128,128);
+    leftInputImage->resize(RETINA_SIZE,RETINA_SIZE);
+    leftOutputImage->resize(RETINA_SIZE,RETINA_SIZE);
+    rightOutputImage->resize(RETINA_SIZE,RETINA_SIZE);
+    leftFeaOutputImage->resize(FEATUR_SIZE,FEATUR_SIZE);
+    rightFeaOutputImage->resize(FEATUR_SIZE,FEATUR_SIZE);
+    
     int padding = leftInputImage->getPadding();
     //initialisation of the memory image
     unsigned char* pLeft   = leftInputImage->getRawImage();
     unsigned char* pLeftOut = leftOutputImage->getRawImage();
     unsigned char* pRightOut = rightOutputImage->getRawImage();
+    
     int rowsize = leftInputImage->getRowSize();
-    for(int r = 0 ; r < 128 ; r++){
-        for(int c = 0 ; c < 128 ; c++){
+    for(int r = 0 ; r < RETINA_SIZE ; r++){
+        for(int c = 0 ; c < RETINA_SIZE ; c++){
             *pLeft  = 127; pLeft++;
             *pLeftOut = 127; pLeftOut++;
             *pRightOut = 127; pRightOut++;
@@ -372,6 +380,7 @@ void efExtractorThread::run() {
         
         unsigned char* pMemL = leftInputImage->getRawImage();
         int          rowSize = leftOutputImage->getRowSize();
+        int       rowSizeFea = leftFeaOutputImage->getRowSize();
         unsigned long ts;
         short pol, cam;
         //aer* bufferFEA_copy = bufferFEA;
@@ -392,6 +401,51 @@ void efExtractorThread::run() {
                 int y = RETINA_SIZE - iterEvent->y;
                 //if((x >127)||(x<0)||(y>127)||(y<0)) break;
                 int posImage     = y * rowSize + x;
+
+                for (int i = 0; i< 5 ; i++) {                
+                    int pos      = lut[i * RETINA_SIZE * RETINA_SIZE +  y * RETINA_SIZE + x ];                      
+                    
+                    //printf("        pos ; %d ", pos);
+                    if(pos == -1) {
+                        if (x % 2 == 1) {
+                            //printf("not mapped event %d \n",x + y * RETINA_SIZE);
+                            countUnmapped++;
+                        }                
+                    }
+                    else {
+                        //creating an event
+                        
+                        int xevent_tmp   = pos / FEATUR_SIZE;
+                        int xevent       = FEATUR_SIZE - xevent_tmp;
+                        int yevent_tmp   = pos - xevent_tmp * FEATUR_SIZE;
+                        int yevent       = yevent_tmp;
+                        int polevent     = pol < 0 ? 0 : 1;
+                        int cameraevent  = 1;
+                        unsigned long blob = 0;
+                        int posFeaImage     = y * rowSizeFea + x;
+                        
+                        //if(ts!=0) {
+                        //    printf(" %d %d %d %08x %08x \n",pos, yevent, xevent,blob, ts);
+                        //}
+                        unmask_events.maskEvent(xevent, yevent, polevent, cameraevent, blob);
+                        //unsigned long evPU;
+                        //evPU = 0;
+                        //evPU = evPU | polevent;
+                        //evPU = evPU | (xevent << 1);
+                        //evPU = evPU | (yevent << 8);
+                        //evPU = evPU | (cameraevent << 15);
+                        
+                        //blob = blob & 0x0000FFFF;
+                        //blob = 0x00001021;
+                        //printf("Given pos %d extracts x=%d and y=%d pol=%d blob=%08x evPU = %08x \n", pos, xevent, yevent, pol, blob, ts);
+                        
+                        
+                        unsigned char* pFeaLeft = leftFeaOutputImage->getRawImage();
+                        pFeaLeft[posFeaImage] = 255;
+                        
+                    } //end else
+                    
+                } //end for i 5
                 
                 if (outLeftPort.getOutputCount()){
                     
@@ -401,13 +455,13 @@ void efExtractorThread::run() {
                     int deviance   = 10;
                     //creating the debug image
                     if(pol > 0){
-                        //if(pLeft[posImage] <= (255 - deviance)) {
+                        if(pLeft[posImage] <= (255 - deviance)) {
                             //pLeft[pos] = 0.6 * pLeft[pos] + 0.4 * (pLeft[pos] + 40);
-                        //    pLeft[posImage] =  pLeft[posImage] + deviance;
-                        //}
-                        //else {
+                            pLeft[posImage] =  pLeft[posImage] + deviance;
+                        }
+                        else {
                             pLeft[posImage] = 255;
-                            //}
+                        }
                         //pMemL[pos] = (int)((1 - lambda) * (double) pMemL[pos] + lambda * (double) (pMemL[pos] + deviance));
                         //pLeft[posImage] = pMemL[posImage];
                         
@@ -427,12 +481,12 @@ void efExtractorThread::run() {
                     if(pol<0){ 
                         //pLeft[pos] = 0.6 * pLeft[pos] + 0.4 * (pLeft[pos] - 40);
                         //pMemL[pos] = (int) ((1 - lambda) * (double) pMemL[pos] + lambda * (double)(pMemL[pos] - deviance));
-                        //if(pLeft[posImage] >= deviance) {
-                        //pLeft[posImage] =  pLeft[posImage] - deviance;
-                        //}
-                        //else {
-                             pLeft[posImage] = 0;
-                        //}
+                        if(pLeft[posImage] >= deviance) {
+                            pLeft[posImage] =  pLeft[posImage] - deviance;
+                        }
+                        else {
+                            pLeft[posImage] = 0;
+                        }
                         //pLeft[posImage] = pMemL[posImage];
                         
                         //  if(pMemL[pos] < 127 - 70) {
@@ -461,14 +515,59 @@ void efExtractorThread::run() {
             } //end of if cam!=0  
             else if(cam==0) {
                 countEventRight++;
-                
-                
+                                
                 lastTimestampRight = ts;
                 //printf(" %d %d %08x \n",iterEvent->x,iterEvent->y, ts );
                 int x = RETINA_SIZE - iterEvent->x;
                 int y = RETINA_SIZE - iterEvent->y;
                 //if((x >127)||(x<0)||(y>127)||(y<0)) break;
                 int posImage     = y * rowSize + x;
+
+
+                for (int i = 0; i< 5 ; i++) {                
+                    int pos      = lut[i * RETINA_SIZE * RETINA_SIZE +  y * RETINA_SIZE + x ];                      
+                    
+                    //printf("        pos ; %d ", pos);
+                    if(pos == -1) {
+                        if (x % 2 == 1) {
+                            //printf("not mapped event %d \n",x + y * RETINA_SIZE);
+                            countUnmapped++;
+                        }                
+                    }
+                    else {
+                        //creating an event
+                        
+                        int xevent_tmp   = pos / FEATUR_SIZE;
+                        int xevent       = FEATUR_SIZE - xevent_tmp;
+                        int yevent_tmp   = pos - xevent_tmp * FEATUR_SIZE;
+                        int yevent       = yevent_tmp;
+                        int polevent     = pol < 0 ? 0 : 1;
+                        int cameraevent  = 1;
+                        unsigned long blob = 0;
+                        int posFeaImage     = y * rowSizeFea + x;
+                        
+                        //if(ts!=0) {
+                        //    printf(" %d %d %d %08x %08x \n",pos, yevent, xevent,blob, ts);
+                        //}
+                        unmask_events.maskEvent(xevent, yevent, polevent, cameraevent, blob);
+                        //unsigned long evPU;
+                        //evPU = 0;
+                        //evPU = evPU | polevent;
+                        //evPU = evPU | (xevent << 1);
+                        //evPU = evPU | (yevent << 8);
+                        //evPU = evPU | (cameraevent << 15);
+                        
+                        //blob = blob & 0x0000FFFF;
+                        //blob = 0x00001021;
+                        //printf("Given pos %d extracts x=%d and y=%d pol=%d blob=%08x evPU = %08x \n", pos, xevent, yevent, pol, blob, ts);
+                        
+                        
+                        unsigned char* pFeaRight = rightFeaOutputImage->getRawImage();
+                        pFeaLeft[posFeaImage] = 255;
+                        
+                    } //end else
+                    
+                } //end for i 5
                 
                 if (outRightPort.getOutputCount()){
                     
@@ -479,12 +578,12 @@ void efExtractorThread::run() {
                     //creating the debug image
                     if(pol > 0){
                         //pLeft[pos] = 0.6 * pLeft[pos] + 0.4 * (pLeft[pos] + 40);
-                        //if(pRight[posImage] <= (255 - deviance)) {
-                        //    pRight[posImage] =  pRight[posImage] + deviance;
-                        //}
-                        //else {
+                        if(pRight[posImage] <= (255 - deviance)) {
+                            pRight[posImage] =  pRight[posImage] + deviance;
+                        }
+                        else {
                             pRight[posImage] = 255;
-                            //}
+                        }
                         //pMemL[pos] = (int)((1 - lambda) * (double) pMemL[pos] + lambda * (double) (pMemL[pos] + deviance));
                         //pLeft[posImage] = pMemL[posImage];
                         
@@ -504,12 +603,12 @@ void efExtractorThread::run() {
                     if(pol<0){ 
                         //pLeft[pos] = 0.6 * pLeft[pos] + 0.4 * (pLeft[pos] - 40);
                         //pMemL[pos] = (int) ((1 - lambda) * (double) pMemL[pos] + lambda * (double)(pMemL[pos] - deviance));
-                        //if(pRight[posImage] >= deviance) {
-                        //    pRight[posImage] =  pRight[posImage] - deviance;
-                        //}
-                        //else {
+                        if(pRight[posImage] >= deviance) {
+                            pRight[posImage] =  pRight[posImage] - deviance;
+                        }
+                        else {
                             pRight[posImage] = 0;
-                            //}
+                        }
                         //pLeft[posImage] = pMemL[posImage];
                         
                         //  if(pMemL[pos] < 127 - 70) {
@@ -547,7 +646,7 @@ void efExtractorThread::run() {
         pMemL  = leftInputImage->getRawImage();
         pLeft  = leftOutputImage->getRawImage();
         int padding = leftOutputImage->getPadding();
-        for (int i = 0; i< 128 * 128; i++) {
+        for (int i = 0; i< RETINA_SIZE * RETINA_SIZE; i++) {
             if(*pLeft >= 127 + CONST_DECREMENT) {                
                 *pLeft -= CONST_DECREMENT;
             }
@@ -656,6 +755,8 @@ void efExtractorThread::run() {
 void efExtractorThread::interrupt() {
     outLeftPort.interrupt();
     outRightPort.interrupt();
+    outFeaLeftPort.interrupt();
+    outFeaRightPort.interrupt();
     inLeftPort.interrupt();
     inRightPort.interrupt();
     outEventPort.interrupt();
@@ -665,6 +766,8 @@ void efExtractorThread::threadRelease() {
     /* closing the ports*/
     outLeftPort.close();
     outRightPort.close();
+    outFeaLeftPort.close();
+    outFeaRightPort.close();
     inLeftPort.close();
     inRightPort.close();
     outEventPort.close();

@@ -51,11 +51,19 @@ private:
     yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelMono> > inRightPort;      // port where the right event image is received
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outLeftPort;       // port whre the output edge (left) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outRightPort;      // port whre the output edge (right) is sent
+
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outFeaLeftPort;       // port whre the output feature (left) is sent
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outFeaRightPort;      // port whre the output feature (right) is sent
+    
     yarp::os::BufferedPort<eventBuffer> outEventPort;                                    // port sending events
     yarp::sig::ImageOf <yarp::sig::PixelMono>* leftInputImage;                           // image input left 
     yarp::sig::ImageOf <yarp::sig::PixelMono>* rightInputImage;                          // image input right 
-    yarp::sig::ImageOf <yarp::sig::PixelMono>* leftOutputImage;                           // image output left 
-    yarp::sig::ImageOf <yarp::sig::PixelMono>* rightOutputImage;                           // image output left 
+    yarp::sig::ImageOf <yarp::sig::PixelMono>* leftOutputImage;                          // image output left 
+    yarp::sig::ImageOf <yarp::sig::PixelMono>* rightOutputImage;                         // image output right 
+    yarp::sig::ImageOf <yarp::sig::PixelMono>* leftFeaOutputImage;                          // output image of feature  left 
+    yarp::sig::ImageOf <yarp::sig::PixelMono>* rightFeaOutputImage;                         // output image of feature  right 
+    
+    
     
     std::string name;                     // rootname of all the ports opened by this thread
     std::string mapURL;                   // mode name and name of the map
