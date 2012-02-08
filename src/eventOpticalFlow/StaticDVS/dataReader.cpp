@@ -26,8 +26,8 @@
 #include <yarp/os/Network.h>
 #include <yarp/os/RFModule.h>
 #include <yarp/os/ResourceFinder.h>
-#include <iCub/eventBuffer.h>
-#include <iCub/eventConversion.h>
+#include <iCub/emorph/eventBuffer.h>
+#include <iCub/emorph/eventConversion.h>
 
 #define  SIZE_OF_DATA  30000
 
