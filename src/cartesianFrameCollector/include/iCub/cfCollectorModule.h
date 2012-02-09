@@ -174,6 +174,7 @@
  * 21/09/11 : added the VERBOSE mode for plotting out debugging messages                                                author : Rea \n
  * 23/09/11 : added parameter in order to define retina dimension                                                       author : Rea \n      
  * 21/11/11 : made the synch_period a parameter rather than hardcoded variable                                          author : Rea \n
+ * 09/02/12 : improved the user interface                                                                               author : Rea \n
 */
 
 #include <iostream>
@@ -186,8 +187,6 @@
 
 //within project includes
 #include <iCub/cfCollectorThread.h>
-
-
 
 class cfCollectorModule:public yarp::os::RFModule {
     std::string moduleName;                     //name of the module (rootname of ports)

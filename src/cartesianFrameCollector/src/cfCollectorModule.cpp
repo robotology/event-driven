@@ -39,6 +39,21 @@ using namespace std;
 
 bool cfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
     /* Process all parameters from both command-line and .ini file */
+    if(rf.check("help")) {
+        printf("HELP \n");
+        printf("=======");
+        printf("--name             (string) : specifies the rootname\n");
+        printf("--robot            (string) : indicates the name of the robot to connect to\n");
+        printf("--retinalSize      (int)    : defines the dimension of the retina (input)\n");
+        printf("--responseGradient (int)    : the increment for any single event in the register\n");
+        printf("--sychPeriod       (int)    : period for synchronization of the variable lastTimestamp\n");
+        printf("--stereo                    : if present both left and right events are represented \n ");    
+        printf("\n press CTRL-C to continue \n");
+        return true;
+    }
+
+
+
     printf("initialization of the main thread \n");
     /* get the module name which will form the stem of all module port names */
     moduleName            = rf.check("name", 
