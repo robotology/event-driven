@@ -39,7 +39,8 @@ using namespace yarp::os;
 #define UNMASKRATETHREAD 1
 #define constInterval 100000;
 
-unmask::unmask(){ // : RateThread(UNMASKRATETHREAD){
+unmask::unmask(int rSize) { // : RateThread(UNMASKRATETHREAD){
+    retinalSize = rSize;
     count = 0;
     verbosity  = false;
     dvsMode    = false;
@@ -65,7 +66,7 @@ unmask::unmask(){ // : RateThread(UNMASKRATETHREAD){
     polmask  = 0x00000001;
     camerashift = 15;
     cameramask  = 0x00008000;
-    retinalSize = 128;
+    //retinalSize = 128;
     temp1=true;
 
     buffer=new int[retinalSize*retinalSize];
@@ -89,12 +90,6 @@ unmask::unmask(){ // : RateThread(UNMASKRATETHREAD){
     //fopen_s(&fp,"events.txt", "w"); //Use the unmasked_buffer
     //uEvents = fopen("./uevents.txt","w");
 }
-
-/*
-bool unmask::threadInit() {
-    return true;
-}
-*/
 
 unmask::~unmask() {
     delete[] buffer;
@@ -147,29 +142,6 @@ unsigned long* unmask::getTimeBuffer(bool camera) {
     else
         return timeBufferRight;
 }
-
-
-
-/*
-void unmask::run() {
-    
-    unsigned long int* pointerTime=timeBuffer;
-    unsigned long int timelimit = lasttimestamp - constInterval;
-    printf("last:%d \n", lasttimestamp);
-    int* pointerPixel=buffer;
-    for(int j=0;j<retinalSize*retinalSize;j++) {
-        
-        unsigned long int current = *pointerTime;
-        if ((current <= timelimit)||(current >lasttimestamp)) {
-            *pointerPixel == 0;
-        }
-        pointerTime++;
-        pointerPixel++;
-    }
-    
-}
-*/
-
 
 int unmask::unmaskData(char* i_buffer, int i_sz, AER_struct* output) {
     //cout << "Size of the received packet to unmask : " << i_sz / 8<< endl;
@@ -286,7 +258,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
     int i = 0;
     for (int evt = 0; evt < num_events; evt++) {
         if(!dvsMode) {
-            // unmask the data ( first 4 byte blob, second 4 bytes timestamp)
+            // before 7/2/12 unmask the data ( first 4 byte blob, second 4 bytes timestamp)
             unsigned long blob = buf2[2 * evt];
             unsigned long t    = buf2[2 * evt + 1];
             //printf("0x%x 0x%x \n",blob, timestamp);

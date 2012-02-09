@@ -193,10 +193,13 @@ public:
     */
      void setRetinalSize(int value){retinalSize = value; };
 
+    unmask(){};
+
     /**
     * default constructor
+    * @param dimension of the input retina space
     */
-    unmask();
+    unmask(int retinaSize);
 
     /**
     * destructor
