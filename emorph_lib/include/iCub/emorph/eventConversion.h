@@ -193,7 +193,7 @@ public:
     */
      void setRetinalSize(int value){retinalSize = value; };
 
-    unmask(){};
+    unmask();
 
     /**
     * default constructor

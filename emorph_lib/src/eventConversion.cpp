@@ -39,6 +39,57 @@ using namespace yarp::os;
 #define UNMASKRATETHREAD 1
 #define constInterval 100000;
 
+unmask::unmask() { 
+    retinalSize = 128;
+    count = 0;
+    verbosity  = false;
+    dvsMode    = false;
+    numKilledEvents = 0;
+    lasttimestamp   = 0;
+    validLeft  = false;
+    validRight = false;
+    eldesttimestamp = MAXVALUE;
+    countEvent  = 0;
+    countEvent2 = 0;
+    minValue = 0;
+    maxValue = 0;
+    xmask = 0x000000fE;
+    ymask = 0x00007f00;
+    xmasklong = 0x000000fE;
+    xmaskshort  = 0x00fE;
+    ymaskshort  = 0x7f00;
+    polmaskshort= 0x0001;
+    yshift   = 8;
+    yshift2  = 16,
+    xshift   = 1;
+    polshift = 0;
+    polmask  = 0x00000001;
+    camerashift = 15;
+    cameramask  = 0x00008000;
+    temp1=true;
+
+    buffer=new int[retinalSize*retinalSize];
+    memset(buffer,0,retinalSize*retinalSize*sizeof(int));
+    timeBuffer=new unsigned long[retinalSize*retinalSize];
+    memset(timeBuffer,0,retinalSize*retinalSize*sizeof(unsigned long));
+    bufferRight=new int[retinalSize*retinalSize];
+    memset(bufferRight,0,retinalSize*retinalSize*sizeof(int));
+    timeBufferRight=new unsigned long[retinalSize*retinalSize];
+    memset(timeBufferRight,0,retinalSize*retinalSize*sizeof(unsigned long));
+    
+    /*fifoEvent=new int[maxPosEvent];
+    memset(fifoEvent,0,maxPosEvent*sizeof(int));
+    fifoEvent_temp=new int[maxPosEvent];
+    memset(fifoEvent_temp,0,maxPosEvent*sizeof(int));
+    fifoEvent_temp2=new int[maxPosEvent];
+    memset(fifoEvent_temp2,0,maxPosEvent*sizeof(int));
+    */
+
+    wrapAdd = 0;
+    //fopen_s(&fp,"events.txt", "w"); //Use the unmasked_buffer
+    //uEvents = fopen("./uevents.txt","w");
+}
+
 unmask::unmask(int rSize) { // : RateThread(UNMASKRATETHREAD){
     retinalSize = rSize;
     count = 0;
@@ -66,7 +117,6 @@ unmask::unmask(int rSize) { // : RateThread(UNMASKRATETHREAD){
     polmask  = 0x00000001;
     camerashift = 15;
     cameramask  = 0x00008000;
-    //retinalSize = 128;
     temp1=true;
 
     buffer=new int[retinalSize*retinalSize];
