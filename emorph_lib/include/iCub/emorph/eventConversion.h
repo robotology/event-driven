@@ -40,9 +40,16 @@ typedef struct s_AER_struct {
     unsigned long ts;
 }AER_struct;
 
+/* //structure before 07/02/12
 struct aer {
     u32 address;
     u32 timestamp;
+};
+*/
+
+struct aer {
+    u32 timestamp;
+    u32 address;
 };
 
 /**
@@ -59,6 +66,7 @@ struct aer {
  * 22/12/11 : made the unsigned 32 bit platform independent                                 author : Rea \n     
  * 06/02/12 : swap the first 4bytes with the second 4bytes, new protocol of GAEP            author : Rea \n
  * 07/02/12 : made the AER_struct of short and added the camera information                 author : Rea \n
+ * 09/02/12 : need to change the order of the u32 words in the struct to make compatible    author : Rea \n
 */
 
 

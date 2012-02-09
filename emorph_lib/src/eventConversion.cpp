@@ -189,32 +189,36 @@ int unmask::unmaskData(char* i_buffer, int i_sz, AER_struct* output) {
         // now    : unmask the data ( first 4 byte timestamp, second 4 bytes blob)
         unsigned long t    = buf2[2 * evt];
         unsigned long blob = buf2[2 * evt + 1];
-        if ((t == 0) && (blob == 0))  continue;
-        //printf("0x%x 0x%x \n",blob, timestamp);
+        if ((t != 0) || (blob != 0)) {
+            //printf("0x%x 0x%x ",blob, timestamp);
         
-        i = i + 1;
-        // here we zero the higher two bytes of the address!!! Only lower 16bits used!
-        blob &= 0xFFFF;
-        unmaskEvent((unsigned int) blob, cartX, cartY, polarity, camera);
-        timestamp = (unsigned long) t;
-
-        // processing of the event
-        cartY = retinalSize - cartY - 1;   //corrected the output of the camera (flipped the image along y axis)
-        cartX = retinalSize - cartX - 1;
+            i = i + 1;
+            // here we zero the higher two bytes of the address!!! Only lower 16bits used!
+            blob &= 0xFFFF;
+            unmaskEvent((unsigned int) blob, cartX, cartY, polarity, camera);
+            timestamp = (unsigned long) t;
             
-        //camera is unmasked as left 0, right -1. It is converted in left 1, right 0
-        camera = camera + 1;        //camera: LEFT 0, RIGHT 1
+            // processing of the event
+            cartY = retinalSize - cartY - 1;   //corrected the output of the camera (flipped the image along y axis)
+            cartX = retinalSize - cartX - 1;
+            
+            
 
-        //adding a new event to the list
-        iterEvent->x   = cartX;
-        iterEvent->y   = cartY;
-        iterEvent->pol = polarity;
-        iterEvent->cam = camera;
-        iterEvent->ts  = timestamp;
-        iterEvent++;
-
-        if(timestamp > lasttimestamp) {
-            lasttimestamp = timestamp;
+            //camera is unmasked as left 0, right -1. It is converted in left 1, right 0
+            camera = camera + 1;        //camera: LEFT 0, RIGHT 1
+            //printf("camera %d   \n", camera);
+            
+            //adding a new event to the list
+            iterEvent->x   = cartX;
+            iterEvent->y   = cartY;
+            iterEvent->pol = polarity;
+            iterEvent->cam = camera;
+            iterEvent->ts  = timestamp;
+            iterEvent++;
+            
+            if(timestamp > lasttimestamp) {
+                lasttimestamp = timestamp;
+            }
         }
     }
     return i;
