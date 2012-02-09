@@ -202,10 +202,22 @@ public:
     bool configure(ResourceFinder & rf){
 
         //inFileName = "/home/fuozhan/Desktop/work/RecordedData/PC104/test1_v3.txt";
-       // inFileName = "/home/fuozhan/Desktop/iCubReal/dump_hand.txt";
-       // inFileName = "/home/fuozhan/Desktop/iCubReal/firstTr.txt";
-       // inFileName = "/home/fuozhan/Desktop/iCubReal/secondTr.txt";
-        inFileName = "/home/fuozhan/Desktop/iCubReal/dumpCar1.txt";
+       // inFileName = "/home/fuozhan/Desktop/iCubDumpEvent/dump_hand.txt";
+       // inFileName = "/home/fuozhan/Desktop/iCubDumpEvent/firstTr.txt";
+      //  inFileName = "/home/fuozhan/Desktop/iCubDumpEvent/secondTr.txt";
+      //  inFileName = "/home/fuozhan/Desktop/iCubDumpEvent/dumpCar1.txt";
+      //  inFileName = "/home/fuozhan/Desktop/iCubDumpEvent/BasicTests/dump800.txt";
+
+        string moduleName;
+        moduleName =  rf.check("name", Value("artRetina"), "module name (String)").asString();
+
+        inFileName = "";
+        inFileName = rf.check("inFile",
+                                    Value("/tmp/dump.txt"),
+                                    "Input  input File Name (string)").asString();
+        cout << "FileName : " <<inFileName << endl;
+        //inFileName = "/home/fuozhan/Desktop/iCubDumpEvent/BasicTests/dump100.txt";
+
         
         dvsCam = true; // true to work with the robot -- false to work with the stand alone camera
         bufferSize = 2048; // 16384 -> 2048 events, 8192 bytes -> 1024 events , 4096-> 512 events
@@ -251,7 +263,7 @@ public:
     double getPeriod()
     {
        /* module periodicity (seconds), called implicitly by myModule */
-       return .005;
+       return .01;
     }
 
 
@@ -316,17 +328,19 @@ private:
 };
 */
 
-int main(){
+int main(int argc, char * argv []){
     Network yarp;
 
     EventReader * eReader = new EventReader();
     ResourceFinder rf;
 
-   if (!eReader->configure(rf))
-   {
-       fprintf(stderr, "Error configuring Event Reader module returning\n");
-       return -1;
-   }
+    rf.setVerbose(true);
+    rf.configure("ICUB_ROOT", argc, argv);
+    if (!eReader->configure(rf))
+    {
+        fprintf(stderr, "Error configuring Event Reader module returning\n");
+        return -1;
+    }
 
    eReader->runModule();
 
