@@ -99,7 +99,10 @@ inline void copy_8u_C3R(ImageOf<PixelRgb>* src, ImageOf<PixelRgb>* dest) {
 }
 
 efExtractorThread::efExtractorThread() : RateThread(THRATE) {
-    resized = false;
+    firstHalf =  true;
+    resized   = false;
+    idle      = false;
+
     count             = 0;
     countEvent        = 0;
     leftInputImage    = 0;
@@ -107,7 +110,6 @@ efExtractorThread::efExtractorThread() : RateThread(THRATE) {
     shiftValue        = 20;
     lastTimestampLeft = 0;
 
-    idle = false;
     bufferCopy  = (char*) malloc(CHUNKSIZE);
     bufferCopy2 = (char*) malloc(CHUNKSIZE);
 }
@@ -284,6 +286,7 @@ bool efExtractorThread::threadInit() {
     unsigned char* pLeftOut = leftOutputImage->getRawImage();
     unsigned char* pRightOut = rightOutputImage->getRawImage();
     
+    // assign 127 to all the location in image plane
     int rowsize = leftInputImage->getRowSize();
     for(int r = 0 ; r < RETINA_SIZE ; r++){
         for(int c = 0 ; c < RETINA_SIZE ; c++){
@@ -295,6 +298,10 @@ bool efExtractorThread::threadInit() {
         pLeftOut += padding;
         pRightOut += padding;
     }
+    
+    unsigned char* pFeaLeftOut = leftFeaOutputImage->getRawImage();
+    memset(pFeaLeftOut, 127, FEATUR_SIZE * FEATUR_SIZE * sizeof(unsigned char));
+    rightFeaOutputImage->zero();
     
     printf("initialisation correctly ended \n");
     return true;
@@ -357,13 +364,25 @@ void efExtractorThread::run() {
             unsigned long t      = buf2[2 * evt];
             unsigned long blob   = buf2[2 * evt + 1];
             
-            if(t > 0x80000000) {          
-                *bufCopy2 = buf2[2 *evt]; bufCopy2++;
-                *bufCopy2 = buf2[2 * evt + 1]; bufCopy2++;
-                countEvent++;
+            if(t > 0x80000000) {
+                if(t == 0x88000000 ){
+                    printf("wrap around detected %lu \n", lastTimestampLeft );
+                    lastTimestampLeft = 0;
+                    firstHalf = true;
+                }
+                else {
+                    *bufCopy2 = buf2[2 *evt]; bufCopy2++;
+                    *bufCopy2 = buf2[2 * evt + 1]; bufCopy2++;
+                    countEvent++;
 #ifdef VERBOSE
-                fprintf(fdebug,"%08X %08X \n",t,blob);        
+                    fprintf(fdebug,"%08X %08X \n",t,blob);        
 #endif
+
+                    if((t > 0x807FFFFF)&&(firstHalf)){
+                        printf("first half  = false\n");
+                        firstHalf = false;
+                    }
+                }
             }
         }
         
@@ -386,131 +405,159 @@ void efExtractorThread::run() {
         //aer* bufferFEA_copy = bufferFEA;
         // visiting a discrete number of events
         int countUnmapped = 0;
+        int deviance   = 10;
         
         for(int i = 0; i < countEvent; i++ ) {
             ts  = iterEvent->ts;
             pol = iterEvent->pol;
             cam = iterEvent->cam;
             //printf("cam %d \n", cam);
-            if(cam==1) {
-                countEventLeft++;
-                
-                lastTimestampLeft = ts;
-                //printf(" %d %d %08x \n",iterEvent->x,iterEvent->y, ts );
-                int x = RETINA_SIZE - iterEvent->x;
-                int y = RETINA_SIZE - iterEvent->y;
-                //if((x >127)||(x<0)||(y>127)||(y<0)) break;
-                int posImage     = y * rowSize + x;
-
-                for (int i = 0; i< 5 ; i++) {                
-                    int pos      = lut[i * RETINA_SIZE * RETINA_SIZE +  y * RETINA_SIZE + x ];                      
-                    
-                    //printf("        pos ; %d ", pos);
-                    if(pos == -1) {
-                        if (x % 2 == 1) {
-                            //printf("not mapped event %d \n",x + y * RETINA_SIZE);
-                            countUnmapped++;
-                        }                
+            if(cam==1) {              
+                if(ts > lastTimestampLeft) {
+                    countEventLeft++;
+                    if(firstHalf){
+                        if(ts < 0x807FFFFF) {
+                            lastTimestampLeft = ts;
+                        }
+                        else {
+                            printf("second half timestamp  in first half portion \n");
+                        }
                     }
                     else {
-                        //creating an event
-                        
-                        int xevent_tmp   = pos / FEATUR_SIZE;
-                        int xevent       = FEATUR_SIZE - xevent_tmp;
-                        int yevent_tmp   = pos - xevent_tmp * FEATUR_SIZE;
-                        int yevent       = yevent_tmp;
-                        int polevent     = pol < 0 ? 0 : 1;
-                        int cameraevent  = 1;
-                        unsigned long blob = 0;
-                        int posFeaImage     = y * rowSizeFea + x;
-                        
-                        //if(ts!=0) {
-                        //    printf(" %d %d %d %08x %08x \n",pos, yevent, xevent,blob, ts);
-                        //}
-                        unmask_events.maskEvent(xevent, yevent, polevent, cameraevent, blob);
-                        //unsigned long evPU;
-                        //evPU = 0;
-                        //evPU = evPU | polevent;
-                        //evPU = evPU | (xevent << 1);
-                        //evPU = evPU | (yevent << 8);
-                        //evPU = evPU | (cameraevent << 15);
-                        
-                        //blob = blob & 0x0000FFFF;
-                        //blob = 0x00001021;
-                        //printf("Given pos %d extracts x=%d and y=%d pol=%d blob=%08x evPU = %08x \n", pos, xevent, yevent, pol, blob, ts);
-                        
-                        
-                        unsigned char* pFeaLeft = leftFeaOutputImage->getRawImage();
-                        pFeaLeft[posFeaImage] = 255;
-                        
-                    } //end else
-                    
-                } //end for i 5
-                
-                if (outLeftPort.getOutputCount()){
-                    
-                    int padding    = leftOutputImage->getPadding();
-                    int rowsizeOut = leftOutputImage->getRowSize();
-                    float lambda   = 1.0;
-                    int deviance   = 10;
-                    //creating the debug image
-                    if(pol > 0){
-                        if(pLeft[posImage] <= (255 - deviance)) {
-                            //pLeft[pos] = 0.6 * pLeft[pos] + 0.4 * (pLeft[pos] + 40);
-                            pLeft[posImage] =  pLeft[posImage] + deviance;
-                        }
-                        else {
-                            pLeft[posImage] = 255;
-                        }
-                        //pMemL[pos] = (int)((1 - lambda) * (double) pMemL[pos] + lambda * (double) (pMemL[pos] + deviance));
-                        //pLeft[posImage] = pMemL[posImage];
-                        
-                        //  if(pMemL[pos] > 127 + 70) {
-                        //  bufferFEA_copy->address   = (u32) blob;
-                        //  bufferFEA_copy->timestamp = (u32) ts;
-                        //  #ifdef VERBOSE
-                        //  fprintf(fdebug,"%08X %08X \n",blob,ts);  
-                        //  #endif
-                        
-                        //fprintf(fout,"%08X %08X \n",bufferFEA_copy->address,ts);
-                        //  bufferFEA_copy++; // jumping to the next event(u32,u32)
-                        //  countEvent++;
-                             // }
-                        
+                        lastTimestampLeft = ts;
                     }
-                    if(pol<0){ 
-                        //pLeft[pos] = 0.6 * pLeft[pos] + 0.4 * (pLeft[pos] - 40);
-                        //pMemL[pos] = (int) ((1 - lambda) * (double) pMemL[pos] + lambda * (double)(pMemL[pos] - deviance));
-                        if(pLeft[posImage] >= deviance) {
-                            pLeft[posImage] =  pLeft[posImage] - deviance;
+                    
+                    
+                    //printf(" %d %d %08x \n",iterEvent->x,iterEvent->y, ts );
+                    int x = RETINA_SIZE - iterEvent->x - 1 ;
+                    int y = RETINA_SIZE - iterEvent->y - 1 ;
+                    //if((x >127)||(x<0)||(y>127)||(y<0)) break;
+                    int posImage     = y * rowSize + x;
+                    
+                    for (int i = 0; i< 5 ; i++) {                
+                        int pos      = lut[i * RETINA_SIZE * RETINA_SIZE +  y * RETINA_SIZE + x ];                      
+                        
+                        //printf("        pos ; %d ", pos);
+                        if(pos == -1) {
+                            if (x % 2 == 1) {
+                                //printf("not mapped event %d \n",x + y * RETINA_SIZE);
+                                countUnmapped++;
+                            }                
                         }
                         else {
-                            pLeft[posImage] = 0;
-                        }
-                        //pLeft[posImage] = pMemL[posImage];
+                            //creating an event
+                            
+                            int yevent_tmp   = pos / FEATUR_SIZE;
+                            int yevent       = FEATUR_SIZE - yevent_tmp;
+                            int xevent_tmp   = pos - yevent_tmp * FEATUR_SIZE;
+                            int xevent       = xevent_tmp;
+                            int polevent     = pol < 0 ? 0 : 1;
+                            int cameraevent  = 1;
+                            unsigned long blob = 0;
+                            int posFeaImage     = yevent * rowSizeFea + xevent ;
+                            
+                            //if(ts!=0) {
+                            //    printf(" %d %d %d ---> ", i ,x, y  );
+                            //    printf(" %d %d %d %d %08x %08x \n",pos, yevent,xevent,posFeaImage,blob, ts);
+                            //}
+                            unmask_events.maskEvent(xevent, yevent, polevent, cameraevent, blob);
+                            //unsigned long evPU;
+                            //evPU = 0;
+                            //evPU = evPU | polevent;
+                            //evPU = evPU | (xevent << 1);
+                            //evPU = evPU | (yevent << 8);
+                            //evPU = evPU | (cameraevent << 15);
+                            
+                            //blob = blob & 0x0000FFFF;
+                            //blob = 0x00001021;
+                            //printf("Given pos %d extracts x=%d and y=%d pol=%d blob=%08x evPU = %08x \n", pos, xevent, yevent, pol, blob, ts);
+                            
+                            
+                            unsigned char* pFeaLeft = leftFeaOutputImage->getRawImage();
+                            if(polevent > 0) {
+                                if(pLeft[posFeaImage] <= 255 - deviance) {
+                                    pFeaLeft[posFeaImage] += deviance ;
+                                }
+                                else {
+                                    pFeaLeft[posFeaImage] = 255;
+                                }
+                            }
+                            else {
+                                if(pLeft[posFeaImage] >= deviance) {
+                                    pFeaLeft[posFeaImage] -= deviance ;
+                                }
+                                else {
+                                    pFeaLeft[posFeaImage] = 0;
+                                }
+                            }                                                
+                        } //end else
                         
-                        //  if(pMemL[pos] < 127 - 70) {
-                        //  bufferFEA_copy->address   = (u32) blob;
-                        //  bufferFEA_copy->timestamp = (u32) ts;                
-                        //  #ifdef VERBOSE
-                        //  fprintf(fdebug,"%08X %08X \n",blob,ts);  
-                        //  #endif                                
-                        //fprintf(fout,"%08X %08X \n",bufferFEA_copy->address,ts);
-                        //  bufferFEA_copy++; // jumping to the next event(u32,u32)
-                        // countEvent++; 
-                        // }
+                    } //end for i 5
+                    
+                    if (outLeftPort.getOutputCount()){
                         
+                        int padding    = leftOutputImage->getPadding();
+                        int rowsizeOut = leftOutputImage->getRowSize();
+                        float lambda   = 1.0;
+                        
+                        //creating the debug image
+                        if(pol > 0){
+                            if(pLeft[posImage] <= (255 - deviance)) {
+                                //pLeft[pos] = 0.6 * pLeft[pos] + 0.4 * (pLeft[pos] + 40);
+                                pLeft[posImage] =  pLeft[posImage] + deviance;
+                            }
+                            else {
+                                pLeft[posImage] = 255;
+                            }
+                            //pMemL[pos] = (int)((1 - lambda) * (double) pMemL[pos] + lambda * (double) (pMemL[pos] + deviance));
+                            //pLeft[posImage] = pMemL[posImage];
+                            
+                            //  if(pMemL[pos] > 127 + 70) {
+                            //  bufferFEA_copy->address   = (u32) blob;
+                            //  bufferFEA_copy->timestamp = (u32) ts;
+                            //  #ifdef VERBOSE
+                            //  fprintf(fdebug,"%08X %08X \n",blob,ts);  
+                            //  #endif
+                            
+                            //fprintf(fout,"%08X %08X \n",bufferFEA_copy->address,ts);
+                            //  bufferFEA_copy++; // jumping to the next event(u32,u32)
+                            //  countEvent++;
+                            // }
+                            
                         }
+                        if(pol<0){ 
+                            //pLeft[pos] = 0.6 * pLeft[pos] + 0.4 * (pLeft[pos] - 40);
+                            //pMemL[pos] = (int) ((1 - lambda) * (double) pMemL[pos] + lambda * (double)(pMemL[pos] - deviance));
+                            if(pLeft[posImage] >= deviance) {
+                                pLeft[posImage] =  pLeft[posImage] - deviance;
+                            }
+                            else {
+                                pLeft[posImage] = 0;
+                            }
+                            //pLeft[posImage] = pMemL[posImage];
+                            
+                            //  if(pMemL[pos] < 127 - 70) {
+                            //  bufferFEA_copy->address   = (u32) blob;
+                            //  bufferFEA_copy->timestamp = (u32) ts;                
+                            //  #ifdef VERBOSE
+                            //  fprintf(fdebug,"%08X %08X \n",blob,ts);  
+                            //  #endif                                
+                            //fprintf(fout,"%08X %08X \n",bufferFEA_copy->address,ts);
+                            //  bufferFEA_copy++; // jumping to the next event(u32,u32)
+                            // countEvent++; 
+                            // }
+                            
+                        }
+                        
+                        
+                    } //end of if outLeftPort
                     
                     
-                } //end of if outLeftPort
+                    
+                    //printf("pointing in the lut at position %d %d %d \n",x, y, x + y * RETINA_SIZE);
+                    // extra output positions are pointed by i
                 
-            
-                
-                //printf("pointing in the lut at position %d %d %d \n",x, y, x + y * RETINA_SIZE);
-                // extra output positions are pointed by i
-                
-            
+                } // end if ts > lasttimestamp
                 
             } //end of if cam!=0  
             else if(cam==0) {
@@ -562,8 +609,8 @@ void efExtractorThread::run() {
                         //printf("Given pos %d extracts x=%d and y=%d pol=%d blob=%08x evPU = %08x \n", pos, xevent, yevent, pol, blob, ts);
                         
                         
-                        unsigned char* pFeaRight = rightFeaOutputImage->getRawImage();
-                        pFeaLeft[posFeaImage] = 255;
+                        //unsigned char* pFeaRight = rightFeaOutputImage->getRawImage();
+                        //pFeaRight[posFeaImage] = 255;
                         
                     } //end else
                     
@@ -574,7 +621,6 @@ void efExtractorThread::run() {
                     int padding    = rightOutputImage->getPadding();
                     int rowsizeOut = rightOutputImage->getRowSize();
                     float lambda   = 1.0;
-                    int deviance   = 10;
                     //creating the debug image
                     if(pol > 0){
                         //pLeft[pos] = 0.6 * pLeft[pos] + 0.4 * (pLeft[pos] + 40);
@@ -636,44 +682,90 @@ void efExtractorThread::run() {
 
         //printf("         countLeft %d \n" , countEventLeft);
         //printf("         countRight %d \n", countEventRight);
+
         
+        // writing images out on ports 
         outLeftPort.prepare() = *leftOutputImage;
         outLeftPort.write();
         outRightPort.prepare() = *rightOutputImage;
         outRightPort.write();
+        outFeaLeftPort.prepare() = *leftFeaOutputImage;
+        outFeaLeftPort.write();
+        outFeaRightPort.prepare() = *rightFeaOutputImage;
+        outFeaRightPort.write();
         
-        // leaking section of the algorithm    
+        // leaking section of the algorithm (retina space)
         pMemL  = leftInputImage->getRawImage();
         pLeft  = leftOutputImage->getRawImage();
         int padding = leftOutputImage->getPadding();
-        for (int i = 0; i< RETINA_SIZE * RETINA_SIZE; i++) {
-            if(*pLeft >= 127 + CONST_DECREMENT) {                
-                *pLeft -= CONST_DECREMENT;
+        for(int row =0; row < RETINA_SIZE; row++) {
+            for (int col = 0; col< RETINA_SIZE; col++) {
+                if(*pLeft >= 127 + CONST_DECREMENT) {                
+                    *pLeft -= CONST_DECREMENT;
+                }
+                else if(*pLeft <= 127 - CONST_DECREMENT) {
+                    *pLeft += CONST_DECREMENT;
+                }
+                else{
+                    *pLeft = 127;
+                }
+                if(*pRight >= 127 + CONST_DECREMENT) {                
+                    *pRight -= CONST_DECREMENT;
+                }
+                else if(*pRight <= 127 - CONST_DECREMENT) {
+                    *pRight += CONST_DECREMENT;
+                }
+                else{
+                    *pRight = 127;
+                }
+                
+                pLeft++;
+                pRight++;
+                //*pLeft = *pMemL;
+                //pLeft++;
             }
-            else if(*pLeft <= 127 - CONST_DECREMENT) {
-                *pLeft += CONST_DECREMENT;
-            }
-            else{
-                *pLeft = 127;
-            }
-            if(*pRight >= 127 + CONST_DECREMENT) {                
-                *pRight -= CONST_DECREMENT;
-            }
-            else if(*pRight <= 127 - CONST_DECREMENT) {
-                *pRight += CONST_DECREMENT;
-            }
-            else{
-                *pRight = 127;
-            }
-            
-            pLeft++;
-            pRight++;
-            //*pLeft = *pMemL;
-            //pLeft++;
+            //pMemL += padding;                
+            pLeft += padding;
+            pRight+= padding;
         }
-        //pMemL += padding;                
-        pLeft += padding;
-        pRight+= padding;
+        
+        
+        // leaking section of the algorithm ( feature map)
+        unsigned char* pFeaLeft = leftFeaOutputImage->getRawImage();
+        
+        padding  = leftFeaOutputImage->getPadding();
+        for(int row =0; row < FEATUR_SIZE; row++) {
+            for (int col = 0; col< FEATUR_SIZE; col++) {
+                if(*pFeaLeft >= 127 + CONST_DECREMENT) {                
+                    *pFeaLeft -= CONST_DECREMENT;
+                }
+                else if(*pFeaLeft <= 127 - CONST_DECREMENT) {
+                    *pFeaLeft += CONST_DECREMENT;
+                }
+                else{
+                    *pFeaLeft = 127;
+                }
+                
+                //if(*pFeaRight >= 127 + CONST_DECREMENT) {                
+                //    *pFeaRight -= CONST_DECREMENT;
+                //}
+                //else if(*pFeaRight <= 127 - CONST_DECREMENT) {
+                //    *pFeaRight += CONST_DECREMENT;
+                //}
+                //else{
+                //    *pFeaRight = 127;
+                //}                
+                
+                pFeaLeft++;
+                //pFeaRight++;
+                
+            }
+                            
+            pFeaLeft += padding;
+            //pFeaRight+= padding;
+        }
+        
+        
         
         
         /*
@@ -764,6 +856,7 @@ void efExtractorThread::interrupt() {
 
 void efExtractorThread::threadRelease() {
     /* closing the ports*/
+    printf("closing the ports \n");
     outLeftPort.close();
     outRightPort.close();
     outFeaLeftPort.close();
@@ -772,6 +865,7 @@ void efExtractorThread::threadRelease() {
     inRightPort.close();
     outEventPort.close();
 
+    printf("deleting the buffer of events \n");
     delete[] eventFeaBuffer;
     delete bufferFEA;
     delete cfConverter;
@@ -779,7 +873,12 @@ void efExtractorThread::threadRelease() {
     //delete bufferCopy2;
     
     /* closing the file */
+    printf("deleting LUT \n");
     delete[] lut;
+    
+    printf("closing the file \n");
     fclose (pFile);
+
+    printf("efExtractorThread::threadReleas : success in releasing \n ");
 }
 

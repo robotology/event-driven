@@ -107,7 +107,7 @@ bool efExtractorModule::close() {
     handlerPort.close();
     /* stop the thread */
     efeThread->stop();
-    delete efeThread;
+    //delete efeThread;
     return true;
 }
 

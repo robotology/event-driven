@@ -42,10 +42,11 @@
 class efExtractorThread : public yarp::os::RateThread {
 private:
     bool idle;                          // flag that exclude code from the execution loop
+    bool firstHalf;                     // flag that indicates whether timestamps are in the first half
     int count;                          // loop counter of the thread
     int width, height;                  // dimension of the extended input image (extending)
     int height_orig, width_orig;        // original dimension of the input and output images
-    unsigned long lastTimestampLeft;     // last timestamp received for left camera
+    unsigned long lastTimestampLeft;    // last timestamp received for left camera
     unsigned long lastTimestampRight;
     yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelMono> > inLeftPort;       // port where the left event image is received
     yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelMono> > inRightPort;      // port where the right event image is received
@@ -60,10 +61,8 @@ private:
     yarp::sig::ImageOf <yarp::sig::PixelMono>* rightInputImage;                          // image input right 
     yarp::sig::ImageOf <yarp::sig::PixelMono>* leftOutputImage;                          // image output left 
     yarp::sig::ImageOf <yarp::sig::PixelMono>* rightOutputImage;                         // image output right 
-    yarp::sig::ImageOf <yarp::sig::PixelMono>* leftFeaOutputImage;                          // output image of feature  left 
-    yarp::sig::ImageOf <yarp::sig::PixelMono>* rightFeaOutputImage;                         // output image of feature  right 
-    
-    
+    yarp::sig::ImageOf <yarp::sig::PixelMono>* leftFeaOutputImage;                       // output image of feature  left 
+    yarp::sig::ImageOf <yarp::sig::PixelMono>* rightFeaOutputImage;                      // output image of feature  right     
     
     std::string name;                     // rootname of all the ports opened by this thread
     std::string mapURL;                   // mode name and name of the map
