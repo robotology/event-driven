@@ -40,7 +40,8 @@ class EventReader : public RFModule{
     int bufferSize;
     string inFileName;
     ifstream inFile;
-    yarp::os::BufferedPort<eventBuffer> outPort;
+    //yarp::os::BufferedPort<eventBuffer> outPort;
+    yarp::os::Port outPort;
     char buffer [2][SIZE_OF_DATA];
     char * buffPtr;
     char datam [10];
@@ -90,12 +91,15 @@ class EventReader : public RFModule{
            inFile >> datam;
         }
        //write data to the port
-       eventBuffer & outObj = outPort.prepare();
-       //outObj = eventBuffer(buffPtr, buffer_idx);
-       outObj.set_data(buffPtr, buffer_idx);
-       outPort.write();
+//       eventBuffer & outObj = outPort.prepare();
+//       outObj.set_data(buffPtr, buffer_idx);
+//       outPort.write();
 
-//       yarp::os::Time::delay(.001);
+
+       eventBuffer outObj = eventBuffer(buffPtr, buffer_idx);
+       outPort.write(outObj);
+
+
 
 
        if (buffPtr == buffer[0])
@@ -154,9 +158,9 @@ class EventReader : public RFModule{
 
         }
        //write data to the port
-       eventBuffer & outObj = outPort.prepare();
-       outObj.set_data(buffPtr, buffer_idx);
-       outPort.write();
+//       eventBuffer & outObj = outPort.prepare();
+//       outObj.set_data(buffPtr, buffer_idx);
+//       outPort.write();
 
        if (buffPtr == buffer[0])
            buffPtr = buffer[1];
@@ -234,17 +238,12 @@ public:
         outPort.open("/eventReader/artificialRetina0:o");
         buffPtr = buffer[0];
 
+        outPort.setTimeout(5.0);
         //loopSingleCam();
         return true;
     }
 
-    bool interruptModule(){
-        outPort.interrupt();
-        if (inFile.is_open())
-            inFile.close();
-        cout << "Fake DVS camera module: interrupt function is called." << endl;
-        return true;
-    }
+
 
     bool updateModule(){
         if (!inFile.eof()){
@@ -263,9 +262,16 @@ public:
     double getPeriod()
     {
        /* module periodicity (seconds), called implicitly by myModule */
-       return .01;
+       return .005;
     }
 
+    bool interruptModule(){
+        outPort.interrupt();
+        if (inFile.is_open())
+            inFile.close();
+        cout << "Fake DVS camera module: interrupt function is called." << endl;
+        return true;
+    }
 
     bool close(){
         //outPort.setStrict(false);
@@ -331,20 +337,20 @@ private:
 int main(int argc, char * argv []){
     Network yarp;
 
-    EventReader * eReader = new EventReader();
+    EventReader eReader;
     ResourceFinder rf;
 
     rf.setVerbose(true);
     rf.configure("ICUB_ROOT", argc, argv);
-    if (!eReader->configure(rf))
+    if (!eReader.configure(rf))
     {
         fprintf(stderr, "Error configuring Event Reader module returning\n");
         return -1;
     }
 
-   eReader->runModule();
+   eReader.runModule();
 
-   delete eReader;
+
 
    /* MyThread my;
     my.start();
