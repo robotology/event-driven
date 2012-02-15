@@ -46,7 +46,7 @@ int main (int argc, char * argv []) {
 
     optFlowModule.runModule();
 
-    cout << "OpticalFlow Module shutting down" << endl;
+    cout << "OpticalFlow Module shutting down .... " << endl;
 
     return 0;
 }

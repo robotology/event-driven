@@ -62,7 +62,7 @@ void AERGrabber::onRead(eventBuffer & eBuffer){
        // cartY = 127 - cartY;
        // cartX = 127 - cartX;
 
-        if (camera == 0 || blob == 0 /*|| polarity==-1*/) // 0, to work with Right camera -- -1, to work with the left one
+        if (camera == -1 || blob == 0 /*|| polarity==-1*/) // 0, to work with Right camera -- -1, to work with the left one
           continue;// not consider the other camera
 
         //printf("%08X %08X\n",blob,tsPacket);

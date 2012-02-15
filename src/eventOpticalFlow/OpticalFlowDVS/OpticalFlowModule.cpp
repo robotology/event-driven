@@ -110,7 +110,7 @@ bool OpticalFlowModule::configure(ResourceFinder & rf){
 
     cout << "module " << getName() << ": configured successfully." << endl;
 
-    for (int i = 0; i < EVNT_WNDW_SZ; ++i) {
+    for (int i = 0; i < SPDerivative_WNDW_SZ; ++i) {
         evntsMutex->wait();
         wrldFlw -> initialize(i);
     }
@@ -145,18 +145,23 @@ bool OpticalFlowModule::updateModule(){
 }
 
 double OpticalFlowModule::getPeriod(){
-    return .005;
+    return .001;
 }
 
 OpticalFlowModule::~OpticalFlowModule(){
 
-	if (evntsMutex != NULL)
-    	delete evntsMutex;
+
+    if (wrldFlw != NULL)
+        delete wrldFlw;
+
     if ( inputPort != NULL)
     	delete inputPort;
-    if (wrldFlw != NULL)
-    	delete wrldFlw;
-    cout << "i am done and I am happy" << endl;
+
+    if (evntsMutex != NULL)
+        delete evntsMutex;
+
+
+    cout << "Optical flow Module destructor Finished." << endl;
 }
 
 void OpticalFlowModule::worldStatusRenderer(){

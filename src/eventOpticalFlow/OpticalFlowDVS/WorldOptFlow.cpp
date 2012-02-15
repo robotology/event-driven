@@ -31,7 +31,7 @@ WorldOptFlow::WorldOptFlow(AERGrabber * inPortPtr,
     outPort = outFlowPort;
     outBPort = outBottlePort;
 
-    eventBuffersSize = EVNT_WNDW_SZ + 1;
+    eventBuffersSize = SPDerivative_WNDW_SZ + 1;
     eventBuffers = new CameraEvent**[eventBuffersSize];
     eventNosBuffer = new int [eventBuffersSize];
 }
@@ -89,13 +89,6 @@ void WorldOptFlow::run(){
 }
 
 
-WorldOptFlow::~WorldOptFlow(){
-    cout << "WorldFlow start cleaning" << endl;
-
-    delete [] eventBuffers;
-    delete [] eventNosBuffer;
-	cout << "world flow is closed" << endl;
-}
 
 void WorldOptFlow::directWrldStus(CameraEvent ** evntBffr, int bffrSize){
     CameraEvent * evntPtr;
@@ -187,10 +180,12 @@ void WorldOptFlow::calVelocities(CameraEvent ** evntBffr, int bffrSize){
 		evtRw = evntPtr->getRowIdx();
 		evtClm = evntPtr->getColumnIdx();
 
-	//	if (evntPtr->isReliable()){
 
-			localFlw.calVelocity(worldStatus, prevWorldStatus,
-									evtRw, evtClm, velocity);
+
+		localFlw.calVelocity(worldStatus, prevWorldStatus,
+		   					 evtRw, evtClm, velocity);
+
+        if (*velocity != 0 || *(velocity +1) != 0 ) {
 
 			if (vlctyBuffer.addDataCheckFull(evtClm - SPATIAL_MARGINE_ADDUP,
 											 evtRw - SPATIAL_MARGINE_ADDUP,
@@ -210,8 +205,8 @@ void WorldOptFlow::calVelocities(CameraEvent ** evntBffr, int bffrSize){
 			b.addDouble(*velocity);
 			b.addDouble(*(velocity + 1));
 			outBPort->write();
-		//}
-		//delete evntPtr;
+		}
+
 	}
 
 
@@ -225,3 +220,26 @@ void WorldOptFlow::calVelocities(CameraEvent ** evntBffr, int bffrSize){
 
 
 }
+
+WorldOptFlow::~WorldOptFlow(){
+    CameraEvent ** eventsBfr;
+
+    cout << "WorldFlow start cleaning" << endl;
+
+    for (int j = 0; j < eventBuffersSize - 1; ++j) {
+        eventsBfr = eventBuffers[j];
+        if (eventsBfr != NULL){
+           // each element of array is a CameraEvent *
+           for (int i = 0; i < eventNosBuffer[j]; ++i) {
+               delete *(eventsBfr + i);
+           }
+           delete [] eventsBfr;
+       }
+    }
+
+
+    delete [] eventBuffers;
+    delete [] eventNosBuffer;
+    cout << "world flow is closed" << endl;
+}
+

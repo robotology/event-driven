@@ -46,9 +46,11 @@ class WorldOptFlow {
     BufferedPort<VelocityBuffer> * outPort;
     BufferedPort<Bottle> *outBPort;
 
-    CameraEvent *** eventBuffers;
-    int * eventNosBuffer;
-    int   eventBuffersSize;
+    CameraEvent *** eventBuffers;                   /*2-Dimensional Array of  "pointers to CameraEvent"-
+                                                     Each row represent a bag of events which arrived in a closed interval */
+    int * eventNosBuffer;                           /*keep number of events in each row of eventBuffer*/
+
+    int   eventBuffersSize;                         /*size of 'eventBuffers' & 'eventNosBuffer'*/
 
     void updtWrldStus();  //void updtWrldStus(CameraEvent **, int);
     void calVelocities(CameraEvent **, int);
