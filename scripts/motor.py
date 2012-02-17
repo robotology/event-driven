@@ -43,7 +43,7 @@ def main():
 	#finding the correct properties
 	options = yarp.Property()
 	options.put("device", "remote_controlboard");
-	nameLocal  = "/iCub/head/client"
+	nameLocal  = "/iCub/singleMotor/pyclient"
 	nameRemote = "/iCub/head"
 	options.put("local" , nameLocal);
 	options.put("remote", nameRemote);
