@@ -449,6 +449,7 @@ private:
     int countErrorsGAEP3;                        // error counter
     int countData;
     int countInWraps;                       // counter of events between two wraps around
+    int countInWrapsTS;                     // counter of the timestamp between two wraps around
     int countLostAE;                        // counter of the lost event addresses
     int maxCountInWraps;                    // counter of events between two wraps around
     int minCountInWraps;                    // counter of events between two wraps around
