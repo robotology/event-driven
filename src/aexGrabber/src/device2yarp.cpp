@@ -460,16 +460,16 @@ void device2yarp::prepareBiases() {
             
         int biasValues[]={cas,        // cas
                           injg,       // injGnd
-                          reqPd,    // reqPd
-                          pux,     // puX
-                          diffoff,        // diffOff
-                          req,      // req
-                          refr,           // refr
-                          puy,    // puY
-                          diffon,      // diffOn
+                          reqPd,      // reqPd
+                          pux,        // puX
+                          diffoff,    // diffOff
+                          req,        // req
+                          refr,       // refr
+                          puy,        // puY
+                          diffon,     // diffOn
                           diff,       // diff 
-                          foll,          // foll
-                          pr            //Pr 
+                          foll,       // foll
+                          pr          // Pr 
         };
         
 
@@ -794,7 +794,7 @@ void  device2yarp::run() {
             
             if((countData - lastAEindex != 2) && (lastAEindex != -1)) {
                 printf("ERROR AE 1 > %d %d %08X \n",  countData, lastAEindex, a);
-                countErrors++;
+                countErrorsAE++;
                 //a = 0xDEADDEAD;
             }
             lastAEindex = countData;
@@ -813,23 +813,27 @@ void  device2yarp::run() {
             
             tempC_unmasked = (tempA & 0x03000000) >> 24; // buffer overflow
             if(tempC_unmasked == 0x01) {
-                printf("BUFFER OVERFLOW  \n");
+                //printf("BUFFER OVERFLOW  \n");
+                countErrorsGAEP1++;
             }
             //time stamp sequence error
             tempC_unmasked = (tempA & 0x03000000) >> 24; // timestamp error
             if(tempC_unmasked == 0x02) {
-                printf("TIMESTAMP ERROR %08X \n",tempA);
+                //printf("TIMESTAMP ERROR %08X \n",tempA);
+                countErrorsGAEP2++;
             }
             //address event sequence error
             tempC_unmasked = (tempA & 0x03000000) >> 24; // address error
             if(tempC_unmasked == 0x03) {
-                printf("ADDRESS ERROR %08X \n", tempA);
+                //printf("ADDRESS ERROR %08X \n", tempA);
+                countErrorsGAEP3++;
             }            
             
             // if TS, check the 26th bit for GAEP error
             tempB_unmasked = tempA_unmasked & 0x01;
             if(tempB_unmasked == 1) {
-                printf("GAEP ERROR!!!!!!! \n");
+                //printf("GAEP ERROR!!!!!!! \n");
+                //general GAEP warning. No longer printed out
             }	
           
             // checking for undetected wrap around
@@ -842,7 +846,7 @@ void  device2yarp::run() {
             if((countData - lastTSindex != 2) && (lastTSindex != -1) && ( t != 0x80000000)) {
                 a = 0xDEADDEAD;
                 printf("ERROR TS 1 > %d %d %08X \n", countData, lastTSindex, t);
-                countErrors++;
+                countErrorsTS++;
             }
             lastTSindex = countData;
             
@@ -861,24 +865,30 @@ void  device2yarp::run() {
             // if TS, check the 26th bit for GAEP error  
             tempB_unmasked = tempA_unmasked & 0x01;
             if(tempB_unmasked == 1) {
-                printf("GAEP ERROR!!!!!!! \n");
+                //printf("GAEP ERROR!!!!!!! \n");
+                //general error warning no longer printed out
             }
           
             tempC_unmasked = (tempA & 0x03000000) >> 24; // buffer overflow
             if(tempC_unmasked == 0x01) {
-                printf("BUFFER OVERFLOW \n");
+                //printf("BUFFER OVERFLOW \n");
+                countErrorsGAEP1++;
             }
             //time stamp sequence error
             tempC_unmasked = (tempA & 0x03000000) >> 24; // timestamp error
             if(tempC_unmasked == 0x02) {
-              printf("TIMESTAMP ERROR %08X \n", tempA);
+                //printf("TIMESTAMP ERROR %08X \n", tempA);
+                countErrorsGAEP2++;
             }
             //address event sequence error
             tempC_unmasked = (tempA & 0x03000000) >> 24; // address error
             if(tempC_unmasked == 0x03) {
-                printf("ADDRESS ERROR %08X \n", tempA);
+                //printf("ADDRESS ERROR %08X \n", tempA);
+                countErrorsGAEP3++;
             }
             
+            /********************************************************/
+            // wrap-around occured printing out statistics
             printf("wrap around \n");
             a = 0xCAFECAFE;
             t = tempA;
@@ -901,7 +911,9 @@ void  device2yarp::run() {
                 double dataRate = (double) countInWraps    / (0xFFFFFF * 0.001);
                 printf("max data rate received  %f kAE/s   ; min data rate received %f kAE/s \n", maxRate, minRate);
                 printf("data rate received %f kAE/s    ;  data rate lost %f kAE/s    ;    LOR %f% \n", dataRate, lostRate, (lostRate / (lostRate + dataRate)) * 100.0);
+                printf("Error Resume : type1:%d type2:%d type3:%d \n", countErrorsGAEP1, countErrorsGAEP2, countErrorsGAEP3);
             }
+            //**********************************************************/
             countInWraps = 0;
             countLostAE = 0;
             t_prev = 0;

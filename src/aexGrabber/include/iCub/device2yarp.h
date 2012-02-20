@@ -442,6 +442,11 @@ private:
 
     int err;
     int countErrors;                        // error counter
+    int countErrorsTS;                        // error counter
+    int countErrorsAE;                        // error counter
+    int countErrorsGAEP1;                        // error counter
+    int countErrorsGAEP2;                        // error counter
+    int countErrorsGAEP3;                        // error counter
     int countData;
     int countInWraps;                       // counter of events between two wraps around
     int countLostAE;                        // counter of the lost event addresses
