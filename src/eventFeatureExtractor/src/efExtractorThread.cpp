@@ -802,9 +802,10 @@ void efExtractorThread::run() {
         //building feature events
         char* buffer = (char*) bufferFEA;
         aer* bFea_copy = bufferFEA;
-        int sz = countEvent * sizeof(aer);
+        //int sz = countEvent * sizeof(aer);
+        int sz = countEventToSend * sizeof(aer);
         // sending events 
-        if (outEventPort.getOutputCount()) {     
+        if ((outEventPort.getOutputCount()) && (countEventToSend > 0)) {     
 #ifdef VERBOSE       
             for (int i = 0; i < countEventToSend; i++) {
                 u32 blob      = bFea_copy[i].address;
