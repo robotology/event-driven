@@ -75,7 +75,7 @@ bool eventSelectorThread::threadInit() {
     //outPort.open(getName("/left:o").c_str());
     //outPortRight.open(getName("/right:o").c_str());
 
-    fout = fopen("./dump.txt","w+");
+    fout = fopen("./eventSelector.dump.txt","w+");
 
     resize(retinalSize, retinalSize);
 
@@ -281,36 +281,37 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, uns
     //unmask_events->setLastTimestamp(0);
 }
 
-void eventSelectorThread::spatialSelection(AER_struct* buffer,int numberOfEvents, double w ) {
+void eventSelectorThread::spatialSelection(AER_struct* buffer,int numberOfEvents, double w, unsigned long minCount, unsigned long maxCount) {
     // in the list of unmasked event updates the saliency map and the timestamp map 
     AER_struct* iter = buffer; // generated the iterator of the buffer
     int inputRetinaSize = 32;
     
-    
     for (int i = 0; i < numberOfEvents; i++) {        
-          if((iter->x != 128) && (iter->y != 1)){
-              //printf("%02d %02d  ", iter->x, iter->y);    
-
-              int pos = (inputRetinaSize - 1 - iter->x) + (inputRetinaSize - 1 - iter->y) * inputRetinaSize;
-              if(pos >= 32*32) {
-                  printf("Error %d %d \n", iter->x, iter->y);
-              }
-              if(iter->pol > 0) {
-                  featureMap[pos]   = featureMap[pos] + 127;
-                  if(featureMap[pos] > 127) {
-                      featureMap[pos] = 127;
-                  }
-              }
-              else {
-                  featureMap[pos]   = featureMap[pos] - 127;
-                  if(featureMap[pos] < -127) {
-                      featureMap[pos] = -127;
-                  }
-              }
-              
-              //printf (" %08X \n", iter->ts);
-              timestampMap[pos] = iter->ts;            
-        }        
+        if((iter->ts>minCount) && (iter->ts < maxCount)) {
+            if((iter->x != 128) && (iter->y != 1)){
+                //printf("%02d %02d  ", iter->x, iter->y);    
+                
+                int pos = (inputRetinaSize - 1 - iter->x) + (inputRetinaSize - 1 - iter->y) * inputRetinaSize;
+                if(pos >= 32*32) {
+                    printf("Error %d %d \n", iter->x, iter->y);
+                }
+                if(iter->pol > 0) {
+                    featureMap[pos]   = featureMap[pos] + 127;
+                    if(featureMap[pos] > 127) {
+                        featureMap[pos] = 127;
+                    }
+                }
+                else {
+                    featureMap[pos]   = featureMap[pos] - 127;
+                    if(featureMap[pos] < -127) {
+                        featureMap[pos] = -127;
+                    }
+                }
+                
+                //printf (" %08X \n", iter->ts);
+                timestampMap[pos] = iter->ts;            
+            } 
+        }
         iter++;
     }    
 }
@@ -331,14 +332,13 @@ void eventSelectorThread::run() {
     int num_events = CHUNKSIZE / 8 ;
     uint32_t* buf2 = (uint32_t*)bufferCopy;
 
-    //getting the time
+    // getting the time statistics
     endTimer = Time::now();
     double interval  = (endTimer - startTimer) * 1000000; //interval in us
-    double procInter = interval -interval2;
+    //double procInter = interval -interval2;
     //printf("procInter %f \n", procInter);
     startTimer = Time::now();
 
-    
     //check for wrapping of the left and right timestamp
     if(maxCount >= 4294967268  ) {
       verb = true;
@@ -398,9 +398,7 @@ void eventSelectorThread::run() {
 #endif
     
 
-    // spatial processing
-    double w1 = 0, w2 = 0, w3 = 0, w4 = 0;
-    spatialSelection(unmaskedEvents,CHUNKSIZE>>3,w1);
+
     
     //gettin the time between two threads
     gettimeofday(&tvend, NULL);
@@ -539,9 +537,13 @@ void eventSelectorThread::run() {
       printf("countStop resetting %llu %llu %llu \n",unmask_events->getLastTimestamp(), lc, rc );
       count = synch_time - 200;
       
-    }
-    
+    }    
     // ----------- preventer end    --------------------- //
+
+    
+    // spatial processing
+    double w1 = 0, w2 = 0, w3 = 0, w4 = 0;
+    spatialSelection(unmaskedEvents,CHUNKSIZE>>3,w1, minCount, maxCount);
     
     getMonoImage(imageLeft,minCount,maxCount,1);
     if(imageLeft != 0) {

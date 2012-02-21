@@ -66,8 +66,8 @@ eventCartesianCollector::eventCartesianCollector() {
     //unmask_events.start();
     printf("unmask event just started");
     previousTimeStamp = 0;
-    readEvents = fopen("./readEvents","w");
-    fout = fopen("dumpCollector.txt", "w+");
+    readEvents = fopen("./eventSelector.readEvents","w");
+    fout = fopen("./eventSelector.dumpCollector.txt", "w+");
 }
 
 void eventCartesianCollector::reset() {
@@ -92,7 +92,7 @@ void eventCartesianCollector::copyChunk(char* bufferCopy) {
 void eventCartesianCollector::onRead(eventBuffer& i_ub) {
     valid = true;
     
-    //printf("eventCartesianCollector:: OnRead ");
+    printf("eventCartesianCollector:: OnRead \n");
 
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() ;      // number of bits received / 8 = bytes received

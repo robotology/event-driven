@@ -229,7 +229,7 @@ public:
      * @param dimension size of the buffer of event passed as input  
      * @param w         weight associated to the particolar feature map whose events belong to.
      */ 
-    void spatialSelection(AER_struct* buffer,int dimension, double w);
+    void spatialSelection(AER_struct* buffer,int dimension, double w, unsigned long minCount, unsigned long maxCount);
 
 };
 
