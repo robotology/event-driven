@@ -81,6 +81,9 @@
  * 
  * - \c mode \c intensity,horizontal66,vertical66
  *
+ * - \c verbose 
+ *    indicates if the events must be dumped in debug files
+ *
  * <b>Configuration File Parameters</b>
  *
  * The following key-value pairs can be specified as parameters in the configuration file 
@@ -102,7 +105,7 @@
  * 
  *  -  \c help \n
  *  -  \c quit \n
- *
+ *  
  *    Note that the name of this port mirrors whatever is provided by the \c --name parameter value
  *    The port is attached to the terminal so that you can type in commands and receive replies.
  *    The port can be used by other modules but also interactively by a user through the yarp rpc directive, viz.: \c yarp \c rpc \c /cartesianFrameCollector
@@ -151,11 +154,12 @@
 
 /**
 * /section change_log CHANGE LOG
-* 24/08/11 : created the module                                                                       \author Rea \n
-* 31/08/11 : added parameter mode for the command line                                                \author Rea \n 
-* 13/09/11 : added the eventBuffer that contains the collection of unmasked events                    \author Rea \n
-* 07/11/11 : corrected the output for debug images                                                    \author Rea \n   
-* 08/11/11 : added lines that send the feature events on the yarp network                             \author Rea \n
+* 24/08/11 : created the module                                                                       author Rea \n
+* 31/08/11 : added parameter mode for the command line                                                author Rea \n 
+* 13/09/11 : added the eventBuffer that contains the collection of unmasked events                    author Rea \n
+* 07/11/11 : corrected the output for debug images                                                    author Rea \n   
+* 08/11/11 : added lines that send the feature events on the yarp network                             author Rea \n
+* 21/02/12 : added interactive verbose mode                                                           author: Rea \n
 */
 
 #include <iostream>

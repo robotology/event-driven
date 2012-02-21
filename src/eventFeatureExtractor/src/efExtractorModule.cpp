@@ -45,6 +45,7 @@ bool efExtractorModule::configure(yarp::os::ResourceFinder &rf) {
         printf("press CTRL-C to continue...");
         return true;
     }
+    
 
     /* get the module name which will form the stem of all module port names */
     moduleName            = rf.check("name", 
@@ -55,6 +56,7 @@ bool efExtractorModule::configure(yarp::os::ResourceFinder &rf) {
     * specifically the port names which are dependent on the module name
     */
     setName(moduleName.c_str());
+
 
     /*
     * get the robot name which will form the stem of the robot ports names
@@ -89,9 +91,21 @@ bool efExtractorModule::configure(yarp::os::ResourceFinder &rf) {
 
     attach(handlerPort);                  // attach to port
 
+    
+
     efeThread = new efExtractorThread();
     efeThread->setMapURL(mapNameComplete);
     efeThread->setName(getName().c_str());
+
+
+    
+    if(rf.check("verbose")) {
+        efeThread->setVERBOSE(true);
+    }
+    else {
+        efeThread->setVERBOSE(false);
+    }
+
     efeThread->start();
 
     return true ;       // let the RFModule know everything went well

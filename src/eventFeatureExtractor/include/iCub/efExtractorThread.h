@@ -43,6 +43,7 @@ class efExtractorThread : public yarp::os::RateThread {
 private:
     bool idle;                          // flag that exclude code from the execution loop
     bool firstHalf;                     // flag that indicates whether timestamps are in the first half
+    bool VERBOSE;                       // flag that enables the dumping of the event in appropriate files
     int count;                          // loop counter of the thread
     int width, height;                  // dimension of the extended input image (extending)
     int height_orig, width_orig;        // original dimension of the input and output images
@@ -115,6 +116,12 @@ public:
     * function called when the module is poked with an interrupt command
     */
     void interrupt(); 
+    
+    /**
+     * @brief function that sets the value of the VERBOSE flag
+     * @param value value that is going to be assigned to the flag VERBOSE
+     */
+    void setVERBOSE(bool value) {VERBOSE = value;};
 
     /**
     * function that set operating mode

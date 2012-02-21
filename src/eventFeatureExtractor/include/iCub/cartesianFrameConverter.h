@@ -66,6 +66,12 @@ public:
     void copyChunk(char* pointer);
 
     /**
+     * @brief function that sets the value of the VERBOSE flag
+     * @param value value that is going to be assigned to the flag VERBOSE
+     */
+    void setVERBOSE(bool value) {VERBOSE = value;};
+    
+    /**
     * @brief returns a mono image of the output of the dvs camera (either left or right)
     * @param pixelMono reference to the image contains the counts of events
     * @param minCount reference to the min timestamp in the frame
@@ -99,14 +105,18 @@ public:
      void clearMonoImage();
 
     /**
-       function that restarts from zero the list of memorised timestamp
+     *function that restarts from zero the list of memorised timestamp
      */
     void resetTimestamps();
 
+    /**
+     * @brief function that return the valid state of the converter
+     */
     bool isValid(){return valid;};
 
 private:
     bool valid;
+    bool VERBOSE;                                               // flag that enables the dumping of the event in appropriate files
     short state;
     int retinalSize;                                            // dimension of the retina default 128x128
     int totDim;                                                 // total dimension of the read buffer
@@ -119,7 +129,7 @@ private:
     char* pcBuffer;                                             // pointer where to buffer events
 
     //unmask unmask_events;           // object in charge of unmasking the events
-    //converter convert_events;         // object in charge of converting the events into an image
+    //converter convert_events;       // object in charge of converting the events into an image
     yarp::os::Semaphore mutex;        // semaphore for thehandling resource buffer
     clock_t start_u;
     clock_t start_p;

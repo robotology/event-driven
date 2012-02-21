@@ -55,7 +55,7 @@ using namespace std;
 
 #define CHUNKSIZE 32768
 
-#define VERBOSE
+//#define VERBOSE
 
 inline int convertChar2Dec(char value) {
     if (value > 60)
@@ -181,92 +181,10 @@ bool efExtractorThread::threadInit() {
         long input = -1, output = -1;
         short x, y;
         countMap = 0;
-        //lSize
-        for (int i = 0; i < lSize; i++) {            
-            
-            int value = convertChar2Dec(*buffer);
-            //looking for EOL
-            if(*buffer == 10) {
-                //sac words
-                if(word < 500000) {
-                    word -= 262144;
-                }
-                else if(word < 1000000) {
-                    word -= 524288;
-                }    
-                else {
-                    word -= 1114112;
-                }
 
-                x = word & 0x001F;
-                y = word >> 5;
-                //printf("sac output: %d --> %d %d \n", word, x, y);
-                output = y * 32 + x;
-                word = 0;
-            }
-            //looking for space
-            else if(*buffer == 32)  {
-                //angel words
-                if(word < 500000) {
-                    word -= 262144;
-                }
-                else if(word < 1000000) {
-                    word -= 524288;
-                }    
-                else {
-                    word -= 1114112;
-                }                
-                
-                x = (word & X_MASK) >> X_SHIFT;
-                y = (word & Y_MASK) >> Y_SHIFT;
-                //printf("angel input: %d --> %d %d \n", word, x, y);
-                input = y * 128 + x;
-                word = 0;
-            }
-            else{
-                //printf("%d,%d ", value, word );
-                word = word << 4;
-                word += value;
-            }
-            buffer++;
-            if((input != -1) && (output!=-1)) {
-                
-                int inputy  = input / 128;
-                int inputx  = input - inputy * 128;
-                int outputy = output / 32;
-                int outputx = output - outputy * 32;
-                
-                bool continueSaving = true;
-
-                // any input coordinate can point up to 5 output coordinates
-                int i = 0;
-                while(continueSaving) {
-                    if(lut[input + i * RETINA_SIZE * RETINA_SIZE] != -1) {
-                        if(lut[input + i * RETINA_SIZE * RETINA_SIZE ]!= output) { 
-                            i++;
-                            if (i>= 5) {
-                                continueSaving = false;
-                            }                                                      
-                        }
-                        else {
-                            continueSaving = false;
-                        }
-                    }
-                    else {
-                        //saving
-                        lut[input + i * RETINA_SIZE * RETINA_SIZE] = output;
-                        printf("lut : %d-->%d (%d) \n", input, output, i);
-                        fprintf(fout," %d %d > %d %d > %d %d   \n",input, output, inputy, inputx,  outputy, outputx);
-                        input  = -1;
-                        output = -1;
-                        continueSaving = false;
-                        countMap++;
-                    }
-                } //end of while
-            }            
-        }
-        printf("counted the number of mapping %d \n", countMap);
+        
     }
+        
     
     leftInputImage      = new ImageOf<PixelMono>;
     leftOutputImage     = new ImageOf<PixelMono>;
