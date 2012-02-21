@@ -101,15 +101,18 @@ static const char* byte_to_binary( int x ) {
 device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName = " "):RateThread(THRATE) {
 
   // initialization of the paramenters
-  t_prev          = 0;
-  fout            = 0;
-  countErrors     = 0;
-  countInWraps    = 0;
-  countInWrapsTS  = 0;
-  minCountInWraps = 16777215;
-  maxCountInWraps = 0;
-  countLostAE     = 0;
-  wrapOccured     = false;
+  t_prev           = 0;
+  fout             = 0;
+  countErrors      = 0;
+  countInWraps     = 0;
+  countInWrapsTS   = 0;
+  countErrorsGAEP1 = 0;
+  countErrorsGAEP2 = 0;
+  countErrorsGAEP3 = 0;
+  minCountInWraps  = 16777215;
+  maxCountInWraps  = 0;
+  countLostAE      = 0;
+  wrapOccured      = false;
   
 
     /*   ORIGINAL VALUES
@@ -308,8 +311,6 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName =
 device2yarp::~device2yarp() {
    
 }
-
-
 
 void device2yarp::prepareBiases() {
     //opening the device
@@ -751,8 +752,7 @@ void  device2yarp::run() {
     
     for (int i = 0; i < monBufEvents; i++ ) {
 
-        tempA = pmonatom[i].data;
-        
+        tempA = pmonatom[i].data;        
         // dumping any single char
         /*
         if(save){
@@ -827,7 +827,7 @@ void  device2yarp::run() {
             //address event sequence error
             tempC_unmasked = (tempA & 0x03000000) >> 24; // address error
             if(tempC_unmasked == 0x03) {
-                //printf("ADDRESS ERROR %08X \n", tempA);
+                printf("ADDRESS ERROR %08X \n", tempA);
                 countErrorsGAEP3++;
             }            
             
@@ -886,14 +886,14 @@ void  device2yarp::run() {
             //address event sequence error
             tempC_unmasked = (tempA & 0x03000000) >> 24; // address error
             if(tempC_unmasked == 0x03) {
-                //printf("ADDRESS ERROR %08X \n", tempA);
+                printf("ADDRESS ERROR2 %08X \n", tempA);
                 countErrorsGAEP3++;
             }
             
             /********************************************************/
             // wrap-around occured printing out statistics
-            printf("\n \n ===================== WRAP AROUND ===================================== \n");
-            
+
+            printf("\n \n ===================== WRAP AROUND ===================================== \n");            
             a = 0xCAFECAFE;
             t = tempA;
             lastTSindex = -1;
@@ -919,14 +919,19 @@ void  device2yarp::run() {
                 printf("data rate received %f kAE/s    ;  data rate lost %f kAE/s    ;    LOR %f% \n", dataRate, lostRate, (lostRate / (lostRate + dataRate)) * 100.0);
                 printf(" \n Error Resume \n");
                 printf("============= \n");
-                printf("type1: %04d     type2: %04d       type3: %04d \n", countErrorsGAEP1, countErrorsGAEP2, countErrorsGAEP3);
+                printf("type1: %04d     type2: %04d       type3: %04d/%04d \n", countErrorsGAEP1, countErrorsGAEP2, countErrorsGAEP3, countInWraps + countInWrapsTS);
                 printf("type1: %04f type2: %04f type3: %04f \n", (double)countErrorsGAEP1 / (countInWraps + countInWrapsTS), (double)countErrorsGAEP2 / (countInWraps + countInWrapsTS), (double)countErrorsGAEP3 / (countInWraps + countInWrapsTS));
                 printf("undetected WrapAdd error %d \n", countUndetectedWA);
             }
             //**********************************************************/
-            countInWraps   = 0;
-            countInWrapsTS = 0;
-            countLostAE    = 0;
+            // reinitialising the statistic 
+            printf("resetting the statistic \n");
+            countInWraps     = 0;
+            countInWrapsTS   = 0;
+            countLostAE      = 0;
+            countErrorsGAEP1 = 0;
+            countErrorsGAEP2 = 0;
+            countErrorsGAEP3 = 0;
             t_prev = 0;
             	    
             buf2[k2++] = t; // passing the timestamp to the data flow to send	    
