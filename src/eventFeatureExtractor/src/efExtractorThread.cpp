@@ -160,7 +160,7 @@ bool efExtractorThread::threadInit() {
     /*opening the file of the mapping and creating the LUT*/
     pFile = fopen (mapURL.c_str(),"rb");    
     fout  = fopen ("lut.txt","w+");
-    fdebug  = fopen ("dumpSet.txt","w+");
+    fdebug  = fopen ("./eventFeatureExtractor.dumpSet.txt","w+");
     if (pFile!=NULL) {
         long lSize;
         size_t result;        
@@ -268,10 +268,10 @@ bool efExtractorThread::threadInit() {
         printf("counted the number of mapping %d \n", countMap);
     }
     
-    leftInputImage  = new ImageOf<PixelMono>;
-    leftOutputImage = new ImageOf<PixelMono>;
-    rightOutputImage = new ImageOf<PixelMono>;
-    leftFeaOutputImage = new ImageOf<PixelMono>;
+    leftInputImage      = new ImageOf<PixelMono>;
+    leftOutputImage     = new ImageOf<PixelMono>;
+    rightOutputImage    = new ImageOf<PixelMono>;
+    leftFeaOutputImage  = new ImageOf<PixelMono>;
     rightFeaOutputImage = new ImageOf<PixelMono>;
     //leftInputImage->resize(FEATUR_SIZE, FEATUR_SIZE);
     leftInputImage->resize(RETINA_SIZE,RETINA_SIZE);
@@ -282,8 +282,8 @@ bool efExtractorThread::threadInit() {
     
     int padding = leftInputImage->getPadding();
     //initialisation of the memory image
-    unsigned char* pLeft   = leftInputImage->getRawImage();
-    unsigned char* pLeftOut = leftOutputImage->getRawImage();
+    unsigned char* pLeft     = leftInputImage->getRawImage();
+    unsigned char* pLeftOut  = leftOutputImage->getRawImage();
     unsigned char* pRightOut = rightOutputImage->getRawImage();
     
     // assign 127 to all the location in image plane
@@ -328,94 +328,25 @@ void efExtractorThread::resize(int widthp, int heightp) {
     //rightInputImage->resize(width, height);
 }
 
-void efExtractorThread::run() {   
-    count++;
-    countEvent = 0;
-    int countEventLeft = 0;
+
+void efExtractorThread::generateMemory(int countEvent, int& countEventToSend) {
+    int countEventLeft  = 0;
     int countEventRight = 0;
-    //printf("counter %d \n", count);
-    bool flagCopy;
-    if(!idle) {
-        
-        //ImageOf<PixelMono> &left = outLeftPort.prepare();  
-        //left.resize(128, 128);
-        //left.zero();
-        unsigned char* pLeft = leftOutputImage->getRawImage(); 
-        unsigned char* pRight = rightOutputImage->getRawImage();
-        
-        //left.zero();
-        
-        //for(int r = 0 ; r < FEATUR_SIZE ; r++){
-        //    for(int c = 0 ; c < FEATUR_SIZE ; c++){
-        //        left(r,c) = 127;
-        //    }
-        //}
-        
-        // reads the buffer received
-        // saves it into a working buffer        
-        //printf("returned 0x%x 0x%x \n", bufferCopy, flagCopy);
-        cfConverter->copyChunk(bufferCopy);
-
-        int num_events = CHUNKSIZE >> 3 ;
-        uint32_t* buf2 = (uint32_t*)bufferCopy;
-        //plotting out
-        int countEvent = 0;
-        uint32_t* bufCopy2 = (uint32_t*)bufferCopy2;
-        for (int evt = 0; evt < num_events; evt++) {
-            unsigned long t      = buf2[2 * evt];
-            unsigned long blob   = buf2[2 * evt + 1];
-            
-            if(t > 0x80000000) {
-                if(t == 0x88000000 ){
-                    lastTimestampLeft = 0;
-                    printf("wrap around detected %lu \n", lastTimestampLeft );
-                    firstHalf = true;
-                }
-                else {
-                    *bufCopy2 = buf2[2 *evt]; bufCopy2++;
-                    *bufCopy2 = buf2[2 * evt + 1]; bufCopy2++;
-                    countEvent++;
-#ifdef VERBOSE
-                    fprintf(fdebug,"%08X %08X \n",t,blob);        
-#endif
-                    /*if((t < 0x807FFFFF)&&(!firstHalf)) {
-                        printf("undetected wrap-around \n");
-                        //firstHalf = true;
-                    }
-                    */
-
-                    if((t > 0x807FFFFF)&&(firstHalf)) {
-                        printf("first half  = false\n");
-                        firstHalf = false;
-                    }
-
-                }
-            }
-        }
-        
-        
-        //int unreadDim = selectUnreadBuffer(bufferCopy, flagCopy, resultCopy);
-
-        //printf("Unmasking events:  %d \n", unreadDim);
-        // extract a chunk/unmask the chunk       
-        int dim = unmask_events.unmaskData(bufferCopy2,countEvent * 8,eventFeaBuffer);
-        //printf("event converted %d whereas %d \n", dim, countEvent);
-        
-        //storing the response in a temp. image
-        AER_struct* iterEvent = eventFeaBuffer;  //<------------ using the pointer to the unmasked events!
-        
-        unsigned char* pMemL = leftInputImage->getRawImage();
-        int          rowSize = leftOutputImage->getRowSize();
-        int       rowSizeFea = leftFeaOutputImage->getRowSize();
-        unsigned long ts;
-        short pol, cam;
-        aer* bufferFEA_copy = bufferFEA;
-        // visiting a discrete number of events
-        int countUnmapped = 0;
-        int deviance    = 10;
-        int devianceFea = 1;
-
-        //#############################################################################        
+    //storing the response in a temp. image
+    AER_struct* iterEvent = eventFeaBuffer;  //<------------ using the pointer to the unmasked events!
+    unsigned char* pLeft  = leftOutputImage->getRawImage(); 
+    unsigned char* pRight = rightOutputImage->getRawImage();
+    unsigned char* pMemL  = leftInputImage->getRawImage();
+    int          rowSize  = leftOutputImage->getRowSize();
+    int       rowSizeFea  = leftFeaOutputImage->getRowSize();
+    unsigned long ts;
+    short pol, cam;
+    aer* bufferFEA_copy = bufferFEA;
+    // visiting a discrete number of events
+    int countUnmapped = 0;
+    int deviance      = 10;
+    int devianceFea   = 10;      
+    //#############################################################################        
         for(int i = 0; i < countEvent; i++ ) {
             ts  = iterEvent->ts;
             pol = iterEvent->pol;
@@ -444,8 +375,8 @@ void efExtractorThread::run() {
                     int posImage     = y * rowSize + x;
                     
                     for (int i = 0; i< 5 ; i++) {                
-                        int pos      = lut[i * RETINA_SIZE * RETINA_SIZE +  y * RETINA_SIZE + x ];                      
-                        
+                        int pos      = lut[i * RETINA_SIZE * RETINA_SIZE +  y * RETINA_SIZE + x ];     
+          
                         //printf("        pos ; %d ", pos);
                         if(pos == -1) {
                             if (x % 2 == 1) {
@@ -491,8 +422,6 @@ void efExtractorThread::run() {
                                     pFeaLeft[posFeaImage] = 0;
                                 }
                             }
-
-                            
                             
                             // sending the event if we pass thresholds
                             unsigned long evPU;
@@ -501,33 +430,30 @@ void efExtractorThread::run() {
                             evPU = evPU | (xevent << 1);
                             evPU = evPU | (yevent << 8);
                             evPU = evPU | (cameraevent << 15);                            
-                            blob = blob & 0x0000FFFF;
-
-                            
+                            blob = blob & 0x0000FFFF;                            
                             
                             if(pFeaLeft[posFeaImage] > 240) {
                                 bufferFEA_copy->address   = (u32) blob;
                                 bufferFEA_copy->timestamp = (u32) ts;
-#ifdef VERBOSE
-                                fprintf(fdebug,"%08X %08X \n",blob,ts);  
-#endif
+                                //#ifdef VERBOSE
+                                //fprintf(fdebug,"%08X %08X \n",ts,blob);  
+                                //#endif
                                 
                                 //fprintf(fout,"%08X %08X \n",bufferFEA_copy->address,ts);
                                 bufferFEA_copy++; // jumping to the next event(u32,u32)
-                                //countEvent++;
+                                countEventToSend++;
                             }
                             else if(pFeaLeft[posFeaImage] < 10) {
                                 bufferFEA_copy->address   = (u32) blob;
                                 bufferFEA_copy->timestamp = (u32) ts;
-#ifdef VERBOSE
-                                fprintf(fdebug,"%08X %08X \n",blob,ts);  
-#endif
+                                //#ifdef VERBOSE
+                                //fprintf(fdebug,"%08X %08X \n",ts,blob);  
+                                //#endif
                                 
                                 //fprintf(fout,"%08X %08X \n",bufferFEA_copy->address,ts);
                                 bufferFEA_copy++; // jumping to the next event(u32,u32)
-                                //countEvent++;
-                            }
-                            
+                                countEventToSend++;
+                            }                           
                                                 
                         } //end else
                         
@@ -645,8 +571,7 @@ void efExtractorThread::run() {
                     } //end else
                     
                 } //end for i 5
-                
-                if (outRightPort.getOutputCount()){
+                 if (outRightPort.getOutputCount()){
                     
                     int padding    = rightOutputImage->getPadding();
                     int rowsizeOut = rightOutputImage->getRowSize();
@@ -710,16 +635,95 @@ void efExtractorThread::run() {
             iterEvent++;
         } //end for i
         //############################################################################
+}
+
+void efExtractorThread::run() {   
+    count++;
+    countEvent = 0;
+
+    //printf("counter %d \n", count);
+    bool flagCopy;
+    if(!idle) {
+        
+        //ImageOf<PixelMono> &left = outLeftPort.prepare();  
+        //left.resize(128, 128);
+        //left.zero();
+        unsigned char* pLeft  = leftOutputImage->getRawImage(); 
+        unsigned char* pRight = rightOutputImage->getRawImage();
+        unsigned char* pMemL  = leftInputImage->getRawImage();
+        //left.zero();
+        
+        //for(int r = 0 ; r < FEATUR_SIZE ; r++){
+        //    for(int c = 0 ; c < FEATUR_SIZE ; c++){
+        //        left(r,c) = 127;
+        //    }
+        //}
+        
+        // reads the buffer received
+        // saves it into a working buffer        
+        //printf("returned 0x%x 0x%x \n", bufferCopy, flagCopy);
+        cfConverter->copyChunk(bufferCopy);
+        
+        int num_events = CHUNKSIZE >> 3 ;
+        uint32_t* buf2 = (uint32_t*)bufferCopy;
+        //plotting out
+        int countEvent = 0;
+        uint32_t* bufCopy2 = (uint32_t*)bufferCopy2;
+        for (int evt = 0; evt < num_events; evt++) {
+            unsigned long t      = buf2[2 * evt];
+            unsigned long blob   = buf2[2 * evt + 1];
+            
+            if(t > 0x80000000) {
+                if(t == 0x88000000 ){
+                    lastTimestampLeft = 0;
+                    printf("wrap around detected %lu \n", lastTimestampLeft );
+                    firstHalf = true;
+                }
+                else {
+                    *bufCopy2 = buf2[2 *evt]; bufCopy2++;
+                    *bufCopy2 = buf2[2 * evt + 1]; bufCopy2++;
+                    countEvent++;
+                    //#ifdef VERBOSE
+                    //fprintf(fdebug,"%08X %08X \n",t,blob);        
+                    //#endif
+
+                    //if((t < 0x807FFFFF)&&(!firstHalf)) {
+                    //    printf("undetected wrap-around \n");
+                        //firstHalf = true;
+                    //}
+                    
+
+                    if((t > 0x807FFFFF)&&(firstHalf)) {
+                        printf("first half  = false\n");
+                        firstHalf = false;
+                    }
+
+                }
+            }
+        }
+        
+        
+        //int unreadDim = selectUnreadBuffer(bufferCopy, flagCopy, resultCopy);
+        //printf("Unmasking events:  %d \n", unreadDim);
+
+        // extract a chunk/unmask the chunk       
+        int dim = unmask_events.unmaskData(bufferCopy2,countEvent * 8,eventFeaBuffer);        
+        //printf("event converted %d whereas %d \n", dim, countEvent);          
 
         //printf("         countLeft %d \n" , countEventLeft);
         //printf("         countRight %d \n", countEventRight);
+
+        //generating the memory
+        int countEventToSend = 0;
+        generateMemory(countEvent, countEventToSend);
+
         
         // writing images out on ports 
-        outLeftPort.prepare() = *leftOutputImage;
+        outLeftPort.prepare()     = *leftOutputImage;
         outLeftPort.write();
-        outRightPort.prepare() = *rightOutputImage;
+        outRightPort.prepare()    = *rightOutputImage;
         outRightPort.write();
-        outFeaLeftPort.prepare() = *leftFeaOutputImage;
+        outFeaLeftPort.prepare()  = *leftFeaOutputImage;
         outFeaLeftPort.write();
         outFeaRightPort.prepare() = *rightFeaOutputImage;
         outFeaRightPort.write();
@@ -797,9 +801,18 @@ void efExtractorThread::run() {
         
         //building feature events
         char* buffer = (char*) bufferFEA;
+        aer* bFea_copy = bufferFEA;
         int sz = countEvent * sizeof(aer);
         // sending events 
-        if (outEventPort.getOutputCount()) {            
+        if (outEventPort.getOutputCount()) {     
+#ifdef VERBOSE       
+            for (int i = 0; i < countEventToSend; i++) {
+                u32 blob      = bFea_copy[i].address;
+                u32 timestamp = bFea_copy[i].timestamp;
+                fprintf(fout,">%08x %08x \n",timestamp, blob);
+            }
+            fprintf(fout, ">>>>>>>>>>>>>>>>>>>>>>>>>>> \n");
+#endif
             //printf("Sending \n");
             eventBuffer data2send(buffer,sz);    
             eventBuffer& tmp = outEventPort.prepare();

@@ -149,6 +149,13 @@ public:
     */
     void shift(int shift, yarp::sig::ImageOf<yarp::sig::PixelRgb>& outImage);
 
+    /**
+     * @brief function that updates the memory of events in the retina space
+     * @param countEvent counter of the event going to be memorized
+     * @param countEventToSend counter of the event that passed the threashold and are going to be sent 
+     */
+    void generateMemory(int countEvent, int& countEventToSend);
+
 };
 
 #endif  //_EF_EXTRACTOR_THREAD_H_

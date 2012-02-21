@@ -73,7 +73,7 @@ cFrameConverter::cFrameConverter() {
     //unmask_events.start();
     printf("unmask event just started");
     previousTimeStamp = 0;
-    readEvents = fopen("./readEvents","w");
+    readEvents = fopen("./eventFeatureExtractor.readEvents.txt","w+");
 }
 
 cFrameConverter::~cFrameConverter() {
@@ -109,7 +109,8 @@ void cFrameConverter::onRead(eventBuffer& i_ub) {
     mutex.wait();
     receivedBuffer = i_ub.get_packet(); 
     uint32_t* buf1 = (uint32_t*)receivedBuffer;
-
+    //printf("received buffer \n");
+    
     // check for bytes lost. If the first byte is not 0x80 there is an error
     if(*buf1 < 0x80000000) {
         //printf("wrong packet \n");
@@ -122,6 +123,7 @@ void cFrameConverter::onRead(eventBuffer& i_ub) {
         return;
     }
 
+    //printf("received values \n");
 
 #ifdef VERBOSE
     int num_events = dim >> 3 ;
@@ -134,7 +136,9 @@ void cFrameConverter::onRead(eventBuffer& i_ub) {
     }
     fprintf(readEvents,"----------------------- \n");
 #endif 
-    
+
+
+
     // the thrid part of the buffer is free to avoid overflow
     //totDim += dim;
     int overflow = 0;      
