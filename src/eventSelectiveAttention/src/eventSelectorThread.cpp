@@ -43,7 +43,7 @@ using namespace std;
 #define dim_window 1
 #define synch_time 1
 
-#define VERBOSE
+//#define VERBOSE
 
 eventSelectorThread::eventSelectorThread() : RateThread(THRATE) {
     responseGradient = 127;
@@ -287,7 +287,7 @@ void eventSelectorThread::spatialSelection(AER_struct* buffer,int numberOfEvents
     int inputRetinaSize = 32;
     
     for (int i = 0; i < numberOfEvents; i++) {        
-        if((iter->ts>minCount) && (iter->ts < maxCount)) {
+        if((iter->ts > minCount) && (iter->ts < maxCount)) {
             if((iter->x != 128) && (iter->y != 1)){
                 //printf("%02d %02d  ", iter->x, iter->y);    
                 
@@ -544,7 +544,8 @@ void eventSelectorThread::run() {
     // spatial processing
     double w1 = 0, w2 = 0, w3 = 0, w4 = 0;
     spatialSelection(unmaskedEvents,CHUNKSIZE>>3,w1, minCount, maxCount);
-    
+
+    // the getMonoImage gets as default input image the saliency map
     getMonoImage(imageLeft,minCount,maxCount,1);
     if(imageLeft != 0) {
       pThread->copyLeft(imageLeft);
@@ -564,7 +565,7 @@ void eventSelectorThread::threadRelease() {
     fclose(fout);
     printf("eventSelectorThread release:freeing bufferCopy \n");
 
-    free(saliencyMap);
+    //free(saliencyMap);
     free(featureMap);
     free(timestampMap); 
     free(unmaskedEvents); 

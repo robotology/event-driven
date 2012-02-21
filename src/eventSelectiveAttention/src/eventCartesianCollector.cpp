@@ -35,7 +35,7 @@
 #include <inttypes.h>
 //#include <iCub/config.h>
 
-#define VERBOSE
+//#define VERBOSE
 
 #define CHUNKSIZE 32768 
 #define TH1       32768  
@@ -91,8 +91,7 @@ void eventCartesianCollector::copyChunk(char* bufferCopy) {
 // reading out from a circular buffer with 2 entry points and wrapping
 void eventCartesianCollector::onRead(eventBuffer& i_ub) {
     valid = true;
-    
-    printf("eventCartesianCollector:: OnRead \n");
+    //printf("eventCartesianCollector:: OnRead \n");
 
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() ;      // number of bits received / 8 = bytes received
