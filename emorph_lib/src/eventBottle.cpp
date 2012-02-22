@@ -120,13 +120,13 @@ bool eventBottle::write(yarp::os::ConnectionWriter& connection) {
     connection.appendInt(2);        // four elements
     connection.appendInt(size_of_the_packet);
     int ceilSizeOfPacket = size_of_the_packet * 4;   // number of 32bit word times 4bytes
-    printf("size of the packet %d \n", ceilSizeOfPacket);
+    //printf("size of the packet %d \n", ceilSizeOfPacket);
     //bool nullB = packet->isNull();
     //printf("packet is null %d \n", nullB);
     ConstString strBottle = packet->toString();
     size_t binaryDim;
     packetPointer = (char*) packet->toBinary(&binaryDim);
-    printf("dimension of the bottle in bytes %d \n", binaryDim);
+    //printf("dimension of the bottle in bytes %d \n", binaryDim);
     connection.appendBlock(packetPointer,ceilSizeOfPacket); //casting bottle into char*
     connection.convertTextMode();   // if connection is text-mode, convert!
     return true;
