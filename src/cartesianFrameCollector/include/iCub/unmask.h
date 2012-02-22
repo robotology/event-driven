@@ -40,7 +40,7 @@
 #include <iCub/config.h>
 #include <iCub/emorph/eventCodec.h>
 
-using namespace emorph::ecodec;
+//using namespace emorph::ecodec;
 
 class unmask : public yarp::os::RateThread{
 private:
@@ -53,16 +53,15 @@ private:
     unsigned long* timeBuffer;            // buffer contains the timestamp of the particular location (left)
     int* bufferRight;                     // buffer representing the event in image plane (right)
     unsigned long* timeBufferRight;       // buffer contains the timestamp of the particular location (right)
-    //int* fifoEvent;
-    //int* fifoEvent_temp;
-    //int* fifoEvent_temp2;
+
     unsigned long timestamp;              // 16 bits variable to save the timestamp
     unsigned long timestamplong;          // variable 32 bits to save the timestamp
     unsigned long lasttimestamp;          // last timestamp acquired for the left camera
+    unsigned int lastRecTimestamp;       // last timestamp received from the device driver (left or right independent)
     unsigned long lasttimestampright;     // last timestamp acquired for the right camera
     unsigned long eldesttimestamp;        // timestamp of the eldest event in the buffer 
     short cartX, cartY, polarity;         // address x, y and polarity event information
-    short camera;                // camera information event information
+    short camera;                         // camera information event information
 
     int wrapAdd;
     unsigned int xmask;              // 16 bits mask for unmasking of the address
@@ -294,6 +293,12 @@ public:
      * function that set to zero the vector of timestamp of positions
      */
     void resetTimestampRight();
+
+    /**
+     * @brief fucntion that update the image given the lastTimestamp received
+     * @param ptr pointer to the AddressEvent that updates the image
+     */
+    void updateImage(emorph::ecodec::AddressEvent* ptr);
 };
 
 #endif //UNMASK_H

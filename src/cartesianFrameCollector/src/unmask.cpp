@@ -33,7 +33,7 @@
 
 using namespace std;
 using namespace yarp::os;
-
+using namespace emorph::ecodec;
 
 #define MAXVALUE 114748364 //4294967295
 #define maxPosEvent 10000
@@ -41,6 +41,7 @@ using namespace yarp::os;
 #define minKillThres 1000
 #define UNMASKRATETHREAD 1
 #define constInterval 100000;
+
 
 
 //TODO : remove inheretance of this class from ratethread. No reason to be ratethread
@@ -184,11 +185,142 @@ unsigned long* unmask::getTimeBuffer(bool camera) {
 void unmask::run() {
 }
 
+void unmask::updateImage(AddressEvent* ptr) {
+    // ********** extract properties **********************************
+    cartX     = ptr->getX();
+    cartY     = ptr->getY();
+    camera    = ptr->getChannel();
+    polarity  = ptr->getPolarity();
+    printf("blob %d %d %d %d \n", cartX, cartY, camera, polarity);
+    
+    timestamp = lastRecTimestamp;
+
+    // ************** created the images ***************************************
+    //correcting the orientation of the camera
+    cartY = retinalSize - cartY - 1;   //corrected the output of the camera (flipped the image along y axis)
+    
+    if((cartX < 0)||(cartX > retinalSize)){
+        cartX = 0;
+    }
+    if((cartY < 0)||(cartY> retinalSize)){
+        cartY = 0;
+    }
+    //cartX = retinalSize - cartX;
+    
+    //if(cartX!=0) {
+    //    printf("retinalSize %d cartX %d cartY %d camera %d \n",retinalSize,cartX, cartY,camera);
+    //}
+    //printf("lastTimeStamp %08X \n", lasttimestamp);
+
+    //camera is unmasked as left 0, right -1. It is converted in left 1, right 0
+    camera = camera + 1;
+    //printf("Camera %d polarity %d  \n", camera, polarity);
+    //camera: LEFT 1, RIGHT 0
+    
+    if(camera) {  // ---- camera left -------------------          
+        if((cartX!=0) &&( cartY!=0) && (timestamp!=0)) {
+            validLeft =  true;
+        }
+               
+        //TODO:: remove verb if not necessary
+        if(verb) {
+            //for (int i = 0; i < 2; i ++) {
+            //printf("verb is true %llu %llu \n", timestamp, lasttimestamp);
+            //}
+            //lasttimestamp = 0;
+            //resetTimestamps();
+        }
+        
+        
+        if(timestamp > lasttimestamp) {
+            lasttimestamp = timestamp;
+        }
+             
+        if(timeBuffer[cartX + cartY * retinalSize] < timestamp) {
+            if(polarity > 0) {
+                buffer[cartX + cartY * retinalSize]     += responseGradient;
+                timeBuffer[cartX + cartY * retinalSize] = timestamp;
+                
+                if(buffer[cartX + cartY * retinalSize] > 127) {
+                    buffer[cartX + cartY * retinalSize] = 127;
+                }
+                
+                if(asvMode){                        
+                    if(!((cartX>=7)&&(cartX<16)&&(cartY>=7)&&(cartY<16))){
+                        buffer[cartX + 1 + cartY * retinalSize]       = responseGradient;
+                        timeBuffer[cartX + 1  + cartY * retinalSize]  = timestamp;
+                        buffer[cartX + (cartY + 1)  * retinalSize]    = responseGradient;
+                        timeBuffer[cartX + (cartY + 1) * retinalSize] = timestamp;
+                        buffer[cartX + 1 + (cartY + 1) * retinalSize]       = responseGradient;
+                        timeBuffer[cartX + 1  + (cartY + 1) * retinalSize]  = timestamp;      
+                    }
+                }
+                
+            }
+            else if(polarity < 0) {
+                buffer[cartX + cartY * retinalSize] -= responseGradient;
+                timeBuffer[cartX + cartY * retinalSize] = timestamp;
+                
+                if (buffer[cartX + cartY * retinalSize] < -127) {
+                    buffer[cartX + cartY * retinalSize] = -127;
+                }
+                
+                if(asvMode) {
+                    if(!((cartX>=7)&&(cartX<16)&&(cartY>=7)&&(cartY<16))){
+                        buffer[cartX + 1 + cartY * retinalSize]       = -responseGradient;
+                        timeBuffer[cartX + 1  + cartY * retinalSize]  = timestamp;
+                        buffer[cartX + (cartY + 1)  * retinalSize]    = -responseGradient;
+                        timeBuffer[cartX + (cartY + 1) * retinalSize] = timestamp;
+                        buffer[cartX + 1 + (cartY + 1) * retinalSize]       = -responseGradient;
+                        timeBuffer[cartX + 1  + (cartY + 1) * retinalSize]  = timestamp;      
+                    }
+                }
+            }
+        }           
+    }
+    else { // --------  camera right ------------------------
+        
+        if((cartX!=0) &&( cartY!=0) && (timestamp!=0)) {
+            validRight =  true;
+        }
+        
+        //TODO : remove if not necessary
+        if(verb) {
+            //for (int i = 0; i < 2; i ++) {
+            //printf("%llu \n", lasttimestamp);
+            //}
+            //lasttimestampright = 0;
+            //resetTimestamps();
+        }
+        
+        if( timestamp > lasttimestampright){
+            lasttimestampright = timestamp;
+        }    
+        
+        if (timeBufferRight[cartX + cartY * retinalSize] < timestamp) {
+            if(polarity > 0) {
+                bufferRight[cartX + cartY * retinalSize] += responseGradient;
+                timeBufferRight[cartX + cartY * retinalSize] = timestamp;
+                
+                if(bufferRight[cartX + cartY * retinalSize] > 127) {
+                    bufferRight[cartX + cartY * retinalSize] = 127;
+                }
+            }
+            else if(polarity < 0) {
+                bufferRight[cartX + cartY * retinalSize] -= responseGradient;
+                timeBufferRight[cartX + cartY * retinalSize] = timestamp;
+                
+                if (bufferRight[cartX + cartY * retinalSize] < -127) {
+                    bufferRight[cartX + cartY * retinalSize] = -127;
+                }
+            }
+        }
+    }
+}
 
 void unmask::unmaskData(Bottle* packets) {
     //AER_struct sAER
     count++;
-
     int num_events = packets->size();
     //if(dvsMode) {
     //    num_events = i_sz / 4;    // pointing to events made of 4 bytes
@@ -208,129 +340,22 @@ void unmask::unmaskData(Bottle* packets) {
     eEventQueue q;
     if(eEvent::decode(*packets,q)) {
         for (int evt = 0; evt < num_events; evt++) {
-
-            //correcting the orientation of the camera
-            cartY = retinalSize - cartY - 1;   //corrected the output of the camera (flipped the image along y axis)
-            
-            if((cartX < 0)||(cartX > retinalSize)){
-                cartX = 0;
+            /*********** extracting the event information **********************/
+            // to identify the type of the packet
+            // user can rely on the getType() method
+            if (q[evt]->getType()=="AE") {
+                // identified an  address event
+                AddressEvent* ptr=dynamic_cast<AddressEvent*>(q[evt]);
+                if (ptr!=NULL) {
+                    //updateImage(ptr);    
+                }
             }
-            if((cartY < 0)||(cartY> retinalSize)){
-                cartY = 0;
-            }
-                        
-            //cartX = retinalSize - cartX;
-            
-            //if(cartX!=0)
-            //    printf("retinalSize %d cartX %d cartY %d camera %d \n",retinalSize,cartX, cartY,camera);
-            //printf("lastTimeStamp %08X \n", lasttimestamp);
-            
-            //camera is unmasked as left 0, right -1. It is converted in left 1, right 0
-            camera = camera + 1;
-            //printf("Camera %d polarity %d  \n", camera, polarity);
-            //camera: LEFT 1, RIGHT 0
-            
-            if(camera) {            
-                if((cartX!=0) &&( cartY!=0) && (timestamp!=0)) {
-                    validLeft =  true;
-                }
-                
-                
-                //TODO:: remove verb if not necessary
-                if(verb) {
-                    //for (int i = 0; i < 2; i ++) {
-                    //printf("verb is true %llu %llu \n", timestamp, lasttimestamp);
-                    //}
-                    //lasttimestamp = 0;
-                    //resetTimestamps();
-                }
-                
-                
-                if(timestamp > lasttimestamp) {
-                    lasttimestamp = timestamp;
-                }
-                
-                
-                if(timeBuffer[cartX + cartY * retinalSize] < timestamp) {
-                    if(polarity > 0) {
-                        buffer[cartX + cartY * retinalSize]     += responseGradient;
-                        timeBuffer[cartX + cartY * retinalSize] = timestamp;
-                        
-                        if(buffer[cartX + cartY * retinalSize] > 127) {
-                            buffer[cartX + cartY * retinalSize] = 127;
-                        }
-                        
-                        if(asvMode){                        
-                            if(!((cartX>=7)&&(cartX<16)&&(cartY>=7)&&(cartY<16))){
-                                buffer[cartX + 1 + cartY * retinalSize]       = responseGradient;
-                                timeBuffer[cartX + 1  + cartY * retinalSize]  = timestamp;
-                                buffer[cartX + (cartY + 1)  * retinalSize]    = responseGradient;
-                                timeBuffer[cartX + (cartY + 1) * retinalSize] = timestamp;
-                                buffer[cartX + 1 + (cartY + 1) * retinalSize]       = responseGradient;
-                                timeBuffer[cartX + 1  + (cartY + 1) * retinalSize]  = timestamp;      
-                            }
-                        }
-                        
-                    }
-                    else if(polarity < 0) {
-                        buffer[cartX + cartY * retinalSize] -= responseGradient;
-                        timeBuffer[cartX + cartY * retinalSize] = timestamp;
-                        
-                        if (buffer[cartX + cartY * retinalSize] < -127) {
-                            buffer[cartX + cartY * retinalSize] = -127;
-                        }
-                        
-                        if(asvMode) {
-                            if(!((cartX>=7)&&(cartX<16)&&(cartY>=7)&&(cartY<16))){
-                                buffer[cartX + 1 + cartY * retinalSize]       = -responseGradient;
-                                timeBuffer[cartX + 1  + cartY * retinalSize]  = timestamp;
-                                buffer[cartX + (cartY + 1)  * retinalSize]    = -responseGradient;
-                                timeBuffer[cartX + (cartY + 1) * retinalSize] = timestamp;
-                                buffer[cartX + 1 + (cartY + 1) * retinalSize]       = -responseGradient;
-                                timeBuffer[cartX + 1  + (cartY + 1) * retinalSize]  = timestamp;      
-                            }
-                        }
-                    }
-                }           
-            }
-            else { // --------  camera right ------------------------
-                
-                if((cartX!=0) &&( cartY!=0) && (timestamp!=0)) {
-                    validRight =  true;
-                }
-                
-                //TODO : remove if not necessary
-                if(verb) {
-                    //for (int i = 0; i < 2; i ++) {
-                    //printf("%llu \n", lasttimestamp);
-                    //}
-                    //lasttimestampright = 0;
-                    //resetTimestamps();
-                }
-                
-                if( timestamp > lasttimestampright){
-                    lasttimestampright = timestamp;
-                }    
-                
-                if (timeBufferRight[cartX + cartY * retinalSize] < timestamp) {
-                    if(polarity > 0) {
-                        bufferRight[cartX + cartY * retinalSize] += responseGradient;
-                        timeBufferRight[cartX + cartY * retinalSize] = timestamp;
-                        
-                        if(bufferRight[cartX + cartY * retinalSize] > 127) {
-                            bufferRight[cartX + cartY * retinalSize] = 127;
-                        }
-                    }
-                    else if(polarity < 0) {
-                        bufferRight[cartX + cartY * retinalSize] -= responseGradient;
-                        timeBufferRight[cartX + cartY * retinalSize] = timestamp;
-                        
-                        if (bufferRight[cartX + cartY * retinalSize] < -127) {
-                            bufferRight[cartX + cartY * retinalSize] = -127;
-                        }
-                    }
-                }
-            } //end camera            
+            else if(q[evt]->getType()=="TS") {
+                TimeStamp* ptr=dynamic_cast<TimeStamp*>(q[evt]);
+                //identified an time stamp event
+                lastRecTimestamp = (unsigned int) ptr->getStamp();
+                //printf("lastTimestamp Received %08x \n", lastRecTimestamp);
+            }            
         } //end of for   
     } // end eEvent::decode
 }
@@ -368,9 +393,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
             //fwrite(buffer, 1, sz, raw);
         //}
     //}
-    
 
-    
     //eldesttimestamp = 0;
     int i = 0;
     for (int evt = 0; evt < num_events; evt++) {
@@ -432,7 +455,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
                 }   
             }
             else {
-                printf("NOT Recognized!!!");
+                printf("NOT Recognized!!! \n");
             }
         }
         

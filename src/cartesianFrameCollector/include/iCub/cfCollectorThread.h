@@ -86,6 +86,7 @@ private:
     bool stereo;                         // flag that indicates whether the synchronization is stereo
     bool asvFlag, dvsFlag;               // flag for operating mode
     bool tristate;                       // option that represent the image with three baselines
+    bool bottleHandler;                  // flag that indicates whether events are sent as bottle exclusively
     unsigned long minCount;              // minimum timestamp allowed for the current frame
     unsigned long maxCount;              // maximum timestamp allowed for the current frame
     unsigned long minCountRight;
@@ -100,6 +101,7 @@ private:
     cFrameConverter* cfConverter;        // receives real-time events
     unmask* unmask_events;               // object that unmask events
     eventBottleHandler *ebHandler;       // handler of received events as bottle
+    yarp::os::Bottle* receivedBottle;    // bottle currently extracted from the buffer 
     char* bufferRead;                    // buffer of events read from the port
     char* bufferCopy;                    // local copy of the events read
     FILE* fout;                          // file for temporarely savings of events
@@ -205,7 +207,17 @@ public:
     void setTristate(bool value) {
         tristate = value;
         //unmask_events->setDVSMode(value);
-    } 
+    }
+
+    /**
+     * @brief function that set the option of bottleHandler
+     * @param value value to assign to the flag
+     */
+    void setBottleHandler(bool value) {
+        bottleHandler = value;
+        //unmask_events->setDVSMode(value);
+    }
+    
 
     /**
      * @brief function that sets the synchronization period between the events and viewer

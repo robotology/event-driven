@@ -47,7 +47,8 @@ bool cfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
         printf("--retinalSize      (int)    : defines the dimension of the retina (input)\n");
         printf("--responseGradient (int)    : the increment for any single event in the register\n");
         printf("--sychPeriod       (int)    : period for synchronization of the variable lastTimestamp\n");
-        printf("--stereo                    : if present both left and right events are represented \n ");    
+        printf("--stereo                    : if present both left and right events are represented \n ");
+        printf("--bottleHanlder             : the user select to send events only through bottle port esclusively  \n");
         printf("\n press CTRL-C to continue \n");
         return true;
     }
@@ -134,6 +135,15 @@ bool cfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
         cfThread->setStereo(false);
     }
 
+     /* 
+     *checking whether the user wants exclusively to send events as bottles
+     */
+    if( rf.check("bottleHandler")) {
+        cfThread->setBottleHandler(true);
+    }
+    else {
+        cfThread->setBottleHandler(false);
+    }
 
     /* 
      *set option for mapping three states into 3baseline graylevels
