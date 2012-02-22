@@ -84,6 +84,10 @@ bool cfCollectorThread::threadInit() {
     cfConverter->useCallback();
     cfConverter->setRetinalSize(retinalSize);
     cfConverter->open(getName("/retina:i").c_str());
+
+    ebHandler = new eventBottleHandler();
+    ebHandler->useCallback();
+    ebHandler->open(getName("/retinaBottle:i").c_str());
     
     printf("\n opening retina\n");
     printf("starting the plotter \n");
@@ -416,7 +420,7 @@ void cfCollectorThread::run() {
             if ((lcprev == lc)||(rcprev == rc)) {
                 //if (lcprev == lc) {
                 countStop++;
-                printf("countStop %d %08X %08X %08X %08X \n", countStop, lc, lcprev, rc, rcprev);
+                printf("countStop %d %08X %08X %08X %08X \n", countStop,(unsigned int) lc, (unsigned int)lcprev, (unsigned int)rc, (unsigned int)rcprev);
             }            
             else {
                 countStop--;
@@ -430,7 +434,7 @@ void cfCollectorThread::run() {
             if (lcprev == lc) {
                 //if (lcprev == lc) {
                 countStop++;
-                printf("countStop %d %08X %08X %08X %08X \n", countStop, lc, lcprev, rc, rcprev);
+                printf("countStop %d %08X %08X %08X %08X \n", countStop, (unsigned int)lc, (unsigned int)lcprev, (unsigned int)rc, (unsigned int)rcprev);
             }            
             else {
                 countStop--;
@@ -465,7 +469,7 @@ void cfCollectorThread::run() {
       //maxCountRight = 4294967268;
       countStop = 0;
       verb = true;
-      printf("countStop resetting %llu %llu %llu \n",unmask_events->getLastTimestamp(), lc, rc );
+      printf("countStop resetting %08X %08X %08X \n",(unsigned int) unmask_events->getLastTimestamp(), (unsigned int)lc, (unsigned int)rc );
       count = synchPeriod - 200;
       
       }

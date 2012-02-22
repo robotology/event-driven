@@ -175,6 +175,7 @@
  * 23/09/11 : added parameter in order to define retina dimension                                                       author : Rea \n      
  * 21/11/11 : made the synch_period a parameter rather than hardcoded variable                                          author : Rea \n
  * 09/02/12 : improved the user interface                                                                               author : Rea \n
+ * 22/02/12 : added extra port for handling events sent as bottle                                                       author : Rea \n
 */
 
 #include <iostream>

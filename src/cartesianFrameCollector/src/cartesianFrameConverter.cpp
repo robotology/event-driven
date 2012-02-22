@@ -36,7 +36,7 @@
 #include <inttypes.h>
 #include <iCub/config.h>
 
-//#define VERBOSE
+#define VERBOSE
 
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -61,8 +61,8 @@ cFrameConverter::cFrameConverter():convert_events(128,128) {
     //unmask_events.start();
     printf("unmask event just started");
     previousTimeStamp = 0;
-    readEvents = fopen("./readEvents","w");
-    fout = fopen("dumpCartCollector.txt", "w+");
+    readEvents = fopen("./cartesianFrameCollector.readEvents.txt","w");
+    fout = fopen("./cartesianFrameCollector.dumpCartCollector.txt", "w+");
 }
 
 

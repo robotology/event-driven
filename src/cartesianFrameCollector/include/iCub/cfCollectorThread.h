@@ -27,11 +27,7 @@
 #ifndef _CF_COLLECTOR_THREAD_H_
 #define _CF_COLLECTOR_THREAD_H_
 
-#include <yarp/os/RateThread.h>
-#include <yarp/os/Bottle.h>
-#include <yarp/sig/all.h>
-#include <iCub/cartesianFrameConverter.h>
-#include <iCub/plotterThread.h>
+
 #include <iostream>
 #include <fstream>
 #include <time.h>
@@ -39,6 +35,16 @@
 #include <sys/types.h>
 #include <inttypes.h>
 #include <stdlib.h>
+
+/* yarp related includes */
+#include <yarp/os/RateThread.h>
+#include <yarp/os/Bottle.h>
+#include <yarp/sig/all.h>
+
+/* within project includes */
+#include <iCub/cartesianFrameConverter.h>
+#include <iCub/plotterThread.h>
+#include <iCub/eventBottleHandler.h>
 
 //typedef unsigned long long int uint64_t;
 #define u64 uint64_t
@@ -93,6 +99,7 @@ private:
     plotterThread* pThread;              // plotterThread for the trasformation of the event in images
     cFrameConverter* cfConverter;        // receives real-time events
     unmask* unmask_events;               // object that unmask events
+    eventBottleHandler *ebHandler;       // handler of received events as bottle
     char* bufferRead;                    // buffer of events read from the port
     char* bufferCopy;                    // local copy of the events read
     FILE* fout;                          // file for temporarely savings of events
