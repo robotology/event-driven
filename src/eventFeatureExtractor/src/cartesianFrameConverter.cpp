@@ -109,33 +109,35 @@ void cFrameConverter::onRead(eventBuffer& i_ub) {
     mutex.wait();
     receivedBuffer = i_ub.get_packet(); 
     uint32_t* buf1 = (uint32_t*)receivedBuffer;
+    char*  receivedBuffer_char = (char*) receivedBuffer;
     //printf("received buffer \n");
     
     // check for bytes lost. If the first byte is not 0x80 there is an error
-    if(*buf1 < 0x80000000) {
+    if(*buf1 < 0x80) {
         //printf("wrong packet \n");
-#ifdef VERBOSE
-        fprintf(readEvents,"wrong packet \n");
-        fprintf(readEvents,"----------------------- \n");
-#endif
+        if(VERBOSE) {
+            fprintf(readEvents,"wrong packet \n");
+            fprintf(readEvents,"----------------------- \n");
+        }
+        receivedBuffer_char -= 5;
         //printf("wrong packet \n");
+        //return;
         mutex.post();
-        return;
     }
 
     //printf("received values \n");
 
-#ifdef VERBOSE
-    int num_events = dim >> 3 ;
-    uint32_t* buf2 = (uint32_t*)receivedBuffer;
-    //plotting out
-    for (int evt = 0; evt < num_events; evt++) {
-        unsigned long t     = buf2[2 * evt];
-        unsigned long blob  = buf2[2 * evt + 1];
-        fprintf(readEvents,"%08X %08X \n",t, blob);        
+    if(VERBOSE) {
+        int num_events = dim >> 3 ;
+        uint32_t* buf2 = (uint32_t*)receivedBuffer_char;
+        //plotting out
+        for (int evt = 0; evt < num_events; evt++) {
+            unsigned long t     = buf2[2 * evt];
+            unsigned long blob  = buf2[2 * evt + 1];
+            fprintf(readEvents,"%08X %08X \n",t, blob);        
+        }
+        fprintf(readEvents,"----------------------- \n");
     }
-    fprintf(readEvents,"----------------------- \n");
-#endif 
 
 
 

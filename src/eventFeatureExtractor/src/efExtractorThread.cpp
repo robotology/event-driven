@@ -51,7 +51,7 @@ using namespace std;
 #define Y_SHIFT 8
 #define POLARITY_MASK 0x00000001
 #define POLARITY_SHIFT 0
-#define CONST_DECREMENT 10
+#define CONST_DECREMENT 1
 
 #define CHUNKSIZE 32768
 
@@ -122,8 +122,8 @@ bool efExtractorThread::threadInit() {
     printf("starting the thread.... \n");
     /* open ports */
     printf("opening ports.... \n");
-    outLeftPort.open(getName("/edgesLeft:o").c_str());
-    outRightPort.open(getName("/edgesRight:o").c_str());
+    outLeftPort.open(getName("/left:o").c_str());
+    outRightPort.open(getName("/right:o").c_str());
     outFeaLeftPort.open(getName("/feaLeft:o").c_str());
     outFeaRightPort.open(getName("/feaRight:o").c_str());
     inLeftPort.open(getName("/left:i").c_str());
@@ -132,6 +132,7 @@ bool efExtractorThread::threadInit() {
 
     cfConverter=new cFrameConverter();
     cfConverter->useCallback();
+    cfConverter->setVERBOSE(VERBOSE);
     cfConverter->open(getName("/retina:i").c_str());
 
     int SIZE_OF_EVENT = CHUNKSIZE >> 3; // every event is composed by 4bytes address and 4 bytes timestamp
@@ -262,8 +263,8 @@ void efExtractorThread::generateMemory(int countEvent, int& countEventToSend) {
     aer* bufferFEA_copy = bufferFEA;
     // visiting a discrete number of events
     int countUnmapped = 0;
-    int deviance      = 10;
-    int devianceFea   = 10;      
+    int deviance      = 20;
+    int devianceFea   = 20;      
     //#############################################################################        
         for(int i = 0; i < countEvent; i++ ) {
             ts  = iterEvent->ts;
@@ -587,6 +588,14 @@ void efExtractorThread::run() {
         //plotting out
         int countEvent = 0;
         uint32_t* bufCopy2 = (uint32_t*)bufferCopy2;
+        firstHalf = true;
+        if(buf2[0] < 0x8000F000) {
+            firstHalf = true;
+        }
+        else {
+            firstHalf = false;
+        }
+
         for (int evt = 0; evt < num_events; evt++) {
             unsigned long t      = buf2[2 * evt];
             unsigned long blob   = buf2[2 * evt + 1];
@@ -595,29 +604,49 @@ void efExtractorThread::run() {
                 if(t == 0x88000000 ){
                     lastTimestampLeft = 0;
                     printf("wrap around detected %lu \n", lastTimestampLeft );
+                    if(VERBOSE){
+                        fprintf(fdebug,"detected_wrap_around \n");
+                    }
                     firstHalf = true;
                 }
-                else {
-                    *bufCopy2 = buf2[2 *evt]; bufCopy2++;
-                    *bufCopy2 = buf2[2 * evt + 1]; bufCopy2++;
-                    countEvent++;
-                    //#ifdef VERBOSE
-                    //fprintf(fdebug,"%08X %08X \n",t,blob);        
-                    //#endif
-
-                    //if((t < 0x807FFFFF)&&(!firstHalf)) {
-                    //    printf("undetected wrap-around \n");
-                        //firstHalf = true;
-                    //}
-                    
-
-                    if((t > 0x807FFFFF)&&(firstHalf)) {
+                else {                    
+                    if((firstHalf) && (t < 0x8000F000)) {
+                        if(t > lastTimestampLeft)  {
+                            lastTimestampLeft = t;
+                            *bufCopy2 = buf2[2 *evt]; bufCopy2++;
+                            *bufCopy2 = buf2[2 * evt + 1]; bufCopy2++;
+                            countEvent++;
+                            if(VERBOSE) {
+                                fprintf(fdebug,"%08X %08X \n",t,blob);        
+                            }
+                        }
+                    }
+                    else if((t >= 0x8000F000)&&(t<80010000)) {
                         printf("first half  = false\n");
                         firstHalf = false;
                     }
-
+                    else if((!firstHalf) && (t>0x8000F000)) {
+                        if(t > lastTimestampLeft)  {
+                            lastTimestampLeft = t;
+                            *bufCopy2 = buf2[2 *evt]; bufCopy2++;
+                            *bufCopy2 = buf2[2 * evt + 1]; bufCopy2++;
+                            countEvent++;
+                            if(VERBOSE) {
+                                fprintf(fdebug,"%08X %08X \n",t,blob);        
+                            }
+                        }
+                    }
+                    else if((t < 0x8000F000)&&(!firstHalf)) {
+                        printf("undetected wrap-around \n");
+                        if(VERBOSE) {
+                            fprintf(fdebug,"undetected_wrap_around \n");
+                            fprintf(fdebug,"%08X %08X \n",t,blob);   
+                            printf("undetected wrap aroung");
+                        }
+                        firstHalf = true;
+                    }                        
                 }
-            }
+            }            
         }
         
         
@@ -625,7 +654,7 @@ void efExtractorThread::run() {
         //printf("Unmasking events:  %d \n", unreadDim);
 
         // extract a chunk/unmask the chunk       
-        int dim = unmask_events.unmaskData(bufferCopy2,countEvent * 8,eventFeaBuffer);        
+        int dim = unmask_events.unmaskData(bufferCopy2,countEvent * sizeof(uint32_t),eventFeaBuffer);        
         //printf("event converted %d whereas %d \n", dim, countEvent);          
 
         //printf("         countLeft %d \n" , countEventLeft);
@@ -724,14 +753,14 @@ void efExtractorThread::run() {
         int sz = countEventToSend * sizeof(aer);
         // sending events 
         if ((outEventPort.getOutputCount()) && (countEventToSend > 0)) {     
-#ifdef VERBOSE       
-            for (int i = 0; i < countEventToSend; i++) {
-                u32 blob      = bFea_copy[i].address;
-                u32 timestamp = bFea_copy[i].timestamp;
-                fprintf(fout,">%08x %08x \n",timestamp, blob);
+            if (VERBOSE) {
+                for (int i = 0; i < countEventToSend; i++) {
+                    u32 blob      = bFea_copy[i].address;
+                    u32 timestamp = bFea_copy[i].timestamp;
+                    fprintf(fout,">%08x %08x \n",timestamp, blob);
+                }
+                fprintf(fout, ">>>>>>>>>>>>>>>>>>>>>>>>>>> \n");
             }
-            fprintf(fout, ">>>>>>>>>>>>>>>>>>>>>>>>>>> \n");
-#endif
             //printf("Sending \n");
             eventBuffer data2send(buffer,sz);    
             eventBuffer& tmp = outEventPort.prepare();
