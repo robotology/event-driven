@@ -120,7 +120,7 @@ public:
     }
 
     double getPeriod(){
-        return .005;
+        return .001;
     }
 
     bool interruptModule(){

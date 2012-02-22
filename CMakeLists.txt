@@ -1,3 +1,5 @@
+
+
 # Copyright: (C) 2010 RobotCub Consortium
 # Authors: Francesco Rea
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
@@ -22,8 +24,8 @@ include(iCubOptions)
 include(iCubHelpers)
 
 SET(NESTED_BUILD TRUE)
-SET(EMORPHLIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/emorph_lib)
-SET(EMORPHLIB_INCLUDE_DIRS ${EMORPHLIB_DIR}/include)
+#SET(EMORPHLIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/emorph_lib)
+SET(EMORPHLIB_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/emorph_lib/include)
 
 message("EMORPHLIB_DIR ${EMORPHLIB_DIR}")
 message("EMORPHLIB_INCLUDE_DIRS ${EMORPHLIB_INCLUDE_DIRS}")

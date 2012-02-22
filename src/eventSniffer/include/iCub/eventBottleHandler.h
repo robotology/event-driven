@@ -28,10 +28,8 @@
 
 
 
-//#include <iCub/convert.h>
+
 #include <iCub/emorph/eventBottle.h>
-///#include <iCub/unmask.h> // Should use library instead of this
-//#include <iCub/config.h>
 
 #include <yarp/os/Network.h>
 #include <yarp/os/BufferedPort.h>

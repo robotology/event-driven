@@ -201,7 +201,7 @@ void flowViewer::run(VelocityBuffer& data)
     img=mBaseImg;
 
 
-    medianFilter2D(data);
+//    medianFilter2D(data);
 //    medianFilterSeprabale(data);
 
     size = data.getSize();
