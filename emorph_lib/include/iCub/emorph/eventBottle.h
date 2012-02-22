@@ -29,7 +29,7 @@ public:
     eventBottle(char*, int);
     ~eventBottle();
 
-    void operator =(const eventBottle&);
+    void operator =(eventBottle&);
     eventBottle(const eventBottle&);
 
     virtual bool write(yarp::os::ConnectionWriter&);
@@ -37,7 +37,7 @@ public:
 
     void set_data(char*, int);
 
-    yarp::os::Bottle* get_packet()    { return packet; };
+    yarp::os::Bottle* get_packet()  { return packet; };
     int get_sizeOfPacket(){ return size_of_the_packet; };
 
 private:
