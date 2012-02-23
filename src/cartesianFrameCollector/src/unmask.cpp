@@ -191,7 +191,7 @@ void unmask::updateImage(AddressEvent* ptr) {
     cartY     = ptr->getY();
     camera    = ptr->getChannel();
     polarity  = ptr->getPolarity();
-    printf("blob %d %d %d %d \n", cartX, cartY, camera, polarity);
+    //printf("blob %d %d %d %d \n", cartX, cartY, camera, polarity);
     
     timestamp = lastRecTimestamp;
 
@@ -336,20 +336,38 @@ void unmask::unmaskData(Bottle* packets) {
     //uint32_t* buf2 = (uint32_t*)i_buffer;
     //uint16_t* buf1 = (uint16_t*)i_buffer;
     unsigned long timestamp;
-    
-    Time::delay(1.0);
           
     //eldesttimestamp = 0;
     int i = 0;
-    eEventQueue q;
+    eEventQueue q;  
+    printf("Bottle: \n");
+    if(packets->isNull()) {
+        printf("null bottle \n");
+    }
+    else {
+        printf("bottle dimension %d \n", packets->size());
+        //for (int j = 0; i < packets->size(); j++) {
+        //    printf(">%d  \n", packets->get(j).asInt());
+        //}
+        //printf("%s \n", packets->toString().c_str());
+    }
+    
+    printf("calling the decode \n"); 
+    eEvent::decode(*packets,q);
+    printf("after the decode \n");
+
+
+    /*
     if(eEvent::decode(*packets,q)) {
-        printf("deque size %d \n", (int) q.size());
+        printf("pointer %08X \n",  &q);
+        printf("deque size %d \n \n", (int) q.size());
         int dequeSize = q.size();
 #ifdef VERBOSE
         fprintf(uEvents, " dim : %d \n", dequeSize);
 #endif
         for (int evt = 0; evt < dequeSize; evt++) {
             //printf("evt : %d \n", evt);
+            
             if(q[evt] != 0) {
                 
                 //********** extracting the event information **********************
@@ -368,7 +386,7 @@ void unmask::unmaskData(Bottle* packets) {
                         //    printf("null address \n");
                         //}
                         
-                        updateImage(ptr);                           
+                        //updateImage(ptr);                           
                     }
                 }
                 else if(q[evt]->getType()=="TS") {
@@ -386,7 +404,7 @@ void unmask::unmaskData(Bottle* packets) {
                 else {
                     printf("not recognized");
                 }
-                
+              
             }
             else {
                 printf("null q[evt] \n");
@@ -396,6 +414,7 @@ void unmask::unmaskData(Bottle* packets) {
     else {
         printf("ERROR in DECODINg  \n");
     }
+    */
 }
 
 
