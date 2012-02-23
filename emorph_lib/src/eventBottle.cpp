@@ -41,7 +41,7 @@ eventBottle::eventBottle(char* i_data, int i_size) {
     }
     
     size_of_the_packet = packet->size();
-    packetPointer = new char;    
+    packetPointer = new char;   // never used 
        
     /*
     packetPointer = new char[32000];
@@ -118,16 +118,20 @@ void eventBottle::set_data(char* i_data, int i_size) {
 bool eventBottle::write(yarp::os::ConnectionWriter& connection) {
     connection.appendInt(BOTTLE_TAG_LIST + BOTTLE_TAG_BLOB + BOTTLE_TAG_INT);
     connection.appendInt(2);        // four elements
-    connection.appendInt(size_of_the_packet);
-    int ceilSizeOfPacket = size_of_the_packet * 4;   // number of 32bit word times 4bytes
-    //printf("size of the packet %d \n", ceilSizeOfPacket);
+    
     //bool nullB = packet->isNull();
     //printf("packet is null %d \n", nullB);
-    ConstString strBottle = packet->toString();
+    //ConstString strBottle = packet->toString();
     size_t binaryDim;
     packetPointer = (char*) packet->toBinary(&binaryDim);
+    //connection.appendInt(size_of_the_packet);
+    connection.appendInt(binaryDim);
+    int ceilSizeOfPacket = size_of_the_packet * 4;   // number of 32bit word times 4bytes
+    printf("size of the packet %d \n", ceilSizeOfPacket);
+    printf("comparing with the binaryDim: %d \n", binaryDim);
     //printf("dimension of the bottle in bytes %d \n", binaryDim);
-    connection.appendBlock(packetPointer,ceilSizeOfPacket); //casting bottle into char*
+    //connection.appendBlock(packetPointer,ceilSizeOfPacket); //casting bottle into char*
+    connection.appendBlock(packetPointer,binaryDim);
     connection.convertTextMode();   // if connection is text-mode, convert!
     return true;
 }
@@ -151,11 +155,11 @@ bool eventBottle::read(yarp::os::ConnectionReader& connection) {
     if (ct!=2)
         return false;
     printf("expecting the second part of the communication \n");
-    size_of_the_packet = connection.expectInt();
-    int ceilSizeOfPacket = size_of_the_packet * 4; // number of 32 bit word times 4bytes
-    
-    connection.expectBlock(packetPointer, ceilSizeOfPacket);
-    packet->fromBinary(packetPointer,ceilSizeOfPacket);
+    size_of_the_packet = connection.expectInt();  //corresponds to binaryDim in write
+    //int ceilSizeOfPacket = size_of_the_packet * 4; // number of 32 bit word times 4bytes
+  
+    connection.expectBlock(packetPointer, size_of_the_packet);
+    packet->fromBinary(packetPointer,size_of_the_packet);
     
     return true;
 }
