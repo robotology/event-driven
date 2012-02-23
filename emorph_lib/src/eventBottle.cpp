@@ -125,9 +125,9 @@ bool eventBottle::write(yarp::os::ConnectionWriter& connection) {
     size_t binaryDim;
     packetPointer = (char*) packet->toBinary(&binaryDim);
     //connection.appendInt(size_of_the_packet);
-    connection.appendInt(binaryDim);
+    connection.appendInt(size_of_the_packet);
     int ceilSizeOfPacket = size_of_the_packet * 4;   // number of 32bit word times 4bytes
-    printf("size of the packet %d \n", ceilSizeOfPacket);
+    printf("size of the packet %d \n", size_of_the_packet);
     printf("comparing with the binaryDim: %d \n", binaryDim);
     //printf("dimension of the bottle in bytes %d \n", binaryDim);
     //connection.appendBlock(packetPointer,ceilSizeOfPacket); //casting bottle into char*
@@ -154,11 +154,11 @@ bool eventBottle::read(yarp::os::ConnectionReader& connection) {
     int ct = connection.expectInt();
     if (ct!=2)
         return false;
-    size_of_the_packet = connection.expectInt();  //corresponds to binaryDim in write
-    //int ceilSizeOfPacket = size_of_the_packet * 4; // number of 32 bit word times 4bytes
+    size_of_the_packet = connection.expectInt();  
+    int binaryDim = size_of_the_packet * 4;      // number of 32 bit word times 4bytes
   
-    connection.expectBlock(packetPointer, size_of_the_packet);
-    packet->fromBinary(packetPointer,size_of_the_packet);
+    connection.expectBlock(packetPointer,binaryDim );
+    packet->fromBinary(packetPointer,binaryDim);
     
     return true;
 }

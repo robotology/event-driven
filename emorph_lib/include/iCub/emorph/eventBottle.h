@@ -38,12 +38,14 @@ public:
     void set_data(char*, int);
 
     yarp::os::Bottle* get_packet()  { return packet; };
-    int get_sizeOfPacket(){ return size_of_the_packet; };
+    int get_sizeOfPacket()  { return size_of_the_packet; };
+    int get_bytesOfPacket() { return byte_of_the_packet; };
 
 private:
     yarp::os::Bottle* packet;
     char* packetPointer;
     int size_of_the_packet;
+    int byte_of_the_packet;
 };
 
 
