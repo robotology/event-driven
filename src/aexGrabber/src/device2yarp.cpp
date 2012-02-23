@@ -827,7 +827,7 @@ void  device2yarp::run() {
             //address event sequence error
             tempC_unmasked = (tempA & 0x03000000) >> 24; // address error
             if(tempC_unmasked == 0x03) {
-                printf("ADDRESS ERROR %08X \n", tempA);
+                //printf("ADDRESS ERROR %08X \n", tempA);
                 countErrorsGAEP3++;
             }            
             
@@ -886,7 +886,7 @@ void  device2yarp::run() {
             //address event sequence error
             tempC_unmasked = (tempA & 0x03000000) >> 24; // address error
             if(tempC_unmasked == 0x03) {
-                printf("ADDRESS ERROR2 %08X \n", tempA);
+                //printf("ADDRESS ERROR2 %08X \n", tempA);
                 countErrorsGAEP3++;
             }
             
