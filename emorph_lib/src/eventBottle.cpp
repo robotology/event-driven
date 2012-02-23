@@ -146,7 +146,7 @@ bool eventBottle::write(yarp::os::ConnectionWriter& connection) {
 
 
 bool eventBottle::read(yarp::os::ConnectionReader& connection) {
-    printf("reading \n");
+    
     connection.convertTextMode();   // if connection is text-mode, convert!
     int tag = connection.expectInt();
     if (tag != BOTTLE_TAG_LIST+BOTTLE_TAG_BLOB+BOTTLE_TAG_INT)
@@ -154,7 +154,6 @@ bool eventBottle::read(yarp::os::ConnectionReader& connection) {
     int ct = connection.expectInt();
     if (ct!=2)
         return false;
-    printf("expecting the second part of the communication \n");
     size_of_the_packet = connection.expectInt();  //corresponds to binaryDim in write
     //int ceilSizeOfPacket = size_of_the_packet * 4; // number of 32 bit word times 4bytes
   
