@@ -139,9 +139,11 @@ bool cfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
      *checking whether the user wants exclusively to send events as bottles
      */
     if( rf.check("bottleHandler")) {
+        printf("set the bottleHandler flag true \n");
         cfThread->setBottleHandler(true);
     }
     else {
+        printf("set the bottleHandler flag false \n");
         cfThread->setBottleHandler(false);
     }
 

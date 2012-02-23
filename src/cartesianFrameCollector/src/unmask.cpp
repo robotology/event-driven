@@ -88,7 +88,7 @@ unmask::unmask() : RateThread(UNMASKRATETHREAD){
 
     wrapAdd = 0;
     //fopen_s(&fp,"events.txt", "w"); //Use the unmasked_buffer
-    uEvents = fopen("uevents.txt","w");
+    uEvents = fopen("cartesianFrameCollector.uevents.txt","w+");
 }
 
 bool unmask::threadInit() {
@@ -322,6 +322,8 @@ void unmask::unmaskData(Bottle* packets) {
     //AER_struct sAER
     count++;
     int num_events = packets->size();
+    printf("packet size %d \n", num_events);
+    
     //if(dvsMode) {
     //    num_events = i_sz / 4;    // pointing to events made of 4 bytes
     //}
@@ -334,30 +336,66 @@ void unmask::unmaskData(Bottle* packets) {
     //uint32_t* buf2 = (uint32_t*)i_buffer;
     //uint16_t* buf1 = (uint16_t*)i_buffer;
     unsigned long timestamp;
+    
+    Time::delay(1.0);
           
     //eldesttimestamp = 0;
     int i = 0;
     eEventQueue q;
     if(eEvent::decode(*packets,q)) {
-        for (int evt = 0; evt < num_events; evt++) {
-            /*********** extracting the event information **********************/
-            // to identify the type of the packet
-            // user can rely on the getType() method
-            if (q[evt]->getType()=="AE") {
-                // identified an  address event
-                AddressEvent* ptr=dynamic_cast<AddressEvent*>(q[evt]);
-                if (ptr!=NULL) {
-                    //updateImage(ptr);    
+        printf("deque size %d \n", (int) q.size());
+        int dequeSize = q.size();
+#ifdef VERBOSE
+        fprintf(uEvents, " dim : %d \n", dequeSize);
+#endif
+        for (int evt = 0; evt < dequeSize; evt++) {
+            //printf("evt : %d \n", evt);
+            if(q[evt] != 0) {
+                
+                //********** extracting the event information **********************
+                // to identify the type of the packet
+                // user can rely on the getType() method
+                if (q[evt]->getType()=="AE") {
+                    //printf("address event \n");
+                    // identified an  address event
+                    AddressEvent* ptr=dynamic_cast<AddressEvent*>(q[evt]);
+                    if(ptr->isValid()) { 
+#ifdef VERBOSE                      
+                        fprintf(uEvents,"content: %s \n", ptr->getContent().toString().c_str());                           
+#endif
+                        //printf("%d %d %d %d \n",ptr->getX(), ptr->getY(), ptr->getChannel(), ptr->getPolarity());
+                        //if((ptr->getX() == 0) && (ptr->getY() == 0) && (ptr->getChannel()==0) && (ptr->getPolarity() == 0)) {
+                        //    printf("null address \n");
+                        //}
+                        
+                        updateImage(ptr);                           
+                    }
                 }
+                else if(q[evt]->getType()=="TS") {
+                    //printf("timestamp \n");
+                    TimeStamp* ptr=dynamic_cast<TimeStamp*>(q[evt]);
+#ifdef VERBOSE
+                    if(ptr->isValid()) {                       
+                        fprintf(uEvents,"content: %08x \n", (unsigned int) ptr->getStamp());    
+                    }
+#endif
+                    //identified an time stamp event
+                    lastRecTimestamp = (unsigned int) ptr->getStamp();
+                    //printf("lastTimestamp Received %08x \n", lastRecTimestamp);
+                }
+                else {
+                    printf("not recognized");
+                }
+                
             }
-            else if(q[evt]->getType()=="TS") {
-                TimeStamp* ptr=dynamic_cast<TimeStamp*>(q[evt]);
-                //identified an time stamp event
-                lastRecTimestamp = (unsigned int) ptr->getStamp();
-                //printf("lastTimestamp Received %08x \n", lastRecTimestamp);
-            }            
+            else {
+                printf("null q[evt] \n");
+            }
         } //end of for   
     } // end eEvent::decode
+    else {
+        printf("ERROR in DECODINg  \n");
+    }
 }
 
 

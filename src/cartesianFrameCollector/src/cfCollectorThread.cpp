@@ -330,7 +330,7 @@ void cfCollectorThread::run() {
     }
     else {
         if(0 != receivedBottle) {
-            //unmask_events->unmaskData(receivedBottle);
+            unmask_events->unmaskData(receivedBottle);
         }
     }
 
