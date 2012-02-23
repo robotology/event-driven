@@ -43,7 +43,7 @@ using namespace std;
 #define dim_window 5
 #define synch_time 1
 
-//#define VERBOSE
+#define VERBOSE
 
 cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
     responseGradient = 127;
@@ -75,7 +75,7 @@ bool cfCollectorThread::threadInit() {
     //outPort.open(getName("/left:o").c_str());
     //outPortRight.open(getName("/right:o").c_str());
 
-    fout = fopen("./dump.txt","w+");
+    fout = fopen("./cartesianFrameCollector.dump.txt","w+");
 
     resize(retinalSize, retinalSize);
     printf("starting the converter!!!.... \n");
@@ -272,9 +272,12 @@ void cfCollectorThread::run() {
         cfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
     }
     else {
-        receivedBottle = ebHandler->extractBottle();
+        receivedBottle = ebHandler->extractBottle();      
+        //printf("received Bottle %08x \n ", receivedBottle);
     }
     
+    
+
     //int countValid = prepareUnmasking(bufferCopy, &codecBottle, u);
     //printf("countValid: %d \n", countValid);
     
@@ -282,6 +285,7 @@ void cfCollectorThread::run() {
     int num_events = CHUNKSIZE / 8 ;
     uint32_t* buf2 = (uint32_t*)bufferCopy;
 
+    /*
 #ifdef VERBOSE
     fprintf(fout,"##############");
     for (int evt = 0; evt < num_events; evt++) {
@@ -290,6 +294,7 @@ void cfCollectorThread::run() {
         fprintf(fout,"0x%08x 0x%08x \n",blob, t);
     }
 #endif
+    */
     
 
     //getting the time
@@ -324,14 +329,30 @@ void cfCollectorThread::run() {
 #endif
 
     // extract a chunk/unmask the chunk
-    // printf("verb %d \n",verb);
+#ifdef VERBOSE
+    if(receivedBottle!=0){
+        fprintf(fout, "dim: %d \n",receivedBottle->size());
+        //plotting out
+        string str;
+        int chksum;
+        for (int i=0; i < receivedBottle->size(); i++) {
+            fprintf(fout,"%08X \n", receivedBottle->get(i).asInt());
+            //printf("%08X \n", receivedBottle->get(i).asInt());
+            int chksum = receivedBottle->get(i).asInt() % 255;
+                str[i] = (char) chksum;
+        }
+        fprintf(fout,"chksum: %s \n", str.c_str());
+        fprintf(fout,"----------------------------- \n");            
+    }
+#endif  
     if(!bottleHandler) {
         unmask_events->unmaskData(bufferCopy,CHUNKSIZE,verb);
     }
-    else {
+    else {        
         if(0 != receivedBottle) {
+            //printf("asking for unmasking \n");
             unmask_events->unmaskData(receivedBottle);
-        }
+        }        
     }
 
     if(verb) {

@@ -340,21 +340,20 @@ void unmask::unmaskData(Bottle* packets) {
     //eldesttimestamp = 0;
     int i = 0;
     eEventQueue q;  
-    printf("Bottle: \n");
     if(packets->isNull()) {
         printf("null bottle \n");
     }
     else {
-        printf("bottle dimension %d \n", packets->size());
-        //for (int j = 0; i < packets->size(); j++) {
-        //    printf(">%08x  \n", (unsigned int) packets->get(j).asInt());
-        //}
-        printf("%s \n", packets->toString().c_str());
+        fprintf(uEvents, "bottle dimension %d \n", packets->size());
+        //printf("is Null? %d \n", packets->isNull());
+        for (int j = 0; j < packets->size(); j++) {
+            //printf(">%08x  \n", (unsigned int) packets->get(j).asInt());
+            fprintf(uEvents, ">%08x  \n", (unsigned int) packets->get(j).asInt());
+        }
+        //printf("%s \n", packets->toString().c_str());
+        fprintf(uEvents,"--- \n");
     }
     
-    //printf("calling the decode \n"); 
-    //eEvent::decode(*packets,q);
-    //printf("after the decode \n");
 
 
     /*
