@@ -347,14 +347,14 @@ void unmask::unmaskData(Bottle* packets) {
     else {
         printf("bottle dimension %d \n", packets->size());
         //for (int j = 0; i < packets->size(); j++) {
-        //    printf(">%d  \n", packets->get(j).asInt());
+        //    printf(">%08x  \n", (unsigned int) packets->get(j).asInt());
         //}
-        //printf("%s \n", packets->toString().c_str());
+        printf("%s \n", packets->toString().c_str());
     }
     
-    printf("calling the decode \n"); 
-    eEvent::decode(*packets,q);
-    printf("after the decode \n");
+    //printf("calling the decode \n"); 
+    //eEvent::decode(*packets,q);
+    //printf("after the decode \n");
 
 
     /*

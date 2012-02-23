@@ -32,6 +32,7 @@
 #include <string>
 #include <ctime>
 #include <list>
+#include <string>
 
 #define VERBOSE
 #define BUFFERDIM 1000
@@ -78,8 +79,6 @@ eventBottleHandler::eventBottleHandler() {
     fout = fopen("cartesianFrameCollector.eventBottleHandler.txt", "w+");
 }
 
-
-
 void eventBottleHandler::reset() {
     memset(converterBuffer_copy,0,BUFFERDIM);
 }
@@ -121,27 +120,32 @@ void eventBottleHandler::onRead(eventBottle& i_ub) {
     //mutex.wait();    
     semBottleBuffer[insertPosition]->wait();
     // receives the buffer and saves it
-    int dim = i_ub.get_sizeOfPacket() ;      // number of words  
+    int dim = i_ub.get_sizeOfPacket() ;      // number of words 
+    //printf("%d dim : %d", insertPosition,dim);
     receivedBufferSize = dim;
     receivedBottle = i_ub.get_packet();
+    //printf("%d packet->size %d \n",insertPosition,receivedBottle->size() );
     //receivedBottle = (Bottle*) receivedBuffer;    
 #ifdef VERBOSE
     int num_events = dim >> 3 ;
     fprintf(fout, "dim: %d \n",dim);
     //plotting out
-    for (int i=0; i < 10; i++) {
+    string str;
+    int chksum;
+    for (int i=0; i < receivedBottle->size(); i++) {
         fprintf(fout,"%08X \n", receivedBottle->get(i).asInt());
-        printf("%08X \n", receivedBottle->get(i).asInt());
+        //printf("%08X \n", receivedBottle->get(i).asInt());
+        int chksum = receivedBottle->get(i).asInt() % 255;
+        str[i] = (char) chksum;
     }
+    fprintf(fout,"chksum: %s \n", str.c_str());
     fprintf(fout,"----------------------------- \n");
 #endif
-    Bottle* fakeBottle = new Bottle;
-    fakeBottle->addInt(1);
-    fakeBottle->addInt(2);
-    fakeBottle->addInt(3);
-    bufferBottle[insertPosition]  = receivedBottle;
+
+    bufferBottle[insertPosition]  = receivedBottle;    
     semBottleBuffer[insertPosition]->post();
     //mutex.post();
+    
     
 
     // changing the value of the insert position
