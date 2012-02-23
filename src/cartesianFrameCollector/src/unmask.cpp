@@ -344,17 +344,20 @@ void unmask::unmaskData(Bottle* packets) {
         printf("null bottle \n");
     }
     else {
-        fprintf(uEvents, "bottle dimension %d \n", packets->size());
+        fprintf(uEvents,"dim %d \n", packets->size());
+        string str;
+        int chksum;
         //printf("is Null? %d \n", packets->isNull());
         for (int j = 0; j < packets->size(); j++) {
             //printf(">%08x  \n", (unsigned int) packets->get(j).asInt());
             fprintf(uEvents, ">%08x  \n", (unsigned int) packets->get(j).asInt());
+            chksum = packets->get(i).asInt() % 255;
+            str[i] = (char) chksum;
         }
         //printf("%s \n", packets->toString().c_str());
+        fprintf(uEvents,"chksum: %s \n", str.c_str());
         fprintf(uEvents,"--- \n");
     }
-    
-
 
     /*
     if(eEvent::decode(*packets,q)) {
