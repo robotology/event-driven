@@ -18,6 +18,7 @@
 #ifndef AERGRABBER_H_
 #define AERGRABBER_H_
 
+
 #include <math.h>
 
 #include <iCub/emorph/eventBuffer.h>
@@ -28,18 +29,24 @@
 #include <yarp/os/Time.h>
 #include <iostream>
 
+#include <vector>
+#include <queue>
+
 #include "CameraEvent.h"
 #include "MyMatrix.h"
 #include "param.h"
 
-#define BUFFER_SIZE 60000
+//#define BUFFER_SIZE 10000
+//#define TMPORAL_WINDOW_SZ 5
 
-class AERGrabber : public yarp::os::BufferedPort<eventBuffer>{
 
 
-    CameraEvent * evntBuffer [BUFFER_SIZE]; /*Buffer of events received from one of the eyes*/
-    int firstIdx;                         /*index of the earliest event in the evntBuffer*/
-    int lastIdx;                          /* index of the first free space in the evntBuffer*/
+class AERGrabber : public yarp::os::BufferedPort <eventBuffer> {
+
+    queue< vector< CameraEvent * > > evtBuffer; /*Buffer of events received from one of the eyes*/
+    vector< CameraEvent * > evtFrame;
+
+
     yarp::os::Semaphore eBufferMutex;     /* a semaphore to access evntBuffer and firstIdx and lastIdx
                                               -- is used in onRead and getEvents function*/
 
@@ -53,9 +60,13 @@ class AERGrabber : public yarp::os::BufferedPort<eventBuffer>{
                                                             at each pixel*/
 
 
+
     unsigned long wrapAddup;
     unsigned long lastFrameTS;
     unsigned long frameInv;
+
+    inline void freeBuffer(vector< CameraEvent * >);
+
 
 public:
 

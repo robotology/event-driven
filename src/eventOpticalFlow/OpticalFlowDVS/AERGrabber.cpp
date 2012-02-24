@@ -24,13 +24,16 @@ AERGrabber::AERGrabber(yarp::os::Semaphore * sigEvents, unsigned long t)
 
 	evntsMutex = sigEvents;
 	frameInv = t;
-    firstIdx = 0;
-    lastIdx = 0;
-    lastFrameTS = 0;
+	lastFrameTS = 0;
+    wrapAddup = 0;
     onTimestamps.resize(RETINA_SIZE_R + 2*RELIABLE_NGHBRHD, RETINA_SIZE_C + 2*RELIABLE_NGHBRHD);
     onTimestamps.initialize(0);
     offTimestamps.resize(RETINA_SIZE_R + 2*RELIABLE_NGHBRHD, RETINA_SIZE_C + 2*RELIABLE_NGHBRHD);
     offTimestamps.initialize(0);
+
+    //TODO evtBuffer.reserve();
+    //TODO evtFrame.reserve();
+
 }
 
 
@@ -42,8 +45,7 @@ void AERGrabber::onRead(eventBuffer & eBuffer){
     unsigned long tsPacket, timestamp, wraparounTS;
     unsigned long blob;
 
-
-    eventNo = eBuffer.get_sizeOfPacket()/4;
+   eventNo = eBuffer.get_sizeOfPacket()/4;
 
     uint32_t* buf2 = (uint32_t*) eBuffer.get_packet();
     for (int evt = 0; evt < eventNo; ) {
@@ -74,20 +76,28 @@ void AERGrabber::onRead(eventBuffer & eBuffer){
             evntClmnIdx = cartX  + SPATIAL_MARGINE_ADDUP;
             evntRowIdx = cartY  + SPATIAL_MARGINE_ADDUP;
 
-            eBufferMutex.wait();
-            if (lastIdx < BUFFER_SIZE){
+//            if (lastIdx < BUFFER_SIZE){
                 CameraEvent * evnt = new CameraEvent(evntRowIdx, evntClmnIdx, polarity, timestamp);
-                evntBuffer [lastIdx] = evnt;
-                lastIdx++;
-            }
-            eBufferMutex.post();
+                evtFrame.push_back(evnt);
+//            }
+
         }
 
         if (timestamp - lastFrameTS > frameInv){ // when timeInv(nano secons) passes, send a signal
         	evntsMutex ->post();
         	lastFrameTS= timestamp;
+
+        	eBufferMutex.wait();
+        	evtBuffer.push(evtFrame);
+        	eBufferMutex.post();
+
+        	evtFrame.clear();
         }
+
     }
+
+
+
 }
 
 bool AERGrabber::isReliableEvent (short row, short clmn, short polarity, unsigned long ts){
@@ -123,27 +133,45 @@ CameraEvent ** AERGrabber::getEvents(int & evenNo){
     CameraEvent ** ptr;
     evenNo = 0;
 
+    vector< CameraEvent * > eFrame;
+
+
     eBufferMutex.wait();
-    if (firstIdx < lastIdx ){
-        evenNo = lastIdx - firstIdx;
-        result = new CameraEvent* [lastIdx - firstIdx];   //allocate memory for the result
+    eFrame = evtBuffer.front();
+    evtBuffer.pop();
+    eBufferMutex.post();
+
+    evenNo = eFrame.size();
+
+    if (evenNo > 0){
+        result = new CameraEvent* [evenNo];   //allocate memory for the result
         ptr = result;
         //copy from evntBuffer[firstIdx-lastIdx]
-        for (int cnt = firstIdx; cnt < lastIdx; ++cnt) {
-            *ptr++ = evntBuffer[cnt];
+        for (int cnt = 0; cnt < evenNo; ++cnt) {
+            *ptr++ = eFrame.at(cnt);
         }
-        firstIdx = 0;
-        lastIdx =  0;
     }
-    eBufferMutex.post();
+
     return result;
 }
 
+inline void AERGrabber::freeBuffer(vector< CameraEvent * > f){
+
+    int sz = f.size();
+    for (int i = 0; i < sz; ++i) {
+        delete f.at(i);
+    }
+    f.clear();
+
+}
 
 AERGrabber::~AERGrabber(){
 	cout << "AER grabber start cleaning" << endl;
-    for (int i = 0; i < lastIdx; ++i) {
-        delete evntBuffer[i];
+	int sz = evtBuffer.size();
+
+	for (int j = 0; j < sz; ++j) {
+	    freeBuffer( evtBuffer.front());
+	    evtBuffer.pop();
     }
 
     cout << "AER grabber is closed happily" << endl;
