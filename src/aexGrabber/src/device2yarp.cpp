@@ -801,10 +801,12 @@ void  device2yarp::run() {
             lastAEindex = countData;
             countInWraps++;
             
+            a &= 0x0000FFFF; //removing extra bits which do not match the protocol
+
             if (save) {	  
                 fprintf(fout,"%08X \n",a);
             }
-            
+                      
             buf2[k2++] = a;   // passing the address event to the data flow to send
             countEventSent++;
         }
