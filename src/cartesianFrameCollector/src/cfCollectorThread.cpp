@@ -299,10 +299,10 @@ void cfCollectorThread::run() {
 
     //getting the time
     endTimer = Time::now();
-    //double interval  = (endTimer - startTimer) * 1000000; //interval in us
-    double interval  = 5 * 1000;
+    double interval  = (endTimer - startTimer) * 1000000; //interval in us
+    //double interval  = 5 * 1000;
     double procInter = interval -interval2;
-    //printf("procInter %f \n", procInter);
+    printf("procInter %f \n", procInter);
     startTimer = Time::now();
 
 #ifdef WRAP_COS
@@ -360,13 +360,15 @@ void cfCollectorThread::run() {
       countStop = 0;
     }
     
-    //gettin the time between two threads
+    
+    //getting the time between two threads
     gettimeofday(&tvend, NULL);
     //Tnow = ((u64)tvend.tv_sec) * 1000000 + ((u64)tvstart.tv_usec);
     Tnow = ((tvend.tv_sec * 1000000 + tvend.tv_usec)
 	    - (tvstart.tv_sec * 1000000 + tvstart.tv_usec));
-    //printf("timeofday>%ld\n",Tnow );
+    printf("timeofday>%ld\n",Tnow );
     gettimeofday(&tvstart, NULL);       
+    
         
     /*if(true){
       //printf("Saving in file \n");

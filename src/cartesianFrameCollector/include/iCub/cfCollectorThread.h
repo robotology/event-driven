@@ -47,7 +47,7 @@
 #include <iCub/eventBottleHandler.h>
 
 //typedef unsigned long long int uint64_t;
-#define u64 uint64_t
+//#define u64 uint64_t
 typedef yarp::os::NetUint32 u32;
 
 class cfCollectorThread : public yarp::os::RateThread {
@@ -56,7 +56,7 @@ private:
     int count;                          // loop counter of the thread
     struct timeval tvstart,tvend;
     //struct timespec start_time, stop_time;
-    u64 Tnow;
+    long int Tnow;
     unsigned long precl;
     unsigned long lc;
     unsigned long lcprev;

@@ -156,10 +156,7 @@ void eventBottleHandler::onRead(eventBottle& i_ub) {
 #endif    
     //printf("next istructyion will post the semaphore in onRead \n");
     semBottleBuffer[insertPosition]->post();
-    //-----------------------------------------------
-
-    
- 
+    //----------------------------------------------
 
     // changing the value of the insert position
     mutex.wait();
