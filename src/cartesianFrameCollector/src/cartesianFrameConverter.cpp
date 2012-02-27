@@ -36,7 +36,7 @@
 #include <inttypes.h>
 #include <iCub/config.h>
 
-#define VERBOSE
+//#define VERBOSE
 
 using namespace yarp::os;
 using namespace yarp::sig;

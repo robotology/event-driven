@@ -43,7 +43,7 @@ using namespace std;
 #define dim_window 5
 #define synch_time 1
 
-#define VERBOSE
+//#define VERBOSE
 
 cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
     responseGradient = 127;

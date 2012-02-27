@@ -42,7 +42,7 @@ using namespace emorph::ecodec;
 #define UNMASKRATETHREAD 1
 #define constInterval 100000;
 
-
+//#define VERBOSE
 
 //TODO : remove inheretance of this class from ratethread. No reason to be ratethread
 unmask::unmask() : RateThread(UNMASKRATETHREAD){
@@ -88,7 +88,8 @@ unmask::unmask() : RateThread(UNMASKRATETHREAD){
 
     wrapAdd = 0;
     //fopen_s(&fp,"events.txt", "w"); //Use the unmasked_buffer
-    uEvents = fopen("cartesianFrameCollector.uevents.txt","w+");
+    uEvents    = fopen("cartesianFrameCollector.uevents.txt","w+");
+    maskEvents = fopen("cartesianFrameCollector.maskEvents.txt","w+");
 }
 
 bool unmask::threadInit() {
@@ -187,35 +188,35 @@ void unmask::run() {
 
 void unmask::updateImage(AddressEvent* ptr) {
     // ********** extract properties **********************************
-    cartX     = ptr->getX();
-    cartY     = ptr->getY();
+    cartY     = ptr->getX();
+    cartX     = ptr->getY();
     camera    = ptr->getChannel();
     polarity  = ptr->getPolarity();
-    //printf("blob %d %d %d %d \n", cartX, cartY, camera, polarity);
+    //printf("blob %04d %04d %04d %04d \n", cartX, cartY, camera, polarity);
     
     timestamp = lastRecTimestamp;
 
-    // ************** created the images ***************************************
-    //correcting the orientation of the camera
+    // // // // ************** created the images ***************************************
+    // // // //correcting the orientation of the camera
     cartY = retinalSize - cartY - 1;   //corrected the output of the camera (flipped the image along y axis)
     
-    if((cartX < 0)||(cartX > retinalSize)){
-        cartX = 0;
-    }
-    if((cartY < 0)||(cartY> retinalSize)){
-        cartY = 0;
-    }
-    //cartX = retinalSize - cartX;
+    // // // if((cartX < 0)||(cartX > retinalSize)){
+    // // //     cartX = 0;
+    // // // }
+    // // // if((cartY < 0)||(cartY> retinalSize)){
+    // // //     cartY = 0;
+    // // // }
+    cartX = retinalSize - cartX;
     
-    //if(cartX!=0) {
-    //    printf("retinalSize %d cartX %d cartY %d camera %d \n",retinalSize,cartX, cartY,camera);
-    //}
-    //printf("lastTimeStamp %08X \n", lasttimestamp);
+    // // // //if(cartX!=0) {
+    // // // //    printf("retinalSize %d cartX %d cartY %d camera %d \n",retinalSize,cartX, cartY,camera);
+    // // // //}
+    // // // //printf("lastTimeStamp %08X \n", lasttimestamp);
 
-    //camera is unmasked as left 0, right -1. It is converted in left 1, right 0
-    camera = camera + 1;
-    //printf("Camera %d polarity %d  \n", camera, polarity);
-    //camera: LEFT 1, RIGHT 0
+    // camera is unmasked as left 0, right -1. It is converted in left 1, right 0
+    // camera = camera + 1;
+    // // // //printf("Camera %d polarity %d  \n", camera, polarity);
+    // now camera: LEFT 1, RIGHT 0
     
     if(camera) {  // ---- camera left -------------------          
         if((cartX!=0) &&( cartY!=0) && (timestamp!=0)) {
@@ -223,13 +224,13 @@ void unmask::updateImage(AddressEvent* ptr) {
         }
                
         //TODO:: remove verb if not necessary
-        if(verb) {
+        //if(verb) {
             //for (int i = 0; i < 2; i ++) {
             //printf("verb is true %llu %llu \n", timestamp, lasttimestamp);
             //}
             //lasttimestamp = 0;
             //resetTimestamps();
-        }
+        //}
         
         
         if(timestamp > lasttimestamp) {
@@ -243,37 +244,14 @@ void unmask::updateImage(AddressEvent* ptr) {
                 
                 if(buffer[cartX + cartY * retinalSize] > 127) {
                     buffer[cartX + cartY * retinalSize] = 127;
-                }
-                
-                if(asvMode){                        
-                    if(!((cartX>=7)&&(cartX<16)&&(cartY>=7)&&(cartY<16))){
-                        buffer[cartX + 1 + cartY * retinalSize]       = responseGradient;
-                        timeBuffer[cartX + 1  + cartY * retinalSize]  = timestamp;
-                        buffer[cartX + (cartY + 1)  * retinalSize]    = responseGradient;
-                        timeBuffer[cartX + (cartY + 1) * retinalSize] = timestamp;
-                        buffer[cartX + 1 + (cartY + 1) * retinalSize]       = responseGradient;
-                        timeBuffer[cartX + 1  + (cartY + 1) * retinalSize]  = timestamp;      
-                    }
-                }
-                
+                }                
             }
-            else if(polarity < 0) {
+            else /*if(polarity < 0)*/ {
                 buffer[cartX + cartY * retinalSize] -= responseGradient;
                 timeBuffer[cartX + cartY * retinalSize] = timestamp;
                 
                 if (buffer[cartX + cartY * retinalSize] < -127) {
                     buffer[cartX + cartY * retinalSize] = -127;
-                }
-                
-                if(asvMode) {
-                    if(!((cartX>=7)&&(cartX<16)&&(cartY>=7)&&(cartY<16))){
-                        buffer[cartX + 1 + cartY * retinalSize]       = -responseGradient;
-                        timeBuffer[cartX + 1  + cartY * retinalSize]  = timestamp;
-                        buffer[cartX + (cartY + 1)  * retinalSize]    = -responseGradient;
-                        timeBuffer[cartX + (cartY + 1) * retinalSize] = timestamp;
-                        buffer[cartX + 1 + (cartY + 1) * retinalSize]       = -responseGradient;
-                        timeBuffer[cartX + 1  + (cartY + 1) * retinalSize]  = timestamp;      
-                    }
                 }
             }
         }           
@@ -285,13 +263,13 @@ void unmask::updateImage(AddressEvent* ptr) {
         }
         
         //TODO : remove if not necessary
-        if(verb) {
+        //if(verb) {
             //for (int i = 0; i < 2; i ++) {
             //printf("%llu \n", lasttimestamp);
             //}
             //lasttimestampright = 0;
             //resetTimestamps();
-        }
+        //}
         
         if( timestamp > lasttimestampright){
             lasttimestampright = timestamp;
@@ -306,7 +284,7 @@ void unmask::updateImage(AddressEvent* ptr) {
                     bufferRight[cartX + cartY * retinalSize] = 127;
                 }
             }
-            else if(polarity < 0) {
+            else /*if(polarity < 0)*/ {
                 bufferRight[cartX + cartY * retinalSize] -= responseGradient;
                 timeBufferRight[cartX + cartY * retinalSize] = timestamp;
                 
@@ -322,7 +300,7 @@ void unmask::unmaskData(Bottle* packets) {
     //AER_struct sAER
     count++;
     int num_events = packets->size();
-    printf("packet size %d \n", num_events);
+    //printf("packet size %d \n", num_events);
     
     //if(dvsMode) {
     //    num_events = i_sz / 4;    // pointing to events made of 4 bytes
@@ -344,6 +322,7 @@ void unmask::unmaskData(Bottle* packets) {
         printf("null bottle \n");
     }
     else {
+#ifdef VERBOSE
         fprintf(uEvents,"dim %d \n", packets->size());
         string str;
         int chksum;
@@ -357,66 +336,66 @@ void unmask::unmaskData(Bottle* packets) {
         //printf("%s \n", packets->toString().c_str());
         fprintf(uEvents,"chksum: %s \n", str.c_str());
         fprintf(uEvents,"--- \n");
-    }
+#endif
 
-    /*
-    if(eEvent::decode(*packets,q)) {
-        printf("pointer %08X \n",  &q);
-        printf("deque size %d \n \n", (int) q.size());
-        int dequeSize = q.size();
+        
+        //-- decoding the packet -------
+        if(eEvent::decode(*packets,q)) {
+            //printf("pointer %08X \n",  &q);
+            //printf("deque size %d \n \n", (int) q.size());
+            int dequeSize = q.size();
 #ifdef VERBOSE
-        fprintf(uEvents, " dim : %d \n", dequeSize);
+            fprintf(maskEvents, " dim : %d \n", dequeSize);
 #endif
-        for (int evt = 0; evt < dequeSize; evt++) {
-            //printf("evt : %d \n", evt);
-            
-            if(q[evt] != 0) {
-                
-                //********** extracting the event information **********************
-                // to identify the type of the packet
-                // user can rely on the getType() method
-                if (q[evt]->getType()=="AE") {
-                    //printf("address event \n");
-                    // identified an  address event
-                    AddressEvent* ptr=dynamic_cast<AddressEvent*>(q[evt]);
-                    if(ptr->isValid()) { 
+            for (int evt = 0; evt < dequeSize; evt++) {
+                //printf("evt : %d \n", evt);                
+                if(q[evt] != 0) {                    
+                    //********** extracting the event information **********************
+                    // to identify the type of the packet
+                    // user can rely on the getType() method
+                    if (q[evt]->getType()=="AE") {
+                        //printf("address event \n");
+                        // identified an  address event
+                        AddressEvent* ptr=dynamic_cast<AddressEvent*>(q[evt]);
+                        if(ptr->isValid()) { 
 #ifdef VERBOSE                      
-                        fprintf(uEvents,"content: %s \n", ptr->getContent().toString().c_str());                           
+                            fprintf(maskEvents,"content: %s \n", ptr->getContent().toString().c_str());            
 #endif
-                        //printf("%d %d %d %d \n",ptr->getX(), ptr->getY(), ptr->getChannel(), ptr->getPolarity());
-                        //if((ptr->getX() == 0) && (ptr->getY() == 0) && (ptr->getChannel()==0) && (ptr->getPolarity() == 0)) {
-                        //    printf("null address \n");
-                        //}
-                        
-                        //updateImage(ptr);                           
+                            //printf("%d %d %d %d \n",ptr->getX(), ptr->getY(), ptr->getChannel(), ptr->getPolarity());
+                            //if((ptr->getX() == 0) && (ptr->getY() == 0) && (ptr->getChannel()==0) && (ptr->getPolarity() == 0)) {
+                            //    printf("null address \n");
+                            //}
+                            
+                            updateImage(ptr);                           
+                        }
                     }
-                }
-                else if(q[evt]->getType()=="TS") {
-                    //printf("timestamp \n");
-                    TimeStamp* ptr=dynamic_cast<TimeStamp*>(q[evt]);
+                    else if(q[evt]->getType()=="TS") {
+                        //printf("timestamp \n");
+                        TimeStamp* ptr=dynamic_cast<TimeStamp*>(q[evt]);
 #ifdef VERBOSE
-                    if(ptr->isValid()) {                       
-                        fprintf(uEvents,"content: %08x \n", (unsigned int) ptr->getStamp());    
-                    }
+                        if(ptr->isValid()) {                       
+                            fprintf(maskEvents,"content: %08x \n", (unsigned int) ptr->getStamp());    
+                        }
 #endif
-                    //identified an time stamp event
-                    lastRecTimestamp = (unsigned int) ptr->getStamp();
-                    //printf("lastTimestamp Received %08x \n", lastRecTimestamp);
+                        //identified an time stamp event
+                        lastRecTimestamp = (unsigned int) ptr->getStamp();
+                        //printf("lastTimestamp Received %08x \n", lastRecTimestamp);
+                    }
+                    else {
+                        printf("not recognized");
+                    }
                 }
                 else {
-                    printf("not recognized");
+                    printf("null q[evt] \n");
                 }
-              
-            }
-            else {
-                printf("null q[evt] \n");
-            }
-        } //end of for   
-    } // end eEvent::decode
-    else {
-        printf("ERROR in DECODINg  \n");
-    }
-    */
+            } //end of for   
+        } // end eEvent::decode
+        else {
+            printf("ERROR in DECODINg  \n");
+        }
+        
+    
+    } // end else packets->isNull;    
 }
 
 

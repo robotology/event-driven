@@ -92,7 +92,8 @@ private:
     bool dvsMode;                    // flag that initialises the typology of unmaske
     bool asvMode;                    // flag that represent the operational mode of the ASV chip
     bool wrapOcc;                    // flag that indicates when a wrapAraund has just occured
-    FILE* uEvents;
+    FILE* uEvents;                   // uEvents file for debug
+    FILE* maskEvents;                // maskEvents file for debug
     yarp::os::Semaphore countEventLocker;
     yarp::os::Semaphore countEventLocker2;
 
