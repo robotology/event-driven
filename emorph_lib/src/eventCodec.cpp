@@ -384,9 +384,9 @@ AddressEvent::AddressEvent(const Bottle &packets, const int pos)
             x=word0&0x7f;
 
             word0>>=7;
-            y=word0&0xff;
+            y=word0&0x7f;
 
-            word0>>=8;
+            word0>>=7;
             channel=word0&0x01;
 
             type="AE";

@@ -30,6 +30,7 @@
 
 using namespace std;
 using namespace yarp::os;
+using namespace emorph::ecodec;
 
 
 #define MAXVALUE 114748364 //4294967295
@@ -192,6 +193,196 @@ unsigned long* unmask::getTimeBuffer(bool camera) {
     else
         return timeBufferRight;
 }
+
+void unmask::updateImage(AddressEvent* ptr) {
+    // ********** extract properties **********************************
+    cartY     = ptr->getX();
+    cartX     = ptr->getY();
+    camera    = ptr->getChannel();
+    polarity  = ptr->getPolarity();
+    //printf("blob %04d %04d %04d %04d \n", cartX, cartY, camera, polarity);
+    
+    timestamp = lastRecTimestamp;
+
+    // // // // ************** created the images ***************************************
+    // // // //correcting the orientation of the camera
+    cartY = retinalSize - cartY - 1;   //corrected the output of the camera (flipped the image along y axis)
+    
+    // // // if((cartX < 0)||(cartX > retinalSize)){
+    // // //     cartX = 0;
+    // // // }
+    // // // if((cartY < 0)||(cartY> retinalSize)){
+    // // //     cartY = 0;
+    // // // }
+    cartX = retinalSize - cartX;
+    
+    // // // //if(cartX!=0) {
+    // // // //    printf("retinalSize %d cartX %d cartY %d camera %d \n",retinalSize,cartX, cartY,camera);
+    // // // //}
+    // // // //printf("lastTimeStamp %08X \n", lasttimestamp);
+
+    // camera is unmasked as left 0, right -1. It is converted in left 1, right 0
+    // camera = camera + 1;
+    // // // //printf("Camera %d polarity %d  \n", camera, polarity);
+    // now camera: LEFT 1, RIGHT 0
+    
+    if(camera) {  // ---- camera left -------------------          
+        if((cartX!=0) &&( cartY!=0) && (timestamp!=0)) {
+            validLeft =  true;
+        }
+        
+        if(timestamp > lasttimestamp) {
+            lasttimestamp = timestamp;
+        }
+             
+        if(timeBuffer[cartX + cartY * retinalSize] < timestamp) {
+            if(polarity > 0) {
+                buffer[cartX + cartY * retinalSize]     += responseGradient;
+                timeBuffer[cartX + cartY * retinalSize] = timestamp;
+                
+                if(buffer[cartX + cartY * retinalSize] > 127) {
+                    buffer[cartX + cartY * retinalSize] = 127;
+                }                
+            }
+            else /*if(polarity < 0)*/ {
+                buffer[cartX + cartY * retinalSize] -= responseGradient;
+                timeBuffer[cartX + cartY * retinalSize] = timestamp;
+                
+                if (buffer[cartX + cartY * retinalSize] < -127) {
+                    buffer[cartX + cartY * retinalSize] = -127;
+                }
+            }
+        }           
+    }
+    else { // --------  camera right ------------------------
+        
+        if((cartX!=0) &&( cartY!=0) && (timestamp!=0)) {
+            validRight =  true;
+        }
+        
+        if( timestamp > lasttimestampright){
+            lasttimestampright = timestamp;
+        }    
+        
+        if (timeBufferRight[cartX + cartY * retinalSize] < timestamp) {
+            if(polarity > 0) {
+                bufferRight[cartX + cartY * retinalSize] += responseGradient;
+                timeBufferRight[cartX + cartY * retinalSize] = timestamp;
+                
+                if(bufferRight[cartX + cartY * retinalSize] > 127) {
+                    bufferRight[cartX + cartY * retinalSize] = 127;
+                }
+            }
+            else /*if(polarity < 0)*/ {
+                bufferRight[cartX + cartY * retinalSize] -= responseGradient;
+                timeBufferRight[cartX + cartY * retinalSize] = timestamp;
+                
+                if (bufferRight[cartX + cartY * retinalSize] < -127) {
+                    bufferRight[cartX + cartY * retinalSize] = -127;
+                }
+            }
+        }
+    }
+}
+
+void unmask::unmaskData(Bottle* packets) {
+    //AER_struct sAER
+    count++;
+    int num_events = packets->size();
+    //printf("packet size %d \n", num_events);
+    
+    //if(dvsMode) {
+    //    num_events = i_sz / 4;    // pointing to events made of 4 bytes
+    //}
+    //else {
+    //    num_events = i_sz / 8;    // pointing to events made of 8 bytes
+    //}
+    //cout << "Number of the received events : " << num_events<< endl;
+    
+    //create a pointer that points every 4 bytes and 2 bytes (DVS mode) 
+    //uint32_t* buf2 = (uint32_t*)i_buffer;
+    //uint16_t* buf1 = (uint16_t*)i_buffer;
+    unsigned long timestamp;
+          
+    //eldesttimestamp = 0;
+    int i = 0;
+    eEventQueue q;  
+    if(packets->isNull()) {
+        printf("null bottle \n");
+    }
+    else {
+#ifdef VERBOSE
+        fprintf(uEvents,"dim %d \n", packets->size());
+        string str;
+        int chksum;
+        //printf("is Null? %d \n", packets->isNull());
+        for (int j = 0; j < packets->size(); j++) {
+            //printf(">%08x  \n", (unsigned int) packets->get(j).asInt());
+            fprintf(uEvents, ">%08x  \n", (unsigned int) packets->get(j).asInt());
+            chksum = packets->get(i).asInt() % 255;
+            str[i] = (char) chksum;
+        }
+        //printf("%s \n", packets->toString().c_str());
+        fprintf(uEvents,"chksum: %s \n", str.c_str());
+        fprintf(uEvents,"--- \n");
+#endif  
+        //-- decoding the packet -------
+        if(eEvent::decode(*packets,q)) {
+            //printf("pointer %08X \n",  &q);
+            //printf("deque size %d \n \n", (int) q.size());
+            int dequeSize = q.size();
+#ifdef VERBOSE
+            fprintf(maskEvents, " dim : %d \n", dequeSize);
+#endif
+            for (int evt = 0; evt < dequeSize; evt++) {
+                //printf("evt : %d \n", evt);                
+                if(q[evt] != 0) {                    
+                    //********** extracting the event information **********************
+                    // to identify the type of the packet
+                    // user can rely on the getType() method
+                    if (q[evt]->getType()=="AE") {
+                        //printf("address event \n");
+                        // identified an  address event
+                        AddressEvent* ptr=dynamic_cast<AddressEvent*>(q[evt]);
+                        if(ptr->isValid()) { 
+#ifdef VERBOSE                      
+                            fprintf(maskEvents,"content: %s \n", ptr->getContent().toString().c_str());            
+#endif
+                            //printf("%d %d %d %d \n",ptr->getX(), ptr->getY(), ptr->getChannel(), ptr->getPolarity());
+                            //if((ptr->getX() == 0) && (ptr->getY() == 0) && (ptr->getChannel()==0) && (ptr->getPolarity() == 0)) {
+                            //    printf("null address \n");
+                            //}
+                            
+                            updateImage(ptr);                           
+                        }
+                    }
+                    else if(q[evt]->getType()=="TS") {
+                        //printf("timestamp \n");
+                        TimeStamp* ptr=dynamic_cast<TimeStamp*>(q[evt]);
+#ifdef VERBOSE
+                        if(ptr->isValid()) {                       
+                            fprintf(maskEvents,"content: %08x \n", (unsigned int) ptr->getStamp());    
+                        }
+#endif
+                        //identified an time stamp event
+                        lastRecTimestamp = (unsigned int) ptr->getStamp();
+                        //printf("lastTimestamp Received %08x \n", lastRecTimestamp);
+                    }
+                    else {
+                        printf("not recognized");
+                    }
+                }
+                else {
+                    printf("null q[evt] \n");
+                }
+            } //end of for   
+        } // end eEvent::decode
+        else {
+            printf("ERROR in decoding; eEvent::decode failed  \n");
+        }    
+    } // end else packets->isNull;    
+}
+
 
 int unmask::unmaskData(char* i_buffer, int i_sz, AER_struct* output) {
     //cout << "Size of the received packet to unmask : " << i_sz / 8<< endl;

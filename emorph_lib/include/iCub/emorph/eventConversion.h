@@ -13,7 +13,7 @@
 
 #ifndef __evenConversionh__
 #define __evenConversionh__
-
+#include <eventCodec.h>
 #include <iostream>
 #include <sstream>
 #include <ctime>
@@ -67,6 +67,7 @@ struct aer {
  * 06/02/12 : swap the first 4bytes with the second 4bytes, new protocol of GAEP            author : Rea \n
  * 07/02/12 : made the AER_struct of short and added the camera information                 author : Rea \n
  * 09/02/12 : need to change the order of the u32 words in the struct to make compatible    author : Rea \n
+ * 27/02/12 : added the bottle as parameter of the unmask data function                     author : Rea \n 
 */
 
 
@@ -90,6 +91,7 @@ private:
     unsigned long lasttimestamp;          // last timestamp acquired for the left camera
     unsigned long lasttimestampright;     // last timestamp acquired for the right camera
     unsigned long eldesttimestamp;        // timestamp of the eldest event in the buffer 
+    unsigned long lastRecTimestamp;        // last recorded timestamp
     short cartX, cartY, polarity, camera; // unmasked information of a single event
 
     int wrapAdd;
@@ -233,6 +235,18 @@ public:
     * @param size size of the last reading from the port
     * @param output pointer to the collection of event unmasked as AER_struct
     */
+    void updateImage(emorph::ecodec::AddressEvent* ptr);
+
+    
+    void unmaskData(yarp::os::Bottle* b);
+
+    /**
+    * function that given a reference to the list of char read from the port and the number of packet received
+    * unmasks the event in term of x,y, polarity and time stamp and update the buffer
+    * @param data reference to the vector of char (the read data)
+    * @param size size of the last reading from the port
+    * @param output pointer to the collection of event unmasked as AER_struct
+    */
     int unmaskData(char* data, int size, AER_struct* output);
     
     /**
@@ -292,7 +306,6 @@ public:
      * @param evPu output of the masking
      */
     void maskEvent( short x, short y, short pol, short camera,unsigned long& evPU ) ;
-
 
     /**
      * function that set to zero the vector of timestamp of positions
