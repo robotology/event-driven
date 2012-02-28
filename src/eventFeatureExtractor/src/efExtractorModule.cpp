@@ -42,6 +42,7 @@ bool efExtractorModule::configure(yarp::os::ResourceFinder &rf) {
         printf("====  \n");
         printf("--name : name of the module \n");
         printf("--mode : (intensity) mapping to be used \n");
+        printf("--bottleHanlder             : the user select to send events only through bottle port esclusively  \n");
         printf("press CTRL-C to continue...");
         return true;
     }
@@ -91,13 +92,21 @@ bool efExtractorModule::configure(yarp::os::ResourceFinder &rf) {
 
     attach(handlerPort);                  // attach to port
 
-    
-
     efeThread = new efExtractorThread();
     efeThread->setMapURL(mapNameComplete);
     efeThread->setName(getName().c_str());
 
-
+    /* 
+     *checking whether the user wants exclusively to send events as bottles
+     */
+    if( rf.check("bottleHandler")) {
+        printf("set the bottleHandler flag true \n");
+        efeThread->setBottleHandler(true);
+    }
+    else {
+        printf("set the bottleHandler flag false \n");
+        efeThread->setBottleHandler(false);
+    }
     
     if(rf.check("verbose")) {
         efeThread->setVERBOSE(true);

@@ -23,7 +23,6 @@
  */
 
 #include <iCub/efExtractorThread.h>
-#include <iCub/cartesianFrameConverter.h>
 
 #include <cxcore.h>
 #include <cv.h>
@@ -129,6 +128,10 @@ bool efExtractorThread::threadInit() {
     inLeftPort.open(getName("/left:i").c_str());
     inRightPort.open(getName("/right:i").c_str());
     outEventPort.open(getName("/event:o").c_str());
+    
+    ebHandler = new eventBottleHandler();
+    ebHandler->useCallback();
+    ebHandler->open(getName("/retinaBottle:i").c_str());
 
     cfConverter=new cFrameConverter();
     cfConverter->useCallback();
@@ -185,8 +188,7 @@ bool efExtractorThread::threadInit() {
 
         
     }
-        
-    
+     
     leftInputImage      = new ImageOf<PixelMono>;
     leftOutputImage     = new ImageOf<PixelMono>;
     rightOutputImage    = new ImageOf<PixelMono>;
@@ -572,16 +574,17 @@ void efExtractorThread::run() {
         unsigned char* pMemL  = leftInputImage->getRawImage();
         //left.zero();
         
-        //for(int r = 0 ; r < FEATUR_SIZE ; r++){
-        //    for(int c = 0 ; c < FEATUR_SIZE ; c++){
-        //        left(r,c) = 127;
-        //    }
-        //}
+
         
         // reads the buffer received
         // saves it into a working buffer        
         //printf("returned 0x%x 0x%x \n", bufferCopy, flagCopy);
-        cfConverter->copyChunk(bufferCopy);
+        if(!bottleHandler) {
+            cfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
+        }
+        else {
+            receivedBottle = ebHandler->extractBottle();      
+        }
         
         int num_events = CHUNKSIZE >> 3 ;
         uint32_t* buf2 = (uint32_t*)bufferCopy;
@@ -617,7 +620,7 @@ void efExtractorThread::run() {
                             *bufCopy2 = buf2[2 * evt + 1]; bufCopy2++;
                             countEvent++;
                             if(VERBOSE) {
-                                fprintf(fdebug,"%08X %08X \n",t,blob);        
+                                fprintf(fdebug,"%08X %08X \n",(unsigned int) t,(unsigned int) blob);        
                             }
                         }
                     }
@@ -632,7 +635,7 @@ void efExtractorThread::run() {
                             *bufCopy2 = buf2[2 * evt + 1]; bufCopy2++;
                             countEvent++;
                             if(VERBOSE) {
-                                fprintf(fdebug,"%08X %08X \n",t,blob);        
+                                fprintf(fdebug,"%08X %08X \n",(unsigned int) t,(unsigned int) blob);        
                             }
                         }
                     }
@@ -640,7 +643,7 @@ void efExtractorThread::run() {
                         printf("undetected wrap-around \n");
                         if(VERBOSE) {
                             fprintf(fdebug,"undetected_wrap_around \n");
-                            fprintf(fdebug,"%08X %08X \n",t,blob);   
+                            fprintf(fdebug,"%08X %08X \n",(unsigned int) t,(unsigned int) blob);   
                             printf("undetected wrap aroung");
                         }
                         firstHalf = true;
