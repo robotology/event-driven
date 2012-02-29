@@ -17,7 +17,7 @@ eventBottle::eventBottle() {
     printf("default Constructor \n");
     packet = new Bottle();
     size_of_the_packet=0;
-    packetPointer = new char[32000];
+    packetPointer = new char[320000];
     //packetPointer = 0;
 }
 
@@ -41,7 +41,7 @@ eventBottle::eventBottle(char* i_data, int i_size) {
     }
     
     size_of_the_packet = packet->size();
-    packetPointer = new char;   // never used 
+    packetPointer = new char; 
        
     /*
     packetPointer = new char[32000];
