@@ -302,7 +302,7 @@ void cfCollectorThread::run() {
     double interval  = (endTimer - startTimer) * 1000000; //interval in us
     //double interval  = 5 * 1000;
     double procInter = interval -interval2;
-    printf("procInter %f \n", procInter);
+    //printf("procInter %f \n", procInter);
     startTimer = Time::now();
 
 #ifdef WRAP_COS
@@ -349,7 +349,7 @@ void cfCollectorThread::run() {
         unmask_events->unmaskData(bufferCopy,CHUNKSIZE,verb);
     }
     else {        
-        if(0 != receivedBottle) {
+        if(0 != receivedBottle->size()) {
             //printf("asking for unmasking \n");
             unmask_events->unmaskData(receivedBottle);
         }        
@@ -366,7 +366,7 @@ void cfCollectorThread::run() {
     //Tnow = ((u64)tvend.tv_sec) * 1000000 + ((u64)tvstart.tv_usec);
     Tnow = ((tvend.tv_sec * 1000000 + tvend.tv_usec)
 	    - (tvstart.tv_sec * 1000000 + tvstart.tv_usec));
-    printf("timeofday>%ld\n",Tnow );
+    //printf("timeofday>%ld\n",Tnow );
     gettimeofday(&tvstart, NULL);       
     
         

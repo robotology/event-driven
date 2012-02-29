@@ -342,8 +342,8 @@ void plotterThread::threadRelease() {
 
   printf("freeing memory \n");
  
-  // delete imageLeft;
-  //delete imageRight;
+  delete imageLeft;
+  delete imageRight;
   delete imageLeftInt;
   delete imageRightInt;
   delete imageLeftBW;
