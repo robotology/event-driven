@@ -133,6 +133,8 @@ bool efExtractorThread::threadInit() {
     ebHandler->useCallback();
     ebHandler->open(getName("/retinaBottle:i").c_str());
 
+    receivedBottle = new Bottle();
+
     cfConverter=new cFrameConverter();
     cfConverter->useCallback();
     cfConverter->setVERBOSE(VERBOSE);
@@ -227,6 +229,45 @@ bool efExtractorThread::threadInit() {
     
     printf("initialisation correctly ended \n");
     return true;
+}
+
+void efExtractorThread::interrupt() {
+    outLeftPort.interrupt();
+    outRightPort.interrupt();
+    outFeaLeftPort.interrupt();
+    outFeaRightPort.interrupt();
+    inLeftPort.interrupt();
+    inRightPort.interrupt();
+    outEventPort.interrupt();
+}
+
+void efExtractorThread::threadRelease() {
+    /* closing the ports*/
+    printf("closing the ports \n");
+    outLeftPort.close();
+    outRightPort.close();
+    outFeaLeftPort.close();
+    outFeaRightPort.close();
+    inLeftPort.close();
+    inRightPort.close();
+    outEventPort.close();
+
+    printf("deleting the buffer of events \n");
+    delete[] eventFeaBuffer;
+    delete bufferFEA;
+    delete cfConverter;
+    delete receivedBottle;
+    //delete bufferCopy;
+    //delete bufferCopy2;
+    
+    /* closing the file */
+    printf("deleting LUT \n");
+    delete[] lut;
+    
+    printf("closing the file \n");
+    fclose (pFile);
+
+    printf("efExtractorThread::threadReleas : success in releasing \n ");
 }
 
 void efExtractorThread::setName(string str) {
@@ -583,7 +624,7 @@ void efExtractorThread::run() {
             cfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
         }
         else {
-            receivedBottle = ebHandler->extractBottle();      
+             ebHandler->extractBottle(receivedBottle);      
         }
         
         int num_events = CHUNKSIZE >> 3 ;
@@ -833,41 +874,4 @@ void efExtractorThread::run() {
 */
 
 
-void efExtractorThread::interrupt() {
-    outLeftPort.interrupt();
-    outRightPort.interrupt();
-    outFeaLeftPort.interrupt();
-    outFeaRightPort.interrupt();
-    inLeftPort.interrupt();
-    inRightPort.interrupt();
-    outEventPort.interrupt();
-}
-
-void efExtractorThread::threadRelease() {
-    /* closing the ports*/
-    printf("closing the ports \n");
-    outLeftPort.close();
-    outRightPort.close();
-    outFeaLeftPort.close();
-    outFeaRightPort.close();
-    inLeftPort.close();
-    inRightPort.close();
-    outEventPort.close();
-
-    printf("deleting the buffer of events \n");
-    delete[] eventFeaBuffer;
-    delete bufferFEA;
-    delete cfConverter;
-    //delete bufferCopy;
-    //delete bufferCopy2;
-    
-    /* closing the file */
-    printf("deleting LUT \n");
-    delete[] lut;
-    
-    printf("closing the file \n");
-    fclose (pFile);
-
-    printf("efExtractorThread::threadReleas : success in releasing \n ");
-}
 

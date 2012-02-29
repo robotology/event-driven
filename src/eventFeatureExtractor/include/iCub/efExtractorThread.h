@@ -52,6 +52,7 @@ private:
     unsigned long lastTimestampLeft;    // last timestamp received for left camera
     unsigned long lastTimestampRight;   // last timestamp received from the right camera
     yarp::os::Bottle* receivedBottle;   // bottle currently extracted from the buffer
+
     yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelMono> > inLeftPort;       // port where the left event image is received
     yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelMono> > inRightPort;      // port where the right event image is received
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outLeftPort;       // port whre the output edge (left) is sent
