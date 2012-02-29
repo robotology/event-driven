@@ -640,6 +640,8 @@ void efExtractorThread::run() {
             firstHalf = false;
         }
 
+
+        //*******************************************************************************************
         for (int evt = 0; evt < num_events; evt++) {
             unsigned long t      = buf2[2 * evt];
             unsigned long blob   = buf2[2 * evt + 1];
@@ -692,7 +694,7 @@ void efExtractorThread::run() {
                 }
             }            
         }
-        
+        //**********************************************************************************************
         
         //int unreadDim = selectUnreadBuffer(bufferCopy, flagCopy, resultCopy);
         //printf("Unmasking events:  %d \n", unreadDim);
