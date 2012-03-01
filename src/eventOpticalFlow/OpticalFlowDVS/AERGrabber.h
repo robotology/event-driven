@@ -65,7 +65,7 @@ class AERGrabber : public yarp::os::BufferedPort <eventBuffer> {
     unsigned long lastFrameTS;
     unsigned long frameInv;
 
-    inline void freeBuffer(vector< CameraEvent * >);
+    inline void freeBuffer(vector< CameraEvent * > &);
 
 
 public:
