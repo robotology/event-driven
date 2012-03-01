@@ -84,14 +84,20 @@ void AERGrabber::onRead(eventBuffer & eBuffer){
         }
 
         if (timestamp - lastFrameTS > frameInv){ // when timeInv(nano secons) passes, send a signal
-        	evntsMutex ->post();
+        
         	lastFrameTS= timestamp;
 
-        	eBufferMutex.wait();
-        	evtBuffer.push(evtFrame);
-        	eBufferMutex.post();
+            if (evtFrame.size() > 10){
+     	       evntsMutex ->post();
+        	   eBufferMutex.wait();
+        	   evtBuffer.push(evtFrame);
+        	   eBufferMutex.post();
+           	   evtFrame.clear();        	   
+            }
+            else 
+                freeBuffer(evtFrame); 
+            
 
-        	evtFrame.clear();
         }
 
     }
@@ -108,16 +114,21 @@ bool AERGrabber::isReliableEvent (short row, short clmn, short polarity, unsigne
         tmp = onTimestamps(row + RELIABLE_NGHBRHD, clmn + RELIABLE_NGHBRHD);
 
         //update the pixel neighborhood in timestamps Matrix with the new value of ts
-        onTimestamps.updateSubMatrix(row, clmn, ts,              // row + RELIABLE_NGHBRHD - RELIABLE_NGHBRHD = row
-                                   2*RELIABLE_NGHBRHD + 1, 2*RELIABLE_NGHBRHD+1);
+//        onTimestamps.updateSubMatrix(row, clmn, ts,              // row + RELIABLE_NGHBRHD - RELIABLE_NGHBRHD = row
+//                                   2*RELIABLE_NGHBRHD + 1, 2*RELIABLE_NGHBRHD+1);
+
+       
+        onTimestamps(row + RELIABLE_NGHBRHD, clmn + RELIABLE_NGHBRHD) = ts;
 
     }
     else{
         tmp = offTimestamps(row + RELIABLE_NGHBRHD, clmn + RELIABLE_NGHBRHD);
 
         //update the pixel neighborhood in timestamps Matrix with the new value of ts
-        offTimestamps.updateSubMatrix(row, clmn, ts,              // row + RELIABLE_NGHBRHD - RELIABLE_NGHBRHD = row
-                                   2*RELIABLE_NGHBRHD + 1, 2*RELIABLE_NGHBRHD+1);
+//        offTimestamps.updateSubMatrix(row, clmn, ts,              // row + RELIABLE_NGHBRHD - RELIABLE_NGHBRHD = row
+//                                   2*RELIABLE_NGHBRHD + 1, 2*RELIABLE_NGHBRHD+1);
+
+        offTimestamps(row + RELIABLE_NGHBRHD, clmn + RELIABLE_NGHBRHD) = ts;
 
     }
 
@@ -132,14 +143,17 @@ CameraEvent ** AERGrabber::getEvents(int & evenNo){
     CameraEvent ** result = NULL;
     CameraEvent ** ptr;
     evenNo = 0;
+int tmp;  //added 
 
     vector< CameraEvent * > eFrame;
 
 
     eBufferMutex.wait();
+    tmp = evtBuffer.size();  //added
     eFrame = evtBuffer.front();
     evtBuffer.pop();
     eBufferMutex.post();
+cout << tmp << "   "  << eFrame.size() << endl; //added
 
     evenNo = eFrame.size();
 
@@ -155,7 +169,7 @@ CameraEvent ** AERGrabber::getEvents(int & evenNo){
     return result;
 }
 
-inline void AERGrabber::freeBuffer(vector< CameraEvent * > f){
+inline void AERGrabber::freeBuffer(vector< CameraEvent * > & f){
 
     int sz = f.size();
     for (int i = 0; i < sz; ++i) {
