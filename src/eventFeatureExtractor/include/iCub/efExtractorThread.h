@@ -39,7 +39,6 @@
 #include <iCub/cartesianFrameConverter.h>
 #include <iCub/eventBottleHandler.h>
 
-
 class efExtractorThread : public yarp::os::RateThread {
 private:
     bool idle;                          // flag that exclude code from the execution loop
@@ -125,7 +124,12 @@ public:
      * @brief function that sets the value of the VERBOSE flag
      * @param value value that is going to be assigned to the flag VERBOSE
      */
-    void setVERBOSE(bool value) {VERBOSE = value;};
+    void setVERBOSE(bool value) {VERBOSE = value; };
+    
+    /**
+     * @brief function that sets the flag for bottle handling
+     */
+    void setBottleHandler(bool value) { bottleHandler = value; };
 
     /**
     * function that set operating mode
@@ -166,15 +170,23 @@ public:
      * @param countEventToSend counter of the event that passed the threashold and are going to be sent 
      */
     void generateMemory(int countEvent, int& countEventToSend);
+
+    /**
+     * @brief function that updates the memory of events in the retina space
+     * @param countEvent counter of the event going to be memorized
+     * @param countEventToSend counter of the event that passed the threashold and are going to be sent 
+     */
+    void generateMemory(emorph::ecodec::eEventQueue* q, int& countEventToSend);
+
     /**
      *  function for remapping a x-y location of event in a new position in the feature
      */
-    void remapEventLeft(int x, int y,short pol,unsigned long ts)
+    void remapEventLeft(int x, int y,short pol,unsigned long ts);
 
-    void setBottleHandler(bool value) {
-        bottleHandler = value;
-    };
-
+    /**
+     *  function for remapping a x-y location of event in a new position in the feature
+     */
+    void remapEventLeft(int x, int y,short pol,unsigned long ts);
 };
 
 #endif  //_EF_EXTRACTOR_THREAD_H_
