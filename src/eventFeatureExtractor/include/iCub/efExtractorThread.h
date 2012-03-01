@@ -67,6 +67,7 @@ private:
     yarp::sig::ImageOf <yarp::sig::PixelMono>* rightOutputImage;                         // image output right 
     yarp::sig::ImageOf <yarp::sig::PixelMono>* leftFeaOutputImage;                       // output image of feature  left 
     yarp::sig::ImageOf <yarp::sig::PixelMono>* rightFeaOutputImage;                      // output image of feature  right     
+    eventBottleHandler *ebHandler;                                       // handler of received events as bottle
     
     std::string name;                     // rootname of all the ports opened by this thread
     std::string mapURL;                   // mode name and name of the map
@@ -79,7 +80,7 @@ private:
     int monBufSize_b;                     // dimension of the bufferFEA in bytes
     int countEvent;                       // counter of event that are going to be sent
     int countMap;                         // counter of the mapped events
-    eventBottleHandler *ebHandler;        // handler of received events as bottle
+ 
     cFrameConverter* cfConverter;         // cartesian frame converter
     unmask unmask_events;                 // object that unmasks the event
     char* bufferCopy;                     // local copy of the events read
@@ -176,7 +177,7 @@ public:
      * @param countEvent counter of the event going to be memorized
      * @param countEventToSend counter of the event that passed the threashold and are going to be sent 
      */
-    void generateMemory(emorph::ecodec::eEventQueue* q, int& countEventToSend);
+    void generateMemory(emorph::ecodec::eEventQueue q, int& countEventToSend);
 
     /**
      *  function for remapping a x-y location of event in a new position in the feature
@@ -186,7 +187,7 @@ public:
     /**
      *  function for remapping a x-y location of event in a new position in the feature
      */
-    void remapEventLeft(int x, int y,short pol,unsigned long ts);
+    void remapEventRight(int x, int y,short pol,unsigned long ts);
 };
 
 #endif  //_EF_EXTRACTOR_THREAD_H_

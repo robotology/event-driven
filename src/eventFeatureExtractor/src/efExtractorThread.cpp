@@ -31,6 +31,7 @@
 #include <cstring>
 #include <cassert>
 
+using namespace emorph::ecodec;
 using namespace yarp::os;
 using namespace yarp::sig;
 using namespace yarp::dev;
@@ -291,8 +292,17 @@ void efExtractorThread::resize(int widthp, int heightp) {
 }
 
 void efExtractorThread::remapEventLeft(int x, int y,short pol,unsigned long ts) {
+    unsigned char* pLeft  = leftOutputImage->getRawImage(); 
+    unsigned char* pRight = rightOutputImage->getRawImage();
+    unsigned char* pMemL  = leftInputImage->getRawImage();
+    int          rowSize  = leftOutputImage->getRowSize();
+    int       rowSizeFea  = leftFeaOutputImage->getRowSize();
+    int deviance      = 20;
+    int devianceFea   = 20;   
+    aer* bufferFEA_copy = bufferFEA;
+
     if(ts > lastTimestampLeft) {
-        countEventLeft++;
+        //countEventLeft++;
         /*if(firstHalf){
             if(ts < 0x807FFFFF) {
                 lastTimestampLeft = ts;
@@ -321,7 +331,7 @@ void efExtractorThread::remapEventLeft(int x, int y,short pol,unsigned long ts) 
             if(pos == -1) {
                 if (x % 2 == 1) {
                     //printf("not mapped event %d \n",x + y * RETINA_SIZE);
-                    countUnmapped++;
+                    //countUnmapped++;
                 }                
             }
             else {
@@ -381,7 +391,7 @@ void efExtractorThread::remapEventLeft(int x, int y,short pol,unsigned long ts) 
                     
                     //fprintf(fout,"%08X %08X \n",bufferFEA_copy->address,ts);
                     bufferFEA_copy++; // jumping to the next event(u32,u32)
-                    countEventToSend++;
+                    // countEventToSend++;
                 }
                 else if(pFeaLeft[posFeaImage] < 10) {
                     bufferFEA_copy->address   = (u32) blob;
@@ -392,7 +402,7 @@ void efExtractorThread::remapEventLeft(int x, int y,short pol,unsigned long ts) 
                     
                     //fprintf(fout,"%08X %08X \n",bufferFEA_copy->address,ts);
                     bufferFEA_copy++; // jumping to the next event(u32,u32)
-                    countEventToSend++;
+                    //countEventToSend++;
                 }                           
                 
             } //end else
@@ -454,10 +464,17 @@ void efExtractorThread::remapEventLeft(int x, int y,short pol,unsigned long ts) 
 }
 
 void efExtractorThread::remapEventRight(int x, int y, short pol, unsigned long ts) {
+    unsigned char* pLeft  = leftOutputImage->getRawImage(); 
+    unsigned char* pRight = rightOutputImage->getRawImage();
+    unsigned char* pMemL  = leftInputImage->getRawImage();
+    int          rowSize  = leftOutputImage->getRowSize();
+    int       rowSizeFea  = leftFeaOutputImage->getRowSize();
+    int deviance      = 20;
+    int devianceFea   = 20;   
+    aer* bufferFEA_copy = bufferFEA;
     lastTimestampRight = ts;
-    //printf(" %d %d %08x \n",iterEvent->x,iterEvent->y, ts );
 
-    //if((x >127)||(x<0)||(y>127)||(y<0)) break;
+    // finding the position in the map
     int posImage     = y * rowSize + x;
     
     
@@ -468,7 +485,7 @@ void efExtractorThread::remapEventRight(int x, int y, short pol, unsigned long t
         if(pos == -1) {
             if (x % 2 == 1) {
                 //printf("not mapped event %d \n",x + y * RETINA_SIZE);
-                countUnmapped++;
+                //countUnmapped++;
             }                
         }
         else {
@@ -605,7 +622,7 @@ void efExtractorThread::generateMemory(int countEvent, int& countEventToSend) {
     //############################################################################
 }
 
-void efExtractorThread::generateMemory(eEventQueue* q;  , int& countEventToSend) {
+void efExtractorThread::generateMemory(eEventQueue q  , int& countEventToSend) {
     int countEventLeft  = 0;
     int countEventRight = 0;
     //storing the response in a temp. image
@@ -637,15 +654,15 @@ void efExtractorThread::generateMemory(eEventQueue* q;  , int& countEventToSend)
                     //ts  = iterEvent->ts;
                     //pol = iterEvent->pol;
                     //cam = iterEvent->cam;
-                    cartY     = ptr->getX();
-                    cartX     = ptr->getY();
-                    camera    = ptr->getChannel();
-                    polarity  = ptr->getPolarity();
+                    int cartY     = ptr->getX();
+                    int cartX     = ptr->getY();
+                    int camera    = ptr->getChannel();
+                    int polarity  = ptr->getPolarity();
                     if(camera) {
-                        remapEventLeft(x,y,polarity,ts);        
+                        remapEventLeft(cartX,cartY,polarity,ts);        
                     }
                     else {
-                        remapEventRight(x,y,polarity,ts);
+                        remapEventRight(cartX,cartY,polarity,ts);
                     }
                 }
             }
