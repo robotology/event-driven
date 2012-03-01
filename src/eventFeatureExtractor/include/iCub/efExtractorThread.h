@@ -187,7 +187,17 @@ public:
     /**
      *  function for remapping a x-y location of event in a new position in the feature
      */
+    void remapEventLeft(int x, int y,short pol,unsigned long ts, emorph::ecodec::eEventQueue& txQueue);
+
+    /**
+     *  function for remapping a x-y location of event in a new position in the feature
+     */
     void remapEventRight(int x, int y,short pol,unsigned long ts);
+    
+    /**
+     *  function for remapping a x-y location of event in a new position in the feature
+     */
+    void remapEventRight(int x, int y,short pol,unsigned long ts, emorph::ecodec::eEventQueue& txQueue );
 };
 
 #endif  //_EF_EXTRACTOR_THREAD_H_
