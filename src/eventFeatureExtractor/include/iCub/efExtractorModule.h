@@ -157,10 +157,11 @@
 * 24/08/11 : created the module                                                                       author: Rea \n
 * 31/08/11 : added parameter mode for the command line                                                author: Rea \n 
 * 13/09/11 : added the eventBuffer that contains the collection of unmasked events                    author: Rea \n
-* 07/11/11 : corrected the output for debug images                                                    author: Rea \n   
+* 07/11/11 : corrected the output for debug images                                                    author: Rea \n
 * 08/11/11 : added lines that send the feature events on the yarp network                             author: Rea \n
 * 21/02/12 : added interactive verbose mode                                                           author: Rea \n
 * 27/02/12 : added a new thread for Bottle Handling                                                   author: Rea \n
+* 02/03/12 : added fuction for bottle unmasking                                                       author: Rea \n
 */
 
 #include <iostream>

@@ -166,6 +166,10 @@ public:
      * @param countEventToSend counter of the event that passed the threashold and are going to be sent 
      */
     void generateMemory(int countEvent, int& countEventToSend);
+    /**
+     *  function for remapping a x-y location of event in a new position in the feature
+     */
+    void remapEventLeft(int x, int y,short pol,unsigned long ts)
 
     void setBottleHandler(bool value) {
         bottleHandler = value;
