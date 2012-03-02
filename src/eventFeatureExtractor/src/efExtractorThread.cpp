@@ -189,7 +189,6 @@ bool efExtractorThread::threadInit() {
         short x, y;
         countMap = 0;
 
-        
     }
      
     leftInputImage      = new ImageOf<PixelMono>;
@@ -919,6 +918,7 @@ void efExtractorThread::generateMemory(eEventQueue *q  , int& countEventToSend) 
     unsigned char* pMemL  = leftInputImage->getRawImage();
     int          rowSize  = leftOutputImage->getRowSize();
     int       rowSizeFea  = leftFeaOutputImage->getRowSize();
+
     unsigned long ts;
     short pol, cam;
     aer* bufferFEA_copy = bufferFEA;
@@ -927,7 +927,9 @@ void efExtractorThread::generateMemory(eEventQueue *q  , int& countEventToSend) 
     int deviance      = 20;
     int devianceFea   = 20;      
     //#############################################################################        
+
     int dequeSize = q->size();
+
     for (int evt = 0; evt < dequeSize; evt++) {
         if((*q)[evt] != 0) {                    
             //********** extracting the event information **********************
@@ -998,7 +1000,9 @@ void efExtractorThread::run() {
             cfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
         }
         else {
-            ebHandler->extractBottle(receivedBottle);      
+            ebHandler->extractBottle(receivedBottle);  
+            printf("received bottle: \n");
+            printf("%s \n", receivedBottle->toString().c_str());
         }
         
         int num_events = CHUNKSIZE >> 3 ;
@@ -1077,9 +1081,12 @@ void efExtractorThread::run() {
         if(!bottleHandler) {
             int dim = unmask_events.unmaskData(bufferCopy2,countEvent * sizeof(uint32_t),eventFeaBuffer);        
         }
-        else {            
-            printf("unmasking received bottle and creating the queue of event to send \n");
-            unmask_events.unmaskData(receivedBottle, txQueue);
+        else {
+            if(receivedBottle->size() != 0) {
+                printf("unmasking received bottle and creating the queue of event to send \n");
+                unmask_events.unmaskData(receivedBottle, txQueue);
+                printf("bottle of events to send : \n");
+            }
         }
 
         //printf("event converted %d whereas %d \n", dim, countEvent);          
@@ -1093,21 +1100,30 @@ void efExtractorThread::run() {
             generateMemory(countEvent, countEventToSend);
         }
         else {
-            printf("generating memory from Bottle \n");
             //eEventQueue tx(false);
             //tx = *txQueue;
-            generateMemory(txQueue, countEventToSend);
+            if(txQueue != NULL) {
+                generateMemory(txQueue, countEventToSend);
+            }
         }
         
-        // writing images out on ports 
-        outLeftPort.prepare()     = *leftOutputImage;
-        outLeftPort.write();
-        outRightPort.prepare()    = *rightOutputImage;
-        outRightPort.write();
-        outFeaLeftPort.prepare()  = *leftFeaOutputImage;
-        outFeaLeftPort.write();
-        outFeaRightPort.prepare() = *rightFeaOutputImage;
-        outFeaRightPort.write();
+        // writing images out on ports
+        if(outLeftPort.getOutputCount()) {
+            outLeftPort.prepare()     = *leftOutputImage;
+            outLeftPort.write();
+        }
+        if(outRightPort.getOutputCount()) {
+            outRightPort.prepare()    = *rightOutputImage;
+            outRightPort.write();
+        }
+        if(outFeaLeftPort.getOutputCount()) {
+            outFeaLeftPort.prepare()  = *leftFeaOutputImage;
+            outFeaLeftPort.write();
+        }
+        if(outFeaRightPort.getOutputCount()) {
+            outFeaRightPort.prepare() = *rightFeaOutputImage;
+            outFeaRightPort.write();
+        }
         
         // leaking section of the algorithm (retina space)
         pMemL  = leftInputImage->getRawImage();
@@ -1147,7 +1163,6 @@ void efExtractorThread::run() {
         
         // leaking section of the algorithm ( feature map)
         unsigned char* pFeaLeft = leftFeaOutputImage->getRawImage();
-        
         padding  = leftFeaOutputImage->getPadding();
         for(int row =0; row < FEATUR_SIZE; row++) {
             for (int col = 0; col< FEATUR_SIZE; col++) {
