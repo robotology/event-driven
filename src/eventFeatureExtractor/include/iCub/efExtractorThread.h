@@ -41,16 +41,17 @@
 
 class efExtractorThread : public yarp::os::RateThread {
 private:
-    bool idle;                          // flag that exclude code from the execution loop
-    bool firstHalf;                     // flag that indicates whether timestamps are in the first half
-    bool VERBOSE;                       // flag that enables the dumping of the event in appropriate files
-    bool bottleHandler;                 // flag that indicates whether events are sent as bottle exclusively
-    int count;                          // loop counter of the thread
-    int width, height;                  // dimension of the extended input image (extending)
-    int height_orig, width_orig;        // original dimension of the input and output images
-    unsigned long lastTimestampLeft;    // last timestamp received for left camera
-    unsigned long lastTimestampRight;   // last timestamp received from the right camera
-    yarp::os::Bottle* receivedBottle;   // bottle currently extracted from the buffer
+    bool idle;                            // flag that exclude code from the execution loop
+    bool firstHalf;                       // flag that indicates whether timestamps are in the first half
+    bool VERBOSE;                         // flag that enables the dumping of the event in appropriate files
+    bool bottleHandler;                   // flag that indicates whether events are sent as bottle exclusively
+    int count;                            // loop counter of the thread
+    int width, height;                    // dimension of the extended input image (extending)
+    int height_orig, width_orig;          // original dimension of the input and output images
+    unsigned long lastTimestampLeft;      // last timestamp received for left camera
+    unsigned long lastTimestampRight;     // last timestamp received from the right camera
+    yarp::os::Bottle* receivedBottle;     // bottle currently extracted from the buffer
+    emorph::ecodec::eEventQueue* txQueue; // queue of event to be sent
 
     yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelMono> > inLeftPort;       // port where the left event image is received
     yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelMono> > inRightPort;      // port where the right event image is received
@@ -177,7 +178,7 @@ public:
      * @param countEvent counter of the event going to be memorized
      * @param countEventToSend counter of the event that passed the threashold and are going to be sent 
      */
-    void generateMemory(emorph::ecodec::eEventQueue q, int& countEventToSend);
+    void generateMemory(emorph::ecodec::eEventQueue *q, int& countEventToSend);
 
     /**
      *  function for remapping a x-y location of event in a new position in the feature

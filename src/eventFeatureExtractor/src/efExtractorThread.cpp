@@ -909,7 +909,7 @@ void efExtractorThread::remapEventRight(int x, int y, short pol, unsigned long t
     } //end of if outLeftPort          
 }
 
-void efExtractorThread::generateMemory(eEventQueue q  , int& countEventToSend) {
+void efExtractorThread::generateMemory(eEventQueue *q  , int& countEventToSend) {
     int countEventLeft  = 0;
     int countEventRight = 0;
     //storing the response in a temp. image
@@ -927,16 +927,16 @@ void efExtractorThread::generateMemory(eEventQueue q  , int& countEventToSend) {
     int deviance      = 20;
     int devianceFea   = 20;      
     //#############################################################################        
-    int dequeSize = q.size();
+    int dequeSize = q->size();
     for (int evt = 0; evt < dequeSize; evt++) {
-        if(q[evt] != 0) {                    
+        if((*q)[evt] != 0) {                    
             //********** extracting the event information **********************
             // to identify the type of the packet
             // user can rely on the getType() method
             // -------------------------- AE  ----------------------------------
-            if (q[evt]->getType()=="AE") {
+            if ((*q)[evt]->getType()=="AE") {
                 // identified an  address event
-                AddressEvent* ptr=dynamic_cast<AddressEvent*>(q[evt]);
+                AddressEvent* ptr=dynamic_cast<AddressEvent*>((*q)[evt]);
                 if(ptr->isValid()) { 
                     //ts  = iterEvent->ts;
                     //pol = iterEvent->pol;
@@ -954,9 +954,9 @@ void efExtractorThread::generateMemory(eEventQueue q  , int& countEventToSend) {
                 }
             }
             // -------------------------- TS ----------------------------------
-            else if(q[evt]->getType()=="TS") {
+            else if((*q)[evt]->getType()=="TS") {
                 //printf("timestamp \n");
-                TimeStamp* ptr=dynamic_cast<TimeStamp*>(q[evt]);
+                TimeStamp* ptr=dynamic_cast<TimeStamp*>((*q)[evt]);
                 
                 //identified an time stamp event
                 ts = (unsigned int) ptr->getStamp();
@@ -998,7 +998,7 @@ void efExtractorThread::run() {
             cfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
         }
         else {
-             ebHandler->extractBottle(receivedBottle);      
+            ebHandler->extractBottle(receivedBottle);      
         }
         
         int num_events = CHUNKSIZE >> 3 ;
@@ -1074,7 +1074,14 @@ void efExtractorThread::run() {
         //printf("Unmasking events:  %d \n", unreadDim);
 
         // extract a chunk/unmask the chunk       
-        int dim = unmask_events.unmaskData(bufferCopy2,countEvent * sizeof(uint32_t),eventFeaBuffer);        
+        if(!bottleHandler) {
+            int dim = unmask_events.unmaskData(bufferCopy2,countEvent * sizeof(uint32_t),eventFeaBuffer);        
+        }
+        else {            
+            printf("unmasking received bottle and creating the queue of event to send \n");
+            unmask_events.unmaskData(receivedBottle, txQueue);
+        }
+
         //printf("event converted %d whereas %d \n", dim, countEvent);          
 
         //printf("         countLeft %d \n" , countEventLeft);
@@ -1082,8 +1089,15 @@ void efExtractorThread::run() {
 
         //generating the memory
         int countEventToSend = 0;
-        generateMemory(countEvent, countEventToSend);
-
+        if(!bottleHandler) {
+            generateMemory(countEvent, countEventToSend);
+        }
+        else {
+            printf("generating memory from Bottle \n");
+            //eEventQueue tx(false);
+            //tx = *txQueue;
+            generateMemory(txQueue, countEventToSend);
+        }
         
         // writing images out on ports 
         outLeftPort.prepare()     = *leftOutputImage;
