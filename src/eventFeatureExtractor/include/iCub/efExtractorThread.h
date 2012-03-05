@@ -69,6 +69,7 @@ private:
     yarp::sig::ImageOf <yarp::sig::PixelMono>* leftFeaOutputImage;                       // output image of feature  left 
     yarp::sig::ImageOf <yarp::sig::PixelMono>* rightFeaOutputImage;                      // output image of feature  right     
     eventBottleHandler *ebHandler;                                       // handler of received events as bottle
+    double* pLeftDouble;
     
     std::string name;                     // rootname of all the ports opened by this thread
     std::string mapURL;                   // mode name and name of the map
