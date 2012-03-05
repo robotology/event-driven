@@ -32,13 +32,14 @@ using namespace std;
 using namespace yarp::os;
 using namespace emorph::ecodec;
 
-
 #define MAXVALUE 114748364 //4294967295
 #define maxPosEvent 10000
 #define responseGradient 127
 #define minKillThres 1000
 #define UNMASKRATETHREAD 1
 #define constInterval 100000;
+
+#define VERBOSE
 
 unmask::unmask() { 
     retinalSize = 128;
@@ -88,7 +89,7 @@ unmask::unmask() {
 
     wrapAdd = 0;
     //fopen_s(&fp,"events.txt", "w"); //Use the unmasked_buffer
-    //uEvents = fopen("./uevents.txt","w");
+    uEvents = fopen("./eventConversion.uevents.txt","w+");
 }
 
 unmask::unmask(int rSize) { // : RateThread(UNMASKRATETHREAD){
@@ -139,7 +140,7 @@ unmask::unmask(int rSize) { // : RateThread(UNMASKRATETHREAD){
 
     wrapAdd = 0;
     //fopen_s(&fp,"events.txt", "w"); //Use the unmasked_buffer
-    //uEvents = fopen("./uevents.txt","w");
+    uEvents = fopen("./eventConvesion.uevents.txt","w+");
 }
 
 unmask::~unmask() {
@@ -327,12 +328,13 @@ void unmask::unmaskData(Bottle* packets) {
         fprintf(uEvents,"--- \n");
 #endif  
         //-- decoding the packet -------
+        printf("trying to decode the packet \n");
         if(eEvent::decode(*packets,q)) {
             //printf("pointer %08X \n",  &q);
             //printf("deque size %d \n \n", (int) q.size());
             int dequeSize = q.size();
 #ifdef VERBOSE
-            fprintf(maskEvents, " dim : %d \n", dequeSize);
+            fprintf(uEvents, " dim : %d \n", dequeSize);
 #endif
             for (int evt = 0; evt < dequeSize; evt++) {
                 //printf("evt : %d \n", evt);                
@@ -346,7 +348,7 @@ void unmask::unmaskData(Bottle* packets) {
                         AddressEvent* ptr=dynamic_cast<AddressEvent*>(q[evt]);
                         if(ptr->isValid()) { 
 #ifdef VERBOSE                      
-                            fprintf(maskEvents,"content: %s \n", ptr->getContent().toString().c_str());            
+                            fprintf(uEvents,"content: %s \n", ptr->getContent().toString().c_str());            
 #endif
                             //printf("%d %d %d %d \n",ptr->getX(), ptr->getY(), ptr->getChannel(), ptr->getPolarity());
                             //if((ptr->getX() == 0) && (ptr->getY() == 0) && (ptr->getChannel()==0) && (ptr->getPolarity() == 0)) {
@@ -361,7 +363,7 @@ void unmask::unmaskData(Bottle* packets) {
                         TimeStamp* ptr=dynamic_cast<TimeStamp*>(q[evt]);
 #ifdef VERBOSE
                         if(ptr->isValid()) {                       
-                            fprintf(maskEvents,"content: %08x \n", (unsigned int) ptr->getStamp());    
+                            fprintf(uEvents,"content: %08x \n", (unsigned int) ptr->getStamp());    
                         }
 #endif
                         //identified an time stamp event
@@ -383,6 +385,54 @@ void unmask::unmaskData(Bottle* packets) {
     } // end else packets->isNull;    
 }
 
+void unmask::unmaskData(Bottle* packets,eEventQueue* q ) {
+    //AER_struct sAER
+    count++;
+    int num_events = packets->size();
+    //printf("packet size %d \n", num_events);
+    
+    //if(dvsMode) {
+    //    num_events = i_sz / 4;    // pointing to events made of 4 bytes
+    //}
+    //else {
+    //    num_events = i_sz / 8;    // pointing to events made of 8 bytes
+    //}
+    //cout << "Number of the received events : " << num_events<< endl;
+    
+    //create a pointer that points every 4 bytes and 2 bytes (DVS mode) 
+    //uint32_t* buf2 = (uint32_t*)i_buffer;
+    //uint16_t* buf1 = (uint16_t*)i_buffer;
+    unsigned long timestamp;
+          
+    //eldesttimestamp = 0;
+    int i = 0;
+      
+    if(packets->isNull()) {
+        printf("null bottle \n");
+    }
+    else {
+        //printf("unmasking packet dimension %d \n", packets->size());
+#ifdef VERBOSE
+        fprintf(uEvents,"dim %d \n", packets->size());
+        string str;
+        int chksum;
+        for (int j = 0; j < packets->size(); j++) {
+            //printf(">%08x  \n", (unsigned int) packets->get(j).asInt());
+            fprintf(uEvents, ">%08x  \n", (unsigned int) packets->get(j).asInt());
+            chksum = packets->get(i).asInt() % 255;
+            str[i] = (char) chksum;
+        }
+        //printf("%s \n", packets->toString().c_str());
+        fprintf(uEvents,"chksum: %s \n", str.c_str());
+        fprintf(uEvents,"--- \n");
+        
+#endif  
+        //-- decoding the packet -------
+        //printf("preparing the decoding procedure  \n");
+        eEvent::decode(*packets,*q);   
+        //printf("success in decoding the events \n");
+    }
+}
 
 int unmask::unmaskData(char* i_buffer, int i_sz, AER_struct* output) {
     //cout << "Size of the received packet to unmask : " << i_sz / 8<< endl;
