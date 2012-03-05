@@ -43,7 +43,7 @@ bool efExtractorModule::configure(yarp::os::ResourceFinder &rf) {
         printf("--name : name of the module \n");
         printf("--mode : (intensity) mapping to be used \n");
         printf("--bottleHanlder             : the user select to send events only through bottle port esclusively  \n");
-        printf("press CTRL-C to continue...");
+        printf("press CTRL-C to continue... \n");
         return true;
     }
     
