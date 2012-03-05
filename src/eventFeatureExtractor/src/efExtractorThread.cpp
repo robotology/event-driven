@@ -226,6 +226,8 @@ bool efExtractorThread::threadInit() {
     unsigned char* pFeaRightOut = rightFeaOutputImage->getRawImage();
     memset(pFeaLeftOut,  127, FEATUR_SIZE * FEATUR_SIZE * sizeof(unsigned char));
     memset(pFeaRightOut, 127, FEATUR_SIZE * FEATUR_SIZE * sizeof(unsigned char));
+
+    txQueue = new eEventQueue();
     
     printf("initialisation correctly ended \n");
     return true;
@@ -257,8 +259,9 @@ void efExtractorThread::threadRelease() {
     delete bufferFEA;
     delete cfConverter;
     delete receivedBottle;
-    //delete bufferCopy;
-    //delete bufferCopy2;
+    delete leftFeaOutputImage;
+    delete rightFeaOutputImage;
+    delete txQueue;
     
     /* closing the file */
     printf("deleting LUT \n");
@@ -799,15 +802,16 @@ void efExtractorThread::remapEventRight(int x, int y, short pol, unsigned long t
     unsigned char* pMemL  = leftInputImage->getRawImage();
     int          rowSize  = leftOutputImage->getRowSize();
     int       rowSizeFea  = leftFeaOutputImage->getRowSize();
-    int deviance      = 20;
-    int devianceFea   = 20;   
-    aer* bufferFEA_copy = bufferFEA;
-    lastTimestampRight = ts;
+    int deviance          = 20;
+    int devianceFea       = 20;   
+    aer* bufferFEA_copy   = bufferFEA;
+    lastTimestampRight    = ts;
 
     // finding the position in the map
     int posImage     = y * rowSize + x;
-    
-    
+       
+    //***********************************************************************************************
+    // looking at the 5 columns of the LUT to remap event 
     for (int i = 0; i< 5 ; i++) {                
         int pos      = lut[i * RETINA_SIZE * RETINA_SIZE +  y * RETINA_SIZE + x ];                      
         
@@ -852,8 +856,11 @@ void efExtractorThread::remapEventRight(int x, int y, short pol, unsigned long t
         } //end else
         
     } //end for i 5
+
+    //******************************************************************************************************
+    
     if (outRightPort.getOutputCount()){
-        
+        // representing remapping into an image
         int padding    = rightOutputImage->getPadding();
         int rowsizeOut = rightOutputImage->getRowSize();
         float lambda   = 1.0;
@@ -929,7 +936,7 @@ void efExtractorThread::generateMemory(eEventQueue *q  , int& countEventToSend) 
     //#############################################################################        
 
     int dequeSize = q->size();
-
+    printf("efExtractorThread::generateMemory processing %d events \n", dequeSize);
     for (int evt = 0; evt < dequeSize; evt++) {
         if((*q)[evt] != 0) {                    
             //********** extracting the event information **********************
@@ -947,12 +954,19 @@ void efExtractorThread::generateMemory(eEventQueue *q  , int& countEventToSend) 
                     int cartX     = ptr->getY();
                     int camera    = ptr->getChannel();
                     int polarity  = ptr->getPolarity();
+                    
+                    if(VERBOSE) {
+                        //printf(" %d %d %d %d \n",cartX, cartY, camera, polarity );
+                        fprintf(fdebug, " %d %d %d %d \n",cartX, cartY, camera, polarity );
+                    }
                     if(camera) {
                         remapEventLeft(cartX,cartY,polarity,ts);        
                     }
                     else {
                         remapEventRight(cartX,cartY,polarity,ts);
                     }
+
+                    countEventToSend++;
                 }
             }
             // -------------------------- TS ----------------------------------
@@ -962,7 +976,12 @@ void efExtractorThread::generateMemory(eEventQueue *q  , int& countEventToSend) 
                 
                 //identified an time stamp event
                 ts = (unsigned int) ptr->getStamp();
-                //printf("lastTimestamp Received %08x \n", lastRecTimestamp);
+                if(VERBOSE) {
+                    fprintf(fdebug, " %08x  \n", (unsigned int) ts);
+                }
+                
+                countEventToSend++;
+
             }
             // -------------------------- NULL ----------------------------------
             else {
@@ -990,8 +1009,6 @@ void efExtractorThread::run() {
         unsigned char* pRight = rightOutputImage->getRawImage();
         unsigned char* pMemL  = leftInputImage->getRawImage();
         //left.zero();
-        
-
         
         // reads the buffer received
         // saves it into a working buffer        
@@ -1078,6 +1095,7 @@ void efExtractorThread::run() {
         //printf("Unmasking events:  %d \n", unreadDim);
 
         // extract a chunk/unmask the chunk       
+        
         if(!bottleHandler) {
             int dim = unmask_events.unmaskData(bufferCopy2,countEvent * sizeof(uint32_t),eventFeaBuffer);        
         }
@@ -1104,6 +1122,7 @@ void efExtractorThread::run() {
             //tx = *txQueue;
             if(txQueue != NULL) {
                 generateMemory(txQueue, countEventToSend);
+                printf("Counted a total of %d \n", countEventToSend);
             }
         }
         
