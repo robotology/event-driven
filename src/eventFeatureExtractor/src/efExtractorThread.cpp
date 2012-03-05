@@ -936,7 +936,6 @@ void efExtractorThread::generateMemory(eEventQueue *q  , int& countEventToSend) 
     //#############################################################################        
 
     int dequeSize = q->size();
-    printf("efExtractorThread::generateMemory processing %d events \n", dequeSize);
     for (int evt = 0; evt < dequeSize; evt++) {
         if((*q)[evt] != 0) {                    
             //********** extracting the event information **********************
@@ -1018,8 +1017,8 @@ void efExtractorThread::run() {
         }
         else {
             ebHandler->extractBottle(receivedBottle);  
-            printf("received bottle: \n");
-            printf("%s \n", receivedBottle->toString().c_str());
+            //printf("received bottle: \n");
+            //printf("%s \n", receivedBottle->toString().c_str());
         }
         
         int num_events = CHUNKSIZE >> 3 ;
@@ -1101,9 +1100,9 @@ void efExtractorThread::run() {
         }
         else {
             if(receivedBottle->size() != 0) {
-                printf("unmasking received bottle and creating the queue of event to send \n");
+                //printf("unmasking received bottle and creating the queue of event to send \n");
                 unmask_events.unmaskData(receivedBottle, txQueue);
-                printf("bottle of events to send : \n");
+                //printf("bottle of events to send : \n");
             }
         }
 
@@ -1122,7 +1121,7 @@ void efExtractorThread::run() {
             //tx = *txQueue;
             if(txQueue != NULL) {
                 generateMemory(txQueue, countEventToSend);
-                printf("Counted a total of %d \n", countEventToSend);
+                //printf("Counted a total of %d \n", countEventToSend);
             }
         }
         
