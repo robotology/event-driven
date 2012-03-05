@@ -69,7 +69,8 @@ eventBottle::eventBottle(const eventBottle& buffer) {
 }
 
 eventBottle::~eventBottle() {
-    delete packetPointer;
+    printf("destructor \n");
+    delete[] packetPointer;
     delete packet;
 }
 

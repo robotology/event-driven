@@ -237,8 +237,17 @@ public:
     */
     void updateImage(emorph::ecodec::AddressEvent* ptr);
 
-    
+    /**
+     * @brief function that given a bottle creates the image of events
+     */
     void unmaskData(yarp::os::Bottle* b);
+
+    /**
+     * @brief function that given a bottle returns the queue of events
+     * @param b input bottle b
+     * @param q output event q
+     */
+    void unmaskData(yarp::os::Bottle* b, emorph::ecodec::eEventQueue* q );
 
     /**
     * function that given a reference to the list of char read from the port and the number of packet received
