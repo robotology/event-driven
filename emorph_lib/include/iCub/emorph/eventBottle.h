@@ -25,8 +25,27 @@
  */
 class eventBottle : public yarp::os::Portable {
 public:
+    /**
+     * default constructor
+     */
     eventBottle();
-    eventBottle(char*, int);
+
+    /**
+     * @brief constructor
+     * @param c pointer to the char buffer
+     * @param i number of bytes
+     */
+    eventBottle(char* c, int i);
+
+    /**
+     * @brief constructor
+     * @param b bottle that constructs the class
+     */
+    eventBottle(yarp::os::Bottle* b);
+    
+    /**
+     * destructor
+     */
     ~eventBottle();
 
     void operator =(eventBottle&);
@@ -35,7 +54,18 @@ public:
     virtual bool write(yarp::os::ConnectionWriter&);
     virtual bool read (yarp::os::ConnectionReader&);
 
-    void set_data(char*, int);
+    /**
+     * @brief function for setting the data afterward
+     * @param c pointer to the char buffer of events
+     * @param i number of bytes in the buffer
+     */
+    void set_data(char* c, int i);
+    
+    /**
+     * @brief function for setting the data afterward
+     * @param b bottle pointer
+     */
+    void set_data(yarp::os::Bottle* b);
 
     yarp::os::Bottle* get_packet()  { return packet; };
     int get_sizeOfPacket()  { return size_of_the_packet; };

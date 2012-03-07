@@ -50,6 +50,13 @@ eventBottle::eventBottle(char* i_data, int i_size) {
     */    
 }
 
+
+eventBottle::eventBottle(Bottle* p) {
+    packet = p;
+    size_of_the_packet = packet->size();
+    packetPointer = new char; 
+}
+
 eventBottle::eventBottle(const eventBottle& buffer) {
     
     packet = new Bottle();
@@ -113,6 +120,12 @@ void eventBottle::set_data(char* i_data, int i_size) {
     memcpy(packetPointer, i_data, i_size);
     size_of_the_packet = i_size;
     */
+}
+
+void eventBottle::set_data(Bottle* p) {
+    packet = p;
+    size_of_the_packet = packet->size();
+    packetPointer = new char;
 }
 
 
