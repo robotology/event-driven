@@ -62,7 +62,8 @@ private:
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outFeaLeftPort;       // port whre the output feature (left) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outFeaRightPort;      // port whre the output feature (right) is sent
     
-    yarp::os::BufferedPort<eventBuffer> outEventPort;                                    // port sending events
+    yarp::os::BufferedPort<eventBuffer> outEventPort;                                    // port sending events as a collection of char buffers
+    yarp::os::BufferedPort<eventBottle> outBottlePort;                                   // port sendinf events as a collection of bottles
     yarp::sig::ImageOf <yarp::sig::PixelMono>* leftInputImage;                           // image input left 
     yarp::sig::ImageOf <yarp::sig::PixelMono>* rightInputImage;                          // image input right 
     yarp::sig::ImageOf <yarp::sig::PixelMono>* leftOutputImage;                          // image output left 

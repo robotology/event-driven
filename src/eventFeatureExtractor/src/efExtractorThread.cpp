@@ -1451,6 +1451,20 @@ void efExtractorThread::run() {
             outEventPort.write();
         } 
         */
+        
+        //************************ OUTPUT OF THE MODULE ****************************
+        // writing the mapped events
+        if(outBottlePort.getOutputCount()) {
+            Bottle packets;
+            cout<<"encoding events within packets"<<endl;
+            for (size_t i=0; i<txQueue->size(); i++) {
+                packets.append((*txQueue)[i]->encode());
+            }
+            eventBottle data2send(&packets);    
+            eventBottle& tmp = outBottlePort.prepare();
+            tmp = data2send;
+            outBottlePort.write(); 
+        }
 
         // writing images out on ports
         if(outLeftPort.getOutputCount()) {
