@@ -117,9 +117,9 @@ public:
 
     /**
      * @brief function that extract one of the bottle in the buffer
-     * @return single bottle pointer
+     * @param receivedBottle single bottle pointer
      */
-    yarp::os::Bottle* extractBottle();
+    void extractBottle(yarp::os::Bottle* receivedBottle);
 
 private:
     bool valid;

@@ -118,6 +118,8 @@ bool cfCollectorThread::threadInit() {
     minCount = 0;
     minCountRight= 0;
 
+    receivedBottle = new Bottle();
+
     printf("Initialisation in collector thread correctly ended \n");
     return true;
 }
@@ -126,6 +128,32 @@ void cfCollectorThread::interrupt() {
     outPort.interrupt();
     outPortRight.interrupt();
 }
+
+void cfCollectorThread::threadRelease() {
+    idle = false;
+    fclose(fout);
+    printf("cfCollectorThread release:freeing bufferCopy \n");
+    //free(bufferCopy);
+    printf("cfCollectorThread release:closing ports \n");
+    outPort.close();
+    outPortRight.close();
+
+
+    //delete imageLeft;
+    //delete imageRight;
+    printf("cFCollectorThread release         stopping plotterThread \n");
+    pThread->stop();
+    printf("cfCollectorThread release         deleting converter \n");
+    delete cfConverter;
+    printf("correctly freed memory from the cfCollector \n");
+    delete ebHandler;
+    printf("just deleted bottle handler \n");
+    delete unmask_events;
+    printf("unmasking event happened \n");
+
+    delete receivedBottle;
+}
+
 
 void cfCollectorThread::setName(string str) {
     this->name=str;
@@ -272,7 +300,7 @@ void cfCollectorThread::run() {
         cfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
     }
     else {
-        receivedBottle = ebHandler->extractBottle();      
+        ebHandler->extractBottle(receivedBottle);      
         //printf("received Bottle %08x \n ", receivedBottle);
     }
     
@@ -351,6 +379,8 @@ void cfCollectorThread::run() {
     else {        
         if(0 != receivedBottle->size()) {
             //printf("asking for unmasking \n");
+            //delete receivedBottle;
+            //receivedBottle = new Bottle();
             unmask_events->unmaskData(receivedBottle);
         }        
     }
@@ -360,7 +390,6 @@ void cfCollectorThread::run() {
       countStop = 0;
     }
     
-    
     //getting the time between two threads
     gettimeofday(&tvend, NULL);
     //Tnow = ((u64)tvend.tv_sec) * 1000000 + ((u64)tvstart.tv_usec);
@@ -368,7 +397,6 @@ void cfCollectorThread::run() {
 	    - (tvstart.tv_sec * 1000000 + tvstart.tv_usec));
     //printf("timeofday>%ld\n",Tnow );
     gettimeofday(&tvstart, NULL);       
-    
         
     /*if(true){
       //printf("Saving in file \n");
@@ -523,24 +551,6 @@ void cfCollectorThread::run() {
     }
   }
 }
-
-void cfCollectorThread::threadRelease() {
-    idle = false;
-    fclose(fout);
-    printf("cfCollectorThread release:freeing bufferCopy \n");
-    //free(bufferCopy);
-    printf("cfCollectorThread release:closing ports \n");
-    outPort.close();
-    outPortRight.close();
-    //delete imageLeft;
-    //delete imageRight;
-    printf("cFCollectorThread release         stopping plotterThread \n");
-    pThread->stop();
-    printf("cfCollectorThread release         deleting converter \n");
-    delete cfConverter;
-    printf("correctly freed memory from the cfCollector \n");
-}
-
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------
 

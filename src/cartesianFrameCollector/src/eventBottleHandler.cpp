@@ -97,17 +97,16 @@ void eventBottleHandler::copyChunk(char* bufferCopy) {
     mutex.post();
 }
 
-Bottle* eventBottleHandler::extractBottle() {
-    Bottle* tempBottle = 0;
+void eventBottleHandler::extractBottle(Bottle* tempBottle) {
     // reading the bottle
     
     //---------------------------------------
     //printf("sem address in extract %08x \n",semBottleBuffer[extractPosition] );
     //printf("trying the wait method in extract \n");
     semBottleBuffer[extractPosition]->wait();
-    tempBottle = bufferBottle[extractPosition];   // copying it in a temporary Bottle*
-    //bufferBottle[extractPosition] = 0;          // setting it to zero as already read Bottle*
-    bufferBottle[extractPosition]->clear();       // removes the content of the bottle.
+    tempBottle->copy(*bufferBottle[extractPosition]);   // copying it in a temporary Bottle*
+    //bufferBottle[extractPosition] = 0;               // setting it to zero as already read Bottle*
+    bufferBottle[extractPosition]->clear();            // removes the content of the bottle.
     //printf("next istructyion will post the semaphore in extract \n");
     semBottleBuffer[extractPosition]->post();
     //----------------------------------------
@@ -117,8 +116,6 @@ Bottle* eventBottleHandler::extractBottle() {
     mutex.wait();
     extractPosition = (extractPosition + 1) % bottleBufferDimension;
     mutex.post();
-        
-    return tempBottle;
 }
 
 // reading out from a circular buffer with 2 entry points and wrapping
@@ -143,12 +140,11 @@ void eventBottleHandler::onRead(eventBottle& i_ub) {
     //printf("%d receivedBottle size : %d \n", insertPosition,receivedBottle->size());
     //printf("%d packet->size %d \n",insertPosition,receivedBottle->size() );
     //receivedBottle = (Bottle*) receivedBuffer;
-    printf("bufferBottle[%d] %08x i_ub.get_packet() %08X \n",insertPosition, bufferBottle[insertPosition],i_ub.get_packet()  );
+    //printf("bufferBottle[%d] %08x i_ub.get_packet() %08X \n",insertPosition, bufferBottle[insertPosition], i_ub.get_packet()  );
     //delete bufferBottle[insertPosition];
     //bufferBottle[insertPosition] = receivedBottle;
     //printf("receivedBottle  %08x \n",receivedBottle);        
     bufferBottle[insertPosition]->copy(*i_ub.get_packet());          
-    printf("copied the bottle \n");
 
     //printf("insertPosition %d  \n", insertPosition);
 #ifdef VERBOSE

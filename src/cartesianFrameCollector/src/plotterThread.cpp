@@ -344,12 +344,16 @@ void plotterThread::threadRelease() {
  
   delete imageLeft;
   delete imageRight;
+  printf("freed images \n");
   delete imageLeftInt;
   delete imageRightInt;
+  printf("freed integrated images \n");
   delete imageLeftBW;
   delete imageRightBW;
+  printf("freed bw images \n");
   delete imageLeftGrey;
   delete imageRightGrey;
+  printf("freed grey images \n");
   delete imageLeftThreshold;
   delete imageRightThreshold;
 
