@@ -1482,8 +1482,7 @@ void efExtractorThread::run() {
         if(outFeaRightPort.getOutputCount()) {
             outFeaRightPort.prepare() = *rightFeaOutputImage;
             outFeaRightPort.write();
-        }
-        
+        }        
     } //end of idle
 }
 
