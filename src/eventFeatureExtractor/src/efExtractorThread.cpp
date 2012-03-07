@@ -888,7 +888,8 @@ void efExtractorThread::remapEventRight(int x, int y, short pol, unsigned long t
     unsigned char* pRight = rightOutputImage->getRawImage();
     unsigned char* pMemL  = leftInputImage->getRawImage();
     int          rowSize  = leftOutputImage->getRowSize();
-    int       rowSizeFea  = leftFeaOutputImage->getRowSize();
+    int       rowSizeFea  = rightFeaOutputImage->getRowSize();
+   
     int deviance          = 20;
     int devianceFea       = 20;   
     aer* bufferFEA_copy   = bufferFEA;
@@ -896,7 +897,9 @@ void efExtractorThread::remapEventRight(int x, int y, short pol, unsigned long t
 
     // finding the position in the map
     int posImage     = y * rowSize + x;
-       
+     
+    
+    
     //***********************************************************************************************
     // looking at the 5 columns of the LUT to remap event 
     for (int i = 0; i< 5 ; i++) {                
@@ -911,14 +914,15 @@ void efExtractorThread::remapEventRight(int x, int y, short pol, unsigned long t
         }
         else {
             //creating an event            
-            int xevent_tmp   = pos / FEATUR_SIZE;
-            int xevent       = FEATUR_SIZE - xevent_tmp;
-            int yevent_tmp   = pos - xevent_tmp * FEATUR_SIZE;
-            int yevent       = yevent_tmp;
-            int polevent     = pol < 0 ? 0 : 1;
+            int yevent_tmp   = pos / FEATUR_SIZE;
+            int yevent       = FEATUR_SIZE - yevent_tmp;
+            int xevent_tmp   = pos - yevent_tmp * FEATUR_SIZE;
+            int xevent       = xevent_tmp;
+            //int polevent     = pol < 0 ? 0 : 1;
+            int polevent = pol;
             int cameraevent  = 1;
             unsigned long blob = 0;
-            int posFeaImage     = y * rowSizeFea + x;
+            int posFeaImage     = yevent * rowSizeFea + xevent;
             
             //if(ts!=0) {
             //    printf(" %d %d %d %08x %08x \n",pos, yevent, xevent,blob, ts);
@@ -935,35 +939,42 @@ void efExtractorThread::remapEventRight(int x, int y, short pol, unsigned long t
             //blob = 0x00001021;
             //printf("Given pos %d extracts x=%d and y=%d pol=%d blob=%08x evPU = %08x \n", pos, xevent, yevent, pol, blob, ts);
             
+            
             // representing the feature map for debug
-            unsigned char* pFeaLeft = leftFeaOutputImage->getRawImage();
+            unsigned char* pFeaRight = rightFeaOutputImage->getRawImage();
+
+            
+            
             if(polevent > 0) {
-                if(pFeaLeft[posFeaImage] <= 255 - devianceFea) {
-                    pFeaLeft[posFeaImage] += devianceFea ;
+                if(pFeaRight[posFeaImage] <= 255 - devianceFea) {
+                    pFeaRight[posFeaImage] += devianceFea ;
                 }
                 else {
-                    pFeaLeft[posFeaImage] = 255;
+                    pFeaRight[posFeaImage] = 255;
                 }
             }
             else {
-                if(pFeaLeft[posFeaImage] >= devianceFea) {
-                    pFeaLeft[posFeaImage] -= devianceFea ;
+                if(pFeaRight[posFeaImage] >= devianceFea) {
+                    pFeaRight[posFeaImage] -= devianceFea ;
                 }
                 else {
-                    pFeaLeft[posFeaImage] = 0;
+                    pFeaRight[posFeaImage] = 0;
                 }
             }
             
-            // sending the event if we pass thresholds
-            unsigned long evPU;
-            evPU = 0;
-            evPU = evPU | polevent;
-            evPU = evPU | (xevent << 1);
-            evPU = evPU | (yevent << 8);
-            evPU = evPU | (cameraevent << 15);                            
-            blob = blob & 0x0000FFFF;                            
             
-            if(pFeaLeft[posFeaImage] > 240) {
+            // sending the event if we pass thresholds
+            //unsigned long evPU;
+            //evPU = 0;
+            //evPU = evPU | polevent;
+            //evPU = evPU | (xevent << 1);
+            //evPU = evPU | (yevent << 8);
+            //evPU = evPU | (cameraevent << 15);                            
+            //blob = blob & 0x0000FFFF;                            
+            
+            
+            if(pFeaRight[posFeaImage] > 240) {
+                
                 TimeStamp timestamp;
                 timestamp.setStamp(ts);
                 txQueue.push_back(&timestamp);
@@ -975,17 +986,17 @@ void efExtractorThread::remapEventRight(int x, int y, short pol, unsigned long t
                 ae.setY(yevent);
                 txQueue.push_back(&ae);
                 
-                /*
-                  bufferFEA_copy->address   = (u32) blob;
-                  bufferFEA_copy->timestamp = (u32) ts;
-                */
+                
+                //  bufferFEA_copy->address   = (u32) blob;
+                //  bufferFEA_copy->timestamp = (u32) ts;
+                
                 
                 
                 //fprintf(fout,"%08X %08X \n",bufferFEA_copy->address,ts);
                 //bufferFEA_copy++; // jumping to the next event(u32,u32)
                 // countEventToSend++;
             }
-            else if(pFeaLeft[posFeaImage] < 10) {
+            else if(pFeaRight[posFeaImage] < 10) {
                 
                 TimeStamp timestamp;
                 timestamp.setStamp(ts);
@@ -998,10 +1009,11 @@ void efExtractorThread::remapEventRight(int x, int y, short pol, unsigned long t
                 ae.setY(yevent);
                 txQueue.push_back(&ae);
                 
-                /*
-                  bufferFEA_copy->address   = (u32) blob;
-                  bufferFEA_copy->timestamp = (u32) ts;
-                */
+                
+                
+                // bufferFEA_copy->address   = (u32) blob;
+                //  bufferFEA_copy->timestamp = (u32) ts;
+                
                 
                 //fprintf(fout,"%08X %08X \n",bufferFEA_copy->address,ts);
                 //bufferFEA_copy++; // jumping to the next event(u32,u32)
@@ -1015,6 +1027,7 @@ void efExtractorThread::remapEventRight(int x, int y, short pol, unsigned long t
         } //end else
         
     } //end for i 5
+
     
     //******************************************************************************************************
     
@@ -1380,7 +1393,8 @@ void efExtractorThread::run() {
         
         
         // leaking section of the algorithm ( feature map)
-        unsigned char* pFeaLeft = leftFeaOutputImage->getRawImage();
+        unsigned char* pFeaLeft  = leftFeaOutputImage->getRawImage();
+        unsigned char* pFeaRight = rightFeaOutputImage->getRawImage();
         padding  = leftFeaOutputImage->getPadding();
         for(int row =0; row < FEATUR_SIZE; row++) {
             for (int col = 0; col< FEATUR_SIZE; col++) {
@@ -1394,23 +1408,23 @@ void efExtractorThread::run() {
                     *pFeaLeft = 127;
                 }
                 
-                //if(*pFeaRight >= 127 + CONST_DECREMENT) {                
-                //    *pFeaRight -= CONST_DECREMENT;
-                //}
-                //else if(*pFeaRight <= 127 - CONST_DECREMENT) {
-                //    *pFeaRight += CONST_DECREMENT;
-                //}
-                //else{
-                //    *pFeaRight = 127;
-                //}                
+                if(*pFeaRight >= 127 + CONST_DECREMENT) {                
+                    *pFeaRight -= CONST_DECREMENT;
+                }
+                else if(*pFeaRight <= 127 - CONST_DECREMENT) {
+                    *pFeaRight += CONST_DECREMENT;
+                }
+                else{
+                    *pFeaRight = 127;
+                }                
                 
                 pFeaLeft++;
-                //pFeaRight++;
+                pFeaRight++;
                 
             }
                             
             pFeaLeft += padding;
-            //pFeaRight+= padding;
+            pFeaRight+= padding;
         }
         
         
