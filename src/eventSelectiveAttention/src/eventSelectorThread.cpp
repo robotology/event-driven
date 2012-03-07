@@ -48,7 +48,7 @@ using namespace std;
 eventSelectorThread::eventSelectorThread() : RateThread(THRATE) {
     responseGradient = 127;
     retinalSize      = 32;  //default value before setting 
-  
+    bottleHandler = true;
     synchronised = false;
     greaterHalf  = false;
     firstRun     = true;
@@ -326,7 +326,14 @@ void eventSelectorThread::run() {
     // reads the buffer received
     //bufferRead = cfConverter->getBuffer();    
     // saves it into a working buffer
-    cfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
+    if(!bottleHandler) {
+        cfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
+    }
+    else {
+        cfConverter->extractBottle(receivedBottle);  
+        //printf("received bottle: \n");
+        //printf("%s \n", receivedBottle->toString().c_str());
+    }
     
     // saving the buffer into the file
     int num_events = CHUNKSIZE / 8 ;

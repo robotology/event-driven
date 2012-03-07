@@ -28,6 +28,7 @@
 
 #include <iCub/emorph/eventBuffer.h>
 #include <iCub/emorph/eventConversion.h>
+#include <iCub/emorph/eventBottle.h>
 
 #include <yarp/os/Network.h>
 #include <yarp/os/BufferedPort.h>
@@ -43,6 +44,10 @@ public:
     */
     virtual void onRead(eventBuffer& b);
 
+    /**
+    * overwritten function for handling events as soon as they arrive as eventBottle
+    */  
+    void onRead(eventBottle& i_ub);
 
     /**
     * function that returns a pointer to read buffer 
@@ -113,6 +118,13 @@ public:
         retinalSize = value;
     }
 
+    /**
+     * extract a bottle of events
+     */
+    void extractBottle(yarp::os::Bottle* tempBottle);
+
+
+
 private:
     bool valid;
     short state;
@@ -121,12 +133,17 @@ private:
     int outputWidth, outputHeight;                              // dimension of the output image default 320x240
     int receivedBufferSize;                                     // dimension of the received packet
     
+    int extractPosition;                                        // position in the buffer where the bottle is extracted 
+    int insertPosition;                                         // position in the buffer where the bottle is saved   
     unsigned long previousTimeStamp;                            // timestamp at the previous run
     char* converterBuffer;                                      // buffer used as saved
     char* converterBuffer_copy;                                 // copy of the buffer pointer, points to the location for freeing
     char* receivedBuffer;                                       // temporarely pointer to the received buffer
     char* pcRead;                                               // pointer to the location where to read events
     char* pcBuffer;                                             // pointer where to buffer events
+    yarp::os::Bottle** bufferBottle;                            // buffer of received bottles
+
+    static const int bottleBufferDimension = 10;                // dimension of the bottleBuffer
 
     //unmask unmask_events;         // object in charge of unmasking the events
     //converter convert_events;       // object in charge of converting the events into an image
@@ -134,6 +151,9 @@ private:
     clock_t start_u;
     clock_t start_p;
     clock_t stop;
+
+    yarp::os::Semaphore** semBottleBuffer;                      // semaphore for the buffer of bottles
+
 
     FILE* readEvents;
     FILE* fout;
