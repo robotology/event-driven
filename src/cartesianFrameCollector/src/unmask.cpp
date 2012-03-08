@@ -206,7 +206,7 @@ void unmask::updateImage(AddressEvent* ptr) {
     // // // if((cartY < 0)||(cartY> retinalSize)){
     // // //     cartY = 0;
     // // // }
-    cartX = retinalSize - cartX;
+    //cartX = retinalSize - cartX;
     
     // // // //if(cartX!=0) {
     // // // //    printf("retinalSize %d cartX %d cartY %d camera %d \n",retinalSize,cartX, cartY,camera);
