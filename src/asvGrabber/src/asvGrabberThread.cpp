@@ -606,11 +606,13 @@ void  asvGrabberThread::run() {
     
     int sizeofstructaer = sizeof(struct aer);
 
+    
+    monBufEvents = r / sizeofstructaer;
     if (r % sizeofstructaer != 0) {
       printf("ERROR: read %d bytes from the AEX!!!\n", r);
+      printf("monBufEvents %d \n ", monBufEvents);
+      fprintf(fout,"ERROR: read %d bytes from the AEX!!!\n", r);
     }
-    monBufEvents = r / sizeofstructaer;
-
     //printf("  %d \n",r);
 
 
