@@ -51,8 +51,10 @@ private:
     unsigned long lastTimestampLeft;       // last timestamp received for left camera
     unsigned long lastTimestampRight;      // last timestamp received from the right camera
     yarp::os::Bottle* receivedBottle;      // bottle currently extracted from the buffer
+    yarp::os::Bottle* bottleToSend;        
     emorph::ecodec::eEventQueue* txQueue;  // queue of event to be sent
     emorph::ecodec::eEventQueue* rxQueue;  // queue of event to be sent
+    
 
     yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelMono> > inLeftPort;       // port where the left event image is received
     yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelMono> > inRightPort;      // port where the right event image is received
@@ -182,7 +184,7 @@ public:
      * @param qout queue of event to send
      * @param countEventToSend counter of the event that passed the threashold and are going to be sent 
      */
-    void generateMemory(emorph::ecodec::eEventQueue *qin,emorph::ecodec::eEventQueue *qout, int& countEventToSend);
+    void generateMemory(emorph::ecodec::eEventQueue *qin,yarp::os::Bottle* bottle, int& countEventToSend);
 
     /**
      *  function for remapping a x-y location of event in a new position in the feature
@@ -192,7 +194,7 @@ public:
     /**
      *  function for remapping a x-y location of event in a new position in the feature
      */
-    void remapEventLeft(int x, int y,short pol,unsigned long ts, emorph::ecodec::eEventQueue& txQueue);
+    void remapEventLeft(int x, int y,short pol,unsigned long ts, emorph::ecodec::eEventQueue* txQueue);
 
     /**
      *  function for remapping a x-y location of event in a new position in the feature
@@ -202,7 +204,7 @@ public:
     /**
      *  function for remapping a x-y location of event in a new position in the feature
      */
-    void remapEventRight(int x, int y,short pol,unsigned long ts, emorph::ecodec::eEventQueue& txQueue );
+    void remapEventRight(int x, int y,short pol,unsigned long ts, emorph::ecodec::eEventQueue* txQueue);
 };
 
 #endif  //_EF_EXTRACTOR_THREAD_H_
