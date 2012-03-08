@@ -218,7 +218,7 @@ void unmask::updateImage(AddressEvent* ptr) {
     // // // //printf("Camera %d polarity %d  \n", camera, polarity);
     // now camera: LEFT 1, RIGHT 0
     
-    if(camera) {  // ---- camera left -------------------          
+    if(camera == 0) {  // ---- camera left -------------------          
         if((cartX!=0) &&( cartY!=0) && (timestamp!=0)) {
             validLeft =  true;
         }
@@ -238,7 +238,7 @@ void unmask::updateImage(AddressEvent* ptr) {
         }
              
         if(timeBuffer[cartX + cartY * retinalSize] < timestamp) {
-            if(polarity > 0) {
+            if(polarity == 0) {
                 buffer[cartX + cartY * retinalSize]     += responseGradient;
                 timeBuffer[cartX + cartY * retinalSize] = timestamp;
                 
@@ -276,7 +276,7 @@ void unmask::updateImage(AddressEvent* ptr) {
         }    
         
         if (timeBufferRight[cartX + cartY * retinalSize] < timestamp) {
-            if(polarity > 0) {
+            if(polarity == 0) {
                 bufferRight[cartX + cartY * retinalSize] += responseGradient;
                 timeBufferRight[cartX + cartY * retinalSize] = timestamp;
                 
