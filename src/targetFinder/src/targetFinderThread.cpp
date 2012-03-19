@@ -835,7 +835,6 @@ void targetFinderThread::run() {
         if(performAction) {
             igaze->lookAtFixationPoint(xo);
             
-        
             bool done;
             igaze->checkMotionDone(&done);
             double timestart = Time::now();
@@ -850,7 +849,7 @@ void targetFinderThread::run() {
             printf("\n");      
         }
         
-        Time::delay(0.5);
+        Time::delay(10);
             
         //***********************************************************************/
         
@@ -859,8 +858,8 @@ void targetFinderThread::run() {
             igaze->getAngles(angleVector);
             Bottle& angleBottle = outPort.prepare();
             angleBottle.clear();
-            angleBottle.add(angleVector[0]);
-            angleBottle.add(angleVector[1]);
+            angleBottle.add(xoAngles[0]);
+            angleBottle.add(xoAngles[1]);
             outPort.write();
         }
     }
