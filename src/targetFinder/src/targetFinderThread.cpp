@@ -2,8 +2,8 @@
 
 /*
   * Copyright (C)2012  Department of Robotics Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
-  * Author:Francesco Rea
-  * email: francesco.rea@iit.it
+  * Author:Francesco Rea  starting from code by Ugo Pattacini
+  * email: francesco.rea@iit.it, ugo.pattacini@iit.it
   * Permission is granted to copy, distribute, and/or modify this program
   * under the terms of the GNU General Public License, version 2 or any
   * later version published by the Free Software Foundation.
@@ -163,6 +163,20 @@ bool getCamPrj(const string &configFile, const string &type, Matrix **Prj)
 
 /**********************************************************************************/
 
+
+
+
+void iCubHeadCenter::allocate(const std::string &_type) {
+    // change DH parameters
+    (*this)[getN()-2].setD(0.0);
+
+    // block last two links
+    blockLink(getN()-2,0.0);
+    blockLink(getN()-1,0.0);
+}
+
+/********************************************************************/
+
 targetFinderThread::targetFinderThread() : RateThread(THRATE) {
     resized = false;
     count           = 0;
@@ -205,8 +219,10 @@ bool targetFinderThread::threadInit() {
     printf("counted the number of mapping %d \n", countMap);    
     printf("\n starting the thread.... \n");
     
-    eyeL = new iCubEye("left_v2");
-    eyeR = new iCubEye("right_v2");    
+    headV2 = true;
+    eyeL  = new iCubEye(headV2?"left_v2":"left");
+    eyeR  = new iCubEye(headV2?"right_v2":"right");
+    iCubHeadCenter eyeC("right_v2");
     
     // remove constraints on the links
     // we use the chains for logging purpose
@@ -287,6 +303,17 @@ bool targetFinderThread::threadInit() {
         printf("center %f,%f \n", cxr, cyr);
         invPrjR=new Matrix(pinv(Prj.transposed()).transposed());
     }
+
+    // get the absolute reference frame of the head
+    
+    Vector q(eyeC.getDOF(),0.0);
+    eyeCAbsFrame=eyeC.getH(q);
+    // ... and its inverse
+    invEyeCAbsFrame=SE3inv(eyeCAbsFrame);
+
+    // get the lenght of the half of the eyes baseline
+    eyesHalfBaseline = 0.5 * norm(eyeL->EndEffPose().subVector(0,2) - eyeR->EndEffPose().subVector(0,2));
+    
     
     //initializing gazecontrollerclient
     Property option;
@@ -473,6 +500,111 @@ bool targetFinderThread::threadInit() {
     return true;
 }
 
+
+/************************************************************************/
+Vector targetFinderThread::getAbsAngles(const Vector &x)
+{
+    Vector fp = x;
+    fp.push_back(1.0);  // impose homogeneous coordinates
+
+    // get fp wrt head-centered system
+    Vector fph = invEyeCAbsFrame * fp;
+    fph.pop_back();
+
+    Vector ang(3);
+    ang[0] =       atan2(fph[0],fph[2]);
+    ang[1] =      -atan2(fph[1],fabs(fph[2]));
+    ang[2] = 2.0 * atan2(eyesHalfBaseline,norm(fph));
+
+    return ang;
+}
+
+
+/************************************************************************/
+Vector targetFinderThread::get3DPoint(const string &type, const Vector &ang)
+{
+    /*
+    double azi = ang[0];
+    double ele = ang[1];
+    double ver = ang[2];
+
+    Vector q(8,0.0);
+    if (type == "rel")
+    {
+        //Vector torso = commData->get_torso();
+        //Vector head  = commData->get_q();
+        
+        // reading proprioception information
+        Vector torso(3);        
+        encTorso->getEncoder(0,&torso[0]);
+        encTorso->getEncoder(1,&torso[1]);
+        encTorso->getEncoder(2,&torso[2]);
+        
+        Vector head(6);
+        encHead->getEncoder(0,&head[0]);
+        encHead->getEncoder(1,&head[1]);
+        encHead->getEncoder(2,&head[2]);
+        encHead->getEncoder(3,&head[3]);
+        encHead->getEncoder(4,&head[4]);
+        encHead->getEncoder(4,&head[5]);
+
+        q[0] = torso[0];
+        q[1] = torso[1];
+        q[2] = torso[2];
+        q[3] = head[0];
+        q[4] = head[1];
+        q[5] = head[2];
+        q[6] = head[3];
+        q[7] = head[4];
+
+        ver += head[5];
+    }
+    
+    // impose vergence != 0.0
+    if (ver < 0.0)
+        ver = 0.0;
+
+    mutex.wait();
+
+    q[7] += ver/2.0;
+    eyeL->setAng(q);
+
+    q[7] -= ver;
+    eyeR->setAng(q);
+
+    Vector fp(4);
+    fp[3]=1.0;  // impose homogeneous coordinates
+
+    // compute new fp due to changed vergence
+    computeFixationPointOnly(*(eyeL->asChain()),*(eyeR->asChain()),fp);
+    mutex.post();
+
+    // compute rotational matrix to
+    // account for elevation and azimuth
+    Vector x(4), y(4);
+    x[0]=1.0;    y[0]=0.0;
+    x[1]=0.0;    y[1]=1.0;
+    x[2]=0.0;    y[2]=0.0;
+    x[3]=ele;    y[3]=azi;   
+    Matrix R = axis2dcm(y)*axis2dcm(x);
+
+    Vector fph, xd;
+    if (type == "rel")
+    {
+        Matrix frame = commData->get_fpFrame();
+        fph = SE3inv(frame)*fp;       // get fp wrt relative head-centered frame
+        xd = frame*(R*fph);           // apply rotation and retrieve fp wrt root frame
+    }
+    else
+    {
+        fph = invEyeCAbsFrame*fp;     // get fp wrt absolute head-centered frame
+        xd = eyeCAbsFrame*(R*fph);    // apply rotation and retrieve fp wrt root frame
+    }
+
+    return xd.subVector(0,2);
+    */
+}
+
 void targetFinderThread::setName(string str) {
     this->name=str;
     printf("name: %s", name.c_str());
@@ -505,21 +637,28 @@ void targetFinderThread::run() {
             //printf(" %f ", valueInput[i]);
         }
         //printf("\n");
+        //centerLeftX, centerLeftY, upperLeftX, upperLeftY, lowerLeftX, lowerLeftY
+        //centerRightX, centerRightY, upperRightX, upperRightY, lowerRightX, lowerRightY
 
         u = valueInput[0];
         v = valueInput[1];
+        
+
+        //preparing vector of position of left and right image plane
         Vector pxl(2);
-        pxl[0] = 160; //valueInput[0]; 
+        pxl[0] = valueInput[0]; 
         printf("%f ", valueInput[0]);
-        pxl[1] = 120; //valueInput[1]; 
+        pxl[1] = valueInput[1]; 
         printf("%f ", valueInput[1]);
         Vector pxr(2);
-        pxr[0] = 160; //valueInput[6]; 
+        pxr[0] = valueInput[6]; 
         printf("%f ", valueInput[6]);
-        pxr[1] = 120; //valueInput[7]; 
+        pxr[1] = valueInput[7]; 
         printf("%f ", valueInput[7]);
         printf("\n");
 
+
+        // reading proprioception information
         Vector torso(3);        
         encTorso->getEncoder(0,&torso[0]);
         encTorso->getEncoder(1,&torso[1]);
@@ -538,8 +677,6 @@ void targetFinderThread::run() {
         Vector q(8);
 
         if(isOnWings) {
-            
-            
             double ratio = M_PI /180; 
             qw[0]=torso[0] * ratio;
             qw[1]=torso[1] * ratio;
@@ -548,15 +685,12 @@ void targetFinderThread::run() {
             qw[4]=head[1]  * ratio;
             qw[5]=head[2]  * ratio;
             qw[6]=0.0 * CTRL_DEG2RAD;
-            qw[7]=0.0 * CTRL_DEG2RAD;
-            
+            qw[7]=0.0 * CTRL_DEG2RAD;            
             double ver = head[5];
             //xo = yarp::math::operator *(eye->getH(qw),xe);
             //printf("0:%f 1:%f 2:%f 3:%f 4:%f 5:%f 6:%f 7:%f \n", q[0],q[1],q[2],q[3],q[4],q[5],q[6],q[7]);
         }
         else {    
-            
-            
             double ratio = M_PI /180;
             q[0]=torso[0] * ratio;
             q[1]=torso[1] * ratio;
@@ -590,8 +724,10 @@ void targetFinderThread::run() {
         Vector qR=qL;
         qR[7]-=head[5]; printf("%f \n", qR[7]);
 
-        Matrix HL=SE3inv(eyeL->getH(qL));
-        Matrix HR=SE3inv(eyeR->getH(qR));
+
+        // processing information for triangulation
+        Matrix HL = SE3inv(eyeL->getH(qL));
+        Matrix HR = SE3inv(eyeR->getH(qR));
         printf("HL : \n"); printf("%s \n", HL.toString().c_str());
         printf("HR : \n"); printf("%s \n", HR.toString().c_str());        
         
@@ -600,11 +736,8 @@ void targetFinderThread::run() {
         tmp(0,2)  = pxl[0]; tmp(1,2) = pxl[1];
         Matrix AL =(*PrjL - tmp) * HL;
         
-        //printf("matrixAL created \n");
         tmp(0,2)  = pxr[0]; tmp(1,2) = pxr[1];
         Matrix AR = (*PrjR - tmp) * HR;
-
-        //printf("matrixAR created \n");
 
         Matrix A(4,3);
         Vector b(4);
@@ -629,10 +762,9 @@ void targetFinderThread::run() {
         
         Vector x(3);
         x = pinv(A) * b;
-        
         printf("x: \n"); printf(" %s \n",x.toString().c_str());        
 
-        //*******************************************************************************/
+        //********************* monocular component of vision ***************************/
         
         bool isLeft = true;  // TODO : the left drive is hardcoded but in the future might be either left or right
         
@@ -704,6 +836,8 @@ void targetFinderThread::run() {
         
         Time::delay(0.5);
         
+        //***********************************************************************/
+        
         if(outPort.getOutputCount()) {
             Vector angleVector(2);
             igaze->getAngles(angleVector);
@@ -733,7 +867,6 @@ void targetFinderThread::threadRelease() {
     inPort.close();
     inRightPort.close();
     outEventPort.close();
-
  
     delete eyeL;
     delete eyeR;

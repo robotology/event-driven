@@ -43,12 +43,18 @@
 #include <yarp/math/Math.h>
 #include <yarp/math/SVD.h>
 
+using namespace iCub::ctrl;
+using namespace iCub::iKin;
+
+
+
 
 
 class targetFinderThread : public yarp::os::RateThread {
 private:
     bool idle;                          // flag that exclude code from the execution loop
     bool isOnWings;
+    bool headV2;                        // indicates whether the robot has head version2
     int count;                          // loop counter of the thread
     int width, height;                  // dimension of the extended input image (extending)
     int height_orig, width_orig;        // original dimension of the input and output images
@@ -76,8 +82,10 @@ private:
 
     iCub::iKin::iCubEye *eyeL;
     iCub::iKin::iCubEye *eyeR;
-    yarp::sig::Matrix *invPrjL, *invPrjR;   // inverse of prjection matrix
-    yarp::sig::Matrix *PrjL, *PrjR;         // projection matrix
+    yarp::sig::Matrix eyeCAbsFrame;                 // projection matrix center eye
+    yarp::sig::Matrix invEyeCAbsFrame;              // inverse projection matrix center eye
+    yarp::sig::Matrix *invPrjL, *invPrjR;           // inverse of prjection matrix left and right
+    yarp::sig::Matrix *PrjL, *PrjR;                 // projection matrix left and right
     yarp::os::Property optionsHead;
     yarp::dev::IGazeControl *igaze;                 // Ikin controller of the gaze
     yarp::dev::PolyDriver* clientGazeCtrl;          // polydriver for the gaze controller
@@ -86,6 +94,7 @@ private:
 
     int originalContext;                    // original context for the gaze Controller
     double blockNeckPitchValue;             // value for blocking the pitch of the neck
+    double eyesHalfBaseline;                // half distance between the eyes
     double valueInput[12];                  // vector of 12 values read from the input port
 
     char* bufferCopy;                       // local copy of the events read
@@ -169,7 +178,38 @@ public:
     */
     void shift(int shift, yarp::sig::ImageOf<yarp::sig::PixelRgb>& outImage);
 
+    /**
+     * @brief simple function that extracts azimuth, elevation and vergence from a 3d position of fixation
+     * @param x 3D position of fixation in space using icub convention
+     * @return vector of angles
+     */
+    yarp::sig::Vector getAbsAngles(const yarp::sig::Vector &x);
+
+    /**
+     * @brief extracts 3d point point starting from azimuth, elevation and vergence angles.
+     * @param type type of trasformation from rel/abs angles
+     * @param ang  vector of angles values
+     */
+    yarp::sig::Vector get3DPoint(const std::string &type, const yarp::sig::Vector &ang); 
+
 };
+
+
+
+// Describe the kinematic of the straight line
+// coming out from the point located between eyes.
+class iCubHeadCenter : public iCub::iKin::iCubEye {
+protected:
+    void allocate(const std::string &_type);
+
+public:
+    iCubHeadCenter()                                { allocate("right"); }
+    iCubHeadCenter(const std::string &_type)        { allocate(_type);   }
+    iCubHeadCenter(const iCubHeadCenter &head)      { clone(head);       }
+};
+
+
+
 
 #endif  //_TARGET_FINDER_THREAD_H_
 //----- end-of-file --- ( next line intentionally left blank ) ------------------
