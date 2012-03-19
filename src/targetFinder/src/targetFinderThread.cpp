@@ -854,12 +854,13 @@ void targetFinderThread::run() {
         //***********************************************************************/
         
         if(outPort.getOutputCount()) {
-            Vector angleVector(2);
-            igaze->getAngles(angleVector);
+            //Vector angleVector(2);
+            //igaze->getAngles(angleVector);
             Bottle& angleBottle = outPort.prepare();
             angleBottle.clear();
-            angleBottle.add(xoAngles[0]);
-            angleBottle.add(xoAngles[1]);
+            angleBottle.add(xo[0]);
+            angleBottle.add(xo[1]);
+            angleBottle.add(xo[2]);
             outPort.write();
         }
     }
