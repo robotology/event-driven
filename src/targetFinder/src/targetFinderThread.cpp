@@ -38,6 +38,7 @@
 #define POLARITY_MASK 0x00000001
 #define POLARITY_SHIFT 0
 #define CONST_DECREMENT 5
+#define PI 3.14159265
 
 #define CHUNKSIZE 32768
 
@@ -502,20 +503,26 @@ bool targetFinderThread::threadInit() {
 
 
 /************************************************************************/
-Vector targetFinderThread::getAbsAngles(const Vector &x)
-{
+Vector targetFinderThread::getAbsAngles(const Vector &x) {
     Vector fp = x;
-    fp.push_back(1.0);  // impose homogeneous coordinates
+    if(fp.size() == 3) {
+        fp.push_back(1.0);  // impose homogeneous coordinates
+    }
 
     // get fp wrt head-centered system
+    //printf("get fp wrt head-centered system \n");
+    //printf(" %s \n",invEyeCAbsFrame.toString().c_str() );
+    //printf(" %s \n", fp.toString().c_str());
     Vector fph = invEyeCAbsFrame * fp;
     fph.pop_back();
 
     Vector ang(3);
+    //printf("angles extraction \n");
     ang[0] =       atan2(fph[0],fph[2]);
     ang[1] =      -atan2(fph[1],fabs(fph[2]));
     ang[2] = 2.0 * atan2(eyesHalfBaseline,norm(fph));
 
+    //printf("end of the function \n");
     return ang;
 }
 
@@ -627,7 +634,7 @@ void targetFinderThread::resize(int widthp, int heightp) {
 
 void targetFinderThread::run() {
     int u, v;
-    float zDistance = 10.5;
+    float zDistance = 3.5;
     Bottle* b  = inPort.read(false);
     if(b!=NULL) {
         printf("*************************************************** \n");
@@ -712,24 +719,24 @@ void targetFinderThread::run() {
         head[5] = 0;
         
         Vector qL(8);
-        qL[0]=torso[0]; printf("%f \n", qL[0]);
-        qL[1]=torso[1]; printf("%f \n", qL[1]);
-        qL[2]=torso[2]; printf("%f \n", qL[2]);
-        qL[3]=head[0];  printf("%f \n", qL[3]);
-        qL[4]=head[1];  printf("%f \n", qL[4]);
-        qL[5]=head[2];  printf("%f \n", qL[5]);
-        qL[6]=head[3];  printf("%f \n", qL[6]);
-        qL[7]=head[4] + head[5] / 2.0; printf("%f \n", qL[7]);
+        qL[0]=torso[0]; //printf("%f \n", qL[0]);
+        qL[1]=torso[1]; //printf("%f \n", qL[1]);
+        qL[2]=torso[2]; //printf("%f \n", qL[2]);
+        qL[3]=head[0];  //printf("%f \n", qL[3]);
+        qL[4]=head[1];  //printf("%f \n", qL[4]);
+        qL[5]=head[2];  //printf("%f \n", qL[5]);
+        qL[6]=head[3];  //printf("%f \n", qL[6]);
+        qL[7]=head[4] + head[5] / 2.0; //printf("%f \n", qL[7]);
 
         Vector qR=qL;
-        qR[7]-=head[5]; printf("%f \n", qR[7]);
+        qR[7]-=head[5]; //printf("%f \n", qR[7]);
 
 
         // processing information for triangulation
         Matrix HL = SE3inv(eyeL->getH(qL));
         Matrix HR = SE3inv(eyeR->getH(qR));
-        printf("HL : \n"); printf("%s \n", HL.toString().c_str());
-        printf("HR : \n"); printf("%s \n", HR.toString().c_str());        
+        //printf("HL : \n"); printf("%s \n", HL.toString().c_str());
+        //printf("HR : \n"); printf("%s \n", HR.toString().c_str());        
         
         //printf("inverse of rototraslation matrix 4by4 \n");
         Matrix tmp = zeros(3,4); tmp(2,2) = 1.0;
@@ -754,15 +761,19 @@ void targetFinderThread::run() {
         }
 
         // solve the least-squares problem
-        printf("Solving the least-squares problem with pseudoinvers \n");
-        printf("A =   \n");
-        printf(" %s  \n", A.toString().c_str());
-        printf("b =   \n");
-        printf(" %s  \n", b.toString().c_str());
+        //printf("Solving the least-squares problem with pseudoinvers \n");
+        //printf("A =   \n");
+        //printf(" %s  \n", A.toString().c_str());
+        //printf("b =   \n");
+        //printf(" %s  \n", b.toString().c_str());
         
         Vector x(3);
+        Vector xAngles(3);
         x = pinv(A) * b;
-        printf("x: \n"); printf(" %s \n",x.toString().c_str());        
+        xAngles = getAbsAngles(x);
+        printf("x: \n"); printf(" %s \n",x.toString().c_str());  
+        printf("extracted angles from x %s \n", xAngles.toString().c_str());
+              
 
         //********************* monocular component of vision ***************************/
         
@@ -791,17 +802,13 @@ void targetFinderThread::run() {
         Vector x2(3);
         x2[0] = zDistance * u;
         x2[1] = zDistance * v;
-        x2[2] = zDistance;
-        printf("assigned the value to the vector x \n");
-        
+        x2[2] = zDistance;        
         
         // find the 3D position from the 2D projection,
         // knowing the distance z from the camera
         Vector xe = yarp::math::operator *(*invPrj, x2);
         xe[3] = 1.0;  // impose homogeneous coordinates 
-        printf("imposing homogeneous coordinates \n");
-        
-        
+              
         if(isOnWings) {
             xo = yarp::math::operator *(eye->getH(qw),xe);
         }
@@ -809,33 +816,42 @@ void targetFinderThread::run() {
             xo = yarp::math::operator *(eye->getH(q),xe);
         }
 
+       
+
         // update position wrt the root frame        
         //Vector xo = yarp::math::operator *(eye->getH(q),xe);
-        printf("fixation point estimated %f %f %f \n",xo[0], xo[1], xo[2]);
+        printf("xo: \n  %f %f %f \n",xo[0], xo[1], xo[2]);
+        Vector xoAngles = getAbsAngles(xo);
+        printf("extracted angles from xo %f %f %f \n", xoAngles[0] * 180.0 / PI, xoAngles[1] * 180.0 / PI, xoAngles[2] * 180.0 / PI);
+        
 
-        
-        
         /*
         Vector start(3);
         start[0] = -0.5;
         start[1] = 0.0;
         start[2] = 0.35;
         */
-       
+        bool performAction = false;
+        if(performAction) {
+            igaze->lookAtFixationPoint(xo);
+            
         
-        igaze->lookAtFixationPoint(xo);
-        
-        bool done;
-        igaze->checkMotionDone(&done);
-        while (!done) {
+            bool done;
             igaze->checkMotionDone(&done);
-            printf(".");
-            Time::delay(0.1);
+            double timestart = Time::now();
+            double timediff = 0, timestop = 0;
+            while ((!done) && (timediff < 5.0)) {
+                igaze->checkMotionDone(&done);
+                printf(".");
+                Time::delay(0.1);
+                timestop = Time::now();
+                timediff = timestop - timestart;
+            }
+            printf("\n");      
         }
-        printf("\n");      
         
         Time::delay(0.5);
-        
+            
         //***********************************************************************/
         
         if(outPort.getOutputCount()) {
@@ -846,7 +862,6 @@ void targetFinderThread::run() {
             angleBottle.add(angleVector[0]);
             angleBottle.add(angleVector[1]);
             outPort.write();
-
         }
     }
 }
