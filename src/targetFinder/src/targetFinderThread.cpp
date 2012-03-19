@@ -665,7 +665,7 @@ void targetFinderThread::run() {
         printf("\n");
 
 
-        // reading proprioception information
+        // reading proprioceptive information
         Vector torso(3);        
         encTorso->getEncoder(0,&torso[0]);
         encTorso->getEncoder(1,&torso[1]);
@@ -679,10 +679,11 @@ void targetFinderThread::run() {
         encHead->getEncoder(4,&head[4]);
         encHead->getEncoder(4,&head[5]);
 
-        Vector xo;
-        Vector qw(8);
-        Vector q(8);
+        Vector xo, qL(8), qR(8);
+        Vector qw(9);
+        Vector q(9);
 
+        isOnWings = false;
         if(isOnWings) {
             double ratio = M_PI /180; 
             qw[0]=torso[0] * ratio;
@@ -692,25 +693,50 @@ void targetFinderThread::run() {
             qw[4]=head[1]  * ratio;
             qw[5]=head[2]  * ratio;
             qw[6]=0.0 * CTRL_DEG2RAD;
-            qw[7]=0.0 * CTRL_DEG2RAD;            
+            qw[7]=0.0 * CTRL_DEG2RAD;
+            qw[8]=0.0 * CTRL_DEG2RAD;   
             double ver = head[5];
+            
+            qL[0]= qw[0]; //printf("%f \n", qL[0]);
+            qL[1]= qw[1]; //printf("%f \n", qL[1]);
+            qL[2]= qw[2]; //printf("%f \n", qL[2]);
+            qL[3]= qw[3];  //printf("%f \n", qL[3]);
+            qL[4]= qw[4];  //printf("%f \n", qL[4]);
+            qL[5]= qw[5];  //printf("%f \n", qL[5]);
+            qL[6]= qw[6];  //printf("%f \n", qL[6]);
+            qL[7]= qw[7] + qw[8] / 2.0; //printf("%f \n", qL[7]);
+
+            qR=qL;
+            qR[7] -= qw[8]; //printf("%f \n", qR[7]);
             //xo = yarp::math::operator *(eye->getH(qw),xe);
             //printf("0:%f 1:%f 2:%f 3:%f 4:%f 5:%f 6:%f 7:%f \n", q[0],q[1],q[2],q[3],q[4],q[5],q[6],q[7]);
         }
         else {    
             double ratio = M_PI /180;
-            q[0]=torso[0] * ratio;
-            q[1]=torso[1] * ratio;
-            q[2]=torso[2] * ratio;
-            q[3]=head[0]  * ratio;
-            q[4]=head[1]  * ratio;
-            q[5]=head[2]  * ratio;
-            q[6]=head[3]  * ratio;
-            q[7]=head[4]  * ratio;
+            q[0] = torso[0] * CTRL_DEG2RAD;
+            q[1] = torso[1] * CTRL_DEG2RAD;
+            q[2] = torso[2] * CTRL_DEG2RAD;
+            q[3] = 0.0 ;//head[0]  * ratio;
+            q[4] = 0.0; //head[1]  * ratio;
+            q[5] = 0.0;//head[2]  * ratio;
+            q[6] = head[3]  * ratio;
+            q[7] = head[4]  * ratio;
+            q[8] = head[5]  * ratio;
             double ver = head[5];
             
+            qL[0]= q[0]; //printf("%f \n", qL[0]);
+            qL[1]= q[1]; //printf("%f \n", qL[1]);
+            qL[2]= q[2]; //printf("%f \n", qL[2]);
+            qL[3]= q[3];  //printf("%f \n", qL[3]);
+            qL[4]= q[4];  //printf("%f \n", qL[4]);
+            qL[5]= q[5];  //printf("%f \n", qL[5]);
+            qL[6]= q[6];  //printf("%f \n", qL[6]);
+            qL[7]= q[7] + q[8] / 2.0; //printf("%f \n", qL[7]);
+
+            qR=qL;
+            qR[7] -= q[8]; //printf("%f \n", qR[7]);
             //xo = yarp::math::operator *(eye->getH(q),xe);
-            //printf("0:%f 1:%f 2:%f 3:%f 4:%f 5:%f 6:%f 7:%f \n", q[0],q[1],q[2],q[3],q[4],q[5],q[6],q[7]);
+            printf("0:%f 1:%f 2:%f 3:%f 4:%f 5:%f 6:%f 7:%f \n", q[0],q[1],q[2],q[3],q[4],q[5],q[6],q[7]);
         }
                  
 
@@ -718,18 +744,7 @@ void targetFinderThread::run() {
         head[4] = 0;
         head[5] = 0;
         
-        Vector qL(8);
-        qL[0]=torso[0]; //printf("%f \n", qL[0]);
-        qL[1]=torso[1]; //printf("%f \n", qL[1]);
-        qL[2]=torso[2]; //printf("%f \n", qL[2]);
-        qL[3]=head[0];  //printf("%f \n", qL[3]);
-        qL[4]=head[1];  //printf("%f \n", qL[4]);
-        qL[5]=head[2];  //printf("%f \n", qL[5]);
-        qL[6]=head[3];  //printf("%f \n", qL[6]);
-        qL[7]=head[4] + head[5] / 2.0; //printf("%f \n", qL[7]);
-
-        Vector qR=qL;
-        qR[7]-=head[5]; //printf("%f \n", qR[7]);
+        
 
 
         // processing information for triangulation
@@ -772,7 +787,7 @@ void targetFinderThread::run() {
         x = pinv(A) * b;
         xAngles = getAbsAngles(x);
         printf("x: \n"); printf(" %s \n",x.toString().c_str());  
-        printf("extracted angles from x %s \n", xAngles.toString().c_str());
+        printf("        angles %s \n", xAngles.toString().c_str());
               
 
         //********************* monocular component of vision ***************************/
@@ -822,7 +837,7 @@ void targetFinderThread::run() {
         //Vector xo = yarp::math::operator *(eye->getH(q),xe);
         printf("xo: \n  %f %f %f \n",xo[0], xo[1], xo[2]);
         Vector xoAngles = getAbsAngles(xo);
-        printf("extracted angles from xo %f %f %f \n", xoAngles[0] * 180.0 / PI, xoAngles[1] * 180.0 / PI, xoAngles[2] * 180.0 / PI);
+        printf("        angles %f %f %f \n", xoAngles[0] * 180.0 / PI, xoAngles[1] * 180.0 / PI, xoAngles[2] * 180.0 / PI);
         
 
         /*
