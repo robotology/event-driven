@@ -34,7 +34,7 @@
 #include <yarp/os/BufferedPort.h>
 #include <yarp/sig/all.h>
 
-class eventCartesianCollector:public yarp::os::BufferedPort<eventBuffer> {
+class eventCartesianCollector:public yarp::os::BufferedPort<emorph::ebuffer::eventBuffer> {
 public:
     eventCartesianCollector();
     ~eventCartesianCollector();
@@ -42,7 +42,7 @@ public:
     /**
     * overwritten function for handling events as soon as they arrive
     */
-    virtual void onRead(eventBuffer& b);
+    virtual void onRead(emorph::ebuffer::eventBuffer& b);
 
     /**
     * overwritten function for handling events as soon as they arrive as eventBottle

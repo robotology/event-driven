@@ -37,7 +37,7 @@
 #include <yarp/os/Network.h>
 #include <yarp/os/BufferedPort.h>
 
-class cFrameConverter:public yarp::os::BufferedPort<eventBuffer> {
+class cFrameConverter:public yarp::os::BufferedPort<emorph::ebuffer::eventBuffer> {
 public:
     cFrameConverter();
     ~cFrameConverter();
@@ -45,7 +45,7 @@ public:
     /**
     * overwritten function for handling events as soon as they arrive
     */
-    virtual void onRead(eventBuffer& b);
+    virtual void onRead(emorph::ebuffer::eventBuffer& b);
 
 
     /**

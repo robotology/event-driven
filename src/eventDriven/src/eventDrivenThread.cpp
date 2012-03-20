@@ -34,6 +34,7 @@
 using namespace yarp::dev;
 using namespace yarp::os;
 using namespace yarp::sig;
+using namespace emorph::ebuffer;
 using namespace std;
 
 eventDrivenThread::eventDrivenThread():RateThread(THRATE) {

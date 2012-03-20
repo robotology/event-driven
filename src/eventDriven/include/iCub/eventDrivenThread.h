@@ -53,15 +53,15 @@
 //template <class eventBuffer>
 
 
-class eventPort : public yarp::os::BufferedPort<eventBuffer> {
+class eventPort : public yarp::os::BufferedPort<emorph::ebuffer::eventBuffer> {
 public:
 
     eventPort(){};
     ~eventPort(){};
-    eventBuffer eventTrain;                       // object made by the train of events
+    emorph::ebuffer::eventBuffer eventTrain;                       // object made by the train of events
     yarp::os::Semaphore mutex;                    // Semaphore for the flage variable
     bool hasNewEvent;                             // flag that indicates whether there are new events
-    virtual void onRead(eventBuffer& eT) {
+    virtual void onRead(emorph::ebuffer::eventBuffer& eT) {
         //mutex.wait();
         //setHasNewEvent(true);             // to be set to false once done with the events
         printf("Received new packet \n");
@@ -86,7 +86,7 @@ private:
     unsigned long* timeBufRight;    // buffer for timestamp, ?? Stack
     int* eventsBufRight;            // buffer for events
     int* leakLeft;                  // leaky integrator and fire for the left eye
-    eventBuffer* currentEventTrain; // the current event that will be read and unmasked 
+    emorph::ebuffer::eventBuffer* currentEventTrain; // the current event that will be read and unmasked 
     unmask unmaskEvent;             // to unmask the event           
     std::string robot;              // name of the robot
     std::string configFile;         // name of the configFile where the parameter of the camera are set

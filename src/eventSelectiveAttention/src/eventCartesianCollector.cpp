@@ -45,6 +45,7 @@
 
 using namespace yarp::os;
 using namespace yarp::sig;
+using namespace emorph::ebuffer;
 using namespace std;
 
 eventCartesianCollector::eventCartesianCollector() {

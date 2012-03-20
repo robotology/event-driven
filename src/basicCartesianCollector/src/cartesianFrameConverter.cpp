@@ -40,6 +40,7 @@
 
 using namespace yarp::os;
 using namespace yarp::sig;
+using namespace emorph::ebuffer;
 using namespace std;
 
 cFrameConverter::cFrameConverter():convert_events(128,128) {
