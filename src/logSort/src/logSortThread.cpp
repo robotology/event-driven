@@ -33,6 +33,7 @@
 
 using namespace yarp::os;
 using namespace yarp::sig;
+using namespace emorph::ebuffer;
 using namespace std;
 
 #define COUNTERRATIO  1             // deprecated 1.25 is the ratio 0.160/0.128

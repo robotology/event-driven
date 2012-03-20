@@ -46,10 +46,6 @@
 using namespace iCub::ctrl;
 using namespace iCub::iKin;
 
-
-
-
-
 class targetFinderThread : public yarp::os::RateThread {
 private:
     bool idle;                          // flag that exclude code from the execution loop
@@ -63,7 +59,7 @@ private:
     yarp::os::BufferedPort<yarp::os::Bottle> inRightPort;                                // port where the right event image is received
     yarp::os::BufferedPort<yarp::os::Bottle> outPort;           // port where the output edge (left) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outRightPort;      // port where the output edge (right) is sent
-    yarp::os::BufferedPort<eventBuffer> outEventPort;                                    // port sending events
+    yarp::os::BufferedPort<emorph::ebuffer::eventBuffer> outEventPort;                                    // port sending events
     yarp::sig::ImageOf <yarp::sig::PixelMono>* leftInputImage;                           // image input left 
     yarp::sig::ImageOf <yarp::sig::PixelMono>* rightInputImage;                          // image input right 
     std::string robot;                      // name of the robot read by the ResourceFinder
