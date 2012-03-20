@@ -75,7 +75,8 @@ bool eventSelectorThread::threadInit() {
     //outPort.open(getName("/left:o").c_str());
     //outPortRight.open(getName("/right:o").c_str());
 
-    fout = fopen("./eventSelector.dump.txt","w+");
+
+    fout = fopen("./eventSelectiveAttention.dump.txt","w+");
 
     resize(retinalSize, retinalSize);
 
@@ -94,8 +95,9 @@ bool eventSelectorThread::threadInit() {
     pThread->setRetinalSize(retinalSize);
     pThread->start();
     
-    unmask_events = new unmask();
-    unmask_events->setRetinalSize(32);
+    unmask_events = new unmask(32);
+    //unmask_events->setRetinalSize(32);
+    
     //unmask_events->setResponseGradient(responseGradient);
     //unmask_events->setASVMode(asvFlag);
     //unmask_events->setDVSMode(dvsFlag);
@@ -395,7 +397,7 @@ void eventSelectorThread::run() {
         //unsigned long blob      = buf2[2 * evt];
         //unsigned long t         = buf2[2 * evt + 1];
         if(iter->ts!=0) {
-            fprintf(fout," %08x \n", iter->ts);
+            fprintf(fout," %08x %d %d \n", iter->ts, iter->x, iter->y);
         }
         //if((iter->x >=32) || (iter->y >= 32)) {
         //    printf("Error after unmasking %d %d \n", iter->x, iter->y);
@@ -404,7 +406,9 @@ void eventSelectorThread::run() {
     }
 #endif
     
-
+    // spatial processing
+    double w1 = 0, w2 = 0, w3 = 0, w4 = 0;
+    //spatialSelection(unmaskedEvents,CHUNKSIZE>>3,w1);
 
     
     //gettin the time between two threads
@@ -547,9 +551,7 @@ void eventSelectorThread::run() {
     }    
     // ----------- preventer end    --------------------- //
 
-    
     // spatial processing
-    double w1 = 0, w2 = 0, w3 = 0, w4 = 0;
     spatialSelection(unmaskedEvents,CHUNKSIZE>>3,w1, minCount, maxCount);
 
     // the getMonoImage gets as default input image the saliency map
