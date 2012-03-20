@@ -43,9 +43,9 @@ add_subdirectory   (targetFinder)
 
 
 
-# ------------- SUBFOLDERS ---------------------
+# --------  OPTICFLOW SUBFOLDERS ---------------------
 #add_subdirectory  (opticalFlow)
 #add_subdirectory  (opticalFlow2)
 #add_subdirectory  (opticalFlow3)
-add_subdirectory   (eventOpticalFlow)
+#add_subdirectory   (eventOpticalFlow)
 
