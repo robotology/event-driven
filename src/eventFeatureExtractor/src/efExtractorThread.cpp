@@ -30,6 +30,9 @@
 #include <stdio.h>
 #include <cstring>
 #include <cassert>
+#include <iomanip>
+#include <string>
+#include <typeinfo>
 
 using namespace emorph::ecodec;
 using namespace yarp::os;
