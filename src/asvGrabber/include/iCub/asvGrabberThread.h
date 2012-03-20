@@ -539,7 +539,7 @@ public:
 
 
 private:
-    yarp::os::BufferedPort<eventBuffer> port;              //port sending events
+    yarp::os::BufferedPort<emorph::ebuffer::eventBuffer> port;              //port sending events
     yarp::os::BufferedPort<yarp::os::Bottle> portDimension;  //port sending dimension of packets   
     int r;                                                   //dimension of the received buffer of event for display
     FILE* raw;

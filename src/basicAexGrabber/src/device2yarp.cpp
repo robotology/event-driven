@@ -37,6 +37,7 @@
 
 using namespace std;
 using namespace yarp::os;
+using namespace emorph::ebuffer;
 
 extern int errno; 
 //EAGAIN		11	/* Resource temporarily unavailable */

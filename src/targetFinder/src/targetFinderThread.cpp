@@ -23,7 +23,7 @@
  */
 
 
-#define DIM 10
+#define DIM 10 
 #define THRATE 30
 #define SHIFTCONST 100
 #define RETINA_SIZE 128
@@ -864,7 +864,7 @@ void targetFinderThread::run() {
             printf("\n");      
         }
         
-        Time::delay(10);
+        Time::delay(0.5);
             
         //***********************************************************************/
         
