@@ -12,6 +12,14 @@
 
 using namespace std;
 using namespace yarp::os;
+using namespace emorph::ebuffer;
+
+
+namespace emorph
+{
+
+namespace ebuffer
+{
 
 eventBuffer::eventBuffer()
 {
@@ -77,3 +85,6 @@ bool eventBuffer::read(yarp::os::ConnectionReader& connection)
     return true;
 }
 
+}
+
+}

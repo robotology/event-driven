@@ -19,6 +19,12 @@
 #include <yarp/os/all.h>
 #include <cstring>
 
+namespace emorph
+{
+
+namespace ebuffer
+{
+
 const int SIZE_OF_DATA = 65536; 
 
 /**
@@ -47,6 +53,9 @@ private:
     int size_of_the_packet;
 };
 
+}
+
+}
 
 #endif
 
