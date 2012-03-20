@@ -13,7 +13,7 @@
 
 #ifndef __evenConversionh__
 #define __evenConversionh__
-#include <eventCodec.h>
+#include <iCub/emorph/eventCodec.h>
 #include <iostream>
 #include <sstream>
 #include <ctime>

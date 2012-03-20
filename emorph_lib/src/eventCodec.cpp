@@ -15,7 +15,7 @@
  * Public License for more details
 */
 
-#include "eventCodec.h"
+#include "iCub/emorph/eventCodec.h"
 
 using namespace yarp::os;
 using namespace emorph::ecodec;

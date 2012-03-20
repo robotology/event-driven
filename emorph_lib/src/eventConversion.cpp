@@ -19,11 +19,12 @@
  */
 
 /**
- * @file unmask.cpp
- * @brief A class for unmasking the event (see the header unmask.h)
+ * @file eventConversion.cpp
+ * @brief A class for conversion of events event (see the eventConversion.h)
  */
 
-#include <eventConversion.h>
+#include <iCub/emorph/eventConversion.h>
+
 #include <cassert>
 #include <cstring>
 #include <inttypes.h>

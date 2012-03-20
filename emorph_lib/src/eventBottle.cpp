@@ -8,7 +8,7 @@
  * CopyPolicy: Released under the terms of the GNU GPL v2.0.
 */
 
-#include <eventBottle.h>
+#include <iCub/emorph/eventBottle.h>
 
 using namespace std;
 using namespace yarp::os;

@@ -3,12 +3,12 @@
 /**
  * Data buffer implementation for the event-based camera.
  *
- * Author: Giorgio Metta
+ * Author: Giorgio Metta, Francesco Rea
  * Copyright (C) 2010 RobotCub Consortium
  * CopyPolicy: Released under the terms of the GNU GPL v2.0.
 */
 
-#include <eventBuffer.h>
+#include <iCub/emorph/eventBuffer.h>
 
 using namespace std;
 using namespace yarp::os;
