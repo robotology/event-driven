@@ -708,7 +708,7 @@ void  device2yarp::run() {
     }
     monBufEvents = r / sizeofstructaer;
     countAEs += monBufEvents; 
-    //printf("%d \n",r);
+    printf("%d \n",r);
 
     int k = 0;
     int k2 = 0;
@@ -739,27 +739,33 @@ void  device2yarp::run() {
         //if(i == 1000)
         //    printf("address:%d ; timestamp:%d \n", a, t);
     }
-
-    fprintf(fout, "# endofpacket number %d \n", packetNum);
     
+    if(save) {
+        fprintf(fout, "# endofpacket number %d \n", packetNum);
+    }
     sz = monBufEvents * sizeof(struct aer); // sz is size in bytes
+    
+    
 
     if (port.getOutputCount()) {
+        printf("sending event buffer \n");
         eventBuffer data2send(buffer, sz);    
         eventBuffer& tmp = port.prepare();
         tmp = data2send;
         port.write();
     }   
 
-    if (portDimension.getOutputCount()) {       
+    if (portDimension.getOutputCount()) {
+        printf("sending dimension of the packet \n");
         Bottle& b = portDimension.prepare();
         b.clear();
         b.addInt(r);
         portDimension.write();
     }  
 
-    //resetting buffers    
+    //resetting buffers
     memset(buffer, 0, SIZE_OF_DATA);
+    
 }
 
 
