@@ -40,7 +40,7 @@
 
 
 using namespace yarp::os;
-
+using namespace emorph::ebuffer;
 
 class OpticalFlowModule : public RFModule{
     short retinaSizeR;

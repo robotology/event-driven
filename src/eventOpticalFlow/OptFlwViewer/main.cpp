@@ -11,7 +11,7 @@
 using namespace std;
 using namespace yarp::os;
 
-#define VEL_BFR_SIZE 10
+#define VEL_BFR_SIZE 20
 
 class VelocityGrabber: public BufferedPort<VelocityBuffer>{
 
@@ -137,8 +137,8 @@ public:
         return true;
     }
 
-    ~FlowViewerModule(){
-        cout << "Optical Flow Module is coles happily!" << endl;
+    virtual ~FlowViewerModule(){
+        cout << "Optical Flow Viewer Module is coles happily!" << endl;
     }
 };
 

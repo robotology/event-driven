@@ -13,7 +13,7 @@
 
 #define XDIM 128
 #define YDIM 128
-#define MEDIAN_NGHBRHD 1
+#define MEDIAN_NGHBRHD 2
 
 using namespace std;
 using namespace yarp::os;

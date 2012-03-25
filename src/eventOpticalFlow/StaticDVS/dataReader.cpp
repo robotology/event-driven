@@ -34,6 +34,7 @@
 using namespace std;
 
 using namespace yarp::os;
+using namespace emorph::ebuffer;
 
 class EventReader : public RFModule{
     bool dvsCam;

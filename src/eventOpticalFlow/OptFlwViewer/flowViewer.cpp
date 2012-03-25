@@ -58,7 +58,7 @@ double flowViewer::kth_smallest(double * a, int n, int k)
 
 void flowViewer::resetVelMtrx(){
     zeroFlag++;
-    if (zeroFlag == 2)
+    if (zeroFlag == 3)
         zeroFlag = 0;
 
     if (zeroFlag == 0){
@@ -224,8 +224,8 @@ void flowViewer::run(VelocityBuffer& data)
         vvx = ax * vx; //vvx = ax * abs(vx) + bx;//
         vvy = ay * vy; //vvy = ay * abs(vy) + by; //
 
-       // norm=vx*vx+vy*vy;
-       // if (norm>0.0)
+        norm=vx*vx+vy*vy;
+        if (norm>0.0){
 //        if (vvx != 0 || vvy != 0)
 //        {
             //std::cout << x << " " << y << " " << vx << " " << vy << std::endl;
@@ -243,7 +243,7 @@ void flowViewer::run(VelocityBuffer& data)
             yarp::sig::draw::addSegment(img,black,X,Y,hx,hy);
             yarp::sig::draw::addCircle(img,black,hx,hy,2);
 
-//        }
+        }
 
     }
 

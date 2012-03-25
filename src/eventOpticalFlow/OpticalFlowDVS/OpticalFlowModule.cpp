@@ -37,7 +37,7 @@ bool OpticalFlowModule::configure(ResourceFinder & rf){
     retinaSizeR = RETINA_SIZE_R;
 
     frameInv = rf.check("frame_intv",
-    		            Value(6250), //12500(2ms) 18750(3ms) 31250(5ms) 62500(10ms)
+    		            Value(18750), //12500(2ms) 18750(3ms) 31250(5ms) 62500(10ms)
     		            "time interval for each frame (unsinged long)").asInt();
 
 

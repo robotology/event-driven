@@ -35,8 +35,8 @@ int main (int argc, char * argv []) {
 
     ResourceFinder rf;
     rf.setVerbose(true);
-    rf.setDefaultConfigFile("eventBasedOpticalFlow.ini"); //overriden by --from parameter
-    rf.setDefaultContext("eventOpticalFlow/conf"); //overriden by --context parameter
+    //rf.setDefaultConfigFile("eventBasedOpticalFlow.ini"); //overriden by --from parameter
+    //rf.setDefaultContext("eventOpticalFlow/conf"); //overriden by --context parameter
     rf.configure("ICUB_ROOT", argc, argv);
 
     if (!optFlowModule.configure(rf)){

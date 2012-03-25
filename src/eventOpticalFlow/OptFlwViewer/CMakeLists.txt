@@ -9,8 +9,6 @@ FIND_PACKAGE(YARP)
 INCLUDE_DIRECTORIES(${YARP_INCLUDE_DIRS}
                     ${ICUB_INCLUDE_DIRS})
 
-#FILE (GLOB SOURCE_FOLDER *.cpp)
-#FILE (GLOB HEADER_FOLDER *.h)
 
 FILE (GLOB source_folder *.cpp)
 FILE (GLOB header_folder *.h)

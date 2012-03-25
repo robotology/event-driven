@@ -39,6 +39,7 @@
 //#define BUFFER_SIZE 10000
 //#define TMPORAL_WINDOW_SZ 5
 
+using namespace emorph::ebuffer;
 
 
 class AERGrabber : public yarp::os::BufferedPort <eventBuffer> {

@@ -87,15 +87,15 @@ void AERGrabber::onRead(eventBuffer & eBuffer){
         
         	lastFrameTS= timestamp;
 
-            if (evtFrame.size() > 10){
-     	       evntsMutex ->post();
+            if (evtFrame.size() > 0){
         	   eBufferMutex.wait();
         	   evtBuffer.push(evtFrame);
         	   eBufferMutex.post();
+        	   evntsMutex ->post();
            	   evtFrame.clear();        	   
             }
-            else 
-                freeBuffer(evtFrame); 
+//            else
+//                freeBuffer(evtFrame);
             
 
         }
@@ -114,21 +114,21 @@ bool AERGrabber::isReliableEvent (short row, short clmn, short polarity, unsigne
         tmp = onTimestamps(row + RELIABLE_NGHBRHD, clmn + RELIABLE_NGHBRHD);
 
         //update the pixel neighborhood in timestamps Matrix with the new value of ts
-//        onTimestamps.updateSubMatrix(row, clmn, ts,              // row + RELIABLE_NGHBRHD - RELIABLE_NGHBRHD = row
-//                                   2*RELIABLE_NGHBRHD + 1, 2*RELIABLE_NGHBRHD+1);
+        onTimestamps.updateSubMatrix(row, clmn, ts,              // row + RELIABLE_NGHBRHD - RELIABLE_NGHBRHD = row
+                                   2*RELIABLE_NGHBRHD + 1, 2*RELIABLE_NGHBRHD+1);
 
        
-        onTimestamps(row + RELIABLE_NGHBRHD, clmn + RELIABLE_NGHBRHD) = ts;
+ //       onTimestamps(row + RELIABLE_NGHBRHD, clmn + RELIABLE_NGHBRHD) = ts;
 
     }
     else{
         tmp = offTimestamps(row + RELIABLE_NGHBRHD, clmn + RELIABLE_NGHBRHD);
 
         //update the pixel neighborhood in timestamps Matrix with the new value of ts
-//        offTimestamps.updateSubMatrix(row, clmn, ts,              // row + RELIABLE_NGHBRHD - RELIABLE_NGHBRHD = row
-//                                   2*RELIABLE_NGHBRHD + 1, 2*RELIABLE_NGHBRHD+1);
+        offTimestamps.updateSubMatrix(row, clmn, ts,              // row + RELIABLE_NGHBRHD - RELIABLE_NGHBRHD = row
+                                   2*RELIABLE_NGHBRHD + 1, 2*RELIABLE_NGHBRHD+1);
 
-        offTimestamps(row + RELIABLE_NGHBRHD, clmn + RELIABLE_NGHBRHD) = ts;
+//        offTimestamps(row + RELIABLE_NGHBRHD, clmn + RELIABLE_NGHBRHD) = ts;
 
     }
 
