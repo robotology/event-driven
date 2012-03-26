@@ -654,16 +654,34 @@ void targetFinderThread::run() {
         //preparing vector of position of left and right image plane
         Vector pxl(2);
         pxl[0] = valueInput[0]; 
+        //pxl[0] = 160;
         printf("%f ", valueInput[0]);
         pxl[1] = valueInput[1]; 
+        //pxl[1] = 120;
         printf("%f ", valueInput[1]);
         Vector pxr(2);
         pxr[0] = valueInput[6]; 
+        //pxr[0] = 160;
         printf("%f ", valueInput[6]);
         pxr[1] = valueInput[7]; 
+        //pxr[1] = 120;
         printf("%f ", valueInput[7]);
         printf("\n");
 
+        
+        //********************* stereo tringulation component of vision ***************************/
+        Vector txl(2), txr(2);
+        txl[0]=10;         // specify somehow the pixel within the left image plane
+        txl[1]=100;
+        
+        txr[0]=20;         // specify somehow the pixel within the right image plane
+        txr[1]=80;
+        Vector xs(3);
+        igaze->triangulate3DPoint(pxl,pxr,xs);
+        printf("xs: \n"); printf(" %s \n",xs.toString().c_str());  
+        
+
+        //********************* stereo component of vision ***************************/
 
         // reading proprioceptive information
         Vector torso(3);        
@@ -677,13 +695,16 @@ void targetFinderThread::run() {
         encHead->getEncoder(2,&head[2]);
         encHead->getEncoder(3,&head[3]);
         encHead->getEncoder(4,&head[4]);
-        encHead->getEncoder(4,&head[5]);
+        encHead->getEncoder(5,&head[5]);
+
+        printf("0:%f 1:%f 2:%f 3:%f 4:%f 5:%f 6:%f 7:%f \n", torso[0],torso[1],torso[2],head[0],head[1],head[2],head[3],head[4]);
+        
 
         Vector xo, qL(8), qR(8);
         Vector qw(9);
         Vector q(9);
 
-        isOnWings = false;
+        isOnWings = true;
         if(isOnWings) {
             double ratio = M_PI /180; 
             qw[0]=torso[0] * ratio;
@@ -711,14 +732,15 @@ void targetFinderThread::run() {
             //xo = yarp::math::operator *(eye->getH(qw),xe);
             //printf("0:%f 1:%f 2:%f 3:%f 4:%f 5:%f 6:%f 7:%f \n", q[0],q[1],q[2],q[3],q[4],q[5],q[6],q[7]);
         }
-        else {    
+        else { 
             double ratio = M_PI /180;
+            printf("difference ratioCTRL_DEG2RAD %f \n", CTRL_DEG2RAD - ratio );
             q[0] = torso[0] * CTRL_DEG2RAD;
             q[1] = torso[1] * CTRL_DEG2RAD;
             q[2] = torso[2] * CTRL_DEG2RAD;
-            q[3] = 0.0 ;//head[0]  * ratio;
-            q[4] = 0.0; //head[1]  * ratio;
-            q[5] = 0.0;//head[2]  * ratio;
+            q[3] = head[0]  * ratio;
+            q[4] = head[1]  * ratio;
+            q[5] = head[2]  * ratio;
             q[6] = head[3]  * ratio;
             q[7] = head[4]  * ratio;
             q[8] = head[5]  * ratio;
@@ -736,16 +758,13 @@ void targetFinderThread::run() {
             qR=qL;
             qR[7] -= q[8]; //printf("%f \n", qR[7]);
             //xo = yarp::math::operator *(eye->getH(q),xe);
-            printf("0:%f 1:%f 2:%f 3:%f 4:%f 5:%f 6:%f 7:%f \n", q[0],q[1],q[2],q[3],q[4],q[5],q[6],q[7]);
+            //printf("0:%f 1:%f 2:%f 3:%f 4:%f 5:%f 6:%f 7:%f \n", q[0],q[1],q[2],q[3],q[4],q[5],q[6],q[7]);
         }
                  
 
-        head[3] = 0;
-        head[4] = 0;
-        head[5] = 0;
-        
-        
-
+        //head[3] = 0;
+        //head[4] = 0;
+        //head[5] = 0;
 
         // processing information for triangulation
         Matrix HL = SE3inv(eyeL->getH(qL));
@@ -787,7 +806,7 @@ void targetFinderThread::run() {
         x = pinv(A) * b;
         xAngles = getAbsAngles(x);
         printf("x: \n"); printf(" %s \n",x.toString().c_str());  
-        printf("        angles %s \n", xAngles.toString().c_str());
+        //printf("        angles %s \n", xAngles.toString().c_str());
               
 
         //********************* monocular component of vision ***************************/
@@ -836,8 +855,8 @@ void targetFinderThread::run() {
         // update position wrt the root frame        
         //Vector xo = yarp::math::operator *(eye->getH(q),xe);
         printf("xo: \n  %f %f %f \n",xo[0], xo[1], xo[2]);
-        Vector xoAngles = getAbsAngles(xo);
-        printf("        angles %f %f %f \n", xoAngles[0] * 180.0 / PI, xoAngles[1] * 180.0 / PI, xoAngles[2] * 180.0 / PI);
+        //Vector xoAngles = getAbsAngles(xo);
+        //printf("        angles %f %f %f \n", xoAngles[0] * 180.0 / PI, xoAngles[1] * 180.0 / PI, xoAngles[2] * 180.0 / PI);
         
 
         /*
@@ -846,10 +865,10 @@ void targetFinderThread::run() {
         start[1] = 0.0;
         start[2] = 0.35;
         */
-        bool performAction = false;
+        bool performAction = true;
         if(performAction) {
-            igaze->lookAtFixationPoint(xo);
-            
+            //igaze->lookAtFixationPoint(xo);
+            igaze->lookAtStereoPixels(pxl, pxr);
             bool done;
             igaze->checkMotionDone(&done);
             double timestart = Time::now();
@@ -861,10 +880,18 @@ void targetFinderThread::run() {
                 timestop = Time::now();
                 timediff = timestop - timestart;
             }
-            printf("\n");      
+            printf("\n"); 
+            if(timediff >= 5.0) {
+                printf("timeout in gaze action \n");
+            }
+            else {
+                printf("success in the gaze action \n");
+                Vector xoAngles; igaze->getAngles(xoAngles);
+                printf("        angles %f %f %f \n", xoAngles[0] , xoAngles[1], xoAngles[2]);
+            }
         }
         
-        Time::delay(0.5);
+        Time::delay(0.1);
             
         //***********************************************************************/
         
@@ -873,9 +900,8 @@ void targetFinderThread::run() {
             //igaze->getAngles(angleVector);
             Bottle& angleBottle = outPort.prepare();
             angleBottle.clear();
-            angleBottle.add(xo[0]);
-            angleBottle.add(xo[1]);
-            angleBottle.add(xo[2]);
+            angleBottle.add(xoAngles[0]);
+            angleBottle.add(x1[0]);
             outPort.write();
         }
     }
