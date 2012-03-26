@@ -865,10 +865,12 @@ void targetFinderThread::run() {
         start[1] = 0.0;
         start[2] = 0.35;
         */
+
+        Vector xoAngles; 
         bool performAction = true;
         if(performAction) {
-            //igaze->lookAtFixationPoint(xo);
-            igaze->lookAtStereoPixels(pxl, pxr);
+            igaze->lookAtFixationPoint(xs);
+            //igaze->lookAtStereoPixels(pxl, pxr);
             bool done;
             igaze->checkMotionDone(&done);
             double timestart = Time::now();
@@ -886,7 +888,7 @@ void targetFinderThread::run() {
             }
             else {
                 printf("success in the gaze action \n");
-                Vector xoAngles; igaze->getAngles(xoAngles);
+                igaze->getAngles(xoAngles);
                 printf("        angles %f %f %f \n", xoAngles[0] , xoAngles[1], xoAngles[2]);
             }
         }
@@ -901,7 +903,7 @@ void targetFinderThread::run() {
             Bottle& angleBottle = outPort.prepare();
             angleBottle.clear();
             angleBottle.add(xoAngles[0]);
-            angleBottle.add(x1[0]);
+            angleBottle.add(xs[0]);
             outPort.write();
         }
     }
