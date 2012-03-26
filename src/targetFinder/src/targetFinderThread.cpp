@@ -676,9 +676,9 @@ void targetFinderThread::run() {
         
         txr[0]=20;         // specify somehow the pixel within the right image plane
         txr[1]=80;
-        Vector xs(3);
-        igaze->triangulate3DPoint(pxl,pxr,xs);
-        printf("xs: \n"); printf(" %s \n",xs.toString().c_str());  
+        //Vector xs(3);
+        //igaze->triangulate3DPoint(pxl,pxr,xs);
+        //printf("xs: \n"); printf(" %s \n",xs.toString().c_str());  
         
 
         //********************* stereo component of vision ***************************/
@@ -836,7 +836,10 @@ void targetFinderThread::run() {
         Vector x2(3);
         x2[0] = zDistance * u;
         x2[1] = zDistance * v;
-        x2[2] = zDistance;        
+        x2[2] = zDistance; 
+        Vector xc(2);
+        xc[0] = u;
+        xc[1] = v;
         
         // find the 3D position from the 2D projection,
         // knowing the distance z from the camera
@@ -866,15 +869,27 @@ void targetFinderThread::run() {
         start[2] = 0.35;
         */
 
-        Vector xoAngles; 
+        Vector xoAngles,xiAngles(3), tmpAngles; 
         bool performAction = true;
         if(performAction) {
-            igaze->lookAtFixationPoint(xs);
+            //igaze->getAngles(tmpAngles);
+            //xiAngles[0] = 0;
+            //xiAngles[1] = 0;
+            //xiAngles[2] = 0 - tmpAngles[2];
+            //igaze->lookAtRelAngles(xiAngles);
+            //igaze->lookAtFixationPoint(xs);
+            double ver = 5;
+            int camSel = 1;
+            double timediff = 0;
+            //igaze->lookAtMonoPixelWithVergence(camSel,xc,ver);
+            igaze->lookAtFixationPoint(xo);
+            igaze->waitMotionDone();
             //igaze->lookAtStereoPixels(pxl, pxr);
-            bool done;
+            /*
+            bool done =  false;
             igaze->checkMotionDone(&done);
             double timestart = Time::now();
-            double timediff = 0, timestop = 0;
+            double timestop = 0;
             while ((!done) && (timediff < 5.0)) {
                 igaze->checkMotionDone(&done);
                 printf(".");
@@ -882,6 +897,7 @@ void targetFinderThread::run() {
                 timestop = Time::now();
                 timediff = timestop - timestart;
             }
+            */
             printf("\n"); 
             if(timediff >= 5.0) {
                 printf("timeout in gaze action \n");
@@ -903,7 +919,7 @@ void targetFinderThread::run() {
             Bottle& angleBottle = outPort.prepare();
             angleBottle.clear();
             angleBottle.add(xoAngles[0]);
-            angleBottle.add(xs[0]);
+            //angleBottle.add(xs[0]);
             outPort.write();
         }
     }
