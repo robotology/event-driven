@@ -29,7 +29,7 @@
 /** 
  *
  * \defgroup icub_eventDriven eventDriven
- * @ingroup icub_logpolarAttention
+ * @ingroup icub_eMorph
  *
  * This is a module that takes the event (from aexGrabber or similar event driven ports) and unmasks it (using
  * emorph library).

@@ -29,7 +29,7 @@
 /** 
  *
  * \defgroup icub_eventConvolution eventConvolution
- * @ingroup icub_logpolarAttention
+ * @ingroup icub_eMorph
  *
  * This is a module that applies a given bank of filters (convolutions) on event-train received by DVS camera :
  *
