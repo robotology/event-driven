@@ -320,7 +320,7 @@ bool targetFinderThread::threadInit() {
     Property option;
     option.put("device","gazecontrollerclient");
     option.put("remote","/iKinGazeCtrl");
-    string localCon("/client/gaze/");
+    string localCon("/targetFinder/client/gaze/");
     localCon.append(getName(""));
     option.put("local",localCon.c_str());
     
@@ -350,7 +350,7 @@ bool targetFinderThread::threadInit() {
     
     //initialising the head polydriver
     optionsHead.put("device", "remote_controlboard");
-    optionsHead.put("local", "/localhead");
+    optionsHead.put("local", "/targetFinder/localhead");
     optionsHead.put("remote", headPort.c_str());
     robotHead = new PolyDriver (optionsHead);
     
@@ -635,9 +635,11 @@ void targetFinderThread::resize(int widthp, int heightp) {
 void targetFinderThread::run() {
     int u, v;
     float zDistance = 3.5;
+    printf("init the cycle \n");
+
     Bottle* b  = inPort.read(false);
     if(b!=NULL) {
-        printf("*************************************************** \n");
+        printf("\n\n\n\n*************************************************** \n");
         //printf("%s \n", b->toString().c_str());
         for (int i = 0; i < b->size(); i++) {
             valueInput[i] = b->get(i).asDouble();
@@ -670,15 +672,9 @@ void targetFinderThread::run() {
 
         
         //********************* stereo tringulation component of vision ***************************/
-        Vector txl(2), txr(2);
-        txl[0]=10;         // specify somehow the pixel within the left image plane
-        txl[1]=100;
-        
-        txr[0]=20;         // specify somehow the pixel within the right image plane
-        txr[1]=80;
-        //Vector xs(3);
-        //igaze->triangulate3DPoint(pxl,pxr,xs);
-        //printf("xs: \n"); printf(" %s \n",xs.toString().c_str());  
+        Vector xs;
+        igaze->triangulate3DPoint(pxl,pxr,xs);
+        printf("xs: \n"); printf(" %s \n",xs.toString().c_str());  
         
 
         //********************* stereo component of vision ***************************/
@@ -877,13 +873,16 @@ void targetFinderThread::run() {
             //xiAngles[1] = 0;
             //xiAngles[2] = 0 - tmpAngles[2];
             //igaze->lookAtRelAngles(xiAngles);
+
+
+
             //igaze->lookAtFixationPoint(xs);
             double ver = 5;
             int camSel = 1;
             double timediff = 0;
             //igaze->lookAtMonoPixelWithVergence(camSel,xc,ver);
             igaze->lookAtFixationPoint(xo);
-            igaze->waitMotionDone();
+            //igaze->waitMotionDone();
             //igaze->lookAtStereoPixels(pxl, pxr);
             /*
             bool done =  false;
@@ -912,14 +911,15 @@ void targetFinderThread::run() {
         Time::delay(0.1);
             
         //***********************************************************************/
-        
+        double distance = sqrt(xo[0] *  xo[0] + xo[1] *  xo[1]) - 0.80;
         if(outPort.getOutputCount()) {
+    
             //Vector angleVector(2);
             //igaze->getAngles(angleVector);
             Bottle& angleBottle = outPort.prepare();
             angleBottle.clear();
             angleBottle.add(xoAngles[0]);
-            //angleBottle.add(xs[0]);
+            angleBottle.add(distance);
             outPort.write();
         }
     }
