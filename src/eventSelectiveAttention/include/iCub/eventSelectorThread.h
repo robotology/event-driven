@@ -38,13 +38,15 @@
 #include <yarp/os/RateThread.h>
 #include <yarp/sig/all.h>
 
+#include <iCub/emorph/eventCodec.h>
+
 //within the project includes
 #include <iCub/eventCartesianCollector.h>
 #include <iCub/plotterThread.h>
-#include <iCub/eventCartesianCollector.h>
+#include <iCub/eventBottleHandler.h>
 
 //typedef unsigned long long int uint64_t;
-#define u64 uint64_t
+#define u64 long
 
 
 class eventSelectorThread : public yarp::os::RateThread {
@@ -88,6 +90,11 @@ private:
     unsigned long maxCount;             // maximum timestamp allowed for the current frame
     unsigned long minCountRight;
     unsigned long maxCountRight;
+
+    emorph::ecodec::eEventQueue* txQueue;  // queue of event to be sent
+    emorph::ecodec::eEventQueue* rxQueue;  // queue of event to be sent
+    eventBottleHandler *ebHandler;         // handler of received events as bottle
+
     double startTimer;
     double interTimer;
     double endTimer;

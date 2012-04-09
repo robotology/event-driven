@@ -1,53 +1,56 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
-/*
-  * Copyright (C)2011  Department of Robotics Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
-  * Author:Francesco Rea
-  * email: francesco.rea@iit.it
-  * Permission is granted to copy, distribute, and/or modify this program
-  * under the terms of the GNU General Public License, version 2 or any
-  * later version published by the Free Software Foundation.
-  *
-  * A copy of the license can be found at
-  * http://www.robotcub.org/icub/license/gpl.txt
-  *
-  * This program is distributed in the hope that it will be useful, but
-  * WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
-  * Public License for more details
-*/
+/* 
+ * Copyright (C) 2010 RobotCub Consortium, European Commission FP6 Project IST-004370
+ * Authors: Rea Francesco, Charles Clercq
+ * email:   francesco.rea@iit.it, charles.clercq@iit.it
+ * website: www.robotcub.org 
+ * Permission is granted to copy, distribute, and/or modify this program
+ * under the terms of the GNU General Public License, version 2 or any
+ * later version published by the Free Software Foundation.
+ *
+ * A copy of the license can be found at
+ * http://www.robotcub.org/icub/license/gpl.txt
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details
+ */
 
 /**
- * @file eventCartesianCollector.h
+ * @file eventBottleHandler.h
  * @brief A class inherited from the bufferefPort class created in order to read events.
  */
 
-#ifndef _EVENT_CARTESIAN_COLLECTOR_H
-#define _EVENT_CARTESIAN_COLLECTOR_H
+#ifndef _EVENT_BOTTLE_HANDLER_H
+#define _EVENT_BOTTLE_HANDLER_H
 
 
-#include <iCub/emorph/eventBuffer.h>
-#include <iCub/emorph/eventConversion.h>
+
+
 #include <iCub/emorph/eventBottle.h>
 
 #include <yarp/os/Network.h>
 #include <yarp/os/BufferedPort.h>
 #include <yarp/sig/all.h>
 
-class eventCartesianCollector:public yarp::os::BufferedPort<emorph::ebuffer::eventBuffer> {
+
+class eventBottleHandler:public yarp::os::BufferedPort<eventBottle> {
 public:
-    eventCartesianCollector();
-    ~eventCartesianCollector();
+    /**
+     * constructur
+     */
+    eventBottleHandler();
+    /**
+     * destructur
+     */
+    ~eventBottleHandler();
 
     /**
     * overwritten function for handling events as soon as they arrive
     */
-    virtual void onRead(emorph::ebuffer::eventBuffer& b);
-
-    /**
-    * overwritten function for handling events as soon as they arrive as eventBottle
-    */  
-    //void onRead(eventBottle& i_ub);
+    virtual void onRead(eventBottle& b);
 
     /**
     * function that returns a pointer to read buffer 
@@ -107,7 +110,7 @@ public:
     /**
      * function return whether the conversion is valid
      */
-    bool isValid(){return valid;};
+    bool isValid(){ return valid; };
 
 
     /**
@@ -119,11 +122,10 @@ public:
     }
 
     /**
-     * extract a bottle of events
+     * @brief function that extract one of the bottle in the buffer
+     * @param receivedBottle single bottle pointer
      */
-    //void extractBottle(yarp::os::Bottle* tempBottle);
-
-
+    void extractBottle(yarp::os::Bottle* receivedBottle);
 
 private:
     bool valid;
@@ -132,33 +134,30 @@ private:
     int totDim;                                                 // total dimension of the read buffer
     int outputWidth, outputHeight;                              // dimension of the output image default 320x240
     int receivedBufferSize;                                     // dimension of the received packet
-    
     int extractPosition;                                        // position in the buffer where the bottle is extracted 
     int insertPosition;                                         // position in the buffer where the bottle is saved   
+    
     unsigned long previousTimeStamp;                            // timestamp at the previous run
     char* converterBuffer;                                      // buffer used as saved
     char* converterBuffer_copy;                                 // copy of the buffer pointer, points to the location for freeing
     char* receivedBuffer;                                       // temporarely pointer to the received buffer
     char* pcRead;                                               // pointer to the location where to read events
     char* pcBuffer;                                             // pointer where to buffer events
+    yarp::os::Bottle* receivedBottle;                           // pointer to the received bottle
     yarp::os::Bottle** bufferBottle;                            // buffer of received bottles
-
+    
     static const int bottleBufferDimension = 10;                // dimension of the bottleBuffer
-
-    //unmask unmask_events;         // object in charge of unmasking the events
-    //converter convert_events;       // object in charge of converting the events into an image
-    yarp::os::Semaphore mutex;      // semaphore for thehandling resource buffer
-    clock_t start_u;
-    clock_t start_p;
-    clock_t stop;
-
+    
+    //unmask unmask_events;                                     // object in charge of unmasking the events
+    //converter convert_events;                                 // object in charge of converting the events into an image
+    yarp::os::Semaphore mutex;                                  // semaphore for resource buffer
     yarp::os::Semaphore** semBottleBuffer;                      // semaphore for the buffer of bottles
-
 
     FILE* readEvents;
     FILE* fout;
 };
 
-#endif //_EVENT_CARTESIAN_COLLECTOR_H
+#endif //_CARTESIAN_FRAME_CONVERTER_H
+
 //----- end-of-file --- ( next line intentionally left blank ) ------------------
 

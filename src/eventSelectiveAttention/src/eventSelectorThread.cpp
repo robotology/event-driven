@@ -28,7 +28,7 @@
 #include <cstdlib>
 #include <time.h>
 
-
+using namespace emorph::ecodec;
 using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
@@ -94,6 +94,12 @@ bool eventSelectorThread::threadInit() {
     pThread->setStereo(stereo);
     pThread->setRetinalSize(retinalSize);
     pThread->start();
+
+    ebHandler = new eventBottleHandler();
+    ebHandler->useCallback();
+    ebHandler->open(getName("/retinaBottle:i").c_str());
+
+    receivedBottle = new Bottle();
     
     unmask_events = new unmask(32);
     //unmask_events->setRetinalSize(32);
@@ -124,7 +130,7 @@ bool eventSelectorThread::threadInit() {
     unmaskedEvents = (AER_struct*) malloc (CHUNKSIZE * sizeof(int));
     memset(unmaskedEvents, 0, CHUNKSIZE * sizeof(int));
 
-    printf("Initialisation in collector thread correctly ended \n");
+    printf("Initialisation in selector thread correctly ended \n");
     return true;
 }
 
@@ -321,22 +327,24 @@ void eventSelectorThread::spatialSelection(AER_struct* buffer,int numberOfEvents
 
 void eventSelectorThread::run() {
   count++;
-  
   if(!idle) {
     interTimer = Time::now();
     double interval2 = (interTimer - startTimer) * 1000000;
     // reads the buffer received
     //bufferRead = cfConverter->getBuffer();    
     // saves it into a working buffer
+    //printf("checking the bottleHandler \n");
     if(!bottleHandler) {
         cfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
     }
     else {
-        cfConverter->extractBottle(receivedBottle);  
+        //printf("eventSelectorThread::run : extracting Bottle! \n");
+        ebHandler->extractBottle(receivedBottle);  
         //printf("received bottle: \n");
         //printf("%s \n", receivedBottle->toString().c_str());
     }
     
+    //printf("after extracting the bottle \n");
     // saving the buffer into the file
     int num_events = CHUNKSIZE / 8 ;
     uint32_t* buf2 = (uint32_t*)bufferCopy;
@@ -382,8 +390,19 @@ void eventSelectorThread::run() {
 
     // extract a chunk/unmask the chunk
     // printf("verb %d \n",verb);
-   
-    unmask_events->unmaskData(bufferCopy,CHUNKSIZE, unmaskedEvents);
+    if(!bottleHandler) {
+        unmask_events->unmaskData(bufferCopy,CHUNKSIZE, unmaskedEvents);
+    }
+    else {
+        if(receivedBottle->size() != 0) {
+            delete rxQueue;   // freeing memory for the new queue of events
+            rxQueue = new eEventQueue(); // preparing the new queue
+            //printf("unmasking received bottle and creating the queue of event to send \n");
+            //unmask_events.unmaskData(receivedBottle, rxQueue); // saving the queue
+            //printf("bottle of events to send : \n");
+        }
+    }
+        
     if(verb) {
       verb = false;
       countStop = 0;
@@ -405,7 +424,6 @@ void eventSelectorThread::run() {
         iter++;
     }
 #endif
-    
     // spatial processing
     double w1 = 0, w2 = 0, w3 = 0, w4 = 0;
     //spatialSelection(unmaskedEvents,CHUNKSIZE>>3,w1);
@@ -552,7 +570,13 @@ void eventSelectorThread::run() {
     // ----------- preventer end    --------------------- //
 
     // spatial processing
-    spatialSelection(unmaskedEvents,CHUNKSIZE>>3,w1, minCount, maxCount);
+    if(!bottleHandler) {
+        spatialSelection(unmaskedEvents,CHUNKSIZE>>3,w1, minCount, maxCount);
+    }
+    else {
+        
+    }
+    
 
     // the getMonoImage gets as default input image the saliency map
     getMonoImage(imageLeft,minCount,maxCount,1);
@@ -583,6 +607,8 @@ void eventSelectorThread::threadRelease() {
     outPortRight.close();
     //delete imageLeft;
     //delete imageRight;
+    delete receivedBottle;
+    delete ebHandler;
     printf("cFCollectorThread release         stopping plotterThread \n");
     pThread->stop();
     printf("eventSelectorThread release         deleting converter \n");

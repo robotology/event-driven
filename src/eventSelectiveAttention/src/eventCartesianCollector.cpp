@@ -35,7 +35,7 @@
 #include <inttypes.h>
 //#include <iCub/config.h>
 
-//#define VERBOSE
+#define VERBOSE
 
 #define CHUNKSIZE 32768 
 #define TH1       32768  
@@ -49,12 +49,14 @@ using namespace emorph::ebuffer;
 using namespace std;
 
 eventCartesianCollector::eventCartesianCollector() {
-    valid       = false;
-    retinalSize = 128;
-    totDim      = 0;
-    pcRead      = 0;
-    state       = 0;
-    receivedBuffer = 0;
+    valid           = false;
+    retinalSize     = 128;
+    totDim          = 0;
+    pcRead          = 0;
+    state           = 0;
+    insertPosition  = 5;
+    extractPosition = 0;
+    receivedBuffer  = 0;
     printf ("allocating memory \n");
 
     bufferBottle    = new Bottle*[bottleBufferDimension];                 //allocated memory for an array of bottle pointers
@@ -65,7 +67,6 @@ eventCartesianCollector::eventCartesianCollector() {
         semBottleBuffer[i] = new Semaphore();
     }
     
-
     converterBuffer_copy = (char*) malloc(BUFFERDIM); // allocates bytes
     converterBuffer = converterBuffer_copy;
     if (converterBuffer == 0)
@@ -99,14 +100,14 @@ void eventCartesianCollector::copyChunk(char* bufferCopy) {
 }
 
 
-
+/*
 void eventCartesianCollector::extractBottle(Bottle* tempBottle) {
-    // reading the bottle
-    
+    // reading the bottle    
     //---------------------------------------
     //printf("sem address in extract %08x \n",semBottleBuffer[extractPosition] );
-    //printf("trying the wait method in extract \n");
+    //printf("trying the wait method in extract %d \n", extractPosition);
     semBottleBuffer[extractPosition]->wait();
+    //printf("after waiting  \n");
     tempBottle->copy(*bufferBottle[extractPosition]);   // copying it in a temporary Bottle*
     //bufferBottle[extractPosition] = 0;               // setting it to zero as already read Bottle*
     bufferBottle[extractPosition]->clear();            // removes the content of the bottle.
@@ -120,7 +121,9 @@ void eventCartesianCollector::extractBottle(Bottle* tempBottle) {
     extractPosition = (extractPosition + 1) % bottleBufferDimension;
     mutex.post();
 }
+*/
 
+/*
 // reading out from a circular buffer with 2 entry points and wrapping
 void eventCartesianCollector::onRead(eventBottle& i_ub) {    
     valid = true;
@@ -134,6 +137,7 @@ void eventCartesianCollector::onRead(eventBottle& i_ub) {
         
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() ;      // number of words     
+    printf(" eventCartesianCollector::onRead : received packet dim %d \n", dim);
     receivedBufferSize = dim;
     //printf("%d dim : %d \n", insertPosition,dim);
     //receivedBottle = new Bottle(*i_ub.get_packet());
@@ -175,7 +179,7 @@ void eventCartesianCollector::onRead(eventBottle& i_ub) {
     insertPosition = (insertPosition + 1) % bottleBufferDimension;
     mutex.post();
 }
-
+*/
 
 
 // reading out from a circular buffer with 2 entry points and wrapping

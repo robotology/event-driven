@@ -278,7 +278,7 @@ bool efExtractorThread::threadInit() {
                     else {
                         //saving
                         lut[input + i * RETINA_SIZE * RETINA_SIZE] = output;
-                        printf("lut : %ld-->%ld (%d) \n", input, output, i);
+                        //printf("lut : %ld-->%ld (%d) \n", input, output, i);
                         fprintf(fout," %ld %ld > %d %d > %d %d   \n",input, output, inputy, inputx,  outputy, outputx);
                         input  = -1;
                         output = -1;
@@ -1125,6 +1125,7 @@ void efExtractorThread::remapEventRight(int x, int y, short pol, unsigned long t
 void efExtractorThread::generateMemory(int countEvent, int& countEventToSend) {
     int countEventLeft  = 0;
     int countEventRight = 0;
+    printf("GenerateMemory without bottles %d  \n", countEvent);
     //storing the response in a temp. image
     AER_struct* iterEvent = eventFeaBuffer;  //<------------ using the pointer to the unmasked events!
     unsigned char* pLeft  = leftOutputImage->getRawImage(); 
@@ -1137,8 +1138,8 @@ void efExtractorThread::generateMemory(int countEvent, int& countEventToSend) {
     aer* bufferFEA_copy = bufferFEA;
     // visiting a discrete number of events
     int countUnmapped = 0;
-    int deviance      = 20;
-    int devianceFea   = 20;      
+    int deviance      = 50;
+    int devianceFea   = 50;      
     //#############################################################################        
     for(int i = 0; i < countEvent; i++ ) {
         ts  = iterEvent->ts;
@@ -1146,7 +1147,7 @@ void efExtractorThread::generateMemory(int countEvent, int& countEventToSend) {
         int y = RETINA_SIZE - iterEvent->y;
         pol = iterEvent->pol;
         cam = iterEvent->cam;
-        //printf("cam %d \n", cam);
+        printf("x %d  y %d  pol %d cam %d \n", cam);
         // -------------------------- CAMERA 1 ----------------------------------
         if(cam == 1) {
             remapEventLeft(x,y,pol,ts);               
@@ -1590,8 +1591,8 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
     aer* bufferFEA_copy = bufferFEA;
     // visiting a discrete number of events
     int countUnmapped = 0;
-    int deviance      = 20;
-    int devianceFea   = 20;      
+    int deviance      = 10;
+    int devianceFea   = 10;      
     //#############################################################################        
     int dequeSize = q->size();    
     for (int evt = 0; evt < dequeSize; evt++) {
@@ -1895,8 +1896,10 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
 
     //############################################################################
     //copying the packets to the bottle
-    printf("copying the queue %08x of %d elements to the bottle \n",packets,packets->size() );
-    printf("value %s \n", packets->toString().c_str());
+    //printf("copying the queue %08x of %d elements to the bottle \n",packets,packets->size() );
+    //printf("value %s \n", packets->toString().c_str());
+    
+    
     /*
     for (size_t i = 0; i<txQueue.size(); i++) {
         if(txQueue[i]->getType()=="AE") {
@@ -1919,7 +1922,7 @@ void efExtractorThread::run() {
     count++;
     countEvent = 0;
 
-    //printf("counter %d \n", count);
+    //printf("\n\n\ncounter %d \n", count);
     bool flagCopy;
     if(!idle) {
         
@@ -1933,12 +1936,13 @@ void efExtractorThread::run() {
         
         // reads the buffer received
         // saves it into a working buffer        
-        //printf("returned 0x%x 0x%x \n", bufferCopy, flagCopy);
-        
+        //printf("returned 0x%x 0x%x with bottleHandler %d \n", bufferCopy, flagCopy, bottleHandler);
         if(!bottleHandler) {
+            //printf("copying chunck \n");
             cfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
         }
         else {
+            //printf("extracting bottle");
             ebHandler->extractBottle(receivedBottle);  
             //printf("received bottle: \n");
             //printf("%s \n", receivedBottle->toString().c_str());
@@ -2018,6 +2022,8 @@ void efExtractorThread::run() {
 
         // ------------------------------------------------------------------------
         // extract a chunk/unmask the chunk               
+        //printf("trying to unmask \n");
+        
         if(!bottleHandler) {
             int dim = unmask_events.unmaskData(bufferCopy2,countEvent * sizeof(uint32_t),eventFeaBuffer);        
         }
@@ -2030,8 +2036,7 @@ void efExtractorThread::run() {
             }
         }
         
-
-        //printf("event converted %d whereas %d \n", dim, countEvent);          
+        // printf("event converted %d  \n",countEvent);          
 
         //printf("         countLeft %d \n" , countEventLeft);
         //printf("         countRight %d \n", countEventRight);
@@ -2040,6 +2045,7 @@ void efExtractorThread::run() {
         //generating the memory
         int countEventToSend = 0;
         if(!bottleHandler) {
+            //printf("Generating memory in not-bottleHandler regime \n");
             generateMemory(countEvent, countEventToSend);
         }
         else {
@@ -2049,23 +2055,28 @@ void efExtractorThread::run() {
                 //printf("Counted a total of %d %d \n", countEventToSend, rxQueue->size());
                 //delete bottleToSend;
                 //bottleToSend = new Bottle();
+                bottleToSend->clear();
                 //eEventQueue tx2Queue(false);
                 generateMemory(rxQueue, bottleToSend, countEventToSend);
-                printf("tx2Queue: \n");
-                printPacket(*bottleToSend);
+                //printf("tx2Queue: \n");
+                //printPacket(*bottleToSend);
                 //printf("txQueue \n");
                 //printf(" %s \n", bottleToSend->toString().c_str());
                 //printf(" %s \n",tx2Queue[0]->getType().c_str());
             }
         }
 
+        
+
         // -----------------------------------------------------------------------  
         // leaking section of the algorithm (retina space) 
+        //printf("leaking section of the algorithm (retina space) \n");
         pMemL  = leftInputImage->getRawImage();
         pLeft  = leftOutputImage->getRawImage();
         int padding = leftOutputImage->getPadding();
         
-        double CONST_DECREMENT_DOUBLE = 0.5;
+        int CONST_DECREMENT_DOUBLE = 1 ;
+        
         
         for(int row  = 0; row < RETINA_SIZE; row++) {
             for (int col = 0; col< RETINA_SIZE; col++) {
@@ -2101,7 +2112,10 @@ void efExtractorThread::run() {
             pRight+= padding;
         }
         
+        
         //---------------------------------------------------------------------------
+        
+        //printf("leaking section of the algorithm feature space \n");
         // leaking section of the algorithm ( feature map)
         unsigned char* pFeaLeft  = leftFeaOutputImage->getRawImage();
         unsigned char* pFeaRight = rightFeaOutputImage->getRawImage();
@@ -2136,6 +2150,9 @@ void efExtractorThread::run() {
             pFeaLeft += padding;
             pFeaRight+= padding;
         }
+        
+        
+        //printf("after leaking section of the algorithm \n");
         
         
         /*

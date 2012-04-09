@@ -100,11 +100,11 @@ bool efExtractorModule::configure(yarp::os::ResourceFinder &rf) {
      *checking whether the user wants exclusively to send events as bottles
      */
     if( rf.check("bottleHandler")) {
-        printf("set the bottleHandler flag true \n");
+        printf("--------------------------->set the bottleHandler flag true \n");
         efeThread->setBottleHandler(true);
     }
     else {
-        printf("set the bottleHandler flag false \n");
+        printf("--------------------------->set the bottleHandler flag false \n");
         efeThread->setBottleHandler(false);
     }
     

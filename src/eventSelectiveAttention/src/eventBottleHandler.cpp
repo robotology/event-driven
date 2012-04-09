@@ -34,7 +34,7 @@
 #include <list>
 #include <string>
 
-//#define VERBOSE
+#define VERBOSE
 #define BUFFERDIM 1000
 #define CHUNKSIZE 1000
 
@@ -77,7 +77,7 @@ eventBottleHandler::eventBottleHandler() {
     printf("unmask event just started \n");
     previousTimeStamp = 0;
     readEvents = fopen("./readEvents","w");
-    fout = fopen("eventFeatureExtractor.eventBottleHandler.txt", "w+");
+    fout = fopen("eventCartesianSelector.eventBottleHandler.txt", "w+");
 }
 
 void eventBottleHandler::reset() {
@@ -121,7 +121,7 @@ void eventBottleHandler::extractBottle(Bottle* tempBottle) {
 // reading out from a circular buffer with 2 entry points and wrapping
 void eventBottleHandler::onRead(eventBottle& i_ub) {    
     valid = true;
-    //printf("OnRead \n");
+    printf("OnRead \n");
     
     //---------------------------------------------   
     //printf("sem address onRead %08x \n",semBottleBuffer[extractPosition] );
@@ -131,6 +131,7 @@ void eventBottleHandler::onRead(eventBottle& i_ub) {
         
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() ;      // number of words     
+    printf("read dimension %d \n", dim);
     receivedBufferSize = dim;
     //printf("%d dim : %d \n", insertPosition,dim);
     //receivedBottle = new Bottle(*i_ub.get_packet());
@@ -156,10 +157,10 @@ void eventBottleHandler::onRead(eventBottle& i_ub) {
     for (int i=0; i < bufferBottle[insertPosition]->size(); i++) {
         fprintf(fout,"%08X \n", bufferBottle[insertPosition]->get(i).asInt());
         //printf("%08X \n", receivedBottle->get(i).asInt());
-        //int chksum = bufferBottle[insertPosition]->get(i).asInt() % 255;
-        //str[i] = (char) chksum;
+        int chksum = bufferBottle[insertPosition]->get(i).asInt() % 255;
+        str[i] = (char) chksum;
     }
-    //fprintf(fout,"chksum: %s \n", str.c_str());
+    fprintf(fout,"chksum: %s \n", str.c_str());
     fprintf(fout,"----------------------------- \n");
 #endif
     
@@ -171,11 +172,7 @@ void eventBottleHandler::onRead(eventBottle& i_ub) {
     mutex.wait();
     insertPosition = (insertPosition + 1) % bottleBufferDimension;
     mutex.post();
-
-    
 }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*
 // reading out from a circular buffer with 2 entry points
@@ -229,7 +226,6 @@ void eventBottleHandler::onRead(eventBuffer& i_ub) {
 }
 */
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*
 // reading out from a circular buffer with 3 entry points

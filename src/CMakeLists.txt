@@ -37,6 +37,7 @@ add_subdirectory   (microsacTest)
 add_subdirectory   (pythonInterface)
 #add_subdirectory  (logpolar_frame_converter)
 #add_subdirectory  (logpolar_frame_converter_add)
+
 add_subdirectory   (visualAligner)
 
 add_subdirectory   (targetFinder)
@@ -47,5 +48,5 @@ add_subdirectory   (targetFinder)
 #add_subdirectory  (opticalFlow)
 #add_subdirectory  (opticalFlow2)
 #add_subdirectory  (opticalFlow3)
-#add_subdirectory   (eventOpticalFlow)
+add_subdirectory   (eventOpticalFlow)
 
