@@ -1582,7 +1582,7 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
     unsigned char* pMemL  = leftInputImage->getRawImage();
     int          rowSize  = leftOutputImage->getRowSize();
     int       rowSizeFea  = leftFeaOutputImage->getRowSize();
-    eEventQueue txQueue;
+    //eEventQueue txQueue;
     
     
     unsigned long ts;
@@ -1684,25 +1684,23 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                                      
                                      //printf("checking for thresholds \n");
                                      if(pFeaLeft[posFeaImage] > 240) {
-                                         
-                                         
-                                         TimeStamp timestamp;
-                                         timestamp.setStamp(ts);
-                                         packets->append(timestamp.encode());
-                                         txQueue.push_back(&timestamp);                                         
+                                                                                  
+                                         TimeStamp* timestamp = new TimeStamp();
+                                         timestamp->setStamp(ts);
+                                         packets->append(timestamp->encode());
+                                         //txQueue.push_back(timestamp);                                         
+                                         delete timestamp;
                                          countEventToSend++;
                                          
-                                         
-                                         AddressEvent ae;
-                                         ae.setChannel(1);
-                                         ae.setPolarity(1);
-                                         ae.setX(xevent);
-                                         ae.setY(yevent);
-                                         packets->append(ae.encode());
-                                         txQueue.push_back(&ae);
+                                         AddressEvent* ae = new AddressEvent();
+                                         ae->setChannel(1);
+                                         ae->setPolarity(1);
+                                         ae->setX(xevent);
+                                         ae->setY(yevent);
+                                         packets->append(ae->encode());
+                                         //txQueue.push_back(ae);
+                                         delete ae;
                                          countEventToSend++;
-                                         
-                                         
                                          
                                          //fprintf(fout,"%08X %08X \n",bufferFEA_copy->address,ts);
                                          //bufferFEA_copy++; // jumping to the next event(u32,u32)
@@ -1710,19 +1708,21 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                                      }
                                      else if(pFeaLeft[posFeaImage] < 10) {
                                          
-                                         TimeStamp timestamp;
-                                         timestamp.setStamp(ts);
-                                         txQueue.push_back(&timestamp);
-                                         packets->append(timestamp.encode());
+                                         TimeStamp* timestamp = new TimeStamp();
+                                         timestamp->setStamp(ts);
+                                         //txQueue.push_back(timestamp);
+                                         packets->append(timestamp->encode());
+                                         delete timestamp;
                                          countEventToSend++;
                                          
-                                         AddressEvent ae;
-                                         ae.setChannel(1);
-                                         ae.setPolarity(0);
-                                         ae.setX(xevent);
-                                         ae.setY(yevent);
-                                         packets->append(ae.encode());
-                                         txQueue.push_back(&ae);
+                                         AddressEvent* ae = new AddressEvent();
+                                         ae->setChannel(1);
+                                         ae->setPolarity(0);
+                                         ae->setX(xevent);
+                                         ae->setY(yevent);
+                                         packets->append(ae->encode());
+                                         //txQueue.push_back(ae);
+                                         delete ae;
                                          countEventToSend++;                                                                                  
                                          
                                          //fprintf(fout,"%08X %08X \n",bufferFEA_copy->address,ts);
@@ -1800,19 +1800,21 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                                     
                                     if(pFeaRight[posFeaImage] > 240) {
                                         
-                                        TimeStamp timestamp;
-                                        timestamp.setStamp(ts);
-                                        txQueue.push_back(&timestamp);
-                                        packets->append(timestamp.encode());
+                                        TimeStamp* timestamp = new TimeStamp();
+                                        timestamp->setStamp(ts);
+                                        //txQueue.push_back(timestamp);
+                                        packets->append(timestamp->encode());
+                                        delete timestamp;
                                         countEventToSend++;
                                         
-                                        AddressEvent ae;
-                                        ae.setChannel(0);
-                                        ae.setPolarity(1);
-                                        ae.setX(xevent);
-                                        ae.setY(yevent);
-                                        packets->append(ae.encode());
-                                        txQueue.push_back(&ae);
+                                        AddressEvent* ae = new AddressEvent(); 
+                                        ae->setChannel(0);
+                                        ae->setPolarity(1);
+                                        ae->setX(xevent);
+                                        ae->setY(yevent);
+                                        packets->append(ae->encode());
+                                        //txQueue.push_back(ae);
+                                        delete ae;
                                         countEventToSend++;
                                         
                                         //  bufferFEA_copy->address   = (u32) blob;
@@ -1826,19 +1828,21 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                                     }
                                     else if(pFeaRight[posFeaImage] < 10) {
                                         
-                                        TimeStamp timestamp;
-                                        timestamp.setStamp(ts);
-                                        txQueue.push_back(&timestamp);
-                                        packets->append(timestamp.encode());
+                                        TimeStamp* timestamp = new TimeStamp();
+                                        timestamp->setStamp(ts);
+                                        //txQueue.push_back(timestamp);
+                                        packets->append(timestamp->encode());
+                                        delete timestamp;
                                         countEventToSend++;
                                         
-                                        AddressEvent ae;
-                                        ae.setChannel(0);
-                                        ae.setPolarity(0);
-                                        ae.setX(xevent);
-                                        ae.setY(yevent);
-                                        packets->append(ae.encode());
-                                        txQueue.push_back(&ae);
+                                        AddressEvent* ae = new AddressEvent();
+                                        ae->setChannel(0);
+                                        ae->setPolarity(0);
+                                        ae->setX(xevent);
+                                        ae->setY(yevent);
+                                        packets->append(ae->encode());
+                                        //txQueue.push_back(ae);
+                                        delete ae;
                                         countEventToSend++;
                                         
                                         
@@ -1891,7 +1895,7 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
 
     //############################################################################
     //copying the packets to the bottle
-    printf("copying the queue of %d elements to the bottle \n",packets->size() );
+    printf("copying the queue %08x of %d elements to the bottle \n",packets,packets->size() );
     printf("value %s \n", packets->toString().c_str());
     /*
     for (size_t i = 0; i<txQueue.size(); i++) {
@@ -1908,8 +1912,6 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
         }
     }
     */
-
-
 }
 
 void efExtractorThread::run() {   
@@ -2050,7 +2052,7 @@ void efExtractorThread::run() {
                 //eEventQueue tx2Queue(false);
                 generateMemory(rxQueue, bottleToSend, countEventToSend);
                 printf("tx2Queue: \n");
-                //printPacket(*bottleToSend);
+                printPacket(*bottleToSend);
                 //printf("txQueue \n");
                 //printf(" %s \n", bottleToSend->toString().c_str());
                 //printf(" %s \n",tx2Queue[0]->getType().c_str());
@@ -2162,10 +2164,9 @@ void efExtractorThread::run() {
         
         //************************ OUTPUT OF THE MODULE ****************************
         // writing the mapped events
-        /*
+        
         if(outBottlePort.getOutputCount()) {
-            //Bottle packets;
-            
+            //Bottle packets;          
             cout<<"encoding events within packets "<<bottleToSend->size() <<endl;
             if(bottleToSend->size() > 0) {
                 //for (size_t i=0; i<txQueue->size(); i++) {
@@ -2182,7 +2183,7 @@ void efExtractorThread::run() {
                 printf("writing the port \n");
             }
         }
-        */
+        
         
         
         // writing images out on ports
