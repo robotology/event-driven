@@ -84,6 +84,7 @@ cFrameConverter::~cFrameConverter() {
     //delete &convert_events;
     printf("cFrameConverter:freeing converterBuffer \n");
     free(converterBuffer_copy);
+    printf("cFrameConverter:success in freeing converterBuffer \n");
 }
 
 void cFrameConverter::copyChunk(char* bufferCopy) {        

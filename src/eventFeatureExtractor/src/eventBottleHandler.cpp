@@ -368,12 +368,13 @@ eventBottleHandler::~eventBottleHandler() {
     //delete &unmask_events;
     //delete &convert_events;
     printf("eventBottleHandler:freeing converterBuffer \n");
-    free(converterBuffer_copy);
+    //free(converterBuffer_copy);
     fclose(fout);
 
-    printf("freeing the buffer of bottle \n");
+    printf("eventBottleHandler:freeing the buffer of bottle \n");
     delete[] bufferBottle;
     delete[] semBottleBuffer;
+    printf("eventBottleHandler:success in converting \n");
 }
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------

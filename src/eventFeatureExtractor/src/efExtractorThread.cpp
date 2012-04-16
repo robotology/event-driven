@@ -348,7 +348,7 @@ void efExtractorThread::interrupt() {
 
 void efExtractorThread::threadRelease() {
     /* closing the ports*/
-    printf("closing the ports \n");
+    printf("efExtractorThread::closing the ports \n");
     outLeftPort.close();
     outRightPort.close();
     outFeaLeftPort.close();
@@ -358,22 +358,35 @@ void efExtractorThread::threadRelease() {
     outEventPort.close();
     outBottlePort.close();
 
-    printf("deleting the buffer of events \n");
+    printf("efExtractorThread::deleting the buffer of events \n");
     delete[] eventFeaBuffer;
     delete bufferFEA;
-    delete cfConverter;
+    printf("efExtractorThread::deleting event bottle Handler \n");
+    if(ebHandler!=0) {
+        printf("ebHandler !NULL \n");
+        ebHandler->close();
+    }
+    //delete ebHandler;
+    printf("efExtractorThread::deleting cartesianFrame converter \n");
+    //cfConverter->close();
+    //delete cfConverter;
+
+    
     delete receivedBottle;
     delete bottleToSend;
-    delete leftFeaOutputImage;
-    delete rightFeaOutputImage;
+    //delete leftFeaOutputImage;
+    //delete rightFeaOutputImage;
+    printf("efExtractorThread::delete transmit and received queue \n");
     delete txQueue;
     delete rxQueue;
     
     /* closing the file */
-    printf("deleting LUT \n");
-    delete[] lut;
+    printf("efExtractorThread::deleting LUT \n");
+    if(lut!=NULL) {
+        delete[] lut;
+    }
     
-    printf("closing the file \n");
+    printf("efExtractorThread::closing the file \n");
     fclose (pFile);
 
     printf("efExtractorThread::threadReleas : success in releasing \n ");
@@ -724,10 +737,7 @@ void efExtractorThread::remapEventLeft(int x, int y,short pol,unsigned long ts, 
       else {
       lastTimestampLeft = ts;
       }
-    */
-
-
-    
+    */    
     
     //printf(" %d %d %08x \n",iterEvent->x,iterEvent->y, ts );
     //int x = RETINA_SIZE - iterEvent->x - 1 ;
@@ -2022,7 +2032,7 @@ void efExtractorThread::run() {
 
         // ------------------------------------------------------------------------
         // extract a chunk/unmask the chunk               
-        //printf("trying to unmask \n");
+        printf("trying to unmask \n");
         
         if(!bottleHandler) {
             int dim = unmask_events.unmaskData(bufferCopy2,countEvent * sizeof(uint32_t),eventFeaBuffer);        
@@ -2036,7 +2046,7 @@ void efExtractorThread::run() {
             }
         }
         
-        // printf("event converted %d  \n",countEvent);          
+        printf("event converted %d  \n",countEvent);          
 
         //printf("         countLeft %d \n" , countEventLeft);
         //printf("         countRight %d \n", countEventRight);
@@ -2045,11 +2055,12 @@ void efExtractorThread::run() {
         //generating the memory
         int countEventToSend = 0;
         if(!bottleHandler) {
-            //printf("Generating memory in not-bottleHandler regime \n");
+            printf("Generating memory in not-bottleHandler regime \n");
             generateMemory(countEvent, countEventToSend);
         }
         else {
             //eEventQueue tx(false);
+             printf("Generating memory in bottleHandler regime \n");
             //tx = *txQueue;
             if((rxQueue != NULL) && (rxQueue->size() != 0)) {
                 //printf("Counted a total of %d %d \n", countEventToSend, rxQueue->size());
@@ -2070,7 +2081,7 @@ void efExtractorThread::run() {
 
         // -----------------------------------------------------------------------  
         // leaking section of the algorithm (retina space) 
-        //printf("leaking section of the algorithm (retina space) \n");
+        printf("leaking section of the algorithm (retina space) \n");
         pMemL  = leftInputImage->getRawImage();
         pLeft  = leftOutputImage->getRawImage();
         int padding = leftOutputImage->getPadding();
@@ -2115,7 +2126,7 @@ void efExtractorThread::run() {
         
         //---------------------------------------------------------------------------
         
-        //printf("leaking section of the algorithm feature space \n");
+        printf("leaking section of the algorithm feature space \n");
         // leaking section of the algorithm ( feature map)
         unsigned char* pFeaLeft  = leftFeaOutputImage->getRawImage();
         unsigned char* pFeaRight = rightFeaOutputImage->getRawImage();
@@ -2152,7 +2163,7 @@ void efExtractorThread::run() {
         }
         
         
-        //printf("after leaking section of the algorithm \n");
+        printf("after leaking section of the algorithm \n");
         
         
         /*
@@ -2204,14 +2215,18 @@ void efExtractorThread::run() {
         
         
         // writing images out on ports
-        if(outLeftPort.getOutputCount()) {
-            outLeftPort.prepare()     = *leftOutputImage;
-            outLeftPort.write();
-        }
+        //if(outLeftPort.getOutputCount()) {
+        //     outLeftPort.prepare()     = *leftOutputImage;
+        //     outLeftPort.write();
+        //}
+
+        /*
         if(outRightPort.getOutputCount()) {
             outRightPort.prepare()    = *rightOutputImage;
             outRightPort.write();
         }
+        */
+
         if(outFeaLeftPort.getOutputCount()) {
             outFeaLeftPort.prepare()  = *leftFeaOutputImage;
             outFeaLeftPort.write();
@@ -2219,7 +2234,10 @@ void efExtractorThread::run() {
         if(outFeaRightPort.getOutputCount()) {
             outFeaRightPort.prepare() = *rightFeaOutputImage;
             outFeaRightPort.write();
-        }        
+        } 
+        
+
+        printf("after the images are sent to the ports \n");
     } //end of idle
 }
 
