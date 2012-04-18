@@ -2069,7 +2069,7 @@ void efExtractorThread::run() {
                 printf("cleaning bottle to send 0x%08x \n", bottleToSend);
                 //delete bottleToSend;
                 printf("after deleting \n");
-                bottleToSend = new Bottle();
+                bottleToSend = new Bottle(); //<---- TODO memory leak here.....
                 //bottleToSend->clear();
                 printf("generating memory of the events \n");
                 //eEventQueue tx2Queue(false);
