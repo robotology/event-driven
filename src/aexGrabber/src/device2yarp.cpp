@@ -298,6 +298,9 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName =
     str_buf << "/icub/retina" << deviceNum << ":o";
     port.open(str_buf.str().c_str());
     portEventBottle.open("/aexGrabber/eventBottle:o");
+    portEventBottle2.open("/aexGrabber/eventBottle2:o");
+    portEventBottle3.open("/aexGrabber/eventBottle3:o");
+    portEventBottle4.open("/aexGrabber/eventBottle4:o");
     portDimension.open("/aexGrabber/dim:o");
 
     // opening the file when the biases are programmed by file
@@ -970,6 +973,27 @@ void  device2yarp::run() {
         tmp = data2send;
         portEventBottle.write();
     }   
+    if (portEventBottle2.getOutputCount()) {       
+        //printf("Sending the bottle %d bytes \n", sz);
+        eventBottle data2send(pBuffer, sz);
+        eventBottle& tmp = portEventBottle2.prepare(); 
+        tmp = data2send;
+        portEventBottle2.write();
+    } 
+    if (portEventBottle3.getOutputCount()) {       
+        //printf("Sending the bottle %d bytes \n", sz);
+        eventBottle data2send(pBuffer, sz);
+        eventBottle& tmp = portEventBottle3.prepare(); 
+        tmp = data2send;
+        portEventBottle3.write();
+    } 
+    if (portEventBottle4.getOutputCount()) {       
+        //printf("Sending the bottle %d bytes \n", sz);
+        eventBottle data2send(pBuffer, sz);
+        eventBottle& tmp = portEventBottle4.prepare(); 
+        tmp = data2send;
+        portEventBottle4.write();
+    } 
     
     wrapOccured = false;
     
@@ -1236,6 +1260,11 @@ void device2yarp::threadRelease() {
     printf("max data rate received  %f  kAE/s ; min data rate received %f kAE/s \n", maxRate, minRate);
     printf("the grabber has collected %d AEs (%d errors) in %f seconds \n",countAEs,countErrors,diff);
     port.close();
+    portDimension.close();
+    portEventBottle.close();
+    portEventBottle2.close();
+    portEventBottle3.close();
+    portEventBottle4.close();
     close(file_desc);
 
 }
