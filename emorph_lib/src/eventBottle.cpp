@@ -14,7 +14,7 @@ using namespace std;
 using namespace yarp::os;
 
 eventBottle::eventBottle() {
-    printf("default Constructor \n");
+    //printf("default Constructor \n");
     packet = new Bottle();
     size_of_the_packet=0;
     packetPointer = new char[320000];
@@ -76,7 +76,7 @@ eventBottle::eventBottle(const eventBottle& buffer) {
 }
 
 eventBottle::~eventBottle() {
-    printf("destructor \n");
+    //printf("destructor \n");
     delete[] packetPointer;
     delete packet;
 }
@@ -141,8 +141,8 @@ bool eventBottle::write(yarp::os::ConnectionWriter& connection) {
     //connection.appendInt(size_of_the_packet);
     connection.appendInt(size_of_the_packet);
     int ceilSizeOfPacket = size_of_the_packet * 4;   // number of 32bit word times 4bytes
-    printf("size of the packet %d \n", size_of_the_packet);
-    printf("comparing with the binaryDim: %d \n", binaryDim);
+    //printf("size of the packet %d \n", size_of_the_packet);
+    //printf("comparing with the binaryDim: %d \n", binaryDim);
     //printf("dimension of the bottle in bytes %d \n", binaryDim);
     //connection.appendBlock(packetPointer,ceilSizeOfPacket); //casting bottle into char*
     connection.appendBlock(packetPointer,binaryDim);
