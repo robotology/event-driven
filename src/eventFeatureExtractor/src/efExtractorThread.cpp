@@ -1932,7 +1932,7 @@ void efExtractorThread::run() {
     count++;
     countEvent = 0;
 
-    //printf("\n\n\ncounter %d \n", count);
+    printf("\n\n\ncounter %d \n", count);
     bool flagCopy;
     if(!idle) {
         
@@ -1946,13 +1946,13 @@ void efExtractorThread::run() {
         
         // reads the buffer received
         // saves it into a working buffer        
-        //printf("returned 0x%x 0x%x with bottleHandler %d \n", bufferCopy, flagCopy, bottleHandler);
+        printf("returned 0x%x 0x%x with bottleHandler %d \n", bufferCopy, flagCopy, bottleHandler);
         if(!bottleHandler) {
             //printf("copying chunck \n");
             cfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
         }
         else {
-            //printf("extracting bottle");
+            printf("extracting bottle \n");
             ebHandler->extractBottle(receivedBottle);  
             //printf("received bottle: \n");
             //printf("%s \n", receivedBottle->toString().c_str());
@@ -2032,7 +2032,7 @@ void efExtractorThread::run() {
 
         // ------------------------------------------------------------------------
         // extract a chunk/unmask the chunk               
-        //printf("trying to unmask \n");
+        printf("trying to unmask \n");
         
         if(!bottleHandler) {
             int dim = unmask_events.unmaskData(bufferCopy2,countEvent * sizeof(uint32_t),eventFeaBuffer);        
@@ -2055,18 +2055,23 @@ void efExtractorThread::run() {
         //generating the memory
         int countEventToSend = 0;
         if(!bottleHandler) {
-            //printf("Generating memory in not-bottleHandler regime \n");
+            //printf("Generating memory in not-bottleHandler \n");
             generateMemory(countEvent, countEventToSend);
         }
         else {
             //eEventQueue tx(false);
-            //printf("Generating memory in bottleHandler regime \n");
+            printf("Generating memory in bottleHandler  \n");
             //tx = *txQueue;
             if((rxQueue != NULL) && (rxQueue->size() != 0)) {
                 //printf("Counted a total of %d %d \n", countEventToSend, rxQueue->size());
                 //delete bottleToSend;
                 //bottleToSend = new Bottle();
-                bottleToSend->clear();
+                printf("cleaning bottle to send 0x%08x \n", bottleToSend);
+                //delete bottleToSend;
+                printf("after deleting \n");
+                bottleToSend = new Bottle();
+                //bottleToSend->clear();
+                printf("generating memory of the events \n");
                 //eEventQueue tx2Queue(false);
                 generateMemory(rxQueue, bottleToSend, countEventToSend);
                 //printf("tx2Queue: \n");
@@ -2126,7 +2131,7 @@ void efExtractorThread::run() {
         
         
         //---------------------------------------------------------------------------        
-        //printf("leaking section of the algorithm feature space \n");
+        printf("leaking section of the algorithm feature space \n");
         // leaking section of the algorithm ( feature map)
         unsigned char* pFeaLeft  = leftFeaOutputImage->getRawImage();
         unsigned char* pFeaRight = rightFeaOutputImage->getRawImage();
@@ -2163,7 +2168,7 @@ void efExtractorThread::run() {
         }
         
         
-        //printf("after leaking section of the algorithm \n");
+        printf("after leaking section of the algorithm \n");
         
         
         /*
@@ -2202,8 +2207,12 @@ void efExtractorThread::run() {
                 //    cout<<((*txQueue)[i])->getContent().toString()<<endl;
                 //    packets.append(((*txQueue)[i])->encode());
                 //}
-                printf("after encoding events in the packets %d", bottleToSend->size() );
-                eventBottle data2send(bottleToSend);            
+                printf("after encoding events in the packets %d \n", bottleToSend->size() );
+                //Bottle b;
+                //b.copy(*bottleToSend);
+                printf("after assignment \n");
+                eventBottle data2send(bottleToSend);         
+                printf("after imprinting \n");
                 eventBottle& tmp = outBottlePort.prepare();
                 printf("preparing the bottle \n");
                 tmp = data2send;
@@ -2227,6 +2236,7 @@ void efExtractorThread::run() {
         }
         */
 
+        printf("sending images \n");
         if(outFeaLeftPort.getOutputCount()) {
             outFeaLeftPort.prepare()  = *leftFeaOutputImage;
             outFeaLeftPort.write();
@@ -2237,7 +2247,7 @@ void efExtractorThread::run() {
         } 
         
 
-        //printf("after the images are sent to the ports \n");
+        printf("after the images are sent to the ports \n");
     } //end of idle
 }
 

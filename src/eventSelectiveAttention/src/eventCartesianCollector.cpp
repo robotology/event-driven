@@ -189,7 +189,7 @@ void eventCartesianCollector::onRead(eventBuffer& i_ub) {
 
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() ;      // number of bits received / 8 = bytes received
-    //printf("%d \n", dim);
+    printf("%d \n", dim);
 
     receivedBufferSize = dim;
     mutex.wait();

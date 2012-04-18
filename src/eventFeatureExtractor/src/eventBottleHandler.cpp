@@ -132,7 +132,8 @@ void eventBottleHandler::onRead(eventBottle& i_ub) {
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() ;      // number of words     
     receivedBufferSize = dim;
-    //printf("%d dim : %d \n", insertPosition,dim);
+    printf("dim : %d                           \r", dim);
+
     //receivedBottle = new Bottle(*i_ub.get_packet());
     //printf("%s \n ", i_ub.get_packet()->toString().c_str());
     //receivedBottle->copy(*i_ub.get_packet());
