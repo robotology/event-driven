@@ -1638,119 +1638,119 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                             //printf("before remapping %08x \n", &txQueue);
                             //remapEventLeft(cartX,cartY,polarity,ts,&txQueue);  
                             int posImage     = cartY * rowSize + cartX;
-                             
-                             for (int i = 0; i< 5 ; i++) {                
-                                 int pos      = lut[i * RETINA_SIZE * RETINA_SIZE +  cartY * RETINA_SIZE + cartX ];     
-                                 
-                                 //printf("        pos ; %d ", pos);
-                                 if(pos == -1) {
-                                     if (cartX % 2 == 1) {
-                                         //printf("not mapped event %d \n",x + y * RETINA_SIZE);
-                                         //countUnmapped++;
-                                     }                
-                                 }
-                                 else {
-                                     //creating an event                            
-                                     int yevent_tmp   = pos / FEATUR_SIZE;
-                                     int yevent       = FEATUR_SIZE - yevent_tmp;
-                                     int xevent_tmp   = pos - yevent_tmp * FEATUR_SIZE;
-                                     int xevent       = xevent_tmp;
-                                     //int polevent     = pol < 0 ? 0 : 1;
-                                     int polevent = pol;
-                                     int cameraevent  = 1;
-                                     unsigned long blob = 0;
-                                     int posFeaImage     = yevent * rowSizeFea + xevent ;
-                                     
-                                     //if(ts!=0) {
-                                     //    printf(" %d %d %d ---> ", i ,x, y  );
-                                     //    printf(" %d %d %d %d %08x %08x \n",pos, yevent,xevent,posFeaImage,blob, ts);
-                                     //}
-                                     unmask_events.maskEvent(xevent, yevent, polevent, cameraevent, blob);
-                                     
-                                     //blob = 0x00001021;
-                                     //printf("Given pos %d extracts x=%d and y=%d pol=%d blob=%08x evPU = %08x \n", pos, xevent, yevent, pol, (unsigned int) blob, (unsigned int)ts);
-                                     
-                                     // representing the feature map for debug
-                                     unsigned char* pFeaLeft = leftFeaOutputImage->getRawImage();
-                                     if(polevent > 0) {
-                                         if(pFeaLeft[posFeaImage] <= 255 - devianceFea) {
-                                             pFeaLeft[posFeaImage] += devianceFea ;
-                                         }
-                                         else {
-                                             pFeaLeft[posFeaImage] = 255;
-                                         }
-                                     }
-                                     else {
-                                         if(pFeaLeft[posFeaImage] >= devianceFea) {
-                                             pFeaLeft[posFeaImage] -= devianceFea ;
-                                         }
-                                         else {
-                                             pFeaLeft[posFeaImage] = 0;
-                                         }
-                                     }
-                                     
-                                     
-                                     
-                                     // sending the event if we pass thresholds
-                                     
-                                     //printf("checking for thresholds \n");
-                                     if(pFeaLeft[posFeaImage] > 240) {
-                                                                                  
-                                         TimeStamp* timestamp = new TimeStamp();
-                                         timestamp->setStamp(ts);
-                                         packets->append(timestamp->encode());
-                                         //txQueue.push_back(timestamp);                                         
-                                         delete timestamp;
-                                         countEventToSend++;
-                                         
-                                         AddressEvent* ae = new AddressEvent();
-                                         ae->setChannel(1);
-                                         ae->setPolarity(1);
-                                         ae->setX(xevent);
-                                         ae->setY(yevent);
-                                         packets->append(ae->encode());
-                                         //txQueue.push_back(ae);
-                                         delete ae;
-                                         countEventToSend++;
-                                         
-                                         //fprintf(fout,"%08X %08X \n",bufferFEA_copy->address,ts);
-                                         //bufferFEA_copy++; // jumping to the next event(u32,u32)
-                               
-                                     }
-                                     else if(pFeaLeft[posFeaImage] < 10) {
-                                         
-                                         TimeStamp* timestamp = new TimeStamp();
-                                         timestamp->setStamp(ts);
-                                         //txQueue.push_back(timestamp);
-                                         packets->append(timestamp->encode());
-                                         delete timestamp;
-                                         countEventToSend++;
-                                         
-                                         AddressEvent* ae = new AddressEvent();
-                                         ae->setChannel(1);
-                                         ae->setPolarity(0);
-                                         ae->setX(xevent);
-                                         ae->setY(yevent);
-                                         packets->append(ae->encode());
-                                         //txQueue.push_back(ae);
-                                         delete ae;
-                                         countEventToSend++;                                                                                  
-                                         
-                                         //fprintf(fout,"%08X %08X \n",bufferFEA_copy->address,ts);
-                                         //bufferFEA_copy++; // jumping to the next event(u32,u32)
-                                         
-                                     }                           
-                                     
-                                 } //end else
-                                 
-                             } //end for i 5 
-                        
+                            
+                            for (int i = 0; i< 5 ; i++) {                
+                                int pos      = lut[i * RETINA_SIZE * RETINA_SIZE +  cartY * RETINA_SIZE + cartX ];     
+                                
+                                //printf("        pos ; %d ", pos);
+                                if(pos == -1) {
+                                    if (cartX % 2 == 1) {
+                                        //printf("not mapped event %d \n",x + y * RETINA_SIZE);
+                                        //countUnmapped++;
+                                    }                
+                                }
+                                else {
+                                    //creating an event                            
+                                    int yevent_tmp      = pos / FEATUR_SIZE;
+                                    int yevent          = FEATUR_SIZE - yevent_tmp;
+                                    int xevent_tmp      = pos - yevent_tmp * FEATUR_SIZE;
+                                    int xevent          = xevent_tmp;
+                                    //int polevent      = pol < 0 ? 0 : 1;
+                                    int polevent        = pol;
+                                    int cameraevent     = 1;
+                                    unsigned long blob  = 0;
+                                    int posFeaImage     = yevent * rowSizeFea + xevent ;
+                                    
+                                    //if(ts!=0) {
+                                    //    printf(" %d %d %d ---> ", i ,x, y  );
+                                    //    printf(" %d %d %d %d %08x %08x \n",pos, yevent,xevent,posFeaImage,blob, ts);
+                                    //}
+                                    unmask_events.maskEvent(xevent, yevent, polevent, cameraevent, blob);
+                                    
+                                    //blob = 0x00001021;
+                                    //printf("Given pos %d extracts x=%d and y=%d pol=%d blob=%08x evPU = %08x \n", pos, xevent, yevent, pol, (unsigned int) blob, (unsigned int)ts);
+                                    
+                                    // representing the feature map for debug
+                                    unsigned char* pFeaLeft = leftFeaOutputImage->getRawImage();
+                                    if(polevent > 0) {
+                                        if(pFeaLeft[posFeaImage] <= 255 - devianceFea) {
+                                            pFeaLeft[posFeaImage] += devianceFea ;
+                                        }
+                                        else {
+                                            pFeaLeft[posFeaImage] = 255;
+                                        }
+                                    }
+                                    else {
+                                        if(pFeaLeft[posFeaImage] >= devianceFea) {
+                                            pFeaLeft[posFeaImage] -= devianceFea ;
+                                        }
+                                        else {
+                                            pFeaLeft[posFeaImage] = 0;
+                                        }
+                                    }
+                                    
+                                    
+                                    
+                                    // sending the event if we pass thresholds
+                                    
+                                    //printf("checking for thresholds \n");
+                                    if(pFeaLeft[posFeaImage] > 240) {
+                                        
+                                        TimeStamp* timestamp = new TimeStamp();
+                                        timestamp->setStamp(ts);
+                                        packets->append(timestamp->encode());
+                                        //txQueue.push_back(timestamp);                                         
+                                        delete timestamp;
+                                        countEventToSend++;
+                                        
+                                        AddressEvent* ae = new AddressEvent();
+                                        ae->setChannel(1);
+                                        ae->setPolarity(1);
+                                        ae->setX(xevent);
+                                        ae->setY(yevent);
+                                        packets->append(ae->encode());
+                                        //txQueue.push_back(ae);
+                                        delete ae;
+                                        countEventToSend++;
+                                        
+                                        //fprintf(fout,"%08X %08X \n",bufferFEA_copy->address,ts);
+                                        //bufferFEA_copy++; // jumping to the next event(u32,u32)
+                                        
+                                    }
+                                    else if(pFeaLeft[posFeaImage] < 10) {
+                                        
+                                        TimeStamp* timestamp = new TimeStamp();
+                                        timestamp->setStamp(ts);
+                                        //txQueue.push_back(timestamp);
+                                        packets->append(timestamp->encode());
+                                        delete timestamp;
+                                        countEventToSend++;
+                                        
+                                        AddressEvent* ae = new AddressEvent();
+                                        ae->setChannel(1);
+                                        ae->setPolarity(0);
+                                        ae->setX(xevent);
+                                        ae->setY(yevent);
+                                        packets->append(ae->encode());
+                                        //txQueue.push_back(ae);
+                                        delete ae;
+                                        countEventToSend++;                                                                                  
+                                        
+                                        //fprintf(fout,"%08X %08X \n",bufferFEA_copy->address,ts);
+                                        //bufferFEA_copy++; // jumping to the next event(u32,u32)
+                                        
+                                    }                           
+                                    
+                                } //end else
+                                
+                            } //end for i 5 
+                            
                         }
                         else { //------------------------------------------------------------------------------------------------------
                             //printf("remapping event right camera:%d \n", camera);
                             //remapEventRight(cartX,cartY,polarity,ts,&txQueue);
                             for (int i = 0; i< 5 ; i++) {                
-                                int pos      = lut[i * RETINA_SIZE * RETINA_SIZE +  cartY * RETINA_SIZE + cartY ];                      
+                                int pos      = lut[i * RETINA_SIZE * RETINA_SIZE +  cartY * RETINA_SIZE + cartX ];                      
                                 
                                 //printf("        pos ; %d ", pos);
                                 if(pos == -1) {
@@ -1761,18 +1761,18 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                                 }
                                 else {
                                     //creating an event            
-                                    int yevent_tmp   = pos / FEATUR_SIZE;
-                                    int yevent       = FEATUR_SIZE - yevent_tmp;
-                                    int xevent_tmp   = pos - yevent_tmp * FEATUR_SIZE;
-                                    int xevent       = xevent_tmp;
-                                    //int polevent     = pol < 0 ? 0 : 1;
-                                    int polevent = pol;
-                                    int cameraevent  = 1;
-                                    unsigned long blob = 0;
+                                    int yevent_tmp      = pos / FEATUR_SIZE;
+                                    int yevent          = FEATUR_SIZE - yevent_tmp;
+                                    int xevent_tmp      = pos - yevent_tmp * FEATUR_SIZE;
+                                    int xevent          = xevent_tmp;
+                                    //int polevent      = pol < 0 ? 0 : 1;
+                                    int polevent        = pol;
+                                    int cameraevent     = 1;
+                                    unsigned long blob  = 0;
                                     int posFeaImage     = yevent * rowSizeFea + xevent;
                                     
                                     //if(ts!=0) {
-                                    //    printf(" %d %d %d %08x %08x \n",pos, yevent, xevent,blob, ts);
+                                    //printf(" %d %d %d %d %d %08x %08x \n",FEATUR_SIZE,pos, yevent, xevent,posFeaImage,blob, ts);
                                     //}
                                     unmask_events.maskEvent(xevent, yevent, polevent, cameraevent, blob);
                                     //unsigned long evPU;
@@ -2082,8 +2082,9 @@ void efExtractorThread::run() {
         // -----------------------------------------------------------------------  
         // leaking section of the algorithm (retina space) 
         printf("leaking section of the algorithm (retina space) \n");
-        pMemL  = leftInputImage->getRawImage();
-        pLeft  = leftOutputImage->getRawImage();
+        pMemL   = leftInputImage->getRawImage();
+        pLeft   = leftOutputImage->getRawImage();
+        pRight  = rightOutputImage->getRawImage();
         int padding = leftOutputImage->getPadding();
         
         int CONST_DECREMENT_DOUBLE = 1 ;
@@ -2158,8 +2159,8 @@ void efExtractorThread::run() {
                 
             }
                             
-            pFeaLeft += padding;
-            pFeaRight+= padding;
+            pFeaLeft  += padding;
+            pFeaRight += padding;
         }
         
         
