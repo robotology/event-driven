@@ -61,6 +61,11 @@ eventBottleHandler::eventBottleHandler() {
     memset(converterBuffer,0,BUFFERDIM);              // set unsigned char
     pcRead = converterBuffer;
     //unmask_events.start();
+    for (int i = 0; i < bottleBufferDimension; i++) {
+        //bufferBottle[i] = 0;
+        bufferBottle[i] = new Bottle();
+        semBottleBuffer[i] = new Semaphore();
+    }
     printf("unmask event just started \n");
     previousTimeStamp = 0;
     readEvents = fopen("./readEvents","w");
@@ -86,6 +91,27 @@ void eventBottleHandler::copyChunk(char* bufferCopy) {
     mutex.post();
 }
 
+
+void eventBottleHandler::extractBottle(Bottle* tempBottle) {
+    // reading the bottle
+    
+    //---------------------------------------
+    //printf("sem address in extract %08x \n",semBottleBuffer[extractPosition] );
+    //printf("trying the wait method in extract \n");
+    semBottleBuffer[extractPosition]->wait();
+    tempBottle->copy(*bufferBottle[extractPosition]);   // copying it in a temporary Bottle*
+    //bufferBottle[extractPosition] = 0;               // setting it to zero as already read Bottle*
+    bufferBottle[extractPosition]->clear();            // removes the content of the bottle.
+    //printf("next istructyion will post the semaphore in extract \n");
+    semBottleBuffer[extractPosition]->post();
+    //----------------------------------------
+    
+    //printf("%d tempBottle: %08X \n",extractPosition, tempBottle);
+    // updating the position of where the next extraction will happen
+    mutex.wait();
+    extractPosition = (extractPosition + 1) % bottleBufferDimension;
+    mutex.post();
+}
 
 // reading out from a circular buffer with 2 entry points and wrapping
 void eventBottleHandler::onRead(eventBottle& i_ub) {    
@@ -125,102 +151,6 @@ void eventBottleHandler::onRead(eventBottle& i_ub) {
     //printf("onRead: ended \n");
     //printf("pcBuffer: 0x%x pcRead: 0x%x \n", pcBuffer, pcRead); 
 }
-
-/*
-// reading out from a circular buffer with 2 entry points
-void eventBottleHandler::onRead(eventBuffer& i_ub) {
-    valid = true;
-    //printf("onRead ");
-    // receives the buffer and saves it
-    int dim = i_ub.get_sizeOfPacket() ;      // number of bits received / 8 = bytes received
-    //printf("dim %d \n", dim);
- 
-    mutex.wait();
-    receivedBuffer = i_ub.get_packet();    
-
-    //mem copying
-    memcpy(pcBuffer,receivedBuffer,dim);
-    
-    if (totDim < TH1) {
-        pcBuffer += dim;
-    }
-    else if((totDim>=TH1)&&(totDim<TH2)&&(state!=1)){
-        //printf("greater than TH1 \n");
-        pcBuffer = converterBuffer + TH1; 
-        pcRead = converterBuffer + TH2;
-        state = 1;
-    }
-    else if(totDim >= TH2) {
-        //printf("greater that TH2 \n");
-        pcBuffer = converterBuffer;
-        pcRead = converterBuffer + TH1;
-        totDim = 0;
-        state = 0;
-    }
-    // the thrid part of the buffer is free to avoid overflow
-    totDim += dim;
-
-    mutex.post();
-
-#ifdef VERBOSE
-    int num_events = dim >> 3 ;
-    uint32_t* buf2 = (uint32_t*)receivedBuffer;
-    //plotting out
-    for (int evt = 0; evt < num_events; evt++) {
-        unsigned long blob      = buf2[2 * evt];
-        unsigned long t         = buf2[2 * evt + 1];
-        fprintf(fout,"%08X %08X \n",blob,t);        
-    }
-#endif 
-
-    //printf("onRead: ended \n");
-    //printf("pcBuffer: 0x%x pcRead: 0x%x \n", pcBuffer, pcRead); 
-}
-*/
-
-
-/*
-// reading out from a circular buffer with 3 entry points
-void eventBottleHandler::onRead(eventBuffer& i_ub) {
-    valid = true;
-    //printf("onRead ");
-    // receives the buffer and saves it
-    int dim = i_ub.get_sizeOfPacket() ;      // number of bits received / 8 = bytes received
-    //printf("dim %d \n", dim);
-   
-    mutex.wait();
-    receivedBuffer = i_ub.get_packet(); 
-    memcpy(pcBuffer,receivedBuffer,dim);
-    
-    
-    pcBuffer += dim;
-    
-    
-    if((totDim>=TH1)&&(totDim<TH2)&&(state!=1)){
-        pcBuffer = converterBuffer + TH1; 
-        pcRead = converterBuffer + TH2;
-        state = 1;
-    }else if((totDim >= TH2)&&(totDim < TH3)&&(state!=2)) {
-        pcBuffer = converterBuffer + TH2;
-        pcRead   = converterBuffer;       
-        state    = 2;
-    }
-    else if(totDim >= TH3) {
-        pcBuffer = converterBuffer;
-        pcRead   = converterBuffer + TH1;
-        totDim   = 0;
-        state    = 0;
-    }
-    // after the thrid part of the buffer is free to avoid overflow
-    totDim += dim; 
-
-    mutex.post();
-    //printf("onRead: ended \n");
-    //printf("pcBuffer: 0x%x pcRead: 0x%x \n", pcBuffer, pcRead);
-   
-}
-*/
-
 
 void eventBottleHandler::resetTimestamps() {
     //unmask_events.resetTimestamps();
@@ -318,6 +248,11 @@ eventBottleHandler::~eventBottleHandler() {
     printf("eventBottleHandler:freeing converterBuffer \n");
     free(converterBuffer_copy);
     fclose(fout);
+    
+    printf("eventBottleHandler:freeing the buffer of bottle \n");
+    delete[] bufferBottle;
+    delete[] semBottleBuffer;
+    printf("eventBottleHandler:success in converting \n");
 }
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------

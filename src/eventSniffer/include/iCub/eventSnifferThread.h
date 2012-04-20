@@ -64,14 +64,18 @@ private:
     int synchPeriod;                    // synchronization period between events and viewer
     int responseGradient;               // responseGradient parameter
     eventBottleHandler* bottleHandler;  // handler for the received bottle
+    yarp::os::Bottle* receivedBottle;      // bottle currently extracted from the buffer
+    yarp::os::Bottle* bottleToSend;        // bottle ready to be sent to the outputport 
+
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPort;            // port whre the output (left) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPortRight;       // port whre the output (right) is sent
+    yarp::os::BufferedPort<eventBottle> outBottlePort;                                   // port sendinf events as a collection of bottles
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeft;                                  //image representing the signal on the leftcamera
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRight;                                 //image representing the signal on the right camera
     std::string name;                   // rootname of all the ports opened by this thread
     bool verb;
     bool synchronised;                   // flag to check whether the microsecond counter has been synchronised
-    bool greaterHalf;                    // indicates whether the counter has passed the half of the range
+    bool greaterHalf;                   // indicates whether the counter has passed the half of the range
     bool idle;                           // controls idle mode
     bool firstRun;                       // flag that check whether the run is a first useful run    
     bool logPolar;                       // flag that indicates whether the viewer represent logpolar information

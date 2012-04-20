@@ -106,6 +106,8 @@ bool eventSnifferThread::threadInit() {
     bottleHandler->setRetinalSize(retinalSize);
     bottleHandler->open(getName("/retina:i").c_str());
 
+    outBottlePort  .open(getName("/eventBottle:o").c_str());
+
     printf("Initialisation in collector thread correctly ended \n");
     return true;
 }
@@ -161,10 +163,31 @@ int eventSnifferThread::prepareUnmasking(char* bufferCopy, Bottle* res) {
 }
 
 void eventSnifferThread::run() {
-  
+    bottleHandler->extractBottle(receivedBottle);  
+    bottleToSend = receivedBottle;
     
-    
-
+    if(outBottlePort.getOutputCount()) {
+        //Bottle packets;          
+        cout<<"encoding events within packets "<<bottleToSend->size() <<endl;
+        if(bottleToSend->size() > 0) {
+            //for (size_t i=0; i<txQueue->size(); i++) {
+            //    printf("encoding the %d event \n", i);
+            //    cout<<((*txQueue)[i])->getContent().toString()<<endl;
+            //    packets.append(((*txQueue)[i])->encode());
+            //}
+            printf("after encoding events in the packets %d \n", bottleToSend->size() );
+            //Bottle b;
+            //b.copy(*bottleToSend);
+            printf("after assignment \n");
+            eventBottle data2send(bottleToSend);         
+            printf("after imprinting \n");
+            eventBottle& tmp = outBottlePort.prepare();
+            printf("preparing the bottle \n");
+            tmp = data2send;
+            outBottlePort.write(); 
+            printf("writing the port \n");
+        }
+    }
 }
 
 void eventSnifferThread::threadRelease() {

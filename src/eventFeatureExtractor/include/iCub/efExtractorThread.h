@@ -51,7 +51,7 @@ private:
     unsigned long lastTimestampLeft;       // last timestamp received for left camera
     unsigned long lastTimestampRight;      // last timestamp received from the right camera
     yarp::os::Bottle* receivedBottle;      // bottle currently extracted from the buffer
-    yarp::os::Bottle* bottleToSend;        
+    yarp::os::Bottle* bottleToSend;        // bottle ready to be sent to the outputport 
     emorph::ecodec::eEventQueue* txQueue;  // queue of event to be sent
     emorph::ecodec::eEventQueue* rxQueue;  // queue of event to be sent
     
