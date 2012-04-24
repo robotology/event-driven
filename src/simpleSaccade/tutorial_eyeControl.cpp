@@ -1,6 +1,7 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <yarp/os/Network.h>
 #include <yarp/dev/ControlBoardInterfaces.h>
 #include <yarp/dev/PolyDriver.h>
@@ -17,13 +18,20 @@ using namespace yarp::dev;
 using namespace yarp::sig;
 using namespace yarp::os;
 
+void moveJoints(IPositionControl *_pos, Vector& _command)
+{
+    _pos->positionMove(_command.data());    
+    Time::delay(0.1);
+}
+
 int main(int argc, char *argv[]) 
 {
     Network yarp;
 
     Port* _pOutPort = new Port;
     //_options.portName+="/command:o";
-    _pOutPort->open("/simpleSaccade/cmd:o");
+    std::string portName="/simpleSaccade/cmd:o";
+    _pOutPort->open(portName.c_str());
 
     Property params;
     params.fromCommand(argc, argv);
@@ -34,12 +42,21 @@ int main(int argc, char *argv[])
         fprintf(stderr, "--robot name (e.g. icub)\n");
         return -1;
     }
-
+    if (!params.check("loop"))
+    {
+        fprintf(stderr, "Please specify the number of repetition\n");
+        fprintf(stderr, "--loop number\n");
+        return -1;
+    }
     std::string robotName=params.find("robot").asString().c_str();
     std::string remotePorts="/";
     remotePorts+=robotName;
-
     remotePorts+="/head"; //"/right_arm"
+
+    //int nOl=atoi(params.find("loop").asString().c_str());
+    int nOl=params.find("loop").asInt();
+
+    Network::connect(portName.c_str(), "/aexGrabber");
 
     std::string localPorts="/test/client";
 
@@ -94,9 +111,9 @@ int main(int argc, char *argv[])
     //
     command=0;
     //now set the shoulder to some value
-    command[0]=-5;
-    command[1]=9;
-    command[2]=50;
+    command[0]=0;
+    command[1]=0;
+    command[2]=0;
     command[3]=0;
     command[4]=0;
     command[5]=0;
@@ -112,39 +129,61 @@ int main(int argc, char *argv[])
     }
 */
     int times=0;
-    while(true)
+    yarp::os::Bottle bot; //= _pOutPort->prepare();
+    bot.clear();
+    bot.addVocab(COMMAND_VOCAB_DUMP);
+    bot.addVocab(COMMAND_VOCAB_ON);
+    Bottle inOn;
+    _pOutPort->write(bot,inOn);
+    Time::delay(0.1);
+    fprintf(stderr, "Start saccade(s), number of repetition: %d", nOl);
+    while(times<nOl)
     {
         times++;
         
-        yarp::os::Bottle bot; //= _pOutPort->prepare();
-        bot.clear();
-        bot.addVocab(COMMAND_VOCAB_DUMP);
-        bot.addVocab(COMMAND_VOCAB_ON);
-        Bottle in;
-        _pOutPort->write(bot,in);
 
-        if (times%2)
+/*        if (times%2)
         {
-            command[0]=-5;
-            command[1]=9;
-            command[2]=50;   
+            command[0]=0;
+            command[1]=0;
+            command[2]=0;   
             command[3]=0;
             command[4]=11;
             command[5]=0;
         }
         else
         {
-            command[0]=-5;
-            command[1]=9;
-            command[2]=50;
+            command[0]=0;
+            command[1]=0;
+            command[2]=0;
             command[3]=0;
             command[4]=0;
             command[5]=0;
         }
-
         pos->positionMove(command.data());
-        
-        Time::delay(0.1);
+        Time::delay(0.1);*/
+
+
+	/*Horizontal saccade*/
+	command[4]=-5;
+	moveJoints(pos, command);
+	/*command[4]=0;
+	moveJoints(pos, command);*/
+	command[4]=5;
+	moveJoints(pos, command);	
+	command[4]=0;
+	moveJoints(pos, command);
+	
+	/*Vertical saccade*/
+	command[3]=-5;
+	moveJoints(pos, command);
+	/*command[3]=0;
+	moveJoints(pos, command);*/
+	command[3]=5;
+	moveJoints(pos, command);
+	command[3]=0;
+	moveJoints(pos, command);
+
         
 /*        int count=50;
         while(count--)
@@ -155,7 +194,13 @@ int main(int argc, char *argv[])
             }
 */
     }
+    bot.clear();
+    bot.addVocab(COMMAND_VOCAB_DUMP);
+    bot.addVocab(COMMAND_VOCAB_OFF);
+    Bottle inOff;
+    _pOutPort->write(bot,inOff);
 
+    _pOutPort->close();
     robotDevice.close();
     
     return 0;
