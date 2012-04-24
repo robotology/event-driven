@@ -29,8 +29,8 @@ TARGET_LINK_LIBRARIES(tutorial_eyeControl ${YARP_LIBRARIES})
 
 
 ## again this is for testing only, please ignore if you are reading tutorials
-ADD_EXECUTABLE(test_icubVis smoke-tests/icubVis.cpp)
-TARGET_LINK_LIBRARIES(test_icubVis ${YARP_LIBRARIES} iCubVis)
+#ADD_EXECUTABLE(test_icubVis smoke-tests/icubVis.cpp)
+#TARGET_LINK_LIBRARIES(test_icubVis ${YARP_LIBRARIES} iCubVis)
 
 IF(ICUB_USE_IPOPT)
     ADD_EXECUTABLE(test_ipopt smoke-tests/ipopt.cpp)
@@ -47,3 +47,5 @@ IF(ICUB_USE_IPOPT)
 ENDIF()
 ###################### end of test specific code
 
+
+INSTALL_TARGETS(/bin tutorial_eyeControl)

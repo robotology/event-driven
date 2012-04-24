@@ -9,6 +9,10 @@
 
 #include <string>
 
+#define COMMAND_VOCAB_ON    VOCAB2('o','n')
+#define COMMAND_VOCAB_OFF   VOCAB3('o','f','f')
+#define COMMAND_VOCAB_DUMP  VOCAB4('d','u','m','p')
+
 using namespace yarp::dev;
 using namespace yarp::sig;
 using namespace yarp::os;
@@ -16,6 +20,10 @@ using namespace yarp::os;
 int main(int argc, char *argv[]) 
 {
     Network yarp;
+
+    Port* _pOutPort = new Port;
+    //_options.portName+="/command:o";
+    _pOutPort->open("/simpleSaccade/cmd:o");
 
     Property params;
     params.fromCommand(argc, argv);
@@ -26,6 +34,7 @@ int main(int argc, char *argv[])
         fprintf(stderr, "--robot name (e.g. icub)\n");
         return -1;
     }
+
     std::string robotName=params.find("robot").asString().c_str();
     std::string remotePorts="/";
     remotePorts+=robotName;
@@ -106,6 +115,14 @@ int main(int argc, char *argv[])
     while(true)
     {
         times++;
+        
+        yarp::os::Bottle bot; //= _pOutPort->prepare();
+        bot.clear();
+        bot.addVocab(COMMAND_VOCAB_DUMP);
+        bot.addVocab(COMMAND_VOCAB_ON);
+        Bottle in;
+        _pOutPort->write(bot,in);
+
         if (times%2)
         {
             command[0]=-5;
