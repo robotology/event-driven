@@ -192,7 +192,7 @@ void unmask::updateImage(AddressEvent* ptr) {
     cartX     = ptr->getY();
     camera    = ptr->getChannel();
     polarity  = ptr->getPolarity();
-    printf("blob %04d %04d %04d %04d \n", cartX, cartY, camera, polarity);
+    //printf("blob %04d %04d %04d %04d \n", cartX, cartY, camera, polarity);
     
     timestamp = lastRecTimestamp;
 

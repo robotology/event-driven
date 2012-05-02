@@ -34,7 +34,7 @@
 #include <list>
 #include <string>
 
-//#define VERBOSE
+#define VERBOSE
 #define BUFFERDIM 1000
 #define CHUNKSIZE 1000
 
