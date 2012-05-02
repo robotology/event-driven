@@ -24,6 +24,7 @@
  */
 
 #include <iCub/eventBottleHandler.h>
+#include <iCub/emorph/eventCodec.h>
 #include <cassert>
 #include <cstdlib>
 #include <iostream>
@@ -41,6 +42,7 @@
 
 using namespace yarp::os;
 using namespace yarp::sig;
+using namespace emorph::ecodec;
 using namespace std;
 
 eventBottleHandler::eventBottleHandler() {
@@ -162,8 +164,6 @@ void eventBottleHandler::onRead(eventBottle& i_ub) {
     //plotting out
     string str;
     int chksum;
-
-    /*
     for (int i=0; i < bufferBottle[insertPosition]->size(); i++) {
         
         if(bufferBottle[insertPosition]->get(i).asInt() >= 0x80000000) {
@@ -178,10 +178,9 @@ void eventBottleHandler::onRead(eventBottle& i_ub) {
     }
     //fprintf(fout,"chksum: %s \n", str.c_str());
     fprintf(fout,"----------------------------- \n");
-    */
-
+    /*
     eEventQueue rxQueue;    // the ownership is true by default
-    bool   ok = eEvent::decode(packets,rxQueue);
+    bool   ok = eEvent::decode(*bufferBottle[insertPosition],rxQueue);
     for (size_t i=0; i<rxQueue.size(); i++)
     {
         // to identify the type of the packet
@@ -191,6 +190,8 @@ void eventBottleHandler::onRead(eventBottle& i_ub) {
             AddressEvent* ptr=dynamic_cast<AddressEvent*>(rxQueue[i]);
             fprintf(fout,"%s \n",rxQueue[i]->getContent().toString().c_str());
         }
+    }
+    */
     
 #endif
     
