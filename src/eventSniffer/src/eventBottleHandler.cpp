@@ -35,7 +35,7 @@
 
 //#include <iCub/config.h>
 
-//#define VERBOSE
+#define VERBOSE
 #define BUFFERDIM 10000
 #define CHUNKSIZE 10000
 
@@ -141,7 +141,7 @@ void eventBottleHandler::onRead(eventBottle& i_ub) {
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() ;      // number of words     
     receivedBufferSize = dim;
-    printf("%d dim : %d \n", insertPosition,dim);
+    //printf("%d dim : %d \n", insertPosition,dim);
     //receivedBottle = new Bottle(*i_ub.get_packet());
     //printf("%s \n ", i_ub.get_packet()->toString().c_str());
     //receivedBottle->copy(*i_ub.get_packet());
@@ -162,14 +162,36 @@ void eventBottleHandler::onRead(eventBottle& i_ub) {
     //plotting out
     string str;
     int chksum;
+
+    /*
     for (int i=0; i < bufferBottle[insertPosition]->size(); i++) {
-        fprintf(fout,"%08X \n", bufferBottle[insertPosition]->get(i).asInt());
+        
+        if(bufferBottle[insertPosition]->get(i).asInt() >= 0x80000000) {
+            fprintf(fout,"%08X ", bufferBottle[insertPosition]->get(i).asInt());
+        }
+        else {
+            fprintf(fout,"%08X \n ", bufferBottle[insertPosition]->get(i).asInt());
+        }
         //printf("%08X \n", receivedBottle->get(i).asInt());
         int chksum = bufferBottle[insertPosition]->get(i).asInt() % 255;
         //str[i] = (char) chksum;
     }
     //fprintf(fout,"chksum: %s \n", str.c_str());
     fprintf(fout,"----------------------------- \n");
+    */
+
+    eEventQueue rxQueue;    // the ownership is true by default
+    bool   ok = eEvent::decode(packets,rxQueue);
+    for (size_t i=0; i<rxQueue.size(); i++)
+    {
+        // to identify the type of the packet
+        // user can rely on the getType() method
+        if (rxQueue[i]->getType()=="AE")
+        {
+            AddressEvent* ptr=dynamic_cast<AddressEvent*>(rxQueue[i]);
+            fprintf(fout,"%s \n",rxQueue[i]->getContent().toString().c_str());
+        }
+    
 #endif
     
 
