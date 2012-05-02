@@ -157,9 +157,9 @@ void eventBottleHandler::onRead(eventBottle& i_ub) {
         fprintf(fout,"%08X \n", bufferBottle[insertPosition]->get(i).asInt());
         //printf("%08X \n", receivedBottle->get(i).asInt());
         int chksum = bufferBottle[insertPosition]->get(i).asInt() % 255;
-        str[i] = (char) chksum;
+        //str[i] = (char) chksum;
     }
-    fprintf(fout,"chksum: %s \n", str.c_str());
+    //fprintf(fout,"chksum: %s \n", str.c_str());
     fprintf(fout,"----------------------------- \n");
 #endif
     
