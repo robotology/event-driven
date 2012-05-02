@@ -63,6 +63,8 @@ eventSnifferThread::eventSnifferThread() : RateThread(THRATE) {
     lc = rc = 0;	
     minCount      = 0;
     minCountRight = 0;
+
+    receivedBottle = new Bottle();
 }
 
 eventSnifferThread::~eventSnifferThread() {
@@ -163,9 +165,10 @@ int eventSnifferThread::prepareUnmasking(char* bufferCopy, Bottle* res) {
 }
 
 void eventSnifferThread::run() {
+    //printf("eventSnifferThread::run \n");
     bottleHandler->extractBottle(receivedBottle);  
     bottleToSend = receivedBottle;
-    
+
     if(outBottlePort.getOutputCount()) {
         //Bottle packets;          
         cout<<"encoding events within packets "<<bottleToSend->size() <<endl;

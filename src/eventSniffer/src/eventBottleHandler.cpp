@@ -35,9 +35,9 @@
 
 //#include <iCub/config.h>
 
-#define VERBOSE
-#define BUFFERDIM 1000
-#define CHUNKSIZE 1000
+//#define VERBOSE
+#define BUFFERDIM 10000
+#define CHUNKSIZE 10000
 
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -45,31 +45,44 @@ using namespace std;
 
 eventBottleHandler::eventBottleHandler() {
     
-    valid       = false;
-    retinalSize = 128;
-    totDim      = 0;
-    pcRead      = 0;
-    state       = 0;
-    receivedBuffer = 0;
+    valid           = false;
+    retinalSize     = 128;
+    totDim          = 0;
+    pcRead          = 0;
+    state           = 0;
+    receivedBuffer  = 0;
+    insertPosition  = 5;
+    extractPosition = 0;
+
     printf ("allocating memory \n");
     converterBuffer_copy = (char*) malloc(BUFFERDIM); // allocates bytes
     converterBuffer = converterBuffer_copy;
-    if (converterBuffer == 0)
+    if (converterBuffer == 0) {
         printf("null pointer \n");
+    }
     pcBuffer = converterBuffer;
+    
     printf("setting memory \n");
     memset(converterBuffer,0,BUFFERDIM);              // set unsigned char
     pcRead = converterBuffer;
+    
     //unmask_events.start();
+    bufferBottle = new Bottle*[bottleBufferDimension];
+    semBottleBuffer = new Semaphore*[bottleBufferDimension];
+    
     for (int i = 0; i < bottleBufferDimension; i++) {
+        printf("setting the bufferBottle %d \n", i);
         //bufferBottle[i] = 0;
         bufferBottle[i] = new Bottle();
         semBottleBuffer[i] = new Semaphore();
     }
+    
     printf("unmask event just started \n");
     previousTimeStamp = 0;
     readEvents = fopen("./readEvents","w");
-    fout = fopen("dumpCartCollector.txt", "w+");
+    fout = fopen("EventSniffer.dumpCartCollector.txt", "w+");
+
+    printf("eventBottleHandler initialisation correctly ultimated \n");
 }
 
 
@@ -94,10 +107,11 @@ void eventBottleHandler::copyChunk(char* bufferCopy) {
 
 void eventBottleHandler::extractBottle(Bottle* tempBottle) {
     // reading the bottle
+    //printf("reading the bottle \n");
     
     //---------------------------------------
     //printf("sem address in extract %08x \n",semBottleBuffer[extractPosition] );
-    //printf("trying the wait method in extract \n");
+    
     semBottleBuffer[extractPosition]->wait();
     tempBottle->copy(*bufferBottle[extractPosition]);   // copying it in a temporary Bottle*
     //bufferBottle[extractPosition] = 0;               // setting it to zero as already read Bottle*
@@ -116,13 +130,67 @@ void eventBottleHandler::extractBottle(Bottle* tempBottle) {
 // reading out from a circular buffer with 2 entry points and wrapping
 void eventBottleHandler::onRead(eventBottle& i_ub) {    
     valid = true;
+    //printf("OnRead \n");
+    
+    //---------------------------------------------   
+    //printf("sem address onRead %08x \n",semBottleBuffer[extractPosition] );
+    //printf("trying the wait method in onRead \n");
+    semBottleBuffer[insertPosition]->wait();
+
+        
+    // receives the buffer and saves it
+    int dim = i_ub.get_sizeOfPacket() ;      // number of words     
+    receivedBufferSize = dim;
+    printf("%d dim : %d \n", insertPosition,dim);
+    //receivedBottle = new Bottle(*i_ub.get_packet());
+    //printf("%s \n ", i_ub.get_packet()->toString().c_str());
+    //receivedBottle->copy(*i_ub.get_packet());
+    //printf("after copy");
+    //printf("%d receivedBottle size : %d \n", insertPosition,receivedBottle->size());
+    //printf("%d packet->size %d \n",insertPosition,receivedBottle->size() );
+    //receivedBottle = (Bottle*) receivedBuffer;
+    //printf("bufferBottle[%d] %08x i_ub.get_packet() %08X \n",insertPosition, bufferBottle[insertPosition], i_ub.get_packet()  );
+    //delete bufferBottle[insertPosition];
+    //bufferBottle[insertPosition] = receivedBottle;
+    //printf("receivedBottle  %08x \n",receivedBottle);        
+    bufferBottle[insertPosition]->copy(*i_ub.get_packet());          
+
+    //printf("insertPosition %d  \n", insertPosition);
+#ifdef VERBOSE
+    int num_events = dim >> 3 ;
+    fprintf(fout, "dim: %d \n",dim);
+    //plotting out
+    string str;
+    int chksum;
+    for (int i=0; i < bufferBottle[insertPosition]->size(); i++) {
+        fprintf(fout,"%08X \n", bufferBottle[insertPosition]->get(i).asInt());
+        //printf("%08X \n", receivedBottle->get(i).asInt());
+        int chksum = bufferBottle[insertPosition]->get(i).asInt() % 255;
+        //str[i] = (char) chksum;
+    }
+    //fprintf(fout,"chksum: %s \n", str.c_str());
+    fprintf(fout,"----------------------------- \n");
+#endif
+    
+
+    semBottleBuffer[insertPosition]->post();
+    //----------------------------------------------
+
+    // changing the value of the insert position
+    mutex.wait();
+    insertPosition = (insertPosition + 1) % bottleBufferDimension;
+    mutex.post();
+}
+/*
+void eventBottleHandler::onRead(eventBottle& i_ub) {    
+    valid = true;
 
     
     mutex.wait();
     
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() ;      // number of words
-    printf("eventBottleHandler::  %d \n", dim);
+    //printf("eventBottleHandler::  %d \n", dim);
     
     receivedBufferSize = dim;
     receivedBottle = i_ub.get_packet();
@@ -131,26 +199,21 @@ void eventBottleHandler::onRead(eventBottle& i_ub) {
     
 #ifdef VERBOSE
     int num_events = dim >> 3 ;
-    printf("size of the received bottle %d \n",receivedBottle->size() );
+    //printf("size of the received bottle %d \n",receivedBottle->size() );
     //plotting out
     for (int i=0; i < receivedBottle->size(); i++) {
         fprintf(fout,"%08X \n", receivedBottle->get(i).asInt());      
     }
+    fprintf("################ \n");
 #endif
 
-    /*
-    
-    // the thrid part of the buffer is free to avoid overflow
-    //totDim += dim;
-    int overflow = 0;               
-    int removeLater=0;    
-    int status = 0;
-    */
     mutex.post();
 
     //printf("onRead: ended \n");
     //printf("pcBuffer: 0x%x pcRead: 0x%x \n", pcBuffer, pcRead); 
 }
+*/
+
 
 void eventBottleHandler::resetTimestamps() {
     //unmask_events.resetTimestamps();

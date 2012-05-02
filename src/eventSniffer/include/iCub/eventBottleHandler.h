@@ -128,7 +128,7 @@ private:
     int outputWidth, outputHeight;                              // dimension of the output image default 320x240
     int receivedBufferSize;                                     // dimension of the received packet
     int extractPosition;                                        // position in the buffer where the bottle is extracted 
-    
+    int insertPosition;                                         // position in the buffer where the bottle is saved 
     unsigned long previousTimeStamp;                            // timestamp at the previous run
     char* converterBuffer;                                      // buffer used as saved
     char* converterBuffer_copy;                                 // copy of the buffer pointer, points to the location for freeing
