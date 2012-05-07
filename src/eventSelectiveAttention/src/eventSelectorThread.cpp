@@ -97,7 +97,13 @@ bool eventSelectorThread::threadInit() {
 
     ebHandler = new eventBottleHandler();
     ebHandler->useCallback();
+    ebHandler->setRetinalSize(128);
     ebHandler->open(getName("/retinaBottle:i").c_str());
+
+    map1Handler = new eventBottleHandler();
+    map1Handler->useCallback();
+    map1Handler->setRetinalSize(32);
+    map1Handler->open(getName("/map1Bottle:i").c_str());
 
     receivedBottle = new Bottle();
     
@@ -608,8 +614,9 @@ void eventSelectorThread::threadRelease() {
     //delete imageLeft;
     //delete imageRight;
     delete receivedBottle;
+    delete map1Handler;
     delete ebHandler;
-    printf("cFCollectorThread release         stopping plotterThread \n");
+    printf("eventSelectorThread release         stopping plotterThread \n");
     pThread->stop();
     printf("eventSelectorThread release         deleting converter \n");
     delete cfConverter;

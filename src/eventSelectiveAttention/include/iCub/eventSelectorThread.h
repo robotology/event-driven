@@ -94,6 +94,7 @@ private:
     emorph::ecodec::eEventQueue* txQueue;  // queue of event to be sent
     emorph::ecodec::eEventQueue* rxQueue;  // queue of event to be sent
     eventBottleHandler *ebHandler;         // handler of received events as bottle
+    eventBottleHandler *map1Handler;       // handler for the first feature map
 
     double startTimer;
     double interTimer;
