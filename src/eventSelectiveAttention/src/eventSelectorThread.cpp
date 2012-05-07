@@ -33,9 +33,9 @@ using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
-#define INTERVFACTOR 6.24
+#define INTERVFACTOR 1
 #define COUNTERRATIO 1 //1.25       //1.25 is the ratio 0.160/0.128
-#define MAXVALUE 4294967295
+#define MAXVALUE 0xFFFFFF //4294967295
 #define THRATE 5
 #define STAMPINFRAME  // 10 ms of period times the us in 1 millisecond + time for computing
 //#define retinalSize 128
@@ -47,7 +47,7 @@ using namespace std;
 
 eventSelectorThread::eventSelectorThread() : RateThread(THRATE) {
     responseGradient = 127;
-    retinalSize      = 32;  //default value before setting 
+    retinalSize      = 128;  //default value before setting 
     bottleHandler = true;
     synchronised = false;
     greaterHalf  = false;
@@ -295,6 +295,52 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, uns
     //unmask_events->setLastTimestamp(0);
 }
 
+void eventSelectorThread::spatialSelection(eEventQueue *q) {
+    int dequeSize = q->size();
+    unsigned long ts;
+    for (int evt = 0; evt < dequeSize; evt++) {
+        if((*q)[evt] != 0) {                    
+            //********** extracting the event information **********************
+            // to identify the type of the packet
+            // user can rely on the getType() method
+            // -------------------------- AE  ----------------------------------
+            if ((*q)[evt]->getType()=="AE") {
+                // identified an  address event
+                AddressEvent* ptr=dynamic_cast<AddressEvent*>((*q)[evt]);
+                if(ptr->isValid()) { 
+                    //ts  = iterEvent->ts;
+                    //pol = iterEvent->pol;
+                    //cam = iterEvent->cam;
+                    int cartY     = ptr->getX();
+                    int cartX     = ptr->getY();
+                    int camera    = ptr->getChannel();
+                    int polarity  = ptr->getPolarity();
+                } //end if (ptr->isValid()) 
+            } //end if ((*q)[evt]->getType()=="AE")
+            // -------------------------- TS ----------------------------------
+            else if((*q)[evt]->getType()=="TS") {
+                //printf("timestamp \n");
+                TimeStamp* ptr=dynamic_cast<TimeStamp*>((*q)[evt]);
+                
+                //identified an time stamp event
+                ts = (unsigned int) ptr->getStamp();
+                //printf("timestamp \n")
+                //if(VERBOSE) {
+                //    fprintf(fdebug, " %08x  \n", (unsigned int) ts);
+                //}
+                
+                //countEventToSend++;
+
+            }
+            // -------------------------- NULL ----------------------------------
+            else {
+                printf("not recognized \n");
+                return;
+            } 
+        } //end if((*q)[evt] != 0)
+    } //end for
+}
+
 void eventSelectorThread::spatialSelection(AER_struct* buffer,int numberOfEvents, double w, unsigned long minCount, unsigned long maxCount) {
     // in the list of unmasked event updates the saliency map and the timestamp map 
     AER_struct* iter = buffer; // generated the iterator of the buffer
@@ -344,9 +390,9 @@ void eventSelectorThread::run() {
         cfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
     }
     else {
-        //printf("eventSelectorThread::run : extracting Bottle! \n");
+        printf("eventSelectorThread::run : extracting Bottle! \n");
         ebHandler->extractBottle(receivedBottle);  
-        //printf("received bottle: \n");
+        printf("received bottle: \n");
         //printf("%s \n", receivedBottle->toString().c_str());
     }
     
@@ -401,10 +447,10 @@ void eventSelectorThread::run() {
     }
     else {
         if(receivedBottle->size() != 0) {
-            delete rxQueue;   // freeing memory for the new queue of events
+            //delete rxQueue;   // freeing memory for the new queue of events
             rxQueue = new eEventQueue(); // preparing the new queue
             //printf("unmasking received bottle and creating the queue of event to send \n");
-            //unmask_events.unmaskData(receivedBottle, rxQueue); // saving the queue
+            unmask_events->unmaskData(receivedBottle, rxQueue); // saving the queue
             //printf("bottle of events to send : \n");
         }
     }
@@ -576,14 +622,14 @@ void eventSelectorThread::run() {
     // ----------- preventer end    --------------------- //
 
     // spatial processing
-    if(!bottleHandler) {
-        spatialSelection(unmaskedEvents,CHUNKSIZE>>3,w1, minCount, maxCount);
-    }
-    else {
+    //if(!bottleHandler) {
+        //spatialSelection(unmaskedEvents,CHUNKSIZE>>3,w1, minCount, maxCount);
+    //}
+    //else {
         
-    }
+    //}
     
-
+    /*
     // the getMonoImage gets as default input image the saliency map
     getMonoImage(imageLeft,minCount,maxCount,1);
     if(imageLeft != 0) {
@@ -596,6 +642,7 @@ void eventSelectorThread::run() {
             pThread->copyRight(imageRight);
         }
     }
+    */
   }
 }
 

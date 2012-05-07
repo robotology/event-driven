@@ -241,6 +241,11 @@ public:
      * @param w         weight associated to the particolar feature map whose events belong to.
      */ 
     void spatialSelection(AER_struct* buffer,int dimension, double w, unsigned long minCount, unsigned long maxCount);
+    /**
+     * @brief function that given a train of events represent them in the spatial domaain
+     @param q reference to the queue of events
+     */
+    void spatialSelection(emorph::ecodec::eEventQueue *q);
 
 };
 

@@ -34,7 +34,7 @@
 #include <list>
 #include <string>
 
-#define VERBOSE
+//#define VERBOSE
 #define BUFFERDIM 1000
 #define CHUNKSIZE 1000
 
@@ -102,7 +102,7 @@ void eventBottleHandler::extractBottle(Bottle* tempBottle) {
     
     //---------------------------------------
     //printf("sem address in extract %08x \n",semBottleBuffer[extractPosition] );
-    //printf("trying the wait method in extract \n");
+    printf("trying the wait method in extract \n");
     semBottleBuffer[extractPosition]->wait();
     tempBottle->copy(*bufferBottle[extractPosition]);   // copying it in a temporary Bottle*
     //bufferBottle[extractPosition] = 0;               // setting it to zero as already read Bottle*
@@ -116,12 +116,14 @@ void eventBottleHandler::extractBottle(Bottle* tempBottle) {
     mutex.wait();
     extractPosition = (extractPosition + 1) % bottleBufferDimension;
     mutex.post();
+    
+    printf("eventBottleHandler::extractBottle:success in extracting the bottle \n");
 }
 
 // reading out from a circular buffer with 2 entry points and wrapping
 void eventBottleHandler::onRead(eventBottle& i_ub) {    
     valid = true;
-    printf("OnRead \n");
+    printf("OnRead %d \n", insertPosition);
     
     //---------------------------------------------   
     //printf("sem address onRead %08x \n",semBottleBuffer[extractPosition] );
@@ -157,10 +159,10 @@ void eventBottleHandler::onRead(eventBottle& i_ub) {
     for (int i=0; i < bufferBottle[insertPosition]->size(); i++) {
         fprintf(fout,"%08X \n", bufferBottle[insertPosition]->get(i).asInt());
         //printf("%08X \n", receivedBottle->get(i).asInt());
-        int chksum = bufferBottle[insertPosition]->get(i).asInt() % 255;
+        // int chksum = bufferBottle[insertPosition]->get(i).asInt() % 255;
         str[i] = (char) chksum;
     }
-    fprintf(fout,"chksum: %s \n", str.c_str());
+    //fprintf(fout,"chksum: %s \n", str.c_str());
     fprintf(fout,"----------------------------- \n");
 #endif
     
