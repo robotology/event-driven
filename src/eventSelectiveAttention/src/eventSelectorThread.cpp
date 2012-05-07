@@ -26,9 +26,11 @@
 #include <cstring>
 #include <cassert>
 #include <cstdlib>
+#include <cmath>
 #include <time.h>
 
 using namespace emorph::ecodec;
+
 using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
@@ -44,6 +46,8 @@ using namespace std;
 #define synch_time 1
 
 //#define VERBOSE
+#define INCR_RESPONSE 1
+#define DECR_RESPONSE 1
 
 eventSelectorThread::eventSelectorThread() : RateThread(THRATE) {
     responseGradient = 127;
@@ -74,7 +78,6 @@ bool eventSelectorThread::threadInit() {
     printf(" \nstarting the threads.... \n");
     //outPort.open(getName("/left:o").c_str());
     //outPortRight.open(getName("/right:o").c_str());
-
 
     fout = fopen("./eventSelectiveAttention.dump.txt","w+");
 
@@ -194,11 +197,19 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, uns
     
     //printf("timestamp: min %d    max %d  \n", minCount, maxCount);
     //pBuffer += retinalSize * retinalSize - 1;
+    double maxLeft, maxRight;
+    double minLeft, minRight;
     for(int r = 0 ; r < retinalSize ; r++){
         for(int c = 0 ; c < retinalSize ; c++) {
             //drawing the retina and the rest of the image separately
             int value = *pBuffer;
-            
+            double left_double  = abs(saliencyMapLeft [r * retinalSize + c]);
+            double right_double = abs(saliencyMapRight[r * retinalSize + c]);
+            if(left_double < minLeft)   minLeft = left_double;
+            if(left_double > maxLeft)   maxLeft = left_double;
+            if(right_double > maxRight) maxRight = right_double;
+            if(right_double < minRight) minRight = right_double;
+                        
             unsigned long timestampactual = *pTime;
             //bool tristateView = false;
             
@@ -290,10 +301,39 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, uns
             } // end !tristate            
         } // end inner loop
         pImage+=imagePadding;
-    }
+    }//end outer loop
     //printf("end of the function get in mono \n");
     //unmask_events->setLastTimestamp(0);
+
+    // cycle after normalisation
+    double* pSalLeft      = saliencyMapLeft;
+    double* pSalRight     = saliencyMapRight;
+    double rangeLeft      = maxLeft - minLeft;
+    double rangeRight     = maxRight - minRight;
+    unsigned char* pLeft  = imageLeft->getRawImage();
+    unsigned char* pRight = imageRight->getRawImage();
+    int padding           = imageLeft->getPadding();
+    for(int r = 0 ; r < retinalSize ; r++){
+        for(int c = 0 ; c < retinalSize ; c++) {
+            *pLeft  = (unsigned char) ((abs(*pSalLeft)  + minLeft )  / rangeLeft ) * 255;
+            pLeft++;
+            pSalLeft++;
+            *pRight = (unsigned char) ((abs(*pSalRight) + minRight )/ rangeRight) * 255;
+            pRight++;
+            pSalRight++;
+        }
+        pLeft += padding;
+        pRight += padding;
+    }
 }
+
+void eventSelectorThread::forgettingMemory() {
+    double* pLeft = saliencyMapLeft;
+    pLeft  -= DECR_RESPONSE;
+    double* pRight = saliencyMapRight;
+    pRight -= DECR_RESPONSE;
+}
+
 
 void eventSelectorThread::spatialSelection(eEventQueue *q) {
     int dequeSize = q->size();
@@ -315,6 +355,16 @@ void eventSelectorThread::spatialSelection(eEventQueue *q) {
                     int cartX     = ptr->getY();
                     int camera    = ptr->getChannel();
                     int polarity  = ptr->getPolarity();
+                    
+                    if(camera) {
+                        // memoriseLeft(cartX, cartY, polarity, ts); //sending event and last timestamp
+                        saliencyMapLeft[cartX * retinalSize + cartY] += polarity * INCR_RESPONSE;
+                    }
+                    else {
+                        //memoriseRight(cartX, cartY, polarity, ts); //sending event and last timestamp
+                        saliencyMapRight[cartX * retinalSize + cartY] += polarity * INCR_RESPONSE; 
+                    }                 
+                    
                 } //end if (ptr->isValid()) 
             } //end if ((*q)[evt]->getType()=="AE")
             // -------------------------- TS ----------------------------------
@@ -324,13 +374,14 @@ void eventSelectorThread::spatialSelection(eEventQueue *q) {
                 
                 //identified an time stamp event
                 ts = (unsigned int) ptr->getStamp();
+                lasttimestamp = ts;
+                forgettingMemory();
                 //printf("timestamp \n")
                 //if(VERBOSE) {
                 //    fprintf(fdebug, " %08x  \n", (unsigned int) ts);
                 //}
                 
                 //countEventToSend++;
-
             }
             // -------------------------- NULL ----------------------------------
             else {
@@ -375,7 +426,6 @@ void eventSelectorThread::spatialSelection(AER_struct* buffer,int numberOfEvents
         iter++;
     }    
 }
-
 
 void eventSelectorThread::run() {
   count++;
@@ -593,9 +643,7 @@ void eventSelectorThread::run() {
         lcprev = lc;
         rcprev = rc;
     }
-    
-    
-      
+         
     //resetting time stamps at overflow
     if (countStop == 10) {
       //printf("resetting time stamps!!!!!!!!!!!!! %d %d   \n ", minCount, minCountRight);
@@ -620,17 +668,17 @@ void eventSelectorThread::run() {
       
     }    
     // ----------- preventer end    --------------------- //
-
     // spatial processing
     //if(!bottleHandler) {
         //spatialSelection(unmaskedEvents,CHUNKSIZE>>3,w1, minCount, maxCount);
     //}
-    //else {
-        
+    //else {        
     //}
     
-    /*
+    
     // the getMonoImage gets as default input image the saliency map
+    
+
     getMonoImage(imageLeft,minCount,maxCount,1);
     if(imageLeft != 0) {
       pThread->copyLeft(imageLeft);
@@ -642,7 +690,7 @@ void eventSelectorThread::run() {
             pThread->copyRight(imageRight);
         }
     }
-    */
+    
   }
 }
 

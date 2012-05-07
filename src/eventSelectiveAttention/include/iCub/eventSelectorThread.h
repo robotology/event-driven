@@ -90,6 +90,7 @@ private:
     unsigned long maxCount;             // maximum timestamp allowed for the current frame
     unsigned long minCountRight;
     unsigned long maxCountRight;
+    unsigned long lasttimestamp;
 
     emorph::ecodec::eEventQueue* txQueue;  // queue of event to be sent
     emorph::ecodec::eEventQueue* rxQueue;  // queue of event to be sent
@@ -111,6 +112,8 @@ private:
     FILE* fout;                          // file for temporarely savings of events
     FILE* raw;                           // file dumper for debug
     
+    double* saliencyMapLeft;             // saliencyMap of the left camera
+    double* saliencyMapRight;             // saliencyMap of the right camera
     unsigned char* saliencyMap;          // saliencyMap collection of responses in different feature maps
     int* featureMap;                     // map of the feature;
     unsigned long* timestampMap;         // timestamp reference for the map of the feature 
@@ -246,6 +249,21 @@ public:
      @param q reference to the queue of events
      */
     void spatialSelection(emorph::ecodec::eEventQueue *q);
+
+    /** 
+     * function that allocates events in the spatial memory for left camera
+     */
+    void memorizeLeft(int cartX,int cartY,int polarity,unsigned long ts) {};
+
+    /** 
+     * function that allocates events in the spatial memory for right camera
+     */
+    void memorizeRight(int cartX,int cartY,int polarity, unsigned long ts) {};
+
+    /**
+     * function that reduces the response using a function of difference in timestamp
+     */
+    void forgettingMemory();
 
 };
 
