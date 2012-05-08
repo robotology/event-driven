@@ -37,7 +37,7 @@ using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
-#define THRATE 40
+#define THRATE 30
 //#define retinalSize 128
 
 plotterThread::plotterThread() : RateThread(THRATE) {
