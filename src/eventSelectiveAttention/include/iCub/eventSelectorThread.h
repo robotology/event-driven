@@ -113,10 +113,12 @@ private:
     FILE* raw;                           // file dumper for debug
     
     double* saliencyMapLeft;             // saliencyMap of the left camera
-    double* saliencyMapRight;             // saliencyMap of the right camera
+    double* saliencyMapRight;            // saliencyMap of the right camera
     unsigned char* saliencyMap;          // saliencyMap collection of responses in different feature maps
     int* featureMap;                     // map of the feature;
     unsigned long* timestampMap;         // timestamp reference for the map of the feature 
+    unsigned long* timestampMapLeft;     //
+    unsigned long* timestampMapRight;    //
     AER_struct* unmaskedEvents;          // trained of unmasked events
 public:
     /**

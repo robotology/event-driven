@@ -130,11 +130,16 @@ bool eventSelectorThread::threadInit() {
     microsecondsPrev = 0;
     minCount = 0;
     minCountRight= 0;
-
-    featureMap = (int*) malloc(32 * 32 * sizeof(int));
-    memset(featureMap,0, 32 * 32 * sizeof(int));
-    timestampMap = (unsigned long*) malloc(32 * 32 * sizeof(unsigned long) );
-    memset(timestampMap,0, 32 * 32 * sizeof(unsigned long));
+    saliencyMapLeft  = (double*) malloc(retinalSize * retinalSize * sizeof(double));
+    saliencyMapRight = (double*) malloc(retinalSize * retinalSize * sizeof(double));
+    featureMap = (int*) malloc(retinalSize * retinalSize * sizeof(int));
+    memset(featureMap,0, retinalSize * retinalSize * sizeof(int));
+    timestampMap = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
+    memset(timestampMap,0, retinalSize * retinalSize * sizeof(unsigned long));
+    timestampMapLeft = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
+    memset(timestampMapLeft,0, retinalSize * retinalSize * sizeof(unsigned long));
+    timestampMapRight = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
+    memset(timestampMapRight,0, retinalSize * retinalSize * sizeof(unsigned long));
 
     unmaskedEvents = (AER_struct*) malloc (CHUNKSIZE * sizeof(int));
     memset(unmaskedEvents, 0, CHUNKSIZE * sizeof(int));
@@ -161,15 +166,16 @@ std::string eventSelectorThread::getName(const char* p) {
 
 void eventSelectorThread::resize(int widthp, int heightp) {
     imageLeft = new ImageOf<PixelMono>;
-    imageLeft->resize(32,32);
+    imageLeft->resize(retinalSize,retinalSize);
     imageRight = new ImageOf<PixelMono>;
-    imageRight->resize(widthp,heightp);
+    imageRight->resize(retinalSize,retinalSize);
+    //imageRight->resize(widthp,heightp);
 }
 
 
 void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsigned long minCount,unsigned long maxCount, bool camera){
     assert(image!=0);
-    //printf("retinalSize in getMonoImage %d \n", retinalSize);
+    printf("retinalSize in getMonoImage %d \n", retinalSize);
     image->resize(retinalSize,retinalSize);
     unsigned char* pImage = image->getRawImage();
     int imagePadding = image->getPadding();
@@ -195,7 +201,7 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, uns
     int* pBuffer           = featureMap;
     unsigned long* pTime   = timestampMap;
     
-    //printf("timestamp: min %d    max %d  \n", minCount, maxCount);
+    printf("timestamp: min %d    max %d  \n", minCount, maxCount);
     //pBuffer += retinalSize * retinalSize - 1;
     double maxLeft, maxRight;
     double minLeft, minRight;
@@ -306,21 +312,42 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, uns
     //unmask_events->setLastTimestamp(0);
 
     // cycle after normalisation
+    printf("cycle after the normalisation \n");
     double* pSalLeft      = saliencyMapLeft;
     double* pSalRight     = saliencyMapRight;
+    unsigned long* pTimeLeft     = timestampMapLeft;
+    unsigned long* pTimeRight    = timestampMapRight;
     double rangeLeft      = maxLeft - minLeft;
     double rangeRight     = maxRight - minRight;
     unsigned char* pLeft  = imageLeft->getRawImage();
     unsigned char* pRight = imageRight->getRawImage();
     int padding           = imageLeft->getPadding();
+    unsigned long timestampactual ;
     for(int r = 0 ; r < retinalSize ; r++){
         for(int c = 0 ; c < retinalSize ; c++) {
-            *pLeft  = (unsigned char) ((abs(*pSalLeft)  + minLeft )  / rangeLeft ) * 255;
+            //printf("%d %d \n", r,c);
+            timestampactual = *pTimeLeft; 
+            if (((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)) { 
+                *pLeft  = (unsigned char) ((abs(*pSalLeft)  + minLeft )  / rangeLeft ) * 255;
+            }
+            else {
+                *pLeft = 0;
+            }
             pLeft++;
             pSalLeft++;
-            *pRight = (unsigned char) ((abs(*pSalRight) + minRight )/ rangeRight) * 255;
+            pTimeLeft++;
+
+            // ------------------------------------------------------------------
+            timestampactual = *pTimeRight;
+            if (((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)) { 
+                *pRight = (unsigned char) ((abs(*pSalRight) + minRight )/ rangeRight) * 255;
+            }
+            else {
+                *pRight = 0;
+            }
             pRight++;
             pSalRight++;
+            pTimeRight++;
         }
         pLeft += padding;
         pRight += padding;
@@ -336,6 +363,7 @@ void eventSelectorThread::forgettingMemory() {
 
 
 void eventSelectorThread::spatialSelection(eEventQueue *q) {
+    printf("eventSelectorThread::spatialSelectio \n");
     int dequeSize = q->size();
     unsigned long ts;
     for (int evt = 0; evt < dequeSize; evt++) {
@@ -358,13 +386,16 @@ void eventSelectorThread::spatialSelection(eEventQueue *q) {
                     
                     if(camera) {
                         // memoriseLeft(cartX, cartY, polarity, ts); //sending event and last timestamp
-                        saliencyMapLeft[cartX * retinalSize + cartY] += polarity * INCR_RESPONSE;
+                        printf("saliencyMapLeft in %d %d changed \n");
+                        saliencyMapLeft [cartX * retinalSize + cartY] += polarity * INCR_RESPONSE;
+                        timestampMapLeft[cartX * retinalSize + cartY] = ts;
                     }
                     else {
+                        printf("saliencyMapRight in %d %d");
                         //memoriseRight(cartX, cartY, polarity, ts); //sending event and last timestamp
-                        saliencyMapRight[cartX * retinalSize + cartY] += polarity * INCR_RESPONSE; 
-                    }                 
-                    
+                        saliencyMapRight [cartX * retinalSize + cartY] += polarity * INCR_RESPONSE; 
+                        timestampMapRight[cartX * retinalSize + cartY] = ts;
+                    }                                     
                 } //end if (ptr->isValid()) 
             } //end if ((*q)[evt]->getType()=="AE")
             // -------------------------- TS ----------------------------------
@@ -379,8 +410,7 @@ void eventSelectorThread::spatialSelection(eEventQueue *q) {
                 //printf("timestamp \n")
                 //if(VERBOSE) {
                 //    fprintf(fdebug, " %08x  \n", (unsigned int) ts);
-                //}
-                
+                //}                
                 //countEventToSend++;
             }
             // -------------------------- NULL ----------------------------------
@@ -526,9 +556,9 @@ void eventSelectorThread::run() {
         iter++;
     }
 #endif
-    // spatial processing
-    double w1 = 0, w2 = 0, w3 = 0, w4 = 0;
-    //spatialSelection(unmaskedEvents,CHUNKSIZE>>3,w1);
+
+    
+
 
     
     //gettin the time between two threads
@@ -667,6 +697,12 @@ void eventSelectorThread::run() {
       count = synch_time - 200;
       
     }    
+
+    // =======================  spatial processing===========================
+    double w1 = 0, w2 = 0, w3 = 0, w4 = 0;
+    //spatialSelection(unmaskedEvents,CHUNKSIZE>>3,w1);
+    
+
     // ----------- preventer end    --------------------- //
     // spatial processing
     //if(!bottleHandler) {
@@ -679,17 +715,24 @@ void eventSelectorThread::run() {
     // the getMonoImage gets as default input image the saliency map
     
 
-    getMonoImage(imageLeft,minCount,maxCount,1);
     if(imageLeft != 0) {
-      pThread->copyLeft(imageLeft);
+        printf("getting the left image \n");
+        getMonoImage(imageLeft,minCount,maxCount,1);
+        printf("copying the right \n");
+        pThread->copyLeft(imageLeft);
     }
     
     if(stereo) {
-        getMonoImage(imageRight,minCountRight,maxCountRight,0);
         if(imageRight != 0) {
+            printf("getting the right image \n");
+            getMonoImage(imageRight,minCountRight,maxCountRight,0);
+            printf("copying the right image \n");
             pThread->copyRight(imageRight);
         }
     }
+
+
+
     
   }
 }
