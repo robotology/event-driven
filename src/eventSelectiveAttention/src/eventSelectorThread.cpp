@@ -52,6 +52,7 @@ using namespace std;
 eventSelectorThread::eventSelectorThread() : RateThread(THRATE) {
     responseGradient = 127;
     retinalSize      = 128;  //default value before setting 
+    lasttimestamp    = 0;
     bottleHandler = true;
     synchronised = false;
     greaterHalf  = false;
@@ -363,8 +364,8 @@ void eventSelectorThread::forgettingMemory() {
 
 
 void eventSelectorThread::spatialSelection(eEventQueue *q) {
-    printf("eventSelectorThread::spatialSelectio \n");
     int dequeSize = q->size();
+    printf("eventSelectorThread::spatialSelection: %d events inQueue \n", dequeSize);
     unsigned long ts;
     for (int evt = 0; evt < dequeSize; evt++) {
         if((*q)[evt] != 0) {                    
@@ -386,12 +387,12 @@ void eventSelectorThread::spatialSelection(eEventQueue *q) {
                     
                     if(camera) {
                         // memoriseLeft(cartX, cartY, polarity, ts); //sending event and last timestamp
-                        printf("saliencyMapLeft in %d %d changed \n");
+                        //printf("saliencyMapLeft in %d %d changed \n", cartX, cartY);
                         saliencyMapLeft [cartX * retinalSize + cartY] += polarity * INCR_RESPONSE;
                         timestampMapLeft[cartX * retinalSize + cartY] = ts;
                     }
                     else {
-                        printf("saliencyMapRight in %d %d");
+                        //printf("saliencyMapRight in %d %d changed \n", cartX, cartY);
                         //memoriseRight(cartX, cartY, polarity, ts); //sending event and last timestamp
                         saliencyMapRight [cartX * retinalSize + cartY] += polarity * INCR_RESPONSE; 
                         timestampMapRight[cartX * retinalSize + cartY] = ts;
@@ -400,14 +401,16 @@ void eventSelectorThread::spatialSelection(eEventQueue *q) {
             } //end if ((*q)[evt]->getType()=="AE")
             // -------------------------- TS ----------------------------------
             else if((*q)[evt]->getType()=="TS") {
-                //printf("timestamp \n");
+                
                 TimeStamp* ptr=dynamic_cast<TimeStamp*>((*q)[evt]);
                 
                 //identified an time stamp event
                 ts = (unsigned int) ptr->getStamp();
                 lasttimestamp = ts;
-                forgettingMemory();
-                //printf("timestamp \n")
+                //printf("timestamp %lu \n", ts);
+
+                //forgettingMemory();
+                
                 //if(VERBOSE) {
                 //    fprintf(fdebug, " %08x  \n", (unsigned int) ts);
                 //}                
@@ -466,6 +469,7 @@ void eventSelectorThread::run() {
     //bufferRead = cfConverter->getBuffer();    
     // saves it into a working buffer
     //printf("checking the bottleHandler \n");
+    printf("============================================================= \n");
     if(!bottleHandler) {
         cfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
     }
@@ -476,6 +480,7 @@ void eventSelectorThread::run() {
         //printf("%s \n", receivedBottle->toString().c_str());
     }
     
+    //======================== temporal synchronization pre-unmasking  =================================
     //printf("after extracting the bottle \n");
     // saving the buffer into the file
     int num_events = CHUNKSIZE / 8 ;
@@ -519,7 +524,7 @@ void eventSelectorThread::run() {
       maxCountRight = minCountRight + interval * INTERVFACTOR* (dim_window);
     }
     
-
+    // =============================== Unmasking ====================================
     // extract a chunk/unmask the chunk
     // printf("verb %d \n",verb);
     if(!bottleHandler) {
@@ -529,12 +534,14 @@ void eventSelectorThread::run() {
         if(receivedBottle->size() != 0) {
             //delete rxQueue;   // freeing memory for the new queue of events
             rxQueue = new eEventQueue(); // preparing the new queue
-            //printf("unmasking received bottle and creating the queue of event to send \n");
+            printf("unmasking received bottle and creating the queue of event to send \n");
             unmask_events->unmaskData(receivedBottle, rxQueue); // saving the queue
             //printf("bottle of events to send : \n");
         }
     }
         
+    //==================== temporal synchronization post unmasking =======================
+    
     if(verb) {
       verb = false;
       countStop = 0;
@@ -557,10 +564,6 @@ void eventSelectorThread::run() {
     }
 #endif
 
-    
-
-
-    
     //gettin the time between two threads
     gettimeofday(&tvend, NULL);
     //Tnow = ((u64)tvend.tv_sec) * 1000000 + ((u64)tvstart.tv_usec);
@@ -568,8 +571,7 @@ void eventSelectorThread::run() {
 	    - (tvstart.tv_sec * 1000000 + tvstart.tv_usec));
     //printf("timeofday>%ld\n",Tnow );
     gettimeofday(&tvstart, NULL);       
-    
-        
+            
     /*if(true){
       //printf("Saving in file \n");
       fprintf(raw,"%08X \n",lc); 
@@ -578,49 +580,60 @@ void eventSelectorThread::run() {
     }*/
     
     //synchronising the threads at the connection time
+    unsigned long int lastleft, lastright;
     if ((cfConverter->isValid())&&(!synchronised)) {
-      printf("Sychronising ");
-      unsigned long int lastleft  = unmask_events->getLastTimestamp();
-      lc = lastleft  * COUNTERRATIO; 
-      unsigned long int lastright = unmask_events->getLastTimestampRight();
-      rc = lastright * COUNTERRATIO;
-
-      //TODO : Check for negative values of minCount not allowed!!!!!!
-
-      minCount = lc - interval * INTERVFACTOR* dim_window; 
-      //cfConverter->getEldestTimeStamp();                                                                   
-      minCountRight = rc - interval * INTERVFACTOR* dim_window;
-      //printf("synchronised %1f! %d,%d,%d||%d,%d,%d \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
-      startTimer = Time::now();
-      synchronised = true;
-      //minCount = unmask_events->getLastTimestamp();
-      //printf("minCount %d \n", minCount);
-      //minCountRight = unmask_events->getLastTimestamp();
-      count = synch_time - 200;
+        printf("Sychronising ");
+        if(!bottleHandler) {
+            lastleft  = unmask_events->getLastTimestamp();
+            lastright = unmask_events->getLastTimestampRight();
+        }
+        else {
+            lastleft = lastright = lasttimestamp;
+        }
+        lc = lastleft  * COUNTERRATIO; 
+        rc = lastright * COUNTERRATIO;
+        
+        //TODO : Check for negative values of minCount not allowed!!!!!!
+        
+        minCount = lc - interval * INTERVFACTOR* dim_window; 
+        //cfConverter->getEldestTimeStamp();                                                                   
+        minCountRight = rc - interval * INTERVFACTOR* dim_window;
+        //printf("synchronised %1f! %d,%d,%d||%d,%d,%d \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
+        startTimer = Time::now();
+        synchronised = true;
+        //minCount = unmask_events->getLastTimestamp();
+        //printf("minCount %d \n", minCount);
+        //minCountRight = unmask_events->getLastTimestamp();
+        count = synch_time - 200;
     }
     else if ((count % synch_time == 0) && (minCount < 4294500000)) {
-      unsigned long lastleft = unmask_events->getLastTimestamp();
-      lc = lastleft * COUNTERRATIO; 
-      unsigned long lastright = unmask_events->getLastTimestampRight();
-      rc = lastright * COUNTERRATIO;
-
-      //if (count == synch_time) {
-      //printf("Sychronised Sychronised Sychronised Sychronised ");
-      if( lc > interval* INTERVFACTOR * dim_window)
-          minCount      = lc - interval* INTERVFACTOR * dim_window; //cfConverter->getEldestTimeStamp();        
-      else
-          minCount = 0;
-      
-      if( rc > interval* INTERVFACTOR * dim_window)
-          minCountRight = rc - interval* INTERVFACTOR * dim_window;
-      else
-          minCountRight = 0;
-      //maxCount = lc; 
-      //maxCountRight = rc;
-		 
-      //printf("synchronised %1f! %llu,%llu,%llu||%llu,%llu,%llu \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
-      startTimer = Time::now();
-      synchronised = true; 
+        if(!bottleHandler) {
+            lastleft  = unmask_events->getLastTimestamp();
+            lastright = unmask_events->getLastTimestampRight();
+        }
+        else {
+            lastleft = lastright = lasttimestamp;  
+        }
+        lc = lastleft  * COUNTERRATIO; 
+        rc = lastright * COUNTERRATIO;
+        
+        //if (count == synch_time) {
+        //printf("Sychronised Sychronised Sychronised Sychronised ");
+        if( lc > interval* INTERVFACTOR * dim_window)
+            minCount      = lc - interval* INTERVFACTOR * dim_window; //cfConverter->getEldestTimeStamp();        
+        else
+            minCount = 0;
+        
+        if( rc > interval* INTERVFACTOR * dim_window)
+            minCountRight = rc - interval* INTERVFACTOR * dim_window;
+        else
+            minCountRight = 0;
+        //maxCount = lc; 
+        //maxCountRight = rc;
+        
+        //printf("synchronised %1f! %llu,%llu,%llu||%llu,%llu,%llu \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
+        startTimer = Time::now();
+        synchronised = true; 
     }
     else {
       // this value is simply the ration between the timestamp reported by the aexGrabber (6.25Mhz) 
@@ -637,9 +650,16 @@ void eventSelectorThread::run() {
     
     //---- preventer for fixed  addresses ----//
     if(count % 100 == 0) { 
-        unsigned long lastleft = unmask_events->getLastTimestamp();
+        if(!bottleHandler) {
+            lastleft = unmask_events->getLastTimestamp();
+            lastright = unmask_events->getLastTimestampRight();
+        }
+        else {
+            lastleft = lastright = lasttimestamp;
+        }
+        
         lc = lastleft * COUNTERRATIO; 
-        unsigned long lastright = unmask_events->getLastTimestampRight();
+        //unsigned long lastright = unmask_events->getLastTimestampRight();
         rc = lastright * COUNTERRATIO;
         //printf("countStop %d lcprev %d lc %d \n",countStop, lcprev,lc);
         if (stereo) {
@@ -673,6 +693,7 @@ void eventSelectorThread::run() {
         lcprev = lc;
         rcprev = rc;
     }
+    
          
     //resetting time stamps at overflow
     if (countStop == 10) {
@@ -700,16 +721,14 @@ void eventSelectorThread::run() {
 
     // =======================  spatial processing===========================
     double w1 = 0, w2 = 0, w3 = 0, w4 = 0;
-    //spatialSelection(unmaskedEvents,CHUNKSIZE>>3,w1);
-    
-
-    // ----------- preventer end    --------------------- //
+    //spatialSelection(unmaskedEvents,CHUNKSIZE>>3,w1);    
     // spatial processing
-    //if(!bottleHandler) {
-        //spatialSelection(unmaskedEvents,CHUNKSIZE>>3,w1, minCount, maxCount);
-    //}
-    //else {        
-    //}
+    if(!bottleHandler) {
+        spatialSelection(unmaskedEvents,CHUNKSIZE>>3,w1, minCount, maxCount);
+    }
+    else {        
+        spatialSelection(rxQueue);
+    }
     
     
     // the getMonoImage gets as default input image the saliency map

@@ -26,9 +26,6 @@
 #ifndef _EVENT_BOTTLE_HANDLER_H
 #define _EVENT_BOTTLE_HANDLER_H
 
-
-
-
 #include <iCub/emorph/eventBottle.h>
 
 #include <yarp/os/Network.h>
@@ -83,19 +80,19 @@ public:
     * function that return the last time stamp saved in the buffer for right camera
     * @return the unsigned int representing the last event timestamp
     */
-     unsigned long getLastTimeStampRight();
+    unsigned long getLastTimeStampRight();
 
     /**
     * function that return the last time stamp saved in the buffer
     * @return the unsigned int representing the last event timestamp
     */
-     unsigned long getEldestTimeStamp();
+    unsigned long getEldestTimeStamp();
 
     /**
     * @brief clears monoImage collection of events
     * @param pixelMono reference to the image contains the counts of events
     */
-     void clearMonoImage();
+    void clearMonoImage();
 
     /**
        function that restarts from zero the list of memorised timestamp
