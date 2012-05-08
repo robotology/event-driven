@@ -93,7 +93,7 @@ bool eventSelectorModule::configure(yarp::os::ResourceFinder &rf) {
     */
     printf("looking for the retinalSize \n");
     retinalSize            = rf.check("retinalSize", 
-                           Value(32), 
+                           Value(128), 
                            "retinalSize (int)").asInt();
     cfThread->setRetinalSize(retinalSize);
 

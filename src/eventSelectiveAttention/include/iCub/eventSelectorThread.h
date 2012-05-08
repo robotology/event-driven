@@ -171,7 +171,7 @@ public:
     */
     void resize(int width, int height);
 
-    /**
+    /**9
     * @brief returns a mono image of the output of the dvs camera (either left or right)
     * @param pixelMono reference to the image contains the counts of events
     * @param minCount reference to the min timestamp in the frame

@@ -46,8 +46,8 @@ using namespace std;
 #define synch_time 1
 
 //#define VERBOSE
-#define INCR_RESPONSE 1
-#define DECR_RESPONSE 1
+#define INCR_RESPONSE 10
+#define DECR_RESPONSE 10
 
 eventSelectorThread::eventSelectorThread() : RateThread(THRATE) {
     responseGradient = 127;
@@ -131,10 +131,15 @@ bool eventSelectorThread::threadInit() {
     microsecondsPrev = 0;
     minCount = 0;
     minCountRight= 0;
+    
     saliencyMapLeft  = (double*) malloc(retinalSize * retinalSize * sizeof(double));
+    memset(saliencyMapLeft,0, retinalSize * retinalSize * sizeof(double));
     saliencyMapRight = (double*) malloc(retinalSize * retinalSize * sizeof(double));
+    memset(saliencyMapRight,0, retinalSize * retinalSize * sizeof(double));
+    
     featureMap = (int*) malloc(retinalSize * retinalSize * sizeof(int));
     memset(featureMap,0, retinalSize * retinalSize * sizeof(int));
+    
     timestampMap = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
     memset(timestampMap,0, retinalSize * retinalSize * sizeof(unsigned long));
     timestampMapLeft = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
@@ -204,14 +209,17 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, uns
     
     printf("timestamp: min %d    max %d  \n", minCount, maxCount);
     //pBuffer += retinalSize * retinalSize - 1;
-    double maxLeft, maxRight;
-    double minLeft, minRight;
+    double maxLeft = -100, maxRight = -100;
+    double minLeft = 100, minRight = 100;
     for(int r = 0 ; r < retinalSize ; r++){
         for(int c = 0 ; c < retinalSize ; c++) {
             //drawing the retina and the rest of the image separately
             int value = *pBuffer;
-            double left_double  = abs(saliencyMapLeft [r * retinalSize + c]);
-            double right_double = abs(saliencyMapRight[r * retinalSize + c]);
+            if((r==10) && (c==10)) {
+                printf(" saliencyMapLeft%f \n", saliencyMapLeft[r * retinalSize + c]);
+            }
+            double left_double  = saliencyMapLeft [r * retinalSize + c];
+            double right_double = saliencyMapRight[r * retinalSize + c];
             if(left_double < minLeft)   minLeft = left_double;
             if(left_double > maxLeft)   maxLeft = left_double;
             if(right_double > maxRight) maxRight = right_double;
@@ -358,12 +366,25 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, uns
 }
 
 void eventSelectorThread::forgettingMemory() {
+    double* pLeft = saliencyMapLeft;
+    double* pRight = saliencyMapRight;
     for(int r = 0 ; r < retinalSize ; r++){
-        for(int c = 0 ; c < retinalSize ; c++) {
-            double* pLeft = saliencyMapLeft;
-            pLeft  -= DECR_RESPONSE;
-            double* pRight = saliencyMapRight;
-            pRight -= DECR_RESPONSE;
+        for(int c = 0 ; c < retinalSize ; c++) {            
+            if(*pLeft > 0) {
+                *pLeft -= DECR_RESPONSE;               
+            }
+            else {
+                *pLeft += DECR_RESPONSE;
+            }
+            pLeft++;
+            if(*pRight > 0) {
+                
+                *pRight -= DECR_RESPONSE;
+            }
+            else {
+                *pLeft += DECR_RESPONSE;
+            }
+            pRight++;
         }
     }
 }
@@ -373,6 +394,8 @@ void eventSelectorThread::spatialSelection(eEventQueue *q) {
     int dequeSize = q->size();
     printf("eventSelectorThread::spatialSelection: %d events inQueue \n", dequeSize);
     unsigned long ts;
+    int countLeftPos = 0, countLeftNeg = 0;
+    int countRightPos = 0 , countRightNeg =0;
     for (int evt = 0; evt < dequeSize; evt++) {
         if((*q)[evt] != 0) {                    
             //********** extracting the event information **********************
@@ -394,24 +417,30 @@ void eventSelectorThread::spatialSelection(eEventQueue *q) {
                     if(camera) {
                         // memoriseLeft(cartX, cartY, polarity, ts); //sending event and last timestamp
                         //printf("saliencyMapLeft in %d %d changed (pol:%d)  \n", cartX, cartY, polarity);
-                        if(polarity) {
-                            saliencyMapLeft [cartX * retinalSize + cartY] += INCR_RESPONSE;
+                        if(polarity == 0) {
+                            saliencyMapLeft [cartX * retinalSize + cartY] += 1.0;// INCR_RESPONSE;
+                            countLeftPos++;
                         }
                         else {
-                            saliencyMapLeft [cartX * retinalSize + cartY] -= INCR_RESPONSE;
+                            saliencyMapLeft [cartX * retinalSize + cartY] -= 1.0;// INCR_RESPONSE;
+                            countLeftNeg++;
                         }
                         timestampMapLeft[cartX * retinalSize + cartY] = ts;
                     }
                     else {
                         //printf("saliencyMapRight in %d %d changed (pol:%d) \n", cartX, cartY, polarity);
                         //memoriseRight(cartX, cartY, polarity, ts); //sending event and last timestamp
-                        if(polarity) {
-                            saliencyMapRight [cartX * retinalSize + cartY] += INCR_RESPONSE; 
+                        
+                        if(polarity == 0) {
+                            saliencyMapRight [cartX * retinalSize + cartY] += 1; 
+                            countRightPos++;
                         }
                         else {
-                            saliencyMapRight [cartX * retinalSize + cartY] -= INCR_RESPONSE; 
+                            saliencyMapRight [cartX * retinalSize + cartY] -= 1; 
+                            countRightNeg++;
                         }
                         timestampMapRight[cartX * retinalSize + cartY] = ts;
+                        
                     }                                     
                 } //end if (ptr->isValid()) 
             } //end if ((*q)[evt]->getType()=="AE")
@@ -425,7 +454,7 @@ void eventSelectorThread::spatialSelection(eEventQueue *q) {
                 lasttimestamp = ts;
                 //printf("timestamp %lu \n", ts);
 
-                //forgettingMemory();
+                forgettingMemory();
                 
                 //if(VERBOSE) {
                 //    fprintf(fdebug, " %08x  \n", (unsigned int) ts);
@@ -439,6 +468,9 @@ void eventSelectorThread::spatialSelection(eEventQueue *q) {
             } 
         } //end if((*q)[evt] != 0)
     } //end for
+
+    printf("number for left %d %d \n", countLeftPos, countLeftNeg);
+    printf("number for right %d %d \n", countRightPos, countRightNeg);
 }
 
 void eventSelectorThread::spatialSelection(AER_struct* buffer,int numberOfEvents, double w, unsigned long minCount, unsigned long maxCount) {
@@ -478,6 +510,7 @@ void eventSelectorThread::spatialSelection(AER_struct* buffer,int numberOfEvents
 
 void eventSelectorThread::run() {
   count++;
+  bottleHandler = true;
   if(!idle) {
     interTimer = Time::now();
     double interval2 = (interTimer - startTimer) * 1000000;
@@ -492,12 +525,12 @@ void eventSelectorThread::run() {
     else {
         printf("eventSelectorThread::run : extracting Bottle! \n");
         ebHandler->extractBottle(receivedBottle);  
-        printf("received bottle: \n");
+        printf("received bottle \n");
         //printf("%s \n", receivedBottle->toString().c_str());
     }
     
     //======================== temporal synchronization pre-unmasking  =================================
-    //printf("after extracting the bottle \n");
+    printf("after extracting the bottle \n");
     // saving the buffer into the file
     int num_events = CHUNKSIZE / 8 ;
     uint32_t* buf2 = (uint32_t*)bufferCopy;
@@ -539,22 +572,27 @@ void eventSelectorThread::run() {
       minCountRight = 0;
       maxCountRight = minCountRight + interval * INTERVFACTOR* (dim_window);
     }
+    printf("end of pre-unmasking synchronization \n ");
     
     // =============================== Unmasking ====================================
     // extract a chunk/unmask the chunk
     // printf("verb %d \n",verb);
     if(!bottleHandler) {
+        printf("unmasking without bottleHandler \n");
         unmask_events->unmaskData(bufferCopy,CHUNKSIZE, unmaskedEvents);
     }
     else {
-        if(receivedBottle->size() != 0) {
+        printf("unmasking with bottleHandler \n");
+        if(receivedBottle->size() != 0) {            
             //delete rxQueue;   // freeing memory for the new queue of events
+            printf("TODO : check for leaking \n");
             rxQueue = new eEventQueue(); // preparing the new queue
             printf("unmasking received bottle and creating the queue of event to send \n");
             unmask_events->unmaskData(receivedBottle, rxQueue); // saving the queue
             //printf("bottle of events to send : \n");
         }
     }
+    printf("end of the unmasking \n");
         
     //==================== temporal synchronization post unmasking =======================
     
@@ -738,12 +776,17 @@ void eventSelectorThread::run() {
     // =======================  spatial processing===========================
     double w1 = 0, w2 = 0, w3 = 0, w4 = 0;
     //spatialSelection(unmaskedEvents,CHUNKSIZE>>3,w1);    
+    
     // spatial processing
     if(!bottleHandler) {
+        printf("spatial selection no bottle Handler \n");
         spatialSelection(unmaskedEvents,CHUNKSIZE>>3,w1, minCount, maxCount);
     }
     else {        
-        spatialSelection(rxQueue);
+        if((rxQueue!=0)&&(receivedBottle->size() != 0)) {
+            printf("spatial selection  bottle Handler\n");
+            spatialSelection(rxQueue);
+        }
     }
     
     
