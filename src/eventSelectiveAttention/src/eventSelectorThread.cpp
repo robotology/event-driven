@@ -313,7 +313,7 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, uns
     //unmask_events->setLastTimestamp(0);
 
     // cycle after normalisation
-    printf("cycle after the normalisation \n");
+    printf("cycle after the normalisation LEFT:(%f, %f)  RIGHT:(%f,%f) \n", minLeft, maxLeft, minRight, maxRight);
     double* pSalLeft      = saliencyMapLeft;
     double* pSalRight     = saliencyMapRight;
     unsigned long* pTimeLeft     = timestampMapLeft;
@@ -329,7 +329,8 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, uns
             //printf("%d %d \n", r,c);
             timestampactual = *pTimeLeft; 
             if (((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)) { 
-                *pLeft  = (unsigned char) ((abs(*pSalLeft)  + minLeft )  / rangeLeft ) * 255;
+                *pLeft  = (unsigned char) ((abs(*pSalLeft)  - minLeft )  / rangeLeft ) * 255;
+                //*pLeft = 255;
             }
             else {
                 *pLeft = 0;
@@ -341,7 +342,8 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, uns
             // ------------------------------------------------------------------
             timestampactual = *pTimeRight;
             if (((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)) { 
-                *pRight = (unsigned char) ((abs(*pSalRight) + minRight )/ rangeRight) * 255;
+                //*pRight = (unsigned char) ((abs(*pSalRight) + minRight )/ rangeRight) * 255;
+                *pRight = 255;
             }
             else {
                 *pRight = 0;
@@ -356,10 +358,14 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, uns
 }
 
 void eventSelectorThread::forgettingMemory() {
-    double* pLeft = saliencyMapLeft;
-    pLeft  -= DECR_RESPONSE;
-    double* pRight = saliencyMapRight;
-    pRight -= DECR_RESPONSE;
+    for(int r = 0 ; r < retinalSize ; r++){
+        for(int c = 0 ; c < retinalSize ; c++) {
+            double* pLeft = saliencyMapLeft;
+            pLeft  -= DECR_RESPONSE;
+            double* pRight = saliencyMapRight;
+            pRight -= DECR_RESPONSE;
+        }
+    }
 }
 
 
@@ -387,14 +393,24 @@ void eventSelectorThread::spatialSelection(eEventQueue *q) {
                     
                     if(camera) {
                         // memoriseLeft(cartX, cartY, polarity, ts); //sending event and last timestamp
-                        //printf("saliencyMapLeft in %d %d changed \n", cartX, cartY);
-                        saliencyMapLeft [cartX * retinalSize + cartY] += polarity * INCR_RESPONSE;
+                        //printf("saliencyMapLeft in %d %d changed (pol:%d)  \n", cartX, cartY, polarity);
+                        if(polarity) {
+                            saliencyMapLeft [cartX * retinalSize + cartY] += INCR_RESPONSE;
+                        }
+                        else {
+                            saliencyMapLeft [cartX * retinalSize + cartY] -= INCR_RESPONSE;
+                        }
                         timestampMapLeft[cartX * retinalSize + cartY] = ts;
                     }
                     else {
-                        //printf("saliencyMapRight in %d %d changed \n", cartX, cartY);
+                        //printf("saliencyMapRight in %d %d changed (pol:%d) \n", cartX, cartY, polarity);
                         //memoriseRight(cartX, cartY, polarity, ts); //sending event and last timestamp
-                        saliencyMapRight [cartX * retinalSize + cartY] += polarity * INCR_RESPONSE; 
+                        if(polarity) {
+                            saliencyMapRight [cartX * retinalSize + cartY] += INCR_RESPONSE; 
+                        }
+                        else {
+                            saliencyMapRight [cartX * retinalSize + cartY] -= INCR_RESPONSE; 
+                        }
                         timestampMapRight[cartX * retinalSize + cartY] = ts;
                     }                                     
                 } //end if (ptr->isValid()) 
