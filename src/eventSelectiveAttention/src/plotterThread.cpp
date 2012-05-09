@@ -62,9 +62,9 @@ bool plotterThread::threadInit() {
     eventPort.open(getName("/event:o").c_str());
 
     // initialising images
-    imageLeft      = new ImageOf<PixelMono>;
+    imageLeft      = new ImageOf<PixelRgb>;
     imageLeft->resize(retinalSize,retinalSize);
-    imageRight     = new ImageOf<PixelMono>;
+    imageRight     = new ImageOf<PixelRgb>;
     imageRight->resize(retinalSize,retinalSize);
     imageLeftInt   = new ImageOf<PixelMono>;
     imageLeftInt->resize(retinalSize,retinalSize);
@@ -116,7 +116,7 @@ std::string plotterThread::getName(const char* p) {
 void plotterThread::resize(int widthp, int heightp) {
 }
 
-void plotterThread::copyLeft(ImageOf<PixelMono>* image) {
+void plotterThread::copyLeft(ImageOf<PixelRgb>* image) {
     //printf("retinalSize in plotterThread %d \n",retinalSize);
     int padding= image->getPadding();
     unsigned char* pimage = image->getRawImage();
@@ -132,7 +132,7 @@ void plotterThread::copyLeft(ImageOf<PixelMono>* image) {
     }
 }
 
-void plotterThread::copyRight(ImageOf<PixelMono>* image) {
+void plotterThread::copyRight(ImageOf<PixelRgb>* image) {
     int padding= image->getPadding();
     unsigned char* pimage = image->getRawImage();
     unsigned char* pright = imageRight->getRawImage();

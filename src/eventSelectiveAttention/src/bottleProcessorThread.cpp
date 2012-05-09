@@ -479,10 +479,11 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                 
                 //identified an time stamp event
                 ts = (unsigned int) ptr->getStamp();
+                //printf("timestamp %lu %08X \n", ts, lasttimestamp);
                 mutexLastTimestamp.wait();
-                lasttimestamp = &ts;
+                *lasttimestamp = ts;
                 mutexLastTimestamp.post();
-                //printf("timestamp %lu \n", ts);
+               
                 //forgettingMemory();
                 //if(VERBOSE) {
                 //    fprintf(fdebug, " %08x  \n", (unsigned int) ts);

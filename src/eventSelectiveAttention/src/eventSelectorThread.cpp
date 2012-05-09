@@ -148,6 +148,9 @@ bool eventSelectorThread::threadInit() {
     unmaskedEvents = (AER_struct*) malloc (CHUNKSIZE * sizeof(int));
     memset(unmaskedEvents, 0, CHUNKSIZE * sizeof(int));
 
+    lasttimestamp  = new unsigned long; 
+    *lasttimestamp = 0;
+
     bptA = new bottleProcessorThread();
     bptA->setLastTimestamp(lasttimestamp);
     bptA->setSaliencyMap(saliencyMapLeft, saliencyMapRight, timestampMapLeft, timestampMapRight);
@@ -159,9 +162,9 @@ bool eventSelectorThread::threadInit() {
     bptA->start();
     bptB->start();
 
+
     receivedBottle = new Bottle();
-    
-    unmask_events = new unmask(32);
+    unmask_events  = new unmask(32);
 
     printf("Initialisation in selector thread correctly ended \n");
     return true;
@@ -184,21 +187,21 @@ std::string eventSelectorThread::getName(const char* p) {
 }
 
 void eventSelectorThread::resize(int widthp, int heightp) {
-    imageLeft = new ImageOf<PixelMono>;
+    imageLeft = new ImageOf<PixelRgb>;
     imageLeft->resize(retinalSize,retinalSize);
-    imageRight = new ImageOf<PixelMono>;
+    imageRight = new ImageOf<PixelRgb>;
     imageRight->resize(retinalSize,retinalSize);
     //imageRight->resize(widthp,heightp);
 }
 
 
-void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsigned long minCount,unsigned long maxCount, bool camera){
+void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsigned long minCount,unsigned long maxCount, bool camera){
     assert(image!=0);
     //printf("retinalSize in getMonoImage %d \n", retinalSize);
     image->resize(retinalSize,retinalSize);
     unsigned char* pImage = image->getRawImage();
-    int imagePadding = image->getPadding();
-    int imageRowSize = image->getRowSize();
+    int imagePadding      = image->getPadding();
+    int imageRowSize      = image->getRowSize();
     
     /*
     unsigned long int lasttimestamp = getLastTimeStamp();

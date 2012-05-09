@@ -42,26 +42,27 @@ private:
     //int width, height;                  // dimension of the extended input image (extending)
     //int height_orig, width_orig;        // original dimension of the input and output images
     int retinalSize;                     // dimension of the squared retina
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > leftPort;                 // port whre the output (left) is sent
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > rightPort;                // port whre the output (right) is sent
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > leftIntPort;              // port whre the output (left integral) is sent
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > rightIntPort;             // port whre the output (right integral) is sent
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > leftGrayPort;              // port whre the output (left integral) is sent
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > rightGrayPort;             // port whre the output (right integral) is sent
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > leftThresholdPort;              // port whre the output (left integral) is sent
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > rightThresholdPort;             // port whre the output (r
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> > leftPort;                 // port whre the output (left) is sent
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> > rightPort;                // port whre the output (right) is sent
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > leftIntPort;             // port whre the output (left integral) is sent
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > rightIntPort;            // port whre the output (right integral) is sent
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > leftGrayPort;            // port whre the output (left integral) is sent
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > rightGrayPort;           // port whre the output (right integral) is sent
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > leftThresholdPort;       // port whre the output (left integral) is sent
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > rightThresholdPort;      // port whre the output (right integral) is sent
 
     yarp::os::BufferedPort<yarp::sig::Vector > eventPort;
-    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeft;                                        //image representing the signal on the leftcamera
-    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRight;                                       //image representing the signal on the right camera
-    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeftBW;                                       //image representing the signal on the right camera
-    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRightBW;                                       //image representing the signal on the right camera   
-    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeftInt;                                     //image representing the signal on the leftcamera (integrated)
-    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRightInt;                                    //image representing the signal on the right camera (integrated)
-    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeftGrey;                                     //image representing the signal on the leftcamera (integrated)
-    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRightGrey;                                    //image representing the signal on the right camera (integrated)
-    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeftThreshold;                                     //image representing the signal on the leftcamera (threshold)
-    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRightThreshold;                                    //image representing the signal on the right camera (threshold)
+    
+    yarp::sig::ImageOf<yarp::sig::PixelRgb>* imageLeft;                                        // image representing the signal on the leftcamera
+    yarp::sig::ImageOf<yarp::sig::PixelRgb>* imageRight;                                       // image representing the signal on the right camera
+    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeftBW;                                     // image representing the signal on the right camera
+    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRightBW;                                    // image representing the signal on the right camera   
+    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeftInt;                                    // image representing the signal on the leftcamera (integrated)
+    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRightInt;                                   // image representing the signal on the right camera (integrated)
+    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeftGrey;                                   // image representing the signal on the leftcamera (integrated)
+    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRightGrey;                                  // image representing the signal on the right camera (integrated)
+    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeftThreshold;                              // image representing the signal on the leftcamera (threshold)
+    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRightThreshold;                             // image representing the signal on the right camera (threshold)
     std::string name;                           // rootname of all the ports opened by this thread
     bool synchronised;                          // flag to check whether the microsecond counter has been synchronised
     bool stereo;                                // flag indicating the stereo characteristic of the synchronization
@@ -126,13 +127,13 @@ public:
      * function that copies the image in the left output
      * @param img passed input of the image to be copied
      */
-    void copyLeft(yarp::sig::ImageOf<yarp::sig::PixelMono>* img);
+    void copyLeft(yarp::sig::ImageOf<yarp::sig::PixelRgb>* img);
 
     /**
      * function that copies the image in the right output
      * @param img passed input of the image to be copied
      */
-    void copyRight(yarp::sig::ImageOf<yarp::sig::PixelMono>* img);
+    void copyRight(yarp::sig::ImageOf<yarp::sig::PixelRgb>* img);
 
     /**
     * function that integrates the current dvs image with previous images

@@ -74,8 +74,8 @@ private:
     int responseGradient;               // responseGradient parameter
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPort;            // port whre the output (left) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPortRight;       // port whre the output (right) is sent
-    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeft;                                  //image representing the signal on the leftcamera
-    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRight;                                 //image representing the signal on the right camera
+    yarp::sig::ImageOf<yarp::sig::PixelRgb>* imageLeft;                                  //image representing the signal on the leftcamera
+    yarp::sig::ImageOf<yarp::sig::PixelRgb>* imageRight;                                 //image representing the signal on the right camera
     std::string name;                   // rootname of all the ports opened by this thread
     bool verb;
     bool synchronised;                  // flag to check whether the microsecond counter has been synchronised
@@ -178,14 +178,14 @@ public:
     */
     void resize(int width, int height);
 
-    /**9
+    /**
     * @brief returns a mono image of the output of the dvs camera (either left or right)
     * @param pixelMono reference to the image contains the counts of events
     * @param minCount reference to the min timestamp in the frame
     * @param maxCount reference to the max timestamp in the frame
     * @param camera reference to the camera the image belongs LEFT 1, RIGHT 1
     */
-    void getMonoImage(yarp::sig::ImageOf<yarp::sig::PixelMono>* image, unsigned long minCount,unsigned long maxCount, bool camera);
+    void getMonoImage(yarp::sig::ImageOf<yarp::sig::PixelRgb>* image, unsigned long minCount,unsigned long maxCount, bool camera);
 
     /**
      * @brief function that describes whether the synchronization is stereo
