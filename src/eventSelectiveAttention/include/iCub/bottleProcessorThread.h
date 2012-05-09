@@ -90,7 +90,7 @@ private:
     unsigned long maxCount;             // maximum timestamp allowed for the current frame
     unsigned long minCountRight;
     unsigned long maxCountRight;
-    unsigned long lasttimestamp;
+    unsigned long* lasttimestamp;       // last unmasked timestamp
 
     emorph::ecodec::eEventQueue* txQueue;  // queue of event to be sent
     emorph::ecodec::eEventQueue* rxQueue;  // queue of event to be sent
@@ -101,6 +101,7 @@ private:
     double interTimer;
     double endTimer;
     yarp::os::Semaphore mutex;           // semaphore thar regulates the access to the buffer resource
+    yarp::os::Semaphore mutexLastTimestamp; // mutex for the last timestamp
     clock_t endTime,startTime;
     long T1,T2;
     plotterThread* pThread;              // plotterThread for the trasformation of the event in images
@@ -238,8 +239,23 @@ public:
      * @brief function that indicates whether the viewer reppresent logpolar information
      */
     void setResponseGradient(int value) {responseGradient = value; }; 
-    
-    void setSaliencyMap(double* saliencyMapLeft, double* saliencyMapRight, unsigned long* timestampMapLeft,unsigned long* timestampMapRight) {};
+
+    /**
+     * function that initialises the attributes of the class in shared resources
+     */
+    void setSaliencyMap(double* sMapLeft, double* sMapRight, unsigned long* tMapLeft,unsigned long* tMapRight) {
+        saliencyMapLeft   = sMapLeft;
+        saliencyMapRight  = sMapRight;
+        timestampMapLeft  = tMapLeft;
+        timestampMapRight = tMapRight;
+    };
+
+    /**
+     * function that initialises the attributes of the class in shared resources
+     */
+    void setLastTimestamp(unsigned long* last) {
+        lasttimestamp = last;
+    };
     
     /**
      * @brief function that given a train of events represent them in the spatial domaain

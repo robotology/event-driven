@@ -109,15 +109,7 @@ bool eventSelectorThread::threadInit() {
     //map1Handler->setRetinalSize(32);
     //map1Handler->open(getName("/map1Bottle:i").c_str());
 
-    bptA = new bottleProcessorThread();
-    //bptA->setSaliencyMap(saliencyMapLeft, saliencyMapRight, timestampMapLeft, timestampMapRight);
-    bptB = new bottleProcessorThread();
-    //bptB->setSaliencyMap(saliencyMapLeft, saliencyMapRight, timestampMapLeft, timestampMapRight);
-     
 
-    receivedBottle = new Bottle();
-    
-    unmask_events = new unmask(32);
     //unmask_events->setRetinalSize(32);
     
     //unmask_events->setResponseGradient(responseGradient);
@@ -155,6 +147,21 @@ bool eventSelectorThread::threadInit() {
 
     unmaskedEvents = (AER_struct*) malloc (CHUNKSIZE * sizeof(int));
     memset(unmaskedEvents, 0, CHUNKSIZE * sizeof(int));
+
+    bptA = new bottleProcessorThread();
+    bptA->setLastTimestamp(lasttimestamp);
+    bptA->setSaliencyMap(saliencyMapLeft, saliencyMapRight, timestampMapLeft, timestampMapRight);
+    bptA->setName(getName("/btpA"));
+    bptB = new bottleProcessorThread();
+    bptB->setLastTimestamp(lasttimestamp);
+    bptB->setName(getName("/btpB"));
+    bptB->setSaliencyMap(saliencyMapLeft, saliencyMapRight, timestampMapLeft, timestampMapRight);
+    bptA->start();
+    bptB->start();
+
+    receivedBottle = new Bottle();
+    
+    unmask_events = new unmask(32);
 
     printf("Initialisation in selector thread correctly ended \n");
     return true;
@@ -482,7 +489,7 @@ void eventSelectorThread::spatialSelection(eEventQueue *q) {
                 
                 //identified an time stamp event
                 ts = (unsigned int) ptr->getStamp();
-                lasttimestamp = ts;
+                *lasttimestamp = ts;
                 //printf("timestamp %lu \n", ts);
 
                 forgettingMemory();
@@ -548,6 +555,9 @@ void eventSelectorThread::run() {
     // reads the buffer received
     //bufferRead = cfConverter->getBuffer();    
     // saves it into a working buffer
+
+
+    /*
     //printf("checking the bottleHandler \n");
     //printf("============================================================= \n");
     if(!bottleHandler) {
@@ -555,10 +565,11 @@ void eventSelectorThread::run() {
     }
     else {
         //printf("eventSelectorThread::run : extracting Bottle! \n");
-        // ebHandler->extractBottle(receivedBottle);  
+        ebHandler->extractBottle(receivedBottle);  
         //printf("received bottle \n");
         //printf("%s \n", receivedBottle->toString().c_str());
     }
+    */
     
     //======================== temporal synchronization pre-unmasking  =================================
     //printf("after extracting the bottle \n");
@@ -605,6 +616,7 @@ void eventSelectorThread::run() {
     }
     //printf("end of pre-unmasking synchronization \n ");
     
+    /*
     // =============================== Unmasking ====================================
     // extract a chunk/unmask the chunk
     // printf("verb %d \n",verb);
@@ -624,6 +636,7 @@ void eventSelectorThread::run() {
         }
     }
     //printf("end of the unmasking \n");
+    */
         
     //==================== temporal synchronization post unmasking =======================
     
@@ -673,7 +686,7 @@ void eventSelectorThread::run() {
             lastright = unmask_events->getLastTimestampRight();
         }
         else {
-            lastleft = lastright = lasttimestamp;
+            lastleft = lastright = *lasttimestamp;
         }
         lc = lastleft  * COUNTERRATIO; 
         rc = lastright * COUNTERRATIO;
@@ -697,7 +710,7 @@ void eventSelectorThread::run() {
             lastright = unmask_events->getLastTimestampRight();
         }
         else {
-            lastleft = lastright = lasttimestamp;  
+            lastleft = lastright = *lasttimestamp;  
         }
         lc = lastleft  * COUNTERRATIO; 
         rc = lastright * COUNTERRATIO;
@@ -740,7 +753,7 @@ void eventSelectorThread::run() {
             lastright = unmask_events->getLastTimestampRight();
         }
         else {
-            lastleft = lastright = lasttimestamp;
+            lastleft = lastright = *lasttimestamp;
         }
         
         lc = lastleft * COUNTERRATIO; 
@@ -804,10 +817,10 @@ void eventSelectorThread::run() {
       
     }    
 
+    /*
     // =======================  spatial processing===========================
     double w1 = 0, w2 = 0, w3 = 0, w4 = 0;
-    //spatialSelection(unmaskedEvents,CHUNKSIZE>>3,w1);    
-    
+    //spatialSelection(unmaskedEvents,CHUNKSIZE>>3,w1);       
     // spatial processing
     if(!bottleHandler) {
         //printf("spatial selection no bottle Handler \n");
@@ -819,11 +832,9 @@ void eventSelectorThread::run() {
             spatialSelection(rxQueue);
         }
     }
+    */
     
-    
-    // the getMonoImage gets as default input image the saliency map
-    
-
+    // the getMonoImage gets as default input image the saliency map    
     if(imageLeft != 0) {
         //printf("getting the left image \n");
         getMonoImage(imageLeft,minCount,maxCount,1);

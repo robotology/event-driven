@@ -422,6 +422,7 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
     int countLeftPos = 0, countLeftNeg = 0;
     int countRightPos = 0 , countRightNeg =0;
     for (int evt = 0; evt < dequeSize; evt++) {
+        //printf("analyzing event %d \n", evt);
         if((*q)[evt] != 0) {                    
             //********** extracting the event information **********************
             // to identify the type of the packet
@@ -440,7 +441,7 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                     int polarity  = ptr->getPolarity();
                     
                     if(camera == 0) {
-                        // memoriseLeft(cartX, cartY, polarity, ts); //sending event and last timestamp
+                        
                         //printf("saliencyMapLeft in %d %d changed (pol:%d)  \n", cartX, cartY, polarity);
                         if(polarity == 0) {
                             saliencyMapLeft [cartX * retinalSize + cartY] +=  INCR_RESPONSE;
@@ -451,10 +452,11 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                             countLeftNeg++;
                         }
                         timestampMapLeft[cartX * retinalSize + cartY] = ts;
+                        
                     }
                     else {
                         //printf("saliencyMapRight in %d %d changed (pol:%d) \n", cartX, cartY, polarity);
-                        //memoriseRight(cartX, cartY, polarity, ts); //sending event and last timestamp
+                        
                         
                         if(polarity == 0) {
                             saliencyMapRight [cartX * retinalSize + cartY] += INCR_RESPONSE; 
@@ -466,6 +468,7 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                         }
                         timestampMapRight[cartX * retinalSize + cartY] = ts;
                         
+                        
                     }                                     
                 } //end if (ptr->isValid()) 
             } //end if ((*q)[evt]->getType()=="AE")
@@ -476,11 +479,11 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                 
                 //identified an time stamp event
                 ts = (unsigned int) ptr->getStamp();
-                lasttimestamp = ts;
+                mutexLastTimestamp.wait();
+                lasttimestamp = &ts;
+                mutexLastTimestamp.post();
                 //printf("timestamp %lu \n", ts);
-
-                forgettingMemory();
-                
+                //forgettingMemory();
                 //if(VERBOSE) {
                 //    fprintf(fdebug, " %08x  \n", (unsigned int) ts);
                 //}                
@@ -549,11 +552,14 @@ void bottleProcessorThread::run() {
     }
     else {
         //printf("bottleProcessorThread::run : extracting Bottle! \n");
-        ebHandler->extractBottle(receivedBottle);  
-        //printf("received bottle \n");
+        ebHandler->extractBottle(receivedBottle); 
+        //if(receivedBottle->size() != 0) {
+        //    printf("received bottle \n");
+        //}
         //printf("%s \n", receivedBottle->toString().c_str());
     }
     
+    /*
     //======================== temporal synchronization pre-unmasking  =================================
     //printf("after extracting the bottle \n");
     // saving the buffer into the file
@@ -598,6 +604,7 @@ void bottleProcessorThread::run() {
       maxCountRight = minCountRight + interval * INTERVFACTOR* (dim_window);
     }
     //printf("end of pre-unmasking synchronization \n ");
+    */
     
     // =============================== Unmasking ====================================
     // extract a chunk/unmask the chunk
@@ -608,19 +615,20 @@ void bottleProcessorThread::run() {
     }
     else {
         //printf("unmasking with bottleHandler \n");
-        if(receivedBottle->size() != 0) {            
-            delete rxQueue;   // freeing memory for the new queue of events
-            //printf("TODO : check for leaking \n");
+        if(receivedBottle->size() != 0) {     
+            //printf("TODO : deleting rxQueue \n");
+            //delete rxQueue;   // freeing memory for the new queue of events
             rxQueue = new eEventQueue(); // preparing the new queue
-            //printf("unmasking received bottle and creating the queue of event to send \n");
+            //printf("unmasking received bottle and creating the queue of event to send \n");            
             unmask_events->unmaskData(receivedBottle, rxQueue); // saving the queue
-            //printf("bottle of events to send : \n");
+            //printf("bottle of events to send \n");
         }
     }
     //printf("end of the unmasking \n");
         
     //==================== temporal synchronization post unmasking =======================
     
+    /*
     if(verb) {
       verb = false;
       countStop = 0;
@@ -650,13 +658,6 @@ void bottleProcessorThread::run() {
 	    - (tvstart.tv_sec * 1000000 + tvstart.tv_usec));
     //printf("timeofday>%ld\n",Tnow );
     gettimeofday(&tvstart, NULL);       
-            
-    /*if(true){
-      //printf("Saving in file \n");
-      fprintf(raw,"%08X \n",lc); 
-      //fwrite(&sz, sizeof(int), 1, raw);
-      //fwrite(buffer, 1, sz, raw);
-    }*/
     
     //synchronising the threads at the connection time
     unsigned long int lastleft, lastright;
@@ -797,6 +798,7 @@ void bottleProcessorThread::run() {
       count = synch_time - 200;
       
     }    
+    */
 
     // =======================  spatial processing===========================
     double w1 = 0, w2 = 0, w3 = 0, w4 = 0;
@@ -811,13 +813,13 @@ void bottleProcessorThread::run() {
         if((rxQueue!=0)&&(receivedBottle->size() != 0)) {
             //printf("spatial selection  bottle Handler\n");
             spatialSelection(rxQueue);
+            //printf("after spatial selection bottleHandler \n");
         }
     }
     
     
+    /*
     // the getMonoImage gets as default input image the saliency map
-    
-
     if(imageLeft != 0) {
         //printf("getting the left image \n");
         getMonoImage(imageLeft,minCount,maxCount,1);
@@ -833,6 +835,7 @@ void bottleProcessorThread::run() {
             pThread->copyRight(imageRight);
         }
     }
+    */
   }
 }
 

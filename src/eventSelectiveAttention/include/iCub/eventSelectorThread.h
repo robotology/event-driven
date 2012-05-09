@@ -91,7 +91,7 @@ private:
     unsigned long maxCount;             // maximum timestamp allowed for the current frame
     unsigned long minCountRight;
     unsigned long maxCountRight;
-    unsigned long lasttimestamp;
+    unsigned long* lasttimestamp;       // timestamp of the last event represented
 
     emorph::ecodec::eEventQueue* txQueue;  // queue of event to be sent
     emorph::ecodec::eEventQueue* rxQueue;  // queue of event to be sent
