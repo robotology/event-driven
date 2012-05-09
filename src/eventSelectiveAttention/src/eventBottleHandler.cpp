@@ -102,7 +102,7 @@ void eventBottleHandler::extractBottle(Bottle* tempBottle) {
     
     //---------------------------------------
     //printf("sem address in extract %08x \n",semBottleBuffer[extractPosition] );
-    printf("trying the wait method in extract \n");
+    //printf("trying the wait method in extract \n");
     semBottleBuffer[extractPosition]->wait();
     tempBottle->copy(*bufferBottle[extractPosition]);   // copying it in a temporary Bottle*
     //bufferBottle[extractPosition] = 0;               // setting it to zero as already read Bottle*
@@ -117,13 +117,13 @@ void eventBottleHandler::extractBottle(Bottle* tempBottle) {
     extractPosition = (extractPosition + 1) % bottleBufferDimension;
     mutex.post();
     
-    printf("eventBottleHandler::extractBottle:success in extracting the bottle \n");
+    //printf("eventBottleHandler::extractBottle:success in extracting the bottle \n");
 }
 
 // reading out from a circular buffer with 2 entry points and wrapping
 void eventBottleHandler::onRead(eventBottle& i_ub) {    
     valid = true;
-    printf("OnRead %d \n", insertPosition);
+    //printf("OnRead %d \n", insertPosition);
     
     //---------------------------------------------   
     //printf("sem address onRead %08x \n",semBottleBuffer[extractPosition] );
@@ -133,7 +133,7 @@ void eventBottleHandler::onRead(eventBottle& i_ub) {
         
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() ;      // number of words     
-    printf("read dimension %d \n", dim);
+    //printf("read dimension %d \n", dim);
     receivedBufferSize = dim;
     //printf("%d dim : %d \n", insertPosition,dim);
     //receivedBottle = new Bottle(*i_ub.get_packet());

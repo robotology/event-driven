@@ -23,8 +23,8 @@
  * (see eventSelectorModule.h).
  */
 
-#ifndef _EVENT_SELECTOR_THREAD_H_
-#define _EVENT_SELECTOR_THREAD_H_
+#ifndef _BOTTLE_PROCESSOR_THREAD_H_
+#define _BOTTLE_PROCESSOR_THREAD_H_
 
 #include <iostream>
 #include <fstream>
@@ -44,13 +44,12 @@
 #include <iCub/eventCartesianCollector.h>
 #include <iCub/plotterThread.h>
 #include <iCub/eventBottleHandler.h>
-#include <iCub/bottleProcessorThread.h>
 
 //typedef unsigned long long int uint64_t;
 #define u64 long
 
 
-class eventSelectorThread : public yarp::os::RateThread {
+class bottleProcessorThread : public yarp::os::RateThread {
 private:
     
     int count;                          // loop counter of the thread
@@ -95,7 +94,8 @@ private:
 
     emorph::ecodec::eEventQueue* txQueue;  // queue of event to be sent
     emorph::ecodec::eEventQueue* rxQueue;  // queue of event to be sent
-
+    eventBottleHandler *ebHandler;         // handler of received events as bottle
+    eventBottleHandler *map1Handler;       // handler for the first feature map
 
     double startTimer;
     double interTimer;
@@ -103,7 +103,9 @@ private:
     yarp::os::Semaphore mutex;           // semaphore thar regulates the access to the buffer resource
     clock_t endTime,startTime;
     long T1,T2;
-    
+    plotterThread* pThread;              // plotterThread for the trasformation of the event in images
+    yarp::os::Bottle* receivedBottle;    // bottle currently extracted from the buffer
+    eventCartesianCollector* cfConverter;// receives real-time events
     unmask* unmask_events;               // object that unmask events
     char* bufferRead;                    // buffer of events read from the port
     char* bufferCopy;                    // local copy of the events read
@@ -118,25 +120,16 @@ private:
     unsigned long* timestampMapLeft;     //
     unsigned long* timestampMapRight;    //
     AER_struct* unmaskedEvents;          // trained of unmasked events
-    
-    plotterThread* pThread;              // plotterThread for the trasformation of the event in images
-    yarp::os::Bottle* receivedBottle;    // bottle currently extracted from the buffer
-    eventCartesianCollector* cfConverter;// receives real-time events
-    //eventBottleHandler *ebHandler;     // handler of received events as bottle
-    //eventBottleHandler *map1Handler;   // handler for the first feature map
-    bottleProcessorThread* bptA;          // processor thread of the bottle
-    bottleProcessorThread* bptB;          // processor thread of the bottle
-    
 public:
     /**
     * default constructor
     */
-    eventSelectorThread();
+    bottleProcessorThread();
 
     /**
      * destructor
      */
-    ~eventSelectorThread();
+    ~bottleProcessorThread();
 
     /**
     * function that initialise the thread
@@ -246,6 +239,8 @@ public:
      */
     void setResponseGradient(int value) {responseGradient = value; }; 
     
+    void setSaliencyMap(double* saliencyMapLeft, double* saliencyMapRight, unsigned long* timestampMapLeft,unsigned long* timestampMapRight) {};
+    
     /**
      * @brief function that given a train of events represent them in the spatial domaain
      * @param buffer    pointer to the train of events
@@ -276,7 +271,7 @@ public:
 
 };
 
-#endif  //_CF_COLLECTOR_THREAD_H_
+#endif  //_BOTTLE_PROCESSOR_THREAD_H_
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------
 

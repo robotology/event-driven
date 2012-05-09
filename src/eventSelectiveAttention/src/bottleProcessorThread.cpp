@@ -18,11 +18,11 @@
 */
 
 /**
- * @file eventSelectorThread.cpp
- * @brief Implementation of the thread (see header eventSelectorThread.h)
+ * @file bottleProcessorThread.cpp
+ * @brief Implementation of the thread (see header bottleProcessorThread.h)
  */
 
-#include <iCub/eventSelectorThread.h>
+#include <iCub/bottleProcessorThread.h>
 #include <cstring>
 #include <cassert>
 #include <cstdlib>
@@ -49,7 +49,7 @@ using namespace std;
 #define INCR_RESPONSE 10
 #define DECR_RESPONSE 10
 
-eventSelectorThread::eventSelectorThread() : RateThread(THRATE) {
+bottleProcessorThread::bottleProcessorThread() : RateThread(THRATE) {
     responseGradient = 127;
     retinalSize      = 128;  //default value before setting 
     lasttimestamp    = 0;
@@ -70,12 +70,12 @@ eventSelectorThread::eventSelectorThread() : RateThread(THRATE) {
     minCountRight = 0;
 }
 
-eventSelectorThread::~eventSelectorThread() {
+bottleProcessorThread::~bottleProcessorThread() {
     printf("freeing memory in collector");
     delete bufferCopy;
 }
 
-bool eventSelectorThread::threadInit() {
+bool bottleProcessorThread::threadInit() {
     printf(" \nstarting the threads.... \n");
     //outPort.open(getName("/left:o").c_str());
     //outPortRight.open(getName("/right:o").c_str());
@@ -93,27 +93,21 @@ bool eventSelectorThread::threadInit() {
     printf("\n opening retina\n");
     printf("starting the plotter \n");
     
-    pThread = new plotterThread();
-    pThread->setName(getName("").c_str());
-    pThread->setStereo(stereo);
-    pThread->setRetinalSize(retinalSize);
-    pThread->start();
+    //pThread = new plotterThread();
+    //pThread->setName(getName("").c_str());
+    //pThread->setStereo(stereo);
+    //pThread->setRetinalSize(retinalSize);
+    //pThread->start();
 
-    //ebHandler = new eventBottleHandler();
-    //ebHandler->useCallback();
-    //ebHandler->setRetinalSize(128);
-    //ebHandler->open(getName("/retinaBottle:i").c_str());
+    ebHandler = new eventBottleHandler();
+    ebHandler->useCallback();
+    ebHandler->setRetinalSize(128);
+    ebHandler->open(getName("/retinaBottle:i").c_str());
 
     //map1Handler = new eventBottleHandler();
     //map1Handler->useCallback();
     //map1Handler->setRetinalSize(32);
     //map1Handler->open(getName("/map1Bottle:i").c_str());
-
-    bptA = new bottleProcessorThread();
-    //bptA->setSaliencyMap(saliencyMapLeft, saliencyMapRight, timestampMapLeft, timestampMapRight);
-    bptB = new bottleProcessorThread();
-    //bptB->setSaliencyMap(saliencyMapLeft, saliencyMapRight, timestampMapLeft, timestampMapRight);
-     
 
     receivedBottle = new Bottle();
     
@@ -138,20 +132,20 @@ bool eventSelectorThread::threadInit() {
     minCount = 0;
     minCountRight= 0;
     
-    saliencyMapLeft  = (double*) malloc(retinalSize * retinalSize * sizeof(double));
-    memset(saliencyMapLeft,0, retinalSize * retinalSize * sizeof(double));
-    saliencyMapRight = (double*) malloc(retinalSize * retinalSize * sizeof(double));
-    memset(saliencyMapRight,0, retinalSize * retinalSize * sizeof(double));
+    //saliencyMapLeft  = (double*) malloc(retinalSize * retinalSize * sizeof(double));
+    //memset(saliencyMapLeft,0, retinalSize * retinalSize * sizeof(double));
+    //saliencyMapRight = (double*) malloc(retinalSize * retinalSize * sizeof(double));
+    //memset(saliencyMapRight,0, retinalSize * retinalSize * sizeof(double));
     
-    featureMap = (int*) malloc(retinalSize * retinalSize * sizeof(int));
-    memset(featureMap,0, retinalSize * retinalSize * sizeof(int));
+    //featureMap = (int*) malloc(retinalSize * retinalSize * sizeof(int));
+    //memset(featureMap,0, retinalSize * retinalSize * sizeof(int));
     
-    timestampMap = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
-    memset(timestampMap,0, retinalSize * retinalSize * sizeof(unsigned long));
-    timestampMapLeft = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
-    memset(timestampMapLeft,0, retinalSize * retinalSize * sizeof(unsigned long));
-    timestampMapRight = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
-    memset(timestampMapRight,0, retinalSize * retinalSize * sizeof(unsigned long));
+    //timestampMap = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
+    //memset(timestampMap,0, retinalSize * retinalSize * sizeof(unsigned long));
+    //timestampMapLeft = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
+    //memset(timestampMapLeft,0, retinalSize * retinalSize * sizeof(unsigned long));
+    //timestampMapRight = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
+    //memset(timestampMapRight,0, retinalSize * retinalSize * sizeof(unsigned long));
 
     unmaskedEvents = (AER_struct*) malloc (CHUNKSIZE * sizeof(int));
     memset(unmaskedEvents, 0, CHUNKSIZE * sizeof(int));
@@ -160,23 +154,23 @@ bool eventSelectorThread::threadInit() {
     return true;
 }
 
-void eventSelectorThread::interrupt() {
+void bottleProcessorThread::interrupt() {
     outPort.interrupt();
     outPortRight.interrupt();
 }
 
-void eventSelectorThread::setName(string str) {
+void bottleProcessorThread::setName(string str) {
     this->name=str;
     printf("name: %s", name.c_str());
 }
 
-std::string eventSelectorThread::getName(const char* p) {
+std::string bottleProcessorThread::getName(const char* p) {
     string str(name);
     str.append(p);
     return str;
 }
 
-void eventSelectorThread::resize(int widthp, int heightp) {
+void bottleProcessorThread::resize(int widthp, int heightp) {
     imageLeft = new ImageOf<PixelMono>;
     imageLeft->resize(retinalSize,retinalSize);
     imageRight = new ImageOf<PixelMono>;
@@ -185,7 +179,7 @@ void eventSelectorThread::resize(int widthp, int heightp) {
 }
 
 
-void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsigned long minCount,unsigned long maxCount, bool camera){
+void bottleProcessorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsigned long minCount,unsigned long maxCount, bool camera){
     assert(image!=0);
     //printf("retinalSize in getMonoImage %d \n", retinalSize);
     image->resize(retinalSize,retinalSize);
@@ -396,7 +390,7 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, uns
     }
 }
 
-void eventSelectorThread::forgettingMemory() {
+void bottleProcessorThread::forgettingMemory() {
     double* pLeft = saliencyMapLeft;
     double* pRight = saliencyMapRight;
     for(int r = 0 ; r < retinalSize ; r++){
@@ -421,9 +415,9 @@ void eventSelectorThread::forgettingMemory() {
 }
 
 
-void eventSelectorThread::spatialSelection(eEventQueue *q) {
+void bottleProcessorThread::spatialSelection(eEventQueue *q) {
     int dequeSize = q->size();
-    //printf("eventSelectorThread::spatialSelection: %d events inQueue \n", dequeSize);
+    //printf("bottleProcessorThread::spatialSelection: %d events inQueue \n", dequeSize);
     unsigned long ts;
     int countLeftPos = 0, countLeftNeg = 0;
     int countRightPos = 0 , countRightNeg =0;
@@ -504,7 +498,7 @@ void eventSelectorThread::spatialSelection(eEventQueue *q) {
     //printf("number for right %d %d \n", countRightPos, countRightNeg);
 }
 
-void eventSelectorThread::spatialSelection(AER_struct* buffer,int numberOfEvents, double w, unsigned long minCount, unsigned long maxCount) {
+void bottleProcessorThread::spatialSelection(AER_struct* buffer,int numberOfEvents, double w, unsigned long minCount, unsigned long maxCount) {
     // in the list of unmasked event updates the saliency map and the timestamp map 
     AER_struct* iter = buffer; // generated the iterator of the buffer
     int inputRetinaSize = 32;
@@ -539,7 +533,7 @@ void eventSelectorThread::spatialSelection(AER_struct* buffer,int numberOfEvents
     }    
 }
 
-void eventSelectorThread::run() {
+void bottleProcessorThread::run() {
   count++;
   bottleHandler = true;
   if(!idle) {
@@ -554,8 +548,8 @@ void eventSelectorThread::run() {
         cfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
     }
     else {
-        //printf("eventSelectorThread::run : extracting Bottle! \n");
-        // ebHandler->extractBottle(receivedBottle);  
+        //printf("bottleProcessorThread::run : extracting Bottle! \n");
+        ebHandler->extractBottle(receivedBottle);  
         //printf("received bottle \n");
         //printf("%s \n", receivedBottle->toString().c_str());
     }
@@ -842,28 +836,26 @@ void eventSelectorThread::run() {
   }
 }
 
-void eventSelectorThread::threadRelease() {
+void bottleProcessorThread::threadRelease() {
     idle = false;
     fclose(fout);
-    printf("eventSelectorThread release:freeing bufferCopy \n");
+    printf("bottleProcessorThread release:freeing bufferCopy \n");
 
     //free(saliencyMap);
     free(featureMap);
     free(timestampMap); 
     free(unmaskedEvents); 
-    printf("eventSelectorThread release:closing ports \n");
+    printf("bottleProcessorThread release:closing ports \n");
     outPort.close();
     outPortRight.close();
     //delete imageLeft;
     //delete imageRight;
     delete receivedBottle;
-    delete bptA;
-    delete bptB;
-    //delete map1Handler;
-    //delete ebHandler;
-    printf("eventSelectorThread release         stopping plotterThread \n");
+    delete map1Handler;
+    delete ebHandler;
+    printf("bottleProcessorThread release         stopping plotterThread \n");
     pThread->stop();
-    printf("eventSelectorThread release         deleting converter \n");
+    printf("bottleProcessorThread release         deleting converter \n");
     delete cfConverter;
     printf("correctly freed memory from the cfCollector \n");
 }
