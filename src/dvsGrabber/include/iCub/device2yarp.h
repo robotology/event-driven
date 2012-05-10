@@ -93,8 +93,8 @@ public:
 
 private:
 
-    //yarp::os::BufferedPort<eventBuffer> port;
-    yarp::os::BufferedPort<yarp::os::Bottle > port;
+    yarp::os::BufferedPort<emorph::ebuffer::eventBuffer> port;
+    //yarp::os::BufferedPort<yarp::os::Bottle > port;
     FILE* raw;
 
     u64 seqTime;
@@ -107,6 +107,7 @@ private:
     unsigned char buffer_msg[64];
     short enabled;
     char buffer[SIZE_OF_DATA];
+    char outbuffer[SIZE_OF_DATA];
     //u32 newBuffer[SIZE_OF_DATA];
     yarp::os::Bottle packetsSent;
     FILE* tmpFile;
