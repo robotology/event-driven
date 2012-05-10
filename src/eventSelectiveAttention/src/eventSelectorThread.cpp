@@ -155,11 +155,14 @@ bool eventSelectorThread::threadInit() {
     bptA->setLastTimestamp(lasttimestamp);
     bptA->setSaliencyMap(saliencyMapLeft, saliencyMapRight, timestampMapLeft, timestampMapRight);
     bptA->setName(getName("/btpA"));
+    bptA->start();
+
     bptB = new bottleProcessorThread();
     bptB->setLastTimestamp(lasttimestamp);
-    bptB->setName(getName("/btpB"));
-    bptB->setSaliencyMap(saliencyMapLeft, saliencyMapRight, timestampMapLeft, timestampMapRight);
-    bptA->start();
+    bptB->setSaliencySize(retinalSize);
+    bptB->setRetinalSize(32);
+    bptB->setName(getName("/btp4"));
+    bptB->setSaliencyMap(saliencyMapLeft, saliencyMapRight, timestampMapLeft, timestampMapRight);    
     bptB->start();
 
 
@@ -363,41 +366,91 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
     unsigned char* pRight = imageRight->getRawImage();
     int padding           = imageLeft->getPadding();
     unsigned long timestampactual ;
+    
     for(int r = 0 ; r < retinalSize ; r++){
         for(int c = 0 ; c < retinalSize ; c++) {
             timestampactual = *pTimeLeft; 
             if (((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)) { 
-                if((r == maxLeftR) && (c == maxLeftC)) {
-                    *pLeft = 255; // maximum response
+                if (r == maxLeftR) {
+                     // maximum response
+                    *pLeft = 255; pLeft++;
+                    *pLeft = 0; pLeft++;
+                    *pLeft = 0; pLeft++;
+                }
+                else if (c == maxLeftC) {
+                    *pLeft = 255; pLeft++;
+                    *pLeft = 0; pLeft++;
+                    *pLeft = 0; pLeft++;
                 }
                 else {
-                    double d = ((abs(*pSalLeft  - minLeft) )  / rangeLeft ) * 180;
+                    double d = ((abs(*pSalLeft  - minLeft) )  / rangeLeft ) * 80;
                     //printf(" d=%f %08X < %08X < %08X\n", d, minCount, timestampactual, maxCount);
-                    *pLeft  = (unsigned char) d;
+                    *pLeft  = (unsigned char) d; pLeft++;
+                    *pLeft  = (unsigned char) d; pLeft++;
+                    *pLeft  = (unsigned char) d; pLeft++;
                 }
             }
             else {
-                *pLeft = 0;
+                if (r == maxLeftR) {
+                    // maximum response
+                    *pLeft = 255; pLeft++;
+                    *pLeft = 0; pLeft++;
+                    *pLeft = 0; pLeft++;
+                }
+                else if (c == maxLeftC) {
+                    *pLeft = 255; pLeft++;
+                    *pLeft = 0; pLeft++;
+                    *pLeft = 0; pLeft++;
+                }
+                else {                    
+                    *pLeft = 0; pLeft++;
+                    *pLeft = 0; pLeft++;
+                    *pLeft = 0; pLeft++;
+                }
             }
-            pLeft++;
+            // pLeft++;
             pSalLeft++;
             pTimeLeft++;
 
             // ------------------------------------------------------------------
             timestampactual = *pTimeRight;
             if (((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)) { 
-                if((r == maxRightR) && (c == maxRightC)) {
-                    *pRight = 255;
+                if (r == maxRightR) {
+                    *pRight = 255; pRight++;
+                    *pRight = 0;   pRight++;
+                    *pRight = 0;   pRight++;
+                }
+                else if(c == maxRightC) {
+                    *pRight = 255; pRight++;
+                    *pRight = 0;   pRight++;
+                    *pRight = 0;   pRight++;
                 }
                 else {
-                    double d = ((abs(*pSalRight - minRight) )/ rangeRight) * 180;
-                    *pRight = (unsigned char) d;
+                    double d = ((abs(*pSalRight - minRight) )/ rangeRight) * 80;
+                    *pRight = (unsigned char) d; pRight++;
+                    *pRight = (unsigned char) d; pRight++;
+                    *pRight = (unsigned char) d; pRight++;
                 }
             }
             else {
-                *pRight = 0;
+                if(r == maxLeftR)  {
+                     // maximum response
+                    *pLeft = 255; pLeft++;
+                    *pLeft = 0;   pLeft++;
+                    *pLeft = 0;   pLeft++;
+                }
+                else if (c == maxLeftC) {
+                    *pLeft = 255; pLeft++;
+                    *pLeft = 0;   pLeft++;
+                    *pLeft = 0;   pLeft++;
+                }
+                else {
+                    *pRight = 0; pRight++;
+                    *pRight = 0; pRight++;
+                    *pRight = 0; pRight++;
+                }
             }
-            pRight++;
+            //pRight++;
             pSalRight++;
             pTimeRight++;
         }
@@ -875,8 +928,10 @@ void eventSelectorThread::threadRelease() {
     delete bptB;
     //delete map1Handler;
     //delete ebHandler;
-    printf("eventSelectorThread release         stopping plotterThread \n");
+    printf("eventSelectorThread release         stopping Threads \n");
     pThread->stop();
+    bptA->stop();
+    bptB->stop();
     printf("eventSelectorThread release         deleting converter \n");
     delete cfConverter;
     printf("correctly freed memory from the cfCollector \n");

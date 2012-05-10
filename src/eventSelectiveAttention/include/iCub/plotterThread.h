@@ -37,11 +37,15 @@
 
 class plotterThread : public yarp::os::RateThread {
 private:    
-    int count;                          // loop counter of the thread
+    int count;                            // loop counter of the thread
     //float lambda;                       // integration factor
     //int width, height;                  // dimension of the extended input image (extending)
     //int height_orig, width_orig;        // original dimension of the input and output images
-    int retinalSize;                     // dimension of the squared retina
+    int retinalSize;                      // dimension of the squared retina
+    int rMax, cMax;                       // location of the max 
+
+    yarp::os::Semaphore mutexMax;         // semaphore that regulates the access to the resource max
+
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> > leftPort;                 // port whre the output (left) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> > rightPort;                // port whre the output (right) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > leftIntPort;             // port whre the output (left integral) is sent
@@ -51,7 +55,7 @@ private:
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > leftThresholdPort;       // port whre the output (left integral) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > rightThresholdPort;      // port whre the output (right integral) is sent
 
-    yarp::os::BufferedPort<yarp::sig::Vector > eventPort;
+    yarp::os::BufferedPort<yarp::sig::Vector > eventPort;                                      // Buffered port cointains a Vector of events
     
     yarp::sig::ImageOf<yarp::sig::PixelRgb>* imageLeft;                                        // image representing the signal on the leftcamera
     yarp::sig::ImageOf<yarp::sig::PixelRgb>* imageRight;                                       // image representing the signal on the right camera
@@ -153,7 +157,15 @@ public:
         retinalSize = value;
     }
     
-
+    /**
+     * @brief function that saves the position of the max 
+     */
+    void setMaxPosition(int xMax, int yMax) {
+        mutexMax.wait();
+        cMax = xMax;
+        rMax = yMax;
+        mutexMax.post();
+    }
 };
 
 #endif  //_PLOTTER_THREAD_H_

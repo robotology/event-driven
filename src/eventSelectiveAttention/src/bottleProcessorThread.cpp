@@ -52,6 +52,7 @@ using namespace std;
 bottleProcessorThread::bottleProcessorThread() : RateThread(THRATE) {
     responseGradient = 127;
     retinalSize      = 128;  //default value before setting 
+    saliencySize     = 128;  //default dimension of the saliency map
     lasttimestamp    = 0;
     bottleHandler = true;
     synchronised = false;
@@ -419,8 +420,9 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
     int dequeSize = q->size();
     //printf("bottleProcessorThread::spatialSelection: %d events inQueue \n", dequeSize);
     unsigned long ts;
-    int countLeftPos = 0, countLeftNeg = 0;
-    int countRightPos = 0 , countRightNeg =0;
+    int countLeftPos  = 0 , countLeftNeg  = 0;
+    int countRightPos = 0 , countRightNeg = 0;
+    int scaleFactor   = saliencySize / retinalSize; 
     for (int evt = 0; evt < dequeSize; evt++) {
         //printf("analyzing event %d \n", evt);
         if((*q)[evt] != 0) {                    
@@ -440,35 +442,62 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                     int camera    = ptr->getChannel();
                     int polarity  = ptr->getPolarity();
                     
+                    int xpos      = cartX * scaleFactor;
+                    int ypos      = cartY * scaleFactor;
+ 
+                    
                     if(camera == 0) {
                         
                         //printf("saliencyMapLeft in %d %d changed (pol:%d)  \n", cartX, cartY, polarity);
                         if(polarity == 0) {
-                            saliencyMapLeft [cartX * retinalSize + cartY] +=  INCR_RESPONSE;
-                            countLeftPos++;
+                            for ( int xi = 0; xi < scaleFactor; xi++) {
+                                for (int yi = 0; yi < scaleFactor; yi++) {
+                                    saliencyMapLeft [(xpos + xi)  * saliencySize + (ypos + yi) ] +=  INCR_RESPONSE;
+                                    countLeftPos++;
+                                }
+                            }
                         }
                         else {
-                            saliencyMapLeft [cartX * retinalSize + cartY] -=  INCR_RESPONSE;
-                            countLeftNeg++;
+                            for ( int xi = 0; xi < scaleFactor; xi++) {
+                                for (int yi = 0; yi < scaleFactor; yi++) {
+                                    saliencyMapLeft [(xpos + xi) * saliencySize + (ypos + yi)] -=  INCR_RESPONSE;
+                                    countLeftNeg++;
+                                }
+                            }
                         }
-                        timestampMapLeft[cartX * retinalSize + cartY] = ts;
+                        //---------------
+                        for ( int xi = 0; xi < scaleFactor; xi++) {
+                            for (int yi = 0; yi < scaleFactor; yi++) {
+                                timestampMapLeft[xpos * saliencySize + ypos] = ts;
+                            }
+                        }
                         
                     }
                     else {
                         //printf("saliencyMapRight in %d %d changed (pol:%d) \n", cartX, cartY, polarity);
                         
-                        
                         if(polarity == 0) {
-                            saliencyMapRight [cartX * retinalSize + cartY] += INCR_RESPONSE; 
-                            countRightPos++;
+                            for ( int xi = 0; xi < scaleFactor; xi++) {
+                                for (int yi = 0; yi < scaleFactor; yi++) {
+                                    saliencyMapRight [xpos * saliencySize + ypos] += INCR_RESPONSE; 
+                                    countRightPos++;
+                                }
+                            }
                         }
                         else {
-                            saliencyMapRight [cartX * retinalSize + cartY] -= INCR_RESPONSE; 
-                            countRightNeg++;
+                            for ( int xi = 0; xi < scaleFactor; xi++) {
+                                for (int yi = 0; yi < scaleFactor; yi++) {
+                                    saliencyMapRight [xpos * saliencySize + ypos] -= INCR_RESPONSE; 
+                                    countRightNeg++;
+                                }
+                            }
                         }
-                        timestampMapRight[cartX * retinalSize + cartY] = ts;
-                        
-                        
+                        //----------
+                        for ( int xi = 0; xi < scaleFactor; xi++) {
+                            for (int yi = 0; yi < scaleFactor; yi++) {
+                                timestampMapRight[(xpos + xi) * saliencySize + (ypos + yi)] = ts;
+                            }
+                        }
                     }                                     
                 } //end if (ptr->isValid()) 
             } //end if ((*q)[evt]->getType()=="AE")
@@ -555,7 +584,7 @@ void bottleProcessorThread::run() {
         //printf("bottleProcessorThread::run : extracting Bottle! \n");
         ebHandler->extractBottle(receivedBottle); 
         //if(receivedBottle->size() != 0) {
-        //    printf("received bottle \n");
+        //    printf("received bottle %d \n", receivedBottle->size());
         //}
         //printf("%s \n", receivedBottle->toString().c_str());
     }

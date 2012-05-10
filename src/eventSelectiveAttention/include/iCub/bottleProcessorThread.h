@@ -67,10 +67,12 @@ private:
     int countStop;                      // counter of equal timestamp
     int countDivider;                   // divider of the count
     int retinalSize;                    // dimension of the retina device
+    int saliencySize;                   // dimension of the saliency map
     int width, height;                  // dimension of the extended input image (extending)
     int height_orig, width_orig;        // original dimension of the input and output images
     int synchPeriod;                    // synchronization period between events and viewer
     int responseGradient;               // responseGradient parameter
+    
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPort;            // port whre the output (left) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPortRight;       // port whre the output (right) is sent
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeft;                                  //image representing the signal on the leftcamera
@@ -100,27 +102,28 @@ private:
     double startTimer;
     double interTimer;
     double endTimer;
-    yarp::os::Semaphore mutex;           // semaphore thar regulates the access to the buffer resource
+    yarp::os::Semaphore mutex;              // semaphore thar regulates the access to the buffer resource
     yarp::os::Semaphore mutexLastTimestamp; // mutex for the last timestamp
+ 
     clock_t endTime,startTime;
     long T1,T2;
-    plotterThread* pThread;              // plotterThread for the trasformation of the event in images
-    yarp::os::Bottle* receivedBottle;    // bottle currently extracted from the buffer
-    eventCartesianCollector* cfConverter;// receives real-time events
-    unmask* unmask_events;               // object that unmask events
-    char* bufferRead;                    // buffer of events read from the port
-    char* bufferCopy;                    // local copy of the events read
-    FILE* fout;                          // file for temporarely savings of events
-    FILE* raw;                           // file dumper for debug
+    plotterThread* pThread;                 // plotterThread for the trasformation of the event in images
+    yarp::os::Bottle* receivedBottle;       // bottle currently extracted from the buffer
+    eventCartesianCollector* cfConverter;   // receives real-time events
+    unmask* unmask_events;                  // object that unmask events
+    char* bufferRead;                       // buffer of events read from the port
+    char* bufferCopy;                       // local copy of the events read
+    FILE* fout;                             // file for temporarely savings of events
+    FILE* raw;                              // file dumper for debug
     
-    double* saliencyMapLeft;             // saliencyMap of the left camera
-    double* saliencyMapRight;            // saliencyMap of the right camera
-    unsigned char* saliencyMap;          // saliencyMap collection of responses in different feature maps
-    int* featureMap;                     // map of the feature;
-    unsigned long* timestampMap;         // timestamp reference for the map of the feature 
-    unsigned long* timestampMapLeft;     //
-    unsigned long* timestampMapRight;    //
-    AER_struct* unmaskedEvents;          // trained of unmasked events
+    double* saliencyMapLeft;               // saliencyMap of the left camera
+    double* saliencyMapRight;              // saliencyMap of the right camera
+    unsigned char* saliencyMap;            // saliencyMap collection of responses in different feature maps
+    int* featureMap;                       // map of the feature;
+    unsigned long* timestampMap;           // timestamp reference for the map of the feature 
+    unsigned long* timestampMapLeft;       //
+    unsigned long* timestampMapRight;      //
+    AER_struct* unmaskedEvents;            // trained of unmasked events
 public:
     /**
     * default constructor
@@ -193,6 +196,13 @@ public:
      */
     void setRetinalSize(int value) {
         retinalSize = value;
+    }
+
+    /** 
+     * @brief function that indicates the dimension of saliency map for scale factor
+     */
+    void setSaliencySize(int value) {
+        saliencySize = value;
     }
 
     /**
