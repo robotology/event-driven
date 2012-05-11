@@ -374,13 +374,13 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
                 if (r == maxLeftR) {
                      // maximum response
                     *pLeft = 255; pLeft++;
-                    *pLeft = 0; pLeft++;
-                    *pLeft = 0; pLeft++;
+                    *pLeft = 0  ; pLeft++;
+                    *pLeft = 0  ; pLeft++;
                 }
                 else if (c == maxLeftC) {
                     *pLeft = 255; pLeft++;
-                    *pLeft = 0; pLeft++;
-                    *pLeft = 0; pLeft++;
+                    *pLeft = 0  ; pLeft++;
+                    *pLeft = 0  ; pLeft++;
                 }
                 else {
                     double d = ((abs(*pSalLeft  - minLeft) )  / rangeLeft ) * 80;
@@ -394,13 +394,13 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
                 if (r == maxLeftR) {
                     // maximum response
                     *pLeft = 255; pLeft++;
-                    *pLeft = 0; pLeft++;
-                    *pLeft = 0; pLeft++;
+                    *pLeft = 0  ; pLeft++;
+                    *pLeft = 0  ; pLeft++;
                 }
                 else if (c == maxLeftC) {
                     *pLeft = 255; pLeft++;
-                    *pLeft = 0; pLeft++;
-                    *pLeft = 0; pLeft++;
+                    *pLeft = 0  ; pLeft++;
+                    *pLeft = 0  ; pLeft++;
                 }
                 else {                    
                     *pLeft = 0; pLeft++;
@@ -433,16 +433,16 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
                 }
             }
             else {
-                if(r == maxLeftR)  {
+                if(r == maxRightR)  {
                      // maximum response
-                    *pLeft = 255; pLeft++;
-                    *pLeft = 0;   pLeft++;
-                    *pLeft = 0;   pLeft++;
+                    *pRight = 255; pRight++;
+                    *pRight = 0;   pRight++;
+                    *pRight = 0;   pRight++;
                 }
-                else if (c == maxLeftC) {
-                    *pLeft = 255; pLeft++;
-                    *pLeft = 0;   pLeft++;
-                    *pLeft = 0;   pLeft++;
+                else if (c == maxRightC) {
+                    *pRight = 255; pRight++;
+                    *pRight = 0;   pRight++;
+                    *pRight = 0;   pRight++;
                 }
                 else {
                     *pRight = 0; pRight++;
@@ -454,7 +454,7 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
             pSalRight++;
             pTimeRight++;
         }
-        pLeft += padding;
+        pLeft  += padding;
         pRight += padding;
     }
 }
@@ -923,9 +923,8 @@ void eventSelectorThread::threadRelease() {
     outPortRight.close();
     //delete imageLeft;
     //delete imageRight;
-    delete receivedBottle;
-    delete bptA;
-    delete bptB;
+    //delete receivedBottle;
+
     //delete map1Handler;
     //delete ebHandler;
     printf("eventSelectorThread release         stopping Threads \n");

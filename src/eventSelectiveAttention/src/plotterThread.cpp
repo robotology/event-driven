@@ -126,22 +126,10 @@ void plotterThread::copyLeft(ImageOf<PixelRgb>* image) {
     unsigned char* pleft  = imageLeft->getRawImage();
     if(imageLeft != 0) {
         for(int r = 0;r < retinalSize; r++) {
-            for(int c = 0; c < retinalSize; c++) {
-                if(r == rMax) {
-                    *pleft++ = 255; pimage++;
-                    *pleft++ = 0;   pimage++;
-                    *pleft++ = 0;   pimage++;
-                }
-                else if(c == cMax) {
-                    *pleft++ = 255; pimage++;
-                    *pleft++ = 0;   pimage++;
-                    *pleft++ = 0;   pimage++;    
-                }
-                else {
-                    *pleft++ = *pimage++;
-                    *pleft++ = *pimage++;
-                    *pleft++ = *pimage++;
-                }
+            for(int c = 0; c < retinalSize; c++) {                
+                *pleft++ = *pimage++;
+                *pleft++ = *pimage++;
+                *pleft++ = *pimage++;
             }
             pleft  += padding;
             pimage += padding;
@@ -155,22 +143,10 @@ void plotterThread::copyRight(ImageOf<PixelRgb>* image) {
     unsigned char* pright = imageRight->getRawImage();
     if(imageRight != 0) {
         for(int r = 0;r < retinalSize; r++) {
-            for(int c = 0;c < retinalSize; c++) {
-                if(r == rMax) {
-                    *pright++ = 255; pimage++;
-                    *pright++ = 0;   pimage++;
-                    *pright++ = 0;   pimage++;
-                }
-                else if(c == cMax) {
-                    *pright++ = 255; pimage++;
-                    *pright++ = 0;   pimage++;
-                    *pright++ = 0;   pimage++;    
-                }
-                else {
-                    *pright++ = *pimage++;
-                    *pright++ = *pimage++;
-                    *pright++ = *pimage++;
-                }
+            for(int c = 0;c < retinalSize; c++) {                
+                *pright++ = *pimage++;
+                *pright++ = *pimage++;
+                *pright++ = *pimage++;                
             }
             pright += padding;
             pimage += padding;
