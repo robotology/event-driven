@@ -22,6 +22,7 @@ eventBottle::eventBottle() {
 }
 
 eventBottle::eventBottle(char* i_data, int i_size) {
+    printf("parametric constructor \n");
     packet = new Bottle();
     packet->clear();
     int word;
@@ -52,6 +53,7 @@ eventBottle::eventBottle(char* i_data, int i_size) {
 
 
 eventBottle::eventBottle(Bottle* p) {
+    printf("copy constructor \n");
     packet = p;
     size_of_the_packet = packet->size();
     packetPointer = new char; 

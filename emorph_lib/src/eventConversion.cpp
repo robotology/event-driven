@@ -89,8 +89,11 @@ unmask::unmask() {
     */
 
     wrapAdd = 0;
+
+#ifdef VERBOSE
     //fopen_s(&fp,"events.txt", "w"); //Use the unmasked_buffer
     uEvents = fopen("./eventConversion.uevents.txt","w+");
+#endif
 }
 
 unmask::unmask(int rSize) { // : RateThread(UNMASKRATETHREAD){
@@ -140,11 +143,19 @@ unmask::unmask(int rSize) { // : RateThread(UNMASKRATETHREAD){
     */
 
     wrapAdd = 0;
+
+#ifdef VERBOSE
     //fopen_s(&fp,"events.txt", "w"); //Use the unmasked_buffer
     uEvents = fopen("./eventConvesion.uevents.txt","w+");
+#endif
 }
 
 unmask::~unmask() {
+#ifdef VERBOSE
+    fclose(uEvents);
+#endif
+    
+
     delete[] buffer;
     delete[] timeBuffer;
     delete[] bufferRight;
