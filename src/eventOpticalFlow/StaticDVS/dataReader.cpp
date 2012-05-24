@@ -38,6 +38,7 @@ using namespace emorph::ebuffer;
 
 class EventReader : public RFModule{
     bool dvsCam;
+    int jearFileType;
     int bufferSize;
     string inFileName;
     ifstream inFile;
@@ -92,15 +93,10 @@ class EventReader : public RFModule{
            inFile >> datam;
         }
        //write data to the port
-//       eventBuffer & outObj = outPort.prepare();
-//       outObj.set_data(buffPtr, buffer_idx);
-//       outPort.write();
-
-
-       eventBuffer outObj = eventBuffer(buffPtr, buffer_idx);
-       outPort.write(outObj);
-
-
+        if (outPort.getOutputCount()){
+            eventBuffer outObj = eventBuffer(buffPtr, buffer_idx);
+            outPort.write(outObj);
+        }
 
 
        if (buffPtr == buffer[0])
@@ -135,39 +131,88 @@ class EventReader : public RFModule{
 
     }
 
-    void loopSingleCam(){
+    void loopSingleCam(int fileTye){
 
         int buffer_idx;
         char oneEvent [10];
         uint32_t a, t;
 
         buffer_idx =0;
+        bool writeSuccess = false;
 
-        cout << "loop  "  << inFile.tellg()<< endl ;
+     //   cout << "loop  "  << inFile.tellg()<< endl ;
 
         while (!inFile.eof() && buffer_idx < bufferSize){ // 8192 bytes -> 1024 events
+//        	cout << inFile.tellg() <<  " " << buffer_idx << endl;
            //Read data corresponding to one event form the input file
-            inFile.read(oneEvent, 8);
-            //addr
-            for (int i = 3; i >= 0; --i) {
-                  *(buffPtr + buffer_idx++) = oneEvent[i];
-            }
-            //timestamp
-            for (int i = 7; i >= 4; --i) {
-              *(buffPtr + buffer_idx++) = oneEvent[i];
-            }
 
+
+//            printf("  %d ", (unsigned char)*(oneEvent ));
+//			printf(" %d ", (unsigned char)*(oneEvent +  1));
+//			printf(" %d ", (unsigned char)*(oneEvent+  2));
+//			printf(" %d ", (unsigned char) *(oneEvent + 3));
+//			printf("  %d ", (unsigned char)*(oneEvent  + 4));
+//			printf(" %d ", (unsigned char)*(oneEvent + 5));
+//			printf(" %d ", (unsigned char)*(oneEvent + 6));
+//			printf(" %d \n", (unsigned char) *(oneEvent  + 7));
+
+
+            //addr
+            switch (fileTye) {
+				case 1:
+					//2 bytes for address
+					inFile.read(oneEvent, 6);
+					for (int i = 1; i >= 0; --i) {
+						*(buffPtr + buffer_idx++) = oneEvent[i];
+					}
+					*(buffPtr + buffer_idx++) = 0;
+					*(buffPtr + buffer_idx++) = 0;
+//			  cout << "1---- " << buffer_idx<< endl;
+					//timestamp
+					for (int i = 5; i >= 2; --i) {
+					  *(buffPtr + buffer_idx++) = oneEvent[i];
+					}
+//            cout << "2 ---- " << buffer_idx<< endl;
+					break;
+				case 2:
+					inFile.read(oneEvent, 8);
+					//4 bytes for timestamp, 4 bytes for Address
+					for (int i = 3; i >= 0; --i) {
+						*(buffPtr + buffer_idx++) = oneEvent[i];
+					}
+   				    //timestamp
+					for (int i = 7; i >= 4; --i) {
+					  *(buffPtr + buffer_idx++) = oneEvent[i];
+					}
+					break;
+			}
         }
        //write data to the port
-//       eventBuffer & outObj = outPort.prepare();
-//       outObj.set_data(buffPtr, buffer_idx);
-//       outPort.write();
+        if (outPort.getOutputCount()){
+        	eventBuffer outObj = eventBuffer(buffPtr, buffer_idx);
+            writeSuccess = outPort.write(outObj);
+            cout << writeSuccess << endl;
+        }
+
+//        unmask unmasker;
+//		uint32_t* buf2 = (uint32_t*)buffPtr;
+//		short cartX, cartY, polarity, camera;
+//
+//		 for (int evt = 0; evt < bufferSize/8; ++evt) {
+//			unsigned long blob = buf2[2 * evt];
+//			unsigned long timestamp = buf2[2 * evt + 1];
+//			printf("  %08x ",  blob);
+//			printf(" %08x \n ", timestamp);
+//
+//			blob &= 0xFFFF;
+//			unmasker.unmaskEvent((unsigned int) blob, cartX, cartY, polarity, camera);
+//			cout << cartX << " " << cartY << " " << polarity << " " << camera << endl;
+//        }
 
        if (buffPtr == buffer[0])
            buffPtr = buffer[1];
        else
            buffPtr = buffer[0];
-
 
     }
 
@@ -175,6 +220,8 @@ class EventReader : public RFModule{
      void readHeaderFile(){
          char line [100];
          int pos;
+
+         cout << "reading header file ..." << endl;
 
          inFile.getline(line, 100);
 
@@ -191,7 +238,6 @@ class EventReader : public RFModule{
              printf("line : %s | tok : %s\n",line, tok); // print line using \n for newline, discarding CRLF written by java under windows
 
              pos = inFile.tellg();
-             cout << pos << endl;
              inFile.getline(line, 100);
 
          }
@@ -206,13 +252,6 @@ class EventReader : public RFModule{
 public:
     bool configure(ResourceFinder & rf){
 
-        //inFileName = "/home/fuozhan/Desktop/work/RecordedData/PC104/test1_v3.txt";
-       // inFileName = "/home/fuozhan/Desktop/iCubDumpEvent/dump_hand.txt";
-       // inFileName = "/home/fuozhan/Desktop/iCubDumpEvent/firstTr.txt";
-      //  inFileName = "/home/fuozhan/Desktop/iCubDumpEvent/secondTr.txt";
-      //  inFileName = "/home/fuozhan/Desktop/iCubDumpEvent/dumpCar1.txt";
-      //  inFileName = "/home/fuozhan/Desktop/iCubDumpEvent/BasicTests/dump800.txt";
-
         string moduleName;
         moduleName =  rf.check("name", Value("artRetina"), "module name (String)").asString();
 
@@ -221,26 +260,41 @@ public:
                                     Value("/tmp/dump.txt"),
                                     "Input  input File Name (string)").asString();
         cout << "FileName : " <<inFileName << endl;
-        //inFileName = "/home/fuozhan/Desktop/iCubDumpEvent/BasicTests/dump100.txt";
 
-        
-        dvsCam = true; // true to work with the robot -- false to work with the stand alone camera
-        bufferSize = 2048; // 16384 -> 2048 events, 8192 bytes -> 1024 events , 4096-> 512 events
+        jearFileType = rf.check("fileType",
+                                  Value(0),
+                                  "Input  input File type (int)").asInt();
+        // true to work with the robot -- false to work with the stand alone camera
+        if (jearFileType == 0)
+        	dvsCam = true;
+        else
+        	dvsCam = false;
+		cout << "dvsCam " << dvsCam << endl;
+
+
+        bufferSize = 2048;	; // 16384 -> 2048 events, 8192 bytes -> 1024 events , 4096-> 512 events
 
         if (dvsCam){
             inFile.open(inFileName.c_str(), ifstream::in);
             inFile >> datam;
         }
         else{
-            inFile.open(inFileName.c_str(), ifstream::binary);
-            readHeaderFile();
+        	inFile.open(inFileName.c_str(), ifstream::binary);
+        	if (jearFileType == 2)
+               readHeaderFile();
+
         }
+
 
         outPort.open("/eventReader/artificialRetina0:o");
         buffPtr = buffer[0];
 
         outPort.setTimeout(5.0);
-        //loopSingleCam();
+
+//        for (int j = 0; j < 1000; ++j) {
+//              loopSingleCam(jearFileType);
+//       }
+
         return true;
     }
 
@@ -248,10 +302,11 @@ public:
 
     bool updateModule(){
         if (!inFile.eof()){
-            if(dvsCam)
+            if(dvsCam){
                 loopICUBCam();
+            }
             else{
-                loopSingleCam();
+            	loopSingleCam(jearFileType);
             }
         }
         else
@@ -263,7 +318,7 @@ public:
     double getPeriod()
     {
        /* module periodicity (seconds), called implicitly by myModule */
-       return .005;
+       return .05;
     }
 
     bool interruptModule(){
@@ -291,49 +346,6 @@ public:
 
 };
 
-/*
-class MyThread : public yarp::os::RateThread {
-public:
-    MyThread():RateThread(1) { }
-    ~MyThread()
-    {
-        cout<<"Dead"<<endl;
-    }
-
-    virtual bool threadInit()
-    {
-        outPort.open("/eventReader/artificialRetina0:o");
-        return true;
-    }
-
-
-    virtual void run()
-    {
-
-        buffPtr = buffer[0];
-        eventBuffer & outObj = outPort.prepare();
-        outObj.set_data(buffPtr, 30000);
-        outPort.write();
-        cout<<"outPort.write();"<<endl;
-    }
-
-    void kill()
-    {
-        outPort.close();
-    }
-
-private:
-    bool dvsCam;
-    int bufferSize;
-    string inFileName;
-    ifstream inFile;
-    yarp::os::BufferedPort<eventBuffer> outPort;
-    char buffer [2][SIZE_OF_DATA];
-    char * buffPtr;
-    char datam [10];
-
-};
-*/
 
 int main(int argc, char * argv []){
     Network yarp;
@@ -350,17 +362,6 @@ int main(int argc, char * argv []){
     }
 
    eReader.runModule();
-
-
-
-   /* MyThread my;
-    my.start();
-    cout<<"press enter"<<endl;
-    int x;
-    cin>>x;
-    cout<<"killing"<<endl;
-    my.kill();
-    my.stop();*/
 
    cout << " last line in main" << endl;
    return 0;
