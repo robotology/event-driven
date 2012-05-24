@@ -29,7 +29,7 @@
 
 using namespace yarp::os;
 
-class WorldOptFlow {
+class WorldOptFlow : public RateThread{
     LKLocalFlow   localFlw;
 
     MyMatrix<POLARITY_TYPE> * worldStatus;          /* keep track of the scene status,
@@ -43,8 +43,13 @@ class WorldOptFlow {
     AERGrabber * inPort;                            /* is inherited from <BufferedPort> and
                                                        received input(events) from Camera */
 
+    short bufferInitialized;
+
+    yarp::os::Semaphore * newEventsSignal;
+
     BufferedPort<VelocityBuffer> * outPort;
     BufferedPort<Bottle> *outBPort;
+
 
     CameraEvent *** eventBuffers;                   /*2-Dimensional Array of  "pointers to CameraEvent"-
                                                      Each row represent a bag of events which arrived in a closed interval */
@@ -56,18 +61,24 @@ class WorldOptFlow {
     void calVelocities(CameraEvent **, int);
     void directWrldStus(CameraEvent ** , int );
 
+    void initialize(int step);
+    void cleanup();
+
+
 public:
 
     WorldOptFlow( AERGrabber * inPortPtr,
                BufferedPort<VelocityBuffer> * outFlowPort,  BufferedPort<Bottle> * outBttlwPort,
                MyMatrix<POLARITY_TYPE> * wStatus, MyMatrix<POLARITY_TYPE> * pWStatus,
-               MyMatrix<TIMESTAMP_TYPE> * ts);
+               MyMatrix<TIMESTAMP_TYPE> * ts, yarp::os::Semaphore * eventsSignal);
 
-    void initialize(int step);
 
-    void run ();
+    bool threadInit();
+    void threadRelease();
 
-    ~WorldOptFlow();
+    virtual void run ();
+
+    virtual ~WorldOptFlow();
 };
 
 

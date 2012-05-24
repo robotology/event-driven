@@ -67,6 +67,7 @@ class OpticalFlowModule : public RFModule{
 
     yarp::os::Semaphore * evntsMutex;
 
+
     BufferedPort<VelocityBuffer> outFlowPort;
     BufferedPort<Bottle> bottleFlowPort;
     BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono16> > outWrldMdlPort;
@@ -79,6 +80,8 @@ class OpticalFlowModule : public RFModule{
     //void eventsHandler();     //TODO : input & comment
 
 public:
+    OpticalFlowModule();
+
     bool configure(ResourceFinder & rf);
 
     bool interruptModule();

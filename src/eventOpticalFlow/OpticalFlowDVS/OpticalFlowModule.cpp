@@ -18,6 +18,14 @@
 #include "OpticalFlowModule.h"
 #include <stdlib.h>
 
+OpticalFlowModule::OpticalFlowModule(){
+//	 wrldFlw = NULL;
+	 inputPort = NULL;
+	 evntsMutex = NULL;
+
+}
+
+
 bool OpticalFlowModule::configure(ResourceFinder & rf){
     string moduleName;
     string inPortName;
@@ -27,11 +35,11 @@ bool OpticalFlowModule::configure(ResourceFinder & rf){
 
     short mtrxRowNo, mtrxClmnNo;
 
-    wrldFlw = NULL;
-
     moduleName =  rf.check("name", Value("eventBaseOpticalFlow"), "module name (String)").asString();
     setName(moduleName.c_str());
     //robotName = rf.check("robot", Value("icub"), "Robot name (string)").asString();
+
+    cout << moduleName << endl;
 
     retinaSizeC = RETINA_SIZE_C;
     retinaSizeR = RETINA_SIZE_R;
@@ -51,8 +59,13 @@ bool OpticalFlowModule::configure(ResourceFinder & rf){
                             Value("/events:i"),
                             "Input  event camera port (string)").asString();
 
+//    if (!inFlowPort.open(inPortName.c_str())){
+//        cerr << getName() << " : Sorry!! Unable to open input port to receive events from camera " << inPortName << endl;
+//        return false;
+//    }
+
     if (!inputPort->open(inPortName.c_str())){
-        cerr << getName() << " : Sorry!! Unable to open input port to receive events from camera" << inPortName << endl;
+        cerr << getName() << " : Sorry!! Unable to open input port to receive events from camera " << inPortName << endl;
         return false;
     }
     inputPort->useCallback();
@@ -92,6 +105,8 @@ bool OpticalFlowModule::configure(ResourceFinder & rf){
                                     << "you will not be able to see the world as I see :( " << endl;
     }
 
+
+
     mtrxRowNo = retinaSizeR + 2 * SPATIAL_MARGINE_ADDUP;
     mtrxClmnNo = retinaSizeC + 2 * SPATIAL_MARGINE_ADDUP;
 
@@ -101,46 +116,54 @@ bool OpticalFlowModule::configure(ResourceFinder & rf){
     timestamps.resize(mtrxRowNo, mtrxClmnNo);
     worldStatus.initialize(0);
     prevWorldStatus.initialize(0);
-    /*
-    updateTimes.resize(mtrxRowNo, mtrxClmnNo);
-    updateTimes.initialize(10);*/
+
+
 
     wrldFlw = new WorldOptFlow(inputPort, &outFlowPort, &bottleFlowPort,
-                               &worldStatus, &prevWorldStatus, &timestamps);
+                               &worldStatus, &prevWorldStatus, &timestamps, evntsMutex);
+    wrldFlw -> start();
 
     cout << "module " << getName() << ": configured successfully." << endl;
 
-    for (int i = 0; i < SPDerivative_WNDW_SZ; ++i) {
-        evntsMutex->wait();
-        wrldFlw -> initialize(i);
-    }
 
     return true;
 }
 
 bool OpticalFlowModule::interruptModule(){
+
+	cout << "calling Module interrupt ... " << endl;
+
     inputPort->interrupt();
     outFlowPort.interrupt();
     bottleFlowPort.interrupt();
     outWrldMdlPort.interrupt();
+
+    cout << "Module Interrupt ended." << endl;
     return true;
 }
 
 bool OpticalFlowModule::close(){
 
+	cout << " Module closing ...." << endl;
+
+	wrldFlw->stop();
+
     inputPort->close();
     outFlowPort.close();
     bottleFlowPort.close();
     outWrldMdlPort.close();
+
+	cout << "thread is stopped" << endl;
     cout << "Optical Flow Module: close function is called. " << endl;
     return true;
 }
 
 bool OpticalFlowModule::updateModule(){
-    if (evntsMutex->check()){
-	    wrldFlw->run();
+
+   // if (evntsMutex->check()){
+	//    wrldFlw->run();
 	    worldStatusRenderer();
-    }
+   // }
    return true;
 }
 
@@ -150,6 +173,7 @@ double OpticalFlowModule::getPeriod(){
 
 OpticalFlowModule::~OpticalFlowModule(){
 
+	cout << "calling module destructor "<< endl;
 
     if (wrldFlw != NULL)
         delete wrldFlw;
@@ -165,13 +189,16 @@ OpticalFlowModule::~OpticalFlowModule(){
 }
 
 void OpticalFlowModule::worldStatusRenderer(){
-	yarp::sig::ImageOf<yarp::sig::PixelMono16>& imgSnd=outWrldMdlPort.prepare();
-	imgSnd.resize(128,128);
-	 for (int i = 0; i < retinaSizeC; ++i) {
-		for (int j = 0; j < retinaSizeR; ++j) {
-			imgSnd (i,j) = worldStatus(j+SPATIAL_MARGINE_ADDUP,i+SPATIAL_MARGINE_ADDUP)+127;
-		}
-	 }
-	 outWrldMdlPort.write();
+
+	if (outWrldMdlPort.getOutputCount()) {
+		yarp::sig::ImageOf<yarp::sig::PixelMono16>& imgSnd=outWrldMdlPort.prepare();
+		imgSnd.resize(128,128);
+		 for (int i = 0; i < retinaSizeC; ++i) {
+			for (int j = 0; j < retinaSizeR; ++j) {
+				imgSnd (i,j) = worldStatus(j+SPATIAL_MARGINE_ADDUP,i+SPATIAL_MARGINE_ADDUP)+127;
+			}
+		 }
+		 outWrldMdlPort.write();
+	}
 
 }

@@ -31,21 +31,29 @@ AERGrabber::AERGrabber(yarp::os::Semaphore * sigEvents, unsigned long t)
     offTimestamps.resize(RETINA_SIZE_R + 2*RELIABLE_NGHBRHD, RETINA_SIZE_C + 2*RELIABLE_NGHBRHD);
     offTimestamps.initialize(0);
 
-    //TODO evtBuffer.reserve();
-    //TODO evtFrame.reserve();
+    //revtBuffer.reserve(100);
+    //evtFrame.reserve(2000);
 
 }
 
-
 void AERGrabber::onRead(eventBuffer & eBuffer){
-    unmask unmasker;
+
+//	readJEAR(eBuffer);
+//	return;
+
     int eventNo;
     short cartX, cartY, polarity, camera;
     short evntRowIdx, evntClmnIdx;
     unsigned long tsPacket, timestamp, wraparounTS;
     unsigned long blob;
 
-   eventNo = eBuffer.get_sizeOfPacket()/4;
+
+    if (evtBuffer.size() > 50)
+            return;
+
+    eventNo = eBuffer.get_sizeOfPacket()/4;
+
+ //   cout << "eventNo" << eventNo << endl;
 
     uint32_t* buf2 = (uint32_t*) eBuffer.get_packet();
     for (int evt = 0; evt < eventNo; ) {
@@ -96,12 +104,70 @@ void AERGrabber::onRead(eventBuffer & eBuffer){
             }
 //            else
 //                freeBuffer(evtFrame);
-            
-
         }
 
     }
 
+}
+
+
+void AERGrabber::readJEAR(eventBuffer & eBuffer){
+
+	int eventNo;
+	short cartX, cartY, polarity, camera;
+	short evntRowIdx, evntClmnIdx;
+	unsigned long tsPacket, timestamp, wraparounTS;
+	unsigned long blob;
+
+	eventNo = eBuffer.get_sizeOfPacket()/4;
+
+	if (evtBuffer.size() > 50)
+	    return;
+
+//	cout << "event No : " << eventNo << endl;
+
+	uint32_t* buf2 = (uint32_t*) eBuffer.get_packet();
+	for (int evt = 0; evt < eventNo; ) {
+		// unmask the data ( first 4 bytes timestamp, second 4 bytes address)
+		blob = buf2[evt++];
+		timestamp = buf2[evt++];
+		blob &= 0xFFFF; // here we zero the higher two bytes of the address!!! Only lower 16bits used!
+		unmasker.unmaskEvent((unsigned int) blob, cartY, cartX, polarity, camera);
+	    cartY = 127 - cartY;
+	   // cartX = 127 - cartX;
+
+		//printf("%08X %08X\n",blob,tsPacket);
+
+		if (blob == 0 /*|| polarity==-1*/) // 0, to work with Right camera -- -1, to work with the left one
+		  continue;// not consider the other camera
+
+
+		//if it's a real event create CameraEvent and put it in the buffer using semaphore eBufferMutex
+		if (isReliableEvent(cartY, cartX, polarity, timestamp)){
+			evntClmnIdx = cartX  + SPATIAL_MARGINE_ADDUP;
+			evntRowIdx = cartY  + SPATIAL_MARGINE_ADDUP;
+//            if (lastIdx < BUFFER_SIZE){
+				CameraEvent * evnt = new CameraEvent(evntRowIdx, evntClmnIdx, polarity, timestamp);
+				evtFrame.push_back(evnt);
+//            }
+		}
+
+//		cout << cartX << " "  << cartY << " "  << polarity << " " << timestamp << endl;
+
+		if (timestamp - lastFrameTS > frameInv){ // when timeInv(nano secons) passes, send a signal
+			lastFrameTS= timestamp;
+			if (evtFrame.size() > 0){
+			   eBufferMutex.wait();
+			   evtBuffer.push(evtFrame);
+			   eBufferMutex.post();
+			   evntsMutex ->post();
+			   evtFrame.clear();
+			}
+//            else
+//                freeBuffer(evtFrame);
+		}
+
+	}
 
 
 }
@@ -143,17 +209,13 @@ CameraEvent ** AERGrabber::getEvents(int & evenNo){
     CameraEvent ** result = NULL;
     CameraEvent ** ptr;
     evenNo = 0;
-int tmp;  //added 
 
     vector< CameraEvent * > eFrame;
 
-
     eBufferMutex.wait();
-    tmp = evtBuffer.size();  //added
     eFrame = evtBuffer.front();
     evtBuffer.pop();
     eBufferMutex.post();
-cout << tmp << "   "  << eFrame.size() << endl; //added
 
     evenNo = eFrame.size();
 

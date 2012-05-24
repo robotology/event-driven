@@ -49,9 +49,9 @@ class AERGrabber : public yarp::os::BufferedPort <eventBuffer> {
 
 
     yarp::os::Semaphore eBufferMutex;     /* a semaphore to access evntBuffer and firstIdx and lastIdx
-                                              -- is used in onRead and getEvents function*/
+                                              -- It's used inside the class: onRead and getEvents functions*/
 
-    yarp::os::Semaphore * evntsMutex;
+    yarp::os::Semaphore * evntsMutex;    /* send a signal to OpticalFlowModule when there is a package of new data*/
 
 
     MyMatrix<TIMESTAMP_TYPE> offTimestamps;          /* stores the the last event's timestamp
@@ -60,7 +60,7 @@ class AERGrabber : public yarp::os::BufferedPort <eventBuffer> {
     MyMatrix<TIMESTAMP_TYPE> onTimestamps;          /* stores the the last event's timestamp
                                                             at each pixel*/
 
-
+    unmask unmasker;
 
     unsigned long wrapAddup;
     unsigned long lastFrameTS;
@@ -76,6 +76,8 @@ public:
     ~AERGrabber();
 
     virtual void onRead(eventBuffer & eBuffer);
+    void readJEAR(eventBuffer & eBuffer);
+
 
     CameraEvent ** getEvents(int & evenNo);
 

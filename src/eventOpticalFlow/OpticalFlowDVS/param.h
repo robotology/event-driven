@@ -28,10 +28,15 @@
 
 #define SPDerivative_WNDW_SZ 5
 
-#define POLARITY_WEIGHT  20
+#define POLARITY_WEIGHT  30
 
+// For ICub Sensor
 #define RELIABLE_EVENT_THRSHLD 6250// 93750 // 12500 //   31250 //  18750 // 6250 // 3125 //
+// For DVS Sensor
+//#define RELIABLE_EVENT_THRSHLD 3000
+
 #define RELIABLE_NGHBRHD  1
+
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++
 
