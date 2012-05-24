@@ -42,6 +42,7 @@ class VelocityBuffer : public yarp::os::Portable{
     short Ys[BUFFER_LENGTH];
     double Vxs[BUFFER_LENGTH];
     double Vys[BUFFER_LENGTH];
+    unsigned long TSs [BUFFER_LENGTH];
 public:
 
     VelocityBuffer();
@@ -51,8 +52,8 @@ public:
     virtual bool write(ConnectionWriter &);
 
     void setData(const VelocityBuffer &src);
-    bool addData(short, short, double, double);
-    bool addDataCheckFull(short, short, double, double);
+    bool addData(short, short, double, double,  unsigned long );
+    bool addDataCheckFull(short, short, double, double, unsigned long );
     bool isFull();
     bool isEmpty();
     void emptyBuffer();
@@ -62,7 +63,7 @@ public:
     inline short getY(int idx){return Ys[idx];};
     inline double getVx(int idx){return Vxs[idx];};
     inline double getVy(int idx){return Vys[idx];};
-
+    inline unsigned long getTs(int idx){return TSs[idx];};
 
     double getVxMin();
     double getVxMax();

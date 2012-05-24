@@ -207,8 +207,8 @@ void flowViewer::run(VelocityBuffer& data)
     size = data.getSize();
    
 
-    ax = 20 / data.getVxMax();
-    ay = 20 / data.getVyMax();
+    ax = (data.getVxMax() == 0 ? 1 : 20 / data.getVxMax());
+    ay = (data.getVyMax() == 0 ? 1 : 20 / data.getVyMax());
 
     //printf("%d  %lf  %lf\n",size,ax ,ay);
 
@@ -225,6 +225,8 @@ void flowViewer::run(VelocityBuffer& data)
         vvy = ay * vy; //vvy = ay * abs(vy) + by; //
 
         norm=vx*vx+vy*vy;
+
+//        cout << norm << endl;
         if (norm>0.0){
 //        if (vvx != 0 || vvy != 0)
 //        {
@@ -236,6 +238,8 @@ void flowViewer::run(VelocityBuffer& data)
 
             hx=X+int(vvx+0.5); //hx=X+int(norm*vx+0.5);//
             hy=Y+int(vvy+0.5); //hy=Y+int(norm*vy+0.5);//
+
+            cout << hx << " " << hy << " " << vvx << " " << vvy << endl;
 
             static const yarp::sig::PixelMono16 black=0;
             static const yarp::sig::PixelMono16 white=255;

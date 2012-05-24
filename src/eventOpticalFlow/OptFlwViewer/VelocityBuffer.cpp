@@ -22,13 +22,13 @@
 
 VelocityBuffer::VelocityBuffer(){
     vxMin = DBL_MAX;
-    vxMax = DBL_MIN;
+    vxMax = -1;
     vyMin = DBL_MAX;
-    vyMax = DBL_MIN;
+    vyMax = -1;
     size = 0;
 }
 
-bool VelocityBuffer::addData(short x, short y, double vx, double vy){
+bool VelocityBuffer::addData(short x, short y, double vx, double vy, unsigned long ts){
     double tmp;
     if (size >= BUFFER_LENGTH)
         return false;
@@ -50,18 +50,20 @@ bool VelocityBuffer::addData(short x, short y, double vx, double vy){
     Ys[size] = y;
     Vxs[size] = vx;
     Vys[size] = vy;
+    TSs[size] = ts;
     size++;
     return true;
 }
 
 VelocityBuffer::~VelocityBuffer(){}
 
-bool VelocityBuffer::addDataCheckFull(short x, short y, double vx, double vy){
+bool VelocityBuffer::addDataCheckFull(short x, short y, double vx, double vy, unsigned long ts){
     double tmp;
     Xs[size] = x;
     Ys[size] = y;
     Vxs[size] = vx;
     Vys[size] = vy;
+    TSs[size] = ts;
     size++;
 
     //std::cout << x << " " << y << " " << vx << " " << vy << std::endl;
@@ -116,10 +118,15 @@ bool VelocityBuffer::read(ConnectionReader & connection){
     for (int i = 0; i < size; ++i) {
        Vys[i] = connection.expectDouble();
     }
+    for (int i = 0; i < size; ++i) {
+	   TSs[i] = (unsigned long) connection.expectInt();
+	}
+
     vxMin = connection.expectDouble();
     vxMax = connection.expectDouble();
     vyMin = connection.expectDouble();
     vyMax = connection.expectDouble();
+
     return true;
 }
 
@@ -138,6 +145,10 @@ bool VelocityBuffer::write(ConnectionWriter & connection){
     for (int i = 0; i < size; ++i) {
         connection.appendDouble(Vys[i]);
     }
+    for (int i = 0; i < size; ++i) {
+		connection.appendInt((int) TSs[i]);
+	}
+
     connection.appendDouble(vxMin);
     connection.appendDouble(vxMax);
     connection.appendDouble(vyMin);
@@ -153,6 +164,7 @@ void VelocityBuffer::setData(const VelocityBuffer & src){
         Ys[i]=src.Ys[i];
         Vxs[i]=src.Vxs[i];
         Vys[i]=src.Vys[i];
+        TSs[i] = src.TSs[i];
     }
 
     vxMin = src.vxMin;
