@@ -124,8 +124,8 @@ void WorldOptFlow::run(){
         eventNosBuffer[eventBuffersSize - 1] = eventNo;
         //directWrldStus(eventsBfr, eventNo);
 
-//        updtWrldStus();
-        clock_t start= clock();
+        updtWrldStus();
+//        clock_t start= clock();
         calVelocities(eventsBfr, eventNo);
 //        clock_t end = clock();
 //        double elapsed = ( (double) (end - start) ) / CLOCKS_PER_SEC;

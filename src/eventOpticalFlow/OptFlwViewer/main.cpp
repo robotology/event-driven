@@ -11,7 +11,7 @@
 using namespace std;
 using namespace yarp::os;
 
-#define VEL_BFR_SIZE 20
+#define VEL_BFR_SIZE 50
 
 class VelocityGrabber: public BufferedPort<VelocityBuffer>{
 
