@@ -48,8 +48,8 @@ void AERGrabber::onRead(eventBuffer & eBuffer){
     unsigned long blob;
 
 
-    if (evtBuffer.size() > 50)
-            return;
+//    if (evtBuffer.size() > 50)
+//            return;
 
     eventNo = eBuffer.get_sizeOfPacket()/4;
 

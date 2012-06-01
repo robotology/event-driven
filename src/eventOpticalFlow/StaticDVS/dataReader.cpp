@@ -269,17 +269,25 @@ public:
         	dvsCam = true;
         else
         	dvsCam = false;
-		cout << "dvsCam " << dvsCam << endl;
 
-
-        bufferSize = 2048;	; // 16384 -> 2048 events, 8192 bytes -> 1024 events , 4096-> 512 events
+        bufferSize = 1024;	; // 16384 -> 2048 events, 8192 bytes -> 1024 events , 4096-> 512 events
 
         if (dvsCam){
             inFile.open(inFileName.c_str(), ifstream::in);
+            if ( inFile.fail() ){  //The file is not opened correctly
+                cerr << "Sorry! cannot open the input file. "<< endl;
+                return false;
+            }
+
             inFile >> datam;
         }
         else{
         	inFile.open(inFileName.c_str(), ifstream::binary);
+        	if ( inFile.fail() ){ //The file is not opened correctly
+        	    cerr << "Sorry! cannot open the input file. "<< endl;
+        	    return false;
+        	}
+
         	if (jearFileType == 2)
                readHeaderFile();
 
@@ -318,7 +326,7 @@ public:
     double getPeriod()
     {
        /* module periodicity (seconds), called implicitly by myModule */
-       return .05;
+       return .005;
     }
 
     bool interruptModule(){

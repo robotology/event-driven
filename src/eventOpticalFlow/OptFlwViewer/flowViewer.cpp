@@ -210,7 +210,7 @@ void flowViewer::run(VelocityBuffer& data)
     ax = (data.getVxMax() == 0 ? 1 : 20 / data.getVxMax());
     ay = (data.getVyMax() == 0 ? 1 : 20 / data.getVyMax());
 
-    //printf("%d  %lf  %lf\n",size,ax ,ay);
+
 
     for (int i = 0; i < size; ++i) {
         x = data.getX(i);
@@ -221,25 +221,18 @@ void flowViewer::run(VelocityBuffer& data)
 //        xVels(x+MEDIAN_NGHBRHD, y+MEDIAN_NGHBRHD) = vx;
 //        yVels(x+MEDIAN_NGHBRHD, y+MEDIAN_NGHBRHD) = vy;
 
-        vvx = ax * vx; //vvx = ax * abs(vx) + bx;//
-        vvy = ay * vy; //vvy = ay * abs(vy) + by; //
-
+        vvx = ax * vx;
+        vvy = ay * vy;
         norm=vx*vx+vy*vy;
 
 //        cout << norm << endl;
         if (norm>0.0){
-//        if (vvx != 0 || vvy != 0)
-//        {
-            //std::cout << x << " " << y << " " << vx << " " << vy << std::endl;
+
             X=5+10*x;
             Y=5+10*y;
-        //    norm=50.0/sqrt(norm);
-            //norm = 40000000;
 
-            hx=X+int(vvx+0.5); //hx=X+int(norm*vx+0.5);//
-            hy=Y+int(vvy+0.5); //hy=Y+int(norm*vy+0.5);//
-
-            cout << hx << " " << hy << " " << vvx << " " << vvy << endl;
+            hx=X+int(vvx+0.5);
+            hy=Y+int(vvy+0.5);
 
             static const yarp::sig::PixelMono16 black=0;
             static const yarp::sig::PixelMono16 white=255;
@@ -251,12 +244,6 @@ void flowViewer::run(VelocityBuffer& data)
 
     }
 
-
-    //printf("%d  %d  %lf  %lf\n",x,y,vx,vy);
-    //fflush(stdout);
-    
-
-    //mBaseImg = img;
     outPort->write();
 
 
