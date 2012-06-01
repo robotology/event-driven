@@ -22,7 +22,7 @@ WorldOptFlow::WorldOptFlow(AERGrabber * inPortPtr,
                      BufferedPort<VelocityBuffer> * outFlowPort,  BufferedPort<Bottle> * outBottlePort,
                      MyMatrix<POLARITY_TYPE> * wStatus, MyMatrix<POLARITY_TYPE> * pWStatus,
                      MyMatrix<TIMESTAMP_TYPE> * ts, yarp::os::Semaphore * eventsSignal)
-                       : RateThread(100), localFlw(LUCAS_KANADE_NGHBR) {
+                       : RateThread(1), localFlw(LUCAS_KANADE_NGHBR) {
     inPort = inPortPtr;
     worldStatus = wStatus;
     prevWorldStatus = pWStatus;
@@ -124,8 +124,14 @@ void WorldOptFlow::run(){
         eventNosBuffer[eventBuffersSize - 1] = eventNo;
         //directWrldStus(eventsBfr, eventNo);
 
-        updtWrldStus();
+//        updtWrldStus();
+        clock_t start= clock();
         calVelocities(eventsBfr, eventNo);
+//        clock_t end = clock();
+//        double elapsed = ( (double) (end - start) ) / CLOCKS_PER_SEC;
+//        cout.precision(10);
+//        cout << "time :  " << elapsed << " " << eventNo << endl;
+
         prevWorldStatus->updateMatrix(worldStatus);
 
 

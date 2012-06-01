@@ -21,6 +21,8 @@
 #include <yarp/os/RateThread.h>
 #include <yarp/os/Semaphore.h>
 
+#include <time.h>
+
 #include "MyMatrix.h"
 #include "param.h"
 #include "LKLocalFlow.h"
