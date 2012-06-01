@@ -1,13 +1,20 @@
 <application>
-<name>eventOptFlwApp</name>
+<name>OptFlw-fromfile</name>
 
 <dependencies>
 </dependencies>
 
 <module>
+   <name>StaticDVS</name>
+   <parameters>  --inFile dump.txt --name artRetina </parameters>
+   <node>localhost</node>
+   <tag>StatDVS</tag>
+</module>
+
+<module>
    <name>eventOpticalFlow</name>
    <parameters> --name flow </parameters>
-   <node>ikart</node>
+   <node>localhost</node>
    <tag>OptFlw</tag>
 </module>
 
@@ -16,13 +23,6 @@
    <parameters> --name OptFlViewer </parameters>
    <node>localhost</node>
    <tag>OptFlwViewer</tag>
-</module>
-
-<module>
-   <name>FOEFinder</name>
-   <parameters> --name foe </parameters>
-   <node>localhost</node>
-   <tag>foeFinder</tag>
 </module>
 
 <module>
@@ -40,17 +40,8 @@
    <tag>ImageBuffer</tag>
 </module>
 
-
-<module>
-   <name>yarpview</name>
-   <parameters>--name /foeViewer --x 350 --ysixe 750 --synch </parameters>
-   <node>localhost</node>
-   <tag>foeViewer</tag>
-</module>
-
-
 <connection>
-  <from>/icub/retina0:o</from>
+  <from>/eventReader/artificialRetina0:o</from>
   <to>/flow/events:i</to>
   <protocol>tcp</protocol>
 </connection>
@@ -58,7 +49,7 @@
 <connection>
   <from>/flow/worldView:o</from>
   <to>/Image</to>
-  <protocol>tcp</protocol>
+  <protocol>udp</protocol>
 </connection>
 
 <connection>
@@ -70,19 +61,6 @@
 <connection>
   <from>/OptFlViewer/vels:o</from>
   <to>/Flows</to>
-  <protocol>udp</protocol>
-</connection>
-
-
-<connection>
-  <from>/flow/opticalFlow:o</from>
-  <to>/foe/vels:i</to>
-  <protocol>udp</protocol>
-</connection>
-
-<connection>
-  <from>/foe/FOEMap:o</from>
-  <to>/foeViewer</to>
   <protocol>udp</protocol>
 </connection>
 
