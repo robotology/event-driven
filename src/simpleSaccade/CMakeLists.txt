@@ -32,19 +32,19 @@ TARGET_LINK_LIBRARIES(tutorial_eyeControl ${YARP_LIBRARIES})
 #ADD_EXECUTABLE(test_icubVis smoke-tests/icubVis.cpp)
 #TARGET_LINK_LIBRARIES(test_icubVis ${YARP_LIBRARIES} iCubVis)
 
-IF(ICUB_USE_IPOPT)
-    ADD_EXECUTABLE(test_ipopt smoke-tests/ipopt.cpp)
-    TARGET_LINK_LIBRARIES(test_ipopt ${YARP_LIBRARIES} iKin)
-ENDIF()
+#IF(ICUB_USE_IPOPT)
+#    ADD_EXECUTABLE(test_ipopt smoke-tests/ipopt.cpp)
+#    TARGET_LINK_LIBRARIES(test_ipopt ${YARP_LIBRARIES} iKin)
+#ENDIF()
 
 ### execute tests
-GET_TARGET_PROPERTY(EXELOC test_icubVis LOCATION_RELEASE)
-ADD_TEST(test_icubVis ${EXELOC})
+#GET_TARGET_PROPERTY(EXELOC test_icubVis LOCATION_RELEASE)
+#ADD_TEST(test_icubVis ${EXELOC})
 
-IF(ICUB_USE_IPOPT)
-    GET_TARGET_PROPERTY(EXELOC test_ipopt LOCATION_RELEASE)
-    ADD_TEST(test_ipopt ${EXELOC})
-ENDIF()
+#IF(ICUB_USE_IPOPT)
+#    GET_TARGET_PROPERTY(EXELOC test_ipopt LOCATION_RELEASE)
+#    ADD_TEST(test_ipopt ${EXELOC})
+#ENDIF()
 ###################### end of test specific code
 
 
