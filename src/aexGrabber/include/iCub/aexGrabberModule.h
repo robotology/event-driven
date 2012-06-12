@@ -176,7 +176,7 @@
 #define COMMAND_VOCAB_INJGND  VOCAB4('i','n','j','g')
 #define COMMAND_VOCAB_CAS     VOCAB3('c','a','s')
 #define COMMAND_VOCAB_BIAS    VOCAB4('b','i','a','s')
-
+#define COMMAND_VOCAB_SYNC    VOCAB4('s','y','n','c')
 
 #include <iostream>
 #include <string>

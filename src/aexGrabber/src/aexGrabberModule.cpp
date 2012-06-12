@@ -578,6 +578,16 @@ bool aexGrabberModule::respond(const Bottle& command, Bottle& reply) {
                 }
             }
             break;            
+        case COMMAND_VOCAB_SYNC:
+            rec = true;
+            printf("recognised the command SYNC \n");
+            {
+                    printf("request of adding the sync bit \n");
+                    D2Y->setSyncBit(true);
+                    printf("success in adding the sync bit \n");
+                    ok = true;
+            }
+            break;
         }
     }
     mutex.post();

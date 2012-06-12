@@ -336,6 +336,11 @@ public:
     * reference to the name of the file where events are dumped
     */
     bool setDumpFile(std::string value);
+    
+    /**
+    * add a bit to the adress to synchronize several records
+    */
+    void setSyncBit(bool value);
 
     /**
     * function that returns the bias for Left camera
@@ -470,6 +475,7 @@ private:
     std::string biasFileName;               // name of the file that contains the biases
     std::string dumpfile;                   // name of the file where events are going to be dumped
 
+    bool sync;                              // bool that indicates if the sync bit have to be add to the current addr
     bool save;                              // bool that indicates whether the 
     bool firstWrap;                         // flag that indicates the first wrap
     bool wrapOccured;                       // flag that indicates if in the block of events a TS_WA is present

@@ -13,6 +13,7 @@
 #define COMMAND_VOCAB_ON    VOCAB2('o','n')
 #define COMMAND_VOCAB_OFF   VOCAB3('o','f','f')
 #define COMMAND_VOCAB_DUMP  VOCAB4('d','u','m','p')
+#define COMMAND_VOCAB_DUMP  VOCAB4('s','y','n','c')
 
 using namespace yarp::dev;
 using namespace yarp::sig;
@@ -35,7 +36,11 @@ int main(int argc, char *argv[])
 
     Property params;
     params.fromCommand(argc, argv);
-
+    if(params.check("help"))
+    {
+        fprintf(stderr, "%s --robot robotName --loop numberOfLoop", argv[0]);
+    }
+    
     if (!params.check("robot"))
     {
         fprintf(stderr, "Please specify the name of the robot\n");
@@ -109,25 +114,10 @@ int main(int argc, char *argv[])
     
     //fisrst zero all joints
     //
-    command=0;
-    //now set the shoulder to some value
-    command[0]=0;
-    command[1]=0;
-    command[2]=0;
-    command[3]=0;
-    command[4]=0;
-    command[5]=0;
-
+    for(i=0; i<nj; i++)
+        command[i]=0;
     pos->positionMove(command.data());//(4,deg);
-    
-    bool done=false;
 
-    /*while(!done)
-    {
-        pos->checkMotionDone(&done);
-        Time::delay(0.1);
-    }
-*/
     int times=0;
     yarp::os::Bottle bot; //= _pOutPort->prepare();
     bot.clear();
@@ -136,6 +126,9 @@ int main(int argc, char *argv[])
     Bottle inOn;
     _pOutPort->write(bot,inOn);
     Time::delay(0.1);
+    
+    bot.clear();
+    bot.addVocab(COMMAND_VOCAB_SYNC);
     fprintf(stderr, "Start saccade(s), number of repetition: %d", nOl);
     while(times<nOl)
     {
@@ -194,6 +187,9 @@ int main(int argc, char *argv[])
             }
 */
     }
+    bot.clear();
+    bot.addVocab(COMMAND_VOCAB_SYNC);
+
     bot.clear();
     bot.addVocab(COMMAND_VOCAB_DUMP);
     bot.addVocab(COMMAND_VOCAB_OFF);

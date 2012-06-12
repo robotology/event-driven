@@ -264,6 +264,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName =
 #endif
      
     save = false;
+    sync = false;
     // passing the parameter to the class variable
     this->portDeviceName = portDeviceName;
     this->biasFileName   = i_fileName;
@@ -806,6 +807,11 @@ void  device2yarp::run() {
             countInWraps++;
             
             a &= 0x0000FFFF; //removing extra bits which do not match the protocol
+            if(sync)
+            {
+                a|=0x0001FFFF;
+                sync=false;
+            }
 
             if (save) {	  
                 fprintf(fout,"%08X \n",a);
@@ -1245,6 +1251,9 @@ bool device2yarp::setDumpFile(std::string value) {
         return false;
 }
 
+void device2yarp::setSyncBit(bool value) {
+    sync = value;
+}
 
 void device2yarp::threadRelease() {
     /* it is better not to set the powerdown at the end!
