@@ -13,7 +13,9 @@
 #define COMMAND_VOCAB_ON    VOCAB2('o','n')
 #define COMMAND_VOCAB_OFF   VOCAB3('o','f','f')
 #define COMMAND_VOCAB_DUMP  VOCAB4('d','u','m','p')
-#define COMMAND_VOCAB_DUMP  VOCAB4('s','y','n','c')
+#define COMMAND_VOCAB_SYNC  VOCAB4('s','y','n','c')
+
+#define DELTAENC 0.000001
 
 using namespace yarp::dev;
 using namespace yarp::sig;
@@ -21,7 +23,7 @@ using namespace yarp::os;
 
 void moveJoints(IPositionControl *_pos, Vector& _command)
 {
-    _pos->positionMove(_command.data());    
+    _pos->positionMove(_command.data());
     Time::delay(0.1);
 }
 
@@ -118,6 +120,10 @@ int main(int argc, char *argv[])
         command[i]=0;
     pos->positionMove(command.data());//(4,deg);
 
+    double startPos;
+    encs->getEncoder(4, &startPos);
+    bool first=true;
+
     int times=0;
     yarp::os::Bottle bot; //= _pOutPort->prepare();
     bot.clear();
@@ -125,10 +131,10 @@ int main(int argc, char *argv[])
     bot.addVocab(COMMAND_VOCAB_ON);
     Bottle inOn;
     _pOutPort->write(bot,inOn);
+    bot.clear();
+
     Time::delay(0.1);
     
-    bot.clear();
-    bot.addVocab(COMMAND_VOCAB_SYNC);
     fprintf(stderr, "Start saccade(s), number of repetition: %d", nOl);
     while(times<nOl)
     {
@@ -159,7 +165,22 @@ int main(int argc, char *argv[])
 
 	/*Horizontal saccade*/
 	command[4]=-5;
-	moveJoints(pos, command);
+	//moveJoints(pos, command);
+    pos->positionMove(command.data());
+    if(first)
+    {
+        first=false;
+        double curPos;
+        encs->getEncoder(4, &curPos);
+        while((curPos>=startPos-DELTAENC) && (curPos<=startPos+DELTAENC))
+        {
+            encs->getEncoder(4, &curPos);
+            bot.addVocab(COMMAND_VOCAB_SYNC);
+        }
+    }
+    Time::delay(0.1);
+
+
 	/*command[4]=0;
 	moveJoints(pos, command);*/
 	command[4]=5;
