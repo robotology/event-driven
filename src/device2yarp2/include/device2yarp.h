@@ -9,6 +9,7 @@
 #include <iostream>
 #include <sstream>
 #include <cstdlib>
+#include <unistd.h>
 
 #include "sending_buffer.h"
 

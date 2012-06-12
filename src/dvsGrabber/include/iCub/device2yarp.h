@@ -36,6 +36,7 @@
 #include <sstream>
 #include <cstdlib>
 #include <stdint.h>
+#include <unistd.h>
 
 #include <iCub/emorph/eventBuffer.h>
 #include <iCub/emorph/eventCodec.h>

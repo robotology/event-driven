@@ -809,7 +809,7 @@ void  device2yarp::run() {
             a &= 0x0000FFFF; //removing extra bits which do not match the protocol
             if(sync)
             {
-                a|=0x0001FFFF;
+                a+=0x00010000;
                 sync=false;
             }
 
