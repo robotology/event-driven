@@ -217,7 +217,6 @@ eEvent *factoryHoughEvent(const Bottle &packets, const int pos=0)
     HoughEvent *pEvent=new HoughEvent(packets,pos);
     if (!pEvent->isValid())
     {
-        printf("factoryHoughEvent: not valid event \n");
         delete pEvent;
         return NULL;
     }
@@ -255,7 +254,6 @@ bool eEvent::decode(const Bottle &packets, eEventQueue &events)
         
 
         if (pEvent==NULL) {
-            printf(" null event in position %d \n", pos);
             return false;
         }
 
