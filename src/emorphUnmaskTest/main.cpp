@@ -156,6 +156,13 @@ int main()
     cle3df3.setYVel(43);
     cout<<cle3df3.getContent().toString().c_str()<<endl;
 
+    HoughEvent hge;
+    hge.setChannel(1);
+    hge.setRadius(4);
+    hge.setXCoc(11);
+    hge.setYCoc(87);
+    cout<<hge.getContent().toString().c_str()<<endl;
+
     // keep trace of sent events
     // but set ownership to false since
     // events have been defined statically
@@ -173,6 +180,7 @@ int main()
     txQueue.push_back(&cle3df1);
     txQueue.push_back(&cle3df2);
     txQueue.push_back(&cle3df3);
+    txQueue.push_back(&hge);
 
     cout<<endl;
 
