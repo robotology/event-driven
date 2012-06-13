@@ -160,7 +160,8 @@ int main(int argc, char *argv[])
             encs->getEncoder(4, &curPos);
         }
         bot.addVocab(COMMAND_VOCAB_SYNC);
-        _pOutPort->write(bot,inOn);
+        Bottle inStart;
+        _pOutPort->write(bot,inStart);
         first=false;
     }
     Time::delay(0.1);
@@ -197,7 +198,8 @@ int main(int argc, char *argv[])
     }
     bot.clear();
     bot.addVocab(COMMAND_VOCAB_SYNC);
-    _pOutPort->write(bot,inOn);
+    Bottle inEnd;
+    _pOutPort->write(bot,inEnd);
 
     bot.clear();
     bot.addVocab(COMMAND_VOCAB_DUMP);
