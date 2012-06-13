@@ -38,13 +38,13 @@
 
 class plotterThread : public yarp::os::RateThread {
 private:    
-    int count;                          // loop counter of the thread
+    int count;                            // loop counter of the thread
     //float lambda;                       // integration factor
     //int width, height;                  // dimension of the extended input image (extending)
     //int height_orig, width_orig;        // original dimension of the input and output images
-    int retinalSize;                     // dimension of the squared retina
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > leftPort;                 // port whre the output (left) is sent
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > rightPort;                // port whre the output (right) is sent
+    int retinalSize;                      // dimension of the squared retina
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> > leftPort;                 // port whre the output (left) is sent
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> > rightPort;                // port whre the output (right) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > leftIntPort;              // port whre the output (left integral) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > rightIntPort;             // port whre the output (right integral) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > leftGrayPort;              // port whre the output (left integral) is sent
@@ -53,8 +53,8 @@ private:
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > rightThresholdPort;             // port whre the output (r
 
     yarp::os::BufferedPort<yarp::sig::Vector > eventPort;
-    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeft;                                        //image representing the signal on the leftcamera
-    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRight;                                       //image representing the signal on the right camera
+    yarp::sig::ImageOf<yarp::sig::PixelRgb>* imageLeft;                                        //image representing the signal on the leftcamera
+    yarp::sig::ImageOf<yarp::sig::PixelRgb>* imageRight;                                       //image representing the signal on the right camera
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeftBW;                                       //image representing the signal on the right camera
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRightBW;                                       //image representing the signal on the right camera   
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeftInt;                                     //image representing the signal on the leftcamera (integrated)

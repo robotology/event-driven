@@ -37,8 +37,7 @@ using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
-#define THRATE 30
-//#define retinalSize 128
+#define THRATE 25
 
 plotterThread::plotterThread() : RateThread(THRATE) {
     synchronised = false;
@@ -53,18 +52,18 @@ plotterThread::~plotterThread() {
 bool plotterThread::threadInit() {
     printf("\n starting the thread.... \n");
     // opening ports 
-    leftPort.open(getName("/left:o").c_str());
-    rightPort.open(getName("/right:o").c_str());
-    leftIntPort.open(getName("/leftInt:o").c_str());
-    rightIntPort.open(getName("/rightInt:o").c_str());
-    leftGrayPort.open(getName("/leftGrey:o").c_str());
-    rightGrayPort.open(getName("/rightGrey:o").c_str());
-    eventPort.open(getName("/event:o").c_str());
+    leftPort.open      (getName("/left:o").c_str());
+    rightPort.open     (getName("/right:o").c_str());
+    leftIntPort.open   (getName("/leftInt:o").c_str());
+    rightIntPort.open  (getName("/rightInt:o").c_str());
+    leftGrayPort.open  (getName("/leftGrey:o").c_str());
+    rightGrayPort.open (getName("/rightGrey:o").c_str());
+    eventPort.open     (getName("/event:o").c_str());
 
     // initialising images
-    imageLeft      = new ImageOf<PixelMono>;
+    imageLeft      = new ImageOf<PixelRgb>;
     imageLeft->resize(retinalSize,retinalSize);
-    imageRight     = new ImageOf<PixelMono>;
+    imageRight     = new ImageOf<PixelRgb>;
     imageRight->resize(retinalSize,retinalSize);
     imageLeftInt   = new ImageOf<PixelMono>;
     imageLeftInt->resize(retinalSize,retinalSize);
@@ -100,6 +99,10 @@ void plotterThread::interrupt() {
     leftIntPort.interrupt();
     rightPort.interrupt();
     rightIntPort.interrupt();
+    leftGrayPort.interrupt();
+    rightGrayPort.interrupt();
+    eventPort.interrupt();
+
 }
 
 void plotterThread::setName(string str) {
@@ -261,7 +264,7 @@ int plotterThread::integrateImage(ImageOf<PixelMono>* imageIn, ImageOf<PixelMono
                 }
                 if ((*pimageout!=127) && (*pimagein == 127)){
                     *pimageout = 127;
-                }	 	     
+                }
                 
                 if(*pimageout > 128) {
                     *pimagebw = 255;
@@ -334,30 +337,33 @@ int plotterThread::integrateImage(ImageOf<PixelMono>* imageIn, ImageOf<PixelMono
 
 
 void plotterThread::threadRelease() {
-  printf("plotterThread: portClosing \n");  
-  leftPort.close();
-  leftIntPort.close();
-  rightPort.close();
-  rightIntPort.close();
+    printf("plotterThread: portClosing \n");  
+    leftPort.close();
+    leftIntPort.close();
+    rightPort.close();
+    rightIntPort.close();
+    leftGrayPort.close();
+    rightGrayPort.close();
+    eventPort.close();
 
-  printf("freeing memory \n");
- 
-  delete imageLeft;
-  delete imageRight;
-  printf("freed images \n");
-  delete imageLeftInt;
-  delete imageRightInt;
-  printf("freed integrated images \n");
-  delete imageLeftBW;
-  delete imageRightBW;
-  printf("freed bw images \n");
-  delete imageLeftGrey;
-  delete imageRightGrey;
-  printf("freed grey images \n");
-  delete imageLeftThreshold;
-  delete imageRightThreshold;
+    printf("freeing memory \n");
 
-  printf("success in release the plotter thread \n");
+    delete imageLeft;
+    delete imageRight;
+    printf("freed images \n");
+    delete imageLeftInt;
+    delete imageRightInt;
+    printf("freed integrated images \n");
+    delete imageLeftBW;
+    delete imageRightBW;
+    printf("freed bw images \n");
+    delete imageLeftGrey;
+    delete imageRightGrey;
+    printf("freed grey images \n");
+    delete imageLeftThreshold;
+    delete imageRightThreshold;
+
+    printf("success in release the plotter thread \n");
 }
 
 
