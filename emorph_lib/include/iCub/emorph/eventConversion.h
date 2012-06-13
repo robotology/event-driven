@@ -17,7 +17,7 @@
 #include <iostream>
 #include <sstream>
 #include <ctime>
-#include <inttypes.h>
+//#include <inttypes.h>
 #include <yarp/os/all.h>
 
 //#define u32 uint32_t

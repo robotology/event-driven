@@ -27,7 +27,7 @@
 
 #include <cassert>
 #include <cstring>
-#include <inttypes.h>
+//#include <inttypes.h>
 
 using namespace std;
 using namespace yarp::os;
@@ -315,7 +315,7 @@ void unmask::unmaskData(Bottle* packets) {
     //create a pointer that points every 4 bytes and 2 bytes (DVS mode) 
     //uint32_t* buf2 = (uint32_t*)i_buffer;
     //uint16_t* buf1 = (uint16_t*)i_buffer;
-    unsigned long timestamp;
+    //unsigned long timestamp;
           
     //eldesttimestamp = 0;
     int i = 0;
@@ -414,7 +414,7 @@ void unmask::unmaskData(Bottle* packets,eEventQueue* q ) {
     //create a pointer that points every 4 bytes and 2 bytes (DVS mode) 
     //uint32_t* buf2 = (uint32_t*)i_buffer;
     //uint16_t* buf1 = (uint16_t*)i_buffer;
-    unsigned long timestamp;
+    //unsigned long timestamp;
           
     //eldesttimestamp = 0;
     int i = 0;
@@ -454,7 +454,7 @@ int unmask::unmaskData(char* i_buffer, int i_sz, AER_struct* output) {
     //assert(num_events % 8 == 0);
     int num_events = i_sz / 8;
     //create a pointer that points every 4 bytes
-    uint32_t* buf2 = (uint32_t*)i_buffer;
+    u32* buf2 = (u32*)i_buffer;
     //eldesttimestamp = 0;
     int i = 0;
     for (int evt = 0; evt < num_events; evt++) {
@@ -508,7 +508,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz, aer* output) {
     //assert(num_events % 8 == 0);
     int num_events = i_sz / 8;
     //create a pointer that points every 4 bytes
-    uint32_t* buf2 = (uint32_t*)i_buffer;
+    u32* buf2 = (u32*)i_buffer;
     //eldesttimestamp = 0;
     int i = 0;
     for (int evt = 0; evt < num_events; evt++) {
@@ -556,7 +556,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
     //assert(num_events % 8 == 0);
     int num_events = i_sz / 8;
     //create a pointer that points every 4 bytes
-    uint32_t* buf2 = (uint32_t*)i_buffer;
+    u32* buf2 = (u32*)i_buffer;
     //eldesttimestamp = 0;
     int i = 0;
     for (int evt = 0; evt < num_events; evt++) {
