@@ -1,3 +1,5 @@
+// -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
+
 /* 
  * Copyright (C) 2011 Department of Robotics Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
  * Author: Ugo Pattacini
@@ -454,6 +456,54 @@ public:
 
     int getLength() const { return 4; }
     bool operator==(const eEvent &event) { return operator==(dynamic_cast<const ClusterEvent3DFeatures3&>(event)); }
+    yarp::os::Bottle   encode() const;
+    yarp::os::Property getContent() const;
+};
+
+
+ /**************************************************************************/
+class HoughEvent : public eEvent
+{
+ protected:
+  int channel;             // reference to the camera                  (bit0)
+  int xCoc;                // x position of the center of the circle   (bit7-1)       
+  int yCoc;                // y position of the center of the circle   (bit15-8)
+  int radius;              // reference to the radius of the circle    (bit25-16)
+
+public:
+    HoughEvent();
+    HoughEvent(const HoughEvent &event);
+    HoughEvent(const yarp::os::Bottle &packets, const int pos=0);
+
+    HoughEvent &operator=(const HoughEvent &event);
+    bool operator==(const HoughEvent &event);
+
+    /* returns the camera that produced the Hough event */
+    int getChannel() const                 { return channel;            }
+
+    /* returns the radius of the circle */
+    int getRadius() const                  { return radius;             }
+
+    /* returns the x coordinate of the center of circle*/
+    int getXCoc() const                    { return xCoc;               }
+
+    /* returns the y coordinate of the center of circle*/
+    int getYCoc() const                    { return yCoc;               }
+
+    /*set channel information*/
+    void setChannel(const int channel)     { this->channel = channel;    }
+
+    /*set the radius information*/
+    void setRadius(const int radius)       { this->radius = radius;      }
+    
+    /*set the x coordinate of the center of circle */
+    void setXCoc(const int xCoc)           { this->xCoc = xCoc;          }
+
+    /*set the y coordinate of the center of circle */
+    void setYCoc(const int yCoc)           { this->yCoc = yCoc;          }
+
+    int getLength() const { return 1; }
+    bool operator==(const eEvent &event) { return operator==(dynamic_cast<const HoughEvent&>(event)); }
     yarp::os::Bottle   encode() const;
     yarp::os::Property getContent() const;
 };

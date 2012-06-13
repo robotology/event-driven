@@ -1,3 +1,5 @@
+// -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
+
 /* 
  * Copyright (C) 2011 Department of Robotics Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
  * Author: Ugo Pattacini
@@ -209,6 +211,19 @@ eEvent *factoryClusterEvent3DFeatures3(const Bottle &packets, const int pos=0)
         return static_cast<eEvent*>(pEvent);
 }
 
+/**************************************************************************/
+eEvent *factoryHoughEvent(const Bottle &packets, const int pos=0)
+{
+    HoughEvent *pEvent=new HoughEvent(packets,pos);
+    if (!pEvent->isValid())
+    {
+        delete pEvent;
+        return NULL;
+    }
+    else
+        return static_cast<eEvent*>(pEvent);
+}
+
 
 }
 
@@ -222,19 +237,21 @@ bool eEvent::decode(const Bottle &packets, eEventQueue &events)
     while (pos<packets.size())
     {
         eEvent *pEvent=NULL;
-        if (pEvent=factoryTimeStamp(packets,pos))                    { }
-        else if (pEvent=factoryAddressEvent(packets,pos))            { }
-        else if (pEvent=factoryAddressEventFeatures(packets,pos))    { }
-        else if (pEvent=factoryAddressEvent3D(packets,pos))          { }
-        else if (pEvent=factoryAddressEvent3DFeatures(packets,pos))  { }
-        else if (pEvent=factoryClusterEvent(packets,pos))            { }
-        else if (pEvent=factoryClusterEventFeatures1(packets,pos))   { }
-        else if (pEvent=factoryClusterEventFeatures2(packets,pos))   { }
-        else if (pEvent=factoryClusterEventFeatures3(packets,pos))   { }
-        else if (pEvent=factoryClusterEvent3D(packets,pos))          { }
-        else if (pEvent=factoryClusterEvent3DFeatures1(packets,pos)) { }
-        else if (pEvent=factoryClusterEvent3DFeatures2(packets,pos)) { }
-        else if (pEvent=factoryClusterEvent3DFeatures3(packets,pos)) { }
+        if      (pEvent = factoryTimeStamp(packets,pos))               { }
+        else if (pEvent = factoryAddressEvent(packets,pos))            { }
+        else if (pEvent = factoryAddressEventFeatures(packets,pos))    { }
+        else if (pEvent = factoryAddressEvent3D(packets,pos))          { }
+        else if (pEvent = factoryAddressEvent3DFeatures(packets,pos))  { }
+        else if (pEvent = factoryClusterEvent(packets,pos))            { }
+        else if (pEvent = factoryClusterEventFeatures1(packets,pos))   { }
+        else if (pEvent = factoryClusterEventFeatures2(packets,pos))   { }
+        else if (pEvent = factoryClusterEventFeatures3(packets,pos))   { }
+        else if (pEvent = factoryClusterEvent3D(packets,pos))          { }
+        else if (pEvent = factoryClusterEvent3DFeatures1(packets,pos)) { }
+        else if (pEvent = factoryClusterEvent3DFeatures2(packets,pos)) { }
+        else if (pEvent = factoryClusterEvent3DFeatures3(packets,pos)) { }
+        else if (pEvent = factoryHoughEvent(packets,pos))              { }
+        
 
         if (pEvent==NULL)
             return false;
@@ -1678,5 +1695,105 @@ Property ClusterEvent3DFeatures3::getContent() const
     return prop;
 }
 
+/**************************************************************************/
+HoughEvent::HoughEvent()
+{
+    valid   = true;
+    type    = "HGE";
+    channel = 0;
+    radius  = 0;
+    xCoc    = 0;
+    yCoc    = 0;
+}
+
+
+/**************************************************************************/
+HoughEvent::HoughEvent(const HoughEvent &event)
+{
+    valid   = event.valid;
+    type    = event.type;
+    channel = event.channel;
+    radius  = event.radius;
+    xCoc    = event.xCoc;
+    yCoc    = event.yCoc;
+}
+
+
+/**************************************************************************/
+HoughEvent::HoughEvent(const Bottle &packets, const int pos)
+{
+    valid = false;
+
+    // check length
+    if ((pos + getLength()-1) < packets.size())
+    {
+        int word0=packets.get(pos).asInt();
+
+        // check type and fill fields
+        if ((word0>>26)==8)
+        {
+            channel = word0&0x01;
+
+            word0 >>= 1;
+            xCoc = word0&0x7f;
+
+            word0 >>= 7;
+            yCoc = word0&0xff;
+
+            word0 >>= 8;
+            radius = word0&0x03ff;
+
+            type  = "HGE";
+            valid = true;
+        }
+    }
+}
+
+
+/**************************************************************************/
+HoughEvent &HoughEvent::operator=(const HoughEvent &event)
+{
+    valid   = event.valid;
+    type    = event.type;
+    channel = event.channel;
+    radius  = event.radius;
+    xCoc    = event.xCoc;
+    yCoc    = event.yCoc;
+
+    return *this;
+}
+
+
+/**************************************************************************/
+bool HoughEvent::operator==(const HoughEvent &event)
+{
+    return ((valid==event.valid)&&(type==event.type)&&(channel==event.channel)&&
+            (radius==event.radius)&&(xCoc==event.xCoc)&&(yCoc==event.yCoc));
+}
+
+
+/**************************************************************************/
+Bottle HoughEvent::encode() const
+{
+    int word0=(8<<26)|((radius&0x03ff)<<16)|((yCoc&0xff)<<8)|((xCoc&0x7f)<<1)|(channel&0x01);
+
+    Bottle ret;
+    ret.addInt(word0);
+    return ret;
+}
+
+
+/**************************************************************************/
+Property HoughEvent::getContent() const
+{
+    Property prop;
+    prop.put("type",type.c_str());
+    prop.put("channel",channel);
+    prop.put("radius",radius);
+    prop.put("xCoc",xCoc);
+    prop.put("yCoc",yCoc);
+
+    return prop;
+}
 
 
