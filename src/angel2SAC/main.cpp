@@ -99,7 +99,7 @@ int TmpDiff128AngelcreateAddress(int x, int y, bool polarity){
 
 
 void mapping81(FILE *pfile) {
-    int xout,yout;
+    //int xout,yout;
     
     for(int yin = 0; yin < TmpDiff128AngelY_SIZE; yin++) {            
         for(int xin = 0; xin < TmpDiff128AngelX_SIZE; xin++) {
@@ -1405,8 +1405,8 @@ void negfull45(FILE *pfile) {
                 
                 if ((yin < Y_SIZE - 4) && (xin < X_SIZE - 4) /*&& (xin >= 2)*/ ) {
 
-                    yout = yin>>2 + 1;
-                    xout = xin>>2 + 1;
+                    yout = (yin >> 2) + 1;
+                    xout = (xin >> 2) + 1;
 
                     // monitoring
                     fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, true) , 0x110000 | SACcreateAddress(xout,yout));
@@ -1418,8 +1418,8 @@ void negfull45(FILE *pfile) {
                 
                 if ((yin >=  4) && (xin >= 4) /*&& (xin < 2)*/) {
 
-                    yout = yin>>2 - 1;
-                    xout = xin>>2 - 1;
+                    yout = (yin >> 2) - 1;
+                    xout = (xin >> 2) - 1;
 
                     // monitoring
                     fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, true) , 0x110000 | SACcreateAddress(xout,yout));
@@ -1442,8 +1442,8 @@ void negfull45(FILE *pfile) {
 
                 if ((yin < Y_SIZE- 4) && (xin < X_SIZE - 4) /*&& (xin >= 2)*/) {
 
-                    yout = yin>>2 + 1;
-                    xout = xin>>2 + 1;
+                    yout = (yin >> 2) + 1;
+                    xout = (xin >> 2) + 1;
 
                     // monitoring
                     fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, true) , 0x110000 | SACcreateAddress(xout,yout));
@@ -1455,8 +1455,8 @@ void negfull45(FILE *pfile) {
                 
                 if ((yin >=  4) && (xin >= 4) /*&& (xin < 2)*/) {
 
-                    yout = yin>>2 - 1;
-                    xout = xin>>2 - 1;
+                    yout = (yin >> 2) - 1;
+                    xout = (xin >> 2) - 1;
 
                     // monitoring
                     fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, true) , 0x110000 | SACcreateAddress(xout,yout));
@@ -1479,8 +1479,8 @@ void negfull45(FILE *pfile) {
                 
                 if ((yin < Y_SIZE- 4) && (xin < X_SIZE - 4) /*&& (xin >= 2)*/) {
 
-                    yout = yin>>2 + 1;
-                    xout = xin>>2 + 1;
+                    yout = (yin >> 2) + 1;
+                    xout = (xin >> 2) + 1;
 
                     // monitoring
                     fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, true) , 0x110000 | SACcreateAddress(xout,yout));
@@ -1492,8 +1492,8 @@ void negfull45(FILE *pfile) {
                 
                 if ((yin >=  4) && (xin >= 4) /*&& (xin < 2)*/) {
 
-                    yout = yin>>2 - 1;
-                    xout = xin>>2 - 1;
+                    yout = (yin >> 2) - 1;
+                    xout = (xin >> 2) - 1;
 
                     // monitoring
                     fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, true) , 0x110000 | SACcreateAddress(xout,yout));
