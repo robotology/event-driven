@@ -217,6 +217,7 @@ eEvent *factoryHoughEvent(const Bottle &packets, const int pos=0)
     HoughEvent *pEvent=new HoughEvent(packets,pos);
     if (!pEvent->isValid())
     {
+        printf("factoryHoughEvent: not valid event \n");
         delete pEvent;
         return NULL;
     }
@@ -253,8 +254,10 @@ bool eEvent::decode(const Bottle &packets, eEventQueue &events)
         else if (pEvent = factoryHoughEvent(packets,pos))              { }
         
 
-        if (pEvent==NULL)
+        if (pEvent==NULL) {
+            printf(" null event in position %d \n", pos);
             return false;
+        }
 
         events.push_back(pEvent);
         pos+=pEvent->getLength();
@@ -1730,7 +1733,7 @@ HoughEvent::HoughEvent(const Bottle &packets, const int pos)
         int word0=packets.get(pos).asInt();
 
         // check type and fill fields
-        if ((word0>>26)==8)
+        if ((word0>>26)==19)
         {
             channel = word0&0x01;
 
@@ -1775,7 +1778,7 @@ bool HoughEvent::operator==(const HoughEvent &event)
 /**************************************************************************/
 Bottle HoughEvent::encode() const
 {
-    int word0=(8<<26)|((radius&0x03ff)<<16)|((yCoc&0xff)<<8)|((xCoc&0x7f)<<1)|(channel&0x01);
+    int word0=(19<<26)|((radius&0x03ff)<<16)|((yCoc&0xff)<<8)|((xCoc&0x7f)<<1)|(channel&0x01);
 
     Bottle ret;
     ret.addInt(word0);
