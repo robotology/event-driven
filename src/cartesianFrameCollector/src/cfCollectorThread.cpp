@@ -28,6 +28,9 @@
 #include <cassert>
 #include <cstdlib>
 #include <time.h>
+#include <cv.h>
+#include <highgui.h>
+#include <cxcore.h>
 
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -40,7 +43,7 @@ using namespace std;
 #define STAMPINFRAME  // 10 ms of period times the us in 1 millisecond + time for computing
 //#define retinalSize 128
 #define CHUNKSIZE 32768 //65536 //8192
-#define dim_window 5
+#define dim_window 10
 #define synch_time 1
 
 //#define VERBOSE
@@ -350,6 +353,8 @@ void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsign
         }
         pImage+=imagePadding;
     }
+
+    //cvCircle(image->getIplImage(),cvPoint(100,110), 10, cvScalar(255,0,0),5 );
 }
 
 
