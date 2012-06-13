@@ -265,6 +265,94 @@ void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsig
     //unmask_events->setLastTimestamp(0);
 }
 
+void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsigned long minCount,unsigned long maxCount, bool camera){
+    assert(image!=0);
+    //printf("retinalSize in getMonoImage %d \n", retinalSize);
+    image->resize(retinalSize,retinalSize);
+    unsigned char* pImage = image->getRawImage();
+    int imagePadding = image->getPadding();
+    int imageRowSize = image->getRowSize();
+    
+    // determining whether the camera is left or right
+    int* pBuffer = unmask_events->getEventBuffer(camera);
+    unsigned long* pTime   = unmask_events->getTimeBuffer(camera);
+    
+    //printf("timestamp: min %d    max %d  \n", minCount, maxCount);
+    //pBuffer += retinalSize * retinalSize - 1;
+    for(int r = 0 ; r < retinalSize ; r++){
+        for(int c = 0 ; c < retinalSize ; c++) {
+            //drawing the retina and the rest of the image separately
+            int value = *pBuffer;
+            
+            unsigned long timestampactual = *pTime;
+            //bool tristateView = false;
+            
+            if(tristate) {
+                // decreasing the spatial response without removing it
+                if(count % 10 == 0) {
+                    if(*pBuffer > 20){
+                        *pBuffer = *pBuffer - 1;                                       
+                    }
+                    else if(*pBuffer < -20){
+                        *pBuffer = *pBuffer + 1;                                       
+                    }
+                }
+                
+
+                //if(minCount>0 && maxCount > 0 && timestampactual>0)
+                //printf("actualTS%ld val%ld max%ld min%ld  are\n",timestampactual,timestampactual * COUNTERRATIO,minCount,maxCount);
+                if (((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)) {   //(timestampactual != lasttimestamp)
+                    *pImage = (unsigned char) (127 + value);
+                    pImage++;                    
+                    *pImage = (unsigned char) (127 + value);
+                    pImage++;                    
+                    *pImage = (unsigned char) (127 + value);
+                    pImage++;                    
+                }
+                else {
+                    *pImage = (unsigned char) 127 ;
+                    pImage++;                    
+                    *pImage = (unsigned char) 127;
+                    pImage++;                    
+                    *pImage = (unsigned char) 127;
+                    pImage++;                    
+                }
+                pBuffer++;
+                pTime++;
+            }
+            // branch !tristateView
+            else {
+                // decreasing the spatial response without removing 
+                if((*pBuffer > 20) && (count % 10 == 0)){
+                    *pBuffer = *pBuffer - 1;                                       
+                }
+                //if(minCount>0 && maxCount > 0 && timestampactual>0)
+                //printf("actualTS%ld val%ld max%ld min%ld  are\n",timestampactual,timestampactual * COUNTERRATIO,minCount,maxCount);
+                if (((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)) {   //(timestampactual != lasttimestamp)
+                    *pImage = (unsigned char) abs(value * 2);
+                    pImage++;
+                    *pImage = (unsigned char) abs(value * 2);
+                    pImage++;
+                    *pImage = (unsigned char) abs(value * 2);
+                    pImage++;
+                }
+                else {
+                    *pImage = (unsigned char) 0 ;
+                    pImage++;
+                    *pImage = (unsigned char) 0 ;
+                    pImage++;
+                    *pImage = (unsigned char) 0 ;
+                    pImage++;
+                }
+                pBuffer++;
+                pTime++;
+            }
+        }
+        pImage+=imagePadding;
+    }
+}
+
+
 int cfCollectorThread::prepareUnmasking(char* bufferCopy, Bottle* res) {
     // navigate the 32bit words in the bufferCopy and create a bottle outofvalid
     int numberofwords = CHUNKSIZE / 4; //4bytes made a 32bits word
