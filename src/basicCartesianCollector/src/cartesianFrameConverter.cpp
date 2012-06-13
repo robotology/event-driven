@@ -32,8 +32,8 @@
 #include <string>
 #include <ctime>
 #include <list>
-#include <sys/types.h>
-#include <inttypes.h>
+//#include <sys/types.h>
+//#include <inttypes.h>
 #include <iCub/config.h>
 
 #define VERBOSE
@@ -99,7 +99,7 @@ void cFrameConverter::onRead(eventBuffer& i_ub) {
 
 #ifdef VERBOSE
     int num_events = dim >> 3 ;
-    uint32_t* buf2 = (uint32_t*)receivedBuffer;
+    u32* buf2 = (u32*)receivedBuffer;
     //plotting out
     for (int evt = 0; evt < num_events; evt++) {
         unsigned long blob      = buf2[2 * evt];

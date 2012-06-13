@@ -26,7 +26,7 @@
 #include <iCub/unmask.h>
 #include <math.h>
 #include <cassert>
-#include <inttypes.h>
+//#include <inttypes.h>
 
 using namespace std;
 using namespace yarp::os;
@@ -213,8 +213,8 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
     //cout << "Number of the received events : " << num_events<< endl;
     
     //create a pointer that points every 4 bytes and 2 bytes (DVS mode) 
-    uint32_t* buf2 = (uint32_t*)i_buffer;
-    uint16_t* buf1 = (uint16_t*)i_buffer;
+    u32* buf2 = (u32*)i_buffer;
+    u16* buf1 = (u16*)i_buffer;
     unsigned long timestamp;
        
     

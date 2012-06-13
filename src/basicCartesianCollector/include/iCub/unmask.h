@@ -31,13 +31,18 @@
 #include <sstream>
 #include <ctime>
 #include <sys/types.h>
-#include <inttypes.h>
+//#include <inttypes.h>
 
 // yarp includes
 #include <yarp/os/all.h>
 
 //Other dependency
 #include <iCub/config.h>
+
+typedef unsigned char  u8;
+typedef unsigned int  u16;
+typedef unsigned long int  u32; 
+typedef unsigned long long int u64;
 
 class unmask : public yarp::os::RateThread{
 private:
