@@ -75,8 +75,8 @@ private:
     int responseGradient;               // responseGradient parameter
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPort;            // port whre the output (left) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPortRight;       // port whre the output (right) is sent
-    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeft;                                  //image representing the signal on the leftcamera
-    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRight;                                 //image representing the signal on the right camera
+    yarp::sig::ImageOf<yarp::sig::PixelRgb>* imageLeft;                                  //image representing the signal on the leftcamera
+    yarp::sig::ImageOf<yarp::sig::PixelRgb>* imageRight;                                 //image representing the signal on the right camera
     std::string name;                   // rootname of all the ports opened by this thread
     bool verb;
     bool synchronised;                   // flag to check whether the microsecond counter has been synchronised

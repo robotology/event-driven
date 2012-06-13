@@ -167,9 +167,9 @@ std::string cfCollectorThread::getName(const char* p) {
 }
 
 void cfCollectorThread::resize(int widthp, int heightp) {
-    imageLeft = new ImageOf<PixelMono>;
+    imageLeft = new ImageOf<PixelRgb>;
     imageLeft->resize(widthp,heightp);
-    imageRight = new ImageOf<PixelMono>;
+    imageRight = new ImageOf<PixelRgb>;
     imageRight->resize(widthp,heightp);
 }
 

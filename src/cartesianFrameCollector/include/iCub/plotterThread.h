@@ -130,10 +130,22 @@ public:
     void copyLeft(yarp::sig::ImageOf<yarp::sig::PixelMono>* img);
 
     /**
-     * function that copies the image in the right output
+     * function that copies the RGB image in the left output 
+     * @param img passed input of the image to be copied
+     */
+    void copyLeft(yarp::sig::ImageOf<yarp::sig::PixelRgb>* img);
+
+    /**
+     * function that copies the RGB image in the right output
      * @param img passed input of the image to be copied
      */
     void copyRight(yarp::sig::ImageOf<yarp::sig::PixelMono>* img);
+
+    /**
+     * function that copies the RGB image in the right output
+     * @param img passed input of the image to be copied
+     */
+    void copyRight(yarp::sig::ImageOf<yarp::sig::PixelRgb>* img);
 
     /**
     * function that integrates the current dvs image with previous images

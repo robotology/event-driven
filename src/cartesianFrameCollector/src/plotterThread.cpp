@@ -135,6 +135,24 @@ void plotterThread::copyLeft(ImageOf<PixelMono>* image) {
     }
 }
 
+void plotterThread::copyLeft(ImageOf<PixelRgb>* image) {
+    //printf("retinalSize in plotterThread %d \n",retinalSize);
+    int padding= image->getPadding();
+    unsigned char* pimage = image->getRawImage();
+    unsigned char* pleft  = imageLeft->getRawImage();
+    if(imageLeft != 0) {
+        for(int r = 0;r < retinalSize; r++) {
+            for(int c = 0; c < retinalSize; c++) {                
+                *pleft++ = *pimage++;
+                *pleft++ = *pimage++;
+                *pleft++ = *pimage++;
+            }
+            pleft  += padding;
+            pimage += padding;
+        }
+    }
+}
+
 void plotterThread::copyRight(ImageOf<PixelMono>* image) {
     int padding= image->getPadding();
     unsigned char* pimage = image->getRawImage();
@@ -150,6 +168,22 @@ void plotterThread::copyRight(ImageOf<PixelMono>* image) {
     }    
 }
 
+void plotterThread::copyRight(ImageOf<PixelRgb>* image) {
+    int padding= image->getPadding();
+    unsigned char* pimage = image->getRawImage();
+    unsigned char* pright = imageRight->getRawImage();
+    if(imageRight != 0) {
+        for(int r = 0;r < retinalSize; r++) {
+            for(int c = 0;c < retinalSize; c++) {
+                *pright++ = *pimage++;
+                *pright++ = *pimage++;
+                *pright++ = *pimage++;
+            }
+            pright += padding;
+            pimage += padding;
+        }
+    }    
+}
 
 void plotterThread::run() {
     count++;
