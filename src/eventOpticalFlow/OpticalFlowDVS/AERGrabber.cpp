@@ -55,7 +55,7 @@ void AERGrabber::onRead(eventBuffer & eBuffer){
 
  //   cout << "eventNo" << eventNo << endl;
 
-    uint32_t* buf2 = (uint32_t*) eBuffer.get_packet();
+    u32* buf2 = (u32*) eBuffer.get_packet();
     for (int evt = 0; evt < eventNo; ) {
         // unmask the data ( first 4 bytes timestamp, second 4 bytes address)
         tsPacket = buf2[evt++];
@@ -124,9 +124,9 @@ void AERGrabber::readJEAR(eventBuffer & eBuffer){
 	if (evtBuffer.size() > 50)
 	    return;
 
-//	cout << "event No : " << eventNo << endl;
+    //	cout << "event No : " << eventNo << endl;
 
-	uint32_t* buf2 = (uint32_t*) eBuffer.get_packet();
+	u32* buf2 = (u32*) eBuffer.get_packet();
 	for (int evt = 0; evt < eventNo; ) {
 		// unmask the data ( first 4 bytes timestamp, second 4 bytes address)
 		blob = buf2[evt++];
