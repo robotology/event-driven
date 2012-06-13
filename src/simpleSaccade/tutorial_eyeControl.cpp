@@ -15,7 +15,7 @@
 #define COMMAND_VOCAB_DUMP  VOCAB4('d','u','m','p')
 #define COMMAND_VOCAB_SYNC  VOCAB4('s','y','n','c')
 
-#define DELTAENC 0.000001
+#define DELTAENC 0.0000001
 
 using namespace yarp::dev;
 using namespace yarp::sig;
@@ -118,12 +118,18 @@ int main(int argc, char *argv[])
     //
     for(i=0; i<nj; i++)
         command[i]=0;
+    /******************************
+    * SPECIFIC STARTING POSITIONS *
+    ******************************/
+    command[0]=-30;
     pos->positionMove(command.data());//(4,deg);
 
     double startPos;
-    encs->getEncoder(4, &startPos);
-    bool first=true;
 
+    encs->getEncoder(4, &startPos);
+    printf("start position value: %lf\n", startPos);
+    bool first=true;
+    int deltaSacc=2;
     int times=0;
     yarp::os::Bottle bot; //= _pOutPort->prepare();
     bot.clear();
@@ -135,65 +141,46 @@ int main(int argc, char *argv[])
 
     Time::delay(0.1);
     
-    fprintf(stderr, "Start saccade(s), number of repetition: %d", nOl);
+    fprintf(stderr, "Start saccade(s), number of repetition: %d\n", nOl);
     while(times<nOl)
     {
         times++;
         
-
-/*        if (times%2)
-        {
-            command[0]=0;
-            command[1]=0;
-            command[2]=0;   
-            command[3]=0;
-            command[4]=11;
-            command[5]=0;
-        }
-        else
-        {
-            command[0]=0;
-            command[1]=0;
-            command[2]=0;
-            command[3]=0;
-            command[4]=0;
-            command[5]=0;
-        }
-        pos->positionMove(command.data());
-        Time::delay(0.1);*/
-
-
 	/*Horizontal saccade*/
-	command[4]=-5;
+	command[4]=-deltaSacc;
 	//moveJoints(pos, command);
     pos->positionMove(command.data());
     if(first)
     {
-        first=false;
         double curPos;
         encs->getEncoder(4, &curPos);
         while((curPos>=startPos-DELTAENC) && (curPos<=startPos+DELTAENC))
         {
+    	    printf("current position value: %lf\n", curPos);
             encs->getEncoder(4, &curPos);
-            bot.addVocab(COMMAND_VOCAB_SYNC);
         }
+        bot.addVocab(COMMAND_VOCAB_SYNC);
+        _pOutPort->write(bot,inOn);
+        first=false;
     }
     Time::delay(0.1);
 
 
 	/*command[4]=0;
 	moveJoints(pos, command);*/
-	command[4]=5;
+	command[4]=deltaSacc;
 	moveJoints(pos, command);	
 	command[4]=0;
 	moveJoints(pos, command);
-	
+
+	Time::delay(0.1);
+
 	/*Vertical saccade*/
-	command[3]=-5;
+	command[3]=-deltaSacc;
 	moveJoints(pos, command);
 	/*command[3]=0;
 	moveJoints(pos, command);*/
-	command[3]=5;
+	command[3]=deltaSacc;
 	moveJoints(pos, command);
 	command[3]=0;
 	moveJoints(pos, command);
@@ -210,6 +197,7 @@ int main(int argc, char *argv[])
     }
     bot.clear();
     bot.addVocab(COMMAND_VOCAB_SYNC);
+    _pOutPort->write(bot,inOn);
 
     bot.clear();
     bot.addVocab(COMMAND_VOCAB_DUMP);
