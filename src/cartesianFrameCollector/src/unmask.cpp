@@ -381,6 +381,30 @@ void unmask::unmaskData(Bottle* packets) {
                         lastRecTimestamp = (unsigned int) ptr->getStamp();
                         //printf("lastTimestamp Received %08x \n", lastRecTimestamp);
                     }
+                    else if(q[evt]->getType()=="CLE") {
+                        //printf("timestamp \n");
+                        ClusterEvent* ptr=dynamic_cast<ClusterEvent*>(q[evt]);
+#ifdef VERBOSE
+                        if(ptr->isValid()) {                       
+                            fprintf(maskEvents,"content: %08x \n", (unsigned int) ptr->getStamp());    
+                        }
+#endif
+                        // code for CLE
+                        printf("received CLUSTER EVENT type: %s \n", ptr->getType());
+                        addCLE(q[evt],ptr->getType());
+                    }
+                    else if(q[evt]->getType()=="HGE") {
+                        //printf("timestamp \n");
+                        HoughEvent* ptr=dynamic_cast<HoughEvent*>(q[evt]);
+#ifdef VERBOSE
+                        if(ptr->isValid()) {                       
+                            fprintf(maskEvents,"content: %08x \n", (unsigned int) ptr->getStamp());    
+                        }
+#endif  
+                        //code for HGE                
+                        printf("received HOUGH EVENT type: %s \n", ptr->getType());
+                        addHGE(ptr, ptr->getType()) ;
+                    }
                     else {
                         printf("not recognized");
                     }

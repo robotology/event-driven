@@ -300,6 +300,20 @@ public:
      * @param ptr pointer to the AddressEvent that updates the image
      */
     void updateImage(emorph::ecodec::AddressEvent* ptr);
+
+    /**
+     * add the cluster event and all its features
+     */
+    void addCLE(emorph::ecodec::eEvent* ptr, std::string type){
+        printf("addCle: %s \n", type.c_str());
+    };
+
+    /**
+     * add the hough event 
+     */
+    void addHGE(emorph::ecodec::eEvent* ptr, std::string type){
+        printf("addHGE: %s \n", type.c_str());
+    };
 };
 
 #endif //UNMASK_H
