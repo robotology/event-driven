@@ -37,15 +37,15 @@
 #include <iostream>
 #include <sstream>
 #include <cstdlib>
-//#include <stdint.h>
+#include <stdint.h>
 #include <fstream>
 
 #include <iCub/emorph/eventBuffer.h>
 
-//#define u8  uint8_t
+#define u8  uint8_t
 //#define u16 uint16_t
 //#define u32 uint32_t
-//#define u64 uint64_t
+#define u64 uint64_t
 
 typedef yarp::os::NetUint32 u16;
 typedef yarp::os::NetUint32 u32;
@@ -549,8 +549,8 @@ private:
     FILE* binInput;
     FILE* fout;                                              // file for dumping the events out
     bool biasFromBinary;                                     // indicates whether the bias programmed are read from a file
-    //u64 seqTime;
-    //u64 ec;
+    u64 seqTime;
+    u64 ec;
     u32 seqAlloced_b;
     u32 seqSize_b, seqEvents, seqDone_b;
     u32 monBufEvents;

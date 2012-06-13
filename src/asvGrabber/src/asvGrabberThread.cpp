@@ -34,14 +34,13 @@
  */
 
 #include <iCub/asvGrabberThread.h>
-//#include <sys/types.h>
+
 #include <assert.h>
-//#include <unistd.h>
+#include <unistd.h>
 #include <stdlib.h>
-//#include <inttypes.h>
 
 #include <sys/types.h>
-//#include <inttypes.h>
+#include <inttypes.h>
 //#include <stdint.h>
 
 #include <stdio.h>
