@@ -110,7 +110,7 @@ void cFrameConverter::onRead(eventBuffer& i_ub) {
     //receivedBufferSize = dim;
     mutex.wait();
     receivedBuffer = i_ub.get_packet(); 
-    uint32_t* buf1 = (uint32_t*)receivedBuffer;
+    u32* buf1 = (u32*)receivedBuffer;
     char*  receivedBuffer_char = (char*) receivedBuffer;
     //printf("received buffer \n");
     
@@ -131,7 +131,7 @@ void cFrameConverter::onRead(eventBuffer& i_ub) {
 
     if(VERBOSE) {
         int num_events = dim >> 3 ;
-        uint32_t* buf2 = (uint32_t*)receivedBuffer_char;
+        u32* buf2 = (u32*)receivedBuffer_char;
         //plotting out
         for (int evt = 0; evt < num_events; evt++) {
             unsigned long t     = buf2[2 * evt];

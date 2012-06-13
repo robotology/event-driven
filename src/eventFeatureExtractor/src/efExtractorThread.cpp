@@ -2210,11 +2210,9 @@ void efExtractorThread::run() {
                 printf("after encoding events in the packets %d \n", bottleToSend->size() );
                 //Bottle b;
                 //b.copy(*bottleToSend);
-                printf("after assignment \n");
+                
                 eventBottle data2send(bottleToSend);         
-                printf("after imprinting \n");
                 eventBottle& tmp = outBottlePort.prepare();
-                printf("preparing the bottle \n");
                 tmp = data2send;
                 outBottlePort.write(); 
                 printf("writing the port \n");
