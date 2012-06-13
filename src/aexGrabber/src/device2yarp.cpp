@@ -809,12 +809,15 @@ void  device2yarp::run() {
             a &= 0x0000FFFF; //removing extra bits which do not match the protocol
             if(sync)
             {
+                printf("Add sync bit\n");
                 a+=0x00010000;
+                //fprintf(fout,"**sync**\n");
                 sync=false;
             }
 
             if (save) {	  
                 fprintf(fout,"%08X \n",a);
+		//fprintf(fout,"test\n");
             }
                       
             buf2[k2++] = a;   // passing the address event to the data flow to send
@@ -1251,8 +1254,8 @@ bool device2yarp::setDumpFile(std::string value) {
         return false;
 }
 
-void device2yarp::setSyncBit(bool value) {
-    sync = value;
+void device2yarp::setSyncBit() {
+    sync = true;
 }
 
 void device2yarp::threadRelease() {

@@ -583,7 +583,7 @@ bool aexGrabberModule::respond(const Bottle& command, Bottle& reply) {
             printf("recognised the command SYNC \n");
             {
                     printf("request of adding the sync bit \n");
-                    D2Y->setSyncBit(true);
+                    D2Y->setSyncBit();
                     printf("success in adding the sync bit \n");
                     ok = true;
             }

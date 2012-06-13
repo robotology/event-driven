@@ -340,7 +340,7 @@ public:
     /**
     * add a bit to the adress to synchronize several records
     */
-    void setSyncBit(bool value);
+    void setSyncBit();
 
     /**
     * function that returns the bias for Left camera
