@@ -94,6 +94,13 @@ private:
     bool wrapOcc;                    // flag that indicates when a wrapAraund has just occured
     FILE* uEvents;                   // uEvents file for debug
     FILE* maskEvents;                // maskEvents file for debug
+
+    reprCLE *bufferCLE;              // pointer to CLE to represent
+    reprHGE *bufferHGE;              // pointer to HGE to represent
+    reprCLE *_bufferCLE;             // temporarely pointer to the buffer
+    reprHGE *_bufferHGE;             // temporarely pointer to the buffer
+    
+
     yarp::os::Semaphore countEventLocker;
     yarp::os::Semaphore countEventLocker2;
 
@@ -304,16 +311,12 @@ public:
     /**
      * add the cluster event and all its features
      */
-    void addCLE(emorph::ecodec::eEvent* ptr, std::string type){
-        printf("addCle: %s \n", type.c_str());
-    };
+    void addCLE(emorph::ecodec::eEvent* ptr);
 
     /**
      * add the hough event 
      */
-    void addHGE(emorph::ecodec::eEvent* ptr, std::string type){
-        printf("addHGE: %s \n", type.c_str());
-    };
+    void addHGE(emorph::ecodec::eEvent* ptr);
 };
 
 #endif //UNMASK_H

@@ -296,6 +296,45 @@ void unmask::updateImage(AddressEvent* ptr) {
     }
 }
 
+
+void unmask::addCLE(eEvent* e) {
+    if(q[evt]->getType()=="CLE") {
+        ClusterEvent* ptr=dynamic_cast<ClusterEvent*>(q[evt]);
+        ptr->getXCoc();
+        ptr->getYCoc();   
+    }
+    else if(q[evt]->getType()=="CLE-F0") {
+        ClusterEventFeatures1* ptr=dynamic_cast<ClusterEventFeatures1*>(q[evt]);
+    }
+    else if(q[evt]->getType()=="CLE-F1") {
+        ClusterEventFeature1* ptr=dynamic_cast<ClusterEventFeature1*>(q[evt]);
+    }
+    else if(q[evt]->getType()=="CLE-F12") {
+        ClusterEvent* ptr=dynamic_cast<ClusterEvent*>(q[evt]);
+    }
+    else if(q[evt]->getType()=="CLE-F2") {
+        ClusterEventFeature2* ptr=dynamic_cast<ClusterEventFeature2*>(q[evt]);
+    }
+    else if(q[evt]->getType()=="CLE-F23") {
+        ClusterEvent* ptr=dynamic_cast<ClusterEvent*>(q[evt]);
+    }
+    else if(q[evt]->getType()=="CLE-F3") {
+        ClusterEventFeature3* ptr=dynamic_cast<ClusterEventFeature3*>(q[evt]);
+    }
+    
+    
+}
+
+void unmask::addHGE(eEvent* e) {
+    HoughEvent* ptr=dynamic_cast<HoughEvent*>(e);
+    //reprHGE _hge;
+    _bufferCLE->x = ptr->getXCoc();
+    _bufferCLE->y = ptr->getYCoc();
+    _bufferCLE->r = ptr->getRadius();
+    
+    _bufferCLE++;
+}
+
 void unmask::unmaskData(Bottle* packets) {
     //AER_struct sAER
     count++;
@@ -383,27 +422,30 @@ void unmask::unmaskData(Bottle* packets) {
                     }
                     else if(q[evt]->getType()=="CLE") {
                         //printf("timestamp \n");
-                        ClusterEvent* ptr=dynamic_cast<ClusterEvent*>(q[evt]);
+                        //ClusterEvent* ptr=dynamic_cast<ClusterEvent*>(q[evt]);
 #ifdef VERBOSE
                         if(ptr->isValid()) {                       
                             fprintf(maskEvents,"content: %08x \n", (unsigned int) ptr->getStamp());    
                         }
 #endif
                         // code for CLE
-                        printf("received CLUSTER EVENT type: %s \n", ptr->getType());
-                        addCLE(q[evt],ptr->getType());
+                        //printf("received CLUSTER EVENT type: %s \n", ptr->getType());
+                        //ptr->getXCog();
+                        //ptr->getYCog();
+                        addCLE(q[evt]);
                     }
                     else if(q[evt]->getType()=="HGE") {
                         //printf("timestamp \n");
-                        HoughEvent* ptr=dynamic_cast<HoughEvent*>(q[evt]);
+                        //HoughEvent* ptr=dynamic_cast<HoughEvent*>(q[evt]);
 #ifdef VERBOSE
                         if(ptr->isValid()) {                       
                             fprintf(maskEvents,"content: %08x \n", (unsigned int) ptr->getStamp());    
                         }
 #endif  
                         //code for HGE                
-                        printf("received HOUGH EVENT type: %s \n", ptr->getType());
-                        addHGE(ptr, ptr->getType()) ;
+                        //printf("received HOUGH EVENT type: %s \n", ptr->getType());
+                        
+                        addHGE(q[evt]);
                     }
                     else {
                         printf("not recognized");

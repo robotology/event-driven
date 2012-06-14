@@ -71,6 +71,18 @@ typedef struct s_GROUP {
     int c_y;
 }t_GROUP;
 
+typedef struct represCLE {
+    short x;
+    short y;
+    short r;
+}reprCLE;
+
+typedef struct represHGE {
+    short x;
+    short y;
+    short r;
+}reprHGE;
+
 #endif //__CONFIG_H
 //----- end-of-file --- ( next line intentionally left blank ) ------------------
 
