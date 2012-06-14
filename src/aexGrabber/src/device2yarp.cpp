@@ -733,6 +733,10 @@ void  device2yarp::run() {
     int sizeofstructaer  = sizeof(struct aer);
     int sizeofstructatom = sizeof(struct atom);
 
+
+    //*******************************************************************************************************
+    // STATISTICS ON GAEP EVENT FLOW 
+
     // check error of extra byte
     if (r % sizeofstructatom != 0) {
         printf("ERROR: read %d bytes from the AEX!!!\n", r);
@@ -817,7 +821,7 @@ void  device2yarp::run() {
 
             if (save) {	  
                 fprintf(fout,"%08X \n",a);
-		//fprintf(fout,"test\n");
+                //fprintf(fout,"test\n");
             }
                       
             buf2[k2++] = a;   // passing the address event to the data flow to send
@@ -963,6 +967,8 @@ void  device2yarp::run() {
       
     }
     
+     //*******************************************************************************************************
+
     
     //sz = monBufEvents * 2 * sizeof(struct atom); // sz is size in bytes
     sz = countEventSent * sizeofstructatom;
@@ -982,27 +988,7 @@ void  device2yarp::run() {
         tmp = data2send;
         portEventBottle.write();
     }   
-    if (portEventBottle2.getOutputCount()) {       
-        //printf("Sending the bottle %d bytes \n", sz);
-        eventBottle data2send(pBuffer, sz);
-        eventBottle& tmp = portEventBottle2.prepare(); 
-        tmp = data2send;
-        portEventBottle2.write();
-    } 
-    if (portEventBottle3.getOutputCount()) {       
-        //printf("Sending the bottle %d bytes \n", sz);
-        eventBottle data2send(pBuffer, sz);
-        eventBottle& tmp = portEventBottle3.prepare(); 
-        tmp = data2send;
-        portEventBottle3.write();
-    } 
-    if (portEventBottle4.getOutputCount()) {       
-        //printf("Sending the bottle %d bytes \n", sz);
-        eventBottle data2send(pBuffer, sz);
-        eventBottle& tmp = portEventBottle4.prepare(); 
-        tmp = data2send;
-        portEventBottle4.write();
-    } 
+    
     
     wrapOccured = false;
     
