@@ -75,12 +75,14 @@ typedef struct represCLE {
     short x;
     short y;
     short r;
+    unsigned long timestamp;
 }reprCLE;
 
 typedef struct represHGE {
     short x;
     short y;
     short r;
+    unsigned long timestamp;
 }reprHGE;
 
 #endif //__CONFIG_H

@@ -95,16 +95,16 @@ private:
     FILE* uEvents;                   // uEvents file for debug
     FILE* maskEvents;                // maskEvents file for debug
 
-    reprCLE *bufferCLE;              // pointer to CLE to represent
-    reprHGE *bufferHGE;              // pointer to HGE to represent
-    reprCLE *_bufferCLE;             // temporarely pointer to the buffer
-    reprHGE *_bufferHGE;             // temporarely pointer to the buffer
+    reprCLE *bufferCLELeft;          // pointer to CLE to represent
+    reprHGE *bufferHGELeft;          // pointer to HGE to represent
+    reprCLE *_bufferCLELeft;         // temporarely pointer to the buffer
+    reprHGE *_bufferHGELeft;         // temporarely pointer to the buffer
         
     yarp::os::Semaphore countEventLocker;
     yarp::os::Semaphore countEventLocker2;
 
     /*semaphore for the additional information HGE and CLE*/
-    yarp::os::Semaphore mutexHGE,mutexCLE;
+    yarp::os::Semaphore mutexHGELeft,mutexCLELeft;
 
 public:
     /**

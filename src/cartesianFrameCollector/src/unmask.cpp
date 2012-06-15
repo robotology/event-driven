@@ -329,13 +329,20 @@ void unmask::addHGE(eEvent* e) {
     HoughEvent* ptr=dynamic_cast<HoughEvent*>(e);
     //reprHGE _hge;
 
-    mutexHGE.wait();
-    _bufferHGE->x = ptr->getXCoc();
-    _bufferHGE->y = ptr->getYCoc();
-    _bufferHGE->r = ptr->getRadius();
-    
-    _bufferHGE++;
-    mutexHGE.post();
+    if(ptr->getChannel()) {
+        //left camera
+        mutexHGELeft.wait();
+        _bufferHGELeft->x = ptr->getXCoc();
+        _bufferHGELeft->y = ptr->getYCoc();
+        _bufferHGELeft->r = ptr->getRadius();
+        _bufferHGELeft->timestamp = timestamp;
+        
+        _bufferHGELeft++;
+        mutexHGELeft.post();
+    }
+    else {
+        // right camera
+    }
 }
 
 void unmask::unmaskData(Bottle* packets) {

@@ -354,18 +354,18 @@ void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsign
         pImage+=imagePadding;
     }
     //***************************************************************
-    //ADDING FURTHER COMPLEX INF
+    //ADDING FURTHER COMPLEX INFORMATION in the IMAGE
     
-    addHGE(image);
-    addCLE(image);
+    addHGE(image,minCount,maxCount,camera);
+    addCLE(image,minCount,maxCount,camera);
 }
 
 
-void cfCollectorThread::addHGE(ImageOf<yarp::sig::PixelRgb>* image) {
+void cfCollectorThread::addHGE(ImageOf<yarp::sig::PixelRgb>* image, unsigned long minCount,unsigned long maxCount, bool camera) {
     cvCircle(image->getIplImage(), cvPoint(100,100),5, cvScalar(255,0,0), 5 );
 }
 
-void cfCollectorThread::addCLE(ImageOf<yarp::sig::PixelRgb>* image) {
+void cfCollectorThread::addCLE(ImageOf<yarp::sig::PixelRgb>* image, unsigned long minCount,unsigned long maxCount, bool camera) {
     cvCircle(image->getIplImage(), cvPoint(100,100),5, cvScalar(255,0,0), 5 );
 }
 

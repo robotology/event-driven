@@ -253,13 +253,13 @@ public:
     /**
      * @brief function that add cluster events to the image
      */
-    void addCLE(yarp::sig::ImageOf<yarp::sig::PixelRgb>* image);
+    void addCLE(yarp::sig::ImageOf<yarp::sig::PixelRgb>* image, unsigned long minCount,unsigned long maxCount, bool camera);
     
 
     /**
      * @brief function that add HGE Hough events to the image
      */
-    void addHGE(yarp::sig::ImageOf<yarp::sig::PixelRgb>* image);
+    void addHGE(yarp::sig::ImageOf<yarp::sig::PixelRgb>* image, unsigned long minCount,unsigned long maxCount, bool camera);
     
 };
 
