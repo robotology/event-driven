@@ -99,10 +99,12 @@ private:
     reprHGE *bufferHGE;              // pointer to HGE to represent
     reprCLE *_bufferCLE;             // temporarely pointer to the buffer
     reprHGE *_bufferHGE;             // temporarely pointer to the buffer
-    
-
+        
     yarp::os::Semaphore countEventLocker;
     yarp::os::Semaphore countEventLocker2;
+
+    /*semaphore for the additional information HGE and CLE*/
+    yarp::os::Semaphore mutexHGE,mutexCLE;
 
 public:
     /**

@@ -297,29 +297,29 @@ void unmask::updateImage(AddressEvent* ptr) {
 }
 
 
-void unmask::addCLE(eEvent* e) {
-    if(q[evt]->getType()=="CLE") {
-        ClusterEvent* ptr=dynamic_cast<ClusterEvent*>(q[evt]);
-        ptr->getXCoc();
-        ptr->getYCoc();   
+void unmask::addCLE(eEvent* qevt) {
+    if(qevt->getType()=="CLE") {
+        ClusterEvent* ptr=dynamic_cast<ClusterEvent*>(qevt);
+        //ptr->getXCoc();
+        //ptr->getYCoc();   
     }
-    else if(q[evt]->getType()=="CLE-F0") {
-        ClusterEventFeatures1* ptr=dynamic_cast<ClusterEventFeatures1*>(q[evt]);
+    else if(qevt->getType()=="CLE-F0") {
+        //ClusterEventFeatures1* ptr=dynamic_cast<ClusterEventFeatures1*>(qevt);
     }
-    else if(q[evt]->getType()=="CLE-F1") {
-        ClusterEventFeature1* ptr=dynamic_cast<ClusterEventFeature1*>(q[evt]);
+    else if(qevt->getType()=="CLE-F1") {
+        //ClusterEventFeature1* ptr=dynamic_cast<ClusterEventFeature1*>(qevt);
     }
-    else if(q[evt]->getType()=="CLE-F12") {
-        ClusterEvent* ptr=dynamic_cast<ClusterEvent*>(q[evt]);
+    else if(qevt->getType()=="CLE-F12") {
+        //ClusterEvent* ptr=dynamic_cast<ClusterEvent*>(qevt);
     }
-    else if(q[evt]->getType()=="CLE-F2") {
-        ClusterEventFeature2* ptr=dynamic_cast<ClusterEventFeature2*>(q[evt]);
+    else if(qevt->getType()=="CLE-F2") {
+        //ClusterEventFeature2* ptr=dynamic_cast<ClusterEventFeature2*>(qevt);
     }
-    else if(q[evt]->getType()=="CLE-F23") {
-        ClusterEvent* ptr=dynamic_cast<ClusterEvent*>(q[evt]);
+    else if(qevt->getType()=="CLE-F23") {
+        //ClusterEvent* ptr=dynamic_cast<ClusterEvent*>(qevt);
     }
-    else if(q[evt]->getType()=="CLE-F3") {
-        ClusterEventFeature3* ptr=dynamic_cast<ClusterEventFeature3*>(q[evt]);
+    else if(qevt->getType()=="CLE-F3") {
+        //ClusterEventFeature3* ptr=dynamic_cast<ClusterEventFeature3*>(qevt);
     }
     
     
@@ -328,11 +328,14 @@ void unmask::addCLE(eEvent* e) {
 void unmask::addHGE(eEvent* e) {
     HoughEvent* ptr=dynamic_cast<HoughEvent*>(e);
     //reprHGE _hge;
-    _bufferCLE->x = ptr->getXCoc();
-    _bufferCLE->y = ptr->getYCoc();
-    _bufferCLE->r = ptr->getRadius();
+
+    mutexHGE.wait();
+    _bufferHGE->x = ptr->getXCoc();
+    _bufferHGE->y = ptr->getYCoc();
+    _bufferHGE->r = ptr->getRadius();
     
-    _bufferCLE++;
+    _bufferHGE++;
+    mutexHGE.post();
 }
 
 void unmask::unmaskData(Bottle* packets) {

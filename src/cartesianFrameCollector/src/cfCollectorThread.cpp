@@ -353,10 +353,21 @@ void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsign
         }
         pImage+=imagePadding;
     }
-
-    //cvCircle(image->getIplImage(),cvPoint(100,110), 10, cvScalar(255,0,0),5 );
+    //***************************************************************
+    //ADDING FURTHER COMPLEX INF
+    
+    addHGE(image);
+    addCLE(image);
 }
 
+
+void cfCollectorThread::addHGE(ImageOf<yarp::sig::PixelRgb>* image) {
+    cvCircle(image->getIplImage(), cvPoint(100,100),5, cvScalar(255,0,0), 5 );
+}
+
+void cfCollectorThread::addCLE(ImageOf<yarp::sig::PixelRgb>* image) {
+    cvCircle(image->getIplImage(), cvPoint(100,100),5, cvScalar(255,0,0), 5 );
+}
 
 int cfCollectorThread::prepareUnmasking(char* bufferCopy, Bottle* res) {
     // navigate the 32bit words in the bufferCopy and create a bottle outofvalid

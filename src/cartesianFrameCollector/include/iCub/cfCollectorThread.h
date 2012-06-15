@@ -66,18 +66,18 @@ private:
     
     double microseconds;
     double microsecondsPrev;
-    int countStop;                      // counter of equal timestamp
-    int countDivider;                   // divider of the count
-    int retinalSize;                    // dimension of the retina device
-    int width, height;                  // dimension of the extended input image (extending)
-    int height_orig, width_orig;        // original dimension of the input and output images
-    int synchPeriod;                    // synchronization period between events and viewer
-    int responseGradient;               // responseGradient parameter
+    int countStop;                       // counter of equal timestamp
+    int countDivider;                    // divider of the count
+    int retinalSize;                     // dimension of the retina device
+    int width, height;                   // dimension of the extended input image (extending)
+    int height_orig, width_orig;         // original dimension of the input and output images
+    int synchPeriod;                     // synchronization period between events and viewer
+    int responseGradient;                // responseGradient parameter
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPort;            // port whre the output (left) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPortRight;       // port whre the output (right) is sent
     yarp::sig::ImageOf<yarp::sig::PixelRgb>* imageLeft;                                  //image representing the signal on the leftcamera
     yarp::sig::ImageOf<yarp::sig::PixelRgb>* imageRight;                                 //image representing the signal on the right camera
-    std::string name;                   // rootname of all the ports opened by this thread
+    std::string name;                    // rootname of all the ports opened by this thread
     bool verb;
     bool synchronised;                   // flag to check whether the microsecond counter has been synchronised
     bool greaterHalf;                    // indicates whether the counter has passed the half of the range
@@ -249,6 +249,17 @@ public:
      * @brief function that given a section of the buffer creates a bottle
      */
     int prepareUnmasking(char* bufferCopy, yarp::os::Bottle* res);
+
+    /**
+     * @brief function that add cluster events to the image
+     */
+    void addCLE(yarp::sig::ImageOf<yarp::sig::PixelRgb>* image);
+    
+
+    /**
+     * @brief function that add HGE Hough events to the image
+     */
+    void addHGE(yarp::sig::ImageOf<yarp::sig::PixelRgb>* image);
     
 };
 
