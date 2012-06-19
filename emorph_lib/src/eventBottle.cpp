@@ -22,7 +22,7 @@ eventBottle::eventBottle() {
 }
 
 eventBottle::eventBottle(char* i_data, int i_size) {
-    printf("parametric constructor \n");
+    //printf("parametric constructor \n");
     packet = new Bottle();
     packet->clear();
     int word;
