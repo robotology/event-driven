@@ -803,24 +803,24 @@ Property AddressEvent3DFeatures::getContent() const
 /**************************************************************************/
 ClusterEvent::ClusterEvent()
 {
-    valid=true;
-    type="CLE";
-    channel=0;
-    numAE=0;
-    xCog=0;
-    yCog=0;
+    valid   = true;
+    type    = "CLE";
+    channel = 0;
+    xCog    = 0;
+    yCog    = 0;
+    id      = 0;
 }
 
 
 /**************************************************************************/
 ClusterEvent::ClusterEvent(const ClusterEvent &event)
 {
-    valid=event.valid;
-    type=event.type;
-    channel=event.channel;
-    numAE=event.numAE;
-    xCog=event.xCog;
-    yCog=event.yCog;
+    valid   = event.valid;
+    type    = event.type;
+    channel = event.channel;
+    xCog    = event.xCog;
+    yCog    = event.yCog;
+    id      = event.id;
 }
 
 
@@ -846,7 +846,7 @@ ClusterEvent::ClusterEvent(const Bottle &packets, const int pos)
             yCog=word0&0xff;
 
             word0>>=8;
-            numAE=word0&0x03ff;
+            id=word0&0x03ff;
 
             type="CLE";
             valid=true;
@@ -858,12 +858,12 @@ ClusterEvent::ClusterEvent(const Bottle &packets, const int pos)
 /**************************************************************************/
 ClusterEvent &ClusterEvent::operator=(const ClusterEvent &event)
 {
-    valid=event.valid;
-    type=event.type;
-    channel=event.channel;
-    numAE=event.numAE;
-    xCog=event.xCog;
-    yCog=event.yCog;
+    valid   = event.valid;
+    type    = event.type;
+    channel = event.channel;
+    id      = event.id;
+    xCog    = event.xCog;
+    yCog    = event.yCog;
 
     return *this;
 }
@@ -873,14 +873,14 @@ ClusterEvent &ClusterEvent::operator=(const ClusterEvent &event)
 bool ClusterEvent::operator==(const ClusterEvent &event)
 {
     return ((valid==event.valid)&&(type==event.type)&&(channel==event.channel)&&
-            (numAE==event.numAE)&&(xCog==event.xCog)&&(yCog==event.yCog));
+            (id==event.id)&&(xCog==event.xCog)&&(yCog==event.yCog));
 }
 
 
 /**************************************************************************/
 Bottle ClusterEvent::encode() const
 {
-    int word0=(8<<26)|((numAE&0x03ff)<<16)|((yCog&0xff)<<8)|((xCog&0x7f)<<1)|(channel&0x01);
+    int word0=(8<<26)|((id&0x03ff)<<16)|((yCog&0xff)<<8)|((xCog&0x7f)<<1)|(channel&0x01);
 
     Bottle ret;
     ret.addInt(word0);
@@ -894,7 +894,7 @@ Property ClusterEvent::getContent() const
     Property prop;
     prop.put("type",type.c_str());
     prop.put("channel",channel);
-    prop.put("numAE",numAE);
+    prop.put("id",id);
     prop.put("xCog",xCog);
     prop.put("yCog",yCog);
 
@@ -933,7 +933,7 @@ ClusterEventFeatures1::ClusterEventFeatures1(const Bottle &packets, const int po
             yCog=word0&0xff;
 
             // word1
-            numAE=word1&0x00ffffff;
+            id=word1&0x00ffffff;
 
             type="CLE-F1";
             valid=true;
@@ -946,7 +946,7 @@ ClusterEventFeatures1::ClusterEventFeatures1(const Bottle &packets, const int po
 Bottle ClusterEventFeatures1::encode() const
 {
     int word0=(9<<26)|((yCog&0xff)<<8)|((xCog&0x7f)<<1)|(channel&0x01);
-    int word1=(10<<26)|(numAE&0x00ffffff);
+    int word1=(10<<26)|(id&0x00ffffff);
 
     Bottle ret;
     ret.addInt(word0);
@@ -962,6 +962,7 @@ ClusterEventFeatures2::ClusterEventFeatures2() : ClusterEventFeatures1()
     shapeType=0;
     xSize=0;
     ySize=0;
+    numAE=0;
 }
 
 
@@ -971,12 +972,13 @@ ClusterEventFeatures2::ClusterEventFeatures2(const ClusterEventFeatures2 &event)
     valid=event.valid;
     type=event.type;
     channel=event.channel;
-    numAE=event.numAE;
+    id=event.id;
     shapeType=event.shapeType;
     xCog=event.xCog;
     yCog=event.yCog;
     xSize=event.xSize;
     ySize=event.ySize;
+    numAE=event.numAE;
 }
 
 
@@ -1003,6 +1005,9 @@ ClusterEventFeatures2::ClusterEventFeatures2(const Bottle &packets, const int po
 
             word0>>=7;
             yCog=word0&0xff;
+            
+            word0>>=8;
+            id = word0&0xff;
 
             // word1
             numAE=word1&0x00ffffff;
@@ -1029,12 +1034,13 @@ ClusterEventFeatures2 &ClusterEventFeatures2::operator=(const ClusterEventFeatur
     valid=event.valid;
     type=event.type;
     channel=event.channel;
-    numAE=event.numAE;
+    id=event.id;
     shapeType=event.shapeType;
     xCog=event.xCog;
     yCog=event.yCog;
     xSize=event.xSize;
     ySize=event.ySize;
+    numAE=event.numAE;
 
     return *this;
 }
@@ -1044,7 +1050,7 @@ ClusterEventFeatures2 &ClusterEventFeatures2::operator=(const ClusterEventFeatur
 bool ClusterEventFeatures2::operator==(const ClusterEventFeatures2 &event)
 {
     return ((valid==event.valid)&&(type==event.type)&&(channel==event.channel)&&
-            (numAE==event.numAE)&&(shapeType==event.shapeType)&&(xCog==event.xCog)&&
+            (id==event.id)&&(numAE==event.numAE)&&(shapeType==event.shapeType)&&(xCog==event.xCog)&&
             (yCog==event.yCog)&&(xSize==event.xSize)&&(ySize==event.ySize));
 }
 
@@ -1052,7 +1058,7 @@ bool ClusterEventFeatures2::operator==(const ClusterEventFeatures2 &event)
 /**************************************************************************/
 Bottle ClusterEventFeatures2::encode() const
 {
-    int word0=(9<<26)|((yCog&0xff)<<8)|((xCog&0x7f)<<1)|(channel&0x01);
+    int word0=(9<<26) |((id & 0xff)<<16) | ((yCog&0xff)<<8)|((xCog&0x7f)<<1)|(channel&0x01);
     int word1=(11<<26)|(numAE&0x00ffffff);
     int word2=(12<<26)|((shapeType&0xff)<<16)|((ySize&0xff)<<8)|(xSize&0xff);
 
@@ -1071,6 +1077,7 @@ Property ClusterEventFeatures2::getContent() const
     prop.put("shapeType",shapeType);
     prop.put("xSize",xSize);
     prop.put("ySize",ySize);
+    prop.put("numAE",numAE);
 
     return prop;
 }
@@ -1083,6 +1090,7 @@ ClusterEventFeatures3::ClusterEventFeatures3() : ClusterEventFeatures2()
     shapeProb=0;
     xVel=0;
     yVel=0;
+    numAE=0;
 }
 
 
@@ -1092,7 +1100,7 @@ ClusterEventFeatures3::ClusterEventFeatures3(const ClusterEventFeatures3 &event)
     valid=event.valid;
     type=event.type;
     channel=event.channel;
-    numAE=event.numAE;
+    id=event.id;
     shapeType=event.shapeType;
     shapeProb=event.shapeProb;
     xCog=event.xCog;
@@ -1101,6 +1109,7 @@ ClusterEventFeatures3::ClusterEventFeatures3(const ClusterEventFeatures3 &event)
     ySize=event.ySize;
     xVel=event.xVel;
     yVel=event.yVel;
+    numAE=event.numAE;
 }
 
 
@@ -1129,6 +1138,9 @@ ClusterEventFeatures3::ClusterEventFeatures3(const Bottle &packets, const int po
 
             word0>>=7;
             yCog=word0&0xff;
+
+            word0>>=8;
+            id=word0&0xff;
 
             // word1
             numAE=word1&0x00ffffff;
@@ -1173,6 +1185,7 @@ ClusterEventFeatures3 &ClusterEventFeatures3::operator=(const ClusterEventFeatur
     ySize=event.ySize;
     xVel=event.xVel;
     yVel=event.yVel;
+    numAE=event.numAE;
 
     return *this;
 }
@@ -1182,7 +1195,7 @@ ClusterEventFeatures3 &ClusterEventFeatures3::operator=(const ClusterEventFeatur
 bool ClusterEventFeatures3::operator==(const ClusterEventFeatures3 &event)
 {
     return ((valid==event.valid)&&(type==event.type)&&(channel==event.channel)&&
-            (numAE==event.numAE)&&(shapeType==event.shapeType)&&(shapeProb==event.shapeProb)&&
+            (id==event.id)&&(numAE==event.numAE)&&(shapeType==event.shapeType)&&(shapeProb==event.shapeProb)&&
             (xCog==event.xCog)&&(yCog==event.yCog)&&(xSize==event.xSize)&&(ySize==event.ySize)&&
             (xVel==event.xVel)&&(yVel==event.yVel));
 }
@@ -1191,7 +1204,7 @@ bool ClusterEventFeatures3::operator==(const ClusterEventFeatures3 &event)
 /**************************************************************************/
 Bottle ClusterEventFeatures3::encode() const
 {
-    int word0=(9<<26)|((yCog&0xff)<<8)|((xCog&0x7f)<<1)|(channel&0x01);
+    int word0=(9<<26) |((id&0xff)<<8)|((yCog&0xff)<<8)|((xCog&0x7f)<<1)|(channel&0x01);
     int word1=(11<<26)|(numAE&0x00ffffff);
     int word2=(13<<26)|((shapeType&0xff)<<16)|((ySize&0xff)<<8)|(xSize&0xff);
     int word3=(14<<26)|((shapeProb&0xff)<<16)|((yVel&0xff)<<8)|(xVel&0xff);
@@ -1212,6 +1225,7 @@ Property ClusterEventFeatures3::getContent() const
     prop.put("shapeProb",shapeProb);
     prop.put("xVel",xVel);
     prop.put("yVel",yVel);
+    prop.put("numAE",numAE);
 
     return prop;
 }

@@ -237,8 +237,8 @@ public:
 class ClusterEvent : public eEvent
 {
 protected:
+    int id;
     int channel;
-    int numAE;
     int xCog;
     int yCog;
 
@@ -251,14 +251,14 @@ public:
     bool operator==(const ClusterEvent &event);
 
     int getChannel() const             { return channel;        }
-    int getNumAE() const               { return numAE;          }
-    int getXCog() const                { return xCog;           }
-    int getYCog() const                { return yCog;           }
+    int getId()      const             { return id;             }
+    int getXCog()    const             { return xCog;           }
+    int getYCog()    const             { return yCog;           }
 
-    void setChannel(const int channel) { this->channel=channel; }
-    void setNumAE(const int numAE)     { this->numAE=numAE;     }
-    void setXCog(const int xCog)       { this->xCog=xCog;       }
-    void setYCog(const int yCog)       { this->yCog=yCog;       }
+    void setChannel(const int channel) { this->channel = channel; }
+    void setId(const int id)           { this->id = id;     }
+    void setXCog(const int xCog)       { this->xCog = xCog;       }
+    void setYCog(const int yCog)       { this->yCog = yCog;       }
 
     int getLength() const { return 1; }
     bool operator==(const eEvent &event) { return operator==(dynamic_cast<const ClusterEvent&>(event)); }
@@ -286,6 +286,7 @@ protected:
     int shapeType;
     int xSize;
     int ySize;
+    int numAE;
 
 public:
     ClusterEventFeatures2();
@@ -298,10 +299,12 @@ public:
     int getShapeType() const               { return shapeType;          }
     int getXSize() const                   { return xSize;              }
     int getYSize() const                   { return ySize;              }
+    int getNumAE() const                   { return numAE;              }
 
     void setShapeType(const int shapeType) { this->shapeType=shapeType; }
     void setXSize(const int xSize)         { this->xSize=xSize;         }
     void setYSize(const int ySize)         { this->ySize=ySize;         }
+    void setNumAE(const int numAE)         { this->numAE=numAE;         }
 
     int getLength() const { return 3; }
     bool operator==(const eEvent &event) { return operator==(dynamic_cast<const ClusterEventFeatures2&>(event)); }
@@ -317,6 +320,7 @@ protected:
     int shapeProb;
     int xVel;
     int yVel;
+    int numAE;
 
 public:
     ClusterEventFeatures3();
@@ -327,12 +331,14 @@ public:
     bool operator==(const ClusterEventFeatures3 &event);
 
     int getShapeProb() const               { return shapeProb;          }
-    int getXVel() const                    { return xVel;               }
-    int getYVel() const                    { return yVel;               }
+    int getXVel()      const               { return xVel;               }
+    int getYVel()      const               { return yVel;               }
+    int getNumAE()     const               { return numAE;              }
 
     void setShapeProb(const int shapeProb) { this->shapeProb=shapeProb; }
     void setXVel(const int xVel)           { this->xVel=xVel;           }
     void setYVel(const int yVel)           { this->yVel=yVel;           }
+    void setNumAE(const int numAE)         { this->numAE=numAE;         }
 
     int getLength() const { return 4; }
     bool operator==(const eEvent &event) { return operator==(dynamic_cast<const ClusterEventFeatures3&>(event)); }
