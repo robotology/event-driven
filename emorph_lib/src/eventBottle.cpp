@@ -60,7 +60,7 @@ eventBottle::eventBottle(Bottle* p) {
     int word;
     
     for(int i = 0 ; i < size_of_the_packet ;i++) {
-        printf("costr: %d \n",packet->get(i).asInt());
+        //printf("costr: %d \n",packet->get(i).asInt());
         //packet->addInt(word);
     }
         
@@ -98,6 +98,11 @@ void eventBottle::operator=( eventBottle& buffer) {
         //printf("extracted value %d \n",v);
         packet->copy(*b);
         //packet = buffer.packet;
+
+        //for (int i = 0; i < buffer.size_of_the_packet; i++) {
+        //    packet->get(i) = b->get(i);
+        //}
+        
     }
     size_of_the_packet = buffer.size_of_the_packet;
     //size_of_the_packet = 4;

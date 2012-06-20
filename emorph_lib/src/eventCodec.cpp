@@ -1745,7 +1745,7 @@ HoughEvent::HoughEvent(const Bottle &packets, const int pos)
         int word0=packets.get(pos).asInt();
 
         // check type and fill fields
-        if ((word0>>26)==19)
+        if ((word0>>26)==24)
         {
             channel = word0&0x01;
 
@@ -1790,7 +1790,7 @@ bool HoughEvent::operator==(const HoughEvent &event)
 /**************************************************************************/
 Bottle HoughEvent::encode() const
 {
-    int word0=(19<<26)|((radius&0x03ff)<<16)|((yCoc&0xff)<<8)|((xCoc&0x7f)<<1)|(channel&0x01);
+    int word0=(24<<26)|((radius&0x03ff)<<16)|((yCoc&0xff)<<8)|((xCoc&0x7f)<<1)|(channel&0x01);
 
     Bottle ret;
     ret.addInt(word0);
