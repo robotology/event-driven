@@ -53,9 +53,17 @@ eventBottle::eventBottle(char* i_data, int i_size) {
 
 
 eventBottle::eventBottle(Bottle* p) {
-    printf("copy constructor \n");
+    
     packet = p;
     size_of_the_packet = packet->size();
+    printf("packet size %d \n",packet->size() );
+    int word;
+    
+    for(int i = 0 ; i < size_of_the_packet ;i++) {
+        printf("costr: %d \n",packet->get(i).asInt());
+        //packet->addInt(word);
+    }
+        
     packetPointer = new char; 
 }
 
