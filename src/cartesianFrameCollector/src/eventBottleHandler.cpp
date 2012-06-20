@@ -118,21 +118,38 @@ void eventBottleHandler::extractBottle(Bottle* tempBottle) {
     mutex.post();
 }
 
+
+/*eEventQueue eventBottleHandler::onReadEQueue(Bottle* packets) {
+    //extracting the bottle
+    
+    eEventQueue rxQueue;
+    bool ok = eEvent::decode(packets,rxQueue);
+
+    //passing the new 
+    return rxQueue;
+    }*/
+
+
+
+
+
 // reading out from a circular buffer with 2 entry points and wrapping
 void eventBottleHandler::onRead(eventBottle& i_ub) {    
     valid = true;
-    //printf("OnRead \n");
+    printf("OnRead \n");
     
     //---------------------------------------------   
     //printf("sem address onRead %08x \n",semBottleBuffer[extractPosition] );
     //printf("trying the wait method in onRead \n");
     semBottleBuffer[insertPosition]->wait();
 
+
+
         
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() ;      // number of words     
     receivedBufferSize = dim;
-    //printf("%d dim : %d \n", insertPosition,dim);
+    printf("%d dim : %d \n", insertPosition,dim);
     //receivedBottle = new Bottle(*i_ub.get_packet());
     //printf("%s \n ", i_ub.get_packet()->toString().c_str());
     //receivedBottle->copy(*i_ub.get_packet());
@@ -153,10 +170,11 @@ void eventBottleHandler::onRead(eventBottle& i_ub) {
     //plotting out
     string str;
     int chksum;
-    for (int i=0; i < bufferBottle[insertPosition]->size(); i++) {
+    //for (int i=0; i < bufferBottle[insertPosition]->size(); i++) {
+    for (int i=0; i < dim; i++) {
         fprintf(fout,"%08X \n", bufferBottle[insertPosition]->get(i).asInt());
         //printf("%08X \n", receivedBottle->get(i).asInt());
-        int chksum = bufferBottle[insertPosition]->get(i).asInt() % 255;
+        //int chksum = bufferBottle[insertPosition]->get(i).asInt() % 255;
         //str[i] = (char) chksum;
     }
     //fprintf(fout,"chksum: %s \n", str.c_str());

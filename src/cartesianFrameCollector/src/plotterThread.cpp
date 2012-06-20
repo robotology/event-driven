@@ -381,9 +381,10 @@ void plotterThread::threadRelease() {
     eventPort.close();
 
     printf("freeing memory \n");
-
-    delete imageLeft;
-    delete imageRight;
+    //if(imageLeft!=0)
+    //    delete imageLeft;
+    //if(imageRight!=0)
+    //    delete imageRight;
     printf("freed images \n");
     delete imageLeftInt;
     delete imageRightInt;

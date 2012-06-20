@@ -107,6 +107,8 @@ private:
     char* bufferCopy;                    // local copy of the events read
     FILE* fout;                          // file for temporarely savings of events
     FILE* raw;                           // file dumper for debug
+
+    reprHGE *origHGE;                    // original position of the Hough Event collection
 public:
     /**
     * default constructor

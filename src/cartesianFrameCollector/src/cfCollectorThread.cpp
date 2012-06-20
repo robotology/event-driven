@@ -101,9 +101,13 @@ bool cfCollectorThread::threadInit() {
     pThread->setRetinalSize(retinalSize);
     pThread->start();
     
+
+    origHGE = (reprHGE*) malloc(10 * sizeof(reprHGE));
+
     unmask_events = new unmask();
     unmask_events->setRetinalSize(retinalSize);
     unmask_events->setResponseGradient(responseGradient);
+    unmask_events->setOrigHGELeft(origHGE);
     unmask_events->setASVMode(asvFlag);
     unmask_events->setDVSMode(dvsFlag);
     unmask_events->start();
@@ -357,16 +361,28 @@ void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsign
     //ADDING FURTHER COMPLEX INFORMATION in the IMAGE
     
     addHGE(image,minCount,maxCount,camera);
-    addCLE(image,minCount,maxCount,camera);
+    //addCLE(image,minCount,maxCount,camera);
 }
 
 
 void cfCollectorThread::addHGE(ImageOf<yarp::sig::PixelRgb>* image, unsigned long minCount,unsigned long maxCount, bool camera) {
-    cvCircle(image->getIplImage(), cvPoint(100,100),5, cvScalar(255,0,0), 5 );
+    if(camera) {
+        
+        reprHGE *tmpHGE;
+        tmpHGE = unmask_events->getHGELeft();
+        //printf("%08x origHGE -> %08x tmpHGE    \n", origHGE, tmpHGE);
+        //while(tmpHGE != origHGE) {            
+        //    cvCircle(image->getIplImage(), cvPoint(100,100),5, cvScalar(255,0,0), 1 );
+        //    tmpHGE--;
+        //}
+        //unmask_events->setHGELeft();
+    }
 }
 
 void cfCollectorThread::addCLE(ImageOf<yarp::sig::PixelRgb>* image, unsigned long minCount,unsigned long maxCount, bool camera) {
-    cvCircle(image->getIplImage(), cvPoint(100,100),5, cvScalar(255,0,0), 5 );
+    if(camera) {
+        cvCircle(image->getIplImage(), cvPoint(100,100),5, cvScalar(255,0,0), 1 );
+    }
 }
 
 int cfCollectorThread::prepareUnmasking(char* bufferCopy, Bottle* res) {

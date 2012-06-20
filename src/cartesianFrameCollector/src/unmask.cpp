@@ -42,7 +42,7 @@ using namespace emorph::ecodec;
 #define UNMASKRATETHREAD 1
 #define constInterval 100000;
 
-//#define VERBOSE
+#define VERBOSE
 
 //TODO : remove inheretance of this class from ratethread. No reason to be ratethread
 unmask::unmask() : RateThread(UNMASKRATETHREAD){
@@ -330,6 +330,7 @@ void unmask::addHGE(eEvent* e) {
     //reprHGE _hge;
 
     if(ptr->getChannel()) {
+        printf("adding HGE left \n");
         //left camera
         mutexHGELeft.wait();
         _bufferHGELeft->x = ptr->getXCoc();
@@ -432,10 +433,10 @@ void unmask::unmaskData(Bottle* packets) {
                     }
                     else if(q[evt]->getType()=="CLE") {
                         //printf("timestamp \n");
-                        //ClusterEvent* ptr=dynamic_cast<ClusterEvent*>(q[evt]);
+                        ClusterEvent* ptr=dynamic_cast<ClusterEvent*>(q[evt]);
 #ifdef VERBOSE
                         if(ptr->isValid()) {                       
-                            fprintf(maskEvents,"content: %08x \n", (unsigned int) ptr->getStamp());    
+                            fprintf(maskEvents,"content: %08x \n");    
                         }
 #endif
                         // code for CLE
@@ -444,12 +445,63 @@ void unmask::unmaskData(Bottle* packets) {
                         //ptr->getYCog();
                         addCLE(q[evt]);
                     }
-                    else if(q[evt]->getType()=="HGE") {
-                        //printf("timestamp \n");
-                        //HoughEvent* ptr=dynamic_cast<HoughEvent*>(q[evt]);
+                    else if(q[evt]->getType()=="CLE-F0") {
+                        printf("CLE_F0  \n");
+                        printf("CLE_F0  \n");
+                        printf("CLE_F0  \n");
+
+                        ClusterEvent* ptr=dynamic_cast<ClusterEvent*>(q[evt]);
 #ifdef VERBOSE
                         if(ptr->isValid()) {                       
-                            fprintf(maskEvents,"content: %08x \n", (unsigned int) ptr->getStamp());    
+                            fprintf(maskEvents,"content: %08x \n" );    
+                        }
+#endif
+                        // code for CLE
+                        //printf("received CLUSTER EVENT type: %s \n", ptr->getType());
+                        //ptr->getXCog();
+                        //ptr->getYCog();
+                        
+                    }
+                    else if(q[evt]->getType()=="CLE-F1") {
+                        printf("CLE_F1  \n");
+                        printf("CLE_F1  \n");
+                        printf("CLE_F1  \n");
+
+                        ClusterEvent* ptr=dynamic_cast<ClusterEvent*>(q[evt]);
+#ifdef VERBOSE
+                        if(ptr->isValid()) {                       
+                            fprintf(maskEvents,"content: %08x \n");    
+                        }
+#endif
+                        // code for CLE
+                        //printf("received CLUSTER EVENT type: %s \n", ptr->getType());
+                        //ptr->getXCog();
+                        //ptr->getYCog();
+                        
+                    }
+                    else if(q[evt]->getType()=="CLE-F2") {
+                        printf("CLE_F2  \n");
+                        printf("CLE_F2  \n");
+                        printf("CLE_F2  \n");
+
+                        ClusterEvent* ptr=dynamic_cast<ClusterEvent*>(q[evt]);
+#ifdef VERBOSE
+                        if(ptr->isValid()) {                       
+                            fprintf(maskEvents,"content: %08x \n");    
+                        }
+#endif
+                        // code for CLE
+                        //printf("received CLUSTER EVENT type: %s \n", ptr->getType());
+                        //ptr->getXCog();
+                        //ptr->getYCog();
+                        
+                    }
+                    else if(q[evt]->getType()=="HGE") {
+                        printf("HGE_Event \n");
+                        HoughEvent* ptr=dynamic_cast<HoughEvent*>(q[evt]);
+#ifdef VERBOSE
+                        if(ptr->isValid()) {                       
+                            fprintf(maskEvents,"content: %08x \n");    
                         }
 #endif  
                         //code for HGE                

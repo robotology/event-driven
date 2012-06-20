@@ -311,6 +311,21 @@ public:
     void updateImage(emorph::ecodec::AddressEvent* ptr);
 
     /**
+     * @brief function that returns the pointer to the HGE Left
+     */
+    reprHGE* getHGELeft() {return _bufferHGELeft;};
+
+    /**
+     * @brief function that sets the pointer to the HGE Left
+     */
+    void setHGELeft() { _bufferHGELeft = bufferHGELeft; };
+    
+    /**
+     * @brief set the pointer to the original value
+     */
+    void setOrigHGELeft(reprHGE* b) {_bufferHGELeft = bufferHGELeft = b;};
+
+    /**
      * add the cluster event and all its features
      */
     void addCLE(emorph::ecodec::eEvent* ptr);
