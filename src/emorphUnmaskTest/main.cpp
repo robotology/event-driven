@@ -33,6 +33,7 @@ void printPacket(const Bottle &packets)
     {
         cout<<hex<<setw(8)<<setfill('0')
             <<packets.get(i).asInt()<<" ";
+	cout<<endl;
     }
     cout<<dec<<endl;
 }
@@ -81,26 +82,27 @@ int main()
 
     ClusterEvent cle;
     cle.setChannel(1);
-    cle.setNumAE(34);
+    cle.setId(34);
     cle.setXCog(11);
     cle.setYCog(87);
     cout<<cle.getContent().toString().c_str()<<endl;
 
     ClusterEventFeatures1 clef1;
     clef1.setChannel(0);
-    clef1.setNumAE(3746323);
+    clef1.setId(3);
     clef1.setXCog(24);
     clef1.setYCog(73);
     cout<<clef1.getContent().toString().c_str()<<endl;
 
     ClusterEventFeatures2 clef2;
     clef2.setChannel(1);
-    clef2.setNumAE(7856754);
+    clef2.setId(7);
     clef2.setXCog(25);
     clef2.setYCog(62);
     clef2.setShapeType(43);
     clef2.setXSize(67);
     clef2.setYSize(59);
+    clef2.setNumAE(82);
     cout<<clef2.getContent().toString().c_str()<<endl;
 
     ClusterEventFeatures3 clef3;
@@ -114,6 +116,7 @@ int main()
     clef3.setYSize(59);
     clef3.setXVel(68);
     clef3.setYVel(43);
+    clef3.setNumAE(82);
     cout<<clef3.getContent().toString().c_str()<<endl;
 
     ClusterEvent3D cle3d;
