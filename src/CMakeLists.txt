@@ -32,14 +32,13 @@ add_subdirectory   (harmonicPathPlanner)
 
 #add_subdirectory  (logpolarFrameCollector)
 add_subdirectory   (logSort)
-add_subdirectory   (microsacTest)
+#add_subdirectory  (microsacTest)
+add_subdirectory   (simpleSaccade)
 #add_subdirectory  (objectInteractor)
 add_subdirectory   (pythonInterface)
 #add_subdirectory  (logpolar_frame_converter)
 #add_subdirectory  (logpolar_frame_converter_add)
-
-add_subdirectory   (visualAligner)
-add_subdirectory   (targetFinder)
+#add_subdirectory   (visualAligner)
 
 
 
@@ -48,4 +47,9 @@ add_subdirectory   (targetFinder)
 #add_subdirectory  (opticalFlow2)
 #add_subdirectory  (opticalFlow3)
 add_subdirectory   (eventOpticalFlow)
+
+
+if(ICUB_USE_IPOPT)
+  add_subdirectory   (targetFinder)
+endif(ICUB_USE_IPOPT)
 
