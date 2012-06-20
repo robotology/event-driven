@@ -109,6 +109,7 @@ private:
     FILE* raw;                           // file dumper for debug
 
     reprHGE *origHGE;                    // original position of the Hough Event collection
+    reprCLE *origCLE;                    // original porision of the CLE event collection 
 public:
     /**
     * default constructor

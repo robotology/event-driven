@@ -72,9 +72,15 @@ typedef struct s_GROUP {
 }t_GROUP;
 
 typedef struct represCLE {
-    short x;
-    short y;
+    short id;
+    short xCog;
+    short yCog;
+    short channel;
+    short numAE;
     short r;
+    short shapeType;
+    short xSize;
+    short ySize;
     unsigned long timestamp;
 }reprCLE;
 
@@ -82,6 +88,7 @@ typedef struct represHGE {
     short x;
     short y;
     short r;
+    short channel;
     unsigned long timestamp;
 }reprHGE;
 

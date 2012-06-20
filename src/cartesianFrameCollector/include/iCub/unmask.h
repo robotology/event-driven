@@ -47,7 +47,7 @@ private:
     int id;
     int nb_trame;
     int count;                            // counter of the unmasked events
-    
+    int countCLE;                         // counter CLE
     int sz;
     int* buffer;                          // buffer representing the event in image plane (left)
     unsigned long* timeBuffer;            // buffer contains the timestamp of the particular location (left)
@@ -313,6 +313,11 @@ public:
     /**
      * @brief function that returns the pointer to the HGE Left
      */
+    reprCLE* getCLELeft() {return _bufferCLELeft;};
+
+    /**
+     * @brief function that returns the pointer to the HGE Left
+     */
     reprHGE* getHGELeft() {return _bufferHGELeft;};
 
     /**
@@ -321,9 +326,19 @@ public:
     void setHGELeft() { _bufferHGELeft = bufferHGELeft; };
     
     /**
+     * @brief function that sets the pointer to the HGE Left
+     */
+    void setCLELeft() { _bufferCLELeft = bufferCLELeft;countCLE =0 ; };
+    
+    /**
      * @brief set the pointer to the original value
      */
     void setOrigHGELeft(reprHGE* b) {_bufferHGELeft = bufferHGELeft = b;};
+
+    /**
+     * @brief set the pointer to the original value
+     */
+    void setOrigCLELeft(reprCLE* b) {_bufferCLELeft = bufferCLELeft = b;};
 
     /**
      * add the cluster event and all its features

@@ -385,12 +385,13 @@ void cfCollectorThread::addHGE(ImageOf<yarp::sig::PixelRgb>* image, unsigned lon
 
 void cfCollectorThread::addCLE(ImageOf<yarp::sig::PixelRgb>* image, unsigned long minCount,unsigned long maxCount, bool camera) {
     if(camera) {
-        cvCircle(image->getIplImage(), cvPoint(100,100),5, cvScalar(0,255,0), 1 );
+        //cvCircle(image->getIplImage(), cvPoint(100,100),5, cvScalar(0,255,0), 1 );
         reprCLE *tmpCLE;
         tmpCLE = unmask_events->getCLELeft();
         printf("%08x origCLE -> %08x tmpCLE    \n", origCLE, tmpCLE);
         while(tmpCLE != origCLE) {            
-            cvCircle(image->getIplImage(), cvPoint(tmpCLE->x,tmpCLE->y),5, cvScalar(0,0,255), 1 );
+            cvRectangle(image->getIplImage(), cvPoint(tmpCLE->xCog - tmpCLE->xSize >> 1,tmpCLE->yCog - tmpCLE->ySize >> 1 ),cvPoint(tmpCLE->xCog + tmpCLE->xSize >> 1,tmpCLE->yCog + tmpCLE->ySize >> 1), cvScalar(0,0,255), 3);
+            //cvCircle(image->getIplImage(), cvPoint(tmpCLE->x,tmpCLE->y),5, cvScalar(0,0,255), 1 );
             tmpCLE--;
         }
         unmask_events->setCLELeft();

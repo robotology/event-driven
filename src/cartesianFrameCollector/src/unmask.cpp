@@ -314,8 +314,10 @@ void unmask::addCLE(eEvent* qevt) {
     else if(qevt->getType()=="CLE-F2") {
         ClusterEventFeatures2* ptr=dynamic_cast<ClusterEventFeatures2*>(qevt);
         mutexCLELeft.wait();
-        _bufferCLELeft->x = ptr->getXCog();
-        _bufferCLELeft->y = ptr->getYCog();
+        _bufferCLELeft->xCog  = ptr->getXCog();
+        _bufferCLELeft->yCog  = ptr->getYCog();
+        _bufferCLELeft->xSize = ptr->getXSize();
+        _bufferCLELeft->ySize = ptr->getYSize();
         
         if (countCLE < 10) {
             _bufferCLELeft++;
