@@ -371,11 +371,12 @@ void cfCollectorThread::addHGE(ImageOf<yarp::sig::PixelRgb>* image, unsigned lon
         reprHGE *tmpHGE;
         tmpHGE = unmask_events->getHGELeft();
         //printf("%08x origHGE -> %08x tmpHGE    \n", origHGE, tmpHGE);
-        //while(tmpHGE != origHGE) {            
-        //    cvCircle(image->getIplImage(), cvPoint(100,100),5, cvScalar(255,0,0), 1 );
-        //    tmpHGE--;
-        //}
-        //unmask_events->setHGELeft();
+        while(tmpHGE != origHGE) {            
+            cvCircle(image->getIplImage(), cvPoint(tmpHGE->x,tmpHGE->y),tmpHGE->r, cvScalar(255,0,0), 1 );
+            tmpHGE--;
+        }
+        unmask_events->setHGELeft();
+        //cvCircle(image->getIplImage(), cvPoint(100,100),5, cvScalar(255,0,0), 1 );
     }
 }
 

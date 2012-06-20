@@ -309,15 +309,18 @@ void unmask::addCLE(eEvent* qevt) {
     else if(qevt->getType()=="CLE-F1") {
         //ClusterEventFeature1* ptr=dynamic_cast<ClusterEventFeature1*>(qevt);
     }
-    else if(qevt->getType()=="CLE-F12") {
-        //ClusterEvent* ptr=dynamic_cast<ClusterEvent*>(qevt);
-    }
+    
     else if(qevt->getType()=="CLE-F2") {
-        //ClusterEventFeature2* ptr=dynamic_cast<ClusterEventFeature2*>(qevt);
+        ClusterEventFeatures2* ptr=dynamic_cast<ClusterEventFeatures2*>(qevt);
+        mutexCLELeft.wait();
+        _bufferCLELeft->x = ptr->getXCog();
+        _bufferCLELeft->y = ptr->getYCog();
+
+        
+        _bufferCLELeft++;
+        mutexCLELeft.post();
     }
-    else if(qevt->getType()=="CLE-F23") {
-        //ClusterEvent* ptr=dynamic_cast<ClusterEvent*>(qevt);
-    }
+    
     else if(qevt->getType()=="CLE-F3") {
         //ClusterEventFeature3* ptr=dynamic_cast<ClusterEventFeature3*>(qevt);
     }
@@ -329,8 +332,8 @@ void unmask::addHGE(eEvent* e) {
     HoughEvent* ptr=dynamic_cast<HoughEvent*>(e);
     //reprHGE _hge;
 
-    if(ptr->getChannel()) {
-        printf("adding HGE left \n");
+    if(!ptr->getChannel()) {
+        //printf("adding HGE left \n");
         //left camera
         mutexHGELeft.wait();
         _bufferHGELeft->x = ptr->getXCoc();
@@ -380,25 +383,25 @@ void unmask::unmaskData(Bottle* packets) {
         for (int j = 0; j < packets->size(); j++) {
             //printf(">%08x  \n", (unsigned int) packets->get(j).asInt());
             fprintf(uEvents, ">%08x  \n", (unsigned int) packets->get(j).asInt());
-            chksum = packets->get(i).asInt() % 255;
-            str[i] = (char) chksum;
+            //chksum = packets->get(i).asInt() % 255;
+            //str[i] = (char) chksum;
         }
         //printf("%s \n", packets->toString().c_str());
-        fprintf(uEvents,"chksum: %s \n", str.c_str());
+        //fprintf(uEvents,"chksum: %s \n", str.c_str());
         fprintf(uEvents,"--- \n");
 #endif
-
+        packets->pop();
+        packets->pop();
+        printf("size after pop %d \n", packets->size());
         
         //-- decoding the packet -------
         if(eEvent::decode(*packets,q)) {
             //printf("pointer %08X \n",  &q);
-            //printf("deque size %d \n \n", (int) q.size());
+            printf("deque size %d \n \n", (int) q.size());
             int dequeSize = q.size();
-#ifdef VERBOSE
-            fprintf(maskEvents, " dim : %d \n", dequeSize);
-#endif
+
             for (int evt = 0; evt < dequeSize; evt++) {
-                //printf("evt : %d \n", evt);                
+                printf("evt : %d \n", evt);                
                 if(q[evt] != 0) {                    
                     //********** extracting the event information **********************
                     // to identify the type of the packet
@@ -408,9 +411,7 @@ void unmask::unmaskData(Bottle* packets) {
                         // identified an  address event
                         AddressEvent* ptr=dynamic_cast<AddressEvent*>(q[evt]);
                         if(ptr->isValid()) { 
-#ifdef VERBOSE                      
-                            fprintf(maskEvents,"content: %s \n", ptr->getContent().toString().c_str());            
-#endif
+
                             //printf("%d %d %d %d \n",ptr->getX(), ptr->getY(), ptr->getChannel(), ptr->getPolarity());
                             //if((ptr->getX() == 0) && (ptr->getY() == 0) && (ptr->getChannel()==0) && (ptr->getPolarity() == 0)) {
                             //    printf("null address \n");
@@ -422,11 +423,7 @@ void unmask::unmaskData(Bottle* packets) {
                     else if(q[evt]->getType()=="TS") {
                         //printf("timestamp \n");
                         TimeStamp* ptr=dynamic_cast<TimeStamp*>(q[evt]);
-#ifdef VERBOSE
-                        if(ptr->isValid()) {                       
-                            fprintf(maskEvents,"content: %08x \n", (unsigned int) ptr->getStamp());    
-                        }
-#endif
+
                         //identified an time stamp event
                         lastRecTimestamp = (unsigned int) ptr->getStamp();
                         //printf("lastTimestamp Received %08x \n", lastRecTimestamp);
@@ -434,11 +431,7 @@ void unmask::unmaskData(Bottle* packets) {
                     else if(q[evt]->getType()=="CLE") {
                         //printf("timestamp \n");
                         ClusterEvent* ptr=dynamic_cast<ClusterEvent*>(q[evt]);
-#ifdef VERBOSE
-                        if(ptr->isValid()) {                       
-                            fprintf(maskEvents,"content: %08x \n");    
-                        }
-#endif
+
                         // code for CLE
                         //printf("received CLUSTER EVENT type: %s \n", ptr->getType());
                         //ptr->getXCog();
@@ -451,11 +444,7 @@ void unmask::unmaskData(Bottle* packets) {
                         printf("CLE_F0  \n");
 
                         ClusterEvent* ptr=dynamic_cast<ClusterEvent*>(q[evt]);
-#ifdef VERBOSE
-                        if(ptr->isValid()) {                       
-                            fprintf(maskEvents,"content: %08x \n" );    
-                        }
-#endif
+
                         // code for CLE
                         //printf("received CLUSTER EVENT type: %s \n", ptr->getType());
                         //ptr->getXCog();
@@ -468,11 +457,7 @@ void unmask::unmaskData(Bottle* packets) {
                         printf("CLE_F1  \n");
 
                         ClusterEvent* ptr=dynamic_cast<ClusterEvent*>(q[evt]);
-#ifdef VERBOSE
-                        if(ptr->isValid()) {                       
-                            fprintf(maskEvents,"content: %08x \n");    
-                        }
-#endif
+
                         // code for CLE
                         //printf("received CLUSTER EVENT type: %s \n", ptr->getType());
                         //ptr->getXCog();
@@ -485,25 +470,18 @@ void unmask::unmaskData(Bottle* packets) {
                         printf("CLE_F2  \n");
 
                         ClusterEvent* ptr=dynamic_cast<ClusterEvent*>(q[evt]);
-#ifdef VERBOSE
-                        if(ptr->isValid()) {                       
-                            fprintf(maskEvents,"content: %08x \n");    
-                        }
-#endif
+
                         // code for CLE
                         //printf("received CLUSTER EVENT type: %s \n", ptr->getType());
                         //ptr->getXCog();
                         //ptr->getYCog();
                         
+                        addCLE(q[evt]);
                     }
                     else if(q[evt]->getType()=="HGE") {
                         printf("HGE_Event \n");
                         HoughEvent* ptr=dynamic_cast<HoughEvent*>(q[evt]);
-#ifdef VERBOSE
-                        if(ptr->isValid()) {                       
-                            fprintf(maskEvents,"content: %08x \n");    
-                        }
-#endif  
+  
                         //code for HGE                
                         //printf("received HOUGH EVENT type: %s \n", ptr->getType());
                         
@@ -519,7 +497,7 @@ void unmask::unmaskData(Bottle* packets) {
             } //end of for   
         } // end eEvent::decode
         else {
-            printf("ERROR in DECODINg  \n");
+            printf("ERROR in DECODING  \n");
         }
         
     
