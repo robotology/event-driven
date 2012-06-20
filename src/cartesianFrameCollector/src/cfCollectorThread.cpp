@@ -102,11 +102,14 @@ bool cfCollectorThread::threadInit() {
     pThread->start();
     
 
+    // allocating memory for up to 10 CLE and 10 HGE
     origHGE = (reprHGE*) malloc(10 * sizeof(reprHGE));
+    origCLE = (reprCLE*) malloc(10 * sizeof(reprCLE));
 
     unmask_events = new unmask();
     unmask_events->setRetinalSize(retinalSize);
     unmask_events->setResponseGradient(responseGradient);
+    unmask_events->setOrigCLELeft(origCLE);
     unmask_events->setOrigHGELeft(origHGE);
     unmask_events->setASVMode(asvFlag);
     unmask_events->setDVSMode(dvsFlag);
@@ -361,7 +364,7 @@ void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsign
     //ADDING FURTHER COMPLEX INFORMATION in the IMAGE
     
     addHGE(image,minCount,maxCount,camera);
-    //addCLE(image,minCount,maxCount,camera);
+    addCLE(image,minCount,maxCount,camera);
 }
 
 
@@ -382,7 +385,15 @@ void cfCollectorThread::addHGE(ImageOf<yarp::sig::PixelRgb>* image, unsigned lon
 
 void cfCollectorThread::addCLE(ImageOf<yarp::sig::PixelRgb>* image, unsigned long minCount,unsigned long maxCount, bool camera) {
     if(camera) {
-        cvCircle(image->getIplImage(), cvPoint(100,100),5, cvScalar(255,0,0), 1 );
+        cvCircle(image->getIplImage(), cvPoint(100,100),5, cvScalar(0,255,0), 1 );
+        reprCLE *tmpCLE;
+        tmpCLE = unmask_events->getCLELeft();
+        printf("%08x origCLE -> %08x tmpCLE    \n", origCLE, tmpCLE);
+        while(tmpCLE != origCLE) {            
+            cvCircle(image->getIplImage(), cvPoint(tmpCLE->x,tmpCLE->y),5, cvScalar(0,0,255), 1 );
+            tmpCLE--;
+        }
+        unmask_events->setCLELeft();
     }
 }
 

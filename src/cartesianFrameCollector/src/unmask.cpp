@@ -46,7 +46,8 @@ using namespace emorph::ecodec;
 
 //TODO : remove inheretance of this class from ratethread. No reason to be ratethread
 unmask::unmask() : RateThread(UNMASKRATETHREAD){
-    count = 0;
+    count      = 0;
+    countCLE   = 0;
     verb       = false;
     dvsMode    = false;
     asvMode    = false; //TODO : make this variable a parameter in the command line
@@ -299,7 +300,7 @@ void unmask::updateImage(AddressEvent* ptr) {
 
 void unmask::addCLE(eEvent* qevt) {
     if(qevt->getType()=="CLE") {
-        ClusterEvent* ptr=dynamic_cast<ClusterEvent*>(qevt);
+        //ClusterEvent* ptr=dynamic_cast<ClusterEvent*>(qevt);
         //ptr->getXCoc();
         //ptr->getYCoc();   
     }
@@ -315,9 +316,11 @@ void unmask::addCLE(eEvent* qevt) {
         mutexCLELeft.wait();
         _bufferCLELeft->x = ptr->getXCog();
         _bufferCLELeft->y = ptr->getYCog();
-
         
-        _bufferCLELeft++;
+        if (countCLE < 10) {
+            _bufferCLELeft++;
+            countCLE++;
+        }
         mutexCLELeft.post();
     }
     
@@ -436,7 +439,7 @@ void unmask::unmaskData(Bottle* packets) {
                         //printf("received CLUSTER EVENT type: %s \n", ptr->getType());
                         //ptr->getXCog();
                         //ptr->getYCog();
-                        addCLE(q[evt]);
+                        //addCLE(q[evt]);
                     }
                     else if(q[evt]->getType()=="CLE-F0") {
                         printf("CLE_F0  \n");
