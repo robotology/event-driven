@@ -765,9 +765,10 @@ void  device2yarp::run() {
     bottle2send->clear();
     
     
-    for (int i = 0; i < monBufEvents; i++ ) {
+    for (int i = 0; i < monBufEvents ; i++ ) {
 
-        tempA = pmonatom[i].data;        
+        tempA = pmonatom[i].data;                  
+
         // dumping any single char
         /*
         if(save){
@@ -1042,10 +1043,9 @@ void  device2yarp::run() {
         //eventBottle data2send(pBuffer, sz);
         eventBottle data2send(bottle2send);
         eventBottle& tmp = portEventBottle.prepare(); 
+        //portEventBottle.prepare() = data2send; 
         tmp = data2send;
         portEventBottle.write();
-
-        printf("just sent: %s \n", bottle2send->toString().c_str());
     }   
     
     
@@ -1060,7 +1060,7 @@ void  device2yarp::run() {
     
     //resetting buffers    
     memset(buffer, 0, SIZE_OF_DATA);
-    delete bottle2send;
+    //delete bottle2send;
 }
 
 
