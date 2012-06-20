@@ -100,22 +100,22 @@ static const char* byte_to_binary( int x ) {
 }
 
 device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName = " "):RateThread(THRATE) {
-
-  // initialization of the paramenters
-  t_prev           = 0;
-  fout             = 0;
-  countErrors      = 0;
-  countInWraps     = 0;
-  countInWrapsTS   = 0;
-  countErrorsGAEP1 = 0;
-  countErrorsGAEP2 = 0;
-  countErrorsGAEP3 = 0;
-  minCountInWraps  = 16777215;
-  maxCountInWraps  = 0;
-  countLostAE      = 0;
-  wrapOccured      = false;
-  
-
+    bottle2send = new Bottle();  
+    // initialization of the paramenters
+    t_prev           = 0;
+    fout             = 0;
+    countErrors      = 0;
+    countInWraps     = 0;
+    countInWrapsTS   = 0;
+    countErrorsGAEP1 = 0;
+    countErrorsGAEP2 = 0;
+    countErrorsGAEP3 = 0;
+    minCountInWraps  = 16777215;
+    maxCountInWraps  = 0;
+    countLostAE      = 0;
+    wrapOccured      = false;
+    
+    
     /*   ORIGINAL VALUES
     *   from DVS128_PAER.xml, set Tmpdiff128
     *    biasvalues = {
@@ -659,16 +659,16 @@ void device2yarp::prepareBiasesRight() {
             
         int biasValues[]={casRight,        // cas
                           injgRight,       // injGnd
-                          reqPdRight,    // reqPd
-                          puxRight,     // puX
-                          diffoffRight,        // diffOff
-                          reqRight,      // req
-                          refrRight,           // refr
-                          puyRight,    // puY
-                          diffonRight,      // diffOn
+                          reqPdRight,      // reqPd
+                          puxRight,        // puX
+                          diffoffRight,    // diffOff
+                          reqRight,        // req
+                          refrRight,       // refr
+                          puyRight,        // puY
+                          diffonRight,     // diffOn
                           diffRight,       // diff 
-                          follRight,          // foll
-                          prRight            //Pr 
+                          follRight,       // foll
+                          prRight           //Pr 
         };
         
 
@@ -758,6 +758,12 @@ void  device2yarp::run() {
     int lastAEindex = -1;
     int countEventSent = 0;
     int countUndetectedWA = 0;
+
+
+    //yarp::os::Bottle *bottle2send;
+    bottle2send = new Bottle;
+    bottle2send->clear();
+    
     
     for (int i = 0; i < monBufEvents; i++ ) {
 
@@ -800,6 +806,7 @@ void  device2yarp::run() {
         }
         // ---------- ADDRESS EVENT -----------------
         else if(tempA_unmasked == 0x00 ){
+
             a = tempA;
             
             if((countData - lastAEindex != 2) && (lastAEindex != -1)) {
@@ -824,8 +831,19 @@ void  device2yarp::run() {
                 //fprintf(fout,"test\n");
             }
                       
-            buf2[k2++] = a;   // passing the address event to the data flow to send
+            buf2[k2++] = a;   // passing the address event to the data flow to send            
             countEventSent++;
+
+            //extracting information 
+            //int channel  = (tempA & 0x00008000) >> 16;
+            //int Ycoord   = (tempA & 0x00007F00) >>  8;
+            //int Xcoord   = (tempA & 0x000000FE) >>  1;
+            //int polarity = (tempA & 0x00000001)      ;
+            //ae.setChannel(channel);
+            //ae.setPolarity(polarity);
+            //ae.setX(Xcoord);
+            //ae.setY(Ycoord);
+            bottle2send->addInt(tempA);
         }
         // -------------- TIMESTAMP EVENT ----------------
         else if (tempA_unmasked == 0x20) {
@@ -873,13 +891,21 @@ void  device2yarp::run() {
             lastTSindex = countData;
             
             if (save) {	  
-                fprintf(fout,"%08X ",t);
+                fprintf(fout,"%08X\n",t);
             }
           
             //copying the atomic block to send
             buf2[k2++] = t; // passing the timestamp to the data flow to send
             countEventSent++;
 
+
+            //extracting information 
+            
+            //int data = (tempA & 0x00FFFFFFF) 
+            //ts.setStamp(data);
+            bottle2send->addInt(tempA);
+            
+    
         }
         // --------------- TIMESTAMP WRAP AROUND ------------
         else if(tempA_unmasked == 0x22) {
@@ -962,9 +988,39 @@ void  device2yarp::run() {
                 //fprintf(fout," %08X ",0xCAFECAFE);
             }	  	  	  
         }
+        // --------------- other events  ------------
+        else {
+            //extracting information         
+            /*
+              int clusterId = (tempA & 0x00FFFFFF) >> 16;
+              int YCog      = (tempA & 0x00007F00) >> 8;
+              int XCog      = (tempA & 0x000000FE) >> 1; 
+              int channel   = (tempA & 0x00000001)     ;
+              clef1.setID();
+              clef1.setChannel(0);        
+              clef1.setXCog(24);
+              clef1.setYCog(73);
+            */
+
+            if (save) {	  
+                fprintf(fout,"%08X\n",tempA);
+                //fprintf(fout," %08X ",0xCAFECAFE);
+            }	
+            
+            //copying the atomic block to send
+            buf2[k2++] = tempA; // passing the timestamp to the data flow to send
+            countEventSent++;
+            
+            bottle2send->addInt(tempA);
         
+        }
+        	
         countData++;
       
+    }
+    
+    if (save) {	  
+        fprintf(fout,"------------------------\n");
     }
     
      //*******************************************************************************************************
@@ -983,10 +1039,13 @@ void  device2yarp::run() {
 
     if (portEventBottle.getOutputCount()) {       
         //printf("Sending the bottle %d bytes \n", sz);
-        eventBottle data2send(pBuffer, sz);
+        //eventBottle data2send(pBuffer, sz);
+        eventBottle data2send(bottle2send);
         eventBottle& tmp = portEventBottle.prepare(); 
         tmp = data2send;
         portEventBottle.write();
+
+        printf("just sent: %s \n", bottle2send->toString().c_str());
     }   
     
     
@@ -1001,6 +1060,7 @@ void  device2yarp::run() {
     
     //resetting buffers    
     memset(buffer, 0, SIZE_OF_DATA);
+    delete bottle2send;
 }
 
 

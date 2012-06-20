@@ -423,6 +423,9 @@ private:
     yarp::os::BufferedPort<eventBottle> portEventBottle2;       // port sending events as bottle
     yarp::os::BufferedPort<eventBottle> portEventBottle3;       // port sending events as bottle
     yarp::os::BufferedPort<eventBottle> portEventBottle4;       // port sending events as bottle
+
+    yarp::os::Bottle *bottle2send;                              // bottle to send on the eventBottle port
+    
     int r;                                         // dimension of the received buffer of event for display
     int countAEs;                                  // counter of the received AEs
     FILE* raw;
