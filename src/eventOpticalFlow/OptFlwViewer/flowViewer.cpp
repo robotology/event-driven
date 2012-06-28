@@ -4,21 +4,43 @@
 flowViewer::flowViewer()
 {
 
-    mBaseImg.resize(10*XDIM,10*YDIM);
+    mBaseImg.resize(4*XDIM,4*YDIM);
     
-    for(int x=0; x<10*XDIM; ++x)
+    for(int x=0; x<4*XDIM; ++x)
     {
-        for(int y=0; y<10*YDIM; ++y)
+        for(int y=0; y<4*YDIM; ++y)
         {
-            mBaseImg(x,y)=160; //255;
+//            if (x < 4 * 69)
+               mBaseImg(x,y)=160; //255;
+//            else
+//               mBaseImg(x,y)=100; //255;
         }
     }
 
-    xVels.resize(XDIM + 2*MEDIAN_NGHBRHD, YDIM + 2*MEDIAN_NGHBRHD);
-    yVels.resize(XDIM + 2*MEDIAN_NGHBRHD, YDIM + 2*MEDIAN_NGHBRHD);
+    normBaseImg.resize(XDIM, YDIM);
+    for(int x=0; x<XDIM; ++x)
+    {
+       for(int y=0; y<YDIM; ++y)
+       {
+              normBaseImg(x,y)=100; //255;
+       }
+    }
+
+//    xVels.resize(XDIM + 2*MEDIAN_NGHBRHD, YDIM + 2*MEDIAN_NGHBRHD);
+//    yVels.resize(XDIM + 2*MEDIAN_NGHBRHD, YDIM + 2*MEDIAN_NGHBRHD);
+
+    xVels.resize(XDIM, YDIM);
+    xVels.zero();
+    yVels.resize(XDIM, YDIM);
+    yVels.zero();
+    timeRec.resize(XDIM, YDIM);
+    timeRec.zero();
 
 
     zeroFlag = 0;
+    cntrR = 0; cntrL = 0;
+    velR = 0; velL = 0;
+
 
 }
 
@@ -196,9 +218,12 @@ void flowViewer::run(VelocityBuffer& data)
     double vvx, vvy;
 
     int size;
-    double norm;
+    double norm, tmp;
     yarp::sig::ImageOf<yarp::sig::PixelMono16>& img=outPort-> prepare();
     img=mBaseImg;
+
+velL =  velR = 0 ;
+cntrL = cntrR = 0;
 
 
 //    medianFilter2D(data);
@@ -206,12 +231,9 @@ void flowViewer::run(VelocityBuffer& data)
 
     size = data.getSize();
    
-
-    ax = (data.getVxMax() == 0 ? 1 : 20 / data.getVxMax());
-    ay = (data.getVyMax() == 0 ? 1 : 20 / data.getVyMax());
-
-
-
+    ax = (data.getVxMax() == 0 ? 1 : 40 / data.getVxMax());
+    ay = (data.getVyMax() == 0 ? 1 : 40 / data.getVyMax());
+    cout << ax << " " << ay << endl;
     for (int i = 0; i < size; ++i) {
         x = data.getX(i);
         y = data.getY(i);
@@ -220,19 +242,30 @@ void flowViewer::run(VelocityBuffer& data)
 
 //        xVels(x+MEDIAN_NGHBRHD, y+MEDIAN_NGHBRHD) = vx;
 //        yVels(x+MEDIAN_NGHBRHD, y+MEDIAN_NGHBRHD) = vy;
+//        cout << vx << " " << vy << " " << vvx << " "  << vvy << endl;
 
         vvx = ax * vx;
         vvy = ay * vy;
-        norm=vx*vx+vy*vy;
 
-//        cout << norm << endl;
+        norm=vvx*vvx+vvy*vvy;
+//
+//        if (x < 69 ){
+//            cntrL++;
+//            velL += norm;
+//        }else{
+//            cntrR++;
+//            velR += norm;
+//        }
+
+
+        //cout << data.getRel(i) << endl;
         if (norm>0.0){
 
-            X=5+10*x;
-            Y=5+10*y;
+            X=2+4*x;
+            Y=2+4*y;
 
-            hx=X+int(vvx+0.5);
-            hy=Y+int(vvy+0.5);
+            hx=X+ (vvx >= 0 ? int(vvx+0.5) : int(vvx - 0.5) ) ;
+            hy=Y+ (vvy >= 0 ? int(vvy+0.5) : int(vvy - 0.5) ) ;
 
             static const yarp::sig::PixelMono16 black=0;
             static const yarp::sig::PixelMono16 white=255;
@@ -244,7 +277,82 @@ void flowViewer::run(VelocityBuffer& data)
 
     }
 
+//    avgL = velL / cntrL;
+//    avgR = velR / cntrR;
+//    cout << avgL << " " << avgR << endl;
+
     outPort->write();
 
+}
+
+void flowViewer::velNorm(VelocityBuffer& data)
+{
+
+    int x, y;
+    double vx, vy;
+    int hx,hy, X,Y;
+
+    double ax, bx, ay, by;
+    double vvx, vvy;
+
+
+
+    int size;
+    double norm, tmp;
+    yarp::sig::ImageOf<yarp::sig::PixelMono16>& img=outPort-> prepare();
+    img=normBaseImg;
+
+
+    size = data.getSize();
+//    if (size < 20)
+//        return;
+
+    ax = (data.getVxMax() == 0 ? 1 : 1 / data.getVxMax());
+    ay = (data.getVyMax() == 0 ? 1 : 1 / data.getVyMax());
+
+    tmp = 0;
+    double sptDer = 0;
+    for (int i = 0; i < size; ++i) {
+        x = data.getX(i);
+        y = data.getY(i);
+        vx = data.getVx(i);
+        vy = data.getVy(i);
+
+        vvx = ax * vx;
+        vvy = ay * vy;
+        norm=  int( sqrt(vvx*vvx+vvy*vvy) * 100 + .5);//  sqrt(vvy*vvy);
+//        norm = (vvx >= 0 ? int(vvx+0.5)*int(vvx+0.5) : int(vvx - 0.5)*int(vvx-0.5) ) ;
+//        norm += (vvy >= 0 ? int(vvy+0.5)*int(vvy+0.5) : int(vvy - 0.5)*int(vvy-0.5) ) ;
+//        norm = sqrt(norm);
+
+
+        if (x >= 1 && y>= 1 && x < 127 && y < 127) {
+            for (int j = -1; j <= 1; ++j) {
+                for (int k = -1; k <= 1; ++k) {
+                    img(x + j,y + k) = (norm * 5 > 255 ? 255 : norm * 5) ;
+                }
+            }
+        }
+        else
+           img(x,y) = (norm * 255 > 255 ? 255 : norm * 255) ;
+
+        cout << norm << endl;
+
+        tmp += norm;
+        sptDer += norm * norm;
+    }
+
+
+
+    tmp = tmp / size;
+    sptDer = sptDer / size;
+    sptDer = sptDer - tmp * tmp;
+//    cout << tmp << " " << sptDer << endl;
+
+    outPort->write();
 
 }
+
+
+
+

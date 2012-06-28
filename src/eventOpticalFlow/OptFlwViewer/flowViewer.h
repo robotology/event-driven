@@ -2,6 +2,7 @@
 #define __FLOWVIEWER_H__
 
 #include "VelocityBuffer.h"
+//#include "IntegralImage.h"
 
 #include <cmath>
 #include <iostream>
@@ -20,25 +21,33 @@ using namespace yarp::os;
 
 class flowViewer {
     yarp::sig::ImageOf<yarp::sig::PixelMono16> mBaseImg;
+    yarp::sig::ImageOf<yarp::sig::PixelMono16> normBaseImg;
     BufferedPort< yarp::sig::ImageOf <yarp::sig::PixelMono16> > * outPort;
 
     yarp::sig::Matrix xVels;
     yarp::sig::Matrix yVels;
+    yarp::sig::Matrix timeRec;
     int zeroFlag;
 
     double kth_smallest(double * a, int n, int k);
 
     void medianFilter2D(VelocityBuffer &);
     void medianFilterSeprabale(VelocityBuffer & );
-
     void resetVelMtrx();
 
+    double velR, velL, avgR, avgL;
+    int cntrR, cntrL;
+
+
 public:
+
+
     flowViewer();
     void setOutPort(BufferedPort< yarp::sig::ImageOf <yarp::sig::PixelMono16> > * );
     ~flowViewer();
     void run(VelocityBuffer &);
-
+    void velNorm(VelocityBuffer& data);
+   // void velAvrg(VelocityBuffer& data);
 
 };
 

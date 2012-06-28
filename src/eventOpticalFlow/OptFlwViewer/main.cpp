@@ -8,6 +8,8 @@
 #include <yarp/os/RFModule.h>
 #include <yarp/os/Semaphore.h>
 
+#include <queue>
+
 using namespace std;
 using namespace yarp::os;
 
@@ -16,51 +18,79 @@ using namespace yarp::os;
 class VelocityGrabber: public BufferedPort<VelocityBuffer>{
 
     unsigned int lostCntr;
-    short firstIdx, lastIdx;
+//    short firstIdx, lastIdx;
     yarp::os::Semaphore bfrMutex;
-    VelocityBuffer * velBfr [VEL_BFR_SIZE];
+    //VelocityBuffer * velBfr [VEL_BFR_SIZE];
+    queue < VelocityBuffer * > velBfr;
+
 
 public:
     VelocityGrabber(){
         lostCntr = 0;
-        firstIdx = 0;
-        lastIdx = 0;
+//        firstIdx = 0;
+//        lastIdx = 0;
     }
 
     virtual void onRead(VelocityBuffer & data){
         VelocityBuffer * vb = new VelocityBuffer();
         vb->setData(data);
         bfrMutex.wait();
-        if (lastIdx < VEL_BFR_SIZE){
-            velBfr[lastIdx++] = vb;
-        }
-        else{
-            lostCntr ++;
-            delete vb;
-        }
+        velBfr.push(vb);
         bfrMutex.post();
     }
+
+//    virtual void onRead(VelocityBuffer & data){
+//        VelocityBuffer * vb = new VelocityBuffer();
+//        vb->setData(data);
+//        bfrMutex.wait();
+//        if (lastIdx < VEL_BFR_SIZE){
+//            velBfr[lastIdx++] = vb;
+//        }
+//        else{
+//            lostCntr ++;
+//            delete vb;
+//        }
+//        bfrMutex.post();
+//    }
 
     VelocityBuffer *  getVelocities(){
         VelocityBuffer * res = NULL;
         bfrMutex.wait();
-        if (lastIdx - firstIdx > 0){
-            res = velBfr[firstIdx++];
-        }
-        else {
-            firstIdx = 0;
-            lastIdx = 0;
+        if (velBfr.size() > 0){
+           res = velBfr.front();
+           velBfr.pop();
         }
         bfrMutex.post();
         return res;
 
     }
 
-    ~VelocityGrabber(){
+//    VelocityBuffer *  getVelocities(){
+//        VelocityBuffer * res = NULL;
+//        bfrMutex.wait();
+//        if (lastIdx - firstIdx > 0){
+//            res = velBfr[firstIdx++];
+//        }
+//        else {
+//            firstIdx = 0;
+//            lastIdx = 0;
+//        }
+//        bfrMutex.post();
+//        return res;
+//
+//    }
 
-        for (int i = firstIdx; i < lastIdx; ++i) {
-            delete velBfr[i];
+    ~VelocityGrabber(){
+        VelocityBuffer * vb;
+
+        for (int i = 0; i < velBfr.size(); ++i) {
+            vb = velBfr.front();
+            delete vb;
+            velBfr.pop();
         }
+//        for (int i = firstIdx; i < lastIdx; ++i) {
+//            delete velBfr[i];
+//        }
 
         cout << "Sorry! " << lostCntr <<  " Velocity bufferes were lost." << endl;
     }
@@ -112,6 +142,8 @@ public:
         if (vb != NULL){
        //     cout << "run function" << endl;
            viewer.run(*vb);
+//           viewer.velNorm(*vb);
+//           viewer.velAvrg(*vb);
            delete vb;
         }
 
