@@ -2,7 +2,7 @@
 #define __FLOWVIEWER_H__
 
 #include "VelocityBuffer.h"
-//#include "IntegralImage.h"
+#include "IntegralImage.h"
 
 #include <cmath>
 #include <iostream>
@@ -14,30 +14,30 @@
 
 #define XDIM 128
 #define YDIM 128
+#define FILTER_NGHBRHD 3
 #define MEDIAN_NGHBRHD 2
 
 using namespace std;
 using namespace yarp::os;
 
 class flowViewer {
-    yarp::sig::ImageOf<yarp::sig::PixelMono16> mBaseImg;
+    yarp::sig::ImageOf<yarp::sig::PixelMono16> vecBaseImg;
     yarp::sig::ImageOf<yarp::sig::PixelMono16> normBaseImg;
     BufferedPort< yarp::sig::ImageOf <yarp::sig::PixelMono16> > * outPort;
 
     yarp::sig::Matrix xVels;
     yarp::sig::Matrix yVels;
     yarp::sig::Matrix timeRec;
-    int zeroFlag;
+
 
     double kth_smallest(double * a, int n, int k);
 
     void medianFilter2D(VelocityBuffer &);
     void medianFilterSeprabale(VelocityBuffer & );
-    void resetVelMtrx();
 
-    double velR, velL, avgR, avgL;
-    int cntrR, cntrL;
-
+//    double velR, velL, avgR, avgL;
+//    int cntrR, cntrL;
+//    int zeroFlag;
 
 public:
 
@@ -45,9 +45,13 @@ public:
     flowViewer();
     void setOutPort(BufferedPort< yarp::sig::ImageOf <yarp::sig::PixelMono16> > * );
     ~flowViewer();
+
+    void avrageFilter(VelocityBuffer& data);
+
+
     void run(VelocityBuffer &);
     void velNorm(VelocityBuffer& data);
-   // void velAvrg(VelocityBuffer& data);
+    void velAvrg(VelocityBuffer& data);
 
 };
 

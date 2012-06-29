@@ -141,9 +141,10 @@ public:
         vb = vGrabber.getVelocities();
         if (vb != NULL){
        //     cout << "run function" << endl;
-           viewer.run(*vb);
+            viewer.avrageFilter(*vb);
+//           viewer.run(*vb);
 //           viewer.velNorm(*vb);
-//           viewer.velAvrg(*vb);
+
            delete vb;
         }
 

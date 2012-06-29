@@ -72,8 +72,8 @@ public:
     double getVyMin();
     double getVyMax();
 
-    inline void setVx(int idx, double vx ){Vxs[idx] = vx;};
-    inline void setVy(int idx, double vy ){Vys[idx] = vy;};
+    void setVx(int idx, double vx );
+    void setVy(int idx, double vy );
     void setVxMax(double v){vxMax = v;};
     void setVyMax(double v){vyMax = v;};
 };

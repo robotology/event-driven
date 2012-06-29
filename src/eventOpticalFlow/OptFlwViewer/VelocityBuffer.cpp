@@ -184,6 +184,27 @@ void VelocityBuffer::setData(const VelocityBuffer & src){
     vyMax = src.vyMax;
 }
 
+void VelocityBuffer::setVx(int idx, double vx ){
+    double tmp;
+    Vxs[idx] = vx;
+
+    tmp = fabs(vx);
+    if (tmp < vxMin)
+        vxMin = tmp;
+    if (tmp > vxMax)
+        vxMax = tmp;
+}
+
+void VelocityBuffer::setVy(int idx, double vy ){
+    double tmp;
+    Vys[idx] = vy;
+    tmp = fabs(vy);
+    if (tmp < vyMin)
+        vyMin = tmp;
+    if (tmp > vyMax)
+        vyMax = tmp;
+}
+
 double VelocityBuffer::getVxMin(){
     return vxMin;
 }
