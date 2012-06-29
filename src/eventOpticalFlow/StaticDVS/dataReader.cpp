@@ -270,7 +270,7 @@ public:
         else
         	dvsCam = false;
 
-        bufferSize = 1024;	; // 16384 -> 2048 events, 8192 bytes -> 1024 events , 4096-> 512 events
+        bufferSize = 512;	; // 16384 -> 2048 events, 8192 bytes -> 1024 events , 4096-> 512 events
 
         if (dvsCam){
             inFile.open(inFileName.c_str(), ifstream::in);
@@ -326,7 +326,7 @@ public:
     double getPeriod()
     {
        /* module periodicity (seconds), called implicitly by myModule */
-       return .005;
+       return .01;
     }
 
     bool interruptModule(){
