@@ -195,7 +195,7 @@ void OpticalFlowModule::worldStatusRenderer(){
 		imgSnd.resize(128,128);
 		 for (int i = 0; i < retinaSizeC; ++i) {
 			for (int j = 0; j < retinaSizeR; ++j) {
-				imgSnd (i,j) = worldStatus(j+SPATIAL_MARGINE_ADDUP,i+SPATIAL_MARGINE_ADDUP)+127;
+				imgSnd (i,j) = worldStatus(j+SPATIAL_MARGINE_ADDUP,i+SPATIAL_MARGINE_ADDUP)*20+127;
 			}
 		 }
 		 outWrldMdlPort.write();

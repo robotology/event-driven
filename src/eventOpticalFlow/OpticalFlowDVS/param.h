@@ -26,9 +26,9 @@
 #define TS_RANGE 0x04000000  // There is 26 bits to represent timestamp
 #define SPATIAL_MARGINE_ADDUP 4  // Spatial Window + LK window
 
-#define SPDerivative_WNDW_SZ 5
+#define SPDerivative_WNDW_SZ 10
 
-#define POLARITY_WEIGHT  30
+#define POLARITY_WEIGHT  1
 
 // For ICub Sensor
 #define RELIABLE_EVENT_THRSHLD 12500// 93750 // 12500 //   31250 //  18750 // 6250 // 3125 //

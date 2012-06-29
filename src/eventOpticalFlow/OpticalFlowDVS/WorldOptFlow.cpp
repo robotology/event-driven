@@ -126,7 +126,7 @@ void WorldOptFlow::run(){
 
         updtWrldStus();
 //        clock_t start= clock();
-        calVelocities(eventsBfr, eventNo);
+       calVelocities(eventsBfr, eventNo);
 //        clock_t end = clock();
 //        double elapsed = ( (double) (end - start) ) / CLOCKS_PER_SEC;
 //        cout.precision(10);
@@ -241,7 +241,7 @@ void WorldOptFlow::calVelocities(CameraEvent ** evntBffr, int bffrSize){
 	CameraEvent * evntPtr;
 	short evtRw, evtClm;
 	VelocityBuffer vlctyBuffer;
-	double velocity [2];
+	double velocity [3];
 
 
 	for (int cntr = 0; cntr < bffrSize; ++cntr) {
@@ -266,9 +266,8 @@ void WorldOptFlow::calVelocities(CameraEvent ** evntBffr, int bffrSize){
 			if (vlctyBuffer.addDataCheckFull(evtClm - SPATIAL_MARGINE_ADDUP,
 											 evtRw - SPATIAL_MARGINE_ADDUP,
 											 *velocity, *(velocity + 1),
-											 evntPtr -> getTimeStamp() ) ){ //TODO
+											 evntPtr -> getTimeStamp(), *(velocity + 2) ) ){ //TODO
 				//Buffer is full and it should be sent to the network
-
 
 				if (outPort -> getOutputCount()){
 					VelocityBuffer & outObj = outPort->prepare();

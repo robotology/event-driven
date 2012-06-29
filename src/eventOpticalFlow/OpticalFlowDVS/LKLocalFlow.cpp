@@ -163,6 +163,8 @@ void LKLocalFlow::LeastSquareSolver(MyMatrix<double> A, MyMatrix<double> b, doub
         }
     }
 
+    *(velocity + 2) = eigenValMin;
+
 }
 
 void LKLocalFlow::pinv_symm2x2(double a11, double a12 ,double a22, MyMatrix<double> & invA){
@@ -278,11 +280,11 @@ void LKLocalFlow::setGuaWeights(double stdDev){
     }
 
 
-    for (int i = 0; i < windowLength*windowLength; ++i) {
-        *(GuaWeight + i) = 1;
-    }
-
-    return;
+//    for (int i = 0; i < windowLength*windowLength; ++i) {
+//        *(GuaWeight + i) = 1;
+//    }
+//
+//    return;
 
 
     double tmp, tmp2;
