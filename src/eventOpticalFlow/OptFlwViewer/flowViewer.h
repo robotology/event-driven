@@ -2,7 +2,7 @@
 #define __FLOWVIEWER_H__
 
 #include "VelocityBuffer.h"
-#include "IntegralImage.h"
+
 
 #include <cmath>
 #include <iostream>
@@ -51,7 +51,7 @@ public:
 
     void run(VelocityBuffer &);
     void velNorm(VelocityBuffer& data);
-    void velAvrg(VelocityBuffer& data);
+
 
 };
 

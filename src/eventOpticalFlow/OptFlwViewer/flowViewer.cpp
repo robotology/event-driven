@@ -43,6 +43,8 @@ void flowViewer::avrageFilter(VelocityBuffer& packet){
     int x, y;
     double vx, vy;
 
+
+
     int packetSize =  packet.getSize();
     // Update Values with the ariving packet
     for (int idx = 0; idx < packetSize; ++idx) {
@@ -56,6 +58,8 @@ void flowViewer::avrageFilter(VelocityBuffer& packet){
 
 
     double xVel, yVel, tim1, tim2 , deltaT;
+    //int wndwSZ = (2*FILTER_NGHBRHD + 1); //*(2*FILTER_NGHBRHD + 1);
+    int wndwSZ;
     //Apply the average Filter
     for (int idx = 0; idx < packetSize; ++idx) {
         x = packet.getX(idx) + FILTER_NGHBRHD;
@@ -63,21 +67,21 @@ void flowViewer::avrageFilter(VelocityBuffer& packet){
 
        xVel = 0; yVel = 0;
        tim1 = timeRec(x,y);
+       wndwSZ  =0;
        for (int i = -FILTER_NGHBRHD; i <= FILTER_NGHBRHD; ++i) {
            for (int j = -FILTER_NGHBRHD; j <= FILTER_NGHBRHD; ++j) {
                tim2 = timeRec(x + i, y + j);
 //               deltaT = (abs(tim1- tim2)!= 0 ? abs(tim1- tim2) : 1);
 //               xVel += (xVels(x + i, y + j) / deltaT);
 //               yVel += (yVels(x + i, y + j) / deltaT);
-                 deltaT = ( abs(tim1- tim2) > 6000 ? 0 : 1 );
+               deltaT = ( abs(tim1- tim2) > 30000 ? 0 : 1 );
                xVel += xVels(x + i, y + j) * deltaT ;
                yVel += yVels(x + i, y + j) * deltaT ;
-
-
-           }
+               wndwSZ  += deltaT;
+          }
        }
-//       xVel = xVel / ( (2*FILTER_NGHBRHD + 1)*(2*FILTER_NGHBRHD + 1) );
-//       yVel = yVel / ( (2*FILTER_NGHBRHD + 1)*(2*FILTER_NGHBRHD + 1) );
+       xVel = xVel / wndwSZ;
+       yVel = yVel / wndwSZ;
 
        packet.setVx(idx, xVel);
        packet.setVy(idx, yVel);
@@ -85,6 +89,7 @@ void flowViewer::avrageFilter(VelocityBuffer& packet){
     }
 
     run(packet);
+    return;
 
 
 
@@ -92,7 +97,7 @@ void flowViewer::avrageFilter(VelocityBuffer& packet){
 
 void flowViewer::run(VelocityBuffer& data)
 {
-
+    double average, sptDer;
     int x, y;
     double vx, vy;
     int hx,hy, X,Y;
@@ -114,6 +119,7 @@ void flowViewer::run(VelocityBuffer& data)
     ax = (data.getVxMax() == 0 ? 1 : 40 / data.getVxMax());
     ay = (data.getVyMax() == 0 ? 1 : 40 / data.getVyMax());
 //    cout << ax << " " << ay << endl;
+    average = 0; sptDer = 0;
     for (int i = 0; i < size; ++i) {
         x = data.getX(i);
         y = data.getY(i);
@@ -145,7 +151,14 @@ void flowViewer::run(VelocityBuffer& data)
 
         }
 
+        average += norm;
+        sptDer += norm * norm;
     }
+
+    average = average / size;
+    sptDer = sptDer / size;
+    sptDer = sptDer - average * average;
+    cout << average << " " << sptDer << endl;
 
     outPort->write();
 
@@ -222,98 +235,6 @@ void flowViewer::velNorm(VelocityBuffer& data)
 
 
 
-void flowViewer::velAvrg(VelocityBuffer& data){
-    int x, y;
-    double vx, vy;
-
-    IntegralImage ii;
-    ImageOf<PixelFloat> accum_xx,accum_xx_ii,accum_xx_sum,
-                        accum_yy,accum_yy_ii,accum_yy_sum;
-
-    accum_xx.resize(XDIM, YDIM);
-    accum_xx_ii.resize(XDIM, YDIM);
-    accum_xx_sum.resize(XDIM, YDIM);
-    accum_yy.resize(XDIM, YDIM);
-    accum_yy_ii.resize(XDIM, YDIM);
-    accum_yy_sum.resize(XDIM, YDIM);
-
-
-//    if (zeroFlag % 10 == 0 ){
-//        xVels.zero();
-//        yVels.zero();
-//        zeroFlag = 0;
-//    }
-//    zeroFlag++;
-
-    int size = data.getSize();
-    for (int i = 0; i < size; ++i) {
-        x = data.getX(i);
-        y = data.getY(i);
-        vx = data.getVx(i);
-        vy = data.getVy(i);
-
-        timeRec(x,y) = data.getTs(i);
-        xVels(x,y) = int (vx*100 + .5);
-        yVels(x,y) = int (vy*100 + .5);
-    }
-
-    IMGFOR(accum_xx,x,y) {
-       accum_xx(x,y) = xVels(x,y) ;
-    }
-    IMGFOR(accum_yy,x,y) {
-       accum_yy(x,y) = yVels(x,y) ;
-    }
-
-    ii.GetSum(accum_xx,accum_xx_ii,accum_xx_sum,2);
-    ii.GetSum(accum_yy,accum_yy_ii,accum_yy_sum,2);
-
-
-    double vvx, vvy, norm;
-    int hx,hy, X,Y;
-    yarp::sig::ImageOf<yarp::sig::PixelMono16>& img=outPort-> prepare();
-    img=vecBaseImg;
-    for (int i = 0; i < size; ++i) {
-        x = data.getX(i);
-        y = data.getY(i);
-
-       vvx = accum_xx_sum(x,y);
-       vvy = accum_xx_sum(x,y);
-
-       norm=vvx*vvx+vvy*vvy;
-         if (norm>0.0){
-
-           X=2+4*x;
-           Y=2+4*y;
-
-           hx=X+ (vvx >= 0 ? int(vvx+0.5) : int(vvx - 0.5) ) ;
-           hy=Y+ (vvy >= 0 ? int(vvy+0.5) : int(vvy - 0.5) ) ;
-
-           static const yarp::sig::PixelMono16 black=0;
-           static const yarp::sig::PixelMono16 white=255;
-
-           yarp::sig::draw::addSegment(img,black,X,Y,hx,hy);
-           yarp::sig::draw::addCircle(img,black,hx,hy,2);
-
-       }
-
-    }
-    outPort->write();
-    return;
-
-
-//    yarp::sig::ImageOf<yarp::sig::PixelMono16>& img=outPort-> prepare();
-//    img=normBaseImg;
-//
-//    for (int i = 0; i < XDIM; ++i) {
-//        for (int j = 0; j < YDIM; ++j) {
-////            img(i,j) = sqrt( xVels(i,j) * xVels(i,j) + yVels(i,j) * yVels(i,j) ) * 2550;
-//            img(i,j) = sqrt( accum_xx_sum(i,j) * accum_xx_sum(i,j) + accum_yy_sum(i,j) * accum_yy_sum(i,j) ) * 255;
-//        }
-//    }
-//
-//    outPort -> write();
-
-}
 
 void flowViewer::medianFilterSeprabale(VelocityBuffer & data){
     int size, idx;
@@ -460,4 +381,96 @@ double flowViewer::kth_smallest(double * a, int n, int k)
     return a[k] ;
 }
 
+//void flowViewer::velAvrg(VelocityBuffer& data){
+//    int x, y;
+//    double vx, vy;
+//
+//    IntegralImage ii;
+//    ImageOf<PixelFloat> accum_xx,accum_xx_ii,accum_xx_sum,
+//                        accum_yy,accum_yy_ii,accum_yy_sum;
+//
+//    accum_xx.resize(XDIM, YDIM);
+//    accum_xx_ii.resize(XDIM, YDIM);
+//    accum_xx_sum.resize(XDIM, YDIM);
+//    accum_yy.resize(XDIM, YDIM);
+//    accum_yy_ii.resize(XDIM, YDIM);
+//    accum_yy_sum.resize(XDIM, YDIM);
+//
+//
+////    if (zeroFlag % 10 == 0 ){
+////        xVels.zero();
+////        yVels.zero();
+////        zeroFlag = 0;
+////    }
+////    zeroFlag++;
+//
+//    int size = data.getSize();
+//    for (int i = 0; i < size; ++i) {
+//        x = data.getX(i);
+//        y = data.getY(i);
+//        vx = data.getVx(i);
+//        vy = data.getVy(i);
+//
+//        timeRec(x,y) = data.getTs(i);
+//        xVels(x,y) = int (vx*100 + .5);
+//        yVels(x,y) = int (vy*100 + .5);
+//    }
+//
+//    IMGFOR(accum_xx,x,y) {
+//       accum_xx(x,y) = xVels(x,y) ;
+//    }
+//    IMGFOR(accum_yy,x,y) {
+//       accum_yy(x,y) = yVels(x,y) ;
+//    }
+//
+//    ii.GetSum(accum_xx,accum_xx_ii,accum_xx_sum,2);
+//    ii.GetSum(accum_yy,accum_yy_ii,accum_yy_sum,2);
+//
+//
+//    double vvx, vvy, norm;
+//    int hx,hy, X,Y;
+//    yarp::sig::ImageOf<yarp::sig::PixelMono16>& img=outPort-> prepare();
+//    img=vecBaseImg;
+//    for (int i = 0; i < size; ++i) {
+//        x = data.getX(i);
+//        y = data.getY(i);
+//
+//       vvx = accum_xx_sum(x,y);
+//       vvy = accum_xx_sum(x,y);
+//
+//       norm=vvx*vvx+vvy*vvy;
+//         if (norm>0.0){
+//
+//           X=2+4*x;
+//           Y=2+4*y;
+//
+//           hx=X+ (vvx >= 0 ? int(vvx+0.5) : int(vvx - 0.5) ) ;
+//           hy=Y+ (vvy >= 0 ? int(vvy+0.5) : int(vvy - 0.5) ) ;
+//
+//           static const yarp::sig::PixelMono16 black=0;
+//           static const yarp::sig::PixelMono16 white=255;
+//
+//           yarp::sig::draw::addSegment(img,black,X,Y,hx,hy);
+//           yarp::sig::draw::addCircle(img,black,hx,hy,2);
+//
+//       }
+//
+//    }
+//    outPort->write();
+//    return;
+//
+//
+////    yarp::sig::ImageOf<yarp::sig::PixelMono16>& img=outPort-> prepare();
+////    img=normBaseImg;
+////
+////    for (int i = 0; i < XDIM; ++i) {
+////        for (int j = 0; j < YDIM; ++j) {
+//////            img(i,j) = sqrt( xVels(i,j) * xVels(i,j) + yVels(i,j) * yVels(i,j) ) * 2550;
+////            img(i,j) = sqrt( accum_xx_sum(i,j) * accum_xx_sum(i,j) + accum_yy_sum(i,j) * accum_yy_sum(i,j) ) * 255;
+////        }
+////    }
+////
+////    outPort -> write();
+//
+//}
 
