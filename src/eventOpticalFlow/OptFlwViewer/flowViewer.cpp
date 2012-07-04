@@ -1,7 +1,7 @@
 #include "flowViewer.h"
 #include <iostream>
 
-flowViewer::flowViewer()
+flowViewer::flowViewer(int visMethod )
 {
 
     vecBaseImg.resize(4*XDIM,4*YDIM);
@@ -22,6 +22,7 @@ flowViewer::flowViewer()
     timeRec.resize(XDIM + 2*FILTER_NGHBRHD, YDIM + 2*FILTER_NGHBRHD);   //resize(XDIM, YDIM);
     timeRec.zero();
 
+    visMthd = visMethod;
 
 //    zeroFlag = 0;
 //    cntrR = 0; cntrL = 0;
@@ -57,7 +58,8 @@ void flowViewer::avrageFilter(VelocityBuffer& packet){
     }
 
 
-    double xVel, yVel, tim1, tim2 , deltaT;
+    double xVelAvg, yVelAvg, tim1, tim2 , deltaT;
+    double xVelSptDer, yVelSptDer, tmp;
     //int wndwSZ = (2*FILTER_NGHBRHD + 1); //*(2*FILTER_NGHBRHD + 1);
     int wndwSZ;
     //Apply the average Filter
@@ -65,7 +67,8 @@ void flowViewer::avrageFilter(VelocityBuffer& packet){
         x = packet.getX(idx) + FILTER_NGHBRHD;
         y = packet.getY(idx) + FILTER_NGHBRHD;
 
-       xVel = 0; yVel = 0;
+       xVelAvg = 0; yVelAvg = 0;
+       xVelSptDer = 0; yVelSptDer = 0;
        tim1 = timeRec(x,y);
        wndwSZ  =0;
        for (int i = -FILTER_NGHBRHD; i <= FILTER_NGHBRHD; ++i) {
@@ -74,22 +77,45 @@ void flowViewer::avrageFilter(VelocityBuffer& packet){
 //               deltaT = (abs(tim1- tim2)!= 0 ? abs(tim1- tim2) : 1);
 //               xVel += (xVels(x + i, y + j) / deltaT);
 //               yVel += (yVels(x + i, y + j) / deltaT);
-               deltaT = ( abs(tim1- tim2) > 30000 ? 0 : 1 );
-               xVel += xVels(x + i, y + j) * deltaT ;
-               yVel += yVels(x + i, y + j) * deltaT ;
+               deltaT = ( abs(tim1- tim2) > 5000 ? 0 : 1 );
+               tmp = xVels(x + i, y + j) * deltaT;
+               xVelAvg += tmp;
+               xVelSptDer += tmp* tmp;
+               tmp = yVels(x + i, y + j) * deltaT;
+               yVelAvg += tmp;
+               yVelSptDer += tmp * tmp;
                wndwSZ  += deltaT;
           }
        }
-       xVel = xVel / wndwSZ;
-       yVel = yVel / wndwSZ;
+       xVelAvg = xVelAvg / wndwSZ;
+       yVelAvg = yVelAvg / wndwSZ;
+       xVelSptDer = xVelSptDer / wndwSZ;
+       yVelSptDer = yVelSptDer / wndwSZ;
+       xVelSptDer = sqrt(xVelSptDer - xVelAvg * xVelAvg);
+       yVelSptDer = sqrt(yVelSptDer - yVelAvg * yVelAvg);
+       vx = packet.getVx(idx);
+       vy = packet.getVy(idx);
 
-       packet.setVx(idx, xVel);
-       packet.setVy(idx, yVel);
+       if ( xVelAvg + 2*xVelSptDer < vx || vx < xVelAvg - 2*xVelSptDer )
+           xVelAvg = 0;
+       if ( yVelAvg + 2*yVelSptDer < vy || vy < yVelAvg - 2*yVelSptDer )
+           yVelAvg = 0;
+
+       packet.setVx(idx, xVelAvg);
+       packet.setVy(idx, yVelAvg);
 
     }
 
-    run(packet);
-    return;
+
+    switch (visMthd) {
+        case 1:
+            run(packet);
+            break;
+        case 2:
+            velNorm(packet);
+            break;
+    }
+
 
 
 
@@ -174,20 +200,17 @@ void flowViewer::velNorm(VelocityBuffer& data)
     double ax, bx, ay, by;
     double vvx, vvy;
 
-
-
     int size;
     double norm, tmp;
     yarp::sig::ImageOf<yarp::sig::PixelMono16>& img=outPort-> prepare();
     img=normBaseImg;
 
-
     size = data.getSize();
 //    if (size < 20)
 //        return;
 
-    ax = (data.getVxMax() == 0 ? 1 : 4 / data.getVxMax());
-    ay = (data.getVyMax() == 0 ? 1 : 4 / data.getVyMax());
+    ax = (data.getVxMax() == 0 ? 1 : 40 / data.getVxMax());
+    ay = (data.getVyMax() == 0 ? 1 : 40 / data.getVyMax());
 
     tmp = 0;
     double sptDer = 0;
@@ -204,16 +227,19 @@ void flowViewer::velNorm(VelocityBuffer& data)
 //        norm += (vvy >= 0 ? int(vvy+0.5)*int(vvy+0.5) : int(vvy - 0.5)*int(vvy-0.5) ) ;
 //        norm = sqrt(norm);
 
+        if (norm == 0)
+            continue;
 
-        if (x >= 1 && y>= 1 && x < 127 && y < 127) {
-            for (int j = -1; j <= 1; ++j) {
-                for (int k = -1; k <= 1; ++k) {
-                    img(x + j,y + k) = (norm * 5 > 255 ? 255 : norm * 5) ;
-                }
-            }
-        }
-        else
-           img(x,y) = (norm * 255 > 255 ? 255 : norm * 255) ;
+//        if (x >= 1 && y>= 1 && x < 127 && y < 127) {
+//            for (int j = -1; j <= 1; ++j) {
+//                for (int k = -1; k <= 1; ++k) {
+//                    img(x + j,y + k) = (norm * 5 > 255 ? 255 : norm * 5) ;
+//                }
+//            }
+//        }
+//        else
+//           img(x,y) = (norm * 255 > 255 ? 255 : norm * 255) ;
+        img(x ,y ) = (norm * 5 > 255 ? 255 : norm * 5) ;
 
         cout << norm << endl;
 

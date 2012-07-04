@@ -29,6 +29,7 @@ class flowViewer {
     yarp::sig::Matrix yVels;
     yarp::sig::Matrix timeRec;
 
+    int visMthd;
 
     double kth_smallest(double * a, int n, int k);
 
@@ -42,8 +43,9 @@ class flowViewer {
 public:
 
 
-    flowViewer();
+    flowViewer(int visMethod = 1);
     void setOutPort(BufferedPort< yarp::sig::ImageOf <yarp::sig::PixelMono16> > * );
+    void setVisMethod(int method){visMthd = method;}
     ~flowViewer();
 
     void avrageFilter(VelocityBuffer& data);

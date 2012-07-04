@@ -23,7 +23,6 @@ class VelocityGrabber: public BufferedPort<VelocityBuffer>{
     //VelocityBuffer * velBfr [VEL_BFR_SIZE];
     queue < VelocityBuffer * > velBfr;
 
-
 public:
     VelocityGrabber(){
         lostCntr = 0;
@@ -102,14 +101,19 @@ class FlowViewerModule : public RFModule{
     VelocityGrabber vGrabber;
     yarp::os::BufferedPort< yarp::sig::ImageOf<yarp::sig::PixelMono16> > outPort;
 
+
 public:
     bool configure(ResourceFinder & rf){
+        int visType;
         string moduleName;
         string inPortName;
         string outPortName;
 
         moduleName =  rf.check("name", Value("OptFlViewer"), "module name (String)").asString();
         setName(moduleName.c_str());
+
+        visType = rf.check("vis_method", Value(1), "visualization type").asInt();
+        viewer.setVisMethod(visType);
 
         //open input BufferedPort
         inPortName = "/";
@@ -147,6 +151,7 @@ public:
 
            delete vb;
         }
+
 
         return true;
 
