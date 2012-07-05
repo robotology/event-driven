@@ -14,8 +14,6 @@
 
 #include "VelocityBuffer.h"
 #include "FOEFinder.h"
-#include "flowClusters.h"
-#include "ClusterViewer.h"
 
 
 using namespace std;
@@ -79,7 +77,7 @@ public:
 
 
 class FOEModule : public RFModule{
-    flowClusters clusters;
+
     FOEFinder foeFinder;
     VelocityGrabber vGrabber;
     yarp::os::BufferedPort< yarp::sig::ImageOf <yarp::sig::PixelRgb> > outPort;
