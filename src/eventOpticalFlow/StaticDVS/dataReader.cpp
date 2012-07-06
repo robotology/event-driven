@@ -47,6 +47,8 @@ class EventReader : public RFModule{
     char buffer [2][SIZE_OF_DATA];
     char * buffPtr;
     char datam [10];
+    unsigned int prvTime;
+    unsigned int cntTime;
 
 
     void convertToInt(char * in){
@@ -216,10 +218,70 @@ class EventReader : public RFModule{
 
     }
 
+    void loopSingleCamTime(int fileTye){
 
-     void readHeaderFile(){
+            int buffer_idx;
+            char oneEvent [10];
+            uint32_t a, t;
+
+
+            buffer_idx =0;
+            bool writeSuccess = false;
+
+            while (!inFile.eof() && cntTime - prvTime < 1000){ // 8192 bytes -> 1024 events
+                //Read data corresponding to one event form the input file
+                //addr
+                switch (fileTye) {
+                    case 1:
+                        //2 bytes for address
+                        inFile.read(oneEvent, 6);
+                        for (int i = 1; i >= 0; --i) {
+                            *(buffPtr + buffer_idx++) = oneEvent[i];
+                        }
+                        *(buffPtr + buffer_idx++) = 0;
+                        *(buffPtr + buffer_idx++) = 0;
+                        //timestamp
+                        for (int i = 5; i >= 2; --i) {
+                          *(buffPtr + buffer_idx++) = oneEvent[i];
+                        }
+                        cntTime =  *((uint32_t*) (buffPtr + buffer_idx - 4));
+                        break;
+                    case 2:
+                        inFile.read(oneEvent, 8);
+                        //4 bytes for timestamp, 4 bytes for Address
+                        for (int i = 3; i >= 0; --i) {
+                            *(buffPtr + buffer_idx++) = oneEvent[i];
+                        }
+                        //timestamp
+                        for (int i = 7; i >= 4; --i) {
+                          *(buffPtr + buffer_idx++) = oneEvent[i];
+                        }
+                        cntTime =  *((uint32_t*) (buffPtr + buffer_idx - 4));
+                        break;
+                }
+            }
+
+           //write data to the port
+            if (outPort.getOutputCount()){
+                eventBuffer outObj = eventBuffer(buffPtr, buffer_idx);
+                writeSuccess = outPort.write(outObj);
+                cout << writeSuccess << endl;
+            }
+
+            prvTime = cntTime;
+
+           if (buffPtr == buffer[0])
+               buffPtr = buffer[1];
+           else
+               buffPtr = buffer[0];
+
+        }
+
+
+
+     void readHeaderFile(int fileTye){
          char line [100];
-         int pos;
+         int pos, buffer_idx = 0;
 
          cout << "reading header file ..." << endl;
 
@@ -228,6 +290,7 @@ class EventReader : public RFModule{
          char tok[10];
          strcpy(tok, "#!AER-DAT");
          float version=0;
+         pos = 0;
          while (line[0] == '#'){
 
              if (strncmp(line,tok, 5)==0)
@@ -241,6 +304,26 @@ class EventReader : public RFModule{
              inFile.getline(line, 100);
 
          }
+
+         switch (fileTye) {
+             case 1:
+                 //2 bytes for address
+                 //timestamp
+                 for (int i = 5; i >= 2; --i) {
+                   *(buffPtr + buffer_idx++) = line[i];
+                 }
+                 prvTime =  *((uint32_t*) buffPtr);
+                 break;
+             case 2:
+                 //4 bytes for timestamp, 4 bytes for Address
+                 //timestamp
+                 for (int i = 7; i >= 4; --i) {
+                   *(buffPtr + buffer_idx++) = line[i];
+                 }
+                 prvTime =  *((uint32_t*) buffPtr);
+                 break;
+         }
+
 
          inFile.close();
          inFile.open(inFileName.c_str(),  ifstream::binary);
@@ -270,6 +353,8 @@ public:
         else
         	dvsCam = false;
 
+        buffPtr = buffer[0];
+
         bufferSize = 512;	; // 16384 -> 2048 events, 8192 bytes -> 1024 events , 4096-> 512 events
 
         if (dvsCam){
@@ -288,20 +373,21 @@ public:
         	    return false;
         	}
 
-        	if (jearFileType == 2)
-               readHeaderFile();
+//        	if (jearFileType == 2)
+               readHeaderFile(jearFileType);
 
         }
 
 
         outPort.open("/eventReader/artificialRetina0:o");
-        buffPtr = buffer[0];
 
         outPort.setTimeout(5.0);
 
 //        for (int j = 0; j < 1000; ++j) {
 //              loopSingleCam(jearFileType);
 //       }
+
+        cntTime = prvTime = 0;
 
         return true;
     }
@@ -314,7 +400,7 @@ public:
                 loopICUBCam();
             }
             else{
-            	loopSingleCam(jearFileType);
+            	loopSingleCamTime(jearFileType);
             }
         }
         else
