@@ -26,7 +26,7 @@
 #define TS_RANGE 0x04000000  // There is 26 bits to represent timestamp
 #define SPATIAL_MARGINE_ADDUP 4  // Spatial Window + LK window
 
-#define SPDerivative_WNDW_SZ 10
+#define SPDerivative_WNDW_SZ 20
 
 #define POLARITY_WEIGHT  1
 

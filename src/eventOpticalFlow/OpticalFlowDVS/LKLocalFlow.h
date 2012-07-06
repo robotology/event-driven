@@ -47,7 +47,7 @@ public:
 
     void setGuaWeights(double stdDev);
 
-    void calVelocity(MyMatrix<POLARITY_TYPE> * It, MyMatrix<POLARITY_TYPE> * Ipt,  int X, int  Y, double *);
+    void calVelocity(unsigned long  tsDiff, MyMatrix<POLARITY_TYPE> * It, MyMatrix<POLARITY_TYPE> * Ipt,  int X, int  Y, double *);
 };
 
 

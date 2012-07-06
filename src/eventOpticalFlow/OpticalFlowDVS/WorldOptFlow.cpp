@@ -35,6 +35,8 @@ WorldOptFlow::WorldOptFlow(AERGrabber * inPortPtr,
     eventBuffersSize = SPDerivative_WNDW_SZ + 1;
     bufferInitialized = 0;
 
+
+
 }
 
 void WorldOptFlow::initialize(int step){
@@ -89,7 +91,6 @@ bool WorldOptFlow::threadInit(){
 		eventNosBuffer[i] = 0;
 	}
 
-
 	return true;
 }
 
@@ -125,12 +126,18 @@ void WorldOptFlow::run(){
         //directWrldStus(eventsBfr, eventNo);
 
         updtWrldStus();
+
 //        clock_t start= clock();
-       calVelocities(eventsBfr, eventNo);
+        calVelocities(eventsBfr, eventNo);
 //        clock_t end = clock();
 //        double elapsed = ( (double) (end - start) ) / CLOCKS_PER_SEC;
 //        cout.precision(10);
 //        cout << "time :  " << elapsed << " " << eventNo << endl;
+
+
+
+
+
 
         prevWorldStatus->updateMatrix(worldStatus);
 
@@ -256,8 +263,11 @@ void WorldOptFlow::calVelocities(CameraEvent ** evntBffr, int bffrSize){
 		evtRw = evntPtr->getRowIdx();
 		evtClm = evntPtr->getColumnIdx();
 
+		unsigned long tsDiff;
+        tsDiff = timestamps-> operator()(evntPtr->getRowIdx(), evntPtr ->getColumnIdx() ) - evntPtr->getTimeStamp();
+		timestamps-> operator()(evntPtr->getRowIdx(), evntPtr ->getColumnIdx() ) = evntPtr->getTimeStamp();
 
-		localFlw.calVelocity(worldStatus, prevWorldStatus,
+		localFlw.calVelocity(tsDiff, worldStatus, prevWorldStatus,
 		   					 evtRw, evtClm, velocity);
 
 
@@ -280,6 +290,9 @@ void WorldOptFlow::calVelocities(CameraEvent ** evntBffr, int bffrSize){
 
 
 			if (outBPort -> getOutputCount()){
+			    info.update();
+			    outBPort->setEnvelope(info);
+
 				Bottle & b = outBPort -> prepare();
 				b.clear();
 				b.addInt(evtClm - SPATIAL_MARGINE_ADDUP);

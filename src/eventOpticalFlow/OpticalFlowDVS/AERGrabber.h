@@ -42,6 +42,7 @@
 using namespace emorph::ebuffer;
 
 
+//class AERGrabber : public yarp::os::BufferedPort <yarp::os::Bottle> {
 class AERGrabber : public yarp::os::BufferedPort <eventBuffer> {
 
     queue< vector< CameraEvent * > > evtBuffer; /*Buffer of events received from one of the eyes*/
@@ -75,8 +76,10 @@ public:
 
     ~AERGrabber();
 
+    //void onRead(yarp::os::Bottle & inBottle);
     virtual void onRead(eventBuffer & eBuffer);
     void readJEAR(eventBuffer & eBuffer);
+
 
 
     CameraEvent ** getEvents(int & evenNo);

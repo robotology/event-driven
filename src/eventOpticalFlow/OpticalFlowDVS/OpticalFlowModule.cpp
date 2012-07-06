@@ -95,6 +95,8 @@ bool OpticalFlowModule::configure(ResourceFinder & rf){
     }
 
 
+
+
     outWrldMdlName = "/";
     outWrldMdlName += getName();
     outWrldMdlName += rf.check("outWorldPortName",

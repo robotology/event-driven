@@ -20,6 +20,7 @@
 
 #include <yarp/os/RateThread.h>
 #include <yarp/os/Semaphore.h>
+#include <yarp/os/Stamp.h>
 
 #include <time.h>
 
@@ -28,6 +29,7 @@
 #include "LKLocalFlow.h"
 #include "AERGrabber.h"
 #include "VelocityBuffer.h"
+
 
 using namespace yarp::os;
 
@@ -65,6 +67,8 @@ class WorldOptFlow : public RateThread{
 
     void initialize(int step);
     void cleanup();
+
+    Stamp info;
 
 
 public:

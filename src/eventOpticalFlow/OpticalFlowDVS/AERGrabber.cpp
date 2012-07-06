@@ -20,6 +20,7 @@
 
 
 AERGrabber::AERGrabber(yarp::os::Semaphore * sigEvents, unsigned long t)
+//            : yarp::os::BufferedPort<yarp::os::Bottle>() , eBufferMutex(1){
             : yarp::os::BufferedPort<eventBuffer>() , eBufferMutex(1){
 
 	evntsMutex = sigEvents;
@@ -37,25 +38,28 @@ AERGrabber::AERGrabber(yarp::os::Semaphore * sigEvents, unsigned long t)
 }
 
 void AERGrabber::onRead(eventBuffer & eBuffer){
-
-//	readJEAR(eBuffer);
-//	return;
-
+//void AERGrabber::onRead(yarp::os::Bottle & inBottle){
     int eventNo;
     short cartX, cartY, polarity, camera;
     short evntRowIdx, evntClmnIdx;
     unsigned long tsPacket, timestamp, wraparounTS;
     unsigned long blob;
 
+//readJEAR(eBuffer);
+//return;
 
+//    const char * bottleBuff = inBottle.toBinary();
+//    eventNo = inBottle.size();
+//    u32* buf2 = (u32*) bottleBuff;
+
+
+    eventNo = eBuffer.get_sizeOfPacket()/4;
+    u32* buf2 = (u32*) eBuffer.get_packet();
 //    if (evtBuffer.size() > 50)
 //            return;
 
-    eventNo = eBuffer.get_sizeOfPacket()/4;
-
  //   cout << "eventNo" << eventNo << endl;
 
-    u32* buf2 = (u32*) eBuffer.get_packet();
     for (int evt = 0; evt < eventNo; ) {
         // unmask the data ( first 4 bytes timestamp, second 4 bytes address)
         tsPacket = buf2[evt++];
@@ -112,26 +116,25 @@ void AERGrabber::onRead(eventBuffer & eBuffer){
 
 
 void AERGrabber::readJEAR(eventBuffer & eBuffer){
-
-	int eventNo;
+    int eventNo;
 	short cartX, cartY, polarity, camera;
 	short evntRowIdx, evntClmnIdx;
 	unsigned long tsPacket, timestamp, wraparounTS;
 	unsigned long blob;
 
-	eventNo = eBuffer.get_sizeOfPacket()/4;
 
-	if (evtBuffer.size() > 50)
-	    return;
+//   	if (evtBuffer.size() > 50)
+//	    return;
 
-    //	cout << "event No : " << eventNo << endl;
-
+    eventNo = eBuffer.get_sizeOfPacket()/4;
 	u32* buf2 = (u32*) eBuffer.get_packet();
-	for (int evt = 0; evt < eventNo; ) {
+
+   	for (int evt = 0; evt < eventNo; ) {
 		// unmask the data ( first 4 bytes timestamp, second 4 bytes address)
 		blob = buf2[evt++];
 		timestamp = buf2[evt++];
 		blob &= 0xFFFF; // here we zero the higher two bytes of the address!!! Only lower 16bits used!
+
 		unmasker.unmaskEvent((unsigned int) blob, cartY, cartX, polarity, camera);
 	    cartY = 127 - cartY;
 	   // cartX = 127 - cartX;
@@ -213,8 +216,10 @@ CameraEvent ** AERGrabber::getEvents(int & evenNo){
     vector< CameraEvent * > eFrame;
 
     eBufferMutex.wait();
-    eFrame = evtBuffer.front();
-    evtBuffer.pop();
+    if (evtBuffer.size()){
+        eFrame = evtBuffer.front();
+        evtBuffer.pop();
+    }
     eBufferMutex.post();
 
     evenNo = eFrame.size();
