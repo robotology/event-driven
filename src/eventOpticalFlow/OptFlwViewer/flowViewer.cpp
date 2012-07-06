@@ -44,8 +44,6 @@ void flowViewer::avrageFilter(VelocityBuffer& packet){
     int x, y;
     double vx, vy;
 
-
-
     int packetSize =  packet.getSize();
     // Update Values with the ariving packet
     for (int idx = 0; idx < packetSize; ++idx) {
@@ -77,7 +75,7 @@ void flowViewer::avrageFilter(VelocityBuffer& packet){
 //               deltaT = (abs(tim1- tim2)!= 0 ? abs(tim1- tim2) : 1);
 //               xVel += (xVels(x + i, y + j) / deltaT);
 //               yVel += (yVels(x + i, y + j) / deltaT);
-               deltaT = ( abs(tim1- tim2) > 5000 ? 0 : 1 );
+               deltaT = ( abs(tim1- tim2) > 30000 ? 0 : 1 );
                tmp = xVels(x + i, y + j) * deltaT;
                xVelAvg += tmp;
                xVelSptDer += tmp* tmp;
@@ -115,10 +113,6 @@ void flowViewer::avrageFilter(VelocityBuffer& packet){
             velNorm(packet);
             break;
     }
-
-
-
-
 }
 
 void flowViewer::run(VelocityBuffer& data)
@@ -136,15 +130,11 @@ void flowViewer::run(VelocityBuffer& data)
     yarp::sig::ImageOf<yarp::sig::PixelMono16>& img=outPort-> prepare();
     img=vecBaseImg;
 
-
-//    medianFilter2D(data);
-//    medianFilterSeprabale(data);
-
     size = data.getSize();
    
     ax = (data.getVxMax() == 0 ? 1 : 40 / data.getVxMax());
     ay = (data.getVyMax() == 0 ? 1 : 40 / data.getVyMax());
-//    cout << ax << " " << ay << endl;
+
     average = 0; sptDer = 0;
     for (int i = 0; i < size; ++i) {
         x = data.getX(i);
@@ -152,16 +142,14 @@ void flowViewer::run(VelocityBuffer& data)
         vx = data.getVx(i);
         vy = data.getVy(i);
 
-//        xVels(x+MEDIAN_NGHBRHD, y+MEDIAN_NGHBRHD) = vx;
-//        yVels(x+MEDIAN_NGHBRHD, y+MEDIAN_NGHBRHD) = vy;
-//        cout << vx << " " << vy << " " << vvx << " "  << vvy << endl;
-
         vvx = ax * vx;
         vvy = ay * vy;
 
         norm=vvx*vvx+vvy*vvy;
 
-        if (norm>0.0){
+        if (norm >= 0.0){
+//        if (norm <= 0)
+//            continue;
 
             X=2+4*x;
             Y=2+4*y;
@@ -175,6 +163,7 @@ void flowViewer::run(VelocityBuffer& data)
             yarp::sig::draw::addSegment(img,black,X,Y,hx,hy);
             yarp::sig::draw::addCircle(img,black,hx,hy,2);
 
+
         }
 
         average += norm;
@@ -184,7 +173,7 @@ void flowViewer::run(VelocityBuffer& data)
     average = average / size;
     sptDer = sptDer / size;
     sptDer = sptDer - average * average;
-    cout << average << " " << sptDer << endl;
+ //   cout << average << " " << sptDer << endl;
 
     outPort->write();
 
@@ -193,68 +182,61 @@ void flowViewer::run(VelocityBuffer& data)
 void flowViewer::velNorm(VelocityBuffer& data)
 {
 
-    int x, y;
-    double vx, vy;
-    int hx,hy, X,Y;
+    double average, sptDer;
+     int x, y;
+     double vx, vy;
+     int hx,hy, X,Y;
 
-    double ax, bx, ay, by;
-    double vvx, vvy;
+     double ax, bx, ay, by;
+     double vvx, vvy;
 
-    int size;
-    double norm, tmp;
-    yarp::sig::ImageOf<yarp::sig::PixelMono16>& img=outPort-> prepare();
-    img=normBaseImg;
+     int size;
+     double norm, tmp;
+     yarp::sig::ImageOf<yarp::sig::PixelMono16>& img=outPort-> prepare();
+     img=normBaseImg;
 
-    size = data.getSize();
-//    if (size < 20)
-//        return;
+     size = data.getSize();
 
-    ax = (data.getVxMax() == 0 ? 1 : 40 / data.getVxMax());
-    ay = (data.getVyMax() == 0 ? 1 : 40 / data.getVyMax());
+     ax = (data.getVxMax() == 0 ? 1 : 40 / data.getVxMax());
+     ay = (data.getVyMax() == 0 ? 1 : 40 / data.getVyMax());
 
-    tmp = 0;
-    double sptDer = 0;
-    for (int i = 0; i < size; ++i) {
-        x = data.getX(i);
-        y = data.getY(i);
-        vx = data.getVx(i);
-        vy = data.getVy(i);
+     average = 0; sptDer = 0;
+     for (int i = 0; i < size; ++i) {
+         x = data.getX(i);
+         y = data.getY(i);
+         vx = data.getVx(i);
+         vy = data.getVy(i);
 
-        vvx = ax * vx;
-        vvy = ay * vy;
-        norm=   sqrt(vvx*vvx+vvy*vvy) ;//  sqrt(vvy*vvy);
-//        norm = (vvx >= 0 ? int(vvx+0.5)*int(vvx+0.5) : int(vvx - 0.5)*int(vvx-0.5) ) ;
-//        norm += (vvy >= 0 ? int(vvy+0.5)*int(vvy+0.5) : int(vvy - 0.5)*int(vvy-0.5) ) ;
-//        norm = sqrt(norm);
+         vvx = ax * vx;
+         vvy = ay * vy;
 
-        if (norm == 0)
-            continue;
-
-//        if (x >= 1 && y>= 1 && x < 127 && y < 127) {
-//            for (int j = -1; j <= 1; ++j) {
-//                for (int k = -1; k <= 1; ++k) {
-//                    img(x + j,y + k) = (norm * 5 > 255 ? 255 : norm * 5) ;
-//                }
-//            }
-//        }
-//        else
-//           img(x,y) = (norm * 255 > 255 ? 255 : norm * 255) ;
-        img(x ,y ) = (norm * 5 > 255 ? 255 : norm * 5) ;
-
-        cout << norm << endl;
-
-        tmp += norm;
-        sptDer += norm * norm;
-    }
+         norm=sqrt(vvx*vvx+vvy*vvy);
 
 
+        if (norm>= 0.0){
 
-    tmp = tmp / size;
-    sptDer = sptDer / size;
-    sptDer = sptDer - tmp * tmp;
-//    cout << tmp << " " << sptDer << endl;
+             //        if (x >= 1 && y>= 1 && x < 127 && y < 127) {
+             //            for (int j = -1; j <= 1; ++j) {
+             //                for (int k = -1; k <= 1; ++k) {
+             //                    img(x + j,y + k) = (norm * 5 > 255 ? 255 : norm * 5) ;
+             //                }
+             //            }
+             //        }
+             //        else
+             //           img(x,y) = (norm * 255 > 255 ? 255 : norm * 255) ;
+           img(x ,y ) = (norm * 5 > 255 ? 255 : norm * 5) ;
+        }
 
-    outPort->write();
+         average += norm;
+         sptDer += norm * norm;
+     }
+
+     average = average / size;
+     sptDer = sptDer / size;
+     sptDer = sptDer - average * average;
+ //    cout << average << " " << sptDer << endl;
+
+     outPort->write();
 
 }
 
