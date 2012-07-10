@@ -10,16 +10,10 @@
 
 FOEFinder::FOEFinder(){
 	crnTS = 0;
-	wrldStatus.resize(X_DIM, Y_DIM);
-	wrldStatus.zero();
+	foeMap.resize(X_DIM, Y_DIM);
+	foeMap.zero();
 	tsStatus.resize(X_DIM, Y_DIM);
 	tsStatus.zero();
-
-
-	vxVels.resize(X_DIM, Y_DIM);
-	vxVels.zero();
-	vyVels.resize(X_DIM, Y_DIM);
-    vyVels.zero();
 
     objMap.resize(X_DIM, Y_DIM);
     objMap.zero();
@@ -34,6 +28,152 @@ void FOEFinder::setOutPort(BufferedPort<yarp::sig::ImageOf
 		                           <yarp::sig::PixelRgb> > * oPort){
 	outPort = oPort;
 }
+
+void FOEFinder::computeFoE(VelocityBuffer & vb){
+
+
+    //Step 1: Leaky Integaration
+    bin2(vb);
+    if (vb.getSize() < 20)
+       return;
+
+    //Step 2: Find the patch of visual fiel with maximum value
+   int centerX, centerY;
+   double foeMaxValue;
+   getFOEMapMax(centerX, centerY,  foeMaxValue);
+
+   //Step 3: Shift teh FOE toward the maximum patch
+   foeX =int ( foeX + WEIGHT_FACTOR * (centerX - foeX) + .5 );
+   foeY =int ( foeY + WEIGHT_FACTOR * (centerY - foeY) + .5 );
+
+   if (foeX < 0) foeX = 0;
+   if (foeY < 0 ) foeY = 0;
+   if (foeX > X_DIM) foeX = X_DIM;
+   if (foeY > Y_DIM) foeY = Y_DIM;
+
+
+
+   //Send the FOE map to output port
+
+   yarp::sig::ImageOf<yarp::sig::PixelRgb>& img=outPort-> prepare();
+   img.resize(X_DIM, Y_DIM);
+   img.zero();
+
+
+//   double normFactor = 254 / foeMaxValue;
+//   for (int i = 0; i < X_DIM; ++i) {
+//        for (int j = 0; j < Y_DIM; ++j) {
+//            img(i,j) = yarp::sig::PixelRgb (0,0 , normFactor * foeMap(i,j) );
+//        }
+//    }
+
+   for (int i = 0; i < vb.getSize(); ++i) {
+       img(vb.getX(i), vb.getY(i)) = yarp::sig::PixelRgb ( 100, 100, 100 );
+   }
+
+   static const yarp::sig::PixelRgb pr(200,0,0);
+   yarp::sig::draw::addCircle(img,pr,foeX,foeY,4);
+
+   static const yarp::sig::PixelRgb pb(0,200,0);
+   yarp::sig::draw::addCircle(img,pb,centerX,centerY,FOEMAP_MAXREG_SIZE);
+
+   outPort -> write();
+}
+
+
+void FOEFinder::bin2(VelocityBuffer & data){
+    int size, x,y, xs, xe, ys, ye, i, j;
+    double aFlow, radian, vx, vy, a1, a2, b1, b2, dtmp1, dtmp2;
+    double a3, b3;
+
+    radian = NGHBR_RADIAN; // angle between two consequative lines
+    size = data.getSize();
+
+    unsigned long tmpTS = data.getTs(0);
+//    cout << tmpTS << endl;
+
+    //leak the values
+    for (int i = 0; i < X_DIM; ++i) {
+       for (int j = 0; j < Y_DIM; ++j) {
+           foeMap(i,j) = exp( LEAK_RATE * (tmpTS - tsStatus(i,j)) ) * foeMap(i,j); //LEAK_RATE * foeMap(i,j);
+           tsStatus(i,j) = tmpTS;
+       }
+    }
+
+
+
+
+    //Leaky Integaration
+    for (int cntr = 0; cntr < size; ++cntr) {
+        x = data.getX(cntr);
+        y = data.getY(cntr);
+        vx = data.getVx(cntr);
+        vy = data.getVy(cntr);
+
+        if (vx == 0 && vy ==0)
+             continue;
+
+        aFlow = atan2(vy, vx);
+        //Calculate the slope of the flow
+        a2 = tan(aFlow + radian);
+        a1 = tan(aFlow - radian);
+        b2 = y - a2 * x;
+        b1 = y - a1 * x;
+
+        //positive weight
+        xs = 0; xe = x;
+        if (vx < 0){
+           xs = x; xe = X_DIM;
+        }
+        for (i = xs; i < xe; ++i) {
+           dtmp1 = a1 * i + b1;
+           dtmp2 = a2 * i + b2;
+           ys =  dtmp1 + dtmp2 - fabs(dtmp1 - dtmp2); ys = ys /2;// ys is set to min(dtmp1, dtmp2)
+           ye =  dtmp1 + dtmp2 + fabs(dtmp1 - dtmp2); ye = ye /2;// ye is set to max(dtmp1, dtmp2)
+           if (ys >= 128 || ye < 0)
+               continue;
+           for (j = ys; j < ye; ++j) {
+              if (j < 0 || j >= 128)
+                  continue;
+//              foeMap(i,j) *= exp( LEAK_RATE* (data.getTs(cntr) - tsStatus(i,j)) );
+              foeMap(i,j) +=  1000*sqrt(vx*vx + vy*vy); // 1 ;
+              tsStatus(i,j) = data.getTs(cntr);
+           } // end on y -coordinate
+       } // end on x -coordinate
+
+//          cout << x << " " << y << " " << vx << " " << vy << " " << data.getTs(cntr) << endl;
+
+   }// end of loop on events
+}
+
+
+void FOEFinder::getFOEMapMax(int & centerX, int & centerY, double & foeMaxValue){
+    double tmp, regfoeProb=0;
+    foeMaxValue = 0;
+//    int windSz =  (2 * FOEMAP_MAXREG_SIZE + 1)*(2 * FOEMAP_MAX_REG_SIZE + 1);
+    for (int i = FOEMAP_MAXREG_SIZE; i < X_DIM - FOEMAP_MAXREG_SIZE; ++i) {
+       for (int j = FOEMAP_MAXREG_SIZE; j < Y_DIM - FOEMAP_MAXREG_SIZE; ++j) {
+
+           if (foeMap(i,j) > foeMaxValue) // is needed for visualization
+               foeMaxValue = foeMap(i,j);
+
+           tmp = 0;
+           for (int k = i - FOEMAP_MAXREG_SIZE; k < i + FOEMAP_MAXREG_SIZE + 1; ++k) { // i - MAX_REG_NGHBR + 2 * MAX_REG_NGHBR + 1 = i + MAX_REG_NGHBR + 1
+               for (int l = j - FOEMAP_MAXREG_SIZE; l < j+FOEMAP_MAXREG_SIZE + 1; ++l) {
+                   tmp += foeMap(k,l);
+             } // window -y
+           } // window - x
+           if (tmp > regfoeProb){
+               regfoeProb = tmp;
+               centerX = i;
+               centerY = j;
+           }
+       }
+   }
+   foeProb = regfoeProb;
+}
+
+
 
 void FOEFinder::initBins(int binNo){
     float radian;
@@ -80,7 +220,7 @@ void FOEFinder::populateBins(int idx1, int idx2, int x, int y, double vx, double
                if (ye < 0)
                    break;
                for (j = ys; j < ye; ++j) {
-                   wrldStatus(i,j) += .1;
+                   foeMap(i,j) += .1;
                }
            }
        }else {  // vy < 0
@@ -92,7 +232,7 @@ void FOEFinder::populateBins(int idx1, int idx2, int x, int y, double vx, double
                if (ys > 128)
                    break;
                for (j = ys; j < ye; ++j) {
-                   wrldStatus(i,j) += .1;
+                   foeMap(i,j) += .1;
                }
            }
        }
@@ -108,7 +248,7 @@ void FOEFinder::populateBins(int idx1, int idx2, int x, int y, double vx, double
            for (j = ys; j < ye; ++j) {
                if (j < 0 || j >= 128)
                    continue;
-               wrldStatus(i,j) += weight;
+               foeMap(i,j) += weight;
             } // end on y -coordinate
        } // end on x -coordinate
    }// end for else
@@ -126,7 +266,7 @@ void FOEFinder::bin(VelocityBuffer & data){
 //    if (crnTS % 100 == 99){
 //		for (int i = 0; i < X_DIM; ++i) {
 //		   for (int j = 0; j < Y_DIM; ++j) {
-//			   wrldStatus(i,j) = LEAK_RATE * wrldStatus(i,j); //(crnTS - tsStatus(i,j)) * LEAK_RATE
+//			   foeMap(i,j) = LEAK_RATE * foeMap(i,j); //(crnTS - tsStatus(i,j)) * LEAK_RATE
 //		   }
 //		}
 //		crnTS = 0;
@@ -168,183 +308,8 @@ void FOEFinder::bin(VelocityBuffer & data){
 
     }// end-for iteration on events
 
-    foeProb = 0;
-    //Determine foe Position
-    for (int i = 0; i < X_DIM; ++i) {
-        for (int j = 0; j < Y_DIM; ++j) {
-            if (wrldStatus(i, j) > foeProb){
-                foeProb = wrldStatus(i, j);
-                foeX = i;
-                foeY = j;
-            }
-        }
-    }
-
-//    yarp::sig::ImageOf<yarp::sig::PixelFloat>& img=outPort-> prepare();
-//    img.resize(X_DIM, Y_DIM);
-//
-//
-//    float dis, vel, maxValue = 0, minValue=100000;
-//    yarp::sig::Matrix ttcMatrix;
-//    ttcMatrix.resize(X_DIM, Y_DIM);
-
-
-
-    //visualise the FOE probabality over the image
-//    img.zero();
-//    normFactor = 254.0  / foeProb;
-//    for (int i = 0; i < X_DIM; ++i) {
-//        for (int j = 0; j < Y_DIM; ++j) {
-//            img(i,j) =  normFactor  * wrldStatus(i,j) ;
-//        }
-//    }
-
-//    static const yarp::sig::PixelFloat black=127;
-//    //static const yarp::sig::PixelRgb red(2, 0, 2);
-//    yarp::sig::draw::addCircle(img,black,foeX,foeY,4);
-//
-//    outPort -> write();
 }
 
-void FOEFinder::bin2(VelocityBuffer & data){
-    int size, x,y, xs, xe, ys, ye, i, j;
-    double aFlow, radian, vx, vy, a1, a2, b1, b2, dtmp1, dtmp2;
-    double a3, b3;
-    double normFactor, minValue, maxValue;
-
-
-    radian = NGHBR_RADIAN; // angle between two consequative lines
-    size = data.getSize();
-
-    unsigned long tmpTS = data.getTs(size - 1);
-
-//    cout << tmpTS << endl;
-
-    //leak the values
-//    for (int i = 0; i < X_DIM; ++i) {
-//       for (int j = 0; j < Y_DIM; ++j) {
-//           wrldStatus(i,j) = exp( - .00005* (tmpTS - tsStatus(i,j)) ) * wrldStatus(i,j); //LEAK_RATE * wrldStatus(i,j);
-//       }
-//    }
-
-
-    //Leaky Integaration
-    for (int cntr = 0; cntr < size; ++cntr) {
-        x = data.getX(cntr);
-        y = data.getY(cntr);
-        vx = data.getVx(cntr);
-        vy = data.getVy(cntr);
-
-        if (vx == 0 && vy ==0)
-             continue;
-
-        aFlow = atan2(vy, vx);
-        //Calculate the slope of the flow
-        a2 = tan(aFlow + radian);
-        a1 = tan(aFlow - radian);
-        b2 = y - a2 * x;
-        b1 = y - a1 * x;
-
-		//positive weight
-        xs = 0; xe = x;
-		if (vx < 0){
-		   xs = x; xe = X_DIM;
-		}
-
-        for (i = xs; i < xe; ++i) {
-           dtmp1 = a1 * i + b1;
-           dtmp2 = a2 * i + b2;
-           ys =  dtmp1 + dtmp2 - fabs(dtmp1 - dtmp2); ys = ys /2;// ys is set to min(dtmp1, dtmp2)
-           ye =  dtmp1 + dtmp2 + fabs(dtmp1 - dtmp2); ye = ye /2;// ye is set to max(dtmp1, dtmp2)
-           if (ys >= 128 || ye < 0)
-               continue;
-           for (j = ys; j < ye; ++j) {
-              if (j < 0 || j >= 128)
-                  continue;
-              wrldStatus(i,j) *= exp( - .00001* (data.getTs(cntr) - tsStatus(i,j)) );
-              wrldStatus(i,j) +=  1000*sqrt(vx*vx + vy*vy); // 1 ;
-              tsStatus(i,j) = data.getTs(cntr);
-           } // end on y -coordinate
-       } // end on x -coordinate
-//        for (int i = 0; i < X_DIM; ++i) {
-//            for (int j = 0; j < Y_DIM; ++j) {
-//                tsStatus(i,j) = tmpTS;
-//            }
-//        }
-//        	cout << x << " " << y << " " << vx << " " << vy << " " << data.getTs(cntr) << endl;
-
-   }// end of loop on events
-
-
-    if (size < 20)
-       return;
-
-   //Find the patch of visual fiel with maximum value
-   double tmp, regfoeProb=0;
-   int preFoeX, preFoeY;
-   preFoeX = foeX;
-   preFoeY = foeY;
-   maxValue = 0;
-   int windSz =  (2 * MAX_REG_NGHBR + 1)*(2 * MAX_REG_NGHBR + 1);
-   for (int i = MAX_REG_NGHBR; i < X_DIM - MAX_REG_NGHBR; ++i) {
-	  for (int j = MAX_REG_NGHBR; j < Y_DIM - MAX_REG_NGHBR; ++j) {
-
-	      if (wrldStatus(i,j) > maxValue) // is needed for visualization
-	          maxValue = wrldStatus(i,j);
-
-		  tmp = 0;
-		  for (int k = i - MAX_REG_NGHBR; k < i + MAX_REG_NGHBR + 1; ++k) { // i - MAX_REG_NGHBR + 2 * MAX_REG_NGHBR + 1 = i + MAX_REG_NGHBR + 1
-			  for (int l = j - MAX_REG_NGHBR; l < j+MAX_REG_NGHBR + 1; ++l) {
-				  tmp += wrldStatus(k,l);
-			} // window -y
-		  } // window - x
-		  if (tmp > regfoeProb){
-			  regfoeProb = tmp;
-			  foeX = i;
-			  foeY = j;
-		  }
-	  }
-  }
-  foeProb = regfoeProb;
-
-
-  //shift teh FOE toward the maximum patch
-  int tmp_x, tmp_y;
-  tmp_x = foeX;
-  tmp_y = foeY;
-
-   foeX =int ( preFoeX + WEIGHT_FACTOR * (foeX - preFoeX) + .5 );
-   foeY =int ( preFoeY + WEIGHT_FACTOR * (foeY - preFoeY) + .5 );
-
-   if (foeX < 0) foeX = 0;
-   if (foeY < 0 ) foeY = 0;
-   if (foeX > X_DIM) foeX = X_DIM;
-   if (foeY > Y_DIM) foeY = Y_DIM;
-
-
-//   makeObjMap(data, foeX, foeY);
-
-   yarp::sig::ImageOf<yarp::sig::PixelRgb>& img=outPort-> prepare();
-   img.resize(X_DIM, Y_DIM);
-   img.zero();
-
-   normFactor = 254 / maxValue;
-   for (int i = 0; i < X_DIM; ++i) {
-        for (int j = 0; j < Y_DIM; ++j) {
-            img(i,j) = yarp::sig::PixelRgb (0,0 , normFactor * wrldStatus(i,j) );
-        }
-    }
-
-   static const yarp::sig::PixelRgb pr(200,0,0);
-   yarp::sig::draw::addCircle(img,pr,foeX,foeY,4);
-
-   static const yarp::sig::PixelRgb pb(0,200,0);
-   yarp::sig::draw::addCircle(img,pb,tmp_x,tmp_y,MAX_REG_NGHBR);
-
-   outPort -> write();
-
-
-}
 
 
 void FOEFinder::makeObjMap(VelocityBuffer & data, int foeX, int foeY){
@@ -364,7 +329,7 @@ double maxValue, normFactor, tmp, r, b , g;
 //    if (crnTS % 100 == 99){
         for (int i = 0; i < X_DIM; ++i) {
            for (int j = 0; j < Y_DIM; ++j) {
-               objMap(i,j) = 0; //leakyCons * objMap(i,j); //LEAK_RATE * wrldStatus(i,j);
+               objMap(i,j) = 0; //leakyCons * objMap(i,j); //LEAK_RATE * foeMap(i,j);
 
                if (objMap(i,j) > maxValue )
                    maxValue = objMap(i,j);
@@ -455,178 +420,9 @@ double maxValue, normFactor, tmp, r, b , g;
 }
 
 
-void FOEFinder::velNormal(VelocityBuffer & data){
-    int size, x,y;
-    int xs, xe, ys, ye;
-    double vx, vy, ax, ay, avg;
-    crnTS++;
-    yarp::sig::Matrix dis;
-    dis.resize(X_DIM, Y_DIM);
-    dis.zero();
+FOEFinder::~FOEFinder(){}
 
-//    if (crnTS  == 5){
-//        crnTS =0;
-        wrldStatus.zero();
-//    }
-
-
-    ax = 100 / data.getVxMax();
-    ay = 100 / data.getVyMax();
-
-    double maxValue=0, minValue = 100000, normFactor;
-    avg = 0;
-
-    int foeX = 64, foeY = 64;
-
-    size = data.getSize();
-    for (int cntr = 0; cntr < size; ++cntr) {
-        x = data.getX(cntr);
-        y = data.getY(cntr);
-        vx = data.getVx(cntr) ;//* ax;
-        vy = data.getVy(cntr) ;//* ay;
-//        dis(x, y) = sqrt ( (foeX - x)*(foeX - x) + (foeY - y)*(foeY - y) );
-        wrldStatus(x,y)= sqrt(vx*vx + vy*vy);
-
-//        wrldStatus(x,y) = dis(x,y) / wrldStatus(x,y);
-        cout << wrldStatus(x,y) << endl;
-        avg += wrldStatus(x,y);
-        if (wrldStatus(x,y) < minValue)
-        	minValue = wrldStatus(x,y);
-        if (wrldStatus(x,y) > maxValue)
-        	maxValue = wrldStatus(x,y);
-    }
-
-    avg = avg / size;
-
- //   cout << minValue << " " << maxValue << " " << avg << " " << size << endl;
-
-
-
-    maxValue = .15;
-    yarp::sig::ImageOf<yarp::sig::PixelRgb>& img=outPort-> prepare();
-    //copy wrldStatus Matrix to img
-    img.resize(X_DIM, Y_DIM);
-    double nf1, nf2, nf3, mv1, mv2, mv3;
-    mv1 = .05;// 800; //
-    mv2 = .08; // 900; //
-    mv3 =  .25;// 1000; //
-    nf1 = 254/mv1;
-    nf2 = 254 /(mv2 - mv1);
-    nf3 = 254 /(mv3 - mv2);
-    normFactor = 254.0 / maxValue ;
-    for (int i = 0; i < X_DIM; ++i) {
-        for (int j = 0; j < Y_DIM; ++j) {
-
-        	yarp::sig::PixelRgb p(0,0,0);
-
-
-        	if (wrldStatus(i,j) <= mv1){
-        		 p.g = int(nf1* wrldStatus(i,j) + .5); // (0, int(nf1* wrldStatus(i,j) + .5), 0);
-//        		 if (p.g != 0)
-//        		    p.g =  int ((dis(i,j)/ p.g) * 255);
-        	}
-        	else{
-        		if (wrldStatus(i,j) > mv1 && wrldStatus(i,j) <= mv2){
-					p.b =  int(nf2 * (wrldStatus(i,j) - mv1) + .5);
-//					p.b =  int ((dis(i,j)/ p.b) * 255);
-        		}
-				else {
-					if (wrldStatus(i,j) > mv2 && wrldStatus(i,j) <= mv3){
-					   p.r = int(nf3 * (wrldStatus(i,j)-mv2) + .5);
-//					   p.r =  int ((dis(i,j)/ p.r) * 255);
-					}
-				}
-        	}
-
-            img(i,j) = p;// int(normFactor * wrldStatus(i,j) + .5);
-        }
-    }
-    outPort -> write();
-
-}
-void FOEFinder::velDivergance(VelocityBuffer & data){
-    int size, x,y;
-    int xs, xe, ys, ye;
-    double vx, vy, ax, ay ;
-    double vxx, vxy, vyy, vyx;
-    double rVels = 0, lVels = 0;
-    int rNum = 0, lNum = 0;
-    //crnTS++;
-
-//    if (crnTS  == 0){
-//        crnTS =0;
-//        vxVels.zero();
-//        vyVels.zero();
-//        wrldStatus.zero();
-//    }
-
-    double ttc = 0;
-
-ax= 1;//   ax = 20 / data.getVxMax();
-ay = 1; //   ay = 20 / data.getVyMax();
-
-    size = data.getSize();
-    for (int cntr = 0; cntr < size; ++cntr) {
-       x = data.getX(cntr);
-       y = data.getY(cntr);
-       vxVels(x, y) = data.getVx(cntr) * ax;
-       vyVels(x, y) = data.getVy(cntr) * ay;
-    }
-
-
-    for (int cntr = 0; cntr < size; ++cntr){
-        x = data.getX(cntr);
-        y = data.getY(cntr);
-
-        vxx = data.getVx(cntr) * data.getVx(cntr);
-        vyy = data.getVy(cntr)*data.getVy(cntr);
-        if (x < 64){
-            lVels += sqrt(vxx + vyy);
-            lNum++;
-        }else{
-            rVels += sqrt(vxx + vyy);
-            rNum++;
-        }
-
-
-
-//       vxx = sobelx(vxVels, x-1, y-1);
-//        vyy = sobely(vyVels, x-1, y-1);
-//        cout << vxx << " " << vyy << endl;
-//        wrldStatus(x,y) = fabs(vxx + vyy);
-//        ttc += fabs(vxVels(x,y)*vxVels(x,y) + vyVels(x,y)*vyVels(x,y));//wrldStatus(x,y);
-
-
-    }
-
-    //ttc = ttc / size;
-
-    cout.precision(10);
-//    cout << lVels << " " << lNum << " " << rVels << " " << rNum << endl;
-
-//    cout << ttc << "  " << size << endl;
-//    yarp::sig::ImageOf<yarp::sig::PixelFloat>& img=outPort-> prepare();
-//    //copy wrldStatus Matrix to img
-//    img.resize(X_DIM, Y_DIM);
-//    img.zero();
-//    for (int i = 0; i < X_DIM; ++i) {
-//        for (int j = 0; j < Y_DIM; ++j) {
-//
-//           if (wrldStatus(i,j) != 0){
-//              img(i,j) = int( ( wrldStatus(i,j)) + .5); //int( ( 2/wrldStatus(i,j)) * 100000);//
-//              //cout << wrldStatus(i,j) << endl;
-//           }
-//
-//        }
-//    }
-//
-//    outPort -> write();
-
-
-}
-
-
-int FOEFinder::sobelx(yarp::sig::Matrix & mtx, int stR, int stC){
+/*int FOEFinder::sobelx(yarp::sig::Matrix & mtx, int stR, int stC){
     int res = 0;
     res = (mtx(stR, stC + 2) +  mtx(stR+1, stC+2) + mtx(stR+2, stC+2))
             - (mtx(stR, stC) +  mtx(stR+1, stC) + mtx(stR+2, stC));
@@ -640,119 +436,5 @@ int FOEFinder::sobely(yarp::sig::Matrix & mtx, int stR, int stC){
             - (mtx(stR, stC ) +  mtx(stR, stC+1) + mtx(stR, stC+2));
 
     return res;
-}
-
-
-FOEFinder::~FOEFinder(){}
-
-//Areas  2 | 1
-//       -----
-//       3 | 0
-//        if (vx >= 0){
-//            area = 0;
-//            if (vy < 0)
-//                area = 1;
-//        }else {
-//            area = 3;
-//            if (vy < 0)}
-//               area = 2;
-//        }
-//
-//        switch (area) {
-//            case 0:
-//                xs = 0; xe = x;
-//                for (i = xs; i < xe; ++i) {
-//                    dtmp1 = a1 * i + b1;
-//                    dtmp2 = a2 * i + b2;
-//                    if (dtmp2 <= 0)
-//                        continue;
-//                    ys = dtmp1; ye = dtmp2;
-//                    for (j = ys; j < ye; ++j) {
-//                        if (j < 0)
-//                            continue;
-//                    }
-//                }
-//                break;
-//            case 1:
-//                xs = 0; xe = x;
-//                for (i = xs; i < xe; ++i) {
-//                    dtmp1 = a1 * i + b1;
-//                    dtmp2 = a2 * i + b2;
-//                    if (dtmp1 > 128)
-//                        continue;
-//                    ys = dtmp1; ye = dtmp2;
-//                    for (j = ys; j < ye; ++j) {
-//                        if (j >128)
-//                            continue;
-//                    }
-//                }
-//                break;
-//            case 2:
-//            xs = x; xe = X_DIM;
-//            for (i = xs; i < xe; ++i) {
-//                dtmp1 = a1 * i + b1;
-//                dtmp2 = a2 * i + b2;
-//                if (dtmp2 > 128)
-//                    continue;
-//                ys = dtmp2; ye = dtmp1;
-//                for (j = ys; j < ye; ++j) {
-//                    if (j >128)
-//                       continue;
-//                }
-//            }
-//            break;
-//            case 3:
-//            xs = x; xe = X_DIM;
-//            for (i = xs; i < xe; ++i) {
-//                dtmp1 = a1 * i + b1;
-//                dtmp2 = a2 * i + b2;
-//                if (dtmp1 < 0 )
-//                    continue;
-//                ys = dtmp2; ye = dtmp1;
-//                for (j = ys; j < ye; ++j) {
-//                    if (j < 0)
-//                       continue;
-//                }
-//            }
-//            break;
-//
-//
-//
-//            default:
-//                break;
-//        }
-
-
-//negative weight
-//       xs = x; xe = X_DIM;
-//     if (vx < 0){
-//         xs = 0; xe = x;
-//     }
-//
-//       a3 = tan(aFlow + (M_PI / 2));
-//       b3 = y - a3 * x;
-//
-//       if (vy > 0 ){
-//         for (i = xs; i < xe; ++i) {
-//             ys = a3*i + b3;
-//             ys = (ys < 0 ? 0 : ys);
-//             ye = Y_DIM;
-//             for (j = ys; j < ye; ++j) {
-//                 wrldStatus(i,j) -= .1;
-//                 wrldStatus(i,j)= (wrldStatus(i,j) < 0 ? 0 : wrldStatus(i, j));
-//             }
-//         }
-//       } // end if vy > 0
-//       else {
-//         for (i = xs; i < xe; ++i) {
-//             ys = 0;
-//             ye = a3*i + b3;
-//             ye = (ye > Y_DIM ? Y_DIM : ye);
-//             for (j = ys; j < ye; ++j) {
-//                 wrldStatus(i,j) -= .1;
-//                 wrldStatus(i,j)= (wrldStatus(i,j) < 0 ? 0 : wrldStatus(i, j));
-//             }
-//         }
-//       }// end else -- vy < 0
-
+}*/
 

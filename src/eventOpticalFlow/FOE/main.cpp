@@ -15,6 +15,7 @@
 #include "VelocityBuffer.h"
 #include "FOEFinder.h"
 
+#include <queue>
 
 using namespace std;
 using namespace yarp::os;
@@ -24,54 +25,45 @@ using namespace yarp::os;
 class VelocityGrabber: public BufferedPort<VelocityBuffer>{
 
     unsigned int lostCntr;
-    short firstIdx, lastIdx;
     yarp::os::Semaphore bfrMutex;
-    VelocityBuffer * velBfr [VEL_BFR_SIZE];
+    queue < VelocityBuffer * > velBfr;
 
-public:
-    VelocityGrabber(){
-        lostCntr = 0;
-        firstIdx = 0;
-        lastIdx = 0;
-    }
+ public:
+     VelocityGrabber(){
+         lostCntr = 0;
+     }
 
-    virtual void onRead(VelocityBuffer & data){
-        VelocityBuffer * vb = new VelocityBuffer();
-        vb->setData(data);
-        bfrMutex.wait();
-        if (lastIdx < VEL_BFR_SIZE){
-            velBfr[lastIdx++] = vb;
-        }
-        else{
-            lostCntr ++;
-            delete vb;
-        }
-        bfrMutex.post();
-    }
+     virtual void onRead(VelocityBuffer & data){
+         VelocityBuffer * vb = new VelocityBuffer();
+         vb->setData(data);
+         bfrMutex.wait();
+         velBfr.push(vb);
+         bfrMutex.post();
+     }
 
-    VelocityBuffer *  getVelocities(){
-        VelocityBuffer * res = NULL;
-        bfrMutex.wait();
-        if (lastIdx - firstIdx > 0){
-            res = velBfr[firstIdx++];
-        }
-        else {
-            firstIdx = 0;
-            lastIdx = 0;
-        }
-        bfrMutex.post();
-        return res;
+     VelocityBuffer *  getVelocities(){
+         VelocityBuffer * res = NULL;
+         bfrMutex.wait();
+         if (velBfr.size() > 0){
+            res = velBfr.front();
+            velBfr.pop();
+         }
+         bfrMutex.post();
+         return res;
 
-    }
+     }
 
-    ~VelocityGrabber(){
+     ~VelocityGrabber(){
+         VelocityBuffer * vb;
 
-        for (int i = firstIdx; i < lastIdx; ++i) {
-            delete velBfr[i];
-        }
+         for (int i = 0; i < velBfr.size(); ++i) {
+             vb = velBfr.front();
+             delete vb;
+             velBfr.pop();
+         }
 
-        cout << "Sorry! " << lostCntr <<  " Velocity bufferes were lost." << endl;
-    }
+         //cout << "Sorry! " << lostCntr <<  " Velocity bufferes were lost." << endl;
+     }
 };
 
 
@@ -123,15 +115,12 @@ public:
         vb = vGrabber.getVelocities();
         ts ++;
         if (vb != NULL){
-            foeFinder.bin2(*vb);
+            foeFinder.computeFoE(*vb);
 //       	  foeFinder.velNormal(*vb);
 //            foeFinder.velDivergance(*vb);
            delete vb;
         }
-
-
         return true;
-
     }
 
 
@@ -155,7 +144,7 @@ public:
     }
 
     ~FOEModule(){
-        cout << "Optical Flow Module is coles happily!" << endl;
+        cout << "FOE Module is coles happily!" << endl;
     }
 };
 
@@ -180,7 +169,7 @@ int main(int argc, char *argv[])
 
    foeModule.runModule();
 
-   cout << "OpticalFlow Viewer Module shutting down." << endl;
+   cout << "FOE Module shutting down." << endl;
 
    return 0;
 }
