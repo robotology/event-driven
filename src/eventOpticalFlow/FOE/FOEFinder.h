@@ -43,6 +43,7 @@ class FOEFinder{
     yarp::sig::Matrix foeMap;
     yarp::sig::Matrix objMap;
 
+
     int foeX;
     int foeY;
     float foeProb;
@@ -65,7 +66,7 @@ public:
     ~FOEFinder();
 
     void computeFoE(VelocityBuffer & );
-    void makeObjMap(VelocityBuffer &, int foeX, int foeY);
+    void makeObjMap(VelocityBuffer &);
 
 };
 

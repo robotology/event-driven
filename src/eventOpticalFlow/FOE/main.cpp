@@ -116,6 +116,7 @@ public:
         ts ++;
         if (vb != NULL){
             foeFinder.computeFoE(*vb);
+//            foeFinder.makeObjMap(*vb);
 //       	  foeFinder.velNormal(*vb);
 //            foeFinder.velDivergance(*vb);
            delete vb;

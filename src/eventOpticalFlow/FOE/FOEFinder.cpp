@@ -34,8 +34,6 @@ void FOEFinder::computeFoE(VelocityBuffer & vb){
 
     //Step 1: Leaky Integaration
     bin2(vb);
-    if (vb.getSize() < 20)
-       return;
 
     //Step 2: Find the patch of visual fiel with maximum value
    int centerX, centerY;
@@ -43,14 +41,15 @@ void FOEFinder::computeFoE(VelocityBuffer & vb){
    getFOEMapMax(centerX, centerY,  foeMaxValue);
 
    //Step 3: Shift teh FOE toward the maximum patch
-   foeX =int ( foeX + WEIGHT_FACTOR * (centerX - foeX) + .5 );
-   foeY =int ( foeY + WEIGHT_FACTOR * (centerY - foeY) + .5 );
+   if (vb.getSize() < 20){
+       foeX =int ( foeX + WEIGHT_FACTOR * (centerX - foeX) + .5 );
+       foeY =int ( foeY + WEIGHT_FACTOR * (centerY - foeY) + .5 );
 
-   if (foeX < 0) foeX = 0;
-   if (foeY < 0 ) foeY = 0;
-   if (foeX > X_DIM) foeX = X_DIM;
-   if (foeY > Y_DIM) foeY = Y_DIM;
-
+       if (foeX < 0) foeX = 0;
+       if (foeY < 0 ) foeY = 0;
+       if (foeX > X_DIM) foeX = X_DIM;
+       if (foeY > Y_DIM) foeY = Y_DIM;
+   }
 
 
    //Send the FOE map to output port
@@ -100,9 +99,6 @@ void FOEFinder::bin2(VelocityBuffer & data){
        }
     }
 
-
-
-
     //Leaky Integaration
     for (int cntr = 0; cntr < size; ++cntr) {
         x = data.getX(cntr);
@@ -136,7 +132,7 @@ void FOEFinder::bin2(VelocityBuffer & data){
               if (j < 0 || j >= 128)
                   continue;
 //              foeMap(i,j) *= exp( LEAK_RATE* (data.getTs(cntr) - tsStatus(i,j)) );
-              foeMap(i,j) +=  1000*sqrt(vx*vx + vy*vy); // 1 ;
+              foeMap(i,j) +=   .1; //1000*sqrt(vx*vx + vy*vy); // 1 ;
               tsStatus(i,j) = data.getTs(cntr);
            } // end on y -coordinate
        } // end on x -coordinate
@@ -312,33 +308,28 @@ void FOEFinder::bin(VelocityBuffer & data){
 
 
 
-void FOEFinder::makeObjMap(VelocityBuffer & data, int foeX, int foeY){
+void FOEFinder::makeObjMap(VelocityBuffer & data){
     int size, x, y;
     double vx, vy, velNorm, distan, leakyCons;
     static unsigned long lastTS = 0;
     unsigned long crntTS;
-double maxValue, normFactor, tmp, r, b , g;
-
+    double maxValue, normFactor, tmp, r, b , g;
 
     size = data.getSize();
 
     maxValue = 0;
-    crntTS = data.getTs(size -1);
+    crntTS = data.getTs(0);
     leakyCons = exp( -0.00001 * (crntTS - lastTS) );
     //leak the values
-//    if (crnTS % 100 == 99){
-        for (int i = 0; i < X_DIM; ++i) {
-           for (int j = 0; j < Y_DIM; ++j) {
-               objMap(i,j) = 0; //leakyCons * objMap(i,j); //LEAK_RATE * foeMap(i,j);
+    for (int i = 0; i < X_DIM; ++i) {
+       for (int j = 0; j < Y_DIM; ++j) {
+           objMap(i,j) = leakyCons * objMap(i,j); //LEAK_RATE * foeMap(i,j);
 
-               if (objMap(i,j) > maxValue )
-                   maxValue = objMap(i,j);
+           if (objMap(i,j) > maxValue )
+               maxValue = objMap(i,j);
 
-           }
-        }
-//        crnTS == 0;
-//    }
-//    crnTS ++;
+       }
+    }
 
 
     for (int cntr = 0; cntr < size; ++cntr) {
@@ -349,65 +340,40 @@ double maxValue, normFactor, tmp, r, b , g;
 
         velNorm = sqrt(vx*vx + vy*vy) * 100;
         distan = sqrt( (foeX - x)*(foeX-x) + (foeY - y)*(foeY - y)) ;
-        objMap(x, y) =  distan / velNorm; //
+        objMap(x, y) =  distan / velNorm;
 
         if (maxValue < objMap(x,y))
             maxValue = objMap(x,y);
-
-//        img(x,y) = yarp::sig::PixelRgb (1000*velNorm, distan , 100 * objMap(x,y) );
-        //img(x,y) = yarp::sig::PixelRgb (100 * objMap(x,y), 0, 0 );
-
     }
 
 
-    yarp::sig::ImageOf<yarp::sig::PixelRgb>& img=outPort-> prepare();
+    yarp::sig::ImageOf<yarp ::sig::PixelRgb>& img=outPort-> prepare();
     img.resize(X_DIM, Y_DIM);
     img.zero();
 
-    //normFactor = (765/ maxValue) * 3;
-    //normFactor = ((255*255*255)/ maxValue) *3 ;
-    normFactor = (255/ maxValue);
+    normFactor = (255/ (.3 * maxValue));
     for (int i = 0; i < X_DIM; ++i) {
        for (int j = 0; j < Y_DIM; ++j) {
-//            img(i,j) = yarp::sig::PixelRgb (10 * objMap(i,j),
-//                                            100 * (objMap(i,j) > 1 ? objMap(i,j) - int (objMap(i,j)) : objMap(i,j) ),
-//                                            1000 * (objMap(i,j) > .1 ? (objMap(i,j)*10 - int(objMap(i,j)*10 ))*.1 : objMap(i,j)) );
 
-
-//           img(i,j) = yarp::sig::PixelRgb (normFactor * objMap(i,j), normFactor * objMap(i,j), normFactor * objMap(i,j));
-
-           tmp = normFactor * objMap(i,j);
-//           r = int (tmp / (255*255));
-//           g = (tmp - r * (255*255)) / 255;
-//           b = int (tmp)% 255;
-//           if (r > 255){
-//               r = g = b = 255;
-//           }
-
-           //img(i,j) = yarp::sig::PixelRgb (r,g , b);
-
-           img(i,j) = yarp::sig::PixelRgb (tmp,tmp , tmp);
-
-//           tmp = normFactor * objMap(i,j);
-//           if (tmp < 255){
-//               r = 0; g = 0; b = tmp;
-//           }else{
-//               if (tmp < 510) {
-//                   r = 0; g = tmp - 255; b = 0;
-//               } else {
-//                   if (tmp < 765){
-//                     r  = tmp - 510; g = 0; b = 0;
-//                   }else{
-//                       r = g = b = 255;
-//                   }
-//               }
-//           }
-//           img(i,j) = yarp::sig::PixelRgb (r, g, b);
-
+           if (objMap(i, j) > .7 * maxValue){
+               r = normFactor * (objMap(i, j) - .7 * maxValue);
+               img(i,j) =  yarp::sig::PixelRgb ( r, 0 , 0 );
+           }else {
+               if (objMap(i, j) > .3 * maxValue ){
+                   b = normFactor * (objMap(i, j) - .3 * maxValue);
+                   img(i,j) =  yarp::sig::PixelRgb ( 0, 0 , b );
+               }
+               else{
+                   g = normFactor * objMap(i, j) ;
+                   img(i,j) =  yarp::sig::PixelRgb ( 0, g , 0 );
+               }
+           }
+//        tmp = normFactor * objMap(i,j);
+//        img(i,j) = yarp::sig::PixelRgb (tmp,tmp , tmp);
         }
     }
 
-    lastTS = data.getTs(size - 1);
+    lastTS = data.getTs(0);
 
 
     cout << "objmap : " << maxValue << endl;
