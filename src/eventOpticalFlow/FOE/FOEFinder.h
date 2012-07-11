@@ -22,7 +22,6 @@
 
 #define X_DIM 128
 #define Y_DIM 128
-#define LEAK_RATE .9
 #define BIN_NO  4  // used for "bin" function
 #define NGHBR_RADIAN (M_PI / 10)  //used by "bin2" function  //The neihboring arc
 
@@ -65,8 +64,10 @@ public:
     void setOutPort(BufferedPort< yarp::sig::ImageOf <yarp::sig::PixelRgb > > * );
     ~FOEFinder();
 
-    void computeFoE(VelocityBuffer & );
+    void computeFoE(VelocityBuffer & , bool vis = true);
     void makeObjMap(VelocityBuffer &);
+
+
 
 };
 

@@ -29,7 +29,7 @@ void FOEFinder::setOutPort(BufferedPort<yarp::sig::ImageOf
 	outPort = oPort;
 }
 
-void FOEFinder::computeFoE(VelocityBuffer & vb){
+void FOEFinder::computeFoE(VelocityBuffer & vb, bool vis){
 
 
     //Step 1: Leaky Integaration
@@ -53,30 +53,31 @@ void FOEFinder::computeFoE(VelocityBuffer & vb){
 
 
    //Send the FOE map to output port
+   if (vis){
+       yarp::sig::ImageOf<yarp::sig::PixelRgb>& img=outPort-> prepare();
+       img.resize(X_DIM, Y_DIM);
+       img.zero();
 
-   yarp::sig::ImageOf<yarp::sig::PixelRgb>& img=outPort-> prepare();
-   img.resize(X_DIM, Y_DIM);
-   img.zero();
 
+    //   double normFactor = 254 / foeMaxValue;
+    //   for (int i = 0; i < X_DIM; ++i) {
+    //        for (int j = 0; j < Y_DIM; ++j) {
+    //            img(i,j) = yarp::sig::PixelRgb (0,0 , normFactor * foeMap(i,j) );
+    //        }
+    //    }
 
-//   double normFactor = 254 / foeMaxValue;
-//   for (int i = 0; i < X_DIM; ++i) {
-//        for (int j = 0; j < Y_DIM; ++j) {
-//            img(i,j) = yarp::sig::PixelRgb (0,0 , normFactor * foeMap(i,j) );
-//        }
-//    }
+       for (int i = 0; i < vb.getSize(); ++i) {
+           img(vb.getX(i), vb.getY(i)) = yarp::sig::PixelRgb ( 100, 100, 100 );
+       }
 
-   for (int i = 0; i < vb.getSize(); ++i) {
-       img(vb.getX(i), vb.getY(i)) = yarp::sig::PixelRgb ( 100, 100, 100 );
+       static const yarp::sig::PixelRgb pr(200,0,0);
+       yarp::sig::draw::addCircle(img,pr,foeX,foeY,4);
+
+       static const yarp::sig::PixelRgb pb(0,200,0);
+       yarp::sig::draw::addCircle(img,pb,centerX,centerY,FOEMAP_MAXREG_SIZE);
+
+       outPort -> write();
    }
-
-   static const yarp::sig::PixelRgb pr(200,0,0);
-   yarp::sig::draw::addCircle(img,pr,foeX,foeY,4);
-
-   static const yarp::sig::PixelRgb pb(0,200,0);
-   yarp::sig::draw::addCircle(img,pb,centerX,centerY,FOEMAP_MAXREG_SIZE);
-
-   outPort -> write();
 }
 
 
@@ -313,7 +314,7 @@ void FOEFinder::makeObjMap(VelocityBuffer & data){
     double vx, vy, velNorm, distan, leakyCons;
     static unsigned long lastTS = 0;
     unsigned long crntTS;
-    double maxValue, normFactor, tmp, r, b , g;
+    double maxValue, sptDrv, normFactor, tmp, r, b , g;
 
     size = data.getSize();
 
@@ -325,26 +326,35 @@ void FOEFinder::makeObjMap(VelocityBuffer & data){
        for (int j = 0; j < Y_DIM; ++j) {
            objMap(i,j) = leakyCons * objMap(i,j); //LEAK_RATE * foeMap(i,j);
 
-           if (objMap(i,j) > maxValue )
-               maxValue = objMap(i,j);
-
+//           if (objMap(i,j) > maxValue )
+//               maxValue = objMap(i,j);
        }
     }
 
 
+maxValue  = 0; sptDrv = 0;
     for (int cntr = 0; cntr < size; ++cntr) {
         x = data.getX(cntr);
         y = data.getY(cntr);
         vx = data.getVx(cntr);
         vy = data.getVy(cntr);
 
-        velNorm = sqrt(vx*vx + vy*vy) * 100;
+        velNorm = sqrt(vx*vx + vy*vy) * 10000;
         distan = sqrt( (foeX - x)*(foeX-x) + (foeY - y)*(foeY - y)) ;
         objMap(x, y) =  distan / velNorm;
 
-        if (maxValue < objMap(x,y))
-            maxValue = objMap(x,y);
+
+        maxValue += objMap(x, y);
+        sptDrv += objMap(x, y) * objMap(x, y);
     }
+    maxValue = maxValue / size;
+    sptDrv = sptDrv / size;
+    sptDrv = sptDrv - maxValue * maxValue;
+    sptDrv = sqrt(sptDrv);
+    cout << maxValue << endl;
+
+    maxValue +=  sptDrv;
+
 
 
     yarp::sig::ImageOf<yarp ::sig::PixelRgb>& img=outPort-> prepare();
@@ -376,7 +386,6 @@ void FOEFinder::makeObjMap(VelocityBuffer & data){
     lastTS = data.getTs(0);
 
 
-    cout << "objmap : " << maxValue << endl;
 
     static const yarp::sig::PixelRgb pr(200,0,0);
     yarp::sig::draw::addCircle(img,pr,foeX,foeY,4);
