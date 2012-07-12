@@ -172,7 +172,7 @@
 #include <yarp/os/Thread.h>
 
 //within project includes
-#include <iCub/eventSnifferThread.h>
+#include <iCub/bottleRepeaterThread.h>
 #include <iCub/eventBottleHandler.h>
 
 class bottleRepeaterModule:public yarp::os::RFModule {
@@ -185,7 +185,7 @@ class bottleRepeaterModule:public yarp::os::RFModule {
     int retinalSize;                            // dimension of the retina
     int responseGradient;                       // amplitude of the response gradient for every event in the image
     yarp::os::Port handlerPort;                 // a port to handle messages 
-    eventSnifferThread* esThread;               // cfCollectorThread for processing events
+    bottleRepeaterThread* esThread;               // cfCollectorThread for processing events
     eventBottleHandler* bottleHandler;          // handler for the received bottle
 
 public:

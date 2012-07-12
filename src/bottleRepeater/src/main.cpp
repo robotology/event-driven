@@ -34,7 +34,7 @@ int main(int argc, char * argv[])
     Network yarp;
     
     Time::turboBoost();
-    bottleHandlerModule module; 
+    bottleRepeaterModule module; 
 
     ResourceFinder rf;
     rf.setVerbose(true);

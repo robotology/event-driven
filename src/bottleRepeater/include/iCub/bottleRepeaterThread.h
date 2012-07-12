@@ -38,7 +38,6 @@
 
 
 //typedef unsigned long long int uint64_t;
-//#define u64 uint64_t
 typedef yarp::os::NetUint32 u32;
 
 class bottleRepeaterThread : public yarp::os::RateThread {
@@ -64,6 +63,9 @@ private:
     int synchPeriod;                    // synchronization period between events and viewer
     int responseGradient;               // responseGradient parameter
     eventBottleHandler* bottleHandler;  // handler for the received bottle
+    yarp::os::Bottle* receivedBottle;      // bottle currently extracted from the buffer
+    yarp::os::Bottle* bottleToSend;        // bottle ready to be sent to the outputport 
+    yarp::os::BufferedPort<eventBottle> outBottlePort;                                    // port sendinf events as a collection of bottles
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPort;            // port whre the output (left) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPortRight;       // port whre the output (right) is sent
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeft;                                  //image representing the signal on the leftcamera
@@ -99,12 +101,12 @@ public:
     /**
     * default constructor
     */
-    eventSnifferThread();
+    bottleRepeaterThread();
 
     /**
      * destructor
      */
-    ~eventSnifferThread();
+    ~bottleRepeaterThread();
 
     /**
     * function that initialise the thread

@@ -162,8 +162,32 @@ int bottleRepeaterThread::prepareUnmasking(char* bufferCopy, Bottle* res) {
 
 void bottleRepeaterThread::run() {
   
+    printf("extracting bottle \n");
+    bottleHandler->extractBottle(bottleToSend);  
+            //printf("received bottle: \n");
+            //printf("%s \n", receivedBottle->toString().c_str());
     
-    
+    // sending the received bottle
+    if(outBottlePort.getOutputCount()) {
+            //Bottle packets;          
+            cout<<"encoding events within packets "<<bottleToSend->size() <<endl;
+            if(bottleToSend->size() > 0) {
+                //for (size_t i=0; i<txQueue->size(); i++) {
+                //    printf("encoding the %d event \n", i);
+                //    cout<<((*txQueue)[i])->getContent().toString()<<endl;
+                //    packets.append(((*txQueue)[i])->encode());
+                //}
+                printf("after encoding events in the packets %d \n", bottleToSend->size() );
+                //Bottle b;
+                //b.copy(*bottleToSend);
+                
+                eventBottle data2send(bottleToSend);         
+                eventBottle& tmp = outBottlePort.prepare();
+                tmp = data2send;
+                outBottlePort.write(); 
+                printf("writing the port \n");
+            }
+        }
 
 }
 

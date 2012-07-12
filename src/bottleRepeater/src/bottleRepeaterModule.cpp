@@ -75,7 +75,7 @@ bool bottleRepeaterModule::configure(yarp::os::ResourceFinder &rf) {
     
     // --------------------------------------------
     printf("starting cfCollector Thread \n");
-    esThread=new eventSnifferThread();
+    esThread=new bottleRepeaterThread();
     esThread->setName(getName().c_str());
     
     printf("name of the cfThread correctly set \n");

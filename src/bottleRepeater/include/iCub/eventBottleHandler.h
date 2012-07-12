@@ -115,13 +115,23 @@ public:
         retinalSize = value;
     }
 
+    /**
+     * @brief function that extract one of the bottle in the buffer
+     * @param receivedBottle single bottle pointer
+     */
+    void extractBottle(yarp::os::Bottle* receivedBottle);
+
 private:
+    static const int bottleBufferDimension = 10;                // dimension of the bottleBuffer
+    
     bool valid;
     short state;
     int retinalSize;                                            // dimension of the retina default 128x128
     int totDim;                                                 // total dimension of the read buffer
     int outputWidth, outputHeight;                              // dimension of the output image default 320x240
     int receivedBufferSize;                                     // dimension of the received packet
+    int extractPosition;                                        // position in the buffer where the bottle is extracted 
+    int insertPosition;                                         // position in the buffer where the bottle is saved   
     
     unsigned long previousTimeStamp;                            // timestamp at the previous run
     char* converterBuffer;                                      // buffer used as saved
@@ -130,10 +140,13 @@ private:
     char* pcRead;                                               // pointer to the location where to read events
     char* pcBuffer;                                             // pointer where to buffer events
     yarp::os::Bottle* receivedBottle;                           // pointer to the received bottle
+    yarp::os::Bottle** bufferBottle;                            // buffer of received bottles
     
-    //unmask unmask_events;         // object in charge of unmasking the events
-    //converter convert_events;       // object in charge of converting the events into an image
-    yarp::os::Semaphore mutex;      // semaphore for thehandling resource buffer
+    //unmask unmask_events;                                     // object in charge of unmasking the events
+    //converter convert_events;                                 // object in charge of converting the events into an image
+    yarp::os::Semaphore mutex;                                  // semaphore for thehandling resource buffer
+    yarp::os::Semaphore** semBottleBuffer;                      // semaphore for the buffer of bottles
+
     //clock_t start_u;
     //clock_t start_p;
     //clock_t stop;
