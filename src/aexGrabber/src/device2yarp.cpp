@@ -1054,13 +1054,13 @@ void  device2yarp::run() {
     if (portDimension.getOutputCount()) {
         Bottle& b = portDimension.prepare();
         b.clear();
-        b.addInt(r);
+        b.addDouble((double)r);
         portDimension.write();
     }  
     
     //resetting buffers    
     memset(buffer, 0, SIZE_OF_DATA);
-    //delete bottle2send;
+    delete bottle2send;
 }
 
 
