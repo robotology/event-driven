@@ -35,7 +35,7 @@
 
 //#include <iCub/config.h>
 
-#define VERBOSE
+//#define VERBOSE
 #define BUFFERDIM 1000
 #define CHUNKSIZE 1000
 
@@ -44,27 +44,49 @@ using namespace yarp::sig;
 using namespace std;
 
 eventBottleHandler::eventBottleHandler() {
+
+    bufferBottle    = 0;
+    semBottleBuffer = 0;
     
-    valid       = false;
-    retinalSize = 128;
-    totDim      = 0;
-    pcRead      = 0;
-    state       = 0;
-    receivedBuffer = 0;
+    valid           = false;
+    retinalSize     = 128;
+    totDim          = 0;
+    pcRead          = 0;
+    state           = 0;
+    receivedBuffer  = 0;
+    insertPosition  = 5;
+    extractPosition = 0;
+    
+    //-------------------------------------------------------------
     printf ("allocating memory \n");
     converterBuffer_copy = (char*) malloc(BUFFERDIM); // allocates bytes
     converterBuffer = converterBuffer_copy;
-    if (converterBuffer == 0)
+    if (0 == converterBuffer) { 
         printf("null pointer \n");
+    }
     pcBuffer = converterBuffer;
+    //------------------------------------------------------------
+
+    printf("initialisation of the bottleBufferDimension %d \n");
+    bufferBottle    = new Bottle*[bottleBufferDimension];                 //allocated memory for an array of bottle pointers
+    semBottleBuffer = new Semaphore*[bottleBufferDimension];
+    for (int i = 0; i < bottleBufferDimension; i++) {
+        bufferBottle[i]    = new Bottle();
+        semBottleBuffer[i] = new Semaphore();
+    }
+     
+    //---------------------------------------------------------
     printf("setting memory \n");
     memset(converterBuffer,0,BUFFERDIM);              // set unsigned char
     pcRead = converterBuffer;
     //unmask_events.start();
-    printf("unmask event just started \n");
+    
     previousTimeStamp = 0;
+#ifdef VERBOSE
     readEvents = fopen("./readEvents","w");
     fout = fopen("dumpCartCollector.txt", "w+");
+#endif
+    printf("eventBottleHandler:constuctor success \n");
 }
 
 
@@ -89,18 +111,15 @@ void eventBottleHandler::copyChunk(char* bufferCopy) {
 void eventBottleHandler::extractBottle(Bottle* tempBottle) {
     // reading the bottle
     
+    printf("%d tempBottle: %08X \n",extractPosition, tempBottle);
     //---------------------------------------
-    //printf("sem address in extract %08x \n",semBottleBuffer[extractPosition] );
-    //printf("trying the wait method in extract \n");
     semBottleBuffer[extractPosition]->wait();
-    tempBottle->copy(*bufferBottle[extractPosition]);   // copying it in a temporary Bottle*
-    //bufferBottle[extractPosition] = 0;               // setting it to zero as already read Bottle*
+    Bottle tmp = *bufferBottle[extractPosition];
+    tempBottle->copy(tmp);  // copying it in a temporary Bottle*
     bufferBottle[extractPosition]->clear();            // removes the content of the bottle.
-    //printf("next istructyion will post the semaphore in extract \n");
     semBottleBuffer[extractPosition]->post();
     //----------------------------------------
-    
-    //printf("%d tempBottle: %08X \n",extractPosition, tempBottle);
+        
     // updating the position of where the next extraction will happen
     mutex.wait();
     extractPosition = (extractPosition + 1) % bottleBufferDimension;
@@ -108,7 +127,8 @@ void eventBottleHandler::extractBottle(Bottle* tempBottle) {
 }
 
 // reading out from a circular buffer with 2 entry points and wrapping
-void eventBottleHandler::onRead(eventBottle& i_ub) {    
+void eventBottleHandler::onRead(eventBottle& i_ub) { 
+    printf("eventBottleHandler::onRead \n");
     valid = true;
 
     semBottleBuffer[insertPosition]->wait();
@@ -336,7 +356,15 @@ eventBottleHandler::~eventBottleHandler() {
     //unmask_events.stop();
     //delete &unmask_events;
     //delete &convert_events;
-    printf("eventBottleHandler:freeing converterBuffer \n");
+    printf("eventBottleHandler:feeing converterBuffer \n");
+
+    delete[] bufferBottle;
+    delete[] semBottleBuffer;
+
+   
+
+
+
     free(converterBuffer_copy);
     fclose(fout);
 }

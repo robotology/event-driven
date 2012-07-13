@@ -33,15 +33,18 @@ using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
+#define dim_window   5
+#define synch_time   1
 #define INTERVFACTOR 1              // resolution 160ns = 6.25Mhz, 128ns = 7.8125Mhz ... gaep 1us
-#define COUNTERRATIO 1 //1.25       //1.25 is the ratio 0.160/0.128
+#define COUNTERRATIO 1              // 1.25 is the ratio 0.160/0.128
+#define THRATE       5
 #define MAXVALUE 0xFFFFFF //4294967295
-#define THRATE 5
+
 #define STAMPINFRAME  // 10 ms of period times the us in 1 millisecond + time for computing
-//#define retinalSize 128
 #define CHUNKSIZE 32768 //65536 //8192
-#define dim_window 5
-#define synch_time 1
+
+//#define retinalSize 128
+
 
 //#define VERBOSE
 
@@ -71,13 +74,13 @@ bottleRepeaterThread::~bottleRepeaterThread() {
 }
 
 bool bottleRepeaterThread::threadInit() {
-    printf(" \nstarting the threads.... \n");
+    printf(" \n------------------------- bottleRepeaterThread::threadInit:starting the threads.... \n");
     //outPort.open(getName("/left:o").c_str());
     //outPortRight.open(getName("/right:o").c_str());
 
     fout = fopen("./dump.txt","w+");
-
     resize(retinalSize, retinalSize);
+
     printf("starting the converter!!!.... \n");
     
     //cfConverter=new cFrameConverter();
@@ -105,8 +108,13 @@ bool bottleRepeaterThread::threadInit() {
     bottleHandler->useCallback();
     bottleHandler->setRetinalSize(retinalSize);
     bottleHandler->open(getName("/retina:i").c_str());
+    
 
-    printf("Initialisation in collector thread correctly ended \n");
+    receivedBottle = new Bottle();
+    bottleToSend   = new Bottle();
+
+
+    printf("-----------------------------  bottleRepeaterThread::threadInit:Initialisation of collector thread correctly ended \n");
     return true;
 }
 
@@ -162,33 +170,29 @@ int bottleRepeaterThread::prepareUnmasking(char* bufferCopy, Bottle* res) {
 
 void bottleRepeaterThread::run() {
   
-    printf("extracting bottle \n");
-    bottleHandler->extractBottle(bottleToSend);  
-            //printf("received bottle: \n");
-            //printf("%s \n", receivedBottle->toString().c_str());
+    printf("extracting bottle %08x \n", bottleToSend);
+    bottleHandler->extractBottle(bottleToSend); 
+    
+    printf("received bottle: \n");
+    printf("%s \n", bottleToSend->toString().c_str());    
     
     // sending the received bottle
     if(outBottlePort.getOutputCount()) {
-            //Bottle packets;          
-            cout<<"encoding events within packets "<<bottleToSend->size() <<endl;
-            if(bottleToSend->size() > 0) {
-                //for (size_t i=0; i<txQueue->size(); i++) {
-                //    printf("encoding the %d event \n", i);
-                //    cout<<((*txQueue)[i])->getContent().toString()<<endl;
-                //    packets.append(((*txQueue)[i])->encode());
-                //}
-                printf("after encoding events in the packets %d \n", bottleToSend->size() );
-                //Bottle b;
-                //b.copy(*bottleToSend);
-                
-                eventBottle data2send(bottleToSend);         
-                eventBottle& tmp = outBottlePort.prepare();
-                tmp = data2send;
-                outBottlePort.write(); 
-                printf("writing the port \n");
-            }
-        }
+        //Bottle packets;          
+        cout<<"encoding events within packets "<<bottleToSend->size() <<endl;
+        if(bottleToSend->size() > 0) {
 
+            printf("after encoding events in the packets %d \n", bottleToSend->size() );
+            //Bottle b;
+            //b.copy(*bottleToSend);
+            
+            eventBottle data2send(bottleToSend);         
+            eventBottle& tmp = outBottlePort.prepare();
+            tmp = data2send;
+            outBottlePort.write(); 
+            printf("writing the port \n");
+        }
+    }
 }
 
 void bottleRepeaterThread::threadRelease() {
@@ -199,7 +203,10 @@ void bottleRepeaterThread::threadRelease() {
     printf("bottleRepeaterThread release:closing ports \n");
     outPort.close();
     outPortRight.close();
+
     delete bottleHandler;
+    delete receivedBottle;
+    delete bottleToSend;
     printf("correctly freed memory from the bottleHandler \n");
 }
 

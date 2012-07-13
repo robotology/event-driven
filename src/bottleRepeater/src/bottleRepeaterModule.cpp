@@ -42,7 +42,7 @@ bool bottleRepeaterModule::configure(yarp::os::ResourceFinder &rf) {
     printf("initialization of the main thread \n");
     /* get the module name which will form the stem of all module port names */
     moduleName            = rf.check("name", 
-                           Value("/eventSniffer"), 
+                           Value("/bottleRepeater"), 
                            "module name (string)").asString();
     /*
     * before continuing, set the module name before getting any other parameters, 
