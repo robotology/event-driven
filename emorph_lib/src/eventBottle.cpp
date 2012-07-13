@@ -37,7 +37,6 @@ eventBottle::eventBottle(char* i_data, int i_size) {
         }
         packet->addInt(word);
     }
-    
     size_of_the_packet = packet->size();
     packetPointer = new char; 
        
@@ -91,9 +90,6 @@ void eventBottle::operator=( eventBottle& buffer) {
         }
            
     }
-    
-
-
     size_of_the_packet = buffer.size_of_the_packet;
 }
 
