@@ -53,20 +53,22 @@ eventBottle::eventBottle(char* i_data, int i_size) {
 
 
 eventBottle::eventBottle(Bottle* p) {
-    
-    packet = p;
-    size_of_the_packet = packet->size();
-    printf("packet size %d \n",packet->size() );
+    //packet = p;
+    packet = new Bottle();
+
+    size_of_the_packet = p->size();    
     int word;
     
     for(int i = 0 ; i < size_of_the_packet ;i++) {
         //printf("costr: %d \n",packet->get(i).asInt());
-        //packet->addInt(word);
+        word = p->get(i).asInt();
+        packet->addInt(word);
     }
-        
+          
+    //printf("packet size %d \n",packet->size() );      
     packetPointer = new char; 
 }
-
+  
 eventBottle::eventBottle(const eventBottle& buffer) {
     
     packet = new Bottle();
@@ -92,21 +94,34 @@ eventBottle::~eventBottle() {
 }
 
 void eventBottle::operator=( eventBottle& buffer) {
+    
     if (buffer.size_of_the_packet > 0) {
         Bottle* b = buffer.get_packet();
-        //int v = b->pop().asInt();
-        //printf("extracted value %d \n",v);
         packet->copy(*b);
-        //packet = buffer.packet;
 
-        //for (int i = 0; i < buffer.size_of_the_packet; i++) {
-        //    packet->get(i) = b->get(i);
-        //}
+        //packet = new Bottle();
+        //packet->addInt(1);
+        //packet->addInt(2);
+        //packet->addInt(3);
+        //packet->addInt(4);
+            
+        /*    
+        for (int i = 0; i < buffer.size_of_the_packet; i++) {
+            int value = b->get(i).asInt();
+            printf(" value  =  %d \n", value);
+            //packet->get(i) = b->get(i).
+        }
+        */
+      
         
     }
-    size_of_the_packet = buffer.size_of_the_packet;
+    
+
+
+    //size_of_the_packet = buffer.size_of_the_packet;
     //size_of_the_packet = 4;
-    //packetPointer      = buffer.packetPointer;
+    
+    packetPointer      = buffer.packetPointer;
     
     /*
     if (buffer.size_of_the_packet > 0)
