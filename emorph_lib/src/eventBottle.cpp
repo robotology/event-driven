@@ -15,7 +15,7 @@ using namespace yarp::os;
 
 eventBottle::eventBottle() {
     //printf("default Constructor \n");
-    packet = new Bottle();
+    packet = 0;
     size_of_the_packet=0;
     packetPointer = new char[320000];
     //packetPointer = 0;
@@ -54,7 +54,7 @@ eventBottle::eventBottle(Bottle* p) {
         packet->addInt(word);
     }
           
-    printf("packet size %d \n",packet->size() );      
+    //printf("packet size %d \n",packet->size() );      
     packetPointer = new char; 
 }
   
@@ -79,8 +79,9 @@ void eventBottle::operator=( eventBottle& buffer) {
     if (buffer.size_of_the_packet > 0) {
         Bottle* b = buffer.get_packet();
         //packet->copy(*b); <------alternative B works as a copy of the pointer which should be avoid
-        printf("in the copy operator = dim: %d  \n", buffer.size_of_the_packet);
-
+        //printf("in the copy operator = dim: %d  \n", buffer.size_of_the_packet);
+        
+        delete packet;
         packet = new Bottle();
 
         for (int i = 0; i < buffer.size_of_the_packet; i++) {
