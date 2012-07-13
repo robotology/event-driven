@@ -107,7 +107,7 @@ bool bottleRepeaterThread::threadInit() {
     bottleHandler = new eventBottleHandler();
     bottleHandler->useCallback();
     bottleHandler->setRetinalSize(retinalSize);
-    bottleHandler->open(getName("/retina:i").c_str());
+    bottleHandler->open(getName("/retinaBottle:i").c_str());
     
 
     receivedBottle = new Bottle();

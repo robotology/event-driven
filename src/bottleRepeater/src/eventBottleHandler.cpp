@@ -360,13 +360,13 @@ eventBottleHandler::~eventBottleHandler() {
 
     delete[] bufferBottle;
     delete[] semBottleBuffer;
-
-   
-
-
+    
+    printf("successfully deleted the buffers \n");
 
     free(converterBuffer_copy);
+#ifdef VERBOSE
     fclose(fout);
+#endif
 }
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------

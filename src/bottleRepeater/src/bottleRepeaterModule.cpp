@@ -183,8 +183,9 @@ bool bottleRepeaterModule::interruptModule() {
 
 bool bottleRepeaterModule::close() {
     handlerPort.close();
+    //bottleHandler.close();
     /* stop the thread */
-    //cfThread->stop();
+    esThread->stop();
     printf("stopped the collector thread \n");
     //delete cfThread;
     return true;
