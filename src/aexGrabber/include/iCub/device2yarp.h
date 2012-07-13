@@ -32,6 +32,7 @@
 #include <yarp/os/RateThread.h>
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/Semaphore.h>
+#include <yarp/os/Bottle.h>
 #include <yarp/os/Time.h>
 
 #include <fcntl.h>
@@ -416,15 +417,12 @@ public:
 
 
 private:
-    yarp::os::BufferedPort<emorph::ebuffer::eventBuffer> port; // port sending events
-    //yarp::os::BufferedPort<sendingBuffer> port;              // port sending events
-    yarp::os::BufferedPort<yarp::os::Bottle> portDimension;    // port sending dimension of packets   
-    yarp::os::BufferedPort<eventBottle> portEventBottle;       // port sending events as bottle
-    yarp::os::BufferedPort<eventBottle> portEventBottle2;       // port sending events as bottle
-    yarp::os::BufferedPort<eventBottle> portEventBottle3;       // port sending events as bottle
-    yarp::os::BufferedPort<eventBottle> portEventBottle4;       // port sending events as bottle
+    yarp::os::BufferedPort<emorph::ebuffer::eventBuffer> port;  // port sending events
+    //yarp::os::BufferedPort<sendingBuffer> port;               // port sending events
+    yarp::os::BufferedPort<yarp::os::Bottle> portDimension;     // port sending dimension of packets   
+    yarp::os::BufferedPort<eventBottle> portEventBottle;        // port sending events as bottle
 
-    yarp::os::Bottle *bottle2send;                              // bottle to send on the eventBottle port
+    yarp::os::Bottle* bottle2send;                              // bottle to send on the eventBottle port
     
     int r;                                         // dimension of the received buffer of event for display
     int countAEs;                                  // counter of the received AEs
@@ -453,11 +451,11 @@ private:
 
     int err;
     int countErrors;                        // error counter
-    int countErrorsTS;                        // error counter
-    int countErrorsAE;                        // error counter
-    int countErrorsGAEP1;                        // error counter
-    int countErrorsGAEP2;                        // error counter
-    int countErrorsGAEP3;                        // error counter
+    int countErrorsTS;                      // error counter
+    int countErrorsAE;                      // error counter
+    int countErrorsGAEP1;                   // error counter
+    int countErrorsGAEP2;                   // error counter
+    int countErrorsGAEP3;                   // error counter
     int countData;
     int countInWraps;                       // counter of events between two wraps around
     int countInWrapsTS;                     // counter of the timestamp between two wraps around

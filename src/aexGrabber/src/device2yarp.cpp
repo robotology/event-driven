@@ -70,6 +70,7 @@ latchexpand = 100
 timestep  = OneSecond // 100000
 latchexpand = 8
 reset_pins_expand = 4 
+#################################################################
 */
 
 #define INPUT_BIN_U32U32LE
@@ -136,7 +137,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName =
 
 
 
-    /*
+    /**************************************************************************
 #define FAST
 #ifdef FAST
     //int biasValues[]={1966,        // cas
@@ -229,8 +230,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName =
     // };
     
 #endif
-
-*/
+***************************************************************/
 
 
 #define WIEN
@@ -299,9 +299,6 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName =
     str_buf << "/icub/retina" << deviceNum << ":o";
     port.open(str_buf.str().c_str());
     portEventBottle.open("/aexGrabber/eventBottle:o");
-    portEventBottle2.open("/aexGrabber/eventBottle2:o");
-    portEventBottle3.open("/aexGrabber/eventBottle3:o");
-    portEventBottle4.open("/aexGrabber/eventBottle4:o");
     portDimension.open("/aexGrabber/dim:o");
 
     // opening the file when the biases are programmed by file
@@ -761,12 +758,13 @@ void  device2yarp::run() {
 
 
     //yarp::os::Bottle *bottle2send;
-    bottle2send = new Bottle;
-    bottle2send->clear();
-    
-    
-    for (int i = 0; i < monBufEvents ; i++ ) {
+    //bottle2send = new Bottle;
+    yarp::os::Bottle tmpBottle;
+      
 
+    for (int i = 0; i < monBufEvents ; i++ ) {
+  
+           
         tempA = pmonatom[i].data;                  
 
         // dumping any single char
@@ -807,7 +805,7 @@ void  device2yarp::run() {
         }
         // ---------- ADDRESS EVENT -----------------
         else if(tempA_unmasked == 0x00 ){
-
+    
             a = tempA;
             
             if((countData - lastAEindex != 2) && (lastAEindex != -1)) {
@@ -844,7 +842,10 @@ void  device2yarp::run() {
             //ae.setPolarity(polarity);
             //ae.setX(Xcoord);
             //ae.setY(Ycoord);
+
+            //tmpBottle.addInt(tempA); //<----- used in the alternative B
             bottle2send->addInt(tempA);
+
         }
         // -------------- TIMESTAMP EVENT ----------------
         else if (tempA_unmasked == 0x20) {
@@ -904,9 +905,10 @@ void  device2yarp::run() {
             
             //int data = (tempA & 0x00FFFFFFF) 
             //ts.setStamp(data);
-            bottle2send->addInt(tempA);
-            
-    
+
+            //tmpBottle.addInt(tempA); //<----- used in the alternative B
+            bottle2send->addInt(tempA); 
+   
         }
         // --------------- TIMESTAMP WRAP AROUND ------------
         else if(tempA_unmasked == 0x22) {
@@ -1012,6 +1014,7 @@ void  device2yarp::run() {
             buf2[k2++] = tempA; // passing the timestamp to the data flow to send
             countEventSent++;
             
+            //tmpBottle.addInt(tempA); //<----- used in the alternative B
             bottle2send->addInt(tempA);
         
         }
@@ -1032,25 +1035,30 @@ void  device2yarp::run() {
     char* buf = (char*) buf2;
     
     if (port.getOutputCount()) {
+        printf("preparing the data to send on the port \n");
         eventBuffer data2send(buffer, sz);  //adding 8 bytes for extra word 0xCAFECAFE and TS_WA    
         eventBuffer& tmp = port.prepare();
         tmp = data2send;
         port.write();
     }   
-
+    
+    
     if (portEventBottle.getOutputCount()) {       
         //printf("Sending the bottle %d bytes \n", sz);
-        //eventBottle data2send(pBuffer, sz);
+        //printf("Sending bottle of dimension %d \n", tmpBottle.size());
+        //eventBottle data2send(&tmpBottle); //<--- alternative that decided to avoid
         eventBottle data2send(bottle2send);
         eventBottle& tmp = portEventBottle.prepare(); 
+
         //portEventBottle.prepare() = data2send; 
         tmp = data2send;
+        //printf("copy of the bottle2Send in the prepared Bottle \n");
         portEventBottle.write();
-    }   
-    
+        //printf("on port written \n");
+    } 
     
     wrapOccured = false;
-    
+       
     if (portDimension.getOutputCount()) {
         Bottle& b = portDimension.prepare();
         b.clear();
@@ -1059,8 +1067,10 @@ void  device2yarp::run() {
     }  
     
     //resetting buffers    
+    bottle2send->clear();   
+    //printf("resetting the buffer \n");
     memset(buffer, 0, SIZE_OF_DATA);
-    delete bottle2send;
+
 }
 
 
@@ -1320,9 +1330,7 @@ void device2yarp::threadRelease() {
     port.close();
     portDimension.close();
     portEventBottle.close();
-    portEventBottle2.close();
-    portEventBottle3.close();
-    portEventBottle4.close();
+
     close(file_desc);
 
 }
