@@ -23,12 +23,12 @@
  * @brief A module that read independent asynchronous events from a yarp port and represents them as an image
  */
 
-#ifndef _BOTTLE_REPEATER_MODULE_H_
-#define _BOTTLE_REPEATER_MODULE_H_
+#ifndef _VELOCITY_EXTRACTOR_MODULE_H_
+#define _VELOCITY_EXTRACTOR_MODULE_H_
 
 /** 
  *
- * \defgroup icub_bottleRepeaterModule bottleRepeaterModule
+ * \defgroup icub_velocityExtractorModule velocityExtractorModule
  * @ingroup icub_eMorph
  *
  *
@@ -36,19 +36,7 @@
  * These events are present on a port, they have to be collected during the frame time costant and visualised on an image.
  * 
  * \section reference
- * The address-event representation communication protocol AER 0.02, Caltech, Pasadena, CA, Internal Memo, Feb. 1993 [Online]. Available:
- * http://www.ini.uzh.ch/~amw/scx/std002.pdf
  * 
- * S. R. Deiss, T. Delbrück, R. J. Douglas, M. Fischer, M. Mahowald, T. Matthews, and A. M. Whatley, Address-event asynchronous local broadcast protocol, Inst. Neuroinform., Zurich, Switzerland, 1994 [Online].
- * Available: http://www.ini.uzh.ch/~amw/scx/aeprotocol.html
- * 
- * A. M. Whatley, PCI-AER Board Driver, Library & Documentation, Inst. Neuroinform., Zurich, Switzerland, 2007 [Online]. Available:
- * http://www.ini.uzh.ch/~amw/pciaer/
- * 
- * S. R. Deiss, R. J. Douglas, and A. M. Whatley, "A pulse-coded communications infrastructure for neuromorphic systems", in Pulsed Neural Networks, W. Maass and C. M. Bishop, Eds. Cambridge, MA: MIT Press, 1998, ch. 6, pp. 157–178.
- * 
- * V. Dante, P. Del Giudice, and A. M. Whatley, “PCI-AER—hardware and software for interfacing to address-event based neuromorphic systems,” The Neuromorphic Engineer vol. 2, no. 1, pp.
- * 5–6, 2005 [Online]. Available: http://ine-web.org/research/newsletters/index.html
  * 
  *
  * \section Description
@@ -64,10 +52,10 @@
  * The following key-value pairs can be specified as command-line parameters by prefixing \c -- to the key 
  * (e.g. \c --from file.ini. The value part can be changed to suit your needs; the default values are shown below. 
  *
- * - \c from \c cartesianFramCollector.ini \n 
+ * - \c from \c velocityExtractor.ini \n 
  *   specifies the configuration file
  *
- * - \c context \c dvsGrabber/conf \n
+ * - \c context \c eMorphApplication/conf \n
  *   specifies the sub-path from \c $ICUB_ROOT/icub/app to the configuration file
  *
  * - \c name \c eventSnifferModule \n 
@@ -145,7 +133,7 @@
  *
  * \section conf_file_sec Configuration Files
  *
- * \c eventSnifferModule.ini  in \c $ICUB_ROOT/app/eventSnifferModule/conf \n
+ * \c velocityExtractorModule.ini  in \c $ICUB_ROOT/app/velocityExtractorModule/conf \n
  * 
  * \section tested_os_sec Tested OS
  *
@@ -159,7 +147,7 @@
  *
  * Copyright (C) 2012 RobotCub Consortium\n
  * CopyPolicy: Released under the terms of the GNU GPL v2.0.\n
- * This file can be edited at \c $ICUB_ROOT/contrib/src/bottleRepeater/include/iCub/bottleRepeaterModule.h
+ * This file can be edited at \c $ICUB_ROOT/contrib/src/velocityExtractor/include/iCub/velocityExtractorModule.h
  * 
  */
 
@@ -172,10 +160,9 @@
 #include <yarp/os/Thread.h>
 
 //within project includes
-#include <iCub/bottleRepeaterThread.h>
-#include <iCub/eventBottleHandler.h>
+#include <iCub/velocityExtractorThread.h>
 
-class bottleRepeaterModule:public yarp::os::RFModule {
+class velocityExtractorModule:public yarp::os::RFModule {
     std::string moduleName;                     //name of the module (rootname of ports)
     std::string robotName;                      //name of the robot
     std::string robotPortName;                  //reference to the head of the robot
@@ -185,8 +172,7 @@ class bottleRepeaterModule:public yarp::os::RFModule {
     int retinalSize;                            // dimension of the retina
     int responseGradient;                       // amplitude of the response gradient for every event in the image
     yarp::os::Port handlerPort;                 // a port to handle messages 
-    bottleRepeaterThread* esThread;               // cfCollectorThread for processing events
-    eventBottleHandler* bottleHandler;          // handler for the received bottle
+    velocityExtractorThread* esThread;               // cfCollectorThread for processing events
 
 public:
     bool configure(yarp::os::ResourceFinder &rf); // configure all the module parameters and return true if successful
@@ -197,7 +183,7 @@ public:
 };
 
 
-#endif // __BOTTLE_REPEATER_MODULE_H__
+#endif // __VELOCITY_EXTRACTOR_MODULE_H__
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------
 

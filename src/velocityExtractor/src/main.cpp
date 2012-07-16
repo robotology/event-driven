@@ -20,10 +20,10 @@
   
 /**
  * @file main.cpp
- * @brief main code for the cartesian frame collector of asynchronous events
+ * @brief main code for the velocity profile extractor from optical flow
  */
 
-#include "iCub/bottleRepeaterModule.h" 
+#include "iCub/velocityExtractorModule.h" 
 #include <yarp/os/all.h>
 
 using namespace yarp::os;
@@ -34,11 +34,11 @@ int main(int argc, char * argv[])
     Network yarp;
     
     Time::turboBoost();
-    bottleRepeaterModule module; 
+    velocityExtractorModule module; 
 
     ResourceFinder rf;
     rf.setVerbose(true);
-    rf.setDefaultConfigFile("bottleRepeater.ini");    //overridden by --from parameter
+    rf.setDefaultConfigFile("velocityExtractor.ini"); //overridden by --from parameter
     rf.setDefaultContext("eMorphApplication/conf");   //overridden by --context parameter
     rf.configure("ICUB_ROOT", argc, argv);
  

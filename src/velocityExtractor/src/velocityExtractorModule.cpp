@@ -19,11 +19,11 @@
  */
 
 /**
- * @file bottleRepeaterModule.cpp
- * @brief Implementation of the bottleRepeaterModule (see header file).
+ * @file velocityExtractorModule.cpp
+ * @brief Implementation of the velocityExtractorModule (see header file).
  */
 
-#include <iCub/bottleRepeaterModule.h>
+#include <iCub/velocityExtractorModule.h>
 
 
 using namespace yarp::os;
@@ -37,12 +37,12 @@ using namespace std;
  *  equivalent of the "open" method.
  */
 
-bool bottleRepeaterModule::configure(yarp::os::ResourceFinder &rf) {
+bool velocityExtractorModule::configure(yarp::os::ResourceFinder &rf) {
     /* Process all parameters from both command-line and .ini file */
     printf("initialization of the main thread \n");
     /* get the module name which will form the stem of all module port names */
     moduleName            = rf.check("name", 
-                           Value("/bottleRepeater"), 
+                           Value("/velocityExtractor"), 
                            "module name (string)").asString();
     /*
     * before continuing, set the module name before getting any other parameters, 
@@ -75,7 +75,7 @@ bool bottleRepeaterModule::configure(yarp::os::ResourceFinder &rf) {
     
     // --------------------------------------------
     printf("starting cfCollector Thread \n");
-    esThread=new bottleRepeaterThread();
+    esThread=new velocityExtractorThread();
     esThread->setName(getName().c_str());
     
     printf("name of the cfThread correctly set \n");
@@ -176,12 +176,12 @@ bool bottleRepeaterModule::configure(yarp::os::ResourceFinder &rf) {
                         // so that it will then run the module
 }
 
-bool bottleRepeaterModule::interruptModule() {
+bool velocityExtractorModule::interruptModule() {
     handlerPort.interrupt();
     return true;
 }
 
-bool bottleRepeaterModule::close() {
+bool velocityExtractorModule::close() {
     handlerPort.close();
     //bottleHandler.close();
     /* stop the thread */
@@ -191,7 +191,7 @@ bool bottleRepeaterModule::close() {
     return true;
 }
 
-bool bottleRepeaterModule::respond(const Bottle& command, Bottle& reply) {
+bool velocityExtractorModule::respond(const Bottle& command, Bottle& reply) {
     string helpMessage =  string(getName().c_str()) + 
                         " commands are: \n" +  
                         "help \n" + 
@@ -212,7 +212,7 @@ bool bottleRepeaterModule::respond(const Bottle& command, Bottle& reply) {
 }
 
 /* Called periodically every getPeriod() seconds */
-bool bottleRepeaterModule::updateModule() {
+bool velocityExtractorModule::updateModule() {
     return true;
 }
 

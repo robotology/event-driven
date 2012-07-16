@@ -19,18 +19,17 @@
  */
 
 /**
- * @file bottleRepeaterThread.h
- * @brief Definition of a thread that receive events from DVS camera and extracts frame-based representations of the readings
+ * @file velocityExtractorThread.h
+ * @brief Definition of a thread that extracts a SMOOTH_PURSUIT command from the optical flow
  * (see bottleRepeaterModule.h).
  */
 
-#ifndef _BOTTLE_REPEATER_THREAD_H_
-#define _BOTTLE_REPEATER_THREAD_H_
+#ifndef _VELOCITY_EXTRACTOR_THREAD_H_
+#define _VELOCITY_EXTRACTOR_THREAD_H_
 
 #include <yarp/os/RateThread.h>
 #include <yarp/os/Bottle.h>
 #include <yarp/sig/all.h>
-#include <iCub/eventBottleHandler.h>
 
 #include <iostream>
 #include <fstream>
@@ -40,7 +39,7 @@
 //typedef unsigned long long int uint64_t;
 typedef yarp::os::NetUint32 u32;
 
-class bottleRepeaterThread : public yarp::os::RateThread {
+class velocityExtractorThread : public yarp::os::RateThread {
 private:
     
     int count;                          // loop counter of the thread
@@ -101,12 +100,12 @@ public:
     /**
     * default constructor
     */
-    bottleRepeaterThread();
+    velocityExtractorThread();
 
     /**
      * destructor
      */
-    ~bottleRepeaterThread();
+    ~velocityExtractorThread();
 
     /**
     * function that initialise the thread
@@ -223,7 +222,7 @@ public:
     
 };
 
-#endif  //_BOTTLE_REPEATER_THREAD_H_
+#endif  //_VELOCITY_EXTRACTOR_THREAD_H_
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------
 

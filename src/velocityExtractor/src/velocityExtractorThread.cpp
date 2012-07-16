@@ -19,11 +19,11 @@
  */
 
 /**
- * @file bottleRepeaterThread.cpp
- * @brief Implementation of the thread (see header bottleRepeaterThread.h)
+ * @file velocityExtractorThread.cpp
+ * @brief Implementation of the thread (see header velocityExtractorThread.h)
  */
 
-#include <iCub/bottleRepeaterThread.h>
+#include <iCub/velocityExtractorThread.h>
 #include <cstring>
 #include <cassert>
 #include <cstdlib>
@@ -48,7 +48,7 @@ using namespace std;
 
 //#define VERBOSE
 
-bottleRepeaterThread::bottleRepeaterThread() : RateThread(THRATE) {
+velocityExtractorThread::velocityExtractorThread() : RateThread(THRATE) {
     responseGradient = 127;
     retinalSize  = 128;  //default value before setting 
   
@@ -68,13 +68,13 @@ bottleRepeaterThread::bottleRepeaterThread() : RateThread(THRATE) {
     minCountRight = 0;
 }
 
-bottleRepeaterThread::~bottleRepeaterThread() {
+velocityExtractorThread::~velocityExtractorThread() {
     printf("freeing memory in collector");
     delete bufferCopy;
 }
 
-bool bottleRepeaterThread::threadInit() {
-    printf(" \n------------------------- bottleRepeaterThread::threadInit:starting the threads.... \n");
+bool velocityExtractorThread::threadInit() {
+    printf(" \n------------------------- velocityExtractorThread::threadInit:starting the threads.... \n");
     //outPort.open(getName("/left:o").c_str());
     //outPortRight.open(getName("/right:o").c_str());
 
@@ -118,27 +118,27 @@ bool bottleRepeaterThread::threadInit() {
     bottleToSend   = new Bottle();
 
 
-    printf("-----------------------------  bottleRepeaterThread::threadInit:Initialisation of collector thread correctly ended \n");
+    printf("-----------------------------  velocityExtractorThread::threadInit:Initialisation of collector thread correctly ended \n");
     return true;
 }
 
-void bottleRepeaterThread::interrupt() {
+void velocityExtractorThread::interrupt() {
     outPort.interrupt();
     outPortRight.interrupt();
 }
 
-void bottleRepeaterThread::setName(string str) {
+void velocityExtractorThread::setName(string str) {
     this->name=str;
     printf("name: %s", name.c_str());
 }
 
-std::string bottleRepeaterThread::getName(const char* p) {
+std::string velocityExtractorThread::getName(const char* p) {
     string str(name);
     str.append(p);
     return str;
 }
 
-void bottleRepeaterThread::resize(int widthp, int heightp) {
+void velocityExtractorThread::resize(int widthp, int heightp) {
     imageLeft = new ImageOf<PixelMono>;
     imageLeft->resize(widthp,heightp);
     imageRight = new ImageOf<PixelMono>;
@@ -146,11 +146,11 @@ void bottleRepeaterThread::resize(int widthp, int heightp) {
 }
 
 
-void bottleRepeaterThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsigned long minCount,unsigned long maxCount, bool camera){
+void velocityExtractorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsigned long minCount,unsigned long maxCount, bool camera){
 
 }
 
-int bottleRepeaterThread::prepareUnmasking(char* bufferCopy, Bottle* res) {
+int velocityExtractorThread::prepareUnmasking(char* bufferCopy, Bottle* res) {
     // navigate the 32bit words in the bufferCopy and create a bottle outofvalid
     int numberofwords = CHUNKSIZE / 4; //4bytes made a 32bits word
     u32* pointerWord = (u32*) bufferCopy;
@@ -172,7 +172,7 @@ int bottleRepeaterThread::prepareUnmasking(char* bufferCopy, Bottle* res) {
     return countValid;
 }
 
-void bottleRepeaterThread::run() {
+void velocityExtractorThread::run() {
   
     printf("extracting bottle %08x \n", bottleToSend);
     bottleHandler->extractBottle(bottleToSend); 
@@ -199,12 +199,12 @@ void bottleRepeaterThread::run() {
     }
 }
 
-void bottleRepeaterThread::threadRelease() {
+void velocityExtractorThread::threadRelease() {
     idle = false;
     fclose(fout);
-    printf("bottleRepeaterThread release:freeing bufferCopy \n");
+    printf("velocityExtractorThread release:freeing bufferCopy \n");
     //free(bufferCopy);
-    printf("bottleRepeaterThread release:closing ports \n");
+    printf("velocityExtractorThread release:closing ports \n");
     //outPort.close();
     outBottlePort.close();
     //outPortRight.close();
