@@ -1035,7 +1035,7 @@ void  device2yarp::run() {
     char* buf = (char*) buf2;
     
     if (port.getOutputCount()) {
-        printf("preparing the data to send on the port \n");
+        //printf("preparing the data to send on the port \n");
         eventBuffer data2send(buffer, sz);  //adding 8 bytes for extra word 0xCAFECAFE and TS_WA    
         eventBuffer& tmp = port.prepare();
         tmp = data2send;
@@ -1044,17 +1044,14 @@ void  device2yarp::run() {
     
     
     if (portEventBottle.getOutputCount()) {       
-        //printf("Sending the bottle %d bytes \n", sz);
-        //printf("Sending bottle of dimension %d \n", tmpBottle.size());
-        //eventBottle data2send(&tmpBottle); //<--- alternative that decided to avoid
-        eventBottle data2send(bottle2send);
-        eventBottle& tmp = portEventBottle.prepare(); 
 
-        //portEventBottle.prepare() = data2send; 
-        tmp = data2send;
-        //printf("copy of the bottle2Send in the prepared Bottle \n");
+        //eventBottle data2send(&tmpBottle); //<--- alternative that decided to avoid
+        //printf("bytes %d on the portEventBottle \n", bottle2send->size());
+        eventBottle data2send(bottle2send);
+        eventBottle& tmp = portEventBottle.prepare();  
+        tmp = data2send;        
         portEventBottle.write();
-        //printf("on port written \n");
+        
     } 
     
     wrapOccured = false;
@@ -1315,12 +1312,14 @@ void device2yarp::setSyncBit() {
 }
 
 void device2yarp::threadRelease() {
+
     /* it is better not to set the powerdown at the end!
     const u32 seqAllocChunk_b = SIZE_OF_EVENTS * sizeof(struct aer); //allocating the right dimension for biases
     memset(pseq,0,seqAllocChunk_b);
     setPowerdown();
     sendingBias();
     */
+
     stopInt=Time::now();
     double diff = stopInt - startInt;
     double maxRate = (double) maxCountInWraps / (0xFFFFFF * 0.001);
