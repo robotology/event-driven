@@ -173,28 +173,13 @@ int velocityExtractorThread::prepareUnmasking(char* bufferCopy, Bottle* res) {
 
 void velocityExtractorThread::run() {
   
-    printf("extracting bottle %08x \n", bottleToSend);
-    //bottleHandler->extractBottle(bottleToSend); 
-    
-    printf("received bottle: \n");
-    printf("%s \n", bottleToSend->toString().c_str());    
-    
-    // sending the received bottle
-
-    if(outBottlePort.getOutputCount()) {
-        //Bottle packets;          
-        cout<<"encoding events within packets "<<bottleToSend->size() <<endl;
-        if(bottleToSend->size() > 0) {
-
-            printf("after encoding events in the packets %d \n", bottleToSend->size() );
-            //Bottle b;
-            //b.copy(*bottleToSend);
-            
-            //eventBottle data2send(bottleToSend);         
-            //eventBottle& tmp = outBottlePort.prepare();
-            //tmp = data2send;
-            //outBottlePort.write(); 
-            //printf("writing the port \n");
+    while(!isRunning()) {
+        if(inBottlePort.getInputCount()) {
+            Bottle* readBottle = inBottlePort.read(true);
+            printf("bottle %s \n", readBottle->toString().c_str());
+        }
+        else {
+            Time::delay(0.5);
         }
     }
 }
