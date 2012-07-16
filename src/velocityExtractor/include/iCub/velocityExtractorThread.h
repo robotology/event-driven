@@ -1,22 +1,21 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
-/* 
- * Copyright (C) 2012 RobotCub Consortium, European Commission FP6 Project IST-004370
- * Authors: Rea Francesco
- * email:   francesco.rea@iit.it
- * website: www.robotcub.org 
- * Permission is granted to copy, distribute, and/or modify this program
- * under the terms of the GNU General Public License, version 2 or any
- * later version published by the Free Software Foundation.
- *
- * A copy of the license can be found at
- * http://www.robotcub.org/icub/license/gpl.txt
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details
- */
+/*
+  * Copyright (C)2012  Department of Robotics Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
+  * Author:Francesco Rea
+  * email: francesco.rea@iit.it
+  * Permission is granted to copy, distribute, and/or modify this program
+  * under the terms of the GNU General Public License, version 2 or any
+  * later version published by the Free Software Foundation.
+  *
+  * A copy of the license can be found at
+  * http://www.robotcub.org/icub/license/gpl.txt
+  *
+  * This program is distributed in the hope that it will be useful, but
+  * WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+  * Public License for more details
+*/
 
 /**
  * @file velocityExtractorThread.h
@@ -29,12 +28,12 @@
 
 #include <yarp/os/RateThread.h>
 #include <yarp/os/Bottle.h>
+#include <yarp/os/all.h>
 #include <yarp/sig/all.h>
 
 #include <iostream>
 #include <fstream>
 #include <time.h>
-
 
 //typedef unsigned long long int uint64_t;
 typedef yarp::os::NetUint32 u32;
@@ -61,12 +60,13 @@ private:
     int height_orig, width_orig;        // original dimension of the input and output images
     int synchPeriod;                    // synchronization period between events and viewer
     int responseGradient;               // responseGradient parameter
-    eventBottleHandler* bottleHandler;  // handler for the received bottle
+    
     yarp::os::Bottle* receivedBottle;      // bottle currently extracted from the buffer
     yarp::os::Bottle* bottleToSend;        // bottle ready to be sent to the outputport 
-    yarp::os::BufferedPort<eventBottle> outBottlePort;                                    // port sendinf events as a collection of bottles
+                                
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPort;            // port whre the output (left) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPortRight;       // port whre the output (right) is sent
+    yarp::os::BufferedPort<yarp::os::Bottle>                          outBottlePort;
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeft;                                  //image representing the signal on the leftcamera
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRight;                                 //image representing the signal on the right camera
     std::string name;                   // rootname of all the ports opened by this thread
