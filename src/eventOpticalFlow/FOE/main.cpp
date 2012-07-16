@@ -115,8 +115,8 @@ public:
         vb = vGrabber.getVelocities();
         ts ++;
         if (vb != NULL){
-            foeFinder.computeFoE(*vb, true);
-//            foeFinder.makeObjMap(*vb);
+//            foeFinder.computeFoE(*vb, false);
+            foeFinder.makeObjMap2(*vb);
 //       	  foeFinder.velNormal(*vb);
 //            foeFinder.velDivergance(*vb);
            delete vb;

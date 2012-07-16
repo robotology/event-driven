@@ -30,6 +30,9 @@
 #define WEIGHT_FACTOR .05
 #define LEAK_RATE (- 0.00001)
 
+
+#define FILTER_NGHBRHD 3
+
 using namespace std;
 using namespace yarp::os;
 
@@ -41,7 +44,7 @@ class FOEFinder{
     yarp::sig::Matrix tsStatus;
     yarp::sig::Matrix foeMap;
     yarp::sig::Matrix objMap;
-
+    yarp::sig::Matrix objMapTS;
 
     int foeX;
     int foeY;
@@ -66,6 +69,7 @@ public:
 
     void computeFoE(VelocityBuffer & , bool vis = true);
     void makeObjMap(VelocityBuffer &);
+    void makeObjMap2(VelocityBuffer &);
 
 
 

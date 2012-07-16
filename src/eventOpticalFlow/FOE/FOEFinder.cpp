@@ -15,8 +15,11 @@ FOEFinder::FOEFinder(){
 	tsStatus.resize(X_DIM, Y_DIM);
 	tsStatus.zero();
 
-    objMap.resize(X_DIM, Y_DIM);
+    objMap.resize(X_DIM + 2*FILTER_NGHBRHD, Y_DIM + 2*FILTER_NGHBRHD);
     objMap.zero();
+
+    objMapTS.resize(X_DIM + 2*FILTER_NGHBRHD, Y_DIM + 2*FILTER_NGHBRHD);
+    objMapTS.zero();
 
     foeProb = 0;
     foeX = 64; foeY = 64;
@@ -324,10 +327,7 @@ void FOEFinder::makeObjMap(VelocityBuffer & data){
     //leak the values
     for (int i = 0; i < X_DIM; ++i) {
        for (int j = 0; j < Y_DIM; ++j) {
-           objMap(i,j) = leakyCons * objMap(i,j); //LEAK_RATE * foeMap(i,j);
-
-//           if (objMap(i,j) > maxValue )
-//               maxValue = objMap(i,j);
+           objMap(i,j) = leakyCons * objMap(i,j);
        }
     }
 
@@ -340,9 +340,9 @@ maxValue  = 0; sptDrv = 0;
         vy = data.getVy(cntr);
 
         velNorm = sqrt(vx*vx + vy*vy) * 10000;
-        distan = sqrt( (foeX - x)*(foeX-x) + (foeY - y)*(foeY - y)) ;
-        objMap(x, y) =  distan / velNorm;
-
+       // distan = sqrt( (foeX - x)*(foeX-x) + (foeY - y)*(foeY - y)) ;
+      //  objMap(x, y) =  distan / velNorm;
+        objMap(x, y) = velNorm;
 
         maxValue += objMap(x, y);
         sptDrv += objMap(x, y) * objMap(x, y);
@@ -355,12 +355,13 @@ maxValue  = 0; sptDrv = 0;
 
     maxValue +=  sptDrv;
 
-
-
     yarp::sig::ImageOf<yarp ::sig::PixelRgb>& img=outPort-> prepare();
     img.resize(X_DIM, Y_DIM);
     img.zero();
 
+    cout << maxValue << " " << sptDrv << endl;
+
+maxValue = 500;
     normFactor = (255/ (.3 * maxValue));
     for (int i = 0; i < X_DIM; ++i) {
        for (int j = 0; j < Y_DIM; ++j) {
@@ -392,6 +393,88 @@ maxValue  = 0; sptDrv = 0;
 
 
     outPort -> write();
+}
+
+void FOEFinder::makeObjMap2(VelocityBuffer & packet){
+    int size, x, y;
+    double vx, vy, velNorm, distan, avg;
+    double tim1, tim2, deltaT;
+    double maxValue, normFactor, tmp, r, b , g;
+    int wndwSZ;
+
+    size = packet.getSize();
+
+    //Update map with new arieved values
+    for (int cntr = 0; cntr < size; ++cntr) {
+       x = packet.getX(cntr) + FILTER_NGHBRHD;
+       y = packet.getY(cntr) + FILTER_NGHBRHD;
+       vx = packet.getVx(cntr);
+       vy = packet.getVy(cntr);
+
+       velNorm = sqrt(vx*vx + vy*vy) * 10000;
+      // distan = sqrt( (foeX - x)*(foeX-x) + (foeY - y)*(foeY - y)) ;
+     //  objMap(x, y) =  distan / velNorm;
+       objMap(x,y ) = velNorm;
+       objMapTS(x, y) = packet.getTs(cntr);
+   }
+
+   //Smoothing
+   for (int cntr = 0; cntr < size; ++cntr) {
+       x = packet.getX(cntr) + FILTER_NGHBRHD;
+       y = packet.getY(cntr) + FILTER_NGHBRHD;
+       avg = 0;
+       tim1 = objMapTS(x,y);
+       wndwSZ  =0;
+       for (int i = -FILTER_NGHBRHD; i <= FILTER_NGHBRHD; ++i) {
+           for (int j = -FILTER_NGHBRHD; j <= FILTER_NGHBRHD; ++j) {
+               tim2 = objMapTS(x + i, y + j);
+               deltaT = ( abs(tim1- tim2) > 30000 ? 0 : 1 );
+               tmp = objMap(x + i, y + j) * deltaT;
+               avg += tmp;
+               wndwSZ  += deltaT;
+          }
+       }
+       avg = avg / wndwSZ;
+       objMap(x, y) = avg;
+   }
+
+   //Visualization
+   unsigned long crntTS;
+   crntTS = packet.getTs(size - 1);
+
+   yarp::sig::ImageOf<yarp ::sig::PixelRgb>& img=outPort-> prepare();
+   img.resize(X_DIM + 2*FILTER_NGHBRHD, Y_DIM + 2*FILTER_NGHBRHD);
+   img.zero();
+
+   maxValue = 100;
+   normFactor = (255/ (.3 * maxValue));
+   for (int i = 0; i < X_DIM + 2*FILTER_NGHBRHD; ++i) {
+      for (int j = 0; j < Y_DIM + 2*FILTER_NGHBRHD; ++j) {
+
+          deltaT = 10000 / ( crntTS - objMapTS(i,j) );
+
+          if (objMap(i, j) * deltaT > .7 * maxValue){
+              r = normFactor * (objMap(i, j) * deltaT - .7 * maxValue);
+              img(i,j) =  yarp::sig::PixelRgb ( r, 0 , 0 );
+          }else {
+              if (objMap(i, j) * deltaT > .3 * maxValue ){
+                  b = normFactor * (objMap(i, j) * deltaT - .3 * maxValue);
+                  img(i,j) =  yarp::sig::PixelRgb ( 0, 0 , b );
+              }
+              else{
+                  g = normFactor * objMap(i, j) * deltaT ;
+                  img(i,j) =  yarp::sig::PixelRgb ( 0, g , 0 );
+              }
+          }
+//        tmp = normFactor * objMap(i,j);
+//        img(i,j) = yarp::sig::PixelRgb (tmp,tmp , tmp);
+       }
+   }
+
+   static const yarp::sig::PixelRgb pr(200,0,0);
+   yarp::sig::draw::addCircle(img,pr,foeX,foeY,4);
+
+   outPort -> write();
 }
 
 
