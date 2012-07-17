@@ -94,12 +94,8 @@ bool velocityExtractorThread::threadInit() {
     minCountRight= 0;
 
     vbh = new velocityBottleHandler();
-    //vbh.open(getName("/velocity:i").c_str());
-
-    if(!inBottlePort.open(getName("/velocity:i").c_str())) {
-        printf("error in opening the input port \n");
-        return false;
-    }
+    vbh->useCallback();
+    vbh->open(getName("/velocity:i").c_str());
 
     if(!outBottlePort.open(getName("/retinaBottle:o").c_str())) {
         printf("error in opening the output port \n");
@@ -119,8 +115,10 @@ bool velocityExtractorThread::threadInit() {
 }
 
 void velocityExtractorThread::interrupt() {
+    printf("velocityExtractorThread::interrupt:interrupt for ports \n");
     outPort.interrupt();
     outPortRight.interrupt();
+    printf("velocityExtractorThread::interrupt: port interrupt! \n");
 }
 
 void velocityExtractorThread::setName(string str) {
@@ -209,13 +207,11 @@ void velocityExtractorThread::run() {
 }
 
 void velocityExtractorThread::threadRelease() {
+    printf("velocityExtractorThrea::threadRelease:entering  \n");
     idle = false;
     //fclose(fout);
-    printf("velocityExtractorThread release:freeing bufferCopy \n");
 
     printf("velocityExtractorThread release:closing ports \n");
-
-    inBottlePort.close();
     outBottlePort.close();
 
     delete receivedBottle;
