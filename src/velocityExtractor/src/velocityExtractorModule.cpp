@@ -111,69 +111,8 @@ bool velocityExtractorModule::configure(yarp::os::ResourceFinder &rf) {
                            "responseGradient (int)").asInt();
     //cfThread->setResponseGradient(responseGradient);
 
-    
-    /* 
-     *checking whether the module synchronizes with single camera or stereo camera
-     */
-    if( rf.check("stereo")) {
-        //cfThread->setStereo(true);
-    }
-    else {
-        //cfThread->setStereo(false);
-    }
-
-
-    /* 
-     *set option for mapping three states into 3baseline graylevels
-     */
-    if( rf.check("tristate")) {
-        //cfThread->setTristate(true);
-    }
-    else {
-        //cfThread->setTristate(false);
-    }
-
-
-    /* 
-     *checking whether the module synchronizes with single camera or stereo camera
-     */
-    printf("Looking for asvMode ... \n");
-    if( rf.check("asvMode")) {
-        printf("setting asvMode = true, dvsMode = false \n");
-        //cfThread->setASVMode(true);
-        //cfThread->setDVSMode(false);
-    }
-    else {
-        printf("setting asvMode = false, dvsMode = false \n");
-        //cfThread->setASVMode(false);
-    }
-
-    
-    /* checking whether the module synchronizes with single camera or stereo camera
-     */
-    if( rf.check("dvsMode")) {
-        //cfThread->setDVSMode(true);
-        //cfThread->setASVMode(false);
-    }
-    else {
-        //cfThread->setDVSMode(false);
-    }
-
-    /**
-     * checking whether the viewer represent log-polar information
-     */
-    if( rf.check("logpolar")) {
-        //cfThread->setLogPolar(true);
-    }
-    else {
-        //cfThread->setLogPolar(false);
-    }
     esThread->start();
 
-    //bottleHandler = new eventBottleHandler();
-    //bottleHandler->useCallback();
-    //bottleHandler->setRetinalSize(retinalSize);
-    //bottleHandler->open(getName("/retina2:i").c_str());
 
     return true ;       // let the RFModule know everything went well
                         // so that it will then run the module

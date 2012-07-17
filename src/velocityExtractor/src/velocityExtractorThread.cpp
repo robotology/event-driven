@@ -47,7 +47,8 @@ using namespace std;
 
 //#define VERBOSE
 
-velocityExtractorThread::velocityExtractorThread() : RateThread(THRATE) {
+velocityExtractorThread::velocityExtractorThread() : Thread() {
+    width = 128;
     responseGradient = 127;
     retinalSize  = 128;  //default value before setting 
   
@@ -81,32 +82,24 @@ bool velocityExtractorThread::threadInit() {
     resize(retinalSize, retinalSize);
 
     printf("starting the converter!!!.... \n");
-    
-    //cfConverter=new cFrameConverter();
-    //cfConverter->useCallback();
-    //cfConverter->setRetinalSize(retinalSize);
-    //cfConverter->open(getName("/retina:i").c_str());
-    
+       
     printf("\n opening retina\n");
     printf("starting the plotter \n");
 
-    //minCount = cfConverter->getEldestTimeStamp();
     startTimer = Time::now();
-    //clock(); //startTime ;
-    //T1 = times(&start_time);
-    //microseconds = 0;
-    //microsecondsPrev = 0;
-    //gettimeofday(&tvend, NULL);
 
     count = 0;
     microsecondsPrev = 0;
     minCount = 0;
     minCountRight= 0;
 
-    //bottleHandler = new eventBottleHandler();
-    //bottleHandler->useCallback();
-    //bottleHandler->setRetinalSize(retinalSize);
-    //bottleHandler->open(getName("/retinaBottle:i").c_str());
+    vbh = new velocityBottleHandler();
+    //vbh.open(getName("/velocity:i").c_str());
+
+    if(!inBottlePort.open(getName("/velocity:i").c_str())) {
+        printf("error in opening the input port \n");
+        return false;
+    }
 
     if(!outBottlePort.open(getName("/retinaBottle:o").c_str())) {
         printf("error in opening the output port \n");
@@ -115,6 +108,10 @@ bool velocityExtractorThread::threadInit() {
     
     receivedBottle = new Bottle();
     bottleToSend   = new Bottle();
+
+    for(int i = 0 ; i < numberOfAngles; i++) {
+        histogram[i] = 0;
+    }
 
 
     printf("-----------------------------  velocityExtractorThread::threadInit:Initialisation of collector thread correctly ended \n");
@@ -172,29 +169,55 @@ int velocityExtractorThread::prepareUnmasking(char* bufferCopy, Bottle* res) {
 }
 
 void velocityExtractorThread::run() {
-  
-    while(!isRunning()) {
+    while(isRunning()) {
         if(inBottlePort.getInputCount()) {
+            
             Bottle* readBottle = inBottlePort.read(true);
-            printf("bottle %s \n", readBottle->toString().c_str());
+            if(readBottle!=NULL) {
+                printf("bottle %s \n", readBottle->toString().c_str());
+                int u          = readBottle->get(0).asInt();
+                int v          = readBottle->get(1).asInt();
+                
+                if((u > umin) && (u < umax) && (v > vmin) && (v < vmax)) {
+                    //printf("read u=%d v=%d \n", u, v);
+                    double uDot    = readBottle->get(2).asDouble();
+                    double vDot    = readBottle->get(3).asDouble();
+                    double theta   = atan2(vDot,uDot);
+                    double mag     = sqrt(vDot * vDot + uDot * uDot);
+                    //if(theta < 0)  theta = 2 * 3.1415 - theta;
+                    //double posRad  = theta / (360 / numberOfAngles);
+                    int thetaDeg   = floor((theta / 3.1415) * 180);
+                    if(thetaDeg < 0)
+                        thetaDeg = 360 + thetaDeg;
+
+                    int pos        =  thetaDeg / (360 / numberOfAngles);
+                    
+                    printf("uDot %f vDot %f theta %f thetaDeg %d pos %d \n",uDot,vDot, theta,thetaDeg, pos);
+                    histogram[pos] = histogram[pos] + 1;
+                    if(histogram[pos] > maxFiringRate) {
+                        printf("max reached in pos %d \n", pos);
+                        histogram[pos] = 0;
+                    }
+                }
+            }
+            Time::delay(0.01);
         }
         else {
-            Time::delay(0.5);
+            Time::delay(0.01);
         }
     }
 }
 
 void velocityExtractorThread::threadRelease() {
     idle = false;
-    fclose(fout);
+    //fclose(fout);
     printf("velocityExtractorThread release:freeing bufferCopy \n");
-    //free(bufferCopy);
-    printf("velocityExtractorThread release:closing ports \n");
-    //outPort.close();
-    outBottlePort.close();
-    //outPortRight.close();
 
-    // delete bottleHandler;
+    printf("velocityExtractorThread release:closing ports \n");
+
+    inBottlePort.close();
+    outBottlePort.close();
+
     delete receivedBottle;
     delete bottleToSend;
     printf("correctly freed memory from the bottleHandler \n");

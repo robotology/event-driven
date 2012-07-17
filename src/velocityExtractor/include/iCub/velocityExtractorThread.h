@@ -35,16 +35,25 @@
 #include <fstream>
 #include <time.h>
 
-//typedef unsigned long long int uint64_t;
+#include <iCub/velocityBottleHandler.h>
+
 typedef yarp::os::NetUint32 u32;
 
-class velocityExtractorThread : public yarp::os::RateThread {
-private:
-    
+class velocityExtractorThread : public yarp::os::Thread {
+private:    
+    static const int numberOfAngles = 36;
+    static const int umin           = 32;
+    static const int vmin           = 32;
+    static const int umax           = 96;
+    static const int vmax           = 96;
+    static const int maxFiringRate  = 5;
+   
     int count;                          // loop counter of the thread
+ 
+
     //struct timeval tvstart,tvend;
     //struct timespec start_time, stop_time;
-    //u64 Tnow;
+    
     unsigned long precl;
     unsigned long lc;
     unsigned long lcprev;
@@ -60,6 +69,7 @@ private:
     int height_orig, width_orig;        // original dimension of the input and output images
     int synchPeriod;                    // synchronization period between events and viewer
     int responseGradient;               // responseGradient parameter
+    short histogram[numberOfAngles];             // histogram of 
     
     yarp::os::Bottle* receivedBottle;      // bottle currently extracted from the buffer
     yarp::os::Bottle* bottleToSend;        // bottle ready to be sent to the outputport 
@@ -80,19 +90,22 @@ private:
     bool stereo;                         // flag that indicates whether the synchronization is stereo
     bool asvFlag, dvsFlag;               // flag for operating mode
     bool tristate;                       // option that represent the image with three baselines
+
     unsigned long minCount;              // minimum timestamp allowed for the current frame
     unsigned long maxCount;              // maximum timestamp allowed for the current frame
     unsigned long minCountRight;
     unsigned long maxCountRight;
+
     double startTimer;
     double interTimer;
     double endTimer;
+    
     yarp::os::Semaphore mutex;           // semaphore thar regulates the access to the buffer resource
     clock_t endTime,startTime;
     long T1,T2;
-    //plotterThread* pThread;              // plotterThread for the trasformation of the event in images
-    //cFrameConverter* cfConverter;        // receives real-time events
-    //unmask* unmask_events;               // object that unmask events
+
+    velocityBottleHandler* vbh;          // handler for packets of velocity information  
+    
     char* bufferRead;                    // buffer of events read from the port
     char* bufferCopy;                    // local copy of the events read
     FILE* fout;                          // file for temporarely savings of events
