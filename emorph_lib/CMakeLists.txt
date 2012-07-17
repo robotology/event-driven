@@ -16,6 +16,7 @@ SET(folder_source
   src/eventConversion.cpp
   src/eventCodec.cpp
   src/eventBottle.cpp
+  src/VelocityBuffer.cpp
 )
 
 #FILE(GLOB folder_source 
@@ -30,6 +31,7 @@ SET(folder_header
   include/iCub/emorph/eventBuffer.h
   include/iCub/emorph/eventCodec.h
   include/iCub/emorph/eventConversion.h 
+  include/iCub/emorph/VelocityBuffer.h
 )
 
 MESSAGE("folder_header ${folder_header}")
