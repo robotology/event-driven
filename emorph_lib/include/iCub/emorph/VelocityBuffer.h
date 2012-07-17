@@ -47,6 +47,7 @@ class VelocityBuffer : public yarp::os::Portable{
 public:
 
     VelocityBuffer();
+    VelocityBuffer(const VelocityBuffer & src);
 
     virtual ~VelocityBuffer();
     virtual bool read(ConnectionReader &);
@@ -60,12 +61,12 @@ public:
     void emptyBuffer();
 
     inline short getSize(){return size;};
-    inline short getX(int idx){return Xs[idx];};
-    inline short getY(int idx){return Ys[idx];};
-    inline double getVx(int idx){return Vxs[idx];};
-    inline double getVy(int idx){return Vys[idx];};
-    inline unsigned long getTs(int idx){return TSs[idx];};
-    inline double getRel(int idx){return rel[idx];};
+    inline short getX(int idx){return *(Xs + idx)/*Xs[idx]*/;};
+    inline short getY(int idx){return *(Ys + idx) /*Ys[idx]*/;};
+    inline double getVx(int idx){return *(Vxs + idx )/*Vxs[idx]*/;};
+    inline double getVy(int idx){return *(Vys + idx ) /*Vys[idx]*/;};
+    inline unsigned long getTs(int idx){return *(TSs + idx ) /*TSs[idx]*/;};
+    inline double getRel(int idx){return *(rel + idx ) /*rel[idx]*/;};
 
     double getVxMin();
     double getVxMax();
