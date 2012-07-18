@@ -51,6 +51,7 @@ add_subdirectory   (eventOpticalFlow)
 
 # --------  NEW OPTICAL FLOW ------------------------
 add_subdirectory    (tsOptFlow)
+add_subdirectory    (eventsUnmask)
 
 if(ICUB_USE_IPOPT)
   add_subdirectory   (targetFinder)
