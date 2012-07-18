@@ -29,11 +29,9 @@ add_subdirectory   (emorphUnmaskTest)
 add_subdirectory   (eventFeatureExtractor)
 #add_subdirectory  (fakeEvent)
 add_subdirectory   (harmonicPathPlanner)
-
-
 #add_subdirectory  (logpolarFrameCollector)
 add_subdirectory   (logSort)
-#add_subdirectory  (microsacTest)
+add_subdirectory  (microsacTest)
 #add_subdirectory  (simpleSaccade)
 #add_subdirectory  (simpleSaccade)
 #add_subdirectory  (objectInteractor)
