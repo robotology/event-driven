@@ -101,6 +101,10 @@ bool velocityExtractorThread::threadInit() {
         printf("error in opening the output port \n");
         return false;
     }
+    if(!outImagePort.open(getName("/histo:o").c_str())) {
+        printf("error in opening the output port \n");
+        return false;
+    }
     
     receivedBottle = new Bottle();
     bottleToSend   = new Bottle();
@@ -116,7 +120,8 @@ bool velocityExtractorThread::threadInit() {
 
 void velocityExtractorThread::interrupt() {
     printf("velocityExtractorThread::interrupt:interrupt for ports \n");
-    outPort.interrupt();
+    outBottlePort.interrupt();
+    outImagePort.interrupt();
     outPortRight.interrupt();
     printf("velocityExtractorThread::interrupt: port interrupt! \n");
 }
@@ -133,16 +138,19 @@ std::string velocityExtractorThread::getName(const char* p) {
 }
 
 void velocityExtractorThread::resize(int widthp, int heightp) {
-    imageLeft = new ImageOf<PixelMono>;
-    imageLeft->resize(widthp,heightp);
+    imageOut = new ImageOf<PixelMono>;
+    imageOut->resize(360,20);
     imageRight = new ImageOf<PixelMono>;
     imageRight->resize(widthp,heightp);
 }
 
-
-void velocityExtractorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsigned long minCount,unsigned long maxCount, bool camera){
-
+/*
+void velocityExtractorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image){
+    for (int i = 0; i < 360; i++) {
+        
+    }
 }
+*/
 
 int velocityExtractorThread::prepareUnmasking(char* bufferCopy, Bottle* res) {
     // navigate the 32bit words in the bufferCopy and create a bottle outofvalid
@@ -167,52 +175,64 @@ int velocityExtractorThread::prepareUnmasking(char* bufferCopy, Bottle* res) {
 }
 
 void velocityExtractorThread::run() {
-    while(isRunning()) {
-        if(inBottlePort.getInputCount()) {
+    while(!isStopping()) {
+
+        //Bottle* readBottle = inBottlePort.read(true);
+        VelocityBuffer* vb; // = new VelocityBuffer();
             
-            Bottle* readBottle = inBottlePort.read(true);
-            if(readBottle!=NULL) {
-                printf("bottle %s \n", readBottle->toString().c_str());
-                int u          = readBottle->get(0).asInt();
-                int v          = readBottle->get(1).asInt();
+        vb = vbh->extractBottle(vb);
+        
+        if(vb != 0) {
+            printf("extracting not null bottle %08x \n", vb);
+            for (int i = 0 ; i < vb->getSize(); i++) {
                 
+                int u          = vb->getX(i);
+                int v          = vb->getY(i);
+                //printf("%d %d \n", u, v);
+               
                 if((u > umin) && (u < umax) && (v > vmin) && (v < vmax)) {
-                    //printf("read u=%d v=%d \n", u, v);
-                    double uDot    = readBottle->get(2).asDouble();
-                    double vDot    = readBottle->get(3).asDouble();
+                    printf("read u = %d v = %d \n", u, v);
+                    double uDot    = vb->getVx(i);
+                    double vDot    = vb->getVy(i);
                     double theta   = atan2(vDot,uDot);
                     double mag     = sqrt(vDot * vDot + uDot * uDot);
-                    //if(theta < 0)  theta = 2 * 3.1415 - theta;
-                    //double posRad  = theta / (360 / numberOfAngles);
+
                     int thetaDeg   = floor((theta / 3.1415) * 180);
                     if(thetaDeg < 0)
                         thetaDeg = 360 + thetaDeg;
 
                     int pos        =  thetaDeg / (360 / numberOfAngles);
                     
-                    printf("uDot %f vDot %f theta %f thetaDeg %d pos %d \n",uDot,vDot, theta,thetaDeg, pos);
+                    // printf("uDot %f vDot %f theta %f thetaDeg %d pos %d \n",uDot,vDot, theta,thetaDeg, pos);
                     histogram[pos] = histogram[pos] + 1;
                     if(histogram[pos] > maxFiringRate) {
-                        printf("max reached in pos %d \n", pos);
+                        //printf("max reached in pos %d \n", pos);
                         histogram[pos] = 0;
                     }
-                }
-            }
-            Time::delay(0.01);
-        }
-        else {
-            Time::delay(0.01);
-        }
-    }
+                }   
+            } //end of the for                        
+        } // end vb! = 0
+    
+        Time::delay(0.1);
+        
+    } //end of while
+}
+
+void velocityExtractorThread::onStop() {
+    printf("in the onStop function \n");
+    outBottlePort.interrupt();
+    
 }
 
 void velocityExtractorThread::threadRelease() {
     printf("velocityExtractorThrea::threadRelease:entering  \n");
     idle = false;
-    //fclose(fout);
+    fclose(fout);
 
     printf("velocityExtractorThread release:closing ports \n");
     outBottlePort.close();
+    outImagePort.close();
+    outPortRight.close();
 
     delete receivedBottle;
     delete bottleToSend;

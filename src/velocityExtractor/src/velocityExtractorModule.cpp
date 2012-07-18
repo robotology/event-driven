@@ -116,11 +116,11 @@ bool velocityExtractorModule::configure(yarp::os::ResourceFinder &rf) {
 
 bool velocityExtractorModule::interruptModule() {
     handlerPort.interrupt();
+    esThread->interrupt();
     return true;
 }
 
 bool velocityExtractorModule::close() {
-    printf("Module closing \n");
     handlerPort.close();
     printf("General handler port closed \n");
     

@@ -74,11 +74,11 @@ private:
     yarp::os::Bottle* receivedBottle;      // bottle currently extracted from the buffer
     yarp::os::Bottle* bottleToSend;        // bottle ready to be sent to the outputport 
                                 
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPort;            // port whre the output (left) is sent
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outImagePort;            // port whre the output (left) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPortRight;       // port whre the output (right) is sent
     yarp::os::BufferedPort<yarp::os::Bottle>                          outBottlePort;     
     yarp::os::BufferedPort<yarp::os::Bottle>                          inBottlePort;
-    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeft;                                  //image representing the signal on the leftcamera
+    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageOut;                                  //image representing the signal on the leftcamera
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRight;                                 //image representing the signal on the right camera
     std::string name;                   // rootname of all the ports opened by this thread
     bool verb;
@@ -140,6 +140,11 @@ public:
     * function called when the module is poked with an interrupt command
     */
     void interrupt();
+
+    /**
+    * function called when the thread is stopped
+    */
+    void onStop();
 
     /**
     * function that set the rootname for the ports that will be opened
