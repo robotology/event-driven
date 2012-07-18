@@ -35,6 +35,7 @@
 #include <fstream>
 #include <time.h>
 
+#include <iCub/plotterThread.h>
 #include <iCub/velocityBottleHandler.h>
 
 typedef yarp::os::NetUint32 u32;
@@ -50,7 +51,6 @@ private:
    
     int count;                          // loop counter of the thread
  
-
     //struct timeval tvstart,tvend;
     //struct timespec start_time, stop_time;
     
@@ -105,6 +105,7 @@ private:
     long T1,T2;
 
     velocityBottleHandler* vbh;          // handler for packets of velocity information  
+    plotterThread* pt;
     
     char* bufferRead;                    // buffer of events read from the port
     char* bufferCopy;                    // local copy of the events read

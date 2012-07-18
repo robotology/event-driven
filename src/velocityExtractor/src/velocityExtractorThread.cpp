@@ -97,14 +97,19 @@ bool velocityExtractorThread::threadInit() {
     vbh->useCallback();
     vbh->open(getName("/velocity:i").c_str());
 
+    
+    pt = new plotterThread();
+    pt->setName(getName("/plotter").c_str());
+    pt->start();
+    
     if(!outBottlePort.open(getName("/retinaBottle:o").c_str())) {
         printf("error in opening the output port \n");
         return false;
     }
-    if(!outImagePort.open(getName("/histo:o").c_str())) {
-        printf("error in opening the output port \n");
-        return false;
-    }
+    //if(!outImagePort.open(getName("/histo:o").c_str())) {
+    //    printf("error in opening the output port \n");
+    //    return false;
+    // }
     
     receivedBottle = new Bottle();
     bottleToSend   = new Bottle();
@@ -183,7 +188,7 @@ void velocityExtractorThread::run() {
         vb = vbh->extractBottle(vb);
         
         if(vb != 0) {
-            printf("extracting not null bottle %08x \n", vb);
+            //printf("extracting not null bottle %08x \n", vb);
             for (int i = 0 ; i < vb->getSize(); i++) {
                 
                 int u          = vb->getX(i);
@@ -191,7 +196,7 @@ void velocityExtractorThread::run() {
                 //printf("%d %d \n", u, v);
                
                 if((u > umin) && (u < umax) && (v > vmin) && (v < vmax)) {
-                    printf("read u = %d v = %d \n", u, v);
+                    //printf("read u = %d v = %d \n", u, v);
                     double uDot    = vb->getVx(i);
                     double vDot    = vb->getVy(i);
                     double theta   = atan2(vDot,uDot);
@@ -237,6 +242,8 @@ void velocityExtractorThread::threadRelease() {
     delete receivedBottle;
     delete bottleToSend;
     printf("correctly freed memory from the bottleHandler \n");
+    
+    pt->stop();
 }
 
 
