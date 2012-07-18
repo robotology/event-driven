@@ -65,6 +65,23 @@ int main(int argc, char * argv[]) {
         //Network yarp;
     yarp::os::Network::init();
     Time::turboBoost(); 
+
+    Bottle bo_send;
+    for(int i=0; i < 4; i++) {
+        bo_send.addInt(0xFFFFFFFE);
+    }
+    size_t binaryDim;
+    char* packetPointer = (char*) bo_send.toBinary(&binaryDim);
+    
+    printf("dimension in byte of the conversion to binary %d \n", binaryDim);
+
+    Bottle bo_rec;
+    bo_rec.fromBinary(packetPointer, binaryDim);
+
+    printf("bottleReceived %s \n", bo_rec.toString().c_str());
+
+
+    return 0;
     
     ResourceFinder rf;
     rf.setVerbose(true);
