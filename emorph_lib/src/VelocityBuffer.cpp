@@ -44,6 +44,22 @@ VelocityBuffer::VelocityBuffer(const VelocityBuffer & src){
     }
 }
 
+void VelocityBuffer::operator = (const VelocityBuffer & src){
+    size = src.size;
+    vxMin = src.vxMin;
+    vxMax = src.vxMax;
+    vyMin = src.vyMin;
+    vyMax = src.vyMax;
+    for (int i = 0; i < size; ++i) {
+        Xs[i] = src.Xs[i];
+        Ys[i] = src.Ys[i];
+        Vxs[i] = src.Vxs[i];
+        Vys[i] = src.Vys[i];
+        rel[i] = src.rel[i];
+        TSs[i] = src.TSs[i];
+    }
+}
+
 
 bool VelocityBuffer::addData(short x, short y, double vx, double vy, unsigned long ts, double reliablity){
     double tmp;

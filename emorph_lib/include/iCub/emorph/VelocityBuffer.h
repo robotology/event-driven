@@ -77,6 +77,8 @@ public:
     void setVy(int idx, double vy );
     void setVxMax(double v){vxMax = v;};
     void setVyMax(double v){vyMax = v;};
+
+    void operator= (const VelocityBuffer & src);
 };
 
 
