@@ -13,8 +13,6 @@
 
 #include "sending_buffer.h"
 
-using namespace std;
-using namespace yarp::os;
 class C_device2yarp:public RateThread
 {
 public:

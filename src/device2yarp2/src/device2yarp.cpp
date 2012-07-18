@@ -14,6 +14,9 @@
  */
 
 #include "device2yarp.h"
+
+using namespace std;
+using namespace yarp::os;
 C_device2yarp::C_device2yarp(string deviceNum, bool i_bool, string i_fileName):RateThread(10), save(i_bool)
 {
 //	xmask = 0x000000fE;

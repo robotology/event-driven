@@ -49,6 +49,8 @@ add_subdirectory   (velocityExtractor)
 #add_subdirectory  (opticalFlow3)
 add_subdirectory   (eventOpticalFlow)
 
+# --------  NEW OPTICAL FLOW ------------------------
+add_subdirectory    (tsOptFlow)
 
 if(ICUB_USE_IPOPT)
   add_subdirectory   (targetFinder)
