@@ -66,6 +66,7 @@ using namespace std;
 static int MAX_NUMBER_ACTIVATED = 1;
 
 
+
 /************************************************************************/
 
 bool getCamPrj(const string &configFile, const string &type, Matrix **Prj)
@@ -244,27 +245,32 @@ int main(int argc, char * argv[]) {
     if (isOnWings) {
         printf("changing the structure of the chain \n");
         iKinChain* eyeChain = eyeL->asChain();
-        //eyeChain->rmLink(7);
-        //eyeChain->rmLink(6); ;
-        iKinLink* link = &(eyeChain-> operator ()(5));
-        //double d_value = link->getD();
-        //printf("d value %f \n", d_value);
-        //double a_value = link->getA();
-        //printf("a value %f \n", a_value);
-        link->setD(0.145);
-        link = &(eyeChain-> operator ()(6));
-        link->setD(0.0);
-        //eyeChain->blockLink(6,0.0);
-        //eyeChain->blockLink(7,0.0);
-        //link = &(eyeChain-> operator ()(6));
-        //link->setA(0.0);
-        //link->setD(0.034);
-        //link->setAlpha(0.0);
-        //double d_value = link->getD();
-        //printf("d value %f \n", d_value);
-        //iKinLink twistLink(0.0,0.034,M_PI/2.0,0.0,-22.0*CTRL_DEG2RAD,  84.0*CTRL_DEG2RAD);
-        //*eyeChain << twistLink;
-        //eyeL->releaseLink(6);
+        eyeChain->rmLink(7);
+        eyeChain->rmLink(6); 
+        eyeChain->rmLink(5);
+        eyeChain->rmLink(4);
+        eyeChain->rmLink(3);
+        eyeChain->rmLink(2);
+        eyeChain->rmLink(1);
+        eyeChain->rmLink(0);
+
+        iKinLink ikl0(  0.032,     0.0,  M_PI/2.0,       0.0, -22.0*CTRL_DEG2RAD, 84.0*CTRL_DEG2RAD);
+        iKinLink ikl1(    0.0, -0.0055,  M_PI/2.0, -M_PI/2.0, -39.0*CTRL_DEG2RAD, 39.0*CTRL_DEG2RAD);
+        iKinLink ikl2(0.00231, -0.1933, -M_PI/2.0, -M_PI/2.0, -59.0*CTRL_DEG2RAD, 59.0*CTRL_DEG2RAD);
+        iKinLink ikl3(  0.033,     0.0,  M_PI/2.0,  M_PI/2.0, -40.0*CTRL_DEG2RAD, 30.0*CTRL_DEG2RAD);
+        iKinLink ikl4(    0.0,   0.001, -M_PI/2.0, -M_PI/2.0, -70.0*CTRL_DEG2RAD, 60.0*CTRL_DEG2RAD);
+        iKinLink ikl5( -0.054,  0.0825, -M_PI/2.0,  M_PI/2.0, -55.0*CTRL_DEG2RAD, 55.0*CTRL_DEG2RAD);
+        iKinLink ikl6(    0.0,   0.034, -M_PI/2.0,       0.0, -35.0*CTRL_DEG2RAD, 15.0*CTRL_DEG2RAD);
+        iKinLink ikl7(    0.0,     0.0,  M_PI/2.0, -M_PI/2.0, -50.0*CTRL_DEG2RAD, 50.0*CTRL_DEG2RAD);
+
+        eyeChain->pushLink(ikl0);
+        eyeChain->pushLink(ikl1);
+        eyeChain->pushLink(ikl2);
+        eyeChain->pushLink(ikl3);
+        eyeChain->pushLink(ikl4);
+        eyeChain->pushLink(ikl5);
+        eyeChain->pushLink(ikl6);
+        eyeChain->pushLink(ikl7);
 
     }
     else {
