@@ -395,18 +395,18 @@ void unmask::unmaskData(Bottle* packets) {
         //fprintf(uEvents,"chksum: %s \n", str.c_str());
         fprintf(uEvents,"--- \n");
 #endif
-        packets->pop();
-        packets->pop();
-        printf("size after pop %d \n", packets->size());
+        packets->pop(); // pop out necessary `till the error in reception found
+        packets->pop(); // pop out necessary `till the error in reception found
+        //printf("size after pop %d \n", packets->size());
         
         //-- decoding the packet -------
         if(eEvent::decode(*packets,q)) {
             //printf("pointer %08X \n",  &q);
-            printf("deque size %d \n \n", (int) q.size());
+            //printf("deque size %d \n \n", (int) q.size());
             int dequeSize = q.size();
 
             for (int evt = 0; evt < dequeSize; evt++) {
-                printf("evt : %d \n", evt);                
+                //printf("evt : %d \n", evt);                
                 if(q[evt] != 0) {                    
                     //********** extracting the event information **********************
                     // to identify the type of the packet
@@ -481,7 +481,7 @@ void unmask::unmaskData(Bottle* packets) {
                         //ptr->getXCog();
                         //ptr->getYCog();
                         
-                        addCLE(q[evt]);
+                        //addCLE(q[evt]);
                     }
                     else if(q[evt]->getType()=="HGE") {
                         printf("HGE_Event \n");
@@ -490,7 +490,7 @@ void unmask::unmaskData(Bottle* packets) {
                         //code for HGE                
                         //printf("received HOUGH EVENT type: %s \n", ptr->getType());
                         
-                        addHGE(q[evt]);
+                        //addHGE(q[evt]);
                     }
                     else {
                         printf("not recognized");
