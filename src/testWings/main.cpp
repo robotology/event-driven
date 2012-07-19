@@ -65,7 +65,105 @@ using namespace std;
 
 static int MAX_NUMBER_ACTIVATED = 1;
 
+bool project(yarp::dev::IEncoders *encTorso,yarp::dev::IEncoders *encHead,
+yarp::sig::Matrix *invPrjL,iCub::iKin::iCubEye *eyeL,int u, int v, double varDistance, Vector &xo) {
+    Vector fp(3);
+    
+    Vector torso(3);
+    encTorso->getEncoder(0,&torso[0]);
+    encTorso->getEncoder(1,&torso[1]);
+    encTorso->getEncoder(2,&torso[2]);
+    Vector head(5);
+    encHead->getEncoder(0,&head[0]);
+    encHead->getEncoder(1,&head[1]);
+    encHead->getEncoder(2,&head[2]);
+    encHead->getEncoder(3,&head[3]);
+    encHead->getEncoder(4,&head[4]);
+    
+    
+    Vector q(8);
+    double ratio = M_PI /180;
+    q[0]=torso[0] * ratio;
+    q[1]=torso[1]* ratio;
+    q[2]=torso[2]* ratio;
+    q[3]=head[0]* ratio;
+    q[4]=head[1]* ratio;
+    q[5]=head[2]* ratio;
+    q[6]=head[3]* ratio;
+    q[7]=head[4]* ratio;
+    double ver = head[5];                    
+    
+    Vector x(3);
+    printf("varDistance %f \n", varDistance);
+    x[0]=varDistance * u;   //epipolar correction excluded the focal lenght
+    x[1]=varDistance * v;
+    x[2]=varDistance;
+    
+    // find the 3D position from the 2D projection,
+    // knowing the distance z from the camera
+    Vector xe = yarp::math::operator *(*invPrjL, x);
+    xe[3]=1.0;  // impose homogeneous coordinates                
+    
+    // update position wrt the root frame
+    Matrix eyeH = eyeL->getH(q);
+    //printf(" %f %f %f ", eyeH(0,0), eyeH(0,1), eyeH(0,2));
+    xo = yarp::math::operator *(eyeH,xe);
+    
+    printf("object %f,%f,%f \n",xo[0],xo[1],xo[2]);    
 
+    return true;
+}
+
+/*
+bool projectPoint(const string &type, const double u, const double v, const double z, Vector &x) {
+    bool isLeft=(type=="left");
+
+    Matrix  *invPrj=(isLeft?invPrjL:invPrjR);
+    iCubEye *eye=(isLeft?eyeL:eyeR);
+
+    if (invPrj)
+    {
+        Vector torso=commData->get_torso();
+        Vector head=commData->get_q();
+
+        Vector q(8);
+        q[0]=torso[0];
+        q[1]=torso[1];
+        q[2]=torso[2];
+        q[3]=head[0];
+        q[4]=head[1];
+        q[5]=head[2];
+        q[6]=head[3];
+
+        if (isLeft)
+            q[7]=head[4]+head[5]/2.0;
+        else
+            q[7]=head[4]-head[5]/2.0;
+
+        Vector p(3);
+        p[0]=z*u;
+        p[1]=z*v;
+        p[2]=z;
+
+        // find the 3D position from the 2D projection,
+        // knowing the coordinate z in the camera frame
+        Vector xe=*invPrj*p;
+        xe[3]=1.0;  // impose homogeneous coordinates
+
+        // find position wrt the root frame
+        mutex.wait();
+        x=(eye->getH(q)*xe).subVector(0,2);
+        mutex.post();
+
+        return true;
+    }
+    else
+    {
+        fprintf(stdout,"Unspecified projection matrix for %s camera!\n",type.c_str());
+        return false;
+    }
+}
+*/
 
 /************************************************************************/
 
@@ -317,57 +415,86 @@ int main(int argc, char * argv[]) {
     
 
     //--------------------------------------------------------------------
-    
+    int operation = 0;
+    switch (operation) {
 
-   //calculating the 3d position and sending it to database
-    int u = 160; 
-    int v = 120;
-    Vector fp(3);
-    
-    
-    Vector torso(3);
-    encTorso->getEncoder(0,&torso[0]);
-    encTorso->getEncoder(1,&torso[1]);
-    encTorso->getEncoder(2,&torso[2]);
-    Vector head(5);
-    encHead->getEncoder(0,&head[0]);
-    encHead->getEncoder(1,&head[1]);
-    encHead->getEncoder(2,&head[2]);
-    encHead->getEncoder(3,&head[3]);
-    encHead->getEncoder(4,&head[4]);
-    
-    
-    Vector q(8);
-    double ratio = M_PI /180;
-    q[0]=torso[0] * ratio;
-    q[1]=torso[1]* ratio;
-    q[2]=torso[2]* ratio;
-    q[3]=head[0]* ratio;
-    q[4]=head[1]* ratio;
-    q[5]=head[2]* ratio;
-    q[6]=head[3]* ratio;
-    q[7]=head[4]* ratio;
-    double ver = head[5];                    
-                            
-    Vector x(3);
-    printf("varDistance %f \n", varDistance);
-    x[0]=varDistance * u;   //epipolar correction excluded the focal lenght
-    x[1]=varDistance * v;
-    x[2]=varDistance;
-    
-    // find the 3D position from the 2D projection,
-    // knowing the distance z from the camera
-    Vector xe = yarp::math::operator *(*invPrjL, x);
-    xe[3]=1.0;  // impose homogeneous coordinates                
-    
-    // update position wrt the root frame
-    Matrix eyeH = eyeL->getH(q);
-    //printf(" %f %f %f ", eyeH(0,0), eyeH(0,1), eyeH(0,2));
-    Vector xo = yarp::math::operator *(eyeH,xe);
+    case 0 : {
+        Vector xo;
+        //calculating the 3d position and sending it to database
+        int u = 160; 
+        int v = 120;
+        varDistance  = 0.5;
+        project(encTorso,encHead,invPrjL,eyeL, u,v, varDistance, xo);
+        
+    }break;
+    case 1: {
+        
+       Vector px(2);   // specify the pixel where to look
+       px[0]=160.0;
+       px[1]=120.0;
+       
+       int u = 160;
+       int v = 120;
 
-    printf("object %f,%f,%f \n",xo[0],xo[1],xo[2]);    
-    
+       Vector plane(4);  // specify the plane in the root reference frame as ax+by+cz+d=0; z=-0.12 in this case
+       plane[0]=0.0;     // a
+       plane[1]=0.0;     // b
+       plane[2]=1.0;     // c
+       plane[3]=0.12;    // d
+       
+       Vector x;
+ 
+        if (plane.length()<4)
+            {
+                fprintf(stdout,"Not enough values given for the projection plane!\n");
+                return false;
+            }
+        
+        ConstString type = "left";
+        bool isLeft=(type=="left");
+        iCubEye *eye=(isLeft?eyeL:eyeR);
+        
+        
+        //if (projectPoint(type,u,v,1.0,x))
+        if(project(encTorso,encHead,invPrjL,eyeL,u,v,1.0,x))
+            {
+                // pick up a point belonging to the plane
+                Vector p0(3,0.0);
+                if (plane[0]!=0.0)
+                    p0[0]=-plane[3]/plane[0];
+                else if (plane[1]!=0.0)
+                    p0[1]=-plane[3]/plane[1];
+                else if (plane[2]!=0.0)
+                    p0[2]=-plane[3]/plane[2];
+                else
+                    {
+                        fprintf(stdout,"Error while specifying projection plane!\n");
+                        return false;
+                    }
+                
+                // take a vector orthogonal to the plane
+                Vector n(3);
+                n[0]=plane[0];
+                n[1]=plane[1];
+                n[2]=plane[2];
+                
+                //mutex.wait();
+                Vector e = eye->EndEffPose().subVector(0,2);
+                //mutex.post();
+
+                // compute the projection
+                Vector v=x-e;
+                x=e+(dot(p0-e,n)/dot(v,n))*v;
+                
+                return true;
+            }
+        else
+            return false;
+    }
+        
     return 0;
+
+    }
 }
 
 
