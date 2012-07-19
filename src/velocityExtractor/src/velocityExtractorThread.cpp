@@ -48,9 +48,10 @@ using namespace std;
 //#define VERBOSE
 
 velocityExtractorThread::velocityExtractorThread() : Thread() {
-    width = 128;
+    width            = 128;
     responseGradient = 127;
-    retinalSize  = 128;  //default value before setting 
+    retinalSize      = 128;  //default value before setting 
+    velWTA_direction = 0;
   
     synchronised = false;
     greaterHalf  = false;
@@ -179,6 +180,28 @@ int velocityExtractorThread::prepareUnmasking(char* bufferCopy, Bottle* res) {
     return countValid;
 }
 
+
+void velocityExtractorThread::setHistoValue() {
+    //int histoValue[360];
+    //int* pHisto = &histoValue[0];
+
+    int* pHisto = new int[360];
+
+    for (int i = 0; i < 360; i++) {
+       
+        double posDouble =  i / numberOfAngles;
+        int pos = floor(posDouble);
+
+        //printf("changing the histoValue in position %d with %d \n",pos, histogram[pos]);
+        
+        //histoValue[i] = histogram[pos];
+        pHisto[i] =  histogram[pos];
+        
+    }
+
+    pt->setHistoValue(pHisto);
+}
+
 void velocityExtractorThread::run() {
     while(!isStopping()) {
 
@@ -203,24 +226,43 @@ void velocityExtractorThread::run() {
                     double mag     = sqrt(vDot * vDot + uDot * uDot);
 
                     int thetaDeg   = floor((theta / 3.1415) * 180);
-                    if(thetaDeg < 0)
+                    if(thetaDeg < 0){
                         thetaDeg = 360 + thetaDeg;
+                    }
 
                     int pos        =  thetaDeg / (360 / numberOfAngles);
                     
-                    // printf("uDot %f vDot %f theta %f thetaDeg %d pos %d \n",uDot,vDot, theta,thetaDeg, pos);
-                    histogram[pos] = histogram[pos] + 1;
+                    //printf("uDot %f vDot %f theta %f thetaDeg %d pos %d \n",uDot,vDot, theta,thetaDeg, pos);
+                    histogram[pos] = histogram[pos] + 2;
                     if(histogram[pos] > maxFiringRate) {
-                        //printf("max reached in pos %d \n", pos);
+                        maxReached = true;
+                        velWTA_direction = pos;
                         histogram[pos] = 0;
                     }
                 }   
             } //end of the for                        
         } // end vb! = 0
+
+        setHistoValue();
+        pt->setVelResult(velWTA_direction, 1.0, maxReached);
+        
+        // resetting the maxReached in this class
+        if(maxReached) {
+            maxReached = false;
+        }
+
+        decayingProcess();
     
         Time::delay(0.1);
         
     } //end of while
+}
+
+void velocityExtractorThread::decayingProcess() {
+    for(int i = 0 ; i < numberOfAngles; i++) {
+        histogram[i] = histogram[i] - 1;
+    }
+
 }
 
 void velocityExtractorThread::onStop() {

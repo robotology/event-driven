@@ -38,6 +38,8 @@
 #include <iCub/plotterThread.h>
 #include <iCub/velocityBottleHandler.h>
 
+#define NUMANGLES 360
+
 typedef yarp::os::NetUint32 u32;
 
 class velocityExtractorThread : public yarp::os::Thread {
@@ -47,7 +49,7 @@ private:
     static const int vmin           = 32;
     static const int umax           = 96;
     static const int vmax           = 96;
-    static const int maxFiringRate  = 5;
+    static const int maxFiringRate  = 50;
    
     int count;                          // loop counter of the thread
  
@@ -69,7 +71,8 @@ private:
     int height_orig, width_orig;        // original dimension of the input and output images
     int synchPeriod;                    // synchronization period between events and viewer
     int responseGradient;               // responseGradient parameter
-    short histogram[numberOfAngles];             // histogram of 
+    int velWTA_direction;               // direction of the winning speed vector
+    short histogram[numberOfAngles];    // histogram of velocity direction
     
     yarp::os::Bottle* receivedBottle;      // bottle currently extracted from the buffer
     yarp::os::Bottle* bottleToSend;        // bottle ready to be sent to the outputport 
@@ -90,6 +93,7 @@ private:
     bool stereo;                         // flag that indicates whether the synchronization is stereo
     bool asvFlag, dvsFlag;               // flag for operating mode
     bool tristate;                       // option that represent the image with three baselines
+    bool maxReached;                     // indicates when a new max is present in the memory
 
     unsigned long minCount;              // minimum timestamp allowed for the current frame
     unsigned long maxCount;              // maximum timestamp allowed for the current frame
@@ -239,6 +243,16 @@ public:
      * @brief function that given a section of the buffer creates a bottle
      */
     int prepareUnmasking(char* bufferCopy, yarp::os::Bottle* res);
+
+    /**
+     * @brief function that prepare the histovalues for the plotter and sends the pointer to the plotter
+     */
+    void setHistoValue();
+
+    /**
+     * @brief that reduces the response along with the time
+     */
+    void decayingProcess();
     
 };
 

@@ -28,19 +28,22 @@
 
 #include <yarp/os/RateThread.h>
 #include <yarp/os/Bottle.h>
+#include <yarp/os/Semaphore.h>
 #include <yarp/os/BufferedPort.h>
 #include <yarp/sig/all.h>
 #include <iostream>
 
+#define NUMANGLES 360
+#define PI        3.1415
 
 class plotterThread : public yarp::os::RateThread {
-private:    
+private:
+    bool maxReached;                      // indicates when a new max is present in the memory
+    
     int count;                            // loop counter of the thread
-    //float lambda;                       // integration factor
-    //int width, height;                  // dimension of the extended input image (extending)
-    //int height_orig, width_orig;        // original dimension of the input and output images
+    int velWTA_direction;                 // direction of the main velocity component in fovea
     int retinalSize;                      // dimension of the squared retina
-    int histoValue[360];                  // value of the representation of the histogram
+    int histoValue[NUMANGLES];                  // value of the representation of the histogram
     
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> > histoPort;                 // port whre the output is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > velocPortIn;                // port whre the output (right) is sent
@@ -57,6 +60,11 @@ private:
     std::string name;                           // rootname of all the ports opened by this thread
     bool synchronised;                          // flag to check whether the microsecond counter has been synchronised
     bool stereo;                                // flag indicating the stereo characteristic of the synchronization
+    bool firstInputImage;                       // flag that indicates the first image received
+
+    yarp::os::Semaphore mutexHisto;             // semaphore for the mutex
+    yarp::os::Semaphore mutexVeloc;             // semaphore for the selected velocity
+    
 public:
     /**
     * default constructor
@@ -155,6 +163,18 @@ public:
     void setRetinalSize(int value) {
         retinalSize = value;
     }
+
+    /**
+     * @brief function that sets the histogram value
+     */
+    void setHistoValue(int* hValuePointer);
+
+    /**
+     * @brief function that sets the velocity selected
+     * @param angle angle of the wta velocity profile
+     * @param magnitude magnitude of the wta velocity profile
+     */
+    void setVelResult(int angle, float magnitude, bool maxreached);
     
     /**
      * @brief image for preparing the histogram of the angle

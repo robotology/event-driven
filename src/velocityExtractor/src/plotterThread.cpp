@@ -36,14 +36,16 @@ using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
-#define THRATE 25
+#define THRATE 15
 
 plotterThread::plotterThread() : RateThread(THRATE) {
-    synchronised = false;
-    count=0;
+    count       = 0;
     retinalSize = 128;   //default value retinal size before setting    
 
-    for(int i = 0; i < 360; i++) {
+    firstInputImage = true;
+    synchronised    = false;
+   
+    for(int i = 0; i < NUMANGLES; i++) {
         histoValue[i] = 10;
     }
 }
@@ -62,7 +64,7 @@ bool plotterThread::threadInit() {
 
     // initialising images
     imageHisto     = new ImageOf<PixelRgb>;
-    imageHisto->resize(retinalSize,retinalSize);
+    imageHisto->resize(NUMANGLES,retinalSize);
     imageVelocOut     = new ImageOf<PixelRgb>;
     imageVelocOut->resize(retinalSize,retinalSize);
    
@@ -165,60 +167,141 @@ void plotterThread::copyRight(ImageOf<PixelRgb>* image) {
     */
 }
 
+
+void plotterThread ::setHistoValue(int* hValuePointer){
+    mutexHisto.wait();    
+    
+    for(int i = 0; i < NUMANGLES; i++) {
+        //printf("%d %d \n",i, hValuePointer[i]);
+        histoValue[i] = hValuePointer[i];
+    }
+    
+    mutexHisto.post();
+}
+
+void plotterThread::setVelResult(int angle, float magnitude, bool _maxReached) {
+    //printf("setting valResult %d \n", angle);
+    mutexVeloc.wait();
+    velWTA_direction = angle;
+    maxReached = _maxReached;
+    mutexVeloc.post();
+}
+
 void plotterThread::prepareHistoImage(ImageOf<PixelRgb>& out) {
-    for (int i = 0; i < 360; i++) {
-        unsigned char* tmp = out.getPixelAddress(i,histoValue[i]);
+    for (int i = 0; i < NUMANGLES; i++) {
+        
+        unsigned char* tmp = out.getPixelAddress(i,200 - 1 - histoValue[i]);
         *tmp = (unsigned char) 255; tmp++;
         *tmp = (unsigned char) 255; tmp++;
         *tmp = (unsigned char) 255; tmp++;
+        
     }
 
 }
 
 void plotterThread::prepareVelocImage(ImageOf<PixelMono> in, ImageOf<PixelRgb>& out){
-    unsigned char* pin =  in.getRawImage();
+    unsigned char* pin  =  in.getRawImage();
     unsigned char* pout = out.getRawImage();
     int padding3 = out.getPadding();
     int padding  = in.getPadding();
+    int rowSize3 = out.getRowSize();
+    int rowSize  = in.getRowSize();
+    int halfRetinalSize  = retinalSize >> 1;
+    int fourthRetinalSize = halfRetinalSize >> 1;
+    
 
-    for (int r = 0; r < 128; r++) {
-        for(int c = 0; c < 128; c++) {
+    pin  += fourthRetinalSize * rowSize  + fourthRetinalSize;
+    pout += fourthRetinalSize * rowSize3 + fourthRetinalSize * 3;
+    
+    for (int r = halfRetinalSize - fourthRetinalSize ; r < halfRetinalSize + fourthRetinalSize; r++) {
+        for(int c =  halfRetinalSize - fourthRetinalSize; c <  halfRetinalSize + fourthRetinalSize; c++) {
+            
             for (int k = 0; k < 3; k++) {
                 *pout = *pin;
                 pout++;
             }
+            
             pin++;
         }
-        pout += padding3;
-        pin  += padding;
-    }    
+        pout += halfRetinalSize * 3;
+        pin  += halfRetinalSize;
+    } 
+ 
+    double velWTA_rad = (velWTA_direction / 180.0) * PI;
+    
+    //printf("velWTA: %f %d \n", velWTA_rad, velWTA_direction );
+    int uComp = (int) round(cos(velWTA_rad) * 50.0);
+    int vComp = (int) round(sin(velWTA_rad) * 50.0);
+    //printf("uComp %d vComp %d \n",uComp, vComp);
+    
+    CvScalar arrowColor;
+    if(maxReached) {
+        maxReached  = false;
+        arrowColor = CV_RGB( 0,255,0);
+    }
+    else {
+        arrowColor = CV_RGB(255,0,0);
+    }
+
+    
+
+    cvLine(out.getIplImage(), cvPoint(halfRetinalSize, halfRetinalSize), 
+           cvPoint((halfRetinalSize) + uComp,(halfRetinalSize) + vComp), 
+           arrowColor, 2, 8, 0); //line thick, line type, shift
+
+    string angleStr;
+    sprintf((char *)angleStr.c_str(), "%d", velWTA_direction );
+    
+    CvFont font;
+    cvInitFont(&font, CV_FONT_HERSHEY_SIMPLEX, 1.0, 1.0, 0, 1, CV_AA);
+    cvPutText(out.getIplImage(), angleStr.c_str(), cvPoint(halfRetinalSize, halfRetinalSize - 20), &font, arrowColor);
+    
+    /*
+    cvRectangle(out.getIplImage(), cvPoint(halfRetinalSize - fourthRetinalSize,halfRetinalSize - fourthRetinalSize ),
+                cvPoint(halfRetinalSize + fourthRetinalSize, halfRetinalSize + fourthRetinalSize),
+                cvScalar(0, 255,0), 1, 8, 0);
+    */
+    
+    
+    
+    
 }
 
 void plotterThread::run() {
     
     count++;
-    ImageOf<PixelRgb>& imageHisto    = histoPort.prepare();
-    imageHisto.resize(retinalSize, retinalSize);
-    imageHisto.zero();
-    ImageOf<PixelRgb>& imageVelocOut = velocPortOut.prepare();
-    imageVelocOut.resize(retinalSize, retinalSize);
     synchronised = true;
-
+    ImageOf<PixelRgb>& imageHisto    = histoPort.prepare();
+    imageHisto.resize(NUMANGLES, 200);
+    imageHisto.zero();
+    
     if(velocPortIn.getInputCount()) {
         imageVelocIn = velocPortIn.read(false);
+        if ( (imageVelocIn != NULL) && (firstInputImage)) {
+            retinalSize = imageVelocIn->width();
+            firstInputImage = false;
+        }
+        
+        if(!firstInputImage) {
+            ImageOf<PixelRgb>& imageVelocOut = velocPortOut.prepare();
+            imageVelocOut.resize(retinalSize, retinalSize);
+            imageVelocOut.zero();
+            
+            if(velocPortOut.getOutputCount() && (imageVelocIn != NULL)) {        
+                prepareVelocImage(*imageVelocIn, imageVelocOut);
+                velocPortOut.write();
+            }
+        }
+        
     }
-
+    
     //printf("plotter::run %d  \n", histoPort.getOutputCount());
     if(histoPort.getOutputCount()) {
         prepareHistoImage(imageHisto);        
         histoPort.write();
         
     }
-    if(velocPortOut.getOutputCount()) {        
-        prepareVelocImage(*imageVelocIn, imageVelocOut);
-        velocPortOut.write();
-        
-    }
+    
 }
 
 void plotterThread::threadRelease() {
@@ -226,11 +309,8 @@ void plotterThread::threadRelease() {
     histoPort.close();
     velocPortOut.close();
     velocPortIn.close();
-    
-    printf("freeing memory \n");
-
     printf("freed images \n");
-    delete imageVelocIn;
+   
 
     printf("success in release the plotter thread \n");
 }
