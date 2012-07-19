@@ -145,10 +145,20 @@ int main(int argc, char * argv[]) {
     printf("configFile: %s \n", configName.c_str());
     std::string configFile = (std::string) rf.findFile(configName.c_str());
     printf("config file %s \n", configFile.c_str());
-    if (configFile=="") {
-        printf("ERROR: file not found");
+    if (configFile == "") {
+        printf("ERROR: file not found \n");
         return false;
     }
+
+    /*
+    * get the robot name which will form the stem of the robot ports names
+    * and append the specific part and device required
+    */
+    std::string robot               = (std::string)rf.check("robot", 
+                           Value("icub"), 
+                           "Robot name (string)").asString();
+
+    
     
     //---------------------------------------------------------------------------------
 
@@ -156,12 +166,15 @@ int main(int argc, char * argv[]) {
     iCub::iKin::iCubEye *eyeR;
     yarp::sig::Matrix *invPrjL, *invPrjR;           // inverse of prjection matrix
     yarp::sig::Matrix *PrjL, *PrjR;                 // projection matrix
-    yarp::os::Property optionsHead;
+    yarp::os::Property optionsHead;                 // head options
+    yarp::dev::IEncoders *encTorso, *encHead;       // measure of the encoder  (head and torso)
     yarp::dev::IGazeControl *igaze;                 // Ikin controller of the gaze
     yarp::dev::PolyDriver* clientGazeCtrl;          // polydriver for the gaze controller
+    yarp::dev::PolyDriver *polyTorso, *robotHead;   // polydriver for the control of the head
     int originalContext;                            // original context for the gaze Controller
     int cxl,cyl;                                    // center of the eye in the configfile
     double blockNeckPitchValue = -1;
+    double varDistance = 0.5;                       // distance from the element                 
     bool isOnWings = true;
     
     //--------------------------------------------------------------------------------
@@ -267,11 +280,86 @@ int main(int argc, char * argv[]) {
         printf("pixel fovea in the config file %d %d \n", cxl,cyl);
         invPrjL=new Matrix(pinv(Prj.transposed()).transposed());
     }
+    // ------------------------------------------------------------------
+
+
+    string headPort = "/" + robot + "/head";
+    string nameLocal("gazeArbiter");
+
+    //initialising the head polydriver
+    optionsHead.put("device", "remote_controlboard");
+    optionsHead.put("local", ("/"+nameLocal+"/localhead").c_str());
+    optionsHead.put("remote", headPort.c_str());
+    robotHead = new PolyDriver (optionsHead);
+
+    if (!robotHead->isValid()){
+        printf("cannot connect to robot head\n");
+    }
+    robotHead->view(encHead);
+    
+    //initialising the torso polydriver
+    printf("starting the polydrive for the torso.... \n");
+    Property optPolyTorso("(device remote_controlboard)");
+    optPolyTorso.put("remote",("/"+robot+"/torso").c_str());
+    optPolyTorso.put("local",("/"+nameLocal+"/torso/position").c_str());
+    polyTorso=new PolyDriver;
+    if (!polyTorso->open(optPolyTorso))
+    {
+        return false;
+    }
+    polyTorso->view(encTorso);
+    
 
     //--------------------------------------------------------------------
     
 
-   
+   //calculating the 3d position and sending it to database
+    int u = 160; 
+    int v = 120;
+    Vector fp(3);
+    
+    
+    Vector torso(3);
+    encTorso->getEncoder(0,&torso[0]);
+    encTorso->getEncoder(1,&torso[1]);
+    encTorso->getEncoder(2,&torso[2]);
+    Vector head(5);
+    encHead->getEncoder(0,&head[0]);
+    encHead->getEncoder(1,&head[1]);
+    encHead->getEncoder(2,&head[2]);
+    encHead->getEncoder(3,&head[3]);
+    encHead->getEncoder(4,&head[4]);
+    
+    
+    Vector q(8);
+    double ratio = M_PI /180;
+    q[0]=torso[0] * ratio;
+    q[1]=torso[1]* ratio;
+    q[2]=torso[2]* ratio;
+    q[3]=head[0]* ratio;
+    q[4]=head[1]* ratio;
+    q[5]=head[2]* ratio;
+    q[6]=head[3]* ratio;
+    q[7]=head[4]* ratio;
+    double ver = head[5];                    
+                            
+    Vector x(3);
+    printf("varDistance %f \n", varDistance);
+    x[0]=varDistance * u;   //epipolar correction excluded the focal lenght
+    x[1]=varDistance * v;
+    x[2]=varDistance;
+    
+    // find the 3D position from the 2D projection,
+    // knowing the distance z from the camera
+    Vector xe = yarp::math::operator *(*invPrjL, x);
+    xe[3]=1.0;  // impose homogeneous coordinates                
+    
+    // update position wrt the root frame
+    Matrix eyeH = eyeL->getH(q);
+    //printf(" %f %f %f ", eyeH(0,0), eyeH(0,1), eyeH(0,2));
+    Vector xo = yarp::math::operator *(eyeH,xe);
+
+    printf("object %f,%f,%f \n",xo[0],xo[1],xo[2]);    
     
     return 0;
 }
