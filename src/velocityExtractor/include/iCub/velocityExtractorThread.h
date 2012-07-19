@@ -39,6 +39,7 @@
 #include <iCub/velocityBottleHandler.h>
 
 #define NUMANGLES 360
+#define PI        3.1415
 
 typedef yarp::os::NetUint32 u32;
 
@@ -49,7 +50,7 @@ private:
     static const int vmin           = 32;
     static const int umax           = 96;
     static const int vmax           = 96;
-    static const int maxFiringRate  = 50;
+    static const int maxFiringRate  = 100;
    
     int count;                          // loop counter of the thread
  

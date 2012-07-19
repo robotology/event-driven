@@ -189,14 +189,11 @@ void velocityExtractorThread::setHistoValue() {
 
     for (int i = 0; i < 360; i++) {
        
-        double posDouble =  i / numberOfAngles;
-        int pos = floor(posDouble);
-
-        //printf("changing the histoValue in position %d with %d \n",pos, histogram[pos]);
+        double posDouble = i / (360 / numberOfAngles);
+        int pos = floor(posDouble);       
         
         //histoValue[i] = histogram[pos];
-        pHisto[i] =  histogram[pos];
-        
+        pHisto[i] =  histogram[pos];        
     }
 
     pt->setHistoValue(pHisto);
@@ -225,7 +222,7 @@ void velocityExtractorThread::run() {
                     double theta   = atan2(vDot,uDot);
                     double mag     = sqrt(vDot * vDot + uDot * uDot);
 
-                    int thetaDeg   = floor((theta / 3.1415) * 180);
+                    int thetaDeg   = floor((theta / PI) * 180);
                     if(thetaDeg < 0){
                         thetaDeg = 360 + thetaDeg;
                     }
@@ -236,7 +233,8 @@ void velocityExtractorThread::run() {
                     histogram[pos] = histogram[pos] + 2;
                     if(histogram[pos] > maxFiringRate) {
                         maxReached = true;
-                        velWTA_direction = pos;
+                        //printf("max reached for %d \n", pos * 10);
+                        velWTA_direction = pos * 10;
                         histogram[pos] = 0;
                     }
                 }   
@@ -260,7 +258,8 @@ void velocityExtractorThread::run() {
 
 void velocityExtractorThread::decayingProcess() {
     for(int i = 0 ; i < numberOfAngles; i++) {
-        histogram[i] = histogram[i] - 1;
+        if(histogram[i] > 0)
+            histogram[i] = histogram[i] - 1;
     }
 
 }

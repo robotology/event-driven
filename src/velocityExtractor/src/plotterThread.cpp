@@ -188,14 +188,16 @@ void plotterThread::setVelResult(int angle, float magnitude, bool _maxReached) {
 }
 
 void plotterThread::prepareHistoImage(ImageOf<PixelRgb>& out) {
-    for (int i = 0; i < NUMANGLES; i++) {
-        
+    for (int i = 0; i < NUMANGLES; i++) {        
         unsigned char* tmp = out.getPixelAddress(i,200 - 1 - histoValue[i]);
         *tmp = (unsigned char) 255; tmp++;
         *tmp = (unsigned char) 255; tmp++;
-        *tmp = (unsigned char) 255; tmp++;
-        
+        *tmp = (unsigned char) 255; tmp++;        
     }
+
+    cvLine(out.getIplImage(), cvPoint(0, 100), 
+           cvPoint(NUMANGLES,100), 
+           cvScalar(255,0,0), 2, 8, 0); //line thick, line type, shift 
 
 }
 
@@ -243,11 +245,12 @@ void plotterThread::prepareVelocImage(ImageOf<PixelMono> in, ImageOf<PixelRgb>& 
         arrowColor = CV_RGB(255,0,0);
     }
 
-    
 
     cvLine(out.getIplImage(), cvPoint(halfRetinalSize, halfRetinalSize), 
            cvPoint((halfRetinalSize) + uComp,(halfRetinalSize) + vComp), 
            arrowColor, 2, 8, 0); //line thick, line type, shift
+
+    cvCircle(out.getIplImage(), cvPoint((halfRetinalSize) + uComp,(halfRetinalSize) + vComp), 5, arrowColor, -1, 8, 0);
 
     string angleStr;
     sprintf((char *)angleStr.c_str(), "%d", velWTA_direction );
