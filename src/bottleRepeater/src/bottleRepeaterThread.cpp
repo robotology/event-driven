@@ -108,8 +108,12 @@ bool bottleRepeaterThread::threadInit() {
     bottleHandler->useCallback();
     bottleHandler->setRetinalSize(retinalSize);
     bottleHandler->open(getName("/retinaBottle:i").c_str());
-    
 
+    if(!outBottlePort.open(getName("/retinaBottle:o").c_str())) {
+        printf("error in opening the output port \n");
+        return false;
+    }
+    
     receivedBottle = new Bottle();
     bottleToSend   = new Bottle();
 
@@ -201,8 +205,9 @@ void bottleRepeaterThread::threadRelease() {
     printf("bottleRepeaterThread release:freeing bufferCopy \n");
     //free(bufferCopy);
     printf("bottleRepeaterThread release:closing ports \n");
-    outPort.close();
-    outPortRight.close();
+    //outPort.close();
+    outBottlePort.close();
+    //outPortRight.close();
 
     delete bottleHandler;
     delete receivedBottle;

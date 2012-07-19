@@ -35,7 +35,7 @@
 
 //#include <iCub/config.h>
 
-//#define VERBOSE
+#define VERBOSE
 #define BUFFERDIM 1000
 #define CHUNKSIZE 1000
 
@@ -83,8 +83,8 @@ eventBottleHandler::eventBottleHandler() {
     
     previousTimeStamp = 0;
 #ifdef VERBOSE
-    readEvents = fopen("./readEvents","w");
-    fout = fopen("dumpCartCollector.txt", "w+");
+    readEvents = fopen("./bottleRepeater.readEvents.txt","w");
+    fout = fopen("bottleRepeater.eventBottleHandler.txt", "w+");
 #endif
     printf("eventBottleHandler:constuctor success \n");
 }
@@ -138,19 +138,19 @@ void eventBottleHandler::onRead(eventBottle& i_ub) {
     int dim = i_ub.get_sizeOfPacket() ;      // number of words
     printf("eventBottleHandler::  %d \n", dim); 
     receivedBufferSize = dim;
-    //receivedBottle = i_ub.get_packet();
-    //receivedBottle = (Bottle*) receivedBuffer;
 
     bufferBottle[insertPosition]->copy(*i_ub.get_packet());
     
     
 #ifdef VERBOSE
+    receivedBottle = i_ub.get_packet();
     int num_events = dim >> 3 ;
     printf("size of the received bottle %d \n",receivedBottle->size() );
     //plotting out
     for (int i=0; i < receivedBottle->size(); i++) {
         fprintf(fout,"%08X \n", receivedBottle->get(i).asInt());      
     }
+    fprintf(fout,"----------------------------- \n");
 #endif
 
     /*
@@ -161,6 +161,12 @@ void eventBottleHandler::onRead(eventBottle& i_ub) {
     int removeLater=0;    
     int status = 0;
     */
+    semBottleBuffer[insertPosition]->post();
+    //---------------------------------------------
+
+    // changing the value of the insert position
+    mutex.wait();
+    insertPosition = (insertPosition + 1) % bottleBufferDimension;
     mutex.post();
 
     //printf("onRead: ended \n");

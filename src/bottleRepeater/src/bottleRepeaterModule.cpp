@@ -167,10 +167,10 @@ bool bottleRepeaterModule::configure(yarp::os::ResourceFinder &rf) {
     }
     esThread->start();
 
-    bottleHandler = new eventBottleHandler();
-    bottleHandler->useCallback();
-    bottleHandler->setRetinalSize(retinalSize);
-    bottleHandler->open(getName("/retina2:i").c_str());
+    //bottleHandler = new eventBottleHandler();
+    //bottleHandler->useCallback();
+    //bottleHandler->setRetinalSize(retinalSize);
+    //bottleHandler->open(getName("/retina2:i").c_str());
 
     return true ;       // let the RFModule know everything went well
                         // so that it will then run the module
