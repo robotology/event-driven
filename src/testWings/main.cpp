@@ -53,6 +53,7 @@
 #include <string>
 #include <cstring>
 #include <cstdlib>
+#include <deque>
 
 YARP_DECLARE_DEVICES(icubmod)
 
@@ -101,12 +102,16 @@ yarp::sig::Matrix *invPrjL,iCub::iKin::iCubEye *eyeL,int u, int v, double varDis
     
     // find the 3D position from the 2D projection,
     // knowing the distance z from the camera
+    printf("finding the 3D position from the 2D projection \n");
     Vector xe = yarp::math::operator *(*invPrjL, x);
     xe[3]=1.0;  // impose homogeneous coordinates                
     
     // update position wrt the root frame
+    printf("updating the 3D position wrt the root frame %d \n",eyeL->getN());
+    
     Matrix eyeH = eyeL->getH(q);
-    //printf(" %f %f %f ", eyeH(0,0), eyeH(0,1), eyeH(0,2));
+    printf("success in getH(q) \n");
+    printf(" %f %f %f \n", eyeH(0,0), eyeH(0,1), eyeH(0,2));
     xo = yarp::math::operator *(eyeH,xe);
     
     printf("object %f,%f,%f \n",xo[0],xo[1],xo[2]);    
@@ -270,6 +275,7 @@ int main(int argc, char * argv[]) {
     yarp::dev::IGazeControl *igaze;                 // Ikin controller of the gaze
     yarp::dev::PolyDriver* clientGazeCtrl;          // polydriver for the gaze controller
     yarp::dev::PolyDriver *polyTorso, *robotHead;   // polydriver for the control of the head
+    yarp::dev::IControlLimits *limTorso, *limHead;  // limits in the device
     int originalContext;                            // original context for the gaze Controller
     int cxl,cyl;                                    // center of the eye in the configfile
     double blockNeckPitchValue = -1;
@@ -328,52 +334,101 @@ int main(int argc, char * argv[]) {
     
     // remove constraints on the links
     // we use the chains for logging purpose
-    // eyeL->setAllConstraints(false);
+     eyeL->setAllConstraints(false);
     // eyeR->setAllConstraints(false);
 
     // release links
     eyeL->releaseLink(0);
-    eyeR->releaseLink(0);
+    //eyeR->releaseLink(0);
     eyeL->releaseLink(1);
-    eyeR->releaseLink(1);
+    //eyeR->releaseLink(1);
     eyeL->releaseLink(2);
-    eyeR->releaseLink(2);
+    //eyeR->releaseLink(2);
+    eyeL->releaseLink(3);
+    eyeL->releaseLink(4);
+    eyeL->releaseLink(5);
+    eyeL->releaseLink(6);
+    eyeL->releaseLink(7);
 
+    
     // if it isOnWings, move the eyes on top of the head 
     if (isOnWings) {
         printf("changing the structure of the chain \n");
         iKinChain* eyeChain = eyeL->asChain();
-        eyeChain->rmLink(7);
-        eyeChain->rmLink(6); 
-        eyeChain->rmLink(5);
-        eyeChain->rmLink(4);
-        eyeChain->rmLink(3);
-        eyeChain->rmLink(2);
-        eyeChain->rmLink(1);
-        eyeChain->rmLink(0);
+        
+        
+        // eyeChain->rmLink(7);
+        // eyeChain->rmLink(6); 
+        // eyeChain->rmLink(5);
+        // eyeChain->rmLink(4);
+        // eyeChain->rmLink(3);
+        // eyeChain->rmLink(2);
+        // eyeChain->rmLink(1);
+        // eyeChain->rmLink(0);
 
-        iKinLink ikl0(  0.032,     0.0,  M_PI/2.0,       0.0, -22.0*CTRL_DEG2RAD, 84.0*CTRL_DEG2RAD);
-        iKinLink ikl1(    0.0, -0.0055,  M_PI/2.0, -M_PI/2.0, -39.0*CTRL_DEG2RAD, 39.0*CTRL_DEG2RAD);
-        iKinLink ikl2(0.00231, -0.1933, -M_PI/2.0, -M_PI/2.0, -59.0*CTRL_DEG2RAD, 59.0*CTRL_DEG2RAD);
-        iKinLink ikl3(  0.033,     0.0,  M_PI/2.0,  M_PI/2.0, -40.0*CTRL_DEG2RAD, 30.0*CTRL_DEG2RAD);
-        iKinLink ikl4(    0.0,   0.001, -M_PI/2.0, -M_PI/2.0, -70.0*CTRL_DEG2RAD, 60.0*CTRL_DEG2RAD);
-        iKinLink ikl5( -0.054,  0.0825, -M_PI/2.0,  M_PI/2.0, -55.0*CTRL_DEG2RAD, 55.0*CTRL_DEG2RAD);
-        iKinLink ikl6(    0.0,   0.034, -M_PI/2.0,       0.0, -35.0*CTRL_DEG2RAD, 15.0*CTRL_DEG2RAD);
-        iKinLink ikl7(    0.0,     0.0,  M_PI/2.0, -M_PI/2.0, -50.0*CTRL_DEG2RAD, 50.0*CTRL_DEG2RAD);
+        /**
+         * Constructor. 
+         * @param _A is the Link length.
+         * @param _D is the Link offset. 
+         * @param _Alpha is the Link twist. 
+         * @param _Offset is the joint angle offset in [-pi,pi]
+         * @param _Min is the joint angle lower bound in [-pi,pi] (-pi by
+         *             default).
+         * @param _Max is the joint angle higher bound in [-pi,pi] (pi by
+         *             default).
+         */
+        //iKinLink(double _A, double _D, double _Alpha, double _Offset,
+        //     double _Min=-M_PI, double _Max=M_PI);
 
-        eyeChain->pushLink(ikl0);
-        eyeChain->pushLink(ikl1);
-        eyeChain->pushLink(ikl2);
-        eyeChain->pushLink(ikl3);
-        eyeChain->pushLink(ikl4);
-        eyeChain->pushLink(ikl5);
-        eyeChain->pushLink(ikl6);
-        eyeChain->pushLink(ikl7);
+        // iKinLink ikl0(  0.032,     0.0,  M_PI/2.0,       0.0, -22.0*CTRL_DEG2RAD, 84.0*CTRL_DEG2RAD);
+        // iKinLink ikl1(    0.0, -0.0055,  M_PI/2.0, -M_PI/2.0, -39.0*CTRL_DEG2RAD, 39.0*CTRL_DEG2RAD);
+        // iKinLink ikl2(0.00231, -0.1933, -M_PI/2.0, -M_PI/2.0, -59.0*CTRL_DEG2RAD, 59.0*CTRL_DEG2RAD);
+        // iKinLink ikl3(  0.033,     0.0,  M_PI/2.0,  M_PI/2.0, -40.0*CTRL_DEG2RAD, 30.0*CTRL_DEG2RAD);
+        // iKinLink ikl4(    0.0,   0.001, -M_PI/2.0, -M_PI/2.0, -70.0*CTRL_DEG2RAD, 60.0*CTRL_DEG2RAD);
+        // iKinLink ikl5( -0.204,  0.0825, -M_PI/2.0,  M_PI/2.0, -55.0*CTRL_DEG2RAD, 55.0*CTRL_DEG2RAD);
+        // iKinLink ikl6(    0.0,   0.034, -M_PI/2.0,       0.0, -35.0*CTRL_DEG2RAD, 15.0*CTRL_DEG2RAD);
+        // iKinLink* ikl7 = new iKinLink(    0.0,     0.0,  M_PI/2.0, -M_PI/2.0, -50.0*CTRL_DEG2RAD, 50.0*CTRL_DEG2RAD);
+        
+
+         //eyeChain->addLink(7, ikl7);
+        // eyeChain->pushLink(ikl0);
+        // eyeChain->pushLink(ikl1);
+        // eyeChain->pushLink(ikl2);
+        // eyeChain->pushLink(ikl3);
+        // eyeChain->pushLink(ikl4);
+        // eyeChain->pushLink(ikl5);
+        // eyeChain->pushLink(ikl6);
+        //eyeL->pushLink(ikl7);
+         
+
+        //eyeL->blockLink(0);
+        //eyeL->blockLink(1);
+        //eyeL->blockLink(2);
+
+        yarp::os::Property p; 
+        p.fromConfigFile(rf.findFile("wingsKinematic.txt"));
+       
+        
+       
+
+        iKinLimb  ikl;
+        ikl.fromLinksProperties(p);
+        
+        //b0.put("D", 0.001);
+        //b0.put("alpha",M_PI/2.0 );
+        //b0.put("offset",0.0 );
+        //b0.put("min", -22.0*CTRL_DEG2RAD);
+        //b0.put("max", 84.0*CTRL_DEG2RAD);
+        
+
+        
 
     }
     else {
         printf("isOnWing false \n");
     }
+
+    //eyeL->alignJointsBounds()
 
     // get camera projection matrix from the configFile
     printf("get Camera configuration \n");
@@ -400,6 +455,7 @@ int main(int argc, char * argv[]) {
         printf("cannot connect to robot head\n");
     }
     robotHead->view(encHead);
+    robotHead->view(limHead);
     
     //initialising the torso polydriver
     printf("starting the polydrive for the torso.... \n");
@@ -412,6 +468,14 @@ int main(int argc, char * argv[]) {
         return false;
     }
     polyTorso->view(encTorso);
+    polyTorso->view(limTorso);
+    //------------------------------------------------------------------------
+
+
+    std::deque<yarp::dev::IControlLimits *> limQueue;
+    limQueue.push_back(limTorso);
+    limQueue.push_back(limHead);
+    eyeL->alignJointsBounds(limQueue);
     
 
     //--------------------------------------------------------------------
@@ -443,56 +507,53 @@ int main(int argc, char * argv[]) {
        plane[3]=0.12;    // d
        
        Vector x;
- 
-        if (plane.length()<4)
-            {
-                fprintf(stdout,"Not enough values given for the projection plane!\n");
-                return false;
-            }
+       if (plane.length() < 4) {
+           fprintf(stdout,"Not enough values given for the projection plane!\n");
+           return false;
+       }
+       
+       ConstString type = "left";
+       bool isLeft=(type=="left");
+       iCubEye *eye=(isLeft?eyeL:eyeR);
         
-        ConstString type = "left";
-        bool isLeft=(type=="left");
-        iCubEye *eye=(isLeft?eyeL:eyeR);
-        
-        
-        //if (projectPoint(type,u,v,1.0,x))
-        if(project(encTorso,encHead,invPrjL,eyeL,u,v,1.0,x))
-            {
-                // pick up a point belonging to the plane
-                Vector p0(3,0.0);
-                if (plane[0]!=0.0)
-                    p0[0]=-plane[3]/plane[0];
-                else if (plane[1]!=0.0)
-                    p0[1]=-plane[3]/plane[1];
-                else if (plane[2]!=0.0)
-                    p0[2]=-plane[3]/plane[2];
-                else
-                    {
-                        fprintf(stdout,"Error while specifying projection plane!\n");
-                        return false;
-                    }
-                
-                // take a vector orthogonal to the plane
-                Vector n(3);
-                n[0]=plane[0];
-                n[1]=plane[1];
-                n[2]=plane[2];
-                
-                //mutex.wait();
-                Vector e = eye->EndEffPose().subVector(0,2);
-                //mutex.post();
-
-                // compute the projection
-                Vector v=x-e;
-                x=e+(dot(p0-e,n)/dot(v,n))*v;
-                
-                return true;
-            }
-        else
-            return false;
+       printf("going to project the point \n");
+       //if (projectPoint(type,u,v,1.0,x))
+       if(project(encTorso,encHead,invPrjL,eyeL,u,v,1.0,x)) {
+           // pick up a point belonging to the plane
+           printf("picking up a point belonging to the plane \n");
+           Vector p0(3,0.0);
+           if (plane[0]!=0.0)
+               p0[0]=-plane[3]/plane[0];
+           else if (plane[1]!=0.0)
+               p0[1]=-plane[3]/plane[1];
+           else if (plane[2]!=0.0)
+               p0[2]=-plane[3]/plane[2];
+           else  {
+               fprintf(stdout,"Error while specifying projection plane!\n");
+               return false;
+           }
+           
+           // take a vector orthogonal to the plane
+           Vector n(3);
+           n[0]=plane[0];
+           n[1]=plane[1];
+           n[2]=plane[2];
+           
+           //mutex.wait();
+           Vector e = eye->EndEffPose().subVector(0,2);
+           //mutex.post();
+           
+           // compute the projection
+           Vector v=x-e;
+           x=e+(dot(p0-e,n)/dot(v,n))*v;
+           
+           return true;
+       }
+       else
+           return false;
     }
         
-    return 0;
+        return 0;
 
     }
 }
