@@ -387,7 +387,7 @@ int main(int argc, char * argv[]) {
         // iKinLink ikl4(    0.0,   0.001, -M_PI/2.0, -M_PI/2.0, -70.0*CTRL_DEG2RAD, 60.0*CTRL_DEG2RAD);
         // iKinLink ikl5( -0.204,  0.0825, -M_PI/2.0,  M_PI/2.0, -55.0*CTRL_DEG2RAD, 55.0*CTRL_DEG2RAD);
         // iKinLink ikl6(    0.0,   0.034, -M_PI/2.0,       0.0, -35.0*CTRL_DEG2RAD, 15.0*CTRL_DEG2RAD);
-        // iKinLink* ikl7 = new iKinLink(    0.0,     0.0,  M_PI/2.0, -M_PI/2.0, -50.0*CTRL_DEG2RAD, 50.0*CTRL_DEG2RAD);
+        // iKinLink ikl7(    0.0,     0.0,  M_PI/2.0, -M_PI/2.0, -50.0*CTRL_DEG2RAD, 50.0*CTRL_DEG2RAD);
         
 
          //eyeChain->addLink(7, ikl7);
@@ -411,8 +411,9 @@ int main(int argc, char * argv[]) {
         
        
 
-        iKinLimb  ikl;
+        iCubEye  ikl;
         ikl.fromLinksProperties(p);
+        eyeL = &ikl;
         
         //b0.put("D", 0.001);
         //b0.put("alpha",M_PI/2.0 );
