@@ -265,7 +265,7 @@ int main(int argc, char * argv[]) {
     
     
     //---------------------------------------------------------------------------------
-
+     iCub::iKin::iCubEye  *ikl;
     iCub::iKin::iCubEye *eyeL;
     iCub::iKin::iCubEye *eyeR;
     yarp::sig::Matrix *invPrjL, *invPrjR;           // inverse of prjection matrix
@@ -320,7 +320,7 @@ int main(int argc, char * argv[]) {
     int head_version = info.check("head_version", Value(1)).asInt();
     
     printf("head_version extracted from gazeArbiter \n");
-
+    ikl = new iCubEye();
     if(head_version == 1) {
         eyeL = new iCubEye("left");
         eyeR = new iCubEye("right");
@@ -331,30 +331,10 @@ int main(int argc, char * argv[]) {
     }
     printf("correctly istantiated the head \n");
 
-    
-    // remove constraints on the links
-    // we use the chains for logging purpose
-     eyeL->setAllConstraints(false);
-    // eyeR->setAllConstraints(false);
-
-    // release links
-    eyeL->releaseLink(0);
-    //eyeR->releaseLink(0);
-    eyeL->releaseLink(1);
-    //eyeR->releaseLink(1);
-    eyeL->releaseLink(2);
-    //eyeR->releaseLink(2);
-    eyeL->releaseLink(3);
-    eyeL->releaseLink(4);
-    eyeL->releaseLink(5);
-    eyeL->releaseLink(6);
-    eyeL->releaseLink(7);
-
-    
     // if it isOnWings, move the eyes on top of the head 
     if (isOnWings) {
-        printf("changing the structure of the chain \n");
-        iKinChain* eyeChain = eyeL->asChain();
+        //printf("changing the structure of the chain \n");
+        //iKinChain* eyeChain = eyeL->asChain();
         
         
         // eyeChain->rmLink(7);
@@ -409,26 +389,29 @@ int main(int argc, char * argv[]) {
         p.fromConfigFile(rf.findFile("wingsKinematic.txt"));
        
         
-       
-
-        iCubEye  ikl;
-        ikl.fromLinksProperties(p);
-        eyeL = &ikl;
-        
-        //b0.put("D", 0.001);
-        //b0.put("alpha",M_PI/2.0 );
-        //b0.put("offset",0.0 );
-        //b0.put("min", -22.0*CTRL_DEG2RAD);
-        //b0.put("max", 84.0*CTRL_DEG2RAD);
-        
-
-        
+        ikl->fromLinksProperties(p);
+        eyeL = ikl; 
 
     }
     else {
         printf("isOnWing false \n");
     }
 
+    printf("introducing additional constraints \n");
+    
+    // remove constraints on the links
+    // we use the chains for logging purpose
+    //eyeL->setAllConstraints(false);
+    // eyeR->setAllConstraints(false);
+
+    // release links
+    eyeL->releaseLink(0);
+    //eyeR->releaseLink(0);
+    eyeL->releaseLink(1);
+    //eyeR->releaseLink(1);
+    eyeL->releaseLink(2);
+    //eyeR->releaseLink(2);    
+    
     //eyeL->alignJointsBounds()
 
     // get camera projection matrix from the configFile
@@ -480,6 +463,7 @@ int main(int argc, char * argv[]) {
     
 
     //--------------------------------------------------------------------
+    printf("starting with the projections \n");
     int operation = 0;
     switch (operation) {
 
