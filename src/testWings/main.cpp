@@ -336,16 +336,6 @@ int main(int argc, char * argv[]) {
         //printf("changing the structure of the chain \n");
         //iKinChain* eyeChain = eyeL->asChain();
         
-        
-        // eyeChain->rmLink(7);
-        // eyeChain->rmLink(6); 
-        // eyeChain->rmLink(5);
-        // eyeChain->rmLink(4);
-        // eyeChain->rmLink(3);
-        // eyeChain->rmLink(2);
-        // eyeChain->rmLink(1);
-        // eyeChain->rmLink(0);
-
         /**
          * Constructor. 
          * @param _A is the Link length.
@@ -370,25 +360,8 @@ int main(int argc, char * argv[]) {
         // iKinLink ikl7(    0.0,     0.0,  M_PI/2.0, -M_PI/2.0, -50.0*CTRL_DEG2RAD, 50.0*CTRL_DEG2RAD);
         
 
-         //eyeChain->addLink(7, ikl7);
-        // eyeChain->pushLink(ikl0);
-        // eyeChain->pushLink(ikl1);
-        // eyeChain->pushLink(ikl2);
-        // eyeChain->pushLink(ikl3);
-        // eyeChain->pushLink(ikl4);
-        // eyeChain->pushLink(ikl5);
-        // eyeChain->pushLink(ikl6);
-        //eyeL->pushLink(ikl7);
-         
-
-        //eyeL->blockLink(0);
-        //eyeL->blockLink(1);
-        //eyeL->blockLink(2);
-
         yarp::os::Property p; 
-        p.fromConfigFile(rf.findFile("wingsKinematic.txt"));
-       
-        
+        p.fromConfigFile(rf.findFile("wingsKinematic.txt")); 
         ikl->fromLinksProperties(p);
         eyeL = ikl; 
 
@@ -464,83 +437,86 @@ int main(int argc, char * argv[]) {
 
     //--------------------------------------------------------------------
     printf("starting with the projections \n");
-    int operation = 0;
-    switch (operation) {
+    while(true) {
+        int operation = 0;
+        switch (operation) {
 
-    case 0 : {
-        Vector xo;
-        //calculating the 3d position and sending it to database
-        int u = 160; 
-        int v = 120;
-        varDistance  = 0.5;
-        project(encTorso,encHead,invPrjL,eyeL, u,v, varDistance, xo);
-        
-    }break;
-    case 1: {
-        
-       Vector px(2);   // specify the pixel where to look
-       px[0]=160.0;
-       px[1]=120.0;
-       
-       int u = 160;
-       int v = 120;
-
-       Vector plane(4);  // specify the plane in the root reference frame as ax+by+cz+d=0; z=-0.12 in this case
-       plane[0]=0.0;     // a
-       plane[1]=0.0;     // b
-       plane[2]=1.0;     // c
-       plane[3]=0.12;    // d
-       
-       Vector x;
-       if (plane.length() < 4) {
-           fprintf(stdout,"Not enough values given for the projection plane!\n");
-           return false;
-       }
-       
-       ConstString type = "left";
-       bool isLeft=(type=="left");
-       iCubEye *eye=(isLeft?eyeL:eyeR);
-        
-       printf("going to project the point \n");
-       //if (projectPoint(type,u,v,1.0,x))
-       if(project(encTorso,encHead,invPrjL,eyeL,u,v,1.0,x)) {
-           // pick up a point belonging to the plane
-           printf("picking up a point belonging to the plane \n");
-           Vector p0(3,0.0);
-           if (plane[0]!=0.0)
-               p0[0]=-plane[3]/plane[0];
-           else if (plane[1]!=0.0)
-               p0[1]=-plane[3]/plane[1];
-           else if (plane[2]!=0.0)
-               p0[2]=-plane[3]/plane[2];
-           else  {
-               fprintf(stdout,"Error while specifying projection plane!\n");
-               return false;
-           }
-           
-           // take a vector orthogonal to the plane
-           Vector n(3);
-           n[0]=plane[0];
-           n[1]=plane[1];
-           n[2]=plane[2];
-           
-           //mutex.wait();
-           Vector e = eye->EndEffPose().subVector(0,2);
-           //mutex.post();
-           
-           // compute the projection
-           Vector v=x-e;
-           x=e+(dot(p0-e,n)/dot(v,n))*v;
-           
-           return true;
-       }
-       else
-           return false;
-    }
-        
-        return 0;
-
-    }
+        case 0 : {
+            Vector xo;
+            //calculating the 3d position and sending it to database
+            int u = 160; 
+            int v = 120;
+            varDistance  = 0.5;
+            project(encTorso,encHead,invPrjL,eyeL, u,v, varDistance, xo);
+            
+        }break;
+        case 1: {
+            
+            Vector px(2);   // specify the pixel where to look
+            px[0]=160.0;
+            px[1]=120.0;
+            
+            int u = 160;
+            int v = 120;
+            
+            Vector plane(4);  // specify the plane in the root reference frame as ax+by+cz+d=0; z=-0.12 in this case
+            plane[0]=0.0;     // a
+            plane[1]=0.0;     // b
+            plane[2]=1.0;     // c
+            plane[3]=0.12;    // d
+            
+            Vector x;
+            if (plane.length() < 4) {
+                fprintf(stdout,"Not enough values given for the projection plane!\n");
+                return false;
+            }
+            
+            ConstString type = "left";
+            bool isLeft=(type=="left");
+            iCubEye *eye=(isLeft?eyeL:eyeR);
+            
+            printf("going to project the point \n");
+            //if (projectPoint(type,u,v,1.0,x))
+            if(project(encTorso,encHead,invPrjL,eyeL,u,v,1.0,x)) {
+                // pick up a point belonging to the plane
+                printf("picking up a point belonging to the plane \n");
+                Vector p0(3,0.0);
+                if (plane[0]!=0.0)
+                    p0[0]=-plane[3]/plane[0];
+                else if (plane[1]!=0.0)
+                    p0[1]=-plane[3]/plane[1];
+                else if (plane[2]!=0.0)
+                    p0[2]=-plane[3]/plane[2];
+                else  {
+                    fprintf(stdout,"Error while specifying projection plane!\n");
+                    return false;
+                }
+                
+                // take a vector orthogonal to the plane
+                Vector n(3);
+                n[0]=plane[0];
+                n[1]=plane[1];
+                n[2]=plane[2];
+                
+                //mutex.wait();
+                Vector e = eye->EndEffPose().subVector(0,2);
+                //mutex.post();
+                
+                // compute the projection
+                Vector v=x-e;
+                x=e+(dot(p0-e,n)/dot(v,n))*v;
+                
+                return true;
+            }
+            else{
+                return false;
+            }
+        }break;
+            
+  
+            
+        } // end of switch
+    }//end of while
 }
 
 
