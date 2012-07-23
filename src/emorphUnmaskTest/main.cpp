@@ -42,10 +42,12 @@ void printPacket(const Bottle &packets)
 int main()
 {
     // define events to be sent
+  
     TimeStamp ts;
     ts.setStamp(1235423);
     cout<<ts.getContent().toString().c_str()<<endl;
-
+    
+    /*
     AddressEvent ae;
     ae.setChannel(0);
     ae.setPolarity(1);
@@ -86,6 +88,7 @@ int main()
     cle.setXCog(11);
     cle.setYCog(87);
     cout<<cle.getContent().toString().c_str()<<endl;
+    
 
     ClusterEventFeatures1 clef1;
     clef1.setChannel(0);
@@ -94,6 +97,8 @@ int main()
     clef1.setYCog(73);
     cout<<clef1.getContent().toString().c_str()<<endl;
 
+    
+    */
     ClusterEventFeatures2 clef2;
     clef2.setChannel(1);
     clef2.setId(7);
@@ -105,6 +110,7 @@ int main()
     clef2.setNumAE(82);
     cout<<clef2.getContent().toString().c_str()<<endl;
 
+    /*
     ClusterEventFeatures3 clef3;
     clef3.setChannel(0);
     clef3.setNumAE(9434223);
@@ -158,32 +164,36 @@ int main()
     cle3df3.setXVel(78);
     cle3df3.setYVel(43);
     cout<<cle3df3.getContent().toString().c_str()<<endl;
+    
 
     HoughEvent hge;
-    hge.setChannel(1);
-    hge.setRadius(4);
-    hge.setXCoc(11);
-    hge.setYCoc(87);
+    hge.setChannel(0);
+    hge.setRadius(20);
+    hge.setXCoc(64);
+    hge.setYCoc(120);
     cout<<hge.getContent().toString().c_str()<<endl;
+    */
 
     // keep trace of sent events
     // but set ownership to false since
     // events have been defined statically
     eEventQueue txQueue(false);
-    txQueue.push_back(&ts);
-    txQueue.push_back(&ae);
-    txQueue.push_back(&ae3d);
-    txQueue.push_back(&aef);
-    txQueue.push_back(&ae3df);
-    txQueue.push_back(&cle);
-    txQueue.push_back(&clef1);
-    txQueue.push_back(&clef2);
-    txQueue.push_back(&clef3);
-    txQueue.push_back(&cle3d);
-    txQueue.push_back(&cle3df1);
-    txQueue.push_back(&cle3df2);
-    txQueue.push_back(&cle3df3);
-    txQueue.push_back(&hge);
+    for(int i = 0; i < 10; i++) {
+      txQueue.push_back(&ts);
+      //txQueue.push_back(&ae);
+      //txQueue.push_back(&ae3d);
+      //txQueue.push_back(&aef);
+      //txQueue.push_back(&ae3df);
+      //txQueue.push_back(&cle);
+      //txQueue.push_back(&clef1);
+      txQueue.push_back(&clef2);
+      //txQueue.push_back(&clef3);
+      //txQueue.push_back(&cle3d);
+      //txQueue.push_back(&cle3df1);
+      //txQueue.push_back(&cle3df2);
+      //txQueue.push_back(&cle3df3);
+      //txQueue.push_back(&hge);
+    }
 
     cout<<endl;
 
