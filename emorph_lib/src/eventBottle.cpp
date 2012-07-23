@@ -155,7 +155,7 @@ bool eventBottle::write(yarp::os::ConnectionWriter& connection) {
             value = value << 8;
             *p = tmpChar;
         }
-        printf("\n");
+        //printf("\n");
     }
 
     //----------------------------------------------------------------------------------------------
