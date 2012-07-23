@@ -149,10 +149,12 @@ bool eventBottle::write(yarp::os::ConnectionWriter& connection) {
         int value = packet->get(i).asInt();
         for (int j = 0 ; j < wordDimension ; j++){
             tmpChar   = value & 0xFF000000;
+            printf("%d ", (int) tmpChar);
             value = value << 8;
             *p = tmpChar;
             p++;
         }
+        printf("\n");
     }
 
     //----------------------------------------------------------------------------------------------
