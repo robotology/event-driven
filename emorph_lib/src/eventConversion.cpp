@@ -40,7 +40,7 @@ using namespace emorph::ecodec;
 #define UNMASKRATETHREAD 1
 #define constInterval 100000;
 
-#define VERBOSE
+//#define VERBOSE
 
 unmask::unmask() { 
     retinalSize = 128;
