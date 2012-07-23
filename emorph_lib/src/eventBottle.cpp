@@ -164,7 +164,7 @@ bool eventBottle::read(yarp::os::ConnectionReader& connection) {
         return false;
     }
     bytes_of_the_packet = connection.expectInt();  
-    //bytes_of_the_packet = size_of_the_packet * wordDimension;      // number of 32 bit word times 4bytes
+    size_of_the_packet = bytes_of_the_packet / wordDimension;      // number of 32 bit word times 4bytes
   
     connection.expectBlock(packetPointer,bytes_of_the_packet);   
     packet->fromBinary(packetPointer,bytes_of_the_packet);
