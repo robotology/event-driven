@@ -17,7 +17,9 @@ using namespace yarp::os;
 eventBottle::eventBottle() {
     //printf("default Constructor \n");    
     packet = new Bottle;
-    size_of_the_packet=0;
+    size_of_the_packet = 0;
+    size_of_the_bottle = 0;
+    bytes_of_the_packet = 0;
     packetPointer = new char[320000];
 }
 
@@ -37,7 +39,7 @@ eventBottle::eventBottle(char* i_data, int i_size) {
         }
         packet->addInt(word);
     }
-    size_of_the_packet = packet->size();
+    size_of_the_bottle = packet->size();
     packetPointer = 0; 
        
 }
@@ -45,10 +47,10 @@ eventBottle::eventBottle(char* i_data, int i_size) {
 eventBottle::eventBottle(Bottle* p) {
     packet = new Bottle();
 
-    size_of_the_packet = p->size();    
+    size_of_the_bottle = p->size();    
     int word;
     
-    for(int i = 0 ; i < size_of_the_packet ;i++) { 
+    for(int i = 0 ; i < size_of_the_bottle ;i++) { 
         word = p->get(i).asInt();
         packet->addInt(word);
     }
@@ -58,10 +60,12 @@ eventBottle::eventBottle(Bottle* p) {
   
 eventBottle::eventBottle(const eventBottle& buffer) {    
     packet = new Bottle();
-    if (buffer.size_of_the_packet > 0) {
-        packet =  buffer.packet;
+    if (buffer.size_of_the_bottle > 0) {
+        packet = buffer.packet;
     }
     size_of_the_packet = buffer.size_of_the_packet;
+    bytes_of_the_packet = buffer.bytes_of_the_packet;
+    size_of_the_bottle = buffer.size_of_the_bottle;
     packetPointer = 0;
     
 }
@@ -73,20 +77,23 @@ eventBottle::~eventBottle() {
 
 void eventBottle::operator=( eventBottle& buffer) {
     
-    if (buffer.size_of_the_packet > 0) {
+    if (buffer.size_of_the_bottle > 0) {
         Bottle* b = buffer.get_packet();
         //packet->copy(*b); <------alternative B works as a copy of the pointer which should be avoided
        
         delete packet;
         packet = new Bottle();
 
-        for (int i = 0; i < buffer.size_of_the_packet; i++) {
+        for (int i = 0; i < buffer.size_of_the_bottle; i++) {
             int value = b->get(i).asInt();
             packet->addInt(value);
         }
            
     }
     size_of_the_packet = buffer.size_of_the_packet;
+    bytes_of_the_packet = buffer.bytes_of_the_packet;
+    size_of_the_bottle = buffer.size_of_the_bottle;
+    
 }
 
 void eventBottle::set_data(char* i_data, int i_size) {
@@ -100,14 +107,13 @@ void eventBottle::set_data(char* i_data, int i_size) {
         }
         packet->addInt(word);
     }
-    size_of_the_packet = packet->size();
+    size_of_the_bottle = packet->size();
     packetPointer = 0;
-    
 }
 
 void eventBottle::set_data(Bottle* p) {
     packet = p;
-    size_of_the_packet = packet->size();
+    size_of_the_bottle = packet->size();
     packetPointer = 0;
 }
 
@@ -118,11 +124,30 @@ bool eventBottle::write(yarp::os::ConnectionWriter& connection) {
     
     size_t binaryDim;
     packetPointer = (char*) packet->toBinary(&binaryDim);
+    bytes_of_the_packet = binaryDim;
+    size_of_the_packet  = bytes_of_the_packet >> 2;
+    connection.appendInt(bytes_of_the_packet);
+    //connection.appendInt(size_of_the_packet);
+    //bytes_of_the_packet = size_of_the_packet * wordDimension;   // number of 32bit word times 4bytes
+    //----------------------------------------------------------------------------------------------
     
-    connection.appendInt(size_of_the_packet);
-    int ceilSizeOfPacket = size_of_the_packet * wordDimension;   // number of 32bit word times 4bytes
+    int word;
+    //printf("packet %d %d \n %s \n", size_of_the_packet,binaryDim, packet->toString().c_str());
+    char* i_data = packetPointer;
+    for(int i = 0 ; i < binaryDim ;) {
+        word = 0;
+        for (int j = 0 ; j < wordDimension ; j++){
+            int value = (unsigned char) *i_data << (8 * j);
+            word = word | value;
+            i_data++;
+            i++;
+        }        
+        //printf(">%08X ", word);
+    }    
+    //printf("\n");
 
-    connection.appendBlock(packetPointer,ceilSizeOfPacket);   //serializing bottle into char*
+    //-----------------------------------------------------------------------------------------------
+    connection.appendBlock(packetPointer,bytes_of_the_packet);   //serializing bottle into char*
     connection.convertTextMode();   // if connection is text-mode, convert!
     return true;
 }
@@ -138,12 +163,12 @@ bool eventBottle::read(yarp::os::ConnectionReader& connection) {
     if (ct!=2) {
         return false;
     }
-    size_of_the_packet = connection.expectInt();  
-    int ceilSizeOfPacket = size_of_the_packet * wordDimension;      // number of 32 bit word times 4bytes
+    bytes_of_the_packet = connection.expectInt();  
+    //bytes_of_the_packet = size_of_the_packet * wordDimension;      // number of 32 bit word times 4bytes
   
-    connection.expectBlock(packetPointer,ceilSizeOfPacket);   
-    packet->fromBinary(packetPointer,ceilSizeOfPacket);
-    
+    connection.expectBlock(packetPointer,bytes_of_the_packet);   
+    packet->fromBinary(packetPointer,bytes_of_the_packet);
+    size_of_the_bottle = packet->size();
     return true;
 }
 

@@ -69,13 +69,15 @@ public:
 
     yarp::os::Bottle* get_packet()  { return packet; };
     int get_sizeOfPacket()  { return size_of_the_packet; };
-    int get_bytesOfPacket() { return byte_of_the_packet; };
+    int get_bytesOfPacket() { return bytes_of_the_packet; };
+    int get_sizeOfBottle()  { return size_of_the_bottle; };
 
 private:
     yarp::os::Bottle* packet;
     char* packetPointer;
-    int size_of_the_packet;
-    int byte_of_the_packet;
+    int size_of_the_packet;      // dimension of the sent packet
+    int bytes_of_the_packet;      // dimension in bytes of the sent packet
+    int size_of_the_bottle;      // number of element that do belong to the bottle
 };
 
 
