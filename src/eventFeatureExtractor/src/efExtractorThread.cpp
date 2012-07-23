@@ -41,7 +41,7 @@ using namespace yarp::dev;
 using namespace std;
 
 #define DIM 10
-#define THRATE 20
+#define THRATE 5
 #define SHIFTCONST 100
 #define RETINA_SIZE 128
 #define FEATUR_SIZE 32
@@ -180,10 +180,15 @@ bool efExtractorThread::threadInit() {
     printf("successfully initialised memory for LUT \n");
     
     /*opening the file of the mapping and creating the LUT*/
-    pFile = fopen (mapURL.c_str(),"rb");    
+       
     fout  = fopen ("lut.txt","w+");
     fdebug  = fopen ("./eventFeatureExtractor.dumpSet.txt","w+");
-    if (pFile!=NULL) {
+    pFile = fopen (mapURL.c_str(),"rb");  
+    if (pFile == NULL) {
+        printf("file of mapping was not found. The module terminates \n");
+        return false;
+    }
+    else {
         long lSize;
         size_t result;        
         // obtain file size:
@@ -1907,10 +1912,10 @@ void efExtractorThread::run() {
             cfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
         }
         else {
-            //printf("extracting bottle \n");
+            printf("extracting bottle \n");
             ebHandler->extractBottle(receivedBottle);  
             //printf("received bottle: \n");
-            //printf("%s \n", receivedBottle->toString().c_str());
+            printf("size received bottle %d \n", receivedBottle->size());
         }
         
         // ---------------------------------------------------------------------------------------------------
@@ -1938,7 +1943,7 @@ void efExtractorThread::run() {
             if(receivedBottle->size() != 0) {
                 //delete rxQueue;   // freeing memory for the new queue of events
                 rxQueue = new eEventQueue(); // preparing the new queue
-                //printf("unmasking received bottle and creating the queue of event to send \n");
+                printf("unmasking received bottle and creating the queue of event to send \n");
                 unmask_events.unmaskData(receivedBottle, rxQueue); // saving the queue
             }
         }
@@ -1956,10 +1961,10 @@ void efExtractorThread::run() {
         }
         else {
             //eEventQueue tx(false);
-            //printf("Generating memory in bottleHandler  \n");
+            printf("Generating memory in bottleHandler %d \n",rxQueue->size() );
             //tx = *txQueue;
             if((rxQueue != NULL) && (rxQueue->size() != 0)) {
-                //printf("Counted a total of %d %d \n", countEventToSend, rxQueue->size());
+                printf("Counted a total of %d %d \n", countEventToSend, rxQueue->size());
                 //delete bottleToSend;
                 //bottleToSend = new Bottle();
                 //printf("cleaning bottle to send 0x%08x \n", bottleToSend);
@@ -1967,8 +1972,8 @@ void efExtractorThread::run() {
                 //printf("after deleting \n");
                 bottleToSend = new Bottle(); //<---- TODO memory leak here.....
                 //bottleToSend->clear();
+                
                 //printf("generating memory of the events \n");
-                //eEventQueue tx2Queue(false);
                 generateMemory(rxQueue, bottleToSend, countEventToSend);
                 //printf("tx2Queue: \n");
                 //printPacket(*bottleToSend);
@@ -2144,64 +2149,6 @@ void efExtractorThread::run() {
     } //end of idle
 }
 
-
-
-/*
-#ifdef COMMENT                
-                  for (int i = 0; i< 5 ; i++) {                
-                  int pos      = lut[i * RETINA_SIZE * RETINA_SIZE +  y * RETINA_SIZE + x ];                        
-                  
-                  //printf("        pos ; %d ", pos);
-                  if(pos == -1) {
-                  if (x % 2 == 1) {
-                  //printf("not mapped event %d \n",x + y * RETINA_SIZE);
-                  countUnmapped++;
-                  }                
-                  }
-                  else {
-                  //creating an event
-                  
-                  int xevent_tmp   = pos / FEATUR_SIZE;
-                  int xevent       = FEATUR_SIZE - xevent_tmp;
-                  int yevent_tmp   = pos - xevent_tmp * FEATUR_SIZE;
-                  int yevent       = yevent_tmp;
-                  int polevent     = pol < 0 ? 0 : 1;
-                  int cameraevent  = 0;
-                  unsigned long blob = 0;
-                  int posImage     = y * rowSize + x;
-                  
-                  //if(ts!=0) {
-                  //    printf(" %d %d %d %08x %08x \n",pos, yevent, xevent,blob, ts);
-                  //}
-                  unmask_events.maskEvent(xevent, yevent, polevent, cameraevent, blob);
-                  //unsigned long evPU;
-                  //evPU = 0;
-                  //evPU = evPU | polevent;
-                  //evPU = evPU | (xevent << 1);
-                  //evPU = evPU | (yevent << 8);
-                  //evPU = evPU | (cameraevent << 15);
-                  
-                  //blob = blob & 0x0000FFFF;
-                  //blob = 0x00001021;
-                  //printf("Given pos %d extracts x=%d and y=%d pol=%d blob=%08x evPU = %08x \n", pos, xevent, yevent, pol, blob, ts);
-                  
-                  //
-                  //bufferFEA_copy->address   = (u32) blob;
-                  //bufferFEA_copy->timestamp = (u32) ts;                
-                  ////fprintf(fout,"%08X %08X \n",bufferFEA_copy->address,ts);
-                  //bufferFEA_copy++; // jumping to the next event(u32,u32)
-                  //countEvent++;
-                  //
-                  
-                  //pLeft = pointer to the left image
-                  //pMem  = pointer to the left input image
-                  
-                  
-                  } //end else
-                  
-                  } //end for i 5
-#ifdef
-*/
 
 
 

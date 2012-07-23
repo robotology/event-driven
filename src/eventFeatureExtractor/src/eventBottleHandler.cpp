@@ -102,12 +102,9 @@ void eventBottleHandler::extractBottle(Bottle* tempBottle) {
     
     //---------------------------------------
     //printf("sem address in extract %08x \n",semBottleBuffer[extractPosition] );
-    //printf("trying the wait method in extract \n");
     semBottleBuffer[extractPosition]->wait();
     tempBottle->copy(*bufferBottle[extractPosition]);   // copying it in a temporary Bottle*
-    //bufferBottle[extractPosition] = 0;               // setting it to zero as already read Bottle*
     bufferBottle[extractPosition]->clear();            // removes the content of the bottle.
-    //printf("next istructyion will post the semaphore in extract \n");
     semBottleBuffer[extractPosition]->post();
     //----------------------------------------
     

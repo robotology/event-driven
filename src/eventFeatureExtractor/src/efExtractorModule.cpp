@@ -43,6 +43,7 @@ bool efExtractorModule::configure(yarp::os::ResourceFinder &rf) {
         printf("--name : name of the module \n");
         printf("--mode : (intensity) mapping to be used \n");
         printf("--bottleHanlder             : the user select to send events only through bottle port esclusively  \n");
+        printf("--verbose                   : saves relevant information in files \n");
         printf("press CTRL-C to continue... \n");
         return true;
     }
@@ -115,7 +116,9 @@ bool efExtractorModule::configure(yarp::os::ResourceFinder &rf) {
         efeThread->setVERBOSE(false);
     }
 
-    efeThread->start();
+    if(!efeThread->start()) {
+        return false;
+    }
 
     return true ;       // let the RFModule know everything went well
                         // so that it will then run the module
