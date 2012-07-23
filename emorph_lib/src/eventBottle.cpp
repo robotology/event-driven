@@ -131,11 +131,30 @@ bool eventBottle::write(yarp::os::ConnectionWriter& connection) {
     
     size_t binaryDim;
     //packetPointer = (char*) packet->toBinary(&binaryDim);
-    bytes_of_the_packet = binaryDim;
-    size_of_the_packet  = bytes_of_the_packet >> 2;
+    //bytes_of_the_packet = binaryDim;
+    //size_of_the_packet  = bytes_of_the_packet >> 2;
     connection.appendInt(bytes_of_the_packet);
     //connection.appendInt(size_of_the_packet);
     //bytes_of_the_packet = size_of_the_packet * wordDimension;   // number of 32bit word times 4bytes
+
+    //--------------------------------------------------------------------------------------------
+    // -------- serialisation of the bottle ---------------------------
+    size_of_the_bottle  = packet->size();
+    size_of_the_packet  = size_of_the_bottle;
+    bytes_of_the_packet = size_of_the_packet << 2;
+
+    char tmpChar;
+    char *p = packetPointer;
+    for(int i = 0 ; i < size_of_the_packet ; i++) {
+        int value = packet->get(i).asInt();
+        for (int j = 0 ; j < wordDimension ; j++){
+            tmpChar   = value & 0xFF000000;
+            value = value << 8;
+            *p = tmpChar;
+            p++;
+        }
+    }
+
     //----------------------------------------------------------------------------------------------
     
 
@@ -157,7 +176,7 @@ bool eventBottle::write(yarp::os::ConnectionWriter& connection) {
 #endif
 
     //-----------------------------------------------------------------------------------------------
-    //connection.appendBlock(packetPointer,bytes_of_the_packet);   //serializing bottle into char*
+    connection.appendBlock(packetPointer,bytes_of_the_packet);   //serializing bottle into char*
     //printf("packet \n %s \n", packet->toString().c_str());
     connection.convertTextMode();   // if connection is text-mode, convert!
     return true;
@@ -176,8 +195,27 @@ bool eventBottle::read(yarp::os::ConnectionReader& connection) {
     }
     bytes_of_the_packet = connection.expectInt();  
     size_of_the_packet = bytes_of_the_packet / wordDimension;      // number of 32 bit word times 4bytes
-  
-    //connection.expectBlock(packetPointer,bytes_of_the_packet);   
+    connection.expectBlock(packetPointer,bytes_of_the_packet); 
+    
+    // ---------------------------------------------------------------------------------------------------------
+    // ------------------------ deserialisation of the bottle -------------------------------------
+
+    int word;
+    char* i_data = packetPointer;
+    for(int i = 0 ; i < bytes_of_the_packet;) {
+        word = 0;
+        for (int j = 0 ; j < wordDimension ; j++){
+            int value = (unsigned char) *i_data << (8 * j);
+            word = word | value;
+            i_data++;
+            i++;
+        }
+        packet->addInt(word);
+    }
+       
+
+    //----------------------------------------------------------------------------------------------------------
+      
     //packet->fromBinary(packetPointer,bytes_of_the_packet);
     size_of_the_bottle = packet->size();
     return true;
