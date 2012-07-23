@@ -381,9 +381,19 @@ void efExtractorThread::threadRelease() {
     delete bottleToSend;
     //delete leftFeaOutputImage;
     //delete rightFeaOutputImage;
+
+    /*
     printf("efExtractorThread::delete transmit and received queue \n");
-    delete txQueue;
-    delete rxQueue;
+    if(txQueue != 0) {
+        delete txQueue;
+        printf("efExtractorThread::threadRelease correctly  deleted the transmit queue \n");
+    }
+    
+    if(rxQueue != 0) {
+        delete rxQueue;
+        printf("efExtractorThread::threadRelease correctly deleted the receiver queue \n");
+    }
+    */
     
     /* closing the file */
     printf("efExtractorThread::deleting LUT \n");
@@ -1906,7 +1916,7 @@ void efExtractorThread::run() {
         
         // reads the buffer received
         // saves it into a working buffer        
-        printf("returned 0x%x 0x%x with bottleHandler %d \n", bufferCopy, flagCopy, bottleHandler);
+        //printf("returned 0x%x 0x%x with bottleHandler %d \n", bufferCopy, flagCopy, bottleHandler);
         if(!bottleHandler) {
             //printf("copying chunck \n");
             cfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
@@ -1914,8 +1924,8 @@ void efExtractorThread::run() {
         else {
             printf("extracting bottle \n");
             ebHandler->extractBottle(receivedBottle);  
-            //printf("received bottle: \n");
-            printf("size received bottle %d \n", receivedBottle->size());
+            printf("received bottle: \n");
+            //printf("size received bottle %d \n", receivedBottle->size());
         }
         
         // ---------------------------------------------------------------------------------------------------
@@ -1940,12 +1950,17 @@ void efExtractorThread::run() {
             int dim = unmask_events.unmaskData(bufferCopy2,countEvent * sizeof(uint32_t),eventFeaBuffer);        
         }
         else {
+            
             if(receivedBottle->size() != 0) {
+                printf("deleting the rxQueue %08X \n",rxQueue );
                 //delete rxQueue;   // freeing memory for the new queue of events
-                rxQueue = new eEventQueue(); // preparing the new queue
-                printf("unmasking received bottle and creating the queue of event to send \n");
+                //rxQueue = new eEventQueue(); // preparing the new queue                
+                rxQueue->clear();
+                printf("created the new rxQueue %08X \n",rxQueue );
+                //printf("unmasking received bottle and creating the queue of event to send \n");
                 unmask_events.unmaskData(receivedBottle, rxQueue); // saving the queue
             }
+            
         }
         
         //printf("event converted %d  \n",countEvent);          
@@ -1961,7 +1976,7 @@ void efExtractorThread::run() {
         }
         else {
             //eEventQueue tx(false);
-            printf("Generating memory in bottleHandler %d \n",rxQueue->size() );
+            //printf("Generating memory in bottleHandler %d \n",rxQueue->size() );
             //tx = *txQueue;
             if((rxQueue != NULL) && (rxQueue->size() != 0)) {
                 printf("Counted a total of %d %d \n", countEventToSend, rxQueue->size());
@@ -1970,10 +1985,10 @@ void efExtractorThread::run() {
                 //printf("cleaning bottle to send 0x%08x \n", bottleToSend);
                 //delete bottleToSend;
                 //printf("after deleting \n");
-                bottleToSend = new Bottle(); //<---- TODO memory leak here.....
-                //bottleToSend->clear();
+                //bottleToSend = new Bottle(); //<---- TODO memory leak here.....
+                bottleToSend->clear();
                 
-                //printf("generating memory of the events \n");
+                printf("generating memory of the events \n");
                 generateMemory(rxQueue, bottleToSend, countEventToSend);
                 //printf("tx2Queue: \n");
                 //printPacket(*bottleToSend);

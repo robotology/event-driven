@@ -124,8 +124,7 @@ void eventBottleHandler::onRead(eventBottle& i_ub) {
     //printf("sem address onRead %08x \n",semBottleBuffer[extractPosition] );
     
     semBottleBuffer[insertPosition]->wait();
-
-    printf("trying the wait method in onRead \n");
+    //printf("trying the wait method in onRead \n");
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() ;      // number of words     
     receivedBufferSize = dim;
