@@ -121,18 +121,18 @@ void eventBottleHandler::extractBottle(Bottle* tempBottle) {
 // reading out from a circular buffer with 2 entry points and wrapping
 void eventBottleHandler::onRead(eventBottle& i_ub) {    
     valid = true;
-    //printf("OnRead \n");
+    printf("OnRead %d \n", insertPosition);
     
     //---------------------------------------------   
     //printf("sem address onRead %08x \n",semBottleBuffer[extractPosition] );
-    //printf("trying the wait method in onRead \n");
+    
     semBottleBuffer[insertPosition]->wait();
 
-        
+    printf("trying the wait method in onRead \n");
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() ;      // number of words     
     receivedBufferSize = dim;
-    printf("dim : %d                           \r", dim);
+    printf("dim : %d                           \n", dim);
 
     //receivedBottle = new Bottle(*i_ub.get_packet());
     //printf("%s \n ", i_ub.get_packet()->toString().c_str());

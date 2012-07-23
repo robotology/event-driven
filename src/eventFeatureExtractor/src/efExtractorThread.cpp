@@ -1536,51 +1536,7 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
 
 */
 
-/*
-void efExtractorThread::generateMemory(int countEvent, int& countEventToSend) {
-    int countEventLeft  = 0;
-    int countEventRight = 0;
-    //storing the response in a temp. image
-    AER_struct* iterEvent = eventFeaBuffer;  //<------------ using the pointer to the unmasked events!
-    unsigned char* pLeft  = leftOutputImage->getRawImage(); 
-    unsigned char* pRight = rightOutputImage->getRawImage();
-    unsigned char* pMemL  = leftInputImage->getRawImage();
-    int          rowSize  = leftOutputImage->getRowSize();
-    int       rowSizeFea  = leftFeaOutputImage->getRowSize();
-    unsigned long ts;
-    short pol, cam;
-    aer* bufferFEA_copy = bufferFEA;
-    // visiting a discrete number of events
-    int countUnmapped = 0;
-    int deviance      = 20;
-    int devianceFea   = 20;      
-    //#############################################################################        
-    for(int i = 0; i < countEvent; i++ ) {
-        ts  = iterEvent->ts;
-        int x = iterEvent->x;
-        int y = RETINA_SIZE - iterEvent->y;
-        pol = iterEvent->pol;
-        cam = iterEvent->cam;
-        //printf("cam %d \n", cam);
-        // -------------------------- CAMERA 1 ----------------------------------
-        if(cam == 1) {
-            remapEventLeft(x,y,pol,ts);               
-        } //end of if cam!=0
-        // -------------------------- CAMERA 0 ----------------------------------
-        else if(cam == 0) {
-            countEventRight++;                               
-            remapEventRight(x,y,pol,ts);
-        }
-        else {
-            printf("error in the camera value %d \n", cam);
-        }
-        
-        //printf("\n");
-        iterEvent++;
-    } //end for i
-    //############################################################################
-}
-*/
+
 
 void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& countEventToSend) {
     int countEventLeft  = 0;
@@ -1932,7 +1888,6 @@ void efExtractorThread::run() {
     count++;
     countEvent = 0;
 
-    printf("\n\n\ncounter %d \n", count);
     bool flagCopy;
     if(!idle) {
         
@@ -1952,12 +1907,13 @@ void efExtractorThread::run() {
             cfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
         }
         else {
-            printf("extracting bottle \n");
+            //printf("extracting bottle \n");
             ebHandler->extractBottle(receivedBottle);  
             //printf("received bottle: \n");
             //printf("%s \n", receivedBottle->toString().c_str());
         }
         
+        // ---------------------------------------------------------------------------------------------------
         int num_events = CHUNKSIZE >> 3 ;
         uint32_t* buf2 = (uint32_t*)bufferCopy;
         //plotting out
@@ -1971,69 +1927,10 @@ void efExtractorThread::run() {
             firstHalf = false;
         }
 
+        // ----------------------------------------------------------------------------------------------------
 
-        //*******************************************************************************************
-        /*
-        for (int evt = 0; evt < num_events; evt++) {
-            unsigned long t      = buf2[2 * evt];
-            unsigned long blob   = buf2[2 * evt + 1];
-            
-            if(t > 0x80000000) {
-                if(t == 0x88000000 ){
-                    lastTimestampLeft = 0;
-                    printf("wrap around detected %lu \n", lastTimestampLeft );
-                    if(VERBOSE){
-                        fprintf(fdebug,"detected_wrap_around \n");
-                    }
-                    firstHalf = true;
-                }
-                else {                    
-                    if((firstHalf) && (t < 0x8000F000)) {
-                        if(t > lastTimestampLeft)  {
-                            lastTimestampLeft = t;
-                            *bufCopy2 = buf2[2 *evt]; bufCopy2++;
-                            *bufCopy2 = buf2[2 * evt + 1]; bufCopy2++;
-                            countEvent++;
-                            if(VERBOSE) {
-                                fprintf(fdebug,"%08X %08X \n",(unsigned int) t,(unsigned int) blob);        
-                            }
-                        }
-                    }
-                    else if((t >= 0x8000F000)&&(t<80010000)) {
-                        printf("first half  = false\n");
-                        firstHalf = false;
-                    }
-                    else if((!firstHalf) && (t>0x8000F000)) {
-                        if(t > lastTimestampLeft)  {
-                            lastTimestampLeft = t;
-                            *bufCopy2 = buf2[2 *evt]; bufCopy2++;
-                            *bufCopy2 = buf2[2 * evt + 1]; bufCopy2++;
-                            countEvent++;
-                            if(VERBOSE) {
-                                fprintf(fdebug,"%08X %08X \n",(unsigned int) t,(unsigned int) blob);        
-                            }
-                        }
-                    }
-                    else if((t < 0x8000F000)&&(!firstHalf)) {
-                        printf("undetected wrap-around \n");
-                        if(VERBOSE) {
-                            fprintf(fdebug,"undetected_wrap_around \n");
-                            fprintf(fdebug,"%08X %08X \n",(unsigned int) t,(unsigned int) blob);   
-                            printf("undetected wrap aroung");
-                        }
-                        firstHalf = true;
-                    }                        
-                }
-            }            
-        }
-        */
-        //**********************************************************************************************
- 
-
-        // ------------------------------------------------------------------------
         // extract a chunk/unmask the chunk               
-        printf("trying to unmask \n");
-        
+        //printf("trying to unmask \n");        
         if(!bottleHandler) {
             int dim = unmask_events.unmaskData(bufferCopy2,countEvent * sizeof(uint32_t),eventFeaBuffer);        
         }
@@ -2047,7 +1944,6 @@ void efExtractorThread::run() {
         }
         
         //printf("event converted %d  \n",countEvent);          
-
         //printf("         countLeft %d \n" , countEventLeft);
         //printf("         countRight %d \n", countEventRight);
 
@@ -2060,18 +1956,18 @@ void efExtractorThread::run() {
         }
         else {
             //eEventQueue tx(false);
-            printf("Generating memory in bottleHandler  \n");
+            //printf("Generating memory in bottleHandler  \n");
             //tx = *txQueue;
             if((rxQueue != NULL) && (rxQueue->size() != 0)) {
                 //printf("Counted a total of %d %d \n", countEventToSend, rxQueue->size());
                 //delete bottleToSend;
                 //bottleToSend = new Bottle();
-                printf("cleaning bottle to send 0x%08x \n", bottleToSend);
+                //printf("cleaning bottle to send 0x%08x \n", bottleToSend);
                 //delete bottleToSend;
-                printf("after deleting \n");
+                //printf("after deleting \n");
                 bottleToSend = new Bottle(); //<---- TODO memory leak here.....
                 //bottleToSend->clear();
-                printf("generating memory of the events \n");
+                //printf("generating memory of the events \n");
                 //eEventQueue tx2Queue(false);
                 generateMemory(rxQueue, bottleToSend, countEventToSend);
                 //printf("tx2Queue: \n");
@@ -2131,7 +2027,7 @@ void efExtractorThread::run() {
         
         
         //---------------------------------------------------------------------------        
-        printf("leaking section of the algorithm feature space \n");
+        //printf("leaking section of the algorithm feature space \n");
         // leaking section of the algorithm ( feature map)
         unsigned char* pFeaLeft  = leftFeaOutputImage->getRawImage();
         unsigned char* pFeaRight = rightFeaOutputImage->getRawImage();
@@ -2167,8 +2063,7 @@ void efExtractorThread::run() {
             pFeaRight += padding;
         }
         
-        
-        printf("after leaking section of the algorithm \n");
+        //printf("after leaking section of the algorithm \n");
         
         
         /*
@@ -2234,7 +2129,7 @@ void efExtractorThread::run() {
         }
         */
 
-        printf("sending images \n");
+        //printf("sending images \n");
         if(outFeaLeftPort.getOutputCount()) {
             outFeaLeftPort.prepare()  = *leftFeaOutputImage;
             outFeaLeftPort.write();
@@ -2245,7 +2140,7 @@ void efExtractorThread::run() {
         } 
         
 
-        printf("after the images are sent to the ports \n");
+        //printf("after the images are sent to the ports \n");
     } //end of idle
 }
 
