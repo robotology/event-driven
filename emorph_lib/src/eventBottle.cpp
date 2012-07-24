@@ -149,10 +149,10 @@ bool eventBottle::write(yarp::os::ConnectionWriter& connection) {
         int value = packet->get(i).asInt();
         printf("integer value %08x  \n", value);
         for (int j = 0 ; j < wordDimension ; j++){
-            int tmpInt   = (value & 0xFF000000) >> 24;
+            int tmpInt   = (value & 0x000000FF) ;
             tmpChar      =  (char) tmpInt;
             printf("%d ",tmpChar);
-            value = value << 8;
+            value = value >> 8;
             *p = tmpChar;
             p++;
         }
@@ -209,13 +209,14 @@ bool eventBottle::read(yarp::os::ConnectionReader& connection) {
     for(int i = 0 ; i < bytes_of_the_packet;) {
         word = 0;
         for (int j = 0 ; j < wordDimension ; j++){
-            printf("%d ", *i_data );
+            //printf("%d ", *i_data );
             int value =  *i_data << (8 * j);
             word = word | value;
             i_data++;
             i++;
         }
         packet->addInt(word);
+        printf("%08x ", word);
     }
        
 
