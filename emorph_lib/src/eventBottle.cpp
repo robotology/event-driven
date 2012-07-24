@@ -130,6 +130,9 @@ bool eventBottle::write(yarp::os::ConnectionWriter& connection) {
     connection.appendInt(2);        // four elements
     
     size_t binaryDim;
+    size_of_the_bottle  = packet->size();
+    size_of_the_packet  = size_of_the_bottle;
+    bytes_of_the_packet = size_of_the_packet << 2;
     //packetPointer = (char*) packet->toBinary(&binaryDim);
     //bytes_of_the_packet = binaryDim;
     //size_of_the_packet  = bytes_of_the_packet >> 2;
@@ -139,9 +142,6 @@ bool eventBottle::write(yarp::os::ConnectionWriter& connection) {
 
     //--------------------------------------------------------------------------------------------
     // -------- serialisation of the bottle ---------------------------
-    size_of_the_bottle  = packet->size();
-    size_of_the_packet  = size_of_the_bottle;
-    bytes_of_the_packet = size_of_the_packet << 2;
 
     char tmpChar;
     char *p = packetPointer;
@@ -154,6 +154,7 @@ bool eventBottle::write(yarp::os::ConnectionWriter& connection) {
             printf("%d ",tmpChar);
             value = value << 8;
             *p = tmpChar;
+            p++;
         }
         printf("\n");
     }
@@ -202,14 +203,14 @@ bool eventBottle::read(yarp::os::ConnectionReader& connection) {
     
     // ---------------------------------------------------------------------------------------------------------
     // ------------------------ deserialisation of the bottle -------------------------------------
-
+    printf("bytes of the packet %d \n",bytes_of_the_packet );
     int word;
     char* i_data = packetPointer;
     for(int i = 0 ; i < bytes_of_the_packet;) {
         word = 0;
         for (int j = 0 ; j < wordDimension ; j++){
-            printf("%c ", *i_data );
-            int value = (unsigned char) *i_data << (8 * j);
+            printf("%d ", *i_data );
+            int value =  *i_data << (8 * j);
             word = word | value;
             i_data++;
             i++;
