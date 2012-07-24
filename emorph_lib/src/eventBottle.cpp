@@ -147,15 +147,15 @@ bool eventBottle::write(yarp::os::ConnectionWriter& connection) {
     unsigned char *p = packetPointer;
     for(int i = 0 ; i < size_of_the_packet ; i++) {
         int value = packet->get(i).asInt();
-        //printf("integer value %08x  \n", value);
+        printf("integer value %08x  \n", value);
         for (int j = 0 ; j < wordDimension ; j++){
             int tmpInt   = (value & 0xFF000000) >> 24;
             tmpChar      =  (unsigned char) tmpInt;
-            //printf("%d ",tmpChar);
+            printf("%d ",tmpChar);
             value = value << 8;
             *p = tmpChar;
         }
-        //printf("\n");
+        printf("\n");
     }
 
     //----------------------------------------------------------------------------------------------
