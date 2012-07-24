@@ -150,7 +150,7 @@ bool eventBottle::write(yarp::os::ConnectionWriter& connection) {
         printf("integer value %08x  \n", value);
         for (int j = 0 ; j < wordDimension ; j++){
             int tmpInt   = (value & 0x000000FF) ;
-            tmpChar      =  (char) tmpInt;
+            tmpChar      =  (unsigned char) tmpInt;
             printf("%02x ",tmpChar);
             value = value >> 8;
             *p = tmpChar;
