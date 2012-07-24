@@ -143,14 +143,14 @@ bool eventBottle::write(yarp::os::ConnectionWriter& connection) {
     size_of_the_packet  = size_of_the_bottle;
     bytes_of_the_packet = size_of_the_packet << 2;
 
-    unsigned char tmpChar;
-    unsigned char *p = packetPointer;
+    char tmpChar;
+    char *p = packetPointer;
     for(int i = 0 ; i < size_of_the_packet ; i++) {
         int value = packet->get(i).asInt();
         printf("integer value %08x  \n", value);
         for (int j = 0 ; j < wordDimension ; j++){
             int tmpInt   = (value & 0xFF000000) >> 24;
-            tmpChar      =  (unsigned char) tmpInt;
+            tmpChar      =  (char) tmpInt;
             printf("%d ",tmpChar);
             value = value << 8;
             *p = tmpChar;
@@ -168,7 +168,7 @@ bool eventBottle::write(yarp::os::ConnectionWriter& connection) {
     for(int i = 0 ; i < binaryDim ;) {
         word = 0;
         for (int j = 0 ; j < wordDimension ; j++){
-            int value = (unsigned char) *i_data << (8 * j);
+            int value = (char) *i_data << (8 * j);
             word = word | value;
             i_data++;
             i++;
