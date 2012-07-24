@@ -147,16 +147,16 @@ bool eventBottle::write(yarp::os::ConnectionWriter& connection) {
     char *p = packetPointer;
     for(int i = 0 ; i < size_of_the_packet ; i++) {
         int value = packet->get(i).asInt();
-        printf("integer value %08x  \n", value);
+        //printf("integer value %08x  \n", value);
         for (int j = 0 ; j < wordDimension ; j++){
             int tmpInt   = (value & 0x000000FF) ;
             tmpChar      =  (unsigned char) tmpInt;
-            printf("%02x %02x ",tmpInt,tmpChar);
+            //printf("%02x %02x ",tmpInt,tmpChar);
             value = value >> 8;
             *p = tmpChar;
             p++;
         }
-        printf("\n");
+        //printf("\n");
     }
 
     //----------------------------------------------------------------------------------------------
@@ -203,20 +203,22 @@ bool eventBottle::read(yarp::os::ConnectionReader& connection) {
     
     // ---------------------------------------------------------------------------------------------------------
     // ------------------------ deserialisation of the bottle -------------------------------------
-    printf("bytes of the packet %d \n",bytes_of_the_packet );
+    //printf("bytes of the packet %d \n",bytes_of_the_packet );
     int word;
-    char* i_data = packetPointer;
+    char* i_data  = packetPointer;
+    unsigned char tmpChar;
     for(int i = 0 ; i < bytes_of_the_packet;) {
         word = 0;
         for (int j = 0 ; j < wordDimension ; j++){
-            //printf("%d ", *i_data );
-            int value =  *i_data << (8 * j);
+            tmpChar = (unsigned char) *i_data;
+            //printf("%d %d ", *i_data, tmpChar );            
+            int value =  tmpChar << (8 * j);
             word = word | value;
             i_data++;
             i++;
         }
         packet->addInt(word);
-        printf("%08x ", word);
+        //printf("%08x \n", word);
     }
        
 
