@@ -143,7 +143,7 @@ bool eventBottle::write(yarp::os::ConnectionWriter& connection) {
     //--------------------------------------------------------------------------------------------
     // -------- serialisation of the bottle ---------------------------
 
-    char tmpChar;
+    unsigned char tmpChar;
     char *p = packetPointer;
     for(int i = 0 ; i < size_of_the_packet ; i++) {
         int value = packet->get(i).asInt();
@@ -151,7 +151,7 @@ bool eventBottle::write(yarp::os::ConnectionWriter& connection) {
         for (int j = 0 ; j < wordDimension ; j++){
             int tmpInt   = (value & 0x000000FF) ;
             tmpChar      =  (unsigned char) tmpInt;
-            printf("%02x ",tmpChar);
+            printf("%02x %02x ",tmpInt,tmpChar);
             value = value >> 8;
             *p = tmpChar;
             p++;
