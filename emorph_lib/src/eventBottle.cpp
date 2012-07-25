@@ -21,6 +21,7 @@ eventBottle::eventBottle() {
     size_of_the_bottle  = 0;
     bytes_of_the_packet = 0;
     packetPointer = new char[320000];
+    fout = fopen("cartesianFrameCollector.eventBottleHandler.txt", "w+");
 }
 
 eventBottle::eventBottle(char* i_data, int i_size) {
@@ -43,7 +44,8 @@ eventBottle::eventBottle(char* i_data, int i_size) {
     }
     size_of_the_bottle = packet->size();
     packetPointer = 0; 
-       
+
+    fout = fopen("cartesianFrameCollector.eventBottleHandler.txt", "w+");       
 }
 
 /**
@@ -61,6 +63,7 @@ eventBottle::eventBottle(Bottle* p) {
     }
          
     packetPointer = 0; 
+    fout = fopen("eventBottle.debug.txt", "w+");
 }
 
 /**
@@ -76,6 +79,7 @@ eventBottle::eventBottle(const eventBottle& buffer) {
     size_of_the_bottle = buffer.size_of_the_bottle;
     packetPointer = 0;
     
+    fout = fopen("cartesianFrameCollector.eventBottleHandler.txt", "w+");
 }
 
 eventBottle::~eventBottle() {
@@ -148,6 +152,7 @@ bool eventBottle::write(yarp::os::ConnectionWriter& connection) {
     for(int i = 0 ; i < size_of_the_packet ; i++) {
         int value = packet->get(i).asInt();
         printf("integer value %08x  \n", value);
+        fprintf(fout, "%08X \n", value);
         for (int j = 0 ; j < wordDimension ; j++){
             int tmpInt   = (value & 0x000000FF) ;
             tmpChar      =  (unsigned char) tmpInt;
@@ -218,7 +223,8 @@ bool eventBottle::read(yarp::os::ConnectionReader& connection) {
             i++;
         }
         packet->addInt(word);
-        //printf("%08x \n", word);
+        printf("%08x \n", word);
+        fprintf(fout, "%08X \n", word);
     }
        
 

@@ -76,8 +76,9 @@ private:
     yarp::os::Bottle* packet;
     char* packetPointer;
     int size_of_the_packet;      // dimension of the sent packet
-    int bytes_of_the_packet;      // dimension in bytes of the sent packet
+    int bytes_of_the_packet;     // dimension in bytes of the sent packet
     int size_of_the_bottle;      // number of element that do belong to the bottle
+    FILE* fout; 
 };
 
 
