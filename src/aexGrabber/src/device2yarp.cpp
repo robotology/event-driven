@@ -756,30 +756,11 @@ void  device2yarp::run() {
     int countEventSent = 0;
     int countUndetectedWA = 0;
 
-
-    //yarp::os::Bottle *bottle2send;
-    //bottle2send = new Bottle;
-    yarp::os::Bottle tmpBottle;
-      
-
+    yarp::os::Bottle tmpBottle;      
     for (int i = 0; i < monBufEvents ; i++ ) {
   
            
         tempA = pmonatom[i].data;                  
-
-        // dumping any single char
-        /*
-        if(save){
-            fprintf(fout,"%02X ", *buf1);
-            buf1++;
-            fprintf(fout,"%02X ", *buf1);
-            buf1++;
-            fprintf(fout,"%02X ", *buf1);
-            buf1++;
-            fprintf(fout,"%02X ", *buf1);
-            buf1++;
-        }
-        */
 
         // dumping the atom as it is
         /*
@@ -832,16 +813,6 @@ void  device2yarp::run() {
                       
             buf2[k2++] = a;   // passing the address event to the data flow to send            
             countEventSent++;
-
-            //extracting information 
-            //int channel  = (tempA & 0x00008000) >> 16;
-            //int Ycoord   = (tempA & 0x00007F00) >>  8;
-            //int Xcoord   = (tempA & 0x000000FE) >>  1;
-            //int polarity = (tempA & 0x00000001)      ;
-            //ae.setChannel(channel);
-            //ae.setPolarity(polarity);
-            //ae.setX(Xcoord);
-            //ae.setY(Ycoord);
 
             //tmpBottle.addInt(tempA); //<----- used in the alternative B
             bottle2send->addInt(tempA);
@@ -992,18 +963,7 @@ void  device2yarp::run() {
             }	  	  	  
         }
         // --------------- other events  ------------
-        else {
-            //extracting information         
-            /*
-              int clusterId = (tempA & 0x00FFFFFF) >> 16;
-              int YCog      = (tempA & 0x00007F00) >> 8;
-              int XCog      = (tempA & 0x000000FE) >> 1; 
-              int channel   = (tempA & 0x00000001)     ;
-              clef1.setID();
-              clef1.setChannel(0);        
-              clef1.setXCog(24);
-              clef1.setYCog(73);
-            */
+        else {         
 
             if (save) {	  
                 fprintf(fout,"%08X\n",tempA);
@@ -1029,9 +989,7 @@ void  device2yarp::run() {
     
      //*******************************************************************************************************
 
-    
-    //sz = monBufEvents * 2 * sizeof(struct atom); // sz is size in bytes
-    sz = countEventSent * sizeofstructatom;
+    sz = countEventSent * sizeofstructatom;  //sz is size in bytes
     char* buf = (char*) buf2;
     
     if (port.getOutputCount()) {
@@ -1044,14 +1002,11 @@ void  device2yarp::run() {
     
     
     if (portEventBottle.getOutputCount()) {       
-
-        //eventBottle data2send(&tmpBottle); //<--- alternative that decided to avoid
         //printf("bytes %d on the portEventBottle \n", bottle2send->size());
         eventBottle data2send(bottle2send);
         eventBottle& tmp = portEventBottle.prepare();  
         tmp = data2send;        
-        portEventBottle.write();
-        
+        portEventBottle.write();       
     } 
     
     wrapOccured = false;
