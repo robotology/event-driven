@@ -54,7 +54,9 @@ eventBottle::eventBottle(char* i_data, int i_size) {
 eventBottle::eventBottle(Bottle* p) {
     packet = new Bottle();
 
-    size_of_the_bottle = p->size();    
+    size_of_the_bottle = p->size();
+    size_of_the_packet = size_of_the_bottle;
+    bytes_of_the_packet = size_of_the_packet * 4;  
     int word;
     
     for(int i = 0 ; i < size_of_the_bottle ;i++) { 
@@ -137,7 +139,7 @@ bool eventBottle::write(yarp::os::ConnectionWriter& connection) {
     size_t binaryDim;
     size_of_the_bottle  = packet->size();
     size_of_the_packet  = size_of_the_bottle;
-    bytes_of_the_packet = size_of_the_packet << 2;
+    bytes_of_the_packet = size_of_the_packet * 4;
     //packetPointer = (char*) packet->toBinary(&binaryDim);
     //bytes_of_the_packet = binaryDim;
     //size_of_the_packet  = bytes_of_the_packet >> 2;
@@ -150,11 +152,17 @@ bool eventBottle::write(yarp::os::ConnectionWriter& connection) {
 
     unsigned char tmpChar;
     char *p = packetPointer;
+
+    fprintf(fout, "dim %d \n",size_of_the_packet);
+    printf("dim %d \n",size_of_the_packet);
     printf("%08x \n", packetPointer);
+
     for(int i = 0 ; i < size_of_the_packet ; i++) {
         int value = packet->get(i).asInt();
+
         //printf("integer value %08x  \n", value);
-        //fprintf(fout, "%08X \n", value);
+        fprintf(fout, "%08X \n", value);
+
         for (int j = 0 ; j < wordDimension ; j++){
             int tmpInt   = (value & 0x000000FF) ;
             tmpChar      =  (unsigned char) tmpInt;
@@ -165,7 +173,7 @@ bool eventBottle::write(yarp::os::ConnectionWriter& connection) {
         }
         //printf("\n");
     }
-    printf("-------------------------------------\n");
+    //printf("-------------------------------------\n");
     //----------------------------------------------------------------------------------------------
     
 
@@ -207,6 +215,8 @@ bool eventBottle::read(yarp::os::ConnectionReader& connection) {
     bytes_of_the_packet = connection.expectInt();  
     size_of_the_packet = bytes_of_the_packet / wordDimension;      // number of 32 bit word times 4bytes
     connection.expectBlock(packetPointer,bytes_of_the_packet); 
+
+    printf("size_of_the_packet %d bytes_of_the_packet %d \n", size_of_the_packet, bytes_of_the_packet);
     
     // ---------------------------------------------------------------------------------------------------------
     // ------------------------ deserialisation of the bottle -------------------------------------
