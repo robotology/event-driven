@@ -150,10 +150,11 @@ bool eventBottle::write(yarp::os::ConnectionWriter& connection) {
 
     unsigned char tmpChar;
     char *p = packetPointer;
+    printf("%08x \n", packetPointer);
     for(int i = 0 ; i < size_of_the_packet ; i++) {
         int value = packet->get(i).asInt();
-        printf("integer value %08x  \n", value);
-        fprintf(fout, "%08X \n", value);
+        //printf("integer value %08x  \n", value);
+        //fprintf(fout, "%08X \n", value);
         for (int j = 0 ; j < wordDimension ; j++){
             int tmpInt   = (value & 0x000000FF) ;
             tmpChar      =  (unsigned char) tmpInt;
@@ -212,6 +213,7 @@ bool eventBottle::read(yarp::os::ConnectionReader& connection) {
     //printf("bytes of the packet %d \n",bytes_of_the_packet );
     int word;
     char* i_data  = packetPointer;
+    printf("packetPointer %08X \n", packetPointer);
     unsigned char tmpChar;
     for(int i = 0 ; i < bytes_of_the_packet;) {
         word = 0;
@@ -224,8 +226,8 @@ bool eventBottle::read(yarp::os::ConnectionReader& connection) {
             i++;
         }
         packet->addInt(word);
-        printf("%08x \n", word);
-        fprintf(fout, "%08X \n", word);
+        //printf("%08x \n", word);
+        //fprintf(fout, "%08X \n", word);
     }
        
 
