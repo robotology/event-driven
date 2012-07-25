@@ -216,7 +216,7 @@ bool eventBottle::read(yarp::os::ConnectionReader& connection) {
     size_of_the_packet = bytes_of_the_packet / wordDimension;      // number of 32 bit word times 4bytes
     connection.expectBlock(packetPointer,bytes_of_the_packet); 
 
-    printf("size_of_the_packet %d bytes_of_the_packet %d \n", size_of_the_packet, bytes_of_the_packet);
+    printf(" eventBottle::read:size_of_the_packet %d bytes_of_the_packet %d \n", size_of_the_packet, bytes_of_the_packet);
     
     // ---------------------------------------------------------------------------------------------------------
     // ------------------------ deserialisation of the bottle -------------------------------------
@@ -224,6 +224,7 @@ bool eventBottle::read(yarp::os::ConnectionReader& connection) {
     int word;
     char* i_data  = packetPointer;
     printf("packetPointer %08X \n", packetPointer);
+    
     unsigned char tmpChar;
     for(int i = 0 ; i < bytes_of_the_packet;) {
         word = 0;
