@@ -154,7 +154,7 @@ bool eventBottle::write(yarp::os::ConnectionWriter& connection) {
     char *p = packetPointer;
 
     fprintf(fout, "dim %d \n",size_of_the_packet);
-    printf("dim %d \n",size_of_the_packet);
+    printf("eventBottle::write:dim %d \n",size_of_the_packet);
     printf("%08x \n", packetPointer);
 
     for(int i = 0 ; i < size_of_the_packet ; i++) {
