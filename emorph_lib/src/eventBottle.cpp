@@ -83,6 +83,7 @@ eventBottle::eventBottle(const eventBottle& buffer) {
 }
 
 eventBottle::~eventBottle() {
+    fclose(fout);
     delete[] packetPointer;
     delete packet;
 }
@@ -161,9 +162,9 @@ bool eventBottle::write(yarp::os::ConnectionWriter& connection) {
             *p = tmpChar;
             p++;
         }
-        printf("\n");
+        //printf("\n");
     }
-
+    printf("-------------------------------------\n");
     //----------------------------------------------------------------------------------------------
     
 
