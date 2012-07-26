@@ -99,10 +99,10 @@ bool eventSelectorThread::threadInit() {
     pThread->setRetinalSize(retinalSize);
     pThread->start();
 
-    //ebHandler = new eventBottleHandler();
-    //ebHandler->useCallback();
-    //ebHandler->setRetinalSize(128);
-    //ebHandler->open(getName("/retinaBottle:i").c_str());
+    ebHandler = new eventBottleHandler();
+    ebHandler->useCallback();
+    ebHandler->setRetinalSize(128);
+    ebHandler->open(getName("/retinaBottle:i").c_str());
 
     //map1Handler = new eventBottleHandler();
     //map1Handler->useCallback();
@@ -613,7 +613,7 @@ void eventSelectorThread::run() {
     // saves it into a working buffer
 
 
-    /*
+    
     //printf("checking the bottleHandler \n");
     //printf("============================================================= \n");
     if(!bottleHandler) {
@@ -621,11 +621,12 @@ void eventSelectorThread::run() {
     }
     else {
         //printf("eventSelectorThread::run : extracting Bottle! \n");
+        receivedBottle->clear();
         ebHandler->extractBottle(receivedBottle);  
         //printf("received bottle \n");
         //printf("%s \n", receivedBottle->toString().c_str());
     }
-    */
+    
     
     //======================== temporal synchronization pre-unmasking  =================================
     //printf("after extracting the bottle \n");
@@ -672,7 +673,7 @@ void eventSelectorThread::run() {
     }
     //printf("end of pre-unmasking synchronization \n ");
     
-    /*
+    
     // =============================== Unmasking ====================================
     // extract a chunk/unmask the chunk
     // printf("verb %d \n",verb);
@@ -685,14 +686,15 @@ void eventSelectorThread::run() {
         if(receivedBottle->size() != 0) {            
             delete rxQueue;   // freeing memory for the new queue of events
             //printf("TODO : check for leaking \n");
-            rxQueue = new eEventQueue(); // preparing the new queue
+            //rxQueue = new eEventQueue(); // preparing the new queue
+            rxQueue->clear();
             //printf("unmasking received bottle and creating the queue of event to send \n");
             unmask_events->unmaskData(receivedBottle, rxQueue); // saving the queue
             //printf("bottle of events to send : \n");
         }
     }
     //printf("end of the unmasking \n");
-    */
+    
         
     //==================== temporal synchronization post unmasking =======================
     
@@ -873,7 +875,7 @@ void eventSelectorThread::run() {
       
     }    
 
-    /*
+    
     // =======================  spatial processing===========================
     double w1 = 0, w2 = 0, w3 = 0, w4 = 0;
     //spatialSelection(unmaskedEvents,CHUNKSIZE>>3,w1);       
@@ -883,12 +885,12 @@ void eventSelectorThread::run() {
         spatialSelection(unmaskedEvents,CHUNKSIZE>>3,w1, minCount, maxCount);
     }
     else {        
-        if((rxQueue!=0)&&(receivedBottle->size() != 0)) {
+        if((rxQueue!=0) && (receivedBottle->size() != 0)) {
             //printf("spatial selection  bottle Handler\n");
             spatialSelection(rxQueue);
         }
     }
-    */
+    
     
     // the getMonoImage gets as default input image the saliency map    
     if(imageLeft != 0) {
@@ -906,6 +908,8 @@ void eventSelectorThread::run() {
             pThread->copyRight(imageRight);
         }
     }
+
+
   }
 }
 
