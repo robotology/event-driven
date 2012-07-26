@@ -103,8 +103,10 @@ static const char* byte_to_binary( int x ) {
 device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName = " "):RateThread(THRATE) {
     bottle2send = new Bottle();  
     // initialization of the paramenters
+    countCycle       = 0;
     t_prev           = 0;
     fout             = 0;
+    fbottle          = 0;
     countErrors      = 0;
     countInWraps     = 0;
     countInWrapsTS   = 0;
@@ -1002,11 +1004,21 @@ void  device2yarp::run() {
     
     
     if (portEventBottle.getOutputCount()) {       
+        countCycle++;
         //printf("bytes %d on the portEventBottle \n", bottle2send->size());
         eventBottle data2send(bottle2send);
         eventBottle& tmp = portEventBottle.prepare();  
         tmp = data2send;        
         portEventBottle.write();       
+    
+        if (save) {    
+            fprintf(fbottle,"dim %d \n", bottle2send->size());
+            printf("dim %d \n", bottle2send->size());
+            for(int i = 0; i < bottle2send->size(); i++) {
+                fprintf(fbottle,"%08X \n", bottle2send->get(i).asInt());
+            }
+            fprintf(fbottle,"------------------------\n");
+        }
     } 
     
     wrapOccured = false;
@@ -1241,10 +1253,16 @@ void device2yarp::setDumpEvent(bool value) {
     save = value;
     
     if(!value) {
-        if(fout!=NULL) {
+        if(fout != NULL) {
             fclose(fout);
             printf("closing the file \n");
         }
+        
+        if(fbottle != NULL) {
+            fclose(fbottle);
+            printf("closing the file \n");
+        } 
+          
     }
 }
 
@@ -1255,7 +1273,8 @@ bool device2yarp::setDumpFile(std::string value) {
     //if (!ret)
     //    cout << "unable to open file" << endl;
 
-    fout = fopen(dumpfile.c_str(),"w");
+    fout    = fopen(dumpfile.c_str(),"w");
+    fbottle = fopen("dumpBottle.txt","w");
     if(fout!=NULL)
         return true;
     else

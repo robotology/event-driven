@@ -449,7 +449,8 @@ private:
     short enabled;
     char buffer[SIZE_OF_DATA];                      // buffer of char to be set on the outport
 
-    int err;
+    int countCycle;                         // cycle counter
+    int err;                                // error counter
     int countErrors;                        // error counter
     int countErrorsTS;                      // error counter
     int countErrorsAE;                      // error counter
@@ -486,6 +487,7 @@ private:
 
     std::stringstream str_buf;
     FILE* fout;                             //reference to the object for output file stream
+    FILE* fbottle;
 
     int pr;                                 //bias left dvs
     int foll;                               //bias left dvs
