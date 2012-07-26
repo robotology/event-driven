@@ -42,7 +42,7 @@ using namespace emorph::ecodec;
 #define UNMASKRATETHREAD 1
 #define constInterval 100000;
 
-#define VERBOSE
+//#define VERBOSE
 
 //TODO : remove inheretance of this class from ratethread. No reason to be ratethread
 unmask::unmask() : RateThread(UNMASKRATETHREAD){

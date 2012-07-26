@@ -432,6 +432,7 @@ void cfCollectorThread::run() {
         cfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
     }
     else {
+        receivedBottle->clear();
         ebHandler->extractBottle(receivedBottle);      
         //printf("received Bottle %08x dimension %d \n ", receivedBottle, receivedBottle->size());
     }
@@ -478,15 +479,18 @@ void cfCollectorThread::run() {
     // extract a chunk/unmask the chunk
 #ifdef VERBOSE
     if(receivedBottle!=0){
-        fprintf(fout, "dim: %d \n",receivedBottle->size());
-        //plotting out
-        string str;
-        int chksum;
-        for (int i=0; i < receivedBottle->size(); i++) {
-            fprintf(fout,"%08X \n", receivedBottle->get(i).asInt());
-            //printf("%08X \n", receivedBottle->get(i).asInt());
+        
+        if( receivedBottle->size()!= 0) {
+            fprintf(fout, "dim: %d \n",receivedBottle->size());
+            //plotting out
+            string str;
+            int chksum;
+            for (int i=0; i < receivedBottle->size(); i++) {
+                fprintf(fout,"%08X \n", receivedBottle->get(i).asInt());
+                //printf("%08X \n", receivedBottle->get(i).asInt());
+            }
+            fprintf(fout,"----------------------------- \n");            
         }
-        fprintf(fout,"----------------------------- \n");            
     }
 #endif
 
@@ -513,10 +517,8 @@ void cfCollectorThread::run() {
     
     //getting the time between two threads
     gettimeofday(&tvend, NULL);
-    //Tnow = ((u64)tvend.tv_sec) * 1000000 + ((u64)tvstart.tv_usec);
     Tnow = ((tvend.tv_sec * 1000000 + tvend.tv_usec)
 	    - (tvstart.tv_sec * 1000000 + tvstart.tv_usec));
-    //printf("timeofday>%ld\n",Tnow );
     gettimeofday(&tvstart, NULL);       
 
     //synchronising the threads at the connection time
@@ -535,9 +537,7 @@ void cfCollectorThread::run() {
         //printf("synchronised %1f! %d,%d,%d||%d,%d,%d \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
         startTimer = Time::now();
         synchronised = true;
-        //minCount = unmask_events->getLastTimestamp();
-        //printf("minCount %d \n", minCount);
-        //minCountRight = unmask_events->getLastTimestamp();
+
         count = synchPeriod - 200;
     }
     else if ((count % synchPeriod == 0) && (minCount < 4294500000)) {
@@ -546,8 +546,6 @@ void cfCollectorThread::run() {
         unsigned long lastright = unmask_events->getLastTimestampRight();
         rc = lastright * COUNTERRATIO;
         
-        //if (count == synchPeriod) {
-        //printf("Sychronised Sychronised Sychronised Sychronised ");
         if( lc > interval* INTERVFACTOR * dim_window)
             minCount      = lc - interval * INTERVFACTOR * dim_window; //cfConverter->getEldestTimeStamp();        
         else
@@ -568,16 +566,10 @@ void cfCollectorThread::run() {
         // this value is simply the ration between the timestamp reported by the aexGrabber (6.25Mhz) 
         //and the correct timestamp counter clock of FPGA (50 Mhz)
         microsecondsPrev = interval;
-        interval = Tnow;
-        //if(unmask_events->getWrapOcc()) {
-        //    minCount = 0;
-        //    maxCount = 0;
-        //    cfConverter->reset();
-        //}
-        //else{
+        interval = Tnow;        
         minCount      = minCount + interval * INTERVFACTOR; // * (50.0 MHz FPGA Counter Clock / 6.25 Mhz ;
         minCountRight = minCount + interval * INTERVFACTOR;  // minCountRight + interval;
-        //}
+
     } 
     //printf("minCount %d interval %f \n", minCount, interval);
     maxCount      =  minCount      + (interval + 1) * INTERVFACTOR* (dim_window);
@@ -594,7 +586,6 @@ void cfCollectorThread::run() {
         //printf("countStop %d lcprev %d lc %d \n",countStop, lcprev,lc);
         if (stereo) {
             if ((lcprev == lc)||(rcprev == rc)) {
-                //if (lcprev == lc) {
                 countStop++;
                 //printf("countStop %d %08X %08X %08X %08X \n", countStop,(unsigned int) lc, (unsigned int)lcprev, (unsigned int)rc, (unsigned int)rcprev);
             }            
@@ -607,8 +598,7 @@ void cfCollectorThread::run() {
             }
         }
         else {
-            if (lcprev == lc) {
-                //if (lcprev == lc) {
+            if (lcprev == lc) {                
                 countStop++;
                 //printf("countStop %d %08X %08X %08X %08X \n", countStop, (unsigned int)lc, (unsigned int)lcprev, (unsigned int)rc, (unsigned int)rcprev);
             }            
@@ -648,8 +638,7 @@ void cfCollectorThread::run() {
       
     }
     
-    
-    // ----------- preventer end    --------------------- //
+ 
     //--------------------------------------------------------------------------------------------------------
     
     getMonoImage(imageLeft,minCount,maxCount,1);
