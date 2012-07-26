@@ -218,30 +218,32 @@ bool eventBottle::read(yarp::os::ConnectionReader& connection) {
 
     printf(" eventBottle::read:size_of_the_packet %d bytes_of_the_packet %d \n", size_of_the_packet, bytes_of_the_packet);
     
+    
     // ---------------------------------------------------------------------------------------------------------
     // ------------------------ deserialisation of the bottle -------------------------------------
     //printf("bytes of the packet %d \n",bytes_of_the_packet );
     int word;
     char* i_data  = packetPointer;
-    printf("packetPointer %08X \n", packetPointer);
+    //printf("packetPointer %08X \n", packetPointer);
+    packet->clear();
     
     unsigned char tmpChar;
     for(int i = 0 ; i < bytes_of_the_packet;) {
         word = 0;
-        for (int j = 0 ; j < wordDimension ; j++){
+        for (int j = 0 ; j < 4 ; j++){
             tmpChar = (unsigned char) *i_data;
-            //printf("%d %d ", *i_data, tmpChar );            
+            //printf("%02x ", *i_data );            
             int value =  tmpChar << (8 * j);
             word = word | value;
             i_data++;
             i++;
         }
         packet->addInt(word);
-        //printf("%08x \n", word);
+        //printf("= %08x \n", word);
         //fprintf(fout, "%08X \n", word);
     }
        
-
+    printf(" eventBottle::read: double check %d \n\n",packet->size() );
     //----------------------------------------------------------------------------------------------------------
       
     //packet->fromBinary(packetPointer,bytes_of_the_packet);
