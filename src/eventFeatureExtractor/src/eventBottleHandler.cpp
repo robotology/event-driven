@@ -43,7 +43,7 @@ using namespace yarp::sig;
 using namespace std;
 
 eventBottleHandler::eventBottleHandler() {
-    
+    VERBOSE         = false;
     valid           = false;
     retinalSize     = 128;
     totDim          = 0;
@@ -117,10 +117,11 @@ void eventBottleHandler::extractBottle(Bottle* tempBottle) {
 
 // reading out from a circular buffer with 2 entry points and wrapping
 void eventBottleHandler::onRead(eventBottle& i_ub) {    
-    valid = true;
     printf("OnRead %d \n", insertPosition);
+    valid = true;
     
-    //---------------------------------------------   
+    //---------------------------------------------------------------------------------------------------------
+    
     //printf("sem address onRead %08x \n",semBottleBuffer[extractPosition] );
     
     semBottleBuffer[insertPosition]->wait();
@@ -128,8 +129,9 @@ void eventBottleHandler::onRead(eventBottle& i_ub) {
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() ;      // number of words     
     receivedBufferSize = dim;
-    printf("dim : %d                           \n", dim);
+    //printf("dim : %d                           \n", dim);
 
+    //--------------------------------------------------------------------------------------------------------
     //receivedBottle = new Bottle(*i_ub.get_packet());
     //printf("%s \n ", i_ub.get_packet()->toString().c_str());
     //receivedBottle->copy(*i_ub.get_packet());
@@ -139,37 +141,38 @@ void eventBottleHandler::onRead(eventBottle& i_ub) {
     //receivedBottle = (Bottle*) receivedBuffer;
     //printf("bufferBottle[%d] %08x i_ub.get_packet() %08X \n",insertPosition, bufferBottle[insertPosition], i_ub.get_packet()  );
     //delete bufferBottle[insertPosition];
-    //bufferBottle[insertPosition] = receivedBottle;
+    bufferBottle[insertPosition]->clear();
     //printf("receivedBottle  %08x \n",receivedBottle);        
     bufferBottle[insertPosition]->copy(*i_ub.get_packet());          
+    //------------------------------------------------------------------------------------------------------
 
     //printf("insertPosition %d  \n", insertPosition);
-#ifdef VERBOSE
-    int num_events = dim >> 3 ;
-    fprintf(fout, "dim: %d \n",dim);
-    //plotting out
-    string str;
-    int chksum;
-    for (int i=0; i < bufferBottle[insertPosition]->size(); i++) {
-        fprintf(fout,"%08X \n", bufferBottle[insertPosition]->get(i).asInt());
-        //printf("%08X \n", receivedBottle->get(i).asInt());
-        //int chksum = bufferBottle[insertPosition]->get(i).asInt() % 255;
-        //str[i] = (char) chksum;
+    if(VERBOSE) {
+        int num_events = dim >> 3 ;
+        fprintf(fout, "dim: %d \n",dim);
+        //plotting out
+        string str;
+        int chksum;
+        for (int i=0; i < bufferBottle[insertPosition]->size(); i++) {
+            fprintf(fout,"%08X \n", bufferBottle[insertPosition]->get(i).asInt());
+            //printf("%08X \n", receivedBottle->get(i).asInt());
+            //int chksum = bufferBottle[insertPosition]->get(i).asInt() % 255;
+            //str[i] = (char) chksum;
+        }
+        //fprintf(fout,"chksum: %s \n", str.c_str());
+        fprintf(fout,"----------------------------- \n");
     }
-    //fprintf(fout,"chksum: %s \n", str.c_str());
-    fprintf(fout,"----------------------------- \n");
-#endif
     
 
     semBottleBuffer[insertPosition]->post();
-    //----------------------------------------------
+    
+    //-----------------------------------------------------------------------------------------------------------
 
     // changing the value of the insert position
     mutex.wait();
     insertPosition = (insertPosition + 1) % bottleBufferDimension;
     mutex.post();
-
-    
+  
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////

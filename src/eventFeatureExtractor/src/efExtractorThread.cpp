@@ -145,6 +145,7 @@ bool efExtractorThread::threadInit() {
     outBottlePort  .open(getName("/eventBottle:o").c_str());
     
     ebHandler = new eventBottleHandler();
+    ebHandler->setVerbose(VERBOSE);
     ebHandler->useCallback();
     ebHandler->open(getName("/retinaBottle:i").c_str());
 
@@ -1914,21 +1915,19 @@ void efExtractorThread::run() {
         unsigned char* pMemL  = leftInputImage->getRawImage();
         //left.zero();
         
-        // reads the buffer received
-        // saves it into a working buffer        
+        // reads the buffer received and saves it into a working buffer        
         //printf("returned 0x%x 0x%x with bottleHandler %d \n", bufferCopy, flagCopy, bottleHandler);
         if(!bottleHandler) {
-            //printf("copying chunck \n");
             cfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
         }
         else {
             printf("extracting bottle \n");
+            receivedBottle->clear();
             ebHandler->extractBottle(receivedBottle);  
-            printf("received bottle: \n");
-            //printf("size received bottle %d \n", receivedBottle->size());
         }
         
         // ---------------------------------------------------------------------------------------------------
+
         int num_events = CHUNKSIZE >> 3 ;
         uint32_t* buf2 = (uint32_t*)bufferCopy;
         //plotting out
@@ -1980,21 +1979,15 @@ void efExtractorThread::run() {
             //tx = *txQueue;
             if((rxQueue != NULL) && (rxQueue->size() != 0)) {
                 printf("Counted a total of %d %d \n", countEventToSend, rxQueue->size());
-                //delete bottleToSend;
-                //bottleToSend = new Bottle();
-                //printf("cleaning bottle to send 0x%08x \n", bottleToSend);
-                //delete bottleToSend;
+                
                 //printf("after deleting \n");
                 //bottleToSend = new Bottle(); //<---- TODO memory leak here.....
                 bottleToSend->clear();
                 
                 printf("generating memory of the events \n");
                 generateMemory(rxQueue, bottleToSend, countEventToSend);
-                //printf("tx2Queue: \n");
-                //printPacket(*bottleToSend);
-                //printf("txQueue \n");
-                //printf(" %s \n", bottleToSend->toString().c_str());
-                //printf(" %s \n",tx2Queue[0]->getType().c_str());
+
+
             }
         }
 
@@ -2003,18 +1996,16 @@ void efExtractorThread::run() {
         // -----------------------------------------------------------------------  
         // leaking section of the algorithm (retina space) 
         //printf("leaking section of the algorithm (retina space) \n");
-        pMemL   = leftInputImage->getRawImage();
-        pLeft   = leftOutputImage->getRawImage();
-        pRight  = rightOutputImage->getRawImage();
+        pMemL       = leftInputImage->getRawImage();
+        pLeft       = leftOutputImage->getRawImage();
+        pRight      = rightOutputImage->getRawImage();
         int padding = leftOutputImage->getPadding();
         
-        int CONST_DECREMENT_DOUBLE = 1 ;
-        
+        int CONST_DECREMENT_DOUBLE = 1 ;        
         
         for(int row  = 0; row < RETINA_SIZE; row++) {
             for (int col = 0; col< RETINA_SIZE; col++) {
                 if(*pLeft >= 127 + CONST_DECREMENT) { 
-                    //printf("value pos %d \n", *pLeft);
                     *pLeft-= CONST_DECREMENT;                    
                 }
                 else if(*pLeft<= 127 - CONST_DECREMENT) {                    
@@ -2023,7 +2014,6 @@ void efExtractorThread::run() {
                 else{
                     *pLeft = 127;
                 }
-                //*pLeft = (unsigned int) *pLeftDouble;
                 
                 if(*pRight >= 127 + CONST_DECREMENT) {                
                     *pRight -= CONST_DECREMENT;
@@ -2037,8 +2027,6 @@ void efExtractorThread::run() {
                 
                 pLeft++;
                 pRight++;
-                //*pLeft = *pMemL;
-                //pLeft++;
             }
             //pMemL += padding;                
             pLeft += padding;
@@ -2081,9 +2069,9 @@ void efExtractorThread::run() {
                             
             pFeaLeft  += padding;
             pFeaRight += padding;
-        }
-        
+        }        
         //printf("after leaking section of the algorithm \n");
+        // ---------------------------------------------------------------------------
         
         
         /*

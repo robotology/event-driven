@@ -112,6 +112,13 @@ public:
      */
     bool isValid(){ return valid; };
 
+    /**
+     * @brief function that sets the VERBOSE mode
+     * @param value value to assign to the VERBOSE flag
+     */
+    void setVerbose(int value) {
+        VERBOSE = value;
+    }
 
     /**
      * @brief function thatset the dimension of the output image
@@ -128,7 +135,8 @@ public:
     void extractBottle(yarp::os::Bottle* receivedBottle);
 
 private:
-    bool valid;
+    bool VERBOSE;                                               // enables the verbose mode
+    bool valid;                                                 // indicates whether the data is valid
     short state;
     int retinalSize;                                            // dimension of the retina default 128x128
     int totDim;                                                 // total dimension of the read buffer
