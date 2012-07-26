@@ -125,7 +125,7 @@ private:
     eventBottleHandler *ebHandler;       // handler of received events as bottle
     //eventBottleHandler *map1Handler;   // handler for the first feature map
     bottleProcessorThread* bptA;          // processor thread of the bottle
-    bottleProcessorThread* bptB;          // processor thread of the bottle
+    bottleProcessorThread* bpt4;          // processor thread of the bottle
     
 public:
     /**

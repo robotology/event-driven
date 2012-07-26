@@ -4,6 +4,7 @@
   * Copyright (C)2011  Department of Robotics Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
   * Author:Francesco Rea
   * email: francesco.rea@iit.it
+
   * Permission is granted to copy, distribute, and/or modify this program
   * under the terms of the GNU General Public License, version 2 or any
   * later version published by the Free Software Foundation.
@@ -99,15 +100,17 @@ bool eventSelectorThread::threadInit() {
     pThread->setRetinalSize(retinalSize);
     pThread->start();
 
+    /*
     ebHandler = new eventBottleHandler();
     ebHandler->useCallback();
     ebHandler->setRetinalSize(128);
     ebHandler->open(getName("/retinaBottle:i").c_str());
 
-    //map1Handler = new eventBottleHandler();
-    //map1Handler->useCallback();
-    //map1Handler->setRetinalSize(32);
-    //map1Handler->open(getName("/map1Bottle:i").c_str());
+    map1Handler = new eventBottleHandler();
+    map1Handler->useCallback();
+    map1Handler->setRetinalSize(32);
+    map1Handler->open(getName("/map1Bottle:i").c_str());
+    */
 
 
     //unmask_events->setRetinalSize(32);
@@ -157,13 +160,13 @@ bool eventSelectorThread::threadInit() {
     bptA->setName(getName("/btpA"));
     bptA->start();
 
-    bptB = new bottleProcessorThread();
-    bptB->setLastTimestamp(lasttimestamp);
-    bptB->setSaliencySize(retinalSize);
-    bptB->setRetinalSize(32);
-    bptB->setName(getName("/btp4"));
-    bptB->setSaliencyMap(saliencyMapLeft, saliencyMapRight, timestampMapLeft, timestampMapRight);    
-    bptB->start();
+    bpt4 = new bottleProcessorThread();
+    bpt4->setLastTimestamp(lasttimestamp);
+    bpt4->setSaliencySize(retinalSize);
+    bpt4->setRetinalSize(32);
+    bpt4->setName(getName("/btp4"));
+    bpt4->setSaliencyMap(saliencyMapLeft, saliencyMapRight, timestampMapLeft, timestampMapRight);    
+    bpt4->start();
 
 
     receivedBottle = new Bottle();
@@ -236,9 +239,13 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
         for(int c = 0 ; c < retinalSize ; c++) {
             //drawing the retina and the rest of the image separately
             int value = *pBuffer;
+            value = 1;
 
             double left_double  = saliencyMapLeft [r * retinalSize + c];
             double right_double = saliencyMapRight[r * retinalSize + c];
+            
+
+            // -------------- max and min of left and right ----------------------
             if(left_double < minLeft)   minLeft = left_double;
             if(left_double > maxLeft)   maxLeft = left_double;
             if(right_double > maxRight) maxRight = right_double;
@@ -258,11 +265,19 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
             if(maxResponseRight < abs(maxRight)) {
                 maxResponseRight = abs(maxRight);
                 maxRightR = r; maxRightC = c;
-            }
-                        
+            }        
+            //-------------------------------------------------------------------
+            
             unsigned long timestampactual = *pTime;
             //bool tristateView = false;
-            
+            if((r == 10) && (c == 10)) {
+                left_double = 100;
+                value = 100;
+                timestampactual =  (minCount + 1) / COUNTERRATIO;
+                //printf("%lu \n", timestampactual);
+            }
+
+            //----------------------------------------------------------------------------------------
             if(tristate) {
                 // decreasing the spatial response without removing it
                 if(count % 10 == 0) {
@@ -276,10 +291,17 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
 
                 //if(minCount>0 && maxCount > 0 && timestampactual>0)
                 //printf("actualTS%ld val%ld max%ld min%ld  are\n",timestampactual,timestampactual * COUNTERRATIO,minCount,maxCount);
-                if (((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)) {   //(timestampactual != lasttimestamp)
-                    *pImage = (unsigned char) (127 + value);
-                    //if(value>0)printf("event%d val%d buf%d\n",*pImage,value,*pBuffer);
+                if (
+                    ((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)
+                    ) {   //(timestampactual != lasttimestamp)
+                    *pImage = (unsigned char) (127 + value );
                     pImage++;
+                    *pImage = (unsigned char) (127 + value );
+                    pImage++;
+                    *pImage = (unsigned char) (127 + value );
+                    pImage++;
+                    
+                    
                     //if ((stereo) && (r < 7) && (r >= 16) && (c < 7) && (c >= 16)) {
                     //  *pImage = (unsigned char) (127 + value);
                     //  pImage += imageRowSize;
@@ -292,7 +314,10 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
                 }
                 else {
                     *pImage = (unsigned char) 127 ;
-                    //printf("NOT event%d \n",*pImage);
+                    pImage++;
+                    *pImage = (unsigned char) 127 ;
+                    pImage++;
+                    *pImage = (unsigned char) 127 ;
                     pImage++;
                     
                     //if ((stereo) && (r < 7) && (r >= 16) && (c < 7) && (c >= 16)) {
@@ -331,7 +356,7 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
                     
                 }
                 else {
-                    *pImage = (unsigned char) 0 ;
+                    *pImage = (unsigned char) 10 ;
                     //printf("NOT event%d \n",*pImage);
                     pImage++;
                     
@@ -351,9 +376,12 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
         } // end inner loop
         pImage+=imagePadding;
     }//end outer loop
+
     //printf("end of the function get in mono \n");
     //unmask_events->setLastTimestamp(0);
+    //printf("maxLR %d  maxLC%d \n",maxLeftR, maxLeftC );
 
+    /*
     // cycle after normalisation
     //printf("cycle after the normalisation LEFT:(%f, %f)  RIGHT:(%f,%f) \n", minLeft, maxLeft, minRight, maxRight);
     double* pSalLeft      = saliencyMapLeft;
@@ -457,6 +485,7 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
         pLeft  += padding;
         pRight += padding;
     }
+    */
 }
 
 void eventSelectorThread::forgettingMemory() {
@@ -486,7 +515,7 @@ void eventSelectorThread::forgettingMemory() {
 
 void eventSelectorThread::spatialSelection(eEventQueue *q) {
     int dequeSize = q->size();
-    //printf("eventSelectorThread::spatialSelection: %d events inQueue \n", dequeSize);
+    printf("eventSelectorThread::spatialSelection: %d events inQueue \n", dequeSize);
     unsigned long ts;
     int countLeftPos = 0, countLeftNeg = 0;
     int countRightPos = 0 , countRightNeg =0;
@@ -568,6 +597,8 @@ void eventSelectorThread::spatialSelection(eEventQueue *q) {
 }
 
 void eventSelectorThread::spatialSelection(AER_struct* buffer,int numberOfEvents, double w, unsigned long minCount, unsigned long maxCount) {
+    printf("spatial selection using the AER_struct \n");
+    
     // in the list of unmasked event updates the saliency map and the timestamp map 
     AER_struct* iter = buffer; // generated the iterator of the buffer
     int inputRetinaSize = 32;
@@ -621,8 +652,8 @@ void eventSelectorThread::run() {
     }
     else {
         //printf("eventSelectorThread::run : extracting Bottle! \n");
-        receivedBottle->clear();
-        ebHandler->extractBottle(receivedBottle);  
+        //receivedBottle->clear();
+        //ebHandler->extractBottle(receivedBottle);  
         //printf("received bottle \n");
         //printf("%s \n", receivedBottle->toString().c_str());
     }
@@ -684,12 +715,12 @@ void eventSelectorThread::run() {
     else {
         //printf("unmasking with bottleHandler \n");
         if(receivedBottle->size() != 0) {            
-            delete rxQueue;   // freeing memory for the new queue of events
+            //delete rxQueue;   // freeing memory for the new queue of events
             //printf("TODO : check for leaking \n");
             //rxQueue = new eEventQueue(); // preparing the new queue
-            rxQueue->clear();
+            //rxQueue->clear();
             //printf("unmasking received bottle and creating the queue of event to send \n");
-            unmask_events->unmaskData(receivedBottle, rxQueue); // saving the queue
+            //unmask_events->unmaskData(receivedBottle, rxQueue); // saving the queue
             //printf("bottle of events to send : \n");
         }
     }
@@ -698,10 +729,12 @@ void eventSelectorThread::run() {
         
     //==================== temporal synchronization post unmasking =======================
     
+    /*
     if(verb) {
       verb = false;
       countStop = 0;
     }
+    */
 
         
 #ifdef VERBOSE
@@ -807,7 +840,7 @@ void eventSelectorThread::run() {
     //---- preventer for fixed  addresses ----//
     if(count % 100 == 0) { 
         if(!bottleHandler) {
-            lastleft = unmask_events->getLastTimestamp();
+            lastleft  = unmask_events->getLastTimestamp();
             lastright = unmask_events->getLastTimestampRight();
         }
         else {
@@ -884,10 +917,11 @@ void eventSelectorThread::run() {
         //printf("spatial selection no bottle Handler \n");
         spatialSelection(unmaskedEvents,CHUNKSIZE>>3,w1, minCount, maxCount);
     }
-    else {        
-        if((rxQueue!=0) && (receivedBottle->size() != 0)) {
+    else {
+        //printf("pre-spatial selection \n");
+        if((rxQueue != 0) && (receivedBottle->size() != 0)) {
             //printf("spatial selection  bottle Handler\n");
-            spatialSelection(rxQueue);
+            //spatialSelection(rxQueue);
         }
     }
     
@@ -909,6 +943,7 @@ void eventSelectorThread::run() {
         }
     }
 
+    //printf("\n\n");
 
   }
 }
@@ -934,7 +969,7 @@ void eventSelectorThread::threadRelease() {
     printf("eventSelectorThread release         stopping Threads \n");
     pThread->stop();
     bptA->stop();
-    bptB->stop();
+    bpt4->stop();
     printf("eventSelectorThread release         deleting converter \n");
     delete cfConverter;
     printf("correctly freed memory from the cfCollector \n");

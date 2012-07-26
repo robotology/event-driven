@@ -34,7 +34,7 @@
 #include <list>
 #include <string>
 
-//#define VERBOSE
+#define VERBOSE
 #define BUFFERDIM 1000
 #define CHUNKSIZE 1000
 
@@ -102,12 +102,9 @@ void eventBottleHandler::extractBottle(Bottle* tempBottle) {
     
     //---------------------------------------
     //printf("sem address in extract %08x \n",semBottleBuffer[extractPosition] );
-    //printf("trying the wait method in extract \n");
     semBottleBuffer[extractPosition]->wait();
-    tempBottle->copy(*bufferBottle[extractPosition]);   // copying it in a temporary Bottle*
-    //bufferBottle[extractPosition] = 0;               // setting it to zero as already read Bottle*
+    tempBottle->copy(*bufferBottle[extractPosition]);   // copying it in a temporary Bottle*    
     bufferBottle[extractPosition]->clear();            // removes the content of the bottle.
-    //printf("next istructyion will post the semaphore in extract \n");
     semBottleBuffer[extractPosition]->post();
     //----------------------------------------
     
@@ -122,10 +119,10 @@ void eventBottleHandler::extractBottle(Bottle* tempBottle) {
 
 // reading out from a circular buffer with 2 entry points and wrapping
 void eventBottleHandler::onRead(eventBottle& i_ub) {    
-    valid = true;
     //printf("OnRead %d \n", insertPosition);
+    valid = true;
     
-    //---------------------------------------------   
+    //-------------------------------------------------------------------------------------
     //printf("sem address onRead %08x \n",semBottleBuffer[extractPosition] );
     //printf("trying the wait method in onRead \n");
     semBottleBuffer[insertPosition]->wait();
@@ -133,8 +130,10 @@ void eventBottleHandler::onRead(eventBottle& i_ub) {
         
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() ;      // number of words     
-    //printf("read dimension %d \n", dim);
     receivedBufferSize = dim;
+    //printf("read dimension %d \n", dim);
+
+    //---------------------------------------------------------------------------------------
     //printf("%d dim : %d \n", insertPosition,dim);
     //receivedBottle = new Bottle(*i_ub.get_packet());
     //printf("%s \n ", i_ub.get_packet()->toString().c_str());
@@ -145,9 +144,11 @@ void eventBottleHandler::onRead(eventBottle& i_ub) {
     //receivedBottle = (Bottle*) receivedBuffer;
     //printf("bufferBottle[%d] %08x i_ub.get_packet() %08X \n",insertPosition, bufferBottle[insertPosition], i_ub.get_packet()  );
     //delete bufferBottle[insertPosition];
-    //bufferBottle[insertPosition] = receivedBottle;
+    bufferBottle[insertPosition]->clear();
     //printf("receivedBottle  %08x \n",receivedBottle);        
-    bufferBottle[insertPosition]->copy(*i_ub.get_packet());          
+    bufferBottle[insertPosition]->copy(*i_ub.get_packet());
+    
+    //----------------------------------------------------------------------------------------
 
     //printf("insertPosition %d  \n", insertPosition);
 #ifdef VERBOSE
@@ -168,7 +169,7 @@ void eventBottleHandler::onRead(eventBottle& i_ub) {
     
 
     semBottleBuffer[insertPosition]->post();
-    //----------------------------------------------
+    //------------------------------------------------------------------------------------------
 
     // changing the value of the insert position
     mutex.wait();
