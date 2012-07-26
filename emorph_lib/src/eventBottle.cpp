@@ -149,19 +149,11 @@ bool eventBottle::write(yarp::os::ConnectionWriter& connection) {
 
     //--------------------------------------------------------------------------------------------
     // -------- serialisation of the bottle ---------------------------
-
     unsigned char tmpChar;
     char *p = packetPointer;
 
-    fprintf(fout, "dim %d \n",size_of_the_packet);
-    printf("eventBottle::write:dim %d \n",size_of_the_packet);
-    printf("%08x \n", packetPointer);
-
     for(int i = 0 ; i < size_of_the_packet ; i++) {
-        int value = packet->get(i).asInt();
-
-        //printf("integer value %08x  \n", value);
-        fprintf(fout, "%08X \n", value);
+        int value = packet->get(i).asInt();        
 
         for (int j = 0 ; j < wordDimension ; j++){
             int tmpInt   = (value & 0x000000FF) ;
@@ -171,9 +163,7 @@ bool eventBottle::write(yarp::os::ConnectionWriter& connection) {
             *p = tmpChar;
             p++;
         }
-        //printf("\n");
     }
-    //printf("-------------------------------------\n");
     //----------------------------------------------------------------------------------------------
     
 
@@ -216,7 +206,7 @@ bool eventBottle::read(yarp::os::ConnectionReader& connection) {
     size_of_the_packet = bytes_of_the_packet / wordDimension;      // number of 32 bit word times 4bytes
     connection.expectBlock(packetPointer,bytes_of_the_packet); 
 
-    printf(" eventBottle::read:size_of_the_packet %d bytes_of_the_packet %d \n", size_of_the_packet, bytes_of_the_packet);
+    //printf(" eventBottle::read:size_of_the_packet %d bytes_of_the_packet %d \n", size_of_the_packet, bytes_of_the_packet);
     
     
     // ---------------------------------------------------------------------------------------------------------
@@ -225,7 +215,7 @@ bool eventBottle::read(yarp::os::ConnectionReader& connection) {
     int word;
     char* i_data  = packetPointer;
     //printf("packetPointer %08X \n", packetPointer);
-    packet->clear();
+    //packet->clear();
     
     unsigned char tmpChar;
     for(int i = 0 ; i < bytes_of_the_packet;) {
@@ -240,7 +230,7 @@ bool eventBottle::read(yarp::os::ConnectionReader& connection) {
         }
         packet->addInt(word);
         //printf("= %08x \n", word);
-        //fprintf(fout, "%08X \n", word);
+        
     }
        
     printf(" eventBottle::read: double check %d \n\n",packet->size() );
