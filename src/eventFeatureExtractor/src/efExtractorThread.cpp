@@ -1583,7 +1583,13 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
             // to identify the type of the packet
             // user can rely on the getType() method
             // -------------------------- AE  ----------------------------------
-            if ((*q)[evt]->getType()=="AE") {
+            string strcmpAE("AE");
+            string strcmpTS("TS");
+            string typeRef = q->operator[](evt)->getType();
+            if(typeRef == "null!")
+                printf("efExtractorThread::generateMemory %s \n", typeRef.c_str());
+ 
+            if (typeRef == strcmpAE) {
                 // identified an  address event
                 AddressEvent* ptr=dynamic_cast<AddressEvent*>((*q)[evt]);
                 if(ptr->isValid()) { 
@@ -1852,7 +1858,7 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                 }
             }
             // -------------------------- TS ----------------------------------
-            else if((*q)[evt]->getType()=="TS") {
+            else if(typeRef == strcmpTS) {
                 //printf("timestamp \n");
                 TimeStamp* ptr=dynamic_cast<TimeStamp*>((*q)[evt]);
                 
@@ -1874,6 +1880,8 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
         }    
         //printf("\n");
         iterEvent++;
+        //printf("end of the generate function \n");
+        
     } //end for i
 
     //############################################################################
@@ -1897,6 +1905,9 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
         }
     }
     */
+
+    
+    
 }
 
 void efExtractorThread::run() {   
@@ -1921,7 +1932,7 @@ void efExtractorThread::run() {
             cfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
         }
         else {
-            printf("extracting bottle \n");
+            //printf("extracting bottle \n");
             receivedBottle->clear();
             ebHandler->extractBottle(receivedBottle);  
         }
@@ -1951,11 +1962,11 @@ void efExtractorThread::run() {
         else {
             
             if(receivedBottle->size() != 0) {
-                printf("deleting the rxQueue %08X \n",rxQueue );
+                //printf("deleting the rxQueue %08X \n",rxQueue );
                 //delete rxQueue;   // freeing memory for the new queue of events
                 //rxQueue = new eEventQueue(); // preparing the new queue                
                 rxQueue->clear();
-                printf("created the new rxQueue %08X \n",rxQueue );
+                //printf("created the new rxQueue %08X \n",rxQueue );
                 //printf("unmasking received bottle and creating the queue of event to send \n");
                 unmask_events.unmaskData(receivedBottle, rxQueue); // saving the queue
             }
@@ -1978,13 +1989,13 @@ void efExtractorThread::run() {
             //printf("Generating memory in bottleHandler %d \n",rxQueue->size() );
             //tx = *txQueue;
             if((rxQueue != NULL) && (rxQueue->size() != 0)) {
-                printf("Counted a total of %d %d \n", countEventToSend, rxQueue->size());
+                //printf("Counted a total of %d %d \n", countEventToSend, rxQueue->size());
                 
                 //printf("after deleting \n");
                 //bottleToSend = new Bottle(); //<---- TODO memory leak here.....
                 bottleToSend->clear();
                 
-                printf("generating memory of the events \n");
+                //printf("generating memory of the events \n");
                 generateMemory(rxQueue, bottleToSend, countEventToSend);
 
 
@@ -2138,11 +2149,11 @@ void efExtractorThread::run() {
         */
 
         //printf("sending images \n");
-        if(outFeaLeftPort.getOutputCount()) {
+        if(outFeaLeftPort.getOutputCount() && !(count % 10)) {
             outFeaLeftPort.prepare()  = *leftFeaOutputImage;
             outFeaLeftPort.write();
         }
-        if(outFeaRightPort.getOutputCount()) {
+        if(outFeaRightPort.getOutputCount() && !(count % 10)) {
             outFeaRightPort.prepare() = *rightFeaOutputImage;
             outFeaRightPort.write();
         } 

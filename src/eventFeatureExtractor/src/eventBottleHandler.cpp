@@ -117,7 +117,7 @@ void eventBottleHandler::extractBottle(Bottle* tempBottle) {
 
 // reading out from a circular buffer with 2 entry points and wrapping
 void eventBottleHandler::onRead(eventBottle& i_ub) {    
-    printf("OnRead %d \n", insertPosition);
+    //printf("OnRead %d \n", insertPosition);
     valid = true;
     
     //---------------------------------------------------------------------------------------------------------
@@ -163,7 +163,6 @@ void eventBottleHandler::onRead(eventBottle& i_ub) {
         fprintf(fout,"----------------------------- \n");
     }
     
-
     semBottleBuffer[insertPosition]->post();
     
     //-----------------------------------------------------------------------------------------------------------
