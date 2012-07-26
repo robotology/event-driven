@@ -49,6 +49,7 @@ bool cfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
         printf("--sychPeriod       (int)    : period for synchronization of the variable lastTimestamp\n");
         printf("--stereo                    : if present both left and right events are represented \n ");
         printf("--bottleHanlder             : the user select to send events only through bottle port esclusively  \n");
+        printf("--verbose                   : enable debug savings of events in files");
         printf("\n press CTRL-C to continue \n");
         return true;
     }
@@ -145,6 +146,18 @@ bool cfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
     else {
         printf("set the bottleHandler flag false \n");
         cfThread->setBottleHandler(false);
+    }
+
+    /* 
+     *checking whether the user wants exclusively to send events as bottles
+     */
+    if( rf.check("verbose")) {
+        printf("set the verbose mode for all the components \n");
+        cfThread->setVerbose(true);
+    }
+    else {
+        printf("verbose mode deactivated \n");
+        cfThread->setVerbose(false);
     }
 
     /* 

@@ -26,9 +26,6 @@
 #ifndef _EVENT_BOTTLE_HANDLER_H
 #define _EVENT_BOTTLE_HANDLER_H
 
-
-
-
 #include <iCub/emorph/eventBottle.h>
 
 #include <yarp/os/Network.h>
@@ -38,7 +35,14 @@
 
 class eventBottleHandler:public yarp::os::BufferedPort<eventBottle> {
 public:
+    /**
+     * constructor 
+     */
     eventBottleHandler();
+
+    /**
+     * destructor
+     */
     ~eventBottleHandler();
 
     /**
@@ -106,6 +110,14 @@ public:
      */
     bool isValid(){ return valid; };
 
+    
+    /**
+     * @brief function that sets the verbose mode
+     * @param value flag representing the mode
+     */
+    void setVerbose(bool value) {
+        verbose = value;
+    }
 
     /**
      * @brief function thatset the dimension of the output image
@@ -122,6 +134,7 @@ public:
     void extractBottle(yarp::os::Bottle* receivedBottle);
 
 private:
+    bool verbose;                                               // activates/deactives the verbose mode
     bool valid;
     short state;
     int retinalSize;                                            // dimension of the retina default 128x128

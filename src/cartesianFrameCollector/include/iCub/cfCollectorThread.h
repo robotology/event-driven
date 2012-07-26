@@ -55,6 +55,14 @@ class cfCollectorThread : public yarp::os::RateThread {
 private:
     
     int count;                          // loop counter of the thread
+    int countStop;                       // counter of equal timestamp
+    int countDivider;                    // divider of the count
+    int retinalSize;                     // dimension of the retina device
+    int width, height;                   // dimension of the extended input image (extending)
+    int height_orig, width_orig;         // original dimension of the input and output images
+    int synchPeriod;                     // synchronization period between events and viewer
+    int responseGradient;                // responseGradient parameter
+
     struct timeval tvstart,tvend;
     //struct timespec start_time, stop_time;
     long int Tnow;
@@ -66,13 +74,7 @@ private:
     
     double microseconds;
     double microsecondsPrev;
-    int countStop;                       // counter of equal timestamp
-    int countDivider;                    // divider of the count
-    int retinalSize;                     // dimension of the retina device
-    int width, height;                   // dimension of the extended input image (extending)
-    int height_orig, width_orig;         // original dimension of the input and output images
-    int synchPeriod;                     // synchronization period between events and viewer
-    int responseGradient;                // responseGradient parameter
+    
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPort;            // port whre the output (left) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPortRight;       // port whre the output (right) is sent
     yarp::sig::ImageOf<yarp::sig::PixelRgb>* imageLeft;                                  //image representing the signal on the leftcamera
@@ -88,6 +90,7 @@ private:
     bool asvFlag, dvsFlag;               // flag for operating mode
     bool tristate;                       // option that represent the image with three baselines
     bool bottleHandler;                  // flag that indicates whether events are sent as bottle exclusively
+    bool verbose;                        // flag that indicates whether the verbosity mode is active
     unsigned long minCount;              // minimum timestamp allowed for the current frame
     unsigned long maxCount;              // maximum timestamp allowed for the current frame
     unsigned long minCountRight;
@@ -186,12 +189,21 @@ public:
     void setStereo(bool value) {stereo = value; };
 
     /**
-     * @brief function thatset the dimension of the output image
+     * @brief function that sets the dimension of the output image
      * @param value the dimension in pixels of the retina device
      */
     void setRetinalSize(int value) {
         retinalSize = value;
     }
+
+    /**
+     * @brief function that sets the verbose mode
+     * @param value flag representing the mode
+     */
+    void setVerbose(bool value) {
+        verbose = value;
+    }
+    
 
     /**
      * @brief function that set the flag for the ASV chip

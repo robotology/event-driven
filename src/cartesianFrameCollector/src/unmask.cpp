@@ -395,8 +395,8 @@ void unmask::unmaskData(Bottle* packets) {
         //fprintf(uEvents,"chksum: %s \n", str.c_str());
         fprintf(uEvents,"--- \n");
 #endif
-        packets->pop(); // pop out necessary `till the error in reception found
-        packets->pop(); // pop out necessary `till the error in reception found
+        //packets->pop(); // pop out necessary `till the error in reception found
+        //packets->pop(); // pop out necessary `till the error in reception found
         //printf("size after pop %d \n", packets->size());
         
         //-- decoding the packet -------

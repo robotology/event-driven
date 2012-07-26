@@ -89,6 +89,7 @@ bool cfCollectorThread::threadInit() {
     cfConverter->open(getName("/retina:i").c_str());
 
     ebHandler = new eventBottleHandler();
+    ebHandler->setVerbose(verbose);
     ebHandler->useCallback();
     ebHandler->open(getName("/retinaBottle:i").c_str());
     
@@ -100,7 +101,6 @@ bool cfCollectorThread::threadInit() {
     pThread->setStereo(stereo);
     pThread->setRetinalSize(retinalSize);
     pThread->start();
-    
 
     // allocating memory for up to 10 CLE and 10 HGE
     origHGE = (reprHGE*) malloc(10 * sizeof(reprHGE));
@@ -425,46 +425,30 @@ void cfCollectorThread::run() {
  
   if(!idle) {
     interTimer = Time::now();
-    double interval2 = (interTimer - startTimer)* 1000000;
-    // reads the buffer received
-    //bufferRead = cfConverter->getBuffer();    
+    double interval2 = (interTimer - startTimer)* 1000000;    
+    
     // saves it into a working buffer
     if(!bottleHandler) {
         cfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
     }
     else {
         ebHandler->extractBottle(receivedBottle);      
-        //printf("received Bottle %08x \n ", receivedBottle);
+        //printf("received Bottle %08x dimension %d \n ", receivedBottle, receivedBottle->size());
     }
-    
-    
 
-    //int countValid = prepareUnmasking(bufferCopy, &codecBottle, u);
-    //printf("countValid: %d \n", countValid);
+    // -------------------------------------------------------------------------------------
     
     // saving the buffer into the file
     int num_events = CHUNKSIZE / 8 ;
-    uint32_t* buf2 = (uint32_t*)bufferCopy;
-
-    /*
-#ifdef VERBOSE
-    fprintf(fout,"##############");
-    for (int evt = 0; evt < num_events; evt++) {
-        unsigned long blob      = buf2[2 * evt];
-        unsigned long t         = buf2[2 * evt + 1];
-        fprintf(fout,"0x%08x 0x%08x \n",blob, t);
-    }
-#endif
-    */
-    
-
+    uint32_t* buf2 = (uint32_t*)bufferCopy;    
     //getting the time
     endTimer = Time::now();
     double interval  = (endTimer - startTimer) * 1000000; //interval in us
-    //double interval  = 5 * 1000;
-    double procInter = interval -interval2;
-    //printf("procInter %f \n", procInter);
+    procInter = interval -interval2;
     startTimer = Time::now();
+    
+    //-------------------------------------------------------------------------------------
+    
 
 #ifdef WRAP_COS
     //check for wrapping of the left and right timestamp
@@ -489,6 +473,8 @@ void cfCollectorThread::run() {
     }
 #endif
 
+    //--------------------------------------------------------------------------------------
+
     // extract a chunk/unmask the chunk
 #ifdef VERBOSE
     if(receivedBottle!=0){
@@ -499,13 +485,13 @@ void cfCollectorThread::run() {
         for (int i=0; i < receivedBottle->size(); i++) {
             fprintf(fout,"%08X \n", receivedBottle->get(i).asInt());
             //printf("%08X \n", receivedBottle->get(i).asInt());
-            int chksum = receivedBottle->get(i).asInt() % 255;
-                str[i] = (char) chksum;
         }
-        fprintf(fout,"chksum: %s \n", str.c_str());
         fprintf(fout,"----------------------------- \n");            
     }
-#endif  
+#endif
+
+    //-------------------------------------------------------------------------------------
+    
     if(!bottleHandler) {
         unmask_events->unmaskData(bufferCopy,CHUNKSIZE,verb);
     }
@@ -517,11 +503,13 @@ void cfCollectorThread::run() {
             unmask_events->unmaskData(receivedBottle);
         }        
     }
-
     if(verb) {
       verb = false;
       countStop = 0;
     }
+
+   
+    //-------------------------------------------------------------------------------------
     
     //getting the time between two threads
     gettimeofday(&tvend, NULL);
@@ -530,14 +518,7 @@ void cfCollectorThread::run() {
 	    - (tvstart.tv_sec * 1000000 + tvstart.tv_usec));
     //printf("timeofday>%ld\n",Tnow );
     gettimeofday(&tvstart, NULL);       
-        
-    /*if(true){
-      //printf("Saving in file \n");
-      fprintf(raw,"%08X \n",lc); 
-      //fwrite(&sz, sizeof(int), 1, raw);
-      //fwrite(buffer, 1, sz, raw);
-    }*/
-    
+
     //synchronising the threads at the connection time
     if ((cfConverter->isValid())&&(!synchronised)) {
         printf("Sychronising ");
@@ -602,6 +583,7 @@ void cfCollectorThread::run() {
     maxCount      =  minCount      + (interval + 1) * INTERVFACTOR* (dim_window);
     maxCountRight =  minCountRight + (interval + 1) * INTERVFACTOR* (dim_window);
     
+    // --------------------------------------------------------------------------------------------------------------
     
     //---- preventer for fixed  addresses ----//
     if(count % 10 == 0) { 
@@ -640,9 +622,7 @@ void cfCollectorThread::run() {
         }
         lcprev = lc;
         rcprev = rc;
-    }
-    
-    
+    }    
     
     //resetting time stamps at overflow
     if (countStop == 1) {
@@ -670,18 +650,20 @@ void cfCollectorThread::run() {
     
     
     // ----------- preventer end    --------------------- //
+    //--------------------------------------------------------------------------------------------------------
     
     getMonoImage(imageLeft,minCount,maxCount,1);
     if(imageLeft != 0) {
       pThread->copyLeft(imageLeft);
     }
-    
     if(stereo) {
         getMonoImage(imageRight,minCountRight,maxCountRight,0);
         if(imageRight != 0) {
             pThread->copyRight(imageRight);
         }
     }
+
+
   }
 }
 
