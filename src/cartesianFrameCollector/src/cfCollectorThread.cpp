@@ -444,7 +444,7 @@ void cfCollectorThread::run() {
     //getting the time
     endTimer = Time::now();
     double interval  = (endTimer - startTimer) * 1000000; //interval in us
-    procInter = interval -interval2;
+    double procInter = interval -interval2;
     startTimer = Time::now();
     
     //-------------------------------------------------------------------------------------
