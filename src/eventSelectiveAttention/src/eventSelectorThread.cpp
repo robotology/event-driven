@@ -246,23 +246,23 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
     
     unsigned long timestampactual;
     unsigned long* pTime   = timestampMap41Left;
-    double* pBuffer        = featureMap41Left;
+    double* pMap41Left     = featureMap41Left;
+    double* pBuffer        = saliencyMapLeft;
     for(int r = 0 ; r < retinalSize ; r++){
         for(int c = 0 ; c < retinalSize ; c++) {
             
-            // combining the feature map
-            // ....
+            // combining the feature map and normalisation
+            
+            *pBuffer = (*pMap41Left + bpt4->getMinLeft()) / (bpt4->getMaxLeft() - bpt4->getMinLeft()) ;
 
-            //drawing the retina and the rest of the image separately
-            //unsigned int value = *pBuffer;
-            //value = 1;
 
             double left_double  = saliencyMapLeft [r * retinalSize + c];
             double right_double = saliencyMapRight[r * retinalSize + c];
+            left_double = featureMap41Left[r * retinalSize + c];            
 
-            left_double = featureMap41Left[r * retinalSize + c];
+            //--------------- convertion  -------------------------------
             left_double = *pBuffer;
-            value = left_double * 127;
+            value = left_double * 255;
             
 
             // -------------- max and min of left and right ----------------------
@@ -305,14 +305,14 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
 
                 //if(minCount>0 && maxCount > 0 && timestampactual>0)
                 //printf("actualTS%ld val%ld max%ld min%ld  are\n",timestampactual,timestampactual * COUNTERRATIO,minCount,maxCount);
-                if ( true
-                    /*((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)*/
+                if ( 
+                    ((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)
                     ) {   //(timestampactual != lasttimestamp)
-                    *pImage = (unsigned char) (127 + value);
+                    *pImage = (unsigned char) (value);
                     pImage++;
-                    *pImage = (unsigned char) (127 + value);
+                    *pImage = (unsigned char) (value);
                     pImage++;
-                    *pImage = (unsigned char) (127 + value);
+                    *pImage = (unsigned char) (value);
                     pImage++;
                     
                     
@@ -327,11 +327,11 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
                     
                 }
                 else {
-                    *pImage = (unsigned char) 127 ;
+                    *pImage = (unsigned char) 0 ;
                     pImage++;
-                    *pImage = (unsigned char) 127 ;
+                    *pImage = (unsigned char) 0 ;
                     pImage++;
-                    *pImage = (unsigned char) 127 ;
+                    *pImage = (unsigned char) 0 ;
                     pImage++;
                     
                     //if ((stereo) && (r < 7) && (r >= 16) && (c < 7) && (c >= 16)) {
@@ -345,6 +345,7 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
                     
                 }
                 pBuffer++;
+                pMap41Left++;
                 pTime++;
             }
             // branch !tristateView

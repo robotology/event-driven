@@ -54,6 +54,11 @@ bottleProcessorThread::bottleProcessorThread() : RateThread(THRATE) {
     retinalSize      = 128;  //default value before setting 
     saliencySize     = 128;  //default dimension of the saliency map
     lasttimestamp    = 0;
+    maxLeft          = -1.0;
+    minLeft          = 1.0;
+    maxRight         = -1.0;
+    minRight         = 1.0;
+
     bottleHandler = true;
     synchronised = false;
     greaterHalf  = false;
@@ -446,7 +451,7 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                     //ts  = iterEvent->ts;
                     //pol = iterEvent->pol;
                     //cam = iterEvent->cam;
-                    int cartX     = retinalSize - ptr->getX();
+                    int cartX     = ptr->getX();
                     int cartY     = ptr->getY();
                     int camera    = ptr->getChannel();
                     int polarity  = ptr->getPolarity();
@@ -473,13 +478,20 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                                 for (int yi = 0; yi < scaleFactor; yi++) {
                                     //saliencyMapLeft [(xpos * scaleFactor + xi) * 3   + (ypos + yi) * saliencySize * 3] +=  INCR_RESPONSE;
                                     mutexFeaLeft.wait();
-                                    double* pFea = featureMapLeft  + (ypos + yi) * saliencySize + (xpos + xi);
+                                    double* pFea = &featureMapLeft[(ypos + yi) * saliencySize + (xpos + xi)];
                                     *pFea += INCR_RESPONSE;
+                                    //featureMapLeft[(ypos + yi) * saliencySize + (xpos + xi)] += INCR_RESPONSE;
                                     if (*pFea > maxLeft) {
                                         mutexMinMaxLeft.wait();
                                         maxLeft = *pFea;
                                         mutexMinMaxLeft.post();
                                     }
+                                    if (*pFea < minLeft) {
+                                        mutexMinMaxLeft.wait();
+                                        minLeft = *pFea;
+                                        mutexMinMaxLeft.post();
+                                    }
+                                    
                                     mutexFeaLeft.post();
                                     countLeftPos++;
                                 }
@@ -490,13 +502,20 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                                 for (int yi = 0; yi < scaleFactor; yi++) {
                                     //saliencyMapLeft [(xpos * scaleFactor + xi) * 3   + (ypos + yi) * saliencySize * 3 ] -=  INCR_RESPONSE;
                                     mutexFeaLeft.wait();
-                                    double * pFea = featureMapLeft + (ypos + yi) * saliencySize + (xpos + xi);
+                                    double* pFea = &featureMapLeft[(ypos + yi) * saliencySize + (xpos + xi)];
                                     *pFea -= INCR_RESPONSE;
+                                    //featureMapLeft[(ypos + yi) * saliencySize + (xpos + xi)] -= INCR_RESPONSE;
+                                     if (*pFea > maxLeft) {
+                                        mutexMinMaxLeft.wait();
+                                        maxLeft = *pFea;
+                                        mutexMinMaxLeft.post();
+                                    }
                                     if (*pFea < minLeft) {
                                         mutexMinMaxLeft.wait();
                                         minLeft = *pFea;
                                         mutexMinMaxLeft.post();
                                     }
+                                    
                                     mutexFeaLeft.post();
                                     countLeftNeg++;
                                 }
@@ -555,7 +574,8 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                 *lasttimestamp = ts;
                 mutexLastTimestamp.post();
                
-                forgettingMemory();
+                //forgettingMemory();
+
                 //if(VERBOSE) {
                 //    fprintf(fdebug, " %08x  \n", (unsigned int) ts);
                 //}                

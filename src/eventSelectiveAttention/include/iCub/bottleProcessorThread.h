@@ -193,10 +193,14 @@ public:
     //void getMonoImage(yarp::sig::ImageOf<yarp::sig::PixelMono>* image, unsigned long minCount,unsigned long maxCount, bool camera);
 
     /**
-     * @brief function that describes whether the synchronization is stereo
-     * @param value boolean value to assign to the variable
+     * return the minvValue measured
      */
-    void setStereo(bool value) {stereo = value; };
+    double getMinLeft() {mutexMinMaxLeft.wait(); double ret = minLeft; mutexMinMaxLeft.post(); return ret; };
+
+    /**
+     * return the minvValue measured
+     */
+    double getMaxLeft() {mutexMinMaxLeft.wait(); double ret = maxLeft; mutexMinMaxLeft.post(); return ret; };
 
      /**
      * @brief function that returns the dimension of the feature map
@@ -213,6 +217,12 @@ public:
     void setRetinalSize(int value) {
         retinalSize = value;
     }
+
+    /**
+     * @brief function that describes whether the synchronization is stereo
+     * @param value boolean value to assign to the variable
+     */
+    void setStereo(bool value) {stereo = value; };
 
     /** 
      * @brief function that indicates the dimension of saliency map for scale factor
