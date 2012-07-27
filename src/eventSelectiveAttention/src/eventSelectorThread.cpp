@@ -183,7 +183,7 @@ bool eventSelectorThread::threadInit() {
     bpt41->setRetinalSize(32);
     bpt41->setName(getName("/btp41"));
     //bpt4->setSaliencyMap(saliencyMapLeft, saliencyMapRight, timestampMapLeft, timestampMapRight);    
-    bpt41->start();
+    //bpt41->start();
 
     receivedBottle = new Bottle();
     unmask_events  = new unmask(32);
