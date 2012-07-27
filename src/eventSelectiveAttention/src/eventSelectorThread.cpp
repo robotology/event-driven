@@ -229,8 +229,8 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
     // determining whether the camera is left or right
     //int* pBuffer = unmask_events->getEventBuffer(camera);
     //unsigned long* pTime   = unmask_events->getTimeBuffer(camera);
-    int* pBuffer           = featureMap;
-    unsigned long* pTime   = timestampMap;
+    
+    
     
     //printf("timestamp: min %d    max %d  \n", minCount, maxCount);
     //pBuffer += retinalSize * retinalSize - 1;
@@ -244,13 +244,14 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
     bpt4->copyFeatureMapLeft(featureMap41Left);
     bpt4->copyTimestampMapLeft(timestampMap41Left);
     
+    unsigned long timestampactual;
+    unsigned long* pTime   = timestampMap41Left;
+    double* pBuffer        = featureMap41Left;
     for(int r = 0 ; r < retinalSize ; r++){
         for(int c = 0 ; c < retinalSize ; c++) {
             
-
-
             // combining the feature map
-
+            // ....
 
             //drawing the retina and the rest of the image separately
             //unsigned int value = *pBuffer;
@@ -259,7 +260,8 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
             double left_double  = saliencyMapLeft [r * retinalSize + c];
             double right_double = saliencyMapRight[r * retinalSize + c];
 
-            left_double =featureMap41Left[r * retinalSize + c];
+            left_double = featureMap41Left[r * retinalSize + c];
+            left_double = *pBuffer;
             value = left_double * 127;
             
 
@@ -286,7 +288,7 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
             }        
 
             //--------------- temporal information ------------------------------          
-            unsigned long timestampactual = *pTime;
+            timestampactual = *pTime;
 
 
             //----------------------------------------------------------------------------------------
@@ -303,14 +305,14 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
 
                 //if(minCount>0 && maxCount > 0 && timestampactual>0)
                 //printf("actualTS%ld val%ld max%ld min%ld  are\n",timestampactual,timestampactual * COUNTERRATIO,minCount,maxCount);
-                if (
-                    ((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)
+                if ( true
+                    /*((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)*/
                     ) {   //(timestampactual != lasttimestamp)
-                    *pImage = (unsigned char) (127 + value );
+                    *pImage = (unsigned char) (127 + value);
                     pImage++;
-                    *pImage = (unsigned char) (127 + value );
+                    *pImage = (unsigned char) (127 + value);
                     pImage++;
-                    *pImage = (unsigned char) (127 + value );
+                    *pImage = (unsigned char) (127 + value);
                     pImage++;
                     
                     
@@ -386,7 +388,7 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
                 pTime++;
             } // end !tristate            
         } // end inner loop
-        pImage+=imagePadding;
+        pImage += imagePadding;
     }//end outer loop
 
     //printf("end of the function get in mono \n");

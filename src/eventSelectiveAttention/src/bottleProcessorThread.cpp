@@ -46,8 +46,8 @@ using namespace std;
 #define synch_time 1
 
 #define VERBOSE
-#define INCR_RESPONSE 50
-#define DECR_RESPONSE 50
+#define INCR_RESPONSE 0.01
+#define DECR_RESPONSE 0.01
 
 bottleProcessorThread::bottleProcessorThread() : RateThread(THRATE) {
     responseGradient = 127;
@@ -138,15 +138,17 @@ bool bottleProcessorThread::threadInit() {
     //saliencyMapRight = (double*) malloc(retinalSize * retinalSize * sizeof(double));
     //memset(saliencyMapRight,0, retinalSize * retinalSize * sizeof(double));
     
-    featureMapLeft = (double*) malloc(retinalSize * retinalSize * sizeof(double));
-    featureMapRight = (double*) malloc(retinalSize * retinalSize * sizeof(double));
-    memset(featureMapLeft ,0, retinalSize * retinalSize * sizeof(double));
-    memset(featureMapRight,0, retinalSize * retinalSize * sizeof(double));
+    
+    printf("allocating memory for maps %d %d \n", saliencySize, retinalSize);
+    featureMapLeft  = (double*) malloc(saliencySize * saliencySize * sizeof(double));
+    featureMapRight = (double*) malloc(saliencySize * saliencySize * sizeof(double));
+    memset(featureMapLeft ,0, saliencySize * saliencySize * sizeof(double));
+    memset(featureMapRight,0, saliencySize * saliencySize * sizeof(double));
     
     //timestampMap = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
     //memset(timestampMap,0, retinalSize * retinalSize * sizeof(unsigned long));
-    //timestampMapLeft = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
-    //memset(timestampMapLeft,0, retinalSize * retinalSize * sizeof(unsigned long));
+    timestampMapLeft = (unsigned long*) malloc(saliencySize * saliencySize * sizeof(unsigned long) );
+    memset(timestampMapLeft,0, saliencySize * saliencySize * sizeof(unsigned long));
     //timestampMapRight = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
     //memset(timestampMapRight,0, retinalSize * retinalSize * sizeof(unsigned long));
 
@@ -451,6 +453,9 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                     
                     int xpos      = cartX * scaleFactor;
                     int ypos      = cartY * scaleFactor;
+                    
+                    //printf("cartX %d cartY %d xpos %d ypos %d \n", cartX, cartY, xpos, ypos);
+
 
 #ifdef VERBOSE
                     //printf(" address event %s \n",ptr->getContent().toString().c_str());
@@ -459,20 +464,23 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                     //fprintf(fout,"%s \n",ptr->getContent().toString().c_str());
                     fprintf(fout,"cartx %d  carty %d \n", cartX, cartY);
 #endif
-                    
-                    xpos = 10;
-                    ypos = 10;
-                    camera = 0;
-                    polarity = 1;
 
-                    if(camera == 0) {
-                        
+                    if(camera == 0) {                        
                         //printf("saliencyMapLeft in %d %d changed (pol:%d)  \n", cartX, cartY, polarity);
                         if(polarity == 0) {
+                           
                             for ( int xi = 0; xi < scaleFactor; xi++) {
                                 for (int yi = 0; yi < scaleFactor; yi++) {
                                     //saliencyMapLeft [(xpos * scaleFactor + xi) * 3   + (ypos + yi) * saliencySize * 3] +=  INCR_RESPONSE;
-                                    featureMapLeft [(xpos * scaleFactor + xi)    + (ypos + yi) * saliencySize ] ==  100.0;
+                                    mutexFeaLeft.wait();
+                                    double* pFea = featureMapLeft  + (ypos + yi) * saliencySize + (xpos + xi);
+                                    *pFea += INCR_RESPONSE;
+                                    if (*pFea > maxLeft) {
+                                        mutexMinMaxLeft.wait();
+                                        maxLeft = *pFea;
+                                        mutexMinMaxLeft.post();
+                                    }
+                                    mutexFeaLeft.post();
                                     countLeftPos++;
                                 }
                             }
@@ -481,7 +489,15 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                             for ( int xi = 0; xi < scaleFactor; xi++) {
                                 for (int yi = 0; yi < scaleFactor; yi++) {
                                     //saliencyMapLeft [(xpos * scaleFactor + xi) * 3   + (ypos + yi) * saliencySize * 3 ] -=  INCR_RESPONSE;
-                                    featureMapLeft [(xpos * scaleFactor + xi)    + (ypos + yi) * saliencySize  ] = 100;
+                                    mutexFeaLeft.wait();
+                                    double * pFea = featureMapLeft + (ypos + yi) * saliencySize + (xpos + xi);
+                                    *pFea -= INCR_RESPONSE;
+                                    if (*pFea < minLeft) {
+                                        mutexMinMaxLeft.wait();
+                                        minLeft = *pFea;
+                                        mutexMinMaxLeft.post();
+                                    }
+                                    mutexFeaLeft.post();
                                     countLeftNeg++;
                                 }
                             }
@@ -489,14 +505,15 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                         //---------------
                         for ( int xi = 0; xi < scaleFactor; xi++) {
                             for (int yi = 0; yi < scaleFactor; yi++) {
-                                timestampMapLeft[ypos * saliencySize + xpos] = ts;
+                                mutexTimeLeft.wait();
+                                timestampMapLeft[(ypos + yi) * saliencySize + (xpos + xi)] = ts;
+                                mutexTimeLeft.post();
                             }
                         }
                         
                     }
                     else {
-                        //printf("saliencyMapRight in %d %d changed (pol:%d) \n", cartX, cartY, polarity);
-                        
+                        //printf("saliencyMapRight in %d %d changed (pol:%d) \n", cartX, cartY, polarity);                       
                         if(polarity == 0) {
                             for ( int xi = 0; xi < scaleFactor; xi++) {
                                 for (int yi = 0; yi < scaleFactor; yi++) {
@@ -538,7 +555,7 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                 *lasttimestamp = ts;
                 mutexLastTimestamp.post();
                
-                //forgettingMemory();
+                forgettingMemory();
                 //if(VERBOSE) {
                 //    fprintf(fdebug, " %08x  \n", (unsigned int) ts);
                 //}                
@@ -897,21 +914,27 @@ void bottleProcessorThread::run() {
 }
 
 void bottleProcessorThread::copyFeatureMapLeft(double *pointer) {
-    double* pFea = featureMapLeft;
     mutexFeaLeft.wait();
-    for (int i = 0; i < saliencySize; i++) {
+    if(0 == featureMapLeft) {
+        return;
+    }
+    double* pFea = featureMapLeft;
+    for (int i = 0; i < saliencySize * saliencySize; i++) {
         *pointer = *pFea;
-        pointer++; pFea++;
+        pointer++;  pFea++;
     }    
     mutexFeaLeft.post();
 }
 
 void bottleProcessorThread::copyTimestampMapLeft(unsigned long *pointer) {
-    unsigned long* pTime = timestampMapLeft;
     mutexTimeLeft.wait();
-    for (int i = 0; i < saliencySize; i++) {
+    if(0 == timestampMapLeft) {
+        return;
+    }
+    unsigned long* pTime = timestampMapLeft;
+    for (int i = 0; i < saliencySize * saliencySize; i++) {
         *pointer = *pTime;
-        pointer++; pTime++;
+        pointer++;  pTime++;
     }    
     mutexTimeLeft.post();
 }
@@ -924,6 +947,9 @@ void bottleProcessorThread::threadRelease() {
     //free(saliencyMap);
     free(featureMapLeft);
     free(featureMapRight);
+    
+    timestampMapLeft = (unsigned long*) malloc(saliencySize * saliencySize * sizeof(unsigned long) );
+    free(timestampMapLeft);
     
     free(timestampMap); 
     free(unmaskedEvents); 

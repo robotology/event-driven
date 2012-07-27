@@ -103,6 +103,8 @@ private:
     double endTimer;
     yarp::os::Semaphore mutexFeaLeft;      // semaphore thar regulates the access to the featuremap (left)
     yarp::os::Semaphore mutexFeaRight;     // semaphore thar regulates the access to the featuremap (right)
+    yarp::os::Semaphore mutexMinMaxLeft;   // semaphore thar regulates the access to the min and max (left)
+    yarp::os::Semaphore mutexMinMaxRight;  // semaphore thar regulates the access to the min and max (right)
     yarp::os::Semaphore mutexTimeLeft;     // semaphore thar regulates the access to the timestamp (left)
     yarp::os::Semaphore mutexTimeRight;    // semaphore thar regulates the access to the timestamp (right)
     
@@ -121,6 +123,8 @@ private:
     
     double* saliencyMapLeft;               // saliencyMap of the left camera
     double* saliencyMapRight;              // saliencyMap of the right camera
+    double maxLeft,minLeft;
+    double maxRight, minRight;
     unsigned char* saliencyMap;            // saliencyMap collection of responses in different feature maps
     double* featureMapLeft;                // map of the feature for the left image; always 128 x 128
     double* featureMapRight;               // map of the feature for the right image; always 128 x 128
