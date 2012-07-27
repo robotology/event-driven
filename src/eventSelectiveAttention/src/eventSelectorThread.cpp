@@ -137,16 +137,19 @@ bool eventSelectorThread::threadInit() {
     memset(saliencyMapLeft,0, retinalSize * retinalSize * sizeof(double));
     saliencyMapRight = (double*) malloc(retinalSize * retinalSize * sizeof(double));
     memset(saliencyMapRight,0, retinalSize * retinalSize * sizeof(double));
+    featureMap41Left  = (double*) malloc(retinalSize * retinalSize * sizeof(double));
+    memset(featureMap41Left,0, retinalSize * retinalSize * sizeof(double));
+
     
     featureMap = (int*) malloc(retinalSize * retinalSize * sizeof(int));
     memset(featureMap,0, retinalSize * retinalSize * sizeof(int));
     
     timestampMap = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
     memset(timestampMap,0, retinalSize * retinalSize * sizeof(unsigned long));
-    timestampMapLeft = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
-    memset(timestampMapLeft,0, retinalSize * retinalSize * sizeof(unsigned long));
-    timestampMapRight = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
-    memset(timestampMapRight,0, retinalSize * retinalSize * sizeof(unsigned long));
+    timestampMap41Left = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
+    memset(timestampMap41Left,0, retinalSize * retinalSize * sizeof(unsigned long));
+    timestampMap41Right = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
+    memset(timestampMap41Right,0, retinalSize * retinalSize * sizeof(unsigned long));
 
     unmaskedEvents = (AER_struct*) malloc (CHUNKSIZE * sizeof(int));
     memset(unmaskedEvents, 0, CHUNKSIZE * sizeof(int));
@@ -156,7 +159,7 @@ bool eventSelectorThread::threadInit() {
 
     bptA = new bottleProcessorThread();
     bptA->setLastTimestamp(lasttimestamp);
-    bptA->setSaliencyMap(saliencyMapLeft, saliencyMapRight, timestampMapLeft, timestampMapRight);
+    //bptA->setSaliencyMap(saliencyMapLeft, saliencyMapRight, timestampMapLeft, timestampMapRight);
     bptA->setName(getName("/btpA"));
     bptA->start();
 
@@ -165,7 +168,7 @@ bool eventSelectorThread::threadInit() {
     bpt4->setSaliencySize(retinalSize);
     bpt4->setRetinalSize(32);
     bpt4->setName(getName("/btp4"));
-    bpt4->setSaliencyMap(saliencyMapLeft, saliencyMapRight, timestampMapLeft, timestampMapRight);    
+    //bpt4->setSaliencyMap(saliencyMapLeft, saliencyMapRight, timestampMapLeft, timestampMapRight);    
     bpt4->start();
 
 
@@ -236,9 +239,10 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
     double maxResponseLeft = 0, maxResponseRight = 0;
     int maxLeftR, maxLeftC, maxRightR, maxRightC;
     unsigned int value;
-    double* tmpFeaMap;
+   
     // copying the feature map for any bottleProcessor connected to the input flow of events
-    bpt4->copyFeatureMapLeft(tmpFeaMap);
+    bpt4->copyFeatureMapLeft(featureMap41Left);
+    bpt4->copyTimestampMapLeft(timestampMap41Left);
     
     for(int r = 0 ; r < retinalSize ; r++){
         for(int c = 0 ; c < retinalSize ; c++) {
@@ -255,7 +259,7 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
             double left_double  = saliencyMapLeft [r * retinalSize + c];
             double right_double = saliencyMapRight[r * retinalSize + c];
 
-            left_double = tmpFeaMap[r * retinalSize + c];
+            left_double =featureMap41Left[r * retinalSize + c];
             value = left_double * 127;
             
 
@@ -280,16 +284,10 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
                 maxResponseRight = abs(maxRight);
                 maxRightR = r; maxRightC = c;
             }        
-            //-------------------------------------------------------------------
-            
+
+            //--------------- temporal information ------------------------------          
             unsigned long timestampactual = *pTime;
-            //bool tristateView = false;
-            if((r == 10) && (c == 10)) {
-                left_double = 100;
-                value = 100;
-                timestampactual =  (minCount + 1) / COUNTERRATIO;
-                //printf("%lu \n", timestampactual);
-            }
+
 
             //----------------------------------------------------------------------------------------
             if(tristate) {
@@ -562,7 +560,7 @@ void eventSelectorThread::spatialSelection(eEventQueue *q) {
                             saliencyMapLeft [cartX * retinalSize + cartY] -=  INCR_RESPONSE;
                             countLeftNeg++;
                         }
-                        timestampMapLeft[cartX * retinalSize + cartY] = ts;
+                        timestampMap41Left[cartX * retinalSize + cartY] = ts;
                     }
                     else {
                         //printf("saliencyMapRight in %d %d changed (pol:%d) \n", cartX, cartY, polarity);
@@ -576,7 +574,7 @@ void eventSelectorThread::spatialSelection(eEventQueue *q) {
                             saliencyMapRight [cartX * retinalSize + cartY] -= INCR_RESPONSE; 
                             countRightNeg++;
                         }
-                        timestampMapRight[cartX * retinalSize + cartY] = ts;
+                        timestampMap41Right[cartX * retinalSize + cartY] = ts;
                         
                     }                                     
                 } //end if (ptr->isValid()) 
@@ -967,10 +965,14 @@ void eventSelectorThread::threadRelease() {
     fclose(fout);
     printf("eventSelectorThread release:freeing bufferCopy \n");
 
-    //free(saliencyMap);
+    free(saliencyMapLeft);
+    free(saliencyMapRight);
+    free(featureMap41Left);    
     free(featureMap);
-    free(timestampMap); 
+    free(timestampMap41Left); 
+    free(timestampMap41Right); 
     free(unmaskedEvents); 
+
     printf("eventSelectorThread release:closing ports \n");
     outPort.close();
     outPortRight.close();

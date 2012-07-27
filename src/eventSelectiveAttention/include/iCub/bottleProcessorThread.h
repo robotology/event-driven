@@ -101,7 +101,11 @@ private:
     double startTimer;
     double interTimer;
     double endTimer;
-    yarp::os::Semaphore mutex;              // semaphore thar regulates the access to the buffer resource
+    yarp::os::Semaphore mutexFeaLeft;      // semaphore thar regulates the access to the featuremap (left)
+    yarp::os::Semaphore mutexFeaRight;     // semaphore thar regulates the access to the featuremap (right)
+    yarp::os::Semaphore mutexTimeLeft;     // semaphore thar regulates the access to the timestamp (left)
+    yarp::os::Semaphore mutexTimeRight;    // semaphore thar regulates the access to the timestamp (right)
+    
     yarp::os::Semaphore mutexLastTimestamp; // mutex for the last timestamp
  
     clock_t endTime,startTime;
@@ -308,6 +312,11 @@ public:
      * function that copies outside the content of the feature map using semaphores
      */
     void copyFeatureMapLeft(double *pointer);
+    
+    /**
+     * function that copies timestamp map left
+     */
+    void copyTimestampMapLeft(unsigned long *pointer);
 
 };
 

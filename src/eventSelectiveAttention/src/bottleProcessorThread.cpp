@@ -898,14 +898,22 @@ void bottleProcessorThread::run() {
 
 void bottleProcessorThread::copyFeatureMapLeft(double *pointer) {
     double* pFea = featureMapLeft;
-    mutex.wait();
-    
+    mutexFeaLeft.wait();
     for (int i = 0; i < saliencySize; i++) {
         *pointer = *pFea;
         pointer++; pFea++;
     }    
+    mutexFeaLeft.post();
+}
 
-    mutex.post();
+void bottleProcessorThread::copyTimestampMapLeft(unsigned long *pointer) {
+    unsigned long* pTime = timestampMapLeft;
+    mutexTimeLeft.wait();
+    for (int i = 0; i < saliencySize; i++) {
+        *pointer = *pTime;
+        pointer++; pTime++;
+    }    
+    mutexTimeLeft.post();
 }
 
 void bottleProcessorThread::threadRelease() {
