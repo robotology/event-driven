@@ -28,7 +28,7 @@
 
 #define SPDerivative_WNDW_SZ 20
 
-#define POLARITY_WEIGHT  1
+#define POLARITY_WEIGHT  50
 
 // For ICub Sensor
 #define RELIABLE_EVENT_THRSHLD 12500// 93750 // 12500 //   31250 //  18750 // 6250 // 3125 //

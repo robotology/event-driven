@@ -63,7 +63,7 @@ void LKLocalFlow::calVelocity(unsigned long  tsDiff, MyMatrix<POLARITY_TYPE>* It
                                              It->operator ()(rowIdx -neighborRadius + rCntr,
                                                  clmnIdx -neighborRadius + cCntr ); // calculate It
 
-           b(rCntr*windowLength + cCntr,0) = b(rCntr*windowLength + cCntr,0) / ( tsDiff /*+ .00001*/) ;
+///           b(rCntr*windowLength + cCntr,0) = b(rCntr*windowLength + cCntr,0) / ( tsDiff /*+ .00001*/) ;
         } // end for on columns
     }//end for on rows
 

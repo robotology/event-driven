@@ -1601,7 +1601,7 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                     int camera    = ptr->getChannel();
                     int polarity  = ptr->getPolarity();
                     
-                    if(VERBOSE) {
+                    if(VERBOSE & false) {
                         fprintf(fdebug, " %d %d %d %d \n",cartX, cartY, camera, polarity );
                     }
                     
@@ -1865,7 +1865,7 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                 //identified an time stamp event
                 ts = (unsigned int) ptr->getStamp();
                 //printf("timestamp \n")
-                if(VERBOSE) {
+                if(VERBOSE & false) {
                     fprintf(fdebug, " %08x  \n", (unsigned int) ts);
                 }
                 
@@ -2124,6 +2124,12 @@ void efExtractorThread::run() {
                 printf("after encoding events in the packets %d \n", bottleToSend->size() );
                 //Bottle b;
                 //b.copy(*bottleToSend);
+
+                if(VERBOSE) {
+                    for(int i = 0; i< bottleToSend->size(); i++) {
+                        fprintf(fdebug,"# %08x \n", bottleToSend->get(i).asInt());
+                    }
+                }
                 
                 eventBottle data2send(bottleToSend);         
                 eventBottle& tmp = outBottlePort.prepare();

@@ -234,7 +234,7 @@ void velocityExtractorThread::run() {
                     if(histogram[pos] > maxFiringRate) {
                         maxReached = true;
                         //printf("max reached for %d \n", pos * 10);
-                        velWTA_direction = pos * 10;
+                        velWTA_direction = pos * (360 / numberOfAngles);
                         histogram[pos] = 0;
                     }
                 }   

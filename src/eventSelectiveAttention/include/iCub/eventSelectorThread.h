@@ -114,11 +114,15 @@ private:
     double* saliencyMapRight;            // saliencyMap of the right camera
     double* featureMap41Left;            // 1 feature map from the type 4 (left):
     double* featureMap41Right;           // 1 feature map from the type 4 (right);
+    double* featureMapA1Left;            // 1 feature map from the type A (left):
+    double* featureMapA1Right;           // 1 feature map from the type A (right);
     unsigned char* saliencyMap;          // saliencyMap collection of responses in different feature maps
     int* featureMap;                     // map of the feature;
     unsigned long* timestampMap;         // timestamp reference for the map of the feature 
     unsigned long* timestampMap41Left;   // pointer to the copy of the timestamp map (41-Left)
     unsigned long* timestampMap41Right;  // pointer to the copy of the timestamp map (41-Right)
+    unsigned long* timestampMapA1Left;   // pointer to the copy of the timestamp map (A1-Left)
+    unsigned long* timestampMapA1Right;  // pointer to the copy of the timestamp map (A1-Right)
     AER_struct* unmaskedEvents;          // trained of unmasked events
     
     plotterThread* pThread;              // plotterThread for the trasformation of the event in images
@@ -126,8 +130,8 @@ private:
     eventCartesianCollector* cfConverter;// receives real-time events
     eventBottleHandler *ebHandler;       // handler of received events as bottle
     //eventBottleHandler *map1Handler;   // handler for the first feature map
-    bottleProcessorThread* bptA;         // processor thread of the bottle
-    bottleProcessorThread* bpt4;         // processor thread of the bottle
+    bottleProcessorThread* bptA1;        // processor thread of the bottle
+    bottleProcessorThread* bpt41;        // processor thread of the bottle
     
 public:
     /**

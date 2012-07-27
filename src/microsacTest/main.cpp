@@ -1,7 +1,7 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /* 
- * Copyright (C) 2010 RobotCub Consortium, European Commission FP6 Project IST-004370
+ * Copyright (C) 2012 RobotCub Consortium, European Commission FP6 Project IST-004370
  * Authors: Francesco Rea
  * email:   francesco.rea@iit.it
  * website: www.robotcub.org 
@@ -17,6 +17,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details
  */
+  
   
 /**
  * @file main.cpp
@@ -68,7 +69,7 @@ int main(int argc, char * argv[]) {
 
     Bottle bo_send;
     for(int i=0; i < 4; i++) {
-        bo_send.addInt(0xFFFFFFFE);
+        bo_send.addInt(1);
     }
     size_t binaryDim;
     char* packetPointer = (char*) bo_send.toBinary(&binaryDim);

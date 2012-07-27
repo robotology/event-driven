@@ -503,12 +503,8 @@ int main(int argc, char * argv[]) {
                 //mutex.post();
                 
                 // compute the projection
-                Vector v=x - e;
-                x=e + 
-                    (dot(p0-e,n)
-                       /
-                     dot(v,n)) 
-                    *v;
+                Vector v = x - e;
+                x = e + ( dot(p0-e,n ) / dot(v,n)) * v;
                 
                 return true;
             }

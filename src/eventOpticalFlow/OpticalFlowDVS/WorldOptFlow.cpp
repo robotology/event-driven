@@ -290,15 +290,13 @@ void WorldOptFlow::calVelocities(CameraEvent ** evntBffr, int bffrSize){
 
 
 			if (outBPort -> getOutputCount()){
-			    info.update();
-			    outBPort->setEnvelope(info);
-
-				Bottle & b = outBPort -> prepare();
+			    
+                Bottle & b = outBPort -> prepare();
 				b.clear();
 				b.addInt(evtClm - SPATIAL_MARGINE_ADDUP);
 				b.addInt(evtRw - SPATIAL_MARGINE_ADDUP);
-				b.addDouble(*velocity);
-				b.addDouble(*(velocity + 1));
+				b.addDouble((*velocity) );
+				b.addDouble((*(velocity + 1) )  );
 				outBPort->write();
 			}
 

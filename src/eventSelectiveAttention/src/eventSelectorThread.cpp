@@ -133,23 +133,35 @@ bool eventSelectorThread::threadInit() {
     minCount = 0;
     minCountRight= 0;
     
-    saliencyMapLeft  = (double*) malloc(retinalSize * retinalSize * sizeof(double));
-    memset(saliencyMapLeft,0, retinalSize * retinalSize * sizeof(double));
-    saliencyMapRight = (double*) malloc(retinalSize * retinalSize * sizeof(double));
+    saliencyMapLeft    = (double*) malloc(retinalSize * retinalSize * sizeof(double));
+    saliencyMapRight   = (double*) malloc(retinalSize * retinalSize * sizeof(double));
+    featureMap41Left   = (double*) malloc(retinalSize * retinalSize * sizeof(double));
+    featureMap41Right  = (double*) malloc(retinalSize * retinalSize * sizeof(double));
+    featureMapA1Left   = (double*) malloc(retinalSize * retinalSize * sizeof(double));
+    featureMapA1Right  = (double*) malloc(retinalSize * retinalSize * sizeof(double));
+    
+    memset(saliencyMapLeft ,0, retinalSize * retinalSize * sizeof(double));
     memset(saliencyMapRight,0, retinalSize * retinalSize * sizeof(double));
-    featureMap41Left  = (double*) malloc(retinalSize * retinalSize * sizeof(double));
     memset(featureMap41Left,0, retinalSize * retinalSize * sizeof(double));
-
+    memset(featureMap41Left,0, retinalSize * retinalSize * sizeof(double));
+    memset(featureMapA1Left,0, retinalSize * retinalSize * sizeof(double));
+    memset(featureMapA1Left,0, retinalSize * retinalSize * sizeof(double));
+    
     
     featureMap = (int*) malloc(retinalSize * retinalSize * sizeof(int));
     memset(featureMap,0, retinalSize * retinalSize * sizeof(int));
     
-    timestampMap = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
-    memset(timestampMap,0, retinalSize * retinalSize * sizeof(unsigned long));
-    timestampMap41Left = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
-    memset(timestampMap41Left,0, retinalSize * retinalSize * sizeof(unsigned long));
+    timestampMap        = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );  
+    timestampMap41Left  = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
     timestampMap41Right = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
-    memset(timestampMap41Right,0, retinalSize * retinalSize * sizeof(unsigned long));
+    timestampMap41Left  = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
+    timestampMap41Right = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
+    
+    memset(timestampMap        ,0, retinalSize * retinalSize * sizeof(unsigned long));
+    memset(timestampMap41Left  ,0, retinalSize * retinalSize * sizeof(unsigned long));
+    memset(timestampMap41Right ,0, retinalSize * retinalSize * sizeof(unsigned long));
+    memset(timestampMap41Left  ,0, retinalSize * retinalSize * sizeof(unsigned long));
+    memset(timestampMap41Right ,0, retinalSize * retinalSize * sizeof(unsigned long));
 
     unmaskedEvents = (AER_struct*) malloc (CHUNKSIZE * sizeof(int));
     memset(unmaskedEvents, 0, CHUNKSIZE * sizeof(int));
@@ -157,20 +169,21 @@ bool eventSelectorThread::threadInit() {
     lasttimestamp  = new unsigned long; 
     *lasttimestamp = 0;
 
-    bptA = new bottleProcessorThread();
-    bptA->setLastTimestamp(lasttimestamp);
+    bptA1 = new bottleProcessorThread();
+    bptA1->setSaliencySize(retinalSize);  
+    bptA1->setRetinalSize(retinalSize);
+    bptA1->setLastTimestamp(lasttimestamp);
     //bptA->setSaliencyMap(saliencyMapLeft, saliencyMapRight, timestampMapLeft, timestampMapRight);
-    bptA->setName(getName("/btpA"));
-    bptA->start();
+    bptA1->setName(getName("/btpA1"));
+    bptA1->start();
 
-    bpt4 = new bottleProcessorThread();
-    bpt4->setLastTimestamp(lasttimestamp);
-    bpt4->setSaliencySize(retinalSize);
-    bpt4->setRetinalSize(32);
-    bpt4->setName(getName("/btp4"));
+    bpt41 = new bottleProcessorThread();
+    bpt41->setLastTimestamp(lasttimestamp);
+    bpt41->setSaliencySize(retinalSize);  
+    bpt41->setRetinalSize(32);
+    bpt41->setName(getName("/btp41"));
     //bpt4->setSaliencyMap(saliencyMapLeft, saliencyMapRight, timestampMapLeft, timestampMapRight);    
-    bpt4->start();
-
+    bpt41->start();
 
     receivedBottle = new Bottle();
     unmask_events  = new unmask(32);
@@ -241,8 +254,8 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
     unsigned int value;
    
     // copying the feature map for any bottleProcessor connected to the input flow of events
-    bpt4->copyFeatureMapLeft(featureMap41Left);
-    bpt4->copyTimestampMapLeft(timestampMap41Left);
+    bpt41->copyFeatureMapLeft(featureMap41Left);
+    bpt41->copyTimestampMapLeft(timestampMap41Left);
     
     unsigned long timestampactual;
     unsigned long* pTime   = timestampMap41Left;
@@ -253,7 +266,7 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
             
             // combining the feature map and normalisation
             
-            *pBuffer = (*pMap41Left + bpt4->getMinLeft()) / (bpt4->getMaxLeft() - bpt4->getMinLeft()) ;
+            *pBuffer = (*pMap41Left + bpt41->getMinLeft()) / (bpt41->getMaxLeft() - bpt41->getMinLeft()) ;
 
 
             double left_double  = saliencyMapLeft [r * retinalSize + c];
@@ -971,9 +984,14 @@ void eventSelectorThread::threadRelease() {
     free(saliencyMapLeft);
     free(saliencyMapRight);
     free(featureMap41Left);    
+    free(featureMap41Right);
+    free(featureMapA1Left);    
+    free(featureMapA1Right);
     free(featureMap);
     free(timestampMap41Left); 
     free(timestampMap41Right); 
+    free(timestampMapA1Left); 
+    free(timestampMapA1Right);
     free(unmaskedEvents); 
 
     printf("eventSelectorThread release:closing ports \n");
@@ -987,8 +1005,8 @@ void eventSelectorThread::threadRelease() {
     //delete ebHandler;
     printf("eventSelectorThread release         stopping Threads \n");
     pThread->stop();
-    bptA->stop();
-    bpt4->stop();
+    bptA1->stop();
+    bpt41->stop();
     printf("eventSelectorThread release         deleting converter \n");
     delete cfConverter;
     printf("correctly freed memory from the cfCollector \n");
