@@ -59,6 +59,9 @@ bottleProcessorThread::bottleProcessorThread() : RateThread(THRATE) {
     maxRight         = -1.0;
     minRight         = 1.0;
 
+    featureMapLeft   = 0;
+    timestampMapLeft = 0;
+
     bottleHandler = true;
     synchronised = false;
     greaterHalf  = false;
@@ -151,10 +154,10 @@ bool bottleProcessorThread::threadInit() {
     
     //timestampMap = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
     //memset(timestampMap,0, retinalSize * retinalSize * sizeof(unsigned long));
-    timestampMapLeft = (unsigned long*) malloc(saliencySize * saliencySize * sizeof(unsigned long) );
-    memset(timestampMapLeft,0, saliencySize * saliencySize * sizeof(unsigned long));
-    //timestampMapRight = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
-    //memset(timestampMapRight,0, retinalSize * retinalSize * sizeof(unsigned long));
+    timestampMapLeft  = (unsigned long*) malloc(saliencySize * saliencySize * sizeof(unsigned long) );
+    timestampMapRight = (unsigned long*) malloc(saliencySize * saliencySize * sizeof(unsigned long) );
+    memset(timestampMapLeft ,0, saliencySize * saliencySize * sizeof(unsigned long));
+    memset(timestampMapRight,0, saliencySize * saliencySize * sizeof(unsigned long));
 
     unmaskedEvents = (AER_struct*) malloc (CHUNKSIZE * sizeof(int));
     memset(unmaskedEvents, 0, CHUNKSIZE * sizeof(int));
@@ -431,15 +434,15 @@ void bottleProcessorThread::forgettingMemory() {
 
 void bottleProcessorThread::spatialSelection(eEventQueue *q) {
     int dequeSize = q->size();
-    printf("bottleProcessorThread::spatialSelection: %d events inQueue \n", dequeSize);
+    //printf("bottleProcessorThread::spatialSelection: %d events inQueue \n", dequeSize);
     unsigned long ts;
     int countLeftPos  = 0 , countLeftNeg  = 0;
     int countRightPos = 0 , countRightNeg = 0;
-    printf("saliencySize %d retinalSize %d \n", saliencySize, retinalSize);
+    //printf("saliencySize %d retinalSize %d \n", saliencySize, retinalSize);
     int scaleFactor   = saliencySize / retinalSize; 
-    printf("scaleFactor %d \n", scaleFactor);
+    //printf("scaleFactor %d \n", scaleFactor);
     for (int evt = 0; evt < dequeSize; evt++) {
-        printf("analyzing event %d \n", evt);
+        //printf("analyzing event %d \n", evt);
         if((*q)[evt] != 0) {                    
             //********** extracting the event information **********************
             // to identify the type of the packet
@@ -460,7 +463,7 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                     int xpos      = cartX * scaleFactor;
                     int ypos      = cartY * scaleFactor;
                     
-                    printf("cartX %d cartY %d xpos %d ypos %d \n", cartX, cartY, xpos, ypos);
+                    //printf("cartX %d cartY %d xpos %d ypos %d \n", cartX, cartY, xpos, ypos);
 
 
 #ifdef VERBOSE
@@ -472,7 +475,7 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
 #endif
 
                     if(camera == 0) {                        
-                        printf("saliencyMapLeft in %d %d changed (pol:%d)  saliencySize %d scaleFactor %d \n", cartX, cartY, polarity, saliencySize, scaleFactor);
+                        //printf("saliencyMapLeft in %d %d changed (pol:%d)  saliencySize %d scaleFactor %d \n", cartX, cartY, polarity, saliencySize, scaleFactor);
                         if(polarity == 0) {
                            
                             for ( int xi = 0; xi < scaleFactor; xi++) {
@@ -499,7 +502,7 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                             }
                         }
                         else {
-                            printf("saliencyMapRight in %d %d changed (pol:%d) saliencySize %d scaleFactor %d \n", cartX, cartY, polarity, saliencySize, scaleFactor);
+                            //printf("saliencyMapRight in %d %d changed (pol:%d) saliencySize %d scaleFactor %d \n", cartX, cartY, polarity, saliencySize, scaleFactor);
                             for ( int xi = 0; xi < scaleFactor; xi++) {
                                 for (int yi = 0; yi < scaleFactor; yi++) {
                                     //saliencyMapLeft [(xpos * scaleFactor + xi) * 3   + (ypos + yi) * saliencySize * 3 ] -=  INCR_RESPONSE;
@@ -534,7 +537,7 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                         
                     }
                     else {
-                        printf("saliencyMapRight in %d %d changed (pol:%d) \n", cartX, cartY, polarity);                       
+                        //printf("saliencyMapRight in %d %d changed (pol:%d) \n", cartX, cartY, polarity);                       
                         if(polarity == 0) {
                             for ( int xi = 0; xi < scaleFactor; xi++) {
                                 for (int yi = 0; yi < scaleFactor; yi++) {
@@ -681,7 +684,7 @@ void bottleProcessorThread::run() {
         cfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
     }
     else {
-        printf("bottleProcessorThread::run : extracting Bottle! \n");
+        //printf("bottleProcessorThread::run : extracting Bottle! \n");
         receivedBottle->clear();
         ebHandler->extractBottle(receivedBottle); 
         //if(receivedBottle->size() != 0) {
@@ -747,13 +750,11 @@ void bottleProcessorThread::run() {
     else {
         //printf("unmasking with bottleHandler \n");
         if(receivedBottle->size() != 0) {     
-            printf("unmasking with bottleHandler : inside the size()!= 0 \n");
-            //delete rxQueue;   // freeing memory for the new queue of events
-            //rxQueue = new eEventQueue(); // preparing the new queue
+            //printf("unmasking with bottleHandler : inside the size()!= 0 \n");
             rxQueue->clear();
             //printf("unmasking received bottle and creating the queue of event to send \n");            
             unmask_events->unmaskData(receivedBottle, rxQueue); // saving the queue
-            printf("bottle of events to send \n");
+            //printf("bottle of events to send \n");
         }
     }
     //printf("end of the unmasking \n");
@@ -939,9 +940,9 @@ void bottleProcessorThread::run() {
     }
     else {        
         if((rxQueue != 0)&&(receivedBottle->size() != 0)) {
-            printf("spatial selection  bottle Handler\n");
+            //printf("spatial selection  bottle Handler\n");
             spatialSelection(rxQueue);
-            printf("after spatial selection bottleHandler \n");
+            //printf("after spatial selection bottleHandler \n");
         }
     }
     
@@ -974,7 +975,8 @@ void bottleProcessorThread::copyFeatureMapLeft(double *pointer) {
     }
     double* pFea = featureMapLeft;
     for (int i = 0; i < saliencySize * saliencySize; i++) {
-        *pointer = *pFea;
+        double tmpValue = *pFea;
+        *pointer = tmpValue;
         pointer++;  pFea++;
     }    
     mutexFeaLeft.post();
@@ -987,7 +989,8 @@ void bottleProcessorThread::copyTimestampMapLeft(unsigned long *pointer) {
     }
     unsigned long* pTime = timestampMapLeft;
     for (int i = 0; i < saliencySize * saliencySize; i++) {
-        *pointer = *pTime;
+        unsigned long tmpValue = *pTime;
+        *pointer = tmpValue;
         pointer++;  pTime++;
     }    
     mutexTimeLeft.post();
@@ -1001,12 +1004,11 @@ void bottleProcessorThread::threadRelease() {
     //free(saliencyMap);
     free(featureMapLeft);
     free(featureMapRight);
-    
-    timestampMapLeft = (unsigned long*) malloc(saliencySize * saliencySize * sizeof(unsigned long) );
-    free(timestampMapLeft);
-    
+    free(timestampMapLeft); 
+    free(timestampMapRight);    
     free(timestampMap); 
     free(unmaskedEvents); 
+
     printf("bottleProcessorThread release:closing ports \n");
     outPort.close();
     outPortRight.close();

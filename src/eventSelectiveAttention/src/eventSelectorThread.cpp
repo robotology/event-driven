@@ -154,14 +154,14 @@ bool eventSelectorThread::threadInit() {
     timestampMap        = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );  
     timestampMap41Left  = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
     timestampMap41Right = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
-    timestampMap41Left  = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
-    timestampMap41Right = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
+    timestampMapA1Left  = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
+    timestampMapA1Right = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
     
     memset(timestampMap        ,0, retinalSize * retinalSize * sizeof(unsigned long));
     memset(timestampMap41Left  ,0, retinalSize * retinalSize * sizeof(unsigned long));
     memset(timestampMap41Right ,0, retinalSize * retinalSize * sizeof(unsigned long));
-    memset(timestampMap41Left  ,0, retinalSize * retinalSize * sizeof(unsigned long));
-    memset(timestampMap41Right ,0, retinalSize * retinalSize * sizeof(unsigned long));
+    memset(timestampMapA1Left  ,0, retinalSize * retinalSize * sizeof(unsigned long));
+    memset(timestampMapA1Right ,0, retinalSize * retinalSize * sizeof(unsigned long));
 
     unmaskedEvents = (AER_struct*) malloc (CHUNKSIZE * sizeof(int));
     memset(unmaskedEvents, 0, CHUNKSIZE * sizeof(int));
@@ -255,26 +255,33 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
    
     // copying the feature map for any bottleProcessor connected to the input flow of events
     bpt41->copyFeatureMapLeft(featureMap41Left);
+    bptA1->copyFeatureMapLeft(featureMapA1Left);
     bpt41->copyTimestampMapLeft(timestampMap41Left);
+    bptA1->copyTimestampMapLeft(timestampMapA1Left);
     
     unsigned long timestampactual;
-    unsigned long* pTime   = timestampMap41Left;
-    double* pMap41Left     = featureMap41Left;
-    double* pBuffer        = saliencyMapLeft;
+    unsigned long* pTime        = timestampMap41Left;
+    unsigned long* pTimeA1Left  = timestampMapA1Left;
+    double* pMap41Left          = featureMap41Left;
+    double* pMapA1Left          = featureMap41Left;
+    double* pBuffer             = saliencyMapLeft;
+
     for(int r = 0 ; r < retinalSize ; r++){
-        for(int c = 0 ; c < retinalSize ; c++) {
-            
+        for(int c = 0 ; c < retinalSize ; c++) {            
             // combining the feature map and normalisation
-            
-            *pBuffer = (*pMap41Left + bpt41->getMinLeft()) / (bpt41->getMaxLeft() - bpt41->getMinLeft()) ;
+            double contrib41Left = (*pMap41Left + bpt41->getMinLeft()) / (bpt41->getMaxLeft() - bpt41->getMinLeft());
+            double contribA1Left = (*pMapA1Left + bptA1->getMinLeft()) / (bptA1->getMaxLeft() - bptA1->getMinLeft());
+            printf("%f \n", contribA1Left);
+            *pBuffer = contribA1Left;
 
 
-            double left_double  = saliencyMapLeft [r * retinalSize + c];
-            double right_double = saliencyMapRight[r * retinalSize + c];
-            left_double = featureMap41Left[r * retinalSize + c];            
+            //double left_double  = saliencyMapLeft [r * retinalSize + c];
+            //double right_double = saliencyMapRight[r * retinalSize + c];
+            //left_double = featureMap41Left[r * retinalSize + c];            
 
             //--------------- convertion  -------------------------------
-            left_double = *pBuffer;
+            double right_double = 0;
+            double left_double  = *pBuffer;
             value = left_double * 255;
             
 
@@ -301,8 +308,7 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
             }        
 
             //--------------- temporal information ------------------------------          
-            timestampactual = *pTime;
-
+            timestampactual = *pTimeA1Left;
 
             //----------------------------------------------------------------------------------------
             if(tristate) {
