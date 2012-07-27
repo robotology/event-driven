@@ -48,7 +48,6 @@
 //typedef unsigned long long int uint64_t;
 #define u64 long
 
-
 class bottleProcessorThread : public yarp::os::RateThread {
 private:
     
@@ -191,8 +190,16 @@ public:
      */
     void setStereo(bool value) {stereo = value; };
 
+     /**
+     * @brief function that returns the dimension of the feature map
+     * @param value the dimension in pixels of the retina device
+     */
+    int getRetinalSize() {
+        return retinalSize;
+    }
+
     /**
-     * @brief function thatset the dimension of the output image
+     * @brief function that sets the dimension of the output image
      * @param value the dimension in pixels of the retina device
      */
     void setRetinalSize(int value) {
@@ -250,6 +257,7 @@ public:
      * @brief function that indicates whether the viewer reppresent logpolar information
      */
     void setResponseGradient(int value) {responseGradient = value; }; 
+    
 
     /**
      * function that initialises the attributes of the class in shared resources
@@ -295,6 +303,11 @@ public:
      * function that reduces the response using a function of difference in timestamp
      */
     void forgettingMemory();
+
+    /**
+     * function that copies outside the content of the feature map using semaphores
+     */
+    void copyFeatureMapLeft(double *pointer);
 
 };
 

@@ -235,14 +235,28 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
     double minLeft = 100, minRight = 100;
     double maxResponseLeft = 0, maxResponseRight = 0;
     int maxLeftR, maxLeftC, maxRightR, maxRightC;
+    unsigned int value;
+    double* tmpFeaMap;
+    // copying the feature map for any bottleProcessor connected to the input flow of events
+    bpt4->copyFeatureMapLeft(tmpFeaMap);
+    
     for(int r = 0 ; r < retinalSize ; r++){
         for(int c = 0 ; c < retinalSize ; c++) {
+            
+
+
+            // combining the feature map
+
+
             //drawing the retina and the rest of the image separately
-            int value = *pBuffer;
-            value = 1;
+            //unsigned int value = *pBuffer;
+            //value = 1;
 
             double left_double  = saliencyMapLeft [r * retinalSize + c];
             double right_double = saliencyMapRight[r * retinalSize + c];
+
+            left_double = tmpFeaMap[r * retinalSize + c];
+            value = left_double * 127;
             
 
             // -------------- max and min of left and right ----------------------
@@ -342,7 +356,7 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
                 //if(minCount>0 && maxCount > 0 && timestampactual>0)
                 //printf("actualTS%ld val%ld max%ld min%ld  are\n",timestampactual,timestampactual * COUNTERRATIO,minCount,maxCount);
                 if (((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)) {   //(timestampactual != lasttimestamp)
-                    *pImage = (unsigned char) abs(value * 2);
+                    *pImage = (unsigned char) abs((double )value * 2);
                     //if(value>0)printf("event%d val%d buf%d\n",*pImage,value,*pBuffer);
                     pImage++;
                     //if ((stereo) && (r < 7) && (r >= 16) && (c < 7) && (c >= 16)) {

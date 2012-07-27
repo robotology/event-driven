@@ -896,6 +896,18 @@ void bottleProcessorThread::run() {
   }
 }
 
+void bottleProcessorThread::copyFeatureMapLeft(double *pointer) {
+    double* pFea = featureMapLeft;
+    mutex.wait();
+    
+    for (int i = 0; i < saliencySize; i++) {
+        *pointer = *pFea;
+        pointer++; pFea++;
+    }    
+
+    mutex.post();
+}
+
 void bottleProcessorThread::threadRelease() {
     idle = false;
     fclose(fout);
