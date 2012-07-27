@@ -1,5 +1,5 @@
 <application>
-	<name>eMorph AttentionMechanism  </name>
+	<name>eMorph AttentionMechanism GUI  </name>
  	<dependencies>
 		<port>/aexGrabber/retinaBottle:o</port>		
 	</dependencies>
