@@ -166,24 +166,24 @@ bool eventSelectorThread::threadInit() {
     unmaskedEvents = (AER_struct*) malloc (CHUNKSIZE * sizeof(int));
     memset(unmaskedEvents, 0, CHUNKSIZE * sizeof(int));
 
+    // common resource necessary to define the temporal horizon
     lasttimestamp  = new unsigned long; 
     *lasttimestamp = 0;
 
+    // istantiating the processors of events
     bptA1 = new bottleProcessorThread();
-    bptA1->setSaliencySize(retinalSize);  
-    bptA1->setRetinalSize(retinalSize);
     bptA1->setLastTimestamp(lasttimestamp);
-    //bptA->setSaliencyMap(saliencyMapLeft, saliencyMapRight, timestampMapLeft, timestampMapRight);
+    bptA1->setSaliencySize(retinalSize);  
+    bptA1->setRetinalSize(retinalSize);   
     bptA1->setName(getName("/btpA1"));
     bptA1->start();
 
     bpt41 = new bottleProcessorThread();
-    bpt41->setLastTimestamp(lasttimestamp);
+    //bpt41->setLastTimestamp(lasttimestamp);
     bpt41->setSaliencySize(retinalSize);  
     bpt41->setRetinalSize(32);
-    bpt41->setName(getName("/btp41"));
-    //bpt4->setSaliencyMap(saliencyMapLeft, saliencyMapRight, timestampMapLeft, timestampMapRight);    
-    //bpt41->start();
+    bpt41->setName(getName("/btp41"));    
+    bpt41->start();
 
     receivedBottle = new Bottle();
     unmask_events  = new unmask(32);
@@ -253,26 +253,54 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
     int maxLeftR, maxLeftC, maxRightR, maxRightC;
     unsigned int value;
    
-    // copying the feature map for any bottleProcessor connected to the input flow of events
+    // copying the feature map for any bottleProcessor connected to the input flow of events    
     bpt41->copyFeatureMapLeft(featureMap41Left);
     bptA1->copyFeatureMapLeft(featureMapA1Left);
     bpt41->copyTimestampMapLeft(timestampMap41Left);
     bptA1->copyTimestampMapLeft(timestampMapA1Left);
+
     
     unsigned long timestampactual;
     unsigned long* pTime        = timestampMap41Left;
     unsigned long* pTimeA1Left  = timestampMapA1Left;
     double* pMap41Left          = featureMap41Left;
-    double* pMapA1Left          = featureMap41Left;
+    double* pMapA1Left          = featureMapA1Left;
     double* pBuffer             = saliencyMapLeft;
 
+    /*
+    for(int j = 0; j < retinalSize * retinalSize; j++){
+        //if(*pTimeA1Left!=0)
+        //    printf("read j %d  %08x \n" , j,*pTimeA1Left);
+        *pTimeA1Left = minCount+1;
+        pTimeA1Left++;
+    }
+    pTimeA1Left = timestampMapA1Left;
+    */
+
+
+
+    
     for(int r = 0 ; r < retinalSize ; r++){
         for(int c = 0 ; c < retinalSize ; c++) {            
             // combining the feature map and normalisation
-            double contrib41Left = (*pMap41Left + bpt41->getMinLeft()) / (bpt41->getMaxLeft() - bpt41->getMinLeft());
-            double contribA1Left = (*pMapA1Left + bptA1->getMinLeft()) / (bptA1->getMaxLeft() - bptA1->getMinLeft());
-            printf("%f \n", contribA1Left);
-            *pBuffer = contribA1Left;
+            
+            //double contrib41Left = (*pMap41Left + bpt41->getMinLeft()) / (bpt41->getMaxLeft() - bpt41->getMinLeft());
+            double contrib41Left = (abs(*pMap41Left) - bpt41->getMinLeft()) / (bpt41->getMaxLeft() - bpt41->getMinLeft()) ;
+            //double contribA1Left = (*pMapA1Left + bptA1->getMinLeft()) / (bptA1->getMaxLeft() - bptA1->getMinLeft());
+            double contribA1Left = abs(*pMapA1Left) * 15;
+            
+            // if(*pMapA1Left == 0) 
+            //    contribA1Left = 0;
+            
+            //TODO : check that every feature maps remains into the limits [0, 1.0]
+            //if(*pMap41Left >1.0) { 
+            //    printf("pMap41Left %f \n", *pMap41Left);
+            //}
+
+            //printf("%f %f %f %f \n", *pMapA1Left, contribA1Left,   bptA1->getMinLeft(),  bptA1->getMaxLeft());
+            double wa1 = 0.9;
+            double w41 = 0.1;
+            *pBuffer =  wa1 * contribA1Left + w41 * contrib41Left ;
 
 
             //double left_double  = saliencyMapLeft [r * retinalSize + c];
@@ -283,9 +311,13 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
             double right_double = 0;
             double left_double  = *pBuffer;
             value = left_double * 255;
+
+            //if(value > 255) {
+            //    printf("overflow %f %f %f \n", contrib41Left, contribA1Left,*pBuffer);
+            //}
             
 
-            // -------------- max and min of left and right ----------------------
+            // -------------- max and min of let and right ----------------------
             if(left_double < minLeft)   minLeft = left_double;
             if(left_double > maxLeft)   maxLeft = left_double;
             if(right_double > maxRight) maxRight = right_double;
@@ -308,10 +340,12 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
             }        
 
             //--------------- temporal information ------------------------------          
-            timestampactual = *pTimeA1Left;
+            timestampactual = (*pTimeA1Left > *pTime)?*pTimeA1Left:*pTime ;
 
             //----------------------------------------------------------------------------------------
             if(tristate) {
+                
+                // forgetting factor
                 // decreasing the spatial response without removing it
                 if(count % 10 == 0) {
                     if(*pBuffer > 20){
@@ -323,9 +357,9 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
                 }
 
                 //if(minCount>0 && maxCount > 0 && timestampactual>0)
-                //printf("actualTS%ld val%ld max%ld min%ld  are\n",timestampactual,timestampactual * COUNTERRATIO,minCount,maxCount);
+                //printf("actualTS %08X val %08X max %08X min %08X  are\n",timestampactual,timestampactual * COUNTERRATIO,minCount,maxCount);
                 if ( 
-                    ((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)
+                     ((timestampactual * COUNTERRATIO) > minCount) && ((timestampactual * COUNTERRATIO) < maxCount)
                     ) {   //(timestampactual != lasttimestamp)
                     *pImage = (unsigned char) (value);
                     pImage++;
@@ -365,10 +399,11 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
                 }
                 pBuffer++;
                 pMap41Left++;
+                pMapA1Left++;
                 pTime++;
+                pTimeA1Left++;
             }
-            // branch !tristateView
-            else {
+            else { // branch !tristateView
                 // decreasing the spatial response without removing 
                 if((*pBuffer > 20) && (count % 10 == 0)){
                     *pBuffer = *pBuffer - 1;                                       
@@ -405,11 +440,15 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
                     
                 }
                 pBuffer++;
+                pMap41Left++;
+                pMapA1Left++;
                 pTime++;
+                pTimeA1Left;
             } // end !tristate            
         } // end inner loop
         pImage += imagePadding;
     }//end outer loop
+    
 
     //printf("end of the function get in mono \n");
     //unmask_events->setLastTimestamp(0);

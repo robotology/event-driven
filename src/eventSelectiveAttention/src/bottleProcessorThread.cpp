@@ -46,7 +46,7 @@ using namespace std;
 #define synch_time 1
 
 //#define VERBOSE
-#define INCR_RESPONSE 0.01
+#define INCR_RESPONSE 0.1
 #define DECR_RESPONSE 0.01
 
 bottleProcessorThread::bottleProcessorThread() : RateThread(THRATE) {
@@ -58,20 +58,22 @@ bottleProcessorThread::bottleProcessorThread() : RateThread(THRATE) {
     minLeft          = 1.0;
     maxRight         = -1.0;
     minRight         = 1.0;
-
     featureMapLeft   = 0;
     timestampMapLeft = 0;
-
-    bottleHandler = true;
-    synchronised = false;
-    greaterHalf  = false;
-    firstRun     = true;
     count        = 0;
     minCount     = 0; //initialisation of the timestamp limits of the first frame
-    idle = false;
+
+    bottleHandler   = true;
+    synchronised    = false;
+    greaterHalf     = false;
+    firstRun        = true;
+    idle            = false;
+    timestampUpdate = false;
+    verb            = false;
+
     bufferCopy = (char*) malloc(CHUNKSIZE);
     countStop = 0;
-    verb = false;
+    
     string i_fileName("bottleProcessorThread.eventBottle.txt");
     raw = fopen(i_fileName.c_str(), "wb");
     lc = rc = 0;	
@@ -408,8 +410,8 @@ void bottleProcessorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, u
 
 
 void bottleProcessorThread::forgettingMemory() {
-    double* pLeft = saliencyMapLeft;
-    double* pRight = saliencyMapRight;
+    double* pLeft  = featureMapLeft;
+    double* pRight = featureMapRight;
     for(int r = 0 ; r < retinalSize ; r++){
         for(int c = 0 ; c < retinalSize ; c++) {            
             if(*pLeft > 0) {
@@ -441,6 +443,13 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
     //printf("saliencySize %d retinalSize %d \n", saliencySize, retinalSize);
     int scaleFactor   = saliencySize / retinalSize; 
     //printf("scaleFactor %d \n", scaleFactor);
+
+    mutexMinMaxLeft.wait();
+    maxLeft = 0.0;
+    minLeft = 255.0;
+    mutexMinMaxLeft.post();  
+  
+
     for (int evt = 0; evt < dequeSize; evt++) {
         //printf("analyzing event %d \n", evt);
         if((*q)[evt] != 0) {                    
@@ -459,9 +468,29 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                     int cartY     = ptr->getY();
                     int camera    = ptr->getChannel();
                     int polarity  = ptr->getPolarity();
+
+                    if(scaleFactor == 4){
+                        if(cartX > 31) {
+                            //printf("ERROR in UNMASKING cartX %d \n", cartX);
+                            cartX = 31;
+                        }
+                        if(cartY > 31){
+                            //printf("ERROR in UNMASKING cartY %d \n", cartY);
+                            cartY = 31;
+                        }
+                    }
                     
-                    int xpos      = cartX * scaleFactor;
-                    int ypos      = cartY * scaleFactor;
+
+                    // TODO: check the difference between representation of feature map and original flow
+                    int xpos,ypos;
+                    if(scaleFactor == 4) {
+                        xpos      = cartX * scaleFactor;
+                        ypos      = cartY * scaleFactor;
+                    }
+                    else {
+                        xpos      = cartY;
+                        ypos      = saliencySize - cartX;
+                    }
                     
                     //printf("cartX %d cartY %d xpos %d ypos %d \n", cartX, cartY, xpos, ypos);
 
@@ -485,17 +514,14 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                                     double* pFea = &featureMapLeft[(ypos + yi) * saliencySize + (xpos + xi)];
                                     *pFea += INCR_RESPONSE;
                                     //featureMapLeft[(ypos + yi) * saliencySize + (xpos + xi)] += INCR_RESPONSE;
-                                    if (*pFea > maxLeft) {
-                                        mutexMinMaxLeft.wait();
-                                        maxLeft = *pFea;
-                                        mutexMinMaxLeft.post();
+                                    mutexMinMaxLeft.wait();
+                                    if (abs(*pFea) > maxLeft) {
+                                        maxLeft = abs(*pFea);                                        
                                     }
-                                    if (*pFea < minLeft) {
-                                        mutexMinMaxLeft.wait();
-                                        minLeft = *pFea;
-                                        mutexMinMaxLeft.post();
+                                    if (abs(*pFea) < minLeft) {
+                                        minLeft = abs(*pFea);
                                     }
-                                    
+                                    mutexMinMaxLeft.post();
                                     mutexFeaLeft.post();
                                     countLeftPos++;
                                 }
@@ -510,26 +536,24 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                                     double* pFea = &featureMapLeft[(ypos + yi) * saliencySize + (xpos + xi)];
                                     *pFea -= INCR_RESPONSE;
                                     //featureMapLeft[(ypos + yi) * saliencySize + (xpos + xi)] -= INCR_RESPONSE;
-                                     if (*pFea > maxLeft) {
-                                        mutexMinMaxLeft.wait();
-                                        maxLeft = *pFea;
-                                        mutexMinMaxLeft.post();
+                                    mutexMinMaxLeft.wait();
+                                    if (abs(*pFea) > maxLeft) {                                        
+                                        maxLeft = abs(*pFea);
                                     }
-                                    if (*pFea < minLeft) {
-                                        mutexMinMaxLeft.wait();
-                                        minLeft = *pFea;
-                                        mutexMinMaxLeft.post();
+                                    if (abs(*pFea) < minLeft) {
+                                        minLeft = abs(*pFea);
                                     }
-                                    
+                                    mutexMinMaxLeft.post();
                                     mutexFeaLeft.post();
                                     countLeftNeg++;
                                 }
                             }
                         }
-                        //---------------
+                        //----------------------------------------------------------
                         for ( int xi = 0; xi < scaleFactor; xi++) {
                             for (int yi = 0; yi < scaleFactor; yi++) {
                                 mutexTimeLeft.wait();
+                                //printf("updating ts left %08x  \n", ts);
                                 timestampMapLeft[(ypos + yi) * saliencySize + (xpos + xi)] = ts;
                                 mutexTimeLeft.post();
                             }
@@ -545,17 +569,14 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                                     double* pFea = &featureMapRight[(ypos + yi) * saliencySize + (xpos + xi)];
                                     *pFea += INCR_RESPONSE;
                                     //featureMapLeft[(ypos + yi) * saliencySize + (xpos + xi)] += INCR_RESPONSE;
-                                    if (*pFea > maxRight) {
-                                        mutexMinMaxRight.wait();
-                                        maxRight = *pFea;
-                                        mutexMinMaxRight.post();
+                                    mutexMinMaxRight.wait();
+                                    if (abs(*pFea) > maxRight) {
+                                        maxRight = abs(*pFea);
                                     }
-                                    if (*pFea < minRight) {
-                                        mutexMinMaxRight.wait();
-                                        minRight = *pFea;
-                                        mutexMinMaxRight.post();
+                                    if (abs(*pFea) < minRight) {
+                                        minRight = abs(*pFea);
                                     }
-                                    
+                                    mutexMinMaxRight.post();
                                     mutexFeaRight.post();
                                     countRightPos++;
                                 }
@@ -568,17 +589,14 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                                     double* pFea = &featureMapRight[(ypos + yi) * saliencySize + (xpos + xi)];
                                     *pFea -= INCR_RESPONSE;
                                     //featureMapLeft[(ypos + yi) * saliencySize + (xpos + xi)] -= INCR_RESPONSE;
-                                     if (*pFea > maxRight) {
-                                        mutexMinMaxRight.wait();
-                                        maxRight = *pFea;
-                                        mutexMinMaxRight.post();
+                                    mutexMinMaxRight.wait();
+                                    if (abs(*pFea) > maxRight) {                                     
+                                        maxRight = abs(*pFea);                                       
                                     }
-                                    if (*pFea < minRight) {
-                                        mutexMinMaxRight.wait();
-                                        minRight = *pFea;
-                                        mutexMinMaxRight.post();
+                                    if (abs(*pFea) < minRight) {              
+                                        minRight = abs(*pFea);                                        
                                     }
-                                    
+                                    mutexMinMaxRight.post();
                                     mutexFeaRight.post();
                                     countRightNeg++;
                                 }
@@ -588,6 +606,7 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                         for ( int xi = 0; xi < scaleFactor; xi++) {
                             for (int yi = 0; yi < scaleFactor; yi++) {
                                 mutexTimeRight.wait();
+                                //printf("updating ts right \n");
                                 timestampMapRight[(ypos + yi) * saliencySize + (xpos + xi)] = ts;
                                 mutexTimeRight.post();
                             }
@@ -606,17 +625,16 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                 
                 //identified an time stamp event
                 ts = (unsigned int) ptr->getStamp();
-                //printf("timestamp %lu %08X \n", ts, lasttimestamp);
-                mutexLastTimestamp.wait();
-                *lasttimestamp = ts;
-                mutexLastTimestamp.post();
-               
-                //forgettingMemory();
+                //printf("timestamp %08X %08X \n", ts, lasttimestamp);
+                if(timestampUpdate) {
+                    mutexLastTimestamp.wait();
+                    //printf("timestamp %08X %08X %d \n", ts, *lasttimestamp, scaleFactor);
+                    *lasttimestamp = ts;
+                    mutexLastTimestamp.post();
+                }
+                    
+                forgettingMemory();
 
-                //if(VERBOSE) {
-                //    fprintf(fdebug, " %08x  \n", (unsigned int) ts);
-                //}                
-                //countEventToSend++;
             }
             // -------------------------- NULL ----------------------------------
             else {
@@ -750,7 +768,7 @@ void bottleProcessorThread::run() {
     else {
         //printf("unmasking with bottleHandler \n");
         if(receivedBottle->size() != 0) {     
-            //printf("unmasking with bottleHandler : inside the size()!= 0 \n");
+            //printf("unmasking with bottleHandler : size()== %d \n",receivedBottle->size() );
             rxQueue->clear();
             //printf("unmasking received bottle and creating the queue of event to send \n");            
             unmask_events->unmaskData(receivedBottle, rxQueue); // saving the queue
@@ -971,12 +989,12 @@ void bottleProcessorThread::run() {
 void bottleProcessorThread::copyFeatureMapLeft(double *pointer) {
     mutexFeaLeft.wait();
     if(0 == featureMapLeft) {
+         mutexFeaLeft.post();
         return;
     }
     double* pFea = featureMapLeft;
     for (int i = 0; i < saliencySize * saliencySize; i++) {
-        double tmpValue = *pFea;
-        *pointer = tmpValue;
+        *pointer = *pFea;
         pointer++;  pFea++;
     }    
     mutexFeaLeft.post();
@@ -985,13 +1003,14 @@ void bottleProcessorThread::copyFeatureMapLeft(double *pointer) {
 void bottleProcessorThread::copyTimestampMapLeft(unsigned long *pointer) {
     mutexTimeLeft.wait();
     if(0 == timestampMapLeft) {
+        mutexTimeLeft.post();
         return;
     }
     unsigned long* pTime = timestampMapLeft;
-    for (int i = 0; i < saliencySize * saliencySize; i++) {
-        unsigned long tmpValue = *pTime;
-        *pointer = tmpValue;
-        pointer++;  pTime++;
+    for (int i = 0; i < saliencySize * saliencySize; i++) {        
+        *pointer = *pTime;
+        pointer++; 
+        pTime++;
     }    
     mutexTimeLeft.post();
 }

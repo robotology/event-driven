@@ -87,6 +87,7 @@ private:
     bool asvFlag, dvsFlag;              // flag for operating mode
     bool tristate;                      // option that represent the image with three baselines
     bool bottleHandler;                 // flag that indicates whether events are sent as bottle exclusively
+    bool timestampUpdate;
     unsigned long minCount;             // minimum timestamp allowed for the current frame
     unsigned long maxCount;             // maximum timestamp allowed for the current frame
     unsigned long minCountRight;
@@ -289,9 +290,11 @@ public:
 
     /**
      * function that initialises the attributes of the class in shared resources
+     * @param last reference to the common last time stamp
      */
     void setLastTimestamp(unsigned long* last) {
         lasttimestamp = last;
+        timestampUpdate = true;
     };
     
     /**
