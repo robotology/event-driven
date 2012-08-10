@@ -277,10 +277,9 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
             // combining the feature map and normalisation
             
             double contrib41Left = abs(*pMap41Left);
-            //double contrib41Left = (abs(*pMap41Left) - bpt41->getMinLeft()) / (bpt41->getMaxLeft() - bpt41->getMinLeft()) ;
-            //double contribA1Left = (*pMapA1Left + bptA1->getMinLeft()) / (bptA1->getMaxLeft() - bptA1->getMinLeft());
-            double contribA1Left = abs(*pMapA1Left)  ;
-            
+            double contribA1Left = abs(*pMapA1Left);
+            //double contrib41Left = (abs(*pMap41Left) - bpt41->getMinLeft()) / (bpt41->getMaxLeft() - bpt41->getMinLeft());
+            //double contribA1Left = (abs(*pMapA1Left) - bptA1->getMinLeft()) / (bptA1->getMaxLeft() - bptA1->getMinLeft());     
 
             //printf("%f %f %f \n",contribA1Left, bptA1->getMaxLeft(), bptA1->getMinLeft() );
             
@@ -293,10 +292,13 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
             //}
 
             
-            double wa1 = 1.0;
-            double w41 = 0.0;
+            double wa1 = 0.5;
+            double w41 = 0.5;
             //*pBuffer =  contrib41Left ;
             *pBuffer =  wa1 * contribA1Left + w41 * contrib41Left ;
+            if(*pBuffer > 1.0) {
+                *pBuffer = 1.0;
+            }
 
 
             //double left_double  = saliencyMapLeft [r * retinalSize + c];
@@ -337,8 +339,8 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
             }        
 
             //--------------- temporal information ------------------------------          
-            //timestampactual = (*pTimeA1Left > *pTime41Left)?*pTimeA1Left:*pTime41Left;
-            timestampactual = *pTimeA1Left;
+            timestampactual = (*pTimeA1Left > *pTime41Left)?*pTimeA1Left:*pTime41Left;
+            //timestampactual = *pTimeA1Left;
             
 
             //----------------------------------------------------------------------------------------

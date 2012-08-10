@@ -46,6 +46,7 @@ using namespace std;
 #define synch_time 1
 
 //#define VERBOSE
+#define TEMPDIST      1000000
 #define INCR_RESPONSE 0.1
 #define DECR_RESPONSE 0.0001
 
@@ -633,7 +634,7 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                     mutexLastTimestamp.post();
                 }
                     
-                //forgettingMemory();
+                forgettingMemory();
 
             }
             // -------------------------- NULL ----------------------------------
@@ -1008,6 +1009,8 @@ void bottleProcessorThread::copyTimestampMapLeft(unsigned long *pointer) {
         return;
     }
     unsigned long* pTime = timestampMapLeft;
+    double *       pFea  = featureMapLeft;
+
     for (int i = 0; i < saliencySize * saliencySize; i++) { 
         // control for old events to avoid events after one cycle timestamp
         long int distance;
@@ -1015,15 +1018,17 @@ void bottleProcessorThread::copyTimestampMapLeft(unsigned long *pointer) {
             distance = std::abs((long int) (*pTime - *lasttimestamp));
         }
         //printf("testing the distance from the last time stamp %d \n", distance);
-        if(distance > 1000000) {
+        if(distance > TEMPDIST) {
             *pointer = *pTime;
             *pTime   = 0;
+            *pFea    = 0;
         }
         else {
             *pointer = *pTime;   
         }
         pointer++; 
         pTime++;
+        pFea++;
     }    
     mutexTimeLeft.post();
 }
