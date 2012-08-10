@@ -47,7 +47,7 @@ using namespace std;
 
 //#define VERBOSE
 #define INCR_RESPONSE 0.1
-#define DECR_RESPONSE 0.01
+#define DECR_RESPONSE 0.0001
 
 bottleProcessorThread::bottleProcessorThread() : RateThread(THRATE) {
     responseGradient = 127;
@@ -446,7 +446,7 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
 
     mutexMinMaxLeft.wait();
     maxLeft = 0.0;
-    minLeft = 255.0;
+    minLeft = 1.0;
     mutexMinMaxLeft.post();  
   
 
@@ -472,11 +472,11 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                     if(scaleFactor == 4){
                         if(cartX > 31) {
                             //printf("ERROR in UNMASKING cartX %d \n", cartX);
-                            cartX = 31;
+                            //cartX = 31;
                         }
                         if(cartY > 31){
                             //printf("ERROR in UNMASKING cartY %d \n", cartY);
-                            cartY = 31;
+                            //cartY = 31;
                         }
                     }
                     
@@ -485,7 +485,7 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                     int xpos,ypos;
                     if(scaleFactor == 4) {
                         xpos      = cartX * scaleFactor;
-                        ypos      = cartY * scaleFactor;
+                        ypos      = (cartY - 1) * scaleFactor;
                     }
                     else {
                         xpos      = cartY;
@@ -633,7 +633,7 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                     mutexLastTimestamp.post();
                 }
                     
-                forgettingMemory();
+                //forgettingMemory();
 
             }
             // -------------------------- NULL ----------------------------------
@@ -995,6 +995,7 @@ void bottleProcessorThread::copyFeatureMapLeft(double *pointer) {
     double* pFea = featureMapLeft;
     for (int i = 0; i < saliencySize * saliencySize; i++) {
         *pointer = *pFea;
+        //*pFea = 0;
         pointer++;  pFea++;
     }    
     mutexFeaLeft.post();
@@ -1007,8 +1008,20 @@ void bottleProcessorThread::copyTimestampMapLeft(unsigned long *pointer) {
         return;
     }
     unsigned long* pTime = timestampMapLeft;
-    for (int i = 0; i < saliencySize * saliencySize; i++) {        
-        *pointer = *pTime;
+    for (int i = 0; i < saliencySize * saliencySize; i++) { 
+        // control for old events to avoid events after one cycle timestamp
+        long int distance;
+        if(lasttimestamp!=0) {
+            distance = std::abs((long int) (*pTime - *lasttimestamp));
+        }
+        //printf("testing the distance from the last time stamp %d \n", distance);
+        if(distance > 1000000) {
+            *pointer = *pTime;
+            *pTime   = 0;
+        }
+        else {
+            *pointer = *pTime;   
+        }
         pointer++; 
         pTime++;
     }    
@@ -1019,28 +1032,25 @@ void bottleProcessorThread::threadRelease() {
     idle = false;
     fclose(fout);
     printf("bottleProcessorThread release:freeing bufferCopy \n");
-
-    //free(saliencyMap);
     free(featureMapLeft);
     free(featureMapRight);
+    printf("bottleProcessorThread release:freed featuremaps \n");
     free(timestampMapLeft); 
     free(timestampMapRight);    
-    free(timestampMap); 
+    printf("bottleProcessorThread release:freed timestampMap \n");
     free(unmaskedEvents); 
 
     printf("bottleProcessorThread release:closing ports \n");
     outPort.close();
     outPortRight.close();
-    //delete imageLeft;
-    //delete imageRight;
+    
+    printf("deleting memory \n");
     delete receivedBottle;
-    delete map1Handler;
     delete ebHandler;
-    printf("bottleProcessorThread release         stopping plotterThread \n");
-    pThread->stop();
-    printf("bottleProcessorThread release         deleting converter \n");
+    
+    printf("bottleProcessorThread release :        deleting converter \n");
     delete cfConverter;
-    printf("correctly freed memory from the cfCollector \n");
+    printf("bottleProcessorThread release : correctly freed memory from the cfCollector \n");
 }
 
 

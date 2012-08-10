@@ -105,20 +105,11 @@ bool eventSelectorThread::threadInit() {
     ebHandler->useCallback();
     ebHandler->setRetinalSize(128);
     ebHandler->open(getName("/retinaBottle:i").c_str());
-
     map1Handler = new eventBottleHandler();
     map1Handler->useCallback();
     map1Handler->setRetinalSize(32);
     map1Handler->open(getName("/map1Bottle:i").c_str());
     */
-
-
-    //unmask_events->setRetinalSize(32);
-    
-    //unmask_events->setResponseGradient(responseGradient);
-    //unmask_events->setASVMode(asvFlag);
-    //unmask_events->setDVSMode(dvsFlag);
-    //unmask_events->start();
 
     //minCount = cfConverter->getEldestTimeStamp();
     startTimer = Time::now();
@@ -261,8 +252,9 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
 
     
     unsigned long timestampactual;
-    unsigned long* pTime        = timestampMap41Left;
+    unsigned long* pTime41Left  = timestampMap41Left;
     unsigned long* pTimeA1Left  = timestampMapA1Left;
+
     double* pMap41Left          = featureMap41Left;
     double* pMapA1Left          = featureMapA1Left;
     double* pBuffer             = saliencyMapLeft;
@@ -284,10 +276,13 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
         for(int c = 0 ; c < retinalSize ; c++) {            
             // combining the feature map and normalisation
             
-            //double contrib41Left = (*pMap41Left + bpt41->getMinLeft()) / (bpt41->getMaxLeft() - bpt41->getMinLeft());
-            double contrib41Left = (abs(*pMap41Left) - bpt41->getMinLeft()) / (bpt41->getMaxLeft() - bpt41->getMinLeft()) ;
+            double contrib41Left = abs(*pMap41Left);
+            //double contrib41Left = (abs(*pMap41Left) - bpt41->getMinLeft()) / (bpt41->getMaxLeft() - bpt41->getMinLeft()) ;
             //double contribA1Left = (*pMapA1Left + bptA1->getMinLeft()) / (bptA1->getMaxLeft() - bptA1->getMinLeft());
-            double contribA1Left = abs(*pMapA1Left) * 15;
+            double contribA1Left = abs(*pMapA1Left)  ;
+            
+
+            //printf("%f %f %f \n",contribA1Left, bptA1->getMaxLeft(), bptA1->getMinLeft() );
             
             // if(*pMapA1Left == 0) 
             //    contribA1Left = 0;
@@ -297,9 +292,10 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
             //    printf("pMap41Left %f \n", *pMap41Left);
             //}
 
-            //printf("%f %f %f %f \n", *pMapA1Left, contribA1Left,   bptA1->getMinLeft(),  bptA1->getMaxLeft());
-            double wa1 = 0.9;
-            double w41 = 0.1;
+            
+            double wa1 = 1.0;
+            double w41 = 0.0;
+            //*pBuffer =  contrib41Left ;
             *pBuffer =  wa1 * contribA1Left + w41 * contrib41Left ;
 
 
@@ -318,10 +314,11 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
             
 
             // -------------- max and min of let and right ----------------------
-            if(left_double < minLeft)   minLeft = left_double;
-            if(left_double > maxLeft)   maxLeft = left_double;
-            if(right_double > maxRight) maxRight = right_double;
-            if(right_double < minRight) minRight = right_double;
+            if(left_double  < minLeft)   minLeft = left_double;
+            if(left_double  > maxLeft)   maxLeft = left_double;
+            if(right_double > maxRight)  maxRight = right_double;
+            if(right_double < minRight)  minRight = right_double;
+
             if(maxResponseLeft < abs(minLeft)) {
                 maxResponseLeft = abs(minLeft);
                 maxLeftR = r; maxLeftC = c;
@@ -340,7 +337,9 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
             }        
 
             //--------------- temporal information ------------------------------          
-            timestampactual = (*pTimeA1Left > *pTime)?*pTimeA1Left:*pTime ;
+            //timestampactual = (*pTimeA1Left > *pTime41Left)?*pTimeA1Left:*pTime41Left;
+            timestampactual = *pTimeA1Left;
+            
 
             //----------------------------------------------------------------------------------------
             if(tristate) {
@@ -400,7 +399,7 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
                 pBuffer++;
                 pMap41Left++;
                 pMapA1Left++;
-                pTime++;
+                pTime41Left++;
                 pTimeA1Left++;
             }
             else { // branch !tristateView
@@ -442,12 +441,15 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
                 pBuffer++;
                 pMap41Left++;
                 pMapA1Left++;
-                pTime++;
-                pTimeA1Left;
+                pTime41Left++;
+                pTimeA1Left++;
             } // end !tristate            
         } // end inner loop
         pImage += imagePadding;
     }//end outer loop
+
+    //printf("A1 > %f %f \n", bptA1->getMinLeft(),  bptA1->getMaxLeft());
+    //printf("41 > %f %f \n", bpt41->getMinLeft(),  bpt41->getMaxLeft());
     
 
     //printf("end of the function get in mono \n");
@@ -923,7 +925,7 @@ void eventSelectorThread::run() {
         lc = lastleft * COUNTERRATIO; 
         //unsigned long lastright = unmask_events->getLastTimestampRight();
         rc = lastright * COUNTERRATIO;
-        //printf("countStop %d lcprev %d lc %d \n",countStop, lcprev,lc);
+        printf("countStop %d lcprev %d lc %d \n",countStop, lcprev,lc);
         if (stereo) {
             if ((lcprev == lc)||(rcprev == rc)) {
                 //if (lcprev == lc) {

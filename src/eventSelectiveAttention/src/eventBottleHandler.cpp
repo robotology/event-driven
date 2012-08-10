@@ -370,9 +370,10 @@ eventBottleHandler::~eventBottleHandler() {
     free(converterBuffer_copy);
     fclose(fout);
 
-    printf("freeing the buffer of bottle \n");
+    printf("eventBottleHandler::~eventBottleHandler:freeing the buffer of bottle \n");
     delete[] bufferBottle;
     delete[] semBottleBuffer;
+    printf("eventBottleHandler::~eventBottleHandler:success in destructor \n");
 }
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------
