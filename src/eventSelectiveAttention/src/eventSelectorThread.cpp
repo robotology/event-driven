@@ -204,6 +204,8 @@ bool eventSelectorThread::threadInit() {
     bpt42->setName(getName("/btp42"));    
     bpt42->start();
 
+    outputCmdPort.open(getName("/cmd:o").c_str());
+
     receivedBottle = new Bottle();
     unmask_events  = new unmask(32);
 
@@ -214,6 +216,7 @@ bool eventSelectorThread::threadInit() {
 void eventSelectorThread::interrupt() {
     outPort.interrupt();
     outPortRight.interrupt();
+    outputCmdPort.interrupt();
 }
 
 void eventSelectorThread::setName(string str) {
@@ -359,18 +362,18 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
             if(right_double > maxRight)  maxRight = right_double;
             if(right_double < minRight)  minRight = right_double;
 
-            if(maxResponseLeft < abs(minLeft)) {
-                maxResponseLeft = abs(minLeft);
-                maxLeftR = r; maxLeftC = c;
-            }
+            //if(maxResponseLeft < abs(minLeft)) {
+            //    maxResponseLeft = abs(minLeft);
+            //    maxLeftR = r; maxLeftC = c;
+            //}
             if(maxResponseLeft < abs(maxLeft)) {
                 maxResponseLeft = abs(maxLeft);
                 maxLeftR = r; maxLeftC = c;
             }
-            if(maxResponseRight < abs(minRight)) {
-                maxResponseRight = abs(minRight);
-                maxRightR = r; maxRightC = c;
-            }
+            //if(maxResponseRight < abs(minRight)) {
+            //    maxResponseRight = abs(minRight);
+            //    maxRightR = r; maxRightC = c;
+            //}
             if(maxResponseRight < abs(maxRight)) {
                 maxResponseRight = abs(maxRight);
                 maxRightR = r; maxRightC = c;
@@ -509,129 +512,144 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
     unsigned char* pRight = imageRight->getRawImage();
     int padding           = imageLeft->getPadding();
     int rowSize           = imageLeft->getRowSize();
-    
-    for(int r = 0 ; r < retinalSize ; r++){
-        for(int c = 0 ; c < retinalSize ; c++) {
-            timestampactual = *pTimeLeft; 
-            if (
-                ((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)
-               ) {
-                
-                if ((r == maxLeftR - 1 ) && (c == maxLeftC - 1)) {
-                    for (int j = 0; j < 3; j ++) {
-                        // maximum response
-                        *pLeft = 255; pLeft++;
-                        *pLeft = 0  ; pLeft++;
-                        *pLeft = 0  ; pLeft++;
-                        *pLeft = 255; pLeft++;
-                        *pLeft = 0  ; pLeft++;
-                        *pLeft = 0  ; pLeft++;
-                        *pLeft = 255; pLeft++;
-                        *pLeft = 0  ; pLeft++;
-                        *pLeft = 0  ; pLeft++;
-                        pLeft += rowSize - 3 * 3;
-                    }
-                }
-                //else if (c == maxLeftC) {
-                //    *pLeft = 255; pLeft++;
-                //    *pLeft = 0  ; pLeft++;
-                //    *pLeft = 0  ; pLeft++;
-                //}
-                
-                else {
-                    //double d = ((abs(*pSalLeft  - minLeft) )  / rangeLeft ) * 80;
-                    //printf(" d=%f %08X < %08X < %08X\n", d, minCount, timestampactual, maxCount);
-                    //*pLeft  = (unsigned char) d; 
-                    pLeft++;
-                    //*pLeft  = (unsigned char) d; 
-                    pLeft++;
-                    //*pLeft  = (unsigned char) d; 
-                    pLeft++;
-                }
-                
-            }
-            else {
-                if ((r == maxLeftR - 1) && (c == maxLeftC - 1)) {
-                    for (int j = 0; j < 3; j ++) {
-                        // maximum response
-                        *pLeft = 255; pLeft++;
-                        *pLeft = 0  ; pLeft++;
-                        *pLeft = 0  ; pLeft++;
-                        *pLeft = 255; pLeft++;
-                        *pLeft = 0  ; pLeft++;
-                        *pLeft = 0  ; pLeft++;
-                        *pLeft = 255; pLeft++;
-                        *pLeft = 0  ; pLeft++;
-                        *pLeft = 0  ; pLeft++;
-                        pLeft += rowSize - 3 * 3;
-                    }
-                }
-                //else if (c == maxLeftC) {
-                //    *pLeft = 255; pLeft++;
-                //    *pLeft = 0  ; pLeft++;
-                //    *pLeft = 0  ; pLeft++;
-                //}
-                else {                    
-                     pLeft++;
-                     pLeft++;
-                     pLeft++;
-                }
-                
-            }
-            // pLeft++;
-            pSalLeft++;
-            pTimeLeft++;
 
-            /*
-            // -----------------------  RIGHT WTA  ------------------------------
-            timestampactual = *pTimeRight;
-            if (((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)) { 
+    
+    if(maxResponseLeft > 0.5) {
+        // sending command for saccade; to focus redeployment corresponds fixation point reallocation 
+        if(outputCmdPort.getOutputCount()){
+            Bottle& commandBottle=outputCmdPort.prepare();
+            commandBottle.clear();
+            commandBottle.addString("SAC_MONO");
+            commandBottle.addInt(maxLeftC);
+            commandBottle.addInt(maxLeftR);
+            commandBottle.addDouble(0.5);
+            commandBottle.addDouble(1.0);
+            outputCmdPort.write();            
+        }
+
+        // representing the WTA as red dot
+        for(int r = 0 ; r < retinalSize ; r++){
+            for(int c = 0 ; c < retinalSize ; c++) {
+                timestampactual = *pTimeLeft; 
+                if (
+                    ((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)
+                    ) {
+                    
+                    if ((r == maxLeftR - 1 ) && (c == maxLeftC - 1)) {
+                        for (int j = 0; j < 3; j ++) {
+                            // maximum response
+                            *pLeft = 255; pLeft++;
+                            *pLeft = 0  ; pLeft++;
+                            *pLeft = 0  ; pLeft++;
+                            *pLeft = 255; pLeft++;
+                            *pLeft = 0  ; pLeft++;
+                            *pLeft = 0  ; pLeft++;
+                            *pLeft = 255; pLeft++;
+                            *pLeft = 0  ; pLeft++;
+                            *pLeft = 0  ; pLeft++;
+                            pLeft += rowSize - 3 * 3;
+                        }
+                    }
+                    //else if (c == maxLeftC) {
+                    //    *pLeft = 255; pLeft++;
+                    //    *pLeft = 0  ; pLeft++;
+                    //    *pLeft = 0  ; pLeft++;
+                    //}
+                    
+                    else {
+                        //double d = ((abs(*pSalLeft  - minLeft) )  / rangeLeft ) * 80;
+                        //printf(" d=%f %08X < %08X < %08X\n", d, minCount, timestampactual, maxCount);
+                        //*pLeft  = (unsigned char) d; 
+                        pLeft++;
+                        //*pLeft  = (unsigned char) d; 
+                        pLeft++;
+                        //*pLeft  = (unsigned char) d; 
+                        pLeft++;
+                    }
+                    
+                }
+                else {
+                    if ((r == maxLeftR - 1) && (c == maxLeftC - 1)) {
+                        for (int j = 0; j < 3; j ++) {
+                            // maximum response
+                            *pLeft = 255; pLeft++;
+                            *pLeft = 0  ; pLeft++;
+                            *pLeft = 0  ; pLeft++;
+                            *pLeft = 255; pLeft++;
+                            *pLeft = 0  ; pLeft++;
+                            *pLeft = 0  ; pLeft++;
+                            *pLeft = 255; pLeft++;
+                            *pLeft = 0  ; pLeft++;
+                            *pLeft = 0  ; pLeft++;
+                            pLeft += rowSize - 3 * 3;
+                        }
+                }
+                    //else if (c == maxLeftC) {
+                    //    *pLeft = 255; pLeft++;
+                    //    *pLeft = 0  ; pLeft++;
+                    //    *pLeft = 0  ; pLeft++;
+                    //}
+                    else {                    
+                        pLeft++;
+                        pLeft++;
+                        pLeft++;
+                    }
+                    
+                }
+                // pLeft++;
+                pSalLeft++;
+                pTimeLeft++;
+
+                /*
+                // -----------------------  RIGHT WTA  ------------------------------
+                timestampactual = *pTimeRight;
+                if (((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)) { 
                 if (r == maxRightR) {
-                    *pRight = 255; pRight++;
-                    *pRight = 0;   pRight++;
-                    *pRight = 0;   pRight++;
+                *pRight = 255; pRight++;
+                *pRight = 0;   pRight++;
+                *pRight = 0;   pRight++;
                 }
                 else if(c == maxRightC) {
-                    *pRight = 255; pRight++;
-                    *pRight = 0;   pRight++;
-                    *pRight = 0;   pRight++;
+                *pRight = 255; pRight++;
+                *pRight = 0;   pRight++;
+                *pRight = 0;   pRight++;
                 }
                 else {
-                    double d = ((abs(*pSalRight - minRight) )/ rangeRight) * 80;
-                    *pRight = (unsigned char) d; pRight++;
-                    *pRight = (unsigned char) d; pRight++;
-                    *pRight = (unsigned char) d; pRight++;
+                double d = ((abs(*pSalRight - minRight) )/ rangeRight) * 80;
+                *pRight = (unsigned char) d; pRight++;
+                *pRight = (unsigned char) d; pRight++;
+                *pRight = (unsigned char) d; pRight++;
                 }
-            }
-            else {
+                }
+                else {
                 if(r == maxRightR)  {
-                     // maximum response
-                    *pRight = 255; pRight++;
-                    *pRight = 0;   pRight++;
-                    *pRight = 0;   pRight++;
+                // maximum response
+                *pRight = 255; pRight++;
+                *pRight = 0;   pRight++;
+                *pRight = 0;   pRight++;
                 }
                 else if (c == maxRightC) {
-                    *pRight = 255; pRight++;
-                    *pRight = 0;   pRight++;
-                    *pRight = 0;   pRight++;
+                *pRight = 255; pRight++;
+                *pRight = 0;   pRight++;
+                *pRight = 0;   pRight++;
                 }
                 else {
-                    *pRight = 0; pRight++;
-                    *pRight = 0; pRight++;
-                    *pRight = 0; pRight++;
+                *pRight = 0; pRight++;
+                *pRight = 0; pRight++;
+                *pRight = 0; pRight++;
                 }
-            }
-            //pRight++;
-            pSalRight++;
+                }
+                //pRight++;
+                pSalRight++;
             pTimeRight++;
-            */
-        }
+                */
+            } //end inner for
             
         pLeft  += padding;
         pRight += padding;
         
-    }
-    
+        }//end outer for
+    } // end if    
 }
 
 void eventSelectorThread::forgettingMemory() {
@@ -1124,12 +1142,8 @@ void eventSelectorThread::threadRelease() {
     printf("eventSelectorThread release:closing ports \n");
     outPort.close();
     outPortRight.close();
-    //delete imageLeft;
-    //delete imageRight;
-    //delete receivedBottle;
+    outputCmdPort.close();
 
-    //delete map1Handler;
-    //delete ebHandler;
     printf("eventSelectorThread release         stopping Threads \n");
     pThread->stop();
     bptA1->stop();

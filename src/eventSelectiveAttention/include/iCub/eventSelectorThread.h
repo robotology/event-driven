@@ -134,18 +134,16 @@ private:
     unsigned long* timestampMapA2Right;  // pointer to the copy of the timestamp map (A2-Right)
     AER_struct* unmaskedEvents;          // trained of unmasked events
     
-    plotterThread* pThread;              // plotterThread for the trasformation of the event in images
-    yarp::os::Bottle* receivedBottle;    // bottle currently extracted from the buffer
-    eventCartesianCollector* cfConverter;// receives real-time events
-    eventBottleHandler *ebHandler;       // handler of received events as bottle
-    //eventBottleHandler *map1Handler;   // handler for the first feature map
+    plotterThread* pThread;                                              // plotterThread for the trasformation of the event in images
+    yarp::os::Bottle* receivedBottle;                                    // bottle currently extracted from the buffer
+    yarp::os::BufferedPort<yarp::os::Bottle > outputCmdPort;             // port that is dedicated to sending the typology of the gaze behaviour and some params
+    eventCartesianCollector* cfConverter;                                // receives real-time events
+    eventBottleHandler *ebHandler;                                       // handler of received events as bottle
     
-    bottleProcessorThread* bptA1;        // processor thread of the bottle
-    bottleProcessorThread* bptA2;        // processor thread of the bottle
-    bottleProcessorThread* bpt41;        // processor thread of the bottle
-    bottleProcessorThread* bpt42;        // processor thread of the bottle
-    
-    
+    bottleProcessorThread* bptA1;                                        // processor thread of the bottle whole retina events 1
+    bottleProcessorThread* bptA2;                                        // processor thread of the bottle whole retina events 2
+    bottleProcessorThread* bpt41;                                        // processor thread of the bottle feature map 1
+    bottleProcessorThread* bpt42;                                        // processor thread of the bottle feature map 2
     
 public:
     /**
