@@ -33,6 +33,12 @@
 		<tag>selectiveAttentionEFA</tag>
 		<node>/icub14</node>
 	</module>
+   	<module>
+		<name>velocityExtractor</name>
+		<parameters></parameters>
+		<tag>velExtractor</tag>
+		<node>/icub14</node>
+	</module>
 	<module>
 		<name>yarpview</name>
 		<parameters>--name /leftFeaHor --x 0 --y 0 </parameters>
@@ -85,6 +91,18 @@
 	        <name>yarpview</name>
 	        <parameters>--name /saliencyMapLeft --x 1200 --y 150</parameters>
 	        <tag>saliencyLeft</tag>
+	        <node>/icub14</node>
+	</module>
+    <module>
+	        <name>yarpview</name>
+	        <parameters>--name /velHistoView --x 0 --y 600</parameters>
+	        <tag>saliencyLeft</tag>
+	        <node>/icub14</node>
+	</module>
+   	<module>
+	        <name>yarpview</name>
+	        <parameters>--name /velExtractorView  --x 300 --y 600</parameters>
+	        <tag>velExtractViewer</tag>
 	        <node>/icub14</node>
 	</module>
 
@@ -171,6 +189,26 @@
 	<connection>
         	<from>/eventSelectiveAttention/left:o</from>
 		<to>/saliencyMapLeft</to>
+		<protocol>udp</protocol>
+	</connection>
+    <connection>
+        	<from>/velocityExtractor/plotter/histo:o</from>
+		<to>/velHistoView</to>
+		<protocol>udp</protocol>
+	</connection>
+    <connection>
+        	<from>/velocityExtractor/plotter/vel:o</from>
+		<to>/velExtractorView</to>
+		<protocol>udp</protocol>
+	</connection>
+    <connection>
+        	<from>/OptFlViewer/vels:o</from>
+		<to>/velocityExtractor/plotter/vel:i</to>
+		<protocol>udp</protocol>
+	</connection>
+        <connection>
+        	<from>/flow/opticalFlow:o</from>
+		<to>/velocityExtractor/velocity:i</to>
 		<protocol>udp</protocol>
 	</connection>
 </application>
