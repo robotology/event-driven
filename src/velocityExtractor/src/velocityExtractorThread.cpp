@@ -245,6 +245,7 @@ void velocityExtractorThread::run() {
 
                         //sending command to the oculomotor performer
                         if(outBottlePort.getOutputCount()) {
+                            
                             double velWTA_rad = velWTA_direction * (PI / 180);                            
                             double u = sin(velWTA_rad) * velWTA_magnitude; 
                             double v = cos(velWTA_rad) * velWTA_magnitude;
@@ -254,10 +255,9 @@ void velocityExtractorThread::run() {
                             Bottle& b = outBottlePort.prepare();
                             b.clear();
                             b.addString("SM_PUR");
-                            b.addDouble(u);
-                            b.addDouble(v);
-                            b.addInt(pixelU);
-                            b.addInt(pixelV);
+                            b.addInt(pixelU);          // velocity along u axis
+                            b.addInt(pixelV);          // velocity along v axis
+                            b.addDouble(0.5);          // smooth pursuit time extension
                             outBottlePort.write();
                         }                        
                         
