@@ -52,21 +52,25 @@ velocityExtractorThread::velocityExtractorThread() : Thread() {
     responseGradient = 127;
     retinalSize      = 128;  //default value before setting 
     velWTA_direction = 0;
+    count            = 0;
+    minCount         = 0; //initialisation of the timestamp limits of the first frame
+    lc               = 0;	
+    rc               = 0;
+    minCount         = 0;
+    minCountRight    = 0;
+    countStop        = 0;
   
     synchronised = false;
     greaterHalf  = false;
     firstRun     = true;
-    count        = 0;
-    minCount     = 0; //initialisation of the timestamp limits of the first frame
+    
     idle = false;
     bufferCopy = (char*) malloc(CHUNKSIZE);
-    countStop = 0;
+    
     verb = false;
     string i_fileName("events.log");
     raw = fopen(i_fileName.c_str(), "wb");
-    lc = rc = 0;	
-    minCount      = 0;
-    minCountRight = 0;
+
 }
 
 velocityExtractorThread::~velocityExtractorThread() {
@@ -117,6 +121,7 @@ bool velocityExtractorThread::threadInit() {
 
     for(int i = 0 ; i < numberOfAngles; i++) {
         histogram[i] = 0;
+        magnitude[i] = 0;
     }
 
 
@@ -145,7 +150,7 @@ std::string velocityExtractorThread::getName(const char* p) {
 
 void velocityExtractorThread::resize(int widthp, int heightp) {
     imageOut = new ImageOf<PixelMono>;
-    imageOut->resize(360,20);
+    imageOut->resize(NUMANGLES,20);
     imageRight = new ImageOf<PixelMono>;
     imageRight->resize(widthp,heightp);
 }
@@ -185,11 +190,11 @@ void velocityExtractorThread::setHistoValue() {
     //int histoValue[360];
     //int* pHisto = &histoValue[0];
 
-    int* pHisto = new int[360];
+    int* pHisto = new int[NUMANGLES];
 
-    for (int i = 0; i < 360; i++) {
+    for (int i = 0; i < NUMANGLES; i++) {
        
-        double posDouble = i / (360 / numberOfAngles);
+        double posDouble = i / (NUMANGLES / numberOfAngles);
         int pos = floor(posDouble);       
         
         //histoValue[i] = histogram[pos];
@@ -231,11 +236,30 @@ void velocityExtractorThread::run() {
                     
                     //printf("uDot %f vDot %f theta %f thetaDeg %d pos %d \n",uDot,vDot, theta,thetaDeg, pos);
                     histogram[pos] = histogram[pos] + 2;
+                    magnitude[pos] = magnitude[pos] + mag;
                     if(histogram[pos] > maxFiringRate) {
                         maxReached = true;
                         //printf("max reached for %d \n", pos * 10);
                         velWTA_direction = pos * (360 / numberOfAngles);
+                        //sending command to the oculomotor performer
+                        if(outBottlePort.getOutputCount()) {
+                            double velWTA_rad = velWTA_direction * (PI / 180);
+                            double meanMag    = magnitude[pos] / histogram[pos];
+                            double u = sin(velWTA_rad) * meanMag; 
+                            double v = cos(velWTA_rad) * meanMag;
+                            int pixelU = (int) u;
+                            int pixelV = (int) v;
+                            
+                            Bottle& b = outBottlePort.prepare();
+                            b.addString("SM_PUR");
+                            b.addDouble(pixelU);
+                            b.addDouble(pixelV);
+                            outBottlePort.write();
+                        }                        
+                        
+                        // resetting the hist/mag
                         histogram[pos] = 0;
+                        magnitude[pos] = 0;                        
                     }
                 }   
             } //end of the for                        
@@ -267,6 +291,12 @@ void velocityExtractorThread::decayingProcess() {
 void velocityExtractorThread::onStop() {
     printf("in the onStop function \n");
     outBottlePort.interrupt();
+    outImagePort.interrupt();
+    outPortRight.interrupt();
+    
+    outImagePort.close();
+    outPortRight.close();
+    outBottlePort.close();
     
 }
 

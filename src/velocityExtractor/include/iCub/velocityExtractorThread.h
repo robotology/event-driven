@@ -73,7 +73,8 @@ private:
     int synchPeriod;                    // synchronization period between events and viewer
     int responseGradient;               // responseGradient parameter
     int velWTA_direction;               // direction of the winning speed vector
-    short histogram[numberOfAngles];    // histogram of velocity direction
+    short  histogram[numberOfAngles];   // histogram of velocity direction
+    double magnitude[numberOfAngles];   // store memory for the mean magnitude of direction
     
     yarp::os::Bottle* receivedBottle;      // bottle currently extracted from the buffer
     yarp::os::Bottle* bottleToSend;        // bottle ready to be sent to the outputport 
