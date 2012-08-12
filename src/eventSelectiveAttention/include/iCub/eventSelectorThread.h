@@ -67,6 +67,7 @@ private:
     double microsecondsPrev;
     int countStop;                      // counter of equal timestamp
     int countDivider;                   // divider of the count
+    int countCommands;                  // counter of sent commands; 
     int retinalSize;                    // dimension of the retina device
     int width, height;                  // dimension of the extended input image (extending)
     int height_orig, width_orig;        // original dimension of the input and output images

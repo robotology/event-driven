@@ -37,13 +37,11 @@ using namespace std;
 
 #define INTERVFACTOR 1
 #define COUNTERRATIO 1 //1.25       //1.25 is the ratio 0.160/0.128
-#define MAXVALUE 0xFFFFFF //4294967295
-#define THRATE 5
-#define STAMPINFRAME  // 10 ms of period times the us in 1 millisecond + time for computing
-//#define retinalSize 128
-#define CHUNKSIZE 32768 //65536 //8192
-#define dim_window 10
-#define synch_time 1
+#define MAXVALUE     0xFFFFFF //4294967295
+#define THRATE       5
+#define CHUNKSIZE    32768 //65536 //8192
+#define dim_window   10
+#define synch_time   1
 
 //#define VERBOSE
 #define TEMPDIST      1000000
@@ -56,13 +54,13 @@ bottleProcessorThread::bottleProcessorThread() : RateThread(THRATE) {
     saliencySize     = 128;  //default dimension of the saliency map
     lasttimestamp    = 0;
     maxLeft          = -1.0;
-    minLeft          = 1.0;
+    minLeft          =  1.0;
     maxRight         = -1.0;
-    minRight         = 1.0;
+    minRight         =  1.0;
     featureMapLeft   = 0;
     timestampMapLeft = 0;
-    count        = 0;
-    minCount     = 0; //initialisation of the timestamp limits of the first frame
+    count            = 0;
+    minCount         = 0; //initialisation of the timestamp limits of the first frame
 
     bottleHandler   = true;
     synchronised    = false;
@@ -77,7 +75,8 @@ bottleProcessorThread::bottleProcessorThread() : RateThread(THRATE) {
     
     string i_fileName("bottleProcessorThread.eventBottle.txt");
     raw = fopen(i_fileName.c_str(), "wb");
-    lc = rc = 0;	
+    lc            = 0;	
+    rc            = 0;
     minCount      = 0;
     minCountRight = 0;
 }

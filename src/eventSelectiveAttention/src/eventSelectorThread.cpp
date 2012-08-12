@@ -36,15 +36,14 @@ using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
-#define INTERVFACTOR 1
-#define COUNTERRATIO 1 //1.25       //1.25 is the ratio 0.160/0.128
-#define MAXVALUE 0xFFFFFF //4294967295
-#define THRATE 5
-#define STAMPINFRAME  // 10 ms of period times the us in 1 millisecond + time for computing
-//#define retinalSize 128
-#define CHUNKSIZE 32768 //65536 //8192
-#define dim_window 10
-#define synch_time 1
+#define FIRETHRESHOLD 0.4
+#define INTERVFACTOR  1
+#define COUNTERRATIO  1 //1.25       //1.25 is the ratio 0.160/0.128
+#define MAXVALUE      0xFFFFFF //4294967295
+#define THRATE        5
+#define CHUNKSIZE     32768 //65536 //8192
+#define dim_window    10
+#define synch_time    1
 
 //#define VERBOSE
 #define INCR_RESPONSE 10
@@ -54,19 +53,25 @@ eventSelectorThread::eventSelectorThread() : RateThread(THRATE) {
     responseGradient = 127;
     retinalSize      = 128;  //default value before setting 
     lasttimestamp    = 0;
+    count            = 0;
+    minCount         = 0;    //initialisation of the timestamp limits of the first frame
+    countStop        = 0;
+    countCommands    = 0;    
+        
     bottleHandler = true;
     synchronised = false;
     greaterHalf  = false;
     firstRun     = true;
-    count        = 0;
-    minCount     = 0; //initialisation of the timestamp limits of the first frame
+    
     idle = false;
     bufferCopy = (char*) malloc(CHUNKSIZE);
-    countStop = 0;
+
     verb = false;
     string i_fileName("events.log");
     raw = fopen(i_fileName.c_str(), "wb");
-    lc = rc = 0;	
+    
+    lc            = 0;	
+    rc            = 0; 
     minCount      = 0;
     minCountRight = 0;
 }
@@ -111,12 +116,8 @@ bool eventSelectorThread::threadInit() {
     map1Handler->open(getName("/map1Bottle:i").c_str());
     */
 
-    //minCount = cfConverter->getEldestTimeStamp();
+
     startTimer = Time::now();
-    //clock(); //startTime ;
-    //T1 = times(&start_time);
-    //microseconds = 0;
-    //microsecondsPrev = 0;
     gettimeofday(&tvend, NULL);
 
     count = 0;
@@ -494,11 +495,9 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
     //printf("A1 > %f %f \n", bptA1->getMinLeft(),  bptA1->getMaxLeft());
     //printf("41 > %f %f \n", bpt41->getMinLeft(),  bpt41->getMaxLeft());
     
-
     //printf("end of the function get in mono \n");
     //unmask_events->setLastTimestamp(0);
     //printf("maxLR %d  maxLC%d \n",maxLeftR, maxLeftC );
-
     
     // cycle after normalisation - WTA representation
     //printf("cycle after the normalisation LEFT:(%f, %f)  RIGHT:(%f,%f) \n", minLeft, maxLeft, minRight, maxRight);
@@ -514,17 +513,27 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
     int rowSize           = imageLeft->getRowSize();
 
     
-    if(maxResponseLeft > 0.5) {
+    if(maxResponseLeft > FIRETHRESHOLD) {
         // sending command for saccade; to focus redeployment corresponds fixation point reallocation 
         if(outputCmdPort.getOutputCount()){
-            Bottle& commandBottle=outputCmdPort.prepare();
-            commandBottle.clear();
-            commandBottle.addString("SAC_MONO");
-            commandBottle.addInt(maxLeftC);
-            commandBottle.addInt(maxLeftR);
-            commandBottle.addDouble(0.5);
-            commandBottle.addDouble(1.0);
-            outputCmdPort.write();            
+
+            // the countCommands prevents from sending frequent sequences of commands
+            if(countCommands > 20) {
+                Bottle& commandBottle=outputCmdPort.prepare();
+                commandBottle.clear();
+                commandBottle.addString("SAC_MONO");
+                commandBottle.addInt(maxLeftC);
+                commandBottle.addInt(maxLeftR);
+                commandBottle.addDouble(0.5);
+                commandBottle.addDouble(1.0);
+                outputCmdPort.write();
+            }
+                
+            countCommands--;
+            if(countCommands == 0) {
+                countCommands = 20;
+            }
+            
         }
 
         // representing the WTA as red dot
