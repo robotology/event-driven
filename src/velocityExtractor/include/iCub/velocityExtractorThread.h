@@ -73,7 +73,7 @@ private:
     int synchPeriod;                    // synchronization period between events and viewer
     int responseGradient;               // responseGradient parameter
     int velWTA_direction;               // direction of the winning speed vector
-    int velWTA_magnitude;               // magnitude of the winning speed vector
+    double velWTA_magnitude;            // magnitude of the winning speed vector
     short  histogram[numberOfAngles];   // histogram of velocity direction
     double magnitude[numberOfAngles];   // store memory for the mean magnitude of direction
     

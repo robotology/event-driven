@@ -248,8 +248,8 @@ void velocityExtractorThread::run() {
                             double velWTA_rad = velWTA_direction * (PI / 180);                            
                             double u = sin(velWTA_rad) * velWTA_magnitude; 
                             double v = cos(velWTA_rad) * velWTA_magnitude;
-                            int pixelU = (int) u * 100;
-                            int pixelV = (int) v * 100;
+                            int pixelU = (int) (u * 1000);
+                            int pixelV = (int) (v * 1000);
                             
                             Bottle& b = outBottlePort.prepare();
                             b.clear();
