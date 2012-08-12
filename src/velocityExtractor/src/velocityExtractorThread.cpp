@@ -107,7 +107,7 @@ bool velocityExtractorThread::threadInit() {
     pt->setName(getName("/plotter").c_str());
     pt->start();
     
-    if(!outBottlePort.open(getName("/retinaBottle:o").c_str())) {
+    if(!outBottlePort.open(getName("/cmd:o").c_str())) {
         printf("error in opening the output port \n");
         return false;
     }
@@ -241,19 +241,23 @@ void velocityExtractorThread::run() {
                         maxReached = true;
                         //printf("max reached for %d \n", pos * 10);
                         velWTA_direction = pos * (360 / numberOfAngles);
+                        velWTA_magnitude = magnitude[pos] / histogram[pos];
+
                         //sending command to the oculomotor performer
                         if(outBottlePort.getOutputCount()) {
-                            double velWTA_rad = velWTA_direction * (PI / 180);
-                            double meanMag    = magnitude[pos] / histogram[pos];
-                            double u = sin(velWTA_rad) * meanMag; 
-                            double v = cos(velWTA_rad) * meanMag;
-                            int pixelU = (int) u;
-                            int pixelV = (int) v;
+                            double velWTA_rad = velWTA_direction * (PI / 180);                            
+                            double u = sin(velWTA_rad) * velWTA_magnitude; 
+                            double v = cos(velWTA_rad) * velWTA_magnitude;
+                            int pixelU = (int) u * 100;
+                            int pixelV = (int) v * 100;
                             
                             Bottle& b = outBottlePort.prepare();
+                            b.clear();
                             b.addString("SM_PUR");
-                            b.addDouble(pixelU);
-                            b.addDouble(pixelV);
+                            b.addDouble(u);
+                            b.addDouble(v);
+                            b.addInt(pixelU);
+                            b.addInt(pixelV);
                             outBottlePort.write();
                         }                        
                         
@@ -266,7 +270,7 @@ void velocityExtractorThread::run() {
         } // end vb! = 0
 
         setHistoValue();
-        pt->setVelResult(velWTA_direction, 1.0, maxReached);
+        pt->setVelResult(velWTA_direction, velWTA_magnitude, maxReached);
         
         // resetting the maxReached in this class
         if(maxReached) {

@@ -183,6 +183,7 @@ void plotterThread::setVelResult(int angle, float magnitude, bool _maxReached) {
     //printf("setting valResult %d \n", angle);
     mutexVeloc.wait();
     velWTA_direction = angle;
+    velWTA_magnitude = magnitude;
     maxReached = _maxReached;
     mutexVeloc.post();
 }
@@ -232,8 +233,8 @@ void plotterThread::prepareVelocImage(ImageOf<PixelMono> in, ImageOf<PixelRgb>& 
     double velWTA_rad = (velWTA_direction / 180.0) * PI;
     
     //printf("velWTA: %f %d \n", velWTA_rad, velWTA_direction );
-    int uComp = (int) round(cos(velWTA_rad) * 50.0);
-    int vComp = (int) round(sin(velWTA_rad) * 50.0);
+    int uComp = (int) round(cos(velWTA_rad) * velWTA_magnitude);
+    int vComp = (int) round(sin(velWTA_rad) * velWTA_magnitude);
     //printf("uComp %d vComp %d \n",uComp, vComp);
     
     CvScalar arrowColor;

@@ -42,20 +42,21 @@ private:
     
     int count;                            // loop counter of the thread
     int velWTA_direction;                 // direction of the main velocity component in fovea
+    double velWTA_magnitude;              // direction of the main velocity component in fovea
     int retinalSize;                      // dimension of the squared retina
-    int histoValue[NUMANGLES];                  // value of the representation of the histogram
+    int histoValue[NUMANGLES];            // value of the representation of the histogram
     
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> > histoPort;                 // port whre the output is sent
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb > > histoPort;                 // port whre the output is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > velocPortIn;                // port whre the output (right) is sent
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> > velocPortOut;                // port whre the output (right) is
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb > > velocPortOut;                // port whre the output (right) is
     
     
-    yarp::os::BufferedPort<yarp::sig::Vector > eventPort;
+    yarp::os::BufferedPort<yarp::sig::Vector >  eventPort;
     
-    yarp::sig::ImageOf<yarp::sig::PixelRgb>* imageHisto;                                       //image representing the histogram of angles
-    yarp::sig::ImageOf<yarp::sig::PixelMono>* imageVelocIn;                                      //image representing the velocities
+    yarp::sig::ImageOf<yarp::sig::PixelRgb   >* imageHisto;                                       //image representing the histogram of angles
+    yarp::sig::ImageOf<yarp::sig::PixelMono  >* imageVelocIn;                                      //image representing the velocities
     
-    yarp::sig::ImageOf<yarp::sig::PixelRgb>* imageVelocOut;                                      //image representing the velocities
+    yarp::sig::ImageOf<yarp::sig::PixelRgb   >* imageVelocOut;                                      //image representing the velocities
     
     std::string name;                           // rootname of all the ports opened by this thread
     bool synchronised;                          // flag to check whether the microsecond counter has been synchronised

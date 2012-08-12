@@ -38,7 +38,7 @@
 #include <iCub/plotterThread.h>
 #include <iCub/velocityBottleHandler.h>
 
-#define NUMANGLES 360
+#define NUMANGLES 360    
 #define PI        3.1415
 
 typedef yarp::os::NetUint32 u32;
@@ -73,6 +73,7 @@ private:
     int synchPeriod;                    // synchronization period between events and viewer
     int responseGradient;               // responseGradient parameter
     int velWTA_direction;               // direction of the winning speed vector
+    int velWTA_magnitude;               // magnitude of the winning speed vector
     short  histogram[numberOfAngles];   // histogram of velocity direction
     double magnitude[numberOfAngles];   // store memory for the mean magnitude of direction
     
