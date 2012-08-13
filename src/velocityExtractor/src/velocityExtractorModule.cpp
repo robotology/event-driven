@@ -24,6 +24,21 @@
 
 #include <iCub/velocityExtractorModule.h>
 
+// general command vocab's
+#define COMMAND_VOCAB_HELP               VOCAB4('h','e','l','p')
+#define COMMAND_VOCAB_SET                VOCAB3('s','e','t')
+#define COMMAND_VOCAB_GET                VOCAB3('g','e','t')
+#define COMMAND_VOCAB_RUN                VOCAB3('r','u','n')
+#define COMMAND_VOCAB_SUSPEND            VOCAB3('s','u','s')
+#define COMMAND_VOCAB_RESUME             VOCAB3('r','e','s')
+#define COMMAND_VOCAB_FIX                VOCAB3('f','i','x')
+#define COMMAND_VOCAB_IS                 VOCAB2('i','s')
+#define COMMAND_VOCAB_OK                 VOCAB2('o','k')
+#define COMMAND_VOCAB_FAILED             VOCAB4('f','a','i','l')
+#define COMMAND_VOCAB_SEEK               VOCAB4('s','e','e','k')
+#define COMMAND_VOCAB_CENT               VOCAB4('c','e','n','t')
+#define COMMAND_VOCAB_STOP               VOCAB4('s','t','o','p')
+
 
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -134,6 +149,9 @@ bool velocityExtractorModule::close() {
 }
 
 bool velocityExtractorModule::respond(const Bottle& command, Bottle& reply) {
+    bool ok = false;
+    bool rec = false; // is the command recognized?
+    
     string helpMessage =  string(getName().c_str()) + 
                         " commands are: \n" +  
                         "help \n" + 
@@ -149,6 +167,49 @@ bool velocityExtractorModule::respond(const Bottle& command, Bottle& reply) {
         cout << helpMessage;
         reply.addString("ok");
     }
+    
+
+    mutex.wait();
+    switch (command.get(0).asVocab()) {
+    case COMMAND_VOCAB_HELP:
+        rec = true;
+        {
+            reply.addString("many");
+            reply.addString("help");
+
+            //reply.addString();
+            reply.addString("set fn \t: general set command ");
+            reply.addString("get fn \t: general get command ");
+            //reply.addString();
+
+            
+            //reply.addString();
+            reply.addString("seek red \t : looking for a red color object");
+            reply.addString("seek rgb \t : looking for a general color object");
+            reply.addString("sus  \t : suspending");
+            reply.addString("res  \t : resuming");
+            //reply.addString();
+
+
+            ok = true;
+        }
+        break;
+    default: {
+        
+    }
+        break;    
+    }
+    mutex.post();
+
+    if (!rec)
+        ok = RFModule::respond(command,reply);
+    
+    if (!ok) {
+        reply.clear();
+        reply.addVocab(COMMAND_VOCAB_FAILED);
+    }
+    else
+        reply.addVocab(COMMAND_VOCAB_OK);
     
     return true;
 }

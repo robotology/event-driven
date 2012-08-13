@@ -172,8 +172,9 @@ class velocityExtractorModule:public yarp::os::RFModule {
     int synchPeriod;                            // synchronization period between events and viewer
     int retinalSize;                            // dimension of the retina
     int responseGradient;                       // amplitude of the response gradient for every event in the image
-    yarp::os::RpcServer handlerPort;                 // a port to handle messages 
-    velocityExtractorThread* esThread;               // cfCollectorThread for processing events
+    yarp::os::RpcServer handlerPort;            // a port to handle messages 
+    yarp::os::Semaphore mutex;                  // semaphore for RpcServer port
+    velocityExtractorThread* esThread;          // cfCollectorThread for processing events
 
 public:
     bool configure(yarp::os::ResourceFinder &rf); // configure all the module parameters and return true if successful
