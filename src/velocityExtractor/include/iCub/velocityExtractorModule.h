@@ -158,6 +158,7 @@
 #include <yarp/os/RFModule.h>
 #include <yarp/os/Network.h>
 #include <yarp/os/Thread.h>
+#include <yarp/os/RpcServer.h>
 
 //within project includes
 #include <iCub/velocityExtractorThread.h>
@@ -171,7 +172,7 @@ class velocityExtractorModule:public yarp::os::RFModule {
     int synchPeriod;                            // synchronization period between events and viewer
     int retinalSize;                            // dimension of the retina
     int responseGradient;                       // amplitude of the response gradient for every event in the image
-    yarp::os::Port handlerPort;                 // a port to handle messages 
+    yarp::os::RpcServer handlerPort;                 // a port to handle messages 
     velocityExtractorThread* esThread;               // cfCollectorThread for processing events
 
 public:

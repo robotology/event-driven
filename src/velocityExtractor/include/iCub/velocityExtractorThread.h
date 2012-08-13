@@ -50,7 +50,7 @@ private:
     static const int vmin           = 32;
     static const int umax           = 96;
     static const int vmax           = 96;
-    static const int maxFiringRate  = 100;
+    static const int maxFiringRate  = 120;
    
     int count;                          // loop counter of the thread
  
@@ -65,6 +65,8 @@ private:
     
     double microseconds;
     double microsecondsPrev;
+    double egoMotionU;                  // component of self motion on U
+    double egoMotionV;                  // component of self motion on V
     int countStop;                      // counter of equal timestamp
     int countDivider;                   // divider of the count
     int retinalSize;                    // dimension of the retina device
@@ -75,6 +77,7 @@ private:
     int velWTA_direction;               // direction of the winning speed vector
     double velWTA_magnitude;            // magnitude of the winning speed vector
     short  histogram[numberOfAngles];   // histogram of velocity direction
+    short  counter  [numberOfAngles];   // counter of the direction
     double magnitude[numberOfAngles];   // store memory for the mean magnitude of direction
     
     yarp::os::Bottle* receivedBottle;      // bottle currently extracted from the buffer

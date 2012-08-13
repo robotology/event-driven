@@ -37,6 +37,8 @@ using namespace std;
 #define INTERVFACTOR 1              // resolution 160ns = 6.25Mhz, 128ns = 7.8125Mhz ... gaep 1us
 #define COUNTERRATIO 1              // 1.25 is the ratio 0.160/0.128
 #define THRATE       5
+#define DECRFACTOR   3
+#define INCRFACTOR   2
 #define MAXVALUE 0xFFFFFF //4294967295
 
 #define STAMPINFRAME  // 10 ms of period times the us in 1 millisecond + time for computing
@@ -59,6 +61,8 @@ velocityExtractorThread::velocityExtractorThread() : Thread() {
     minCount         = 0;
     minCountRight    = 0;
     countStop        = 0;
+    egoMotionU       = 0;
+    egoMotionV       = 0;
   
     synchronised = false;
     greaterHalf  = false;
@@ -122,6 +126,7 @@ bool velocityExtractorThread::threadInit() {
     for(int i = 0 ; i < numberOfAngles; i++) {
         histogram[i] = 0;
         magnitude[i] = 0;
+        counter  [i] = 0;
     }
 
 
@@ -218,12 +223,17 @@ void velocityExtractorThread::run() {
                 
                 int u          = vb->getX(i);
                 int v          = vb->getY(i);
+                
                 //printf("%d %d \n", u, v);
                
                 if((u > umin) && (u < umax) && (v > vmin) && (v < vmax)) {
                     //printf("read u = %d v = %d \n", u, v);
                     double uDot    = vb->getVx(i);
                     double vDot    = vb->getVy(i);
+                    //correcting the acquired retinal speed with egoMotion
+                    uDot = uDot - egoMotionU;
+                    vDot = vDot - egoMotionV;
+                    
                     double theta   = atan2(vDot,uDot);
                     double mag     = sqrt(vDot * vDot + uDot * uDot);
 
@@ -235,35 +245,38 @@ void velocityExtractorThread::run() {
                     int pos        =  thetaDeg / (360 / numberOfAngles);
                     
                     //printf("uDot %f vDot %f theta %f thetaDeg %d pos %d \n",uDot,vDot, theta,thetaDeg, pos);
-                    histogram[pos] = histogram[pos] + 2;
+                    histogram[pos] = histogram[pos] + exp(histogram[pos] / 10.0);
+                    counter  [pos] = counter[pos]   + 1;
                     magnitude[pos] = magnitude[pos] + mag;
                     if(histogram[pos] > maxFiringRate) {
                         maxReached = true;
                         //printf("max reached for %d \n", pos * 10);
                         velWTA_direction = pos * (360 / numberOfAngles);
-                        velWTA_magnitude = magnitude[pos] / histogram[pos];
+                        velWTA_magnitude = magnitude[pos] / counter[pos];
 
                         //sending command to the oculomotor performer
                         if(outBottlePort.getOutputCount()) {
                             
                             double velWTA_rad = velWTA_direction * (PI / 180);                            
-                            double u = sin(velWTA_rad) * velWTA_magnitude; 
-                            double v = cos(velWTA_rad) * velWTA_magnitude;
-                            int pixelU = (int) (u * 1000);
-                            int pixelV = (int) (v * 1000);
+                            double u = cos(velWTA_rad) * velWTA_magnitude; 
+                            double v = sin(velWTA_rad) * velWTA_magnitude;
+                            double pixelU = u * 100;
+                            double pixelV = v * 100;
                             
                             Bottle& b = outBottlePort.prepare();
                             b.clear();
                             b.addString("SM_PUR");
-                            b.addInt(pixelU);          // velocity along u axis
-                            b.addInt(pixelV);          // velocity along v axis
-                            b.addDouble(0.5);          // smooth pursuit time extension
+                            b.addDouble(pixelU);          // velocity along u axis
+                            b.addDouble(pixelV);          // velocity along v axis
+                            b.addDouble(1.5);          // smooth pursuit time extension
+                            b.addDouble(velWTA_direction);
                             outBottlePort.write();
                         }                        
                         
                         // resetting the hist/mag
                         histogram[pos] = 0;
                         magnitude[pos] = 0;                        
+                        counter  [pos] = 0;
                     }
                 }   
             } //end of the for                        
@@ -286,8 +299,8 @@ void velocityExtractorThread::run() {
 
 void velocityExtractorThread::decayingProcess() {
     for(int i = 0 ; i < numberOfAngles; i++) {
-        if(histogram[i] > 0)
-            histogram[i] = histogram[i] - 1;
+        if(histogram[i] > DECRFACTOR)
+            histogram[i] = histogram[i] - DECRFACTOR;
     }
 
 }
