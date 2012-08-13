@@ -108,7 +108,7 @@ private:
 
     double startTimer;
     double interTimer;
-    double endTimer;
+    double endTimer;    
     
     yarp::os::Semaphore mutex;           // semaphore thar regulates the access to the buffer resource
     clock_t endTime,startTime;
@@ -244,6 +244,12 @@ public:
      * @brief function that indicates whether the viewer reppresent logpolar information
      */
     void setResponseGradient(int value) {responseGradient = value; }; 
+
+    /**
+     * @brief function that sets the valeus of the egoMotion components on the retina
+     */
+    void setEgoMotion(double egoU, double egoV) {egoMotionU = egoU; egoMotionV =  egoV; }; 
+    
     
     /**
      * @brief function that given a section of the buffer creates a bottle

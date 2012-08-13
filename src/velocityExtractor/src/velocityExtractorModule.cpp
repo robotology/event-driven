@@ -25,15 +25,18 @@
 #include <iCub/velocityExtractorModule.h>
 
 // general command vocab's
-#define COMMAND_VOCAB_HELP               VOCAB4('h','e','l','p')
+#define COMMAND_VOCAB_IS                 VOCAB2('i','s')
+#define COMMAND_VOCAB_OK                 VOCAB2('o','k')
+
 #define COMMAND_VOCAB_SET                VOCAB3('s','e','t')
 #define COMMAND_VOCAB_GET                VOCAB3('g','e','t')
 #define COMMAND_VOCAB_RUN                VOCAB3('r','u','n')
 #define COMMAND_VOCAB_SUSPEND            VOCAB3('s','u','s')
 #define COMMAND_VOCAB_RESUME             VOCAB3('r','e','s')
 #define COMMAND_VOCAB_FIX                VOCAB3('f','i','x')
-#define COMMAND_VOCAB_IS                 VOCAB2('i','s')
-#define COMMAND_VOCAB_OK                 VOCAB2('o','k')
+#define COMMAND_VOCAB_EGO                VOCAB3('E','G','O')
+
+#define COMMAND_VOCAB_HELP               VOCAB4('h','e','l','p')
 #define COMMAND_VOCAB_FAILED             VOCAB4('f','a','i','l')
 #define COMMAND_VOCAB_SEEK               VOCAB4('s','e','e','k')
 #define COMMAND_VOCAB_CENT               VOCAB4('c','e','n','t')
@@ -183,15 +186,21 @@ bool velocityExtractorModule::respond(const Bottle& command, Bottle& reply) {
             //reply.addString();
 
             
-            //reply.addString();
-            reply.addString("seek red \t : looking for a red color object");
-            reply.addString("seek rgb \t : looking for a general color object");
+
             reply.addString("sus  \t : suspending");
             reply.addString("res  \t : resuming");
             //reply.addString();
 
 
             ok = true;
+        }
+        break;
+    case COMMAND_VOCAB_EGO:
+       rec = true;
+        {
+            double egoMotionU = command.get(1).asDouble();
+            double egoMotionV = command.get(2).asDouble();
+            esThread->setEgoMotion(egoMotionU, egoMotionV);
         }
         break;
     default: {
