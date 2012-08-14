@@ -163,8 +163,8 @@ class wingsTranslatorModule:public yarp::os::RFModule {
     
     int ratethread;                             // time constant for ratethread
     yarp::os::Semaphore respondLock;            // to lock updating through respond
-    yarp::os::Port handlerPort;                 // a port to handle messages 
-    wingsTranslatorThread* tf;                     // wingsTranslatorThread for processing events
+    yarp::os::RpcServer handlerPort;            // a port to handle messages 
+    wingsTranslatorThread* tf;                  // wingsTranslatorThread for processing events
 
 public:
     bool configure(yarp::os::ResourceFinder &rf); // configure all the module parameters and return true if successful

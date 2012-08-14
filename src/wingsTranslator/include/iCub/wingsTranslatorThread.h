@@ -24,8 +24,8 @@
  * (see efExtractorModule.h).
  */
 
-#ifndef _TARGET_FINDER_THREAD_H_
-#define _TARGET_FINDER_THREAD_H_
+#ifndef _WINGS_TRANSLATOR_THREAD_H_
+#define _WINGS_TRANSLATOR_THREAD_H_
 
 #include <iostream>
 
@@ -35,7 +35,7 @@
 #include <yarp/dev/all.h>
 
 #include <iCub/emorph/eventConversion.h>
-#include <iCub/emorph/eventBuffer.h>
+
 #include <iCub/iKin/iKinInv.h>
 #include <iCub/iKin/iKinIpOpt.h>
 #include <iCub/iKin/iKinFwd.h>
@@ -59,7 +59,8 @@ private:
     yarp::os::BufferedPort<yarp::os::Bottle> inRightPort;                                // port where the right event image is received
     yarp::os::BufferedPort<yarp::os::Bottle> outPort;           // port where the output edge (left) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outRightPort;      // port where the output edge (right) is sent
-    yarp::os::BufferedPort<emorph::ebuffer::eventBuffer> outEventPort;                                    // port sending events
+
+
     yarp::sig::ImageOf <yarp::sig::PixelMono>* leftInputImage;                           // image input left 
     yarp::sig::ImageOf <yarp::sig::PixelMono>* rightInputImage;                          // image input right 
     std::string robot;                      // name of the robot read by the ResourceFinder
@@ -71,7 +72,7 @@ private:
     FILE *pFile;                            // file that contains the rules for the LUT
     FILE *fout;                             // file where the extracted LUT is saved
     FILE *fdebug;                           // file for debug
-    int* lut;                               // lut that route the event in a different location 
+    
     int monBufSize_b;                       // dimension of the bufferFEA in bytes
     int countEvent;                         // counter of event that are going to be sent
     int countMap;                           // counter of the mapped events

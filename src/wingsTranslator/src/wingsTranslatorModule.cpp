@@ -36,6 +36,14 @@ using namespace std;
 
 bool wingsTranslatorModule::configure(yarp::os::ResourceFinder &rf) {
     /* Process all parameters from both command-line and .ini file */
+     if(rf.check("help")) {
+        printf("HELP \n");
+        printf("--name : changes the rootname of the module ports \n");
+        printf("--robot : changes the name of the robot where the module interfaces to  \n"); 
+        printf("====== \n");
+        printf("press CTRL-C to continue.. \n");
+        return true;
+    }
 
     /* get the module name which will form the stem of all module port names */
     moduleName            = rf.check("name", 
@@ -73,15 +81,6 @@ bool wingsTranslatorModule::configure(yarp::os::ResourceFinder &rf) {
     else {
         configFile.clear();
     }
-    
-    /*
-    * set the operating mode which correspond as well with the file map saved in conf
-    */
-    mapName             = rf.check("mode", 
-                                   Value("intensity"), 
-                                   "file map name (string)").asString();
-    mapName += ".txt";
-    mapNameComplete = rf.findFile(mapName.c_str());
 
     /*
     * attach a port of the same name as the module (prefixed with a /) to the module
