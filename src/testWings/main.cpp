@@ -112,7 +112,11 @@ yarp::sig::Matrix *invPrjL,iCub::iKin::iCubEye *eye,int u, int v, double varDist
     
     Matrix eyeH = eye->getH(q);
     printf("success in getH(q) \n");
-    printf("eyeH : %f %f %f \n", eyeH(0,0), eyeH(0,1), eyeH(0,2));
+    printf("eyeH : %f %f %f \n %f %f %f \n %f %f %f \n ", 
+           eyeH(0,0), eyeH(0,1), eyeH(0,2),
+           eyeH(1,0), eyeH(1,1), eyeH(1,2),
+           eyeH(2,0), eyeH(2,1), eyeH(2,2)
+           );
     //xo = yarp::math::operator *(eyeH,xe).subVector(0,2);
     xo=(eye->getH(q)*xe).subVector(0,2);
 
@@ -336,18 +340,10 @@ int main(int argc, char * argv[]) {
     printf("correctly istantiated the head \n");
 
     // if it isOnWings, move the eyes on top of the head 
-    isOnWings = false;
+    isOnWings = true;
     if (isOnWings) {
         printf("changing the structure of the chain \n");
         //iKinChain* eyeChain = eyeL->asChain();
-
-        Matrix H0(4,4);
-        H0.zero();
-        H0(0,1)=-1.0;
-        H0(1,2)=-1.0;
-        H0(2,0)=1.0;
-        H0(3,3)=1.0;
-        ikl->setH0(H0);
         
         /**
          * Constructor. 
@@ -373,21 +369,39 @@ int main(int argc, char * argv[]) {
         // iKinLink ikl7(    0.0,     0.0,  M_PI/2.0, -M_PI/2.0, -50.0*CTRL_DEG2RAD, 50.0*CTRL_DEG2RAD);
         
 
-        //yarp::os::Property p; 
-        //p.fromConfigFile(rf.findFile("wingsKinematic.txt")); 
-        //ikl->fromLinksProperties(p);
+        yarp::os::Property p; 
+        p.fromConfigFile(rf.findFile("wingsKinematic.txt")); 
+        ikl->fromLinksProperties(p);
         eyeL = ikl; 
+        printf("eyeL is valid? %d \n", eyeL->isValid());
+
+        printf("H0 = \n %s \n", eyeL->getH0().toString().c_str());
+        iKinChain* tmpChain = eyeL->asChain();
+        for(int j = 0; j < eyeL->getN(); j++) {
+            printf("LINK %d :",j);
+            iKinLink tmpLink = tmpChain->operator[](j);
+            printf("              A %f D %f alpha %f offset %f min %f max %f blocked %d\n",
+                   tmpLink.getA(), tmpLink.getD(),tmpLink.getAlpha(), tmpLink.getOffset(), tmpLink.getMin(), tmpLink.getMax(), tmpLink.isBlocked() );
+        }
 
     }
     else {
         printf("isOnWing false \n");
+        printf("H0 = \n %s \n", eyeL->getH0().toString().c_str());
+        iKinChain* tmpChain = eyeL->asChain();
+        for(int j = 0; j < eyeL->getN(); j++) {
+            printf("LINK %d :",j);
+            iKinLink tmpLink = tmpChain->operator[](j);
+            printf("              A %f D %f alpha %f offset %f min %f max %f blocked %d\n",
+                   tmpLink.getA(), tmpLink.getD(),tmpLink.getAlpha(), tmpLink.getOffset(), tmpLink.getMin(), tmpLink.getMax(), tmpLink.isBlocked());
+        }
     }
 
     printf("introducing additional constraints \n");
     
     // remove constraints on the links
     // we use the chains for logging purpose
-    //eyeL->setAllConstraints(false);
+    // eyeL->setAllConstraints(false);
     // eyeR->setAllConstraints(false);
 
     // release links
