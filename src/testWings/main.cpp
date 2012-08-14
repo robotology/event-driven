@@ -67,38 +67,39 @@ using namespace std;
 static int MAX_NUMBER_ACTIVATED = 1;
 
 bool project(yarp::dev::IEncoders *encTorso,yarp::dev::IEncoders *encHead,
-yarp::sig::Matrix *invPrjL,iCub::iKin::iCubEye *eyeL,int u, int v, double varDistance, Vector &xo) {
+yarp::sig::Matrix *invPrjL,iCub::iKin::iCubEye *eye,int u, int v, double varDistance, Vector &xo) {
     Vector fp(3);
     
     Vector torso(3);
     encTorso->getEncoder(0,&torso[0]);
     encTorso->getEncoder(1,&torso[1]);
     encTorso->getEncoder(2,&torso[2]);
+    printf("torso %f %f %f \n", torso[0], torso[1], torso[2]);
     Vector head(5);
     encHead->getEncoder(0,&head[0]);
     encHead->getEncoder(1,&head[1]);
     encHead->getEncoder(2,&head[2]);
     encHead->getEncoder(3,&head[3]);
     encHead->getEncoder(4,&head[4]);
-    
+    printf("head %f %f %f %f %f %f \n", head[0], head[1], head[2], head[3], head[4]);
     
     Vector q(8);
     double ratio = M_PI /180;
     q[0]=torso[0] * ratio;
-    q[1]=torso[1]* ratio;
-    q[2]=torso[2]* ratio;
-    q[3]=head[0]* ratio;
-    q[4]=head[1]* ratio;
-    q[5]=head[2]* ratio;
-    q[6]=head[3]* ratio;
-    q[7]=head[4]* ratio;
+    q[1]=torso[1] * ratio;
+    q[2]=torso[2] * ratio;
+    q[3]=head[0]  * ratio;
+    q[4]=head[1]  * ratio;
+    q[5]=head[2]  * ratio;
+    q[6]=head[3]  * ratio;
+    q[7]=head[4]  * ratio;
     double ver = head[5];                    
     
     Vector x(3);
     printf("varDistance %f \n", varDistance);
-    x[0]=varDistance * u;   //epipolar correction excluded the focal lenght
-    x[1]=varDistance * v;
-    x[2]=varDistance;
+    x[0] = varDistance * u;   //epipolar correction excluded the focal lenght
+    x[1] = varDistance * v;
+    x[2] = varDistance;
     
     // find the 3D position from the 2D projection,
     // knowing the distance z from the camera
@@ -107,13 +108,14 @@ yarp::sig::Matrix *invPrjL,iCub::iKin::iCubEye *eyeL,int u, int v, double varDis
     xe[3]=1.0;  // impose homogeneous coordinates                
     
     // update position wrt the root frame
-    printf("updating the 3D position wrt the root frame %d \n",eyeL->getN());
+    printf("updating the 3D position wrt the root frame %d \n",eye->getN());
     
-    Matrix eyeH = eyeL->getH(q);
+    Matrix eyeH = eye->getH(q);
     printf("success in getH(q) \n");
-    printf(" %f %f %f \n", eyeH(0,0), eyeH(0,1), eyeH(0,2));
-    xo = yarp::math::operator *(eyeH,xe);
-    
+    printf("eyeH : %f %f %f \n", eyeH(0,0), eyeH(0,1), eyeH(0,2));
+    //xo = yarp::math::operator *(eyeH,xe).subVector(0,2);
+    xo=(eye->getH(q)*xe).subVector(0,2);
+
     printf("object %f,%f,%f \n",xo[0],xo[1],xo[2]);    
 
     return true;
@@ -244,7 +246,7 @@ int main(int argc, char * argv[]) {
     rf.configure("ICUB_ROOT", argc, argv);    
 
     yarp::os::ConstString configName             = rf.check("config", 
-                           Value("icubEyes.ini"), 
+                           Value("icubEyesDefault.ini"), 
                            "Config file for intrinsic parameters (string)").asString();
     printf("configFile: %s \n", configName.c_str());
     std::string configFile = (std::string) rf.findFile(configName.c_str());
@@ -319,22 +321,33 @@ int main(int argc, char * argv[]) {
     printf("just got the info \n");    
     int head_version = info.check("head_version", Value(1)).asInt();
     
-    printf("head_version extracted from gazeArbiter \n");
+    printf("head_version extracted from gazeArbiter %d \n",head_version);
     ikl = new iCubEye();
+    
+    head_version = 2;
     if(head_version == 1) {
         eyeL = new iCubEye("left");
         eyeR = new iCubEye("right");
     }
     else {
-        eyeL = new iCubEye("left_v2");
+        eyeL = new iCubEye("left_wings");
         eyeR = new iCubEye("right_v2");
     }
     printf("correctly istantiated the head \n");
 
     // if it isOnWings, move the eyes on top of the head 
+    isOnWings = false;
     if (isOnWings) {
-        //printf("changing the structure of the chain \n");
+        printf("changing the structure of the chain \n");
         //iKinChain* eyeChain = eyeL->asChain();
+
+        Matrix H0(4,4);
+        H0.zero();
+        H0(0,1)=-1.0;
+        H0(1,2)=-1.0;
+        H0(2,0)=1.0;
+        H0(3,3)=1.0;
+        ikl->setH0(H0);
         
         /**
          * Constructor. 
@@ -360,9 +373,9 @@ int main(int argc, char * argv[]) {
         // iKinLink ikl7(    0.0,     0.0,  M_PI/2.0, -M_PI/2.0, -50.0*CTRL_DEG2RAD, 50.0*CTRL_DEG2RAD);
         
 
-        yarp::os::Property p; 
-        p.fromConfigFile(rf.findFile("wingsKinematic.txt")); 
-        ikl->fromLinksProperties(p);
+        //yarp::os::Property p; 
+        //p.fromConfigFile(rf.findFile("wingsKinematic.txt")); 
+        //ikl->fromLinksProperties(p);
         eyeL = ikl; 
 
     }
@@ -400,7 +413,7 @@ int main(int argc, char * argv[]) {
 
 
     string headPort = "/" + robot + "/head";
-    string nameLocal("gazeArbiter");
+    string nameLocal("testWings");
 
     //initialising the head polydriver
     optionsHead.put("device", "remote_controlboard");
@@ -438,7 +451,7 @@ int main(int argc, char * argv[]) {
     //--------------------------------------------------------------------
     printf("starting with the projections \n");
     while(true) {
-        int operation = 0;
+        int operation = 1;
         switch (operation) {
 
         case 0 : {
@@ -449,6 +462,7 @@ int main(int argc, char * argv[]) {
             varDistance  = 0.5;
             project(encTorso,encHead,invPrjL,eyeL, u,v, varDistance, xo);
             
+            return true;
         }break;
         case 1: {
             
@@ -474,12 +488,13 @@ int main(int argc, char * argv[]) {
             ConstString type = "left";
             bool isLeft=(type=="left");
             iCubEye *eye=(isLeft?eyeL:eyeR);
+            eye = eyeL;
             
             printf("going to project the point \n");
             //if (projectPoint(type,u,v,1.0,x))
             if(project(encTorso,encHead,invPrjL,eyeL,u,v,1.0,x)) {
                 // pick up a point belonging to the plane
-                printf("picking up a point belonging to the plane \n");
+                printf("picking up a point belonging to the plane;\n  x =\n %s  \n", x.toString().c_str());
                 Vector p0(3,0.0);
                 if (plane[0]!=0.0)
                     p0[0]=-plane[3]/plane[0];
@@ -492,7 +507,9 @@ int main(int argc, char * argv[]) {
                     return false;
                 }
                 
+                
                 // take a vector orthogonal to the plane
+                printf("taking an orthogonal vector to the plane \n");
                 Vector n(3);
                 n[0]=plane[0];
                 n[1]=plane[1];
@@ -503,8 +520,12 @@ int main(int argc, char * argv[]) {
                 //mutex.post();
                 
                 // compute the projection
+                printf("computing the projection e=%s  \n", e.toString().c_str());
                 Vector v = x - e;
-                x = e + ( dot(p0-e,n ) / dot(v,n)) * v;
+                printf("after subtraction \n");
+                x = e + ( dot(p0-e,n ) / dot(x - e,n)) * v;
+                //Vector k = e;
+                printf("------------ x %s \n",x.toString().c_str());
                 
                 return true;
             }
