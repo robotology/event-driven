@@ -138,7 +138,7 @@
 #define COMMAND_VOCAB_SUSPEND       VOCAB3('s','u','s')
 #define COMMAND_VOCAB_RESUME        VOCAB3('r','e','s')
 #define COMMAND_VOCAB_OK            VOCAB2('o','k')
-
+#define COMMAND_VOCAB_GET3D         VOCAB4('g','e','t','3')
 
 #include <iostream>
 #include <string>
@@ -160,6 +160,8 @@ class wingsTranslatorModule:public yarp::os::RFModule {
     std::string mapNameComplete;                // name of complete of the map 
     std::string configName;                     // name of the configuration file for camera 
     std::string configFile;                     // configuration file of cameras (LEFT RIGHT)
+    std::string wingsLeftFile;                  // kinematic configuration file for left camera
+    std::string wingsLeftName;                  // name of the kinematic configuration of the 
     
     int ratethread;                             // time constant for ratethread
     yarp::os::Semaphore respondLock;            // to lock updating through respond
@@ -175,6 +177,6 @@ public:
 };
 
 
-#endif // _TARGET_FINDER_MODULE_H__
+#endif // _WINGS_TRANSLATOR_MODULE_H__
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------

@@ -46,7 +46,7 @@
 using namespace iCub::ctrl;
 using namespace iCub::iKin;
 
-class wingsTranslatorThread : public yarp::os::RateThread {
+class wingsTranslatorThread : public yarp::os::Thread {
 private:
     bool idle;                          // flag that exclude code from the execution loop
     bool isOnWings;
@@ -55,11 +55,12 @@ private:
     int width, height;                  // dimension of the extended input image (extending)
     int height_orig, width_orig;        // original dimension of the input and output images
     std::string configFile;             // configuration file of cameras (LEFT RIGHT)
+    std::string wingsLeftFile;          // complete path for the kinematic of the left cam
+    std::string wingsRightStr;          // complete path for the kinematic of the right cam
     yarp::os::BufferedPort<yarp::os::Bottle> inPort;                                     // port where the left event image is received
     yarp::os::BufferedPort<yarp::os::Bottle> inRightPort;                                // port where the right event image is received
     yarp::os::BufferedPort<yarp::os::Bottle> outPort;           // port where the output edge (left) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outRightPort;      // port where the output edge (right) is sent
-
 
     yarp::sig::ImageOf <yarp::sig::PixelMono>* leftInputImage;                           // image input left 
     yarp::sig::ImageOf <yarp::sig::PixelMono>* rightInputImage;                          // image input right 
@@ -79,20 +80,26 @@ private:
 
     iCub::iKin::iCubEye *eyeL;
     iCub::iKin::iCubEye *eyeR;
+    iCub::iKin::iCubEye  *ikl;
+
+    yarp::os::Property optionsHead;
+    yarp::os::ResourceFinder* rf;                   // resorceFinder reference for configuration files
+
     yarp::sig::Matrix eyeCAbsFrame;                 // projection matrix center eye
     yarp::sig::Matrix invEyeCAbsFrame;              // inverse projection matrix center eye
     yarp::sig::Matrix *invPrjL, *invPrjR;           // inverse of prjection matrix left and right
     yarp::sig::Matrix *PrjL, *PrjR;                 // projection matrix left and right
-    yarp::os::Property optionsHead;
     yarp::dev::IGazeControl *igaze;                 // Ikin controller of the gaze
     yarp::dev::PolyDriver* clientGazeCtrl;          // polydriver for the gaze controller
     yarp::dev::PolyDriver *polyTorso, *robotHead;   // polydriver for the control of the head
     yarp::dev::IEncoders *encTorso, *encHead;       // measure of the encoder  (head and torso)
+    yarp::dev::IControlLimits *limTorso, *limHead;  // limits in the device
 
     int originalContext;                    // original context for the gaze Controller
     double blockNeckPitchValue;             // value for blocking the pitch of the neck
     double eyesHalfBaseline;                // half distance between the eyes
     double valueInput[12];                  // vector of 12 values read from the input port
+    double cxl,cyl;                         // position of the center of the image
 
     char* bufferCopy;                       // local copy of the events read
     char* flagCopy;                         // copy of the unreadBuffer
@@ -131,6 +138,11 @@ public:
     void interrupt(); 
 
     /**
+     * stopping function for the thread
+     */
+    void onStop();
+
+    /**
     * function that set operating mode
     * @param str name of the mode
     */
@@ -153,6 +165,11 @@ public:
     * @param str robotname as a string
     */
     void setConfigFile(std::string str) {configFile = str; };
+    
+    /**
+     * 
+     */
+    void setWingsLeftFile(std::string str) {wingsLeftFile = str; };
     
     /**
     * function that returns the original root name and appends another string iff passed as parameter
@@ -188,6 +205,13 @@ public:
      * @param ang  vector of angles values
      */
     yarp::sig::Vector get3DPoint(const std::string &type, const yarp::sig::Vector &ang); 
+
+    /**
+     * @brief function that returns the 3d position of an object on the left camera
+     * @param u retina position of the object on the x-axis
+     * @param v retina position of the object on the y-axis
+     */
+    yarp::sig::Vector get3dWingsLeft(int u , int v) ;
 
 };
 

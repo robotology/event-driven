@@ -82,6 +82,25 @@ bool wingsTranslatorModule::configure(yarp::os::ResourceFinder &rf) {
         configFile.clear();
     }
 
+
+    printf("trying to read the kinematic chain for the left \n");
+    wingsLeftName          = rf.check("kinWingLeft", 
+                           Value("wingsKinematic.ini"), 
+                           "Config file for kinematics left wing (string)").asString();
+    printf("wingLeftName: %s \n", wingsLeftName.c_str());
+    if (strcmp(wingsLeftName.c_str(),"")) {
+        printf("looking for the wingsLeft file \n");
+        wingsLeftFile=rf.findFile(wingsLeftName.c_str());
+        printf("wings left file %s \n", wingsLeftFile.c_str());
+        if (wingsLeftFile=="") {
+            printf("ERROR: file not found");
+            return false;
+        }
+    }
+    else {
+        wingsLeftFile.clear();
+    }
+
     /*
     * attach a port of the same name as the module (prefixed with a /) to the module
     * so that messages received from the port are redirected to the respond method
@@ -100,6 +119,7 @@ bool wingsTranslatorModule::configure(yarp::os::ResourceFinder &rf) {
     tf->setMapURL(mapNameComplete);
     tf->setRobotName(robotName);
     tf->setConfigFile(configFile);
+    tf->setWingsLeftFile(wingsLeftFile);
     tf->setName(getName().c_str());
     tf->start();
 
@@ -155,11 +175,11 @@ bool wingsTranslatorModule::respond(const Bottle& command, Bottle& reply) {
             reply.addString(" ");
             reply.addString(" ");
             reply.addString(" sus   ");
-            reply.addString(" sus   ");
+            reply.addString(" res   ");
             reply.addString(" ");
             reply.addString(" ");
             reply.addString(" ");
-            reply.addString(" ");
+            reply.addString("  get3D u v : get the 3D position using homography ");
             //reply.addString(helpMessage.c_str());
             ok = true;
         }
@@ -174,17 +194,37 @@ bool wingsTranslatorModule::respond(const Bottle& command, Bottle& reply) {
     
     
     case COMMAND_VOCAB_SUSPEND:
+        rec = true;
         {            
             reply.addString("suspending");
             ok = true;
-            tf->suspend();
+            //tf->suspend();
         }
         break;
     case COMMAND_VOCAB_RESUME:
+        rec = true;
         {
             reply.addString("resuming");
             ok = true;
-            tf->resume();
+            //tf->resume();
+        }
+        break;
+    case COMMAND_VOCAB_GET3D:
+        rec = true;
+        {
+            //reply.addString("get3D");
+            int u = command.get(1).asInt();
+            int v = command.get(2).asInt();
+            printf("received get3d query with u %d v %d \n", u,v);
+            
+            yarp::sig::Vector res = tf->get3dWingsLeft(u,v);
+            
+            reply.addDouble(res[0]);
+            reply.addDouble(res[1]);
+            reply.addDouble(res[2]);
+
+            ok = true;
+            //tf->resume();
         }
         break;
     default:

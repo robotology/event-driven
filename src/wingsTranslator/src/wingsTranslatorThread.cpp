@@ -95,7 +95,6 @@ inline void copy_8u_C3R(ImageOf<PixelRgb>* src, ImageOf<PixelRgb>* dest) {
 
 
 /************************************************************************/
-
 bool getCamPrj(const string &configFile, const string &type, Matrix **Prj)
 {
     *Prj=NULL;
@@ -146,8 +145,66 @@ bool getCamPrj(const string &configFile, const string &type, Matrix **Prj)
 
 /**********************************************************************************/
 
+bool project(yarp::dev::IEncoders *encTorso,yarp::dev::IEncoders *encHead,
+yarp::sig::Matrix *invPrjL,iCub::iKin::iCubEye *eye,int u, int v, double varDistance, Vector &xo) {
+    Vector fp(3);
+    
+    Vector torso(3);
+    encTorso->getEncoder(0,&torso[0]);
+    encTorso->getEncoder(1,&torso[1]);
+    encTorso->getEncoder(2,&torso[2]);
+    printf("torso %f %f %f \n", torso[0], torso[1], torso[2]);
+    Vector head(5);
+    encHead->getEncoder(0,&head[0]);
+    encHead->getEncoder(1,&head[1]);
+    encHead->getEncoder(2,&head[2]);
+    encHead->getEncoder(3,&head[3]);
+    encHead->getEncoder(4,&head[4]);
+    printf("head %f %f %f %f %f %f \n", head[0], head[1], head[2], head[3], head[4]);
+    
+    Vector q(8);
+    double ratio = M_PI /180;
+    q[0]=torso[0] * ratio;
+    q[1]=torso[1] * ratio;
+    q[2]=torso[2] * ratio;
+    q[3]=head[0]  * ratio;
+    q[4]=head[1]  * ratio;
+    q[5]=head[2]  * ratio;
+    q[6]=head[3]  * ratio;
+    q[7]=head[4]  * ratio;
+    double ver = head[5];                    
+    
+    Vector x(3);
+    printf("varDistance %f \n", varDistance);
+    x[0] = varDistance * u;   //epipolar correction excluded the focal lenght
+    x[1] = varDistance * v;
+    x[2] = varDistance;
+    
+    // find the 3D position from the 2D projection,
+    // knowing the distance z from the camera
+    printf("finding the 3D position from the 2D projection \n");
+    Vector xe = yarp::math::operator *(*invPrjL, x);
+    xe[3]=1.0;  // impose homogeneous coordinates                
+    
+    // update position wrt the root frame
+    printf("updating the 3D position wrt the root frame %d \n",eye->getN());
+    
+    Matrix eyeH = eye->getH(q);
+    printf("success in getH(q) \n");
+    printf("eyeH : %f %f %f \n %f %f %f \n %f %f %f \n ", 
+           eyeH(0,0), eyeH(0,1), eyeH(0,2),
+           eyeH(1,0), eyeH(1,1), eyeH(1,2),
+           eyeH(2,0), eyeH(2,1), eyeH(2,2)
+           );
+    //xo = yarp::math::operator *(eyeH,xe).subVector(0,2);
+    xo=(eye->getH(q)*xe).subVector(0,2);
 
+    printf("object %f,%f,%f \n",xo[0],xo[1],xo[2]);    
 
+    return true;
+}
+
+/********************************************************************/
 
 void iCubHeadCenter::allocate(const std::string &_type) {
     // change DH parameters
@@ -160,7 +217,7 @@ void iCubHeadCenter::allocate(const std::string &_type) {
 
 /********************************************************************/
 
-wingsTranslatorThread::wingsTranslatorThread() : RateThread(THRATE) {
+wingsTranslatorThread::wingsTranslatorThread() /*: RateThread(THRATE)*/ {
     resized = false;
     count           = 0;
     countEvent      = 0;
@@ -186,7 +243,165 @@ bool wingsTranslatorThread::threadInit() {
     inPort.open(getName("/coord:i").c_str());
     inRightPort.open(getName("/right:i").c_str());
     
+    //initializing gazecontrollerclient
+    printf("initialising gazeControllerClient \n");
+    Property option;
+    option.put("device","gazecontrollerclient");
+    option.put("remote","/iKinGazeCtrl");
+    string localCon("/client/gaze");
+    localCon.append("testWings");
+    option.put("local",localCon.c_str());
 
+    clientGazeCtrl=new PolyDriver();
+    clientGazeCtrl->open(option);
+    igaze=NULL;
+
+    if (clientGazeCtrl->isValid()) {
+       clientGazeCtrl->view(igaze);
+    }
+    else
+        return false;
+   
+    igaze->storeContext(&originalContext);
+  
+    blockNeckPitchValue = -1;
+    if(blockNeckPitchValue != -1) {
+        igaze->blockNeckPitch(blockNeckPitchValue);
+        printf("pitch fixed at %f \n",blockNeckPitchValue);
+    }
+    else {
+        printf("pitch free to change\n");
+    }
+
+    // -----------------------------------------------------------------
+    
+    Bottle info;
+    igaze->getInfo(info);
+    printf("just got the info \n");    
+    int head_version = info.check("head_version", Value(1)).asInt();
+    
+    printf("head_version extracted from gazeArbiter %d \n",head_version);
+    ikl = new iCubEye();
+    
+    head_version = 2;
+    if(head_version == 1) {
+        eyeL = new iCubEye("left");
+        eyeR = new iCubEye("right");
+    }
+    else {
+        eyeL = new iCubEye("left_wings");
+        eyeR = new iCubEye("right_v2");
+    }
+    printf("correctly istantiated the head \n");
+    
+    // if it isOnWings, move the eyes on top of the head 
+    isOnWings = true;
+    if (isOnWings) {
+        printf("changing the structure of the chain \n");
+           
+        yarp::os::Property p; 
+        /*if(rf->findFile("wingsKinematic.txt")) {
+            wingsLeftStr = rf->findFile("wingsKinematic.txt");
+        }
+        else {
+            printf("file for kinematics wingsLeft not found \n");
+            return false;
+            }*/
+        printf("extracting properties from %s \n",wingsLeftFile.c_str() );
+        p.fromConfigFile(wingsLeftFile.c_str()); 
+        ikl->fromLinksProperties(p);
+        eyeL = ikl; 
+        printf("eyeL is valid? %d \n", eyeL->isValid());
+        
+        printf("H0 = \n %s \n", eyeL->getH0().toString().c_str());
+        iKinChain* tmpChain = eyeL->asChain();
+        for(int j = 0; j < eyeL->getN(); j++) {
+            printf("LINK %d :",j);
+            iKinLink tmpLink = tmpChain->operator[](j);
+            printf("              A %f D %f alpha %f offset %f min %f max %f blocked %d\n",
+                   tmpLink.getA(), tmpLink.getD(),tmpLink.getAlpha(), tmpLink.getOffset(), tmpLink.getMin(), tmpLink.getMax(), tmpLink.isBlocked() );
+        }
+        
+    }
+    else {
+        printf("isOnWing false \n");
+        printf("H0 = \n %s \n", eyeL->getH0().toString().c_str());
+        iKinChain* tmpChain = eyeL->asChain();
+        for(int j = 0; j < eyeL->getN(); j++) {
+            printf("LINK %d :",j);
+            iKinLink tmpLink = tmpChain->operator[](j);
+            printf("              A %f D %f alpha %f offset %f min %f max %f blocked %d\n",
+                   tmpLink.getA(), tmpLink.getD(),tmpLink.getAlpha(), tmpLink.getOffset(), tmpLink.getMin(), tmpLink.getMax(), tmpLink.isBlocked());
+        }
+    }
+    //---------------------------------------------------------------------------------------------------------------
+    
+    printf("introducing additional constraints \n");
+    
+    // remove constraints on the links
+    // we use the chains for logging purpose
+    // eyeL->setAllConstraints(false);
+    // eyeR->setAllConstraints(false);
+    
+    // release links
+    eyeL->releaseLink(0);
+    //eyeR->releaseLink(0);
+    eyeL->releaseLink(1);
+    //eyeR->releaseLink(1);
+    eyeL->releaseLink(2);
+    //eyeR->releaseLink(2);    
+    
+    //eyeL->alignJointsBounds()
+
+    // get camera projection matrix from the configFile
+    printf("get Camera configuration \n");
+    if (getCamPrj(configFile,"CAMERA_CALIBRATION_LEFT",&PrjL)) {
+        Matrix &Prj = *PrjL;
+        cxl=Prj(0,2);
+        cyl=Prj(1,2);
+        printf("pixel fovea in the config file %d %d \n", cxl,cyl);
+        invPrjL=new Matrix(pinv(Prj.transposed()).transposed());
+    }
+    // ------------------------------------------------------------------
+
+
+    string headPort = "/" + robot + "/head";
+    string nameLocal("testWings");
+
+    //initialising the head polydriver
+    optionsHead.put("device", "remote_controlboard");
+    optionsHead.put("local", ("/"+nameLocal+"/localhead").c_str());
+    optionsHead.put("remote", headPort.c_str());
+    robotHead = new PolyDriver (optionsHead);
+
+    if (!robotHead->isValid()){
+        printf("cannot connect to robot head\n");
+    }
+    robotHead->view(encHead);
+    robotHead->view(limHead);
+    
+    //initialising the torso polydriver
+    printf("starting the polydrive for the torso.... \n");
+    Property optPolyTorso("(device remote_controlboard)");
+    optPolyTorso.put("remote",("/"+robot+"/torso").c_str());
+    optPolyTorso.put("local",("/"+nameLocal+"/torso/position").c_str());
+    polyTorso=new PolyDriver;
+    if (!polyTorso->open(optPolyTorso))
+    {
+        return false;
+    }
+    polyTorso->view(encTorso);
+    polyTorso->view(limTorso);
+    //------------------------------------------------------------------------
+
+    printf("defining limits \n");
+    std::deque<yarp::dev::IControlLimits *> limQueue;
+    limQueue.push_back(limTorso);
+    limQueue.push_back(limHead);
+    eyeL->alignJointsBounds(limQueue);
+    printf("success in aligning the JointsBounds \n");
+
+    return true;
 }
 
 
@@ -216,88 +431,8 @@ Vector wingsTranslatorThread::getAbsAngles(const Vector &x) {
 
 
 /************************************************************************/
-Vector wingsTranslatorThread::get3DPoint(const string &type, const Vector &ang)
-{
-    /*
-    double azi = ang[0];
-    double ele = ang[1];
-    double ver = ang[2];
+Vector wingsTranslatorThread::get3DPoint(const string &type, const Vector &ang) {
 
-    Vector q(8,0.0);
-    if (type == "rel")
-    {
-        //Vector torso = commData->get_torso();
-        //Vector head  = commData->get_q();
-        
-        // reading proprioception information
-        Vector torso(3);        
-        encTorso->getEncoder(0,&torso[0]);
-        encTorso->getEncoder(1,&torso[1]);
-        encTorso->getEncoder(2,&torso[2]);
-        
-        Vector head(6);
-        encHead->getEncoder(0,&head[0]);
-        encHead->getEncoder(1,&head[1]);
-        encHead->getEncoder(2,&head[2]);
-        encHead->getEncoder(3,&head[3]);
-        encHead->getEncoder(4,&head[4]);
-        encHead->getEncoder(4,&head[5]);
-
-        q[0] = torso[0];
-        q[1] = torso[1];
-        q[2] = torso[2];
-        q[3] = head[0];
-        q[4] = head[1];
-        q[5] = head[2];
-        q[6] = head[3];
-        q[7] = head[4];
-
-        ver += head[5];
-    }
-    
-    // impose vergence != 0.0
-    if (ver < 0.0)
-        ver = 0.0;
-
-    mutex.wait();
-
-    q[7] += ver/2.0;
-    eyeL->setAng(q);
-
-    q[7] -= ver;
-    eyeR->setAng(q);
-
-    Vector fp(4);
-    fp[3]=1.0;  // impose homogeneous coordinates
-
-    // compute new fp due to changed vergence
-    computeFixationPointOnly(*(eyeL->asChain()),*(eyeR->asChain()),fp);
-    mutex.post();
-
-    // compute rotational matrix to
-    // account for elevation and azimuth
-    Vector x(4), y(4);
-    x[0]=1.0;    y[0]=0.0;
-    x[1]=0.0;    y[1]=1.0;
-    x[2]=0.0;    y[2]=0.0;
-    x[3]=ele;    y[3]=azi;   
-    Matrix R = axis2dcm(y)*axis2dcm(x);
-
-    Vector fph, xd;
-    if (type == "rel")
-    {
-        Matrix frame = commData->get_fpFrame();
-        fph = SE3inv(frame)*fp;       // get fp wrt relative head-centered frame
-        xd = frame*(R*fph);           // apply rotation and retrieve fp wrt root frame
-    }
-    else
-    {
-        fph = invEyeCAbsFrame*fp;     // get fp wrt absolute head-centered frame
-        xd = eyeCAbsFrame*(R*fph);    // apply rotation and retrieve fp wrt root frame
-    }
-
-    return xd.subVector(0,2);
-    */
 }
 
 void wingsTranslatorThread::setName(string str) {
@@ -320,8 +455,103 @@ void wingsTranslatorThread::resize(int widthp, int heightp) {
     //rightInputImage->resize(width, height);
 }
 
-void wingsTranslatorThread::run() {
+Vector wingsTranslatorThread::get3dWingsLeft(int u , int v) {
+    printf("starting with the projections \n");
+    Vector errorVector(3);
+    errorVector.zero();
     
+    int operation = 1;
+    switch (operation) {
+        
+    case 0 : {
+        Vector xo;
+        //calculating the 3d position and sending it to database
+        int u = 160; 
+        int v = 120;
+        int varDistance  = 0.5;
+        project(encTorso,encHead,invPrjL,eyeL, u,v, varDistance, xo);
+        
+        return xo;
+    }break;
+    case 1: {
+        
+        //Vector px(2);   // specify the pixel where to look
+        //px[0]=160.0;
+        //px[1]=120.0;
+        
+        //int u = 160;
+        //int v = 120;
+        
+        Vector plane(4);  // specify the plane in the root reference frame as ax+by+cz+d=0; z=-0.12 in this case
+        plane[0]=0.0;     // a
+        plane[1]=0.0;     // b
+        plane[2]=1.0;     // c
+        plane[3]=0.12;    // d
+        
+        Vector x;
+        if (plane.length() < 4) {
+            fprintf(stdout,"Not enough values given for the projection plane!\n");
+            return x;
+        }
+        
+        ConstString type = "left";
+        bool isLeft=(type=="left");
+        iCubEye *eye=(isLeft?eyeL:eyeR);
+        eye = eyeL;
+        
+        printf("going to project the point \n");
+        //if (projectPoint(type,u,v,1.0,x))
+        if(project(encTorso,encHead,invPrjL,eyeL,u,v,1.0,x)) {
+            // pick up a point belonging to the plane
+            printf("picking up a point belonging to the plane;\n  x =\n %s  \n", x.toString().c_str());
+            Vector p0(3,0.0);
+            if (plane[0]!=0.0)
+                p0[0]=-plane[3]/plane[0];
+            else if (plane[1]!=0.0)
+                p0[1]=-plane[3]/plane[1];
+            else if (plane[2]!=0.0)
+                p0[2]=-plane[3]/plane[2];
+            else  {
+                fprintf(stdout,"Error while specifying projection plane!\n");
+                return errorVector;
+            }
+            
+            
+            // take a vector orthogonal to the plane
+            printf("taking an orthogonal vector to the plane \n");
+            Vector n(3);
+            n[0]=plane[0];
+            n[1]=plane[1];
+            n[2]=plane[2];
+            
+            //mutex.wait();
+            Vector e = eye->EndEffPose().subVector(0,2);
+            //mutex.post();
+            
+            // compute the projection
+            printf("computing the projection e=%s  \n", e.toString().c_str());
+            Vector v = x - e;
+
+            x = e + ( dot(p0-e,n ) / dot(x - e,n)) * v;
+            //Vector k = e;
+            printf("------------ x %s \n",x.toString().c_str());
+            
+            return x;
+        }
+        else{
+            return errorVector;
+        }
+    }break;
+    } // end of the switch
+}
+
+void wingsTranslatorThread::run() {
+    while(!isStopping()) {
+        Vector v = get3dWingsLeft(160,120);
+        printf("resultVector %s \n ", v.toString().c_str());
+        
+        Time::delay(2.00);
+    }
     
 }
 
@@ -331,6 +561,10 @@ void wingsTranslatorThread::interrupt() {
     inPort.interrupt();
     inRightPort.interrupt();
 
+}
+
+void wingsTranslatorThread::onStop(){
+    printf("wingsTranslatorThread::onStop \n");
 }
 
 void wingsTranslatorThread::threadRelease() {
