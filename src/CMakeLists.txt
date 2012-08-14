@@ -41,6 +41,7 @@ add_subdirectory   (pythonInterface)
 add_subdirectory   (testWings)
 #add_subdirectory  (visualAligner)
 add_subdirectory   (velocityExtractor)
+add_subdirectory   (eventManager)
 
 
 
