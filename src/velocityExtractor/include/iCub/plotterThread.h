@@ -42,8 +42,11 @@ private:
     
     int count;                            // loop counter of the thread
     int velWTA_direction;                 // direction of the main velocity component in fovea
+    int meanValue;
     double velWTA_magnitude;              // direction of the main velocity component in fovea
+   
     int retinalSize;                      // dimension of the squared retina
+    int maxFiringRate;                    // maximum value beyond the which there is firing
     int histoValue[NUMANGLES];            // value of the representation of the histogram
     
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb > > histoPort;                 // port whre the output is sent
@@ -171,11 +174,17 @@ public:
     void setHistoValue(int* hValuePointer);
 
     /**
+     * @brief function that sets the max firing rate
+     */
+    void setMaxFiringRate(int mFiringRate) {maxFiringRate = mFiringRate; };
+
+    /**
      * @brief function that sets the velocity selected
      * @param angle angle of the wta velocity profile
      * @param magnitude magnitude of the wta velocity profile
+     * @param meanValue meanValue of the response for noise suppression
      */
-    void setVelResult(int angle, float magnitude, bool maxreached);
+    void setVelResult(int angle, float magnitude, bool maxreached, int meanValue);
     
     /**
      * @brief image for preparing the histogram of the angle

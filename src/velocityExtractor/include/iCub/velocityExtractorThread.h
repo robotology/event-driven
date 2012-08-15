@@ -45,12 +45,13 @@ typedef yarp::os::NetUint32 u32;
 
 class velocityExtractorThread : public yarp::os::Thread {
 private:    
-    static const int numberOfAngles = 36;
-    static const int umin           = 32;
-    static const int vmin           = 32;
-    static const int umax           = 96;
-    static const int vmax           = 96;
-    static const int maxFiringRate  = 120;
+    static const int    numberOfAngles = 36;
+    static const int    umin           = 32;
+    static const int    vmin           = 32;
+    static const int    umax           = 96;
+    static const int    vmax           = 96;
+    static const int    maxFiringRate  = 120;
+    static const double alfa           = 0.0;
    
     int count;                          // loop counter of the thread
  
@@ -79,6 +80,8 @@ private:
     short  histogram[numberOfAngles];   // histogram of velocity direction
     short  counter  [numberOfAngles];   // counter of the direction
     double magnitude[numberOfAngles];   // store memory for the mean magnitude of direction
+    double sumHist;                     // sum of all the values in the histogram in this packet
+    double meanHist;                    // mean value of the histogram
     
     yarp::os::Bottle* receivedBottle;      // bottle currently extracted from the buffer
     yarp::os::Bottle* bottleToSend;        // bottle ready to be sent to the outputport 
@@ -258,6 +261,7 @@ public:
 
     /**
      * @brief function that prepare the histovalues for the plotter and sends the pointer to the plotter
+     * @param mean value of the histogram
      */
     void setHistoValue();
 

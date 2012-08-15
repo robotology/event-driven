@@ -179,12 +179,13 @@ void plotterThread ::setHistoValue(int* hValuePointer){
     mutexHisto.post();
 }
 
-void plotterThread::setVelResult(int angle, float magnitude, bool _maxReached) {
+void plotterThread::setVelResult(int angle, float magnitude, bool _maxReached, int _meanValue) {
     //printf("setting valResult %d \n", angle);
     mutexVeloc.wait();
-    velWTA_direction = angle;
-    velWTA_magnitude = magnitude;
-    maxReached = _maxReached;
+    velWTA_direction   = angle;
+    velWTA_magnitude   = magnitude;
+    maxReached         = _maxReached;
+    meanValue = _meanValue;
     mutexVeloc.post();
 }
 
@@ -196,9 +197,12 @@ void plotterThread::prepareHistoImage(ImageOf<PixelRgb>& out) {
         *tmp = (unsigned char) 255; tmp++;        
     }
 
-    cvLine(out.getIplImage(), cvPoint(0, 100), 
-           cvPoint(NUMANGLES,100), 
+    cvLine(out.getIplImage(), cvPoint(0, 200 - 1 - maxFiringRate), 
+           cvPoint(NUMANGLES,200 - 1 - maxFiringRate), 
            cvScalar(255,0,0), 2, 8, 0); //line thick, line type, shift 
+    cvLine(out.getIplImage(), cvPoint(0, 200 - 1 - meanValue), 
+           cvPoint(NUMANGLES,200 - 1 - meanValue), 
+           cvScalar(0 ,255,0), 0.5, 8, 0); //line thick, line type, shift 
 
 }
 

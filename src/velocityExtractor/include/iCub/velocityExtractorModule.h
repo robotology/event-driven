@@ -141,7 +141,7 @@
  *
  * \section example_sec Example Instantiation of the Module
  * 
- * <tt>eventSnifferModule --name eventSnifferModule --context eventSnifferModule/conf --from eventSnifferModule.ini --robot icub</tt>
+ * <tt>velocityExtractor --name velocityExtractor --context velocityExtractor/conf --from velocityExtractor.ini --robot icub</tt>
  *
  * \author Rea Francesco
  *
