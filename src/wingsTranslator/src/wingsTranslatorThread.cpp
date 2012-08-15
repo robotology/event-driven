@@ -242,6 +242,10 @@ bool wingsTranslatorThread::threadInit() {
     outRightPort.open(getName("/edgesRight:o").c_str());
     inPort.open(getName("/coord:i").c_str());
     inRightPort.open(getName("/right:i").c_str());
+
+    Vector v(3);
+    p0 = v;
+    n  = v;
     
     //initializing gazecontrollerclient
     printf("initialising gazeControllerClient \n");
@@ -277,7 +281,7 @@ bool wingsTranslatorThread::threadInit() {
     
     Bottle info;
     igaze->getInfo(info);
-    printf("just got the info \n");    
+    printf("getting info from iKinGazeCtrl \n");    
     int head_version = info.check("head_version", Value(1)).asInt();
     
     printf("head_version extracted from gazeArbiter %d \n",head_version);
@@ -364,7 +368,7 @@ bool wingsTranslatorThread::threadInit() {
     }
     // ------------------------------------------------------------------
 
-
+    printf("initialising polyDriver head \n");
     string headPort = "/" + robot + "/head";
     string nameLocal("testWings");
 
@@ -376,6 +380,9 @@ bool wingsTranslatorThread::threadInit() {
 
     if (!robotHead->isValid()){
         printf("cannot connect to robot head\n");
+    }
+    else {
+        printf("robotHead is valid \n");
     }
     robotHead->view(encHead);
     robotHead->view(limHead);
@@ -458,6 +465,7 @@ void wingsTranslatorThread::resize(int widthp, int heightp) {
 Vector wingsTranslatorThread::get3dWingsLeft(int u , int v) {
     printf("starting with the projections \n");
     Vector errorVector(3);
+    Vector x(3);
     errorVector.zero();
     
     int operation = 1;
@@ -482,17 +490,7 @@ Vector wingsTranslatorThread::get3dWingsLeft(int u , int v) {
         //int u = 160;
         //int v = 120;
         
-        Vector plane(4);  // specify the plane in the root reference frame as ax+by+cz+d=0; z=-0.12 in this case
-        plane[0]=0.0;     // a
-        plane[1]=0.0;     // b
-        plane[2]=1.0;     // c
-        plane[3]=0.12;    // d
         
-        Vector x;
-        if (plane.length() < 4) {
-            fprintf(stdout,"Not enough values given for the projection plane!\n");
-            return x;
-        }
         
         ConstString type = "left";
         bool isLeft=(type=="left");
@@ -503,26 +501,7 @@ Vector wingsTranslatorThread::get3dWingsLeft(int u , int v) {
         //if (projectPoint(type,u,v,1.0,x))
         if(project(encTorso,encHead,invPrjL,eyeL,u,v,1.0,x)) {
             // pick up a point belonging to the plane
-            printf("picking up a point belonging to the plane;\n  x =\n %s  \n", x.toString().c_str());
-            Vector p0(3,0.0);
-            if (plane[0]!=0.0)
-                p0[0]=-plane[3]/plane[0];
-            else if (plane[1]!=0.0)
-                p0[1]=-plane[3]/plane[1];
-            else if (plane[2]!=0.0)
-                p0[2]=-plane[3]/plane[2];
-            else  {
-                fprintf(stdout,"Error while specifying projection plane!\n");
-                return errorVector;
-            }
             
-            
-            // take a vector orthogonal to the plane
-            printf("taking an orthogonal vector to the plane \n");
-            Vector n(3);
-            n[0]=plane[0];
-            n[1]=plane[1];
-            n[2]=plane[2];
             
             //mutex.wait();
             Vector e = eye->EndEffPose().subVector(0,2);
@@ -532,7 +511,13 @@ Vector wingsTranslatorThread::get3dWingsLeft(int u , int v) {
             printf("computing the projection e=%s  \n", e.toString().c_str());
             Vector v = x - e;
 
+            mutexN.wait();
+            mutexP0.wait();
             x = e + ( dot(p0-e,n ) / dot(x - e,n)) * v;
+            mutexP0.post();
+            mutexN.post();
+            
+
             //Vector k = e;
             printf("------------ x %s \n",x.toString().c_str());
             
@@ -547,10 +532,52 @@ Vector wingsTranslatorThread::get3dWingsLeft(int u , int v) {
 
 void wingsTranslatorThread::run() {
     while(!isStopping()) {
-        Vector v = get3dWingsLeft(160,120);
-        printf("resultVector %s \n ", v.toString().c_str());
+        //Vector v = get3dWingsLeft(160,120);
+        //printf("resultVector %s \n ", v.toString().c_str());
+
+        Vector plane(4);        // specify the plane in the root reference frame as ax+by+cz+d=0; z=-0.12 in this case
+        plane[0]=0.0;           // a
+        plane[1]=0.0;           // b
+        plane[2]=1.0;           // c
+        plane[3]=tableHeight;   // d
+
+        //printf("using tableHeight %f \n", tableHeight);
+ 
+        //Vector x;
+        if (plane.length() < 4) {
+            fprintf(stdout,"Not enough values given for the projection plane!\n");
+            
+        }
         
-        Time::delay(2.00);
+        //printf("defining the point p0 belonging to the plane \n");
+        mutexP0.wait();
+        p0(3);
+        p0.zero();
+        
+        if (plane[0]!=0.0)
+            p0[0]=-plane[3]/plane[0];
+        else if (plane[1]!=0.0)
+            p0[1]=-plane[3]/plane[1];
+        else if (plane[2]!=0.0)
+            p0[2]=-plane[3]/plane[2];
+        else  {
+            fprintf(stdout,"Error while specifying projection plane!\n");
+        }
+        mutexP0.post();
+        
+        
+        // take a vector orthogonal to the plane
+        
+        //Vector n(3);
+        mutexN.wait();
+        n[0]=plane[0];
+        n[1]=plane[1];
+        n[2]=plane[2];
+        mutexN.post();
+
+        //printf("p0 = %s ; n = %s \n", p0.toString().c_str(), n.toString().c_str());
+        
+        Time::delay(0.1);
     }
     
 }

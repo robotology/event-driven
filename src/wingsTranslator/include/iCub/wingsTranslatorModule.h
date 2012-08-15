@@ -163,6 +163,7 @@ class wingsTranslatorModule:public yarp::os::RFModule {
     std::string wingsLeftFile;                  // kinematic configuration file for left camera
     std::string wingsLeftName;                  // name of the kinematic configuration of the 
     
+    double tableHeight;                          // height z-axis for the plane in homography
     int ratethread;                             // time constant for ratethread
     yarp::os::Semaphore respondLock;            // to lock updating through respond
     yarp::os::RpcServer handlerPort;            // a port to handle messages 

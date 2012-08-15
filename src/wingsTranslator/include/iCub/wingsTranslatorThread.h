@@ -54,6 +54,7 @@ private:
     int count;                          // loop counter of the thread
     int width, height;                  // dimension of the extended input image (extending)
     int height_orig, width_orig;        // original dimension of the input and output images
+    
     std::string configFile;             // configuration file of cameras (LEFT RIGHT)
     std::string wingsLeftFile;          // complete path for the kinematic of the left cam
     std::string wingsRightStr;          // complete path for the kinematic of the right cam
@@ -84,7 +85,11 @@ private:
 
     yarp::os::Property optionsHead;
     yarp::os::ResourceFinder* rf;                   // resorceFinder reference for configuration files
+    yarp::os::Semaphore mutexP0;                    // semaphore for resource p0
+    yarp::os::Semaphore mutexN;                     // semaphore for resource n
 
+    yarp::sig::Vector n;                            // vector normal to the plane
+    yarp::sig::Vector p0;                           // point belonging to the plane
     yarp::sig::Matrix eyeCAbsFrame;                 // projection matrix center eye
     yarp::sig::Matrix invEyeCAbsFrame;              // inverse projection matrix center eye
     yarp::sig::Matrix *invPrjL, *invPrjR;           // inverse of prjection matrix left and right
@@ -100,6 +105,7 @@ private:
     double eyesHalfBaseline;                // half distance between the eyes
     double valueInput[12];                  // vector of 12 values read from the input port
     double cxl,cyl;                         // position of the center of the image
+    double tableHeight;                     // height of the table
 
     char* bufferCopy;                       // local copy of the events read
     char* flagCopy;                         // copy of the unreadBuffer
@@ -165,6 +171,11 @@ public:
     * @param str robotname as a string
     */
     void setConfigFile(std::string str) {configFile = str; };
+
+    /**
+     *@brief function that set the z height of the plane
+     */
+    void setTableHeight(double _height) {tableHeight = _height; printf("wingsTranslatorThread::setTableHeight %f %f \n",_height, tableHeight); };
     
     /**
      * 

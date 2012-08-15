@@ -69,6 +69,12 @@ bool wingsTranslatorModule::configure(yarp::os::ResourceFinder &rf) {
                            "Config file for intrinsic parameters (string)").asString();
     printf("configFile: %s \n", configName.c_str());
 
+    /* setting the table height for homography */
+    tableHeight             = rf.check("tableHeight", 
+                           Value(0.12), 
+                           "sets the plane z-axis height for homography (double)").asDouble();
+    printf("tableHeight: %f \n", tableHeight);
+
     if (strcmp(configName.c_str(),"")) {
         printf("looking for the config file \n");
         configFile=rf.findFile(configName.c_str());
@@ -119,6 +125,7 @@ bool wingsTranslatorModule::configure(yarp::os::ResourceFinder &rf) {
     tf->setMapURL(mapNameComplete);
     tf->setRobotName(robotName);
     tf->setConfigFile(configFile);
+    tf->setTableHeight(tableHeight);
     tf->setWingsLeftFile(wingsLeftFile);
     tf->setName(getName().c_str());
     tf->start();
