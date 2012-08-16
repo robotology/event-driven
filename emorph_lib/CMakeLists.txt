@@ -17,6 +17,13 @@ SET(folder_source
   src/eventCodec.cpp
   src/eventBottle.cpp
   src/VelocityBuffer.cpp
+  src/eventAtom.cpp
+  src/eventHistBuffer.cpp
+  src/eventSpatiotemporalVolume.cpp
+  src/eventSpatiotemporalVolumeStack.cpp
+  src/eventUnmask.cpp
+  src/eventUnmaskDVS128.cpp
+  src/eventUnmaskICUB.cpp
 )
 
 #FILE(GLOB folder_source 
@@ -32,6 +39,13 @@ SET(folder_header
   include/iCub/emorph/eventCodec.h
   include/iCub/emorph/eventConversion.h 
   include/iCub/emorph/VelocityBuffer.h
+  include/iCub/emorph/eventAtom.h
+  include/iCub/emorph/eventHistBuffer.h
+  include/iCub/emorph/eventSpatiotemporalVolume.h
+  include/iCub/emorph/eventSpatiotemporalVolumeStack.h
+  include/iCub/emorph/eventUnmask.h
+  include/iCub/emorph/eventUnmaskDVS128.h
+  include/iCub/emorph/eventUnmaskICUB.h
 )
 
 MESSAGE("folder_header ${folder_header}")

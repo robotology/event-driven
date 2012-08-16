@@ -38,9 +38,9 @@
 #include <gsl/gsl_sort.h>
 #include <gsl/gsl_statistics.h>
 
-#include "unmask.hpp"
-#include "unmaskDVS128.hpp"
-#include "unmaskICUB.hpp"
+#include "iCub/emorph/eventUnmask.h"
+#include "iCub/emorph/eventUnmaskDVS128.h"
+#include "iCub/emorph/eventUnmaskICUB.h"
 
 #include "VelocityBuffer.h"
 
@@ -130,7 +130,8 @@ private:
     uint refts;
     bool first;
     
-    unmask *unmasker;
+    emorph::eunmask::eventUnmask *unmasker;
+
     yarp::sig::Matrix *vxMat;
     yarp::sig::Matrix *vyMat;
     double *vxMatData;
@@ -140,6 +141,9 @@ private:
 
     yarp::sig::Matrix binEvts;
     uint iBinEvts;
+    double *vxMean;
+    double *vyMean;
+    uint *ivxyNData;
 
     yarp::sig::Matrix wMat;
     yarp::sig::Matrix sMat;

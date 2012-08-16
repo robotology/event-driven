@@ -20,10 +20,11 @@
 using namespace yarp::sig;
 using namespace yarp::os;
 using namespace yarp::math;
+using namespace emorph::eunmask;
 
 tsOptFlowThread::tsOptFlowThread(uint &_h, uint &_w, std::string &_src, uint &_type, uint &_acc, uint &_bin, double &_th, uint &_nn, uint &_ssz, uint &_tsval, double &_a, double &_td, int &_pol, uint &_ori, bool &_save, Matrix *_vxMat, Matrix *_vyMat, Semaphore *_mutex, VelocityBuffer* _velb)
 //:RateThread(THRATE), activity(_h, _w), TSs(_h, _w), TSs2Plan(_h, _w), compPurpTS(_h, _w), sobelx(_ssz, _ssz), sobely(_ssz, _ssz), subTSs(_nn, _nn), A(_nn*_nn, 3), At(3,_nn*_nn), AtA(3,3), abc(3), Y(_nn*_nn), ctrl((uint)floor((double)_ssz/2.0), (uint)floor((double)_ssz/2.0)), wMat(_h, _w), sMat(_h*_w, 2), binEvts(10000, 2), alreadyComputedX(_h, _w), alreadyComputedY(_h, _w)
-:activity(_h, _w), TSs(_h, _w), TSs2Plan(_h, _w), compPurpTS(_h, _w), sobelx(_ssz, _ssz), sobely(_ssz, _ssz), subTSs(_nn, _nn), A(_nn*_nn, 3), At(3,_nn*_nn), AtA(3,3), abc(3), Y(_nn*_nn), ctrl((uint)floor((double)_ssz/2.0), (uint)floor((double)_ssz/2.0)), wMat(_h, _w), sMat(_h*_w, 2), binEvts(10000, 3), alreadyComputedX(_h, _w), alreadyComputedY(_h, _w), polSel(_pol), orientation(_ori), binAcc(_bin), saveOf(_save)
+:activity(_h, _w), TSs(_h, _w), TSs2Plan(_h, _w), compPurpTS(_h, _w), sobelx(_ssz, _ssz), sobely(_ssz, _ssz), subTSs(_ssz, _ssz), A(_ssz*_ssz, 3), At(3,_ssz*_ssz), AtA(3,3), abc(3), Y(_nn*_nn), ctrl((uint)floor((double)_ssz/2.0), (uint)floor((double)_ssz/2.0)), wMat(_h, _w), sMat(_h*_w, 2), binEvts(10000, 3), alreadyComputedX(_h, _w), alreadyComputedY(_h, _w), polSel(_pol), orientation(_ori), binAcc(_bin), saveOf(_save)
 {
     velBuf=_velb;
 
@@ -43,6 +44,9 @@ tsOptFlowThread::tsOptFlowThread(uint &_h, uint &_w, std::string &_src, uint &_t
     width=_w;
 
     accumulation=_acc;
+    vxMean=new double[_h*_w]; memset(vxMean, 0, _h*_w*sizeof(double));
+    vyMean=new double[_h*_w]; memset(vyMean, 0, _h*_w*sizeof(double));
+    ivxyNData=new uint[_h*_w]; memset(ivxyNData, 0, _h*_w*sizeof(uint));
 
     //xNeighFlow=new double[_nn*_nn];
     xNeighFlow=new double[_ssz*_ssz];
@@ -95,9 +99,9 @@ printMatrix(sobely);
         std::cout << *(trans2neigh+i*2) << " " << *(trans2neigh+i*2+1) << endl;
 
     if(!_src.compare("icub"))
-        unmasker=new unmaskICUB();
+        unmasker=new eventUnmaskICUB();
     else if(!_src.compare("dvs"))
-        unmasker=new unmaskDVS128(_type);
+        unmasker=new eventUnmaskDVS128(_type);
     else
         std::cout << "[tsOptFlowThread] Error: Instanciation unmask failed!" << std::endl;
     if(saveOf)
@@ -115,6 +119,15 @@ tsOptFlowThread::~tsOptFlowThread()
 {
     delete[] xNeighFlow;
     delete[] yNeighFlow;
+    delete[] activityData;
+    delete[] TSsData;
+    delete[] TSs2PlanData;
+    delete[] vxMatData;
+    delete[] vyMatData;
+    delete[] vxMean;
+    delete[] vyMean;
+    delete[] trans2neigh;
+    delete unmasker;
 }
 
 void tsOptFlowThread::run()
@@ -155,6 +168,12 @@ void tsOptFlowThread::run()
                     binEvts(ii, 1)=binEvts(i, 1);
                     binEvts(ii, 2)=binEvts(i, 2);
                     ++ii;
+                }
+                else
+                {
+                    *(vxMean+(int)binEvts(i, 0)*width+(int)binEvts(i, 1))=0;
+                    *(vyMean+(int)binEvts(i, 0)*width+(int)binEvts(i, 1))=0;
+                    *(ivxyNData+(int)binEvts(i, 0)*width+(int)binEvts(i, 1))=0;
                 }
             }
             iBinEvts=ii;
@@ -404,10 +423,15 @@ void tsOptFlowThread::compute()
                 outY=((outY)*1E-9);
                 //velBuf.addData((short)x, (short)y, outY, outX, timestamp);
                 //std::cout << "Mutex free?" << std::endl;
+                *(ivxyNData+x*width+y)+=1;
+                *(vxMean+x*width+y)=*(vxMean+x*width+y)+(1/ *(ivxyNData+x*width+y))*(outX-*(vxMean+x*width+y));
+                *(vyMean+x*width+y)=*(vyMean+x*width+y)+(1/ *(ivxyNData+x*width+y))*(outY-*(vyMean+x*width+y));
+
                 mutex->wait();
                 {
                     //std::cout << "\tMutex took" << std::endl;
-                    velBuf->addData((short)x, (short)y, outY, outX, *(TSsData+x*width+y));
+                    //velBuf->addData((short)x, (short)y, outY, outX, *(TSsData+x*width+y));
+                    velBuf->addData((short)x, (short)y, *(vyMean+x*width+y), *(vxMean+x*width+y), *(TSsData+x*width+y));
                 }mutex->post();
                 //std::cout << "Mutex freed" << std::endl;
                 

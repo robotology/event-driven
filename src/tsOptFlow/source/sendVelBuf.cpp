@@ -44,9 +44,9 @@ void sendVelBuf::run()
             refts=velBuf->getTs(0);
             init=false;
         }
-        else if( (refts+acc)<velBuf->getTs(velBuf->getSize()-1))
+        else if( ((refts+acc)<velBuf->getTs(velBuf->getSize()-1)) || velBuf->isFull() )
         {
-            refts=velBuf->getTs(0);
+            refts=velBuf->getTs(velBuf->getSize()-1);
             VelocityBuffer& tmp = port->prepare();
             tmp=*velBuf;
             port->write();

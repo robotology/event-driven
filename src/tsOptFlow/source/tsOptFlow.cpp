@@ -45,6 +45,11 @@ tsOptFlow::~tsOptFlow()
     delete tsofThreadPos;
     tsofThreadNeg->stop();
     delete tsofThreadNeg;
+
+    delete vxMat;
+    delete vyMat;
+    delete mutex;
+    delete velBuf;
 }
 
 void tsOptFlow::onRead(eventBuffer& _buf)

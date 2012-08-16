@@ -12,7 +12,7 @@ MESSAGE(STATUS "Using ${LIB_PKG}Config.cmake")
 SET(LIB_DIR ${${LIB_PKG}_DIR})
 
 # Tell the user what include directories need to be added to use this library.
-SET(${LIB_PKG}_INCLUDE_DIRS ${LIB_DIR}/include)
+SET(${LIB_PKG}_INCLUDE_DIRS ${LIB_DIR}/include/iCub/emorph)
 
 
 # Are we compiling as part of the ICub project, or separately?
