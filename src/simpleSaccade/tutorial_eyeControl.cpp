@@ -124,10 +124,13 @@ int main(int argc, char *argv[])
     command[0]=-30;
     pos->positionMove(command.data());//(4,deg);
 
-    double startPos;
+    double startPos3;
+    double startPos4;
 
-    encs->getEncoder(4, &startPos);
-    printf("start position value: %lf\n", startPos);
+    encs->getEncoder(3, &startPos3);
+    encs->getEncoder(4, &startPos4);
+    printf("start position value: %lf\n", startPos3);
+    printf("start position value: %lf\n", startPos4);
     bool first=true;
     int deltaSacc=2;
     int times=0;
@@ -137,7 +140,6 @@ int main(int argc, char *argv[])
     bot.addVocab(COMMAND_VOCAB_ON);
     Bottle inOn;
     _pOutPort->write(bot,inOn);
-    bot.clear();
 
     Time::delay(0.1);
     
@@ -154,11 +156,12 @@ int main(int argc, char *argv[])
     {
         double curPos;
         encs->getEncoder(4, &curPos);
-        while((curPos>=startPos-DELTAENC) && (curPos<=startPos+DELTAENC))
+        while((curPos>=startPos4-DELTAENC) && (curPos<=startPos4+DELTAENC))
         {
     	    printf("current position value: %lf\n", curPos);
             encs->getEncoder(4, &curPos);
         }
+        bot.clear();
         bot.addVocab(COMMAND_VOCAB_SYNC);
         Bottle inStart;
         _pOutPort->write(bot,inStart);
@@ -174,7 +177,6 @@ int main(int argc, char *argv[])
 	command[4]=0;
 	moveJoints(pos, command);
 
-	Time::delay(0.1);
 
 	/*Vertical saccade*/
 	command[3]=-deltaSacc;
@@ -185,8 +187,21 @@ int main(int argc, char *argv[])
 	moveJoints(pos, command);
 	command[3]=0;
 	moveJoints(pos, command);
+    if(times>=nOl)
+    {
+        double curPos;
+        encs->getEncoder(3, &curPos);
+        while((curPos>=startPos3-DELTAENC) && (curPos<=startPos3+DELTAENC))
+        {
+    	    printf("current position value: %lf\n", curPos);
+            encs->getEncoder(3, &curPos);
+        }
+        bot.clear();
+        bot.addVocab(COMMAND_VOCAB_SYNC);
+        Bottle inEnd;
+        _pOutPort->write(bot,inEnd);
+    }
 
-        
 /*        int count=50;
         while(count--)
             {
@@ -196,10 +211,12 @@ int main(int argc, char *argv[])
             }
 */
     }
+	/*Time::delay(0.1);
     bot.clear();
     bot.addVocab(COMMAND_VOCAB_SYNC);
     Bottle inEnd;
     _pOutPort->write(bot,inEnd);
+    */
 
     bot.clear();
     bot.addVocab(COMMAND_VOCAB_DUMP);
