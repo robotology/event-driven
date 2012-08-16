@@ -866,7 +866,8 @@ void  device2yarp::run() {
             lastTSindex = countData;
             
             if (save) {	  
-                fprintf(fout,"%08X\n",t);
+                //fprintf(fout,"%08X\n",t);
+                fprintf(fout,"%08X ",t);
             }
           
             //copying the atomic block to send
@@ -960,7 +961,8 @@ void  device2yarp::run() {
             countEventSent++;              
             
             if (save) {	  
-                fprintf(fout,"%08X\n",t);
+                //fprintf(fout,"%08X\n",t);
+                fprintf(fout,"%08X ",t);
                 //fprintf(fout," %08X ",0xCAFECAFE);
             }	  	  	  
         }
