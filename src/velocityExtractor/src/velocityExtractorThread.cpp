@@ -75,6 +75,8 @@ velocityExtractorThread::velocityExtractorThread() : Thread() {
     string i_fileName("events.log");
     raw = fopen(i_fileName.c_str(), "wb");
 
+    
+    
 }
 
 velocityExtractorThread::~velocityExtractorThread() {
@@ -97,10 +99,11 @@ bool velocityExtractorThread::threadInit() {
 
     startTimer = Time::now();
 
-    count = 0;
+    count            = 0;
+    countMedian      = 0;
     microsecondsPrev = 0;
-    minCount = 0;
-    minCountRight= 0;
+    minCount         = 0;
+    minCountRight    = 0;
 
     vbh = new velocityBottleHandler();
     vbh->useCallback();
@@ -129,8 +132,12 @@ bool velocityExtractorThread::threadInit() {
         magnitude[i] = 0;
         counter  [i] = 0;
     }
-
-
+    
+    for(int i=0 ; i < medianDim; i++) {
+        medianVector[i] = 0.0;
+    }
+    
+   
     printf("-----------------------------  velocityExtractorThread::threadInit:Initialisation of collector thread correctly ended \n");
     return true;
 }
@@ -233,6 +240,7 @@ void velocityExtractorThread::run() {
         
         if(vb != 0) {
             //printf("extracting not null bottle %08x \n", vb);
+            //Vector medianVector(5);
             for (int i = 0 ; i < vb->getSize(); i++) {
                 
                 int u          = vb->getX(i);
@@ -271,7 +279,8 @@ void velocityExtractorThread::run() {
                         // either compensate or avoid computation
                     }
                     else {
-                        histogram[pos] = alfa * histogram[pos]+ (1 - alfa) * (histogram[pos] + INCRFACTOR) - meanHist;
+
+                        histogram[pos] = alfa * histogram[pos]+ (1 - alfa) * mag * 10 *(histogram[pos] + INCRFACTOR) - meanHist;
                         if(histogram[pos] < 0) {
                             histogram[pos] = 0;
                         } 
@@ -280,15 +289,63 @@ void velocityExtractorThread::run() {
  
                         if(histogram[pos] > maxFiringRate) {
 
-                            maxReached = true;
-                            printf("max reached for %d \n", pos * 10);
+                            maxReached = true;                     
                             velWTA_direction = pos * (360 / numberOfAngles);
                             velWTA_magnitude = magnitude[pos] / counter[pos];
+
+                            if(countMedian == 0) {
+                                medianMag   [0] = velWTA_magnitude;
+                                medianVector[0] = velWTA_direction;                                                               
+                            }
+                            else {
+                                for(int i = 0; i < 5; i++) {
+                                    
+                                    if(i == countMedian) {
+                                        medianVector[i] = velWTA_direction;
+                                        medianMag   [i] = velWTA_magnitude;
+                                        break;
+                                    }
+                                    else if(velWTA_direction < medianVector[i]){
+
+                                        //printf("vetWtadirction %d <= medianVector(i) %f \n",velWTA_direction,medianVector[i] );
+                                        //printf("medianVector %f %f %f %f %f \n",medianVector[0],medianVector[1],medianVector[2],medianVector[3],medianVector[4]);
+
+                                        //shift
+                                        int jump =  countMedian - i;
+                                        
+                                        for (int k = jump; k > 0; k--) {
+                                            medianVector[i + k] = medianVector[i + k - 1];
+                                            medianMag   [i + k] = medianMag   [i + k - 1];
+                                        }
+                                        medianVector[i] = velWTA_direction;
+                                        medianMag   [i] = velWTA_magnitude;
+                                        break;
+                                    }
+                                }
+                            }
+                            countMedian++;
+                            //printf("increment of the value of countMedian \n");
+
+                            if(countMedian == 5) {
+                                velWTA_direction = medianVector[2];
+                                velWTA_magnitude = medianMag   [2];
+                                printf("--------------------------------\n");
+                                printf("Reached max value countMedian %f \n",medianVector[2] );
+                                printf("medianVector %f %f %f %f %f \n",medianVector[0],medianVector[1],medianVector[2],medianVector[3],medianVector[4]);
+                                countMedian = 0;
+                                for(int i = 0; i < 5; i++) {
+                                    medianVector[i] = 0;
+                                }
+                            }
+                            
                             
                             //sending command to the oculomotor performer
-                            if(outBottlePort.getOutputCount()) {
-                                
-                                double velWTA_rad = velWTA_direction * (PI / 180);                            
+                            if(outBottlePort.getOutputCount() && (countMedian == 5)) {
+                                printf("after reached the count of 5 for countMedian \n");
+                                printf("sending the command");
+                                //after 5 steps, in the middle of the ordered mediaVector there is the median valie
+                                double velWTA_rad = medianVector[2] * (PI / 180);                            
+                                //double velWTA_rad = velWTA_direction * (PI / 180);                            
                                 double u = cos(velWTA_rad) * velWTA_magnitude; 
                                 double v = sin(velWTA_rad) * velWTA_magnitude;
                                 double pixelU = u * 500;
@@ -305,6 +362,7 @@ void velocityExtractorThread::run() {
                             }                        
                             
                             // resetting the hist/mag
+                            //printf("resetting the histogram \n");
                             for(int k = 0; k < numberOfAngles; k++ ) {
                                 histogram[k] = 0;
                                 magnitude[k] = 0;                        

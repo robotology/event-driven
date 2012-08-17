@@ -51,9 +51,12 @@ private:
     static const int    umax           = 96;
     static const int    vmax           = 96;
     static const int    maxFiringRate  = 120;
+    static const int    medianDim      = 5;
+
     static const double alfa           = 0.0;
    
     int count;                          // loop counter of the thread
+    int countMedian;                  // counter of the median
  
     //struct timeval tvstart,tvend;
     //struct timespec start_time, stop_time;
@@ -82,6 +85,8 @@ private:
     double magnitude[numberOfAngles];   // store memory for the mean magnitude of direction
     double sumHist;                     // sum of all the values in the histogram in this packet
     double meanHist;                    // mean value of the histogram
+    double medianVector[medianDim];     // list of value where the median is extracted
+    double medianMag[medianDim];        // magnitude of the value in the medianVector
     
     yarp::os::Bottle* receivedBottle;      // bottle currently extracted from the buffer
     yarp::os::Bottle* bottleToSend;        // bottle ready to be sent to the outputport 
@@ -92,6 +97,7 @@ private:
     yarp::os::BufferedPort<yarp::os::Bottle>                          inBottlePort;
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageOut;                                  //image representing the signal on the leftcamera
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRight;                                 //image representing the signal on the right camera
+    
     std::string name;                   // rootname of all the ports opened by this thread
     bool verb;
     bool synchronised;                   // flag to check whether the microsecond counter has been synchronised
