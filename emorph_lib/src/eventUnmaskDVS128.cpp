@@ -105,7 +105,7 @@ void eventUnmaskDVS128::setBuffer(char* i_buffer, uint i_sz)
     mutex.wait();
     
     //std::cout << "\t\tConcate a new buffer" << std::endl;
-    if(szBuffer=0)
+    if(szBuffer==0)
     {
 #ifdef _DEBUG
         std::cout << "[eventUnmaskDVS128] expand the size of the gBuffer" << std::endl;

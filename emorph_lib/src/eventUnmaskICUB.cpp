@@ -46,7 +46,8 @@ eventUnmaskICUB::eventUnmaskICUB(bool _save)
 
     retinalSize = 128;
 
-    buffer=new uint[BUFFERBLOCK];
+    buffer=new uint[BUFFERBLOCK/4];
+    bufSnapShot=NULL;
 }
 
 eventUnmaskICUB::eventUnmaskICUB(const eventUnmaskICUB &_obj)
@@ -100,7 +101,7 @@ void eventUnmaskICUB::setBuffer(char* i_buffer, uint i_sz)
     mutex.wait();
     //std::cout << "\t\tConcate a new buffer" << std::endl;
     
-    if(szBuffer=0)
+    if(szBuffer==0)
     {
         //szInMem+=BUFFERBLOCK;
         szInMem=(uint)ceil((double)i_sz/(double)BUFFERBLOCK)*BUFFERBLOCK;
@@ -119,7 +120,8 @@ void eventUnmaskICUB::setBuffer(char* i_buffer, uint i_sz)
         memcpy(buffer, buftmp, szBuffer);
     }
     //std::cout << "\t\t\t- Concat the buffer (size in byte: " << sz+i_sz << ", real size in mem: " << szInMem << ")" << std::endl;
-    memcpy(buffer+(szBuffer/4), (uint*)i_buffer, i_sz);
+    //memcpy(buffer+(szBuffer/4), (uint*)i_buffer, i_sz);
+    memcpy(buffer+(szBuffer/4), i_buffer, i_sz);
     szBuffer+=i_sz;
     nEvent=szBuffer/4;
     mutex.post();
@@ -148,26 +150,32 @@ void eventUnmaskICUB::reshapeBuffer()
 
 int eventUnmaskICUB::getUmaskedData(uint& cartX, uint& cartY, int& polarity, uint& eye, uint& timestamp)
 {
-    if((eventIndex+8)>szBufSnapShot || szBufSnapShot==0)
+    int res=1;
+    if(4*(eventIndex+2)>szBufSnapShot || szBufSnapShot==0)
     {
         if(!snapBuffer())
             return 0;
     }
-    if(eventCounter++>=nEvent)
-        return 0;
+    //if(eventCounter++>=nEvent)
+    //    return 0;
         // unmask the data ( first 4 bytes timestamp, second 4 bytes address)
-    tsPacket = buffer[eventIndex++];
+    tsPacket = bufSnapShot[eventIndex++];
+    blob = bufSnapShot[eventIndex++];
     //Check if s tamistamp wrap around occured
     if ((tsPacket & 0xFC000000) == 0x88000000){ // if it's TSWA then skip it
         timestampMonotonyWrap += 0x04000000;
-        tsPacket = buffer[eventIndex++];
+        //eventIndex++;
+        tsPacket = bufSnapShot[eventIndex++];
+        blob = bufSnapShot[eventIndex++];
     }
     timestamp = (tsPacket &  0x03FFFFFF) + timestampMonotonyWrap;
 
-    blob = buffer[eventIndex++];
+    //blob = bufSnapShot[eventIndex++];
     blob &= 0xFFFF; // here we zero the higher two bytes of the address!!! Only lower 16bits used!
     unmaskEvent(blob, cartX, cartY, polarity, eye);
-    return 1;
+    if(blob&0x8000)
+        res=2;
+    return res;
 }
 
 uint eventUnmaskICUB::snapBuffer()
