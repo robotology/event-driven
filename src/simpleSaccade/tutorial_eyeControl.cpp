@@ -122,6 +122,7 @@ int main(int argc, char *argv[])
     * SPECIFIC STARTING POSITIONS *
     ******************************/
     command[0]=-30;
+
     pos->positionMove(command.data());//(4,deg);
 
     double startPos3;
@@ -129,8 +130,8 @@ int main(int argc, char *argv[])
 
     encs->getEncoder(3, &startPos3);
     encs->getEncoder(4, &startPos4);
-    printf("start position value: %lf\n", startPos3);
-    printf("start position value: %lf\n", startPos4);
+    printf("start position value of joint 3: %lf\n", startPos3);
+    printf("start position value of joint 4: %lf\n", startPos4);
     bool first=true;
     int deltaSacc=2;
     int times=0;
@@ -156,15 +157,17 @@ int main(int argc, char *argv[])
     {
         double curPos;
         encs->getEncoder(4, &curPos);
+    	printf("current position value of joint 4: %lf\n", curPos);
         while((curPos>=startPos4-DELTAENC) && (curPos<=startPos4+DELTAENC))
         {
-    	    printf("current position value: %lf\n", curPos);
+    	    printf("current position value of joint 4: %lf\n", curPos);
             encs->getEncoder(4, &curPos);
         }
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SYNC);
         Bottle inStart;
         _pOutPort->write(bot,inStart);
+    	printf("1st synch asked\n");
         first=false;
     }
     Time::delay(0.1);
@@ -191,15 +194,18 @@ int main(int argc, char *argv[])
     {
         double curPos;
         encs->getEncoder(3, &curPos);
-        while((curPos>=startPos3-DELTAENC) && (curPos<=startPos3+DELTAENC))
+    	printf("current position value of joint 3: %lf\n", curPos);
+/*        while((curPos<startPos3-DELTAENC) || (curPos>startPos3+DELTAENC))
         {
-    	    printf("current position value: %lf\n", curPos);
+	        command[3]=0;
+    	    printf("current position value of joint 3: %lf\n", curPos);
             encs->getEncoder(3, &curPos);
-        }
+        }*/
         bot.clear();
         bot.addVocab(COMMAND_VOCAB_SYNC);
         Bottle inEnd;
         _pOutPort->write(bot,inEnd);
+    	printf("2nd synch asked\n");
     }
 
 /*        int count=50;
@@ -211,8 +217,8 @@ int main(int argc, char *argv[])
             }
 */
     }
-	/*Time::delay(0.1);
-    bot.clear();
+	Time::delay(0.1);
+    /*bot.clear();
     bot.addVocab(COMMAND_VOCAB_SYNC);
     Bottle inEnd;
     _pOutPort->write(bot,inEnd);
