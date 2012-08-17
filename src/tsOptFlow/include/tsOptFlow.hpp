@@ -42,7 +42,6 @@
  *
  * YARP.
  * EMORPHLIB.
- * EVENTSUNMASK.
  *
  * \section parameters_sec Parameters
  * 
