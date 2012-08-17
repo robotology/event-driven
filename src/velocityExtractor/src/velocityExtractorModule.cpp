@@ -195,8 +195,20 @@ bool velocityExtractorModule::respond(const Bottle& command, Bottle& reply) {
             ok = true;
         }
         break;
+    case COMMAND_VOCAB_SUSPEND:
+        rec = true;
+        {
+            esThread->suspend();
+        }
+        break;
+    case COMMAND_VOCAB_RESUME:
+        rec = true;
+        {
+            esThread->resume();
+        }
+        break;
     case COMMAND_VOCAB_EGO:
-       rec = true;
+        rec = true;
         {
             double egoMotionU = command.get(1).asDouble();
             double egoMotionV = command.get(2).asDouble();

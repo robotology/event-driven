@@ -232,7 +232,7 @@ void velocityExtractorThread::setHistoValue() {
 
 void velocityExtractorThread::run() {
     while(!isStopping()) {
-
+    if(!suspendFlag) {
         //Bottle* readBottle = inBottlePort.read(true);
         VelocityBuffer* vb; // = new VelocityBuffer();
         sumHist = 0;    
@@ -385,7 +385,7 @@ void velocityExtractorThread::run() {
         decayingProcess();
     
         Time::delay(0.1);
-        
+    } //end if !suspend    
     } //end of while
 }
 

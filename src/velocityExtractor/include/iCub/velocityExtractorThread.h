@@ -98,7 +98,8 @@ private:
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageOut;                                  //image representing the signal on the leftcamera
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRight;                                 //image representing the signal on the right camera
     
-    std::string name;                   // rootname of all the ports opened by this thread
+    std::string name;                    // rootname of all the ports opened by this thread
+    bool suspendFlag;                    // flag that suspend the computation
     bool verb;
     bool synchronised;                   // flag to check whether the microsecond counter has been synchronised
     bool greaterHalf;                    // indicates whether the counter has passed the half of the range
@@ -166,6 +167,16 @@ public:
     */
     void onStop();
 
+    /**
+     * function that suspends the execution 
+     */
+    void suspend(){suspendFlag = true; };
+
+    /**
+     * function that resumes the execution
+     */
+    void resume(){suspendFlag = false; };
+    
     /**
     * function that set the rootname for the ports that will be opened
     * @param str rootname as a string
