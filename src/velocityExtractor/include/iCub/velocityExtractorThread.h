@@ -79,6 +79,7 @@ private:
     int synchPeriod;                    // synchronization period between events and viewer
     int responseGradient;               // responseGradient parameter
     int velWTA_direction;               // direction of the winning speed vector
+    int countSent;                      // counter of the command sent
     double velWTA_magnitude;            // magnitude of the winning speed vector
     short  histogram[numberOfAngles];   // histogram of velocity direction
     short  counter  [numberOfAngles];   // counter of the direction

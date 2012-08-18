@@ -37,8 +37,8 @@ using namespace std;
 #define INTERVFACTOR 1              // resolution 160ns = 6.25Mhz, 128ns = 7.8125Mhz ... gaep 1us
 #define COUNTERRATIO 1              // 1.25 is the ratio 0.160/0.128
 #define THRATE       5
-#define DECRFACTOR   3
-#define INCRFACTOR   5
+#define DECRFACTOR   30
+#define INCRFACTOR   3
 #define MAXVALUE 0xFFFFFF //4294967295
 
 #define STAMPINFRAME  // 10 ms of period times the us in 1 millisecond + time for computing
@@ -104,6 +104,7 @@ bool velocityExtractorThread::threadInit() {
     microsecondsPrev = 0;
     minCount         = 0;
     minCountRight    = 0;
+    countSent        = 0;
 
     vbh = new velocityBottleHandler();
     vbh->useCallback();
@@ -265,13 +266,14 @@ void velocityExtractorThread::run() {
                     
                     double theta   = atan2(vDot,uDot);
                     double mag     = sqrt(vDot * vDot + uDot * uDot);
-
+                    //printf("uDot %f vDot %f \n", uDot,vDot);
                     int thetaDeg   = floor((theta / PI) * 180);
+                    //printf("theta %f thetaDeg %d \n", theta, thetaDeg);
                     if(thetaDeg < 0){
                         thetaDeg = 360 + thetaDeg;
                     }
-
                     int pos        =  thetaDeg / (360 / numberOfAngles);
+                    //printf("thetaDeg %d pos %d \n", thetaDeg, pos);
                     
                     //printf("uDot %f vDot %f theta %f thetaDeg %d pos %d \n",uDot,vDot, theta,thetaDeg, pos);
                     if((egoMotionU != 0) || (egoMotionV!=0)) {
@@ -280,7 +282,7 @@ void velocityExtractorThread::run() {
                     }
                     else {
 
-                        histogram[pos] = alfa * histogram[pos]+ (1 - alfa) * mag * 10 *(histogram[pos] + INCRFACTOR) - meanHist;
+                        histogram[pos] =  mag * 500 + (histogram[pos] /*+ INCRFACTOR*/) - meanHist;
                         if(histogram[pos] < 0) {
                             histogram[pos] = 0;
                         } 
@@ -332,35 +334,38 @@ void velocityExtractorThread::run() {
                                 printf("--------------------------------\n");
                                 printf("Reached max value countMedian %f \n",medianVector[2] );
                                 printf("medianVector %f %f %f %f %f \n",medianVector[0],medianVector[1],medianVector[2],medianVector[3],medianVector[4]);
+
+                                 //sending command to the oculomotor performer
+                                if(outBottlePort.getOutputCount()) {
+                                    printf("after reached the count of 5 for countMedian \n");
+                                    printf("sending the command number %d\n \n\n", countSent);
+                                    //after 5 steps, in the middle of the ordered mediaVector there is the median valie
+                                    double velWTA_rad = medianVector[2] * (PI / 180);                            
+                                    //double velWTA_rad = velWTA_direction * (PI / 180);                            
+                                    double u = cos(velWTA_rad) * velWTA_magnitude; 
+                                    double v = sin(velWTA_rad) * velWTA_magnitude;
+                                    double pixelU = u * 100;
+                                    double pixelV = v * 100;
+                                    
+                                    Bottle& b = outBottlePort.prepare();
+                                    b.clear();
+                                    b.addString("SM_PUR");
+                                    b.addDouble(pixelU);          // velocity along u axis
+                                    b.addDouble(pixelV);          // velocity along v axis
+                                    b.addDouble(0.1);          // smooth pursuit time extension
+                                    b.addDouble(velWTA_direction);
+                                    b.addInt(countSent);
+                                    outBottlePort.write();
+                                    
+                                    countSent++;
+                                }                        
+                                
                                 countMedian = 0;
                                 for(int i = 0; i < 5; i++) {
                                     medianVector[i] = 0;
                                 }
-                            }
-                            
-                            
-                            //sending command to the oculomotor performer
-                            if(outBottlePort.getOutputCount() && (countMedian == 5)) {
-                                printf("after reached the count of 5 for countMedian \n");
-                                printf("sending the command");
-                                //after 5 steps, in the middle of the ordered mediaVector there is the median valie
-                                double velWTA_rad = medianVector[2] * (PI / 180);                            
-                                //double velWTA_rad = velWTA_direction * (PI / 180);                            
-                                double u = cos(velWTA_rad) * velWTA_magnitude; 
-                                double v = sin(velWTA_rad) * velWTA_magnitude;
-                                double pixelU = u * 500;
-                                double pixelV = v * 500;
-                                
-                                Bottle& b = outBottlePort.prepare();
-                                b.clear();
-                                b.addString("SM_PUR");
-                                b.addDouble(pixelU);          // velocity along u axis
-                                b.addDouble(pixelV);          // velocity along v axis
-                                b.addDouble(0.5);          // smooth pursuit time extension
-                                b.addDouble(velWTA_direction);
-                                outBottlePort.write();
-                            }                        
-                            
+                            }        
+                                                    
                             // resetting the hist/mag
                             //printf("resetting the histogram \n");
                             for(int k = 0; k < numberOfAngles; k++ ) {
