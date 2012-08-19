@@ -83,7 +83,11 @@ int main(int argc, char *argv[])
         tauD=params.find("tauD").asDouble();
     int pol=0;
     if(params.check("pol"))
-        pol=params.find("pol").asInt();    
+        pol=params.find("pol").asInt();
+    std::string eye="left";
+    if(params.check("eye"))
+        eye=params.find("eye").asString();
+ 
     unsigned int ori=0;
     if(params.check("ori"))
         ori=(unsigned int)params.find("ori").asInt();
@@ -113,6 +117,7 @@ int main(int argc, char *argv[])
                             alpha,
                             tauD,
                             pol,
+                            eye,
                             ori,
                             save,
                             &outPort);

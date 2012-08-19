@@ -22,7 +22,7 @@ using namespace yarp::os;
 using namespace yarp::math;
 using namespace emorph::eunmask;
 
-tsOptFlowThread::tsOptFlowThread(uint &_h, uint &_w, std::string &_src, uint &_type, uint &_acc, uint &_bin, double &_th, uint &_nn, uint &_ssz, uint &_tsval, double &_a, double &_td, int &_pol, uint &_ori, bool &_save, Matrix *_vxMat, Matrix *_vyMat, Semaphore *_mutex, VelocityBuffer* _velb)
+tsOptFlowThread::tsOptFlowThread(uint &_h, uint &_w, std::string &_src, uint &_type, uint &_acc, uint &_bin, double &_th, uint &_nn, uint &_ssz, uint &_tsval, double &_a, double &_td, int &_pol, std::string &_eye, uint &_ori, bool &_save, Matrix *_vxMat, Matrix *_vyMat, Semaphore *_mutex, VelocityBuffer* _velb)
 //:RateThread(THRATE), activity(_h, _w), TSs(_h, _w), TSs2Plan(_h, _w), compPurpTS(_h, _w), sobelx(_ssz, _ssz), sobely(_ssz, _ssz), subTSs(_nn, _nn), A(_nn*_nn, 3), At(3,_nn*_nn), AtA(3,3), abc(3), Y(_nn*_nn), ctrl((uint)floor((double)_ssz/2.0), (uint)floor((double)_ssz/2.0)), wMat(_h, _w), sMat(_h*_w, 2), binEvts(10000, 2), alreadyComputedX(_h, _w), alreadyComputedY(_h, _w)
 :activity(_h, _w), TSs(_h, _w), TSs2Plan(_h, _w), compPurpTS(_h, _w), sobelx(_ssz, _ssz), sobely(_ssz, _ssz), subTSs(_ssz, _ssz), A(_ssz*_ssz, 3), At(3,_ssz*_ssz), AtA(3,3), abc(3), Y(_nn*_nn), ctrl((uint)floor((double)_ssz/2.0), (uint)floor((double)_ssz/2.0)), wMat(_h, _w), sMat(_h*_w, 2), binEvts(10000, 3), alreadyComputedX(_h, _w), alreadyComputedY(_h, _w), polSel(_pol), orientation(_ori), binAcc(_bin), saveOf(_save)
 {
@@ -113,6 +113,10 @@ printMatrix(sobely);
         else if(polSel==-1)
             saveFile.open("eventsNeg.txt", ios::out);
     }
+    if(!_eye.compare("left"))
+        eyeSel=0;
+    else
+        eyeSel=1;
 }
 
 tsOptFlowThread::~tsOptFlowThread()
@@ -143,11 +147,11 @@ void tsOptFlowThread::run()
         while(!res)
         {
             res=unmasker->getUmaskedData(addrx, addry, polarity, eye, timestamp);
+            //std::cout << "[tsOptFlowThread] Waiting for the good pol: addrx:" << addrx << ", addry: " << addry << ", pol: " << polarity << ", eye: " << eye << ", ts: " << timestamp << std::endl;
                 //std::cout << "[tsOptFlowThread] res: " << res << std::endl;
-            if(polSel && polarity!=polSel) res=0;
+            if((polSel && polarity!=polSel) || eye!=eyeSel) res=0;
         }
         //std::cout << "[tsOptFlowThread] Initialisation done" << std::endl;
-        
         if(first)
         {
             first=false;    
@@ -192,7 +196,10 @@ void tsOptFlowThread::run()
         while(refbin+binAcc>=timestamp && iBinEvts<10000)
         {
             res=unmasker->getUmaskedData(addrx, addry, polarity, eye, timestamp);
-            if(polSel && polarity!=polSel) res=0;
+            //std::cout << "[tsOptFlowThread] Waiting for the full acc: addrx:" << addrx << ", addry: " << addry << ", pol: " << polarity << ", eye: " << eye << ", ts: " << timestamp << std::endl;
+
+            //if(polSel && polarity!=polSel) res=0;
+            if((polSel && polarity!=polSel) || eye!=eyeSel) res=0;
             if(res)
             {
                 //if(orientation)
@@ -322,6 +329,9 @@ void tsOptFlowThread::setBuffer(char* _buf, uint _sz)
     std::cout << "[tsOptFlowThread] Forward buffer to umask instance" << std::endl;
 #endif
     unmasker->setBuffer(_buf, _sz);
+#ifdef _DEBUG
+    std::cout << "[tsOptFlowThread] Buffer forwarded" << std::endl;
+#endif
 }
 
 void tsOptFlowThread::compute()
@@ -332,6 +342,7 @@ void tsOptFlowThread::compute()
     {
         uint x=sMat(ixy,0);
         uint y=sMat(ixy,1);
+        //std::cout << "[tsOptFlowThread] Current address: " << x << " " << y << " at: " << *(TSsData+x*width+y) << std::endl;
         if(x>borneInfX && x<borneSupX && y>borneInfY && y<borneSupY)
         {
             ixNeighFlow=0;

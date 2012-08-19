@@ -57,7 +57,7 @@ typedef unsigned int uint;
 class tsOptFlowThread:public yarp::os::Thread
 {
 public:
-    tsOptFlowThread(uint&, uint&, std::string&, uint&, uint&, uint&, double&, uint&, uint&, uint&, double&, double&, int&, uint&, bool&, yarp::sig::Matrix*, yarp::sig::Matrix*, yarp::os::Semaphore*, VelocityBuffer*);
+    tsOptFlowThread(uint&, uint&, std::string&, uint&, uint&, uint&, double&, uint&, uint&, uint&, double&, double&, int&, std::string&, uint&, bool&, yarp::sig::Matrix*, yarp::sig::Matrix*, yarp::os::Semaphore*, VelocityBuffer*);
     ~tsOptFlowThread();
     void setBuffer(char*, uint);
     void run();
@@ -124,7 +124,7 @@ private:
     uint orientation;
     uint addrx, addrxBack;
     uint addry;
-    uint eye;
+    uint eye, eyeSel;
     int polarity, polSel;
     uint timestamp;
     uint refts;
