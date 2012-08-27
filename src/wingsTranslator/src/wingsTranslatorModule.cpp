@@ -38,9 +38,13 @@ bool wingsTranslatorModule::configure(yarp::os::ResourceFinder &rf) {
     /* Process all parameters from both command-line and .ini file */
      if(rf.check("help")) {
         printf("HELP \n");
-        printf("--name : changes the rootname of the module ports \n");
-        printf("--robot : changes the name of the robot where the module interfaces to  \n"); 
         printf("====== \n");
+        printf("--name         : changes the rootname of the module ports \n");
+        printf("--config       : changes the eye config file e.g. icubEyes.ini");
+        printf("--robot        : changes the name of the robot where the module interfaces to  \n"); 
+        printf("--tableHeight  : changes the reference height of the plane for homography");
+        printf("--kinWingsLeft : look for the kinematic constraint of the camera ");
+        printf("--kinWingsRight: look for the kinematic constraint of the camera ");
         printf("press CTRL-C to continue.. \n");
         return true;
     }
@@ -64,23 +68,24 @@ bool wingsTranslatorModule::configure(yarp::os::ResourceFinder &rf) {
                            "Robot name (string)").asString();
     robotPortName         = "/" + robotName + "/head";
 
-    configName             = rf.check("config", 
-                           Value("icubEyes.ini"), 
-                           "Config file for intrinsic parameters (string)").asString();
-    printf("configFile: %s \n", configName.c_str());
-
     /* setting the table height for homography */
     tableHeight             = rf.check("tableHeight", 
                            Value(0.12), 
                            "sets the plane z-axis height for homography (double)").asDouble();
     printf("tableHeight: %f \n", tableHeight);
 
+
+    /* eyes config file for projection into the image plane */
+    configName             = rf.check("config", 
+                           Value("icubEyes.ini"), 
+                           "Config file for intrinsic parameters (string)").asString();
+    printf("configFile: %s \n", configName.c_str());
     if (strcmp(configName.c_str(),"")) {
         printf("looking for the config file \n");
         configFile=rf.findFile(configName.c_str());
         printf("config file %s \n", configFile.c_str());
         if (configFile=="") {
-            printf("ERROR: file not found");
+            printf("file not found; the program will proceed with standard values \n");
             return false;
         }
     }
@@ -88,24 +93,51 @@ bool wingsTranslatorModule::configure(yarp::os::ResourceFinder &rf) {
         configFile.clear();
     }
 
-
+    /*******************************************************************************************************/
+    isOnWings = true;
     printf("trying to read the kinematic chain for the left \n");
     wingsLeftName          = rf.check("kinWingLeft", 
-                           Value("wingsKinematic.ini"), 
+                                      Value("null"),   //wingsKinematic.ini"
                            "Config file for kinematics left wing (string)").asString();
     printf("wingLeftName: %s \n", wingsLeftName.c_str());
-    if (strcmp(wingsLeftName.c_str(),"")) {
+    if (strcmp(wingsLeftName.c_str(),"null")) {
         printf("looking for the wingsLeft file \n");
         wingsLeftFile=rf.findFile(wingsLeftName.c_str());
         printf("wings left file %s \n", wingsLeftFile.c_str());
         if (wingsLeftFile=="") {
-            printf("ERROR: file not found");
-            return false;
+            printf("ERROR: file not found; the program will proceed with standard values \n");
+            isOnWings = false;
+            //return false;
         }
     }
     else {
+        printf("left : setting isOnWings false because not found \n");
+        isOnWings = false;
         wingsLeftFile.clear();
     }
+
+    /******************************************************************************************************/
+    printf("trying to read the kinematic chain for the right \n");
+    wingsRightName          = rf.check("kinWingRight", 
+                                       Value("null"),   //wingsKinematic.ini"
+                           "Config file for kinematics right wing (string)").asString();
+    printf("wingRightName: %s \n", wingsRightName.c_str());
+    if (strcmp(wingsRightName.c_str(),"null")) {
+        printf("looking for the wingsRight file \n");
+        wingsRightFile=rf.findFile(wingsRightName.c_str());
+        printf("wings right file %s \n", wingsRightFile.c_str());
+        if (wingsRightFile=="") {
+            printf("ERROR: file kinematic right eye not found; the program will proceed with standard values \n");
+            isOnWings = false;
+            //return false;
+        }
+    }
+    else {
+        printf("left : setting isOnWings false because not found \n");
+        isOnWings = false;
+        wingsRightFile.clear();
+    }
+
 
     /*
     * attach a port of the same name as the module (prefixed with a /) to the module
@@ -125,8 +157,17 @@ bool wingsTranslatorModule::configure(yarp::os::ResourceFinder &rf) {
     tf->setMapURL(mapNameComplete);
     tf->setRobotName(robotName);
     tf->setConfigFile(configFile);
+    if(isOnWings) {
+        printf("setting the isOnWings TRUE in the module \n");
+        tf->setIsOnWings(true);
+        tf->setWingsLeftFile(wingsLeftFile);
+        tf->setWingsRightFile(wingsRightFile);
+    }
+    else {
+        printf("setting the isOnWings FALSE in the module \n");
+        tf->setIsOnWings(false);
+    }
     tf->setTableHeight(tableHeight);
-    tf->setWingsLeftFile(wingsLeftFile);
     tf->setName(getName().c_str());
     tf->start();
 
@@ -222,16 +263,23 @@ bool wingsTranslatorModule::respond(const Bottle& command, Bottle& reply) {
             //reply.addString("get3D");
             int u = command.get(1).asInt();
             int v = command.get(2).asInt();
-            printf("received get3d query with u %d v %d \n", u,v);
+            ConstString stereoRef = command.get(3).asString();
+            printf("received get3d query with u %d v %d camera %s \n", u,v, stereoRef.c_str());
             
-            yarp::sig::Vector res = tf->get3dWingsLeft(u,v);
+            yarp::sig::Vector res;
+            if(stereoRef == "left") {
+                res = tf->get3dWingsLeft(u,v);
+            }
+            else {
+                res = tf->get3dWingsRight(u,v);
+            }
             
             reply.addDouble(res[0]);
             reply.addDouble(res[1]);
             reply.addDouble(res[2]);
 
             ok = true;
-            //tf->resume();
+           
         }
         break;
     default:

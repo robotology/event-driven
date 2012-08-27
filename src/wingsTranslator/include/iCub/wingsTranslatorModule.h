@@ -152,6 +152,8 @@
 #include <iCub/wingsTranslatorThread.h>
 
 class wingsTranslatorModule:public yarp::os::RFModule {
+    bool        isOnWings;                      // indicates whether the camera is installed on the wings
+    
     std::string moduleName;                     // name of the module (rootname of ports)
     std::string robotName;                      // name of the robot
     std::string robotPortName;                  // reference to the head of the robot
@@ -161,7 +163,9 @@ class wingsTranslatorModule:public yarp::os::RFModule {
     std::string configName;                     // name of the configuration file for camera 
     std::string configFile;                     // configuration file of cameras (LEFT RIGHT)
     std::string wingsLeftFile;                  // kinematic configuration file for left camera
+    std::string wingsRightFile;                  // kinematic configuration file for left camera
     std::string wingsLeftName;                  // name of the kinematic configuration of the 
+    std::string wingsRightName;                  // name of the kinematic configuration of the 
     
     double tableHeight;                          // height z-axis for the plane in homography
     int ratethread;                             // time constant for ratethread

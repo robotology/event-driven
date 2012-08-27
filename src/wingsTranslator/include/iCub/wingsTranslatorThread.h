@@ -49,7 +49,7 @@ using namespace iCub::iKin;
 class wingsTranslatorThread : public yarp::os::Thread {
 private:
     bool idle;                          // flag that exclude code from the execution loop
-    bool isOnWings;
+    bool isOnWings;                     // indicates when the camera is mounted on the wings
     bool headV2;                        // indicates whether the robot has head version2
     int count;                          // loop counter of the thread
     int width, height;                  // dimension of the extended input image (extending)
@@ -57,7 +57,7 @@ private:
     
     std::string configFile;             // configuration file of cameras (LEFT RIGHT)
     std::string wingsLeftFile;          // complete path for the kinematic of the left cam
-    std::string wingsRightStr;          // complete path for the kinematic of the right cam
+    std::string wingsRightFile;          // complete path for the kinematic of the right cam
     yarp::os::BufferedPort<yarp::os::Bottle> inPort;                                     // port where the left event image is received
     yarp::os::BufferedPort<yarp::os::Bottle> inRightPort;                                // port where the right event image is received
     yarp::os::BufferedPort<yarp::os::Bottle> outPort;           // port where the output edge (left) is sent
@@ -79,9 +79,10 @@ private:
     int countEvent;                         // counter of event that are going to be sent
     int countMap;                           // counter of the mapped events
 
-    iCub::iKin::iCubEye *eyeL;
-    iCub::iKin::iCubEye *eyeR;
-    iCub::iKin::iCubEye  *ikl;
+    iCub::iKin::iCubEye *eyeL;              // iCubEye object used in the module left
+    iCub::iKin::iCubEye *eyeR;              // iCubEye object used in the module right
+    iCub::iKin::iCubEye  *ikl;              // support object for temporarely configuration
+    iCub::iKin::iCubEye  *ikr;              // support object for temporarely configuration
 
     yarp::os::Property optionsHead;
     yarp::os::ResourceFinder* rf;                   // resorceFinder reference for configuration files
@@ -178,9 +179,19 @@ public:
     void setTableHeight(double _height) {tableHeight = _height; printf("wingsTranslatorThread::setTableHeight %f %f \n",_height, tableHeight); };
     
     /**
-     * 
+     * set the reference file where the kinematics chain of the left camera is defined
      */
     void setWingsLeftFile(std::string str) {wingsLeftFile = str; };
+
+    /**
+     * set the reference file where the kinematics chain of the right camera is defined
+     */
+    void setWingsRightFile(std::string str) {wingsRightFile = str; };
+
+    /**
+     * function that indicates when the camera is on the wings otherwise default kinematic chain of eyes are used
+     */
+    void setIsOnWings(bool value) { isOnWings = value; };
     
     /**
     * function that returns the original root name and appends another string iff passed as parameter
@@ -223,7 +234,14 @@ public:
      * @param v retina position of the object on the y-axis
      */
     yarp::sig::Vector get3dWingsLeft(int u , int v) ;
-
+    
+    /**
+     * @brief function that returns the 3d position of an object on the right camera
+     * @param u retina position of the object on the x-axis
+     * @param v retina position of the object on the y-axis
+     */
+    yarp::sig::Vector get3dWingsRight(int u , int v) ;
+    
 };
 
 

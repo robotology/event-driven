@@ -286,6 +286,7 @@ bool wingsTranslatorThread::threadInit() {
     
     printf("head_version extracted from gazeArbiter %d \n",head_version);
     ikl = new iCubEye();
+    ikr = new iCubEye();
     
     head_version = 2;
     if(head_version == 1) {
@@ -293,25 +294,18 @@ bool wingsTranslatorThread::threadInit() {
         eyeR = new iCubEye("right");
     }
     else {
-        eyeL = new iCubEye("left_wings");
+        eyeL = new iCubEye("left_v2");
         eyeR = new iCubEye("right_v2");
     }
     printf("correctly istantiated the head \n");
     
     // if it isOnWings, move the eyes on top of the head 
-    isOnWings = true;
+    //isOnWings = true;
     if (isOnWings) {
         printf("changing the structure of the chain \n");
            
         yarp::os::Property p; 
-        /*if(rf->findFile("wingsKinematic.txt")) {
-            wingsLeftStr = rf->findFile("wingsKinematic.txt");
-        }
-        else {
-            printf("file for kinematics wingsLeft not found \n");
-            return false;
-            }*/
-        printf("extracting properties from %s \n",wingsLeftFile.c_str() );
+        printf("left camera : extracting properties from %s \n",wingsLeftFile.c_str() );
         p.fromConfigFile(wingsLeftFile.c_str()); 
         ikl->fromLinksProperties(p);
         eyeL = ikl; 
@@ -326,12 +320,34 @@ bool wingsTranslatorThread::threadInit() {
                    tmpLink.getA(), tmpLink.getD(),tmpLink.getAlpha(), tmpLink.getOffset(), tmpLink.getMin(), tmpLink.getMax(), tmpLink.isBlocked() );
         }
         
+        printf("right camera : extracting properties from %s \n",wingsRightFile.c_str() );
+        p.fromConfigFile(wingsRightFile.c_str()); 
+        ikr->fromLinksProperties(p);
+        eyeR = ikr; 
+        printf("eyer is valid? %d \n", eyeR->isValid());
+        
+        printf("H0 = \n %s \n", eyeR->getH0().toString().c_str());
+        tmpChain = eyeR->asChain();
+        for(int j = 0; j < eyeR->getN(); j++) {
+            printf("LINK %d :",j);
+            iKinLink tmpLink = tmpChain->operator[](j);
+            printf("              A %f D %f alpha %f offset %f min %f max %f blocked %d\n",
+                   tmpLink.getA(), tmpLink.getD(),tmpLink.getAlpha(), tmpLink.getOffset(), tmpLink.getMin(), tmpLink.getMax(), tmpLink.isBlocked() );
+        }
+        
     }
     else {
         printf("isOnWing false \n");
         printf("H0 = \n %s \n", eyeL->getH0().toString().c_str());
         iKinChain* tmpChain = eyeL->asChain();
         for(int j = 0; j < eyeL->getN(); j++) {
+            printf("LINK %d :",j);
+            iKinLink tmpLink = tmpChain->operator[](j);
+            printf("              A %f D %f alpha %f offset %f min %f max %f blocked %d\n",
+                   tmpLink.getA(), tmpLink.getD(),tmpLink.getAlpha(), tmpLink.getOffset(), tmpLink.getMin(), tmpLink.getMax(), tmpLink.isBlocked());
+        }
+        tmpChain = eyeR->asChain();
+        for(int j = 0; j < eyeR->getN(); j++) {
             printf("LINK %d :",j);
             iKinLink tmpLink = tmpChain->operator[](j);
             printf("              A %f D %f alpha %f offset %f min %f max %f blocked %d\n",
@@ -500,6 +516,65 @@ Vector wingsTranslatorThread::get3dWingsLeft(int u , int v) {
         printf("going to project the point \n");
         //if (projectPoint(type,u,v,1.0,x))
         if(project(encTorso,encHead,invPrjL,eyeL,u,v,1.0,x)) {
+            // pick up a point belonging to the plane
+            
+            
+            //mutex.wait();
+            Vector e = eye->EndEffPose().subVector(0,2);
+            //mutex.post();
+            
+            // compute the projection
+            printf("computing the projection e=%s  \n", e.toString().c_str());
+            Vector v = x - e;
+
+            mutexN.wait();
+            mutexP0.wait();
+            x = e + ( dot(p0-e,n ) / dot(x - e,n)) * v;
+            mutexP0.post();
+            mutexN.post();
+            
+
+            //Vector k = e;
+            printf("------------ x %s \n",x.toString().c_str());
+            
+            return x;
+        }
+        else{
+            return errorVector;
+        }
+    }break;
+    } // end of the switch
+}
+
+Vector wingsTranslatorThread::get3dWingsRight(int u , int v) {
+    printf("starting with the projections \n");
+    Vector errorVector(3);
+    Vector x(3);
+    errorVector.zero();
+    
+    int operation = 1;
+    switch (operation) {
+        
+    case 0 : {
+        Vector xo;
+        //calculating the 3d position and sending it to database
+        int u = 160; 
+        int v = 120;
+        int varDistance  = 0.5;
+        project(encTorso,encHead,invPrjR,eyeR, u,v, varDistance, xo);
+        
+        return xo;
+    }break;
+    case 1: {
+        
+        ConstString type = "right";
+        bool isRight=(type=="right");
+        iCubEye *eye=(isRight?eyeR:eyeL);
+        eye = eyeR;
+        
+        printf("going to project the point \n");
+        //if (projectPoint(type,u,v,1.0,x))
+        if(project(encTorso,encHead,invPrjR,eyeR,u,v,1.0,x)) {
             // pick up a point belonging to the plane
             
             
