@@ -24,6 +24,7 @@ SET(folder_source
   src/eventUnmask.cpp
   src/eventUnmaskDVS128.cpp
   src/eventUnmaskICUB.cpp
+  src/objDistBuffer.cpp
 )
 
 #FILE(GLOB folder_source 
@@ -46,6 +47,7 @@ SET(folder_header
   include/iCub/emorph/eventUnmask.h
   include/iCub/emorph/eventUnmaskDVS128.h
   include/iCub/emorph/eventUnmaskICUB.h
+  include/iCub/emorph/objDistBuffer.h
 )
 
 MESSAGE("folder_header ${folder_header}")

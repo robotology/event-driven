@@ -160,21 +160,21 @@ int eventUnmaskICUB::getUmaskedData(uint& cartX, uint& cartY, int& polarity, uin
     //    return 0;
         // unmask the data ( first 4 bytes timestamp, second 4 bytes address)
     tsPacket = bufSnapShot[eventIndex++];
-    blob = bufSnapShot[eventIndex++];
+    //blob = bufSnapShot[eventIndex++];
     //Check if s tamistamp wrap around occured
     if ((tsPacket & 0xFC000000) == 0x88000000){ // if it's TSWA then skip it
         timestampMonotonyWrap += 0x04000000;
         //eventIndex++;
         tsPacket = bufSnapShot[eventIndex++];
-        blob = bufSnapShot[eventIndex++];
+        //blob = bufSnapShot[eventIndex++];
     }
     timestamp = (tsPacket &  0x03FFFFFF) + timestampMonotonyWrap;
 
-    //blob = bufSnapShot[eventIndex++];
+    blob = bufSnapShot[eventIndex++];
+    if(blob&0x10000)
+        res=2;
     blob &= 0xFFFF; // here we zero the higher two bytes of the address!!! Only lower 16bits used!
     unmaskEvent(blob, cartX, cartY, polarity, eye);
-    if(blob&0x8000)
-        res=2;
     return res;
 }
 
