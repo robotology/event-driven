@@ -977,6 +977,7 @@ void  device2yarp::run() {
             }	
             
             //copying the atomic block to send
+            tempA &= 0x0000FFFF;
             buf2[k2++] = tempA; // passing the timestamp to the data flow to send
             countEventSent++;
             
