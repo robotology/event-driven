@@ -25,7 +25,7 @@ class aggregation : public yarp::os::BufferedPort<emorph::reco::objDistBuffer>
 {
 public:
     aggregation();
-    aggregation(std::string&, BufferedPort< yarp::sig::ImageOf <yarp::sig::PixelMono16> > *);
+    aggregation(std::string&, yarp::os::BufferedPort< yarp::sig::ImageOf <yarp::sig::PixelMono16> > *);
     ~aggregation();
 
     void onRead(emorph::reco::objDistBuffer&);
@@ -50,7 +50,7 @@ private:
     yarp::sig::Vector negRightEye;
 
     std::string imgFile;
-    BufferedPort< yarp::sig::ImageOf <yarp::sig::PixelMono16> > *port;
+    yarp::os::BufferedPort< yarp::sig::ImageOf <yarp::sig::PixelMono16> > *port;
 
     cv::Mat **knowledgeImg;
 };

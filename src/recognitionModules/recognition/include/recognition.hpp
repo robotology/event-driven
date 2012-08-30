@@ -31,7 +31,7 @@ public:
     virtual void onRead(emorph::ehist::eventHistBuffer&);
 
     void set_hist(unsigned int*, unsigned int, unsigned int*, unsigned int);
-    void setOutPort(BufferedPort< emorph::reco::objDistBuffer > *_port ){outPort=_port;};
+    void setOutPort(yarp::os::BufferedPort< emorph::reco::objDistBuffer > *_port ){outPort=_port;};
 private:
     void init();
     void loadKnowledgeBase();

@@ -29,6 +29,7 @@ recognition::recognition(std::string _file, unsigned int _sd, unsigned int _htw,
     //load the bases;
     cout << "[recognition] load the base of knowledge" << endl;
     loadKnowledgeBase();
+    cout << "[recognition] Base loaded, knowledgeSize: " << knowledgeSize << endl;
 
 /*    cout << "The number of kernel recover form the file for a negative polarity: " << nnegk << endl;
     cout << "Number of negative stv associated of the first model: " << nnegh[0] << endl
@@ -49,6 +50,7 @@ recognition::recognition(std::string _file, unsigned int _sd, unsigned int _htw,
     for(unsigned int i=0; i<sznposh; i++)
     {
         ptr_posdh[i]=new Matrix(nposk, nBin);
+        cout << "[recognition] Create dense histogram of positive channel of the object no " << i << endl;
         createDenseHistogram(ptr_posh+index, nposh[i], ptr_posdh[i]);
         index+=nposh[i]*4;
         countElemInHist(ptr_posdh[i], nElem);
@@ -131,16 +133,21 @@ void recognition::loadKnowledgeBase()
     ifstream fd;
     string dfile;
     fd.open(knowledgeFileList.c_str());
-    while(fd.good())
+    std::cout << "[recognition] Opening the file of list: " << knowledgeFileList << std::endl;
+    if(fd.is_open())
     {
-        getline(fd, dfile);
-        loadFile(dfile);
-        knowledgeSize++;
+        while(fd.good())
+        {
+            getline(fd, dfile);
+            std::cout << "[recognition] Opening base file: " << dfile << std::endl;
+            loadFile(dfile);
+            knowledgeSize++;
+        }
+        knowledgeSize/=2;
+        fd.close();
     }
-    knowledgeSize/=2;
-//    cout << "Close the file..." << endl;
-    fd.close();
-//    cout << "File closed" << endl;
+    else
+        std::cout << "Error: File not found" << std::endl;
 }
 
 void recognition::compare()
@@ -197,53 +204,59 @@ int recognition::loadFileFromPol(string& _fileToLoad, unsigned int **_ptrh, unsi
 
     ifstream fd;
     fd.open(_fileToLoad.c_str(), ios::in|ios::app);
-    fd.read(reinterpret_cast<char*>(&_nk), sizeof(int));
-    fd.read(reinterpret_cast<char*>(&nh), sizeof(int));
-//    cout << "\t\t\tSize of the current file: " << nh << endl;
-    if(_szptrh)
+    if(fd.is_open())
     {
-        tmp_ptrh=new unsigned int[_szptrh];
-        memcpy(tmp_ptrh, *_ptrh, _szptrh*sizeof(int));
+        fd.read(reinterpret_cast<char*>(&_nk), sizeof(int));
+        fd.read(reinterpret_cast<char*>(&nh), sizeof(int));
+    //    cout << "\t\t\tSize of the current file: " << nh << endl;
+        if(_szptrh)
+        {
+            tmp_ptrh=new unsigned int[_szptrh];
+            memcpy(tmp_ptrh, *_ptrh, _szptrh*sizeof(int));
 
-        tmp_nh=new unsigned int[_sznh];
-        memcpy(tmp_nh, *_nh, _sznh*sizeof(int));
+            tmp_nh=new unsigned int[_sznh];
+            memcpy(tmp_nh, *_nh, _sznh*sizeof(int));
 
-        delete[] *_ptrh;
-        *_ptrh=new unsigned int[4*nh+_szptrh];
-        memcpy(*_ptrh, tmp_ptrh, _szptrh*sizeof(int));
+            delete[] *_ptrh;
+            *_ptrh=new unsigned int[4*nh+_szptrh];
+            memcpy(*_ptrh, tmp_ptrh, _szptrh*sizeof(int));
 
-        delete[] *_nh;
-        *_nh=new unsigned int[_sznh+1];
-        memcpy(*_nh, tmp_nh, _sznh*sizeof(int));
-        
+            delete[] *_nh;
+            *_nh=new unsigned int[_sznh+1];
+            memcpy(*_nh, tmp_nh, _sznh*sizeof(int));
+            
+            delete[] tmp_ptrh;
+            delete[] tmp_nh;
+        }
+        else
+        {
+            *_ptrh=new unsigned int[4*nh];
+            *_nh=new unsigned int[1];
+        }
+        tmp_ptrh=new unsigned int[4*nh];
+        fd.read(reinterpret_cast<char*>(tmp_ptrh), 4*nh*sizeof(int));
+    //    cout << "\t\t\tData size: " << 4*nh*sizeof(int) << endl;
+
+        memcpy(*_ptrh+_szptrh, tmp_ptrh, 4*nh*sizeof(int));
+        memcpy(*_nh+_sznh, &nh, sizeof(int));
+        _szptrh+=4*nh;
+        _sznh++;
+    //    cout << "\t\t\tNumber of file load for this pol: " << _sznh << endl;
         delete[] tmp_ptrh;
-        delete[] tmp_nh;
     }
     else
-    {
-        *_ptrh=new unsigned int[4*nh];
-        *_nh=new unsigned int[1];
-    }
-    tmp_ptrh=new unsigned int[4*nh];
-    fd.read(reinterpret_cast<char*>(tmp_ptrh), 4*nh*sizeof(int));
-//    cout << "\t\t\tData size: " << 4*nh*sizeof(int) << endl;
-
-    memcpy(*_ptrh+_szptrh, tmp_ptrh, 4*nh*sizeof(int));
-    memcpy(*_nh+_sznh, &nh, sizeof(int));
-    _szptrh+=4*nh;
-    _sznh++;
-//    cout << "\t\t\tNumber of file load for this pol: " << _sznh << endl;
-    delete[] tmp_ptrh;
+        cout << "[recognition] Error: file " << _fileToLoad << " not found" << endl; 
 }
 
 int recognition::createDenseHistogram(unsigned int* _ptrh, unsigned int _nh, Matrix *_ptrdh)
 {
-    cerr << "recognition::createDenseHistogram(...)" << endl;
-    fprintf(stderr, "Address of the target of the pointer: %08x\n", _ptrh); 
+    cerr << "[recognition] recognition::createDenseHistogram(...)" << endl;
+    fprintf(stderr, "[recognition] Address of the target of the pointer: %08x\n", _ptrh); 
     unsigned int refts=_ptrh[1];
-    fprintf(stderr, "ts reference: %d\n", refts);
+    fprintf(stderr, "[recognition] ts reference: %d\n", refts);
     unsigned int bin=0;
     _ptrdh->zero();
+    cout << "[recognition] Number of dimension: " << _nh << endl;
     for(unsigned int i=0; i<_nh; i++)
     {
         //fprintf(stderr, "\tstep %d / %d\n", i, _nh);
