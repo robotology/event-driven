@@ -859,7 +859,8 @@ void  device2yarp::run() {
           
             //checking for missed addresses
             if((countData - lastTSindex != 2) && (lastTSindex != -1) && ( t != 0x80000000)) {
-                a = 0xDEADDEAD;
+                //a = 0xDEADDEAD;
+                a = 0x0000DEAD;
                 printf("ERROR TS 1 > %d %d %08X \n", countData, lastTSindex, t);
                 countErrorsTS++;
             }
@@ -916,7 +917,8 @@ void  device2yarp::run() {
             // wrap-around occured printing out statistics
 
             printf("\n \n ===================== WRAP AROUND ===================================== \n");            
-            a = 0xCAFECAFE;
+            //a = 0xCAFECAFE;
+            a = 0x0000CAFE;
             t = tempA;
             lastTSindex = -1;
             lastAEindex = -1;
