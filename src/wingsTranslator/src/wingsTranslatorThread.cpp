@@ -153,14 +153,14 @@ yarp::sig::Matrix *invPrjL,iCub::iKin::iCubEye *eye,int u, int v, double varDist
     encTorso->getEncoder(0,&torso[0]);
     encTorso->getEncoder(1,&torso[1]);
     encTorso->getEncoder(2,&torso[2]);
-    printf("torso %f %f %f \n", torso[0], torso[1], torso[2]);
+    //printf("torso %f %f %f \n", torso[0], torso[1], torso[2]);
     Vector head(5);
     encHead->getEncoder(0,&head[0]);
     encHead->getEncoder(1,&head[1]);
     encHead->getEncoder(2,&head[2]);
     encHead->getEncoder(3,&head[3]);
     encHead->getEncoder(4,&head[4]);
-    printf("head %f %f %f %f %f %f \n", head[0], head[1], head[2], head[3], head[4]);
+    //printf("head %f %f %f %f %f %f \n", head[0], head[1], head[2], head[3], head[4]);
     
     Vector q(8);
     double ratio = M_PI /180;
@@ -175,31 +175,31 @@ yarp::sig::Matrix *invPrjL,iCub::iKin::iCubEye *eye,int u, int v, double varDist
     double ver = head[5];                    
     
     Vector x(3);
-    printf("varDistance %f \n", varDistance);
+    //printf("varDistance %f \n", varDistance);
     x[0] = varDistance * u;   //epipolar correction excluded the focal lenght
     x[1] = varDistance * v;
     x[2] = varDistance;
     
     // find the 3D position from the 2D projection,
     // knowing the distance z from the camera
-    printf("finding the 3D position from the 2D projection \n");
+    //printf("finding the 3D position from the 2D projection \n");
     Vector xe = yarp::math::operator *(*invPrjL, x);
     xe[3]=1.0;  // impose homogeneous coordinates                
     
     // update position wrt the root frame
-    printf("updating the 3D position wrt the root frame %d \n",eye->getN());
+    //printf("updating the 3D position wrt the root frame %d \n",eye->getN());
     
     Matrix eyeH = eye->getH(q);
-    printf("success in getH(q) \n");
-    printf("eyeH : %f %f %f \n %f %f %f \n %f %f %f \n ", 
-           eyeH(0,0), eyeH(0,1), eyeH(0,2),
-           eyeH(1,0), eyeH(1,1), eyeH(1,2),
-           eyeH(2,0), eyeH(2,1), eyeH(2,2)
-           );
+    // printf("success in getH(q) \n");
+    //printf("eyeH : %f %f %f \n %f %f %f \n %f %f %f \n ", 
+    //       eyeH(0,0), eyeH(0,1), eyeH(0,2),
+    //       eyeH(1,0), eyeH(1,1), eyeH(1,2),
+    //       eyeH(2,0), eyeH(2,1), eyeH(2,2)
+    //       );
     //xo = yarp::math::operator *(eyeH,xe).subVector(0,2);
     xo=(eye->getH(q)*xe).subVector(0,2);
 
-    printf("object %f,%f,%f \n",xo[0],xo[1],xo[2]);    
+//printf("object %f,%f,%f \n",xo[0],xo[1],xo[2]);    
 
     return true;
 }
@@ -424,6 +424,8 @@ bool wingsTranslatorThread::threadInit() {
     eyeL->alignJointsBounds(limQueue);
     printf("success in aligning the JointsBounds \n");
 
+    fmatch = fopen("match.txt", "w+");
+
     return true;
 }
 
@@ -482,7 +484,11 @@ Vector wingsTranslatorThread::get3dWingsLeft(int u , int v) {
     printf("starting with the projections \n");
     Vector errorVector(3);
     Vector x(3);
+    Vector x2(3);
     errorVector.zero();
+    ConstString type = "left";
+    bool isLeft=(type=="left");
+    iCubEye *eye=(isLeft?eyeL:eyeR);
     
     int operation = 1;
     switch (operation) {
@@ -508,9 +514,8 @@ Vector wingsTranslatorThread::get3dWingsLeft(int u , int v) {
         
         
         
-        ConstString type = "left";
-        bool isLeft=(type=="left");
-        iCubEye *eye=(isLeft?eyeL:eyeR);
+        
+        
         eye = eyeL;
         
         printf("going to project the point \n");
@@ -537,13 +542,82 @@ Vector wingsTranslatorThread::get3dWingsLeft(int u , int v) {
             //Vector k = e;
             printf("------------ x %s \n",x.toString().c_str());
             
-            return x;
+            
         }
         else{
             return errorVector;
         }
     }break;
     } // end of the switch
+    
+    Matrix &Prj = *PrjL;
+    double origPrj00 = Prj(0,0);
+    double origPrj11 = Prj(1,1);
+    double origPrj02 = Prj(0,2);
+    double origPrj12 = Prj(1,2);
+
+    Vector e,ve;
+    invPrjL = new Matrix(pinv(Prj.transposed()).transposed());
+    int count;
+    
+    for (int cx= -10; cx < 10; cx+=1) {
+        for  (int cy= -10; cy < 10; cy+=1) {
+            
+            count = 0;
+            for (int fx= -40; fx < 500; fx+=5) {
+                for (int fy = -160; fy < 500; fy+=5) {
+                        
+                        cxl=Prj(0,2);
+                        cyl=Prj(1,2);
+                        //printf("pixel fovea in the config file %d %d \n", cxl,cyl);
+                        Prj(0,0) = origPrj00 + fx;
+                        Prj(1,1) = origPrj11 + fy;
+                        Prj(0,2) = origPrj02 + cx;
+                        Prj(1,2) = origPrj12 + cy;
+                        *invPrjL = pinv(Prj.transposed()).transposed();
+                        
+                        project(encTorso,encHead,invPrjL,eyeL,u,v,1.0,x2); 
+                        
+                        e = eye->EndEffPose().subVector(0,2);
+                        //mutex.post();
+                        
+                        // compute the projection
+                        //printf("computing the projection e=%s  \n", e.toString().c_str());
+                        ve = x2 - e;
+                        
+                        mutexN.wait();
+                        mutexP0.wait();
+                        x2 = e + ( dot(p0-e,n ) / dot(x2 - e,n)) * ve;
+                        mutexP0.post();
+                        mutexN.post();
+                        
+                        double distanceTarget = sqrt(
+                                                     (x2(0) - xTarget) * (x2(0) - xTarget)
+                                                     +
+                                                     (x2(1) - yTarget) * (x2(1) - yTarget)
+                                                     );
+                        
+                        if (distanceTarget < 0.001) {
+                            printf(" dist %f > %f %f %f %f -- x2 %s \n",distanceTarget, Prj(0,0), Prj(1,1), Prj(0,2), Prj(1,2), x2.toString().c_str());
+                            count++;
+                        }
+                    }
+                         
+               }
+                
+                if(count > 0) {
+                    printf("----------------------------------- cx %d cy %d \n", cx, cy);
+                    fprintf(fmatch," cx %d cy %d count %d \n", cx, cy, count);
+                    printf("--------------------------------count %d \n\n\n\n", count);
+                }
+         }
+    }
+    printf("END of the SEARCH \n");
+    Prj(0,0) = origPrj00;
+    Prj(1,1) = origPrj11;
+    Prj(0,2) = origPrj02;
+    Prj(1,2) = origPrj12;
+    return x;
 }
 
 Vector wingsTranslatorThread::get3dWingsRight(int u , int v) {
@@ -685,14 +759,18 @@ void wingsTranslatorThread::threadRelease() {
    
     /* closing the file */   
     if(pFile!=NULL) {
-        fclose (pFile); 
+        fclose(pFile); 
     }
 
     if(fout!=NULL) {
-        fclose (fout); 
+        fclose(fout); 
     }
     if(fdebug!=NULL) {
-        fclose (fdebug); 
+        fclose(fdebug); 
+    }
+    
+    if(fmatch!=NULL) {
+        fclose(fmatch);
     }
 }
 

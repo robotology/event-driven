@@ -74,6 +74,7 @@ private:
     FILE *pFile;                            // file that contains the rules for the LUT
     FILE *fout;                             // file where the extracted LUT is saved
     FILE *fdebug;                           // file for debug
+    FILE *fmatch;                           // file for matching
     
     int monBufSize_b;                       // dimension of the bufferFEA in bytes
     int countEvent;                         // counter of event that are going to be sent
@@ -107,6 +108,8 @@ private:
     double valueInput[12];                  // vector of 12 values read from the input port
     double cxl,cyl;                         // position of the center of the image
     double tableHeight;                     // height of the table
+    double xTarget;                         // position of the target on the xAxis
+    double yTarget;                         // position of the target on the yAxis
 
     char* bufferCopy;                       // local copy of the events read
     char* flagCopy;                         // copy of the unreadBuffer
@@ -241,6 +244,11 @@ public:
      * @param v retina position of the object on the y-axis
      */
     yarp::sig::Vector get3dWingsRight(int u , int v) ;
+
+    /**
+     * function that sets the target for parameter extraction
+     */
+    void set3DTarget(double x, double y) { xTarget = x; yTarget = y;};
     
 };
 

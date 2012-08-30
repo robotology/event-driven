@@ -227,7 +227,7 @@ bool wingsTranslatorModule::respond(const Bottle& command, Bottle& reply) {
             reply.addString(" ");
             reply.addString(" ");
             reply.addString(" ");
-            reply.addString("  get3D u v : get the 3D position using homography ");
+            reply.addString("  get3D u v left : get the 3D position using homography ");
             //reply.addString(helpMessage.c_str());
             ok = true;
         }
@@ -264,13 +264,18 @@ bool wingsTranslatorModule::respond(const Bottle& command, Bottle& reply) {
             int u = command.get(1).asInt();
             int v = command.get(2).asInt();
             ConstString stereoRef = command.get(3).asString();
+            double x = command.get(4).asDouble();
+            double y = command.get(5).asDouble();
             printf("received get3d query with u %d v %d camera %s \n", u,v, stereoRef.c_str());
             
             yarp::sig::Vector res;
             if(stereoRef == "left") {
+                tf->set3DTarget(x,y);
                 res = tf->get3dWingsLeft(u,v);
+                
             }
             else {
+                tf->set3DTarget(x,y);
                 res = tf->get3dWingsRight(u,v);
             }
             
