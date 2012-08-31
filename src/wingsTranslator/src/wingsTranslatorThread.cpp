@@ -113,8 +113,10 @@ bool getCamPrj(const string &configFile, const string &type, Matrix **Prj)
                 parType.check("fx") && parType.check("fy"))
             {
                 // we suppose that the center distorsion is already compensated
-                double cx = parType.find("w").asDouble() / 2.0;
-                double cy = parType.find("h").asDouble() / 2.0;
+                //double cx = parType.find("w").asDouble() / 2.0;
+                //double cy = parType.find("h").asDouble() / 2.0;
+                double cx = parType.find("cx").asDouble();
+                double cy = parType.find("cy").asDouble();
                 double fx = parType.find("fx").asDouble();
                 double fy = parType.find("fy").asDouble();
 
@@ -549,74 +551,86 @@ Vector wingsTranslatorThread::get3dWingsLeft(int u , int v) {
         }
     }break;
     } // end of the switch
-    
-    Matrix &Prj = *PrjL;
-    double origPrj00 = Prj(0,0);
-    double origPrj11 = Prj(1,1);
-    double origPrj02 = Prj(0,2);
-    double origPrj12 = Prj(1,2);
 
-    Vector e,ve;
-    invPrjL = new Matrix(pinv(Prj.transposed()).transposed());
-    int count;
     
-    for (int cx= -10; cx < 10; cx+=1) {
-        for  (int cy= -10; cy < 10; cy+=1) {
-            
-            count = 0;
-            for (int fx= -40; fx < 500; fx+=5) {
-                for (int fy = -160; fy < 500; fy+=5) {
-                        
-                        cxl=Prj(0,2);
-                        cyl=Prj(1,2);
-                        //printf("pixel fovea in the config file %d %d \n", cxl,cyl);
-                        Prj(0,0) = origPrj00 + fx;
-                        Prj(1,1) = origPrj11 + fy;
-                        Prj(0,2) = origPrj02 + cx;
-                        Prj(1,2) = origPrj12 + cy;
-                        *invPrjL = pinv(Prj.transposed()).transposed();
-                        
-                        project(encTorso,encHead,invPrjL,eyeL,u,v,1.0,x2); 
-                        
-                        e = eye->EndEffPose().subVector(0,2);
-                        //mutex.post();
-                        
-                        // compute the projection
-                        //printf("computing the projection e=%s  \n", e.toString().c_str());
-                        ve = x2 - e;
-                        
-                        mutexN.wait();
-                        mutexP0.wait();
-                        x2 = e + ( dot(p0-e,n ) / dot(x2 - e,n)) * ve;
-                        mutexP0.post();
-                        mutexN.post();
-                        
-                        double distanceTarget = sqrt(
-                                                     (x2(0) - xTarget) * (x2(0) - xTarget)
-                                                     +
-                                                     (x2(1) - yTarget) * (x2(1) - yTarget)
-                                                     );
-                        
-                        if (distanceTarget < 0.001) {
-                            printf(" dist %f > %f %f %f %f -- x2 %s \n",distanceTarget, Prj(0,0), Prj(1,1), Prj(0,2), Prj(1,2), x2.toString().c_str());
-                            count++;
-                        }
-                    }
-                         
-               }
+    bool searchParam = true;
+    if (searchParam) {
+        
+        Matrix &Prj = *PrjL;
+        double origPrj00 = Prj(0,0);
+        double origPrj11 = Prj(1,1);
+        double origPrj02 = Prj(0,2);
+        double origPrj12 = Prj(1,2);
+        
+        Vector e,ve;
+        invPrjL = new Matrix(pinv(Prj.transposed()).transposed());
+        int count;
+        
+        for (int cx= -20; cx < 20; cx+=1) {
+            for  (int cy= -20; cy < 20; cy+=1) {
                 
-                if(count > 0) {
-                    printf("----------------------------------- cx %d cy %d \n", cx, cy);
-                    fprintf(fmatch," cx %d cy %d count %d \n", cx, cy, count);
-                    printf("--------------------------------count %d \n\n\n\n", count);
+                count = 0;
+                for (int fx= -40; fx < 200; fx+=5) {
+                    for (int fy = -160; fy < 200; fy+=5) {
+                            
+                            cxl=Prj(0,2);
+                            cyl=Prj(1,2);
+                            //printf("pixel fovea in the config file %d %d \n", cxl,cyl);
+                            Prj(0,0) = origPrj00 + fx;
+                            Prj(1,1) = origPrj11 + fy;
+                            Prj(0,2) = origPrj02 + cx;
+                            Prj(1,2) = origPrj12 + cy;
+                            *invPrjL = pinv(Prj.transposed()).transposed();
+                            
+                            project(encTorso,encHead,invPrjL,eyeL,u,v,1.0,x2); 
+                            
+                            e = eye->EndEffPose().subVector(0,2);
+                            //mutex.post();
+                            
+                            // compute the projection
+                            //printf("computing the projection e=%s  \n", e.toString().c_str());
+                            ve = x2 - e;
+                            
+                            mutexN.wait();
+                            mutexP0.wait();
+                            x2 = e + ( dot(p0-e,n ) / dot(x2 - e,n)) * ve;
+                            mutexP0.post();
+                            mutexN.post();
+                            
+                            double distanceTarget = sqrt(
+                                                         (x2(0) - xTarget) * (x2(0) - xTarget)
+                                                         +
+                                                         (x2(1) - yTarget) * (x2(1) - yTarget)
+                                                         );
+                            
+                            //printf("  dist %f > %f %f %f %f -- x2 %s \n  ",distanceTarget, Prj(0,0), Prj(1,1), Prj(0,2), Prj(1,2), x2.toString().c_str());
+                            
+                            if (distanceTarget < 0.001) {
+                                printf("  dist %f > %f %f %f %f -- x2 %s \n  ",distanceTarget, Prj(0,0), Prj(1,1), Prj(0,2), Prj(1,2), x2.toString().c_str());
+                                fprintf(fmatch, "%f %f %f %f %f\n",distanceTarget, Prj(0,0), Prj(1,1), Prj(0,2), Prj(1,2), x2.toString().c_str());
+                                count++;
+                            }
+                        }
+                             
+                             }
+                    
+                    
+                    if(count > 0) {
+                        printf("----------------------------------- cx %d cy %d \n", cx, cy);
+                        //fprintf(fmatch,"%d %d %d \n", cx, cy, count);
+                        printf("--------------------------------count %d \n\n\n\n", count);
+                    }
                 }
-         }
-    }
-    printf("END of the SEARCH \n");
-    Prj(0,0) = origPrj00;
-    Prj(1,1) = origPrj11;
-    Prj(0,2) = origPrj02;
-    Prj(1,2) = origPrj12;
+            }
+            printf("END of the SEARCH \n");
+        
+            Prj(0,0) = origPrj00;
+            Prj(1,1) = origPrj11;
+            Prj(0,2) = origPrj02;
+            Prj(1,2) = origPrj12;
+        }
+    
+
     return x;
 }
 
@@ -756,9 +770,11 @@ void wingsTranslatorThread::threadRelease() {
     delete eyeR;
     igaze->restoreContext(originalContext);
     delete clientGazeCtrl;
+    printf("correctly deleting the client \n");
+
    
     /* closing the file */   
-    if(pFile!=NULL) {
+    /*if(pFile!=NULL) {
         fclose(pFile); 
     }
 
@@ -767,7 +783,7 @@ void wingsTranslatorThread::threadRelease() {
     }
     if(fdebug!=NULL) {
         fclose(fdebug); 
-    }
+        }*/
     
     if(fmatch!=NULL) {
         fclose(fmatch);
