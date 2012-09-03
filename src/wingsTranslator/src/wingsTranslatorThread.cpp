@@ -381,7 +381,7 @@ bool wingsTranslatorThread::threadInit() {
         Matrix &Prj = *PrjL;
         cxl=Prj(0,2);
         cyl=Prj(1,2);
-        printf("pixel fovea in the config file %d %d \n", cxl,cyl);
+        printf("pixel fovea in the config file %f %f %f %f \n",  Prj(0,0), Prj(1,1), cxl,cyl);
         invPrjL=new Matrix(pinv(Prj.transposed()).transposed());
     }
     // ------------------------------------------------------------------
@@ -553,7 +553,7 @@ Vector wingsTranslatorThread::get3dWingsLeft(int u , int v) {
     } // end of the switch
 
     
-    bool searchParam = true;
+    bool searchParam = false;
     if (searchParam) {
         
         Matrix &Prj = *PrjL;
@@ -570,8 +570,8 @@ Vector wingsTranslatorThread::get3dWingsLeft(int u , int v) {
             for  (int cy= -20; cy < 20; cy+=1) {
                 
                 count = 0;
-                for (int fx= -40; fx < 200; fx+=5) {
-                    for (int fy = -160; fy < 200; fy+=5) {
+                for (int fx= -40; fx < 200; fx+=1) {
+                    for (int fy = -160; fy < 200; fy+=1) {
                             
                             cxl=Prj(0,2);
                             cyl=Prj(1,2);
