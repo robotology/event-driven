@@ -52,7 +52,6 @@ class WorldOptFlow : public RateThread{
     yarp::os::Semaphore * newEventsSignal;
 
     BufferedPort<VelocityBuffer> * outPort;
-    BufferedPort<Bottle> *outBPort;
 
 
     CameraEvent *** eventBuffers;                   /*2-Dimensional Array of  "pointers to CameraEvent"-
@@ -74,7 +73,7 @@ class WorldOptFlow : public RateThread{
 public:
 
     WorldOptFlow( AERGrabber * inPortPtr,
-               BufferedPort<VelocityBuffer> * outFlowPort,  BufferedPort<Bottle> * outBttlwPort,
+               BufferedPort<VelocityBuffer> * outFlowPort,
                MyMatrix<POLARITY_TYPE> * wStatus, MyMatrix<POLARITY_TYPE> * pWStatus,
                MyMatrix<TIMESTAMP_TYPE> * ts, yarp::os::Semaphore * eventsSignal);
 

@@ -69,7 +69,7 @@ class OpticalFlowModule : public RFModule{
 
 
     BufferedPort<VelocityBuffer> outFlowPort;
-    BufferedPort<Bottle> bottleFlowPort;
+//    BufferedPort<Bottle> bottleFlowPort;
     BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono16> > outWrldMdlPort;
 
 

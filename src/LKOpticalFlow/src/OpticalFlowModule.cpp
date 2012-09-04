@@ -19,7 +19,7 @@
 #include <stdlib.h>
 
 OpticalFlowModule::OpticalFlowModule(){
-//	 wrldFlw = NULL;
+	 wrldFlw = NULL;
 	 inputPort = NULL;
 	 evntsMutex = NULL;
 
@@ -84,18 +84,15 @@ bool OpticalFlowModule::configure(ResourceFinder & rf){
         return false;
     }
 
-    outBttlPortName = "/";
-    outBttlPortName += getName();
-    outBttlPortName += rf.check("bottleFlowPort",
-                            Value("/velocity:o"),
-                            "Output velocity port(Bottle)").asString();
-    if (!bottleFlowPort.open(outBttlPortName.c_str()) ){
-        cerr << getName() << ": Sorry!! Unable to open output port " << outBttlPortName << endl;
-        return false;
-    }
-
-
-
+//    outBttlPortName = "/";
+//    outBttlPortName += getName();
+//    outBttlPortName += rf.check("bottleFlowPort",
+//                            Value("/velocity:o"),
+//                            "Output velocity port(Bottle)").asString();
+//    if (!bottleFlowPort.open(outBttlPortName.c_str()) ){
+//        cerr << getName() << ": Sorry!! Unable to open output port " << outBttlPortName << endl;
+//        return false;
+//    }
 
     outWrldMdlName = "/";
     outWrldMdlName += getName();
@@ -121,7 +118,7 @@ bool OpticalFlowModule::configure(ResourceFinder & rf){
 
 
 
-    wrldFlw = new WorldOptFlow(inputPort, &outFlowPort, &bottleFlowPort,
+    wrldFlw = new WorldOptFlow(inputPort, &outFlowPort, /*&bottleFlowPort,*/
                                &worldStatus, &prevWorldStatus, &timestamps, evntsMutex);
     wrldFlw -> start();
 
@@ -137,9 +134,9 @@ bool OpticalFlowModule::interruptModule(){
 	cout << "calling Module interrupt ... " << endl;
 
     inputPort->interrupt();
-    outFlowPort.interrupt();
-    bottleFlowPort.interrupt();
     outWrldMdlPort.interrupt();
+    outFlowPort.interrupt();
+
 
     cout << "Module Interrupt ended." << endl;
     return true;
@@ -152,9 +149,9 @@ bool OpticalFlowModule::close(){
 	wrldFlw->stop();
 
     inputPort->close();
-    outFlowPort.close();
-    bottleFlowPort.close();
     outWrldMdlPort.close();
+    outFlowPort.close();
+
 
 	cout << "thread is stopped" << endl;
     cout << "Optical Flow Module: close function is called. " << endl;
@@ -176,7 +173,7 @@ double OpticalFlowModule::getPeriod(){
 
 OpticalFlowModule::~OpticalFlowModule(){
 
-	cout << "calling module destructor "<< endl;
+	cout << "calling optical flow module destructor "<< endl;
 
     if (wrldFlw != NULL)
         delete wrldFlw;
