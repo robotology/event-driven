@@ -24,18 +24,21 @@ namespace ebuffer
 eventBuffer::eventBuffer()
 {
     packet = new char[SIZE_OF_DATA];
+    memset(packet, 0, SIZE_OF_DATA);
     size_of_the_packet=0;
 }
 
 eventBuffer::eventBuffer(char* i_data, int i_size)
 {
     packet = new char[SIZE_OF_DATA];
+    memset(packet, 0, SIZE_OF_DATA);
     memcpy(packet, i_data, i_size);
     size_of_the_packet = i_size;
 }
 
 eventBuffer::eventBuffer(const eventBuffer& buffer) {
     packet = new char[SIZE_OF_DATA];
+    memset(packet, 0, SIZE_OF_DATA);
     if (buffer.size_of_the_packet > 0)
         memcpy(packet, buffer.packet, sizeof(char) * buffer.size_of_the_packet);
     size_of_the_packet = buffer.size_of_the_packet;
@@ -47,6 +50,7 @@ eventBuffer::~eventBuffer()
 }
 
 void eventBuffer::operator=(const eventBuffer& buffer) {
+    memset(packet, 0, SIZE_OF_DATA);
     if (buffer.size_of_the_packet > 0)
         memcpy(packet, buffer.packet, sizeof(char) * buffer.size_of_the_packet);
     size_of_the_packet = buffer.size_of_the_packet;
@@ -54,6 +58,7 @@ void eventBuffer::operator=(const eventBuffer& buffer) {
 
 void eventBuffer::set_data(char* i_data, int i_size)
 {
+    memset(packet, 0, SIZE_OF_DATA);
     memcpy(packet, i_data, i_size);
     size_of_the_packet = i_size;
 }
@@ -81,6 +86,7 @@ bool eventBuffer::read(yarp::os::ConnectionReader& connection)
         return false;
     size_of_the_packet = connection.expectInt();
     int ceilSizeOfPacket = (size_of_the_packet+7)/8*8; // the nearest multiple of 8 greater or equal to size_of_the_packet
+    memset(packet, 0, SIZE_OF_DATA);
     connection.expectBlock(packet, ceilSizeOfPacket);
     return true;
 }
