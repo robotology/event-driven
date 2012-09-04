@@ -32,8 +32,12 @@ add_subdirectory   (dvsGrabber)
 #add_subdirectory  (logpolarFrameCollector)
 #add_subdirectory   (logSort)
 #add_subdirectory   (microsacTest)
+add_subdirectory   (simpleSaccade)
 #add_subdirectory  (simpleSaccade)
-add_subdirectory  (simpleSaccade)
+
+
+
+
 #add_subdirectory  (objectInteractor)
 #add_subdirectory   (pythonInterface)
 #add_subdirectory  (logpolar_frame_converter)
@@ -41,7 +45,14 @@ add_subdirectory  (simpleSaccade)
 #add_subdirectory   (testWings)
 #add_subdirectory  (visualAligner)
 add_subdirectory   (velocityExtractor)
-#add_subdirectory   (eventManager)
+
+add_subdirectory   (wingsTranslator  )
+
+add_subdirectory   (eventManager)
+
+
+
+
 
 
 
@@ -53,6 +64,17 @@ add_subdirectory   (eventOpticalFlow)
 
 # --------  TIMESTAMP-BASED OPTICAL FLOW -------------
 add_subdirectory    (tsOptFlow)
+
+add_subdirectory    (tsOptFlowViewer)
+
+# --------  OBJECT RECOGNITION ----------------------
+add_subdirectory    (recognitionModules/aggregation)
+add_subdirectory    (recognitionModules/association)
+add_subdirectory    (recognitionModules/extraction)
+add_subdirectory    (recognitionModules/recognition)
+#add_subdirectory    (eventsUnmask)
+
+
 
 # --------  OBJECT RECOGNITION
 add_subdirectory    (recognitionModules/extraction)
