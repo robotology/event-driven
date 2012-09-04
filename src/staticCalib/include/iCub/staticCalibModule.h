@@ -153,15 +153,8 @@
  */
 
 /**
-* /section change_log CHANGE LOG
-* 24/08/11 : created the module                                                                       author: Rea \n
-* 31/08/11 : added parameter mode for the command line                                                author: Rea \n 
-* 13/09/11 : added the eventBuffer that contains the collection of unmasked events                    author: Rea \n
-* 07/11/11 : corrected the output for debug images                                                    author: Rea \n
-* 08/11/11 : added lines that send the feature events on the yarp network                             author: Rea \n
-* 21/02/12 : added interactive verbose mode                                                           author: Rea \n
-* 27/02/12 : added a new thread for Bottle Handling                                                   author: Rea \n
-* 02/03/12 : added fuction for bottle unmasking                                                       author: Rea \n
+* @section change_log CHANGE LOG
+*
 */
 
 #include <iostream>
@@ -175,7 +168,7 @@
 
 #include "iCub/staticCalibThread.h"
 
-class staticCalibModule:public RFModule
+class staticCalibModule:public yarp::os::RFModule 
 {
     string moduleName;
     string inputLeftPortName;
@@ -187,21 +180,17 @@ class staticCalibModule:public RFModule
 
     int thresholdValue;
 
-
-
-    BufferedPort<ImageOf<PixelBgr> > imageOut;
-    Port handlerPort;
-
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr> > imageOut;
+    yarp::os::Port handlerPort;
 
     staticCalibThread *calibThread;
-
 
 public:
 
     bool configure(yarp::os::ResourceFinder &rf);
     bool interruptModule();                       
     bool close();                                 
-    bool respond(const Bottle& command, Bottle& reply);
+    bool respond(const yarp::os::Bottle& command, yarp::os::Bottle& reply);
     double getPeriod(); 
     bool updateModule();
     void createFullPath(const char* path);

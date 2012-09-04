@@ -1,7 +1,9 @@
+// -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
+
 /* 
  * Copyright (C) 2011 RobotCub Consortium
- * Author: Sean Ryan Fanello
- * email:   sean.fanello@iit.it
+ * Author: Francesco Rea
+ * email:   francesco.rea@iit.it
  * website: www.robotcub.org
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
@@ -25,7 +27,7 @@ Calibrate the iCub's stereo system (both intrinsics and extrinsics).
 
 Copyright (C) 2011 RobotCub Consortium
  
-Author: Sean Ryan Fanello
+Author: Francesco Rea
  
 Date: first release on 26/03/2011
 
@@ -90,26 +92,29 @@ None.
 \section tested_os_sec Tested OS
 Windows and Linux.
 
-\author Sean Ryan Fanello
+\author Rea Francesco
 */ 
 
-#include "stereoCalibModule.h"
+#include <iCub/staticCalibModule.h>
 #include <yarp/dev/Drivers.h>
+#include <yarp/os/all.h>
+
+    using namespace yarp::os;
 
 YARP_DECLARE_DEVICES(icubmod)
-
+    
 
 int main(int argc, char * argv[])
 {
-   YARP_REGISTER_DEVICES(icubmod)
-   Network yarp;
-   stereoCalibModule stereoModule; 
-   ResourceFinder rf;
-   rf.setVerbose(true);
-   rf.setDefaultConfigFile("icubEyes.ini"); 
-   rf.setDefaultContext("cameraCalibration/conf");
-   rf.configure("ICUB_ROOT", argc, argv);
-
-   stereoModule.runModule(rf);
-    return 1;
+  YARP_REGISTER_DEVICES(icubmod);
+  Network yarp;
+  staticCalibModule staticModule; 
+  ResourceFinder rf;
+  rf.setVerbose(true);
+  rf.setDefaultConfigFile("icubEyes.ini"); 
+  rf.setDefaultContext("cameraCalibration/conf");
+  rf.configure("ICUB_ROOT", argc, argv);
+  
+  staticModule.runModule(rf);
+  return 1;
 }

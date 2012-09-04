@@ -22,7 +22,7 @@
  * @brief Implementation of the thread (see header staticCalibThread.h)
  */
 
-#include "staticCalibThread.h"
+#include <iCub/staticCalibThread.h>
 
 using namespace cv;
 using namespace yarp::sig;
@@ -174,15 +174,14 @@ bool staticCalibThread::threadInit()
 }
 void staticCalibThread::run(){
 
-    if(stereo)
+  if(stereo)   {
+    fprintf(stdout, "Running Stereo Calibration Mode... \n");
+    stereoCalibRun();
+  }
+  else
     {
-        fprintf(stdout, "Running Stereo Calibration Mode... \n");
-        stereoCalibRun();
-    }
-    else
-    {
-        fprintf(stdout, "Running Mono Calibration Mode... Connect only one eye \n");
-        monoCalibRun();
+      fprintf(stdout, "Running Mono Calibration Mode... Connect only one eye \n");
+      monoCalibRun();
     }
 
 }

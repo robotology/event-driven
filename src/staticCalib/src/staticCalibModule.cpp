@@ -22,7 +22,7 @@
  * @brief Implementation of the module (see header staticCalibModule.h)
  */
 
-#include "stereoCalibModule.h"
+#include <iCub/staticCalibModule.h>
 #include <yarp/os/Stamp.h>
 #include <yarp/os/Os.h>
 
