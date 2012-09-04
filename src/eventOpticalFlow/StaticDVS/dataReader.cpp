@@ -70,35 +70,50 @@ class EventReader : public RFModule{
 
         buffer_idx =0;
 
+        //ofstream check;
+        //check.open("check.txt");
+
         while (!inFile.eof() && buffer_idx < bufferSize){
+
+           //check << datam << " ";
+
            //Read data from file and process the input data
            convertToInt(datam);
            for (int i = 6; i>= 0; i-=2) {
                oneByte = (datam[i] << 4) | datam [i+1];
                *(buffPtr + buffer_idx) = oneByte;
                buffer_idx++;
+
+               //check << oneByte;
            }
+           //check << endl;
+
            if (datam[0]==8 && datam[1] == 8){            
                inFile >> datam;
                continue;
            }
-
            inFile >> datam;
+
+           //check << datam << " ";
 
            convertToInt(datam);
            for (int i = 6; i >= 0; i-=2) {
                oneByte = (datam[i] << 4) | datam [i+1];
                *(buffPtr + buffer_idx) = oneByte;
                buffer_idx++;
+
+               //check << oneByte;
            }
+
+           //check << endl;
 
            inFile >> datam;
         }
        //write data to the port
-        if (outPort.getOutputCount()){
+        //if (outPort.getOutputCount()){
             eventBuffer outObj = eventBuffer(buffPtr, buffer_idx);
             outPort.write(outObj);
-        }
+        //}
 
 
        if (buffPtr == buffer[0])
@@ -190,11 +205,11 @@ class EventReader : public RFModule{
 			}
         }
        //write data to the port
-        if (outPort.getOutputCount()){
+        //if (outPort.getOutputCount()){
         	eventBuffer outObj = eventBuffer(buffPtr, buffer_idx);
             writeSuccess = outPort.write(outObj);
             cout << writeSuccess << endl;
-        }
+        //}
 
 //        unmask unmasker;
 //		uint32_t* buf2 = (uint32_t*)buffPtr;
@@ -262,11 +277,11 @@ class EventReader : public RFModule{
             }
 
            //write data to the port
-            if (outPort.getOutputCount()){
+            //if (outPort.getOutputCount()){
                 eventBuffer outObj = eventBuffer(buffPtr, buffer_idx);
                 writeSuccess = outPort.write(outObj);
                 cout << writeSuccess << endl;
-            }
+            //}
 
             prvTime = cntTime;
 
@@ -396,15 +411,20 @@ public:
 
     bool updateModule(){
         if (!inFile.eof()){
-            if(dvsCam){
-                loopICUBCam();
-            }
-            else{
-            	loopSingleCamTime(jearFileType);
+            if(outPort.getOutputCount()){
+                if(dvsCam){
+                    loopICUBCam();
+                }
+                else{
+                    loopSingleCamTime(jearFileType);
+                }
             }
         }
         else
+        {
            cout << "end of file " << endl;
+            this->stopModule();
+        }
 
         return true;
     }
@@ -454,7 +474,9 @@ int main(int argc, char * argv []){
         fprintf(stderr, "Error configuring Event Reader module returning\n");
         return -1;
     }
-
+    char c='\0';
+    cout << "Press enter..." << endl;
+    while(c!='\n'){c=getchar();}
    eReader.runModule();
 
    cout << " last line in main" << endl;

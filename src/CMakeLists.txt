@@ -51,9 +51,17 @@ add_subdirectory   (velocityExtractor)
 #add_subdirectory  (opticalFlow3)
 add_subdirectory   (eventOpticalFlow)
 
-# --------  NEW OPTICAL FLOW ------------------------
+# --------  TIMESTAMP-BASED OPTICAL FLOW -------------
 add_subdirectory    (tsOptFlow)
-#add_subdirectory    (eventsUnmask)
+
+# --------  OBJECT RECOGNITION
+add_subdirectory    (recognitionModules/extraction)
+add_subdirectory    (recognitionModules/association)
+add_subdirectory    (recognitionModules/recognition)
+add_subdirectory    (recognitionModules/aggregation)
+# --------  BASIC VIEWER BASED ON THE SAME UNMASK METHOD THAN TSOPTFLOW 
+#   - THE PURPOSE IS ONLY TO TEST THIS METHOD
+add_subdirectory    (basicCFrameConverter)
 
 if(ICUB_USE_IPOPT)
   add_subdirectory   (targetFinder)
