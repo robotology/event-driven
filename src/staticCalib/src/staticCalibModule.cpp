@@ -1,13 +1,39 @@
+// -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
+
+/*
+  * Copyright (C)2012  Department of Robotics Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
+  * Author:Francesco Rea
+  * email: francesco.rea@iit.it
+  * Permission is granted to copy, distribute, and/or modify this program
+  * under the terms of the GNU General Public License, version 2 or any
+  * later version published by the Free Software Foundation.
+  *
+  * A copy of the license can be found at
+  * http://www.robotcub.org/icub/license/gpl.txt
+  *
+  * This program is distributed in the hope that it will be useful, but
+  * WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+  * Public License for more details
+*/
+
+/**
+ * @file staticCalibModule.cpp
+ * @brief Implementation of the module (see header staticCalibModule.h)
+ */
+
 #include "stereoCalibModule.h"
 #include <yarp/os/Stamp.h>
 #include <yarp/os/Os.h>
 
+using namespace std;
+using namespace yarp::os; 
+using namespace yarp::sig;
 
-
-bool stereoCalibModule::configure(yarp::os::ResourceFinder &rf)
+bool staticCalibModule::configure(yarp::os::ResourceFinder &rf)
 {
     moduleName            = rf.check("name", 
-                           Value("stereoCalib"), 
+                           Value("staticCalib"), 
                            "module name (string)").asString();
 
     setName(moduleName.c_str());
@@ -37,7 +63,7 @@ bool stereoCalibModule::configure(yarp::os::ResourceFinder &rf)
     }
     attach(handlerPort);
 
-    calibThread = new stereoCalibThread(rf,&handlerPort, dirName);
+    calibThread = new staticCalibThread(rf,&handlerPort, dirName);
     calibThread->start();
 
     return true;
@@ -45,7 +71,7 @@ bool stereoCalibModule::configure(yarp::os::ResourceFinder &rf)
 }
 
 
-bool stereoCalibModule::interruptModule()
+bool staticCalibModule::interruptModule()
 {
     calibThread->stopCalib();
     calibThread->stop();
@@ -53,7 +79,7 @@ bool stereoCalibModule::interruptModule()
 }
 
 
-bool stereoCalibModule::close()
+bool staticCalibModule::close()
 {
     calibThread->stop();
     delete calibThread;
@@ -62,7 +88,7 @@ bool stereoCalibModule::close()
 }
 
 
-bool stereoCalibModule::respond(const Bottle& command, Bottle& reply) 
+bool staticCalibModule::respond(const Bottle& command, Bottle& reply) 
 {
     if (command.get(0).asString()=="start") {
         reply.addString("Starting Calibration...");
@@ -71,19 +97,19 @@ bool stereoCalibModule::respond(const Bottle& command, Bottle& reply)
     return true;
 }
 
-bool stereoCalibModule::updateModule()
+bool staticCalibModule::updateModule()
 {
     return true;
 }
 
 
 
-double stereoCalibModule::getPeriod()
+double staticCalibModule::getPeriod()
 {    
    return 0.1;
 }
 
-void stereoCalibModule::createFullPath(const char* path)
+void staticCalibModule::createFullPath(const char* path)
 {
     if (yarp::os::stat(path))
     {

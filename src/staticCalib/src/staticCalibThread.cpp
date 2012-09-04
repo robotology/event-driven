@@ -1,7 +1,39 @@
-#include "stereoCalibThread.h"
+// -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
+/*
+  * Copyright (C)2012  Department of Robotics Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
+  * Author:Francesco Rea
+  * email: francesco.rea@iit.it
+  * Permission is granted to copy, distribute, and/or modify this program
+  * under the terms of the GNU General Public License, version 2 or any
+  * later version published by the Free Software Foundation.
+  *
+  * A copy of the license can be found at
+  * http://www.robotcub.org/icub/license/gpl.txt
+  *
+  * This program is distributed in the hope that it will be useful, but
+  * WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+  * Public License for more details
+*/
 
-stereoCalibThread::stereoCalibThread(ResourceFinder &rf, Port* commPort, const char *imageDir)
+/**
+ * @file staticCalibThread.cpp
+ * @brief Implementation of the thread (see header staticCalibThread.h)
+ */
+
+#include "staticCalibThread.h"
+
+using namespace cv;
+using namespace yarp::sig;
+using namespace std;
+using namespace yarp::os; 
+using namespace yarp::sig;
+using namespace yarp::dev;
+using namespace iCub::iKin;
+using namespace yarp::math;
+
+staticCalibThread::staticCalibThread(ResourceFinder &rf, Port* commPort, const char *imageDir)
 {
 
     string moduleName=rf.check("name", Value("stereoCalib"),"module name (string)").asString().c_str();
@@ -41,7 +73,7 @@ stereoCalibThread::stereoCalibThread(ResourceFinder &rf, Port* commPort, const c
     this->mutex=new Semaphore(1);
 }
 
-bool stereoCalibThread::threadInit() 
+bool staticCalibThread::threadInit() 
 {
      if (!imagePortInLeft.open(inputLeftPortName.c_str())) {
       cout  << ": unable to open port " << inputLeftPortName << endl;
@@ -140,7 +172,7 @@ bool stereoCalibThread::threadInit()
 
    return true;
 }
-void stereoCalibThread::run(){
+void staticCalibThread::run(){
 
     if(stereo)
     {
@@ -154,7 +186,7 @@ void stereoCalibThread::run(){
     }
 
 }
-void stereoCalibThread::stereoCalibRun()
+void staticCalibThread::stereoCalibRun()
 {
 
     imageL=new ImageOf<PixelRgb>;
@@ -281,7 +313,7 @@ void stereoCalibThread::stereoCalibRun()
 
 
 
- void stereoCalibThread::monoCalibRun()
+ void staticCalibThread::monoCalibRun()
 {
 
 
@@ -378,7 +410,7 @@ void stereoCalibThread::stereoCalibRun()
 
 
  }
-void stereoCalibThread::threadRelease() 
+void staticCalibThread::threadRelease() 
 {
     imagePortInRight.close();
     imagePortInLeft.close();
@@ -396,7 +428,7 @@ void stereoCalibThread::threadRelease()
         polyTorso.close();
 }
 
-void stereoCalibThread::onStop() {
+void staticCalibThread::onStop() {
     startCalibration=0;
     imagePortInRight.interrupt();
     imagePortInLeft.interrupt();
@@ -405,19 +437,19 @@ void stereoCalibThread::onStop() {
     commandPort->interrupt();
 
 }
-void stereoCalibThread::startCalib() {
+void staticCalibThread::startCalib() {
     mutex->wait();
     startCalibration=1;
     mutex->post();
   }
 
-void stereoCalibThread::stopCalib() {
+void staticCalibThread::stopCalib() {
     mutex->wait();
     startCalibration=0;
     mutex->post();
   }
 
-void stereoCalibThread::printMatrix(Mat &matrix) {
+void staticCalibThread::printMatrix(Mat &matrix) {
     int row=matrix.rows;
     int col =matrix.cols;
         cout << endl;
@@ -432,7 +464,7 @@ void stereoCalibThread::printMatrix(Mat &matrix) {
 }
 
 
-bool stereoCalibThread::checkTS(double TSLeft, double TSRight, double th) {
+bool staticCalibThread::checkTS(double TSLeft, double TSRight, double th) {
     double diff=fabs(TSLeft-TSRight);
     if(diff <th)
         return true;
@@ -440,7 +472,7 @@ bool stereoCalibThread::checkTS(double TSLeft, double TSRight, double th) {
 
 }
 
-void stereoCalibThread::preparePath(const char * imageDir, char* pathL, char* pathR, int count) {
+void staticCalibThread::preparePath(const char * imageDir, char* pathL, char* pathR, int count) {
     char num[5];
     sprintf(num, "%i", count); 
 
@@ -460,7 +492,7 @@ void stereoCalibThread::preparePath(const char * imageDir, char* pathL, char* pa
 }
 
 
-void stereoCalibThread::saveStereoImage(const char * imageDir, IplImage* left, IplImage * right, int num) {
+void staticCalibThread::saveStereoImage(const char * imageDir, IplImage* left, IplImage * right, int num) {
     char pathL[256];
     char pathR[256];
     preparePath(imageDir, pathL,pathR,num);
@@ -471,7 +503,7 @@ void stereoCalibThread::saveStereoImage(const char * imageDir, IplImage* left, I
     cvSaveImage(pathR,right);
 }
 
-void stereoCalibThread::saveImage(const char * imageDir, IplImage* left, int num) {
+void staticCalibThread::saveImage(const char * imageDir, IplImage* left, int num) {
     char pathL[256];
     preparePath(imageDir, pathL,pathR,num);
     
@@ -480,7 +512,7 @@ void stereoCalibThread::saveImage(const char * imageDir, IplImage* left, int num
     cvSaveImage(pathL,left);
 
 }
-bool stereoCalibThread::updateIntrinsics(int width, int height, double fx, double fy,double cx, double cy, double k1, double k2, double p1, double p2, const string& groupname){
+bool staticCalibThread::updateIntrinsics(int width, int height, double fx, double fy,double cx, double cy, double k1, double k2, double p1, double p2, const string& groupname){
 
     std::vector<string> lines;
 
@@ -626,7 +658,7 @@ bool stereoCalibThread::updateIntrinsics(int width, int height, double fx, doubl
     return true;
 }
 
-void stereoCalibThread::monoCalibration(const vector<string>& imageList, int boardWidth, int boardHeight, Mat &K, Mat &Dist)
+void staticCalibThread::monoCalibration(const vector<string>& imageList, int boardWidth, int boardHeight, Mat &K, Mat &Dist)
 {
     vector<vector<Point2f> > imagePoints;
     Size boardSize, imageSize;
@@ -678,7 +710,7 @@ void stereoCalibThread::monoCalibration(const vector<string>& imageList, int boa
 }
 
 
-void stereoCalibThread::stereoCalibration(const vector<string>& imagelist, int boardWidth, int boardHeight,float sqsize)
+void staticCalibThread::stereoCalibration(const vector<string>& imagelist, int boardWidth, int boardHeight,float sqsize)
 {
     Size boardSize;
     boardSize.width=boardWidth;
@@ -828,7 +860,7 @@ void stereoCalibThread::stereoCalibration(const vector<string>& imagelist, int b
 }
 
 
-void stereoCalibThread::saveCalibration(const string& extrinsicFilePath, const string& intrinsicFilePath){
+void staticCalibThread::saveCalibration(const string& extrinsicFilePath, const string& intrinsicFilePath){
 
     if( Kleft.empty() || Kright.empty() || DistL.empty() || DistR.empty() || R.empty() || T.empty()) {
             cout << "Error: cameras are not calibrated! Run the calibration or set intrinsic and extrinsic parameters \n";
@@ -855,7 +887,7 @@ void stereoCalibThread::saveCalibration(const string& extrinsicFilePath, const s
 
 }
 
-void stereoCalibThread::calcChessboardCorners(Size boardSize, float squareSize, vector<Point3f>& corners)
+void staticCalibThread::calcChessboardCorners(Size boardSize, float squareSize, vector<Point3f>& corners)
 {
     corners.resize(0);
     
@@ -864,7 +896,7 @@ void stereoCalibThread::calcChessboardCorners(Size boardSize, float squareSize, 
             corners.push_back(Point3f(float(j*squareSize),
                                       float(i*squareSize), 0));
 }
-bool stereoCalibThread::updateExtrinsics(Mat Rot, Mat Tr, const string& groupname)
+bool staticCalibThread::updateExtrinsics(Mat Rot, Mat Tr, const string& groupname)
 {
 
     std::vector<string> lines;
