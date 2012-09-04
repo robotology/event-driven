@@ -36,39 +36,39 @@ using namespace yarp::math;
 staticCalibThread::staticCalibThread(ResourceFinder &rf, Port* commPort, const char *imageDir)
 {
 
-    string moduleName=rf.check("name", Value("stereoCalib"),"module name (string)").asString().c_str();
+    string moduleName=rf.check("name", Value("staticCalib"),"module name (string)").asString().c_str();
     robotName = rf.check("robotName",Value("icub"), "module name (string)").asString().c_str();
 
-    this->inputLeftPortName         = "/"+moduleName;
+    this->inputLeftPortName        = "/"+moduleName;
     this->inputLeftPortName        +=rf.check("imgLeft",Value("/cam/left:i"),"Input image port (string)").asString();
    
-    this->inputRightPortName        = "/"+moduleName;
+    this->inputRightPortName       = "/"+moduleName;
     this->inputRightPortName       += rf.check("imgRight", Value("/cam/right:i"),"Input image port (string)").asString();
 
-    this->outNameRight        = "/"+moduleName;
-    this->outNameRight       += rf.check("outRight",Value("/cam/right:o"),"Output image port (string)").asString();
+    this->outNameRight             = "/"+moduleName;
+    this->outNameRight             += rf.check("outRight",Value("/cam/right:o"),"Output image port (string)").asString();
 
-    this->outNameLeft        = "/"+moduleName;
-    this->outNameLeft       +=rf.check("outLeft",Value("/cam/left:o"),"Output image port (string)").asString();
+    this->outNameLeft              = "/"+moduleName;
+    this->outNameLeft              +=rf.check("outLeft",Value("/cam/left:o"),"Output image port (string)").asString();
 
     Bottle stereoCalibOpts=rf.findGroup("STEREO_CALIBRATION_CONFIGURATION");
-    this->boardWidth=  stereoCalibOpts.check("boardWidth", Value(8)).asInt();
-    this->boardHeight= stereoCalibOpts.check("boardHeight", Value(6)).asInt();
-    this->numOfPairs=stereoCalibOpts.check("numberOfPairs", Value(30)).asInt();
-    this->squareSize= (float)stereoCalibOpts.check("boardSize", Value(0.09241)).asDouble();
-    this->commandPort=commPort;
-    this->imageDir=imageDir;
-    this->startCalibration=0;
-    this->currentPathDir=rf.getContextPath().c_str();
-    int tmp=stereoCalibOpts.check("MonoCalib", Value(0)).asInt();
-    this->stereo= tmp?false:true;
+    this->boardWidth       =         stereoCalibOpts.check("boardWidth", Value(8)).asInt();
+    this->boardHeight      =         stereoCalibOpts.check("boardHeight", Value(6)).asInt();
+    this->numOfPairs       =         stereoCalibOpts.check("numberOfPairs", Value(30)).asInt();
+    this->squareSize       = (float) stereoCalibOpts.check("boardSize", Value(0.09241)).asDouble();
+    this->commandPort      = commPort;
+    this->imageDir         = imageDir;
+    this->startCalibration = 0;
+    this->currentPathDir   = rf.getContextPath().c_str();
+    
+    int tmp = stereoCalibOpts.check("MonoCalib", Value(0)).asInt();
+    printf("MonoCalib>>>>>>>>>>>> %d \n", tmp);
+    this->stereo           = tmp ? false:true;
     this->camCalibFile=rf.getContextPath().c_str();
 
-
     string fileName= "outputCalib.ini"; //rf.find("from").asString().c_str();
-
     
-    this->camCalibFile=this->camCalibFile+"/"+fileName.c_str();
+    this->camCalibFile = this->camCalibFile+"/"+fileName.c_str();
 
     this->mutex=new Semaphore(1);
 }
@@ -172,19 +172,21 @@ bool staticCalibThread::threadInit()
 
    return true;
 }
+
 void staticCalibThread::run(){
 
   if(stereo)   {
     fprintf(stdout, "Running Stereo Calibration Mode... \n");
-    stereoCalibRun();
+    monoCalibRun();
+    //stereoCalibRun();
   }
   else
     {
       fprintf(stdout, "Running Mono Calibration Mode... Connect only one eye \n");
       monoCalibRun();
     }
-
 }
+
 void staticCalibThread::stereoCalibRun()
 {
 
@@ -312,105 +314,137 @@ void staticCalibThread::stereoCalibRun()
 
 
 
- void staticCalibThread::monoCalibRun()
-{
-
-
+void staticCalibThread::monoCalibRun() {
+  /*
     while(imagePortInLeft.getInputCount()==0 && imagePortInRight.getInputCount()==0)
     {
-        fprintf(stdout, "Connect one camera.. \n");
-        Time::delay(1.0);
-
-        if(isStopping())
-            return;
-
+    fprintf(stdout, "Connect one camera.. \n");
+    Time::delay(1.0);
+    
+    if(isStopping())
+    return;
+    
     }
-
+    
     bool left= imagePortInLeft.getInputCount()>0?true:false;
+  */
 
-    string cameraName;
+  bool left = true;
+  
+  string cameraName;
 
-    if(left)
-        cameraName="LEFT";
-    else
-        cameraName="RIGHT";
+  if(left)
+    cameraName="LEFT";
+  else
+    cameraName="RIGHT";
+   
+  fprintf(stdout, "CALIBRATING %s CAMERA \n",cameraName.c_str());
+  
+  
+  int count = 1;
+  Size boardSize, imageSize;
+  boardSize.width=this->boardWidth;
+  boardSize.height=this->boardHeight;
+  
 
-    fprintf(stdout, "CALIBRATING %s CAMERA \n",cameraName.c_str());
+  while (!isStopping()) { 
+    // read the image as yarp::sig::ImageOf<>
+    if(left){
+      imageL = NULL;
+      
+      IplImage* img=0; 
+      string filename = "./Chessboard.png";
+      img = cvLoadImage(filename.c_str());
+      if(!img) {
+	printf("Could not load image file: %s\n",filename.c_str());
+	 
+      }
+      else {
+	// Show original
+	printf("showing original %d %d \n", img->width, img->height);
+	cvNamedWindow( "Source", 1) ;
+	cvShowImage( "Source", img );
+	// wait for a key
+	cvWaitKey(0);
+	imageL = new ImageOf<PixelRgb>;
+	imageL->resize(img->width, img->height);
+	imageL->wrapIplImage(img);
+      }
+     
+      
+      //imageL = imagePortInLeft.read(false);
+    }
+    else {
+      imageL = imagePortInRight.read(false);
+    }
+    
+    if(imageL!=NULL){
+      printf("ImageL != NULL : can continue...... \n");
+      bool foundL = false;
+      mutex->wait();
+      if(startCalibration > 0) {
+	printf("startCalibration flag active \n");
+	string pathImg=imageDir;
+	preparePath(pathImg.c_str(), pathL,pathR,count);
+	string iml(pathL);
+	imgL= (IplImage*) imageL->getIplImage();
+	Mat Left(imgL);
+	std::vector<Point2f> pointbufL;
+	
+	foundL = findChessboardCorners( Left, boardSize, pointbufL, CV_CALIB_CB_ADAPTIVE_THRESH & CV_CALIB_CB_FAST_CHECK & CV_CALIB_CB_NORMALIZE_IMAGE);
+	if(foundL) {
+	  printf("found corners \n");
+	  cvCvtColor(imgL,imgL,CV_RGB2BGR);
+	  saveImage(pathImg.c_str(),imgL,count);
+	  imageListL.push_back(iml);
+	  Mat cL(pointbufL);
+	  drawChessboardCorners(Left, boardSize, cL, foundL);
+	  count++;
+	}
+	else {
+	  printf("not found corners \n");
+	}
+	
+	if(count > numOfPairs) {
+	  printf("count > numOfPairs branch \n");
+	  
+	  fprintf(stdout," Running %s Camera Calibration... \n", cameraName.c_str());
+	  monoCalibration(imageListL,this->boardWidth,this->boardHeight,this->Kleft,this->DistL);
+	  
+	  fprintf(stdout," Saving Calibration Results... \n");
+	  if(left)
+	    updateIntrinsics(imgL->width,imgL->height,Kleft.at<double>(0,0),Kleft.at<double>(1,1),Kleft.at<double>(0,2),Kleft.at<double>(1,2),DistL.at<double>(0,0),DistL.at<double>(0,1),DistL.at<double>(0,2),DistL.at<double>(0,3),"CAMERA_CALIBRATION_LEFT");
+	  else
+	    updateIntrinsics(imgL->width,imgL->height,Kleft.at<double>(0,0),Kleft.at<double>(1,1),Kleft.at<double>(0,2),Kleft.at<double>(1,2),DistL.at<double>(0,0),DistL.at<double>(0,1),DistL.at<double>(0,2),DistL.at<double>(0,3),"CAMERA_CALIBRATION_RIGHT");
+	  
+	  fprintf(stdout, "Calibration Results Saved in %s \n", camCalibFile.c_str());
+	  
+	  startCalibration=0;
+	  count=1;
+	  imageListL.clear();
+	}
+		
+      }
+      mutex->post();
+      ImageOf<PixelRgb>& outimL=outPortLeft.prepare();
+      outimL=*imageL;
+      outPortLeft.write();
+      
+      ImageOf<PixelRgb>& outimR=outPortRight.prepare();
+      outimR=*imageL;
+      outPortRight.write();
+      
+      if(foundL && startCalibration==1)
+	Time::delay(2.0);
+      
+    }
+  }
+  
+  
+}
 
 
-    int count=1;
-    Size boardSize, imageSize;
-    boardSize.width=this->boardWidth;
-    boardSize.height=this->boardHeight;
-
-
-
-    while (!isStopping()) { 
-       if(left)
-            imageL = imagePortInLeft.read(false);
-       else
-            imageL = imagePortInRight.read(false);
-
-       if(imageL!=NULL){
-            bool foundL=false;
-            mutex->wait();
-            if(startCalibration>0) {
-
-                string pathImg=imageDir;
-                preparePath(pathImg.c_str(), pathL,pathR,count);
-                string iml(pathL);
-                imgL= (IplImage*) imageL->getIplImage();
-                Mat Left(imgL);
-                std::vector<Point2f> pointbufL;
-
-                foundL = findChessboardCorners( Left, boardSize, pointbufL, CV_CALIB_CB_ADAPTIVE_THRESH & CV_CALIB_CB_FAST_CHECK & CV_CALIB_CB_NORMALIZE_IMAGE);
-                if(foundL) {
-                        cvCvtColor(imgL,imgL,CV_RGB2BGR);
-                        saveImage(pathImg.c_str(),imgL,count);
-                        imageListL.push_back(iml);
-                        Mat cL(pointbufL);
-                        drawChessboardCorners(Left, boardSize, cL, foundL);
-                        count++;
-                }
-
-                if(count>numOfPairs) {
-                    fprintf(stdout," Running %s Camera Calibration... \n", cameraName.c_str());
-                    monoCalibration(imageListL,this->boardWidth,this->boardHeight,this->Kleft,this->DistL);
-
-                    fprintf(stdout," Saving Calibration Results... \n");
-                    if(left)
-                        updateIntrinsics(imgL->width,imgL->height,Kleft.at<double>(0,0),Kleft.at<double>(1,1),Kleft.at<double>(0,2),Kleft.at<double>(1,2),DistL.at<double>(0,0),DistL.at<double>(0,1),DistL.at<double>(0,2),DistL.at<double>(0,3),"CAMERA_CALIBRATION_LEFT");
-                    else
-                        updateIntrinsics(imgL->width,imgL->height,Kleft.at<double>(0,0),Kleft.at<double>(1,1),Kleft.at<double>(0,2),Kleft.at<double>(1,2),DistL.at<double>(0,0),DistL.at<double>(0,1),DistL.at<double>(0,2),DistL.at<double>(0,3),"CAMERA_CALIBRATION_RIGHT");
-                        
-                    fprintf(stdout, "Calibration Results Saved in %s \n", camCalibFile.c_str());
-
-                    startCalibration=0;
-                    count=1;
-                    imageListL.clear();
-                }
-
-
-            }
-            mutex->post();
-            ImageOf<PixelRgb>& outimL=outPortLeft.prepare();
-            outimL=*imageL;
-            outPortLeft.write();
-
-            ImageOf<PixelRgb>& outimR=outPortRight.prepare();
-            outimR=*imageL;
-            outPortRight.write();
-
-            if(foundL && startCalibration==1)
-                Time::delay(2.0);
-
-        }
-   }
-
-
- }
-void staticCalibThread::threadRelease() 
-{
+void staticCalibThread::threadRelease() {
     imagePortInRight.close();
     imagePortInLeft.close();
     outPortLeft.close();
