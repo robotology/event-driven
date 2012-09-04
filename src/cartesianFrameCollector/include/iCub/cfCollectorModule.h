@@ -176,6 +176,7 @@
  * 21/11/11 : made the synch_period a parameter rather than hardcoded variable                                          author : Rea \n
  * 09/02/12 : improved the user interface                                                                               author : Rea \n
  * 22/02/12 : added extra port for handling events sent as bottle                                                       author : Rea \n
+ * 04/09/12 : added the windowSize for the collection of events                                                         author : Rea \n
 */
 
 #include <iostream>
@@ -190,16 +191,17 @@
 #include <iCub/cfCollectorThread.h>
 
 class cfCollectorModule:public yarp::os::RFModule {
-    std::string moduleName;                     //name of the module (rootname of ports)
-    std::string robotName;                      //name of the robot
-    std::string robotPortName;                  //reference to the head of the robot
-    std::string handlerPortName;                //name of the handler port (comunication with respond function)
-    int ratethread;                             //time constant for ratethread
+    std::string moduleName;                     // name of the module (rootname of ports)
+    std::string robotName;                      // name of the robot
+    std::string robotPortName;                  // reference to the head of the robot
+    std::string handlerPortName;                // name of the handler port (comunication with respond function)
+    int ratethread;                             // time constant for ratethread
     int synchPeriod;                            // synchronization period between events and viewer
     int retinalSize;                            // dimension of the retina
+    int windowSize;                             // dimension of temporal window for gathering events 
     int responseGradient;                       // amplitude of the response gradient for every event in the image
     yarp::os::Port handlerPort;                 // a port to handle messages 
-    cfCollectorThread* cfThread;                //cfCollectorThread for processing events
+    cfCollectorThread* cfThread;                // cfCollectorThread for processing events
 
 public:
     bool configure(yarp::os::ResourceFinder &rf); // configure all the module parameters and return true if successful

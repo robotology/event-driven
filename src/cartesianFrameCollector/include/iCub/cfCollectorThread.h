@@ -54,10 +54,11 @@ typedef unsigned long long int  u64;
 class cfCollectorThread : public yarp::os::RateThread {
 private:
     
-    int count;                          // loop counter of the thread
+    int count;                           // loop counter of the thread
     int countStop;                       // counter of equal timestamp
     int countDivider;                    // divider of the count
     int retinalSize;                     // dimension of the retina device
+    int windowSize;                      // dimension of the temporal window for collection of events            
     int width, height;                   // dimension of the extended input image (extending)
     int height_orig, width_orig;         // original dimension of the input and output images
     int synchPeriod;                     // synchronization period between events and viewer
@@ -194,6 +195,15 @@ public:
      */
     void setRetinalSize(int value) {
         retinalSize = value;
+    }
+
+    /**
+     * @brief function that sets the dimension of the temporaral window 
+     *        where events are collected
+     * @param value the dimension of the window
+     */
+    void setWindowSize(int value) {
+        windowSize = value;
     }
 
     /**

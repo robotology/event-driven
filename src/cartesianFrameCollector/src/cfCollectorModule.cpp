@@ -47,6 +47,7 @@ bool cfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
         printf("--retinalSize      (int)    : defines the dimension of the retina (input)\n");
         printf("--responseGradient (int)    : the increment for any single event in the register\n");
         printf("--sychPeriod       (int)    : period for synchronization of the variable lastTimestamp\n");
+        printf("--windowSize       (int)    : size of the window where events are collected \n ");
         printf("--stereo                    : if present both left and right events are represented \n ");
         printf("--bottleHanlder             : the user select to send events only through bottle port esclusively  \n");
         printf("--verbose                   : enable debug savings of events in files");
@@ -115,6 +116,14 @@ bool cfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
                            "retinalSize (int)").asInt();
     cfThread->setRetinalSize(retinalSize);
 
+    /*
+    * set the windowSize (dimension of temporal window collected events)
+    */
+    printf("looking for the windowSize \n");
+    windowSize            = rf.check("windowSize", 
+                           Value(10), 
+                           "windowSize (int)").asInt();
+    cfThread->setWindowSize(windowSize);
     
     /*
     * set the retinaSize (considering squared retina)
