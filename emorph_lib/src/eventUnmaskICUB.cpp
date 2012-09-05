@@ -32,6 +32,7 @@ eventUnmaskICUB::eventUnmaskICUB(bool _save)
     nEvent=0;
 
     timestampMonotonyWrap=0;
+    ptimestamp=0;
     blob=0;
 
     xmask   = 0x000000fE;
@@ -110,7 +111,7 @@ void eventUnmaskICUB::setBuffer(char* i_buffer, uint i_sz)
     if(szBuffer==0)
     {
 #ifdef _DEBUG_
-        fprintf(dump,"%s\n","--SET Z--");
+        //fprintf(dump,"%s\n","--SET Z--");
 #endif
         //szInMem+=BUFFERBLOCK;
         szInMem=(uint)ceil((double)i_sz/(double)BUFFERBLOCK)*BUFFERBLOCK;
@@ -120,7 +121,7 @@ void eventUnmaskICUB::setBuffer(char* i_buffer, uint i_sz)
     else if(szBuffer+i_sz>=szInMem)
     {
 #ifdef _DEBUG_
-         fprintf(dump,"%s\n","--SET NZ--");
+         //fprintf(dump,"%s\n","--SET NZ--");
 #endif
         //std::cout << "\t\t\t- Expand the size of the gBuffer" << std::endl;
         //szInMem+=BUFFERBLOCK;
@@ -170,50 +171,69 @@ int eventUnmaskICUB::getUmaskedData(uint& cartX, uint& cartY, int& polarity, uin
         if(!snapBuffer())
             return 0;
     }
-    //if(eventCounter++>=nEvent)
-    //    return 0;
-        // unmask the data ( first 4 bytes timestamp, second 4 bytes address)
     tsPacket = bufSnapShot[eventIndex++];
-    //blob = bufSnapShot[eventIndex++];
     //Check if s tamistamp wrap around occured
-    if ((tsPacket & 0xFC000000) == 0x88000000){ // if it's TSWA then skip it
-        timestampMonotonyWrap += 0x04000000;
-        //eventIndex++;
-        tsPacket = bufSnapShot[eventIndex++];
-        //blob = bufSnapShot[eventIndex++];
+    if(tsPacket & 0x80000000)
+    {
 #ifdef _DEBUG_
-        fprintf(dump,"%s\n","--WRAP--");
+        fprintf(dump,"%08X ",tsPacket);
 #endif
+        if ((tsPacket & 0xFC000000) > 0x80000000)
+        {
+            if ((tsPacket & 0xFC000000) == 0x88000000)
+            {
+#ifdef _DEBUG_
+        fprintf(dump,"%s","CAFECAFE");
+        fprintf(dump,"%s\n","<=WRAP");
+#endif
+                timestampMonotonyWrap += 0x04000000;
+            }
+            else
+            {
+#ifdef _DEBUG_
+        fprintf(dump,"%s","CAFECAFE");
+        fprintf(dump,"%s\n","<=CTRL");
+#endif
+            }
+            tsPacket = bufSnapShot[eventIndex++];
+        }
+        timestamp = (tsPacket &  0x03FFFFFF) + timestampMonotonyWrap;
+        ptimestamp=timestamp;
     }
-    timestamp = (tsPacket &  0x03FFFFFF) + timestampMonotonyWrap;
-
+    else
+    {
 #ifdef _DEBUG_
-    fprintf(dump,"%08X ",tsPacket);
+        fprintf(dump,"%s","DEADDEAD ");
 #endif
+        timestamp=ptimestamp;
+        eventIndex--;
+    }
     blob = bufSnapShot[eventIndex++];
     if(blob&0x80000000)
     {
-        eventIndex--;
 #ifdef _DEBUG_
-        fprintf(dump,"%s","0000DEAD");
+        fprintf(dump,"%s","DEADDEAD");
         fprintf(dump,"%s\n","<=MISS");
 #endif
-        return 0;
+        eventIndex--;
+        res=0;
     }
-    else if(((blob&0xFFFF0000)>>16)!=1)
+    else if((blob&0xFFFF0000)>0x00010000)
     {
 #ifdef _DEBUG_
         fprintf(dump,"%08X",blob);
-        fprintf(dump,"%s\n","<=ERROR");
+        fprintf(dump,"%s\n","<=CORRUPTED");
 #endif
-        return 0;
+        res=0;
     }
-    else if(((blob&0xFFFF0000)>>16)==1)
+    else if((blob&0xFFFF0000)==0x00010000)
     {
 #ifdef _DEBUG_
         fprintf(dump,"%08X",blob);
-        fprintf(dump,"%s\n","<=HERE");
+        fprintf(dump,"%s\n","<=SYNCH");
 #endif
+        blob &= 0xFFFF; // here we zero the higher two bytes of the address!!! Only lower 16bits used!
+        unmaskEvent(blob, cartX, cartY, polarity, eye);
         res=2;
     }
     else
@@ -221,9 +241,10 @@ int eventUnmaskICUB::getUmaskedData(uint& cartX, uint& cartY, int& polarity, uin
 #ifdef _DEBUG_
         fprintf(dump,"%08X\n",blob);
 #endif
+        blob &= 0xFFFF; // here we zero the higher two bytes of the address!!! Only lower 16bits used!
+        unmaskEvent(blob, cartX, cartY, polarity, eye);
+        res=1;
     }
-    blob &= 0xFFFF; // here we zero the higher two bytes of the address!!! Only lower 16bits used!
-    unmaskEvent(blob, cartX, cartY, polarity, eye);
     return res;
 }
 
@@ -236,7 +257,7 @@ uint eventUnmaskICUB::snapBuffer()
         return 0;
     }
 #ifdef _DEBUG_
-    fprintf(dump,"%s\n","--SNAP--");
+    //fprintf(dump,"%s\n","--SNAP--");
 #endif
     int remainingSz=szBufSnapShot-(4*eventIndex);
     if(szBufSnapShot>0 && remainingSz>0)
