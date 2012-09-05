@@ -18,7 +18,13 @@
 #ifndef EVENTUNMASKICUB_H
 #define EVENTUNMASKICUB_H
 
+#define _DEBUG_
+
 #include "eventUnmask.h"
+
+#ifdef _DEBUG_
+#include <cstdio>
+#endif
 
 namespace emorph
 {
@@ -48,6 +54,9 @@ private:
     uint *bufSnapShot;
     uint tsPacket;
     bool save;
+#ifdef _DEBUG_
+    FILE *dump;
+#endif
 };
 }
 }

@@ -48,6 +48,9 @@ eventUnmaskICUB::eventUnmaskICUB(bool _save)
 
     buffer=new uint[BUFFERBLOCK/4];
     bufSnapShot=NULL;
+#ifdef _DEBUG_
+    dump = fopen("/home/icub/Clercq/iCubDump.txt", "w");
+#endif
 }
 
 eventUnmaskICUB::eventUnmaskICUB(const eventUnmaskICUB &_obj)
@@ -58,6 +61,9 @@ eventUnmaskICUB::eventUnmaskICUB(const eventUnmaskICUB &_obj)
 eventUnmaskICUB::~eventUnmaskICUB()
 {
     delete[] buffer;
+#ifdef _DEBUG_
+    fclose(dump);
+#endif
 }
 
 eventUnmaskICUB& eventUnmaskICUB::operator=(const eventUnmaskICUB &_obj)
@@ -103,6 +109,9 @@ void eventUnmaskICUB::setBuffer(char* i_buffer, uint i_sz)
     
     if(szBuffer==0)
     {
+#ifdef _DEBUG_
+        fprintf(dump,"%s\n","--SET Z--");
+#endif
         //szInMem+=BUFFERBLOCK;
         szInMem=(uint)ceil((double)i_sz/(double)BUFFERBLOCK)*BUFFERBLOCK;
         //delete[] buffer;
@@ -110,6 +119,9 @@ void eventUnmaskICUB::setBuffer(char* i_buffer, uint i_sz)
     }
     else if(szBuffer+i_sz>=szInMem)
     {
+#ifdef _DEBUG_
+         fprintf(dump,"%s\n","--SET NZ--");
+#endif
         //std::cout << "\t\t\t- Expand the size of the gBuffer" << std::endl;
         //szInMem+=BUFFERBLOCK;
         szInMem=(uint)ceil((double)(i_sz+szBuffer)/(double)BUFFERBLOCK)*BUFFERBLOCK;
@@ -151,7 +163,9 @@ void eventUnmaskICUB::reshapeBuffer()
 int eventUnmaskICUB::getUmaskedData(uint& cartX, uint& cartY, int& polarity, uint& eye, uint& timestamp)
 {
     int res=1;
-    if(4*(eventIndex+2)>szBufSnapShot || szBufSnapShot==0)
+    //if(4*(eventIndex+3)>szBufSnapShot || szBufSnapShot==0)
+    //if(4*(eventIndex-1)>=szBufSnapShot || szBufSnapShot==0)
+    if((double)(4*(eventIndex-1))>=0.95*(double)szBufSnapShot || szBufSnapShot==0)
     {
         if(!snapBuffer())
             return 0;
@@ -167,12 +181,47 @@ int eventUnmaskICUB::getUmaskedData(uint& cartX, uint& cartY, int& polarity, uin
         //eventIndex++;
         tsPacket = bufSnapShot[eventIndex++];
         //blob = bufSnapShot[eventIndex++];
+#ifdef _DEBUG_
+        fprintf(dump,"%s\n","--WRAP--");
+#endif
     }
     timestamp = (tsPacket &  0x03FFFFFF) + timestampMonotonyWrap;
 
+#ifdef _DEBUG_
+    fprintf(dump,"%08X ",tsPacket);
+#endif
     blob = bufSnapShot[eventIndex++];
-    if(blob&0x10000)
+    if(blob&0x80000000)
+    {
+        eventIndex--;
+#ifdef _DEBUG_
+        fprintf(dump,"%s","0000DEAD");
+        fprintf(dump,"%s\n","<=MISS");
+#endif
+        return 0;
+    }
+    else if(((blob&0xFFFF0000)>>16)!=1)
+    {
+#ifdef _DEBUG_
+        fprintf(dump,"%08X",blob);
+        fprintf(dump,"%s\n","<=ERROR");
+#endif
+        return 0;
+    }
+    else if(((blob&0xFFFF0000)>>16)==1)
+    {
+#ifdef _DEBUG_
+        fprintf(dump,"%08X",blob);
+        fprintf(dump,"%s\n","<=HERE");
+#endif
         res=2;
+    }
+    else
+    {
+#ifdef _DEBUG_
+        fprintf(dump,"%08X\n",blob);
+#endif
+    }
     blob &= 0xFFFF; // here we zero the higher two bytes of the address!!! Only lower 16bits used!
     unmaskEvent(blob, cartX, cartY, polarity, eye);
     return res;
@@ -186,10 +235,34 @@ uint eventUnmaskICUB::snapBuffer()
         mutex.post();
         return 0;
     }
+#ifdef _DEBUG_
+    fprintf(dump,"%s\n","--SNAP--");
+#endif
+    int remainingSz=szBufSnapShot-(4*eventIndex);
+    if(szBufSnapShot>0 && remainingSz>0)
+    {
+        uint *buftmp=new uint[(uint)ceil((double)remainingSz/4)];
+        memcpy(buftmp, bufSnapShot+eventIndex, remainingSz);
+        delete[] bufSnapShot;
+        bufSnapShot = new uint[(uint)ceil((double)(szBuffer+remainingSz)/4)];
+        memcpy(bufSnapShot, buftmp, remainingSz);
+        delete[] buftmp;
+        memcpy(bufSnapShot+(remainingSz/4), buffer, szBuffer);
+        szBufSnapShot=szBuffer+remainingSz;
+    }
+    else
+    {
+        delete[] bufSnapShot;
+        bufSnapShot = new uint[szBuffer/4];
+        memcpy(bufSnapShot, buffer, szBuffer);
+        szBufSnapShot=szBuffer;
+    }
+/*
     delete[] bufSnapShot;
     bufSnapShot = new uint[szBuffer/4];
     memcpy(bufSnapShot, buffer, szBuffer);
     szBufSnapShot=szBuffer;
+*/
     nEvent=szBufSnapShot/8;
     eventCounter=0;
     eventIndex=0;
