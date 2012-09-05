@@ -45,6 +45,9 @@ staticCalibThread::staticCalibThread(ResourceFinder &rf, Port* commPort, const c
     this->inputRightPortName       = "/"+moduleName;
     this->inputRightPortName       += rf.check("imgRight", Value("/cam/right:i"),"Input image port (string)").asString();
 
+    this->inputLeftClickName       = "/"+moduleName;
+    this->inputLeftClickName       += rf.check("imgLeft", Value("/cam/click:i"),"Input click port (string)").asString();
+
     this->outNameRight             = "/"+moduleName;
     this->outNameRight             += rf.check("outRight",Value("/cam/right:o"),"Output image port (string)").asString();
 
@@ -52,9 +55,9 @@ staticCalibThread::staticCalibThread(ResourceFinder &rf, Port* commPort, const c
     this->outNameLeft              +=rf.check("outLeft",Value("/cam/left:o"),"Output image port (string)").asString();
 
     Bottle stereoCalibOpts=rf.findGroup("STEREO_CALIBRATION_CONFIGURATION");
-    this->boardWidth       =         stereoCalibOpts.check("boardWidth", Value(8)).asInt();
+    this->boardWidth       =         stereoCalibOpts.check("boardWidth", Value(9)).asInt();
     this->boardHeight      =         stereoCalibOpts.check("boardHeight", Value(6)).asInt();
-    this->numOfPairs       =         stereoCalibOpts.check("numberOfPairs", Value(30)).asInt();
+    this->numOfPairs       =         stereoCalibOpts.check("numberOfPairs", Value(10)).asInt();
     this->squareSize       = (float) stereoCalibOpts.check("boardSize", Value(0.09241)).asDouble();
     this->commandPort      = commPort;
     this->imageDir         = imageDir;
@@ -85,12 +88,17 @@ bool staticCalibThread::threadInit()
       return false;
    }
 
-    if (!outPortLeft.open(outNameLeft.c_str())) {
-      cout << ": unable to open port " << outNameLeft << endl;
+   if (!imageClickInLeft.open(inputLeftClickName.c_str())) {
+      cout << ": unable to open port " << inputLeftClickName << endl;
       return false;
    }
 
-    if (!outPortRight.open(outNameRight.c_str())) {
+   if (!outPortLeft.open(outNameLeft.c_str())) {
+      cout << ": unable to open port " << outNameLeft << endl;
+      return false;
+   }
+   
+   if (!outPortRight.open(outNameRight.c_str())) {
       cout << ": unable to open port " << outNameRight << endl;
       return false;
    }    
@@ -261,12 +269,12 @@ void staticCalibThread::stereoCalibRun()
                         count++;
                 }
 
-                if(count>numOfPairs) {
+                if(count > numOfPairs) {
                     fprintf(stdout," Running Left Camera Calibration... \n");
-                    monoCalibration(imageListL,this->boardWidth,this->boardHeight,this->Kleft,this->DistL);
+                    //monoCalibration(imageListL,this->boardWidth,this->boardHeight,this->Kleft,this->DistL);
 
                     fprintf(stdout," Running Right Camera Calibration... \n");
-                    monoCalibration(imageListR,this->boardWidth,this->boardHeight,this->Kright,this->DistR);
+		    //                    monoCalibration(imageListR,this->boardWidth,this->boardHeight,this->Kright,this->DistR);
 
                     stereoCalibration(imageListLR, this->boardWidth,this->boardHeight,this->squareSize);
 
@@ -343,27 +351,45 @@ void staticCalibThread::monoCalibRun() {
   
   int count = 1;
   Size boardSize, imageSize;
-  boardSize.width=this->boardWidth;
-  boardSize.height=this->boardHeight;
-  
+  boardSize.width  = this->boardWidth;
+  boardSize.height = this->boardHeight;
+  printf("borderSize width %d height %d \n",boardWidth,boardHeight  );
 
   while (!isStopping()) { 
     // read the image as yarp::sig::ImageOf<>
     if(left){
       imageL = NULL;
       
-      IplImage* img=0; 
-      string filename = "./Chessboard.png";
+      IplImage* img  = 0; 
+      
+      string filename = "./chess";
+      sprintf((char*)filename.c_str(), "./chess%d.png", count);
+      printf("loading file %s \n", filename.c_str());
       img = cvLoadImage(filename.c_str());
       if(!img) {
 	printf("Could not load image file: %s\n",filename.c_str());
 	 
       }
       else {
+	/*Mat erosion_dst;
+	
+	int erosion_size = 1;
+	Mat element = getStructuringElement( MORPH_CROSS,
+                                       Size( 2*erosion_size + 1, 2*erosion_size+1 ),
+                                       Point( erosion_size, erosion_size ) );
+	
+	/// Apply the erosion operation
+	dilate( img, erosion_dst, element );
+	*/
+
 	// Show original
 	printf("showing original %d %d \n", img->width, img->height);
 	cvNamedWindow( "Source", 1) ;
-	cvShowImage( "Source", img );
+	cvShowImage( "Source", img);
+	//imshow( "Erosion Demo", erosion_dst );
+	//printf("image just presented! Check it out \n");
+	//IplImage img2 = erosion_dst;
+
 	// wait for a key
 	cvWaitKey(0);
 	imageL = new ImageOf<PixelRgb>;
@@ -383,7 +409,7 @@ void staticCalibThread::monoCalibRun() {
       bool foundL = false;
       mutex->wait();
       if(startCalibration > 0) {
-	printf("startCalibration flag active \n");
+	printf("startCalibration flag active  \n");
 	string pathImg=imageDir;
 	preparePath(pathImg.c_str(), pathL,pathR,count);
 	string iml(pathL);
@@ -392,24 +418,55 @@ void staticCalibThread::monoCalibRun() {
 	std::vector<Point2f> pointbufL;
 	
 	foundL = findChessboardCorners( Left, boardSize, pointbufL, CV_CALIB_CB_ADAPTIVE_THRESH & CV_CALIB_CB_FAST_CHECK & CV_CALIB_CB_NORMALIZE_IMAGE);
+	//foundL = findChessboardCorners( Left, boardSize, pointbufL, CV_CALIB_CB_ADAPTIVE_THRESH );
+	//foundL = findChessboardCorners( Left, boardSize, pointbufL);
 	if(foundL) {
 	  printf("found corners \n");
 	  cvCvtColor(imgL,imgL,CV_RGB2BGR);
 	  saveImage(pathImg.c_str(),imgL,count);
 	  imageListL.push_back(iml);
+	  cornerListL.push_back(pointbufL);
 	  Mat cL(pointbufL);
 	  drawChessboardCorners(Left, boardSize, cL, foundL);
 	  count++;
 	}
 	else {
 	  printf("not found corners \n");
+	  printf("add corners by hand \n");
+	  cvCvtColor(imgL,imgL,CV_RGB2BGR);
+	  ImageOf<PixelRgb>& outimL=outPortLeft.prepare();
+	  outimL=*imageL;	    
+	  outPortLeft.write();
+	  unsigned char* pImage = imageL->getRawImage();
+	  int rowsize = imageL->getRowSize();
+	  for(int i = 0; i < boardWidth * boardHeight; i ++) {
+	    Bottle* b = imageClickInLeft.read(true);
+	    int u = b->get(0).asInt();
+	    int v = b->get(1).asInt();
+	    Point2f p((double)u,(double)v);
+	    printf("received the following bottle %d %d;",u, v);
+	    printf("%d points left \n", boardWidth * boardHeight - i);
+	    pointbufL.push_back(p);
+	    ImageOf<PixelRgb>& outimL=outPortLeft.prepare();
+	    pImage[v * rowsize + u * 3] = 255;
+	    outimL=*imageL;
+	    
+	    outPortLeft.write();
+	  }
+	  
+	  saveImage(pathImg.c_str(),imgL,count);
+	  imageListL.push_back(iml);
+	  cornerListL.push_back(pointbufL);
+	  Mat cL(pointbufL);
+	  drawChessboardCorners(Left, boardSize, cL, 1);
+	  count++;
 	}
 	
 	if(count > numOfPairs) {
 	  printf("count > numOfPairs branch \n");
 	  
 	  fprintf(stdout," Running %s Camera Calibration... \n", cameraName.c_str());
-	  monoCalibration(imageListL,this->boardWidth,this->boardHeight,this->Kleft,this->DistL);
+	  monoCalibration(imageListL,cornerListL,this->boardWidth,this->boardHeight,this->Kleft,this->DistL);
 	  
 	  fprintf(stdout," Saving Calibration Results... \n");
 	  if(left)
@@ -447,6 +504,7 @@ void staticCalibThread::monoCalibRun() {
 void staticCalibThread::threadRelease() {
     imagePortInRight.close();
     imagePortInLeft.close();
+    imageClickInLeft.close();
     outPortLeft.close();
     outPortRight.close();
     commandPort->close();
@@ -465,6 +523,7 @@ void staticCalibThread::onStop() {
     startCalibration=0;
     imagePortInRight.interrupt();
     imagePortInLeft.interrupt();
+    imageClickInLeft.interrupt();
     outPortLeft.interrupt();
     outPortRight.interrupt();
     commandPort->interrupt();
@@ -691,7 +750,7 @@ bool staticCalibThread::updateIntrinsics(int width, int height, double fx, doubl
     return true;
 }
 
-void staticCalibThread::monoCalibration(const vector<string>& imageList, int boardWidth, int boardHeight, Mat &K, Mat &Dist)
+void staticCalibThread::monoCalibration(const vector<string>& imageList, const vector<vector<Point2f> > cornerList, int boardWidth, int boardHeight, Mat &K, Mat &Dist)
 {
     vector<vector<Point2f> > imagePoints;
     Size boardSize, imageSize;
@@ -720,6 +779,11 @@ void staticCalibThread::monoCalibration(const vector<string>& imageList, int boa
             drawChessboardCorners( view, boardSize, Mat(pointbuf), found );
             imagePoints.push_back(pointbuf);
          }
+	 else{
+	   pointbuf = cornerList[i];
+	   drawChessboardCorners( view, boardSize, Mat(pointbuf), found );
+	   imagePoints.push_back(pointbuf);
+	 }
 
     }
     std::vector<Mat> rvecs, tvecs;

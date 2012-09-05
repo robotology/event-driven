@@ -87,16 +87,21 @@ private:
   cv::Mat Q;
   string inputLeftPortName;
   string inputRightPortName;
+  string inputLeftClickName;
   string outNameRight;
   string outNameLeft;
   string camCalibFile;
   string currentPathDir;
   std::vector<string> imageListR;
   std::vector<string> imageListL;
+  std::vector<std::vector<cv::Point2f> > cornerListL;
   std::vector<string> imageListLR;
   
+  yarp::os::BufferedPort<yarp::os::Bottle>  imageClickInLeft;
   yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> > imagePortInLeft;
+  
   yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> > imagePortInRight;
+  
   yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> > outPortRight;
   yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> > outPortLeft;
 
@@ -115,7 +120,7 @@ private:
   bool checkTS(double TSLeft, double TSRight, double th=0.08);
   void preparePath(const char * imageDir, char* pathL, char* pathR, int num);
   void saveStereoImage(const char * imageDir, IplImage* left, IplImage * right, int num);
-  void monoCalibration(const vector<string>& imageList, int boardWidth, int boardHeight, cv::Mat &K, cv::Mat &Dist);
+  void monoCalibration(const vector<string>& imageList, const std::vector<vector<cv::Point2f> > cornerList, int boardWidth, int boardHeight, cv::Mat &K, cv::Mat &Dist);
   void stereoCalibration(const vector<string>& imagelist, int boardWidth, int boardHeight,float sqsizee);
   void saveCalibration(const string& extrinsicFilePath, const string& intrinsicFilePath);
   void calcChessboardCorners(cv::Size boardSize, float squareSize, vector<cv::Point3f>& corners);
