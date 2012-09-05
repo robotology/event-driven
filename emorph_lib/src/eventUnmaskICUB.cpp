@@ -50,7 +50,9 @@ eventUnmaskICUB::eventUnmaskICUB(bool _save)
     buffer=new uint[BUFFERBLOCK/4];
     bufSnapShot=NULL;
 #ifdef _DEBUG_
-    dump = fopen("/home/icub/Clercq/iCubDump.txt", "w");
+    dump = fopen("/home/clercq/Documents/Temp/iCubDump.txt", "w");
+    if(dump==NULL)
+        std::cout << "[eventUnmaskICUB] Error, file can't be opened or created" << std::endl;
 #endif
 }
 
@@ -106,7 +108,7 @@ void eventUnmaskICUB::objcpy(const eventUnmaskICUB &_obj)
 void eventUnmaskICUB::setBuffer(char* i_buffer, uint i_sz)
 {
     mutex.wait();
-    //std::cout << "\t\tConcate a new buffer" << std::endl;
+    //std::cout << "[eventUnmaskICUB] setBuffer called" << std::endl;
     
     if(szBuffer==0)
     {
@@ -163,10 +165,11 @@ void eventUnmaskICUB::reshapeBuffer()
 
 int eventUnmaskICUB::getUmaskedData(uint& cartX, uint& cartY, int& polarity, uint& eye, uint& timestamp)
 {
-    int res=1;
+    int res=0;
     //if(4*(eventIndex+3)>szBufSnapShot || szBufSnapShot==0)
     //if(4*(eventIndex-1)>=szBufSnapShot || szBufSnapShot==0)
     if((double)(4*(eventIndex-1))>=0.95*(double)szBufSnapShot || szBufSnapShot==0)
+    //if((szBufSnapShot-(4*(eventIndex)))<3 || szBufSnapShot==0)
     {
         if(!snapBuffer())
             return 0;
@@ -175,28 +178,30 @@ int eventUnmaskICUB::getUmaskedData(uint& cartX, uint& cartY, int& polarity, uin
     //Check if s tamistamp wrap around occured
     if(tsPacket & 0x80000000)
     {
-#ifdef _DEBUG_
-        fprintf(dump,"%08X ",tsPacket);
-#endif
         if ((tsPacket & 0xFC000000) > 0x80000000)
         {
             if ((tsPacket & 0xFC000000) == 0x88000000)
             {
 #ifdef _DEBUG_
-        fprintf(dump,"%s","CAFECAFE");
-        fprintf(dump,"%s\n","<=WRAP");
+                fprintf(dump,"%08X ",tsPacket);
+                fprintf(dump,"%s","CAFECAFE");
+                fprintf(dump,"%s\n","<=WRAP");
 #endif
                 timestampMonotonyWrap += 0x04000000;
             }
             else
             {
 #ifdef _DEBUG_
-        fprintf(dump,"%s","CAFECAFE");
-        fprintf(dump,"%s\n","<=CTRL");
+                fprintf(dump,"%08X ",tsPacket);
+                fprintf(dump,"%s","CAFECAFE");
+                fprintf(dump,"%s\n","<=CTRL");
 #endif
             }
             tsPacket = bufSnapShot[eventIndex++];
         }
+#ifdef _DEBUG_
+        fprintf(dump,"%08X ",tsPacket);
+#endif
         timestamp = (tsPacket &  0x03FFFFFF) + timestampMonotonyWrap;
         ptimestamp=timestamp;
     }
@@ -262,6 +267,9 @@ uint eventUnmaskICUB::snapBuffer()
     int remainingSz=szBufSnapShot-(4*eventIndex);
     if(szBufSnapShot>0 && remainingSz>0)
     {
+#ifdef _DEBUG_
+//        fprintf(dump,"--SNAP with rescue RSZ = %d--", remainingSz);
+#endif
         uint *buftmp=new uint[(uint)ceil((double)remainingSz/4)];
         memcpy(buftmp, bufSnapShot+eventIndex, remainingSz);
         delete[] bufSnapShot;
@@ -273,6 +281,9 @@ uint eventUnmaskICUB::snapBuffer()
     }
     else
     {
+#ifdef _DEBUG_
+//        fprintf(dump,"--SNAP without rescue RSZ = %d--", remainingSz);
+#endif
         delete[] bufSnapShot;
         bufSnapShot = new uint[szBuffer/4];
         memcpy(bufSnapShot, buffer, szBuffer);

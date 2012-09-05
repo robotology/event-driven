@@ -22,6 +22,8 @@ associationThread::associationThread()
     ptr_negh=0;
 
     lastUpperBound=-1;
+
+    initialized=false;
 }
 
 associationThread::associationThread(string _src, unsigned int _type, string _eye, string _features, unsigned int _szSpace, unsigned int _szTemp, double _eigenvalSim, double _eigenvecSim, unsigned int _dim, bool _learn, yarp::os::BufferedPort<emorph::ehist::eventHistBuffer> *_port)
@@ -47,7 +49,8 @@ associationThread::associationThread(string _src, unsigned int _type, string _ey
         featuresFolder=featuresFile.substr(0,found);
     else
         featuresFolder=".";
-
+    cout << "[associationThread] featuresFolder found" << featuresFolder << endl;
+    
     stringstream concatenation;
     ofstream of;
 /*    cout << "*******************************************" << endl
@@ -157,11 +160,11 @@ void associationThread::run()
             {
                 save();
                 cout << "[associationThread] Association saved" << endl;
-                imgPreview = cv::Mat::ones(128, 128, CV_8U)*126;
             }
         }
         else
             cerr << "Association error: missed event?" << endl;
+        cout << "[associationThread] Reset all" << endl;
         stvStack.reset();
         target->reset();
         initialized=false; 
@@ -205,13 +208,15 @@ int associationThread::associate()
     int res=0;
     if(!initialized)
     {
+        cout << "[associationThread] Initializing" << endl;
         res=initialize(x_, y_, p_, t_);
         feed(x_, y_, p_, t_); 
         initialized=true;
     }
-    cout << "[associationThread] Initialized" << endl;
+    cout << "[associationThread] Initialized, res=" << res << " x: " << x_ << " y: " << y_ << " p: " << p_ << " t: " << t_ << endl;
     refts=t_;
     //int res=target->read(x_, y_, p_, t_);
+    res=0;
     do
     {
         res=target->getUmaskedData(x_, y_, p_, e_, t_);
@@ -227,7 +232,7 @@ int associationThread::associate()
 //        if(t_>10E6 && res!=2)
 //            return -1;
     }while(res!=2);
-    cout << "[associationThread] Second synch received, fed=" << fed << endl;
+    cout << "[associationThread] Second synch received, res=" << res << " x: " << x_ << " y: " << y_ << " p: " << p_ << " t: " << t_ << ", fed=" << fed << endl;
     
 //    cout << "Occurence of the feeding loop: " << fed << endl;
     if(!fed)
