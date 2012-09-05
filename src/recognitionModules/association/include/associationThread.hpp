@@ -75,6 +75,7 @@ private:
 
 
     std::string featuresFile;
+    std::string featuresFolder;
 
     int lastUpperBound;
 

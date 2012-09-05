@@ -42,6 +42,12 @@ associationThread::associationThread(string _src, unsigned int _type, string _ey
     else
         eyeSel=1;
 
+    size_t found=featuresFile.find_last_of("/\\");
+    if(found!=string::npos)
+        featuresFolder=featuresFile.substr(0,found);
+    else
+        featuresFolder=".";
+
     stringstream concatenation;
     ofstream of;
 /*    cout << "*******************************************" << endl
@@ -155,7 +161,7 @@ void associationThread::run()
             }
         }
         else
-            cerr << "Association error: No synch found" << endl;
+            cerr << "Association error: missed event?" << endl;
         stvStack.reset();
         target->reset();
         initialized=false; 
@@ -217,6 +223,9 @@ int associationThread::associate()
             if(refts+5000>=t_)
                 createPreview(x_, y_, p_);
         }
+//        cout << "[associationThread] Wait for 2nd synch, ts=" << t_ << endl;
+//        if(t_>10E6 && res!=2)
+//            return -1;
     }while(res!=2);
     cout << "[associationThread] Second synch received, fed=" << fed << endl;
     
@@ -310,15 +319,15 @@ void associationThread::feed(unsigned int& _x, unsigned int& _y, int& _p, unsign
 void associationThread::pca()
 {
     unsigned int szStack=stvStack.size();
-    cout << "Size of  the stack: " << szStack << endl;
+    cout << "[associationThread] Size of  the stack: " << szStack << endl;
     npose=0;
-    delete[] ptr_pose; 
+    if(ptr_pose!=NULL) delete[] ptr_pose; 
     ptr_pose=new double[(dim+dim*dim+3)*szStack]; //dim: eigval; dim*dim: eigvec; 3: ts, cx, cy
-//    cout << "\tCompute pos pca" << endl;
+    cout << "[associationThread] Compute pos pca" << endl;
     computePCA(ptr_pose, npose, 1);
     cout << "[associationThread] Number of pos pca: " << npose << endl;
     nnege=0;
-    delete[] ptr_nege;
+    if(ptr_nege!=NULL) delete[] ptr_nege;
     ptr_nege=new double[(dim+dim*dim+3)*szStack];
 //    cout << "\tCompute neg pca" << endl;
     computePCA(ptr_nege, nnege, -1);
@@ -539,7 +548,7 @@ void associationThread::save()
     ofstream fdImg;
     ofstream of;
     
-    listOfFile << eigenvalSim << "_" << eigenvecSim << "_" << szSpace << "_" << szTemp << "_eye" << eyeSel << ".list";
+    listOfFile << featuresFolder << "/" << eigenvalSim << "_" << eigenvecSim << "_" << szSpace << "_" << szTemp << "_eye" << eyeSel << ".list";
 
 /*    cout << "Enter a name for the new knowledge file: " << endl;
     char cmdl[MAXCMD];
@@ -568,7 +577,7 @@ void associationThread::save()
     }
     fileName=subdate.substr(0, subdate.size()-1);
 
-    concatenation << fileName << "_" << eigenvalSim << "_" << eigenvecSim << "_" << szSpace << "_" << szTemp << "_eye" << eyeSel << "_hist_pos.data";
+    concatenation << featuresFolder << "/" << fileName << "_" << eigenvalSim << "_" << eigenvecSim << "_" << szSpace << "_" << szTemp << "_eye" << eyeSel << "_hist_pos.data";
     if(!verifIfExist(listOfFile.str(), concatenation.str()))
     {
         fd.open(listOfFile.str().c_str(), ios::app);
@@ -587,7 +596,7 @@ void associationThread::save()
     delete toSave;
 
     concatenation.str("");
-    concatenation << fileName << "_" << eigenvalSim << "_" << eigenvecSim << "_" << szSpace << "_" << szTemp << "_eye" << eyeSel << "_hist_neg.data";
+    concatenation << featuresFolder << "/" << fileName << "_" << eigenvalSim << "_" << eigenvecSim << "_" << szSpace << "_" << szTemp << "_eye" << eyeSel << "_hist_neg.data";
     if(!verifIfExist(listOfFile.str(), concatenation.str()))
     {
         fd.open(listOfFile.str().c_str(), ios::app);
