@@ -77,7 +77,6 @@ typedef struct represCLE {
     short yCog;
     short channel;
     short numAE;
-    short r;
     short shapeType;
     short xSize;
     short ySize;
@@ -87,7 +86,7 @@ typedef struct represCLE {
 typedef struct represHGE {
     short x;
     short y;
-    short r;
+    short radius;
     short channel;
     unsigned long timestamp;
 }reprHGE;

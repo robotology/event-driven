@@ -106,6 +106,15 @@ bool cfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
                            "synchronisation period (int)").asInt();
     cfThread->setSynchPeriod(synchPeriod);
 
+    /*
+    * set the windowSize (dimension of temporal window collected events)
+    */
+    windowSize            = rf.check("windowSize", 
+                           Value(10), 
+                           "windowSize (int)").asInt();
+    printf("looking for the windowSize; found value %d \n", windowSize);
+    cfThread->setWindowSize(windowSize);
+
     
     /*
     * set the retinaSize (considering squared retina)
@@ -116,14 +125,7 @@ bool cfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
                            "retinalSize (int)").asInt();
     cfThread->setRetinalSize(retinalSize);
 
-    /*
-    * set the windowSize (dimension of temporal window collected events)
-    */
-    printf("looking for the windowSize \n");
-    windowSize            = rf.check("windowSize", 
-                           Value(10), 
-                           "windowSize (int)").asInt();
-    cfThread->setWindowSize(windowSize);
+
     
     /*
     * set the retinaSize (considering squared retina)

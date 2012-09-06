@@ -59,6 +59,7 @@ private:
     int countDivider;                    // divider of the count
     int retinalSize;                     // dimension of the retina device
     int windowSize;                      // dimension of the temporal window for collection of events            
+    int dim_window;                      // dimension of the temporal window for collection of events 
     int width, height;                   // dimension of the extended input image (extending)
     int height_orig, width_orig;         // original dimension of the input and output images
     int synchPeriod;                     // synchronization period between events and viewer

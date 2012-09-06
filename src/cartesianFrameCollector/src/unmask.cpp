@@ -318,7 +318,7 @@ void unmask::addCLE(eEvent* qevt) {
         _bufferCLELeft->yCog  = ptr->getYCog();
         _bufferCLELeft->xSize = ptr->getXSize();
         _bufferCLELeft->ySize = ptr->getYSize();
-        
+        _bufferCLELeft->numAE = ptr->getNumAE();
         if (countCLE < 10) {
             _bufferCLELeft++;
             countCLE++;
@@ -341,9 +341,9 @@ void unmask::addHGE(eEvent* e) {
         //printf("adding HGE left \n");
         //left camera
         mutexHGELeft.wait();
-        _bufferHGELeft->x = ptr->getXCoc();
-        _bufferHGELeft->y = ptr->getYCoc();
-        _bufferHGELeft->r = ptr->getRadius();
+        _bufferHGELeft->x      = ptr->getXCoc();
+        _bufferHGELeft->y      = ptr->getYCoc();
+        _bufferHGELeft->radius = ptr->getRadius();
         _bufferHGELeft->timestamp = timestamp;
         
         _bufferHGELeft++;
@@ -470,9 +470,7 @@ void unmask::unmaskData(Bottle* packets) {
                         
                     }
                     else if(q[evt]->getType()=="CLE-F2") {
-                        printf("CLE_F2  \n");
-                        printf("CLE_F2  \n");
-                        printf("CLE_F2  \n");
+                        
 
                         ClusterEvent* ptr=dynamic_cast<ClusterEvent*>(q[evt]);
 
@@ -481,16 +479,16 @@ void unmask::unmaskData(Bottle* packets) {
                         //ptr->getXCog();
                         //ptr->getYCog();
                         
-                        //addCLE(q[evt]);
+                        addCLE(q[evt]);
                     }
                     else if(q[evt]->getType()=="HGE") {
-                        printf("HGE_Event \n");
+                        
                         HoughEvent* ptr=dynamic_cast<HoughEvent*>(q[evt]);
   
                         //code for HGE                
                         //printf("received HOUGH EVENT type: %s \n", ptr->getType());
                         
-                        //addHGE(q[evt]);
+                        addHGE(q[evt]);
                     }
                     else {
                         printf("not recognized");

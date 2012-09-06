@@ -43,7 +43,7 @@ using namespace std;
 #define STAMPINFRAME  // 10 ms of period times the us in 1 millisecond + time for computing
 //#define retinalSize 128
 #define CHUNKSIZE 32768 //65536 //8192
-#define dim_window 10
+//#define dim_window 10
 #define synch_time 1
 
 //#define VERBOSE
@@ -57,6 +57,7 @@ cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
     firstRun     = true;
     count        = 0;
     minCount     = 0; //initialisation of the timestamp limits of the first frame
+    
     idle = false;
     bufferCopy = (char*) malloc(CHUNKSIZE);
     countStop = 0;
@@ -129,6 +130,9 @@ bool cfCollectorThread::threadInit() {
     minCountRight= 0;
 
     receivedBottle = new Bottle();
+
+    dim_window   = windowSize;
+    printf("cfCollectorThread::cfCollectorThread:Initialisation of the dim_window %d \n ", dim_window);
 
     printf("Initialisation in collector thread correctly ended \n");
     return true;
@@ -375,7 +379,7 @@ void cfCollectorThread::addHGE(ImageOf<yarp::sig::PixelRgb>* image, unsigned lon
         tmpHGE = unmask_events->getHGELeft();
         //printf("%08x origHGE -> %08x tmpHGE    \n", origHGE, tmpHGE);
         while(tmpHGE != origHGE) {            
-            cvCircle(image->getIplImage(), cvPoint(tmpHGE->x,tmpHGE->y),tmpHGE->r, cvScalar(255,0,0), 1 );
+            cvCircle(image->getIplImage(), cvPoint(tmpHGE->x,tmpHGE->y),tmpHGE->radius, cvScalar(255,0,0), 1 );
             tmpHGE--;
         }
         unmask_events->setHGELeft();
@@ -392,6 +396,11 @@ void cfCollectorThread::addCLE(ImageOf<yarp::sig::PixelRgb>* image, unsigned lon
         while(tmpCLE != origCLE) {            
             cvRectangle(image->getIplImage(), cvPoint(tmpCLE->xCog - tmpCLE->xSize >> 1,tmpCLE->yCog - tmpCLE->ySize >> 1 ),cvPoint(tmpCLE->xCog + tmpCLE->xSize >> 1,tmpCLE->yCog + tmpCLE->ySize >> 1), cvScalar(0,0,255), 3);
             //cvCircle(image->getIplImage(), cvPoint(tmpCLE->x,tmpCLE->y),5, cvScalar(0,0,255), 1 );
+
+            CvFont font;
+            cvInitFont(&font, CV_FONT_HERSHEY_SIMPLEX, 0.2f, 0.2f, 0, 0.07, CV_AA);
+            cvPutText(image->getIplImage(), "Hello World!", cvPoint(tmpCLE->xCog,tmpCLE->yCog ), &font, cvScalar(0, 0, 255, 0));
+            
             tmpCLE--;
         }
         unmask_events->setCLELeft();
@@ -400,7 +409,7 @@ void cfCollectorThread::addCLE(ImageOf<yarp::sig::PixelRgb>* image, unsigned lon
 
 int cfCollectorThread::prepareUnmasking(char* bufferCopy, Bottle* res) {
     // navigate the 32bit words in the bufferCopy and create a bottle outofvalid
-    int numberofwords = CHUNKSIZE / 4; //4bytes made a 32bits word
+    int numberofwords = CHUNKSIZE / 4; //4bytes made a 32bits wodr
     u32* pointerWord = (u32*) bufferCopy;
     int countValid  = 0;
     for (int i = 0; i< numberofwords; i ++) {
