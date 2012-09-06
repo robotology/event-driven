@@ -356,148 +356,148 @@ void staticCalibThread::monoCalibRun() {
   printf("borderSize width %d height %d \n",boardWidth,boardHeight  );
 
   while (!isStopping()) { 
-    // read the image as yarp::sig::ImageOf<>
-    if(left){
-      imageL = NULL;
-      
-      IplImage* img  = 0; 
-      
-      string filename = "./chess";
-      sprintf((char*)filename.c_str(), "./chess%d.png", count);
-      printf("loading file %s \n", filename.c_str());
-      img = cvLoadImage(filename.c_str());
-      if(!img) {
-	printf("Could not load image file: %s\n",filename.c_str());
-	 
+      // read the image as yarp::sig::ImageOf<>
+      if(left){
+          imageL = NULL;
+          
+          IplImage* img  = 0; 
+          
+          string filename = "./chess";
+          sprintf((char*)filename.c_str(), "./chess%d.png", count);
+          printf("loading file %s \n", filename.c_str());
+          img = cvLoadImage(filename.c_str());
+          if(!img) {
+              printf("Could not load image file: %s\n",filename.c_str());
+              
+          }
+          else {
+              /*Mat erosion_dst;
+                
+                int erosion_size = 1;
+                Mat element = getStructuringElement( MORPH_CROSS,
+                Size( 2*erosion_size + 1, 2*erosion_size+1 ),
+                Point( erosion_size, erosion_size ) );
+                
+                /// Apply the erosion operation
+                dilate( img, erosion_dst, element );
+              */
+              
+              // Show original
+              printf("showing original %d %d \n", img->width, img->height);
+              cvNamedWindow( "Source", 1) ;
+              cvShowImage( "Source", img);
+              //imshow( "Erosion Demo", erosion_dst );
+              //printf("image just presented! Check it out \n");
+              //IplImage img2 = erosion_dst;
+              
+              // wait for a key
+              cvWaitKey(0);
+              imageL = new ImageOf<PixelRgb>;
+              imageL->resize(img->width, img->height);
+              imageL->wrapIplImage(img);
+          }
+          
+          
+          //imageL = imagePortInLeft.read(false);
       }
       else {
-	/*Mat erosion_dst;
-	
-	int erosion_size = 1;
-	Mat element = getStructuringElement( MORPH_CROSS,
-                                       Size( 2*erosion_size + 1, 2*erosion_size+1 ),
-                                       Point( erosion_size, erosion_size ) );
-	
-	/// Apply the erosion operation
-	dilate( img, erosion_dst, element );
-	*/
-
-	// Show original
-	printf("showing original %d %d \n", img->width, img->height);
-	cvNamedWindow( "Source", 1) ;
-	cvShowImage( "Source", img);
-	//imshow( "Erosion Demo", erosion_dst );
-	//printf("image just presented! Check it out \n");
-	//IplImage img2 = erosion_dst;
-
-	// wait for a key
-	cvWaitKey(0);
-	imageL = new ImageOf<PixelRgb>;
-	imageL->resize(img->width, img->height);
-	imageL->wrapIplImage(img);
+          imageL = imagePortInRight.read(false);
       }
-     
       
-      //imageL = imagePortInLeft.read(false);
-    }
-    else {
-      imageL = imagePortInRight.read(false);
-    }
-    
-    if(imageL!=NULL){
-      printf("ImageL != NULL : can continue...... \n");
-      bool foundL = false;
-      mutex->wait();
-      if(startCalibration > 0) {
-	printf("startCalibration flag active  \n");
-	string pathImg=imageDir;
-	preparePath(pathImg.c_str(), pathL,pathR,count);
-	string iml(pathL);
-	imgL= (IplImage*) imageL->getIplImage();
-	Mat Left(imgL);
-	std::vector<Point2f> pointbufL;
-	
-	foundL = findChessboardCorners( Left, boardSize, pointbufL, CV_CALIB_CB_ADAPTIVE_THRESH & CV_CALIB_CB_FAST_CHECK & CV_CALIB_CB_NORMALIZE_IMAGE);
-	//foundL = findChessboardCorners( Left, boardSize, pointbufL, CV_CALIB_CB_ADAPTIVE_THRESH );
-	//foundL = findChessboardCorners( Left, boardSize, pointbufL);
-	if(foundL) {
-	  printf("found corners \n");
-	  cvCvtColor(imgL,imgL,CV_RGB2BGR);
-	  saveImage(pathImg.c_str(),imgL,count);
-	  imageListL.push_back(iml);
-	  cornerListL.push_back(pointbufL);
-	  Mat cL(pointbufL);
-	  drawChessboardCorners(Left, boardSize, cL, foundL);
-	  count++;
-	}
-	else {
-	  printf("not found corners \n");
-	  printf("add corners by hand \n");
-	  cvCvtColor(imgL,imgL,CV_RGB2BGR);
-	  ImageOf<PixelRgb>& outimL=outPortLeft.prepare();
-	  outimL=*imageL;	    
-	  outPortLeft.write();
-	  unsigned char* pImage = imageL->getRawImage();
-	  int rowsize = imageL->getRowSize();
-	  for(int i = 0; i < boardWidth * boardHeight; i ++) {
-	    Bottle* b = imageClickInLeft.read(true);
-	    int u = b->get(0).asInt();
-	    int v = b->get(1).asInt();
-	    Point2f p((double)u,(double)v);
-	    printf("received the following bottle %d %d;",u, v);
-	    printf("%d points left \n", boardWidth * boardHeight - i);
-	    pointbufL.push_back(p);
-	    ImageOf<PixelRgb>& outimL=outPortLeft.prepare();
-	    pImage[v * rowsize + u * 3] = 255;
-	    outimL=*imageL;
-	    
-	    outPortLeft.write();
-	  }
-	  
-	  saveImage(pathImg.c_str(),imgL,count);
-	  imageListL.push_back(iml);
-	  cornerListL.push_back(pointbufL);
-	  Mat cL(pointbufL);
-	  drawChessboardCorners(Left, boardSize, cL, 1);
-	  count++;
-	}
-	
-	if(count > numOfPairs) {
-	  printf("count > numOfPairs branch \n");
-	  
-	  fprintf(stdout," Running %s Camera Calibration... \n", cameraName.c_str());
-	  monoCalibration(imageListL,cornerListL,this->boardWidth,this->boardHeight,this->Kleft,this->DistL);
-	  
-	  fprintf(stdout," Saving Calibration Results... \n");
-	  if(left)
-	    updateIntrinsics(imgL->width,imgL->height,Kleft.at<double>(0,0),Kleft.at<double>(1,1),Kleft.at<double>(0,2),Kleft.at<double>(1,2),DistL.at<double>(0,0),DistL.at<double>(0,1),DistL.at<double>(0,2),DistL.at<double>(0,3),"CAMERA_CALIBRATION_LEFT");
-	  else
-	    updateIntrinsics(imgL->width,imgL->height,Kleft.at<double>(0,0),Kleft.at<double>(1,1),Kleft.at<double>(0,2),Kleft.at<double>(1,2),DistL.at<double>(0,0),DistL.at<double>(0,1),DistL.at<double>(0,2),DistL.at<double>(0,3),"CAMERA_CALIBRATION_RIGHT");
-	  
-	  fprintf(stdout, "Calibration Results Saved in %s \n", camCalibFile.c_str());
-	  
-	  startCalibration=0;
-	  count=1;
-	  imageListL.clear();
-	}
-		
+      if(imageL!=NULL){
+          printf("ImageL != NULL : can continue...... \n");
+          bool foundL = false;
+          mutex->wait();
+          if(startCalibration > 0) {
+              printf("startCalibration flag active  \n");
+              string pathImg=imageDir;
+              preparePath(pathImg.c_str(), pathL,pathR,count);
+              string iml(pathL);
+              imgL= (IplImage*) imageL->getIplImage();
+              Mat Left(imgL);
+              std::vector<Point2f> pointbufL;
+              
+              foundL = findChessboardCorners( Left, boardSize, pointbufL, CV_CALIB_CB_ADAPTIVE_THRESH & CV_CALIB_CB_FAST_CHECK & CV_CALIB_CB_NORMALIZE_IMAGE);
+              //foundL = findChessboardCorners( Left, boardSize, pointbufL, CV_CALIB_CB_ADAPTIVE_THRESH );
+              //foundL = findChessboardCorners( Left, boardSize, pointbufL);
+              if(foundL) {
+                  printf("found corners \n");
+                  cvCvtColor(imgL,imgL,CV_RGB2BGR);
+                  saveImage(pathImg.c_str(),imgL,count);
+                  imageListL.push_back(iml);
+                  cornerListL.push_back(pointbufL);
+                  Mat cL(pointbufL);
+                  drawChessboardCorners(Left, boardSize, cL, foundL);
+                  count++;
+              }
+              else {
+                  printf("not found corners \n");
+                  printf("add corners by hand \n");
+                  cvCvtColor(imgL,imgL,CV_RGB2BGR);
+                  ImageOf<PixelRgb>& outimL=outPortLeft.prepare();
+                  outimL=*imageL;	    
+                  outPortLeft.write();
+                  unsigned char* pImage = imageL->getRawImage();
+                  int rowsize = imageL->getRowSize();
+                  for(int i = 0; i < boardWidth * boardHeight; i ++) {
+                      Bottle* b = imageClickInLeft.read(true);
+                      int u = b->get(0).asInt();
+                      int v = b->get(1).asInt();
+                      Point2f p((double)u,(double)v);
+                      printf("received the following bottle %d %d;",u, v);
+                      printf("%d points left \n", boardWidth * boardHeight - i);
+                      pointbufL.push_back(p);
+                      ImageOf<PixelRgb>& outimL=outPortLeft.prepare();
+                      pImage[v * rowsize + u * 3] = 255;
+                      outimL=*imageL;
+                      
+                      outPortLeft.write();
+                  }
+                  // saving the corners and images 
+                  saveImage(pathImg.c_str(),imgL,count);
+                  imageListL.push_back(iml);
+                  cornerListL.push_back(pointbufL);
+                  // drawing the corners
+                  Mat cL(pointbufL);
+                  drawChessboardCorners(Left, boardSize, cL, 1);
+                  count++;
+              }
+              
+              if(count > numOfPairs) {
+                  printf("count > numOfPairs branch \n");
+                  
+                  fprintf(stdout," Running %s Camera Calibration... \n", cameraName.c_str());
+                  monoCalibration(imageListL,cornerListL,this->boardWidth,this->boardHeight,this->Kleft,this->DistL);
+                  
+                  fprintf(stdout," Saving Calibration Results... \n");
+                  if(left)
+                      updateIntrinsics(imgL->width,imgL->height,Kleft.at<double>(0,0),Kleft.at<double>(1,1),Kleft.at<double>(0,2),Kleft.at<double>(1,2),DistL.at<double>(0,0),DistL.at<double>(0,1),DistL.at<double>(0,2),DistL.at<double>(0,3),"CAMERA_CALIBRATION_LEFT");
+                  else
+                      updateIntrinsics(imgL->width,imgL->height,Kleft.at<double>(0,0),Kleft.at<double>(1,1),Kleft.at<double>(0,2),Kleft.at<double>(1,2),DistL.at<double>(0,0),DistL.at<double>(0,1),DistL.at<double>(0,2),DistL.at<double>(0,3),"CAMERA_CALIBRATION_RIGHT");
+                  
+                  fprintf(stdout, "Calibration Results Saved in %s \n", camCalibFile.c_str());
+                  
+                  // reinitialize the cycle
+                  startCalibration=0;
+                  count=1;
+                  imageListL.clear();
+              }
+              
+          }
+          mutex->post();
+          ImageOf<PixelRgb>& outimL=outPortLeft.prepare();
+          outimL=*imageL;
+          outPortLeft.write();
+          
+          ImageOf<PixelRgb>& outimR=outPortRight.prepare();
+          outimR=*imageL;
+          outPortRight.write();
+          
+          if(foundL && startCalibration==1)
+              Time::delay(2.0);
+          
       }
-      mutex->post();
-      ImageOf<PixelRgb>& outimL=outPortLeft.prepare();
-      outimL=*imageL;
-      outPortLeft.write();
-      
-      ImageOf<PixelRgb>& outimR=outPortRight.prepare();
-      outimR=*imageL;
-      outPortRight.write();
-      
-      if(foundL && startCalibration==1)
-	Time::delay(2.0);
-      
-    }
   }
-  
-  
 }
 
 
@@ -760,8 +760,8 @@ void staticCalibThread::monoCalibration(const vector<string>& imageList, const v
     int i;
 
     float squareSize = 1.f, aspectRatio = 1.f;
-
-      Mat view, viewGray;
+    
+    Mat view, viewGray;
 
     for(i = 0; i<(int)imageList.size();i++)
     {
@@ -779,12 +779,13 @@ void staticCalibThread::monoCalibration(const vector<string>& imageList, const v
             drawChessboardCorners( view, boardSize, Mat(pointbuf), found );
             imagePoints.push_back(pointbuf);
          }
-	 else{
-	   pointbuf = cornerList[i];
-	   drawChessboardCorners( view, boardSize, Mat(pointbuf), found );
-	   imagePoints.push_back(pointbuf);
-	 }
-
+         else{
+             // using the corner saved in the corner list
+             pointbuf = cornerList[i];
+             printf("fetched the corners saved in the cornerList[%d] \n",i);
+             drawChessboardCorners( view, boardSize, Mat(pointbuf), found );
+             imagePoints.push_back(pointbuf);
+         }         
     }
     std::vector<Mat> rvecs, tvecs;
     std::vector<float> reprojErrs;
