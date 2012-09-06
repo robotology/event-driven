@@ -54,6 +54,8 @@ staticCalibThread::staticCalibThread(ResourceFinder &rf, Port* commPort, const c
     this->outNameLeft              = "/"+moduleName;
     this->outNameLeft              +=rf.check("outLeft",Value("/cam/left:o"),"Output image port (string)").asString();
 
+    this->rfCameraName             =rf.check("cameraName",Value("left"),"either left or right (string)").asString();
+
     Bottle stereoCalibOpts=rf.findGroup("STEREO_CALIBRATION_CONFIGURATION");
     this->boardWidth       =         stereoCalibOpts.check("boardWidth", Value(9)).asInt();
     this->boardHeight      =         stereoCalibOpts.check("boardHeight", Value(6)).asInt();
@@ -335,9 +337,10 @@ void staticCalibThread::monoCalibRun() {
     }
     
     bool left= imagePortInLeft.getInputCount()>0?true:false;
+    bool left = true;
   */
 
-  bool left = true;
+  
   
   string cameraName;
 

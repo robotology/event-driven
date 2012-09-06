@@ -93,7 +93,7 @@ private:
   string outNameLeft;
   string camCalibFile;
   string currentPathDir;
-  string cameraName;
+  string rfCameraName;
   std::vector<string> imageListR;
   std::vector<string> imageListL;
   std::vector<std::vector<cv::Point2f> > cornerListL;
