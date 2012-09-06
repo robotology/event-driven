@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
     if(!params.check("source"))
     {
         fprintf(stderr, "Please specify the address event representation origin\n");
-        fprintf(stderr, "--aer type (e.g. icub)\n");
+        fprintf(stderr, "--source type (e.g. icub)\n");
         return -1;
     }
     if(!params.check("f"))

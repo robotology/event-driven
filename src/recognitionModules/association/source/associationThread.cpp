@@ -28,7 +28,7 @@ associationThread::associationThread()
 
 associationThread::associationThread(string _src, unsigned int _type, string _eye, string _features, unsigned int _szSpace, unsigned int _szTemp, double _eigenvalSim, double _eigenvecSim, unsigned int _dim, bool _learn, yarp::os::BufferedPort<emorph::ehist::eventHistBuffer> *_port)
 //:RateThread(RATETH), featuresFile(_features), szSpace(_szSpace), szTemp(_szTemp), eigenvalSim(_eigenvalSim), eigenvecSim(_eigenvecSim), dim(_dim), learn(_learn)
-:featuresFile(_features), szSpace(_szSpace), szTemp(_szTemp), eigenvalSim(_eigenvalSim), eigenvecSim(_eigenvecSim), dim(_dim), learn(_learn)
+:source(_src), featuresFile(_features), szSpace(_szSpace), szTemp(_szTemp), eigenvalSim(_eigenvalSim), eigenvecSim(_eigenvecSim), dim(_dim), learn(_learn)
 {
     ptr_pose=0;
     ptr_nege=0;
@@ -113,10 +113,16 @@ associationThread::associationThread(string _src, unsigned int _type, string _ey
     else
         cerr << "Load positive features failed, error " << res << endl;
 
+//    if(!_src.compare("icub"))
+//       target=new eventUnmaskICUB();
+//    else
+//        target=new eventUnmaskDVS128(_type);
     if(!_src.compare("icub"))
-       target=new eventUnmaskICUB();
-    else
+        target=new eventUnmaskICUB();
+    else if(!_src.compare("dvs"))
         target=new eventUnmaskDVS128(_type);
+    else
+        std::cout << "[tsOptFlowThread] Error: Instanciation unmask failed!" << std::endl;
 
     stvStack=eventSpatiotemporalVolumeStack();
 
@@ -166,7 +172,8 @@ void associationThread::run()
             cerr << "Association error: missed event?" << endl;
         cout << "[associationThread] Reset all" << endl;
         stvStack.reset();
-        target->reset();
+        if(source.compare("icub"))
+            target->reset();
         initialized=false; 
     }
 }
@@ -721,11 +728,15 @@ void associationThread::sendhist()
     tmp = outputBuffer;
     outputPort->write();
 }
-
+void associationThread::setBuffer(emorph::ebuffer::eventBuffer &_buf)
+{
+    target->setBuffer(_buf.get_packet(), _buf.get_sizeOfPacket());
+}
+/* 
 void associationThread::setBuffer(char* _buf, unsigned int _sz)
 {
     target->setBuffer(_buf, _sz);
-}
+}*/
 
 void associationThread::createPreview(unsigned int _x, unsigned int _y, int _pol)
 {

@@ -15,5 +15,6 @@ association::~association()
 
 void association::onRead(eventBuffer &_buf)
 {
-    associaterThread->setBuffer(_buf.get_packet(), _buf.get_sizeOfPacket());
+    //associaterThread->setBuffer(_buf.get_packet(), _buf.get_sizeOfPacket());
+    associaterThread->setBuffer(_buf);
 }

@@ -20,6 +20,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
+#include "iCub/emorph/eventBuffer.h"
 #include "iCub/emorph/eventHistBuffer.h"
 #include "iCub/emorph/eventUnmask.h"
 #include "iCub/emorph/eventUnmaskDVS128.h"
@@ -40,7 +41,8 @@ public:
     unsigned int get_sizeh(std::string);
     unsigned int* get_ptrh(std::string);
 
-    void setBuffer(char*, unsigned int);
+    //void setBuffer(char*, unsigned int);
+    void setBuffer(emorph::ebuffer::eventBuffer&);
 
     void run();
 private:
@@ -73,7 +75,7 @@ private:
     void sendhist();
     void createPreview(unsigned int, unsigned int, int);
 
-
+    std::string source;
     std::string featuresFile;
     std::string featuresFolder;
 
