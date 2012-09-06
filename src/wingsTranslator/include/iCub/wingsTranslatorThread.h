@@ -106,7 +106,8 @@ private:
     double blockNeckPitchValue;             // value for blocking the pitch of the neck
     double eyesHalfBaseline;                // half distance between the eyes
     double valueInput[12];                  // vector of 12 values read from the input port
-    double cxl,cyl;                         // position of the center of the image
+    double cxl,cyl;                         // position of the center of the image left
+    double cxr,cyr;                         // position of the center of the image right
     double tableHeight;                     // height of the table
     double xTarget;                         // position of the target on the xAxis
     double yTarget;                         // position of the target on the yAxis
