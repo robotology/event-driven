@@ -25,6 +25,7 @@
 #include "iCub/emorph/eventUnmask.h"
 #include "iCub/emorph/eventUnmaskDVS128.h"
 #include "iCub/emorph/eventUnmaskICUB.h"
+#include "iCub/emorph/eventUnmaskICUBcircBuf.h"
 
 #include "iCub/emorph/eventSpatiotemporalVolumeStack.h"
 

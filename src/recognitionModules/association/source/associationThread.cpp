@@ -119,6 +119,8 @@ associationThread::associationThread(string _src, unsigned int _type, string _ey
 //        target=new eventUnmaskDVS128(_type);
     if(!_src.compare("icub"))
         target=new eventUnmaskICUB();
+    else if(!_src.compare("icubcircbuf"))
+        target=new eventUnmaskICUBcircBuf();
     else if(!_src.compare("dvs"))
         target=new eventUnmaskDVS128(_type);
     else

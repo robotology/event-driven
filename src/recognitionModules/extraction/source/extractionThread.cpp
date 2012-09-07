@@ -34,6 +34,8 @@ extractionThread::extractionThread(std::string _src, uint _type, std::string _ey
     stvStack=eventSpatiotemporalVolumeStack();
     if(!_src.compare("icub"))
        source=new eventUnmaskICUB();
+    else if(!_src.compare("icubcircbuf"))
+       source=new eventUnmaskICUBcircBuf();
     else
         source=new eventUnmaskDVS128(_type);
 
