@@ -42,7 +42,8 @@ public:
 
     eventUnmaskICUBcircBuf& operator=(const eventUnmaskICUBcircBuf&);
 
-	void setBuffer(char*, uint);
+	//void setBuffer(char*, uint);
+	void setBuffer(emorph::ebuffer::eventBuffer&);
     void reshapeBuffer();
     int getUmaskedData(uint&, uint&, int&, uint&, uint&);
     int reset();

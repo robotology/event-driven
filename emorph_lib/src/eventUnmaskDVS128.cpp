@@ -100,10 +100,14 @@ void eventUnmaskDVS128::objcpy(const eventUnmaskDVS128 &_obj)
     }
 }
 
-void eventUnmaskDVS128::setBuffer(char* i_buffer, uint i_sz)
+//void eventUnmaskDVS128::setBuffer(char* i_buffer, uint i_sz)
+void eventUnmaskDVS128::setBuffer(emorph::ebuffer::eventBuffer &_buf)
 {
     mutex.wait();
     
+    char* i_buffer = _buf.get_packet();
+    uint i_sz =_buf.get_sizeOfPacket();
+
     //std::cout << "\t\tConcate a new buffer" << std::endl;
     if(szBuffer==0)
     {

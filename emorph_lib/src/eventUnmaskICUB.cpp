@@ -47,7 +47,7 @@ eventUnmaskICUB::eventUnmaskICUB(bool _save)
 
     retinalSize = 128;
 
-    buffer=new uint[BUFFERBLOCK/4];
+    buffer=new u32[BUFFERBLOCK/4];
     bufSnapShot=NULL;
 #ifdef _DEBUG_
     dump = fopen("/home/clercq/Documents/Temp/iCubDump.txt", "w");
@@ -100,16 +100,19 @@ void eventUnmaskICUB::objcpy(const eventUnmaskICUB &_obj)
         retinalSize=_obj.retinalSize;
 
         delete[] buffer;
-        buffer = new uint[szInMem];
+        buffer = new u32[szInMem];
         memcpy(buffer, _obj.buffer, szBuffer);
     }
 }
 
-void eventUnmaskICUB::setBuffer(char* i_buffer, uint i_sz)
+//void eventUnmaskICUB::setBuffer(char* i_buffer, uint i_sz)
+void eventUnmaskICUB::setBuffer(emorph::ebuffer::eventBuffer &_buf)
 {
     mutex.wait();
     //std::cout << "[eventUnmaskICUB] setBuffer called" << std::endl;
-    
+    u32  *i_buffer = (u32*)_buf.get_packet();
+    uint i_sz =_buf.get_sizeOfPacket();
+
     if(szBuffer==0)
     {
 #ifdef _DEBUG_
@@ -128,10 +131,10 @@ void eventUnmaskICUB::setBuffer(char* i_buffer, uint i_sz)
         //std::cout << "\t\t\t- Expand the size of the gBuffer" << std::endl;
         //szInMem+=BUFFERBLOCK;
         szInMem=(uint)ceil((double)(i_sz+szBuffer)/(double)BUFFERBLOCK)*BUFFERBLOCK;
-        uint *buftmp=new uint[szBuffer/4];
+        u32 *buftmp=new u32[szBuffer/4];
         memcpy(buftmp, buffer, szBuffer);
         delete[] buffer;
-        buffer = new uint[szInMem/4];
+        buffer = new u32[szInMem/4];
         memcpy(buffer, buftmp, szBuffer);
     }
     //std::cout << "\t\t\t- Concat the buffer (size in byte: " << sz+i_sz << ", real size in mem: " << szInMem << ")" << std::endl;
@@ -144,6 +147,7 @@ void eventUnmaskICUB::setBuffer(char* i_buffer, uint i_sz)
 
 void eventUnmaskICUB::reshapeBuffer()
 {
+/*
     mutex.wait();
     std::cout << "\t\t*** Reshape the buffer ***" << std::endl;
     szBuffer=szBuffer-(eventIndex*4);
@@ -160,7 +164,7 @@ void eventUnmaskICUB::reshapeBuffer()
     nEvent=szBuffer/4;
     std::cout << "\t\t*** Buffer reshaped ***" << std::endl;
     //std::cout << "\t\t\t- New size in byte: " << sz << ", real size in mem: " << szInMem << std::endl;
-    mutex.post();
+    mutex.post();*/
 }
 
 int eventUnmaskICUB::getUmaskedData(uint& cartX, uint& cartY, int& polarity, uint& eye, uint& timestamp)
@@ -270,10 +274,10 @@ uint eventUnmaskICUB::snapBuffer()
 #ifdef _DEBUG_
 //        fprintf(dump,"--SNAP with rescue RSZ = %d--", remainingSz);
 #endif
-        uint *buftmp=new uint[(uint)ceil((double)remainingSz/4)];
+        uint *buftmp=new u32[(uint)ceil((double)remainingSz/4)];
         memcpy(buftmp, bufSnapShot+eventIndex, remainingSz);
         delete[] bufSnapShot;
-        bufSnapShot = new uint[(uint)ceil((double)(szBuffer+remainingSz)/4)];
+        bufSnapShot = new u32[(uint)ceil((double)(szBuffer+remainingSz)/4)];
         memcpy(bufSnapShot, buftmp, remainingSz);
         delete[] buftmp;
         memcpy(bufSnapShot+(remainingSz/4), buffer, szBuffer);
@@ -285,7 +289,7 @@ uint eventUnmaskICUB::snapBuffer()
 //        fprintf(dump,"--SNAP without rescue RSZ = %d--", remainingSz);
 #endif
         delete[] bufSnapShot;
-        bufSnapShot = new uint[szBuffer/4];
+        bufSnapShot = new u32[szBuffer/4];
         memcpy(bufSnapShot, buffer, szBuffer);
         szBufSnapShot=szBuffer;
     }

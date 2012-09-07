@@ -127,9 +127,14 @@ void eventUnmaskICUBcircBuf::objcpy(const eventUnmaskICUBcircBuf &_obj)
     }
 }
 
-void eventUnmaskICUBcircBuf::setBuffer(char* i_buffer, uint i_sz)
+//void eventUnmaskICUBcircBuf::setBuffer(char* i_buffer, uint i_sz)
+void eventUnmaskICUBcircBuf::setBuffer(emorph::ebuffer::eventBuffer &_buf)
 {    
     cBufMutex[whichBuf].wait();
+
+    char* i_buffer = _buf.get_packet();
+    uint i_sz =_buf.get_sizeOfPacket();
+
     //std::cout << "[eventUnmaskICUBcircBuf] setBuffer, fills buffer " << whichBuf << std::endl;
     
     //szInMem+=BUFFERBLOCK;

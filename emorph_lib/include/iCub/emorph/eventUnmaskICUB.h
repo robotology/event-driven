@@ -41,7 +41,8 @@ public:
 
     eventUnmaskICUB& operator=(const eventUnmaskICUB&);
 
-	void setBuffer(char*, uint);
+	//void setBuffer(char*, uint);
+	void setBuffer(emorph::ebuffer::eventBuffer&);
     void reshapeBuffer();
     int getUmaskedData(uint&, uint&, int&, uint&, uint&);
     int reset();
@@ -50,8 +51,8 @@ private:
     uint snapBuffer();
 
     void objcpy(const eventUnmaskICUB&);
-    uint *buffer;
-    uint *bufSnapShot;
+    u32 *buffer;
+    u32 *bufSnapShot;
     uint tsPacket;
     bool save;
 #ifdef _DEBUG_

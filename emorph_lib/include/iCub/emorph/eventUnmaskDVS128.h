@@ -18,6 +18,7 @@
 #ifndef EVENTUNMASKDVS128_H
 #define EVENTUNMASKDVS128_H
 
+#include "eventBuffer.h"
 #include "eventUnmask.h"
 
 //#define _DEBUG
@@ -36,7 +37,8 @@ public:
 
     eventUnmaskDVS128& operator=(const eventUnmaskDVS128&);
 //Internally, the raw stereo addresses presently use bit 15 to mark the right eye, i.e. 1=right, 0=left. However this assignment is also likely to change without notice.
-	void setBuffer(char*, uint);
+	//void setBuffer(char*, uint);
+	void setBuffer(emorph::ebuffer::eventBuffer&);
     void reshapeBuffer();
     int getUmaskedData(uint&, uint&, int&, uint&, uint&);
 

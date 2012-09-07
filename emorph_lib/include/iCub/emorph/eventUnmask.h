@@ -27,12 +27,16 @@
 #include <cmath>
 #include <cstring>
 
+#include <stdint.h>
 //#include <yarp/os/all.h>
 #include <yarp/os/Semaphore.h>
+
+#include "eventBuffer.h"
 
 #define BUFFERBLOCK 65536//32768 
 
 typedef unsigned int uint;
+typedef uint32_t u32;
 
 using namespace std;
 namespace emorph
@@ -50,7 +54,8 @@ public:
 
     eventUnmask& operator=(const eventUnmask&);
 
-	virtual void setBuffer(char*, uint)=0;
+	//virtual void setBuffer(char*, uint)=0;
+	virtual void setBuffer(emorph::ebuffer::eventBuffer&)=0;
     virtual void reshapeBuffer()=0;
     virtual int reset()=0;
     virtual int getUmaskedData(uint&, uint&, int&, uint&, uint&)=0;
