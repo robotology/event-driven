@@ -28,7 +28,7 @@ class convert:public yarp::os::Thread
 public:
 	convert(unsigned int, unsigned int, unsigned int, std::string, unsigned int, unsigned int);
 	~convert();
-    void setBuffer(char*, unsigned int);
+    void setBuffer(emorph::ebuffer::eventBuffer&);
     
     void initFrames();
     void createFrames();

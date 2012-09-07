@@ -40,12 +40,12 @@ convert::~convert()
     portRight.close();
 }
 
-void convert::setBuffer(char* _buf, unsigned int _sz)
+void convert::setBuffer(emorph::ebuffer::eventBuffer &_buf)
 {
 #ifdef _DEBUG
     cout << "[convert] throw buffer to unmask instance" << endl;
 #endif
-    unmasker->setBuffer(_buf, _sz);
+    unmasker->setBuffer(_buf);
 }
 
 void convert::initFrames()
