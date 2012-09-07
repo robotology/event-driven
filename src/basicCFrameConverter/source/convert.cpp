@@ -29,6 +29,8 @@ convert::convert(unsigned int i_width, unsigned int i_height, unsigned int _acc,
 
     if(!_src.compare("icub"))
         unmasker=new eventUnmaskICUB();
+    else if(!_src.compare("icubcircbuf"))
+        unmasker=new eventUnmaskICUBcircBuf();
     else if(!_src.compare("dvs"))
         unmasker=new eventUnmaskDVS128(_type);
 }
