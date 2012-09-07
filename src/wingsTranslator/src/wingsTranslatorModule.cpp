@@ -263,21 +263,29 @@ bool wingsTranslatorModule::respond(const Bottle& command, Bottle& reply) {
             //reply.addString("get3D");
             int u = command.get(1).asInt();
             int v = command.get(2).asInt();
-            ConstString stereoRef = command.get(3).asString();
-            double x = command.get(4).asDouble();
-            double y = command.get(5).asDouble();
-            printf("received get3d query with u %d v %d camera %s \n", u,v, stereoRef.c_str());
-            
             yarp::sig::Vector res;
-            if(stereoRef == "left") {
-                tf->set3DTarget(x,y);
-                res = tf->get3dWingsLeft(u,v);
+
+            if(command.size() > 3) {
+                ConstString stereoRef = command.get(3).asString();
+                if(command.size() > 4) {
+                    double x = command.get(4).asDouble();
+                    double y = command.get(5).asDouble();
+                    printf("received get3d query with u %d v %d camera %s \n", u,v, stereoRef.c_str());
+                    tf->set3DTarget(x,y);
+                }
                 
+                
+                if(stereoRef == "left") {
+                    res = tf->get3dWingsLeft(u,v);
+                }
+                else {
+                    res = tf->get3dWingsRight(u,v);
+                }
             }
             else {
-                tf->set3DTarget(x,y);
-                res = tf->get3dWingsRight(u,v);
+                res = tf->get3dWingsLeft(u,v);                
             }
+            
             
             reply.addDouble(res[0]);
             reply.addDouble(res[1]);
