@@ -732,7 +732,7 @@ void associationThread::sendhist()
 }
 void associationThread::setBuffer(emorph::ebuffer::eventBuffer &_buf)
 {
-    target->setBuffer(_buf.get_packet(), _buf.get_sizeOfPacket());
+    target->setBuffer(_buf);
 }
 /* 
 void associationThread::setBuffer(char* _buf, unsigned int _sz)
