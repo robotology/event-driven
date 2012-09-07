@@ -18,6 +18,7 @@
 #include <yarp/math/Math.h>
 #include <yarp/math/SVD.h>
 
+#include "iCub/emorph/eventBuffer.h"
 #include "iCub/emorph/eventUnmask.h"
 #include "iCub/emorph/eventUnmaskDVS128.h"
 #include "iCub/emorph/eventUnmaskICUB.h"
@@ -57,7 +58,7 @@ public:
     */
     //inline double* get(){return ptr_features;};
     virtual void run();
-    void setBuffer(char*, unsigned int); 
+    void setBuffer(emorph::ebuffer::eventBuffer&); 
 private:
     /**
     *   int extract()

@@ -474,8 +474,8 @@ void extractionThread::splitFilename (const string& str, string& _name)
     _name = str.substr(found+1);
 }
 
-void extractionThread::setBuffer(char* _buf, uint _sz)
+void extractionThread::setBuffer(emorph::ebuffer::eventBuffer &_buf)
 {
     //cout << "Set buffer in unmask instance" << endl;
-    source->setBuffer(_buf, _sz);
+    source->setBuffer(_buf);
 }

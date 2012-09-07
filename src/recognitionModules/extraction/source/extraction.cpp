@@ -15,5 +15,5 @@ extraction::~extraction()
 
 void extraction::onRead(eventBuffer& _buf)
 {
-    extracterThread->setBuffer(_buf.get_packet(), _buf.get_sizeOfPacket());
+    extracterThread->setBuffer(_buf);
 }
