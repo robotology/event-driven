@@ -330,7 +330,7 @@ void tsOptFlowThread::setBuffer(emorph::ebuffer::eventBuffer &_buf)
 #ifdef _DEBUG
     std::cout << "[tsOptFlowThread] Forward buffer to umask instance" << std::endl;
 #endif
-    unmasker->setBuffer(_buf.get_packet(), _buf.get_sizeOfPacket());
+    unmasker->setBuffer(_buf);
 #ifdef _DEBUG
     std::cout << "[tsOptFlowThread] Buffer forwarded" << std::endl;
 #endif
