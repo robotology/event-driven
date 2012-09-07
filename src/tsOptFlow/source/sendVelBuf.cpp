@@ -30,6 +30,7 @@ sendVelBuf::sendVelBuf(VelocityBuffer* _velb, Semaphore *_sem, BufferedPort<Velo
 
 sendVelBuf::~sendVelBuf()
 {
+    port->close();
 }
 
 void sendVelBuf::run()

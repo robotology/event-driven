@@ -95,11 +95,13 @@ printMatrix(sobely);
                 ++iT2N;
             }
         }
-    for(int i=0; i<iT2N; ++i)
-        std::cout << *(trans2neigh+i*2) << " " << *(trans2neigh+i*2+1) << endl;
+//    for(int i=0; i<iT2N; ++i)
+//        std::cout << *(trans2neigh+i*2) << " " << *(trans2neigh+i*2+1) << endl;
 
     if(!_src.compare("icub"))
         unmasker=new eventUnmaskICUB();
+    else if(!_src.compare("icubcircbuf"))
+        unmasker=new eventUnmaskICUBcircBuf();
     else if(!_src.compare("dvs"))
         unmasker=new eventUnmaskDVS128(_type);
     else
@@ -323,12 +325,12 @@ void tsOptFlowThread::updateAll()
 //    printMatrix(activity);
 }
 
-void tsOptFlowThread::setBuffer(char* _buf, uint _sz)
+void tsOptFlowThread::setBuffer(emorph::ebuffer::eventBuffer &_buf)
 {
 #ifdef _DEBUG
     std::cout << "[tsOptFlowThread] Forward buffer to umask instance" << std::endl;
 #endif
-    unmasker->setBuffer(_buf, _sz);
+    unmasker->setBuffer(_buf.get_packet(), _buf.get_sizeOfPacket());
 #ifdef _DEBUG
     std::cout << "[tsOptFlowThread] Buffer forwarded" << std::endl;
 #endif

@@ -57,7 +57,7 @@ void tsOptFlow::onRead(eventBuffer& _buf)
 #ifdef _DEBUG
     cout << "[tsOptFlow] Buffer to forward received" << endl;
 #endif
-    tsofThreadPos->setBuffer(_buf.get_packet(), _buf.get_sizeOfPacket());
-    tsofThreadNeg->setBuffer(_buf.get_packet(), _buf.get_sizeOfPacket());
+    tsofThreadPos->setBuffer(_buf);
+    tsofThreadNeg->setBuffer(_buf);
 }
 

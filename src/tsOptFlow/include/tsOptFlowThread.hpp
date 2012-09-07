@@ -38,9 +38,11 @@
 #include <gsl/gsl_sort.h>
 #include <gsl/gsl_statistics.h>
 
+#include "iCub/emorph/eventBuffer.h"
 #include "iCub/emorph/eventUnmask.h"
 #include "iCub/emorph/eventUnmaskDVS128.h"
 #include "iCub/emorph/eventUnmaskICUB.h"
+#include "iCub/emorph/eventUnmaskICUBcircBuf.h"
 
 #include "VelocityBuffer.h"
 
@@ -59,7 +61,7 @@ class tsOptFlowThread:public yarp::os::Thread
 public:
     tsOptFlowThread(uint&, uint&, std::string&, uint&, uint&, uint&, double&, uint&, uint&, uint&, double&, double&, int&, std::string&, uint&, bool&, yarp::sig::Matrix*, yarp::sig::Matrix*, yarp::os::Semaphore*, VelocityBuffer*);
     ~tsOptFlowThread();
-    void setBuffer(char*, uint);
+    void setBuffer(emorph::ebuffer::eventBuffer&);
     void run();
 private:
 
