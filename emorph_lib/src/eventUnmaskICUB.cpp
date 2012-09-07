@@ -50,7 +50,7 @@ eventUnmaskICUB::eventUnmaskICUB(bool _save)
     buffer=new u32[BUFFERBLOCK/4];
     bufSnapShot=NULL;
 #ifdef _DEBUG_
-    dump = fopen("/home/clercq/Documents/Temp/iCubDump.txt", "w");
+    dump = fopen("/home/icub/Clercq/icubDump.txt", "w");
     if(dump==NULL)
         std::cout << "[eventUnmaskICUB] Error, file can't be opened or created" << std::endl;
 #endif
@@ -213,9 +213,12 @@ int eventUnmaskICUB::getUmaskedData(uint& cartX, uint& cartY, int& polarity, uin
     {
 #ifdef _DEBUG_
         fprintf(dump,"%s","DEADDEAD ");
+        fprintf(dump,"%08X",tsPacket);
+        fprintf(dump,"%s\n","<=MISSTS");
 #endif
         timestamp=ptimestamp;
-        eventIndex--;
+        //eventIndex--;
+        return 0;
     }
     blob = bufSnapShot[eventIndex++];
     if(blob&0x80000000)
