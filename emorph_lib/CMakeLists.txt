@@ -24,6 +24,7 @@ SET(folder_source
   src/eventUnmask.cpp
   src/eventUnmaskDVS128.cpp
   src/eventUnmaskICUB.cpp
+  src/eventUnmaskICUBcircBuf.cpp
   src/objDistBuffer.cpp
 )
 
@@ -47,6 +48,7 @@ SET(folder_header
   include/iCub/emorph/eventUnmask.h
   include/iCub/emorph/eventUnmaskDVS128.h
   include/iCub/emorph/eventUnmaskICUB.h
+  include/iCub/emorph/eventUnmaskICUBcircBuf.h
   include/iCub/emorph/objDistBuffer.h
 )
 
