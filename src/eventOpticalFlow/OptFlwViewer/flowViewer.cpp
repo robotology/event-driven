@@ -2,7 +2,7 @@
 #include <iostream>
 
 flowViewer::flowViewer(int visMethod )
-    : RateThread(10) {
+{
 
     vecBaseImg.resize(4*XDIM,4*YDIM);
 
@@ -31,9 +31,7 @@ flowViewer::flowViewer(int visMethod )
 
 }
 
-void flowViewer::
-setPorts(BufferedPort< yarp::sig::ImageOf <yarp::sig::PixelMono16> > * oPort, VelocityGrabber * iPort){
-    inPort = iPort;
+void flowViewer::setOutPort(BufferedPort< yarp::sig::ImageOf <yarp::sig::PixelMono16> > * oPort ){
     outPort = oPort;
 }
 
@@ -41,22 +39,6 @@ flowViewer::~flowViewer()
 {
 }
 
-void flowViewer::run(){
-
-
-    VelocityBuffer * vb;
-    vb = inPort->getVelocities();
-    if (vb != NULL){
-//       cout << vb -> getSize() << endl;
-       avrageFilter(*vb);
-       delete vb;
-    } else{
-       yarp::sig::ImageOf<yarp::sig::PixelMono16>& img=outPort-> prepare();
-       img=vecBaseImg;
-       outPort->write();
-    }
-
-}
 
 void flowViewer::avrageFilter(VelocityBuffer& packet){
     int x, y;

@@ -87,8 +87,8 @@ bool VelocityBuffer::addDataCheckFull(short x, short y, double vx, double vy, un
     if (tmp > vyMax)
         vyMax = tmp;
 
-    if ((ts - TSs[0] >= bufferingTime) || size == BUFFER_LENGTH){
-        std::cout << size << std::endl;
+    if (/*(ts - TSs[0] >= bufferingTime) ||*/ size == BUFFER_LENGTH){
+   //     std::cout << size << std::endl;
         return true;
     }
 

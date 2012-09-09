@@ -19,7 +19,7 @@
 #ifndef VELOCITYBUFFER_H_
 #define VELOCITYBUFFER_H_
 
-#define BUFFER_LENGTH 5000
+#define BUFFER_LENGTH 1000
 
 #include <float.h>
 #include <cmath>
