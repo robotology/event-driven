@@ -251,7 +251,6 @@ void WorldOptFlow::calVelocities(CameraEvent ** evntBffr, int bffrSize){
 			continue;
 
 
-
 		evtRw = evntPtr->getRowIdx();
 		evtClm = evntPtr->getColumnIdx();
 
