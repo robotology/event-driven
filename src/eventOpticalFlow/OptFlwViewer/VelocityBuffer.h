@@ -25,6 +25,8 @@
 #include <cmath>
 #include <iostream>
 
+#include <vector>
+
 #include <yarp/os/Portable.h>
 #include <yarp/os/Bottle.h>
 #include <yarp/os/ConnectionReader.h>
@@ -33,6 +35,7 @@
 using namespace yarp::os;
 
 class VelocityBuffer : public yarp::os::Portable{
+
     short size;
     double vxMin;
     double vxMax;
@@ -42,17 +45,19 @@ class VelocityBuffer : public yarp::os::Portable{
     short Ys[BUFFER_LENGTH];
     double Vxs[BUFFER_LENGTH];
     double Vys[BUFFER_LENGTH];
-    double rel[BUFFER_LENGTH];
     unsigned long TSs [BUFFER_LENGTH];
+    unsigned long bufferingTime;
 public:
 
     VelocityBuffer();
+    VelocityBuffer(unsigned long timeInt );
 
     virtual ~VelocityBuffer();
     virtual bool read(ConnectionReader &);
     virtual bool write(ConnectionWriter &);
 
     void setData(const VelocityBuffer &src);
+    bool addData(const VelocityBuffer &data);
     bool addData(short, short, double, double,  unsigned long , double);
     bool addDataCheckFull(short, short, double, double, unsigned long, double );
     bool isFull();
@@ -65,7 +70,7 @@ public:
     inline double getVx(int idx){return Vxs[idx];};
     inline double getVy(int idx){return Vys[idx];};
     inline unsigned long getTs(int idx){return TSs[idx];};
-    inline double getRel(int idx){return rel[idx];};
+    inline double getRel(int idx){return 1;};
 
     double getVxMin();
     double getVxMax();

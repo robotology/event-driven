@@ -26,48 +26,66 @@
 using namespace std;
 
 
+
 class VelocityGrabber: public yarp::os::BufferedPort<VelocityBuffer>{
 
     unsigned int lostCntr;
     yarp::os::Semaphore bfrMutex;
-    queue < VelocityBuffer * > velBfr;
+    // queue < VelocityBuffer * > velBfr;
+    VelocityBuffer * velBuf;
 
 public:
     VelocityGrabber(){
         lostCntr = 0;
+        velBuf = new VelocityBuffer();
     }
 
     virtual void onRead(VelocityBuffer & data){
-        VelocityBuffer * vb = new VelocityBuffer();
-        vb->setData(data);
+        //VelocityBuffer * vb = new VelocityBuffer();
+        //vb->setData(data);
+        //bfrMutex.wait();
+        //velBfr.push(vb);
+        //bfrMutex.post();
+
         bfrMutex.wait();
-        velBfr.push(vb);
+        std::cout << velBuf -> addData(data) << std::endl;
         bfrMutex.post();
     }
 
 
 
     VelocityBuffer *  getVelocities(){
-        VelocityBuffer * res = NULL;
-        bfrMutex.wait();
-        if (velBfr.size() > 0){
-           res = velBfr.front();
-           velBfr.pop();
-        }
-        bfrMutex.post();
-        return res;
+//        VelocityBuffer * res = NULL;
+//        bfrMutex.wait();
+//        if (velBfr.size() > 0){
+//           res = velBfr.front();
+//           velBfr.pop();
+//        }
+//        bfrMutex.post();
+//        return res;
+
+       VelocityBuffer * res = NULL;
+       bfrMutex.wait();
+       if (velBuf->getSize() > 0){
+          res = velBuf;
+          velBuf = new VelocityBuffer();
+       }
+       bfrMutex.post();
+       return res;
+
 
     }
 
     ~VelocityGrabber(){
-        VelocityBuffer * vb;
+//        VelocityBuffer * vb;
+//
+//        for (int i = 0; i < velBfr.size(); ++i) {
+//            vb = velBfr.front();
+//            delete vb;
+//            velBfr.pop();
+//        }
 
-        for (int i = 0; i < velBfr.size(); ++i) {
-            vb = velBfr.front();
-            delete vb;
-            velBfr.pop();
-        }
-
+        delete velBuf;
         cout << "Sorry! " << lostCntr <<  " Velocity bufferes were lost." << endl;
     }
 };
