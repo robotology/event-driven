@@ -26,6 +26,12 @@ VelocityBuffer::VelocityBuffer(){
     vyMin = DBL_MAX;
     vyMax = -1;
     size = 0;
+    bufferingTime = 18750; //10000;
+}
+
+VelocityBuffer::VelocityBuffer(unsigned long timeInt ){
+    VelocityBuffer();
+    bufferingTime = timeInt;
 }
 
 bool VelocityBuffer::addData(short x, short y, double vx, double vy, unsigned long ts, double reliablity){
@@ -83,8 +89,10 @@ bool VelocityBuffer::addDataCheckFull(short x, short y, double vx, double vy, un
     if (tmp > vyMax)
         vyMax = tmp;
 
-    if (size == BUFFER_LENGTH)
+    if ((ts - TSs[0] >= bufferingTime) || size == BUFFER_LENGTH){
+        std::cout << size << std::endl;
         return true;
+    }
 
     return false;
 }

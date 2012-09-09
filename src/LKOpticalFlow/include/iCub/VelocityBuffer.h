@@ -19,7 +19,7 @@
 #ifndef VELOCITYBUFFER_H_
 #define VELOCITYBUFFER_H_
 
-#define BUFFER_LENGTH 500
+#define BUFFER_LENGTH 5000
 
 #include <float.h>
 #include <cmath>
@@ -44,9 +44,11 @@ class VelocityBuffer : public yarp::os::Portable{
     double Vys[BUFFER_LENGTH];
     double rel[BUFFER_LENGTH];
     unsigned long TSs [BUFFER_LENGTH];
+    unsigned long bufferingTime;
 public:
 
     VelocityBuffer();
+    VelocityBuffer(unsigned long timeInt );
 
     virtual ~VelocityBuffer();
     virtual bool read(ConnectionReader &);

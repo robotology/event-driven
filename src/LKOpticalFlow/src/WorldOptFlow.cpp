@@ -125,14 +125,14 @@ void WorldOptFlow::run(){
 
         updtWrldStus();
 
-//        clock_t start= clock();
+//      clock_t start= clock();
 
         calVelocities(eventsBfr, eventNo);
 
 //        clock_t end = clock();
 //        double elapsed = ( (double) (end - start) ) / CLOCKS_PER_SEC;
 //        cout.precision(10);
-//        cout << "time :  " << elapsed << " " << eventNo << endl;
+//        cout << elapsed << " " << eventNo << endl;
 
         prevWorldStatus->updateMatrix(worldStatus);
 

@@ -56,8 +56,8 @@ void AERGrabber::onRead(eventBuffer & eBuffer){
 
     eventNo = eBuffer.get_sizeOfPacket()/4;
     u32* buf2 = (u32*) eBuffer.get_packet();
-    if (evtBuffer.size() > 50)
-        return;
+//    if (evtBuffer.size() > 50)
+//        return;
 
  //   cout << "eventNo" << eventNo << endl;
 
