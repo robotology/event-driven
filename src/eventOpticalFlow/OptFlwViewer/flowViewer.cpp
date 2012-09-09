@@ -2,17 +2,17 @@
 #include <iostream>
 
 flowViewer::flowViewer(int visMethod )
-{
+    : RateThread(1) {
 
     vecBaseImg.resize(4*XDIM,4*YDIM);
 
     IMGFOR(vecBaseImg ,i , j) {
-        vecBaseImg(i, j) = 160;
+        vecBaseImg(i, j) = 150;
     }
 
     normBaseImg.resize(XDIM, YDIM);
     IMGFOR(normBaseImg ,i , j) {
-        normBaseImg(i, j) = 100;
+        normBaseImg(i, j) = 150;
     }
 
     xVels.resize(XDIM + 2*FILTER_NGHBRHD, YDIM + 2*FILTER_NGHBRHD);    // xVels.resize(XDIM, YDIM);
@@ -31,7 +31,9 @@ flowViewer::flowViewer(int visMethod )
 
 }
 
-void flowViewer::setOutPort(BufferedPort< yarp::sig::ImageOf <yarp::sig::PixelMono16> > * oPort ){
+void flowViewer::
+setPorts(BufferedPort< yarp::sig::ImageOf <yarp::sig::PixelMono16> > * oPort, VelocityGrabber * iPort){
+    inPort = iPort;
     outPort = oPort;
 }
 
@@ -39,10 +41,22 @@ flowViewer::~flowViewer()
 {
 }
 
+void flowViewer::run(){
+
+    VelocityBuffer * vb;
+    vb = inPort->getVelocities();
+    if (vb != NULL){
+       cout << vb -> getSize() << endl;
+       avrageFilter(*vb);
+       delete vb;
+    }
+
+}
 
 void flowViewer::avrageFilter(VelocityBuffer& packet){
     int x, y;
     double vx, vy;
+
 
     int packetSize =  packet.getSize();
     // Update Values with the ariving packet
@@ -107,7 +121,7 @@ void flowViewer::avrageFilter(VelocityBuffer& packet){
 
     switch (visMthd) {
         case 1:
-            run(packet);
+            velVect(packet);
             break;
         case 2:
             velNorm(packet);
@@ -115,7 +129,7 @@ void flowViewer::avrageFilter(VelocityBuffer& packet){
     }
 }
 
-void flowViewer::run(VelocityBuffer& data)
+void flowViewer::velVect(VelocityBuffer& data)
 {
     double average, sptDer;
     int x, y;
@@ -131,9 +145,9 @@ void flowViewer::run(VelocityBuffer& data)
     img=vecBaseImg;
 
     size = data.getSize();
-   
-    ax = (data.getVxMax() == 0 ? 1 : 40 / data.getVxMax());
-    ay = (data.getVyMax() == 0 ? 1 : 40 / data.getVyMax());
+
+    ax =  (data.getVxMax() == 0 ? 1 : 40 / data.getVxMax());
+    ay =  (data.getVyMax() == 0 ? 1 : 40 / data.getVyMax());
 
     average = 0; sptDer = 0;
     for (int i = 0; i < size; ++i) {
@@ -189,6 +203,7 @@ void flowViewer::velNorm(VelocityBuffer& data)
 
      double ax, bx, ay, by;
      double vvx, vvy;
+     int vx_int, vy_int;
 
      int size;
      double norm, tmp;
@@ -208,33 +223,33 @@ void flowViewer::velNorm(VelocityBuffer& data)
          vy = data.getVy(i);
 
          vvx = ax * vx;
-         vvy = ay * vy;
+         vvy = ax * vy;
 
-         norm=sqrt(vvx*vvx+vvy*vvy);
+         vx_int = (vvx >= 0 ? int(vvx+0.5) : int(vvx - 0.5) ) ;
+         vy_int = (vvy >= 0 ? int(vvy+0.5) : int(vvy - 0.5) ) ;
+         norm=sqrt(vx_int*vx_int+vy_int*vy_int);
+
+//         norm=sqrt(vvx*vvx+vvy*vvy);
+//        norm=sqrt(vx*vx+vy*vy) * 500;
 
 
         if (norm>= 0.0){
 
-             //        if (x >= 1 && y>= 1 && x < 127 && y < 127) {
-             //            for (int j = -1; j <= 1; ++j) {
-             //                for (int k = -1; k <= 1; ++k) {
-             //                    img(x + j,y + k) = (norm * 5 > 255 ? 255 : norm * 5) ;
-             //                }
-             //            }
-             //        }
-             //        else
-             //           img(x,y) = (norm * 255 > 255 ? 255 : norm * 255) ;
-           img(x ,y ) = (norm * 5 > 255 ? 255 : norm * 5) ;
+           img(x ,y ) = (norm * 5 > 255 ? 255 : int( norm + .5) * 5) ;
         }
 
-         average += norm;
+         //average += int (norm + .5);
+         average += norm ;
+         //sptDer += int (norm + .5) * int (norm + .5);
          sptDer += norm * norm;
      }
 
      average = average / size;
      sptDer = sptDer / size;
      sptDer = sptDer - average * average;
- //    cout << average << " " << sptDer << endl;
+     sptDer = sqrt(sptDer);
+     cout << average << endl;
+     //cout << average << " " << sptDer << endl;
 
      outPort->write();
 

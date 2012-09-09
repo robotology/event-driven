@@ -2,11 +2,12 @@
 #define __FLOWVIEWER_H__
 
 #include "VelocityBuffer.h"
-
+#include "VelocityGrabber.h"
 
 #include <cmath>
 #include <iostream>
 
+#include <yarp/os/RateThread.h>
 #include <yarp/sig/Image.h>
 #include <yarp/sig/Matrix.h>
 #include <yarp/os/BufferedPort.h>
@@ -20,10 +21,14 @@
 using namespace std;
 using namespace yarp::os;
 
-class flowViewer {
+class VelocityGrabber;
+
+class flowViewer : public RateThread{
     yarp::sig::ImageOf<yarp::sig::PixelMono16> vecBaseImg;
     yarp::sig::ImageOf<yarp::sig::PixelMono16> normBaseImg;
     BufferedPort< yarp::sig::ImageOf <yarp::sig::PixelMono16> > * outPort;
+
+    VelocityGrabber * inPort;
 
     yarp::sig::Matrix xVels;
     yarp::sig::Matrix yVels;
@@ -42,19 +47,22 @@ class flowViewer {
 
 public:
 
-
     flowViewer(int visMethod = 1);
-    void setOutPort(BufferedPort< yarp::sig::ImageOf <yarp::sig::PixelMono16> > * );
+    void setPorts(BufferedPort< yarp::sig::ImageOf <yarp::sig::PixelMono16> > * , VelocityGrabber * );
     void setVisMethod(int method){visMthd = method;}
-    ~flowViewer();
+    virtual ~flowViewer();
+
+    virtual void run();
 
     void avrageFilter(VelocityBuffer& data);
 
 
-    void run(VelocityBuffer &);
+    void velVect(VelocityBuffer &);
     void velNorm(VelocityBuffer& data);
 
 
 };
+
+
 
 #endif //OPTICALFLOWVIEWER

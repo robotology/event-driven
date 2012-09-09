@@ -13,87 +13,7 @@
 using namespace std;
 using namespace yarp::os;
 
-#define VEL_BFR_SIZE 50
 
-class VelocityGrabber: public BufferedPort<VelocityBuffer>{
-
-    unsigned int lostCntr;
-//    short firstIdx, lastIdx;
-    yarp::os::Semaphore bfrMutex;
-    //VelocityBuffer * velBfr [VEL_BFR_SIZE];
-    queue < VelocityBuffer * > velBfr;
-
-public:
-    VelocityGrabber(){
-        lostCntr = 0;
-//        firstIdx = 0;
-//        lastIdx = 0;
-    }
-
-    virtual void onRead(VelocityBuffer & data){
-        VelocityBuffer * vb = new VelocityBuffer();
-        vb->setData(data);
-        bfrMutex.wait();
-        velBfr.push(vb);
-        bfrMutex.post();
-    }
-
-//    virtual void onRead(VelocityBuffer & data){
-//        VelocityBuffer * vb = new VelocityBuffer();
-//        vb->setData(data);
-//        bfrMutex.wait();
-//        if (lastIdx < VEL_BFR_SIZE){
-//            velBfr[lastIdx++] = vb;
-//        }
-//        else{
-//            lostCntr ++;
-//            delete vb;
-//        }
-//        bfrMutex.post();
-//    }
-
-    VelocityBuffer *  getVelocities(){
-        VelocityBuffer * res = NULL;
-        bfrMutex.wait();
-        if (velBfr.size() > 0){
-           res = velBfr.front();
-           velBfr.pop();
-        }
-        bfrMutex.post();
-        return res;
-
-    }
-
-//    VelocityBuffer *  getVelocities(){
-//        VelocityBuffer * res = NULL;
-//        bfrMutex.wait();
-//        if (lastIdx - firstIdx > 0){
-//            res = velBfr[firstIdx++];
-//        }
-//        else {
-//            firstIdx = 0;
-//            lastIdx = 0;
-//        }
-//        bfrMutex.post();
-//        return res;
-//
-//    }
-
-    ~VelocityGrabber(){
-        VelocityBuffer * vb;
-
-        for (int i = 0; i < velBfr.size(); ++i) {
-            vb = velBfr.front();
-            delete vb;
-            velBfr.pop();
-        }
-//        for (int i = firstIdx; i < lastIdx; ++i) {
-//            delete velBfr[i];
-//        }
-
-        cout << "Sorry! " << lostCntr <<  " Velocity bufferes were lost." << endl;
-    }
-};
 
 
 class FlowViewerModule : public RFModule{
@@ -134,34 +54,32 @@ public:
             return false;
         }
 
-        viewer.setOutPort(&outPort);
+        viewer.setPorts(&outPort, &vGrabber);
+
+        viewer.start();
 
         return true;
     }
 
 
     bool updateModule(){
-        VelocityBuffer * vb;
-        vb = vGrabber.getVelocities();
-        if (vb != NULL){
-       //     cout << "run function" << endl;
-            viewer.avrageFilter(*vb);
-//           viewer.run(*vb);
-//           viewer.velNorm(*vb);
-
-           delete vb;
-        }
-
-
+//        VelocityBuffer * vb;
+//        vb = vGrabber.getVelocities();
+//        if (vb != NULL){
+//            cout << vb -> getSize() << endl;
+//            viewer.avrageFilter(*vb);
+//           delete vb;
+//        }
         return true;
 
     }
 
     double getPeriod(){
-        return .001;
+        return 1;
     }
 
     bool interruptModule(){
+        viewer.stop();
         cout << "Interrupting.." << endl;
         vGrabber.interrupt();
         outPort.interrupt();
