@@ -18,7 +18,7 @@
 #ifndef EVENTUNMASKICUB_H
 #define EVENTUNMASKICUB_H
 
-//#define _DEBUG_
+#define _DEBUG_
 
 #include "eventUnmask.h"
 
