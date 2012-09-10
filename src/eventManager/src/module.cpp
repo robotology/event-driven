@@ -1,3 +1,5 @@
+// -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
+
 /*
  * Copyright (C) 2011 Department of Robotics Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
  * Author: Vadim Tikhanoff Ugo Pattacini
@@ -14,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details
 */
+
 #include <sstream>
 #include <stdio.h>
 #include <yarp/math/Rand.h>
@@ -29,8 +32,17 @@ using namespace yarp::math;
 
 #define RET_INVALID     -1
 
+#define CMD_TAP                 VOCAB3('t','a','p')
+#define CMD_KPUSH_TRAD          VOCAB3('k','p','t')           // push in karmaMotor retina position on the traditionalCameras
+#define CMD_KPUSH_EVENT         VOCAB3('k','p','e')           // push in karmaMotor retina position on the eventCameras
+
 #define CMD_TRAIN               VOCAB4('t','r','a','i')
 #define CMD_EXECUTE             VOCAB4('e','x','e','c')
+#define CMD_HELP                VOCAB4('h','e','l','p')
+#define CMD_HOME                VOCAB4('h','o','m','e')
+#define CMD_PUSH                VOCAB4('p','u','s','h')
+
+
 
 /**********************************************************/
 bool Manager::configure(ResourceFinder &rf)
@@ -38,17 +50,20 @@ bool Manager::configure(ResourceFinder &rf)
     name=rf.find("name").asString().c_str();
 
     //incoming
-    pointedLoc.open(("/"+name+"/point:i").c_str());
-    blobExtractor.open(("/"+name+"/blobs:i").c_str());
+    pointedLoc.open(     ("/"+name+"/point:i").c_str());
+    blobExtractor.open(  ("/"+name+"/blobs:i").c_str());
 
     //outgoing
     iolStateMachine.open(("/"+name+"/iolState:o").c_str());    
 
     //rpc 
-    rpcMIL.open(("/"+name+"/mil:rpc").c_str());                 //rpc client to query mil classifications
-    rpcHuman.open(("/"+name+"/human:rpc").c_str());             //rpc server to interact with the italkManager
-    rpcMotorAre.open(("/"+name+"/are:rpc").c_str());          //rpc server to query ARE
-    rpcMotorKarma.open(("/"+name+"/karma:rpc").c_str());        //rpc server to query Karma
+    rpcMIL.open(         ("/"+name+"/mil:rpc").c_str());          //rpc client to query mil classifications
+    rpcHuman.open(       ("/"+name+"/human:rpc").c_str());        //rpc server to interact with the italkManager
+    rpcMotorAre.open(    ("/"+name+"/are:rpc").c_str());          //rpc server to query ARE
+    rpcMotorKarma.open(  ("/"+name+"/karma:rpc").c_str());        //rpc server to query Karma
+
+    rpcTransTrad.open(   ("/"+name+"/transTrad:rpc").c_str());    //rpc server to query the transTrad
+    rpcTransEvent.open(  ("/"+name+"/transEvent:rpc").c_str());   //rpc server to query the transEvent
 
     Rand::init();
 
@@ -75,6 +90,8 @@ bool Manager::interruptModule()
     pointedLoc.interrupt();
     iolStateMachine.interrupt();
     rpcMIL.interrupt();
+    rpcTransTrad.interrupt();
+    rpcTransEvent.interrupt();
 
     return true;
 }
@@ -88,7 +105,8 @@ bool Manager::close()
     pointedLoc.close();
     iolStateMachine.close();
     rpcMIL.close();
-
+    rpcTransTrad.close();
+    rpcTransEvent.close();
     return true;
 }
 /**********************************************************/
@@ -113,8 +131,8 @@ bool Manager::updateModule()
         
     while (!init)
     {   
-        Time::delay(0.5);
-        fprintf(stdout, "waiting for connection from iolStateMachineHandler\n");
+        Time::delay(5.0);
+        fprintf(stdout, "waiting for connection from iolStateMachineHandler... \n");
         if (iolStateMachine.getOutputCount() > 0)
         {
             fprintf(stdout, "sending home \n");
@@ -139,6 +157,7 @@ bool Manager::updateModule()
     if (cmd != NULL)
     {
         int rxCmd=processHumanCmd(cmd,val);
+
         if (rxCmd==Vocab::encode("train"))
         {
             obj=cmd.get(1).asString().c_str();
@@ -172,6 +191,53 @@ bool Manager::updateModule()
             rpcHuman.reply(reply);
             pointGood = false;
         }
+        
+        //*************************************************************************
+        switch(rxCmd) {
+        case CMD_HELP: {
+            reply.addString("HELP \n");
+            reply.addString("train \n");
+            reply.addString("test \n");
+            reply.addString("tap \n");
+            reply.addString("push (u v)");
+            reply.addString("===== \n");
+            rpcHuman.reply(reply);
+        }break;
+        case CMD_HOME:{
+            printf("home command received \n");
+            goHome();
+        }break;
+        case CMD_TAP: {
+            reply.addString("tap command \n");
+            
+            rpcHuman.reply(reply);
+        }break;
+        case CMD_PUSH: {
+            reply.addString("push command \n");
+            if(cmd.size() > 1 ){
+                Bottle* opt = cmd.get(1).asList();
+                fprintf(stdout,"option of the command push  \n");
+            }
+            rpcHuman.reply(reply);
+        }break;
+        case CMD_KPUSH_TRAD: {
+            reply.addString("karma push command for traditional camera: ");
+            if(cmd.size() > 1 ){
+                Bottle* opt = cmd.get(1).asList();
+                fprintf(stdout,"option of the command push  \n");
+                int u = opt->get(0).asInt();
+                int v = opt->get(1).asInt();
+                pushTraditional(u,v);
+            }
+            else {
+                reply.addString("UNSUCCESS \n");
+            }
+            rpcHuman.reply(reply);
+        }break;
+        defaut: {
+            }
+        }
+        
     }
     Bottle result;
     result.clear();
@@ -181,6 +247,7 @@ bool Manager::updateModule()
 
 void Manager::goHome()
 {
+    fprintf(stdout,"goHome command executing ...... ");
     Bottle cmdAre, replyAre;
     cmdAre.clear();
     replyAre.clear();
@@ -189,8 +256,16 @@ void Manager::goHome()
     rpcMotorAre.write(cmdAre,replyAre);
     fprintf(stdout,"gone home %s:\n",replyAre.toString().c_str()); 
 }
+/****************************************************************************************************************/
 
-/**********************************************************/
+
+void Manager::pushTraditional(int u, int v){
+    fprintf(stdout, "push retina position of traditional cameras \n");
+    
+}
+
+
+/****************************************************************************************************************/
 int Manager::executeOnLoc(bool shouldTrain)
 {
 

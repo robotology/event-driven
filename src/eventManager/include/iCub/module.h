@@ -45,6 +45,8 @@ protected:
     yarp::os::RpcClient         rpcMotorKarma;      //rpc motor port KARMA    
     yarp::os::RpcClient         iolStateMachine;    //rpc to iol state machine
     yarp::os::RpcClient         rpcMIL;             //rpc mil port
+    yarp::os::RpcClient         rpcTransTrad;       // rpc transformation traditional camera
+    yarp::os::RpcClient         rpcTransEvent;      // rpc transformation event camera
 
     PointedLocation             pointedLoc;         //port class to receive pointed locations
     
@@ -71,6 +73,10 @@ protected:
     yarp::os::Bottle            getOffset(yarp::os::Bottle &closestBlob, double actionOrient, yarp::sig::Vector &initPos);
     
     void                        goHome();
+    /**
+     *      @brief: push an object detected with traditional cameras
+     */
+    void                        pushTraditional(int u, int v);     
     double                      wrapAng (const double ang);
     
     void                        acquireImage(const bool request=false);
