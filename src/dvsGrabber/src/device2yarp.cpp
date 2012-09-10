@@ -56,8 +56,12 @@ using namespace yarp::os;
 //#define FAST
 
 
-device2yarp::device2yarp(string portDeviceName, bool i_bool, string fileName):RateThread(THRATE), save(i_bool) , i_fileName(fileName){
+//device2yarp::device2yarp(string portDeviceName, bool i_bool, string fileName):RateThread(THRATE), save(i_bool) , i_fileName(fileName){
+device2yarp::device2yarp(string portDeviceName, bool i_bool, string fileName):save(i_bool) , i_fileName(fileName){
     printf("initialising the module \n");
+
+    wrapAround=0;
+
     verbosity = false;
     len=0;
     sz=0;
@@ -202,101 +206,112 @@ void device2yarp::setDeviceName(string deviceName) {
 
 void  device2yarp::run() {
     // read address events from device file which is not /dev/aerfx2_0
-    sz = read(file_desc,buffer,KERNELDEVICEREAD);
-    int numberofWords = 0;
-    uint32_t * buf32 = (uint32_t*) outbuffer;
-    cout << sz <<"  bytes"<<endl;    
-//    Bottle& newBuffer = port.prepare();
-    
-    for (int i = 0 ; i < sz ; i+=4) {
-
-
-        u32 adrs, ts, tag;
-        unsigned int part_1 = 0xFF & *(buffer+i);    //extracting the 1 byte        
-        unsigned int part_2 = 0xFF & *(buffer+i+1);  //extracting the 2 byte        
-        unsigned int part_3 = 0xFF & *(buffer+i+2);  //extracting the 3 byte
-        unsigned int part_4 = 0xFF & *(buffer+i+3);  //extracting the 4 byte
-        if(part_3 == 0 && part_4 == 0 && part_1 == 0 && part_2 == 0){
-            continue;
-        }
-    
-        adrs = 0x0000FFFF & (part_1|part_2<<8);
-
-        ts = 0x80000000;
-        if (part_4 >= 0xB0  ) {
-           numberOfTimeWraps++;                     
-
-           if (numberOfTimeWraps >= 1<<12){
-              ts = 0x88000000;
-              numberOfTimeWraps = 0;
-              buf32[numberofWords++] = ts; 
-              if (save){ 
-                 fprintf(raw,"%08X\n",ts);  
-              }
-              continue;
-           }
-        }
-        else 
-        {
-           ts = ts | ((part_3)|(part_4<<8));                
-        }             
-        ts = numberOfTimeWraps<<14 | ts; 
-
-
-//        if(numberOfTimeWraps >= 1<<12){
-//            ts = 0x88000000;
-//            numberOfTimeWraps = 0;
-//            buf32[numberofWords++] = ts; 
-//            if (save){ 
-//               fprintf(raw,"%08X\n",ts);  
-//            }
-//            continue;
-//        }
-//        else {
-//            ts = 0x80000000;
-//            if(part_4 >= 0xB0  ) {
-//                    numberOfTimeWraps++;      
-//                    
-//                }
-//            else 
-//            {
-//                ts = ts | ((part_3)|(part_4<<8));                
-//            }             
-//            ts = numberOfTimeWraps<<14 | ts; 
-//        }     
-         
-
-
-        //newBuffer[countRealEvents] = ts;
-        //newBuffer[countRealEvents+1] = adrs;
-        //newBuffer.addInt(ts);
-        //newBuffer.addInt(adrs);
+    while(1)
+    {
+        sz = read(file_desc,buffer,KERNELDEVICEREAD);
+        int numberofWords = 0;
+        uint32_t * buf32 = (uint32_t*) outbuffer;
+        cout << sz <<"  bytes"<<endl;    
+    //    Bottle& newBuffer = port.prepare();
         
-        buf32[numberofWords++] = ts; 
-        buf32[numberofWords++] = adrs; 
+        for (int i = 0 ; i < sz ; i+=4) {
 
-//        fprintf(tmpFile,"%08X \t %08X \t\t %u\n",ts,adrs,numberOfTimeWraps);  
 
-        if (save){
-           fprintf(raw,"%08X \t %08X \r\n",ts,adrs);  
+            u32 adrs, ts, tag;
+            unsigned int part_1 = 0xFF & *(buffer+i);    //extracting the 1 byte        
+            unsigned int part_2 = 0xFF & *(buffer+i+1);  //extracting the 2 byte        
+            unsigned int part_3 = 0xFF & *(buffer+i+2);  //extracting the 3 byte
+            unsigned int part_4 = 0xFF & *(buffer+i+3);  //extracting the 4 byte
+            if(part_3 == 0 && part_4 == 0 && part_1 == 0 && part_2 == 0){
+                continue;
+            }
+        
+            adrs = 0x0000FFFF & (part_1|part_2<<8);
+
+/*            ts = 0x80000000;
+            if (part_4 >= 0xB0  ) {
+               numberOfTimeWraps++;                     
+
+               if (numberOfTimeWraps >= 1<<12){
+                  ts = 0x88000000;
+                  numberOfTimeWraps = 0;
+                  buf32[numberofWords++] = ts; 
+                  if (save){ 
+                     fprintf(raw,"%08X\n",ts);  
+                  }
+                  continue;
+               }
+            }
+            else 
+            {
+               ts = ts | ((part_3)|(part_4<<8));                
+            }             
+            ts = numberOfTimeWraps<<14 | ts; 
+*/
+            if( (part_4&0x80)==0x80 )
+                wrapAround+=0x4000;
+            if(wrapAround==(1<<24))
+            {
+                wrapAround=0;
+                buf32[numberofWords++] = 0x88000000;
+            }
+            ts=(0xffff&(part_3)|0xffff&(part_4<<8))+wrapAround;
+
+    //        if(numberOfTimeWraps >= 1<<12){
+    //            ts = 0x88000000;
+    //            numberOfTimeWraps = 0;
+    //            buf32[numberofWords++] = ts; 
+    //            if (save){ 
+    //               fprintf(raw,"%08X\n",ts);  
+    //            }
+    //            continue;
+    //        }
+    //        else {
+    //            ts = 0x80000000;
+    //            if(part_4 >= 0xB0  ) {
+    //                    numberOfTimeWraps++;      
+    //                    
+    //                }
+    //            else 
+    //            {
+    //                ts = ts | ((part_3)|(part_4<<8));                
+    //            }             
+    //            ts = numberOfTimeWraps<<14 | ts; 
+    //        }     
+             
+
+
+            //newBuffer[countRealEvents] = ts;
+            //newBuffer[countRealEvents+1] = adrs;
+            //newBuffer.addInt(ts);
+            //newBuffer.addInt(adrs);
+            
+            buf32[numberofWords++] = ts; 
+            buf32[numberofWords++] = adrs; 
+
+    //        fprintf(tmpFile,"%08X \t %08X \t\t %u\n",ts,adrs,numberOfTimeWraps);  
+
+            if (save){
+               fprintf(raw,"%08X \t %08X \r\n",ts,adrs);  
+            }
         }
-    }
-    
-    /*
-    if(port.getOutputCount()) {
-        port.write();        
-    }
-    */
+        
+        /*
+        if(port.getOutputCount()) {
+            port.write();        
+        }
+        */
 
-    if(port.getOutputCount()) {
-        emorph::ebuffer::eventBuffer data2send(outbuffer, sz);  //adding 8 bytes for extra word 0xCAFECAFE and TS_WA    
-        emorph::ebuffer::eventBuffer& tmp = port.prepare();
-        tmp = data2send;
-        port.write();
+        if(port.getOutputCount()) {
+            emorph::ebuffer::eventBuffer data2send(outbuffer, sz);  //adding 8 bytes for extra word 0xCAFECAFE and TS_WA    
+            emorph::ebuffer::eventBuffer& tmp = port.prepare();
+            tmp = data2send;
+            port.write();
+        }
+        
+        //resetting buffers    
+        memset(buffer, 0, SIZE_OF_DATA);
     }
-    
-    //resetting buffers    
-    memset(buffer, 0, SIZE_OF_DATA);
 }
 
 

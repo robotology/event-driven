@@ -27,7 +27,8 @@
 #define _DEVICE2YARP_H
 
 //yarp include
-#include <yarp/os/RateThread.h>
+//#include <yarp/os/RateThread.h>
+#include <yarp/os/Thread.h>
 #include <yarp/os/BufferedPort.h>
 
 #include <fcntl.h>
@@ -53,7 +54,8 @@ struct aer {
 };
 
 
-class device2yarp : public yarp::os::RateThread {
+//class device2yarp : public yarp::os::RateThread {
+class device2yarp : public yarp::os::Thread {
 public:
     device2yarp(std::string deviceNumber, bool save, std::string filename);
     
@@ -116,6 +118,7 @@ private:
     int err;
     int numberOfTimeWraps;                       // 14 are bits used for timestamp, 26 are bits at our disposal, so actual time = 2^14 * #timeWraps + timeStamp, hence this counter tracks till 2^12
     unsigned int timestamp;
+    unsigned int wrapAround;
     short cartX, cartY, polarity;
 
     unsigned int xmask;
