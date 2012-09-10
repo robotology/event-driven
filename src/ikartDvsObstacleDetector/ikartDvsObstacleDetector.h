@@ -47,7 +47,7 @@ class obstacleDetectorThread: public yarp::os::RateThread
 
     protected:
     //configuration parameters
-
+    double obstacle_size;   //m
 
     //ports
 	BufferedPort<yarp::sig::Vector> port_optical_flow_input;
@@ -62,6 +62,8 @@ class obstacleDetectorThread: public yarp::os::RateThread
                RateThread(_period),     rf(_rf),
                iKartCtrl_options (options)
     {
+		scan_data.resize(1080,100);
+		obstacle_size=1;
     }
 
     virtual bool threadInit()
@@ -83,6 +85,8 @@ class obstacleDetectorThread: public yarp::os::RateThread
     }
 
     virtual void run();
+	void clearScan();
+	void compute_scan_1(double detected_distance);
 
     virtual void threadRelease()
     {    

@@ -37,13 +37,57 @@ using namespace std;
 using namespace yarp::os;
 using namespace yarp::dev;
 
+void obstacleDetectorThread::clearScan()
+{
+	for (int i=0; i<1080; i++)
+	{
+		scan_data[i]=100;
+	}
+}
+
+int deg2las (double deg)
+{
+	return deg/270*1080;
+}
+
+double las2deg (int las)
+{
+	return double(las)/1080*270;
+}
+
+void obstacleDetectorThread::compute_scan_1(double detected_distance)
+{
+	double alpha     = atan2(obstacle_size/2,detected_distance)*180.0/M_PI;
+	int alpha_i      = deg2las(alpha);
+	int alpha_start  = 1080/2-alpha_i;
+	int alpha_end    = 1080/2+alpha_i;
+	for (int i=0; i<alpha_i*2; i++)
+	{
+		int index = alpha_start+i;
+		double t = 270/2-las2deg(index);
+		double coeff = cos(t/180.0*M_PI);
+		double curr_d = detected_distance / coeff;
+		scan_data[index] = curr_d;
+		//fprintf (stdout, "%d %f\n", i, scan_data[index]);
+	}
+}
+
 void obstacleDetectorThread::run()
 {
+	//put the obstacle in the vector
+	clearScan();
+
+	//compute the scan 
+	double detected_distance = 1; //m
+	compute_scan_1(detected_distance);
 
 	//send the simulate obstacle
-    yarp::sig::Vector &v=port_simulated_scan_output.prepare();
-	v=scan_data;
-    port_simulated_scan_output.write();
+	if (port_simulated_scan_output.getOutputCount()>0)
+	{
+		yarp::sig::Vector &v=port_simulated_scan_output.prepare();
+		v=scan_data;
+		port_simulated_scan_output.write();
+	}
 }
 
 void obstacleDetectorThread::printStats()
