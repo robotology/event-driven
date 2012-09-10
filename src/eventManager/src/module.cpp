@@ -64,7 +64,10 @@ bool Manager::configure(ResourceFinder &rf)
 
     rpcTransTrad.open(   ("/"+name+"/transTrad:rpc").c_str());    //rpc server to query the transTrad
     rpcTransEvent.open(  ("/"+name+"/transEvent:rpc").c_str());   //rpc server to query the transEvent
-
+    rpcVelExtract.open(  ("/"+name+"/velExtract:rpc").c_str());   //rpc server to query the velocityExtractor
+    rpcAttention.open(   ("/"+name+"/attention:rpc").c_str());    //rpc server to query the velocityExtractor
+    rpcGrabber.open(     ("/"+name+"/grabber:rpc").c_str());      //rpc server to activate and deactivate the grabber
+                          
     Rand::init();
 
     randActions[0] = 0.0;
@@ -92,7 +95,9 @@ bool Manager::interruptModule()
     rpcMIL.interrupt();
     rpcTransTrad.interrupt();
     rpcTransEvent.interrupt();
-
+    rpcVelExtract.interrupt();
+    rpcAttention.interrupt();
+    rpcGrabber.interrupt();
     return true;
 }
 /**********************************************************/
@@ -107,6 +112,10 @@ bool Manager::close()
     rpcMIL.close();
     rpcTransTrad.close();
     rpcTransEvent.close();
+    rpcVelExtract.close();
+    rpcAttention.close();
+    rpcGrabber.close();
+
     return true;
 }
 /**********************************************************/
@@ -133,7 +142,7 @@ bool Manager::updateModule()
     {   
         Time::delay(5.0);
         fprintf(stdout, "waiting for connection from iolStateMachineHandler... \n");
-        if (iolStateMachine.getOutputCount() > 0)
+        if (iolStateMachine.getOutputCount() > 0 && rpcVelExtract.getOutputCount() > 0 )
         {
             fprintf(stdout, "sending home \n");
             Bottle cmdIol, replyIol;
@@ -229,6 +238,10 @@ bool Manager::updateModule()
                 int v = opt->get(1).asInt();
                 double x,y,z;
                 pushTraditional(u,v,x,y,z);
+                reply.addDouble(x);
+                reply.addDouble(y);
+                reply.addDouble(z);
+                
             }
             else {
                 reply.addString("UNSUCCESS \n");
@@ -279,6 +292,29 @@ void Manager::pushTraditional(int u, int v, double& x, double& y, double& z){
         x = replyPushTrad.get(0).asDouble();
         y = replyPushTrad.get(1).asDouble();
         z = replyPushTrad.get(2).asDouble();
+        
+        x = -0.40;
+        y = 0.05;
+        z = 0.12;
+        
+        if(rpcMotorKarma.getOutputCount()) {
+            double actionOrient = 0.0;
+            double offset       = 0.06;
+            fprintf(stdout,"Will now send to karmaMotor:\n");
+            Bottle karmaMotor,KarmaReply;
+            karmaMotor.addDouble(x);
+            karmaMotor.addDouble(y);
+            karmaMotor.addDouble(z + 0.05);
+            karmaMotor.addDouble(actionOrient);
+            karmaMotor.addDouble( offset );// + 0.06 );
+
+            fprintf(stdout,"%s\n",karmaMotor.toString().c_str());
+            rpcMotorKarma.write(karmaMotor, KarmaReply);
+            fprintf(stdout,"action is %s:\n",KarmaReply.toString().c_str());
+
+            goHome();
+        }
+        
     }
     else {
         fprintf(stdout, "interface with traslator traditional camera not active \n");

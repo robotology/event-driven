@@ -39,14 +39,17 @@ class Manager : public yarp::os::RFModule
 {
 protected:
 
-    std::string                 name;               //name of the module
-    yarp::os::Port              rpcHuman;           //human rpc port (receive commands via rpc)
-    yarp::os::RpcClient         rpcMotorAre;        //rpc motor port ARE
-    yarp::os::RpcClient         rpcMotorKarma;      //rpc motor port KARMA    
-    yarp::os::RpcClient         iolStateMachine;    //rpc to iol state machine
-    yarp::os::RpcClient         rpcMIL;             //rpc mil port
+    std::string                 name;               // name of the module
+    yarp::os::Port              rpcHuman;           // human rpc port (receive commands via rpc)
+    yarp::os::RpcClient         rpcMotorAre;        // rpc motor port ARE
+    yarp::os::RpcClient         rpcMotorKarma;      // rpc motor port KARMA    
+    yarp::os::RpcClient         iolStateMachine;    // rpc to iol state machine
+    yarp::os::RpcClient         rpcMIL;             // rpc mil port
     yarp::os::RpcClient         rpcTransTrad;       // rpc transformation traditional camera
     yarp::os::RpcClient         rpcTransEvent;      // rpc transformation event camera
+    yarp::os::RpcClient         rpcVelExtract;      // rpc for velocity extractor
+    yarp::os::RpcClient         rpcAttention;       // rpc to the attentive system
+    yarp::os::RpcClient         rpcGrabber;         // rpc to the grabber of events
 
     PointedLocation             pointedLoc;         //port class to receive pointed locations
     
