@@ -297,7 +297,22 @@ void Manager::pushTraditional(int u, int v, double& x, double& y, double& z){
         y = 0.05;
         z = 0.12;
         
-        if(rpcMotorKarma.getOutputCount()) {
+        if(rpcMotorKarma.getOutputCount() && (rpcMotorAre.getOutputCount())) {
+            // sending fix command to the actionRenderingEngine "look (x y z) fixate"
+            Bottle areMotor,areReply;
+            Bottle areTarget;
+            
+            
+            areMotor.addString("look");
+            areTarget = areMotor.addList();
+            areTarget.addDouble(x);
+            areTarget.addDouble(y);
+            areTarget.addDouble(z);
+            areMotor.addString("fixate");
+
+                
+            
+            // sending push command to the karma
             double actionOrient = 0.0;
             double offset       = 0.06;
             fprintf(stdout,"Will now send to karmaMotor:\n");
