@@ -3,7 +3,7 @@
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
-set(PROJECTNAME "LKEventOpticalFlow")
+set(PROJECTNAME "LKOpticalFlow")
 project(${PROJECTNAME})
 
 message(STATUS ${CMAKE_CURRENT_SOURCE_DIR}/../bin)
