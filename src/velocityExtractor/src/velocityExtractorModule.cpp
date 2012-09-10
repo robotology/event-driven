@@ -126,6 +126,7 @@ bool velocityExtractorModule::configure(yarp::os::ResourceFinder &rf) {
     //cfThread->setResponseGradient(responseGradient);
 
     esThread->start();
+    esThread->suspend();
 
 
     return true ;       // let the RFModule know everything went well
