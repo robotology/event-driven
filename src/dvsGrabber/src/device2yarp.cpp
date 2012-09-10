@@ -250,49 +250,54 @@ void  device2yarp::run() {
 */
             if( (part_4&0x80)==0x80 )
                 wrapAround+=0x4000;
-            if(wrapAround==(1<<24))
+            else
             {
-                wrapAround=0;
-                buf32[numberofWords++] = 0x88000000;
-            }
-            ts=(0xffff&(part_3)|0xffff&(part_4<<8))+wrapAround;
+                if(wrapAround>=(1<<24))
+                {
+                    wrapAround=0;
+                    buf32[numberofWords++] = 0x88000000;
+                    if (save)
+                        fprintf(raw,"%s ","0x88000000");  
+                }
+                ts=( (0xffff&part_3)|((0xffff&part_4)<<8) )+wrapAround;
 
-    //        if(numberOfTimeWraps >= 1<<12){
-    //            ts = 0x88000000;
-    //            numberOfTimeWraps = 0;
-    //            buf32[numberofWords++] = ts; 
-    //            if (save){ 
-    //               fprintf(raw,"%08X\n",ts);  
-    //            }
-    //            continue;
-    //        }
-    //        else {
-    //            ts = 0x80000000;
-    //            if(part_4 >= 0xB0  ) {
-    //                    numberOfTimeWraps++;      
-    //                    
-    //                }
-    //            else 
-    //            {
-    //                ts = ts | ((part_3)|(part_4<<8));                
-    //            }             
-    //            ts = numberOfTimeWraps<<14 | ts; 
-    //        }     
-             
+        //        if(numberOfTimeWraps >= 1<<12){
+        //            ts = 0x88000000;
+        //            numberOfTimeWraps = 0;
+        //            buf32[numberofWords++] = ts; 
+        //            if (save){ 
+        //               fprintf(raw,"%08X\n",ts);  
+        //            }
+        //            continue;
+        //        }
+        //        else {
+        //            ts = 0x80000000;
+        //            if(part_4 >= 0xB0  ) {
+        //                    numberOfTimeWraps++;      
+        //                    
+        //                }
+        //            else 
+        //            {
+        //                ts = ts | ((part_3)|(part_4<<8));                
+        //            }             
+        //            ts = numberOfTimeWraps<<14 | ts; 
+        //        }     
+                 
 
 
-            //newBuffer[countRealEvents] = ts;
-            //newBuffer[countRealEvents+1] = adrs;
-            //newBuffer.addInt(ts);
-            //newBuffer.addInt(adrs);
-            
-            buf32[numberofWords++] = ts; 
-            buf32[numberofWords++] = adrs; 
+                //newBuffer[countRealEvents] = ts;
+                //newBuffer[countRealEvents+1] = adrs;
+                //newBuffer.addInt(ts);
+                //newBuffer.addInt(adrs);
+                
+                buf32[numberofWords++] = ts; 
+                buf32[numberofWords++] = adrs; 
 
-    //        fprintf(tmpFile,"%08X \t %08X \t\t %u\n",ts,adrs,numberOfTimeWraps);  
+        //        fprintf(tmpFile,"%08X \t %08X \t\t %u\n",ts,adrs,numberOfTimeWraps);  
 
-            if (save){
-               fprintf(raw,"%08X \t %08X \r\n",ts,adrs);  
+                if (save){
+                   fprintf(raw,"%08X \t %08X \r\n",ts,adrs);  
+                }
             }
         }
         
