@@ -32,6 +32,9 @@ using namespace yarp::math;
 
 #define RET_INVALID     -1
 
+#define CMD_ON                  VOCAB2('o','n')
+
+#define CMD_OFF                 VOCAB3('o','f','f')
 #define CMD_TAP                 VOCAB3('t','a','p')
 #define CMD_KPUSH_TRAD          VOCAB3('k','p','t')           // push in karmaMotor retina position on the traditionalCameras
 #define CMD_KPUSH_EVENT         VOCAB3('k','p','e')           // push in karmaMotor retina position on the eventCameras
@@ -41,6 +44,7 @@ using namespace yarp::math;
 #define CMD_HELP                VOCAB4('h','e','l','p')
 #define CMD_HOME                VOCAB4('h','o','m','e')
 #define CMD_PUSH                VOCAB4('p','u','s','h')
+#define CMD_DUMP                VOCAB4('d','u','m','p')
 
 
 
@@ -142,7 +146,7 @@ bool Manager::updateModule()
     {   
         Time::delay(5.0);
         fprintf(stdout, "waiting for connection from iolStateMachineHandler... \n");
-        if (iolStateMachine.getOutputCount() > 0 && rpcVelExtract.getOutputCount() > 0 )
+        if (iolStateMachine.getOutputCount() > 0 )
         {
             fprintf(stdout, "sending home \n");
             Bottle cmdIol, replyIol;
@@ -209,6 +213,7 @@ bool Manager::updateModule()
             reply.addString("test \n");
             reply.addString("tap \n");
             reply.addString("push (u v)");
+            reply.addString("kpt (u v)");
             reply.addString("===== \n");
             rpcHuman.reply(reply);
         }break;
@@ -277,6 +282,7 @@ void Manager::pushTraditional(int u, int v, double& x, double& y, double& z){
     fprintf(stdout, "push retina position of traditional cameras %d %d \n", u, v);
     if(rpcTransTrad.getOutputCount()) {
         Bottle cmdPushTrad, replyPushTrad;
+        cmdPushTrad.clear(); replyPushTrad.clear();
         cmdPushTrad.addString("home");
         iolStateMachine.write(cmdPushTrad,replyPushTrad);
         fprintf(stdout,"%s\n", replyPushTrad.toString().c_str());
@@ -293,30 +299,42 @@ void Manager::pushTraditional(int u, int v, double& x, double& y, double& z){
         y = replyPushTrad.get(1).asDouble();
         z = replyPushTrad.get(2).asDouble();
         
-        x = -0.40;
+        x = -0.35;
         y = 0.05;
-        z = 0.12;
+        z = -0.20;
         
-        if(rpcMotorKarma.getOutputCount() && (rpcMotorAre.getOutputCount())) {
+        if(rpcMotorKarma.getOutputCount() && (rpcMotorAre.getOutputCount()) ) {
             // sending fix command to the actionRenderingEngine "look (x y z) fixate"
+            Bottle areTarget; areTarget.clear();
             Bottle areMotor,areReply;
-            Bottle areTarget;
-            
-            
+            areMotor.clear(); areReply.clear();
             areMotor.addString("look");
             areTarget = areMotor.addList();
             areTarget.addDouble(x);
             areTarget.addDouble(y);
             areTarget.addDouble(z);
             areMotor.addString("fixate");
-
-                
+            rpcMotorAre.write(areMotor,areReply);
+            fprintf(stdout,"fication is %s:\n",areReply.toString().c_str());
+            
+            // sending command to dump event
+            if(rpcGrabber.getOutputCount()){
+                Bottle grabberRequest,grabberReply;
+                grabberRequest.clear(); grabberReply.clear();
+                grabberRequest.addVocab(CMD_DUMP);
+                grabberRequest.addVocab(CMD_ON); 
+                rpcGrabber.write(grabberRequest,grabberReply);
+            }
+            else {
+                fprintf(stdout, "connection to the grabber missing \n");
+            }
             
             // sending push command to the karma
             double actionOrient = 0.0;
             double offset       = 0.06;
             fprintf(stdout,"Will now send to karmaMotor:\n");
-            Bottle karmaMotor,KarmaReply;
+            Bottle karmaMotor,karmaReply;
+            karmaMotor.clear(); karmaReply.clear();
             karmaMotor.addDouble(x);
             karmaMotor.addDouble(y);
             karmaMotor.addDouble(z + 0.05);
@@ -324,10 +342,28 @@ void Manager::pushTraditional(int u, int v, double& x, double& y, double& z){
             karmaMotor.addDouble( offset );// + 0.06 );
 
             fprintf(stdout,"%s\n",karmaMotor.toString().c_str());
-            rpcMotorKarma.write(karmaMotor, KarmaReply);
-            fprintf(stdout,"action is %s:\n",KarmaReply.toString().c_str());
+            rpcMotorKarma.write(karmaMotor, karmaReply);
+            fprintf(stdout,"action is %s:\n",karmaReply.toString().c_str());
+            
+            //temporal delay
+            Time::delay(1000);
 
+            // sending command to dump event
+            if(rpcGrabber.getOutputCount()){
+                Bottle grabberRequest,grabberReply;
+                grabberRequest.clear(); grabberReply.clear();
+                grabberRequest.addVocab(CMD_DUMP);
+                grabberRequest.addVocab(CMD_OFF); 
+                rpcGrabber.write(grabberRequest,grabberReply);
+            }
+            else {
+                fprintf(stdout, "connection to the grabber missing \n");
+            }
+            
             goHome();
+        }
+        else {
+            fprintf(stdout,"Either the ActionRenderingEngine or the KARMA motor missing in connections \n");
         }
         
     }
