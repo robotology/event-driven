@@ -224,10 +224,11 @@ bool Manager::updateModule()
             reply.addString("karma push command for traditional camera: ");
             if(cmd.size() > 1 ){
                 Bottle* opt = cmd.get(1).asList();
-                fprintf(stdout,"option of the command push  \n");
+                fprintf(stdout,"option of the command push %s \n", opt->toString().c_str());
                 int u = opt->get(0).asInt();
                 int v = opt->get(1).asInt();
-                pushTraditional(u,v);
+                double x,y,z;
+                pushTraditional(u,v,x,y,z);
             }
             else {
                 reply.addString("UNSUCCESS \n");
@@ -259,9 +260,29 @@ void Manager::goHome()
 /****************************************************************************************************************/
 
 
-void Manager::pushTraditional(int u, int v){
-    fprintf(stdout, "push retina position of traditional cameras \n");
-    
+void Manager::pushTraditional(int u, int v, double& x, double& y, double& z){
+    fprintf(stdout, "push retina position of traditional cameras %d %d \n", u, v);
+    if(rpcTransTrad.getOutputCount()) {
+        Bottle cmdPushTrad, replyPushTrad;
+        cmdPushTrad.addString("home");
+        iolStateMachine.write(cmdPushTrad,replyPushTrad);
+        fprintf(stdout,"%s\n", replyPushTrad.toString().c_str());
+        fprintf(stdout,"getting the 3d position ... \n");
+        cmdPushTrad.clear();
+        replyPushTrad.clear();
+        cmdPushTrad.addString("get3d");
+        cmdPushTrad.addInt(u);
+        cmdPushTrad.addInt(v);
+        cmdPushTrad.addString("left");
+        rpcTransTrad.write(cmdPushTrad,replyPushTrad);
+        fprintf(stdout,"reply:%s \n", replyPushTrad.toString().c_str());
+        x = replyPushTrad.get(0).asDouble();
+        y = replyPushTrad.get(1).asDouble();
+        z = replyPushTrad.get(2).asDouble();
+    }
+    else {
+        fprintf(stdout, "interface with traslator traditional camera not active \n");
+    }
 }
 
 

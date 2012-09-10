@@ -76,7 +76,7 @@ protected:
     /**
      *      @brief: push an object detected with traditional cameras
      */
-    void                        pushTraditional(int u, int v);     
+    void                        pushTraditional(int u, int v, double& x, double& y, double& z);     
     double                      wrapAng (const double ang);
     
     void                        acquireImage(const bool request=false);
