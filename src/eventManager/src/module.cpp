@@ -38,6 +38,8 @@ using namespace yarp::math;
 #define CMD_TAP                 VOCAB3('t','a','p')
 #define CMD_KPUSH_TRAD          VOCAB3('k','p','t')           // push in karmaMotor retina position on the traditionalCameras
 #define CMD_KPUSH_EVENT         VOCAB3('k','p','e')           // push in karmaMotor retina position on the eventCameras
+#define CMD_RES                 VOCAB3('r','e','s') 
+#define CMD_SUS                 VOCAB3('s','u','s')
 
 #define CMD_TRAIN               VOCAB4('t','r','a','i')
 #define CMD_EXECUTE             VOCAB4('e','x','e','c')
@@ -45,6 +47,7 @@ using namespace yarp::math;
 #define CMD_HOME                VOCAB4('h','o','m','e')
 #define CMD_PUSH                VOCAB4('p','u','s','h')
 #define CMD_DUMP                VOCAB4('d','u','m','p')
+#define CMD_KPUSH_SM            VOCAB4('k','p','s','m')       // karmaMotor push smooth pursuit
 
 
 
@@ -253,6 +256,25 @@ bool Manager::updateModule()
             }
             rpcHuman.reply(reply);
         }break;
+        case CMD_KPUSH_SM: {
+            reply.addString("karma push command for traditional camera: ");
+            if(cmd.size() > 1 ){
+                Bottle* opt = cmd.get(1).asList();
+                fprintf(stdout,"option of the command push %s \n", opt->toString().c_str());
+                int u = opt->get(0).asInt();
+                int v = opt->get(1).asInt();
+                double x,y,z;
+                pushTraditional(u,v,x,y,z);
+                reply.addDouble(x);
+                reply.addDouble(y);
+                reply.addDouble(z);
+                
+            }
+            else {
+                reply.addString("UNSUCCESS \n");
+            }
+            rpcHuman.reply(reply);
+        }break;
         defaut: {
             }
         }
@@ -346,7 +368,7 @@ void Manager::pushTraditional(int u, int v, double& x, double& y, double& z){
             fprintf(stdout,"action is %s:\n",karmaReply.toString().c_str());
             
             //temporal delay
-            Time::delay(1000);
+            Time::delay(1.0);
 
             // sending command to dump event
             if(rpcGrabber.getOutputCount()){
@@ -358,6 +380,102 @@ void Manager::pushTraditional(int u, int v, double& x, double& y, double& z){
             }
             else {
                 fprintf(stdout, "connection to the grabber missing \n");
+            }
+            
+            goHome();
+        }
+        else {
+            fprintf(stdout,"Either the ActionRenderingEngine or the KARMA motor missing in connections \n");
+        }
+        
+    }
+    else {
+        fprintf(stdout, "interface with traslator traditional camera not active \n");
+    }
+}
+
+/***************************************************************************************************************/
+void Manager::pushSmoothPursuit(int u, int v){
+    fprintf(stdout, "push retina position of traditional cameras %d %d \n", u, v);
+    if(rpcTransTrad.getOutputCount()) {
+        Bottle cmdPushTrad, replyPushTrad;
+        
+        //forcing home the robot
+        cmdPushTrad.clear(); replyPushTrad.clear();
+        cmdPushTrad.addString("home");
+        iolStateMachine.write(cmdPushTrad,replyPushTrad);
+        fprintf(stdout,"%s\n", replyPushTrad.toString().c_str());
+        
+        // getting the 3d position
+        fprintf(stdout,"getting the 3d position ... \n");
+        cmdPushTrad.clear(); replyPushTrad.clear();
+        cmdPushTrad.addString("get3d");
+        cmdPushTrad.addInt(u);
+        cmdPushTrad.addInt(v);
+        cmdPushTrad.addString("left");
+        rpcTransTrad.write(cmdPushTrad,replyPushTrad);
+        fprintf(stdout,"reply:%s \n", replyPushTrad.toString().c_str());
+        double x = replyPushTrad.get(0).asDouble();
+        double y = replyPushTrad.get(1).asDouble();
+        double z = replyPushTrad.get(2).asDouble();
+        
+        x = -0.35;
+        y = 0.05;
+        z = -0.20;
+        
+        if(rpcMotorKarma.getOutputCount() && (rpcMotorAre.getOutputCount()) ) {
+            // sending fix command to the actionRenderingEngine "look (x y z) fixate"
+            Bottle areTarget; areTarget.clear();
+            Bottle areMotor,areReply;
+            areMotor.clear(); areReply.clear();
+            areMotor.addString("look");
+            areTarget = areMotor.addList();
+            areTarget.addDouble(x);
+            areTarget.addDouble(y);
+            areTarget.addDouble(z);
+            areMotor.addString("fixate");
+            rpcMotorAre.write(areMotor,areReply);
+            fprintf(stdout,"fication is %s:\n",areReply.toString().c_str());
+            
+            // sending command to dump event
+            if(rpcVelExtract.getOutputCount()){
+                Bottle velRequest,velReply;
+                velRequest.clear(); velReply.clear();
+                velRequest.addVocab(CMD_RES);
+                rpcVelExtract.write(velRequest,velReply);
+            }
+            else {
+                fprintf(stdout, "connection to the velocityExtractor missing \n");
+            }
+            
+            // sending push command to the karma
+            double actionOrient = 0.0;
+            double offset       = 0.06;
+            fprintf(stdout,"Will now send to karmaMotor:\n");
+            Bottle karmaMotor,karmaReply;
+            karmaMotor.clear(); karmaReply.clear();
+            karmaMotor.addDouble(x);
+            karmaMotor.addDouble(y);
+            karmaMotor.addDouble(z + 0.05);
+            karmaMotor.addDouble(actionOrient);
+            karmaMotor.addDouble( offset );// + 0.06 );
+
+            fprintf(stdout,"%s\n",karmaMotor.toString().c_str());
+            rpcMotorKarma.write(karmaMotor, karmaReply);
+            fprintf(stdout,"action is %s:\n",karmaReply.toString().c_str());
+            
+            //temporal delay
+            Time::delay(1.0);
+
+            // sending command to dump event
+            if(rpcVelExtract.getOutputCount()){
+                Bottle velRequest,velReply;
+                velRequest.clear(); velReply.clear();
+                velRequest.addVocab(CMD_SUS);
+                rpcVelExtract.write(velRequest,velReply);
+            }
+            else {
+                fprintf(stdout, "connection to the velocityExtractor missing \n");
             }
             
             goHome();
