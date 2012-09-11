@@ -50,8 +50,8 @@ eventUnmaskICUB::eventUnmaskICUB(bool _save)
     buffer=new u32[BUFFERBLOCK/4];
     bufSnapShot=NULL;
 #ifdef _DEBUG_
-    //dump = fopen("/home/icub/Clercq/icubDump.txt", "w");
-    dump = fopen("/home/clercq/Documents/Temp/icubDump.txt", "w");
+    dump = fopen("/home/icub/Clercq/icubDump.txt", "w");
+    //dump = fopen("/home/clercq/Documents/Temp/icubDump.txt", "w");
     if(dump==NULL)
         std::cout << "[eventUnmaskICUB] Error, file can't be opened or created" << std::endl;
 #endif
@@ -172,19 +172,19 @@ int eventUnmaskICUB::getUmaskedData(uint& cartX, uint& cartY, int& polarity, uin
 {
     int res=0;
     //if(4*(eventIndex+3)>szBufSnapShot || szBufSnapShot==0)
-    //if(4*(eventIndex-1)>=szBufSnapShot || szBufSnapShot==0)
+    if(4*(eventIndex)>=szBufSnapShot || szBufSnapShot==0)
     //if((double)(4*(eventIndex-1))>=0.95*(double)szBufSnapShot || szBufSnapShot==0)
-    if(((int)szBufSnapShot-(4*(int)eventIndex))<2 || szBufSnapShot==0)
+    //if(((int)szBufSnapShot-(4*(int)eventIndex))<2 || szBufSnapShot==0)
     {
         if(!snapBuffer())
             return 0;
     }
     tsPacket = bufSnapShot[eventIndex++];
-    if( ((tsPacket & 0xFC000000) > 0x80000000) && ((szBufSnapShot-(4*(eventIndex)))<3) )
+    /*if( ((tsPacket & 0xFC000000) > 0x80000000) && ((szBufSnapShot-(4*(eventIndex)))<3) )
     {
         szBufSnapShot=0;
         return 0;
-    }
+    }*/
     
     //Check if s tamistamp wrap around occured
     if(tsPacket & 0x80000000)
@@ -198,7 +198,8 @@ int eventUnmaskICUB::getUmaskedData(uint& cartX, uint& cartY, int& polarity, uin
                 fprintf(dump,"%s","CAFECAFE");
                 fprintf(dump,"%s\n","<=WRAP");
 #endif
-                timestampMonotonyWrap += 0x1000000;//1<<24;//0x04000000;
+                //timestampMonotonyWrap += 0x04000000;
+                timestampMonotonyWrap += 0x1000000;//1<<24;
             }
             else
             {
