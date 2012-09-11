@@ -198,7 +198,7 @@ int eventUnmaskICUB::getUmaskedData(uint& cartX, uint& cartY, int& polarity, uin
                 fprintf(dump,"%s","CAFECAFE");
                 fprintf(dump,"%s\n","<=WRAP");
 #endif
-                timestampMonotonyWrap += 0x04000000;
+                timestampMonotonyWrap += 0x1000000;//1<<24;//0x04000000;
             }
             else
             {
