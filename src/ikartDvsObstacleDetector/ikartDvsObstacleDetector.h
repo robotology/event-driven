@@ -33,6 +33,8 @@
 #include <yarp/dev/IAnalogSensor.h>
 #include <string>
 
+#include "VelocityBuffer.h"
+
 using namespace std;
 using namespace yarp::os;
 using namespace yarp::dev;
@@ -48,9 +50,11 @@ class obstacleDetectorThread: public yarp::os::RateThread
     protected:
     //configuration parameters
     double obstacle_size;   //m
+	VelocityBuffer                   optical_flow_buffer;
 
     //ports
-	BufferedPort<yarp::sig::Vector> port_optical_flow_input;
+	BufferedPort<VelocityBuffer>     port_buffered_optical_flow_input;
+	BufferedPort<yarp::sig::Vector>  port_optical_flow_input;
     BufferedPort<yarp::sig::Vector>  port_simulated_scan_output;
 
     Property            iKartCtrl_options;
@@ -73,7 +77,8 @@ class obstacleDetectorThread: public yarp::os::RateThread
 
         //open module ports
 		string localName = "/ikartDvsObstacleDetector";
-		port_optical_flow_input.open((localName+"/flow:i").c_str());
+		//port_optical_flow_input.open((localName+"/flow:i").c_str());
+		port_buffered_optical_flow_input.open((localName+"/flow:i").c_str());
 		port_simulated_scan_output.open((localName+"/scan:o").c_str());
 
         //automatic port connections
@@ -92,6 +97,8 @@ class obstacleDetectorThread: public yarp::os::RateThread
     {    
         port_optical_flow_input.interrupt();
         port_optical_flow_input.close();
+		port_buffered_optical_flow_input.interrupt();
+		port_buffered_optical_flow_input.close();
 	    port_simulated_scan_output.interrupt();
         port_simulated_scan_output.close();
     }

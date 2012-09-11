@@ -47,7 +47,7 @@ void obstacleDetectorThread::clearScan()
 
 int deg2las (double deg)
 {
-	return deg/270*1080;
+	return (int)(deg/270*1080);
 }
 
 double las2deg (int las)
@@ -74,10 +74,15 @@ void obstacleDetectorThread::compute_scan_1(double detected_distance)
 
 void obstacleDetectorThread::run()
 {
-	//put the obstacle in the vector
-	clearScan();
+	//get the optical flow buffer;
+	VelocityBuffer* buff = port_buffered_optical_flow_input.read(false);
+	if (buff)
+	{
+		optical_flow_buffer = *buff;
+	}
 
 	//compute the scan 
+	clearScan();
 	double detected_distance = 1; //m
 	compute_scan_1(detected_distance);
 
