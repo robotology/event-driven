@@ -21,8 +21,8 @@
 #include <yarp/math/SVD.h>
 #include <yarp/math/Math.h>
 
-POLARITY_TYPE LKLocalFlow::SOBEL_X[3][3] = {{-1, 0, 1} ,{-2, 0, 2}, {-1, 0, 1}};
-POLARITY_TYPE LKLocalFlow::SOBEL_Y[3][3] = {{-1, -2, -1} ,{0, 0, 0}, {1, 2, 1}};
+POLARITY_TYPE SOBEL_X[3][3] = {{-1, 0, 1} ,{-2, 0, 2}, {-1, 0, 1}};
+POLARITY_TYPE SOBEL_Y[3][3] = {{-1, -2, -1} ,{0, 0, 0}, {1, 2, 1}};
 
 LKLocalFlow::LKLocalFlow(int nRadius)
 {
