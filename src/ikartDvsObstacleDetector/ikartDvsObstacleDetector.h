@@ -34,10 +34,12 @@
 #include <string>
 
 #include "VelocityBuffer.h"
+#include "groundFlowModel.h"
 
 using namespace std;
 using namespace yarp::os;
 using namespace yarp::dev;
+using namespace iCub::ctrl;
 
 #ifndef M_PI
 #define M_PI 3.14159265
@@ -51,6 +53,7 @@ class obstacleDetectorThread: public yarp::os::RateThread
     //configuration parameters
     double obstacle_size;   //m
 	VelocityBuffer                   optical_flow_buffer;
+	groundFlowModel                  flow_model;
 
     //ports
 	BufferedPort<VelocityBuffer>     port_buffered_optical_flow_input;

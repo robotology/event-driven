@@ -55,6 +55,16 @@ double las2deg (int las)
 	return double(las)/1080*270;
 }
 
+void image2world (int x, int y, double &d, double& ang)
+{
+	double ymin=1; //m
+	double ymax=3.5; //m
+	double xpixels = 128;
+	double ypixels = 128;
+	d=(y/ypixels*(ymax-ymin)) + ymin;
+	ang=0;
+}
+
 void obstacleDetectorThread::compute_scan_1(double detected_distance)
 {
 	double alpha     = atan2(obstacle_size/2,detected_distance)*180.0/M_PI;
