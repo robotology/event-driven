@@ -54,6 +54,7 @@ void LKLocalFlow::calVelocity(/*TIMESTAMP_TYPE*/double  tsDiff, MyMatrix<TIMESTA
                                                        clmnIdx - neighborRadius - 1 + cCntr,
                                                        tmpDblPtr, 3,3);        //calculate Ix
 
+
             tmpDblPtr = *SOBEL_Y;
             A(rCntr*windowLength + cCntr, 1) = It->convolveSubMatrix(rowIdx - neighborRadius - 1 + rCntr,
                                                        clmnIdx - neighborRadius - 1 + cCntr,
@@ -62,6 +63,7 @@ void LKLocalFlow::calVelocity(/*TIMESTAMP_TYPE*/double  tsDiff, MyMatrix<TIMESTA
                                                 clmnIdx -neighborRadius + cCntr ) -
                                              It->operator ()(rowIdx -neighborRadius + rCntr,
                                                  clmnIdx -neighborRadius + cCntr ); // calculate It
+
 
 ///           b(rCntr*windowLength + cCntr,0) = b(rCntr*windowLength + cCntr,0) / ( tsDiff /*+ .00001*/) ;
         } // end for on columns

@@ -267,7 +267,6 @@ void WorldOptFlow::calVelocities(CameraEvent ** evntBffr, int bffrSize){
 		//timestamps ->updateSubMatrix(evntPtr->getRowIdx() - 2, evntPtr->getColumnIdx() -2, evntPtr->getTimeStamp(), 5, 5);
 
         if (*velocity != 0 || *(velocity +1) != 0 ) {
-
 			if (vlctyBuffer.addDataCheckFull(evtClm - SPATIAL_MARGINE_ADDUP,
 											 evtRw - SPATIAL_MARGINE_ADDUP,
 											 *velocity, *(velocity + 1),

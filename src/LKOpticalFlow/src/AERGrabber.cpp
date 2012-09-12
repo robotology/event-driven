@@ -53,11 +53,14 @@ void AERGrabber::onRead(eventBuffer & eBuffer){
 //    eventNo = inBottle.size();
 //    u32* buf2 = (u32*) bottleBuff;
 
-
     eventNo = eBuffer.get_sizeOfPacket()/4;
     u32* buf2 = (u32*) eBuffer.get_packet();
-//    if (evtBuffer.size() > 50)
-//        return;
+
+//    cout << eventNo << endl;
+    if (evtBuffer.size() > 200){
+        cout << evtBuffer.size() << " " << eventNo << endl;
+        return;
+    }
 
  //   cout << "eventNo" << eventNo << endl;
 
@@ -124,8 +127,10 @@ void AERGrabber::readJEAR(eventBuffer & eBuffer){
 	unsigned long blob;
 
 
-//   	if (evtBuffer.size() > 50)
-//	    return;
+   	if (evtBuffer.size() > 100){
+   	    cout << evtBuffer.size() <<endl;
+	    return;
+   	}
 
     eventNo = eBuffer.get_sizeOfPacket()/4;
 	u32* buf2 = (u32*) eBuffer.get_packet();
@@ -184,26 +189,26 @@ bool AERGrabber::isReliableEvent (short row, short clmn, short polarity, unsigne
         tmp = onTimestamps(row + RELIABLE_NGHBRHD, clmn + RELIABLE_NGHBRHD);
 
         //update the pixel neighborhood in timestamps Matrix with the new value of ts
-        onTimestamps.updateSubMatrix(row, clmn, ts,              // row + RELIABLE_NGHBRHD - RELIABLE_NGHBRHD = row
-                                   2*RELIABLE_NGHBRHD + 1, 2*RELIABLE_NGHBRHD+1);
+ //       onTimestamps.updateSubMatrix(row, clmn, ts,              // row + RELIABLE_NGHBRHD - RELIABLE_NGHBRHD = row
+ //                                  2*RELIABLE_NGHBRHD + 1, 2*RELIABLE_NGHBRHD+1);
 
        
- //       onTimestamps(row + RELIABLE_NGHBRHD, clmn + RELIABLE_NGHBRHD) = ts;
+        onTimestamps(row + RELIABLE_NGHBRHD, clmn + RELIABLE_NGHBRHD) = ts;
 
     }
     else{
         tmp = offTimestamps(row + RELIABLE_NGHBRHD, clmn + RELIABLE_NGHBRHD);
 
         //update the pixel neighborhood in timestamps Matrix with the new value of ts
-        offTimestamps.updateSubMatrix(row, clmn, ts,              // row + RELIABLE_NGHBRHD - RELIABLE_NGHBRHD = row
-                                   2*RELIABLE_NGHBRHD + 1, 2*RELIABLE_NGHBRHD+1);
+//        offTimestamps.updateSubMatrix(row, clmn, ts,              // row + RELIABLE_NGHBRHD - RELIABLE_NGHBRHD = row
+//                                   2*RELIABLE_NGHBRHD + 1, 2*RELIABLE_NGHBRHD+1);
 
-//        offTimestamps(row + RELIABLE_NGHBRHD, clmn + RELIABLE_NGHBRHD) = ts;
+        offTimestamps(row + RELIABLE_NGHBRHD, clmn + RELIABLE_NGHBRHD) = ts;
 
     }
 
 
-    if (ts - tmp > RELIABLE_EVENT_THRSHLD)
+    if (ts - tmp >  RELIABLE_EVENT_THRSHLD )
         return false;
 
     return true;
