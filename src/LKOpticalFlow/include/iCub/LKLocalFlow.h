@@ -25,9 +25,6 @@
 
 class LKLocalFlow{
 
-	POLARITY_TYPE SOBEL_X [3][3];
-	POLARITY_TYPE SOBEL_Y [3][3];
-
     int neighborRadius;
     int windowLength;
 
