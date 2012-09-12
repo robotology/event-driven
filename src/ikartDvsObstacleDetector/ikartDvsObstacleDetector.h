@@ -54,8 +54,15 @@ class obstacleDetectorThread: public yarp::os::RateThread
     double obstacle_size;   //m
 	VelocityBuffer                   optical_flow_buffer;
 	groundFlowModel                  flow_model;
+	
+	//ikart velocity data
+	double                           ikart_vx;
+	double                           ikart_vy;
+	double                           ikart_vt;
+	double                           last_data;
 
     //ports
+	BufferedPort<Bottle>             port_ikart_velocity_input;
 	BufferedPort<VelocityBuffer>     port_buffered_optical_flow_input;
 	BufferedPort<yarp::sig::Vector>  port_optical_flow_input;
     BufferedPort<yarp::sig::Vector>  port_simulated_scan_output;
@@ -83,6 +90,7 @@ class obstacleDetectorThread: public yarp::os::RateThread
 		//port_optical_flow_input.open((localName+"/flow:i").c_str());
 		port_buffered_optical_flow_input.open((localName+"/flow:i").c_str());
 		port_simulated_scan_output.open((localName+"/scan:o").c_str());
+		port_ikart_velocity_input.open((localName+"/ikart_velocity:i").c_str());
 
         //automatic port connections
         bool b = false;
@@ -95,9 +103,12 @@ class obstacleDetectorThread: public yarp::os::RateThread
     virtual void run();
 	void clearScan();
 	void compute_scan_1(double detected_distance);
+	void updateIkartVel();
 
     virtual void threadRelease()
     {    
+		port_ikart_velocity_input.interrupt();
+		port_ikart_velocity_input.close();
         port_optical_flow_input.interrupt();
         port_optical_flow_input.close();
 		port_buffered_optical_flow_input.interrupt();

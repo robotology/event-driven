@@ -82,8 +82,37 @@ void obstacleDetectorThread::compute_scan_1(double detected_distance)
 	}
 }
 
+void obstacleDetectorThread::updateIkartVel()
+{
+	Bottle *b_ikart_vel = port_ikart_velocity_input.read(false);
+	if (b_ikart_vel)
+	{
+		if (b_ikart_vel->get(0).asInt() == 0)
+		{
+			ikart_vx = b_ikart_vel->get(1).asDouble();
+			ikart_vy = b_ikart_vel->get(1).asDouble();
+			ikart_vt = b_ikart_vel->get(1).asDouble();
+			last_data = yarp::os::Time::now();
+		}
+		else
+		{
+			printf ("Invalid input command format! \n");
+			ikart_vx = ikart_vy = ikart_vt = 0;
+		}
+	}
+	double curr_time = yarp::os::Time::now();
+	if (curr_time - last_data > 0.3) 
+	{
+		printf ("Input command timeout! \n");
+		ikart_vx = ikart_vy = ikart_vt = 0;
+	}
+}
+
 void obstacleDetectorThread::run()
 {
+	//get the ikart velocity
+	updateIkartVel();
+
 	//get the optical flow buffer;
 	VelocityBuffer* buff = port_buffered_optical_flow_input.read(false);
 	if (buff)
