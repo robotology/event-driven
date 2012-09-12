@@ -22,6 +22,8 @@
 #include <iCub/ctrl/math.h>
 #include <yarp/sig/Vector.h>
 #include <yarp/sig/Matrix.h>
+#include <yarp/sig/Image.h>
+#include <yarp/sig/ImageDraw.h>
 #include <string>
 
 using namespace yarp::sig;
@@ -35,9 +37,13 @@ using namespace std;
 //#define N_PIXELS 128 
 #define N_PIXELS 6
 
+#ifndef IMGFOR
+#define IMGFOR(img,i,j) for (int i=0; i<(img).width(); i++) for (int j=0; j<(img).height(); j++)
+#endif
+
 class groundFlowModel
 {
-	public:
+	private:
 	double input_ground_model_y [N_PIXELS][N_PIXELS];
 	double input_ground_model_x [N_PIXELS][N_PIXELS];
 	double output_ground_model_y [N_PIXELS][N_PIXELS];
@@ -46,8 +52,27 @@ class groundFlowModel
 	Matrix tx_matrix;
 	Matrix p_matrix;
 
+	public:
+	yarp::sig::ImageOf<yarp::sig::PixelMono16> flow_model_image;
+
+	void redraw()
+	{	
+		static const yarp::sig::PixelMono16 black=0;
+        static const yarp::sig::PixelMono16 white=255;
+
+		IMGFOR(flow_model_image ,i , j)
+		{
+			flow_model_image(i, j) = 150;
+		}
+
+		//yarp::sig::draw::addSegment(flow_model_image,black,X,Y,hx,hy);
+        //yarp::sig::draw::addCircle(flow_model_image,black,hx,hy,2);
+	}
+
 	groundFlowModel()
 	{
+		flow_model_image.resize(4*N_PIXELS,4*N_PIXELS);
+
 		for (int x=0; x<N_PIXELS; x++)
 			for (int y=0; y<N_PIXELS; y++)
 				input_ground_model_x[x][y]=0;
@@ -174,6 +199,9 @@ class groundFlowModel
 			 printf ("\n");
 		}
 	}
+
+
+
 };
 
 #endif

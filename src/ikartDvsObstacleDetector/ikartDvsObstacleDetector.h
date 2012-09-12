@@ -27,6 +27,7 @@
 #include <yarp/os/Os.h>
 #include <yarp/os/Time.h>
 #include <yarp/sig/Vector.h>
+#include <yarp/sig/Image.h>
 #include <yarp/dev/Drivers.h>
 #include <yarp/dev/PolyDriver.h>
 #include <yarp/os/RateThread.h>
@@ -66,6 +67,7 @@ class obstacleDetectorThread: public yarp::os::RateThread
 	BufferedPort<VelocityBuffer>     port_buffered_optical_flow_input;
 	BufferedPort<yarp::sig::Vector>  port_optical_flow_input;
     BufferedPort<yarp::sig::Vector>  port_simulated_scan_output;
+	BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono16> > port_flow_model_output;
 
     Property            iKartCtrl_options;
     ResourceFinder      &rf;
@@ -87,10 +89,11 @@ class obstacleDetectorThread: public yarp::os::RateThread
 
         //open module ports
 		string localName = "/ikartDvsObstacleDetector";
-		//port_optical_flow_input.open((localName+"/flow:i").c_str());
-		port_buffered_optical_flow_input.open((localName+"/flow:i").c_str());
-		port_simulated_scan_output.open((localName+"/scan:o").c_str());
-		port_ikart_velocity_input.open((localName+"/ikart_velocity:i").c_str());
+		//port_optical_flow_input.open        ( (localName+"/flow:i").c_str() );
+		port_buffered_optical_flow_input.open ( (localName+"/flow:i").c_str() );
+		port_simulated_scan_output.open       ( (localName+"/scan:o").c_str() );
+		port_ikart_velocity_input.open        ( (localName+"/ikart_velocity:i").c_str() );
+		port_flow_model_output.open           ( (localName+"/flow_model_img:o").c_str() );
 
         //automatic port connections
         bool b = false;
@@ -107,6 +110,8 @@ class obstacleDetectorThread: public yarp::os::RateThread
 
     virtual void threadRelease()
     {    
+		port_flow_model_output.interrupt();
+		port_flow_model_output.close();
 		port_ikart_velocity_input.interrupt();
 		port_ikart_velocity_input.close();
         port_optical_flow_input.interrupt();

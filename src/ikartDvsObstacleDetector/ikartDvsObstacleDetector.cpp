@@ -125,12 +125,21 @@ void obstacleDetectorThread::run()
 	double detected_distance = 1; //m
 	compute_scan_1(detected_distance);
 
-	//send the simulate obstacle
+	//send the simulated obstacle
 	if (port_simulated_scan_output.getOutputCount()>0)
 	{
 		yarp::sig::Vector &v=port_simulated_scan_output.prepare();
 		v=scan_data;
 		port_simulated_scan_output.write();
+	}
+
+	//send the optical flow model image
+	if (port_flow_model_output.getOutputCount()>0)
+	{
+		flow_model.redraw();
+		yarp::sig::ImageOf<yarp::sig::PixelMono16>& img=port_flow_model_output.prepare();
+		img=flow_model.flow_model_image;
+		port_flow_model_output.write();
 	}
 }
 

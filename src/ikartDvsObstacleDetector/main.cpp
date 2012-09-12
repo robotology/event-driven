@@ -43,8 +43,9 @@ public:
         Property p;
         ConstString configFile = rf.findFile("from");
         if (configFile!="") p.fromConfigFile(configFile.c_str());
-
-        obstacleThread = new obstacleDetectorThread(10,rf,p);
+		
+		int period = 20; //ms
+        obstacleThread = new obstacleDetectorThread(period,rf,p);
 
         if (!obstacleThread->start())
         {
