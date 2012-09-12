@@ -21,17 +21,15 @@
 #include <yarp/math/SVD.h>
 #include <yarp/math/Math.h>
 
+POLARITY_TYPE SOBEL_X[3][3] = {{-1, 0, 1} ,{-2, 0, 2}, {-1, 0, 1}};
+POLARITY_TYPE SOBEL_Y[3][3] = {{-1, -2, -1} ,{0, 0, 0}, {1, 2, 1}};
+
 LKLocalFlow::LKLocalFlow(int nRadius)
-    : SOBEL_X ( {{-1, 0, 1} ,{-2, 0, 2}, {-1, 0, 1}})
-    , SOBEL_Y ( {{-1, -2, -1} ,{0, 0, 0}, {1, 2, 1}})
-    {//SOBEL_X = {{-1, -2, -1} ,{0, 0, 0}, {1, 2, 1}};
-    //SOBEL_Y = {{-1, 0, 1} ,{-2, 0, 2}, {-1, 0, 1}};
-    GuaWeight = NULL;
-    lambda = 1.5;
-
-    neighborRadius = nRadius;
-    windowLength = 2 * neighborRadius + 1;
-
+{
+	GuaWeight = NULL;
+	lambda = 1.5;
+	neighborRadius = nRadius;
+	windowLength = 2 * nRadius + 1;
 }
 
 
@@ -40,7 +38,6 @@ void LKLocalFlow::calVelocity(/*TIMESTAMP_TYPE*/double  tsDiff, MyMatrix<TIMESTA
 
     MyMatrix<double> A(windowLength*windowLength, 2);
     MyMatrix<double> b(windowLength*windowLength, 1);
-
 
     //TODO invalid access for the points in the border
 
@@ -290,7 +287,7 @@ void LKLocalFlow::setGuaWeights(double stdDev){
 
 
     double tmp, tmp2;
-    double rowTmp [windowLength];
+    double* rowTmp = new double [windowLength];
     for (int idx = 0; idx < windowLength; ++idx) {
         *(rowTmp + idx) = (idx - neighborRadius)*(idx - neighborRadius);
     }
@@ -315,6 +312,7 @@ void LKLocalFlow::setGuaWeights(double stdDev){
             tmpPtr++;
         }
     }
+	delete [] rowTmp;
 }
 
 LKLocalFlow::~LKLocalFlow(){
