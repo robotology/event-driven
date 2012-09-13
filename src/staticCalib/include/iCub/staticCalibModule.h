@@ -27,7 +27,7 @@
 
 /** 
  *
- * \defgroup icub_efExtractor efExtractor
+ * \defgroup icub_staticCalib staticCalib
  * @ingroup icub_eMorph
  *
  *
@@ -67,13 +67,13 @@
  * The following key-value pairs can be specified as command-line parameters by prefixing \c -- to the key 
  * (e.g. \c --from file.ini. The value part can be changed to suit your needs; the default values are shown below. 
  *
- * - \c from \c efExtractor.ini \n 
+ * - \c from \c staticCalib.ini \n 
  *   specifies the configuration file
  *
  * - \c context \c logPolarAttentionSystem/conf \n
  *   specifies the sub-path from \c /app to the configuration file
  *
- * - \c name \c efExtractor \n 
+ * - \c name \c staticCalib \n 
  *   specifies the name of the module (used to form the stem of module port names)  
  *
  * - \c robot \c icub \n 
@@ -99,7 +99,7 @@
  *
  *  <b>Input ports</b>
  *
- *  - \c /efExtractor \n
+ *  - \c /staticCalib \n
  *    This port is used to change the parameters of the module at run time or stop the module. \n
  *    The following commands are available
  * 
@@ -111,17 +111,17 @@
  *    The port can be used by other modules but also interactively by a user through the yarp rpc directive, viz.: \c yarp \c rpc \c /cartesianFrameCollector
  *    This opens a connection from a terminal to the port and allows the user to then type in commands and receive replies.
  *       
- *  - \c /efExtractor/dvsLeft:i \n
- *  - \c /efExtractor/dvsRight:i \n
- *  - \c /efExtractor/dragonLeft:i \n
- *  - \c /efExtractor/dragonRight:i \n
+ *  - \c /staticCalib/dvsLeft:i \n
+ *  - \c /staticCalib/dvsRight:i \n
+ *  - \c /staticCalib/dragonLeft:i \n
+ *  - \c /staticCalib/dragonRight:i \n
  *
  * <b>Output ports</b>
  *
- *  - \c /efExtractor \n
+ *  - \c /staticCalib \n
  *    see above
  *
- *  - \c /efExtractor/image:o \n
+ *  - \c /staticCalib/image:o \n
  *
  * <b>Port types</b>
  *
@@ -135,7 +135,7 @@
  *
  * \section conf_file_sec Configuration Files
  *
- * \c efExtractor.ini  in \c /eMorphApplication/conf \n
+ * \c staticCalib.ini  in \c /eMorphApplication/conf \n
  * 
  * \section tested_os_sec Tested OS
  *
@@ -143,7 +143,20 @@
  *
  * \section example_sec Example Instantiation of the Module
  * 
- * <tt>efExtractor --name /efExtractor --context logPolarAttentionSystem/conf --from efExtractor.ini --robot icub</tt>
+ * <tt>staticCalib --name /staticCalib --context logPolarAttentionSystem/conf --from staticCalib.ini --robot icub</tt>
+ * 
+ * it is stricly important to follow a predefined sequence of acquisition
+ *
+ * preparing the module
+ * 1. connect the  /staticCalib/cam/left:o to a viewer with the click output
+ * 2. connect the click output of the viewer to /staticCalib/cam/click:i 
+ * 3. type start when you are ready with a rpc command to /staticCalib/cmd
+ *
+ * use of the module
+ * 1. close the opencv image created by the module
+ * 2. check whether the module extracted corners autonomously (shown as coloured circles)
+ * 3. if not click on the internal corners
+ * 4. to analyse the next image close the new opencvimage
  *
  * \author Rea Francesco
  *

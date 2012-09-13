@@ -337,13 +337,13 @@ void staticCalibThread::monoCalibRun() {
     }
     
     bool left= imagePortInLeft.getInputCount()>0?true:false;
-    bool left = true;
+   
   */
 
-  
+    bool left = true;
   
   string cameraName;
-
+  
   if(left)
     cameraName="LEFT";
   else
