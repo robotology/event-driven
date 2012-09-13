@@ -1,0 +1,33 @@
+<application>
+<name>ikartDvsObstacleDetector</name>
+
+<dependencies>
+</dependencies>
+
+<module>
+   <name>ikartDvsObstacleDetector</name>
+   <parameters></parameters>
+   <node>ikart</node>
+   <tag>ikartDvsObstacleDetector</tag>
+</module>
+
+<module>
+   <name>yarpview</name>
+   <parameters>--name /flowModel:i --synch</parameters>
+   <node>icub14</node>
+   <tag>OpticalFlowModelViewer</tag>
+</module>
+
+<connection>
+  <from>/ikart/odometry:o</from>
+  <to>/ikartDvsObstacleDetector/ikart_velocity:i</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
+  <from>/ikartDvsObstacleDetector/flow_model_img:o</from>
+  <to>/flowModel:i</to>
+  <protocol>udp</protocol>
+</connection>
+
+</application>
