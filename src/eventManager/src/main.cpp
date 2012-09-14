@@ -30,7 +30,9 @@ int main(int argc, char *argv[])
 
     ResourceFinder rf;
     rf.setVerbose(true);
-    rf.setDefault("name","eventManager");
+    //rf.setDefault("name","eventManager");
+    rf.setDefaultConfigFile("eventManager.ini"); //overridden by --from parameter
+    rf.setDefaultContext("eMorphApplication/conf");   //overridden by --context parameter
     rf.configure("ICUB_ROOT",argc,argv);
 
     Manager manager;

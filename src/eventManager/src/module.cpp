@@ -37,9 +37,14 @@ using namespace yarp::math;
 #define CMD_OFF                 VOCAB3('o','f','f')
 #define CMD_TAP                 VOCAB3('t','a','p')
 #define CMD_KPUSH_TRAD          VOCAB3('k','p','t')           // push in karmaMotor retina position on the traditionalCameras
+#define CMD_KPUSH_LOC           VOCAB3('k','p','l') 
 #define CMD_KPUSH_EVENT         VOCAB3('k','p','e')           // push in karmaMotor retina position on the eventCameras
 #define CMD_RES                 VOCAB3('r','e','s') 
 #define CMD_SUS                 VOCAB3('s','u','s')
+#define CMD_PUR_TRAD            VOCAB3('s','m','t')
+#define CMD_PUR_LOC             VOCAB3('s','m','l')
+#define CMD_TOU                 VOCAB3('t','o','u')
+
 
 #define CMD_TRAIN               VOCAB4('t','r','a','i')
 #define CMD_EXECUTE             VOCAB4('e','x','e','c')
@@ -48,6 +53,8 @@ using namespace yarp::math;
 #define CMD_PUSH                VOCAB4('p','u','s','h')
 #define CMD_DUMP                VOCAB4('d','u','m','p')
 #define CMD_KPUSH_SM            VOCAB4('k','p','s','m')       // karmaMotor push smooth pursuit
+#define CMD_POINT_DVS           VOCAB4('p','d','v','s')       // pointing using dvs cameras
+#define CMD_TOUCH_DVS           VOCAB4('t','d','v','s')       // pointing using dvs cameras
 
 
 
@@ -74,9 +81,70 @@ bool Manager::configure(ResourceFinder &rf)
     rpcVelExtract.open(  ("/"+name+"/velExtract:rpc").c_str());   //rpc server to query the velocityExtractor
     rpcAttention.open(   ("/"+name+"/attention:rpc").c_str());    //rpc server to query the velocityExtractor
     rpcGrabber.open(     ("/"+name+"/grabber:rpc").c_str());      //rpc server to activate and deactivate the grabber
+
+    //**********************************************************************************
+    //find group DVS_CAMERA
+    Bottle b=rf.findGroup("DVS_CAMERA");
+
+    if(b.isNull())
+    {
+        fprintf(stdout,"DVS_CAMERA kinematic offset is missing!\n");
+        return false;
+    }
+
+    if (Bottle *pB=b.find("left").asList())
+    {
+        printf("DVS-left %s \n", pB->toString().c_str());
+        leftDVS_kine = *pB;
+    }
+    else {
+        return false;
+    }
+    if (Bottle *pB=b.find("right").asList())
+    {
+        printf("DVS-right %s \n", pB->toString().c_str());
+        rightDVS_kine = *pB;
+    }
+    else {
+        return false;
+    }
+   
+    
+    //************************************************************/
+    fprintf(stdout,"extracting kinematics values for wings on the camera \n");
+    //find group WINGS_CAMERA
+    b=rf.findGroup("WINGS_CAMERA");
+
+    if(b.isNull())
+    {
+        fprintf(stdout,"WINGS_CAMERA kinematic offset is missing!\n");
+        return false;
+    }
+    else {
+        fprintf(stdout,"found WINGS_CAMERA \n");
+    }
+
+    if (Bottle *pB=b.find("left").asList())
+    {
+        printf("WINGS-left %s \n", pB->toString().c_str());
+        leftWINGS_kine = *pB;
+    }
+    else {
+        return false;
+    }
+    if (Bottle *pB=b.find("right").asList())
+    {
+        printf("WINGS-left %s \n", pB->toString().c_str());
+        rightWINGS_kine = *pB;
+    }
+    else {
+        return false;
+    }
+   
+    
+    /************************************************************/
                           
     Rand::init();
-
     randActions[0] = 0.0;
     randActions[1] = 30.0;
     randActions[2] = 150.0;
@@ -214,9 +282,14 @@ bool Manager::updateModule()
             reply.addString("HELP \n");
             reply.addString("train \n");
             reply.addString("test \n");
-            reply.addString("tap \n");
+            reply.addString("tou \n");
             reply.addString("push (u v)");
-            reply.addString("kpt (u v)");
+            reply.addString("kpt  (u v) - karmaPush using traditional camera");
+            reply.addString("smt  (u v) - karmaPush using traditional camera + smoothPursuit");
+            reply.addString("kpl  (u v) - karmaPush using traditional camera and blob detector");
+            reply.addString("sml  (u v) - karmaPush using traditional camera and blob detector + smoothPursuit");
+            reply.addString("pdvs (u v) - arePointing using dvs camera ");
+            reply.addString("tdvs (u v) - areTouching using dvs camera ");
             reply.addString("===== \n");
             rpcHuman.reply(reply);
         }break;
@@ -224,9 +297,13 @@ bool Manager::updateModule()
             printf("home command received \n");
             goHome();
         }break;
-        case CMD_TAP: {
-            reply.addString("tap command \n");
-            
+        case CMD_TOU: {
+            reply.addString("touch command \n");
+            Bottle* opt = cmd.get(1).asList();
+            double x = opt->get(0).asDouble();
+            double y = opt->get(1).asDouble();
+            double z = opt->get(2).asDouble();
+            touch(x,y,z);
             rpcHuman.reply(reply);
         }break;
         case CMD_PUSH: {
@@ -256,15 +333,47 @@ bool Manager::updateModule()
             }
             rpcHuman.reply(reply);
         }break;
-        case CMD_KPUSH_SM: {
-            reply.addString("karma push command for traditional camera: ");
+        case CMD_POINT_DVS: {
+            reply.addString("are pointing for dvsv camera: ");
+            if(cmd.size() > 1 ){
+                Bottle* opt = cmd.get(1).asList();
+                fprintf(stdout,"option of the command push %s \n", opt->toString().c_str());
+                int u = opt->get(0).asInt();
+                int v = opt->get(1).asInt();
+                
+                pointDVS(u,v);
+                
+            }
+            else {
+                reply.addString("UNSUCCESS, number of options insufficient \n");
+            }
+            rpcHuman.reply(reply);
+        }break;
+        case CMD_TOUCH_DVS: {
+            reply.addString("are pointing for dvsv camera: ");
+            if(cmd.size() > 1 ){
+                Bottle* opt = cmd.get(1).asList();
+                fprintf(stdout,"option of the command push %s \n", opt->toString().c_str());
+                int u = opt->get(0).asInt();
+                int v = opt->get(1).asInt();
+                
+                touchDVS(u,v);
+                
+            }
+            else {
+                reply.addString("UNSUCCESS, number of options insufficient \n");
+            }
+            rpcHuman.reply(reply);
+        }break;
+        case CMD_PUR_TRAD: {
+            reply.addString("karma push command for traditional camera smooth pursuit: ");
             if(cmd.size() > 1 ){
                 Bottle* opt = cmd.get(1).asList();
                 fprintf(stdout,"option of the command push %s \n", opt->toString().c_str());
                 int u = opt->get(0).asInt();
                 int v = opt->get(1).asInt();
                 double x,y,z;
-                pushTraditional(u,v,x,y,z);
+                pushSmoothPursuit(u,v);
                 reply.addDouble(x);
                 reply.addDouble(y);
                 reply.addDouble(z);
@@ -273,6 +382,18 @@ bool Manager::updateModule()
             else {
                 reply.addString("UNSUCCESS \n");
             }
+            rpcHuman.reply(reply);
+        }break;
+        case CMD_KPUSH_LOC: {
+            reply.addString("karma push command for traditional camera : ");
+            fprintf(stdout," option of the command push on Blob  \n");
+            pushOnLoc();
+            rpcHuman.reply(reply);  
+        }break;
+        case CMD_PUR_LOC: {
+            reply.addString("karma push command for traditional camera smooth pursuit: ");
+            fprintf(stdout,"option of the command pursuit on Blob  \n");
+            pursOnLoc();
             rpcHuman.reply(reply);
         }break;
         defaut: {
@@ -298,7 +419,24 @@ void Manager::goHome()
     fprintf(stdout,"gone home %s:\n",replyAre.toString().c_str()); 
 }
 /****************************************************************************************************************/
+void Manager::touch(double x, double y, double z)
+{
+    fprintf(stdout,"touch command executing ...... ");
+    Bottle cmdAre, replyAre;
+    Bottle areTarget;
+    cmdAre.clear();
+    replyAre.clear();
+    cmdAre.addString("touch");
+    areTarget.addDouble(x);
+    areTarget.addDouble(y);
+    areTarget.addDouble(z);
+    cmdAre.addList() = areTarget;
+    
+    rpcMotorAre.write(cmdAre,replyAre);
+    fprintf(stdout,"gone home %s:\n",replyAre.toString().c_str()); 
+}
 
+/****************************************************************************************************************/
 
 void Manager::pushTraditional(int u, int v, double& x, double& y, double& z){
     fprintf(stdout, "push retina position of traditional cameras %d %d \n", u, v);
@@ -320,10 +458,11 @@ void Manager::pushTraditional(int u, int v, double& x, double& y, double& z){
         x = replyPushTrad.get(0).asDouble();
         y = replyPushTrad.get(1).asDouble();
         z = replyPushTrad.get(2).asDouble();
+
+        x = -0.4;
+        y = 0.0;
+        z = -0.05;
         
-        x = -0.35;
-        y = 0.05;
-        z = -0.20;
         
         if(rpcMotorKarma.getOutputCount() && (rpcMotorAre.getOutputCount()) ) {
             // sending fix command to the actionRenderingEngine "look (x y z) fixate"
@@ -337,9 +476,12 @@ void Manager::pushTraditional(int u, int v, double& x, double& y, double& z){
             areTarget.addDouble(z);
             areMotor.addString("fixate");
             rpcMotorAre.write(areMotor,areReply);
-            fprintf(stdout,"fication is %s:\n",areReply.toString().c_str());
+            fprintf(stdout,"fixation is %s:\n",areReply.toString().c_str());
+            
+           
             
             // sending command to dump event
+            
             if(rpcGrabber.getOutputCount()){
                 Bottle grabberRequest,grabberReply;
                 grabberRequest.clear(); grabberReply.clear();
@@ -352,8 +494,9 @@ void Manager::pushTraditional(int u, int v, double& x, double& y, double& z){
             }
             
             // sending push command to the karma
+            Time::delay(5.0);
             double actionOrient = 0.0;
-            double offset       = 0.06;
+            double offset       = 0.1;
             fprintf(stdout,"Will now send to karmaMotor:\n");
             Bottle karmaMotor,karmaReply;
             karmaMotor.clear(); karmaReply.clear();
@@ -368,7 +511,21 @@ void Manager::pushTraditional(int u, int v, double& x, double& y, double& z){
             fprintf(stdout,"action is %s:\n",karmaReply.toString().c_str());
             
             //temporal delay
-            Time::delay(1.0);
+            Time::delay(3.0);
+            
+            /* 
+            // moving the arm far from the table
+            fprintf(stdout, "moving the arm away from the table \n");
+            areMotor.clear(); areReply.clear();
+            areTarget.clear();
+            areMotor.addString("touch");
+            areTarget = areMotor.addList();
+            areTarget.addDouble(-0.2);
+            areTarget.addDouble(0.15);
+            areTarget.addDouble(0.2);
+            areMotor.addString("no_gaze");
+            rpcMotorAre.write(areMotor,areReply);
+            */
 
             // sending command to dump event
             if(rpcGrabber.getOutputCount()){
@@ -382,7 +539,7 @@ void Manager::pushTraditional(int u, int v, double& x, double& y, double& z){
                 fprintf(stdout, "connection to the grabber missing \n");
             }
             
-            goHome();
+            //goHome();
         }
         else {
             fprintf(stdout,"Either the ActionRenderingEngine or the KARMA motor missing in connections \n");
@@ -393,6 +550,191 @@ void Manager::pushTraditional(int u, int v, double& x, double& y, double& z){
         fprintf(stdout, "interface with traslator traditional camera not active \n");
     }
 }
+/****************************************************************************************************************/
+
+void Manager::pointDVS(int u, int v){
+    fprintf(stdout, "pointing using retina position of dvs cameras %d %d \n", u, v);
+    if(rpcTransEvent.getOutputCount()) {
+
+        if(rpcMotorKarma.getOutputCount() && (rpcMotorAre.getOutputCount()) ) {
+            // sending fix command to the actionRenderingEngine "look (x y z) "
+            Bottle areTarget; areTarget.clear();
+            Bottle areMotor,areReply;
+            areMotor.clear(); areReply.clear();
+            areMotor.addString("look");
+            
+            areTarget.addDouble(-0.35);
+            areTarget.addDouble(0.0);
+            areTarget.addDouble(-0.12);
+            areMotor.addList() = areTarget;
+            
+            fprintf(stdout,"areMotor %s:\n",areMotor.toString().c_str());
+            rpcMotorAre.write(areMotor,areReply);
+            fprintf(stdout,"areReply %s:\n",areReply.toString().c_str());
+            Time::delay(2.0);
+        }
+        
+        double x, y, z;
+
+        if(rpcMotorKarma.getOutputCount() && (rpcMotorAre.getOutputCount()) ) {
+            // sending fix command to the actionRenderingEngine "look (x y z) fixate"
+            Bottle areTarget; areTarget.clear();
+            Bottle areMotor,areReply;
+            areMotor.clear(); areReply.clear();
+            areMotor.addString("point");
+            
+            
+            areTarget.addInt(u);
+            areTarget.addInt(v);
+            areMotor.addList() = areTarget;
+            fprintf(stdout,"command to are %s:\n",areMotor.toString().c_str());
+            rpcMotorAre.write(areMotor,areReply);
+            fprintf(stdout,"reply from are %s:\n",areReply.toString().c_str());
+            
+            
+            //goHome();
+        }
+        else {
+            fprintf(stdout,"Either the ActionRenderingEngine or the KARMA motor missing in connections \n");
+        }
+
+
+        /*
+        Bottle cmdPushDVS, replyPushDVS;
+        cmdPushDVS.clear();
+        replyPushDVS.clear();
+        cmdPushDVS.addString("get3d");
+        cmdPushDVS.addDouble(u);
+        cmdPushDVS.addDouble(v);
+        cmdPushDVS.addString("left");
+        fprintf(stdout,"command sent :%s \n", cmdPushDVS.toString().c_str());
+        rpcTransEvent.write(cmdPushDVS,replyPushDVS);
+        fprintf(stdout,"reply:%s \n", replyPushDVS.toString().c_str());
+        x = replyPushDVS.get(0).asDouble();
+        y = replyPushDVS.get(1).asDouble();
+        z = replyPushDVS.get(2).asDouble();
+
+        if(rpcMotorKarma.getOutputCount() && (rpcMotorAre.getOutputCount()) ) {
+            // sending fix command to the actionRenderingEngine "look (x y z) fixate"
+            Bottle areTarget; areTarget.clear();
+            Bottle areMotor,areReply;
+            areMotor.clear(); areReply.clear();
+            areMotor.addString("point");
+            
+            areTarget.addDouble(x);
+            areTarget.addDouble(y);
+            areTarget.addDouble(z);
+            areMotor.addList() = areTarget;
+            fprintf(stdout,"command to are %s:\n",areMotor.toString().c_str());
+            rpcMotorAre.write(areMotor,areReply);
+            fprintf(stdout,"reply from are %s:\n",areReply.toString().c_str());
+            
+            
+            //goHome();
+        }
+        else {
+            fprintf(stdout,"Either the ActionRenderingEngine or the KARMA motor missing in connections \n");
+        }
+        */
+        
+    }
+    else {
+        fprintf(stdout, "interface with traslator traditional camera not active \n");
+    }
+}
+
+/****************************************************************************************************************/
+
+void Manager::touchDVS(int u, int v){
+    fprintf(stdout, "pointing using retina position of dvs cameras %d %d \n", u, v);
+    if(rpcTransEvent.getOutputCount()) {
+
+        if(rpcMotorKarma.getOutputCount() && (rpcMotorAre.getOutputCount()) ) {
+            // sending fix command to the actionRenderingEngine "look (x y z) "
+            Bottle areTarget; areTarget.clear();
+            Bottle areMotor,areReply;
+            areMotor.clear(); areReply.clear();
+            areMotor.addString("look");
+            
+            areTarget.addDouble(-0.35);
+            areTarget.addDouble(0.0);
+            areTarget.addDouble(-0.12);
+            areMotor.addList() = areTarget;
+            
+            fprintf(stdout,"areMotor %s:\n",areMotor.toString().c_str());
+            rpcMotorAre.write(areMotor,areReply);
+            fprintf(stdout,"areReply %s:\n",areReply.toString().c_str());
+            Time::delay(2.0);
+        }
+        
+        double x, y, z;
+
+        if(rpcMotorKarma.getOutputCount() && (rpcMotorAre.getOutputCount()) ) {
+            // sending fix command to the actionRenderingEngine "look (x y z) fixate"
+            Bottle areTarget; areTarget.clear();
+            Bottle areMotor,areReply;
+            areMotor.clear(); areReply.clear();
+            areMotor.addString("touch");           
+            areTarget.addInt(u);
+            areTarget.addInt(v);
+            areMotor.addList() = areTarget;
+            fprintf(stdout,"command to are %s:\n",areMotor.toString().c_str());
+            rpcMotorAre.write(areMotor,areReply);
+            fprintf(stdout,"reply from are %s:\n",areReply.toString().c_str());
+            
+            
+            //goHome();
+        }
+        else {
+            fprintf(stdout,"Either the ActionRenderingEngine or the KARMA motor missing in connections \n");
+        }
+
+
+
+        /*
+        Bottle cmdPushDVS, replyPushDVS;
+        cmdPushDVS.clear();
+        replyPushDVS.clear();
+        cmdPushDVS.addString("get3d");
+        cmdPushDVS.addDouble(u);
+        cmdPushDVS.addDouble(v);
+        cmdPushDVS.addString("left");
+        fprintf(stdout,"command sent :%s \n", cmdPushDVS.toString().c_str());
+        rpcTransEvent.write(cmdPushDVS,replyPushDVS);
+        fprintf(stdout,"reply:%s \n", replyPushDVS.toString().c_str());
+        x = replyPushDVS.get(0).asDouble();
+        y = replyPushDVS.get(1).asDouble();
+        z = replyPushDVS.get(2).asDouble();
+
+        if(rpcMotorKarma.getOutputCount() && (rpcMotorAre.getOutputCount()) ) {
+            // sending fix command to the actionRenderingEngine "look (x y z) fixate"
+            Bottle areTarget; areTarget.clear();
+            Bottle areMotor,areReply;
+            areMotor.clear(); areReply.clear();
+            areMotor.addString("point");
+            
+            areTarget.addDouble(x);
+            areTarget.addDouble(y);
+            areTarget.addDouble(z);
+            areMotor.addList() = areTarget;
+            fprintf(stdout,"command to are %s:\n",areMotor.toString().c_str());
+            rpcMotorAre.write(areMotor,areReply);
+            fprintf(stdout,"reply from are %s:\n",areReply.toString().c_str());
+            
+            
+            //goHome();
+        }
+        else {
+            fprintf(stdout,"Either the ActionRenderingEngine or the KARMA motor missing in connections \n");
+        }
+        */
+        
+    }
+    else {
+        fprintf(stdout, "interface with traslator traditional camera not active \n");
+    }
+}
+
 
 /***************************************************************************************************************/
 void Manager::pushSmoothPursuit(int u, int v){
@@ -418,10 +760,10 @@ void Manager::pushSmoothPursuit(int u, int v){
         double x = replyPushTrad.get(0).asDouble();
         double y = replyPushTrad.get(1).asDouble();
         double z = replyPushTrad.get(2).asDouble();
-        
-        x = -0.35;
+
+        x = -0.4;
         y = 0.05;
-        z = -0.20;
+        z = 0.0 ;
         
         if(rpcMotorKarma.getOutputCount() && (rpcMotorAre.getOutputCount()) ) {
             // sending fix command to the actionRenderingEngine "look (x y z) fixate"
@@ -429,26 +771,20 @@ void Manager::pushSmoothPursuit(int u, int v){
             Bottle areMotor,areReply;
             areMotor.clear(); areReply.clear();
             areMotor.addString("look");
-            areTarget = areMotor.addList();
+            
             areTarget.addDouble(x);
             areTarget.addDouble(y);
             areTarget.addDouble(z);
+
+            areMotor.addList() = areTarget;
             areMotor.addString("fixate");
+            fprintf(stdout,"sending command %s to actionRenderingEngine:\n",areMotor.toString().c_str());
             rpcMotorAre.write(areMotor,areReply);
-            fprintf(stdout,"fication is %s:\n",areReply.toString().c_str());
+            fprintf(stdout,"fixation is %s:\n",areReply.toString().c_str());
             
-            // sending command to dump event
-            if(rpcVelExtract.getOutputCount()){
-                Bottle velRequest,velReply;
-                velRequest.clear(); velReply.clear();
-                velRequest.addVocab(CMD_RES);
-                rpcVelExtract.write(velRequest,velReply);
-            }
-            else {
-                fprintf(stdout, "connection to the velocityExtractor missing \n");
-            }
             
             // sending push command to the karma
+            //Time::delay(5.0);
             double actionOrient = 0.0;
             double offset       = 0.06;
             fprintf(stdout,"Will now send to karmaMotor:\n");
@@ -464,10 +800,26 @@ void Manager::pushSmoothPursuit(int u, int v){
             rpcMotorKarma.write(karmaMotor, karmaReply);
             fprintf(stdout,"action is %s:\n",karmaReply.toString().c_str());
             
+            
+            /*
+            // sending command to smooth pursuit
+            if(rpcVelExtract.getOutputCount()){
+                Bottle velRequest,velReply;
+                velRequest.clear(); velReply.clear();
+                velRequest.addVocab(CMD_RES);
+                rpcVelExtract.write(velRequest,velReply);
+            }
+            else {
+                fprintf(stdout, "connection to the velocityExtractor missing \n");
+            }
+            */
+            
             //temporal delay
-            Time::delay(1.0);
+            //Time::delay(1.0);
+            
 
-            // sending command to dump event
+            /*
+            // sending command to disable sm-pursuit
             if(rpcVelExtract.getOutputCount()){
                 Bottle velRequest,velReply;
                 velRequest.clear(); velReply.clear();
@@ -477,8 +829,9 @@ void Manager::pushSmoothPursuit(int u, int v){
             else {
                 fprintf(stdout, "connection to the velocityExtractor missing \n");
             }
+            */
             
-            goHome();
+            //goHome();
         }
         else {
             fprintf(stdout,"Either the ActionRenderingEngine or the KARMA motor missing in connections \n");
@@ -570,6 +923,310 @@ int Manager::executeOnLoc(bool shouldTrain)
 
             goHome();
         }
+    }
+    return 0;
+}
+/****************************************************************************************************************/
+int Manager::pushOnLoc()
+{
+
+    fprintf(stdout, "\n\n\n****************************************************************************\n\n" );
+    Bottle blobs;
+    blobs.clear();
+    // grab the blobs
+    blobs = getBlobs();
+    printf("got all the blobs \n");
+    
+    // failure handling
+    if (blobs.size()==0) {
+        fprintf(stdout,"no available blob visible \n");
+        return RET_INVALID;
+    }
+    
+    if (blobs.size()<2)
+    {
+        pointLocation = getBlobCOG(blobs,0);
+        fprintf (stdout,"point is %d %d \n", pointLocation.x, pointLocation.y);
+        pointGood = true;
+    }else
+    {
+        fprintf (stdout,"I see more than two blobs\n");
+        pointGood = false;
+    }
+    
+    if (pointGood)
+    {
+        Bottle closestBlob;
+        mutexResources.wait();
+        closestBlob=findClosestBlob(blobs,pointLocation);
+        mutexResources.post();
+        
+        CvPoint cog;
+        cog.x = closestBlob.get(0).asInt();
+        cog.y = closestBlob.get(1).asInt();
+        
+        int index = 0;
+        index = closestBlob.get(2).asInt();
+
+        fprintf(stdout, "closest blob is x:%d y:%d with index %d\n\n",cog.x, cog.y, index); 
+
+        int u = cog.x;
+        int v = cog.y;
+
+        //forcing home the robot
+        //cmdPushTrad.clear(); replyPushTrad.clear();
+        //cmdPushTrad.addString("home");
+        //iolStateMachine.write(cmdPushTrad,replyPushTrad);
+        //fprintf(stdout,"%s\n", replyPushTrad.toString().c_str());
+        
+        // getting the 3d position
+        fprintf(stdout,"getting the 3d position ... \n");
+        Bottle cmdPushTrad, replyPushTrad;
+        cmdPushTrad.clear(); replyPushTrad.clear();
+        cmdPushTrad.addString("get3d");
+        cmdPushTrad.addInt(u);
+        cmdPushTrad.addInt(v);
+        cmdPushTrad.addString("left");
+        rpcTransTrad.write(cmdPushTrad,replyPushTrad);
+        fprintf(stdout,"reply:%s \n", replyPushTrad.toString().c_str());
+        double x = replyPushTrad.get(0).asDouble();
+        double y = replyPushTrad.get(1).asDouble();
+        double z = replyPushTrad.get(2).asDouble();
+
+        printf("translated into the position %f %f %f \n", x, y, z);
+        // check on the position 
+        if(z < 0.0) {
+            z = 0;
+        }
+
+        if(rpcMotorKarma.getOutputCount() && (rpcMotorAre.getOutputCount()) ) {
+            // sending fix command to the actionRenderingEngine "look (x y z) fixate"
+            Bottle areTarget; areTarget.clear();
+            Bottle areMotor,areReply;
+            areMotor.clear(); areReply.clear();
+            areMotor.addString("look");
+            areTarget = areMotor.addList();
+            areTarget.addDouble(x);
+            areTarget.addDouble(y);
+            areTarget.addDouble(z);
+            areMotor.addString("fixate");
+            rpcMotorAre.write(areMotor,areReply);
+            fprintf(stdout,"fixation is %s:\n",areReply.toString().c_str());
+            
+            // sending command to dump event
+            
+            if(rpcGrabber.getOutputCount()){
+                Bottle grabberRequest,grabberReply;
+                grabberRequest.clear(); grabberReply.clear();
+                grabberRequest.addVocab(CMD_DUMP);
+                grabberRequest.addVocab(CMD_ON); 
+                rpcGrabber.write(grabberRequest,grabberReply);
+            }
+            else {
+                fprintf(stdout, "connection to the grabber missing \n");
+            }
+            
+            // sending push command to the karma
+            Time::delay(5.0);
+            double actionOrient = 0.0;
+            double offset       = 0.1;
+            fprintf(stdout,"Will now send to karmaMotor:\n");
+            Bottle karmaMotor,karmaReply;
+            karmaMotor.clear(); karmaReply.clear();
+            karmaMotor.addDouble(x);
+            karmaMotor.addDouble(y);
+            karmaMotor.addDouble(z + 0.05);
+            karmaMotor.addDouble(actionOrient);
+            karmaMotor.addDouble( offset );// + 0.06 );
+
+            fprintf(stdout,"%s\n",karmaMotor.toString().c_str());
+            rpcMotorKarma.write(karmaMotor, karmaReply);
+            fprintf(stdout,"action is %s:\n",karmaReply.toString().c_str());
+            
+            //temporal delay
+            Time::delay(3.0);
+            
+            /* 
+            // moving the arm far from the table
+            fprintf(stdout, "moving the arm away from the table \n");
+            areMotor.clear(); areReply.clear();
+            areTarget.clear();
+            areMotor.addString("touch");
+            areTarget = areMotor.addList();
+            areTarget.addDouble(-0.2);
+            areTarget.addDouble(0.15);
+            areTarget.addDouble(0.2);
+            areMotor.addString("no_gaze");
+            rpcMotorAre.write(areMotor,areReply);
+            */
+
+            // sending command to dump event
+            if(rpcGrabber.getOutputCount()){
+                Bottle grabberRequest,grabberReply;
+                grabberRequest.clear(); grabberReply.clear();
+                grabberRequest.addVocab(CMD_DUMP);
+                grabberRequest.addVocab(CMD_OFF); 
+                rpcGrabber.write(grabberRequest,grabberReply);
+            }
+            else {
+                fprintf(stdout, "connection to the grabber missing \n");
+            }
+            
+            //goHome();
+        }
+        else {
+            fprintf(stdout,"Either the ActionRenderingEngine or the KARMA motor missing in connections \n");
+        }
+
+    }
+    
+    return 0;
+}
+/****************************************************************************************************************/
+int Manager::pursOnLoc()
+{
+
+    fprintf(stdout, "\n\n\n****************************************************************************\n\n" );
+    Bottle blobs;
+    blobs.clear();
+    // grab the blobs
+    blobs=getBlobs();
+    // failure handling
+
+    if (blobs.size()==0)
+        return RET_INVALID;
+    
+    if (blobs.size()<2)
+    {
+        pointLocation = getBlobCOG(blobs,0);
+        fprintf (stdout,"point is %d %d \n", pointLocation.x, pointLocation.y);
+        pointGood = true;
+    }else
+    {
+        fprintf (stdout,"I see more than two blobs\n");
+        pointGood = false;
+    }
+    if (pointGood)
+    {
+        Bottle closestBlob;
+        mutexResources.wait();
+        closestBlob=findClosestBlob(blobs,pointLocation);
+        mutexResources.post();
+        
+        CvPoint cog;
+        cog.x = closestBlob.get(0).asInt();
+        cog.y = closestBlob.get(1).asInt();
+        
+        int index = 0;
+        index = closestBlob.get(2).asInt();
+
+        fprintf(stdout, "closest blob is x:%d y:%d with index %d\n\n",cog.x, cog.y, index);
+        
+        int u = cog.x;
+        int v = cog.y;
+        
+        // getting the 3d position
+        fprintf(stdout,"getting the 3d position ... \n");
+        Bottle cmdPushTrad, replyPushTrad;
+        cmdPushTrad.clear(); replyPushTrad.clear();
+        cmdPushTrad.addString("get3d");
+        cmdPushTrad.addInt(u);
+        cmdPushTrad.addInt(v);
+        cmdPushTrad.addString("left");
+        rpcTransTrad.write(cmdPushTrad,replyPushTrad);
+        fprintf(stdout,"reply:%s \n", replyPushTrad.toString().c_str());
+        double x = replyPushTrad.get(0).asDouble();
+        double y = replyPushTrad.get(1).asDouble();
+        double z = replyPushTrad.get(2).asDouble();
+
+        printf("translated into the position %f %f %f \n", x, y, z);
+        // check on the position 
+        if(z < 0.0) {
+            z = 0;
+        }
+
+        if(rpcMotorKarma.getOutputCount() && (rpcMotorAre.getOutputCount()) ) {
+            // sending fix command to the actionRenderingEngine "look (x y z) fixate"
+            Bottle areTarget; areTarget.clear();
+            Bottle areMotor,areReply;
+            areMotor.clear(); areReply.clear();
+            areMotor.addString("look");
+            areTarget = areMotor.addList();
+            areTarget.addDouble(x);
+            areTarget.addDouble(y);
+            areTarget.addDouble(z);
+            areMotor.addString("fixate");
+            rpcMotorAre.write(areMotor,areReply);
+            fprintf(stdout,"fixation is %s:\n",areReply.toString().c_str());
+            
+           
+            
+            // sending command to dump event
+            
+            if(rpcGrabber.getOutputCount()){
+                Bottle grabberRequest,grabberReply;
+                grabberRequest.clear(); grabberReply.clear();
+                grabberRequest.addVocab(CMD_DUMP);
+                grabberRequest.addVocab(CMD_ON); 
+                rpcGrabber.write(grabberRequest,grabberReply);
+            }
+            else {
+                fprintf(stdout, "connection to the grabber missing \n");
+            }
+            
+            // sending push command to the karma
+            Time::delay(5.0);
+            double actionOrient = 0.0;
+            double offset       = 0.1;
+            fprintf(stdout,"Will now send to karmaMotor:\n");
+            Bottle karmaMotor,karmaReply;
+            karmaMotor.clear(); karmaReply.clear();
+            karmaMotor.addDouble(x);
+            karmaMotor.addDouble(y);
+            karmaMotor.addDouble(z + 0.05);
+            karmaMotor.addDouble(actionOrient);
+            karmaMotor.addDouble( offset );// + 0.06 );
+
+            fprintf(stdout,"%s\n",karmaMotor.toString().c_str());
+            rpcMotorKarma.write(karmaMotor, karmaReply);
+            fprintf(stdout,"action is %s:\n",karmaReply.toString().c_str());
+            
+            //temporal delay
+            Time::delay(3.0);
+            
+            /* 
+            // moving the arm far from the table
+            fprintf(stdout, "moving the arm away from the table \n");
+            areMotor.clear(); areReply.clear();
+            areTarget.clear();
+            areMotor.addString("touch");
+            areTarget = areMotor.addList();
+            areTarget.addDouble(-0.2);
+            areTarget.addDouble(0.15);
+            areTarget.addDouble(0.2);
+            areMotor.addString("no_gaze");
+            rpcMotorAre.write(areMotor,areReply);
+            */
+
+            // sending command to dump event
+            if(rpcGrabber.getOutputCount()){
+                Bottle grabberRequest,grabberReply;
+                grabberRequest.clear(); grabberReply.clear();
+                grabberRequest.addVocab(CMD_DUMP);
+                grabberRequest.addVocab(CMD_OFF); 
+                rpcGrabber.write(grabberRequest,grabberReply);
+            }
+            else {
+                fprintf(stdout, "connection to the grabber missing \n");
+            }
+            
+            //goHome();
+        }
+        else {
+            fprintf(stdout,"Either the ActionRenderingEngine or the KARMA motor missing in connections \n");
+        }
+            
+            
     }
     return 0;
 }

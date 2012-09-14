@@ -60,6 +60,11 @@ protected:
     bool                        init;
     bool                        pointGood;          //boolean for if got a point location
     yarp::os::Bottle            lastBlobs;
+
+    yarp::os::Bottle            leftDVS_kine;       // kinematic offset of the left camera DVS
+    yarp::os::Bottle            rightDVS_kine;      // kinematic offset of the right cameara DVS
+    yarp::os::Bottle            leftWINGS_kine;     // kinematic offset of the left camera on WINGS
+    yarp::os::Bottle            rightWINGS_kine;    // kinematic offset of the right camera on WINGS
     
     std::string                 obj;
     double                      userTheta;
@@ -74,7 +79,14 @@ protected:
     int                         executeOnLoc(bool shouldTrain);
 
     yarp::os::Bottle            getOffset(yarp::os::Bottle &closestBlob, double actionOrient, yarp::sig::Vector &initPos);
-    
+   
+     /**
+     *      @brief: basic command for touch in are
+     */
+    void                        touch(double x, double y, double z);     
+    /**
+     *      @brief : basic command for home in are
+     */
     void                        goHome();
     /**
      *      @brief: push an object detected with traditional cameras
@@ -86,6 +98,29 @@ protected:
      *      @param v position on the image plane of traditional cameras
      */
     void                        pushSmoothPursuit(int u, int v);
+     /**
+     *      @brief: point to an object detected with traditional cameras enabling smooth pursuit right after
+     *      @param u position on the image plane of traditional cameras
+     *      @param v position on the image plane of traditional cameras
+     */
+    void                        pointDVS(int u, int v);
+    /**
+     *      @brief: touch an object detected with DVS cameras 
+     *      @param u position on the image plane of traditional cameras
+     *      @param v position on the image plane of traditional cameras
+     */
+    void                        touchDVS(int u, int v);
+    /**
+     *      @brief  : push an object detected with traditional cameras enabling smooth pursuit right after
+     *      @return : result of the action
+     */
+    int                        pushOnLoc();
+    /**
+     *      @brief  : push an object detected with traditional cameras enabling smooth pursuit right after     
+     *      @return : result of the action
+     */
+    int                        pursOnLoc();
+    
     double                      wrapAng (const double ang);
     
     void                        acquireImage(const bool request=false);
