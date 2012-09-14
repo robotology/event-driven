@@ -95,7 +95,9 @@ bool Manager::configure(ResourceFinder &rf)
     if (Bottle *pB=b.find("left").asList())
     {
         printf("DVS-left %s \n", pB->toString().c_str());
-        leftDVS_kine = *pB;
+        leftDVS_kine[0] = pB->get(0).asDouble();
+        leftDVS_kine[1] = pB->get(1).asDouble();
+        leftDVS_kine[2] = pB->get(2).asDouble();
     }
     else {
         return false;
@@ -103,7 +105,9 @@ bool Manager::configure(ResourceFinder &rf)
     if (Bottle *pB=b.find("right").asList())
     {
         printf("DVS-right %s \n", pB->toString().c_str());
-        rightDVS_kine = *pB;
+        rightDVS_kine[0] = pB->get(0).asDouble();
+        rightDVS_kine[1] = pB->get(1).asDouble();
+        rightDVS_kine[2] = pB->get(2).asDouble();
     }
     else {
         return false;
@@ -127,7 +131,9 @@ bool Manager::configure(ResourceFinder &rf)
     if (Bottle *pB=b.find("left").asList())
     {
         printf("WINGS-left %s \n", pB->toString().c_str());
-        leftWINGS_kine = *pB;
+        leftWINGS_kine[0] = pB->get(0).asDouble();
+        leftWINGS_kine[1] = pB->get(1).asDouble();
+        leftWINGS_kine[2] = pB->get(2).asDouble();
     }
     else {
         return false;
@@ -135,7 +141,9 @@ bool Manager::configure(ResourceFinder &rf)
     if (Bottle *pB=b.find("right").asList())
     {
         printf("WINGS-left %s \n", pB->toString().c_str());
-        rightWINGS_kine = *pB;
+        rightWINGS_kine[0] = pB->get(0).asDouble();
+        rightWINGS_kine[1] = pB->get(1).asDouble();
+        rightWINGS_kine[2] = pB->get(2).asDouble();
     }
     else {
         return false;
@@ -1033,9 +1041,10 @@ int Manager::pushOnLoc()
             fprintf(stdout,"Will now send to karmaMotor:\n");
             Bottle karmaMotor,karmaReply;
             karmaMotor.clear(); karmaReply.clear();
-            karmaMotor.addDouble(x);
-            karmaMotor.addDouble(y);
-            karmaMotor.addDouble(z + 0.05);
+            // removing DVS kinematic offset and adding WINGS kinematic offset
+            karmaMotor.addDouble(x - leftDVS_kine[0] + leftWINGS_kine[0]); 
+            karmaMotor.addDouble(y - leftDVS_kine[1] + leftWINGS_kine[1]);
+            karmaMotor.addDouble(z - leftDVS_kine[2] + leftWINGS_kine[2]);
             karmaMotor.addDouble(actionOrient);
             karmaMotor.addDouble( offset );// + 0.06 );
 
@@ -1181,9 +1190,9 @@ int Manager::pursOnLoc()
             fprintf(stdout,"Will now send to karmaMotor:\n");
             Bottle karmaMotor,karmaReply;
             karmaMotor.clear(); karmaReply.clear();
-            karmaMotor.addDouble(x);
-            karmaMotor.addDouble(y);
-            karmaMotor.addDouble(z + 0.05);
+            karmaMotor.addDouble(x  - leftDVS_kine[0] + leftWINGS_kine[0]);
+            karmaMotor.addDouble(y  - leftDVS_kine[1] + leftWINGS_kine[1]);
+            karmaMotor.addDouble(z  - leftDVS_kine[2] + leftWINGS_kine[2]);
             karmaMotor.addDouble(actionOrient);
             karmaMotor.addDouble( offset );// + 0.06 );
 

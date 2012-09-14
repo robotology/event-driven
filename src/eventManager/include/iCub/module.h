@@ -61,10 +61,10 @@ protected:
     bool                        pointGood;          //boolean for if got a point location
     yarp::os::Bottle            lastBlobs;
 
-    yarp::os::Bottle            leftDVS_kine;       // kinematic offset of the left camera DVS
-    yarp::os::Bottle            rightDVS_kine;      // kinematic offset of the right cameara DVS
-    yarp::os::Bottle            leftWINGS_kine;     // kinematic offset of the left camera on WINGS
-    yarp::os::Bottle            rightWINGS_kine;    // kinematic offset of the right camera on WINGS
+    yarp::sig::Vector            leftDVS_kine;       // kinematic offset of the left camera DVS
+    yarp::sig::Vector            rightDVS_kine;      // kinematic offset of the right cameara DVS
+    yarp::sig::Vector            leftWINGS_kine;     // kinematic offset of the left camera on WINGS
+    yarp::sig::Vector            rightWINGS_kine;    // kinematic offset of the right camera on WINGS
     
     std::string                 obj;
     double                      userTheta;
