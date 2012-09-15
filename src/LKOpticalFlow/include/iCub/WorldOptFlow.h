@@ -60,9 +60,11 @@ class WorldOptFlow : public RateThread{
 
     int   eventBuffersSize;                         /*size of 'eventBuffers' & 'eventNosBuffer'*/
 
+    unsigned long sampleTime;
+
     void updtWrldStus();  //void updtWrldStus(CameraEvent **, int);
     void calVelocities(CameraEvent **, int);
-    void directWrldStus(CameraEvent ** , int );
+
 
     void initialize(int step);
     void cleanup();
@@ -72,8 +74,8 @@ class WorldOptFlow : public RateThread{
 
 public:
 
-    WorldOptFlow( AERGrabber * inPortPtr,
-               BufferedPort<VelocityBuffer> * outFlowPort,
+    WorldOptFlow( AERGrabber * inPortPtr, BufferedPort<VelocityBuffer> * outFlowPort,
+               unsigned long sampleInv,
                MyMatrix<POLARITY_TYPE> * wStatus, MyMatrix<POLARITY_TYPE> * pWStatus,
                MyMatrix<TIMESTAMP_TYPE> * ts, yarp::os::Semaphore * eventsSignal);
 

@@ -20,18 +20,23 @@
 
 #include <iCub/VelocityBuffer.h>
 
+
 VelocityBuffer::VelocityBuffer(){
+    initialize();
+    bufferingTime = 10000; //10000;
+}
+
+VelocityBuffer::VelocityBuffer(unsigned long timeInt ){
+    initialize();
+    bufferingTime = timeInt;
+}
+
+void VelocityBuffer::initialize(){
     vxMin = DBL_MAX;
     vxMax = -1;
     vyMin = DBL_MAX;
     vyMax = -1;
     size = 0;
-    bufferingTime = 18750; //10000;
-}
-
-VelocityBuffer::VelocityBuffer(unsigned long timeInt ){
-    VelocityBuffer();
-    bufferingTime = timeInt;
 }
 
 bool VelocityBuffer::addData(short x, short y, double vx, double vy, unsigned long ts, double reliablity){
@@ -188,14 +193,13 @@ bool VelocityBuffer::addData(const VelocityBuffer &data){
 
     bool res = true;
     int tmp = data.size;
-    if (size + data.size > BUFFER_LENGTH){
+    if (size + data.size >= BUFFER_LENGTH){
         tmp = BUFFER_LENGTH;
         res = false;
     }
 
 
-    for (int i = 0; i < data.size; ++i) {
-
+    for (int i = 0; i < tmp; ++i) {
         Xs[size]= data.Xs[i];
         Ys[size]= data.Ys[i];
         Vxs[size]=data.Vxs[i];
@@ -204,9 +208,9 @@ bool VelocityBuffer::addData(const VelocityBuffer &data){
         size++;
     }
 
-    if (vxMin < data.vxMin)
+    if (vxMin > data.vxMin)
         vxMin = data.vxMin;
-    if (vyMin < data.vyMin)
+    if (vyMin > data.vyMin)
         vyMin = data.vyMin;
     if (vxMax < data.vxMax)
         vxMax = data.vxMax;
@@ -218,7 +222,7 @@ bool VelocityBuffer::addData(const VelocityBuffer &data){
 }
 
 void VelocityBuffer::setVx(int idx, double vx ){
-    double tmp;
+    double tmp;    
     Vxs[idx] = vx;
 
     tmp = fabs(vx);

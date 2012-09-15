@@ -118,7 +118,7 @@ bool OpticalFlowModule::configure(ResourceFinder & rf){
 
 
 
-    wrldFlw = new WorldOptFlow(inputPort, &outFlowPort, /*&bottleFlowPort,*/
+    wrldFlw = new WorldOptFlow(inputPort, &outFlowPort, /*&bottleFlowPort,*/frameInv,
                                &worldStatus, &prevWorldStatus, &timestamps, evntsMutex);
     wrldFlw -> start();
 

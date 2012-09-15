@@ -57,10 +57,10 @@ void AERGrabber::onRead(eventBuffer & eBuffer){
     u32* buf2 = (u32*) eBuffer.get_packet();
 
 //    cout << eventNo << endl;
-    if (evtBuffer.size() > 200){
-        cout << evtBuffer.size() << " " << eventNo << endl;
-        return;
-    }
+//    if (evtBuffer.size() > 200){
+//        cout << evtBuffer.size() << " " << eventNo << endl;
+//        return;
+//    }
 
  //   cout << "eventNo" << eventNo << endl;
 
@@ -208,7 +208,7 @@ bool AERGrabber::isReliableEvent (short row, short clmn, short polarity, unsigne
     }
 
 
-    if (ts - tmp >  RELIABLE_EVENT_THRSHLD )
+    if (ts - tmp > RELIABLE_EVENT_THRSHLD /*&& ts - tmp < 2000*/ )
         return false;
 
     return true;

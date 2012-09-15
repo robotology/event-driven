@@ -18,8 +18,8 @@
 
 #include <iCub/WorldOptFlow.h>
 
-WorldOptFlow::WorldOptFlow(AERGrabber * inPortPtr,
-                     BufferedPort<VelocityBuffer> * outFlowPort,
+WorldOptFlow::WorldOptFlow(AERGrabber * inPortPtr, BufferedPort<VelocityBuffer> * outFlowPort,
+                     unsigned long sampleInv,
                      MyMatrix<POLARITY_TYPE> * wStatus, MyMatrix<POLARITY_TYPE> * pWStatus,
                      MyMatrix<TIMESTAMP_TYPE> * ts, yarp::os::Semaphore * eventsSignal)
                        : RateThread(1), localFlw(LUCAS_KANADE_NGHBR) {
@@ -33,6 +33,7 @@ WorldOptFlow::WorldOptFlow(AERGrabber * inPortPtr,
 
     eventBuffersSize = SPDerivative_WNDW_SZ + 1;
     bufferInitialized = 0;
+    sampleTime = sampleInv;
 
 
 
@@ -105,12 +106,13 @@ void WorldOptFlow::threadRelease(){
 
 
 void WorldOptFlow::run(){
-
+    static double last_read = 0;
     int eventNo;
     CameraEvent ** eventsBfr;
     CameraEvent * evntPtr;;
 
     if (newEventsSignal->check()){
+        last_read = yarp::os::Time::now();
 
         if (bufferInitialized < SPDerivative_WNDW_SZ){
             initialize(bufferInitialized);
@@ -121,7 +123,6 @@ void WorldOptFlow::run(){
         eventsBfr = inPort->getEvents(eventNo);
         eventBuffers[eventBuffersSize - 1] = eventsBfr;
         eventNosBuffer[eventBuffersSize - 1] = eventNo;
-        //directWrldStus(eventsBfr, eventNo);
 
         updtWrldStus();
 
@@ -136,40 +137,49 @@ void WorldOptFlow::run(){
 
         prevWorldStatus->updateMatrix(worldStatus);
 
-
-        // release the memory for events
+        //Release the memory for events
         eventsBfr = eventBuffers[0];
         if (eventsBfr != NULL){
-            // each element of array is a CameraEvent *
-            for (int i = 0; i < eventNosBuffer[0]; ++i) {
-                delete *(eventsBfr + i);
-            }
-            delete [] eventsBfr;
+           // each element of array is a CameraEvent *
+           for (int i = 0; i < eventNosBuffer[0]; ++i) {
+               delete *(eventsBfr + i);
+           }
+           delete [] eventsBfr;
         }
 
-        // shift the eventBufffers one step
+        //Shift the eventBufffers one step
         for (int i = 1; i < eventBuffersSize; ++i) {
             eventBuffers[i-1] = eventBuffers[i];
             eventNosBuffer[i-1] = eventNosBuffer[i];
         }
+
+
+
     }
-}
+    else{
+        double curr_time = yarp::os::Time::now();
+        if (curr_time-last_read> .1){  //if it's a long time i have not received any thing then put some stuff on the
+            eventBuffers[eventBuffersSize - 1] = NULL;
+            eventNosBuffer[eventBuffersSize - 1] = 0;
+            updtWrldStus();
+            prevWorldStatus->updateMatrix(worldStatus);
 
-void WorldOptFlow::directWrldStus(CameraEvent ** evntBffr, int bffrSize){
-    CameraEvent * evntPtr;
-    short rwIdx, clmnIdx;
+            //Release the memory for events
+            eventsBfr = eventBuffers[0];
+            if (eventsBfr != NULL){
+               // each element of array is a CameraEvent *
+               for (int i = 0; i < eventNosBuffer[0]; ++i) {
+                   delete *(eventsBfr + i);
+               }
+               delete [] eventsBfr;
+            }
 
-    for (int i = SPATIAL_MARGINE_ADDUP; i < RETINA_SIZE_R + SPATIAL_MARGINE_ADDUP; ++i) {
-        for (int j = SPATIAL_MARGINE_ADDUP; j < RETINA_SIZE_C+ SPATIAL_MARGINE_ADDUP ; ++j) {
-            worldStatus ->operator ()(i,j) = 160;
-        }
-    }
-
-    for (int cntr = 0; cntr < bffrSize; ++cntr) {
-        evntPtr = evntBffr[cntr];
-        rwIdx = evntPtr ->getRowIdx();
-        clmnIdx = evntPtr -> getColumnIdx();
-        worldStatus ->operator ()(rwIdx, clmnIdx)  += POLARITY_WEIGHT*evntPtr->getPolarity();
+            //Shift the eventBufffers one step
+            for (int i = 1; i < eventBuffersSize; ++i) {
+                eventBuffers[i-1] = eventBuffers[i];
+                eventNosBuffer[i-1] = eventNosBuffer[i];
+            }
+        }// end-if on time
     }
 
 
@@ -201,42 +211,12 @@ void WorldOptFlow::updtWrldStus(){
 }
 
 
-/*
-
-void WorldFlow::updtWrldStus(CameraEvent ** evntBffr, int bffrSize){
-    CameraEvent * evntPtr;
-    short rwIdx, clmnIdx;
-    double alpha = .6; //.8 --> 5 ms, .9 --> 10 ms,.6 --> 2ms, .36 --> 1ms
-    int tmp;
-
-    for (int i = SPATIAL_MARGINE_ADDUP; i < RETINA_SIZE_R + SPATIAL_MARGINE_ADDUP; ++i) {
-        for (int j = SPATIAL_MARGINE_ADDUP; j < RETINA_SIZE_C+ SPATIAL_MARGINE_ADDUP ; ++j) {
-            worldStatus ->operator ()(i,j) = alpha * worldStatus->operator ()(rwIdx, clmnIdx) ;
-        }
-    }
-
-    for (int cntr = 0; cntr < bffrSize; ++cntr) {
-        evntPtr = evntBffr[cntr];
-        rwIdx = evntPtr ->getRowIdx();
-        clmnIdx = evntPtr -> getColumnIdx();
-
-        worldStatus ->operator ()(rwIdx, clmnIdx) += (1 - alpha)*50*evntPtr->getPolarity();
-
-        tmp = worldStatus->operator ()(rwIdx, clmnIdx);
-        if ((tmp > RELIABLE_EVENT_THRSHLD) || (tmp < -RELIABLE_EVENT_THRSHLD)){
-            evntPtr->setReliable(true);
-        }
-
-
-    }
-}
-*/
 
 void WorldOptFlow::calVelocities(CameraEvent ** evntBffr, int bffrSize){
 
 	CameraEvent * evntPtr;
 	short evtRw, evtClm;
-	VelocityBuffer vlctyBuffer;
+	VelocityBuffer vlctyBuffer(sampleTime);
 	double velocity [3];
 
 
@@ -267,19 +247,25 @@ void WorldOptFlow::calVelocities(CameraEvent ** evntBffr, int bffrSize){
 		//timestamps ->updateSubMatrix(evntPtr->getRowIdx() - 2, evntPtr->getColumnIdx() -2, evntPtr->getTimeStamp(), 5, 5);
 
         if (*velocity != 0 || *(velocity +1) != 0 ) {
-			if (vlctyBuffer.addDataCheckFull(evtClm - SPATIAL_MARGINE_ADDUP,
-											 evtRw - SPATIAL_MARGINE_ADDUP,
-											 *velocity, *(velocity + 1),
-											 evntPtr -> getTimeStamp(), *(velocity + 2) ) ){ //TODO
-				//Buffer is full and it should be sent to the network
-				if (outPort -> getOutputCount()){
-					VelocityBuffer & outObj = outPort->prepare();
-					outObj.setData(vlctyBuffer);
-					outPort->write();
-				}
-				vlctyBuffer.emptyBuffer();
 
-			}
+            vlctyBuffer.addData(evtClm - SPATIAL_MARGINE_ADDUP,
+                                evtRw - SPATIAL_MARGINE_ADDUP,
+                                *velocity, *(velocity + 1),
+                                evntPtr -> getTimeStamp(), *(velocity + 2) );
+
+//			if (vlctyBuffer.addDataCheckFull(evtClm - SPATIAL_MARGINE_ADDUP,
+//											 evtRw - SPATIAL_MARGINE_ADDUP,
+//											 *velocity, *(velocity + 1),
+//											 evntPtr -> getTimeStamp(), *(velocity + 2) ) ){ //TODO
+//				//Buffer is full and it should be sent to the network
+//				if (outPort -> getOutputCount()){
+//					VelocityBuffer & outObj = outPort->prepare();
+//					outObj.setData(vlctyBuffer);
+//					outPort->write();
+//				}
+//				vlctyBuffer.emptyBuffer();
+//
+//			}
 
 		}// end if velocity != 0
 

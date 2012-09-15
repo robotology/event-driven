@@ -19,7 +19,7 @@
 #ifndef VELOCITYBUFFER_H_
 #define VELOCITYBUFFER_H_
 
-#define BUFFER_LENGTH 1000
+#define BUFFER_LENGTH 5000
 
 #include <float.h>
 #include <cmath>
@@ -35,7 +35,7 @@
 using namespace yarp::os;
 
 class VelocityBuffer : public yarp::os::Portable{
-    short size;
+    int size;
     double vxMin;
     double vxMax;
     double vyMin;
@@ -46,6 +46,9 @@ class VelocityBuffer : public yarp::os::Portable{
     double Vys[BUFFER_LENGTH];
     unsigned long TSs [BUFFER_LENGTH];
     unsigned long bufferingTime;
+
+    void initialize();
+
 public:
 
     VelocityBuffer();
