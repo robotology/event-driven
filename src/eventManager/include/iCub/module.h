@@ -53,7 +53,8 @@ protected:
 
     PointedLocation             pointedLoc;         //port class to receive pointed locations
     
-    yarp::os::BufferedPort<yarp::os::Bottle>        blobExtractor;
+    yarp::os::BufferedPort<yarp::os::Bottle>        blobExtractor;   //port where the visible blobs are seen
+    yarp::os::BufferedPort<yarp::os::Bottle>        attentionFocus;  //port that receives attention redeployment commands
 
     yarp::os::Semaphore         mutexResources;     //mutex for ressources
     CvPoint                     pointLocation;      //x and y of the pointed location
@@ -120,6 +121,11 @@ protected:
      *      @return : result of the action
      */
     int                        pursOnLoc();
+    /**
+     *      @brief  : touch an object detected with traditional cameras enabling smooth pursuit right after     
+     *      @return : result of the action
+     */
+    int                        touchOnLoc();
     
     double                      wrapAng (const double ang);
     
