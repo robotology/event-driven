@@ -50,7 +50,7 @@ using namespace yarp::os;
 #define CLOCK_HI 1
 #define THRATE   5
 
-#define KERNELDEVICEREAD 32768
+#define KERNELDEVICEREAD SIZE_OF_DATA //32768
 
 
 //#define FAST
@@ -181,7 +181,10 @@ void device2yarp::threadRelease() {
 bool device2yarp::threadInit() {
     if(save) {
         printf("Opening the file to dump down all the events \n");
-        raw = fopen(i_fileName.c_str(), "wb");
+        //raw = fopen(i_fileName.c_str(), "wb");
+        raw = fopen(i_fileName.c_str(), "w");
+	if(raw==NULL)
+	    printf("%s\n", "Error: file not found or can't be created");
     }
     else {
         printf("Saving option not activated \n");
@@ -206,17 +209,32 @@ void device2yarp::setDeviceName(string deviceName) {
 
 void  device2yarp::run() {
     // read address events from device file which is not /dev/aerfx2_0
+    memset(buffer, 0, SIZE_OF_DATA);
+    wrapOccured=0;
+    ptimestamp=0;
+    uint32_t * buf32 = new uint32_t[SIZE_OF_DATA];
+    memset(buf32, 0, SIZE_OF_DATA*sizeof(uint32_t));
+
     while(1)
     {
         sz = read(file_desc,buffer,KERNELDEVICEREAD);
+        //sz = pread(file_desc,buffer,KERNELDEVICEREAD, 0);
         int numberofWords = 0;
-        uint32_t * buf32 = (uint32_t*) outbuffer;
+	//memset(outbuffer, 0, SIZE_OF_DATA);
+        //uint32_t * buf32 = (uint32_t*) outbuffer;
+
+        //uint32_t * buf32 = new uint32_t[SIZE_OF_DATA];
+	//memset(buf32, 0, SIZE_OF_DATA*sizeof(uint32_t));
+
+#ifdef _DEBUG_
         cout << sz <<"  bytes"<<endl;    
+#endif
     //    Bottle& newBuffer = port.prepare();
         
         for (int i = 0 ; i < sz ; i+=4) {
 
 
+	    //printf("[dvsGrabber] Read buffer at %d over %d\n", i, sz);
             u32 adrs, ts, tag;
             unsigned int part_1 = 0xFF & *(buffer+i);    //extracting the 1 byte        
             unsigned int part_2 = 0xFF & *(buffer+i+1);  //extracting the 2 byte        
@@ -248,18 +266,48 @@ void  device2yarp::run() {
             }             
             ts = numberOfTimeWraps<<14 | ts; 
 */
-            if( (part_4&0x80)==0x80 )
-                wrapAround+=0x4000;
+	    timestamp=0x0000FFFF&( part_3|(part_4<<8));
+		    //if( (part_4&0xff)==0x80 )
+	    if( timestamp==0x8000 )
+	    {
+#ifdef _DEBUG_
+		printf("%s\n","[dvsGrabber] Increment wrap around");
+#endif
+		wrapOccured=1;
+		wrapAround+=0x4000;
+		if(save)
+		    //fprintf(raw,"%s\n","--SUBWRAP--");  
+		    fprintf(raw,"%08X \t CAFECAFE \t CAFECAFE <= SUBWRAP\n", timestamp);  
+	    }
+	    //else if( (part_4&0xf0)==0x40 )
+	    else if( timestamp==0x4000 )
+	    {
+#ifdef _DEBUG_
+		printf("%s\n","[dvsGrabber] Reset wrap around");
+#endif
+		wrapAround=0;
+		if(save)
+		    fprintf(raw,"%08X \t EFACEFAC \t EFACEFAC <= RESET\n", timestamp);  
+	    }
             else
             {
-                if(wrapAround>=(1<<24))
+                //if(wrapAround>=(1<<24))
+		if(timestamp<ptimestamp && !wrapOccured)
+			wrapAround+=0x4000;
+		wrapOccured=0;
+                if(wrapAround>=0x1000000)
                 {
                     wrapAround=0;
                     buf32[numberofWords++] = 0x88000000;
                     if (save)
-                        fprintf(raw,"%s ","0x88000000");  
+		    {
+                        //fprintf(raw,"%s\n","--WRAP--");  
+                        fprintf(raw,"00000000 \t 88000000 \t 00000000");  
+		    }
                 }
-                ts=( (0xffff&part_3)|((0xffff&part_4)<<8) )+wrapAround;
+                ts=0x80000000|((0x3fff&timestamp)+wrapAround);
+		ptimestamp=timestamp;
+
 
         //        if(numberOfTimeWraps >= 1<<12){
         //            ts = 0x88000000;
@@ -296,7 +344,8 @@ void  device2yarp::run() {
         //        fprintf(tmpFile,"%08X \t %08X \t\t %u\n",ts,adrs,numberOfTimeWraps);  
 
                 if (save){
-                   fprintf(raw,"%08X \t %08X \r\n",ts,adrs);  
+                   //fprintf(raw,"%08X \t %08X \r\n",ts,adrs);  
+                   fprintf(raw,"%08X \t %08X \t %08X\n", 0x3fff&timestamp, ts,adrs);  
                 }
             }
         }
@@ -308,15 +357,38 @@ void  device2yarp::run() {
         */
 
         if(port.getOutputCount()) {
-            emorph::ebuffer::eventBuffer data2send(outbuffer, sz);  //adding 8 bytes for extra word 0xCAFECAFE and TS_WA    
+#ifdef _DEBUG_
+            printf("%s\n", "[dvsGrabber] Send buf32");
+#endif
+            //emorph::ebuffer::eventBuffer data2send(outbuffer, sz);  //adding 8 bytes for extra word 0xCAFECAFE and TS_WA    
+            //emorph::ebuffer::eventBuffer data2send(buffer, sz);  //adding 8 bytes for extra word 0xCAFECAFE and TS_WA    
+
+            //emorph::ebuffer::eventBuffer data2send((char*)buf32, sz*sizeof(uint32_t));    
+            //emorph::ebuffer::eventBuffer data2send((char*)buf32, sz*2);    
+            unsigned int sz2s=numberofWords<=0?0:(numberofWords-1)*sizeof(uint32_t);
+            printf("[device2yarp] Send %d bytes\n", sz2s);
+            emorph::ebuffer::eventBuffer data2send((char*)buf32, sz2s);
             emorph::ebuffer::eventBuffer& tmp = port.prepare();
             tmp = data2send;
             port.write();
+/*            int npart=(int)ceil((double)sz2s/32768.0);
+            emorph::ebuffer::eventBuffer data2send;
+            for(int ii=0;ii<npart;++ii)
+            {
+                if(sz2s>32768)
+                    data2send.set_data((char*)(buf32+ii*8192), 32768);
+                else
+                    data2send.set_data((char*)(buf32+ii*8192), sz2s);
+                sz2s-=32768;
+                emorph::ebuffer::eventBuffer& tmp = port.prepare();
+                tmp = data2send;
+                port.write();
+            }*/
         }
-        
         //resetting buffers    
         memset(buffer, 0, SIZE_OF_DATA);
     }
+    delete[] buf32;
 }
 
 

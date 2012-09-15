@@ -38,6 +38,7 @@
 #include <cstdlib>
 #include <stdint.h>
 #include <unistd.h>
+#include <cmath>
 
 #include <iCub/emorph/eventBuffer.h>
 #include <iCub/emorph/eventCodec.h>
@@ -118,7 +119,9 @@ private:
     int err;
     int numberOfTimeWraps;                       // 14 are bits used for timestamp, 26 are bits at our disposal, so actual time = 2^14 * #timeWraps + timeStamp, hence this counter tracks till 2^12
     unsigned int timestamp;
+    unsigned int ptimestamp;
     unsigned int wrapAround;
+    short wrapOccured;
     short cartX, cartY, polarity;
 
     unsigned int xmask;
