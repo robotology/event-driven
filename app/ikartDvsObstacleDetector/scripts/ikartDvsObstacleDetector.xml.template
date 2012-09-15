@@ -19,7 +19,7 @@
 </module>
 
 <connection>
-  <from>/ikart/odometry:o</from>
+  <from>/ikart/velocity:o</from>
   <to>/ikartDvsObstacleDetector/ikart_velocity:i</to>
   <protocol>udp</protocol>
 </connection>
