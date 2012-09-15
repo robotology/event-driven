@@ -26,12 +26,6 @@ VelocityBuffer::VelocityBuffer(){
     vyMin = DBL_MAX;
     vyMax = -1;
     size = 0;
-    bufferingTime = 18750; //10000;
-}
-
-VelocityBuffer::VelocityBuffer(unsigned long timeInt ){
-    VelocityBuffer();
-    bufferingTime = timeInt;
 }
 
 bool VelocityBuffer::addData(short x, short y, double vx, double vy, unsigned long ts, double reliablity){
@@ -87,10 +81,8 @@ bool VelocityBuffer::addDataCheckFull(short x, short y, double vx, double vy, un
     if (tmp > vyMax)
         vyMax = tmp;
 
-    if ((ts - TSs[0] >= bufferingTime) || size == BUFFER_LENGTH){
-        std::cout << size << std::endl;
+    if (size == BUFFER_LENGTH)
         return true;
-    }
 
     return false;
 }
@@ -106,6 +98,10 @@ bool VelocityBuffer::isEmpty(){
 
 void VelocityBuffer::emptyBuffer(){
     size = 0;
+    vxMin = DBL_MAX;
+    vxMax = -1;
+    vyMin = DBL_MAX;
+    vyMax = -1;
 }
 
 bool VelocityBuffer::read(ConnectionReader & connection){
@@ -129,6 +125,8 @@ bool VelocityBuffer::read(ConnectionReader & connection){
     for (int i = 0; i < size; ++i) {
 	   TSs[i] = (unsigned long) connection.expectInt();
 	}
+
+
 
 
     vxMin = connection.expectDouble();
@@ -181,40 +179,6 @@ void VelocityBuffer::setData(const VelocityBuffer & src){
     vxMax = src.vxMax;
     vyMin = src.vyMin;
     vyMax = src.vyMax;
-}
-
-
-bool VelocityBuffer::addData(const VelocityBuffer & data){
-
-    bool res = true;
-    int tmp = data.size;
-    if (size + data.size > BUFFER_LENGTH){
-        tmp = BUFFER_LENGTH;
-        res = false;
-    }
-
-
-    for (int i = 0; i < data.size; ++i) {
-
-        Xs[size]= data.Xs[i];
-        Ys[size]= data.Ys[i];
-        Vxs[size]=data.Vxs[i];
-        Vys[size]=data.Vys[i];
-        TSs[size] = data.TSs[i];
-        size++;
-    }
-
-    if (vxMin < data.vxMin)
-        vxMin = data.vxMin;
-    if (vyMin < data.vyMin)
-        vyMin = data.vyMin;
-    if (vxMax < data.vxMax)
-        vxMax = data.vxMax;
-    if (vyMax < data.vyMax)
-        vyMax = data.vyMax;
-
-    return res;
-
 }
 
 void VelocityBuffer::setVx(int idx, double vx ){
