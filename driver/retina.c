@@ -22,9 +22,9 @@
 ///////////////////////////////////////////////////////////
 // for pre 2.6.35, activate this section by changing 0 to 1
 
-#if 0
-#define usb_alloc_coherent usb_buffer_alloc
-#define usb_free_coherent usb_buffer_free
+#if 1
+#define usb_buffer_alloc usb_alloc_coherent 
+#define usb_buffer_free usb_free_coherent 
 #endif
 
 // all this does not work as wished..:
@@ -251,12 +251,16 @@ static ssize_t retina_read(struct file *file, char *buffer, size_t count, loff_t
 		if (!retval) {
 
 			/*dev_info(&dev->interface->dev,"event = {0x%x,0x%x,0x%x,0x%x}",dev->bulk_in_buffer[0],dev->bulk_in_buffer[1],dev->bulk_in_buffer[2],dev->bulk_in_buffer[3]);*/
-			if (copy_to_user(buffer+i*dev->bulk_in_size, dev->bulk_in_buffer, bytes_read))
-			{	retval = -EFAULT;
+			//if (copy_to_user(buffer+i*dev->bulk_in_size, dev->bulk_in_buffer, bytes_read)) //BUGGED
+			if (copy_to_user(buffer+bytes_read_sum, dev->bulk_in_buffer, bytes_read))
+			{	
+			    retval = -EFAULT;
 				break;
 			}
 			else
+			{
 				bytes_read_sum += bytes_read;
+			}
 		}
 	}
 	/*dev_info(&dev->interface->dev,"%d bytes read\n",bytes_read_sum);*/
