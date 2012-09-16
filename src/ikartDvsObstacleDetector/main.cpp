@@ -128,6 +128,9 @@ public:
 		{
 			double k = command.get(1).asDouble();
 			obstacleThread->set_model_k(k);
+			double f, ang, h;
+			obstacleThread->get_model_params(f, ang, h);
+			obstacleThread->set_model_params(f,ang,h);
 			reply.addString("k done");
 		}
         else

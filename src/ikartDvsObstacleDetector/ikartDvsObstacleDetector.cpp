@@ -146,7 +146,9 @@ void obstacleDetectorThread::run()
 	//get the ikart velocity
 	updateIkartVel();
 	//updtae the model of the optical flow
-	flow_model.set_movement(-ikart_vx, -ikart_vy, -ikart_vt);
+	double speed_mult = 1000/this->getRate();
+	speed_mult/=25; //<<<<<<<<<<<<<<<<<<<<<<<<
+	flow_model.set_movement(-ikart_vx*speed_mult, -ikart_vy*speed_mult, -ikart_vt*speed_mult);
 	flow_model.compute_model();
 
 	//get the optical flow buffer;

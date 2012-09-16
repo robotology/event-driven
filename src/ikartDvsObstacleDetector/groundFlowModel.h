@@ -50,6 +50,8 @@ class groundFlowModel
 	private:
 	double input_grid_matrix_y [N_PIXELS][N_PIXELS];
 	double input_grid_matrix_x [N_PIXELS][N_PIXELS];
+	double input_grid_matrix_d [N_PIXELS][N_PIXELS];
+	double input_grid_matrix_t [N_PIXELS][N_PIXELS];
 
 	double input_ground_model_y [N_PIXELS][N_PIXELS];
 	double input_ground_model_x [N_PIXELS][N_PIXELS];
@@ -82,7 +84,7 @@ class groundFlowModel
 
 		int c=BIGGER/2;
 		//double scale = 300;
-		double scale = 10;
+		double scale = 1;
 		for (int y=0, Y=0; y<N_PIXELS*BIGGER; y+=BIGGER*4, Y+=4)
 			for (int x=0, X=0; x<N_PIXELS*BIGGER; x+=BIGGER*4, X+=4)
 			{
@@ -166,6 +168,8 @@ class groundFlowModel
 				//printf ("r-----------------\n");
 				input_grid_matrix_x[u][v] = result[0];
 				input_grid_matrix_y[u][v] = result[1];
+				input_grid_matrix_d[u][v] = sqrt(result[0]*result[0]+ result[1]* result[1]);
+				input_grid_matrix_t[u][v] = atan2(result[1],result[0]);
 			}
 			        
 	}
@@ -260,11 +264,11 @@ class groundFlowModel
 	{
 		for (int x=0; x<N_PIXELS; x++)
 			for (int y=0; y<N_PIXELS; y++)
-				input_ground_model_x[x][y]=x_vel;
-
-		for (int x=0; x<N_PIXELS; x++)
-			for (int y=0; y<N_PIXELS; y++)
-				input_ground_model_y[x][y]=y_vel;
+				{
+					t_vel=0; //<<<<<<<<<<<<<<<<<<<
+					input_ground_model_x[x][y]=x_vel+t_vel/180*M_PI*input_grid_matrix_d[x][y]*sin(input_grid_matrix_t[x][y]);
+					input_ground_model_y[x][y]=y_vel-t_vel/180*M_PI*input_grid_matrix_d[x][y]*cos(input_grid_matrix_t[x][y]);
+				}
 	}
 
 	void compute_model()
@@ -316,7 +320,8 @@ class groundFlowModel
 	groundFlowModel()
 	{
 		k_off=0;
-		initialize(62.5,-135,0.6);
+		//initialize(62.5,-135,0.6);
+		initialize(680,-122,0.6);
 		project_plane();
 		//1m/s = 0.001m/ms = 0,030m/30ms
 		set_movement (0, 0.001, 0.0);

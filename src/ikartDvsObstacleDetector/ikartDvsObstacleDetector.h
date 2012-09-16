@@ -110,6 +110,11 @@ class obstacleDetectorThread: public yarp::os::RateThread
 		flow_model.project_plane();
 	}
 
+	void set_model_k(double k)
+	{
+		flow_model.k_off=k;
+	}
+
     virtual bool threadInit()
     {
         //read configuration parametes
