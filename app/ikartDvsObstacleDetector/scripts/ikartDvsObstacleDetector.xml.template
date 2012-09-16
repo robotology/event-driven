@@ -36,5 +36,10 @@
   <protocol>udp</protocol>
 </connection>
 
+<connection>
+  <from>/ikartDvsObstacleDetector/calibration_img:o</from>
+  <to>/flow_calib_grid:i</to>
+  <protocol>udp</protocol>
+</connection>
 
 </application>
