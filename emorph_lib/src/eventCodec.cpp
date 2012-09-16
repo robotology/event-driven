@@ -264,6 +264,18 @@ bool eEvent::decode(const Bottle &packets, eEventQueue &events)
     return true;
 }
 
+/**************************************************************************/
+std::string eEvent::getType() {
+
+    if(type.c_str() == NULL) {
+        printf("type null \n");
+        return "null!";
+    }
+
+    return type;  
+
+}
+
 
 /**************************************************************************/
 eEventQueue::~eEventQueue()

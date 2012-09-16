@@ -45,7 +45,7 @@ protected:
 public:
     eEvent() : valid(false), type("") { }
     bool isValid() const        { return valid; }
-    std::string getType() const { return type;  }
+    std::string getType() /*const*/ ;
 
     virtual int getLength() const=0;
     virtual bool operator==(const eEvent &event)=0;
