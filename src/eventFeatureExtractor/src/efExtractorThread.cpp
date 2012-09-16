@@ -32,7 +32,7 @@
 #include <cassert>
 #include <iomanip>
 #include <string>
-#include <typeinfo>
+
 
 using namespace emorph::ecodec;
 using namespace yarp::os;
@@ -1218,9 +1218,11 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
     //#############################################################################        
     int dequeSize = q->size();
     int readPosition = 0;
+    
     for (int evt = 0; evt < dequeSize; evt++) {
-        eEvent* eventInQueue = (*q) [evt];
-        if( eventInQueue!= 0) {                    
+        
+        eEvent* eventInQueue = q->operator[](evt);
+        if( (*q)[evt]!= 0) {                    
             //********** extracting the event information **********************
             // to identify the type of the packet
             // user can rely on the getType() method
@@ -1229,8 +1231,12 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
             string strcmpAE("AE");
             string strcmpTS("TS");
             string typeRef = q->operator[](evt)->getType();
-            if(typeRef == "null!")
+
+            if(typeRef == "null!"){
                 printf("efExtractorThread::generateMemory %s \n", typeRef.c_str());
+                continue;
+            }
+            
  
             if (typeRef == strcmpAE) {
                 // identified an  address event
@@ -1526,7 +1532,7 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
         //printf("end of the generate function \n");
         
         //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        //deleting the front event to avoid memory leak
+        //deleting the event to avoid memory leak
         delete eventInQueue;
         //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         
@@ -1591,10 +1597,10 @@ void efExtractorThread::run() {
         // ---------------------------------------------------------------------------------------------------
 
         int num_events = CHUNKSIZE >> 3 ;
-        uint32_t* buf2 = (uint32_t*)bufferCopy;
+        u32* buf2 = (u32*)bufferCopy;
         //plotting out
         int countEvent = 0;
-        uint32_t* bufCopy2 = (uint32_t*)bufferCopy2;
+        u32* bufCopy2 = (u32*)bufferCopy2;
         firstHalf = true;
         if(buf2[0] < 0x8000F000) {
             firstHalf = true;
@@ -1608,7 +1614,7 @@ void efExtractorThread::run() {
         // extract a chunk/unmask the chunk               
         //printf("trying to unmask \n");        
         if(!bottleHandler) {
-            int dim = unmask_events.unmaskData(bufferCopy2,countEvent * sizeof(uint32_t),eventFeaBuffer);        
+            int dim = unmask_events.unmaskData(bufferCopy2,countEvent * sizeof(u32),eventFeaBuffer);        
         }
         else {
             

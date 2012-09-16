@@ -39,6 +39,9 @@
 #include <iCub/cartesianFrameConverter.h>
 #include <iCub/eventBottleHandler.h>
 
+typedef yarp::os::NetUint32 u32;
+typedef unsigned long long int  u64; 
+
 class efExtractorThread : public yarp::os::RateThread {
 private:
     bool idle;                             // flag that exclude code from the execution loop
