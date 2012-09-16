@@ -194,219 +194,6 @@ void bottleProcessorThread::resize(int widthp, int heightp) {
     //imageRight->resize(widthp,heightp);
 }
 
-/*
-void bottleProcessorThread::getMonoImage(ImageOf<yarp::sig::PixelMono>* image, unsigned long minCount,unsigned long maxCount, bool camera){
-    assert(image!=0);
-    //printf("retinalSize in getMonoImage %d \n", retinalSize);
-    image->resize(retinalSize,retinalSize);
-    unsigned char* pImage = image->getRawImage();
-    int imagePadding = image->getPadding();
-    int imageRowSize = image->getRowSize();
-    
-    
-    // unsigned long int lasttimestamp = getLastTimeStamp();
-    // if (lasttimestamp == previousTimeStamp) {   //condition where there were not event between this call and the previous
-    //     for(int r = 0 ; r < retinalSize ; r++){
-    //         for(int c = 0 ; c < retinalSize ; c++) {
-    //             *pImage++ = (unsigned char) 127;
-    //         }
-    //         pImage+=imagePadding;
-    //     }
-    //     return;
-    // }
-    // previousTimeStamp = lasttimestamp;
-   
-
-    // determining whether the camera is left or right
-    //int* pBuffer = unmask_events->getEventBuffer(camera);
-    //unsigned long* pTime   = unmask_events->getTimeBuffer(camera);
-    double* pBuffer        = featureMap;
-    unsigned long* pTime   = timestampMap;
-    
-    //printf("timestamp: min %d    max %d  \n", minCount, maxCount);
-    //pBuffer += retinalSize * retinalSize - 1;
-    double maxLeft = -100, maxRight = -100;
-    double minLeft = 100, minRight = 100;
-    double maxResponseLeft = 0, maxResponseRight = 0;
-    int maxLeftR, maxLeftC, maxRightR, maxRightC;
-    for(int r = 0 ; r < retinalSize ; r++){
-        for(int c = 0 ; c < retinalSize ; c++) {
-            //drawing the retina and the rest of the image separately
-            int value = *pBuffer;
-
-            double left_double  = saliencyMapLeft [r * retinalSize + c];
-            double right_double = saliencyMapRight[r * retinalSize + c];
-            if(left_double < minLeft)   minLeft = left_double;
-            if(left_double > maxLeft)   maxLeft = left_double;
-            if(right_double > maxRight) maxRight = right_double;
-            if(right_double < minRight) minRight = right_double;
-            if(maxResponseLeft < abs(minLeft)) {
-                maxResponseLeft = abs(minLeft);
-                maxLeftR = r; maxLeftC = c;
-            }
-            if(maxResponseLeft < abs(maxLeft)) {
-                maxResponseLeft = abs(maxLeft);
-                maxLeftR = r; maxLeftC = c;
-            }
-            if(maxResponseRight < abs(minRight)) {
-                maxResponseRight = abs(minRight);
-                maxRightR = r; maxRightC = c;
-            }
-            if(maxResponseRight < abs(maxRight)) {
-                maxResponseRight = abs(maxRight);
-                maxRightR = r; maxRightC = c;
-            }
-                        
-            unsigned long timestampactual = *pTime;
-            //bool tristateView = false;
-            
-            if(tristate) {
-                // decreasing the spatial response without removing it
-                if(count % 10 == 0) {
-                    if(*pBuffer > 20){
-                        *pBuffer = *pBuffer - 1;                                       
-                    }
-                    else if(*pBuffer < -20){
-                        *pBuffer = *pBuffer + 1;                                       
-                    }
-                }
-
-                //if(minCount>0 && maxCount > 0 && timestampactual>0)
-                //printf("actualTS%ld val%ld max%ld min%ld  are\n",timestampactual,timestampactual * COUNTERRATIO,minCount,maxCount);
-                if (((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)) {   //(timestampactual != lasttimestamp)
-                    *pImage = (unsigned char) (127 + value);
-                    //if(value>0)printf("event%d val%d buf%d\n",*pImage,value,*pBuffer);
-                    pImage++;
-                    //if ((stereo) && (r < 7) && (r >= 16) && (c < 7) && (c >= 16)) {
-                    //  *pImage = (unsigned char) (127 + value);
-                    //  pImage += imageRowSize;
-                    //  *pImage = (unsigned char) (127 + value);
-                    //pImage--;
-                    //  *pImage = (unsigned char) (127 + value);
-                    //  pImage -= (imageRowSize + 1);
-                    //}
-                    
-                }
-                else {
-                    *pImage = (unsigned char) 127 ;
-                    //printf("NOT event%d \n",*pImage);
-                    pImage++;
-                    
-                    //if ((stereo) && (r < 7) && (r >= 16) && (c < 7) && (c >= 16)) {
-                    //  *pImage = (unsigned char) 127;
-                    //  pImage += imageRowSize;
-                    //  *pImage = (unsigned char) 127 + value;
-                    //  pImage--;
-                    //  *pImage = (unsigned char) 127 + value;
-                    //  pImage -= (imageRowSize + 1);
-                    //}
-                    
-                }
-                pBuffer++;
-                pTime++;
-            }
-            // branch !tristateView
-            else {
-                // decreasing the spatial response without removing 
-                if((*pBuffer > 20) && (count % 10 == 0)){
-                    *pBuffer = *pBuffer - 1;                                       
-                }
-                //if(minCount>0 && maxCount > 0 && timestampactual>0)
-                //printf("actualTS%ld val%ld max%ld min%ld  are\n",timestampactual,timestampactual * COUNTERRATIO,minCount,maxCount);
-                if (((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)) {   //(timestampactual != lasttimestamp)
-                    *pImage = (unsigned char) abs(value * 2);
-                    //if(value>0)printf("event%d val%d buf%d\n",*pImage,value,*pBuffer);
-                    pImage++;
-                    //if ((stereo) && (r < 7) && (r >= 16) && (c < 7) && (c >= 16)) {
-                    //  *pImage = (unsigned char) (127 + value);
-                    //  pImage += imageRowSize;
-                    //  *pImage = (unsigned char) (127 + value);
-                    //pImage--;
-                    //  *pImage = (unsigned char) (127 + value);
-                    //  pImage -= (imageRowSize + 1);
-                    //}
-                    
-                }
-                else {
-                    *pImage = (unsigned char) 0 ;
-                    //printf("NOT event%d \n",*pImage);
-                    pImage++;
-                    
-                    //if ((stereo) && (r < 7) && (r >= 16) && (c < 7) && (c >= 16)) {
-                    //  *pImage = (unsigned char) 127;
-                    //  pImage += imageRowSize;
-                    //  *pImage = (unsigned char) 127 + value;
-                    //  pImage--;
-                    //  *pImage = (unsigned char) 127 + value;
-                    //  pImage -= (imageRowSize + 1);
-                    //}
-                    
-                }
-                pBuffer++;
-                pTime++;
-            } // end !tristate            
-        } // end inner loop
-        pImage+=imagePadding;
-    }//end outer loop
-    //printf("end of the function get in mono \n");
-    //unmask_events->setLastTimestamp(0);
-
-    // cycle after normalisation
-    //printf("cycle after the normalisation LEFT:(%f, %f)  RIGHT:(%f,%f) \n", minLeft, maxLeft, minRight, maxRight);
-    double* pSalLeft      = saliencyMapLeft;
-    double* pSalRight     = saliencyMapRight;
-    unsigned long* pTimeLeft     = timestampMapLeft;
-    unsigned long* pTimeRight    = timestampMapRight;
-    double rangeLeft      = abs(maxLeft  - minLeft);
-    double rangeRight     = abs(maxRight - minRight);
-    unsigned char* pLeft  = imageLeft->getRawImage();
-    unsigned char* pRight = imageRight->getRawImage();
-    int padding           = imageLeft->getPadding();
-    unsigned long timestampactual ;
-    for(int r = 0 ; r < retinalSize ; r++){
-        for(int c = 0 ; c < retinalSize ; c++) {
-            timestampactual = *pTimeLeft; 
-            if (((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)) { 
-                if((r == maxLeftR) && (c == maxLeftC)) {
-                    *pLeft = 255; // maximum response
-                }
-                else {
-                    double d = ((abs(*pSalLeft  - minLeft) )  / rangeLeft ) * 180;
-                    //printf(" d=%f %08X < %08X < %08X\n", d, minCount, timestampactual, maxCount);
-                    *pLeft  = (unsigned char) d;
-                }
-            }
-            else {
-                *pLeft = 0;
-            }
-            pLeft++;
-            pSalLeft++;
-            pTimeLeft++;
-
-            // ------------------------------------------------------------------
-            timestampactual = *pTimeRight;
-            if (((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)) { 
-                if((r == maxRightR) && (c == maxRightC)) {
-                    *pRight = 255;
-                }
-                else {
-                    double d = ((abs(*pSalRight - minRight) )/ rangeRight) * 180;
-                    *pRight = (unsigned char) d;
-                }
-            }
-            else {
-                *pRight = 0;
-            }
-            pRight++;
-            pSalRight++;
-            pTimeRight++;
-        }
-        pLeft += padding;
-        pRight += padding;
-    }
-}
-*/
-
 
 
 void bottleProcessorThread::forgettingMemory() {
@@ -452,14 +239,15 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
 
     for (int evt = 0; evt < dequeSize; evt++) {
         //printf("analyzing event %d \n", evt);
-        if((*q)[evt] != 0) {                    
+        eEvent* eventInQueue = (*q) [evt];
+        if(eventInQueue != 0) {                    
             //********** extracting the event information **********************
             // to identify the type of the packet
             // user can rely on the getType() method
             // -------------------------- AE  ----------------------------------
-            if ((*q)[evt]->getType()=="AE") {
+            if (eventInQueue->getType()=="AE") {
                 // identified an  address event
-                AddressEvent* ptr=dynamic_cast<AddressEvent*>((*q)[evt]);
+                AddressEvent* ptr=dynamic_cast<AddressEvent*>(eventInQueue);
                 if(ptr->isValid()) { 
                     //ts  = iterEvent->ts;
                     //pol = iterEvent->pol;
@@ -615,9 +403,9 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                 } //end if (ptr->isValid()) 
             } //end if ((*q)[evt]->getType()=="AE")
             // -------------------------- TS ----------------------------------
-            else if((*q)[evt]->getType()=="TS") {
+            else if(eventInQueue->getType()=="TS") {
                 
-                TimeStamp* ptr=dynamic_cast<TimeStamp*>((*q)[evt]);
+                TimeStamp* ptr=dynamic_cast<TimeStamp*>(eventInQueue);
 
 #ifdef VERBOSE
                 fprintf(fout,"ts : %08X  \n",ptr->encode().get(0).asInt());
@@ -642,7 +430,19 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                 return;
             } 
         } //end if((*q)[evt] != 0)
+        
+        //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        //deleting the event to avoid memory leak
+        if(eventInQueue) {
+            delete eventInQueue;
+            eventInQueue = 0;
+        }
+        //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        
     } //end for
+    
+    //all the elements processed, clearing the queue
+	q->clear();
 
 
 #ifdef VERBOSE
@@ -698,66 +498,19 @@ void bottleProcessorThread::run() {
     // saves it into a working buffer
     //printf("checking the bottleHandler \n");
     //printf("============================================================= \n");
+
+    
     if(!bottleHandler) {
         cfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
     }
     else {
         //printf("bottleProcessorThread::run : extracting Bottle! \n");
+        
         receivedBottle->clear();
         ebHandler->extractBottle(receivedBottle); 
-        //if(receivedBottle->size() != 0) {
-        //    printf("received bottle %d \n", receivedBottle->size());
-        //}
-        //printf("%s \n", receivedBottle->toString().c_str());
     }
-    
-    /*
-    //======================== temporal synchronization pre-unmasking  =================================
-    //printf("after extracting the bottle \n");
-    // saving the buffer into the file
-    int num_events = CHUNKSIZE / 8 ;
-    uint32_t* buf2 = (uint32_t*)bufferCopy;
 
-    // getting the time statistics
-    endTimer = Time::now();
-    double interval  = (endTimer - startTimer) * 1000000; //interval in us
-    //double procInter = interval -interval2;
-    //printf("procInter %f \n", procInter);
-    startTimer = Time::now();
-
-    //check for wrapping of the left and right timestamp
-    if(maxCount >= 4294967268  ) {
-      verb = true;
-      unmask_events->resetTimestampLeft();
-      unmask_events->resetTimestampRight();
-      printf("wrapping left %lu %lu \n",lc,unmask_events->getLastTimestamp());
-      printf("wrapping left %lu %lu\n",lc,unmask_events->getLastTimestamp());
-      printf("wrapping left %lu %lu\n",lc,unmask_events->getLastTimestamp());
-      printf("wrapping left %lu %lu\n",lc,unmask_events->getLastTimestamp());
-      printf("wrapping left %lu %lu\n",lc,unmask_events->getLastTimestamp());
-      printf("wrapping left %lu %lu\n",lc,unmask_events->getLastTimestamp());
-      printf("wrapping left %lu %lu\n",lc,unmask_events->getLastTimestamp());
-      minCount = 0;
-      maxCount      =  minCount      + interval * INTERVFACTOR* (dim_window);
-   
-    }
-    if(maxCountRight >= 4294967268) {
-      verb = true;
-      unmask_events->resetTimestampRight();
-      unmask_events->resetTimestampLeft();
-      printf("wrapping right %lu %lu\n",rc,unmask_events->getLastTimestampRight());
-      printf("wrapping right %lu %lu\n",rc,unmask_events->getLastTimestampRight());
-      printf("wrapping right %lu %lu\n",rc,unmask_events->getLastTimestampRight());
-      printf("wrapping right %lu %lu\n",rc,unmask_events->getLastTimestampRight());
-      printf("wrapping right %lu %lu\n",rc,unmask_events->getLastTimestampRight());
-      printf("wrapping right %lu %lu\n",rc,unmask_events->getLastTimestampRight());
-
-      minCountRight = 0;
-      maxCountRight = minCountRight + interval * INTERVFACTOR* (dim_window);
-    }
-    //printf("end of pre-unmasking synchronization \n ");
-    */
-    
+ 
     // =============================== Unmasking ====================================
     // extract a chunk/unmask the chunk
     // printf("verb %d \n",verb);
@@ -769,184 +522,15 @@ void bottleProcessorThread::run() {
         //printf("unmasking with bottleHandler \n");
         if(receivedBottle->size() != 0) {     
             //printf("unmasking with bottleHandler : size()== %d \n",receivedBottle->size() );
-            rxQueue->clear();
+            // rxQueue->clear(); <----- no need for clear here. Look in the ....
             //printf("unmasking received bottle and creating the queue of event to send \n");            
             unmask_events->unmaskData(receivedBottle, rxQueue); // saving the queue
             //printf("bottle of events to send \n");
         }
     }
-    //printf("end of the unmasking \n");
-        
-    //==================== temporal synchronization post unmasking =======================
-    
-
-    /*
-        
-#ifdef VERBOSE
-    int num_events2 = CHUNKSIZE>>3;
-    AER_struct* iter = unmaskedEvents;
-    for (int evt = 0; evt < num_events2; evt++) {
-        //unsigned long blob      = buf2[2 * evt];
-        //unsigned long t         = buf2[2 * evt + 1];
-        if(iter->ts!=0) {
-            fprintf(fout," %08x %d %d \n", iter->ts, iter->x, iter->y);
-        }
-        //if((iter->x >=32) || (iter->y >= 32)) {
-        //    printf("Error after unmasking %d %d \n", iter->x, iter->y);
-        //}
-        iter++;
-    }
-#endif
-
-    //gettin the time between two threads
-    gettimeofday(&tvend, NULL);
-    //Tnow = ((u64)tvend.tv_sec) * 1000000 + ((u64)tvstart.tv_usec);
-    Tnow = ((tvend.tv_sec * 1000000 + tvend.tv_usec)
-	    - (tvstart.tv_sec * 1000000 + tvstart.tv_usec));
-    //printf("timeofday>%ld\n",Tnow );
-    gettimeofday(&tvstart, NULL);       
-    
-    //synchronising the threads at the connection time
-    unsigned long int lastleft, lastright;
-    if ((cfConverter->isValid())&&(!synchronised)) {
-        printf("Sychronising ");
-        if(!bottleHandler) {
-            lastleft  = unmask_events->getLastTimestamp();
-            lastright = unmask_events->getLastTimestampRight();
-        }
-        else {
-            lastleft = lastright = *lasttimestamp;
-        }
-        lc = lastleft  * COUNTERRATIO; 
-        rc = lastright * COUNTERRATIO;
-        
-        //TODO : Check for negative values of minCount not allowed!!!!!!
-        
-        minCount = lc - interval * INTERVFACTOR* dim_window; 
-        //cfConverter->getEldestTimeStamp();                                                                   
-        minCountRight = rc - interval * INTERVFACTOR* dim_window;
-        //printf("synchronised %1f! %d,%d,%d||%d,%d,%d \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
-        startTimer = Time::now();
-        synchronised = true;
-        //minCount = unmask_events->getLastTimestamp();
-        //printf("minCount %d \n", minCount);
-        //minCountRight = unmask_events->getLastTimestamp();
-        count = synch_time - 200;
-    }
-    else if ((count % synch_time == 0) && (minCount < 4294500000)) {
-        if(!bottleHandler) {
-            lastleft  = unmask_events->getLastTimestamp();
-            lastright = unmask_events->getLastTimestampRight();
-        }
-        else {
-            lastleft = lastright = *lasttimestamp;  
-        }
-        lc = lastleft  * COUNTERRATIO; 
-        rc = lastright * COUNTERRATIO;
-        
-        //if (count == synch_time) {
-        //printf("Sychronised Sychronised Sychronised Sychronised ");
-        if( lc > interval* INTERVFACTOR * dim_window)
-            minCount      = lc - interval* INTERVFACTOR * dim_window; //cfConverter->getEldestTimeStamp();        
-        else
-            minCount = 0;
-        
-        if( rc > interval* INTERVFACTOR * dim_window)
-            minCountRight = rc - interval* INTERVFACTOR * dim_window;
-        else
-            minCountRight = 0;
-        //maxCount = lc; 
-        //maxCountRight = rc;
-        
-        //printf("synchronised %1f! %llu,%llu,%llu||%llu,%llu,%llu \n",interval, minCount, lc, maxCount, minCountRight, rc, maxCountRight);
-        startTimer = Time::now();
-        synchronised = true; 
-    }
-    else {
-      // this value is simply the ration between the timestamp reported by the aexGrabber (6.25Mhz) 
-      //and the correct timestamp counter clock of FPGA (50 Mhz)
-      microsecondsPrev = interval;
-      interval = Tnow;
-      minCount      = minCount + interval * INTERVFACTOR; // * (50.0 MHz FPGA Counter Clock / 6.25 Mhz ;
-      minCountRight = minCount + interval * INTERVFACTOR;  // minCountRight + interval;
-    } 
-    //printf("minCount %d interval %f \n", minCount, interval);
-    maxCount      =  minCount      + interval * INTERVFACTOR* (dim_window);
-    maxCountRight =  minCountRight + interval * INTERVFACTOR* (dim_window);
+    //printf("end of the unmasking \n");g
     
     
-    //---- preventer for fixed  addresses ----//
-    if(count % 100 == 0) { 
-        if(!bottleHandler) {
-            lastleft = unmask_events->getLastTimestamp();
-            lastright = unmask_events->getLastTimestampRight();
-        }
-        else {
-            lastleft = lastright = lasttimestamp;
-        }
-        
-        lc = lastleft * COUNTERRATIO; 
-        //unsigned long lastright = unmask_events->getLastTimestampRight();
-        rc = lastright * COUNTERRATIO;
-        //printf("countStop %d lcprev %d lc %d \n",countStop, lcprev,lc);
-        if (stereo) {
-            if ((lcprev == lc)||(rcprev == rc)) {
-                //if (lcprev == lc) {
-                countStop++;
-                printf("countStop %d %lu %lu %lu %lu \n", countStop, lc, lcprev, rc, rcprev);
-            }            
-            else {
-                countStop--;
-                //printf("countStop %d \n", countStop);
-                if(countStop<= 0) {
-                    countStop = 0;
-                }
-            }
-        }
-        else {
-            if (lcprev == lc) {
-                //if (lcprev == lc) {
-                countStop++;
-                printf("countStop %d %lu %lu %lu %lu \n", countStop, lc, lcprev, rc, rcprev);
-            }            
-            else {
-                countStop--;
-                //printf("countStop %d \n", countStop);
-                if(countStop<= 0) {
-                    countStop = 0;
-                }
-            }
-        }
-        lcprev = lc;
-        rcprev = rc;
-    }
-    
-         
-    //resetting time stamps at overflow
-    if (countStop == 10) {
-      //printf("resetting time stamps!!!!!!!!!!!!! %d %d   \n ", minCount, minCountRight);
-      unmask_events->resetTimestampLeft(); 
-      unmask_events->resetTimestampRight();
-      cfConverter->reset();
-      unsigned long lastleft = unmask_events->getLastTimestamp();
-      lc = lastleft * COUNTERRATIO; 
-      unsigned long lastright = unmask_events->getLastTimestampRight();
-      rc = lastright * COUNTERRATIO;
-      minCount      = 0;
-      minCountRight = 0;
-      maxCount      =  minCount      + interval * INTERVFACTOR* (dim_window);
-      maxCountRight =  minCountRight + interval * INTERVFACTOR* (dim_window);
-      
-      //maxCount      = 4294967268;
-      //maxCountRight = 4294967268;
-      countStop = 0;
-      verb = true;
-      printf("countStop resetting %llu %llu %llu \n",unmask_events->getLastTimestamp(), lc, rc );
-      count = synch_time - 200;
-      
-    }    
-    */
-
     // =======================  spatial processing===========================
     double w1 = 0, w2 = 0, w3 = 0, w4 = 0;
     //spatialSelection(unmaskedEvents,CHUNKSIZE>>3,w1);    
@@ -962,27 +546,7 @@ void bottleProcessorThread::run() {
             spatialSelection(rxQueue);
             //printf("after spatial selection bottleHandler \n");
         }
-    }
-    
-    
-    /*
-    // the getMonoImage gets as default input image the saliency map
-    if(imageLeft != 0) {
-        //printf("getting the left image \n");
-        getMonoImage(imageLeft,minCount,maxCount,1);
-        //printf("copying the right \n");
-        pThread->copyLeft(imageLeft);
-    }
-    
-    if(stereo) {
-        if(imageRight != 0) {
-            //printf("getting the right image \n");
-            getMonoImage(imageRight,minCountRight,maxCountRight,0);
-            //printf("copying the right image \n");
-            pThread->copyRight(imageRight);
-        }
-    }
-    */
+   }
   }
 }
 
@@ -1033,8 +597,9 @@ void bottleProcessorThread::copyTimestampMapLeft(unsigned long *pointer) {
 }
 
 void bottleProcessorThread::threadRelease() {
+    printf("bottleProcessorThread::threadRelease()  \n");
     idle = false;
-    fclose(fout);
+    //fclose(fout);
     printf("bottleProcessorThread release:freeing bufferCopy \n");
     free(featureMapLeft);
     free(featureMapRight);
@@ -1050,7 +615,7 @@ void bottleProcessorThread::threadRelease() {
     
     printf("deleting memory \n");
     delete receivedBottle;
-    delete ebHandler;
+    ebHandler->close();
     
     printf("bottleProcessorThread release :        deleting converter \n");
     delete cfConverter;

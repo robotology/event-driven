@@ -44,6 +44,7 @@ using namespace std;
 #define CHUNKSIZE     32768 //65536 //8192
 #define dim_window    10
 #define synch_time    1
+#define COMMCOUNTDEF  20
 
 //#define VERBOSE
 #define INCR_RESPONSE 10
@@ -56,7 +57,7 @@ eventSelectorThread::eventSelectorThread() : RateThread(THRATE) {
     count            = 0;
     minCount         = 0;    //initialisation of the timestamp limits of the first frame
     countStop        = 0;
-    countCommands    = 0;    
+    countCommands    = 30;    
         
     bottleHandler = true;
     synchronised = false;
@@ -236,6 +237,10 @@ void eventSelectorThread::resize(int widthp, int heightp) {
     imageLeft->resize(retinalSize,retinalSize);
     imageRight = new ImageOf<PixelRgb>;
     imageRight->resize(retinalSize,retinalSize);
+    imageLeftBW = new ImageOf<PixelMono>;
+    imageLeftBW->resize(retinalSize,retinalSize);
+    imageRightBW = new ImageOf<PixelMono>;
+    imageRightBW->resize(retinalSize,retinalSize);
     //imageRight->resize(widthp,heightp);
 }
 
@@ -518,7 +523,7 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
         if(outputCmdPort.getOutputCount()){
 
             // the countCommands prevents from sending frequent sequences of commands
-            if(countCommands > 20) {
+            if(countCommands >= COMMCOUNTDEF) {
                 Bottle& commandBottle=outputCmdPort.prepare();
                 commandBottle.clear();
                 commandBottle.addString("SAC_MONO");
@@ -530,8 +535,8 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
             }
                 
             countCommands--;
-            if(countCommands == 0) {
-                countCommands = 20;
+            if(countCommands <= 0) {
+                countCommands = COMMCOUNTDEF;
             }
             
         }
@@ -693,14 +698,15 @@ void eventSelectorThread::spatialSelection(eEventQueue *q) {
     int countLeftPos = 0, countLeftNeg = 0;
     int countRightPos = 0 , countRightNeg =0;
     for (int evt = 0; evt < dequeSize; evt++) {
-        if((*q)[evt] != 0) {                    
+        eEvent* eventInQueue = (*q) [evt];
+        if(eventInQueue != 0) {                    
             //********** extracting the event information **********************
             // to identify the type of the packet
             // user can rely on the getType() method
             // -------------------------- AE  ----------------------------------
-            if ((*q)[evt]->getType()=="AE") {
+            if (eventInQueue->getType()=="AE") {
                 // identified an  address event
-                AddressEvent* ptr=dynamic_cast<AddressEvent*>((*q)[evt]);
+                AddressEvent* ptr=dynamic_cast<AddressEvent*>(eventInQueue);
                 if(ptr->isValid()) { 
                     //ts  = iterEvent->ts;
                     //pol = iterEvent->pol;
@@ -741,9 +747,9 @@ void eventSelectorThread::spatialSelection(eEventQueue *q) {
                 } //end if (ptr->isValid()) 
             } //end if ((*q)[evt]->getType()=="AE")
             // -------------------------- TS ----------------------------------
-            else if((*q)[evt]->getType()=="TS") {
+            else if(eventInQueue->getType()=="TS") {
                 
-                TimeStamp* ptr=dynamic_cast<TimeStamp*>((*q)[evt]);
+                TimeStamp* ptr=dynamic_cast<TimeStamp*>(eventInQueue);
                 
                 //identified an time stamp event
                 ts = (unsigned int) ptr->getStamp();
@@ -763,6 +769,12 @@ void eventSelectorThread::spatialSelection(eEventQueue *q) {
                 return;
             } 
         } //end if((*q)[evt] != 0)
+
+        //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        //deleting the event to avoid memory leak
+        delete eventInQueue;
+        //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        
     } //end for
 
     //printf("number for left %d %d \n", countLeftPos, countLeftNeg);
@@ -817,7 +829,7 @@ void eventSelectorThread::run() {
     // saves it into a working buffer
 
 
-    
+    /******MOVED TO THE SINGLE PROCESSOR
     //printf("checking the bottleHandler \n");
     //printf("============================================================= \n");
     if(!bottleHandler) {
@@ -826,10 +838,11 @@ void eventSelectorThread::run() {
     else {
         //printf("eventSelectorThread::run : extracting Bottle! \n");
         //receivedBottle->clear();
-        //ebHandler->extractBottle(receivedBottle);  
+        ebHandler->extractBottle(receivedBottle);  
         //printf("received bottle \n");
         //printf("%s \n", receivedBottle->toString().c_str());
     }
+    *************************************/
     
     
     //======================== temporal synchronization pre-unmasking  =================================
@@ -877,7 +890,9 @@ void eventSelectorThread::run() {
     }
     //printf("end of pre-unmasking synchronization \n ");
     
+
     
+    /******MOVED TO THE SINGLE PROCESSOR
     // =============================== Unmasking ====================================
     // extract a chunk/unmask the chunk
     // printf("verb %d \n",verb);
@@ -893,23 +908,14 @@ void eventSelectorThread::run() {
             //rxQueue = new eEventQueue(); // preparing the new queue
             //rxQueue->clear();
             //printf("unmasking received bottle and creating the queue of event to send \n");
-            //unmask_events->unmaskData(receivedBottle, rxQueue); // saving the queue
+            unmask_events->unmaskData(receivedBottle, rxQueue); // saving the queue
             //printf("bottle of events to send : \n");
         }
     }
-    //printf("end of the unmasking \n");
-    
+    ******************************/
         
-    //==================== temporal synchronization post unmasking =======================
-    
-    /*
-    if(verb) {
-      verb = false;
-      countStop = 0;
-    }
-    */
 
-        
+    //==================== temporal synchronization post unmasking =======================   
 #ifdef VERBOSE
     int num_events2 = CHUNKSIZE>>3;
     AER_struct* iter = unmaskedEvents;
@@ -934,12 +940,7 @@ void eventSelectorThread::run() {
     //printf("timeofday>%ld\n",Tnow );
     gettimeofday(&tvstart, NULL);       
             
-    /*if(true){
-      //printf("Saving in file \n");
-      fprintf(raw,"%08X \n",lc); 
-      //fwrite(&sz, sizeof(int), 1, raw);
-      //fwrite(buffer, 1, sz, raw);
-    }*/
+
     
     //synchronising the threads at the connection time
     unsigned long int lastleft, lastright;
@@ -1080,9 +1081,11 @@ void eventSelectorThread::run() {
       count = synch_time - 200;
       
     }    
-
     
+
+    /******MOVED TO THE SINGLE PROCESSOR
     // =======================  spatial processing===========================
+    
     double w1 = 0, w2 = 0, w3 = 0, w4 = 0;
     //spatialSelection(unmaskedEvents,CHUNKSIZE>>3,w1);       
     // spatial processing
@@ -1094,9 +1097,10 @@ void eventSelectorThread::run() {
         //printf("pre-spatial selection \n");
         if((rxQueue != 0) && (receivedBottle->size() != 0)) {
             //printf("spatial selection  bottle Handler\n");
-            //spatialSelection(rxQueue);
+            // spatialSelection(rxQueue);
         }
     }
+    *********************************/
     
     
     // the getMonoImage gets as default input image the saliency map    
@@ -1115,9 +1119,6 @@ void eventSelectorThread::run() {
             pThread->copyRight(imageRight);
         }
     }
-
-    //printf("\n\n");
-
   }
 }
 
@@ -1125,6 +1126,12 @@ void eventSelectorThread::threadRelease() {
     idle = false;
     fclose(fout);
     printf("eventSelectorThread release:freeing bufferCopy \n");
+
+    delete imageLeft;
+    delete imageRight;    
+    delete imageLeftBW;
+    delete imageRightBW;
+    
 
     free(saliencyMapLeft);
     free(saliencyMapRight);
@@ -1155,12 +1162,16 @@ void eventSelectorThread::threadRelease() {
 
     printf("eventSelectorThread release         stopping Threads \n");
     pThread->stop();
-    bptA1->stop();
-    bptA2->stop();
-    bpt41->stop();
-    bpt42->stop();
+    if(bptA1!=0)
+        bptA1->stop();
+    //if(bptA2!=0)
+    //bptA2->stop();
+    //if(bpt41!=0)
+    //   bpt41->stop();
+    //if(bpt42!=0)
+    //  bpt42->stop();
     printf("eventSelectorThread release         deleting converter \n");
-    delete cfConverter;
+    //delete cfConverter;
     printf("correctly freed memory from the cfCollector \n");
 }
 
