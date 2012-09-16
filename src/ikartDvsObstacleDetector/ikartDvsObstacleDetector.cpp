@@ -176,12 +176,11 @@ void obstacleDetectorThread::run()
 		v=scan_data;
 		port_simulated_scan_output.write();
 	}
-		flow_model.redraw();
-			draw_comparison();
+
 	//send the optical flow model image
 	if (port_flow_model_output.getOutputCount()>0)
 	{
-	
+		flow_model.redraw();
 		yarp::sig::ImageOf<yarp::sig::PixelMono16>& img=port_flow_model_output.prepare();
 		img=flow_model.flow_model_image;
 		port_flow_model_output.write();
@@ -190,10 +189,18 @@ void obstacleDetectorThread::run()
 	//send the comparison image
 	if (port_comparison_output.getOutputCount()>0)
 	{
-	
+		draw_comparison();
 		yarp::sig::ImageOf<yarp::sig::PixelRgb>& img=port_comparison_output.prepare();
 		img=comparison_image;
 		port_comparison_output.write();
+	}
+
+	//send the calibration image
+	if (port_calibration_output.getOutputCount()>0)
+	{
+		yarp::sig::ImageOf<yarp::sig::PixelMono16>& img=port_calibration_output.prepare();
+		img=flow_model.calibration_image;
+		port_calibration_output.write();
 	}
 }
 

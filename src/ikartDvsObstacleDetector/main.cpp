@@ -108,13 +108,21 @@ public:
 			reply.addString("Available commands are:");
 			reply.addString("quit");
 		}
-		else if (command.get(0).asString()="set_p")
+		else if (command.get(0).asString()=="s")
 		{
 			double f = command.get(1).asDouble();
 			double ang= command.get(2).asDouble();
 			double h = command.get(3).asDouble();
 			obstacleThread->set_model_params(f,ang,h);
 			reply.addString("Params loaded");
+		}
+		else if (command.get(0).asString()=="g")
+		{
+			char buff[255];
+			double f, ang, h;
+			obstacleThread->get_model_params(f, ang, h);
+			sprintf (buff, "f: %f ang: %f h: %f\n",f, ang, h);
+			reply.addString(buff);
 		}
         else
         {

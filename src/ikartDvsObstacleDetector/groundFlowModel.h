@@ -58,7 +58,11 @@ class groundFlowModel
 	Matrix p_matrix;
 
 	public:
+	double model_ang_deg;
+	double model_f;
+	double model_height;
 	yarp::sig::ImageOf<yarp::sig::PixelMono16> flow_model_image;
+	yarp::sig::ImageOf<yarp::sig::PixelMono16> calibration_image;
 	double output_ground_model_y [N_PIXELS][N_PIXELS];
 	double output_ground_model_x [N_PIXELS][N_PIXELS];
 
@@ -167,9 +171,14 @@ class groundFlowModel
 
 	void initialize (double focal_lenght, double angle_deg, double height)
 	{
+#define ZOOM 8
 		flow_model_image.resize(BIGGER*N_PIXELS,BIGGER*N_PIXELS);
-
-		double ang = angle_deg/180.0*M_PI;
+		calibration_image.resize(ZOOM*N_PIXELS,ZOOM*N_PIXELS);
+		
+		model_ang_deg = angle_deg;
+		double ang = model_ang_deg/180.0*M_PI;
+		model_height = height;
+		model_f = focal_lenght;
 		tx_matrix.resize(4,4);
 		tx_matrix.zero();
 		/*
@@ -204,6 +213,46 @@ class groundFlowModel
 		    0 f c 0
 			0 0 1 0
 		*/
+
+		calibration_image.zero();
+		static const yarp::sig::PixelMono16 black=0;
+        static const yarp::sig::PixelMono16 white=255;
+
+		Vector istart1; istart1.resize(4);
+		Vector iend1; iend1.resize(4);
+		Vector ostart1; ostart1.resize(3);
+		Vector oend1; oend1.resize(3);
+		Vector istart2; istart2.resize(4);
+		Vector iend2; iend2.resize(4);
+		Vector ostart2; ostart2.resize(3);
+		Vector oend2; oend2.resize(3);
+		for (int i=0; i<1000; i++)
+		{
+			double sq_size = 0.09; //9 centimeters
+			istart1[0]=-10; istart1[1]=sq_size*i; istart1[2]=0; istart1[3]=1;
+			iend1[0]=10;   iend1[1]=sq_size*i;   iend1[2]=0;   iend1[3]=1;
+			istart2[0]=sq_size*(i-500); istart2[1]=-100; istart2[2]=0; istart2[3]=1;
+			iend2[0]=sq_size*(i-500);   iend2[1]=0;   iend2[2]=0;   iend2[3]=1;
+
+			ostart1 = tx_matrix*istart1;
+			ostart1 = p_matrix*ostart1;
+			ostart1 = (1.0/ostart1[2]) * ostart1 ;
+			oend1 = tx_matrix*iend1;
+			oend1 = p_matrix*oend1;
+			oend1 = (1.0/oend1[2]) * oend1 ;
+
+			ostart2 = tx_matrix*istart2;
+			ostart2 = p_matrix*ostart2;
+			ostart2 = (1.0/ostart2[2]) * ostart2 ;
+			oend2 = tx_matrix*iend2;
+			oend2 = p_matrix*oend2;
+			oend2 = (1.0/oend2[2]) * oend2 ;
+
+			//printf ("start   %f %f ---> %f  %f\n", istart1[0], istart1[1], ostart1[0], ostart1[1]);
+			//printf ("end     %f %f ---> %f  %f\n", iend1[0], iend1[1], oend1[0], oend1[1]);
+			yarp::sig::draw::addSegment(calibration_image,white,(int)(ostart1[0]*ZOOM),(int)(ostart1[1]*ZOOM),(int)(oend1[0]*ZOOM),(int)(oend1[1]*ZOOM));
+			yarp::sig::draw::addSegment(calibration_image,white,(int)(ostart2[0]*ZOOM),(int)(ostart2[1]*ZOOM),(int)(oend2[0]*ZOOM),(int)(oend2[1]*ZOOM));
+		}
 	}
 
 	void set_movement(double x_vel, double y_vel, double t_vel)

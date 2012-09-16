@@ -69,6 +69,7 @@ class obstacleDetectorThread: public yarp::os::RateThread
     BufferedPort<yarp::sig::Vector>							  port_simulated_scan_output;
 	BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono16> > port_flow_model_output;
 	BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> >    port_comparison_output;
+	BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono16> > port_calibration_output;
 
 	double measured_optical_flow_x							  [N_PIXELS][N_PIXELS];
 	double measured_optical_flow_y							  [N_PIXELS][N_PIXELS];
@@ -96,6 +97,12 @@ class obstacleDetectorThread: public yarp::os::RateThread
 				measured_optical_flow_y [i][j]=0;
 			}
     }
+	void get_model_params(double& focal_lenght, double& angle_deg, double& height)
+	{
+		focal_lenght = flow_model.model_f;
+		angle_deg = flow_model.model_ang_deg;
+		height = flow_model.model_height;
+	}
 
 	void set_model_params(double focal_lenght, double angle_deg, double height)
 	{
@@ -116,6 +123,7 @@ class obstacleDetectorThread: public yarp::os::RateThread
 		port_ikart_velocity_input.open        ( (localName+"/ikart_velocity:i").c_str() );
 		port_flow_model_output.open           ( (localName+"/flow_model_img:o").c_str() );
 		port_comparison_output.open           ( (localName+"/flow_comparison_img:o").c_str() );
+		port_calibration_output.open          ( (localName+"/calibration_img:o").c_str() );
 
         //automatic port connections
         bool b = false;
@@ -146,6 +154,8 @@ class obstacleDetectorThread: public yarp::os::RateThread
         port_simulated_scan_output.close();
 		port_comparison_output.interrupt();
 		port_comparison_output.close();
+		port_calibration_output.interrupt();
+		port_calibration_output.close();
     }
 
     void printStats();
