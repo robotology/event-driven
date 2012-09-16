@@ -42,7 +42,7 @@ using namespace std;
 #define IMGFOR(img,i,j) for (int i=0; i<(img).width(); i++) for (int j=0; j<(img).height(); j++)
 #endif
 
-#define  BIGGER 16
+#define  BIGGER 8
 #define  STEP   4
 
 class groundFlowModel
@@ -53,14 +53,17 @@ class groundFlowModel
 
 	double input_ground_model_y [N_PIXELS][N_PIXELS];
 	double input_ground_model_x [N_PIXELS][N_PIXELS];
-	double output_ground_model_y [N_PIXELS][N_PIXELS];
-	double output_ground_model_x [N_PIXELS][N_PIXELS];
 
 	Matrix tx_matrix;
 	Matrix p_matrix;
 
 	public:
 	yarp::sig::ImageOf<yarp::sig::PixelMono16> flow_model_image;
+	double output_ground_model_y [N_PIXELS][N_PIXELS];
+	double output_ground_model_x [N_PIXELS][N_PIXELS];
+
+	double initialized_output_ground_model_y [N_PIXELS][N_PIXELS];
+	double initialized_output_ground_model_x [N_PIXELS][N_PIXELS];
 
 	void redraw()
 	{	
@@ -75,8 +78,8 @@ class groundFlowModel
 		int c=BIGGER/2;
 		//double scale = 300;
 		double scale = 10;
-		for (int y=0, Y=0; y<N_PIXELS*BIGGER; y+=BIGGER, Y++)
-			for (int x=0, X=0; x<N_PIXELS*BIGGER; x+=BIGGER, X++)
+		for (int y=0, Y=0; y<N_PIXELS*BIGGER; y+=BIGGER*4, Y+=4)
+			for (int x=0, X=0; x<N_PIXELS*BIGGER; x+=BIGGER*4, X+=4)
 			{
 				//yarp::sig::draw::addSegment(flow_model_image,black,x,y,x+20,y+20);
 #if DEBUG
@@ -267,6 +270,13 @@ class groundFlowModel
 		//1m/s = 0.001m/ms = 0,030m/30ms
 		set_movement (0, 0.001, 0.0);
 		compute_model();
+
+		for (int y=0; y<128; y++)
+		for (int x=0; x<128; x++)
+		{
+			initialized_output_ground_model_x[x][y] = output_ground_model_x[x][y];
+			initialized_output_ground_model_y[x][y] = output_ground_model_y[x][y];
+		}
 
 		printf ("----------\n");
 		for (int x=0; x<N_PIXELS; x++)

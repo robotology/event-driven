@@ -30,6 +30,7 @@
 #include <yarp/dev/IAnalogSensor.h>
 #include <string>
 #include <math.h>
+#include <cv.h>
 
 #include "ikartDVSObstacleDetector.h"
 
@@ -100,6 +101,46 @@ void obstacleDetectorThread::updateIkartVel()
 	}
 }
 
+void obstacleDetectorThread::compute_comparison()
+{
+	for (int y=0; y<128; y++)
+		for (int x=0; x<128; x++)
+		{
+			double c = this->flow_model.output_ground_model_x[x][y] * measured_optical_flow_x[x][y] + 
+			   	       this->flow_model.output_ground_model_y[x][y] * measured_optical_flow_y[x][y];
+
+			compared_optical_flow_ang[x][y] = c;
+		}
+}
+
+void obstacleDetectorThread::draw_comparison()
+{
+	IplImage *ipl=(IplImage*) comparison_image.getIplImage();
+	int r =0;
+	int g =0;
+	int b =0;
+	for (int row=0; row<ipl->height; row++)
+    {
+		uchar* p =(uchar*) ipl->imageData + row*ipl->widthStep;
+		for(int col=0; col<ipl->width; col++)
+		{
+			if (1)
+			{
+				if       (compared_optical_flow_ang[col][row]  > 0) {r = 0; b= 0; g = 200;}
+				else if  (compared_optical_flow_ang[col][row] <= 0) {r = 200; b= 0; g =0;}
+			}
+			else  
+			{
+				r = 0; b= 0; g =0;
+			}
+
+			p[3*col+0]=r;
+			p[3*col+1]=g;
+		    p[3*col+2]=b;
+		}
+	}
+}
+
 void obstacleDetectorThread::run()
 {
 	//get the ikart velocity
@@ -114,8 +155,16 @@ void obstacleDetectorThread::run()
 	{
 		optical_flow_buffer = *buff;
 	}
+	for (int y=0; y<128; y++)
+		for (int x=0; x<128; x++)
+		{
+			measured_optical_flow_x[x][y]= this->flow_model.initialized_output_ground_model_x[x][y];
+			measured_optical_flow_y[x][y]= this->flow_model.initialized_output_ground_model_y[x][y];
+		}
 
-	//compute the scan 
+	compute_comparison();
+
+	//compute the output 'laser' scan 
 	clearScan();
 	double detected_distance = 1; //m
 	compute_scan_1(detected_distance);
@@ -127,14 +176,24 @@ void obstacleDetectorThread::run()
 		v=scan_data;
 		port_simulated_scan_output.write();
 	}
-
+		flow_model.redraw();
+			draw_comparison();
 	//send the optical flow model image
 	if (port_flow_model_output.getOutputCount()>0)
 	{
-		flow_model.redraw();
+	
 		yarp::sig::ImageOf<yarp::sig::PixelMono16>& img=port_flow_model_output.prepare();
 		img=flow_model.flow_model_image;
 		port_flow_model_output.write();
+	}
+
+	//send the comparison image
+	if (port_comparison_output.getOutputCount()>0)
+	{
+	
+		yarp::sig::ImageOf<yarp::sig::PixelRgb>& img=port_comparison_output.prepare();
+		img=comparison_image;
+		port_comparison_output.write();
 	}
 }
 

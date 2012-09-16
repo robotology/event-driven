@@ -70,7 +70,12 @@ class obstacleDetectorThread: public yarp::os::RateThread
 	BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono16> > port_flow_model_output;
 	BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> >    port_comparison_output;
 
-	yarp::sig::ImageOf<yarp::sig::PixelMono16>                comparison_image;
+	double measured_optical_flow_x							  [N_PIXELS][N_PIXELS];
+	double measured_optical_flow_y							  [N_PIXELS][N_PIXELS];
+
+	double compared_optical_flow_ang						  [N_PIXELS][N_PIXELS];
+
+	yarp::sig::ImageOf<yarp::sig::PixelRgb>                   comparison_image;
     Property            iKartCtrl_options;
     ResourceFinder      &rf;
     yarp::sig::Vector   scan_data;
@@ -83,6 +88,13 @@ class obstacleDetectorThread: public yarp::os::RateThread
 		comparison_image.resize(128,128);
 		scan_data.resize(1080,100);
 		obstacle_size=1;
+
+		for (int i=0; i<N_PIXELS; i++)
+			for (int j=0; j<N_PIXELS; j++)
+			{
+				measured_optical_flow_x [i][j]=0;
+				measured_optical_flow_y [i][j]=0;
+			}
     }
 
 	void set_model_params(double focal_lenght, double angle_deg, double height)
@@ -117,6 +129,8 @@ class obstacleDetectorThread: public yarp::os::RateThread
 	void clearScan();
 	void compute_scan_1(double detected_distance);
 	void updateIkartVel();
+	void compute_comparison();
+	void draw_comparison();
 
     virtual void threadRelease()
     {    
