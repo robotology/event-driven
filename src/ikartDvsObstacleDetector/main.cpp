@@ -124,6 +124,12 @@ public:
 			sprintf (buff, "f: %f ang: %f h: %f\n",f, ang, h);
 			reply.addString(buff);
 		}
+		else if (command.get(0).asString()=="k")
+		{
+			double k = command.get(1).asDouble();
+			obstacleThread->set_model_k(k);
+			reply.addString("k done");
+		}
         else
         {
             reply.addString("Unknown command.");

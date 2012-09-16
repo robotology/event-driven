@@ -61,6 +61,7 @@ class groundFlowModel
 	double model_ang_deg;
 	double model_f;
 	double model_height;
+	double k_off;
 	yarp::sig::ImageOf<yarp::sig::PixelMono16> flow_model_image;
 	yarp::sig::ImageOf<yarp::sig::PixelMono16> calibration_image;
 	double output_ground_model_y [N_PIXELS][N_PIXELS];
@@ -229,8 +230,8 @@ class groundFlowModel
 		for (int i=0; i<1000; i++)
 		{
 			double sq_size = 0.09; //9 centimeters
-			istart1[0]=-10; istart1[1]=sq_size*i; istart1[2]=0; istart1[3]=1;
-			iend1[0]=10;   iend1[1]=sq_size*i;   iend1[2]=0;   iend1[3]=1;
+			istart1[0]=-10; istart1[1]=sq_size*i+k_off; istart1[2]=0; istart1[3]=1;
+			iend1[0]=10;   iend1[1]=sq_size*i+k_off;   iend1[2]=0;   iend1[3]=1;
 			istart2[0]=sq_size*(i-500); istart2[1]=-100; istart2[2]=0; istart2[3]=1;
 			iend2[0]=sq_size*(i-500);   iend2[1]=0;   iend2[2]=0;   iend2[3]=1;
 
@@ -314,6 +315,7 @@ class groundFlowModel
 	}
 	groundFlowModel()
 	{
+		k_off=0;
 		initialize(62.5,-135,0.6);
 		project_plane();
 		//1m/s = 0.001m/ms = 0,030m/30ms
