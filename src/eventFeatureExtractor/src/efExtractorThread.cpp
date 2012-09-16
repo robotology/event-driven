@@ -1283,7 +1283,7 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                                     int xevent_tmp      = pos - yevent_tmp * FEATUR_SIZE;
                                     int xevent          = xevent_tmp;
                                     //int polevent      = pol < 0 ? 0 : 1;
-                                    int polevent        = pol;
+                                    int polevent        = polarity;
                                     int cameraevent     = 1;
                                     unsigned long blob  = 0;
                                     int posFeaImage     = yevent * rowSizeFea + xevent ;
@@ -1393,7 +1393,7 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                                     int xevent_tmp      = pos - yevent_tmp * FEATUR_SIZE;
                                     int xevent          = xevent_tmp;
                                     //int polevent      = pol < 0 ? 0 : 1;
-                                    int polevent        = pol;
+                                    int polevent        = polarity;
                                     int cameraevent     = 1;
                                     unsigned long blob  = 0;
                                     int posFeaImage     = yevent * rowSizeFea + xevent;
@@ -1533,11 +1533,17 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
         
         //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         //deleting the event to avoid memory leak
-        delete eventInQueue;
+		if (eventInQueue)
+        {
+			delete eventInQueue;
+			eventInQueue=0;
+		}
         //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         
     } //end for i
     
+	//all the elements processed, clearing the queue
+	q->clear();
    
 
 
@@ -1592,6 +1598,10 @@ void efExtractorThread::run() {
             //printf("extracting bottle \n");
             receivedBottle->clear();
             ebHandler->extractBottle(receivedBottle);  
+			if (receivedBottle == 0)
+			{
+				//do something
+			}
         }
         
         // ---------------------------------------------------------------------------------------------------
@@ -1622,7 +1632,6 @@ void efExtractorThread::run() {
                 //printf("deleting the rxQueue %08X \n",rxQueue );
                 //delete rxQueue;   // freeing memory for the new queue of events
                 //rxQueue = new eEventQueue(); // preparing the new queue                
-                rxQueue->clear();
                 //printf("created the new rxQueue %08X \n",rxQueue );
                 //printf("unmasking received bottle and creating the queue of event to send \n");
                 unmask_events.unmaskData(receivedBottle, rxQueue); // saving the queue
