@@ -166,9 +166,9 @@ yarp::sig::Matrix *invPrjL,iCub::iKin::iCubEye *eye,int u, int v, double varDist
     
     Vector q(8);
     double ratio = M_PI /180;
-    q[0]=torso[0] * ratio;
+    q[0]=torso[2] * ratio;
     q[1]=torso[1] * ratio;
-    q[2]=torso[2] * ratio;
+    q[2]=torso[0] * ratio;
     q[3]=head[0]  * ratio;
     q[4]=head[1]  * ratio;
     q[5]=head[2]  * ratio;

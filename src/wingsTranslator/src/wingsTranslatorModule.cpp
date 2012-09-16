@@ -190,7 +190,7 @@ bool wingsTranslatorModule::close() {
 bool wingsTranslatorModule::respond(const Bottle& command, Bottle& reply) {
 
     reply.clear();
-
+    printf("command to be translated \n");
     bool ok = false;
     bool rec = false; // is the command recognized?
 
@@ -260,9 +260,11 @@ bool wingsTranslatorModule::respond(const Bottle& command, Bottle& reply) {
     case COMMAND_VOCAB_GET3D:
         rec = true;
         {
+            printf("get3d command \n");
             //reply.addString("get3D");
             int u = command.get(1).asInt();
             int v = command.get(2).asInt();
+            printf("get3d command %d %d \n", u, v);
             yarp::sig::Vector res;
 
             if(command.size() > 3) {
