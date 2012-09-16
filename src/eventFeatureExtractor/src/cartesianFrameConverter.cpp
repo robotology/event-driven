@@ -336,14 +336,17 @@ void cFrameConverter::getMonoImage(ImageOf<PixelMono>* image, unsigned long minC
 
 unsigned long cFrameConverter::getLastTimeStamp() {
     //return unmask_events.getLastTimestamp();
+	return 0;
 }
 
 unsigned long cFrameConverter::getLastTimeStampRight() {
     //return unmask_events.getLastTimestampRight();
+	return 0;
 }
 
 unsigned long cFrameConverter::getEldestTimeStamp() {
     //return unmask_events.getEldestTimeStamp();
+	return 0;
 }
 
 void cFrameConverter::clearMonoImage() {
