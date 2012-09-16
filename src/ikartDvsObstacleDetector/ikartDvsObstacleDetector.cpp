@@ -87,32 +87,15 @@ void obstacleDetectorThread::updateIkartVel()
 	Bottle *b_ikart_vel = port_ikart_velocity_input.read(false);
 	if (b_ikart_vel)
 	{
-#if USE_IKART_COMMANDS
-		//this block is used if the velocity is taken from the ikart input commands
-		if (b_ikart_vel->get(0).asInt() == 0)
-		{
-			ikart_vx = b_ikart_vel->get(1).asDouble();
-			ikart_vy = b_ikart_vel->get(2).asDouble();
-			ikart_vt = b_ikart_vel->get(3).asDouble();
-			last_data = yarp::os::Time::now();
-		}
-		else
-		{
-			printf ("Invalid input command format! \n");
-			ikart_vx = ikart_vy = ikart_vt = 0;
-		}
-#else
-		//this block is used if the velocity is taken from the ikart odometry
-		ikart_vx = b_ikart_vel->get(3).asDouble();
-		ikart_vy = b_ikart_vel->get(4).asDouble();
-		ikart_vt = b_ikart_vel->get(5).asDouble();
+		ikart_vx = b_ikart_vel->get(0).asDouble();
+		ikart_vy = b_ikart_vel->get(1).asDouble();
+		ikart_vt = b_ikart_vel->get(2).asDouble();
 		last_data = yarp::os::Time::now();
-#endif
 	}
 	double curr_time = yarp::os::Time::now();
 	if (curr_time - last_data > 0.3) 
 	{
-		printf ("Input command timeout! \n");
+	//	printf ("Input command timeout! \n");
 		ikart_vx = ikart_vy = ikart_vt = 0;
 	}
 }
@@ -121,6 +104,9 @@ void obstacleDetectorThread::run()
 {
 	//get the ikart velocity
 	updateIkartVel();
+	//updtae the model of the optical flow
+	flow_model.set_movement(-ikart_vx, -ikart_vy, -ikart_vt);
+	flow_model.compute_model();
 
 	//get the optical flow buffer;
 	VelocityBuffer* buff = port_buffered_optical_flow_input.read(false);

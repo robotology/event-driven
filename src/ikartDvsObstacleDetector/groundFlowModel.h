@@ -35,12 +35,15 @@ using namespace std;
 #define M_PI 3.14159265
 #endif
 
-//#define N_PIXELS 64 
-#define N_PIXELS 5
+#define N_PIXELS 128 
+//#define N_PIXELS 50
 
 #ifndef IMGFOR
 #define IMGFOR(img,i,j) for (int i=0; i<(img).width(); i++) for (int j=0; j<(img).height(); j++)
 #endif
+
+#define  BIGGER 16
+#define  STEP   4
 
 class groundFlowModel
 {
@@ -69,13 +72,22 @@ class groundFlowModel
 			flow_model_image(i, j) = 150;
 		}
 
-		for (int x=0, X=0; x<N_PIXELS*4; x+=4, X++)
-			for (int y=0, Y=0; y<N_PIXELS*4; y+=4, Y++)
+		int c=BIGGER/2;
+		//double scale = 300;
+		double scale = 10;
+		for (int y=0, Y=0; y<N_PIXELS*BIGGER; y+=BIGGER, Y++)
+			for (int x=0, X=0; x<N_PIXELS*BIGGER; x+=BIGGER, X++)
 			{
 				//yarp::sig::draw::addSegment(flow_model_image,black,x,y,x+20,y+20);
-				yarp::sig::draw::addSegment(flow_model_image,black,x,y,int(x+output_ground_model_x[X][Y]),int(y+output_ground_model_y[X][Y]));
-				yarp::sig::draw::addCircle(flow_model_image,black,x+int(output_ground_model_x[X][Y]),int(y+output_ground_model_y[X][Y]),2);
+#if DEBUG
+				printf ("x:%d y:%d X:%d Y:%d %d %d %f %f\n", x, y, X, Y, int(x+output_ground_model_x[X][Y]*scale), int(y+output_ground_model_y[X][Y]*scale), output_ground_model_x[X][Y], output_ground_model_y[X][Y]);
+#endif
+				yarp::sig::draw::addSegment(flow_model_image,black,x+c,y+c,int(x+output_ground_model_x[X][Y]*scale)+c,int(y+output_ground_model_y[X][Y]*scale)+c);
+				yarp::sig::draw::addCircle(flow_model_image,black,x+int(output_ground_model_x[X][Y]*scale)+c,int(y+output_ground_model_y[X][Y]*scale)+c,2);
 			}
+#if DEBUG
+		printf ("-----------\n");
+#endif
 	}
 
 	void project_plane()
@@ -150,11 +162,11 @@ class groundFlowModel
 			        
 	}
 
-	void initialize ()
+	void initialize (double focal_lenght, double angle_deg, double height)
 	{
-		flow_model_image.resize(4*N_PIXELS,4*N_PIXELS);
+		flow_model_image.resize(BIGGER*N_PIXELS,BIGGER*N_PIXELS);
 
-		double ang = -135.0/180.0*M_PI;
+		double ang = angle_deg/180.0*M_PI;
 		tx_matrix.resize(4,4);
 		tx_matrix.zero();
 		/*
@@ -171,13 +183,13 @@ class groundFlowModel
 		tx_matrix[2][1] = sin(ang);
 		tx_matrix[0][3] = 0; //x
 		tx_matrix[1][3] = 0; //y
-		tx_matrix[2][3] = 1; //z
+		tx_matrix[2][3] = height; //z
 		tx_matrix[3][3] = 1; 
 		tx_matrix = iCub::ctrl::SE3inv(tx_matrix);
 
 		p_matrix.resize(3,4);
 		p_matrix.zero();
-		double f = 25000;
+		double f = focal_lenght;
 		double c = N_PIXELS/2;
 		p_matrix[0][0] = f;
 		p_matrix[0][2] = c;
@@ -250,9 +262,10 @@ class groundFlowModel
 	}
 	groundFlowModel()
 	{
-		initialize();
+		initialize(62.5,-135,0.6);
 		project_plane();
-		set_movement (0.0, 1.0, 0.0);
+		//1m/s = 0.001m/ms = 0,030m/30ms
+		set_movement (0, 0.001, 0.0);
 		compute_model();
 
 		printf ("----------\n");

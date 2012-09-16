@@ -27,10 +27,11 @@
 class iKartPlannerModule : public yarp::os::RFModule
 {
 protected:
-    obstacleDetectorThread     *obstacleThread;
     yarp::os::Port              rpcPort;
 
 public:
+	obstacleDetectorThread     *obstacleThread;
+
     iKartPlannerModule()
     {
         obstacleThread=NULL;
@@ -106,6 +107,14 @@ public:
 		{
 			reply.addString("Available commands are:");
 			reply.addString("quit");
+		}
+		else if (command.get(0).asString()="set_p")
+		{
+			double f = command.get(1).asDouble();
+			double ang= command.get(2).asDouble();
+			double h = command.get(3).asDouble();
+			obstacleThread->set_model_params(f,ang,h);
+			reply.addString("Params loaded");
 		}
         else
         {

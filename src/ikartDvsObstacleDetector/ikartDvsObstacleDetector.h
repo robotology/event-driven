@@ -63,12 +63,14 @@ class obstacleDetectorThread: public yarp::os::RateThread
 	double                           last_data;
 
     //ports
-	BufferedPort<Bottle>             port_ikart_velocity_input;
-	BufferedPort<VelocityBuffer>     port_buffered_optical_flow_input;
-	BufferedPort<yarp::sig::Vector>  port_optical_flow_input;
-    BufferedPort<yarp::sig::Vector>  port_simulated_scan_output;
+	BufferedPort<Bottle>									  port_ikart_velocity_input;
+	BufferedPort<VelocityBuffer>							  port_buffered_optical_flow_input;
+	BufferedPort<yarp::sig::Vector>							  port_optical_flow_input;
+    BufferedPort<yarp::sig::Vector>							  port_simulated_scan_output;
 	BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono16> > port_flow_model_output;
+	BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> >    port_comparison_output;
 
+	yarp::sig::ImageOf<yarp::sig::PixelMono16>                comparison_image;
     Property            iKartCtrl_options;
     ResourceFinder      &rf;
     yarp::sig::Vector   scan_data;
@@ -78,9 +80,16 @@ class obstacleDetectorThread: public yarp::os::RateThread
                RateThread(_period),     rf(_rf),
                iKartCtrl_options (options)
     {
+		comparison_image.resize(128,128);
 		scan_data.resize(1080,100);
 		obstacle_size=1;
     }
+
+	void set_model_params(double focal_lenght, double angle_deg, double height)
+	{
+	    flow_model.initialize(focal_lenght,angle_deg,height);
+		flow_model.project_plane();
+	}
 
     virtual bool threadInit()
     {
@@ -94,6 +103,7 @@ class obstacleDetectorThread: public yarp::os::RateThread
 		port_simulated_scan_output.open       ( (localName+"/scan:o").c_str() );
 		port_ikart_velocity_input.open        ( (localName+"/ikart_velocity:i").c_str() );
 		port_flow_model_output.open           ( (localName+"/flow_model_img:o").c_str() );
+		port_comparison_output.open           ( (localName+"/flow_comparison_img:o").c_str() );
 
         //automatic port connections
         bool b = false;
@@ -120,6 +130,8 @@ class obstacleDetectorThread: public yarp::os::RateThread
 		port_buffered_optical_flow_input.close();
 	    port_simulated_scan_output.interrupt();
         port_simulated_scan_output.close();
+		port_comparison_output.interrupt();
+		port_comparison_output.close();
     }
 
     void printStats();
