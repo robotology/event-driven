@@ -26,8 +26,15 @@
 
 <connection>
   <from>/ikartDvsObstacleDetector/flow_model_img:o</from>
-  <to>/flowModel:i</to>
+  <to>/flow_model:i</to>
   <protocol>udp</protocol>
 </connection>
+
+<connection>
+  <from>/ikartDvsObstacleDetector/flow_comparison_img:o</from>
+  <to>/flow_comparison:i</to>
+  <protocol>udp</protocol>
+</connection>
+
 
 </application>
