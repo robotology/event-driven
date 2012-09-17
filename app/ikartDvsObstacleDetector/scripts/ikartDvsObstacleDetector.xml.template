@@ -42,4 +42,10 @@
   <protocol>udp</protocol>
 </connection>
 
+<connection>
+  <from>/ikartDvsObstacleDetector/flow_measured_check_img:o</from>
+  <to>/flow_measured_check:i</to>
+  <protocol>udp</protocol>
+</connection>
+
 </application>
