@@ -58,7 +58,7 @@ void AERGrabber::onRead(eventBuffer & eBuffer){
 
 //    cout << eventNo << endl;
 //    if (evtBuffer.size() > 200){
-//        cout << evtBuffer.size() << " " << eventNo << endl;
+        cout << evtBuffer.size() << " " << eventNo << endl;
 //        return;
 //    }
 

@@ -63,6 +63,7 @@ class WorldOptFlow : public RateThread{
     unsigned long sampleTime;
 
     void updtWrldStus();  //void updtWrldStus(CameraEvent **, int);
+    void updtPreWrldStus();
     void calVelocities(CameraEvent **, int);
 
 

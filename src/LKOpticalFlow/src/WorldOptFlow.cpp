@@ -110,6 +110,7 @@ void WorldOptFlow::run(){
     int eventNo;
     CameraEvent ** eventsBfr;
     CameraEvent * evntPtr;;
+    int tmp;
 
     if (newEventsSignal->check()){
         last_read = yarp::os::Time::now();
@@ -121,8 +122,8 @@ void WorldOptFlow::run(){
         }
 
         eventsBfr = inPort->getEvents(eventNo);
-        eventBuffers[eventBuffersSize - 1] = eventsBfr;
-        eventNosBuffer[eventBuffersSize - 1] = eventNo;
+        *(eventBuffers + eventBuffersSize - 1) = eventsBfr; //eventBuffers[eventBuffersSize - 1] = eventsBfr;
+        *(eventNosBuffer + eventBuffersSize - 1) = eventNo; //eventNosBuffer[eventBuffersSize - 1] = eventNo;
 
         updtWrldStus();
 
@@ -136,12 +137,14 @@ void WorldOptFlow::run(){
 //        cout << elapsed << " " << eventNo << endl;
 
         prevWorldStatus->updateMatrix(worldStatus);
+//        updtPreWrldStus();
 
         //Release the memory for events
         eventsBfr = eventBuffers[0];
         if (eventsBfr != NULL){
            // each element of array is a CameraEvent *
-           for (int i = 0; i < eventNosBuffer[0]; ++i) {
+           tmp = *eventNosBuffer/*eventNosBuffer[0]*/;
+           for (int i = 0; i < tmp; ++i) {
                delete *(eventsBfr + i);
            }
            delete [] eventsBfr;
@@ -149,26 +152,25 @@ void WorldOptFlow::run(){
 
         //Shift the eventBufffers one step
         for (int i = 1; i < eventBuffersSize; ++i) {
-            eventBuffers[i-1] = eventBuffers[i];
-            eventNosBuffer[i-1] = eventNosBuffer[i];
+            *(eventBuffers + i-1) = *(eventBuffers + i); //eventBuffers[i-1] = eventBuffers[i];
+            *(eventNosBuffer + i-1) = *(eventNosBuffer + i); // eventNosBuffer[i-1] = eventNosBuffer[i];
         }
-
-
 
     }
     else{
         double curr_time = yarp::os::Time::now();
         if (curr_time-last_read> .1){  //if it's a long time i have not received any thing then put some stuff on the
-            eventBuffers[eventBuffersSize - 1] = NULL;
-            eventNosBuffer[eventBuffersSize - 1] = 0;
+            *(eventBuffers  + eventBuffersSize - 1) = NULL;
+            *(eventNosBuffer + eventBuffersSize - 1) = 0;
             updtWrldStus();
-            prevWorldStatus->updateMatrix(worldStatus);
+            updtPreWrldStus();
 
             //Release the memory for events
             eventsBfr = eventBuffers[0];
             if (eventsBfr != NULL){
                // each element of array is a CameraEvent *
-               for (int i = 0; i < eventNosBuffer[0]; ++i) {
+               tmp = *eventNosBuffer/*eventNosBuffer[0]*/;
+               for (int i = 0; i < tmp; ++i) {
                    delete *(eventsBfr + i);
                }
                delete [] eventsBfr;
@@ -176,14 +178,11 @@ void WorldOptFlow::run(){
 
             //Shift the eventBufffers one step
             for (int i = 1; i < eventBuffersSize; ++i) {
-                eventBuffers[i-1] = eventBuffers[i];
-                eventNosBuffer[i-1] = eventNosBuffer[i];
+                *(eventBuffers + i-1) = *(eventBuffers + i); //eventBuffers[i-1] = eventBuffers[i];
+                *(eventNosBuffer + i-1) = *(eventNosBuffer + i); // eventNosBuffer[i-1] = eventNosBuffer[i];
             }
         }// end-if on time
     }
-
-
-
 }
 
 
@@ -191,25 +190,54 @@ void WorldOptFlow::updtWrldStus(){
     CameraEvent * evntPtr;
     CameraEvent ** evntBffr;
     short rwIdx, clmnIdx;
+    int tmp;
 
-    evntBffr = eventBuffers[0];
-    for (int i = 0; i < eventNosBuffer[0]; ++i) {
-        evntPtr = evntBffr[i];
+    evntBffr = *eventBuffers; //eventBuffers[0];
+    tmp = *eventNosBuffer;
+    for (int i = 0; i < tmp; ++i) {
+        evntPtr = *(evntBffr + i ); //evntBffr[i];
         rwIdx = evntPtr ->getRowIdx();
         clmnIdx = evntPtr -> getColumnIdx();
         worldStatus->operator ()(rwIdx, clmnIdx) -= POLARITY_WEIGHT*evntPtr->getPolarity();
     }
 
-    evntBffr = eventBuffers[eventBuffersSize - 1];
-    for (int i = 0; i < eventNosBuffer[eventBuffersSize -1]; ++i) {
-        evntPtr = evntBffr[i];
+    evntBffr = *(eventBuffers + eventBuffersSize - 1); eventBuffers[eventBuffersSize - 1];
+    tmp = * (eventNosBuffer + eventBuffersSize -1);
+    for (int i = 0; i < tmp ; ++i) {  //eventNosBuffer[eventBuffersSize -1]
+        evntPtr = *(evntBffr + i); //evntBffr[i];
         rwIdx = evntPtr ->getRowIdx();
         clmnIdx = evntPtr -> getColumnIdx();
-        worldStatus->operator ()(rwIdx, clmnIdx) += POLARITY_WEIGHT * evntPtr->getPolarity();
+        worldStatus ->operator ()(rwIdx, clmnIdx) += POLARITY_WEIGHT * evntPtr->getPolarity();
     }
 
 }
 
+
+void WorldOptFlow::updtPreWrldStus(){
+    CameraEvent * evntPtr;
+      CameraEvent ** evntBffr;
+      short rwIdx, clmnIdx;
+      int tmp;
+
+      evntBffr = *eventBuffers; //eventBuffers[0];
+      tmp = *eventNosBuffer;
+      for (int i = 0; i < tmp; ++i) {
+          evntPtr = *(evntBffr + i ); //evntBffr[i];
+          rwIdx = evntPtr ->getRowIdx();
+          clmnIdx = evntPtr -> getColumnIdx();
+          prevWorldStatus->operator ()(rwIdx, clmnIdx) -= POLARITY_WEIGHT*evntPtr->getPolarity();
+      }
+
+      evntBffr = *(eventBuffers + eventBuffersSize - 1); eventBuffers[eventBuffersSize - 1];
+      tmp = * (eventNosBuffer + eventBuffersSize -1);
+      for (int i = 0; i < tmp ; ++i) {  //eventNosBuffer[eventBuffersSize -1]
+          evntPtr = *(evntBffr + i); //evntBffr[i];
+          rwIdx = evntPtr ->getRowIdx();
+          clmnIdx = evntPtr -> getColumnIdx();
+          prevWorldStatus->operator ()(rwIdx, clmnIdx) += POLARITY_WEIGHT * evntPtr->getPolarity();
+      }
+
+}
 
 
 void WorldOptFlow::calVelocities(CameraEvent ** evntBffr, int bffrSize){
