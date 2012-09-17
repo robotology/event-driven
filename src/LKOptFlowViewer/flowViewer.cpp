@@ -32,9 +32,10 @@ flowViewer::flowViewer(int visMethod )
 }
 
 void flowViewer::
-setPorts(BufferedPort< yarp::sig::ImageOf <yarp::sig::PixelMono16> > * oPort, VelocityGrabber * iPort){
+setPorts(BufferedPort< yarp::sig::ImageOf <yarp::sig::PixelMono16> > * oPort, VelocityGrabber * iPort, BufferedPort<Bottle> * oDataPort){
     inPort = iPort;
-    outPort = oPort;
+    outImagePort = oPort;
+	outDataPort = oDataPort;
 }
 
 flowViewer::~flowViewer()
@@ -67,9 +68,9 @@ void flowViewer::run(){
        double curr_time = yarp::os::Time::now();
        if (curr_time-last_read> 0.030*3 )
        {
-           yarp::sig::ImageOf<yarp::sig::PixelMono16>& img=outPort-> prepare();
+           yarp::sig::ImageOf<yarp::sig::PixelMono16>& img=outImagePort-> prepare();
            img=vecBaseImg;
-           outPort->write();
+           outImagePort->write();
            last_read = curr_time;
        }
     }
@@ -153,7 +154,7 @@ void flowViewer::velVect(VelocityBuffer& data)
 
     int size;
     double norm, tmp;
-    yarp::sig::ImageOf<yarp::sig::PixelMono16>& img=outPort-> prepare();
+    yarp::sig::ImageOf<yarp::sig::PixelMono16>& img=outImagePort-> prepare();
     img=vecBaseImg;
 
     size = data.getSize();
@@ -168,6 +169,8 @@ void flowViewer::velVect(VelocityBuffer& data)
         vx = data.getVx(i);
         vy = data.getVy(i);
 
+		data_x[x][y] = vx;
+		data_y[x][y] = vy;
         vvx = ax * vx;
         vvy = ay * vy;
 
@@ -199,9 +202,27 @@ void flowViewer::velVect(VelocityBuffer& data)
  //   cout << average << " " << sptDer << endl;
 
 
-    outPort->write();
+    outImagePort->write();
 //    cout << "after write " << endl;
 
+	//send the data
+	if (outDataPort->getOutputCount()>0)
+	{
+		Bottle &b = outDataPort->prepare();
+		b.addInt(XDIM);
+		b.addInt(YDIM);
+		for (int y=0; y<YDIM; y++)	
+			for (int x=0; x<XDIM; x++)
+				{
+					b.addDouble(data_x[x][y]);
+				}
+		for (int y=0; y<YDIM; y++)	
+			for (int x=0; x<XDIM; x++)
+				{
+					b.addDouble(data_y[x][y]);
+				}
+		outDataPort->write();
+	}
 }
 
 void flowViewer::velNorm(VelocityBuffer& data)
@@ -218,7 +239,7 @@ void flowViewer::velNorm(VelocityBuffer& data)
 
      int size;
      double norm, tmp;
-     yarp::sig::ImageOf<yarp::sig::PixelMono16>& img=outPort-> prepare();
+     yarp::sig::ImageOf<yarp::sig::PixelMono16>& img=outImagePort-> prepare();
      img=normBaseImg;
 
      size = data.getSize();
@@ -238,7 +259,7 @@ void flowViewer::velNorm(VelocityBuffer& data)
 
          vx_int = (vvx >= 0 ? int(vvx+0.5) : int(vvx - 0.5) ) ;
          vy_int = (vvy >= 0 ? int(vvy+0.5) : int(vvy - 0.5) ) ;
-         norm=sqrt(vx_int*vx_int+vy_int*vy_int);
+         norm=sqrt(double(vx_int*vx_int+vy_int*vy_int));
 
 //         norm=sqrt(vvx*vvx+vvy*vvy);
 //        norm=sqrt(vx*vx+vy*vy) * 500;
@@ -262,7 +283,7 @@ void flowViewer::velNorm(VelocityBuffer& data)
      cout << average << endl;
      //cout << average << " " << sptDer << endl;
 
-     outPort->write();
+     outImagePort->write();
 
 }
 

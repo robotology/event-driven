@@ -27,7 +27,10 @@ class VelocityGrabber;
 class flowViewer : public RateThread{
     yarp::sig::ImageOf<yarp::sig::PixelMono16> vecBaseImg;
     yarp::sig::ImageOf<yarp::sig::PixelMono16> normBaseImg;
-    BufferedPort< yarp::sig::ImageOf <yarp::sig::PixelMono16> > * outPort;
+    BufferedPort< yarp::sig::ImageOf <yarp::sig::PixelMono16> > * outImagePort;
+	BufferedPort<Bottle> * outDataPort;
+	double data_x [XDIM][YDIM];
+	double data_y [XDIM][YDIM];
 
     VelocityGrabber * inPort;
 
@@ -49,7 +52,7 @@ class flowViewer : public RateThread{
 public:
 
     flowViewer(int visMethod = 1);
-    void setPorts(BufferedPort< yarp::sig::ImageOf <yarp::sig::PixelMono16> > * , VelocityGrabber * );
+    void setPorts(BufferedPort< yarp::sig::ImageOf <yarp::sig::PixelMono16> > * oPort, VelocityGrabber * iPort, BufferedPort<Bottle> * oDataPort);
     void setVisMethod(int method){visMthd = method;}
     virtual ~flowViewer();
 

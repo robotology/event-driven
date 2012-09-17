@@ -20,6 +20,7 @@ class FlowViewerModule : public RFModule{
     flowViewer viewer;
     VelocityGrabber vGrabber;
     yarp::os::BufferedPort< yarp::sig::ImageOf<yarp::sig::PixelMono16> > outPort;
+	yarp::os::BufferedPort< Bottle > outDataPort;
 
 
 public:
@@ -59,7 +60,7 @@ public:
         }
         vGrabber.useCallback();
 
-        //open output Port
+        //open image output Port
         outPortName = "/";
         outPortName += getName();
         outPortName += "/vels:o";
@@ -68,7 +69,16 @@ public:
             return false;
         }
 
-        viewer.setPorts(&outPort, &vGrabber);
+        //open data output Port
+        outPortName = "/";
+        outPortName += getName();
+        outPortName += "/data:o";
+        if (!outDataPort.open(outPortName.c_str()) ){
+            cerr << getName() << "" << outPortName << endl;
+            return false;
+        }
+
+        viewer.setPorts(&outPort, &vGrabber, &outDataPort);
 
         viewer.start();
 
@@ -90,6 +100,7 @@ public:
         cout << "Interrupting.." << endl;
         vGrabber.interrupt();
         outPort.interrupt();
+		outDataPort.interrupt();
         return true;
     }
 
@@ -97,6 +108,7 @@ public:
         cout << "closing .." << endl;
         vGrabber.close();
         outPort.close();
+		outDataPort.close();
         return true;
     }
 
