@@ -48,4 +48,11 @@
   <protocol>udp</protocol>
 </connection>
 
+<connection>
+  <from>/OptFlViewer/data:o</from>
+  <to>/ikartDvsObstacleDetector/flow:i</to>
+  <protocol>udp</protocol>
+</connection>
+
+
 </application>
