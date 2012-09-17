@@ -53,7 +53,7 @@ class obstacleDetectorThread: public yarp::os::RateThread
     protected:
     //configuration parameters
     double obstacle_size;   //m
-	VelocityBuffer                   optical_flow_buffer;
+	//VelocityBuffer                   optical_flow_buffer;
 	groundFlowModel                  flow_model;
 	
 	//ikart velocity data
@@ -64,9 +64,10 @@ class obstacleDetectorThread: public yarp::os::RateThread
 
     //ports
 	BufferedPort<Bottle>									  port_ikart_velocity_input;
-	BufferedPort<VelocityBuffer>							  port_buffered_optical_flow_input;
-	BufferedPort<yarp::sig::Vector>							  port_optical_flow_input;
+	//BufferedPort<VelocityBuffer>							  port_buffered_optical_flow_input;
+	BufferedPort<Bottle>									  port_optical_flow_input;
     BufferedPort<yarp::sig::Vector>							  port_simulated_scan_output;
+	BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono16> > port_flow_measured_check_output;
 	BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono16> > port_flow_model_output;
 	BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> >    port_comparison_output;
 	BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono16> > port_calibration_output;
@@ -77,6 +78,7 @@ class obstacleDetectorThread: public yarp::os::RateThread
 	double compared_optical_flow_ang						  [N_PIXELS][N_PIXELS];
 
 	yarp::sig::ImageOf<yarp::sig::PixelRgb>                   comparison_image;
+	yarp::sig::ImageOf<yarp::sig::PixelMono16>				  flow_measured_check_image;
     Property            iKartCtrl_options;
     ResourceFinder      &rf;
     yarp::sig::Vector   scan_data;
@@ -86,6 +88,7 @@ class obstacleDetectorThread: public yarp::os::RateThread
                RateThread(_period),     rf(_rf),
                iKartCtrl_options (options)
     {
+		flow_measured_check_image.resize(128*BIGGER,128*BIGGER);
 		comparison_image.resize(128,128);
 		scan_data.resize(1080,100);
 		obstacle_size=1;
@@ -122,11 +125,12 @@ class obstacleDetectorThread: public yarp::os::RateThread
 
         //open module ports
 		string localName = "/ikartDvsObstacleDetector";
-		//port_optical_flow_input.open        ( (localName+"/flow:i").c_str() );
-		port_buffered_optical_flow_input.open ( (localName+"/flow:i").c_str() );
+		port_optical_flow_input.open        ( (localName+"/flow:i").c_str() );
+		//port_buffered_optical_flow_input.open ( (localName+"/flow:i").c_str() );
 		port_simulated_scan_output.open       ( (localName+"/scan:o").c_str() );
 		port_ikart_velocity_input.open        ( (localName+"/ikart_velocity:i").c_str() );
 		port_flow_model_output.open           ( (localName+"/flow_model_img:o").c_str() );
+		port_flow_measured_check_output.open  ( (localName+"/flow_measured_check_img:o").c_str() );
 		port_comparison_output.open           ( (localName+"/flow_comparison_img:o").c_str() );
 		port_calibration_output.open          ( (localName+"/calibration_img:o").c_str() );
 
@@ -144,6 +148,8 @@ class obstacleDetectorThread: public yarp::os::RateThread
 	void updateIkartVel();
 	void compute_comparison();
 	void draw_comparison();
+	void used_simulated_measured_optical_flow();
+	void draw_measured_check();
 
     virtual void threadRelease()
     {    
@@ -153,14 +159,16 @@ class obstacleDetectorThread: public yarp::os::RateThread
 		port_ikart_velocity_input.close();
         port_optical_flow_input.interrupt();
         port_optical_flow_input.close();
-		port_buffered_optical_flow_input.interrupt();
-		port_buffered_optical_flow_input.close();
+		//port_buffered_optical_flow_input.interrupt();
+		//port_buffered_optical_flow_input.close();
 	    port_simulated_scan_output.interrupt();
         port_simulated_scan_output.close();
 		port_comparison_output.interrupt();
 		port_comparison_output.close();
 		port_calibration_output.interrupt();
 		port_calibration_output.close();
+		port_flow_measured_check_output.interrupt();
+		port_flow_measured_check_output.close();
     }
 
     void printStats();

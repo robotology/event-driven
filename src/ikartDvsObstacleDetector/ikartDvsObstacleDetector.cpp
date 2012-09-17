@@ -24,6 +24,7 @@
 #include <yarp/os/Os.h>
 #include <yarp/os/Time.h>
 #include <yarp/sig/Vector.h>
+#include <yarp/sig/ImageDraw.h>
 #include <yarp/dev/Drivers.h>
 #include <yarp/dev/PolyDriver.h>
 #include <yarp/os/RateThread.h>
@@ -33,6 +34,7 @@
 #include <cv.h>
 
 #include "ikartDVSObstacleDetector.h"
+
 
 using namespace std;
 using namespace yarp::os;
@@ -119,26 +121,60 @@ void obstacleDetectorThread::draw_comparison()
 	int r =0;
 	int g =0;
 	int b =0;
-	for (int row=0; row<ipl->height; row++)
+	for (int y=0; y<ipl->height; y++)
     {
-		uchar* p =(uchar*) ipl->imageData + row*ipl->widthStep;
-		for(int col=0; col<ipl->width; col++)
+		uchar* p =(uchar*) ipl->imageData + y*ipl->widthStep;
+		for(int x=0; x<ipl->width; x++)
 		{
-			if (1)
+			double mag = sqrt (measured_optical_flow_x[x][y]*measured_optical_flow_x[x][y]+measured_optical_flow_y[x][y]*measured_optical_flow_y[x][y]);
+			if (mag > 0.001)
 			{
-				if       (compared_optical_flow_ang[col][row]  > 0) {r = 0; b= 0; g = 200;}
-				else if  (compared_optical_flow_ang[col][row] <= 0) {r = 200; b= 0; g =0;}
+				if       (compared_optical_flow_ang[x][y]  > 0.01) {r = 0;   b= 0; g = 200;}
+				else if  (compared_optical_flow_ang[x][y]  < 0.01) {r = 200; b= 0; g =0;   }
+				else                                               {r = 200; b= 0; g =200; }
 			}
 			else  
 			{
 				r = 0; b= 0; g =0;
 			}
 
-			p[3*col+0]=r;
-			p[3*col+1]=g;
-		    p[3*col+2]=b;
+			p[3*x+0]=r;
+			p[3*x+1]=g;
+		    p[3*x+2]=b;
 		}
 	}
+}
+
+void obstacleDetectorThread::used_simulated_measured_optical_flow()
+{
+	for (int y=0; y<128; y++)
+		for (int x=0; x<128; x++)
+		{
+			measured_optical_flow_x[x][y]= this->flow_model.initialized_output_ground_model_x[x][y];
+			measured_optical_flow_y[x][y]= this->flow_model.initialized_output_ground_model_y[x][y];
+		}
+}
+void obstacleDetectorThread::draw_measured_check()
+{
+	static const yarp::sig::PixelMono16 black=0;
+    static const yarp::sig::PixelMono16 white=255;
+	static double scale = 100;
+	static int c=BIGGER/2;
+	
+	IMGFOR(flow_measured_check_image ,i , j)
+		{
+			flow_measured_check_image(i, j) = 150;
+		}
+
+	for (int y=0, Y=0; y<N_PIXELS*BIGGER; y+=BIGGER, Y+=1)
+		for (int x=0, X=0; x<N_PIXELS*BIGGER; x+=BIGGER, X+=1)
+		{
+			yarp::sig::draw::addSegment(flow_measured_check_image,black,x+c,y+c,int(x+measured_optical_flow_x[X][Y]*scale)+c,int(y+measured_optical_flow_y[X][Y]*scale)+c);
+			if (fabs(measured_optical_flow_x[X][Y])> 0.0001 || fabs(measured_optical_flow_y[X][Y])> 0.0001)
+				yarp::sig::draw::addCircle(flow_measured_check_image,black,x+int(measured_optical_flow_y[X][Y]*scale)+c,int(y+measured_optical_flow_y[X][Y]*scale)+c,2);
+			else
+				yarp::sig::draw::addCircle(flow_measured_check_image,black,x+int(measured_optical_flow_y[X][Y]*scale)+c,int(y+measured_optical_flow_y[X][Y]*scale)+c,1);
+		}
 }
 
 void obstacleDetectorThread::run()
@@ -152,17 +188,34 @@ void obstacleDetectorThread::run()
 	flow_model.compute_model();
 
 	//get the optical flow buffer;
-	VelocityBuffer* buff = port_buffered_optical_flow_input.read(false);
+	//VelocityBuffer* buff = port_buffered_optical_flow_input.read(false);
+	Bottle *buff = port_optical_flow_input.read(false);
 	if (buff)
 	{
-		optical_flow_buffer = *buff;
+		int c = 0;
+		int xdim = buff->get(c++).asInt();
+		int ydim = buff->get(c++).asInt();
+		//optical_flow_buffer = *buff;
+		for (int y=0; y<128; y++)
+			for (int x=0; x<128; x++)
+			{
+				c++;
+				measured_optical_flow_x[x][y]= buff->get(c).asDouble();
+				measured_optical_flow_y[x][y]= buff->get(c+16384).asDouble();
+			}
 	}
-	for (int y=0; y<128; y++)
-		for (int x=0; x<128; x++)
-		{
-			measured_optical_flow_x[x][y]= this->flow_model.initialized_output_ground_model_x[x][y];
-			measured_optical_flow_y[x][y]= this->flow_model.initialized_output_ground_model_y[x][y];
-		}
+	else
+	{
+		for (int y=0; y<128; y++)
+			for (int x=0; x<128; x++)
+			{
+				measured_optical_flow_x[x][y]= 0;
+				measured_optical_flow_y[x][y]= 0;
+			}
+	}
+
+	//used_simulated_measured_optical_flow();
+
 
 	compute_comparison();
 
@@ -203,6 +256,15 @@ void obstacleDetectorThread::run()
 		yarp::sig::ImageOf<yarp::sig::PixelMono16>& img=port_calibration_output.prepare();
 		img=flow_model.calibration_image;
 		port_calibration_output.write();
+	}
+
+	//send the check image
+	if (port_flow_measured_check_output.getOutputCount()>0)
+	{
+		draw_measured_check();
+		yarp::sig::ImageOf<yarp::sig::PixelMono16>& img=port_flow_measured_check_output.prepare();
+		img=flow_measured_check_image;
+		port_flow_measured_check_output.write();
 	}
 }
 

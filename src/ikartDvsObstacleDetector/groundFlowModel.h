@@ -233,7 +233,7 @@ class groundFlowModel
 		Vector oend2; oend2.resize(3);
 		for (int i=0; i<1000; i++)
 		{
-			double sq_size = 0.09; //9 centimeters
+			double sq_size = 0.045; //9 centimeters for the large chess board, 0.045 just for display
 			istart1[0]=-10; istart1[1]=sq_size*i+k_off; istart1[2]=0; istart1[3]=1;
 			iend1[0]=10;   iend1[1]=sq_size*i+k_off;   iend1[2]=0;   iend1[3]=1;
 			istart2[0]=sq_size*(i-500); istart2[1]=-100; istart2[2]=0; istart2[3]=1;
