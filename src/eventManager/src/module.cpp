@@ -685,6 +685,7 @@ void Manager::touchDVS(int u, int v){
 
         if(rpcMotorKarma.getOutputCount() && (rpcMotorAre.getOutputCount()) ) {
             // sending fix command to the actionRenderingEngine "look (x y z) "
+            /*
             Bottle areTarget; areTarget.clear();
             Bottle areMotor,areReply;
             areMotor.clear(); areReply.clear();
@@ -699,6 +700,7 @@ void Manager::touchDVS(int u, int v){
             rpcMotorAre.write(areMotor,areReply);
             fprintf(stdout,"areReply %s:\n",areReply.toString().c_str());
             Time::delay(2.0);
+            */
         }
         
         double x, y, z;
