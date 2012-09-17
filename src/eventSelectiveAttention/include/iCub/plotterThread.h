@@ -43,11 +43,21 @@ private:
     //int height_orig, width_orig;        // original dimension of the input and output images
     int retinalSize;                      // dimension of the squared retina
     int rMax, cMax;                       // location of the max 
+    int maxCalib;                         // position in 16x16 map of WTA
+    int maxCounterWTA;                    // max value of the count in WTA map
+    int countCalib;
+    int counterWTA[256];                  //histogram of WTA position
 
     yarp::os::Semaphore mutexMax;         // semaphore that regulates the access to the resource max
 
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> > leftPort;                 // port whre the output (left) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> > rightPort;                // port whre the output (right) is sent
+    
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > leftPortBW;                 // port whre the output (left) is sent
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > rightPortBW;                // port whre the output (right) is sent
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > leftPortBWCalib;                 // port whre the output (left) is sent
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > rightPortBWCalib;                // port whre the output (right) is sent
+    
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > leftIntPort;             // port whre the output (left integral) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > rightIntPort;            // port whre the output (right integral) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > leftGrayPort;            // port whre the output (left integral) is sent
@@ -56,6 +66,8 @@ private:
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > rightThresholdPort;      // port whre the output (right integral) is sent
 
     yarp::os::BufferedPort<yarp::sig::Vector > eventPort;                                      // Buffered port cointains a Vector of events
+    
+    yarp::os::BufferedPort<yarp::os::Bottle> maxCalibPort;                                     // Buffered port necessary to send the position of the WTA in the calibrate image
     
     yarp::sig::ImageOf<yarp::sig::PixelRgb>* imageLeft;                                        // image representing the signal on the leftcamera
     yarp::sig::ImageOf<yarp::sig::PixelRgb>* imageRight;                                       // image representing the signal on the right camera
@@ -140,6 +152,18 @@ public:
     void copyRight(yarp::sig::ImageOf<yarp::sig::PixelRgb>* img);
 
     /**
+     * function that copies the imageBW in the left output
+     * @param img passed input of the image to be copied
+     */
+    void copyLeftBW(yarp::sig::ImageOf<yarp::sig::PixelMono>* img);
+
+    /**
+     * function that copies the image in the right output
+     * @param img passed input of the image to be copied
+     */
+    void copyRightBW(yarp::sig::ImageOf<yarp::sig::PixelMono>* img);
+
+    /**
     * function that integrates the current dvs image with previous images
     * @param imgIn image of the current dvs camera
     * @param output of the process
@@ -166,6 +190,20 @@ public:
         rMax = yMax;
         mutexMax.post();
     }
+
+    /**
+     * @brief function that extracts the centroid and build the histo of position
+     * @param imgIn inputImage
+     * @param xMax xposition
+     * @param yMax yposition
+     * @return the result indicates whether the centroid has been found
+     */
+    bool centroidCalib(yarp::sig::ImageOf<yarp::sig::PixelMono>* imgIn);
+
+    /**
+     * @brief function that resets the counter of WTAs
+     */
+    void resetCounterWTA();
 };
 
 #endif  //_PLOTTER_THREAD_H_

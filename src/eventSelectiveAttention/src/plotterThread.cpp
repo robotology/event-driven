@@ -42,8 +42,9 @@ using namespace std;
 
 plotterThread::plotterThread() : RateThread(THRATE) {
     synchronised = false;
-    count=0;
-    retinalSize = 128;   //default value retinal size before setting    
+    count        = 0;
+    countCalib   = 0;
+    retinalSize  = 128;   //default value retinal size before setting    
 }
 
 plotterThread::~plotterThread() {
@@ -53,13 +54,19 @@ plotterThread::~plotterThread() {
 bool plotterThread::threadInit() {
     printf("\n starting the thread.... \n");
     // opening ports 
-    leftPort.open(getName("/left:o").c_str());
-    rightPort.open(getName("/right:o").c_str());
-    leftIntPort.open(getName("/leftInt:o").c_str());
-    rightIntPort.open(getName("/rightInt:o").c_str());
-    leftGrayPort.open(getName("/leftGrey:o").c_str());
-    rightGrayPort.open(getName("/rightGrey:o").c_str());
-    eventPort.open(getName("/event:o").c_str());
+    leftPort.open(      getName("/left:o"      ).c_str());
+    rightPort.open(     getName("/right:o"     ).c_str());
+    leftPortBW.open(    getName("/leftBW:o"    ).c_str());
+    rightPortBW.open(   getName("/rightBW:o"   ).c_str());
+    leftIntPort.open(   getName("/leftInt:o"   ).c_str());
+    rightIntPort.open(  getName("/rightInt:o"  ).c_str());
+    leftGrayPort.open(  getName("/leftGrey:o"  ).c_str());
+    rightGrayPort.open( getName("/rightGrey:o" ).c_str());
+    eventPort.open(     getName("/event:o"     ).c_str());
+    
+    leftPortBWCalib.open(    getName("/leftBWCalib:i"    ).c_str());
+    rightPortBWCalib.open(   getName("/rightBWCalib:i"   ).c_str());
+    maxCalibPort.open(       getName("/maxCalib:o"       ).c_str());     
 
     // initialising images
     imageLeft      = new ImageOf<PixelRgb>;
@@ -80,7 +87,7 @@ bool plotterThread::threadInit() {
     imageLeftBW->zero();
     imageRightBW   = new ImageOf<PixelMono>;
     imageRightBW->resize(retinalSize,retinalSize);
-    imageRightBW->zero();
+    
     imageLeftGrey  = new ImageOf<PixelMono>;
     imageLeftGrey->resize(retinalSize,retinalSize);
     imageLeftGrey->zero();
@@ -93,6 +100,10 @@ bool plotterThread::threadInit() {
     imageRightThreshold = new ImageOf<PixelMono>;
     imageRightThreshold->resize(retinalSize,retinalSize);
     imageRightThreshold->zero();
+
+    for (int i = 0; i < 256; i++) {
+            counterWTA[i] = 0;
+        }
     
     printf("initialization in plotter thread correctly ended \n");
     return true;
@@ -103,6 +114,14 @@ void plotterThread::interrupt() {
     leftIntPort.interrupt();
     rightPort.interrupt();
     rightIntPort.interrupt();
+    leftPortBW.interrupt();
+    rightPortBW.interrupt();
+    leftGrayPort.interrupt();
+    rightGrayPort.interrupt();
+    eventPort.interrupt();
+    leftPortBWCalib.interrupt();
+    rightPortBWCalib.interrupt();
+    maxCalibPort.interrupt();     
 }
 
 void plotterThread::setName(string str) {
@@ -137,6 +156,22 @@ void plotterThread::copyLeft(ImageOf<PixelRgb>* image) {
     }
 }
 
+void plotterThread::copyLeftBW(ImageOf<PixelMono>* image) {
+    //printf("retinalSize in plotterThread %d \n",retinalSize);
+    int padding= image->getPadding();
+    unsigned char* pimage = image->getRawImage();
+    unsigned char* pleft  = imageLeftBW->getRawImage();
+    if(imageLeftBW != 0) {
+        for(int r = 0;r < retinalSize; r++) {
+            for(int c = 0; c < retinalSize; c++) {                
+                *pleft++ = *pimage++;
+            }
+            pleft  += padding;
+            pimage += padding;
+        }
+    }
+}
+
 void plotterThread::copyRight(ImageOf<PixelRgb>* image) {
     int padding= image->getPadding();
     unsigned char* pimage = image->getRawImage();
@@ -154,92 +189,141 @@ void plotterThread::copyRight(ImageOf<PixelRgb>* image) {
     }    
 }
 
+void plotterThread::copyRightBW(ImageOf<PixelMono>* image) {
+    int padding= image->getPadding();
+    unsigned char* pimage = image->getRawImage();
+    unsigned char* pright = imageRightBW->getRawImage();
+    if(imageRightBW != 0) {
+        for(int r = 0;r < retinalSize; r++) {
+            for(int c = 0;c < retinalSize; c++) {                
+                *pright++ = *pimage++;                   
+            }
+            pright += padding;
+            pimage += padding;
+        }
+    }    
+}
+
+void plotterThread::resetCounterWTA() {
+    for (int i = 0; i < 256 ; i++) {
+        counterWTA[i] = 0;
+    }
+}
+
+bool plotterThread::centroidCalib(ImageOf<PixelMono>* imageIn) {
+    //extracting the centroid
+    bool success = false;
+    unsigned char* pImage = imageIn->getRawImage();
+    int padding           = imageIn->getPadding();
+    double rSum = 0;
+    double cSum = 0;
+    int countC  = 0;
+    int countR  = 0;
+   
+    for (int r = 0; r < retinalSize; r++) {
+        for (int c = 0; c < retinalSize; c++) {
+            if(*pImage != 0) {
+                success = true;
+                rSum += r;
+                cSum += c;
+                countC++;
+                countR++;
+            } 
+            pImage++;
+        }
+        pImage += padding;
+    }
+
+    // check whether centroid has been found
+    if(!success) {
+        // no active pixel has been found
+        //printf("insuccess \n");
+        return success;
+    }
+
+    // finding the position and updating the maxCounterWTA
+    double meanC = cSum / countC;
+    double meanR = rSum / countR;
+    int x = floor(meanC / 8.0);
+    int y = floor(meanR / 8.0);
+
+    int pos  = y * 16 + x;
+    //printf("mean %f %f position %d %d > %d \n", meanC, meanR, x, y, pos);
+    
+    counterWTA[pos]++;
+    if(maxCounterWTA < counterWTA[pos]) {
+        maxCounterWTA = counterWTA[pos];
+        maxCalib = pos;
+        printf("%d with counts %d \n", maxCalib, maxCounterWTA);
+    }
+    return true;
+}
+
 
 void plotterThread::run() {
     count++;
-    imageLeft  = &leftPort.prepare();
-    imageLeft->resize(retinalSize, retinalSize);
-    imageRight = &rightPort.prepare();
-    imageRight->resize(retinalSize, retinalSize);
+
     synchronised = true;
-    
+    if(leftPortBW.getOutputCount()) {
+        imageLeftBW  = &leftPortBW.prepare();
+        imageLeftBW->resize(retinalSize, retinalSize);
+        leftPortBW.write();
+    }
+    if(rightPortBW.getOutputCount()) {
+        imageRightBW = &rightPortBW.prepare();
+        imageRightBW->resize(retinalSize, retinalSize);
+        rightPortBW.write();
+    }
     if(leftPort.getOutputCount()) {
+        imageLeft  = &leftPort.prepare();
+        imageLeft->resize(retinalSize, retinalSize);
         leftPort.write();
     }
     if(rightPort.getOutputCount()) {
+        imageRight = &rightPort.prepare();
+        imageRight->resize(retinalSize, retinalSize);
         rightPort.write();
     }
-
-    /*
-    // obtaining the left and right integrated images
-    int positionLeft = 0, positionRight = 0;
-    int ul = 0, vl = 0, ur = 0, vr = 0;
-    if ((leftIntPort.getOutputCount())||(leftGrayPort.getOutputCount())) {
-        ImageOf<PixelMono>& leftInt = leftIntPort.prepare();
-        ImageOf<PixelMono>& leftGrey = leftGrayPort.prepare();
-        leftInt.resize(imageLeftInt->width(), imageLeftInt->height());
-        if(count % 500 == 0) {
-            imageLeftInt->copy(*imageLeft);
-            imageLeftGrey->zero();
-        }
-        else {
-            positionLeft = integrateImage(imageLeft, imageLeftInt,imageLeftBW, imageLeftGrey, imageLeftThreshold);
-        }
-        leftInt.copy(*imageLeftBW);
-        leftIntPort.write();
-        leftGrey.copy(*imageLeftThreshold);
-        leftGrayPort.write(); 
-        vl = floor(positionLeft/retinalSize);
-        ul = positionLeft%retinalSize;       
-    }
     
-    if ((rightIntPort.getOutputCount())||(rightGrayPort.getOutputCount())) {
-        ImageOf<PixelMono>& rightInt = rightIntPort.prepare();
-        ImageOf<PixelMono>& rightGrey = rightGrayPort.prepare();
-        rightInt.resize(imageRightInt->width(), imageRightInt->height());
-        if(count % 500 == 0) {
-            imageRightInt->copy(*imageRight);
-            imageRightGrey->zero();
-        }
-        else {
-            positionRight = integrateImage(imageRight, imageRightInt,imageRightBW, imageRightGrey, imageRightThreshold);
-        }
-        rightInt.copy(*imageRightBW);
-        rightIntPort.write();
-        rightGrey.copy(*imageRightThreshold);
-        rightGrayPort.write();
-        vr = floor(positionRight/retinalSize);
-        ur = positionRight%retinalSize;
-    }
-    */
-    
+    if(leftPortBWCalib.getInputCount()) {
+        ImageOf<PixelMono>* leftBWCalib = leftPortBWCalib.read(false);
+        if(leftBWCalib != NULL) {
+            
+            int x = 10; int y = 10;
+            //int pos  = y * retinalSize + x;
+            //int xpos = x / 16;
+            //int ypos = y / 16;
 
-    /*
-    // extracting the centroid of the integrated image
-    //Bottle& eventBottle = eventPort.prepare();
-    Vector& centroidStereo = eventPort.prepare();
-    if (( ul!= 0) && ( vl!= 0) && ( ur!= 0) && ( vr!= 0)) {
-        //eventBottle.addInt(ul);
-        //eventBottle.addInt(vl);
-        //eventBottle.addInt(ur);
-        //eventBottle.addInt(vr);
-        //eventPort.write();
-        ul = (((((ul - 64)/ 128.0)/ 7.4) * 4) * 320) + 160;
-        vl = (((((vl - 64)/ 128.0)/ 7.4) * 4) * 240) + 120;
-        ur = (((((ur - 64)/ 128.0)/ 7.4) * 4) * 320) + 160;
-        vr = (((((vr - 64)/ 128.0)/ 7.4) * 4) * 240) + 120;
-        centroidStereo.clear();
-        
-        centroidStereo.push_back(ul);
-        centroidStereo.push_back(vl);
-        centroidStereo.push_back(ur);
-        centroidStereo.push_back(vr);
-        eventPort.write();
-        
-        //printf("positionLeft %d-%d, positionRight %d \n", (int) floor(positionLeft/128.0),positionLeft%128, positionRight);
+            bool success = centroidCalib(leftBWCalib);
+            if(success) {
+                printf("success!; counting WTAs \n");
+                countCalib++;
+                
+            }
+            
+            if (countCalib > 10 && maxCalibPort.getOutputCount()) {
+                printf("counted upto 10 WTA \n");
+                //send maxCalibX and maxCaliby
+                int maxCalibX, maxCalibY;
+                maxCalibY = (int) floor(maxCalib / 16);
+                maxCalibX = maxCalib - maxCalibY * 16;
+                maxCalibY = maxCalibY * 8;
+                maxCalibX = maxCalibX * 8;
+                
+                Bottle& calibBottle=maxCalibPort.prepare();
+                calibBottle.clear();
+                calibBottle.addInt(maxCalibX);
+                calibBottle.addInt(maxCalibY);
+                maxCalibPort.write();
+                countCalib    = 0;
+                maxCounterWTA = 0; 
+                resetCounterWTA();
+            }
+        }
     }
-    */
 }
+
+
 
 
 int plotterThread::integrateImage(ImageOf<PixelMono>* imageIn, ImageOf<PixelMono>* imageOut, ImageOf<PixelMono>* imageBW, ImageOf<PixelMono>* imageGrey,ImageOf<PixelMono>* imageThreshold ){
@@ -343,11 +427,16 @@ void plotterThread::threadRelease() {
   printf("plotterThread: portClosing \n");  
   leftPort.close();
   rightPort.close();
+  leftPortBW.close();
+  rightPortBW.close();
   leftIntPort.close();
   rightIntPort.close();
   leftGrayPort.close();
   rightGrayPort.close();
   eventPort.close();
+  leftPortBWCalib.close();
+  rightPortBWCalib.close();
+  maxCalibPort.close();
 
   printf("freeing memory \n");
  

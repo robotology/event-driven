@@ -100,7 +100,7 @@ private:
     emorph::ecodec::eEventQueue* txQueue;  // queue of event to be sent
     emorph::ecodec::eEventQueue* rxQueue;  // queue of event to be sent
 
-
+    double maxDistance;                  // distance from the center of the WTA 
     double startTimer;
     double interTimer;
     double endTimer;
