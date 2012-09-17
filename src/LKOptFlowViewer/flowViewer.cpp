@@ -209,6 +209,7 @@ void flowViewer::velVect(VelocityBuffer& data)
 	if (outDataPort->getOutputCount()>0)
 	{
 		Bottle &b = outDataPort->prepare();
+		b.clear();
 		b.addInt(XDIM);
 		b.addInt(YDIM);
 		for (int y=0; y<YDIM; y++)	
