@@ -56,6 +56,7 @@ using namespace yarp::math;
 #define CMD_KPUSH_SM            VOCAB4('k','p','s','m')       // karmaMotor push smooth pursuit
 #define CMD_POINT_DVS           VOCAB4('p','d','v','s')       // pointing using dvs cameras
 #define CMD_TOUCH_DVS           VOCAB4('t','d','v','s')       // pointing using dvs cameras
+#define CMD_LEARN_DVS           VOCAB4('l','d','v','s')
 
 
 
@@ -363,18 +364,26 @@ bool Manager::updateModule()
                     rpcHuman.reply(reply);
                 }break;
                 case CMD_POINT_DVS: {
-                    reply.addString("are pointing for dvsv camera: ");
+                    printf("received pdvs \n");
+                        //reply.addString("are pointing for dvsv camera: ");
                     if(cmd.size() > 1 ){
+                        /*
                         Bottle* opt = cmd.get(1).asList();
                         fprintf(stdout,"option of the command push %s \n", opt->toString().c_str());
                         int u = opt->get(0).asInt();
                         int v = opt->get(1).asInt();
+                        */
+                        
+                        int u  = cmd.get(1).asInt();
+                        int v  = cmd.get(2).asInt();
+                        
+                        printf("u %d v %d \n", u, v);
                         
                         pointDVS(u,v);
-                        
+                        reply.addString("ack");
                     }
                     else {
-                        reply.addString("UNSUCCESS, number of options insufficient \n");
+                        reply.addString("nack");
                     }
                     rpcHuman.reply(reply);
                 }break;
@@ -394,6 +403,24 @@ bool Manager::updateModule()
                     }
                     rpcHuman.reply(reply);
                 }break;
+                case CMD_LEARN_DVS: {
+                    reply.addString("are pointing for dvsv camera: ");
+                    if(cmd.size() > 1 ){
+                        /*Bottle* opt = cmd.get(1).asList();
+                        fprintf(stdout,"option of the command push %s \n", opt->toString().c_str());
+                        int u = opt->get(0).asInt();
+                        int v = opt->get(1).asInt();*/
+
+                        int u  = cmd.get(1).asInt();
+                        int v  = cmd.get(2).asInt();
+                        learnDVS(u,v);
+                        reply.addString("ack");
+                    }
+                    else {
+                        reply.addString("nack");
+                    }
+                    rpcHuman.reply(reply);
+                }break;
                 case CMD_PUR_TRAD: {
                     reply.addString("karma push command for traditional camera smooth pursuit: ");
                     if(cmd.size() > 1 ){
@@ -406,10 +433,10 @@ bool Manager::updateModule()
                         reply.addDouble(x);
                         reply.addDouble(y);
                         reply.addDouble(z);
-                        
+                        reply.addString("ack");
                     }
                     else {
-                        reply.addString("UNSUCCESS \n");
+                        reply.addString("nack");
                     }
                     rpcHuman.reply(reply);
                 }break;
@@ -741,8 +768,8 @@ void Manager::pointDVS(int u, int v){
             areMotor.addString("point");      
             areTarget.addInt(u);
             areTarget.addInt(v);
-            areTarget.addString("still");
             areMotor.addList() = areTarget;
+            areMotor.addString("still");
             fprintf(stdout,"command to are %s:\n",areMotor.toString().c_str());
             rpcMotorAre.write(areMotor,areReply);
             fprintf(stdout,"reply from are %s:\n",areReply.toString().c_str());
