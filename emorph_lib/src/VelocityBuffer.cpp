@@ -133,6 +133,11 @@ bool VelocityBuffer::isEmpty(){
 
 void VelocityBuffer::emptyBuffer(){
     size = 0;
+    // added the following line Rea 18.09.12
+    vxMin = DBL_MAX;
+    vxMax = -1;
+    vyMin = DBL_MAX;
+    vyMax = -1;
 }
 
 bool VelocityBuffer::read(ConnectionReader & connection){
@@ -156,10 +161,12 @@ bool VelocityBuffer::read(ConnectionReader & connection){
     for (int i = 0; i < size; ++i) {
 	   TSs[i] = (unsigned long) connection.expectInt();
 	}
+    /* removed Rea 18.09.12
 
     for (int i = 0; i < size; ++i) {
         rel[i] = connection.expectDouble();
     }
+    */
 
 
     vxMin = connection.expectDouble();
@@ -188,9 +195,11 @@ bool VelocityBuffer::write(ConnectionWriter & connection){
     for (int i = 0; i < size; ++i) {
 		connection.appendInt((int) TSs[i]);
 	}
-    for (int i = 0; i < size; ++i) {
+    /*Rea 18.09.12
+      for (int i = 0; i < size; ++i) {
         connection.appendDouble(rel[i]);
     }
+    */
 
     connection.appendDouble(vxMin);
     connection.appendDouble(vxMax);
