@@ -134,12 +134,12 @@ void SuperReceptiveField::run(){
 
     int eventNo = velField.getSize();
     if (eventNo > 20){
-        computeFoE();
+//        computeFoE();
 
 //        visualizeFOE();
 
-//        foeX = 64;
-//        foeY = 64;
+        foeX = 0;
+        foeY = 60;
         makeObjMap();
         visualizeObjMap();
     }
