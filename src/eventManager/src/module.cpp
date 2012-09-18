@@ -440,32 +440,29 @@ bool Manager::updateModule()
                     }
                     rpcHuman.reply(reply);
                 }break;
-                case CMD_KPUSH_LOC: {
-                    reply.addString("karma push command for traditional camera : ");
+                case CMD_KPUSH_LOC: {                    
                     fprintf(stdout," option of the command push on Blob  \n");
                     pushOnLoc();
+                    reply.addString("ack");
                     rpcHuman.reply(reply);  
                 }break;
                 case CMD_PUR_LOC: {
-                    reply.addString("karma push command for traditional camera smooth pursuit: ");
                     fprintf(stdout,"option of the command pursuit on Blob  \n");
                     pursOnLoc();
+                    reply.addString("ack");
                     rpcHuman.reply(reply);
                 }break;
                 case CMD_TOU_LOC: {
-                    reply.addString("are touch command for traditional camera : ");
                     fprintf(stdout,"option of the command pursuit on Blob  \n");
                     touchOnLoc();
+                    reply.addString("ack");
                     rpcHuman.reply(reply);
                 }break;
                 defaut: {
                     }
                 }        
             }
-
     }
-    
-
 
     Bottle result;
     result.clear();
