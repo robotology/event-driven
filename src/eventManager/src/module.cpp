@@ -38,7 +38,7 @@ using namespace yarp::math;
 #define CMD_OFF                 VOCAB3('o','f','f')
 #define CMD_TAP                 VOCAB3('t','a','p')
 #define CMD_KPUSH_TRAD          VOCAB3('k','p','t')           // push in karmaMotor retina position on the traditionalCameras
-#define CMD_KPUSH_LOC           VOCAB3('k','p','l') 
+#define CMD_KTAP_LOC           VOCAB3('k','t','l') 
 #define CMD_KPUSH_EVENT         VOCAB3('k','p','e')           // push in karmaMotor retina position on the eventCameras
 #define CMD_RES                 VOCAB3('r','e','s') 
 #define CMD_SUS                 VOCAB3('s','u','s')
@@ -313,7 +313,7 @@ bool Manager::updateModule()
                     reply.addString("push (u v)");
                     reply.addString("kpt  (u v) - karmaPush using traditional camera");
                     reply.addString("smt  (u v) - karmaPush using traditional camera + smoothPursuit");
-                    reply.addString("kpl   - karmaPush using traditional camera and blob detector");
+                    reply.addString("ktl   - karmaPush using traditional camera and blob detector");
                     reply.addString("sml   - karmaPush using traditional camera and blob detector + smoothPursuit");
                     reply.addString("tl    - areTouch  using traditional camera and bloc detector ");
                     reply.addString("pdvs (u v) - arePointing using dvs camera ");
@@ -388,7 +388,7 @@ bool Manager::updateModule()
                     rpcHuman.reply(reply);
                 }break;
                 case CMD_TOUCH_DVS: {
-                    reply.addString("are pointing for dvsv camera: ");
+                    
                     if(cmd.size() > 1 ){
                         Bottle* opt = cmd.get(1).asList();
                         fprintf(stdout,"option of the command push %s \n", opt->toString().c_str());
@@ -396,25 +396,29 @@ bool Manager::updateModule()
                         int v = opt->get(1).asInt();
                         
                         touchDVS(u,v);
-                        
+                        reply.addString("ack");
                     }
                     else {
-                        reply.addString("UNSUCCESS, number of options insufficient \n");
+                        reply.addString("nack");
                     }
                     rpcHuman.reply(reply);
                 }break;
-                case CMD_LEARN_DVS: {
-                    reply.addString("are pointing for dvsv camera: ");
+                case CMD_LEARN_DVS: {                    
                     if(cmd.size() > 1 ){
                         /*Bottle* opt = cmd.get(1).asList();
                         fprintf(stdout,"option of the command push %s \n", opt->toString().c_str());
                         int u = opt->get(0).asInt();
                         int v = opt->get(1).asInt();*/
 
-                        int u  = cmd.get(1).asInt();
-                        int v  = cmd.get(2).asInt();
-                        learnDVS(u,v);
-                        reply.addString("ack");
+                        int u   = cmd.get(1).asInt();
+                        int v   = cmd.get(2).asInt();
+                        int res = learnDVS(u,v);
+                        if (res == 0){
+                            reply.addString("ack");
+                        }
+                        else {
+                            reply.addString("nack");
+                        }
                     }
                     else {
                         reply.addString("nack");
@@ -440,22 +444,35 @@ bool Manager::updateModule()
                     }
                     rpcHuman.reply(reply);
                 }break;
-                case CMD_KPUSH_LOC: {                    
+                case CMD_KTAP_LOC: {                    
                     fprintf(stdout," option of the command push on Blob  \n");
-                    pushOnLoc();
-                    reply.addString("ack");
+                    int res = pushOnLoc();
+                    if(res == 0) {
+                        reply.addString("ack");
+                    }
+                    else {
+                        reply.addString("nack");
+                    }
                     rpcHuman.reply(reply);  
                 }break;
                 case CMD_PUR_LOC: {
                     fprintf(stdout,"option of the command pursuit on Blob  \n");
-                    pursOnLoc();
-                    reply.addString("ack");
+                    int res = pursOnLoc();
+                    if(res == 0) {
+                        reply.addString("ack");
+                    }
+                    else {
+                        reply.addString("nack");
+                    }
                     rpcHuman.reply(reply);
                 }break;
                 case CMD_TOU_LOC: {
-                    fprintf(stdout,"option of the command pursuit on Blob  \n");
-                    touchOnLoc();
-                    reply.addString("ack");
+                    fprintf(stdout,"option of the command touch on Blob  \n");
+                    int result = touchOnLoc();
+                    if(result != 0)
+                        reply.addString("ack");
+                    else 
+                        reply.addString("nack");
                     rpcHuman.reply(reply);
                 }break;
                 defaut: {
@@ -617,9 +634,9 @@ void Manager::pushTraditional(int u, int v, double& x, double& y, double& z){
 
 /****************************************************************************************************************/
 
-void Manager::learnDVS(int u, int v){
+int Manager::learnDVS(int u, int v){
     fprintf(stdout, "push retina position of traditional cameras %d %d \n", u, v);
-    if(rpcTransTrad.getOutputCount()) {
+    if(rpcTransEvent.getOutputCount()) {
         Bottle cmdPushTrad, replyPushTrad;
         cmdPushTrad.clear(); replyPushTrad.clear();
         fprintf(stdout,"getting the 3d position ... \n");
@@ -629,15 +646,15 @@ void Manager::learnDVS(int u, int v){
         cmdPushTrad.addInt(u);
         cmdPushTrad.addInt(v);
         cmdPushTrad.addString("left");
-        rpcTransTrad.write(cmdPushTrad,replyPushTrad);
+        rpcTransEvent.write(cmdPushTrad,replyPushTrad);
         fprintf(stdout,"reply:%s \n", replyPushTrad.toString().c_str());
         double x = replyPushTrad.get(0).asDouble();
         double y = replyPushTrad.get(1).asDouble();
         double z = replyPushTrad.get(2).asDouble();
 
-        x = -0.35;
-        y = 0.05;
-        z = -0.12;
+        //x = -0.35;
+        //y = 0.05;
+        //z = -0.12;
         
         
         if(rpcMotorKarma.getOutputCount() && (rpcMotorAre.getOutputCount()) ) {
@@ -668,10 +685,11 @@ void Manager::learnDVS(int u, int v){
             }
             else {
                 fprintf(stdout, "connection to the grabber missing \n");
+                return 1;
             }
             
             // sending push command to the karma
-            Time::delay(5.0);
+            Time::delay(1.0);
             double actionOrient = 0.0;
             double offset       = 0.1;
             fprintf(stdout,"Will now send to karmaMotor:\n");
@@ -688,7 +706,7 @@ void Manager::learnDVS(int u, int v){
             fprintf(stdout,"action is %s:\n",karmaReply.toString().c_str());
             
             //temporal delay
-            Time::delay(3.0);
+            Time::delay(1.0);
             
             /* 
             // moving the arm far from the table
@@ -714,17 +732,20 @@ void Manager::learnDVS(int u, int v){
             }
             else {
                 fprintf(stdout, "connection to the grabber missing \n");
+                return 1;
             }
-            
+            return 0;
             //goHome();
         }
         else {
             fprintf(stdout,"Either the ActionRenderingEngine or the KARMA motor missing in connections \n");
+            return 1;
         }
         
     }
     else {
         fprintf(stdout, "interface with traslator traditional camera not active \n");
+        return 1;
     }
 }
 
@@ -1124,10 +1145,12 @@ int Manager::pushOnLoc()
         pointLocation = getBlobCOG(blobs,0);
         fprintf (stdout,"point is %d %d \n", pointLocation.x, pointLocation.y);
         pointGood = true;
+        
     }else
     {
         fprintf (stdout,"I see more than two blobs\n");
         pointGood = false;
+        return 1;
     }
     
     if (pointGood)
@@ -1173,16 +1196,17 @@ int Manager::pushOnLoc()
         }
         else {
             fprintf(stdout,"no connection to the translator; cannot continue \n");
-            return 0;
+            return 1;
         }
 
         printf("translated into the position %f %f %f \n", x, y, z);
         // check on the position 
-        if(z < 0.0) {
-            z = 0;
-        }
+        if((x > -0.25) || (x < -0.40)) { retunr 1; }
+        if((y < -0.35) || (y > 0.35))  { retunr 1; }
+        if((z > 0.25)  || (z < -0.20)) { retunr 1; }
 
         if(rpcMotorKarma.getOutputCount() && (rpcMotorAre.getOutputCount()) ) {
+            /*
             // sending fix command to the actionRenderingEngine "look (x y z) fixate"
             Bottle areTarget; areTarget.clear();
             Bottle areMotor,areReply;
@@ -1196,6 +1220,7 @@ int Manager::pushOnLoc()
             areMotor.addString("fixate");
             rpcMotorAre.write(areMotor,areReply);
             fprintf(stdout,"fixation is %s:\n",areReply.toString().c_str());
+            */
             
             // sending command to dump event
             
@@ -1208,10 +1233,11 @@ int Manager::pushOnLoc()
             }
             else {
                 fprintf(stdout, "connection to the grabber missing \n");
+                return 1;
             }
             
             // sending push command to the karma
-            Time::delay(5.0);
+            Time::delay(1.0);
             double actionOrient = 0.0;
             double offset       = 0.1;
             fprintf(stdout,"Will now send to karmaMotor:\n");
@@ -1229,7 +1255,7 @@ int Manager::pushOnLoc()
             fprintf(stdout,"action is %s:\n",karmaReply.toString().c_str());
             
             //temporal delay
-            Time::delay(3.0);
+            Time::delay(1.0);
             
             /* 
             // moving the arm far from the table
@@ -1255,12 +1281,14 @@ int Manager::pushOnLoc()
             }
             else {
                 fprintf(stdout, "connection to the grabber missing \n");
+                return 1;
             }
             
             //goHome();
         }
         else {
             fprintf(stdout,"Either the ActionRenderingEngine or the KARMA motor missing in connections \n");
+            return 1;
         }
 
     }
@@ -1294,6 +1322,7 @@ int Manager::pursOnLoc()
     {
         fprintf (stdout,"I see more than two blobs\n");
         pointGood = false;
+        return 1;
     }
     
     if (pointGood)
@@ -1339,18 +1368,20 @@ int Manager::pursOnLoc()
         }
         else {
             fprintf(stdout,"no connection to the translator; cannot continue \n");
-            return 0;
+            return 1;
         }
          
 
         printf("translated into the position %f %f %f \n", x, y, z);
         // check on the position 
-        if(z < 0.0) {
-            z = 0;
-        }
+        if((x > -0.25) || (x < -0.40)) { retunr 1; }
+        if((y < -0.35) || (y > 0.35))  { retunr 1; }
+        if((z > 0.25)  || (z < -0.20)) { retunr 1; }
 
         if(rpcMotorKarma.getOutputCount() && (rpcMotorAre.getOutputCount()) ) {
             // sending fix command to the actionRenderingEngine "look (x y z) fixate"
+
+            /*
             Bottle areTarget; areTarget.clear();
             Bottle areMotor,areReply;
             areMotor.clear(); areReply.clear();
@@ -1362,6 +1393,7 @@ int Manager::pursOnLoc()
             areMotor.addString("fixate");
             rpcMotorAre.write(areMotor,areReply);
             fprintf(stdout,"fixation is %s:\n",areReply.toString().c_str());
+            */
             
             // sending command to dump event
             
@@ -1374,10 +1406,11 @@ int Manager::pursOnLoc()
             }
             else {
                 fprintf(stdout, "connection to the grabber missing \n");
+                return 1;
             }
             
             // sending push command to the karma
-            Time::delay(5.0);
+            Time::delay(1.0);
             double actionOrient = 0.0;
             double offset       = 0.1;
             fprintf(stdout,"Will now send to karmaMotor:\n");
@@ -1395,7 +1428,7 @@ int Manager::pursOnLoc()
             fprintf(stdout,"action is %s:\n",karmaReply.toString().c_str());
             
             //temporal delay
-            Time::delay(3.0);
+            Time::delay(1.0);
             
             /* 
             // moving the arm far from the table
@@ -1421,12 +1454,14 @@ int Manager::pursOnLoc()
             }
             else {
                 fprintf(stdout, "connection to the grabber missing \n");
+                return 1;
             }
             
             //goHome();
         }
         else {
             fprintf(stdout,"Either the ActionRenderingEngine or the KARMA motor missing in connections \n");
+            return 1;
         }
 
     }
@@ -1446,8 +1481,10 @@ int Manager::touchOnLoc()
     blobs=getBlobs();
     // failure handling
 
-    if (blobs.size()==0)
+    if (blobs.size()==0){
+        printf("no blob detected \n");
         return RET_INVALID;
+    }
     
     if (blobs.size()<2)
     {
@@ -1496,22 +1533,18 @@ int Manager::touchOnLoc()
         }
         else {
             fprintf(stdout, "no translator active; cannot continue \n");
-            return 0;
+            return RET_INVALID;
         }
         
         printf("translated into the position %f %f %f \n", x, y, z);
+         // check on the position 
+        if((x > -0.25) || (x < -0.40)) { retunr 1; }
+        if((y < -0.35) || (y > 0.35))  { retunr 1; }
+        if((z > 0.25)  || (z < -0.20)) { retunr 1; }
 
-        //check on position 
-        if( x > -0.1) {
-            fprintf(stdout, "x > -0.1 \n");
-            return 0;
-        }
-        if( z < -0.2) {
-            fprintf(stdout, "z < -0.2 \n");
-            return 0;
-        }
-
+  
         if(rpcMotorAre.getOutputCount() ) {
+            /*
             // sending fix command to the actionRenderingEngine "look (x y z) fixate"
             Bottle areTarget; areTarget.clear();
             Bottle areMotor,areReply;
@@ -1525,7 +1558,7 @@ int Manager::touchOnLoc()
             areMotor.addString("fixate");
             rpcMotorAre.write(areMotor,areReply);
             fprintf(stdout,"fixation is %s:\n",areReply.toString().c_str());
-            
+            */
            
             
             // sending command to dump event
@@ -1546,12 +1579,14 @@ int Manager::touchOnLoc()
             double actionOrient = 0.0;
             double offset       = 0.1;
             fprintf(stdout,"Will now send to areMotor:\n");
+            Bottle areMotor, areReply, areTarget;
             areMotor.clear(); areReply.clear(); areTarget.clear();
             areMotor.addString("touch");
             areTarget.addDouble(x  - leftDVS_kine[0] + leftWINGS_kine[0]);
             areTarget.addDouble(y  - leftDVS_kine[1] + leftWINGS_kine[1]);
             areTarget.addDouble(z  - leftDVS_kine[2] + leftWINGS_kine[2]);
             areMotor.addList() = areTarget;
+            areMotor.addString("still");
             fprintf(stdout,"%s\n",areMotor.toString().c_str());
             rpcMotorAre.write(areMotor, areReply);
             fprintf(stdout,"action is %s:\n",areReply.toString().c_str());

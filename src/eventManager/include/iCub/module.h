@@ -117,7 +117,7 @@ protected:
      *      @param u position on the image plane of traditional cameras
      *      @param v position on the image plane of traditional cameras
      */
-    void                        learnDVS(int u, int v);
+    int                        learnDVS(int u, int v);
     /**
      *      @brief  : push an object detected with traditional cameras enabling smooth pursuit right after
      *      @return : result of the action
