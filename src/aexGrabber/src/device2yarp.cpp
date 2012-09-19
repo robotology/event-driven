@@ -1018,7 +1018,7 @@ void  device2yarp::run() {
     
         if (save) {    
             fprintf(fbottle,"dim %d \n", bottle2send->size());
-            printf("dim %d \n", bottle2send->size());
+            //printf("dim %d \n", bottle2send->size());
             for(int i = 0; i < bottle2send->size(); i++) {
                 fprintf(fbottle,"%08X \n", bottle2send->get(i).asInt());
             }
