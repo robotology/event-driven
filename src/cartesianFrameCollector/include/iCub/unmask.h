@@ -48,6 +48,7 @@ private:
     int nb_trame;
     int count;                            // counter of the unmasked events
     int countCLE;                         // counter CLE
+    int countCLERight;
     int sz;
     int* buffer;                          // buffer representing the event in image plane (left)
     unsigned long* timeBuffer;            // buffer contains the timestamp of the particular location (left)
@@ -98,7 +99,12 @@ private:
     reprCLE *bufferCLELeft;          // pointer to CLE to represent
     reprHGE *bufferHGELeft;          // pointer to HGE to represent
     reprCLE *_bufferCLELeft;         // temporarely pointer to the buffer
-    reprHGE *_bufferHGELeft;         // temporarely pointer to the buffer
+    reprHGE *_bufferHGELeft;         // temporarely pointer to the buffe
+
+    reprCLE *bufferCLERight;          // pointer to CLE to represent
+    reprHGE *bufferHGERight;          // pointer to HGE to represent
+    reprCLE *_bufferCLERight;         // temporarely pointer to the buffer
+    reprHGE *_bufferHGERight;         // temporarely pointer to the buffe
         
     yarp::os::Semaphore countEventLocker;
     yarp::os::Semaphore countEventLocker2;
@@ -313,7 +319,29 @@ public:
     /**
      * @brief function that returns the pointer to the HGE Left
      */
-    reprCLE* getCLELeft() {return _bufferCLELeft;};
+    reprCLE* getCLELeft() {
+        printf("countLeft %d \n",countCLE);
+        if(countCLE == 0) {
+            return 0;
+        }
+        _bufferCLELeft--;
+        printf("getCLELEFT: %d \n", _bufferCLELeft->xCog);
+        
+        return _bufferCLELeft;
+
+    };
+    
+        /**
+     * @brief function that returns the pointer to the HGE Left
+     */
+    reprCLE* getCLERight() {
+        if(countCLERight == 0) {
+            return 0;
+        }
+        _bufferCLERight--;
+        
+        return _bufferCLERight;
+    };
 
     /**
      * @brief function that returns the pointer to the HGE Left
@@ -326,9 +354,14 @@ public:
     void setHGELeft() { _bufferHGELeft = bufferHGELeft; };
     
     /**
-     * @brief function that sets the pointer to the HGE Left
+     * @brief function that sets the pointer to the CLE Left
      */
     void setCLELeft() { _bufferCLELeft = bufferCLELeft;countCLE =0 ; };
+
+    /**
+     * @brief function that sets the pointer to the CLE right 
+     */
+    void setCLERight() { _bufferCLERight  = bufferCLERight ; countCLERight =0 ; };
     
     /**
      * @brief set the pointer to the original value
@@ -339,6 +372,11 @@ public:
      * @brief set the pointer to the original value
      */
     void setOrigCLELeft(reprCLE* b) {_bufferCLELeft = bufferCLELeft = b;};
+
+    /**
+     * @brief set the pointer to the original value
+     */
+    void setOrigCLERight(reprCLE* b) {_bufferCLERight = bufferCLERight = b;};
 
     /**
      * add the cluster event and all its features

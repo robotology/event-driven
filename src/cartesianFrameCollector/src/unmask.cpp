@@ -314,16 +314,35 @@ void unmask::addCLE(eEvent* qevt) {
     else if(qevt->getType()=="CLE-F2") {
         ClusterEventFeatures2* ptr=dynamic_cast<ClusterEventFeatures2*>(qevt);
         mutexCLELeft.wait();
-        _bufferCLELeft->xCog  = ptr->getXCog();
-        _bufferCLELeft->yCog  = ptr->getYCog();
-        _bufferCLELeft->xSize = ptr->getXSize();
-        _bufferCLELeft->ySize = ptr->getYSize();
-        _bufferCLELeft->numAE = ptr->getNumAE();
-        if (countCLE < 10) {
-            _bufferCLELeft++;
-            countCLE++;
+        printf("received CLE_F2 from %d \n",ptr->getChannel() );
+        if(ptr->getChannel() == 0) {
+            
+            _bufferCLELeft->xCog  = ptr->getXCog();
+            _bufferCLELeft->yCog  = ptr->getYCog();
+            _bufferCLELeft->xSize = ptr->getXSize();
+            _bufferCLELeft->ySize = ptr->getYSize();
+            _bufferCLELeft->numAE = ptr->getNumAE();
+            if (countCLE < 10) {
+                _bufferCLELeft++;
+                countCLE++;
+            }
         }
         mutexCLELeft.post();
+         
+        if(ptr->getChannel() == 1) {
+            
+            _bufferCLERight->xCog  = ptr->getXCog();
+            _bufferCLERight->yCog  = ptr->getYCog();
+            _bufferCLERight->xSize = ptr->getXSize();
+            _bufferCLERight->ySize = ptr->getYSize();
+            _bufferCLERight->numAE = ptr->getNumAE();
+            if (countCLERight < 10) {
+                _bufferCLERight++;
+                countCLERight++;
+            } 
+            
+        }
+       
     }
     
     else if(qevt->getType()=="CLE-F3") {
@@ -470,7 +489,9 @@ void unmask::unmaskData(Bottle* packets) {
                         
                     }
                     else if(q[evt]->getType()=="CLE-F2") {
-                        
+                        printf("CLE_F2  \n");
+                        printf("CLE_F2  \n");
+                        printf("CLE_F2  \n");
 
                         ClusterEvent* ptr=dynamic_cast<ClusterEvent*>(q[evt]);
 
@@ -478,6 +499,8 @@ void unmask::unmaskData(Bottle* packets) {
                         //printf("received CLUSTER EVENT type: %s \n", ptr->getType());
                         //ptr->getXCog();
                         //ptr->getYCog();
+                        int channel = ptr->getChannel();
+                        printf("channed of the CLUSTER EVENT %d \n", channel);
                         
                         addCLE(q[evt]);
                     }
@@ -500,7 +523,8 @@ void unmask::unmaskData(Bottle* packets) {
             } //end of for   
         } // end eEvent::decode
         else {
-            printf("ERROR in DECODING  \n");
+            
+            //printf("ERROR in DECODING  \n");
         }
         
     

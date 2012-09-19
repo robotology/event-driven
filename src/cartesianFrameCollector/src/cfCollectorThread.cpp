@@ -104,13 +104,16 @@ bool cfCollectorThread::threadInit() {
     pThread->start();
 
     // allocating memory for up to 10 CLE and 10 HGE
+    printf("allocating memory for up to 10 CLE and 10 HGE \n");
     origHGE = (reprHGE*) malloc(10 * sizeof(reprHGE));
     origCLE = (reprCLE*) malloc(10 * sizeof(reprCLE));
+    origCLERight = (reprCLE*) malloc(10 * sizeof(reprCLE));
 
     unmask_events = new unmask();
     unmask_events->setRetinalSize(retinalSize);
     unmask_events->setResponseGradient(responseGradient);
     unmask_events->setOrigCLELeft(origCLE);
+    unmask_events->setOrigCLERight(origCLERight);
     unmask_events->setOrigHGELeft(origHGE);
     unmask_events->setASVMode(asvFlag);
     unmask_events->setDVSMode(dvsFlag);
@@ -385,6 +388,7 @@ void cfCollectorThread::addHGE(ImageOf<yarp::sig::PixelRgb>* image, unsigned lon
         unmask_events->setHGELeft();
         //cvCircle(image->getIplImage(), cvPoint(100,100),5, cvScalar(255,0,0), 1 );
     }
+    
 }
 
 void cfCollectorThread::addCLE(ImageOf<yarp::sig::PixelRgb>* image, unsigned long minCount,unsigned long maxCount, bool camera) {
@@ -392,18 +396,56 @@ void cfCollectorThread::addCLE(ImageOf<yarp::sig::PixelRgb>* image, unsigned lon
         //cvCircle(image->getIplImage(), cvPoint(100,100),5, cvScalar(0,255,0), 1 );
         reprCLE *tmpCLE;
         tmpCLE = unmask_events->getCLELeft();
-        //printf("%08x origCLE -> %08x tmpCLE    \n", origCLE, tmpCLE);
-        while(tmpCLE != origCLE) {            
-            cvRectangle(image->getIplImage(), cvPoint(tmpCLE->xCog - tmpCLE->xSize >> 1,tmpCLE->yCog - tmpCLE->ySize >> 1 ),cvPoint(tmpCLE->xCog + tmpCLE->xSize >> 1,tmpCLE->yCog + tmpCLE->ySize >> 1), cvScalar(0,0,255), 3);
+        if (tmpCLE == 0) return;
+        // printf("%08x origCLE -> %08x tmpCLE    \n", origCLE, tmpCLE);
+        
+        while(tmpCLE != origCLE) {
+            printf("left > x %d y %d \n", tmpCLE->xCog, tmpCLE->yCog);
+
+            cvRectangle(image->getIplImage(), cvPoint(tmpCLE->xCog - 2,tmpCLE->yCog - 2 ),cvPoint(tmpCLE->xCog + 2,tmpCLE->yCog + 2), cvScalar(0,0,255), 3);
             //cvCircle(image->getIplImage(), cvPoint(tmpCLE->x,tmpCLE->y),5, cvScalar(0,0,255), 1 );
 
-            CvFont font;
-            cvInitFont(&font, CV_FONT_HERSHEY_SIMPLEX, 0.2f, 0.2f, 0, 0.07, CV_AA);
-            cvPutText(image->getIplImage(), "Hello World!", cvPoint(tmpCLE->xCog,tmpCLE->yCog ), &font, cvScalar(0, 0, 255, 0));
+            //CvFont font;
+            //cvInitFont(&font, CV_FONT_HERSHEY_SIMPLEX, 0.2f, 0.2f, 0, 0.07, CV_AA);
+            //cvPutText(image->getIplImage(), "Hello World!", cvPoint(tmpCLE->xCog,tmpCLE->yCog ), &font, cvScalar(0, 0, 255, 0));
             
             tmpCLE--;
         }
+        // representation of the first event
+        printf("left > x %d y %d \n", tmpCLE->xCog, tmpCLE->yCog);       
+        cvRectangle(image->getIplImage(), cvPoint(tmpCLE->xCog - (tmpCLE->xSize >> 1),tmpCLE->yCog - (tmpCLE->ySize >> 1) ),cvPoint(tmpCLE->xCog + (tmpCLE->xSize >> 1),tmpCLE->yCog + (tmpCLE->ySize >> 1)), cvScalar(0,0,255), 1);
+        //cvRectangle(image->getIplImage(), cvPoint(tmpCLE->xCog - 2,tmpCLE->yCog - 2) ,cvPoint(tmpCLE->xCog + 2,tmpCLE->yCog + 2), cvScalar(0,0,255), 1);
+        
+        
         unmask_events->setCLELeft();
+    }
+    else {
+        //printf("x %d y %d \n", tmpCLE->xCog, tmpCLE->yCog);
+        //tmpCLE->xCog = 10;
+        //tmpCLE->yCog = 10;
+        //printf("cfCollectorThread::addCLE \n");
+        //cvCircle(image->getIplImage(), cvPoint(100,100),5, cvScalar(0,255,0), 1 );
+        reprCLE *tmpCLE;
+        tmpCLE = unmask_events->getCLERight();
+        if (tmpCLE == 0) return;
+        
+        //printf("%08x origCLERight -> %08x tmpCLE    \n", origCLERight, tmpCLE);
+        while(tmpCLE != origCLERight) {
+            printf("right > x %d y %d \n", tmpCLE->xCog, tmpCLE->yCog);
+            cvRectangle(image->getIplImage(), cvPoint(tmpCLE->xCog - 2,tmpCLE->yCog - 2 ),cvPoint(tmpCLE->xCog + 2,tmpCLE->yCog + 2), cvScalar(0,0,255), 3);
+            //cvCircle(image->getIplImage(), cvPoint(tmpCLE->x,tmpCLE->y),5, cvScalar(0,0,255), 1 );
+
+            //CvFont font;
+            //cvInitFont(&font, CV_FONT_HERSHEY_SIMPLEX, 0.2f, 0.2f, 0, 0.07, CV_AA);
+            //cvPutText(image->getIplImage(), "Hello World!", cvPoint(tmpCLE->xCog,tmpCLE->yCog ), &font, cvScalar(0, 0, 255, 0));
+            
+            tmpCLE--;
+        }
+        // representation of the first event
+        printf("right > x %d y %d \n", tmpCLE->xCog, tmpCLE->yCog);       
+        cvRectangle(image->getIplImage(), cvPoint(tmpCLE->xCog - (tmpCLE->xSize >> 1),tmpCLE->yCog - (tmpCLE->ySize >> 1) ),cvPoint(tmpCLE->xCog + (tmpCLE->xSize >> 1),tmpCLE->yCog + (tmpCLE->ySize >> 1)), cvScalar(0,0,255), 1);
+        unmask_events->setCLERight();
+        
     }
 }
 
