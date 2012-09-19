@@ -19,11 +19,13 @@
 #ifndef VELOCITYBUFFER_H_
 #define VELOCITYBUFFER_H_
 
-#define BUFFER_LENGTH 500
+#define BUFFER_LENGTH 5000
 
 #include <float.h>
 #include <cmath>
 #include <iostream>
+
+#include <vector>
 
 #include <yarp/os/Portable.h>
 #include <yarp/os/Bottle.h>
@@ -33,7 +35,7 @@
 using namespace yarp::os;
 
 class VelocityBuffer : public yarp::os::Portable{
-    short size;
+    int size;
     double vxMin;
     double vxMax;
     double vyMin;
@@ -42,18 +44,22 @@ class VelocityBuffer : public yarp::os::Portable{
     short Ys[BUFFER_LENGTH];
     double Vxs[BUFFER_LENGTH];
     double Vys[BUFFER_LENGTH];
-    double rel[BUFFER_LENGTH];
     unsigned long TSs [BUFFER_LENGTH];
+    unsigned long bufferingTime;
+
+    void initialize();
+
 public:
 
     VelocityBuffer();
-    VelocityBuffer(const VelocityBuffer & src);
+    VelocityBuffer(unsigned long timeInt );
 
     virtual ~VelocityBuffer();
     virtual bool read(ConnectionReader &);
     virtual bool write(ConnectionWriter &);
 
     void setData(const VelocityBuffer &src);
+    bool addData(const VelocityBuffer &data);
     bool addData(short, short, double, double,  unsigned long , double);
     bool addDataCheckFull(short, short, double, double, unsigned long, double );
     bool isFull();
@@ -61,12 +67,12 @@ public:
     void emptyBuffer();
 
     inline short getSize(){return size;};
-    inline short getX(int idx){return *(Xs + idx)/*Xs[idx]*/;};
-    inline short getY(int idx){return *(Ys + idx) /*Ys[idx]*/;};
-    inline double getVx(int idx){return *(Vxs + idx )/*Vxs[idx]*/;};
-    inline double getVy(int idx){return *(Vys + idx ) /*Vys[idx]*/;};
-    inline unsigned long getTs(int idx){return *(TSs + idx ) /*TSs[idx]*/;};
-    inline double getRel(int idx){return *(rel + idx ) /*rel[idx]*/;};
+    inline short getX(int idx){return Xs[idx];};
+    inline short getY(int idx){return Ys[idx];};
+    inline double getVx(int idx){return Vxs[idx];};
+    inline double getVy(int idx){return Vys[idx];};
+    inline unsigned long getTs(int idx){return TSs[idx];};
+    inline double getRel(int idx){return 1;};
 
     double getVxMin();
     double getVxMax();
@@ -77,8 +83,6 @@ public:
     void setVy(int idx, double vy );
     void setVxMax(double v){vxMax = v;};
     void setVyMax(double v){vyMax = v;};
-
-    void operator= (const VelocityBuffer & src);
 };
 
 
