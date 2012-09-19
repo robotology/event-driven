@@ -257,7 +257,7 @@ void obstacleDetectorThread::draw_comparison()
 
 	float r_rg  = float(r_count)/float(rg_count);
 	float r_rgy =  float(r_count)/float(rgy_count);
-	printf ("r:%4d  g:%4d  y:%4d   r/rg:%4.1f  r/rgy:%4.1f\n", r_count, g_count, y_count, r_rg, r_rgy);
+	printf ("r:%4d  g:%4d  y:%4d   r/rg:%4.1f  r/rgy:%4.1f", r_count, g_count, y_count, r_rg, r_rgy);
 	
 	if (r_rgy>0.5 && rg_count>200)
 		detection_value = 1;
@@ -272,6 +272,7 @@ void obstacleDetectorThread::draw_comparison()
 	cvReleaseImage(&Ig);
 	cvReleaseImage(&Ib);
 	cvReleaseImage(&Ia);
+	cvReleaseImage(&dest);
 }
 
 void obstacleDetectorThread::used_simulated_measured_optical_flow()
