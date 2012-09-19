@@ -161,7 +161,9 @@ void obstacleDetectorThread::draw_comparison()
 					else                  {r = 200; b= 0; g =200; }*/
 					//printf ("%f\n",mag_model);
 					if (fabs(mag_measured/mag_model)>0.010)
-						printf ("%f\n",fabs(mag_measured/mag_model));
+					{
+					//	printf ("%f\n",fabs(mag_measured/mag_model));
+					}
 				}
 				else
 				{
@@ -186,13 +188,39 @@ void obstacleDetectorThread::draw_comparison()
 	cvCopy(dest,ipl);
 	//cvCopyImage(dest,ipl);
 
-	//remove isolated reds?
-	/*int vals[] = {0,0,0,0,1,0,0,0,0}; 
-	IplConvKernel* kern = cvCreateStructuringElementEx(3, 3, 1, 1, CV_SHAPE_CUSTOM , vals);
+	//this block remove isolated red pixels
+	CvSize sz = cvGetSize(ipl);
+	IplImage *Ir  = cvCreateImage( sz, IPL_DEPTH_8U, 1 );
+	IplImage *Ir2 = cvCreateImage( sz, IPL_DEPTH_8U, 1 );
+	IplImage *Ig  = cvCreateImage( sz, IPL_DEPTH_8U, 1 );
+	IplImage *Ib  = cvCreateImage( sz, IPL_DEPTH_8U, 1 );
+	IplImage *Ia = cvCreateImage( sz, IPL_DEPTH_8U, 1 );
+	cvSplit(ipl,Ir,Ig,Ib,0 );
 
-	cvErode(ipl_r,dest_r,kern);
-	cvMerge(
-	cvCopy(dest,ipl);*/
+	for (int y=1; y<Ir->height-1; y++)
+    {
+		for(int x=1; x<Ir->width-1; x++)
+		{
+			uchar* p1 =(uchar*) Ir->imageData + y*Ir->widthStep;
+			uchar* p2 =(uchar*) Ir2->imageData + y*Ir2->widthStep;
+			if (p1[x] == 200 && p1[x+1] == 0
+							 && p1[x-1] == 0
+				             && p1[x-Ir->widthStep] == 0 
+							 && p1[x+Ir->widthStep] == 0) 
+				p2[x]=0;
+			else
+				p2[x]=p1[x];
+		}
+	}
+	/*
+	int vals[] = {0,0,0,0,1,0,0,0,0}; 
+	IplConvKernel* kern = cvCreateStructuringElementEx(3, 3, 1, 1, CV_SHAPE_CUSTOM , vals);
+	//cvErode(Ir,Ir2,kern);
+	//cvDilate(Ir,Ir2,kern);
+	cvSmooth(Ir, Ir2, CV_MEDIAN);
+	//cvMerge(Ir2,Ig,Ib,0,dest );*/
+	cvMerge(Ir2,Ig,Ib,0,dest );
+	cvCopy(dest,ipl);
 
 	int r_count = 0;
 	int g_count = 0;
@@ -230,9 +258,20 @@ void obstacleDetectorThread::draw_comparison()
 	float r_rg  = float(r_count)/float(rg_count);
 	float r_rgy =  float(r_count)/float(rgy_count);
 	printf ("r:%4d  g:%4d  y:%4d   r/rg:%4.1f  r/rgy:%4.1f\n", r_count, g_count, y_count, r_rg, r_rgy);
-	detection_value = r_rgy;
+	
+	if (r_rgy>0.5 && rg_count>200)
+		detection_value = 1;
+	else
+		detection_value = 0;
 
+	if (detection_value >0.99) printf ("***********************");
+	printf ("\n");
 
+	cvReleaseImage(&Ir);
+	cvReleaseImage(&Ir2);
+	cvReleaseImage(&Ig);
+	cvReleaseImage(&Ib);
+	cvReleaseImage(&Ia);
 }
 
 void obstacleDetectorThread::used_simulated_measured_optical_flow()
