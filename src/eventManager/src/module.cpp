@@ -1201,9 +1201,9 @@ int Manager::pushOnLoc()
 
         printf("translated into the position %f %f %f \n", x, y, z);
         // check on the position 
-        if((x > -0.25) || (x < -0.40)) { retunr 1; }
-        if((y < -0.35) || (y > 0.35))  { retunr 1; }
-        if((z > 0.25)  || (z < -0.20)) { retunr 1; }
+        if((x > -0.25) || (x < -0.40)) { return 1; }
+        if((y < -0.35) || (y > 0.35))  { return 1; }
+        if((z > 0.25)  || (z < -0.20)) { return 1; }
 
         if(rpcMotorKarma.getOutputCount() && (rpcMotorAre.getOutputCount()) ) {
             /*
@@ -1374,9 +1374,9 @@ int Manager::pursOnLoc()
 
         printf("translated into the position %f %f %f \n", x, y, z);
         // check on the position 
-        if((x > -0.25) || (x < -0.40)) { retunr 1; }
-        if((y < -0.35) || (y > 0.35))  { retunr 1; }
-        if((z > 0.25)  || (z < -0.20)) { retunr 1; }
+        if((x > -0.25) || (x < -0.40)) { return 1; }
+        if((y < -0.35) || (y > 0.35))  { return 1; }
+        if((z > 0.25)  || (z < -0.20)) { return 1; }
 
         if(rpcMotorKarma.getOutputCount() && (rpcMotorAre.getOutputCount()) ) {
             // sending fix command to the actionRenderingEngine "look (x y z) fixate"
@@ -1538,9 +1538,9 @@ int Manager::touchOnLoc()
         
         printf("translated into the position %f %f %f \n", x, y, z);
          // check on the position 
-        if((x > -0.25) || (x < -0.40)) { retunr 1; }
-        if((y < -0.35) || (y > 0.35))  { retunr 1; }
-        if((z > 0.25)  || (z < -0.20)) { retunr 1; }
+        if((x > -0.25) || (x < -0.40)) { return 1; }
+        if((y < -0.35) || (y > 0.35))  { return 1; }
+        if((z > 0.25)  || (z < -0.20)) { return 1; }
 
   
         if(rpcMotorAre.getOutputCount() ) {
