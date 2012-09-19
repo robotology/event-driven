@@ -45,6 +45,7 @@ using namespace yarp::math;
 #define CMD_PUR_TRAD            VOCAB3('s','m','t')
 #define CMD_PUR_LOC             VOCAB3('s','m','l')
 #define CMD_TOU                 VOCAB3('t','o','u')
+#define CMD_RES                 VOCAB3('r','e','s')
 
 
 #define CMD_TRAIN               VOCAB4('t','r','a','i')
@@ -747,7 +748,7 @@ int Manager::learnDVS(int u, int v){
                 fprintf(stdout, "connection to the grabber missing \n");
                 return 1;
             }
-            return 0;
+           
             //goHome();
         }
         else {
@@ -760,6 +761,9 @@ int Manager::learnDVS(int u, int v){
         fprintf(stdout, "interface with traslator traditional camera not active \n");
         return 1;
     }
+    
+    Time::delay(3.0);
+     return 0;
 }
 
 /****************************************************************************************************************/
@@ -1137,9 +1141,8 @@ int Manager::executeOnLoc(bool shouldTrain)
     return 0;
 }
 /****************************************************************************************************************/
-int Manager::pushOnLoc()
+int Manager::pursOnLoc()
 {
-
     fprintf(stdout, "\n\n\n****************************************************************************\n\n" );
     Bottle blobs;
     blobs.clear();
@@ -1166,7 +1169,7 @@ int Manager::pushOnLoc()
         return 1;
     }
     
-    if (pointGood)
+    if ((pointGood) && (rpcAttention.getOutputCount() ))
     {
         Bottle closestBlob;
         mutexResources.wait();
@@ -1235,8 +1238,8 @@ int Manager::pushOnLoc()
             fprintf(stdout,"fixation is %s:\n",areReply.toString().c_str());
             */
             
-            // sending command to dump event
-            
+            /*
+            // sending command to dump event            
             if(rpcGrabber.getOutputCount()){
                 Bottle grabberRequest,grabberReply;
                 grabberRequest.clear(); grabberReply.clear();
@@ -1248,6 +1251,7 @@ int Manager::pushOnLoc()
                 fprintf(stdout, "connection to the grabber missing \n");
                 return 1;
             }
+            */
             
             // sending push command to the karma
             Time::delay(1.0);
@@ -1264,7 +1268,7 @@ int Manager::pushOnLoc()
             karmaMotor.addDouble( offset );// + 0.06 );
 
             fprintf(stdout,"%s\n",karmaMotor.toString().c_str());
-            //rpcMotorKarma.write(karmaMotor, karmaReply);
+            rpcMotorKarma.write(karmaMotor, karmaReply);
             fprintf(stdout,"action is %s:\n",karmaReply.toString().c_str());
             
             //temporal delay
@@ -1285,15 +1289,14 @@ int Manager::pushOnLoc()
             */
 
             // sending command to dump event
-            if(rpcGrabber.getOutputCount()){
-                Bottle grabberRequest,grabberReply;
-                grabberRequest.clear(); grabberReply.clear();
-                grabberRequest.addVocab(CMD_DUMP);
-                grabberRequest.addVocab(CMD_OFF); 
-                rpcGrabber.write(grabberRequest,grabberReply);
+            if(rpcAttention.getOutputCount()){
+                Bottle attentionRequest,attentionReply;
+                attentionRequest.clear(); attentionReply.clear();
+                attentionRequest.addVocab(CMD_RES);
+                rpcAttention.write(attentionRequest,attentionReply);
             }
             else {
-                fprintf(stdout, "connection to the grabber missing \n");
+                fprintf(stdout, "connection to the attention missing \n");
                 return 1;
             }
             
@@ -1303,14 +1306,18 @@ int Manager::pushOnLoc()
             fprintf(stdout,"Either the ActionRenderingEngine or the KARMA motor missing in connections \n");
             return 1;
         }
-
     }
-    
+    else {
+         fprintf(stdout,"Either point not good or attention system not connected \n");
+        return 1;
+    }
+
+    Time::delay(3.0);
     return 0;
 }
 
 /****************************************************************************************************************/
-int Manager::pursOnLoc()
+int Manager::pushOnLoc()
 {
 
     fprintf(stdout, "\n\n\n****************************************************************************\n\n" );
@@ -1437,8 +1444,8 @@ int Manager::pursOnLoc()
             karmaMotor.addDouble( offset );// + 0.06 );
 
             fprintf(stdout,"%s\n",karmaMotor.toString().c_str());
-            //rpcMotorKarma.write(karmaMotor, karmaReply);
-            fprintf(stdout,"action is %s:\n",karmaReply.toString().c_str());
+            rpcMotorKarma.write(karmaMotor, karmaReply);
+            fprintf(stdout,"reply from karma is %s:\n",karmaReply.toString().c_str());
             
             //temporal delay
             Time::delay(1.0);
@@ -1470,6 +1477,8 @@ int Manager::pursOnLoc()
                 return 1;
             }
             
+            
+            
             //goHome();
         }
         else {
@@ -1478,6 +1487,8 @@ int Manager::pursOnLoc()
         }
 
     }
+
+    Time::delay(3.0);
     
     return 0;
 }
@@ -1585,6 +1596,7 @@ int Manager::touchOnLoc()
             }
             else {
                 fprintf(stdout, "connection to the grabber missing \n");
+                return 1;
             }
             
             // sending push command to the karma
@@ -1631,16 +1643,20 @@ int Manager::touchOnLoc()
             }
             else {
                 fprintf(stdout, "connection to the grabber missing \n");
+                return 1;
             }
             
             //goHome();
         }
         else {
             fprintf(stdout,"Either the ActionRenderingEngine or the KARMA motor missing in connections \n");
+            return 1;
         }
             
             
     }
+
+    Time::delay(3.0);
     return 0;
 }
 /**********************************************************/
