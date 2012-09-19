@@ -254,7 +254,7 @@ bool plotterThread::centroidCalib(ImageOf<PixelMono>* imageIn) {
     if(maxCounterWTA < counterWTA[pos]) {
         maxCounterWTA = counterWTA[pos];
         maxCalib = pos;
-        printf("%d with counts %d \n", maxCalib, maxCounterWTA);
+        //printf("%d with counts %d \n", maxCalib, maxCounterWTA);
     }
     return true;
 }
@@ -296,13 +296,13 @@ void plotterThread::run() {
 
             bool success = centroidCalib(leftBWCalib);
             if(success) {
-                printf("success!; counting WTAs \n");
+                //printf("success!; counting WTAs \n");
                 countCalib++;
                 
             }
             
-            if (countCalib > 10 && maxCalibPort.getOutputCount()) {
-                printf("counted upto 10 WTA \n");
+            if (countCalib > 20 && maxCalibPort.getOutputCount()) {
+                //printf("counted upto 10 WTA \n");
                 //send maxCalibX and maxCaliby
                 int maxCalibX, maxCalibY;
                 maxCalibY = (int) floor(maxCalib / 16);
