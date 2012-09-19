@@ -45,6 +45,7 @@ protected:
     yarp::os::RpcClient         rpcMotorKarma;      // rpc motor port KARMA    
     yarp::os::RpcClient         iolStateMachine;    // rpc to iol state machine
     yarp::os::RpcClient         rpcMIL;             // rpc mil port
+    yarp::os::RpcClient         rpcWBD;             // rpc wholeBody port
     yarp::os::RpcClient         rpcTransTrad;       // rpc transformation traditional camera
     yarp::os::RpcClient         rpcTransEvent;      // rpc transformation event camera
     yarp::os::RpcClient         rpcVelExtract;      // rpc for velocity extractor
@@ -78,6 +79,7 @@ protected:
     yarp::os::Bottle            findClosestBlob(const yarp::os::Bottle &blobs, const CvPoint &loc);
     int                         processHumanCmd(const yarp::os::Bottle &cmd, yarp::os::Bottle &b);
     int                         executeOnLoc(bool shouldTrain);
+    void                        wbdRecalibration();
 
     yarp::os::Bottle            getOffset(yarp::os::Bottle &closestBlob, double actionOrient, yarp::sig::Vector &initPos);
    

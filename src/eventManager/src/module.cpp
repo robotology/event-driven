@@ -77,7 +77,7 @@ bool Manager::configure(ResourceFinder &rf)
     rpcHuman.open(       ("/"+name+"/human:rpc").c_str());        //rpc server to interact with the italkManager
     rpcMotorAre.open(    ("/"+name+"/are:rpc").c_str());          //rpc server to query ARE
     rpcMotorKarma.open(  ("/"+name+"/karma:rpc").c_str());        //rpc server to query Karma
-
+    rpcWBD.open(         ("/"+name+"/wbd:rpc").c_str());          // rpc for wholeBodyConnection
     rpcTransTrad.open(   ("/"+name+"/transTrad:rpc").c_str());    //rpc server to query the transTrad
     rpcTransEvent.open(  ("/"+name+"/transEvent:rpc").c_str());   //rpc server to query the transEvent
     rpcVelExtract.open(  ("/"+name+"/velExtract:rpc").c_str());   //rpc server to query the velocityExtractor
@@ -190,6 +190,7 @@ bool Manager::interruptModule()
     rpcVelExtract.interrupt();
     rpcAttention.interrupt();
     rpcGrabber.interrupt();
+    rpcWBD.interrupt();
     return true;
 }
 /**********************************************************/
@@ -207,9 +208,19 @@ bool Manager::close()
     rpcVelExtract.close();
     rpcAttention.close();
     rpcGrabber.close();
-
+    rpcWBD.close();
     return true;
 }
+/**********************************************************/
+void Manager::wbdRecalibration()
+{
+    Bottle cmdWBD,replyWBD;
+    cmdWBD.addInt(0);
+    printf("Sending recalibration request to WBD\n");
+    rpcWBD.write(cmdWBD,replyWBD);
+    printf("Received reply from WBD: %s\n",replyWBD.toString().c_str());
+}
+
 /**********************************************************/
 int Manager::processHumanCmd(const Bottle &cmd, Bottle &b)
 {
@@ -230,6 +241,7 @@ bool Manager::updateModule()
     if (isStopping())
         return false;
 
+    /*
     //wait for connection with the iolMachine
     while (!init)
     {   
@@ -253,6 +265,7 @@ bool Manager::updateModule()
             fprintf(stdout, "have successfully initialize it all\n");
         }
     }
+    */
     
     // looking for possible attention redeplyment commands
     Bottle* attCmd;
@@ -268,7 +281,7 @@ bool Manager::updateModule()
         if (cmd != NULL)
             {
                 int rxCmd=processHumanCmd(cmd,val);
-                
+                wbdRecalibration();
                 if (rxCmd==Vocab::encode("train"))
                     {
                         obj=cmd.get(1).asString().c_str();
@@ -1251,7 +1264,7 @@ int Manager::pushOnLoc()
             karmaMotor.addDouble( offset );// + 0.06 );
 
             fprintf(stdout,"%s\n",karmaMotor.toString().c_str());
-            rpcMotorKarma.write(karmaMotor, karmaReply);
+            //rpcMotorKarma.write(karmaMotor, karmaReply);
             fprintf(stdout,"action is %s:\n",karmaReply.toString().c_str());
             
             //temporal delay
@@ -1424,7 +1437,7 @@ int Manager::pursOnLoc()
             karmaMotor.addDouble( offset );// + 0.06 );
 
             fprintf(stdout,"%s\n",karmaMotor.toString().c_str());
-            rpcMotorKarma.write(karmaMotor, karmaReply);
+            //rpcMotorKarma.write(karmaMotor, karmaReply);
             fprintf(stdout,"action is %s:\n",karmaReply.toString().c_str());
             
             //temporal delay
