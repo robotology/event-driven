@@ -70,6 +70,10 @@ class EventReader : public RFModule{
 
         buffer_idx =0;
 
+        while(outPort.getOutputCount() == 0 ){
+            Time::delay(0.1);
+        }
+
         while (!inFile.eof() && buffer_idx < bufferSize){
            //Read data from file and process the input data
            convertToInt(datam);
