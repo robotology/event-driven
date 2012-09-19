@@ -1016,6 +1016,7 @@ void  device2yarp::run() {
         tmp = data2send;        
         portEventBottle.write();       
     
+        /*
         if (save) {    
             fprintf(fbottle,"dim %d \n", bottle2send->size());
             //printf("dim %d \n", bottle2send->size());
@@ -1024,6 +1025,7 @@ void  device2yarp::run() {
             }
             fprintf(fbottle,"------------------------\n");
         }
+        */
     } 
     
     wrapOccured = false;
