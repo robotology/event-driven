@@ -265,7 +265,7 @@ class groundFlowModel
 		for (int x=0; x<N_PIXELS; x++)
 			for (int y=0; y<N_PIXELS; y++)
 				{
-					t_vel=0; //<<<<<<<<<<<<<<<<<<<
+					//t_vel=0; //<<<<<<<<<<<<<<<<<<<
 					input_ground_model_x[x][y]=x_vel+t_vel/180*M_PI*input_grid_matrix_d[x][y]*sin(input_grid_matrix_t[x][y]);
 					input_ground_model_y[x][y]=y_vel-t_vel/180*M_PI*input_grid_matrix_d[x][y]*cos(input_grid_matrix_t[x][y]);
 				}

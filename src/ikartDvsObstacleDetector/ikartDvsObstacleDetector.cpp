@@ -108,10 +108,25 @@ void obstacleDetectorThread::compute_comparison()
 	for (int y=0; y<128; y++)
 		for (int x=0; x<128; x++)
 		{
-			double c = this->flow_model.output_ground_model_x[x][y] * measured_optical_flow_x[x][y] + 
+			/*
+			//test functions
+			flow_model.output_ground_model_x[x][y] = 1.0/3.0;
+			flow_model.output_ground_model_y[x][y] = 0;
+			measured_optical_flow_x[x][y] = 0.866/2;
+			measured_optical_flow_y[x][y] = 0.5/2;
+			*/
+			double d = this->flow_model.output_ground_model_x[x][y] * measured_optical_flow_x[x][y] + 
 			   	       this->flow_model.output_ground_model_y[x][y] * measured_optical_flow_y[x][y];
 
-			compared_optical_flow_ang[x][y] = c;
+			double m = sqrt (flow_model.output_ground_model_x[x][y] *  flow_model.output_ground_model_x[x][y] +
+				             flow_model.output_ground_model_y[x][y] *  flow_model.output_ground_model_y[x][y]) *
+					   sqrt (measured_optical_flow_x[x][y] *  measured_optical_flow_x[x][y] +
+				             measured_optical_flow_y[x][y] *  measured_optical_flow_y[x][y]);
+			
+			double a = acos(d/m)*180/M_PI;
+			compared_optical_flow_dot[x][y] = d;
+			compared_optical_flow_mag[x][y] = m;
+			compared_optical_flow_ang[x][y] = a;
 		}
 }
 
@@ -126,12 +141,32 @@ void obstacleDetectorThread::draw_comparison()
 		uchar* p =(uchar*) ipl->imageData + y*ipl->widthStep;
 		for(int x=0; x<ipl->width; x++)
 		{
-			double mag = sqrt (measured_optical_flow_x[x][y]*measured_optical_flow_x[x][y]+measured_optical_flow_y[x][y]*measured_optical_flow_y[x][y]);
-			if (mag > 0.001)
+			double mag_measured = sqrt (measured_optical_flow_x[x][y]*measured_optical_flow_x[x][y]+
+									    measured_optical_flow_y[x][y]*measured_optical_flow_y[x][y]);
+			double mag_model    = sqrt (flow_model.output_ground_model_x[x][y]*flow_model.output_ground_model_x[x][y]+
+									    flow_model.output_ground_model_x[x][y]*flow_model.output_ground_model_x[x][y]);
+			if (mag_measured > 0.001)
 			{
-				if       (compared_optical_flow_ang[x][y]  > 0.01) {r = 0;   b= 0; g = 200;}
-				else if  (compared_optical_flow_ang[x][y]  < 0.01) {r = 200; b= 0; g =0;   }
-				else                                               {r = 200; b= 0; g =200; }
+				if (mag_model > 0.035)
+				{
+					double ang = 0 ;
+					double thr_mag =0.010;
+					ang = compared_optical_flow_ang[x][y]; 
+					if       (fabs(ang) > 80)                          {r = 200; b=   0; g =  0;}
+					else if   (fabs(mag_measured/mag_model) > 0.010)   {r = 200; b=   0; g =200;}
+					else                                               {r =   0; b=   0; g =200;}
+					/*ang = compared_optical_flow_dot[x][y];
+					if       (ang > 0.01) {r = 0;   b= 0; g = 200;}
+					else if  (ang < 0.01) {r = 200; b= 0; g =0;   }
+					else                  {r = 200; b= 0; g =200; }*/
+					//printf ("%f\n",mag_model);
+					if (fabs(mag_measured/mag_model)>0.010)
+						printf ("%f\n",fabs(mag_measured/mag_model));
+				}
+				else
+				{
+					r = 200; b= 0; g =0;
+				}
 			}
 			else  
 			{
@@ -143,6 +178,61 @@ void obstacleDetectorThread::draw_comparison()
 		    p[3*x+2]=b;
 		}
 	}
+
+	IplImage * dest=(IplImage *) cvCloneImage(ipl);
+	//cvDilate(ipl,dest);
+	//cvSmooth(ipl,dest);
+	cvMorphologyEx(ipl, dest, NULL, NULL, cv::MORPH_CLOSE , 1);
+	cvCopy(dest,ipl);
+	//cvCopyImage(dest,ipl);
+
+	//remove isolated reds?
+	/*int vals[] = {0,0,0,0,1,0,0,0,0}; 
+	IplConvKernel* kern = cvCreateStructuringElementEx(3, 3, 1, 1, CV_SHAPE_CUSTOM , vals);
+
+	cvErode(ipl_r,dest_r,kern);
+	cvMerge(
+	cvCopy(dest,ipl);*/
+
+	int r_count = 0;
+	int g_count = 0;
+	int y_count = 0;
+	for (int y=0; y<ipl->height; y++)
+    {
+		uchar* p =(uchar*) ipl->imageData + y*ipl->widthStep;
+		for(int x=0; x<ipl->width; x++)
+		{
+			if (p[3*x+0] == 200 &&
+				p[3*x+1] != 200)
+				{
+					r_count++;
+				}
+			else if 
+			   (p[3*x+0] != 200 &&
+				p[3*x+1] == 200)
+				{
+					g_count++;
+				}
+			else if
+				(p[3*x+0] == 200 &&
+				 p[3*x+1] == 200)
+				{
+					y_count++;
+				}
+		}
+	}
+	float rp =0;
+	int rg_count  = g_count+r_count;
+	int rgy_count = g_count+r_count+y_count;
+	if  (rg_count == 0)  rg_count = 1000;
+	if (rgy_count == 0) rgy_count = 1000;
+
+	float r_rg  = float(r_count)/float(rg_count);
+	float r_rgy =  float(r_count)/float(rgy_count);
+	printf ("r:%4d  g:%4d  y:%4d   r/rg:%4.1f  r/rgy:%4.1f\n", r_count, g_count, y_count, r_rg, r_rgy);
+	detection_value = r_rgy;
+
+
 }
 
 void obstacleDetectorThread::used_simulated_measured_optical_flow()
@@ -158,7 +248,7 @@ void obstacleDetectorThread::draw_measured_check()
 {
 	static const yarp::sig::PixelMono16 black=0;
     static const yarp::sig::PixelMono16 white=255;
-	static double scale = 100;
+	static double scale = 300;
 	static int c=BIGGER/2;
 	
 	IMGFOR(flow_measured_check_image ,i , j)
@@ -169,11 +259,15 @@ void obstacleDetectorThread::draw_measured_check()
 	for (int y=0, Y=0; y<N_PIXELS*BIGGER; y+=BIGGER, Y+=1)
 		for (int x=0, X=0; x<N_PIXELS*BIGGER; x+=BIGGER, X+=1)
 		{
-			yarp::sig::draw::addSegment(flow_measured_check_image,black,x+c,y+c,int(x+measured_optical_flow_x[X][Y]*scale)+c,int(y+measured_optical_flow_y[X][Y]*scale)+c);
+			yarp::sig::draw::addSegment(flow_measured_check_image,black,x+c,y+c,int(x-measured_optical_flow_x[X][Y]*scale)+c,int(y+measured_optical_flow_y[X][Y]*scale)+c);
 			if (fabs(measured_optical_flow_x[X][Y])> 0.0001 || fabs(measured_optical_flow_y[X][Y])> 0.0001)
-				yarp::sig::draw::addCircle(flow_measured_check_image,black,x+int(measured_optical_flow_y[X][Y]*scale)+c,int(y+measured_optical_flow_y[X][Y]*scale)+c,2);
+			{
+				yarp::sig::draw::addCircle(flow_measured_check_image,black,x-int(measured_optical_flow_y[X][Y]*scale)+c,int(y+measured_optical_flow_y[X][Y]*scale)+c,2);
+			}
 			else
-				yarp::sig::draw::addCircle(flow_measured_check_image,black,x+int(measured_optical_flow_y[X][Y]*scale)+c,int(y+measured_optical_flow_y[X][Y]*scale)+c,1);
+			{
+			//	yarp::sig::draw::addCircle(flow_measured_check_image,black,x+int(measured_optical_flow_y[X][Y]*scale)+c,int(y+measured_optical_flow_y[X][Y]*scale)+c,1);
+			}
 		}
 }
 
@@ -265,6 +359,15 @@ void obstacleDetectorThread::run()
 		yarp::sig::ImageOf<yarp::sig::PixelMono16>& img=port_flow_measured_check_output.prepare();
 		img=flow_measured_check_image;
 		port_flow_measured_check_output.write();
+	}
+
+	//send the detection data
+	if (port_detection_output.getOutputCount()>0)
+	{
+		yarp::os::Bottle& detect=port_detection_output.prepare();
+		detect.clear();
+		detect.addDouble(detection_value);
+		port_detection_output.write();
 	}
 }
 

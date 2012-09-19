@@ -67,6 +67,7 @@ class obstacleDetectorThread: public yarp::os::RateThread
 	//BufferedPort<VelocityBuffer>							  port_buffered_optical_flow_input;
 	BufferedPort<Bottle>									  port_optical_flow_input;
     BufferedPort<yarp::sig::Vector>							  port_simulated_scan_output;
+	BufferedPort<Bottle>							          port_detection_output;
 	BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono16> > port_flow_measured_check_output;
 	BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono16> > port_flow_model_output;
 	BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> >    port_comparison_output;
@@ -75,13 +76,16 @@ class obstacleDetectorThread: public yarp::os::RateThread
 	double measured_optical_flow_x							  [N_PIXELS][N_PIXELS];
 	double measured_optical_flow_y							  [N_PIXELS][N_PIXELS];
 
+	double compared_optical_flow_dot						  [N_PIXELS][N_PIXELS];
+	double compared_optical_flow_mag						  [N_PIXELS][N_PIXELS];
 	double compared_optical_flow_ang						  [N_PIXELS][N_PIXELS];
 
 	yarp::sig::ImageOf<yarp::sig::PixelRgb>                   comparison_image;
 	yarp::sig::ImageOf<yarp::sig::PixelMono16>				  flow_measured_check_image;
-    Property            iKartCtrl_options;
-    ResourceFinder      &rf;
-    yarp::sig::Vector   scan_data;
+    Property												  iKartCtrl_options;
+    ResourceFinder											  &rf;
+    yarp::sig::Vector									      scan_data;
+	double                                                    detection_value;
 
     public:
     obstacleDetectorThread(unsigned int _period, ResourceFinder &_rf, Property options) :
@@ -99,6 +103,8 @@ class obstacleDetectorThread: public yarp::os::RateThread
 				measured_optical_flow_x [i][j]=0;
 				measured_optical_flow_y [i][j]=0;
 			}
+
+		detection_value=0;
     }
 	void get_model_params(double& focal_lenght, double& angle_deg, double& height)
 	{
@@ -133,6 +139,7 @@ class obstacleDetectorThread: public yarp::os::RateThread
 		port_flow_measured_check_output.open  ( (localName+"/flow_measured_check_img:o").c_str() );
 		port_comparison_output.open           ( (localName+"/flow_comparison_img:o").c_str() );
 		port_calibration_output.open          ( (localName+"/calibration_img:o").c_str() );
+		port_detection_output.open            ( (localName+"/detection:o").c_str() );
 
         //automatic port connections
         bool b = false;
@@ -169,6 +176,8 @@ class obstacleDetectorThread: public yarp::os::RateThread
 		port_calibration_output.close();
 		port_flow_measured_check_output.interrupt();
 		port_flow_measured_check_output.close();
+		port_detection_output.interrupt();
+		port_detection_output.close();
     }
 
     void printStats();
