@@ -169,8 +169,6 @@ bool VelocityBuffer::write(ConnectionWriter & connection){
     for (int i = 0; i < size; ++i) {
 		connection.appendInt((int) TSs[i]);
 	}
-    */
-
 
     connection.appendDouble(vxMin);
     connection.appendDouble(vxMax);
