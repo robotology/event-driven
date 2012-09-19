@@ -38,6 +38,7 @@ using namespace emorph::ebuffer;
 
 class EventReader : public RFModule{
     bool dvsCam;
+    bool init;
     int jearFileType;
     int bufferSize;
     string inFileName;
@@ -69,10 +70,6 @@ class EventReader : public RFModule{
         unsigned char oneByte;
 
         buffer_idx =0;
-
-        while(outPort.getOutputCount() == 0 ){
-            Time::delay(0.1);
-        }
 
         while (!inFile.eof() && buffer_idx < bufferSize){
            //Read data from file and process the input data
@@ -359,8 +356,12 @@ public:
 
         buffPtr = buffer[0];
 
-        bufferSize = 512;	; // 16384 -> 2048 events, 8192 bytes -> 1024 events , 4096-> 512 events
+        bufferSize = 8192;	; // 16384 -> 2048 events, 8192 bytes -> 1024 events , 4096-> 512 events
+        bufferSize = rf.check("bufferSize",
+                                  Value(8192),
+                                  "Input  input File type (int)").asInt();
 
+    
         if (dvsCam){
             inFile.open(inFileName.c_str(), ifstream::in);
             if ( inFile.fail() ){  //The file is not opened correctly
@@ -392,6 +393,7 @@ public:
 //       }
 
         cntTime = prvTime = 0;
+        init = false;
 
         return true;
     }
@@ -399,16 +401,25 @@ public:
 
 
     bool updateModule(){
+        if((outPort.getOutputCount() == 0 ) && (!init)){
+            Time::delay(0.1);
+            return true;
+        }
+        init = true;
         if (!inFile.eof()){
+            
             if(dvsCam){
+                printf("loopICUBCam \n");
                 loopICUBCam();
             }
             else{
             	loopSingleCamTime(jearFileType);
             }
         }
-        else
+        else {
            cout << "end of file " << endl;
+           return false;
+        }
 
         return true;
     }
@@ -416,7 +427,7 @@ public:
     double getPeriod()
     {
        /* module periodicity (seconds), called implicitly by myModule */
-       return .001;
+       return .005;
     }
 
     bool interruptModule(){
