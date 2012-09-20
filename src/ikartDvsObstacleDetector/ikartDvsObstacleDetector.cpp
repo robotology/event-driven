@@ -33,7 +33,7 @@
 #include <math.h>
 #include <cv.h>
 
-#include "ikartDVSObstacleDetector.h"
+#include "ikartDvsObstacleDetector.h"
 
 
 using namespace std;
