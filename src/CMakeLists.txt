@@ -43,6 +43,7 @@ add_subdirectory   (  staticCalib                  )
 add_subdirectory   (  velocityExtractor            )
 add_subdirectory   (  wingsTranslator              )
 add_subdirectory   (  eventManager                 )  
+add_subdirectory   (  ikartDvsObstacleDetector     ) 
 
 # --------  OPTICFLOW SUBFOLDERS ---------------------
 add_subdirectory   (  eventOpticalFlow             )
