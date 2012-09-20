@@ -320,12 +320,12 @@ public:
      * @brief function that returns the pointer to the HGE Left
      */
     reprCLE* getCLELeft() {
-        printf("countLeft %d \n",countCLE);
+        
         if(countCLE == 0) {
             return 0;
         }
         _bufferCLELeft--;
-        printf("getCLELEFT: %d \n", _bufferCLELeft->xCog);
+        
         
         return _bufferCLELeft;
 

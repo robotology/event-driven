@@ -46,8 +46,9 @@ using namespace emorph::ecodec;
 
 //TODO : remove inheretance of this class from ratethread. No reason to be ratethread
 unmask::unmask() : RateThread(UNMASKRATETHREAD){
-    count      = 0;
-    countCLE   = 0;
+    count         = 0;
+    countCLE      = 0;
+    countCLERight = 0;
     verb       = false;
     dvsMode    = false;
     asvMode    = false; //TODO : make this variable a parameter in the command line
@@ -317,11 +318,12 @@ void unmask::addCLE(eEvent* qevt) {
         printf("received CLE_F2 from %d \n",ptr->getChannel() );
         if(ptr->getChannel() == 0) {
             
-            _bufferCLELeft->xCog  = ptr->getXCog();
-            _bufferCLELeft->yCog  = ptr->getYCog();
+            _bufferCLELeft->xCog  = ptr->getYCog();
+            _bufferCLELeft->yCog  = 128 - ptr->getXCog();
             _bufferCLELeft->xSize = ptr->getXSize();
             _bufferCLELeft->ySize = ptr->getYSize();
             _bufferCLELeft->numAE = ptr->getNumAE();
+            _bufferCLELeft->id    = ptr->getId();
             if (countCLE < 10) {
                 _bufferCLELeft++;
                 countCLE++;
@@ -331,11 +333,12 @@ void unmask::addCLE(eEvent* qevt) {
          
         if(ptr->getChannel() == 1) {
             
-            _bufferCLERight->xCog  = ptr->getXCog();
-            _bufferCLERight->yCog  = ptr->getYCog();
+            _bufferCLERight->xCog  = ptr->getYCog();
+            _bufferCLERight->yCog  = 128 - ptr->getXCog();
             _bufferCLERight->xSize = ptr->getXSize();
             _bufferCLERight->ySize = ptr->getYSize();
             _bufferCLERight->numAE = ptr->getNumAE();
+            _bufferCLERight->id     = ptr->getId();
             if (countCLERight < 10) {
                 _bufferCLERight++;
                 countCLERight++;

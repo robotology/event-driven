@@ -391,18 +391,41 @@ void cfCollectorThread::addHGE(ImageOf<yarp::sig::PixelRgb>* image, unsigned lon
     
 }
 
+CvScalar getColorCode(int id) {
+    int ident = id % 10;
+    switch (ident) {
+    case 0 : return cvScalar(255,0,0);
+    case 1 : return cvScalar(0,255,0);
+    case 2 : return cvScalar(0,0,255);
+    case 3 : return cvScalar(255,255,0);
+    case 4 : return cvScalar(255,0,255);
+    case 5 : return cvScalar(0,255,255);
+    case 6 : return cvScalar(125,0,125);
+    case 7 : return cvScalar(0,125,125);
+    case 8 : return cvScalar(125,125,0);
+    case 9 : return cvScalar(0,0,0);
+    default: return cvScalar(255,0,0);
+    }
+}
+
+
 void cfCollectorThread::addCLE(ImageOf<yarp::sig::PixelRgb>* image, unsigned long minCount,unsigned long maxCount, bool camera) {
+    int lineWidth = 2;
     if(camera) {
         //cvCircle(image->getIplImage(), cvPoint(100,100),5, cvScalar(0,255,0), 1 );
         reprCLE *tmpCLE;
         tmpCLE = unmask_events->getCLELeft();
         if (tmpCLE == 0) return;
-        // printf("%08x origCLE -> %08x tmpCLE    \n", origCLE, tmpCLE);
+        // printf("%08x origCLE -> %08x tmpCLE    \n", origCLE, tmpCLE);        
         
         while(tmpCLE != origCLE) {
-            printf("left > x %d y %d \n", tmpCLE->xCog, tmpCLE->yCog);
+            //printf("left > x %d y %d \n", tmpCLE->xCog, tmpCLE->yCog);
+            
+            CvScalar c = getColorCode(tmpCLE->id);
+            
 
-            cvRectangle(image->getIplImage(), cvPoint(tmpCLE->xCog - 2,tmpCLE->yCog - 2 ),cvPoint(tmpCLE->xCog + 2,tmpCLE->yCog + 2), cvScalar(0,0,255), 3);
+
+            cvRectangle(image->getIplImage(), cvPoint(tmpCLE->xCog - 2,tmpCLE->yCog - 2 ),cvPoint(tmpCLE->xCog + 2,tmpCLE->yCog + 2), c, lineWidth);
             //cvCircle(image->getIplImage(), cvPoint(tmpCLE->x,tmpCLE->y),5, cvScalar(0,0,255), 1 );
 
             //CvFont font;
@@ -412,8 +435,9 @@ void cfCollectorThread::addCLE(ImageOf<yarp::sig::PixelRgb>* image, unsigned lon
             tmpCLE--;
         }
         // representation of the first event
-        printf("left > x %d y %d \n", tmpCLE->xCog, tmpCLE->yCog);       
-        cvRectangle(image->getIplImage(), cvPoint(tmpCLE->xCog - (tmpCLE->xSize >> 1),tmpCLE->yCog - (tmpCLE->ySize >> 1) ),cvPoint(tmpCLE->xCog + (tmpCLE->xSize >> 1),tmpCLE->yCog + (tmpCLE->ySize >> 1)), cvScalar(0,0,255), 1);
+        //printf("left > x %d y %d \n", tmpCLE->xCog, tmpCLE->yCog);       
+        CvScalar c = getColorCode(tmpCLE->id);
+        cvRectangle(image->getIplImage(), cvPoint(tmpCLE->xCog - (tmpCLE->xSize >> 1),tmpCLE->yCog - (tmpCLE->ySize >> 1) ),cvPoint(tmpCLE->xCog + (tmpCLE->xSize >> 1),tmpCLE->yCog + (tmpCLE->ySize >> 1)), c, lineWidth);
         //cvRectangle(image->getIplImage(), cvPoint(tmpCLE->xCog - 2,tmpCLE->yCog - 2) ,cvPoint(tmpCLE->xCog + 2,tmpCLE->yCog + 2), cvScalar(0,0,255), 1);
         
         
@@ -431,8 +455,9 @@ void cfCollectorThread::addCLE(ImageOf<yarp::sig::PixelRgb>* image, unsigned lon
         
         //printf("%08x origCLERight -> %08x tmpCLE    \n", origCLERight, tmpCLE);
         while(tmpCLE != origCLERight) {
-            printf("right > x %d y %d \n", tmpCLE->xCog, tmpCLE->yCog);
-            cvRectangle(image->getIplImage(), cvPoint(tmpCLE->xCog - 2,tmpCLE->yCog - 2 ),cvPoint(tmpCLE->xCog + 2,tmpCLE->yCog + 2), cvScalar(0,0,255), 3);
+            //printf("right > x %d y %d \n", tmpCLE->xCog, tmpCLE->yCog);
+            CvScalar c = getColorCode(tmpCLE->id);
+            cvRectangle(image->getIplImage(), cvPoint(tmpCLE->xCog - 2,tmpCLE->yCog - 2 ),cvPoint(tmpCLE->xCog + 2,tmpCLE->yCog + 2), c, lineWidth);
             //cvCircle(image->getIplImage(), cvPoint(tmpCLE->x,tmpCLE->y),5, cvScalar(0,0,255), 1 );
 
             //CvFont font;
@@ -442,8 +467,9 @@ void cfCollectorThread::addCLE(ImageOf<yarp::sig::PixelRgb>* image, unsigned lon
             tmpCLE--;
         }
         // representation of the first event
-        printf("right > x %d y %d \n", tmpCLE->xCog, tmpCLE->yCog);       
-        cvRectangle(image->getIplImage(), cvPoint(tmpCLE->xCog - (tmpCLE->xSize >> 1),tmpCLE->yCog - (tmpCLE->ySize >> 1) ),cvPoint(tmpCLE->xCog + (tmpCLE->xSize >> 1),tmpCLE->yCog + (tmpCLE->ySize >> 1)), cvScalar(0,0,255), 1);
+        //printf("right > x %d y %d \n", tmpCLE->xCog, tmpCLE->yCog);       
+        CvScalar c = getColorCode(tmpCLE->id);
+        cvRectangle(image->getIplImage(), cvPoint(tmpCLE->xCog - (tmpCLE->xSize >> 1),tmpCLE->yCog - (tmpCLE->ySize >> 1) ),cvPoint(tmpCLE->xCog + (tmpCLE->xSize >> 1),tmpCLE->yCog + (tmpCLE->ySize >> 1)), c, lineWidth);
         unmask_events->setCLERight();
         
     }
