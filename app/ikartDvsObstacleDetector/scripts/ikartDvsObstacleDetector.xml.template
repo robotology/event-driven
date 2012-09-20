@@ -49,6 +49,12 @@
 </connection>
 
 <connection>
+  <from>/ikartDvsObstacleDetector/rpc:o</from>
+  <to>/ikartGoto/rpc:i</to>
+  <protocol>tcp</protocol>
+</connection>
+
+<connection>
   <from>/OptFlViewer/data:o</from>
   <to>/ikartDvsObstacleDetector/flow:i</to>
   <protocol>udp</protocol>
