@@ -5,7 +5,7 @@
 </dependencies>
 
 <module>
-   <name>ikartDvsObstacleDetector</name>
+   <name>iKartDvsObstacleDetector</name>
    <parameters></parameters>
    <node>ikart</node>
    <tag>ikartDvsObstacleDetector</tag>
@@ -13,7 +13,7 @@
 
 <module>
    <name>yarpview</name>
-   <parameters>--name /flowModel:i</parameters>
+   <parameters>--name /flow_model:i</parameters>
    <node>icub14</node>
    <tag>OpticalFlowModelViewer1</tag>
 </module>
