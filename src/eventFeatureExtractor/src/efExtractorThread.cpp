@@ -435,7 +435,7 @@ void efExtractorThread::remapEventLeft(int x, int y,short pol,unsigned long ts) 
     int          rowSize  = leftOutputImage->getRowSize();
     int       rowSizeFea  = leftFeaOutputImage->getRowSize();
     int deviance      = 1;
-    int devianceFea   = 1;   
+    int devianceFea   = 5;   
     aer* bufferFEA_copy = bufferFEA;
 
     if(true) {
@@ -1175,11 +1175,11 @@ void efExtractorThread::generateMemory(int countEvent, int& countEventToSend) {
         cam = iterEvent->cam;
         printf("x %d  y %d  pol %d cam %d \n", cam);
         // -------------------------- CAMERA 1 ----------------------------------
-        if(cam == 1) {
+        if(cam == 0) {
             remapEventLeft(x,y,pol,ts);               
         } //end of if cam!=0
         // -------------------------- CAMERA 0 ----------------------------------
-        else if(cam == 0) {
+        else if(cam == 1) {
             countEventRight++;                               
             remapEventRight(x,y,pol,ts);
         }
@@ -1213,8 +1213,8 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
     aer* bufferFEA_copy = bufferFEA;
     // visiting a discrete number of events
     int countUnmapped = 0;
-    int deviance      = 10;
-    int devianceFea   = 10;      
+    int deviance      = 20;
+    int devianceFea   = 20;      
     //#############################################################################        
     int dequeSize = q->size();
     int readPosition = 0;
@@ -1260,7 +1260,7 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                     }
                     else {
                         
-                        if(camera) {
+                        if(camera==0) {
                             //printf("remapping event left camera:%d \n", camera);
                             //printf("before remapping %08x \n", &txQueue);
                             //remapEventLeft(cartX,cartY,polarity,ts,&txQueue);  
