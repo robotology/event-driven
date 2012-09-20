@@ -13,9 +13,30 @@
 
 <module>
    <name>yarpview</name>
-   <parameters>--name /flowModel:i --synch</parameters>
+   <parameters>--name /flowModel:i</parameters>
    <node>icub14</node>
-   <tag>OpticalFlowModelViewer</tag>
+   <tag>OpticalFlowModelViewer1</tag>
+</module>
+
+<module>
+   <name>yarpview</name>
+   <parameters>--name /flow_comparison:i</parameters>
+   <node>icub14</node>
+   <tag>OpticalFlowModelViewer2</tag>
+</module>
+
+<module>
+   <name>yarpview</name>
+   <parameters>--name /flow_calib_grid:i</parameters>
+   <node>icub14</node>
+   <tag>OpticalFlowModelViewer3</tag>
+</module>
+
+<module>
+   <name>yarpview</name>
+   <parameters>--name /flow_measured_check:i</parameters>
+   <node>icub14</node>
+   <tag>OpticalFlowModelViewer4</tag>
 </module>
 
 <connection>
