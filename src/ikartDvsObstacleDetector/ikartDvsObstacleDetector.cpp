@@ -264,8 +264,19 @@ void obstacleDetectorThread::draw_comparison()
 	else
 		detection_value = 0;
 
-	if (detection_value >0.99) printf ("***********************");
+	if (detection_value >0.99) 
+		{
+			printf ("***********************");
+
+			Bottle cmd;
+			Bottle reply;
+			cmd.addString("pause");
+			//port_rpc_out.write(cmd,reply);
+			//not waiting for reply
+			port_rpc_out.write(cmd);
+		}
 	printf ("\n");
+
 
 	cvReleaseImage(&Ir);
 	cvReleaseImage(&Ir2);

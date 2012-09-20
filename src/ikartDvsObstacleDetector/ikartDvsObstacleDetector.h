@@ -72,6 +72,7 @@ class obstacleDetectorThread: public yarp::os::RateThread
 	BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono16> > port_flow_model_output;
 	BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> >    port_comparison_output;
 	BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono16> > port_calibration_output;
+	yarp::os::Port                                            port_rpc_out;
 
 	double measured_optical_flow_x							  [N_PIXELS][N_PIXELS];
 	double measured_optical_flow_y							  [N_PIXELS][N_PIXELS];
@@ -140,6 +141,7 @@ class obstacleDetectorThread: public yarp::os::RateThread
 		port_comparison_output.open           ( (localName+"/flow_comparison_img:o").c_str() );
 		port_calibration_output.open          ( (localName+"/calibration_img:o").c_str() );
 		port_detection_output.open            ( (localName+"/detection:o").c_str() );
+		port_rpc_out.open                     ( (localName+"/rpc:o").c_str() );
 
         //automatic port connections
         bool b = false;
@@ -178,6 +180,9 @@ class obstacleDetectorThread: public yarp::os::RateThread
 		port_flow_measured_check_output.close();
 		port_detection_output.interrupt();
 		port_detection_output.close();
+		
+		port_rpc_out.interrupt();
+		port_rpc_out.close();
     }
 
     void printStats();
