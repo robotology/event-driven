@@ -276,37 +276,21 @@ int tsOptFlowThread::Pasc(int k, int n)
 void tsOptFlowThread::updateAll()
 {
     iSMat=0; 
-    for(uint i=0; i<height; ++i)
+/*    for(uint i=0; i<height; ++i)
         for(uint ii=0; ii<width; ++ii)
         {
             if(*(TSsData+i*width+ii)+tsVal<timestamp)
             {
                 *(TSs2PlanData+i*width+ii)=-1;
-//                *(TSsData+i*width+ii)=-1;
                 *(activityData+i*width+ii)=0;
             }
-/*            if(*(activityData+i*width+ii)>0)
-            {
-                //std::cout << "[tsOptFlowThread] In the exp(): " << -((double)timestamp-*(TSsData+i*width+ii))/(double)tauD << std::endl;
-                //std::cout << "[tsOptFlowThread] With the exp(): " << std::exp(-((double)timestamp-*(TSsData+i*width+ii))/(double)tauD) << std::endl;
-                //std::cout << "[tsOptFlowThread] With the a*exp(): " << alpha*std::exp(-((double)timestamp-*(TSsData+i*width+ii))/(double)tauD) << std::endl;
-
-                
-//                *(activityData+i*width+ii)=*(activityData+i*width+ii)*alpha*std::exp(-((double)timestamp-*(TSsData+i*width+ii))/tauD);
-                if(*(activityData+i*width+ii)>=threshold)
-                {
-                    sMat(iSMat, 0)=i;
-                    sMat(iSMat, 1)=ii;
-                    iSMat++;
-                    //std::cout << "Threshold reached, flow to compute: " << iSMat << std::endl;
-                    //std::cout << "Current activity: " << *(activityData+i*width+ii) << std::endl;
-                }
-            }*/
-        }
+        }*/
     for(uint i=0; i<iBinEvts; i++)
     {
        addrx=binEvts(i, 0); 
-       addry=binEvts(i, 1); 
+       addry=binEvts(i, 1);
+        if(*(TSsData+addrx*width+addry)+tsVal<timestamp)
+            *(activityData+addrx*width+addry)=0;
         *(TSsData+addrx*width+addry)=(double)timestamp;
         //*(TSsData+addrx*width+addry)=binEvts(i, 2);
         *(TSs2PlanData+addrx*width+addry)=(double)timestamp;
@@ -639,7 +623,8 @@ uint tsOptFlowThread::createPlanAndCompute(Matrix &_m, double &_dx, double &_dy,
         for(i=0; i<sobelSz; i++)
             for(ii=0; ii<sobelSz; ii++)
             {
-                if(_m(i, ii)>-1 && ((i==_curx && ii==_cury) || ((i!=_curx || ii!=_cury) && _m(i, ii)<=(_curts-binAcc))))
+                //if(_m(i, ii)>-1 && ((i==_curx && ii==_cury) || ((i!=_curx || ii!=_cury) && _m(i, ii)<=(_curts-binAcc))))
+                if( (_m(i, ii)+tsVal)>_curts && ((i==_curx && ii==_cury) || ((i!=_curx || ii!=_cury) && _m(i, ii)<=(_curts-binAcc))))
                 {
 #ifdef _DEBUG
                     std::cout << "[tsOptFlowThread] Following index: " << index+1 << ", size A: [" << A.rows() << ", " << A.cols() << "], size Y: " << Y.size() << std::endl;
@@ -659,7 +644,33 @@ uint tsOptFlowThread::createPlanAndCompute(Matrix &_m, double &_dx, double &_dy,
         Y=Y.subVector(0, index); //Y.resize(index);
         At=A.transposed();
         AtA=At*A;
-        abc=pinv(AtA)*At*Y;
+        //if(AtA.rows()==3)
+        //{
+/*DET = a11(a33a22-a32a23)-a21(a33a12-a32a13)+a31(a23a12-a22a13)*/
+/*
+| a11 a12 a13 |-1             |   a33a22-a32a23  -(a33a12-a32a13)   a23a12-a22a13  |
+| a21 a22 a23 |    =  1/DET * | -(a33a21-a31a23)   a33a11-a31a13  -(a23a11-a21a13) |
+| a31 a32 a33 |               |   a32a21-a31a22  -(a32a11-a31a12)   a22a11-a21a12  |
+*/          double* dataATA=AtA.data();
+            double DET=*dataATA*( *(dataATA+8)**(dataATA+4)-*(dataATA+7)**(dataATA+5)) - *(dataATA+3)*(*(dataATA+8)**(dataATA+1)-*(dataATA+7)**(dataATA+2))+*(dataATA+6)*(*(dataATA+5)**(dataATA+1)-*(dataATA+4)**(dataATA+2));
+            if(!DET)
+                return 0;
+            A.resize(3,3);
+            double *dataA=A.data();
+            DET=1/DET;
+            *dataA=DET*(*(dataATA+8)**(dataATA+4)-*(dataATA+7)**(dataATA+5));
+            *(dataA+1)=DET*(*(dataATA+7)**(dataATA+2)-*(dataATA+8)**(dataATA+1));
+            *(dataA+2)=DET*(*(dataATA+5)**(dataATA+1)-*(dataATA+4)**(dataATA+2));
+            *(dataA+3)=DET*(*(dataATA+6)**(dataATA+5)-*(dataATA+8)**(dataATA+3));
+            *(dataA+4)=DET*(*(dataATA+8)**dataATA-*(dataATA+6)**(dataATA+2));
+            *(dataA+5)=DET*(*(dataATA+3)**(dataATA+2)-*(dataATA+5)**dataATA);
+            *(dataA+6)=DET*(*(dataATA+7)**(dataATA+3)-*(dataATA+6)**(dataATA+4));
+            *(dataA+7)=DET*(*(dataATA+6)**(dataATA+1)-*(dataATA+7)**dataATA);
+            *(dataA+8)=DET*(*(dataATA+4)**dataATA-*(dataATA+3)**(dataATA+1));
+            abc=A*At*Y;
+        //}
+        //else
+        //    abc=pinv(AtA)*At*Y;
 #ifdef _DEBUG
         std::cout << "[tsOptFlowThread] Fill the plan with the new values" << std::endl;
 #endif

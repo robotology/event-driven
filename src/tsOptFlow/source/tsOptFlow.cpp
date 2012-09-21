@@ -30,12 +30,13 @@ tsOptFlow::tsOptFlow(uint &_h, uint &_w, string &_src, uint &_type, uint &_acc, 
 
     _pol=1;
     tsofThreadPos=new tsOptFlowThread(_h, _w, _src, _type, _acc, _bin, _th, _nn, _ssz, _tsval, _a, _td, _pol, _eye, _ori, _save, vxMat, vyMat, mutex, velBuf);
-    tsofThreadPos->start();
     _pol=-1;
     tsofThreadNeg=new tsOptFlowThread(_h, _w, _src, _type, _acc, _bin, _th, _nn, _ssz, _tsval, _a, _td, _pol, _eye, _ori, _save, vxMat, vyMat, mutex, velBuf);
-    tsofThreadNeg->start();
 
     sendvelbuf=new sendVelBuf(velBuf, mutex, _port, _acc);
+
+    tsofThreadPos->start();
+    tsofThreadNeg->start();
     sendvelbuf->start();
 }
 
