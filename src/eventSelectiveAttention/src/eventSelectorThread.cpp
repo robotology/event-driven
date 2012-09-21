@@ -47,8 +47,8 @@ using namespace std;
 #define COMMCOUNTDEF  20
 
 //#define VERBOSE
-#define INCR_RESPONSE 10
-#define DECR_RESPONSE 10
+#define INCR_RESPONSE 0
+#define DECR_RESPONSE 0
 
 eventSelectorThread::eventSelectorThread() : RateThread(THRATE) {
     responseGradient = 127;
@@ -314,7 +314,8 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
     */
     
     maxDistance = 100; // resetting the max distance to the max value
-
+    unsigned int maxValue = 0;
+    
     for(int r = 0 ; r < retinalSize ; r++){
         for(int c = 0 ; c < retinalSize ; c++) {            
             // combining the feature map and normalisation
@@ -337,13 +338,17 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
             //}
 
             
-            double wa1 = 0.1;
+            double wa1 = 0.8;
             double wa2 = 0.0;
-            double w41 = 0.2;
-            double w42 = 0.2;
+            double w41 = 0.1;
+            double w42 = 0.1;
             //*pBufferLeft =  contrib41Left ;
             *pBufferLeft =  wa1 * contribA1Left + wa2 * contribA2Left + 
                             w41 * contrib41Left + w42 * contrib42Left;
+            
+            
+            
+            //printf("wa1 %f contribA1Left %f w41 %f contrib41Left %f w42 %f contrib42Left %f \n ",wa1, contribA1Left, w41,contrib41Left, w42, contrib42Left );
             if(*pBufferLeft > 1.0) {
                 *pBufferLeft = 1.0;
             }
@@ -385,14 +390,16 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
             // weight in the range between 0.35 and 0.9
             
             
-            if(maxResponseLeft  <= (abs(left_double))) {
+            if(maxResponseLeft  < (abs(left_double))) {
                 //printf("%f %f \n", distance, maxDistance);
-                // if (distance < maxDistance) {
+                //if (distance < maxDistance) {
                     maxResponseLeft  = abs(left_double);
                     maxDistance      = distance;
                     maxLeftR = r; maxLeftC = c;
                     //}
             }
+            
+            
             //if(maxResponseRight < abs(minRight)) {
             //    maxResponseRight = abs(minRight);
             //    maxRightR = r; maxRightC = c;
@@ -413,13 +420,30 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
                 
                 // forgetting factor
                 // decreasing the spatial response without removing it
-                if(count % 10 == 0) {
-                    if(*pBufferLeft > 20){
-                        *pBufferLeft = *pBufferLeft - 0;                                       
+                // without forgetting factor the event can be present for the timestamp but it is always presenting the max value
+                if(count % 1 == 0) {
+                    /*
+                    if(*pBufferLeft > 0.1){
+                        left_double = left_double - 0.1;
+                        //*pBufferLeft = *pBufferLeft - 100;                                       
                     }
-                    else if(*pBufferLeft < -20){
-                        *pBufferLeft = *pBufferLeft + 0;                                       
+                    else if(*pBufferLeft < -0.1){
+                        printf("less than -100 \n");
+                        left_double = left_double + 0.1;
+                        //*pBufferLeft = *pBufferLeft + 100;                                       
                     }
+                    */
+
+                    if(left_double > 0.99){
+                        left_double = left_double - 0.99;
+                        //*pBufferLeft = *pBufferLeft - 100;                                       
+                    }
+                    else if(left_double < -0.8){
+                        printf("less than -100 \n");
+                        left_double = left_double + 0.99;
+                        //*pBufferLeft = *pBufferLeft + 100;                                       
+                    }
+
                 }
 
                 //if(minCount>0 && maxCount > 0 && timestampactual>0)
@@ -435,6 +459,12 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
                     pImage++;
                     
                     
+                    if(value > maxValue){
+                        maxValue = value;
+                        maxLeftR = r; 
+                        maxLeftC = c;
+                    }
+
                     //if ((stereo) && (r < 7) && (r >= 16) && (c < 7) && (c >= 16)) {
                     //  *pImage = (unsigned char) (127 + value);
                     //  pImage += imageRowSize;
@@ -540,8 +570,11 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
 
     imageLeftBW->zero();
     imageRightBW->zero();
-    
-    if(maxResponseLeft > FIRETHRESHOLD) {
+   
+    // if(maxResponseLeft > FIRETHRESHOLD) {
+         
+    if(maxValue >= 100) {    
+        //printf("maxResponseLeft %f position %d %d \n",maxResponseLeft,maxLeftC,maxLeftR  );
         // sending command for saccade; to focus redeployment corresponds fixation point reallocation 
         if(outputCmdPort.getOutputCount()){
 
