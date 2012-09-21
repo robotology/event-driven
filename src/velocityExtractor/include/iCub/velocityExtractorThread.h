@@ -111,6 +111,7 @@ private:
     bool asvFlag, dvsFlag;               // flag for operating mode
     bool tristate;                       // option that represent the image with three baselines
     bool maxReached;                     // indicates when a new max is present in the memory
+    bool firstCycle;                     // flag that indicates the first cycle after resume for time::delay
 
     unsigned long minCount;              // minimum timestamp allowed for the current frame
     unsigned long maxCount;              // maximum timestamp allowed for the current frame
@@ -176,7 +177,7 @@ public:
     /**
      * function that resumes the execution
      */
-    void resume(){suspendFlag = false; };
+    void resume(){firstCycle = true;  suspendFlag = false; };
     
     /**
     * function that set the rootname for the ports that will be opened

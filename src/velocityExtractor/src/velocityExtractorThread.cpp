@@ -67,6 +67,7 @@ velocityExtractorThread::velocityExtractorThread() : Thread() {
     synchronised = false;
     greaterHalf  = false;
     firstRun     = true;
+    firstCycle   = true;
     
     idle = false;
     bufferCopy = (char*) malloc(CHUNKSIZE);
@@ -106,15 +107,21 @@ bool velocityExtractorThread::threadInit() {
     minCountRight    = 0;
     countSent        = 0;
 
+    vbh = 0;
+    
     vbh = new velocityBottleHandler();
     vbh->useCallback();
     vbh->open(getName("/velocity:i").c_str());
+    
 
+    pt = 0;
     
     pt = new plotterThread();
     pt->setName(getName("/plotter").c_str());
     pt->setMaxFiringRate(maxFiringRate);
     pt->start();
+    
+    
     
     if(!outBottlePort.open(getName("/cmd:o").c_str())) {
         printf("error in opening the output port \n");
@@ -231,14 +238,24 @@ void velocityExtractorThread::setHistoValue() {
     pt->setHistoValue(pHisto);
 }
 
+
 void velocityExtractorThread::run() {
+
     while(!isStopping()) {
+        
+    
     if(!suspendFlag) {
+        if(firstCycle) {
+            firstCycle = false;
+            Time::delay(3.5);
+            printf("getting out of the first cycle \n");
+        }
+        //printf("inNotSuspend \n");
         //Bottle* readBottle = inBottlePort.read(true);
         VelocityBuffer* vb; // = new VelocityBuffer();
         sumHist = 0;    
         vb = vbh->extractBottle(vb);
-        
+        //printf("just extracted \n");
         if(vb != 0) {
             //printf("extracting not null bottle %08x \n", vb);
             //Vector medianVector(5);
@@ -282,7 +299,7 @@ void velocityExtractorThread::run() {
                     }
                     else {
 
-                        histogram[pos] =  mag * 500 + (histogram[pos] /*+ INCRFACTOR*/) - meanHist;
+                        histogram[pos] =  mag * 500 + (histogram[pos] ) - meanHist;
                         if(histogram[pos] < 0) {
                             histogram[pos] = 0;
                         } 
@@ -352,12 +369,15 @@ void velocityExtractorThread::run() {
                                     b.addString("SM_PUR");
                                     b.addDouble(pixelU);          // velocity along u axis
                                     b.addDouble(pixelV);          // velocity along v axis
-                                    b.addDouble(0.1);          // smooth pursuit time extension
+                                    b.addDouble(0.5);          // smooth pursuit time extension
                                     b.addDouble(velWTA_direction);
                                     b.addInt(countSent);
                                     outBottlePort.write();
                                     
                                     countSent++;
+                                    
+                                    suspendFlag = true;
+                                    
                                 }                        
                                 
                                 countMedian = 0;
@@ -373,12 +393,17 @@ void velocityExtractorThread::run() {
                                 magnitude[k] = 0;                        
                                 counter  [k] = 0;
                             }// end for k
+                            
+                            
+                            
                         }
                     }//end if !egoMotion
                 }   
             } //end of the for                        
         } // end vb! = 0
 
+        
+        //printf("setting histo value \n");
         setHistoValue();
         pt->setVelResult(velWTA_direction, velWTA_magnitude, maxReached, meanHist);
         
@@ -389,10 +414,16 @@ void velocityExtractorThread::run() {
 
         decayingProcess();
     
-        Time::delay(0.1);
+        Time::delay(0.05);
     } //end if !suspend    
+        
+
+
     } //end of while
+       
 }
+
+
 
 void velocityExtractorThread::decayingProcess() {
     for(int i = 0 ; i < numberOfAngles; i++) {
@@ -427,8 +458,9 @@ void velocityExtractorThread::threadRelease() {
     delete receivedBottle;
     delete bottleToSend;
     printf("correctly freed memory from the bottleHandler \n");
-    
-    pt->stop();
+    if (pt!=0) {
+        pt->stop();
+    }
 }
 
 

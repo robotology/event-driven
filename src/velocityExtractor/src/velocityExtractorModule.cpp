@@ -206,6 +206,7 @@ bool velocityExtractorModule::respond(const Bottle& command, Bottle& reply) {
     case COMMAND_VOCAB_RESUME:
         rec = true;
         {
+            
             esThread->resume();
             ok = true;
         }
@@ -213,13 +214,13 @@ bool velocityExtractorModule::respond(const Bottle& command, Bottle& reply) {
     case COMMAND_VOCAB_EGO:
         rec = true;
         {
-            printf("case position %d \n",COMMAND_VOCAB_EGO );
+            //printf("case position %d \n",COMMAND_VOCAB_EGO );
             double egoMotionU = command.get(1).asDouble();
             double egoMotionV = command.get(2).asDouble();
             if((egoMotionU == 0) && (egoMotionV == 0)) {
                 Time::delay(2.0);
             }
-            esThread->setEgoMotion(egoMotionU, egoMotionV);
+            //esThread->setEgoMotion(egoMotionU, egoMotionV);
             ok = true;
         }
         break;

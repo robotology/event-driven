@@ -44,6 +44,10 @@ plotterThread::plotterThread() : RateThread(THRATE) {
 
     firstInputImage = true;
     synchronised    = false;
+
+    velWTA_direction   = 0;
+    velWTA_magnitude   = 0;
+
    
     for(int i = 0; i < NUMANGLES; i++) {
         histoValue[i] = 10;
@@ -197,9 +201,11 @@ void plotterThread::prepareHistoImage(ImageOf<PixelRgb>& out) {
         *tmp = (unsigned char) 255; tmp++;        
     }
 
+    //plotting the threashold line
     cvLine(out.getIplImage(), cvPoint(0, 200 - 1 - maxFiringRate), 
            cvPoint(NUMANGLES,200 - 1 - maxFiringRate), 
            cvScalar(255,0,0), 2, 8, 0); //line thick, line type, shift 
+    //plotting the mean line
     cvLine(out.getIplImage(), cvPoint(0, 200 - 1 - meanValue), 
            cvPoint(NUMANGLES,200 - 1 - meanValue), 
            cvScalar(0 ,255,0), 0.5, 8, 0); //line thick, line type, shift 
@@ -250,11 +256,10 @@ void plotterThread::prepareVelocImage(ImageOf<PixelMono> in, ImageOf<PixelRgb>& 
         arrowColor = CV_RGB(255,0,0);
     }
 
-
+    // drawing the main vector
     cvLine(out.getIplImage(), cvPoint(halfRetinalSize, halfRetinalSize), 
            cvPoint((halfRetinalSize) + uComp,(halfRetinalSize) + vComp), 
            arrowColor, 2, 8, 0); //line thick, line type, shift
-
     cvCircle(out.getIplImage(), cvPoint((halfRetinalSize) + uComp,(halfRetinalSize) + vComp), 5, arrowColor, -1, 8, 0);
 
     string angleStr;
