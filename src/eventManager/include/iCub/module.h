@@ -106,7 +106,7 @@ protected:
      *      @param u position on the image plane of traditional cameras
      *      @param v position on the image plane of traditional cameras
      */
-    void                        pointDVS(int u, int v);
+    int                        pointDVS(int u, int v);
     /**
      *      @brief: touch an object detected with DVS cameras 
      *      @param u position on the image plane of traditional cameras
