@@ -139,7 +139,7 @@ eyeTriangulation::eyeTriangulation(const ResourceFinder &rf, Matrix PrjL, Matrix
   kal=new Kalman(kalA,kalH,kalQ,kalR);
 
   rlim->init(kalx0);
-  kal->init(kalx0,kalx0,kalP0);
+  kal->init(kalx0,kalP0);
 
   kalState=KALMAN_INIT;
   kalTimer=0.0;
@@ -433,7 +433,7 @@ void eyeTriangulation::run()
 					kalx0(1)=XRo(1);
 					kalx0(2)=XRo(2);
 					rlim->init(kalx0);
-					kal->init(kalx0,kalx0,kalP0);
+					kal->init(kalx0,kalP0);
 					kalState=KALMAN_NORMAL;
 				 }
 
