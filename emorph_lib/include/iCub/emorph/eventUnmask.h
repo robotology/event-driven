@@ -54,7 +54,7 @@ public:
 
     eventUnmask& operator=(const eventUnmask&);
 
-	//virtual void setBuffer(char*, uint)=0;
+	virtual void setBuffer(char*, uint)=0;
 	virtual void setBuffer(emorph::ebuffer::eventBuffer&)=0;
     virtual void reshapeBuffer()=0;
     virtual int reset()=0;

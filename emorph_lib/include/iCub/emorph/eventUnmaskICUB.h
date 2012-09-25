@@ -18,7 +18,7 @@
 #ifndef EVENTUNMASKICUB_H
 #define EVENTUNMASKICUB_H
 
-#define _DEBUG_
+//#define _DEBUG_
 
 #include "eventUnmask.h"
 
@@ -41,7 +41,7 @@ public:
 
     eventUnmaskICUB& operator=(const eventUnmaskICUB&);
 
-	//void setBuffer(char*, uint);
+	void setBuffer(char*, uint){};
 	void setBuffer(emorph::ebuffer::eventBuffer&);
     void reshapeBuffer();
     int getUmaskedData(uint&, uint&, int&, uint&, uint&);

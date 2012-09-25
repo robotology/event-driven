@@ -100,7 +100,45 @@ void eventUnmaskDVS128::objcpy(const eventUnmaskDVS128 &_obj)
     }
 }
 
-//void eventUnmaskDVS128::setBuffer(char* i_buffer, uint i_sz)
+void eventUnmaskDVS128::setBuffer(char* i_buffer, uint i_sz)
+{
+    mutex.wait();
+    //std::cout << "\t\tConcate a new buffer" << std::endl;
+    if(szBuffer==0)
+    {
+#ifdef _DEBUG
+        std::cout << "[eventUnmaskDVS128] expand the size of the gBuffer" << std::endl;
+#endif
+        //szInMem+=BUFFERBLOCK;
+        szInMem=(uint)ceil((double)i_sz/(double)BUFFERBLOCK)*BUFFERBLOCK;
+        //delete[] buffer;
+        buffer = new char[szInMem];
+    }
+    else if(szBuffer+i_sz>=szInMem)
+    {
+#ifdef _DEBUG
+        std::cout << "[eventUnmaskDVS128] expand the size and recopy of the gBuffer" << std::endl;
+#endif
+        char *buftmp=new char[szBuffer];
+        memcpy(buftmp, buffer, szBuffer);
+
+        //szInMem+=BUFFERBLOCK;
+        szInMem=(uint)ceil((double)(i_sz+szBuffer)/(double)BUFFERBLOCK)*BUFFERBLOCK;
+        delete[] buffer;
+        buffer = new char[szInMem];
+
+        memcpy(buffer, buftmp, szBuffer);
+    }
+#ifdef _DEBUG
+    std::cout << "[eventUnmaskDVS128] concat the buffer (size in byte: " << szBuffer+i_sz << ", real size in mem: " << szInMem << ")" << std::endl;
+#endif
+    memcpy(buffer+szBuffer, i_buffer, i_sz);
+    szBuffer+=i_sz;
+    nEvent=szBuffer/typeOfRecord;
+
+    mutex.post();
+}
+
 void eventUnmaskDVS128::setBuffer(emorph::ebuffer::eventBuffer &_buf)
 {
     mutex.wait();

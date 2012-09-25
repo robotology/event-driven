@@ -253,7 +253,12 @@ int eventUnmaskICUB::getUmaskedData(uint& cartX, uint& cartY, int& polarity, uin
         fprintf(dump,"%s\n","<=SYNCH");
 #endif
         blob &= 0xFFFF; // here we zero the higher two bytes of the address!!! Only lower 16bits used!
-        unmaskEvent(blob, cartX, cartY, polarity, eye);
+        //unmaskEvent(blob, cartX, cartY, polarity, eye);
+        cartX   = ((blob & xmask)>>xshift);
+        cartY   = ((blob & ymask)>>yshift);
+        polarity= (((blob & polmask)>>polshift)==0)?-1:1;   //+1 ON, -1 OFF
+        eye     = ((blob & eyemask)>>eyeshift);
+
         res=2;
     }
     else
@@ -262,7 +267,12 @@ int eventUnmaskICUB::getUmaskedData(uint& cartX, uint& cartY, int& polarity, uin
         fprintf(dump,"%08X\n",blob);
 #endif
         blob &= 0xFFFF; // here we zero the higher two bytes of the address!!! Only lower 16bits used!
-        unmaskEvent(blob, cartX, cartY, polarity, eye);
+        //unmaskEvent(blob, cartX, cartY, polarity, eye);
+        cartX   = ((blob & xmask)>>xshift);
+        cartY   = ((blob & ymask)>>yshift);
+        polarity= (((blob & polmask)>>polshift)==0)?-1:1;   //+1 ON, -1 OFF
+        eye     = ((blob & eyemask)>>eyeshift);
+
         res=1;
     }
     return res;
