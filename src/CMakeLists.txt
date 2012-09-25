@@ -3,11 +3,15 @@
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 cmake_minimum_required(VERSION 2.6)
 
-#add_subdirectory  (  angel2SAC                    )
-add_subdirectory   (  aexGrabber                   )
-add_subdirectory   (  asvGrabber                   )
+
+IF(NOT WIN32) 
+	add_subdirectory   (  aexGrabber                   )		
+	add_subdirectory   (  asvGrabber                   )
+	add_subdirectory   (  basicAexGrabber              )
+ENDIF (NOT WIN32)
+
+add_subdirectory  (  angel2SAC                    )
 add_subdirectory   (  asvBiasInterface             )
-add_subdirectory   (  basicAexGrabber              )
 #add_subdirectory  (  basicCartesianCollector      )
 add_subdirectory   (  biasInterface                )
 #add_subdirectory  (  bottleRepeater               )
