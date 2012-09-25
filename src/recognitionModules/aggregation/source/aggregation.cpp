@@ -197,6 +197,8 @@ int aggregation::loadPictures()
 //    cout << "Close the file..." << endl;
     fd.close();
 */
+
+    return 0;
 }
 
 void aggregation::sendImg(int &_index)
