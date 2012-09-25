@@ -7,6 +7,8 @@
 
 #include <string>
 #include <iostream>
+#include <fstream>
+#include <sstream>
 
 #include <yarp/os/RFModule.h>
 #include <yarp/os/Semaphore.h>
@@ -16,6 +18,8 @@
 #include "FOEFinder.h"
 
 #include <queue>
+
+
 
 using namespace std;
 using namespace yarp::os;
@@ -73,6 +77,7 @@ class FOEModule : public RFModule{
     FOEFinder foeFinder;
     VelocityGrabber vGrabber;
     yarp::os::BufferedPort< yarp::sig::ImageOf <yarp::sig::PixelRgb> > outPort;
+    Port handlerPort; // a port to handle messages
     unsigned long ts;
 
 public:
@@ -106,6 +111,12 @@ public:
 
         foeFinder.setOutPort(&outPort);
 
+        inPortName = "/";
+        inPortName += getName();
+        inPortName += "/handler";
+        handlerPort.open(inPortName.c_str());
+        attach(handlerPort);
+
         ts = 0;
         return true;
     }
@@ -115,16 +126,31 @@ public:
         vb = vGrabber.getVelocities();
         ts ++;
         if (vb != NULL){
-//            foeFinder.computeFoE(*vb, false);
-            foeFinder.makeObjMap2(*vb);
-//       	  foeFinder.velNormal(*vb);
+            foeFinder.computeFoE(*vb, true);
+//            foeFinder.makeObjMap2(*vb);
+//            foeFinder.velNormal(*vb);
 //            foeFinder.velDivergance(*vb);
            delete vb;
         }
         return true;
     }
 
+    bool respond(const Bottle& command, Bottle& reply)
+    {
+        static int count= 0;
+        string fileName;
+        std::stringstream sstm;
+        sstm << "dump" << count << ".txt";
+        fileName = sstm.str();
 
+        if (command.get(0).asString()=="dump"){
+            foeFinder.printFOE(fileName);
+
+            count++;
+            reply=command;
+        }
+        return true;
+    }
 
     double getPeriod(){
         return .001;
@@ -134,6 +160,7 @@ public:
         cout << "Interrupting.." << endl;
         vGrabber.interrupt();
         outPort.interrupt();
+        handlerPort.interrupt();
         return true;
     }
 
@@ -141,6 +168,7 @@ public:
         cout << "closing .." << endl;
         vGrabber.close();
         outPort.close();
+        handlerPort.close();
         return true;
     }
 
@@ -174,3 +202,8 @@ int main(int argc, char *argv[])
 
    return 0;
 }
+
+
+
+
+

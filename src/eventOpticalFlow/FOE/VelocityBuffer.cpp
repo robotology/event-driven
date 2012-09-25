@@ -20,7 +20,18 @@
 
 #include "VelocityBuffer.h"
 
+
 VelocityBuffer::VelocityBuffer(){
+    initialize();
+    bufferingTime = 10000; //10000;
+}
+
+VelocityBuffer::VelocityBuffer(unsigned long timeInt ){
+    initialize();
+    bufferingTime = timeInt;
+}
+
+void VelocityBuffer::initialize(){
     vxMin = DBL_MAX;
     vxMax = -1;
     vyMin = DBL_MAX;
@@ -28,7 +39,7 @@ VelocityBuffer::VelocityBuffer(){
     size = 0;
 }
 
-bool VelocityBuffer::addData(short x, short y, double vx, double vy, unsigned long ts){
+bool VelocityBuffer::addData(short x, short y, double vx, double vy, unsigned long ts, double reliablity){
     double tmp;
     if (size >= BUFFER_LENGTH)
         return false;
@@ -57,7 +68,7 @@ bool VelocityBuffer::addData(short x, short y, double vx, double vy, unsigned lo
 
 VelocityBuffer::~VelocityBuffer(){}
 
-bool VelocityBuffer::addDataCheckFull(short x, short y, double vx, double vy, unsigned long ts){
+bool VelocityBuffer::addDataCheckFull(short x, short y, double vx, double vy, unsigned long ts, double reliablity){
     double tmp;
     Xs[size] = x;
     Ys[size] = y;
@@ -81,8 +92,10 @@ bool VelocityBuffer::addDataCheckFull(short x, short y, double vx, double vy, un
     if (tmp > vyMax)
         vyMax = tmp;
 
-    if (size == BUFFER_LENGTH)
+    if (/*(ts - TSs[0] >= bufferingTime) ||*/ size == BUFFER_LENGTH){
+   //     std::cout << size << std::endl;
         return true;
+    }
 
     return false;
 }
@@ -122,6 +135,7 @@ bool VelocityBuffer::read(ConnectionReader & connection){
 	   TSs[i] = (unsigned long) connection.expectInt();
 	}
 
+
     vxMin = connection.expectDouble();
     vxMax = connection.expectDouble();
     vyMin = connection.expectDouble();
@@ -149,6 +163,7 @@ bool VelocityBuffer::write(ConnectionWriter & connection){
 		connection.appendInt((int) TSs[i]);
 	}
 
+
     connection.appendDouble(vxMin);
     connection.appendDouble(vxMax);
     connection.appendDouble(vyMin);
@@ -171,6 +186,60 @@ void VelocityBuffer::setData(const VelocityBuffer & src){
     vxMax = src.vxMax;
     vyMin = src.vyMin;
     vyMax = src.vyMax;
+}
+
+
+bool VelocityBuffer::addData(const VelocityBuffer &data){
+
+    bool res = true;
+    int tmp = data.size;
+    if (size + data.size >= BUFFER_LENGTH){
+        tmp = BUFFER_LENGTH;
+        res = false;
+    }
+
+
+    for (int i = 0; i < tmp; ++i) {
+        Xs[size]= data.Xs[i];
+        Ys[size]= data.Ys[i];
+        Vxs[size]=data.Vxs[i];
+        Vys[size]=data.Vys[i];
+        TSs[size] = data.TSs[i];
+        size++;
+    }
+
+    if (vxMin > data.vxMin)
+        vxMin = data.vxMin;
+    if (vyMin > data.vyMin)
+        vyMin = data.vyMin;
+    if (vxMax < data.vxMax)
+        vxMax = data.vxMax;
+    if (vyMax < data.vyMax)
+        vyMax = data.vyMax;
+
+    return res;
+
+}
+
+void VelocityBuffer::setVx(int idx, double vx ){
+    double tmp;    
+    Vxs[idx] = vx;
+
+    tmp = fabs(vx);
+    if (tmp < vxMin)
+        vxMin = tmp;
+    if (tmp > vxMax)
+        vxMax = tmp;
+}
+
+void VelocityBuffer::setVy(int idx, double vy ){
+    double tmp;
+    Vys[idx] = vy;
+    tmp = fabs(vy);
+    if (tmp < vyMin)
+        vyMin = tmp;
+    if (tmp > vyMax)
+        vyMax = tmp;
 }
 
 double VelocityBuffer::getVxMin(){

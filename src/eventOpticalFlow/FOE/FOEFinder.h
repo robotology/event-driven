@@ -14,6 +14,8 @@
 #include <cmath>
 #include <vector>
 #include <iostream>
+#include <fstream>
+#include <sstream>
 
 #include <yarp/sig/Image.h>
 #include <yarp/sig/Matrix.h>
@@ -27,7 +29,7 @@
 
 ///For FOE in development
 #define FOEMAP_MAXREG_SIZE 7
-#define WEIGHT_FACTOR .05
+#define WEIGHT_FACTOR .1
 #define LEAK_RATE (- 0.00001)
 
 
@@ -62,10 +64,15 @@ class FOEFinder{
 
     void getFOEMapMax(int & centerX, int & centerY, double & foeMaxValue);
 
+
+    void visualizeObjMap(  unsigned long crntTS);
+
 public:
     FOEFinder();
     void setOutPort(BufferedPort< yarp::sig::ImageOf <yarp::sig::PixelRgb > > * );
     ~FOEFinder();
+
+    void printFOE(string fileName);
 
     void computeFoE(VelocityBuffer & , bool vis = true);
     void makeObjMap(VelocityBuffer &);

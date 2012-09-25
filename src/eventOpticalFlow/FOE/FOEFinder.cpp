@@ -55,6 +55,7 @@ void FOEFinder::computeFoE(VelocityBuffer & vb, bool vis){
    }
 
 
+   cout << foeX << " " << foeY << endl;
    //Send the FOE map to output port
    if (vis){
        yarp::sig::ImageOf<yarp::sig::PixelRgb>& img=outPort-> prepare();
@@ -62,12 +63,12 @@ void FOEFinder::computeFoE(VelocityBuffer & vb, bool vis){
        img.zero();
 
 
-    //   double normFactor = 254 / foeMaxValue;
-    //   for (int i = 0; i < X_DIM; ++i) {
-    //        for (int j = 0; j < Y_DIM; ++j) {
-    //            img(i,j) = yarp::sig::PixelRgb (0,0 , normFactor * foeMap(i,j) );
-    //        }
-    //    }
+//       double normFactor = 254 / foeMaxValue;
+//       for (int i = 0; i < X_DIM; ++i) {
+//            for (int j = 0; j < Y_DIM; ++j) {
+//                img(i,j) = yarp::sig::PixelRgb (0,0 , normFactor * foeMap(i,j) );
+//            }
+//        }
 
        for (int i = 0; i < vb.getSize(); ++i) {
            img(vb.getX(i), vb.getY(i)) = yarp::sig::PixelRgb ( 100, 100, 100 );
@@ -89,16 +90,19 @@ void FOEFinder::bin2(VelocityBuffer & data){
     double aFlow, radian, vx, vy, a1, a2, b1, b2, dtmp1, dtmp2;
     double a3, b3;
 
+    static unsigned long prevTS = 0;
+
     radian = NGHBR_RADIAN; // angle between two consequative lines
     size = data.getSize();
 
     unsigned long tmpTS = data.getTs(0);
-//    cout << tmpTS << endl;
 
+
+    double leakyFactor = exp( LEAK_RATE * (tmpTS -  prevTS));
     //leak the values
     for (int i = 0; i < X_DIM; ++i) {
        for (int j = 0; j < Y_DIM; ++j) {
-           foeMap(i,j) = exp( LEAK_RATE * (tmpTS - tsStatus(i,j)) ) * foeMap(i,j); //LEAK_RATE * foeMap(i,j);
+           foeMap(i,j) = /*exp( LEAK_RATE * (tmpTS - tsStatus(i,j)) )*/leakyFactor * foeMap(i,j); //LEAK_RATE * foeMap(i,j);
            tsStatus(i,j) = tmpTS;
        }
     }
@@ -144,6 +148,9 @@ void FOEFinder::bin2(VelocityBuffer & data){
 //          cout << x << " " << y << " " << vx << " " << vy << " " << data.getTs(cntr) << endl;
 
    }// end of loop on events
+
+
+   prevTS = tmpTS;
 }
 
 
@@ -402,81 +409,192 @@ void FOEFinder::makeObjMap2(VelocityBuffer & packet){
     double maxValue, normFactor, tmp, r, b , g;
     int wndwSZ;
 
+//   foeX  = 59; foeY = 64;
+
     size = packet.getSize();
 
-    //Update map with new arieved values
+    unsigned long crntTS;
+    crntTS = packet.getTs(size - 1);
+
+    //Update map with new arrived values
     for (int cntr = 0; cntr < size; ++cntr) {
        x = packet.getX(cntr) + FILTER_NGHBRHD;
        y = packet.getY(cntr) + FILTER_NGHBRHD;
        vx = packet.getVx(cntr);
        vy = packet.getVy(cntr);
 
-       velNorm = sqrt(vx*vx + vy*vy) * 10000;
-      // distan = sqrt( (foeX - x)*(foeX-x) + (foeY - y)*(foeY - y)) ;
-     //  objMap(x, y) =  distan / velNorm;
-       objMap(x,y ) = velNorm;
+//       velNorm = sqrt(vx*vx + vy*vy) * 10000;
+//       objMap(x,y ) = velNorm;
+
+       //velNorm = int ( sqrt(vx*vx + vy*vy) * 100000 + .5 ) + 1;
+       velNorm = int( ( 1 / ( sqrt(vx*vx + vy*vy ) + .0000001)) + .5 ) ;
+       distan = sqrt( (foeX - x)*(foeX-x) + (foeY - y)*(foeY - y)) ;
+       deltaT = (crntTS - objMapTS(x, y) > 50000 ? 0 : .4);
+       objMap(x, y) =    (1 - deltaT) *  distan *  velNorm + deltaT * objMap(x, y) ;
+
        objMapTS(x, y) = packet.getTs(cntr);
    }
+    //cout << velNorm << endl;
 
    //Smoothing
-   for (int cntr = 0; cntr < size; ++cntr) {
-       x = packet.getX(cntr) + FILTER_NGHBRHD;
-       y = packet.getY(cntr) + FILTER_NGHBRHD;
-       avg = 0;
-       tim1 = objMapTS(x,y);
-       wndwSZ  =0;
-       for (int i = -FILTER_NGHBRHD; i <= FILTER_NGHBRHD; ++i) {
-           for (int j = -FILTER_NGHBRHD; j <= FILTER_NGHBRHD; ++j) {
-               tim2 = objMapTS(x + i, y + j);
-               deltaT = ( abs(tim1- tim2) > 30000 ? 0 : 1 );
-               tmp = objMap(x + i, y + j) * deltaT;
-               avg += tmp;
-               wndwSZ  += deltaT;
-          }
-       }
-       avg = avg / wndwSZ;
-       objMap(x, y) = avg;
-   }
+//   for (int cntr = 0; cntr < size; ++cntr) {
+//       x = packet.getX(cntr) + FILTER_NGHBRHD;
+//       y = packet.getY(cntr) + FILTER_NGHBRHD;
+
+    for (int x = FILTER_NGHBRHD; x < X_DIM + FILTER_NGHBRHD; ++x) {
+        for (int y = FILTER_NGHBRHD; y < Y_DIM + FILTER_NGHBRHD; ++y) {
+
+           tim1 = objMapTS(x,y);
+
+           if (crntTS - tim1 > 200000){
+               objMap(x,y) = 0;
+               continue;
+           }
+           avg = 0;
+           wndwSZ  =0;
+           for (int i = -FILTER_NGHBRHD; i <= FILTER_NGHBRHD; ++i) {
+               for (int j = -FILTER_NGHBRHD; j <= FILTER_NGHBRHD; ++j) {
+                   tim2 = objMapTS(x + i, y + j);
+                   deltaT = ( abs(tim1- tim2) > 50000 ? 0 : 1 );
+                   tmp = objMap(x + i, y + j) * deltaT;
+                   avg += tmp;
+                   wndwSZ  += deltaT;
+              }
+           }
+           avg = avg / wndwSZ;
+           objMap(x, y) = avg;
+      }
+    }
+   cout << avg << endl;
 
    //Visualization
-   unsigned long crntTS;
-   crntTS = packet.getTs(size - 1);
 
-   yarp::sig::ImageOf<yarp ::sig::PixelRgb>& img=outPort-> prepare();
-   img.resize(X_DIM + 2*FILTER_NGHBRHD, Y_DIM + 2*FILTER_NGHBRHD);
-   img.zero();
 
-   maxValue = 100;
-   normFactor = (255/ (.3 * maxValue));
-   for (int i = 0; i < X_DIM + 2*FILTER_NGHBRHD; ++i) {
-      for (int j = 0; j < Y_DIM + 2*FILTER_NGHBRHD; ++j) {
+   visualizeObjMap( crntTS);
 
-          deltaT = 10000 / ( crntTS - objMapTS(i,j) );
-
-          if (objMap(i, j) * deltaT > .7 * maxValue){
-              r = normFactor * (objMap(i, j) * deltaT - .7 * maxValue);
-              img(i,j) =  yarp::sig::PixelRgb ( r, 0 , 0 );
-          }else {
-              if (objMap(i, j) * deltaT > .3 * maxValue ){
-                  b = normFactor * (objMap(i, j) * deltaT - .3 * maxValue);
-                  img(i,j) =  yarp::sig::PixelRgb ( 0, 0 , b );
-              }
-              else{
-                  g = normFactor * objMap(i, j) * deltaT ;
-                  img(i,j) =  yarp::sig::PixelRgb ( 0, g , 0 );
-              }
-          }
-//        tmp = normFactor * objMap(i,j);
-//        img(i,j) = yarp::sig::PixelRgb (tmp,tmp , tmp);
-       }
-   }
-
-   static const yarp::sig::PixelRgb pr(200,0,0);
-   yarp::sig::draw::addCircle(img,pr,foeX,foeY,4);
-
-   outPort -> write();
 }
 
+
+void FOEFinder::visualizeObjMap(  unsigned long crntTS){
+    double maxValue, normFactor;
+    int tempDepth, deltaT;
+    double depthRed, depthGreen, depthBlue;
+
+
+    yarp::sig::ImageOf<yarp ::sig::PixelRgb>& img=outPort-> prepare();
+    img.resize(X_DIM , Y_DIM );
+    img.zero();
+
+    maxValue = 2000; //16000; //300;
+    normFactor = (255/  maxValue);
+    for (int i = 0; i < X_DIM ; ++i) {
+        for (int j = 0; j < Y_DIM ; ++j) {
+
+//            deltaT = ( crntTS - objMapTS(i,j) > 200000 ? 0 : 1);
+//            objMap(i, j) = objMap(i, j) * deltaT;
+
+            tempDepth = normFactor * objMap(i + FILTER_NGHBRHD ,j + FILTER_NGHBRHD);
+
+            if(tempDepth < 43){
+                depthRed = tempDepth * 6;
+                depthGreen = 0;
+                depthBlue = tempDepth * 6;
+            }
+            if(tempDepth > 42 && tempDepth < 85){
+                depthRed = 255 - (tempDepth - 43) * 6;
+                depthGreen = 0;
+                depthBlue = 255;
+            }
+            if(tempDepth > 84 && tempDepth < 128){
+                depthRed = 0;
+                depthGreen = (tempDepth - 85) * 6;
+                depthBlue = 255;
+            }
+            if(tempDepth > 127 && tempDepth < 169){
+                depthRed = 0;
+                depthGreen = 255;
+                depthBlue = 255 - (tempDepth - 128) * 6;
+            }
+            if(tempDepth > 168 && tempDepth < 212){
+                depthRed = (tempDepth - 169) * 6;
+                depthGreen = 255;
+                depthBlue = 0;
+            }
+            if(tempDepth > 211 && tempDepth < 254){
+                depthRed = 255;
+                depthGreen = 255 - (tempDepth - 212) * 6;
+                depthBlue = 0;
+            }
+            if(tempDepth > 253){
+                depthRed = 255;
+                depthGreen = 0;
+                depthBlue = 0;
+            }
+
+            img(i,j) =  yarp::sig::PixelRgb ( depthRed, depthGreen , depthBlue );
+
+        }// end for on y dimention
+    }// end for on x dimention
+
+
+
+
+    static const yarp::sig::PixelRgb pr(200,0,0);
+    yarp::sig::draw::addCircle(img,pr,foeX,foeY,4);
+    outPort -> write();
+
+
+    ///GRAY-SCALE VISUALIzations
+    //   yarp::sig::ImageOf<yarp ::sig::PixelRgb>& img=outPort-> prepare();
+    //   img.resize(X_DIM + 2*FILTER_NGHBRHD, Y_DIM + 2*FILTER_NGHBRHD);
+    //   img.zero();
+    //
+    //   maxValue = 15; //16000; //300;
+    //   normFactor = (255/  maxValue);
+    //   for (int i = 0; i < X_DIM + 2*FILTER_NGHBRHD; ++i) {
+    //     for (int j = 0; j < Y_DIM + 2*FILTER_NGHBRHD; ++j) {
+    //         deltaT = ( crntTS - objMapTS(i,j) > 100000 ? 0 : 1);
+    //         objMap(i, j) = objMap(i, j) * deltaT;
+    //
+    //         if (objMap(i, j) * deltaT > .00000001 * maxValue){
+    //             r = normFactor * objMap(i, j);
+    //             img(i,j) =  yarp::sig::PixelRgb ( 0, r , 0 );
+    //         }
+    //
+    //     }
+    //
+    //   }
+
+
+
+    //   normFactor = (255/ (.3 * maxValue));
+    //   for (int i = 0; i < X_DIM + 2*FILTER_NGHBRHD; ++i) {
+    //      for (int j = 0; j < Y_DIM + 2*FILTER_NGHBRHD; ++j) {
+    //
+    //          deltaT = ( crntTS - objMapTS(i,j) > 100000 ? 0 : 1);
+    //          objMap(i, j) = objMap(i, j) * deltaT;
+    //
+    //          if (objMap(i, j) * deltaT > .00000001 * maxValue){
+    //              // if the value is not too small
+    //              if (objMap(i, j)  < .3 * maxValue){
+    //                 r = normFactor * objMap(i, j);
+    //                 img(i,j) =  yarp::sig::PixelRgb ( r, 0 , 0 );
+    //              }else {
+    //                  if (objMap(i, j)  < .7 * maxValue){
+    //                      b = normFactor * (objMap(i, j)  - .3 * maxValue);
+    //                      img(i,j) =  yarp::sig::PixelRgb ( 250, 0 , b );
+    //                  }else {
+    //                      g = normFactor * (objMap(i, j)  - .7 * maxValue);
+    //                      g = (g < 255 ? g : 255);
+    //                      img(i,j) =  yarp::sig::PixelRgb ( 250, g , 250 );
+    //                  }
+    //              }
+    //          }
+    //
+    //       }
+    //   }
+
+}
 
 FOEFinder::~FOEFinder(){}
 
@@ -495,4 +613,17 @@ int FOEFinder::sobely(yarp::sig::Matrix & mtx, int stR, int stC){
 
     return res;
 }*/
+
+void FOEFinder::printFOE(string fileName){
+
+    ofstream fileStr;
+    fileStr.open(fileName.c_str(), ofstream::binary);
+    cout << fileName.c_str() << endl;;
+
+    fileStr << foeMap.toString() << endl;
+
+    //fileStr << foeX << " " << foeY << endl;
+    fileStr.close();
+
+}
 
