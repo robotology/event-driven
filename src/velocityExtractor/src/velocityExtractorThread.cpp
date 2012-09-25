@@ -63,6 +63,7 @@ velocityExtractorThread::velocityExtractorThread() : Thread() {
     countStop        = 0;
     egoMotionU       = 0;
     egoMotionV       = 0;
+    alfa             = 0.0;
   
     synchronised = false;
     greaterHalf  = false;

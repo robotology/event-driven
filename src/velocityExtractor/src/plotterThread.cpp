@@ -36,6 +36,7 @@ using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
+
 #define THRATE 15
 
 plotterThread::plotterThread() : RateThread(THRATE) {
@@ -243,8 +244,8 @@ void plotterThread::prepareVelocImage(ImageOf<PixelMono> in, ImageOf<PixelRgb>& 
     double velWTA_rad = (velWTA_direction / 180.0) * PI;
     
     //printf("velWTA: %f %d \n", velWTA_rad, velWTA_direction );
-    int uComp = (int) round(cos(velWTA_rad) * (velWTA_magnitude * 1000));
-    int vComp = (int) round(sin(velWTA_rad) * (velWTA_magnitude * 1000));
+    int uComp = (int) floor((double)cos(velWTA_rad) * (velWTA_magnitude * 1000));
+    int vComp = (int) floor((double)sin(velWTA_rad) * (velWTA_magnitude * 1000));
     //printf("uComp %d vComp %d \n",uComp, vComp);
     
     CvScalar arrowColor;

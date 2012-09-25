@@ -31,6 +31,7 @@
 #include <yarp/os/Semaphore.h>
 #include <yarp/os/BufferedPort.h>
 #include <yarp/sig/all.h>
+#include <cmath>
 #include <iostream>
 
 #define NUMANGLES 360

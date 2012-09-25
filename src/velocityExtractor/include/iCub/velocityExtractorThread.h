@@ -53,7 +53,7 @@ private:
     static const int    maxFiringRate  = 120;
     static const int    medianDim      = 5;
 
-    static const double alfa           = 0.0;
+    double alfa;
    
     int count;                          // loop counter of the thread
     int countMedian;                  // counter of the median
