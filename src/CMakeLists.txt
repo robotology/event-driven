@@ -10,7 +10,7 @@ IF(NOT WIN32)
 	add_subdirectory   (  basicAexGrabber              )
 ENDIF (NOT WIN32)
 
-add_subdirectory  (  angel2SAC                    )
+add_subdirectory   (  angel2SAC                    )
 add_subdirectory   (  asvBiasInterface             )
 #add_subdirectory  (  basicCartesianCollector      )
 add_subdirectory   (  biasInterface                )
@@ -45,7 +45,7 @@ add_subdirectory   (  staticCalib                  )
 #add_subdirectory  (  testWings                    )
 #add_subdirectory  (  visualAligner                )
 add_subdirectory   (  velocityExtractor            )
-add_subdirectory   (  wingsTranslator              )
+
 add_subdirectory   (  eventManager                 )  
 add_subdirectory   (  ikartDvsObstacleDetector     ) 
 
@@ -63,6 +63,7 @@ add_subdirectory   ( recognitionModules/recognition)
 add_subdirectory   ( recognitionModules/aggregation)
 
 if(ICUB_USE_IPOPT)
-  add_subdirectory ( targetFinder                  )
+        add_subdirectory ( targetFinder                  )
+	add_subdirectory (  wingsTranslator              )
 endif(ICUB_USE_IPOPT)
 

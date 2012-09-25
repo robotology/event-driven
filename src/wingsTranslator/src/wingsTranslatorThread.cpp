@@ -467,7 +467,8 @@ Vector wingsTranslatorThread::getAbsAngles(const Vector &x) {
 
 /************************************************************************/
 Vector wingsTranslatorThread::get3DPoint(const string &type, const Vector &ang) {
-
+    Vector res(3);
+    return res;
 }
 
 void wingsTranslatorThread::setName(string str) {
