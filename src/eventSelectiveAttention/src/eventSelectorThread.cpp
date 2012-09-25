@@ -121,7 +121,7 @@ bool eventSelectorThread::threadInit() {
 
 
     startTimer = Time::now();
-    gettimeofday(&tvend, NULL);
+    //gettimeofday(&tvend, NULL);
 
     count = 0;
     microsecondsPrev = 0;
@@ -900,7 +900,7 @@ void eventSelectorThread::run() {
     //printf("after extracting the bottle \n");
     // saving the buffer into the file
     int num_events = CHUNKSIZE / 8 ;
-    uint32_t* buf2 = (uint32_t*)bufferCopy;
+    u32* buf2 = (u32*)bufferCopy;
 
     // getting the time statistics
     endTimer = Time::now();
@@ -984,12 +984,12 @@ void eventSelectorThread::run() {
 #endif
 
     //gettin the time between two threads
-    gettimeofday(&tvend, NULL);
+    //gettimeofday(&tvend, NULL);
     //Tnow = ((u64)tvend.tv_sec) * 1000000 + ((u64)tvstart.tv_usec);
-    Tnow = ((tvend.tv_sec * 1000000 + tvend.tv_usec)
-	    - (tvstart.tv_sec * 1000000 + tvstart.tv_usec));
+    //Tnow = ((tvend.tv_sec * 1000000 + tvend.tv_usec)
+	//    - (tvstart.tv_sec * 1000000 + tvstart.tv_usec));
     //printf("timeofday>%ld\n",Tnow );
-    gettimeofday(&tvstart, NULL);       
+    //gettimeofday(&tvstart, NULL);       
             
 
     

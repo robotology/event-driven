@@ -29,9 +29,9 @@
 #include <iostream>
 #include <fstream>
 #include <time.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <inttypes.h>
+//#include <sys/time.h>
+//#include <sys/types.h>
+//#include <inttypes.h>
 #include <stdlib.h>
 
 //yarp includes
@@ -54,7 +54,7 @@ class eventSelectorThread : public yarp::os::RateThread {
 private:
     
     int count;                          // loop counter of the thread
-    struct timeval tvstart,tvend;
+    //struct timeval tvstart,tvend;
     //struct timespec start_time, stop_time;
     u64 Tnow;
     unsigned long precl;

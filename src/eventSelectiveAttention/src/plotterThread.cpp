@@ -305,7 +305,7 @@ void plotterThread::run() {
                 //printf("counted upto 10 WTA \n");
                 //send maxCalibX and maxCaliby
                 int maxCalibX, maxCalibY;
-                maxCalibY = (int) floor(maxCalib / 16);
+                maxCalibY = (int) std::floor((double)maxCalib / 16);
                 maxCalibX = maxCalib - maxCalibY * 16;
                 maxCalibY = maxCalibY * 8;
                 maxCalibX = maxCalibX * 8;
@@ -415,8 +415,8 @@ int plotterThread::integrateImage(ImageOf<PixelMono>* imageIn, ImageOf<PixelMono
             pimageth += padding;
         }
         if((countX!=0) && (countY!=0)) {
-            centroidX = (int) floor(sumX / countX);
-            centroidY = (int )floor(sumY / countY);
+            centroidX = (int) std::floor((double)sumX / countX);
+            centroidY = (int )std::floor((double)sumY / countY);
         }
     }
     return  centroidY * retinalSize + centroidX;
@@ -424,34 +424,34 @@ int plotterThread::integrateImage(ImageOf<PixelMono>* imageIn, ImageOf<PixelMono
 
 
 void plotterThread::threadRelease() {
-  printf("plotterThread: portClosing \n");  
-  leftPort.close();
-  rightPort.close();
-  leftPortBW.close();
-  rightPortBW.close();
-  leftIntPort.close();
-  rightIntPort.close();
-  leftGrayPort.close();
-  rightGrayPort.close();
-  eventPort.close();
-  leftPortBWCalib.close();
-  rightPortBWCalib.close();
-  maxCalibPort.close();
+    printf("plotterThread: portClosing \n");  
+    leftPort.close();
+    rightPort.close();
+    leftPortBW.close();
+    rightPortBW.close();
+    leftIntPort.close();
+    rightIntPort.close();
+    leftGrayPort.close();
+    rightGrayPort.close();
+    eventPort.close();
+    leftPortBWCalib.close();
+    rightPortBWCalib.close();
+    maxCalibPort.close();
 
-  printf("freeing memory \n");
- 
-  // delete imageLeft;
-  //delete imageRight;
-  delete imageLeftInt;
-  delete imageRightInt;
-  delete imageLeftBW;
-  delete imageRightBW;
-  delete imageLeftGrey;
-  delete imageRightGrey;
-  delete imageLeftThreshold;
-  delete imageRightThreshold;
+    printf("freeing memory \n");
 
-  printf("success in release the plotter thread \n");
+    // delete imageLeft;
+    //delete imageRight;
+    delete imageLeftInt;
+    delete imageRightInt;
+    delete imageLeftBW;
+    delete imageRightBW;
+    delete imageLeftGrey;
+    delete imageRightGrey;
+    delete imageLeftThreshold;
+    delete imageRightThreshold;
+
+    printf("success in release the plotter thread \n");
 }
 
 

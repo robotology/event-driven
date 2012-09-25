@@ -135,7 +135,7 @@ bool bottleProcessorThread::threadInit() {
     //T1 = times(&start_time);
     //microseconds = 0;
     //microsecondsPrev = 0;
-    gettimeofday(&tvend, NULL);
+    //gettimeofday(&tvend, NULL);
 
     count = 0;
     microsecondsPrev = 0;

@@ -32,7 +32,7 @@
 #include <ctime>
 #include <list>
 #include <sys/types.h>
-#include <inttypes.h>
+//#include <inttypes.h>
 //#include <iCub/config.h>
 
 #define VERBOSE
@@ -197,7 +197,7 @@ void eventCartesianCollector::onRead(eventBuffer& i_ub) {
 
 #ifdef VERBOSE
     int num_events = dim >> 3 ;
-    uint32_t* buf2 = (uint32_t*)receivedBuffer;
+    u32* buf2 = (u32*) receivedBuffer;
     //plotting out
     for (int evt = 0; evt < num_events; evt++) {
         unsigned long blob      = buf2[2 * evt];
@@ -210,10 +210,8 @@ void eventCartesianCollector::onRead(eventBuffer& i_ub) {
     // the thrid part of the buffer is free to avoid overflow
     //totDim += dim;
     int overflow = 0;
-         
       
     int removeLater=0;
-    
     
     int status = 0;
     
@@ -226,7 +224,7 @@ void eventCartesianCollector::onRead(eventBuffer& i_ub) {
        totDim   += dim;
        removeLater = 1; 
     }
-    else if(totDim < TH2 && (totDim + dim) > TH2){
+    else if((totDim < TH2) && ((totDim + dim) > TH2)){
         pcRead = converterBuffer;
         status = 3;
         memcpy(pcBuffer,receivedBuffer,dim);
