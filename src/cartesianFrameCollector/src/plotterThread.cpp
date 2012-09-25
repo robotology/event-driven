@@ -362,8 +362,8 @@ int plotterThread::integrateImage(ImageOf<PixelMono>* imageIn, ImageOf<PixelMono
             pimageth += padding;
         }
         if((countX!=0) && (countY!=0)) {
-            centroidX = (int) floor(sumX / countX);
-            centroidY = (int )floor(sumY / countY);
+            centroidX = (int) std::floor((double)sumX / countX);
+            centroidY = (int )std::floor((double)sumY / countY);
         }
     }
     return  centroidY * retinalSize + centroidX;

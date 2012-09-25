@@ -31,7 +31,7 @@
 #include <sstream>
 #include <ctime>
 #include <sys/types.h>
-#include <inttypes.h>
+//#include <inttypes.h>
 
 // yarp includes
 #include <yarp/os/all.h>
@@ -41,6 +41,9 @@
 #include <iCub/emorph/eventCodec.h>
 
 //using namespace emorph::ecodec;
+
+typedef yarp::os::NetUint16 u16;
+typedef yarp::os::NetUint32 u32;
 
 class unmask : public yarp::os::RateThread{
 private:

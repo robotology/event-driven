@@ -31,9 +31,9 @@
 #include <iostream>
 #include <fstream>
 #include <time.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <inttypes.h>
+//#include <sys/time.h>
+//#include <sys/types.h>
+//#include <inttypes.h>
 #include <stdlib.h>
 
 /* yarp related includes */
@@ -65,7 +65,7 @@ private:
     int synchPeriod;                     // synchronization period between events and viewer
     int responseGradient;                // responseGradient parameter
 
-    struct timeval tvstart,tvend;
+    //struct timeval tvstart,tvend;
     //struct timespec start_time, stop_time;
     long int Tnow;
     unsigned long precl;
@@ -265,7 +265,7 @@ public:
     /**
      * @brief function that indicates whether the viewer reppresent logpolar information
      */
-    void setLogPolar(int value) {logPolar = value; };
+    void setLogPolar(int value) {logPolar = value==1?true:false; };
 
     /**
      * @brief function that indicates whether the viewer reppresent logpolar information

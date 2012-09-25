@@ -299,7 +299,7 @@ void eventBottleHandler::getMonoImage(ImageOf<PixelMono>* image, unsigned long m
     // int* pBuffer = unmask_events.getEventBuffer(camera);
     int* pBuffer = 0;
     // unsigned long* pTime   = unmask_events.getTimeBuffer(camera);
-    unsigned long* pTime;
+    unsigned long* pTime = 0;
     
     //printf("timestamp: min %d    max %d  \n", minCount, maxCount);
     //pBuffer += retinalSize * retinalSize - 1;

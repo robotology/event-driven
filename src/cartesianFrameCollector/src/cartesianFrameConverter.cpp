@@ -33,7 +33,7 @@
 #include <ctime>
 #include <list>
 #include <sys/types.h>
-#include <inttypes.h>
+//#include <inttypes.h>
 #include <iCub/config.h>
 
 //#define VERBOSE
