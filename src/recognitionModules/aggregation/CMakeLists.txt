@@ -14,7 +14,9 @@ SOURCE_GROUP("Header Files" FILES ${folder_header})
 
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR})
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/include)
-INCLUDE_DIRECTORIES(${YARP_INCLUDE_DIRS})
+INCLUDE_DIRECTORIES(${YARP_INCLUDE_DIRS}
+                    ${GSL_INCLUDE_DIRS}
+)
 INCLUDE_DIRECTORIES(${EMORPHLIB_INCLUDE_DIRS})
 INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIRS})
 
@@ -22,10 +24,10 @@ ADD_EXECUTABLE(${PROJECTNAMELOCAL}   ${folder_source}
                                 ${folder_header})
 
 TARGET_LINK_LIBRARIES (	${PROJECTNAMELOCAL}
-						${YARP_LIBRARIES}
+                        ${YARP_LIBRARIES}
                         ${OpenCV_LIBS}
                         eMorphLib
-						)
+                        )
 
 #SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build)
 #SET(EXECUTABLE_OUTPUT_PATH $ENV{MODULES_ROOT}/bin)
