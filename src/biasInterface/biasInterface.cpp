@@ -529,7 +529,7 @@ static void callbackLoadButton( GtkWidget *widget,gpointer data ) {
         filename.append(entry_file);
         filename.append(".txt");
         //char str[80];
-        int current;
+        //int current;
         printf("trying to read from the %s \n", entry_file);
         fout = fopen(filename.c_str(),"r");
         if(fout == NULL ) {
