@@ -64,6 +64,7 @@
 
 
 bool HeadingModule::updateModule(){
+
     return true;
 }
 

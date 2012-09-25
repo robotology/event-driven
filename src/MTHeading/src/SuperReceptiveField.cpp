@@ -20,7 +20,7 @@
 VelocityBuffer SuperReceptiveField::velField;
 
 SuperReceptiveField::SuperReceptiveField(int receptFieldNum):
-       RateThread(10){
+       RateThread(20){
     receptiveFieldsNum = receptFieldNum;
 
     //reserve enough space for thread vectors
@@ -29,9 +29,9 @@ SuperReceptiveField::SuperReceptiveField(int receptFieldNum):
     //initialize threads and mutexs
     int borderSize = FOEMAP_MAXREG_SIZE;
     for (int i = 0; i < receptFieldNum; ++i) {
-        receptiveFields.push_back( FOERecptiveField(0, i * (RETINA_Y / receptFieldNum )
-                                                     , RETINA_X - 1 + 2*borderSize
-                                                     , (i + 1) * (RETINA_Y / receptFieldNum) -1 + 2*borderSize, borderSize ) );
+        receptiveFields.push_back( FOERecptiveField(0, i * (RETINA_Y / receptFieldNum ),
+                                                    RETINA_X - 1 + 2*borderSize,
+                                                    (i + 1) * (RETINA_Y / receptFieldNum) -1 + 2*borderSize, borderSize ) );
 
     }
 
@@ -134,16 +134,15 @@ void SuperReceptiveField::run(){
 
     int eventNo = velField.getSize();
     if (eventNo > 20){
-//        computeFoE();
-
+        computeFoE();
+    }
 //        visualizeFOE();
+//        cout << foeX << " " << foeY << endl;
 
-        foeX = 0;
-        foeY = 60;
+//        foeX = 50;
+//        foeY = 60;
         makeObjMap();
         visualizeObjMap();
-    }
-
 }
 
 
@@ -184,10 +183,10 @@ void SuperReceptiveField::makeObjMap(){
     double  normFactor, tmp, r, b , g;
     int wndwSZ;
 
-    unsigned long tSmoothTh = 15000;
-    double tSmoothCoefficient = .2;
-    unsigned long tValidTh = 100000;
-    unsigned long sSmoothTh = 20000;
+    unsigned long tSmoothTh = 15000; //15000;
+    double tSmoothCoefficient = .2; //.2
+    unsigned long tValidTh = 100000; //100000;
+    unsigned long sSmoothTh = 20000; //20000;
 
     size = velField.getSize();
 
@@ -209,9 +208,12 @@ void SuperReceptiveField::makeObjMap(){
 //       distan = int (10000 / (distan + .0000001));
 
 
-       velNorm = int( ( 1 / ( 100* sqrt(vx*vx + vy*vy ) + .0000001 )) + .5 ); // [ 1 / (|V| + epsilon) ]
+       //velNorm = int( ( 1 / ( 1000* sqrt(vx*vx + vy*vy ) + .0000001 )) + .5 ); // [ 1 / (|V| + epsilon) ]
+       velNorm = int( (  1000* sqrt(vx*vx + vy*vy ) + .0000001 ) + .5 ); // [ 1 / (|V| + epsilon) ]
+
        distan =  int (  sqrt( (foeXCord - x)*(foeXCord-x) + (foeYCord - y)*(foeYCord - y)) + .5) ;
        //if (distan < 15) distan = distan * 10 +10;
+
 
 
        deltaT = (crntTS - objMapTS(x, y) > tSmoothTh ? 0 : tSmoothCoefficient);
@@ -272,7 +274,7 @@ void SuperReceptiveField::visualizeFOE(){
         for (int i = 0; i < eventNo; ++i) {
             x = velField.getX(i);
             y = velField.getY(i);
-            imgSnd(x,y) = yarp::sig::PixelRgb(100, 100, 100);
+            imgSnd(x,y) = yarp::sig::PixelRgb(200, 200, 200);
         }
         yarp::sig::draw::addCircle(imgSnd,r,foeX,foeY,4);
         yarp::sig::draw::addCircle(imgSnd,g,maxPointX, maxPointY,4);
@@ -290,6 +292,9 @@ void SuperReceptiveField::visualizeObjMap(){
     int cntr;
     double TTC;
 
+    if (outPort.getOutputCount()){
+
+
     yarp::sig::ImageOf<yarp ::sig::PixelRgb>& imgSnd=outPort.prepare();
     imgSnd.resize(RETINA_X ,RETINA_Y);
     imgSnd.zero();
@@ -302,16 +307,19 @@ void SuperReceptiveField::visualizeObjMap(){
 
             //tempDepth = normFactor * objMap(i + TTCNGHBR_SIZE, j + TTCNGHBR_SIZE);
 
-//            if (i > 35 && i < 55 && j > 30 && j < 85){
-            if (i > 35 && i < 55 && j > 20 && j < 95){
+////            if (i > 35 && i < 55 && j > 30 && j < 85){
+//            if (i > 35 && i < 55 && j > 20 && j < 95){
+//            TTC += objMap(i + TTCNGHBR_SIZE, j + TTCNGHBR_SIZE);
                TTC +=  (normFactor * objMap(i + TTCNGHBR_SIZE, j + TTCNGHBR_SIZE) > 255 ? 255 : normFactor * objMap(i + TTCNGHBR_SIZE, j + TTCNGHBR_SIZE) );
-//                TTC += objMap(i + TTCNGHBR_SIZE, j + TTCNGHBR_SIZE);
+////                TTC += objMap(i + TTCNGHBR_SIZE, j + TTCNGHBR_SIZE);
                cntr ++;
-            }
+//            }
 
 
             tempDepth = 255 - normFactor * objMap(i + TTCNGHBR_SIZE, j + TTCNGHBR_SIZE);
             tempDepth = (tempDepth < 0 ? 0 : tempDepth);
+
+
 
 //            if (i > 35 && i < 55 && j > 30 && j < 85){
 //               TTC += tempDepth;
@@ -357,8 +365,8 @@ void SuperReceptiveField::visualizeObjMap(){
 
             imgSnd(i,j) =  yarp::sig::PixelRgb ( depthRed, depthGreen , depthBlue );
 
-            if (i > 35 && i < 55 && j == 20 && j == 95)
-                imgSnd(i,j) =  yarp::sig::PixelRgb ( 255, 255 , 255 );
+//            if (i > 35 && i < 55 && j == 20 && j == 95)
+//                imgSnd(i,j) =  yarp::sig::PixelRgb ( 255, 255 , 255 );
 
         }// end for on y dimention
     }// end for on x dimention
@@ -369,4 +377,13 @@ void SuperReceptiveField::visualizeObjMap(){
     static const yarp::sig::PixelRgb r(200,0,0);
     yarp::sig::draw::addCircle(imgSnd, r, foeX, foeY, 4);
     outPort.write();
+    }
+}
+
+void SuperReceptiveField::printFOEMAP(){
+    for (int j = 0; j < receptiveFieldsNum; ++j) {
+       receptiveFields.at(j).printFOEMap();
+    }
+
+
 }

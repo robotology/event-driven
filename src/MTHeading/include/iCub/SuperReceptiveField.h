@@ -21,6 +21,7 @@
 #include <vector>
 #include <string>
 
+#include <yarp/os/Semaphore.h>
 #include <yarp/os/RateThread.h>
 #include <yarp/os/Event.h>
 #include <yarp/os/BufferedPort.h>
@@ -42,7 +43,7 @@ using namespace yarp::os;
 #define RETINA_Y 128
 #define FOEMAP_MAXREG_SIZE 7
 #define TTCNGHBR_SIZE 7
-#define OBJMAP_MAX_VALUE 15
+#define OBJMAP_MAX_VALUE 15 // 50000
 
 #define UPDATE_FACTOR .06
 
@@ -57,6 +58,7 @@ class SuperReceptiveField : public RateThread {
     //Focus of Expansion
     int foeX;
 	int foeY;
+
 
 
 	//the patch of visual field with maximum value
@@ -84,6 +86,7 @@ class SuperReceptiveField : public RateThread {
     void visualizeObjMap();
     void visualizeFOE();
 
+
 public:
     SuperReceptiveField(int receptFieldNum);
     virtual ~SuperReceptiveField();
@@ -96,6 +99,9 @@ public:
     void setPortNames(string inPName, string outPName);
 
     void static setVelField(VelocityBuffer velBuf){velField = velBuf;}
+
+
+    void printFOEMAP();
 
     void run();
 };

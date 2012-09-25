@@ -89,6 +89,7 @@ public:
 	int getLocalFOEX(){return localFOEX - borderSize;}
 	int getLocalFOEY(){return localFOEY - borderSize;}
 	int getLocalFOEProb(){return foeProbablity;}
+	void printFOEMap();
 
 };
 

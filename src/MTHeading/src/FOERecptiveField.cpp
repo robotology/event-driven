@@ -212,3 +212,17 @@ void FOERecptiveField::findLocalMax(){
 }
 
 
+void FOERecptiveField::printFOEMap(){
+//    vector<double> row;
+//
+//    for (int i = leftUpX + borderSize; i < rightBotX -borderSize ; i++){
+//        row = foeMap.getRow(i);
+//        for(int j = leftUpY + borderSize; j < rightBotY - borderSize; j++){
+//            cout << row.at(j) << " ";
+//        }
+//        cout << endl;
+//    }
+
+
+}
+
