@@ -610,6 +610,9 @@ Vector targetFinderThread::get3DPoint(const string &type, const Vector &ang)
 
     return xd.subVector(0,2);
     */
+
+    Vector res(3);
+    return res;
 }
 
 void targetFinderThread::setName(string str) {
