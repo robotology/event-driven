@@ -1251,61 +1251,61 @@ static void callbackSaveButton( GtkWidget *widget,gpointer data ) {
         if(fout == NULL) {
             return;
         }
-        int value = gtk_adjustment_get_value((GtkAdjustment*)adjSYTH);
+        int value = (int) gtk_adjustment_get_value((GtkAdjustment*)adjSYTH);
         fprintf(fout,"%d \n", value);
-        value = gtk_adjustment_get_value((GtkAdjustment*)adjSYTA);
+        value = (int) gtk_adjustment_get_value((GtkAdjustment*)adjSYTA);
         fprintf(fout,"%d \n", value);
-        value = gtk_adjustment_get_value((GtkAdjustment*)adjSYPA);
+        value = (int) gtk_adjustment_get_value((GtkAdjustment*)adjSYPA);
         fprintf(fout,"%d \n", value);
-        value = gtk_adjustment_get_value((GtkAdjustment*)adjSYPH);
+        value = (int) gtk_adjustment_get_value((GtkAdjustment*)adjSYPH);
         fprintf(fout,"%d \n", value);
-        value = gtk_adjustment_get_value((GtkAdjustment*)adjTPB);
+        value = (int) gtk_adjustment_get_value((GtkAdjustment*)adjTPB);
         fprintf(fout,"%d \n", value);
-        value = gtk_adjustment_get_value((GtkAdjustment*)adjCDR);
+        value = (int) gtk_adjustment_get_value((GtkAdjustment*)adjCDR);
         fprintf(fout,"%d \n", value);
-        value = gtk_adjustment_get_value((GtkAdjustment*)adjCDS);
+        value = (int) gtk_adjustment_get_value((GtkAdjustment*)adjCDS);
         fprintf(fout,"%d \n", value);
-        value = gtk_adjustment_get_value((GtkAdjustment*)adjCDP);
+        value = (int) gtk_adjustment_get_value((GtkAdjustment*)adjCDP);
         fprintf(fout,"%d \n", value);
-        value = gtk_adjustment_get_value((GtkAdjustment*)adjRPX);
+        value = (int) gtk_adjustment_get_value((GtkAdjustment*)adjRPX);
         fprintf(fout,"%d \n", value);
-        value = gtk_adjustment_get_value((GtkAdjustment*)adjRPY);
+        value = (int) gtk_adjustment_get_value((GtkAdjustment*)adjRPY);
         fprintf(fout,"%d \n", value);
-        value = gtk_adjustment_get_value((GtkAdjustment*)adjIFR);
+        value = (int) gtk_adjustment_get_value((GtkAdjustment*)adjIFR);
         fprintf(fout,"%d \n", value);
-        value = gtk_adjustment_get_value((GtkAdjustment*)adjIFT);
+        value = (int) gtk_adjustment_get_value((GtkAdjustment*)adjIFT);
         fprintf(fout,"%d \n", value);
-        value = gtk_adjustment_get_value((GtkAdjustment*)adjIFL);
+        value = (int) gtk_adjustment_get_value((GtkAdjustment*)adjIFL);
         fprintf(fout,"%d \n", value);
-        value = gtk_adjustment_get_value((GtkAdjustment*)adjCDOF);
+        value = (int) gtk_adjustment_get_value((GtkAdjustment*)adjCDOF);
         fprintf(fout,"%d \n", value);
-        value = gtk_adjustment_get_value((GtkAdjustment*)adjSYPW);
+        value = (int) gtk_adjustment_get_value((GtkAdjustment*)adjSYPW);
         fprintf(fout,"%d \n", value);
-        value = gtk_adjustment_get_value((GtkAdjustment*)adjSYW);
+        value = (int) gtk_adjustment_get_value((GtkAdjustment*)adjSYW);
         fprintf(fout,"%d \n", value);
-        value = gtk_adjustment_get_value((GtkAdjustment*)adjCDON);
+        value = (int) gtk_adjustment_get_value((GtkAdjustment*)adjCDON);
         fprintf(fout,"%d \n", value);
-        value = gtk_adjustment_get_value((GtkAdjustment*)adjCDD);
+        value = (int) gtk_adjustment_get_value((GtkAdjustment*)adjCDD);
         fprintf(fout,"%d \n", value);
-        value = gtk_adjustment_get_value((GtkAdjustment*)adjEMCH);
+        value = (int) gtk_adjustment_get_value((GtkAdjustment*)adjEMCH);
         fprintf(fout,"%d \n", value);
-        value = gtk_adjustment_get_value((GtkAdjustment*)adjEMCT);
+        value = (int) gtk_adjustment_get_value((GtkAdjustment*)adjEMCT);
         fprintf(fout,"%d \n", value);
-        value = gtk_adjustment_get_value((GtkAdjustment*)adjCDI);
+        value = (int) gtk_adjustment_get_value((GtkAdjustment*)adjCDI);
         fprintf(fout,"%d \n", value);
-        value = gtk_adjustment_get_value((GtkAdjustment*)adjCDRG);
+        value = (int) gtk_adjustment_get_value((GtkAdjustment*)adjCDRG);
         fprintf(fout,"%d \n", value);
-        value = gtk_adjustment_get_value((GtkAdjustment*)adjSELF);
+        value = (int) gtk_adjustment_get_value((GtkAdjustment*)adjSELF);
         fprintf(fout,"%d \n", value);
-        value = gtk_adjustment_get_value((GtkAdjustment*)adjFOLL);
+        value = (int) gtk_adjustment_get_value((GtkAdjustment*)adjFOLL);
         fprintf(fout,"%d \n", value);
-        value = gtk_adjustment_get_value((GtkAdjustment*)adjARBP);
+        value = (int) gtk_adjustment_get_value((GtkAdjustment*)adjARBP);
         fprintf(fout,"%d \n", value);
-        value = gtk_adjustment_get_value((GtkAdjustment*)adjEMVL);
+        value = (int) gtk_adjustment_get_value((GtkAdjustment*)adjEMVL);
         fprintf(fout,"%d \n", value);
-        value = gtk_adjustment_get_value((GtkAdjustment*)adjCDC);
+        value = (int) gtk_adjustment_get_value((GtkAdjustment*)adjCDC);
         fprintf(fout,"%d \n", value);
-        value = gtk_adjustment_get_value((GtkAdjustment*)adjEMVH);
+        value = (int) gtk_adjustment_get_value((GtkAdjustment*)adjEMVH);
         fprintf(fout,"%d \n", value);
         fclose(fout);
         printf("biases file correctly saved \n");
@@ -2258,7 +2258,7 @@ void updateStatusbar(GtkWidget *statusbar, gchar *msg) {
 GtkWidget* createMainWindow(void) {
     
     
-    GtkRequisition actualSize;
+    //GtkRequisition actualSize;
     GtkWidget* window;
     
     //gtk_init (&argc, &argv);
@@ -2315,14 +2315,15 @@ GtkWidget* createMainWindow(void) {
     gtk_container_set_border_width (GTK_CONTAINER (boxSliders), 0);
     
     //-----SCALE section
-    GtkWidget *scrollbar;
+    //GtkWidget *scrollbar;
     GtkWidget *separator;
     GtkWidget *label;
     
     //GtkWidget *scale;
     
     
-    GtkWidget *hscale, *vscale;
+    GtkWidget *hscale;
+    //*vscale;
 
     // value, lower, upper, step_increment, page_increment, page_size 
     //adj1 = gtk_adjustment_new (0.0, 0.0, 1.0, 0.01, 1.0, 1.0);
