@@ -164,7 +164,8 @@ public:
     ~tsOptFlow();
     void onRead(emorph::ebuffer::eventBuffer&);
 private:
-    
+    int polarity;
+
     yarp::os::Semaphore *mutex;
     tsOptFlowThread *tsofThreadPos;
     tsOptFlowThread *tsofThreadNeg;
