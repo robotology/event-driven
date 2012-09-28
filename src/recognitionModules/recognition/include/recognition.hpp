@@ -8,6 +8,7 @@
 #include <cstring>
 #include <cmath>
 #include <cstdio>
+#include <stdint.h>
 
 #include <yarp/os/Network.h>
 #include <yarp/os/BufferedPort.h>
@@ -39,6 +40,7 @@ private:
     int loadFileFromPol(std::string&, unsigned int**, unsigned int**, unsigned int&, unsigned int&, unsigned int&);
 
     int createDenseHistogram(unsigned int*, unsigned int, yarp::sig::Matrix*);
+    int create3DDenseHistogram(unsigned int*, unsigned int&, int*, unsigned int&);
     void max(yarp::sig::Matrix*, double&);
     void min(yarp::sig::Matrix*, double&);
     void mean(yarp::sig::Vector*, double&);
@@ -46,6 +48,9 @@ private:
     int mahalanobisDist(yarp::sig::Vector*, yarp::sig::Vector*, double&);    
     int euclideanDist(yarp::sig::Vector*, yarp::sig::Vector*, double&);    
     void histDist(yarp::sig::Matrix*, yarp::sig::Matrix*, double&);
+    void hist3DDist(int*, int*, unsigned int&, yarp::sig::Vector&);
+    void cosine(int*, int*, double&);
+
     void printVector(yarp::sig::Vector*);
     void countElemInHist(yarp::sig::Matrix*, unsigned int&);   
 
@@ -83,6 +88,11 @@ private:
     yarp::sig::Matrix *ptr_unkposdh;
     unsigned int nunknegdh;
     yarp::sig::Matrix *ptr_unknegdh;
+
+    int **ptr_pos3ddh;
+    int **ptr_neg3ddh;
+    int *ptr_unkpos3ddh;
+    int *ptr_unkneg3ddh;
     
     bool eyeSel;
 };

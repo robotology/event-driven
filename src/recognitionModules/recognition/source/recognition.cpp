@@ -47,22 +47,35 @@ recognition::recognition(std::string _file, unsigned int _sd, unsigned int _htw,
     unsigned int nElem;
     unsigned int index=0;
     ptr_posdh=new Matrix*[sznposh];
+    ptr_pos3ddh=new int*[sznposh];
+    cout << "[recognition] nposk: " << nposk << ", nBin: " << nBin << endl;
     for(unsigned int i=0; i<sznposh; i++)
     {
-        ptr_posdh[i]=new Matrix(nposk, nBin);
         cout << "[recognition] Create dense histogram of positive channel of the object no " << i << endl;
+        ptr_posdh[i]=new Matrix(nposk, nBin);
         createDenseHistogram(ptr_posh+index, nposh[i], ptr_posdh[i]);
+        
+        ptr_pos3ddh[i]=new int[nBin*nposk*128*2];
+        memset(ptr_pos3ddh[i], 0, nBin*nposk*128*2*sizeof(int));
+        create3DDenseHistogram(ptr_posh+index, nposh[i], ptr_pos3ddh[i], nposk);
+
         index+=nposh[i]*4;
         countElemInHist(ptr_posdh[i], nElem);
         cout << "[POS] Total number of positive element in the known matrix[" << i << "]: " << nElem << endl;
     }
 
-    ptr_negdh=new Matrix*[sznnegh];
     index=0;
+    ptr_negdh=new Matrix*[sznnegh];
+    ptr_neg3ddh=new int*[sznnegh];
     for(unsigned int i=0; i<sznnegh; i++)
     {
         ptr_negdh[i]=new Matrix(nnegk, nBin);
         createDenseHistogram(ptr_negh+index, nnegh[i], ptr_negdh[i]);
+        
+        ptr_neg3ddh[i]=new int[nBin*nnegk*128*2];
+        memset(ptr_neg3ddh[i], 0, nBin*nnegk*128*2*sizeof(int));
+        create3DDenseHistogram(ptr_negh+index, nnegh[i], ptr_neg3ddh[i], nnegk);
+
         index+=nnegh[i]*4;
         countElemInHist(ptr_negdh[i], nElem);
         cout << "[NEG] Total number of positive element in the known matrix[" << i << "]: " << nElem << endl;
@@ -71,6 +84,31 @@ recognition::recognition(std::string _file, unsigned int _sd, unsigned int _htw,
 
 recognition::~recognition()
 {
+    delete[] ptr_unkposdh;
+    delete[] ptr_unknegdh;
+    delete[] ptr_unkpos3ddh;
+    delete[] ptr_unkneg3ddh;
+
+    for(uint32_t i=0; i<sznposh; ++i)
+    {
+        delete[] ptr_posdh[i];
+        delete[] ptr_pos3ddh[i];
+    }
+    delete[] ptr_posdh;
+    delete[] ptr_pos3ddh;
+
+    for(uint32_t i=0; i<sznnegh; ++i)
+    {
+        delete[] ptr_negdh[i];
+        delete[] ptr_neg3ddh[i];
+    }
+    delete[] ptr_negdh;
+    delete[] ptr_neg3ddh;
+
+    delete[] nposh;
+    delete[] ptr_posh;
+    delete[] nnegh;
+    delete[] ptr_negh;
 }
 
 void recognition::onRead(eventHistBuffer& _hb)
@@ -112,11 +150,24 @@ void recognition::init()
 
 void recognition::set_hist(unsigned int* _unkpos, unsigned int _nunkpos, unsigned int* _unkneg, unsigned int _nunkneg)
 {
-    cerr << "recognition::set_hist(...)" << endl;
+    cout << "[recognition] set hist pos" << endl;
     ptr_unkposdh=new Matrix(nposk, nBin);
     createDenseHistogram(_unkpos, _nunkpos, ptr_unkposdh);
+
+    cout << "[recognition] set hist pos 3d" << endl;
+    ptr_unkpos3ddh=new int[nBin*nposk*128*2];
+    memset(ptr_unkpos3ddh, 0, nBin*nposk*128*2*sizeof(int));
+    create3DDenseHistogram(_unkpos, _nunkpos, ptr_unkpos3ddh, nposk);
+
+    cout << "[recognition] set hist neg" << endl;
     ptr_unknegdh=new Matrix(nnegk, nBin);
     createDenseHistogram(_unkneg, _nunkneg, ptr_unknegdh);
+
+    cout << "[recognition] set hist neg 3d" << endl;
+    ptr_unkneg3ddh=new int[nBin*nnegk*128*2];
+    memset(ptr_unkneg3ddh, 0, nBin*nnegk*128*2*sizeof(int));
+    create3DDenseHistogram(_unkneg, _nunkneg, ptr_unkneg3ddh, nnegk);
+
 
     unsigned int nElem;
     cout << "[POS] Dimension of the histogram: " << nposk << "x" << nBin << endl;
@@ -156,11 +207,20 @@ void recognition::compare()
     double *distpos=new double[sznposh];
     double *distneg=new double[sznnegh];
 
+    Vector inter3DSimPos(nposk);
+    double *simpos=new double[sznposh];
+    double *simneg=new double[sznnegh];
     for(unsigned int i=0; i<sznposh; i++)
     {
         histDist(ptr_unkposdh, ptr_posdh[i], interHistdistance);
         distpos[i]=interHistdistance;
-        cout << "[POS] Distance between the unknown entry and known[" << i << "]: " << interHistdistance << endl;
+        cout << "[POS] Distance between the unknown entry and known[" << i << "]: " << interHistdistance;
+
+        hist3DDist(ptr_unkpos3ddh, ptr_pos3ddh[i], nposk, inter3DSimPos);
+        simpos[i]=1;
+        for(unsigned int ii=0; ii<nposk; ++ii)
+            simpos[i]*=inter3DSimPos[ii];
+        cout << ", with space: " << simpos[i] << endl;
     }
     for(unsigned int i=0; i<sznnegh; i++)
     {
@@ -177,6 +237,12 @@ void recognition::compare()
     objDistBuffer& tmp = outPort->prepare();
     tmp=outBuf;
     outPort->write();
+
+    delete[] buffer;
+    delete[] distpos;
+    delete[] distneg;
+    delete[] simpos;
+    delete[] simneg;
 }
 
 int recognition::loadFile(string _fileToLoad)
@@ -270,6 +336,52 @@ int recognition::createDenseHistogram(unsigned int* _ptrh, unsigned int _nh, Mat
     }
 }
 
+int recognition::create3DDenseHistogram(unsigned int *_ptrh, unsigned int &_nh, int *_ptr3ddh, unsigned int &_nk)
+{
+    //_ptrh point   0. The kernel ID
+    //              1. The ts of the K arrival
+    //              2. The K center coordinate in X
+    //              3. The K center coordinate in Y
+
+    //Calculation of the center of the object considering the K coordinate
+    double cx=0;
+    double cxElem=0;
+    double cy=0;
+    double cyElem=0;
+    
+    for(unsigned int i=0; i<_nh; ++i)
+    {
+        cxElem++;
+        cyElem++;
+        //cout << "[recognition] Center of the current features: " << _ptrh[4*i+2] << ", " << _ptrh[4*i+3] << endl;
+        cx=cx+(1/cxElem)*((double)_ptrh[4*i+2]-cx);
+        cy=cy+(1/cyElem)*((double)_ptrh[4*i+3]-cy);
+    }
+    cout << "[recognition] Center of the current shape: " << cx << ", " << cy << endl;
+    //Consider _ptr3ddh be initialized to 0 (memset(...) )
+
+    unsigned int refts=_ptrh[1];
+    unsigned int bin=0;
+    for(unsigned int i=0; i<_nh; i++)
+    {
+        //fprintf(stderr, "\tstep %d / %d\n", i, _nh);
+        if(refts+htwin<=_ptrh[4*i+1])
+        {
+            bin+=_nk*2*128;
+            refts=_ptrh[4*i+1];
+        }
+       // if(bin<_ptrdh->cols())
+       //    (*_ptrdh)(_ptrh[4*i], bin)++;
+        int indX=_ptrh[4*i+2]-(int)floor(cx+0.5)+64;
+        int indY=_ptrh[4*i+3]-(int)floor(cy+0.5)+64;
+        //cout << "[recognition] Add occurence at: " << indX << ", " << indY << endl;
+
+        *(_ptr3ddh+(bin+_ptrh[4*i]*256+indX))+=1;
+        *(_ptr3ddh+(bin+_ptrh[4*i]*256+indY+128))+=1;
+    }
+    
+}
+
 void recognition::max(Matrix* _mat, double& _val)
 {
     _val=0; 
@@ -354,6 +466,46 @@ void recognition::histDist(Matrix *_hist1, Matrix *_hist2, double& _dist)
         euclideanDist(&vec1, &vec2, step);
         _dist+=step;
     }
+}
+
+void recognition::hist3DDist(int *_3DHist1, int *_3DHist2, unsigned int &_nk, Vector &_sim)
+{
+    unsigned int bin=0;
+    _sim.zero();
+    double subSim;
+    for(unsigned int i=0; i<nBin; i++)
+    {
+        bin=i*_nk*2*128;
+        for(unsigned int ii=0; ii<_nk; ii++)
+        {
+            cosine(_3DHist1+(bin+ii*256), _3DHist2+(bin+ii*256), subSim);
+            cout << "[POS] Bin " << i << ", kernel " << ii << ", result of the cosine: " << subSim << endl;
+            _sim(ii)+=subSim;
+        }
+    }
+    _sim/=(double)nBin;
+}
+
+void recognition::cosine(int *_sub3DHist1, int *_sub3DHist2, double &_sim)
+{
+    // A°B/||A||*||B||
+    double normA=0;
+    double normB=0;
+    double AdotB=0;
+    for(int i=0; i<256; ++i)
+    {
+        if(_sub3DHist1[i] || _sub3DHist2[i])
+            cout << "[POS] Values: _sub3DHist1[" << i << "]: " << _sub3DHist1[i] << ", _sub3DHist2[" << i << "]: " << _sub3DHist2[i] << endl;
+        normA+=(double)_sub3DHist1[i];
+        normB+=(double)_sub3DHist2[i];
+        AdotB+=(double)_sub3DHist1[i]*(double)_sub3DHist2[i];
+    }
+    if(normA==0 && normB==0)
+        _sim=1;
+    else if(normA==0 || normB==0)
+        _sim=0;
+    else
+        _sim=AdotB/(sqrt(normA)*sqrt(normB));
 }
 
 void recognition::printVector(yarp::sig::Vector* _vec)
