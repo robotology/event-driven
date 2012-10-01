@@ -19,7 +19,7 @@
 
 VelocityBuffer SuperReceptiveField::velField;
 
-SuperReceptiveField::SuperReceptiveField(int receptFieldNum):
+SuperReceptiveField::SuperReceptiveField(int receptFieldNum, unsigned long frameIntv, unsigned long smoothingIntv, int ttcRange):
        RateThread(20){
     receptiveFieldsNum = receptFieldNum;
 
@@ -40,7 +40,7 @@ SuperReceptiveField::SuperReceptiveField(int receptFieldNum):
     //objMap.zero();
     for (int i = 0; i < RETINA_X; ++i) {
         for (int j = 0; j < RETINA_Y; ++j) {
-            objMap(i,j) = OBJMAP_MAX_VALUE;
+            objMap(i,j) = ttcMaxValue;
         }
     }
     objMapTS.resize(RETINA_X+ 2*TTCNGHBR_SIZE, RETINA_Y+ 2*TTCNGHBR_SIZE);
@@ -54,6 +54,13 @@ SuperReceptiveField::SuperReceptiveField(int receptFieldNum):
 
     outImg.resize(RETINA_X,RETINA_Y);
     outImg.zero();
+
+    //TTC parameters
+    tSmoothCoefficient = .2; //.2
+    tValidTh = frameIntv;
+    tSmoothTh = smoothingIntv;
+    sSmoothTh = smoothingIntv;
+    ttcMaxValue = ttcRange;
 
 }
 
@@ -183,10 +190,7 @@ void SuperReceptiveField::makeObjMap(){
     double  normFactor, tmp, r, b , g;
     int wndwSZ;
 
-    unsigned long tSmoothTh = 15000; //15000;
-    double tSmoothCoefficient = .2; //.2
-    unsigned long tValidTh = 100000; //100000;
-    unsigned long sSmoothTh = 20000; //20000;
+
 
     size = velField.getSize();
 
@@ -210,7 +214,6 @@ void SuperReceptiveField::makeObjMap(){
 
        //velNorm = int( ( 1 / ( 1000* sqrt(vx*vx + vy*vy ) + .0000001 )) + .5 ); // [ 1 / (|V| + epsilon) ]
        velNorm = int( (  1000* sqrt(vx*vx + vy*vy ) + .0000001 ) + .5 ); // [ 1 / (|V| + epsilon) ]
-
        distan =  int (  sqrt( (foeXCord - x)*(foeXCord-x) + (foeYCord - y)*(foeYCord - y)) + .5) ;
        //if (distan < 15) distan = distan * 10 +10;
 
@@ -231,7 +234,7 @@ void SuperReceptiveField::makeObjMap(){
            tim1 = objMapTS(x,y);
 
            if (crntTS - tim1 > tValidTh){
-               objMap(x,y) = OBJMAP_MAX_VALUE;
+               objMap(x,y) = ttcMaxValue;
                continue;
            }
            avg = 0;
@@ -301,7 +304,7 @@ void SuperReceptiveField::visualizeObjMap(){
 
     cntr =0; TTC = 0;
 
-    normFactor = 255 / ((double) OBJMAP_MAX_VALUE);
+    normFactor = 255 / ((double) ttcMaxValue);
     for (int i = 0; i < RETINA_X ; ++i) {
         for (int j = 0; j < RETINA_Y ; ++j) {
 

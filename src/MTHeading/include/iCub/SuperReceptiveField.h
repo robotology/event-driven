@@ -43,7 +43,7 @@ using namespace yarp::os;
 #define RETINA_Y 128
 #define FOEMAP_MAXREG_SIZE 7
 #define TTCNGHBR_SIZE 7
-#define OBJMAP_MAX_VALUE 15 // 50000
+//#define OBJMAP_MAX_VALUE 15 // 50000
 
 #define UPDATE_FACTOR .06
 
@@ -78,7 +78,11 @@ class SuperReceptiveField : public RateThread {
 
     yarp::sig::Matrix objMap;
     yarp::sig::Matrix objMapTS;
-
+    unsigned long tSmoothTh; //15000;
+    double tSmoothCoefficient;
+    unsigned long tValidTh;  //100000;
+    unsigned long sSmoothTh; //20000;
+    int ttcMaxValue;
 
     void computeFoE();
     void makeObjMap();
@@ -88,7 +92,7 @@ class SuperReceptiveField : public RateThread {
 
 
 public:
-    SuperReceptiveField(int receptFieldNum);
+    SuperReceptiveField(int receptFieldNum, unsigned long frameIntv, unsigned long smoothingIntv, int ttcRange);
     virtual ~SuperReceptiveField();
 
 

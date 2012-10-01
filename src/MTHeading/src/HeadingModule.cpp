@@ -25,6 +25,12 @@
         string outPortName;
 
         int threadsNum;
+        unsigned long smoothIntv;
+        unsigned long frameIntv;
+        int ttcRange;
+
+
+
 
         moduleName =  rf.check("name", Value("Heading"), "module name (String)").asString();
         setName(moduleName.c_str());
@@ -34,7 +40,21 @@
                                Value(4),
                                "number of threads (int)").asInt();
 
-        receptiveField = new SuperReceptiveField(threadsNum);
+        frameIntv = rf.check("frame_intv",
+                             Value(100000),
+                             "time interval for each frame (unsinged long)").asInt();
+
+        smoothIntv = rf.check("smooth_intv",
+                             Value(20000),
+                             "time interval for spatial and temporal smoothing (unsinged long)").asInt();
+
+        ttcRange = rf.check("TTC_Range",
+                              Value(15),
+                              "the maximume value of TTC (int)").asInt();
+
+
+        receptiveField = new SuperReceptiveField(threadsNum, frameIntv, smoothIntv, ttcRange);
+
 
         //open input BufferedPort
         inPortName = "/";
