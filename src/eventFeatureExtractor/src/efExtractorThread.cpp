@@ -436,6 +436,7 @@ void efExtractorThread::remapEventLeft(int x, int y,short pol,unsigned long ts) 
     int       rowSizeFea  = leftFeaOutputImage->getRowSize();
     int deviance      = 1;
     int devianceFea   = 5;   
+    
     aer* bufferFEA_copy = bufferFEA;
 
     if(true) {
@@ -1163,9 +1164,10 @@ void efExtractorThread::generateMemory(int countEvent, int& countEventToSend) {
     short pol, cam;
     aer* bufferFEA_copy = bufferFEA;
     // visiting a discrete number of events
-    int countUnmapped = 0;
-    int deviance      = 50;
-    int devianceFea   = 50;      
+    int countUnmapped        = 0;
+    int deviance             = 50;
+    int devianceFea          = 50;
+    int devianceFeaSurround  = 5; 
     //#############################################################################        
     for(int i = 0; i < countEvent; i++ ) {
         ts  = iterEvent->ts;
@@ -1212,9 +1214,10 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
     short pol, cam;
     aer* bufferFEA_copy = bufferFEA;
     // visiting a discrete number of events
-    int countUnmapped = 0;
-    int deviance      = 20;
-    int devianceFea   = 20;      
+    int countUnmapped        = 0;
+    int deviance             = 20;
+    int devianceFea          = 20; 
+    int devianceFeaSurround  = 2; 
     //#############################################################################        
     int dequeSize = q->size();
     int readPosition = 0;
@@ -1274,6 +1277,28 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                                     if (cartX % 2 == 1) {
                                         //printf("not mapped event %d \n",x + y * RETINA_SIZE);
                                         //countUnmapped++;
+                                        int scaleFactor = RETINA_SIZE  / FEATUR_SIZE;
+                                        //printf("Obtained scale factor %d \n", scaleFactor);
+                                        int xevent = cartX / scaleFactor;
+                                        int yevent = cartY / scaleFactor;
+                                        //printf(" xevent %d yevent %d \n", xevent, yevent);
+                                        
+                                        int posFeaImage     = yevent * rowSizeFea + xevent ;
+
+                                        // depressing the feature map in the location
+                                        unsigned char* pFeaLeft = leftFeaOutputImage->getRawImage();
+                                    
+                                        if(pFeaLeft[posFeaImage] < -devianceFeaSurround) {
+                                            pFeaLeft[posFeaImage] += devianceFeaSurround ;
+                                        }
+                                        
+                                        else  if(pFeaLeft[posFeaImage] > devianceFeaSurround) {
+                                            pFeaLeft[posFeaImage] -= devianceFea ;
+                                        }
+                                        else {
+                                            //pFeaLeft[posFeaImage] = 0;
+                                        }
+                                    
                                     }                
                                 }
                                 else {
@@ -1297,7 +1322,7 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                                     //blob = 0x00001021;
                                     //printf("Given pos %d extracts x=%d and y=%d pol=%d blob=%08x evPU = %08x \n", pos, xevent, yevent, pol, (unsigned int) blob, (unsigned int)ts);
                                     
-                                    // representing the feature map for debug
+                                    // representing the feature map
                                     unsigned char* pFeaLeft = leftFeaOutputImage->getRawImage();
                                     if(polevent > 0) {
                                         if(pFeaLeft[posFeaImage] <= 255 - devianceFea) {
