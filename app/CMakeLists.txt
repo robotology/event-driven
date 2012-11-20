@@ -23,6 +23,7 @@ add_subdirectory(objectInteractorApp)
 add_subdirectory(opticalFlowApplication)
 add_subdirectory(eMorphVisualAttention)
 add_subdirectory(ikartDvsObstacleDetector)
+add_subdirectory(testAttention)
 
 ## make all applications show up as single target
 icub_app_all()
