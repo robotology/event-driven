@@ -362,7 +362,7 @@ void device2yarp::prepareBiases() {
         while (1) {
             if (seqAlloced_b < seqSize_b) {
                 //fprintf(stderr, "code error 1234: %" PRIu32 " < %" PRIu32 "\n", seqAlloced_b, seqSize_b);
-                exit(1);
+                yarp::os::exit(1);
             }
             // realloc needed?
             if (seqAlloced_b == seqSize_b) {
@@ -395,7 +395,7 @@ void device2yarp::prepareBiases() {
                 } else {
                     fprintf(stderr, "input parsing error!!!\n");
                     perror("errno");
-                    exit(1);
+                    yarp::os::exit(1);
                 }
             }
             ival = rbuf[0];
@@ -436,7 +436,7 @@ void device2yarp::prepareBiases() {
                 // we were not busy, maybe someone else is... 
             } else {
                 perror("invalid write");
-                exit(1);
+                yarp::os::exit(1);
             }
         }
         //closing the file where the biases are set
@@ -554,7 +554,7 @@ void device2yarp::prepareBiasesRight() {
         while (1) {
             if (seqAlloced_b < seqSize_b) {
                 //fprintf(stderr, "code error 1234: %" PRIu32 " < %" PRIu32 "\n", seqAlloced_b, seqSize_b);
-                exit(1);
+                yarp::os::exit(1);
             }
             // realloc needed?
             if (seqAlloced_b == seqSize_b) {
@@ -573,7 +573,7 @@ void device2yarp::prepareBiasesRight() {
             }
             if (r != 2) {
                 fprintf(stderr, "input parsing error!!!\n");
-                exit(1); // FIXME
+                yarp::os::exit(1); // FIXME
             }
 #else
             r = fread(rbuf, 8, 1, binInput);
@@ -587,7 +587,7 @@ void device2yarp::prepareBiasesRight() {
                 } else {
                     fprintf(stderr, "input parsing error!!!\n");
                     perror("errno");
-                    exit(1);
+                    yarp::os::exit(1);
                 }
             }
             ival = rbuf[0];
@@ -628,7 +628,7 @@ void device2yarp::prepareBiasesRight() {
                 // we were not busy, maybe someone else is... 
             } else {
                 perror("invalid write");
-                exit(1);
+                yarp::os::exit(1);
             }
         }
         //closing the file where the biases are set
@@ -1062,7 +1062,7 @@ void device2yarp::sendingBias() {
                 /* we were not busy, maybe someone else is... */
             } else {
                 perror("invalid write");
-                exit(1);
+                yarp::os::exit(1);
             }
     }    
     printf("writing successfully ended \n");
