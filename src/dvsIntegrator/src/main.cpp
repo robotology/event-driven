@@ -14,7 +14,7 @@
   * (image plane coordinates in the left and right eye)
   * into the coorinates X of the point in the root reference
   * frame (see <a
-  * href="http://eris.liralab.it/wiki/ICubForwardKinematics">here</a>).
+  * href="http://wiki.icub.org/wiki/ICubForwardKinematics">here</a>).
   * Image plane coordinates are defined so that the origin of
   * the reference frame is in the top left corner. The x axis is
   * pointing rightward and the y axis is pointing downward.
