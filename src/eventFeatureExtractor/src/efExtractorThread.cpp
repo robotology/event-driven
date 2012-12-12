@@ -40,21 +40,27 @@ using namespace yarp::sig;
 using namespace yarp::dev;
 using namespace std;
 
-#define DIM 10
-#define THRATE 5
-#define SHIFTCONST 100
-#define RETINA_SIZE 128
-#define FEATUR_SIZE 32
-#define ADDRESS 0x40000
-#define X_MASK 0x000000FE
-#define X_MASK_DEC    254
-#define X_SHIFT 1
-#define Y_MASK 0x00007F00
-#define Y_MASK_DEC  32512    
-#define Y_SHIFT 8
-#define POLARITY_MASK 0x00000001
-#define POLARITY_SHIFT 0
+#define DIM             10
+#define THRATE          5
+#define SHIFTCONST      100
+#define RETINA_SIZE     128
+#define FEATUR_SIZE     32
 #define CONST_DECREMENT 1
+#define POS_FIRE_TH     240
+#define NEG_FIRE_TH     10
+#define Y_MASK_DEC      32512
+#define X_MASK_DEC      254
+#define X_SHIFT         1
+#define Y_SHIFT         8
+#define POLARITY_SHIFT  0
+#define Y_MASK          0x00007F00
+#define X_MASK          0x000000FE
+#define POLARITY_MASK   0x00000001
+#define ADDRESS         0x40000
+
+
+
+ 
 
 #define CHUNKSIZE 32768
 
@@ -610,10 +616,10 @@ void efExtractorThread::remapEventRight(int x, int y, short pol, unsigned long t
     unsigned char* pMemL  = leftInputImage->getRawImage();
     int          rowSize  = leftOutputImage->getRowSize();
     int       rowSizeFea  = leftFeaOutputImage->getRowSize();
-    int deviance      = 20;
-    int devianceFea   = 20;   
-    aer* bufferFEA_copy = bufferFEA;
-    lastTimestampRight = ts;
+    int deviance          = 20;
+    int devianceFea       = 20;   
+    aer* bufferFEA_copy   = bufferFEA;
+    lastTimestampRight    = ts;
 
     // finding the position in the map
     int posImage     = y * rowSize + x;
@@ -1216,11 +1222,20 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
     // visiting a discrete number of events
     int countUnmapped        = 0;
     int deviance             = 20;
-    int devianceFea          = 20; 
-    int devianceFeaSurround  = 2; 
+    
+    int devianceFea          = 20;  // parameter that effects the response of a mapped position
+    int devianceFeaSurround  = 2;   // parameter that effects the response of unmapped position
     //#############################################################################        
     int dequeSize = q->size();
     int readPosition = 0;
+
+    /* BEWARE! REMEMBER : the feature maps assume values which are unsigned int and therefore in the range 0-255;
+       towards the 0   : negative event triggers
+       towards the 255 : positive event triggers
+
+       Hence, to reduce firing rate the value must evolve toward 127!
+     */
+    
     
     for (int evt = 0; evt < dequeSize; evt++) {
         
@@ -1239,8 +1254,7 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                 printf("efExtractorThread::generateMemory %s \n", typeRef.c_str());
                 continue;
             }
-            
- 
+             
             if (typeRef == strcmpAE) {
                 // identified an  address event
                 AddressEvent* ptr=dynamic_cast<AddressEvent*>(eventInQueue);
@@ -1264,6 +1278,7 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                     else {
                         
                         if(camera==0) {
+                            // LEFT CAMERA
                             //printf("remapping event left camera:%d \n", camera);
                             //printf("before remapping %08x \n", &txQueue);
                             //remapEventLeft(cartX,cartY,polarity,ts,&txQueue);  
@@ -1274,35 +1289,35 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                                 
                                 //printf("        pos ; %d ", pos);
                                 if(pos == -1) {
-                                    if (cartX % 2 == 1) {
-                                        //printf("not mapped event %d \n",x + y * RETINA_SIZE);
-                                        //countUnmapped++;
-                                        int scaleFactor = RETINA_SIZE  / FEATUR_SIZE;
-                                        //printf("Obtained scale factor %d \n", scaleFactor);
-                                        int xevent = cartX / scaleFactor;
-                                        int yevent = cartY / scaleFactor;
-                                        //printf(" xevent %d yevent %d \n", xevent, yevent);
-                                        
-                                        int posFeaImage     = yevent * rowSizeFea + xevent ;
+                                    
+                                    //if (cartX % 2 == 1) {
+                                        // EVENT NOT MAPPED in the LUT :
+                                        // if the event is not mapped this reduces the response of the receptive field
+                                    // } //end if cartX %2 == 1;                
 
-                                        // depressing the feature map in the location
-                                        unsigned char* pFeaLeft = leftFeaOutputImage->getRawImage();
+                                    int scaleFactor = RETINA_SIZE  / FEATUR_SIZE;
+                                    //printf("Obtained scale factor %d \n", scaleFactor);
+                                    int xevent = cartX / scaleFactor;
+                                    int yevent = (FEATUR_SIZE - cartY) / scaleFactor;
+                                    //printf(" xevent %d yevent %d \n", xevent, yevent);                                    
+                                    int posFeaImage     = yevent * rowSizeFea + xevent ;                                    
+                                    // depressing the feature map in the location
+                                    unsigned char* pFeaLeft = leftFeaOutputImage->getRawImage();
                                     
-                                        if(pFeaLeft[posFeaImage] < -devianceFeaSurround) {
-                                            pFeaLeft[posFeaImage] += devianceFeaSurround ;
-                                        }
-                                        
-                                        else  if(pFeaLeft[posFeaImage] > devianceFeaSurround) {
-                                            pFeaLeft[posFeaImage] -= devianceFea ;
-                                        }
-                                        else {
-                                            //pFeaLeft[posFeaImage] = 0;
-                                        }
+                                    if(pFeaLeft[posFeaImage] < 127 - devianceFeaSurround) {
+                                        pFeaLeft[posFeaImage] += devianceFeaSurround;
+                                    }     
+                                    else  if(pFeaLeft[posFeaImage] > 127 + devianceFeaSurround) {
+                                        pFeaLeft[posFeaImage] -= devianceFeaSurround;
+                                    }
+                                    else {
+                                        //pFeaLeft[posFeaImage] = 0;
+                                    }
                                     
-                                    }                
+
                                 }
                                 else {
-                                    //creating an event                            
+                                    // ------ creating an event --------------------------                           
                                     int yevent_tmp      = pos / FEATUR_SIZE;
                                     int yevent          = FEATUR_SIZE - yevent_tmp;
                                     int xevent_tmp      = pos - yevent_tmp * FEATUR_SIZE;
@@ -1312,17 +1327,15 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                                     int cameraevent     = 1;
                                     unsigned long blob  = 0;
                                     int posFeaImage     = yevent * rowSizeFea + xevent ;
+                                    // ----------------------------------------------------
                                     
-                                    //if(ts!=0) {
-                                    //    printf(" %d %d %d ---> ", i ,x, y  );
-                                    //    printf(" %d %d %d %d %08x %08x \n",pos, yevent,xevent,posFeaImage,blob, ts);
-                                    //}
+                                    //converting the event in a blob
                                     unmask_events.maskEvent(xevent, yevent, polevent, cameraevent, blob);
                                     
                                     //blob = 0x00001021;
                                     //printf("Given pos %d extracts x=%d and y=%d pol=%d blob=%08x evPU = %08x \n", pos, xevent, yevent, pol, (unsigned int) blob, (unsigned int)ts);
                                     
-                                    // representing the feature map
+                                    //------------  representing the feature map (image) -------------------
                                     unsigned char* pFeaLeft = leftFeaOutputImage->getRawImage();
                                     if(polevent > 0) {
                                         if(pFeaLeft[posFeaImage] <= 255 - devianceFea) {
@@ -1340,13 +1353,12 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                                             pFeaLeft[posFeaImage] = 0;
                                         }
                                     }
+                                    //-----------------------------------------------------------------
                                     
                                     
-                                    
-                                    // sending the event if we pass thresholds
-                                    
+                                    //-------------------- sending the event if it passes thresholds -------
                                     //printf("checking for thresholds \n");
-                                    if(pFeaLeft[posFeaImage] > 240) {
+                                    if(pFeaLeft[posFeaImage] > POS_FIRE_TH) {
                                         
                                         TimeStamp* timestamp = new TimeStamp();
                                         timestamp->setStamp(ts);
@@ -1369,7 +1381,7 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                                         //bufferFEA_copy++; // jumping to the next event(u32,u32)
                                         
                                     }
-                                    else if(pFeaLeft[posFeaImage] < 10) {
+                                    else if(pFeaLeft[posFeaImage] < NEG_FIRE_TH) {
                                         
                                         TimeStamp* timestamp = new TimeStamp();
                                         timestamp->setStamp(ts);
@@ -1391,7 +1403,8 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                                         //fprintf(fout,"%08X %08X \n",bufferFEA_copy->address,ts);
                                         //bufferFEA_copy++; // jumping to the next event(u32,u32)
                                         
-                                    }                           
+                                    } 
+                                    //-------------------------------------------------------------------------
                                     
                                 } //end else
                                 
@@ -1399,6 +1412,8 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                             
                         }
                         else { //------------------------------------------------------------------------------------------------------
+                            
+                            // RIGHT CAMERA
                             //printf("remapping event right camera:%d \n", camera);
                             //remapEventRight(cartX,cartY,polarity,ts,&txQueue);
                             for (int i = 0; i< 5 ; i++) {                
@@ -1410,6 +1425,25 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                                         //printf("not mapped event %d \n",x + y * RETINA_SIZE);
                                         //countUnmapped++;
                                     }                
+
+                                    int scaleFactor = RETINA_SIZE  / FEATUR_SIZE;
+                                    //printf("Obtained scale factor %d \n", scaleFactor);
+                                    int xevent = cartX / scaleFactor;
+                                    int yevent = (FEATUR_SIZE - cartY) / scaleFactor;
+                                    //printf(" xevent %d yevent %d \n", xevent, yevent);                                    
+                                    int posFeaImage     = yevent * rowSizeFea + xevent ;                                    
+                                    // depressing the feature map in the location
+                                    unsigned char* pFeaRight = rightFeaOutputImage->getRawImage();
+                                    
+                                    if(pFeaRight[posFeaImage] < 127 - devianceFeaSurround) {
+                                        pFeaRight[posFeaImage] += devianceFeaSurround;
+                                    }     
+                                    else  if(pFeaRight[posFeaImage] > 127 + devianceFeaSurround) {
+                                        pFeaRight[posFeaImage] -= devianceFeaSurround;
+                                    }
+                                    else {
+                                        //pFeaRight[posFeaImage] = 0;
+                                    }
                                 }
                                 else {
                                     //creating an event            
@@ -1439,11 +1473,8 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                                     //printf("Given pos %d extracts x=%d and y=%d pol=%d blob=%08x evPU = %08x \n", pos, xevent, yevent, pol, blob, ts);
                                     
                                     
-                                    // representing the feature map for debug
+                                    //------------ representing the feature map for debug---------------
                                     unsigned char* pFeaRight = rightFeaOutputImage->getRawImage();
-                                    
-                                    
-                                    
                                     if(polevent > 0) {
                                         if(pFeaRight[posFeaImage] <= 255 - devianceFea) {
                                             pFeaRight[posFeaImage] += devianceFea ;
@@ -1460,8 +1491,11 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                                             pFeaRight[posFeaImage] = 0;
                                         }
                                     }
+                                    //-------------------------------------------------------------------
                                     
-                                    if(pFeaRight[posFeaImage] > 240) {
+                                    
+                                    //-------------------- sending the event if it passes thresholds -------
+                                    if(pFeaRight[posFeaImage] > POS_FIRE_TH) {
                                         
                                         TimeStamp* timestamp = new TimeStamp();
                                         timestamp->setStamp(ts);
@@ -1489,7 +1523,7 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                                         //bufferFEA_copy++; // jumping to the next event(u32,u32)
                                         // countEventToSend++;
                                     }
-                                    else if(pFeaRight[posFeaImage] < 10) {
+                                    else if(pFeaRight[posFeaImage] < NEG_FIRE_TH) {
                                         
                                         TimeStamp* timestamp = new TimeStamp();
                                         timestamp->setStamp(ts);
@@ -1516,7 +1550,8 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                                         //fprintf(fout,"%08X %08X \n",bufferFEA_copy->address,ts);
                                         //bufferFEA_copy++; // jumping to the next event(u32,u32)
                                         //countEventToSend++;
-                                    }                           
+                                    } 
+                                    // -------------------------------------------------------------------
                                     
                                     
                                     //unsigned char* pFeaRight = rightFeaOutputImage->getRawImage();
