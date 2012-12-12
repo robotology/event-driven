@@ -36,15 +36,15 @@ using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
-#define FIRETHRESHOLD 0.4
+#define FIRETHRESHOLD 100            // value of the fire threshold in the saliency map [0,255]
 #define INTERVFACTOR  1
-#define COUNTERRATIO  1 //1.25       //1.25 is the ratio 0.160/0.128
-#define MAXVALUE      0xFFFFFF //4294967295
+#define COUNTERRATIO  1              //1.25 is the ratio 0.160/0.128
+#define MAXVALUE      0xFFFFFF       //4294967295
 #define THRATE        5
-#define CHUNKSIZE     32768 //65536 //8192
+#define CHUNKSIZE     32768          //65536 //8192
 #define dim_window    10
 #define synch_time    1
-#define COMMCOUNTDEF  20
+#define COMMCOUNTDEF  1
 
 //#define VERBOSE
 #define INCR_RESPONSE 0
@@ -314,8 +314,15 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
     */
     
     maxDistance = 100; // resetting the max distance to the max value
-    unsigned int maxValue = 0;
     
+
+    /* BEWARE! REMEMBER: the feature map received are double value in the range [-1.0, 1.0]
+       However in the next analysis it does not matter whether the contribution is positive or negative.
+       The more distant from 0 the more salient. It suffices to extract the abs(value) as a measure of saliency
+     */
+
+    unsigned int maxValue = 0;   /*  MAX VALUE REGISTER of saliency map [0, 255] initialised to 0 */
+
     for(int r = 0 ; r < retinalSize ; r++){
         for(int c = 0 ; c < retinalSize ; c++) {            
             // combining the feature map and normalisation
@@ -357,37 +364,35 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
             //double left_double  = saliencyMapLeft [r * retinalSize + c];
             //double right_double = saliencyMapRight[r * retinalSize + c];
             //left_double = featureMap41Left[r * retinalSize + c];            
-
-            //--------------- conversion  -------------------------------
-            double right_double = 0;
-            double left_double  = *pBufferLeft;
-            value = left_double * 255;
-
             //if(value > 255) {
             //    printf("overflow %f %f %f \n", contrib41Left, contribA1Left,*pBuffer);
             //}
-            
 
-            // -------------- max and min of let and right ----------------------
+            double right_double = 0;
+            double left_double  = *pBufferLeft;
+
+            // -------------- max and min of left and right image  -------------------
             if(left_double  < minLeft)   minLeft = left_double;
             if(left_double  > maxLeft)   maxLeft = left_double;
             if(right_double > maxRight)  maxRight = right_double;
             if(right_double < minRight)  minRight = right_double;
+            //--------------------------------------------------------------------------
 
             //if(maxResponseLeft < abs(minLeft)) {
             //    maxResponseLeft = abs(minLeft);
             //    maxLeftR = r; maxLeftC = c;
             //}
-            
+
+            // --------- weight biases distance from the center of the saliency map -----------
             double a, b;
             a = b = (double) (retinalSize >> 1); 
             double max_distance = sqrt (a * a + b * b) + 50;
             a -= r;
-            b -= c;
-           
+            b -= c;           
             double distance = sqrt (a * a + b * b);
             double weight = 1.0 + (1 - (distance / max_distance)) / 4 ;
             // weight in the range between 0.35 and 0.9
+            //---------------------------------------------------------------------------------
             
             
             if(maxResponseLeft  < (abs(left_double))) {
@@ -409,16 +414,30 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
                 maxRightR = r; maxRightC = c;
             }        
 
-            //--------------- temporal information ------------------------------          
+            //--------------- temporal information ------------------------------------          
             timestampactual = (*pTimeA1Left > *pTime41Left)?*pTimeA1Left:*pTime41Left;
             //timestampactual = *pTimeA1Left;
             //timestampactual   = *pTime41Left;
+
+
+            //--------------- conversion  --------------------------------------------
+            /** BEWARE! REMEMBER : In the previous section the saliency map is double register in the range [0.0, 1.0];
+                Towards 1.0 : high saliency
+                Towards 0.0 : low  saliency
+
+                From now on, the register value is mapped in to unsigned int in the range [0, 255];
+                This allows for the creation of an grey-scale image representing the saliency map.
+             */            
+            
+            value = left_double * 255;         // CAUTION : casting of a double into an unsigned int!!!!!!!!!!!!!!!
+            //------------------------------------------------------------------------
+
             
 
             //----------------------------------------------------------------------------------------
             if(tristate) {
                 
-                // forgetting factor
+                // -----(NOT ENABLED)--- FORGETTING FACTOR -----------------------------------------
                 // decreasing the spatial response without removing it
                 // without forgetting factor the event can be present for the timestamp but it is always presenting the max value
                 if(count % 1 == 0) {
@@ -443,14 +462,17 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
                         left_double = left_double + 0.99;
                         //*pBufferLeft = *pBufferLeft + 100;                                       
                     }
-
                 }
+                // ----(NOT ENABLED)------------------------------------------------------------------
+
 
                 //if(minCount>0 && maxCount > 0 && timestampactual>0)
                 //printf("actualTS %08X val %08X max %08X min %08X  are\n",timestampactual,timestampactual * COUNTERRATIO,minCount,maxCount);
+
                 if ( 
                     ((timestampactual * COUNTERRATIO) > minCount) && ((timestampactual * COUNTERRATIO) < maxCount)
                     ) {   //(timestampactual != lasttimestamp)
+
                     *pImage = (unsigned char) (value);
                     pImage++;
                     *pImage = (unsigned char) (value);
@@ -499,17 +521,25 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
                 pTime41Left++;
                 pTimeA1Left++;
             }
-            else { // branch !tristateView
+            else { 
+
+                // ------------------------- branch !tristateView ------------------------
+
+                // -----(NOT ENABLED)--- FORGETTING FACTOR -----------------------------------------
                 // decreasing the spatial response without removing 
                 if((*pBufferLeft > 20) && (count % 10 == 0)){
                     *pBufferLeft = *pBufferLeft - 1;                                       
                 }
-                //if(minCount>0 && maxCount > 0 && timestampactual>0)
-                //printf("actualTS%ld val%ld max%ld min%ld  are\n",timestampactual,timestampactual * COUNTERRATIO,minCount,maxCount);
-                if (((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)) {   //(timestampactual != lasttimestamp)
-                    *pImage = (unsigned char) abs((double )value * 2);
+                // -----(NOT ENABLED)-----------------------------------------------------------------
+
+                if (((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)) {   
+                    *pImage =  value ;
                     //if(value>0)printf("event%d val%d buf%d\n",*pImage,value,*pBuffer);
                     pImage++;
+                    
+                    //TODO:  the output image is RGB image, still address other color pixels
+                    
+
                     //if ((stereo) && (r < 7) && (r >= 16) && (c < 7) && (c >= 16)) {
                     //  *pImage = (unsigned char) (127 + value);
                     //  pImage += imageRowSize;
@@ -524,6 +554,9 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
                     *pImage = (unsigned char) 10 ;
                     //printf("NOT event%d \n",*pImage);
                     pImage++;
+
+                    //TODO:  the output image is RGB image, still address other color pixels
+
                     
                     //if ((stereo) && (r < 7) && (r >= 16) && (c < 7) && (c >= 16)) {
                     //  *pImage = (unsigned char) 127;
@@ -554,26 +587,26 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
     
     // cycle after normalisation - WTA representation
     //printf("cycle after the normalisation LEFT:(%f, %f)  RIGHT:(%f,%f) \n", minLeft, maxLeft, minRight, maxRight);
-    double* pSalLeft      = saliencyMapLeft;
-    double* pSalRight     = saliencyMapRight;
+    double* pSalLeft        = saliencyMapLeft;
+    double* pSalRight       = saliencyMapRight;
     //unsigned long* pTimeLeft     = timestampMapLeft;
     //unsigned long* pTimeRight    = timestampMapRight;
     double rangeLeft        = abs(maxLeft  - minLeft);
     double rangeRight       = abs(maxRight - minRight);
-    unsigned char* pLeft    = imageLeft->getRawImage();
-    unsigned char* pRight   = imageRight->getRawImage();
-    unsigned char* pLeftBW  = imageLeftBW->getRawImage();
-    unsigned char* pRightBW = imageRightBW->getRawImage();
-    int padding             = imageLeft->getPadding();
-    int rowSize             = imageLeft->getRowSize();
-    int rowSizeBW           = imageLeftBW->getRowSize();
+    unsigned char* pLeft    = imageLeft    ->getRawImage();
+    unsigned char* pRight   = imageRight   ->getRawImage();
+    unsigned char* pLeftBW  = imageLeftBW  ->getRawImage();
+    unsigned char* pRightBW = imageRightBW ->getRawImage();
+    int padding             = imageLeft    ->getPadding();
+    int rowSize             = imageLeft    ->getRowSize();
+    int rowSizeBW           = imageLeftBW   ->getRowSize();
 
     imageLeftBW->zero();
     imageRightBW->zero();
    
     // if(maxResponseLeft > FIRETHRESHOLD) {
          
-    if(maxValue >= 100) {    
+    if(maxValue >= FIRETHRESHOLD) {    
         //printf("maxResponseLeft %f position %d %d \n",maxResponseLeft,maxLeftC,maxLeftR  );
         // sending command for saccade; to focus redeployment corresponds fixation point reallocation 
         if(outputCmdPort.getOutputCount()){
@@ -587,6 +620,7 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
                 commandBottle.addInt(maxLeftR);
                 commandBottle.addDouble(0.5);
                 commandBottle.addDouble(1.0);
+                commandBottle.addDouble((double)timestampactual);
                 outputCmdPort.write();
             }
                 
@@ -597,7 +631,7 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
             
         }
 
-        // representing the WTA on a BW saliencymap
+        // representing the WTA on a BW saliency map image
         pLeftBW += (maxLeftR - 1)  * rowSizeBW  + (maxLeftC - 1);
         for (int r = 0 ; r < 3; r++) {
             for (int c = 0 ; c < 3 ; c++) {
@@ -608,7 +642,10 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
         }
 
 
-        // representing the WTA as red dot
+        //pLeft +=  (maxLeftR - 1) * rowsize + (maxLeftC - 1) * 3 ;
+
+        
+        // (OLD) representing the WTA as red dot 
         for(int r = 0 ; r < retinalSize ; r++){
             for(int c = 0 ; c < retinalSize ; c++) {
                 timestampactual = *pTimeLeft; 
@@ -669,45 +706,48 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
                 // -----------------------  RIGHT WTA  ------------------------------
                 timestampactual = *pTimeRight;
                 if (((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)) { 
-                if (r == maxRightR) {
-                *pRight = 255; pRight++;
-                *pRight = 0;   pRight++;
-                *pRight = 0;   pRight++;
-                }
-                else if(c == maxRightC) {
-                *pRight = 255; pRight++;
-                *pRight = 0;   pRight++;
-                *pRight = 0;   pRight++;
-                }
-                else {
-                double d = ((abs(*pSalRight - minRight) )/ rangeRight) * 80;
-                *pRight = (unsigned char) d; pRight++;
-                *pRight = (unsigned char) d; pRight++;
-                *pRight = (unsigned char) d; pRight++;
-                }
-                }
-                else {
-                if(r == maxRightR)  {
-                // maximum response
-                *pRight = 255; pRight++;
-                *pRight = 0;   pRight++;
-                *pRight = 0;   pRight++;
-                }
-                else if (c == maxRightC) {
-                *pRight = 255; pRight++;
-                *pRight = 0;   pRight++;
-                *pRight = 0;   pRight++;
+                    if (r == maxRightR) {
+                        *pRight = 255; pRight++;
+                        *pRight = 0;   pRight++;
+                        *pRight = 0;   pRight++;
+                    }
+                    else if(c == maxRightC) {
+                        *pRight = 255; pRight++;
+                        *pRight = 0;   pRight++;
+                        *pRight = 0;   pRight++;
+                    }
+                    else {
+                        double d = ((abs(*pSalRight - minRight) )/ rangeRight) * 80;
+                        *pRight = (unsigned char) d; pRight++;
+                        *pRight = (unsigned char) d; pRight++;
+                        *pRight = (unsigned char) d; pRight++;
+                    }
                 }
                 else {
-                *pRight = 0; pRight++;
-                *pRight = 0; pRight++;
-                *pRight = 0; pRight++;
+                    if(r == maxRightR)  {
+                        // maximum response
+                        *pRight = 255; pRight++;
+                        *pRight = 0;   pRight++;
+                        *pRight = 0;   pRight++;
+                    }
+                    else if (c == maxRightC) {
+                        *pRight = 255; pRight++;
+                        *pRight = 0;   pRight++;
+                        *pRight = 0;   pRight++;
+                    }
+                    else {
+                        *pRight = 0; pRight++;
+                        *pRight = 0; pRight++;
+                        *pRight = 0; pRight++;
+                    }
                 }
-                }
+                
+
                 //pRight++;
                 pSalRight++;
-            pTimeRight++;
+                pTimeRight++;
                 */
+                
             } //end inner for
             
         pLeft  += padding;
