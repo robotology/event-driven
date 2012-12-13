@@ -44,9 +44,10 @@ using namespace std;
 #define CHUNKSIZE     32768          //65536 //8192
 #define dim_window    10
 #define synch_time    1
-#define COMMCOUNTDEF  1
+#define COMMCOUNTDEF  20
 
 //#define VERBOSE
+#define STOREWTA
 #define INCR_RESPONSE 0
 #define DECR_RESPONSE 0
 
@@ -58,6 +59,15 @@ eventSelectorThread::eventSelectorThread() : RateThread(THRATE) {
     minCount         = 0;    //initialisation of the timestamp limits of the first frame
     countStop        = 0;
     countCommands    = 30;    
+    
+    lc               = 0;	
+    rc               = 0; 
+    minCount         = 0;
+    minCountRight    = 0;
+
+    maxDistance      = 255;
+
+    forgettingFactor = 0.05;
         
     bottleHandler = true;
     synchronised = false;
@@ -69,14 +79,9 @@ eventSelectorThread::eventSelectorThread() : RateThread(THRATE) {
 
     verb = false;
     string i_fileName("events.log");
-    raw = fopen(i_fileName.c_str(), "wb");
-    
-    lc            = 0;	
-    rc            = 0; 
-    minCount      = 0;
-    minCountRight = 0;
-
-    maxDistance   = 255;
+    string w_fileName("wta.log");
+    raw    = fopen(i_fileName.c_str(), "wb");
+    fstore = fopen(w_fileName.c_str(), "wb"); 
 }
 
 eventSelectorThread::~eventSelectorThread() {
@@ -319,18 +324,37 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
     /* BEWARE! REMEMBER: the feature map received are double value in the range [-1.0, 1.0]
        However in the next analysis it does not matter whether the contribution is positive or negative.
        The more distant from 0 the more salient. It suffices to extract the abs(value) as a measure of saliency
+       The pixel value is immediately forced in the range [0.0, 1.0] using abs operator
      */
 
     unsigned int maxValue = 0;   /*  MAX VALUE REGISTER of saliency map [0, 255] initialised to 0 */
 
     for(int r = 0 ; r < retinalSize ; r++){
         for(int c = 0 ; c < retinalSize ; c++) {            
-            // combining the feature map and normalisation
-            
-            double contrib41Left = abs(*pMap41Left);
+            // combining the feature map and normalisation            
+            double contrib41Left = abs(*pMap41Left); 
             double contrib42Left = abs(*pMap42Left);
             double contribA1Left = abs(*pMapA1Left);
-            double contribA2Left = abs(*pMapA2Left);
+            double contribA2Left = abs(*pMapA2Left); 
+            // forgetting factor decrement
+            if(contrib41Left > forgettingFactor)  {
+                contrib41Left -= forgettingFactor;
+            }
+            if(contrib42Left > forgettingFactor)  {
+                contrib42Left -= forgettingFactor;
+            }
+            if(contribA1Left > forgettingFactor)  {
+                contribA1Left -= forgettingFactor;
+            }
+            if(contribA2Left > forgettingFactor)  {
+                contribA2Left -= forgettingFactor;
+            }
+            
+
+
+            
+            
+
             //double contrib41Left = (abs(*pMap41Left) - bpt41->getMinLeft()) / (bpt41->getMaxLeft() - bpt41->getMinLeft());
             //double contribA1Left = (abs(*pMapA1Left) - bptA1->getMinLeft()) / (bptA1->getMaxLeft() - bptA1->getMinLeft());     
 
@@ -606,7 +630,12 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
    
     // if(maxResponseLeft > FIRETHRESHOLD) {
          
-    if(maxValue >= FIRETHRESHOLD) {    
+    if(maxValue >= FIRETHRESHOLD) {  
+
+#ifdef STOREWTA
+        fprintf(fstore, "%d %d %lu \n", maxLeftC,maxLeftR, timestampactual);
+#endif
+  
         //printf("maxResponseLeft %f position %d %d \n",maxResponseLeft,maxLeftC,maxLeftR  );
         // sending command for saccade; to focus redeployment corresponds fixation point reallocation 
         if(outputCmdPort.getOutputCount()){
@@ -620,7 +649,7 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
                 commandBottle.addInt(maxLeftR);
                 commandBottle.addDouble(0.5);
                 commandBottle.addDouble(1.0);
-                commandBottle.addDouble((double)timestampactual);
+                //commandBottle.addDouble(timestampactual);
                 outputCmdPort.write();
             }
                 
@@ -1222,6 +1251,7 @@ void eventSelectorThread::run() {
 void eventSelectorThread::threadRelease() {
     idle = false;
     fclose(fout);
+    fclose(fstore);
     printf("eventSelectorThread release:freeing bufferCopy \n");
 
     delete imageLeft;

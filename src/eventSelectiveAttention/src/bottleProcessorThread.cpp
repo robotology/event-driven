@@ -238,7 +238,7 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
     //printf("saliencySize %d retinalSize %d \n", saliencySize, retinalSize);
     int scaleFactor   = saliencySize / retinalSize; 
 
-    /* BEWARE! REMEMBER: the feature map at this stage has double value in the interval [0.0, 1.0]
+    /* BEWARE! REMEMBER: the feature map at this stage has double value in the interval [-1.0, 1.0]
        
        negative value : negative overall contribution of the receptive field
        positive value : positive overall contribution of the receptive field
@@ -349,7 +349,7 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                                     //saliencyMapLeft [(xpos * scaleFactor + xi) * 3   + (ypos + yi) * saliencySize * 3 ] -=  INCR_RESPONSE;                                    
                                     mutexFeaLeft.wait();
                                     double* pFea = &featureMapLeft[(ypos + yi) * saliencySize + (xpos + xi)];
-                                    if(*pFea > INCR_RESPONSE){
+                                    if(*pFea > -1.0 + INCR_RESPONSE){
                                         *pFea -= INCR_RESPONSE;
                                     }
                                     //featureMapLeft[(ypos + yi) * saliencySize + (xpos + xi)] -= INCR_RESPONSE;
@@ -412,7 +412,7 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                                 for (int yi = 0; yi < scaleFactor; yi++) {
                                     mutexFeaRight.wait();
                                     double* pFea = &featureMapRight[(ypos + yi) * saliencySize + (xpos + xi)];
-                                    if(*pFea > INCR_RESPONSE) {
+                                    if(*pFea > -1.0 + INCR_RESPONSE) {
                                         *pFea -= INCR_RESPONSE;
                                     }
                                     //featureMapLeft[(ypos + yi) * saliencySize + (xpos + xi)] -= INCR_RESPONSE;
@@ -462,7 +462,8 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                 }
                  
                 // reducing the contribution of the receptive field in time
-                forgettingMemory();
+                // TODO : check time consumption
+                // _REMOVED forgettingMemory(); // it was taking to much
 
             }
 /************************** NULL ***********************************/

@@ -63,6 +63,7 @@ private:
     unsigned long rcprev;
     unsigned long rc;
     
+    double forgettingFactor;            // forgetting factor subtracted to pixel of feature map [0.0,1.0]
     double microseconds;
     double microsecondsPrev;
     int countStop;                      // counter of equal timestamp
@@ -73,10 +74,10 @@ private:
     int height_orig, width_orig;        // original dimension of the input and output images
     int synchPeriod;                    // synchronization period between events and viewer
     int responseGradient;               // responseGradient parameter
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPort;            // port whre the output (left) is sent
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPortRight;       // port whre the output (right) is sent
-    yarp::sig::ImageOf<yarp::sig::PixelRgb>* imageLeft;                                  //image representing the signal on the leftcamera
-    yarp::sig::ImageOf<yarp::sig::PixelRgb>* imageRight;                                 //image representing the signal on the right camera
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPort;           // port whre the output (left) is sent
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outPortRight;      // port whre the output (right) is sent
+    yarp::sig::ImageOf<yarp::sig::PixelRgb>*  imageLeft;                                  //image representing the signal on the leftcamera
+    yarp::sig::ImageOf<yarp::sig::PixelRgb>*  imageRight;                                 //image representing the signal on the right camera
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeftBW;                               //image representing the signal on the leftcamera
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRightBW;                              //image representing the signal on the right camera
     
@@ -112,6 +113,7 @@ private:
     char* bufferRead;                    // buffer of events read from the port
     char* bufferCopy;                    // local copy of the events read
     FILE* fout;                          // file for temporarely savings of events
+    FILE* fstore;                        // file for the saving of wta position with timestamps
     FILE* raw;                           // file dumper for debug
     
     double* saliencyMapLeft;             // saliencyMap of the left camera
