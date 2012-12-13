@@ -293,7 +293,24 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
     bpt41->copyTimestampMapLeft(timestampMap41Left);
     bpt42->copyTimestampMapLeft(timestampMap42Left);
     bptA1->copyTimestampMapLeft(timestampMapA1Left);
-    //bptA2->copyTimestampMapLeft(timestampMapA2Left);    
+    //bptA2->copyTimestampMapLeft(timestampMapA2Left);
+
+    unsigned long last41 =  bpt41->getLastTimestamp();
+    unsigned long last42 =  bpt42->getLastTimestamp();
+    unsigned long lastA1 =  bptA1->getLastTimestamp();
+
+    unsigned long last_ts;
+    if(last41 > last42)
+        last_ts = last41;
+    else if( last42 > lastA1)
+        last_ts = last42;
+    else
+        last_ts = lastA1;
+
+#ifdef STOREWTA
+    fprintf(fstore," %lu %lu %lu > %lu \n",last41,last42,lastA1, last_ts);
+#endif
+    
     
     unsigned long timestampactual;
     unsigned long* pTime41Left  = timestampMap41Left;
@@ -438,10 +455,22 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
                 maxRightR = r; maxRightC = c;
             }        
 
-            //--------------- temporal information ------------------------------------          
-            timestampactual = (*pTimeA1Left > *pTime41Left)?*pTimeA1Left:*pTime41Left;
-            //timestampactual = *pTimeA1Left;
+            //--------------- temporal information ------------------------------------
+            unsigned long ta1l = *pTimeA1Left;
+            unsigned long t41l = *pTime41Left;
+            /*
+            if( ta1l > t41l){
+                timestampactual = ta1l;
+            }
+            else {
+                timestampactual = t41l;
+            }
+            */   
+
+            timestampactual   = (*pTimeA1Left > *pTime41Left)?*pTimeA1Left:*pTime41Left;
+            //timestampactual   = *pTimeA1Left;
             //timestampactual   = *pTime41Left;
+            //--------------------------------------------------------------------------
 
 
             //--------------- conversion  --------------------------------------------
@@ -633,7 +662,7 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
     if(maxValue >= FIRETHRESHOLD) {  
 
 #ifdef STOREWTA
-        fprintf(fstore, "%d %d %lu \n", maxLeftC,maxLeftR, timestampactual);
+        fprintf(fstore, ">>>>>> %d %d %lu \n", maxLeftC,maxLeftR, timestampactual);
 #endif
   
         //printf("maxResponseLeft %f position %d %d \n",maxResponseLeft,maxLeftC,maxLeftR  );

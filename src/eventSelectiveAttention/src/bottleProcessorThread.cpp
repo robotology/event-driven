@@ -52,11 +52,14 @@ bottleProcessorThread::bottleProcessorThread() : RateThread(THRATE) {
     responseGradient = 127;
     retinalSize      = 128;  //default value before setting 
     saliencySize     = 128;  //default dimension of the saliency map
-    lasttimestamp    = 0;
+
     maxLeft          = -1.0;
     minLeft          =  1.0;
     maxRight         = -1.0;
     minRight         =  1.0;
+
+    last_ts          = 0;
+    lasttimestamp    = 0;
     featureMapLeft   = 0;
     timestampMapLeft = 0;
     count            = 0;
@@ -372,7 +375,7 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                             for (int yi = 0; yi < scaleFactor; yi++) {
                                 
                                 mutexTimeLeft.wait();
-                                //printf("updating ts left %08x  \n", ts);
+                                //printf("updating ts left %08x  saliencySize %d \n", ts, saliencySize);
                                 timestampMapLeft[(ypos + yi) * saliencySize + (xpos + xi)] = ts;
                                 mutexTimeLeft.post();
                                 
@@ -453,6 +456,7 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                 
                 //identified an time stamp event
                 ts = (unsigned int) ptr->getStamp();
+                last_ts = ts;
                 //printf("timestamp %08X %08X \n", ts, lasttimestamp);
                 if(timestampUpdate) {
                     mutexLastTimestamp.wait();
@@ -618,6 +622,12 @@ void bottleProcessorThread::copyTimestampMapLeft(unsigned long *pointer) {
     double *       pFea  = featureMapLeft;
 
     for (int i = 0; i < saliencySize * saliencySize; i++) { 
+        
+        *pointer = *pTime;
+        
+        //printf("%08x =  %08x \n", *pointer, *pTime);
+        
+        /*
         // control for old events to avoid events after one cycle timestamp
         long int distance;
         if(lasttimestamp!=0) {
@@ -632,10 +642,14 @@ void bottleProcessorThread::copyTimestampMapLeft(unsigned long *pointer) {
         else {
             *pointer = *pTime;   
         }
+        */
+
+
         pointer++; 
         pTime++;
         pFea++;
-    }    
+    }
+    
     mutexTimeLeft.post();
 }
 

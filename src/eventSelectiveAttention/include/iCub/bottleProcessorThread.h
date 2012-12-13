@@ -88,10 +88,11 @@ private:
     bool tristate;                      // option that represent the image with three baselines
     bool bottleHandler;                 // flag that indicates whether events are sent as bottle exclusively
     bool timestampUpdate;
-    unsigned long minCount;             // minimum timestamp allowed for the current frame
-    unsigned long maxCount;             // maximum timestamp allowed for the current frame
-    unsigned long minCountRight;
-    unsigned long maxCountRight;
+    unsigned long  minCount;           // minimum timestamp allowed for the current frame
+    unsigned long  maxCount;           // maximum timestamp allowed for the current frame
+    unsigned long  minCountRight;
+    unsigned long  maxCountRight;
+    unsigned long  last_ts;             // local measure of the timestamp               
     unsigned long* lasttimestamp;       // last unmasked timestamp
 
     emorph::ecodec::eEventQueue* txQueue;  // queue of event to be sent
@@ -193,6 +194,9 @@ public:
     */
     //void getMonoImage(yarp::sig::ImageOf<yarp::sig::PixelMono>* image, unsigned long minCount,unsigned long maxCount, bool camera);
 
+    
+    
+
     /**
      * return the minvValue measured
      */
@@ -293,8 +297,27 @@ public:
      * @param last reference to the common last time stamp
      */
     void setLastTimestamp(unsigned long* last) {
+        
         lasttimestamp = last;
         timestampUpdate = true;
+        
+    };
+
+    /**
+     * function that returns the value of the last timestamp received
+     * @return last timestamp in the current acquisition
+     */
+    unsigned long getLastTimestamp() {
+        /*if(lasttimestamp == 0) {
+            printf("lasttimestamp == 0 \n");
+            return 0;
+        }
+        else {
+            printf("*lasttimestamp = %lu \n",  *lasttimestamp );
+            return *lasttimestamp;
+            }*/
+        
+        return last_ts;
     };
     
     /**
