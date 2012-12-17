@@ -307,9 +307,9 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
     else
         last_ts = lastA1;
 
-#ifdef STOREWTA
-    fprintf(fstore," %lu %lu %lu > %lu \n",last41,last42,lastA1, last_ts);
-#endif
+    //#ifdef STOREWTA
+    //fprintf(fstore," %lu %lu %lu > %lu \n",last41,last42,lastA1, last_ts);
+    //#endif
     
     
     unsigned long timestampactual;
@@ -366,11 +366,6 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
             if(contribA2Left > forgettingFactor)  {
                 contribA2Left -= forgettingFactor;
             }
-            
-
-
-            
-            
 
             //double contrib41Left = (abs(*pMap41Left) - bpt41->getMinLeft()) / (bpt41->getMaxLeft() - bpt41->getMinLeft());
             //double contribA1Left = (abs(*pMapA1Left) - bptA1->getMinLeft()) / (bptA1->getMaxLeft() - bptA1->getMinLeft());     
@@ -652,7 +647,7 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
     unsigned char* pRightBW = imageRightBW ->getRawImage();
     int padding             = imageLeft    ->getPadding();
     int rowSize             = imageLeft    ->getRowSize();
-    int rowSizeBW           = imageLeftBW   ->getRowSize();
+    int rowSizeBW           = imageLeftBW  ->getRowSize();
 
     imageLeftBW->zero();
     imageRightBW->zero();
@@ -662,7 +657,10 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
     if(maxValue >= FIRETHRESHOLD) {  
 
 #ifdef STOREWTA
-        fprintf(fstore, ">>>>>> %d %d %lu \n", maxLeftC,maxLeftR, timestampactual);
+        /** 
+         *saving in a file the list of WTA position and their timestamp (X,Y) for the left camera
+         */
+        fprintf(fstore, "%d %d %lu \n", maxLeftC,maxLeftR, last_ts);
 #endif
   
         //printf("maxResponseLeft %f position %d %d \n",maxResponseLeft,maxLeftC,maxLeftR  );
