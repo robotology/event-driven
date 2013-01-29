@@ -315,17 +315,26 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
     if(bpt42!=0) {
         bpt42->copyFeatureMapLeft(featureMap42Left);
     }
+    if(bpt43!=0) {
+        bpt43->copyFeatureMapLeft(featureMap43Left);
+    }
     if(bptA1!=0) {
         bptA1->copyFeatureMapLeft(featureMapA1Left);
     }
     //bptA2->copyFeatureMapLeft(featureMapA2Left);
+
+
+    // copying the map of timestamps
     if(bpt41!= 0){
         bpt41->copyTimestampMapLeft(timestampMap41Left);
     }
     if(bpt42!= 0){
         bpt42->copyTimestampMapLeft(timestampMap42Left);
     }
-    if(bpt41!= 0){
+    if(bpt43!= 0){
+        bpt43->copyTimestampMapLeft(timestampMap43Left);
+    }
+    if(bptA1!= 0){
         bptA1->copyTimestampMapLeft(timestampMapA1Left);
     }
     //bptA2->copyTimestampMapLeft(timestampMapA2Left);
@@ -338,6 +347,10 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
     unsigned long last42 = 0;
     if(bpt42!= 0){
         last42=  bpt42->getLastTimestamp();
+    }
+    unsigned long last43 = 0;
+    if(bpt43!= 0){
+        last43=  bpt43->getLastTimestamp();
     }
     unsigned long lastA1 = 0;
     if(bptA1!= 0){
@@ -360,12 +373,14 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
     unsigned long timestampactual;
     unsigned long* pTime41Left  = timestampMap41Left;
     unsigned long* pTime42Left  = timestampMap42Left;
+    unsigned long* pTime43Left  = timestampMap43Left;
     unsigned long* pTimeA1Left  = timestampMapA1Left;
     unsigned long* pTimeA2Left  = timestampMapA2Left;
     unsigned long* pTimeLeft    = timestampMapLeft;
 
     double* pMap41Left          = featureMap41Left;
     double* pMap42Left          = featureMap42Left;
+    double* pMap43Left          = featureMap43Left;
     double* pMapA1Left          = featureMapA1Left;
     double* pMapA2Left          = featureMapA2Left;
     double* pBufferLeft         = saliencyMapLeft;
@@ -396,6 +411,7 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
             // combining the feature map and normalisation            
             double contrib41Left = abs(*pMap41Left); 
             double contrib42Left = abs(*pMap42Left);
+            double contrib43Left = abs(*pMap43Left);
             double contribA1Left = abs(*pMapA1Left);
             double contribA2Left = abs(*pMapA2Left); 
 
@@ -405,6 +421,9 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
             }
             if(contrib42Left > forgettingFactor)  {
                 contrib42Left -= forgettingFactor;
+            }
+            if(contrib43Left > forgettingFactor)  {
+                contrib43Left -= forgettingFactor;
             }
             if(contribA1Left > forgettingFactor)  {
                 contribA1Left -= forgettingFactor;
@@ -431,9 +450,10 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
             double wa2 = 0.0;
             double w41 = 0.1;
             double w42 = 0.1;
+            double w43 = 0.0;
             //*pBufferLeft =  contrib41Left ;
             *pBufferLeft =  wa1 * contribA1Left + wa2 * contribA2Left + 
-                            w41 * contrib41Left + w42 * contrib42Left;
+                w41 * contrib41Left + w42 * contrib42Left + w43 * contrib43Left;
             
             
             
@@ -615,7 +635,10 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
                 }
                 pBufferLeft++;
                 pMap41Left++;
+                pMap42Left++;
+                pMap43Left++;
                 pMapA1Left++;
+                
                 pTime41Left++;
                 pTimeA1Left++;
             }
@@ -668,6 +691,9 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
                 }
                 pBufferLeft++;
                 pMap41Left++;
+                pMap42Left++;
+                pMap43Left++;
+
                 pMapA1Left++;
                 pTime41Left++;
                 pTimeA1Left++;
