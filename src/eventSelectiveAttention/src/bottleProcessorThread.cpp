@@ -38,7 +38,7 @@ using namespace std;
 #define INTERVFACTOR 1
 #define COUNTERRATIO 1 //1.25       //1.25 is the ratio 0.160/0.128
 #define MAXVALUE     0xFFFFFF //4294967295
-#define THRATE       5
+#define THRATE       1
 #define CHUNKSIZE    32768 //65536 //8192
 #define dim_window   10
 #define synch_time   1

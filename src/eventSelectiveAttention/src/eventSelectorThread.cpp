@@ -40,7 +40,7 @@ using namespace std;
 #define INTERVFACTOR  1
 #define COUNTERRATIO  1              //1.25 is the ratio 0.160/0.128
 #define MAXVALUE      0xFFFFFF       //4294967295
-#define THRATE        5
+#define THRATE        1
 #define CHUNKSIZE     32768          //65536 //8192
 #define dim_window    10
 #define synch_time    1
@@ -48,6 +48,7 @@ using namespace std;
 
 //#define VERBOSE
 #define STOREWTA
+#define STOREINI
 #define INCR_RESPONSE 0
 #define DECR_RESPONSE 0
 
@@ -80,8 +81,10 @@ eventSelectorThread::eventSelectorThread() : RateThread(THRATE) {
     verb = false;
     string i_fileName("events.log");
     string w_fileName("wta.log");
-    raw    = fopen(i_fileName.c_str(), "wb");
-    fstore = fopen(w_fileName.c_str(), "wb"); 
+    string n_fileName("ini.log");
+    raw     = fopen(i_fileName.c_str(), "wb");
+    fstore  = fopen(w_fileName.c_str(), "wb"); 
+    istore  = fopen(n_fileName.c_str(), "wb"); 
 }
 
 eventSelectorThread::~eventSelectorThread() {
@@ -139,21 +142,25 @@ bool eventSelectorThread::threadInit() {
     featureMap41Right  = (double*) malloc(retinalSize * retinalSize * sizeof(double));
     featureMap42Left   = (double*) malloc(retinalSize * retinalSize * sizeof(double));
     featureMap42Right  = (double*) malloc(retinalSize * retinalSize * sizeof(double));
+    featureMap43Left   = (double*) malloc(retinalSize * retinalSize * sizeof(double));
+    featureMap43Right  = (double*) malloc(retinalSize * retinalSize * sizeof(double));
     featureMapA1Left   = (double*) malloc(retinalSize * retinalSize * sizeof(double));
     featureMapA1Right  = (double*) malloc(retinalSize * retinalSize * sizeof(double));
     featureMapA2Left   = (double*) malloc(retinalSize * retinalSize * sizeof(double));
     featureMapA2Right  = (double*) malloc(retinalSize * retinalSize * sizeof(double));
     
-    memset(saliencyMapLeft ,0, retinalSize * retinalSize * sizeof(double));
-    memset(saliencyMapRight,0, retinalSize * retinalSize * sizeof(double));
-    memset(featureMap41Left,0, retinalSize * retinalSize * sizeof(double));
-    memset(featureMap41Left,0, retinalSize * retinalSize * sizeof(double));
-    memset(featureMap42Left,0, retinalSize * retinalSize * sizeof(double));
-    memset(featureMap42Left,0, retinalSize * retinalSize * sizeof(double));
-    memset(featureMapA1Left,0, retinalSize * retinalSize * sizeof(double));
-    memset(featureMapA1Left,0, retinalSize * retinalSize * sizeof(double));
-    memset(featureMapA2Left,0, retinalSize * retinalSize * sizeof(double));
-    memset(featureMapA2Left,0, retinalSize * retinalSize * sizeof(double));
+    memset(saliencyMapLeft  ,0, retinalSize * retinalSize * sizeof(double));
+    memset(saliencyMapRight ,0, retinalSize * retinalSize * sizeof(double));
+    memset(featureMap41Left ,0, retinalSize * retinalSize * sizeof(double));
+    memset(featureMap41Right,0, retinalSize * retinalSize * sizeof(double));
+    memset(featureMap42Left ,0, retinalSize * retinalSize * sizeof(double));
+    memset(featureMap42Right,0, retinalSize * retinalSize * sizeof(double));
+    memset(featureMap43Left ,0, retinalSize * retinalSize * sizeof(double));
+    memset(featureMap43Right,0, retinalSize * retinalSize * sizeof(double));
+    memset(featureMapA1Left ,0, retinalSize * retinalSize * sizeof(double));
+    memset(featureMapA1Right,0, retinalSize * retinalSize * sizeof(double));
+    memset(featureMapA2Left ,0, retinalSize * retinalSize * sizeof(double));
+    memset(featureMapA2Right,0, retinalSize * retinalSize * sizeof(double));
     
     
     featureMap = (int*) malloc(retinalSize * retinalSize * sizeof(int));
@@ -164,6 +171,8 @@ bool eventSelectorThread::threadInit() {
     timestampMap41Right = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
     timestampMap42Left  = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
     timestampMap42Right = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
+    timestampMap43Left  = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
+    timestampMap43Right = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
     timestampMapA1Left  = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
     timestampMapA1Right = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
     timestampMapA2Left  = (unsigned long*) malloc(retinalSize * retinalSize * sizeof(unsigned long) );
@@ -174,6 +183,8 @@ bool eventSelectorThread::threadInit() {
     memset(timestampMap41Right ,0, retinalSize * retinalSize * sizeof(unsigned long));
     memset(timestampMap42Left  ,0, retinalSize * retinalSize * sizeof(unsigned long));
     memset(timestampMap42Right ,0, retinalSize * retinalSize * sizeof(unsigned long));
+    memset(timestampMap43Left  ,0, retinalSize * retinalSize * sizeof(unsigned long));
+    memset(timestampMap43Right ,0, retinalSize * retinalSize * sizeof(unsigned long));
     memset(timestampMapA1Left  ,0, retinalSize * retinalSize * sizeof(unsigned long));
     memset(timestampMapA1Right ,0, retinalSize * retinalSize * sizeof(unsigned long));
     memset(timestampMapA2Left  ,0, retinalSize * retinalSize * sizeof(unsigned long));
@@ -186,14 +197,20 @@ bool eventSelectorThread::threadInit() {
     lasttimestamp  = new unsigned long; 
     *lasttimestamp = 0;
 
+    bptA1 = 0;
+    bptA2 = 0;
+    bpt41 = 0;
+    bpt42 = 0;
+    bpt43 = 0;
+    
     // istantiating the processors of events
     bptA1 = new bottleProcessorThread();
     bptA1->setLastTimestamp(lasttimestamp);
     bptA1->setSaliencySize(retinalSize);  
     bptA1->setRetinalSize(retinalSize);   
     bptA1->setName(getName("/btpA1"));
-    bptA1->start();
-
+    bptA1->start();    
+    
     bptA2 = new bottleProcessorThread();
     bptA2->setLastTimestamp(lasttimestamp);
     bptA2->setSaliencySize(retinalSize);  
@@ -213,6 +230,12 @@ bool eventSelectorThread::threadInit() {
     bpt42->setName(getName("/btp42"));    
     bpt42->start();
 
+    bpt43 = new bottleProcessorThread();
+    bpt43->setSaliencySize(retinalSize);  
+    bpt43->setRetinalSize(32);
+    bpt43->setName(getName("/btp43"));    
+    bpt43->start();
+    
     outputCmdPort.open(getName("/cmd:o").c_str());
 
     receivedBottle = new Bottle();
@@ -286,18 +309,40 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
     unsigned int value;
    
     // copying the feature map for any bottleProcessor connected to the input flow of events    
-    bpt41->copyFeatureMapLeft(featureMap41Left);
-    bpt42->copyFeatureMapLeft(featureMap42Left);
-    bptA1->copyFeatureMapLeft(featureMapA1Left);
+    if(bpt41!= 0){
+        bpt41->copyFeatureMapLeft(featureMap41Left);
+    }
+    if(bpt42!=0) {
+        bpt42->copyFeatureMapLeft(featureMap42Left);
+    }
+    if(bptA1!=0) {
+        bptA1->copyFeatureMapLeft(featureMapA1Left);
+    }
     //bptA2->copyFeatureMapLeft(featureMapA2Left);
-    bpt41->copyTimestampMapLeft(timestampMap41Left);
-    bpt42->copyTimestampMapLeft(timestampMap42Left);
-    bptA1->copyTimestampMapLeft(timestampMapA1Left);
+    if(bpt41!= 0){
+        bpt41->copyTimestampMapLeft(timestampMap41Left);
+    }
+    if(bpt42!= 0){
+        bpt42->copyTimestampMapLeft(timestampMap42Left);
+    }
+    if(bpt41!= 0){
+        bptA1->copyTimestampMapLeft(timestampMapA1Left);
+    }
     //bptA2->copyTimestampMapLeft(timestampMapA2Left);
-
-    unsigned long last41 =  bpt41->getLastTimestamp();
-    unsigned long last42 =  bpt42->getLastTimestamp();
-    unsigned long lastA1 =  bptA1->getLastTimestamp();
+    
+    
+    unsigned long last41 = 0;
+    if(bpt41!= 0){
+        last41=  bpt41->getLastTimestamp();
+    }
+    unsigned long last42 = 0;
+    if(bpt42!= 0){
+        last42=  bpt42->getLastTimestamp();
+    }
+    unsigned long lastA1 = 0;
+    if(bptA1!= 0){
+        lastA1=  bptA1->getLastTimestamp();
+    }
 
     unsigned long last_ts;
     if(last41 > last42)
@@ -353,6 +398,7 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
             double contrib42Left = abs(*pMap42Left);
             double contribA1Left = abs(*pMapA1Left);
             double contribA2Left = abs(*pMapA2Left); 
+
             // forgetting factor decrement
             if(contrib41Left > forgettingFactor)  {
                 contrib41Left -= forgettingFactor;
@@ -405,32 +451,36 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
             //}
 
             double right_double = 0;
-            double left_double  = *pBufferLeft;
+            double left_double  = 0;
 
-            // -------------- max and min of left and right image  -------------------
-            if(left_double  < minLeft)   minLeft = left_double;
-            if(left_double  > maxLeft)   maxLeft = left_double;
-            if(right_double > maxRight)  maxRight = right_double;
-            if(right_double < minRight)  minRight = right_double;
+            // DEPREC -------------- max and min of left and right image  -------------------
+            left_double  = *pBufferLeft;
+            //if(left_double  < minLeft)   minLeft = left_double;
+            //if(left_double  > maxLeft)   maxLeft = left_double;
+            //if(right_double > maxRight)  maxRight = right_double;
+            //if(right_double < minRight)  minRight = right_double;
+            //------------------------------------------------------------------------------
+
+
             //--------------------------------------------------------------------------
-
             //if(maxResponseLeft < abs(minLeft)) {
             //    maxResponseLeft = abs(minLeft);
             //    maxLeftR = r; maxLeftC = c;
             //}
 
             // --------- weight biases distance from the center of the saliency map -----------
-            double a, b;
-            a = b = (double) (retinalSize >> 1); 
-            double max_distance = sqrt (a * a + b * b) + 50;
-            a -= r;
-            b -= c;           
-            double distance = sqrt (a * a + b * b);
-            double weight = 1.0 + (1 - (distance / max_distance)) / 4 ;
+            //double a, b;
+            //a = b = (double) (retinalSize >> 1); 
+            //double max_distance = sqrt (a * a + b * b) + 50;
+            //a -= r;
+            //b -= c;           
+            //double distance = sqrt (a * a + b * b);
+            //double weight = 1.0 + (1 - (distance / max_distance)) / 4 ;
             // weight in the range between 0.35 and 0.9
             //---------------------------------------------------------------------------------
             
             
+            /* deprec
             if(maxResponseLeft  < (abs(left_double))) {
                 //printf("%f %f \n", distance, maxDistance);
                 //if (distance < maxDistance) {
@@ -438,9 +488,7 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
                     maxDistance      = distance;
                     maxLeftR = r; maxLeftC = c;
                     //}
-            }
-            
-            
+            } 
             //if(maxResponseRight < abs(minRight)) {
             //    maxResponseRight = abs(minRight);
             //    maxRightR = r; maxRightC = c;
@@ -448,7 +496,8 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
             if(maxResponseRight  <= abs(maxRight)) {
                 maxResponseRight = abs(maxRight);
                 maxRightR = r; maxRightC = c;
-            }        
+            } 
+            */
 
             //--------------- temporal information ------------------------------------
             unsigned long ta1l = *pTimeA1Left;
@@ -462,8 +511,8 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
             }
             */   
 
-            timestampactual   = (*pTimeA1Left > *pTime41Left)?*pTimeA1Left:*pTime41Left;
-            //timestampactual   = *pTimeA1Left;
+            //timestampactual   = (*pTimeA1Left > *pTime41Left)?*pTimeA1Left:*pTime41Left;
+            timestampactual   = *pTimeA1Left;
             //timestampactual   = *pTime41Left;
             //--------------------------------------------------------------------------
 
@@ -488,30 +537,31 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
                 // -----(NOT ENABLED)--- FORGETTING FACTOR -----------------------------------------
                 // decreasing the spatial response without removing it
                 // without forgetting factor the event can be present for the timestamp but it is always presenting the max value
+                /*
                 if(count % 1 == 0) {
-                    /*
-                    if(*pBufferLeft > 0.1){
-                        left_double = left_double - 0.1;
-                        //*pBufferLeft = *pBufferLeft - 100;                                       
-                    }
-                    else if(*pBufferLeft < -0.1){
-                        printf("less than -100 \n");
-                        left_double = left_double + 0.1;
-                        //*pBufferLeft = *pBufferLeft + 100;                                       
-                    }
-                    */
+                // old
+                //    if(*pBufferLeft > 0.1){
+                //        left_double = left_double - 0.1;
+                //        
+                //   }
+                //  else if(*pBufferLeft < -0.1){
+                //     printf("less than -100 \n");
+                //    left_double = left_double + 0.1;                                             
+                //  }
+                // old
 
                     if(left_double > 0.99){
                         left_double = left_double - 0.99;
-                        //*pBufferLeft = *pBufferLeft - 100;                                       
+                                                          
                     }
                     else if(left_double < -0.8){
                         printf("less than -100 \n");
                         left_double = left_double + 0.99;
-                        //*pBufferLeft = *pBufferLeft + 100;                                       
+                                                      
                     }
                 }
-                // ----(NOT ENABLED)------------------------------------------------------------------
+               */
+               // ----(NOT ENABLED)------------------------------------------------------------------
 
 
                 //if(minCount>0 && maxCount > 0 && timestampactual>0)
@@ -575,9 +625,9 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
 
                 // -----(NOT ENABLED)--- FORGETTING FACTOR -----------------------------------------
                 // decreasing the spatial response without removing 
-                if((*pBufferLeft > 20) && (count % 10 == 0)){
-                    *pBufferLeft = *pBufferLeft - 1;                                       
-                }
+                //if((*pBufferLeft > 20) && (count % 10 == 0)){
+                //    *pBufferLeft = *pBufferLeft - 1;                                       
+                //}
                 // -----(NOT ENABLED)-----------------------------------------------------------------
 
                 if (((timestampactual * COUNTERRATIO) > minCount)&&((timestampactual * COUNTERRATIO) < maxCount)) {   
@@ -1002,7 +1052,9 @@ void eventSelectorThread::run() {
     endTimer = Time::now();
     double interval  = (endTimer - startTimer) * 1000000; //interval in us
     //double procInter = interval -interval2;
-    //printf("procInter %f \n", procInter);
+#ifdef STOREINI
+    fprintf(istore,"\n %f ", interval);
+#endif
     startTimer = Time::now();
 
     //check for wrapping of the left and right timestamp
@@ -1252,7 +1304,7 @@ void eventSelectorThread::run() {
     
     // the getMonoImage gets as default input image the saliency map    
     if(imageLeft != 0) {
-        //printf("getting the left image \n");
+        
         getMonoImage(imageLeft,minCount,maxCount,1);
         if(imageLeftBW != 0) {
             pThread->copyLeftBW(imageLeftBW);
@@ -1272,6 +1324,12 @@ void eventSelectorThread::run() {
             pThread->copyRightBW(imageRightBW);
         }
     }
+
+    // debug check point! Checking the time interval required for processing
+    //endTimer = Time::now();
+    //double intervalProc  = (endTimer - interTimer) * 1000000; //interval in us
+    //printf("processing time %f \n", intervalProc);
+
   }
 }
 
@@ -1279,6 +1337,7 @@ void eventSelectorThread::threadRelease() {
     idle = false;
     fclose(fout);
     fclose(fstore);
+    fclose(istore);
     printf("eventSelectorThread release:freeing bufferCopy \n");
 
     delete imageLeft;
@@ -1286,23 +1345,27 @@ void eventSelectorThread::threadRelease() {
     delete imageLeftBW;
     delete imageRightBW;
     
-
     free(saliencyMapLeft);
     free(saliencyMapRight);
     free(featureMap41Left);    
     free(featureMap41Right);
     free(featureMap42Left);    
     free(featureMap42Right);
+    free(featureMap43Left);    
+    free(featureMap43Right);
     free(featureMapA1Left);    
     free(featureMapA1Right);
     free(featureMapA2Left);    
     free(featureMapA2Right);
     free(featureMap);
+    
     free(timestampMapLeft);
     free(timestampMap41Left); 
     free(timestampMap41Right); 
     free(timestampMap42Left); 
-    free(timestampMap42Right); 
+    free(timestampMap42Right);
+    free(timestampMap43Left); 
+    free(timestampMap43Right);
     free(timestampMapA1Left); 
     free(timestampMapA1Right);
     free(timestampMapA2Left); 
@@ -1320,10 +1383,14 @@ void eventSelectorThread::threadRelease() {
         bptA1->stop();
     //if(bptA2!=0)
     //bptA2->stop();
-    //if(bpt41!=0)
-    //   bpt41->stop();
-    //if(bpt42!=0)
-    //  bpt42->stop();
+
+    if(bpt41!=0)
+        bpt41->stop();
+    if(bpt42!=0)
+        bpt42->stop();
+    if(bpt43!=0)
+        bpt43->stop();
+
     printf("eventSelectorThread release         deleting converter \n");
     //delete cfConverter;
     printf("correctly freed memory from the cfCollector \n");

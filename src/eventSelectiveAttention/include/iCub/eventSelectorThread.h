@@ -114,6 +114,7 @@ private:
     char* bufferCopy;                    // local copy of the events read
     FILE* fout;                          // file for temporarely savings of events
     FILE* fstore;                        // file for the saving of wta position with timestamps
+    FILE* istore;                        // file for the saving of ini
     FILE* raw;                           // file dumper for debug
     
     double* saliencyMapLeft;             // saliencyMap of the left camera
@@ -122,6 +123,8 @@ private:
     double* featureMap41Right;           // 1 feature map from the type 4 (right);
     double* featureMap42Left;            // 2 feature map from the type 4 (left):
     double* featureMap42Right;           // 2 feature map from the type 4 (right);
+    double* featureMap43Left;            // 3 feature map from the type 4 (left):
+    double* featureMap43Right;           // 3 feature map from the type 4 (right);
     double* featureMapA1Left;            // 1 feature map from the type A (left);
     double* featureMapA1Right;           // 1 feature map from the type A (right);
     double* featureMapA2Left;            // 2 feature map from the type A (left);
@@ -134,6 +137,8 @@ private:
     unsigned long* timestampMap41Right;  // pointer to the copy of the timestamp map (41-Right)
     unsigned long* timestampMap42Left;   // pointer to the copy of the timestamp map (42-Left)
     unsigned long* timestampMap42Right;  // pointer to the copy of the timestamp map (42-Right)
+    unsigned long* timestampMap43Left;   // pointer to the copy of the timestamp map (43-Left)
+    unsigned long* timestampMap43Right;  // pointer to the copy of the timestamp map (43-Right)
     unsigned long* timestampMapA1Left;   // pointer to the copy of the timestamp map (A1-Left)
     unsigned long* timestampMapA1Right;  // pointer to the copy of the timestamp map (A1-Right)
     unsigned long* timestampMapA2Left;   // pointer to the copy of the timestamp map (A2-Left)
@@ -150,6 +155,7 @@ private:
     bottleProcessorThread* bptA2;                                        // processor thread of the bottle whole retina events 2
     bottleProcessorThread* bpt41;                                        // processor thread of the bottle feature map 1
     bottleProcessorThread* bpt42;                                        // processor thread of the bottle feature map 2
+    bottleProcessorThread* bpt43;                                        // processor thread of the bottle feature map 3
     
 public:
     /**

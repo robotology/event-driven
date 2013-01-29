@@ -101,10 +101,14 @@ void eventBottleHandler::extractBottle(Bottle* tempBottle) {
     // reading the bottle
     
     //---------------------------------------
-    //printf("sem address in extract %08x \n",semBottleBuffer[extractPosition] );
+    //printf("extractBottle %d \n",extractPosition);
     semBottleBuffer[extractPosition]->wait();
     tempBottle->copy(*bufferBottle[extractPosition]);   // copying it in a temporary Bottle*    
-    bufferBottle[extractPosition]->clear();            // removes the content of the bottle.
+    int length = bufferBottle[extractPosition]->size();
+    //for (int i=0; i < length; i++ ) {
+    //    bufferBottle[extractPosition]->pop();
+    //}
+    bufferBottle[extractPosition]->clear();             // removes the content of the bottle.
     semBottleBuffer[extractPosition]->post();
     //----------------------------------------
     
