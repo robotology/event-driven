@@ -71,11 +71,14 @@ private:
     yarp::os::BufferedPort<eventBottle> outBottlePort;                                   // port sendinf events as a collection of bottles
     yarp::sig::ImageOf <yarp::sig::PixelMono>* leftInputImage;                           // image input left 
     yarp::sig::ImageOf <yarp::sig::PixelMono>* rightInputImage;                          // image input right 
-    yarp::sig::ImageOf <yarp::sig::PixelMono>* leftOutputImage;                          // image output left 
+    yarp::sig::ImageOf <yarp::sig::PixelMono>* leftOutputImage;                          // image output left
+    
     yarp::sig::ImageOf <yarp::sig::PixelMono>* rightOutputImage;                         // image output right 
-    yarp::sig::ImageOf <yarp::sig::PixelMono>* leftFeaOutputImage;                       // output image of feature  left 
-    yarp::sig::ImageOf <yarp::sig::PixelMono>* rightFeaOutputImage;                      // output image of feature  right     
-    eventBottleHandler *ebHandler;                                       // handler of received events as bottle
+    yarp::sig::ImageOf <yarp::sig::PixelMono>* leftFeaOutputImage;                       // output image of feature left
+    yarp::sig::ImageOf <yarp::sig::PixelMono>* leftFeaOutputImageOn;                     // output image of feature left center-on  response (registry)
+    yarp::sig::ImageOf <yarp::sig::PixelMono>* leftFeaOutputImageOff;                    // output image of feature left center-off response (registry)
+    yarp::sig::ImageOf <yarp::sig::PixelMono>* rightFeaOutputImage;                      // output image of feature right     
+    eventBottleHandler *ebHandler;                                                       // handler of received events as bottle
     double* pLeftDouble;
     
     std::string name;                     // rootname of all the ports opened by this thread

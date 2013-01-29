@@ -304,24 +304,27 @@ bool efExtractorThread::threadInit() {
         
     }
      
-    leftInputImage      = new ImageOf<PixelMono>;
-    leftOutputImage     = new ImageOf<PixelMono>;
-    rightOutputImage    = new ImageOf<PixelMono>;
-    leftFeaOutputImage  = new ImageOf<PixelMono>;
-    rightFeaOutputImage = new ImageOf<PixelMono>;
+    leftInputImage         = new ImageOf<PixelMono>;
+    leftOutputImage        = new ImageOf<PixelMono>;
+    rightOutputImage       = new ImageOf<PixelMono>;
+    leftFeaOutputImage     = new ImageOf<PixelMono>;
+    leftFeaOutputImageOn   = new ImageOf<PixelMono>;
+    leftFeaOutputImageOff  = new ImageOf<PixelMono>;
+    rightFeaOutputImage    = new ImageOf<PixelMono>;
 
-    leftInputImage     ->resize(RETINA_SIZE,RETINA_SIZE);
-    leftOutputImage    ->resize(RETINA_SIZE,RETINA_SIZE);
-    rightOutputImage   ->resize(RETINA_SIZE,RETINA_SIZE);
-    leftFeaOutputImage ->resize(FEATUR_SIZE,FEATUR_SIZE);
-    rightFeaOutputImage->resize(FEATUR_SIZE,FEATUR_SIZE);
+    leftInputImage       ->resize(RETINA_SIZE,RETINA_SIZE);
+    leftOutputImage      ->resize(RETINA_SIZE,RETINA_SIZE);
+    rightOutputImage     ->resize(RETINA_SIZE,RETINA_SIZE);
+    leftFeaOutputImage   ->resize(FEATUR_SIZE,FEATUR_SIZE);
+    leftFeaOutputImageOn ->resize(FEATUR_SIZE,FEATUR_SIZE);
+    leftFeaOutputImageOff->resize(FEATUR_SIZE,FEATUR_SIZE);
+    rightFeaOutputImage  ->resize(FEATUR_SIZE,FEATUR_SIZE);
     
     int padding = leftInputImage->getPadding();
     //initialisation of the memory image
     unsigned char* pLeft     = leftInputImage->getRawImage();
     unsigned char* pLeftOut  = leftOutputImage->getRawImage();
     unsigned char* pRightOut = rightOutputImage->getRawImage();
-    
     // assign 127 to all the location in image plane
     int rowsize = leftInputImage->getRowSize();
     for(int r = 0 ; r < RETINA_SIZE ; r++){
@@ -335,10 +338,17 @@ bool efExtractorThread::threadInit() {
         pRightOut += padding;
     }
     
-    unsigned char* pFeaLeftOut = leftFeaOutputImage->getRawImage();
-    unsigned char* pFeaRightOut = rightFeaOutputImage->getRawImage();
-    memset(pFeaLeftOut,  127, FEATUR_SIZE * FEATUR_SIZE * sizeof(unsigned char));
-    memset(pFeaRightOut, 127, FEATUR_SIZE * FEATUR_SIZE * sizeof(unsigned char));
+    // the feature maps are defined in the interval [0,255]. 127 value is baseline
+    unsigned char* pFeaLeftOut     = leftFeaOutputImage->getRawImage();
+    unsigned char* pFeaRightOut    = rightFeaOutputImage->getRawImage();
+    memset(pFeaLeftOut,     127, FEATUR_SIZE * FEATUR_SIZE * sizeof(unsigned char));
+    memset(pFeaRightOut,    127, FEATUR_SIZE * FEATUR_SIZE * sizeof(unsigned char));
+
+    // the feature maps are definde in the interval [0,255]. 0 value is the baseline
+    unsigned char* pFeaLeftOutOn   = leftFeaOutputImageOn->getRawImage();
+    unsigned char* pFeaLeftOutOff  = leftFeaOutputImageOff->getRawImage();
+    memset(pFeaLeftOutOn,   127, FEATUR_SIZE * FEATUR_SIZE * sizeof(unsigned char));
+    memset(pFeaLeftOutOff,  127, FEATUR_SIZE * FEATUR_SIZE * sizeof(unsigned char));
 
     txQueue = new eEventQueue();
     rxQueue = new eEventQueue();
@@ -386,8 +396,13 @@ void efExtractorThread::threadRelease() {
     
     delete receivedBottle;
     delete bottleToSend;
-    //delete leftFeaOutputImage;
-    //delete rightFeaOutputImage;
+    delete leftInputImage;
+    delete leftOutputImage;
+    delete rightOutputImage;
+    delete leftFeaOutputImage;
+    delete leftFeaOutputImageOn;
+    delete leftFeaOutputImageOff;
+    delete rightFeaOutputImage;
 
     /*
     printf("efExtractorThread::delete transmit and received queue \n");
@@ -733,8 +748,7 @@ void efExtractorThread::remapEventLeft(int x, int y,short pol,unsigned long ts, 
         printf("%d : \n", i);
         cout<<txQueue->at(i)->getContent().toString().c_str()<<endl;
     }
-
-    
+   
     unsigned char* pLeft  = leftOutputImage->getRawImage(); 
     unsigned char* pRight = rightOutputImage->getRawImage();
     unsigned char* pMemL  = leftInputImage->getRawImage();
@@ -1222,7 +1236,6 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
     // visiting a discrete number of events
     int countUnmapped        = 0;
     int deviance             = 20;
-    
     int devianceFea          = 20;  // parameter that effects the response of a mapped position
     int devianceFeaSurround  = 2;   // parameter that effects the response of unmapped position
     //#############################################################################        
@@ -1289,10 +1302,11 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                                 
                                 //printf("        pos ; %d ", pos);
                                 if(pos == -1) {
+
+                                    // EVENT NOT MAPPED in the LUT :
+                                    // if the event is not mapped this reduces the response of the receptive field
                                     
                                     //if (cartX % 2 == 1) {
-                                        // EVENT NOT MAPPED in the LUT :
-                                        // if the event is not mapped this reduces the response of the receptive field
                                     // } //end if cartX %2 == 1;                
 
                                     int scaleFactor = RETINA_SIZE  / FEATUR_SIZE;
@@ -1302,8 +1316,11 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                                     //printf(" xevent %d yevent %d \n", xevent, yevent);                                    
                                     int posFeaImage     = yevent * rowSizeFea + xevent ;                                    
                                     // depressing the feature map in the location
-                                    unsigned char* pFeaLeft = leftFeaOutputImage->getRawImage();
+                                    unsigned char* pFeaLeft    = leftFeaOutputImage->getRawImage();
+                                    unsigned char* pFeaLeftOn  = leftFeaOutputImageOn->getRawImage();
+                                    unsigned char* pFeaLeftOff = leftFeaOutputImageOff->getRawImage();
                                     
+                                    /* **Rea@29/1/13 the registry split into two : one for the center-on and one forthe center-off
                                     if(pFeaLeft[posFeaImage] < 127 - devianceFeaSurround) {
                                         pFeaLeft[posFeaImage] += devianceFeaSurround;
                                     }     
@@ -1312,6 +1329,29 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                                     }
                                     else {
                                         //pFeaLeft[posFeaImage] = 0;
+                                    }
+                                    */
+
+                                    /**
+                                     * considering the polarity to determine the contribution in the surround of the cell
+                                     * event with positive polarity : increase of the light 
+                                     * event with negative polarity : decrease of the light
+                                     */
+                                    if(polarity>0){
+                                        if(pFeaLeftOn[posFeaImage] >=  devianceFeaSurround) {
+                                            pFeaLeftOn[posFeaImage]  += devianceFeaSurround; // positive event in the surround of center-on
+                                        }
+                                        if(pFeaLeftOff[posFeaImage] <= 255 - devianceFeaSurround) {
+                                            pFeaLeftOff[posFeaImage] += devianceFeaSurround; // positive event in the surround of center-off                                            
+                                        }
+                                    }
+                                    else{
+                                        if(pFeaLeftOn[posFeaImage] <= 255 - devianceFeaSurround) {
+                                            pFeaLeftOn[posFeaImage]  += devianceFeaSurround; // negative event in the surround of center-on
+                                        }
+                                        if(pFeaLeftOff[posFeaImage] >=  devianceFeaSurround) {
+                                            pFeaLeftOff[posFeaImage] -= devianceFeaSurround; // negative event in the surround of center-off                                                                                
+                                        }
                                     }
                                     
 
@@ -1336,7 +1376,11 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                                     //printf("Given pos %d extracts x=%d and y=%d pol=%d blob=%08x evPU = %08x \n", pos, xevent, yevent, pol, (unsigned int) blob, (unsigned int)ts);
                                     
                                     //------------  representing the feature map (image) -------------------
-                                    unsigned char* pFeaLeft = leftFeaOutputImage->getRawImage();
+                                    unsigned char* pFeaLeft    = leftFeaOutputImage->getRawImage();
+                                    unsigned char* pFeaLeftOn  = leftFeaOutputImageOn->getRawImage();
+                                    unsigned char* pFeaLeftOff = leftFeaOutputImageOff->getRawImage();
+                                    
+                                    /* Rea@29/1/13 the registry split into two : one for the center-on and one for the center-off
                                     if(polevent > 0) {
                                         if(pFeaLeft[posFeaImage] <= 255 - devianceFea) {
                                             pFeaLeft[posFeaImage] += devianceFea ;
@@ -1353,11 +1397,55 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                                             pFeaLeft[posFeaImage] = 0;
                                         }
                                     }
+                                    */
+
+                                    /**
+                                     * considering the polarity to determine the contribution in the surround of the cell
+                                     * event with positive polarity : increase of the light 
+                                     * event with negative polarity : decrease of the light
+                                     */
+                                    if(polevent > 0) {
+                                        // positive event in the center of center-on cell
+                                        if(pFeaLeftOn[posFeaImage] <= 255 - devianceFea) {
+                                            pFeaLeftOn[posFeaImage] += devianceFea ;
+                                        }
+                                        else {
+                                            pFeaLeftOn[posFeaImage] = 255;
+                                        }
+                                        
+                                        // positive event in the center of center-off cell
+                                        if(pFeaLeftOff[posFeaImage] >= devianceFea) {
+                                            pFeaLeftOff[posFeaImage] -= devianceFea ;
+                                        }
+                                        else {
+                                            pFeaLeftOff[posFeaImage] = 0;
+                                        }
+
+                                    }
+                                    else {
+                                        // negative event in the center of center-on cell
+                                        if(pFeaLeftOn[posFeaImage] >= devianceFea) {
+                                            pFeaLeftOn[posFeaImage] -= devianceFea ;
+                                        }
+                                        else {
+                                            pFeaLeftOn[posFeaImage] = 0;
+                                        }
+                                        
+                                        // negative event in the center of center-off cell
+                                        if(pFeaLeftOff[posFeaImage] <= 255 - devianceFea) {
+                                            pFeaLeftOff[posFeaImage] += devianceFea ;
+                                        }
+                                        else {
+                                            pFeaLeftOff[posFeaImage] = 255;
+                                        }     
+                                    }
+                                    
+                                    
+
                                     //-----------------------------------------------------------------
                                     
-                                    
+                                    /*
                                     //-------------------- sending the event if it passes thresholds -------
-                                    //printf("checking for thresholds \n");
                                     if(pFeaLeft[posFeaImage] > POS_FIRE_TH) {
                                         
                                         TimeStamp* timestamp = new TimeStamp();
@@ -1403,8 +1491,59 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                                         //fprintf(fout,"%08X %08X \n",bufferFEA_copy->address,ts);
                                         //bufferFEA_copy++; // jumping to the next event(u32,u32)
                                         
-                                    } 
+                                    }
+                                    */
+
                                     //-------------------------------------------------------------------------
+
+                                    //-------------------- sending the event if it passes thresholds -------
+                                    if(pFeaLeftOn[posFeaImage] > POS_FIRE_TH) {
+                                        
+                                        TimeStamp* timestamp = new TimeStamp();
+                                        timestamp->setStamp(ts);
+                                        packets->append(timestamp->encode());
+                                        //txQueue.push_back(timestamp);                                         
+                                        delete timestamp;
+                                        countEventToSend++;
+                                        
+                                        AddressEvent* ae = new AddressEvent();
+                                        ae->setChannel(1);
+                                        ae->setPolarity(1);
+                                        ae->setX(xevent);
+                                        ae->setY(yevent);
+                                        packets->append(ae->encode());
+                                        //txQueue.push_back(ae);
+                                        delete ae;
+                                        countEventToSend++;
+                                        
+                                        //fprintf(fout,"%08X %08X \n",bufferFEA_copy->address,ts);
+                                        //bufferFEA_copy++; // jumping to the next event(u32,u32)
+                                        
+                                    }
+                                    else if(pFeaLeftOff[posFeaImage] > POS_FIRE_TH) {
+                                        
+                                        TimeStamp* timestamp = new TimeStamp();
+                                        timestamp->setStamp(ts);
+                                        //txQueue.push_back(timestamp);
+                                        packets->append(timestamp->encode());
+                                        delete timestamp;
+                                        countEventToSend++;
+                                        
+                                        AddressEvent* ae = new AddressEvent();
+                                        ae->setChannel(1);
+                                        ae->setPolarity(0);
+                                        ae->setX(xevent);
+                                        ae->setY(yevent);
+                                        packets->append(ae->encode());
+                                        //txQueue.push_back(ae);
+                                        delete ae;
+                                        countEventToSend++;                                                                                  
+                                        
+                                        //fprintf(fout,"%08X %08X \n",bufferFEA_copy->address,ts);
+                                        //bufferFEA_copy++; // jumping to the next event(u32,u32)
+                                        
+                                    } 
+                                    
                                     
                                 } //end else
                                 
@@ -1413,6 +1552,7 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                         }
                         else { //------------------------------------------------------------------------------------------------------
                             
+                            // TODO: introduce the splitting of the registry into center-on and center-off registry 
                             // RIGHT CAMERA
                             //printf("remapping event right camera:%d \n", camera);
                             //remapEventRight(cartX,cartY,polarity,ts,&txQueue);
