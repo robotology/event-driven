@@ -96,7 +96,20 @@ int TmpDiff128AngelcreateAddress(int x, int y, bool polarity){
     }
 }
 
-
+void mapping41(FILE *pfile) {
+    //int xout,yout;
+    
+    for(int yin = 0; yin < TmpDiff128AngelY_SIZE; yin++) {            
+        for(int xin = 0; xin < TmpDiff128AngelX_SIZE; xin++) {
+            // monitoring
+            fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, true) , 0x110000 | SACcreateAddress(xin>>2, yin>>2));
+            fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, false), 0x110000 | SACcreateAddress(xin>>2, yin>>2));
+            // to SAC chip
+            fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, true) , 0x80000 | SACcreateAddress(xin>>2, yin>>2));
+            fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, false), 0x80000 | SACcreateAddress(xin>>2, yin>>2));
+        }
+    }
+}
 
 void mapping81(FILE *pfile) {
     //int xout,yout;
@@ -109,6 +122,38 @@ void mapping81(FILE *pfile) {
             // to SAC chip
             fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, true) , 0x80000 | SACcreateAddress(xin>>2, yin>>2));
             fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, false), 0x80000 | SACcreateAddress(xin>>2, yin>>2));
+        }
+    }
+}
+
+void center44(FILE *pfile) {
+    int xout,yout;
+    
+    for(int yin = 0; yin < TmpDiff128AngelY_SIZE; yin++) {
+        for(int xin = 0; xin < TmpDiff128AngelX_SIZE; xin++) {
+            if((yin%4 == MODEA)||(yin%4 == MODEB)) {
+                if ((xin%4 == MODEA)||(xin%4 == MODEB)){
+                    yout = yin>>2;
+                    xout = xin>>2;
+                    
+                    // monitoring
+                    fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, true) , 0x110000 | SACcreateAddress(xout, yout));
+                    fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, false), 0x110000 | SACcreateAddress(xout, yout));
+                    // to SAC chip
+                    fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, true) , 0x80000 | SACcreateAddress(xout, yout));
+                    fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, false), 0x80000 | SACcreateAddress(xout, yout));
+                    
+                    xout--;
+
+                    // monitoring
+                    fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, true) , 0x110000 | SACcreateAddress(xout,yout));
+                    fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, false), 0x110000 | SACcreateAddress(xout,yout));
+                    // to SAC chip
+                    fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, true) , 0x80000 | SACcreateAddress(xout,yout));
+                    fprintf(pfile,"%x %x\n", ADDRESS | TmpDiff128AngelcreateAddress(xin, yin, false), 0x80000 | SACcreateAddress(xout,yout));                                        
+                    
+                }
+            }                        
         }
     }
 }
@@ -1743,6 +1788,7 @@ int main(int argc, char * argv[])
 
 
     printf("--mode mapping81 \n");
+    printf("options : mapping41, mapping81, center44 \n");  
     printf("options : horizontal54, horizontal55, horizontal66, horizfull66, horizontal1010 \n");  
     printf("options : vertical54, vertical55, vertical66, vertfull66, vertical1010 \n");
     printf("options : positive45, negative45, posfull45, negfull45 \n");
@@ -1760,7 +1806,9 @@ int main(int argc, char * argv[])
  
     //opening a file
     FILE *pfile  = NULL;
-    char* filename = "map.txt";
+    //std::string filenamefull("map.txt");
+    //char* filename = "map.txt";
+    //char* filename = filenamefull.c_str();
     
     
     printf("Opening the file ..... \n");
@@ -1773,10 +1821,18 @@ int main(int argc, char * argv[])
     //saving the output
     printf("Saving the mapping .....");
     
-
-    if(!strcmp("mapping81.txt",mappingName.c_str())){
+    
+    if(!strcmp("mapping41.txt",mappingName.c_str())){
+        printf("using mapping81 \n");        
+        mapping41(pfile);
+    }
+    else if(!strcmp("mapping81.txt",mappingName.c_str())){
         printf("using mapping81 \n");        
         mapping81(pfile);
+    }
+    else if(!strcmp("center44.txt",mappingName.c_str())){
+        printf("using center44 \n");        
+        center44(pfile);
     }
     else if(!strcmp("horizontal54.txt",mappingName.c_str())){
         printf("using horizontal 54 \n");        
