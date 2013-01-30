@@ -396,13 +396,18 @@ void efExtractorThread::threadRelease() {
     
     delete receivedBottle;
     delete bottleToSend;
-    delete leftInputImage;
-    delete leftOutputImage;
-    delete rightOutputImage;
-    delete leftFeaOutputImage;
-    delete leftFeaOutputImageOn;
-    delete leftFeaOutputImageOff;
-    delete rightFeaOutputImage;
+    free(leftInputImage);
+    free(leftOutputImage);
+    free(rightOutputImage);
+    
+
+    printf("deallocating imageA %d \n", leftFeaOutputImage->getRawImageSize());
+    free(leftFeaOutputImage);
+    free(leftFeaOutputImageOn);
+    free(leftFeaOutputImageOff);
+    printf("deallocating imageB %d \n", rightFeaOutputImage->getRawImageSize());
+    free(rightFeaOutputImage);
+    
 
     /*
     printf("efExtractorThread::delete transmit and received queue \n");
@@ -1217,6 +1222,7 @@ void efExtractorThread::generateMemory(int countEvent, int& countEventToSend) {
 
 
 void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& countEventToSend) {
+    //printf("in generateMemory \n");
     int countEventLeft  = 0;
     int countEventRight = 0;
     
@@ -1291,16 +1297,22 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                     else {
                         
                         if(camera==0) {
+                            
+
+                            
                             // LEFT CAMERA
                             //printf("remapping event left camera:%d \n", camera);
                             //printf("before remapping %08x \n", &txQueue);
                             //remapEventLeft(cartX,cartY,polarity,ts,&txQueue);  
                             int posImage     = cartY * rowSize + cartX;
                             
-                            for (int i = 0; i< 5 ; i++) {                
+                            for (int i = 0; i< 5 ; i++) {    
+                                //printf("        pos ; %d ",i * RETINA_SIZE * RETINA_SIZE +  cartY * RETINA_SIZE + cartX );
+                                
                                 int pos      = lut[i * RETINA_SIZE * RETINA_SIZE +  cartY * RETINA_SIZE + cartX ];     
                                 
-                                //printf("        pos ; %d ", pos);
+                                
+                                
                                 if(pos == -1) {
 
                                     // EVENT NOT MAPPED in the LUT :
