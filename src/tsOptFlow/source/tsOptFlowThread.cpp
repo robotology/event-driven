@@ -17,6 +17,9 @@
 */
 #include "tsOptFlowThread.hpp"
 
+#define HEADERSZ 1459384
+#define TYPE 8
+
 using namespace yarp::sig;
 using namespace yarp::os;
 using namespace yarp::math;
@@ -119,6 +122,19 @@ printMatrix(sobely);
         eyeSel=0;
     else
         eyeSel=1;
+    //Analyse purpose
+#ifdef _ANALYSE_
+    concatenation.str("");
+    if(polSel==1)
+        myfile.open ("/home/clercq/computationalTimeAndNumberOfEvents_pos_rotDisk_90_5loop_2difLens.txt");
+    else if(polSel==-1)
+        myfile.open ("/home/clercq/computationalTimeAndNumberOfEvents_neg_rotDisk_90_5loop_2difLens.txt");
+    else
+        myfile.open ("/home/clercq/computationalTimeAndNumberOfEvents_full_rotDisk_90_5loop_2difLens.txt");
+    smoothedNeigh=0;
+    //ctimeAndEvtNumIterator=0;
+    //ctimeAndEvtNum=new _ctimeAndEvtNum[HEADERSZ/TYPE];
+#endif
 }
 
 tsOptFlowThread::~tsOptFlowThread()
@@ -134,6 +150,9 @@ tsOptFlowThread::~tsOptFlowThread()
     delete[] vyMean;
     delete[] trans2neigh;
     delete unmasker;
+//#ifdef _ANALYSE_
+//    createFile();
+//#endif
 }
 
 void tsOptFlowThread::run()
@@ -234,7 +253,23 @@ void tsOptFlowThread::run()
 */
             updateAll();
             //std::cout << "[tsOptFlowThread] Compute the flow" << std::endl;
+#ifdef _ANALYSE_
+            clock_gettime(CLOCK_MONOTONIC, &compStart);
+            smoothedNeigh=0;
+#endif
             compute();
+#ifdef _ANALYSE_
+            clock_gettime(CLOCK_MONOTONIC, &compEnd);
+/*            ctimeAndEvtNumIterator++;
+            ctimeAndEvtNum[ctimeAndEvtNumIterator].computationalTime=(((compEnd.tv_sec-compStart.tv_sec) * 1000000000) + (compEnd.tv_nsec-compStart.tv_nsec));
+            ctimeAndEvtNum[ctimeAndEvtNumIterator].numberOfEvent=iBinEvts;
+            ctimeAndEvtNum[ctimeAndEvtNumIterator].timestampOfComputation=timestamp;
+*/
+            myfile  << (((compEnd.tv_sec-compStart.tv_sec) * 1000000000) + (compEnd.tv_nsec-compStart.tv_nsec)) << " "
+                    << iBinEvts << " "
+                    << timestamp << " "
+                    << smoothedNeigh << endl;
+#endif
         }
     }
 }
@@ -373,6 +408,9 @@ void tsOptFlowThread::compute()
                             //std::cout << "[tsOptFlowThread] Plan computed" << std::endl;
                             std::cout << "[tsOptFlowThread] Compute flow (" << xn << ", " << yn << ")" << std::endl;
 #endif
+//#ifdef _ANALYSE_
+//                           smoothedNeigh++;
+//#endif
     /*                        dx=0;
                             dy=0;
                             for(uint i=0; i<neighbor; i++)
@@ -384,12 +422,16 @@ void tsOptFlowThread::compute()
                                     //TO BE CONTINUE
                                 }
                             }*/
-                            alreadyComputedX(xn, yn)=dx;
-                            alreadyComputedY(xn, yn)=dy;
+                            //alreadyComputedX(xn, yn)=dx;
+                            //alreadyComputedY(xn, yn)=dy;
+                            alreadyComputedX(xn, yn)=((dx/4)*1e-6)/3;
+                            alreadyComputedY(xn, yn)=((dy/4)*1e-6)/3;
                             if(dx || dy)
                             {
-                                *(xNeighFlow+ixNeighFlow++)=dx;
-                                *(yNeighFlow+iyNeighFlow++)=dy;
+                                //*(xNeighFlow+ixNeighFlow++)=dx;
+                                //*(yNeighFlow+iyNeighFlow++)=dy;
+                                *(xNeighFlow+ixNeighFlow++)=alreadyComputedX(xn, yn);//((dx/4)*1e-6)/3;
+                                *(yNeighFlow+iyNeighFlow++)=alreadyComputedY(xn, yn);//((dy/4)*1e-6)/3;
                             }
 #ifdef _DEBUG
                             std::cout << "[tsOptFlowThread] Flow (" << xn << ", " << yn << ") computed and stored" << std::endl;
@@ -401,6 +443,9 @@ void tsOptFlowThread::compute()
             //std::cout << "Number of good computation: " << ixNeighFlow << endl;
             if(ixNeighFlow>=3)
             {
+#ifdef _ANALYSE_
+                smoothedNeigh++;
+#endif
 /*
                 gsl_sort(xNeighFlow, 1, ixNeighFlow);
                 gsl_sort(yNeighFlow, 1, iyNeighFlow);
@@ -416,8 +461,10 @@ void tsOptFlowThread::compute()
 */
                 double outX=gsl_stats_mean(xNeighFlow, 1, ixNeighFlow);
                 double outY=gsl_stats_mean(yNeighFlow, 1, iyNeighFlow);
-                outX=((outX)*1E-9);
-                outY=((outY)*1E-9);
+
+                //outX=((outX)*1E-9)/2;
+                //outY=((outY)*1E-9)/2;
+
                 //velBuf.addData((short)x, (short)y, outY, outX, timestamp);
                 //std::cout << "Mutex free?" << std::endl;
                 *(ivxyNData+x*width+y)+=1;
@@ -436,7 +483,8 @@ void tsOptFlowThread::compute()
                 {
                     line2save.str("");
                     //line2save << (short)x << " " << (short)y << " " << outY << " " << outX << " " << timestamp << endl;
-                    line2save << (short)x << " " << (short)y << " " << outY << " " << outX << " " << *(TSsData+x*width+y) << endl;
+                    //line2save << (short)x << " " << (short)y << " " << outY << " " << outX << " " << *(TSsData+x*width+y) << endl;
+                    line2save << (short)x << " " << (short)y << " " << *(vyMean+x*width+y) << " " << *(vxMean+x*width+y) << " " << *(TSsData+x*width+y) << endl;
                     saveFile.write( line2save.str().c_str(), line2save.str().size() );
                 }
             }
@@ -727,3 +775,24 @@ void tsOptFlowThread::flip()
         default: break;
     }
 }
+
+/*#ifdef _ANALYSE_
+void tsOptFlowThread::createFile()
+{
+    cout << "[tsOptFlowThread] Save data for analysis" << endl;
+    stringstream concatenation;
+    if(polSel==1)
+        concatenation << "/home/clercq/computationalTimeAndNumberOfEvents_pos_rotDisk_90_5loop_2difLens.txt";
+    else if(polSel==-1)
+        concatenation << "/home/clercq/computationalTimeAndNumberOfEvents_neg_rotDisk_90_5loop_2difLens.txt";
+    else
+        concatenation << "/home/clercq/computationalTimeAndNumberOfEvents_full_rotDisk_90_5loop_2difLens.txt";
+    ofstream myfile;
+    myfile.open (concatenation.str().c_str());
+    for(int i=0; i<=ctimeAndEvtNumIterator; i++)
+        myfile  << ctimeAndEvtNum[i].computationalTime << " "
+                << ctimeAndEvtNum[i].numberOfEvent << " "
+                << ctimeAndEvtNum[i].timestampOfComputation << endl;
+    myfile.close();
+}
+#endif*/

@@ -50,6 +50,8 @@
 #define THRATE 1
 #define CONTRAST 15
 
+//#define _ANALYSE_
+
 typedef unsigned int uint;
 
 //yarp::sig::Matrix operator-(double, yarp::sig::Matrix&);
@@ -162,6 +164,25 @@ private:
 
     ofstream saveFile;
     stringstream line2save;
+
+    //Analyse purpose
+#ifdef _ANALYSE_
+/*    void createFile();
+    typedef struct __ctimeAndEvtNum
+    {
+        long int computationalTime;
+        int numberOfEvent;
+        unsigned int timestampOfComputation;
+    } _ctimeAndEvtNum;
+    _ctimeAndEvtNum* ctimeAndEvtNum;
+    int ctimeAndEvtNumIterator;
+*/
+    uint smoothedNeigh;
+    timespec compStart;
+    timespec compEnd;
+    stringstream concatenation;
+    ofstream myfile;
+#endif
 };
 
 #endif //TSOPTFLOWTHREAD_HPP
