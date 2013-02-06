@@ -46,7 +46,7 @@ using namespace std;
 #define RETINA_SIZE     128
 #define FEATUR_SIZE     32
 #define CONST_DECREMENT 1
-#define POS_FIRE_TH     240
+#define POS_FIRE_TH     127
 #define NEG_FIRE_TH     10
 #define Y_MASK_DEC      32512
 #define X_MASK_DEC      254
@@ -1192,7 +1192,7 @@ void efExtractorThread::generateMemory(int countEvent, int& countEventToSend) {
     int countUnmapped        = 0;
     int deviance             = 50;
     int devianceFea          = 50;
-    int devianceFeaSurround  = 5; 
+    int devianceFeaSurround  = 20; 
     //#############################################################################        
     for(int i = 0; i < countEvent; i++ ) {
         ts  = iterEvent->ts;
@@ -1241,18 +1241,22 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
     aer* bufferFEA_copy = bufferFEA;
     // visiting a discrete number of events
     int countUnmapped        = 0;
-    int deviance             = 20;
-    int devianceFea          = 20;  // parameter that effects the response of a mapped position
-    int devianceFeaSurround  = 2;   // parameter that effects the response of unmapped position
+    int deviance             = 10;
+    int devianceFea          = 10;  // parameter that effects the response of a mapped position (center)
+    int devianceFeaSurround  = 10;  // parameter that effects the response of unmapped position (surround)
     //#############################################################################        
     int dequeSize = q->size();
     int readPosition = 0;
 
-    /* BEWARE! REMEMBER : the feature maps assume values which are unsigned int and therefore in the range 0-255;
+    /* BEWARE! REMEMBER : the feature maps (left and right) assume values which are unsigned int and therefore in the range 0-255;
        towards the 0   : negative event triggers
        towards the 255 : positive event triggers
-
        Hence, to reduce firing rate the value must evolve toward 127!
+     */
+    /* BEWARE! REMEMBER : the feature maps (leftOn and LeftOff) assume values which are unsigned int and therefore in the range 0-255;
+       towards the 0   : no activity
+       towards the 255 : either positive or negative event triggers
+       Hence, to reduce firing rate the value must evolve toward 0!
      */
     
     
@@ -1323,9 +1327,15 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
 
                                     int scaleFactor = RETINA_SIZE  / FEATUR_SIZE;
                                     //printf("Obtained scale factor %d \n", scaleFactor);
-                                    int xevent = cartX / scaleFactor;
-                                    int yevent = (FEATUR_SIZE - cartY) / scaleFactor;
+                                    int yevent_tmp      = pos / FEATUR_SIZE;
+                                    int yevent          = FEATUR_SIZE - yevent_tmp;
+                                    int xevent_tmp      = pos - yevent_tmp * FEATUR_SIZE;
+                                    int xevent          = xevent_tmp;
+                                    
+                                    //int xevent = cartX / scaleFactor;                   //old version %comment 01/02/13 Rea
+                                    //int yevent = (FEATUR_SIZE - cartY) / scaleFactor;   //old version %comment 01/02/13 Rea
                                     //printf(" xevent %d yevent %d \n", xevent, yevent);                                    
+
                                     int posFeaImage     = yevent * rowSizeFea + xevent ;                                    
                                     // depressing the feature map in the location
                                     unsigned char* pFeaLeft    = leftFeaOutputImage->getRawImage();
@@ -1343,28 +1353,46 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                                         //pFeaLeft[posFeaImage] = 0;
                                     }
                                     */
-
+                                    
                                     /**
                                      * considering the polarity to determine the contribution in the surround of the cell
                                      * event with positive polarity : increase of the light 
                                      * event with negative polarity : decrease of the light
                                      */
+                                    
                                     if(polarity>0){
+                                        // positive event in the surround of center-on
                                         if(pFeaLeftOn[posFeaImage] >=  devianceFeaSurround) {
-                                            pFeaLeftOn[posFeaImage]  += devianceFeaSurround; // positive event in the surround of center-on
+                                            pFeaLeftOn[posFeaImage]  -= devianceFeaSurround; 
                                         }
+                                        else {
+                                            pFeaLeftOn[posFeaImage]  = 0; 
+                                        }
+                                        // positive event in the surround of center-off                                            
                                         if(pFeaLeftOff[posFeaImage] <= 255 - devianceFeaSurround) {
-                                            pFeaLeftOff[posFeaImage] += devianceFeaSurround; // positive event in the surround of center-off                                            
+                                            pFeaLeftOff[posFeaImage] += devianceFeaSurround; 
+                                        }
+                                        else {
+                                            pFeaLeftOff[posFeaImage]  = 255; 
                                         }
                                     }
                                     else{
+                                        // negative event in the surround of center-on
                                         if(pFeaLeftOn[posFeaImage] <= 255 - devianceFeaSurround) {
-                                            pFeaLeftOn[posFeaImage]  += devianceFeaSurround; // negative event in the surround of center-on
+                                            pFeaLeftOn[posFeaImage]  += devianceFeaSurround; 
                                         }
+                                        else {
+                                            pFeaLeftOn[posFeaImage]  = 255; 
+                                        }
+                                        // negative event in the surround of center-off                                                     
                                         if(pFeaLeftOff[posFeaImage] >=  devianceFeaSurround) {
-                                            pFeaLeftOff[posFeaImage] -= devianceFeaSurround; // negative event in the surround of center-off                                                                                
+                                            pFeaLeftOff[posFeaImage] -= devianceFeaSurround;                            
+                                        }
+                                        else {
+                                            pFeaLeftOff[posFeaImage]  = 0; 
                                         }
                                     }
+                                    
                                     
 
                                 }
@@ -1523,6 +1551,9 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                                         ae->setPolarity(1);
                                         ae->setX(xevent);
                                         ae->setY(yevent);
+
+                                        //printf("positive event to send %d %d \n", xevent, yevent);
+                                        
                                         packets->append(ae->encode());
                                         //txQueue.push_back(ae);
                                         delete ae;
@@ -1532,7 +1563,7 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                                         //bufferFEA_copy++; // jumping to the next event(u32,u32)
                                         
                                     }
-                                    else if(pFeaLeftOff[posFeaImage] > POS_FIRE_TH) {
+                                    else if(pFeaLeftOff[posFeaImage] < NEG_FIRE_TH) {
                                         
                                         TimeStamp* timestamp = new TimeStamp();
                                         timestamp->setStamp(ts);
@@ -1546,6 +1577,9 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                                         ae->setPolarity(0);
                                         ae->setX(xevent);
                                         ae->setY(yevent);
+                                        
+                                        //printf("negative event to send %d %d \n", xevent, yevent);
+
                                         packets->append(ae->encode());
                                         //txQueue.push_back(ae);
                                         delete ae;
@@ -1661,6 +1695,9 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                                         ae->setPolarity(1);
                                         ae->setX(xevent);
                                         ae->setY(yevent);
+                                        
+                                        
+                                        
                                         packets->append(ae->encode());
                                         //txQueue.push_back(ae);
                                         delete ae;
@@ -1689,6 +1726,9 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                                         ae->setPolarity(0);
                                         ae->setX(xevent);
                                         ae->setY(yevent);
+
+                                        printf("positive event to send %d %d \n", xevent, yevent);
+                                        
                                         packets->append(ae->encode());
                                         //txQueue.push_back(ae);
                                         delete ae;
@@ -1816,6 +1856,8 @@ void efExtractorThread::run() {
 			}
         }
         
+       
+        
         // ---------------------------------------------------------------------------------------------------
 
         int num_events = CHUNKSIZE >> 3 ;
@@ -1875,7 +1917,9 @@ void efExtractorThread::run() {
                 //printf("Counted a total of %d %d \n \n", countEventToSend, rxQueue->size());
             }
         }
-        
+
+
+     
         // -----------------------------------------------------------------------  
         // leaking section of the algorithm (retina space) 
         //printf("leaking section of the algorithm (retina space) \n");
@@ -1920,11 +1964,14 @@ void efExtractorThread::run() {
         //---------------------------------------------------------------------------        
         //printf("leaking section of the algorithm feature space \n");
         // leaking section of the algorithm ( feature map)
-        unsigned char* pFeaLeft  = leftFeaOutputImage->getRawImage();
-        unsigned char* pFeaRight = rightFeaOutputImage->getRawImage();
+        unsigned char* pFeaLeft     = leftFeaOutputImage->getRawImage();
+        unsigned char* pFeaLeftOn   = leftFeaOutputImageOn->getRawImage();
+        unsigned char* pFeaLeftOff  = leftFeaOutputImageOff->getRawImage();
+        unsigned char* pFeaRight    = rightFeaOutputImage->getRawImage();
         padding  = leftFeaOutputImage->getPadding();
         for(int row =0; row < FEATUR_SIZE; row++) {
             for (int col = 0; col< FEATUR_SIZE; col++) {
+                /*
                 if(*pFeaLeft >= 127 + CONST_DECREMENT) {                
                     *pFeaLeft -= CONST_DECREMENT;
                 }
@@ -1934,6 +1981,32 @@ void efExtractorThread::run() {
                 else{
                     *pFeaLeft = 127;
                 }
+                */
+                
+                if(*pFeaLeftOn >= CONST_DECREMENT) {                
+                    *pFeaLeftOn -= CONST_DECREMENT;
+                }
+                /*else if(*pFeaLeftOn <= 127 - CONST_DECREMENT) {
+                    *pFeaLeftOn += CONST_DECREMENT;
+                }
+                */
+                else{
+                    *pFeaLeftOn = 0;
+                }  
+                
+                
+                if(*pFeaLeftOff >= CONST_DECREMENT) {                
+                    *pFeaLeftOff -= CONST_DECREMENT;
+                }
+                /*
+                else if(*pFeaLeftOff <= 127 - CONST_DECREMENT) {
+                    *pFeaLeftOff += CONST_DECREMENT;
+                }
+                */
+                else{
+                    *pFeaLeftOff = 0;
+                }  
+                                
                 
                 if(*pFeaRight >= 127 + CONST_DECREMENT) {                
                     *pFeaRight -= CONST_DECREMENT;
@@ -1945,17 +2018,19 @@ void efExtractorThread::run() {
                     *pFeaRight = 127;
                 }                
                 
-                pFeaLeft++;
+                //pFeaLeft++;
+                pFeaLeftOn++;
+                pFeaLeftOff++;
                 pFeaRight++;
+                
                 
             }
                             
-            pFeaLeft  += padding;
-            pFeaRight += padding;
+            //pFeaLeft    += padding;
+            pFeaLeftOn  += padding;
+            pFeaLeftOff += padding;
+            pFeaRight   += padding;
         } 
-        
-        
-       
         //printf("after leaking section of the algorithm \n");
         // ---------------------------------------------------------------------------
         
@@ -1984,6 +2059,8 @@ void efExtractorThread::run() {
         } 
         */
         
+
+           
         
         //************************ OUTPUT OF THE MODULE ****************************
         // writing the mapped events
@@ -2031,11 +2108,11 @@ void efExtractorThread::run() {
         
         //printf("sending images \n");
         if(outFeaLeftPort.getOutputCount() && !(count % 10)) {
-            outFeaLeftPort.prepare()  = *leftFeaOutputImage;
+            outFeaLeftPort.prepare()  = *leftFeaOutputImageOn;
             outFeaLeftPort.write();
         }
         if(outFeaRightPort.getOutputCount() && !(count % 10)) {
-            outFeaRightPort.prepare() = *rightFeaOutputImage;
+            outFeaRightPort.prepare() = *leftFeaOutputImageOff;
             outFeaRightPort.write();
         } 
         

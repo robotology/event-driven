@@ -99,6 +99,7 @@ void eventBottleHandler::copyChunk(char* bufferCopy) {
 
 void eventBottleHandler::extractBottle(Bottle* tempBottle) {
     // reading the bottle
+    //printf("extract Bottle BEGIN %d \n",extractPosition );
     
     //---------------------------------------
     //printf("sem address in extract %08x \n",semBottleBuffer[extractPosition] );
@@ -113,11 +114,13 @@ void eventBottleHandler::extractBottle(Bottle* tempBottle) {
     mutex.wait();
     extractPosition = (extractPosition + 1) % bottleBufferDimension;
     mutex.post();
+
+    //printf("extract Bottle END %d \n",extractPosition );
 }
 
 // reading out from a circular buffer with 2 entry points and wrapping
 void eventBottleHandler::onRead(eventBottle& i_ub) {    
-    //printf("OnRead %d \n", insertPosition);
+    //printf("OnRead BEGIN %d \n", insertPosition);
     valid = true;
     
     //---------------------------------------------------------------------------------------------------------
@@ -171,6 +174,8 @@ void eventBottleHandler::onRead(eventBottle& i_ub) {
     mutex.wait();
     insertPosition = (insertPosition + 1) % bottleBufferDimension;
     mutex.post();
+
+    //printf("OnRead END %d \n", insertPosition);
   
 }
 
