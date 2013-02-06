@@ -1,0 +1,66 @@
+<application>
+	<name>Basic Repr Optical flow with Static DVS</name>
+
+	<dependencies>
+	</dependencies>
+
+	<module>
+	   <name>tsOptFlow</name>
+		<parameters>--name optFlow --source icub --height 128 --width 128 --acc 30000 --alpha 0 --tsValidity 80000 --szSobel 3 --threshold 2 --bin 1000 --pol 1</parameters>
+	   <node>local</node>
+	   <tag>timestamp based optFlow positive polarity</tag>
+	</module>
+    <module>
+	   <name>basicCFrameConverter</name>
+		<parameters>--robot icub --source icub --acc 30000</parameters>
+	   <node>local</node>
+	   <tag>basicCFrameConverter</tag>
+	</module>
+    <module>
+       <name>tsOptFlowViewer</name>
+       <parameters>--name optViewer --display arrow --norm 5000</parameters>
+       <node>local</node>
+       <tag>optical flow viewer pos</tag>
+    </module>
+
+	<module>
+	   <name>yarpview</name>
+	   <parameters>--name /eventsCRepr --x 0 --y 0 --w 500 --h 500  --synch </parameters>
+	   <node>local</node>
+	   <tag>eventsCRepr</tag>
+	</module>
+	<module>
+	   <name>yarpview</name>
+	   <parameters>--name /eventsFView --x 550 --y 0 --w 500 --h 500 --synch </parameters>
+	   <node>local</node>
+	   <tag>eventsFReprPos</tag>
+	</module>
+
+	<connection>
+	  <from>/eventReader/artificialRetina0:o</from>
+	  <to>/optFlow/evts:i</to>
+	  <protocol>shmem</protocol>
+	</connection>
+
+    <connection>
+      <from>/eventReader/artificialRetina0:o</from>
+      <to>/icub/bfc:i</to>
+      <protocol>shmem</protocol>
+    </connection>
+    <connection>
+      <from>/image/cfLeft:o</from>
+      <to>/eventsCRepr</to>
+      <protocol>shmem</protocol>
+    </connection>
+
+	<connection>
+	  <from>/optFlow/flow:o</from>
+	  <to>/optViewer/flow:i</to>
+	  <protocol>shmem</protocol>
+	</connection>
+    <connection>
+      <from>/optViewer/img:o</from>
+      <to>/eventsFView</to>
+      <protocol>shmem</protocol>
+    </connection>
+</application>
