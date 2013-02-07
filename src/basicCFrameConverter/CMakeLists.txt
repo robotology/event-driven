@@ -1,35 +1,42 @@
+# Copyright: (C) 2011 RobotCub Consortium
+# Authors: Francesco Rea
+# CopyPolicy: Released under the terms of the GNU GPL v2.0.
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
-SET(PROJECTNAMELOCAL basicCFrameConverter)
-PROJECT(${PROJECTNAMELOCAL})
+SET(KEYWORD "basicCFrameConverter")
+PROJECT(${KEYWORD})
+cmake_minimum_required(VERSION 2.6)
 
-SET(YARP_DIR "$ENV{YARP_ROOT}" CACHE LOCATION "where is yarp?")
-FIND_PACKAGE(YARP)
-#FIND_PACKAGE(EMORPHLIB)
+set(ICUB_CONTRIB_DIRS $ENV{ICUB_DIR}/include)
 
-FILE(GLOB folder_source source/*.cpp)
-FILE(GLOB folder_header include/*.hpp)
+INCLUDE_DIRECTORIES(
+    ${PROJECT_SOURCE_DIR}/include
+    ${YARP_INCLUDE_DIRS} 	
+    ${ICUB_CONTRIB_DIRS}
+    ${OpenCV_INCLUDE_DIRS}
+    ${EMORPHLIB_INCLUDE_DIRS}
+)
 
+# Search for source code.
+FILE(GLOB folder_source source/*.cpp source/*.cc source/*.c)
+FILE(GLOB folder_header include/iCub/*.h)
 SOURCE_GROUP("Source Files" FILES ${folder_source})
 SOURCE_GROUP("Header Files" FILES ${folder_header})
 
-INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR})
-INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/include)
-INCLUDE_DIRECTORIES(${YARP_INCLUDE_DIR})
-INCLUDE_DIRECTORIES(${EMORPHLIB_INCLUDE_DIRS})
+# Set up the main executable.
+IF (folder_source)
+    ADD_EXECUTABLE(${KEYWORD} 
+        ${folder_source} 
+        ${folder_header}
+    )
 
-#To link the unmasked_buffer class
-#AUX_SOURCE_DIRECTORY($ENV(TCP2YARP)/src auxsrc)
+    TARGET_LINK_LIBRARIES(${KEYWORD}        
+      eMorphLib
+      ${YARP_LIBRARIES}
+      ${OpenCV_LIBRARIES}
+      )	
 
-ADD_EXECUTABLE(${PROJECTNAMELOCAL} 	${folder_source} ${folder_header})
-
-TARGET_LINK_LIBRARIES (	${PROJECTNAMELOCAL} 
-			            ${YARP_LIBRARIES}
-			            #${EMORPHLIB_LIBRARIES}
-                        eMorphLib
-                        )
-
-#SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build)
-#SET(EXECUTABLE_OUTPUT_PATH $ENV{MODULES_ROOT}/bin)
-
-INSTALL_TARGETS(/bin ${PROJECTNAMELOCAL})
+    INSTALL_TARGETS(/bin ${KEYWORD})
+ELSE (folder_source)
+    MESSAGE(FATAL_ERROR "No source code files found. Please add something")
+ENDIF (folder_source)
