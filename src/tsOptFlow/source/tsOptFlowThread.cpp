@@ -60,10 +60,10 @@ tsOptFlowThread::tsOptFlowThread(uint &_h, uint &_w, std::string &_src, uint &_t
 
     first=true;
 
-//    if(!orientation)
-        setSobelFilters(_ssz, sobelx, sobely);
-//    else
-//        setSobelFilters(_ssz, sobely, sobelx);
+    setSobelFilters(_ssz, sobelx, sobely);
+    if(orientation)
+        sobely=sobely*-1;
+    
 printMatrix(sobelx);
 printMatrix(sobely);
 
