@@ -90,9 +90,11 @@ void convert::createFrames()
             if(refts+accTime>timestamp)
             {
                 if(eye==0)
-                    imgLeft(addrx, addry)+=CONTRAST*polarity;
+                    //imgLeft(addrx, addry)+=CONTRAST*polarity;
+                    imgLeft(addrx, addry)=polarity>0?255:0;
                 else
-                    imgRight(addrx, addry)+=CONTRAST*polarity;
+                    //imgRight(addrx, addry)+=CONTRAST*polarity;
+                    imgRight(addrx, addry)=polarity>0?255:0;
             }
             else
             {
