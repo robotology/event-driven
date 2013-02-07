@@ -25,7 +25,7 @@ using namespace yarp::os;
 using namespace yarp::math;
 using namespace emorph::eunmask;
 
-tsOptFlowThread::tsOptFlowThread(uint &_h, uint &_w, std::string &_src, uint &_type, uint &_acc, uint &_bin, double &_th, uint &_nn, uint &_ssz, uint &_tsval, double &_a, double &_td, int &_pol, std::string &_eye, uint &_ori, bool &_save, Matrix *_vxMat, Matrix *_vyMat, Semaphore *_mutex, VelocityBuffer* _velb)
+tsOptFlowThread::tsOptFlowThread(uint &_h, uint &_w, std::string &_src, uint &_type, uint &_acc, uint &_bin, double &_th, uint &_nn, uint &_ssz, uint &_tsval, double &_a, double &_td, int &_pol, std::string &_eye, bool &_ori, bool &_save, Matrix *_vxMat, Matrix *_vyMat, Semaphore *_mutex, VelocityBuffer* _velb)
 //:RateThread(THRATE), activity(_h, _w), TSs(_h, _w), TSs2Plan(_h, _w), compPurpTS(_h, _w), sobelx(_ssz, _ssz), sobely(_ssz, _ssz), subTSs(_nn, _nn), A(_nn*_nn, 3), At(3,_nn*_nn), AtA(3,3), abc(3), Y(_nn*_nn), ctrl((uint)floor((double)_ssz/2.0), (uint)floor((double)_ssz/2.0)), wMat(_h, _w), sMat(_h*_w, 2), binEvts(10000, 2), alreadyComputedX(_h, _w), alreadyComputedY(_h, _w)
 :activity(_h, _w), TSs(_h, _w), TSs2Plan(_h, _w), compPurpTS(_h, _w), sobelx(_ssz, _ssz), sobely(_ssz, _ssz), subTSs(_ssz, _ssz), A(_ssz*_ssz, 3), At(3,_ssz*_ssz), AtA(3,3), abc(3), Y(_nn*_nn), ctrl((uint)floor((double)_ssz/2.0), (uint)floor((double)_ssz/2.0)), wMat(_h, _w), sMat(_h*_w, 2), binEvts(10000, 3), alreadyComputedX(_h, _w), alreadyComputedY(_h, _w), polSel(_pol), orientation(_ori), binAcc(_bin), saveOf(_save)
 {
@@ -60,7 +60,10 @@ tsOptFlowThread::tsOptFlowThread(uint &_h, uint &_w, std::string &_src, uint &_t
 
     first=true;
 
-    setSobelFilters(_ssz, sobelx, sobely);
+//    if(!orientation)
+        setSobelFilters(_ssz, sobelx, sobely);
+//    else
+//        setSobelFilters(_ssz, sobely, sobelx);
 printMatrix(sobelx);
 printMatrix(sobely);
 
@@ -167,7 +170,11 @@ void tsOptFlowThread::run()
         //std::cout << "[tsOptFlowThread] Initialisation..." << endl;
         while(!res)
         {
-            res=unmasker->getUmaskedData(addrx, addry, polarity, eye, timestamp);
+            if(orientation)
+                res=unmasker->getUmaskedData(addry, addrx, polarity, eye, timestamp);
+            else
+                res=unmasker->getUmaskedData(addrx, addry, polarity, eye, timestamp);
+                
             //std::cout << "[tsOptFlowThread] Waiting for the good pol: addrx:" << addrx << ", addry: " << addry << ", pol: " << polarity << ", eye: " << eye << ", ts: " << timestamp << std::endl;
                 //std::cout << "[tsOptFlowThread] res: " << res << std::endl;
             if((polSel && polarity!=polSel) || eye!=eyeSel) res=0;
@@ -203,8 +210,6 @@ void tsOptFlowThread::run()
             }
             iBinEvts=ii;
         }
-        //if(orientation)
-        //    flip();
         binEvts(iBinEvts, 0)=addrx;
         binEvts(iBinEvts, 1)=addry;
         binEvts(iBinEvts, 2)=timestamp;
@@ -216,15 +221,16 @@ void tsOptFlowThread::run()
 
         while(refbin+binAcc>=timestamp && iBinEvts<10000)
         {
-            res=unmasker->getUmaskedData(addrx, addry, polarity, eye, timestamp);
+            if(orientation)
+                res=unmasker->getUmaskedData(addry, addrx, polarity, eye, timestamp);
+            else
+                res=unmasker->getUmaskedData(addrx, addry, polarity, eye, timestamp);
             //std::cout << "[tsOptFlowThread] Waiting for the full acc: addrx:" << addrx << ", addry: " << addry << ", pol: " << polarity << ", eye: " << eye << ", ts: " << timestamp << std::endl;
 
             //if(polSel && polarity!=polSel) res=0;
             if((polSel && polarity!=polSel) || eye!=eyeSel) res=0;
             if(res)
             {
-                //if(orientation)
-                //    flip();
                 binEvts(iBinEvts, 0)=addrx;
                 binEvts(iBinEvts, 1)=addry;
                 binEvts(iBinEvts, 2)=timestamp;
@@ -752,27 +758,6 @@ void tsOptFlowThread::printMatrix(Matrix& _mat)
         for(uint c=0; c<nc; c++)
             std::cout << _mat(r,c) << " ";
         std::cout << std::endl;
-    }
-}
-
-void tsOptFlowThread::flip()
-{
-    switch(orientation)
-    {
-        case 90:    addrxBack=addrx;
-                    addrx=addry;
-                    //addry=height-(addrxBack+1);
-                    addry=(addrxBack);
-                    break;
-        case 180:   addrx=(addrx);
-                    //addrx=height-(addrx+1);
-                    addry=width-(addry+1);
-                    break;
-        case 270:   addrxBack=addrx;
-                    addrx=width-(addry+1);
-                    addry=addrxBack;
-                    break;
-        default: break;
     }
 }
 

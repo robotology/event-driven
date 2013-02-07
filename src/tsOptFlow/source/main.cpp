@@ -88,9 +88,7 @@ int main(int argc, char *argv[])
     if(params.check("eye"))
         eye=params.find("eye").asString();
  
-    unsigned int ori=0;
-    if(params.check("ori"))
-        ori=(unsigned int)params.find("ori").asInt();
+    bool ori=params.check("swap_xy");
     bool save=params.check("save");
 
     string appName=params.find("name").asString().c_str();

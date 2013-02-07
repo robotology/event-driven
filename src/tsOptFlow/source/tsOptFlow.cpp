@@ -21,7 +21,7 @@ using namespace std;
 using namespace emorph::ebuffer;
 using namespace yarp::sig;
 using namespace yarp::os;
-tsOptFlow::tsOptFlow(uint &_h, uint &_w, string &_src, uint &_type, uint &_acc, uint &_bin, double &_th, uint &_nn, uint &_ssz, uint &_tsval, double &_a, double &_td, int &_pol, std::string &_eye, uint &_ori, bool &_save, yarp::os::BufferedPort<VelocityBuffer>* _port)
+tsOptFlow::tsOptFlow(uint &_h, uint &_w, string &_src, uint &_type, uint &_acc, uint &_bin, double &_th, uint &_nn, uint &_ssz, uint &_tsval, double &_a, double &_td, int &_pol, std::string &_eye, bool &_ori, bool &_save, yarp::os::BufferedPort<VelocityBuffer>* _port)
 :polarity(_pol)
 {
     vxMat = new Matrix(_h, _w);

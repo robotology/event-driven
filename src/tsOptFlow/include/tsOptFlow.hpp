@@ -160,7 +160,7 @@
 class tsOptFlow:public yarp::os::BufferedPort<emorph::ebuffer::eventBuffer>
 {
 public:
-    tsOptFlow(uint&, uint&, std::string&, uint&, uint&, uint&, double&, uint&, uint&, uint&, double&, double&, int&, std::string&, uint&, bool&, yarp::os::BufferedPort<VelocityBuffer>*);
+    tsOptFlow(uint&, uint&, std::string&, uint&, uint&, uint&, double&, uint&, uint&, uint&, double&, double&, int&, std::string&, bool&, bool&, yarp::os::BufferedPort<VelocityBuffer>*);
     ~tsOptFlow();
     void onRead(emorph::ebuffer::eventBuffer&);
 private:
