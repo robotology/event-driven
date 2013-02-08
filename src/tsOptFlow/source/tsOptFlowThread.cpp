@@ -61,9 +61,11 @@ tsOptFlowThread::tsOptFlowThread(uint &_h, uint &_w, std::string &_src, uint &_t
     first=true;
 
     setSobelFilters(_ssz, sobelx, sobely);
-    if(orientation)
-        sobely=sobely*-1;
-    
+//    if(orientation)
+//    {
+//        sobelx=sobelx*-1;
+//        sobely=sobely*-1;
+//    }
 printMatrix(sobelx);
 printMatrix(sobely);
 
@@ -171,7 +173,10 @@ void tsOptFlowThread::run()
         while(!res)
         {
             if(orientation)
+            {
                 res=unmasker->getUmaskedData(addry, addrx, polarity, eye, timestamp);
+                addry=127-addry;
+            }
             else
                 res=unmasker->getUmaskedData(addrx, addry, polarity, eye, timestamp);
                 
@@ -222,7 +227,10 @@ void tsOptFlowThread::run()
         while(refbin+binAcc>=timestamp && iBinEvts<10000)
         {
             if(orientation)
+            {
                 res=unmasker->getUmaskedData(addry, addrx, polarity, eye, timestamp);
+                addry=127-addry;
+            }
             else
                 res=unmasker->getUmaskedData(addrx, addry, polarity, eye, timestamp);
             //std::cout << "[tsOptFlowThread] Waiting for the full acc: addrx:" << addrx << ", addry: " << addry << ", pol: " << polarity << ", eye: " << eye << ", ts: " << timestamp << std::endl;
