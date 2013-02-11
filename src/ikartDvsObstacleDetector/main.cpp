@@ -30,7 +30,7 @@ protected:
     yarp::os::Port              rpcPort;
 
 public:
-	obstacleDetectorThread     *obstacleThread;
+    obstacleDetectorThread     *obstacleThread;
 
     iKartPlannerModule()
     {
@@ -44,8 +44,8 @@ public:
         Property p;
         ConstString configFile = rf.findFile("from");
         if (configFile!="") p.fromConfigFile(configFile.c_str());
-		
-		int period = 20; //ms
+        
+        int period = 20; //ms
         obstacleThread = new obstacleDetectorThread(period,rf,p);
 
         if (!obstacleThread->start())
@@ -99,45 +99,45 @@ public:
 
     virtual bool respond(const yarp::os::Bottle& command,yarp::os::Bottle& reply) 
     {
-		reply.clear(); 
-		
+        reply.clear(); 
+        
         if (command.get(0).asString()=="quit") return false;     
 
-		else if (command.get(0).asString()=="help")
-		{
-			reply.addString("Available commands are:");
-			reply.addString("quit");
-		}
-		else if (command.get(0).asString()=="s")
-		{
-			double f = command.get(1).asDouble();
-			double ang= command.get(2).asDouble();
-			double h = command.get(3).asDouble();
-			obstacleThread->set_model_params(f,ang,h);
-			reply.addString("Params loaded");
-		}
-		else if (command.get(0).asString()=="g")
-		{
-			char buff[255];
-			double f, ang, h;
-			obstacleThread->get_model_params(f, ang, h);
-			sprintf (buff, "f: %f ang: %f h: %f\n",f, ang, h);
-			reply.addString(buff);
-		}
-		else if (command.get(0).asString()=="k")
-		{
-			double k = command.get(1).asDouble();
-			obstacleThread->set_model_k(k);
-			double f, ang, h;
-			obstacleThread->get_model_params(f, ang, h);
-			obstacleThread->set_model_params(f,ang,h);
-			reply.addString("k done");
-		}
+        else if (command.get(0).asString()=="help")
+        {
+            reply.addString("Available commands are:");
+            reply.addString("quit");
+        }
+        else if (command.get(0).asString()=="s")
+        {
+            double f = command.get(1).asDouble();
+            double ang= command.get(2).asDouble();
+            double h = command.get(3).asDouble();
+            obstacleThread->set_model_params(f,ang,h);
+            reply.addString("Params loaded");
+        }
+        else if (command.get(0).asString()=="g")
+        {
+            char buff[255];
+            double f, ang, h;
+            obstacleThread->get_model_params(f, ang, h);
+            sprintf (buff, "f: %f ang: %f h: %f\n",f, ang, h);
+            reply.addString(buff);
+        }
+        else if (command.get(0).asString()=="k")
+        {
+            double k = command.get(1).asDouble();
+            obstacleThread->set_model_k(k);
+            double f, ang, h;
+            obstacleThread->get_model_params(f, ang, h);
+            obstacleThread->set_model_params(f,ang,h);
+            reply.addString("k done");
+        }
         else
         {
             reply.addString("Unknown command.");
         }
-		
+        
         return true;
     }
 };
@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
 
     yarp::os::ResourceFinder rf;
     rf.setVerbose(true);
-    rf.setDefaultConfigFile("ikartDvsObstacleDetector.ini");		   //overridden by --from parameter
+    rf.setDefaultConfigFile("ikartDvsObstacleDetector.ini");           //overridden by --from parameter
     rf.setDefaultContext("ikartDvsObstacleDetector/conf");             //overridden by --context parameter
     rf.configure("ICUB_ROOT",argc,argv);
     

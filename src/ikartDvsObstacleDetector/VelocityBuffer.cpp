@@ -121,8 +121,8 @@ bool VelocityBuffer::read(ConnectionReader & connection){
        Vys[i] = connection.expectDouble();
     }
     for (int i = 0; i < size; ++i) {
-	   TSs[i] = (unsigned long) connection.expectInt();
-	}
+       TSs[i] = (unsigned long) connection.expectInt();
+    }
 
     for (int i = 0; i < size; ++i) {
         rel[i] = connection.expectDouble();
@@ -153,8 +153,8 @@ bool VelocityBuffer::write(ConnectionWriter & connection){
         connection.appendDouble(Vys[i]);
     }
     for (int i = 0; i < size; ++i) {
-		connection.appendInt((int) TSs[i]);
-	}
+        connection.appendInt((int) TSs[i]);
+    }
     for (int i = 0; i < size; ++i) {
         connection.appendDouble(rel[i]);
     }
