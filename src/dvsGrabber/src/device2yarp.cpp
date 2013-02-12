@@ -366,6 +366,22 @@ void  device2yarp::run() {
             //emorph::ebuffer::eventBuffer data2send((char*)buf32, sz*sizeof(uint32_t));    
             //emorph::ebuffer::eventBuffer data2send((char*)buf32, sz*2);    
             unsigned int sz2s=numberofWords<=0?0:(numberofWords-1)*sizeof(uint32_t);
+
+            static double t2 = yarp::os::Time::now();
+            static double t1 = yarp::os::Time::now();
+            static int second_count = 0;
+            if (t2-t1>1.0)
+            {
+                t2=t1=yarp::os::Time::now();
+                printf("[device2yarp] Total %d events/s\n", second_count/4);
+                second_count = 0;
+            }
+            else
+            {
+                t2=yarp::os::Time::now();
+                second_count += sz2s;
+            }
+
             printf("[device2yarp] Send %d bytes\n", sz2s);
             emorph::ebuffer::eventBuffer data2send((char*)buf32, sz2s);
             emorph::ebuffer::eventBuffer& tmp = port.prepare();
