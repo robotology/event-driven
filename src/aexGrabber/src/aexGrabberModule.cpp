@@ -38,15 +38,20 @@ using namespace std;
 
 bool aexGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     /* Process all parameters from both command-line and .ini file */
+    printf("configure in aexGrabberModule \n");
 
-    /* get the module name which will form the stem of all module port names */
+    //printf("moduleName  %s \n", moduleName.c_str());
     moduleName            = rf.check("name", 
                            Value("/aexGrabber"), 
                            "module name (string)").asString();
+    printf("extracted the module name \n");
+    
+    
     /*
     * before continuing, set the module name before getting any other parameters, 
     * specifically the port names which are dependent on the module name
     */
+    printf("setting the module rootname \n");
     setName(moduleName.c_str());
 
     /*

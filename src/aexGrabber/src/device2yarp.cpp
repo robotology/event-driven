@@ -101,6 +101,8 @@ static const char* byte_to_binary( int x ) {
 }
 
 device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName = " "):RateThread(THRATE) {
+    printf("device2yarp initialization .... \n");
+
     bottle2send = new Bottle();  
     // initialization of the paramenters
     countCycle       = 0;
@@ -234,6 +236,8 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName =
 #endif
 ***************************************************************/
 
+bool onlyLeft = false;
+
 
 #define WIEN
 #ifdef WIEN
@@ -251,18 +255,54 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName =
     foll = 20;           // foll
     pr = 5;              // Pr 
 
-    casRight = 52458;         // cas
+    //casRight = 52458;         // cas
+    if(onlyLeft) {
+        casRight = 0;         // cas    
+    }
+    else {
+        casRight = 52458;
+    }
     injgRight = 101508;       // injGnd
     reqPdRight = 16777215;    // reqPd
     puxRight = 8053457;       // puX
-    diffoffRight = 133;       // diffOff
+    //diffoffRight = 133;       // diffOff
+    if(onlyLeft){ 
+	diffoffRight = 0;       // diffOff
+    }
+    else{
+    	diffoffRight = 133;
+    }
     reqRight = 160712;        // req
-    refrRight = 944;          // refr
+    //refrRight = 944;          // refr
+    if(onlyLeft){
+        refrRight = 0;          // refr   
+    }
+    else{
+        refrRight = 944;
+    }
     puyRight = 16777215;      // puY
-    diffonRight = 639172;     // diffOn
-    diffRight = 30108;        // diff 
+    //diffonRight = 639172;     // diffOn
+    if(onlyLeft){
+        diffonRight = 0;     // diffOn
+    }
+    else {
+	diffonRight = 639172;
+    }
+    //diffRight = 30108;        // diff
+    if(onlyLeft){
+        diffRight = 0;        // diff  
+    }
+    else {
+	diffRight = 30108;
+    }
     follRight = 20;           // foll
-    prRight = 5;              // Pr 
+    //prRight = 5;              // Pr 
+    if(onlyLeft){
+    	prRight = 0;              // Pr 
+    }
+    else{
+	prRight = 5; 
+    }
 #endif
      
     save = false;
@@ -381,7 +421,7 @@ void device2yarp::prepareBiases() {
             }
             if (r != 2) {
                 fprintf(stderr, "input parsing error!!!\n");
-                exit(1); // FIXME
+                yarp::os::exit(1); // FIXME
             }
 #else
             r = fread(rbuf, 8, 1, binInput);
@@ -809,7 +849,8 @@ void  device2yarp::run() {
             }
 
             if (save) {	  
-                fprintf(fout,"%08X \n",a);
+                //fprintf(fout,"%08X \n",a);
+                fprintf(fout,"%lu,",a);
                 //fprintf(fout,"test\n");
             }
                       
@@ -868,7 +909,8 @@ void  device2yarp::run() {
             
             if (save) {	  
                 //fprintf(fout,"%08X\n",t);
-                fprintf(fout,"%08X ",t);
+                //fprintf(fout,"%08X ",t);
+                fprintf(fout,"%lu,",t);
             }
           
             //copying the atomic block to send
@@ -964,7 +1006,7 @@ void  device2yarp::run() {
             
             if (save) {	  
                 //fprintf(fout,"%08X\n",t);
-                fprintf(fout,"%08X ",t);
+                fprintf(fout,"%lu ",t);
                 //fprintf(fout," %08X ",0xCAFECAFE);
             }	  	  	  
         }
@@ -972,7 +1014,8 @@ void  device2yarp::run() {
         else {         
 
             if (save) {	  
-                fprintf(fout,"%08X\n",tempA);
+                //fprintf(fout,"%08X\n",tempA);
+                fprintf(fout,"%lu,",tempA);
                 //fprintf(fout," %08X ",0xCAFECAFE);
             }	
             
