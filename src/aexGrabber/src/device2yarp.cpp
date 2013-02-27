@@ -255,54 +255,33 @@ bool onlyLeft = false;
     foll = 20;           // foll
     pr = 5;              // Pr 
 
-    //casRight = 52458;         // cas
+    
     if(onlyLeft) {
         casRight = 0;         // cas    
+        diffoffRight = 0;     // diffOff
+        refrRight = 0;        // refr   
+        diffonRight = 0;      // diffOn
+        diffRight = 0;        // diff
+        prRight = 0;          // Pr 
     }
     else {
         casRight = 52458;
+        diffoffRight = 133;
+        refrRight = 944;
+        diffonRight = 639172;
+        diffRight = 30108;
+        prRight = 5;
+        
     }
     injgRight = 101508;       // injGnd
     reqPdRight = 16777215;    // reqPd
     puxRight = 8053457;       // puX
-    //diffoffRight = 133;       // diffOff
-    if(onlyLeft){ 
-	diffoffRight = 0;       // diffOff
-    }
-    else{
-    	diffoffRight = 133;
-    }
     reqRight = 160712;        // req
-    //refrRight = 944;          // refr
-    if(onlyLeft){
-        refrRight = 0;          // refr   
-    }
-    else{
-        refrRight = 944;
-    }
     puyRight = 16777215;      // puY
-    //diffonRight = 639172;     // diffOn
-    if(onlyLeft){
-        diffonRight = 0;     // diffOn
-    }
-    else {
-	diffonRight = 639172;
-    }
-    //diffRight = 30108;        // diff
-    if(onlyLeft){
-        diffRight = 0;        // diff  
-    }
-    else {
-	diffRight = 30108;
-    }
     follRight = 20;           // foll
-    //prRight = 5;              // Pr 
-    if(onlyLeft){
-    	prRight = 0;              // Pr 
-    }
-    else{
-	prRight = 5; 
-    }
+    
+    
+
 #endif
      
     save = false;
@@ -751,6 +730,7 @@ void device2yarp::closeDevice(){
 }
 
 void  device2yarp::run() {
+    bool printExa = true;
 
     r = read(file_desc, pmonatom, monBufSize_b);
     //printf("received %d bytes \n", r);
@@ -849,9 +829,12 @@ void  device2yarp::run() {
             }
 
             if (save) {	  
-                //fprintf(fout,"%08X \n",a);
-                fprintf(fout,"%lu,",a);
-                //fprintf(fout,"test\n");
+                if(printExa) {
+                    fprintf(fout,"%08X \n",a);
+                }
+                else {
+                    fprintf(fout,"%lu,",a);
+                }
             }
                       
             buf2[k2++] = a;   // passing the address event to the data flow to send            
@@ -908,9 +891,12 @@ void  device2yarp::run() {
             lastTSindex = countData;
             
             if (save) {	  
-                //fprintf(fout,"%08X\n",t);
-                //fprintf(fout,"%08X ",t);
-                fprintf(fout,"%lu,",t);
+                if(printExa) {
+                    fprintf(fout,"%08X ",t);
+                }
+                else {
+                    fprintf(fout,"%lu,",t);
+                }
             }
           
             //copying the atomic block to send
@@ -1004,9 +990,13 @@ void  device2yarp::run() {
             //buf2[k2++] = a;
             countEventSent++;              
             
-            if (save) {	  
-                //fprintf(fout,"%08X\n",t);
-                fprintf(fout,"%lu ",t);
+            if (save) {
+                if(printExa) {
+                    fprintf(fout,"%08X\n",t);
+                }
+                else {
+                    fprintf(fout,"%lu ",t);
+                }
                 //fprintf(fout," %08X ",0xCAFECAFE);
             }	  	  	  
         }
@@ -1014,8 +1004,12 @@ void  device2yarp::run() {
         else {         
 
             if (save) {	  
-                //fprintf(fout,"%08X\n",tempA);
-                fprintf(fout,"%lu,",tempA);
+                if(printExa) {
+                    fprintf(fout,"%08X\n",tempA);
+                }
+                else {
+                    fprintf(fout,"%lu,",tempA);
+                }
                 //fprintf(fout," %08X ",0xCAFECAFE);
             }	
             
