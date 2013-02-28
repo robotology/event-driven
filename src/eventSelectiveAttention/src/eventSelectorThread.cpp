@@ -36,7 +36,7 @@ using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
-#define FIRETHRESHOLD 100            // value of the fire threshold in the saliency map [0,255]
+#define FIRETHRESHOLD 200            // value of the fire threshold in the saliency map [0,255]
 #define INTERVFACTOR  1
 #define COUNTERRATIO  1              //1.25 is the ratio 0.160/0.128
 #define MAXVALUE      0xFFFFFF       //4294967295
@@ -68,7 +68,7 @@ eventSelectorThread::eventSelectorThread() : RateThread(THRATE) {
 
     maxDistance      = 255;
 
-    forgettingFactor = 0.05;
+    forgettingFactor = 0.00; //in the range [0.0,1.0]
         
     bottleHandler = true;
     synchronised = false;
@@ -79,12 +79,17 @@ eventSelectorThread::eventSelectorThread() : RateThread(THRATE) {
     bufferCopy = (char*) malloc(CHUNKSIZE);
 
     verb = false;
-    string i_fileName("events.log");
-    string w_fileName("wta.log");
-    string n_fileName("ini.log");
-    raw     = fopen(i_fileName.c_str(), "wb");
-    fstore  = fopen(w_fileName.c_str(), "wb"); 
-    istore  = fopen(n_fileName.c_str(), "wb"); 
+    plotLatency = false;
+
+    string i_fileName("eventSelectorThread.events.log");
+    string w_fileName("eventSelectorThread.wta.log");
+    string n_fileName("eventSelectorThread.ini.log");
+    string l_fileName("eventSelectorThread.latency.txt");
+    raw         = fopen(i_fileName.c_str(), "wb");
+    fstore      = fopen(w_fileName.c_str(), "wb"); 
+    istore      = fopen(n_fileName.c_str(), "wb"); 
+    latencyFile = fopen(l_fileName.c_str(), "wb");
+
 }
 
 eventSelectorThread::~eventSelectorThread() {
@@ -241,6 +246,8 @@ bool eventSelectorThread::threadInit() {
     receivedBottle = new Bottle();
     unmask_events  = new unmask(32);
 
+    timeStart = Time::now();
+
     printf("Initialisation in selector thread correctly ended \n");
     return true;
 }
@@ -370,7 +377,8 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
     //#endif
     
     
-    unsigned long timestampactual;
+    unsigned long  timestampactual;                      // timestamp of the current selected location
+    unsigned long  maxtimestamp;                         // timestamp associated to the max value
     unsigned long* pTime41Left  = timestampMap41Left;
     unsigned long* pTime42Left  = timestampMap42Left;
     unsigned long* pTime43Left  = timestampMap43Left;
@@ -415,6 +423,8 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
             double contribA1Left = abs(*pMapA1Left);
             double contribA2Left = abs(*pMapA2Left); 
 
+
+            /*** removed because forgetting in the  bottleProcessor Thread
             // forgetting factor decrement
             if(contrib41Left > forgettingFactor)  {
                 contrib41Left -= forgettingFactor;
@@ -431,6 +441,7 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
             if(contribA2Left > forgettingFactor)  {
                 contribA2Left -= forgettingFactor;
             }
+            */
 
             //double contrib41Left = (abs(*pMap41Left) - bpt41->getMinLeft()) / (bpt41->getMaxLeft() - bpt41->getMinLeft());
             //double contribA1Left = (abs(*pMapA1Left) - bptA1->getMinLeft()) / (bptA1->getMaxLeft() - bptA1->getMinLeft());     
@@ -448,15 +459,12 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
             
             double wa1 = 0.8;
             double wa2 = 0.0;
-            double w41 = 0.1;
-            double w42 = 0.1;
+            double w41 = 0.6;
+            double w42 = 0.0;
             double w43 = 0.0;
             //*pBufferLeft =  contrib41Left ;
             *pBufferLeft =  wa1 * contribA1Left + wa2 * contribA2Left + 
-                w41 * contrib41Left + w42 * contrib42Left + w43 * contrib43Left;
-            
-            
-            
+                w41 * contrib41Left + w42 * contrib42Left + w43 * contrib43Left;        
             //printf("wa1 %f contribA1Left %f w41 %f contrib41Left %f w42 %f contrib42Left %f \n ",wa1, contribA1Left, w41,contrib41Left, w42, contrib42Left );
             if(*pBufferLeft > 1.0) {
                 *pBufferLeft = 1.0;
@@ -522,18 +530,30 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
             //--------------- temporal information ------------------------------------
             unsigned long ta1l = *pTimeA1Left;
             unsigned long t41l = *pTime41Left;
-            /*
-            if( ta1l > t41l){
-                timestampactual = ta1l;
-            }
-            else {
+            unsigned long t42l = *pTime42Left;
+            unsigned long t43l = *pTime43Left;
+            
+            timestampactual = 0;
+            
+            if(t41l > timestampactual){
                 timestampactual = t41l;
             }
-            */   
+            //else if(t42l > timestampactual){
+            //    timestampactual = t42l;
+            //}
+            //else if(t43l > timestampactual){
+            //    timestampactual = t43l;
+            //}
+            else if( ta1l > timestampactual){
+                timestampactual = ta1l;
+            }
+               
 
             //timestampactual   = (*pTimeA1Left > *pTime41Left)?*pTimeA1Left:*pTime41Left;
             timestampactual   = *pTimeA1Left;
             //timestampactual   = *pTime41Left;
+
+            
             //--------------------------------------------------------------------------
 
 
@@ -547,6 +567,7 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
              */            
             
             value = left_double * 255;         // CAUTION : casting of a double into an unsigned int!!!!!!!!!!!!!!!
+            // movieng from pBufferleft (saliencyImageLeft) to pImage(Image)
             //------------------------------------------------------------------------
 
             
@@ -603,6 +624,7 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
                         maxValue = value;
                         maxLeftR = r; 
                         maxLeftC = c;
+                        maxtimestamp = timestampactual;
                     }
 
                     //if ((stereo) && (r < 7) && (r >= 16) && (c < 7) && (c >= 16)) {
@@ -638,8 +660,10 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
                 pMap42Left++;
                 pMap43Left++;
                 pMapA1Left++;
-                
+                //---
                 pTime41Left++;
+                pTime42Left++;
+                pTime43Left++;
                 pTimeA1Left++;
             }
             else { 
@@ -693,10 +717,13 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
                 pMap41Left++;
                 pMap42Left++;
                 pMap43Left++;
-
                 pMapA1Left++;
+                //--
                 pTime41Left++;
+                pTime42Left++;
+                pTime43Left++;
                 pTimeA1Left++;
+                
             } // end !tristate            
         } // end inner loop
         pImage += imagePadding;
@@ -727,16 +754,25 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
 
     imageLeftBW->zero();
     imageRightBW->zero();
+
+
+    if(plotLatency) {
+        timeStop = Time::now();
+        double latency = timeStop - timeStart;
+        fprintf(latencyFile, "%f \n", latency);  
+        timeStart = Time::now();
+    }
+
+               
    
-    // if(maxResponseLeft > FIRETHRESHOLD) {
-         
+    // if(maxResponseLeft > FIRETHRESHOLD) {         
     if(maxValue >= FIRETHRESHOLD) {  
 
 #ifdef STOREWTA
         /** 
          *saving in a file the list of WTA position and their timestamp (X,Y) for the left camera
          */
-        fprintf(fstore, "%d %d %lu \n", maxLeftC,maxLeftR, last_ts);
+        fprintf(fstore, "%d %d %lu \n", maxLeftC,maxLeftR, maxtimestamp);
 #endif
   
         //printf("maxResponseLeft %f position %d %d \n",maxResponseLeft,maxLeftC,maxLeftR  );
@@ -777,7 +813,7 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
         //pLeft +=  (maxLeftR - 1) * rowsize + (maxLeftC - 1) * 3 ;
 
         
-        // (OLD) representing the WTA as red dot 
+        // (TODO : make it more efficient with jump to correct location) representing the WTA as red dot 
         for(int r = 0 ; r < retinalSize ; r++){
             for(int c = 0 ; c < retinalSize ; c++) {
                 timestampactual = *pTimeLeft; 
@@ -1364,12 +1400,13 @@ void eventSelectorThread::threadRelease() {
     fclose(fout);
     fclose(fstore);
     fclose(istore);
+    fclose(latencyFile);
     printf("eventSelectorThread release:freeing bufferCopy \n");
 
-    delete imageLeft;
-    delete imageRight;    
-    delete imageLeftBW;
-    delete imageRightBW;
+    //delete imageLeft;
+    //delete imageRight;    
+    //delete imageLeftBW;
+    //delete imageRightBW;
     
     free(saliencyMapLeft);
     free(saliencyMapRight);

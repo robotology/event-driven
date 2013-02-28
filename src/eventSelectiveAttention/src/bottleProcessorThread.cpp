@@ -45,8 +45,8 @@ using namespace std;
 
 //#define VERBOSE
 #define TEMPDIST      1000000
-#define INCR_RESPONSE 0.1
-#define DECR_RESPONSE 0.9
+#define INCR_RESPONSE 0.07  //0.007    //0.07
+#define DECR_RESPONSE 0.002 //0.01  //0.002
 
 bottleProcessorThread::bottleProcessorThread() : RateThread(THRATE) {
     responseGradient = 127;
@@ -207,8 +207,12 @@ void bottleProcessorThread::forgettingMemory() {
     
     double* pLeft  = featureMapLeft;
     double* pRight = featureMapRight;
-    for(int r = 0 ; r < retinalSize ; r++){
-        for(int c = 0 ; c < retinalSize ; c++) {            
+    //for(int r = 0 ; r < retinalSize ; r++){
+    //    for(int c = 0 ; c < retinalSize ; c++) {   
+
+    for(int r = 0 ; r < saliencySize ; r++){
+        for(int c = 0 ; c < saliencySize ; c++) {    
+            
             if(*pLeft > DECR_RESPONSE) {
                 *pLeft -= DECR_RESPONSE;               
                 //*pLeft = 0;
@@ -217,13 +221,19 @@ void bottleProcessorThread::forgettingMemory() {
                 *pLeft += DECR_RESPONSE;
                 //*pLeft = 0;
             }
+            else{
+                *pLeft = 0;
+            }
             pLeft++;
-            if(*pRight > 0) {
-                
+
+            if(*pRight > 0) {                
                 *pRight -= DECR_RESPONSE;
             }
-            else {
+            else if(*pRight < -DECR_RESPONSE) {
                 *pRight += DECR_RESPONSE;
+            }
+            else {
+                *pRight = 0;
             }
             pRight++;
         }
@@ -291,7 +301,12 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                     int xpos,ypos;
                     if(scaleFactor == 4) {
                         xpos      = cartX * scaleFactor;
-                        ypos      = (cartY - 1) * scaleFactor;                        
+                        //ypos      = (cartY - 1) * scaleFactor;                        
+                        ypos      = cartY  * scaleFactor; 
+
+                        //xpos = cartY * scaleFactor;
+                        //ypos = cartX * scaleFactor;
+
                         /*
                         if(camera == 0)
                             camera = 1;
@@ -320,7 +335,7 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                        /* ----------------------  LEFT CAMERA --------------------------------*/
                         
                        if(polarity == 0) {
-                            // CONTRIBUTION OF A POSITIVE EVENT
+                            // CONTRIBUTION OF A POSITIVE EVENT increments saliency
                             for ( int xi = 0; xi < scaleFactor; xi++) {
                                 for (int yi = 0; yi < scaleFactor; yi++) {
                                     //saliencyMapLeft [(xpos * scaleFactor + xi) * 3   + (ypos + yi) * saliencySize * 3] +=  INCR_RESPONSE;
@@ -346,15 +361,23 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
                             }
                         }
                         else {
-                            // CONTRIBUTION OF A NEGATIVE EVENT
+                            // CONTRIBUTION OF A NEGATIVE EVENT increments saliency
                             for ( int xi = 0; xi < scaleFactor; xi++) {
                                 for (int yi = 0; yi < scaleFactor; yi++) {
                                     //saliencyMapLeft [(xpos * scaleFactor + xi) * 3   + (ypos + yi) * saliencySize * 3 ] -=  INCR_RESPONSE;                                    
                                     mutexFeaLeft.wait();
                                     double* pFea = &featureMapLeft[(ypos + yi) * saliencySize + (xpos + xi)];
-                                    if(*pFea > -1.0 + INCR_RESPONSE){
-                                        *pFea -= INCR_RESPONSE;
+
+                                    //Rea 4.2.2013  increments saliency for center-off surround cells!
+                                    
+                                    //if(*pFea > -1.0 + INCR_RESPONSE){
+                                    //    *pFea -= INCR_RESPONSE;
+                                    //}
+
+                                    if (*pFea < 1.0 - INCR_RESPONSE) {
+                                        *pFea += INCR_RESPONSE;
                                     }
+
                                     //featureMapLeft[(ypos + yi) * saliencySize + (xpos + xi)] -= INCR_RESPONSE;
                                     mutexMinMaxLeft.wait();
                                     if (*pFea > maxLeft) {                                        
@@ -487,6 +510,9 @@ void bottleProcessorThread::spatialSelection(eEventQueue *q) {
         
     } //end for
     
+
+    //moved from inside the cycle
+    forgettingMemory();
     //all the elements processed, clearing the queue
 	q->clear();
 

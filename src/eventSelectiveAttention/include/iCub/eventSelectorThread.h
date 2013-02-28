@@ -156,7 +156,11 @@ private:
     bottleProcessorThread* bpt41;                                        // processor thread of the bottle feature map 1
     bottleProcessorThread* bpt42;                                        // processor thread of the bottle feature map 2
     bottleProcessorThread* bpt43;                                        // processor thread of the bottle feature map 3
-    
+
+    bool plotLatency;
+    double timeStart, timeStop;                                          // variables that measures the computation load
+    FILE* latencyFile;                                                   // file where all the latency measurements are saved
+
 public:
     /**
     * default constructor

@@ -105,8 +105,10 @@ void eventBottleHandler::extractBottle(Bottle* tempBottle) {
     semBottleBuffer[extractPosition]->wait();
     tempBottle->copy(*bufferBottle[extractPosition]);   // copying it in a temporary Bottle*    
     int length = bufferBottle[extractPosition]->size();
+    
+    //might not be neccessary because clearing
     //for (int i=0; i < length; i++ ) {
-    //    bufferBottle[extractPosition]->pop();
+    //   bufferBottle[extractPosition]->pop();
     //}
     bufferBottle[extractPosition]->clear();             // removes the content of the bottle.
     semBottleBuffer[extractPosition]->post();
