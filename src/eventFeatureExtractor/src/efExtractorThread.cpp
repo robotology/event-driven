@@ -118,9 +118,10 @@ inline void copy_8u_C3R(ImageOf<PixelRgb>* src, ImageOf<PixelRgb>* dest) {
 }
 
 efExtractorThread::efExtractorThread() : RateThread(THRATE) {
-    firstHalf =  true;
-    resized   = false;
-    idle      = false;
+    firstHalf   =  true;
+    resized     = false;
+    idle        = false;
+    plotLatency = false; 
 
     count             = 0;
     countEvent        = 0;
@@ -188,9 +189,10 @@ bool efExtractorThread::threadInit() {
     
     /*opening the file of the mapping and creating the LUT*/
        
-    fout  = fopen ("lut.txt","w+");
-    fdebug  = fopen ("./eventFeatureExtractor.dumpSet.txt","w+");
-    pFile = fopen (mapURL.c_str(),"rb");  
+    fout        = fopen ("lut.txt","w+");
+    fdebug      = fopen ("./eventFeatureExtractor.dumpSet.txt","w+");
+    latencyFile = fopen ("./eventFeatureExtracto.latency.txt","wb");
+    pFile       = fopen (mapURL.c_str(),"rb");  
     if (pFile == NULL) {
         printf("file of mapping was not found. The module terminates \n");
         return false;
@@ -354,6 +356,8 @@ bool efExtractorThread::threadInit() {
     rxQueue = new eEventQueue();
     
     printf("initialisation correctly ended \n");
+    timeStart = Time::now();
+
     return true;
 }
 
@@ -371,14 +375,14 @@ void efExtractorThread::interrupt() {
 void efExtractorThread::threadRelease() {
     /* closing the ports*/
     printf("efExtractorThread::closing the ports \n");
-    outLeftPort.close();
-    outRightPort.close();
-    outFeaLeftPort.close();
+    outLeftPort    .close();
+    outRightPort   .close();
+    outFeaLeftPort .close();
     outFeaRightPort.close();
-    inLeftPort.close();
-    inRightPort.close();
-    outEventPort.close();
-    outBottlePort.close();
+    inLeftPort     .close();
+    inRightPort    .close();
+    outEventPort   .close();
+    outBottlePort  .close();
 
     printf("efExtractorThread::deleting the buffer of events \n");
     delete[] eventFeaBuffer;
@@ -430,6 +434,7 @@ void efExtractorThread::threadRelease() {
     
     printf("efExtractorThread::closing the file \n");
     fclose (pFile);
+    fclose (latencyFile);
 
     printf("efExtractorThread::threadReleas : success in releasing \n ");
 }
@@ -1552,7 +1557,7 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                                         ae->setX(xevent);
                                         ae->setY(yevent);
 
-                                        //printf("positive event to send %d %d \n", xevent, yevent);
+                                        //printf("positive event to send %d = %d %d \n",posFeaImage xevent, yevent);
                                         
                                         packets->append(ae->encode());
                                         //txQueue.push_back(ae);
@@ -1727,7 +1732,7 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                                         ae->setX(xevent);
                                         ae->setY(yevent);
 
-                                        printf("positive event to send %d %d \n", xevent, yevent);
+                                        //printf("positive event to send %d %d \n", xevent, yevent);
                                         
                                         packets->append(ae->encode());
                                         //txQueue.push_back(ae);
@@ -1850,9 +1855,13 @@ void efExtractorThread::run() {
             //printf("extracting bottle \n");
             receivedBottle->clear();
             ebHandler->extractBottle(receivedBottle);  
+
+            timeStart = Time::now();
+            
+            
 			if (receivedBottle == 0)
 			{
-				//do something
+				printf("null bottle of received events \n");
 			}
         }
         
@@ -2063,8 +2072,19 @@ void efExtractorThread::run() {
            
         
         //************************ OUTPUT OF THE MODULE ****************************
-        // writing the mapped events
         
+        if(plotLatency) {
+            timeStop = Time::now();
+            double latency = timeStop - timeStart;
+            fprintf(latencyFile, "%f \n", latency);
+            
+            //timeStart = Time::now();
+        }
+
+
+
+
+        // writing the mapped events
         if(outBottlePort.getOutputCount()) {
             //Bottle packets;          
             //cout<<"encoding events within packets "<<bottleToSend->size() <<endl;

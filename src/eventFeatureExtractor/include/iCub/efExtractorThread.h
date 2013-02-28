@@ -102,6 +102,11 @@ private:
     char* buffer;                         // buffer where the events to send are stored
     AER_struct* eventFeaBuffer;           // list of unmasked events
     aer* bufferFEA;                       // buffer storing events as aer struct
+
+    bool plotLatency;
+    double timeStart, timeStop;           // variables that measures the computation load
+    FILE *latencyFile;                    // file where all the latency measurements are saved
+    
 public:
     /**
     * default constructor
