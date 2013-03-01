@@ -119,6 +119,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName =
     maxCountInWraps  = 0;
     countLostAE      = 0;
     wrapOccured      = false;
+    onlyLeft         = true;
     
     
     /*   ORIGINAL VALUES
@@ -236,7 +237,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName =
 #endif
 ***************************************************************/
 
-bool onlyLeft = false;
+
 
 
 #define WIEN

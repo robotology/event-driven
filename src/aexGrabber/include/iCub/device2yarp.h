@@ -481,6 +481,7 @@ private:
     bool save;                              // bool that indicates whether the 
     bool firstWrap;                         // flag that indicates the first wrap
     bool wrapOccured;                       // flag that indicates if in the block of events a TS_WA is present
+    bool onlyLeft;                          // flag true/false corresponds only left camera/both cameras
 
     yarp::os::Port interfacePort;           //port dedicated to the request of values set through interface
     yarp::os::Semaphore mutex;              //semaphore for file reading
