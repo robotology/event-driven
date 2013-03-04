@@ -45,8 +45,8 @@ using namespace std;
 
 //#define VERBOSE
 #define TEMPDIST      1000000
-#define INCR_RESPONSE 0.07  //0.007    //0.07
-#define DECR_RESPONSE 0.002 //0.01  //0.002
+#define INCR_RESPONSE 0.09  //0.007    //0.07
+#define DECR_RESPONSE 0.001 //0.01  //0.002
 
 bottleProcessorThread::bottleProcessorThread() : RateThread(THRATE) {
     responseGradient = 127;

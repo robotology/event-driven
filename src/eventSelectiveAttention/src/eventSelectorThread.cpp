@@ -79,7 +79,7 @@ eventSelectorThread::eventSelectorThread() : RateThread(THRATE) {
     bufferCopy = (char*) malloc(CHUNKSIZE);
 
     verb = false;
-    plotLatency = false;
+    plotLatency = true;
 
     string i_fileName("eventSelectorThread.events.log");
     string w_fileName("eventSelectorThread.wta.log");
@@ -423,8 +423,6 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
             double contribA1Left = abs(*pMapA1Left);
             double contribA2Left = abs(*pMapA2Left); 
 
-
-            /*** removed because forgetting in the  bottleProcessor Thread
             // forgetting factor decrement
             if(contrib41Left > forgettingFactor)  {
                 contrib41Left -= forgettingFactor;
@@ -441,7 +439,6 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
             if(contribA2Left > forgettingFactor)  {
                 contribA2Left -= forgettingFactor;
             }
-            */
 
             //double contrib41Left = (abs(*pMap41Left) - bpt41->getMinLeft()) / (bpt41->getMaxLeft() - bpt41->getMinLeft());
             //double contribA1Left = (abs(*pMapA1Left) - bptA1->getMinLeft()) / (bptA1->getMaxLeft() - bptA1->getMinLeft());     
@@ -457,9 +454,9 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
             //}
 
             
-            double wa1 = 0.8;
+            double wa1 = 0.0;
             double wa2 = 0.0;
-            double w41 = 0.6;
+            double w41 = 1.0;
             double w42 = 0.0;
             double w43 = 0.0;
             //*pBufferLeft =  contrib41Left ;
@@ -550,8 +547,8 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
                
 
             //timestampactual   = (*pTimeA1Left > *pTime41Left)?*pTimeA1Left:*pTime41Left;
-            timestampactual   = *pTimeA1Left;
-            //timestampactual   = *pTime41Left;
+            //timestampactual   = *pTimeA1Left;
+            timestampactual   = *pTime41Left;
 
             
             //--------------------------------------------------------------------------
@@ -621,7 +618,7 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
                     
                     
                     if(value > maxValue){
-                        maxValue = value;
+                        `maxValue = value;
                         maxLeftR = r; 
                         maxLeftC = c;
                         maxtimestamp = timestampactual;
@@ -759,7 +756,8 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
     if(plotLatency) {
         timeStop = Time::now();
         double latency = timeStop - timeStart;
-        fprintf(latencyFile, "%f \n", latency);  
+        fprintf(latencyFile, "%f \n", latency);
+        
         timeStart = Time::now();
     }
 
