@@ -1,5 +1,3 @@
-
-
 # Copyright: (C) 2010 RobotCub Consortium
 # Authors: Francesco Rea
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
@@ -23,8 +21,9 @@ find_package(GtkPlus REQUIRED)
 find_package(IPOPT)
 
 #include(iCubOptions) # removed the line, no longer necessary @Rea 20/11/12
-include(iCubOptions)
+#include(iCubOptions)
 include(iCubHelpers)
+icub_install_with_rpath()
 
 SET(NESTED_BUILD TRUE)
 #SET(EMORPHLIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/emorph_lib)
