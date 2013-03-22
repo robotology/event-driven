@@ -618,7 +618,7 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
                     
                     
                     if(value > maxValue){
-                        `maxValue = value;
+                        maxValue = value;
                         maxLeftR = r; 
                         maxLeftC = c;
                         maxtimestamp = timestampactual;
