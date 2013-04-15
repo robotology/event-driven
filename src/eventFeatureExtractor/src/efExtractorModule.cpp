@@ -44,6 +44,7 @@ bool efExtractorModule::configure(yarp::os::ResourceFinder &rf) {
         printf("--mode : (intensity) mapping to be used \n");
         printf("--bottleHanlder             : the user select to send events only through bottle port esclusively  \n");
         printf("--verbose                   : saves relevant information in files \n");
+        printf("--plotLatency               : saves relevant information about latency \n");
         printf("press CTRL-C to continue... \n");
         return true;
     }
@@ -114,6 +115,13 @@ bool efExtractorModule::configure(yarp::os::ResourceFinder &rf) {
     }
     else {
         efeThread->setVERBOSE(false);
+    }
+
+    if(rf.check("plotLatency")) {
+        efeThread->setPlotLatency(true);
+    }
+    else {
+        efeThread->setPlotLatency(false);
     }
 
     if(!efeThread->start()) {

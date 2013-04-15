@@ -143,6 +143,12 @@ public:
      * @param value value that is going to be assigned to the flag VERBOSE
      */
     void setVERBOSE(bool value) {VERBOSE = value; };
+
+    /**
+     * @brief function that sets the value of the plotLatency flag
+     * @param value value that is going to be assigned to the flag plotLatency
+     */
+    void setPlotLatency(bool value) {plotLatency = value; };
     
     /**
      * @brief function that sets the flag for bottle handling

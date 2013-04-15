@@ -191,7 +191,14 @@ bool efExtractorThread::threadInit() {
        
     fout        = fopen ("lut.txt","w+");
     fdebug      = fopen ("./eventFeatureExtractor.dumpSet.txt","w+");
-    latencyFile = fopen ("./eventFeatureExtracto.latency.txt","wb");
+    
+    
+    std::string latencyName("./");
+    latencyName.append(getName("").c_str());
+    latencyName.append(".latency.txt");
+    printf("attempt in trying to open the file %s \n", latencyName.c_str());
+    latencyFile = fopen (latencyName.c_str(),"w+");
+
     pFile       = fopen (mapURL.c_str(),"rb");  
     if (pFile == NULL) {
         printf("file of mapping was not found. The module terminates \n");
@@ -432,11 +439,12 @@ void efExtractorThread::threadRelease() {
         delete[] lut;
     }
     
-    printf("efExtractorThread::closing the file \n");
+    printf("efExtractorThread::closing the pFile \n");
     fclose (pFile);
+    printf("efExtractorThread::closing the latencyFile \n");
     fclose (latencyFile);
 
-    printf("efExtractorThread::threadReleas : success in releasing \n ");
+    printf("efExtractorThread::threadRelease : success in releasing \n ");
 }
 
 void efExtractorThread::setName(string str) {
