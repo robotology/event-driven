@@ -57,10 +57,10 @@ add_subdirectory   (  tsOptFlow                    )
 add_subdirectory   (  tsOptFlowViewer              )
 
 # --------  OBJECT RECOGNITION
-add_subdirectory   ( recognitionModules/extraction )
-add_subdirectory   ( recognitionModules/association)
-add_subdirectory   ( recognitionModules/recognition)
-add_subdirectory   ( recognitionModules/aggregation)
+#add_subdirectory   ( recognitionModules/extraction )
+#add_subdirectory   ( recognitionModules/association)
+#add_subdirectory   ( recognitionModules/recognition)
+#add_subdirectory   ( recognitionModules/aggregation)
 
 if(ICUB_USE_IPOPT)
         add_subdirectory ( targetFinder                  )
