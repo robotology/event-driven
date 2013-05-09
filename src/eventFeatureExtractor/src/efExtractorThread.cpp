@@ -192,13 +192,14 @@ bool efExtractorThread::threadInit() {
     fout        = fopen ("lut.txt","w+");
     fdebug      = fopen ("./eventFeatureExtractor.dumpSet.txt","w+");
     
-    
-    std::string latencyName("./");
-    latencyName.append(getName("").c_str());
-    latencyName.append(".latency.txt");
-    printf("attempt in trying to open the file %s \n", latencyName.c_str());
-    latencyFile = fopen (latencyName.c_str(),"w+");
-
+    if(plotLatency) {
+        std::string latencyName("./");
+        latencyName.append(getName("").c_str());
+        latencyName.append(".latency.txt");
+        printf("attempt in trying to open the file %s \n", latencyName.c_str());
+        latencyFile = fopen (latencyName.c_str(),"w+");
+    }
+        
     pFile       = fopen (mapURL.c_str(),"rb");  
     if (pFile == NULL) {
         printf("file of mapping was not found. The module terminates \n");
@@ -224,7 +225,7 @@ bool efExtractorThread::threadInit() {
         long input = -1, output = -1;
         short x, y;
         countMap = 0;
-
+        
         //lSize
         for (int i = 0; i < lSize; i++) {            
             
@@ -241,7 +242,7 @@ bool efExtractorThread::threadInit() {
                 else {
                     word -= 1114112;
                 }
-
+                
                 x = word & 0x001F;
                 y = word >> 5;
                 //printf("sac output: %d --> %d %d \n", word, x, y);
