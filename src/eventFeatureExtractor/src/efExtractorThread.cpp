@@ -1340,15 +1340,17 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                                     // } //end if cartX %2 == 1;                
 
                                     int scaleFactor = RETINA_SIZE  / FEATUR_SIZE;
-                                    //printf("Obtained scale factor %d \n", scaleFactor);
+
+                                    /******  commented out 17/5/13 ********
                                     int yevent_tmp      = pos / FEATUR_SIZE;
                                     int yevent          = FEATUR_SIZE - yevent_tmp;
                                     int xevent_tmp      = pos - yevent_tmp * FEATUR_SIZE;
                                     int xevent          = xevent_tmp;
+                                    ***************************************/
                                     
-                                    //int xevent = cartX / scaleFactor;                   //old version %comment 01/02/13 Rea
-                                    //int yevent = (FEATUR_SIZE - cartY) / scaleFactor;   //old version %comment 01/02/13 Rea
-                                    //printf(" xevent %d yevent %d \n", xevent, yevent);                                    
+                                    int xevent = cartX / scaleFactor;                   
+                                    int yevent = (RETINA_SIZE - cartY) / scaleFactor;   
+                                                                      
 
                                     int posFeaImage     = yevent * rowSizeFea + xevent ;                                    
                                     // depressing the feature map in the location
@@ -1629,7 +1631,7 @@ void efExtractorThread::generateMemory(eEventQueue *q, Bottle* packets, int& cou
                                     int scaleFactor = RETINA_SIZE  / FEATUR_SIZE;
                                     //printf("Obtained scale factor %d \n", scaleFactor);
                                     int xevent = cartX / scaleFactor;
-                                    int yevent = (FEATUR_SIZE - cartY) / scaleFactor;
+                                    int yevent = (RETINA_SIZE - cartY) / scaleFactor;
                                     //printf(" xevent %d yevent %d \n", xevent, yevent);                                    
                                     int posFeaImage     = yevent * rowSizeFea + xevent ;                                    
                                     // depressing the feature map in the location
