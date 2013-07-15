@@ -2,39 +2,84 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
+
+#include <cv.h>
+#include <highgui.h>
+
 #include <yarp/os/Network.h>
 #include <yarp/dev/ControlBoardInterfaces.h>
 #include <yarp/dev/PolyDriver.h>
 #include <yarp/os/Time.h>
 #include <yarp/sig/Vector.h>
 
-#include <string>
-
 #define COMMAND_VOCAB_ON    VOCAB2('o','n')
 #define COMMAND_VOCAB_OFF   VOCAB3('o','f','f')
 #define COMMAND_VOCAB_DUMP  VOCAB4('d','u','m','p')
 #define COMMAND_VOCAB_SYNC  VOCAB4('s','y','n','c')
 
-#define DELTAENC 0.0000001
+#include <string>
 
 using namespace yarp::dev;
 using namespace yarp::sig;
 using namespace yarp::os;
+using namespace cv;
 
-void moveJoints(IPositionControl *_pos, Vector& _command)
-{
-    _pos->positionMove(_command.data());
-    Time::delay(0.1);
+
+inline const void  doubleSize(const char* pathIn, const char* pathOut, const int xDim, const int yDim){
+    cv::Mat image;
+    image = imread( pathIn, 1 );
+    
+    cv::Mat gray_image;
+    cvtColor( image, gray_image, CV_BGR2GRAY );
+
+    
+    
+    int heightDouble = yDim << 1;
+    int widthDouble  = xDim << 1;
+    printf("heightDouble %d widthDouble %d \n",heightDouble,widthDouble );
+    IplImage* imageC = cvCreateImage(cvSize(widthDouble, heightDouble),IPL_DEPTH_8U ,3);
+    //Mat M(widthDouble, heightDouble, CV_64F);
+    cv::Mat M = imageC;
+
+    Vec3b point, pointA, pointB;
+
+    printf("doubleSize %d %d in %s %s \n",xDim,yDim, pathIn, pathOut);
+    for (int r = 1; r < heightDouble; r ++){
+        for (int c = 1; c < widthDouble; c++){
+            if(( c % 2 == 0)&&(r % 2 == 0)) {
+                // M.at<double>(r,c) = image.at<double>(r>>1, c>>1);
+                point =  image.at<Vec3b>(r>>1,c>>1);
+                M.at<Vec3b>(r,c) = point;
+            }
+            else {
+                
+                    pointA    = image.at<Vec3b>(r>>1, (c>>1) + 1);
+                    pointB    = image.at<Vec3b>(r>>1, c>>1);
+                    int sum0  = pointA.val[0] + pointB.val[0];
+                    int sum1  = pointA.val[1] + pointB.val[1];
+                    int sum2  = pointA.val[2] + pointB.val[2];
+                    Vec3b pointMean(sum0 >> 1, sum1 >> 1, sum2 >> 1);
+                    M.at<Vec3b>(r,c) = pointMean;
+                
+            }
+        }
+    }
+    
+    imwrite( pathOut, M );
+    cvReleaseImage(&imageC);
+    
 }
+
 
 int main(int argc, char *argv[]) 
 {
-    Network yarp;
+    Network yarp; yarp::os::Network::init();
 
-    Port* _pOutPort = new Port;
+    //Port* _pOutPort = new Port;
     //_options.portName+="/command:o";
-    std::string portName="/simpleSaccade/cmd:o";
-    _pOutPort->open(portName.c_str());
+    //std::string portName="/simpleSaccade/cmd:o";
+    //_pOutPort->open(portName.c_str());
 
     Property params;
     params.fromCommand(argc, argv);
@@ -43,195 +88,66 @@ int main(int argc, char *argv[])
         fprintf(stderr, "%s --robot robotName --loop numberOfLoop", argv[0]);
     }
     
-    if (!params.check("robot"))
+    if (!params.check("xDim"))
     {
-        fprintf(stderr, "Please specify the name of the robot\n");
-        fprintf(stderr, "--robot name (e.g. icub)\n");
+        fprintf(stderr, "Please specify the name of the xDim \n");
+        fprintf(stderr, "--xDim (e.g. icub)\n");
         return -1;
     }
-    if (!params.check("loop"))
+    if (!params.check("yDim"))
     {
-        fprintf(stderr, "Please specify the number of repetition\n");
-        fprintf(stderr, "--loop number\n");
+        fprintf(stderr, "Please specify the yDim\n");
+        fprintf(stderr, "--yDim\n");
         return -1;
     }
-    std::string robotName=params.find("robot").asString().c_str();
-    std::string remotePorts="/";
-    remotePorts+=robotName;
-    remotePorts+="/head"; //"/right_arm"
+
+    //std::string robotName=params.find("robot").asString().c_str();
+    //std::string remotePorts="/";
+    //remotePorts+=robotName;
+    //remotePorts+="/head"; //"/right_arm"
 
     //int nOl=atoi(params.find("loop").asString().c_str());
-    int nOl=params.find("loop").asInt();
+    int xDim = params.find("xDim").asInt();
+    int yDim = params.find("yDim").asInt();
 
-    Network::connect(portName.c_str(), "/aexGrabber");
+    int maxIndex =  365;
 
-    std::string localPorts="/test/client";
-
-    Property options;
-    options.put("device", "remote_controlboard");
-    options.put("local", localPorts.c_str());   //local port names
-    options.put("remote", remotePorts.c_str());         //where we connect to
-
-    // create a device
-    PolyDriver robotDevice(options);
-    if (!robotDevice.isValid()) {
-        printf("Device not available.  Here are the known devices:\n");
-        printf("%s", Drivers::factory().toString().c_str());
-        return 0;
-    }
-
-    IPositionControl *pos;
-    IEncoders *encs;
-
-    bool ok;
-    ok = robotDevice.view(pos);
-    ok = ok && robotDevice.view(encs);
-
-    if (!ok) {
-        printf("Problems acquiring interfaces\n");
-        return 0;
-    }
-
-    int nj=0;
-    pos->getAxes(&nj);
-    Vector encoders;
-    Vector command;
-    Vector tmp;
-    encoders.resize(nj);
-    tmp.resize(nj);
-    command.resize(nj);
     
-    int i;
-    for (i = 0; i < nj; i++) {
-         tmp[i] = 50.0;
-    }
-    pos->setRefAccelerations(tmp.data());
-
-    for (i = 0; i < nj; i++) {
-        tmp[i] = 100.0;
-        pos->setRefSpeed(i, tmp[i]);
-    }
-
-    //pos->setRefSpeeds(tmp.data()))
+    std::string pathIn("/tmp/data/");
+    std::string pathOut    = "/tmp/dataDouble/";
+    std::string exten    = ".jpg";
+    std::string pf       = "0000000";
     
-    //fisrst zero all joints
-    //
-    for(i=0; i<nj; i++)
-        command[i]=0;
-    /******************************
-    * SPECIFIC STARTING POSITIONS *
-    ******************************/
-    command[0]=-30;
-
-    pos->positionMove(command.data());//(4,deg);
-
-    double startPos3;
-    double startPos4;
-
-    encs->getEncoder(3, &startPos3);
-    encs->getEncoder(4, &startPos4);
-    printf("start position value of joint 3: %lf\n", startPos3);
-    printf("start position value of joint 4: %lf\n", startPos4);
-    bool first=true;
-    int deltaSacc=2;
-    int times=0;
-    yarp::os::Bottle bot; //= _pOutPort->prepare();
-    bot.clear();
-    bot.addVocab(COMMAND_VOCAB_DUMP);
-    bot.addVocab(COMMAND_VOCAB_ON);
-    Bottle inOn;
-    _pOutPort->write(bot,inOn);
-
-    Time::delay(0.1);
     
-    fprintf(stderr, "Start saccade(s), number of repetition: %d\n", nOl);
-    while(times<nOl)
-    {
-        times++;
-        
-	/*Horizontal saccade*/
-	command[4]=-deltaSacc;
-	//moveJoints(pos, command);
-    pos->positionMove(command.data());
-    if(first)
-    {
-        double curPos;
-        encs->getEncoder(4, &curPos);
-    	printf("current position value of joint 4: %lf\n", curPos);
-        while((curPos>=startPos4-DELTAENC) && (curPos<=startPos4+DELTAENC))
-        {
-    	    printf("current position value of joint 4: %lf\n", curPos);
-            encs->getEncoder(4, &curPos);
-        }
-        bot.clear();
-        bot.addVocab(COMMAND_VOCAB_SYNC);
-        Bottle inStart;
-        _pOutPort->write(bot,inStart);
-    	printf("1st synch asked\n");
-        first=false;
+    char pathFileIn[50];
+    char pathFileOut[50];
+    char* ppathFileIn  = &pathFileIn[0];
+    char* ppathFileOut = &pathFileOut[0];
+    
+    printf("pointers %08X %08X \n", ppathFileIn, ppathFileOut);
+    
+    for (int i = 0; i < 10 & i <= maxIndex; i++) {
+        sprintf(ppathFileIn ,"%s%s%d%s",pathIn.c_str(),pf.c_str(), i, exten.c_str()); 
+        sprintf(ppathFileOut,"%s%s%d%s",pathOut.c_str(),pf.c_str(),i,exten.c_str());
+        printf("pathFile: %s \n", ppathFileIn);
+        doubleSize(ppathFileIn, ppathFileOut, xDim, yDim);
     }
-    Time::delay(0.1);
-
-
-	/*command[4]=0;
-	moveJoints(pos, command);*/
-	command[4]=deltaSacc;
-	moveJoints(pos, command);	
-	command[4]=0;
-	moveJoints(pos, command);
-
-
-	/*Vertical saccade*/
-	command[3]=-deltaSacc;
-	moveJoints(pos, command);
-	/*command[3]=0;
-	moveJoints(pos, command);*/
-	command[3]=deltaSacc;
-	moveJoints(pos, command);
-	command[3]=0;
-	moveJoints(pos, command);
-    if(times>=nOl)
-    {
-        double curPos;
-        encs->getEncoder(3, &curPos);
-    	printf("current position value of joint 3: %lf\n", curPos);
-/*        while((curPos<startPos3-DELTAENC) || (curPos>startPos3+DELTAENC))
-        {
-	        command[3]=0;
-    	    printf("current position value of joint 3: %lf\n", curPos);
-            encs->getEncoder(3, &curPos);
-        }*/
-        bot.clear();
-        bot.addVocab(COMMAND_VOCAB_SYNC);
-        Bottle inEnd;
-        _pOutPort->write(bot,inEnd);
-    	printf("2nd synch asked\n");
+    
+    
+    /*
+    pf = "00000";
+    for (int i = 10; i < 1000 & i <= maxIndex; i++) {
+        sprintf((char*)pathFileIn.c_str() ,"%s%s%d%s",pathIn.c_str(),pf.c_str(),i,exten.c_str()); 
+        sprintf((char*)pathFileOut.c_str(),"%s%s%d%s",pathOut.c_str(),pf.c_str(),i,exten.c_str());
+        printf("pathFile: %s \n", pathFileIn.c_str());
+        doubleSize(pathFileIn.c_str(), pathFileOut.c_str(), xDim, yDim);
     }
-
-/*        int count=50;
-        while(count--)
-            {
-                Time::delay(0.1);
-                encs->getEncoders(encoders.data());
-                printf("%.1lf %.1lf %.1lf %.1lf\n", encoders[0], encoders[1], encoders[2], encoders[3]);
-            }
-*/
-    }
-	Time::delay(0.1);
-    /*bot.clear();
-    bot.addVocab(COMMAND_VOCAB_SYNC);
-    Bottle inEnd;
-    _pOutPort->write(bot,inEnd);
     */
-
-    bot.clear();
-    bot.addVocab(COMMAND_VOCAB_DUMP);
-    bot.addVocab(COMMAND_VOCAB_OFF);
-    Bottle inOff;
-    _pOutPort->write(bot,inOff);
-
-    _pOutPort->close();
-    robotDevice.close();
     
+
+    printf("Closing the executable; Freeing memory \n");
+    yarp::os::Network::fini();
+    
+   
     return 0;
 }

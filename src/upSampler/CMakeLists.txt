@@ -1,6 +1,6 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
-SET(PROJECTNAME tutorials)
+SET(PROJECTNAME upSampler)
 
 PROJECT(${PROJECTNAME})
 
@@ -13,7 +13,8 @@ INCLUDE(iCubOptions)
 INCLUDE(iCubHelpers)
 
 INCLUDE_DIRECTORIES(${ICUB_INCLUDE_DIRS}
-                    ${YARP_INCLUDE_DIRS})
+                    ${YARP_INCLUDE_DIRS}
+                    ${OPENCV_INCLUDE_DIR})
 	
 ## this is for testing only, please ignore if you are reading tutorials				
 INCLUDE(CTest)
@@ -23,9 +24,11 @@ SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${ICUB_LINK_FLAGS}")
 
 # Create everything needed to build our executable.
 
-ADD_EXECUTABLE(tutorial_eyeControl tutorial_eyeControl.cpp)
-TARGET_LINK_LIBRARIES(tutorial_eyeControl ${YARP_LIBRARIES})
-
+ADD_EXECUTABLE(${PROJECTNAME} main.cpp)
+TARGET_LINK_LIBRARIES(${PROJECTNAME} 
+  ${YARP_LIBRARIES}
+  ${OpenCV_LIBS}
+)
 
 
 ## again this is for testing only, please ignore if you are reading tutorials
@@ -48,4 +51,4 @@ TARGET_LINK_LIBRARIES(tutorial_eyeControl ${YARP_LIBRARIES})
 ###################### end of test specific code
 
 
-INSTALL_TARGETS(/bin tutorial_eyeControl)
+INSTALL_TARGETS(/bin ${PROJECTNAME})
