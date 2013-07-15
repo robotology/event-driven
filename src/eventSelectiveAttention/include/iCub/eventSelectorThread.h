@@ -54,6 +54,7 @@ class eventSelectorThread : public yarp::os::RateThread {
 private:
     
     int count;                          // loop counter of the thread
+    int iCount;                         // counter of attentional shifts
     //struct timeval tvstart,tvend;
     //struct timespec start_time, stop_time;
     u64 Tnow;

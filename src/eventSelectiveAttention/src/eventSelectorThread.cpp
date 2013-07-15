@@ -44,11 +44,11 @@ using namespace std;
 #define CHUNKSIZE     32768          //65536 //8192
 #define dim_window    10
 #define synch_time    1
-#define COMMCOUNTDEF  20
+#define COMMCOUNTDEF  500
 
 //#define VERBOSE
-#define STOREWTA
-#define STOREINI
+//#define STOREWTA
+//#define STOREINI
 #define INCR_RESPONSE 0
 #define DECR_RESPONSE 0
 
@@ -57,6 +57,7 @@ eventSelectorThread::eventSelectorThread() : RateThread(THRATE) {
     retinalSize      = 128;  //default value before setting 
     lasttimestamp    = 0;
     count            = 0;
+    iCount           = 0;
     minCount         = 0;    //initialisation of the timestamp limits of the first frame
     countStop        = 0;
     countCommands    = 30;    
@@ -79,7 +80,7 @@ eventSelectorThread::eventSelectorThread() : RateThread(THRATE) {
     bufferCopy = (char*) malloc(CHUNKSIZE);
 
     verb = false;
-    plotLatency = true;
+    plotLatency = false;
 
     string i_fileName("eventSelectorThread.events.log");
     string w_fileName("eventSelectorThread.wta.log");
@@ -776,18 +777,22 @@ void eventSelectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsi
         //printf("maxResponseLeft %f position %d %d \n",maxResponseLeft,maxLeftC,maxLeftR  );
         // sending command for saccade; to focus redeployment corresponds fixation point reallocation 
         if(outputCmdPort.getOutputCount()){
-
+            
+            iCount++;
+            
             // the countCommands prevents from sending frequent sequences of commands
-            if(countCommands >= COMMCOUNTDEF) {
+            if(countCommands >= COMMCOUNTDEF)  {
                 Bottle& commandBottle=outputCmdPort.prepare();
                 commandBottle.clear();
-                commandBottle.addString("SAC_MONO");
+                //commandBottle.addString("SAC_MONO");
+                commandBottle.addString("left");
                 commandBottle.addInt(maxLeftC);
                 commandBottle.addInt(maxLeftR);
                 commandBottle.addDouble(0.5);
-                commandBottle.addDouble(1.0);
+                //commandBottle.addDouble(1.0);
                 //commandBottle.addDouble(timestampactual);
                 outputCmdPort.write();
+                
             }
                 
             countCommands--;
