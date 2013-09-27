@@ -323,13 +323,13 @@ int main(int argc, char * argv[]) {
     Bottle info;
     igaze->getInfo(info);
     printf("just got the info \n");    
-    int head_version = info.check("head_version", Value(1)).asInt();
+    double head_version = info.check("head_version", Value(1.0)).asDouble();
     
-    printf("head_version extracted from gazeArbiter %d \n",head_version);
+    printf("head_version extracted from gazeArbiter %g \n",head_version);
     ikl = new iCubEye();
     
-    head_version = 2;
-    if(head_version == 1) {
+    head_version = 2.0;
+    if(head_version == 1.0) {
         eyeL = new iCubEye("left");
         eyeR = new iCubEye("right");
     }
