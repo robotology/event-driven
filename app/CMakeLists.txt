@@ -26,4 +26,4 @@ add_subdirectory(ikartDvsObstacleDetector)
 add_subdirectory(testAttention)
 
 ## make all applications show up as single target
-icub_app_all()
+#icub_app_all()
