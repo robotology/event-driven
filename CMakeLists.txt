@@ -15,8 +15,16 @@ FIND_PACKAGE(YARP REQUIRED)
 FIND_PACKAGE(ICUB REQUIRED)
 find_package(ICUBcontrib REQUIRED)
 
-set(CMAKE_MODULE_PATH ${YARP_MODULE_PATH} ${ICUB_MODULE_PATH} ${CMAKE_MODULE_PATH})
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${ICUB_DIR}/conf ${YARP_DIR}/conf)
+
+set(CMAKE_MODULE_PATH 
+  ${YARP_MODULE_PATH} 
+  ${ICUB_MODULE_PATH} 
+  ${ICUBCONTRIB_MODULE_PATH}
+)
+
+include(ICUBcontribHelpers)
+icubcontrib_set_default_prefix() #set CMAKE_INSTALL_PREFIX to the ICUBcontrib one; print warning if user modifies it
+
 
 include(YarpInstallationHelpers)
 
@@ -25,10 +33,10 @@ find_package(OpenCV REQUIRED)
 find_package(GtkPlus REQUIRED)
 find_package(IPOPT)
 
-#include(iCubOptions) # removed the line, no longer necessary @Rea 20/11/12
-include(iCubOptions)
-include(iCubHelpers)
-#icub_install_with_rpath()
+
+include(iCubOptions) # removed the line, no longer necessary @Rea 12/12/13
+include(iCubHelpers) # removed the line, no longer necessary @Rea 12/12/13
+include(ICUBcontribOptions) #added @Rea 12/12/13
 
 SET(NESTED_BUILD TRUE)
 #SET(EMORPHLIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/emorph_lib)
@@ -37,3 +45,6 @@ SET(EMORPHLIB_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/emorph_lib/include)
 ADD_SUBDIRECTORY(emorph_lib)
 ADD_SUBDIRECTORY(src)
 ADD_SUBDIRECTORY(app)
+
+icubcontrib_finalize_export(emorphLib) #macro added 13/11/2013
+icubcontrib_add_uninstall_target()     #macro added 13/11/2013

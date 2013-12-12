@@ -52,8 +52,6 @@ SET(folder_header
   include/iCub/emorph/objDistBuffer.h
 )
 
-MESSAGE("folder_header ${folder_header}")
-
 #FILE(GLOB folder_header 
 #  include/iCub/emorph/*.h
   #include/iCub/emorph/eventBottle.h
@@ -92,3 +90,7 @@ TARGET_LINK_LIBRARIES(${PROJECTNAME} ${YARP_LIBRARIES})
 #                                   DESTINATION include/iCub
 #                                   FILES ${folder_header})
 
+icubcontrib_export_library(${PROJECTNAME} INTERNAL_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/include
+                                          EXTERNAL_INCLUDE_DIRS ${YARP_INCLUDE_DIRS} ${ICUB_INCLUDE_DIRS}
+                                          DESTINATION include/iCub/emorph
+                                          FILES  ${folder_header})
