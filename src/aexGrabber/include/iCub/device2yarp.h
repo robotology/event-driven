@@ -174,6 +174,11 @@ public:
     void sendingBias();
 
     /**
+    *   function that switches only the left camera ON
+    */
+    void setOnlyLeft() {onlyLeft = true;};
+
+    /**
     * set the flag that regulates whether the biases are read from binary or copied from default values
     */
     void setFromBinary(bool value) { biasFromBinary = value; };

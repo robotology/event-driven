@@ -127,6 +127,11 @@ bool aexGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         D2Y=new device2yarp(devicePortName, true, binaryNameComplete);        
         //D2Y->setBinaryFile(f);
     }
+
+    if(rf.check("onlyLeft")){
+        D2Y->setOnlyLeft();        
+    }
+
     if (strcmp(dumpNameComplete.c_str(),"" )) {
         D2Y->setDumpEvent(true);
         D2Y->setDumpFile(dumpNameComplete);
@@ -568,10 +573,13 @@ bool aexGrabberModule::respond(const Bottle& command, Bottle& reply) {
                 switch(command.get(1).asVocab()) {
                 case COMMAND_VOCAB_ON: {
                     printf("request of start dumping events arrived \n");
-                    D2Y->setDumpFile("dump.txt");
+                 string S = command.get(2).asString().c_str();
+                   printf("Writing to file: %s \n",S.c_str());
+	//	 D2Y->setDumpFile("dump.txt");
+               	D2Y->setDumpFile(S.c_str());
                     D2Y->setDumpEvent(true);
                     printf("success in opening the dump file \n");
-                    ok = true;
+                  ok = true;
                 }
                     break;
                 case COMMAND_VOCAB_OFF: {
