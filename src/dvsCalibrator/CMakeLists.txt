@@ -7,7 +7,6 @@ SET(KEYWORD "dvsCalibrator")
 PROJECT(${KEYWORD})
 cmake_minimum_required(VERSION 2.6)
 
-#SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "/home/pathak/myPackages/findersCMake")
 FIND_PACKAGE(OpenCV REQUIRED)
 
 INCLUDE_DIRECTORIES(
