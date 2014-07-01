@@ -15,26 +15,36 @@
  * Public License for more details
 */
 
-#ifndef ADDRESSEVENT_H_
-#define ADDRESSEVENT_H_
-
-class CameraEvent{
-    short row;
-    short column;
-    short polarity;
-    unsigned long timeStamp;
-    bool reliable;
-
-public:
-    CameraEvent(int row, int column, short polarity, unsigned long timeStamp);
-    short getRowIdx();
-    short getColumnIdx();
-    short getPolarity();
-    unsigned long getTimeStamp();
-    void setReliable(bool );
-    bool isReliable();
-};
+//#include "CameraEvent.h"
 
 
+CameraEvent::CameraEvent(int row, int column, short polarity, unsigned long timeStamp){
+    this->row  = row;
+    this->column  = column;
+    this->polarity = polarity;
+    this->timeStamp = timeStamp;
 
-#endif /* ADDRESSEVENT_H_ */
+}
+
+short CameraEvent::getRowIdx(){
+    return row;
+}
+
+short CameraEvent::getColumnIdx(){
+    return column;
+}
+
+short CameraEvent::getPolarity(){
+    return polarity;
+}
+
+unsigned long CameraEvent::getTimeStamp(){
+    return timeStamp;
+}
+void CameraEvent::setReliable(bool val){
+    reliable = val;
+}
+
+bool CameraEvent::isReliable(){
+    return reliable;
+}
