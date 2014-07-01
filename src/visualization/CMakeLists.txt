@@ -17,5 +17,6 @@ add_subdirectory  (  cartesian_frame_printer      )
 add_subdirectory  (  cartesianFrameCollector      )
 add_subdirectory  (  logpolar_frame_converter     )
 add_subdirectory  (  logpolar_frame_converter_add )
-add_subdirectory  (  logpolarFrameCollector )
+add_subdirectory  (  logpolarFrameCollector	  )
+add_subdirectory  (  logSort			  )
 
