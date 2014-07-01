@@ -10,6 +10,12 @@ IF(NOT WIN32)
 	add_subdirectory   (  basicAexGrabber              )
 ENDIF (NOT WIN32)
 
+add_subdirectory   (  development                 )
+add_subdirectory   (  grabbers                    )
+add_subdirectory   (  interfaces				)
+add_subdirectory   (  processing                   )
+add_subdirectory   (  visualization               )
+
 add_subdirectory   (  angel2SAC                    )
 add_subdirectory   (  asvBiasInterface             )
 add_subdirectory  (  basicCartesianCollector      )
