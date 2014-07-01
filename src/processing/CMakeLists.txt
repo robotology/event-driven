@@ -22,6 +22,7 @@ add_subdirectory  (  eventFeatureExtractor	)
 add_subdirectory  (  harmonicPathPlanner	)
 add_subdirectory  (  upSampler			)
 add_subdirectory  (  velocityExtractor		)
+add_subdirectory  (  visualAligner		)
 
 # --------  OPTICFLOW SUBFOLDERS ---------------------
 #add_subdirectory   (  eventOpticalFlow             )
@@ -37,7 +38,7 @@ add_subdirectory   ( recognitionModules/recognition)
 add_subdirectory   ( recognitionModules/aggregation)
 
 if(ICUB_USE_IPOPT)
-#        add_subdirectory ( targetFinder                  )
-#	add_subdirectory (  wingsTranslator              )
+        add_subdirectory ( targetFinder                  )
+	add_subdirectory (  wingsTranslator              )
 endif(ICUB_USE_IPOPT)
 
