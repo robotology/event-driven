@@ -36,7 +36,7 @@ IF (folder_source)
       eMorphLib                      
     )	
 
-    INSTALL_TARGETS(/bin ${KEYWORD})
+    INSTALL(TARGETS ${KEYWORD} DESTINATION bin)
 ELSE (folder_source)
     MESSAGE(FATAL_ERROR "No source code files found. Please add something")
 ENDIF (folder_source)
