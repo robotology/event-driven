@@ -22,21 +22,15 @@ set(CMAKE_MODULE_PATH
   ${ICUBCONTRIB_MODULE_PATH}
 )
 
-include(ICUBcontribHelpers)
-icubcontrib_set_default_prefix() #set CMAKE_INSTALL_PREFIX to the ICUBcontrib one; print warning if user modifies it
-
-
-include(YarpInstallationHelpers)
-
 find_package(GSL)
 find_package(OpenCV REQUIRED)
 find_package(GtkPlus REQUIRED)
 find_package(IPOPT)
 
-
-include(iCubOptions) # removed the line, no longer necessary @Rea 12/12/13
-include(iCubHelpers) # removed the line, no longer necessary @Rea 12/12/13
-include(ICUBcontribOptions) #added @Rea 12/12/13
+include(YarpInstallationHelpers)
+include(ICUBcontribHelpers)
+include(ICUBcontribOptions)
+icubcontrib_set_default_prefix()
 
 SET(NESTED_BUILD TRUE)
 #SET(EMORPHLIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/emorph_lib)
