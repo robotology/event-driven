@@ -44,5 +44,5 @@ ELSE (folder_source)
 ENDIF (folder_source)
 
 
-INSTALL_TARGETS(/bin ${KEYWORD})
+INSTALL(TARGETS ${KEYWORD} DESTINATION bin)
 
