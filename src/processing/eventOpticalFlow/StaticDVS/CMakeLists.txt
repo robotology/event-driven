@@ -1,7 +1,7 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
-SET(PROJECT_NAME "StaticDVS")
-project(${PROJECT_NAME})
+SET(PROJECTNAME "StaticDVS")
+project(${PROJECTNAME})
 
 FIND_PACKAGE(YARP)
 
@@ -13,13 +13,10 @@ FILE (GLOB source_folder *.cpp)
 FILE (GLOB header_folder *.h)
 
 #add_executable(${PROJECT_NAME} ${sourse_folder} ${header_folder})
-add_executable(${PROJECT_NAME} dataReader.cpp)
+add_executable(${PROJECTNAME} dataReader.cpp)
 
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} eMorphLib ${YARP_LIBRARIES})
+TARGET_LINK_LIBRARIES(${PROJECTNAME} eMorphLib ${YARP_LIBRARIES})
 
 #INSTALL(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../bin)
 
-INSTALL_TARGETS(/bin ${PROJECT_NAME})
-
-
-
+install(TARGETS ${PROJECTNAME} DESTINATION bin)

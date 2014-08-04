@@ -7,19 +7,6 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 SET(PROJECTNAME eventBottleConverter)
 PROJECT(${PROJECTNAME})
 
-find_package(YARP)
-find_package(ICUB)
-find_package(ICUBcontrib)
-
-list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH})
-list(APPEND CMAKE_MODULE_PATH ${ICUB_MODULE_PATH})
-list(APPEND CMAKE_MODULE_PATH ${ICUBCONTRIB_MODULE_PATH})
-
-include(YarpInstallationHelpers)
-include(ICUBcontribHelpers)
-include(ICUBcontribOptions)
-icubcontrib_set_default_prefix()
-
 file(GLOB source src/*.cpp)
 file(GLOB header include/*.h)
 

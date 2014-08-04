@@ -5,14 +5,14 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
 SET(KEYWORD "eventFeatureExtractor")
 PROJECT(${KEYWORD})
-# first find the iCub package
-find_package(ICUB)
-set(CMAKE_MODULE_PATH ${ICUB_MODULE_PATH} ${CMAKE_MODULE_PATH})
 
-INCLUDE(iCubOptions)
-INCLUDE(iCubHelpers)
 
-#set(ICUB_CONTRIB_DIRS $ENV{ICUB_DIR}/include)
+
+# Search for source code.
+FILE(GLOB folder_source src/*.cpp src/*.cc src/*.c)
+FILE(GLOB folder_header include/iCub/*.h)
+SOURCE_GROUP("Source Files" FILES ${folder_source})
+SOURCE_GROUP("Header Files" FILES ${folder_header})
 
 INCLUDE_DIRECTORIES(
     ${PROJECT_SOURCE_DIR}/include
@@ -20,12 +20,6 @@ INCLUDE_DIRECTORIES(
     ${OpenCV_INCLUDE_DIRS}
     ${EMORPHLIB_INCLUDE_DIRS}
 )
-
-# Search for source code.
-FILE(GLOB folder_source src/*.cpp src/*.cc src/*.c)
-FILE(GLOB folder_header include/iCub/*.h)
-SOURCE_GROUP("Source Files" FILES ${folder_source})
-SOURCE_GROUP("Header Files" FILES ${folder_header})
 
 # Set up the main executable.
 IF (folder_source)
@@ -40,7 +34,7 @@ IF (folder_source)
 			  eMorphLib	
     	                  )	
 
-    INSTALL_TARGETS(/bin ${KEYWORD})
+    install(TARGETS ${KEYWORD} DESTINATION bin)
 ELSE (folder_source)
     MESSAGE(FATAL_ERROR "No source code files found. Please add something")
 ENDIF (folder_source)

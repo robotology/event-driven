@@ -51,4 +51,5 @@ TARGET_LINK_LIBRARIES(${PROJECTNAME}
 ###################### end of test specific code
 
 
-INSTALL_TARGETS(/bin ${PROJECTNAME})
+
+    INSTALL(TARGETS ${PROJECTNAME} DESTINATION bin)
