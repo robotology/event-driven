@@ -163,10 +163,10 @@ void EventToBottleHandler::onRead(eventBottle &bot)
                     AddressEvent* ptr=dynamic_cast<AddressEvent*>(q[e]); //create the Address Event for the type
                     if(ptr->isValid()) 
                     {
-                        short posX = ptr->getX();
-                        short posY = ptr->getY();
-                        short polarity = ptr->getPolarity();
-                        short channel = ptr->getChannel();
+                        int posX = ptr->getX();
+                        int posY = ptr->getY();
+                        int polarity = ptr->getPolarity();
+                        int channel = ptr->getChannel();
                         string type = ptr->getType();
                         
                         Bottle &tmp = pack.addList();
@@ -263,17 +263,20 @@ void BottleToEventHandler::onRead(Bottle &bot)
     
     Bottle *main = bot.get(0).asList(); //read main list from bottle
     int size = main->size();
+
+    Bottle event;
     
     for (int b=0; b<size;b++)
     {
         Bottle *cur = main->get(b).asList(); //get each sublist  
+        //fprintf(stdout, "Bottle: %s\n", cur->toString().c_str());
         
         //create timestamp       
         TimeStamp ts;
         ts.setStamp(cur->find("time").asDouble());
 
-        string type = cur->find("type").asString().c_str(); //for each sublist get type  
-                
+        //string type = cur->find("type").asString().c_str(); //for each sublist get type  
+
         //create addressEvent for specific type
         AddressEvent ae; 
         //start filling addressEvent with data from sublists
@@ -281,17 +284,19 @@ void BottleToEventHandler::onRead(Bottle &bot)
         ae.setY(cur->find("posY").asInt());
         ae.setPolarity(cur->find("polarity").asInt());
         ae.setChannel(cur->find("channel").asInt());
-    
+
         //encode TimeStamp and AddressEvent and append them into single bottle
-        Bottle event;
-        event = ts.encode();
-        event.append(ae.encode());
-        
-        //create and fill in dataTmp (eventBottle) with data from event (Bottle) 
-        eventBottle dataTmp(&event);
-        //copy dataTmp to eventBottle out
-        out = dataTmp;
+        Bottle tmp;
+        tmp = ts.encode();
+        tmp.append(ae.encode());
+
+        event.append(tmp);
     }
+    //create and fill in dataTmp (eventBottle) with data from event (Bottle) 
+    //fprintf(stdout, "\n\n\nEvent: %s\n", event.toString().c_str());
+    eventBottle dataTmp(&event);
+    //copy dataTmp to eventBottle out
+    out = dataTmp;
     //send it all out
     outPort.write();
     mutex.post();

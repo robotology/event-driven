@@ -39,6 +39,9 @@ add_subdirectory   ( recognitionModules/association)
 add_subdirectory   ( recognitionModules/recognition)
 add_subdirectory   ( recognitionModules/aggregation)
 
+#----------- Clustering -----------------------------
+add_subdirectory   ( clustering                     )
+
 if(ICUB_USE_IPOPT)
         #add_subdirectory ( targetFinder                  )
 	#add_subdirectory (  wingsTranslator              )
