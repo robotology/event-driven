@@ -112,7 +112,7 @@ int main(int numArgs, char** args)
   image_port_right_out.open(image_port_name_right_out.c_str());
 
   BufferedPort<eventBottle> outClusterPortLeft;
-  std::string outClusterNameLeft = "BlobTracker/clusterPortLeft";
+  std::string outClusterNameLeft = "/BlobTracker/clusterPortLeft";
   outClusterPortLeft.open( outClusterNameLeft.c_str() );
 
   // We create the images and give them their size
@@ -243,6 +243,8 @@ int main(int numArgs, char** args)
 	    // We update the images of the ellipses
 	    tracker_pool_left.display(image_left_out);
  	    tracker_pool_right.display(image_right_out);
+
+	    tracker_pool_left.writeParameters() 	
             // Write the images into the yarp port
             image_port_left_out.write(image_left_out);
             image_port_right_out.write(image_right_out);

@@ -32,9 +32,11 @@ class BlobTracker {
 
   void get_ellipse_parameters(double &a, double &b, double &alpha);
   
-  void BlobTracker::get_gauss_parameters(double &sig_x2, double &sig_y2, double &sig_xy);
+  void get_gauss_parameters(double &sig_x2, double &sig_y2, double &sig_xy);
 
   void get_center(double &cen_x, double &cen_y);
+
+  void get_gauss_parameters(double &c_x, double &c_y, double sig_x2, double sig_y2, double sig_xy);
 
   void display(yarp::sig::ImageOf<yarp::sig::PixelRgb> &img, yarp::sig::PixelRgb color);
 

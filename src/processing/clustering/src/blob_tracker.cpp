@@ -171,6 +171,14 @@ void BlobTracker::get_center(double &cen_x, double &cen_y){
   cen_y = cen_y_;
 }
 
+void BlobTracker::get_gaussianParameters(double &c_x, double &c_y, double &sig_x2, double &sig_y2, double &sig_xy){
+  c_x = cen_x_;
+  c_y = cen_y_;
+  sig_x2 = sig_x2_;
+  sig_y2 = sig_y2_;
+  sig_xy = sig_xy_;		
+}
+
 
 // Inactive trackers are displayed in blue, active trackers in red
 void BlobTracker::display(yarp::sig::ImageOf<yarp::sig::PixelRgb> &img, yarp::sig::PixelRgb color){
