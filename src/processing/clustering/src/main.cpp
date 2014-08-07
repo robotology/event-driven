@@ -308,6 +308,7 @@ int main(int numArgs, char** args)
                 eventToWrite.setXCog(cenx_write);
                 eventToWrite.setYCog(ceny_write);
                 eventToWrite.setChannel(writeChannelNum);
+                eventToWrite.setId(writeChannelNum);
                 
                 yarp::os::Bottle tmp;
                 tmp = eventToWrite.encode();
