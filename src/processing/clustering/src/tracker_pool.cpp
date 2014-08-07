@@ -140,8 +140,6 @@ void TrackerPool::get_ellipse_parameters(std::vector<double> &a, std::vector<dou
   }  
 }
 
-
-
 void TrackerPool::display(yarp::sig::ImageOf<yarp::sig::PixelRgb> &img){
   for(int ii=0; ii<trackers_.size(); ii++){
     if(trackers_[ii].is_active()){
@@ -188,6 +186,9 @@ void TrackerPool::get_tracker(BlobTracker &blobT, int index){
   blobT = trackers_[index];
 }	
 
+void TrackerPool::get_pool_size(int &index){
+  index = tracker_.size();
+}
 
 
 void TrackerPool::regulate_pool(int ts){

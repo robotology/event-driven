@@ -81,8 +81,6 @@ int main(int numArgs, char** args)
 
   // We create the network
 
-  
-
   // We create the port in which we will receive the DVS events
   yarp::os::BufferedPort<eventBottle> dvs_port;
   eventBottle *evBottle;
@@ -112,6 +110,10 @@ int main(int numArgs, char** args)
   yarp::os::Port image_port_right_out;
   std::string image_port_name_right_out = "/BlobTracker/imagePortRight:o";
   image_port_right_out.open(image_port_name_right_out.c_str());
+
+  BufferedPort<eventBottle> outClusterPortLeft;
+  std::string outClusterNameLeft = "BlobTracker/clusterPortLeft";
+  outClusterPortLeft.open( outClusterNameLeft.c_str() );
 
   // We create the images and give them their size
   // Output
@@ -176,18 +178,22 @@ int main(int numArgs, char** args)
         //printf("Received %i events \n", sizeOfQ);
 
     // If the number of events is lower than a predefined threshold, then we assume we are getting just noise, and we do nothing
-    if(sizeOfQ > min_nb_ev){
+    if(sizeOfQ > min_nb_ev)
+    {
       int ev_x, ev_y, pol, channel, ev_t;
 
       bool address_ev_found = false;
       bool ts_found = false;
       // We go through all the events
-      for (int ii=0; ii < sizeOfQ; ii++){
+      for (int ii=0; ii < sizeOfQ; ii++)
+      {
 	// We need the adress event first
-	if (q[ii]->getType() == "AE"){
+	if (q[ii]->getType() == "AE")
+        {
 	  // We decode the event
 	  emorph::ecodec::AddressEvent *ev = static_cast<emorph::ecodec::AddressEvent*>(q[ii]); 
-	  if (ev->isValid()){
+	  if (ev->isValid())
+          {
 	    ev_x = 127-ev->getX();
 	    ev_y = ev->getY();
 	    pol = ev->getPolarity();
@@ -197,26 +203,34 @@ int main(int numArgs, char** args)
 	  }
 	}
 	// Once the addres event has been found, we look for the timestamp
-	if (q[ii]->getType() == "TS" && address_ev_found){
+	if (q[ii]->getType() == "TS" && address_ev_found)
+        {
 	  // We decode the event
 	  emorph::ecodec::TimeStamp *ts = static_cast<emorph::ecodec::TimeStamp*>(q[ii]); 
-	  if (ts->isValid()){
+	  if (ts->isValid())
+          {
 	    ev_t = ts->getStamp();
 	    ts_found = true;
 	  }
 	}
 
 	// If we have both the adress and the timestamp, we update the trackers
-	if(address_ev_found && ts_found){
-	  if(ev_x>=0 && ev_x <= 127 && ev_y>=0 && ev_y <= 127){
-            if (channel == 0) {
-	      if(pol == 1 | pol == 0){  
+	if(address_ev_found && ts_found)
+        {
+	  if(ev_x>=0 && ev_x <= 127 && ev_y>=0 && ev_y <= 127)
+          {
+            if (channel == 0) 
+            {
+	      if(pol == 1 | pol == 0)
+              {  
                 tracker_pool_left.update(ev_x, ev_y, ev_t);
               }
               image_left_out.pixel(ev_y, ev_x) = yarp::sig::PixelRgb(255*pol, 255*pol, 255*pol);
 	    }
-	    else {
-	      if(pol == 1 | pol == 0){
+	    else 
+            {
+	      if(pol == 1 | pol == 0)
+              {
                 tracker_pool_right.update(ev_x, ev_y, ev_t);
               }
               image_right_out.pixel(ev_y, ev_x) = yarp::sig::PixelRgb(255*pol, 255*pol, 255*pol);
@@ -224,7 +238,8 @@ int main(int numArgs, char** args)
           }
 	  address_ev_found = false;
 	  ts_found = false;
-	  if(ev_t - last_t_display >= dt || ev_t - last_t_display < 0){
+	  if(ev_t - last_t_display >= dt || ev_t - last_t_display < 0)
+          {
 	    // We update the images of the ellipses
 	    tracker_pool_left.display(image_left_out);
  	    tracker_pool_right.display(image_right_out);
@@ -241,8 +256,49 @@ int main(int numArgs, char** args)
 
       double mean_x = 0;
       double mean_y = 0;
+      
+      
       //bool collision = false;
 
+      //Writing active tracker data to output port
+      eventBottle &clusterOut = outClusterPortLeft.prepare();
+      
+      Bottle clusterEvents;
+      for (ii=0; ii<tracker_pool_left.get_pool_size(); ii++)
+      {
+              BlobTracker *gaussCluster;
+              
+              int writeChannelNum = 0;              
+              tracker_pool_left.get_tracker(gauss, ii);  
+              double sig_x2_write, sig_y2_write, sig_xy_write;
+              int cenx_write, ceny_write;
+              if (gaussCluster->isAlive())
+              { 
+                      gaussCluster.get_center(&cenx_write, &ceny_write);
+                      gaussCluster.get_gauss_parameters(&sig_x2_write, &sig_y2_write, &sig_xy_write);
+                      ClusterFeatureEvent eventToWrite;
+                      
+                      eventToWrite.setXCog(cenx_write);
+                      eventToWrite.setYCog(ceny_write);
+                      eventToWrite.setChannel(writeChannelNum);
+                      
+                      Bottle tmp;
+                      tmp = eventToWrite.encode();
+                      clusterEvents.append(tmp);                      
+              }
+      }
+      eventBottle dataTmp(&clusterEvents);
+      
+      out = dataTmp;
+      outClusterPortLeft.write();
+
+      
+        
+      }
+                      
+                      
+              }
+        
       // We get the data from the tracker pool
       tracker_pool_left.get_collisions(x_coll_left, y_coll_left);
       tracker_pool_right.get_collisions(x_coll_right, y_coll_right);

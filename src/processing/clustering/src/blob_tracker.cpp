@@ -149,7 +149,7 @@ void BlobTracker::move_to(double x, double y){
 
 
 void BlobTracker::get_ellipse_parameters(double &a, double &b, double &alpha){
-  // We compute the eigenvalues of the covariance matrix
+  // Compute the eigenvalues of the covariance matrix
   double tmp = sqrt( (sig_x2_ - sig_y2_) * (sig_x2_ - sig_y2_) + 4*sig_xy_*sig_xy_ );
   double l_max = 0.5*(sig_x2_ + sig_y2_ + tmp);
   double l_min = 0.5*(sig_x2_ + sig_y2_ - tmp);
@@ -159,6 +159,11 @@ void BlobTracker::get_ellipse_parameters(double &a, double &b, double &alpha){
   alpha = 0.5*atan2f(2*sig_xy_, sig_y2_ - sig_x2_);
 }
 
+void BlobTracker::get_gauss_parameters(double &sig_x2, double &sig_y2, double &sig_xy){
+  sig_x2 = sig_x2_;
+  sig_y2 = sig_y2_;
+  sig_xy = sig_xy_;  
+}
 
 
 void BlobTracker::get_center(double &cen_x, double &cen_y){

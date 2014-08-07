@@ -43,6 +43,8 @@ class TrackerPool {
   void display(yarp::sig::ImageOf<yarp::sig::PixelRgb> &img);
 
   void set_collision_det_param(double dist_thresh, double vel_thresh, double acc_thresh);
+  
+  void get_pool_size(int s);
 
  protected:
 
