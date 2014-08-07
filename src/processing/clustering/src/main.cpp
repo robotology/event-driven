@@ -111,7 +111,7 @@ int main(int numArgs, char** args)
   std::string image_port_name_right_out = "/BlobTracker/imagePortRight:o";
   image_port_right_out.open(image_port_name_right_out.c_str());
 
-  BufferedPort<eventBottle> outClusterPortLeft;
+  yarp::os::BufferedPort<eventBottle> outClusterPortLeft;
   std::string outClusterNameLeft = "/BlobTracker/clusterPortLeft";
   outClusterPortLeft.open( outClusterNameLeft.c_str() );
 
@@ -241,11 +241,10 @@ int main(int numArgs, char** args)
 	  if(ev_t - last_t_display >= dt || ev_t - last_t_display < 0)
           {
 	    // We update the images of the ellipses
-	    tracker_pool_left.display(image_left_out);
- 	    tracker_pool_right.display(image_right_out);
+    	    tracker_pool_left.display(image_left_out);
+     	    tracker_pool_right.display(image_right_out);
 
-	    tracker_pool_left.writeParameters() 	
-            // Write the images into the yarp port
+        // Write the images into the yarp port
             image_port_left_out.write(image_left_out);
             image_port_right_out.write(image_right_out);
             // And reset them to gray
@@ -256,6 +255,12 @@ int main(int numArgs, char** args)
 	}
       }
 
+             
+      }
+                      
+                      
+      }
+      
       double mean_x = 0;
       double mean_y = 0;
       
@@ -265,41 +270,36 @@ int main(int numArgs, char** args)
       //Writing active tracker data to output port
       eventBottle &clusterOut = outClusterPortLeft.prepare();
       
-      Bottle clusterEvents;
-      for (ii=0; ii<tracker_pool_left.get_pool_size(); ii++)
+      yarp::os::Bottle clusterEvents;
+      int sizePool; tracker_pool_left.get_pool_size(sizePool);
+      for (int iw=0; iw < sizePool; iw++)
       {
-              BlobTracker *gaussCluster;
+              BlobTracker gaussCluster;
               
               int writeChannelNum = 0;              
-              tracker_pool_left.get_tracker(gauss, ii);  
+              tracker_pool_left.get_tracker(gaussCluster, iw);  
               double sig_x2_write, sig_y2_write, sig_xy_write;
-              int cenx_write, ceny_write;
-              if (gaussCluster->isAlive())
+              double cenx_write, ceny_write;
+              if (gaussCluster.is_active())
               { 
-                      gaussCluster.get_center(&cenx_write, &ceny_write);
-                      gaussCluster.get_gauss_parameters(&sig_x2_write, &sig_y2_write, &sig_xy_write);
-                      ClusterFeatureEvent eventToWrite;
+                      gaussCluster.get_center(cenx_write, ceny_write);
+                      gaussCluster.get_gauss_parameters(sig_x2_write, sig_y2_write, sig_xy_write);
+                      emorph::ecodec::ClusterEvent eventToWrite;
                       
                       eventToWrite.setXCog(cenx_write);
                       eventToWrite.setYCog(ceny_write);
                       eventToWrite.setChannel(writeChannelNum);
                       
-                      Bottle tmp;
+                      yarp::os::Bottle tmp;
                       tmp = eventToWrite.encode();
                       clusterEvents.append(tmp);                      
               }
       }
       eventBottle dataTmp(&clusterEvents);
       
-      out = dataTmp;
+      clusterOut = dataTmp;
       outClusterPortLeft.write();
 
-      
-        
-      }
-                      
-                      
-              }
         
       // We get the data from the tracker pool
       tracker_pool_left.get_collisions(x_coll_left, y_coll_left);
