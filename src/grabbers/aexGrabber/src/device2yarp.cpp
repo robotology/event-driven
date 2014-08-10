@@ -105,7 +105,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName =
 
     bottle2send = new Bottle();  
     // initialization of the paramenters
-    countCycle       = 0;
+    //countCycle       = 0;
     t_prev           = 0;
     fout             = 0;
     fbottle          = 0;
@@ -989,7 +989,9 @@ void  device2yarp::run() {
             	    
             buf2[k2++] = t; // passing the timestamp to the data flow to send	    
             //buf2[k2++] = a;
-            countEventSent++;              
+            countEventSent++;
+            
+            countData=0; // ADDED RESET TO COUNTDATA              
             
             if (save) {
                 if(printExa) {
@@ -1025,7 +1027,7 @@ void  device2yarp::run() {
         }
         	
         countData++;
-      
+        //fprintf(stdout, "count... %d\n", countData) ;
     }
     
     //if (save) {	  
@@ -1047,12 +1049,20 @@ void  device2yarp::run() {
     
     
     if (portEventBottle.getOutputCount()) {       
-        countCycle++;
+        //countCycle++;
         //printf("bytes %d on the portEventBottle \n", bottle2send->size());
+        Stamp st;
+        st.update();
+        
         eventBottle data2send(bottle2send);
         eventBottle& tmp = portEventBottle.prepare();  
         tmp = data2send;        
-        portEventBottle.write();       
+        portEventBottle.setEnvelope(st);
+
+        //fprintf(stdout, "TIME ... %lf\n", st.getTime()) ;
+
+        portEventBottle.write();      
+        //fprintf(stdout, "count... %d\n", countCycle) ;
     
         /*
         if (save) {    
@@ -1110,8 +1120,8 @@ void device2yarp::sendingBias() {
 
     double TmaxSeqTimeEstimate = 
         seqTime * 0.128 * 1.10 +   // summed up seq intervals in us plus 10%
-        seqEvents * 1.0           // plus one us per Event
-    ;
+        seqEvents * 1.0;           // plus one us per Event
+    
 
     printf("seqEvents: %d \n", seqEvents);
     printf("seqTime * 0.128: %d \n", (u64)(seqTime * 0.128));

@@ -108,6 +108,9 @@ bool EventBottleManager::open()
     outPortName = "/" + moduleName + "/out:o";
     outPort.open( outPortName.c_str() );
 
+    eventPortName = "/" + moduleName + "/eventBottle:o";
+    eventPort.open( eventPortName.c_str() );
+
     return true;
 }
 
@@ -116,6 +119,7 @@ void EventBottleManager::close()
 {
     fprintf(stdout,"now closing ports...\n");
     outPort.close();
+    eventPort.close();
     BufferedPort<eventBottle >::close();
     fprintf(stdout,"finished closing the read port...\n");
 }
@@ -136,7 +140,11 @@ void EventBottleManager::onRead(eventBottle &bot)
     eEventQueue q; 
     unsigned long ts;
     //decode packet
-    Bottle out; 
+    Bottle out; // for Bottle port outPort
+    Bottle event; // for eventBottle port eventPort
+
+    eventBottle &evt = eventPort.prepare();
+    
     if(eEvent::decode(*bot.get_packet(),q)) 
     {   
         int size = q.size();
@@ -154,27 +162,76 @@ void EventBottleManager::onRead(eventBottle &bot)
                 else if (q[e]->getType()=="AE") //identify the type of the packet (Address Event)
                 {
                     AddressEvent* ptr=dynamic_cast<AddressEvent*>(q[e]); //create the Address Event for the type
+                    
+                                        
                     if(ptr->isValid()) 
-                    {
+                    {   // get data from AE
                         short posX = ptr->getX();
                         short posY = ptr->getY();
                         short polarity = ptr->getPolarity();
                         short channel = ptr->getChannel();
                         
+                        ClusterEventGauss cluEvt; //create the Cluster Event 
+                        //fill the CLE-G with data:
+                        cluEvt.setChannel(channel);
+                        //  cluEvt->setId(1); 
+                        cluEvt.setXCog(posX); 
+                        cluEvt.setYCog(posY);
+                        
+                        int numAE = 0;
+                        int xS2 = 1;
+                        int yS2 = 2;
+                        int xyS = 3;
+                        
+                        cluEvt.setNumAE(numAE); 
+                        cluEvt.setXSigma2(xS2);
+                        cluEvt.setYSigma2(yS2);
+                        cluEvt.setXYSigma(xyS);
+                        
+                        //create the timestamp and fill it
+                        TimeStamp time;
+                        time.setStamp(ts);
+                        
+                        //create a bottle with ts and cle-g
+                        Bottle tmpEv;
+                        tmpEv = time.encode();
+                        tmpEv.append(cluEvt.encode());
+                        
+                        //append bottle tmpEv to the bottle of events
+                        event.append(tmpEv);
+                        
+                        // prepare data into yarp bottle
                         Bottle &tmp = pack.addList();                        
                         tmp.addDouble(ts);
                         tmp.addInt(posX);
                         tmp.addInt(posY);
-                        tmp.addInt(polarity);
+                        //p.addInt(polarity);
                         tmp.addInt(channel);
-                        fprintf(stdout, "Size %d TimeStamp: %d Event: (X: %d  Y: %d  pol: %d  cha: %d) \n",size, ts, posX, posY, polarity, channel);
+                        tmp.addInt(numAE);
+                        tmp.addInt(xS2);
+                        tmp.addInt(yS2);
+                        tmp.addInt(xyS);
+                        
+                        string type = cluEvt.getType();
+
+                        //fprintf(stdout, "Size %d TimeStamp: %d Event: (Type: %s X: %d  Y: %d  pol: %d  cha: %d m: %d xs: %d ys: %d xys: %d) \n",size, ts, type.c_str(), posX, posY, polarity, channel, numAE, xS2, yS2, xyS);
+                        
                     } 
                 }
             }
         } 
+
+        //create and fill in dataTmp (eventBottle) with data from event (Bottle) 
+        //fprintf(stdout, "\n\n\nEvent: %s\n", event.toString().c_str());
+        eventBottle dataTmp(&event);
+        //copy dataTmp to eventBottle out
+        evt = dataTmp;
+        //send it all out
+        eventPort.write();
+
         outPort.write(out);
     }   
-    fprintf(stdout, "------------------------------------------------------------------\n");
+    //fprintf(stdout, "------------------------------------------------------------------\n");
 }
 
 //empty line to make gcc happy

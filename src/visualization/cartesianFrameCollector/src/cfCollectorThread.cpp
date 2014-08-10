@@ -1,3 +1,4 @@
+
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /* 
@@ -368,10 +369,11 @@ void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsign
         pImage+=imagePadding;
     }
     //***************************************************************
-    //ADDING FURTHER COMPLEX INFORMATION in the IMAGE
+    //ADDING FURTHER COMPLEX INFORMATION to the IMAGE
     
     addHGE(image,minCount,maxCount,camera);
     addCLE(image,minCount,maxCount,camera);
+    addCLEG(image,minCount,maxCount,camera);
 }
 
 
@@ -390,6 +392,8 @@ void cfCollectorThread::addHGE(ImageOf<yarp::sig::PixelRgb>* image, unsigned lon
     }
     
 }
+
+
 
 CvScalar getColorCode(int id) {
     int ident = id % 10;
@@ -475,6 +479,52 @@ void cfCollectorThread::addCLE(ImageOf<yarp::sig::PixelRgb>* image, unsigned lon
     }
 }
 
+void cfCollectorThread::addCLEG(ImageOf<yarp::sig::PixelRgb>* image, unsigned long minCount,unsigned long maxCount, bool camera) {
+    int lineWidth = 2;
+    if(camera) {
+        reprCLE *tmpCLE;
+        tmpCLE = unmask_events->getCLELeft();
+        if (tmpCLE == 0) return;
+        
+        while(tmpCLE != origCLE) {
+            
+            CvScalar c = getColorCode(tmpCLE->id);
+            
+            cvRectangle(image->getIplImage(), cvPoint(tmpCLE->xCog - 2,tmpCLE->yCog - 2 ),cvPoint(tmpCLE->xCog + 2,tmpCLE->yCog + 2), c, lineWidth);
+            
+            tmpCLE--;
+        }
+        // representation of the first event
+        //printf("left > x %d y %d \n", tmpCLE->xCog, tmpCLE->yCog);       
+        CvScalar c = getColorCode(tmpCLE->id);
+        cvRectangle(image->getIplImage(), cvPoint(tmpCLE->xCog - (tmpCLE->xSize >> 1),tmpCLE->yCog - (tmpCLE->ySize >> 1) ),cvPoint(tmpCLE->xCog + (tmpCLE->xSize >> 1),tmpCLE->yCog + (tmpCLE->ySize >> 1)), c, lineWidth);
+        //C++: void ellipse(Mat& img, Point center, Size axes, double angle, double startAngle, double endAngle, const Scalar& color, int thickness=1, int lineType=8, int shift=0)
+        unmask_events->setCLELeft();
+    }
+    else {
+        //printf("x %d y %d \n", tmpCLE->xCog, tmpCLE->yCog);
+        reprCLE *tmpCLE;
+        tmpCLE = unmask_events->getCLERight();
+        if (tmpCLE == 0) return;
+        
+        while(tmpCLE != origCLERight) {
+            //printf("right > x %d y %d \n", tmpCLE->xCog, tmpCLE->yCog);
+            CvScalar c = getColorCode(tmpCLE->id);
+            cvRectangle(image->getIplImage(), cvPoint(tmpCLE->xCog - 2,tmpCLE->yCog - 2 ),cvPoint(tmpCLE->xCog + 2,tmpCLE->yCog + 2), c, lineWidth);
+            
+            tmpCLE--;
+        }
+        // representation of the first event
+        //printf("right > x %d y %d \n", tmpCLE->xCog, tmpCLE->yCog);       
+        CvScalar c = getColorCode(tmpCLE->id);
+        cvRectangle(image->getIplImage(), cvPoint(tmpCLE->xCog - (tmpCLE->xSize >> 1),tmpCLE->yCog - (tmpCLE->ySize >> 1) ),cvPoint(tmpCLE->xCog + (tmpCLE->xSize >> 1),tmpCLE->yCog + (tmpCLE->ySize >> 1)), c, lineWidth);
+        unmask_events->setCLERight();
+        
+    }
+}
+
+
+
 int cfCollectorThread::prepareUnmasking(char* bufferCopy, Bottle* res) {
     // navigate the 32bit words in the bufferCopy and create a bottle outofvalid
     int numberofwords = CHUNKSIZE / 4; //4bytes made a 32bits wodr
@@ -503,7 +553,6 @@ void cfCollectorThread::run() {
   if(!idle) {
     interTimer = Time::now();
     double interval2 = (interTimer - startTimer)* 1000000;    
-    
     // saves it into a working buffer
     if(!bottleHandler) {
         cfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
@@ -511,7 +560,7 @@ void cfCollectorThread::run() {
     else {
         receivedBottle->clear();
         ebHandler->extractBottle(receivedBottle);      
-        //printf("received Bottle %08x dimension %d \n ", receivedBottle, receivedBottle->size());
+        //fprintf(stdout, "received Bottle %08x dimension %d \n ", receivedBottle, receivedBottle->size());
     }
 
     // -------------------------------------------------------------------------------------

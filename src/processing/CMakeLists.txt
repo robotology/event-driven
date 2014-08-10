@@ -40,7 +40,7 @@ add_subdirectory   ( recognitionModules/recognition)
 add_subdirectory   ( recognitionModules/aggregation)
 
 #----------- Clustering -----------------------------
-add_subdirectory   ( clustering                     )
+#add_subdirectory   ( clustering                     )
 
 if(ICUB_USE_IPOPT)
         #add_subdirectory ( targetFinder                  )

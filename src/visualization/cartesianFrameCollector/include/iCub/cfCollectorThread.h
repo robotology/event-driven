@@ -288,6 +288,12 @@ public:
      */
     void addHGE(yarp::sig::ImageOf<yarp::sig::PixelRgb>* image, unsigned long minCount,unsigned long maxCount, bool camera);
     
+
+     /**
+     * @brief function that add cluster events of type "gaussian" to the image
+     */
+    void addCLEG(yarp::sig::ImageOf<yarp::sig::PixelRgb>* image, unsigned long minCount,unsigned long maxCount, bool camera);
+
 };
 
 #endif  //_CF_COLLECTOR_THREAD_H_

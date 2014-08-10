@@ -139,14 +139,23 @@ void EventToBottleHandler::interrupt()
 /**********************************************************/
 void EventToBottleHandler::onRead(eventBottle &bot)
 {
+
+    double currTime = yarp::os::Time::now();
     //create event queue
     eEventQueue q; 
     unsigned long ts;
     //decode packet
     Bottle out; 
+    Stamp st;
+    BufferedPort<eventBottle >::getEnvelope(st);
+
+    double timeaex = st.getTime(); 
+    //fprintf(stdout, "aexGrab %lf \n",timeaex);
+    //fprintf(stdout, "%d\n", bot.get_sizeOfPacket()) ;
     if(eEvent::decode(*bot.get_packet(),q)) 
     {   
         int size = q.size();
+        //fprintf(stdout, "eventBottle size: %d\n",size);
         Bottle &pack =  out.addList();  
         for (int e = 0; e < size; e++)
         {
@@ -195,14 +204,77 @@ void EventToBottleHandler::onRead(eventBottle &bot)
                         btype.addString("type");
                         btype.addString(type);
                 
-                       //fprintf(stdout, "Size %d TimeStamp: %d Event: (X: %d  Y: %d  pol: %d  cha: %d) \n",size, ts, posX, posY, polarity, channel);
+                        //fprintf(stdout, "Size %d TimeStamp: %d AddressEvent: (X: %d  Y: %d  pol: %d  cha: %d) \n",size, ts, posX, posY, polarity, channel);
                     } 
                 }
+                else if (q[e]->getType()=="CLE-G") //identify the type of the packet (ClusterEventGauss)
+                {   
+                    ClusterEventGauss* ptr=dynamic_cast<ClusterEventGauss*>(q[e]); //create the Event for the type
+                    if(ptr->isValid()) 
+                    {
+                        int channel = ptr->getChannel();        
+                        //int getId()       id;             
+                        int xCog = ptr->getXCog();           
+                        int yCog = ptr->getYCog();           
+                        string type = ptr->getType();
+                        int numAE = ptr->getNumAE();            
+                        int xSigma2 = ptr->getXSigma2(); 
+                        int ySigma2 = ptr->getYSigma2();          
+                        int xySigma = ptr->getXYSigma();         
+                                            
+                        Bottle &tmp = pack.addList();
+                        
+                        Bottle &bts = tmp.addList();  
+                        bts.addString("time");                      
+                        bts.addDouble(ts);
+                        
+                        Bottle &bxCog = tmp.addList(); 
+                        bxCog.addString("xCog");
+                        bxCog.addInt(xCog);
+                        
+                        Bottle &byCog = tmp.addList();
+                        byCog.addString("yCog");
+                        byCog.addInt(yCog);
+                        
+                        Bottle &bnumAE = tmp.addList();
+                        bnumAE.addString("numAE");
+                        bnumAE.addInt(numAE);
+
+                        Bottle &bxSigma2 = tmp.addList();
+                        bxSigma2.addString("xSigma2");
+                        bxSigma2.addInt(xSigma2);
+
+                        Bottle &bySigma2 = tmp.addList();
+                        bySigma2.addString("ySigma2");
+                        bySigma2.addInt(ySigma2);
+
+                        Bottle &bxySigma = tmp.addList();
+                        bxySigma.addString("xySigma");
+                        bxySigma.addInt(xySigma);
+                        
+                        Bottle &bch = tmp.addList();
+                        bch.addString("channel");
+                        bch.addInt(channel);
+                        
+                        Bottle &btype = tmp.addList();
+                        btype.addString("type");
+                        btype.addString(type);
+                
+                        //fprintf(stdout, "Size %d TimeStamp: %d ClusterEventGauss: (X: %d  Y: %d  cha: %d m: %d xs: %d ys: %d xys: %d) \n",size, ts, xCog, yCog, channel, numAE, xSigma2, ySigma2, xySigma);
+                    } 
+                }
+
             }
         } 
+        double timeaex = st.getTime(); 
+        //fprintf(stdout, "aexsend %lf \n",timeaex);
+        outPort.setEnvelope(st);
         outPort.write(out);
     }   
-    //fprintf(stdout, "------------------------------------------------------------------\n");
+
+    double ms = (yarp::os::Time::now() - currTime)*1000;
+    //fprintf(stdout, "------------------------------------------------------------------\n");*/
+    //fprintf(stdout, "time spent is %lf \n",ms);
 }
 BottleToEventHandler::~BottleToEventHandler()
 {
@@ -275,21 +347,43 @@ void BottleToEventHandler::onRead(Bottle &bot)
         TimeStamp ts;
         ts.setStamp(cur->find("time").asDouble());
 
-        //string type = cur->find("type").asString().c_str(); //for each sublist get type  
-
-        //create addressEvent for specific type
-        AddressEvent ae; 
-        //start filling addressEvent with data from sublists
-        ae.setX(cur->find("posX").asInt());
-        ae.setY(cur->find("posY").asInt());
-        ae.setPolarity(cur->find("polarity").asInt());
-        ae.setChannel(cur->find("channel").asInt());
-
-        //encode TimeStamp and AddressEvent and append them into single bottle
+        string type = cur->find("type").asString().c_str(); //for each sublist get type  
+        //create Bottle to append Timestamp and Event
         Bottle tmp;
+        //encode TimeStamp 
         tmp = ts.encode();
-        tmp.append(ae.encode());
+        if (type=="AE")
+        {
+            //create addressEvent for specific type
+            AddressEvent evt; 
+            //start filling addressEvent with data from sublists
+            evt.setX(cur->find("posX").asInt());
+            evt.setY(cur->find("posY").asInt());
+            evt.setPolarity(cur->find("polarity").asInt());
+            evt.setChannel(cur->find("channel").asInt());
+            //append timeStamp and Event into single bottle
+            tmp.append(evt.encode());
+        }
 
+        if (type=="CLE-G")
+        {
+            //create addressEvent for specific type
+            ClusterEventGauss evt; 
+            //start filling addressEvent with data from sublists
+            evt.setChannel(cur->find("channel").asInt());
+            evt.setXCog(cur->find("xCog").asInt());
+            evt.setYCog(cur->find("yCog").asInt());
+            evt.setNumAE(cur->find("numAE").asInt());
+            evt.setXSigma2(cur->find("xSigma2").asInt());
+            evt.setYSigma2(cur->find("ySigma2").asInt());
+            evt.setXYSigma(cur->find("xySigma").asInt());
+            
+            //append timeStamp and Event into single bottle
+            tmp.append(evt.encode());
+        }
+
+
+        //append the bottle tmp with TimeStamp and Event of a single spike to a bottle that contains the events of the whole packet 
         event.append(tmp);
     }
     //create and fill in dataTmp (eventBottle) with data from event (Bottle) 

@@ -44,8 +44,11 @@ private:
     std::string 				                moduleName;         //string containing module name
     std::string 				                inPortName;        	//string containing speech input port name
     std::string 				                outPortName;	    //string containing start output port name
+    std::string 				                eventPortName;	    //string containing start output port name
 
     yarp::os::Port                              outPort;            //output port for the Bottle of events created from the input eventBuffer
+
+    yarp::os::BufferedPort<eventBottle>         eventPort;          //output port for the eventBottle with the new events computed by the module
 
 public:
     /**
