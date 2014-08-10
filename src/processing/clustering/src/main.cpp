@@ -9,8 +9,9 @@
 #include <yarp/dev/all.h>
 
 //#include "unmask.h"
-#include "eventCodec.h"
-#include "eventBottle.h"
+#include <iCub/emorph/eventBottle.h>
+#include <iCub/emorph/eventCodec.h>
+
 #include "blob_tracker.h"
 #include "tracker_pool.h"
 
@@ -291,6 +292,7 @@ int main(int numArgs, char** args)
       
         yarp::os::Bottle clusterEvents;
         int sizePool; tracker_pool_left.get_pool_size(sizePool);
+        int numAE = 1;
         for (int iw=0; iw < sizePool; iw++)
         {
             BlobTracker gaussCluster;
@@ -303,12 +305,18 @@ int main(int numArgs, char** args)
             { 
                 gaussCluster.get_center(cenx_write, ceny_write);
                 gaussCluster.get_gauss_parameters(sig_x2_write, sig_y2_write, sig_xy_write);
-                emorph::ecodec::ClusterEvent eventToWrite;
+
+                emorph::ecodec::ClusterEventGauss eventToWrite;
                       
                 eventToWrite.setXCog(cenx_write);
                 eventToWrite.setYCog(ceny_write);
                 eventToWrite.setChannel(writeChannelNum);
                 eventToWrite.setId(writeChannelNum);
+    
+                eventToWrite.setNumAE(numAE); 
+                eventToWrite.setXSigma2(sig_x2_write);
+                eventToWrite.setYSigma2(sig_y2_write);
+                eventToWrite.setXYSigma(sig_xy_write);
                 
                 yarp::os::Bottle tmp;
                 tmp = eventToWrite.encode();

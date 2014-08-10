@@ -44,7 +44,7 @@ class TrackerPool {
 
   void set_collision_det_param(double dist_thresh, double vel_thresh, double acc_thresh);
   
-  void get_pool_size(int s);
+  void get_pool_size(int &s);
 
  protected:
 

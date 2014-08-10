@@ -187,7 +187,7 @@ void TrackerPool::get_tracker(BlobTracker &blobT, int index){
 }	
 
 void TrackerPool::get_pool_size(int &index){
-  index = tracker_.size();
+  index = trackers_.size();
 }
 
 

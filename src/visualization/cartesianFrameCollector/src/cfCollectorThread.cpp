@@ -490,7 +490,16 @@ void cfCollectorThread::addCLEG(ImageOf<yarp::sig::PixelRgb>* image, unsigned lo
             
             CvScalar c = getColorCode(tmpCLE->id);
             
-            cvRectangle(image->getIplImage(), cvPoint(tmpCLE->xCog - 2,tmpCLE->yCog - 2 ),cvPoint(tmpCLE->xCog + 2,tmpCLE->yCog + 2), c, lineWidth);
+//            cvRectangle(image->getIplImage(), cvPoint(tmpCLE->xCog - 2,tmpCLE->yCog - 2 ),cvPoint(tmpCLE->xCog + 2,tmpCLE->yCog + 2), c, lineWidth);
+//            double tmp = sqrt( (tmpCLE->xSigma2 - tmpCLE->ySigma2) * (tmpCLE->xSigma2 - tmpCLE->ySigma2) + 4*tmpCLE->xySigma*tmpCLE->xySigma );
+  //          double l_max = 0.5*(xSigma2 + ySigma2 + tmp);
+    //        double l_min = 0.5*(xSigma2 + ySigma2 - tmp);
+
+            double ellipse_a = 1; //sqrt(l_max);  
+            double ellipse_b = 2; //sqrt(l_min);
+
+            double ellipse_angle = 0.5; //0.5*atan2f(2*tmpCLE->xySigma, tmpCLE->ySigma2 - tmpCLE->xSigma2);
+            cvEllipse(image->getIplImage(), cvPoint(tmpCLE->xCog,tmpCLE->yCog), cvSize(ellipse_a, ellipse_b), ellipse_angle, 0, 360, cvScalar(0,0, 255), lineWidth);
             
             tmpCLE--;
         }
