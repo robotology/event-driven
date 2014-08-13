@@ -52,6 +52,7 @@ using namespace std;
 cfCollectorThread::cfCollectorThread() : RateThread(THRATE) {
     responseGradient = 127;
     retinalSize  = 128;  //default value before setting 
+    evType = "ae";
   
     synchronised = false;
     greaterHalf  = false;
@@ -103,18 +104,36 @@ bool cfCollectorThread::threadInit() {
     pThread->setStereo(stereo);
     pThread->setRetinalSize(retinalSize);
     pThread->start();
-
-    // allocating memory for up to 10 CLE and 10 HGE
-    printf("allocating memory for up to 10 CLE and 10 HGE \n");
-    origHGE = (reprHGE*) malloc(10 * sizeof(reprHGE));
-    origCLE = (reprCLE*) malloc(10 * sizeof(reprCLE));
-    origCLERight = (reprCLE*) malloc(10 * sizeof(reprCLE));
+    
+    if (evType == "cle")
+    {
+        // allocating memory for up to 10 CLE
+        fprintf(stdout,"allocating memory for up to 10 CLE \n");
+        origCLE = (reprCLE*) malloc(10 * sizeof(reprCLE));
+        origCLERight = (reprCLE*) malloc(10 * sizeof(reprCLE));
+    }
+    else if (evType == "cleg")
+    {    
+        // allocating memory for up to 10 CLE
+        fprintf(stdout,"allocating memory for up to 10 CLE Gauss\n");
+        origCLEGLeft = (reprCLEG*) malloc(10 * sizeof(reprCLEG));
+        origCLEGRight = (reprCLEG*) malloc(10 * sizeof(reprCLEG));
+    }
+    else if (evType == "hge")
+    {    
+        // allocating memory for up to 10 CLE
+        fprintf(stdout,"allocating memory for up to 10 HGE \n");
+        origHGE = (reprHGE*) malloc(10 * sizeof(reprHGE));
+    }
 
     unmask_events = new unmask();
     unmask_events->setRetinalSize(retinalSize);
     unmask_events->setResponseGradient(responseGradient);
+    unmask_events->setType(evType);
     unmask_events->setOrigCLELeft(origCLE);
     unmask_events->setOrigCLERight(origCLERight);
+    unmask_events->setOrigCLEGLeft(origCLEGLeft);
+    unmask_events->setOrigCLEGRight(origCLEGRight);
     unmask_events->setOrigHGELeft(origHGE);
     unmask_events->setASVMode(asvFlag);
     unmask_events->setDVSMode(dvsFlag);
@@ -370,10 +389,18 @@ void cfCollectorThread::getMonoImage(ImageOf<yarp::sig::PixelRgb>* image, unsign
     }
     //***************************************************************
     //ADDING FURTHER COMPLEX INFORMATION to the IMAGE
-    
-    addHGE(image,minCount,maxCount,camera);
-    addCLE(image,minCount,maxCount,camera);
-    addCLEG(image,minCount,maxCount,camera);
+    if (evType == "cle")
+    {
+        addCLE(image,minCount,maxCount,camera);
+    }
+    else if (evType == "hge")
+    {
+        addHGE(image,minCount,maxCount,camera);
+    }
+    else if (evType == "cleg")
+    {
+        addCLEG(image,minCount,maxCount,camera);
+    }
 }
 
 
@@ -481,53 +508,81 @@ void cfCollectorThread::addCLE(ImageOf<yarp::sig::PixelRgb>* image, unsigned lon
 
 void cfCollectorThread::addCLEG(ImageOf<yarp::sig::PixelRgb>* image, unsigned long minCount,unsigned long maxCount, bool camera) {
     int lineWidth = 2;
-    if(camera) {
-        reprCLE *tmpCLE;
-        tmpCLE = unmask_events->getCLELeft();
-        if (tmpCLE == 0) return;
+    double ellipse_a = 1; 
+    double ellipse_b = 2;
+    double ellipse_angle = 0.5;
         
-        while(tmpCLE != origCLE) {
+    if(camera) { // left
+        reprCLEG *tmpCLEG;
+        tmpCLEG = unmask_events->getCLEGLeft();
+        
+        if (tmpCLEG == 0)
+        {   
+            //fprintf(stdout,"empty cluster\n");
+            return;
+        }
+        while(tmpCLEG != origCLEGLeft) {
             
-            CvScalar c = getColorCode(tmpCLE->id);
+            CvScalar c = getColorCode(tmpCLEG->id);
             
-//            cvRectangle(image->getIplImage(), cvPoint(tmpCLE->xCog - 2,tmpCLE->yCog - 2 ),cvPoint(tmpCLE->xCog + 2,tmpCLE->yCog + 2), c, lineWidth);
-//            double tmp = sqrt( (tmpCLE->xSigma2 - tmpCLE->ySigma2) * (tmpCLE->xSigma2 - tmpCLE->ySigma2) + 4*tmpCLE->xySigma*tmpCLE->xySigma );
-  //          double l_max = 0.5*(xSigma2 + ySigma2 + tmp);
-    //        double l_min = 0.5*(xSigma2 + ySigma2 - tmp);
+            //double tmp = sqrt( (tmpCLEG->xSigma2 - tmpCLEG->ySigma2) * (tmpCLEG->xSigma2 - tmpCLEG->ySigma2) + 4*tmpCLEG->xySigma*tmpCLEG->xySigma );
+            //double l_max = 0.5*(xSigma2 + ySigma2 + tmp);
+            //double l_min = 0.5*(xSigma2 + ySigma2 - tmp);
 
-            double ellipse_a = 1; //sqrt(l_max);  
-            double ellipse_b = 2; //sqrt(l_min);
+            //ellipse_a = sqrt(l_max);  
+            //ellipse_b sqrt(l_min);
+            //ellipse_angle = 0.5*atan2f(2*tmpCLEG->xySigma, tmpCLEG->ySigma2 - tmpCLEG->xSigma2);
 
-            double ellipse_angle = 0.5; //0.5*atan2f(2*tmpCLE->xySigma, tmpCLE->ySigma2 - tmpCLE->xSigma2);
-            cvEllipse(image->getIplImage(), cvPoint(tmpCLE->xCog,tmpCLE->yCog), cvSize(ellipse_a, ellipse_b), ellipse_angle, 0, 360, cvScalar(0,0, 255), lineWidth);
+            //cvEllipse(image->getIplImage(), cvPoint(tmpCLEG->xCog,tmpCLEG->yCog), cvSize(ellipse_a, ellipse_b), ellipse_angle, 0, 360, cvScalar(0,0, 255), lineWidth);
+
+            cvEllipse(image->getIplImage(), cvPoint(tmpCLEG->xCog,tmpCLEG->yCog), cvSize(ellipse_a, ellipse_b), ellipse_angle, 0, 360, c, lineWidth);
+
             
-            tmpCLE--;
+            tmpCLEG--;
         }
         // representation of the first event
-        //printf("left > x %d y %d \n", tmpCLE->xCog, tmpCLE->yCog);       
-        CvScalar c = getColorCode(tmpCLE->id);
-        cvRectangle(image->getIplImage(), cvPoint(tmpCLE->xCog - (tmpCLE->xSize >> 1),tmpCLE->yCog - (tmpCLE->ySize >> 1) ),cvPoint(tmpCLE->xCog + (tmpCLE->xSize >> 1),tmpCLE->yCog + (tmpCLE->ySize >> 1)), c, lineWidth);
-        //C++: void ellipse(Mat& img, Point center, Size axes, double angle, double startAngle, double endAngle, const Scalar& color, int thickness=1, int lineType=8, int shift=0)
-        unmask_events->setCLELeft();
+        fprintf(stdout,"left > x %d y %d \n", tmpCLEG->xCog, tmpCLEG->yCog);       
+        CvScalar c = getColorCode(tmpCLEG->id);
+        //ellipse_a = sqrt(l_max);  
+        //ellipse_b sqrt(l_min);
+        //ellipse_angle = 0.5*atan2f(2*tmpCLEG->xySigma, tmpCLEG->ySigma2 - tmpCLEG->xSigma2);
+
+        cvEllipse(image->getIplImage(), cvPoint(tmpCLEG->xCog,tmpCLEG->yCog), cvSize(ellipse_a, ellipse_b), ellipse_angle, 0, 360, c, lineWidth);
+
+        unmask_events->setCLEGLeft();
     }
-    else {
-        //printf("x %d y %d \n", tmpCLE->xCog, tmpCLE->yCog);
-        reprCLE *tmpCLE;
-        tmpCLE = unmask_events->getCLERight();
-        if (tmpCLE == 0) return;
+    else { //right
+        reprCLEG *tmpCLEG;
+        tmpCLEG = unmask_events->getCLEGLeft();
+        if (tmpCLEG == 0) return;
         
-        while(tmpCLE != origCLERight) {
-            //printf("right > x %d y %d \n", tmpCLE->xCog, tmpCLE->yCog);
-            CvScalar c = getColorCode(tmpCLE->id);
-            cvRectangle(image->getIplImage(), cvPoint(tmpCLE->xCog - 2,tmpCLE->yCog - 2 ),cvPoint(tmpCLE->xCog + 2,tmpCLE->yCog + 2), c, lineWidth);
+        while(tmpCLEG != origCLEGRight) {
             
-            tmpCLE--;
+            CvScalar c = getColorCode(tmpCLEG->id);
+            
+            //double tmp = sqrt( (tmpCLEG->xSigma2 - tmpCLEG->ySigma2) * (tmpCLEG->xSigma2 - tmpCLEG->ySigma2) + 4*tmpCLEG->xySigma*tmpCLEG->xySigma );
+            //double l_max = 0.5*(xSigma2 + ySigma2 + tmp);
+            //double l_min = 0.5*(xSigma2 + ySigma2 - tmp);
+
+            //ellipse_a = sqrt(l_max);  
+            //ellipse_b sqrt(l_min);
+            //ellipse_angle = 0.5*atan2f(2*tmpCLEG->xySigma, tmpCLEG->ySigma2 - tmpCLEG->xSigma2);
+
+            cvEllipse(image->getIplImage(), cvPoint(tmpCLEG->xCog,tmpCLEG->yCog), cvSize(ellipse_a, ellipse_b), ellipse_angle, 0, 360, c, lineWidth);
+
+            tmpCLEG--;
         }
         // representation of the first event
-        //printf("right > x %d y %d \n", tmpCLE->xCog, tmpCLE->yCog);       
-        CvScalar c = getColorCode(tmpCLE->id);
-        cvRectangle(image->getIplImage(), cvPoint(tmpCLE->xCog - (tmpCLE->xSize >> 1),tmpCLE->yCog - (tmpCLE->ySize >> 1) ),cvPoint(tmpCLE->xCog + (tmpCLE->xSize >> 1),tmpCLE->yCog + (tmpCLE->ySize >> 1)), c, lineWidth);
-        unmask_events->setCLERight();
+        fprintf(stdout,"right > x %d y %d \n", tmpCLEG->xCog, tmpCLEG->yCog);       
+        CvScalar c = getColorCode(tmpCLEG->id);
+
+        //ellipse_a = sqrt(l_max);  
+        //ellipse_b sqrt(l_min);
+        //ellipse_angle = 0.5*atan2f(2*tmpCLEG->xySigma, tmpCLEG->ySigma2 - tmpCLEG->xSigma2);
+
+        cvEllipse(image->getIplImage(), cvPoint(tmpCLEG->xCog,tmpCLEG->yCog), cvSize(ellipse_a, ellipse_b), ellipse_angle, 0, 360, c, lineWidth);
+
+        unmask_events->setCLEGRight();
         
     }
 }
@@ -658,7 +713,7 @@ void cfCollectorThread::run() {
 
     //synchronising the threads at the connection time
     if ((cfConverter->isValid())&&(!synchronised)) {
-        printf("Sychronising ");
+        printf("Synchronising ");
         unsigned long int lastleft  = unmask_events->getLastTimestamp();
         lc = lastleft  * COUNTERRATIO; 
         unsigned long int lastright = unmask_events->getLastTimestampRight();

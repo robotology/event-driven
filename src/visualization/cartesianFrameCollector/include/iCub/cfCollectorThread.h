@@ -64,6 +64,7 @@ private:
     int height_orig, width_orig;         // original dimension of the input and output images
     int synchPeriod;                     // synchronization period between events and viewer
     int responseGradient;                // responseGradient parameter
+    std::string evType;                         // type of event to be plotted parameter
 
     //struct timeval tvstart,tvend;
     //struct timespec start_time, stop_time;
@@ -116,6 +117,11 @@ private:
     reprHGE *origHGE;                    // original position of the Hough Event collection
     reprCLE *origCLE;                    // original porision of the CLE event collection
     reprCLE *origCLERight;               // original porision of the CLE event collection
+    reprCLEG *origCLEGLeft;              // original position of the CLEG event collection
+    reprCLEG *origCLEGRight;             // original position of the CLEG event collection
+
+
+
 public:
     /**
     * default constructor
@@ -271,7 +277,13 @@ public:
      * @brief function that indicates whether the viewer reppresent logpolar information
      */
     void setResponseGradient(int value) {responseGradient = value; }; 
-    
+ 
+    /**
+     * @brief function that indicates which type of events will be plotted 
+     */
+    void setType(std::string value) {evType = value; }; 
+ 
+   
     /**
      * @brief function that given a section of the buffer creates a bottle
      */

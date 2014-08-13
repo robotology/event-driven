@@ -37,7 +37,7 @@ using namespace std;
  *  equivalent of the "open" method.
  */
 
-bool cfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
+          bool cfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
     /* Process all parameters from both command-line and .ini file */
     if(rf.check("help")) {
         printf("HELP \n");
@@ -49,8 +49,9 @@ bool cfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
         printf("--sychPeriod       (int)    : period for synchronization of the variable lastTimestamp\n");
         printf("--windowSize       (int)    : size of the window where events are collected \n ");
         printf("--stereo                    : if present both left and right events are represented \n ");
+        printf("--evType           (string) : specifies the type of events to be plotted (ae, cle, cleg, ofe, etc.)\n");   
         printf("--bottleHanlder             : the user select to send events only through bottle port esclusively  \n");
-        printf("--verbose                   : enable debug savings of events in files");
+        printf("--verbose         : enable debug savings of events in files");
         printf("\n press CTRL-C to continue \n");
         return true;
     }
@@ -104,6 +105,7 @@ bool cfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
     synchPeriod            = rf.check("synchPeriod", 
                            Value(10000), 
                            "synchronisation period (int)").asInt();
+    printf("set synchPeriod; found value %d \n", synchPeriod);
     cfThread->setSynchPeriod(synchPeriod);
 
     /*
@@ -146,6 +148,13 @@ bool cfCollectorModule::configure(yarp::os::ResourceFinder &rf) {
     else {
         cfThread->setStereo(false);
     }
+
+    /* set the type of event to be plotted */
+    evType            = rf.check("evType", 
+                           Value("ae"), 
+                           "evType (string)").asString();
+    fprintf(stdout,"add %s event for plotting \n", evType.c_str());
+    cfThread->setType(evType);
 
      /* 
      *checking whether the user wants exclusively to send events as bottles

@@ -52,6 +52,8 @@ private:
     int count;                            // counter of the unmasked events
     int countCLE;                         // counter CLE
     int countCLERight;
+    int countCLEGLeft;
+    int countCLEGRight;
     int sz;
     int* buffer;                          // buffer representing the event in image plane (left)
     unsigned long* timeBuffer;            // buffer contains the timestamp of the particular location (left)
@@ -90,6 +92,7 @@ private:
     int countEvent2;                 // counter of the number of events saved in the buffer2
     int numKilledEvents;             // number of the element that have be removed from the buffer
     int responseGradient;            // dimension of the responseGradient
+    std::string evType;              // type of event to be plotted 
     bool temp1;                      // boolean flag that indicates where the events have to be saved
     bool validLeft,validRight;       // flag for validity of the events
     bool verb;                       // flag that indicates whether timestamp in forced to renewal 
@@ -100,14 +103,18 @@ private:
     FILE* maskEvents;                // maskEvents file for debug
 
     reprCLE *bufferCLELeft;          // pointer to CLE to represent
-    reprHGE *bufferHGELeft;          // pointer to HGE to represent
     reprCLE *_bufferCLELeft;         // temporarely pointer to the buffer
+    reprHGE *bufferHGELeft;          // pointer to HGE to represent
     reprHGE *_bufferHGELeft;         // temporarely pointer to the buffe
+    reprCLEG *bufferCLEGLeft;        // pointer to CLE to represent
+    reprCLEG *_bufferCLEGLeft;       // temporarely pointer to the buffer
 
     reprCLE *bufferCLERight;          // pointer to CLE to represent
-    reprHGE *bufferHGERight;          // pointer to HGE to represent
     reprCLE *_bufferCLERight;         // temporarely pointer to the buffer
+    reprHGE *bufferHGERight;          // pointer to HGE to represent
     reprHGE *_bufferHGERight;         // temporarely pointer to the buffe
+    reprCLEG *bufferCLEGRight;        // pointer to CLE to represent
+    reprCLEG *_bufferCLEGRight;       // temporarely pointer to the buffer
         
     yarp::os::Semaphore countEventLocker;
     yarp::os::Semaphore countEventLocker2;
@@ -202,7 +209,18 @@ public:
     void setResponseGradient(int value) {
         responseGradient = value;
     }
-        
+     
+
+    /**
+     * @brief function that sets the event type to be plotted
+     * @param value the event type
+
+     */
+    void setType(std::string value) {
+        evType = value;
+    }   
+
+
     /**
      * @brief function that set the flag for the ASV chip
      * @param value value to assign to the flag
@@ -350,6 +368,35 @@ public:
      * @brief function that returns the pointer to the HGE Left
      */
     reprHGE* getHGELeft() {return _bufferHGELeft;};
+    /**
+     * @brief function that returns the pointer to the HGE Left
+
+     */
+    reprCLEG* getCLEGLeft() {
+        
+        if(countCLEGLeft == 0) {
+            return 0;
+        }
+        _bufferCLEGLeft--;
+        
+        
+        return _bufferCLEGLeft;
+
+    };
+    
+        /**
+     * @brief function that returns the pointer to the HGE Left
+
+     */
+    reprCLEG* getCLEGRight() {
+        if(countCLEGRight == 0) {
+            return 0;
+        }
+        _bufferCLEGRight--;
+        
+        return _bufferCLEGRight;
+    };
+
 
     /**
      * @brief function that sets the pointer to the HGE Left
@@ -382,6 +429,34 @@ public:
     void setOrigCLERight(reprCLE* b) {_bufferCLERight = bufferCLERight = b;};
 
     /**
+     * @brief function that sets the pointer to the CLEG Left
+     */
+    void setCLEGLeft() { _bufferCLEGLeft = bufferCLEGLeft;countCLEGLeft =0 ; };
+
+    /**
+
+     * @brief function that sets the pointer to the CLEG right 
+     */
+    void setCLEGRight() { _bufferCLEGRight  = bufferCLEGRight ; countCLEGRight =0 ; };
+    
+    /**
+
+     * @brief set the pointer to the original value
+     */
+    void setOrigCLEGLeft(reprCLEG* b) {_bufferCLEGLeft = bufferCLEGLeft = b;};
+
+    /**
+
+     * @brief set the pointer to the original value
+     */
+    void setOrigCLEGRight(reprCLEG* b) {_bufferCLEGRight = bufferCLEGRight = b;};
+
+
+
+
+
+    /**
+
      * add the cluster event and all its features
      */
     void addCLE(emorph::ecodec::eEvent* ptr);
@@ -390,6 +465,13 @@ public:
      * add the hough event 
      */
     void addHGE(emorph::ecodec::eEvent* ptr);
+
+
+    /**
+     * add the cluster event gauss and all its features
+     */
+    void addCLEG(emorph::ecodec::eEvent* ptr);
+
 };
 
 #endif //UNMASK_H

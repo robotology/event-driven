@@ -376,8 +376,53 @@ void unmask::addHGE(eEvent* e) {
     }
 }
 
+void unmask::addCLEG(eEvent* qevt) {
+    if(qevt->getType()=="CLE-G") {
+        ClusterEventGauss* ptr=dynamic_cast<ClusterEventGauss*>(qevt);
+        //fprintf(stdout,"received CLE_G from %d \n",ptr->getChannel() );
+
+        //mutexCLEGLeft.wait();
+        if(ptr->getChannel() == 0) {
+            //fprintf(stdout,"writing on bufferCLEGLeft from channel %d \n",ptr->getChannel() );
+    
+            _bufferCLEGLeft->xCog  = ptr->getYCog();
+            _bufferCLEGLeft->yCog  = 128 - ptr->getXCog();
+            _bufferCLEGLeft->xSigma2 = ptr->getXSigma2();
+            _bufferCLEGLeft->ySigma2 = ptr->getYSigma2();
+            _bufferCLEGLeft->xySigma = ptr->getXYSigma();
+            _bufferCLEGLeft->numAE = ptr->getNumAE();
+            _bufferCLEGLeft->id    = ptr->getId();
+            if (countCLEGLeft < 10) {
+                _bufferCLEGLeft++;
+                countCLEGLeft++;
+            }
+        }
+        //mutexCLEGLeft.post();
+
+        //mutexCLEGRight.wait();
+        if(ptr->getChannel() == 1) {
+            //fprintf(stdout,"writing on bufferCLEGRight from channel %d \n",ptr->getChannel() );
+                
+            _bufferCLEGRight->xCog  = ptr->getYCog();
+            _bufferCLEGRight->yCog  = 128 - ptr->getXCog();
+            _bufferCLEGRight->xSigma2 = ptr->getXSigma2();
+            _bufferCLEGRight->ySigma2 = ptr->getYSigma2();
+            _bufferCLEGRight->xySigma = ptr->getXYSigma();
+            _bufferCLEGRight->numAE = ptr->getNumAE();
+            _bufferCLEGRight->id    = ptr->getId();
+            if (countCLEGRight < 10) {
+                _bufferCLEGRight++;
+                countCLEGRight++;
+            } 
+        }
+        //mutexCLEGRight.post();
+       
+    }
+}
+
+
 void unmask::unmaskData(Bottle* packets) {
-    //AER_struct sAER
+
     count++;
     int num_events = packets->size();
     //printf("packet size %d \n", num_events);
@@ -503,7 +548,7 @@ void unmask::unmaskData(Bottle* packets) {
                         //ptr->getXCog();
                         //ptr->getYCog();
                         int channel = ptr->getChannel();
-                        printf("channed of the CLUSTER EVENT %d \n", channel);
+                        printf("channel of the CLUSTER EVENT %d \n", channel);
                         
                         addCLE(q[evt]);
                     }
@@ -516,8 +561,18 @@ void unmask::unmaskData(Bottle* packets) {
                         
                         addHGE(q[evt]);
                     }
+                    else if(q[evt]->getType()=="CLE-G") {
+                        
+                        ClusterEventGauss* ptr=dynamic_cast<ClusterEventGauss*>(q[evt]);
+  
+                        //code for CLEG                
+                        fprintf(stdout,"unmaskData Bottle: received event type: %s x: %d y: %d ch: %d \n", ptr->getType().c_str(),
+ptr->getXCog(),ptr->getYCog(),ptr->getChannel());
+                        
+                        addCLEG(q[evt]);
+                    }
                     else {
-                        printf("not recognized");
+                        printf("unmaskData Bottle: not recognized");
                     }
                 }
                 else {
@@ -537,7 +592,7 @@ void unmask::unmaskData(Bottle* packets) {
 
 
 void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
-    //AER_struct sAER
+
     count++;
     bool endofwords = false;
     int num_events;
@@ -629,7 +684,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz, bool verb) {
                 }   
             }
             else {
-                printf("NOT Recognized!!! \n");
+                printf("unmaskData char: NOT Recognized!!! \n");
             }
         }
         

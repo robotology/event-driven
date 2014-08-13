@@ -91,6 +91,19 @@ typedef struct represHGE {
     unsigned long timestamp;
 }reprHGE;
 
+typedef struct represCLEG {
+    short id;
+    short xCog;
+    short yCog;
+    short channel;
+    short numAE;
+    short xSigma2;
+    short ySigma2;
+    short xySigma;
+    unsigned long timestamp;
+}reprCLEG;
+
+
 #endif //__CONFIG_H
 //----- end-of-file --- ( next line intentionally left blank ) ------------------
 
