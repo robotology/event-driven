@@ -126,6 +126,7 @@ void eventBottle::set_data(char* i_data, int i_size) {
 }
 
 void eventBottle::set_data(Bottle* p) {
+    
     packet = p;
     size_of_the_bottle = packet->size();
     packetPointer = 0;
@@ -135,18 +136,18 @@ void eventBottle::set_data(Bottle* p) {
 bool eventBottle::write(yarp::os::ConnectionWriter& connection) {
     connection.appendInt(BOTTLE_TAG_LIST + BOTTLE_TAG_BLOB + BOTTLE_TAG_INT);
     connection.appendInt(2);        // four elements
-    
+
     size_t binaryDim;
     size_of_the_bottle  = packet->size();
     size_of_the_packet  = size_of_the_bottle;
     bytes_of_the_packet = size_of_the_packet * 4;
+
     //packetPointer = (char*) packet->toBinary(&binaryDim);
     //bytes_of_the_packet = binaryDim;
     //size_of_the_packet  = bytes_of_the_packet >> 2;
     connection.appendInt(bytes_of_the_packet);
     //connection.appendInt(size_of_the_packet);
     //bytes_of_the_packet = size_of_the_packet * wordDimension;   // number of 32bit word times 4bytes
-
     //--------------------------------------------------------------------------------------------
     // -------- serialisation of the bottle ---------------------------
     unsigned char tmpChar;
@@ -165,7 +166,7 @@ bool eventBottle::write(yarp::os::ConnectionWriter& connection) {
         }
     }
     //----------------------------------------------------------------------------------------------
-    
+   
 
 #if VERBOSE
     int word;
@@ -183,7 +184,6 @@ bool eventBottle::write(yarp::os::ConnectionWriter& connection) {
     }    
     printf("\n");
 #endif
-
     //-----------------------------------------------------------------------------------------------
     connection.appendBlock(packetPointer,bytes_of_the_packet);   //serializing bottle into char*
     //printf("packet \n %s \n", packet->toString().c_str());
@@ -231,7 +231,7 @@ bool eventBottle::read(yarp::os::ConnectionReader& connection) {
         //printf("= %08x \n", word);
         
     }
- 
+    //printf("packet %d %d \n %s \n\n\n\n\n\n", size_of_the_packet, bytes_of_the_packet, packet->toString().c_str());
     //----------------------------------------------------------------------------------------------------------
       
     //packet->fromBinary(packetPointer,bytes_of_the_packet);

@@ -514,6 +514,38 @@ public:
     yarp::os::Property getContent() const;
 };
 
+/**************************************************************************/
+class ClusterEventGauss : public ClusterEvent
+{
+protected:
+    int numAE;
+    int xSigma2;
+    int ySigma2;
+    int xySigma;
+
+public:
+    ClusterEventGauss();
+    ClusterEventGauss(const ClusterEventGauss &event);
+    ClusterEventGauss(const yarp::os::Bottle &packets, const int pos=0);
+
+    ClusterEventGauss &operator=(const ClusterEventGauss &event);
+    bool operator==(const ClusterEventGauss &event);
+
+    int getNumAE()      const               { return numAE;            }
+    int getXSigma2()    const               { return xSigma2;          }
+    int getYSigma2()    const               { return ySigma2;          }
+    int getXYSigma()    const               { return xySigma;          }
+
+    void setNumAE(const int numAE)          { this->numAE=numAE;       }
+    void setXSigma2(const int xSigma2)      { this->xSigma2=xSigma2;   }
+    void setYSigma2(const int ySigma2)      { this->ySigma2=ySigma2;   }
+    void setXYSigma(const int xySigma)      { this->xySigma=xySigma;   }
+
+    int getLength() const { return 3; } 
+    bool operator==(const eEvent &event) { return operator==(dynamic_cast<const ClusterEventGauss&>(event)); }
+    yarp::os::Bottle   encode() const;
+    yarp::os::Property getContent() const;
+};
 
 }
 
