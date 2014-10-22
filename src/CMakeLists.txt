@@ -15,5 +15,4 @@ add_subdirectory   (  grabbers                  )
 add_subdirectory   (  interfaces		)
 add_subdirectory   (  processing                )
 add_subdirectory   (  visualization             )
-add_subdirectory   (  motorActions		)
 
