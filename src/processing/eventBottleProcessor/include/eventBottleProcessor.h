@@ -42,12 +42,15 @@ class EventBottleManager : public yarp::os::BufferedPort<eventBottle>
 private:
 
     std::string 				                moduleName;         //string containing module name
-    std::string 				                inPortName;        	//string containing speech input port name
-    std::string 				                outPortName;	    //string containing start output port name
-    std::string 				                eventPortName;	    //string containing start output port name
+    std::string 				                inPortName;        	//string containing input port name
+    std::string 				                outPortName;	    //string containing output port name (for output sent as yarp bottle)
+    std::string 				                aePortName;	        //string containing output port name (for input address events sent as 
+                                                                    //eventBottle, synchronised with output eventBottle from the processing)
+    std::string 				                eventPortName;	    //string containing output port name (for output sent as eventBottle)
 
     yarp::os::Port                              outPort;            //output port for the Bottle of events created from the input eventBuffer
 
+    yarp::os::BufferedPort<eventBottle>            aePort;             //output port for the eventBottle with the input address events
     yarp::os::BufferedPort<eventBottle>         eventPort;          //output port for the eventBottle with the new events computed by the module
 
 public:

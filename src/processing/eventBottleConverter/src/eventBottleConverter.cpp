@@ -203,8 +203,10 @@ void EventToBottleHandler::onRead(eventBottle &bot)
                         Bottle &btype = tmp.addList();
                         btype.addString("type");
                         btype.addString(type);
-                
-                        //fprintf(stdout, "Size %d TimeStamp: %d AddressEvent: (X: %d  Y: %d  pol: %d  cha: %d) \n",size, ts, posX, posY, polarity, channel);
+                        if(e == 1)
+                        {
+                            fprintf(stdout, "Size %d TimeStamp: %d AE: (X: %d  Y: %d  pol: %d  cha: %d) \n",size, ts, posX, posY, polarity, channel);
+                        }
                     } 
                 }
                 else if (q[e]->getType()=="CLE-G") //identify the type of the packet (ClusterEventGauss)
@@ -259,8 +261,10 @@ void EventToBottleHandler::onRead(eventBottle &bot)
                         Bottle &btype = tmp.addList();
                         btype.addString("type");
                         btype.addString(type);
-                
-                        //fprintf(stdout, "Size %d TimeStamp: %d ClusterEventGauss: (X: %d  Y: %d  cha: %d m: %d xs: %d ys: %d xys: %d) \n",size, ts, xCog, yCog, channel, numAE, xSigma2, ySigma2, xySigma);
+                        if (e == 1)
+                        {
+                            fprintf(stdout, "Size %d TimeStamp: %d CLE-G: (X: %d  Y: %d  cha: %d m: %d xs: %d ys: %d xys: %d) \n",size, ts, xCog, yCog, channel, numAE, xSigma2, ySigma2, xySigma);
+                        }
                     } 
                 }
 
