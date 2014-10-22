@@ -423,16 +423,16 @@ AddressEvent::AddressEvent(const Bottle &packets, const int pos)
         if ((word0>>26)==0)
         {
             polarity=word0&0x01;
-
+            
             word0>>=1;
             x=word0&0x7f;
-
+            
             word0>>=7;
             y=word0&0x7f;
-
+            
             word0>>=7;
             channel=word0&0x01;
-            
+                        
             type="AE";
             valid=true;
         }
@@ -466,6 +466,7 @@ bool AddressEvent::operator==(const AddressEvent &event)
 Bottle AddressEvent::encode() const
 {
     int word0=(0<<26)|((channel&0x01)<<15)|((y&0xff)<<8)|((x&0x7f)<<1)|(polarity&0x01);
+    //int word0=(0<<26)|((channel&0x01)<<15)|((y&0x7f)<<8)|((x&0x7f)<<1)|(polarity&0x01); //chiara: word0 = ch|yyyyyyy|xxxxxxx|p
 
     Bottle ret;
     ret.addInt(word0);
@@ -616,7 +617,6 @@ AddressEvent3D::AddressEvent3D()
     y=0;
 }
 
-
 /**************************************************************************/
 AddressEvent3D::AddressEvent3D(const AddressEvent3D &event)
 {
@@ -719,7 +719,7 @@ AddressEvent3DFeatures::AddressEvent3DFeatures() : AddressEvent3D()
 
 /**************************************************************************/
 AddressEvent3DFeatures::AddressEvent3DFeatures(const AddressEvent3DFeatures &event)
-{
+{ 
     valid=event.valid;
     type=event.type;
     disparity=event.disparity;
@@ -808,7 +808,7 @@ Bottle AddressEvent3DFeatures::encode() const
     int word1=(3<<26)|((yFlow&0xff)<<16)|((xFlow&0xff)<<8)|(orientation&0xff);
 
     Bottle ret;
-    ret.addInt(word0);
+    ret.addInt(word0); 
     ret.addInt(word1);
     return ret;
 }
@@ -842,7 +842,7 @@ ClusterEvent::ClusterEvent()
 ClusterEvent::ClusterEvent(const ClusterEvent &event)
 {
     valid   = event.valid;
-    type    = event.type;
+    type    = event.type; 
     channel = event.channel;
     xCog    = event.xCog;
     yCog    = event.yCog;
@@ -870,7 +870,6 @@ ClusterEvent::ClusterEvent(const Bottle &packets, const int pos)
 
             word0>>=7;
             yCog=word0&0xff;
-
             word0>>=8;
             id=word0&0x03ff;
 
@@ -1212,7 +1211,7 @@ ClusterEventFeatures3 &ClusterEventFeatures3::operator=(const ClusterEventFeatur
     xVel=event.xVel;
     yVel=event.yVel;
     numAE=event.numAE;
-
+    //id missing
     return *this;
 }
 
@@ -1571,7 +1570,7 @@ Bottle ClusterEvent3DFeatures2::encode() const
     int word2=(12<<26)|((shapeType&0xff)<<16)|((ySize&0xff)<<8)|(xSize&0xff);
 
     Bottle ret;
-    ret.addInt(word0);
+    ret.addInt(word0); 
     ret.addInt(word1);
     ret.addInt(word2);
     return ret;
@@ -1881,18 +1880,18 @@ ClusterEventGauss::ClusterEventGauss(const Bottle &packets, const int pos)
         if (((word0>>26)==19)&&((word1>>26)==20)&&
             ((word2>>26)==21))
         {
-            // word0
+           // word0
             channel=word0&0x01;
 
             word0>>=1;
             xCog=word0&0x7f;
-
+ 
             word0>>=7;
-            yCog=word0&0xff;
+            yCog=word0&0x7f;
 
             word0>>=8;
             id=word0&0xff;
-
+ 
             // word1
             numAE=word1&0x00ffffff;
 
@@ -1920,7 +1919,7 @@ ClusterEventGauss &ClusterEventGauss::operator=(const ClusterEventGauss &event)
     channel=event.channel;
     id=event.id;
     xCog=event.xCog;
-    yCog=event.yCog;
+    yCog=event.yCog; 
     xSigma2=event.xSigma2;
     ySigma2=event.ySigma2;
     xySigma=event.xySigma;
@@ -1941,7 +1940,7 @@ bool ClusterEventGauss::operator==(const ClusterEventGauss &event)
 /**************************************************************************/
 Bottle ClusterEventGauss::encode() const
 {   
-    int word0=(19<<26) |((id&0xff)<<8)|((yCog&0xff)<<8)|((xCog&0x7f)<<1)|(channel&0x01);
+    int word0=(19<<26)|((id&0xff)<<16)|((yCog&0x07f)<<8)|((xCog&0x7f)<<1)|(channel&0x01);
     int word1=(20<<26)|(numAE&0x00ffffff);
     int word2=(21<<26)|((xySigma&0xff)<<16)|((ySigma2&0xff)<<8)|(xSigma2&0xff);
     
@@ -1956,7 +1955,7 @@ Bottle ClusterEventGauss::encode() const
 /**************************************************************************/
 Property ClusterEventGauss::getContent() const
 {
-    Property prop=ClusterEvent::getContent(); //???
+    Property prop=ClusterEvent::getContent(); 
     prop.put("numAE",numAE);
     prop.put("xSigma2",xSigma2);
     prop.put("ySigma2",ySigma2);
