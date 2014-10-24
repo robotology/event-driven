@@ -31,7 +31,7 @@ add_subdirectory  ( eventBottleConverter    )
 
 # --------  TIMESTAMP-BASED OPTICAL FLOW -------------
 add_subdirectory   (  tsOptFlow                    )
-add_subdirectory   (  tsOptFlowViewer              )
+#add_subdirectory   (  tsOptFlowViewer              )
 
 # --------  OBJECT RECOGNITION
 add_subdirectory   ( recognitionModules/extraction )

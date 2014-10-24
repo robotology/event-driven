@@ -6,33 +6,33 @@
 
 <module>
    <name>dataSetPlayer</name>
-   <node>/icub14</node>
+   <node>localhost</node>
    <tag>dataSetPlayer</tag>
 </module>
 
 <module>
-   <name>cartesianFC</name>
+   <name>cartesianFrameCollector</name>
    <parameters>--synchPeriod 1 --tristate --stereo --bottleHandler</parameters>
-   <node>/icub14</node>
+   <node>localhost</node>
    <tag>cartFrameCollector</tag>
 </module>
 
 <module>
    <name>eventBottleConverter</name>
-   <node>/icub14</node>
+   <node>localhost</node>
    <tag>eventBottleConvert</tag>
 </module>
 
 <module>
    <name>yarpview</name>
    <parameters>--name /eventViewLeft --x 000 --y 000 --RefreshTime 50 </parameters>
-   <node>/icub14</node>
+   <node>localhost</node>
    <tag>eventViewerLeft</tag>
 </module>
 <module>
    <name>yarpview</name>
    <parameters>--name /eventViewRight --x 350 --y 000 --RefreshTime 50 </parameters>
-   <node>/icub14</node>
+   <node>localhost</node>
    <tag>eventViewerRight</tag>
 </module>
 
