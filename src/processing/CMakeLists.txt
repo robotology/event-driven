@@ -14,33 +14,34 @@ IF(NOT WIN32)
 #	add_subdirectory   (  basicAexGrabber              )
 ENDIF (NOT WIN32)
 
-add_subdirectory  ( angle2Sac   )
+#add_subdirectory  ( angle2Sac   )
 #add_subdirectory  (  buffer2image		)
 #add_subdirectory  (  disparitySelector		)
-add_subdirectory  ( eventSelectiveAttention )
-add_subdirectory  ( eventFeatureExtractor    )
-add_subdirectory  ( harmonicPathPlanner  )
-add_subdirectory  ( upSampler    )
-add_subdirectory  ( velocityExtractor    )
-add_subdirectory  ( visualAligner    )
+#add_subdirectory  ( eventSelectiveAttention )
+#add_subdirectory  ( eventFeatureExtractor    )
+#add_subdirectory  ( harmonicPathPlanner  )
+#add_subdirectory  ( upSampler    )
+#add_subdirectory  ( velocityExtractor    )
+#add_subdirectory  ( visualAligner    )
 add_subdirectory  ( eventBottleProcessor )
 add_subdirectory  ( eventBottleConverter    )
+add_subdirectory  ( eventAnalysis    )
 
 # --------  OPTICFLOW SUBFOLDERS ---------------------
 #add_subdirectory   (  eventOpticalFlow             )
 
 # --------  TIMESTAMP-BASED OPTICAL FLOW -------------
-add_subdirectory   (  tsOptFlow                    )
+#add_subdirectory   (  tsOptFlow                    )
 #add_subdirectory   (  tsOptFlowViewer              )
 
 # --------  OBJECT RECOGNITION
-add_subdirectory   ( recognitionModules/extraction )
-add_subdirectory   ( recognitionModules/association)
-add_subdirectory   ( recognitionModules/recognition)
-add_subdirectory   ( recognitionModules/aggregation)
+#add_subdirectory   ( recognitionModules/extraction )
+#add_subdirectory   ( recognitionModules/association)
+#add_subdirectory   ( recognitionModules/recognition)
+#add_subdirectory   ( recognitionModules/aggregation)
 
 #----------- Clustering -----------------------------
-add_subdirectory   ( clustering                     )
+#add_subdirectory   ( clustering                     )
 
 if(ICUB_USE_IPOPT)
         #add_subdirectory ( targetFinder                  )

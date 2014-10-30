@@ -12,7 +12,7 @@ ENDIF (NOT WIN32)
 
 #add_subdirectory   (  development               )
 add_subdirectory   (  grabbers                  )
-add_subdirectory   (  interfaces		)
+#add_subdirectory   (  interfaces		)
 add_subdirectory   (  processing                )
 add_subdirectory   (  visualization             )
 
