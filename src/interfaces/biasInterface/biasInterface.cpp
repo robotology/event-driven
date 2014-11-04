@@ -298,7 +298,7 @@ static void cb_digits_injgnd( GtkAdjustment *adj ) {
 
 
 static void cb_digits_cas( GtkAdjustment *adj ) {
-    mutex.wait();
+    mutexVar.wait();
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -310,7 +310,7 @@ static void cb_digits_cas( GtkAdjustment *adj ) {
         Bottle in;
         _pOutPort->write(bot,in);
     }
-    mutex.post();
+    mutexVar.post();
 }
 
 //-------------------------------------------------
@@ -473,7 +473,7 @@ static void cb_digits_injgndRight( GtkAdjustment *adj ) {
 
 
 static void cb_digits_casRight( GtkAdjustment *adj ) {
-    mutex.wait();
+    mutexVar.wait();
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -485,7 +485,7 @@ static void cb_digits_casRight( GtkAdjustment *adj ) {
         Bottle in;
         _pOutPort->write(bot,in);
     }
-    mutex.post();
+    mutexVar.post();
 }
 
 
@@ -494,7 +494,7 @@ static void cb_digits_casRight( GtkAdjustment *adj ) {
 
 static void callbackSaveButton( GtkWidget *widget,gpointer data ) {
     printf ("Save button - %s was pressed\n", (char *) data);
-    mutex.wait();
+    mutexVar.wait();
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -504,12 +504,12 @@ static void callbackSaveButton( GtkWidget *widget,gpointer data ) {
         Bottle in;
         _pOutPort->write(bot,in);
     }
-    mutex.post();
+    mutexVar.post();
 }
 
 static void callbackLoadButton( GtkWidget *widget,gpointer data ) {
     printf ("Load button - %s was pressed\n", (char *) data);
-    mutex.wait();
+    mutexVar.wait();
     c = 100;
     printf("c %d \n", c);
     if (_pOutPort!=NULL) {
@@ -521,7 +521,7 @@ static void callbackLoadButton( GtkWidget *widget,gpointer data ) {
         Bottle in;
         _pOutPort->write(bot,in);
     }
-    mutex.post();
+    mutexVar.post();
     
     //loading in local file
     if(entry_file!=NULL){
@@ -544,7 +544,7 @@ static void callbackLoadButton( GtkWidget *widget,gpointer data ) {
 
 static void callbackProgBiasButton( GtkWidget *widget,gpointer data ) {
     printf ("Prog Bias - %s was pressed\n", (char *) data);
-    mutex.wait();
+    mutexVar.wait();
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -561,12 +561,12 @@ static void callbackProgBiasButton( GtkWidget *widget,gpointer data ) {
         Bottle in;
         _pOutPort->write(bot,in);
     }
-    mutex.post();
+    mutexVar.post();
 }
 
 static void callbackDumpButton( GtkWidget *widget,gpointer data ) {
     printf ("Dump Button - %s was pressed\n", (char *) data);
-    mutex.wait();
+    mutexVar.wait();
     if (_pOutPort!=NULL) {
         yarp::os::Bottle bot; //= _pOutPort->prepare();
         bot.clear();
@@ -583,7 +583,7 @@ static void callbackDumpButton( GtkWidget *widget,gpointer data ) {
         Bottle in;
         _pOutPort->write(bot,in);
     }
-    mutex.post();
+    mutexVar.post();
 }
 
 gint timeout_update_CB(gpointer data) {
