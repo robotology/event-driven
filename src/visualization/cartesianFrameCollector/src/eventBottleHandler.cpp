@@ -134,14 +134,15 @@ void eventBottleHandler::onRead(eventBottle& i_ub) {
     
     
     //-------------------------------------------------------------------------------   
-    //printf("sem address onRead %08x \n",semBottleBuffer[extractPosition] );
-    //printf("trying the wait method in onRead \n");
+        
+    printf("sem address onRead %08x \n",semBottleBuffer[extractPosition] );
+    printf("trying the wait method in onRead \n");
     semBottleBuffer[insertPosition]->wait();
         
     // receives the buffer and saves it
     int dim = i_ub.get_sizeOfPacket() ;      // number of words     
     receivedBufferSize = dim;
-    //printf("%d dim : %d \n", insertPosition,dim);
+    printf("%d dim : %d \n", insertPosition,dim);
 
     //--------------------------------------------------------------------------------
     //receivedBottle = new Bottle(*i_ub.get_packet());
@@ -154,7 +155,7 @@ void eventBottleHandler::onRead(eventBottle& i_ub) {
     //printf("bufferBottle[%d] %08x i_ub.get_packet() %08X \n",insertPosition, bufferBottle[insertPosition], i_ub.get_packet()  );
     //delete bufferBottle[insertPosition];
     //bufferBottle[insertPosition] = receivedBottle;
-    //printf("receivedBottle  %08x \n",receivedBottle);
+    printf("receivedBottle  %08x \n",receivedBottle);
     bufferBottle[insertPosition]->clear();
     //copyBottle(i_ub.get_packet(),bufferBottle[insertPosition]);
     bufferBottle[insertPosition]->copy(*i_ub.get_packet());          
@@ -163,22 +164,22 @@ void eventBottleHandler::onRead(eventBottle& i_ub) {
 
     //printf("insertPosition %d  \n", insertPosition);
 #ifdef VERBOSE
-    fprintf(fout, "dim: %d \n",dim);
+    //fprintf(fout, "dim: %d \n",dim);
     //plotting out
     string str;
     int chksum;
     //for (int i=0; i < bufferBottle[insertPosition]->size(); i++) {
-    for (int i=0; i < dim; i++) {
-        // fprintf(fout,"%08X \n", bufferBottle[insertPosition]->get(i).asInt());
-        fprintf(fout,"%08X \n", i_ub.get_packet()->get(i).asInt());
+    for (int i=0; i < dim; i++) 
+    {
+        fprintf(fout,"bufferBottle %08X \n", bufferBottle[insertPosition]->get(i).asInt());
+        fprintf(fout,"i_ub %08X \n", i_ub.get_packet()->get(i).asInt());
         //printf("%08X \n", receivedBottle->get(i).asInt());
     }
     fprintf(fout,"----------------------------- \n");
     
 #endif
     
-    //printf("%d saved dim %d \n",insertPosition, bufferBottle[insertPosition]->size());
-
+    printf("%d saved dim %d \n",insertPosition, bufferBottle[insertPosition]->size());
     semBottleBuffer[insertPosition]->post();
     //------------------------------------------------------------------------------------
 
@@ -287,6 +288,7 @@ void eventBottleHandler::onRead(eventBuffer& i_ub) {
 void eventBottleHandler::resetTimestamps() {
     //unmask_events.resetTimestamps();
 }
+
 
 void eventBottleHandler::getMonoImage(ImageOf<PixelMono>* image, unsigned long minCount, unsigned long maxCount, bool camera){
     assert(image!=0);

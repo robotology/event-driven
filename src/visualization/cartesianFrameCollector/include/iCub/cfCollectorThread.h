@@ -64,7 +64,8 @@ private:
     int height_orig, width_orig;         // original dimension of the input and output images
     int synchPeriod;                     // synchronization period between events and viewer
     int responseGradient;                // responseGradient parameter
-    std::string evType;                         // type of event to be plotted parameter
+    int cleMax;                           // maximum number of cluster events to be plotted in a single frame parameter
+    std::string evType;                  // type of event to be added to the image parameter
 
     //struct timeval tvstart,tvend;
     //struct timespec start_time, stop_time;
@@ -107,8 +108,10 @@ private:
     plotterThread* pThread;              // plotterThread for the trasformation of the event in images
     cFrameConverter* cfConverter;        // receives real-time events
     unmask* unmask_events;               // object that unmask events
+    eventBottleHandler *aeHandler;       // handler of received events as bottle (for address events)
     eventBottleHandler *ebHandler;       // handler of received events as bottle
-    yarp::os::Bottle* receivedBottle;    // bottle currently extracted from the buffer 
+    yarp::os::Bottle* aeBottle;          // bottle of address events currently extracted from the buffer
+    yarp::os::Bottle* receivedBottle;    // bottle of events currently extracted from the buffer 
     char* bufferRead;                    // buffer of events read from the port
     char* bufferCopy;                    // local copy of the events read
     FILE* fout;                          // file for temporarely savings of events
@@ -279,11 +282,16 @@ public:
     void setResponseGradient(int value) {responseGradient = value; }; 
  
     /**
-     * @brief function that indicates which type of events will be plotted 
+     * @brief function that indicates which type of events will be added to the image
      */
     void setType(std::string value) {evType = value; }; 
  
-   
+    /**
+     * @brief function that indicates how many cluster events can be added to the image
+     */
+    void setCleMax(int value) {cleMax = value; }; 
+
+
     /**
      * @brief function that given a section of the buffer creates a bottle
      */

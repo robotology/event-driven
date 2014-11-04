@@ -49,7 +49,8 @@ using namespace std;
         printf("--sychPeriod       (int)    : period for synchronization of the variable lastTimestamp\n");
         printf("--windowSize       (int)    : size of the window where events are collected \n ");
         printf("--stereo                    : if present both left and right events are represented \n ");
-        printf("--evType           (string) : specifies the type of events to be plotted (ae, cle, cleg, ofe, etc.)\n");   
+        printf("--evType           (string) : specifies the type of events to be added to the image (cle, cleg, ofe, etc.)\n");   
+        printf("--cleMax           (int)    : maximum number of Cluster Events to be added \n");   
         printf("--bottleHanlder             : the user select to send events only through bottle port esclusively  \n");
         printf("--verbose         : enable debug savings of events in files");
         printf("\n press CTRL-C to continue \n");
@@ -76,7 +77,7 @@ using namespace std;
     robotName             = rf.check("robot", 
                            Value("icub"), 
                            "Robot name (string)").asString();
-    robotPortName         = "/" + robotName + "/head";\
+    robotPortName         = "/" + robotName + "/head";
     
     /*
     * attach a port of the same name as the module (prefixed with a /) to the module
@@ -116,7 +117,6 @@ using namespace std;
                            "windowSize (int)").asInt();
     printf("looking for the windowSize; found value %d \n", windowSize);
     cfThread->setWindowSize(windowSize);
-
     
     /*
     * set the retinaSize (considering squared retina)
@@ -126,8 +126,6 @@ using namespace std;
                            Value(128), 
                            "retinalSize (int)").asInt();
     cfThread->setRetinalSize(retinalSize);
-
-
     
     /*
     * set the retinaSize (considering squared retina)
@@ -155,6 +153,15 @@ using namespace std;
                            "evType (string)").asString();
     fprintf(stdout,"add %s event for plotting \n", evType.c_str());
     cfThread->setType(evType);
+
+    /*
+    * set the maximum number of cluster events to be added to the image
+    */
+    cleMax            = rf.check("cleMax", 
+                           Value(10), 
+                           "cleMax (int)").asInt();
+    cfThread->setCleMax(cleMax);
+
 
      /* 
      *checking whether the user wants exclusively to send events as bottles
