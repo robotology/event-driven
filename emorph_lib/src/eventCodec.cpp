@@ -422,16 +422,22 @@ AddressEvent::AddressEvent(const Bottle &packets, const int pos)
         // check type and fill fields
         if ((word0>>26)==0)
         {
+            //fprintf(stdout,"AE word0: %d ", word0);
+
             polarity=word0&0x01;
+            //fprintf(stdout,"po: %d ", word0&0x01);
 
             word0>>=1;
             x=word0&0x7f;
+            //fprintf(stdout,"x: %d ", word0&0x7f);
 
             word0>>=7;
             y=word0&0x7f;
+            //fprintf(stdout,"y: %d ", word0&0x7f);
 
             word0>>=7;
             channel=word0&0x01;
+            //fprintf(stdout,"ch: %d \n", word0&0x01);
             
             type="AE";
             valid=true;
@@ -1881,17 +1887,22 @@ ClusterEventGauss::ClusterEventGauss(const Bottle &packets, const int pos)
         if (((word0>>26)==19)&&((word1>>26)==20)&&
             ((word2>>26)==21))
         {
+            //fprintf(stdout,"CL word0: %d ", word0);
             // word0
             channel=word0&0x01;
+            //fprintf(stdout,"ch: %d ", word0&0x01);
 
             word0>>=1;
             xCog=word0&0x7f;
+            //fprintf(stdout,"x: %d ", word0&0x7f);
 
             word0>>=7;
-            yCog=word0&0xff;
+            yCog=word0&0x7f;
+            //fprintf(stdout,"y: %d ", word0&0x7f);
 
             word0>>=8;
             id=word0&0xff;
+            //fprintf(stdout,"id: %d \n", word0&0xff);
 
             // word1
             numAE=word1&0x00ffffff;
