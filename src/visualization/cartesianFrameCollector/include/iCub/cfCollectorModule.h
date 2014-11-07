@@ -195,12 +195,13 @@ class cfCollectorModule:public yarp::os::RFModule {
     std::string robotName;                      // name of the robot
     std::string robotPortName;                  // reference to the head of the robot
     std::string handlerPortName;                // name of the handler port (comunication with respond function)    
-    std::string evType;                         // type of events to be plotted
+    std::string evType;                         // type of events to be added to the image
     int ratethread;                             // time constant for ratethread
     int synchPeriod;                            // synchronization period between events and viewer
     int retinalSize;                            // dimension of the retina
     int windowSize;                             // dimension of temporal window for gathering events 
     int responseGradient;                       // amplitude of the response gradient for every event in the image
+    int cleMax;                                 // maximum number of cluster events to be added to the image
     yarp::os::Port handlerPort;                 // a port to handle messages 
     cfCollectorThread* cfThread;                // cfCollectorThread for processing events
 
