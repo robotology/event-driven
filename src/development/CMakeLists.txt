@@ -11,6 +11,7 @@ cmake_minimum_required(VERSION 2.6)
 #add_subdirectory  (  emorphUnmaskTest             )
 #add_subdirectory  (  eventProcessor               )
 #add_subdirectory  (  testWings                    )
-#add_subdirectory  (  staticCalib                    )
+#add_subdirectory  (  staticCalib                  )
+add_subdirectory   (  eBottleTest                  )
 
 

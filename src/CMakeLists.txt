@@ -10,7 +10,7 @@ IF(NOT WIN32)
 #	add_subdirectory   (  basicAexGrabber              )
 ENDIF (NOT WIN32)
 
-#add_subdirectory   (  development               )
+add_subdirectory   (  development               )
 add_subdirectory   (  grabbers                  )
 #add_subdirectory   (  interfaces		)
 add_subdirectory   (  processing                )

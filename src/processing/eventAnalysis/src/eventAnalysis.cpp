@@ -25,22 +25,27 @@
 
 eventStatisticsDumper::eventStatisticsDumper()
 {
-    eventsPerTS = 1;
+
     this->setStrict();
     this->moduleName = "Default";
-    outfilename = "/home/aglover/workspace/results/uniquetimestamps.txt";
-    fwriter.open(outfilename.c_str());
-    if(!fwriter.is_open()) {
-        std::cerr << "File did not open at: " << outfilename << std::endl;
-    }
+    //outfilename = "/home/aglover/workspace/results/uniquetimestamps.txt";
+
+
+    eventsPerTS = 1;
     ts = 0;
     total = 0;
     batched = 0;
+    sameTScount = 0;
 }
 
 void eventStatisticsDumper::setModuleName(std::string name)
 {
     this->moduleName = name;
+}
+
+void eventStatisticsDumper::setOutputName(std::string name)
+{
+    this->outfilename = name;
 }
 
 
@@ -49,8 +54,13 @@ bool eventStatisticsDumper::open()
     this->useCallback();
 
     //create all ports
-    inPortName = "/" + moduleName + "/etb:i";
+    inPortName = "/" + moduleName + ":i";
     BufferedPort<eventBottle >::open( inPortName.c_str() );
+
+    fwriter.open(outfilename.c_str());
+    if(!fwriter.is_open()) {
+        std::cerr << "File did not open at: " << outfilename << std::endl;
+    }
 
     return true;
 }
@@ -88,7 +98,7 @@ void eventStatisticsDumper::onRead(eventBottle &bot)
         {
             if(q[e] != 0)
             {
-                if(q[e]->getType()=="TS") //identify the type of the packet (Time Stamp)
+                if(q[e]->getType()=="TS") //identify the type (Time Stamp)
                 {
                     //write the number of events per timestamp to a file
                     //std::cout << eventsPerTS << std::endl;
@@ -97,22 +107,41 @@ void eventStatisticsDumper::onRead(eventBottle &bot)
                     unsigned long tstemp = (unsigned long) ptr->getStamp();
                     total++;
                     if(ts == tstemp) {
-                            eventsPerTS++;
+                            sameTScount++;
                     } else {
-                        if(eventsPerTS > 1) batched++;
-                        fwriter << eventsPerTS << std::endl;
-                        eventsPerTS = 1;
+                        if(sameTScount > 1) batched += sameTScount;
+                        //fwriter << eventsPerTS << std::endl;
+                        sameTScount = 1;
                     }
                     ts = tstemp;
+                    eventsPerTS--;
 
+                } else {
+                    eventsPerTS++;
                 }
 
 
             }
+
         }
 
     }
 
+}
+
+double eventStatisticsDumper::getBatchedPercentage()
+{
+    return 100 * batched / total;
+}
+
+int eventStatisticsDumper::getBatchedCount()
+{
+    return eventsPerTS;
+}
+
+unsigned long eventStatisticsDumper::getTSCount()
+{
+    return total;
 }
 
 /******************************************************************************/
@@ -137,8 +166,20 @@ bool eventStatisticsModule::configure(yarp::os::ResourceFinder &rf)
         std::cout << "Module name set to default: " << name << std::endl;
     }
     setName(name.c_str());
+    esd.setModuleName(name);
 
-    esd.setModuleName(std::string("StatisticsDumper"));
+    std::string outfilename;
+    if(rf.check(("outputFile")))
+    {
+        outfilename = rf.find(("outputFile")).asString();
+        std::cout << "Writing Output to: " << outfilename;
+    }
+    else
+    {
+        outfilename = "eventAnalysisOutput.txt";
+        std::cout << "Default Output: ./" << outfilename;
+    }
+    esd.setOutputName(outfilename);
     esd.open();
 
     return true;
@@ -149,6 +190,21 @@ bool eventStatisticsModule::close()
 
     std::cout << "Closing the Event Statistics Module" << std::endl;
     esd.close();
+}
+
+bool eventStatisticsModule::updateModule()
+{
+    std::cout << name << " " << esd.getBatchedPercentage() << "% batched "
+              << esd.getBatchedCount() << "# more "
+              << esd.getTSCount() << "# TS total "
+              << std::endl;
+
+    esd.fwriter << esd.getBatchedPercentage() << " "
+                << esd.getBatchedCount() << " "
+                << esd.getTSCount() << " "
+                << std::endl;
+
+    return true;
 }
 
 

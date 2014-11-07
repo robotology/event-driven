@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 2.6)
 IF(NOT WIN32) 
 	add_subdirectory   (  aexGrabber                   )		
 #	add_subdirectory   (  asvGrabber                   )
-	add_subdirectory   (  basicAexGrabber              )
+#	add_subdirectory   (  basicAexGrabber              )
 ENDIF (NOT WIN32)
 
 add_subdirectory  ( device2yarp )

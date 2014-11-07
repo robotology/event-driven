@@ -21,9 +21,9 @@ int main(int argc, char * argv[])
 {
     //i need an resource finder to configure a module
     yarp::os::ResourceFinder rf;
-    rf.setVerbose(false);
+    rf.setVerbose(true);
     rf.setDefaultContext("eMorph");           //where to look for config
-    rf.setDefaultConfigFile("eventAnalysis.ini");    //config file name
+    rf.setDefaultConfigFile("eventAnalysisConfig.ini");    //config file name
     rf.configure(argc,argv);                        //args overrule file
 
     //creating the yarp object initialised the interaction

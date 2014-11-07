@@ -28,6 +28,7 @@ SET(folder_source
   src/eventUnmaskICUBcircBuf.cpp
   src/objDistBuffer.cpp
   src/eBottle.cpp
+  src/eCodec.cpp
 )
 
 #FILE(GLOB folder_source 
@@ -53,6 +54,7 @@ SET(folder_header
   include/iCub/emorph/eventUnmaskICUBcircBuf.h
   include/iCub/emorph/objDistBuffer.h
   include/iCub/emorph/eBottle.h
+  include/iCub/emorph/eCodec.h
 )
 
 #FILE(GLOB folder_header 

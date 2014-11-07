@@ -17,27 +17,24 @@
 
 
 #include <yarp/os/all.h>
-#include <iCub/emorph/eventCodec.h>
+#include <iCub/emorph/eCodec.h>
 
 class eBottle : public yarp::os::Bottle {
 
 public:
 
     //constructors shouldn't change from Bottle
+    eBottle() : yarp::os::Bottle() {}
 
-    void addEvent(emorph::ecodec::eEvent &e);
+    void addEvent(emorph::ecodec2::eEvent &e);
 
-    void append(eBottle eb);
+    void append(eBottle &eb);
 
-    //emorph::ecodec::eEvent pop();
-    emorph::ecodec::eEvent& getEvent(int index);
-
-    //inhereted member functions
-    //clear
-    //
+    void get(emorph::ecodec2::eEvent &e, emorph::ecodec2::eEventQueue &q);
 
 private:
 
+    //hide all regular functions
     void add();
     void addDict();
     void addDouble();
@@ -47,6 +44,9 @@ private:
     void addVocab();
     void fromString(const yarp::os::ConstString& text);
     void append(const yarp::os::Bottle &alt);
+    void copy();
+    void copyPortable();
+
 
 
     int getInt();

@@ -34,20 +34,29 @@ public:
 
     eventStatisticsDumper();
     void setModuleName(std::string name);
+    void setOutputName(std::string name);
 
     bool    open();
     void    close();
     void    onRead(eventBottle &bot);
     void    interrupt();
 
+    int getBatchedCount();          //method 1
+    double getBatchedPercentage();  //method 2
+    unsigned long getTSCount();
+
+
+    std::ofstream fwriter;
+
 private:
 
-    double eventsPerTS;
+    int eventsPerTS;
+    double sameTScount;
     unsigned long ts;
     unsigned long total;
     double batched;
     std::string outfilename;
-    std::ofstream fwriter;
+
 
     std::string     moduleName;         //string containing module name
     std::string     inPortName;        	//speech input port
@@ -73,9 +82,7 @@ public:
 
 
     double getPeriod() { return 1.0; }
-    bool updateModule() {
-        std::cout << "BLAH: " << name << std::endl;
-        return true; }
+    bool updateModule();
 
 };
 

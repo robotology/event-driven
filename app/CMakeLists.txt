@@ -17,12 +17,14 @@ include(iCubHelpers)
 # default prefix for applications
 SET(ICUB_APPLICATIONS_PREFIX "$ENV{ICUB_ROOT}"  CACHE PATH "Application path prefix")
 				
-add_subdirectory(asvApplication)
-add_subdirectory(eMorphApplication)
-add_subdirectory(objectInteractorApp)
-add_subdirectory(opticalFlowApplication)
-add_subdirectory(eMorphVisualAttention)
-add_subdirectory(ikartDvsObstacleDetector)
+#add_subdirectory(asvApplication)
+#add_subdirectory(eMorphApplication)
+#add_subdirectory(objectInteractorApp)
+#add_subdirectory(opticalFlowApplication)
+#add_subdirectory(eMorphVisualAttention)
+#add_subdirectory(ikartDvsObstacleDetector)
+add_subdirectory(eventAnalysis)
+add_subdirectory(eventDataPlayer)
 #add_subdirectory(testAttention)
 
 ## make all applications show up as single target

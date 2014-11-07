@@ -36,6 +36,12 @@
    <tag>eventViewerRight</tag>
 </module>
 
+<module>
+   <name>eventAnalysis</name>
+   <node>localhost</node>
+   <tag>eventAnalysis</tag>
+</module>
+
 
 
 <connection>
@@ -46,6 +52,11 @@
 <connection>
   <from>/eventBottleConverter/bte:o</from>
   <to>/cartesianFrameCollector/retinaBottle:i</to>
+  <protocol>udp</protocol>
+</connection>
+<connection>
+  <from>/eventBottleConverter/bte:o</from>
+  <to>/eventStatsModule:i</to>
   <protocol>udp</protocol>
 </connection>
 <connection>

@@ -5,8 +5,9 @@ PROJECT
 - find out if inheretence from bufferedport is the best way to do things (might not need to with change in bottle)
 
 EBOTTLE
-- make event statistics dumper an app that can run in yarpmanager
-- make the resource finder set the values for file saving etc.
-- add timestamps to eEvents
-- find best method to return events from the eBottle (use the isSpecificEventType() and write .asSpecificEventType() commands?)
+- modify the rest of the event types to comply with new architecture
+- update aex grabber to use new eBottle format
+- make new example module that uses the new format
+- remove functions that do not use the new bottles from the makefile
+
 
