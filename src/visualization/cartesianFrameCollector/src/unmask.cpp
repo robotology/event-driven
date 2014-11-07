@@ -324,7 +324,7 @@ void unmask::addCLE(eEvent* qevt) {
             _bufferCLELeft->ySize = ptr->getYSize();
             _bufferCLELeft->numAE = ptr->getNumAE();
             _bufferCLELeft->id    = ptr->getId();
-            if (countCLE < 10) {
+            if (countCLE < cleMax) {
                 _bufferCLELeft++;
                 countCLE++;
             }
@@ -339,7 +339,7 @@ void unmask::addCLE(eEvent* qevt) {
             _bufferCLERight->ySize = ptr->getYSize();
             _bufferCLERight->numAE = ptr->getNumAE();
             _bufferCLERight->id     = ptr->getId();
-            if (countCLERight < 10) {
+            if (countCLERight < cleMax) {
                 _bufferCLERight++;
                 countCLERight++;
             } 
@@ -379,11 +379,11 @@ void unmask::addHGE(eEvent* e) {
 void unmask::addCLEG(eEvent* qevt) {
     if(qevt->getType()=="CLE-G") {
         ClusterEventGauss* ptr=dynamic_cast<ClusterEventGauss*>(qevt);
-        //fprintf(stdout,"received CLE_G from %d \n",ptr->getChannel() );
+        
 
-        //mutexCLEGLeft.wait();
+        mutexCLEGLeft.wait();
         if(ptr->getChannel() == 0) {
-            //fprintf(stdout,"writing on bufferCLEGLeft from channel %d \n",ptr->getChannel() );
+            //fprintf(stdout,"writing on bufferCLEGLeft, countCLEGLeft: %d, cleMax: %d \n", countCLEGLeft, cleMax );
     
             _bufferCLEGLeft->xCog  = ptr->getYCog();
             _bufferCLEGLeft->yCog  = 128 - ptr->getXCog();
@@ -392,30 +392,30 @@ void unmask::addCLEG(eEvent* qevt) {
             _bufferCLEGLeft->xySigma = ptr->getXYSigma();
             _bufferCLEGLeft->numAE = ptr->getNumAE();
             _bufferCLEGLeft->id    = ptr->getId();
-            if (countCLEGLeft < 10) {
+            if (countCLEGLeft < cleMax) {
                 _bufferCLEGLeft++;
                 countCLEGLeft++;
             }
         }
-        //mutexCLEGLeft.post();
+        mutexCLEGLeft.post();
 
-        //mutexCLEGRight.wait();
+        mutexCLEGRight.wait();
         if(ptr->getChannel() == 1) {
-            //fprintf(stdout,"writing on bufferCLEGRight from channel %d \n",ptr->getChannel() );
+            //fprintf(stdout,"writing on bufferCLEGRight countCLEGRight %d \n",countCLEGRight );
                 
             _bufferCLEGRight->xCog  = ptr->getYCog();
-            _bufferCLEGRight->yCog  = 128 - ptr->getXCog();
+            _bufferCLEGRight->yCog  = 128 - ptr->getXCog(); //the image is rotated and mirrored -> swap x with y and mirror y
             _bufferCLEGRight->xSigma2 = ptr->getXSigma2();
             _bufferCLEGRight->ySigma2 = ptr->getYSigma2();
             _bufferCLEGRight->xySigma = ptr->getXYSigma();
             _bufferCLEGRight->numAE = ptr->getNumAE();
             _bufferCLEGRight->id    = ptr->getId();
-            if (countCLEGRight < 10) {
+            if (countCLEGRight < cleMax) {
                 _bufferCLEGRight++;
                 countCLEGRight++;
-            } 
+            } // after the max cle overwrites the buffer
         }
-        //mutexCLEGRight.post();
+        mutexCLEGRight.post();
        
     }
 }
@@ -448,19 +448,19 @@ void unmask::unmaskData(Bottle* packets) {
     }
     else {
 #ifdef VERBOSE
-        fprintf(uEvents,"dim %d \n", packets->size());
+        //fprintf(stdout,"dim %d \n", packets->size());
         string str;
         int chksum;
         //printf("is Null? %d \n", packets->isNull());
         for (int j = 0; j < packets->size(); j++) {
             //printf(">%08x  \n", (unsigned int) packets->get(j).asInt());
-            fprintf(uEvents, ">%08x  \n", (unsigned int) packets->get(j).asInt());
+            //fprintf(stdout, ">%08x  \n", (unsigned int) packets->get(j).asInt());
             //chksum = packets->get(i).asInt() % 255;
             //str[i] = (char) chksum;
         }
-        //printf("%s \n", packets->toString().c_str());
+        printf("%s \n", packets->toString().c_str());
         //fprintf(uEvents,"chksum: %s \n", str.c_str());
-        fprintf(uEvents,"--- \n");
+        fprintf(stdout,"--- \n");
 #endif
         //packets->pop(); // pop out necessary `till the error in reception found
         //packets->pop(); // pop out necessary `till the error in reception found
@@ -469,26 +469,22 @@ void unmask::unmaskData(Bottle* packets) {
         //-- decoding the packet -------
         if(eEvent::decode(*packets,q)) {
             //printf("pointer %08X \n",  &q);
-            //printf("deque size %d \n \n", (int) q.size());
             int dequeSize = q.size();
-
+            //fprintf(stdout,"deque size %d ", dequeSize);
+           
             for (int evt = 0; evt < dequeSize; evt++) {
-                //printf("evt : %d \n", evt);                
                 if(q[evt] != 0) {                    
                     //********** extracting the event information **********************
                     // to identify the type of the packet
                     // user can rely on the getType() method
                     if (q[evt]->getType()=="AE") {
-                        //printf("address event \n");
                         // identified an  address event
                         AddressEvent* ptr=dynamic_cast<AddressEvent*>(q[evt]);
                         if(ptr->isValid()) { 
-
-                            //printf("%d %d %d %d \n",ptr->getX(), ptr->getY(), ptr->getChannel(), ptr->getPolarity());
-                            //if((ptr->getX() == 0) && (ptr->getY() == 0) && (ptr->getChannel()==0) && (ptr->getPolarity() == 0)) {
-                            //    printf("null address \n");
-                            //}
-                            
+                            if (evt == 1)
+                            {
+                                fprintf(stdout,"Size: %d TS: %d AE x: %d y: %d ch: %d p: %d \n", dequeSize, lastRecTimestamp, ptr->getX(), ptr->getY(), ptr->getChannel(), ptr->getPolarity());
+                            }
                             updateImage(ptr);                           
                         }
                     }
@@ -500,79 +496,26 @@ void unmask::unmaskData(Bottle* packets) {
                         lastRecTimestamp = (unsigned int) ptr->getStamp();
                         //printf("lastTimestamp Received %08x \n", lastRecTimestamp);
                     }
-                    else if(q[evt]->getType()=="CLE") {
-                        //printf("timestamp \n");
-                        ClusterEvent* ptr=dynamic_cast<ClusterEvent*>(q[evt]);
-
-                        // code for CLE
-                        //printf("received CLUSTER EVENT type: %s \n", ptr->getType());
-                        //ptr->getXCog();
-                        //ptr->getYCog();
-                        //addCLE(q[evt]);
-                    }
-                    else if(q[evt]->getType()=="CLE-F0") {
-                        printf("CLE_F0  \n");
-                        printf("CLE_F0  \n");
-                        printf("CLE_F0  \n");
-
-                        ClusterEvent* ptr=dynamic_cast<ClusterEvent*>(q[evt]);
-
-                        // code for CLE
-                        //printf("received CLUSTER EVENT type: %s \n", ptr->getType());
-                        //ptr->getXCog();
-                        //ptr->getYCog();
-                        
-                    }
-                    else if(q[evt]->getType()=="CLE-F1") {
-                        printf("CLE_F1  \n");
-                        printf("CLE_F1  \n");
-                        printf("CLE_F1  \n");
-
-                        ClusterEvent* ptr=dynamic_cast<ClusterEvent*>(q[evt]);
-
-                        // code for CLE
-                        //printf("received CLUSTER EVENT type: %s \n", ptr->getType());
-                        //ptr->getXCog();
-                        //ptr->getYCog();
-                        
-                    }
                     else if(q[evt]->getType()=="CLE-F2") {
-                        printf("CLE_F2  \n");
-                        printf("CLE_F2  \n");
-                        printf("CLE_F2  \n");
-
-                        ClusterEvent* ptr=dynamic_cast<ClusterEvent*>(q[evt]);
-
-                        // code for CLE
+                        //ClusterEvent* ptr=dynamic_cast<ClusterEvent*>(q[evt]);
                         //printf("received CLUSTER EVENT type: %s \n", ptr->getType());
-                        //ptr->getXCog();
-                        //ptr->getYCog();
-                        int channel = ptr->getChannel();
-                        printf("channel of the CLUSTER EVENT %d \n", channel);
-                        
                         addCLE(q[evt]);
                     }
                     else if(q[evt]->getType()=="HGE") {
-                        
-                        HoughEvent* ptr=dynamic_cast<HoughEvent*>(q[evt]);
-  
-                        //code for HGE                
+                        //HoughEvent* ptr=dynamic_cast<HoughEvent*>(q[evt]);
                         //printf("received HOUGH EVENT type: %s \n", ptr->getType());
-                        
                         addHGE(q[evt]);
                     }
                     else if(q[evt]->getType()=="CLE-G") {
-                        
                         ClusterEventGauss* ptr=dynamic_cast<ClusterEventGauss*>(q[evt]);
-  
-                        //code for CLEG                
-                        fprintf(stdout,"unmaskData Bottle: received event type: %s x: %d y: %d ch: %d \n", ptr->getType().c_str(),
-ptr->getXCog(),ptr->getYCog(),ptr->getChannel());
-                        
-                        addCLEG(q[evt]);
+                        if (evt == 1)
+                        {
+                            fprintf(stdout,"Size: %d TS: %d CL x: %d y: %d \n", dequeSize, lastRecTimestamp, ptr->getXCog(), ptr->getYCog());
+                        }                        
+                    addCLEG(q[evt]);
                     }
                     else {
-                        printf("unmaskData Bottle: not recognized");
+                        printf("unmaskData Bottle: type not supported");
                     }
                 }
                 else {
@@ -581,11 +524,8 @@ ptr->getXCog(),ptr->getYCog(),ptr->getChannel());
             } //end of for   
         } // end eEvent::decode
         else {
-            
             //printf("ERROR in DECODING  \n");
         }
-        
-    
     } // end else packets->isNull;    
 }
 
@@ -1113,7 +1053,7 @@ void unmask::unmaskData(char* i_buffer, int i_sz) {
             // this firmware version uses reset events to reset timestamps
             //write(file_desc,reset,1);//this.resetTimestamps();
             //buffer_msg[0] = 6;
-            //write(file_desc,buffer_msg,1);
+            //write(file_desc,buffer_msaeg,1);
             wrapAdd=0;
             // log.info("got reset event, timestamp " + (0xffff&((short)aeBuffer[i]&0xff | ((short)aeBuffer[i+1]&0xff)<<8)));
         }

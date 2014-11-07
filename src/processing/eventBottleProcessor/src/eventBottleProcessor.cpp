@@ -102,14 +102,18 @@ bool EventBottleManager::open()
     this->useCallback();
 
     //create all ports
-    inPortName = "/" + moduleName + "/in:i";
+    inPortName = "/" + moduleName + "/aeBottle:i";
     BufferedPort<eventBottle >::open( inPortName.c_str() );
 
     outPortName = "/" + moduleName + "/out:o";
     outPort.open( outPortName.c_str() );
 
+    aePortName = "/" + moduleName + "/aeBottle:o";
+    aePort.open( aePortName.c_str() );
+
     eventPortName = "/" + moduleName + "/eventBottle:o";
     eventPort.open( eventPortName.c_str() );
+
 
     return true;
 }
@@ -119,6 +123,7 @@ void EventBottleManager::close()
 {
     fprintf(stdout,"now closing ports...\n");
     outPort.close();
+    aePort.close();
     eventPort.close();
     BufferedPort<eventBottle >::close();
     fprintf(stdout,"finished closing the read port...\n");
@@ -144,7 +149,8 @@ void EventBottleManager::onRead(eventBottle &bot)
     Bottle event; // for eventBottle port eventPort
 
     eventBottle &evt = eventPort.prepare();
-    
+    eventBottle &aeBot = aePort.prepare();
+
     if(eEvent::decode(*bot.get_packet(),q)) 
     {   
         int size = q.size();
@@ -174,7 +180,7 @@ void EventBottleManager::onRead(eventBottle &bot)
                         ClusterEventGauss cluEvt; //create the Cluster Event 
                         //fill the CLE-G with data:
                         cluEvt.setChannel(channel);
-                        //  cluEvt->setId(1); 
+                        
                         cluEvt.setXCog(posX); 
                         cluEvt.setYCog(posY);
                         
@@ -182,6 +188,9 @@ void EventBottleManager::onRead(eventBottle &bot)
                         int xS2 = 1;
                         int yS2 = 2;
                         int xyS = 3;
+                        int id = 4;
+
+                        cluEvt.setId(id); 
                         
                         cluEvt.setNumAE(numAE); 
                         cluEvt.setXSigma2(xS2);
@@ -192,6 +201,15 @@ void EventBottleManager::onRead(eventBottle &bot)
                         TimeStamp time;
                         time.setStamp(ts);
                         
+                        // add ae events mixed with cle-g events, with the correct ts order
+                        //create a bottle with ts and ae
+                        Bottle aeEv;
+                        aeEv = time.encode();
+                        aeEv.append(ptr->encode());
+
+                        //append bottle aeEv to the bottle of events
+                        event.append(aeEv);
+
                         //create a bottle with ts and cle-g
                         Bottle tmpEv;
                         tmpEv = time.encode();
@@ -205,28 +223,37 @@ void EventBottleManager::onRead(eventBottle &bot)
                         tmp.addDouble(ts);
                         tmp.addInt(posX);
                         tmp.addInt(posY);
-                        //p.addInt(polarity);
+                        tmp.addInt(id);
+                        //tmp.addInt(polarity);
                         tmp.addInt(channel);
                         tmp.addInt(numAE);
                         tmp.addInt(xS2);
                         tmp.addInt(yS2);
                         tmp.addInt(xyS);
                         
-                        string type = cluEvt.getType();
+                        string type = ptr->getType();
+                        if (e == 1)
+                        {
+                            fprintf(stdout, "Size %d TimeStamp: %d (Type: %s id: %d X: %d  Y: %d) \n",size, ts, type.c_str(), id, posX, posY);
+                                            
+                            type = cluEvt.getType();
 
-                        //fprintf(stdout, "Size %d TimeStamp: %d Event: (Type: %s X: %d  Y: %d  pol: %d  cha: %d m: %d xs: %d ys: %d xys: %d) \n",size, ts, type.c_str(), posX, posY, polarity, channel, numAE, xS2, yS2, xyS);
-                        
+                            fprintf(stdout, "Size %d TimeStamp: %d (Type: %s id: %d X: %d  Y: %d) \n",size, ts, type.c_str(), id, cluEvt.getXCog(), cluEvt.getYCog());
+                        }
                     } 
                 }
             }
         } 
 
         //create and fill in dataTmp (eventBottle) with data from event (Bottle) 
-        //fprintf(stdout, "\n\n\nEvent: %s\n", event.toString().c_str());
+        fprintf(stdout, "\n\n\nEvent: %s\n", event.toString().c_str());
         eventBottle dataTmp(&event);
         //copy dataTmp to eventBottle out
         evt = dataTmp;
+        //evt.append(bot); //append the eventBottle of ae input events to the output eventBottle with cle-g computed events:::: it doesn't work because the eventBottle doesn't have the member function append()
+        //aeBot = bot; // to send the ae eventBottle on a separate port
         //send it all out
+        //aePort.write(); // to send the ae eventBottle on a separate port
         eventPort.write();
 
         outPort.write(out);

@@ -54,6 +54,7 @@ private:
     int countCLERight;
     int countCLEGLeft;
     int countCLEGRight;
+    int cleMax;                           // maximum number of cluster events to be added to the image
     int sz;
     int* buffer;                          // buffer representing the event in image plane (left)
     unsigned long* timeBuffer;            // buffer contains the timestamp of the particular location (left)
@@ -121,7 +122,7 @@ private:
 
     /*semaphore for the additional information HGE and CLE*/
     yarp::os::Semaphore mutexHGELeft,mutexCLELeft;
-
+    yarp::os::Semaphore mutexCLEGLeft,mutexCLEGRight;
 public:
     /**
     * @brief Function returns the pointer to the buffer that containes events counts
@@ -237,6 +238,12 @@ public:
     void setDVSMode(bool value) {
         dvsMode = value;
     } 
+
+    /**
+     * @brief function that indicates how many cluster events can be added to the image
+     */
+    void setCleMax(int value) {cleMax = value; }; 
+
     
     /**
     * default constructor

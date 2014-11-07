@@ -91,11 +91,16 @@ bool cfCollectorThread::threadInit() {
     cfConverter->setRetinalSize(retinalSize);
     cfConverter->open(getName("/retina:i").c_str());
 
+    aeHandler = new eventBottleHandler();
+    aeHandler->setVerbose(verbose);
+    aeHandler->useCallback();
+    aeHandler->open(getName("/aeBottle:i").c_str());
+
     ebHandler = new eventBottleHandler();
     ebHandler->setVerbose(verbose);
     ebHandler->useCallback();
     ebHandler->open(getName("/retinaBottle:i").c_str());
-    
+
     printf("\n opening retina\n");
     printf("starting the plotter \n");
     
@@ -108,28 +113,29 @@ bool cfCollectorThread::threadInit() {
     if (evType == "cle")
     {
         // allocating memory for up to 10 CLE
-        fprintf(stdout,"allocating memory for up to 10 CLE \n");
-        origCLE = (reprCLE*) malloc(10 * sizeof(reprCLE));
-        origCLERight = (reprCLE*) malloc(10 * sizeof(reprCLE));
+        fprintf(stdout,"allocating memory for up to %d CLE \n", cleMax);
+        origCLE = (reprCLE*) malloc(cleMax * sizeof(reprCLE));
+        origCLERight = (reprCLE*) malloc(cleMax * sizeof(reprCLE));
     }
     else if (evType == "cleg")
     {    
         // allocating memory for up to 10 CLE
-        fprintf(stdout,"allocating memory for up to 10 CLE Gauss\n");
-        origCLEGLeft = (reprCLEG*) malloc(10 * sizeof(reprCLEG));
-        origCLEGRight = (reprCLEG*) malloc(10 * sizeof(reprCLEG));
+        fprintf(stdout,"allocating memory for up to %d CLE Gauss \n", cleMax);
+        origCLEGLeft = (reprCLEG*) malloc(cleMax * sizeof(reprCLEG));
+        origCLEGRight = (reprCLEG*) malloc(cleMax * sizeof(reprCLEG));
     }
     else if (evType == "hge")
     {    
         // allocating memory for up to 10 CLE
-        fprintf(stdout,"allocating memory for up to 10 HGE \n");
-        origHGE = (reprHGE*) malloc(10 * sizeof(reprHGE));
+        fprintf(stdout,"allocating memory for up to cleMax HGE \n");
+        origHGE = (reprHGE*) malloc(cleMax * sizeof(reprHGE));
     }
 
     unmask_events = new unmask();
     unmask_events->setRetinalSize(retinalSize);
     unmask_events->setResponseGradient(responseGradient);
     unmask_events->setType(evType);
+    unmask_events->setCleMax(cleMax);
     unmask_events->setOrigCLELeft(origCLE);
     unmask_events->setOrigCLERight(origCLERight);
     unmask_events->setOrigCLEGLeft(origCLEGLeft);
@@ -152,6 +158,7 @@ bool cfCollectorThread::threadInit() {
     minCount = 0;
     minCountRight= 0;
 
+    aeBottle = new Bottle();
     receivedBottle = new Bottle();
 
     dim_window   = windowSize;
@@ -183,11 +190,14 @@ void cfCollectorThread::threadRelease() {
     printf("cfCollectorThread release         deleting converter \n");
     delete cfConverter;
     printf("correctly freed memory from the cfCollector \n");
+    delete aeHandler;
+    printf("just deleted ae bottle handler \n");    
     delete ebHandler;
-    printf("just deleted bottle handler \n");
+    printf("just deleted evt bottle handler \n");
     delete unmask_events;
     printf("unmasking event happened \n");
 
+    delete aeBottle;
     delete receivedBottle;
 }
 
@@ -522,7 +532,7 @@ void cfCollectorThread::addCLEG(ImageOf<yarp::sig::PixelRgb>* image, unsigned lo
             return;
         }
         while(tmpCLEG != origCLEGLeft) {
-            
+            //fprintf(stdout,"left > x %d y %d \n", tmpCLEG->xCog, tmpCLEG->yCog);                  
             CvScalar c = getColorCode(tmpCLEG->id);
             
             //double tmp = sqrt( (tmpCLEG->xSigma2 - tmpCLEG->ySigma2) * (tmpCLEG->xSigma2 - tmpCLEG->ySigma2) + 4*tmpCLEG->xySigma*tmpCLEG->xySigma );
@@ -541,7 +551,7 @@ void cfCollectorThread::addCLEG(ImageOf<yarp::sig::PixelRgb>* image, unsigned lo
             tmpCLEG--;
         }
         // representation of the first event
-        fprintf(stdout,"left > x %d y %d \n", tmpCLEG->xCog, tmpCLEG->yCog);       
+        //fprintf(stdout,"left > x %d y %d \n", tmpCLEG->xCog, tmpCLEG->yCog);       
         CvScalar c = getColorCode(tmpCLEG->id);
         //ellipse_a = sqrt(l_max);  
         //ellipse_b sqrt(l_min);
@@ -553,11 +563,11 @@ void cfCollectorThread::addCLEG(ImageOf<yarp::sig::PixelRgb>* image, unsigned lo
     }
     else { //right
         reprCLEG *tmpCLEG;
-        tmpCLEG = unmask_events->getCLEGLeft();
+        tmpCLEG = unmask_events->getCLEGRight();
         if (tmpCLEG == 0) return;
         
         while(tmpCLEG != origCLEGRight) {
-            
+            //fprintf(stdout,"right > x %d y %d \n", tmpCLEG->xCog, tmpCLEG->yCog);                  
             CvScalar c = getColorCode(tmpCLEG->id);
             
             //double tmp = sqrt( (tmpCLEG->xSigma2 - tmpCLEG->ySigma2) * (tmpCLEG->xSigma2 - tmpCLEG->ySigma2) + 4*tmpCLEG->xySigma*tmpCLEG->xySigma );
@@ -573,7 +583,7 @@ void cfCollectorThread::addCLEG(ImageOf<yarp::sig::PixelRgb>* image, unsigned lo
             tmpCLEG--;
         }
         // representation of the first event
-        fprintf(stdout,"right > x %d y %d \n", tmpCLEG->xCog, tmpCLEG->yCog);       
+        //fprintf(stdout,"right > x %d y %d \n", tmpCLEG->xCog, tmpCLEG->yCog);       
         CvScalar c = getColorCode(tmpCLEG->id);
 
         //ellipse_a = sqrt(l_max);  
@@ -622,6 +632,8 @@ void cfCollectorThread::run() {
         cfConverter->copyChunk(bufferCopy);//memcpy(bufferCopy, bufferRead, 8192);
     }
     else {
+        aeBottle->clear();
+        aeHandler->extractBottle(aeBottle);      
         receivedBottle->clear();
         ebHandler->extractBottle(receivedBottle);      
         //fprintf(stdout, "received Bottle %08x dimension %d \n ", receivedBottle, receivedBottle->size());
@@ -647,7 +659,7 @@ void cfCollectorThread::run() {
       verb = true;
       unmask_events->resetTimestampLeft();
       unmask_events->resetTimestampRight();
-      printf("wrapping left %lu %lu \n",lc,unmask_events->getLastTimestamp());
+     // printf("wrapping left %lu %lu \n",lc,unmask_events->getLastTimestamp());
      
       minCount = 0;
       maxCount      =  minCount      + interval * INTERVFACTOR* (dim_window);
@@ -657,7 +669,7 @@ void cfCollectorThread::run() {
       verb = true;
       unmask_events->resetTimestampRight();
       unmask_events->resetTimestampLeft();
-      printf("wrapping right %lu %lu\n",rc,unmask_events->getLastTimestampRight());
+     // printf("wrapping right %lu %lu\n",rc,unmask_events->getLastTimestampRight());
 
       minCountRight = 0;
       maxCountRight = minCountRight + interval * INTERVFACTOR* (dim_window);
@@ -668,6 +680,20 @@ void cfCollectorThread::run() {
 
     // extract a chunk/unmask the chunk
 #ifdef VERBOSE
+    if(aeBottle!=0){
+        
+        if( aeBottle->size()!= 0) {
+            fprintf(fout, "dim: %d \n",aeBottle->size());
+            //plotting out
+            string str;
+            int chksum;
+            for (int i=0; i < aeBottle->size(); i++) {
+                fprintf(fout,"%08X \n", aeBottle->get(i).asInt());
+                //printf("%08X \n", aeBottle->get(i).asInt());
+            }
+            fprintf(fout,"----------------------------- \n");            
+        }
+    }
     if(receivedBottle!=0){
         
         if( receivedBottle->size()!= 0) {
@@ -690,12 +716,15 @@ void cfCollectorThread::run() {
         unmask_events->unmaskData(bufferCopy,CHUNKSIZE,verb);
     }
     else {        
-        if(0 != receivedBottle->size()) {
-            //printf("asking for unmasking \n");
-            //delete receivedBottle;
-            //receivedBottle = new Bottle();
-            unmask_events->unmaskData(receivedBottle);
-        }        
+         if(0 != aeBottle->size()) {
+            unmask_events->unmaskData(aeBottle);
+            if(0 != receivedBottle->size()) {
+                //printf("asking for unmasking \n");
+                //delete receivedBottle;
+                //receivedBottle = new Bottle();
+                unmask_events->unmaskData(receivedBottle);
+            }      
+         }  
     }
     if(verb) {
       verb = false;

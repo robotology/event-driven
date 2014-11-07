@@ -153,7 +153,7 @@ private:
     yarp::os::Bottle* receivedBottle;                           // pointer to the received bottle
     yarp::os::Bottle** bufferBottle;                            // buffer of received bottles
     
-    static const int bottleBufferDimension = 10;                // dimension of the bottleBuffer
+    static const int bottleBufferDimension = 100;                // dimension of the bottleBuffer
     
     //unmask unmask_events;                                     // object in charge of unmasking the events
     //converter convert_events;                                 // object in charge of converting the events into an image
