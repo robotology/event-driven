@@ -1,4 +1,4 @@
-#include "blob_tracker.h"
+#include "blobTracker.h"
 
 
 BlobTracker::BlobTracker(double x0, double y0, double sig_x2, double sig_y2, double sig_xy, 

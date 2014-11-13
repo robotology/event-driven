@@ -43,8 +43,6 @@ bool EventClustering::configure(yarp::os::ResourceFinder &rf)
 
     attach(rpcPort);
 
-    /* create the thread and pass pointers to the module parameters */
-    eventBottleManager = new EventBottleManager( moduleName );
 
     /*
     * set the file name for saving cluster data
@@ -53,7 +51,7 @@ bool EventClustering::configure(yarp::os::ResourceFinder &rf)
                         Value("clusters.txt"), 
                         "file name (string)").asString();
     fprintf(stdout,"output file %s \n", fileName.c_str());
-    eventBottleManager ->setFileName(fileName);
+    //eventBottleManager ->setFileName(fileName);
 
     /*
     * set the alpha shape of the gauss cluster
@@ -62,7 +60,7 @@ bool EventClustering::configure(yarp::os::ResourceFinder &rf)
                         Value(10), 
                         "alpha shape (int)").asInt();
     fprintf(stdout,"alpha shape %d \n", alphaShape);
-    eventBottleManager ->setAlphaShape(alphaShape);
+    //eventBottleManager ->setAlphaShape(alphaShape);
 
     /*
     * set the alpha pos of the gauss cluster
@@ -71,7 +69,10 @@ bool EventClustering::configure(yarp::os::ResourceFinder &rf)
                         Value(10), 
                         "alpha pos (int)").asInt();
     fprintf(stdout,"alpha pos %d \n", alphaPos);
-    eventBottleManager ->setAlphaPos(alphaPos);
+    //eventBottleManager ->setAlphaPos(alphaPos);
+
+    /* create the thread and pass pointers to the module parameters */
+    eventBottleManager = new EventBottleManager( moduleName, fileName, alphaShape, alphaPos );
 
     /* initialize variables */
     eventBottleManager->init();
@@ -123,10 +124,14 @@ EventBottleManager::~EventBottleManager()
 }
 
 /**********************************************************/
-EventBottleManager::EventBottleManager( const string &moduleName )
+EventBottleManager::EventBottleManager( const string &moduleName, std::string &fileName, int &alphaShape, int &alphaPos )
 {
     fprintf(stdout,"initialising Variables\n");
     this->moduleName = moduleName;
+    this->fileName = fileName;
+    this->alphaPos=alphaPos;
+    this->alphaShape=alphaShape;
+    
 }
 /**********************************************************/
 bool EventBottleManager::init()
@@ -160,13 +165,13 @@ bool EventBottleManager::init()
         perror ("Error opening file");
   
     // Create the trackers
-    //TrackerPool tracker_pool_left(sig_x, sig_y, sig_xy, alpha_pos, alpha_shape, k, max_dist, fixed_shape, tau_act, up_thresh, down_thresh, delete_thresh, alpha_rep, d_rep, max_nb_trackers, nb_ev_reg);
-    //tracker_pool_left.set_collision_det_param(dist_thresh, vel_thresh, acc_thresh);
+    TrackerPool tracker_pool_left(sig_x, sig_y, sig_xy, alpha_pos, alpha_shape, k, max_dist, fixed_shape, tau_act, up_thresh, down_thresh, delete_thresh, alpha_rep, d_rep, max_nb_trackers, nb_ev_reg);
+    tracker_pool_left.set_collision_det_param(dist_thresh, vel_thresh, acc_thresh);
 
-    //TrackerPool tracker_pool_right(sig_x, sig_y, sig_xy, alpha_pos, alpha_shape, k, 
-		//		 max_dist, fixed_shape, tau_act, up_thresh, down_thresh, delete_thresh,
-		//		 alpha_rep, d_rep, max_nb_trackers, nb_ev_reg);
-    //tracker_pool_right.set_collision_det_param(dist_thresh, vel_thresh, acc_thresh);
+    TrackerPool tracker_pool_right(sig_x, sig_y, sig_xy, alpha_pos, alpha_shape, k,
+				 max_dist, fixed_shape, tau_act, up_thresh, down_thresh, delete_thresh,
+				 alpha_rep, d_rep, max_nb_trackers, nb_ev_reg);
+    tracker_pool_right.set_collision_det_param(dist_thresh, vel_thresh, acc_thresh);
 
     // Threshold for updating the position
     int min_nb_ev = 1;

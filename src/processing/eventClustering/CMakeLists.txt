@@ -4,7 +4,7 @@
 # 
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
-SET(PROJECTNAME eventBottleProcessor)
+SET(PROJECTNAME eventClustering)
 PROJECT(${PROJECTNAME})
 
 file(GLOB source src/*.cpp)

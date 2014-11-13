@@ -55,13 +55,13 @@ private:
     std::string                                 fileName;
     int                                         alphaShape;
     int                                         alphaPos;
-
+    
 public:
     /**
      * constructor
      * @param moduleName is passed to the thread in order to initialise all the ports correctly (default yuvProc)
      */
-    EventBottleManager( const std::string &moduleName );
+    EventBottleManager( const std::string &moduleName, std::string &fileName, int &alphaShape, int &alphaPos);
     ~EventBottleManager();
 
     bool    open();
@@ -80,9 +80,9 @@ class EventClustering:public yarp::os::RFModule
     std::string             rpcPortName;
     yarp::os::RpcServer     rpcPort;
 
-    std::string                                 fileName;
-    int                                         alphaShape;
-    int                                         alphaPos;
+    std::string             fileName;
+    int                     alphaShape;
+    int                     alphaPos;
 
     /* pointer to a new manager */
     EventBottleManager      *eventBottleManager;
@@ -97,20 +97,20 @@ public:
     double getPeriod();
     bool updateModule();
 
-  /**
+    /**
      * @brief function that sets the output file name for saving the clustered data
      */
-    void setFileName(std::string value) {fileName = value; }; 
+    //void setFileName(std::string value) {fileName = value; };
  
     /**
      * @brief function that sets the alpha shape
      */
-    void setAlphaShape(int value) {alphaShape = value; }; 
+    //void setAlphaShape(int value) {alphaShape = value; };
  
     /**
      * @brief function that sets the alpha shape
      */
-    void setAlphaPos(int value) {alphaPos = value; }; 
+    //void setAlphaPos(int value) {alphaPos = value; };
 
 
 

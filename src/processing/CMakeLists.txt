@@ -26,6 +26,7 @@ add_subdirectory  ( visualAligner    )
 add_subdirectory  ( eventBottleProcessor )
 add_subdirectory  ( eventBottleConverter    )
 
+
 # --------  OPTICFLOW SUBFOLDERS ---------------------
 #add_subdirectory   (  eventOpticalFlow             )
 
@@ -41,6 +42,7 @@ add_subdirectory   ( recognitionModules/aggregation)
 
 #----------- Clustering -----------------------------
 add_subdirectory   ( clustering                     )
+add_subdirectory   ( eventClustering      	    )
 
 if(ICUB_USE_IPOPT)
         #add_subdirectory ( targetFinder                  )
