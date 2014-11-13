@@ -27,7 +27,7 @@
 namespace emorph
 {
 
-namespace ecodec
+namespace ecodecold
 {
 
 

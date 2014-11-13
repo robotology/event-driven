@@ -87,10 +87,10 @@ void eventStatisticsDumper::onRead(eventBottle &bot)
 
 
     //create event queue
-    emorph::ecodec::eEventQueue q;
+    emorph::ecodecold::eEventQueue q;
 
 
-    if(emorph::ecodec::eEvent::decode(*bot.get_packet(),q))
+    if(emorph::ecodecold::eEvent::decode(*bot.get_packet(),q))
     {
         int size = q.size();
         //fprintf(stdout, "eventBottle size: %d\n",size);
@@ -102,8 +102,8 @@ void eventStatisticsDumper::onRead(eventBottle &bot)
                 {
                     //write the number of events per timestamp to a file
                     //std::cout << eventsPerTS << std::endl;
-                    emorph::ecodec::TimeStamp* ptr =
-                            dynamic_cast<emorph::ecodec::TimeStamp*>(q[e]);
+                    emorph::ecodecold::TimeStamp* ptr =
+                            dynamic_cast<emorph::ecodecold::TimeStamp*>(q[e]);
                     unsigned long tstemp = (unsigned long) ptr->getStamp();
                     total++;
                     if(ts == tstemp) {

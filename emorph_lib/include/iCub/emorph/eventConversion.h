@@ -235,7 +235,7 @@ public:
     * @param size size of the last reading from the port
     * @param output pointer to the collection of event unmasked as AER_struct
     */
-    void updateImage(emorph::ecodec::AddressEvent* ptr);
+    void updateImage(emorph::ecodecold::AddressEvent* ptr);
 
     /**
      * @brief function that given a bottle creates the image of events
@@ -247,7 +247,7 @@ public:
      * @param b input bottle b
      * @param q output event q
      */
-    void unmaskData(yarp::os::Bottle* b, emorph::ecodec::eEventQueue* q );
+    void unmaskData(yarp::os::Bottle* b, emorph::ecodecold::eEventQueue* q );
 
     /**
     * function that given a reference to the list of char read from the port and the number of packet received

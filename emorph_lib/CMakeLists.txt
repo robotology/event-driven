@@ -39,6 +39,7 @@ SET(folder_source
 #)
 
 SET(folder_header 
+  include/iCub/emorph/all.h
   include/iCub/emorph/eventBottle.h
   include/iCub/emorph/eventBuffer.h
   include/iCub/emorph/eventCodec.h

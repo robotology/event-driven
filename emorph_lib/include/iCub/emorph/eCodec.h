@@ -28,9 +28,6 @@
 namespace emorph
 {
 
-namespace ecodec2
-{
-
 //forward declaration
 class eEvent;
 
@@ -44,9 +41,10 @@ private:
     // allocated for events
     eEventQueue(const eEventQueue&);
     eEventQueue &operator=(const eEventQueue&);
+    static bool temporalSort(const eEvent *e1, const eEvent *e2);
 
 protected:
-    bool owner;
+    bool owner;  
 
 public:
     eEventQueue()                   { owner=true;        }
@@ -54,6 +52,10 @@ public:
     void setOwner(const bool owner) { this->owner=owner; }
     bool getOwner()                 { return owner;      }
     ~eEventQueue();
+
+    void sort();
+
+
 };
 
 
@@ -81,14 +83,15 @@ public:
 
     virtual eEvent &operator=(const eEvent &event);
     virtual bool operator==(const eEvent &event);
+    virtual bool operator<(const eEvent &event) const
+                 {return this->stamp < event.stamp; }
+    virtual bool operator>(const eEvent &event) const
+                 {return this->stamp > event.stamp; }
 
     virtual yarp::os::Bottle   encode() const;
     virtual eEvent * decode(const yarp::os::Bottle &packet, int &pos);
     virtual yarp::os::Property getContent() const;
-
-
-
-
+    static eEvent * create(const std::string type);
 
 };
 
@@ -105,7 +108,7 @@ protected:
     virtual int nBytesCoded() const         { return 1;                 }
 
 public:
-    AddressEvent();    
+    AddressEvent();
     AddressEvent(const AddressEvent &event);
     AddressEvent(const eEvent &event);
     //AddressEvent(const yarp::os::Bottle &packets, const int pos=0);
@@ -243,7 +246,8 @@ protected:
 public:
     ClusterEvent();
     ClusterEvent(const ClusterEvent &event);
-    ClusterEvent(const yarp::os::Bottle &packets, const int pos=0);
+    ClusterEvent(const eEvent &event);
+    //ClusterEvent(const yarp::os::Bottle &packets, const int pos=0);
 
     ClusterEvent &operator=(const ClusterEvent &event);
     bool operator==(const ClusterEvent &event);
@@ -258,10 +262,10 @@ public:
     void setXCog(const int xCog)       { this->xCog = xCog;       }
     void setYCog(const int yCog)       { this->yCog = yCog;       }
 
-    int getLength() const { return 1; }
     bool operator==(const eEvent &event) { return operator==(dynamic_cast<const ClusterEvent&>(event)); }
     yarp::os::Bottle   encode() const;
     yarp::os::Property getContent() const;
+    virtual eEvent * decode(const yarp::os::Bottle &packet, int &pos);
 };
 
 
@@ -544,8 +548,6 @@ public:
     yarp::os::Bottle   encode() const;
     yarp::os::Property getContent() const;
 };
-
-}
 
 }
 

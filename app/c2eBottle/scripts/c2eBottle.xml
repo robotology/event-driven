@@ -1,0 +1,39 @@
+<application>
+<name>chiaraBottletoeBottle </name>
+
+<dependencies>	
+</dependencies>
+
+<module>
+   <name>dataSetPlayer</name>
+   <node>localhost</node>
+   <tag>dataSetPlayer</tag>
+</module>
+
+<module>
+   <name>cbottle2ebottle</name>
+   <node>localhost</node>
+   <tag>bottleconverter</tag>
+</module>
+
+<module>
+   <name>dataDumper</name>
+   <parameters>--name /home/aglover/workspace/dataDumper</parameters>
+   <node>localhost</node>
+   <tag>dataDumper</tag>
+</module>
+
+
+
+<connection>
+  <from>/eventBottlePlayer/etb:o</from>
+  <to>/eventBottleConverter/cte:i</to>
+  <protocol>udp</protocol>
+</connection>
+<connection>
+  <from>/eventBottleConverter/cte:o</from>
+  <to>/home/aglover/workspace/dataDumper</to>
+  <protocol>udp</protocol>
+</connection>
+
+</application>

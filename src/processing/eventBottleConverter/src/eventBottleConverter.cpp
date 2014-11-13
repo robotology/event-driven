@@ -20,7 +20,7 @@
 using namespace std;
 using namespace yarp::os;
 using namespace yarp::sig;
-using namespace emorph::ecodec;
+using namespace emorph::ecodecold;
 
 /**********************************************************/
 bool EventBottleConverter::configure(ResourceFinder &rf)

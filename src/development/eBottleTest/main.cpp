@@ -1,19 +1,17 @@
 
 #include <iostream>
 #include <yarp/os/all.h>
-#include <iCub/emorph/eBottle.h>
-#include <iCub/emorph/eCodec.h>
+#include <iCub/emorph/all.h>
 
 
 int main(int argc, char * argv[]) {
 
-
-
-
-
     //test eBottle
-    eBottle bb;
-    emorph::ecodec2::AddressEvent ae;
+    emorph::eBottle bb;
+    emorph::AddressEvent ae;
+    emorph::ClusterEvent cle;
+    emorph::eEventQueue q;
+    emorph::eEventQueue::iterator qi;
 
     std::cout << "Adding Events:" << std::endl;
 
@@ -46,26 +44,75 @@ int main(int argc, char * argv[]) {
 
     std::cout << ae.getContent().toString() << std::endl;
 
+    cle.setChannel(0);
+    cle.setId(223);
+    cle.setStamp(632);
+    cle.setXCog(33);
+    cle.setYCog(9999);
+    bb.addEvent(cle);
+
+    std::cout << cle.getContent().toString() << std::endl;
+
+    cle.setChannel(1);
+    cle.setId(234);
+    cle.setStamp(7980);
+    cle.setXCog(789);
+    cle.setYCog(2);
+    bb.addEvent(cle);
+
+    std::cout << cle.getContent().toString() << std::endl;
+
+    ae.setChannel(1);
+    ae.setPolarity(0);
+    ae.setX(55);
+    ae.setY(56);
+    ae.setStamp(20);
+    bb.addEvent(ae);
+
+    std::cout << ae.getContent().toString() << std::endl;
+
     std::cout << "Contents of eBottle" << std::endl;
     std::cout << bb.toString() << std::endl;
 
-    emorph::ecodec2::eEventQueue q;
+
 
     //get all the events of type given in arg1
-    bb.get(ae, q);
+    std::cout << "Contents retrieved from eBottle by type" << std::endl;
 
-
-    std::cout << "Contents retrieved from eBottle" << std::endl;
-    emorph::ecodec2::AddressEvent *aeout;
-    emorph::ecodec2::eEventQueue::iterator qi;
+    std::cout << "Address Events" << std::endl;
+    bb.get<emorph::AddressEvent>(q);  
     for(qi = q.begin(); qi != q.end(); qi++) {
-        aeout = dynamic_cast<emorph::ecodec2::AddressEvent*>(*qi);
-        std::cout << aeout->getContent().toString() << std::endl;
+        std::cout << (*qi)->getContent().toString() << std::endl;
+        //to use functions in the address event cast it to the correct type
+        //and then go for it
+        emorph::AddressEvent * aep = dynamic_cast<emorph::AddressEvent *>
+                (*qi);
+        aep->getX();
+    }
+    q.clear();
+
+    std::cout << "Cluster Events" << std::endl;
+    bb.get<emorph::ClusterEvent>(q);
+    for(qi = q.begin(); qi != q.end(); qi++) {
+        std::cout << (*qi)->getContent().toString() << std::endl;
+    }
+    q.clear();
+
+    std::cout << "Just Address Events Sorted" << std::endl;
+    bb.getSorted<emorph::AddressEvent>(q);
+    for(qi = q.begin(); qi != q.end(); qi++) {
+        std::cout << (*qi)->getContent().toString() << std::endl;
+    }
+    q.clear();
+
+    std::cout << "Sorted Contents Returned From Bottle" << std::endl;
+    bb.getAllSorted(q);
+    for(qi = q.begin(); qi != q.end(); qi++) {
+        std::cout << (*qi)->getContent().toString() << std::endl;
     }
 
     std::cout << "Testing Done" << std::endl;
 
     return 0;
-
 
 }

@@ -31,7 +31,7 @@
 
 using namespace std;
 using namespace yarp::os;
-using namespace emorph::ecodec;
+using namespace emorph::ecodecold;
 
 #define MAXVALUE 114748364 //4294967295
 #define maxPosEvent 10000

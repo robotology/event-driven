@@ -10,8 +10,8 @@ IF(NOT WIN32)
 #	add_subdirectory   (  basicAexGrabber              )
 ENDIF (NOT WIN32)
 
-add_subdirectory  ( device2yarp )
-add_subdirectory  ( zBrdInterface )
+#add_subdirectory  ( device2yarp )
+#add_subdirectory  ( zBrdInterface )
 #add_subdirectory  ( dvsGrabber )
 #add_subdirectory  ( eventSniffer )
 

@@ -20,13 +20,13 @@
 #include "iCub/emorph/eventCodec.h"
 
 using namespace yarp::os;
-using namespace emorph::ecodec;
+using namespace emorph::ecodecold;
 
 
 namespace emorph
 {
 
-namespace ecodec
+namespace ecodecold
 {
 
 

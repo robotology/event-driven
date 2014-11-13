@@ -2,12 +2,21 @@ PROJECT
 - clear unneccessary files
 - test suite?
 - encode/decode uses int to store coded data. Is this platform independent?
-- find out if inheretence from bufferedport is the best way to do things (might not need to with change in bottle)
+- ensure coding style + documentation + headers are compliant with iCub standards
+- doxygen and comments
 
 EBOTTLE
-- modify the rest of the event types to comply with new architecture
-- update aex grabber to use new eBottle format
-- make new example module that uses the new format
-- remove functions that do not use the new bottles from the makefile
+- modify the append function
+- modify eBottle::get function to not use an eEvent instance
+- combine eCodec and eBottle into a single file. Users shouldn't need to know about eCodec.
+- add the rest of the event types to comply with new architecture
+- update aex grabber to use new eBottle format (input into yarp)
+- update cartesianFrameCollector for eBottles (visualisation)
+- convert current datasets to eBottle files
+- make new example module that uses the new format (visualisation)
+- remove functions that do not use the new bottles from the cmakefile
+- convert old code to use new eBottle where necessary
+- ensure ALL non-compatible functionality is hidden in eBottle
+
 
 

@@ -18,20 +18,17 @@
  * Public License for more details
 */
 
+#include <algorithm>
 #include "iCub/emorph/eCodec.h"
-
+using namespace emorph;
 using namespace yarp::os;
-using namespace emorph::ecodec2;
-
 
 namespace emorph
 {
 
-namespace ecodec2
-{
-
-
-/**************************************************************************/
+/******************************************************************************/
+//eEventQueue
+/******************************************************************************/
 eEventQueue::~eEventQueue()
 {
     if (owner)
@@ -42,8 +39,29 @@ eEventQueue::~eEventQueue()
     clear();
 }
 
-/**************************************************************************/
-eEvent *eEvent::decode(const Bottle &packet, int &pos)
+void eEventQueue::sort() {
+    std::sort(begin(), end(), temporalSort);
+}
+
+
+bool eEventQueue::temporalSort(const eEvent *e1, const eEvent *e2){
+    return e1->getStamp() < e2->getStamp();
+}
+
+/******************************************************************************/
+//eEvent
+/******************************************************************************/
+yarp::os::Bottle eEvent::encode() const
+{
+    int word0=(32<<26)|(stamp&0x00ffffff);
+
+    Bottle ret;
+    ret.addInt(word0);
+    return ret;
+}
+
+/******************************************************************************/
+emorph::eEvent *eEvent::decode(const yarp::os::Bottle &packet, int &pos)
 {
     eEvent * e = 0;
     if(pos + nBytesCoded() <= packet.size()) {
@@ -57,7 +75,7 @@ eEvent *eEvent::decode(const Bottle &packet, int &pos)
 
 }
 
-/**************************************************************************/
+/******************************************************************************/
 eEvent &eEvent::operator=(const eEvent &event)
 {
     type = event.type;
@@ -66,7 +84,7 @@ eEvent &eEvent::operator=(const eEvent &event)
     return *this;
 }
 
-/**************************************************************************/
+/******************************************************************************/
 bool eEvent::operator==(const eEvent &event)
 {
     return
@@ -76,17 +94,7 @@ bool eEvent::operator==(const eEvent &event)
     );
 }
 
-/**************************************************************************/
-yarp::os::Bottle eEvent::encode() const
-{
-    int word0=(32<<26)|(stamp&0x00ffffff);
-
-    Bottle ret;
-    ret.addInt(word0);
-    return ret;
-}
-
-/**************************************************************************/
+/******************************************************************************/
 yarp::os::Property eEvent::getContent() const
 {
     Property prop;
@@ -96,20 +104,29 @@ yarp::os::Property eEvent::getContent() const
     return prop;
 }
 
-/**************************************************************************/
-//const std::string eEvent::getType() {
+/******************************************************************************/
+eEvent * eEvent::create(const std::string type)
+{
+    eEvent * ret = 0;
 
-//    if(type.c_str() == NULL) {
-//        printf("type null \n");
-//        return "null!";
-//    }
+    ret = new AddressEvent();
 
-//    return type;
+    if(type == ret->type) return ret;
+    else delete(ret);
 
-//}
+    ret = new ClusterEvent();
+    if(type == ret->type) return ret;
+    else delete(ret);
+
+    ret = 0;
+    return ret;
+
+}
 
 
-/**************************************************************************/
+/******************************************************************************/
+//AddressEvent
+/******************************************************************************/
 AddressEvent::AddressEvent()
 {
     type="AE";
@@ -121,8 +138,7 @@ AddressEvent::AddressEvent()
     y=0;
 }
 
-
-/**************************************************************************/
+/******************************************************************************/
 AddressEvent::AddressEvent(const AddressEvent &event)
 {
     type=event.type;
@@ -134,60 +150,24 @@ AddressEvent::AddressEvent(const AddressEvent &event)
     y=event.y;
 }
 
-/**************************************************************************/
+/******************************************************************************/
 AddressEvent::AddressEvent(const eEvent &event) : AddressEvent()
 {
     stamp = event.getStamp();
 }
 
-/**************************************************************************/
-AddressEvent &AddressEvent::operator=(const AddressEvent &event)
-{
-    eEvent::operator =(event);
-    channel=event.channel;
-    polarity=event.polarity;
-    x=event.x;
-    y=event.y;
-
-    return *this;
-}
-
-
-/**************************************************************************/
-bool AddressEvent::operator==(const AddressEvent &event)
-{
-    return ((eEvent::operator==(event)) &&
-            (channel==event.channel)&&
-            (polarity==event.polarity)&&
-            (x==event.x)&&
-            (y==event.y));
-}
-
-
-/**************************************************************************/
+/******************************************************************************/
 yarp::os::Bottle AddressEvent::encode() const
 {
-    int word0=(0<<26)|((channel&0x01)<<15)|((y&0xff)<<8)|((x&0x7f)<<1)|(polarity&0x01);
+    int word0=(0<<26)|((channel&0x01)<<15)|((y&0xff)<<8)|((x&0x7f)<<1)|
+            (polarity&0x01);
 
     Bottle ret = eEvent::encode();
     ret.addInt(word0);
     return ret;
 }
 
-
-/**************************************************************************/
-Property AddressEvent::getContent() const
-{
-    Property prop = eEvent::getContent();
-    prop.put("type",type.c_str());
-    prop.put("channel",channel);
-    prop.put("polarity",polarity);
-    prop.put("x",x);
-    prop.put("y",y);
-
-    return prop;
-}
-
+/******************************************************************************/
 eEvent *AddressEvent::decode(const yarp::os::Bottle &packet, int &pos)
 {
     eEvent * ee = eEvent::decode(packet, pos);
@@ -217,8 +197,43 @@ eEvent *AddressEvent::decode(const yarp::os::Bottle &packet, int &pos)
     return ae;
 }
 
+/******************************************************************************/
+AddressEvent &AddressEvent::operator=(const AddressEvent &event)
+{
+    eEvent::operator =(event);
+    channel=event.channel;
+    polarity=event.polarity;
+    x=event.x;
+    y=event.y;
 
-/**************************************************************************/
+    return *this;
+}
+
+/******************************************************************************/
+bool AddressEvent::operator==(const AddressEvent &event)
+{
+    return ((eEvent::operator==(event)) &&
+            (channel==event.channel)&&
+            (polarity==event.polarity)&&
+            (x==event.x)&&
+            (y==event.y));
+}
+
+/******************************************************************************/
+Property AddressEvent::getContent() const
+{
+    Property prop = eEvent::getContent();
+    prop.put("channel",channel);
+    prop.put("polarity",polarity);
+    prop.put("x",x);
+    prop.put("y",y);
+
+    return prop;
+}
+
+/******************************************************************************/
+//AddressEventFeatures
+/******************************************************************************/
 AddressEventFeatures::AddressEventFeatures() : AddressEvent()
 {
     type="AE-F";
@@ -228,7 +243,7 @@ AddressEventFeatures::AddressEventFeatures() : AddressEvent()
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 AddressEventFeatures::AddressEventFeatures(const AddressEventFeatures &event)
 {
     valid=event.valid;
@@ -243,7 +258,7 @@ AddressEventFeatures::AddressEventFeatures(const AddressEventFeatures &event)
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 AddressEventFeatures::AddressEventFeatures(const Bottle &packets, const int pos)
 {
     valid=false;
@@ -285,7 +300,7 @@ AddressEventFeatures::AddressEventFeatures(const Bottle &packets, const int pos)
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 AddressEventFeatures &AddressEventFeatures::operator=(const AddressEventFeatures &event)
 {
     valid=event.valid;
@@ -302,7 +317,7 @@ AddressEventFeatures &AddressEventFeatures::operator=(const AddressEventFeatures
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 bool AddressEventFeatures::operator==(const AddressEventFeatures &event)
 {
     return ((valid==event.valid)&&(type==event.type)&&(channel==event.channel)&&
@@ -311,7 +326,7 @@ bool AddressEventFeatures::operator==(const AddressEventFeatures &event)
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 Bottle AddressEventFeatures::encode() const
 {
     int word0=(2<<26)|((channel&0x01)<<16)|((y&0xff)<<8)|((x&0x7f)<<1)|(polarity&0x01);
@@ -324,7 +339,7 @@ Bottle AddressEventFeatures::encode() const
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 Property AddressEventFeatures::getContent() const
 {
     Property prop=AddressEvent::getContent();
@@ -336,7 +351,7 @@ Property AddressEventFeatures::getContent() const
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 AddressEvent3D::AddressEvent3D()
 {
     valid=true;
@@ -347,7 +362,7 @@ AddressEvent3D::AddressEvent3D()
     y=0;
 }
 
-/**************************************************************************/
+/******************************************************************************/
 AddressEvent3D::AddressEvent3D(const AddressEvent3D &event)
 {
     valid=event.valid;
@@ -359,7 +374,7 @@ AddressEvent3D::AddressEvent3D(const AddressEvent3D &event)
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 AddressEvent3D::AddressEvent3D(const Bottle &packets, const int pos)
 {
     valid=false;
@@ -390,7 +405,7 @@ AddressEvent3D::AddressEvent3D(const Bottle &packets, const int pos)
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 AddressEvent3D &AddressEvent3D::operator=(const AddressEvent3D &event)
 {
     valid=event.valid;
@@ -404,7 +419,7 @@ AddressEvent3D &AddressEvent3D::operator=(const AddressEvent3D &event)
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 bool AddressEvent3D::operator==(const AddressEvent3D &event)
 {
     return ((valid==event.valid)&&(type==event.type)&&(disparity==event.disparity)&&
@@ -412,7 +427,7 @@ bool AddressEvent3D::operator==(const AddressEvent3D &event)
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 Bottle AddressEvent3D::encode() const
 {
     int word0=(1<<26)|((disparity&0xff)<<16)|((y&0xff)<<8)|((x&0x7f)<<1)|(polarity&0x01);
@@ -423,7 +438,7 @@ Bottle AddressEvent3D::encode() const
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 Property AddressEvent3D::getContent() const
 {
     Property prop;
@@ -437,7 +452,7 @@ Property AddressEvent3D::getContent() const
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 AddressEvent3DFeatures::AddressEvent3DFeatures() : AddressEvent3D()
 {
     type="3D-AE-F";
@@ -447,7 +462,7 @@ AddressEvent3DFeatures::AddressEvent3DFeatures() : AddressEvent3D()
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 AddressEvent3DFeatures::AddressEvent3DFeatures(const AddressEvent3DFeatures &event)
 { 
     valid=event.valid;
@@ -462,7 +477,7 @@ AddressEvent3DFeatures::AddressEvent3DFeatures(const AddressEvent3DFeatures &eve
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 AddressEvent3DFeatures::AddressEvent3DFeatures(const Bottle &packets, const int pos)
 {
     valid=false;
@@ -504,7 +519,7 @@ AddressEvent3DFeatures::AddressEvent3DFeatures(const Bottle &packets, const int 
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 AddressEvent3DFeatures &AddressEvent3DFeatures::operator=(const AddressEvent3DFeatures &event)
 {
     valid=event.valid;
@@ -521,7 +536,7 @@ AddressEvent3DFeatures &AddressEvent3DFeatures::operator=(const AddressEvent3DFe
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 bool AddressEvent3DFeatures::operator==(const AddressEvent3DFeatures &event)
 {
     return ((valid==event.valid)&&(type==event.type)&&(disparity==event.disparity)&&
@@ -531,7 +546,7 @@ bool AddressEvent3DFeatures::operator==(const AddressEvent3DFeatures &event)
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 Bottle AddressEvent3DFeatures::encode() const
 {
     int word0=(4<<26)|((disparity&0xff)<<16)|((y&0xff)<<8)|((x&0x7f)<<1)|(polarity&0x01);
@@ -544,7 +559,7 @@ Bottle AddressEvent3DFeatures::encode() const
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 Property AddressEvent3DFeatures::getContent() const
 {
     Property prop=AddressEvent3D::getContent();
@@ -555,66 +570,85 @@ Property AddressEvent3DFeatures::getContent() const
     return prop;
 }
 
-
-/**************************************************************************/
+/******************************************************************************/
+//ClusterEvent
+/******************************************************************************/
 ClusterEvent::ClusterEvent()
 {
-    valid   = true;
     type    = "CLE";
+    stamp   = 0;
     channel = 0;
     xCog    = 0;
     yCog    = 0;
     id      = 0;
 }
 
-
-/**************************************************************************/
+/******************************************************************************/
 ClusterEvent::ClusterEvent(const ClusterEvent &event)
 {
-    valid   = event.valid;
     type    = event.type; 
+    stamp   = event.stamp;
     channel = event.channel;
     xCog    = event.xCog;
     yCog    = event.yCog;
     id      = event.id;
 }
 
-
-/**************************************************************************/
-ClusterEvent::ClusterEvent(const Bottle &packets, const int pos)
+/******************************************************************************/
+ClusterEvent::ClusterEvent(const eEvent &event) : ClusterEvent()
 {
-    valid=false;
+    stamp = event.getStamp();
+}
+
+/******************************************************************************/
+yarp::os::Bottle ClusterEvent::encode() const
+{
+    int word0=(8<<26)|((id&0x03ff)<<16)|((yCog&0xff)<<8)|((xCog&0x7f)<<1)|
+            (channel&0x01);
+
+    yarp::os::Bottle ret = eEvent::encode();
+    ret.addInt(word0);
+    return ret;
+}
+
+/******************************************************************************/
+
+eEvent * ClusterEvent::decode(const yarp::os::Bottle &packet, int &pos)
+{
+    eEvent * ee = eEvent::decode(packet, pos);
+    ClusterEvent * cle = 0;
 
     // check length
-    if ((pos+getLength()-1)<packets.size())
+    if ( ee && pos+nBytesCoded() <= packet.size())
     {
-        int word0=packets.get(pos).asInt();
+        cle = new ClusterEvent(*ee);
+        int word0=packet.get(pos).asInt();
 
-        // check type and fill fields
-        if ((word0>>26)==8)
-        {
-            channel=word0&0x01;
+        channel=word0&0x01;
 
-            word0>>=1;
-            xCog=word0&0x7f;
+        word0>>=1;
+        xCog=word0&0x7f;
 
-            word0>>=7;
-            yCog=word0&0xff;
-            word0>>=8;
-            id=word0&0x03ff;
+        word0>>=7;
+        yCog=word0&0xff;
+        word0>>=8;
+        id=word0&0x03ff;
 
-            type="CLE";
-            valid=true;
-        }
+        pos++;
+
+
     }
+    if(ee) delete ee;
+
+    return cle;
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 ClusterEvent &ClusterEvent::operator=(const ClusterEvent &event)
 {
-    valid   = event.valid;
-    type    = event.type;
+
+    eEvent::operator =(event);
     channel = event.channel;
     id      = event.id;
     xCog    = event.xCog;
@@ -624,30 +658,21 @@ ClusterEvent &ClusterEvent::operator=(const ClusterEvent &event)
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 bool ClusterEvent::operator==(const ClusterEvent &event)
 {
-    return ((valid==event.valid)&&(type==event.type)&&(channel==event.channel)&&
-            (id==event.id)&&(xCog==event.xCog)&&(yCog==event.yCog));
+    return ((eEvent::operator ==(event)) &&
+            (channel==event.channel)&&
+            (id==event.id)&&
+            (xCog==event.xCog)&&
+            (yCog==event.yCog));
 }
 
 
-/**************************************************************************/
-Bottle ClusterEvent::encode() const
-{   
-    int word0=(8<<26)|((id&0x03ff)<<16)|((yCog&0xff)<<8)|((xCog&0x7f)<<1)|(channel&0x01);
-
-    Bottle ret;
-    ret.addInt(word0);
-    return ret;
-}
-
-
-/**************************************************************************/
+/******************************************************************************/
 Property ClusterEvent::getContent() const
 {
-    Property prop;
-    prop.put("type",type.c_str());
+    Property prop = eEvent::getContent();
     prop.put("channel",channel);
     prop.put("id",id);
     prop.put("xCog",xCog);
@@ -657,14 +682,16 @@ Property ClusterEvent::getContent() const
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
+//ClusterEventFeatures1
+/******************************************************************************/
 ClusterEventFeatures1::ClusterEventFeatures1() : ClusterEvent()
 {
     type="CLE-F1";
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 ClusterEventFeatures1::ClusterEventFeatures1(const Bottle &packets, const int pos)
 {
     valid=false;
@@ -697,7 +724,7 @@ ClusterEventFeatures1::ClusterEventFeatures1(const Bottle &packets, const int po
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 Bottle ClusterEventFeatures1::encode() const
 {
     int word0=(9<<26)|((yCog&0xff)<<8)|((xCog&0x7f)<<1)|(channel&0x01);
@@ -710,7 +737,7 @@ Bottle ClusterEventFeatures1::encode() const
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 ClusterEventFeatures2::ClusterEventFeatures2() : ClusterEventFeatures1()
 {
     type="CLE-F2";
@@ -721,7 +748,7 @@ ClusterEventFeatures2::ClusterEventFeatures2() : ClusterEventFeatures1()
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 ClusterEventFeatures2::ClusterEventFeatures2(const ClusterEventFeatures2 &event)
 {
     valid=event.valid;
@@ -737,7 +764,7 @@ ClusterEventFeatures2::ClusterEventFeatures2(const ClusterEventFeatures2 &event)
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 ClusterEventFeatures2::ClusterEventFeatures2(const Bottle &packets, const int pos)
 {
     valid=false;
@@ -783,7 +810,7 @@ ClusterEventFeatures2::ClusterEventFeatures2(const Bottle &packets, const int po
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 ClusterEventFeatures2 &ClusterEventFeatures2::operator=(const ClusterEventFeatures2 &event)
 {
     valid=event.valid;
@@ -801,7 +828,7 @@ ClusterEventFeatures2 &ClusterEventFeatures2::operator=(const ClusterEventFeatur
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 bool ClusterEventFeatures2::operator==(const ClusterEventFeatures2 &event)
 {
     return ((valid==event.valid)&&(type==event.type)&&(channel==event.channel)&&
@@ -810,7 +837,7 @@ bool ClusterEventFeatures2::operator==(const ClusterEventFeatures2 &event)
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 Bottle ClusterEventFeatures2::encode() const
 {
     int word0=(9<<26) |((id & 0xff)<<16) | ((yCog&0xff)<<8)|((xCog&0x7f)<<1)|(channel&0x01);
@@ -825,7 +852,7 @@ Bottle ClusterEventFeatures2::encode() const
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 Property ClusterEventFeatures2::getContent() const
 {
     Property prop=ClusterEventFeatures1::getContent();
@@ -838,7 +865,7 @@ Property ClusterEventFeatures2::getContent() const
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 ClusterEventFeatures3::ClusterEventFeatures3() : ClusterEventFeatures2()
 {
     type="CLE-F3";
@@ -849,7 +876,7 @@ ClusterEventFeatures3::ClusterEventFeatures3() : ClusterEventFeatures2()
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 ClusterEventFeatures3::ClusterEventFeatures3(const ClusterEventFeatures3 &event)
 {
     valid=event.valid;
@@ -868,7 +895,7 @@ ClusterEventFeatures3::ClusterEventFeatures3(const ClusterEventFeatures3 &event)
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 ClusterEventFeatures3::ClusterEventFeatures3(const Bottle &packets, const int pos)
 {
     valid=false;
@@ -925,7 +952,7 @@ ClusterEventFeatures3::ClusterEventFeatures3(const Bottle &packets, const int po
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 ClusterEventFeatures3 &ClusterEventFeatures3::operator=(const ClusterEventFeatures3 &event)
 {
     valid=event.valid;
@@ -946,7 +973,7 @@ ClusterEventFeatures3 &ClusterEventFeatures3::operator=(const ClusterEventFeatur
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 bool ClusterEventFeatures3::operator==(const ClusterEventFeatures3 &event)
 {
     return ((valid==event.valid)&&(type==event.type)&&(channel==event.channel)&&
@@ -956,7 +983,7 @@ bool ClusterEventFeatures3::operator==(const ClusterEventFeatures3 &event)
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 Bottle ClusterEventFeatures3::encode() const
 {
     int word0=(9<<26) |((id&0xff)<<8)|((yCog&0xff)<<8)|((xCog&0x7f)<<1)|(channel&0x01);
@@ -973,7 +1000,7 @@ Bottle ClusterEventFeatures3::encode() const
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 Property ClusterEventFeatures3::getContent() const
 {
     Property prop=ClusterEventFeatures2::getContent();
@@ -986,7 +1013,7 @@ Property ClusterEventFeatures3::getContent() const
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 ClusterEvent3D::ClusterEvent3D()
 {
     valid=true;
@@ -998,7 +1025,7 @@ ClusterEvent3D::ClusterEvent3D()
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 ClusterEvent3D::ClusterEvent3D(const ClusterEvent3D &event)
 {
     valid=event.valid;
@@ -1010,7 +1037,7 @@ ClusterEvent3D::ClusterEvent3D(const ClusterEvent3D &event)
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 ClusterEvent3D::ClusterEvent3D(const Bottle &packets, const int pos)
 {
     valid=false;
@@ -1041,7 +1068,7 @@ ClusterEvent3D::ClusterEvent3D(const Bottle &packets, const int pos)
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 ClusterEvent3D &ClusterEvent3D::operator=(const ClusterEvent3D &event)
 {
     valid=event.valid;
@@ -1055,7 +1082,7 @@ ClusterEvent3D &ClusterEvent3D::operator=(const ClusterEvent3D &event)
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 bool ClusterEvent3D::operator==(const ClusterEvent3D &event)
 {
     return ((valid==event.valid)&&(type==event.type)&&(channel==event.channel)&&
@@ -1063,7 +1090,7 @@ bool ClusterEvent3D::operator==(const ClusterEvent3D &event)
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 Bottle ClusterEvent3D::encode() const
 {
     int word0=(16<<26)|((disparity&0xff)<<16)|((yCog&0xff)<<8)|((xCog&0x7f)<<1)|(channel&0x01);
@@ -1074,7 +1101,7 @@ Bottle ClusterEvent3D::encode() const
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 Property ClusterEvent3D::getContent() const
 {
     Property prop;
@@ -1088,7 +1115,7 @@ Property ClusterEvent3D::getContent() const
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 ClusterEvent3DFeatures1::ClusterEvent3DFeatures1() : ClusterEvent3D()
 {
     type="3D-CLE-F1";
@@ -1096,7 +1123,7 @@ ClusterEvent3DFeatures1::ClusterEvent3DFeatures1() : ClusterEvent3D()
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 ClusterEvent3DFeatures1::ClusterEvent3DFeatures1(const ClusterEvent3DFeatures1 &event)
 {
     valid=event.valid;
@@ -1109,7 +1136,7 @@ ClusterEvent3DFeatures1::ClusterEvent3DFeatures1(const ClusterEvent3DFeatures1 &
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 ClusterEvent3DFeatures1::ClusterEvent3DFeatures1(const Bottle &packets, const int pos)
 {
     valid=false;
@@ -1145,7 +1172,7 @@ ClusterEvent3DFeatures1::ClusterEvent3DFeatures1(const Bottle &packets, const in
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 ClusterEvent3DFeatures1 &ClusterEvent3DFeatures1::operator=(const ClusterEvent3DFeatures1 &event)
 {
     valid=event.valid;
@@ -1160,7 +1187,7 @@ ClusterEvent3DFeatures1 &ClusterEvent3DFeatures1::operator=(const ClusterEvent3D
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 bool ClusterEvent3DFeatures1::operator==(const ClusterEvent3DFeatures1 &event)
 {
     return ((valid==event.valid)&&(type==event.type)&&(channel==event.channel)&&
@@ -1169,7 +1196,7 @@ bool ClusterEvent3DFeatures1::operator==(const ClusterEvent3DFeatures1 &event)
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 Bottle ClusterEvent3DFeatures1::encode() const
 {
     int word0=(17<<26)|((disparity&0xff)<<16)|((yCog&0xff)<<8)|((xCog&0x7f)<<1)|(channel&0x01);
@@ -1182,7 +1209,7 @@ Bottle ClusterEvent3DFeatures1::encode() const
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 Property ClusterEvent3DFeatures1::getContent() const
 {
     Property prop=ClusterEvent3D::getContent();
@@ -1192,7 +1219,7 @@ Property ClusterEvent3DFeatures1::getContent() const
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 ClusterEvent3DFeatures2::ClusterEvent3DFeatures2() : ClusterEvent3DFeatures1()
 {
     type="3D-CLE-F2";
@@ -1202,7 +1229,7 @@ ClusterEvent3DFeatures2::ClusterEvent3DFeatures2() : ClusterEvent3DFeatures1()
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 ClusterEvent3DFeatures2::ClusterEvent3DFeatures2(const ClusterEvent3DFeatures2 &event)
 {
     valid=event.valid;
@@ -1218,7 +1245,7 @@ ClusterEvent3DFeatures2::ClusterEvent3DFeatures2(const ClusterEvent3DFeatures2 &
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 ClusterEvent3DFeatures2::ClusterEvent3DFeatures2(const Bottle &packets, const int pos)
 {
     valid=false;
@@ -1264,7 +1291,7 @@ ClusterEvent3DFeatures2::ClusterEvent3DFeatures2(const Bottle &packets, const in
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 ClusterEvent3DFeatures2 &ClusterEvent3DFeatures2::operator=(const ClusterEvent3DFeatures2 &event)
 {
     valid=event.valid;
@@ -1282,7 +1309,7 @@ ClusterEvent3DFeatures2 &ClusterEvent3DFeatures2::operator=(const ClusterEvent3D
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 bool ClusterEvent3DFeatures2::operator==(const ClusterEvent3DFeatures2 &event)
 {
     return ((valid==event.valid)&&(type==event.type)&&(channel==event.channel)&&
@@ -1292,7 +1319,7 @@ bool ClusterEvent3DFeatures2::operator==(const ClusterEvent3DFeatures2 &event)
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 Bottle ClusterEvent3DFeatures2::encode() const
 {
     int word0=(17<<26)|((disparity&0xff)<<16)|((yCog&0xff)<<8)|((xCog&0x7f)<<1)|(channel&0x01);
@@ -1307,7 +1334,7 @@ Bottle ClusterEvent3DFeatures2::encode() const
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 Property ClusterEvent3DFeatures2::getContent() const
 {
     Property prop=ClusterEvent3DFeatures1::getContent();
@@ -1319,7 +1346,7 @@ Property ClusterEvent3DFeatures2::getContent() const
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 ClusterEvent3DFeatures3::ClusterEvent3DFeatures3() : ClusterEvent3DFeatures2()
 {
     type="3D-CLE-F3";
@@ -1329,7 +1356,7 @@ ClusterEvent3DFeatures3::ClusterEvent3DFeatures3() : ClusterEvent3DFeatures2()
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 ClusterEvent3DFeatures3::ClusterEvent3DFeatures3(const ClusterEvent3DFeatures3 &event)
 {
     valid=event.valid;
@@ -1348,7 +1375,7 @@ ClusterEvent3DFeatures3::ClusterEvent3DFeatures3(const ClusterEvent3DFeatures3 &
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 ClusterEvent3DFeatures3::ClusterEvent3DFeatures3(const Bottle &packets, const int pos)
 {
     valid=false;
@@ -1405,7 +1432,7 @@ ClusterEvent3DFeatures3::ClusterEvent3DFeatures3(const Bottle &packets, const in
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 ClusterEvent3DFeatures3 &ClusterEvent3DFeatures3::operator=(const ClusterEvent3DFeatures3 &event)
 {
     valid=event.valid;
@@ -1426,7 +1453,7 @@ ClusterEvent3DFeatures3 &ClusterEvent3DFeatures3::operator=(const ClusterEvent3D
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 bool ClusterEvent3DFeatures3::operator==(const ClusterEvent3DFeatures3 &event)
 {
     return ((valid==event.valid)&&(type==event.type)&&(channel==event.channel)&&
@@ -1437,7 +1464,7 @@ bool ClusterEvent3DFeatures3::operator==(const ClusterEvent3DFeatures3 &event)
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 Bottle ClusterEvent3DFeatures3::encode() const
 {
     int word0=(17<<26)|((disparity&0xff)<<16)|((yCog&0xff)<<8)|((xCog&0x7f)<<1)|(channel&0x01);
@@ -1454,7 +1481,7 @@ Bottle ClusterEvent3DFeatures3::encode() const
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 Property ClusterEvent3DFeatures3::getContent() const
 {
     Property prop=ClusterEvent3DFeatures2::getContent();
@@ -1465,7 +1492,7 @@ Property ClusterEvent3DFeatures3::getContent() const
     return prop;
 }
 
-/**************************************************************************/
+/******************************************************************************/
 HoughEvent::HoughEvent()
 {
     valid   = true;
@@ -1477,7 +1504,7 @@ HoughEvent::HoughEvent()
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 HoughEvent::HoughEvent(const HoughEvent &event)
 {
     valid   = event.valid;
@@ -1489,7 +1516,7 @@ HoughEvent::HoughEvent(const HoughEvent &event)
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 HoughEvent::HoughEvent(const Bottle &packets, const int pos)
 {
     valid = false;
@@ -1520,7 +1547,7 @@ HoughEvent::HoughEvent(const Bottle &packets, const int pos)
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 HoughEvent &HoughEvent::operator=(const HoughEvent &event)
 {
     valid   = event.valid;
@@ -1534,7 +1561,7 @@ HoughEvent &HoughEvent::operator=(const HoughEvent &event)
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 bool HoughEvent::operator==(const HoughEvent &event)
 {
     return ((valid==event.valid)&&(type==event.type)&&(channel==event.channel)&&
@@ -1542,7 +1569,7 @@ bool HoughEvent::operator==(const HoughEvent &event)
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 Bottle HoughEvent::encode() const
 {
     int word0=(24<<26)|((radius&0x03ff)<<16)|((yCoc&0xff)<<8)|((xCoc&0x7f)<<1)|(channel&0x01);
@@ -1553,7 +1580,7 @@ Bottle HoughEvent::encode() const
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 Property HoughEvent::getContent() const
 {
     Property prop;
@@ -1567,7 +1594,7 @@ Property HoughEvent::getContent() const
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 ClusterEventGauss::ClusterEventGauss() : ClusterEvent()
 {
     type="CLE-G";
@@ -1578,7 +1605,7 @@ ClusterEventGauss::ClusterEventGauss() : ClusterEvent()
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 ClusterEventGauss::ClusterEventGauss(const ClusterEventGauss &event)
 {
     valid=event.valid;
@@ -1594,7 +1621,7 @@ ClusterEventGauss::ClusterEventGauss(const ClusterEventGauss &event)
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 ClusterEventGauss::ClusterEventGauss(const Bottle &packets, const int pos)
 {
     valid=false;
@@ -1641,7 +1668,7 @@ ClusterEventGauss::ClusterEventGauss(const Bottle &packets, const int pos)
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 ClusterEventGauss &ClusterEventGauss::operator=(const ClusterEventGauss &event)
 {
     valid=event.valid;
@@ -1659,7 +1686,7 @@ ClusterEventGauss &ClusterEventGauss::operator=(const ClusterEventGauss &event)
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 bool ClusterEventGauss::operator==(const ClusterEventGauss &event)
 {
 
@@ -1667,7 +1694,7 @@ bool ClusterEventGauss::operator==(const ClusterEventGauss &event)
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 Bottle ClusterEventGauss::encode() const
 {   
     int word0=(19<<26)|((id&0xff)<<16)|((yCog&0x07f)<<8)|((xCog&0x7f)<<1)|(channel&0x01);
@@ -1682,7 +1709,7 @@ Bottle ClusterEventGauss::encode() const
 }
 
 
-/**************************************************************************/
+/******************************************************************************/
 Property ClusterEventGauss::getContent() const
 {
     Property prop=ClusterEvent::getContent(); 
@@ -1692,8 +1719,6 @@ Property ClusterEventGauss::getContent() const
     prop.put("xySigma",xySigma);
 
     return prop;
-}
-
 }
 
 }
