@@ -70,6 +70,8 @@ class eFramerProcess : public yarp::os::BufferedPort<emorph::eBottle>
     //functions and then outputs the image at a certain rate
 
 private:
+    std::string portName;
+
     double period;
     double current_period;
 
@@ -79,15 +81,17 @@ private:
 
 public:
 
-    eFramerProcess();
+    eFramerProcess(const std::string &moduleName);
     ~eFramerProcess();
 
+    virtual bool open();
+    virtual void close();
+    virtual void interrupt();
+
     void setPeriodMS(int period) { this->period = period; }
-    void setWindowSize(int width, int height)
-        { eImage->setPublishSize(width, height); }
+    void setWindowSize(int width, int height);
 
-
-    virtual void onRead(emorph::eBottle &datum);
+    virtual void onRead(emorph::eBottle &incoming);
 
 
 };
@@ -103,14 +107,15 @@ private:
     std::string moduleName;         // name of the module (rootname of ports)
     std::string robotName;          // name of the robot
     std::string robotPortName;      // reference to the head of the robot
-    std::string handlerPortName;    // name for comunication with respond
+    std::string rpcPortName;    // name for comunication with respond
 
-    int retinaWidth;                // number of pixels
-    int retinaHeight;               // number of pixels
-    int windowSize;                 // display window size
+    eFramerProcess * eframer;
 
-
-    eFramerProcess eframer;
+    //all options for this module
+    //retina size (eImage needs to know and it needs to match the hardware)
+    //image size (user option but eImage needs it to publish)
+    //eventlife (
+    //framerate (this module needs to know but it should also be twice the
 
 public:
 
@@ -124,6 +129,7 @@ public:
     //when we call update module we want to send the frame on the output port
     //we use the framerate to determine how often we do this
     virtual bool updateModule();
+    virtual double getPeriod();
 };
 
 

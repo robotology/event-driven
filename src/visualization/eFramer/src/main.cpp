@@ -89,21 +89,22 @@ using namespace yarp::sig;
 
 int main(int argc, char * argv[])
 {
-    return runImageTest(argc, argv);
+    //return runImageTest(argc, argv);
 
-    Network yarp;
+    Network::init();
     
-    Time::turboBoost();
     emorph::eFramerModule module;
     //cfCollectorModule module;
 
     ResourceFinder rf;
     rf.setVerbose(true);
-    rf.setDefaultConfigFile("cartesianFrameCollector.ini"); //overridden by --from parameter
-    rf.setDefaultContext("dvsGrabber/conf");   //overridden by --context parameter
-    rf.configure("ICUB_ROOT", argc, argv);
+    rf.setDefaultConfigFile("eFramer.ini"); //overridden by --from parameter
+    rf.setDefaultContext("eFramer/conf");   //overridden by --context parameter
+    rf.configure(argc, argv);
  
     module.runModule(rf);
+
+    Network::fini();
     return 0;
 }
 

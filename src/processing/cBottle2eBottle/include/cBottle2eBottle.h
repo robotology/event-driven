@@ -73,9 +73,9 @@ class C2EHandler : public yarp::os::BufferedPort<yarp::os::Bottle>
 {
 private:
 
-    std::string 				                moduleName;         //string containing module name
-    std::string 				                inPortName;        	//string containing speech input port name
-    std::string 				                outPortName;	    //string containing start output port name
+    std::string 	moduleName;         //string containing module name
+    std::string 	inPortName;        	//string containing speech input port name
+    std::string 	outPortName;	    //string containing start output port name
 
     yarp::os::BufferedPort<emorph::eBottle>         outPort;            //output port for the eventBottle created from the input Bottle (e.g. from dataDumper)
 

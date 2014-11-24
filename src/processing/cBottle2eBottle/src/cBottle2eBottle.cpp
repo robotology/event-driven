@@ -340,9 +340,9 @@ void C2EHandler::interrupt()
 /**********************************************************/
 void C2EHandler::onRead(Bottle &bot)
 {   
-    mutex.wait();
-    
+
     eBottle &out = outPort.prepare();
+    out.clear();
     
     Bottle *main = bot.get(0).asList(); //read main list from bottle
     int size = main->size();
@@ -398,8 +398,13 @@ void C2EHandler::onRead(Bottle &bot)
     //copy dataTmp to eventBottle out
     //out = dataTmp;
     //send it all out
+    //emorph::eEventQueue q;
+    //q.clear();
+    //out.get<emorph::AddressEvent>(q);
+    //std::cout << q.size() << std::endl;
+
     outPort.write();
-    mutex.post();
+
 }
 
 //empty line to make gcc happy

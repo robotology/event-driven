@@ -26,6 +26,7 @@ SET(ICUB_APPLICATIONS_PREFIX "$ENV{ICUB_ROOT}"  CACHE PATH "Application path pre
 add_subdirectory(eventAnalysis)
 add_subdirectory(eventDataPlayer)
 add_subdirectory(c2eBottle)
+add_subdirectory(eFramer)
 #add_subdirectory(testAttention)
 
 ## make all applications show up as single target

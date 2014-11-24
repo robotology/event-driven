@@ -31,9 +31,9 @@ int main(int argc, char * argv[])
     /* prepare and configure the resource finder */
     ResourceFinder rf;
     rf.setVerbose( true );
-    rf.setDefaultContext( "eventBottleConverter" );
+    rf.setDefaultContext( "cbottletoebottle" );
     rf.setDefaultConfigFile( "config.ini" );
-    rf.setDefault("name","eventBottleConverter");
+    rf.setDefault("name","cbottletoebottle");
     rf.configure( argc, argv );
 
     /* run the module: runModule() calls configure first and, if successful, it then runs */
