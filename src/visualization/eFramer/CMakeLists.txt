@@ -3,7 +3,7 @@
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
-SET(KEYWORD "frameCollector")
+SET(KEYWORD "eFramer")
 PROJECT(${KEYWORD})
 cmake_minimum_required(VERSION 2.6)
 
@@ -18,8 +18,8 @@ INCLUDE_DIRECTORIES(
 )
 
 # Search for source code.
-FILE(GLOB folder_source src/*.cpp src/*.cc src/*.c)
-FILE(GLOB folder_header include/iCub/*.h)
+FILE(GLOB folder_source src/*.cpp src/eFramer.cpp src/main.cpp)
+FILE(GLOB folder_header include/iCub/eFramer.h)
 SOURCE_GROUP("Source Files" FILES ${folder_source})
 SOURCE_GROUP("Header Files" FILES ${folder_header})
 

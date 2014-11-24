@@ -6,15 +6,95 @@
  *
  * ///////////////////////////////////////////////////////////////////////////*/
 
+#ifndef __eFramer__
+#define __eFramer__
 
 #include <yarp/os/all.h>
 #include <yarp/sig/all.h>
-#include <iCub/emorph/eBottle.h>
-#include <iCub/emorph/eCodec.h>
+#include <iCub/emorph/all.h>
+#include <opencv2/opencv.hpp>
+
+namespace emorph {
 
 //forward declaration of the collector. It performs onRead operations to
 //add new events to the frame
-class eFramerCollector;
+class eFrame {
+
+protected:
+
+    int publishWidth;
+    int publishHeight;
+    cv::Mat rawImage;
+
+public:
+
+    eFrame(int retinaWidth, int retinaHeight);
+
+    void setPublishSize(int width, int height);
+
+    virtual void addEvent(emorph::eEvent &event) = 0;
+    void clear();
+
+    yarp::sig::ImageOf<yarp::sig::PixelMono> publish();
+
+};
+
+/*!
+ * \brief A class that draws a mono image as events are added to it
+ */
+
+class eAddressFrame : public eFrame {
+
+public:
+
+    eAddressFrame(int retinaWidth, int retinaHeight) :
+        eFrame(retinaWidth, retinaHeight) {}
+
+    //eAddressFrame(int retinaWidth, int retinaHeight) :
+        //eFrame(retinaWidth, retinaHeight) {}
+    virtual void addEvent(emorph::eEvent &event);
+
+    //~eAddressFrame() {}
+
+};
+
+/*!
+ * \brief A class that handles reading events and how long to compile an image.
+ * Events are sent to an eImage which controls how events should be drawn.
+ *
+ */
+
+class eFramerProcess : public yarp::os::BufferedPort<emorph::eBottle>
+{
+    //has an onRead() function that updates an eImage based on the draw
+    //functions and then outputs the image at a certain rate
+
+private:
+    double period;
+    double current_period;
+
+    eFrame * eImage;
+    yarp::sig::ImageOf<yarp::sig::PixelMono> yarpImage;
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > imgWriter;
+
+public:
+
+    eFramerProcess();
+    ~eFramerProcess();
+
+    void setPeriodMS(int period) { this->period = period; }
+    void setWindowSize(int width, int height)
+        { eImage->setPublishSize(width, height); }
+
+
+    virtual void onRead(emorph::eBottle &datum);
+
+
+};
+
+/*!
+ * \brief The module which envolopes making frames from event-based data
+ */
 
 class eFramerModule : public yarp::os::RFModule {
 
@@ -25,22 +105,12 @@ private:
     std::string robotPortName;      // reference to the head of the robot
     std::string handlerPortName;    // name for comunication with respond
 
-    int framerate;                  // rate at which frames are produced
     int retinaWidth;                // number of pixels
     int retinaHeight;               // number of pixels
     int windowSize;                 // display window size
 
-    yarp::sig::ImageOf<yarp::sig::PixelMono> frame;
 
-    //input port for eBottles
-    yarp::os::BufferedPort<emorph::eBottle> portIn_eBottle;
-
-    //output port for images
-    yarp::os::BufferedPort< yarp::sig::ImageOf
-                     < yarp::sig::PixelMono > > portOut_image;
-
-    //input port for messages
-    yarp::os::Port handlerPort;     // a port to handle messages
+    eFramerProcess eframer;
 
 public:
 
@@ -57,9 +127,7 @@ public:
 };
 
 
-class eFramerCollector : public yarp::os::BufferedPort<emorph::eBottle>
-{
+} //namespace emorph
 
+#endif //eframer
 
-
-};

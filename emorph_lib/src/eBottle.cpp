@@ -37,6 +37,9 @@ void eBottle::append(eBottle &eb)
 {
     //we need to access the data in eb as if it were a normal bottle
     //so we cast it to a Bottle
+
+    //TODO: just make sure the functions are available but protected should
+    //      make the casting unnecessary
     yarp::os::Bottle * bb = dynamic_cast<yarp::os::Bottle *>(&eb);
 
     //for each list of events

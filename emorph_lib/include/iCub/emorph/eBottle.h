@@ -36,22 +36,28 @@ public:
 
     //you can then get events from the eBottle
     //must be defined in header for template to work
-    template<class T> void get(emorph::eEventQueue &q)
+    template<class T> int get(emorph::eEventQueue &q)
     {
+        int r = 0;
         T t;
 
         Bottle * b = find(t.getType()).asList();
 
         int pos = 0;
-        while(pos < b->size())
+        while(pos < b->size()) {
             q.push_back(t.decode(*b, pos));
+            r++;
+        }
+
+        return r;
 
     }
 
-    template<class T> void getSorted(emorph::eEventQueue &q)
+    template<class T> int getSorted(emorph::eEventQueue &q)
     {
-        get<T>(q);
+        int r = get<T>(q);
         q.sort();
+        return r;
     }
 
     //you can also access the following functions

@@ -24,8 +24,64 @@
  */
 
 #include "iCub/eFramer.h"
-#include "iCub/cfCollectorModule.h" 
+//#include "iCub/cfCollectorModule.h"
 #include <yarp/os/all.h>
+#include <iCub/emorph/all.h>
+
+int runImageTest(int argc, char * argv[]) {
+
+    std::cout << "Starting Frame Testing" << std::endl;
+
+    emorph::eAddressFrame eaf(128, 128);
+    eaf.setPublishSize(512, 512);
+    emorph::AddressEvent ae;
+
+
+
+    std::cout << "Adding Events:" << std::endl;
+
+    ae.setChannel(0);
+    ae.setPolarity(0);
+    ae.setX(20);
+    ae.setY(30);
+    ae.setStamp(1);
+    eaf.addEvent(ae);
+
+    std::cout << ae.getContent().toString() << std::endl;
+
+
+    ae.setChannel(0);
+    ae.setPolarity(0);
+    ae.setX(50);
+    ae.setY(50);
+    ae.setStamp(2);
+    eaf.addEvent(ae);
+
+    std::cout << ae.getContent().toString() << std::endl;
+
+
+    ae.setChannel(0);
+    ae.setPolarity(0);
+    ae.setX(61);
+    ae.setY(69);
+    ae.setStamp(3);
+    eaf.addEvent(ae);
+
+    std::cout << ae.getContent().toString() << std::endl;
+
+    ae.setChannel(0);
+    ae.setPolarity(0);
+    ae.setX(120);
+    ae.setY(109);
+    ae.setStamp(4);
+    eaf.addEvent(ae);
+
+    std::cout << ae.getContent().toString() << std::endl;
+
+    eaf.publish();
+
+    return 0;
+}
 
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -33,10 +89,13 @@ using namespace yarp::sig;
 
 int main(int argc, char * argv[])
 {
+    return runImageTest(argc, argv);
+
     Network yarp;
     
     Time::turboBoost();
-    cfCollectorModule module; 
+    emorph::eFramerModule module;
+    //cfCollectorModule module;
 
     ResourceFinder rf;
     rf.setVerbose(true);

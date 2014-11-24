@@ -93,6 +93,10 @@ public:
     virtual yarp::os::Property getContent() const;
     static eEvent * create(const std::string type);
 
+    template<class T> T* getAs() {
+        return dynamic_cast<T*>(this);
+    }
+
 };
 
 

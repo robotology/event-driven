@@ -80,14 +80,13 @@ int main(int argc, char * argv[]) {
     std::cout << "Contents retrieved from eBottle by type" << std::endl;
 
     std::cout << "Address Events" << std::endl;
-    bb.get<emorph::AddressEvent>(q);  
+    bb.get<emorph::AddressEvent>(q);
     for(qi = q.begin(); qi != q.end(); qi++) {
         std::cout << (*qi)->getContent().toString() << std::endl;
         //to use functions in the address event cast it to the correct type
         //and then go for it
-        emorph::AddressEvent * aep = dynamic_cast<emorph::AddressEvent *>
-                (*qi);
-        aep->getX();
+        emorph::AddressEvent * aep = (*qi)->getAs<emorph::AddressEvent>();
+        if(aep) aep->getX();
     }
     q.clear();
 
