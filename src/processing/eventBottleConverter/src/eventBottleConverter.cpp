@@ -339,6 +339,8 @@ void BottleToEventHandler::onRead(Bottle &bot)
     
     Bottle *main = bot.get(0).asList(); //read main list from bottle
     int size = main->size();
+    
+    cout << "{eBottleConverter:} size of bottle received: " << size << endl;
 
     Bottle event;
     
