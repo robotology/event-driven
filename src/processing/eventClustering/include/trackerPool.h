@@ -1,7 +1,7 @@
 #ifndef __TRACKERPOOL_H
 #define __TRACKERPOOL_H
 
-#include "blob_tracker.h"
+#include "blobTracker.h"
 
 #include <math.h>
 #include <yarp/sig/all.h>
