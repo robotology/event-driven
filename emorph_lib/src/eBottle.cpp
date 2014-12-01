@@ -79,7 +79,7 @@ void eBottle::getAllSorted(emorph::eEventQueue &q)
     q.clear();
 
     for(int i = 0; i < Bottle::size(); i+=2) {
-        eEvent * e = eEvent::create(Bottle::get(i).asString());
+        eEvent * e = emorph::createEvent(Bottle::get(i).asString());
         if(!e) {
             std::cerr << "Warning: could not get bottle type during"
                          "getAllSorted. Check eBottle integrity." << std::endl;

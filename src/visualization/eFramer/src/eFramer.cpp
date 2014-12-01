@@ -1,4 +1,21 @@
+/*
+ * Copyright (C) 2014 iCub Facility - Istituto Italiano di Tecnologia
+ * Author: Arren Glover (@itt.it)
+ * Permission is granted to copy, distribute, and/or modify this program
+ * under the terms of the GNU General Public License, version 2 or any
+ * later version published by the Free Software Foundation.
+ *
+ * A copy of the license can be found at
+ * http://www.robotcub.org/icub/license/gpl.txt
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details
+*/
+
 #include "iCub/eFramer.h"
+#include <sstream>
 
 namespace emorph {
 /*////////////////////////////////////////////////////////////////////////////*/
@@ -12,21 +29,20 @@ namespace emorph {
 /// \param windowHeight
 ///
 ///
-eFrame::eFrame(int retinaWidth, int retinaHeight)
+eFrame::eFrame(int channel, int retinaWidth, int retinaHeight)
 {
+    this->channel = channel;
+    this->retinaWidth = retinaWidth;
+    this->retinaHeight = retinaHeight;
 
-    publishWidth = retinaWidth;
-    publishHeight = retinaHeight;
-
-    rawImage = cv::Mat(retinaHeight, retinaWidth, CV_8U);
-    clear();
+    eventLife = 1000; //default 0.001 second
+    eTime = 0; //start high to always reset on first event read
 
 }
 
-void eFrame::setPublishSize(int width, int height)
+void eFrame::setEventLife(int eventLife)
 {
-    publishWidth = width;
-    publishHeight = height;
+    this->eventLife = eventLife;
 }
 
 
@@ -34,34 +50,43 @@ void eFrame::setPublishSize(int width, int height)
 /// \brief eFrame::publish
 /// \return
 ///
-yarp::sig::ImageOf<yarp::sig::PixelMono> eFrame::publish() {
+void eFrame::publish(cv::Mat &imageOnThePort, double seconds)
+{
 
-    //create the output yarp-style image
-    yarp::sig::ImageOf<yarp::sig::PixelMono> yarpImage;
-    //yarpImage.resize(publishWidth, publishHeight);
+    //eTime += seconds * 1000000;
 
-    //create the output openCV-style image and point it to the yarp image
-    //cv::Mat publishImage((IplImage *) yarpImage.getIplImage(), false);
+    //here we can check for the subset of events to draw.
+    cv::Mat canvas = draw(q);
+    q.clear(); //this should be remove when proper event persistance is made
 
-    //publish the raw image to the publish container image  (yarp-style
-    //shoule be update also
-    cv::Mat publishImage(publishWidth, publishHeight, CV_8U);
-    cv::resize(rawImage, publishImage, publishImage.size());
+    cv::Mat correctChannels(canvas.size(), CV_8UC3);
+    if(canvas.type() == CV_8U) {
+        cv::cvtColor(canvas, correctChannels, CV_GRAY2BGR);
+    } else {
+        correctChannels = canvas; //shallow copy
+    }
 
-    cv::imshow("CV DEBUG WINDOW 1", publishImage);
-    cv::waitKey(1);
+    cv::flip(correctChannels, correctChannels, 0);
 
-    //return our published yarp-style image
-    return yarpImage;
+
+    //cannot gaurantee the size or the image type returned so we need to
+    //check and convert
+
+    cv::resize(correctChannels, imageOnThePort,
+               imageOnThePort.size(), 0, 0, cv::INTER_NEAREST);
+
 
 }
 
-///
-/// \brief eFrame::clear
-///
-void eFrame::clear()
+void eFrame::addEvent(emorph::eEvent &event)
 {
-    rawImage.setTo(0);
+    if (event.getStamp() < eTime)
+        eTime = event.getStamp();
+
+    eEvent * newcopy = emorph::createEvent(event.getType());
+    *newcopy = event;
+    q.push_back(newcopy);
+
 }
 
 /*////////////////////////////////////////////////////////////////////////////*/
@@ -72,49 +97,56 @@ void eFrame::clear()
 /// \brief eAddressFrame::addEvent
 /// \param event
 ///
-void eAddressFrame::addEvent(emorph::eEvent &event)
+cv::Mat eAddressFrame::draw(eEventQueue &eSet)
 {
 
-    emorph::AddressEvent *aep = event.getAs<emorph::AddressEvent>();
-    if(aep) {
-        rawImage.at<char>(aep->getX(), aep->getY()) = 255;
+    //std::cout << "Drawing " << eSet.size() << std::endl;
+    emorph::eEventQueue::iterator qi;
+    cv::Mat canvas(retinaWidth, retinaHeight, CV_8U);
+    canvas.setTo(128);
+
+    for(qi = eSet.begin(); qi != eSet.end(); qi++) {
+        emorph::AddressEvent *aep = (*qi)->getAs<emorph::AddressEvent>();
+        if(aep) {
+            if(aep->getPolarity())
+                canvas.at<char>(aep->getX(), aep->getY()) = 255;
+            else
+                canvas.at<char>(aep->getX(), aep->getY()) = 0;
+            //std::cout << aep->getX() << " " <<aep->getY() << std::endl;
+        }
+
     }
 
+    return canvas;
+
 }
 
 /*////////////////////////////////////////////////////////////////////////////*/
-//eFramerProcess
+//eReadAndSplit
 /*////////////////////////////////////////////////////////////////////////////*/
-eFramerProcess::~eFramerProcess()
-{
-    delete eImage;
-}
-
 ///
-/// \brief eFramerProcess::eFramerProcess
+/// \brief eReadAndSplit::eReadAndSplit
 ///
-eFramerProcess::eFramerProcess( const std::string &moduleName )
+eReadAndSplit::eReadAndSplit(const std::string &moduleName)
 {
 
     portName = moduleName;
-    eImage = 0;
 
-    current_period = 0;
-    period = 100;
+    this->eframes = 0;
 
     //yarpImage = imgWriter.prepare(); //check this works as it is a return by ref
 
     //yarpImage.resize(256, 256);
-    eImage = new eAddressFrame(128, 128);
-    eImage->setPublishSize(256, 256);
+    //eImage = new eAddressFrame(128, 128);
+    //eImage->setPublishSize(256, 256);
 
 }
 
-bool eFramerProcess::open()
+bool eReadAndSplit::open()
 {
     this->useCallback();
 
-    std::cout << "Opening BufferedPort::eFramerProcess" << std::endl;
+    std::cout << "Opening BufferedPort::eReadAndSplit" << std::endl;
     std::string name = "/" + portName + "/eBottle:i";
     bool r = BufferedPort<emorph::eBottle>::open(name.c_str());
 
@@ -124,103 +156,113 @@ bool eFramerProcess::open()
 
 }
 
-void eFramerProcess::close()
+void eReadAndSplit::close()
 {
-    std::cout << "Closing BufferedPort::eFramerProcess" << std::endl;
+    std::cout << "Closing BufferedPort::eReadAndSplit" << std::endl;
     BufferedPort<emorph::eBottle>::close();
 }
 
 
 
-void eFramerProcess::interrupt()
+void eReadAndSplit::interrupt()
 {
    BufferedPort<eBottle>::interrupt();
 }
 
-void eFramerProcess::setWindowSize(int width, int height)
+
+void eReadAndSplit::onRead(emorph::eBottle &incoming)
 {
-    if (eImage) {
-        eImage->setPublishSize(width, height);
-    }
-}
-
-void eFramerProcess::onRead(emorph::eBottle &incoming)
-{
-
-
-
-
     emorph::eEventQueue q;
     emorph::eEventQueue::iterator qi;
+
     incoming.getAllSorted(q);
-
-    int lPeriod;
-    int lcPeriod;
-    int lStamp;
-
-    /*
-     * the problem with the current method is that it will hang on the last
-     * frame if no new events are read as frame publoishing is triggered by
-     * events.
-     */
-
-    //std::cout << "New Bottle: (" << q.size() <<  ")" << ": " <<
-    //             q.front()->getStamp() << std::endl;
-
-    if(!eImage) return;
     for(qi = q.begin(); qi != q.end(); qi++) {
-
-        lPeriod = period;
-        lcPeriod = current_period;
-        lStamp = (*qi)->getStamp();
-
-        if((*qi)->getStamp() > current_period + 2 * period)
-        {
-           std::cout << "Problem here: ";
-
-
+        //only display the event if we have define to display events on this
+        //channel
+        if(eframes->find((*qi)->getChannel())!= eframes->end()) {
+            (*eframes)[(*qi)->getChannel()]->addEvent((**qi));
         }
-
-
-        //publish at a set rate
-        if((*qi)->getStamp() > current_period) {
-
-            yarpImage = eImage->publish();
-            //imgWriter.write();
-            eImage->clear();
-            //current_period = (*qi)->getStamp() + period;
-            current_period = current_period + period;
-        }
-
-        //continue adding all events
-        eImage->addEvent(**qi);
     }
-    std::cout << lStamp << " " << lcPeriod << std::endl;
-
-
+    //eImage->addEvents(incoming);
 }
 
 
 /*////////////////////////////////////////////////////////////////////////////*/
 //eFramerModule
 /*////////////////////////////////////////////////////////////////////////////*/
+eFramerModule::~eFramerModule()
+{
+    std::map<int, eFrame *>::iterator ii;
+    for(ii = eframes.begin(); ii != eframes.end(); ii++)
+        delete ii->second;
+    std::map<int, yarp::os::BufferedPort<
+        yarp::sig::ImageOf<yarp::sig::PixelBgr> > *>::iterator oi;
+    for(oi = outports.begin(); oi != outports.end(); oi++)
+        delete oi->second;
+
+}
+
 bool eFramerModule::configure(yarp::os::ResourceFinder &rf)
 {
     //read in config file
-    moduleName = "eFramerModule"; //update this from rf
 
+    moduleName = rf.find("name").asString();
+    if(moduleName == "")
+        moduleName = "eFramerModule";
     setName(moduleName.c_str());
+
+    int retinaHeight = rf.find("retinaHeight").asInt();
+    if(!retinaHeight) {
+        std::cerr << "Warning: setting retina size to default values (128x128)."
+                     "Ensure this is correct for your sensor" << std::endl;
+        retinaHeight = 128;
+    }
+
+    int retinaWidth = rf.find("retinaWidth").asInt();
+    if(!retinaWidth) {
+        retinaWidth = 128;
+    }
+
+    yarp::os::Bottle tempList; tempList.addInt(0); tempList.addInt(1);
+    yarp::os::Bottle * channelList = rf.find("channels").asList();
+    if(!channelList)
+        channelList = &tempList;
+
 
     //set up robot etc.
 
-    //set up specific parameters
-    eframer = new eFramerProcess(moduleName);
+    //set up the frames for each channel
+    //yarp::os::Bottle *channel_list = rf.find("channels").asList();
 
-    eframer->open();
+    //if(channel_list->isNull()) {
+    std::stringstream portNamer;
+    for(int i = 0; i < channelList->size(); i++) {
+        int c = channelList->get(i).asInt();
+        eframes[c] = new eAddressFrame(c, retinaWidth, retinaHeight);
+        //eframes[i]->setPublishSize(256, 256);
+        outports[c] = new yarp::os::BufferedPort<
+                yarp::sig::ImageOf<yarp::sig::PixelBgr> >;
+        portNamer.str("");
+        portNamer << "/" << moduleName << "/ch" << c << ":o";
+        outports[c]->open(portNamer.str());
+    }
+    //}
 
-    eframer->setPeriodMS(10000);  //update this from rf
-    eframer->setWindowSize(256, 256);  //update this from rf
+    //set up the reader and splitter
+    eReader = new eReadAndSplit(moduleName);
+    eReader->setFrameSet(&eframes);
+    eReader->open();
 
+    //set up the frameRate
+    period = rf.find("frameRate").asInt();
+    if(period == 0) period = 10;
+    period = 1.0 / period;
+
+    //set the output image size
+    publishHeight = rf.find("publishheight").asInt();
+    if(!publishHeight) publishHeight = 256;
+    publishWidth = rf.find("publishwidth").asInt();
+    if(!publishWidth) publishWidth = 256;
 
     return true;
 
@@ -228,14 +270,14 @@ bool eFramerModule::configure(yarp::os::ResourceFinder &rf)
 
 bool eFramerModule::interruptModule()
 {
-    eframer->interrupt();
+    eReader->interrupt();
     return true;
 }
 
 bool eFramerModule::close()
 {
-    eframer->close();
-    delete eframer;
+    eReader->close();
+    delete eReader;
 
     return true;
 }
@@ -249,14 +291,42 @@ bool eFramerModule::respond(const yarp::os::Bottle& command,
 
 bool eFramerModule::updateModule()
 {
-    //perhaps do a publish here depending on type of image out.
-    eframer->
+    //perhaps do a publish here depending on type of image out
+    std::map<int, eFrame *>::iterator mi;
+    for(mi = eframes.begin(); mi != eframes.end(); mi++) {
+        //get a pointer to buffer space
+        yarp::sig::ImageOf<yarp::sig::PixelBgr> &yarpImage =
+                outports[(mi->first)]->prepare();
+
+        //set the image size
+        yarpImage.resize(publishWidth, publishHeight);
+
+        //make a pointer as a cv::Mat
+        cv::Mat publishMat((IplImage *)yarpImage.getIplImage(), false);
+
+        //get the eframer to draw the image
+        (mi->second)->publish(publishMat, period);
+
+        //openCV debug window
+//        std::stringstream windowname;
+//        windowname << "DEBUG C" << mi->first;
+//        cv::imshow(windowname.str().c_str(), publishMat);
+//        cv::waitKey(1);
+
+//        std::cout << publishMat.rows << " " << publishMat.cols << " " <<
+//                     publishMat.channels() << " " << publishMat.depth() <<
+//                     std::endl;
+
+        //write the image to the port
+        outports[mi->first]->write();
+
+    }
     return true;
 }
 
 double eFramerModule::getPeriod()
 {
-    return 1.0;
+    return period;
 }
 
 } //namespace emorph

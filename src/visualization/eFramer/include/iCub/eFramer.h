@@ -1,10 +1,18 @@
-/*//////////////////////////////////////////////////////////////////////////////
+/*
+ * Copyright (C) 2014 iCub Facility - Istituto Italiano di Tecnologia
+ * Author: Arren Glover (@itt.it)
+ * Permission is granted to copy, distribute, and/or modify this program
+ * under the terms of the GNU General Public License, version 2 or any
+ * later version published by the Free Software Foundation.
  *
- * Copyright (C) 2014 iCub Facility, Italian Institute of Technology
- * Author: Arren Glover <arren.glover@iit.it>
+ * A copy of the license can be found at
+ * http://www.robotcub.org/icub/license/gpl.txt
  *
- *
- * ///////////////////////////////////////////////////////////////////////////*/
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details
+*/
 
 #ifndef __eFramer__
 #define __eFramer__
@@ -13,6 +21,7 @@
 #include <yarp/sig/all.h>
 #include <iCub/emorph/all.h>
 #include <opencv2/opencv.hpp>
+#include <map>
 
 namespace emorph {
 
@@ -22,20 +31,26 @@ class eFrame {
 
 protected:
 
-    int publishWidth;
-    int publishHeight;
-    cv::Mat rawImage;
+    int channel;
+    int retinaWidth;
+    int retinaHeight;
+
+    int eventLife;
+    int eTime;
+
+    emorph::eEventQueue q;
+
+    virtual cv::Mat draw(emorph::eEventQueue &eSet) = 0;
 
 public:
 
-    eFrame(int retinaWidth, int retinaHeight);
+    eFrame(int channel, int retinaWidth, int retinaHeight);
 
-    void setPublishSize(int width, int height);
+    void setEventLife(int eventLife);
 
-    virtual void addEvent(emorph::eEvent &event) = 0;
-    void clear();
+    void addEvent(emorph::eEvent &event);
 
-    yarp::sig::ImageOf<yarp::sig::PixelMono> publish();
+    void publish(cv::Mat &imageOnThePort, double seconds);
 
 };
 
@@ -47,12 +62,12 @@ class eAddressFrame : public eFrame {
 
 public:
 
-    eAddressFrame(int retinaWidth, int retinaHeight) :
-        eFrame(retinaWidth, retinaHeight) {}
+    eAddressFrame(int channel, int retinaWidth, int retinaHeight) :
+        eFrame(channel, retinaWidth, retinaHeight) {}
 
     //eAddressFrame(int retinaWidth, int retinaHeight) :
         //eFrame(retinaWidth, retinaHeight) {}
-    virtual void addEvent(emorph::eEvent &event);
+    virtual cv::Mat draw(eEventQueue &eSet);
 
     //~eAddressFrame() {}
 
@@ -64,33 +79,25 @@ public:
  *
  */
 
-class eFramerProcess : public yarp::os::BufferedPort<emorph::eBottle>
+class eReadAndSplit : public yarp::os::BufferedPort<emorph::eBottle>
 {
     //has an onRead() function that updates an eImage based on the draw
     //functions and then outputs the image at a certain rate
 
 private:
     std::string portName;
-
-    double period;
-    double current_period;
-
-    eFrame * eImage;
-    yarp::sig::ImageOf<yarp::sig::PixelMono> yarpImage;
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > imgWriter;
+    std::map<int, eFrame *> *eframes;
 
 public:
 
-    eFramerProcess(const std::string &moduleName);
-    ~eFramerProcess();
+    eReadAndSplit(const std::string &moduleName);
+
+    void setFrameSet(std::map<int, eFrame *> *eframes)
+        {this->eframes = eframes;}
 
     virtual bool open();
     virtual void close();
     virtual void interrupt();
-
-    void setPeriodMS(int period) { this->period = period; }
-    void setWindowSize(int width, int height);
-
     virtual void onRead(emorph::eBottle &incoming);
 
 
@@ -109,7 +116,19 @@ private:
     std::string robotPortName;      // reference to the head of the robot
     std::string rpcPortName;    // name for comunication with respond
 
-    eFramerProcess * eframer;
+    double period;
+    int publishWidth;
+    int publishHeight;
+
+    //this is the eBottle reading port
+    eReadAndSplit * eReader;
+
+    //this is the image frame drawers
+    std::map<int, eFrame *> eframes;
+
+    //this is the output ports sending the yarp::Imageofs on
+    std::map<int, yarp::os::BufferedPort<
+        yarp::sig::ImageOf<yarp::sig::PixelBgr> > *> outports;
 
     //all options for this module
     //retina size (eImage needs to know and it needs to match the hardware)
@@ -118,6 +137,8 @@ private:
     //framerate (this module needs to know but it should also be twice the
 
 public:
+
+    virtual ~eFramerModule();
 
     // configure all the module parameters and return true if successful
     virtual bool configure(yarp::os::ResourceFinder &rf);

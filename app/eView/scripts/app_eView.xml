@@ -1,0 +1,54 @@
+<application>
+<name>eView </name>
+
+<dependencies>	
+</dependencies>
+
+<module>
+   <name>dataSetPlayer</name>
+   <node>localhost</node>
+   <tag>dataSetPlayer</tag>
+</module>
+
+
+<module>
+    <name> eFramer</name>
+    <node> localhost </node>
+    <tag> eFramer </tag>
+</module>
+
+<module>
+   <name>yarpview</name>
+   <parameters>--name /viewCh0 --x 000 --y 000 --RefreshTime 50 </parameters>
+   <node>localhost</node>
+   <tag>eventViewerLeft</tag>
+</module>
+
+<module>
+   <name>yarpview</name>
+   <parameters>--name /viewCh1 --x 200 --y 000 --RefreshTime 50 </parameters>
+   <node>localhost</node>
+   <tag>eventViewerRight</tag>
+</module>
+
+
+<connection>
+  <from>/eventBottlePlayer/etb:o</from>
+  <to>/eFramerModule/eBottle:i</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
+  <from>/eFramerModule/ch0:o</from>
+  <to>/viewCh0</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
+  <from>/eFramerModule/ch1:o</from>
+  <to>/viewCh1</to>
+  <protocol>udp</protocol>
+</connection>
+
+
+</application>

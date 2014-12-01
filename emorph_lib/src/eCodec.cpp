@@ -26,6 +26,22 @@ using namespace yarp::os;
 namespace emorph
 {
 
+eEvent * createEvent(const std::string type)
+{
+    eEvent * ret = 0;
+
+    ret = new AddressEvent();
+    if(type == ret->getType()) return ret;
+    else delete(ret);
+
+    ret = new ClusterEvent();
+    if(type == ret->getType()) return ret;
+    else delete(ret);
+
+    return 0;
+
+}
+
 /******************************************************************************/
 //eEventQueue
 /******************************************************************************/
@@ -105,26 +121,6 @@ yarp::os::Property eEvent::getContent() const
 }
 
 /******************************************************************************/
-eEvent * eEvent::create(const std::string type)
-{
-    eEvent * ret = 0;
-
-    ret = new AddressEvent();
-
-    if(type == ret->type) return ret;
-    else delete(ret);
-
-    ret = new ClusterEvent();
-    if(type == ret->type) return ret;
-    else delete(ret);
-
-    ret = 0;
-    return ret;
-
-}
-
-
-/******************************************************************************/
 //AddressEvent
 /******************************************************************************/
 AddressEvent::AddressEvent()
@@ -198,13 +194,17 @@ eEvent *AddressEvent::decode(const yarp::os::Bottle &packet, int &pos)
 }
 
 /******************************************************************************/
-AddressEvent &AddressEvent::operator=(const AddressEvent &event)
+eEvent &AddressEvent::operator=(const eEvent &event)
 {
     eEvent::operator =(event);
-    channel=event.channel;
-    polarity=event.polarity;
-    x=event.x;
-    y=event.y;
+
+    const AddressEvent * aep = dynamic_cast<const AddressEvent *>(&event);
+    if(aep) {
+        channel=aep->channel;
+        polarity=aep->polarity;
+        x=aep->x;
+        y=aep->y;
+    }
 
     return *this;
 }

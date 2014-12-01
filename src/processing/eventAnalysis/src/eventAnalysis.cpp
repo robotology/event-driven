@@ -29,13 +29,7 @@ eventStatisticsDumper::eventStatisticsDumper()
     this->setStrict();
     this->moduleName = "Default";
     //outfilename = "/home/aglover/workspace/results/uniquetimestamps.txt";
-
-
-    eventsPerTS = 1;
-    ts = 0;
-    total = 0;
-    batched = 0;
-    sameTScount = 0;
+    prevstamp = 0;
 }
 
 void eventStatisticsDumper::setModuleName(std::string name)
@@ -55,12 +49,14 @@ bool eventStatisticsDumper::open()
 
     //create all ports
     inPortName = "/" + moduleName + ":i";
-    BufferedPort<eventBottle >::open( inPortName.c_str() );
+    BufferedPort<emorph::eBottle>::open( inPortName.c_str() );
 
+    std::cout << "Opening writer: " << outfilename << std::endl;
     fwriter.open(outfilename.c_str());
     if(!fwriter.is_open()) {
         std::cerr << "File did not open at: " << outfilename << std::endl;
     }
+    fwriter << "Event Statistics Output File" << std::endl;
 
     return true;
 }
@@ -68,9 +64,8 @@ bool eventStatisticsDumper::open()
 void eventStatisticsDumper::close()
 {
     std::cout << "now closing ports..." << std::endl;
-    fwriter << batched / total << std::endl;
     fwriter.close();
-    BufferedPort<eventBottle >::close();
+    BufferedPort<emorph::eBottle>::close();
     std::cout << "finished closing the read port..." << std::endl;
 }
 
@@ -78,71 +73,27 @@ void eventStatisticsDumper::interrupt()
 {
     fprintf(stdout,"cleaning up...\n");
     fprintf(stdout,"attempting to interrupt ports\n");
-    BufferedPort<eventBottle >::interrupt();
+    BufferedPort<emorph::eBottle>::interrupt();
     fprintf(stdout,"finished interrupt ports\n");
 }
 
-void eventStatisticsDumper::onRead(eventBottle &bot)
+void eventStatisticsDumper::onRead(emorph::eBottle &bot)
 {
 
 
     //create event queue
-    emorph::ecodecold::eEventQueue q;
+    emorph::eEventQueue q;
+    emorph::eEventQueue::iterator qi;
+    bot.getAllSorted(q);
 
-
-    if(emorph::ecodecold::eEvent::decode(*bot.get_packet(),q))
+    for(qi = q.begin(); qi != q.end(); qi++)
     {
-        int size = q.size();
-        //fprintf(stdout, "eventBottle size: %d\n",size);
-        for (int e = 0; e < size; e++)
-        {
-            if(q[e] != 0)
-            {
-                if(q[e]->getType()=="TS") //identify the type (Time Stamp)
-                {
-                    //write the number of events per timestamp to a file
-                    //std::cout << eventsPerTS << std::endl;
-                    emorph::ecodecold::TimeStamp* ptr =
-                            dynamic_cast<emorph::ecodecold::TimeStamp*>(q[e]);
-                    unsigned long tstemp = (unsigned long) ptr->getStamp();
-                    total++;
-                    if(ts == tstemp) {
-                            sameTScount++;
-                    } else {
-                        if(sameTScount > 1) batched += sameTScount;
-                        //fwriter << eventsPerTS << std::endl;
-                        sameTScount = 1;
-                    }
-                    ts = tstemp;
-                    eventsPerTS--;
-
-                } else {
-                    eventsPerTS++;
-                }
-
-
-            }
-
-        }
-
+        if ((*qi)->getStamp() < prevstamp)
+                fwriter << prevstamp << " " << (*qi)->getStamp() << std::endl;
+        prevstamp = (*qi)->getStamp();
     }
-
 }
 
-double eventStatisticsDumper::getBatchedPercentage()
-{
-    return 100 * batched / total;
-}
-
-int eventStatisticsDumper::getBatchedCount()
-{
-    return eventsPerTS;
-}
-
-unsigned long eventStatisticsDumper::getTSCount()
-{
-    return total;
-}
 
 /******************************************************************************/
 //EVENT STATISTICS MODULE
@@ -172,12 +123,12 @@ bool eventStatisticsModule::configure(yarp::os::ResourceFinder &rf)
     if(rf.check(("outputFile")))
     {
         outfilename = rf.find(("outputFile")).asString();
-        std::cout << "Writing Output to: " << outfilename;
+        std::cout << "Writing Output to: " << outfilename << std::endl;
     }
     else
     {
         outfilename = "eventAnalysisOutput.txt";
-        std::cout << "Default Output: ./" << outfilename;
+        std::cout << "Default Output: ./" << outfilename << std::endl;
     }
     esd.setOutputName(outfilename);
     esd.open();
@@ -194,15 +145,15 @@ bool eventStatisticsModule::close()
 
 bool eventStatisticsModule::updateModule()
 {
-    std::cout << name << " " << esd.getBatchedPercentage() << "% batched "
-              << esd.getBatchedCount() << "# more "
-              << esd.getTSCount() << "# TS total "
-              << std::endl;
+//    std::cout << name << " " << esd.getBatchedPercentage() << "% batched "
+//              << esd.getBatchedCount() << "# more "
+//              << esd.getTSCount() << "# TS total "
+//              << std::endl;
 
-    esd.fwriter << esd.getBatchedPercentage() << " "
-                << esd.getBatchedCount() << " "
-                << esd.getTSCount() << " "
-                << std::endl;
+//    esd.fwriter << esd.getBatchedPercentage() << " "
+//                << esd.getBatchedCount() << " "
+//                << esd.getTSCount() << " "
+//                << std::endl;
 
     return true;
 }

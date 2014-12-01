@@ -18,7 +18,7 @@ INCLUDE_DIRECTORIES(
 )
 
 # Search for source code.
-FILE(GLOB folder_source src/*.cpp src/eFramer.cpp src/main.cpp)
+FILE(GLOB folder_source src/eFramer.cpp src/main.cpp)
 FILE(GLOB folder_header include/iCub/eFramer.h)
 SOURCE_GROUP("Source Files" FILES ${folder_source})
 SOURCE_GROUP("Header Files" FILES ${folder_header})

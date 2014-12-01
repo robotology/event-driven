@@ -2,15 +2,14 @@ PROJECT
 - clear unneccessary files
 - test suite?
 - encode/decode uses int to store coded data. Is this platform independent?
+- do we still need header codes in the coded data?
 - ensure coding style + documentation + headers are compliant with iCub standards
 - doxygen and comments
 
 EBOTTLE
 - add the rest of the event types to comply with new architecture
 - update aex grabber to use new eBottle format (input into yarp)
-- update cartesianFrameCollector for eBottles (visualisation)
-- convert current datasets to eBottle files
-- make new example module that uses the new format (visualisation)
+- update eFrame to decouple event persistance from frameRate
 - convert old code to use new eBottle where necessary
 
 

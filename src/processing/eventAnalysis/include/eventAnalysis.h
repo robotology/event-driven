@@ -18,8 +18,7 @@
 #define __eventAnalysis__
 
 #include <yarp/os/all.h>
-#include <iCub/emorph/eventBottle.h>
-#include <iCub/emorph/eventCodec.h>
+#include <iCub/emorph/all.h>
 
 #include <fstream>
 
@@ -28,7 +27,7 @@
 //EVENT STATISTICS DUMPER
 /******************************************************************************/
 
-class eventStatisticsDumper : public yarp::os::BufferedPort<eventBottle>
+class eventStatisticsDumper : public yarp::os::BufferedPort<emorph::eBottle>
 {
 public:
 
@@ -38,24 +37,16 @@ public:
 
     bool    open();
     void    close();
-    void    onRead(eventBottle &bot);
+    void    onRead(emorph::eBottle &bot);
     void    interrupt();
-
-    int getBatchedCount();          //method 1
-    double getBatchedPercentage();  //method 2
-    unsigned long getTSCount();
 
 
     std::ofstream fwriter;
 
 private:
 
-    int eventsPerTS;
-    double sameTScount;
-    unsigned long ts;
-    unsigned long total;
-    double batched;
     std::string outfilename;
+    int prevstamp;
 
 
     std::string     moduleName;         //string containing module name

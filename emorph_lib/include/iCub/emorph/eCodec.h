@@ -31,6 +31,8 @@ namespace emorph
 //forward declaration
 class eEvent;
 
+eEvent * createEvent(const std::string type);
+
 /**************************************************************************/
 class eEventQueue : public std::deque<eEvent*>
 {
@@ -73,11 +75,13 @@ protected:
 
 public:
     eEvent() : type("TS"), stamp(0) { }
-    std::string getType()           { return type;          }
+    std::string getType() const     { return type;          }
 
 
     void setStamp(const int stamp)  { this->stamp=stamp;    }
     int getStamp() const            { return stamp;         }
+
+    virtual int getChannel() const  { return -1;            }
 
 
 
@@ -91,7 +95,6 @@ public:
     virtual yarp::os::Bottle   encode() const;
     virtual eEvent * decode(const yarp::os::Bottle &packet, int &pos);
     virtual yarp::os::Property getContent() const;
-    static eEvent * create(const std::string type);
 
     template<class T> T* getAs() {
         return dynamic_cast<T*>(this);
@@ -117,7 +120,7 @@ public:
     AddressEvent(const eEvent &event);
     //AddressEvent(const yarp::os::Bottle &packets, const int pos=0);
 
-    AddressEvent &operator=(const AddressEvent &event);
+    eEvent &operator=(const eEvent &event);
     bool operator==(const AddressEvent &event);
 
     int getChannel() const                  { return channel;           }
