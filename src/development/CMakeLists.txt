@@ -12,6 +12,6 @@ cmake_minimum_required(VERSION 2.6)
 #add_subdirectory  (  eventProcessor               )
 #add_subdirectory  (  testWings                    )
 #add_subdirectory  (  staticCalib                  )
-add_subdirectory   (  eBottleTest                  )
+#add_subdirectory   (  eBottleTest                  )
 
 

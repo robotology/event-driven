@@ -25,8 +25,7 @@
 #include <string>
 #include <deque>
 
-namespace emorph
-{
+namespace emorph {
 
 //forward declaration
 class eEvent;

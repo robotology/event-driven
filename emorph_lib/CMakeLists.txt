@@ -14,19 +14,19 @@ SET(PROJECT_INCLUDE_DIRS
 # and in principle it would be better to list these files manually.
 SET(folder_source 
   src/eventBuffer.cpp
-  src/eventConversion.cpp
-  src/eventCodec.cpp
+#  src/eventConversion.cpp
+#  src/eventCodec.cpp
   src/eventBottle.cpp
-  src/VelocityBuffer.cpp
-  src/eventAtom.cpp
-  src/eventHistBuffer.cpp
-  src/eventSpatiotemporalVolume.cpp
-  src/eventSpatiotemporalVolumeStack.cpp
-  src/eventUnmask.cpp
-  src/eventUnmaskDVS128.cpp
-  src/eventUnmaskICUB.cpp
-  src/eventUnmaskICUBcircBuf.cpp
-  src/objDistBuffer.cpp
+#  src/VelocityBuffer.cpp
+#  src/eventAtom.cpp
+#  src/eventHistBuffer.cpp
+#  src/eventSpatiotemporalVolume.cpp
+#  src/eventSpatiotemporalVolumeStack.cpp
+#  src/eventUnmask.cpp
+#  src/eventUnmaskDVS128.cpp
+#  src/eventUnmaskICUB.cpp
+#  src/eventUnmaskICUBcircBuf.cpp
+#  src/objDistBuffer.cpp
   src/eBottle.cpp
   src/eCodec.cpp
 )
@@ -42,18 +42,18 @@ SET(folder_header
   include/iCub/emorph/all.h
   include/iCub/emorph/eventBottle.h
   include/iCub/emorph/eventBuffer.h
-  include/iCub/emorph/eventCodec.h
-  include/iCub/emorph/eventConversion.h 
-  include/iCub/emorph/VelocityBuffer.h
-  include/iCub/emorph/eventAtom.h
-  include/iCub/emorph/eventHistBuffer.h
-  include/iCub/emorph/eventSpatiotemporalVolume.h
-  include/iCub/emorph/eventSpatiotemporalVolumeStack.h
-  include/iCub/emorph/eventUnmask.h
-  include/iCub/emorph/eventUnmaskDVS128.h
-  include/iCub/emorph/eventUnmaskICUB.h
-  include/iCub/emorph/eventUnmaskICUBcircBuf.h
-  include/iCub/emorph/objDistBuffer.h
+#  include/iCub/emorph/eventCodec.h
+#  include/iCub/emorph/eventConversion.h
+#  include/iCub/emorph/VelocityBuffer.h
+#  include/iCub/emorph/eventAtom.h
+#  include/iCub/emorph/eventHistBuffer.h
+#  include/iCub/emorph/eventSpatiotemporalVolume.h
+#  include/iCub/emorph/eventSpatiotemporalVolumeStack.h
+#  include/iCub/emorph/eventUnmask.h
+#  include/iCub/emorph/eventUnmaskDVS128.h
+#  include/iCub/emorph/eventUnmaskICUB.h
+#  include/iCub/emorph/eventUnmaskICUBcircBuf.h
+#  include/iCub/emorph/objDistBuffer.h
   include/iCub/emorph/eBottle.h
   include/iCub/emorph/eCodec.h
 )
