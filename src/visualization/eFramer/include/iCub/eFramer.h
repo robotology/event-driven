@@ -29,18 +29,21 @@ namespace emorph {
 //add new events to the frame
 class eFrame {
 
-protected:
+private:
+    emorph::eEventQueue q;
 
     int channel;
     int retinaWidth;
     int retinaHeight;
 
     int eventLife;
-    int eTime;
+    yarp::os::Semaphore mutex;
 
-    emorph::eEventQueue q;
+protected:
 
     virtual cv::Mat draw(emorph::eEventQueue &eSet) = 0;
+    int getRetinaWidth() { return retinaWidth; }
+    int getRetinaHeight() { return retinaHeight; }
 
 public:
 

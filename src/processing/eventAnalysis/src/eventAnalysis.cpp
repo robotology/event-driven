@@ -30,6 +30,7 @@ eventStatisticsDumper::eventStatisticsDumper()
     this->moduleName = "Default";
     //outfilename = "/home/aglover/workspace/results/uniquetimestamps.txt";
     prevstamp = 0;
+    bottle_number = 0;
 }
 
 void eventStatisticsDumper::setModuleName(std::string name)
@@ -57,6 +58,7 @@ bool eventStatisticsDumper::open()
         std::cerr << "File did not open at: " << outfilename << std::endl;
     }
     fwriter << "Event Statistics Output File" << std::endl;
+    fwriter << "Bottle# Event#/#inBottle PrevStamp CurStamp ..." << std::endl;
 
     return true;
 }
@@ -80,16 +82,28 @@ void eventStatisticsDumper::interrupt()
 void eventStatisticsDumper::onRead(emorph::eBottle &bot)
 {
 
+    bottle_number++;
+    std::cout << ". ";
 
     //create event queue
     emorph::eEventQueue q;
-    emorph::eEventQueue::iterator qi;
-    bot.getAllSorted(q);
+    emorph::eEventQueue::iterator qi, qi2;
+    bot.getAll(q);
+
+    int i = 0, j = 0;
 
     for(qi = q.begin(); qi != q.end(); qi++)
     {
-        if ((*qi)->getStamp() < prevstamp)
-                fwriter << prevstamp << " " << (*qi)->getStamp() << std::endl;
+        i++;
+        if ((*qi)->getStamp() < prevstamp) {
+            fwriter << bottle_number << ": " << i << "/" << q.size() << " : ";
+            fwriter << prevstamp << " " << (*qi)->getType() <<
+                       (*qi)->getStamp() << " ";
+            for(j = 0, qi2 = qi; j < 4 && qi2 != q.end(); j++, qi2++)
+                fwriter << (*qi2)->getType() << (*qi2)->getStamp() << " ";
+            fwriter << std::endl;
+
+        }
         prevstamp = (*qi)->getStamp();
     }
 }

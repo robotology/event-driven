@@ -46,6 +46,7 @@
 //within the emorph project includes
 #include <iCub/emorph/eventBuffer.h>
 #include <iCub/emorph/eventBottle.h>
+#include <iCub/emorph/all.h>
 
 #define u8  uint8_t
 #define u16 uint16_t
@@ -426,6 +427,7 @@ private:
     //yarp::os::BufferedPort<sendingBuffer> port;               // port sending events
     yarp::os::BufferedPort<yarp::os::Bottle> portDimension;     // port sending dimension of packets   
     yarp::os::BufferedPort<eventBottle> portEventBottle;        // port sending events as bottle
+    yarp::os::BufferedPort<emorph::eBottle> portEBottle;
 
     yarp::os::Bottle* bottle2send;                              // bottle to send on the eventBottle port
     

@@ -74,7 +74,7 @@ void eBottle::append(eBottle &eb)
 
 }
 
-void eBottle::getAllSorted(emorph::eEventQueue &q)
+void eBottle::getAll(emorph::eEventQueue &q)
 {
     q.clear();
 
@@ -95,9 +95,12 @@ void eBottle::getAllSorted(emorph::eEventQueue &q)
         delete(e);
 
     }
+}
 
+void eBottle::getAllSorted(emorph::eEventQueue &q)
+{
+    getAll(q);
     q.sort();
-    //std::sort(q.begin(), q.end(), eEventQueue::temporalSort);
 
 }
 

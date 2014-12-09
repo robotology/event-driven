@@ -24,9 +24,9 @@ SET(ICUB_APPLICATIONS_PREFIX "$ENV{ICUB_ROOT}"  CACHE PATH "Application path pre
 #add_subdirectory(eMorphVisualAttention)
 #add_subdirectory(ikartDvsObstacleDetector)
 add_subdirectory(eAnalysis)
-add_subdirectory(eventDataPlayer)
-add_subdirectory(c2eBottle)
-add_subdirectory(eFramer)
+#add_subdirectory(eventDataPlayer)
+#add_subdirectory(c2eBottle)
+#add_subdirectory(eFramer)
 add_subdirectory(eView)
 #add_subdirectory(testAttention)
 

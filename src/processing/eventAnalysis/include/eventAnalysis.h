@@ -45,6 +45,8 @@ public:
 
 private:
 
+    int bottle_number;
+
     std::string outfilename;
     int prevstamp;
 

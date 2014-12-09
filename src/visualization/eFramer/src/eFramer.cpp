@@ -35,9 +35,7 @@ eFrame::eFrame(int channel, int retinaWidth, int retinaHeight)
     this->retinaWidth = retinaWidth;
     this->retinaHeight = retinaHeight;
 
-    eventLife = 1000; //default 0.001 second
-    eTime = 0; //start high to always reset on first event read
-
+    eventLife = 50000; //default 0.5 seconds
 }
 
 void eFrame::setEventLife(int eventLife)
@@ -53,12 +51,33 @@ void eFrame::setEventLife(int eventLife)
 void eFrame::publish(cv::Mat &imageOnThePort, double seconds)
 {
 
-    //eTime += seconds * 1000000;
+    //critical section
+    mutex.wait();
 
-    //here we can check for the subset of events to draw.
+    //do a quick clean of the q
+    if(!q.empty()) {
+        int ctime = q.back()->getStamp();
+        emorph::eEventQueue::iterator qi = q.begin();
+        while(qi != q.end()) {
+            int etime = (*qi)->getStamp();
+            if(etime < ctime - eventLife || etime > ctime + eventLife) {
+                delete (*qi);
+                qi = q.erase(qi);
+            }
+            else
+            {
+                qi++;
+            }
+        }
+    }
+
+    //draw the q
     cv::Mat canvas = draw(q);
-    q.clear(); //this should be remove when proper event persistance is made
+    mutex.post();
 
+
+    //we can't gaurantee the output of the canvas so we have to do some
+    //image conversion (channel count and image size)
     cv::Mat correctChannels(canvas.size(), CV_8UC3);
     if(canvas.type() == CV_8U) {
         cv::cvtColor(canvas, correctChannels, CV_GRAY2BGR);
@@ -68,10 +87,6 @@ void eFrame::publish(cv::Mat &imageOnThePort, double seconds)
 
     cv::flip(correctChannels, correctChannels, 0);
 
-
-    //cannot gaurantee the size or the image type returned so we need to
-    //check and convert
-
     cv::resize(correctChannels, imageOnThePort,
                imageOnThePort.size(), 0, 0, cv::INTER_NEAREST);
 
@@ -80,12 +95,34 @@ void eFrame::publish(cv::Mat &imageOnThePort, double seconds)
 
 void eFrame::addEvent(emorph::eEvent &event)
 {
-    if (event.getStamp() < eTime)
-        eTime = event.getStamp();
+    //sketchy hack to remove the unknown artefacts
+    //this shouldn't be needed when the artefacts go!
+    if(event.getStamp() == 4287744)
+        return;
 
+
+    //make a copy of the event to add to the circular buffer
     eEvent * newcopy = emorph::createEvent(event.getType());
     *newcopy = event;
+
+    mutex.wait();
+
+    //add the event
     q.push_back(newcopy);
+
+    //check if any events need to be removed
+    while(true) {
+
+        int lifeThreshold = event.getStamp() - eventLife;
+
+        if(q.front()->getStamp() < lifeThreshold) {
+            delete q.front();
+            q.pop_front();
+        }
+        else
+            break;
+    }
+    mutex.post();
 
 }
 
@@ -99,20 +136,29 @@ void eFrame::addEvent(emorph::eEvent &event)
 ///
 cv::Mat eAddressFrame::draw(eEventQueue &eSet)
 {
-
+    int mass = 180;
     //std::cout << "Drawing " << eSet.size() << std::endl;
     emorph::eEventQueue::iterator qi;
-    cv::Mat canvas(retinaWidth, retinaHeight, CV_8U);
+    cv::Mat canvas(getRetinaWidth(), getRetinaHeight(), CV_8UC3);
     canvas.setTo(128);
 
     for(qi = eSet.begin(); qi != eSet.end(); qi++) {
         emorph::AddressEvent *aep = (*qi)->getAs<emorph::AddressEvent>();
         if(aep) {
+            cv::Vec3b cpc = canvas.at<cv::Vec3b>(aep->getX(), aep->getY());
+
             if(aep->getPolarity())
-                canvas.at<char>(aep->getX(), aep->getY()) = 255;
+            {
+                if(cpc.val[1] > 255 - mass) cpc.val[1] = 255;
+                else cpc.val[1] += mass;
+            }
             else
-                canvas.at<char>(aep->getX(), aep->getY()) = 0;
-            //std::cout << aep->getX() << " " <<aep->getY() << std::endl;
+            {
+                if(cpc.val[2] > 255 - mass) cpc.val[2] = 255;
+                else cpc.val[2] += mass;
+            }
+
+            canvas.at<cv::Vec3b>(aep->getX(), aep->getY()) = cpc;
         }
 
     }
@@ -133,12 +179,6 @@ eReadAndSplit::eReadAndSplit(const std::string &moduleName)
     portName = moduleName;
 
     this->eframes = 0;
-
-    //yarpImage = imgWriter.prepare(); //check this works as it is a return by ref
-
-    //yarpImage.resize(256, 256);
-    //eImage = new eAddressFrame(128, 128);
-    //eImage->setPublishSize(256, 256);
 
 }
 
@@ -206,11 +246,14 @@ bool eFramerModule::configure(yarp::os::ResourceFinder &rf)
 {
     //read in config file
 
+
+    //set the module name for port naming
     moduleName = rf.find("name").asString();
     if(moduleName == "")
         moduleName = "eFramerModule";
     setName(moduleName.c_str());
 
+    //set the eFrame options (sensor size and eventlife
     int retinaHeight = rf.find("retinaHeight").asInt();
     if(!retinaHeight) {
         std::cerr << "Warning: setting retina size to default values (128x128)."
@@ -223,22 +266,22 @@ bool eFramerModule::configure(yarp::os::ResourceFinder &rf)
         retinaWidth = 128;
     }
 
+    double eventWindow = rf.find("eventWindow").asDouble();
+    if(eventWindow == 0) eventWindow = 0.5;
+    eventWindow = eventWindow * 100000;
+
+    //set the channel list
     yarp::os::Bottle tempList; tempList.addInt(0); tempList.addInt(1);
     yarp::os::Bottle * channelList = rf.find("channels").asList();
     if(!channelList)
         channelList = &tempList;
 
-
-    //set up robot etc.
-
-    //set up the frames for each channel
-    //yarp::os::Bottle *channel_list = rf.find("channels").asList();
-
-    //if(channel_list->isNull()) {
+    //for each channel open an eFrame and an output port
     std::stringstream portNamer;
     for(int i = 0; i < channelList->size(); i++) {
         int c = channelList->get(i).asInt();
         eframes[c] = new eAddressFrame(c, retinaWidth, retinaHeight);
+        eframes[c]->setEventLife((int)eventWindow);
         //eframes[i]->setPublishSize(256, 256);
         outports[c] = new yarp::os::BufferedPort<
                 yarp::sig::ImageOf<yarp::sig::PixelBgr> >;
@@ -246,16 +289,15 @@ bool eFramerModule::configure(yarp::os::ResourceFinder &rf)
         portNamer << "/" << moduleName << "/ch" << c << ":o";
         outports[c]->open(portNamer.str());
     }
-    //}
 
-    //set up the reader and splitter
+    //open our event reader given the channel list
     eReader = new eReadAndSplit(moduleName);
     eReader->setFrameSet(&eframes);
     eReader->open();
 
     //set up the frameRate
     period = rf.find("frameRate").asInt();
-    if(period == 0) period = 10;
+    if(period == 0) period = 30;
     period = 1.0 / period;
 
     //set the output image size
@@ -306,16 +348,6 @@ bool eFramerModule::updateModule()
 
         //get the eframer to draw the image
         (mi->second)->publish(publishMat, period);
-
-        //openCV debug window
-//        std::stringstream windowname;
-//        windowname << "DEBUG C" << mi->first;
-//        cv::imshow(windowname.str().c_str(), publishMat);
-//        cv::waitKey(1);
-
-//        std::cout << publishMat.rows << " " << publishMat.cols << " " <<
-//                     publishMat.channels() << " " << publishMat.depth() <<
-//                     std::endl;
 
         //write the image to the port
         outports[mi->first]->write();

@@ -46,6 +46,7 @@ public:
     void addEvent(emorph::eEvent &e);\
     void append(eBottle &eb);
 
+    void getAll(eEventQueue &q);
     void getAllSorted(eEventQueue &q);
 
     //you can then get events from the eBottle
