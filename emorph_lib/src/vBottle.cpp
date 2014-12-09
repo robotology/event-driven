@@ -12,7 +12,7 @@
  * CopyPolicy: Released under the terms of the GNU GPL v2.0.
 */
 
-#include <iCub/emorph/eBottle.h>
+#include <iCub/emorph/vBottle.h>
 
 
 namespace emorph {

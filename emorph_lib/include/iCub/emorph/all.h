@@ -1,3 +1,3 @@
 
-#include <iCub/emorph/eBottle.h>
-#include <iCub/emorph/eCodec.h>
+#include <iCub/emorph/vBottle.h>
+#include <iCub/emorph/vCodec.h>

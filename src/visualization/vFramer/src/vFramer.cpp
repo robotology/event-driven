@@ -14,7 +14,7 @@
  * Public License for more details
 */
 
-#include "iCub/eFramer.h"
+#include "iCub/vFramer.h"
 #include <sstream>
 
 namespace emorph {

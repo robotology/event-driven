@@ -31,7 +31,7 @@
 
 
 #include <yarp/os/all.h>
-#include <iCub/emorph/eCodec.h>
+#include <iCub/emorph/vCodec.h>
 
 namespace emorph {
 

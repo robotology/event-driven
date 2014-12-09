@@ -17,8 +17,8 @@ include(iCubHelpers)
 # default prefix for applications
 SET(ICUB_APPLICATIONS_PREFIX "$ENV{ICUB_ROOT}"  CACHE PATH "Application path prefix")
 				
-add_subdirectory(eAnalysis)
-add_subdirectory(eView)
+add_subdirectory(vAnalysis)
+add_subdirectory(vView)
 
 
 ## make all applications show up as single target

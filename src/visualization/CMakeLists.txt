@@ -19,5 +19,5 @@ ENDIF (NOT WIN32)
 #add_subdirectory  (  logpolar_frame_converter_add )
 #add_subdirectory  (  logpolarFrameCollector	  )
 #add_subdirectory  (  logSort			  )
-add_subdirectory    ( eFramer )
+add_subdirectory    ( vFramer )
 

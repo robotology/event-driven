@@ -19,7 +19,7 @@
 */
 
 #include <algorithm>
-#include "iCub/emorph/eCodec.h"
+#include "iCub/emorph/vCodec.h"
 using namespace emorph;
 using namespace yarp::os;
 
