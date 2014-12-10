@@ -1,25 +1,22 @@
 #Copyright: (C) 2010 RobotCub Consortium
 # Authors: Francesco Rea
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
-
-# After change in directory structure the uncommented modules were moved from src to /src/processing/ : 26 june 2014 by Himanshu Akolkar
-
 cmake_minimum_required(VERSION 2.6)
 
 
-
 IF(NOT WIN32) 
-#	add_subdirectory   (  aexGrabber                   )		
+        add_subdirectory   (  vGrabber                   )
 #	add_subdirectory   (  asvGrabber                   )
 #	add_subdirectory   (  basicAexGrabber              )
 ENDIF (NOT WIN32)
 
-
-add_subdirectory  ( eventAnalysis    )
-
+#add_subdirectory  ( device2yarp )
+#add_subdirectory  ( zBrdInterface )
+#add_subdirectory  ( dvsGrabber )
+#add_subdirectory  ( eventSniffer )
 
 if(ICUB_USE_IPOPT)
-        #add_subdirectory ( targetFinder                  )
-	#add_subdirectory (  wingsTranslator              )
+#        add_subdirectory ( targetFinder                  )
+#	add_subdirectory (  wingsTranslator              )
 endif(ICUB_USE_IPOPT)
 
