@@ -147,7 +147,7 @@ void EventToBottleHandler::onRead(eventBottle &bot)
     //decode packet
     Bottle out; 
     Stamp st;
-    BufferedPort<eventBottle >::getEnvelope(st);
+    BufferedPort<eventBottle>::getEnvelope(st);
 
     double timeaex = st.getTime(); 
     //fprintf(stdout, "aexGrab %lf \n",timeaex);
@@ -177,7 +177,8 @@ void EventToBottleHandler::onRead(eventBottle &bot)
                         int polarity = ptr->getPolarity();
                         int channel = ptr->getChannel();
                         string type = ptr->getType();
-                        
+        
+                        cout << posX << " " << posY  <<  endl;
                         Bottle &tmp = pack.addList();
                         
                         Bottle &bts = tmp.addList();  
@@ -203,6 +204,7 @@ void EventToBottleHandler::onRead(eventBottle &bot)
                         Bottle &btype = tmp.addList();
                         btype.addString("type");
                         btype.addString(type);
+
                         if(e == 1)
                         {
                             fprintf(stdout, "Size %d TimeStamp: %d AE: (X: %d  Y: %d  pol: %d  cha: %d) \n",size, ts, posX, posY, polarity, channel);

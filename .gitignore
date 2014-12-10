@@ -11,3 +11,6 @@ CMakeLists.txt.user
 #ignore the build directory
 build/
 
+#the pc104 build which we only want on the iCub14
+build-pc104/
+
