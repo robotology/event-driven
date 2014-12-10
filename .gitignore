@@ -1,0 +1,13 @@
+
+#this file is created by QT creator IDE
+CMakeLists.txt.user
+
+# ignore all temporary files
+*~
+
+#ignore objects and .a files
+*.[oa]
+
+#ignore the build directory
+build/
+

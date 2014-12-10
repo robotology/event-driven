@@ -7,24 +7,64 @@ SET(PROJECTNAME eMorphLib)
 PROJECT(${PROJECTNAME})
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR})
 
-SET(PROJECT_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/include)
+SET(PROJECT_INCLUDE_DIRS
+  ${PROJECT_SOURCE_DIR}/include)
 
 # Find .cpp and .h files automatically.  This is a bit lazy,
 # and in principle it would be better to list these files manually.
 SET(folder_source 
   src/eventBuffer.cpp
+#  src/eventConversion.cpp
+#  src/eventCodec.cpp
   src/eventBottle.cpp
+#  src/VelocityBuffer.cpp
+#  src/eventAtom.cpp
+#  src/eventHistBuffer.cpp
+#  src/eventSpatiotemporalVolume.cpp
+#  src/eventSpatiotemporalVolumeStack.cpp
+#  src/eventUnmask.cpp
+#  src/eventUnmaskDVS128.cpp
+#  src/eventUnmaskICUB.cpp
+#  src/eventUnmaskICUBcircBuf.cpp
+#  src/objDistBuffer.cpp
   src/vBottle.cpp
   src/vCodec.cpp
 )
+
+#FILE(GLOB folder_source 
+#  src/eventBuffer.cpp
+#  src/eventConversion.cpp
+#  src/eventCodec.cpp
+#  src/eventBottle.cpp
+#)
 
 SET(folder_header 
   include/iCub/emorph/all.h
   include/iCub/emorph/eventBottle.h
   include/iCub/emorph/eventBuffer.h
+#  include/iCub/emorph/eventCodec.h
+#  include/iCub/emorph/eventConversion.h
+#  include/iCub/emorph/VelocityBuffer.h
+#  include/iCub/emorph/eventAtom.h
+#  include/iCub/emorph/eventHistBuffer.h
+#  include/iCub/emorph/eventSpatiotemporalVolume.h
+#  include/iCub/emorph/eventSpatiotemporalVolumeStack.h
+#  include/iCub/emorph/eventUnmask.h
+#  include/iCub/emorph/eventUnmaskDVS128.h
+#  include/iCub/emorph/eventUnmaskICUB.h
+#  include/iCub/emorph/eventUnmaskICUBcircBuf.h
+#  include/iCub/emorph/objDistBuffer.h
   include/iCub/emorph/vBottle.h
   include/iCub/emorph/vCodec.h
 )
+
+#FILE(GLOB folder_header 
+#  include/iCub/emorph/*.h
+  #include/iCub/emorph/eventBottle.h
+  #include/iCub/emorph/eventBuffer.h
+  #include/iCub/emorph/eventCodec.h
+  #include/iCub/emorph/eventConversion.h
+#)
 
 # Declare groups of source and header files -- makes things pretty in MSVC.
 SOURCE_GROUP("Source Files" FILES ${folder_source})
@@ -56,9 +96,7 @@ TARGET_LINK_LIBRARIES(${PROJECTNAME} ${YARP_LIBRARIES})
 #                                   DESTINATION include/iCub
 #                                   FILES ${folder_header})
 
-icubcontrib_export_library(${PROJECTNAME}
-    INTERNAL_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/include
-    EXTERNAL_INCLUDE_DIRS ${YARP_INCLUDE_DIRS} ${ICUB_INCLUDE_DIRS}
-    DESTINATION include/iCub/emorph
-    FILES  ${folder_header}
-)
+icubcontrib_export_library(${PROJECTNAME} INTERNAL_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/include
+                                          EXTERNAL_INCLUDE_DIRS ${YARP_INCLUDE_DIRS} ${ICUB_INCLUDE_DIRS}
+                                          DESTINATION include/iCub/emorph
+                                          FILES  ${folder_header})
