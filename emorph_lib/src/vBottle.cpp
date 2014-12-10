@@ -5,7 +5,7 @@
  * @ingroup emorph_lib
  *
  * Data transport method for the eMorph project using the standard Bottle
- * format tailored for eEvents
+ * format tailored for vEvents
  *
  * Author: Arren Glover 2014
  * Copyright (C) 2010 RobotCub Consortium
@@ -17,7 +17,7 @@
 
 namespace emorph {
 
-void eBottle::addEvent(emorph::eEvent &e) {
+void vBottle::addEvent(emorph::vEvent &e) {
 
     //first append a searchable string
     //yarp::os::Bottle::addString(e.getType());
@@ -33,7 +33,7 @@ void eBottle::addEvent(emorph::eEvent &e) {
 
 }
 
-void eBottle::append(eBottle &eb)
+void vBottle::append(vBottle &eb)
 {
     //we need to access the data in eb as if it were a normal bottle
     //so we cast it to a Bottle
@@ -48,16 +48,16 @@ void eBottle::append(eBottle &eb)
         //get the appended event type
         const std::string tagname = bb->get(tagi).asString();
         if(!tagname.size()) {
-            std::cerr << "Warning: Could not get tagname during eBottle append."
-                         "Check eBottle integrity." << std::endl;
+            std::cerr << "Warning: Could not get tagname during vBottle append."
+                         "Check vBottle integrity." << std::endl;
             continue;
         }
 
         //and the contents to append
         yarp::os::Bottle *b_from = bb->get(tagi+1).asList();
         if(b_from->size()) {
-            std::cerr << "Warning: From-list empty during eBottle append."
-                         "Check eBottle integrity." << std::endl;
+            std::cerr << "Warning: From-list empty during vBottle append."
+                         "Check vBottle integrity." << std::endl;
             continue;
         }
 
@@ -74,15 +74,15 @@ void eBottle::append(eBottle &eb)
 
 }
 
-void eBottle::getAll(emorph::eEventQueue &q)
+void vBottle::getAll(emorph::vQueue &q)
 {
     q.clear();
 
     for(int i = 0; i < Bottle::size(); i+=2) {
-        eEvent * e = emorph::createEvent(Bottle::get(i).asString());
+        vEvent * e = emorph::createEvent(Bottle::get(i).asString());
         if(!e) {
             std::cerr << "Warning: could not get bottle type during"
-                         "getAllSorted. Check eBottle integrity." << std::endl;
+                         "getAllSorted. Check vBottle integrity." << std::endl;
             continue;
         }
 
@@ -97,7 +97,7 @@ void eBottle::getAll(emorph::eEventQueue &q)
     }
 }
 
-void eBottle::getAllSorted(emorph::eEventQueue &q)
+void vBottle::getAllSorted(emorph::vQueue &q)
 {
     getAll(q);
     q.sort();

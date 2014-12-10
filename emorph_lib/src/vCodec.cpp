@@ -26,9 +26,9 @@ using namespace yarp::os;
 namespace emorph
 {
 
-eEvent * createEvent(const std::string type)
+vEvent * createEvent(const std::string type)
 {
-    eEvent * ret = 0;
+    vEvent * ret = 0;
 
     ret = new AddressEvent();
     if(type == ret->getType()) return ret;
@@ -43,9 +43,9 @@ eEvent * createEvent(const std::string type)
 }
 
 /******************************************************************************/
-//eEventQueue
+//vQueue
 /******************************************************************************/
-eEventQueue::~eEventQueue()
+vQueue::~vQueue()
 {
     if (owner)
         for (size_t i=0; i<size(); i++)
@@ -55,19 +55,19 @@ eEventQueue::~eEventQueue()
     clear();
 }
 
-void eEventQueue::sort() {
+void vQueue::sort() {
     std::sort(begin(), end(), temporalSort);
 }
 
 
-bool eEventQueue::temporalSort(const eEvent *e1, const eEvent *e2){
+bool vQueue::temporalSort(const vEvent *e1, const vEvent *e2){
     return e1->getStamp() < e2->getStamp();
 }
 
 /******************************************************************************/
-//eEvent
+//vEvent
 /******************************************************************************/
-yarp::os::Bottle eEvent::encode() const
+yarp::os::Bottle vEvent::encode() const
 {
     int word0=(32<<26)|(stamp&0x00ffffff);
 
@@ -77,11 +77,11 @@ yarp::os::Bottle eEvent::encode() const
 }
 
 /******************************************************************************/
-emorph::eEvent *eEvent::decode(const yarp::os::Bottle &packet, int &pos)
+emorph::vEvent *vEvent::decode(const yarp::os::Bottle &packet, int &pos)
 {
-    eEvent * e = 0;
+    vEvent * e = 0;
     if(pos + nBytesCoded() <= packet.size()) {
-        e = new eEvent();
+        e = new vEvent();
 
         //TODO: this needs to take into account the code aswell
         e->stamp = packet.get(pos).asInt()&0x00ffffff;;
@@ -92,7 +92,7 @@ emorph::eEvent *eEvent::decode(const yarp::os::Bottle &packet, int &pos)
 }
 
 /******************************************************************************/
-eEvent &eEvent::operator=(const eEvent &event)
+vEvent &vEvent::operator=(const vEvent &event)
 {
     type = event.type;
     stamp = event.stamp;
@@ -101,7 +101,7 @@ eEvent &eEvent::operator=(const eEvent &event)
 }
 
 /******************************************************************************/
-bool eEvent::operator==(const eEvent &event)
+bool vEvent::operator==(const vEvent &event)
 {
     return
     (
@@ -111,7 +111,7 @@ bool eEvent::operator==(const eEvent &event)
 }
 
 /******************************************************************************/
-yarp::os::Property eEvent::getContent() const
+yarp::os::Property vEvent::getContent() const
 {
     Property prop;
     prop.put("type",type.c_str());
@@ -147,7 +147,7 @@ AddressEvent::AddressEvent(const AddressEvent &event)
 }
 
 /******************************************************************************/
-AddressEvent::AddressEvent(const eEvent &event) : AddressEvent()
+AddressEvent::AddressEvent(const vEvent &event) : AddressEvent()
 {
     stamp = event.getStamp();
 }
@@ -158,15 +158,15 @@ yarp::os::Bottle AddressEvent::encode() const
     int word0=(0<<26)|((channel&0x01)<<15)|((y&0xff)<<8)|((x&0x7f)<<1)|
             (polarity&0x01);
 
-    Bottle ret = eEvent::encode();
+    Bottle ret = vEvent::encode();
     ret.addInt(word0);
     return ret;
 }
 
 /******************************************************************************/
-eEvent *AddressEvent::decode(const yarp::os::Bottle &packet, int &pos)
+vEvent *AddressEvent::decode(const yarp::os::Bottle &packet, int &pos)
 {
-    eEvent * ee = eEvent::decode(packet, pos);
+    vEvent * ee = vEvent::decode(packet, pos);
     AddressEvent * ae = 0;
 
     // check length
@@ -194,9 +194,9 @@ eEvent *AddressEvent::decode(const yarp::os::Bottle &packet, int &pos)
 }
 
 /******************************************************************************/
-eEvent &AddressEvent::operator=(const eEvent &event)
+vEvent &AddressEvent::operator=(const vEvent &event)
 {
-    eEvent::operator =(event);
+    vEvent::operator =(event);
 
     const AddressEvent * aep = dynamic_cast<const AddressEvent *>(&event);
     if(aep) {
@@ -212,7 +212,7 @@ eEvent &AddressEvent::operator=(const eEvent &event)
 /******************************************************************************/
 bool AddressEvent::operator==(const AddressEvent &event)
 {
-    return ((eEvent::operator==(event)) &&
+    return ((vEvent::operator==(event)) &&
             (channel==event.channel)&&
             (polarity==event.polarity)&&
             (x==event.x)&&
@@ -222,7 +222,7 @@ bool AddressEvent::operator==(const AddressEvent &event)
 /******************************************************************************/
 Property AddressEvent::getContent() const
 {
-    Property prop = eEvent::getContent();
+    Property prop = vEvent::getContent();
     prop.put("channel",channel);
     prop.put("polarity",polarity);
     prop.put("x",x);
@@ -595,7 +595,7 @@ ClusterEvent::ClusterEvent(const ClusterEvent &event)
 }
 
 /******************************************************************************/
-ClusterEvent::ClusterEvent(const eEvent &event) : ClusterEvent()
+ClusterEvent::ClusterEvent(const vEvent &event) : ClusterEvent()
 {
     stamp = event.getStamp();
 }
@@ -606,16 +606,16 @@ yarp::os::Bottle ClusterEvent::encode() const
     int word0=(8<<26)|((id&0x03ff)<<16)|((yCog&0xff)<<8)|((xCog&0x7f)<<1)|
             (channel&0x01);
 
-    yarp::os::Bottle ret = eEvent::encode();
+    yarp::os::Bottle ret = vEvent::encode();
     ret.addInt(word0);
     return ret;
 }
 
 /******************************************************************************/
 
-eEvent * ClusterEvent::decode(const yarp::os::Bottle &packet, int &pos)
+vEvent * ClusterEvent::decode(const yarp::os::Bottle &packet, int &pos)
 {
-    eEvent * ee = eEvent::decode(packet, pos);
+    vEvent * ee = vEvent::decode(packet, pos);
     ClusterEvent * cle = 0;
 
     // check length
@@ -648,7 +648,7 @@ eEvent * ClusterEvent::decode(const yarp::os::Bottle &packet, int &pos)
 ClusterEvent &ClusterEvent::operator=(const ClusterEvent &event)
 {
 
-    eEvent::operator =(event);
+    vEvent::operator =(event);
     channel = event.channel;
     id      = event.id;
     xCog    = event.xCog;
@@ -661,7 +661,7 @@ ClusterEvent &ClusterEvent::operator=(const ClusterEvent &event)
 /******************************************************************************/
 bool ClusterEvent::operator==(const ClusterEvent &event)
 {
-    return ((eEvent::operator ==(event)) &&
+    return ((vEvent::operator ==(event)) &&
             (channel==event.channel)&&
             (id==event.id)&&
             (xCog==event.xCog)&&
@@ -672,7 +672,7 @@ bool ClusterEvent::operator==(const ClusterEvent &event)
 /******************************************************************************/
 Property ClusterEvent::getContent() const
 {
-    Property prop = eEvent::getContent();
+    Property prop = vEvent::getContent();
     prop.put("channel",channel);
     prop.put("id",id);
     prop.put("xCog",xCog);

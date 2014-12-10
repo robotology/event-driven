@@ -19,17 +19,17 @@
 
 namespace emorph {
 /*////////////////////////////////////////////////////////////////////////////*/
-//eFrame
+//vFrame
 /*////////////////////////////////////////////////////////////////////////////*/
 ///
-/// \brief eFrame::eFrame
+/// \brief vFrame::vFrame
 /// \param retinaWidth
 /// \param retinaHeight
 /// \param windowWidth
 /// \param windowHeight
 ///
 ///
-eFrame::eFrame(int channel, int retinaWidth, int retinaHeight)
+vFrame::vFrame(int channel, int retinaWidth, int retinaHeight)
 {
     this->channel = channel;
     this->retinaWidth = retinaWidth;
@@ -38,17 +38,17 @@ eFrame::eFrame(int channel, int retinaWidth, int retinaHeight)
     eventLife = 50000; //default 0.5 seconds
 }
 
-void eFrame::setEventLife(int eventLife)
+void vFrame::setEventLife(int eventLife)
 {
     this->eventLife = eventLife;
 }
 
 
 ///
-/// \brief eFrame::publish
+/// \brief vFrame::publish
 /// \return
 ///
-void eFrame::publish(cv::Mat &imageOnThePort, double seconds)
+void vFrame::publish(cv::Mat &imageOnThePort, double seconds)
 {
 
     //critical section
@@ -57,7 +57,7 @@ void eFrame::publish(cv::Mat &imageOnThePort, double seconds)
     //do a quick clean of the q
     if(!q.empty()) {
         int ctime = q.back()->getStamp();
-        emorph::eEventQueue::iterator qi = q.begin();
+        emorph::vQueue::iterator qi = q.begin();
         while(qi != q.end()) {
             int etime = (*qi)->getStamp();
             if(etime < ctime - eventLife || etime > ctime + eventLife) {
@@ -93,7 +93,7 @@ void eFrame::publish(cv::Mat &imageOnThePort, double seconds)
 
 }
 
-void eFrame::addEvent(emorph::eEvent &event)
+void vFrame::addEvent(emorph::vEvent &event)
 {
     //sketchy hack to remove the unknown artefacts
     //this shouldn't be needed when the artefacts go!
@@ -102,7 +102,7 @@ void eFrame::addEvent(emorph::eEvent &event)
 
 
     //make a copy of the event to add to the circular buffer
-    eEvent * newcopy = emorph::createEvent(event.getType());
+    vEvent * newcopy = emorph::createEvent(event.getType());
     *newcopy = event;
 
     mutex.wait();
@@ -134,11 +134,11 @@ void eFrame::addEvent(emorph::eEvent &event)
 /// \brief eAddressFrame::addEvent
 /// \param event
 ///
-cv::Mat eAddressFrame::draw(eEventQueue &eSet)
+cv::Mat eAddressFrame::draw(vQueue &eSet)
 {
     int mass = 180;
     //std::cout << "Drawing " << eSet.size() << std::endl;
-    emorph::eEventQueue::iterator qi;
+    emorph::vQueue::iterator qi;
     cv::Mat canvas(getRetinaWidth(), getRetinaHeight(), CV_8UC3);
     canvas.setTo(128);
 
@@ -168,27 +168,27 @@ cv::Mat eAddressFrame::draw(eEventQueue &eSet)
 }
 
 /*////////////////////////////////////////////////////////////////////////////*/
-//eReadAndSplit
+//vReadAndSplit
 /*////////////////////////////////////////////////////////////////////////////*/
 ///
-/// \brief eReadAndSplit::eReadAndSplit
+/// \brief vReadAndSplit::vReadAndSplit
 ///
-eReadAndSplit::eReadAndSplit(const std::string &moduleName)
+vReadAndSplit::vReadAndSplit(const std::string &moduleName)
 {
 
     portName = moduleName;
 
-    this->eframes = 0;
+    this->vFrames = 0;
 
 }
 
-bool eReadAndSplit::open()
+bool vReadAndSplit::open()
 {
     this->useCallback();
 
-    std::cout << "Opening BufferedPort::eReadAndSplit" << std::endl;
-    std::string name = "/" + portName + "/eBottle:i";
-    bool r = BufferedPort<emorph::eBottle>::open(name.c_str());
+    std::cout << "Opening BufferedPort::vReadAndSplit" << std::endl;
+    std::string name = "/" + portName + "/vBottle:i";
+    bool r = BufferedPort<emorph::vBottle>::open(name.c_str());
 
     //r = r && imgWriter.open(std::string(portName + "yarpImage:o").c_str());
 
@@ -196,31 +196,31 @@ bool eReadAndSplit::open()
 
 }
 
-void eReadAndSplit::close()
+void vReadAndSplit::close()
 {
-    std::cout << "Closing BufferedPort::eReadAndSplit" << std::endl;
-    BufferedPort<emorph::eBottle>::close();
+    std::cout << "Closing BufferedPort::vReadAndSplit" << std::endl;
+    BufferedPort<emorph::vBottle>::close();
 }
 
 
 
-void eReadAndSplit::interrupt()
+void vReadAndSplit::interrupt()
 {
-   BufferedPort<eBottle>::interrupt();
+   BufferedPort<vBottle>::interrupt();
 }
 
 
-void eReadAndSplit::onRead(emorph::eBottle &incoming)
+void vReadAndSplit::onRead(emorph::vBottle &incoming)
 {
-    emorph::eEventQueue q;
-    emorph::eEventQueue::iterator qi;
+    emorph::vQueue q;
+    emorph::vQueue::iterator qi;
 
     incoming.getAllSorted(q);
     for(qi = q.begin(); qi != q.end(); qi++) {
         //only display the event if we have define to display events on this
         //channel
-        if(eframes->find((*qi)->getChannel())!= eframes->end()) {
-            (*eframes)[(*qi)->getChannel()]->addEvent((**qi));
+        if(vFrames->find((*qi)->getChannel())!= vFrames->end()) {
+            (*vFrames)[(*qi)->getChannel()]->addEvent((**qi));
         }
     }
     //eImage->addEvents(incoming);
@@ -228,12 +228,12 @@ void eReadAndSplit::onRead(emorph::eBottle &incoming)
 
 
 /*////////////////////////////////////////////////////////////////////////////*/
-//eFramerModule
+//vFramerModule
 /*////////////////////////////////////////////////////////////////////////////*/
-eFramerModule::~eFramerModule()
+vFramerModule::~vFramerModule()
 {
-    std::map<int, eFrame *>::iterator ii;
-    for(ii = eframes.begin(); ii != eframes.end(); ii++)
+    std::map<int, vFrame *>::iterator ii;
+    for(ii = vFrames.begin(); ii != vFrames.end(); ii++)
         delete ii->second;
     std::map<int, yarp::os::BufferedPort<
         yarp::sig::ImageOf<yarp::sig::PixelBgr> > *>::iterator oi;
@@ -242,7 +242,7 @@ eFramerModule::~eFramerModule()
 
 }
 
-bool eFramerModule::configure(yarp::os::ResourceFinder &rf)
+bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
 {
     //read in config file
 
@@ -250,10 +250,10 @@ bool eFramerModule::configure(yarp::os::ResourceFinder &rf)
     //set the module name for port naming
     moduleName = rf.find("name").asString();
     if(moduleName == "")
-        moduleName = "eFramerModule";
+        moduleName = "vFramerModule";
     setName(moduleName.c_str());
 
-    //set the eFrame options (sensor size and eventlife
+    //set the vFrame options (sensor size and eventlife
     int retinaHeight = rf.find("retinaHeight").asInt();
     if(!retinaHeight) {
         std::cerr << "Warning: setting retina size to default values (128x128)."
@@ -276,13 +276,13 @@ bool eFramerModule::configure(yarp::os::ResourceFinder &rf)
     if(!channelList)
         channelList = &tempList;
 
-    //for each channel open an eFrame and an output port
+    //for each channel open an vFrame and an output port
     std::stringstream portNamer;
     for(int i = 0; i < channelList->size(); i++) {
         int c = channelList->get(i).asInt();
-        eframes[c] = new eAddressFrame(c, retinaWidth, retinaHeight);
-        eframes[c]->setEventLife((int)eventWindow);
-        //eframes[i]->setPublishSize(256, 256);
+        vFrames[c] = new eAddressFrame(c, retinaWidth, retinaHeight);
+        vFrames[c]->setEventLife((int)eventWindow);
+        //vFrames[i]->setPublishSize(256, 256);
         outports[c] = new yarp::os::BufferedPort<
                 yarp::sig::ImageOf<yarp::sig::PixelBgr> >;
         portNamer.str("");
@@ -291,9 +291,9 @@ bool eFramerModule::configure(yarp::os::ResourceFinder &rf)
     }
 
     //open our event reader given the channel list
-    eReader = new eReadAndSplit(moduleName);
-    eReader->setFrameSet(&eframes);
-    eReader->open();
+    vReader = new vReadAndSplit(moduleName);
+    vReader->setFrameSet(&vFrames);
+    vReader->open();
 
     //set up the frameRate
     period = rf.find("frameRate").asInt();
@@ -310,32 +310,32 @@ bool eFramerModule::configure(yarp::os::ResourceFinder &rf)
 
 }
 
-bool eFramerModule::interruptModule()
+bool vFramerModule::interruptModule()
 {
-    eReader->interrupt();
+    vReader->interrupt();
     return true;
 }
 
-bool eFramerModule::close()
+bool vFramerModule::close()
 {
-    eReader->close();
-    delete eReader;
+    vReader->close();
+    delete vReader;
 
     return true;
 }
 
-bool eFramerModule::respond(const yarp::os::Bottle& command,
+bool vFramerModule::respond(const yarp::os::Bottle& command,
                             yarp::os::Bottle& reply)
 {
     //add respond messages
     return true;
 }
 
-bool eFramerModule::updateModule()
+bool vFramerModule::updateModule()
 {
     //perhaps do a publish here depending on type of image out
-    std::map<int, eFrame *>::iterator mi;
-    for(mi = eframes.begin(); mi != eframes.end(); mi++) {
+    std::map<int, vFrame *>::iterator mi;
+    for(mi = vFrames.begin(); mi != vFrames.end(); mi++) {
         //get a pointer to buffer space
         yarp::sig::ImageOf<yarp::sig::PixelBgr> &yarpImage =
                 outports[(mi->first)]->prepare();
@@ -346,7 +346,7 @@ bool eFramerModule::updateModule()
         //make a pointer as a cv::Mat
         cv::Mat publishMat((IplImage *)yarpImage.getIplImage(), false);
 
-        //get the eframer to draw the image
+        //get the vFramer to draw the image
         (mi->second)->publish(publishMat, period);
 
         //write the image to the port
@@ -356,7 +356,7 @@ bool eFramerModule::updateModule()
     return true;
 }
 
-double eFramerModule::getPeriod()
+double vFramerModule::getPeriod()
 {
     return period;
 }

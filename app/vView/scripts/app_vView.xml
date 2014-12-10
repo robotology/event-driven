@@ -1,5 +1,5 @@
 <application>
-<name>eView </name>
+<name>vView </name>
 
 <dependencies>	
 </dependencies>
@@ -12,21 +12,21 @@
 
 
 <module>
-    <name> eFramer</name>
+    <name> vFramer</name>
     <node> localhost </node>
-    <tag> eFramer </tag>
+    <tag> vFramer </tag>
 </module>
 
 <module>
    <name>yarpview</name>
-   <parameters>--name /viewCh0 --x 000 --y 000 --RefreshTime 50 </parameters>
+   <parameters>--name /viewCh0 --x 000 --y 000 --RefreshTime 33 </parameters>
    <node>localhost</node>
    <tag>eventViewerLeft</tag>
 </module>
 
 <module>
    <name>yarpview</name>
-   <parameters>--name /viewCh1 --x 200 --y 000 --RefreshTime 50 </parameters>
+   <parameters>--name /viewCh1 --x 500 --y 000 --RefreshTime 33 </parameters>
    <node>localhost</node>
    <tag>eventViewerRight</tag>
 </module>
@@ -34,18 +34,18 @@
 
 <connection>
   <from>/eventBottlePlayer/etb:o</from>
-  <to>/eFramerModule/eBottle:i</to>
+  <to>/vFramerModule/vBottle:i</to>
   <protocol>udp</protocol>
 </connection>
 
 <connection>
-  <from>/eFramerModule/ch0:o</from>
+  <from>/vFramerModule/ch0:o</from>
   <to>/viewCh0</to>
   <protocol>udp</protocol>
 </connection>
 
 <connection>
-  <from>/eFramerModule/ch1:o</from>
+  <from>/vFramerModule/ch1:o</from>
   <to>/viewCh1</to>
   <protocol>udp</protocol>
 </connection>

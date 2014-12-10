@@ -322,7 +322,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName =
     port.open(str_buf.str().c_str());
     portEventBottle.open("/aexGrabber/eventBottle:o");
     portDimension.open("/aexGrabber/dim:o");
-    portEBottle.open("/aexGrabber/eBottle:o");
+    portvBottle.open("/aexGrabber/vBottle:o");
 
     // opening the file when the biases are programmed by file
     biasFromBinary = i_bool;
@@ -338,7 +338,7 @@ device2yarp::~device2yarp() {
 //    port.close();
 //    portEventBottle.close();
 //    portDimension.close();
-//    portEBottle.close();
+//    portvBottle.close();
    
 }
 
@@ -1082,8 +1082,8 @@ void  device2yarp::run() {
         */
     }
 
-    if (portEBottle.getOutputCount()) {
-        emorph::eBottle &eb = portEBottle.prepare();
+    if (portvBottle.getOutputCount()) {
+        emorph::vBottle &eb = portvBottle.prepare();
         eb.clear();
 
         //do some sketchy casting to make things fast at this part of the
@@ -1096,7 +1096,7 @@ void  device2yarp::run() {
         //and that might be a problem
 
         bb->append(*bottle2send);
-        portEBottle.write();
+        portvBottle.write();
 
     }
     

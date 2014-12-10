@@ -28,31 +28,31 @@
 namespace emorph {
 
 //forward declaration
-class eEvent;
+class vEvent;
 
-eEvent * createEvent(const std::string type);
+vEvent * createEvent(const std::string type);
 
 /**************************************************************************/
-class eEventQueue : public std::deque<eEvent*>
+class vQueue : public std::deque<vEvent*>
 {
 private:
     // copy-constructor and overaloaded "=" operator are made
     // private on purpose to avoid the problem of dangling
     // pointers since the destructor frees up the memory
     // allocated for events
-    eEventQueue(const eEventQueue&);
-    eEventQueue &operator=(const eEventQueue&);
-    static bool temporalSort(const eEvent *e1, const eEvent *e2);
+    vQueue(const vQueue&);
+    vQueue &operator=(const vQueue&);
+    static bool temporalSort(const vEvent *e1, const vEvent *e2);
 
 protected:
     bool owner;  
 
 public:
-    eEventQueue()                   { owner=true;        }
-    eEventQueue(const bool _owner)  { owner=_owner;      }
+    vQueue()                   { owner=true;        }
+    vQueue(const bool _owner)  { owner=_owner;      }
     void setOwner(const bool owner) { this->owner=owner; }
     bool getOwner()                 { return owner;      }
-    ~eEventQueue();
+    ~vQueue();
 
     void sort();
 
@@ -61,7 +61,7 @@ public:
 
 
 /**************************************************************************/
-class eEvent
+class vEvent
 {
 protected:
 
@@ -73,7 +73,7 @@ protected:
     virtual int nBytesCoded() const { return 1;             }
 
 public:
-    eEvent() : type("TS"), stamp(0) { }
+    vEvent() : type("TS"), stamp(0) { }
     std::string getType() const     { return type;          }
 
 
@@ -84,15 +84,15 @@ public:
 
 
 
-    virtual eEvent &operator=(const eEvent &event);
-    virtual bool operator==(const eEvent &event);
-    virtual bool operator<(const eEvent &event) const
+    virtual vEvent &operator=(const vEvent &event);
+    virtual bool operator==(const vEvent &event);
+    virtual bool operator<(const vEvent &event) const
                  {return this->stamp < event.stamp; }
-    virtual bool operator>(const eEvent &event) const
+    virtual bool operator>(const vEvent &event) const
                  {return this->stamp > event.stamp; }
 
     virtual yarp::os::Bottle   encode() const;
-    virtual eEvent * decode(const yarp::os::Bottle &packet, int &pos);
+    virtual vEvent * decode(const yarp::os::Bottle &packet, int &pos);
     virtual yarp::os::Property getContent() const;
 
     template<class T> T* getAs() {
@@ -103,7 +103,7 @@ public:
 
 
 /**************************************************************************/
-class AddressEvent : public eEvent
+class AddressEvent : public vEvent
 {
 protected:
     int channel;
@@ -116,10 +116,10 @@ protected:
 public:
     AddressEvent();
     AddressEvent(const AddressEvent &event);
-    AddressEvent(const eEvent &event);
+    AddressEvent(const vEvent &event);
     //AddressEvent(const yarp::os::Bottle &packets, const int pos=0);
 
-    eEvent &operator=(const eEvent &event);
+    vEvent &operator=(const vEvent &event);
     bool operator==(const AddressEvent &event);
 
     int getChannel() const                  { return channel;           }
@@ -133,11 +133,11 @@ public:
     void setY(const int y)                  { this->y=y;                }
 
 
-    bool operator==(const eEvent &event) {
+    bool operator==(const vEvent &event) {
         return operator==(dynamic_cast<const AddressEvent&>(event)); }
     yarp::os::Bottle   encode() const ;
     yarp::os::Property getContent() const;
-    virtual eEvent * decode(const yarp::os::Bottle &packet, int &pos);
+    virtual vEvent * decode(const yarp::os::Bottle &packet, int &pos);
 };
 
 
@@ -169,14 +169,14 @@ public:
     void setYFlow(const int yFlow)             { this->yFlow=yFlow;             }
 
     int getLength() const { return 2; }
-    bool operator==(const eEvent &event) { return operator==(dynamic_cast<const AddressEventFeatures&>(event)); }
+    bool operator==(const vEvent &event) { return operator==(dynamic_cast<const AddressEventFeatures&>(event)); }
     yarp::os::Bottle   encode() const;
     yarp::os::Property getContent() const;
 };
 
 
 /**************************************************************************/
-class AddressEvent3D : public eEvent
+class AddressEvent3D : public vEvent
 {
 protected:
     int disparity;
@@ -203,7 +203,7 @@ public:
     void setY(const int y)                 { this->y=y;                 }
 
     int getLength() const { return 1; }
-    bool operator==(const eEvent &event) { return operator==(dynamic_cast<const AddressEvent3D&>(event)); }
+    bool operator==(const vEvent &event) { return operator==(dynamic_cast<const AddressEvent3D&>(event)); }
     yarp::os::Bottle   encode() const;
     yarp::os::Property getContent() const;
 };
@@ -234,14 +234,14 @@ public:
     void setYFlow(const int yFlow)             { this->yFlow=yFlow;             }
 
     int getLength() const { return 2; }
-    bool operator==(const eEvent &event) { return operator==(dynamic_cast<const AddressEvent3DFeatures&>(event)); }
+    bool operator==(const vEvent &event) { return operator==(dynamic_cast<const AddressEvent3DFeatures&>(event)); }
     yarp::os::Bottle   encode() const;
     yarp::os::Property getContent() const;
 };
 
 
 /**************************************************************************/
-class ClusterEvent : public eEvent
+class ClusterEvent : public vEvent
 {
 protected:
     int id;
@@ -252,7 +252,7 @@ protected:
 public:
     ClusterEvent();
     ClusterEvent(const ClusterEvent &event);
-    ClusterEvent(const eEvent &event);
+    ClusterEvent(const vEvent &event);
     //ClusterEvent(const yarp::os::Bottle &packets, const int pos=0);
 
     ClusterEvent &operator=(const ClusterEvent &event);
@@ -268,10 +268,10 @@ public:
     void setXCog(const int xCog)       { this->xCog = xCog;       }
     void setYCog(const int yCog)       { this->yCog = yCog;       }
 
-    bool operator==(const eEvent &event) { return operator==(dynamic_cast<const ClusterEvent&>(event)); }
+    bool operator==(const vEvent &event) { return operator==(dynamic_cast<const ClusterEvent&>(event)); }
     yarp::os::Bottle   encode() const;
     yarp::os::Property getContent() const;
-    virtual eEvent * decode(const yarp::os::Bottle &packet, int &pos);
+    virtual vEvent * decode(const yarp::os::Bottle &packet, int &pos);
 };
 
 
@@ -315,7 +315,7 @@ public:
     void setNumAE(const int numAE)         { this->numAE=numAE;         }
 
     int getLength() const { return 3; }
-    bool operator==(const eEvent &event) { return operator==(dynamic_cast<const ClusterEventFeatures2&>(event)); }
+    bool operator==(const vEvent &event) { return operator==(dynamic_cast<const ClusterEventFeatures2&>(event)); }
     yarp::os::Bottle   encode() const;
     yarp::os::Property getContent() const;
 };
@@ -349,14 +349,14 @@ public:
     void setNumAE(const int numAE)         { this->numAE=numAE;         }
 
     int getLength() const { return 4; }
-    bool operator==(const eEvent &event) { return operator==(dynamic_cast<const ClusterEventFeatures3&>(event)); }
+    bool operator==(const vEvent &event) { return operator==(dynamic_cast<const ClusterEventFeatures3&>(event)); }
     yarp::os::Bottle   encode() const;
     yarp::os::Property getContent() const;
 };
 
 
 /**************************************************************************/
-class ClusterEvent3D : public eEvent
+class ClusterEvent3D : public vEvent
 {
 protected:
     int channel;
@@ -383,7 +383,7 @@ public:
     void setYCog(const int yCog)           { this->yCog=yCog;           }
 
     int getLength() const { return 1; }
-    bool operator==(const eEvent &event) { return operator==(dynamic_cast<const ClusterEvent3D&>(event)); }
+    bool operator==(const vEvent &event) { return operator==(dynamic_cast<const ClusterEvent3D&>(event)); }
     yarp::os::Bottle   encode() const;
     yarp::os::Property getContent() const;
 };
@@ -407,7 +407,7 @@ public:
     void setNumAE(const int numAE) { this->numAE=numAE; }
 
     int getLength() const { return 2; }
-    bool operator==(const eEvent &event) { return operator==(dynamic_cast<const ClusterEvent3DFeatures1&>(event)); }
+    bool operator==(const vEvent &event) { return operator==(dynamic_cast<const ClusterEvent3DFeatures1&>(event)); }
     yarp::os::Bottle   encode() const;
     yarp::os::Property getContent() const;
 };
@@ -438,7 +438,7 @@ public:
     void setYSize(const int ySize)         { this->ySize=ySize;         }
 
     int getLength() const { return 3; }
-    bool operator==(const eEvent &event) { return operator==(dynamic_cast<const ClusterEvent3DFeatures2&>(event)); }
+    bool operator==(const vEvent &event) { return operator==(dynamic_cast<const ClusterEvent3DFeatures2&>(event)); }
     yarp::os::Bottle   encode() const;
     yarp::os::Property getContent() const;
 };
@@ -469,14 +469,14 @@ public:
     void setYVel(const int yVel)           { this->yVel=yVel;           }
 
     int getLength() const { return 4; }
-    bool operator==(const eEvent &event) { return operator==(dynamic_cast<const ClusterEvent3DFeatures3&>(event)); }
+    bool operator==(const vEvent &event) { return operator==(dynamic_cast<const ClusterEvent3DFeatures3&>(event)); }
     yarp::os::Bottle   encode() const;
     yarp::os::Property getContent() const;
 };
 
 
  /**************************************************************************/
-class HoughEvent : public eEvent
+class HoughEvent : public vEvent
 {
  protected:
   int channel;             // reference to the camera                  (bit0)
@@ -517,7 +517,7 @@ public:
     void setYCoc(const int yCoc)           { this->yCoc = yCoc;          }
 
     int getLength() const { return 1; }
-    bool operator==(const eEvent &event) { return operator==(dynamic_cast<const HoughEvent&>(event)); }
+    bool operator==(const vEvent &event) { return operator==(dynamic_cast<const HoughEvent&>(event)); }
     yarp::os::Bottle   encode() const;
     yarp::os::Property getContent() const;
 };
@@ -550,7 +550,7 @@ public:
     void setXYSigma(const int xySigma)      { this->xySigma=xySigma;   }
 
     int getLength() const { return 3; }
-    bool operator==(const eEvent &event) { return operator==(dynamic_cast<const ClusterEventGauss&>(event)); }
+    bool operator==(const vEvent &event) { return operator==(dynamic_cast<const ClusterEventGauss&>(event)); }
     yarp::os::Bottle   encode() const;
     yarp::os::Property getContent() const;
 };

@@ -14,8 +14,8 @@
  * Public License for more details
 */
 
-#ifndef __eFramer__
-#define __eFramer__
+#ifndef __vFramer__
+#define __vFramer__
 
 #include <yarp/os/all.h>
 #include <yarp/sig/all.h>
@@ -27,10 +27,10 @@ namespace emorph {
 
 //forward declaration of the collector. It performs onRead operations to
 //add new events to the frame
-class eFrame {
+class vFrame {
 
 private:
-    emorph::eEventQueue q;
+    emorph::vQueue q;
 
     int channel;
     int retinaWidth;
@@ -41,17 +41,17 @@ private:
 
 protected:
 
-    virtual cv::Mat draw(emorph::eEventQueue &eSet) = 0;
+    virtual cv::Mat draw(emorph::vQueue &eSet) = 0;
     int getRetinaWidth() { return retinaWidth; }
     int getRetinaHeight() { return retinaHeight; }
 
 public:
 
-    eFrame(int channel, int retinaWidth, int retinaHeight);
+    vFrame(int channel, int retinaWidth, int retinaHeight);
 
     void setEventLife(int eventLife);
 
-    void addEvent(emorph::eEvent &event);
+    void addEvent(emorph::vEvent &event);
 
     void publish(cv::Mat &imageOnThePort, double seconds);
 
@@ -61,16 +61,16 @@ public:
  * \brief A class that draws a mono image as events are added to it
  */
 
-class eAddressFrame : public eFrame {
+class eAddressFrame : public vFrame {
 
 public:
 
     eAddressFrame(int channel, int retinaWidth, int retinaHeight) :
-        eFrame(channel, retinaWidth, retinaHeight) {}
+        vFrame(channel, retinaWidth, retinaHeight) {}
 
     //eAddressFrame(int retinaWidth, int retinaHeight) :
-        //eFrame(retinaWidth, retinaHeight) {}
-    virtual cv::Mat draw(eEventQueue &eSet);
+        //vFrame(retinaWidth, retinaHeight) {}
+    virtual cv::Mat draw(vQueue &eSet);
 
     //~eAddressFrame() {}
 
@@ -82,26 +82,26 @@ public:
  *
  */
 
-class eReadAndSplit : public yarp::os::BufferedPort<emorph::eBottle>
+class vReadAndSplit : public yarp::os::BufferedPort<emorph::vBottle>
 {
     //has an onRead() function that updates an eImage based on the draw
     //functions and then outputs the image at a certain rate
 
 private:
     std::string portName;
-    std::map<int, eFrame *> *eframes;
+    std::map<int, vFrame *> *vFrames;
 
 public:
 
-    eReadAndSplit(const std::string &moduleName);
+    vReadAndSplit(const std::string &moduleName);
 
-    void setFrameSet(std::map<int, eFrame *> *eframes)
-        {this->eframes = eframes;}
+    void setFrameSet(std::map<int, vFrame *> *vFrames)
+        {this->vFrames = vFrames;}
 
     virtual bool open();
     virtual void close();
     virtual void interrupt();
-    virtual void onRead(emorph::eBottle &incoming);
+    virtual void onRead(emorph::vBottle &incoming);
 
 
 };
@@ -110,7 +110,7 @@ public:
  * \brief The module which envolopes making frames from event-based data
  */
 
-class eFramerModule : public yarp::os::RFModule {
+class vFramerModule : public yarp::os::RFModule {
 
 private:
 
@@ -123,11 +123,11 @@ private:
     int publishWidth;
     int publishHeight;
 
-    //this is the eBottle reading port
-    eReadAndSplit * eReader;
+    //this is the vBottle reading port
+    vReadAndSplit * vReader;
 
     //this is the image frame drawers
-    std::map<int, eFrame *> eframes;
+    std::map<int, vFrame *> vFrames;
 
     //this is the output ports sending the yarp::Imageofs on
     std::map<int, yarp::os::BufferedPort<
@@ -141,7 +141,7 @@ private:
 
 public:
 
-    virtual ~eFramerModule();
+    virtual ~vFramerModule();
 
     // configure all the module parameters and return true if successful
     virtual bool configure(yarp::os::ResourceFinder &rf);
@@ -159,5 +159,5 @@ public:
 
 } //namespace emorph
 
-#endif //eframer
+#endif //vFramer
 

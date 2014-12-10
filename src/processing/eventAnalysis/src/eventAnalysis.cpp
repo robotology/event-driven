@@ -50,7 +50,7 @@ bool eventStatisticsDumper::open()
 
     //create all ports
     inPortName = "/" + moduleName + ":i";
-    BufferedPort<emorph::eBottle>::open( inPortName.c_str() );
+    BufferedPort<emorph::vBottle>::open( inPortName.c_str() );
 
     std::cout << "Opening writer: " << outfilename << std::endl;
     fwriter.open(outfilename.c_str());
@@ -67,7 +67,7 @@ void eventStatisticsDumper::close()
 {
     std::cout << "now closing ports..." << std::endl;
     fwriter.close();
-    BufferedPort<emorph::eBottle>::close();
+    BufferedPort<emorph::vBottle>::close();
     std::cout << "finished closing the read port..." << std::endl;
 }
 
@@ -75,19 +75,19 @@ void eventStatisticsDumper::interrupt()
 {
     fprintf(stdout,"cleaning up...\n");
     fprintf(stdout,"attempting to interrupt ports\n");
-    BufferedPort<emorph::eBottle>::interrupt();
+    BufferedPort<emorph::vBottle>::interrupt();
     fprintf(stdout,"finished interrupt ports\n");
 }
 
-void eventStatisticsDumper::onRead(emorph::eBottle &bot)
+void eventStatisticsDumper::onRead(emorph::vBottle &bot)
 {
 
     bottle_number++;
     std::cout << ". ";
 
     //create event queue
-    emorph::eEventQueue q;
-    emorph::eEventQueue::iterator qi, qi2;
+    emorph::vQueue q;
+    emorph::vQueue::iterator qi, qi2;
     bot.getAll(q);
 
     int i = 0, j = 0;

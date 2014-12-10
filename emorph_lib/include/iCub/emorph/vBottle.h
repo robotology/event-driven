@@ -26,8 +26,8 @@
 */
 
 
-#ifndef __eBottle__
-#define __eBottle__
+#ifndef __vBottle__
+#define __vBottle__
 
 
 #include <yarp/os/all.h>
@@ -35,23 +35,23 @@
 
 namespace emorph {
 
-class eBottle : public yarp::os::Bottle {
+class vBottle : public yarp::os::Bottle {
 
 public:
 
     //constructors shouldn't change from Bottle
-    eBottle() : yarp::os::Bottle() {}
+    vBottle() : yarp::os::Bottle() {}
 
-    //you can only modify contents by adding events and append other eBottles
-    void addEvent(emorph::eEvent &e);\
-    void append(eBottle &eb);
+    //you can only modify contents by adding events and append other vBottles
+    void addEvent(emorph::vEvent &e);\
+    void append(vBottle &eb);
 
-    void getAll(eEventQueue &q);
-    void getAllSorted(eEventQueue &q);
+    void getAll(vQueue &q);
+    void getAllSorted(vQueue &q);
 
-    //you can then get events from the eBottle
+    //you can then get events from the vBottle
     //must be defined in header for template to work
-    template<class T> int get(emorph::eEventQueue &q)
+    template<class T> int get(emorph::vQueue &q)
     {
         int r = 0;
         T t;
@@ -68,7 +68,7 @@ public:
 
     }
 
-    template<class T> int getSorted(emorph::eEventQueue &q)
+    template<class T> int getSorted(emorph::vQueue &q)
     {
         int r = get<T>(q);
         q.sort();
@@ -137,6 +137,6 @@ private:
 
 } //end namespace emorph
 
-#endif /*__eBottle__*/
+#endif /*__vBottle__*/
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------

@@ -27,7 +27,7 @@
 //EVENT STATISTICS DUMPER
 /******************************************************************************/
 
-class eventStatisticsDumper : public yarp::os::BufferedPort<emorph::eBottle>
+class eventStatisticsDumper : public yarp::os::BufferedPort<emorph::vBottle>
 {
 public:
 
@@ -37,7 +37,7 @@ public:
 
     bool    open();
     void    close();
-    void    onRead(emorph::eBottle &bot);
+    void    onRead(emorph::vBottle &bot);
     void    interrupt();
 
 

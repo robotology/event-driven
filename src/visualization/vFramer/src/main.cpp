@@ -36,12 +36,12 @@ int main(int argc, char * argv[])
 
     Network::init();
     
-    emorph::eFramerModule module;
+    emorph::vFramerModule module;
     //cfCollectorModule module;
 
     ResourceFinder rf;
     rf.setVerbose(true);
-    rf.setDefaultConfigFile("eFramer.ini"); //overridden by --from parameter
+    rf.setDefaultConfigFile("vFramer.ini"); //overridden by --from parameter
     rf.setDefaultContext("eMorph");   //overridden by --context parameter
     rf.configure(argc, argv);
  

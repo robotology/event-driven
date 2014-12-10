@@ -8,7 +8,11 @@ set(appname eventAnalysis)
 icub_app(${appname})
 
 file(GLOB conf ${CMAKE_CURRENT_SOURCE_DIR}/conf/*.ini)
-file(GLOB scripts ${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.template)
+file(GLOB scripts ${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.xml)
+
+#SOURCE_GROUP("Source Files" FILES conf/eFramer.ini)
+#add_library(dummy_lib ${CMAKE_CURRENT_SOURCE_DIR}/conf/eFramer.ini)]
+add_custom_target(${appname}_dummy SOURCES ${conf} ${scripts})
 
 icub_app_install(${appname}
 				FILES ${conf}
