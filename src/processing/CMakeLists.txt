@@ -7,19 +7,6 @@
 cmake_minimum_required(VERSION 2.6)
 
 
-
-IF(NOT WIN32) 
-#	add_subdirectory   (  aexGrabber                   )		
-#	add_subdirectory   (  asvGrabber                   )
-#	add_subdirectory   (  basicAexGrabber              )
-ENDIF (NOT WIN32)
-
-
 add_subdirectory  ( eventAnalysis    )
 
-
-if(ICUB_USE_IPOPT)
-        #add_subdirectory ( targetFinder                  )
-	#add_subdirectory (  wingsTranslator              )
-endif(ICUB_USE_IPOPT)
 
