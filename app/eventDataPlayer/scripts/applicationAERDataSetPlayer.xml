@@ -11,8 +11,8 @@
 </module>
 
 <module>
-   <name>cartesianFC</name>
-   <parameters>--synchPeriod 1 --tristate --stereo --bottleHandler</parameters>
+   <name>cartesianFrameCollector</name>
+   <parameters>--synchPeriod 1 --tristate --stereo</parameters>
    <node>localhost</node>
    <tag>cartFrameCollector</tag>
 </module>
@@ -45,7 +45,7 @@
 </connection>
 <connection>
   <from>/eventBottleConverter/bte:o</from>
-  <to>/cartesianFrameCollector/retinaBottle:i</to>
+  <to>/cartesianFrameCollector/retina:i</to>
   <protocol>udp</protocol>
 </connection>
 <connection>

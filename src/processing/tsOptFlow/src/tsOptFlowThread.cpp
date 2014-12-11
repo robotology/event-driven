@@ -66,8 +66,10 @@ tsOptFlowThread::tsOptFlowThread(uint &_h, uint &_w, std::string &_src, uint &_t
 //        sobelx=sobelx*-1;
 //        sobely=sobely*-1;
 //    }
-printMatrix(sobelx);
-printMatrix(sobely);
+    printf("Sobelx: \n");
+    printMatrix(sobelx);
+    printf("Sobely: \n");
+    printMatrix(sobely);
 
     polarity=0;
     activity=0;
@@ -91,6 +93,7 @@ printMatrix(sobely);
     borneSupX=height-borneInfX;
     borneSupY=width-borneInfY;
 
+
     trans2neigh=new int[2*(4*_ssz-4)];
     iT2N=0;
     for(int i=0; i<_ssz; ++i)
@@ -103,8 +106,10 @@ printMatrix(sobely);
                 ++iT2N;
             }
         }
-//    for(int i=0; i<iT2N; ++i)
-//        std::cout << *(trans2neigh+i*2) << " " << *(trans2neigh+i*2+1) << endl;
+
+   //   std::cout << "trans2neigh: " << *trans2neigh << endl;
+   //  for(int i=0; i<iT2N; ++i)
+   //    std::cout << *(trans2neigh+i*2) << " " << *(trans2neigh+i*2+1) << endl;
 
     if(!_src.compare("icub"))
         unmasker=new eventUnmaskICUB();
@@ -166,10 +171,10 @@ void tsOptFlowThread::run()
     uint prefbin;
     while(1)
     {
-        //std::cout << "[tsOptFlowThread] Get the data form the buffer" << std::endl;
+        std::cout << "[tsOptFlowThread] Get the data form the buffer" << std::endl;
 //        iBinEvts=0;
         int res=0;
-        //std::cout << "[tsOptFlowThread] Initialisation..." << endl;
+        std::cout << "[tsOptFlowThread] Initialisation..." << endl;
         while(!res)
         {
             if(orientation)
@@ -180,11 +185,11 @@ void tsOptFlowThread::run()
             else
                 res=unmasker->getUmaskedData(addrx, addry, polarity, eye, timestamp);
                 
-            //std::cout << "[tsOptFlowThread] Waiting for the good pol: addrx:" << addrx << ", addry: " << addry << ", pol: " << polarity << ", eye: " << eye << ", ts: " << timestamp << std::endl;
-                //std::cout << "[tsOptFlowThread] res: " << res << std::endl;
+           //std::cout << "[tsOptFlowThread] Waiting for the good pol: addrx:" << addrx << ", addry: " << addry << ", pol: " << polarity << ", eye: " << eye << ", ts: " << timestamp << std::endl;
+           //     std::cout << "[tsOptFlowThread] res: " << res << std::endl;
             if((polSel && polarity!=polSel) || eye!=eyeSel) res=0;
         }
-        //std::cout << "[tsOptFlowThread] Initialisation done" << std::endl;
+        std::cout << "[tsOptFlowThread] Initialisation done" << std::endl;
         if(first)
         {
             first=false;    
@@ -219,9 +224,11 @@ void tsOptFlowThread::run()
         binEvts(iBinEvts, 1)=addry;
         binEvts(iBinEvts, 2)=timestamp;
         iBinEvts++;
-            
-        //std::cout << "[tsOptFlowThread] Bin filling..." << endl;
-        //std::cout << "[tsOptFlowThread] Get the data form the buffer" << std::endl;
+
+
+        std::cout << "[tsOptFlowThread] Bin filling..." << endl;
+        std::cout << "[tsOptFlowThread] Get the data form the buffer" << std::endl;
+
         res=0;
 
         while(refbin+binAcc>=timestamp && iBinEvts<10000)
@@ -233,7 +240,7 @@ void tsOptFlowThread::run()
             }
             else
                 res=unmasker->getUmaskedData(addrx, addry, polarity, eye, timestamp);
-            //std::cout << "[tsOptFlowThread] Waiting for the full acc: addrx:" << addrx << ", addry: " << addry << ", pol: " << polarity << ", eye: " << eye << ", ts: " << timestamp << std::endl;
+            std::cout << "[tsOptFlowThread] Waiting for the full acc: addrx:" << addrx << ", addry: " << addry << ", pol: " << polarity << ", eye: " << eye << ", ts: " << timestamp << std::endl;
 
             //if(polSel && polarity!=polSel) res=0;
             if((polSel && polarity!=polSel) || eye!=eyeSel) res=0;
@@ -245,13 +252,13 @@ void tsOptFlowThread::run()
                 iBinEvts++;
             }
         }
-        //std::cout << "[tsOptFlowThread] Bin filled" << endl;
+       std::cout << "[tsOptFlowThread] Bin filled" << endl;
         timestamp=prefbin=refbin;
 
-        //std::cout << "[tsOptFlowThread] evts in the bin: " << iBinEvts << std::endl;
+        std::cout << "[tsOptFlowThread] evts in the bin: " << iBinEvts << std::endl;
         if(iBinEvts)
         {
-            //std::cout << "addrx: " << addrx << ", addry: " << addry << ", polarity: " << polarity << ", eye: " << eye << ", ts: " << timestamp << std::endl;
+            std::cout << "addrx: " << addrx << ", addry: " << addry << ", polarity: " << polarity << ", eye: " << eye << ", ts: " << timestamp << std::endl;
 /*
 #ifdef _DEBUG
             std::cout << "[tsOptFlowThread] Update the map of timestamp" << std::endl;
@@ -266,7 +273,7 @@ void tsOptFlowThread::run()
 #endif
 */
             updateAll();
-            //std::cout << "[tsOptFlowThread] Compute the flow" << std::endl;
+            std::cout << "[tsOptFlowThread] Compute the flow" << std::endl;
 #ifdef _ANALYSE_
             clock_gettime(CLOCK_MONOTONIC, &compStart);
             smoothedNeigh=0;
@@ -685,7 +692,7 @@ uint tsOptFlowThread::createPlanAndCompute(Matrix &_m, double &_dx, double &_dy,
         for(i=0; i<sobelSz; i++)
             for(ii=0; ii<sobelSz; ii++)
             {
-                //if(_m(i, ii)>-1 && ((i==_curx && ii==_cury) || ((i!=_curx || ii!=_cury) && _m(i, ii)<=(_curts-binAcc))))
+                //if(_m(i, ii)>-1 && ((i==_curx && ii==_cury) || ((i!=_curx || ii!=_cury) && _m(i, ii)<=(_curts-))))
                 if( (_m(i, ii)+tsVal)>_curts && ((i==_curx && ii==_cury) || ((i!=_curx || ii!=_cury) && _m(i, ii)<=(_curts-binAcc))))
                 {
 #ifdef _DEBUG
