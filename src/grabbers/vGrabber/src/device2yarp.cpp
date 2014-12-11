@@ -1053,7 +1053,6 @@ void  device2yarp::run() {
         port.write();
     }   
     
-    
     if (portEventBottle.getOutputCount()) {       
         //countCycle++;
         //printf("bytes %d on the portEventBottle \n", bottle2send->size());
@@ -1096,13 +1095,13 @@ void  device2yarp::run() {
         //and that might be a problem
 
         //bb->append(*bottle2send);
-        yarp::os::Bottle eventlist = bb->addList();
+        yarp::os::Bottle &eventlist = bb->addList();
         eventlist = *bottle2send;
 
         portvBottle.write();
 
     }
-    
+        
     wrapOccured = false;
        
     if (portDimension.getOutputCount()) {
