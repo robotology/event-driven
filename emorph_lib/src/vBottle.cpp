@@ -78,25 +78,29 @@ void vBottle::getAll(emorph::vQueue &q)
 {
     q.clear();
 
+    std::cout << this->toString() << std::endl;
     for(int i = 0; i < Bottle::size(); i+=2) {
         vEvent * e = emorph::createEvent(Bottle::get(i).asString());
         if(!e) {
-            std::cerr << "Warning: could not get bottle type during"
-                         "getAllSorted. Check vBottle integrity." << std::endl;
+            std::cerr << "Warning: could not get bottle type during vBottle::"
+                         "getAll(). Check vBottle integrity." << std::endl;
             continue;
         }
 
         Bottle * b = Bottle::get(i+1).asList();
         if(!b) {
             std::cerr << "Warning: could not get event data as a list after "
-                         "getting correct tag (e.g. AE) in vBottle->getAll. "
+                         "getting correct tag (e.g. AE) in vBottle::getAll(). "
                          "Check vBottle integrity" << std::endl;
-            continue;
+            delete(e);
+            break;
         }
         int pos = 0;
         while(pos < b->size()) {
-            q.push_back(e->decode(*b, pos));
+            vEvent * ep = e->decode(*b, pos);
+            if(ep) q.push_back(ep);
         }
+
         delete(e);
 
     }
