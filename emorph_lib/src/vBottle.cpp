@@ -87,7 +87,12 @@ void vBottle::getAll(emorph::vQueue &q)
         }
 
         Bottle * b = Bottle::get(i+1).asList();
-
+        if(!b) {
+            std::cerr << "Warning: could not get event data as a list after "
+                         "getting correct tag (e.g. AE) in vBottle->getAll. "
+                         "Check vBottle integrity" << std::endl;
+            continue;
+        }
         int pos = 0;
         while(pos < b->size()) {
             q.push_back(e->decode(*b, pos));

@@ -1095,7 +1095,10 @@ void  device2yarp::run() {
         //this doesn't ensure that the data goes TS -> AE -> TS ->
         //and that might be a problem
 
-        bb->append(*bottle2send);
+        //bb->append(*bottle2send);
+        yarp::os::Bottle eventlist = bb->addList();
+        eventlist = *bottle2send;
+
         portvBottle.write();
 
     }
