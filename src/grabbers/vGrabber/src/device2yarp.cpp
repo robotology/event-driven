@@ -120,6 +120,9 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName =
     countLostAE      = 0;
     wrapOccured      = false;
     onlyLeft         = false;
+
+    associatedTimestamp = 0;
+    timestampAvailable = false;
     
     
     /*   ORIGINAL VALUES
@@ -843,7 +846,23 @@ void  device2yarp::run() {
                     fprintf(fout,"%lu,",a);
                 }
             }
-                      
+
+            if(!timestampAvailable)
+            {
+                std::cerr << "An addressevent occured without a preceeding "
+                             "timestamp. This really shouldn't happen but it "
+                             "did, so perhaps check it out!" << std::endl;
+                continue;
+            }
+
+            //first put in our associate timestamp (it could be from the last
+            //buffer of events!)
+            buf2[k2++] = associatedTimestamp;
+            bottle2send->addInt(associatedTimestamp);
+            timestampAvailable = false;
+
+            //then put in our address
+
             buf2[k2++] = a;   // passing the address event to the data flow to send            
             countEventSent++;
 
@@ -905,19 +924,34 @@ void  device2yarp::run() {
                     fprintf(fout,"%lu,",t);
                 }
             }
-          
-            //copying the atomic block to send
-            buf2[k2++] = t; // passing the timestamp to the data flow to send
+
+
+            //we delay the sending of the timestamp till when we know the
+            //address event it is associated with
+
+            if(timestampAvailable)
+            {
+                //if a timestamp is already available we have an error!
+                std::cerr << "Multiple timestamps without addressevent. "
+                             "This really shouldn't happen but it did, so "
+                             "perhaps check it out!" << std::endl;
+            }
+
+            //Arren isn't sure whether this should be incremented here. I'm not
+            //sure if it's events sent by the hardware (and received here)
+            //of if it's events sent by this module (in which case the timestamp
+            //is delayed and this int might not be sent yet!
+
             countEventSent++;
 
+            associatedTimestamp = tempA;
+            timestampAvailable = true;
+          
+            //copying the atomic block to send
 
-            //extracting information 
-            
-            //int data = (tempA & 0x00FFFFFFF) 
-            //ts.setStamp(data);
-
-            //tmpBottle.addInt(tempA); //<----- used in the alternative B
-            bottle2send->addInt(tempA); 
+            //directly add timestamp
+            //buf2[k2++] = t;
+            //bottle2send->addInt(tempA);
    
         }
         // --------------- TIMESTAMP WRAP AROUND ------------
@@ -1020,15 +1054,23 @@ void  device2yarp::run() {
                     fprintf(fout,"%lu,",tempA);
                 }
                 //fprintf(fout," %08X ",0xCAFECAFE);
-            }	
+            }
+
+            //TODO: it is possible for the board to send hardware-based
+            //events other than address events. for example cluster events.
+            //these events should be accounted for here but currently the
+            //events are just discared.
+            //Currently we *shouldn't* get any of these event types
+
+            std::cout << "Unknown Event (discarded): " << tempA << std::endl;
             
             //copying the atomic block to send
             //tempA &= 0x0000FFFF;
-            buf2[k2++] = tempA; // passing the timestamp to the data flow to send
-            countEventSent++;
+            //buf2[k2++] = tempA; // passing the timestamp to the data flow to send
+            //countEventSent++;
             
             //tmpBottle.addInt(tempA); //<----- used in the alternative B
-            bottle2send->addInt(tempA);
+            //bottle2send->addInt(tempA);
         
         }
         	
@@ -1082,13 +1124,13 @@ void  device2yarp::run() {
     }
 
     if (portvBottle.getOutputCount()) {
-        emorph::vBottle &eb = portvBottle.prepare();
-        eb.clear();
+        emorph::vBottle &vb = portvBottle.prepare();
+        vb.clear();
 
         //do some sketchy casting to make things fast at this part of the
         //project
 
-        Bottle * bb = (Bottle *)&eb;
+        Bottle * bb = (Bottle *)&vb;
         bb->addString("AE");
 
         //this doesn't ensure that the data goes TS -> AE -> TS ->

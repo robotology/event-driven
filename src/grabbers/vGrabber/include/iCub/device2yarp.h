@@ -473,6 +473,12 @@ private:
     unsigned int timestamp;
     short cartX, cartY, polarity;
 
+    //this is a temp storage of the timestamp use to prevent fragmentation
+    //between address event and timestamp
+    int associatedTimestamp;
+    //this is a flaf used to indicate if a timstamp is available
+    bool timestampAvailable;
+
     unsigned int xmask;                     // mask for extracting the x position
     unsigned int ymask;                     // mask for extracting the y position
     int yshift;                             // mask for extracting the x position
