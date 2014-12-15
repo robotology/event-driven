@@ -83,7 +83,12 @@ void eventStatisticsDumper::onRead(emorph::vBottle &bot)
 {
 
     bottle_number++;
-    std::cout << ". ";
+    if(bottle_number % 1000 == 0) {
+        //every 1000 bottles put a message so we know the module is
+        //actaully running in case of good operation
+        fwriter << bottle_number << ": ... " << std::endl;
+    }
+    //std::cout << ". ";
 
     //create event queue
     emorph::vQueue q;

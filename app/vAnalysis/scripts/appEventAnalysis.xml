@@ -13,6 +13,7 @@
 <module>
    <name>eventAnalysis</name>
    <node>localhost</node>
+   <parameters>--outputFile testtype </parameters>
    <tag>eventAnalysis</tag>
 </module>
 
