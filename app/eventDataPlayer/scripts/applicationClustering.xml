@@ -1,5 +1,5 @@
 <application>
-<name>AER Vision Modules Player </name>
+<name>ED Gauss Clustering </name>
 
 <dependencies>	
 </dependencies>
@@ -11,16 +11,15 @@
 </module>
 
 <module>
-   <name>cartesianFrameCollector</name>
-   <parameters>--synchPeriod 1 --tristate --stereo --bottleHandler</parameters>
-   <node>localhost</node>
-   <tag>cartFrameCollector</tag>
-</module>
-
-<module>
    <name>eventBottleConverter</name>
    <node>localhost</node>
    <tag>eventBottleConvert</tag>
+</module>
+
+<module>
+    <name>eventClustering</name>
+    <node>localhost</node>
+    <tag>eventClustering</tag>
 </module>
 
 <module>
@@ -37,7 +36,6 @@
 </module>
 
 
-
 <connection>
   <from>/eventBottlePlayer/etb:o</from>
   <to>/eventBottleConverter/bte:i</to>
@@ -45,18 +43,18 @@
 </connection>
 <connection>
   <from>/eventBottleConverter/bte:o</from>
-  <to>/cartesianFrameCollector/retinaBottle:i</to>
+  <to>/eventClustering/eventBottle:i</to>
   <protocol>tcp</protocol>
 </connection>
 <connection>
-  <from>/cartesianFrameCollector/left:o</from>
-  <to>/eventViewLeft</to>
+    <from>/eventClustering/leftImage:o</from>
+      <to>/eventViewLeft</to>
   <protocol>tcp</protocol>
 </connection>
 <connection>
-  <from>/cartesianFrameCollector/right:o</from>
-  <to>/eventViewRight</to>
-  <protocol>tcp</protocol>
+    <from>/eventClustering/rightImage:o</from>
+    <to>/eventViewRight</to>
+    <protocol>tcp</protocol>
 </connection>
 
 </application>

@@ -40,6 +40,7 @@ bool EventBottleProcessor::configure(yarp::os::ResourceFinder &rf)
     }
 
     attach(rpcPort);
+    closing = false;
 
     /* create the thread and pass pointers to the module parameters */
     eventBottleManager = new EventBottleManager( moduleName );
@@ -63,7 +64,7 @@ bool EventBottleProcessor::close()
 {
     rpcPort.close();
     fprintf(stdout, "starting the shutdown procedure\n");
-
+    closing = true;
     eventBottleManager->close();
     fprintf(stdout, "deleting thread\n");
     delete eventBottleManager;
