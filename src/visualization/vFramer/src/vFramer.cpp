@@ -23,11 +23,9 @@ namespace emorph {
 /*////////////////////////////////////////////////////////////////////////////*/
 ///
 /// \brief vFrame::vFrame
+/// \param channel
 /// \param retinaWidth
 /// \param retinaHeight
-/// \param windowWidth
-/// \param windowHeight
-///
 ///
 vFrame::vFrame(int channel, int retinaWidth, int retinaHeight)
 {
@@ -38,6 +36,10 @@ vFrame::vFrame(int channel, int retinaWidth, int retinaHeight)
     eventLife = 50000; //default 0.5 seconds
 }
 
+///
+/// \brief vFrame::setEventLife
+/// \param eventLife
+///
 void vFrame::setEventLife(int eventLife)
 {
     this->eventLife = eventLife;
@@ -46,9 +48,10 @@ void vFrame::setEventLife(int eventLife)
 
 ///
 /// \brief vFrame::publish
-/// \return
+/// \param imageOnThePort
+/// \param seconds
 ///
-void vFrame::publish(cv::Mat &imageOnThePort, double seconds)
+void vFrame::publish(cv::Mat &imageOnThePort)
 {
 
     //critical section
@@ -92,7 +95,10 @@ void vFrame::publish(cv::Mat &imageOnThePort, double seconds)
 
 
 }
-
+///
+/// \brief vFrame::addEvent
+/// \param event
+///
 void vFrame::addEvent(emorph::vEvent &event)
 {
     //sketchy hack to remove the unknown artefacts
@@ -164,6 +170,75 @@ cv::Mat eAddressFrame::draw(vQueue &eSet)
     }
 
     return canvas;
+
+}
+
+/*////////////////////////////////////////////////////////////////////////////*/
+//vWindow
+/*////////////////////////////////////////////////////////////////////////////*/
+
+int vWindow::getCurrentWindow(emorph::vQueue q)
+{
+    if(this->q.empty())
+        return 0;
+
+    //critical section
+    mutex.wait();
+
+    //do a copy and a clean
+    int lowerthesh = this->q.back()->getStamp() - windowSize;
+    int upperthesh = this->q.back()->getStamp() + windowSize;
+
+    emorph::vQueue::iterator qi;
+    for (qi = this->q.begin(); qi != this->q.end();) {
+        int etime = (*qi)->getStamp();
+        if(etime < upperthesh && etime > lowerthesh)
+        {
+            //copy it into the new q
+            vEvent * newcopy = emorph::createEvent((*qi)->getType());
+            *newcopy = **qi;
+            q.push_back(newcopy);
+
+            //on to the next event
+            qi++;
+        }
+        else
+        {
+            //clean it (set qi to next event)
+            delete (*qi);
+            qi = q.erase(qi);
+        }
+    }
+
+    mutex.post();
+
+    return q.size();
+
+}
+
+void vWindow::addEvent(emorph::vEvent &event)
+{
+    //make a copy of the event to add to the circular buffer
+    vEvent * newcopy = emorph::createEvent(event.getType());
+    *newcopy = event;
+
+    mutex.wait();
+
+    //add the event
+    q.push_back(newcopy);
+
+    //check if any events need to be removed
+    int lifeThreshold = event.getStamp() - windowSize;
+    while(true) {
+
+        if(q.front()->getStamp() < lifeThreshold) {
+            delete q.front();
+            q.pop_front();
+        }
+        else
+            break;
+    }
+    mutex.post();
 
 }
 
@@ -347,7 +422,7 @@ bool vFramerModule::updateModule()
         cv::Mat publishMat((IplImage *)yarpImage.getIplImage(), false);
 
         //get the vFramer to draw the image
-        (mi->second)->publish(publishMat, period);
+        (mi->second)->publish(publishMat);
 
         //write the image to the port
         outports[mi->first]->write();

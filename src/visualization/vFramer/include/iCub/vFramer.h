@@ -25,8 +25,9 @@
 
 namespace emorph {
 
-//forward declaration of the collector. It performs onRead operations to
-//add new events to the frame
+/*!
+ * \brief The vFrame class
+ */
 class vFrame {
 
 private:
@@ -53,14 +54,27 @@ public:
 
     void addEvent(emorph::vEvent &event);
 
-    void publish(cv::Mat &imageOnThePort, double seconds);
+    void publish(cv::Mat &imageOnThePort);
+
+};
+
+class vWindow {
+
+private:
+    emorph::vQueue q;
+    int windowSize;
+    yarp::os::Semaphore mutex;
+
+public:
+    vWindow(int windowSize = 50000) { this->windowSize = windowSize; }
+    void addEvent(emorph::vEvent &event);
+    int getCurrentWindow(emorph::vQueue q);
 
 };
 
 /*!
- * \brief A class that draws a mono image as events are added to it
+ * \brief The eAddressFrame class
  */
-
 class eAddressFrame : public vFrame {
 
 public:
@@ -76,10 +90,10 @@ public:
 
 };
 
+
+
 /*!
- * \brief A class that handles reading events and how long to compile an image.
- * Events are sent to an eImage which controls how events should be drawn.
- *
+ * \brief The vReadAndSplit class
  */
 
 class vReadAndSplit : public yarp::os::BufferedPort<emorph::vBottle>
