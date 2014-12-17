@@ -1,0 +1,26 @@
+<application>
+<name>eventAnalysisModule </name>
+
+<dependencies>	
+</dependencies>
+
+<module>
+   <name>dataSetPlayer</name>
+   <node>localhost</node>
+   <tag>dataSetPlayer</tag>
+</module>
+
+<module>
+   <name>eventAnalysis</name>
+   <node>localhost</node>
+   <parameters>--outputFile testtype </parameters>
+   <tag>eventAnalysis</tag>
+</module>
+
+<connection>
+  <from>/eventBottlePlayer/etb:o</from>
+  <to>/eventStatsModule:i</to>
+  <protocol>udp</protocol>
+</connection>
+
+</application>
