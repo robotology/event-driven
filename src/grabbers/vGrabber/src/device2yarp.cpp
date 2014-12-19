@@ -843,7 +843,7 @@ void  device2yarp::run() {
                     fprintf(fout,"%08X \n",a);
                 }
                 else {
-                    fprintf(fout,"%lu,",a);
+                    fprintf(fout,"%lu,",(long unsigned int)a);
                 }
             }
 
@@ -921,7 +921,7 @@ void  device2yarp::run() {
                     fprintf(fout,"%08X ",t);
                 }
                 else {
-                    fprintf(fout,"%lu,",t);
+                    fprintf(fout,"%lu,",(long unsigned int)t);
                 }
             }
 
@@ -1009,7 +1009,7 @@ void  device2yarp::run() {
                 printf("Overall Statistic \n");
                 printf("================= \n");
                 printf("max data rate received  %f kAE/s   ; min data rate received %f kAE/s \n", maxRate, minRate);
-                printf("data rate received %f kAE/s    ;  data rate lost %f kAE/s    ;    LOR %f% \n", dataRate, lostRate, (lostRate / (lostRate + dataRate)) * 100.0);
+                printf("data rate received %f kAE/s    ;  data rate lost %f kAE/s    ;    LOR %f%% \n", dataRate, lostRate, (double)((lostRate / (lostRate + dataRate)) * 100.0));
                 printf(" \n Error Resume \n");
                 printf("============= \n");
                 printf("type1: %04d     type2: %04d       type3: %04d/%04d \n", countErrorsGAEP1, countErrorsGAEP2, countErrorsGAEP3, countInWraps + countInWrapsTS);
@@ -1038,7 +1038,7 @@ void  device2yarp::run() {
                     fprintf(fout,"%08X\n",t);
                 }
                 else {
-                    fprintf(fout,"%lu ",t);
+                    fprintf(fout,"%lu ",(long unsigned int)t);
                 }
                 //fprintf(fout," %08X ",0xCAFECAFE);
             }	  	  	  
@@ -1051,7 +1051,7 @@ void  device2yarp::run() {
                     fprintf(fout,"%08X\n",tempA);
                 }
                 else {
-                    fprintf(fout,"%lu,",tempA);
+                    fprintf(fout,"%lu,",(long unsigned int)tempA);
                 }
                 //fprintf(fout," %08X ",0xCAFECAFE);
             }
@@ -1192,7 +1192,7 @@ void device2yarp::sendingBias() {
     
 
     printf("seqEvents: %d \n", seqEvents);
-    printf("seqTime * 0.128: %d \n", (u64)(seqTime * 0.128));
+    printf("seqTime * 0.128: %d \n", (int)(u64)(seqTime * 0.128));
     //printf("TmaxSeqTimeEstima PRIu64  %f %f\n", 
     //  (TmaxSeqTimeEstimate / 1000000), (TmaxSeqTimeEstimate % 1000000));
 

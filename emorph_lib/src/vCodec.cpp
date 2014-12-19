@@ -123,33 +123,39 @@ yarp::os::Property vEvent::getContent() const
 /******************************************************************************/
 //AddressEvent
 /******************************************************************************/
-AddressEvent::AddressEvent()
+AddressEvent::AddressEvent(const vEvent &event)
 {
-    type="AE";
-    stamp = 0;
+    //most of the constructor is replicated in the assignment operator
+    //so we just use that to construct
+    *this = event;
 
-    channel=0;
-    polarity=0;
-    x=0;
-    y=0;
 }
 
 /******************************************************************************/
-AddressEvent::AddressEvent(const AddressEvent &event)
+vEvent &AddressEvent::operator=(const vEvent &event)
 {
-    type=event.type;
-    stamp = event.stamp;
 
-    channel=event.channel;
-    polarity=event.polarity;
-    x=event.x;
-    y=event.y;
-}
+    //copy timestamp and type (base class =operator)
+    vEvent::operator =(event);
 
-/******************************************************************************/
-AddressEvent::AddressEvent(const vEvent &event) : AddressEvent()
-{
-    stamp = event.getStamp();
+    //copy other fields if it's compatible
+    const AddressEvent * aep = dynamic_cast<const AddressEvent *>(&event);
+    if(aep) {
+        channel=aep->channel;
+        polarity=aep->polarity;
+        x=aep->x;
+        y=aep->y;
+    } else {
+        channel = 0;
+        polarity = 0;
+        x = 0;
+        y = 0;
+    }
+
+    //force the type to addressevent
+    type = "AE";
+
+    return *this;
 }
 
 /******************************************************************************/
@@ -193,21 +199,7 @@ vEvent *AddressEvent::decode(const yarp::os::Bottle &packet, int &pos)
     return ae;
 }
 
-/******************************************************************************/
-vEvent &AddressEvent::operator=(const vEvent &event)
-{
-    vEvent::operator =(event);
 
-    const AddressEvent * aep = dynamic_cast<const AddressEvent *>(&event);
-    if(aep) {
-        channel=aep->channel;
-        polarity=aep->polarity;
-        x=aep->x;
-        y=aep->y;
-    }
-
-    return *this;
-}
 
 /******************************************************************************/
 bool AddressEvent::operator==(const AddressEvent &event)
@@ -573,31 +565,39 @@ Property AddressEvent3DFeatures::getContent() const
 /******************************************************************************/
 //ClusterEvent
 /******************************************************************************/
-ClusterEvent::ClusterEvent()
+ClusterEvent::ClusterEvent(const vEvent &event)
 {
-    type    = "CLE";
-    stamp   = 0;
-    channel = 0;
-    xCog    = 0;
-    yCog    = 0;
-    id      = 0;
+    //most of the constructor is replicated in the assignment operator
+    //so we just use that to construct
+    *this = event;
+
 }
 
 /******************************************************************************/
-ClusterEvent::ClusterEvent(const ClusterEvent &event)
+vEvent &ClusterEvent::operator=(const vEvent &event)
 {
-    type    = event.type; 
-    stamp   = event.stamp;
-    channel = event.channel;
-    xCog    = event.xCog;
-    yCog    = event.yCog;
-    id      = event.id;
-}
 
-/******************************************************************************/
-ClusterEvent::ClusterEvent(const vEvent &event) : ClusterEvent()
-{
-    stamp = event.getStamp();
+    //copy timestamp and type
+    vEvent::operator =(event);
+
+    //copy other fields if it's compatible
+    const ClusterEvent * aep = dynamic_cast<const ClusterEvent *>(&event);
+    if(aep) {
+        channel=aep->channel;
+        xCog=aep->xCog;
+        yCog=aep->yCog;
+        id=aep->id;
+    } else {
+        channel = 0;
+        xCog = 0;
+        yCog = 0;
+        id = 0;
+    }
+
+    //force the type to addressevent
+    type = "CLE";
+
+    return *this;
 }
 
 /******************************************************************************/
@@ -641,20 +641,6 @@ vEvent * ClusterEvent::decode(const yarp::os::Bottle &packet, int &pos)
     if(ee) delete ee;
 
     return cle;
-}
-
-
-/******************************************************************************/
-ClusterEvent &ClusterEvent::operator=(const ClusterEvent &event)
-{
-
-    vEvent::operator =(event);
-    channel = event.channel;
-    id      = event.id;
-    xCog    = event.xCog;
-    yCog    = event.yCog;
-
-    return *this;
 }
 
 

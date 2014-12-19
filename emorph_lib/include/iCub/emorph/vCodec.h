@@ -114,10 +114,9 @@ protected:
     virtual int nBytesCoded() const         { return 1;                 }
 
 public:
-    AddressEvent();
-    AddressEvent(const AddressEvent &event);
-    AddressEvent(const vEvent &event);
-    //AddressEvent(const yarp::os::Bottle &packets, const int pos=0);
+
+    AddressEvent(const vEvent &event = vEvent());
+
 
     vEvent &operator=(const vEvent &event);
     bool operator==(const AddressEvent &event);
@@ -250,12 +249,12 @@ protected:
     int yCog;
 
 public:
-    ClusterEvent();
-    ClusterEvent(const ClusterEvent &event);
-    ClusterEvent(const vEvent &event);
+    //ClusterEvent();
+    //ClusterEvent(const ClusterEvent &event);
+    ClusterEvent(const vEvent &event = vEvent());
     //ClusterEvent(const yarp::os::Bottle &packets, const int pos=0);
 
-    ClusterEvent &operator=(const ClusterEvent &event);
+    vEvent &operator=(const vEvent &event);
     bool operator==(const ClusterEvent &event);
 
     int getChannel() const             { return channel;        }
