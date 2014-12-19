@@ -25,38 +25,7 @@
 
 namespace emorph {
 
-/*!
- * \brief The vFrame class
- */
-class vFrame {
 
-private:
-    emorph::vQueue q;
-
-    int channel;
-    int retinaWidth;
-    int retinaHeight;
-
-    int eventLife;
-    yarp::os::Semaphore mutex;
-
-protected:
-
-    virtual cv::Mat draw(emorph::vQueue &eSet) = 0;
-    int getRetinaWidth() { return retinaWidth; }
-    int getRetinaHeight() { return retinaHeight; }
-
-public:
-
-    vFrame(int channel, int retinaWidth, int retinaHeight);
-
-    void setEventLife(int eventLife);
-
-    void addEvent(emorph::vEvent &event);
-
-    void publish(cv::Mat &imageOnThePort);
-
-};
 
 class vWindow {
 
@@ -66,7 +35,9 @@ private:
     yarp::os::Semaphore mutex;
 
 public:
-    vWindow(int windowSize = 50000) { this->windowSize = windowSize; }
+    vWindow(int windowSize = 50000)     { this->windowSize = windowSize; }
+    void setWindowSize(int windowSize)  { this->windowSize = windowSize; }
+
     void addEvent(emorph::vEvent &event);
     int getCurrentWindow(emorph::vQueue q);
 
@@ -134,14 +105,12 @@ private:
     std::string rpcPortName;    // name for comunication with respond
 
     double period;
-    int publishWidth;
-    int publishHeight;
 
     //this is the vBottle reading port
     vReadAndSplit * vReader;
 
     //this is the image frame drawers
-    std::map<int, vFrame *> vFrames;
+    std::map<int, vWindow> vWindows;
 
     //this is the output ports sending the yarp::Imageofs on
     std::map<int, yarp::os::BufferedPort<

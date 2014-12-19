@@ -27,13 +27,9 @@ namespace emorph {
 /// \param retinaWidth
 /// \param retinaHeight
 ///
-vFrame::vFrame(int channel, int retinaWidth, int retinaHeight)
+vFrame::vFrame()
 {
-    this->channel = channel;
-    this->retinaWidth = retinaWidth;
-    this->retinaHeight = retinaHeight;
 
-    eventLife = 50000; //default 0.5 seconds
 }
 
 ///
