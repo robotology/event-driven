@@ -5,18 +5,6 @@
 </dependencies>
 
 <module>
-   <name>dataSetPlayer</name>
-   <node>localhost</node>
-   <tag>dataSetPlayer</tag>
-</module>
-
-<module>
-   <name>eventBottleConverter</name>
-   <node>localhost</node>
-   <tag>eventBottleConvert</tag>
-</module>
-
-<module>
     <name>eventClustering</name>
     <node>localhost</node>
     <tag>eventClustering</tag>
@@ -37,13 +25,8 @@
 
 
 <connection>
-  <from>/eventBottlePlayer/etb:o</from>
-  <to>/eventBottleConverter/bte:i</to>
-  <protocol>tcp</protocol>
-</connection>
-<connection>
-  <from>/eventBottleConverter/bte:o</from>
-  <to>/eventClustering/eventBottle:i</to>
+  <from>/cbottletoebottle/cte:o</from>
+  <to>/eventClustering/vBottle:i</to>
   <protocol>tcp</protocol>
 </connection>
 <connection>
