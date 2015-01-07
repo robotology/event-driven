@@ -310,13 +310,14 @@ void EventBottleManager::onRead(vBottle &bot)
         AddressEvent *aep = (*qi)->getAs<AddressEvent>(); // address event from the input vBottle
 
         // address event augmented with the cluster ID info
-        AddressEventCluster *aec;
+//        AddressEventCluster *aec; //AddressEventClustered
         
         // cluster event
         ClusterEventGauss clep;
         if(&aep) {
 
-            aec = new AddressEventCluster(*aep);
+  //          aec = new AddressEventCluster(*aep);
+            AddressEventCluster aec(*aep);
 
             ev_x    = aep->getX();
             ev_y    = aep->getY();
@@ -333,8 +334,8 @@ void EventBottleManager::onRead(vBottle &bot)
                     
                     if(clep.getActivity()){
                         evtCluster.addEvent(clep);  // add cluster event to the vBottle
-                        aec->assignCluster(clep);   // assign cluster Id to the aec event
-                        evtCluster.addEvent(*aec);
+                        aec.setId(clep.getId());
+                        evtCluster.addEvent(aec);
                     }
                     else{
                         evtCluster.addEvent(*aep);  // if the AE is not part of any cluster, send the simple AE to the output vBottle
@@ -346,8 +347,8 @@ void EventBottleManager::onRead(vBottle &bot)
                     clep = tracker_pool_right->update(aep);
                     if(clep.getActivity()){
                         evtCluster.addEvent(clep);  // add cluster event to the vBottle
-                        aec->assignCluster(clep);   // assign cluster Id to Address Event Cluster
-                        evtCluster.addEvent(*aec);  // add Address Event Cluster to the vBottle
+                        aec.setId(clep.getId());
+                        evtCluster.addEvent(aec);  // add Address Event Cluster to the vBottle
                     }
                     else{
                         evtCluster.addEvent(*aep);  // if the AE is not part of any cluster, send the simple AE to the output vBottle
@@ -370,7 +371,7 @@ void EventBottleManager::onRead(vBottle &bot)
                 right_image = gray_image;
                 last_t_display = ev_t;
             }
-           delete aec;
+//           delete aec;
         }
         //Writing active tracker data to output port
         //send it all out
