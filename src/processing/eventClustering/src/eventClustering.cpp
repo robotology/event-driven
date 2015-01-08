@@ -309,15 +309,13 @@ void EventBottleManager::onRead(vBottle &bot)
        
         AddressEvent *aep = (*qi)->getAs<AddressEvent>(); // address event from the input vBottle
 
-        // address event augmented with the cluster ID info
-//        AddressEventCluster *aec; //AddressEventClustered
         
         // cluster event
         ClusterEventGauss clep;
         if(&aep) {
 
-  //          aec = new AddressEventCluster(*aep);
-            AddressEventCluster aec(*aep);
+            // address event augmented with the cluster ID info
+            AddressEventClustered aec(*aep);
 
             ev_x    = aep->getX();
             ev_y    = aep->getY();
@@ -332,7 +330,7 @@ void EventBottleManager::onRead(vBottle &bot)
                 {
                     clep = tracker_pool_left->update(aep);
                     
-                    if(clep.getActivity()){
+                    if(clep.getNumAE()){
                         evtCluster.addEvent(clep);  // add cluster event to the vBottle
                         aec.setId(clep.getId());
                         evtCluster.addEvent(aec);
@@ -345,7 +343,7 @@ void EventBottleManager::onRead(vBottle &bot)
                 else
                 {
                     clep = tracker_pool_right->update(aep);
-                    if(clep.getActivity()){
+                    if(clep.getNumAE()){
                         evtCluster.addEvent(clep);  // add cluster event to the vBottle
                         aec.setId(clep.getId());
                         evtCluster.addEvent(aec);  // add Address Event Cluster to the vBottle
