@@ -17,6 +17,12 @@
 </module>
 
 <module>
+   <name>eventClustering</name>
+   <node>localhost</node>
+   <tag>eventClustering</tag>
+</module>
+
+<module>
     <name> vFramer</name>
     <parameters> --frameRate 30 --eventWindow 0.5 </parameters>
     <node> localhost </node>
@@ -72,6 +78,12 @@
 <connection>
   <from>/vFramerModule/ch1:o</from>
   <to>/viewCh1</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
+  <from>/cbottletoebottle/cte:o</from>
+  <to>/eventClustering/vBottle:i</to>
   <protocol>udp</protocol>
 </connection>
 

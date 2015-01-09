@@ -373,8 +373,9 @@ void EventBottleManager::onRead(vBottle &bot)
         }
         //Writing active tracker data to output port
         //send it all out
-        outPort.write();
+
     }
+    outPort.write();
     //fprintf(stdout, "------------------------------------------------------------------\n");
 }
 
