@@ -155,8 +155,9 @@ protected:
 
 public:
 
-    int getID() const { return clID;}
-    int setID(const int clID) {this->clID = clID;}
+    int getID() const                       { return clID;              }
+
+    void setID(const int clID)              { this->clID = clID;        }
 
     AddressEventClustered(const vEvent &event = vEvent());
     vEvent &operator=(const vEvent &event);
@@ -187,12 +188,12 @@ public:
 
     //these are new the member get functions
     int getChannel() const             { return channel;        }
-    int getId()      const             { return id;             }
+    int getID()      const             { return id;             }
     int getXCog()    const             { return xCog;           }
     int getYCog()    const             { return yCog;           }
 
     void setChannel(const int channel) { this->channel = channel; }
-    void setId(const int id)           { this->id = id;     }
+    void setID(const int id)           { this->id = id;     }
     void setXCog(const int xCog)       { this->xCog = xCog;       }
     void setYCog(const int yCog)       { this->yCog = yCog;       }
 
@@ -219,9 +220,11 @@ protected:
     int xSigma2;
     int ySigma2;
     int xySigma;
+    int xVel;
+    int yVel;
 
     //this is the number of *extra* bytes (in addition to base class) to code
-    virtual int nBytesCoded() const { return 2; }
+    virtual int nBytesCoded() const { return 3; }
 
 public:
 
@@ -230,11 +233,15 @@ public:
     int getXSigma2()    const               { return xSigma2;          }
     int getYSigma2()    const               { return ySigma2;          }
     int getXYSigma()    const               { return xySigma;          }
-
+    int getXVel()       const               { return xVel;             }
+    int getYVel()       const               { return yVel;             }
+    
     void setNumAE(const int numAE)          { this->numAE=numAE;       }
     void setXSigma2(const int xSigma2)      { this->xSigma2=xSigma2;   }
     void setYSigma2(const int ySigma2)      { this->ySigma2=ySigma2;   }
     void setXYSigma(const int xySigma)      { this->xySigma=xySigma;   }
+    void setXVel(const int xVel)            { this->xSigma2=xVel;   }
+    void setYVel(const int yVel)            { this->ySigma2=yVel;   }
 
 
     //these functions need to be defined correctly for inheritance

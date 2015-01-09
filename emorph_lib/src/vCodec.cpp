@@ -436,12 +436,16 @@ vEvent &ClusterEventGauss::operator=(const vEvent &event)
         xSigma2 = aep->xSigma2;
         ySigma2 = aep->ySigma2;
         xySigma = aep->xySigma;
+        xVel = aep->xVel;
+        yVel = aep->yVel;
     } else {
         //this needs the default
         numAE = 0;
         xSigma2 = 0;
         ySigma2 = 0;
         xySigma = 0;
+        xVel = 0;
+        yVel = 0;
     }
 
     //force the type to addressevent
@@ -456,10 +460,12 @@ yarp::os::Bottle ClusterEventGauss::encode() const
     //the encoding needs to happen here from the old codec
     int word0=(20<<26)|(numAE&0x00ffffff);
     int word1=(21<<26)|((xySigma&0xff)<<16)|((ySigma2&0xff)<<8)|(xSigma2&0xff);
+    int word2=(22<<26)|((yVel&0xff)<<8)|(xVel&0xff);
 
     yarp::os::Bottle ret = ClusterEvent::encode();
     ret.addInt(word0);
     ret.addInt(word1);
+    ret.addInt(word2);
     return ret;
 }
 
@@ -477,6 +483,7 @@ vEvent * ClusterEventGauss::decode(const yarp::os::Bottle &packet, int &pos)
         cleg = new ClusterEventGauss(*ee);
         int word0=packet.get(pos).asInt();
         int word1=packet.get(pos+1).asInt();
+        int word2=packet.get(pos+2).asInt();
 
         //assign the decode values here
         numAE=word0&0x00ffffff;
@@ -489,9 +496,11 @@ vEvent * ClusterEventGauss::decode(const yarp::os::Bottle &packet, int &pos)
         word1>>=8;
         xySigma=word1&0xff;
 
-
-
-
+        xVel=word2&0xff;
+        
+        word2>>=8;
+        yVel=word2&0xff;
+        
         pos += nBytesCoded();
 
 
@@ -510,7 +519,9 @@ bool ClusterEventGauss::operator==(const ClusterEventGauss &event)
             (numAE == event.numAE) &&
             (xSigma2 == event.xSigma2) &&
             (ySigma2 == event.ySigma2) &&
-            (xySigma== event.xySigma)
+            (xySigma== event.xySigma) &&
+            (xVel == event.xVel) &&
+            (yVel == event.yVel)
             );
 }
 
@@ -524,6 +535,8 @@ Property ClusterEventGauss::getContent() const
     prop.put("xSigma2", xSigma2);
     prop.put("ySigma2", ySigma2);
     prop.put("xySigma", xySigma);
+    prop.put("xVel", xVel);
+    prop.put("yVel", yVel);
 
 
     return prop;

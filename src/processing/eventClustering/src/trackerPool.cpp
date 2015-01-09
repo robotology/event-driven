@@ -184,8 +184,8 @@ emorph::ClusterEventGauss TrackerPool::update(emorph::AddressEvent *ptr){
         clep.setYVel(temp_y);
         // get the activity of each cluster
         trackers_[trackId].getActivity(temp_x);
-        clep.setActivity(temp_x);
-        clep.setId(trackId);
+        clep.setNumAE(temp_x);
+        clep.setID(trackId);
     }
     //count_ = 0;
     

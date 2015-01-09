@@ -332,7 +332,7 @@ void EventBottleManager::onRead(vBottle &bot)
                     
                     if(clep.getNumAE()){
                         evtCluster.addEvent(clep);  // add cluster event to the vBottle
-                        aec.setId(clep.getId());
+                        aec.setID(clep.getID());
                         evtCluster.addEvent(aec);
                     }
                     else{
@@ -345,7 +345,7 @@ void EventBottleManager::onRead(vBottle &bot)
                     clep = tracker_pool_right->update(aep);
                     if(clep.getNumAE()){
                         evtCluster.addEvent(clep);  // add cluster event to the vBottle
-                        aec.setId(clep.getId());
+                        aec.setID(clep.getID());
                         evtCluster.addEvent(aec);  // add Address Event Cluster to the vBottle
                     }
                     else{
