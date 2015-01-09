@@ -221,7 +221,7 @@ protected:
     int xySigma;
 
     //this is the number of *extra* bytes (in addition to base class) to code
-    virtual int nBytesCoded() const { return 1; }
+    virtual int nBytesCoded() const { return 2; }
 
 public:
 

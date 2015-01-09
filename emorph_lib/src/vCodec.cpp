@@ -432,10 +432,16 @@ vEvent &ClusterEventGauss::operator=(const vEvent &event)
     const ClusterEventGauss * aep = dynamic_cast<const ClusterEventGauss *>(&event);
     if(aep) {
         //this needs to be filled with copy
-        //x = aep->x;
+        numAE = aep->numAE;
+        xSigma2 = aep->xSigma2;
+        ySigma2 = aep->ySigma2;
+        xySigma = aep->xySigma;
     } else {
         //this needs the default
-        //x = 0;
+        numAE = 0;
+        xSigma2 = 0;
+        ySigma2 = 0;
+        xySigma = 0;
     }
 
     //force the type to addressevent
@@ -448,10 +454,12 @@ vEvent &ClusterEventGauss::operator=(const vEvent &event)
 yarp::os::Bottle ClusterEventGauss::encode() const
 {
     //the encoding needs to happen here from the old codec
-    int word0 = 0;
+    int word0=(20<<26)|(numAE&0x00ffffff);
+    int word1=(21<<26)|((xySigma&0xff)<<16)|((ySigma2&0xff)<<8)|(xSigma2&0xff);
 
     yarp::os::Bottle ret = ClusterEvent::encode();
     ret.addInt(word0);
+    ret.addInt(word1);
     return ret;
 }
 
@@ -468,10 +476,21 @@ vEvent * ClusterEventGauss::decode(const yarp::os::Bottle &packet, int &pos)
         //need the decoding here
         cleg = new ClusterEventGauss(*ee);
         int word0=packet.get(pos).asInt();
-
+        int word1=packet.get(pos+1).asInt();
 
         //assign the decode values here
-        //x = word0&0x01
+        numAE=word0&0x00ffffff;
+
+        xSigma2=word1&0xff;
+
+        word1>>=8;
+        ySigma2=word1&0xff;
+
+        word1>>=8;
+        xySigma=word1&0xff;
+
+
+
 
         pos += nBytesCoded();
 
@@ -486,10 +505,12 @@ vEvent * ClusterEventGauss::decode(const yarp::os::Bottle &packet, int &pos)
 /******************************************************************************/
 bool ClusterEventGauss::operator==(const ClusterEventGauss &event)
 {
-    return ((ClusterEvent::operator ==(event))
+    return ((ClusterEvent::operator ==(event))&&
             //add the extra equals operators here new members
-            //(x == event.x)&& ...
-
+            (numAE == event.numAE) &&
+            (xSigma2 == event.xSigma2) &&
+            (ySigma2 == event.ySigma2) &&
+            (xySigma== event.xySigma)
             );
 }
 
@@ -499,7 +520,10 @@ Property ClusterEventGauss::getContent() const
 {
     Property prop = vEvent::getContent();
     //add extra member properties for human readable here
-    //prop.put("x", x)
+    prop.put("numAE", numAE);
+    prop.put("xSigma2", xSigma2);
+    prop.put("ySigma2", ySigma2);
+    prop.put("xySigma", xySigma);
 
 
     return prop;
