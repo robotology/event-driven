@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2014 iCub Facility - Istituto Italiano di Tecnologia
- * Author: Arren Glover (@itt.it)
+ * Copyright (C) 2010 eMorph Group iCub Facility
+ * Authors: Arren Glover
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
  * later version published by the Free Software Foundation.
@@ -12,7 +12,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details
-*/
+ */
 
 #ifndef __vFramer__
 #define __vFramer__
@@ -21,106 +21,139 @@
 #include <yarp/sig/all.h>
 #include <iCub/emorph/all.h>
 #include <opencv2/opencv.hpp>
-#include <map>
+#include <>
+
+#include "vDraw.h"
 
 namespace emorph {
 
-
-
+/**
+ * @brief The vWindow class holds a list of events for a period of time as
+ * specified. Event expiry is checked each time new events are added and
+ * expired events are removed. At any point in time a copy of the current list
+ * of events can be requested.
+ */
 class vWindow {
 
 private:
+
+    //! event storage
     emorph::vQueue q;
+    //! the length of time to store events (in us)
     int windowSize;
+    //! for safe copying of q in the multi-threaded environment
     yarp::os::Semaphore mutex;
 
 public:
+
+    ///
+    /// \brief vWindow constructor
+    /// \param windowSize optional time to store events (in us)
+    ///
     vWindow(int windowSize = 50000)     { this->windowSize = windowSize; }
+
+    ///
+    /// \brief setWindowSize sets the length of time to store events
+    /// \param windowSize the time period (in us)
+    ///
     void setWindowSize(int windowSize)  { this->windowSize = windowSize; }
 
+    ///
+    /// \brief addEvent adds an event to the window. Also checks for expired
+    /// events.
+    /// \param event the event to add
+    ///
     void addEvent(emorph::vEvent &event);
-    int getCurrentWindow(emorph::vQueue q);
 
-};
-
-/*!
- * \brief The eAddressFrame class
- */
-class eAddressFrame : public vFrame {
-
-public:
-
-    eAddressFrame(int channel, int retinaWidth, int retinaHeight) :
-        vFrame(channel, retinaWidth, retinaHeight) {}
-
-    //eAddressFrame(int retinaWidth, int retinaHeight) :
-        //vFrame(retinaWidth, retinaHeight) {}
-    virtual cv::Mat draw(vQueue &eSet);
-
-    //~eAddressFrame() {}
+    ///
+    /// \brief getCurrentWindow returns the current list of active events
+    /// \param sample_q is a vQueue to which events are added
+    /// \return the number of events added to sample_q
+    ///
+    int getCurrentWindow(emorph::vQueue &sample_q);
 
 };
 
 
-
-/*!
- * \brief The vReadAndSplit class
+/**
+ * @brief The vReadAndSplit class splits events into different vWindows based
+ * on the channel parameter. At any point in time a snapshot of all windows can
+ * be performed, after which the resulting vQueues can be accessed.
  */
-
 class vReadAndSplit : public yarp::os::BufferedPort<emorph::vBottle>
 {
     //has an onRead() function that updates an eImage based on the draw
     //functions and then outputs the image at a certain rate
 
 private:
-    std::string portName;
-    std::map<int, vFrame *> *vFrames;
+
+    //! the temporal window size to use
+    int windowsize;
+
+    //! storage of vWindows
+    std::map<int, vWindow*> windows;
+    //! storage of window snapshots
+    std::map<int, vQueue*> snaps;
 
 public:
 
-    vReadAndSplit(const std::string &moduleName);
+    ///
+    /// \brief vReadAndSplit constructor
+    /// \param windowsize the size of the length of time events are stored
+    ///
+    vReadAndSplit(int windowsize = 50000);
+    ~vReadAndSplit();
 
-    void setFrameSet(std::map<int, vFrame *> *vFrames)
-        {this->vFrames = vFrames;}
+    ///
+    /// \brief snapshotAllWindows freeze the current list of events for each
+    /// channel
+    ///
+    void snapshotAllWindows();
 
-    virtual bool open();
+    ///
+    /// \brief getSnap get a list of snapshotted events
+    /// \param channel the channel value to access
+    /// \return the list of events in a vQueue
+    ///
+    emorph::vQueue & getSnap(const int channel);
+
+    ///
+    /// \brief onRead splitting is performed as an asynchronous onRead function
+    /// \param incoming the vBottle with events of all channels
+    ///
+    virtual void onRead(emorph::vBottle &incoming);
+    virtual bool open(const std::string portName);
     virtual void close();
     virtual void interrupt();
-    virtual void onRead(emorph::vBottle &incoming);
+
 
 
 };
 
-/*!
- * \brief The module which envolopes making frames from event-based data
+/**
+ * @brief The vFramerModule class runs the event reading and channel splitting,
+ * the drawing modules, and the yarp image output buffers. Images are created
+ * at a rate equal to the rate of this thread.
  */
-
 class vFramerModule : public yarp::os::RFModule {
 
 private:
 
-    std::string moduleName;         // name of the module (rootname of ports)
-    std::string robotName;          // name of the robot
-    std::string robotPortName;      // reference to the head of the robot
-    std::string rpcPortName;    // name for comunication with respond
-
+    //! the period between images being published
     double period;
 
-    //this is the vBottle reading port
-    vReadAndSplit * vReader;
+    //! the vBottle reading port that splits events by channel
+    vReadAndSplit vReader;
 
-    //this is the image frame drawers
-    std::map<int, vWindow> vWindows;
+    //! the list of channels for each output image
+    std::vector<int> channels;
 
-    //this is the output ports sending the yarp::Imageofs on
-    std::map<int, yarp::os::BufferedPort<
+    //! the list of drawers for each output image
+    std::vector<std::vector<vDraw *> > drawers;
+
+    //! the list of output ports for images
+    std::vector<yarp::os::BufferedPort<
         yarp::sig::ImageOf<yarp::sig::PixelBgr> > *> outports;
-
-    //all options for this module
-    //retina size (eImage needs to know and it needs to match the hardware)
-    //image size (user option but eImage needs it to publish)
-    //eventlife (
-    //framerate (this module needs to know but it should also be twice the
 
 public:
 
