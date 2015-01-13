@@ -179,7 +179,7 @@ bool EventBottleManager::init()
     double  dist_thresh = 30;
     double  vel_thresh = 50;
     double  acc_thresh = 300;
-    //int     s;
+
     
     output_file = fopen (fileName.c_str(), "w");
     if (output_file == NULL) 
@@ -193,8 +193,10 @@ bool EventBottleManager::init()
 
     tracker_pool_right = new TrackerPool(sig_x, sig_y, sig_xy, alphaPos, alphaShape, k, max_dist, fixed_shape, tau_act, upThr, downThr, delete_thresh, alpha_rep, d_rep, max_nb_trackers, nb_ev_reg);
     tracker_pool_right->set_collision_det_param(dist_thresh, vel_thresh, acc_thresh);
-    //tracker_pool_right->get_pool_size(s);
 
+    //Debugging
+    //int     s;
+    //tracker_pool_right->get_pool_size(s);
     //fprintf(stdout, "cluster pool right size s =%d\n",s);
 
     // Initialization of the images - correct size (128*128 from DVS sensor)
@@ -303,6 +305,7 @@ void EventBottleManager::onRead(vBottle &bot)
     evtCluster.clear();
     // get the event queue in the vBottle bot
     bot.getAll(q);
+
     // checks for empty or non valid queue????
     for(qi = q.begin(); qi != q.end(); qi++)
     {
@@ -323,8 +326,7 @@ void EventBottleManager::onRead(vBottle &bot)
             pol     = aep->getPolarity();
             channel = aep->getChannel();
             
-            
-            if(ev_x>=0 && ev_x <= 127 && ev_y>=0 && ev_y <= 127)
+            if(ev_x>=0 && ev_x <= 127 && ev_y>=0 && ev_y <= 127 && channel == 0)
             {
 
                 if (channel == 0)
@@ -372,8 +374,18 @@ void EventBottleManager::onRead(vBottle &bot)
             }
 
             //H.A. : Adding snippet to send collision centers
-            printf("Number of collisions for this bottle of events %d", tracker_pool_left->get_collisions(x_coll_left, y_coll_left));
-            printf("Number of collisions for this bottle of events %d", tracker_pool_left->get_collisions(x_coll_left, y_coll_left));
+            tracker_pool_left->get_collisions(x_coll_left, y_coll_left);
+            tracker_pool_right->get_collisions(x_coll_right, y_coll_right);
+
+            int nb_coll = x_coll_left.size() + x_coll_right.size(); //get total collisions
+            if(nb_coll)
+            {
+                //fprintf(stdout, "Number of collisions for this bottle of events %d\n", nb_coll); // display number of collisions
+                Time::delay(5);
+            }
+
+
+
             //           delete aec;
         }
         //Writing active tracker data to output port
