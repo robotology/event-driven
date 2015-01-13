@@ -297,6 +297,7 @@ void EventBottleManager::onRead(vBottle &bot)
     short pol;
     short channel;
     
+    std::vector<double> x_coll_left, y_coll_left, x_coll_right, y_coll_right;
     // prepare output vBottle with address events extended with cluster ID (aec) and cluster events (clep)
     vBottle &evtCluster = outPort.prepare();
     evtCluster.clear();
@@ -369,7 +370,11 @@ void EventBottleManager::onRead(vBottle &bot)
                 right_image = gray_image;
                 last_t_display = ev_t;
             }
-//           delete aec;
+
+            //H.A. : Adding snippet to send collision centers
+            printf("Number of collisions for this bottle of events %d", tracker_pool_left->get_collisions(x_coll_left, y_coll_left));
+            printf("Number of collisions for this bottle of events %d", tracker_pool_left->get_collisions(x_coll_left, y_coll_left));
+            //           delete aec;
         }
         //Writing active tracker data to output port
         //send it all out
