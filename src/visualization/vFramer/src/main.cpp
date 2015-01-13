@@ -1,9 +1,6 @@
-// -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
-
-/* 
- * Copyright (C) 2010 RobotCub Consortium, European Commission FP6 Project IST-004370
+/*
+ * Copyright (C) 2010 eMorph Group iCub Facility
  * Authors: Arren Glover
- * website: www.robotcub.org 
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
  * later version published by the Free Software Foundation.
@@ -17,37 +14,29 @@
  * Public License for more details
  */
   
-/**
- * @file main.cpp
- * @brief main code for the cartesian frame collector of asynchronous events
- */
 
 #include "iCub/vFramer.h"
 #include <yarp/os/all.h>
 #include <iCub/emorph/all.h>
 
-using namespace yarp::os;
-using namespace yarp::sig;
-
 
 int main(int argc, char * argv[])
 {
-    //return runImageTest(argc, argv);
 
-    Network::init();
-    
+    yarp::os::Network::init();
     emorph::vFramerModule module;
-    //cfCollectorModule module;
+    yarp::os::ResourceFinder rf;
 
-    ResourceFinder rf;
+    //set up the resource finder
     rf.setVerbose(true);
     rf.setDefaultConfigFile("vFramer.ini"); //overridden by --from parameter
     rf.setDefaultContext("eMorph");   //overridden by --context parameter
     rf.configure(argc, argv);
  
+    //run the module
     module.runModule(rf);
 
-    Network::fini();
+    yarp::os::Network::fini();
     return 0;
 }
 

@@ -18,9 +18,9 @@
 
 <module>
     <name> vFramer</name>
-    <parameters> --frameRate 30 --eventWindow 0.5 </parameters>
-    <node> localhost </node>
-    <tag> vFramer </tag>
+    <parameters> --frameRate 30 --eventWindow 0.5 --displays '(0 left (AE) 1 right (AE))'</parameters>
+    <node>localhost</node>
+    <stdio>debugserver</stdio>
 </module>
 
 <module>
