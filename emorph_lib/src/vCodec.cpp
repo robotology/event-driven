@@ -34,7 +34,15 @@ vEvent * createEvent(const std::string type)
     if(type == ret->getType()) return ret;
     else delete(ret);
 
+    ret = new AddressEventClustered();
+    if(type == ret->getType()) return ret;
+    else delete(ret);
+
     ret = new ClusterEvent();
+    if(type == ret->getType()) return ret;
+    else delete(ret);
+
+    ret = new ClusterEventGauss();
     if(type == ret->getType()) return ret;
     else delete(ret);
 
