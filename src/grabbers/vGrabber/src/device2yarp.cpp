@@ -246,18 +246,18 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName =
 #define WIEN
 #ifdef WIEN
     printf("values from WIEN \n");
-    cas = 52458;         // cas
-    injg = 101508;       // injGnd
-    reqPd = 16777215;    // reqPd
-    pux = 8053457;       // puX
-    diffoff = 10; //orig: 133;       // diffOff
-    req = 160712;        // req
-    refr = 96978.12; // orig: 944;          // refr
-    puy = 16777215;      // puY
-    diffon = 2327474.91; // 639172;     // diffOn
-    diff = 85076.24; // 30108;        // diff 
-    foll = 10; //20;           // foll
-    pr = 10; //5;              // Pr 
+    cas = 52458;                   // cas
+    injg = 101508;                 // injGnd
+    reqPd = 16777215;              // reqPd
+    pux = 8053457;                 // puX
+    diffoff = 10; // 133;          // diffOff      
+    req = 160712;                  // req
+    refr = 193956.24; ; // 944;    // refr 
+    puy = 16777215;                // puY
+    diffon = 1648628.06; // 639172;// diffOn 
+    diff = 105978.12;   // 30108;  // diff    
+    foll = 10; // 20;              // foll    
+    pr = 5; //5;                  // Pr
 
     
     if(onlyLeft) {
@@ -274,7 +274,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName =
         refrRight = 193956.24; // 944;
         diffonRight = 1648628.06; //639172;
         diffRight = 105978.12; // 30108;
-        prRight = 10; //5;
+        prRight = 5; //5;
         
     }
     injgRight = 101508;       // injGnd
@@ -282,7 +282,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName =
     puxRight = 8053457;       // puX
     reqRight = 160712;        // req
     puyRight = 16777215;      // puY
-    follRight = 30; //20;           // foll
+    follRight = 10; //20;           // foll
     
     
 

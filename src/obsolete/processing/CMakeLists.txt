@@ -24,8 +24,8 @@ ENDIF (NOT WIN32)
 #add_subdirectory  ( velocityExtractor    )
 #add_subdirectory  ( visualAligner    )
 #add_subdirectory  ( eventBottleProcessor )
-#add_subdirectory  ( eventBottleConverter    )
-add_subdirectory  ( eventAnalysis    )
+add_subdirectory  ( eventBottleConverter    )
+#add_subdirectory  ( eventAnalysis    )
 #add_subdirectory  (cBottle2vBottle          )
 
 # --------  OPTICFLOW SUBFOLDERS ---------------------

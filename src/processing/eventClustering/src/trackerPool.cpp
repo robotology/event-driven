@@ -18,7 +18,7 @@ TrackerPool::TrackerPool(double sig_x, double sig_y, double sig_xy, double alpha
     alpha_rep_ = alpha_rep;
     d_rep_ = d_rep;
     
-    dist_thresh_ = 30;
+    dist_thresh_ = 10; // 30;
     vel_thresh_ = 40;
     acc_thresh_ = 400;
     
@@ -114,7 +114,7 @@ emorph::ClusterEventGauss TrackerPool::update(emorph::AddressEvent *ptr){
 
     emorph::ClusterEventGauss clep;
     int ev_t = ptr->getStamp();
-    int ev_x = ptr->getX();
+    int ev_x = 127 - ptr->getX();
     int ev_y = ptr->getY();
     
     double max_p = 0;
@@ -457,8 +457,11 @@ void TrackerPool::look_for_collisions(int ts){
                 
                 //   printf("...\n");
                 //printf("Relative speed = %f\n", rel_speed_[ii][jj]);
+
                 if(!clapping_[ii][jj]){
-                    if(dist_[ii][jj] < dist_thresh_ && vel_[ii][jj] > -vel_thresh_ && vel_[ii][jj] < vel_thresh_ && acc_[ii][jj] > acc_thresh_){
+                    printf("********* %f %f %f %f \n *********", dist_[ii][jj], dist_thresh_, vel_[ii][jj], -vel_thresh_);
+                    if(dist_[ii][jj] < dist_thresh_ && vel_[ii][jj] > -vel_thresh_) // && vel_[ii][jj] < vel_thresh_ && acc_[ii][jj] > acc_thresh_)
+                    {
                         clapping_[ii][jj] = true;
                         double x_coll = (trackers_[ii].get_x() + trackers_[jj].get_x())/2;
                         double y_coll = (trackers_[ii].get_y() + trackers_[jj].get_y())/2;

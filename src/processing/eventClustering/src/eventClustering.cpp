@@ -18,11 +18,13 @@
 #include "eventClustering.h"
 #include "trackerPool.h"
 #include "blobTracker.h"
+#include "iCubMotor.h"
 
 using namespace std;
 using namespace yarp::os;
 using namespace yarp::sig;
 using namespace emorph;
+using namespace aquilacubmotor;
 
 /**********************************************************/
 bool EventClustering::configure(yarp::os::ResourceFinder &rf)
@@ -86,6 +88,15 @@ bool EventClustering::configure(yarp::os::ResourceFinder &rf)
                      Value(1),
                      "down thr (double)").asDouble();
     fprintf(stdout,"down thr %f \n", downThr);
+
+    /*
+    * set the remote port where event vBottle is sent from
+    */
+    //fileName = rf.check("remotePortName",
+    //                    Value("none"),
+    //                    "remote port (string)").asString();
+    //fprintf(stdout,"remote vBottle port %s \n", remotePortName.c_str());
+
 
     closing = false;
     
@@ -170,15 +181,15 @@ bool EventBottleManager::init()
     double  k = 2;
     double  max_dist = 30;
     bool    fixed_shape = false;
-    double  tau_act = 10000;
+    double  tau_act = 100000;
     double  delete_thresh = 10;//0.00000001;
     double  alpha_rep = 2;
     int     d_rep = 40;
-    int     max_nb_trackers = 40;
+    int     max_nb_trackers = 10; //40
     int     nb_ev_reg = 50;
-    double  dist_thresh = 30;
-    double  vel_thresh = 50;
-    double  acc_thresh = 300;
+    double  dist_thresh = 10; //30;
+    double  vel_thresh = 100; //50;
+    double  acc_thresh = 300; //300;
 
     
     output_file = fopen (fileName.c_str(), "w");
@@ -231,9 +242,14 @@ bool EventBottleManager::init()
     numClusters = 5;
     numIters = 0;
     moveEyes = false;
+    getAudio = true;
     
     last_t_display = 0;
     dt = 10000;
+
+
+    icubMove = new ICubMotor(false, false);
+    icubMove->start();
 
     return true;
 }
@@ -243,20 +259,27 @@ bool EventBottleManager::open()
 {
     this->useCallback();
 
+    bool ok;
+
     //create all ports
     inPortName = "/" + moduleName + "/vBottle:i";
-    BufferedPort< vBottle >::open(inPortName.c_str());
+    ok = BufferedPort< vBottle >::open(inPortName.c_str());
 
     leftPortName = "/" + moduleName + "/leftImage:o";
-    leftPort.open( leftPortName.c_str() );
+    ok = ok && leftPort.open( leftPortName.c_str() );
 
     rightPortName = "/" + moduleName + "/rightImage:o";
-    rightPort.open( rightPortName.c_str() );
+    ok = ok && rightPort.open( rightPortName.c_str() );
 
     outPortName = "/" + moduleName + "/vBottle:o";
-    outPort.open( outPortName.c_str() );
+    ok = ok && outPort.open( outPortName.c_str() );
 
-    return true;
+    collisionPortName = "/" + moduleName + "/collisionSignal:i";
+    ok = ok && collisionPort.open(collisionPortName.c_str());
+
+    Network::connect("/AudioStreamer/clapL:o", collisionPortName.c_str());
+
+    return ok;
 }
 
 /**********************************************************/
@@ -321,7 +344,7 @@ void EventBottleManager::onRead(vBottle &bot)
             // address event augmented with the cluster ID info
             AddressEventClustered aec(*aep);
 
-            ev_x    = aep->getX();
+            ev_x    = 127 - aep->getX();
             ev_y    = aep->getY();
             pol     = aep->getPolarity();
             channel = aep->getChannel();
@@ -373,27 +396,62 @@ void EventBottleManager::onRead(vBottle &bot)
                 last_t_display = ev_t;
             }
 
-            //H.A. : Adding snippet to send collision centers
-            tracker_pool_left->get_collisions(x_coll_left, y_coll_left);
-            tracker_pool_right->get_collisions(x_coll_right, y_coll_right);
-
-            int nb_coll = x_coll_left.size() + x_coll_right.size(); //get total collisions
-            if(nb_coll)
-            {
-                //fprintf(stdout, "Number of collisions for this bottle of events %d\n", nb_coll); // display number of collisions
-                Time::delay(5);
-            }
-
-
-
             //           delete aec;
-        }
+        }    
         //Writing active tracker data to output port
         //send it all out
 
     }
     outPort.write();
     //fprintf(stdout, "------------------------------------------------------------------\n");
+
+
+    //H.A. : Adding snippet to send collision centers
+    tracker_pool_left->get_collisions(x_coll_left, y_coll_left);
+    tracker_pool_right->get_collisions(x_coll_right, y_coll_right);
+
+    int nb_coll = x_coll_left.size() + x_coll_right.size(); //get total collisions
+    //Bottle &collisionBot = collisionPort.prepare();
+    Bottle* storeCollisionValue;
+
+    if(nb_coll && getAudio && moveEyes== false)
+    {
+
+        storeCollisionValue = collisionPort.read();
+
+        fprintf(stdout, "Visual collision!! with audio signal = %f \n", storeCollisionValue->get(0).asDouble());
+        //Time::delay(1);
+
+        if(storeCollisionValue->get(0).asDouble() > 0.5) //if also audio
+        {
+            fprintf(stdout, "*************** Clap!!!\n **************");
+            Time::delay(1);
+
+            moveEyes = true;
+            double mean_x, mean_y;
+            for(int ii=0; ii<x_coll_left.size(); ii++)
+            {
+                mean_x =+ x_coll_left[ii];
+                mean_y =+ y_coll_left[ii];
+            }
+            mean_x/=nb_coll;
+            mean_y/=nb_coll;
+            fprintf(stdout, "mean_x, mean_y: %f %f \n", mean_x, mean_y);
+
+            icubMove->moveHead(mean_y, mean_x);
+            Time::delay(5);
+        }
+        moveEyes = false;
+
+        storeCollisionValue->clear();
+    }
+    else
+    {
+  //      storeCollisionValue.addDouble(1.0);
+    }
+    // End of clap detect and head motion part *** H.A.
+
+
 }
 
 //empty line to make gcc happy

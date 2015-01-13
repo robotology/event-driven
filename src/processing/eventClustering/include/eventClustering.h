@@ -35,6 +35,7 @@
 //#include <iCub/emorph/eventCodec.h>
 
 #include "trackerPool.h"
+#include "iCubMotor.h"
 
 #include <time.h>
 #include <string>
@@ -48,12 +49,14 @@ class EventBottleManager : public yarp::os::BufferedPort<emorph::vBottle>
         std::string 				                inPortName;        	//string containing events input port name
         std::string 				                leftPortName;	    //string containing image output port name
         std::string 				                rightPortName;	    //string containing image output port name
-        std::string 				                outPortName;	    //string containing events output port name
+        std::string 				                outPortName;	    //string containing events output port name        
+        std::string 				                collisionPortName;	    //string containing double collision signal port name
     
         //yarp::os::BufferedPort<eventBottle>         inPort;             //input port for the eventBottles from aexGrabber or dataSetPlayer
         yarp::os::Port                              leftPort;           //output port for the image left
         yarp::os::Port                              rightPort;          //output port for the image right
-        yarp::os::BufferedPort<emorph::vBottle>             outPort;            //output port for the eventBottle with the new events computed by the module
+        yarp::os::BufferedPort<emorph::vBottle>     outPort;            //output port for the eventBottle with the new events computed by the module
+        yarp::os::BufferedPort<yarp::os::Bottle>    collisionPort;            //output port for the eventBottle with the new events computed by the module
 
         std::string                                 fileName;
 
@@ -65,6 +68,8 @@ class EventBottleManager : public yarp::os::BufferedPort<emorph::vBottle>
         // Cluster (in)activation thresholds (percent of activation)
         double                                      downThr;            // percentage of activity for inactivating the tracker
         double                                      upThr;              // percentage of activity for activating the tracker
+
+        std::string                                 remotePortName;
     
         int                                         min_nb_ev;          // Threshold for updating the position
         int                                         numClusters;        //number of clusters (const)
@@ -76,6 +81,7 @@ class EventBottleManager : public yarp::os::BufferedPort<emorph::vBottle>
         int                                         numIters;
     
         bool                                        moveEyes;
+        bool                                        getAudio;
         
         int                                         last_t_display;
         int                                         dt;
@@ -84,6 +90,7 @@ class EventBottleManager : public yarp::os::BufferedPort<emorph::vBottle>
         yarp::sig::ImageOf<yarp::sig::PixelRgb> left_image;
         yarp::sig::ImageOf<yarp::sig::PixelRgb> right_image;
 
+        aquilacubmotor::ICubMotor *icubMove;
     
     public:
     
