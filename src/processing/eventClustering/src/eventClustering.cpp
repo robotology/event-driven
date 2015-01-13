@@ -185,10 +185,10 @@ bool EventBottleManager::init()
     double  delete_thresh = 10;//0.00000001;
     double  alpha_rep = 2;
     int     d_rep = 40;
-    int     max_nb_trackers = 10; //40
-    int     nb_ev_reg = 50;
-    double  dist_thresh = 10; //30;
-    double  vel_thresh = 100; //50;
+    int     max_nb_trackers = 10; //40;
+    int     nb_ev_reg = 30; //50;
+    double  dist_thresh = 30; //30;
+    double  vel_thresh = 10; //50;
     double  acc_thresh = 300; //300;
 
     
@@ -422,10 +422,11 @@ void EventBottleManager::onRead(vBottle &bot)
         fprintf(stdout, "Visual collision!! with audio signal = %f \n", storeCollisionValue->get(0).asDouble());
         //Time::delay(1);
 
-        if(storeCollisionValue->get(0).asDouble() > 0.5) //if also audio
+
+        if(storeCollisionValue->get(0).asDouble() > 0.1) //if also audio
         {
             fprintf(stdout, "*************** Clap!!!\n **************");
-            Time::delay(1);
+            //Time::delay(1);
 
             moveEyes = true;
             double mean_x, mean_y;
@@ -436,10 +437,12 @@ void EventBottleManager::onRead(vBottle &bot)
             }
             mean_x/=nb_coll;
             mean_y/=nb_coll;
+
             fprintf(stdout, "mean_x, mean_y: %f %f \n", mean_x, mean_y);
 
-            icubMove->moveHead(mean_y, mean_x);
-            Time::delay(5);
+           // icubMove->moveHead(mean_y, mean_x);
+            icubMove->moveEyes(mean_y, mean_x);
+            //Time::delay(3);
         }
         moveEyes = false;
 

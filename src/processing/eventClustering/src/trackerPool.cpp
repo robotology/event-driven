@@ -478,7 +478,8 @@ void TrackerPool::look_for_collisions(int ts){
                         printf("Clap!!\n");
                     }
                 }
-                else if(dist_[ii][jj]>2*dist_thresh_){
+                else if(dist_[ii][jj]>2*dist_thresh_)
+                {
                     clapping_[ii][jj] = false;
                 }
             }

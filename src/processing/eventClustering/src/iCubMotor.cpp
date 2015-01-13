@@ -754,8 +754,8 @@ void ICubMotor::moveEyes(float target_x, float target_y)
         // j3: -35 to 15 (eyes vertical axis)
         // j4: -50 to 52 (eyes horizontal axis)
         // j5: vergence not used, vergence should be fixed for disparity based depth measures
-        target_x = (target_x / (imageWidth / 2)) * 30;
-        target_y = (target_y / (imageHeight / 2)) * 30;
+        target_x = (target_x / (imageWidth / 2)) * 25;
+        target_y = (target_y / (imageHeight / 2)) * 15;
 
 
         //head
@@ -796,10 +796,10 @@ void ICubMotor::moveEyes(float target_x, float target_y)
   //      }
   //      else
   //      {
-            head->command->data()[4] = -target_ey/2;// head->encoders->data()[4];
-            head->command->data()[3] = target_ex/2; //head->encoders->data()[3];
-            head->command->data()[0] = target_ex/2;// head->encoders->data()[4];
-            head->command->data()[2] = target_ey/2; //head->encoders->data()[3];
+            head->command->data()[4] = -target_ex/2;// head->encoders->data()[4];
+            head->command->data()[3] = target_ey/2; //head->encoders->data()[3];
+            head->command->data()[2] = target_ex;// head->encoders->data()[4];
+            head->command->data()[0] = target_ey; //head->encoders->data()[3];
 
 		
   //      }
@@ -809,7 +809,7 @@ void ICubMotor::moveEyes(float target_x, float target_y)
 //	printf("Moving??? %d\n", head->enc->checkMotionDone());
         moving = true;
         readyToMove = false;
-        Time::delay(5);
+        Time::delay(2);
 
        head->command->data()[4] = 0;
        head->command->data()[3] = 0;
