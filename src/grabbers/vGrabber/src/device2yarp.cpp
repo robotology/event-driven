@@ -250,14 +250,14 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName =
     injg = 101508;       // injGnd
     reqPd = 16777215;    // reqPd
     pux = 8053457;       // puX
-    diffoff = 133;       // diffOff
+    diffoff = 10; //orig: 133;       // diffOff
     req = 160712;        // req
-    refr = 944;          // refr
+    refr = 96978.12; // orig: 944;          // refr
     puy = 16777215;      // puY
-    diffon = 639172;     // diffOn
-    diff = 30108;        // diff 
-    foll = 20;           // foll
-    pr = 5;              // Pr 
+    diffon = 2327474.91; // 639172;     // diffOn
+    diff = 85076.24; // 30108;        // diff 
+    foll = 10; //20;           // foll
+    pr = 10; //5;              // Pr 
 
     
     if(onlyLeft) {
@@ -270,11 +270,11 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName =
     }
     else {
         casRight = 52458;
-        diffoffRight = 133;
-        refrRight = 944;
-        diffonRight = 639172;
-        diffRight = 30108;
-        prRight = 5;
+        diffoffRight = 10; //133;
+        refrRight = 193956.24; // 944;
+        diffonRight = 1648628.06; //639172;
+        diffRight = 105978.12; // 30108;
+        prRight = 10; //5;
         
     }
     injgRight = 101508;       // injGnd
@@ -282,7 +282,7 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName =
     puxRight = 8053457;       // puX
     reqRight = 160712;        // req
     puyRight = 16777215;      // puY
-    follRight = 20;           // foll
+    follRight = 30; //20;           // foll
     
     
 
