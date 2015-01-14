@@ -78,7 +78,6 @@ void vBottle::getAll(emorph::vQueue &q)
 {
     q.clear();
 
-    std::cout << this->toString() << std::endl;
     for(int i = 0; i < Bottle::size(); i+=2) {
         vEvent * e = emorph::createEvent(Bottle::get(i).asString());
         if(!e) {

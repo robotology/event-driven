@@ -18,8 +18,8 @@ INCLUDE_DIRECTORIES(
 )
 
 # Search for source code.
-FILE(GLOB folder_source src/vFramer.cpp src/main.cpp)
-FILE(GLOB folder_header include/iCub/vFramer.h)
+FILE(GLOB folder_source src/vFramer.cpp src/vDraw.cpp src/main.cpp)
+FILE(GLOB folder_header include/iCub/vFramer.h include/iCub/vDraw.h)
 SOURCE_GROUP("Source Files" FILES ${folder_source})
 SOURCE_GROUP("Header Files" FILES ${folder_header})
 
