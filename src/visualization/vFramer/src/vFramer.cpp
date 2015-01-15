@@ -278,6 +278,7 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
     }
 
     //open our event reader given the channel list
+    vReader.setWindowSize(eventWindow);
     vReader.open(moduleName);
 
     //set up the frameRate

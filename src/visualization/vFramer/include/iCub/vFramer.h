@@ -21,7 +21,7 @@
 #include <yarp/sig/all.h>
 #include <iCub/emorph/all.h>
 #include <opencv2/opencv.hpp>
-#include <>
+#include <map>
 
 #include "vDraw.h"
 
