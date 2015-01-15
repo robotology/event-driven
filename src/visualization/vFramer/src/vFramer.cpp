@@ -91,14 +91,6 @@ void vWindow::addEvent(emorph::vEvent &event)
 /*////////////////////////////////////////////////////////////////////////////*/
 //vReadAndSplit
 /*////////////////////////////////////////////////////////////////////////////*/
-///
-/// \brief vReadAndSplit::vReadAndSplit
-///
-vReadAndSplit::vReadAndSplit(int windowsize)
-{
-    this->windowsize = windowsize;
-}
-
 vReadAndSplit::~vReadAndSplit()
 {
     std::map<int, vWindow*>::iterator wi;
@@ -110,6 +102,11 @@ vReadAndSplit::~vReadAndSplit()
     for(qi = snaps.begin(); qi != snaps.end(); qi++) {
         delete qi->second;
     }
+}
+
+void vReadAndSplit::setWindowSize(int windowsize)
+{
+    this->windowsize = windowsize;
 }
 
 bool vReadAndSplit::open(const std::string portName)

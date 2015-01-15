@@ -98,11 +98,16 @@ private:
 public:
 
     ///
-    /// \brief vReadAndSplit constructor
-    /// \param windowsize the size of the length of time events are stored
+    /// \brief vReadAndSplit constructor with default windowsize parameter
     ///
-    vReadAndSplit(int windowsize = 50000);
+    vReadAndSplit() : windowsize(50000) {}
     ~vReadAndSplit();
+
+    ///
+    /// \brief setWindowSize sets the length of time events are stored
+    /// \param windowsize (in us)
+    ///
+    void setWindowSize(int windowsize);
 
     ///
     /// \brief snapshotAllWindows freeze the current list of events for each
