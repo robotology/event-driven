@@ -4,7 +4,7 @@
 # 
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
-SET(PROJECTNAME template)
+SET(PROJECTNAME downSampling)
 PROJECT(${PROJECTNAME})
 
 file(GLOB source src/*.cpp)

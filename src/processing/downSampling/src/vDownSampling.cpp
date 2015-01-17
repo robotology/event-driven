@@ -15,13 +15,13 @@
  * Public License for more details
  */
 
-#include "vTemplate.h"
+#include "vDownSampling.h"
 
 /**********************************************************/
-bool vTemplateModule::configure(yarp::os::ResourceFinder &rf)
+bool vDownSamplingModule::configure(yarp::os::ResourceFinder &rf)
 {
     //set the name of the module
-    std::string moduleName = rf.check("name", yarp::os::Value("vTemplate"),
+    std::string moduleName = rf.check("name", yarp::os::Value("vDownSampling"),
                                       "module name (string)").asString();
     setName(moduleName.c_str());
 
@@ -51,7 +51,7 @@ bool vTemplateModule::configure(yarp::os::ResourceFinder &rf)
 }
 
 /**********************************************************/
-bool vTemplateModule::interruptModule()
+bool vDownSamplingModule::interruptModule()
 {
     rpcPort.interrupt();
     eventBottleManager->interrupt();
@@ -59,7 +59,7 @@ bool vTemplateModule::interruptModule()
 }
 
 /**********************************************************/
-bool vTemplateModule::close()
+bool vDownSamplingModule::close()
 {
     rpcPort.close();
     eventBottleManager->close();
@@ -68,18 +68,18 @@ bool vTemplateModule::close()
 }
 
 /**********************************************************/
-bool vTemplateModule::updateModule()
+bool vDownSamplingModule::updateModule()
 {
     return true;
 }
 
 /**********************************************************/
-double vTemplateModule::getPeriod()
+double vDownSamplingModule::getPeriod()
 {
     return 0.1;
 }
 
-bool vTemplateModule::respond(const yarp::os::Bottle &command,
+bool vDownSamplingModule::respond(const yarp::os::Bottle &command,
                               yarp::os::Bottle &reply)
 {
     //fill in all command/response plus module update methods here
