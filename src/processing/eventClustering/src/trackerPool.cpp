@@ -460,7 +460,7 @@ void TrackerPool::look_for_collisions(int ts){
 
                 if(!clapping_[ii][jj]){
                     printf("********* %f %f %f %f \n *********", dist_[ii][jj], dist_thresh_, vel_[ii][jj], -vel_thresh_);
-                    if(dist_[ii][jj] < dist_thresh_ && vel_[ii][jj] > -vel_thresh_) // && vel_[ii][jj] < vel_thresh_ && acc_[ii][jj] > acc_thresh_)
+                    if(dist_[ii][jj] < dist_thresh_ && vel_[ii][jj] > abs(-vel_thresh_)) // && vel_[ii][jj] < vel_thresh_ && acc_[ii][jj] > acc_thresh_)
                     {
                         clapping_[ii][jj] = true;
                         double x_coll = (trackers_[ii].get_x() + trackers_[jj].get_x())/2;
@@ -478,7 +478,7 @@ void TrackerPool::look_for_collisions(int ts){
                         printf("Clap!!\n");
                     }
                 }
-                else if(dist_[ii][jj]>2*dist_thresh_)
+                else //if(dist_[ii][jj]>2*dist_thresh_)
                 {
                     clapping_[ii][jj] = false;
                 }

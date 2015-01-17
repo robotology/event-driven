@@ -188,7 +188,7 @@ bool EventBottleManager::init()
     int     max_nb_trackers = 10; //40;
     int     nb_ev_reg = 30; //50;
     double  dist_thresh = 30; //30;
-    double  vel_thresh = 10; //50;
+    double  vel_thresh = 50; //50;
     double  acc_thresh = 300; //300;
 
     
@@ -420,7 +420,7 @@ void EventBottleManager::onRead(vBottle &bot)
         storeCollisionValue = collisionPort.read();
 
         fprintf(stdout, "Visual collision!! with audio signal = %f \n", storeCollisionValue->get(0).asDouble());
-        //Time::delay(1);
+        Time::delay(0.1);
 
 
         if(storeCollisionValue->get(0).asDouble() > 0.1) //if also audio
