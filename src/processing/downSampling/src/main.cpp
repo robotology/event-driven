@@ -17,7 +17,7 @@
 
 
 #include "vDownSampling.h"
-#include "vDownSamplingProcess.h"
+//#include "vDownSamplingProcess.h"
 
 int main(int argc, char * argv[])
 {
@@ -30,9 +30,9 @@ int main(int argc, char * argv[])
     /* prepare and configure the resource finder */
     yarp::os::ResourceFinder rf;
     rf.setVerbose( true );
-    rf.setDefaultContext( "vTemplate" );
+    rf.setDefaultContext( "vDownSampling" );
     rf.setDefaultConfigFile( "config.ini" );
-    rf.setDefault("name","vTemplate");
+    rf.setDefault("name","vDownSampling");
     rf.configure( argc, argv );
 
     /* run the module: runModule() calls configure first and, if successful, it then runs */
