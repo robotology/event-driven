@@ -42,6 +42,7 @@ public:
     EventBottleManager();
 
     bool    open(const std::string &name);
+    bool    open(const std::string &name, double);
     void    close();
     void    interrupt();
 

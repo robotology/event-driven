@@ -17,6 +17,9 @@
 
 #include "vDownSampling.h"
 
+
+using namespace emorph;
+
 /**********************************************************/
 bool vDownSamplingModule::configure(yarp::os::ResourceFinder &rf)
 {
@@ -44,8 +47,12 @@ bool vDownSamplingModule::configure(yarp::os::ResourceFinder &rf)
                         yarp::os::Value("variable_defualt"),
                         "variable description").asString();
     
+    double samplingFactor = rf.check("sampleBy", yarp::os::Value(2.0), "asdasd").asDouble();
+
     /* create the thread and pass pointers to the module parameters */
     eventBottleManager = new EventBottleManager;
+    eventBottleManager->open(moduleName, samplingFactor);
+
 
     return true ;
 }
@@ -95,7 +102,7 @@ EventBottleManager::EventBottleManager()
     
 }
 /**********************************************************/
-bool EventBottleManager::open(const std::string &name)
+bool EventBottleManager::open(const std::string &name, double samplingFactor)
 {
     //and open the input port
 
@@ -106,8 +113,20 @@ bool EventBottleManager::open(const std::string &name)
 
     std::string outPortName = "/" + name + "/vBottle:o";
     outPort.open(outPortName);
+
+    std::fprintf(stdout, "Opened ports. Starting downSamplingProcessor \n");
+
+    /* create downSamplingProcess instance */
+    downSamplingInstance = new downSamplingProcessor;
+
+    downSamplingInstance->setSamplingFactor(samplingFactor);
+    downSamplingInstance->addWeights(1/(2*downSamplingInstance->getSamplingFactor()));
+
+    std::fprintf(stdout, "created downSamplingProcessor with samplingFactor %f and weights %f \n", downSamplingInstance->getSamplingFactor(), 1/(2*downSamplingInstance->getSamplingFactor()));
+
     return true;
 }
+
 
 /**********************************************************/
 void EventBottleManager::close()
@@ -133,6 +152,10 @@ void EventBottleManager::interrupt()
 /**********************************************************/
 void EventBottleManager::onRead(emorph::vBottle &bot)
 {
+
+
+
+
     //create event queue
     emorph::vQueue q;
     //create queue iterator
@@ -143,19 +166,56 @@ void EventBottleManager::onRead(emorph::vBottle &bot)
     outBottle.clear();
 
     // get the event queue in the vBottle bot
-    bot.getAll(q);
+    bot.getAll(q);    
+
+    short ev_x;
+    short ev_y;
+    short pol;
+    short channel;
+
+    unsigned long ev_t;
+
+//    std::fprintf(stdout, "  [eventBottleManager OnREAD]:: Got events.\n");
 
     for(qi = q.begin(); qi != q.end(); qi++)
     {
+        int addedEvents =0;
+        // get events
+        ev_t = (*qi)->getStamp();
+
+        AddressEvent *aep = (*qi)->getAs<AddressEvent>(); // address event from the input vBottle
+
         //process
+        ev_x    = aep->getX();
+        ev_y    = aep->getY();
+        pol     = aep->getPolarity(); pol = pol*2 - 1;
+        channel = aep->getChannel();
 
-        //add events that need to be added to the out bottle
-        outBottle.addEvent(**qi);
+        if (channel == 0)
+        {
+//            std::fprintf(stdout, "Event x, y: %d %d %d %d %d\n", ev_x, ev_y, int(ev_x/2), int(ev_y/2), pol);
+
+            int dwnSampleEvent = downSamplingInstance->downSampling(ev_x, ev_y, pol);
+            if(dwnSampleEvent == 1 || dwnSampleEvent == -1)
+            {
+                AddressEvent ae(*aep);
 
 
+                ae.setX( int(ev_x/downSamplingInstance->getSamplingFactor())  + int(double(128.0/2.0) - 128.0/(2.0*downSamplingInstance->getSamplingFactor())) );
+                ae.setY( int(ev_y/downSamplingInstance->getSamplingFactor())  + int(double(128.0/2.0) - 128.0/(2.0*downSamplingInstance->getSamplingFactor())) );
+                ae.setPolarity(pol);
+                ae.setChannel(channel);
+                //ae->encode();
+
+                outBottle.addEvent(ae);
+                addedEvents++;
+            }
+        }
     }
     //send on the processed events
     outPort.write();
+
+    //outBottle.clear();
 
 }
 

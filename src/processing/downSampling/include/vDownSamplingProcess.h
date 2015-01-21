@@ -12,6 +12,8 @@ public:
     void addWeights(double);
     int downSampling(int, int, int);
     int initializeCenters();
+    bool setSamplingFactor(double);
+    double getSamplingFactor();
 
 private:
 
@@ -19,6 +21,8 @@ private:
     int windowSize;
     int numRow;
     int numCol;
+
+    double sampleBy;
 
     std::vector<double> originalImage;
     std::vector<double> downSampledImage;
