@@ -19,12 +19,11 @@
 <module>
    <name>eventClustering</name>
    <node>localhost</node>
-   <tag>eventClustering</tag>
 </module>
 
 <module>
     <name> vFramer</name>
-    <parameters> --frameRate 30 --eventWindow 0.5 --displays '(0 left (AE) 1 right (AE))'</parameters>
+    <parameters> --frameRate 30 --eventWindow 0.5 --displays "(0 left (AE) 1 right (AE))"</parameters>
     <node>localhost</node>
     <stdio>debugserver</stdio>
 </module>

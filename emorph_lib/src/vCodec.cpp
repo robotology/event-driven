@@ -496,7 +496,7 @@ yarp::os::Bottle ClusterEventGauss::encode() const
 bool ClusterEventGauss::decode(const yarp::os::Bottle &packet, int &pos)
 {
     // check length
-    if (ClusterEventGauss::decode(packet, pos) &&
+    if (ClusterEvent::decode(packet, pos) &&
             pos+nBytesCoded() <= packet.size())
     {
 

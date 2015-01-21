@@ -28,6 +28,11 @@ vDraw * createDrawer(std::string tag)
         return newDrawer;
     delete newDrawer;
 
+    newDrawer = new clusterDraw();
+    if(tag == newDrawer->getTag())
+        return newDrawer;
+    delete newDrawer;
+
     return 0;
 }
 
@@ -68,6 +73,40 @@ void addressDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
     }
 
     canvas.copyTo(image);
+
+}
+
+std::string clusterDraw::getTag()
+{
+    return "CLE";
+}
+
+void clusterDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
+{
+
+    std::map<int, emorph::ClusterEvent *> latest;
+
+    if(image.empty()) {
+        image = cv::Mat(Xlimit, Ylimit, CV_8UC3);
+        image.setTo(0);
+    }
+
+    emorph::vQueue::const_reverse_iterator qi;
+    for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
+        emorph::ClusterEvent *vp = (*qi)->getAs<emorph::ClusterEvent>();
+        if(vp) {
+            latest[vp->getID()] = vp;
+        }
+
+    }
+
+    std::map<int, emorph::ClusterEvent *>::iterator ci;
+    for(ci = latest.begin(); ci != latest.end(); ci++) {
+        //std::cout << ci->second->getXCog() << " " << ci->second->getYCog() << std::endl;
+        cv::circle(image,
+                   cv::Point(ci->second->getYCog(), Xlimit - ci->second->getXCog()),
+                   4, CV_RGB(255, 255, 255));
+    }
 
 }
 
