@@ -24,13 +24,15 @@ vDraw * createDrawer(std::string tag)
     vDraw * newDrawer = 0;
 
     newDrawer = new addressDraw();
-    if(tag == newDrawer->getTag())
-        return newDrawer;
+    if(tag == newDrawer->getTag()) return newDrawer;
     delete newDrawer;
 
     newDrawer = new clusterDraw();
-    if(tag == newDrawer->getTag())
-        return newDrawer;
+    if(tag == newDrawer->getTag()) return newDrawer;
+	delete newDrawer;
+
+    newDrawer = new integralDraw();
+    if(tag == newDrawer->getTag()) return newDrawer;
     delete newDrawer;
 
     return 0;
@@ -107,6 +109,46 @@ void clusterDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
                    cv::Point(ci->second->getYCog(), Xlimit - ci->second->getXCog()),
                    4, CV_RGB(255, 255, 255));
     }
+
+}
+
+integralDraw::integralDraw()
+{
+    iimage = cv::Mat(Xlimit, Ylimit, CV_8UC1);
+    iimage.setTo(128);
+}
+
+std::string integralDraw::getTag()
+{
+    return "INTI";
+}
+
+void integralDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
+{
+
+    int d = 5;
+    emorph::vQueue::const_iterator qi;
+    for(qi = eSet.begin(); qi != eSet.end(); qi++) {
+        emorph::AddressEvent *aep = (*qi)->getAs<emorph::AddressEvent>();
+        if(aep) {
+
+            unsigned char c = iimage.at<unsigned char>(aep->getX(), aep->getY());
+            int i = c;
+            if(aep->getPolarity())
+                i += d;
+            else
+                i -= d;
+
+            //i =+ aep->getPolarity()?d:-d;
+            i = std::max(i, 0);
+            i = std::min(i, 255);
+            iimage.at<unsigned char>(aep->getX(), aep->getY()) = (unsigned char)i;
+        }
+
+    }
+
+    cv::cvtColor(iimage, image, CV_GRAY2BGR);
+    //iimage.copyTo(image);
 
 }
 

@@ -13,4 +13,3 @@ emorph::vEvent& eventProcessor::myFunc(emorph::vEvent &event)
 }
 
 } //namespace emorph
-

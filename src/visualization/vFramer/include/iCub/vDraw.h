@@ -91,6 +91,28 @@ public:
 
 };
 
+class integralDraw : public vDraw {
+
+private:
+
+    cv::Mat iimage;
+
+public:
+
+    integralDraw();
+
+    ///
+    /// \brief see vDraw
+    ///
+    virtual void draw(cv::Mat &image, const emorph::vQueue &eSet);
+
+    ///
+    /// \brief see vDraw
+    ///
+    virtual std::string getTag();
+
+};
+
 /**
  * @brief The clusterDrawer overlays the image with visualisation of event
  * clusters.
