@@ -231,7 +231,7 @@ bool EventBottleManager::init()
     moveEyes = false;
     
     last_t_display = 0;
-    dt = 10000;
+    dt = 16000;
 
     return true;
 }
@@ -360,6 +360,10 @@ void EventBottleManager::onRead(vBottle &bot)
                 // We update the images of the ellipses
                 tracker_pool_left->display(left_image);
                 tracker_pool_right->display(right_image);
+
+                cv::Mat img = (IplImage *)left_image.getIplImage();
+                cv::flip(img, img, 0);
+
 
                 // Write the images into the yarp port
                 leftPort.write(left_image);

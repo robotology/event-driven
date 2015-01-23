@@ -253,8 +253,8 @@ public:
     void setXSigma2(const int xSigma2)      { this->xSigma2=xSigma2;   }
     void setYSigma2(const int ySigma2)      { this->ySigma2=ySigma2;   }
     void setXYSigma(const int xySigma)      { this->xySigma=xySigma;   }
-    void setXVel(const int xVel)            { this->xSigma2=xVel;   }
-    void setYVel(const int yVel)            { this->ySigma2=yVel;   }
+    void setXVel(const int xVel)            { this->xVel=xVel;   }
+    void setYVel(const int yVel)            { this->yVel=yVel;   }
 
     //these functions need to be defined correctly for inheritance
     ClusterEventGauss() : ClusterEvent(), numAE(0), xSigma2(0), ySigma2(0),

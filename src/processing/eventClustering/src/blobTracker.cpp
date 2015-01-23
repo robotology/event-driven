@@ -214,6 +214,7 @@ void BlobTracker::display(yarp::sig::ImageOf<yarp::sig::PixelRgb> &img, yarp::si
     std::stringstream ss; ss << (int)activity_;
     //string str = std::to_string((int)activity_);
     putText(orig, ss.str(), Point(cen_y_,cen_x_), 1, 1, Scalar(255,0,0));
+
 }
 
 

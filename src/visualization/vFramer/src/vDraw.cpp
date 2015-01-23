@@ -86,12 +86,16 @@ std::string clusterDraw::getTag()
 void clusterDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
 {
 
+    std::stringstream ss;
     std::map<int, emorph::ClusterEvent *> latest;
 
     if(image.empty()) {
         image = cv::Mat(Xlimit, Ylimit, CV_8UC3);
         image.setTo(0);
     }
+
+
+    cv::Mat textImg(image.rows, image.cols, image.type()); textImg.setTo(0);
 
     emorph::vQueue::const_reverse_iterator qi;
     for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
@@ -104,11 +108,46 @@ void clusterDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
 
     std::map<int, emorph::ClusterEvent *>::iterator ci;
     for(ci = latest.begin(); ci != latest.end(); ci++) {
-        //std::cout << ci->second->getXCog() << " " << ci->second->getYCog() << std::endl;
-        cv::circle(image,
-                   cv::Point(ci->second->getYCog(), Xlimit - ci->second->getXCog()),
-                   4, CV_RGB(255, 255, 255));
+
+        cv::Point centr(ci->second->getYCog(), ci->second->getXCog());
+        ss.str(""); ss << ci->second->getID();
+
+        //the event could be a gaussian cluster or a regular cluster have
+        //display options for both
+        emorph::ClusterEventGauss *clegp = ci->second->getAs<emorph::ClusterEventGauss>();
+        if(clegp) {
+            double sig_x2_ = clegp->getXSigma2();
+            double sig_y2_ = clegp->getYSigma2();
+            double sig_xy_ = clegp->getXYSigma();
+            double tmp = sqrt( (sig_x2_ - sig_y2_) * (sig_x2_ - sig_y2_) + 4*sig_xy_*sig_xy_ );
+            double l_max = 0.5*(sig_x2_ + sig_y2_ + tmp);
+            double l_min = 0.5*(sig_x2_ + sig_y2_ - tmp);
+
+
+            if(l_max < 0 || l_min < 0)
+                continue;
+
+            double a = sqrt(l_max) * 2;
+            double b = sqrt(l_min) * 2;
+            double alpha = 0.5*atan2f(2*sig_xy_, sig_y2_ - sig_x2_);
+
+            alpha = alpha * 180 / M_PI; //convert to degrees for openCV ellipse function
+
+            cv::ellipse(image, centr,
+                        cv::Size(a,b), alpha, 0, 360, cv::Scalar(255,0,0));
+
+        } else {
+            cv::circle(image, centr, 4, CV_RGB(255, 255, 255));
+        }
+
+        cv::putText(textImg, ss.str(),
+                    cv::Point(ci->second->getYCog(),
+                              Xlimit - ci->second->getXCog()),
+                    0, 0.3, CV_RGB(255, 255, 255));
     }
+
+    cv::flip(textImg, textImg, 0);
+    image += textImg;
 
 }
 
