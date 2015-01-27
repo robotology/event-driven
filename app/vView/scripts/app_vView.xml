@@ -1,0 +1,79 @@
+<application>
+<name>vView </name>
+
+<dependencies>	
+</dependencies>
+
+<module>
+   <name>dataSetPlayer</name>
+   <node>localhost</node>
+   <tag>dataSetPlayer</tag>
+</module>
+
+<module>
+   <name>aexGrabber</name>
+   <node>pc104</node>
+   <tag>vGrabber</tag>
+</module>
+
+<module>
+    <name> vFramer</name>
+    <parameters> --frameRate 30 --eventWindow 0.5 --displays '(0 left (AE) 1 right (AE))'</parameters>
+    <node>localhost</node>
+    <stdio>debugserver</stdio>
+</module>
+
+<module>
+    <name> dataDumper </name>
+    <parameters> --name /datadumper/experimenttype/experimentnumber/ </parameters>
+    <node> localhost </node>
+    <tag> dataDumper </tag>
+</module>
+
+<module>
+   <name>yarpview</name>
+   <parameters>--name /viewCh0 --x 000 --y 000 --RefreshTime 33 </parameters>
+   <node>localhost</node>
+   <tag>eventViewerLeft</tag>
+</module>
+
+<module>
+   <name>yarpview</name>
+   <parameters>--name /viewCh1 --x 500 --y 000 --RefreshTime 33 </parameters>
+   <node>localhost</node>
+   <tag>eventViewerRight</tag>
+</module>
+
+
+<connection>
+  <from>/eventBottlePlayer/etb:o</from>
+  <to>/vFramerModule/vBottle:i</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
+  <from>/aexGrabber/vBottle:o</from>
+  <to>/vFramerModule/vBottle:i</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
+  <from>/aexGrabber/vBottle:o</from>
+  <to>/datadumper/experimenttype/experimentnumber/</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
+  <from>/vFramerModule/ch0:o</from>
+  <to>/viewCh0</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
+  <from>/vFramerModule/ch1:o</from>
+  <to>/viewCh1</to>
+  <protocol>udp</protocol>
+</connection>
+
+
+</application>

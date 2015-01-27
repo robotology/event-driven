@@ -1,7 +1,16 @@
-build/
-
+#this file is created by QT creator IDE
 CMakeLists.txt.user
 
+# ignore all temporary files
 *~
+
+#ignore objects and .a files
+*.[oa]
+
+#ignore the build directory
+build/
+
+#the pc104 build which we only want on the iCub14
+build-pc104/
 
 *.autosave
