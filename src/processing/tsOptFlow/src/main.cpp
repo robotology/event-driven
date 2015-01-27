@@ -31,9 +31,6 @@ int main(int argc, char *argv[])
 
     Network::init();
 
-    //yarp::os::BufferedPort<eventBottle> bp;
-    //bp.open("/testport:o");
-
     yarp::os::Property params;
     params.fromCommand(argc, argv);
 ////    if(!params.check("bufsz"))

@@ -18,7 +18,7 @@
 
 <module>
    <name>tsOptFlow</name>
-   <parameters> --name tsOptFlow --source icub --height 128 --width 128 --acc 10000 --alpha 0 --tsValidity 30000 --szSobel 3 --threshold 2 --bin 1000</parameters>
+   <parameters> --name tsOptFlow --source icub --height 128 --width 128 --acc 20000 --alpha 0.5 --tsValidity 100000 --szSobel 3 --threshold 2 --bin 1000 --swap_xy</parameters>
    <node>localhost</node>
    <tag>OptFlw</tag>
 </module>

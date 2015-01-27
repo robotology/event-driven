@@ -1,4 +1,4 @@
-#ifndef FORWARDFLOW_HPP
+/*#ifndef FORWARDFLOW_HPP
 #define FORWARDFLOW_HPP
 
 #include <yarp/os/RateThread.h>
@@ -30,3 +30,4 @@ private:
 };
 
 #endif //FORWARDFLOW_HPP
+*/
