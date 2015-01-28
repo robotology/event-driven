@@ -65,6 +65,7 @@ class EventBottleManager : public yarp::os::BufferedPort<emorph::vBottle>
         // Cluster (in)activation thresholds (percent of activation)
         double                                      downThr;            // percentage of activity for inactivating the tracker
         double                                      upThr;              // percentage of activity for activating the tracker
+        double                                      decay_tau;
     
         int                                         min_nb_ev;          // Threshold for updating the position
         int                                         numClusters;        //number of clusters (const)
@@ -95,7 +96,7 @@ class EventBottleManager : public yarp::os::BufferedPort<emorph::vBottle>
          * constructor
          * @param moduleName is passed to the thread in order to initialise all the ports correctly (default yuvProc)
          */
-        EventBottleManager( const std::string &moduleName, std::string &fileName, double &alphaShape, double &alphaPos, double &upThr, double &downThr);
+        EventBottleManager( const std::string &moduleName, std::string &fileName, double &alphaShape, double &alphaPos, double &upThr, double &downThr, double &decay_tau);
         ~EventBottleManager();
 
         bool    open();
@@ -118,6 +119,7 @@ class EventClustering:public yarp::os::RFModule
     double                  alphaPos;
     double                  downThr;
     double                  upThr;
+    double                  decay_tau;
     /* pointer to a new manager */
     EventBottleManager      *eventBottleManager;
     bool                    closing;

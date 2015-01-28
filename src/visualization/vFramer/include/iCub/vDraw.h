@@ -119,6 +119,10 @@ public:
  */
 class clusterDraw : public vDraw {
 
+private:
+
+    std::map<int, emorph::ClusterEvent *> persistance;
+
 public:
 
     ///

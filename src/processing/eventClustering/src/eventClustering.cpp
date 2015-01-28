@@ -87,10 +87,13 @@ bool EventClustering::configure(yarp::os::ResourceFinder &rf)
                      "down thr (double)").asDouble();
     fprintf(stdout,"down thr %f \n", downThr);
 
+    decay_tau = rf.check("decay_tau", Value(10000),
+                         "decay rate (double)").asDouble();
+
     closing = false;
     
     /* create the thread and pass pointers to the module parameters */
-    eventBottleManager = new EventBottleManager( moduleName, fileName, alphaShape, alphaPos, upThr, downThr);
+    eventBottleManager = new EventBottleManager( moduleName, fileName, alphaShape, alphaPos, upThr, downThr, decay_tau);
 
     /* initialize variables */
     //eventBottleManager->init();
@@ -148,7 +151,7 @@ EventBottleManager::~EventBottleManager()
 }
 
 /**********************************************************/
-EventBottleManager::EventBottleManager( const string &moduleName, std::string &fileName, double &alphaShape, double &alphaPos, double &upThr, double &downThr )
+EventBottleManager::EventBottleManager(const string &moduleName, std::string &fileName, double &alphaShape, double &alphaPos, double &upThr, double &downThr , double &decay_tau)
 {
     fprintf(stdout,"initialising Variables\n");
     this->moduleName = moduleName;
@@ -157,6 +160,7 @@ EventBottleManager::EventBottleManager( const string &moduleName, std::string &f
     this->alphaShape = alphaShape;
     this->downThr = downThr;
     this->upThr = upThr;
+    this->decay_tau = decay_tau;
     
 }
 /**********************************************************/
@@ -186,12 +190,12 @@ bool EventBottleManager::init()
         perror ("Error opening file");
   
     // Create the trackers
-    tracker_pool_left = new TrackerPool(sig_x, sig_y, sig_xy, alphaPos, alphaShape, k, max_dist, fixed_shape, tau_act, upThr, downThr, delete_thresh, alpha_rep, d_rep, max_nb_trackers, nb_ev_reg);
+    tracker_pool_left = new TrackerPool(sig_x, sig_y, sig_xy, alphaPos, alphaShape, k, max_dist, fixed_shape, decay_tau, upThr, downThr, delete_thresh, alpha_rep, d_rep, max_nb_trackers, nb_ev_reg);
     tracker_pool_left->set_collision_det_param(dist_thresh, vel_thresh, acc_thresh);
     //tracker_pool_left->get_pool_size(s);
     //fprintf(stdout, "cluster pool left size s =%d\n",s);
 
-    tracker_pool_right = new TrackerPool(sig_x, sig_y, sig_xy, alphaPos, alphaShape, k, max_dist, fixed_shape, tau_act, upThr, downThr, delete_thresh, alpha_rep, d_rep, max_nb_trackers, nb_ev_reg);
+    tracker_pool_right = new TrackerPool(sig_x, sig_y, sig_xy, alphaPos, alphaShape, k, max_dist, fixed_shape, decay_tau, upThr, downThr, delete_thresh, alpha_rep, d_rep, max_nb_trackers, nb_ev_reg);
     tracker_pool_right->set_collision_det_param(dist_thresh, vel_thresh, acc_thresh);
     //tracker_pool_right->get_pool_size(s);
 
@@ -287,96 +291,108 @@ void EventBottleManager::interrupt()
 /**********************************************************/
 void EventBottleManager::onRead(vBottle &bot)
 {
-    //create event queue
-    vQueue q;
-    //create queue iterator
-    vQueue::iterator qi;
-    unsigned long ev_t;
-    short ev_x;
-    short ev_y;
-    short pol;
-    short channel;
-    
-    // prepare output vBottle with address events extended with cluster ID (aec) and cluster events (clep)
+
+    // prepare output vBottle with address events extended with
+    // cluster ID (aec) and cluster events (clep)
     vBottle &evtCluster = outPort.prepare();
     evtCluster.clear();
-    // get the event queue in the vBottle bot
+    std::vector<ClusterEventGauss> clEvts;
+    std::vector<ClusterEventGauss>::iterator ceit;
+
+
+    //create event queue and iterator
+    vQueue q;
+    vQueue::iterator qi;
     bot.getAll(q);
+
     // checks for empty or non valid queue????
     for(qi = q.begin(); qi != q.end(); qi++)
     {
-        ev_t = (*qi)->getStamp();
-       
         AddressEvent *aep = (*qi)->getAs<AddressEvent>(); // address event from the input vBottle
+        if(!aep) continue;
 
-        
-        // cluster event
-        ClusterEventGauss clep;
-        if(&aep) {
+        unsigned long ev_t      = aep->getStamp();
+        short ev_x              = aep->getX();
+        short ev_y              = aep->getY();
+        short pol               = aep->getPolarity();
+        short channel           = aep->getChannel();
 
-            // address event augmented with the cluster ID info
-            AddressEventClustered aec(*aep);
+        //not sure why this check is really needed?
+        if(!(ev_x>=0 && ev_x <= 127 && ev_y>=0 && ev_y <= 127)) continue;
 
-            ev_x    = aep->getX();
-            ev_y    = aep->getY();
-            pol     = aep->getPolarity();
-            channel = aep->getChannel();
-            
-            
-            if(ev_x>=0 && ev_x <= 127 && ev_y>=0 && ev_y <= 127)
-            {
+        if (channel == 0)
+        {
+            clEvts.clear();
+            int clusterAssignedTo = tracker_pool_left->update(aep, clEvts);
 
-                if (channel == 0)
-                {
-                    clep = tracker_pool_left->update(aep);
-                    
-                    if(clep.getNumAE()){
-                        evtCluster.addEvent(clep);  // add cluster event to the vBottle
-                        aec.setID(clep.getID());
-                        evtCluster.addEvent(aec);
-                    }
-                    else{
-                        evtCluster.addEvent(*aep);  // if the AE is not part of any cluster, send the simple AE to the output vBottle
-                    }
-                    left_image.pixel(ev_y, ev_x) = yarp::sig::PixelRgb(255*pol, 255*pol, 255*pol);
-                }
-                else
-                {
-                    clep = tracker_pool_right->update(aep);
-                    if(clep.getNumAE()){
-                        evtCluster.addEvent(clep);  // add cluster event to the vBottle
-                        aec.setID(clep.getID());
-                        evtCluster.addEvent(aec);  // add Address Event Cluster to the vBottle
-                    }
-                    else{
-                        evtCluster.addEvent(*aep);  // if the AE is not part of any cluster, send the simple AE to the output vBottle
-                    }
-                    right_image.pixel(ev_y, ev_x) = yarp::sig::PixelRgb(255*pol, 255*pol, 255*pol);
-                }
+            //add the event depending if it was assigned a cluster
+            if(clusterAssignedTo >= 0) {
+                AddressEventClustered aec = *aep;
+                aec.setID(clusterAssignedTo);
+                evtCluster.addEvent(aec);
+            } else {
+                evtCluster.addEvent(*aep);
             }
 
-            if(ev_t - last_t_display >= dt || ev_t - last_t_display <= 0)
-            {
-                // We update the images of the ellipses
-                tracker_pool_left->display(left_image);
-                tracker_pool_right->display(right_image);
-
-                cv::Mat img = (IplImage *)left_image.getIplImage();
-                cv::flip(img, img, 0);
-
-
-                // Write the images into the yarp port
-                leftPort.write(left_image);
-                rightPort.write(right_image);
-                // And reset them to gray
-                left_image = gray_image;
-                right_image = gray_image;
-                last_t_display = ev_t;
+            //add the clusterEvents
+            for(ceit = clEvts.begin(); ceit != clEvts.end(); ceit++) {
+                evtCluster.addEvent(*ceit);
             }
-//           delete aec;
+
         }
-        //Writing active tracker data to output port
-        //send it all out
+        else
+        {
+            clEvts.clear();
+            int clusterAssignedTo = tracker_pool_right->update(aep, clEvts);
+
+            //add the event depending if it was assigned a cluster
+            if(clusterAssignedTo >= 0) {
+                AddressEventClustered aec = *aep;
+                aec.setID(clusterAssignedTo);
+                evtCluster.addEvent(aec);
+            } else {
+                evtCluster.addEvent(*aep);
+            }
+
+            //add the clusterEvents
+            for(ceit = clEvts.begin(); ceit != clEvts.end(); ceit++) {
+                evtCluster.addEvent(*ceit);
+            }
+
+
+
+        }
+
+        //std::vector<clusterEventGuass>::iterator ncei;
+        //ncei
+
+
+        //DISPLAY ADDRESS EVENTS AND CLUSTER EVENTS (SHOULD BE REMOVED WHEN
+        //DRAW FUNCTION IS WORKING NICELY AND TEST
+        if(channel==0) {
+            left_image.pixel(ev_y, ev_x) = yarp::sig::PixelRgb(255*pol, 255*pol, 255*pol);
+        } else {
+            right_image.pixel(ev_y, ev_x) = yarp::sig::PixelRgb(255*pol, 255*pol, 255*pol);
+        }
+
+        if(ev_t - last_t_display >= dt || ev_t - last_t_display <= 0)
+        {
+            // We update the images of the ellipses
+            tracker_pool_left->display(left_image);
+            tracker_pool_right->display(right_image);
+
+            cv::Mat img = (IplImage *)left_image.getIplImage();
+            cv::flip(img, img, 0);
+
+
+            // Write the images into the yarp port
+            leftPort.write(left_image);
+            rightPort.write(right_image);
+            // And reset them to gray
+            left_image = gray_image;
+            right_image = gray_image;
+            last_t_display = ev_t;
+        }
 
     }
     outPort.write();

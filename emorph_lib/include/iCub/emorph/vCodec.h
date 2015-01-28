@@ -189,6 +189,7 @@ protected:
     int channel;
     int xCog;
     int yCog;
+    int polarity;
 
     //this is the number of *extra* bytes (in addition to base class) to code
     virtual int nBytesCoded() const { return 1; }
@@ -200,14 +201,17 @@ public:
     int getID()      const             { return id;             }
     int getXCog()    const             { return xCog;           }
     int getYCog()    const             { return yCog;           }
+    int getPolarity()const             { return polarity;           }
 
     void setChannel(const int channel) { this->channel = channel; }
     void setID(const int id)           { this->id = id;     }
     void setXCog(const int xCog)       { this->xCog = xCog;       }
     void setYCog(const int yCog)       { this->yCog = yCog;       }
+    void setPolarity(const int polarity)       { this->polarity = polarity;       }
+
 
     //these functions need to be defined correctly for inheritance
-    ClusterEvent() : vEvent(), id(0), channel(0), xCog(0), yCog(0)
+    ClusterEvent() : vEvent(), id(0), channel(0), xCog(0), yCog(0), polarity(1)
                      {this->type = "CLE";}
     ClusterEvent(const vEvent &event);
     vEvent &operator=(const vEvent &event);
@@ -230,11 +234,11 @@ protected:
 
     //add new member variables here
     int numAE;
-    int xSigma2;
-    int ySigma2;
-    int xySigma;
-    int xVel;
-    int yVel;
+    char xSigma2;
+    char ySigma2;
+    char xySigma;
+    char xVel;
+    char yVel;
 
     //this is the number of *extra* bytes (in addition to base class) to code
     virtual int nBytesCoded() const { return 3; }

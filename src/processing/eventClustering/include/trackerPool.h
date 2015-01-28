@@ -35,7 +35,7 @@ class TrackerPool {
         void get_tracker (BlobTracker &, int);
 
         //void update(int ev_x, int ev_y, int ev_t);
-        emorph::ClusterEventGauss update(emorph::AddressEvent *ptr);
+        int update(emorph::AddressEvent *ptr, std::vector<emorph::ClusterEventGauss> &clEvts);
 
         void get_tracker_center(std::vector<double> &cen_x, std::vector<double> &cen_y);
 
@@ -63,7 +63,7 @@ class TrackerPool {
             int count_disp;
         };
 
-        void regulate_pool(int ts);
+        void regulate_pool(int ts, std::vector<emorph::ClusterEventGauss> &clEvts);
 
         void apply_rep_field();
 

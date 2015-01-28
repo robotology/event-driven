@@ -110,17 +110,18 @@ TrackerPool::~TrackerPool(){
 //    }
 //}
 
-emorph::ClusterEventGauss TrackerPool::update(emorph::AddressEvent *ptr){
+int TrackerPool::update(emorph::AddressEvent *ptr, std::vector<emorph::ClusterEventGauss> &clEvts){
 
-    emorph::ClusterEventGauss clep;
     int ev_t = ptr->getStamp();
     int ev_x = ptr->getX();
     int ev_y = ptr->getY();
     
     double max_p = 0;
-    int max_ind = -1;
-    int trackId;
+    //int max_ind = -1;
+    int trackId = -1;
     double temp_x, temp_y, temp_xy;
+    double deltaPos = 0;
+    bool just_activated = false;
     
     
     // If this is the first event that we receive, we set its timestamp as the first one for the regulation process
@@ -133,64 +134,106 @@ emorph::ClusterEventGauss TrackerPool::update(emorph::AddressEvent *ptr){
         // only among the Active and Inactive clusters
         if(trackers_[ii].is_on() && trackers_[ii].dist2event(ev_x, ev_y) < max_dist_){
             double p = trackers_[ii].compute_p(ev_x, ev_y);
-            if(p>max_p || max_ind ==-1){
+            if(p>max_p || trackId ==-1){
                 max_p = p;
-                max_ind = ii;
-                trackId = max_ind;
+                //max_ind = ii;
+                trackId = ii;
             }
         }
     }
     
     // If there was not any tracker close enough, we take one of the Free trackers (to_reset_) and reset it to the position of the event
-    if(max_ind == -1){
+    if(trackId == -1){
         if(to_reset_.size()>0){
             trackId = to_reset_.back();
             trackers_[trackId].reset(ev_x, ev_y, sig_x2_, sig_y2_, sig_xy_);
             to_reset_.pop_back();
-            fprintf(stdout, "new tracker ID: %d \t to reset size %lu\n",trackId, to_reset_.size());
+            just_activated = true;
+            //fprintf(stdout, "new tracker ID: %d \t to reset size %lu\n",trackId, to_reset_.size());
+        } else {
+            return trackId;
         }
     }
     // Otherwise, we update the one with the biggest p
     else{
         double act;
         getMeanActivity(act);
-        trackers_[max_ind].update_position(ev_x, ev_y, max_p, ev_t, act);
+        bool wasnot_active = !trackers_[trackId].is_active();
+        deltaPos = trackers_[trackId].update_position(ev_x, ev_y, max_p, ev_t, act);
+        just_activated = wasnot_active && trackers_[trackId].is_active();
         //fprintf(stdout, "update position ID: %d\n", max_ind);
     }
     
     count_++;
     //regulate the pool only each nb_ev_regulate_ events
     if(count_%nb_ev_regulate_==0){
-        regulate_pool(ev_t);
+        regulate_pool(ev_t, clEvts);
         count_ = 1;
     }
+
+
     
     // if the tracker is active return the cluster event
-    if (trackers_[trackId].is_active()) {
+    if (trackers_[trackId].is_active() && (just_activated || deltaPos > 5)) {
+        trackers_[trackId].clusterSpiked();
 
+        emorph::ClusterEventGauss clep;
         clep.setStamp(ev_t);
+        clep.setPolarity(1);
         // center coordinates of the cluster
         trackers_[trackId].get_center(temp_x, temp_y);
-        clep.setXCog(temp_x);
-        clep.setYCog(temp_y);
+        clep.setXCog((int)temp_x);
+        clep.setYCog((int)temp_y);
         //get the gauss parameters of each cluster
         trackers_[trackId].get_gauss_parameters(temp_x, temp_y, temp_xy);
+
+        //if(temp_y * temp_x < temp_xy) {
+//        std::cout << temp_x << "x" << temp_y<< "=" << temp_x*temp_y
+//                  << " (" << temp_xy << ")" << std::endl;
+        //}
         //get the velocity of each cluster
-        clep.setXSigma2(temp_x);
-        clep.setYSigma2(temp_y);
-        clep.setXYSigma(temp_xy);
+        clep.setXSigma2((int)temp_x);
+        clep.setYSigma2((int)temp_y);
+        clep.setXYSigma((int)temp_xy);
+
+//        if(clep.getXSigma2() * clep.getYSigma2() < clep.getXYSigma()) {
+//        std::cout << clep.getXSigma2() << "x" << clep.getYSigma2()<< "=" <<
+//                     clep.getXSigma2()*clep.getYSigma2()
+//                     << " (" << clep.getXYSigma() << ")" << std::endl;
+
+
+//        }
+
         trackers_[trackId].getVelocity(temp_x, temp_y);
-        clep.setXVel(temp_x);
-        clep.setYVel(temp_y);
+        clep.setXVel((int)temp_x);
+        clep.setYVel((int)temp_y);
         // get the activity of each cluster
         trackers_[trackId].getActivity(temp_x);
         clep.setNumAE(temp_x);
         clep.setID(trackId);
+        clEvts.push_back(clep);
+
+        emorph::ClusterEventGauss* vtest = &clep;
+        std::cout << vtest->getXSigma2() << " " << vtest->getYSigma2() <<
+                     " " << vtest->getXYSigma() << std::endl;
+
+        emorph::vQueue q;
+        emorph::vBottle vbtest; vbtest.addEvent(clep);
+        vbtest.getAll(q);
+
+        vtest = q.front()->getAs<emorph::ClusterEventGauss>();
+        if(vtest) {
+            std::cout << vtest->getXSigma2() << " " << vtest->getYSigma2() <<
+                         " " << vtest->getXYSigma() << std::endl;
+        }
+
+
+
     }
     //count_ = 0;
     
     //fprintf(stdout, "\n count_ %d \n\n", count_);
-    return clep;
+    return trackId;
 }
 
 
@@ -277,7 +320,7 @@ void TrackerPool::display(yarp::sig::ImageOf<yarp::sig::PixelRgb> &img){
     for(int ii=0; ii<trackers_.size(); ii++){
         if(trackers_[ii].is_active()){
             yarp::sig::PixelRgb color = yarp::sig::PixelRgb(0, 0, 255);
-            trackers_[ii].display(img, color);
+            trackers_[ii].display(img, color, ii);
         }
     }
     
@@ -342,9 +385,11 @@ void TrackerPool::getMeanActivity(double &act){
 }
 
 
-void TrackerPool::regulate_pool(int ts){
+void TrackerPool::regulate_pool(int ts,
+                                std::vector<emorph::ClusterEventGauss> &clEvts)
+{
     // Apply the exponential decay of activity, and remove the filters that become inactive
-    fprintf(stdout,"[tracker pool] : Regulating pool\n");
+    //fprintf(stdout,"[tracker pool] : Regulating pool\n");
     int dt = ts-ts_last_reg_;
 
     if(dt>0){
@@ -354,10 +399,41 @@ void TrackerPool::regulate_pool(int ts){
         for(int ii=0; ii<max_nb_tr_; ii++){
              // We update the activity of each Active tracker
             if(trackers_[ii].is_on()){
-                fprintf(stdout, "active track ID: %d \n", ii);
+                //fprintf(stdout, "active track ID: %d \n", ii);
+
+                //check to see if the activity changes
                 if(trackers_[ii].update_activity(decay,act)){
-                    to_reset_.push_back(ii);
-                    fprintf(stdout, "reset ID: %d \t to reset size: %lu \n", to_reset_[ii], to_reset_.size());
+
+                    //if it has changed to off it needs to be reset
+                    if(!trackers_[ii].is_on())
+                        to_reset_.push_back(ii);
+
+                    //otherwise it is just inactive but in either case we
+                    //need to produce an event
+                    double temp_x, temp_y, temp_xy;
+                    emorph::ClusterEventGauss clep;
+                    clep.setStamp(ts);
+                    clep.setPolarity(0);
+                    // center coordinates of the cluster
+                    trackers_[ii].get_center(temp_x, temp_y);
+                    clep.setXCog(temp_x);
+                    clep.setYCog(temp_y);
+                    //get the gauss parameters of each cluster
+                    trackers_[ii].get_gauss_parameters(temp_x, temp_y, temp_xy);
+                    //get the velocity of each cluster
+                    clep.setXSigma2(temp_x);
+                    clep.setYSigma2(temp_y);
+                    clep.setXYSigma(temp_xy);
+                    trackers_[ii].getVelocity(temp_x, temp_y);
+                    clep.setXVel(temp_x);
+                    clep.setYVel(temp_y);
+                    // get the activity of each cluster
+                    trackers_[ii].getActivity(temp_x);
+                    clep.setNumAE(temp_x);
+                    clep.setID(ii);
+                    clEvts.push_back(clep);
+
+                    //fprintf(stdout, "reset ID: %d \t to reset size: %lu \n", to_reset_[ii], to_reset_.size());
                     if (to_reset_.size()>max_nb_tr_) {
                         fprintf(stdout, "MERD! il memory leak.... \n\n\n\n");
                     }

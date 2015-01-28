@@ -5,6 +5,8 @@ BlobTracker::BlobTracker(double x0, double y0, double sig_x2, double sig_y2, dou
                          double alpha_pos, double alpha_shape, double k, double up_thresh, double down_thresh, double delete_thresh){
     cen_x_ = x0;
     cen_y_ = y0;
+    vLastX = x0;
+    vLastY = y0;
     
     sig_x2_ = sig_x2;
     sig_y2_ = sig_y2;
@@ -64,27 +66,29 @@ double BlobTracker::compute_p(int ev_x, int ev_y) {
 
 bool BlobTracker::update_activity(double temp_decay, double act){
     
+    State prev_state = state_;
     activity_*=temp_decay;
-    fprintf(stdout, "[Blob TrackerTracker - update_activity] activity %f \n", activity_);
+    //fprintf(stdout, "[Blob TrackerTracker - update_activity] activity %f \n", activity_);
     
     // Activity threshold is a fraction of the mean/max pool activity
     double thr;
     thr = act * down_thresh_;
+    //thr = down_thresh_;
     // In this stage, the activity can only go down, so it can only go from active to inactive
     if(activity_ < delete_thresh_){
         // If it drops below the delete threshold, we return true
-        fprintf(stdout, "[Blob Tracker - update_activity] set to free \n");
+        //fprintf(stdout, "[Blob Tracker - update_activity] set to free \n");
         state_ = Free;
-        return true;
+        //return true;
     }
-    else{
-        if(activity_ < thr){
-            state_ = Inactive;
-            fprintf(stdout, "[Blob Tracker - update_activity] set to inactive \n");
-        }
-        fprintf(stdout, "[Blob Tracker - update_activity] return false \n");
-        return false;
+    else if(activity_ < thr){
+        state_ = Inactive;
+        //fprintf(stdout, "[Blob Tracker - update_activity] set to inactive \n");
     }
+        //fprintf(stdout, "[Blob Tracker - update_activity] return false \n");
+        //return false;
+
+    return prev_state != state_;
 }
 
 
@@ -100,12 +104,14 @@ double BlobTracker::dist2event(int ev_x, int ev_y) {
 }
 
 
-void BlobTracker::update_position(int ev_x, int ev_y, double p, int ts, double act) {
+double BlobTracker::update_position(int ev_x, int ev_y,
+                                    double p, int ts, double act)
+{
     activity_ += 1;//p;
     // Activity threshold is a fraction of the mean/max pool activity
     double thr;
     thr = act * up_thresh_;
-    
+    //thr = up_thresh_;
     
     if(state_==Inactive && activity_>thr){
         state_=Active;
@@ -142,6 +148,14 @@ void BlobTracker::update_position(int ev_x, int ev_y, double p, int ts, double a
         vy_ = (1-alpha)*vy_ + alpha*(cen_y_-old_y)/dt;
     }
     ts_last_update_ = ts;
+    return sqrt(std::pow(vLastX - cen_x_, 2.0) + std::pow(vLastY - cen_y_, 2.0));
+
+}
+
+void BlobTracker::clusterSpiked()
+{
+    vLastX = cen_x_;
+    vLastY = cen_y_;
 }
 
 
@@ -196,7 +210,7 @@ void BlobTracker::getActivity(double &act){
 }
 
 // Inactive trackers are displayed in blue, active trackers in red
-void BlobTracker::display(yarp::sig::ImageOf<yarp::sig::PixelRgb> &img, yarp::sig::PixelRgb color){
+void BlobTracker::display(yarp::sig::ImageOf<yarp::sig::PixelRgb> &img, yarp::sig::PixelRgb color, int id){
     
     Mat orig = (IplImage *)img.getIplImage();
     
@@ -211,7 +225,7 @@ void BlobTracker::display(yarp::sig::ImageOf<yarp::sig::PixelRgb> &img, yarp::si
     //open CV for drawing ellipse
     
     ellipse(orig, Point(cen_y_,cen_x_), Size(a,b), alpha, 0, 360, Scalar(255,0,0));
-    std::stringstream ss; ss << (int)activity_;
+    std::stringstream ss; ss << (int)id;
     //string str = std::to_string((int)activity_);
     putText(orig, ss.str(), Point(cen_y_,cen_x_), 1, 1, Scalar(255,0,0));
 
@@ -222,6 +236,8 @@ void BlobTracker::display(yarp::sig::ImageOf<yarp::sig::PixelRgb> &img, yarp::si
 void BlobTracker::reset(double x0, double y0, double sig_x2, double sig_y2, double sig_xy){
     cen_x_ = x0;
     cen_y_ = y0;
+    vLastX = x0;
+    vLastY = y0;
     
     sig_x2_ = sig_x2;
     sig_y2_ = sig_y2;

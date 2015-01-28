@@ -26,7 +26,8 @@ public:
     // Applies the given temporal decay. It will return true if the tracker goes from active to inactive (which tipically means that it should be removed)
     bool update_activity(double temp_decay, double act);
     
-    void update_position(int ev_x, int ev_y, double p, int ts, double act);
+    double update_position(int ev_x, int ev_y, double p, int ts, double act);
+    void clusterSpiked();
     
     void displace(double dx, double dy);
     
@@ -42,7 +43,7 @@ public:
     void getActivity(double &act);
     void getVelocity(double &v_x, double &v_y);
     
-    void display(yarp::sig::ImageOf<yarp::sig::PixelRgb> &img, yarp::sig::PixelRgb color);
+    void display(yarp::sig::ImageOf<yarp::sig::PixelRgb> &img, yarp::sig::PixelRgb color, int id = 0);
     
     double dist2event(int ev_x, int ev_y);
     
@@ -61,6 +62,7 @@ public:
     
 protected:
     double cen_x_, cen_y_, sig_x2_, sig_y2_, sig_xy_;
+    double vLastX, vLastY;
     double vx_, vy_;
     double alpha_pos_, alpha_shape_;
     double up_thresh_, down_thresh_, delete_thresh_;

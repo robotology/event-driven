@@ -87,7 +87,11 @@ void clusterDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
 {
 
     std::stringstream ss;
-    std::map<int, emorph::ClusterEvent *> latest;
+    //std::map<int, emorph::ClusterEvent *> latest;
+
+    cv::Scalar red = CV_RGB(255, 0, 0);
+    cv::Scalar green = CV_RGB(0, 255, 0);
+    cv::Scalar color = red;
 
     if(image.empty()) {
         image = cv::Mat(Xlimit, Ylimit, CV_8UC3);
@@ -97,17 +101,27 @@ void clusterDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
 
     cv::Mat textImg(image.rows, image.cols, image.type()); textImg.setTo(0);
 
-    emorph::vQueue::const_reverse_iterator qi;
-    for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
+    emorph::vQueue::const_iterator qi;
+    for(qi = eSet.begin(); qi != eSet.end(); qi++) {
         emorph::ClusterEvent *vp = (*qi)->getAs<emorph::ClusterEvent>();
         if(vp) {
-            latest[vp->getID()] = vp;
+            if(persistance[vp->getID()]) {
+                delete persistance[vp->getID()];
+                persistance[vp->getID()] = 0;
+            }
+            persistance[vp->getID()] = vp->clone()->getAs<emorph::ClusterEvent>();
+            //latest[vp->getID()] = vp;
         }
 
     }
 
     std::map<int, emorph::ClusterEvent *>::iterator ci;
-    for(ci = latest.begin(); ci != latest.end(); ci++) {
+    for(ci = persistance.begin(); ci != persistance.end(); ci++) {
+
+
+
+        if(!ci->second->getPolarity()) continue;
+        //if(ci->second->getID() != 37) continue;
 
         cv::Point centr(ci->second->getYCog(), ci->second->getXCog());
         ss.str(""); ss << ci->second->getID();
@@ -119,22 +133,33 @@ void clusterDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
             double sig_x2_ = clegp->getXSigma2();
             double sig_y2_ = clegp->getYSigma2();
             double sig_xy_ = clegp->getXYSigma();
+            if(sig_xy_ > sig_x2_ * sig_y2_) {
+                std::cout << sig_x2_ << "x" << sig_y2_<< "=" << sig_x2_*sig_y2_
+                             << " (" << sig_xy_ << ")" << std::endl;
+            }
+
             double tmp = sqrt( (sig_x2_ - sig_y2_) * (sig_x2_ - sig_y2_) + 4*sig_xy_*sig_xy_ );
             double l_max = 0.5*(sig_x2_ + sig_y2_ + tmp);
             double l_min = 0.5*(sig_x2_ + sig_y2_ - tmp);
 
 
-            if(l_max < 0 || l_min < 0)
-                continue;
+            if(l_max < 0 || l_min < 0) {
+                std::cout << "l_min | l_max error" << std::endl;
+                //continue;
+            }
 
-            double a = sqrt(l_max) * 2;
-            double b = sqrt(l_min) * 2;
+            double a = sqrt(std::fabs(l_max)) * 2;
+            double b = sqrt(std::fabs(l_min)) * 2;
             double alpha = 0.5*atan2f(2*sig_xy_, sig_y2_ - sig_x2_);
 
             alpha = alpha * 180 / M_PI; //convert to degrees for openCV ellipse function
 
-            cv::ellipse(image, centr,
-                        cv::Size(a,b), alpha, 0, 360, cv::Scalar(255,0,0));
+            if(clegp->getPolarity())
+                color = green;
+            else
+                color = red;
+
+            cv::ellipse(image, centr, cv::Size(a,b), alpha, 0, 360, color);
 
         } else {
             cv::circle(image, centr, 4, CV_RGB(255, 255, 255));
