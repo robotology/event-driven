@@ -34,7 +34,15 @@ vEvent * createEvent(const std::string type)
     if(type == ret->getType()) return ret;
     else delete(ret);
 
+    ret = new AddressEventClustered();
+    if(type == ret->getType()) return ret;
+    else delete(ret);
+
     ret = new ClusterEvent();
+    if(type == ret->getType()) return ret;
+    else delete(ret);
+
+    ret = new ClusterEventGauss();
     if(type == ret->getType()) return ret;
     else delete(ret);
 
@@ -77,17 +85,23 @@ yarp::os::Bottle vEvent::encode() const
 }
 
 /******************************************************************************/
-emorph::vEvent *vEvent::decode(const yarp::os::Bottle &packet, int &pos)
+bool vEvent::decode(const yarp::os::Bottle &packet, int &pos)
 {
-    vEvent * e = 0;
+
     if(pos + nBytesCoded() <= packet.size()) {
-        e = new vEvent();
 
         //TODO: this needs to take into account the code aswell
-        e->stamp = packet.get(pos).asInt()&0x00ffffff;;
+        stamp = packet.get(pos).asInt()&0x00ffffff;
         pos++;
+        return true;
     }
-    return e;
+    return false;
+
+}
+
+vEvent::vEvent(const vEvent &event)
+{
+    *this = event;
 
 }
 
@@ -98,6 +112,10 @@ vEvent &vEvent::operator=(const vEvent &event)
     stamp = event.stamp;
 
     return *this;
+}
+
+vEvent *vEvent::clone() {
+    return new vEvent(*this);
 }
 
 /******************************************************************************/
@@ -159,6 +177,11 @@ vEvent &AddressEvent::operator=(const vEvent &event)
 }
 
 /******************************************************************************/
+vEvent* AddressEvent::clone() {
+    return new AddressEvent(*this);
+}
+
+/******************************************************************************/
 yarp::os::Bottle AddressEvent::encode() const
 {
     int word0=(0<<26)|((channel&0x01)<<15)|((y&0xff)<<8)|((x&0x7f)<<1)|
@@ -170,33 +193,28 @@ yarp::os::Bottle AddressEvent::encode() const
 }
 
 /******************************************************************************/
-vEvent *AddressEvent::decode(const yarp::os::Bottle &packet, int &pos)
+bool AddressEvent::decode(const yarp::os::Bottle &packet, int &pos)
 {
-    vEvent * ee = vEvent::decode(packet, pos);
-    AddressEvent * ae = 0;
-
     // check length
-    if (ee && pos+nBytesCoded() <= packet.size())
+    if (vEvent::decode(packet, pos) && pos+nBytesCoded() <= packet.size())
     {
-        ae = new AddressEvent(*ee);
         int word0=packet.get(pos).asInt();
 
-        ae->polarity=word0&0x01;
+        polarity=word0&0x01;
 
         word0>>=1;
-        ae->x=word0&0x7f;
+        x=word0&0x7f;
 
         word0>>=7;
-        ae->y=word0&0x7f;
+        y=word0&0x7f;
 
         word0>>=7;
-        ae->channel=word0&0x01;
+        channel=word0&0x01;
 
         pos++;
+        return true;
     }
-    if(ee) delete ee;
-
-    return ae;
+    return false;
 }
 
 
@@ -257,6 +275,11 @@ vEvent &AddressEventClustered::operator=(const vEvent &event/*always vEvent*/)
 }
 
 /******************************************************************************/
+vEvent* AddressEventClustered::clone() {
+    return new AddressEventClustered(*this);
+}
+
+/******************************************************************************/
 yarp::os::Bottle AddressEventClustered::encode() const
 {
     int word0=clID;
@@ -267,23 +290,18 @@ yarp::os::Bottle AddressEventClustered::encode() const
 }
 
 /******************************************************************************/
-vEvent *AddressEventClustered::decode(const yarp::os::Bottle &packet, int &pos)
+bool AddressEventClustered::decode(const yarp::os::Bottle &packet, int &pos)
 {
-    /*always vEvent*/vEvent * ee = AddressEvent::decode(packet, pos);
-    AddressEventClustered * aec = 0;
-
     // check length
-    if (ee && pos+nBytesCoded() <= packet.size())
+    if (AddressEvent::decode(packet, pos) && pos+nBytesCoded() <= packet.size())
     {
-        aec = new AddressEventClustered(*ee);
         int word0=packet.get(pos).asInt();
-        aec->clID = word0;
-
+        clID = word0;
         pos++;
+        return true;
     }
-    if(ee) delete ee;
 
-    return aec;
+    return false;
 }
 
 
@@ -329,11 +347,13 @@ vEvent &ClusterEvent::operator=(const vEvent &event)
         xCog=aep->xCog;
         yCog=aep->yCog;
         id=aep->id;
+        polarity = aep->polarity;
     } else {
         channel = 0;
         xCog = 0;
         yCog = 0;
         id = 0;
+        polarity = 1;
     }
 
     //force the type to addressevent
@@ -343,10 +363,21 @@ vEvent &ClusterEvent::operator=(const vEvent &event)
 }
 
 /******************************************************************************/
+vEvent* ClusterEvent::clone() {
+    return new ClusterEvent(*this);
+}
+
+/******************************************************************************/
 yarp::os::Bottle ClusterEvent::encode() const
 {
-    int word0=(8<<26)|((id&0x03ff)<<16)|((yCog&0xff)<<8)|((xCog&0x7f)<<1)|
-            (channel&0x01);
+    //6bits for code
+    //10bits for id
+    //7bits for yCog
+    //7bits for XCog
+    //1bit for polarity
+    //1bit for channel
+    int word0=(8<<26)|((id&0x02ff)<<16)|((yCog&0x7f)<<9)|((xCog&0x7f)<<2)|
+            ((polarity&0x01)<<1)|(channel&0x01);
 
     yarp::os::Bottle ret = vEvent::encode();
     ret.addInt(word0);
@@ -355,34 +386,36 @@ yarp::os::Bottle ClusterEvent::encode() const
 
 /******************************************************************************/
 
-vEvent * ClusterEvent::decode(const yarp::os::Bottle &packet, int &pos)
+bool ClusterEvent::decode(const yarp::os::Bottle &packet, int &pos)
 {
-    vEvent * ee = vEvent::decode(packet, pos);
-    ClusterEvent * cle = 0;
-
     // check length
-    if ( ee && pos+nBytesCoded() <= packet.size())
+    if (vEvent::decode(packet, pos) && pos+nBytesCoded() <= packet.size())
     {
-        cle = new ClusterEvent(*ee);
         int word0=packet.get(pos).asInt();
 
         channel=word0&0x01;
-
         word0>>=1;
-        xCog=word0&0x7f;
 
+        polarity = word0&0x01;
+        word0>>=1;
+
+        xCog=word0&0x7f;
         word0>>=7;
-        yCog=word0&0xff;
-        word0>>=8;
-        id=word0&0x03ff;
+
+        yCog=word0&0x7f;
+        word0>>=7;
+
+        id=word0&0x02ff;
+        //word0>>10;
+
+        //code=word0&0x3f;
+        //word0>>6;
 
         pos++;
 
-
+        return true;
     }
-    if(ee) delete ee;
-
-    return cle;
+    return false;
 }
 
 
@@ -391,6 +424,7 @@ bool ClusterEvent::operator==(const ClusterEvent &event)
 {
     return ((vEvent::operator ==(event)) &&
             (channel==event.channel)&&
+            (polarity==event.polarity)&&
             (id==event.id)&&
             (xCog==event.xCog)&&
             (yCog==event.yCog));
@@ -402,6 +436,7 @@ Property ClusterEvent::getContent() const
 {
     Property prop = vEvent::getContent();
     prop.put("channel",channel);
+    prop.put("polarity", polarity);
     prop.put("id",id);
     prop.put("xCog",xCog);
     prop.put("yCog",yCog);
@@ -432,10 +467,20 @@ vEvent &ClusterEventGauss::operator=(const vEvent &event)
     const ClusterEventGauss * aep = dynamic_cast<const ClusterEventGauss *>(&event);
     if(aep) {
         //this needs to be filled with copy
-        //x = aep->x;
+        numAE = aep->numAE;
+        xSigma2 = aep->xSigma2;
+        ySigma2 = aep->ySigma2;
+        xySigma = aep->xySigma;
+        xVel = aep->xVel;
+        yVel = aep->yVel;
     } else {
         //this needs the default
-        //x = 0;
+        numAE = 0;
+        xSigma2 = 0;
+        ySigma2 = 0;
+        xySigma = 0;
+        xVel = 0;
+        yVel = 0;
     }
 
     //force the type to addressevent
@@ -445,51 +490,84 @@ vEvent &ClusterEventGauss::operator=(const vEvent &event)
 }
 
 /******************************************************************************/
+vEvent* ClusterEventGauss::clone() {
+    return new ClusterEventGauss(*this);
+}
+
+/******************************************************************************/
 yarp::os::Bottle ClusterEventGauss::encode() const
 {
     //the encoding needs to happen here from the old codec
-    int word0 = 0;
+    //code 6
+    //activity 24
+    int word0=(20<<26)|(numAE&0x00ffffff);
+    //code 6
+    //xySig 8
+    //ySig 8
+    //xSig 8
+    int word1=(21<<26)|((xySigma&0xff)<<16)|((ySigma2&0xff)<<8)|(xSigma2&0xff);
+    //code 6
+    //yVel 8
+    //xVel 8
+    int word2=(22<<26)|((yVel&0xff)<<8)|(xVel&0xff);
 
     yarp::os::Bottle ret = ClusterEvent::encode();
     ret.addInt(word0);
+    ret.addInt(word1);
+    ret.addInt(word2);
     return ret;
 }
 
 /******************************************************************************/
 
-vEvent * ClusterEventGauss::decode(const yarp::os::Bottle &packet, int &pos)
+bool ClusterEventGauss::decode(const yarp::os::Bottle &packet, int &pos)
 {
-    vEvent * ee = ClusterEvent::decode(packet, pos);
-    ClusterEventGauss * cleg = 0;
-
     // check length
-    if ( ee && pos+nBytesCoded() <= packet.size())
+    if (ClusterEvent::decode(packet, pos) &&
+            pos+nBytesCoded() <= packet.size())
     {
-        //need the decoding here
-        cleg = new ClusterEventGauss(*ee);
-        int word0=packet.get(pos).asInt();
 
+        int word0=packet.get(pos).asInt();
+        int word1=packet.get(pos+1).asInt();
+        int word2=packet.get(pos+2).asInt();
 
         //assign the decode values here
-        //x = word0&0x01
+        numAE=word0&0x00ffffff;
+        //word0>>=24
 
+        xSigma2=word1&0xff;
+        word1>>=8;
+
+        ySigma2=word1&0xff;
+        word1>>=8;
+
+        xySigma=word1&0xff;
+
+        xVel=word2&0xff;
+        word2>>=8;
+
+        yVel=word2&0xff;
+        
         pos += nBytesCoded();
-
+        return true;
 
     }
-    if(ee) delete ee;
 
-    return cleg;
+    return false;
 }
 
 
 /******************************************************************************/
 bool ClusterEventGauss::operator==(const ClusterEventGauss &event)
 {
-    return ((ClusterEvent::operator ==(event))
+    return ((ClusterEvent::operator ==(event))&&
             //add the extra equals operators here new members
-            //(x == event.x)&& ...
-
+            (numAE == event.numAE) &&
+            (xSigma2 == event.xSigma2) &&
+            (ySigma2 == event.ySigma2) &&
+            (xySigma== event.xySigma) &&
+            (xVel == event.xVel) &&
+            (yVel == event.yVel)
             );
 }
 
@@ -499,7 +577,12 @@ Property ClusterEventGauss::getContent() const
 {
     Property prop = vEvent::getContent();
     //add extra member properties for human readable here
-    //prop.put("x", x)
+    prop.put("numAE", numAE);
+    prop.put("xSigma2", xSigma2);
+    prop.put("ySigma2", ySigma2);
+    prop.put("xySigma", xySigma);
+    prop.put("xVel", xVel);
+    prop.put("yVel", yVel);
 
 
     return prop;

@@ -73,7 +73,11 @@ protected:
     virtual int nBytesCoded() const { return 1;             }
 
 public:
+    //!blank constructor required at base level
     vEvent() : type("TS"), stamp(0) { }
+    //!copy constructor
+    vEvent(const vEvent &event);
+
     std::string getType() const     { return type;          }
 
 
@@ -82,17 +86,16 @@ public:
 
     virtual int getChannel() const  { return -1;            }
 
-
-
     virtual vEvent &operator=(const vEvent &event);
     virtual bool operator==(const vEvent &event);
     virtual bool operator<(const vEvent &event) const
                  {return this->stamp < event.stamp; }
     virtual bool operator>(const vEvent &event) const
                  {return this->stamp > event.stamp; }
+    virtual vEvent* clone();
 
     virtual yarp::os::Bottle   encode() const;
-    virtual vEvent * decode(const yarp::os::Bottle &packet, int &pos);
+    virtual bool decode(const yarp::os::Bottle &packet, int &pos);
     virtual yarp::os::Property getContent() const;
 
     template<class T> T* getAs() {
@@ -130,14 +133,17 @@ public:
     void setY(const int y)                  { this->y=y;                }
 
     //these functions need to be defined correctly for inheritance
-    AddressEvent(const vEvent &event = vEvent());
+    AddressEvent() : vEvent(), channel(0), polarity(0), x(0), y(0) {this->type = "AE";}
+    AddressEvent(const vEvent &event);
     vEvent &operator=(const vEvent &event);
+    virtual vEvent* clone();
+
     bool operator==(const AddressEvent &event);
     bool operator==(const vEvent &event) {
         return operator==(dynamic_cast<const AddressEvent&>(event)); }
     yarp::os::Bottle   encode() const ;
     yarp::os::Property getContent() const;
-    virtual vEvent * decode(const yarp::os::Bottle &packet, int &pos);
+    virtual bool decode(const yarp::os::Bottle &packet, int &pos);
 
 
 
@@ -155,17 +161,21 @@ protected:
 
 public:
 
-    int getID() const { return clID;}
-    int setID(const int clID) {this->clID = clID;}
+    int getID() const                       { return clID;              }
 
-    AddressEventClustered(const vEvent &event = vEvent());
+    void setID(const int clID)              { this->clID = clID;        }
+
+    AddressEventClustered() : AddressEvent(), clID(0) {this->type = "AE-C";}
+    AddressEventClustered(const vEvent &event);
     vEvent &operator=(const vEvent &event);
+    virtual vEvent* clone();
+
     bool operator==(const AddressEventClustered &event);
     bool operator==(const vEvent &event) {
         return operator==(dynamic_cast<const AddressEventClustered&>(event)); }
     yarp::os::Bottle   encode() const ;
     yarp::os::Property getContent() const;
-    virtual vEvent * decode(const yarp::os::Bottle &packet, int &pos);
+    virtual bool decode(const yarp::os::Bottle &packet, int &pos);
 
 };
 
@@ -179,6 +189,7 @@ protected:
     int channel;
     int xCog;
     int yCog;
+    int polarity;
 
     //this is the number of *extra* bytes (in addition to base class) to code
     virtual int nBytesCoded() const { return 1; }
@@ -187,24 +198,31 @@ public:
 
     //these are new the member get functions
     int getChannel() const             { return channel;        }
-    int getId()      const             { return id;             }
+    int getID()      const             { return id;             }
     int getXCog()    const             { return xCog;           }
     int getYCog()    const             { return yCog;           }
+    int getPolarity()const             { return polarity;           }
 
     void setChannel(const int channel) { this->channel = channel; }
-    void setId(const int id)           { this->id = id;     }
+    void setID(const int id)           { this->id = id;     }
     void setXCog(const int xCog)       { this->xCog = xCog;       }
     void setYCog(const int yCog)       { this->yCog = yCog;       }
+    void setPolarity(const int polarity)       { this->polarity = polarity;       }
+
 
     //these functions need to be defined correctly for inheritance
-    ClusterEvent(const vEvent &event = vEvent());
+    ClusterEvent() : vEvent(), id(0), channel(0), xCog(0), yCog(0), polarity(1)
+                     {this->type = "CLE";}
+    ClusterEvent(const vEvent &event);
     vEvent &operator=(const vEvent &event);
+    virtual vEvent* clone();
+
     bool operator==(const ClusterEvent &event);
     bool operator==(const vEvent &event) {
         return operator==(dynamic_cast<const ClusterEvent&>(event)); }
     yarp::os::Bottle   encode() const;
     yarp::os::Property getContent() const;
-    virtual vEvent * decode(const yarp::os::Bottle &packet, int &pos);
+    virtual bool decode(const yarp::os::Bottle &packet, int &pos);
 
 };
 
@@ -216,12 +234,14 @@ protected:
 
     //add new member variables here
     int numAE;
-    int xSigma2;
-    int ySigma2;
-    int xySigma;
+    char xSigma2;
+    char ySigma2;
+    char xySigma;
+    char xVel;
+    char yVel;
 
     //this is the number of *extra* bytes (in addition to base class) to code
-    virtual int nBytesCoded() const { return 1; }
+    virtual int nBytesCoded() const { return 3; }
 
 public:
 
@@ -230,22 +250,29 @@ public:
     int getXSigma2()    const               { return xSigma2;          }
     int getYSigma2()    const               { return ySigma2;          }
     int getXYSigma()    const               { return xySigma;          }
-
+    int getXVel()       const               { return xVel;             }
+    int getYVel()       const               { return yVel;             }
+    
     void setNumAE(const int numAE)          { this->numAE=numAE;       }
     void setXSigma2(const int xSigma2)      { this->xSigma2=xSigma2;   }
     void setYSigma2(const int ySigma2)      { this->ySigma2=ySigma2;   }
     void setXYSigma(const int xySigma)      { this->xySigma=xySigma;   }
-
+    void setXVel(const int xVel)            { this->xVel=xVel;   }
+    void setYVel(const int yVel)            { this->yVel=yVel;   }
 
     //these functions need to be defined correctly for inheritance
-    ClusterEventGauss(const vEvent &event = vEvent());
+    ClusterEventGauss() : ClusterEvent(), numAE(0), xSigma2(0), ySigma2(0),
+        xVel(0), yVel(0) {this->type = "CLEG";}
+    ClusterEventGauss(const vEvent &event);
     vEvent &operator=(const vEvent &event);
+    virtual vEvent* clone();
+
     bool operator==(const ClusterEventGauss &event);
     bool operator==(const vEvent &event) {
         return operator==(dynamic_cast<const ClusterEventGauss&>(event)); }
     yarp::os::Bottle   encode() const;
     yarp::os::Property getContent() const;
-    virtual vEvent * decode(const yarp::os::Bottle &packet, int &pos);
+    virtual bool decode(const yarp::os::Bottle &packet, int &pos);
 };
 
 }
