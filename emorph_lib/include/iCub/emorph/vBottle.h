@@ -43,7 +43,7 @@ public:
     vBottle() : yarp::os::Bottle() {}
 
     //you can only modify contents by adding events and append other vBottles
-    void addEvent(emorph::vEvent &e);\
+    void addEvent(emorph::vEvent &e);
     void append(vBottle &eb);
 
     void getAll(vQueue &q);
