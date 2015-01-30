@@ -233,12 +233,12 @@ class ClusterEventGauss : public ClusterEvent
 protected:
 
     //add new member variables here
-    int numAE;
-    char xSigma2;
-    char ySigma2;
-    char xySigma;
-    char xVel;
-    char yVel;
+    unsigned short int numAE;
+    short int xySigma;
+    unsigned short int xSigma2;
+    unsigned short int ySigma2;
+    short int xVel;
+    short int yVel;
 
     //this is the number of *extra* bytes (in addition to base class) to code
     virtual int nBytesCoded() const { return 3; }
