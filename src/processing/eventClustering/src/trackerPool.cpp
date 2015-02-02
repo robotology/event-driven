@@ -270,6 +270,9 @@ void TrackerPool::get_collisions(std::vector<double> &x_coll, std::vector<double
     y_collision_.clear();
 }
 
+std::vector<TrackerPool::Collision> TrackerPool::get_collisions(){
+    return collisions_disp_;
+}
 
 
 void TrackerPool::get_ellipse_parameters(std::vector<double> &a, std::vector<double> &b, std::vector<double> &alpha){
@@ -526,11 +529,13 @@ void TrackerPool::look_for_collisions(int ts){
                         
                         x_collision_.push_back(x_coll);
                         y_collision_.push_back(y_coll);
+
                         
                         Collision new_collision;
                         new_collision.x = x_coll;
                         new_collision.y = y_coll;
                         new_collision.count_disp = 0;
+                        new_collision.timestamp = ts; // H.A.: adding timestamp info for collisions
                         collisions_disp_.push_back(new_collision);
                         
                         printf("Clap!!\n");

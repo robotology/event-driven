@@ -320,10 +320,24 @@ void EventBottleManager::onRead(vBottle &bot)
         //not sure why this check is really needed?
         if(!(ev_x>=0 && ev_x <= 127 && ev_y>=0 && ev_y <= 127)) continue;
 
-        if (channel == 0)
+        if (channel == 0) //Process events for left camera
         {
             clEvts.clear();
             int clusterAssignedTo = tracker_pool_left->update(aep, clEvts);
+            
+
+	//std::vector<TrackerPool::Collision> collisions_left = tracker_pool_left->get_collisions();
+
+        //    for (int colNum=0; colNum < collisions_left.size(); colNum++)
+//            {
+//
+//              AddressEventClustered aeCollision = *aep;
+//            aeCollision.setID(colNum+10000);
+//          aeCollision.setX(collisions_left[colNum].x);
+//        aeCollision.setY(collisions_left[colNum].y);
+//      aeCollision.setTimeStamp(collisions_left[colNum].timeStamp);
+
+//           }
 
             //add the event depending if it was assigned a cluster
             if(clusterAssignedTo >= 0) {

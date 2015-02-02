@@ -17,6 +17,53 @@
 // Class implementing a pool of Gaussian Trackers, that looks for collisions between them.
 // The different trackers have a repulsive force that tends to mantain them at a certain distance
 class TrackerPool {
+protected:
+    struct Collision
+    {
+        int x;
+        int y;
+        int timestamp;
+        int count_disp;
+    };
+
+    void regulate_pool(int ts, std::vector<emorph::ClusterEventGauss> &clEvts);
+
+    void apply_rep_field();
+
+    void look_for_collisions(int ts);
+
+    std::vector<BlobTracker> trackers_;
+    yarp::os::Port image_port;
+
+    // We will regulate the pool every fixed number of events
+    int nb_ev_regulate_, count_;
+    int ts_last_reg_;
+
+    // Parameters of the repulsive field
+    double alpha_rep_;
+    int d_rep_;
+
+    std::vector<int> to_reset_;
+    int max_nb_tr_;
+
+    // Initial parameters of the blob trackers
+    double max_dist_, tau_act_;
+    bool fixed_shape_;
+    double sig_x2_, sig_y2_, sig_xy_;
+
+    // Variables for the collision detector
+    double dist_thresh_, vel_thresh_, acc_thresh_;
+    int max_dt_;
+    std::vector<std::vector<bool> > clapping_;
+    std::vector<std::vector<double> > dist_, vel_, acc_;
+    std::list<double> last_dist_, last_vel_, last_acc_;
+    int span_;
+    std::vector<Collision> collisions_disp_;
+    std::vector<double> x_collision_, y_collision_;
+
+    FILE *output_file_;
+
+
     public:
         // Contructor
         //
@@ -41,6 +88,8 @@ class TrackerPool {
 
         void get_collisions(std::vector<double> &x_coll, std::vector<double> &y_coll);
 
+        std::vector<Collision> get_collisions();
+
         void get_ellipse_parameters(std::vector<double> &a, std::vector<double> &b, std::vector<double> &alpha);
     
         void getMeanActivity(double &act);
@@ -53,52 +102,8 @@ class TrackerPool {
     
         int getPoolSize();
 
-        //void getTrackers(std::vector<double> &cen_x, std::vector<double> &cen_y, std::vector<double> &v_x, std::vector<double> &v_y, std::vector<double> &sig_x, std::vector<double> &sig_y, std::vector<double> &sig_xy, std::vector<double> &activity, std::vector<bool> &is_active,std::vector<double> &id);
-    
-    protected:
-        struct Collision
-        {
-            int x;
-            int y;
-            int count_disp;
-        };
+        //void getTrackers(std::vector<double> &cen_x, std::vector<double> &cen_y, std::vector<double> &v_x, std::vector<double> &v_y, std::vector<double> &sig_x, std::vector<double> &sig_y, std::vector<double> &sig_xy, std::vector<double> &activity, std::vector<bool> &is_active,std::vector<double> &id);    
 
-        void regulate_pool(int ts, std::vector<emorph::ClusterEventGauss> &clEvts);
-
-        void apply_rep_field();
-
-        void look_for_collisions(int ts);
-
-        std::vector<BlobTracker> trackers_;
-        yarp::os::Port image_port;
-
-        // We will regulate the pool every fixed number of events
-        int nb_ev_regulate_, count_;
-        int ts_last_reg_;
-        
-        // Parameters of the repulsive field
-        double alpha_rep_;
-        int d_rep_;
-
-        std::vector<int> to_reset_;
-        int max_nb_tr_;
-
-        // Initial parameters of the blob trackers
-        double max_dist_, tau_act_;
-        bool fixed_shape_;
-        double sig_x2_, sig_y2_, sig_xy_;
-
-        // Variables for the collision detector
-        double dist_thresh_, vel_thresh_, acc_thresh_;
-        int max_dt_;
-        std::vector<std::vector<bool> > clapping_;
-        std::vector<std::vector<double> > dist_, vel_, acc_;
-        std::list<double> last_dist_, last_vel_, last_acc_;
-        int span_;
-        std::vector<Collision> collisions_disp_;
-        std::vector<double> x_collision_, y_collision_;
-
-        FILE *output_file_;
 };
 
 #endif /* __GAUSSIAN_BLOB_TRACKER_H */
