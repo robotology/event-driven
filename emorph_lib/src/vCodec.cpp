@@ -87,12 +87,11 @@ yarp::os::Bottle vEvent::encode() const
 /******************************************************************************/
 bool vEvent::decode(const yarp::os::Bottle &packet, int &pos)
 {
-
-    if(pos + nBytesCoded() <= packet.size()) {
+    if(pos + localWordsCoded <= packet.size()) {
 
         //TODO: this needs to take into account the code aswell
         stamp = packet.get(pos).asInt()&0x00ffffff;
-        pos++;
+        pos += localWordsCoded;
         return true;
     }
     return false;
@@ -196,7 +195,7 @@ yarp::os::Bottle AddressEvent::encode() const
 bool AddressEvent::decode(const yarp::os::Bottle &packet, int &pos)
 {
     // check length
-    if (vEvent::decode(packet, pos) && pos+nBytesCoded() <= packet.size())
+    if (vEvent::decode(packet, pos) && pos + localWordsCoded <= packet.size())
     {
         int word0=packet.get(pos).asInt();
 
@@ -211,7 +210,7 @@ bool AddressEvent::decode(const yarp::os::Bottle &packet, int &pos)
         word0>>=7;
         channel=word0&0x01;
 
-        pos++;
+        pos += localWordsCoded;
         return true;
     }
     return false;
@@ -293,11 +292,12 @@ yarp::os::Bottle AddressEventClustered::encode() const
 bool AddressEventClustered::decode(const yarp::os::Bottle &packet, int &pos)
 {
     // check length
-    if (AddressEvent::decode(packet, pos) && pos+nBytesCoded() <= packet.size())
+    if (AddressEvent::decode(packet, pos) &&
+            pos + localWordsCoded <= packet.size())
     {
         int word0=packet.get(pos).asInt();
         clID = word0;
-        pos++;
+        pos += localWordsCoded;
         return true;
     }
 
@@ -389,7 +389,7 @@ yarp::os::Bottle ClusterEvent::encode() const
 bool ClusterEvent::decode(const yarp::os::Bottle &packet, int &pos)
 {
     // check length
-    if (vEvent::decode(packet, pos) && pos+nBytesCoded() <= packet.size())
+    if (vEvent::decode(packet, pos) && pos + localWordsCoded <= packet.size())
     {
         int word0=packet.get(pos).asInt();
 
@@ -411,7 +411,7 @@ bool ClusterEvent::decode(const yarp::os::Bottle &packet, int &pos)
         //code=word0&0x3f;
         //word0>>6;
 
-        pos++;
+        pos += localWordsCoded;
 
         return true;
     }
@@ -512,9 +512,9 @@ yarp::os::Bottle ClusterEventGauss::encode() const
     //int word2=(22<<26)|((yVel&0xff)<<8)|(xVel&0xff);
 
 
-    int word0 = (xySigma&0xffff<<16)|(numAE&0xffff);
-    int word1 = (xSigma2&0xffff<<16)|(ySigma2&0xffff);
-    int word2 = (xVel&0xffff<<16)|(yVel&0xffff);
+    int word0 = ((xySigma&0xffff)<<16)|(numAE&0xffff);
+    int word1 = ((xSigma2&0xffff)<<16)|(ySigma2&0xffff);
+    int word2 = ((xVel&0xffff)<<16)|(yVel&0xffff);
 
     yarp::os::Bottle ret = ClusterEvent::encode();
     ret.addInt(word0);
@@ -529,7 +529,7 @@ bool ClusterEventGauss::decode(const yarp::os::Bottle &packet, int &pos)
 {
     // check length
     if (ClusterEvent::decode(packet, pos) &&
-            pos+nBytesCoded() <= packet.size())
+            pos + localWordsCoded <= packet.size())
     {
 
         int word0=packet.get(pos).asInt();
@@ -565,7 +565,7 @@ bool ClusterEventGauss::decode(const yarp::os::Bottle &packet, int &pos)
         word2>>=16;
         xVel=word2&0xffff;
         
-        pos += nBytesCoded();
+        pos += localWordsCoded;
         return true;
 
     }
