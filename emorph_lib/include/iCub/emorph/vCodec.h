@@ -63,14 +63,13 @@ public:
 /**************************************************************************/
 class vEvent
 {
+private:
+    const static int localWordsCoded = 1;
+
 protected:
 
-    bool valid; //this is just in here so i don't have to change other
-                //derived classes just yet. delete it when i can
     std::string type;
     int stamp;
-
-    virtual int nBytesCoded() const { return 1;             }
 
 public:
     //!blank constructor required at base level
@@ -97,6 +96,7 @@ public:
     virtual yarp::os::Bottle   encode() const;
     virtual bool decode(const yarp::os::Bottle &packet, int &pos);
     virtual yarp::os::Property getContent() const;
+    virtual int nBytesCoded() const {return localWordsCoded * sizeof(int);}
 
     template<class T> T* getAs() {
         return dynamic_cast<T*>(this);
@@ -108,6 +108,9 @@ public:
 /**************************************************************************/
 class AddressEvent : public vEvent
 {
+private:
+    const static int localWordsCoded = 1;
+
 protected:
 
     //add new member variables here
@@ -115,9 +118,6 @@ protected:
     int polarity;
     int x;
     int y;
-
-    //this is the number of *extra* bytes (in addition to base class) to code
-    virtual int nBytesCoded() const         { return 1;                 }
 
 public:
 
@@ -145,7 +145,9 @@ public:
     yarp::os::Property getContent() const;
     virtual bool decode(const yarp::os::Bottle &packet, int &pos);
 
-
+    //this is the total number of bytes used to code this event
+    virtual int nBytesCoded() const         { return localWordsCoded *
+                sizeof(int) + vEvent::nBytesCoded();                 }
 
 
 };
@@ -153,11 +155,12 @@ public:
 /**************************************************************************/
 class AddressEventClustered : public AddressEvent
 {
+private:
+    const static int localWordsCoded = 1;
+
 protected:
 
     int clID;
-
-    virtual int nBytesCoded() const { return 1;}
 
 public:
 
@@ -177,11 +180,18 @@ public:
     yarp::os::Property getContent() const;
     virtual bool decode(const yarp::os::Bottle &packet, int &pos);
 
+    //this is the total number of bytes used to code this event
+    virtual int nBytesCoded() const         { return localWordsCoded *
+                sizeof(int) + AddressEvent::nBytesCoded(); }
+
 };
 
 /**************************************************************************/
 class ClusterEvent : public vEvent
 {
+private:
+    const static int localWordsCoded = 1;
+
 protected:
 
     //add new member variables here
@@ -190,9 +200,6 @@ protected:
     int xCog;
     int yCog;
     int polarity;
-
-    //this is the number of *extra* bytes (in addition to base class) to code
-    virtual int nBytesCoded() const { return 1; }
 
 public:
 
@@ -223,6 +230,9 @@ public:
     yarp::os::Bottle   encode() const;
     yarp::os::Property getContent() const;
     virtual bool decode(const yarp::os::Bottle &packet, int &pos);
+    //this is the total number of bytes used to code this event
+    virtual int nBytesCoded() const         { return localWordsCoded *
+                sizeof(int) + vEvent::nBytesCoded(); }
 
 };
 
@@ -230,6 +240,9 @@ public:
 /**************************************************************************/
 class ClusterEventGauss : public ClusterEvent
 {
+private:
+    const static int localWordsCoded = 3;
+
 protected:
 
     //add new member variables here
@@ -239,9 +252,6 @@ protected:
     unsigned short int ySigma2;
     short int xVel;
     short int yVel;
-
-    //this is the number of *extra* bytes (in addition to base class) to code
-    virtual int nBytesCoded() const { return 3; }
 
 public:
 
@@ -273,6 +283,9 @@ public:
     yarp::os::Bottle   encode() const;
     yarp::os::Property getContent() const;
     virtual bool decode(const yarp::os::Bottle &packet, int &pos);
+    //this is the total number of bytes used to code this event
+    virtual int nBytesCoded() const         { return localWordsCoded *
+                sizeof(int) + ClusterEvent::nBytesCoded(); }
 };
 
 }

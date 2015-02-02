@@ -101,11 +101,6 @@ void vBottle::getAll(emorph::vQueue &q)
                 q.push_back(e);
                 e = e->clone();
             }
-            //v.decode(*b, pos);
-            //vEvent * ep = new vEvent(*e);
-            //ep->decode(*b, pos);
-            //vEvent * ep = e->decode(*b, pos);
-            //if(ep) q.push_back(ep);
         }
 
         delete(e);
