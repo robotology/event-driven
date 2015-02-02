@@ -179,6 +179,7 @@ void BlobTracker::move_to(double x, double y){
 
 void BlobTracker::get_ellipse_parameters(double &a, double &b, double &alpha){
     // Compute the eigenvalues of the covariance matrix
+
     double tmp = sqrt( (sig_x2_ - sig_y2_) * (sig_x2_ - sig_y2_) + 4*sig_xy_*sig_xy_ );
     double l_max = 0.5*(sig_x2_ + sig_y2_ + tmp);
     double l_min = 0.5*(sig_x2_ + sig_y2_ - tmp);

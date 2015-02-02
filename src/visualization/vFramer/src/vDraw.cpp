@@ -133,19 +133,13 @@ void clusterDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
             double sig_x2_ = clegp->getXSigma2();
             double sig_y2_ = clegp->getYSigma2();
             double sig_xy_ = clegp->getXYSigma();
-            if(sig_xy_ > sig_x2_ * sig_y2_) {
-                std::cout << sig_x2_ << "x" << sig_y2_<< "=" << sig_x2_*sig_y2_
-                             << " (" << sig_xy_ << ")" << std::endl;
-            }
-
             double tmp = sqrt( (sig_x2_ - sig_y2_) * (sig_x2_ - sig_y2_) + 4*sig_xy_*sig_xy_ );
             double l_max = 0.5*(sig_x2_ + sig_y2_ + tmp);
             double l_min = 0.5*(sig_x2_ + sig_y2_ - tmp);
 
 
-            if(l_max < 0 || l_min < 0) {
-                std::cout << "l_min | l_max error" << std::endl;
-                //continue;
+            if(l_min < -5) {
+                std::cout << "l_min error: shape distorted" << std::endl;
             }
 
             double a = sqrt(std::fabs(l_max)) * 2;
@@ -162,7 +156,7 @@ void clusterDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
             cv::ellipse(image, centr, cv::Size(a,b), alpha, 0, 360, color);
 
         } else {
-            cv::circle(image, centr, 4, CV_RGB(255, 255, 255));
+            cv::circle(image, centr, 4, green);
         }
 
         cv::putText(textImg, ss.str(),

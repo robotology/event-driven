@@ -186,53 +186,24 @@ int TrackerPool::update(emorph::AddressEvent *ptr, std::vector<emorph::ClusterEv
         clep.setYCog((int)temp_y);
         //get the gauss parameters of each cluster
         trackers_[trackId].get_gauss_parameters(temp_x, temp_y, temp_xy);
-
-        //if(temp_y * temp_x < temp_xy) {
-//        std::cout << temp_x << "x" << temp_y<< "=" << temp_x*temp_y
-//                  << " (" << temp_xy << ")" << std::endl;
-        //}
         //get the velocity of each cluster
         clep.setXSigma2((int)temp_x);
         clep.setYSigma2((int)temp_y);
         clep.setXYSigma((int)temp_xy);
 
-//        if(clep.getXSigma2() * clep.getYSigma2() < clep.getXYSigma()) {
-//        std::cout << clep.getXSigma2() << "x" << clep.getYSigma2()<< "=" <<
-//                     clep.getXSigma2()*clep.getYSigma2()
-//                     << " (" << clep.getXYSigma() << ")" << std::endl;
-
-
-//        }
-
         trackers_[trackId].getVelocity(temp_x, temp_y);
         clep.setXVel((int)temp_x);
         clep.setYVel((int)temp_y);
+
         // get the activity of each cluster
         trackers_[trackId].getActivity(temp_x);
         clep.setNumAE(temp_x);
         clep.setID(trackId);
         clEvts.push_back(clep);
 
-        emorph::ClusterEventGauss* vtest = &clep;
-        std::cout << vtest->getXSigma2() << " " << vtest->getYSigma2() <<
-                     " " << vtest->getXYSigma() << std::endl;
-
-        emorph::vQueue q;
-        emorph::vBottle vbtest; vbtest.addEvent(clep);
-        vbtest.getAll(q);
-
-        vtest = q.front()->getAs<emorph::ClusterEventGauss>();
-        if(vtest) {
-            std::cout << vtest->getXSigma2() << " " << vtest->getYSigma2() <<
-                         " " << vtest->getXYSigma() << std::endl;
-        }
-
-
 
     }
-    //count_ = 0;
-    
-    //fprintf(stdout, "\n count_ %d \n\n", count_);
+
     return trackId;
 }
 
@@ -410,27 +381,41 @@ void TrackerPool::regulate_pool(int ts,
 
                     //otherwise it is just inactive but in either case we
                     //need to produce an event
-                    double temp_x, temp_y, temp_xy;
+                    double temp_x, temp_y, temp_xy;                   
                     emorph::ClusterEventGauss clep;
                     clep.setStamp(ts);
                     clep.setPolarity(0);
+                    //std::cout << ts << "(" << clep.getStamp() << ") ";
+                    //std::cout << 0 << "(" << clep.getPolarity() << ") ";
                     // center coordinates of the cluster
                     trackers_[ii].get_center(temp_x, temp_y);
-                    clep.setXCog(temp_x);
-                    clep.setYCog(temp_y);
+                    clep.setXCog((int)temp_x);
+                    clep.setYCog((int)temp_y);
+                    //std::cout << temp_x << "(" << clep.getXCog() << ") ";
+                    //std::cout << temp_y << "(" << clep.getYCog() << ") ";
                     //get the gauss parameters of each cluster
                     trackers_[ii].get_gauss_parameters(temp_x, temp_y, temp_xy);
                     //get the velocity of each cluster
-                    clep.setXSigma2(temp_x);
-                    clep.setYSigma2(temp_y);
-                    clep.setXYSigma(temp_xy);
+                    clep.setXSigma2((int)temp_x);
+                    clep.setYSigma2((int)temp_y);
+                    clep.setXYSigma((int)temp_xy);
+                    //std::cout << temp_x << "(" << clep.getXSigma2() << ") ";
+                    //std::cout << temp_y << "(" << clep.getYSigma2() << ") ";
+                    //std::cout << temp_xy << "(" << clep.getXYSigma() << ") ";
+
                     trackers_[ii].getVelocity(temp_x, temp_y);
-                    clep.setXVel(temp_x);
-                    clep.setYVel(temp_y);
+                    clep.setXVel((int)temp_x);
+                    clep.setYVel((int)temp_y);
+                    //std::cout << temp_x << "(" << clep.getXVel() << ") ";
+                    //std::cout << temp_y << "(" << clep.getYVel() << ") ";
+
                     // get the activity of each cluster
                     trackers_[ii].getActivity(temp_x);
                     clep.setNumAE(temp_x);
                     clep.setID(ii);
+                    //std::cout << temp_x << "(" << clep.getNumAE() << ") ";
+                    //std::cout << ii << "(" << clep.getID() << ") ";
+                    //std::cout << std::endl;
                     clEvts.push_back(clep);
 
                     //fprintf(stdout, "reset ID: %d \t to reset size: %lu \n", to_reset_[ii], to_reset_.size());

@@ -136,33 +136,20 @@ void vReadAndSplit::interrupt()
    BufferedPort<vBottle>::interrupt();
 }
 
-
 void vReadAndSplit::onRead(emorph::vBottle &incoming)
 {
+
+
+
     emorph::vQueue q;
     emorph::vQueue::iterator qi;
-
-    incoming.getAllSorted(q);
+    incoming.getAll(q);
     for(qi = q.begin(); qi != q.end(); qi++) {
         int ch = (*qi)->getChannel();
         if(!windows.count(ch)) {
             windows[ch] = new vWindow(windowsize);
         }
         windows[ch]->addEvent(**qi);
-
-        //DEBUG
-        ClusterEventGauss * clegp = (*qi)->getAs<ClusterEventGauss>();
-        if(!clegp) continue;
-        double sig_x2_ = clegp->getXSigma2();
-        double sig_y2_ = clegp->getYSigma2();
-        double sig_xy_ = clegp->getXYSigma();
-        if(sig_xy_ > sig_x2_ * sig_y2_) {
-            std::cout << sig_x2_ << "x" << sig_y2_<< "=" << sig_x2_*sig_y2_
-                         << " (" << sig_xy_ << ")" << std::endl;
-        }
-
-
-
     }
 
 }

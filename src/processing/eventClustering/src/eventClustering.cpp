@@ -354,9 +354,12 @@ void EventBottleManager::onRead(vBottle &bot)
                 evtCluster.addEvent(*aep);
             }
 
+            //evtCluster.clear();
+
             //add the clusterEvents
             for(ceit = clEvts.begin(); ceit != clEvts.end(); ceit++) {
                 evtCluster.addEvent(*ceit);
+
             }
 
 
@@ -395,6 +398,7 @@ void EventBottleManager::onRead(vBottle &bot)
         }
 
     }
+
     outPort.write();
     //fprintf(stdout, "------------------------------------------------------------------\n");
 }
