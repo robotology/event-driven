@@ -60,6 +60,7 @@ class TrackerPool {
         {
             int x;
             int y;
+            //int ts;
             int count_disp;
         };
 

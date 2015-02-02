@@ -47,7 +47,7 @@ bool vDownSamplingModule::configure(yarp::os::ResourceFinder &rf)
                         yarp::os::Value("variable_defualt"),
                         "variable description").asString();
     
-    double samplingFactor = rf.check("sampleBy", yarp::os::Value(2.0), "asdasd").asDouble();
+    double samplingFactor = rf.check("sampleBy", yarp::os::Value(2.0), "default sampling").asDouble();
 
     /* create the thread and pass pointers to the module parameters */
     eventBottleManager = new EventBottleManager;
@@ -188,23 +188,23 @@ void EventBottleManager::onRead(emorph::vBottle &bot)
         //process
         ev_x    = aep->getX();
         ev_y    = aep->getY();
-        pol     = aep->getPolarity(); pol = pol*2 - 1;
+        pol     = aep->getPolarity();
         channel = aep->getChannel();
 
         if (channel == 0)
         {
 //            std::fprintf(stdout, "Event x, y: %d %d %d %d %d\n", ev_x, ev_y, int(ev_x/2), int(ev_y/2), pol);
 
-            int dwnSampleEvent = downSamplingInstance->downSampling(ev_x, ev_y, pol);
-            if(dwnSampleEvent == 1 || dwnSampleEvent == -1)
+            // int dwnSampleEvent = downSamplingInstance->downSampling(ev_x, ev_y,  pol*2 - 1;);
+            if(true) //(dwnSampleEvent == 1 || dwnSampleEvent == -1)
             {
                 AddressEvent ae(*aep);
 
 
                 ae.setX( int(ev_x/downSamplingInstance->getSamplingFactor())  + int(double(128.0/2.0) - 128.0/(2.0*downSamplingInstance->getSamplingFactor())) );
                 ae.setY( int(ev_y/downSamplingInstance->getSamplingFactor())  + int(double(128.0/2.0) - 128.0/(2.0*downSamplingInstance->getSamplingFactor())) );
-                ae.setPolarity(pol);
-                ae.setChannel(channel);
+                //ae.setPolarity(pol);
+                //ae.setChannel(channel);
                 //ae->encode();
 
                 outBottle.addEvent(ae);
