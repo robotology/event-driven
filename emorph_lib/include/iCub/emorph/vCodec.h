@@ -188,6 +188,36 @@ public:
 };
 
 /**************************************************************************/
+class CollisionEvent : public AddressEvent
+{
+private:
+    const static int localWordsCoded = 0;
+
+protected:
+
+    //int newdata;
+
+public:
+
+    CollisionEvent() : AddressEvent() {this->type = "COL";}
+    CollisionEvent(const vEvent &event);
+    vEvent &operator=(const vEvent &event);
+    virtual vEvent* clone();
+
+    bool operator==(const CollisionEvent &event);
+    bool operator==(const vEvent &event) {
+        return operator==(dynamic_cast<const CollisionEvent&>(event)); }
+    yarp::os::Bottle   encode() const ;
+    yarp::os::Property getContent() const;
+    virtual bool decode(const yarp::os::Bottle &packet, int &pos);
+
+    //this is the total number of bytes used to code this event
+    virtual int nBytesCoded() const         { return localWordsCoded *
+                sizeof(int) + AddressEvent::nBytesCoded(); }
+
+};
+
+/**************************************************************************/
 class ClusterEvent : public vEvent
 {
 private:
