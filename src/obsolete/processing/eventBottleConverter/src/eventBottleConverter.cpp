@@ -40,6 +40,7 @@ bool EventBottleConverter::configure(ResourceFinder &rf)
     }
 
     attach(rpcPort);
+    closing = false;
 
     /* create the thread and pass pointers to the module parameters */
     etbHandler = new EventToBottleHandler( moduleName );
@@ -66,6 +67,7 @@ bool EventBottleConverter::close()
 {
     rpcPort.close();
     fprintf(stdout, "starting the shutdown procedure\n");
+    closing = true;
 
     etbHandler->close();
     bteHandler->close();
@@ -80,6 +82,7 @@ bool EventBottleConverter::close()
 /**********************************************************/
 bool EventBottleConverter::updateModule()
 {
+    //fprintf(stdout,"update module, closing = %d\n",closing);
     return !closing;
 }
 

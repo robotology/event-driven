@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) <year> RobotCub Consortium, European Commission FP6 Project IST-004370
  * Author Charles Clercq
  * email:   charles.clercq@robotcub.org
