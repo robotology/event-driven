@@ -52,6 +52,7 @@ public:
     vQueue(const bool _owner)  { owner=_owner;      }
     void setOwner(const bool owner) { this->owner=owner; }
     bool getOwner()                 { return owner;      }
+    void clear();
     ~vQueue();
 
     void sort();
