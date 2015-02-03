@@ -1,7 +1,8 @@
 /*
- * Copyright (C) 2011 Department of Robotics Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
- * Author: Chiara Bartolozzi
- * email:  chiara.bartolozzi@iit.it
+ * Copyright (C) 2011 Department of Robotics Brain and Cognitive Sciences -
+ * Istituto Italiano di Tecnologia
+ * Author: Chiara Bartolozzi and Arren Glover
+ * email:  chiara.bartolozzi@iit.it, arren.glover@iit.it
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
  * later version published by the Free Software Foundation.
@@ -16,299 +17,208 @@
  */
 
 #include "eventClustering.h"
-#include "trackerPool.h"
-#include "blobTracker.h"
 
-using namespace std;
-using namespace yarp::os;
-using namespace yarp::sig;
-using namespace emorph;
-
-/**********************************************************/
+/******************************************************************************/
+//EventClustering
+/******************************************************************************/
 bool EventClustering::configure(yarp::os::ResourceFinder &rf)
 {
-    moduleName = rf.check("name", Value("eventClustering"), "module name (string)").asString();
+    std::string moduleName = rf.check("name",
+                                      yarp::os::Value("eventClustering"),
+                                      "module name (string)").asString();
 
     setName(moduleName.c_str());
 
-    rpcPortName  =  "/";
-    rpcPortName +=  getName();
-    rpcPortName +=  "/rpc:i";
+    std::string rpcPortName  =  "/" + moduleName + "/rpc:i";
 
-    if (!rpcPort.open(rpcPortName.c_str()))
+    if (!rpcPort.open(rpcPortName))
     {
-        fprintf(stdout, "%s : Unable to open port %s\n", getName().c_str(), rpcPortName.c_str());
+        std::cerr << rpcPortName << " : Unable to open port" << std::endl;
         return false;
     }
-
     attach(rpcPort);
 
 
-    /*
-    * set the file name for saving cluster data
-    */
-    fileName = rf.check("filename", 
-                        Value("clusters.txt"), 
-                        "file name (string)").asString();
-    fprintf(stdout,"output file %s \n", fileName.c_str());
-    //eventBottleManager ->setFileName(fileName);
-
-    /*
-    * set the alpha shape of the gauss cluster
-    */
-    alphaShape = rf.check("alpha_shape", 
-                        Value(0.01),
+    double alphaShape = rf.check("alpha_shape",
+                        yarp::os::Value(0.01),
                         "alpha shape (double)").asDouble();
-    fprintf(stdout,"alpha shape %f \n", alphaShape);
-    //eventBottleManager ->setAlphaShape(alphaShape);
 
-    /*
-    * set the alpha pos of the gauss cluster
-    */
-    alphaPos = rf.check("alpha_pos", 
-                        Value(0.1),
+    double alphaPos = rf.check("alpha_pos",
+                        yarp::os::Value(0.1),
                         "alpha pos (double)").asDouble();
-    fprintf(stdout,"alpha pos %f \n", alphaPos);
-    //eventBottleManager ->setAlphaPos(alphaPos);
 
-    /*
-     * set the activation threshold of the gauss cluster
-     */
-    upThr = rf.check("up_thr",
-                     Value(5),
-                     "up thr (double)").asDouble();
-    fprintf(stdout,"up thr %f \n", upThr);
+    double Tact = rf.check("Tact",
+                     yarp::os::Value(20),
+                     "Tact (double)").asDouble();
 
-    /*
-     * set the inactivation threshold of the gauss cluster
-     */
-    downThr = rf.check("down_thr",
-                     Value(1),
-                     "down thr (double)").asDouble();
-    fprintf(stdout,"down thr %f \n", downThr);
+    double Tinact = rf.check("Tinact",
+                     yarp::os::Value(10),
+                     "Tinact (double)").asDouble();
 
-    decay_tau = rf.check("decay_tau", Value(10000),
+    double Tfree = rf.check("Tfree",
+                            yarp::os::Value(5),
+                            "Tfree (double)").asDouble();
+
+    double Tevent = rf.check("Tevent",
+                             yarp::os::Value(2),
+                             "Tevent (double)").asDouble();
+
+    double SigX = rf.check("SigX",
+                           yarp::os::Value(5),
+                           "SigX (double)").asDouble();
+
+    double SigY = rf.check("SigY",
+                           yarp::os::Value(5),
+                           "SigY (double)").asDouble();
+
+    double SigXY = rf.check("SigXY",
+                            yarp::os::Value(0),
+                            "SigXY (double)").asDouble();
+
+    bool Fixedshape = rf.check("Fixedshape",
+                               yarp::os::Value(false),
+                               "Fixedshape (double)").asBool();
+
+    int Regrate = rf.check("Regrate",
+                              yarp::os::Value(50),
+                              "Regrate (double)").asInt();
+
+    double Maxdist = rf.check("Maxdist",
+                              yarp::os::Value(10),
+                              "Maxdist (double)").asDouble();
+
+    double decay_tau = rf.check("decay_tau",
+                         yarp::os::Value(10000),
                          "decay rate (double)").asDouble();
 
-    closing = false;
+
+
     
-    /* create the thread and pass pointers to the module parameters */
-    eventBottleManager = new EventBottleManager( moduleName, fileName, alphaShape, alphaPos, upThr, downThr, decay_tau);
-
-    /* initialize variables */
-    //eventBottleManager->init();
-    if(eventBottleManager->init())
-    {
-        fprintf(stdout,"eventBottleManager init\n");
-    }
-
+    eventBottleManager.setAllParameters(alphaShape, alphaPos, Tact, Tinact,
+                                        Tfree, Tevent, SigX, SigY, SigXY,
+                                        Fixedshape, Regrate, Maxdist,
+                                        decay_tau);
 
    /* now open the manager to do the work */
-    if(eventBottleManager->open())
+    if(!eventBottleManager.open(moduleName))
     {
-        fprintf(stdout,"eventBottleManager open\n");
+        std::cerr << " : Unable to open ports" << std::endl;
+        return false;
     }
+
+    closing = false;
     return true ;
+
 }
 
-/**********************************************************/
+/******************************************************************************/
 bool EventClustering::interruptModule()
 {
     rpcPort.interrupt();
-    eventBottleManager->interrupt();
+    eventBottleManager.interrupt();
     return true;
 }
 
-/**********************************************************/
+/******************************************************************************/
 bool EventClustering::close()
 {
-    rpcPort.close();
-    fprintf(stdout, "starting the shutdown procedure\n");
     closing = true;
-    eventBottleManager->close();
-    fprintf(stdout, "deleting thread\n");
-    delete eventBottleManager;
-    fprintf(stdout, "done deleting thread\n");
+    rpcPort.close();
+    eventBottleManager.close();
+
     return true;
 }
 
-/**********************************************************/
+/******************************************************************************/
 bool EventClustering::updateModule()
 {
     return !closing;
 }
 
-/**********************************************************/
+/******************************************************************************/
 double EventClustering::getPeriod()
 {
     return 0.1;
 }
 
-/**********************************************************/
-EventBottleManager::~EventBottleManager()
-{
+/******************************************************************************/
+//EventBottleManager
+/******************************************************************************/
 
+void EventBottleManager::setAllParameters(double alpha_shape, double alpha_pos,
+                                     double Tact, double Tinact, double Tfree,
+                                     double Tevent, double SigX, double SigY,
+                                     double SigXY, bool Fixedshape, int Regrate,
+                                     double Maxdist, double decay_tau)
+{
+    tracker_pool_left.setComparisonParams(Maxdist);
+    tracker_pool_left.setDecayParams(decay_tau, Tact, Tinact, Tfree, Tevent,
+                                     Regrate);
+    tracker_pool_left.setInitialParams(SigX, SigY, SigXY, alpha_pos,
+                                       alpha_shape, Fixedshape);
+
+    tracker_pool_right.setComparisonParams(Maxdist);
+    tracker_pool_right.setDecayParams(decay_tau, Tact, Tinact, Tfree, Tevent,
+                                     Regrate);
+    tracker_pool_right.setInitialParams(SigX, SigY, SigXY, alpha_pos,
+                                       alpha_shape, Fixedshape);
 }
 
-/**********************************************************/
-EventBottleManager::EventBottleManager(const string &moduleName, std::string &fileName, double &alphaShape, double &alphaPos, double &upThr, double &downThr , double &decay_tau)
-{
-    fprintf(stdout,"initialising Variables\n");
-    this->moduleName = moduleName;
-    this->fileName = fileName;
-    this->alphaPos = alphaPos;
-    this->alphaShape = alphaShape;
-    this->downThr = downThr;
-    this->upThr = upThr;
-    this->decay_tau = decay_tau;
-    
-}
-/**********************************************************/
-bool EventBottleManager::init()
-{
-
-    // Initial parameters of the Tracker Pool
-    double  sig_x = 5;
-    double  sig_y = 5;
-    double  sig_xy = 0;
-    double  k = 2;
-    double  max_dist = 30;
-    bool    fixed_shape = false;
-    double  tau_act = 10000;
-    double  delete_thresh = 10;//0.00000001;
-    double  alpha_rep = 2;
-    int     d_rep = 40;
-    int     max_nb_trackers = 40;
-    int     nb_ev_reg = 50;
-    double  dist_thresh = 30;
-    double  vel_thresh = 50;
-    double  acc_thresh = 300;
-    //int     s;
-    
-    output_file = fopen (fileName.c_str(), "w");
-    if (output_file == NULL) 
-        perror ("Error opening file");
-  
-    // Create the trackers
-    tracker_pool_left = new TrackerPool(sig_x, sig_y, sig_xy, alphaPos, alphaShape, k, max_dist, fixed_shape, decay_tau, upThr, downThr, delete_thresh, alpha_rep, d_rep, max_nb_trackers, nb_ev_reg);
-    tracker_pool_left->set_collision_det_param(dist_thresh, vel_thresh, acc_thresh);
-    //tracker_pool_left->get_pool_size(s);
-    //fprintf(stdout, "cluster pool left size s =%d\n",s);
-
-    tracker_pool_right = new TrackerPool(sig_x, sig_y, sig_xy, alphaPos, alphaShape, k, max_dist, fixed_shape, decay_tau, upThr, downThr, delete_thresh, alpha_rep, d_rep, max_nb_trackers, nb_ev_reg);
-    tracker_pool_right->set_collision_det_param(dist_thresh, vel_thresh, acc_thresh);
-    //tracker_pool_right->get_pool_size(s);
-
-    //fprintf(stdout, "cluster pool right size s =%d\n",s);
-
-    // Initialization of the images - correct size (128*128 from DVS sensor)
-
-    // Output
-    gray_image.resize(128,128);
-    gray_image.zero();
-    
-    for(int ii=0; ii<128; ii++)
-    {
-        for(int jj=0; jj<128; jj++)
-        {
-            gray_image.pixel(ii, jj) = yarp::sig::PixelRgb(127, 127, 127);
-        }  
-    }  
-
-    // Left
-    left_image.resize(128,128);
-    left_image.zero();
-
-    // Right
-    right_image.resize(128,128);
-    right_image.zero();
-
-    numEventsPerCluster.resize(5);
-    currentEventNumbers.resize(128,128);
-    
-    // Threshold for updating the position
-    min_nb_ev = 1;
-    
-    // Define number of clusters
-    numClusters = 5;
-    numIters = 0;
-    moveEyes = false;
-    
-    last_t_display = 0;
-    dt = 16000;
-
-    return true;
-}
-
-/**********************************************************/
-bool EventBottleManager::open()
+/******************************************************************************/
+bool EventBottleManager::open(std::string moduleName)
 {
     this->useCallback();
 
-    //create all ports
-    inPortName = "/" + moduleName + "/vBottle:i";
-    BufferedPort< vBottle >::open(inPortName.c_str());
+    std::string inPortName = "/" + moduleName + "/vBottle:i";
+    bool success1 = yarp::os::BufferedPort< emorph::vBottle >::open(inPortName);
 
-    leftPortName = "/" + moduleName + "/leftImage:o";
-    leftPort.open( leftPortName.c_str() );
 
-    rightPortName = "/" + moduleName + "/rightImage:o";
-    rightPort.open( rightPortName.c_str() );
+    std::string outPortName = "/" + moduleName + "/vBottle:o";
+    bool success2 = outPort.open(outPortName);
 
-    outPortName = "/" + moduleName + "/vBottle:o";
-    outPort.open( outPortName.c_str() );
+    if(!success1 || !success2) {
+        yarp::os::BufferedPort< emorph::vBottle >::close();
+        outPort.close();
+    }
 
-    return true;
+    return success1 && success2;
 }
 
-/**********************************************************/
+/******************************************************************************/
 void EventBottleManager::close()
 {
-    fprintf(stdout,"now closing ports...\n");
-
-    BufferedPort<vBottle >::close();
-    leftPort.close();
-    rightPort.close();
     outPort.close();
-    
-    delete tracker_pool_left;
-    delete tracker_pool_right;
-    
-    fprintf(stdout,"finished closing the read port...\n");
-    fclose(output_file);
-
+    BufferedPort<emorph::vBottle >::close();
 }
 
-/**********************************************************/
+/******************************************************************************/
 void EventBottleManager::interrupt()
 {
-    fprintf(stdout,"cleaning up...\n");
-    fprintf(stdout,"attempting to interrupt ports\n");
-    BufferedPort< vBottle >::interrupt();
-    fprintf(stdout,"finished interrupt ports\n");
+    outPort.interrupt();
+    BufferedPort< emorph::vBottle >::interrupt();
 }
 
-/**********************************************************/
-void EventBottleManager::onRead(vBottle &bot)
+/******************************************************************************/
+void EventBottleManager::onRead(emorph::vBottle &bot)
 {
 
     // prepare output vBottle with address events extended with
     // cluster ID (aec) and cluster events (clep)
-    vBottle &evtCluster = outPort.prepare();
+    emorph::vBottle &evtCluster = outPort.prepare();
     evtCluster.clear();
-    std::vector<ClusterEventGauss> clEvts;
-    std::vector<ClusterEventGauss>::iterator ceit;
+    std::vector<emorph::ClusterEventGauss> clEvts;
+    std::vector<emorph::ClusterEventGauss>::iterator ceit;
 
 
     //create event queue and iterator
-    vQueue q;
-    vQueue::iterator qi;
+    emorph::vQueue q;
+    emorph::vQueue::iterator qi;
     bot.getAll(q);
 
     // checks for empty or non valid queue????
     for(qi = q.begin(); qi != q.end(); qi++)
     {
-        AddressEvent *aep = (*qi)->getAs<AddressEvent>(); // address event from the input vBottle
+        emorph::AddressEvent *aep = (*qi)->getAs<emorph::AddressEvent>();
         if(!aep) continue;
 
         unsigned long ev_t      = aep->getStamp();
@@ -323,25 +233,11 @@ void EventBottleManager::onRead(vBottle &bot)
         if (channel == 0) //Process events for left camera
         {
             clEvts.clear();
-            int clusterAssignedTo = tracker_pool_left->update(aep, clEvts);
-            
-
-	//std::vector<TrackerPool::Collision> collisions_left = tracker_pool_left->get_collisions();
-
-        //    for (int colNum=0; colNum < collisions_left.size(); colNum++)
-//            {
-//
-//              AddressEventClustered aeCollision = *aep;
-//            aeCollision.setID(colNum+10000);
-//          aeCollision.setX(collisions_left[colNum].x);
-//        aeCollision.setY(collisions_left[colNum].y);
-//      aeCollision.setTimeStamp(collisions_left[colNum].timeStamp);
-
-//           }
+            int clusterAssignedTo = tracker_pool_left.update(*aep, clEvts);
 
             //add the event depending if it was assigned a cluster
             if(clusterAssignedTo >= 0) {
-                AddressEventClustered aec = *aep;
+                emorph::AddressEventClustered aec = *aep;
                 aec.setID(clusterAssignedTo);
                 evtCluster.addEvent(aec);
             } else {
@@ -350,6 +246,7 @@ void EventBottleManager::onRead(vBottle &bot)
 
             //add the clusterEvents
             for(ceit = clEvts.begin(); ceit != clEvts.end(); ceit++) {
+                ceit->setChannel(0);
                 evtCluster.addEvent(*ceit);
             }
 
@@ -357,64 +254,29 @@ void EventBottleManager::onRead(vBottle &bot)
         else
         {
             clEvts.clear();
-            int clusterAssignedTo = tracker_pool_right->update(aep, clEvts);
+            int clusterAssignedTo = tracker_pool_right.update(*aep, clEvts);
 
             //add the event depending if it was assigned a cluster
             if(clusterAssignedTo >= 0) {
-                AddressEventClustered aec = *aep;
+                emorph::AddressEventClustered aec = *aep;
                 aec.setID(clusterAssignedTo);
                 evtCluster.addEvent(aec);
             } else {
                 evtCluster.addEvent(*aep);
             }
 
-            //evtCluster.clear();
-
             //add the clusterEvents
             for(ceit = clEvts.begin(); ceit != clEvts.end(); ceit++) {
+                ceit->setChannel(1);
                 evtCluster.addEvent(*ceit);
 
             }
 
-
-
         }
-
-        //std::vector<clusterEventGuass>::iterator ncei;
-        //ncei
-
-
-        //DISPLAY ADDRESS EVENTS AND CLUSTER EVENTS (SHOULD BE REMOVED WHEN
-        //DRAW FUNCTION IS WORKING NICELY AND TEST
-        if(channel==0) {
-            left_image.pixel(ev_y, ev_x) = yarp::sig::PixelRgb(255*pol, 255*pol, 255*pol);
-        } else {
-            right_image.pixel(ev_y, ev_x) = yarp::sig::PixelRgb(255*pol, 255*pol, 255*pol);
-        }
-
-        if(ev_t - last_t_display >= dt || ev_t - last_t_display <= 0)
-        {
-            // We update the images of the ellipses
-            tracker_pool_left->display(left_image);
-            tracker_pool_right->display(right_image);
-
-            cv::Mat img = (IplImage *)left_image.getIplImage();
-            cv::flip(img, img, 0);
-
-
-            // Write the images into the yarp port
-            leftPort.write(left_image);
-            rightPort.write(right_image);
-            // And reset them to gray
-            left_image = gray_image;
-            right_image = gray_image;
-            last_t_display = ev_t;
-        }
-
     }
 
+
     outPort.write();
-    //fprintf(stdout, "------------------------------------------------------------------\n");
 }
 
 //empty line to make gcc happy

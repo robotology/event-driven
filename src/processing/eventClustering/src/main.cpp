@@ -1,7 +1,8 @@
 /*
- * Copyright (C) 2011 Department of Robotics Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
- * Author: Chiara Bartolozzi
- * email:  chiara.bartolozzi@iit.it
+ * Copyright (C) 2011 Department of Robotics Brain and Cognitive Sciences -
+ * Istituto Italiano di Tecnologia
+ * Author: Chiara Bartolozzi and Arren Glover
+ * email:  chiara.bartolozzi@iit.it, arren.glover@iit.it
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
  * later version published by the Free Software Foundation.
@@ -30,7 +31,7 @@ int main(int argc, char * argv[])
 
     /* prepare and configure the resource finder */
     ResourceFinder rf;
-    rf.setVerbose( true );
+    rf.setVerbose( false );
     rf.setDefaultContext( "eventClustering" );
     rf.setDefaultConfigFile( "config.ini" );
     rf.setDefault("name","eventClustering");

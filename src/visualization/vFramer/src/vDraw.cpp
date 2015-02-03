@@ -118,10 +118,7 @@ void clusterDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
     std::map<int, emorph::ClusterEvent *>::iterator ci;
     for(ci = persistance.begin(); ci != persistance.end(); ci++) {
 
-
-
         if(!ci->second->getPolarity()) continue;
-        //if(ci->second->getID() != 37) continue;
 
         cv::Point centr(ci->second->getYCog(), ci->second->getXCog());
         ss.str(""); ss << ci->second->getID();

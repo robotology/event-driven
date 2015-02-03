@@ -1,7 +1,8 @@
 /*
- * Copyright (C) 2011 Department of Robotics Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
- * Author: Chiara Bartolozzi
- * email:  chiara.bartolozzi@iit.it
+ * Copyright (C) 2011 Department of Robotics Brain and Cognitive Sciences -
+ * Istituto Italiano di Tecnologia
+ * Author: Chiara Bartolozzi and Arren Glover
+ * email:  chiara.bartolozzi@iit.it, arren.glover@iit.it
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
  * later version published by the Free Software Foundation.
@@ -39,67 +40,28 @@
 #include <time.h>
 #include <string>
 
-
+/******************************************************************************/
+//EventBottleManager
+/******************************************************************************/
 class EventBottleManager : public yarp::os::BufferedPort<emorph::vBottle>
 {
     private:
 
-        std::string 				                moduleName;         //string containing module name
-        std::string 				                inPortName;        	//string containing events input port name
-        std::string 				                leftPortName;	    //string containing image output port name
-        std::string 				                rightPortName;	    //string containing image output port name
-        std::string 				                outPortName;	    //string containing events output port name
-    
-        //yarp::os::BufferedPort<eventBottle>         inPort;             //input port for the eventBottles from aexGrabber or dataSetPlayer
-        yarp::os::Port                              leftPort;           //output port for the image left
-        yarp::os::Port                              rightPort;          //output port for the image right
-        yarp::os::BufferedPort<emorph::vBottle>             outPort;            //output port for the eventBottle with the new events computed by the module
+        yarp::os::BufferedPort<emorph::vBottle>     outPort;            //output port for the eventBottle with the new events computed by the module
 
-        std::string                                 fileName;
-
-        FILE                                        *output_file;       // File for outputing the data
-
-        // Cluster initialization values
-        double                                      alphaShape;
-        double                                      alphaPos;
-        // Cluster (in)activation thresholds (percent of activation)
-        double                                      downThr;            // percentage of activity for inactivating the tracker
-        double                                      upThr;              // percentage of activity for activating the tracker
-        double                                      decay_tau;
-    
-        int                                         min_nb_ev;          // Threshold for updating the position
-        int                                         numClusters;        //number of clusters (const)
-        yarp::sig::Vector                           numEventsPerCluster;
-        yarp::sig::Vector                           currentEventNumbers, previousEventNumbers;
-
-        std::vector<double>                         x_coll_left, y_coll_left, x_coll_right, y_coll_right;        // Variables that will hold the coordinates of the collisions
-
-        int                                         numIters;
-    
-        bool                                        moveEyes;
-        
-        int                                         last_t_display;
-        int                                         dt;
-    
-        yarp::sig::ImageOf<yarp::sig::PixelRgb> gray_image;
-        yarp::sig::ImageOf<yarp::sig::PixelRgb> left_image;
-        yarp::sig::ImageOf<yarp::sig::PixelRgb> right_image;
-
+        //create trackers, left and right
+        TrackerPool tracker_pool_left;
+        TrackerPool tracker_pool_right;
     
     public:
     
-        //create trackers, left and right
-        TrackerPool *tracker_pool_left;
-        TrackerPool *tracker_pool_right;
-        
-        /**
-         * constructor
-         * @param moduleName is passed to the thread in order to initialise all the ports correctly (default yuvProc)
-         */
-        EventBottleManager( const std::string &moduleName, std::string &fileName, double &alphaShape, double &alphaPos, double &upThr, double &downThr, double &decay_tau);
-        ~EventBottleManager();
+        void setAllParameters(double alpha_shape, double alpha_pos,
+                         double Tact, double Tinact, double Tfree,
+                         double Tevent, double SigX, double SigY,
+                         double SigXY, bool Fixedshape, int Regrate,
+                         double Maxdist, double decay_tau);
 
-        bool    open();
+        bool    open(std::string moduleName);
         bool    init();
         void    close();
         void    onRead(emorph::vBottle &bot);
@@ -107,21 +69,16 @@ class EventBottleManager : public yarp::os::BufferedPort<emorph::vBottle>
   
 };
 
+/******************************************************************************/
+//EventClustering
+/******************************************************************************/
 class EventClustering:public yarp::os::RFModule
 {
     /* module parameters */
-    std::string             moduleName;
-    std::string             rpcPortName;
     yarp::os::RpcServer     rpcPort;
 
-    std::string             fileName;
-    double                  alphaShape;
-    double                  alphaPos;
-    double                  downThr;
-    double                  upThr;
-    double                  decay_tau;
     /* pointer to a new manager */
-    EventBottleManager      *eventBottleManager;
+    EventBottleManager      eventBottleManager;
     bool                    closing;
 
 public:
@@ -132,23 +89,6 @@ public:
 
     double getPeriod();
     bool updateModule();
-
-    /**
-     * @brief function that sets the output file name for saving the clustered data
-     */
-    //void setFileName(std::string value) {fileName = value; };
- 
-    /**
-     * @brief function that sets the alpha shape
-     */
-    //void setAlphaShape(int value) {alphaShape = value; };
- 
-    /**
-     * @brief function that sets the alpha shape
-     */
-    //void setAlphaPos(int value) {alphaPos = value; };
-
-
 
 };
 

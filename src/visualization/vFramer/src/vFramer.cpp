@@ -41,9 +41,10 @@ int vWindow::getCurrentWindow(vQueue &sample_q)
         if(etime < upperthesh && etime > lowerthesh)
         {
             //copy it into the new q
-            vEvent * newcopy = emorph::createEvent((*qi)->getType());
-            *newcopy = **qi;
-            sample_q.push_back(newcopy);
+            //vEvent * newcopy = emorph::createEvent((*qi)->getType());
+            //*newcopy = **qi;
+            //sample_q.push_back((newcopy));
+            sample_q.push_back((*qi)->clone());
 
             //on to the next event
             qi++;
@@ -138,12 +139,9 @@ void vReadAndSplit::interrupt()
 
 void vReadAndSplit::onRead(emorph::vBottle &incoming)
 {
-
-
-
     emorph::vQueue q;
     emorph::vQueue::iterator qi;
-    incoming.getAll(q);
+    incoming.getAllSorted(q);
     for(qi = q.begin(); qi != q.end(); qi++) {
         int ch = (*qi)->getChannel();
         if(!windows.count(ch)) {

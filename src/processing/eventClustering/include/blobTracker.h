@@ -1,81 +1,83 @@
+/*
+ * Copyright (C) 2011 Department of Robotics Brain and Cognitive Sciences -
+ * Istituto Italiano di Tecnologia
+ * Author: Chiara Bartolozzi and Arren Glover
+ * email:  chiara.bartolozzi@iit.it, arren.glover@iit.it
+ * Permission is granted to copy, distribute, and/or modify this program
+ * under the terms of the GNU General Public License, version 2 or any
+ * later version published by the Free Software Foundation.
+ *
+ * A copy of the license can be found at
+ * http://www.robotcub.org/icub/license/gpl.txt
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details
+ */
+
 #ifndef __BLOB_TRACKER_H
 #define __BLOB_TRACKER_H
 
-#include <math.h>
-#include <yarp/sig/all.h>
-#include <vector>
-#include <cv.h>
-#include <highgui.h>
-
+#include <cmath>
 
 class BlobTracker {
-public:
+
+protected:
+
     enum State{
         Active,
         Inactive,
         Free,
     };
-    
-    BlobTracker(double x0, double y0, double sig_x2, double sig_y2, double sig_xy, double alpha_pos, double alpha_shape,
-                double k, double up_thresh, double down_thresh, double delete_thresh);
+
+    State state_;
+
+    double cen_x_, cen_y_;
+    double sig_x2_, sig_y2_, sig_xy_;
+    double vLastX, vLastY;
+    double vx_, vy_;
+    double alpha_pos_, alpha_shape_;
+    bool fixed_shape_;
+    double activity_;
+    int ts_last_update_;
+
+public:
+
     BlobTracker();
-    ~BlobTracker();
-    
+
+    //initialisation
+    bool initialisePosition(double x, double y);
+    bool initialiseShape(double sigX, double sigY2, double sigXY,
+                        double alpha_pos, double alpha_shape, bool fix);
+
+    //mathematical comparison
+    double dist2event(int ev_x, int ev_y);
     double compute_p(int ev_x, int ev_y);
     
-    // Applies the given temporal decay. It will return true if the tracker goes from active to inactive (which tipically means that it should be removed)
-    bool update_activity(double temp_decay, double act);
-    
-    double update_position(int ev_x, int ev_y, double p, int ts, double act);
+    //update with new event
+    bool addActivity(int x, int y, int ts, double Tact, double Tevent);
+    bool decayActivity(int dt, double tau, double Tinact, double Tfree);
     void clusterSpiked();
-    
-    void displace(double dx, double dy);
-    
-    void fix_shape(bool fix);
-    
-    void move_to(double x, double y);
-    
-    void get_ellipse_parameters(double &a, double &b, double &alpha);
-    
-    void get_gauss_parameters(double &sig_x2, double &sig_y2, double &sig_xy);
-    
-    void get_center(double &cen_x, double &cen_y);
-    void getActivity(double &act);
-    void getVelocity(double &v_x, double &v_y);
-    
-    void display(yarp::sig::ImageOf<yarp::sig::PixelRgb> &img, yarp::sig::PixelRgb color, int id = 0);
-    
-    double dist2event(int ev_x, int ev_y);
-    
-    void reset(double x0, double y0, double sig_x2, double sig_y2, double sig_xy);
-    
-    void get_norm_v(double &vx, double &vy);
-    
-    // Accessors to some of the tracker's properties
+
+    //updating and getting state
+    void isNoLongerFree() { state_ = Inactive; }
     inline bool is_active(){return state_==Active;}
     inline bool is_on(){return state_==Active || state_==Inactive;}
+    inline bool isFree() {return state_ == Free;}
+
+    //getting blob position etc.
+    inline double get_sigx2() {return sig_x2_;}
+    inline double get_sigy2() {return sig_y2_;}
+    inline double get_sigxy() {return sig_xy_;}
     inline int get_x(){return cen_x_;}
     inline int get_y(){return cen_y_;}
     inline double get_vx(){return vx_;}
     inline double get_vy(){return vy_;}
     inline double get_act(){return activity_;}
     
-protected:
-    double cen_x_, cen_y_, sig_x2_, sig_y2_, sig_xy_;
-    double vLastX, vLastY;
-    double vx_, vy_;
-    double alpha_pos_, alpha_shape_;
-    double up_thresh_, down_thresh_, delete_thresh_;
-    bool fixed_shape_;
-    double activity_;
-    int ts_last_update_;
-    
-    State state_;
-    
-    double k_;
-    // Vector containing the degrees (in radians) for plotting the ellipse
-    std::vector<double> theta_;
-    
+
+
 };
 
 #endif /* __GAUSSIAN_BLOB_TRACKER_H */
