@@ -55,12 +55,20 @@ vEvent * createEvent(const std::string type)
 /******************************************************************************/
 vQueue::~vQueue()
 {
+//    if (owner)
+//        for (size_t i=0; i<size(); i++)
+//            if ((*this)[i]!=NULL)
+//                delete (*this)[i];
+
+    this->clear();
+}
+void vQueue::clear()
+{
     if (owner)
         for (size_t i=0; i<size(); i++)
             if ((*this)[i]!=NULL)
                 delete (*this)[i];
-
-    clear();
+    deque::clear();
 }
 
 void vQueue::sort() {
