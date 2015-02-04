@@ -32,7 +32,7 @@ protected:
     std::vector<BlobTracker> trackers_;
 
     int nb_ev_regulate_, count_;
-    int  ts_last_reg_;
+    unsigned long int  ts_last_reg_;
     double decay_tau;
     double Tact, Tinact, Tfree, Tevent;
     double max_dist;
@@ -42,6 +42,7 @@ protected:
 
     int getNewTracker();
     emorph::ClusterEventGauss makeEvent(int i, int ts);
+    emorph::vtsHelper unwrap;
 
 
     // Parameters of the repulsive field

@@ -71,7 +71,8 @@ bool BlobTracker::initialiseShape(double sigX2, double sigY2, double sigXY,
 
 
 
-bool BlobTracker::addActivity(int x, int y, int ts, double Tact, double Tevent)
+bool BlobTracker::addActivity(int x, int y, unsigned long int ts,
+                              double Tact, double Tevent)
 {
     activity_ += 1;//p;
 

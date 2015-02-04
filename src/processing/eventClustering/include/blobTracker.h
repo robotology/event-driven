@@ -40,7 +40,7 @@ protected:
     double alpha_pos_, alpha_shape_;
     bool fixed_shape_;
     double activity_;
-    int ts_last_update_;
+    unsigned long int ts_last_update_;
 
 public:
 
@@ -56,7 +56,8 @@ public:
     double compute_p(int ev_x, int ev_y);
     
     //update with new event
-    bool addActivity(int x, int y, int ts, double Tact, double Tevent);
+    bool addActivity(int x, int y, unsigned long int ts,
+                     double Tact, double Tevent);
     bool decayActivity(int dt, double tau, double Tinact, double Tfree);
     void clusterSpiked();
 

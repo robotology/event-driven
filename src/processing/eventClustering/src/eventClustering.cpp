@@ -221,14 +221,7 @@ void EventBottleManager::onRead(emorph::vBottle &bot)
         emorph::AddressEvent *aep = (*qi)->getAs<emorph::AddressEvent>();
         if(!aep) continue;
 
-        unsigned long ev_t      = aep->getStamp();
-        short ev_x              = aep->getX();
-        short ev_y              = aep->getY();
-        short pol               = aep->getPolarity();
         short channel           = aep->getChannel();
-
-        //not sure why this check is really needed?
-        if(!(ev_x>=0 && ev_x <= 127 && ev_y>=0 && ev_y <= 127)) continue;
 
         if (channel == 0) //Process events for left camera
         {

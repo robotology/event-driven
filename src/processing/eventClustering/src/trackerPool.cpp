@@ -73,7 +73,7 @@ int TrackerPool::update(emorph::AddressEvent &event,
                         std::vector<emorph::ClusterEventGauss> &clEvts)
 {
 
-    int ev_t = event.getStamp();
+    unsigned long int ev_t = unwrap(event.getStamp());
     int ev_x = event.getX();
     int ev_y = event.getY();
 
@@ -109,25 +109,24 @@ int TrackerPool::update(emorph::AddressEvent &event,
         bool spiked = trackers_[trackId].addActivity(ev_x, ev_y, ev_t, Tact,
                                                      Tevent);
         if(spiked) {
-            clEvts.push_back(makeEvent(trackId, ev_t));
+            clEvts.push_back(makeEvent(trackId, event.getStamp()));
         }
     }
 
     //regulate the pool only each nb_ev_regulate_ events
-    if(++count_ > nb_ev_regulate_) {
-        int dt = ev_t - ts_last_reg_;
-        ts_last_reg_ = ev_t;
+    if(++count_ < nb_ev_regulate_) return trackId;
 
-        if(dt > 0) {
-            for(int i = 0; i < trackers_.size(); i++){
-                // We update the activity of each Active tracker
-                if(!(trackers_[i].is_on())) continue;
-                bool spiked = trackers_[i].decayActivity(dt, decay_tau,
-                                                         Tinact, Tfree);
-                if(spiked) clEvts.push_back(makeEvent(i, ev_t));
-            }
-        }
-        count_ = 0;
+    //do the regulation
+    int dt = ev_t - ts_last_reg_;
+    ts_last_reg_ = ev_t;
+    count_ = 0;
+
+    for(int i = 0; i < trackers_.size(); i++){
+        // We update the activity of each Active tracker
+        if(!(trackers_[i].is_on())) continue;
+        bool spiked = trackers_[i].decayActivity(dt, decay_tau,
+                                                 Tinact, Tfree);
+        if(spiked) clEvts.push_back(makeEvent(i, event.getStamp()));
     }
 
     return trackId;
@@ -135,8 +134,6 @@ int TrackerPool::update(emorph::AddressEvent &event,
 
 int TrackerPool::getNewTracker()
 {
-
-
     for(int i = 0; i < trackers_.size(); i++) {
         if(trackers_[i].isFree()) {
             trackers_[i].initialiseShape(sig_x2_, sig_y2_, sig_xy_, alpha_pos,
