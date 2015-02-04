@@ -74,46 +74,46 @@ void vBottle::append(vBottle &eb)
 
 }
 
-void vBottle::getAll(emorph::vQueue &q)
-{
-    q.clear();
+//void vBottle::getAll(emorph::vQueue &q)
+//{
+//    q.clear();
 
-    for(int i = 0; i < Bottle::size(); i+=2) {
-        vEvent * e = emorph::createEvent(Bottle::get(i).asString());
-        if(!e) {
-            std::cerr << "Warning: could not get bottle type during vBottle::"
-                         "getAll(). Check vBottle integrity." << std::endl;
-            continue;
-        }
+//    for(int i = 0; i < Bottle::size(); i+=2) {
+//        vEvent * e = emorph::createEvent(Bottle::get(i).asString());
+//        if(!e) {
+//            std::cerr << "Warning: could not get bottle type during vBottle::"
+//                         "getAll(). Check vBottle integrity." << std::endl;
+//            continue;
+//        }
 
-        Bottle * b = Bottle::get(i+1).asList();
-        if(!b) {
-            std::cerr << "Warning: could not get event data as a list after "
-                         "getting correct tag (e.g. AE) in vBottle::getAll(). "
-                         "Check vBottle integrity" << std::endl;
-            delete(e);
-            break;
-        }
+//        Bottle * b = Bottle::get(i+1).asList();
+//        if(!b) {
+//            std::cerr << "Warning: could not get event data as a list after "
+//                         "getting correct tag (e.g. AE) in vBottle::getAll(). "
+//                         "Check vBottle integrity" << std::endl;
+//            delete(e);
+//            break;
+//        }
 
-        int pos = 0;
-        while(pos < b->size()) {
-            if(e->decode(*b, pos)) {
-                q.push_back(e);
-                e = e->clone();
-            }
-        }
+//        int pos = 0;
+//        while(pos < b->size()) {
+//            if(e->decode(*b, pos)) {
+//                q.push_back(e);
+//                e = e->clone();
+//            }
+//        }
 
-        delete(e);
+//        delete(e);
 
-    }
-}
+//    }
+//}
 
-void vBottle::getAllSorted(emorph::vQueue &q)
-{
-    getAll(q);
-    q.sort();
+//void vBottle::getAllSorted(emorph::vQueue &q)
+//{
+//    getAll(q);
+//    q.sort();
 
-}
+//}
 
 
 } //end namespace emorph

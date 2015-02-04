@@ -46,25 +46,46 @@ public:
     void addEvent(emorph::vEvent &e);
     void append(vBottle &eb);
 
-    void getAll(vQueue &q);
-    void getAllSorted(vQueue &q);
+    //all get functions call this to do the meat of the getting function
+    template<class T> int get(emorph::vQueue &q) {
 
-    //you can then get events from the vBottle
-    //must be defined in header for template to work
-    template<class T> int get(emorph::vQueue &q)
-    {
-        int r = 0;
-        T t;
+        //the bottle is stored as TAG (EVENTS) TAG (EVENTS)
+        for(int i = 0; i < Bottle::size(); i+=2) {
 
-        Bottle * b = find(t.getType()).asList();
+            //so for each TAG we create an event of that type
+            vEvent * e = emorph::createEvent(Bottle::get(i).asString());
+            if(!e) {
+                std::cerr << "Warning: could not get bottle type during vBottle::"
+                             "get<>(). Check vBottle integrity." << std::endl;
+                continue;
+            }
 
-        int pos = 0;
-        while(pos < b->size()) {
-            q.push_back(t.decode(*b, pos));
-            r++;
+            //and if e is of type T we can continue to get the events
+            if(!dynamic_cast<T*>(e)) continue;
+
+            //we get the (EVENTS)
+            Bottle * b = Bottle::get(i+1).asList();
+            if(!b) {
+                std::cerr << "Warning: could not get event data as a list after "
+                             "getting correct tag (e.g. AE) in vBottle::getAll(). "
+                             "Check vBottle integrity" << std::endl;
+                delete(e);
+                break;
+            }
+
+            //and decode each one also creating the memory with clone
+            int pos = 0;
+            while(pos < b->size()) {
+                if(e->decode(*b, pos)) {
+                    q.push_back(e);
+                    e = e->clone();
+                }
+            }
+
+            //finally we don't need the last event
+            delete(e);
+
         }
-
-        return r;
 
     }
 
@@ -73,6 +94,16 @@ public:
         int r = get<T>(q);
         q.sort();
         return r;
+    }
+
+    void getAll(emorph::vQueue &q) {
+        q.clear();
+        this->get<vEvent>(q); //all events are of type vEvent so we get all
+    }
+
+    void getAllSorted(emorph::vQueue &q) {
+        getAll(q);
+        q.sort();
     }
 
     //you can also access the following functions
