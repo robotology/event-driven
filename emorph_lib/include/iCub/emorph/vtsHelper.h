@@ -25,6 +25,9 @@
  * CopyPolicy: Released under the terms of the GNU GPL v2.0.
 */
 
+#ifndef __VTSHELPER__
+#define __VTSHELPER__
+
 #include <yarp/os/all.h>
 
 namespace emorph {
@@ -51,5 +54,7 @@ public:
 };
 
 }
+
+#endif //__VTSHELPER
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------

@@ -19,25 +19,12 @@
 #ifndef __ICUB_EVENTCLUSTERING_MOD_H__
 #define __ICUB_EVENTCLUSTERING_MOD_H__
 
-#include <yarp/os/BufferedPort.h>
-#include <yarp/os/RFModule.h>
-#include <yarp/os/Network.h>
-#include <yarp/os/Thread.h>
-#include <yarp/os/RateThread.h>
-#include <yarp/os/Time.h>
-#include <yarp/os/Semaphore.h>
-#include <yarp/os/Stamp.h>
-#include <yarp/sig/Vector.h>
-#include <yarp/sig/Image.h>
-
-#include <yarp/os/RpcClient.h>
-
+#include <yarp/os/all.h>
 #include <iCub/emorph/all.h>
-//#include <iCub/emorph/eventCodec.h>
 
 #include "trackerPool.h"
 
-#include <time.h>
+#include <ctime>
 #include <string>
 
 /******************************************************************************/
