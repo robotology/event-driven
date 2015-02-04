@@ -28,6 +28,9 @@ private:
     //output port for the vBottle with the new events computed by the module
     yarp::os::BufferedPort<emorph::vBottle> outPort;
 
+    //for helping with timestamp wrap around
+    emorph::vtsHelper unwrapper;
+
 public:
     
     EventBottleManager();

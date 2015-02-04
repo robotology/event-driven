@@ -147,6 +147,9 @@ void EventBottleManager::onRead(emorph::vBottle &bot)
 
     for(qi = q.begin(); qi != q.end(); qi++)
     {
+        //unwrap timestamp
+        unsigned long int ts = unwrapper((*qi)->getStamp());
+
         //process
 
         //add events that need to be added to the out bottle
