@@ -24,6 +24,7 @@ SET(folder_header
   include/iCub/emorph/eventBuffer.h
   include/iCub/emorph/vBottle.h
   include/iCub/emorph/vCodec.h
+  include/iCub/emorph/vtsHelper.h
 )
 
 # Declare groups of source and header files -- makes things pretty in MSVC.
