@@ -119,9 +119,25 @@ public:
  */
 class clusterDraw : public vDraw {
 
-private:
+protected:
 
     std::map<int, emorph::ClusterEvent *> persistance;
+
+public:
+
+    ///
+    /// \brief see vDraw
+    ///
+    virtual void draw(cv::Mat &image, const emorph::vQueue &eSet);
+
+    ///
+    /// \brief see vDraw
+    ///
+    virtual std::string getTag();
+
+};
+
+class blobDraw : public vDraw {
 
 public:
 

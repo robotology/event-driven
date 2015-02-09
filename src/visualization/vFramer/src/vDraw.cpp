@@ -35,6 +35,10 @@ vDraw * createDrawer(std::string tag)
     if(tag == newDrawer->getTag()) return newDrawer;
     delete newDrawer;
 
+    newDrawer = new blobDraw();
+    if(tag == newDrawer->getTag()) return newDrawer;
+    delete newDrawer;
+
     return 0;
 }
 
@@ -53,25 +57,24 @@ void addressDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
     emorph::vQueue::const_iterator qi;
     for(qi = eSet.begin(); qi != eSet.end(); qi++) {
         emorph::AddressEvent *aep = (*qi)->getAs<emorph::AddressEvent>();
-        if(aep) {
-            cv::Vec3b cpc = canvas.at<cv::Vec3b>(aep->getX(), aep->getY());
+        if(!aep) continue;
 
-            if(aep->getPolarity())
-            {
-                if(cpc[0]) cpc[0] = 255;
-                if(cpc[1]) cpc[1] = 255;
-                cpc[2] = 255;
-            }
-            else
-            {
-                cpc[0] = 0;
-                cpc[1] = 0;
-                if(cpc.val[2] < 255) cpc[2] = 0;
-            }
+        cv::Vec3b cpc = canvas.at<cv::Vec3b>(aep->getX(), aep->getY());
 
-            canvas.at<cv::Vec3b>(aep->getX(), aep->getY()) = cpc;
+        if(aep->getPolarity())
+        {
+            if(cpc[0]) cpc[0] = 255;
+            if(cpc[1]) cpc[1] = 255;
+            cpc[2] = 255;
+        }
+        else
+        {
+            cpc[0] = 0;
+            cpc[1] = 0;
+            if(cpc.val[2] < 255) cpc[2] = 0;
         }
 
+        canvas.at<cv::Vec3b>(aep->getX(), aep->getY()) = cpc;
     }
 
     canvas.copyTo(image);
@@ -165,6 +168,40 @@ void clusterDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
     cv::flip(textImg, textImg, 0);
     image += textImg;
 
+}
+
+std::string blobDraw::getTag()
+{
+    return "BLOB";
+}
+
+void blobDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
+{
+
+    cv::Mat canvas(Xlimit, Ylimit, CV_8UC3);
+    canvas.setTo(255);
+
+    emorph::vQueue::const_iterator qi;
+    for(qi = eSet.begin(); qi != eSet.end(); qi++) {
+        emorph::AddressEvent *aep = (*qi)->getAs<emorph::AddressEvent>();
+        if(!aep) continue;
+
+        cv::Vec3b cpc = canvas.at<cv::Vec3b>(aep->getX(), aep->getY());
+
+        if(!aep->getPolarity())
+        {
+            cpc[0] = 0;
+            cpc[1] = 0;
+            cpc[2] = 0;
+        }
+
+        canvas.at<cv::Vec3b>(aep->getX(), aep->getY()) = cpc;
+
+    }
+
+    cv::medianBlur(canvas, canvas, 5);
+    cv::blur(canvas, canvas, cv::Size(5, 5));
+    cv::resize(canvas, image, cv::Size(Xlimit*2, Ylimit*2));
 }
 
 integralDraw::integralDraw()
