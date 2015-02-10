@@ -1,0 +1,49 @@
+<application>
+<name>vCalib </name>
+
+<dependencies>	
+</dependencies>
+
+<module>
+   <name>aexGrabber</name>
+   <node>pc104</node>
+   <tag>vGrabber</tag>
+</module>
+
+<module>
+    <name> vFramer</name>
+    <parameters> --frameRate 30 --eventWindow 0.5 --displays "(0 left (BLOB) 1 right (BLOB))"</parameters>
+    <node>localhost</node>
+</module>
+
+<module>
+    <name> stereoCalib </name>
+    <parameters> --STEREO_CALIBRATION_CONFIGURATION::MonoCalib 1 --STEREO_CALIBRATION_CONFIGURATION::boardWidth 4 --STEREO_CALIBRATION_CONFIGURATION::boardHeight 11 --STEREO_CALIBRATION_CONFIGURATION::boardSize 0.023 --STEREO_CALIBRATION_CONFIGURATION::numberOfPairs 30 --STEREO_CALIBRATION_CONFIGURATION::boardType ASYMMETRIC_CIRCLES_GRID</parameters>
+    <node>localhost</node>
+</module>
+
+<module>
+   <name>yarpview</name>
+   <parameters>--name /viewCh0 --x 000 --y 000 --RefreshTime 33 </parameters>
+   <node>localhost</node>
+</module>
+
+<connection>
+  <from>/aexGrabber/vBottle:o</from>
+  <to>/vFramerModule/vBottle:i</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
+  <from>/vFramerModule/left</from>
+  <to>/stereoCalib/cam/left:i</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
+  <from>/stereoCalib/cam/left:o</from>
+  <to>/viewCh0</to>
+  <protocol>udp</protocol>
+</connection>
+
+</application>
