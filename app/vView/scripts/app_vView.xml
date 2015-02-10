@@ -17,8 +17,14 @@
 </module>
 
 <module>
+   <name>vUndistortCam</name>
+   <parameters> --name vUndistortCam --sensorHeight 128 --sensorWidth 128 --truncate true </parameters>
+   <node>localhost</node>
+</module>
+
+<module>
    <name>eventClustering</name>
-   <parameters> --decay_tau 10000 </parameters>
+   <parameters> --decay_tau 15000 --Tact 20 --Tinact 5 --Tfree 5 --Maxdist 8 --Tevent 0.5 </parameters>
    <node>localhost</node>
 </module>
 
@@ -53,12 +59,12 @@
 
 <connection>
   <from>/aexGrabber/vBottle:o</from>
-  <to>/eventClustering/vBottle:i</to>
+  <to>/vUndistortCam/vBottle:i</to>
   <protocol>udp</protocol>
 </connection>
 
 <connection>
-  <from>/eventClustering/vBottle:o</from>
+  <from>/vUndistortCam/vBottle:o</from>
   <to>/vFramerModule/vBottle:i</to>
   <protocol>udp</protocol>
 </connection>
