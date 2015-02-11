@@ -32,6 +32,12 @@ vDraw * createDrawer(std::string tag)
     if(tag == newDrawer->getTag()) return newDrawer;
     delete newDrawer;
 
+
+    newDrawer = new flowDraw();
+    if(tag == newDrawer->getTag()) return newDrawer;
+    delete newDrawer;
+
+
     return 0;
 }
 
@@ -112,6 +118,89 @@ void integralDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
 
     cv::cvtColor(iimage, image, CV_GRAY2BGR);
     //iimage.copyTo(image);
+
+}
+
+std::string flowDraw::getTag()
+{
+    return "OFE";
+}
+
+void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
+{
+
+    cv::Mat canvas(Xlimit, Ylimit, CV_8UC3);
+    canvas.setTo(128);
+
+    int line_tickness = 1;
+    cv::Scalar line_color = CV_RGB(0,0,0);
+    cv::Point p_start,p_end;
+    int dx, dy;
+    const double pi = 3.1416;
+
+    emorph::vQueue::const_iterator qi;
+    for(qi = eSet.begin(); qi != eSet.end(); qi++) {
+        emorph::OpticalFlowEvent *ofp = (*qi)->getAs<emorph::OpticalFlowEvent>();
+        if(ofp) {
+
+            int x = ofp->getX();
+            int y = ofp->getY();
+            float vx = ofp->getVx();
+            float vy = ofp->getVy();
+
+            /*
+            int X = 5+10*x;
+            int Y = 5+10*y;
+
+            if (vx<0 && vy<0)
+            {
+                dx = X+floor(vx-0.5);
+                dy = Y+floor(vy-0.5);
+            }
+
+            if (vx>0 && vy<0)
+            {
+                dx = X+floor(vx+0.5);
+                dy = Y+floor(vy-0.5);
+            }
+
+            if (vx<0 && vy>0)
+            {
+                dx = X+floor(vx-0.5);
+                dy = Y+floor(vy+0.5);
+            }
+
+            if (vx>0 && vy>0)
+            {
+                dx = X+floor(vx+0.5);
+                dy = Y+floor(vy+0.5);
+            }
+
+            */
+
+            p_start.x = x;
+            p_start.y = y;
+            p_end.x = x + vx;
+            p_end.y = y + vy;
+            cv::line(canvas, p_start, p_end, line_color, line_tickness, CV_AA, 0);
+
+            /*
+            double angle;
+            angle = atan2( (double) p_start.y - p_end.y, (double) p_start.x - p_end.x );
+
+            p_start.x = (int) (p_end.x + 4 * cos(angle + pi/4));
+            p_start.y = (int) (p_end.y + 4 * sin(angle + pi/4));
+            cv::line(canvas, p_start, p_end, line_color, line_tickness, CV_AA, 0);
+
+            p_start.x = (int) (p_end.x + 4 * cos(angle - pi/4));
+            p_start.y = (int) (p_end.y + 4 * sin(angle - pi/4));
+            cv::line(canvas, p_start, p_end, line_color, line_tickness, CV_AA, 0);
+*/
+
+      }
+
+    }
+    canvas.copyTo(image);
 
 }
 

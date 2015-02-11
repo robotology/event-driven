@@ -113,6 +113,22 @@ public:
 
 };
 
+class flowDraw : public vDraw {
+
+public:
+
+    ///
+    /// \brief see vDraw
+    ///
+    virtual void draw(cv::Mat &image, const emorph::vQueue &eSet);
+
+    ///
+    /// \brief see vDraw
+    ///
+    virtual std::string getTag();
+
+};
+
 /**
  * @brief createDrawer returns an instance of a drawer that matches the tag
  * specified

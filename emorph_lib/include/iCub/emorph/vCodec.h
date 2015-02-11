@@ -80,8 +80,8 @@ public:
     std::string getType() const     { return type;          }
 
 
-    void setStamp(const int stamp)  { this->stamp=stamp;    }
-    int getStamp() const            { return stamp;         }
+    void setStamp(const int stamp)   { this->stamp=stamp;    }
+    int getStamp() const             { return stamp;         }
 
     virtual int getChannel() const  { return -1;            }
 
@@ -286,6 +286,59 @@ public:
     //this is the total number of bytes used to code this event
     virtual int nBytesCoded() const         { return localWordsCoded *
                 sizeof(int) + ClusterEvent::nBytesCoded(); }
+};
+
+
+/**************************************************************************/
+class OpticalFlowEvent : public vEvent
+{
+private:
+    const static int localWordsCoded = 3;
+
+protected:
+
+    //add new member variables here
+    int channel;
+    int polarity;
+    unsigned char x;
+    unsigned char y;
+    float vx;
+    float vy;
+
+public:
+
+    //these are new the member get functions
+    int getChannel() const                  { return channel;           }
+    int getPolarity() const                 { return polarity;          }
+    int getX() const                        { return x;                 }
+    int getY() const                        { return y;                 }
+    float getVx() const                     { return vx;                }
+    float getVy() const                     { return vy;                }
+
+    void setChannel(const int channel)      { this->channel=channel;    }
+    void setPolarity(const int polarity)    { this->polarity=polarity;  }
+    void setX(const int x)                  { this->x=x;                }
+    void setY(const int y)                  { this->y=y;                }
+    void setVx(float vx)                    { this->vx=vx;              }
+    void setVy(float vy)                    { this->vy=vy;              }
+
+    //these functions need to be defined correctly for inheritance
+    OpticalFlowEvent() : vEvent(), channel(0), polarity(0), x(0), y(0), vx(0), vy(0) {this->type = "OFE";}
+    OpticalFlowEvent(const vEvent &event);
+    vEvent &operator=(const vEvent &event);
+    virtual vEvent* clone();
+
+    bool operator==(const OpticalFlowEvent &event);
+    bool operator==(const vEvent &event) {
+        return operator==(dynamic_cast<const OpticalFlowEvent&>(event)); }
+    yarp::os::Bottle   encode() const ;
+    yarp::os::Property getContent() const;
+    virtual bool decode(const yarp::os::Bottle &packet, int &pos);
+    //this is the total number of bytes used to code this event
+    virtual int nBytesCoded() const         { return localWordsCoded *
+                sizeof(int) + vEvent::nBytesCoded(); }
+
+
 };
 
 }

@@ -6,10 +6,10 @@
 
 cmake_minimum_required(VERSION 2.6)
 
-add_subdirectory   (  tsOptFlow                    )
-add_subdirectory   (  tsOptFlowMod                    )
+add_subdirectory   (  vtsOptFlow                    )
 add_subdirectory   (  tsOptFlowViewer              )
-add_subdirectory  ( velocityExtractor    )
+#add_subdirectory   (  vtsOptFlowViewer              )
+#add_subdirectory  ( velocityExtractor    )
 add_subdirectory  ( eventAnalysis    )
 add_subdirectory(template)
 

@@ -20,6 +20,7 @@
 
 #include <yarp/os/all.h>
 #include <iCub/emorph/all.h>
+#include <iCub/emorph/vtsHelper.h>
 
 class EventBottleManager : public yarp::os::BufferedPort<emorph::vBottle>
 {
