@@ -52,7 +52,7 @@ void addressDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
 {
 
     cv::Mat canvas(Xlimit, Ylimit, CV_8UC3);
-    canvas.setTo(128);
+    canvas.setTo(255);
 
     emorph::vQueue::const_iterator qi;
     for(qi = eSet.begin(); qi != eSet.end(); qi++) {
@@ -63,15 +63,27 @@ void addressDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
 
         if(aep->getPolarity())
         {
-            if(cpc[0]) cpc[0] = 255;
-            if(cpc[1]) cpc[1] = 255;
-            cpc[2] = 255;
+            //blue
+            if(cpc[0] == 1) cpc[0] = 0;   //if positive and negative
+            else cpc[0] = 160;              //if only positive
+            //green
+            if(cpc[1] == 60) cpc[1] = 255;
+            else cpc[1] = 0;
+            //red
+            if(cpc[2] == 0) cpc[2] = 255;
+            else cpc[2] = 160;
         }
         else
         {
-            cpc[0] = 0;
-            cpc[1] = 0;
-            if(cpc.val[2] < 255) cpc[2] = 0;
+            //blue
+            if(cpc[0] == 160) cpc[0] = 0;   //negative and positive
+            else cpc[0] = 1;              //negative only
+            //green
+            if(cpc[1] == 0) cpc[1] = 255;
+            else cpc[1] = 60;
+            //red
+            if(cpc.val[2] == 160) cpc[2] = 255;
+            else cpc[2] = 0;
         }
 
         canvas.at<cv::Vec3b>(aep->getX(), aep->getY()) = cpc;
