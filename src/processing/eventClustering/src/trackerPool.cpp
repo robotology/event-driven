@@ -248,12 +248,13 @@ void TrackerPool::get_tracker_center(std::vector<double> &cen_x, std::vector<dou
 
 void TrackerPool::get_collisions(std::vector<double> &x_coll, std::vector<double> &y_coll){
     for(int ii=0; ii<x_collision_.size(); ii++){
-        printf("[TrackerPool] x collision %f\n", x_collision_[ii]);
+        //printf("[TrackerPool] x collision %f\n", x_collision_[ii]);
     }
     x_coll = x_collision_;
     y_coll = y_collision_;
     x_collision_.clear();
     y_collision_.clear();
+
 }
 
 
@@ -354,12 +355,12 @@ void TrackerPool::regulate_pool(int ts){
         for(int ii=0; ii<max_nb_tr_; ii++){
              // We update the activity of each Active tracker
             if(trackers_[ii].is_on()){
-                fprintf(stdout, "active track ID: %d \n", ii);
+                //fprintf(stdout, "active track ID: %d \n", ii);
                 if(trackers_[ii].update_activity(decay,act)){
                     to_reset_.push_back(ii);
-                    fprintf(stdout, "reset ID: %d \t to reset size: %lu \n", to_reset_[ii], to_reset_.size());
+                    //fprintf(stdout, "reset ID: %d \t to reset size: %lu \n", to_reset_[ii], to_reset_.size());
                     if (to_reset_.size()>max_nb_tr_) {
-                        fprintf(stdout, "MERD! il memory leak.... \n\n\n\n");
+                        //fprintf(stdout, "MERD! il memory leak.... \n\n\n\n");
                     }
                 }
             }
@@ -459,7 +460,7 @@ void TrackerPool::look_for_collisions(int ts){
                 //printf("Relative speed = %f\n", rel_speed_[ii][jj]);
 
                 if(!clapping_[ii][jj]){
-                    printf("********* %f %f %f %f \n *********", dist_[ii][jj], dist_thresh_, vel_[ii][jj], -vel_thresh_);
+                    //printf("********* %f %f %f %f \n *********", dist_[ii][jj], dist_thresh_, vel_[ii][jj], -vel_thresh_);
                     if(dist_[ii][jj] < dist_thresh_ && vel_[ii][jj] > abs(-vel_thresh_)) // && vel_[ii][jj] < vel_thresh_ && acc_[ii][jj] > acc_thresh_)
                     {
                         clapping_[ii][jj] = true;
@@ -475,7 +476,7 @@ void TrackerPool::look_for_collisions(int ts){
                         new_collision.count_disp = 0;
                         collisions_disp_.push_back(new_collision);
                         
-                        printf("Clap!!\n");
+                        //printf("Clap!!\n");
                     }
                 }
                 else //if(dist_[ii][jj]>2*dist_thresh_)

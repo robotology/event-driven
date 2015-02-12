@@ -408,22 +408,23 @@ void EventBottleManager::onRead(vBottle &bot)
 
     //H.A. : Adding snippet to send collision centers
     tracker_pool_left->get_collisions(x_coll_left, y_coll_left);
-    tracker_pool_right->get_collisions(x_coll_right, y_coll_right);
+    //tracker_pool_right->get_collisions(x_coll_right, y_coll_right);
 
     int nb_coll = x_coll_left.size() + x_coll_right.size(); //get total collisions
     //Bottle &collisionBot = collisionPort.prepare();
-    Bottle* storeCollisionValue;
+
 
     if(nb_coll && getAudio && moveEyes== false)
     {
 
+        Bottle* storeCollisionValue;
         storeCollisionValue = collisionPort.read();
 
         fprintf(stdout, "Visual collision!! with audio signal = %f \n", storeCollisionValue->get(0).asDouble());
         Time::delay(0.1);
 
 
-        if(storeCollisionValue->get(0).asDouble() > 0.9) //if also audio
+        if(storeCollisionValue->get(0).asDouble() > 0.3) //if also audio
         {
             fprintf(stdout, "*************** Clap!!!\n **************");
             //Time::delay(1);

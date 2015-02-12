@@ -65,7 +65,7 @@ double BlobTracker::compute_p(int ev_x, int ev_y) {
 bool BlobTracker::update_activity(double temp_decay, double act){
     
     activity_*=temp_decay;
-    fprintf(stdout, "[Blob TrackerTracker - update_activity] activity %f \n", activity_);
+    //fprintf(stdout, "[Blob TrackerTracker - update_activity] activity %f \n", activity_);
     
     // Activity threshold is a fraction of the mean/max pool activity
     double thr;
@@ -73,16 +73,16 @@ bool BlobTracker::update_activity(double temp_decay, double act){
     // In this stage, the activity can only go down, so it can only go from active to inactive
     if(activity_ < delete_thresh_){
         // If it drops below the delete threshold, we return true
-        fprintf(stdout, "[Blob Tracker - update_activity] set to free \n");
+        //fprintf(stdout, "[Blob Tracker - update_activity] set to free \n");
         state_ = Free;
         return true;
     }
     else{
         if(activity_ < thr){
             state_ = Inactive;
-            fprintf(stdout, "[Blob Tracker - update_activity] set to inactive \n");
+            //fprintf(stdout, "[Blob Tracker - update_activity] set to inactive \n");
         }
-        fprintf(stdout, "[Blob Tracker - update_activity] return false \n");
+        //fprintf(stdout, "[Blob Tracker - update_activity] return false \n");
         return false;
     }
 }
