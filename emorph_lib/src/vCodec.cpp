@@ -195,7 +195,7 @@ vEvent* AddressEvent::clone() {
 /******************************************************************************/
 yarp::os::Bottle AddressEvent::encode() const
 {
-    int word0=(0<<26)|((channel&0x01)<<15)|((y&0xff)<<8)|((x&0x7f)<<1)|
+    int word0=(0<<26)|((channel&0x01)<<15)|((y&0x7f)<<8)|((x&0x7f)<<1)|
             (polarity&0x01);
 
     Bottle ret = vEvent::encode();
@@ -350,18 +350,26 @@ vEvent &CollisionEvent::operator=(const vEvent &event/*always vEvent*/)
 {
 
     //copy timestamp and type (base class =operator)
-    AddressEvent::operator =(event);
+    vEvent::operator =(event);
 
     //copy other fields if it's compatible
-    const CollisionEvent * aep =
+    const CollisionEvent * v =
             dynamic_cast<const CollisionEvent *>(&event);
-    if(aep) {
-        //clID = aep->clID;
+    if(v) {
+        x = v->x;
+        y = v->y;
+        channel = v->channel;
+        clid1 = v->clid1;
+        clid2 = v->clid2;
     } else {
-        //clID = 0;
+        x = 0;
+        y = 0;
+        channel = 0;
+        clid1 = 0;
+        clid2 = 0;
     }
 
-    //force the type to addressevent
+    //force the type to collision event
     type = "COL";
 
     return *this;
@@ -375,10 +383,11 @@ vEvent* CollisionEvent::clone() {
 /******************************************************************************/
 yarp::os::Bottle CollisionEvent::encode() const
 {
-    //int word0=clID;
+    int word0 =
+            clid1<<24 | clid2<<16 | (channel&0x01)<<15 | (x&0x7f)<<8 | (y&0x7f);
 
-    Bottle ret = AddressEvent::encode();
-    //ret.addInt(word0);
+    Bottle ret = vEvent::encode();
+    ret.addInt(word0);
     return ret;
 }
 
@@ -386,12 +395,18 @@ yarp::os::Bottle CollisionEvent::encode() const
 bool CollisionEvent::decode(const yarp::os::Bottle &packet, int &pos)
 {
     // check length
-    if (AddressEvent::decode(packet, pos) &&
+    if (vEvent::decode(packet, pos) &&
             pos + localWordsCoded <= packet.size())
     {
-        //int word0=packet.get(pos).asInt();
-        //clID = word0;
-        //pos += localWordsCoded;
+        int word0 = packet.get(pos).asInt();
+
+        y = word0&0x7f; word0 >>= 8;
+        x = word0&0x7f; word0 >>= 7;
+        channel = word0&0x01; word0 >>= 1;
+        clid2 = word0&0xff; word0 >>= 8;
+        clid1 = word0&0xff; word0 >>= 8;
+
+        pos += localWordsCoded;
         return true;
     }
 
@@ -403,14 +418,23 @@ bool CollisionEvent::decode(const yarp::os::Bottle &packet, int &pos)
 /******************************************************************************/
 bool CollisionEvent::operator==(const CollisionEvent &event)
 {
-    return ((AddressEvent::operator==(event)));
+    return (vEvent::operator==(event) &&
+            y == event.y &&
+            x == event.x &&
+            channel == event.channel &&
+            clid1 == event.clid1 &&
+            clid2 == event.clid2);
 }
 
 /******************************************************************************/
 Property CollisionEvent::getContent() const
 {
-    Property prop = AddressEvent::getContent();
-    //prop.put("clID",clID);
+    Property prop = vEvent::getContent();
+    prop.put("x", x);
+    prop.put("y", y);
+    prop.put("channel", channel);
+    prop.put("clid1", clid1);
+    prop.put("clid2", clid2);
 
     return prop;
 }
