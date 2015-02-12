@@ -423,7 +423,7 @@ void EventBottleManager::onRead(vBottle &bot)
         Time::delay(0.1);
 
 
-        if(storeCollisionValue->get(0).asDouble() > 0.1) //if also audio
+        if(storeCollisionValue->get(0).asDouble() > 0.9) //if also audio
         {
             fprintf(stdout, "*************** Clap!!!\n **************");
             //Time::delay(1);
