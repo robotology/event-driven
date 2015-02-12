@@ -181,7 +181,7 @@ bool EventBottleManager::init()
     double  k = 2;
     double  max_dist = 30;
     bool    fixed_shape = false;
-    double  tau_act = 100000;
+    double  tau_act = 10000;
     double  delete_thresh = 10;//0.00000001;
     double  alpha_rep = 2;
     int     d_rep = 40;
