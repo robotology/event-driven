@@ -45,22 +45,27 @@
 <connection>
   <from>/eventBottlePlayer/etb:o</from>
   <to>/eventBottleConverter/bte:i</to>
-  <protocol>udp</protocol>
+  <protocol>tcp</protocol>
 </connection>
 <connection>
   <from>/eventBottleConverter/bte:o</from>
+<<<<<<< HEAD
   <to>/cartesianFrameCollector/retina:i</to>
   <protocol>udp</protocol>
+=======
+  <to>/cartesianFrameCollector/retinaBottle:i</to>
+  <protocol>tcp</protocol>
+>>>>>>> master
 </connection>
 <connection>
   <from>/cartesianFrameCollector/left:o</from>
   <to>/eventViewLeft</to>
-  <protocol>udp</protocol>
+  <protocol>tcp</protocol>
 </connection>
 <connection>
   <from>/cartesianFrameCollector/right:o</from>
   <to>/eventViewRight</to>
-  <protocol>udp</protocol>
+  <protocol>tcp</protocol>
 </connection>
 
 </application>

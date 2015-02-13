@@ -1,10 +1,10 @@
 # Copyright: 2012 iCub Facility, Istituto Italiano di Tecnologia
-# Author: Vadim Tikhanoff
+# Author: Arren Glover
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 # 
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
-SET(PROJECTNAME eventClustering)
+SET(PROJECTNAME vUndistortCam)
 PROJECT(${PROJECTNAME})
 
 file(GLOB source src/*.cpp)

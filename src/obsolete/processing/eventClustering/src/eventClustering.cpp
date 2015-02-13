@@ -43,8 +43,6 @@ bool EventClustering::configure(yarp::os::ResourceFinder &rf)
 
     attach(rpcPort);
 
-    /* create the thread and pass pointers to the module parameters */
-    eventBottleManager = new EventBottleManager( moduleName );
 
     /*
     * set the file name for saving cluster data
@@ -53,33 +51,60 @@ bool EventClustering::configure(yarp::os::ResourceFinder &rf)
                         Value("clusters.txt"), 
                         "file name (string)").asString();
     fprintf(stdout,"output file %s \n", fileName.c_str());
-    eventBottleManager ->setFileName(fileName);
+    //eventBottleManager ->setFileName(fileName);
 
     /*
     * set the alpha shape of the gauss cluster
     */
     alphaShape = rf.check("alpha_shape", 
-                        Value(10), 
-                        "alpha shape (int)").asInt();
-    fprintf(stdout,"alpha shape %d \n", alphaShape);
-    eventBottleManager ->setAlphaShape(alphaShape);
+                        Value(0.01),
+                        "alpha shape (double)").asDouble();
+    fprintf(stdout,"alpha shape %f \n", alphaShape);
+    //eventBottleManager ->setAlphaShape(alphaShape);
 
     /*
     * set the alpha pos of the gauss cluster
     */
     alphaPos = rf.check("alpha_pos", 
-                        Value(10), 
-                        "alpha pos (int)").asInt();
-    fprintf(stdout,"alpha pos %d \n", alphaPos);
-    eventBottleManager ->setAlphaPos(alphaPos);
+                        Value(0.1),
+                        "alpha pos (double)").asDouble();
+    fprintf(stdout,"alpha pos %f \n", alphaPos);
+    //eventBottleManager ->setAlphaPos(alphaPos);
+
+    /*
+     * set the activation threshold of the gauss cluster
+     */
+    upThr = rf.check("up_thr",
+                     Value(5),
+                     "up thr (double)").asDouble();
+    fprintf(stdout,"up thr %f \n", upThr);
+
+    /*
+     * set the inactivation threshold of the gauss cluster
+     */
+    downThr = rf.check("down_thr",
+                     Value(1),
+                     "down thr (double)").asDouble();
+    fprintf(stdout,"down thr %f \n", downThr);
+
+    closing = false;
+    
+    /* create the thread and pass pointers to the module parameters */
+    eventBottleManager = new EventBottleManager( moduleName, fileName, alphaShape, alphaPos, upThr, downThr);
 
     /* initialize variables */
-    eventBottleManager->init();
- 
+    //eventBottleManager->init();
+    if(eventBottleManager->init())
+    {
+        fprintf(stdout,"eventBottleManager init\n");
+    }
+
 
    /* now open the manager to do the work */
-    eventBottleManager->open();
-
+    if(eventBottleManager->open())
+    {
+        fprintf(stdout,"eventBottleManager open\n");
+    }
     return true ;
 }
 
@@ -96,7 +121,7 @@ bool EventClustering::close()
 {
     rpcPort.close();
     fprintf(stdout, "starting the shutdown procedure\n");
-
+    closing = true;
     eventBottleManager->close();
     fprintf(stdout, "deleting thread\n");
     delete eventBottleManager;
@@ -123,59 +148,61 @@ EventBottleManager::~EventBottleManager()
 }
 
 /**********************************************************/
-EventBottleManager::EventBottleManager( const string &moduleName )
+EventBottleManager::EventBottleManager( const string &moduleName, std::string &fileName, double &alphaShape, double &alphaPos, double &upThr, double &downThr )
 {
     fprintf(stdout,"initialising Variables\n");
     this->moduleName = moduleName;
+    this->fileName = fileName;
+    this->alphaPos = alphaPos;
+    this->alphaShape = alphaShape;
+    this->downThr = downThr;
+    this->upThr = upThr;
+    
 }
 /**********************************************************/
 bool EventBottleManager::init()
 {
 
-    // Initial parameters of the Blob Tracker and the Tracker Pool
-    double sig_x = 5;
-    double sig_y = 5;
-    double sig_xy = 0;
-    double alpha_pos = 0.1;
-    double alpha_shape = 0.01;
-    double max_dist = 30;
-    double k = 2;
-    bool fixed_shape = false;
-    double tau_act = 10000;
-    double up_thresh = 5;
-    double down_thresh = 1;
-    double delete_thresh = 0.00000001;
-    double alpha_rep = 2;
-    int d_rep = 40;
-    int max_nb_trackers = 40;
-    int nb_ev_reg = 50;
-    double dist_thresh = 30;
-    double vel_thresh = 50;
-    double acc_thresh = 300;
-
-    // File for outputing the data
-    FILE *output_file;
+    // Initial parameters of the Tracker Pool
+    double  sig_x = 5;
+    double  sig_y = 5;
+    double  sig_xy = 0;
+    double  k = 2;
+    double  max_dist = 30;
+    bool    fixed_shape = false;
+    double  tau_act = 10000;
+    double  delete_thresh = 0.00000001;
+    double  alpha_rep = 2;
+    int     d_rep = 40;
+    int     max_nb_trackers = 40;
+    int     nb_ev_reg = 50;
+    double  dist_thresh = 30;
+    double  vel_thresh = 50;
+    double  acc_thresh = 300;
+    int     s;
+    
     output_file = fopen (fileName.c_str(), "w");
     if (output_file == NULL) 
         perror ("Error opening file");
   
     // Create the trackers
-    //TrackerPool tracker_pool_left(sig_x, sig_y, sig_xy, alpha_pos, alpha_shape, k, max_dist, fixed_shape, tau_act, up_thresh, down_thresh, delete_thresh, alpha_rep, d_rep, max_nb_trackers, nb_ev_reg);
-    //tracker_pool_left.set_collision_det_param(dist_thresh, vel_thresh, acc_thresh);
+    tracker_pool_left = new TrackerPool(sig_x, sig_y, sig_xy, alphaPos, alphaShape, k, max_dist, fixed_shape, tau_act, upThr, downThr, delete_thresh, alpha_rep, d_rep, max_nb_trackers, nb_ev_reg);
+    tracker_pool_left->set_collision_det_param(dist_thresh, vel_thresh, acc_thresh);
+    tracker_pool_left->get_pool_size(s);
+    fprintf(stdout, "cluster pool left size s =%d\n",s);
 
-    //TrackerPool tracker_pool_right(sig_x, sig_y, sig_xy, alpha_pos, alpha_shape, k, 
-		//		 max_dist, fixed_shape, tau_act, up_thresh, down_thresh, delete_thresh,
-		//		 alpha_rep, d_rep, max_nb_trackers, nb_ev_reg);
-    //tracker_pool_right.set_collision_det_param(dist_thresh, vel_thresh, acc_thresh);
+    tracker_pool_right = new TrackerPool(sig_x, sig_y, sig_xy, alphaPos, alphaShape, k, max_dist, fixed_shape, tau_act, upThr, downThr, delete_thresh, alpha_rep, d_rep, max_nb_trackers, nb_ev_reg);
+    tracker_pool_right->set_collision_det_param(dist_thresh, vel_thresh, acc_thresh);
+    tracker_pool_right->get_pool_size(s);
 
-    // Threshold for updating the position
-    int min_nb_ev = 1;
+    fprintf(stdout, "cluster pool right size s =%d\n",s);
 
-  // We create the images and give them their size
-  // Output
-    ImageOf<PixelRgb> gray_image;
-    gray_image.resize(128,128);	
+    // Initialization of the images - correct size (128*128 from DVS sensor)
+
+    // Output
+    gray_image.resize(128,128);
     gray_image.zero();
+    
     for(int ii=0; ii<128; ii++)
     {
         for(int jj=0; jj<128; jj++)
@@ -184,36 +211,27 @@ bool EventBottleManager::init()
         }  
     }  
 
-  
-  // Left
-    ImageOf<PixelRgb> image_left_out;
-    image_left_out.resize(128,128);	
-    image_left_out.zero();
-  // Right
-    ImageOf<PixelRgb> image_right_out;
-    image_right_out.resize(128,128);	
-    image_right_out.zero();
+    // Left
+    left_image.resize(128,128);
+    left_image.zero();
 
-  // Define cluster init position.
-  // Num clusters	= 5 (const init);
-    const int numClusters = 5;
-  // Cluster events = 0 (variable init);
-    Vector numEventsPerCluster;
+    // Right
+    right_image.resize(128,128);
+    right_image.zero();
+
     numEventsPerCluster.resize(5);
-    Vector currentEventNumbers, previousEventNumbers;
     currentEventNumbers.resize(128,128);
-
-  // Variables that will hold the coordinates of the collisions
-    vector<double> x_coll_left, y_coll_left, x_coll_right, y_coll_right;
-
-    int numIters = 0;
-    int confidenceVal = 0;
-    bool moveEyes = false;
-    int t_start_moving;
-    double cen_x_prev, cen_y_prev; 
-  
-    int last_t_display = 0;
-    int dt = 10000;	 
+    
+    // Threshold for updating the position
+    min_nb_ev = 1;
+    
+    // Define number of clusters
+    numClusters = 5;
+    numIters = 0;
+    moveEyes = false;
+    
+    last_t_display = 0;
+    dt = 10000;
 
     return true;
 }
@@ -225,7 +243,7 @@ bool EventBottleManager::open()
 
     //create all ports
     inPortName = "/" + moduleName + "/eventBottle:i";
-    inPort.open( inPortName.c_str() );
+    BufferedPort<eventBottle >::open(inPortName.c_str());
 
     leftPortName = "/" + moduleName + "/leftImage:o";
     leftPort.open( leftPortName.c_str() );
@@ -244,12 +262,17 @@ void EventBottleManager::close()
 {
     fprintf(stdout,"now closing ports...\n");
 
-    inPort.close();
+    BufferedPort<eventBottle >::close();
     leftPort.close();
     rightPort.close();
     outPort.close();
     
+    delete tracker_pool_left;
+    delete tracker_pool_right;
+    
     fprintf(stdout,"finished closing the read port...\n");
+    fclose(output_file);
+
 }
 
 /**********************************************************/
@@ -266,84 +289,121 @@ void EventBottleManager::onRead(eventBottle &bot)
 {
     //create event queue
     eEventQueue q; 
-    unsigned long ts;
+    unsigned long ev_t;
+    short ev_x;
+    short ev_y;
+    short pol;
+    short channel;
+
     //decode packet
     Bottle event; // for eventBottle port eventPort
 
-    eventBottle &evt = outPort.prepare();
+    eventBottle &evtCluster = outPort.prepare();
     
     if(eEvent::decode(*bot.get_packet(),q)) 
     {   
         int size = q.size();
-        for (int e = 0; e < size; e++)
-        {
-            if(q[e] != 0)
+        if (size > min_nb_ev)
+        { //scan the queue of events
+            for (int e = 0; e < size; e++)
             {
-                if(q[e]->getType()=="TS") //identify the type of the packet (Time Stamp)
+                if(q[e] != 0)
                 {
-                    TimeStamp* ptr=dynamic_cast<TimeStamp*>(q[e]);
-                    ts = (unsigned long) ptr->getStamp();
-                    //fprintf(stdout, "Size %d TimeStamp: %d", size, (unsigned int) ptr->getStamp());
-                }
-                else if (q[e]->getType()=="AE") //identify the type of the packet (Address Event)
-                {
-                    AddressEvent* ptr=dynamic_cast<AddressEvent*>(q[e]); //create the Address Event for the type
-                    
-                                        
-                    if(ptr->isValid()) 
-                    {   // get data from AE
-                        short posX = ptr->getX();
-                        short posY = ptr->getY();
-                        short polarity = ptr->getPolarity();
-                        short channel = ptr->getChannel();
+                    if(q[e]->getType()=="TS") //identify the type of the packet (Time Stamp)
+                    {
+                        TimeStamp* ptr=dynamic_cast<TimeStamp*>(q[e]);
+                        ev_t = (unsigned long) ptr->getStamp();
+                        //fprintf(stdout, "Size %d TimeStamp: %d", size, (unsigned int) ptr->getStamp());
+                    }
+                    else if (q[e]->getType()=="AE") //identify the type of the packet (Address Event)
+                    {
+                        AddressEvent* ptr=dynamic_cast<AddressEvent*>(q[e]); //create the Address Event for the type
                         
-                        ClusterEventGauss cluEvt; //create the Cluster Event 
-                        //fill the CLE-G with data:
-                        cluEvt.setChannel(channel);
-                        //  cluEvt->setId(1); 
-                        cluEvt.setXCog(posX); 
-                        cluEvt.setYCog(posY);
                         
-                        int numAE = 0;
-                        int xS2 = 1;
-                        int yS2 = 2;
-                        int xyS = 3;
-                        
-                        cluEvt.setNumAE(numAE); 
-                        cluEvt.setXSigma2(xS2);
-                        cluEvt.setYSigma2(yS2);
-                        cluEvt.setXYSigma(xyS);
-                        
-                        //create the timestamp and fill it
-                        TimeStamp time;
-                        time.setStamp(ts);
-                        
-                        //create a bottle with ts and cle-g
-                        Bottle tmpEv;
-                        tmpEv = time.encode();
-                        tmpEv.append(cluEvt.encode());
-                        
-                        //append bottle tmpEv to the bottle of events
-                        event.append(tmpEv);
-                                                
-                        string type = cluEvt.getType();
+                        if(ptr->isValid())
+                        {   // get data from AE
+                            ev_x = ptr->getX();
+                            ev_y = ptr->getY();
+                            pol = ptr->getPolarity();
+                            channel = ptr->getChannel();
+                            if(ev_x>=0 && ev_x <= 127 && ev_y>=0 && ev_y <= 127)
+                            {
+                                if (channel == 0)
+                                {
+//                                    tracker_pool_left->update(ev_x, ev_y, ev_t);
+                                    tracker_pool_left->update(ptr, ev_t);
+                                    left_image.pixel(ev_y, ev_x) = yarp::sig::PixelRgb(255*pol, 255*pol, 255*pol);
+                                    fprintf(stdout,"x: %d, trackId: %d\n",ev_x, ptr->getX());
+                                }
+                                else
+                                {
+                                    tracker_pool_right->update(ev_x, ev_y, ev_t);
+                                    right_image.pixel(ev_y, ev_x) = yarp::sig::PixelRgb(255*pol, 255*pol, 255*pol);
+                                }
+                            }
 
-                        //fprintf(stdout, "Size %d TimeStamp: %d Event: (Type: %s X: %d  Y: %d  pol: %d  cha: %d m: %d xs: %d ys: %d xys: %d) \n",size, ts, type.c_str(), posX, posY, polarity, channel, numAE, xS2, yS2, xyS);
-                        
-                    } 
+
+                            if(ev_t - last_t_display >= dt || ev_t - last_t_display <= 0)
+                            {
+                                // We update the images of the ellipses
+                                tracker_pool_left->display(left_image);
+                                tracker_pool_right->display(right_image);
+                                
+                                // Write the images into the yarp port
+                                leftPort.write(left_image);
+                                rightPort.write(right_image);
+                                // And reset them to gray
+                                left_image = gray_image;
+                                right_image = gray_image;
+                                last_t_display = ev_t;
+                            }
+                        }
+                    }
                 }
             }
-        } 
+        }
 
-        //create and fill in dataTmp (eventBottle) with data from event (Bottle) 
-        //fprintf(stdout, "\n\n\nEvent: %s\n", event.toString().c_str());
-        eventBottle dataTmp(&event);
-        //copy dataTmp to eventBottle out
-        evt = dataTmp;
+        //Writing active tracker data to output port
+        
+        Bottle clusterEvents;
+        int sizePool;
+        std::vector<double> c_x, c_y, v_x, v_y, s_x2, s_y2, s_xy, mass, id;
+        std::vector<bool> act;
+        
+        // left
+        tracker_pool_left->get_pool_size(sizePool);
+        tracker_pool_left->getTrackers(c_x, c_y, v_x, v_y, s_x2, s_y2, s_xy, mass, act, id);
+        
+        for (int iw=0; iw < sizePool; iw++)
+        {
+            int writeChannelNum = 0;
+
+            if (mass[iw])
+            {
+                ClusterEventGauss eventToWrite;
+                
+                eventToWrite.setXCog(c_x[iw]);
+                eventToWrite.setYCog(c_y[iw]);
+                eventToWrite.setChannel(writeChannelNum);
+                eventToWrite.setId(id[iw]);
+                eventToWrite.setNumAE(mass[iw]);
+                eventToWrite.setXSigma2(s_x2[iw]);
+                eventToWrite.setYSigma2(s_y2[iw]);
+                eventToWrite.setXYSigma(s_xy[iw]);
+                //eventToWrite.setVx(v_x[iw]);
+                //eventToWrite.setVy(v_y[iw]);
+                
+                Bottle tmp;
+                tmp = eventToWrite.encode();
+                clusterEvents.append(tmp);                      
+            }
+        }
+        eventBottle dataTmp(&clusterEvents);
+        evtCluster = dataTmp;
+        
         //send it all out
-
         outPort.write();
-    }   
+    }
     //fprintf(stdout, "------------------------------------------------------------------\n");
 }
 

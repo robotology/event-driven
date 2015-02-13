@@ -1,5 +1,7 @@
 #this file is created by QT creator IDE
 CMakeLists.txt.user
+*.autosave
+*.orig
 
 # ignore all temporary files
 *~
