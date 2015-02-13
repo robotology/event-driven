@@ -46,6 +46,10 @@ vEvent * createEvent(const std::string type)
     if(type == ret->getType()) return ret;
     else delete(ret);
 
+    ret = new CollisionEvent();
+    if(type == ret->getType()) return ret;
+    else delete(ret);
+
     ret = new OpticalFlowEvent();
     if(type == ret->getType()) return ret;
     else delete(ret);
@@ -59,12 +63,20 @@ vEvent * createEvent(const std::string type)
 /******************************************************************************/
 vQueue::~vQueue()
 {
+//    if (owner)
+//        for (size_t i=0; i<size(); i++)
+//            if ((*this)[i]!=NULL)
+//                delete (*this)[i];
+
+    this->clear();
+}
+void vQueue::clear()
+{
     if (owner)
         for (size_t i=0; i<size(); i++)
             if ((*this)[i]!=NULL)
                 delete (*this)[i];
-
-    clear();
+    deque::clear();
 }
 
 void vQueue::sort() {
@@ -322,6 +334,87 @@ Property AddressEventClustered::getContent() const
 {
     Property prop = AddressEvent::getContent();
     prop.put("clID",clID);
+
+    return prop;
+}
+
+/******************************************************************************/
+//CollisionEvent
+/******************************************************************************/
+CollisionEvent::CollisionEvent(const vEvent &event/*always vEvent*/)
+{
+    //most of the constructor is replicated in the assignment operator
+    //so we just use that to construct
+    *this = event;
+
+}
+
+/******************************************************************************/
+vEvent &CollisionEvent::operator=(const vEvent &event/*always vEvent*/)
+{
+
+    //copy timestamp and type (base class =operator)
+    AddressEvent::operator =(event);
+
+    //copy other fields if it's compatible
+    const CollisionEvent * aep =
+            dynamic_cast<const CollisionEvent *>(&event);
+    if(aep) {
+        //clID = aep->clID;
+    } else {
+        //clID = 0;
+    }
+
+    //force the type to addressevent
+    type = "COL";
+
+    return *this;
+}
+
+/******************************************************************************/
+vEvent* CollisionEvent::clone() {
+    return new CollisionEvent(*this);
+}
+
+/******************************************************************************/
+yarp::os::Bottle CollisionEvent::encode() const
+{
+    //int word0=clID;
+
+    Bottle ret = AddressEvent::encode();
+    //ret.addInt(word0);
+    return ret;
+}
+
+/******************************************************************************/
+bool CollisionEvent::decode(const yarp::os::Bottle &packet, int &pos)
+{
+    // check length
+    if (AddressEvent::decode(packet, pos) &&
+            pos + localWordsCoded <= packet.size())
+    {
+        //int word0=packet.get(pos).asInt();
+        //clID = word0;
+        //pos += localWordsCoded;
+        return true;
+    }
+
+    return false;
+}
+
+
+
+/******************************************************************************/
+bool CollisionEvent::operator==(const CollisionEvent &event)
+{
+    return ((AddressEvent::operator==(event)));
+}
+
+/******************************************************************************/
+Property CollisionEvent::getContent() const
+{
+    Property prop = AddressEvent::getContent();
+    //prop.put("clID",clID);
 
     return prop;
 }

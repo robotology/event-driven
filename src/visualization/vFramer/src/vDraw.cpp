@@ -27,16 +27,21 @@ vDraw * createDrawer(std::string tag)
     if(tag == newDrawer->getTag()) return newDrawer;
     delete newDrawer;
 
+    newDrawer = new clusterDraw();
+    if(tag == newDrawer->getTag()) return newDrawer;
+	delete newDrawer;
 
     newDrawer = new integralDraw();
     if(tag == newDrawer->getTag()) return newDrawer;
     delete newDrawer;
 
+    newDrawer = new blobDraw();
+    if(tag == newDrawer->getTag()) return newDrawer;
+    delete newDrawer;
 
     newDrawer = new flowDraw();
     if(tag == newDrawer->getTag()) return newDrawer;
     delete newDrawer;
-
 
     return 0;
 }
@@ -51,34 +56,168 @@ void addressDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
 {
 
     cv::Mat canvas(Xlimit, Ylimit, CV_8UC3);
-    canvas.setTo(128);
+    canvas.setTo(255);
 
     emorph::vQueue::const_iterator qi;
     for(qi = eSet.begin(); qi != eSet.end(); qi++) {
         emorph::AddressEvent *aep = (*qi)->getAs<emorph::AddressEvent>();
-        if(aep) {
-            cv::Vec3b cpc = canvas.at<cv::Vec3b>(aep->getX(), aep->getY());
+        if(!aep) continue;
 
-            if(aep->getPolarity())
-            {
-                if(cpc[0]) cpc[0] = 255;
-                if(cpc[1]) cpc[1] = 255;
-                cpc[2] = 255;
-            }
-            else
-            {
-                cpc[0] = 0;
-                cpc[1] = 0;
-                if(cpc.val[2] < 255) cpc[2] = 0;
-            }
+        cv::Vec3b cpc = canvas.at<cv::Vec3b>(aep->getX(), aep->getY());
 
-            canvas.at<cv::Vec3b>(aep->getX(), aep->getY()) = cpc;
+        if(aep->getPolarity())
+        {
+            //blue
+            if(cpc[0] == 1) cpc[0] = 0;   //if positive and negative
+            else cpc[0] = 160;              //if only positive
+            //green
+            if(cpc[1] == 60) cpc[1] = 255;
+            else cpc[1] = 0;
+            //red
+            if(cpc[2] == 0) cpc[2] = 255;
+            else cpc[2] = 160;
+        }
+        else
+        {
+            //blue
+            if(cpc[0] == 160) cpc[0] = 0;   //negative and positive
+            else cpc[0] = 1;              //negative only
+            //green
+            if(cpc[1] == 0) cpc[1] = 255;
+            else cpc[1] = 60;
+            //red
+            if(cpc.val[2] == 160) cpc[2] = 255;
+            else cpc[2] = 0;
         }
 
+        canvas.at<cv::Vec3b>(aep->getX(), aep->getY()) = cpc;
     }
 
     canvas.copyTo(image);
 
+}
+
+std::string clusterDraw::getTag()
+{
+    return "CLE";
+}
+
+void clusterDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
+{
+
+    std::stringstream ss;
+    //std::map<int, emorph::ClusterEvent *> latest;
+
+    cv::Scalar red = CV_RGB(255, 0, 0);
+    cv::Scalar green = CV_RGB(0, 255, 0);
+    cv::Scalar color = red;
+
+    if(image.empty()) {
+        image = cv::Mat(Xlimit, Ylimit, CV_8UC3);
+        image.setTo(0);
+    }
+
+
+    cv::Mat textImg(image.rows, image.cols, image.type()); textImg.setTo(0);
+
+    emorph::vQueue::const_iterator qi;
+    for(qi = eSet.begin(); qi != eSet.end(); qi++) {
+        emorph::ClusterEvent *vp = (*qi)->getAs<emorph::ClusterEvent>();
+        if(vp) {
+            if(persistance[vp->getID()]) {
+                delete persistance[vp->getID()];
+                persistance[vp->getID()] = 0;
+            }
+            persistance[vp->getID()] = vp->clone()->getAs<emorph::ClusterEvent>();
+            //latest[vp->getID()] = vp;
+        }
+
+    }
+
+    std::map<int, emorph::ClusterEvent *>::iterator ci;
+    for(ci = persistance.begin(); ci != persistance.end(); ci++) {
+
+        if(!ci->second->getPolarity()) continue;
+
+        cv::Point centr(ci->second->getYCog(), ci->second->getXCog());
+        ss.str(""); ss << ci->second->getID();
+
+        //the event could be a gaussian cluster or a regular cluster have
+        //display options for both
+        emorph::ClusterEventGauss *clegp = ci->second->getAs<emorph::ClusterEventGauss>();
+        if(clegp) {
+            double sig_x2_ = clegp->getXSigma2();
+            double sig_y2_ = clegp->getYSigma2();
+            double sig_xy_ = clegp->getXYSigma();
+            double tmp = sqrt( (sig_x2_ - sig_y2_) * (sig_x2_ - sig_y2_) + 4*sig_xy_*sig_xy_ );
+            double l_max = 0.5*(sig_x2_ + sig_y2_ + tmp);
+            double l_min = 0.5*(sig_x2_ + sig_y2_ - tmp);
+
+
+            if(l_min < -5) {
+                std::cout << "l_min error: shape distorted" << std::endl;
+            }
+
+            double a = sqrt(std::fabs(l_max)) * 2;
+            double b = sqrt(std::fabs(l_min)) * 2;
+            double alpha = 0.5*atan2f(2*sig_xy_, sig_y2_ - sig_x2_);
+
+            alpha = alpha * 180 / M_PI; //convert to degrees for openCV ellipse function
+
+            if(clegp->getPolarity())
+                color = green;
+            else
+                color = red;
+
+            cv::ellipse(image, centr, cv::Size(a,b), alpha, 0, 360, color);
+
+        } else {
+            cv::circle(image, centr, 4, green);
+        }
+
+        cv::putText(textImg, ss.str(),
+                    cv::Point(ci->second->getYCog(),
+                              Xlimit - ci->second->getXCog()),
+                    0, 0.3, CV_RGB(255, 255, 255));
+    }
+
+    cv::flip(textImg, textImg, 0);
+    image += textImg;
+
+}
+
+std::string blobDraw::getTag()
+{
+    return "BLOB";
+}
+
+void blobDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
+{
+
+    cv::Mat canvas(Xlimit, Ylimit, CV_8UC3);
+    canvas.setTo(255);
+
+    emorph::vQueue::const_iterator qi;
+    for(qi = eSet.begin(); qi != eSet.end(); qi++) {
+        emorph::AddressEvent *aep = (*qi)->getAs<emorph::AddressEvent>();
+        if(!aep) continue;
+
+        cv::Vec3b cpc = canvas.at<cv::Vec3b>(aep->getX(), aep->getY());
+
+        if(!aep->getPolarity())
+        {
+            cpc[0] = 0;
+            cpc[1] = 0;
+            cpc[2] = 0;
+        }
+
+        canvas.at<cv::Vec3b>(aep->getX(), aep->getY()) = cpc;
+
+    }
+
+    cv::medianBlur(canvas, canvas, 5);
+    cv::blur(canvas, canvas, cv::Size(5, 5));
+    cv::resize(canvas, image, cv::Size(Xlimit*2, Ylimit*2));
 }
 
 integralDraw::integralDraw()
@@ -147,36 +286,6 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
             int y = ofp->getY();
             float vx = ofp->getVx();
             float vy = ofp->getVy();
-
-            /*
-            int X = 5+10*x;
-            int Y = 5+10*y;
-
-            if (vx<0 && vy<0)
-            {
-                dx = X+floor(vx-0.5);
-                dy = Y+floor(vy-0.5);
-            }
-
-            if (vx>0 && vy<0)
-            {
-                dx = X+floor(vx+0.5);
-                dy = Y+floor(vy-0.5);
-            }
-
-            if (vx<0 && vy>0)
-            {
-                dx = X+floor(vx-0.5);
-                dy = Y+floor(vy+0.5);
-            }
-
-            if (vx>0 && vy>0)
-            {
-                dx = X+floor(vx+0.5);
-                dy = Y+floor(vy+0.5);
-            }
-
-            */
 
             p_start.x = x;
             p_start.y = y;
