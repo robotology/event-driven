@@ -253,7 +253,7 @@ void vtsOptFlowManager::onRead(emorph::vBottle &bot)
 
         posX = aep->getX();
         posY = aep->getY();
-        ts = aep->getStamp();    //(*qi)->getStamp();  
+        ts = aep->getStamp();
         channel = aep->getChannel();
 
         /*correct wrap around*/
@@ -278,11 +278,13 @@ void vtsOptFlowManager::onRead(emorph::vBottle &bot)
             TSs=ts;
             iBinEvts=0;
             refbin=ts;
+            //prefbin=ts;
         }
         else
         {
             uint ii=0;
             refbin=((1-alpha)*ts+alpha*prefbin);
+
             for(uint i=0; i<iBinEvts;++i)
             {
                 if(binEvts(i, 2)>=refbin)
@@ -306,20 +308,21 @@ void vtsOptFlowManager::onRead(emorph::vBottle &bot)
         binEvts(iBinEvts, 1)=posY;
         binEvts(iBinEvts, 2)=ts;
         iBinEvts++;
-    }
 
-    if(iBinEvts)
-       {
-           /*update activity*/
-           updateAll();
+        ts=prefbin=refbin;
 
-           /*compute the flow*/
-           outEvent = compute();
+        if(iBinEvts)
+        {
+            /*update activity*/
+            updateAll();
 
-           vx = outEvent.getVx();
-           vy = outEvent.getVy();
+            /*compute the flow*/
+            outEvent = compute();
 
-           /*
+            vx = outEvent.getVx();
+            vy = outEvent.getVy();
+
+            /*
            vx = outEvent.getVx();
            computeStat(vx,ixNeighFlow,mean,dev_std);
            mean=mean;
@@ -328,15 +331,16 @@ void vtsOptFlowManager::onRead(emorph::vBottle &bot)
            cout << "std dev " << dev_std << endl;
            */
 
-           /*add optical flow events to the out bottle only if the number of good computation was >= 3*/
-           if (vx!=0 && vy!=0)
-           {
-               outBottle.addEvent(outEvent);
+            /*add optical flow events to the out bottle only if the number of good computation was >= 3*/
+            if (vx!=0 && vy!=0)
+            {
+                outBottle.addEvent(outEvent);
 
-               /*send on the processed events*/
-               outPort.write();
-           }
-       }
+                /*send on the processed events*/
+                outPort.write();
+            }
+        }
+    }
 }
 
 void vtsOptFlowManager::updateAll()
@@ -362,7 +366,7 @@ void vtsOptFlowManager::updateAll()
        *(TSsData+posX*width+posY)=(double)ts;
        *(TSs2PlanData+posX*width+posY)=(double)ts;
 
-       /*update activity and to compute the flow use only pixels whose activity aboves the threshold*/
+       /*update activity and use only pixels whose activity aboves the threshold to compute the flow */
         *(activityData+posX*width+posY)+=1;
         if(*(activityData+posX*width+posY)>=threshold)
         {
