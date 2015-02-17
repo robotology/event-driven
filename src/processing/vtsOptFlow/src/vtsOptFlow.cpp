@@ -51,15 +51,30 @@ bool vtsOptFlow::configure(ResourceFinder &rf)
     /* set parameters */
     unsigned int height = rf.find("height").asInt();
     unsigned int width = rf.find("width").asInt();
+
     //unsigned int accumulation = rf.find("acc").asInt();
+
     unsigned int binAcc = rf.find("bin").asInt();
+    if(!binAcc) binAcc = 1000;
+
     double threshold = rf.find("threshold").asDouble();
+    if(threshold == 0) threshold = 2;
+
     //unsigned int neighbor = rf.find("nNeighBor").asInt();
     unsigned int sobelSz = rf.find("szSobel").asInt();
+    if(!sobelSz) sobelSz = 3;
+
     unsigned int tsVal = rf.find("tsVal").asInt();
+    if(!tsVal) tsVal = 100000;
+
     double alpha = rf.find("alpha").asDouble();
+    if(alpha == 0) alpha = 0.5;
+
     //double tauD = rf.find("tauD").asDouble();
-    int eye = rf.find("eye").asInt();
+
+    int eye = 0;
+    if(rf.check("eye")) eye = rf.find("eye").asInt();
+
     bool saveOf = rf.check("save");
     bool orientation = rf.check("swap_xy");
 
@@ -309,11 +324,21 @@ void vtsOptFlowManager::onRead(emorph::vBottle &bot)
         binEvts(iBinEvts, 2)=ts;
         iBinEvts++;
 
+        /*
+        while(refbin+binAcc>=ts && iBinEvts<10000)
+        {
+                binEvts(iBinEvts, 0)=posX;
+                binEvts(iBinEvts, 1)=posY;
+                binEvts(iBinEvts, 2)=ts;
+                iBinEvts++;
+        }
+    */
+
         ts=prefbin=refbin;
 
         if(iBinEvts)
         {
-            /*update activity*/
+            /*update activity and timestamp map*/
             updateAll();
 
             /*compute the flow*/
@@ -321,15 +346,6 @@ void vtsOptFlowManager::onRead(emorph::vBottle &bot)
 
             vx = outEvent.getVx();
             vy = outEvent.getVy();
-
-            /*
-           vx = outEvent.getVx();
-           computeStat(vx,ixNeighFlow,mean,dev_std);
-           mean=mean;
-           dev_std=dev_std;
-           cout << "mean " << mean << endl;
-           cout << "std dev " << dev_std << endl;
-           */
 
             /*add optical flow events to the out bottle only if the number of good computation was >= 3*/
             if (vx!=0 || vy!=0)
