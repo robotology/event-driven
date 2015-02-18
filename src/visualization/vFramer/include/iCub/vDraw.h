@@ -19,6 +19,7 @@
 
 #include <iCub/emorph/all.h>
 #include <string>
+#include <cmath>
 #include <opencv2/opencv.hpp>
 
 namespace emorph
