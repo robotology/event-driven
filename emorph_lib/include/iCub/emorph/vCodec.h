@@ -82,8 +82,8 @@ public:
 
     std::string getType() const     { return type;          }
 
-    void setStamp(const int stamp)  {
-        if(stamp>16777215)encoderr; this->stamp=stamp;}
+
+    void setStamp(const long int stamp)   { this->stamp=(int)(stamp%max_stamp);}
     int getStamp() const            { return stamp;         }
 
     virtual int getChannel() const  { return -1;            }
