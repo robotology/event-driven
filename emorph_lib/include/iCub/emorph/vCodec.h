@@ -69,6 +69,7 @@ private:
 
 protected:
 
+    static const long int max_stamp = 16777215; //2^24
     std::string type;
     int stamp;
 
@@ -81,7 +82,7 @@ public:
     std::string getType() const     { return type;          }
 
 
-    void setStamp(const int stamp)   { this->stamp=stamp;    }
+    void setStamp(const long int stamp)   { this->stamp=(int)(stamp%max_stamp);}
     int getStamp() const             { return stamp;         }
 
     virtual int getChannel() const  { return -1;            }
