@@ -779,15 +779,9 @@ bool OpticalFlowEvent::decode(const yarp::os::Bottle &packet, int &pos)
         int word2=packet.get(pos+2).asInt();
 
         channel=word0&0x01;
-        word0>>=1;
-
-        polarity=word0&0x01;
-        word0>>2;
-
-        x=word0&0xff;
-        word0>>=10;
-
-        y=word0&0xff;
+        polarity=(word0>>1)&0x01;
+        x=(word0>>2)&0xff;
+        y=(word0>>10)&0xff;
 
         vx=*(float*)(&word1);
 
