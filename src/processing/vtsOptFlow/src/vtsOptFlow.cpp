@@ -332,15 +332,14 @@ void vtsOptFlowManager::onRead(emorph::vBottle &bot)
            */
 
             /*add optical flow events to the out bottle only if the number of good computation was >= 3*/
-            if (vx!=0 && vy!=0)
+            if (vx!=0 || vy!=0)
             {
                 outBottle.addEvent(outEvent);
-
-                /*send on the processed events*/
-                outPort.write();
             }
         }
     }
+    /*send on the processed events*/
+    outPort.write();
 }
 
 void vtsOptFlowManager::updateAll()
