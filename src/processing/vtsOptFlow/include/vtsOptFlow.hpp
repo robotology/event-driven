@@ -67,21 +67,14 @@ private:
 
     double alpha;
     double threshold;
-    //double tauD;
     uint tsVal;
-    //uint neighbor;
-    //uint neighLR;
     uint height;
     uint width;
     uint sobelSz;
     uint sobelLR;
-    //uint accumulation;
     uint binAcc;
     bool saveOf;
     bool orientation;
-
-    //double mean;
-    //double dev_std;
 
     uint borneSupX;
     uint borneSupY;
@@ -93,7 +86,7 @@ private:
 
     emorph::vtsHelper unwrapper;
 
-    yarp::sig::Matrix activity; double* activityData;
+    yarp::sig::Matrix activity;
     yarp::sig::Matrix TSs;      double* TSsData;
     yarp::sig::Matrix TSs2Plan; double* TSs2PlanData;
     yarp::sig::Matrix compPurpTS;
@@ -123,18 +116,13 @@ private:
     uint refts;
     bool first;
 
-    yarp::sig::Matrix *vxMat;
-    yarp::sig::Matrix *vyMat;
-    double *vxMatData;
-    double *vyMatData;
+    yarp::sig::Matrix vxMat;
+    yarp::sig::Matrix vyMat;
+    yarp::sig::Matrix ivxy;
 
     yarp::sig::Matrix binEvts;
     uint iBinEvts;
-    double *vxMean;
-    double *vyMean;
-    uint *ivxyNData;
 
-    //yarp::sig::Matrix wMat;
     yarp::sig::Matrix sMat;
     uint iSMat;
     double *xNeighFlow;
@@ -153,7 +141,7 @@ private:
 
 public:
 
-    vtsOptFlowManager(const std::string &moduleName, unsigned int &_height, unsigned int &_width, unsigned int &_binAcc, double &_threshold, unsigned int &_sobelSz, unsigned int &_tsVal, double &_alpha, int &_eye, bool &_saveOf, bool &_orientation);
+    vtsOptFlowManager(const std::string &moduleName, unsigned int &_height, unsigned int &_width, unsigned int &_binAcc, double &_threshold, unsigned int &_sobelSz, unsigned int &_tsVal, double &_alpha, int &_eye, bool &_saveOf);
     ~vtsOptFlowManager();
 
     bool    open();

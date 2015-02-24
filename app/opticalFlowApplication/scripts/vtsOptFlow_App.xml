@@ -25,7 +25,7 @@
 
 <module>
     <name>vtsOptFlow</name>
-    <parameters>--height 128 --width 128 --source icub --bin 1000 --threshold 2 --szSobel 3 --tsVal 100000 --alpha 0.5 --eye 0 --save --swap_xy </parameters>
+    <parameters>--height 128 --width 128 --bin 1000 --threshold 2 --szSobel 3 --tsVal 100000 --alpha 0.5 --eye 0 --save --swap_xy </parameters>
     <node>localhost</node>
     <tag>vtsOptFlow</tag>
 </module>
