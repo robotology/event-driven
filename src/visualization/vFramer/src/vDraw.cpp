@@ -29,7 +29,7 @@ vDraw * createDrawer(std::string tag)
 
     newDrawer = new clusterDraw();
     if(tag == newDrawer->getTag()) return newDrawer;
-	delete newDrawer;
+    delete newDrawer;
 
     newDrawer = new integralDraw();
     if(tag == newDrawer->getTag()) return newDrawer;
@@ -301,8 +301,8 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
             hypotenuse = sqrt((p_start.y - p_end.y)*(p_start.y - p_end.y) + (p_start.x - p_end.x)*(p_start.x - p_end.x));
 
             //Scale the arrow by a factor of three
-            p_end.x = (int) (p_start.x - 6 * hypotenuse * cos(angle));
-            p_end.y = (int) (p_start.y - 6 * hypotenuse * sin(angle));
+            p_end.x = (int) (p_start.x - 9 * hypotenuse * cos(angle));
+            p_end.y = (int) (p_start.y - 9 * hypotenuse * sin(angle));
 
             //Draw the main line of the arrow
             cv::line(canvas, p_start, p_end, line_color, line_tickness, CV_AA, 0);

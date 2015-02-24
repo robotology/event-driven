@@ -50,7 +50,9 @@ bool vtsOptFlow::configure(ResourceFinder &rf)
 
     /* set parameters */
     unsigned int height = rf.find("height").asInt();
+    if(!height) height = 128;
     unsigned int width = rf.find("width").asInt();
+    if(!width) width = 128;
 
     //unsigned int accumulation = rf.find("acc").asInt();
 
@@ -75,8 +77,11 @@ bool vtsOptFlow::configure(ResourceFinder &rf)
     int eye = 0;
     if(rf.check("eye")) eye = rf.find("eye").asInt();
 
-    bool saveOf = rf.check("save");
-    bool orientation = rf.check("swap_xy");
+    bool saveOf = false;
+    saveOf = rf.check("save"); // yarp::os::Value(false)).asBool();
+
+    bool orientation = false;
+    orientation = rf.check("swap_xy"); // yarp::os::Value(false)).asBool();
 
     vtsofManager = new vtsOptFlowManager( moduleName, height, width,  binAcc, threshold, sobelSz, tsVal, alpha, eye, saveOf, orientation );
     vtsofManager->open();
@@ -344,6 +349,8 @@ void vtsOptFlowManager::onRead(emorph::vBottle &bot)
             /*compute the flow*/
             outEvent = compute();
 
+            int x = outEvent.getX();
+            int y = outEvent.getY();
             vx = outEvent.getVx();
             vy = outEvent.getVy();
 
@@ -523,12 +530,12 @@ emorph::OpticalFlowEvent vtsOptFlowManager::compute()
                 opt_flow.setY(y);
                 opt_flow.setVx(float(*(vxMean+x*width+y)));
                 opt_flow.setVy(float(*(vyMean+x*width+y)));
-                opt_flow.setStamp(ts);
+                opt_flow.setStamp(*(TSsData+x*width+y));
 
                 if(saveOf)
                 {
                     line2save.str("");
-                    line2save << (short)x << " " << (short)y << " " << *(vxMean+x*width+y) << " " << *(vyMean+x*width+y) << " " << ts << endl;
+                    line2save << (short)x << " " << (short)y << " " << *(vxMean+x*width+y) << " " << *(vyMean+x*width+y) << " " << *(TSsData+x*width+y) << endl;
                     saveFile.write( line2save.str().c_str(), line2save.str().size() );
                 }
                 else
