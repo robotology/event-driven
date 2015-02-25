@@ -71,6 +71,7 @@ private:
 
 protected:
 
+    static const long int max_stamp = 16777215; //2^24
     std::string type;
     int stamp;
 
