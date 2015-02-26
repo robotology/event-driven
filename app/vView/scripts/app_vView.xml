@@ -7,13 +7,11 @@
 <module>
    <name>dataSetPlayer</name>
    <node>localhost</node>
-   <tag>dataSetPlayer</tag>
 </module>
 
 <module>
    <name>aexGrabber</name>
    <node>pc104</node>
-   <tag>vGrabber</tag>
 </module>
 
 <module>
@@ -32,7 +30,12 @@
     <name> vFramer</name>
     <parameters> --frameRate 30 --eventWindow 0.1 --displays "(0 left (AE CLE) 1 right (AE CLE))"</parameters>
     <node>localhost</node>
-    <stdio>debugserver</stdio>
+</module>
+
+<module>
+    <name> autoSaccade </name>
+    <parameters> --name autoSaccade --checkPeriod 0.8 --minVpS 50 </parameters>
+    <node>localhost</node>
 </module>
 
 <module>
@@ -60,6 +63,12 @@
 <connection>
   <from>/aexGrabber/vBottle:o</from>
   <to>/vUndistortCam/vBottle:i</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
+  <from>/aexGrabber/vBottle:o</from>
+  <to>/autoSaccade/vBotte:i</to>
   <protocol>udp</protocol>
 </connection>
 
