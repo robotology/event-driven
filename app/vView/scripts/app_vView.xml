@@ -68,7 +68,7 @@
 
 <connection>
   <from>/aexGrabber/vBottle:o</from>
-  <to>/autoSaccade/vBotte:i</to>
+  <to>/autoSaccade/vBottle:i</to>
   <protocol>udp</protocol>
 </connection>
 

@@ -87,7 +87,7 @@ bool saccadeModule::updateModule()
         //perform saccade
         std::cout << "perform saccade" << std::endl;
     } else {
-        std::cout << vPeriod / 100000 << std::endl;
+        std::cout << vPeriod / 100000 << " | " << vCount / vPeriod << std::endl;
     }
 
     return true;
@@ -157,6 +157,7 @@ void EventBottleManager::onRead(emorph::vBottle &bot)
     
     // get the event queue in the vBottle bot
     bot.getSorted<emorph::AddressEvent>(q);
+    if(q.empty()) return;
 
     latestStamp = unwrapper(q.back()->getStamp());
 
