@@ -268,8 +268,12 @@ std::string flowDraw::getTag()
 void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
 {
 
-    cv::Mat canvas(Xlimit, Ylimit, CV_8UC3);
-    canvas.setTo(128);
+    if(image.empty()) {
+        image = cv::Mat(Xlimit, Ylimit, CV_8UC3);
+        image.setTo(0);
+    }
+    //cv::Mat canvas(Xlimit, Ylimit, CV_8UC3);
+    //canvas.setTo(128);
 
     int line_tickness = 1;
     cv::Scalar line_color = CV_RGB(255,0,0);
@@ -291,8 +295,8 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
             p_start.y = y;
 
             //Ending point of the line
-            p_end.x = x + vx;
-            p_end.y = y + vy;
+            p_end.x = x + 500 * vx;
+            p_end.y = y + 500 * vy;
 
             double angle;
             angle = atan2( (double) p_start.y - p_end.y, (double) p_start.x - p_end.x );
@@ -301,25 +305,25 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
             hypotenuse = sqrt((p_start.y - p_end.y)*(p_start.y - p_end.y) + (p_start.x - p_end.x)*(p_start.x - p_end.x));
 
             //Scale the arrow by a factor of three
-            p_end.x = (int) (p_start.x - 9 * hypotenuse * cos(angle));
-            p_end.y = (int) (p_start.y - 9 * hypotenuse * sin(angle));
+            p_end.x = (int) (p_start.x - hypotenuse * cos(angle));
+            p_end.y = (int) (p_start.y - hypotenuse * sin(angle));
 
             //Draw the main line of the arrow
-            cv::line(canvas, p_start, p_end, line_color, line_tickness, CV_AA, 0);
+            cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA, 0);
 
             //Draw the tips of the arrow
             p_start.x = (int) (p_end.x + 3*cos(angle + pi/4));
             p_start.y = (int) (p_end.y + 3*sin(angle + pi/4));
-            cv::line(canvas, p_start, p_end, line_color, line_tickness, CV_AA, 0);
+            cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA, 0);
 
             p_start.x = (int) (p_end.x + 3*cos(angle - pi/4));
             p_start.y = (int) (p_end.y + 3*sin(angle - pi/4));
-            cv::line(canvas, p_start, p_end, line_color, line_tickness, CV_AA, 0);
+            cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA, 0);
 
       }
 
     }
-    canvas.copyTo(image);
+    //canvas.copyTo(image);
 
 }
 

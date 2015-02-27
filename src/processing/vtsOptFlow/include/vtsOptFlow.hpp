@@ -141,7 +141,12 @@ private:
 
 public:
 
-    vtsOptFlowManager(const std::string &moduleName, unsigned int &_height, unsigned int &_width, unsigned int &_binAcc, double &_threshold, unsigned int &_sobelSz, unsigned int &_tsVal, double &_alpha, int &_eye, bool &_saveOf);
+
+    vtsOptFlowManager(const std::string &moduleName, unsigned int &_height,
+                      unsigned int &_width, unsigned int &_binAcc,
+                      double &_threshold, unsigned int &_sobelSz,
+                      unsigned int &_tsVal, double &_alpha, int &_eye,
+                      bool &_saveOf);
     ~vtsOptFlowManager();
 
     bool    open();

@@ -204,8 +204,8 @@ void vtsOptFlowManager::interrupt()
 
 void vtsOptFlowManager::onRead(emorph::vBottle &bot)
 {
-    uint refbin;
-    uint prefbin;
+    uint refbin = 0;
+    uint prefbin = 0;
 
     /*create event queue*/
     emorph::vQueue q;
@@ -216,6 +216,7 @@ void vtsOptFlowManager::onRead(emorph::vBottle &bot)
     /*prepare output vBottle with address events extended with optical flow events*/
     emorph::vBottle &outBottle = outPort.prepare();
     outBottle.clear();
+    outBottle.append(bot);
 
     emorph::OpticalFlowEvent outEvent;
 
@@ -280,28 +281,30 @@ void vtsOptFlowManager::onRead(emorph::vBottle &bot)
         binEvts(iBinEvts, 2)=ts;
         iBinEvts++;
 
-        /*look forward in the bottle and fill the bin*/
-        qii = qi + 1;
-        while(refbin+binAcc>=ts && iBinEvts<10000 && qii != q.end())
-        {
-            emorph::AddressEvent *aep_forward = (*qii)->getAs<emorph::AddressEvent>();
-            posX = aep_forward->getX();
-            posY = aep_forward->getY();
-            ts = aep_forward->getStamp();
-            channel = aep_forward->getChannel();
+//        /*look forward in the bottle and fill the bin*/
+//        qii = qi + 1;
+//        while(refbin+binAcc>=ts && iBinEvts<10000 && qii != q.end())
+//        {
+//            emorph::AddressEvent *aep_forward = (*qii)->getAs<emorph::AddressEvent>();
+//            posX = aep_forward->getX();
+//            posY = aep_forward->getY();
+//            ts = aep_forward->getStamp();
+//            channel = aep_forward->getChannel();
 
-            if(eye==channel)
-            {
-                if(posX != 0)
-                {
-                    binEvts(iBinEvts, 0)=posX;
-                    binEvts(iBinEvts, 1)=posY;
-                    binEvts(iBinEvts, 2)=ts;
-                    iBinEvts++;
-                }
-            }
-            qii++;
-        }
+//            if(eye==channel)
+//            {
+//                if(posX != 0)
+//                {
+//                    binEvts(iBinEvts, 0)=posX;
+//                    binEvts(iBinEvts, 1)=posY;
+//                    binEvts(iBinEvts, 2)=ts;
+//                    iBinEvts++;
+//                }
+//            }
+//            qii++;
+//        }
+
+        //should qi = qii here?
 
         ts=prefbin=refbin;
 
