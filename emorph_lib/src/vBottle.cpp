@@ -55,7 +55,7 @@ void vBottle::append(vBottle &eb)
 
         //and the contents to append
         yarp::os::Bottle *b_from = bb->get(tagi+1).asList();
-        if(b_from->size()) {
+        if(!b_from->size()) {
             std::cerr << "Warning: From-list empty during vBottle append."
                          "Check vBottle integrity." << std::endl;
             continue;
