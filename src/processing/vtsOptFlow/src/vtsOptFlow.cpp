@@ -69,8 +69,9 @@ bool vtsOptFlow::configure(ResourceFinder &rf)
     double alpha = rf.find("alpha").asDouble();
     if(alpha == 0) alpha = 0.5;
 
-    int eye = 0;
-    if(rf.check("eye")) eye = rf.find("eye").asInt();
+    int eye = rf.check("eye", yarp::os::Value(0)).asInt();
+    //int eye = 0;
+    //if(rf.check("eye")) eye = rf.find("eye").asInt();
 
     bool saveOf = false;
     saveOf = rf.check("save"); // yarp::os::Value(false)).asBool();
@@ -126,6 +127,7 @@ vtsOptFlowManager::vtsOptFlowManager(const std::string &moduleName, unsigned int
     height=_height;
     width=_width;
     saveOf=_saveOf;
+    eye=_eye;
 
     xNeighFlow=new double[_sobelSz*_sobelSz];
     yNeighFlow=new double[_sobelSz*_sobelSz];
@@ -209,6 +211,7 @@ void vtsOptFlowManager::onRead(emorph::vBottle &bot)
     emorph::vQueue q;
     /*create queue iterator*/
     emorph::vQueue::iterator qi;
+    emorph::vQueue::iterator qii;
 
     /*prepare output vBottle with address events extended with optical flow events*/
     emorph::vBottle &outBottle = outPort.prepare();
@@ -276,6 +279,30 @@ void vtsOptFlowManager::onRead(emorph::vBottle &bot)
         binEvts(iBinEvts, 1)=posY;
         binEvts(iBinEvts, 2)=ts;
         iBinEvts++;
+
+        /*look forward in the bottle and fill the bin*/
+        qii = qi + 1;
+        while(refbin+binAcc>=ts && iBinEvts<10000 && qii != q.end())
+        {
+            emorph::AddressEvent *aep_forward = (*qii)->getAs<emorph::AddressEvent>();
+            posX = aep_forward->getX();
+            posY = aep_forward->getY();
+            ts = aep_forward->getStamp();
+            channel = aep_forward->getChannel();
+
+            if(eye==channel)
+            {
+                if(posX != 0)
+                {
+                    binEvts(iBinEvts, 0)=posX;
+                    binEvts(iBinEvts, 1)=posY;
+                    binEvts(iBinEvts, 2)=ts;
+                    iBinEvts++;
+                }
+            }
+            qii++;
+        }
+
         ts=prefbin=refbin;
 
         if(iBinEvts)
