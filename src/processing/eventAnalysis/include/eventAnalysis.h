@@ -32,27 +32,27 @@ class eventStatisticsDumper : public yarp::os::BufferedPort<emorph::vBottle>
 public:
 
     eventStatisticsDumper();
-    void setModuleName(std::string name);
-    void setOutputName(std::string name);
-
-    bool    open();
+    bool    open(std::string moduleName = "ESD");
     void    close();
     void    onRead(emorph::vBottle &bot);
     void    interrupt();
 
+    void setDirectory(std::string dir) {
+        this->dir = dir;
+    }
 
-    std::ofstream fwriter;
+
+    std::ofstream wrap_writer;
+    std::ofstream count_writer;
 
 private:
+
+    std::string dir;
 
     int bottle_number;
 
     std::string outfilename;
     int prevstamp;
-
-
-    std::string     moduleName;         //string containing module name
-    std::string     inPortName;        	//speech input port
 
 };
 
@@ -64,7 +64,7 @@ class eventStatisticsModule : public yarp::os::RFModule
 {
 
 private:
-    std::string name;
+
     eventStatisticsDumper esd;
 
 public:

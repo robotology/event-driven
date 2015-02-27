@@ -7,13 +7,11 @@
 <module>
    <name>dataSetPlayer</name>
    <node>localhost</node>
-   <tag>dataSetPlayer</tag>
 </module>
 
 <module>
    <name>aexGrabber</name>
    <node>pc104</node>
-   <tag>vGrabber</tag>
 </module>
 
 <module>
@@ -32,28 +30,30 @@
     <name> vFramer</name>
     <parameters> --frameRate 30 --eventWindow 0.1 --displays "(0 left (AE CLE) 1 right (AE CLE))"</parameters>
     <node>localhost</node>
-    <stdio>debugserver</stdio>
+</module>
+
+<module>
+    <name> eventAnalysis</name>
+    <parameters> --name ESD --dir $HOME/workspace/results/esd/"</parameters>
+    <node>localhost</node>
 </module>
 
 <module>
     <name> dataDumper </name>
     <parameters> --name /datadumper/experimenttype/experimentnumber/ </parameters>
     <node> localhost </node>
-    <tag> dataDumper </tag>
 </module>
 
 <module>
    <name>yarpview</name>
    <parameters>--name /viewCh0 --x 000 --y 000 --RefreshTime 33 </parameters>
    <node>localhost</node>
-   <tag>eventViewerLeft</tag>
 </module>
 
 <module>
    <name>yarpview</name>
    <parameters>--name /viewCh1 --x 500 --y 000 --RefreshTime 33 </parameters>
    <node>localhost</node>
-   <tag>eventViewerRight</tag>
 </module>
 
 
