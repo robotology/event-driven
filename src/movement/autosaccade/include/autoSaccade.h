@@ -20,6 +20,7 @@
 
 #include <yarp/os/all.h>
 #include <iCub/emorph/all.h>
+#include <yarp/dev/all.h>
 
 class EventBottleManager : public yarp::os::BufferedPort<emorph::vBottle>
 {
@@ -59,9 +60,18 @@ private:
     //the event bottle input and output handler
     EventBottleManager      eventBottleManager;
 
-    //parameters
+    //timing parameters
     double checkPeriod;
     double minVpS;
+
+    //saccade parameters
+    double sMag;
+    double sVel;
+
+    //robot control settings
+    yarp::dev::PolyDriver mdriver;
+    yarp::dev::IPositionControl *pc;
+    void performSaccade(yarp::dev::IPositionControl *pc);
 
     //timestamps for comparison
     double prevStamp;

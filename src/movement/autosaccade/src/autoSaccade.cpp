@@ -38,6 +38,26 @@ bool saccadeModule::configure(yarp::os::ResourceFinder &rf)
     //make the respond method of this RF module respond to the rpcPort
     attach(rpcPort);
 
+    std::string condev = rf.check("robot", yarp::os::Value("none")).asString();
+    yarp::os::Property options;
+    options.put("device", "remote_controlboard");
+    options.put("local", "/" + moduleName);
+    options.put("remote", "/" + condev + "/head");
+    pc = 0;
+
+    mdriver.open(options);
+    if(!mdriver.isValid())
+        std::cerr << "Did not connect to robot/simulator" << std::endl;
+    else
+        mdriver.view(pc);
+
+    if(!pc)
+        std::cerr << "Did not connect to position control" << std::endl;
+    else {
+        int t; pc->getAxes(&t);
+        std::cout << "Number of Joints: " << t << std::endl;
+    }
+
 
     //set other variables we need from the
     checkPeriod = rf.check("checkPeriod",
@@ -45,6 +65,28 @@ bool saccadeModule::configure(yarp::os::ResourceFinder &rf)
     minVpS = rf.check("minVpS", yarp::os::Value(50)).asDouble();
     prevStamp = 4294967295; //max value
 
+    sMag = rf.check("sMag", yarp::os::Value(1)).asDouble();
+    sVel = rf.check("sVel", yarp::os::Value(1000)).asDouble();
+
+    if(sMag < -5) {
+        std::cout << "Hard-coded limit of sMag < 5" << std::endl;
+        sMag = -5;
+    }
+
+    if(sMag > 5) {
+        std::cout << "Hard-coded limit of sMag < 5" << std::endl;
+        sMag = 5;
+    }
+
+    if(sVel < 0) {
+        std::cout << "Hard-coded limit of sVel > 10" << std::endl;
+        sVel = 10;
+    }
+
+    if(sVel > 1000) {
+        std::cout << "Hard-coded limit of sMag < 1000" << std::endl;
+        sVel = 1000;
+    }
 
     eventBottleManager.open(moduleName);
 
@@ -64,7 +106,65 @@ bool saccadeModule::close()
 {
     rpcPort.close();
     eventBottleManager.close();
+    pc->stop(); delete pc;
+    mdriver.close();
     return true;
+}
+
+void saccadeModule::performSaccade(yarp::dev::IPositionControl *pc)
+{
+    if(!pc) {
+        std::cerr << "Position Control Module Invalid" << std::endl;
+        return;
+    }
+    double vel3, vel4;
+    pc->getRefSpeed(3, &vel3);
+    pc->getRefSpeed(4, &vel4);
+
+    pc->setRefSpeed(3, sVel);
+    pc->setRefSpeed(4, sVel);
+
+
+    //move up
+    bool movedone = false;
+    pc->relativeMove(3, sMag);
+    while(!movedone)
+        pc->checkMotionDone(3, &movedone);
+
+    //move down
+    movedone = false;
+    pc->relativeMove(3, -2 * sMag);
+    while(!movedone)
+        pc->checkMotionDone(3, &movedone);
+
+    //move back up
+    movedone = false;
+    pc->relativeMove(3, sMag);
+    while(!movedone)
+        pc->checkMotionDone(3, &movedone);
+
+    //move left
+    movedone = false;
+    pc->relativeMove(4, sMag);
+    while(!movedone)
+        pc->checkMotionDone(4, &movedone);
+
+    //move right
+    movedone = false;
+    pc->relativeMove(4, -2 * sMag);
+    while(!movedone)
+        pc->checkMotionDone(4, &movedone);
+
+    //move back
+    movedone = false;
+    pc->relativeMove(4, sMag);
+    while(!movedone)
+        pc->checkMotionDone(4, &movedone);
+
+    pc->setRefSpeed(3, vel3);
+    pc->setRefSpeed(4, vel4);
+
+
 }
 
 /**********************************************************/
@@ -85,6 +185,8 @@ bool saccadeModule::updateModule()
 
     if(vPeriod == 0 || (vCount / vPeriod) < minVpS) {
         //perform saccade
+        if(pc) performSaccade(pc);
+
         std::cout << "perform saccade" << std::endl;
     } else {
         std::cout << vPeriod / 100000 << " | " << vCount / vPeriod << std::endl;
