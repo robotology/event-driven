@@ -39,6 +39,12 @@
 </module>
 
 <module>
+    <name> autoSaccade </name>
+    <parameters> --name autoSaccade --robot icub --checkPeriod 0.5 --minVpS 80 --sVel 1000 --sMag 2</parameters>
+    <node>localhost</node>
+</module>
+
+<module>
     <name> dataDumper </name>
     <parameters> --name /datadumper/experimenttype/experimentnumber/ </parameters>
     <node> localhost </node>
@@ -60,6 +66,12 @@
 <connection>
   <from>/aexGrabber/vBottle:o</from>
   <to>/vUndistortCam/vBottle:i</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
+  <from>/aexGrabber/vBottle:o</from>
+  <to>/autoSaccade/vBottle:i</to>
   <protocol>udp</protocol>
 </connection>
 
