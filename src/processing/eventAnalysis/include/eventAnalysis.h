@@ -44,8 +44,12 @@ public:
 
     std::ofstream wrap_writer;
     std::ofstream count_writer;
+    std::ofstream stamp_writer;
 
 private:
+
+    emorph::vtsHelper unwrapper;
+
 
     std::string dir;
 
@@ -66,6 +70,7 @@ class eventStatisticsModule : public yarp::os::RFModule
 private:
 
     eventStatisticsDumper esd;
+    bool msgflag;
 
 public:
 

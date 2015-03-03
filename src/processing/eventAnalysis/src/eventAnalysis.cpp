@@ -27,6 +27,7 @@ eventStatisticsDumper::eventStatisticsDumper()
 {
 
 
+
     this->setStrict();
     dir = "";
     prevstamp = 0;
@@ -68,6 +69,15 @@ bool eventStatisticsDumper::open(std::string moduleName)
     }
     count_writer << "Bottle Size | most recent stamp" << std::endl;
 
+    //vBottle size stats
+    fname = dir + "stamps.txt";
+    stamp_writer.open(fname.c_str());
+    if(!stamp_writer.is_open()) {
+        std::cerr << "File did not open at: " << fname << std::endl;
+    } else {
+        std::cout << fname << " successfully opened" << std::endl;
+    }
+
     return true;
 }
 
@@ -75,6 +85,8 @@ void eventStatisticsDumper::close()
 {
     std::cout << "now closing ports..." << std::endl;
     wrap_writer.close();
+    count_writer.close();
+    stamp_writer.close();
     BufferedPort<emorph::vBottle>::close();
     std::cout << "finished closing the read port..." << std::endl;
 }
@@ -118,6 +130,11 @@ void eventStatisticsDumper::onRead(emorph::vBottle &bot)
 
         }
         prevstamp = (*qi)->getStamp();
+
+        emorph::AddressEvent *ae = (*qi)->getAs<emorph::AddressEvent>();
+        if(!ae) continue;
+        unsigned long int ts = unwrapper(ae->getStamp());
+        stamp_writer << ae->getChannel() << " " << ts << std::endl;
     }
 
     count_writer << q.size();
@@ -132,7 +149,7 @@ void eventStatisticsDumper::onRead(emorph::vBottle &bot)
 
 eventStatisticsModule::eventStatisticsModule()
 {
-
+    msgflag = true;
 }
 
 bool eventStatisticsModule::configure(yarp::os::ResourceFinder &rf)
@@ -161,6 +178,18 @@ bool eventStatisticsModule::close()
 
 bool eventStatisticsModule::updateModule()
 {
+
+    if(msgflag && !esd.getInputCount() ) {
+        std::cout << "Please connect vBottle to port" << std::endl;
+        msgflag = false;
+    }
+
+    if(!msgflag && esd.getInputCount()) {
+        std::cout << "Okay ready to go. Hit Play" << std::endl;
+        msgflag = true;
+    }
+
+
 //    std::cout << name << " " << esd.getBatchedPercentage() << "% batched "
 //              << esd.getBatchedCount() << "# more "
 //              << esd.getTSCount() << "# TS total "
