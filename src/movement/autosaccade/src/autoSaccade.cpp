@@ -43,18 +43,27 @@ bool saccadeModule::configure(yarp::os::ResourceFinder &rf)
     options.put("device", "remote_controlboard");
     options.put("local", "/" + moduleName);
     options.put("remote", "/" + condev + "/head");
-    pc = 0;
+    pc = 0; ec = 0;
 
     mdriver.open(options);
     if(!mdriver.isValid())
         std::cerr << "Did not connect to robot/simulator" << std::endl;
-    else
+    else {
         mdriver.view(pc);
+        mdriver.view(ec);
+    }
 
     if(!pc)
         std::cerr << "Did not connect to position control" << std::endl;
     else {
         int t; pc->getAxes(&t);
+        std::cout << "Number of Joints: " << t << std::endl;
+    }
+
+    if(!ec)
+       std::cerr << "Did not connect to encoders" << std::endl;
+    else {
+        int t; ec->getAxes(&t);
         std::cout << "Number of Joints: " << t << std::endl;
     }
 
@@ -111,10 +120,10 @@ bool saccadeModule::close()
     return true;
 }
 
-void saccadeModule::performSaccade(yarp::dev::IPositionControl *pc)
+void saccadeModule::performSaccade()
 {
-    if(!pc) {
-        std::cerr << "Position Control Module Invalid" << std::endl;
+    if(!pc || !ec) {
+        std::cerr << "Saccade cannot be performed" << std::endl;
         return;
     }
     double vel3, vel4;
@@ -124,40 +133,44 @@ void saccadeModule::performSaccade(yarp::dev::IPositionControl *pc)
     pc->setRefSpeed(3, sVel);
     pc->setRefSpeed(4, sVel);
 
+    double pos3, pos4;
+    ec->getEncoder(3, &pos3);
+    ec->getEncoder(4, &pos4);
+
 
     //move up
     bool movedone = false;
-    pc->relativeMove(3, sMag);
+    pc->positionMove(3, pos3 + sMag);
     while(!movedone)
         pc->checkMotionDone(3, &movedone);
 
     //move down
     movedone = false;
-    pc->relativeMove(3, -2 * sMag);
+    pc->positionMove(3, pos3 - sMag);
     while(!movedone)
         pc->checkMotionDone(3, &movedone);
 
     //move back up
     movedone = false;
-    pc->relativeMove(3, sMag);
+    pc->positionMove(3, pos3);
     while(!movedone)
         pc->checkMotionDone(3, &movedone);
 
     //move left
     movedone = false;
-    pc->relativeMove(4, sMag);
+    pc->positionMove(4, pos4 + sMag);
     while(!movedone)
         pc->checkMotionDone(4, &movedone);
 
     //move right
     movedone = false;
-    pc->relativeMove(4, -2 * sMag);
+    pc->positionMove(4, pos4 - sMag);
     while(!movedone)
         pc->checkMotionDone(4, &movedone);
 
     //move back
     movedone = false;
-    pc->relativeMove(4, sMag);
+    pc->positionMove(4, pos4);
     while(!movedone)
         pc->checkMotionDone(4, &movedone);
 
@@ -185,7 +198,7 @@ bool saccadeModule::updateModule()
 
     if(vPeriod == 0 || (vCount / vPeriod) < minVpS) {
         //perform saccade
-        if(pc) performSaccade(pc);
+        if(pc && ec) performSaccade();
 
         std::cout << "perform saccade" << std::endl;
     } else {

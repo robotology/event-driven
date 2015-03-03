@@ -71,7 +71,8 @@ private:
     //robot control settings
     yarp::dev::PolyDriver mdriver;
     yarp::dev::IPositionControl *pc;
-    void performSaccade(yarp::dev::IPositionControl *pc);
+    yarp::dev::IEncoders *ec;
+    void performSaccade();
 
     //timestamps for comparison
     double prevStamp;
