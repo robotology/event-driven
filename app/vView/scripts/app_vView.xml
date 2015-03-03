@@ -5,11 +5,6 @@
 </dependencies>
 
 <module>
-   <name>dataSetPlayer</name>
-   <node>localhost</node>
-</module>
-
-<module>
    <name>aexGrabber</name>
    <node>pc104</node>
 </module>
@@ -34,7 +29,7 @@
 
 <module>
     <name> autoSaccade </name>
-    <parameters> --name autoSaccade --checkPeriod 0.8 --minVpS 50 </parameters>
+    <parameters> --name autoSaccade --robot icub --checkPeriod 1.5 --minVpS 50 --sVel 1000 --sMag 2</parameters>
     <node>localhost</node>
 </module>
 
