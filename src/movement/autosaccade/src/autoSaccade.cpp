@@ -105,18 +105,24 @@ bool saccadeModule::configure(yarp::os::ResourceFinder &rf)
 /**********************************************************/
 bool saccadeModule::interruptModule()
 {
+    std::cout << "Interrupting" << std::endl;
     rpcPort.interrupt();
     eventBottleManager.interrupt();
+    std::cout << "Finished Interrupting" << std::endl;
     return true;
 }
 
 /**********************************************************/
 bool saccadeModule::close()
 {
+
+    std::cout << "Closing" << std::endl;
     rpcPort.close();
     eventBottleManager.close();
-    pc->stop(); delete pc;
+    delete pc;
+    delete ec;
     mdriver.close();
+    std::cout << "Finished Closing" << std::endl;
     return true;
 }
 
@@ -243,23 +249,6 @@ bool EventBottleManager::open(const std::string &name)
     yarp::os::BufferedPort<emorph::vBottle>::open(inPortName);
 
     return true;
-}
-
-/**********************************************************/
-void EventBottleManager::close()
-{
-    //close ports
-    this->close();
-
-    //remember to also deallocate any memory allocated by this class
-}
-
-/**********************************************************/
-void EventBottleManager::interrupt()
-{
-    //pass on the interrupt call to everything needed
-    this->interrupt();
-
 }
 
 /**********************************************************/

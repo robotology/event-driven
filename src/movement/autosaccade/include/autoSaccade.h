@@ -39,8 +39,6 @@ public:
     EventBottleManager();
 
     bool    open(const std::string &name);
-    void    close();
-    void    interrupt();
 
     //this is the entry point to your main functionality
     void    onRead(emorph::vBottle &bot);
