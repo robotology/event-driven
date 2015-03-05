@@ -204,12 +204,10 @@ bool saccadeModule::updateModule()
     if(vPeriod == 0 || (vCount / vPeriod) < minVpS) {
         //perform saccade
         if(pc && ec) performSaccade();
-
-        std::cout << "perform saccade" << std::endl;
-    } else {
-        std::cout << vPeriod/1000000 << "s | " << vCount/vPeriod
-                  << "v/s" << std::endl;
+        std::cout << "perform saccade: ";
     }
+    std::cout << vPeriod/1000000 << "s | " << vCount/vPeriod
+              << "v/s" << std::endl;
 
     return true;
 }
