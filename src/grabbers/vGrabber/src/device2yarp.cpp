@@ -1140,6 +1140,8 @@ void  device2yarp::run() {
         yarp::os::Bottle &eventlist = bb->addList();
         eventlist = *bottle2send;
 
+        vStamp.update();
+        portvBottle.setEnvelope(vStamp);
         portvBottle.write();
 
     }
