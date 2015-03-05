@@ -69,11 +69,11 @@ bool saccadeModule::configure(yarp::os::ResourceFinder &rf)
 
     //set other variables we need from the
     checkPeriod = rf.check("checkPeriod",
-                           yarp::os::Value(0.8)).asDouble();
-    minVpS = rf.check("minVpS", yarp::os::Value(50)).asDouble();
+                           yarp::os::Value(0.5)).asDouble();
+    minVpS = rf.check("minVpS", yarp::os::Value(800)).asDouble();
     prevStamp = 4294967295; //max value
 
-    sMag = rf.check("sMag", yarp::os::Value(1)).asDouble();
+    sMag = rf.check("sMag", yarp::os::Value(2)).asDouble();
     sVel = rf.check("sVel", yarp::os::Value(1000)).asDouble();
 
     if(sMag < -5) {
@@ -193,7 +193,7 @@ bool saccadeModule::updateModule()
 
     //check the last time stamp and count
     unsigned long int latestStamp = eventBottleManager.getTime();
-    unsigned long int vCount = 100000 * eventBottleManager.popCount();
+    unsigned long int vCount = 1000000 * eventBottleManager.popCount();
 
     double vPeriod = latestStamp - prevStamp;
     prevStamp = latestStamp;
@@ -207,7 +207,8 @@ bool saccadeModule::updateModule()
 
         std::cout << "perform saccade" << std::endl;
     } else {
-        std::cout << vPeriod / 100000 << " | " << vCount / vPeriod << std::endl;
+        std::cout << vPeriod/1000000 << "s | " << vCount/vPeriod
+                  << "v/s" << std::endl;
     }
 
     return true;

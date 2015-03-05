@@ -40,7 +40,7 @@
 
 <module>
     <name> autoSaccade </name>
-    <parameters> --name autoSaccade --robot icub --checkPeriod 0.5 --minVpS 80 --sVel 1000 --sMag 2</parameters>
+    <parameters> --name autoSaccade --robot icub --checkPeriod 0.5 --minVpS 800 --sVel 1000 --sMag 2</parameters>
     <node>localhost</node>
 </module>
 
