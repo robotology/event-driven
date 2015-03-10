@@ -134,7 +134,8 @@ void eventStatisticsDumper::onRead(emorph::vBottle &bot)
         emorph::AddressEvent *ae = (*qi)->getAs<emorph::AddressEvent>();
         if(!ae) continue;
         unsigned long int ts = unwrapper(ae->getStamp());
-        stamp_writer << ae->getChannel() << " " << ts << std::endl;
+        stamp_writer << ae->getChannel() << " " << ts << " " << 
+            (int)ae->getPolarity() << std::endl;
     }
 
     count_writer << q.size();
