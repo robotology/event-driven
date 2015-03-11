@@ -5,11 +5,6 @@
 </dependencies>
 
 <module>
-   <name>dataSetPlayer</name>
-   <node>localhost</node>
-</module>
-
-<module>
    <name>aexGrabber</name>
    <node>pc104</node>
 </module>
@@ -76,7 +71,13 @@
 </connection>
 
 <connection>
-  <from>/vUndistortCam/vBottle:o</from>
+  <from>/aexGrabber/vBottle:o</from>
+  <to>/datadumper/experimenttype/experimentnumber/</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
+  <from>/aexGrabber/vBottle:o</from>
   <to>/vFramerModule/vBottle:i</to>
   <protocol>udp</protocol>
 </connection>
@@ -93,10 +94,6 @@
   <protocol>udp</protocol>
 </connection>
 
-<connection>
-  <from>/aexGrabber/vBottle:o</from>
-  <to>/datadumper/experimenttype/experimentnumber/</to>
-  <protocol>udp</protocol>
-</connection>
+
 
 </application>

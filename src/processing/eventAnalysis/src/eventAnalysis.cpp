@@ -42,8 +42,6 @@ bool eventStatisticsDumper::open(std::string moduleName)
     std::string inPortName = "/" + moduleName + "/vBottle:i";
     BufferedPort<emorph::vBottle>::open( inPortName.c_str() );
 
-
-
     //now initialise and open all our writers
     std::cout << "Opening writers: " << std::endl;
     std::string fname;
@@ -91,14 +89,6 @@ void eventStatisticsDumper::close()
     std::cout << "finished closing the read port..." << std::endl;
 }
 
-void eventStatisticsDumper::interrupt()
-{
-    fprintf(stdout,"cleaning up...\n");
-    fprintf(stdout,"attempting to interrupt ports\n");
-    BufferedPort<emorph::vBottle>::interrupt();
-    fprintf(stdout,"finished interrupt ports\n");
-}
-
 void eventStatisticsDumper::onRead(emorph::vBottle &bot)
 {
 
@@ -135,7 +125,8 @@ void eventStatisticsDumper::onRead(emorph::vBottle &bot)
         if(!ae) continue;
         unsigned long int ts = unwrapper(ae->getStamp());
         stamp_writer << ae->getChannel() << " " << ts << " " << 
-            (int)ae->getPolarity() << std::endl;
+            (int)ae->getPolarity() << " " << (int)ae->getX() << " " <<
+            (int)ae->getY() << std::endl;
     }
 
     count_writer << q.size();
@@ -157,11 +148,14 @@ bool eventStatisticsModule::configure(yarp::os::ResourceFinder &rf)
 {
 
     std::string name = rf.check("name",
-                                yarp::os::Value("ESD")
-                                ).asString();
+                                yarp::os::Value("ESD")).asString();
 
     std::string dir = rf.check("dir",
                                yarp::os::Value("")).asString();
+
+    runtime = rf.check("runfor",
+                       yarp::os::Value(-1)).asDouble();
+    starttime = -1;
     setName(name.c_str());
 
     esd.setDirectory(dir);
@@ -180,7 +174,7 @@ bool eventStatisticsModule::close()
 bool eventStatisticsModule::updateModule()
 {
 
-    if(msgflag && !esd.getInputCount() ) {
+    if(msgflag && !esd.getInputCount()) {
         std::cout << "Please connect vBottle to port" << std::endl;
         msgflag = false;
     }
@@ -190,16 +184,13 @@ bool eventStatisticsModule::updateModule()
         msgflag = true;
     }
 
-
-//    std::cout << name << " " << esd.getBatchedPercentage() << "% batched "
-//              << esd.getBatchedCount() << "# more "
-//              << esd.getTSCount() << "# TS total "
-//              << std::endl;
-
-//    esd.wrap_writer << esd.getBatchedPercentage() << " "
-//                << esd.getBatchedCount() << " "
-//                << esd.getTSCount() << " "
-//                << std::endl;
+    if(runtime > 0 && esd.getBottleCount()) {
+        if(starttime < 0) starttime = timer.now();
+        if(timer.now() - starttime > runtime) {
+            esd.close();
+            return false;
+        }
+    }
 
     return true;
 }
