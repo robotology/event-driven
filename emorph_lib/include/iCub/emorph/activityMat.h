@@ -33,20 +33,25 @@ private:
     //data
     yarp::sig::Matrix activity;
     yarp::sig::Matrix timestamps;
+    double ctime;
 
     //parameters
     double decayrate;
     double injectionamount;
+    int height;
+    int width;
 
     //private functions
-    void decayActivity(int x, int y, double ts);
+    void decayActivity(int x, int y);
 
 
 public:
 
-    activityMat(int height = 128, int width = 128) {
-        decayrate = 1000;
-        injectionamount = 1;
+    activityMat(int height = 128, int width = 128, double decayRate = 1000,
+                double injectionAmount = 1 ) : height(height), width(width) {
+        decayrate = decayRate;
+        injectionamount = injectionAmount;
+        ctime = 0;
         activity.resize(height, width);
         activity.zero();
         timestamps.resize(height, width);
@@ -54,7 +59,8 @@ public:
     }
 
     double addEvent(emorph::AddressEvent &event);
-    double queryActivity(emorph::AddressEvent &event);
+    double queryActivity(int x, int y);
+    yarp::sig::Matrix copyAllActivity() { return activity; }
 
 };
 

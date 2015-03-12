@@ -17,10 +17,10 @@
 #include "iCub/emorph/activityMat.h"
 namespace emorph {
 
-void activityMat::decayActivity(int x, int y, double ts)
+void activityMat::decayActivity(int x, int y)
 {
-    activity(y, x) = activity(y, x) * exp(-(ts - timestamps(y, x))/decayrate);
-    timestamps(y, x) = ts;
+    activity(y, x) = activity(y, x) * exp(-(ctime - timestamps(y, x))/decayrate);
+    timestamps(y, x) = ctime;
 }
 
 double activityMat::addEvent(emorph::AddressEvent &event)
@@ -28,18 +28,24 @@ double activityMat::addEvent(emorph::AddressEvent &event)
     int x = event.getX();
     int y = event.getY();
 
-    decayActivity(x, y, unwrap(event.getStamp()));
+    if(x < 0 || x > width-1 || y < 0 || y > height-1) return -1;
+
+    //update the current time
+    ctime = unwrap(event.getStamp());
+
+    //decay the activity (given the current time)
+    decayActivity(x, y);
+
+    //add new activity
     activity(y, x) += injectionamount;
     return activity(y, x);
 
 }
 
-double activityMat::queryActivity(emorph::AddressEvent &event)
+double activityMat::queryActivity(int x, int y)
 {
-    int x = event.getX();
-    int y = event.getY();
-
-    decayActivity(x, y, unwrap(event.getStamp()));
+    if(x < 0 || x > width-1 || y < 0 || y > height-1) return -1;
+    decayActivity(x, y);
     return activity(y, x);
 
 }
