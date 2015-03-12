@@ -19,6 +19,7 @@
 
 #include <yarp/os/all.h>
 #include <iCub/emorph/all.h>
+#include <vCircle.h>
 
 class EventBottleManager : public yarp::os::BufferedPort<emorph::vBottle>
 {
@@ -33,6 +34,7 @@ private:
 public:
     
     EventBottleManager();
+    vCircle circleFinder;
 
     bool    open(const std::string &name);
     void    close();
@@ -45,11 +47,8 @@ public:
 
 class vCircleModule : public yarp::os::RFModule
 {
-    //the remote procedure port
-    yarp::os::RpcServer     rpcPort;
-
     //the event bottle input and output handler
-    EventBottleManager      *eventBottleManager;
+    EventBottleManager      eventBottleManager;
 
 
 public:
@@ -58,8 +57,6 @@ public:
     virtual bool configure(yarp::os::ResourceFinder &rf);
     virtual bool interruptModule();
     virtual bool close();
-    virtual bool respond(const yarp::os::Bottle &command,
-                         yarp::os::Bottle &reply);
     virtual double getPeriod();
     virtual bool updateModule();
 

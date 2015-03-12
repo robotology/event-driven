@@ -16,16 +16,28 @@
 
 #include "vCircle.h"
 
-namespace emorph {
-
-vCircle::vCircle()
+void vCircle::localCircleEstimate(emorph::AddressEvent &event)
 {
+    int x = event.getX();
+    int y = event.getY();
+    //update the activity here
+    activity.addEvent(event);
+    return;
+
+    //search for the best activity around the event
+    double ba = -1; int bv, bu;
+    for(int v = std::max(y - sRadius, 0); v = std::min(y + sRadius, height-1); v++) {
+        for(int u = std::max(x - sRadius, 0); u = std::min(x + sRadius, width-1); u++) {
+            double a = activity.queryActivity(u, v);
+            if(a > ba) {
+                ba = a;
+                bv = v;
+                bu = u;
+            }
+        }
+    }
+
+
 
 }
 
-emorph::vEvent& vCircle::myFunc(emorph::vEvent &event)
-{
-    return event;
-}
-
-} //namespace emorph

@@ -15,36 +15,19 @@
  */
 
 #include "vCircleModule.h"
+#include <opencv2/opencv.hpp>
 
 /**********************************************************/
 bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
 {
     //set the name of the module
-    std::string moduleName = rf.check("name", yarp::os::Value("vTemplate"),
-                                      "module name (string)").asString();
+    std::string moduleName = rf.check("name",
+                                      yarp::os::Value("vCircleFinder")
+                                      ).asString();
     setName(moduleName.c_str());
 
-    //open and attach the rpc port
-    std::string rpcPortName  =  "/" + moduleName + "rpc:i";
 
-    if (!rpcPort.open(rpcPortName))
-    {
-        std::cerr << getName() << " : Unable to open rpc port at " <<
-                     rpcPortName << std::endl;
-        return false;
-    }
-
-    //make the respond method of this RF module respond to the rpcPort
-    attach(rpcPort);
-
-
-    //set other variables we need from the
-    std::string fileName = rf.check("variable",
-                        yarp::os::Value("variable_defualt"),
-                        "variable description").asString();
-    
-    /* create the thread and pass pointers to the module parameters */
-    eventBottleManager = new EventBottleManager;
+    eventBottleManager.open(moduleName);
 
     return true ;
 }
@@ -52,23 +35,34 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
 /**********************************************************/
 bool vCircleModule::interruptModule()
 {
-    rpcPort.interrupt();
-    eventBottleManager->interrupt();
+    eventBottleManager.interrupt();
+    yarp::os::RFModule::interruptModule();
     return true;
 }
 
 /**********************************************************/
 bool vCircleModule::close()
 {
-    rpcPort.close();
-    eventBottleManager->close();
-    delete eventBottleManager;
+    eventBottleManager.close();
+    yarp::os::RFModule::close();
     return true;
 }
 
 /**********************************************************/
 bool vCircleModule::updateModule()
 {
+    yarp::sig::Matrix act =
+            eventBottleManager.circleFinder.activity.copyAllActivity();
+    cv::Mat image(act.rows(), act.cols(), CV_8U);
+    for(int i = 0; i < act.rows(); i++) {
+        for(int j = 0; j < act.cols(); j++) {
+            image.at<char>(i, j) = act(i, j);
+        }
+    }
+    cv::imshow("Activity Debug", image);
+    cv::waitKey(1);
+
+
     return true;
 }
 
@@ -76,13 +70,6 @@ bool vCircleModule::updateModule()
 double vCircleModule::getPeriod()
 {
     return 0.1;
-}
-
-bool vCircleModule::respond(const yarp::os::Bottle &command,
-                              yarp::os::Bottle &reply)
-{
-    //fill in all command/response plus module update methods here
-    return true;
 }
 
 
@@ -146,18 +133,22 @@ void EventBottleManager::onRead(emorph::vBottle &bot)
 
     for(qi = q.begin(); qi != q.end(); qi++)
     {
+        emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
+        if(!v) continue;
+        circleFinder.localCircleEstimate(*v);
+
         //unwrap timestamp
-        unsigned long int ts = unwrapper((*qi)->getStamp());
+        //unsigned long int ts = unwrapper((*qi)->getStamp());
 
         //process
 
         //add events that need to be added to the out bottle
-        outBottle.addEvent(**qi);
+        //outBottle.addEvent(**qi);
 
 
     }
     //send on the processed events
-    outPort.write();
+    //outPort.write();
 
 }
 

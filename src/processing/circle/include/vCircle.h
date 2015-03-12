@@ -16,20 +16,33 @@
 
 #include <iCub/emorph/all.h>
 
-namespace emorph {
-
 class vCircle
 {
+
+private:
+
+    //data
+    //emorph::activityMat activity;
+
+    //parameters
+    int width;
+    int height;
+    int sRadius;
+
 public:
 
-    vCircle();
-    emorph::vEvent& myFunc(emorph::vEvent &event);
+    vCircle(int width = 128, int height = 128, int sRadius = 5) :
+        sRadius(sRadius), width(width), height(height) {
+        activity = emorph::activityMat(height, width, 500000, 20);
+    }
+    void localCircleEstimate(emorph::AddressEvent &event);
 
-protected:
+    //temporarily public
+    emorph::activityMat activity;
+
 
 
 
 };
 
-} //namespace emorph
 
