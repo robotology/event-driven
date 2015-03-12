@@ -18,53 +18,82 @@
 #ifndef __ICUB_EVENTCLUSTERING_MOD_H__
 #define __ICUB_EVENTCLUSTERING_MOD_H__
 
+#include <string.h>
+
+#include <fstream>
+
 #include <yarp/os/all.h>
 #include <yarp/sig/all.h>
+#include <yarp/dev/all.h>
 #include <iCub/emorph/all.h>
 #include <iCub/emorph/vtsHelper.h>
+#include <iCub/emorph/svm.h>
 
-class EventBottleManager : public yarp::os::BufferedPort<emorph::vBottle>
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
+
+class vBottleManager : public yarp::os::BufferedPort<emorph::vBottle>
 {
 private:
-    
+
+    //name of the module (rootname of ports)
+    std::string moduleName;
+
+    //input port for the encoders
+    yarp::os::BufferedPort<yarp::os::Bottle> inPortEncoders;
+
     //output port for the vBottle with the new events computed by the module
     yarp::os::BufferedPort<emorph::vBottle> outPort;
 
     //for helping with timestamp wrap around
     emorph::vtsHelper unwrapper;
 
-    //for computing statistics
-    void computeStat(double, double, uint, yarp::sig::Vector&, yarp::sig::Matrix&);
+    /******************************************************************************/
+    //   FUNCTIONS
+    /******************************************************************************/
+    double compute_and_scale_vel(double last_pos, double curr_pos, double dt);
+    std::vector<double> predict_mean(svm_node *test);
+    cv::Mat predict_cov(svm_node *test);
 
     /******************************************************************************/
     //   VARIABLES
     /******************************************************************************/
+    double threshold;
+    bool first;
+
+    double last_joint_pos[6] = {0, 0, 0, 0, 0, 0};
+
+    std::ofstream saveFile;
+    std::stringstream line2save;
+
     uint x;
     uint y;
-    double vx;
-    double vy;
+    float vx;
+    float vy;
     uint ts;
 
 public:
     
-    EventBottleManager();
+    vBottleManager(const std::string &_moduleName, double &_threshold);
 
-    bool    open(const std::string &name);
+    bool    open();
     void    close();
     void    interrupt();
 
     //this is the entry point to your main functionality
-    void    onRead(emorph::vBottle &bot);
+    void    onRead(emorph::vBottle &vbot);
 
 };
 
 class vEgoMotionModule : public yarp::os::RFModule
 {
+
     //the remote procedure port
     yarp::os::RpcServer     rpcPort;
 
-    //the event bottle input and output handler
-    EventBottleManager      *eventBottleManager;
+    //the vbottle input and output handler
+    vBottleManager      *vBotManager;
 
 
 public:

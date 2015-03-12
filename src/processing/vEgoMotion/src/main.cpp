@@ -18,16 +18,18 @@
 
 #include "vEgoMotion.h"
 
+using namespace yarp::os;
+
 int main(int argc, char * argv[])
 {
     /* initialize yarp network */
-    yarp::os::Network::init();
+    Network::init();
 
     /* create the module */
     vEgoMotionModule vEgoMotionModuleInstance;
 
     /* prepare and configure the resource finder */
-    yarp::os::ResourceFinder rf;
+    ResourceFinder rf;
     rf.setVerbose( true );
     rf.setDefaultContext( "vEgomotion" );
     rf.setDefaultConfigFile( "config.ini" );
@@ -36,7 +38,7 @@ int main(int argc, char * argv[])
 
     /* run the module: runModule() calls configure first and, if successful, it then runs */
     vEgoMotionModuleInstance.runModule(rf);
-    yarp::os::Network::fini();
+    Network::fini();
 
     return 0;
 }
