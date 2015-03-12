@@ -16,6 +16,7 @@ SET(folder_source
   src/eventBottle.cpp
   src/vBottle.cpp
   src/vCodec.cpp
+  src/activityMat.cpp
   src/vWindow.cpp
   src/vSurf.cpp
 )
@@ -27,6 +28,7 @@ SET(folder_header
   include/iCub/emorph/vBottle.h
   include/iCub/emorph/vCodec.h
   include/iCub/emorph/vtsHelper.h
+include/iCub/emorph/activityMat.h
   include/iCub/emorph/vWindow.h
   include/iCub/emorph/vSurf.h
 )
