@@ -10,4 +10,6 @@ add_subdirectory(template)
 add_subdirectory(dPepper)
 if(OPENCV_FOUND)
     add_subdirectory(vUndistortCam)
+	add_subdirectory(circle)
 endif(OPENCV_FOUND)
+
