@@ -69,14 +69,16 @@ bool vtsOptFlow::configure(ResourceFinder &rf)
     double alpha = rf.find("alpha").asDouble();
     if(alpha == 0) alpha = 0.5;
 
-    int eye = rf.check("eye", yarp::os::Value(0)).asInt();
-    //int eye = 0;
-    //if(rf.check("eye")) eye = rf.find("eye").asInt();
+    int eye = rf.check("eye", Value(0)).asInt();
 
     bool saveOf = false;
-    saveOf = rf.check("save"); // yarp::os::Value(false)).asBool();
+    if (rf.check("save")) saveOf = true;
 
-    vtsofManager = new vtsOptFlowManager( moduleName, height, width,  binAcc, threshold, sobelSz, tsVal, alpha, eye, saveOf );
+    bool batch_mode = false;
+    if (rf.check("batch")) batch_mode = true;
+    //rf.check("batch", Value(false)).asBool();
+
+    vtsofManager = new vtsOptFlowManager( moduleName, height, width,  binAcc, threshold, sobelSz, tsVal, alpha, eye, saveOf, batch_mode );
     vtsofManager->open();
 
     return true ;
@@ -112,7 +114,7 @@ vtsOptFlowManager::~vtsOptFlowManager()
     delete[] trans2neigh;
 }
 
-vtsOptFlowManager::vtsOptFlowManager(const std::string &moduleName, unsigned int &_height, unsigned int &_width, unsigned int &_binAcc, double &_threshold, unsigned int &_sobelSz, unsigned int &_tsVal, double &_alpha, int &_eye, bool &_saveOf)
+vtsOptFlowManager::vtsOptFlowManager(const string &moduleName, unsigned int &_height, unsigned int &_width, unsigned int &_binAcc, double &_threshold, unsigned int &_sobelSz, unsigned int &_tsVal, double &_alpha, int &_eye, bool &_saveOf, bool &_batch_mode)
     :activity(_height, _width), TSs(_height, _width), TSs2Plan(_height, _width), vxMat(_height, _width), vyMat(_height, _width), ivxy(_height, _width), sobelx(_sobelSz, _sobelSz), sobely(_sobelSz, _sobelSz), subTSs(_sobelSz, _sobelSz), A(_sobelSz*_sobelSz, 3), At(3,_sobelSz*_sobelSz), AtA(3,3), abc(3), Y(_sobelSz*_sobelSz), ctrl((uint)floor((double)_sobelSz/2.0), (uint)floor((double)_sobelSz/2.0)), sMat(_height*_width, 2), binEvts(10000, 3), alreadyComputedX(_height, _width), alreadyComputedY(_height, _width), binAcc(_binAcc)
 {
     fprintf(stdout,"initialising Variables\n");
@@ -128,6 +130,7 @@ vtsOptFlowManager::vtsOptFlowManager(const std::string &moduleName, unsigned int
     width=_width;
     saveOf=_saveOf;
     eye=_eye;
+    batch_mode=_batch_mode;
 
     xNeighFlow=new double[_sobelSz*_sobelSz];
     yNeighFlow=new double[_sobelSz*_sobelSz];
@@ -178,7 +181,7 @@ bool vtsOptFlowManager::open()
     this->useCallback();
 
     inPortName = "/" + moduleName + "/vBottle:i";
-    BufferedPort<emorph::vBottle>::open(inPortName);
+    BufferedPort<vBottle>::open(inPortName);
 
     outPortName = "/" + moduleName + "/vBottle:o";
     outPort.open(outPortName);
@@ -202,23 +205,23 @@ void vtsOptFlowManager::interrupt()
     outPort.interrupt();
 }
 
-void vtsOptFlowManager::onRead(emorph::vBottle &bot)
+void vtsOptFlowManager::onRead(vBottle &bot)
 {
     uint refbin = 0;
     uint prefbin = 0;
 
     /*create event queue*/
-    emorph::vQueue q;
+    vQueue q;
     /*create queue iterator*/
-    emorph::vQueue::iterator qi;
-    emorph::vQueue::iterator qii;
+    vQueue::iterator qi;
+    vQueue::iterator qii;
 
     /*prepare output vBottle with address events extended with optical flow events*/
-    emorph::vBottle &outBottle = outPort.prepare();
+    vBottle &outBottle = outPort.prepare();
     outBottle.clear();
     outBottle.append(bot);
 
-    emorph::OpticalFlowEvent outEvent;
+    OpticalFlowEvent outEvent;
 
     /*get the event queue in the vBottle bot*/
     bot.getAll(q);
@@ -227,7 +230,7 @@ void vtsOptFlowManager::onRead(emorph::vBottle &bot)
 
     for(qi = q.begin(); qi != q.end(); qi++)
     {
-        emorph::AddressEvent *aep = (*qi)->getAs<emorph::AddressEvent>();
+        AddressEvent *aep = (*qi)->getAs<AddressEvent>();
         if(!aep) continue;
 
         posX = aep->getX();
@@ -281,30 +284,31 @@ void vtsOptFlowManager::onRead(emorph::vBottle &bot)
         binEvts(iBinEvts, 2)=ts;
         iBinEvts++;
 
-//        /*look forward in the bottle and fill the bin*/
-//        qii = qi + 1;
-//        while(refbin+binAcc>=ts && iBinEvts<10000 && qii != q.end())
-//        {
-//            emorph::AddressEvent *aep_forward = (*qii)->getAs<emorph::AddressEvent>();
-//            posX = aep_forward->getX();
-//            posY = aep_forward->getY();
-//            ts = aep_forward->getStamp();
-//            channel = aep_forward->getChannel();
+        /*look forward in the bottle and fill the bin*/
+        if(batch_mode)
+        {
+            qii = qi + 1;
+            while(refbin+binAcc>=ts && iBinEvts<10000 && qii != q.end())
+            {
+                AddressEvent *aep_forward = (*qii)->getAs<AddressEvent>();
+                posX = aep_forward->getX();
+                posY = aep_forward->getY();
+                ts = aep_forward->getStamp();
+                channel = aep_forward->getChannel();
 
-//            if(eye==channel)
-//            {
-//                if(posX != 0)
-//                {
-//                    binEvts(iBinEvts, 0)=posX;
-//                    binEvts(iBinEvts, 1)=posY;
-//                    binEvts(iBinEvts, 2)=ts;
-//                    iBinEvts++;
-//                }
-//            }
-//            qii++;
-//        }
-
-        //should qi = qii here?
+                if(eye==channel)
+                {
+                    if(posX != 0)
+                    {
+                        binEvts(iBinEvts, 0)=posX;
+                        binEvts(iBinEvts, 1)=posY;
+                        binEvts(iBinEvts, 2)=ts;
+                        iBinEvts++;
+                    }
+                }
+                qii++;
+            }
+        }
 
         ts=prefbin=refbin;
 
@@ -360,7 +364,7 @@ void vtsOptFlowManager::updateAll()
 
 emorph::OpticalFlowEvent vtsOptFlowManager::compute()
 {
-    emorph::OpticalFlowEvent opt_flow;
+    OpticalFlowEvent opt_flow;
 
     alreadyComputedX=0;
     alreadyComputedY=0;
@@ -413,9 +417,13 @@ emorph::OpticalFlowEvent vtsOptFlowManager::compute()
                 ivxy(x, y)+=1;
                 vxMat(x, y) = vxMat(x, y) + (1/ivxy(x, y))*(outX - vxMat(x, y));
                 vyMat(x, y) = vyMat(x, y) + (1/ivxy(x, y))*(outY - vyMat(x, y));
+                //double theta = atan2(vyMat(x, y), vyMat(x, y));
+                //double mag = sqrt(vxMat(x, y)*vxMat(x, y) + vyMat(x, y)*vyMat(x, y));
 
                 opt_flow.setX(y);
                 opt_flow.setY(x);
+                //opt_flow.setVx(mag);
+                //opt_flow.setVy(theta);
                 opt_flow.setVx((float)vxMat(x, y));
                 opt_flow.setVy((float)vyMat(x, y));
 
@@ -580,8 +588,8 @@ void vtsOptFlowManager::printMatrix(Matrix& _mat)
     for(uint r=0; r<nr; r++)
     {
         for(uint c=0; c<nc; c++)
-            std::cout << _mat(r,c) << " ";
-        std::cout << std::endl;
+            cout << _mat(r,c) << " ";
+        cout << endl;
     }
 }
 

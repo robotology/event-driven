@@ -59,7 +59,6 @@ private:
     uint createPlan(yarp::sig::Matrix& );
     uint createPlanAndCompute(yarp::sig::Matrix&, double&, double&, uint&, uint&, uint&);
     void printMatrix(yarp::sig::Matrix& );
-    //int computeStat(double, uint, double &, double &);
 
     /******************************************************************************/
     //   VARIABLES
@@ -74,7 +73,7 @@ private:
     uint sobelLR;
     uint binAcc;
     bool saveOf;
-    bool orientation;
+    bool batch_mode;
 
     uint borneSupX;
     uint borneSupY;
@@ -108,7 +107,6 @@ private:
 
     uint posX;
     uint posY;
-    uint posXY;
     int channel;
     int pol;
     uint ts;
@@ -146,7 +144,7 @@ public:
                       unsigned int &_width, unsigned int &_binAcc,
                       double &_threshold, unsigned int &_sobelSz,
                       unsigned int &_tsVal, double &_alpha, int &_eye,
-                      bool &_saveOf);
+                      bool &_saveOf, bool &_batch_mode);
     ~vtsOptFlowManager();
 
     bool    open();
