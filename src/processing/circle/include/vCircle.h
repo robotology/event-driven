@@ -22,25 +22,33 @@ class vCircle
 private:
 
     //data
-    //emorph::activityMat activity;
+    emorph::activityMat activity;
+
+    struct act_unit {
+        int x;
+        int y;
+        int a;
+        act_unit(int x, int y, int a): x(x), y(y), a(a) {}
+    };
+    std::vector<act_unit> localActivity;
 
     //parameters
     int width;
     int height;
     int sRadius;
+    int tRadius;
+
+    //private functions
+    void createLocalSearch(int x, int y);
+    void trimFilterLocations(int x, int y);
 
 public:
 
-    vCircle(int width = 128, int height = 128, int sRadius = 5) :
-        sRadius(sRadius), width(width), height(height) {
-        activity = emorph::activityMat(height, width, 500000, 20);
+    vCircle(int width = 128, int height = 128, int sRadius = 10, int tRadius = 5)
+        : sRadius(sRadius), width(width), height(height), tRadius(tRadius) {
+        activity = emorph::activityMat(height, width, 1000000, 5);
     }
-    void localCircleEstimate(emorph::AddressEvent &event);
-
-    //temporarily public
-    emorph::activityMat activity;
-
-
+    emorph::ClusterEvent *localCircleEstimate(emorph::AddressEvent &event);
 
 
 };

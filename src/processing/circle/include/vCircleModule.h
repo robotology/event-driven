@@ -31,10 +31,12 @@ private:
     //for helping with timestamp wrap around
     emorph::vtsHelper unwrapper;
 
+    vCircle circleFinder;
+
 public:
     
     EventBottleManager();
-    vCircle circleFinder;
+    emorph::vBottle tempBottle;
 
     bool    open(const std::string &name);
     void    close();

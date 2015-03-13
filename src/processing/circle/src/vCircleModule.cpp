@@ -51,16 +51,26 @@ bool vCircleModule::close()
 /**********************************************************/
 bool vCircleModule::updateModule()
 {
-    yarp::sig::Matrix act =
-            eventBottleManager.circleFinder.activity.copyAllActivity();
-    cv::Mat image(act.rows(), act.cols(), CV_8U);
-    for(int i = 0; i < act.rows(); i++) {
-        for(int j = 0; j < act.cols(); j++) {
-            image.at<char>(i, j) = act(i, j);
-        }
-    }
-    cv::imshow("Activity Debug", image);
-    cv::waitKey(1);
+//    cv::Mat image(128, 128, CV_8U); image.setTo(0);
+
+////    yarp::sig::Matrix act =
+////            eventBottleManager.circleFinder.activity.copyAllActivity();
+////    for(int i = 0; i < act.rows(); i++) {
+////        for(int j = 0; j < act.cols(); j++) {
+////            image.at<char>(i, j) = act(i, j);
+////        }
+////    }
+
+//    emorph::vQueue q; emorph::vQueue::iterator qi;
+//    eventBottleManager.tempBottle.getAll(q);
+//    for(qi = q.begin(); qi != q.end(); qi++) {
+//        emorph::ClusterEvent *cv = (*qi)->getAs<emorph::ClusterEvent>();
+//        if(!cv) continue;
+//        cv::circle(image, cv::Point2i(cv->getXCog(), cv->getYCog()), 4, CV_RGB(255, 255, 255), CV_FILLED);
+//    }
+
+//    cv::imshow("Activity Debug", image);
+//    cv::waitKey(1);
 
 
     return true;
@@ -69,10 +79,9 @@ bool vCircleModule::updateModule()
 /**********************************************************/
 double vCircleModule::getPeriod()
 {
-    return 0.1;
+    return 0.3;
+
 }
-
-
 /**********************************************************/
 EventBottleManager::EventBottleManager()
 {
@@ -126,29 +135,35 @@ void EventBottleManager::onRead(emorph::vBottle &bot)
     
     // prepare output vBottle with address events extended with cluster ID (aec) and cluster events (clep)
     emorph::vBottle &outBottle = outPort.prepare();
-    outBottle.clear();
+    //outBottle.clear();
+    outBottle = bot;
 
+    cv::Mat image(128*4, 128*4, CV_8U); image.setTo(0);
     // get the event queue in the vBottle bot
     bot.getAll(q);
 
+    tempBottle.clear();
     for(qi = q.begin(); qi != q.end(); qi++)
     {
         emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
         if(!v) continue;
-        circleFinder.localCircleEstimate(*v);
+        emorph::ClusterEvent * cv = circleFinder.localCircleEstimate(*v);
+        if(!cv) continue;
 
-        //unwrap timestamp
-        //unsigned long int ts = unwrapper((*qi)->getStamp());
-
-        //process
-
-        //add events that need to be added to the out bottle
-        //outBottle.addEvent(**qi);
-
+        //outBottle.addEvent(*cv);
+        //tempBottle.addEvent(*cv);
+        cv::circle(image, cv::Point2i(cv->getYCog()*4, (128 - cv->getXCog())*4), 4, CV_RGB(255, 255, 255), CV_FILLED);
 
     }
+
+
+
+    cv::imshow("Activity Debug", image);
+    cv::waitKey(1);
+
     //send on the processed events
-    //outPort.write();
+    outPort.write();
+    //std::cout << outBottle.toString() << std::endl;
 
 }
 
