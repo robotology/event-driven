@@ -165,9 +165,9 @@ void EventBottleManager::onRead(emorph::vBottle &bot)
     cv::Mat bigim(128*4, 128*4, CV_32F); bigim.setTo(0);
     cv::resize(image2, bigim, bigim.size());
 
-    //cv::imshow("Circle Estimates", image);
+    cv::imshow("Circle Estimates", image);
     //cv::imshow("Activity Debug", bigim);
-    //cv::waitKey(1);
+    cv::waitKey(1);
 
     //send on the processed events
     outPort.write();

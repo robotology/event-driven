@@ -192,9 +192,10 @@ emorph::ClusterEvent * vCircle::localCircleEstimate(emorph::AddressEvent &event)
     double ma = (p2.y - p1.y) / (double)(p2.x - p1.x);
     double mb = (p3.y - p2.y) / (double)(p3.x - p2.x);
 
-    unsigned char cx = (ma * mb * (p1.y - p3.y) + mb * (p1.x - p2.x) - ma * (p2.x + p3.x)) /
-            2 * (mb - ma);
-    unsigned char cy = ma * (cx - p1.x) + p1.y;
+    unsigned char cx = (ma * mb * (p1.y - p3.y) + mb * (p1.x + p2.x) - ma * (p2.x + p3.x)) /
+            (2 * (mb - ma));
+    //unsigned char cy = ma * (cx - p1.x) + p1.y;
+    unsigned char cy = -1 * (cx - (p1.x+p2.x)/2)/ma + (p1.y+p2.y)/2;
     double cr = sqrt(pow(cx - p1.x, 2.0) + pow(cy - p1.y, 2.0));
 
 
@@ -209,7 +210,7 @@ emorph::ClusterEvent * vCircle::localCircleEstimate(emorph::AddressEvent &event)
     cv::line(image, cv::Point(p3.y, p3.x)*4, cv::Point(cy, cx)*4, CV_RGB(255, 255, 255));
 
     cv::imshow("Local Activity", image);
-    cv::waitKey(100);
+    cv::waitKey(1);
 
 
 
