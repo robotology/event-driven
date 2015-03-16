@@ -147,19 +147,27 @@ void EventBottleManager::onRead(emorph::vBottle &bot)
     {
         emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
         if(!v) continue;
+        if(v->getChannel()) continue;
         emorph::ClusterEvent * cv = circleFinder.localCircleEstimate(*v);
         if(!cv) continue;
 
         //outBottle.addEvent(*cv);
         //tempBottle.addEvent(*cv);
         cv::circle(image, cv::Point2i(cv->getYCog()*4, (128 - cv->getXCog())*4), 4, CV_RGB(255, 255, 255), CV_FILLED);
-
     }
 
+    cv::Mat image2(128, 128, CV_32F); image2.setTo(0);
+    for(int x = 0; x < 128; x++) {
+        for(int y = 0; y < 128; y++) {
+            image2.at<float>(x, y) = circleFinder.activity.queryActivity(x, y);
+        }
+    }
+    cv::Mat bigim(128*4, 128*4, CV_32F); bigim.setTo(0);
+    cv::resize(image2, bigim, bigim.size());
 
-
-    cv::imshow("Activity Debug", image);
-    cv::waitKey(1);
+    //cv::imshow("Circle Estimates", image);
+    //cv::imshow("Activity Debug", bigim);
+    //cv::waitKey(1);
 
     //send on the processed events
     outPort.write();

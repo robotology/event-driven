@@ -19,7 +19,9 @@ namespace emorph {
 
 void activityMat::decayActivity(int x, int y)
 {
-    activity(y, x) = activity(y, x) * exp(-(ctime - timestamps(y, x))/decayrate);
+    if(activity(y, x) > 0.01)
+        activity(y, x) *= exp(-(ctime - timestamps(y, x))/decayrate);
+
     timestamps(y, x) = ctime;
 }
 

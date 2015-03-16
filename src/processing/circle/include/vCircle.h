@@ -15,6 +15,7 @@
  */
 
 #include <iCub/emorph/all.h>
+#include <opencv2/opencv.hpp>
 
 class vCircle
 {
@@ -22,12 +23,12 @@ class vCircle
 private:
 
     //data
-    emorph::activityMat activity;
+
 
     struct act_unit {
         int x;
         int y;
-        int a;
+        double a;
         act_unit(int x, int y, int a): x(x), y(y), a(a) {}
     };
     std::vector<act_unit> localActivity;
@@ -41,16 +42,19 @@ private:
     //private functions
     void createLocalSearch(int x, int y);
     void trimFilterLocations(int x, int y);
+    cv::Mat createLocalActivityWindow(int x, int y);
 
 public:
 
-    vCircle(int width = 128, int height = 128, int sRadius = 10, int tRadius = 5)
+    vCircle(int width = 128, int height = 128, int sRadius = 12, int tRadius = 2)
         : sRadius(sRadius), width(width), height(height), tRadius(tRadius) {
-        activity = emorph::activityMat(height, width, 1000000, 5);
+        activity = emorph::activityMat(height, width, 10000, 20);
     }
     emorph::ClusterEvent *localCircleEstimate(emorph::AddressEvent &event);
 
-
+    emorph::activityMat activity;
+    bool threePointCircle(int x1, int y1, int x2, int y2, int x3, int y3,
+                          int &cx, int &cy, double &r);
 };
 
 
