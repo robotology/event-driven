@@ -138,7 +138,8 @@ void EventBottleManager::onRead(emorph::vBottle &bot)
     //outBottle.clear();
     outBottle = bot;
 
-    cv::Mat image(128*4, 128*4, CV_8U); image.setTo(0);
+    //cv::Mat image(128*4, 128*4, CV_8U); image.setTo(0);
+    emorph::activityMat estimate(128, 128, 1000000000, 5, 8);
     // get the event queue in the vBottle bot
     bot.getAll(q);
 
@@ -150,24 +151,35 @@ void EventBottleManager::onRead(emorph::vBottle &bot)
         if(v->getChannel()) continue;
         emorph::ClusterEvent * cv = circleFinder.localCircleEstimate(*v);
         if(!cv) continue;
+        emorph::AddressEvent tevent(*v);
+        tevent.setStamp(v->getStamp());
+        tevent.setX(cv->getXCog());
+        tevent.setY(cv->getYCog());
 
         //outBottle.addEvent(*cv);
         //tempBottle.addEvent(*cv);
-        cv::circle(image, cv::Point2i(cv->getYCog()*4, (128 - cv->getXCog())*4), 4, CV_RGB(255, 255, 255), CV_FILLED);
+        //cv::circle(image, cv::Point2i(cv->getYCog()*4, (128 - cv->getXCog())*4), 4, CV_RGB(255, 255, 255), CV_FILLED);
+        estimate.addEvent(tevent);
     }
 
+    double mact = 0;
     cv::Mat image2(128, 128, CV_32F); image2.setTo(0);
     for(int x = 0; x < 128; x++) {
         for(int y = 0; y < 128; y++) {
-            image2.at<float>(x, y) = circleFinder.activity.queryActivity(x, y);
+            double a = estimate.queryActivity(x, y);
+            mact = std::max(a, mact);
+            image2.at<float>(127 - x, y) = a;
         }
     }
-    cv::Mat bigim(128*4, 128*4, CV_32F); bigim.setTo(0);
-    cv::resize(image2, bigim, bigim.size());
+    image2 = image2 * (1/mact);
+    cv::Mat image(512, 512, CV_32F);
+    cv::resize(image2, image, image.size());
 
-    cv::imshow("Circle Estimates", image);
-    //cv::imshow("Activity Debug", bigim);
+    cv::imshow("Local Estimate", image);
     cv::waitKey(1);
+
+
+
 
     //send on the processed events
     outPort.write();

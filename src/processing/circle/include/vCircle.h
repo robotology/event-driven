@@ -23,6 +23,7 @@ class vCircle
 private:
 
     //data
+    emorph::activityMat activity;
 
 
     struct act_unit {
@@ -41,18 +42,20 @@ private:
 
     //private functions
     void createLocalSearch(int x, int y);
-    void trimFilterLocations(int x, int y);
+    void pointTrim(int x, int y);
+    void linearTrim(int x1, int y1, int x2, int y2);
     cv::Mat createLocalActivityWindow(int x, int y);
+    double calculateCircleActivity(int cx, int cy, int r);
 
 public:
 
-    vCircle(int width = 128, int height = 128, int sRadius = 12, int tRadius = 2)
+    vCircle(int width = 128, int height = 128, int sRadius = 16, int tRadius = 1)
         : sRadius(sRadius), width(width), height(height), tRadius(tRadius) {
-        activity = emorph::activityMat(height, width, 10000, 20);
+        activity = emorph::activityMat(height, width, 100000, 5, 0);
     }
     emorph::ClusterEvent *localCircleEstimate(emorph::AddressEvent &event);
 
-    emorph::activityMat activity;
+
     bool threePointCircle(int x1, int y1, int x2, int y2, int x3, int y3,
                           int &cx, int &cy, double &r);
 };
