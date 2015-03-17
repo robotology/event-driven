@@ -38,6 +38,7 @@ private:
     //parameters
     double decayrate;
     double injectionamount;
+    int injectionradius;
     int height;
     int width;
 
@@ -48,9 +49,12 @@ private:
 public:
 
     activityMat(int height = 128, int width = 128, double decayRate = 1000,
-                double injectionAmount = 1 ) : height(height), width(width) {
+                double injectionAmount = 1, int injectionRadius = 0 )
+        : height(height), width(width) {
+
         decayrate = decayRate;
         injectionamount = injectionAmount;
+        injectionradius = injectionRadius;
         ctime = 0;
         activity.resize(height, width);
         activity.zero();

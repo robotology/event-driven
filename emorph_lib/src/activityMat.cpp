@@ -39,7 +39,19 @@ double activityMat::addEvent(emorph::AddressEvent &event)
     decayActivity(x, y);
 
     //add new activity
-    activity(y, x) += injectionamount;
+    for(int v = std::max(0, y-injectionradius);
+        v <= std::min(height-1, y+injectionradius);
+        v++) {
+
+        for(int u = std::max(0, x-injectionradius);
+            u <= std::min(width-1, x+injectionradius);
+            u++) {
+
+            decayActivity(u, v);
+            activity(v, u) += injectionamount;
+        }
+    }
+
     return activity(y, x);
 
 }
