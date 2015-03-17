@@ -26,11 +26,11 @@ file(GLOB folder_header include/*.h)
 source_group("Source Files" FILES ${folder_source})
 source_group("Header Files" FILES ${folder_header})
 
-set(EMORPH_INCLUDE_DIRS /usr/local/src/robot/eventDriven/emorph_lib/include)
+#set(EMORPH_INCLUDE_DIRS /usr/local/src/robot/eventDriven/emorph_lib/include)
 
 
 include_directories(${YARP_INCLUDE_DIRS} 
-${EMORPH_INCLUDE_DIRS}
+${EMORPHLIB_INCLUDE_DIRS}
 ${PROJECT_SOURCE_DIR}/include)
 
 message("${INCLUDE_DIRECTORIES}")
