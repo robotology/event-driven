@@ -19,9 +19,7 @@ namespace emorph {
 
 void activityMat::decayActivity(int x, int y)
 {
-    if(activity(y, x) > 0.01)
-        activity(y, x) *= exp(-(ctime - timestamps(y, x))/decayrate);
-
+    activity(y, x) *= exp(-(ctime - timestamps(y, x))/decayrate);
     timestamps(y, x) = ctime;
 }
 
@@ -36,7 +34,7 @@ double activityMat::addEvent(emorph::AddressEvent &event)
     ctime = unwrap(event.getStamp());
 
     //decay the activity (given the current time)
-    decayActivity(x, y);
+    //decayActivity(x, y);
 
     //add new activity
     for(int v = std::max(0, y-injectionradius);
