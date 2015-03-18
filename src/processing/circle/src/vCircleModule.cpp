@@ -93,6 +93,7 @@ EventBottleManager::EventBottleManager()
 bool EventBottleManager::open(const std::string &name)
 {
     //and open the input port
+    estimate = emorph::activityMat(128, 128, 200000, 0.05, 4);
 
     this->useCallback();
 
@@ -139,7 +140,7 @@ void EventBottleManager::onRead(emorph::vBottle &bot)
     outBottle = bot;
 
     //cv::Mat image(128*4, 128*4, CV_8U); image.setTo(0);
-    emorph::activityMat estimate(128, 128, 1000000000, 5, 8);
+    //emorph::activityMat estimate(128, 128, 1000000000, 0.2, 3);
     // get the event queue in the vBottle bot
     bot.getAll(q);
 
@@ -162,16 +163,22 @@ void EventBottleManager::onRead(emorph::vBottle &bot)
         estimate.addEvent(tevent);
     }
 
-    double mact = 0;
+    double mact = 0; int mx, my;
     cv::Mat image2(128, 128, CV_32F); image2.setTo(0);
     for(int x = 0; x < 128; x++) {
         for(int y = 0; y < 128; y++) {
             double a = estimate.queryActivity(x, y);
+            if(mact < a) {
+                mact = a;
+                mx = x;
+                my = y;
+            }
             mact = std::max(a, mact);
             image2.at<float>(127 - x, y) = a;
         }
     }
     image2 = image2 * (1/mact);
+    cv::circle(image2, cv::Point(my, 127 - mx), 12, CV_RGB(255, 255, 255));
     cv::Mat image(512, 512, CV_32F);
     cv::resize(image2, image, image.size());
 

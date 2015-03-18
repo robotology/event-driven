@@ -49,9 +49,9 @@ private:
 
 public:
 
-    vCircle(int width = 128, int height = 128, int sRadius = 16, int tRadius = 1)
+    vCircle(int width = 128, int height = 128, int sRadius = 16, int tRadius = 2)
         : sRadius(sRadius), width(width), height(height), tRadius(tRadius) {
-        activity = emorph::activityMat(height, width, 100000, 5, 0);
+        activity = emorph::activityMat(height, width, 500000, 5, 0);
     }
     emorph::ClusterEvent *localCircleEstimate(emorph::AddressEvent &event);
 
