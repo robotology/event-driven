@@ -30,7 +30,7 @@ private:
         int x;
         int y;
         double a;
-        act_unit(int x, int y, int a): x(x), y(y), a(a) {}
+        act_unit(int x, int y, double a): x(x), y(y), a(a) {}
     };
     std::vector<act_unit> localActivity;
 
@@ -49,9 +49,9 @@ private:
 
 public:
 
-    vCircle(int width = 128, int height = 128, int sRadius = 16, int tRadius = 2)
+    vCircle(int width = 128, int height = 128, int sRadius = 16, int tRadius = 16)
         : sRadius(sRadius), width(width), height(height), tRadius(tRadius) {
-        activity = emorph::activityMat(height, width, 500000, 5, 0);
+        activity = emorph::activityMat(height, width, 1000, 5, 0);
     }
     emorph::ClusterEvent *localCircleEstimate(emorph::AddressEvent &event);
 

@@ -32,6 +32,7 @@ private:
     emorph::vtsHelper unwrapper;
 
     vCircle circleFinder;
+
     emorph::activityMat estimate;
 
 public:
