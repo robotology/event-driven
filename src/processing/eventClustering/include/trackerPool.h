@@ -39,6 +39,7 @@ protected:
     bool fixed_shape_;
     double sig_x2_, sig_y2_, sig_xy_;
     double alpha_pos, alpha_shape;
+    double clusterLimit;
 
     int getNewTracker();
     emorph::ClusterEventGauss makeEvent(int i, int ts);
@@ -61,6 +62,7 @@ public:
     void setDecayParams(double decay_tau, double Tact, double Tinact,
                         double Tfree, double Tevent, int rate);
     void setComparisonParams(double max_dist);
+    void setClusterLimit(int limit);
 
     int update(emorph::AddressEvent &event,
                std::vector<emorph::ClusterEventGauss> &clEvts);

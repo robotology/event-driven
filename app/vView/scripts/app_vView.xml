@@ -17,7 +17,7 @@
 
 <module>
    <name>eventClustering</name>
-   <parameters> --decay_tau 15000 --Tact 20 --Tinact 5 --Tfree 5 --Maxdist 8 --Tevent 0.5 </parameters>
+   <parameters> --decay 15000 --tAct 20 --tInact 5 --tFree 5 --maxDist 8 --tEvent 0.5 </parameters>
    <node>localhost</node>
 </module>
 

@@ -32,9 +32,8 @@ int main(int argc, char * argv[])
     /* prepare and configure the resource finder */
     ResourceFinder rf;
     rf.setVerbose( false );
-    rf.setDefaultContext( "eventClustering" );
-    rf.setDefaultConfigFile( "config.ini" );
-    rf.setDefault("name","eventClustering");
+    rf.setDefaultContext( "eMorph" );
+    rf.setDefaultConfigFile( "cluster.ini" );
     rf.configure( argc, argv );
 
     /* run the module: runModule() calls configure first and, if successful, it then runs */
