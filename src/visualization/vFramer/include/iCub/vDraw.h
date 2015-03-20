@@ -35,10 +35,24 @@ protected:
 
     int Xlimit;
     int Ylimit;
+    int stagnantCount;
+    int pTS;
+    int clearThreshold;
+
+    int checkStagnancy(const emorph::vQueue &eSet) {
+        if(!eSet.size()) return 0;
+        if(pTS == eSet.back()->getStamp())
+            stagnantCount++;
+        else
+            stagnantCount = 0;
+        pTS = eSet.back()->getStamp();
+        return stagnantCount;
+    }
 
 public:
 
-    vDraw() : Xlimit(128), Ylimit(128) {}
+    vDraw() : Xlimit(128), Ylimit(128), stagnantCount(0), pTS(0),
+            clearThreshold(60) {}
 
     ///
     /// \brief setLimits sets the maximum possible values of the position of
@@ -122,6 +136,7 @@ class clusterDraw : public vDraw {
 protected:
 
     std::map<int, emorph::ClusterEvent *> persistance;
+    int stagnantCount;
 
 public:
 

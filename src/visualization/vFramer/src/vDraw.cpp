@@ -51,15 +51,19 @@ std::string addressDraw::getTag()
 void addressDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
 {
 
-    cv::Mat canvas(Xlimit, Ylimit, CV_8UC3);
-    canvas.setTo(255);
+    image = cv::Mat(Xlimit, Ylimit, CV_8UC3);
+    image.setTo(255);
+
+    if(checkStagnancy(eSet) > clearThreshold) {
+        return;
+    }
 
     emorph::vQueue::const_iterator qi;
     for(qi = eSet.begin(); qi != eSet.end(); qi++) {
         emorph::AddressEvent *aep = (*qi)->getAs<emorph::AddressEvent>();
         if(!aep) continue;
 
-        cv::Vec3b cpc = canvas.at<cv::Vec3b>(aep->getX(), aep->getY());
+        cv::Vec3b cpc = image.at<cv::Vec3b>(aep->getX(), aep->getY());
 
         if(!aep->getPolarity())
         {
@@ -86,11 +90,8 @@ void addressDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
             else cpc[2] = 0;
         }
 
-        canvas.at<cv::Vec3b>(aep->getX(), aep->getY()) = cpc;
+        image.at<cv::Vec3b>(aep->getX(), aep->getY()) = cpc;
     }
-
-    canvas.copyTo(image);
-
 }
 
 std::string clusterDraw::getTag()
@@ -102,7 +103,8 @@ void clusterDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
 {
 
     std::stringstream ss;
-    //std::map<int, emorph::ClusterEvent *> latest;
+
+
 
     cv::Scalar red = CV_RGB(255, 0, 0);
     cv::Scalar green = CV_RGB(0, 255, 0);
@@ -113,6 +115,10 @@ void clusterDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
         image.setTo(0);
     }
 
+    if(checkStagnancy(eSet) > clearThreshold) {
+        persistance.clear();
+        return;
+    }
 
     cv::Mat textImg(image.rows, image.cols, image.type()); textImg.setTo(0);
 
@@ -174,7 +180,7 @@ void clusterDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
         cv::putText(textImg, ss.str(),
                     cv::Point(ci->second->getYCog(),
                               Xlimit - ci->second->getXCog()),
-                    0, 0.3, CV_RGB(255, 255, 255));
+                    0, 0.3, CV_RGB(0, 0, 0));
     }
 
     cv::flip(textImg, textImg, 0);
