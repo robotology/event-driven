@@ -130,7 +130,8 @@ double vCircle::calculateCircleActivity(int cx, int cy, int r)
     return actacc;
 }
 
-emorph::ClusterEvent * vCircle::localCircleEstimate(emorph::AddressEvent &event)
+bool vCircle::localCircleEstimate(emorph::AddressEvent &event, double &cx,
+                                  double &cy, double &cr)
 {
     act_unit p1(event.getX(), event.getY(), 0);
     //update the activity here
@@ -141,7 +142,7 @@ emorph::ClusterEvent * vCircle::localCircleEstimate(emorph::AddressEvent &event)
 
     //remove points too close to centre
     pointTrim(p1.x, p1.y);
-    if(localActivity.size() < 3) return 0;
+    if(localActivity.size() < 3) return false;
 
     //find the best score
     int bi = 0;
@@ -151,7 +152,7 @@ emorph::ClusterEvent * vCircle::localCircleEstimate(emorph::AddressEvent &event)
 
     //remove activity close-by the first point
     linearTrim(p1.x, p1.y, p2.x, p2.y);
-    if(localActivity.empty()) return 0;
+    if(localActivity.empty()) return false;
 
     //find the second best score
     bi = 0;
@@ -159,9 +160,10 @@ emorph::ClusterEvent * vCircle::localCircleEstimate(emorph::AddressEvent &event)
         if(localActivity[i].a > localActivity[bi].a) bi = i;
     act_unit p3 = localActivity[bi];
 
-    //if we are all on the same y line
-    if(p1.y == p2.y && p1.y == p3.y) return 0;
+    //if we are all on the same y line (should be impossible after linearTrim)
+    if(p1.y == p2.y && p1.y == p3.y) return false;
 
+    //make sure x2 is different to x1 and x3 (else we divide by 0 later)
     act_unit * ex = 0;
 
     if(p2.x == p1.x) {
@@ -203,73 +205,72 @@ emorph::ClusterEvent * vCircle::localCircleEstimate(emorph::AddressEvent &event)
     double ma = (p2.y - p1.y) / (double)(p2.x - p1.x);
     double mb = (p3.y - p2.y) / (double)(p3.x - p2.x);
 
-    double cx = (ma * mb * (p1.y - p3.y) + mb * (p1.x + p2.x) -
+    cx = (ma * mb * (p1.y - p3.y) + mb * (p1.x + p2.x) -
                         ma * (p2.x + p3.x)) / (2 * (mb - ma));
-    double cy;
     if(ma)
         cy = -1 * (cx - (p1.x+p2.x)/2.0)/ma + (p1.y+p2.y)/2.0;
     else
         cy = -1 * (cx - (p2.x+p3.x)/2.0)/mb + (p2.y+p3.y)/2.0;
 
-    double cr = sqrt(pow(cx - p1.x, 2.0) + pow(cy - p1.y, 2.0));
+    cr = sqrt(pow(cx - p1.x, 2.0) + pow(cy - p1.y, 2.0));
 
 
 
-    if(cx < 0 || cx > width-1 || cy < 0 || cy > height-1) return 0;
+    if(cx < 0 || cx > width-1 || cy < 0 || cy > height-1) return false;
 
     //if(cr < 10) return 0;
 
     //%%% display centre and radius lines.
-    static int divider = 0;
-    if(divider++ % 10000000 == 0) {
+//    static int divider = 0;
+//    if(divider++ % 10000000 == 0) {
 
-        double mact = 0;
-        cv::Mat image2(128, 128, CV_32F); image2.setTo(0);
-        for(int x = 0; x < 128; x++) {
-            for(int y = 0; y < 128; y++) {
-                double a = activity.queryActivity(x, y);
-                mact = std::max(a, mact);
-                if(a > 0.01)
-                    image2.at<float>(x, y) = a;
-            }
-        }
+//        double mact = 0;
+//        cv::Mat image2(128, 128, CV_32F); image2.setTo(0);
+//        for(int x = 0; x < 128; x++) {
+//            for(int y = 0; y < 128; y++) {
+//                double a = activity.queryActivity(x, y);
+//                mact = std::max(a, mact);
+//                if(a > 0.01)
+//                    image2.at<float>(x, y) = a;
+//            }
+//        }
 
-        image2 = image2 * (2/mact);
-        cv::Mat i8u(128, 128, CV_8U); image2.copyTo(i8u);
-        cv::Mat image(128, 128, CV_8UC3); cv::cvtColor(i8u, image, CV_GRAY2BGR);
-        cv::resize(image, image, cv::Size(512, 512), 0, 0, CV_INTER_NN);
-
-
-        cv::circle(image, cv::Point(p1.y, p1.x)*4, 12, CV_RGB(255, 255, 255));
-        cv::circle(image, cv::Point(p2.y, p2.x)*4, 12, CV_RGB(255, 255, 255));
-        cv::circle(image, cv::Point(p3.y, p3.x)*4, 12, CV_RGB(255, 255, 255));
-        cv::line(image, cv::Point(p2.y, p2.x)*4, cv::Point(p1.y, p1.x)*4, CV_RGB(255, 255, 255));
-        cv::line(image, cv::Point(p1.y, p1.x)*4, cv::Point(p3.y, p3.x)*4, CV_RGB(255, 255, 255));
-        cv::line(image, cv::Point(p1.y, p1.x)*4, cv::Point(cy, cx)*4, CV_RGB(255, 255, 255));
-        cv::line(image, cv::Point(p2.y, p2.x)*4, cv::Point(cy, cx)*4, CV_RGB(255, 255, 255));
-        cv::line(image, cv::Point(p3.y, p3.x)*4, cv::Point(cy, cx)*4, CV_RGB(255, 255, 255));
-        cv::circle(image, cv::Point(cy, cx)*4, 5, CV_RGB(255, 0, 0), CV_FILLED);
+//        image2 = image2 * (2/mact);
+//        cv::Mat i8u(128, 128, CV_8U); image2.copyTo(i8u);
+//        cv::Mat image(128, 128, CV_8UC3); cv::cvtColor(i8u, image, CV_GRAY2BGR);
+//        cv::resize(image, image, cv::Size(512, 512), 0, 0, CV_INTER_NN);
 
 
-
-        if(divider % 200 == 0) {
-            int xsm = std::max(p1.x-sRadius, 0)*4;
-            int ysm = std::max(p1.y-sRadius, 0)*4;
-            int wsm = std::min(128 - xsm/4, 2*sRadius)*4;
-            int hsm = std::min(128 - ysm/4, 2*sRadius)*4;
-
-            cv::Mat submat;
-            image(cv::Rect(ysm, xsm, hsm, wsm)).copyTo(submat);
-            cv::flip(submat, submat, 0);
-            cv::resize(submat, submat, cv::Size(0, 0), 4, 4, CV_INTER_NN);
-            cv::flip(image, image, 0);
-            cv::imshow("Local", submat);
-        }
+//        cv::circle(image, cv::Point(p1.y, p1.x)*4, 12, CV_RGB(255, 255, 255));
+//        cv::circle(image, cv::Point(p2.y, p2.x)*4, 12, CV_RGB(255, 255, 255));
+//        cv::circle(image, cv::Point(p3.y, p3.x)*4, 12, CV_RGB(255, 255, 255));
+//        cv::line(image, cv::Point(p2.y, p2.x)*4, cv::Point(p1.y, p1.x)*4, CV_RGB(255, 255, 255));
+//        cv::line(image, cv::Point(p1.y, p1.x)*4, cv::Point(p3.y, p3.x)*4, CV_RGB(255, 255, 255));
+//        cv::line(image, cv::Point(p1.y, p1.x)*4, cv::Point(cy, cx)*4, CV_RGB(255, 255, 255));
+//        cv::line(image, cv::Point(p2.y, p2.x)*4, cv::Point(cy, cx)*4, CV_RGB(255, 255, 255));
+//        cv::line(image, cv::Point(p3.y, p3.x)*4, cv::Point(cy, cx)*4, CV_RGB(255, 255, 255));
+//        cv::circle(image, cv::Point(cy, cx)*4, 5, CV_RGB(255, 0, 0), CV_FILLED);
 
 
-        cv::imshow("Activity", image);
-        cv::waitKey(1);
-    }
+
+//        if(divider % 200 == 0) {
+//            int xsm = std::max(p1.x-sRadius, 0)*4;
+//            int ysm = std::max(p1.y-sRadius, 0)*4;
+//            int wsm = std::min(128 - xsm/4, 2*sRadius)*4;
+//            int hsm = std::min(128 - ysm/4, 2*sRadius)*4;
+
+//            cv::Mat submat;
+//            image(cv::Rect(ysm, xsm, hsm, wsm)).copyTo(submat);
+//            cv::flip(submat, submat, 0);
+//            cv::resize(submat, submat, cv::Size(0, 0), 4, 4, CV_INTER_NN);
+//            cv::flip(image, image, 0);
+//            cv::imshow("Local", submat);
+//        }
+
+
+//        cv::imshow("Activity", image);
+//        cv::waitKey(1);
+//    }
 
 //    cv::Mat image2(128, 128, CV_32F); image2.setTo(0);
 //    for(int x = 0; x < 128; x++) {
@@ -290,15 +291,7 @@ emorph::ClusterEvent * vCircle::localCircleEstimate(emorph::AddressEvent &event)
 
 
 
-
-    emorph::ClusterEvent *v = new emorph::ClusterEvent;
-    v->setChannel(event.getChannel());
-    v->setPolarity(event.getPolarity());
-    v->setStamp(event.getStamp());
-    v->setXCog((int)cx);
-    v->setYCog((int)cy);
-    //std::cout << (int)cx << " " << (int)cy << std::endl;
-    return v;
+    return true;
 
 }
 

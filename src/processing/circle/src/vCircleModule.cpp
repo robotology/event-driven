@@ -87,6 +87,16 @@ EventBottleManager::EventBottleManager()
 {
 
     //here we should initialise the module
+    yarp::sig::Matrix A(3, 3); A(0, 0) = 1; A(1, 1) = 1; A(2, 2) = 1;
+    yarp::sig::Matrix H(3, 3); H = A;
+    yarp::sig::Matrix Q(3, 3); Q(0, 0) = 0.01; Q(1, 1) = 0.01; Q(2, 2) = 0.01;
+    yarp::sig::Matrix R(3, 3); R = 1; R(0, 0) = 20; R(1, 1) = 20; R(2, 2) = 20;
+
+
+    filter = new iCub::ctrl::Kalman(A, H, Q, R);
+
+    //filter = new iCub::ctrl::Kalman(A, H, Q, R);
+    //filter.
     
 }
 /**********************************************************/
@@ -136,8 +146,8 @@ void EventBottleManager::onRead(emorph::vBottle &bot)
     
     // prepare output vBottle with address events extended with cluster ID (aec) and cluster events (clep)
     emorph::vBottle &outBottle = outPort.prepare();
-    //outBottle.clear();
-    outBottle = bot;
+    outBottle.clear();
+    //outBottle = bot;
 
     //cv::Mat image(128*4, 128*4, CV_8U); image.setTo(0);
     //emorph::activityMat estimate(128, 128, 1000000000, 0.2, 3);
@@ -150,19 +160,53 @@ void EventBottleManager::onRead(emorph::vBottle &bot)
         emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
         if(!v) continue;
         if(v->getChannel()) continue;
-        emorph::ClusterEvent * cv = circleFinder.localCircleEstimate(*v);
-        if(!cv) continue;
+        double cx, cy, cr;
+        if(!circleFinder.localCircleEstimate(*v, cx, cy, cr)) continue;
+
+        //outBottle.addEvent(*ov);
+
+        if(!filter_active) {
+            yarp::sig::Vector x0;
+            x0.push_back(cx);
+            x0.push_back(cy);
+            x0.push_back(cr);
+            yarp::sig::Matrix P0 = filter->get_R();
+            filter->init(x0, P0);
+            filter_active = true;
+        } else {
+            yarp::sig::Vector z;
+            z.push_back(cx);
+            z.push_back(cy);
+            z.push_back(cr);
+            filter->filt(z);
+        }
+
+        //for our estimator
         emorph::AddressEvent tevent(*v);
         tevent.setStamp(v->getStamp());
-        tevent.setX(cv->getXCog());
-        tevent.setY(cv->getYCog());
-
-        //outBottle.addEvent(*cv);
-        //tempBottle.addEvent(*cv);
-        //cv::circle(image, cv::Point2i(cv->getYCog()*4, (128 - cv->getXCog())*4), 4, CV_RGB(255, 255, 255), CV_FILLED);
+        tevent.setX(cx);
+        tevent.setY(cy);
         estimate.addEvent(tevent);
     }
 
+    if(filter_active) {
+        yarp::sig::Vector x = filter->get_x();
+        yarp::sig::Matrix P = filter->get_P();
+        //std::cout << P.toString() << std::endl << std::endl;
+
+
+        cv::Mat filterview(512, 512, CV_8UC3); filterview.setTo(0);
+        cv::circle(filterview, cv::Point(x[1]*4, 511-x[0]*4), x[2]*4, CV_RGB(255, 255, 255));
+        cv::circle(filterview, cv::Point(x[1]*4, 511-x[0]*4), (x[2]+P(2, 2))*4, CV_RGB(0, 255, 255));
+        if(x[2] > P(2, 2))
+            cv::circle(filterview, cv::Point(x[1]*4, 511-x[0]*4), (x[2]-P(2, 2))*4, CV_RGB(0, 255, 255));
+        cv::circle(filterview, cv::Point(x[1]*4, 511-x[0]*4), (P(0, 0)+P(1, 1))*2, CV_RGB(255, 255, 0));
+        cv::imshow("Filter", filterview);
+        cv::waitKey(1);
+
+    }
+
+    //visualising the estimator
     double mact = 0; int mx, my;
     cv::Mat image2(128, 128, CV_32F); image2.setTo(0);
     for(int x = 0; x < 128; x++) {
@@ -190,7 +234,6 @@ void EventBottleManager::onRead(emorph::vBottle &bot)
 
     //send on the processed events
     outPort.write();
-    //std::cout << outBottle.toString() << std::endl;
 
 }
 

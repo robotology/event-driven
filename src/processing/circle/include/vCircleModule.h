@@ -19,6 +19,7 @@
 
 #include <yarp/os/all.h>
 #include <iCub/emorph/all.h>
+#include <iCub/ctrl/kalman.h>
 #include <vCircle.h>
 
 class EventBottleManager : public yarp::os::BufferedPort<emorph::vBottle>
@@ -31,7 +32,12 @@ private:
     //for helping with timestamp wrap around
     emorph::vtsHelper unwrapper;
 
+    //our circle position estimator
     vCircle circleFinder;
+
+    //our filter/tracker
+    iCub::ctrl::Kalman *filter;
+    bool filter_active;
 
     emorph::activityMat estimate;
 

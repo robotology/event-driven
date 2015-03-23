@@ -27,9 +27,9 @@ int main(int argc, char * argv[])
 
     /* prepare and configure the resource finder */
     yarp::os::ResourceFinder rf;
-    rf.setVerbose( true );
+    rf.setVerbose( false );
     rf.setDefaultContext( "eMorph" );
-    rf.setDefaultConfigFile( "config.ini" );
+    rf.setDefaultConfigFile( "vCircleFinder.ini" );
     rf.configure( argc, argv );
 
     /* run the module: runModule() calls configure first and, if successful, it then runs */

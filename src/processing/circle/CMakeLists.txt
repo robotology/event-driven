@@ -20,6 +20,6 @@ include_directories(${PROJECT_SOURCE_DIR}/include
 
 add_executable(${PROJECTNAME} ${source} ${header})
 
-target_link_libraries(${PROJECTNAME} ${YARP_LIBRARIES} eMorphLib ${OpenCV_LIBRARIES})
+target_link_libraries(${PROJECTNAME} ${ICUB_LIBRARIES} ${YARP_LIBRARIES} eMorphLib ${OpenCV_LIBRARIES} )
 
 install(TARGETS ${PROJECTNAME} DESTINATION bin)

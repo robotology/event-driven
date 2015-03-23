@@ -53,7 +53,8 @@ public:
         : sRadius(sRadius), width(width), height(height), tRadius(tRadius) {
         activity = emorph::activityMat(height, width, 1000, 5, 0);
     }
-    emorph::ClusterEvent *localCircleEstimate(emorph::AddressEvent &event);
+    bool localCircleEstimate(emorph::AddressEvent &event, double &cx, double &cy,
+                             double &cr);
 
 
     bool threePointCircle(int x1, int y1, int x2, int y2, int x3, int y3,
