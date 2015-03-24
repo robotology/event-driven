@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
     //    receptiveFields.resize(24);
  
     receptiveField rf1;
-    weightsFile = "./curvedRFs/cRF1.txt" ;
+    weightsFile = "/home/icub/curvedRFs/cRF1.txt" ;
     rf1.setWeightsFile(weightsFile.c_str());
     rf1.setWeights();
 //        cout << "Receptive Field " << r << " is valid? " <<  rf1.isValid() << endl;
