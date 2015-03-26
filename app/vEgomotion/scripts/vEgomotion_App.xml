@@ -1,0 +1,79 @@
+<application>
+<name>vEgomotion</name>
+
+<dependencies>	
+</dependencies>
+
+<module>
+    <name>yarpdataplayer</name>
+    <node>localhost</node>
+    <stdio></stdio>
+    <tag>yarpdataplayer</tag>
+</module>
+
+<module>
+   <name>aexGrabber</name>
+   <node>pc104</node>
+   <tag>vGrabber</tag>
+</module>
+
+<module>
+   <name>vtsOptFlow</name>
+   <parameters>--height 128 --width 128 --bin 1000 --threshold 2 --szSobel 3 --tsVal 100000 --alpha 0.5 --eye 0 --save </parameters>
+   <node>localhost</node>
+   <tag>vtsOptFlow</tag>
+</module>
+
+<module>
+   <name>vEgomotion</name>
+   <node>localhost</node>
+   <tag>vEgomotion</tag>
+</module>
+
+<module>
+    <name>vFramer</name>
+    <parameters> --frameRate 30 --eventWindow 0.5 --displays "(0 left (AE,OFE) 1 right (AE,OFE))"</parameters>
+    <node>localhost</node>
+    <stdio>debugserver</stdio>
+</module>
+
+<module>
+   <name>yarpview</name>
+   <parameters>--name /viewLeftEgo --x 000 --y 000 --RefreshTime 33 </parameters>
+   <node>localhost</node>
+   <tag>eventViewerLeft</tag>
+</module>
+
+<connection>
+  <from>/aexGrabber/vBottle:o</from>
+  <to>/vtsOptFlow/vBottle:i</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
+  <from>/vtsOptFlow/vBottle:o</from>
+  <to>/vEgoMotion/vBottle:i</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
+  <from>/icub/head/state:o</from>
+  <to>/vEgoMotion/encoders:i</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
+  <from>/vEgoMotion/vBottle:o</from>
+  <to>/vFramerModule/vBottle:i</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
+  <from>/vFramerModule/left</from>
+  <to>/viewLeftEgo</to>
+  <protocol>udp</protocol>
+</connection>
+
+</application>
+
+

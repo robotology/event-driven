@@ -1,3 +1,4 @@
+
 /*
  * Copyright (C) 2014 Istituto Italiano di Tecnologia
  * Author: Charles Clercq, edited by Valentina Vasco (01/15)
@@ -71,6 +72,8 @@ bool vtsOptFlow::configure(ResourceFinder &rf)
 
     int eye = rf.check("eye", Value(0)).asInt();
 
+    int polarity = rf.check("pol", Value(0)).asInt();
+
     bool saveOf = false;
     if (rf.check("save")) saveOf = true;
 
@@ -78,7 +81,7 @@ bool vtsOptFlow::configure(ResourceFinder &rf)
     if (rf.check("batch")) batch_mode = true;
     //rf.check("batch", Value(false)).asBool();
 
-    vtsofManager = new vtsOptFlowManager( moduleName, height, width,  binAcc, threshold, sobelSz, tsVal, alpha, eye, saveOf, batch_mode );
+    vtsofManager = new vtsOptFlowManager( moduleName, height, width,  binAcc, threshold, sobelSz, tsVal, alpha, eye, polarity, saveOf, batch_mode );
     vtsofManager->open();
 
     return true ;
@@ -114,7 +117,7 @@ vtsOptFlowManager::~vtsOptFlowManager()
     delete[] trans2neigh;
 }
 
-vtsOptFlowManager::vtsOptFlowManager(const string &moduleName, unsigned int &_height, unsigned int &_width, unsigned int &_binAcc, double &_threshold, unsigned int &_sobelSz, unsigned int &_tsVal, double &_alpha, int &_eye, bool &_saveOf, bool &_batch_mode)
+vtsOptFlowManager::vtsOptFlowManager(const string &moduleName, unsigned int &_height, unsigned int &_width, unsigned int &_binAcc, double &_threshold, unsigned int &_sobelSz, unsigned int &_tsVal, double &_alpha, int &_eye, int &_polarity, bool &_saveOf, bool &_batch_mode)
     :activity(_height, _width), TSs(_height, _width), TSs2Plan(_height, _width), vxMat(_height, _width), vyMat(_height, _width), ivxy(_height, _width), sobelx(_sobelSz, _sobelSz), sobely(_sobelSz, _sobelSz), subTSs(_sobelSz, _sobelSz), A(_sobelSz*_sobelSz, 3), At(3,_sobelSz*_sobelSz), AtA(3,3), abc(3), Y(_sobelSz*_sobelSz), ctrl((uint)floor((double)_sobelSz/2.0), (uint)floor((double)_sobelSz/2.0)), sMat(_height*_width, 2), binEvts(10000, 3), alreadyComputedX(_height, _width), alreadyComputedY(_height, _width), binAcc(_binAcc)
 {
     fprintf(stdout,"initialising Variables\n");
@@ -130,6 +133,7 @@ vtsOptFlowManager::vtsOptFlowManager(const string &moduleName, unsigned int &_he
     width=_width;
     saveOf=_saveOf;
     eye=_eye;
+    polarity=_polarity;
     batch_mode=_batch_mode;
 
     xNeighFlow=new double[_sobelSz*_sobelSz];
@@ -237,12 +241,14 @@ void vtsOptFlowManager::onRead(vBottle &bot)
         posY = aep->getY();
         ts = aep->getStamp();
         channel = aep->getChannel();
+        pol = aep->getPolarity();
 
         /*correct wrap around*/
         ts = unwrapper(ts);
 
         /*compute only for one channel*/
         if (eye != channel) continue;
+        //if (eye != channel || pol != polarity) continue;
 
         /*fill the bin with events*/
         if(first)
@@ -308,6 +314,7 @@ void vtsOptFlowManager::onRead(vBottle &bot)
                 }
                 qii++;
             }
+
         }
 
         ts=prefbin=refbin;
@@ -351,7 +358,7 @@ void vtsOptFlowManager::updateAll()
       TSs(posX, posY) = (double)ts;
       TSs2Plan(posX, posY) = (double)ts;
 
-       /*update activity and use only pixels whose activity aboves the threshold to compute the flow*/
+      /*update activity and use only pixels whose activity aboves the threshold to compute the flow*/
       activity(posX, posY)+=1;
       if(activity(posX, posY) >= threshold)
       {
@@ -362,7 +369,7 @@ void vtsOptFlowManager::updateAll()
     }
 }
 
-emorph::OpticalFlowEvent vtsOptFlowManager::compute()
+OpticalFlowEvent vtsOptFlowManager::compute()
 {
     OpticalFlowEvent opt_flow;
 
@@ -417,13 +424,17 @@ emorph::OpticalFlowEvent vtsOptFlowManager::compute()
                 ivxy(x, y)+=1;
                 vxMat(x, y) = vxMat(x, y) + (1/ivxy(x, y))*(outX - vxMat(x, y));
                 vyMat(x, y) = vyMat(x, y) + (1/ivxy(x, y))*(outY - vyMat(x, y));
-                //double theta = atan2(vyMat(x, y), vyMat(x, y));
-                //double mag = sqrt(vxMat(x, y)*vxMat(x, y) + vyMat(x, y)*vyMat(x, y));
+                double mag = sqrt(vxMat(x, y)*vxMat(x, y) + vyMat(x, y)*vyMat(x, y));
+                double theta = atan2(vyMat(x, y), vxMat(x, y));
+                double thetaDeg = (theta/M_PI) * 180;
+                if(thetaDeg < 0){
+                    thetaDeg = 360 + thetaDeg;
+                }
 
                 opt_flow.setX(y);
                 opt_flow.setY(x);
                 //opt_flow.setVx(mag);
-                //opt_flow.setVy(theta);
+                //opt_flow.setVy(thetaDeg);
                 opt_flow.setVx((float)vxMat(x, y));
                 opt_flow.setVy((float)vyMat(x, y));
 

@@ -289,12 +289,16 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
             int y = ofp->getY();
             float vx = ofp->getVx();
             float vy = ofp->getVy();
+            //float mag = ofp->getVx();
+            //float theta = ofp->getVy();
 
             //Starting point of the line
             p_start.x = x;
             p_start.y = y;
 
             //Ending point of the line
+            //p_end.x = x + 500 * mag * cos(theta);
+            //p_end.y = y + 500 * mag * sin(theta);
             p_end.x = x + 500 * vx;
             p_end.y = y + 500 * vy;
 
@@ -320,7 +324,8 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
             p_start.y = (int) (p_end.y + 3*sin(angle - pi/4));
             cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA, 0);
 
-      }
+
+        }
 
     }
     //canvas.copyTo(image);

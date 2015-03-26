@@ -73,6 +73,8 @@ private:
     uint sobelLR;
     uint binAcc;
     bool saveOf;
+    uint eye;
+    uint polarity;
     bool batch_mode;
 
     uint borneSupX;
@@ -108,9 +110,8 @@ private:
     uint posX;
     uint posY;
     int channel;
-    int pol;
+    uint pol;
     uint ts;
-    uint eye;
     uint refts;
     bool first;
 
@@ -144,7 +145,7 @@ public:
                       unsigned int &_width, unsigned int &_binAcc,
                       double &_threshold, unsigned int &_sobelSz,
                       unsigned int &_tsVal, double &_alpha, int &_eye,
-                      bool &_saveOf, bool &_batch_mode);
+                      int &_polarity, bool &_saveOf, bool &_batch_mode);
     ~vtsOptFlowManager();
 
     bool    open();

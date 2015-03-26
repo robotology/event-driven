@@ -18,21 +18,29 @@
 </module>
 
 <module>
-   <name>vUndistortCam</name>
-   <parameters> --name vUndistortCam --sensorHeight 128 --sensorWidth 128 --truncate true </parameters>
+   <name>yarpdatadumper</name>
+   <parameters> --name encoders </parameters>
    <node>localhost</node>
+   <tag>yarpdatadumper</tag>
+</module>
+
+<module>
+   <name>yarpdatadumper</name>
+   <parameters> --name grabber </parameters>
+   <node>localhost</node>
+   <tag>yarpdatadumper</tag>
 </module>
 
 <module>
     <name>vtsOptFlow</name>
-    <parameters>--height 128 --width 128 --bin 1000 --threshold 2 --szSobel 3 --tsVal 100000 --alpha 0.5 --eye 0 --save --swap_xy </parameters>
+    <parameters>--height 128 --width 128 --bin 1000 --threshold 2 --szSobel 3 --tsVal 100000 --alpha 0.5 --eye 0 --save </parameters>
     <node>localhost</node>
     <tag>vtsOptFlow</tag>
 </module>
 
 <module>
     <name>vFramer</name>
-    <parameters> --frameRate 30 --eventWindow 0.5 --displays "(0 left (OFE) 1 right (AE))"</parameters>
+    <parameters> --frameRate 30 --eventWindow 0.5 --displays "(0 left (AE,OFE) 1 right (AE,OFE))"</parameters>
     <node>localhost</node>
     <stdio>debugserver</stdio>
 </module>
@@ -53,12 +61,6 @@
 
 <connection>
   <from>/aexGrabber/vBottle:o</from>
-  <to>/vUndistortCam/vBottle:i</to>
-  <protocol>udp</protocol>
-</connection>
-
-<connection>
-  <from>/vUndistortCam/vBottle:o</from>
   <to>/vtsOptFlow/vBottle:i</to>
   <protocol>udp</protocol>
 </connection>
@@ -70,7 +72,7 @@
 </connection>
 
 <connection>
-  <from>/vUndistortCam/vBottle:o</from>
+  <from>/aexGrabber/vBottle:o</from>
   <to>/vFramerModule/vBottle:i</to>
   <protocol>udp</protocol>
 </connection>
@@ -87,5 +89,16 @@
   <protocol>udp</protocol>
 </connection>
 
+<connection>
+  <from>/icub/head/state:o</from>
+  <to>/encoders</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
+  <from>/aexGrabber/vBottle:o</from>
+  <to>/grabber</to>
+  <protocol>udp</protocol>
+</connection>
 
 </application>
