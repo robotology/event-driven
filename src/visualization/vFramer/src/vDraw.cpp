@@ -268,9 +268,13 @@ std::string flowDraw::getTag()
 void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
 {
 
+    double k = 4;
     if(image.empty()) {
-        image = cv::Mat(Xlimit, Ylimit, CV_8UC3);
+        image = cv::Mat(Xlimit*k, Ylimit*k, CV_8UC3);
         image.setTo(0);
+    } else {
+        cv::resize(image, image, cv::Size(0, 0), k, k, cv::INTER_LINEAR);
+
     }
     //cv::Mat canvas(Xlimit, Ylimit, CV_8UC3);
     //canvas.setTo(128);
@@ -293,14 +297,14 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
             //float theta = ofp->getVy();
 
             //Starting point of the line
-            p_start.x = x;
-            p_start.y = y;
+            p_start.x = x*k;
+            p_start.y = y*k;
 
             //Ending point of the line
             //p_end.x = x + 500 * mag * cos(theta);
             //p_end.y = y + 500 * mag * sin(theta);
-            p_end.x = x + 500 * vx;
-            p_end.y = y + 500 * vy;
+            p_end.x = x*k + 500 * vx*k;
+            p_end.y = y*k + 500 * vy*k;
 
             double angle;
             angle = atan2( (double) p_start.y - p_end.y, (double) p_start.x - p_end.x );
