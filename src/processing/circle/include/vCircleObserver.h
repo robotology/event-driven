@@ -17,7 +17,7 @@
 #include <iCub/emorph/all.h>
 #include <opencv2/opencv.hpp>
 
-class vCircle
+class vCircleObserver
 {
 
 private:
@@ -49,12 +49,16 @@ private:
 
 public:
 
-    vCircle(int width = 128, int height = 128, int sRadius = 16, int tRadius = 16)
+    vCircleObserver(int width = 128, int height = 128,
+            int sRadius = 16, int tRadius = 8,
+            double aDecay = 1000, double aInject = 5, int aRegion = 0)
         : sRadius(sRadius), width(width), height(height), tRadius(tRadius) {
-        activity = emorph::activityMat(height, width, 1000, 5, 0);
+
+        activity = emorph::activityMat(height, width, aDecay, aInject, aRegion);
     }
-    bool localCircleEstimate(emorph::AddressEvent &event, double &cx, double &cy,
-                             double &cr);
+
+    bool localCircleEstimate(emorph::AddressEvent &event, double &cx,
+                             double &cy, double &cr, bool showDebug = false);
 
 
     bool threePointCircle(int x1, int y1, int x2, int y2, int x3, int y3,

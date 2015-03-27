@@ -20,9 +20,9 @@
 #include <yarp/os/all.h>
 #include <iCub/emorph/all.h>
 #include <iCub/ctrl/kalman.h>
-#include <vCircle.h>
+#include "vCircleObserver.h"
 
-class EventBottleManager : public yarp::os::BufferedPort<emorph::vBottle>
+class vCircleReader : public yarp::os::BufferedPort<emorph::vBottle>
 {
 private:
     
@@ -31,20 +31,24 @@ private:
 
     //for helping with timestamp wrap around
     emorph::vtsHelper unwrapper;
+    unsigned long int pTS;
 
     //our circle position estimator
-    vCircle circleFinder;
+    vCircleObserver circleFinder;
 
     //our filter/tracker
     iCub::ctrl::Kalman *filter;
     bool filter_active;
+    double vPos;
+    double vSiz;
 
+    //this is only for debugging
+    bool debugFlag;
     emorph::activityMat estimate;
 
 public:
     
-    EventBottleManager();
-    emorph::vBottle tempBottle;
+    vCircleReader();
 
     bool    open(const std::string &name);
     void    close();
@@ -53,12 +57,17 @@ public:
     //this is the entry point to your main functionality
     void    onRead(emorph::vBottle &bot);
 
+    void setDebug(bool debugFlag) { this->debugFlag = debugFlag; }
+    void resetObserverParams(int width, int height, double aDec, double aInj,
+                             int aRad, int oWin, int oTrim);
+    void resetFilterParams(double pvp, double pvs, double mvp, double mvs);
+
 };
 
 class vCircleModule : public yarp::os::RFModule
 {
     //the event bottle input and output handler
-    EventBottleManager      eventBottleManager;
+    vCircleReader      circleReader;
 
 
 public:
