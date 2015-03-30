@@ -23,7 +23,7 @@ set(CMAKE_MODULE_PATH
 )
 
 find_package(GSL)
-find_package(OpenCV REQUIRED)
+find_package(OpenCV)
 find_package(GtkPlus REQUIRED)
 find_package(IPOPT)
 

@@ -3,5 +3,7 @@
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 cmake_minimum_required(VERSION 2.6)
 
-add_subdirectory    ( vFramer )
+if(OPENCV_FOUND)
+    add_subdirectory( vFramer )
+endif(OPENCV_FOUND)
 
