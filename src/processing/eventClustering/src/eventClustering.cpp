@@ -421,8 +421,7 @@ void EventBottleManager::onRead(vBottle &bot)
         storeCollisionValue = collisionPort.read();
 
         fprintf(stdout, "Visual collision!! with audio signal = %f \n", storeCollisionValue->get(0).asDouble());
-        Time::delay(0.1);
-
+        Time::delay(0.100);
 
         if(storeCollisionValue->get(0).asDouble() > 0.3) //if also audio
         {
