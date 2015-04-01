@@ -744,7 +744,7 @@ void ICubMotor::moveEyes(float target_x, float target_y)
 
         //modify the position relative to the center of the image
         target_x -= imageWidth / 2;  // center of image should mean no motion
-        target_y -= 70; //imageHeight / 2;
+        target_y -= imageHeight / 2;
 
         // Convert the pixel position into the joint angle change requirted to reach that posotion
         // divide by the max value and Multiply by the range of the motor. On the Plymouth robot this is as follows:
@@ -755,7 +755,7 @@ void ICubMotor::moveEyes(float target_x, float target_y)
         // j4: -50 to 52 (eyes horizontal axis)
         // j5: vergence not used, vergence should be fixed for disparity based depth measures
         target_x = (target_x / (imageWidth / 2)) * 30;
-        target_y = (target_y / (imageHeight / 2)) * 26;
+        target_y = (target_y / (imageHeight / 2)) * 23;
 
 
         //head
