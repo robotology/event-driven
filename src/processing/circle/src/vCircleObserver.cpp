@@ -136,11 +136,11 @@ bool vCircleObserver::localCircleEstimate(emorph::AddressEvent &event, double &c
     if(cx < 0 || cx > width-1 || cy < 0 || cy > height-1) return false;
 
 
-    if(showDebug) {
+    if(showDebug && stepbystep) {
 
         //%%% display centre and radius lines.
         static int divider = 0;
-        if(++divider % 10 == 0) {
+        if(++divider % 1 == 0) {
 
             double mact = 0;
             cv::Mat image2(128, 128, CV_32F); image2.setTo(0);
@@ -171,7 +171,7 @@ bool vCircleObserver::localCircleEstimate(emorph::AddressEvent &event, double &c
 
 
 
-            if(divider % 200  == 0) {
+            if(divider % 1  == 0) {
                 int xsm = std::max(p1.x-sRadius, 0)*4;
                 int ysm = std::max(p1.y-sRadius, 0)*4;
                 int wsm = std::min(128 - xsm/4, 2*sRadius)*4;
@@ -186,7 +186,8 @@ bool vCircleObserver::localCircleEstimate(emorph::AddressEvent &event, double &c
 
             cv::flip(image, image, 0);
             cv::imshow("Activity", image);
-            cv::waitKey(1);
+            char c = cv::waitKey(0);
+            if(c == 27) stepbystep = false;
         }
     }
 
@@ -194,4 +195,248 @@ bool vCircleObserver::localCircleEstimate(emorph::AddressEvent &event, double &c
     return true;
 
 }
+
+/*//////////////////////////////////////////////////////////////////////////////
+  CIRCLE TRACKER
+  ////////////////////////////////////////////////////////////////////////////*/
+
+vCircleTracker::vCircleTracker(double svPos, double svSiz, double zvPos, double zvSiz)
+{
+    this->svPos = svPos;
+    this->svSiz = svSiz;
+    active = false;
+    pTS = 0;
+
+    //these two matrices are dependent on dt so we have to update them everytime
+    yarp::sig::Matrix A(6, 6); A = 0;
+    A(0, 0) = 1; A(1, 1) = 1; A(2, 2) = 1;
+    A(3, 3) = 1; A(4, 4) = 1; A(5, 5) = 1;
+    //we need to update A: (0, 3), (1, 4) and (2, 5) based on delta t
+
+    yarp::sig::Matrix Q(6, 6); Q = 0;
+    //we update Q depending on delta t
+
+    //these two are constant
+    yarp::sig::Matrix H(6, 6); H = 0;
+    H(0, 0) = 1; H(1, 1) = 1; H(2, 2) = 1;
+
+    yarp::sig::Matrix R(6, 6); R = 0;
+    R(0, 0) = zvPos; R(1, 1) = zvPos; R(2, 2) = zvSiz;
+
+    filter = new iCub::ctrl::Kalman(A, H, Q, R);
+
+}
+
+vCircleTracker::~vCircleTracker()
+{
+    delete filter;
+}
+
+//add event will:
+//1. check closeness to distribution
+//2. update zq if < c
+//3. perform correction based on observation from zq
+//4. destroy if validation gate too high
+//5. return whether, updated, non-updated, needs destroying
+double vCircleTracker::addEvent(emorph::AddressEvent v, double cT)
+{
+
+    //get our delta t
+    double ts = unwrap(v.getStamp());
+    double dt = 0;
+    if(!pTS) {
+        pTS = ts;
+    } else {
+        dt = (ts - pTS) * unwrap.tstosecs();
+        pTS = ts;
+    }
+
+    //predict
+    predict(dt);
+    yarp::sig::Vector state = filter->get_x();
+    if(state[0] != state[0]) {
+        std::cout << "error" << std::endl;
+    }
+
+    //assume it is part of the tracker (probability = 1)
+    double cV = 1;
+    if(active) {
+        //calculate probability observation belongs to this tracker
+        cV = Pvgd(v.getX(), v.getY());
+
+    } else {
+        //some other measure whether this belongs to a circle otherwise we
+        //would make circles from any three random points
+
+    }
+
+    std::cout << cV << " <--> " << cT << std::endl;
+    if(cV < cT) {
+        return 0;
+    }
+
+
+
+    //either it's not active or the z fits the distribution
+    zq.push_front(v.clone());
+
+    //still not active
+    if(zq.size() < 3)
+        return 0;
+
+    //or we throw out old observations
+    if(zq.size() > 3) {
+        delete zq.back();
+        zq.pop_back();
+    }
+
+
+    //calculate the circle
+    double cx, cy, cr;
+    bool madecircle = makeObservation(cx, cy, cr);
+
+
+    //if we didn't make a circle just exit?
+    if(!madecircle)
+        return 0;
+
+    //adding observation
+    std::cout << "NEW OBSERVATION" << std::endl;
+
+    //either correct our position or start tracking
+    yarp::sig::Vector z(6, 0.0); z[0]=cx; z[1]=cy; z[2]=cr;
+    if(active) {
+        filter->correct(z);
+        yarp::sig::Vector state = filter->get_x();
+        if(state[0] != state[0]) {
+            std::cout << "error" << std::endl;
+        }
+    } else {
+        yarp::sig::Matrix P0 = filter->get_R();
+        P0(3, 3) = P0(0, 0); P0(4, 4) = P0(1, 1); P0(5, 5) = P0(2, 2);
+        filter->init(z, P0);
+        active = true;
+    }
+
+    //return our tracking strength
+    //this might not be a good measure if we only add observations that agree
+    //with the distribution in the first place
+    return filter->get_ValidationGate();
+
+}
+
+//update state
+//also update zq values based on velocity
+double vCircleTracker::predict(double dt)
+{
+
+    if(!active) return 0;
+    //update the tracker position
+    yarp::sig::Matrix A = filter->get_A();
+    A(0, 3) = dt; A(1, 4) = dt; A(2, 5) = dt;
+    filter->set_A(A);
+
+    yarp::sig::Matrix Q = filter->get_Q();
+    Q(3, 3) = svPos*dt; Q(4, 4) = svPos*dt; Q(5, 5) = svSiz*dt;
+    filter->set_Q(Q);
+
+    filter->predict();
+
+    //update the observations according to tracker movement
+    yarp::sig::Vector x = filter->get_x();
+    emorph::vQueue::iterator vi;
+    for(vi = zq.begin(); vi != zq.end(); vi++) {
+        emorph::AddressEvent *v = (*vi)->getAs<emorph::AddressEvent>();
+        if(!v) continue;
+        v->setX(v->getX() + x(0) * dt);
+        v->setY(v->getY() + x(1) * dt);
+    }
+    return 0;
+}
+
+double vCircleTracker::Pvgd(double xv, double yv)
+{
+    if(!active) return 0;
+
+    yarp::sig::Vector c = filter->get_x();
+    double xc = c[0], yc = c[1], rc = c[2];
+
+    //calculate the distance to the mean of the distribution
+    double rv = sqrt(pow(yv-yc, 2.0) + pow(xv-xc, 2.0));
+    if(rv == 0) return 0;
+    double xd = xc + (rc / rv) * (xv - xc); //trouble here if rv == 0
+    double yd = yc + (rc / rv) * (yv - yc);
+
+    double x = fabs(xv - xd);
+    double y = fabs(yv - yd);
+
+    yarp::sig::Matrix P = filter->get_P();
+    double distance = P(0, 0) * pow(x, 2.0) + 2 * P(0, 1) * x * y +
+            P(1, 1) * pow(y, 2.0);
+    distance = pow(x, 2.0) + pow(y, 2.0);
+    double det = pow(P(0, 0), 2.0) + pow(P(1, 1), 2.0) + 2 * P(0, 0) * P(1, 1) *
+            P(0, 1) + pow(P(2, 2), 2.0);
+
+    double pvgd = exp(-0.5 * distance / det);
+    return pvgd;// / sqrt(det * 6.283);
+}
+
+bool vCircleTracker::makeObservation(double &cx, double &cy, double &cr)
+{
+    //extract the points
+    if(zq.size() < 3) return false;
+    emorph::AddressEvent *v1 = zq[0]->getAs<emorph::AddressEvent>();
+    emorph::AddressEvent *v2 = zq[1]->getAs<emorph::AddressEvent>();
+    emorph::AddressEvent *v3 = zq[2]->getAs<emorph::AddressEvent>();
+    double x1 = v1->getX(), y1 = v1->getY();
+    double x2 = v2->getX(), y2 = v2->getY();
+    double x3 = v3->getX(), y3 = v3->getY();
+
+    //if we are all on the same line we can't compute a circle
+    if(y1 == y2 && y1 == y3) return false;
+    if(x1 == x2 && x1 == x3) return false;
+    if(x1 == x2 && y1 == y2) return false;
+    if(x1 == x3 && y1 == y3) return false;
+    if(x2 == x3 && y2 == y3) return false;
+
+    //make sure x2 is different to x1 and x3 (else we divide by 0 later)
+    if(x2 == x1) {
+        x3 = x2; y3 = x2;
+        x2 = v3->getX(); y2 = v3->getY();
+    } else if(x2 == x3) {
+        x1 = x2; y1 = y2;
+        x2 = v1->getX(); y2 = v1->getY();
+    }
+
+
+    //calculate the circle from the 3 points
+    double ma = (y2 - y1) / (x2 - x1);
+    double mb = (y3 - y2) / (x3 - x2);
+
+    if(ma == mb) return false;
+    if(ma != ma || mb != mb) {
+        std::cout << "error" << std::endl;
+    }
+
+    cx = (ma * mb * (y1 - y3) + mb * (x1 + x2) -
+                        ma * (x2 + x3)) / (2 * (mb - ma));
+    if(ma)
+        cy = -1 * (cx - (x1+x2)/2.0)/ma + (y1+y2)/2.0;
+    else
+        cy = -1 * (cx - (x2+x3)/2.0)/mb + (y2+y3)/2.0;
+
+    cr = sqrt(pow(cx - x1, 2.0) + pow(cy - y1, 2.0));
+
+    if(cx != cx) {
+        std::cout << "error" << std::endl;
+    }
+    if(cx == INFINITY || cx == -INFINITY) {
+        std::cout << "error" << std::endl;
+    }
+
+    return true;
+
+}
+
+
 

@@ -35,6 +35,7 @@ private:
 
     //our circle position estimator
     vCircleObserver circleFinder;
+    vCircleTracker *circleTracker;
 
     //our filter/tracker
     iCub::ctrl::Kalman *filter;

@@ -16,6 +16,7 @@
 
 #include <iCub/emorph/all.h>
 #include <opencv2/opencv.hpp>
+#include <iCub/ctrl/kalman.h>
 
 class vCircleObserver
 {
@@ -47,6 +48,7 @@ private:
     cv::Mat createLocalActivityWindow(int x, int y);
     double calculateCircleActivity(int cx, int cy, int r);
 
+
 public:
 
     vCircleObserver(int width = 128, int height = 128,
@@ -54,6 +56,7 @@ public:
             double aDecay = 1000, double aInject = 5, int aRegion = 0)
         : sRadius(sRadius), width(width), height(height), tRadius(tRadius) {
 
+        stepbystep = false;
         activity = emorph::activityMat(height, width, aDecay, aInject, aRegion);
     }
 
@@ -63,6 +66,52 @@ public:
 
     bool threePointCircle(int x1, int y1, int x2, int y2, int x3, int y3,
                           int &cx, int &cy, double &r);
+
+    //temporary debug stuff
+    bool stepbystep;
+};
+
+/*//////////////////////////////////////////////////////////////////////////////
+  CIRCLE TRACKER
+  ////////////////////////////////////////////////////////////////////////////*/
+
+class vCircleTracker
+{
+public:
+
+    iCub::ctrl::Kalman *filter;
+    emorph::vQueue zq;
+    bool active;
+    emorph::vtsHelper unwrap;
+    double pTS;
+
+    //system variance
+    double svPos;
+    double svSiz;
+
+    //private functions
+    bool makeObservation(double &cx, double &cy, double &cr);
+    double Pvgd(double xv, double yv);
+
+public:
+
+    vCircleTracker(double svPos, double svSiz, double zvPos, double zvSiz);
+    ~vCircleTracker();
+
+
+    //add event will:
+    //1. check closeness to distribution
+    //2. update zq if < c
+    //3. perform correction based on observation from zq
+    //4. destroy if validation gate too high
+    //5. return whether, updated, non-updated, needs destroying
+    double addEvent(emorph::AddressEvent v, double cT);
+
+    //update state
+    //also update zq values based on velocity
+    double predict(double dt);
+
+
 };
 
 

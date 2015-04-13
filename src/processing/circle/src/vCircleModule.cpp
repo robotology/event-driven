@@ -46,10 +46,10 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
 
     //filter parameters
     double procNoisePos = rf.check("procNoisePos",
-                                   yarp::os::Value(10)).asDouble();
+                                   yarp::os::Value(1)).asDouble();
 
     double procNoiseRad = rf.check("procNoiseRad",
-                                   yarp::os::Value(100)).asDouble();
+                                   yarp::os::Value(1)).asDouble();
 
     double measNoisePos = rf.check("measNoisePos",
                                    yarp::os::Value(32)).asDouble();
@@ -128,6 +128,8 @@ vCircleReader::vCircleReader()
     filter = new iCub::ctrl::Kalman(A, H, Q, R);
 
     pTS = 0;
+
+    circleTracker = new vCircleTracker(0.1, 0.1, 32, 16);
     
 }
 
@@ -180,6 +182,8 @@ void vCircleReader::resetFilterParams(double pvp, double pvs, double mvp,
     yarp::sig::Matrix R(6, 6); R = 0;
     R(0, 0) = mvp; R(1, 1) = mvp; R(2, 2) = mvs;
     filter->set_R(R);
+    if(circleTracker) delete circleTracker;
+    circleTracker = new vCircleTracker(vPos, vSiz, mvp, mvs);
 }
 
 void vCircleReader::resetObserverParams(int width, int height, double aDec, double aInj,
@@ -205,6 +209,21 @@ void vCircleReader::onRead(emorph::vBottle &bot)
     // get the event queue in the vBottle bot
     bot.getAll(q);
 
+    if(debugFlag)
+    {
+        circleFinder.stepbystep = true;
+        cv::Mat bottleImage(128, 128, CV_8UC1); bottleImage.setTo(0);
+        for(qi = q.begin(); qi != q.end(); qi++)
+        {
+            emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
+            if(!v) continue;
+            if(v->getChannel()) continue;
+            bottleImage.at<char>(127 - v->getX(), v->getY()) = 255;
+        }
+        cv::imshow("All Bottle", bottleImage);
+        cv::waitKey(1);
+    }
+
     for(qi = q.begin(); qi != q.end(); qi++)
     {      
         emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
@@ -212,7 +231,12 @@ void vCircleReader::onRead(emorph::vBottle &bot)
         unsigned long int ts = v->getStamp();
         if(v->getChannel()) continue;
         double cx, cy, cr;
+        //circleTracker->addEvent(*v, 0.1);
+
+        //continue;
         if(!circleFinder.localCircleEstimate(*v, cx, cy, cr, debugFlag)) continue;
+
+
 
         if(!filter_active) {
             yarp::sig::Vector x0(6, 0.0); x0[0] = cx; x0[1] = cy; x0[2] = cr;
