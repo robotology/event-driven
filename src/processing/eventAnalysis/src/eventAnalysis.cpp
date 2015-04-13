@@ -26,8 +26,6 @@
 eventStatisticsDumper::eventStatisticsDumper()
 {
 
-
-
     this->setStrict();
     dir = "";
     prevstamp = 0;
