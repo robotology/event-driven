@@ -20,12 +20,6 @@
 namespace emorph {
 
 /*////////////////////////////////////////////////////////////////////////////*/
-//vWindow
-/*////////////////////////////////////////////////////////////////////////////*/
-
-
-
-/*////////////////////////////////////////////////////////////////////////////*/
 //vReadAndSplit
 /*////////////////////////////////////////////////////////////////////////////*/
 vReadAndSplit::~vReadAndSplit()
@@ -151,7 +145,7 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
 
     double eventWindow = rf.find("eventWindow").asDouble();
     if(eventWindow == 0) eventWindow = 0.5;
-    eventWindow = eventWindow * 100000;
+    eventWindow = eventWindow / vtsHelper::tstosecs();
 
     //set up the default channel list
     yarp::os::Bottle tempDisplayList, *bp;
