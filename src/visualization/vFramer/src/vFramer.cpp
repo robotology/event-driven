@@ -23,71 +23,7 @@ namespace emorph {
 //vWindow
 /*////////////////////////////////////////////////////////////////////////////*/
 
-int vWindow::getCurrentWindow(vQueue &sample_q)
-{
-    if(q.empty())
-        return 0;
 
-    //critical section
-    mutex.wait();
-
-    //do a copy and a clean
-    int lowerthesh = q.back()->getStamp() - windowSize;
-    int upperthesh = q.back()->getStamp() + windowSize;
-
-    emorph::vQueue::iterator qi;
-    for (qi = q.begin(); qi != q.end();) {
-        int etime = (*qi)->getStamp();
-        if(etime < upperthesh && etime > lowerthesh)
-        {
-            //copy it into the new q
-            //vEvent * newcopy = emorph::createEvent((*qi)->getType());
-            //*newcopy = **qi;
-            //sample_q.push_back((newcopy));
-            sample_q.push_back((*qi)->clone());
-
-            //on to the next event
-            qi++;
-        }
-        else
-        {
-            //clean it (set qi to next event)
-            delete (*qi);
-            qi = q.erase(qi);
-        }
-    }
-
-    mutex.post();
-
-    return q.size();
-
-}
-
-void vWindow::addEvent(emorph::vEvent &event)
-{
-    //make a copy of the event to add to the circular buffer
-    vEvent * newcopy = emorph::createEvent(event.getType());
-    *newcopy = event;
-
-    mutex.wait();
-
-    //add the event
-    q.push_back(newcopy);
-
-    //check if any events need to be removed
-    int lifeThreshold = event.getStamp() - windowSize;
-    while(true) {
-
-        if(q.front()->getStamp() < lifeThreshold) {
-            delete q.front();
-            q.pop_front();
-        }
-        else
-            break;
-    }
-    mutex.post();
-
-}
 
 /*////////////////////////////////////////////////////////////////////////////*/
 //vReadAndSplit
