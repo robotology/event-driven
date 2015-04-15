@@ -46,7 +46,9 @@ public:
     /// \brief vWindow constructor
     /// \param windowSize optional time to store events (in us)
     ///
-    vWindow(int windowSize = 50000)     { this->windowSize = windowSize; }
+    vWindow(int windowSize = 50000) : windowSize(windowSize){q.setOwner(false);}
+
+    ~vWindow() { q.setOwner(true); }
 
     ///
     /// \brief setWindowSize sets the length of time to store events
@@ -67,6 +69,8 @@ public:
     /// \return the number of events added to sample_q
     ///
     int getCurrentWindow(emorph::vQueue &sample_q);
+
+    const vQueue& getWindow(bool ASYNC = true);
 
 };
 

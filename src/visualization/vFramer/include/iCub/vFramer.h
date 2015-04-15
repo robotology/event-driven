@@ -48,7 +48,7 @@ private:
     //! storage of vWindows
     std::map<int, vWindow*> windows;
     //! storage of window snapshots
-    std::map<int, vQueue*> snaps;
+    std::map<int, const vQueue*> snaps;
 
 public:
 
@@ -75,7 +75,7 @@ public:
     /// \param channel the channel value to access
     /// \return the list of events in a vQueue
     ///
-    emorph::vQueue & getSnap(const int channel);
+    const emorph::vQueue & getSnap(const int channel);
 
     ///
     /// \brief onRead splitting is performed as an asynchronous onRead function

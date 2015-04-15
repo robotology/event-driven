@@ -58,6 +58,27 @@ int vWindow::getCurrentWindow(vQueue &sample_q)
 
 }
 
+const vQueue& vWindow::getWindow(bool ASYNC)
+{
+    if(!ASYNC)
+        return q;
+
+    vQueue *qcopy = new vQueue;
+    qcopy->setOwner(true);
+
+    //critical section
+    mutex.wait();
+    vQueue::iterator qi;
+    for (qi = q.begin(); qi != q.end(); qi++) {
+        qcopy->push_back((*qi)->clone());
+    }
+
+    mutex.post();
+
+    return *qcopy;
+
+}
+
 void vWindow::addEvent(vEvent &event)
 {
     //make a copy of the event to add to the circular buffer

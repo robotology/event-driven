@@ -29,7 +29,7 @@ vReadAndSplit::~vReadAndSplit()
         delete wi->second;
     }
 
-    std::map<int, vQueue*>::iterator qi;
+    std::map<int, const vQueue*>::iterator qi;
     for(qi = snaps.begin(); qi != snaps.end(); qi++) {
         delete qi->second;
     }
@@ -85,15 +85,11 @@ void vReadAndSplit::onRead(emorph::vBottle &incoming)
 void vReadAndSplit::snapshotAllWindows()
 {
     std::map<int, vWindow*>::iterator wi;
-    for(wi = windows.begin(); wi != windows.end(); wi++) {
-        if(!snaps.count(wi->first))
-                snaps[wi->first] = new vQueue;
-        snaps[wi->first]->clear();
-        (wi->second)->getCurrentWindow(*(snaps[wi->first]));
-    }
+    for(wi = windows.begin(); wi != windows.end(); wi++)
+        snaps[wi->first] = &(wi->second)->getWindow(true);
 }
 
-emorph::vQueue & vReadAndSplit::getSnap(const int channel)
+const emorph::vQueue & vReadAndSplit::getSnap(const int channel)
 {
     if(!snaps.count(channel))
             snaps[channel] = new vQueue;
@@ -259,7 +255,7 @@ bool vFramerModule::updateModule()
         cv::Mat canvas;
 
         //get the event queue associated with the correct channel
-        emorph::vQueue &q = vReader.getSnap(channels[i]);
+        const emorph::vQueue &q = vReader.getSnap(channels[i]);
 
         //emorph::vQueue q;
 
