@@ -52,7 +52,7 @@ public:
     }
 
     static long int maxStamp() { return max_stamp; }
-    static double tstosecs() { return 1.0 / 1000000.0; }
+    static double tstosecs() { return 0.000001; }
 
 };
 
