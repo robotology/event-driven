@@ -27,14 +27,14 @@ int vWindow::getCurrentWindow(vQueue &sample_q)
     mutex.wait();
 
     //do a copy and a clean
-    int lowerthesh = q.back()->getStamp() - windowSize;
-    int upperthesh = q.back()->getStamp() + windowSize;
+    //int lowerthesh = q.back()->getStamp() - windowSize;
+    //int upperthesh = q.back()->getStamp() + windowSize;
 
     vQueue::iterator qi;
     for (qi = q.begin(); qi != q.end();) {
-        int etime = (*qi)->getStamp();
-        if(etime < upperthesh && etime > lowerthesh)
-        {
+        //int etime = (*qi)->getStamp();
+        //if(etime < upperthesh && etime > lowerthesh)
+        //{
             //copy it into the new q
             //vEvent * newcopy = emorph::createEvent((*qi)->getType());
             //*newcopy = **qi;
@@ -43,13 +43,13 @@ int vWindow::getCurrentWindow(vQueue &sample_q)
 
             //on to the next event
             qi++;
-        }
-        else
-        {
+        //}
+        //else
+        //{
             //clean it (set qi to next event)
-            delete (*qi);
-            qi = q.erase(qi);
-        }
+         //   delete (*qi);
+         //   qi = q.erase(qi);
+        //}
     }
 
     mutex.post();
@@ -61,8 +61,9 @@ int vWindow::getCurrentWindow(vQueue &sample_q)
 void vWindow::addEvent(vEvent &event)
 {
     //make a copy of the event to add to the circular buffer
-    vEvent * newcopy = emorph::createEvent(event.getType());
-    *newcopy = event;
+    //vEvent * newcopy = emorph::createEvent(event.getType());
+    //*newcopy = event;
+    vEvent * newcopy = event.clone();
 
     mutex.wait();
 
@@ -70,10 +71,14 @@ void vWindow::addEvent(vEvent &event)
     q.push_back(newcopy);
 
     //check if any events need to be removed
-    int lifeThreshold = event.getStamp() - windowSize;
+    //int lifeThreshold = event.getStamp() - windowSize;
+    int ctime = event.getStamp();
+    int upper = ctime + vtsHelper::maxStamp() - windowSize;
+    int lower = ctime - windowSize;
     while(true) {
 
-        if(q.front()->getStamp() < lifeThreshold) {
+        int vtime = q.front()->getStamp();
+        if((vtime > ctime && vtime < upper) || vtime < lower) {
             delete q.front();
             q.pop_front();
         }

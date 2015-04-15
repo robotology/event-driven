@@ -19,6 +19,7 @@
 
 #include <yarp/os/all.h>
 #include "vCodec.h"
+#include "vtsHelper.h"
 
 namespace emorph {
 
