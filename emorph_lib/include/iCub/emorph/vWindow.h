@@ -70,7 +70,28 @@ public:
     ///
     int getCurrentWindow(emorph::vQueue &sample_q);
 
-    const vQueue& getWindow(bool ASYNC = true);
+    const vQueue& getWindow();
+
+    ///
+    /// \brief getSpatialWindow returns AddressEvents within a spatial window
+    /// \param x x centre
+    /// \param y y centre
+    /// \param d distance of the half-length of a square window
+    /// \return a vQueue containing a copy of the events
+    ///
+    const vQueue& getSpatialWindow(int x, int y, int d);
+
+    ///
+    /// \brief getSpatialWindow returns AddressEvents within a spatial window
+    /// \param xl lower x value of window
+    /// \param xh upper x value of window
+    /// \param yl lower y value of window
+    /// \param yh upper y value of window
+    /// \return a vQueue containing a copy of the events
+    ///
+    const vQueue& getSpatialWindow(int xl, int xh, int yl, int yh);
+
+    vEvent *getMostRecent();
 
 };
 

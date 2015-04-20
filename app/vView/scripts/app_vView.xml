@@ -23,7 +23,7 @@
 
 <module>
     <name> vFramer</name>
-    <parameters> --frameRate 30 --eventWindow 0.1 --displays "(0 left (AE CLE) 1 right (AE CLE))"</parameters>
+    <parameters> --frameRate 30 --eventWindow 0.01 --displays "(0 left (AE) 1 right (AE))"</parameters>
     <node>localhost</node>
 </module>
 

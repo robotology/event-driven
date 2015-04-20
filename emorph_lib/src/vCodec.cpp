@@ -75,6 +75,12 @@ void vQueue::clear()
     deque::clear();
 }
 
+vQueue& vQueue::operator=(const vQueue& other)
+{
+    for(vQueue::const_iterator qi = other.begin(); qi != other.end(); qi++)
+        this->push_back((*qi)->clone());
+}
+
 void vQueue::sort() {
     std::sort(begin(), end(), temporalSort);
 }

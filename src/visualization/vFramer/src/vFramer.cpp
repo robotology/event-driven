@@ -86,7 +86,7 @@ void vReadAndSplit::snapshotAllWindows()
 {
     std::map<int, vWindow*>::iterator wi;
     for(wi = windows.begin(); wi != windows.end(); wi++)
-        snaps[wi->first] = &(wi->second)->getWindow(true);
+        snaps[wi->first] = &(wi->second)->getWindow();
 }
 
 const emorph::vQueue & vReadAndSplit::getSnap(const int channel)

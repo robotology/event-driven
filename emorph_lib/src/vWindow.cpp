@@ -25,51 +25,49 @@ int vWindow::getCurrentWindow(vQueue &sample_q)
 
     //critical section
     mutex.wait();
-
-    //do a copy and a clean
-    //int lowerthesh = q.back()->getStamp() - windowSize;
-    //int upperthesh = q.back()->getStamp() + windowSize;
-
-    vQueue::iterator qi;
-    for (qi = q.begin(); qi != q.end();) {
-        //int etime = (*qi)->getStamp();
-        //if(etime < upperthesh && etime > lowerthesh)
-        //{
-            //copy it into the new q
-            //vEvent * newcopy = emorph::createEvent((*qi)->getType());
-            //*newcopy = **qi;
-            //sample_q.push_back((newcopy));
-            sample_q.push_back((*qi)->clone());
-
-            //on to the next event
-            qi++;
-        //}
-        //else
-        //{
-            //clean it (set qi to next event)
-         //   delete (*qi);
-         //   qi = q.erase(qi);
-        //}
-    }
-
+    sample_q = this->q;
     mutex.post();
 
     return q.size();
 
 }
 
-const vQueue& vWindow::getWindow(bool ASYNC)
+const vQueue& vWindow::getWindow()
 {
-    if(!ASYNC)
-        return q;
+
+    //first apply limits
 
     vQueue *qcopy = new vQueue;
-    qcopy->setOwner(true);
+
+    mutex.wait();
+    *qcopy = this->q;
+    mutex.post();
+
+    return *qcopy;
+
+}
+
+const vQueue& vWindow::getSpatialWindow(int x, int y, int d)
+{
+    return getSpatialWindow(x - d, x + d, y - d, y + d);
+}
+
+const vQueue& vWindow::getSpatialWindow(int xl, int xh, int yl, int yh)
+{
+
+    //first apply limits
+
+    vQueue *qcopy = new vQueue;
 
     //critical section
     mutex.wait();
+
     vQueue::iterator qi;
     for (qi = q.begin(); qi != q.end(); qi++) {
+        AddressEvent *v = (*qi)->getAs<AddressEvent>();
+        if(!v) continue;
+        int x = v->getX(); int y = v->getY();
+        if(x < xl || x > xh || y < yl || y > yh) continue;
         qcopy->push_back((*qi)->clone());
     }
 
@@ -79,23 +77,32 @@ const vQueue& vWindow::getWindow(bool ASYNC)
 
 }
 
+vEvent *vWindow::getMostRecent()
+{
+    if(q.size()) return q.back();
+    return 0;
+}
+
 void vWindow::addEvent(vEvent &event)
 {
     //make a copy of the event to add to the circular buffer
     //vEvent * newcopy = emorph::createEvent(event.getType());
     //*newcopy = event;
-    vEvent * newcopy = event.clone();
+    //vEvent * newcopy = event.clone();
+
+    int ctime = event.getStamp();
+    int upper = ctime + vtsHelper::maxStamp() - windowSize;
+    int lower = ctime - windowSize;
+
 
     mutex.wait();
 
     //add the event
-    q.push_back(newcopy);
+    q.push_back(event.clone());
 
     //check if any events need to be removed
     //int lifeThreshold = event.getStamp() - windowSize;
-    int ctime = event.getStamp();
-    int upper = ctime + vtsHelper::maxStamp() - windowSize;
-    int lower = ctime - windowSize;
+
     while(true) {
 
         int vtime = q.front()->getStamp();

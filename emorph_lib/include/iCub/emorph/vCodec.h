@@ -43,7 +43,6 @@ private:
     // pointers since the destructor frees up the memory
     // allocated for events
     vQueue(const vQueue&);
-    vQueue &operator=(const vQueue&);
     static bool temporalSort(const vEvent *e1, const vEvent *e2);
 
 protected:
@@ -55,6 +54,7 @@ public:
     void setOwner(const bool owner) { this->owner=owner; }
     bool getOwner()                 { return owner;      }
     void clear();
+    vQueue &operator=(const vQueue&);
     ~vQueue();
 
     void sort();
