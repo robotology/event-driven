@@ -28,10 +28,9 @@ int main(int argc, char * argv[])
 
     /* prepare and configure the resource finder */
     yarp::os::ResourceFinder rf;
-    rf.setVerbose( true );
-    rf.setDefaultContext( "vTemplate" );
-    rf.setDefaultConfigFile( "config.ini" );
-    rf.setDefault("name","vTemplate");
+    //rf.setVerbose( true );
+    rf.setDefaultContext( "emorph" );
+    rf.setDefaultConfigFile( "template.ini" );
     rf.configure( argc, argv );
 
     /* run the module: runModule() calls configure first and, if successful, it then runs */

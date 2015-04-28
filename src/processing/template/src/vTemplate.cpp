@@ -21,12 +21,12 @@
 bool vTemplateModule::configure(yarp::os::ResourceFinder &rf)
 {
     //set the name of the module
-    std::string moduleName = rf.check("name", yarp::os::Value("vTemplate"),
-                                      "module name (string)").asString();
+    std::string moduleName =
+            rf.check("name", yarp::os::Value("vTemplate")).asString();
     setName(moduleName.c_str());
 
     //open and attach the rpc port
-    std::string rpcPortName  =  "/" + moduleName + "rpc:i";
+    std::string rpcPortName  =  "/" + moduleName + "/rpc:i";
 
     if (!rpcPort.open(rpcPortName))
     {
@@ -45,7 +45,7 @@ bool vTemplateModule::configure(yarp::os::ResourceFinder &rf)
                         "variable description").asString();
     
     /* create the thread and pass pointers to the module parameters */
-    eventBottleManager = new EventBottleManager;
+    eventBottleManager.open(moduleName);
 
     return true ;
 }
@@ -54,7 +54,7 @@ bool vTemplateModule::configure(yarp::os::ResourceFinder &rf)
 bool vTemplateModule::interruptModule()
 {
     rpcPort.interrupt();
-    eventBottleManager->interrupt();
+    eventBottleManager.interrupt();
     return true;
 }
 
@@ -62,8 +62,7 @@ bool vTemplateModule::interruptModule()
 bool vTemplateModule::close()
 {
     rpcPort.close();
-    eventBottleManager->close();
-    delete eventBottleManager;
+    eventBottleManager.close();
     return true;
 }
 
@@ -140,7 +139,7 @@ void EventBottleManager::onRead(emorph::vBottle &bot)
     
     // prepare output vBottle with address events extended with cluster ID (aec) and cluster events (clep)
     emorph::vBottle &outBottle = outPort.prepare();
-    outBottle.clear();
+    outBottle = bot; //start with the incoming bottle
 
     // get the event queue in the vBottle bot
     bot.getAll(q);
@@ -150,10 +149,14 @@ void EventBottleManager::onRead(emorph::vBottle &bot)
         //unwrap timestamp
         unsigned long int ts = unwrapper((*qi)->getStamp());
 
+        //perhaps you need to filter for a certain type of event?
+        emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
+        if(!v) continue;
+
         //process
 
         //add events that need to be added to the out bottle
-        outBottle.addEvent(**qi);
+        //outBottle.addEvent(**qi);
 
 
     }

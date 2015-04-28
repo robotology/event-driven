@@ -50,7 +50,7 @@ class vTemplateModule : public yarp::os::RFModule
     yarp::os::RpcServer     rpcPort;
 
     //the event bottle input and output handler
-    EventBottleManager      *eventBottleManager;
+    EventBottleManager      eventBottleManager;
 
 
 public:
