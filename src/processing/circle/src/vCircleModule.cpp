@@ -46,16 +46,16 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
 
     //filter parameters
     double procNoisePos = rf.check("procNoisePos",
-                                   yarp::os::Value(1)).asDouble();
+                                   yarp::os::Value(1000)).asDouble();
 
     double procNoiseRad = rf.check("procNoiseRad",
-                                   yarp::os::Value(1)).asDouble();
+                                   yarp::os::Value(1000)).asDouble();
 
     double measNoisePos = rf.check("measNoisePos",
-                                   yarp::os::Value(32)).asDouble();
+                                   yarp::os::Value(10)).asDouble();
 
     double measNoiseRad = rf.check("measNoiseRad",
-                                   yarp::os::Value(16)).asDouble();
+                                   yarp::os::Value(10)).asDouble();
 
     circleReader.setDebug(debugwindows);
     circleReader.resetObserverParams(width, height, actDecay, actInject,
@@ -128,6 +128,7 @@ vCircleReader::vCircleReader()
     filter = new iCub::ctrl::Kalman(A, H, Q, R);
 
     pTS = 0;
+    filter_active = false;
 
     circleTracker = new vCircleTracker(0.1, 0.1, 32, 16);
     
@@ -228,13 +229,22 @@ void vCircleReader::onRead(emorph::vBottle &bot)
     {      
         emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
         if(!v) continue;
-        unsigned long int ts = v->getStamp();
+        unsigned long int ts = unwrap(v->getStamp());
         if(v->getChannel()) continue;
         double cx, cy, cr;
         //circleTracker->addEvent(*v, 0.1);
 
         //continue;
-        if(!circleFinder.localCircleEstimate(*v, cx, cy, cr, debugFlag)) continue;
+
+        double dt = ((double)ts - pTS) * emorph::vtsHelper::tstosecs();
+        circleTracker->predict(dt);
+
+        circleFinder.addEvent(**qi);
+        double e = circleFinder.RANSAC(cx, cy, cr, true);
+        if(e < 20) continue;
+
+        //continue;
+        //if(!circleFinder.localCircleEstimate(*v, cx, cy, cr, debugFlag)) continue;
 
 
 
@@ -245,8 +255,18 @@ void vCircleReader::onRead(emorph::vBottle &bot)
             filter->init(x0, P0);
             filter_active = true;
             pTS = ts;
+
+            //circleTracker->init(cx, cy, cr);
+
         } else {
-            double dt = ((double)ts - pTS) / 1000000.0;
+
+            //double dt = ((double)ts - pTS) / 1000000.0;
+
+            circleTracker->predict(dt);
+            //if(circleTracker->Pzgd(cx, cy, cr) < 0.01) continue;
+            circleTracker->correct(cx, cy, cr, dt);
+
+
 
             yarp::sig::Vector z(6, 0.0); z[0]=cx; z[1]=cy; z[2]=cr;
             yarp::sig::Matrix A = filter->get_A();
@@ -259,6 +279,9 @@ void vCircleReader::onRead(emorph::vBottle &bot)
 
             filter->filt(z);
 
+
+
+
             pTS = ts;
         }
 
@@ -270,9 +293,9 @@ void vCircleReader::onRead(emorph::vBottle &bot)
         estimate.addEvent(tevent);
     }
 
-    if(filter_active) {
-        yarp::sig::Vector x = filter->get_x();
-        yarp::sig::Matrix P = filter->get_P();
+    if(circleTracker->active) {
+        yarp::sig::Vector x = circleTracker->filter->get_x();
+        yarp::sig::Matrix P = circleTracker->filter->get_P();
 
         std::cout << "x:" << std::endl << x.toString() << std::endl;
         std::cout << "P:" << std::endl << P.toString() << std::endl;
@@ -282,13 +305,13 @@ void vCircleReader::onRead(emorph::vBottle &bot)
 
         //validation gate
         //cv::Mat valMat = filterview(cv::Rect())
-        std::ostringstream ss; ss << filter->get_ValidationGate();
+        std::ostringstream ss; ss << circleTracker->filter->get_ValidationGate();
         cv::putText(filterview, ss.str(), cv::Point(10, 118*4), 0, 1, CV_RGB(0, 255, 0));
 
         //estimated state
         if(x[2] > 0) {
             cv::circle(filterview, cv::Point(x[1]*4, 511-x[0]*4), x[2]*4,
-                    CV_RGB(255, 255, 255));
+                    CV_RGB(255, 255, 255), 3);
         }
 
         //x-y standard deviation

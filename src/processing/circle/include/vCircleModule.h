@@ -30,7 +30,7 @@ private:
     yarp::os::BufferedPort<emorph::vBottle> outPort;
 
     //for helping with timestamp wrap around
-    emorph::vtsHelper unwrapper;
+    emorph::vtsHelper unwrap;
     unsigned long int pTS;
 
     //our circle position estimator

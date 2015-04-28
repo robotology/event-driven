@@ -16,6 +16,7 @@
 
 #include "vCircleObserver.h"
 #include <vector>
+#include <limits>
 
 void vCircleObserver::createLocalSearch(int x, int y)
 {
@@ -196,6 +197,159 @@ bool vCircleObserver::localCircleEstimate(emorph::AddressEvent &event, double &c
 
 }
 
+bool vCircleObserver::calculateCircle(double x1, double x2, double x3,
+                                      double y1, double y2, double y3,
+                                      double &cx, double &cy, double &cr)
+{
+
+
+
+    //if we are all on the same line we can't compute a circle
+    if(y1 == y2 && y1 == y3) return false;
+    if(x1 == x2 && x1 == x3) return false;
+
+    //or if any of the points are duplicate
+    if(x1 == x2 && y1 == y2) return false;
+    if(x1 == x3 && y1 == y3) return false;
+    if(x2 == x3 && y2 == y3) return false;
+
+    //make sure x2 is different to x1 and x3 (else we divide by 0 later)
+    if(x2 == x1) {
+        double tx = x3, ty = y3;
+        x3 = x2; y3 = x2;
+        x2 = tx; y2 = ty;
+    } else if(x2 == x3) {
+        double tx = x1, ty = y1;
+        x1 = x2; y1 = y2;
+        x2 = ty; y2 = ty;
+    }
+
+
+    //calculate the circle from the 3 points
+    double ma = (y2 - y1) / (x2 - x1);
+    double mb = (y3 - y2) / (x3 - x2);
+
+    if(ma == mb) return false;
+    if(ma != ma || mb != mb) {
+        std::cout << "error" << std::endl;
+    }
+
+    cx = (ma * mb * (y1 - y3) + mb * (x1 + x2) -
+                        ma * (x2 + x3)) / (2 * (mb - ma));
+    if(ma)
+        cy = -1 * (cx - (x1+x2)/2.0)/ma + (y1+y2)/2.0;
+    else
+        cy = -1 * (cx - (x2+x3)/2.0)/mb + (y2+y3)/2.0;
+
+    cr = sqrt(pow(cx - x1, 2.0) + pow(cy - y1, 2.0));
+
+    if(cx != cx) {
+        std::cout << "error" << std::endl;
+    }
+    if(cx == INFINITY || cx == -INFINITY) {
+        std::cout << "error" << std::endl;
+    }
+
+    return true;
+
+}
+
+void vCircleObserver::addEvent(emorph::vEvent &event) {
+    window.addEvent(event);
+}
+
+double vCircleObserver::RANSAC(double &cx, double &cy, double &cr, bool debug)
+{
+    emorph::vEvent *v = window.getMostRecent();
+    if(!v) return -1;
+    emorph::AddressEvent *av = v->getAs<emorph::AddressEvent>();
+
+    const emorph::vQueue& q =
+            window.getSpatialWindow(av->getX(), av->getY(), sRadius);
+
+    if(q.size() < minVsReq4RANSAC) return -1;
+    int pi1, pi2, pi3;
+    double min_error = std::numeric_limits<double>::max();
+    int max_inliers = 0;
+    for(int i = 0; i < iterations; i++) {
+        //choose three random points
+        pi1 = q.size()-1;
+        //pi1 = rand() % q.size();
+        pi2 = pi1;
+        while(pi2 == pi1) {
+            pi2 = rand() % q.size();
+        }
+        pi3 = pi1;
+        while(pi3 == pi1 || pi3 == pi2) {
+           pi3 = rand() % q.size();
+        }
+        emorph::AddressEvent *v1 = q[pi1]->getAs<emorph::AddressEvent>();
+        emorph::AddressEvent *v2 = q[pi2]->getAs<emorph::AddressEvent>();
+        emorph::AddressEvent *v3 = q[pi3]->getAs<emorph::AddressEvent>();
+
+        double tx, ty, tr;
+        bool madeCircle = calculateCircle(v1->getX(), v2->getX(), v3->getX(),
+                v1->getY(), v2->getY(), v3->getY(), tx, ty, tr);
+        if(!madeCircle) continue;
+
+        double error = 0;
+        int inliers = 0;
+        for(emorph::vQueue::const_iterator qi = q.begin(); qi != q.end(); qi++) {
+            emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
+            double terror = fabs(pow(v->getX() - tx, 2.0) + pow(v->getY() - ty, 2.0)
+                                 - pow(tr, 2.0));
+            error += terror;
+            if(sqrt(terror) < inlierThreshold) {
+                inliers++;
+            }
+        }
+
+        //if(error < min_error) {
+        if(inliers > max_inliers) {
+            min_error = error;
+            max_inliers = inliers;
+            cx = tx; cy = ty; cr = tr;
+        }
+    }
+
+    if(cx < 0 || cx > 128 || cy < 0 || cy  > 128 || cr < inlierThreshold || cr > 100)
+        return 0;
+
+    if(debug) {
+
+        cv::Mat image(128, 128, CV_8UC3); image.setTo(0);
+
+        if(max_inliers > minVsReq4RANSAC) {
+            cv::circle(image, cv::Point(cy, cx), cr, CV_RGB((max_inliers)*20, 0, 0), inlierThreshold * 2);
+            cv::circle(image, cv::Point(cy, cx), cr-inlierThreshold, CV_RGB(0, 0, 255));
+            cv::circle(image, cv::Point(cy, cx), cr+inlierThreshold, CV_RGB(0, 0, 255));
+
+
+
+        }
+
+        for(emorph::vQueue::const_iterator qi = q.begin(); qi != q.end(); qi++) {
+            emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
+            image.at<cv::Vec3b>(v->getX(), v->getY()) = cv::Vec3b(255, 255, 255);
+        }
+        //cv::rectangle(image, cv::Rect(), CV_RGB(0, 0, 255));
+
+
+        cv::flip(image, image, 0);
+        cv::resize(image, image, image.size()*2, 0, 0, CV_INTER_NN);
+        cv::imshow("RANSAC", image);
+        cv::waitKey(1);
+
+        std::cout << q.size() << " " << min_error / q.size() << " "
+                  << max_inliers << std::endl;
+
+\
+    }
+
+    return max_inliers;
+
+}
+
 /*//////////////////////////////////////////////////////////////////////////////
   CIRCLE TRACKER
   ////////////////////////////////////////////////////////////////////////////*/
@@ -208,19 +362,20 @@ vCircleTracker::vCircleTracker(double svPos, double svSiz, double zvPos, double 
     pTS = 0;
 
     //these two matrices are dependent on dt so we have to update them everytime
-    yarp::sig::Matrix A(6, 6); A = 0;
+    yarp::sig::Matrix A(9, 9); A = 0;
     A(0, 0) = 1; A(1, 1) = 1; A(2, 2) = 1;
     A(3, 3) = 1; A(4, 4) = 1; A(5, 5) = 1;
+    A(6, 6) = 1; A(7, 7) = 1; A(8, 8) = 1;
     //we need to update A: (0, 3), (1, 4) and (2, 5) based on delta t
 
-    yarp::sig::Matrix Q(6, 6); Q = 0;
+    yarp::sig::Matrix Q(9, 9); Q = 0;
     //we update Q depending on delta t
 
     //these two are constant
-    yarp::sig::Matrix H(6, 6); H = 0;
+    yarp::sig::Matrix H(9, 9); H = 0;
     H(0, 0) = 1; H(1, 1) = 1; H(2, 2) = 1;
 
-    yarp::sig::Matrix R(6, 6); R = 0;
+    yarp::sig::Matrix R(9, 9); R = 0;
     R(0, 0) = zvPos; R(1, 1) = zvPos; R(2, 2) = zvSiz;
 
     filter = new iCub::ctrl::Kalman(A, H, Q, R);
@@ -325,6 +480,25 @@ double vCircleTracker::addEvent(emorph::AddressEvent v, double cT)
 
 }
 
+double vCircleTracker::correct(double xz, double yz, double rz, double dt)
+{
+    if(!active) return 0;
+    yarp::sig::Vector z(9, 0.0); z[0]=xz; z[1]=yz; z[2]=rz;
+    filter->correct(z);
+    return 0;
+}
+
+double vCircleTracker::init(double xz, double yz, double rz)
+{
+    yarp::sig::Vector x0(9, 0.0); x0[0] = xz; x0[1] = yz; x0[2] = rz;
+    yarp::sig::Matrix P0 = filter->get_R();
+    P0(3, 3) = P0(0, 0); P0(4, 4) = P0(1, 1); P0(5, 5) = P0(2, 2);
+    P0(4, 4) = P0(0, 0); P0(5, 5) = P0(1, 1); P0(6, 6) = P0(2, 2);
+    filter->init(x0, P0);
+    active = true;
+    return 0;
+}
+
 //update state
 //also update zq values based on velocity
 double vCircleTracker::predict(double dt)
@@ -333,24 +507,29 @@ double vCircleTracker::predict(double dt)
     if(!active) return 0;
     //update the tracker position
     yarp::sig::Matrix A = filter->get_A();
+    double dt2 = 0.5 * pow(dt, 2.0);
     A(0, 3) = dt; A(1, 4) = dt; A(2, 5) = dt;
+    A(3, 6) = dt; A(4, 7) = dt; A(5, 8) = dt;
+    A(0, 6) = dt2; A(1, 7) = dt2; A(2, 8) = dt2;
     filter->set_A(A);
 
     yarp::sig::Matrix Q = filter->get_Q();
-    Q(3, 3) = svPos*dt; Q(4, 4) = svPos*dt; Q(5, 5) = svSiz*dt;
+    Q(6, 6) = svPos*dt2; Q(7, 7) = svPos*dt2; Q(8, 8) = svSiz*dt2;
     filter->set_Q(Q);
 
     filter->predict();
 
     //update the observations according to tracker movement
-    yarp::sig::Vector x = filter->get_x();
-    emorph::vQueue::iterator vi;
-    for(vi = zq.begin(); vi != zq.end(); vi++) {
-        emorph::AddressEvent *v = (*vi)->getAs<emorph::AddressEvent>();
-        if(!v) continue;
-        v->setX(v->getX() + x(0) * dt);
-        v->setY(v->getY() + x(1) * dt);
-    }
+//    yarp::sig::Vector x = filter->get_x();
+//    emorph::vQueue::iterator vi;
+//    for(vi = zq.begin(); vi != zq.end(); vi++) {
+//        emorph::AddressEvent *v = (*vi)->getAs<emorph::AddressEvent>();
+//        if(!v) continue;
+//        v->setX(v->getX() + x(0) * dt);
+//        v->setY(v->getY() + x(1) * dt);
+//    }
+
+
     return 0;
 }
 
@@ -379,6 +558,21 @@ double vCircleTracker::Pvgd(double xv, double yv)
 
     double pvgd = exp(-0.5 * distance / det);
     return pvgd;// / sqrt(det * 6.283);
+}
+
+double vCircleTracker::Pzgd(double xz, double yz, double rz)
+{
+    if(!active) return 0;
+
+    yarp::sig::Vector x = filter->get_x();
+    yarp::sig::Matrix P = filter->get_P();
+
+    double Px = exp(-0.5 * pow(xz - x[0], 2.0) / pow(P(0, 0), 2.0));
+    double Py = exp(-0.5 * pow(yz - x[1], 2.0) / pow(P(1, 1), 2.0));
+    double Pr = exp(-0.5 * pow(rz - x[2], 2.0) / pow(P(2, 2), 2.0));
+
+    return std::min(Px, std::min(Py, Pr));
+
 }
 
 bool vCircleTracker::makeObservation(double &cx, double &cy, double &cr)

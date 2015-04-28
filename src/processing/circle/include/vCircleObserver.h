@@ -25,6 +25,7 @@ private:
 
     //data
     emorph::activityMat activity;
+    emorph::vWindow window;
 
 
     struct act_unit {
@@ -35,11 +36,18 @@ private:
     };
     std::vector<act_unit> localActivity;
 
+    double cx, cy, cr;
+
     //parameters
     int width;
     int height;
     int sRadius;
     int tRadius;
+
+    int iterations;
+    int minVsReq4RANSAC;
+    int windowSize;
+    double inlierThreshold;
 
     //private functions
     void createLocalSearch(int x, int y);
@@ -49,23 +57,34 @@ private:
     double calculateCircleActivity(int cx, int cy, int r);
 
 
+
+
 public:
 
     vCircleObserver(int width = 128, int height = 128,
-            int sRadius = 16, int tRadius = 8,
+            int sRadius = 32, int tRadius = 8,
             double aDecay = 1000, double aInject = 5, int aRegion = 0)
         : sRadius(sRadius), width(width), height(height), tRadius(tRadius) {
 
         stepbystep = false;
         activity = emorph::activityMat(height, width, aDecay, aInject, aRegion);
+        iterations = 200;
+        minVsReq4RANSAC = 10;
+        windowSize = 5000;
+        inlierThreshold = 3;
+        window.setWindowSize(windowSize);
     }
 
     bool localCircleEstimate(emorph::AddressEvent &event, double &cx,
                              double &cy, double &cr, bool showDebug = false);
 
 
-    bool threePointCircle(int x1, int y1, int x2, int y2, int x3, int y3,
-                          int &cx, int &cy, double &r);
+    bool calculateCircle(double x1, double x2, double x3,
+                         double y1, double y2, double y3,
+                         double &cx, double &cy, double &cr);
+
+    void addEvent(emorph::vEvent &event);
+    double RANSAC(double &cx, double &cy, double &cr, bool debug = false);
 
     //temporary debug stuff
     bool stepbystep;
@@ -110,6 +129,12 @@ public:
     //update state
     //also update zq values based on velocity
     double predict(double dt);
+
+    double correct(double xz, double yz, double rz, double dt);
+
+    double init(double xz, double yz, double rz);
+
+    double Pzgd(double xz, double yz, double rz);
 
 
 };
