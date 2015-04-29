@@ -25,19 +25,6 @@ bool dPepperModule::configure(yarp::os::ResourceFinder &rf)
             rf.check("name", yarp::os::Value("dPepper")).asString();
     setName(moduleName.c_str());
 
-    //open and attach the rpc port
-    std::string rpcPortName  =  "/" + moduleName + "/rpc:i";
-
-    if (!rpcPort.open(rpcPortName))
-    {
-        std::cerr << getName() << " : Unable to open rpc port at " <<
-                     rpcPortName << std::endl;
-        return false;
-    }
-
-    //make the respond method of this RF module respond to the rpcPort
-    attach(rpcPort);
-
 
     //set other variables we need from the
     double temporalSize =
@@ -45,7 +32,9 @@ bool dPepperModule::configure(yarp::os::ResourceFinder &rf)
     double spatialSize =
             rf.check("spatialSize", yarp::os::Value(1)).asDouble();
 
-    eventBottleManager.open(moduleName);
+    eventManager.setSpatialSize(spatialSize);
+    eventManager.setTemporalSize(temporalSize);
+    eventManager.open(moduleName);
 
     return true ;
 }
@@ -53,16 +42,16 @@ bool dPepperModule::configure(yarp::os::ResourceFinder &rf)
 /**********************************************************/
 bool dPepperModule::interruptModule()
 {
-    rpcPort.interrupt();
-    eventBottleManager.interrupt();
+    eventManager.interrupt();
+    yarp::os::RFModule::interruptModule();
     return true;
 }
 
 /**********************************************************/
 bool dPepperModule::close()
 {
-    rpcPort.close();
-    eventBottleManager.close();
+    eventManager.close();
+    yarp::os::RFModule::close();
     return true;
 }
 
@@ -75,29 +64,22 @@ bool dPepperModule::updateModule()
 /**********************************************************/
 double dPepperModule::getPeriod()
 {
-    return 0.1;
+    return 1.0;
 }
-
-bool dPepperModule::respond(const yarp::os::Bottle &command,
-                              yarp::os::Bottle &reply)
-{
-    //fill in all command/response plus module update methods here
-    return true;
-}
-
 
 /**********************************************************/
-EventBottleManager::EventBottleManager()
+dPepperIO::dPepperIO()
 {
 
     //here we should initialise the module
-    temporalSize = 1000;
-    spatialSize = 3;
-    window.setWindowSize(temporalSize);
+    double temporalSize = 10000;
+    spatialSize = 1;
+    leftWindow.setWindowSize(temporalSize);
+    rightWindow.setWindowSize(temporalSize);
     
 }
 /**********************************************************/
-bool EventBottleManager::open(const std::string &name)
+bool dPepperIO::open(const std::string &name)
 {
     //and open the input port
 
@@ -113,33 +95,28 @@ bool EventBottleManager::open(const std::string &name)
 }
 
 /**********************************************************/
-void EventBottleManager::close()
+void dPepperIO::close()
 {
     //close ports
-    this->close();
     outPort.close();
-
-    //remember to also deallocate any memory allocated by this class
-
-
+    yarp::os::BufferedPort<emorph::vBottle>::close();
 }
 
 /**********************************************************/
-void EventBottleManager::interrupt()
+void dPepperIO::interrupt()
 {
     //pass on the interrupt call to everything needed
-    this->interrupt();
     outPort.interrupt();
-
+    yarp::os::BufferedPort<emorph::vBottle>::interrupt();
 }
 
 /**********************************************************/
-void EventBottleManager::onRead(emorph::vBottle &bot)
+void dPepperIO::onRead(emorph::vBottle &bot)
 {
     //create event queue
     emorph::vQueue q;
     //create queue iterator
-    emorph::vQueue::iterator qi;
+    emorph::vQueue::iterator qi, wi;
     
     // prepare output vBottle with address events extended with cluster ID (aec) and cluster events (clep)
     emorph::vBottle &outBottle = outPort.prepare();
@@ -151,19 +128,51 @@ void EventBottleManager::onRead(emorph::vBottle &bot)
     for(qi = q.begin(); qi != q.end(); qi++)
     {
 
-        window.addEvent(**qi);
+        //leftWindow.addEvent(**qi);
         emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
         if(!v) continue;
-        //unwrap timestamp
-        const emorph::vQueue &tw =
-                window.getSpatialWindow(v->getX(), v->getY(), spatialSize);
-        if(tw.size() > 1)
+
+        //keep each channel independently
+        emorph::vQueue tw;
+        if(v->getChannel()) {
+            rightWindow.addEvent(**qi);
+            tw = rightWindow.getSpatialWindow(v->getX(), v->getY(), spatialSize);
+        }
+        else {
+            leftWindow.addEvent(**qi);
+            tw = leftWindow.getSpatialWindow(v->getX(), v->getY(), spatialSize);
+        }
+
+        bool addit = false;
+        for(wi = tw.begin(); wi != tw.end(); wi++) {
+            emorph::AddressEvent *pv = (*wi)->getAs<emorph::AddressEvent>();
+            if((pv->getX() != v->getX() || pv->getY() != v->getY()) &&
+                    pv->getPolarity() == v->getPolarity() &&
+                    pv->getChannel() == v->getChannel()) {
+                addit = true;
+                break;
+            }
+        }
+
+
+        if(addit)
             outBottle.addEvent(**qi);
 
     }
     //send on the processed events
     outPort.write();
 
+}
+
+void dPepperIO::setTemporalSize(double microseconds)
+{
+    leftWindow.setWindowSize(microseconds);
+    rightWindow.setWindowSize(microseconds);
+}
+
+void dPepperIO::setSpatialSize(double pixelradius)
+{
+    spatialSize = pixelradius;
 }
 
 //empty line to make gcc happy

@@ -55,6 +55,7 @@ bool vTemplateModule::interruptModule()
 {
     rpcPort.interrupt();
     eventBottleManager.interrupt();
+    yarp::os::RFModule::interruptModule();
     return true;
 }
 
@@ -63,6 +64,7 @@ bool vTemplateModule::close()
 {
     rpcPort.close();
     eventBottleManager.close();
+    yarp::os::RFModule::close();
     return true;
 }
 
@@ -112,8 +114,8 @@ bool EventBottleManager::open(const std::string &name)
 void EventBottleManager::close()
 {
     //close ports
-    this->close();
     outPort.close();
+    yarp::os::BufferedPort<emorph::vBottle>::close();
 
     //remember to also deallocate any memory allocated by this class
 
@@ -124,8 +126,8 @@ void EventBottleManager::close()
 void EventBottleManager::interrupt()
 {
     //pass on the interrupt call to everything needed
-    this->interrupt();
     outPort.interrupt();
+    yarp::os::BufferedPort<emorph::vBottle>::interrupt();
 
 }
 
