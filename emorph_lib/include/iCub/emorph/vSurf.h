@@ -14,8 +14,8 @@
  * Public License for more details
  */
 
-#ifndef __VWINDOW__
-#define __VWINDOW__
+#ifndef __VSURF__
+#define __VSURF__
 
 #include <yarp/os/all.h>
 #include "vCodec.h"
@@ -35,7 +35,7 @@ private:
     std::vector<std::vector<vEvent *> > surface;
 
     //! \brief mostRecent
-    AddressEvent * mostRecent;
+    vEvent * mostRecent;
 
     //! for safe copying of q in the multi-threaded environment
     yarp::os::Semaphore mutex;
@@ -46,7 +46,7 @@ public:
     /// \brief vWindow constructor
     /// \param windowSize optional time to store events (in us)
     ///
-    vSurf();
+    vSurf(int height = 128, int width = 128);
 
     ~vSurf();
 
@@ -55,13 +55,13 @@ public:
     /// events.
     /// \param event the event to add
     ///
-    void addEvent(emorph::AddressEvent &event);
+    void addEvent(vEvent &event);
 
     ///
     /// \brief getMostRecent
     /// \return
     ///
-    AddressEvent *getMostRecent();
+    AddressEvent &getMostRecent();
 
     ///
     /// \brief getSpatialWindow

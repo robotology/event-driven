@@ -18,8 +18,14 @@
 
 namespace emorph {
 
-vSurf::vSurf()
+vSurf::vSurf(int height, int width)
 {
+    //resize sets everything to 0
+    surface.resize(height);
+    for(int j = 0; j < surface.size(); j++) {
+        surface[j].resize(width);
+    }
+
     mostRecent = 0;
 }
 
@@ -32,22 +38,28 @@ vSurf::~vSurf()
     }
 }
 
-void vSurf::addEvent(AddressEvent &event)
+void vSurf::addEvent(vEvent &event)
 {
+
+    AddressEvent * v = event.getAs<AddressEvent>();
+    if(!v) return;
 
     mutex.wait();
 
-    delete surface[event.getY()][event.getX()];
-    surface[event.getY()][event.getX()] = event.clone();
-    mostRecent = surface[event.getY()][event.getX()]->getAs<AddressEvent>();
+    //if(surface[v->getY()][v->getX()])
+        delete surface[v->getY()][v->getX()];
+    surface[v->getY()][v->getX()] = v->clone();
+    mostRecent = surface[v->getY()][v->getX()];
 
     mutex.post();
 
 }
 
-AddressEvent* vSurf::getMostRecent()
+AddressEvent& vSurf::getMostRecent()
 {
-    return mostRecent;
+    mutex.wait();
+    return *mostRecent->clone()->getAs<AddressEvent>();
+    mutex.post();
 }
 
 vQueue& vSurf::getSpatialWindow()
@@ -70,6 +82,9 @@ vQueue& vSurf::getSpatialWindow(int xl, int xh, int yl, int yh)
     //first apply limits
     xl = std::max(xl, 0);
     yl = std::max(yl, 0);
+    xh = std::min(xh, (int)surface[0].size());
+    yh = std::min(yh, (int)surface.size());
+
 
     vQueue *qcopy = new vQueue;
 

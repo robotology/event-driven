@@ -3,3 +3,4 @@
 #include <iCub/emorph/vCodec.h>
 #include <iCub/emorph/vtsHelper.h>
 #include <iCub/emorph/vWindow.h>
+#include <iCub/emorph/vSurf.h>
