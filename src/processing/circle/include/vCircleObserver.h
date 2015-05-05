@@ -68,10 +68,10 @@ public:
 
         stepbystep = false;
         activity = emorph::activityMat(height, width, aDecay, aInject, aRegion);
-        iterations = 200;
-        minVsReq4RANSAC = 10;
-        windowSize = 5000;
-        inlierThreshold = 3;
+        iterations = 20;
+        minVsReq4RANSAC = 20;
+        windowSize = 20000;
+        inlierThreshold = 2;
         window.setWindowSize(windowSize);
     }
 
@@ -84,7 +84,7 @@ public:
                          double &cx, double &cy, double &cr);
 
     void addEvent(emorph::vEvent &event);
-    double RANSAC(double &cx, double &cy, double &cr, bool debug = false);
+    double RANSAC(double &cx, double &cy, double &cr, bool debug = false, cv::Mat *image = 0);
 
     //temporary debug stuff
     bool stepbystep;

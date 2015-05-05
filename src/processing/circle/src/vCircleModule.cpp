@@ -27,7 +27,7 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
                                       ).asString();
     setName(moduleName.c_str());
 
-    bool debugwindows = rf.check("debugWindows",
+    bool debugwindows = rf.check("debug",
                                  yarp::os::Value(false)).asBool();
 
     //sensory size
@@ -210,19 +210,19 @@ void vCircleReader::onRead(emorph::vBottle &bot)
     // get the event queue in the vBottle bot
     bot.getAll(q);
 
+    cv::Mat bottleImage(128, 128, CV_8UC1);
     if(debugFlag)
     {
         circleFinder.stepbystep = true;
-        cv::Mat bottleImage(128, 128, CV_8UC1); bottleImage.setTo(0);
+        bottleImage.setTo(0);
         for(qi = q.begin(); qi != q.end(); qi++)
         {
             emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
             if(!v) continue;
             if(v->getChannel()) continue;
-            bottleImage.at<char>(127 - v->getX(), v->getY()) = 255;
+            bottleImage.at<char>(v->getX(), v->getY()) = 255;
         }
-        cv::imshow("All Bottle", bottleImage);
-        cv::waitKey(1);
+
     }
 
     for(qi = q.begin(); qi != q.end(); qi++)
@@ -240,7 +240,7 @@ void vCircleReader::onRead(emorph::vBottle &bot)
         circleTracker->predict(dt);
 
         circleFinder.addEvent(**qi);
-        double e = circleFinder.RANSAC(cx, cy, cr, true);
+        double e = circleFinder.RANSAC(cx, cy, cr, debugFlag, &bottleImage);
         if(e < 20) continue;
 
         //continue;
@@ -286,19 +286,25 @@ void vCircleReader::onRead(emorph::vBottle &bot)
         }
 
         //for our estimator
-        emorph::AddressEvent tevent(*v);
-        tevent.setStamp(v->getStamp());
-        tevent.setX(cx);
-        tevent.setY(cy);
-        estimate.addEvent(tevent);
+        //emorph::AddressEvent tevent(*v);
+        //tevent.setStamp(v->getStamp());
+        //tevent.setX(cx);
+        //tevent.setY(cy);
+        //estimate.addEvent(tevent);
+    }
+
+    if(debugFlag) {
+        cv::flip(bottleImage, bottleImage, 0);
+        cv::imshow("All Bottle", bottleImage);
+        cv::waitKey(1);
     }
 
     if(circleTracker->active) {
         yarp::sig::Vector x = circleTracker->filter->get_x();
         yarp::sig::Matrix P = circleTracker->filter->get_P();
 
-        std::cout << "x:" << std::endl << x.toString() << std::endl;
-        std::cout << "P:" << std::endl << P.toString() << std::endl;
+        //std::cout << "x:" << std::endl << x.toString() << std::endl;
+        //std::cout << "P:" << std::endl << P.toString() << std::endl;
 
 
         cv::Mat filterview(512, 512, CV_8UC3); filterview.setTo(0);
@@ -344,31 +350,31 @@ void vCircleReader::onRead(emorph::vBottle &bot)
 
     }
 
-    if(debugFlag) {
+//    if(debugFlag) {
 
-        //visualising the estimator
-        double mact = 0; int mx, my;
-        cv::Mat image2(128, 128, CV_32F); image2.setTo(0);
-        for(int x = 0; x < 128; x++) {
-            for(int y = 0; y < 128; y++) {
-                double a = estimate.queryActivity(x, y);
-                if(mact < a) {
-                    mact = a;
-                    mx = x;
-                    my = y;
-                }
-                mact = std::max(a, mact);
-                image2.at<float>(127 - x, y) = a;
-            }
-        }
-        image2 = image2 * (1/mact);
-        cv::circle(image2, cv::Point(my, 127 - mx), 12, CV_RGB(255, 255, 255));
-        cv::Mat image(512, 512, CV_32F);
-        cv::resize(image2, image, image.size());
+//        //visualising the estimator
+//        double mact = 0; int mx, my;
+//        cv::Mat image2(128, 128, CV_32F); image2.setTo(0);
+//        for(int x = 0; x < 128; x++) {
+//            for(int y = 0; y < 128; y++) {
+//                double a = estimate.queryActivity(x, y);
+//                if(mact < a) {
+//                    mact = a;
+//                    mx = x;
+//                    my = y;
+//                }
+//                mact = std::max(a, mact);
+//                image2.at<float>(127 - x, y) = a;
+//            }
+//        }
+//        image2 = image2 * (1/mact);
+//        cv::circle(image2, cv::Point(my, 127 - mx), 12, CV_RGB(255, 255, 255));
+//        cv::Mat image(512, 512, CV_32F);
+//        cv::resize(image2, image, image.size());
 
-        cv::imshow("Local Estimate", image);
-        cv::waitKey(1);
-    }
+//        cv::imshow("Local Estimate", image);
+//        cv::waitKey(1);
+//    }
 
 
 

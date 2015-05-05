@@ -216,12 +216,12 @@ bool vCircleObserver::calculateCircle(double x1, double x2, double x3,
     //make sure x2 is different to x1 and x3 (else we divide by 0 later)
     if(x2 == x1) {
         double tx = x3, ty = y3;
-        x3 = x2; y3 = x2;
+        x3 = x2; y3 = y2;
         x2 = tx; y2 = ty;
     } else if(x2 == x3) {
         double tx = x1, ty = y1;
         x1 = x2; y1 = y2;
-        x2 = ty; y2 = ty;
+        x2 = tx; y2 = ty;
     }
 
 
@@ -231,7 +231,7 @@ bool vCircleObserver::calculateCircle(double x1, double x2, double x3,
 
     if(ma == mb) return false;
     if(ma != ma || mb != mb) {
-        std::cout << "error" << std::endl;
+        std::cout << "error: (ma|mb) == NaN" << std::endl;
     }
 
     cx = (ma * mb * (y1 - y3) + mb * (x1 + x2) -
@@ -244,10 +244,10 @@ bool vCircleObserver::calculateCircle(double x1, double x2, double x3,
     cr = sqrt(pow(cx - x1, 2.0) + pow(cy - y1, 2.0));
 
     if(cx != cx) {
-        std::cout << "error" << std::endl;
+        std::cout << "error: cx == NaN" << std::endl;
     }
     if(cx == INFINITY || cx == -INFINITY) {
-        std::cout << "error" << std::endl;
+        std::cout << "error: cx == INF" << std::endl;
     }
 
     return true;
@@ -258,7 +258,7 @@ void vCircleObserver::addEvent(emorph::vEvent &event) {
     window.addEvent(event);
 }
 
-double vCircleObserver::RANSAC(double &cx, double &cy, double &cr, bool debug)
+double vCircleObserver::RANSAC(double &cx, double &cy, double &cr, bool debug, cv::Mat *image)
 {
     emorph::vEvent *v = window.getMostRecent();
     if(!v) return -1;
@@ -312,36 +312,35 @@ double vCircleObserver::RANSAC(double &cx, double &cy, double &cr, bool debug)
         }
     }
 
-    if(cx < 0 || cx > 128 || cy < 0 || cy  > 128 || cr < inlierThreshold || cr > 100)
-        return 0;
+    //if(cx < 0 || cx > 128 || cy < 0 || cy  > 128 || cr < inlierThreshold || cr > 100)
+     //   return 0;
 
-    if(debug) {
+    if(cr < 5) return -1;
 
-        cv::Mat image(128, 128, CV_8UC3); image.setTo(0);
+    if(debug && image && max_inliers >= minVsReq4RANSAC) {
 
-        if(max_inliers > minVsReq4RANSAC) {
-            cv::circle(image, cv::Point(cy, cx), cr, CV_RGB((max_inliers)*20, 0, 0), inlierThreshold * 2);
-            cv::circle(image, cv::Point(cy, cx), cr-inlierThreshold, CV_RGB(0, 0, 255));
-            cv::circle(image, cv::Point(cy, cx), cr+inlierThreshold, CV_RGB(0, 0, 255));
+        //cv::Mat image(128, 128, CV_8UC3); image.setTo(0);
 
+        //if(max_inliers > minVsReq4RANSAC) {
+            //cv::circle(*image, cv::Point(cy, cx), cr, CV_RGB(255, 0, 0), inlierThreshold * 2);
+            cv::circle(*image, cv::Point(cy, cx), cr-inlierThreshold, CV_RGB(0, 0, 255));
+            cv::circle(*image, cv::Point(cy, cx), cr+inlierThreshold, CV_RGB(0, 0, 255));
+        //}
 
-
-        }
-
-        for(emorph::vQueue::const_iterator qi = q.begin(); qi != q.end(); qi++) {
-            emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
-            image.at<cv::Vec3b>(v->getX(), v->getY()) = cv::Vec3b(255, 255, 255);
-        }
+//        for(emorph::vQueue::const_iterator qi = q.begin(); qi != q.end(); qi++) {
+//            emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
+//            image.at<cv::Vec3b>(v->getX(), v->getY()) = cv::Vec3b(255, 255, 255);
+//        }
         //cv::rectangle(image, cv::Rect(), CV_RGB(0, 0, 255));
 
 
-        cv::flip(image, image, 0);
-        cv::resize(image, image, image.size()*2, 0, 0, CV_INTER_NN);
-        cv::imshow("RANSAC", image);
-        cv::waitKey(1);
+        //cv::flip(image, image, 0);
+        //cv::resize(image, image, image.size()*2, 0, 0, CV_INTER_NN);
+        //cv::imshow("RANSAC", image);
+        //cv::waitKey(1);
 
-        std::cout << q.size() << " " << min_error / q.size() << " "
-                  << max_inliers << std::endl;
+        //std::cout << q.size() << " " << min_error / q.size() << " "
+        //          << max_inliers << std::endl;
 
 \
     }
