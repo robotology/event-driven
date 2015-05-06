@@ -20,6 +20,7 @@
 #include <yarp/os/all.h>
 #include <iCub/emorph/all.h>
 #include <iCub/ctrl/kalman.h>
+#include <fstream>
 #include "vCircleObserver.h"
 
 class vCircleReader : public yarp::os::BufferedPort<emorph::vBottle>
@@ -46,6 +47,7 @@ private:
     //this is only for debugging
     bool debugFlag;
     emorph::activityMat estimate;
+    std::ofstream filewriter;
 
 public:
     

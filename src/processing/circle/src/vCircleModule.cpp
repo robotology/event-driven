@@ -147,6 +147,7 @@ bool vCircleReader::open(const std::string &name)
 
     std::string outPortName = "/" + name + "/vBottle:o";
     outPort.open(outPortName);
+    filewriter.open("/home/aglover/temp.txt");
     return true;
 }
 
@@ -205,28 +206,29 @@ void vCircleReader::onRead(emorph::vBottle &bot)
     // prepare output vBottle with address events extended with cluster ID (aec) and cluster events (clep)
     emorph::vBottle &outBottle = outPort.prepare();
     outBottle.clear();
-    outBottle = bot;
+    //outBottle = bot;
 
     // get the event queue in the vBottle bot
     bot.getAll(q);
 
-    cv::Mat bottleImage(128, 128, CV_8UC1);
-    if(debugFlag)
-    {
-        circleFinder.stepbystep = true;
-        bottleImage.setTo(0);
-        for(qi = q.begin(); qi != q.end(); qi++)
-        {
-            emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
-            if(!v) continue;
-            if(v->getChannel()) continue;
-            bottleImage.at<char>(v->getX(), v->getY()) = 255;
-        }
+    cv::Mat bottleImage;
+    bottleImage = cv::Mat(128, 128, CV_8UC1); bottleImage.setTo(0);
+//    if(debugFlag)
+//    {
+//        circleFinder.stepbystep = true;
+//        for(qi = q.begin(); qi != q.end(); qi++)
+//        {
+//            emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
+//            if(!v) continue;
+//            if(v->getChannel()) continue;
+//            bottleImage.at<char>(v->getX(), v->getY()) = 255;
+//        }
 
-    }
+//    }
 
     for(qi = q.begin(); qi != q.end(); qi++)
     {      
+        //filewriter << (*qi)->getStamp() << std::endl;
         emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
         if(!v) continue;
         unsigned long int ts = unwrap(v->getStamp());
@@ -236,12 +238,29 @@ void vCircleReader::onRead(emorph::vBottle &bot)
 
         //continue;
 
-        double dt = ((double)ts - pTS) * emorph::vtsHelper::tstosecs();
-        circleTracker->predict(dt);
+        double dt;
+        //dt = ((double)ts - pTS) * emorph::vtsHelper::tstosecs();
+        //circleTracker->predict(dt);
 
         circleFinder.addEvent(**qi);
-        double e = circleFinder.RANSAC(cx, cy, cr, debugFlag, &bottleImage);
-        if(e < 20) continue;
+        double e1 = circleFinder.RANSAC(cx, cy, cr);
+
+        if(e1 < circleFinder.minVsReq4RANSAC) continue;
+        continue;
+
+        //double e2 = circleFinder.globalInlierCount(cx, cy, cr);
+
+
+        //std::cout << e1 / e2  << " " << circleFinder.sRadius*2 << " " << cr * 2<< std::endl;
+
+        //if(e1 /e2 > 0.6) continue;
+
+        cv::circle(bottleImage, cv::Point(cy, cx), cr-circleFinder.inlierThreshold, CV_RGB(0, 0, 255));
+        cv::circle(bottleImage, cv::Point(cy, cx), cr+circleFinder.inlierThreshold, CV_RGB(0, 0, 255));
+
+
+
+        continue;
 
         //continue;
         //if(!circleFinder.localCircleEstimate(*v, cx, cy, cr, debugFlag)) continue;
@@ -295,11 +314,12 @@ void vCircleReader::onRead(emorph::vBottle &bot)
 
     if(debugFlag) {
         cv::flip(bottleImage, bottleImage, 0);
+        cv::resize(bottleImage, bottleImage, bottleImage.size()*2);
         cv::imshow("All Bottle", bottleImage);
         cv::waitKey(1);
     }
 
-    if(circleTracker->active) {
+    if(false && circleTracker->active) {
         yarp::sig::Vector x = circleTracker->filter->get_x();
         yarp::sig::Matrix P = circleTracker->filter->get_P();
 

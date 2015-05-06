@@ -292,6 +292,8 @@ double vCircleObserver::RANSAC(double &cx, double &cy, double &cr, bool debug, c
                 v1->getY(), v2->getY(), v3->getY(), tx, ty, tr);
         if(!madeCircle) continue;
 
+        if(tr < 8 || tr > 32) continue;
+
         double error = 0;
         int inliers = 0;
         for(emorph::vQueue::const_iterator qi = q.begin(); qi != q.end(); qi++) {
@@ -311,11 +313,6 @@ double vCircleObserver::RANSAC(double &cx, double &cy, double &cr, bool debug, c
             cx = tx; cy = ty; cr = tr;
         }
     }
-
-    //if(cx < 0 || cx > 128 || cy < 0 || cy  > 128 || cr < inlierThreshold || cr > 100)
-     //   return 0;
-
-    if(cr < 5) return -1;
 
     if(debug && image && max_inliers >= minVsReq4RANSAC) {
 
@@ -347,6 +344,21 @@ double vCircleObserver::RANSAC(double &cx, double &cy, double &cr, bool debug, c
 
     return max_inliers;
 
+}
+
+double vCircleObserver::globalInlierCount(double cx, double cy, double cr)
+{
+    const emorph::vQueue& q = window.getSpatialWindow(cx, cy, cr+inlierThreshold);
+    int inliers = 0;
+    for(emorph::vQueue::const_iterator qi = q.begin(); qi != q.end(); qi++) {
+        emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
+        double terror = fabs(pow(v->getX() - cx, 2.0) + pow(v->getY() - cy, 2.0)
+                             - pow(cr, 2.0));
+        if(sqrt(terror) < inlierThreshold) {
+            inliers++;
+        }
+    }
+    return inliers;
 }
 
 /*//////////////////////////////////////////////////////////////////////////////
