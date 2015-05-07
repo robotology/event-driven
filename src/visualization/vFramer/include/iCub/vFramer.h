@@ -48,7 +48,7 @@ private:
     //! storage of vWindows
     std::map<int, vWindow*> windows;
     //! storage of window snapshots
-    std::map<int, const vQueue*> snaps;
+    std::map<int, const vQueue *> snaps;
 
 public:
 
@@ -83,8 +83,6 @@ public:
     ///
     virtual void onRead(emorph::vBottle &incoming);
     virtual bool open(const std::string portName);
-    virtual void close();
-    virtual void interrupt();
 
 
 

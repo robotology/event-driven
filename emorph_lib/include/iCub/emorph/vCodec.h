@@ -55,6 +55,7 @@ public:
     bool getOwner()                 { return owner;      }
     void clear();
     vQueue &operator=(const vQueue&);
+    vQueue& softcopy();
     ~vQueue();
 
     void sort();

@@ -37,8 +37,11 @@ private:
     vQueue q;
     //! the length of time to store events (in us)
     int windowSize;
+    //! whether to deep copy or shallow copy
+    bool asynchronous;
     //! for safe copying of q in the multi-threaded environment
     yarp::os::Semaphore mutex;
+
 
 public:
 
@@ -46,9 +49,8 @@ public:
     /// \brief vWindow constructor
     /// \param windowSize optional time to store events (in us)
     ///
-    vWindow(int windowSize = 50000) : windowSize(windowSize){q.setOwner(false);}
-
-    ~vWindow() { q.setOwner(true); }
+    vWindow(int windowSize = 50000, bool asynch = true) :
+        windowSize(windowSize), asynchronous(asynch) {}
 
     ///
     /// \brief setWindowSize sets the length of time to store events
@@ -64,12 +66,15 @@ public:
     void addEvent(emorph::vEvent &event);
 
     ///
-    /// \brief getCurrentWindow returns the current list of active events
-    /// \param sample_q is a vQueue to which events are added
-    /// \return the number of events added to sample_q
+    /// \brief getMostRecent
+    /// \return
     ///
-    int getCurrentWindow(emorph::vQueue &sample_q);
+    vEvent *getMostRecent();
 
+    ///
+    /// \brief getWindow
+    /// \return
+    ///
     const vQueue& getWindow();
 
     ///
@@ -91,7 +96,7 @@ public:
     ///
     const vQueue& getSpatialWindow(int xl, int xh, int yl, int yh);
 
-    vEvent *getMostRecent();
+
 
 };
 

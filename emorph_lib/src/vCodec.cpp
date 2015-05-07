@@ -81,6 +81,15 @@ vQueue& vQueue::operator=(const vQueue& other)
         this->push_back((*qi)->clone());
 }
 
+vQueue& vQueue::softcopy()
+{
+    vQueue * newq = new vQueue;
+    newq->setOwner(false);
+    for(vQueue::iterator qi = this->begin(); qi != this->end(); qi++)
+        newq->push_back(*qi);
+
+}
+
 void vQueue::sort() {
     std::sort(begin(), end(), temporalSort);
 }

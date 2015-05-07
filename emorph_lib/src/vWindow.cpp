@@ -18,30 +18,21 @@
 
 namespace emorph {
 
-int vWindow::getCurrentWindow(vQueue &sample_q)
-{
-    if(q.empty())
-        return 0;
-
-    //critical section
-    mutex.wait();
-    sample_q = this->q;
-    mutex.post();
-
-    return q.size();
-
-}
-
 const vQueue& vWindow::getWindow()
 {
 
     //first apply limits
 
-    vQueue *qcopy = new vQueue;
+    vQueue *qcopy;
 
-    mutex.wait();
-    *qcopy = this->q;
-    mutex.post();
+    if(asynchronous) {
+        qcopy = new vQueue;
+        mutex.wait();
+        *qcopy = this->q;
+        mutex.post();
+    } else {
+        qcopy = &q.softcopy();
+    }
 
     return *qcopy;
 
@@ -58,6 +49,7 @@ const vQueue& vWindow::getSpatialWindow(int xl, int xh, int yl, int yh)
     //first apply limits
 
     vQueue *qcopy = new vQueue;
+    if(!asynchronous) qcopy->setOwner(false);
 
     //critical section
     mutex.wait();
@@ -68,7 +60,11 @@ const vQueue& vWindow::getSpatialWindow(int xl, int xh, int yl, int yh)
         if(!v) continue;
         int x = v->getX(); int y = v->getY();
         if(x < xl || x > xh || y < yl || y > yh) continue;
-        qcopy->push_back((*qi)->clone());
+        if(asynchronous) {
+            qcopy->push_back((*qi)->clone());
+        } else {
+            qcopy->push_back(*qi);
+        }
     }
 
     mutex.post();
@@ -79,7 +75,9 @@ const vQueue& vWindow::getSpatialWindow(int xl, int xh, int yl, int yh)
 
 vEvent *vWindow::getMostRecent()
 {
-    if(q.size()) return q.back();
+    if(!q.size()) return 0;
+    if(asynchronous) return q.back()->clone();
+    else return q.back();
     return 0;
 }
 

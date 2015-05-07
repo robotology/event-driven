@@ -54,19 +54,6 @@ bool vReadAndSplit::open(const std::string portName)
 
 }
 
-void vReadAndSplit::close()
-{
-    std::cout << "Closing BufferedPort::vReadAndSplit" << std::endl;
-    BufferedPort<emorph::vBottle>::close();
-}
-
-
-
-void vReadAndSplit::interrupt()
-{
-   BufferedPort<vBottle>::interrupt();
-}
-
 void vReadAndSplit::onRead(emorph::vBottle &incoming)
 {
     emorph::vQueue q;
@@ -75,7 +62,7 @@ void vReadAndSplit::onRead(emorph::vBottle &incoming)
     for(qi = q.begin(); qi != q.end(); qi++) {
         int ch = (*qi)->getChannel();
         if(!windows.count(ch)) {
-            windows[ch] = new vWindow(windowsize);
+            windows[ch] = new vWindow(windowsize, true);
         }
         windows[ch]->addEvent(**qi);
     }
@@ -85,8 +72,10 @@ void vReadAndSplit::onRead(emorph::vBottle &incoming)
 void vReadAndSplit::snapshotAllWindows()
 {
     std::map<int, vWindow*>::iterator wi;
-    for(wi = windows.begin(); wi != windows.end(); wi++)
+    for(wi = windows.begin(); wi != windows.end(); wi++) {
+        if(snaps[wi->first]) delete snaps[wi->first];
         snaps[wi->first] = &(wi->second)->getWindow();
+    }
 }
 
 const emorph::vQueue & vReadAndSplit::getSnap(const int channel)
