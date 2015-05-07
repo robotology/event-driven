@@ -52,6 +52,8 @@ public:
     vWindow(int windowSize = 50000, bool asynch = true) :
         windowSize(windowSize), asynchronous(asynch) {}
 
+    vWindow& operator=(const vWindow&);
+
     ///
     /// \brief setWindowSize sets the length of time to store events
     /// \param windowSize the time period (in us)

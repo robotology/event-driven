@@ -38,6 +38,14 @@ const vQueue& vWindow::getWindow()
 
 }
 
+vWindow& vWindow::operator=(const vWindow& that)
+{
+    this->q = that.q;
+    this->windowSize = that.windowSize;
+    this->asynchronous = that.asynchronous;
+}
+
+
 const vQueue& vWindow::getSpatialWindow(int x, int y, int d)
 {
     return getSpatialWindow(x - d, x + d, y - d, y + d);
