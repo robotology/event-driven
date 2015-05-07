@@ -68,12 +68,15 @@ public:
 
         stepbystep = false;
         activity = emorph::activityMat(height, width, aDecay, aInject, aRegion);
+
         this->sRadius = 6;
         iterations = 1;
-        minVsReq4RANSAC = 8;
+        minVsReq4RANSAC = 6;
         windowSize = 20000;
         inlierThreshold = 2;
-        window.setWindowSize(windowSize);
+
+        window = emorph::vWindow(windowSize, false);
+        //window.setWindowSize(windowSize);
     }
 
     bool localCircleEstimate(emorph::AddressEvent &event, double &cx,
@@ -85,7 +88,7 @@ public:
                          double &cx, double &cy, double &cr);
 
     void addEvent(emorph::vEvent &event);
-    double RANSAC(double &cx, double &cy, double &cr, bool debug = false, cv::Mat *image = 0);
+    double RANSAC(double &cx, double &cy, double &cr);
 
     double globalInlierCount(double cx, double cy, double cr);
     //temporary debug stuff

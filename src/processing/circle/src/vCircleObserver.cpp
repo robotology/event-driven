@@ -258,7 +258,7 @@ void vCircleObserver::addEvent(emorph::vEvent &event) {
     window.addEvent(event);
 }
 
-double vCircleObserver::RANSAC(double &cx, double &cy, double &cr, bool debug, cv::Mat *image)
+double vCircleObserver::RANSAC(double &cx, double &cy, double &cr)
 {
     emorph::vEvent *v = window.getMostRecent();
     if(!v) return -1;
@@ -297,9 +297,10 @@ double vCircleObserver::RANSAC(double &cx, double &cy, double &cr, bool debug, c
         double error = 0;
         int inliers = 0;
         for(emorph::vQueue::const_iterator qi = q.begin(); qi != q.end(); qi++) {
-            emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
-            double terror = fabs(pow(v->getX() - tx, 2.0) + pow(v->getY() - ty, 2.0)
+            emorph::AddressEvent *vp = (*qi)->getAs<emorph::AddressEvent>();
+            double terror = fabs(pow(vp->getX() - tx, 2.0) + pow(vp->getY() - ty, 2.0)
                                  - pow(tr, 2.0));
+            terror += pow((vp->getStamp() - av->getStamp())/1000, 2.0);
             error += terror;
             if(sqrt(terror) < inlierThreshold) {
                 inliers++;
@@ -312,34 +313,6 @@ double vCircleObserver::RANSAC(double &cx, double &cy, double &cr, bool debug, c
             max_inliers = inliers;
             cx = tx; cy = ty; cr = tr;
         }
-    }
-
-    if(debug && image && max_inliers >= minVsReq4RANSAC) {
-
-        //cv::Mat image(128, 128, CV_8UC3); image.setTo(0);
-
-        //if(max_inliers > minVsReq4RANSAC) {
-            //cv::circle(*image, cv::Point(cy, cx), cr, CV_RGB(255, 0, 0), inlierThreshold * 2);
-            cv::circle(*image, cv::Point(cy, cx), cr-inlierThreshold, CV_RGB(0, 0, 255));
-            cv::circle(*image, cv::Point(cy, cx), cr+inlierThreshold, CV_RGB(0, 0, 255));
-        //}
-
-//        for(emorph::vQueue::const_iterator qi = q.begin(); qi != q.end(); qi++) {
-//            emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
-//            image.at<cv::Vec3b>(v->getX(), v->getY()) = cv::Vec3b(255, 255, 255);
-//        }
-        //cv::rectangle(image, cv::Rect(), CV_RGB(0, 0, 255));
-
-
-        //cv::flip(image, image, 0);
-        //cv::resize(image, image, image.size()*2, 0, 0, CV_INTER_NN);
-        //cv::imshow("RANSAC", image);
-        //cv::waitKey(1);
-
-        //std::cout << q.size() << " " << min_error / q.size() << " "
-        //          << max_inliers << std::endl;
-
-\
     }
 
     return max_inliers;
@@ -395,7 +368,7 @@ vCircleTracker::vCircleTracker(double svPos, double svSiz, double zvPos, double 
 
 vCircleTracker::~vCircleTracker()
 {
-    delete filter;
+    if(filter) delete filter;
 }
 
 //add event will:

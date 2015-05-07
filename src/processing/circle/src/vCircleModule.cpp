@@ -155,8 +155,17 @@ bool vCircleReader::open(const std::string &name)
 void vCircleReader::close()
 {
     //close ports
-    delete filter; filter = 0;
     outPort.close();
+    if(filter) {
+        delete filter;
+        filter = 0;
+    }
+    if(circleTracker) {
+        delete circleTracker;
+        circleTracker = 0;
+    }
+    if(filewriter.is_open())
+        filewriter.close();
     this->close();
 
 
@@ -198,6 +207,10 @@ void vCircleReader::resetObserverParams(int width, int height, double aDec, doub
 /**********************************************************/
 void vCircleReader::onRead(emorph::vBottle &bot)
 {
+
+    double tstart = yarp::os::Time::now();
+    double ransact = 0;
+    double t0;
     //create event queue
     emorph::vQueue q;
     //create queue iterator
@@ -205,14 +218,9 @@ void vCircleReader::onRead(emorph::vBottle &bot)
     
     // prepare output vBottle with address events extended with cluster ID (aec) and cluster events (clep)
     emorph::vBottle &outBottle = outPort.prepare();
-    outBottle.clear();
-    //outBottle = bot;
-
-    // get the event queue in the vBottle bot
+    outBottle = bot;
     bot.getAll(q);
 
-    cv::Mat bottleImage;
-    bottleImage = cv::Mat(128, 128, CV_8UC1); bottleImage.setTo(0);
 //    if(debugFlag)
 //    {
 //        circleFinder.stepbystep = true;
@@ -226,13 +234,16 @@ void vCircleReader::onRead(emorph::vBottle &bot)
 
 //    }
 
+
     for(qi = q.begin(); qi != q.end(); qi++)
     {      
+
         //filewriter << (*qi)->getStamp() << std::endl;
         emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
         if(!v) continue;
         unsigned long int ts = unwrap(v->getStamp());
         if(v->getChannel()) continue;
+        if(v->getPolarity()) continue;
         double cx, cy, cr;
         //circleTracker->addEvent(*v, 0.1);
 
@@ -242,22 +253,24 @@ void vCircleReader::onRead(emorph::vBottle &bot)
         //dt = ((double)ts - pTS) * emorph::vtsHelper::tstosecs();
         //circleTracker->predict(dt);
 
+
+
         circleFinder.addEvent(**qi);
+        t0 = yarp::os::Time::now();
+        //circleFinder.localCircleEstimate(*v, cx, cy, cr, false);
         double e1 = circleFinder.RANSAC(cx, cy, cr);
-
+        ransact += yarp::os::Time::now() - t0;
         if(e1 < circleFinder.minVsReq4RANSAC) continue;
-        continue;
-
-        //double e2 = circleFinder.globalInlierCount(cx, cy, cr);
+        //continue;
 
 
-        //std::cout << e1 / e2  << " " << circleFinder.sRadius*2 << " " << cr * 2<< std::endl;
-
-        //if(e1 /e2 > 0.6) continue;
-
-        cv::circle(bottleImage, cv::Point(cy, cx), cr-circleFinder.inlierThreshold, CV_RGB(0, 0, 255));
-        cv::circle(bottleImage, cv::Point(cy, cx), cr+circleFinder.inlierThreshold, CV_RGB(0, 0, 255));
-
+        emorph::ClusterEventGauss circevent(*v);
+        circevent.setChannel(v->getChannel());
+        circevent.setXCog(cx);
+        circevent.setYCog(cy);
+        circevent.setXSigma2(cr);
+        circevent.setYSigma2(circleFinder.inlierThreshold*2);
+        outBottle.addEvent(circevent);
 
 
         continue;
@@ -312,63 +325,65 @@ void vCircleReader::onRead(emorph::vBottle &bot)
         //estimate.addEvent(tevent);
     }
 
-    if(debugFlag) {
-        cv::flip(bottleImage, bottleImage, 0);
-        cv::resize(bottleImage, bottleImage, bottleImage.size()*2);
-        cv::imshow("All Bottle", bottleImage);
-        cv::waitKey(1);
-    }
+//    if(debugFlag) {
+//        t0 = yarp::os::Time::now();
+//        cv::flip(bottleImage, bottleImage, 0);
+//        cv::resize(bottleImage, bottleImage, bottleImage.size()*2);
+//        cv::imshow("All Bottle", bottleImage);
+//        cv::waitKey(1);
+//        showing += yarp::os::Time::now() - t0;
+//    }
 
-    if(false && circleTracker->active) {
-        yarp::sig::Vector x = circleTracker->filter->get_x();
-        yarp::sig::Matrix P = circleTracker->filter->get_P();
+//    if(false && circleTracker->active) {
+//        yarp::sig::Vector x = circleTracker->filter->get_x();
+//        yarp::sig::Matrix P = circleTracker->filter->get_P();
 
-        //std::cout << "x:" << std::endl << x.toString() << std::endl;
-        //std::cout << "P:" << std::endl << P.toString() << std::endl;
-
-
-        cv::Mat filterview(512, 512, CV_8UC3); filterview.setTo(0);
-
-        //validation gate
-        //cv::Mat valMat = filterview(cv::Rect())
-        std::ostringstream ss; ss << circleTracker->filter->get_ValidationGate();
-        cv::putText(filterview, ss.str(), cv::Point(10, 118*4), 0, 1, CV_RGB(0, 255, 0));
-
-        //estimated state
-        if(x[2] > 0) {
-            cv::circle(filterview, cv::Point(x[1]*4, 511-x[0]*4), x[2]*4,
-                    CV_RGB(255, 255, 255), 3);
-        }
-
-        //x-y standard deviation
-        if(P(0, 0) > 0) {
-            cv::circle(filterview, cv::Point(x[1]*4, 511-x[0]*4),
-                    (P(0, 0)+P(1, 1))*2, CV_RGB(255, 255, 0));
-        }
-
-        //radius standard deviation
-        //upperbound
-        double rv = std::fabs(P(2, 2));
-        if(x[2] + rv > 0) {
-            cv::circle(filterview, cv::Point(x[1]*4, 511-x[0]*4),
-                    (x[2]+rv)*4, CV_RGB(0, 255, 255));
-        }
-        //lowerbound
-        if(x[2] - rv > 0) {
-            cv::circle(filterview, cv::Point(x[1]*4, 511-x[0]*4),
-                    (x[2]-rv)*4, CV_RGB(0, 255, 255));
-        }
-
-        //x-y velocity
-        cv::Point pc(x[1]*4, 511-x[0]*4); cv::Point pv = pc + cv::Point(x[4], -x[3]);
-        cv::line(filterview, pc, pv, CV_RGB(255, 0, 0));
+//        //std::cout << "x:" << std::endl << x.toString() << std::endl;
+//        //std::cout << "P:" << std::endl << P.toString() << std::endl;
 
 
-        cv::imshow("Filter", filterview);
-        cv::waitKey(1);
+//        cv::Mat filterview(512, 512, CV_8UC3); filterview.setTo(0);
+
+//        //validation gate
+//        //cv::Mat valMat = filterview(cv::Rect())
+//        std::ostringstream ss; ss << circleTracker->filter->get_ValidationGate();
+//        cv::putText(filterview, ss.str(), cv::Point(10, 118*4), 0, 1, CV_RGB(0, 255, 0));
+
+//        //estimated state
+//        if(x[2] > 0) {
+//            cv::circle(filterview, cv::Point(x[1]*4, 511-x[0]*4), x[2]*4,
+//                    CV_RGB(255, 255, 255), 3);
+//        }
+
+//        //x-y standard deviation
+//        if(P(0, 0) > 0) {
+//            cv::circle(filterview, cv::Point(x[1]*4, 511-x[0]*4),
+//                    (P(0, 0)+P(1, 1))*2, CV_RGB(255, 255, 0));
+//        }
+
+//        //radius standard deviation
+//        //upperbound
+//        double rv = std::fabs(P(2, 2));
+//        if(x[2] + rv > 0) {
+//            cv::circle(filterview, cv::Point(x[1]*4, 511-x[0]*4),
+//                    (x[2]+rv)*4, CV_RGB(0, 255, 255));
+//        }
+//        //lowerbound
+//        if(x[2] - rv > 0) {
+//            cv::circle(filterview, cv::Point(x[1]*4, 511-x[0]*4),
+//                    (x[2]-rv)*4, CV_RGB(0, 255, 255));
+//        }
+
+//        //x-y velocity
+//        cv::Point pc(x[1]*4, 511-x[0]*4); cv::Point pv = pc + cv::Point(x[4], -x[3]);
+//        cv::line(filterview, pc, pv, CV_RGB(255, 0, 0));
 
 
-    }
+//        cv::imshow("Filter", filterview);
+//        cv::waitKey(1);
+
+
+//    }
 
 //    if(debugFlag) {
 
@@ -399,8 +414,15 @@ void vCircleReader::onRead(emorph::vBottle &bot)
 
 
 
+
     //send on the processed events
     outPort.write();
+
+    double tthread = yarp::os::Time::now() - tstart;
+    if(ransact > 0.001) {
+        std::cout << "On Read took " << tthread / 0.001 << "x too long (" <<
+                     100 * ransact / tthread <<  "% from RANSAC)" << std::endl;
+    }
 
 }
 

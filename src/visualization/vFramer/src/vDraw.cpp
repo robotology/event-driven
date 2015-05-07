@@ -39,6 +39,10 @@ vDraw * createDrawer(std::string tag)
     if(tag == newDrawer->getTag()) return newDrawer;
     delete newDrawer;
 
+    newDrawer = new circleDraw();
+    if(tag == newDrawer->getTag()) return newDrawer;
+    delete newDrawer;
+
     return 0;
 }
 
@@ -259,6 +263,38 @@ void integralDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
 
     cv::cvtColor(iimage, image, CV_GRAY2BGR);
     //iimage.copyTo(image);
+
+}
+
+std::string circleDraw::getTag()
+{
+    return "CIRC";
+}
+
+void circleDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
+{
+
+    if(image.empty()) {
+        image = cv::Mat(Xlimit, Ylimit, CV_8UC3);
+        image.setTo(0);
+    }
+
+    if(checkStagnancy(eSet) > clearThreshold) {
+        return;
+    }
+
+    emorph::vQueue::const_iterator qi;
+    for(qi = eSet.begin(); qi != eSet.end(); qi++) {
+        emorph::ClusterEventGauss *v = (*qi)->getAs<emorph::ClusterEventGauss>();
+        if(!v) continue;
+        cv::Point centr(v->getYCog(), v->getXCog());
+        //we hide the radius in in X_sigma_2
+        double r = v->getXSigma2();
+        //we hide the radial variance in Y_sigma_2
+        double w = v->getYSigma2();
+        cv::circle(image, centr, r, CV_RGB(255, 0, 0), w);
+
+    }
 
 }
 
