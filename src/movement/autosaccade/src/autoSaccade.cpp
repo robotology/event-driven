@@ -253,12 +253,12 @@ bool EventBottleManager::open(const std::string &name)
 void EventBottleManager::onRead(emorph::vBottle &bot)
 {
     //create event queue
-    emorph::vQueue q;
+    emorph::vQueue q = bot.getSorted<emorph::AddressEvent>();
     //create queue iterator
     emorph::vQueue::iterator qi;
     
     // get the event queue in the vBottle bot
-    bot.getSorted<emorph::AddressEvent>(q);
+    //bot.getSorted<emorph::AddressEvent>(q);
     if(q.empty()) return;
 
     latestStamp = unwrapper(q.back()->getStamp());

@@ -29,7 +29,7 @@ vReadAndSplit::~vReadAndSplit()
         delete wi->second;
     }
 
-    std::map<int, const vQueue*>::iterator qi;
+    std::map<int, vQueue*>::iterator qi;
     for(qi = snaps.begin(); qi != snaps.end(); qi++) {
         delete qi->second;
     }
@@ -56,13 +56,14 @@ bool vReadAndSplit::open(const std::string portName)
 
 void vReadAndSplit::onRead(emorph::vBottle &incoming)
 {
-    emorph::vQueue q;
+
+    emorph::vQueue q = incoming.getAllSorted();
     emorph::vQueue::iterator qi;
-    incoming.getAllSorted(q);
+    //incoming.getAllSorted(q);
     for(qi = q.begin(); qi != q.end(); qi++) {
         int ch = (*qi)->getChannel();
         if(!windows.count(ch)) {
-            windows[ch] = new vWindow(windowsize, true);
+            windows[ch] = new vWindow(128, 128, 20000, true);
         }
         windows[ch]->addEvent(**qi);
     }
@@ -73,15 +74,17 @@ void vReadAndSplit::snapshotAllWindows()
 {
     std::map<int, vWindow*>::iterator wi;
     for(wi = windows.begin(); wi != windows.end(); wi++) {
-        if(snaps[wi->first]) delete snaps[wi->first];
-        snaps[wi->first] = &(wi->second)->getWindow();
+        if(snaps[wi->first]) {
+            delete snaps[wi->first];
+        }
+        snaps[wi->first] = new vQueue((wi->second)->getWindow());
     }
 }
 
 const emorph::vQueue & vReadAndSplit::getSnap(const int channel)
 {
     if(!snaps.count(channel))
-            snaps[channel] = new vQueue;
+            snaps[channel] = new vQueue();
     return *(snaps[channel]);
 
 }
@@ -210,6 +213,7 @@ bool vFramerModule::interruptModule()
     vReader.interrupt();
     for(int i = 0; i < outports.size(); i++)
         outports[i]->interrupt();
+    RFModule::interruptModule();
 
     return true;
 }
@@ -219,6 +223,7 @@ bool vFramerModule::close()
     vReader.close();
     for(int i = 0; i < outports.size(); i++)
         outports[i]->close();
+    RFModule::close();
 
     return true;
 }

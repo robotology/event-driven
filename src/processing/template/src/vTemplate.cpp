@@ -135,7 +135,7 @@ void EventBottleManager::interrupt()
 void EventBottleManager::onRead(emorph::vBottle &bot)
 {
     //create event queue
-    emorph::vQueue q;
+    emorph::vQueue q = bot.getAll();
     //create queue iterator
     emorph::vQueue::iterator qi;
     
@@ -144,7 +144,7 @@ void EventBottleManager::onRead(emorph::vBottle &bot)
     outBottle = bot; //start with the incoming bottle
 
     // get the event queue in the vBottle bot
-    bot.getAll(q);
+    //bot.getAll(q);
 
     for(qi = q.begin(); qi != q.end(); qi++)
     {

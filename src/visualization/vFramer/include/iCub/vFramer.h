@@ -48,14 +48,14 @@ private:
     //! storage of vWindows
     std::map<int, vWindow*> windows;
     //! storage of window snapshots
-    std::map<int, const vQueue *> snaps;
+    std::map<int, vQueue *> snaps;
 
 public:
 
     ///
     /// \brief vReadAndSplit constructor with default windowsize parameter
     ///
-    vReadAndSplit() : windowsize(50000) {}
+    vReadAndSplit() : windowsize(20000) {}
     ~vReadAndSplit();
 
     ///

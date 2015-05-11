@@ -18,66 +18,131 @@
 
 namespace emorph {
 
-const vQueue& vWindow::getWindow()
+vWindow::vWindow(int width, int height, int duration, bool asynch)
 {
+    this->width = width;
+    this->height = height;
+    this->duration = duration;
+    this->asynchronous = asynch;
 
-    //first apply limits
+    spatial.resize(height);
+    for(int y = 0; y < height; y++) {
+        spatial[y].resize(width, vQueue(false));
+    }
+}
 
-    vQueue *qcopy;
+//vWindow::vWindow(const vWindow& that)
+//{
+//    *this = that;
+//}
 
-    if(asynchronous) {
-        qcopy = new vQueue;
-        mutex.wait();
-        *qcopy = this->q;
-        mutex.post();
-    } else {
-        qcopy = &q.softcopy();
+vWindow vWindow::operator=(const vWindow& that)
+{
+    this->width = that.width;
+    this->height = that.height;
+    this->duration = that.duration;
+    this->asynchronous = that.asynchronous;
+
+    //we don't copy data in a vWindow for now
+    q.clear();
+
+    spatial.resize(height);
+    for(int y = 0; y < height; y++) {
+        spatial[y].resize(width, vQueue(false));
+        for(int x = 0; x < width; x++) {
+            spatial[y][x].clear();
+        }
     }
 
-    return *qcopy;
 
+    return *this;
 }
 
-vWindow& vWindow::operator=(const vWindow& that)
+void vWindow::addEvent(vEvent &event)
 {
-    this->q = that.q;
-    this->windowSize = that.windowSize;
-    this->asynchronous = that.asynchronous;
+
+    //calculate event window boundaries based on latest timestamp
+    int ctime = event.getStamp();
+    int upper = ctime + vtsHelper::maxStamp() - duration;
+    int lower = ctime - duration;
+
+
+    //enter critcal section
+    mutex.wait();
+
+    q.push_back(&event);
+    AddressEvent *c = event.getAs<AddressEvent>();
+    if(c) spatial[c->getY()][c->getX()].push_back(q.back());
+
+    //remove any events falling out the back of the window
+    while(true) {
+
+        int vtime = q.front()->getStamp();
+        if((vtime > ctime && vtime < upper) || vtime < lower) {
+            AddressEvent * v = q.front()->getAs<AddressEvent>();
+            if(v) spatial[v->getY()][v->getX()].pop_front();
+            q.pop_front();
+        } else {
+            break;
+        }
+    }
+    mutex.post();
+
+}
+
+const vQueue vWindow::getWindow()
+{
+    mutex.wait();
+    vQueue qcopy = q.copy(asynchronous);
+    mutex.post();
+
+    return qcopy;
+
 }
 
 
-const vQueue& vWindow::getSpatialWindow(int x, int y, int d)
+const vQueue vWindow::getSpatialWindow(int x, int y, int d)
 {
     return getSpatialWindow(x - d, x + d, y - d, y + d);
 }
 
-const vQueue& vWindow::getSpatialWindow(int xl, int xh, int yl, int yh)
+const vQueue vWindow::getSpatialWindow(int xl, int xh, int yl, int yh)
 {
+    vQueue qcopy(asynchronous);
 
-    //first apply limits
-
-    vQueue *qcopy = new vQueue;
-    if(!asynchronous) qcopy->setOwner(false);
+    xl = std::max(xl, 0);
+    xh = std::min(xh, width);
+    yl = std::max(yl, 0);
+    yh = std::max(yh, height);
 
     //critical section
     mutex.wait();
 
-    vQueue::iterator qi;
-    for (qi = q.begin(); qi != q.end(); qi++) {
-        AddressEvent *v = (*qi)->getAs<AddressEvent>();
-        if(!v) continue;
-        int x = v->getX(); int y = v->getY();
-        if(x < xl || x > xh || y < yl || y > yh) continue;
-        if(asynchronous) {
-            qcopy->push_back((*qi)->clone());
-        } else {
-            qcopy->push_back(*qi);
+    for(int y = yl; y < yh; y++) {
+        for(int x = xl; x < xh; x++) {
+            for (vQueue::iterator qi = spatial[y][x].begin();
+                 qi != spatial[y][x].end();
+                 qi++)
+            {
+                qcopy.push_back(*qi);
+            }
         }
     }
 
+
+
+//    vQueue::iterator qi;
+//    for (qi = q.begin(); qi != q.end(); qi++) {
+//        AddressEvent *v = (*qi)->getAs<AddressEvent>();
+//        if(!v) continue;
+//        int x = v->getX(); int y = v->getY();
+//        if(x < xl || x > xh || y < yl || y > yh) continue;
+//        qcopy.push_back(*qi);
+//    }
+
     mutex.post();
 
-    return *qcopy;
+    return qcopy;
 
 }
 
@@ -89,38 +154,6 @@ vEvent *vWindow::getMostRecent()
     return 0;
 }
 
-void vWindow::addEvent(vEvent &event)
-{
-    //make a copy of the event to add to the circular buffer
-    //vEvent * newcopy = emorph::createEvent(event.getType());
-    //*newcopy = event;
-    //vEvent * newcopy = event.clone();
 
-    int ctime = event.getStamp();
-    int upper = ctime + vtsHelper::maxStamp() - windowSize;
-    int lower = ctime - windowSize;
-
-
-    mutex.wait();
-
-    //add the event
-    q.push_back(event.clone());
-
-    //check if any events need to be removed
-    //int lifeThreshold = event.getStamp() - windowSize;
-
-    while(true) {
-
-        int vtime = q.front()->getStamp();
-        if((vtime > ctime && vtime < upper) || vtime < lower) {
-            delete q.front();
-            q.pop_front();
-        }
-        else
-            break;
-    }
-    mutex.post();
-
-}
 
 }

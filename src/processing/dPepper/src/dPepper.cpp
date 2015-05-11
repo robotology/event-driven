@@ -74,8 +74,8 @@ dPepperIO::dPepperIO()
     //here we should initialise the module
     double temporalSize = 10000;
     spatialSize = 1;
-    leftWindow.setWindowSize(temporalSize);
-    rightWindow.setWindowSize(temporalSize);
+    leftWindow.setTemporalWindowSize(temporalSize);
+    rightWindow.setTemporalWindowSize(temporalSize);
     
 }
 /**********************************************************/
@@ -114,7 +114,7 @@ void dPepperIO::interrupt()
 void dPepperIO::onRead(emorph::vBottle &bot)
 {
     //create event queue
-    emorph::vQueue q;
+    emorph::vQueue q = bot.getAll();
     //create queue iterator
     emorph::vQueue::iterator qi, wi;
     
@@ -123,7 +123,7 @@ void dPepperIO::onRead(emorph::vBottle &bot)
     outBottle.clear();
 
     // get the event queue in the vBottle bot
-    bot.getAll(q);
+    //bot.getAll(q);
 
     for(qi = q.begin(); qi != q.end(); qi++)
     {
@@ -166,8 +166,8 @@ void dPepperIO::onRead(emorph::vBottle &bot)
 
 void dPepperIO::setTemporalSize(double microseconds)
 {
-    leftWindow.setWindowSize(microseconds);
-    rightWindow.setWindowSize(microseconds);
+    leftWindow.setTemporalWindowSize(microseconds);
+    rightWindow.setTemporalWindowSize(microseconds);
 }
 
 void dPepperIO::setSpatialSize(double pixelradius)

@@ -18,6 +18,8 @@
 #define __VWINDOW__
 
 #include <yarp/os/all.h>
+#include <yarp/sig/all.h>
+#include <vector>
 #include "vCodec.h"
 #include "vtsHelper.h"
 
@@ -36,11 +38,15 @@ private:
     //! event storage
     vQueue q;
     //! the length of time to store events (in us)
-    int windowSize;
+    int width;
+    int height;
+    int duration;
     //! whether to deep copy or shallow copy
     bool asynchronous;
     //! for safe copying of q in the multi-threaded environment
     yarp::os::Semaphore mutex;
+    //! for quick spatial accessing and surfacing
+    std::vector< std::vector <vQueue> > spatial;
 
 
 public:
@@ -49,16 +55,15 @@ public:
     /// \brief vWindow constructor
     /// \param windowSize optional time to store events (in us)
     ///
-    vWindow(int windowSize = 50000, bool asynch = true) :
-        windowSize(windowSize), asynchronous(asynch) {}
+    vWindow(int width = 128, int height = 128, int duration = 20000, bool asynch = true);
 
-    vWindow& operator=(const vWindow&);
+    vWindow operator=(const vWindow&);
 
     ///
     /// \brief setWindowSize sets the length of time to store events
     /// \param windowSize the time period (in us)
     ///
-    void setWindowSize(int windowSize)  { this->windowSize = windowSize; }
+    void setTemporalWindowSize(int duration)  { this->duration = duration; }
 
     ///
     /// \brief addEvent adds an event to the window. Also checks for expired
@@ -77,7 +82,7 @@ public:
     /// \brief getWindow
     /// \return
     ///
-    const vQueue& getWindow();
+    const vQueue getWindow();
 
     ///
     /// \brief getSpatialWindow returns AddressEvents within a spatial window
@@ -86,7 +91,7 @@ public:
     /// \param d distance of the half-length of a square window
     /// \return a vQueue containing a copy of the events
     ///
-    const vQueue& getSpatialWindow(int x, int y, int d);
+    const vQueue getSpatialWindow(int x, int y, int d);
 
     ///
     /// \brief getSpatialWindow returns AddressEvents within a spatial window
@@ -96,7 +101,7 @@ public:
     /// \param yh upper y value of window
     /// \return a vQueue containing a copy of the events
     ///
-    const vQueue& getSpatialWindow(int xl, int xh, int yl, int yh);
+    const vQueue getSpatialWindow(int xl, int xh, int yl, int yh);
 
 
 

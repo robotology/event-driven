@@ -197,9 +197,9 @@ void EventBottleManager::onRead(emorph::vBottle &bot)
 
 
     //create event queue and iterator
-    emorph::vQueue q;
+    emorph::vQueue q = bot.getAll();
     emorph::vQueue::iterator qi;
-    bot.getAll(q);
+    //bot.getAll(q);
 
     // checks for empty or non valid queue????
     for(qi = q.begin(); qi != q.end(); qi++)

@@ -59,13 +59,9 @@ vEvent * createEvent(const std::string type)
 /******************************************************************************/
 vQueue::~vQueue()
 {
-//    if (owner)
-//        for (size_t i=0; i<size(); i++)
-//            if ((*this)[i]!=NULL)
-//                delete (*this)[i];
-
     this->clear();
 }
+
 void vQueue::clear()
 {
     if (owner)
@@ -75,19 +71,61 @@ void vQueue::clear()
     deque::clear();
 }
 
-vQueue& vQueue::operator=(const vQueue& other)
+void vQueue::push_back(const value_type &__x)
 {
-    for(vQueue::const_iterator qi = other.begin(); qi != other.end(); qi++)
-        this->push_back((*qi)->clone());
+    if(owner) {
+        deque::push_back(__x->clone());
+    } else {
+        deque::push_back(__x);
+    }
 }
 
-vQueue& vQueue::softcopy()
+void vQueue::push_front(const value_type &__x)
 {
-    vQueue * newq = new vQueue;
-    newq->setOwner(false);
-    for(vQueue::iterator qi = this->begin(); qi != this->end(); qi++)
-        newq->push_back(*qi);
+    if(owner)
+        deque::push_front(__x->clone());
+    else
+        deque::push_front(__x);
+}
 
+void vQueue::pop_back()
+{
+    if(owner)
+        delete back();
+    deque::pop_back();
+}
+
+void vQueue::pop_front()
+{
+    if(owner)
+        delete front();
+    deque::pop_front();
+}
+
+vQueue::vQueue(const vQueue& that)
+{
+    std::cout << "vQ:vQ(const vQ &)" << std::endl;
+    this->owner = that.owner;
+    for(vQueue::const_iterator qi = that.begin(); qi != that.end(); qi++)
+        this->push_back(*qi);
+}
+
+vQueue vQueue::operator=(const vQueue& that)
+{
+    std::cout << "vQ:operator=" << std::endl;
+    this->clear();
+    this->owner = that.owner;
+    for(vQueue::const_iterator qi = that.begin(); qi != that.end(); qi++)
+        this->push_back(*qi);
+    return *this;
+}
+
+vQueue vQueue::copy(bool hardcopy)
+{
+    vQueue newq(hardcopy);
+    for(vQueue::iterator qi = this->begin(); qi != this->end(); qi++)
+        newq.push_back(*qi);
+    return newq;
 }
 
 void vQueue::sort() {

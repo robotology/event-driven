@@ -99,9 +99,9 @@ void eventStatisticsDumper::onRead(emorph::vBottle &bot)
     //std::cout << ". ";
 
     //create event queue
-    emorph::vQueue q;
+    emorph::vQueue q = bot.getAll();
     emorph::vQueue::iterator qi, qi2;
-    bot.getAll(q);
+    //emorphbot.getAll(q);
 
     int i = 0, j = 0;
 

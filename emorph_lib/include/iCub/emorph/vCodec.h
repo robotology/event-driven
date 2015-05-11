@@ -38,28 +38,38 @@ vEvent * createEvent(const std::string type);
 class vQueue : public std::deque<vEvent*>
 {
 private:
-    // copy-constructor and overaloaded "=" operator are made
-    // private on purpose to avoid the problem of dangling
-    // pointers since the destructor frees up the memory
-    // allocated for events
-    vQueue(const vQueue&);
+
+    //! whether of not the storage needs to be freed or if it is a pointer to
+    //! something stored elsewhere
+    bool owner;
+
+    //! sorting events by timestamp comparitor
     static bool temporalSort(const vEvent *e1, const vEvent *e2);
 
-protected:
-    bool owner;  
+    //!overloaded erase so I don't have to deal with them yet
+    //virtual void erase(iterator __first, iterator __last);
+    //virtual void erase(iterator __position);
 
 public:
-    vQueue()                   { owner=true;        }
-    vQueue(const bool _owner)  { owner=_owner;      }
-    void setOwner(const bool owner) { this->owner=owner; }
-    bool getOwner()                 { return owner;      }
-    void clear();
-    vQueue &operator=(const vQueue&);
-    vQueue& softcopy();
+
+    vQueue(const bool owner = true) { this->owner = owner; }
+
     ~vQueue();
+    virtual void clear();
 
+    vQueue(const vQueue&);
+    vQueue operator=(const vQueue&);
+
+    virtual void push_back(const value_type &__x);
+    virtual void push_front(const value_type &__x);
+
+    virtual void pop_back();
+    virtual void pop_front();
+
+    vQueue copy(bool hardcopy = true);
+
+    bool getOwner() { return owner; }
     void sort();
-
 
 };
 
