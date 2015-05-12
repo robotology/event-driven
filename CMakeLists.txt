@@ -23,9 +23,13 @@ set(CMAKE_MODULE_PATH
 )
 
 find_package(GSL)
-find_package(OpenCV)
+if(ICUB_USE_OPENCV)
+    find_package(OpenCV)
+endif(ICUB_USE_OPENCV)
 find_package(GtkPlus REQUIRED)
-find_package(IPOPT)
+if(ICUB_USE_IPOPT)
+    find_package(IPOPT)
+endif(ICUB_USE_IPOPT)
 
 include(YarpInstallationHelpers)
 include(ICUBcontribHelpers)
