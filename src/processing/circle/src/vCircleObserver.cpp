@@ -18,184 +18,188 @@
 #include <vector>
 #include <limits>
 
-void vCircleObserver::createLocalSearch(int x, int y)
-{
-    localActivity.clear();
-    int tminx = std::max(x-sRadius, 0);
-    int tmaxx = std::min(x+sRadius, width -1);
-    int tminy = std::max(y-sRadius, 0);
-    int tmaxy = std::min(y+sRadius, height-1);
-    for(int v = tminy; v <= tmaxy; v++) {
-        for(int u = tminx; u <= tmaxx; u++) {
-            double a = activity.queryActivity(u, v);
-            if(a > 1)
-                localActivity.push_back(act_unit(u, v, a));
-        }
-    }
+vCircleObserver::vCircleObserver() {
+
+    stepbystep = false;
+
+    width = 128;
+    height = 128;
+    windowSize = 200000;
+
+    tRadius = 8;
+    sRadius = 5;
+    iterations = 5;
+    minVsReq4RANSAC = 8;
+
+
+
+    window = new emorph::vWindow(width, height, windowSize, false);
+
+    inlierThreshold = 2;
 }
 
-void vCircleObserver::pointTrim(int x, int y)
-{
-    std::vector<act_unit>::iterator i = localActivity.begin();
-    while(i != localActivity.end()) {
-        if(sqrt(std::pow(x - i->x, 2.0) + std::pow(y - i->y, 2)) < tRadius)
-            localActivity.erase(i);
-        else
-            i++;
-    }
-}
+//void vCircleObserver::pointTrim(int x, int y)
+//{
+//    std::vector<act_unit>::iterator i = localActivity.begin();
+//    while(i != localActivity.end()) {
+//        if(sqrt(std::pow(x - i->x, 2.0) + std::pow(y - i->y, 2)) < tRadius)
+//            localActivity.erase(i);
+//        else
+//            i++;
+//    }
+//}
 
-void vCircleObserver::linearTrim(int x1, int y1, int x2, int y2)
-{
-    std::vector<act_unit>::iterator i = localActivity.begin();
-    if(x2 == x1) {
-        //if we have a vertical line just check x value
-        while(i != localActivity.end()) {
-            if(std::fabs(i->x - x1) < tRadius)
-                localActivity.erase(i);
-            else
-                i++;
-        }
-    } else {
-        //otherwise we have to calculate the line parameters
-        double m = (y2 - y1) / (double)(x2 - x1);
-        double b = y1 - m * x1;
-        while(i != localActivity.end()) {
-            if(std::fabs(i->y - m*i->x - b) < tRadius)
-                localActivity.erase(i);
-            else
-                i++;
-        }
-    }
-}
+//void vCircleObserver::linearTrim(int x1, int y1, int x2, int y2)
+//{
+//    std::vector<act_unit>::iterator i = localActivity.begin();
+//    if(x2 == x1) {
+//        //if we have a vertical line just check x value
+//        while(i != localActivity.end()) {
+//            if(std::fabs(i->x - x1) < tRadius)
+//                localActivity.erase(i);
+//            else
+//                i++;
+//        }
+//    } else {
+//        //otherwise we have to calculate the line parameters
+//        double m = (y2 - y1) / (double)(x2 - x1);
+//        double b = y1 - m * x1;
+//        while(i != localActivity.end()) {
+//            if(std::fabs(i->y - m*i->x - b) < tRadius)
+//                localActivity.erase(i);
+//            else
+//                i++;
+//        }
+//    }
+//}
 
-bool vCircleObserver::localCircleEstimate(emorph::AddressEvent &event, double &cx,
-                                  double &cy, double &cr, bool showDebug)
-{
-    act_unit p1(event.getX(), event.getY(), 0);
-    //update the activity here
-    p1.a = activity.addEvent(event);
+//bool vCircleObserver::localCircleEstimate(emorph::AddressEvent &event, double &cx,
+//                                  double &cy, double &cr, bool showDebug)
+//{
+//    act_unit p1(event.getX(), event.getY(), 0);
+//    //update the activity here
+//    //p1.a = activity.addEvent(event);
 
-    //create our search locations
-    createLocalSearch(p1.x, p1.y);
+//    //create our search locations
+//    createLocalSearch(p1.x, p1.y);
 
-    //remove points too close to centre
-    pointTrim(p1.x, p1.y);
-    if(localActivity.size() < 3) return false;
+//    //remove points too close to centre
+//    pointTrim(p1.x, p1.y);
+//    if(localActivity.size() < 3) return false;
 
-    //find the best score
-    int bi = 0;
-    for(int i = 0; i < localActivity.size(); i++)
-        if(localActivity[i].a > localActivity[bi].a) bi = i;
-    act_unit p2 = localActivity[bi];
+//    //find the best score
+//    int bi = 0;
+//    for(int i = 0; i < localActivity.size(); i++)
+//        if(localActivity[i].a > localActivity[bi].a) bi = i;
+//    act_unit p2 = localActivity[bi];
 
-    //remove activity close-by the first point
-    linearTrim(p1.x, p1.y, p2.x, p2.y);
-    if(localActivity.empty()) return false;
+//    //remove activity close-by the first point
+//    linearTrim(p1.x, p1.y, p2.x, p2.y);
+//    if(localActivity.empty()) return false;
 
-    //find the second best score
-    bi = 0;
-    for(int i = 0; i < localActivity.size(); i++)
-        if(localActivity[i].a > localActivity[bi].a) bi = i;
-    act_unit p3 = localActivity[bi];
+//    //find the second best score
+//    bi = 0;
+//    for(int i = 0; i < localActivity.size(); i++)
+//        if(localActivity[i].a > localActivity[bi].a) bi = i;
+//    act_unit p3 = localActivity[bi];
 
-    //if we are all on the same y line (should be impossible after linearTrim)
-    if(p1.y == p2.y && p1.y == p3.y) return false;
+//    //if we are all on the same y line (should be impossible after linearTrim)
+//    if(p1.y == p2.y && p1.y == p3.y) return false;
 
-    //make sure x2 is different to x1 and x3 (else we divide by 0 later)
-    act_unit * ex = 0;
+//    //make sure x2 is different to x1 and x3 (else we divide by 0 later)
+//    act_unit * ex = 0;
 
-    if(p2.x == p1.x) {
-        if(p2.x == p3.x)
-            return 0;
-        ex = &p3;
-    } else if(p2.x == p3.x) {
-        ex = &p1;
-    }
+//    if(p2.x == p1.x) {
+//        if(p2.x == p3.x)
+//            return 0;
+//        ex = &p3;
+//    } else if(p2.x == p3.x) {
+//        ex = &p1;
+//    }
 
-    if(ex) {
-        act_unit temp = p2;
-        p2 = *ex;
-        *ex = temp;
-    }
+//    if(ex) {
+//        act_unit temp = p2;
+//        p2 = *ex;
+//        *ex = temp;
+//    }
 
-    //calculate the circle from the 3 points
-    double ma = (p2.y - p1.y) / (double)(p2.x - p1.x);
-    double mb = (p3.y - p2.y) / (double)(p3.x - p2.x);
+//    //calculate the circle from the 3 points
+//    double ma = (p2.y - p1.y) / (double)(p2.x - p1.x);
+//    double mb = (p3.y - p2.y) / (double)(p3.x - p2.x);
 
-    cx = (ma * mb * (p1.y - p3.y) + mb * (p1.x + p2.x) -
-                        ma * (p2.x + p3.x)) / (2 * (mb - ma));
-    if(ma)
-        cy = -1 * (cx - (p1.x+p2.x)/2.0)/ma + (p1.y+p2.y)/2.0;
-    else
-        cy = -1 * (cx - (p2.x+p3.x)/2.0)/mb + (p2.y+p3.y)/2.0;
+//    cx = (ma * mb * (p1.y - p3.y) + mb * (p1.x + p2.x) -
+//                        ma * (p2.x + p3.x)) / (2 * (mb - ma));
+//    if(ma)
+//        cy = -1 * (cx - (p1.x+p2.x)/2.0)/ma + (p1.y+p2.y)/2.0;
+//    else
+//        cy = -1 * (cx - (p2.x+p3.x)/2.0)/mb + (p2.y+p3.y)/2.0;
 
-    cr = sqrt(pow(cx - p1.x, 2.0) + pow(cy - p1.y, 2.0));
-
-
-
-    if(cx < 0 || cx > width-1 || cy < 0 || cy > height-1) return false;
-
-
-    if(showDebug && stepbystep) {
-
-        //%%% display centre and radius lines.
-        static int divider = 0;
-        if(++divider % 1 == 0) {
-
-            double mact = 0;
-            cv::Mat image2(128, 128, CV_32F); image2.setTo(0);
-            for(int x = 0; x < 128; x++) {
-                for(int y = 0; y < 128; y++) {
-                    double a = activity.queryActivity(x, y);
-                    mact = std::max(a, mact);
-                    if(a > 0.01)
-                        image2.at<float>(x, y) = a;
-                }
-            }
-
-            image2 = image2 * (2/mact);
-            cv::Mat i8u(128, 128, CV_8U); image2.copyTo(i8u);
-            cv::Mat image(128, 128, CV_8UC3); cv::cvtColor(i8u, image, CV_GRAY2BGR);
-            cv::resize(image, image, cv::Size(512, 512), 0, 0, CV_INTER_NN);
-
-
-            cv::circle(image, cv::Point(p1.y, p1.x)*4, 12, CV_RGB(255, 255, 255));
-            cv::circle(image, cv::Point(p2.y, p2.x)*4, 12, CV_RGB(255, 255, 255));
-            cv::circle(image, cv::Point(p3.y, p3.x)*4, 12, CV_RGB(255, 255, 255));
-            cv::line(image, cv::Point(p2.y, p2.x)*4, cv::Point(p1.y, p1.x)*4, CV_RGB(255, 255, 255));
-            cv::line(image, cv::Point(p1.y, p1.x)*4, cv::Point(p3.y, p3.x)*4, CV_RGB(255, 255, 255));
-            cv::line(image, cv::Point(p1.y, p1.x)*4, cv::Point(cy, cx)*4, CV_RGB(255, 255, 255));
-            cv::line(image, cv::Point(p2.y, p2.x)*4, cv::Point(cy, cx)*4, CV_RGB(255, 255, 255));
-            cv::line(image, cv::Point(p3.y, p3.x)*4, cv::Point(cy, cx)*4, CV_RGB(255, 255, 255));
-            cv::circle(image, cv::Point(cy, cx)*4, 5, CV_RGB(255, 0, 0), CV_FILLED);
+//    cr = sqrt(pow(cx - p1.x, 2.0) + pow(cy - p1.y, 2.0));
 
 
 
-            if(divider % 1  == 0) {
-                int xsm = std::max(p1.x-sRadius, 0)*4;
-                int ysm = std::max(p1.y-sRadius, 0)*4;
-                int wsm = std::min(128 - xsm/4, 2*sRadius)*4;
-                int hsm = std::min(128 - ysm/4, 2*sRadius)*4;
-
-                cv::Mat submat;
-                image(cv::Rect(ysm, xsm, hsm, wsm)).copyTo(submat);
-                cv::flip(submat, submat, 0);
-                cv::resize(submat, submat, cv::Size(0, 0), 4, 4, CV_INTER_NN);
-                cv::imshow("Local", submat);
-            }
-
-            cv::flip(image, image, 0);
-            cv::imshow("Activity", image);
-            char c = cv::waitKey(0);
-            if(c == 27) stepbystep = false;
-        }
-    }
+//    if(cx < 0 || cx > width-1 || cy < 0 || cy > height-1) return false;
 
 
-    return true;
+//    if(showDebug && stepbystep) {
 
-}
+//        //%%% display centre and radius lines.
+//        static int divider = 0;
+//        if(++divider % 1 == 0) {
+
+//            double mact = 0;
+//            cv::Mat image2(128, 128, CV_32F); image2.setTo(0);
+//            for(int x = 0; x < 128; x++) {
+//                for(int y = 0; y < 128; y++) {
+//                    //double a = activity.queryActivity(x, y);
+//                    //mact = std::max(a, mact);
+//                    //if(a > 0.01)
+//                    //    image2.at<float>(x, y) = a;
+//                }
+//            }
+
+//            image2 = image2 * (2/mact);
+//            cv::Mat i8u(128, 128, CV_8U); image2.copyTo(i8u);
+//            cv::Mat image(128, 128, CV_8UC3); cv::cvtColor(i8u, image, CV_GRAY2BGR);
+//            cv::resize(image, image, cv::Size(512, 512), 0, 0, CV_INTER_NN);
+
+
+//            cv::circle(image, cv::Point(p1.y, p1.x)*4, 12, CV_RGB(255, 255, 255));
+//            cv::circle(image, cv::Point(p2.y, p2.x)*4, 12, CV_RGB(255, 255, 255));
+//            cv::circle(image, cv::Point(p3.y, p3.x)*4, 12, CV_RGB(255, 255, 255));
+//            cv::line(image, cv::Point(p2.y, p2.x)*4, cv::Point(p1.y, p1.x)*4, CV_RGB(255, 255, 255));
+//            cv::line(image, cv::Point(p1.y, p1.x)*4, cv::Point(p3.y, p3.x)*4, CV_RGB(255, 255, 255));
+//            cv::line(image, cv::Point(p1.y, p1.x)*4, cv::Point(cy, cx)*4, CV_RGB(255, 255, 255));
+//            cv::line(image, cv::Point(p2.y, p2.x)*4, cv::Point(cy, cx)*4, CV_RGB(255, 255, 255));
+//            cv::line(image, cv::Point(p3.y, p3.x)*4, cv::Point(cy, cx)*4, CV_RGB(255, 255, 255));
+//            cv::circle(image, cv::Point(cy, cx)*4, 5, CV_RGB(255, 0, 0), CV_FILLED);
+
+
+
+//            if(divider % 1  == 0) {
+//                int xsm = std::max(p1.x-sRadius, 0)*4;
+//                int ysm = std::max(p1.y-sRadius, 0)*4;
+//                int wsm = std::min(128 - xsm/4, 2*sRadius)*4;
+//                int hsm = std::min(128 - ysm/4, 2*sRadius)*4;
+
+//                cv::Mat submat;
+//                image(cv::Rect(ysm, xsm, hsm, wsm)).copyTo(submat);
+//                cv::flip(submat, submat, 0);
+//                cv::resize(submat, submat, cv::Size(0, 0), 4, 4, CV_INTER_NN);
+//                cv::imshow("Local", submat);
+//            }
+
+//            cv::flip(image, image, 0);
+//            cv::imshow("Activity", image);
+//            char c = cv::waitKey(0);
+//            if(c == 27) stepbystep = false;
+//        }
+//    }
+
+
+//    return true;
+
+//}
 
 bool vCircleObserver::calculateCircle(double x1, double x2, double x3,
                                       double y1, double y2, double y3,
@@ -255,25 +259,31 @@ bool vCircleObserver::calculateCircle(double x1, double x2, double x3,
 }
 
 void vCircleObserver::addEvent(emorph::vEvent &event) {
-    window.addEvent(event);
+    window->addEvent(event);
 }
 
 double vCircleObserver::RANSAC(double &cx, double &cy, double &cr)
 {
-    emorph::vEvent *v = window.getMostRecent();
-    if(!v) return -1;
-    emorph::AddressEvent *av = v->getAs<emorph::AddressEvent>();
+    //emorph::vEvent *v = window->getMostRecent();
+    //if(!v) return -1;
+    //emorph::AddressEvent *av = v->getAs<emorph::AddressEvent>();
 
-    const emorph::vQueue& q =
-            window.getSpatialWindow(av->getX(), av->getY(), sRadius);
+    emorph::vQueue q = window->getSMARTSURF(sRadius);
+    q.sort();
 
     if(q.size() < minVsReq4RANSAC) return -1;
+
     int pi1, pi2, pi3;
-    double min_error = std::numeric_limits<double>::max();
     int max_inliers = 0;
+
+    //this will only work for asynchronous windows
+    emorph::AddressEvent *v1 = window->getMostRecent()->getAs<emorph::AddressEvent>();
+    for(pi1 = 0; pi1 < q.size(); pi1++)
+        if(q[pi1] == v1) break;
+    //emorph::AddressEvent *v1 = q[pi1]->getAs<emorph::AddressEvent>();
     for(int i = 0; i < iterations; i++) {
         //choose three random points
-        pi1 = q.size()-1;
+
         //pi1 = rand() % q.size();
         pi2 = pi1;
         while(pi2 == pi1) {
@@ -283,7 +293,7 @@ double vCircleObserver::RANSAC(double &cx, double &cy, double &cr)
         while(pi3 == pi1 || pi3 == pi2) {
            pi3 = rand() % q.size();
         }
-        emorph::AddressEvent *v1 = q[pi1]->getAs<emorph::AddressEvent>();
+
         emorph::AddressEvent *v2 = q[pi2]->getAs<emorph::AddressEvent>();
         emorph::AddressEvent *v3 = q[pi3]->getAs<emorph::AddressEvent>();
 
@@ -292,36 +302,128 @@ double vCircleObserver::RANSAC(double &cx, double &cy, double &cr)
                 v1->getY(), v2->getY(), v3->getY(), tx, ty, tr);
         if(!madeCircle) continue;
 
-        if(tr < 8 || tr > 32) continue;
-
-        double error = 0;
+        if(tr < 2*inlierThreshold) continue;
         int inliers = 0;
         for(emorph::vQueue::const_iterator qi = q.begin(); qi != q.end(); qi++) {
             emorph::AddressEvent *vp = (*qi)->getAs<emorph::AddressEvent>();
-            double terror = fabs(pow(vp->getX() - tx, 2.0) + pow(vp->getY() - ty, 2.0)
+            double sqerror = fabs(pow(vp->getX() - tx, 2.0) + pow(vp->getY() - ty, 2.0)
                                  - pow(tr, 2.0));
-            terror += pow((vp->getStamp() - av->getStamp())/1000, 2.0);
-            error += terror;
-            if(sqrt(terror) < inlierThreshold) {
+            if(sqerror < inlierThreshold) {
                 inliers++;
             }
         }
 
         //if(error < min_error) {
         if(inliers > max_inliers) {
-            min_error = error;
             max_inliers = inliers;
             cx = tx; cy = ty; cr = tr;
         }
+    }
+    bool error = false;
+    if(max_inliers >= minVsReq4RANSAC) {
+        cv::Mat a(sRadius*2+1, sRadius*2+1, CV_8UC1); a.setTo(255);
+        double cts = v1->getStamp();
+        for(emorph::vQueue::const_iterator qi = q.begin(); qi != q.end(); qi++) {
+            emorph::AddressEvent *vp = (*qi)->getAs<emorph::AddressEvent>();
+            //int x = vp->getX()-v1->getX()+sRadius;
+            //int y = vp->getY()-v1->getY()+sRadius;
+            //if(x < 0 || x > 10 || y < 0 || y > 10) error = true;
+            double tts = vp->getStamp();
+            if(tts > cts) tts = tts - emorph::vtsHelper::maxStamp();
+            if(cts - tts > 90000) tts = cts - 90000;
+            int val = 255.0 * (cts - tts)/ 100000;
+            a.at<char>(vp->getX()-v1->getX()+sRadius, vp->getY()-v1->getY()+sRadius) = val;
+        }
+//        if(error) {
+//            for(emorph::vQueue::const_iterator qi = q.begin(); qi != q.end(); qi++) {
+//                emorph::AddressEvent *vp = (*qi)->getAs<emorph::AddressEvent>();
+//                std::cout << (int)v1->getX() << " " << (int)v1->getY() << std::endl;
+//                std::cout << (int)vp->getX() << " " << (int)vp->getY() << std::endl;
+//            }
+//            std::cout << "error reported" << std::endl;
+//        }
+
+        //cv::Mat b(a.size()*4, CV_8UC1);
+        cv::flip(a, a, 0);
+        cv::resize(a, a, a.size()*6, 0, 0, cv::INTER_NEAREST);
+        cv::imshow("Local Surface", a);
+
     }
 
     return max_inliers;
 
 }
 
+double vCircleObserver::gradient(double &cx, double &cy, double &cr)
+{
+    std::vector<double> ms, bs;
+    emorph::vQueue q = window->getSMARTSURF(sRadius);
+    emorph::AddressEvent *vr = window->getMostRecent()->getAs<emorph::AddressEvent>();
+    for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
+        emorph::AddressEvent * v = (*qi)->getAs<emorph::AddressEvent>();
+        emorph::vQueue g = window->getSURF(v->getX(), v->getY(), 1, v->getPolarity());
+        if(g.size() < 3) continue;
+        double dxdt = 0, dydt = 0;
+        int c = 0;
+        for(int i = 0; i < g.size(); i++)  {
+            for(int j = i+1; j < g.size(); j++) {
+                if(i == j) continue;
+                emorph::AddressEvent * v1 = g[i]->getAs<emorph::AddressEvent>();
+                emorph::AddressEvent * v2 = g[j]->getAs<emorph::AddressEvent>();
+                if(v1->getX() == v2->getX()) {
+                    dxdt += (double)(v1->getX() - v2->getX()) / (double)(v1->getStamp() - v2->getStamp());
+                    cx++;
+                }
+                if(v1->getY() == v2->getY()) {
+                    dydt += (double)(v1->getY() - v2->getY()) / (double)(v1->getStamp() - v2->getStamp());
+                    cy++;
+                }
+
+            }
+        }
+        if(cx == 0 || cy == 0) continue;
+        dxdt /= cx;
+        dydt /= cy;
+        double m = atan2(dydt, dxdt);
+        ms.push_back(m);
+        double b = v->getY() - m * v->getX();
+        bs.push_back(b);
+    }
+
+    double x1 = -sRadius, x2 = sRadius;
+    double cts = vr->getStamp();
+    cv::Mat a(sRadius*2+1, sRadius*2+1, CV_8UC1); a.setTo(255);
+    //plot the surface
+    for(emorph::vQueue::const_iterator qi = q.begin(); qi != q.end(); qi++) {
+        emorph::AddressEvent *vp = (*qi)->getAs<emorph::AddressEvent>();
+        double tts = vp->getStamp();
+        if(tts > cts) tts = tts - emorph::vtsHelper::maxStamp();
+        if(cts - tts > 90000) tts = cts - 90000;
+        int val = 255.0 * (cts - tts)/ 100000;
+        a.at<char>(vp->getX()-vr->getX()+sRadius, vp->getY()-vr->getY()+sRadius) = val;
+    }
+
+    //plot the gradients
+    for(int i = 0; i < ms.size(); i++) {
+        double y1 = ms[i] * x1 + bs[i];
+        double y2 = ms[i] * x2 + bs[i];
+        cv::line(a, cv::Point(x1, y1), cv::Point(x2, y2), CV_RGB(0, 0, 0), 0.5);
+    }
+
+
+    cv::flip(a, a, 0);
+    cv::resize(a, a, a.size()*6, 0, 0, cv::INTER_NEAREST);
+    cv::imshow("Local Surface", a);
+
+
+
+
+
+}
+
 double vCircleObserver::globalInlierCount(double cx, double cy, double cr)
 {
-    const emorph::vQueue& q = window.getSpatialWindow(cx, cy, cr+inlierThreshold);
+    const emorph::vQueue q = window->getSTW(cx, cy, cr+inlierThreshold);
     int inliers = 0;
     for(emorph::vQueue::const_iterator qi = q.begin(); qi != q.end(); qi++) {
         emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();

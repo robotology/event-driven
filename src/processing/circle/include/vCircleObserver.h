@@ -24,17 +24,7 @@ class vCircleObserver
 public:
 
     //data
-    emorph::activityMat activity;
-    emorph::vWindow window;
-
-
-    struct act_unit {
-        int x;
-        int y;
-        double a;
-        act_unit(int x, int y, double a): x(x), y(y), a(a) {}
-    };
-    std::vector<act_unit> localActivity;
+    emorph::vWindow *window;
 
     double cx, cy, cr;
 
@@ -42,57 +32,41 @@ public:
     int width;
     int height;
     int sRadius;
-    int tRadius;
-
+    int windowSize;
     int iterations;
     int minVsReq4RANSAC;
-    int windowSize;
     double inlierThreshold;
 
+    //old parameters
+    bool stepbystep;
+    int tRadius;
+
     //private functions
-    void createLocalSearch(int x, int y);
-    void pointTrim(int x, int y);
-    void linearTrim(int x1, int y1, int x2, int y2);
-    cv::Mat createLocalActivityWindow(int x, int y);
-    double calculateCircleActivity(int cx, int cy, int r);
-
-
-
-
-public:
-
-    vCircleObserver(int width = 128, int height = 128,
-            int sRadius = 6, int tRadius = 8,
-            double aDecay = 1000, double aInject = 5, int aRegion = 0)
-        : sRadius(sRadius), width(width), height(height), tRadius(tRadius) {
-
-        stepbystep = false;
-        activity = emorph::activityMat(height, width, aDecay, aInject, aRegion);
-
-        this->sRadius = 6;
-        iterations = 1;
-        minVsReq4RANSAC = 6;
-        windowSize = 20000;
-        inlierThreshold = 2;
-
-        window = emorph::vWindow(windowSize, false);
-        //window.setWindowSize(windowSize);
-    }
-
-    bool localCircleEstimate(emorph::AddressEvent &event, double &cx,
-                             double &cy, double &cr, bool showDebug = false);
-
+    //void createLocalSearch(int x, int y);
+    //void pointTrim(int x, int y);
+    //void linearTrim(int x1, int y1, int x2, int y2);
+    //cv::Mat createLocalActivityWindow(int x, int y);
+    //double calculateCircleActivity(int cx, int cy, int r);
 
     bool calculateCircle(double x1, double x2, double x3,
                          double y1, double y2, double y3,
                          double &cx, double &cy, double &cr);
 
+
+public:
+
+    vCircleObserver();
+
     void addEvent(emorph::vEvent &event);
     double RANSAC(double &cx, double &cy, double &cr);
+    double gradient(double &cx, double &cy, double &cr);
+
+//    bool localCircleEstimate(emorph::AddressEvent &event, double &cx,
+//                             double &cy, double &cr, bool showDebug = false);
 
     double globalInlierCount(double cx, double cy, double cr);
     //temporary debug stuff
-    bool stepbystep;
+
 };
 
 /*//////////////////////////////////////////////////////////////////////////////

@@ -200,8 +200,7 @@ void vCircleReader::resetFilterParams(double pvp, double pvs, double mvp,
 void vCircleReader::resetObserverParams(int width, int height, double aDec, double aInj,
                          int aRad, int oWin, int oTrim)
 {
-    circleFinder =
-            vCircleObserver(width, height, oWin, oTrim, aDec, aInj, aRad);
+    //circleFinder = vCircleObserver();
 }
 
 /**********************************************************/
@@ -212,14 +211,14 @@ void vCircleReader::onRead(emorph::vBottle &bot)
     double ransact = 0;
     double t0;
     //create event queue
-    emorph::vQueue q;
+    emorph::vQueue q = bot.get<emorph::AddressEvent>();
     //create queue iterator
     emorph::vQueue::iterator qi;
     
     // prepare output vBottle with address events extended with cluster ID (aec) and cluster events (clep)
     emorph::vBottle &outBottle = outPort.prepare();
     outBottle = bot;
-    bot.getAll(q);
+    //bot.getAll(q);
 
 //    if(debugFlag)
 //    {
@@ -233,6 +232,12 @@ void vCircleReader::onRead(emorph::vBottle &bot)
 //        }
 
 //    }
+
+    if(q.size()) {
+        double cx, cy, cr;
+        circleFinder.gradient(cx, cy, cr);
+    }
+
 
 
     for(qi = q.begin(); qi != q.end(); qi++)
@@ -258,7 +263,8 @@ void vCircleReader::onRead(emorph::vBottle &bot)
         circleFinder.addEvent(**qi);
         t0 = yarp::os::Time::now();
         //circleFinder.localCircleEstimate(*v, cx, cy, cr, false);
-        double e1 = circleFinder.RANSAC(cx, cy, cr);
+        double e1;
+        //e1 = circleFinder.RANSAC(cx, cy, cr);
         ransact += yarp::os::Time::now() - t0;
         if(e1 < circleFinder.minVsReq4RANSAC) continue;
         //continue;
@@ -271,6 +277,7 @@ void vCircleReader::onRead(emorph::vBottle &bot)
         circevent.setXSigma2(cr);
         circevent.setYSigma2(circleFinder.inlierThreshold*2);
         outBottle.addEvent(circevent);
+        cv::waitKey(1);
 
 
         continue;
