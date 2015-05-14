@@ -63,7 +63,7 @@ void vReadAndSplit::onRead(emorph::vBottle &incoming)
     for(qi = q.begin(); qi != q.end(); qi++) {
         int ch = (*qi)->getChannel();
         if(!windows.count(ch)) {
-            windows[ch] = new vWindow(128, 128, 20000, true);
+            windows[ch] = new vWindow(128, 128, windowsize, true);
         }
         windows[ch]->addEvent(**qi);
     }
@@ -77,7 +77,7 @@ void vReadAndSplit::snapshotAllWindows()
         if(snaps[wi->first]) {
             delete snaps[wi->first];
         }
-        snaps[wi->first] = new vQueue((wi->second)->getWindow());
+        snaps[wi->first] = new vQueue((wi->second)->getTW());
     }
 }
 

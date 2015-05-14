@@ -43,6 +43,10 @@ vDraw * createDrawer(std::string tag)
     if(tag == newDrawer->getTag()) return newDrawer;
     delete newDrawer;
 
+    newDrawer = new surfDraw();
+    if(tag == newDrawer->getTag()) return newDrawer;
+    delete newDrawer;
+
     return 0;
 }
 
@@ -276,7 +280,7 @@ void circleDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
 
     if(image.empty()) {
         image = cv::Mat(Xlimit, Ylimit, CV_8UC3);
-        image.setTo(0);
+        image.setTo(255);
     }
 
     if(checkStagnancy(eSet) > clearThreshold) {
@@ -293,6 +297,62 @@ void circleDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
         //we hide the radial variance in Y_sigma_2
         double w = v->getYSigma2();
         cv::circle(image, centr, r, CV_RGB(255, 0, 0), w);
+
+    }
+
+}
+
+std::string surfDraw::getTag()
+{
+    return "SURF";
+}
+
+void surfDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
+{
+
+    image = cv::Mat(Xlimit, Ylimit*2, CV_8UC3);
+    image.setTo(0);
+
+    if(eSet.empty()) return;
+    if(checkStagnancy(eSet) > clearThreshold) return;
+
+    double cts = eSet.back()->getStamp();
+
+    emorph::vQueue::const_reverse_iterator qi;
+    for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
+        emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
+        if(!v) continue;
+
+        //cpc[blue][green][red]
+
+        if(v->getPolarity())
+        {
+            cv::Vec3b cpc = image.at<cv::Vec3b>(v->getX(), v->getY());
+            if(cpc[1]) continue;
+
+            double tts = v->getStamp();
+            if(tts > cts) tts = tts - emorph::vtsHelper::maxStamp();
+            if(cts - tts > gradient) continue;
+            int val = 255 - 255.0 * (cts - tts)/ gradient;
+            cpc[1] = std::max(val, 0);
+            image.at<cv::Vec3b>(v->getX(), v->getY()) = cpc;
+
+        }
+        else
+        {
+            cv::Vec3b cpc = image.at<cv::Vec3b>(v->getX(), v->getY()+Ylimit);
+            if(cpc[2]) continue;
+
+            double tts = v->getStamp();
+            if(tts > cts) tts = tts - emorph::vtsHelper::maxStamp();
+            if(cts - tts > gradient) continue;
+            int val = 255 - 255 * (cts - tts) / gradient;
+            cpc[2] = std::max(val, 0);
+            cpc[0] = std::max(val, 0);
+            image.at<cv::Vec3b>(v->getX(), v->getY()+Ylimit) = cpc;
+        }
+
+
 
     }
 
