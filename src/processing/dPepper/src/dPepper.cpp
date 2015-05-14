@@ -136,11 +136,11 @@ void dPepperIO::onRead(emorph::vBottle &bot)
         emorph::vQueue tw;
         if(v->getChannel()) {
             rightWindow.addEvent(**qi);
-            tw = rightWindow.getSpatialWindow(v->getX(), v->getY(), spatialSize);
+            tw = rightWindow.getSTW(v->getX(), v->getY(), spatialSize);
         }
         else {
             leftWindow.addEvent(**qi);
-            tw = leftWindow.getSpatialWindow(v->getX(), v->getY(), spatialSize);
+            tw = leftWindow.getSTW(v->getX(), v->getY(), spatialSize);
         }
 
         bool addit = false;

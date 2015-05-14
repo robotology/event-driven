@@ -57,6 +57,7 @@ public:
     ///
     vWindow(int width = 128, int height = 128, int duration = 20000, bool asynch = true);
 
+    vWindow(const vWindow&);
     vWindow operator=(const vWindow&);
 
     ///
@@ -82,7 +83,7 @@ public:
     /// \brief getWindow
     /// \return
     ///
-    const vQueue getWindow();
+    const vQueue getTW();
 
     ///
     /// \brief getSpatialWindow returns AddressEvents within a spatial window
@@ -91,7 +92,7 @@ public:
     /// \param d distance of the half-length of a square window
     /// \return a vQueue containing a copy of the events
     ///
-    const vQueue getSpatialWindow(int x, int y, int d);
+    const vQueue getSTW(int x, int y, int d);
 
     ///
     /// \brief getSpatialWindow returns AddressEvents within a spatial window
@@ -101,8 +102,15 @@ public:
     /// \param yh upper y value of window
     /// \return a vQueue containing a copy of the events
     ///
-    const vQueue getSpatialWindow(int xl, int xh, int yl, int yh);
+    const vQueue getSTW(int xl, int xh, int yl, int yh);
 
+    const vQueue getSMARTSTW(int d);
+
+
+    const vQueue getSURF(int pol);
+    const vQueue getSMARTSURF(int d);
+    const vQueue getSURF(int x, int y, int d, int pol);
+    const vQueue getSURF(int xl, int xh, int yl, int yh, int pol);
 
 
 };

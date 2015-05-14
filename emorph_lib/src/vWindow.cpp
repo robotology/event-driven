@@ -31,10 +31,10 @@ vWindow::vWindow(int width, int height, int duration, bool asynch)
     }
 }
 
-//vWindow::vWindow(const vWindow& that)
-//{
-//    *this = that;
-//}
+vWindow::vWindow(const vWindow& that)
+{
+    *this = that;
+}
 
 vWindow vWindow::operator=(const vWindow& that)
 {
@@ -90,7 +90,7 @@ void vWindow::addEvent(vEvent &event)
 
 }
 
-const vQueue vWindow::getWindow()
+const vQueue vWindow::getTW()
 {
     mutex.wait();
     vQueue qcopy = q.copy(asynchronous);
@@ -100,20 +100,32 @@ const vQueue vWindow::getWindow()
 
 }
 
-
-const vQueue vWindow::getSpatialWindow(int x, int y, int d)
+const vQueue vWindow::getSMARTSTW(int d)
 {
-    return getSpatialWindow(x - d, x + d, y - d, y + d);
+    vQueue tw(asynchronous);
+    AddressEvent *v = 0;
+    for(vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
+        v = (*qi)->getAs<AddressEvent>();
+        if(v) break;
+    }
+    if(!v) return tw;
+    getSTW(v->getX(), v->getY(), d);
+    return tw;
 }
 
-const vQueue vWindow::getSpatialWindow(int xl, int xh, int yl, int yh)
+const vQueue vWindow::getSTW(int x, int y, int d)
+{
+    return getSTW(x - d, x + d, y - d, y + d);
+}
+
+const vQueue vWindow::getSTW(int xl, int xh, int yl, int yh)
 {
     vQueue qcopy(asynchronous);
 
     xl = std::max(xl, 0);
     xh = std::min(xh, width);
     yl = std::max(yl, 0);
-    yh = std::max(yh, height);
+    yh = std::min(yh, height);
 
     //critical section
     mutex.wait();
@@ -131,20 +143,74 @@ const vQueue vWindow::getSpatialWindow(int xl, int xh, int yl, int yh)
 
 
 
+//    vQueue qcopy2(asynchronous);
 //    vQueue::iterator qi;
 //    for (qi = q.begin(); qi != q.end(); qi++) {
 //        AddressEvent *v = (*qi)->getAs<AddressEvent>();
 //        if(!v) continue;
 //        int x = v->getX(); int y = v->getY();
 //        if(x < xl || x > xh || y < yl || y > yh) continue;
-//        qcopy.push_back(*qi);
+//        qcopy2.push_back(*qi);
 //    }
+//    std::cout << qcopy.size() << " " << qcopy2.size() << std::endl;
 
     mutex.post();
 
     return qcopy;
 
 }
+
+const vQueue vWindow::getSURF(int pol)
+{
+    return getSURF(0, width, 0, height, pol);
+}
+
+const vQueue vWindow::getSMARTSURF(int d) {
+    AddressEvent *v = 0;
+    for(vQueue::reverse_iterator qi = q.rbegin(); qi != q.rend(); qi++) {
+        v = (*qi)->getAs<AddressEvent>();
+        if(v) break;
+    }
+    if(!v) return vQueue(asynchronous);
+    return getSURF(v->getX(), v->getY(), d, v->getPolarity());
+}
+
+const vQueue vWindow::getSURF(int x, int y, int d, int pol)
+{
+    return getSURF(x - d, x + d, y - d, y + d, pol);
+}
+
+const vQueue vWindow::getSURF(int xl, int xh, int yl, int yh, int pol)
+{
+    vQueue qcopy(asynchronous);
+
+    xl = std::max(xl, 0);
+    xh = std::min(xh, width-1);
+    yl = std::max(yl, 0);
+    yh = std::min(yh, height-1);
+
+    //critical section
+    mutex.wait();
+
+    for(int y = yl; y <= yh; y++) {
+        for(int x = xl; x <= xh; x++) {
+            for(int t = spatial[y][x].size()-1; t > -1; t--) {
+                if(spatial[y][x][t]->getPolarity() == pol) {
+                    qcopy.push_back(spatial[y][x][t]);
+                    break;
+                }
+            }
+        }
+    }
+
+    mutex.post();
+
+    return qcopy;
+
+}
+
+
+
 
 vEvent *vWindow::getMostRecent()
 {

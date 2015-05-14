@@ -104,7 +104,7 @@ void vQueue::pop_front()
 
 vQueue::vQueue(const vQueue& that)
 {
-    std::cout << "vQ:vQ(const vQ &)" << std::endl;
+    //std::cout << "vQ:vQ(const vQ &)" << std::endl;
     this->owner = that.owner;
     for(vQueue::const_iterator qi = that.begin(); qi != that.end(); qi++)
         this->push_back(*qi);
