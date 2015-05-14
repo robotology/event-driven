@@ -99,6 +99,7 @@ public:
     int getStamp() const            { return stamp;         }
 
     virtual int getChannel() const  { return -1;            }
+    virtual int getPolarity() const { return -1;            }
 
     virtual vEvent &operator=(const vEvent &event);
     virtual bool operator==(const vEvent &event);
@@ -138,7 +139,7 @@ public:
 
     //these are new the member get functions
     int getChannel() const                      { return channel;       }
-    unsigned char getPolarity() const           { return polarity;      }
+    int getPolarity() const                     { return polarity;      }
     unsigned char getX() const                  { return x;             }
     unsigned char getY() const                  { return y;             }
 
