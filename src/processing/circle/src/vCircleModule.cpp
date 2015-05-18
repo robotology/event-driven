@@ -233,10 +233,10 @@ void vCircleReader::onRead(emorph::vBottle &bot)
 
 //    }
 
-    if(q.size()) {
-        double cx, cy, cr;
-        circleFinder.gradient(cx, cy, cr);
-    }
+    //if(q.size()) {
+    //    double cx, cy, cr;
+    //    circleFinder.gradient(cx, cy, cr);
+    //}
 
 
 
@@ -264,7 +264,7 @@ void vCircleReader::onRead(emorph::vBottle &bot)
         t0 = yarp::os::Time::now();
         //circleFinder.localCircleEstimate(*v, cx, cy, cr, false);
         double e1;
-        //e1 = circleFinder.RANSAC(cx, cy, cr);
+        e1 = circleFinder.RANSAC(cx, cy, cr);
         ransact += yarp::os::Time::now() - t0;
         if(e1 < circleFinder.minVsReq4RANSAC) continue;
         //continue;

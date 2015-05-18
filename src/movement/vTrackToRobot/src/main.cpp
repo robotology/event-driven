@@ -14,13 +14,16 @@
  * Public License for more details
  */
 
-
+#include "yarp/dev/all.h"
 #include "vTrackToRobot.h"
+YARP_DECLARE_DEVICES(icubmod)
 
 int main(int argc, char * argv[])
 {
     /* initialize yarp network */
     yarp::os::Network::init();
+
+    YARP_REGISTER_DEVICES(icubmod);
 
     /* create the module */
     vTrackToRobotModule module;

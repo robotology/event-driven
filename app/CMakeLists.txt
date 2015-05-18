@@ -20,6 +20,7 @@ SET(ICUB_APPLICATIONS_PREFIX "$ENV{ICUB_ROOT}"  CACHE PATH "Application path pre
 add_subdirectory(vAnalysis)
 add_subdirectory(vView)
 add_subdirectory(vCalib)
+add_subdirectory(vBallDemo)
 
 ## make all applications show up as single target
 #icub_app_all()

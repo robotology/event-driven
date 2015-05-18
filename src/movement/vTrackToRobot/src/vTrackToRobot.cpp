@@ -89,26 +89,29 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
     emorph::vQueue q = vBottleIn.getSorted<emorph::ClusterEventGauss>();
     yarp::sig::Vector px(2), x(3);
 
+    if(!q.size()) return;
     emorph::ClusterEventGauss * v =
             q.back()->getAs<emorph::ClusterEventGauss>();
     if(!v) return;
 
-    px[0] = v->getXCog();
-    px[1] = v->getYCog();
+    px[0] = v->getXCog(); px[1] = v->getYCog();
+    std::cout << "Pixel: " << px.toString() << std::endl;
     gazecontrol->get3DPoint(0, px, 1.0, x);
 
 
     yarp::os::Bottle& BottleOut = cartOutPort.prepare();
     BottleOut.clear();
     //add the XYZ position
-    BottleOut.add(x[0]); BottleOut.add(x[1]); BottleOut.add(x[2]);
+    //BottleOut.add(x[0]); BottleOut.add(x[1]); BottleOut.add(x[2]);
+    BottleOut.add(0.5); BottleOut.add(0.8); BottleOut.add(0.4);
     //add some buffer ints
     BottleOut.add(0.0); BottleOut.add(0.0); BottleOut.add(0.0);
     //flag that the object is detected
     BottleOut.add(1.0);
 
-    std::cout << BottleOut.toString() << std::endl;
+    std::cout << "Bottle: " << BottleOut.toString() << std::endl;
 
+    cartOutPort.write();
 
 }
 
@@ -121,14 +124,17 @@ bool vTrackToRobotModule::configure(yarp::os::ResourceFinder &rf)
 {
     //set the name of the module
     std::string moduleName =
-            rf.check("name", yarp::os::Value("autoSaccade")).asString();
+            rf.check("name", yarp::os::Value("vTrackToRobot")).asString();
     setName(moduleName.c_str());
 
     std::string method =
             rf.check("method", yarp::os::Value("usegaze")).asString();
 
     vTrackToRobot.setMethod(method);
-    vTrackToRobot.open(moduleName);
+    if(!vTrackToRobot.open(moduleName)) {
+        std::cerr << "Could Not Open vTrackToRobotModule" << std::endl;
+        return false;
+    }
 
     return true ;
 }
@@ -148,8 +154,6 @@ bool vTrackToRobotModule::close()
     yarp::os::RFModule::close();
     return true;
 }
-
-
 
 /******************************************************************************/
 bool vTrackToRobotModule::updateModule()

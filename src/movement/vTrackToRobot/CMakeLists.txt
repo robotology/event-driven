@@ -2,7 +2,7 @@
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
-SET(PROJECTNAME trackToRobot)
+SET(PROJECTNAME vTrackToRobot)
 PROJECT(${PROJECTNAME})
 
 file(GLOB source src/*.cpp)
@@ -18,6 +18,6 @@ include_directories(${PROJECT_SOURCE_DIR}/include
 
 add_executable(${PROJECTNAME} ${source} ${header})
 
-target_link_libraries(${PROJECTNAME} ${YARP_LIBRARIES} eMorphLib )
+target_link_libraries(${PROJECTNAME} ${YARP_LIBRARIES} icubmod eMorphLib )
 
 install(TARGETS ${PROJECTNAME} DESTINATION bin)
