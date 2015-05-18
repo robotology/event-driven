@@ -102,15 +102,14 @@ const vQueue vWindow::getTW()
 
 const vQueue vWindow::getSMARTSTW(int d)
 {
-    vQueue tw(asynchronous);
     AddressEvent *v = 0;
-    for(vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
+    for(vQueue::reverse_iterator qi = q.rbegin(); qi != q.rend(); qi++) {
         v = (*qi)->getAs<AddressEvent>();
         if(v) break;
     }
-    if(!v) return tw;
-    getSTW(v->getX(), v->getY(), d);
-    return tw;
+    if(!v) return vQueue(asynchronous);
+    return getSTW(v->getX(), v->getY(), d);;
+
 }
 
 const vQueue vWindow::getSTW(int x, int y, int d)
