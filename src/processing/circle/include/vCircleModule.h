@@ -43,6 +43,7 @@ private:
     bool filter_active;
     double vPos;
     double vSiz;
+    double periodstart;
 
     //this is only for debugging
     bool debugFlag;

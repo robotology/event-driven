@@ -128,6 +128,7 @@ vCircleReader::vCircleReader()
     filter = new iCub::ctrl::Kalman(A, H, Q, R);
 
     pTS = 0;
+    periodstart = yarp::os::Time::now();
     filter_active = false;
 
     circleTracker = new vCircleTracker(0.1, 0.1, 32, 16);
@@ -264,7 +265,8 @@ void vCircleReader::onRead(emorph::vBottle &bot)
         t0 = yarp::os::Time::now();
         //circleFinder.localCircleEstimate(*v, cx, cy, cr, false);
         double e1;
-        e1 = circleFinder.RANSAC(cx, cy, cr);
+        //e1 = circleFinder.RANSAC(cx, cy, cr);
+        e1 = circleFinder.oneShotObserve(cx, cy, cr);
         ransact += yarp::os::Time::now() - t0;
         if(e1 < circleFinder.minVsReq4RANSAC) continue;
         //continue;
@@ -277,7 +279,13 @@ void vCircleReader::onRead(emorph::vBottle &bot)
         circevent.setXSigma2(cr);
         circevent.setYSigma2(circleFinder.inlierThreshold*2);
         outBottle.addEvent(circevent);
-        cv::waitKey(1);
+
+        if(yarp::os::Time::now() - periodstart > 2) {
+            circleFinder.viewEvents();
+            circleFinder.gradient(cx, cy, cr);
+            cv::waitKey(5);
+            periodstart = yarp::os::Time::now();
+        }
 
 
         continue;

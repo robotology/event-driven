@@ -58,12 +58,14 @@ public:
     vCircleObserver();
 
     void addEvent(emorph::vEvent &event);
+    double oneShotObserve(double &cx, double &cy, double &cr);
     double RANSAC(double &cx, double &cy, double &cr);
     double gradient(double &cx, double &cy, double &cr);
 
-//    bool localCircleEstimate(emorph::AddressEvent &event, double &cx,
-//                             double &cy, double &cr, bool showDebug = false);
+    //bool localCircleEstimate(emorph::AddressEvent &event, double &cx,
+    //                        double &cy, double &cr, bool showDebug = false);
 
+    void viewEvents();
     double globalInlierCount(double cx, double cy, double cr);
     //temporary debug stuff
 

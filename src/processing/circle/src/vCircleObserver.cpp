@@ -319,39 +319,207 @@ double vCircleObserver::RANSAC(double &cx, double &cy, double &cr)
             cx = tx; cy = ty; cr = tr;
         }
     }
-    bool error = false;
-    if(max_inliers >= minVsReq4RANSAC) {
-        cv::Mat a(sRadius*2+1, sRadius*2+1, CV_8UC1); a.setTo(255);
-        double cts = v1->getStamp();
-        for(emorph::vQueue::const_iterator qi = q.begin(); qi != q.end(); qi++) {
-            emorph::AddressEvent *vp = (*qi)->getAs<emorph::AddressEvent>();
-            //int x = vp->getX()-v1->getX()+sRadius;
-            //int y = vp->getY()-v1->getY()+sRadius;
-            //if(x < 0 || x > 10 || y < 0 || y > 10) error = true;
-            double tts = vp->getStamp();
-            if(tts > cts) tts = tts - emorph::vtsHelper::maxStamp();
-            if(cts - tts > 90000) tts = cts - 90000;
-            int val = 255.0 * (cts - tts)/ 100000;
-            a.at<char>(vp->getX()-v1->getX()+sRadius, vp->getY()-v1->getY()+sRadius) = val;
-        }
-//        if(error) {
-//            for(emorph::vQueue::const_iterator qi = q.begin(); qi != q.end(); qi++) {
-//                emorph::AddressEvent *vp = (*qi)->getAs<emorph::AddressEvent>();
-//                std::cout << (int)v1->getX() << " " << (int)v1->getY() << std::endl;
-//                std::cout << (int)vp->getX() << " " << (int)vp->getY() << std::endl;
-//            }
-//            std::cout << "error reported" << std::endl;
+//    bool error = false;
+//    if(max_inliers >= minVsReq4RANSAC) {
+//        cv::Mat a(sRadius*2+1, sRadius*2+1, CV_8UC1); a.setTo(255);
+//        double cts = v1->getStamp();
+//        for(emorph::vQueue::const_iterator qi = q.begin(); qi != q.end(); qi++) {
+//            emorph::AddressEvent *vp = (*qi)->getAs<emorph::AddressEvent>();
+//            //int x = vp->getX()-v1->getX()+sRadius;
+//            //int y = vp->getY()-v1->getY()+sRadius;
+//            //if(x < 0 || x > 10 || y < 0 || y > 10) error = true;
+//            double tts = vp->getStamp();
+//            if(tts > cts) tts = tts - emorph::vtsHelper::maxStamp();
+//            if(cts - tts > 90000) tts = cts - 90000;
+//            int val = 255.0 * (cts - tts)/ 100000;
+//            a.at<char>(vp->getX()-v1->getX()+sRadius, vp->getY()-v1->getY()+sRadius) = val;
 //        }
+////        if(error) {
+////            for(emorph::vQueue::const_iterator qi = q.begin(); qi != q.end(); qi++) {
+////                emorph::AddressEvent *vp = (*qi)->getAs<emorph::AddressEvent>();
+////                std::cout << (int)v1->getX() << " " << (int)v1->getY() << std::endl;
+////                std::cout << (int)vp->getX() << " " << (int)vp->getY() << std::endl;
+////            }
+////            std::cout << "error reported" << std::endl;
+////        }
 
-        //cv::Mat b(a.size()*4, CV_8UC1);
-        cv::flip(a, a, 0);
-        cv::resize(a, a, a.size()*6, 0, 0, cv::INTER_NEAREST);
-        cv::imshow("Local Surface", a);
+//        //cv::Mat b(a.size()*4, CV_8UC1);
+//        cv::flip(a, a, 0);
+//        cv::resize(a, a, a.size()*6, 0, 0, cv::INTER_NEAREST);
+//        cv::imshow("Local Surface", a);
 
-    }
+//    }
 
     return max_inliers;
 
+}
+
+double vCircleObserver::oneShotObserve(double &cx, double &cy, double &cr)
+{
+    //emorph::vEvent *v = window->getMostRecent();
+    //if(!v) return -1;
+    //emorph::AddressEvent *av = v->getAs<emorph::AddressEvent>();
+
+    emorph::vQueue q = window->getSMARTSURF(sRadius);
+    q.sort();
+
+    if(q.size() < minVsReq4RANSAC) return -1;
+
+    int pi1, pi2, pi3;
+
+    //this will only work for asynchronous windows
+    emorph::AddressEvent *v1 = window->getMostRecent()->getAs<emorph::AddressEvent>();
+    for(pi1 = 0; pi1 < q.size(); pi1++)
+        if(q[pi1] == v1) break;
+
+    if(pi1 == 0) {
+        pi2 = q.size()-1;
+        pi3 = q.size()-2;
+    } else if(pi1 == 1) {
+        pi2 = 0;
+        pi3 = q.size()-1;
+    } else {
+        pi2 = pi1 - 1;
+        pi3 = pi1 - 2;
+    }
+
+    emorph::AddressEvent *v2 = q[pi2]->getAs<emorph::AddressEvent>();
+    emorph::AddressEvent *v3 = q[pi3]->getAs<emorph::AddressEvent>();
+
+
+    bool madeCircle = calculateCircle(v1->getX(), v2->getX(), v3->getX(),
+                                      v1->getY(), v2->getY(), v3->getY(),
+                                      cx, cy, cr);
+
+    if(!madeCircle) return 0;
+    if(cr < 2*inlierThreshold) return 0;
+
+    int inliers = 0;
+    for(emorph::vQueue::const_iterator qi = q.begin(); qi != q.end(); qi++) {
+        emorph::AddressEvent *vp = (*qi)->getAs<emorph::AddressEvent>();
+        double sqerror = fabs(pow(vp->getX() - cx, 2.0) + pow(vp->getY() - cy, 2.0)
+                              - pow(cr, 2.0));
+        if(sqerror < inlierThreshold) {
+            inliers++;
+        }
+    }
+
+    return inliers;
+
+}
+
+void vCircleObserver::viewEvents()
+{
+    emorph::vQueue q = window->getSMARTSURF(sRadius);
+    q.sort();
+
+    int pi1, pi2, pi3;
+    int max_inliers = 0;
+
+    //this will only work for asynchronous windows
+    emorph::AddressEvent *v1 =
+            window->getMostRecent()->getAs<emorph::AddressEvent>();
+    for(pi1 = 0; pi1 < q.size(); pi1++)
+        if(q[pi1] == v1) break;
+
+    if(pi1 == 0) {
+        pi2 = q.size()-1;
+        pi3 = q.size()-2;
+    } else if(pi1 == 1) {
+        pi2 = 0;
+        pi3 = q.size()-1;
+    } else {
+        pi2 = pi1 - 1;
+        pi3 = pi1 - 2;
+    }
+
+    emorph::AddressEvent *recv1 = q[pi1]->getAs<emorph::AddressEvent>();
+    emorph::AddressEvent *recv2 = q[pi2]->getAs<emorph::AddressEvent>();
+    emorph::AddressEvent *recv3 = q[pi3]->getAs<emorph::AddressEvent>();
+
+
+    emorph::AddressEvent *ranv1 = v1, *ranv2, *ranv3;
+
+
+    for(int i = 0; i < 100; i++) {
+
+        pi2 = pi1;
+        while(pi2 == pi1) {
+            pi2 = rand() % q.size();
+        }
+        pi3 = pi1;
+        while(pi3 == pi1 || pi3 == pi2) {
+           pi3 = rand() % q.size();
+        }
+
+        emorph::AddressEvent *v2 = q[pi2]->getAs<emorph::AddressEvent>();
+        emorph::AddressEvent *v3 = q[pi3]->getAs<emorph::AddressEvent>();
+
+        double tx, ty, tr;
+        bool madeCircle = calculateCircle(v1->getX(), v2->getX(), v3->getX(),
+                v1->getY(), v2->getY(), v3->getY(), tx, ty, tr);
+        if(!madeCircle) continue;
+
+        if(tr < 2*inlierThreshold) continue;
+        int inliers = 0;
+        for(emorph::vQueue::const_iterator qi = q.begin(); qi != q.end(); qi++) {
+            emorph::AddressEvent *vp = (*qi)->getAs<emorph::AddressEvent>();
+            double sqerror = fabs(pow(vp->getX() - tx, 2.0) + pow(vp->getY() - ty, 2.0)
+                                 - pow(tr, 2.0));
+            if(sqerror < inlierThreshold) {
+                inliers++;
+            }
+        }
+
+        //if(error < min_error) {
+        if(inliers > max_inliers) {
+            max_inliers = inliers;
+            cx = tx; cy = ty; cr = tr;
+            ranv2 = v2; ranv3 = v3;
+        }
+    }
+
+
+
+
+    cv::Mat a(sRadius*2+1, sRadius*2+1, CV_8UC1); a.setTo(255);
+    double cts = v1->getStamp();
+    for(emorph::vQueue::const_iterator qi = q.begin(); qi != q.end(); qi++) {
+        emorph::AddressEvent *vp = (*qi)->getAs<emorph::AddressEvent>();
+        //int x = vp->getX()-v1->getX()+sRadius;
+        //int y = vp->getY()-v1->getY()+sRadius;
+        //if(x < 0 || x > 10 || y < 0 || y > 10) error = true;
+        double tts = vp->getStamp();
+        if(tts > cts) tts = tts - emorph::vtsHelper::maxStamp();
+        if(cts - tts > 190000) tts = cts - 190000;
+        int val = 255.0 * (cts - tts)/ 200000;
+        a.at<char>(vp->getX()-v1->getX()+sRadius, vp->getY()-v1->getY()+sRadius) = val;
+    }
+    int s = 20;
+    cv::resize(a, a, a.size()*s, 0, 0, cv::INTER_NEAREST);
+
+    cv::Mat b(a.size(), CV_8UC3);
+    cv::cvtColor(a, b, CV_GRAY2BGR);
+    int x, y;
+
+    x = (recv1->getX()-v1->getX()+sRadius)*s+s/2; y = (recv1->getY()-v1->getY()+sRadius)*s+s/2;
+    cv::circle(b, cv::Point(y, x), 5, CV_RGB(255, 0, 0), CV_FILLED);
+    x = (recv2->getX()-v1->getX()+sRadius)*s+s/2; y = (recv2->getY()-v1->getY()+sRadius)*s+s/2;
+    cv::circle(b, cv::Point(y, x), 5, CV_RGB(255, 0, 0), CV_FILLED);
+    x = (recv3->getX()-v1->getX()+sRadius)*s+s/2; y = (recv3->getY()-v1->getY()+sRadius)*s+s/2;
+    cv::circle(b, cv::Point(y, x), 5, CV_RGB(255, 0, 0), CV_FILLED);
+
+    x = (ranv1->getX()-v1->getX()+sRadius)*s+s/2; y = (ranv1->getY()-v1->getY()+sRadius)*s+s/2;
+    cv::circle(b, cv::Point(y, x), 3, CV_RGB(0, 255, 0), CV_FILLED);
+    x = (ranv2->getX()-v1->getX()+sRadius)*s+s/2; y = (ranv2->getY()-v1->getY()+sRadius)*s+s/2;
+    cv::circle(b, cv::Point(y, x), 3, CV_RGB(0, 255, 0), CV_FILLED);
+    x = (ranv3->getX()-v1->getX()+sRadius)*s+s/2; y = (ranv3->getY()-v1->getY()+sRadius)*s+s/2;
+    cv::circle(b, cv::Point(y, x), 3, CV_RGB(0, 255, 0), CV_FILLED);
+
+
+
+    cv::flip(b, b, 0);
+    cv::imshow("Local Surface", b);
 }
 
 double vCircleObserver::gradient(double &cx, double &cy, double &cr)
@@ -364,17 +532,17 @@ double vCircleObserver::gradient(double &cx, double &cy, double &cr)
         emorph::vQueue g = window->getSURF(v->getX(), v->getY(), 1, v->getPolarity());
         if(g.size() < 3) continue;
         double dxdt = 0, dydt = 0;
-        int c = 0;
+        int cx = 0, cy = 0;
         for(int i = 0; i < g.size(); i++)  {
             for(int j = i+1; j < g.size(); j++) {
                 if(i == j) continue;
                 emorph::AddressEvent * v1 = g[i]->getAs<emorph::AddressEvent>();
                 emorph::AddressEvent * v2 = g[j]->getAs<emorph::AddressEvent>();
-                if(v1->getX() == v2->getX()) {
+                if(v1->getY() == v2->getY()) {
                     dxdt += (double)(v1->getX() - v2->getX()) / (double)(v1->getStamp() - v2->getStamp());
                     cx++;
                 }
-                if(v1->getY() == v2->getY()) {
+                if(v1->getX() == v2->getX()) {
                     dydt += (double)(v1->getY() - v2->getY()) / (double)(v1->getStamp() - v2->getStamp());
                     cy++;
                 }
@@ -387,6 +555,7 @@ double vCircleObserver::gradient(double &cx, double &cy, double &cr)
         double m = atan2(dydt, dxdt);
         ms.push_back(m);
         double b = v->getY() - m * v->getX();
+        b = (v->getY() - vr->getY() + sRadius) -m * (v->getX() - vr->getX() + sRadius);
         bs.push_back(b);
     }
 
@@ -398,8 +567,8 @@ double vCircleObserver::gradient(double &cx, double &cy, double &cr)
         emorph::AddressEvent *vp = (*qi)->getAs<emorph::AddressEvent>();
         double tts = vp->getStamp();
         if(tts > cts) tts = tts - emorph::vtsHelper::maxStamp();
-        if(cts - tts > 90000) tts = cts - 90000;
-        int val = 255.0 * (cts - tts)/ 100000;
+        if(cts - tts > 190000) tts = cts - 190000;
+        int val = 255.0 * (cts - tts)/ 200000;
         a.at<char>(vp->getX()-vr->getX()+sRadius, vp->getY()-vr->getY()+sRadius) = val;
     }
 
@@ -412,12 +581,8 @@ double vCircleObserver::gradient(double &cx, double &cy, double &cr)
 
 
     cv::flip(a, a, 0);
-    cv::resize(a, a, a.size()*6, 0, 0, cv::INTER_NEAREST);
-    cv::imshow("Local Surface", a);
-
-
-
-
+    cv::resize(a, a, a.size()*20, 0, 0, cv::INTER_NEAREST);
+    cv::imshow("Local Gradients", a);
 
 }
 
