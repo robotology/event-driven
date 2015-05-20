@@ -27,9 +27,9 @@ vCircleObserver::vCircleObserver() {
     windowSize = 200000;
 
     tRadius = 8;
-    sRadius = 5;
+    sRadius = 10;
     iterations = 5;
-    minVsReq4RANSAC = 8;
+    minVsReq4RANSAC = 15;
 
 
 
@@ -246,6 +246,9 @@ bool vCircleObserver::calculateCircle(double x1, double x2, double x3,
         cy = -1 * (cx - (x2+x3)/2.0)/mb + (y2+y3)/2.0;
 
     cr = sqrt(pow(cx - x1, 2.0) + pow(cy - y1, 2.0));
+    double cr1 = cr;
+    double cr2 = sqrt(pow(cx - x2, 2.0) + pow(cy - y2, 2.0));
+    double cr3 = sqrt(pow(cx - x3, 2.0) + pow(cy - y3, 2.0));
 
     if(cx != cx) {
         std::cout << "error: cx == NaN" << std::endl;
@@ -522,44 +525,19 @@ void vCircleObserver::viewEvents()
     cv::imshow("Local Surface", b);
 }
 
-double vCircleObserver::gradient(double &cx, double &cy, double &cr)
+int vCircleObserver::gradientView()
 {
+
+    int MIN4GRAD = 5;
+    emorph::vQueue test1 = window->getSMARTSURF(1);
+    if(test1.size() < MIN4GRAD) return -1;
+
     std::vector<double> ms, bs;
     emorph::vQueue q = window->getSMARTSURF(sRadius);
     emorph::AddressEvent *vr = window->getMostRecent()->getAs<emorph::AddressEvent>();
-    for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
-        emorph::AddressEvent * v = (*qi)->getAs<emorph::AddressEvent>();
-        emorph::vQueue g = window->getSURF(v->getX(), v->getY(), 1, v->getPolarity());
-        if(g.size() < 3) continue;
-        double dxdt = 0, dydt = 0;
-        int cx = 0, cy = 0;
-        for(int i = 0; i < g.size(); i++)  {
-            for(int j = i+1; j < g.size(); j++) {
-                if(i == j) continue;
-                emorph::AddressEvent * v1 = g[i]->getAs<emorph::AddressEvent>();
-                emorph::AddressEvent * v2 = g[j]->getAs<emorph::AddressEvent>();
-                if(v1->getY() == v2->getY()) {
-                    dxdt += (double)(v1->getX() - v2->getX()) / (double)(v1->getStamp() - v2->getStamp());
-                    cx++;
-                }
-                if(v1->getX() == v2->getX()) {
-                    dydt += (double)(v1->getY() - v2->getY()) / (double)(v1->getStamp() - v2->getStamp());
-                    cy++;
-                }
 
-            }
-        }
-        if(cx == 0 || cy == 0) continue;
-        dxdt /= cx;
-        dydt /= cy;
-        double m = atan2(dydt, dxdt);
-        ms.push_back(m);
-        double b = v->getY() - m * v->getX();
-        b = (v->getY() - vr->getY() + sRadius) -m * (v->getX() - vr->getX() + sRadius);
-        bs.push_back(b);
-    }
-
-    double x1 = -sRadius, x2 = sRadius;
+    int scale = 20;
+    double x1 = 0, x2 = sRadius*2+1;
     double cts = vr->getStamp();
     cv::Mat a(sRadius*2+1, sRadius*2+1, CV_8UC1); a.setTo(255);
     //plot the surface
@@ -571,18 +549,332 @@ double vCircleObserver::gradient(double &cx, double &cy, double &cr)
         int val = 255.0 * (cts - tts)/ 200000;
         a.at<char>(vp->getX()-vr->getX()+sRadius, vp->getY()-vr->getY()+sRadius) = val;
     }
+    cv::Mat colour(a.size(), CV_8UC3);
+    cv::cvtColor(a, colour, CV_GRAY2BGR);
+    cv::resize(colour, colour, colour.size()*scale, 0, 0, cv::INTER_NEAREST);
+//    cv::imshow("Local Gradients", colour);
+//    cvWaitKey(10);
 
-    //plot the gradients
-    for(int i = 0; i < ms.size(); i++) {
-        double y1 = ms[i] * x1 + bs[i];
-        double y2 = ms[i] * x2 + bs[i];
-        cv::line(a, cv::Point(x1, y1), cv::Point(x2, y2), CV_RGB(0, 0, 0), 0.5);
+
+
+    for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
+        emorph::AddressEvent * v = (*qi)->getAs<emorph::AddressEvent>();
+        emorph::vQueue g = window->getSURF(v->getX(), v->getY(), 1, v->getPolarity());
+        if(g.size() < MIN4GRAD) continue;
+        double dtdx = 0, dtdy = 0;
+        int cntx = 0, cnty = 0;
+        for(int i = 0; i < g.size(); i++)  {
+            for(int j = i+1; j < g.size(); j++) {
+                emorph::AddressEvent * v1 = g[i]->getAs<emorph::AddressEvent>();
+                emorph::AddressEvent * v2 = g[j]->getAs<emorph::AddressEvent>();
+                if(v1->getY() == v2->getY()) {
+                    dtdx += (double)(v1->getStamp() - v2->getStamp()) / (double)(v1->getX() - v2->getX());
+                    cntx++;
+                }
+                if(v1->getX() == v2->getX()) {
+                    dtdy += (double)(v1->getStamp() - v2->getStamp()) / (double)(v1->getY() - v2->getY());
+                    cnty++;
+                }
+
+            }
+        }
+        if(cntx == 0 || cnty == 0) continue;
+        dtdx /= cntx;
+        dtdy /= cnty;
+        double m = dtdy / dtdx; //atan2(dxdt, dydt);
+        double b = v->getY() - m * v->getX();
+        b = (v->getY() - vr->getY() + sRadius) -m * (v->getX() - vr->getX() + sRadius);
+
+        if(v == vr) {
+            ms.insert(ms.begin(), 1, m);
+            bs.insert(bs.begin(), 1, b);
+        } else {
+            ms.push_back(m);
+            bs.push_back(b);
+        }
+
+        double y1 = (ms.back() * x1 + bs.back());
+        double y2 = (ms.back() * x2 + bs.back());
+        //cv::Mat wrec = colour.clone();
+        cv::line(colour, cv::Point((y1)*scale, (x1)*scale), cv::Point((y2)*scale, (x2)*scale), CV_RGB(255, 0, 0), 0.5);
+
+
+        //cv::Rect rw(cv::Point((tfy)*scale, (tfx)*scale), cv::Size(3*scale, 3*scale));
+        //cv::rectangle(wrec, rw, CV_RGB(0, 0, 255));
+        //cv::imshow("Local Gradients", colour);
+        //cv::waitKey(100);
+        //std::cout << "dtdx: " << dtdx << "dtdy: " << dtdy << " m: " << m << " b: " << b << std::endl;
+        //cv::waitKey();
+
+    }
+
+    if(ms.size() < 3) return -1;
+
+    double cx, cy, cr_scaled;
+    int inliers = 0, max_inliers = 0;
+
+    int pi1, pi2;
+    for(int i = 0; i < 100; i++) {
+        pi1 = 0; //rand() % ms.size();
+
+        pi2 = pi1;
+        while(pi2 == pi1)
+                pi2 = rand() % ms.size();
+
+        if(ms[pi1] == ms[pi2]) continue;
+        double xc = (bs[pi2] - bs[pi1]) / (ms[pi1] - ms[pi2]);
+        double yc = (ms[pi1]*bs[pi2] - ms[pi2]*bs[pi1]) / (ms[pi1] - ms[pi2]);
+
+        inliers = 0;
+        for(int j = 0; j < ms.size(); j++) {
+            double d = fabs(-ms[j]*xc + yc - bs[j]) / sqrt(pow(ms[j], 2.0) + 1);
+            if(d < 0.5)
+                inliers++;
+        }
+
+        if(inliers > max_inliers) {
+            max_inliers = inliers;
+            cx = xc;
+            cy = yc;
+
+        }
+
+
+
     }
 
 
-    cv::flip(a, a, 0);
-    cv::resize(a, a, a.size()*20, 0, 0, cv::INTER_NEAREST);
-    cv::imshow("Local Gradients", a);
+    cr_scaled = sqrt(pow(cx*scale - (sRadius+0.5)*scale, 2.0) + pow(cy*scale - (sRadius+0.5)*scale, 2.0));
+    std::cout << max_inliers << std::endl;
+    cv::circle(colour, cv::Point(cy*scale, cx*scale), 0.5*scale, CV_RGB(0, 255, 0), 0.5);
+    cv::circle(colour, cv::Point(cy*scale, cx*scale), cr_scaled, CV_RGB(0, 0, 255), 0.5);
+
+
+    cv::flip(colour, colour, 0);
+
+    cv::imshow("Local Gradients", colour);
+
+    return max_inliers;
+
+}
+
+int vCircleObserver::gradientView2()
+{
+
+    int MIN4GRAD = 5;
+    int scale = 10;
+
+    std::vector<double> ms, bs;
+    double main_m, main_b;
+    emorph::vQueue test1 = window->getSMARTSURF(1);
+    //if(test1.size() < MIN4GRAD) return -1;
+
+    emorph::vQueue q = window->getSMARTSURF(sRadius);
+    emorph::AddressEvent *vr = window->getMostRecent()->getAs<emorph::AddressEvent>();
+
+
+    double cts = vr->getStamp();
+    cv::Mat a(128, 128, CV_8UC1); a.setTo(255);
+    //plot the surface
+    for(emorph::vQueue::const_iterator qi = q.begin(); qi != q.end(); qi++) {
+        emorph::AddressEvent *vp = (*qi)->getAs<emorph::AddressEvent>();
+        double tts = vp->getStamp();
+        if(tts > cts) tts = tts - emorph::vtsHelper::maxStamp();
+        if(cts - tts > 190000) tts = cts - 190000;
+        int val = 255.0 * (cts - tts)/ 200000;
+        a.at<char>(vp->getX(), vp->getY()) = val;
+    }
+    cv::Mat colour(a.size(), CV_8UC3);
+    cv::cvtColor(a, colour, CV_GRAY2BGR);
+    //cv::resize(colour, colour, colour.size(), 0, 0, cv::INTER_NEAREST);
+//    cv::imshow("Local Gradients", colour);
+//    cvWaitKey(10);
+
+
+
+    for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
+        emorph::AddressEvent * v = (*qi)->getAs<emorph::AddressEvent>();
+        emorph::vQueue g = window->getSURF(v->getX(), v->getY(), 1, v->getPolarity());
+        if(g.size() < MIN4GRAD) continue;
+        double dtdx = 0, dtdy = 0;
+        int cntx = 0, cnty = 0;
+        for(int i = 0; i < g.size(); i++)  {
+            for(int j = i+1; j < g.size(); j++) {
+                emorph::AddressEvent * v1 = g[i]->getAs<emorph::AddressEvent>();
+                emorph::AddressEvent * v2 = g[j]->getAs<emorph::AddressEvent>();
+                if(v1->getY() == v2->getY()) {
+                    dtdx += (double)(v1->getStamp() - v2->getStamp()) / (double)(v1->getX() - v2->getX());
+                    cntx++;
+                }
+                if(v1->getX() == v2->getX()) {
+                    dtdy += (double)(v1->getStamp() - v2->getStamp()) / (double)(v1->getY() - v2->getY());
+                    cnty++;
+                }
+
+            }
+        }
+        if(cntx == 0 || cnty == 0) continue;
+        dtdx /= cntx;
+        dtdy /= cnty;
+
+        double m = dtdy / dtdx; //atan2(dxdt, dydt);
+        double b = v->getY() - m * v->getX();
+        //b = (v->getY() - vr->getY() + sRadius) -m * (v->getX() - vr->getX() + sRadius);
+
+
+        if(v == vr) {
+            main_m = m;
+            main_b = b;
+            //cv::line(colour, cv::Point(y1, x1), cv::Point(y2, x2), CV_RGB(255, 0, 255), 0.1);
+        } else {
+            ms.push_back(m);
+            bs.push_back(b);
+            //cv::line(colour, cv::Point(y1, x1), cv::Point(y2, x2), CV_RGB(255, 0, 0), 0.1);
+        }
+
+    }
+
+    if(ms.size() < 1) return -1;
+
+    double meanx = 0, meany = 0;
+    std::vector<double> cxs, cys;
+    double mincx = vr->getX()-sRadius, maxcx = vr->getX()+sRadius;
+    double mincy = vr->getY()-sRadius, maxcy = vr->getY()+sRadius;
+    for(int i = 0; i < ms.size(); i++) {
+        double xc = (bs[i] - main_b) / (main_m - ms[i]);
+        double yc = (main_m*bs[i] - ms[i]*main_b) / (main_m - ms[i]);
+        cxs.push_back(xc);
+        cys.push_back(yc);
+        meanx += xc; meany += yc;
+        mincx = std::min(mincx, xc);
+        maxcx = std::max(maxcx, xc);
+        mincy = std::min(mincy, yc);
+        maxcy = std::max(maxcy, yc);
+    }
+    mincx = std::max(mincx, 0.0); maxcx = std::min(maxcx, 127.0);
+    mincy = std::max(mincy, 0.0); maxcy = std::min(maxcy, 127.0);
+    meanx /= ms.size(); meany /= ms.size();
+
+    //cv::rectangle(colour, cv::Rect(mincy, mincx, maxcy-mincy+1, maxcx-mincx+1), CV_RGB(0, 0, 0));
+    cv::Mat subcolour = colour(cv::Rect(mincy, mincx, maxcy-mincy+1, maxcx-mincx+1));
+    cv::Mat m3;
+    cv::resize(subcolour, m3, subcolour.size()*scale, 0, 0, cv::INTER_NEAREST);
+
+    double x1 = 0; double x2 = (maxcx-mincx+1);
+    double y1 = main_m * (x1+mincx) + main_b - mincy;
+    double y2 = main_m * (x2+mincx) + main_b - mincy;
+    cv::line(m3, cv::Point(y1*scale, x1*scale), cv::Point(y2*scale, x2*scale), CV_RGB(255, 0, 255), 0.1);
+    for(int i = 0; i < ms.size(); i++) {
+
+        y1 = ms[i] * (x1+mincx) + bs[i] - mincy;
+        y2 = ms[i] * (x2+mincx) + bs[i] - mincy;
+
+        cv::circle(m3, cv::Point((cys[i]-mincy)*scale, (cxs[i]-mincx)*scale), 3, CV_RGB(0, 0, 255), CV_FILLED);
+        cv::line(m3, cv::Point(y1*scale, x1*scale), cv::Point(y2*scale, x2*scale), CV_RGB(255, 0, 0), 0.1);
+
+    }
+     cv::circle(m3, cv::Point((meany-mincy)*scale, (meanx-mincx)*scale), 4, CV_RGB(255, 0, 255), CV_FILLED);
+
+
+
+
+
+
+    cv::flip(m3, m3, 0);
+    //cv::resize(colour, colour, colour.size()*4);
+
+    cv::imshow("Local Gradients 2", m3);
+
+    return 0;
+
+}
+
+int vCircleObserver::gradient(double &cx, double &cy, double &cr)
+{
+
+    int MIN4GRAD = 6;
+    emorph::vQueue test1 = window->getSMARTSURF(1);
+    if(test1.size() < MIN4GRAD) return -1;
+
+    std::vector<double> ms, bs;
+    emorph::vQueue q = window->getSMARTSURF(sRadius);
+    emorph::AddressEvent *vr = window->getMostRecent()->getAs<emorph::AddressEvent>();
+
+    for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
+        emorph::AddressEvent * v = (*qi)->getAs<emorph::AddressEvent>();
+        emorph::vQueue g = window->getSURF(v->getX(), v->getY(), 1, v->getPolarity());
+        if(g.size() < MIN4GRAD) continue;
+        double dtdx = 0, dtdy = 0;
+        int cntx = 0, cnty = 0;
+        for(int i = 0; i < g.size(); i++)  {
+            for(int j = i+1; j < g.size(); j++) {
+                emorph::AddressEvent * v1 = g[i]->getAs<emorph::AddressEvent>();
+                emorph::AddressEvent * v2 = g[j]->getAs<emorph::AddressEvent>();
+                if(v1->getY() == v2->getY()) {
+                    dtdx += (double)(v1->getStamp() - v2->getStamp()) / (double)(v1->getX() - v2->getX());
+                    cntx++;
+                }
+                if(v1->getX() == v2->getX()) {
+                    dtdy += (double)(v1->getStamp() - v2->getStamp()) / (double)(v1->getY() - v2->getY());
+                    cnty++;
+                }
+
+            }
+        }
+        if(cntx == 0 || cnty == 0) continue;
+        dtdx /= cntx;
+        dtdy /= cnty;
+        double m = dtdy / dtdx; //atan2(dxdt, dydt);   
+        double b = v->getY() - m * v->getX();
+
+        if(v == vr) {
+            ms.insert(ms.begin(), 1, m);
+            bs.insert(bs.begin(), 1, b);
+        } else {
+            ms.push_back(m);
+            bs.push_back(b);
+        }
+
+
+    }
+
+    if(ms.size() < 3) return -1;
+
+    int inliers = 0, max_inliers = 0;
+
+    int pi1, pi2;
+    for(int i = 0; i < 100; i++) {
+        pi1 = 0; //rand() % ms.size();
+
+        pi2 = pi1;
+        while(pi2 == pi1)
+                pi2 = rand() % ms.size();
+
+        if(ms[pi1] == ms[pi2]) continue;
+        double xc = (bs[pi2] - bs[pi1]) / (ms[pi1] - ms[pi2]);
+        double yc = (ms[pi1]*bs[pi2] - ms[pi2]*bs[pi1]) / (ms[pi1] - ms[pi2]);
+
+        inliers = 0;
+        for(int j = 0; j < ms.size(); j++) {
+            double d = fabs(-ms[j]*xc + yc - bs[j]) / sqrt(pow(ms[j], 2.0) + 1);
+            if(d < 0.5)
+                inliers++;
+        }
+
+        if(inliers > max_inliers) {
+            max_inliers = inliers;
+            cx = xc;
+            cy = yc;
+
+        }
+
+
+
+    }
+
+    cr = sqrt(pow(cx - vr->getX(), 2.0) + pow(cy - vr->getY(), 2.0));
+    if(cr < 5) return -1;
+    return max_inliers;
 
 }
 

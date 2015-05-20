@@ -265,25 +265,31 @@ void vCircleReader::onRead(emorph::vBottle &bot)
         t0 = yarp::os::Time::now();
         //circleFinder.localCircleEstimate(*v, cx, cy, cr, false);
         double e1;
+        e1 = circleFinder.gradient(cx, cy, cr);
+        //cv::waitKey(10);
         //e1 = circleFinder.RANSAC(cx, cy, cr);
-        e1 = circleFinder.oneShotObserve(cx, cy, cr);
+        //e1 = circleFinder.oneShotObserve(cx, cy, cr);
         ransact += yarp::os::Time::now() - t0;
         if(e1 < circleFinder.minVsReq4RANSAC) continue;
+
+        //cv::waitKey(1000);
         //continue;
 
+        //std::cout << cr << std::endl;
 
         emorph::ClusterEventGauss circevent(*v);
         circevent.setChannel(v->getChannel());
         circevent.setXCog(cx);
         circevent.setYCog(cy);
-        circevent.setXSigma2(cr);
+        circevent.setXSigma2((int)cr);
         circevent.setYSigma2(circleFinder.inlierThreshold*2);
         outBottle.addEvent(circevent);
 
         if(yarp::os::Time::now() - periodstart > 2) {
-            circleFinder.viewEvents();
-            circleFinder.gradient(cx, cy, cr);
-            cv::waitKey(5);
+            //circleFinder.viewEvents();
+            circleFinder.gradientView();
+            circleFinder.gradientView2();
+            cv::waitKey();
             periodstart = yarp::os::Time::now();
         }
 
@@ -434,10 +440,10 @@ void vCircleReader::onRead(emorph::vBottle &bot)
     outPort.write();
 
     double tthread = yarp::os::Time::now() - tstart;
-    if(ransact > 0.001) {
-        std::cout << "On Read took " << tthread / 0.001 << "x too long (" <<
-                     100 * ransact / tthread <<  "% from RANSAC)" << std::endl;
-    }
+    //if(ransact > 0.001) {
+    //    std::cout << "On Read took " << tthread / 0.001 << "x too long (" <<
+    //                 100 * ransact / tthread <<  "% from RANSAC)" << std::endl;
+    //}
 
 }
 

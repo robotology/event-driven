@@ -60,7 +60,9 @@ public:
     void addEvent(emorph::vEvent &event);
     double oneShotObserve(double &cx, double &cy, double &cr);
     double RANSAC(double &cx, double &cy, double &cr);
-    double gradient(double &cx, double &cy, double &cr);
+    int gradient(double &cx, double &cy, double &cr);
+    int gradientView();
+    int gradientView2();
 
     //bool localCircleEstimate(emorph::AddressEvent &event, double &cx,
     //                        double &cy, double &cr, bool showDebug = false);
