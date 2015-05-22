@@ -285,11 +285,12 @@ void vCircleReader::onRead(emorph::vBottle &bot)
         circevent.setYSigma2(circleFinder.inlierThreshold*2);
         outBottle.addEvent(circevent);
 
-        if(yarp::os::Time::now() - periodstart > 2) {
+        if(true && yarp::os::Time::now() - periodstart > 5) {
             //circleFinder.viewEvents();
-            circleFinder.gradientView();
+            //circleFinder.gradientView();
+            std::cout << e1 << std::endl;
             circleFinder.gradientView2();
-            cv::waitKey();
+            cv::waitKey(20);
             periodstart = yarp::os::Time::now();
         }
 

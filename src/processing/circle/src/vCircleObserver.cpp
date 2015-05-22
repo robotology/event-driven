@@ -27,9 +27,9 @@ vCircleObserver::vCircleObserver() {
     windowSize = 200000;
 
     tRadius = 8;
-    sRadius = 10;
+    sRadius = 8;
     iterations = 5;
-    minVsReq4RANSAC = 15;
+    minVsReq4RANSAC = 60;
 
 
 
@@ -528,7 +528,7 @@ void vCircleObserver::viewEvents()
 int vCircleObserver::gradientView()
 {
 
-    int MIN4GRAD = 5;
+    int MIN4GRAD = 3;
     emorph::vQueue test1 = window->getSMARTSURF(1);
     if(test1.size() < MIN4GRAD) return -1;
 
@@ -563,21 +563,46 @@ int vCircleObserver::gradientView()
         if(g.size() < MIN4GRAD) continue;
         double dtdx = 0, dtdy = 0;
         int cntx = 0, cnty = 0;
-        for(int i = 0; i < g.size(); i++)  {
-            for(int j = i+1; j < g.size(); j++) {
-                emorph::AddressEvent * v1 = g[i]->getAs<emorph::AddressEvent>();
-                emorph::AddressEvent * v2 = g[j]->getAs<emorph::AddressEvent>();
-                if(v1->getY() == v2->getY()) {
-                    dtdx += (double)(v1->getStamp() - v2->getStamp()) / (double)(v1->getX() - v2->getX());
-                    cntx++;
-                }
-                if(v1->getX() == v2->getX()) {
-                    dtdy += (double)(v1->getStamp() - v2->getStamp()) / (double)(v1->getY() - v2->getY());
-                    cnty++;
-                }
+        std::vector<double> gxs, gys;
 
+        for(emorph::vQueue::iterator qi2 = q.begin(); qi2 != q.end(); qi2++) {
+            emorph::AddressEvent * vn = (*qi2)->getAs<emorph::AddressEvent>();
+            if(v == vn) continue;
+            if(vn->getX() == v->getX()) {
+                double grad = (double)(v->getStamp() - vn->getStamp()) / (double)(v->getY() - vn->getY());
+                gys.push_back(grad);
+            }
+            if(vn->getY() == v->getY()) {
+                double grad = (double)(v->getStamp() - vn->getStamp()) / (double)(v->getX() - vn->getX());
+                gxs.push_back(grad);
             }
         }
+
+        if(!gys.size() || !gxs.size()) continue;
+
+        //so now we have the list of gxs and gys
+        int minx = 0;
+        for(int x = 0; x < gxs.size(); x++) {
+            if(fabs(gxs[x]) < fabs(gxs[minx])) minx = x;
+        }
+        for(int x = 0; x < gxs.size(); x++) {
+            if(gxs[minx]*gxs[x] > 0) {
+                dtdx += gxs[x];
+                cntx++;
+            }
+        }
+
+        int miny = 0;
+        for(int y = 0; y < gys.size(); y++) {
+            if(fabs(gys[y]) < fabs(gys[miny])) miny = y;
+        }
+        for(int y = 0; y < gys.size(); y++) {
+            if(gys[miny]*gys[y] > 0) {
+                dtdy += gys[y];
+                cnty++;
+            }
+        }
+
         if(cntx == 0 || cnty == 0) continue;
         dtdx /= cntx;
         dtdy /= cnty;
@@ -595,16 +620,19 @@ int vCircleObserver::gradientView()
 
         double y1 = (ms.back() * x1 + bs.back());
         double y2 = (ms.back() * x2 + bs.back());
-        //cv::Mat wrec = colour.clone();
+
         cv::line(colour, cv::Point((y1)*scale, (x1)*scale), cv::Point((y2)*scale, (x2)*scale), CV_RGB(255, 0, 0), 0.5);
+        cv::imshow("Local Gradients", colour);
 
-
-        //cv::Rect rw(cv::Point((tfy)*scale, (tfx)*scale), cv::Size(3*scale, 3*scale));
-        //cv::rectangle(wrec, rw, CV_RGB(0, 0, 255));
-        //cv::imshow("Local Gradients", colour);
-        //cv::waitKey(100);
-        //std::cout << "dtdx: " << dtdx << "dtdy: " << dtdy << " m: " << m << " b: " << b << std::endl;
-        //cv::waitKey();
+//        cv::Mat wrec = colour.clone();
+//        cv::line(wrec, cv::Point((y1)*scale, (x1)*scale), cv::Point((y2)*scale, (x2)*scale), CV_RGB(255, 0, 0), 0.5);
+//        double tfy = v->getY() - vr->getY() + sRadius - 1;
+//        double tfx = (v->getX() - vr->getX() + sRadius) - 1;
+//        cv::Rect rw(cv::Point((tfy)*scale, (tfx)*scale), cv::Size(3*scale, 3*scale));
+//        cv::rectangle(wrec, rw, CV_RGB(0, 0, 255));
+//        cv::imshow("Local Gradients", wrec);
+//        //std::cout << "dtdx: " << dtdx << "dtdy: " << dtdy << " m: " << m << " b: " << b << std::endl;
+//        cv::waitKey();
 
     }
 
@@ -627,8 +655,19 @@ int vCircleObserver::gradientView()
 
         inliers = 0;
         for(int j = 0; j < ms.size(); j++) {
-            double d = fabs(-ms[j]*xc + yc - bs[j]) / sqrt(pow(ms[j], 2.0) + 1);
-            if(d < 0.5)
+            double px1 = (bs[j] - bs[pi1]) / (ms[pi1] - ms[j]);
+            double py1 = (ms[pi1]*bs[j] - ms[j]*bs[pi1]) / (ms[pi1] - ms[j]);
+            double d1 = sqrt(pow(px1-xc, 2.0)+pow(py1-yc, 2.0));
+
+            double px2 = (bs[pi2] - bs[j]) / (ms[j] - ms[pi2]);
+            double py2 = (ms[j]*bs[pi2] - ms[pi2]*bs[j]) / (ms[j] - ms[pi2]);
+            double d2 = sqrt(pow(px2-xc, 2.0)+pow(py2-yc, 2.0));
+
+            double d = std::min(d1, d2);
+
+
+            //double d = fabs(-ms[j]*xc + yc - bs[j]) / sqrt(pow(ms[j], 2.0) + 1);
+            if(d < 1)
                 inliers++;
         }
 
@@ -646,7 +685,7 @@ int vCircleObserver::gradientView()
 
     cr_scaled = sqrt(pow(cx*scale - (sRadius+0.5)*scale, 2.0) + pow(cy*scale - (sRadius+0.5)*scale, 2.0));
     std::cout << max_inliers << std::endl;
-    cv::circle(colour, cv::Point(cy*scale, cx*scale), 0.5*scale, CV_RGB(0, 255, 0), 0.5);
+    cv::circle(colour, cv::Point(cy*scale, cx*scale), 1*scale, CV_RGB(0, 255, 0), 0.5);
     cv::circle(colour, cv::Point(cy*scale, cx*scale), cr_scaled, CV_RGB(0, 0, 255), 0.5);
 
 
@@ -661,13 +700,12 @@ int vCircleObserver::gradientView()
 int vCircleObserver::gradientView2()
 {
 
-    int MIN4GRAD = 5;
+    int MIN4GRAD = 3;
     int scale = 10;
 
-    std::vector<double> ms, bs;
-    double main_m, main_b;
-    emorph::vQueue test1 = window->getSMARTSURF(1);
-    //if(test1.size() < MIN4GRAD) return -1;
+    std::vector<double> ms, bs, xs, ys, dtdys, dtdxs;
+    double main_m, main_b, main_x, main_y, main_dtdy, main_dtdx;
+    double maxgrad = 0;
 
     emorph::vQueue q = window->getSMARTSURF(sRadius);
     emorph::AddressEvent *vr = window->getMostRecent()->getAs<emorph::AddressEvent>();
@@ -694,25 +732,50 @@ int vCircleObserver::gradientView2()
 
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
         emorph::AddressEvent * v = (*qi)->getAs<emorph::AddressEvent>();
-        emorph::vQueue g = window->getSURF(v->getX(), v->getY(), 1, v->getPolarity());
-        if(g.size() < MIN4GRAD) continue;
+        //emorph::vQueue g = window->getSURF(v->getX(), v->getY(), 1, v->getPolarity());
+        //if(g.size() < MIN4GRAD) continue;
         double dtdx = 0, dtdy = 0;
         int cntx = 0, cnty = 0;
-        for(int i = 0; i < g.size(); i++)  {
-            for(int j = i+1; j < g.size(); j++) {
-                emorph::AddressEvent * v1 = g[i]->getAs<emorph::AddressEvent>();
-                emorph::AddressEvent * v2 = g[j]->getAs<emorph::AddressEvent>();
-                if(v1->getY() == v2->getY()) {
-                    dtdx += (double)(v1->getStamp() - v2->getStamp()) / (double)(v1->getX() - v2->getX());
-                    cntx++;
-                }
-                if(v1->getX() == v2->getX()) {
-                    dtdy += (double)(v1->getStamp() - v2->getStamp()) / (double)(v1->getY() - v2->getY());
-                    cnty++;
-                }
+        std::vector<double> gxs, gys;
 
+        for(emorph::vQueue::iterator qi2 = q.begin(); qi2 != q.end(); qi2++) {
+            emorph::AddressEvent * vn = (*qi2)->getAs<emorph::AddressEvent>();
+            if(v == vn) continue;
+            if(vn->getX() == v->getX()) {
+                double grad = (double)(v->getStamp() - vn->getStamp()) / (double)(v->getY() - vn->getY());
+                gys.push_back(grad);
+            }
+            if(vn->getY() == v->getY()) {
+                double grad = (double)(v->getStamp() - vn->getStamp()) / (double)(v->getX() - vn->getX());
+                gxs.push_back(grad);
             }
         }
+
+        if(!gys.size() || !gxs.size()) continue;
+
+        //so now we have the list of gxs and gys
+        int minx = 0;
+        for(int x = 0; x < gxs.size(); x++) {
+            if(fabs(gxs[x]) < fabs(gxs[minx])) minx = x;
+        }
+        for(int x = 0; x < gxs.size(); x++) {
+            if(gxs[minx]*gxs[x] > 0) {
+                dtdx += gxs[x];
+                cntx++;
+            }
+        }
+
+        int miny = 0;
+        for(int y = 0; y < gys.size(); y++) {
+            if(fabs(gys[y]) < fabs(gys[miny])) miny = y;
+        }
+        for(int y = 0; y < gys.size(); y++) {
+            if(gys[miny]*gys[y] > 0) {
+                dtdy += gys[y];
+                cnty++;
+            }
+        }
+
         if(cntx == 0 || cnty == 0) continue;
         dtdx /= cntx;
         dtdy /= cnty;
@@ -721,20 +784,60 @@ int vCircleObserver::gradientView2()
         double b = v->getY() - m * v->getX();
         //b = (v->getY() - vr->getY() + sRadius) -m * (v->getX() - vr->getX() + sRadius);
 
+        maxgrad = std::max(maxgrad, fabs(dtdx));
+        maxgrad = std::max(maxgrad, fabs(dtdy));
 
         if(v == vr) {
             main_m = m;
             main_b = b;
+            main_x = vr->getX();
+            main_y = vr->getY();
+            main_dtdy = dtdy;
+            main_dtdx = dtdx;
             //cv::line(colour, cv::Point(y1, x1), cv::Point(y2, x2), CV_RGB(255, 0, 255), 0.1);
         } else {
             ms.push_back(m);
             bs.push_back(b);
+            xs.push_back(v->getX());
+            ys.push_back(v->getY());
+            dtdys.push_back(dtdy);
+            dtdxs.push_back(dtdx);
             //cv::line(colour, cv::Point(y1, x1), cv::Point(y2, x2), CV_RGB(255, 0, 0), 0.1);
         }
 
     }
 
     if(ms.size() < 1) return -1;
+
+    int max_inliers = 0;
+
+    for(int pi2 = 0; pi2 < ms.size(); pi2++) {
+
+        double xc = (bs[pi2] - main_b) / (main_m - ms[pi2]);
+        double yc = (main_m*bs[pi2] - ms[pi2]*main_b) / (main_m - ms[pi2]);
+
+        int inliers = 0;
+        for(int j = 0; j < ms.size(); j++) {
+
+            double px1 = (bs[j] - main_b) / (main_m - ms[j]);
+            double py1 = (main_m*bs[j] - ms[j]*main_b) / (main_m - ms[j]);
+            double d = sqrt(pow(px1-xc, 2.0)+pow(py1-yc, 2.0)) * fabs(main_m - ms[j]);
+            if(d < 10) inliers++;
+        }
+
+        if(inliers > max_inliers) {
+            max_inliers = inliers;
+            cx = xc;
+            cy = yc;
+
+        }
+
+    }
+
+    cr = sqrt(pow(cx - vr->getX(), 2.0) + pow(cy - vr->getY(), 2.0));
+
+
+
 
     double meanx = 0, meany = 0;
     std::vector<double> cxs, cys;
@@ -759,21 +862,41 @@ int vCircleObserver::gradientView2()
     cv::Mat subcolour = colour(cv::Rect(mincy, mincx, maxcy-mincy+1, maxcx-mincx+1));
     cv::Mat m3;
     cv::resize(subcolour, m3, subcolour.size()*scale, 0, 0, cv::INTER_NEAREST);
+    cv::Mat gradmat(256, 256, CV_8UC3); gradmat.setTo(255);
 
-    double x1 = 0; double x2 = (maxcx-mincx+1);
+    double x1 = main_x - mincx; double x2 = (maxcx-mincx+1);
+    if(main_dtdy < 0) x2 = 0;
     double y1 = main_m * (x1+mincx) + main_b - mincy;
     double y2 = main_m * (x2+mincx) + main_b - mincy;
     cv::line(m3, cv::Point(y1*scale, x1*scale), cv::Point(y2*scale, x2*scale), CV_RGB(255, 0, 255), 0.1);
+    cv::circle(gradmat, cv::Point(main_dtdy*128/maxgrad+128, main_dtdx*128/maxgrad+128), 4, CV_RGB(255, 0, 0), CV_FILLED);
+
     for(int i = 0; i < ms.size(); i++) {
+
+        double theta1 = atan(main_m);
+        double theta2 = atan(ms[i]);
+
+
+        x1 = xs[i] - mincx;
+        x2 = (maxcx-mincx+1);
+        if(dtdys[i] < 0) x2 = 0;
 
         y1 = ms[i] * (x1+mincx) + bs[i] - mincy;
         y2 = ms[i] * (x2+mincx) + bs[i] - mincy;
 
         cv::circle(m3, cv::Point((cys[i]-mincy)*scale, (cxs[i]-mincx)*scale), 3, CV_RGB(0, 0, 255), CV_FILLED);
-        cv::line(m3, cv::Point(y1*scale, x1*scale), cv::Point(y2*scale, x2*scale), CV_RGB(255, 0, 0), 0.1);
+        if(fabs(theta1 - theta2) > 90.0 * 3.14 / 180.0) {
 
+            cv::line(m3, cv::Point(y1*scale, x1*scale), cv::Point(y2*scale, x2*scale), CV_RGB(255, 0, 0), 0.1);
+        } else {
+            cv::line(m3, cv::Point(y1*scale, x1*scale), cv::Point(y2*scale, x2*scale), CV_RGB(120, 120, 0), 0.1);
+        }
+
+
+        cv::circle(gradmat, cv::Point(dtdys[i]*128/maxgrad+128, dtdxs[i]*128/maxgrad+128), 1, CV_RGB(0, 0, 0), CV_FILLED);
     }
-     cv::circle(m3, cv::Point((meany-mincy)*scale, (meanx-mincx)*scale), 4, CV_RGB(255, 0, 255), CV_FILLED);
+     cv::circle(m3, cv::Point((cy-mincy)*scale, (cx-mincx)*scale), 10*scale, CV_RGB(0, 255, 0));
+     cv::circle(m3, cv::Point((cy-mincy)*scale, (cx-mincx)*scale), cr*scale, CV_RGB(0, 0, 255));
 
 
 
@@ -783,6 +906,7 @@ int vCircleObserver::gradientView2()
     cv::flip(m3, m3, 0);
     //cv::resize(colour, colour, colour.size()*4);
 
+    cv::imshow("Gradient Distribution", gradmat);
     cv::imshow("Local Gradients 2", m3);
 
     return 0;
@@ -792,9 +916,7 @@ int vCircleObserver::gradientView2()
 int vCircleObserver::gradient(double &cx, double &cy, double &cr)
 {
 
-    int MIN4GRAD = 6;
-    emorph::vQueue test1 = window->getSMARTSURF(1);
-    if(test1.size() < MIN4GRAD) return -1;
+    bool main_true = false;
 
     std::vector<double> ms, bs;
     emorph::vQueue q = window->getSMARTSURF(sRadius);
@@ -802,26 +924,53 @@ int vCircleObserver::gradient(double &cx, double &cy, double &cr)
 
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
         emorph::AddressEvent * v = (*qi)->getAs<emorph::AddressEvent>();
-        emorph::vQueue g = window->getSURF(v->getX(), v->getY(), 1, v->getPolarity());
-        if(g.size() < MIN4GRAD) continue;
+
         double dtdx = 0, dtdy = 0;
         int cntx = 0, cnty = 0;
-        for(int i = 0; i < g.size(); i++)  {
-            for(int j = i+1; j < g.size(); j++) {
-                emorph::AddressEvent * v1 = g[i]->getAs<emorph::AddressEvent>();
-                emorph::AddressEvent * v2 = g[j]->getAs<emorph::AddressEvent>();
-                if(v1->getY() == v2->getY()) {
-                    dtdx += (double)(v1->getStamp() - v2->getStamp()) / (double)(v1->getX() - v2->getX());
-                    cntx++;
-                }
-                if(v1->getX() == v2->getX()) {
-                    dtdy += (double)(v1->getStamp() - v2->getStamp()) / (double)(v1->getY() - v2->getY());
-                    cnty++;
-                }
 
+        std::vector<double> gxs, gys;
+
+        for(emorph::vQueue::iterator qi2 = q.begin(); qi2 != q.end(); qi2++) {
+            emorph::AddressEvent * vn = (*qi2)->getAs<emorph::AddressEvent>();
+            if(v == vn) continue;
+            if(vn->getX() == v->getX()) {
+                double grad = (double)(v->getStamp() - vn->getStamp()) / (double)(v->getY() - vn->getY());
+                gys.push_back(grad);
+            }
+            if(vn->getY() == v->getY()) {
+                double grad = (double)(v->getStamp() - vn->getStamp()) / (double)(v->getX() - vn->getX());
+                gxs.push_back(grad);
             }
         }
+
+        if(!gys.size() || !gxs.size()) continue;
+
+        //so now we have the list of gxs and gys
+        int minx = 0;
+        for(int x = 0; x < gxs.size(); x++) {
+            if(fabs(gxs[x]) < fabs(gxs[minx])) minx = x;
+        }
+
+        for(int x = 0; x < gxs.size(); x++) {
+            if(gxs[minx]*gxs[x] > 0) {
+                dtdx += gxs[x];
+                cntx++;
+            }
+        }
+
+        int miny = 0;
+        for(int y = 0; y < gys.size(); y++) {
+            if(fabs(gys[y]) < fabs(gys[miny])) miny = y;
+        }
+        for(int y = 0; y < gys.size(); y++) {
+            if(gys[miny]*gys[y] > 0) {
+                dtdy += gys[y];
+                cnty++;
+            }
+        }
+
         if(cntx == 0 || cnty == 0) continue;
+        if(cntx < 2 || cnty < 2) continue;
         dtdx /= cntx;
         dtdy /= cnty;
         double m = dtdy / dtdx; //atan2(dxdt, dydt);   
@@ -830,6 +979,7 @@ int vCircleObserver::gradient(double &cx, double &cy, double &cr)
         if(v == vr) {
             ms.insert(ms.begin(), 1, m);
             bs.insert(bs.begin(), 1, b);
+            main_true = true;
         } else {
             ms.push_back(m);
             bs.push_back(b);
@@ -838,17 +988,19 @@ int vCircleObserver::gradient(double &cx, double &cy, double &cr)
 
     }
 
+    if(!main_true) return -1;
     if(ms.size() < 3) return -1;
 
     int inliers = 0, max_inliers = 0;
 
     int pi1, pi2;
-    for(int i = 0; i < 100; i++) {
+    for(int i = 0; i < ms.size(); i++) {
         pi1 = 0; //rand() % ms.size();
 
-        pi2 = pi1;
-        while(pi2 == pi1)
-                pi2 = rand() % ms.size();
+        //pi2 = pi1;
+        //while(pi2 == pi1)
+        //        pi2 = rand() % ms.size();
+        pi2 = i;
 
         if(ms[pi1] == ms[pi2]) continue;
         double xc = (bs[pi2] - bs[pi1]) / (ms[pi1] - ms[pi2]);
@@ -856,8 +1008,21 @@ int vCircleObserver::gradient(double &cx, double &cy, double &cr)
 
         inliers = 0;
         for(int j = 0; j < ms.size(); j++) {
-            double d = fabs(-ms[j]*xc + yc - bs[j]) / sqrt(pow(ms[j], 2.0) + 1);
-            if(d < 0.5)
+
+            double px1 = (bs[j] - bs[pi1]) / (ms[pi1] - ms[j]);
+            double py1 = (ms[pi1]*bs[j] - ms[j]*bs[pi1]) / (ms[pi1] - ms[j]);
+            double d1 = sqrt(pow(px1-xc, 2.0)+pow(py1-yc, 2.0));
+
+//            double px2 = (bs[pi2] - bs[j]) / (ms[j] - ms[pi2]);
+//            double py2 = (ms[j]*bs[pi2] - ms[pi2]*bs[j]) / (ms[j] - ms[pi2]);
+//            double d2 = sqrt(pow(px2-xc, 2.0)+pow(py2-yc, 2.0));
+
+//            double d = std::min(d1, d2);
+            double d = d1 * fabs(ms[pi1] - ms[j]);
+
+
+            //double d = fabs(-ms[j]*xc + yc - bs[j]) / sqrt(pow(ms[j], 2.0) + 1);
+            if(d < 10)
                 inliers++;
         }
 
