@@ -27,15 +27,15 @@ vCircleObserver::vCircleObserver() {
     windowSize = 200000;
 
     tRadius = 8;
-    sRadius = 8;
+    sRadius = 32;
     iterations = 5;
-    minVsReq4RANSAC = 60;
+    minVsReq4RANSAC = 30;
 
 
 
     window = new emorph::vWindow(width, height, windowSize, false);
 
-    inlierThreshold = 2;
+    inlierThreshold = 10;
 }
 
 //void vCircleObserver::pointTrim(int x, int y)
@@ -700,17 +700,21 @@ int vCircleObserver::gradientView()
 int vCircleObserver::gradientView2()
 {
 
-    int MIN4GRAD = 3;
     int scale = 10;
 
-    std::vector<double> ms, bs, xs, ys, dtdys, dtdxs;
+    std::vector<double> ms, bs, xs, ys, dtdys, dtdxs, crossx, crossy;
+    std::vector<double> ms2, bs2, xs2, ys2, dtdys2, dtdxs2, crossx2, crossy2;
     double main_m, main_b, main_x, main_y, main_dtdy, main_dtdx;
     double maxgrad = 0;
+    double dtdx = 0, dtdy = 0;
+    double cntx = 0, cnty = 0;
+    std::vector<double> gxs, gys;
 
+    //get the recent event and the surface
     emorph::vQueue q = window->getSMARTSURF(sRadius);
     emorph::AddressEvent *vr = window->getMostRecent()->getAs<emorph::AddressEvent>();
 
-
+    //plot the surface
     double cts = vr->getStamp();
     cv::Mat a(128, 128, CV_8UC1); a.setTo(255);
     //plot the surface
@@ -724,23 +728,74 @@ int vCircleObserver::gradientView2()
     }
     cv::Mat colour(a.size(), CV_8UC3);
     cv::cvtColor(a, colour, CV_GRAY2BGR);
-    //cv::resize(colour, colour, colour.size(), 0, 0, cv::INTER_NEAREST);
-//    cv::imshow("Local Gradients", colour);
-//    cvWaitKey(10);
+
+
+    //get the gradient of the current event
+    for(emorph::vQueue::iterator qi2 = q.begin(); qi2 != q.end(); qi2++) {
+        emorph::AddressEvent * vn = (*qi2)->getAs<emorph::AddressEvent>();
+        if(vr == vn) continue;
+        if(vn->getX() == vr->getX()) {
+            double grad = (double)(vr->getStamp() - vn->getStamp()) / (double)(vr->getY() - vn->getY());
+            gys.push_back(grad);
+        }
+        if(vn->getY() == vr->getY()) {
+            double grad = (double)(vr->getStamp() - vn->getStamp()) / (double)(vr->getX() - vn->getX());
+            gxs.push_back(grad);
+        }
+    }
+
+    if(!gys.size() || !gxs.size()) return -1;
+
+    //so now we have the list of gxs and gys
+    int minx = 0;
+    for(int x = 0; x < gxs.size(); x++) {
+        if(fabs(gxs[x]) < fabs(gxs[minx])) minx = x;
+    }
+    for(int x = 0; x < gxs.size(); x++) {
+        if(gxs[minx]*gxs[x] > 0) {
+            dtdx += gxs[x];
+            cntx++;
+        }
+    }
+
+    int miny = 0;
+    for(int y = 0; y < gys.size(); y++) {
+        if(fabs(gys[y]) < fabs(gys[miny])) miny = y;
+    }
+    for(int y = 0; y < gys.size(); y++) {
+        if(gys[miny]*gys[y] > 0) {
+            dtdy += gys[y];
+            cnty++;
+        }
+    }
+
+    if(cntx == 0 || cnty == 0) return -1;
+    dtdx /= cntx;
+    dtdy /= cnty;
+
+    main_m = dtdy / dtdx;
+    main_b = vr->getY() - main_m * vr->getX();
+    main_x = vr->getX();
+    main_y = vr->getY();
+    main_dtdy = dtdy;
+    main_dtdx = dtdx;
+    double theta1 = atan2(main_dtdx, main_dtdy);
 
 
 
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
         emorph::AddressEvent * v = (*qi)->getAs<emorph::AddressEvent>();
-        //emorph::vQueue g = window->getSURF(v->getX(), v->getY(), 1, v->getPolarity());
-        //if(g.size() < MIN4GRAD) continue;
-        double dtdx = 0, dtdy = 0;
-        int cntx = 0, cnty = 0;
-        std::vector<double> gxs, gys;
+
+        if(v == vr) continue;
+
+        dtdx = 0; dtdy = 0;
+        cntx = 0; cnty = 0;
+        gxs.clear(), gys.clear();
 
         for(emorph::vQueue::iterator qi2 = q.begin(); qi2 != q.end(); qi2++) {
             emorph::AddressEvent * vn = (*qi2)->getAs<emorph::AddressEvent>();
             if(v == vn) continue;
+
             if(vn->getX() == v->getX()) {
                 double grad = (double)(v->getStamp() - vn->getStamp()) / (double)(v->getY() - vn->getY());
                 gys.push_back(grad);
@@ -780,30 +835,44 @@ int vCircleObserver::gradientView2()
         dtdx /= cntx;
         dtdy /= cnty;
 
+        double theta2 = atan2(dtdx, dtdy);
+        double diff = std::min(fabs(theta1 - theta2), fabs(theta1 - theta2 + 6.28));
+        diff = std::min(diff, fabs(theta1 - theta2 - 6.28));
+        if(diff > 45.0 * (3.14 / 180.0)) continue;
+
         double m = dtdy / dtdx; //atan2(dxdt, dydt);
         double b = v->getY() - m * v->getX();
         //b = (v->getY() - vr->getY() + sRadius) -m * (v->getX() - vr->getX() + sRadius);
 
+        if(main_m == m) continue;
+
+        double xc = (b - main_b) / (main_m - m);
+        double yc = (main_m*b - m*main_b) / (main_m - m);
+
         maxgrad = std::max(maxgrad, fabs(dtdx));
         maxgrad = std::max(maxgrad, fabs(dtdy));
 
-        if(v == vr) {
-            main_m = m;
-            main_b = b;
-            main_x = vr->getX();
-            main_y = vr->getY();
-            main_dtdy = dtdy;
-            main_dtdx = dtdx;
-            //cv::line(colour, cv::Point(y1, x1), cv::Point(y2, x2), CV_RGB(255, 0, 255), 0.1);
-        } else {
+
+        if(xc < main_x) {
             ms.push_back(m);
             bs.push_back(b);
-            xs.push_back(v->getX());
-            ys.push_back(v->getY());
             dtdys.push_back(dtdy);
             dtdxs.push_back(dtdx);
-            //cv::line(colour, cv::Point(y1, x1), cv::Point(y2, x2), CV_RGB(255, 0, 0), 0.1);
+            xs.push_back(v->getX());
+            ys.push_back(v->getY());
+            crossx.push_back(xc);
+            crossy.push_back(yc);
+        } else {
+            ms2.push_back(m);
+            bs2.push_back(b);
+            dtdys2.push_back(dtdy);
+            dtdxs2.push_back(dtdx);
+            xs2.push_back(v->getX());
+            ys2.push_back(v->getY());
+            crossx2.push_back(xc);
+            crossy2.push_back(yc);
         }
+
 
     }
 
@@ -813,92 +882,144 @@ int vCircleObserver::gradientView2()
 
     for(int pi2 = 0; pi2 < ms.size(); pi2++) {
 
-        double xc = (bs[pi2] - main_b) / (main_m - ms[pi2]);
-        double yc = (main_m*bs[pi2] - ms[pi2]*main_b) / (main_m - ms[pi2]);
+        //double xc = (bs[pi2] - main_b) / (main_m - ms[pi2]);
+        //double yc = (main_m*bs[pi2] - ms[pi2]*main_b) / (main_m - ms[pi2]);
 
         int inliers = 0;
         for(int j = 0; j < ms.size(); j++) {
 
-            double px1 = (bs[j] - main_b) / (main_m - ms[j]);
-            double py1 = (main_m*bs[j] - ms[j]*main_b) / (main_m - ms[j]);
-            double d = sqrt(pow(px1-xc, 2.0)+pow(py1-yc, 2.0)) * fabs(main_m - ms[j]);
-            if(d < 10) inliers++;
+            //double px1 = (bs[j] - main_b) / (main_m - ms[j]);
+            //double py1 = (main_m*bs[j] - ms[j]*main_b) / (main_m - ms[j]);
+            double d = sqrt(pow(crossx[pi2]-crossx[j], 2.0)+pow(crossy[pi2]-crossy[j], 2.0));
+            //d *= fabs(main_m - ms[j]);
+            if(d < inlierThreshold) inliers++;
         }
 
         if(inliers > max_inliers) {
             max_inliers = inliers;
-            cx = xc;
-            cy = yc;
+            cx = crossx[pi2];
+            cy = crossy[pi2];
 
         }
 
     }
+
+    for(int pi2 = 0; pi2 < ms2.size(); pi2++) {
+
+        //double xc = (bs[pi2] - main_b) / (main_m - ms[pi2]);
+        //double yc = (main_m*bs[pi2] - ms[pi2]*main_b) / (main_m - ms[pi2]);
+
+        int inliers = 0;
+        for(int j = 0; j < ms2.size(); j++) {
+
+            //double px1 = (bs[j] - main_b) / (main_m - ms[j]);
+            //double py1 = (main_m*bs[j] - ms[j]*main_b) / (main_m - ms[j]);
+            double d = sqrt(pow(crossx2[pi2]-crossx2[j], 2.0)+pow(crossy2[pi2]-crossy2[j], 2.0));
+            //d *= fabs(main_m - ms[j]);
+            if(d < inlierThreshold) inliers++;
+        }
+
+        if(inliers > max_inliers) {
+            max_inliers = inliers;
+            cx = crossx2[pi2];
+            cy = crossy2[pi2];
+
+        }
+
+    }
+
 
     cr = sqrt(pow(cx - vr->getX(), 2.0) + pow(cy - vr->getY(), 2.0));
 
 
-
-
-    double meanx = 0, meany = 0;
     std::vector<double> cxs, cys;
     double mincx = vr->getX()-sRadius, maxcx = vr->getX()+sRadius;
     double mincy = vr->getY()-sRadius, maxcy = vr->getY()+sRadius;
     for(int i = 0; i < ms.size(); i++) {
-        double xc = (bs[i] - main_b) / (main_m - ms[i]);
-        double yc = (main_m*bs[i] - ms[i]*main_b) / (main_m - ms[i]);
-        cxs.push_back(xc);
-        cys.push_back(yc);
-        meanx += xc; meany += yc;
-        mincx = std::min(mincx, xc);
-        maxcx = std::max(maxcx, xc);
-        mincy = std::min(mincy, yc);
-        maxcy = std::max(maxcy, yc);
+        mincx = std::min(mincx, crossx[i]);
+        maxcx = std::max(maxcx, crossx[i]);
+        mincy = std::min(mincy, crossy[i]);
+        maxcy = std::max(maxcy, crossy[i]);
+    }
+    for(int j = 0; j < ms2.size(); j++) {
+        mincx = std::min(mincx, crossx2[j]);
+        maxcx = std::max(maxcx, crossx2[j]);
+        mincy = std::min(mincy, crossy2[j]);
+        maxcy = std::max(maxcy, crossy2[j]);
     }
     mincx = std::max(mincx, 0.0); maxcx = std::min(maxcx, 127.0);
     mincy = std::max(mincy, 0.0); maxcy = std::min(maxcy, 127.0);
-    meanx /= ms.size(); meany /= ms.size();
 
     //cv::rectangle(colour, cv::Rect(mincy, mincx, maxcy-mincy+1, maxcx-mincx+1), CV_RGB(0, 0, 0));
+    scale = 512 / (maxcx - mincx + 1);
     cv::Mat subcolour = colour(cv::Rect(mincy, mincx, maxcy-mincy+1, maxcx-mincx+1));
     cv::Mat m3;
     cv::resize(subcolour, m3, subcolour.size()*scale, 0, 0, cv::INTER_NEAREST);
-    cv::Mat gradmat(256, 256, CV_8UC3); gradmat.setTo(255);
+    //cv::Mat gradmat(256, 256, CV_8UC3); gradmat.setTo(255);
 
     double x1 = main_x - mincx; double x2 = (maxcx-mincx+1);
-    if(main_dtdy < 0) x2 = 0;
+    if(main_dtdx < 0) x2 = 0;
     double y1 = main_m * (x1+mincx) + main_b - mincy;
     double y2 = main_m * (x2+mincx) + main_b - mincy;
-    cv::line(m3, cv::Point(y1*scale, x1*scale), cv::Point(y2*scale, x2*scale), CV_RGB(255, 0, 255), 0.1);
-    cv::circle(gradmat, cv::Point(main_dtdy*128/maxgrad+128, main_dtdx*128/maxgrad+128), 4, CV_RGB(255, 0, 0), CV_FILLED);
 
+    cv::line(m3, cv::Point(y1*scale, x1*scale), cv::Point(y2*scale, x2*scale), CV_RGB(255, 0, 255), 0.1);
+    //cv::circle(gradmat, cv::Point(main_dtdy*128/maxgrad+128, main_dtdx*128/maxgrad+128), 4, CV_RGB(255, 0, 0), CV_FILLED);
+
+    //std::cout << main_dtdy << " " << main_dtdx << " " << atan2(main_dtdy, main_dtdx) << std::endl;
     for(int i = 0; i < ms.size(); i++) {
 
-        double theta1 = atan(main_m);
-        double theta2 = atan(ms[i]);
+        //double theta1 = atan2(main_dtdx, main_dtdy);
+        //double theta2 = atan2(dtdxs[i], dtdys[i]);
+        //double diff = std::min(fabs(theta1 - theta2), fabs(theta1 - theta2 + 6.28));
+        //diff = std::min(diff, fabs(theta1 - theta2 - 6.28));
+        //if(diff > 45.0 * (3.14 / 180.0)) continue;
 
 
         x1 = xs[i] - mincx;
         x2 = (maxcx-mincx+1);
-        if(dtdys[i] < 0) x2 = 0;
+        if(dtdxs[i] < 0) x2 = 0;
 
         y1 = ms[i] * (x1+mincx) + bs[i] - mincy;
         y2 = ms[i] * (x2+mincx) + bs[i] - mincy;
 
-        cv::circle(m3, cv::Point((cys[i]-mincy)*scale, (cxs[i]-mincx)*scale), 3, CV_RGB(0, 0, 255), CV_FILLED);
-        if(fabs(theta1 - theta2) > 90.0 * 3.14 / 180.0) {
+        cv::circle(m3, cv::Point((crossy[i]-mincy)*scale, (crossx[i]-mincx)*scale), 3, CV_RGB(0, 0, 255), CV_FILLED);
 
-            cv::line(m3, cv::Point(y1*scale, x1*scale), cv::Point(y2*scale, x2*scale), CV_RGB(255, 0, 0), 0.1);
-        } else {
-            cv::line(m3, cv::Point(y1*scale, x1*scale), cv::Point(y2*scale, x2*scale), CV_RGB(120, 120, 0), 0.1);
-        }
+        cv::line(m3, cv::Point(y1*scale, x1*scale), cv::Point(y2*scale, x2*scale), CV_RGB(120, 120, 0), 0.1);
+        //std::cout << dtdys[i] << " " << dtdxs[i] << " " << theta2 << " " << diff << std::endl;
 
 
-        cv::circle(gradmat, cv::Point(dtdys[i]*128/maxgrad+128, dtdxs[i]*128/maxgrad+128), 1, CV_RGB(0, 0, 0), CV_FILLED);
+
+        //cv::circle(gradmat, cv::Point(dtdys[i]*128/maxgrad+128, dtdxs[i]*128/maxgrad+128), 1, CV_RGB(0, 0, 0), CV_FILLED);
+
+
+        //cv::imshow("Gradient Distribution", gradmat);
+        //cv::imshow("Local Gradients 2", m3);
+        //cv::waitKey(100);
+        //cv::waitKey(1);
     }
-     cv::circle(m3, cv::Point((cy-mincy)*scale, (cx-mincx)*scale), 10*scale, CV_RGB(0, 255, 0));
-     cv::circle(m3, cv::Point((cy-mincy)*scale, (cx-mincx)*scale), cr*scale, CV_RGB(0, 0, 255));
+
+    for(int i = 0; i < ms2.size(); i++) {
 
 
+        x1 = xs2[i] - mincx;
+        x2 = (maxcx-mincx+1);
+        if(dtdxs2[i] < 0) x2 = 0;
+
+        y1 = ms2[i] * (x1+mincx) + bs2[i] - mincy;
+        y2 = ms2[i] * (x2+mincx) + bs2[i] - mincy;
+
+        cv::circle(m3, cv::Point((crossy2[i]-mincy)*scale, (crossx2[i]-mincx)*scale), 3, CV_RGB(255, 0, 0), CV_FILLED);
+
+        cv::line(m3, cv::Point(y1*scale, x1*scale), cv::Point(y2*scale, x2*scale), CV_RGB(120, 120, 0), 0.1);
+
+    }
+
+    //meanx /= countmean; meany /= countmean;
+    //std::cout << "-=================-" << std::endl;
+    cv::circle(m3, cv::Point((cy-mincy)*scale, (cx-mincx)*scale), inlierThreshold*scale, CV_RGB(0, 255, 0));
+    cv::circle(m3, cv::Point((cy-mincy)*scale, (cx-mincx)*scale), cr*scale, CV_RGB(0, 0, 255));
+
+    //cv::circle(m3, cv::Point(maxcy*scale-1, 0), 2, CV_RGB(0, 255, 0), CV_FILLED);
 
 
 
@@ -906,11 +1027,82 @@ int vCircleObserver::gradientView2()
     cv::flip(m3, m3, 0);
     //cv::resize(colour, colour, colour.size()*4);
 
-    cv::imshow("Gradient Distribution", gradmat);
+    //cv::imshow("Gradient Distribution", gradmat);
     cv::imshow("Local Gradients 2", m3);
 
-    return 0;
+    return max_inliers;
 
+}
+
+int vCircleObserver::eigenView()
+{
+
+
+    //get the recent event and the surface
+    emorph::vQueue q = window->getSMARTSURF(sRadius);
+    emorph::AddressEvent *vr = window->getMostRecent()->getAs<emorph::AddressEvent>();
+
+    int RX = -(vr->getX()-sRadius); int RY = -(vr->getY()-sRadius);
+    int S = 10;
+
+    //plot the surface
+    double cts = vr->getStamp();
+    cv::Mat G(sRadius*2+1, sRadius*2+1, CV_8UC1); G.setTo(255);
+    for(emorph::vQueue::const_iterator qi = q.begin(); qi != q.end(); qi++) {
+        emorph::AddressEvent *vp = (*qi)->getAs<emorph::AddressEvent>();
+
+        double tts = vp->getStamp();
+        if(tts > cts) tts = tts - emorph::vtsHelper::maxStamp();
+        if(cts - tts > 190000) tts = cts - 190000;
+        int val = 254.0 * (cts - tts)/ 200000;
+        G.at<char>(vp->getX()+RX, vp->getY()+RY) = val;
+    }
+    cv::Mat image(G.size(), CV_8UC3);
+    cv::cvtColor(G, image, CV_GRAY2BGR);
+    cv::resize(image, image, image.size()*S, 0, 0, cv::INTER_NEAREST);
+
+    //step through the eigen areas
+    for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
+        emorph::AddressEvent * v = (*qi)->getAs<emorph::AddressEvent>();
+
+        int x = v->getX(); int y = v->getY();
+
+        if(x == vr->getX()+sRadius || y == vr->getY()+sRadius) continue;
+
+        double a = G.at<unsigned char>(x+RX, y+RY);
+        double b = G.at<unsigned char>(x+RX+1, y+RY);
+        double c = G.at<unsigned char>(x+RX, y+RY+1);
+        double d = G.at<unsigned char>(x+RX+1, y+RY+1);
+
+        if(b == 255 || c == 255 || d == 255) continue;
+
+        double T = a + d;
+        double D = a*d - b*c;
+        double e1 = T / 2 + sqrt(pow(T, 2.0) / 4 - D);
+        double e2 = T / 2 - sqrt(pow(T, 2.0) / 4 - D);
+        double emax = e1;
+        if(fabs(e2) > fabs(emax)) emax = e2;
+
+
+        //double dtdx, dtdy;
+        double dtdx = emax-d;
+        double dtdy = c;
+
+        cv::Point gp((y+RY+1)*S, (x+RX+1)*S);
+        cv::Point gvend = gp + cv::Point(S * 2 * dtdy / c, S * 2 * dtdx / c);
+        cv::line(image, gp, gvend, CV_RGB(255, 0, 0));
+
+         cv::Rect e((v->getY()+RY)*S, (v->getX()+RX)*S, 2*S, 2*S);
+        cv::rectangle(image, e, CV_RGB(0, 255, 0));
+        cv::imshow("EIGENVECTORS", image);
+        char cfw = cv::waitKey();
+        if(cfw == 27) break;
+
+        //if(cv::waitKey() == 32) break;
+    }
+
+
+    return 0;
 }
 
 int vCircleObserver::gradient(double &cx, double &cy, double &cr)
@@ -1039,6 +1231,216 @@ int vCircleObserver::gradient(double &cx, double &cy, double &cr)
 
     cr = sqrt(pow(cx - vr->getX(), 2.0) + pow(cy - vr->getY(), 2.0));
     if(cr < 5) return -1;
+    return max_inliers;
+
+}
+
+int vCircleObserver::gradient2(double &cx, double &cy, double &cr)
+{
+
+    std::vector<double> ms, bs, xs, ys, dtdys, dtdxs, crossx, crossy;
+    std::vector<double> ms2, bs2, xs2, ys2, dtdys2, dtdxs2, crossx2, crossy2;
+    //std::vector<double> crossx, crossy, crossx2, crossy2;
+    double main_m, main_b, main_x, main_y, main_dtdy, main_dtdx;
+
+    double dtdx = 0, dtdy = 0;
+    double cntx = 0, cnty = 0;
+    std::vector<double> gxs, gys;
+
+    //get the recent event and the surface
+    emorph::vQueue q = window->getSMARTSURF(sRadius);
+    emorph::AddressEvent *vr = window->getMostRecent()->getAs<emorph::AddressEvent>();
+
+    if(q.size() < minVsReq4RANSAC) return -1;
+
+
+    //get the gradient of the current event
+    for(emorph::vQueue::iterator qi2 = q.begin(); qi2 != q.end(); qi2++) {
+        emorph::AddressEvent * vn = (*qi2)->getAs<emorph::AddressEvent>();
+        if(vr == vn) continue;
+        if(vn->getX() == vr->getX()) {
+            double grad = (double)(vr->getStamp() - vn->getStamp()) / (double)(vr->getY() - vn->getY());
+            gys.push_back(grad);
+        }
+        if(vn->getY() == vr->getY()) {
+            double grad = (double)(vr->getStamp() - vn->getStamp()) / (double)(vr->getX() - vn->getX());
+            gxs.push_back(grad);
+        }
+    }
+
+    if(!gys.size() || !gxs.size()) return -1;
+
+    //so now we have the list of gxs and gys
+    int minx = 0;
+    for(int x = 0; x < gxs.size(); x++) {
+        if(fabs(gxs[x]) < fabs(gxs[minx])) minx = x;
+    }
+    for(int x = 0; x < gxs.size(); x++) {
+        if(gxs[minx]*gxs[x] > 0) {
+            dtdx += gxs[x];
+            cntx++;
+        }
+    }
+
+    int miny = 0;
+    for(int y = 0; y < gys.size(); y++) {
+        if(fabs(gys[y]) < fabs(gys[miny])) miny = y;
+    }
+    for(int y = 0; y < gys.size(); y++) {
+        if(gys[miny]*gys[y] > 0) {
+            dtdy += gys[y];
+            cnty++;
+        }
+    }
+
+    if(cntx == 0 || cnty == 0) return -1;
+    dtdx /= cntx;
+    dtdy /= cnty;
+
+    main_m = dtdy / dtdx;
+    main_b = vr->getY() - main_m * vr->getX();
+    main_x = vr->getX();
+    main_y = vr->getY();
+    main_dtdy = dtdy;
+    main_dtdx = dtdx;
+    double theta1 = atan2(main_dtdx, main_dtdy);
+
+
+
+    for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
+        emorph::AddressEvent * v = (*qi)->getAs<emorph::AddressEvent>();
+
+        if(v == vr) continue;
+
+        dtdx = 0; dtdy = 0;
+        cntx = 0; cnty = 0;
+        gxs.clear(), gys.clear();
+
+        for(emorph::vQueue::iterator qi2 = q.begin(); qi2 != q.end(); qi2++) {
+            emorph::AddressEvent * vn = (*qi2)->getAs<emorph::AddressEvent>();
+            if(vn == v) continue;
+
+            if(vn->getX() == v->getX()) {
+                double grad = (double)(v->getStamp() - vn->getStamp()) / (double)(v->getY() - vn->getY());
+                gys.push_back(grad);
+            }
+            if(vn->getY() == v->getY()) {
+                double grad = (double)(v->getStamp() - vn->getStamp()) / (double)(v->getX() - vn->getX());
+                gxs.push_back(grad);
+            }
+        }
+
+        if(!gys.size() || !gxs.size()) continue;
+
+        //so now we have the list of gxs and gys
+        int minx = 0;
+        for(int x = 0; x < gxs.size(); x++) {
+            if(fabs(gxs[x]) < fabs(gxs[minx])) minx = x;
+        }
+        for(int x = 0; x < gxs.size(); x++) {
+            if(gxs[minx]*gxs[x] > 0) {
+                dtdx += gxs[x];
+                cntx++;
+            }
+        }
+
+        int miny = 0;
+        for(int y = 0; y < gys.size(); y++) {
+            if(fabs(gys[y]) < fabs(gys[miny])) miny = y;
+        }
+        for(int y = 0; y < gys.size(); y++) {
+            if(gys[miny]*gys[y] > 0) {
+                dtdy += gys[y];
+                cnty++;
+            }
+        }
+
+        if(cntx == 0 || cnty == 0) continue;
+        dtdx /= cntx;
+        dtdy /= cnty;
+
+        double theta2 = atan2(dtdx, dtdy);
+        double diff = std::min(fabs(theta1 - theta2), fabs(theta1 - theta2 + 6.28));
+        diff = std::min(diff, fabs(theta1 - theta2 - 6.28));
+        if(diff > 45.0 * (3.14 / 180.0)) continue;
+
+        double m = dtdy / dtdx; //atan2(dxdt, dydt);
+        double b = v->getY() - m * v->getX();
+        //b = (v->getY() - vr->getY() + sRadius) -m * (v->getX() - vr->getX() + sRadius);
+
+        if(main_m == m) continue;
+
+        double xc = (b - main_b) / (main_m - m);
+        double yc = (main_m*b - m*main_b) / (main_m - m);
+
+
+        if(xc < main_x) {
+            ms.push_back(m);
+            //bs.push_back(b);
+            //dtdys.push_back(dtdy);
+            //dtdxs.push_back(dtdx);
+            //xs.push_back(v->getX());
+            //ys.push_back(v->getY());
+            crossx.push_back(xc);
+            crossy.push_back(yc);
+        } else {
+            ms2.push_back(m);
+            //bs2.push_back(b);
+            //dtdys2.push_back(dtdy);
+            //dtdxs2.push_back(dtdx);
+            //xs2.push_back(v->getX());
+            //ys2.push_back(v->getY());
+            crossx2.push_back(xc);
+            crossy2.push_back(yc);
+        }
+
+
+    }
+
+    if(crossx.size() < minVsReq4RANSAC && crossx2.size() < minVsReq4RANSAC) return -1;
+
+    int max_inliers = 0;
+
+    for(int pi2 = 0; pi2 < crossx.size(); pi2++) {
+
+        int inliers = 0;
+        for(int j = 0; j < crossx.size(); j++) {
+
+            double d = sqrt(pow(crossx[pi2]-crossx[j], 2.0)+pow(crossy[pi2]-crossy[j], 2.0));
+            //d *= fabs(main_m - ms[j]);
+            if(d < inlierThreshold) inliers++;
+        }
+
+        if(inliers > max_inliers) {
+            max_inliers = inliers;
+            cx = crossx[pi2];
+            cy = crossy[pi2];
+
+        }
+
+    }
+
+    for(int pi2 = 0; pi2 < crossx2.size(); pi2++) {
+
+        int inliers = 0;
+        for(int j = 0; j < crossx2.size(); j++) {
+            double d = sqrt(pow(crossx2[pi2]-crossx2[j], 2.0)+pow(crossy2[pi2]-crossy2[j], 2.0));
+            //d *= fabs(main_m - ms2[j]);
+            if(d < inlierThreshold) inliers++;
+        }
+
+        if(inliers > max_inliers) {
+            max_inliers = inliers;
+            cx = crossx2[pi2];
+            cy = crossy2[pi2];
+
+        }
+
+    }
+
+
+    cr = sqrt(pow(cx - vr->getX(), 2.0) + pow(cy - vr->getY(), 2.0));
+
     return max_inliers;
 
 }

@@ -61,8 +61,10 @@ public:
     double oneShotObserve(double &cx, double &cy, double &cr);
     double RANSAC(double &cx, double &cy, double &cr);
     int gradient(double &cx, double &cy, double &cr);
+    int gradient2(double &cx, double &cy, double &cr);
     int gradientView();
     int gradientView2();
+    int eigenView();
 
     //bool localCircleEstimate(emorph::AddressEvent &event, double &cx,
     //                        double &cy, double &cr, bool showDebug = false);

@@ -63,7 +63,10 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
     circleReader.resetFilterParams(procNoisePos, procNoiseRad,
                                    measNoisePos, measNoiseRad);
 
-    circleReader.open(moduleName);
+    if(!circleReader.open(moduleName)) {
+        std::cerr << "Could not open required ports" << std::endl;
+        return false;
+    }
 
     return true ;
 }
@@ -128,7 +131,7 @@ vCircleReader::vCircleReader()
     filter = new iCub::ctrl::Kalman(A, H, Q, R);
 
     pTS = 0;
-    periodstart = yarp::os::Time::now();
+    periodstart = 0;//yarp::os::Time::now();
     filter_active = false;
 
     circleTracker = new vCircleTracker(0.1, 0.1, 32, 16);
@@ -144,12 +147,12 @@ bool vCircleReader::open(const std::string &name)
     this->useCallback();
 
     std::string inPortName = "/" + name + "/vBottle:i";
-    yarp::os::BufferedPort<emorph::vBottle>::open(inPortName);
+    bool state1 = yarp::os::BufferedPort<emorph::vBottle>::open(inPortName);
 
     std::string outPortName = "/" + name + "/vBottle:o";
-    outPort.open(outPortName);
+    bool state2 = outPort.open(outPortName);
     filewriter.open("/home/aglover/temp.txt");
-    return true;
+    return state1 && state2;
 }
 
 /**********************************************************/
@@ -265,7 +268,7 @@ void vCircleReader::onRead(emorph::vBottle &bot)
         t0 = yarp::os::Time::now();
         //circleFinder.localCircleEstimate(*v, cx, cy, cr, false);
         double e1;
-        e1 = circleFinder.gradient(cx, cy, cr);
+        e1 = 31; //circleFinder.gradient2(cx, cy, cr);
         //cv::waitKey(10);
         //e1 = circleFinder.RANSAC(cx, cy, cr);
         //e1 = circleFinder.oneShotObserve(cx, cy, cr);
@@ -277,19 +280,20 @@ void vCircleReader::onRead(emorph::vBottle &bot)
 
         //std::cout << cr << std::endl;
 
-        emorph::ClusterEventGauss circevent(*v);
-        circevent.setChannel(v->getChannel());
-        circevent.setXCog(cx);
-        circevent.setYCog(cy);
-        circevent.setXSigma2((int)cr);
-        circevent.setYSigma2(circleFinder.inlierThreshold*2);
-        outBottle.addEvent(circevent);
+//        emorph::ClusterEventGauss circevent(*v);
+//        circevent.setChannel(v->getChannel());
+//        circevent.setXCog(cx);
+//        circevent.setYCog(cy);
+//        circevent.setXSigma2((int)cr);
+//        circevent.setYSigma2(/*circleFinder.inlierThreshold**/2);
+//        outBottle.addEvent(circevent);
 
-        if(true && yarp::os::Time::now() - periodstart > 5) {
+        if(true && yarp::os::Time::now() - periodstart > 3) {
             //circleFinder.viewEvents();
             //circleFinder.gradientView();
-            std::cout << e1 << std::endl;
-            circleFinder.gradientView2();
+            //std::cout << e1 << std::endl;
+            //std::cout << circleFinder.gradientView2() << std::endl;
+            std::cout << circleFinder.eigenView() << std::endl;
             cv::waitKey(20);
             periodstart = yarp::os::Time::now();
         }
@@ -441,10 +445,10 @@ void vCircleReader::onRead(emorph::vBottle &bot)
     outPort.write();
 
     double tthread = yarp::os::Time::now() - tstart;
-    //if(ransact > 0.001) {
-    //    std::cout << "On Read took " << tthread / 0.001 << "x too long (" <<
-    //                 100 * ransact / tthread <<  "% from RANSAC)" << std::endl;
-    //}
+    if(ransact > 0.001) {
+        std::cout << "On Read took " << tthread / 0.001 << "x too long (" <<
+                     100 * ransact / tthread <<  "% from RANSAC)" << std::endl;
+    }
 
 }
 
