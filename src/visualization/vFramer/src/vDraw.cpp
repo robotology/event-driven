@@ -29,13 +29,21 @@ vDraw * createDrawer(std::string tag)
 
     newDrawer = new clusterDraw();
     if(tag == newDrawer->getTag()) return newDrawer;
-    delete newDrawer;
+	delete newDrawer;
 
     newDrawer = new integralDraw();
     if(tag == newDrawer->getTag()) return newDrawer;
     delete newDrawer;
 
     newDrawer = new blobDraw();
+    if(tag == newDrawer->getTag()) return newDrawer;
+    delete newDrawer;
+
+    newDrawer = new circleDraw();
+    if(tag == newDrawer->getTag()) return newDrawer;
+    delete newDrawer;
+
+    newDrawer = new surfDraw();
     if(tag == newDrawer->getTag()) return newDrawer;
     delete newDrawer;
 
@@ -55,21 +63,25 @@ std::string addressDraw::getTag()
 void addressDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
 {
 
-    cv::Mat canvas(Xlimit, Ylimit, CV_8UC3);
-    canvas.setTo(255);
+    image = cv::Mat(Xlimit, Ylimit, CV_8UC3);
+    image.setTo(255);
+
+    if(checkStagnancy(eSet) > clearThreshold) {
+        return;
+    }
 
     emorph::vQueue::const_iterator qi;
     for(qi = eSet.begin(); qi != eSet.end(); qi++) {
         emorph::AddressEvent *aep = (*qi)->getAs<emorph::AddressEvent>();
         if(!aep) continue;
 
-        cv::Vec3b cpc = canvas.at<cv::Vec3b>(aep->getX(), aep->getY());
+        cv::Vec3b cpc = image.at<cv::Vec3b>(aep->getX(), aep->getY());
 
-        if(aep->getPolarity())
+        if(!aep->getPolarity())
         {
             //blue
             if(cpc[0] == 1) cpc[0] = 0;   //if positive and negative
-            else cpc[0] = 160;              //if only positive
+            else cpc[0] = 160;            //if only positive
             //green
             if(cpc[1] == 60) cpc[1] = 255;
             else cpc[1] = 0;
@@ -81,7 +93,7 @@ void addressDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
         {
             //blue
             if(cpc[0] == 160) cpc[0] = 0;   //negative and positive
-            else cpc[0] = 1;              //negative only
+            else cpc[0] = 1;                //negative only
             //green
             if(cpc[1] == 0) cpc[1] = 255;
             else cpc[1] = 60;
@@ -90,10 +102,8 @@ void addressDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
             else cpc[2] = 0;
         }
 
-        canvas.at<cv::Vec3b>(aep->getX(), aep->getY()) = cpc;
+        image.at<cv::Vec3b>(aep->getX(), aep->getY()) = cpc;
     }
-
-    canvas.copyTo(image);
 
 }
 
@@ -106,7 +116,8 @@ void clusterDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
 {
 
     std::stringstream ss;
-    //std::map<int, emorph::ClusterEvent *> latest;
+
+
 
     cv::Scalar red = CV_RGB(255, 0, 0);
     cv::Scalar green = CV_RGB(0, 255, 0);
@@ -117,6 +128,10 @@ void clusterDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
         image.setTo(0);
     }
 
+    if(checkStagnancy(eSet) > clearThreshold) {
+        persistance.clear();
+        return;
+    }
 
     cv::Mat textImg(image.rows, image.cols, image.type()); textImg.setTo(0);
 
@@ -178,7 +193,7 @@ void clusterDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
         cv::putText(textImg, ss.str(),
                     cv::Point(ci->second->getYCog(),
                               Xlimit - ci->second->getXCog()),
-                    0, 0.3, CV_RGB(255, 255, 255));
+                    0, 0.3, CV_RGB(0, 0, 0));
     }
 
     cv::flip(textImg, textImg, 0);
@@ -257,6 +272,94 @@ void integralDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
 
     cv::cvtColor(iimage, image, CV_GRAY2BGR);
     //iimage.copyTo(image);
+
+}
+
+std::string circleDraw::getTag()
+{
+    return "CIRC";
+}
+
+void circleDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
+{
+
+    if(image.empty()) {
+        image = cv::Mat(Xlimit, Ylimit, CV_8UC3);
+        image.setTo(0);
+    }
+
+    if(checkStagnancy(eSet) > clearThreshold) {
+        return;
+    }
+
+    emorph::vQueue::const_iterator qi;
+    for(qi = eSet.begin(); qi != eSet.end(); qi++) {
+        emorph::ClusterEventGauss *v = (*qi)->getAs<emorph::ClusterEventGauss>();
+        if(!v) continue;
+        cv::Point centr(v->getYCog(), v->getXCog());
+        //we hide the radius in in X_sigma_2
+        double r = v->getXSigma2();
+        //we hide the radial variance in Y_sigma_2
+        double w = v->getYSigma2();
+        cv::circle(image, centr, r, CV_RGB(255, 0, 0), w);
+
+    }
+
+}
+
+std::string surfDraw::getTag()
+{
+    return "SURF";
+}
+
+void surfDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
+{
+
+    image = cv::Mat(Xlimit, Ylimit*2, CV_8UC3);
+    image.setTo(0);
+
+    if(eSet.empty()) return;
+    if(checkStagnancy(eSet) > clearThreshold) return;
+
+    double cts = eSet.back()->getStamp();
+
+    emorph::vQueue::const_reverse_iterator qi;
+    for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
+        emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
+        if(!v) continue;
+
+        //cpc[blue][green][red]
+
+        if(v->getPolarity())
+        {
+            cv::Vec3b cpc = image.at<cv::Vec3b>(v->getX(), v->getY());
+            if(cpc[1]) continue;
+
+            double tts = v->getStamp();
+            if(tts > cts) tts = tts - emorph::vtsHelper::maxStamp();
+            if(cts - tts > gradient) continue;
+            int val = 255 - 255.0 * (cts - tts)/ gradient;
+            cpc[1] = std::max(val, 0);
+            image.at<cv::Vec3b>(v->getX(), v->getY()) = cpc;
+
+        }
+        else
+        {
+            cv::Vec3b cpc = image.at<cv::Vec3b>(v->getX(), v->getY()+Ylimit);
+            if(cpc[2]) continue;
+
+            double tts = v->getStamp();
+            if(tts > cts) tts = tts - emorph::vtsHelper::maxStamp();
+            if(cts - tts > gradient) continue;
+            int val = 255 - 255 * (cts - tts) / gradient;
+            cpc[2] = std::max(val, 0);
+            cpc[0] = std::max(val, 0);
+            image.at<cv::Vec3b>(v->getX(), v->getY()+Ylimit) = cpc;
+        }
+
+
+
+    }
 
 }
 

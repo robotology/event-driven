@@ -27,52 +27,7 @@
 
 namespace emorph {
 
-/**
- * @brief The vWindow class holds a list of events for a period of time as
- * specified. Event expiry is checked each time new events are added and
- * expired events are removed. At any point in time a copy of the current list
- * of events can be requested.
- */
-class vWindow {
 
-private:
-
-    //! event storage
-    emorph::vQueue q;
-    //! the length of time to store events (in us)
-    int windowSize;
-    //! for safe copying of q in the multi-threaded environment
-    yarp::os::Semaphore mutex;
-
-public:
-
-    ///
-    /// \brief vWindow constructor
-    /// \param windowSize optional time to store events (in us)
-    ///
-    vWindow(int windowSize = 50000)     { this->windowSize = windowSize; }
-
-    ///
-    /// \brief setWindowSize sets the length of time to store events
-    /// \param windowSize the time period (in us)
-    ///
-    void setWindowSize(int windowSize)  { this->windowSize = windowSize; }
-
-    ///
-    /// \brief addEvent adds an event to the window. Also checks for expired
-    /// events.
-    /// \param event the event to add
-    ///
-    void addEvent(emorph::vEvent &event);
-
-    ///
-    /// \brief getCurrentWindow returns the current list of active events
-    /// \param sample_q is a vQueue to which events are added
-    /// \return the number of events added to sample_q
-    ///
-    int getCurrentWindow(emorph::vQueue &sample_q);
-
-};
 
 
 /**
@@ -93,14 +48,14 @@ private:
     //! storage of vWindows
     std::map<int, vWindow*> windows;
     //! storage of window snapshots
-    std::map<int, vQueue*> snaps;
+    std::map<int, vQueue *> snaps;
 
 public:
 
     ///
     /// \brief vReadAndSplit constructor with default windowsize parameter
     ///
-    vReadAndSplit() : windowsize(50000) {}
+    vReadAndSplit() : windowsize(20000) {}
     ~vReadAndSplit();
 
     ///
@@ -120,7 +75,7 @@ public:
     /// \param channel the channel value to access
     /// \return the list of events in a vQueue
     ///
-    emorph::vQueue & getSnap(const int channel);
+    const emorph::vQueue & getSnap(const int channel);
 
     ///
     /// \brief onRead splitting is performed as an asynchronous onRead function
@@ -128,8 +83,6 @@ public:
     ///
     virtual void onRead(emorph::vBottle &incoming);
     virtual bool open(const std::string portName);
-    virtual void close();
-    virtual void interrupt();
 
 
 

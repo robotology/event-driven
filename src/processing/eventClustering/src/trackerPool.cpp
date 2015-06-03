@@ -69,6 +69,11 @@ void TrackerPool::setComparisonParams(double max_dist)
     this->max_dist = max_dist;
 }
 
+void TrackerPool::setClusterLimit(int limit)
+{
+    clusterLimit = limit;
+}
+
 int TrackerPool::update(emorph::AddressEvent &event,
                         std::vector<emorph::ClusterEventGauss> &clEvts)
 {
@@ -95,13 +100,17 @@ int TrackerPool::update(emorph::AddressEvent &event,
         }
     }
 
-    // If there was not any tracker close enough, we take one of the Free trackers (to_reset_) and reset it to the position of the event
+    // If there was not any tracker close enough,
+    // we take one of the Free trackers (to_reset_) and reset
+    // it to the position of the event
     if(trackId == -1) {
 
         trackId = getNewTracker();
-        trackers_[trackId].initialisePosition(ev_x, ev_y);
-        trackers_[trackId].clusterSpiked();
-        trackers_[trackId].isNoLongerFree();
+        if(trackId >= 0) {
+            trackers_[trackId].initialisePosition(ev_x, ev_y);
+            trackers_[trackId].clusterSpiked();
+            trackers_[trackId].isNoLongerFree();
+        }
     }
 
     // Otherwise, we update the one with the highest probability
@@ -134,6 +143,7 @@ int TrackerPool::update(emorph::AddressEvent &event,
 
 int TrackerPool::getNewTracker()
 {
+    //check to see if there is a free tracker already created
     for(int i = 0; i < trackers_.size(); i++) {
         if(trackers_[i].isFree()) {
             trackers_[i].initialiseShape(sig_x2_, sig_y2_, sig_xy_, alpha_pos,
@@ -143,12 +153,19 @@ int TrackerPool::getNewTracker()
     }
 
     //else no free trackers
-    BlobTracker newtracker;
-    newtracker.initialiseShape(sig_x2_, sig_y2_, sig_xy_,
-                               alpha_pos, alpha_shape, fixed_shape_);
-    trackers_.push_back(newtracker);
 
-    return trackers_.size()  - 1;
+    //first check if we are under the limit
+    if(clusterLimit < 0 || trackers_.size() < clusterLimit) {
+        BlobTracker newtracker;
+        newtracker.initialiseShape(sig_x2_, sig_y2_, sig_xy_,
+                                   alpha_pos, alpha_shape, fixed_shape_);
+        trackers_.push_back(newtracker);
+
+        return trackers_.size()  - 1;
+    }
+
+    return -1;
+
 }
 
 emorph::ClusterEventGauss TrackerPool::makeEvent(int i, int ts)

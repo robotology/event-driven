@@ -20,76 +20,6 @@
 namespace emorph {
 
 /*////////////////////////////////////////////////////////////////////////////*/
-//vWindow
-/*////////////////////////////////////////////////////////////////////////////*/
-
-int vWindow::getCurrentWindow(vQueue &sample_q)
-{
-    if(q.empty())
-        return 0;
-
-    //critical section
-    mutex.wait();
-
-    //do a copy and a clean
-    int lowerthesh = q.back()->getStamp() - windowSize;
-    int upperthesh = q.back()->getStamp() + windowSize;
-
-    emorph::vQueue::iterator qi;
-    for (qi = q.begin(); qi != q.end();) {
-        int etime = (*qi)->getStamp();
-        if(etime < upperthesh && etime > lowerthesh)
-        {
-            //copy it into the new q
-            //vEvent * newcopy = emorph::createEvent((*qi)->getType());
-            //*newcopy = **qi;
-            //sample_q.push_back((newcopy));
-            sample_q.push_back((*qi)->clone());
-
-            //on to the next event
-            qi++;
-        }
-        else
-        {
-            //clean it (set qi to next event)
-            delete (*qi);
-            qi = q.erase(qi);
-        }
-    }
-
-    mutex.post();
-
-    return q.size();
-
-}
-
-void vWindow::addEvent(emorph::vEvent &event)
-{
-    //make a copy of the event to add to the circular buffer
-    vEvent * newcopy = emorph::createEvent(event.getType());
-    *newcopy = event;
-
-    mutex.wait();
-
-    //add the event
-    q.push_back(newcopy);
-
-    //check if any events need to be removed
-    int lifeThreshold = event.getStamp() - windowSize;
-    while(true) {
-
-        if(q.front()->getStamp() < lifeThreshold) {
-            delete q.front();
-            q.pop_front();
-        }
-        else
-            break;
-    }
-    mutex.post();
-
-}
-
-/*////////////////////////////////////////////////////////////////////////////*/
 //vReadAndSplit
 /*////////////////////////////////////////////////////////////////////////////*/
 vReadAndSplit::~vReadAndSplit()
@@ -124,28 +54,16 @@ bool vReadAndSplit::open(const std::string portName)
 
 }
 
-void vReadAndSplit::close()
-{
-    std::cout << "Closing BufferedPort::vReadAndSplit" << std::endl;
-    BufferedPort<emorph::vBottle>::close();
-}
-
-
-
-void vReadAndSplit::interrupt()
-{
-   BufferedPort<vBottle>::interrupt();
-}
-
 void vReadAndSplit::onRead(emorph::vBottle &incoming)
 {
-    emorph::vQueue q;
+
+    emorph::vQueue q = incoming.getAllSorted();
     emorph::vQueue::iterator qi;
-    incoming.getAllSorted(q);
+    //incoming.getAllSorted(q);
     for(qi = q.begin(); qi != q.end(); qi++) {
         int ch = (*qi)->getChannel();
         if(!windows.count(ch)) {
-            windows[ch] = new vWindow(windowsize);
+            windows[ch] = new vWindow(128, 128, windowsize, true);
         }
         windows[ch]->addEvent(**qi);
     }
@@ -156,17 +74,17 @@ void vReadAndSplit::snapshotAllWindows()
 {
     std::map<int, vWindow*>::iterator wi;
     for(wi = windows.begin(); wi != windows.end(); wi++) {
-        if(!snaps.count(wi->first))
-                snaps[wi->first] = new vQueue;
-        snaps[wi->first]->clear();
-        (wi->second)->getCurrentWindow(*(snaps[wi->first]));
+        if(snaps[wi->first]) {
+            delete snaps[wi->first];
+        }
+        snaps[wi->first] = new vQueue((wi->second)->getTW());
     }
 }
 
-emorph::vQueue & vReadAndSplit::getSnap(const int channel)
+const emorph::vQueue & vReadAndSplit::getSnap(const int channel)
 {
     if(!snaps.count(channel))
-            snaps[channel] = new vQueue;
+            snaps[channel] = new vQueue();
     return *(snaps[channel]);
 
 }
@@ -215,7 +133,7 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
 
     double eventWindow = rf.find("eventWindow").asDouble();
     if(eventWindow == 0) eventWindow = 0.5;
-    eventWindow = eventWindow * 100000;
+    eventWindow = eventWindow / vtsHelper::tstosecs();
 
     //set up the default channel list
     yarp::os::Bottle tempDisplayList, *bp;
@@ -295,6 +213,7 @@ bool vFramerModule::interruptModule()
     vReader.interrupt();
     for(int i = 0; i < outports.size(); i++)
         outports[i]->interrupt();
+    RFModule::interruptModule();
 
     return true;
 }
@@ -304,6 +223,7 @@ bool vFramerModule::close()
     vReader.close();
     for(int i = 0; i < outports.size(); i++)
         outports[i]->close();
+    RFModule::close();
 
     return true;
 }
@@ -329,7 +249,7 @@ bool vFramerModule::updateModule()
         cv::Mat canvas;
 
         //get the event queue associated with the correct channel
-        emorph::vQueue &q = vReader.getSnap(channels[i]);
+        const emorph::vQueue &q = vReader.getSnap(channels[i]);
 
         //emorph::vQueue q;
 

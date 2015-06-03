@@ -27,38 +27,52 @@ eventStatisticsDumper::eventStatisticsDumper()
 {
 
     this->setStrict();
-    this->moduleName = "Default";
-    //outfilename = "/home/aglover/workspace/results/uniquetimestamps.txt";
+    dir = "";
     prevstamp = 0;
     bottle_number = 0;
 }
 
-void eventStatisticsDumper::setModuleName(std::string name)
+bool eventStatisticsDumper::open(std::string moduleName)
 {
-    this->moduleName = name;
-}
 
-void eventStatisticsDumper::setOutputName(std::string name)
-{
-    this->outfilename = name;
-}
-
-
-bool eventStatisticsDumper::open()
-{
+    //allow input of vBottles
     this->useCallback();
-
-    //create all ports
-    inPortName = "/" + moduleName + ":i";
+    std::string inPortName = "/" + moduleName + "/vBottle:i";
     BufferedPort<emorph::vBottle>::open( inPortName.c_str() );
 
-    std::cout << "Opening writer: " << outfilename << std::endl;
-    fwriter.open(outfilename.c_str());
-    if(!fwriter.is_open()) {
-        std::cerr << "File did not open at: " << outfilename << std::endl;
+    //now initialise and open all our writers
+    std::cout << "Opening writers: " << std::endl;
+    std::string fname;
+
+    //wrap_stats
+    fname = dir + "wrapStats.txt";
+    wrap_writer.open(fname.c_str());
+    if(!wrap_writer.is_open()) {
+        std::cerr << "File did not open at: " << fname << std::endl;
+    } else {
+        std::cout << fname << " successfully opened" << std::endl;
     }
-    fwriter << "Event Statistics Output File" << std::endl;
-    fwriter << "Bottle# Event#/#inBottle PrevStamp CurStamp ..." << std::endl;
+    wrap_writer << "Event Statistics Output File" << std::endl;
+    wrap_writer << "Bottle# Event#/#inBottle PrevStamp CurStamp ..." << std::endl;
+
+    //vBottle size stats
+    fname = dir + "bottleSize.txt";
+    count_writer.open(fname.c_str());
+    if(!count_writer.is_open()) {
+        std::cerr << "File did not open at: " << fname << std::endl;
+    } else {
+        std::cout << fname << " successfully opened" << std::endl;
+    }
+    count_writer << "Bottle Size | most recent stamp" << std::endl;
+
+    //vBottle size stats
+    fname = dir + "stamps.txt";
+    stamp_writer.open(fname.c_str());
+    if(!stamp_writer.is_open()) {
+        std::cerr << "File did not open at: " << fname << std::endl;
+    } else {
+        std::cout << fname << " successfully opened" << std::endl;
+    }
 
     return true;
 }
@@ -66,17 +80,11 @@ bool eventStatisticsDumper::open()
 void eventStatisticsDumper::close()
 {
     std::cout << "now closing ports..." << std::endl;
-    fwriter.close();
+    wrap_writer.close();
+    count_writer.close();
+    stamp_writer.close();
     BufferedPort<emorph::vBottle>::close();
     std::cout << "finished closing the read port..." << std::endl;
-}
-
-void eventStatisticsDumper::interrupt()
-{
-    fprintf(stdout,"cleaning up...\n");
-    fprintf(stdout,"attempting to interrupt ports\n");
-    BufferedPort<emorph::vBottle>::interrupt();
-    fprintf(stdout,"finished interrupt ports\n");
 }
 
 void eventStatisticsDumper::onRead(emorph::vBottle &bot)
@@ -86,14 +94,14 @@ void eventStatisticsDumper::onRead(emorph::vBottle &bot)
     if(bottle_number % 1000 == 0) {
         //every 1000 bottles put a message so we know the module is
         //actaully running in case of good operation
-        fwriter << bottle_number << ": ... " << std::endl;
+        wrap_writer << bottle_number << ": ... " << std::endl;
     }
     //std::cout << ". ";
 
     //create event queue
-    emorph::vQueue q;
+    emorph::vQueue q = bot.getAll();
     emorph::vQueue::iterator qi, qi2;
-    bot.getAll(q);
+    //emorphbot.getAll(q);
 
     int i = 0, j = 0;
 
@@ -101,16 +109,27 @@ void eventStatisticsDumper::onRead(emorph::vBottle &bot)
     {
         i++;
         if ((*qi)->getStamp() < prevstamp) {
-            fwriter << bottle_number << ": " << i << "/" << q.size() << " : ";
-            fwriter << prevstamp << " " << (*qi)->getType() <<
+            wrap_writer << bottle_number << ": " << i << "/" << q.size() << " : ";
+            wrap_writer << prevstamp << " " << (*qi)->getType() <<
                        (*qi)->getStamp() << " ";
             for(j = 0, qi2 = qi; j < 4 && qi2 != q.end(); j++, qi2++)
-                fwriter << (*qi2)->getType() << (*qi2)->getStamp() << " ";
-            fwriter << std::endl;
+                wrap_writer << (*qi2)->getType() << (*qi2)->getStamp() << " ";
+            wrap_writer << std::endl;
 
         }
         prevstamp = (*qi)->getStamp();
+
+        emorph::AddressEvent *ae = (*qi)->getAs<emorph::AddressEvent>();
+        if(!ae) continue;
+        unsigned long int ts = unwrapper(ae->getStamp());
+        stamp_writer << ae->getChannel() << " " << ts << " " << 
+            (int)ae->getPolarity() << " " << (int)ae->getX() << " " <<
+            (int)ae->getY() << std::endl;
     }
+
+    count_writer << q.size();
+    if(q.size()) count_writer << " | " << q.back()->getStamp();
+    count_writer << std::endl;
 }
 
 
@@ -120,37 +139,25 @@ void eventStatisticsDumper::onRead(emorph::vBottle &bot)
 
 eventStatisticsModule::eventStatisticsModule()
 {
-
+    msgflag = true;
 }
 
 bool eventStatisticsModule::configure(yarp::os::ResourceFinder &rf)
 {
-    if(rf.check("name"))
-    {
-        name = rf.find("name").asString();
-        std::cout << "Module name set to: " << name << std::endl;
-    }
-    else
-    {
-        name = "EventStatisticsModule";
-        std::cout << "Module name set to default: " << name << std::endl;
-    }
-    setName(name.c_str());
-    esd.setModuleName(name);
 
-    std::string outfilename;
-    if(rf.check(("outputFile")))
-    {
-        outfilename = rf.find(("outputFile")).asString();
-        std::cout << "Writing Output to: " << outfilename << std::endl;
-    }
-    else
-    {
-        outfilename = "eventAnalysisOutput.txt";
-        std::cout << "Default Output: ./" << outfilename << std::endl;
-    }
-    esd.setOutputName(outfilename);
-    esd.open();
+    std::string name = rf.check("name",
+                                yarp::os::Value("ESD")).asString();
+
+    std::string dir = rf.check("dir",
+                               yarp::os::Value("")).asString();
+
+    runtime = rf.check("runfor",
+                       yarp::os::Value(-1)).asDouble();
+    starttime = -1;
+    setName(name.c_str());
+
+    esd.setDirectory(dir);
+    esd.open(name);
 
     return true;
 }
@@ -164,15 +171,24 @@ bool eventStatisticsModule::close()
 
 bool eventStatisticsModule::updateModule()
 {
-//    std::cout << name << " " << esd.getBatchedPercentage() << "% batched "
-//              << esd.getBatchedCount() << "# more "
-//              << esd.getTSCount() << "# TS total "
-//              << std::endl;
 
-//    esd.fwriter << esd.getBatchedPercentage() << " "
-//                << esd.getBatchedCount() << " "
-//                << esd.getTSCount() << " "
-//                << std::endl;
+    if(msgflag && !esd.getInputCount()) {
+        std::cout << "Please connect vBottle to port" << std::endl;
+        msgflag = false;
+    }
+
+    if(!msgflag && esd.getInputCount()) {
+        std::cout << "Okay ready to go. Hit Play" << std::endl;
+        msgflag = true;
+    }
+
+    if(runtime > 0 && esd.getBottleCount()) {
+        if(starttime < 0) starttime = timer.now();
+        if(timer.now() - starttime > runtime) {
+            esd.close();
+            return false;
+        }
+    }
 
     return true;
 }

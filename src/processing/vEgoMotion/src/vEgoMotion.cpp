@@ -152,8 +152,7 @@ void vBottleManager::interrupt()
 /**********************************************************/
 void vBottleManager::onRead(vBottle &vbot)
 {
-    //create event queue
-    vQueue q;
+
     //create queue iterator
     vQueue::iterator qi;
 
@@ -183,7 +182,7 @@ void vBottleManager::onRead(vBottle &vbot)
     outBottle.append(vbot);
 
     //get the event queue in the vBottle bot
-    vbot.getAll(q);
+    emorph::vQueue q = vbot.getAll();
 
     for (qi = q.begin(); qi != q.end(); qi++)
     {

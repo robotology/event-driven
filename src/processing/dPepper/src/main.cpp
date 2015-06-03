@@ -16,7 +16,7 @@
  */
 
 
-#include "vTemplate.h"
+#include "dPepper.h"
 
 int main(int argc, char * argv[])
 {
@@ -24,17 +24,16 @@ int main(int argc, char * argv[])
     yarp::os::Network::init();
 
     /* create the module */
-    vTemplateModule vTemplateModuleInstance;
+    dPepperModule dPepperInstance;
 
     /* prepare and configure the resource finder */
     yarp::os::ResourceFinder rf;
-    //rf.setVerbose( true );
     rf.setDefaultContext( "emorph" );
-    rf.setDefaultConfigFile( "template.ini" );
+    rf.setDefaultConfigFile( "dpepper.ini" );
     rf.configure( argc, argv );
 
     /* run the module: runModule() calls configure first and, if successful, it then runs */
-    vTemplateModuleInstance.runModule(rf);
+    dPepperInstance.runModule(rf);
     yarp::os::Network::fini();
 
     return 0;

@@ -51,6 +51,9 @@ public:
         return (unsigned long int)timestamp + (max_stamp*n_wraps);
     }
 
+    static long int maxStamp() { return max_stamp; }
+    static double tstosecs() { return 0.000001; }
+
 };
 
 }

@@ -15,43 +15,45 @@
  * Public License for more details
  */
 
-#ifndef __ICUB_EVENTCLUSTERING_MOD_H__
-#define __ICUB_EVENTCLUSTERING_MOD_H__
+#ifndef __ICUB_DPEPPER_MOD_H__
+#define __ICUB_DPEPPER_MOD_H__
 
 #include <yarp/os/all.h>
 #include <iCub/emorph/all.h>
-#include <iCub/emorph/vtsHelper.h>
 
-class EventBottleManager : public yarp::os::BufferedPort<emorph::vBottle>
+class dPepperIO : public yarp::os::BufferedPort<emorph::vBottle>
 {
 private:
     
     //output port for the vBottle with the new events computed by the module
     yarp::os::BufferedPort<emorph::vBottle> outPort;
 
-    //for helping with timestamp wrap around
-    emorph::vtsHelper unwrapper;
+    emorph::vWindow leftWindow;
+    emorph::vWindow rightWindow;
+
+    //paramters
+    double spatialSize;
 
 public:
     
-    EventBottleManager();
+    dPepperIO();
 
-    bool    open(const std::string &name);
-    void    close();
-    void    interrupt();
+    bool open(const std::string &name);
+    void close();
+    void interrupt();
 
     //this is the entry point to your main functionality
-    void    onRead(emorph::vBottle &bot);
+    void onRead(emorph::vBottle &bot);
+
+    void setTemporalSize(double microseconds);
+    void setSpatialSize(double pixelradius);
 
 };
 
-class vTemplateModule : public yarp::os::RFModule
+class dPepperModule : public yarp::os::RFModule
 {
-    //the remote procedure port
-    yarp::os::RpcServer     rpcPort;
-
     //the event bottle input and output handler
-    EventBottleManager      eventBottleManager;
+    dPepperIO      eventManager;
 
 
 public:
@@ -60,8 +62,7 @@ public:
     virtual bool configure(yarp::os::ResourceFinder &rf);
     virtual bool interruptModule();
     virtual bool close();
-    virtual bool respond(const yarp::os::Bottle &command,
-                         yarp::os::Bottle &reply);
+
     virtual double getPeriod();
     virtual bool updateModule();
 

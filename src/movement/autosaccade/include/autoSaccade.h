@@ -1,7 +1,6 @@
 /*
  * Copyright (C) 2011 Department of Robotics Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
- * Author: Chiara Bartolozzi
- * email:  chiara.bartolozzi@iit.it
+ * Author: Arren.Glover@iit.it
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
  * later version published by the Free Software Foundation.
@@ -20,39 +19,60 @@
 
 #include <yarp/os/all.h>
 #include <iCub/emorph/all.h>
-#include <iCub/emorph/vtsHelper.h>
+#include <yarp/dev/all.h>
 
 class EventBottleManager : public yarp::os::BufferedPort<emorph::vBottle>
 {
 private:
     
-    //output port for the vBottle with the new events computed by the module
-    yarp::os::BufferedPort<emorph::vBottle> outPort;
-
     //for helping with timestamp wrap around
     emorph::vtsHelper unwrapper;
+
+    //rate counters
+    yarp::os::Semaphore mutex;
+    unsigned long int latestStamp;
+    unsigned int vCount;
 
 public:
     
     EventBottleManager();
 
     bool    open(const std::string &name);
-    void    close();
-    void    interrupt();
 
     //this is the entry point to your main functionality
     void    onRead(emorph::vBottle &bot);
 
+    //the getting functions of the parent class
+    unsigned long int getTime();
+    unsigned long int popCount();
+
 };
 
-class vTemplateModule : public yarp::os::RFModule
+class saccadeModule : public yarp::os::RFModule
 {
+private:
     //the remote procedure port
     yarp::os::RpcServer     rpcPort;
 
     //the event bottle input and output handler
     EventBottleManager      eventBottleManager;
 
+    //timing parameters
+    double checkPeriod;
+    double minVpS;
+
+    //saccade parameters
+    double sMag;
+    double sVel;
+
+    //robot control settings
+    yarp::dev::PolyDriver mdriver;
+    yarp::dev::IPositionControl *pc;
+    yarp::dev::IEncoders *ec;
+    void performSaccade();
+
+    //timestamps for comparison
+    double prevStamp;
 
 public:
 

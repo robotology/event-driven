@@ -43,10 +43,11 @@ class EventBottleManager : public yarp::os::BufferedPort<emorph::vBottle>
     public:
     
         void setAllParameters(double alpha_shape, double alpha_pos,
-                         double Tact, double Tinact, double Tfree,
-                         double Tevent, double SigX, double SigY,
-                         double SigXY, bool Fixedshape, int Regrate,
-                         double Maxdist, double decay_tau);
+                              double Tact, double Tinact, double Tfree,
+                              double Tevent, double SigX, double SigY,
+                              double SigXY, bool Fixedshape, int Regrate,
+                              double Maxdist, double decay_tau,
+                              double clusterLimit);
 
         bool    open(std::string moduleName);
         bool    init();

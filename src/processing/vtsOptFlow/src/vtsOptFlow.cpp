@@ -214,8 +214,6 @@ void vtsOptFlowManager::onRead(vBottle &bot)
     uint refbin = 0;
     uint prefbin = 0;
 
-    /*create event queue*/
-    vQueue q;
     /*create queue iterator*/
     vQueue::iterator qi;
     vQueue::iterator qii;
@@ -228,7 +226,7 @@ void vtsOptFlowManager::onRead(vBottle &bot)
     OpticalFlowEvent outEvent;
 
     /*get the event queue in the vBottle bot*/
-    bot.getAll(q);
+    emorph::vQueue q = bot.getAll();
 
     iBinEvts = 0;
 

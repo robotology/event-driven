@@ -29,30 +29,38 @@
 
 class eventStatisticsDumper : public yarp::os::BufferedPort<emorph::vBottle>
 {
+private:
+
+    //parameters
+    std::string dir;
+
+    //private member variables
+    emorph::vtsHelper unwrapper;
+    int bottle_number;
+    int prevstamp;
+
+    //statistics writers
+    std::ofstream wrap_writer;
+    std::ofstream count_writer;
+    std::ofstream stamp_writer;
+
 public:
 
     eventStatisticsDumper();
-    void setModuleName(std::string name);
-    void setOutputName(std::string name);
 
-    bool    open();
-    void    close();
+    bool    open(std::string moduleName = "ESD");
     void    onRead(emorph::vBottle &bot);
-    void    interrupt();
+    void    close();
 
 
-    std::ofstream fwriter;
-
-private:
-
-    int bottle_number;
-
-    std::string outfilename;
-    int prevstamp;
+    void setDirectory(std::string dir) { this->dir = dir; }
+    int getBottleCount() { return bottle_number; }
 
 
-    std::string     moduleName;         //string containing module name
-    std::string     inPortName;        	//speech input port
+
+
+
+
 
 };
 
@@ -64,8 +72,17 @@ class eventStatisticsModule : public yarp::os::RFModule
 {
 
 private:
-    std::string name;
+
+    //our class that does the statistics dumping with an onRead()
     eventStatisticsDumper esd;
+
+    //for connection instructions
+    bool msgflag;
+
+    //for timing (if only set to run for a set time period)
+    double runtime;
+    double starttime;
+    yarp::os::Time timer;
 
 public:
 
@@ -74,7 +91,7 @@ public:
     bool close();
 
 
-    double getPeriod() { return 1.0; }
+    double getPeriod() { return 0.2; }
     bool updateModule();
 
 };

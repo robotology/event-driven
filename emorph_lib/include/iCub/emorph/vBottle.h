@@ -47,8 +47,9 @@ public:
     void append(vBottle &eb);
 
     //all get functions call this to do the meat of the getting function
-    template<class T> int get(emorph::vQueue &q) {
+    template<class T> vQueue get() {
 
+        vQueue q(true);
         //the bottle is stored as TAG (EVENTS) TAG (EVENTS)
         for(int i = 0; i < Bottle::size(); i+=2) {
 
@@ -78,7 +79,6 @@ public:
             while(pos < b->size()) {
                 if(e->decode(*b, pos)) {
                     q.push_back(e);
-                    e = e->clone();
                 }
             }
 
@@ -87,23 +87,26 @@ public:
 
         }
 
+        return q;
+
     }
 
-    template<class T> int getSorted(emorph::vQueue &q)
+    template<class T> vQueue getSorted()
     {
-        int r = get<T>(q);
+        vQueue q = get<T>();
         q.sort();
-        return r;
+        return q;
     }
 
-    void getAll(emorph::vQueue &q) {
-        q.clear();
-        this->get<vEvent>(q); //all events are of type vEvent so we get all
+    vQueue getAll() {
+        vQueue q = this->get<vEvent>(); //all events are of type vEvent so we get all
+        return q;
     }
 
-    void getAllSorted(emorph::vQueue &q) {
-        getAll(q);
+    vQueue getAllSorted() {
+        vQueue q = getAll();
         q.sort();
+        return q;
     }
 
     //you can also access the following functions

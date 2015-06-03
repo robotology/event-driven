@@ -24,8 +24,8 @@
 bool EventClustering::configure(yarp::os::ResourceFinder &rf)
 {
     std::string moduleName = rf.check("name",
-                                      yarp::os::Value("eventClustering"),
-                                      "module name (string)").asString();
+                                      yarp::os::Value("vCluster")
+                                      ).asString();
 
     setName(moduleName.c_str());
 
@@ -39,57 +39,34 @@ bool EventClustering::configure(yarp::os::ResourceFinder &rf)
     attach(rpcPort);
 
 
-    double alphaShape = rf.check("alpha_shape",
-                        yarp::os::Value(0.01),
-                        "alpha shape (double)").asDouble();
-
-    double alphaPos = rf.check("alpha_pos",
-                        yarp::os::Value(0.1),
-                        "alpha pos (double)").asDouble();
-
-    double Tact = rf.check("Tact",
-                     yarp::os::Value(20),
-                     "Tact (double)").asDouble();
-
-    double Tinact = rf.check("Tinact",
-                     yarp::os::Value(10),
-                     "Tinact (double)").asDouble();
-
-    double Tfree = rf.check("Tfree",
-                            yarp::os::Value(5),
-                            "Tfree (double)").asDouble();
-
-    double Tevent = rf.check("Tevent",
-                             yarp::os::Value(2),
-                             "Tevent (double)").asDouble();
-
-    double SigX = rf.check("SigX",
-                           yarp::os::Value(5),
-                           "SigX (double)").asDouble();
-
-    double SigY = rf.check("SigY",
-                           yarp::os::Value(5),
-                           "SigY (double)").asDouble();
-
-    double SigXY = rf.check("SigXY",
-                            yarp::os::Value(0),
-                            "SigXY (double)").asDouble();
-
-    bool Fixedshape = rf.check("Fixedshape",
-                               yarp::os::Value(false),
-                               "Fixedshape (double)").asBool();
-
-    int Regrate = rf.check("Regrate",
-                              yarp::os::Value(50),
-                              "Regrate (double)").asInt();
-
-    double Maxdist = rf.check("Maxdist",
-                              yarp::os::Value(10),
-                              "Maxdist (double)").asDouble();
-
-    double decay_tau = rf.check("decay_tau",
-                         yarp::os::Value(10000),
-                         "decay rate (double)").asDouble();
+    //how quickly cluster shape changes given new information
+    double alphaShape =
+            rf.check("alphaShape", yarp::os::Value(0.01)).asDouble();
+    //how quickly cluster position changes given new information
+    double alphaPos = rf.check("alphaPos", yarp::os::Value(0.1)).asDouble();
+    //at what threshold a cluster becomes active given activity
+    double Tact = rf.check("tAct", yarp::os::Value(20)).asDouble();
+    //at what threshold an active cluster becomes inactive given no activity
+    double Tinact = rf.check("tInact", yarp::os::Value(10)).asDouble();
+    //at what threshold an inactive cluster becomes free
+    double Tfree = rf.check("tFree", yarp::os::Value(5)).asDouble();
+    //maximum period at which a cluster can output a cluster event
+    double Tevent = rf.check("tClusRefr", yarp::os::Value(2)).asDouble();
+    //cluster initialisation parameters (size in x, y and angle between x&y
+    double SigX = rf.check("sigX", yarp::os::Value(5)).asDouble();
+    double SigY = rf.check("sigY", yarp::os::Value(5)).asDouble();
+    double SigXY = rf.check("sigXY", yarp::os::Value(0)).asDouble();
+    //are clusters fixed to circular gaussians?
+    bool Fixedshape = rf.check("fixedShape", yarp::os::Value(false)).asBool();
+    //how often clusters are decayed (computation trade-off)
+    int Regrate = rf.check("regRate", yarp::os::Value(50)).asInt();
+    //maximum distance an event can be from the centre of the cluster
+    double Maxdist = rf.check("maxDist", yarp::os::Value(10)).asDouble();
+    //how slowly events decay
+    double decay_tau = rf.check("decay", yarp::os::Value(10000)).asDouble();
+    //is there a limit on the number of clusters?
+    double clusterLimit =
+            rf.check("clusterLimit", yarp::os::Value(-1)).asDouble();
 
 
 
@@ -97,7 +74,7 @@ bool EventClustering::configure(yarp::os::ResourceFinder &rf)
     eventBottleManager.setAllParameters(alphaShape, alphaPos, Tact, Tinact,
                                         Tfree, Tevent, SigX, SigY, SigXY,
                                         Fixedshape, Regrate, Maxdist,
-                                        decay_tau);
+                                        decay_tau, clusterLimit);
 
    /* now open the manager to do the work */
     if(!eventBottleManager.open(moduleName))
@@ -146,22 +123,31 @@ double EventClustering::getPeriod()
 /******************************************************************************/
 
 void EventBottleManager::setAllParameters(double alpha_shape, double alpha_pos,
-                                     double Tact, double Tinact, double Tfree,
-                                     double Tevent, double SigX, double SigY,
-                                     double SigXY, bool Fixedshape, int Regrate,
-                                     double Maxdist, double decay_tau)
+                                          double Tact, double Tinact,
+                                          double Tfree,
+                                          double Tevent, double SigX,
+                                          double SigY,
+                                          double SigXY, bool Fixedshape,
+                                          int Regrate,
+                                          double Maxdist, double decay_tau,
+                                          double clusterLimit)
 {
+    //left
     tracker_pool_left.setComparisonParams(Maxdist);
     tracker_pool_left.setDecayParams(decay_tau, Tact, Tinact, Tfree, Tevent,
                                      Regrate);
     tracker_pool_left.setInitialParams(SigX, SigY, SigXY, alpha_pos,
                                        alpha_shape, Fixedshape);
+    tracker_pool_left.setClusterLimit(clusterLimit);
 
+    //right
     tracker_pool_right.setComparisonParams(Maxdist);
     tracker_pool_right.setDecayParams(decay_tau, Tact, Tinact, Tfree, Tevent,
                                      Regrate);
     tracker_pool_right.setInitialParams(SigX, SigY, SigXY, alpha_pos,
                                        alpha_shape, Fixedshape);
+    tracker_pool_right.setClusterLimit(clusterLimit);
+
 }
 
 /******************************************************************************/
@@ -211,9 +197,9 @@ void EventBottleManager::onRead(emorph::vBottle &bot)
 
 
     //create event queue and iterator
-    emorph::vQueue q;
+    emorph::vQueue q = bot.getAll();
     emorph::vQueue::iterator qi;
-    bot.getAll(q);
+    //bot.getAll(q);
 
     // checks for empty or non valid queue????
     for(qi = q.begin(); qi != q.end(); qi++)

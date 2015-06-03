@@ -1,7 +1,6 @@
 /*
  * Copyright (C) 2011 Department of Robotics Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
- * Author: Chiara Bartolozzi
- * email:  chiara.bartolozzi@iit.it
+ * Author: Arren.Glover@iit.it
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
  * later version published by the Free Software Foundation.
@@ -16,7 +15,7 @@
  */
 
 
-#include "vTemplate.h"
+#include "autoSaccade.h"
 
 int main(int argc, char * argv[])
 {
@@ -24,17 +23,17 @@ int main(int argc, char * argv[])
     yarp::os::Network::init();
 
     /* create the module */
-    vTemplateModule vTemplateModuleInstance;
+    saccadeModule saccadeModuleInstance;
 
     /* prepare and configure the resource finder */
     yarp::os::ResourceFinder rf;
-    //rf.setVerbose( true );
-    rf.setDefaultContext( "emorph" );
-    rf.setDefaultConfigFile( "template.ini" );
+    rf.setVerbose( true );
+    rf.setDefaultContext( "autoSaccade" );
+    rf.setDefaultConfigFile( "config.ini" );
     rf.configure( argc, argv );
 
     /* run the module: runModule() calls configure first and, if successful, it then runs */
-    vTemplateModuleInstance.runModule(rf);
+    saccadeModuleInstance.runModule(rf);
     yarp::os::Network::fini();
 
     return 0;

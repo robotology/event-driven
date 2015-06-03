@@ -1,10 +1,8 @@
 # Copyright: 2012 iCub Facility, Istituto Italiano di Tecnologia
-# Author: Arren Glover
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
-# 
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
-SET(PROJECTNAME template)
+SET(PROJECTNAME autoSaccade)
 PROJECT(${PROJECTNAME})
 
 file(GLOB source src/*.cpp)
