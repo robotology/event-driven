@@ -15,7 +15,6 @@ FIND_PACKAGE(YARP REQUIRED)
 FIND_PACKAGE(ICUB REQUIRED)
 find_package(ICUBcontrib REQUIRED)
 
-
 set(CMAKE_MODULE_PATH 
   ${YARP_MODULE_PATH} 
   ${ICUB_MODULE_PATH} 
@@ -23,9 +22,14 @@ set(CMAKE_MODULE_PATH
 )
 
 find_package(GSL)
-find_package(OpenCV)
+if(ICUB_USE_OpenCV)
+    find_package(OpenCV REQUIRED)
+endif(ICUB_USE_OpenCV)
+
 find_package(GtkPlus REQUIRED)
-find_package(IPOPT)
+if(ICUB_USE_IPOPT)
+    find_package(IPOPT)
+endif(ICUB_USE_IPOPT)
 
 include(YarpInstallationHelpers)
 include(ICUBcontribHelpers)

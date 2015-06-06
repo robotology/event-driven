@@ -32,6 +32,12 @@ private:
     //for helping with timestamp wrap around
     emorph::vtsHelper unwrapper;
 
+    uint x;
+    uint y;
+    float vx;
+    float vy;
+    uint ts;
+
 public:
     
     EventBottleManager();
@@ -45,13 +51,13 @@ public:
 
 };
 
-class vTemplateModule : public yarp::os::RFModule
+class vTestModule : public yarp::os::RFModule
 {
     //the remote procedure port
     yarp::os::RpcServer     rpcPort;
 
     //the event bottle input and output handler
-    EventBottleManager      eventBottleManager;
+    EventBottleManager      *eventBottleManager;
 
 
 public:

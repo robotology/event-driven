@@ -22,6 +22,12 @@
 </module>
 
 <module>
+    <name> vtsOptFlow </name>
+    <parameters> --name vtsOptFlow --height 128 --width 128 --filterSize 5 --tWindow 30000 --minEvtsThresh 5 --minSobelsThresh 3</parameters>
+    <node> localhost </node>
+</module>
+
+<module>
    <name>eventClustering</name>
    <parameters> --decay 15000 --tAct 20 --tInact 5 --tFree 5 --maxDist 8 --tEvent 0.5 </parameters>
    <node>localhost</node>
@@ -34,14 +40,8 @@
 </module>
 
 <module>
-    <name> vFramer</name>
-    <parameters> --frameRate 60 --eventWindow 0.02 --displays "(0 left (AE CIRC) 1 right (AE CIRC))"</parameters>
-    <node>localhost</node>
-</module>
-
-<module>
     <name> eventAnalysis</name>
-    <parameters> --name ESD --dir $HOME/workspace/results/esd/"</parameters>
+    <parameters> --name ESD --dir $HOME/workspace/results/esd/</parameters>
     <node>localhost</node>
 </module>
 
@@ -55,6 +55,12 @@
     <name> dataDumper </name>
     <parameters> --name /datadumper/experimenttype/experimentnumber/ </parameters>
     <node> localhost </node>
+</module>
+
+<module>
+    <name> vFramer</name>
+    <parameters> --frameRate 60 --eventWindow 0.02 --displays "(0 left (SURF OFE) 1 right (SURF OFE))"</parameters>
+    <node>localhost</node>
 </module>
 
 <module>
@@ -84,6 +90,12 @@
 
 <connection>
   <from>/aexGrabber/vBottle:o</from>
+  <to>/autoSaccade/vBottle:i</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
+  <from>/aexGrabber/vBottle:o</from>
   <to>/datadumper/experimenttype/experimentnumber/</to>
   <protocol>tcp</protocol>
 </connection>
@@ -98,6 +110,19 @@
   <from>/vFramerModule/right</from>
   <to>/viewCh1</to>
   <protocol>tcp</protocol>
+</connection>
+
+<connection>
+  <from>/temp:o</from>
+  <to>/temp:i</to>
+  <protocol>tcp</protocol>
+</connection>
+
+<connection>
+  <from>/temp:o</from>
+  <to>/temp:i</to>
+  <protocol>tcp</protocol>
+
 </connection>
 
 

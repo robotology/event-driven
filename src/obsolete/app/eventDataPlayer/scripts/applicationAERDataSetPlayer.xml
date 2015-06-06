@@ -12,7 +12,11 @@
 
 <module>
    <name>cartesianFrameCollector</name>
+<<<<<<< HEAD:app/eventDataPlayer/scripts/applicationAERDataSetPlayer.xml
+   <parameters>--synchPeriod 1 --tristate --stereo</parameters>
+=======
    <parameters>--synchPeriod 1 --tristate --stereo --bottleHandler</parameters>
+>>>>>>> master:src/obsolete/app/eventDataPlayer/scripts/applicationAERDataSetPlayer.xml
    <node>localhost</node>
    <tag>cartFrameCollector</tag>
 </module>
@@ -45,8 +49,13 @@
 </connection>
 <connection>
   <from>/eventBottleConverter/bte:o</from>
+<<<<<<< HEAD
+  <to>/cartesianFrameCollector/retina:i</to>
+  <protocol>udp</protocol>
+=======
   <to>/cartesianFrameCollector/retinaBottle:i</to>
   <protocol>tcp</protocol>
+>>>>>>> master
 </connection>
 <connection>
   <from>/cartesianFrameCollector/left:o</from>

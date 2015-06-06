@@ -1,4 +1,3 @@
-
 #this file is created by QT creator IDE
 CMakeLists.txt.user
 *.autosave
@@ -17,3 +16,4 @@ build-x86_64/
 #the pc104 build which we only want on the iCub14
 build-pc104/
 
+*.autosave

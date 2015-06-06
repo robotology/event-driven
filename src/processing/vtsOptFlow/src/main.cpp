@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2010 eMorph Group iCub Facility
- * Authors: Arren Glover
+ * Copyright (C) 2014 Istituto Italiano di Tecnologia
+ * Author: Charles Clercq, edited by Valentina Vasco (01/15)
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
  * later version published by the Free Software Foundation.
@@ -13,33 +13,40 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details
  */
-  
 
-#include "iCub/vFramer.h"
+/*
+ * @file main.cpp
+ * @brief main code for the computation of the optical flow
+ */
+
+#include "vtsOptFlow.hpp"
 #include <yarp/os/all.h>
-#include <iCub/emorph/all.h>
+#include <yarp/sig/all.h>
 
+using namespace yarp::os;
+using namespace yarp::sig;
 
 int main(int argc, char * argv[])
 {
-
+    /* initialize yarp network */
     yarp::os::Network::init();
-    emorph::vFramerModule module;
-    yarp::os::ResourceFinder rf;
 
-    //set up the resource finder
-    rf.setDefaultConfigFile("vFramer.ini"); //overridden by --from parameter
-    rf.setDefaultContext("eMorph");   //overridden by --context parameter
+    /* instantiate the module */
+    vtsOptFlow module;
+
+    /* prepare and configure the resource finder */
+    ResourceFinder rf;
+    rf.setDefaultConfigFile("opticalflow.ini");    //overridden by --from parameter
+    rf.setDefaultContext("eMorph");    //overridden by --context parameter
     rf.configure(argc, argv);
- 
-    //run the module
+
+    /* run the module: runModule() calls configure first and, if successful, it then runs */
     module.runModule(rf);
 
-    yarp::os::Network::fini();
+    /* deinitilize yarp network */
+    Network::fini();
+
     return 0;
 }
 
-
-
 //----- end-of-file --- ( next line intentionally left blank ) ------------------
-

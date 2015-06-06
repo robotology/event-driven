@@ -50,6 +50,10 @@ vEvent * createEvent(const std::string type)
     if(type == ret->getType()) return ret;
     else delete(ret);
 
+    ret = new OpticalFlowEvent();
+    if(type == ret->getType()) return ret;
+    else delete(ret);
+
     return 0;
 
 }
@@ -771,6 +775,121 @@ Property ClusterEventGauss::getContent() const
     prop.put("xVel", xVel);
     prop.put("yVel", yVel);
 
+
+    return prop;
+}
+
+/******************************************************************************/
+//OpticalFlowEvent
+/******************************************************************************/
+OpticalFlowEvent::OpticalFlowEvent(const vEvent &event)
+{
+    //most of the constructor is replicated in the assignment operator
+    //so we just use that to construct
+    *this = event;
+
+}
+
+/******************************************************************************/
+vEvent &OpticalFlowEvent::operator=(const vEvent &event)
+{
+
+    //copy timestamp and type (base class =operator)
+    vEvent::operator =(event);
+
+    //copy other fields if it's compatible
+    const OpticalFlowEvent * ofp = dynamic_cast<const OpticalFlowEvent *>(&event);
+    if(ofp) {
+        channel=ofp->channel;
+        x=ofp->x;
+        y=ofp->y;
+        vx=ofp->vx;
+        vy=ofp->vy;
+    } else {
+        channel = 0;
+        x = 0;
+        y = 0;
+        vx = 0;
+        vy = 0;
+    }
+
+    //force the type to OpticalFlowEvent
+    type = "OFE";
+
+    return *this;
+}
+
+/******************************************************************************/
+vEvent* OpticalFlowEvent::clone() {
+    return new OpticalFlowEvent(*this);
+}
+
+/******************************************************************************/
+yarp::os::Bottle OpticalFlowEvent::encode() const
+{
+    //32bits for vy
+    //32bits for vx
+    //8bits for y
+    //8bits for x
+    //1bit for polarity
+    //1bit for channel
+
+    int word0=((y&0xff)<<10)|((x&0xff)<<2)|((polarity&0x01)<<1)|(channel&0x01);
+    int word1=*(int*)(&vx);
+    int word2=*(int*)(&vy);
+
+    Bottle ret = vEvent::encode();
+    ret.addInt(word0);
+    ret.addInt(word1);
+    ret.addInt(word2);
+    return ret;
+}
+
+/******************************************************************************/
+bool OpticalFlowEvent::decode(const yarp::os::Bottle &packet, int &pos)
+{
+    // check length
+    if (vEvent::decode(packet, pos) && pos + localWordsCoded <= packet.size())
+    {
+        int word0=packet.get(pos).asInt();
+        int word1=packet.get(pos+1).asInt();
+        int word2=packet.get(pos+2).asInt();
+
+        channel=word0&0x01;
+        polarity=(word0>>1)&0x01;
+        x=(word0>>2)&0xff;
+        y=(word0>>10)&0xff;
+
+        vx=*(float*)(&word1);
+
+        vy=*(float*)(&word2);
+
+        pos+=localWordsCoded;
+        return true;
+    }
+    return false;
+}
+
+/******************************************************************************/
+bool OpticalFlowEvent::operator==(const OpticalFlowEvent &event)
+{
+    return ((vEvent::operator==(event)) &&
+            (channel==event.channel)&&
+            (x==event.x)&&
+            (y==event.y))&&
+            (vx==event.vx)&&
+            (vy==event.vy);
+}
+
+/******************************************************************************/
+Property OpticalFlowEvent::getContent() const
+{
+    Property prop = vEvent::getContent();
+    prop.put("channel",channel);
+    prop.put("x",x);
+    prop.put("y",y);
+    prop.put("vx",vx);
+    prop.put("vy",vy);
 
     return prop;
 }

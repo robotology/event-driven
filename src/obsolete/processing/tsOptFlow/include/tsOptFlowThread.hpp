@@ -44,13 +44,15 @@
 #include "iCub/emorph/eventUnmaskICUB.h"
 #include "iCub/emorph/eventUnmaskICUBcircBuf.h"
 
+#include <iCub/emorph/eventBottle.h>
+
 #include "VelocityBuffer.h"
 
 //#define _DEBUG
 #define THRATE 1
 #define CONTRAST 15
 
-//#define _ANALYSE_
+#define _ANALYSE_
 
 typedef unsigned int uint;
 
@@ -96,6 +98,8 @@ private:
     uint accumulation;
     uint binAcc;
     bool saveOf;
+
+    int index;    // index for parameters optimization
 
     uint borneSupX;
     uint borneSupY;
@@ -146,6 +150,10 @@ private:
     uint iBinEvts;
     double *vxMean;
     double *vyMean;
+    double amplitude;    //optical flow amplitude
+    double vx2;    //vx^2
+    double vy2;    //vy^2
+    int indice;
     uint *ivxyNData;
 
     yarp::sig::Matrix wMat;
@@ -166,7 +174,7 @@ private:
 
     //Analyse purpose
 #ifdef _ANALYSE_
-/*    void createFile();
+    void createFile();
     typedef struct __ctimeAndEvtNum
     {
         long int computationalTime;
@@ -175,7 +183,7 @@ private:
     } _ctimeAndEvtNum;
     _ctimeAndEvtNum* ctimeAndEvtNum;
     int ctimeAndEvtNumIterator;
-*/
+
     uint smoothedNeigh;
     timespec compStart;
     timespec compEnd;

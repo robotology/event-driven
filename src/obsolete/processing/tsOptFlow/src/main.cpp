@@ -17,24 +17,28 @@
 */
 #include "tsOptFlow.hpp"
 
-#include <yarp/os/Network.h>
+#include <yarp/os/all.h>
+//#include <yarp/os/Network.h>
 #include <yarp/os/Property.h>
 
+#include <iCub/emorph/eventBottle.h>
 #include "VelocityBuffer.h"
 
 using namespace std;
 int main(int argc, char *argv[])
 {
-    yarp::os::Network yarpNet;
+    //yarp::os::Network yarpNet;
+
+    Network::init();
 
     yarp::os::Property params;
     params.fromCommand(argc, argv);
-//    if(!params.check("bufsz"))
-//    {
-//        fprintf(stderr, "Please specify the size of the buffer to be received\n");
-//        fprintf(stderr, "--bufsz size_of_the_buffer (e.g. 32768)\n");
-//        return -1;
-//    }
+////    if(!params.check("bufsz"))
+////    {
+////        fprintf(stderr, "Please specify the size of the buffer to be received\n");
+////        fprintf(stderr, "--bufsz size_of_the_buffer (e.g. 32768)\n");
+////        return -1;
+////    }
     if(!params.check("height") || !params.check("width") || !params.check("source") || !params.check("name"))
     {
         fprintf(stderr, "Error param\n");
@@ -135,4 +139,5 @@ int main(int argc, char *argv[])
     tsOptFlower.disableCallback();
 
     outPort.close();
+    Network::fini();
 }

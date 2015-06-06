@@ -17,6 +17,7 @@
 */
 #include "tsOptFlowThread.hpp"
 
+
 #define HEADERSZ 1459384
 #define TYPE 8
 
@@ -29,7 +30,10 @@ tsOptFlowThread::tsOptFlowThread(uint &_h, uint &_w, std::string &_src, uint &_t
 //:RateThread(THRATE), activity(_h, _w), TSs(_h, _w), TSs2Plan(_h, _w), compPurpTS(_h, _w), sobelx(_ssz, _ssz), sobely(_ssz, _ssz), subTSs(_nn, _nn), A(_nn*_nn, 3), At(3,_nn*_nn), AtA(3,3), abc(3), Y(_nn*_nn), ctrl((uint)floor((double)_ssz/2.0), (uint)floor((double)_ssz/2.0)), wMat(_h, _w), sMat(_h*_w, 2), binEvts(10000, 2), alreadyComputedX(_h, _w), alreadyComputedY(_h, _w)
 :activity(_h, _w), TSs(_h, _w), TSs2Plan(_h, _w), compPurpTS(_h, _w), sobelx(_ssz, _ssz), sobely(_ssz, _ssz), subTSs(_ssz, _ssz), A(_ssz*_ssz, 3), At(3,_ssz*_ssz), AtA(3,3), abc(3), Y(_nn*_nn), ctrl((uint)floor((double)_ssz/2.0), (uint)floor((double)_ssz/2.0)), wMat(_h, _w), sMat(_h*_w, 2), binEvts(10000, 3), alreadyComputedX(_h, _w), alreadyComputedY(_h, _w), polSel(_pol), orientation(_ori), binAcc(_bin), saveOf(_save)
 {
+    index=-1;
     velBuf=_velb;
+
+    indice=0;
 
     TSsData=TSs.data();
     TSs2PlanData=TSs2Plan.data();
@@ -66,8 +70,10 @@ tsOptFlowThread::tsOptFlowThread(uint &_h, uint &_w, std::string &_src, uint &_t
 //        sobelx=sobelx*-1;
 //        sobely=sobely*-1;
 //    }
-printMatrix(sobelx);
-printMatrix(sobely);
+    printf("Sobelx: \n");
+    printMatrix(sobelx);
+    printf("Sobely: \n");
+    printMatrix(sobely);
 
     polarity=0;
     activity=0;
@@ -91,6 +97,7 @@ printMatrix(sobely);
     borneSupX=height-borneInfX;
     borneSupY=width-borneInfY;
 
+
     trans2neigh=new int[2*(4*_ssz-4)];
     iT2N=0;
     for(int i=0; i<_ssz; ++i)
@@ -103,8 +110,10 @@ printMatrix(sobely);
                 ++iT2N;
             }
         }
-//    for(int i=0; i<iT2N; ++i)
-//        std::cout << *(trans2neigh+i*2) << " " << *(trans2neigh+i*2+1) << endl;
+
+   //   std::cout << "trans2neigh: " << *trans2neigh << endl;
+   //  for(int i=0; i<iT2N; ++i)
+   //    std::cout << *(trans2neigh+i*2) << " " << *(trans2neigh+i*2+1) << endl;
 
     if(!_src.compare("icub"))
         unmasker=new eventUnmaskICUB();
@@ -131,11 +140,11 @@ printMatrix(sobely);
 #ifdef _ANALYSE_
     concatenation.str("");
     if(polSel==1)
-        myfile.open ("/home/clercq/computationalTimeAndNumberOfEvents_pos_rotDisk_90_5loop_2difLens.txt");
+        myfile.open ("/home/vvasco/dev/computationalTimeAndNumberOfEvents_pos_rotDisk_90_5loop_2difLens.txt");
     else if(polSel==-1)
-        myfile.open ("/home/clercq/computationalTimeAndNumberOfEvents_neg_rotDisk_90_5loop_2difLens.txt");
+        myfile.open ("/home/vvasco/dev/computationalTimeAndNumberOfEvents_neg_rotDisk_90_5loop_2difLens.txt");
     else
-        myfile.open ("/home/clercq/computationalTimeAndNumberOfEvents_full_rotDisk_90_5loop_2difLens.txt");
+        myfile.open ("/home/vvasco/dev/computationalTimeAndNumberOfEvents_full_rotDisk_90_5loop_2difLens.txt");
     smoothedNeigh=0;
     //ctimeAndEvtNumIterator=0;
     //ctimeAndEvtNum=new _ctimeAndEvtNum[HEADERSZ/TYPE];
@@ -154,16 +163,18 @@ tsOptFlowThread::~tsOptFlowThread()
     delete[] vxMean;
     delete[] vyMean;
     delete[] trans2neigh;
+    delete velBuf;
     delete unmasker;
-//#ifdef _ANALYSE_
-//    createFile();
-//#endif
+#ifdef _ANALYSE_
+    createFile();
+#endif
 }
 
 void tsOptFlowThread::run()
 {
     uint refbin;
     uint prefbin;
+
     while(1)
     {
         //std::cout << "[tsOptFlowThread] Get the data form the buffer" << std::endl;
@@ -180,8 +191,8 @@ void tsOptFlowThread::run()
             else
                 res=unmasker->getUmaskedData(addrx, addry, polarity, eye, timestamp);
                 
-            //std::cout << "[tsOptFlowThread] Waiting for the good pol: addrx:" << addrx << ", addry: " << addry << ", pol: " << polarity << ", eye: " << eye << ", ts: " << timestamp << std::endl;
-                //std::cout << "[tsOptFlowThread] res: " << res << std::endl;
+           //std::cout << "[tsOptFlowThread] Waiting for the good pol: addrx:" << addrx << ", addry: " << addry << ", pol: " << polarity << ", eye: " << eye << ", ts: " << timestamp << std::endl;
+           //     std::cout << "[tsOptFlowThread] res: " << res << std::endl;
             if((polSel && polarity!=polSel) || eye!=eyeSel) res=0;
         }
         //std::cout << "[tsOptFlowThread] Initialisation done" << std::endl;
@@ -219,9 +230,11 @@ void tsOptFlowThread::run()
         binEvts(iBinEvts, 1)=addry;
         binEvts(iBinEvts, 2)=timestamp;
         iBinEvts++;
-            
-        //std::cout << "[tsOptFlowThread] Bin filling..." << endl;
-        //std::cout << "[tsOptFlowThread] Get the data form the buffer" << std::endl;
+
+
+        std::cout << "[tsOptFlowThread] Bin filling..." << endl;
+        std::cout << "[tsOptFlowThread] Get the data form the buffer" << std::endl;
+
         res=0;
 
         while(refbin+binAcc>=timestamp && iBinEvts<10000)
@@ -245,13 +258,13 @@ void tsOptFlowThread::run()
                 iBinEvts++;
             }
         }
-        //std::cout << "[tsOptFlowThread] Bin filled" << endl;
+       std::cout << "[tsOptFlowThread] Bin filled" << endl;
         timestamp=prefbin=refbin;
 
-        //std::cout << "[tsOptFlowThread] evts in the bin: " << iBinEvts << std::endl;
+        std::cout << "[tsOptFlowThread] evts in the bin: " << iBinEvts << std::endl;
         if(iBinEvts)
         {
-            //std::cout << "addrx: " << addrx << ", addry: " << addry << ", polarity: " << polarity << ", eye: " << eye << ", ts: " << timestamp << std::endl;
+            std::cout << "addrx: " << addrx << ", addry: " << addry << ", polarity: " << polarity << ", eye: " << eye << ", ts: " << timestamp << std::endl;
 /*
 #ifdef _DEBUG
             std::cout << "[tsOptFlowThread] Update the map of timestamp" << std::endl;
@@ -266,12 +279,14 @@ void tsOptFlowThread::run()
 #endif
 */
             updateAll();
-            //std::cout << "[tsOptFlowThread] Compute the flow" << std::endl;
+            std::cout << "[tsOptFlowThread] Compute the flow" << std::endl;
+
 #ifdef _ANALYSE_
             clock_gettime(CLOCK_MONOTONIC, &compStart);
             smoothedNeigh=0;
 #endif
             compute();
+
 #ifdef _ANALYSE_
             clock_gettime(CLOCK_MONOTONIC, &compEnd);
 /*            ctimeAndEvtNumIterator++;
@@ -371,6 +386,16 @@ void tsOptFlowThread::setBuffer(emorph::ebuffer::eventBuffer &_buf)
 
 void tsOptFlowThread::compute()
 {
+    ofstream file;
+    //FILE *file;
+    //saveFile.open("flowtest.txt",ios::out);
+    //file.open("flowtest.txt",ios::out);
+    file.open("flow.txt");
+    file<<tsVal<<endl;
+    int x0=64;    //center of the image
+    int y0=64;    //center of the image
+    double distance;     //distance of the actual pixel (64,64) from the center
+
     alreadyComputedX=0;
     alreadyComputedY=0;
     for(uint ixy=0; ixy<iSMat; ++ixy)
@@ -490,6 +515,7 @@ void tsOptFlowThread::compute()
                     //std::cout << "\tMutex took" << std::endl;
                     //velBuf->addData((short)x, (short)y, outY, outX, *(TSsData+x*width+y));
                     velBuf->addData((short)x, (short)y, *(vyMean+x*width+y), *(vxMean+x*width+y), *(TSsData+x*width+y));
+
                 }mutex->post();
                 //std::cout << "Mutex freed" << std::endl;
                 
@@ -498,8 +524,19 @@ void tsOptFlowThread::compute()
                     line2save.str("");
                     //line2save << (short)x << " " << (short)y << " " << outY << " " << outX << " " << timestamp << endl;
                     //line2save << (short)x << " " << (short)y << " " << outY << " " << outX << " " << *(TSsData+x*width+y) << endl;
-                    line2save << (short)x << " " << (short)y << " " << *(vyMean+x*width+y) << " " << *(vxMean+x*width+y) << " " << *(TSsData+x*width+y) << endl;
+                    //line2save << (short)x << " " << (short)y << " " << *(vyMean+x*width+y) << " " << *(vxMean+x*width+y) << " " << *(TSsData+x*width+y) << endl;
+                    vx2=pow(*(vyMean+x*width+y),2);
+                    vy2=pow(*(vxMean+x*width+y),2);
+                    amplitude=sqrt(vx2+vy2);
+                    distance=sqrt(((x-x0)*(x-x0)+(y-y0)*(y-y0)));
+                    //double thetaX = atan2(*(vyMean+x*width+y),x);
+                    //double thetaY = atan2(*(vxMean+x*width+y),y);
+                    //double theta = atan2(x,y);
+                    double timenow = Time::now();
+                    line2save.precision(12);
+                    line2save << (short)x << " " << (short)y << " " << distance << " " << *(vyMean+x*width+y) << " " << *(vxMean+x*width+y) << " " << amplitude << " " << *(TSsData+x*width+y) << " " << timenow << " " << indice << endl;
                     saveFile.write( line2save.str().c_str(), line2save.str().size() );
+                    indice++;
                 }
             }
             else
@@ -509,6 +546,8 @@ void tsOptFlowThread::compute()
             }
         }
     }
+
+    //file.close();
 }
 
 uint tsOptFlowThread::createPlan(Matrix& _m)
@@ -685,7 +724,7 @@ uint tsOptFlowThread::createPlanAndCompute(Matrix &_m, double &_dx, double &_dy,
         for(i=0; i<sobelSz; i++)
             for(ii=0; ii<sobelSz; ii++)
             {
-                //if(_m(i, ii)>-1 && ((i==_curx && ii==_cury) || ((i!=_curx || ii!=_cury) && _m(i, ii)<=(_curts-binAcc))))
+                //if(_m(i, ii)>-1 && ((i==_curx && ii==_cury) || ((i!=_curx || ii!=_cury) && _m(i, ii)<=(_curts-))))
                 if( (_m(i, ii)+tsVal)>_curts && ((i==_curx && ii==_cury) || ((i!=_curx || ii!=_cury) && _m(i, ii)<=(_curts-binAcc))))
                 {
 #ifdef _DEBUG
@@ -769,23 +808,24 @@ void tsOptFlowThread::printMatrix(Matrix& _mat)
     }
 }
 
-/*#ifdef _ANALYSE_
+#ifdef _ANALYSE_
 void tsOptFlowThread::createFile()
 {
     cout << "[tsOptFlowThread] Save data for analysis" << endl;
     stringstream concatenation;
     if(polSel==1)
-        concatenation << "/home/clercq/computationalTimeAndNumberOfEvents_pos_rotDisk_90_5loop_2difLens.txt";
+        concatenation << "/home/vvasco/dev/computationalTimeAndNumberOfEvents_pos_rotDisk_90_5loop_2difLens.txt";
     else if(polSel==-1)
-        concatenation << "/home/clercq/computationalTimeAndNumberOfEvents_neg_rotDisk_90_5loop_2difLens.txt";
+        concatenation << "/home/vvasco/dev/computationalTimeAndNumberOfEvents_neg_rotDisk_90_5loop_2difLens.txt";
     else
-        concatenation << "/home/clercq/computationalTimeAndNumberOfEvents_full_rotDisk_90_5loop_2difLens.txt";
+        concatenation << "/home/vvasco/dev/computationalTimeAndNumberOfEvents_full_rotDisk_90_5loop_2difLens.txt";
     ofstream myfile;
     myfile.open (concatenation.str().c_str());
     for(int i=0; i<=ctimeAndEvtNumIterator; i++)
         myfile  << ctimeAndEvtNum[i].computationalTime << " "
                 << ctimeAndEvtNum[i].numberOfEvent << " "
-                << ctimeAndEvtNum[i].timestampOfComputation << endl;
+                << ctimeAndEvtNum[i].timestampOfComputation << " "
+                << i << endl;
     myfile.close();
 }
-#endif*/
+#endif
