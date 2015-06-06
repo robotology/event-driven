@@ -4,12 +4,11 @@
 
 cmake_minimum_required(VERSION 2.6)
 
-add_subdirectory   (  vtsOptFlow                    )
+add_subdirectory(vtsOptFlow)
 add_subdirectory(eventAnalysis )
 add_subdirectory(eventClustering )
 add_subdirectory(template)
 add_subdirectory(dPepper)
-add_subdirectory(vEgoMotion)
 if(OPENCV_FOUND)
     add_subdirectory(vUndistortCam)
 endif(OPENCV_FOUND)

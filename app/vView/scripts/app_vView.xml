@@ -35,7 +35,7 @@
 
 <module>
     <name> eventAnalysis</name>
-    <parameters> --name ESD --dir $HOME/workspace/results/esd/"</parameters>
+    <parameters> --name ESD --dir $HOME/workspace/results/esd/</parameters>
     <node>localhost</node>
 </module>
 
@@ -53,7 +53,7 @@
 
 <module>
     <name> vFramer</name>
-    <parameters> --frameRate 60 --eventWindow 0.02 --displays "(0 left (AE OFE))"</parameters>
+    <parameters> --frameRate 60 --eventWindow 0.02 --displays "(0 left (SURF OFE) 1 right (SURF OFE))"</parameters>
     <node>localhost</node>
 </module>
 
@@ -104,6 +104,19 @@
   <from>/vFramerModule/right</from>
   <to>/viewCh1</to>
   <protocol>tcp</protocol>
+</connection>
+
+<connection>
+  <from>/temp:o</from>
+  <to>/temp:i</to>
+  <protocol>tcp</protocol>
+</connection>
+
+<connection>
+  <from>/temp:o</from>
+  <to>/temp:i</to>
+  <protocol>tcp</protocol>
+
 </connection>
 
 
