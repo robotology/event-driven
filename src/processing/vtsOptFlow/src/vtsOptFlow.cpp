@@ -1,7 +1,9 @@
 
 /*
  * Copyright (C) 2014 Istituto Italiano di Tecnologia
- * Author: Charles Clercq, edited by Valentina Vasco (01/15)
+ * Author:  oringinal Charles Clercq
+ *          edited by Valentina Vasco
+ *          edited by Arren Glover
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
  * later version published by the Free Software Foundation.
@@ -15,572 +17,300 @@
  * Public License for more details
  */
 
-/*
- * @file vtsOptFlow.cpp
- * @brief Implementation of the vtsOptFlow (see header file).
- */
-
 #include "vtsOptFlow.hpp"
 
-using namespace yarp::os;
-using namespace yarp::sig;
-using namespace yarp::math;
-using namespace std;
-using namespace emorph;
+using yarp::math::operator *;
+using yarp::math::outerProduct;
 
-
-bool vtsOptFlow::configure(ResourceFinder &rf)
+/******************************************************************************/
+//vtsOptFlow
+/******************************************************************************/
+bool vtsOptFlow::configure(yarp::os::ResourceFinder &rf)
 {
     /* set the name of the module */
-    moduleName            = rf.check("name",
-                           Value("vtsOptFlow"),
-                           "module name (string)").asString();
+    std::string moduleName = rf.check("name",
+                                      yarp::os::Value("vtsOptFlow")).asString();
+    yarp::os::RFModule::setName(moduleName.c_str());
 
-    setName(moduleName.c_str());
-
-    /* open and attach rpc port */
-    rpcPortName =  "/" + moduleName + "/rpc:i";
-
-    if (!rpcPort.open(rpcPortName)) {
-        cerr << getName() << ": Unable to open rpc port at " << rpcPortName << endl;
-        return false;
-    }
-
-    /* make the respond method of this RF module respond to the rpcPort */
-    attach(rpcPort);
 
     /* set parameters */
-    unsigned int height = rf.find("height").asInt();
-    if(!height) height = 128;
-    unsigned int width = rf.find("width").asInt();
-    if(!width) width = 128;
+    int height = rf.check("height", yarp::os::Value(128)).asInt();
+    int width = rf.check("width", yarp::os::Value(128)).asInt();
+    int sobelSize = rf.check("filterSize", yarp::os::Value(3)).asInt();
+    int tWindow = rf.check("tWindow", yarp::os::Value(50000)).asInt();
+    int minEvtsInSobel = rf.check("minEvtsThresh", yarp::os::Value(5)).asInt();
+    int minSobelsInFlow = rf.check("minSobelsThresh",
+                                   yarp::os::Value(3)).asInt();
 
-    unsigned int binAcc = rf.find("bin").asInt();
-    if(!binAcc) binAcc = 1000;
+    vtsofManager = new vtsOptFlowManager(height, width, sobelSize, tWindow,
+                                         minEvtsInSobel, minSobelsInFlow);
+    return vtsofManager->open(moduleName);
 
-    double threshold = rf.find("threshold").asDouble();
-    if(threshold == 0) threshold = 2;
-
-    unsigned int sobelSz = rf.find("szSobel").asInt();
-    if(!sobelSz) sobelSz = 3;
-
-    unsigned int tsVal = rf.find("tsVal").asInt();
-    if(!tsVal) tsVal = 100000;
-
-    double alpha = rf.find("alpha").asDouble();
-    if(alpha == 0) alpha = 0.5;
-
-    int eye = rf.check("eye", Value(0)).asInt();
-
-    int polarity = rf.check("pol", Value(0)).asInt();
-
-    bool saveOf = false;
-    if (rf.check("save")) saveOf = true;
-
-    bool batch_mode = false;
-    if (rf.check("batch")) batch_mode = true;
-    //rf.check("batch", Value(false)).asBool();
-
-    vtsofManager = new vtsOptFlowManager( moduleName, height, width,  binAcc, threshold, sobelSz, tsVal, alpha, eye, polarity, saveOf, batch_mode );
-    vtsofManager->open();
-
-    return true ;
 }
 
+/******************************************************************************/
 bool vtsOptFlow::interruptModule()
 {
-    rpcPort.interrupt();
     vtsofManager->interrupt();
+    yarp::os::RFModule::interruptModule();
 
     return true;
 }
 
+/******************************************************************************/
 bool vtsOptFlow::close()
 {
-    rpcPort.close();
     vtsofManager->close();
     delete vtsofManager;
+    yarp::os::RFModule::close();
 
     return true;
 }
 
-/* Called periodically every getPeriod() seconds */
+/******************************************************************************/
+double vtsOptFlow::getPeriod() {
+    return 1.0;
+}
+
+/******************************************************************************/
 bool vtsOptFlow::updateModule()
 {
     return true;
 }
 
-vtsOptFlowManager::~vtsOptFlowManager()
+/******************************************************************************/
+//vtsOptFlowManager
+/******************************************************************************/
+vtsOptFlowManager::vtsOptFlowManager(int height, int width, int sobelSize,
+                                     int temporalWindow, int minEvtsInSobel,
+                                     int minSobelsInFlow)
 {
-    delete[] xNeighFlow;
-    delete[] yNeighFlow;
-    delete[] trans2neigh;
+
+    this->height=height;
+    this->width=width;
+
+    //ensure sobel size is at least 3 and an odd number
+    if(sobelSize < 5) sobelSize = 3;
+    if(!(sobelSize % 2)) sobelSize--;
+    this->sobelSize=sobelSize;
+    this->sobRad = sobelSize / 2;
+    this->minEvtsInSobel = minEvtsInSobel;
+    this->minSobelsInFlow = minSobelsInFlow;
+
+    //for speed we predefine the mememory for some matricies
+    sobelx = yarp::sig::Matrix(sobelSize, sobelSize);
+    sobely = yarp::sig::Matrix(sobelSize, sobelSize);
+    At = yarp::sig::Matrix(3, sobelSize * sobelSize);
+    AtA = yarp::sig::Matrix(3,3);
+    abc = yarp::sig::Vector(3);
+    A2 = yarp::sig::Matrix(3, 3);
+
+    setSobelFilters(sobelSize, sobelx, sobely);
+
+    //create our surface in synchronous mode
+    surface = new emorph::vWindow(width, height, temporalWindow, false);
 }
 
-vtsOptFlowManager::vtsOptFlowManager(const string &moduleName, unsigned int &_height, unsigned int &_width, unsigned int &_binAcc, double &_threshold, unsigned int &_sobelSz, unsigned int &_tsVal, double &_alpha, int &_eye, int &_polarity, bool &_saveOf, bool &_batch_mode)
-    :activity(_height, _width), TSs(_height, _width), TSs2Plan(_height, _width), vxMat(_height, _width), vyMat(_height, _width), ivxy(_height, _width), sobelx(_sobelSz, _sobelSz), sobely(_sobelSz, _sobelSz), subTSs(_sobelSz, _sobelSz), A(_sobelSz*_sobelSz, 3), At(3,_sobelSz*_sobelSz), AtA(3,3), abc(3), Y(_sobelSz*_sobelSz), ctrl((uint)floor((double)_sobelSz/2.0), (uint)floor((double)_sobelSz/2.0)), sMat(_height*_width, 2), binEvts(10000, 3), alreadyComputedX(_height, _width), alreadyComputedY(_height, _width), binAcc(_binAcc)
-{
-    fprintf(stdout,"initialising Variables\n");
-    this->moduleName = moduleName;
-
-    /*set parameters*/
-    alpha=_alpha;
-    threshold=_threshold;
-    tsVal=_tsVal;
-    sobelSz=_sobelSz;
-    sobelLR=(uint)floor((double)_sobelSz/2.0);
-    height=_height;
-    width=_width;
-    saveOf=_saveOf;
-    eye=_eye;
-    polarity=_polarity;
-    batch_mode=_batch_mode;
-
-    xNeighFlow=new double[_sobelSz*_sobelSz];
-    yNeighFlow=new double[_sobelSz*_sobelSz];
-    ixNeighFlow=0;
-    iyNeighFlow=0;
-
-    first=true;
-
-    setSobelFilters(_sobelSz, sobelx, sobely);
-
-    activity=0;
-    TSs=0;
-    TSs2Plan=0;
-    ctrl=-1;
-
-    vxMat = 0;
-    vyMat = 0;
-    ivxy = 0;
-
-    sMat=0;
-    iSMat=0;
-
-    borneInfX=2*sobelLR+1;
-    borneInfY=2*sobelLR+1;
-    borneSupX=_height-borneInfX;
-    borneSupY=_width-borneInfY;
-
-    trans2neigh = new int[2*(4*_sobelSz-4)];
-    iT2N=0;
-    for(int i=0; i<_sobelSz; ++i)
-        for(int ii=0; ii<_sobelSz; ++ii)
-        {
-            if(i==0 || i==(_sobelSz-1) || ii==0 || ii==(_sobelSz-1))
-            {
-                *(trans2neigh+iT2N*2)=i-(int)sobelLR;
-                *(trans2neigh+iT2N*2+1)=ii-(int)sobelLR;
-                ++iT2N;
-            }
-        }
-
-    if(saveOf)
-        saveFile.open("optical_flow_events.txt", ios::out);
-}
-
-bool vtsOptFlowManager::open()
+/******************************************************************************/
+bool vtsOptFlowManager::open(std::string moduleName)
 {
     /*create all ports*/
     this->useCallback();
 
-    inPortName = "/" + moduleName + "/vBottle:i";
-    BufferedPort<vBottle>::open(inPortName);
+    std::string inPortName = "/" + moduleName + "/vBottle:i";
+    bool check1 = BufferedPort<emorph::vBottle>::open(inPortName);
 
-    outPortName = "/" + moduleName + "/vBottle:o";
-    outPort.open(outPortName);
-    return true;
+    std::string outPortName = "/" + moduleName + "/vBottle:o";
+    bool check2 = outPort.open(outPortName);
+    return check1 && check2;
 }
 
+/******************************************************************************/
 void vtsOptFlowManager::close()
 {
     /*close ports*/
-    this->close();
     outPort.close();
+    yarp::os::BufferedPort<emorph::vBottle>::close();
 
-    delete[] xNeighFlow;
-    delete[] yNeighFlow;
-    delete[] trans2neigh;
+    delete surface;
+
 }
 
+/******************************************************************************/
 void vtsOptFlowManager::interrupt()
 {
-    this->interrupt();
     outPort.interrupt();
+    yarp::os::BufferedPort<emorph::vBottle>::interrupt();
 }
 
-void vtsOptFlowManager::onRead(vBottle &bot)
+/******************************************************************************/
+void vtsOptFlowManager::onRead(emorph::vBottle &inBottle)
 {
-    uint refbin = 0;
-    uint prefbin = 0;
+    double starttime = yarp::os::Time::now();
 
-    /*create queue iterator*/
-    vQueue::iterator qi;
-    vQueue::iterator qii;
-
-    /*prepare output vBottle with address events extended with optical flow events*/
-    vBottle &outBottle = outPort.prepare();
-    outBottle.clear();
-    outBottle.append(bot);
-
-    OpticalFlowEvent outEvent;
+    /*prepare output vBottle with AEs extended with optical flow events*/
+    emorph::vBottle &outBottle = outPort.prepare();
+    outBottle = inBottle;
 
     /*get the event queue in the vBottle bot*/
-    emorph::vQueue q = bot.getAll();
+    emorph::vQueue q = inBottle.getAll();
 
-    iBinEvts = 0;
-
-    for(qi = q.begin(); qi != q.end(); qi++)
+    for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {
-        AddressEvent *aep = (*qi)->getAs<AddressEvent>();
+        emorph::AddressEvent *aep = (*qi)->getAs<emorph::AddressEvent>();
         if(!aep) continue;
 
-        posX = aep->getX();
-        posY = aep->getY();
-        ts = aep->getStamp();
-        channel = aep->getChannel();
-        pol = aep->getPolarity();
+        surface->addEvent(*aep);
 
-        /*correct wrap around*/
-        ts = unwrapper(ts);
+        emorph::OpticalFlowEvent ofe = compute();
+        if(ofe.getVx() || ofe.getVy()) outBottle.addEvent(ofe);
 
-        /*compute only for one channel*/
-        if (eye != channel) continue;
-        //if (eye != channel || pol != polarity) continue;
-
-        /*fill the bin with events*/
-        if(first)
-        {
-            first=false;
-            refts=ts;
-            TSs=ts;
-            iBinEvts=0;
-            refbin=ts;
-            //prefbin=ts;
-        }
-        else
-        {
-            uint ii=0;
-            refbin=((1-alpha)*ts+alpha*prefbin);
-
-            for(uint i=0; i<iBinEvts;++i)
-            {
-                /*discard old events*/
-                if(binEvts(i, 2)>=refbin)
-                {
-                    binEvts(ii, 0)=binEvts(i, 0);
-                    binEvts(ii, 1)=binEvts(i, 1);
-                    binEvts(ii, 2)=binEvts(i, 2);
-                    ++ii;
-                }
-                else
-                {
-                    vxMat(binEvts(i, 0), binEvts(i, 1)) = 0;
-                    vyMat(binEvts(i, 0), binEvts(i, 1)) = 0;
-                    ivxy(binEvts(i, 0), binEvts(i, 1)) = 0;
-                }
-            }
-            iBinEvts=ii;
-        }
-
-        binEvts(iBinEvts, 0)=posX;
-        binEvts(iBinEvts, 1)=posY;
-        binEvts(iBinEvts, 2)=ts;
-        iBinEvts++;
-
-        /*look forward in the bottle and fill the bin*/
-        if(batch_mode)
-        {
-            qii = qi + 1;
-            while(refbin+binAcc>=ts && iBinEvts<10000 && qii != q.end())
-            {
-                AddressEvent *aep_forward = (*qii)->getAs<AddressEvent>();
-                posX = aep_forward->getX();
-                posY = aep_forward->getY();
-                ts = aep_forward->getStamp();
-                channel = aep_forward->getChannel();
-
-                if(eye==channel)
-                {
-                    if(posX != 0)
-                    {
-                        binEvts(iBinEvts, 0)=posX;
-                        binEvts(iBinEvts, 1)=posY;
-                        binEvts(iBinEvts, 2)=ts;
-                        iBinEvts++;
-                    }
-                }
-                qii++;
-            }
-
-        }
-
-        ts=prefbin=refbin;
-
-        if(iBinEvts)
-        {
-            /*update activity and timestamp map*/
-            updateAll();
-
-            /*compute the flow*/
-            outEvent = compute();
-            outEvent.setStamp(aep->getStamp());
-
-            vx = outEvent.getVx();
-            vy = outEvent.getVy();
-
-            /*add optical flow events to the out bottle only if the number of good computation was >= 3*/
-            if (vx!=0 || vy!=0)
-            {
-                outBottle.addEvent(outEvent);
-            }
-        }
     }
-    /*send on the processed events*/
+
     outPort.write();
-}
 
-void vtsOptFlowManager::updateAll()
-{
-    iSMat=0;    //number of addresses where the activity is sufficient
-
-    for(uint i=0; i<iBinEvts; i++)
-    {
-      posX=binEvts(i, 0);
-      posY=binEvts(i, 1);
-
-      /*reset activity if the event is too old*/
-      if(TSs(posX, posY) + tsVal < ts)
-          activity(posX, posY) = 0;
-
-      TSs(posX, posY) = (double)ts;
-      TSs2Plan(posX, posY) = (double)ts;
-
-      /*update activity and use only pixels whose activity aboves the threshold to compute the flow*/
-      activity(posX, posY)+=1;
-      if(activity(posX, posY) >= threshold)
-      {
-          sMat(iSMat, 0)=posX;
-          sMat(iSMat, 1)=posY;
-          iSMat++;
-      }
+    double threadtime = yarp::os::Time::now() - starttime;
+    if(threadtime > 0.001) {
+        std::cout << "Thread took too long: " << threadtime * 1000 << "ms" << std::endl;
     }
 }
 
-OpticalFlowEvent vtsOptFlowManager::compute()
+/******************************************************************************/
+emorph::OpticalFlowEvent vtsOptFlowManager::compute()
 {
-    OpticalFlowEvent opt_flow;
+    emorph::AddressEvent * vr = surface->getMostRecent()->getAs<emorph::AddressEvent>();
+    int rx = vr->getX();
+    int ry = vr->getY();
+    int rp = vr->getPolarity();
 
-    alreadyComputedX=0;
-    alreadyComputedY=0;
-    for(uint ixy=0; ixy<iSMat; ++ixy)
-    {
-        uint x=sMat(ixy,0);
-        uint y=sMat(ixy,1);
+    //we compute multiple gradients around a perimeter of the central position
+    double dtdy_mean = 0, dtdx_mean = 0;
+    double dtdy = 0, dtdx = 0;
+    int n = 0;
 
-        if(x>borneInfX && x<borneSupX && y>borneInfY && y<borneSupY)
-        {
-            ixNeighFlow=0;
-            iyNeighFlow=0;
+    //top and bottom perimeter
+    for(int x = -sobRad; x <= sobRad; x++) {
+        for(int y = -sobRad; y <= sobRad; y += sobelSize-1) {
+            //get the surface over which to compute a plane
+            emorph::vQueue subsurf = surface->getSURF(rx+x, ry+y, sobRad, rp);
+            if(subsurf.size() < minEvtsInSobel) continue;
 
-            for(int it=0; it<iT2N; ++it)
-            {
-                uint xn=x+*(trans2neigh+2*it);
-                uint yn=y+*(trans2neigh+2*it+1);
-                if(alreadyComputedX(xn, yn) || alreadyComputedY(xn, yn))//if(alreadyComputedX(xn, yn)!=-1)
-                {
-                    *(xNeighFlow+ixNeighFlow++)=alreadyComputedX(xn, yn);
-                    *(yNeighFlow+iyNeighFlow++)=alreadyComputedY(xn, yn);
-                }
-                else
-                {
-                    subTSs=TSs2Plan.submatrix(xn-sobelLR, xn+sobelLR, yn-sobelLR, yn+sobelLR);
-                    dx=dy=0;
-                    uint resp=createPlanAndCompute(subTSs, dx, dy, sobelLR, sobelLR, ts);
-                    if(resp)
-                    {
-                        alreadyComputedX(xn, yn)=((dx/4)*1e-6)/3;
-                        alreadyComputedY(xn, yn)=((dy/4)*1e-6)/3;
-                        if(dx || dy)
-                        {
-                            *(xNeighFlow+ixNeighFlow++)=alreadyComputedX(xn, yn);//((dx/4)*1e-6)/3;
-                            *(yNeighFlow+iyNeighFlow++)=alreadyComputedY(xn, yn);//((dy/4)*1e-6)/3;
-                        }
-                    }
-                }
-            }
-
-            if(ixNeighFlow>=3)
-            {
-#ifdef _ANALYSE_
-                smoothedNeigh++;
-#endif
-
-                double outX=gsl_stats_mean(xNeighFlow, 1, ixNeighFlow);
-                double outY=gsl_stats_mean(yNeighFlow, 1, iyNeighFlow);
-
-                ivxy(x, y)+=1;
-                vxMat(x, y) = vxMat(x, y) + (1/ivxy(x, y))*(outX - vxMat(x, y));
-                vyMat(x, y) = vyMat(x, y) + (1/ivxy(x, y))*(outY - vyMat(x, y));
-                double mag = sqrt(vxMat(x, y)*vxMat(x, y) + vyMat(x, y)*vyMat(x, y));
-                double theta = atan2(vyMat(x, y), vxMat(x, y));
-                double thetaDeg = (theta/M_PI) * 180;
-                if(thetaDeg < 0){
-                    thetaDeg = 360 + thetaDeg;
-                }
-
-                opt_flow.setX(y);
-                opt_flow.setY(x);
-                //opt_flow.setVx(mag);
-                //opt_flow.setVy(thetaDeg);
-                opt_flow.setVx((float)vxMat(x, y));
-                opt_flow.setVy((float)vyMat(x, y));
-
-                /*save data*/
-                if(saveOf)
-                {
-                    line2save.str("");
-                    line2save << (short)x << " " << (short)y << " " << vxMat(x, y) << " " << vyMat(x, y) << " " << TSs(x, y) << endl;
-                    saveFile.write( line2save.str().c_str(), line2save.str().size() );
-                }
-                else
-                {
-                    vxMat(x, y) = 0;
-                    vyMat(x, y) = 0;
-                }
-                return opt_flow;
+            //compute!
+            bool fit = computeGrads(subsurf, dtdy, dtdx);
+            if(fit) {
+                dtdy_mean += dtdy;
+                dtdx_mean += dtdx;
+                n++;
             }
         }
     }
-}
 
+    //left and right perimeter sans corners already done above
+    for(int x = -sobRad; x <= sobRad; x+=sobelSize-1) {
+        for(int y = -sobRad+1; y <= sobRad-1; y++) {
+            //get the surface over which to compute a plane
+            emorph::vQueue subsurf = surface->getSURF(rx+x, ry+y, sobRad, rp);
+            if(subsurf.size() < minEvtsInSobel) continue;
 
-uint vtsOptFlowManager::createPlanAndCompute(Matrix &_m, double &_dx, double &_dy, uint &_curx, uint &_cury, uint &_curts)
-{
-#ifdef _DEBUG
-    std::cout << "[tsOptFlowThread] Create the plan" << std::endl;
-#endif
-    uint test=(_m.submatrix(0, sobelLR-1, 0, sobelLR-1)==ctrl)?0:1;
-    test+=(_m.submatrix(0, sobelLR-1, sobelLR+1, sobelSz-1)==ctrl)?0:1;
-    test+=(_m.submatrix(sobelLR+1, sobelSz-1, 0, sobelLR-1)==ctrl)?0:1;
-    test+=(_m.submatrix(sobelLR+1, sobelSz-1, sobelLR+1, sobelSz-1)==ctrl)?0:1;
-
-    if(test>=3)
-    {
-#ifdef _DEBUG
-    std::cout << "[tsOptFlowThread] Condition passed" << std::endl;
-#endif
-        int index=-1;
-        uint i;
-        uint ii;
-#ifdef _DEBUG
-        std::cout << "[tsOptFlowThread] Cover the submatrix" << std::endl;
-#endif  
-        A.resize(sobelSz*sobelSz, 3);
-        Y.resize(sobelSz*sobelSz);
-        for(i=0; i<sobelSz; i++)
-            for(ii=0; ii<sobelSz; ii++)
-            {
-                //if(_m(i, ii)>-1 && ((i==_curx && ii==_cury) || ((i!=_curx || ii!=_cury) && _m(i, ii)<=(_curts-binAcc))))
-                if( (_m(i, ii)+tsVal)>_curts && ((i==_curx && ii==_cury) || ((i!=_curx || ii!=_cury) && _m(i, ii)<=(_curts-binAcc))))
-                {
-#ifdef _DEBUG
-                    std::cout << "[tsOptFlowThread] Following index: " << index+1 << ", size A: [" << A.rows() << ", " << A.cols() << "], size Y: " << Y.size() << std::endl;
-#endif
-                    A(++index, 0)=i;
-                    A(index, 1)=ii;
-                    A(index, 2)=1;
-                    Y(index)=_m(i, ii);
-                }
+            //compute!
+            bool fit = computeGrads(subsurf, dtdy, dtdx);
+            if(fit) {
+                dtdy_mean += dtdy;
+                dtdx_mean += dtdx;
+                n++;
             }
-
-        if(index<3)
-            return 0;
-#ifdef _DEBUG
-        std::cout << "[tsOptFlowThread] Compute the LS-plan" << std::endl;
-#endif
-        A=A.submatrix(0, index, 0, 2);//A.resize(index, 3);
-        Y=Y.subVector(0, index); //Y.resize(index);
-        At=A.transposed();
-        AtA=At*A;
-        //if(AtA.rows()==3)
-        //{
-/*DET = a11(a33a22-a32a23)-a21(a33a12-a32a13)+a31(a23a12-a22a13)*/
-/*
-| a11 a12 a13 |-1             |   a33a22-a32a23  -(a33a12-a32a13)   a23a12-a22a13  |
-| a21 a22 a23 |    =  1/DET * | -(a33a21-a31a23)   a33a11-a31a13  -(a23a11-a21a13) |
-| a31 a32 a33 |               |   a32a21-a31a22  -(a32a11-a31a12)   a22a11-a21a12  |
-*/          double* dataATA=AtA.data();
-            double DET=*dataATA*( *(dataATA+8)**(dataATA+4)-*(dataATA+7)**(dataATA+5)) - *(dataATA+3)*(*(dataATA+8)**(dataATA+1)-*(dataATA+7)**(dataATA+2))+*(dataATA+6)*(*(dataATA+5)**(dataATA+1)-*(dataATA+4)**(dataATA+2));
-            if(!DET)
-                return 0;
-
-            A.resize(3,3);
-            double *dataA=A.data();
-            DET=1/DET;
-            *dataA=DET*(*(dataATA+8)**(dataATA+4)-*(dataATA+7)**(dataATA+5));
-            *(dataA+1)=DET*(*(dataATA+7)**(dataATA+2)-*(dataATA+8)**(dataATA+1));
-            *(dataA+2)=DET*(*(dataATA+5)**(dataATA+1)-*(dataATA+4)**(dataATA+2));
-            *(dataA+3)=DET*(*(dataATA+6)**(dataATA+5)-*(dataATA+8)**(dataATA+3));
-            *(dataA+4)=DET*(*(dataATA+8)**dataATA-*(dataATA+6)**(dataATA+2));
-            *(dataA+5)=DET*(*(dataATA+3)**(dataATA+2)-*(dataATA+5)**dataATA);
-            *(dataA+6)=DET*(*(dataATA+7)**(dataATA+3)-*(dataATA+6)**(dataATA+4));
-            *(dataA+7)=DET*(*(dataATA+6)**(dataATA+1)-*(dataATA+7)**dataATA);
-            *(dataA+8)=DET*(*(dataATA+4)**dataATA-*(dataATA+3)**(dataATA+1));
-
-            abc=A*At*Y;
-            //}
-        //else
-        //    abc=pinv(AtA)*At*Y;
-#ifdef _DEBUG
-        std::cout << "[tsOptFlowThread] Fill the plan with the new values" << std::endl;
-#endif
-        for(i=0; i<sobelSz; i++)
-            for(ii=0; ii<sobelSz;ii++)
-            {
-                //_m(i, ii)=abc(0)*i+abc(1)*ii+abc(2);
-                dx+=sobelx(i,ii)*(abc(0)*((sobelSz-1)-i)+abc(1)*((sobelSz-1)-ii)+abc(2));
-                dy+=sobely(i,ii)*(abc(0)*((sobelSz-1)-i)+abc(1)*((sobelSz-1)-ii)+abc(2));
-            }
-#ifdef _DEBUG
-        std::cout << "[tsOptFlowThread] Plan filled" << std::endl;
-#endif
-        return 1;
+        }
     }
-    else
-    {
-#ifdef _DEBUG
-        std::cout << "[tsOptFlowThread] return 0" << std::endl;
-#endif
-        return 0;
+
+    emorph::OpticalFlowEvent opt_flow(*vr);
+    if(n > minSobelsInFlow) {
+        opt_flow.setChannel(vr->getChannel());
+        opt_flow.setPolarity(vr->getPolarity());
+        opt_flow.setX(ry);
+        opt_flow.setY(rx);
+        opt_flow.setVx(emorph::vtsHelper::tstosecs() * dtdx_mean / n);
+        opt_flow.setVy(emorph::vtsHelper::tstosecs() * dtdy_mean / n);
     }
+
+    return opt_flow;
+
 }
 
-void vtsOptFlowManager::setSobelFilters(uint _sz, Matrix& _sfx, Matrix& _sfy)
+/******************************************************************************/
+bool vtsOptFlowManager::computeGrads(emorph::vQueue &subsurf,
+                                     double &dtdy, double &dtdx)
 {
-    Vector Sx(_sz);
-    Vector Dx(_sz);
-    for(int i=1; i<=_sz; i++)
-    {
-        //std::cout << "\t" << i << std::endl;
-        //std::cout << "\t" << _sz-1 << "! = " << factorial(_sz-1) << std::endl;
-        Sx(i-1)=factorial((_sz-1))/((factorial((_sz-1)-(i-1)))*(factorial(i-1)));
-        Dx(i-1)=Pasc(i-1,_sz-2)-Pasc(i-2,_sz-2);
+
+    yarp::sig::Matrix A(subsurf.size(), 3);
+    yarp::sig::Vector Y(subsurf.size());
+    for(int vi = 0; vi < subsurf.size(); vi++) {
+        emorph::AddressEvent *v = subsurf[vi]->getAs<emorph::AddressEvent>();
+        A(vi, 0) = v->getX();
+        A(vi, 1) = v->getY();
+        A(vi, 2) = 1;
+        Y(vi) = v->getStamp();
     }
-    //Sy=Sx';
-    //Dy=Dx';
-    _sfx=outerProduct(Sx, Dx); //Mx=Sy(:)*Dx;
-    _sfy=_sfx.transposed();
+
+    return computeGrads(A, Y, dtdy, dtdx);
 }
 
-int vtsOptFlowManager::factorial(int _v)
+/******************************************************************************/
+bool vtsOptFlowManager::computeGrads(yarp::sig::Matrix &A, yarp::sig::Vector &Y,
+                                     double &dtdy, double &dtdx)
+{
+
+    At=A.transposed();
+    AtA=At*A;
+
+    double* dataATA=AtA.data();
+    double DET=*dataATA*( *(dataATA+8)**(dataATA+4)-*(dataATA+7)**(dataATA+5))-
+            *(dataATA+3)*(*(dataATA+8)**(dataATA+1)-*(dataATA+7)**(dataATA+2))+
+            *(dataATA+6)*(*(dataATA+5)**(dataATA+1)-*(dataATA+4)**(dataATA+2));
+    if(DET < 1) return false;
+
+
+    double *dataA=A2.data();
+    DET=1/DET;
+    *(dataA+0)=DET*(*(dataATA+8)**(dataATA+4)-*(dataATA+7)**(dataATA+5));
+    *(dataA+1)=DET*(*(dataATA+7)**(dataATA+2)-*(dataATA+8)**(dataATA+1));
+    *(dataA+2)=DET*(*(dataATA+5)**(dataATA+1)-*(dataATA+4)**(dataATA+2));
+    *(dataA+3)=DET*(*(dataATA+6)**(dataATA+5)-*(dataATA+8)**(dataATA+3));
+    *(dataA+4)=DET*(*(dataATA+8)**(dataATA+0)-*(dataATA+6)**(dataATA+2));
+    *(dataA+5)=DET*(*(dataATA+3)**(dataATA+2)-*(dataATA+5)**(dataATA+0));
+    *(dataA+6)=DET*(*(dataATA+7)**(dataATA+3)-*(dataATA+6)**(dataATA+4));
+    *(dataA+7)=DET*(*(dataATA+6)**(dataATA+1)-*(dataATA+7)**(dataATA+0));
+    *(dataA+8)=DET*(*(dataATA+4)**(dataATA+0)-*(dataATA+3)**(dataATA+1));
+
+    abc=A2*At*Y;
+
+    dtdy = 0; dtdx = 0;
+    for(int i=0; i<sobelSize; i++) {
+        for(int ii=0; ii<sobelSize;ii++)
+        {
+            dtdx+=sobelx(i,ii)*
+                    (abc(0)*((sobelSize-1)-i)+abc(1)*((sobelSize-1)-ii)+abc(2));
+            dtdy+=sobely(i,ii)*
+                    (abc(0)*((sobelSize-1)-i)+abc(1)*((sobelSize-1)-ii)+abc(2));
+        }
+    }
+
+    //I don't know why Charles did this division
+    dtdx /= 12.0;
+    dtdy /= 12.0;
+
+    return true;
+
+}
+
+/******************************************************************************/
+int factorial(int _v)
 {
     if(_v<=1)
         return 1;
     return _v*factorial(_v-1);
 }
 
-int vtsOptFlowManager::Pasc(int k, int n)
+int Pasc(int k, int n)
 {
     int P;
     if ( (k>=0) && (k<=n) )
@@ -590,16 +320,18 @@ int vtsOptFlowManager::Pasc(int k, int n)
     return P;
 }
 
-void vtsOptFlowManager::printMatrix(Matrix& _mat)
+void vtsOptFlowManager::setSobelFilters(uint _sz, yarp::sig::Matrix& _sfx, yarp::sig::Matrix& _sfy)
 {
-    uint nr=_mat.rows();
-    uint nc=_mat.cols();
-    for(uint r=0; r<nr; r++)
+    yarp::sig::Vector Sx(_sz);
+    yarp::sig::Vector Dx(_sz);
+    for(int i=1; i<=_sz; i++)
     {
-        for(uint c=0; c<nc; c++)
-            cout << _mat(r,c) << " ";
-        cout << endl;
+        Sx(i-1)=factorial((_sz-1))/((factorial((_sz-1)-(i-1)))*(factorial(i-1)));
+        Dx(i-1)=Pasc(i-1,_sz-2)-Pasc(i-2,_sz-2);
     }
+    _sfx=outerProduct(Sx, Dx); //Mx=Sy(:)*Dx;
+    _sfy=_sfx.transposed();
 }
+
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------

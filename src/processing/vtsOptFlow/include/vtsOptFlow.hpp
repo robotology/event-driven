@@ -18,17 +18,11 @@
  * @file tsOptFlow.h
  * @brief A module that reads vBottle from a yarp port and computes optical flow
  */
+
 #ifndef VTSOPTFLOW_HPP
 #define VTSOPTFLOW_HPP
 
-#include <fstream>
-#include <sstream>
 #include <string>
-#include <cstdio>
-#include <cmath>
-
-#include <gsl/gsl_sort.h>
-#include <gsl/gsl_statistics.h>
 
 #include <yarp/os/all.h>
 #include <yarp/sig/all.h>
@@ -36,137 +30,53 @@
 #include <yarp/math/SVD.h>
 
 #include <iCub/emorph/all.h>
-#include <iCub/emorph/vtsHelper.h>
-
-//#define _DEBUG
 
 class vtsOptFlowManager : public yarp::os::BufferedPort<emorph::vBottle>
 {
 private:
 
-    std::string moduleName;
-
-    /*input and output port for the vBottle*/
-    std::string outPortName;
     yarp::os::BufferedPort<emorph::vBottle> outPort;
-    std::string inPortName;
 
-    void setSobelFilters(uint, yarp::sig::Matrix&, yarp::sig::Matrix&);
-    int factorial(int);
-    int Pasc(int, int);
-    void updateAll();
-    emorph::OpticalFlowEvent compute();
-    uint createPlan(yarp::sig::Matrix& );
-    uint createPlanAndCompute(yarp::sig::Matrix&, double&, double&, uint&, uint&, uint&);
-    void printMatrix(yarp::sig::Matrix& );
+    emorph::vWindow *surface;
 
-    /******************************************************************************/
-    //   VARIABLES
-    /******************************************************************************/
-
-    double alpha;
-    double threshold;
-    uint tsVal;
-    uint height;
-    uint width;
-    uint sobelSz;
-    uint sobelLR;
-    uint binAcc;
-    bool saveOf;
-    uint eye;
-    uint polarity;
-    bool batch_mode;
-
-    uint borneSupX;
-    uint borneSupY;
-    uint borneInfX;
-    uint borneInfY;
+    int height;
+    int width;
+    int sobelSize;
+    int sobRad;
+    int minEvtsInSobel;
+    int minSobelsInFlow;
 
     yarp::sig::Matrix sobelx;
     yarp::sig::Matrix sobely;
-
-    emorph::vtsHelper unwrapper;
-
-    yarp::sig::Matrix activity;
-    yarp::sig::Matrix TSs;      double* TSsData;
-    yarp::sig::Matrix TSs2Plan; double* TSs2PlanData;
-    yarp::sig::Matrix compPurpTS;
-    yarp::sig::Matrix subTSs;
-    yarp::sig::Matrix alreadyComputedX;
-    yarp::sig::Matrix alreadyComputedY;
-
-    double  dx;
-    double  dy;
-
-    /*** To compute the plan ***/
-    yarp::sig::Matrix A;
     yarp::sig::Matrix At;
     yarp::sig::Matrix AtA;
-    yarp::sig::Matrix ctrl;
+    yarp::sig::Matrix A2;
     yarp::sig::Vector abc;
-    yarp::sig::Vector Y;
-    /***************************/
 
-    uint posX;
-    uint posY;
-    int channel;
-    uint pol;
-    uint ts;
-    uint refts;
-    bool first;
 
-    yarp::sig::Matrix vxMat;
-    yarp::sig::Matrix vyMat;
-    yarp::sig::Matrix ivxy;
-
-    yarp::sig::Matrix binEvts;
-    uint iBinEvts;
-
-    yarp::sig::Matrix sMat;
-    uint iSMat;
-    double *xNeighFlow;
-    double *yNeighFlow;
-    uint ixNeighFlow;
-    uint iyNeighFlow;
-
-    double vx;
-    double vy;
-
-    int *trans2neigh;
-    int iT2N;
-
-    std::ofstream saveFile;
-    std::stringstream line2save;
+    void setSobelFilters(uint, yarp::sig::Matrix&, yarp::sig::Matrix&);
+    emorph::OpticalFlowEvent compute();
+    bool computeGrads(yarp::sig::Matrix &A, yarp::sig::Vector &Y,
+                      double &dtdy, double &dtdx);
+    bool computeGrads(emorph::vQueue &subsurf, double &dtdy, double &dtdx);
 
 public:
 
+    vtsOptFlowManager(int height, int width, int sobelSize, int temporalWindow,
+                      int minEvtsInSobel, int minSobelsInFlow);
 
-    vtsOptFlowManager(const std::string &moduleName, unsigned int &_height,
-                      unsigned int &_width, unsigned int &_binAcc,
-                      double &_threshold, unsigned int &_sobelSz,
-                      unsigned int &_tsVal, double &_alpha, int &_eye,
-                      int &_polarity, bool &_saveOf, bool &_batch_mode);
-    ~vtsOptFlowManager();
-
-    bool    open();
+    bool    open(std::string moduleName);
     void    close();
     void    interrupt();
-
-    /*function that reads vBottles*/
-    void    onRead(emorph::vBottle &bot);
+    void    onRead(emorph::vBottle &inBottle);
 
 };
 
 
 class vtsOptFlow:public yarp::os::RFModule {
 
-    /* module parameters*/
-    std::string moduleName;                     //name of the module (rootname of ports)
-    std::string rpcPortName;                //name of the handler port (comunication with respond function)
-    yarp::os::RpcServer rpcPort;            //a port to handle messages
 
-    /* pointer to threads*/
-    vtsOptFlowManager *vtsofManager;                //vtsOptFlowManager for processing vBottles and computing optical flow
+    vtsOptFlowManager *vtsofManager;
 
 public:
 
@@ -174,6 +84,7 @@ public:
     virtual bool interruptModule();                       // interrupt, e.g., the ports
     virtual bool close();                                 // close and shut down the module
     virtual bool updateModule();
+    virtual double getPeriod();
 };
 #endif //VTSOPTFLOW_HPP
 

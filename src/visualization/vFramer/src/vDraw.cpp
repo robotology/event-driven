@@ -371,7 +371,9 @@ std::string flowDraw::getTag()
 void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
 {
 
-    double k = 4;
+
+
+    double k = 2;
     if(image.empty()) {
         image = cv::Mat(Xlimit*k, Ylimit*k, CV_8UC3);
         image.setTo(0);
@@ -379,8 +381,10 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
         cv::resize(image, image, cv::Size(0, 0), k, k, cv::INTER_LINEAR);
 
     }
-    //cv::Mat canvas(Xlimit, Ylimit, CV_8UC3);
-    //canvas.setTo(128);
+
+    if(eSet.empty()) return;
+    if(checkStagnancy(eSet) > clearThreshold) return;
+
 
     int line_tickness = 1;
     cv::Scalar line_color = CV_RGB(255,0,0);
@@ -390,52 +394,40 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
     emorph::vQueue::const_iterator qi;
     for(qi = eSet.begin(); qi != eSet.end(); qi++) {
         emorph::OpticalFlowEvent *ofp = (*qi)->getAs<emorph::OpticalFlowEvent>();
-        if(ofp) {
+        if(!ofp) continue;
 
-            int x = ofp->getX();
-            int y = ofp->getY();
-            float vx = ofp->getVx();
-            float vy = ofp->getVy();
-            //float mag = ofp->getVx();
-            //float theta = ofp->getVy();
+        int x = ofp->getX();
+        int y = ofp->getY();
+        float vx = ofp->getVx();
+        float vy = ofp->getVy();
 
-            //Starting point of the line
-            p_start.x = x*k;
-            p_start.y = y*k;
+        //Starting point of the line
+        p_start.x = x*k;
+        p_start.y = y*k;
 
-            //Ending point of the line
-            //p_end.x = x + 500 * mag * cos(theta);
-            //p_end.y = y + 500 * mag * sin(theta);
-            p_end.x = x*k + 500 * vx*k;
-            p_end.y = y*k + 500 * vy*k;
+        double magnitude = sqrt(pow(vx, 2.0) + pow(vy, 2.0));
+        double hypotenuse = 0.01 / magnitude;
+        if(hypotenuse < 3) hypotenuse = 3;
+        if(hypotenuse > 20) hypotenuse = 20;
+        double angle = atan2(vy, vx);
 
-            double angle;
-            angle = atan2( (double) p_start.y - p_end.y, (double) p_start.x - p_end.x );
+        //Scale the arrow by a factor of three
+        p_end.x = (int) (p_start.x - hypotenuse * cos(angle));
+        p_end.y = (int) (p_start.y - hypotenuse * sin(angle));
 
-            double hypotenuse;
-            hypotenuse = sqrt((p_start.y - p_end.y)*(p_start.y - p_end.y) + (p_start.x - p_end.x)*(p_start.x - p_end.x));
+        //Draw the main line of the arrow
+        cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
 
-            //Scale the arrow by a factor of three
-            p_end.x = (int) (p_start.x - hypotenuse * cos(angle));
-            p_end.y = (int) (p_start.y - hypotenuse * sin(angle));
+        //Draw the tips of the arrow
+        p_start.x = (int) (p_end.x - 3*cos(angle + pi/4));
+        p_start.y = (int) (p_end.y - 3*sin(angle + pi/4));
+        cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
 
-            //Draw the main line of the arrow
-            cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA, 0);
-
-            //Draw the tips of the arrow
-            p_start.x = (int) (p_end.x + 3*cos(angle + pi/4));
-            p_start.y = (int) (p_end.y + 3*sin(angle + pi/4));
-            cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA, 0);
-
-            p_start.x = (int) (p_end.x + 3*cos(angle - pi/4));
-            p_start.y = (int) (p_end.y + 3*sin(angle - pi/4));
-            cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA, 0);
-
-
-        }
+        p_start.x = (int) (p_end.x - 3*cos(angle - pi/4));
+        p_start.y = (int) (p_end.y - 3*sin(angle - pi/4));
+        cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
 
     }
-    //canvas.copyTo(image);
 
 }
 

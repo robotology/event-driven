@@ -28,7 +28,6 @@ int main(int argc, char * argv[])
     yarp::os::ResourceFinder rf;
 
     //set up the resource finder
-    rf.setVerbose(true);
     rf.setDefaultConfigFile("vFramer.ini"); //overridden by --from parameter
     rf.setDefaultContext("eMorph");   //overridden by --context parameter
     rf.configure(argc, argv);

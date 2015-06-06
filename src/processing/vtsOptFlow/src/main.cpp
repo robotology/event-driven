@@ -29,15 +29,14 @@ using namespace yarp::sig;
 int main(int argc, char * argv[])
 {
     /* initialize yarp network */
-    Network::init();
+    yarp::os::Network::init();
 
     /* instantiate the module */
     vtsOptFlow module;
 
     /* prepare and configure the resource finder */
     ResourceFinder rf;
-    rf.setVerbose(true);
-    rf.setDefaultConfigFile("vtsOptFlow.ini");    //overridden by --from parameter
+    rf.setDefaultConfigFile("opticalflow.ini");    //overridden by --from parameter
     rf.setDefaultContext("eMorph");    //overridden by --context parameter
     rf.configure(argc, argv);
 

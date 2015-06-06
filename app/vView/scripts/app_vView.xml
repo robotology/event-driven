@@ -29,7 +29,7 @@
 
 <module>
     <name> vtsOptFlow </name>
-    <parameters> </parameters>
+    <parameters> --name vtsOptFlow --height 128 --width 128 --filterSize 5 --tWindow 30000 --minEvtsThresh 5 --minSobelsThresh 3</parameters>
     <node> localhost </node>
 </module>
 
