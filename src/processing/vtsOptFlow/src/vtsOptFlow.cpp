@@ -150,7 +150,7 @@ void vtsOptFlowManager::onRead(emorph::vBottle &inBottle)
 
     /*prepare output vBottle with AEs extended with optical flow events*/
     emorph::vBottle &outBottle = outPort.prepare();
-    outBottle = inBottle;
+    outBottle.clear();
 
     /*get the event queue in the vBottle bot*/
     emorph::vQueue q = inBottle.getAll();
@@ -163,7 +163,11 @@ void vtsOptFlowManager::onRead(emorph::vBottle &inBottle)
         surface->addEvent(*aep);
 
         emorph::OpticalFlowEvent ofe = compute();
-        if(ofe.getVx() || ofe.getVy()) outBottle.addEvent(ofe);
+        if(ofe.getVx() || ofe.getVy()) {
+            outBottle.addEvent(ofe);
+        } else {
+            outBottle.addEvent(*aep);
+        }
 
     }
 
@@ -224,10 +228,10 @@ emorph::OpticalFlowEvent vtsOptFlowManager::compute()
 
     emorph::OpticalFlowEvent opt_flow(*vr);
     if(n > minSobelsInFlow) {
-        opt_flow.setChannel(vr->getChannel());
-        opt_flow.setPolarity(vr->getPolarity());
-        opt_flow.setX(ry);
-        opt_flow.setY(rx);
+        //opt_flow.setChannel(vr->getChannel());
+        //opt_flow.setPolarity(vr->getPolarity());
+        //opt_flow.setX(ry);
+        //opt_flow.setY(rx);
         opt_flow.setVx(emorph::vtsHelper::tstosecs() * dtdx_mean / n);
         opt_flow.setVy(emorph::vtsHelper::tstosecs() * dtdy_mean / n);
     }

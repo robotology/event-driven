@@ -795,20 +795,14 @@ vEvent &OpticalFlowEvent::operator=(const vEvent &event)
 {
 
     //copy timestamp and type (base class =operator)
-    vEvent::operator =(event);
+    AddressEvent::operator =(event);
 
     //copy other fields if it's compatible
     const OpticalFlowEvent * ofp = dynamic_cast<const OpticalFlowEvent *>(&event);
     if(ofp) {
-        channel=ofp->channel;
-        x=ofp->x;
-        y=ofp->y;
         vx=ofp->vx;
         vy=ofp->vy;
     } else {
-        channel = 0;
-        x = 0;
-        y = 0;
         vx = 0;
         vy = 0;
     }
@@ -827,21 +821,11 @@ vEvent* OpticalFlowEvent::clone() {
 /******************************************************************************/
 yarp::os::Bottle OpticalFlowEvent::encode() const
 {
-    //32bits for vy
-    //32bits for vx
-    //8bits for y
-    //8bits for x
-    //1bit for polarity
-    //1bit for channel
 
-    int word0=((y&0xff)<<10)|((x&0xff)<<2)|((polarity&0x01)<<1)|(channel&0x01);
-    int word1=*(int*)(&vx);
-    int word2=*(int*)(&vy);
+    Bottle ret = AddressEvent::encode();
 
-    Bottle ret = vEvent::encode();
-    ret.addInt(word0);
-    ret.addInt(word1);
-    ret.addInt(word2);
+    ret.addInt(*(int*)(&vx));
+    ret.addInt(*(int*)(&vy));
     return ret;
 }
 
@@ -849,19 +833,12 @@ yarp::os::Bottle OpticalFlowEvent::encode() const
 bool OpticalFlowEvent::decode(const yarp::os::Bottle &packet, int &pos)
 {
     // check length
-    if (vEvent::decode(packet, pos) && pos + localWordsCoded <= packet.size())
+    if (AddressEvent::decode(packet, pos) &&
+            pos + localWordsCoded <= packet.size())
     {
-        int word0=packet.get(pos).asInt();
-        int word1=packet.get(pos+1).asInt();
-        int word2=packet.get(pos+2).asInt();
-
-        channel=word0&0x01;
-        polarity=(word0>>1)&0x01;
-        x=(word0>>2)&0xff;
-        y=(word0>>10)&0xff;
-
+        int word1=packet.get(pos).asInt();
         vx=*(float*)(&word1);
-
+        int word2=packet.get(pos+1).asInt();
         vy=*(float*)(&word2);
 
         pos+=localWordsCoded;
@@ -873,21 +850,15 @@ bool OpticalFlowEvent::decode(const yarp::os::Bottle &packet, int &pos)
 /******************************************************************************/
 bool OpticalFlowEvent::operator==(const OpticalFlowEvent &event)
 {
-    return ((vEvent::operator==(event)) &&
-            (channel==event.channel)&&
-            (x==event.x)&&
-            (y==event.y))&&
+    return ((AddressEvent::operator==(event)) &&
             (vx==event.vx)&&
-            (vy==event.vy);
+            (vy==event.vy));
 }
 
 /******************************************************************************/
 Property OpticalFlowEvent::getContent() const
 {
-    Property prop = vEvent::getContent();
-    prop.put("channel",channel);
-    prop.put("x",x);
-    prop.put("y",y);
+    Property prop = AddressEvent::getContent();
     prop.put("vx",vx);
     prop.put("vy",vy);
 

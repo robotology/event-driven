@@ -378,7 +378,6 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
         image.setTo(0);
     } else {
         cv::resize(image, image, cv::Size(0, 0), k, k, cv::INTER_LINEAR);
-
     }
 
     if(eSet.empty()) return;
@@ -395,10 +394,10 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
         emorph::OpticalFlowEvent *ofp = (*qi)->getAs<emorph::OpticalFlowEvent>();
         if(!ofp) continue;
 
-        int x = ofp->getX();
-        int y = ofp->getY();
-        float vx = ofp->getVx();
-        float vy = ofp->getVy();
+        int x = ofp->getY();
+        int y = ofp->getX();
+        float vx = ofp->getVy();
+        float vy = ofp->getVx();
 
         //Starting point of the line
         p_start.x = x*k;
@@ -408,7 +407,7 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
         double hypotenuse = 0.01 / magnitude;
         if(hypotenuse < 3) hypotenuse = 3;
         if(hypotenuse > 20) hypotenuse = 20;
-        double angle = atan2(vy, vx);
+        double angle = atan2(vx, vy);
 
         //Scale the arrow by a factor of three
         p_end.x = (int) (p_start.x - hypotenuse * cos(angle));
