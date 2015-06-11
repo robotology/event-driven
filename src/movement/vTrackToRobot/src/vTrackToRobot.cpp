@@ -97,13 +97,16 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
     px[0] = v->getXCog(); px[1] = v->getYCog();
     std::cout << "Pixel: " << px.toString() << std::endl;
     gazecontrol->get3DPoint(0, px, 1.0, x);
+    std::cout << "2D point: " << px.toString() << std::endl;
+    std::cout << "3D point: " << x.toString() << std::endl;
+    //gazecontrol->lookAtFixationPoint(x);
 
 
     yarp::os::Bottle& BottleOut = cartOutPort.prepare();
     BottleOut.clear();
     //add the XYZ position
-    //BottleOut.add(x[0]); BottleOut.add(x[1]); BottleOut.add(x[2]);
-    BottleOut.add(0.5); BottleOut.add(0.8); BottleOut.add(0.4);
+    BottleOut.add(x[0]); BottleOut.add(x[1]); BottleOut.add(x[2]);
+    //BottleOut.add(0.5); BottleOut.add(0.8); BottleOut.add(0.4);
     //add some buffer ints
     BottleOut.add(0.0); BottleOut.add(0.0); BottleOut.add(0.0);
     //flag that the object is detected

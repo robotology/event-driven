@@ -291,6 +291,7 @@ void circleDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
         return;
     }
 
+    //int n = 0;
     emorph::vQueue::const_iterator qi;
     for(qi = eSet.begin(); qi != eSet.end(); qi++) {
         emorph::ClusterEventGauss *v = (*qi)->getAs<emorph::ClusterEventGauss>();
@@ -300,9 +301,13 @@ void circleDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
         double r = v->getXSigma2();
         //we hide the radial variance in Y_sigma_2
         double w = v->getYSigma2();
-        cv::circle(image, centr, r, CV_RGB(255, 0, 0), w);
-
+        cv::circle(image, centr, r, CV_RGB(0, 0, 255), w);
+        //n++;
     }
+
+//    std::stringstream ss;
+//    ss << n;
+//    cv::putText(image, ss.str().c_str(), cv::Point(0, 0), 0, 0.5, CV_RGB(0, 0, 0), 1, 8, true);
 
 }
 
@@ -381,7 +386,7 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
     }
 
     if(eSet.empty()) return;
-    if(checkStagnancy(eSet) > clearThreshold) return;
+    //if(checkStagnancy(eSet) > clearThreshold) return;
 
 
     int line_tickness = 1;
@@ -396,15 +401,15 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
 
         int x = ofp->getY();
         int y = ofp->getX();
-        float vx = ofp->getVy();
-        float vy = ofp->getVx();
+        float vx = ofp->getVx();
+        float vy = ofp->getVy();
 
         //Starting point of the line
         p_start.x = x*k;
         p_start.y = y*k;
 
         double magnitude = sqrt(pow(vx, 2.0) + pow(vy, 2.0));
-        double hypotenuse = 0.01 / magnitude;
+        double hypotenuse = 0.05 / magnitude;
         if(hypotenuse < 3) hypotenuse = 3;
         if(hypotenuse > 20) hypotenuse = 20;
         double angle = atan2(vx, vy);

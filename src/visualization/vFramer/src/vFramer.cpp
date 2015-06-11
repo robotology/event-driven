@@ -60,6 +60,7 @@ void vReadAndSplit::onRead(emorph::vBottle &incoming)
     emorph::vQueue q = incoming.getAllSorted();
     emorph::vQueue::iterator qi;
     //incoming.getAllSorted(q);
+    std::cout << q.size() << std::endl;
     for(qi = q.begin(); qi != q.end(); qi++) {
         int ch = (*qi)->getChannel();
         if(!windows.count(ch)) {

@@ -36,6 +36,8 @@ public:
     int iterations;
     int minVsReq4RANSAC;
     double inlierThreshold;
+    double angleThreshold;
+    double radiusThreshold;
 
     //old parameters
     bool stepbystep;
@@ -62,9 +64,11 @@ public:
     double RANSAC(double &cx, double &cy, double &cr);
     int gradient(double &cx, double &cy, double &cr);
     int gradient2(double &cx, double &cy, double &cr);
+    int flowcircle(double &cx, double &cy, double &cr);
     int gradientView();
     int gradientView2();
     int eigenView();
+    int flowView();
 
     //bool localCircleEstimate(emorph::AddressEvent &event, double &cx,
     //                        double &cy, double &cr, bool showDebug = false);

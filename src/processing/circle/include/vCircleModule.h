@@ -49,6 +49,8 @@ private:
     bool debugFlag;
     emorph::activityMat estimate;
     std::ofstream filewriter;
+    int obscounter;
+    int obstimer;
 
 public:
     

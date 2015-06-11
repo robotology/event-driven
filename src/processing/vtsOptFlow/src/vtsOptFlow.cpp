@@ -147,6 +147,7 @@ void vtsOptFlowManager::interrupt()
 void vtsOptFlowManager::onRead(emorph::vBottle &inBottle)
 {
     double starttime = yarp::os::Time::now();
+    bool computeflow = true;
 
     /*prepare output vBottle with AEs extended with optical flow events*/
     emorph::vBottle &outBottle = outPort.prepare();
@@ -157,12 +158,19 @@ void vtsOptFlowManager::onRead(emorph::vBottle &inBottle)
 
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {
+        if(computeflow && yarp::os::Time::now() - starttime > 0.0008)
+            computeflow = false;
+
         emorph::AddressEvent *aep = (*qi)->getAs<emorph::AddressEvent>();
         if(!aep) continue;
+        if(aep->getChannel()) continue;
+
 
         surface->addEvent(*aep);
 
-        emorph::OpticalFlowEvent ofe = compute();
+        emorph::OpticalFlowEvent ofe;
+        if(computeflow) ofe = compute();
+
         if(ofe.getVx() || ofe.getVy()) {
             outBottle.addEvent(ofe);
         } else {
@@ -175,7 +183,8 @@ void vtsOptFlowManager::onRead(emorph::vBottle &inBottle)
 
     double threadtime = yarp::os::Time::now() - starttime;
     if(threadtime > 0.001) {
-        std::cout << "Thread took too long: " << threadtime * 1000 << "ms" << std::endl;
+        std::cout << "Thread took too long: " << threadtime * 1000 << "ms";
+        std::cout << std::endl;
     }
 }
 
@@ -333,8 +342,8 @@ void vtsOptFlowManager::setSobelFilters(uint _sz, yarp::sig::Matrix& _sfx, yarp:
         Sx(i-1)=factorial((_sz-1))/((factorial((_sz-1)-(i-1)))*(factorial(i-1)));
         Dx(i-1)=Pasc(i-1,_sz-2)-Pasc(i-2,_sz-2);
     }
-    _sfx=outerProduct(Sx, Dx); //Mx=Sy(:)*Dx;
-    _sfy=_sfx.transposed();
+    _sfy=outerProduct(Sx, Dx); //Mx=Sy(:)*Dx;
+    _sfx=_sfy.transposed();
 }
 
 

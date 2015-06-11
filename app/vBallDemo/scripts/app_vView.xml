@@ -36,8 +36,14 @@
 </module>
 
 <module>
+    <name> vtsOptFlow </name>
+    <parameters> </parameters>
+    <node> localhost </node>
+</module>
+
+<module>
     <name> vCircle </name>
-    <parameters> --debug true </parameters>
+    <parameters>  </parameters>
     <node> localhost </node>
 </module>
 
@@ -65,9 +71,14 @@
    <node>localhost</node>
 </module>
 
-
 <connection>
   <from>/aexGrabber/vBottle:o</from>
+  <to>/vtsOptFlow/vBottle:i</to>
+  <protocol>tcp</protocol>
+</connection>
+
+<connection>
+  <from>/vtsOptFlow/vBottle:o</from>
   <to>/vCircleFinder/vBottle:i</to>
   <protocol>tcp</protocol>
 </connection>
