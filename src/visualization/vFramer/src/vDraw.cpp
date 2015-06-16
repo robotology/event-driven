@@ -374,10 +374,7 @@ std::string flowDraw::getTag()
 
 void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
 {
-
-
-
-    double k = 2;
+    double k = 4;
     if(image.empty()) {
         image = cv::Mat(Xlimit*k, Ylimit*k, CV_8UC3);
         image.setTo(0);
@@ -386,7 +383,7 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
     }
 
     if(eSet.empty()) return;
-    //if(checkStagnancy(eSet) > clearThreshold) return;
+    if(checkStagnancy(eSet) > clearThreshold) return;
 
 
     int line_tickness = 1;
@@ -409,14 +406,15 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
         p_start.y = y*k;
 
         double magnitude = sqrt(pow(vx, 2.0) + pow(vy, 2.0));
-        double hypotenuse = 0.05 / magnitude;
-        if(hypotenuse < 3) hypotenuse = 3;
+        double hypotenuse = 0.5 / magnitude;
+        if(hypotenuse < 5) hypotenuse = 5;
         if(hypotenuse > 20) hypotenuse = 20;
+        hypotenuse = 15;
         double angle = atan2(vx, vy);
 
         //Scale the arrow by a factor of three
-        p_end.x = (int) (p_start.x - hypotenuse * cos(angle));
-        p_end.y = (int) (p_start.y - hypotenuse * sin(angle));
+        p_end.x = (int) (p_start.x + hypotenuse * cos(angle));
+        p_end.y = (int) (p_start.y + hypotenuse * sin(angle));
 
         //Draw the main line of the arrow
         cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);

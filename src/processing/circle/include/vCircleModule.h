@@ -30,29 +30,21 @@ private:
     //output port for the vBottle with the new events computed by the module
     yarp::os::BufferedPort<emorph::vBottle> outPort;
 
-    //for helping with timestamp wrap around
-    emorph::vtsHelper unwrap;
-    unsigned long int pTS;
-
     //our circle position estimator
-    vCircleObserver circleFinder;
-    vCircleTracker *circleTracker;
 
+    int inlierThreshold;
+
+    emorph::vtsHelper unwrap;
+    double pTS;
     //our filter/tracker
-    iCub::ctrl::Kalman *filter;
-    bool filter_active;
-    double vPos;
-    double vSiz;
     double periodstart;
-
-    //this is only for debugging
     bool debugFlag;
-    emorph::activityMat estimate;
-    std::ofstream filewriter;
-    int obscounter;
-    int obstimer;
 
 public:
+
+    //we actually allow our observers and trackers
+    vCircleObserver circleFinder;
+    vCircleTracker circleTracker;
     
     vCircleReader();
 

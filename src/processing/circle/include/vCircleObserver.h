@@ -21,61 +21,33 @@
 class vCircleObserver
 {
 
-public:
+private:
 
     //data
     emorph::vWindow *window;
 
-    double cx, cy, cr;
-
     //parameters
-    int width;
-    int height;
-    int sRadius;
-    int windowSize;
-    int iterations;
-    int minVsReq4RANSAC;
-    double inlierThreshold;
+    int spatialRadius;
+    int inlierThreshold;
     double angleThreshold;
     double radiusThreshold;
-
-    //old parameters
-    bool stepbystep;
-    int tRadius;
-
-    //private functions
-    //void createLocalSearch(int x, int y);
-    //void pointTrim(int x, int y);
-    //void linearTrim(int x1, int y1, int x2, int y2);
-    //cv::Mat createLocalActivityWindow(int x, int y);
-    //double calculateCircleActivity(int cx, int cy, int r);
-
-    bool calculateCircle(double x1, double x2, double x3,
-                         double y1, double y2, double y3,
-                         double &cx, double &cy, double &cr);
-
 
 public:
 
     vCircleObserver();
 
+    void init(int width, int height, int tempWin, int spatialRadius,
+              int inlierThresh, double angleThresh, double radThresh);
+
+    bool calculateCircle(double x1, double x2, double x3,
+                         double y1, double y2, double y3,
+                         double &cx, double &cy, double &cr);
+
     void addEvent(emorph::vEvent &event);
-    double oneShotObserve(double &cx, double &cy, double &cr);
-    double RANSAC(double &cx, double &cy, double &cr);
-    int gradient(double &cx, double &cy, double &cr);
-    int gradient2(double &cx, double &cy, double &cr);
+    //double RANSAC(double &cx, double &cy, double &cr);
     int flowcircle(double &cx, double &cy, double &cr);
-    int gradientView();
-    int gradientView2();
-    int eigenView();
     int flowView();
 
-    //bool localCircleEstimate(emorph::AddressEvent &event, double &cx,
-    //                        double &cy, double &cr, bool showDebug = false);
-
-    void viewEvents();
-    double globalInlierCount(double cx, double cy, double cr);
-    //temporary debug stuff
 
 };
 
@@ -85,45 +57,33 @@ public:
 
 class vCircleTracker
 {
-public:
+private:
 
     iCub::ctrl::Kalman *filter;
-    emorph::vQueue zq;
     bool active;
-    emorph::vtsHelper unwrap;
-    double pTS;
 
     //system variance
     double svPos;
     double svSiz;
 
     //private functions
-    bool makeObservation(double &cx, double &cy, double &cr);
-    double Pvgd(double xv, double yv);
+    //double Pvgd(double xv, double yv);
 
 public:
 
-    vCircleTracker(double svPos, double svSiz, double zvPos, double zvSiz);
+    vCircleTracker();
     ~vCircleTracker();
 
+    void init(double svPos, double svSiz, double zvPos, double zvSiz);
 
-    //add event will:
-    //1. check closeness to distribution
-    //2. update zq if < c
-    //3. perform correction based on observation from zq
-    //4. destroy if validation gate too high
-    //5. return whether, updated, non-updated, needs destroying
-    double addEvent(emorph::AddressEvent v, double cT);
+    bool startTracking(double xz, double yz, double rz);
 
-    //update state
-    //also update zq values based on velocity
     double predict(double dt);
-
-    double correct(double xz, double yz, double rz, double dt);
-
-    double init(double xz, double yz, double rz);
-
+    bool correct(double xz, double yz, double rz);
+    bool getState(double &x, double &y, double &r);
     double Pzgd(double xz, double yz, double rz);
+
+    bool isActive() { return active; }
 
 
 };
