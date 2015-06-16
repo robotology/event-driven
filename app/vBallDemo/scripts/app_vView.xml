@@ -25,7 +25,7 @@
 
 <module>
     <name> iKinGazeCtrl </name>
-    <parameters> --robot icubSim </parameters>
+    <parameters> --robot icub </parameters>
     <node> localhost </node>
 </module>
 
@@ -37,13 +37,13 @@
 
 <module>
     <name> vtsOptFlow </name>
-    <parameters> </parameters>
+    <parameters> --name vtsOptFlow --height 128 --width 128 --filterSize 5 --tWindow 50000 --minEvtsThresh 4 --minSobelsThresh 4 </parameters>
     <node> localhost </node>
 </module>
 
 <module>
     <name> vCircle </name>
-    <parameters>  </parameters>
+    <parameters> --inlierThreshold 20 </parameters>
     <node> localhost </node>
 </module>
 
@@ -55,7 +55,7 @@
 
 <module>
     <name> vFramer</name>
-    <parameters> --frameRate 60 --eventWindow 0.02 --displays "(0 left (AE) 1 right (AE))"</parameters>
+    <parameters> --frameRate 60 --eventWindow 0.2 --displays "(0 left (AE CIRC OFE))"</parameters>
     <node>localhost</node>
 </module>
 

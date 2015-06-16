@@ -15,7 +15,7 @@
  */
 
 #include "vCircleObserver.h"
-#include <vector>
+//#include <vector>
 //#include <limits>
 
 vCircleObserver::vCircleObserver()
@@ -27,6 +27,11 @@ vCircleObserver::vCircleObserver()
 
     window = 0;
 
+}
+
+vCircleObserver::~vCircleObserver()
+{
+    if(window) delete window;
 }
 
 void vCircleObserver::init(int width, int height, int temporalRadius,
@@ -162,171 +167,171 @@ void vCircleObserver::addEvent(emorph::vEvent &event) {
 //}
 
 
-int vCircleObserver::flowView()
-{
-    if(!window) return -1;
-    emorph::OpticalFlowEvent *vr = window->getMostRecent()->
-            getAs<emorph::OpticalFlowEvent>();
-    if(!vr) return -1;
+//int vCircleObserver::flowView()
+//{
+//    if(!window) return -1;
+//    emorph::OpticalFlowEvent *vr = window->getMostRecent()->
+//            getAs<emorph::OpticalFlowEvent>();
+//    if(!vr) return -1;
 
-    //get the recent event and the surface
-    emorph::vQueue q = window->getSMARTSURF(spatialRadius);
-    if(q.size() < inlierThreshold) return -1;
+//    //get the recent event and the surface
+//    emorph::vQueue q = window->getSMARTSURF(spatialRadius);
+//    if(q.size() < inlierThreshold) return -1;
 
-    int RX = -(vr->getX()-spatialRadius); int RY = -(vr->getY()-spatialRadius);
-    int S = 10;
+//    int RX = -(vr->getX()-spatialRadius); int RY = -(vr->getY()-spatialRadius);
+//    int S = 10;
 
-    //plot the surface
-    double cts = vr->getStamp();
-    cv::Mat G(spatialRadius*2+1, spatialRadius*2+1, CV_8UC1); G.setTo(255);
-    for(emorph::vQueue::const_iterator qi = q.begin(); qi != q.end(); qi++) {
-        emorph::AddressEvent *vp = (*qi)->getAs<emorph::AddressEvent>();
+//    //plot the surface
+//    double cts = vr->getStamp();
+//    cv::Mat G(spatialRadius*2+1, spatialRadius*2+1, CV_8UC1); G.setTo(255);
+//    for(emorph::vQueue::const_iterator qi = q.begin(); qi != q.end(); qi++) {
+//        emorph::AddressEvent *vp = (*qi)->getAs<emorph::AddressEvent>();
 
-        double tts = vp->getStamp();
-        if(tts > cts) tts = tts - emorph::vtsHelper::maxStamp();
-        if(cts - tts > 190000) tts = cts - 190000;
-        int val = 254.0 * (cts - tts)/ 200000;
-        G.at<char>(vp->getX()+RX, vp->getY()+RY) = val;
-    }
-    cv::Mat image(G.size(), CV_8UC3);
-    cv::cvtColor(G, image, CV_GRAY2BGR);
-    cv::resize(image, image, image.size()*S, 0, 0, cv::INTER_NEAREST);
+//        double tts = vp->getStamp();
+//        if(tts > cts) tts = tts - emorph::vtsHelper::maxStamp();
+//        if(cts - tts > 190000) tts = cts - 190000;
+//        int val = 254.0 * (cts - tts)/ 200000;
+//        G.at<char>(vp->getX()+RX, vp->getY()+RY) = val;
+//    }
+//    cv::Mat image(G.size(), CV_8UC3);
+//    cv::cvtColor(G, image, CV_GRAY2BGR);
+//    cv::resize(image, image, image.size()*S, 0, 0, cv::INTER_NEAREST);
 
-    double main_m = vr->getVy() / vr->getVx();
-    double main_b = vr->getY() - main_m * vr->getX();
+//    double main_m = vr->getVy() / vr->getVx();
+//    double main_b = vr->getY() - main_m * vr->getX();
 
-    double xc, yc, rc;
-    double max_inliers = 0;
-    //step through the eigen areas
-    for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
-        emorph::OpticalFlowEvent * v = (*qi)->getAs<emorph::OpticalFlowEvent>();
-        if(!v) continue;
-        if(v == vr) continue;
+//    double xc, yc, rc;
+//    double max_inliers = 0;
+//    //step through the eigen areas
+//    for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
+//        emorph::OpticalFlowEvent * v = (*qi)->getAs<emorph::OpticalFlowEvent>();
+//        if(!v) continue;
+//        if(v == vr) continue;
 
-        int y = v->getY();
-        int x = v->getX();
-        double dtdy = v->getVy();
-        double dtdx = v->getVx();
+//        int y = v->getY();
+//        int x = v->getX();
+//        double dtdy = v->getVy();
+//        double dtdx = v->getVx();
 
-        double flowmag = sqrt(pow(dtdx, 2.0) + pow(dtdy, 2.0)) /
-                emorph::vtsHelper::tstosecs();
-        if(vr->getStamp() - v->getStamp() > flowmag) continue;
+//        double flowmag = sqrt(pow(dtdx, 2.0) + pow(dtdy, 2.0)) /
+//                emorph::vtsHelper::tstosecs();
+//        if(vr->getStamp() - v->getStamp() > flowmag) continue;
 
-        double vm = dtdy / dtdx;
-        double vb = y - vm * x;
-        if(vm == main_m) continue;
+//        double vm = dtdy / dtdx;
+//        double vb = y - vm * x;
+//        if(vm == main_m) continue;
 
-        double xX = (vb - main_b) / (main_m - vm);
-        double yX = (main_m*vb - vm*main_b) / (main_m - vm);
+//        double xX = (vb - main_b) / (main_m - vm);
+//        double yX = (main_m*vb - vm*main_b) / (main_m - vm);
 
-        //it can only be a valid cross if both gradients point towards or away
-        if(vr->getVx() * (xX - vr->getX()) * dtdx * (xX - x) < 0) continue;
-        if(vr->getVy() * (yX - vr->getY()) * dtdy * (yX - y) < 0) continue;
+//        //it can only be a valid cross if both gradients point towards or away
+//        if(vr->getVx() * (xX - vr->getX()) * dtdx * (xX - x) < 0) continue;
+//        if(vr->getVy() * (yX - vr->getY()) * dtdy * (yX - y) < 0) continue;
 
-        //if the radius doesn't agree between the two points
-        double main_rad = sqrt(pow(vr->getX()-xX, 2.0) + pow(vr->getY() - yX, 2.0));
-        double rad1 = sqrt(pow(x-xX, 2.0) + pow(y - yX, 2.0));
-        if(fabs(main_rad - rad1) < radiusThreshold) continue;
-
-
-        int inliers = 0;
-        for(emorph::vQueue::iterator qi2 = q.begin(); qi2 != q.end(); qi2++) {
-            emorph::OpticalFlowEvent * v2 = (*qi2)->getAs<emorph::OpticalFlowEvent>();
-            if(!v2) continue;
-
-            //only allow points with the same side of xX to main_x
-            double vm2 = v2->getVy() / v2->getVx();
-            double vb2 = v2->getY() - vm2 * v2->getX();
-            if(vm2 == main_m) continue;
-            double xX2 = (vb2 - main_b) / (main_m - vm2);
-            double yX2 = (main_m*vb2 - vm2*main_b) / (main_m - vm2);
-
-            if(vr->getVx() * (xX2 - vr->getX()) * v2->getVx() * (xX2 - v2->getX()) < 0) continue;
-            if(vr->getVy() * (yX2 - vr->getY()) * v2->getVy() * (yX2 - v2->getY()) < 0) continue;
-
-            //angle1
-            double angle1 = atan2(v2->getVy(), v2->getVx());
-            double angle2 = atan2(yX - v2->getY(), xX - v2->getX());
-            if(v2->getVx()*(xX-v2->getX()) < 0 || v2->getVy()*(yX-v2->getY()) < 0)
-                angle2 = atan2(v2->getY() - yX, v2->getX() - xX);
-
-            //this needs to account for wrap
-            double adiff = fabs(angle1 - angle2);
-            adiff = std::min(adiff, fabs(angle1 - angle2 - 6.18));
-            adiff = std::min(adiff, fabs(angle1 - angle2 + 6.18));
-
-            double rad2 = sqrt(pow(v2->getX()-xX, 2.0) + pow(v2->getY() - yX, 2.0));
-            double rdiff = fabs(main_rad - rad2);
-
-            if(adiff < angleThreshold && rdiff < radiusThreshold) inliers++;
-
-        }
-
-        if(inliers > max_inliers) {
-            max_inliers = inliers;
-            xc = xX;
-            yc = yX;
-        }
-    }
+//        //if the radius doesn't agree between the two points
+//        double main_rad = sqrt(pow(vr->getX()-xX, 2.0) + pow(vr->getY() - yX, 2.0));
+//        double rad1 = sqrt(pow(x-xX, 2.0) + pow(y - yX, 2.0));
+//        if(fabs(main_rad - rad1) < radiusThreshold) continue;
 
 
-    double main_rad = sqrt(pow(vr->getX()-xc, 2.0) + pow(vr->getY() - yc, 2.0));
-    for(emorph::vQueue::iterator qi2 = q.begin(); qi2 != q.end(); qi2++) {
-        emorph::OpticalFlowEvent * v2 = (*qi2)->getAs<emorph::OpticalFlowEvent>();
-        if(!v2) continue;
+//        int inliers = 0;
+//        for(emorph::vQueue::iterator qi2 = q.begin(); qi2 != q.end(); qi2++) {
+//            emorph::OpticalFlowEvent * v2 = (*qi2)->getAs<emorph::OpticalFlowEvent>();
+//            if(!v2) continue;
 
-        //only allow points with the same side of xX to main_x
-        double vm2 = v2->getVy() / v2->getVx();
-        double vb2 = v2->getY() - vm2 * v2->getX();
-        if(vm2 == main_m) continue;
-        double xX2 = (vb2 - main_b) / (main_m - vm2);
-        double yX2 = (main_m*vb2 - vm2*main_b) / (main_m - vm2);
+//            //only allow points with the same side of xX to main_x
+//            double vm2 = v2->getVy() / v2->getVx();
+//            double vb2 = v2->getY() - vm2 * v2->getX();
+//            if(vm2 == main_m) continue;
+//            double xX2 = (vb2 - main_b) / (main_m - vm2);
+//            double yX2 = (main_m*vb2 - vm2*main_b) / (main_m - vm2);
 
-        if(vr->getVx() * (xX2 - vr->getX()) * v2->getVx() * (xX2 - v2->getX()) < 0) continue;
-        if(vr->getVy() * (yX2 - vr->getY()) * v2->getVy() * (yX2 - v2->getY()) < 0) continue;
+//            if(vr->getVx() * (xX2 - vr->getX()) * v2->getVx() * (xX2 - v2->getX()) < 0) continue;
+//            if(vr->getVy() * (yX2 - vr->getY()) * v2->getVy() * (yX2 - v2->getY()) < 0) continue;
 
-        //angle1
-        double angle1 = atan2(v2->getVy(), v2->getVx());
-        double angle2 = atan2(yc - v2->getY(), xc - v2->getX());
-        if(v2->getVx()*(xc-v2->getX()) < 0 || v2->getVy()*(yc-v2->getY()) < 0)
-            angle2 = atan2(v2->getY() - yc, v2->getX() - xc);
+//            //angle1
+//            double angle1 = atan2(v2->getVy(), v2->getVx());
+//            double angle2 = atan2(yX - v2->getY(), xX - v2->getX());
+//            if(v2->getVx()*(xX-v2->getX()) < 0 || v2->getVy()*(yX-v2->getY()) < 0)
+//                angle2 = atan2(v2->getY() - yX, v2->getX() - xX);
 
-        //this needs to account for wrap
-        double adiff = fabs(angle1 - angle2);
-        adiff = std::min(adiff, fabs(angle1 - angle2 - 6.18));
-        adiff = std::min(adiff, fabs(angle1 - angle2 + 6.18));
+//            //this needs to account for wrap
+//            double adiff = fabs(angle1 - angle2);
+//            adiff = std::min(adiff, fabs(angle1 - angle2 - 6.18));
+//            adiff = std::min(adiff, fabs(angle1 - angle2 + 6.18));
 
-        double rad2 = sqrt(pow(v2->getX()-xc, 2.0) + pow(v2->getY() - yc, 2.0));
-        double rdiff = fabs(main_rad - rad2);
+//            double rad2 = sqrt(pow(v2->getX()-xX, 2.0) + pow(v2->getY() - yX, 2.0));
+//            double rdiff = fabs(main_rad - rad2);
 
-        if(adiff < angleThreshold && rdiff < radiusThreshold) {
-            double GS = sqrt(2000.0 / (pow(v2->getVx(), 2.0) + pow(v2->getVy(), 2.0)));
+//            if(adiff < angleThreshold && rdiff < radiusThreshold) inliers++;
 
-            cv::Point gp((v2->getY()+RY+1)*S, (v2->getX()+RX+1)*S);
-            cv::Point gvend = gp + cv::Point(S * v2->getVy() * GS, S * v2->getVx() *GS);
-            cv::line(image, gp, gvend, CV_RGB(255, 0, 0));
-            //cv::imshow("FLOW VECTORS", image);
-            //cv::waitKey();
-        }
+//        }
 
-    }
-
-    rc = sqrt(pow(xc - vr->getX(), 2.0) + pow(yc - vr->getY(), 2.0));
-    std::cout << "max_inliers: " << max_inliers << std::endl;
+//        if(inliers > max_inliers) {
+//            max_inliers = inliers;
+//            xc = xX;
+//            yc = yX;
+//        }
+//    }
 
 
-    double GS = sqrt(2000.0 / (pow(vr->getVx(), 2.0) + pow(vr->getVy(), 2.0)));
-    cv::Point gp((vr->getY()+RY+1)*S, (vr->getX()+RX+1)*S);
-    cv::Point gvend = gp + cv::Point(S * vr->getVy() * GS, S * vr->getVx() *GS);
-    cv::line(image, gp, gvend, CV_RGB(255, 0, 255));
+//    double main_rad = sqrt(pow(vr->getX()-xc, 2.0) + pow(vr->getY() - yc, 2.0));
+//    for(emorph::vQueue::iterator qi2 = q.begin(); qi2 != q.end(); qi2++) {
+//        emorph::OpticalFlowEvent * v2 = (*qi2)->getAs<emorph::OpticalFlowEvent>();
+//        if(!v2) continue;
 
-    cv::circle(image, cv::Point((yc+RY+1)*S, (xc+RX+1)*S), rc*S, CV_RGB(0, 255, 0), 2);
-    cv::flip(image, image, 0);
-    cv::imshow("FLOW VECTORS", image);
+//        //only allow points with the same side of xX to main_x
+//        double vm2 = v2->getVy() / v2->getVx();
+//        double vb2 = v2->getY() - vm2 * v2->getX();
+//        if(vm2 == main_m) continue;
+//        double xX2 = (vb2 - main_b) / (main_m - vm2);
+//        double yX2 = (main_m*vb2 - vm2*main_b) / (main_m - vm2);
+
+//        if(vr->getVx() * (xX2 - vr->getX()) * v2->getVx() * (xX2 - v2->getX()) < 0) continue;
+//        if(vr->getVy() * (yX2 - vr->getY()) * v2->getVy() * (yX2 - v2->getY()) < 0) continue;
+
+//        //angle1
+//        double angle1 = atan2(v2->getVy(), v2->getVx());
+//        double angle2 = atan2(yc - v2->getY(), xc - v2->getX());
+//        if(v2->getVx()*(xc-v2->getX()) < 0 || v2->getVy()*(yc-v2->getY()) < 0)
+//            angle2 = atan2(v2->getY() - yc, v2->getX() - xc);
+
+//        //this needs to account for wrap
+//        double adiff = fabs(angle1 - angle2);
+//        adiff = std::min(adiff, fabs(angle1 - angle2 - 6.18));
+//        adiff = std::min(adiff, fabs(angle1 - angle2 + 6.18));
+
+//        double rad2 = sqrt(pow(v2->getX()-xc, 2.0) + pow(v2->getY() - yc, 2.0));
+//        double rdiff = fabs(main_rad - rad2);
+
+//        if(adiff < angleThreshold && rdiff < radiusThreshold) {
+//            double GS = sqrt(2000.0 / (pow(v2->getVx(), 2.0) + pow(v2->getVy(), 2.0)));
+
+//            cv::Point gp((v2->getY()+RY+1)*S, (v2->getX()+RX+1)*S);
+//            cv::Point gvend = gp + cv::Point(S * v2->getVy() * GS, S * v2->getVx() *GS);
+//            cv::line(image, gp, gvend, CV_RGB(255, 0, 0));
+//            //cv::imshow("FLOW VECTORS", image);
+//            //cv::waitKey();
+//        }
+
+//    }
+
+//    rc = sqrt(pow(xc - vr->getX(), 2.0) + pow(yc - vr->getY(), 2.0));
+//    std::cout << "max_inliers: " << max_inliers << std::endl;
 
 
-    return max_inliers;
-}
+//    double GS = sqrt(2000.0 / (pow(vr->getVx(), 2.0) + pow(vr->getVy(), 2.0)));
+//    cv::Point gp((vr->getY()+RY+1)*S, (vr->getX()+RX+1)*S);
+//    cv::Point gvend = gp + cv::Point(S * vr->getVy() * GS, S * vr->getVx() *GS);
+//    cv::line(image, gp, gvend, CV_RGB(255, 0, 255));
+
+//    cv::circle(image, cv::Point((yc+RY+1)*S, (xc+RX+1)*S), rc*S, CV_RGB(0, 255, 0), 2);
+//    cv::flip(image, image, 0);
+//    cv::imshow("FLOW VECTORS", image);
+
+
+//    return max_inliers;
+//}
 
 int vCircleObserver::flowcircle(double &cx, double &cy, double &cr)
 {
@@ -495,7 +500,9 @@ vCircleTracker::vCircleTracker()
 /******************************************************************************/
 vCircleTracker::~vCircleTracker()
 {
+    std::cout << "Closing vCircleTracker" << std::endl;
     if(filter) delete filter;
+    std::cout << "Closed vCircleTracker" << std::endl;
 }
 
 /******************************************************************************/

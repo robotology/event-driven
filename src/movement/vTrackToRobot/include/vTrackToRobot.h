@@ -63,9 +63,9 @@ private:
 
 
     //robot control settings
-    yarp::dev::PolyDriver mdriver;
-    yarp::dev::IPositionControl *pc;
-    yarp::dev::IEncoders *ec;
+//    yarp::dev::PolyDriver mdriver;
+//    yarp::dev::IPositionControl *pc;
+//    yarp::dev::IEncoders *ec;
 
 
 public:

@@ -16,7 +16,7 @@
 
 #include "vCircleModule.h"
 #include <sstream>
-#include <opencv2/opencv.hpp>
+//#include <opencv2/opencv.hpp>
 
 /**********************************************************/
 bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
@@ -47,10 +47,13 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
                                    yarp::os::Value(2)).asDouble();
 
     double measNoisePos = rf.check("measNoisePos",
-                                   yarp::os::Value(10)).asDouble();
+                                   yarp::os::Value(5)).asDouble();
 
     double measNoiseRad = rf.check("measNoiseRad",
                                    yarp::os::Value(5)).asDouble();
+
+    int inlierThreshold = rf.check("inlierThreshold",
+                                   yarp::os::Value(5)).asInt();
 
     circleReader.setDebug(debugwindows);
     //circleReader.resetObserverParams(width, height, actDecay, actInject,
@@ -58,7 +61,8 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
 //    circleReader.resetFilterParams(procNoisePos, procNoiseRad,
 //                                   measNoisePos, measNoiseRad);
 
-    circleReader.circleFinder.init(width, height, temporalWindow, obsRadius, 5, 0.1, 1.5);
+    circleReader.inlierThreshold = inlierThreshold;
+    circleReader.circleFinder.init(width, height, temporalWindow, obsRadius, inlierThreshold, 0.1, 1.5);
     circleReader.circleTracker.init(procNoisePos, procNoiseRad,
                                     measNoisePos, measNoiseRad);
 
@@ -81,8 +85,10 @@ bool vCircleModule::interruptModule()
 /**********************************************************/
 bool vCircleModule::close()
 {
+    std::cout << "Closing vCircleModule" << std::endl;
     circleReader.close();
     yarp::os::RFModule::close();
+    std::cout << "Closed vCircleModule" << std::endl;
     return true;
 }
 
@@ -102,6 +108,7 @@ double vCircleModule::getPeriod()
 /**********************************************************/
 vCircleReader::vCircleReader()
 {
+    inlierThreshold = 5;
     periodstart = 0;//yarp::os::Time::now();
     //circleTracker = 0; //new vCircleTracker(0.1, 0.1, 32, 16);
 }
@@ -125,9 +132,10 @@ bool vCircleReader::open(const std::string &name)
 void vCircleReader::close()
 {
     //close ports
+    std::cout << "Closing vCircleReader" << std::endl;
     outPort.close();
-
     yarp::os::BufferedPort<emorph::vBottle>::close();
+    std::cout << "Closed vCircleReader" << std::endl;
 
 }
 
@@ -136,7 +144,7 @@ void vCircleReader::interrupt()
 {
     //pass on the interrupt call to everything needed
     outPort.interrupt();
-    this->interrupt();
+    yarp::os::BufferedPort<emorph::vBottle>::interrupt();
 
 
 }
@@ -171,10 +179,11 @@ void vCircleReader::onRead(emorph::vBottle &bot)
         circleFinder.addEvent(*v);
     }
 
+    bool circlewasfound = false;
     double count = 0;
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
 
-        //if(yarp::os::Time::now() - tstart > 0.0009) break;
+        if(yarp::os::Time::now() - tstart > 0.0009) break;
         count++;
 
         emorph::AddressEvent *v = (*qi)->getAs<emorph::OpticalFlowEvent>();
@@ -185,9 +194,11 @@ void vCircleReader::onRead(emorph::vBottle &bot)
         double inliers = circleFinder.flowcircle(cx, cy, cr);
         //double e1 = 12;
 
-        if(cr < 5 || cr > 32) continue;
+        if(cr < 5 || cr > 24) continue;
         if(inliers < inlierThreshold) continue;
 
+
+        circlewasfound = true;
 //        emorph::ClusterEventGauss circevent;
 //        circevent.setStamp(v->getStamp());
 //        circevent.setChannel(0);
@@ -199,11 +210,11 @@ void vCircleReader::onRead(emorph::vBottle &bot)
 //        continue;
 
 
-        if(false && yarp::os::Time::now() - periodstart > 3) {
-            circleFinder.flowView();
-            cv::waitKey(20);
-            periodstart = yarp::os::Time::now();
-        }
+//        if(false && yarp::os::Time::now() - periodstart > 3) {
+//            circleFinder.flowView();
+//            cv::waitKey(20);
+//            periodstart = yarp::os::Time::now();
+//        }
 
         if(!circleTracker.isActive()) {
             circleTracker.startTracking(cx, cy, cr);
@@ -222,7 +233,7 @@ void vCircleReader::onRead(emorph::vBottle &bot)
     }
 
     double x, y, r;
-    if(circleTracker.getState(x, y, r)) {
+    if(circlewasfound && circleTracker.getState(x, y, r)) {
         emorph::ClusterEventGauss circevent;
         circevent.setStamp(pTS);
         circevent.setChannel(0);

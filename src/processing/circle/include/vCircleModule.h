@@ -32,7 +32,7 @@ private:
 
     //our circle position estimator
 
-    int inlierThreshold;
+
 
     emorph::vtsHelper unwrap;
     double pTS;
@@ -45,6 +45,7 @@ public:
     //we actually allow our observers and trackers
     vCircleObserver circleFinder;
     vCircleTracker circleTracker;
+    int inlierThreshold;
     
     vCircleReader();
 

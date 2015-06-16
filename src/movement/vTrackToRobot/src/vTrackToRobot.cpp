@@ -68,16 +68,22 @@ bool vTrackToRobotManager::open(const std::string &name)
 
 void vTrackToRobotManager::interrupt()
 {
+    std::cout << "Interrupting Manager" << std::endl;
     cartOutPort.interrupt();
     yarp::os::BufferedPort<emorph::vBottle>::interrupt();
+    std::cout << "Interrupted Manager" << std::endl;
 }
 
 void vTrackToRobotManager::close()
 {
-    cartOutPort.close();
+    std::cout << "Closing Event Manager" << std::endl;
+
+    gazecontrol->stopControl();
     gazedriver.close();
-    if(gazecontrol) delete gazecontrol; gazecontrol = 0;
+    cartOutPort.close();
     yarp::os::BufferedPort<emorph::vBottle>::close();
+
+    std::cout << "Closed Event Manager" << std::endl;
 
 }
 
@@ -94,25 +100,26 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
             q.back()->getAs<emorph::ClusterEventGauss>();
     if(!v) return;
 
-    px[0] = v->getXCog(); px[1] = v->getYCog();
+    px[0] = v->getYCog(); px[1] = 127 - v->getXCog();
     std::cout << "Pixel: " << px.toString() << std::endl;
-    gazecontrol->get3DPoint(0, px, 1.0, x);
-    std::cout << "2D point: " << px.toString() << std::endl;
+    gazecontrol->get3DPoint(0, px, 0.5, x);
+    //std::cout << "2D point: " << px.toString() << std::endl;
     std::cout << "3D point: " << x.toString() << std::endl;
-    //gazecontrol->lookAtFixationPoint(x);
+
+    gazecontrol->lookAtFixationPoint(x);
 
 
     yarp::os::Bottle& BottleOut = cartOutPort.prepare();
     BottleOut.clear();
     //add the XYZ position
-    BottleOut.add(x[0]); BottleOut.add(x[1]); BottleOut.add(x[2]);
-    //BottleOut.add(0.5); BottleOut.add(0.8); BottleOut.add(0.4);
+    //BottleOut.add(x[0]); BottleOut.add(x[1]); BottleOut.add(x[2]);
+    BottleOut.add(-1.0); BottleOut.add(0.0); BottleOut.add(-0.3);
     //add some buffer ints
     BottleOut.add(0.0); BottleOut.add(0.0); BottleOut.add(0.0);
     //flag that the object is detected
     BottleOut.add(1.0);
 
-    std::cout << "Bottle: " << BottleOut.toString() << std::endl;
+    //std::cout << "Bottle: " << BottleOut.toString() << std::endl;
 
     cartOutPort.write();
 

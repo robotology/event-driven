@@ -15,7 +15,7 @@
  */
 
 #include <iCub/emorph/all.h>
-#include <opencv2/opencv.hpp>
+//#include <opencv2/opencv.hpp>
 #include <iCub/ctrl/kalman.h>
 
 class vCircleObserver
@@ -35,6 +35,7 @@ private:
 public:
 
     vCircleObserver();
+    ~vCircleObserver();
 
     void init(int width, int height, int tempWin, int spatialRadius,
               int inlierThresh, double angleThresh, double radThresh);
