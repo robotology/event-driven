@@ -18,7 +18,7 @@
 #include <sstream>
 //#include <opencv2/opencv.hpp>
 
-/**********************************************************/
+/******************************************************************************/
 bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
 {
     //set the name of the module
@@ -26,9 +26,6 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
                                       yarp::os::Value("vCircleFinder")
                                       ).asString();
     setName(moduleName.c_str());
-
-    bool debugwindows = rf.check("debug",
-                                 yarp::os::Value(false)).asBool();
 
     //sensory size
     int width = rf.check("width", yarp::os::Value(128)).asInt();
@@ -38,6 +35,12 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
     //observation parameters
     int obsRadius = rf.check("obsWindow", yarp::os::Value(32)).asDouble();
     int temporalWindow = rf.check("temWindow", yarp::os::Value(200000)).asDouble();
+    int inlierThreshold = rf.check("inlierThreshold",
+                                   yarp::os::Value(5)).asInt();
+    double angleThreshold = rf.check("angleThreshold",
+                                     yarp::os::Value(0.1)).asDouble();
+    double radiusThreshold = rf.check("radiusThreshold",
+                                      yarp::os::Value(1.5)).asDouble();
 
     //filter parameters
     double procNoisePos = rf.check("procNoisePos",
@@ -52,20 +55,18 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
     double measNoiseRad = rf.check("measNoiseRad",
                                    yarp::os::Value(5)).asDouble();
 
-    int inlierThreshold = rf.check("inlierThreshold",
-                                   yarp::os::Value(5)).asInt();
 
-    circleReader.setDebug(debugwindows);
-    //circleReader.resetObserverParams(width, height, actDecay, actInject,
-    //                                 actRadius, obsRadius, elimRegion);
-//    circleReader.resetFilterParams(procNoisePos, procNoiseRad,
-//                                   measNoisePos, measNoiseRad);
-
+    //initialise the dection and tracking
     circleReader.inlierThreshold = inlierThreshold;
-    circleReader.circleFinder.init(width, height, temporalWindow, obsRadius, inlierThreshold, 0.1, 1.5);
+
+    circleReader.circleFinder.init(width, height, temporalWindow, obsRadius,
+                                   inlierThreshold, angleThreshold,
+                                   radiusThreshold);
+
     circleReader.circleTracker.init(procNoisePos, procNoiseRad,
                                     measNoisePos, measNoiseRad);
 
+    //open the ports
     if(!circleReader.open(moduleName)) {
         std::cerr << "Could not open required ports" << std::endl;
         return false;
@@ -74,7 +75,7 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
     return true ;
 }
 
-/**********************************************************/
+/******************************************************************************/
 bool vCircleModule::interruptModule()
 {
     circleReader.interrupt();
@@ -82,7 +83,7 @@ bool vCircleModule::interruptModule()
     return true;
 }
 
-/**********************************************************/
+/******************************************************************************/
 bool vCircleModule::close()
 {
     std::cout << "Closing vCircleModule" << std::endl;
@@ -92,28 +93,28 @@ bool vCircleModule::close()
     return true;
 }
 
-/**********************************************************/
+/******************************************************************************/
 bool vCircleModule::updateModule()
 {
 
     return true;
 }
 
-/**********************************************************/
+/******************************************************************************/
 double vCircleModule::getPeriod()
 {
     return 0.3;
 
 }
-/**********************************************************/
+
+/******************************************************************************/
 vCircleReader::vCircleReader()
 {
     inlierThreshold = 5;
-    periodstart = 0;//yarp::os::Time::now();
-    //circleTracker = 0; //new vCircleTracker(0.1, 0.1, 32, 16);
+    periodstart = 0;
 }
 
-/**********************************************************/
+/******************************************************************************/
 bool vCircleReader::open(const std::string &name)
 {
 
@@ -128,18 +129,16 @@ bool vCircleReader::open(const std::string &name)
     return state1 && state2;
 }
 
-/**********************************************************/
+/******************************************************************************/
 void vCircleReader::close()
 {
     //close ports
-    std::cout << "Closing vCircleReader" << std::endl;
     outPort.close();
     yarp::os::BufferedPort<emorph::vBottle>::close();
-    std::cout << "Closed vCircleReader" << std::endl;
 
 }
 
-/**********************************************************/
+/******************************************************************************/
 void vCircleReader::interrupt()
 {
     //pass on the interrupt call to everything needed
@@ -149,20 +148,14 @@ void vCircleReader::interrupt()
 
 }
 
-
-//void vCircleReader::resetObserverParams(int width, int height, double aDec, double aInj,
-//                         int aRad, int oWin, int oTrim)
-//{
-//    //circleFinder = vCircleObserver();
-//}
-
-/**********************************************************/
+/******************************************************************************/
 void vCircleReader::onRead(emorph::vBottle &bot)
 {
 
     double tstart = yarp::os::Time::now();
     
-    // prepare output vBottle with address events extended with cluster ID (aec) and cluster events (clep)
+    // prepare output vBottle with address events extended with cluster ID (aec)
+    // and cluster events (clep)
     emorph::vBottle &outBottle = outPort.prepare();
     outBottle = bot;
 
@@ -183,7 +176,7 @@ void vCircleReader::onRead(emorph::vBottle &bot)
     double count = 0;
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
 
-        if(yarp::os::Time::now() - tstart > 0.0009) break;
+        if(yarp::os::Time::now() - tstart > 0.0008) break;
         count++;
 
         emorph::AddressEvent *v = (*qi)->getAs<emorph::OpticalFlowEvent>();

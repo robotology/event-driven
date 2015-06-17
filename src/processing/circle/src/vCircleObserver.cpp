@@ -15,9 +15,9 @@
  */
 
 #include "vCircleObserver.h"
-//#include <vector>
-//#include <limits>
 
+
+/******************************************************************************/
 vCircleObserver::vCircleObserver()
 {
     spatialRadius = 32;
@@ -29,11 +29,13 @@ vCircleObserver::vCircleObserver()
 
 }
 
+/******************************************************************************/
 vCircleObserver::~vCircleObserver()
 {
     if(window) delete window;
 }
 
+/******************************************************************************/
 void vCircleObserver::init(int width, int height, int temporalRadius,
                            int spatialRadius, int inlierThresh,
                            double angleThresh, double radThresh)
@@ -46,6 +48,7 @@ void vCircleObserver::init(int width, int height, int temporalRadius,
     this->window = new emorph::vWindow(width, height, temporalRadius, false);
 }
 
+/******************************************************************************/
 void vCircleObserver::addEvent(emorph::vEvent &event) {
     window->addEvent(event);
 }
@@ -333,6 +336,7 @@ void vCircleObserver::addEvent(emorph::vEvent &event) {
 //    return max_inliers;
 //}
 
+/******************************************************************************/
 int vCircleObserver::flowcircle(double &cx, double &cy, double &cr)
 {
 
@@ -427,6 +431,7 @@ int vCircleObserver::flowcircle(double &cx, double &cy, double &cr)
 
 }
 
+/******************************************************************************/
 bool vCircleObserver::calculateCircle(double x1, double x2, double x3,
                                       double y1, double y2, double y3,
                                       double &cx, double &cy, double &cr)
@@ -500,9 +505,7 @@ vCircleTracker::vCircleTracker()
 /******************************************************************************/
 vCircleTracker::~vCircleTracker()
 {
-    std::cout << "Closing vCircleTracker" << std::endl;
     if(filter) delete filter;
-    std::cout << "Closed vCircleTracker" << std::endl;
 }
 
 /******************************************************************************/
