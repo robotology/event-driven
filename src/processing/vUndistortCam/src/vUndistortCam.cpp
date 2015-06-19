@@ -75,6 +75,7 @@ bool vUndistortModule::interruptModule()
 {
     rpcPort.interrupt();
     eventBottleManager.interrupt();
+    yarp::os::RFModule::interruptModule();
     return true;
 }
 
@@ -83,6 +84,7 @@ bool vUndistortModule::close()
 {
     rpcPort.close();
     eventBottleManager.close();
+    yarp::os::RFModule::close();
     return true;
 }
 
@@ -95,7 +97,7 @@ bool vUndistortModule::updateModule()
 /**********************************************************/
 double vUndistortModule::getPeriod()
 {
-    return 0.1;
+    return 0.5;
 }
 
 bool vUndistortModule::respond(const yarp::os::Bottle &command,
@@ -140,7 +142,7 @@ void EventBottleManager::close()
 {
     //close ports
     outPort.close();
-    this->close();
+    yarp::os::BufferedPort<emorph::vBottle>::close();
 
     //remember to also deallocate any memory allocated by this class
 
@@ -152,7 +154,7 @@ void EventBottleManager::interrupt()
 {
     //pass on the interrupt call to everything needed
     outPort.interrupt();
-    this->interrupt();
+    yarp::os::BufferedPort<emorph::vBottle>::interrupt();
 
 }
 /******************************************************************************/
