@@ -29,7 +29,8 @@ void vBottle::addEvent(emorph::vEvent &e) {
     }
 
     //add the coded event to the end of the bottle
-    b->append(e.encode());
+    e.encode(*b);
+    //b->append(e.encode());
 
 }
 

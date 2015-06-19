@@ -108,7 +108,6 @@ void vQueue::pop_front()
 
 vQueue::vQueue(const vQueue& that)
 {
-    //std::cout << "vQ:vQ(const vQ &)" << std::endl;
     this->owner = that.owner;
     for(vQueue::const_iterator qi = that.begin(); qi != that.end(); qi++)
         this->push_back(*qi);
@@ -116,7 +115,6 @@ vQueue::vQueue(const vQueue& that)
 
 vQueue vQueue::operator=(const vQueue& that)
 {
-    std::cout << "vQ:operator=" << std::endl;
     this->clear();
     this->owner = that.owner;
     for(vQueue::const_iterator qi = that.begin(); qi != that.end(); qi++)
@@ -144,13 +142,9 @@ bool vQueue::temporalSort(const vEvent *e1, const vEvent *e2){
 /******************************************************************************/
 //vEvent
 /******************************************************************************/
-yarp::os::Bottle vEvent::encode() const
+void vEvent::encode(yarp::os::Bottle &b) const
 {
-    int word0=(32<<26)|(stamp&0x00ffffff);
-
-    Bottle ret;
-    ret.addInt(word0);
-    return ret;
+    b.addInt((32<<26)|(stamp&0x00ffffff));
 }
 
 /******************************************************************************/
@@ -176,7 +170,6 @@ vEvent::vEvent(const vEvent &event)
 /******************************************************************************/
 vEvent &vEvent::operator=(const vEvent &event)
 {
-    type = event.type;
     stamp = event.stamp;
 
     return *this;
@@ -191,7 +184,7 @@ bool vEvent::operator==(const vEvent &event)
 {
     return
     (
-    this->type == event.type &&
+    this->getType() == event.getType() &&
     this->stamp == event.stamp
     );
 }
@@ -200,7 +193,7 @@ bool vEvent::operator==(const vEvent &event)
 yarp::os::Property vEvent::getContent() const
 {
     Property prop;
-    prop.put("type",type.c_str());
+    prop.put("type",getType().c_str());
     prop.put("stamp",stamp);
 
     return prop;
@@ -238,9 +231,6 @@ vEvent &AddressEvent::operator=(const vEvent &event)
         y = 0;
     }
 
-    //force the type to addressevent
-    type = "AE";
-
     return *this;
 }
 
@@ -250,14 +240,10 @@ vEvent* AddressEvent::clone() {
 }
 
 /******************************************************************************/
-yarp::os::Bottle AddressEvent::encode() const
+void AddressEvent::encode(yarp::os::Bottle &b) const
 {
-    int word0=(0<<26)|((channel&0x01)<<15)|((y&0x7f)<<8)|((x&0x7f)<<1)|
-            (polarity&0x01);
-
-    Bottle ret = vEvent::encode();
-    ret.addInt(word0);
-    return ret;
+    vEvent::encode(b);
+    b.addInt(((channel&0x01)<<15)|((y&0x7f)<<8)|((x&0x7f)<<1)|(polarity&0x01));
 }
 
 /******************************************************************************/
@@ -336,9 +322,6 @@ vEvent &AddressEventClustered::operator=(const vEvent &event/*always vEvent*/)
         clID = 0;
     }
 
-    //force the type to addressevent
-    type = "AE-C";
-
     return *this;
 }
 
@@ -348,13 +331,10 @@ vEvent* AddressEventClustered::clone() {
 }
 
 /******************************************************************************/
-yarp::os::Bottle AddressEventClustered::encode() const
+void AddressEventClustered::encode(yarp::os::Bottle &b) const
 {
-    int word0=clID;
-
-    Bottle ret = AddressEvent::encode();
-    ret.addInt(word0);
-    return ret;
+    AddressEvent::encode(b);
+    b.addInt(clID);
 }
 
 /******************************************************************************/
@@ -426,9 +406,6 @@ vEvent &CollisionEvent::operator=(const vEvent &event/*always vEvent*/)
         clid2 = 0;
     }
 
-    //force the type to collision event
-    type = "COL";
-
     return *this;
 }
 
@@ -438,15 +415,13 @@ vEvent* CollisionEvent::clone() {
 }
 
 /******************************************************************************/
-yarp::os::Bottle CollisionEvent::encode() const
+void CollisionEvent::encode(yarp::os::Bottle &b) const
 {
-    int word0 =
-            clid1<<24 | clid2<<16 | (channel&0x01)<<15 | (x&0x7f)<<8 | (y&0x7f);
-
-    Bottle ret = vEvent::encode();
-    ret.addInt(word0);
-    return ret;
+    vEvent::encode(b);
+    b.addInt((clid1&0xff)<<24 | (clid2&0xff)<<16 | (channel&0x01)<<15 |
+             (x&0x7f)<<8 | (y&0x7f));
 }
+
 
 /******************************************************************************/
 bool CollisionEvent::decode(const yarp::os::Bottle &packet, int &pos)
@@ -530,9 +505,6 @@ vEvent &ClusterEvent::operator=(const vEvent &event)
         polarity = 1;
     }
 
-    //force the type to addressevent
-    type = "CLE";
-
     return *this;
 }
 
@@ -542,20 +514,11 @@ vEvent* ClusterEvent::clone() {
 }
 
 /******************************************************************************/
-yarp::os::Bottle ClusterEvent::encode() const
+void ClusterEvent::encode(yarp::os::Bottle &b) const
 {
-    //6bits for code
-    //10bits for id
-    //7bits for yCog
-    //7bits for XCog
-    //1bit for polarity
-    //1bit for channel
-    int word0=(8<<26)|((id&0x02ff)<<16)|((yCog&0x7f)<<9)|((xCog&0x7f)<<2)|
-            ((polarity&0x01)<<1)|(channel&0x01);
-
-    yarp::os::Bottle ret = vEvent::encode();
-    ret.addInt(word0);
-    return ret;
+    vEvent::encode(b);
+    b.addInt((8<<26)|((id&0x02ff)<<16)|((yCog&0x7f)<<9)|((xCog&0x7f)<<2)|
+             ((polarity&0x01)<<1)|(channel&0x01));
 }
 
 /******************************************************************************/
@@ -657,9 +620,6 @@ vEvent &ClusterEventGauss::operator=(const vEvent &event)
         yVel = 0;
     }
 
-    //force the type to addressevent
-    type = "CLEG";
-
     return *this;
 }
 
@@ -669,32 +629,12 @@ vEvent* ClusterEventGauss::clone() {
 }
 
 /******************************************************************************/
-yarp::os::Bottle ClusterEventGauss::encode() const
+void ClusterEventGauss::encode(yarp::os::Bottle &b) const
 {
-    //the encoding needs to happen here from the old codec
-    //code 6
-    //activity 24
-    //int word0=(20<<26)|(numAE&0x00ffffff);
-    //code 6
-    //xySig 8
-    //ySig 8
-    //xSig 8
-    //int word1=(21<<26)|((xySigma&0xff)<<16)|((ySigma2&0xff)<<8)|(xSigma2&0xff);
-    //code 6
-    //yVel 8
-    //xVel 8
-    //int word2=(22<<26)|((yVel&0xff)<<8)|(xVel&0xff);
-
-
-    int word0 = ((xySigma&0xffff)<<16)|(numAE&0xffff);
-    int word1 = ((xSigma2&0xffff)<<16)|(ySigma2&0xffff);
-    int word2 = ((xVel&0xffff)<<16)|(yVel&0xffff);
-
-    yarp::os::Bottle ret = ClusterEvent::encode();
-    ret.addInt(word0);
-    ret.addInt(word1);
-    ret.addInt(word2);
-    return ret;
+    ClusterEvent::encode(b);
+    b.addInt(((xySigma&0xffff)<<16)|(numAE&0xffff));
+    b.addInt(((xSigma2&0xffff)<<16)|(ySigma2&0xffff));
+    b.addInt(((xVel&0xffff)<<16)|(yVel&0xffff));
 }
 
 /******************************************************************************/
@@ -807,9 +747,6 @@ vEvent &OpticalFlowEvent::operator=(const vEvent &event)
         vy = 0;
     }
 
-    //force the type to OpticalFlowEvent
-    type = "OFE";
-
     return *this;
 }
 
@@ -819,14 +756,11 @@ vEvent* OpticalFlowEvent::clone() {
 }
 
 /******************************************************************************/
-yarp::os::Bottle OpticalFlowEvent::encode() const
+void OpticalFlowEvent::encode(yarp::os::Bottle &b) const
 {
-
-    Bottle ret = AddressEvent::encode();
-
-    ret.addInt(*(int*)(&vx));
-    ret.addInt(*(int*)(&vy));
-    return ret;
+    AddressEvent::encode(b);
+    b.addInt(*(int*)(&vx));
+    b.addInt(*(int*)(&vy));
 }
 
 /******************************************************************************/

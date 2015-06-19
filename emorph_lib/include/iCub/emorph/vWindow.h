@@ -47,6 +47,7 @@ private:
     yarp::os::Semaphore mutex;
     //! for quick spatial accessing and surfacing
     std::vector< std::vector <vQueue> > spatial;
+    vQueue subq;
 
 
 public:
@@ -83,7 +84,7 @@ public:
     /// \brief getWindow
     /// \return
     ///
-    const vQueue getTW();
+    const vQueue& getTW();
 
     ///
     /// \brief getSpatialWindow returns AddressEvents within a spatial window
@@ -92,7 +93,7 @@ public:
     /// \param d distance of the half-length of a square window
     /// \return a vQueue containing a copy of the events
     ///
-    const vQueue getSTW(int x, int y, int d);
+    const vQueue& getSTW(int x, int y, int d);
 
     ///
     /// \brief getSpatialWindow returns AddressEvents within a spatial window
@@ -102,15 +103,15 @@ public:
     /// \param yh upper y value of window
     /// \return a vQueue containing a copy of the events
     ///
-    const vQueue getSTW(int xl, int xh, int yl, int yh);
+    const vQueue& getSTW(int xl, int xh, int yl, int yh);
 
-    const vQueue getSMARTSTW(int d);
+    const vQueue& getSMARTSTW(int d);
 
 
-    const vQueue getSURF(int pol);
-    const vQueue getSMARTSURF(int d);
-    const vQueue getSURF(int x, int y, int d, int pol);
-    const vQueue getSURF(int xl, int xh, int yl, int yh, int pol);
+    const vQueue& getSURF(int pol);
+    const vQueue& getSMARTSURF(int d);
+    const vQueue& getSURF(int x, int y, int d, int pol);
+    const vQueue& getSURF(int xl, int xh, int yl, int yh, int pol);
 
 
 };
