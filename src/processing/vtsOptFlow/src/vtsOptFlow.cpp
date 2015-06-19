@@ -148,17 +148,19 @@ void vtsOptFlowManager::onRead(emorph::vBottle &inBottle)
 {
     double starttime = yarp::os::Time::now();
     bool computeflow = true;
+    int eventsComputed = 0;
+    int eventsPotential = 0;
 
     /*prepare output vBottle with AEs extended with optical flow events*/
     emorph::vBottle &outBottle = outPort.prepare();
     outBottle.clear();
 
     /*get the event queue in the vBottle bot*/
-    emorph::vQueue q = inBottle.getAll();
+    emorph::vQueue q = inBottle.get<emorph::AddressEvent>();
 
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {
-        if(computeflow && yarp::os::Time::now() - starttime > 0.0008)
+        if(computeflow && yarp::os::Time::now() - starttime > 0.0009)
             computeflow = false;
 
         emorph::AddressEvent *aep = (*qi)->getAs<emorph::AddressEvent>();
@@ -169,7 +171,11 @@ void vtsOptFlowManager::onRead(emorph::vBottle &inBottle)
         surface->addEvent(*aep);
 
         emorph::OpticalFlowEvent ofe;
-        if(computeflow) ofe = compute();
+        if(computeflow) {
+            ofe = compute();
+            eventsComputed++;
+        }
+        eventsPotential++;
 
         if(ofe.getVx() || ofe.getVy()) {
             outBottle.addEvent(ofe);
@@ -179,13 +185,18 @@ void vtsOptFlowManager::onRead(emorph::vBottle &inBottle)
 
     }
 
+    //if(eventsComputed != eventsPotential) {
+        std::cout << (int)(eventsComputed *100.0 / eventsPotential);
+        std::cout << "% (" << eventsComputed << ")" << std::endl;
+    //}
+
     outPort.write();
 
-    double threadtime = yarp::os::Time::now() - starttime;
-    if(threadtime > 0.001) {
-        std::cout << "Thread took too long: " << threadtime * 1000 << "ms";
-        std::cout << std::endl;
-    }
+//    double threadtime = yarp::os::Time::now() - starttime;
+//    if(threadtime > 0.001) {
+//        std::cout << "Thread took too long: " << threadtime * 1000 << "ms";
+//        std::cout << std::endl;
+//    }
 }
 
 /******************************************************************************/
