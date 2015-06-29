@@ -12,5 +12,6 @@ add_subdirectory(dPepper)
 if(OPENCV_FOUND)
     add_subdirectory(vUndistortCam)
     add_subdirectory(circle)
+    add_subdirectory(hough)
 endif(OPENCV_FOUND)
 
