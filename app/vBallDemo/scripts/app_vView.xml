@@ -55,7 +55,7 @@
 
 <module>
     <name> vFramer</name>
-    <parameters> --frameRate 60 --eventWindow 0.2 --displays "(0 left (AE CIRC OFE))"</parameters>
+    <parameters> --frameRate 60 --eventWindow 0.2 --displays "(0 left (AE CIRC FLOW))"</parameters>
     <node>localhost</node>
 </module>
 

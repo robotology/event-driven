@@ -22,6 +22,7 @@
 #define __EMORPH_ECODEC_H__
 
 #include <yarp/os/all.h>
+#include <iCub/emorph/vtsHelper.h>
 #include <string>
 #include <deque>
 
@@ -65,6 +66,9 @@ public:
 
     virtual void pop_back();
     virtual void pop_front();
+
+    virtual iterator erase(iterator __first, iterator __last);
+    virtual iterator erase(iterator __position);
 
     vQueue copy(bool hardcopy = true);
 
@@ -371,36 +375,39 @@ public:
 
 
 /**************************************************************************/
-class OpticalFlowEvent : public AddressEvent
+class FlowEvent : public AddressEvent
 {
 private:
-    const static int localWordsCoded = 2;
+    const static int localWordsCoded = 3;
 
 protected:
 
     //add new member variables here
     float vx;
     float vy;
+    int death;
 
 public:
 
     //these are new the member get functions
-    virtual std::string getType() const { return "OFE";}
+    virtual std::string getType() const { return "FLOW";}
     float getVx() const                     { return vx;                }
     float getVy() const                     { return vy;                }
+    int getDeath() const { return death; }
 
     void setVx(float vx)                    { this->vx=vx;              }
     void setVy(float vy)                    { this->vy=vy;              }
+    void setDeath();
 
     //these functions need to be defined correctly for inheritance
-    OpticalFlowEvent() : AddressEvent(), vx(0), vy(0) {}
-    OpticalFlowEvent(const vEvent &event);
+    FlowEvent() : AddressEvent(), vx(0), vy(0), death(0) {}
+    FlowEvent(const vEvent &event);
     vEvent &operator=(const vEvent &event);
     virtual vEvent* clone();
 
-    bool operator==(const OpticalFlowEvent &event);
+    bool operator==(const FlowEvent &event);
     bool operator==(const vEvent &event) {
-        return operator==(dynamic_cast<const OpticalFlowEvent&>(event)); }
+        return operator==(dynamic_cast<const FlowEvent&>(event)); }
     virtual void encode(yarp::os::Bottle &b) const;
     yarp::os::Property getContent() const;
     virtual bool decode(const yarp::os::Bottle &packet, int &pos);

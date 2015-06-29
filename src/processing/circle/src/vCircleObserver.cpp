@@ -173,8 +173,8 @@ void vCircleObserver::addEvent(emorph::vEvent &event) {
 //int vCircleObserver::flowView()
 //{
 //    if(!window) return -1;
-//    emorph::OpticalFlowEvent *vr = window->getMostRecent()->
-//            getAs<emorph::OpticalFlowEvent>();
+//    emorph::FlowEvent *vr = window->getMostRecent()->
+//            getAs<emorph::FlowEvent>();
 //    if(!vr) return -1;
 
 //    //get the recent event and the surface
@@ -207,7 +207,7 @@ void vCircleObserver::addEvent(emorph::vEvent &event) {
 //    double max_inliers = 0;
 //    //step through the eigen areas
 //    for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
-//        emorph::OpticalFlowEvent * v = (*qi)->getAs<emorph::OpticalFlowEvent>();
+//        emorph::FlowEvent * v = (*qi)->getAs<emorph::FlowEvent>();
 //        if(!v) continue;
 //        if(v == vr) continue;
 
@@ -239,7 +239,7 @@ void vCircleObserver::addEvent(emorph::vEvent &event) {
 
 //        int inliers = 0;
 //        for(emorph::vQueue::iterator qi2 = q.begin(); qi2 != q.end(); qi2++) {
-//            emorph::OpticalFlowEvent * v2 = (*qi2)->getAs<emorph::OpticalFlowEvent>();
+//            emorph::FlowEvent * v2 = (*qi2)->getAs<emorph::FlowEvent>();
 //            if(!v2) continue;
 
 //            //only allow points with the same side of xX to main_x
@@ -280,7 +280,7 @@ void vCircleObserver::addEvent(emorph::vEvent &event) {
 
 //    double main_rad = sqrt(pow(vr->getX()-xc, 2.0) + pow(vr->getY() - yc, 2.0));
 //    for(emorph::vQueue::iterator qi2 = q.begin(); qi2 != q.end(); qi2++) {
-//        emorph::OpticalFlowEvent * v2 = (*qi2)->getAs<emorph::OpticalFlowEvent>();
+//        emorph::FlowEvent * v2 = (*qi2)->getAs<emorph::FlowEvent>();
 //        if(!v2) continue;
 
 //        //only allow points with the same side of xX to main_x
@@ -341,8 +341,7 @@ int vCircleObserver::flowcircle(double &cx, double &cy, double &cr)
 {
 
     if(!window) return -1;
-    emorph::OpticalFlowEvent *vr = window->getMostRecent()->
-            getAs<emorph::OpticalFlowEvent>();
+    emorph::FlowEvent *vr = window->getMostRecent()->getAs<emorph::FlowEvent>();
     if(!vr) return -1;
 
     //get the recent event and the surface
@@ -354,7 +353,7 @@ int vCircleObserver::flowcircle(double &cx, double &cy, double &cr)
 
     int max_inliers = 0;
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
-        emorph::OpticalFlowEvent * v = (*qi)->getAs<emorph::OpticalFlowEvent>();
+        emorph::FlowEvent * v = (*qi)->getAs<emorph::FlowEvent>();
         if(!v) continue;
         if(v == vr) continue;
 
@@ -384,7 +383,7 @@ int vCircleObserver::flowcircle(double &cx, double &cy, double &cr)
 
         int inliers = 0;
         for(emorph::vQueue::iterator qi2 = q.begin(); qi2 != q.end(); qi2++) {
-            emorph::OpticalFlowEvent * v2 = (*qi2)->getAs<emorph::OpticalFlowEvent>();
+            emorph::FlowEvent * v2 = (*qi2)->getAs<emorph::FlowEvent>();
             if(!v2) continue;
 
             //only allow points with the same side of xX to main_x

@@ -55,7 +55,7 @@ private:
 
 
     void setSobelFilters(uint, yarp::sig::Matrix&, yarp::sig::Matrix&);
-    emorph::OpticalFlowEvent compute();
+    emorph::FlowEvent compute();
     bool computeGrads(yarp::sig::Matrix &A, yarp::sig::Vector &Y,
                       double &dtdy, double &dtdx);
     bool computeGrads(emorph::vQueue &subsurf, double &dtdy, double &dtdx);

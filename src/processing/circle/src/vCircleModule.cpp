@@ -152,7 +152,7 @@ void vCircleReader::interrupt()
 void vCircleReader::onRead(emorph::vBottle &bot)
 {
 
-    double tstart = yarp::os::Time::now();
+    //double tstart = yarp::os::Time::now();
     
     // prepare output vBottle with address events extended with cluster ID (aec)
     // and cluster events (clep)
@@ -160,11 +160,11 @@ void vCircleReader::onRead(emorph::vBottle &bot)
     outBottle = bot;
 
     //create event queue
-    emorph::vQueue q = bot.get<emorph::OpticalFlowEvent>();
+    emorph::vQueue q = bot.get<emorph::FlowEvent>();
     if(!q.size()) return;
 
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
-        emorph::AddressEvent *v = (*qi)->getAs<emorph::OpticalFlowEvent>();
+        emorph::AddressEvent *v = (*qi)->getAs<emorph::FlowEvent>();
         if(!v || v->getChannel()) continue;
         //if(!v->getPolarity()) continue;
 
@@ -176,10 +176,11 @@ void vCircleReader::onRead(emorph::vBottle &bot)
     double count = 0;
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
 
-        if(yarp::os::Time::now() - tstart > 0.0008) break;
+        //if(yarp::os::Time::now() - tstart > 0.0008) break;
+        if(getPendingReads()) break;
         count++;
 
-        emorph::AddressEvent *v = (*qi)->getAs<emorph::OpticalFlowEvent>();
+        emorph::AddressEvent *v = (*qi)->getAs<emorph::FlowEvent>();
         if(!v || v->getChannel()) continue;
         //if(!v->getPolarity()) continue;
 
@@ -240,10 +241,10 @@ void vCircleReader::onRead(emorph::vBottle &bot)
     //send on the processed events
     outPort.write();
 
-    double tthread = yarp::os::Time::now() - tstart;
-    if(tthread > 0.001) {
-        std::cout << "On Read took too long " << tthread*1000  << "ms" << std::endl;
-    }
+    //double tthread = yarp::os::Time::now() - tstart;
+    //if(tthread > 0.001) {
+    //    std::cout << "On Read took too long " << tthread*1000  << "ms" << std::endl;
+    //}
 
 }
 

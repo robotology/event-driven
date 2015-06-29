@@ -146,7 +146,7 @@ void vtsOptFlowManager::interrupt()
 /******************************************************************************/
 void vtsOptFlowManager::onRead(emorph::vBottle &inBottle)
 {
-    double starttime = yarp::os::Time::now();
+    //double starttime = yarp::os::Time::now();
     bool computeflow = true;
     int eventsComputed = 0;
     int eventsPotential = 0;
@@ -160,7 +160,8 @@ void vtsOptFlowManager::onRead(emorph::vBottle &inBottle)
 
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {
-        if(computeflow && yarp::os::Time::now() - starttime > 0.0009)
+        //if(computeflow && yarp::os::Time::now() - starttime > 0.0009)
+        if(getPendingReads())
             computeflow = false;
 
         emorph::AddressEvent *aep = (*qi)->getAs<emorph::AddressEvent>();
@@ -170,7 +171,7 @@ void vtsOptFlowManager::onRead(emorph::vBottle &inBottle)
 
         surface->addEvent(*aep);
 
-        emorph::OpticalFlowEvent ofe;
+        emorph::FlowEvent ofe;
         if(computeflow) {
             ofe = compute();
             eventsComputed++;
@@ -200,7 +201,7 @@ void vtsOptFlowManager::onRead(emorph::vBottle &inBottle)
 }
 
 /******************************************************************************/
-emorph::OpticalFlowEvent vtsOptFlowManager::compute()
+emorph::FlowEvent vtsOptFlowManager::compute()
 {
     emorph::AddressEvent * vr = surface->getMostRecent()->getAs<emorph::AddressEvent>();
     int rx = vr->getX();
@@ -246,7 +247,7 @@ emorph::OpticalFlowEvent vtsOptFlowManager::compute()
         }
     }
 
-    emorph::OpticalFlowEvent opt_flow(*vr);
+    emorph::FlowEvent opt_flow(*vr);
     if(n > minSobelsInFlow) {
         //opt_flow.setChannel(vr->getChannel());
         //opt_flow.setPolarity(vr->getPolarity());
@@ -254,6 +255,7 @@ emorph::OpticalFlowEvent vtsOptFlowManager::compute()
         //opt_flow.setY(rx);
         opt_flow.setVx(emorph::vtsHelper::tstosecs() * dtdx_mean / n);
         opt_flow.setVy(emorph::vtsHelper::tstosecs() * dtdy_mean / n);
+        opt_flow.setDeath();
     }
 
     return opt_flow;

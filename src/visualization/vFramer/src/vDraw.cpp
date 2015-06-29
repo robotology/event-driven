@@ -369,7 +369,7 @@ void surfDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
 
 std::string flowDraw::getTag()
 {
-    return "OFE";
+    return "FLOW";
 }
 
 void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
@@ -393,7 +393,7 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
 
     emorph::vQueue::const_iterator qi;
     for(qi = eSet.begin(); qi != eSet.end(); qi++) {
-        emorph::OpticalFlowEvent *ofp = (*qi)->getAs<emorph::OpticalFlowEvent>();
+        emorph::FlowEvent *ofp = (*qi)->getAs<emorph::FlowEvent>();
         if(!ofp) continue;
 
         int x = ofp->getY();

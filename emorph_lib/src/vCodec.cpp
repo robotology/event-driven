@@ -20,8 +20,9 @@
 
 #include <algorithm>
 #include "iCub/emorph/vCodec.h"
-using namespace emorph;
-using namespace yarp::os;
+#include <cmath>
+//using namespace emorph;
+//using namespace yarp::os;
 
 namespace emorph
 {
@@ -50,7 +51,7 @@ vEvent * createEvent(const std::string type)
     if(type == ret->getType()) return ret;
     else delete(ret);
 
-    ret = new OpticalFlowEvent();
+    ret = new FlowEvent();
     if(type == ret->getType()) return ret;
     else delete(ret);
 
@@ -104,6 +105,30 @@ void vQueue::pop_front()
     if(owner)
         delete front();
     deque::pop_front();
+}
+
+vQueue::iterator vQueue::erase(iterator __first, iterator __last)
+{
+    //deallocation memory
+    if(owner) {
+        for(iterator i = __first; i != __last; i++)
+            delete *i;
+    }
+
+    //normal erase
+    return deque::erase(__first, __last);
+}
+
+vQueue::iterator vQueue::erase(iterator __position)
+{
+    //deallocate memory
+    if(owner) {
+        delete *__position;
+    }
+
+    //normal erase
+    return deque::erase(__position);
+
 }
 
 vQueue::vQueue(const vQueue& that)
@@ -192,7 +217,7 @@ bool vEvent::operator==(const vEvent &event)
 /******************************************************************************/
 yarp::os::Property vEvent::getContent() const
 {
-    Property prop;
+    yarp::os::Property prop;
     prop.put("type",getType().c_str());
     prop.put("stamp",stamp);
 
@@ -284,9 +309,9 @@ bool AddressEvent::operator==(const AddressEvent &event)
 }
 
 /******************************************************************************/
-Property AddressEvent::getContent() const
+yarp::os::Property AddressEvent::getContent() const
 {
-    Property prop = vEvent::getContent();
+    yarp::os::Property prop = vEvent::getContent();
     prop.put("channel",channel);
     prop.put("polarity",polarity);
     prop.put("x",x);
@@ -363,9 +388,9 @@ bool AddressEventClustered::operator==(const AddressEventClustered &event)
 }
 
 /******************************************************************************/
-Property AddressEventClustered::getContent() const
+yarp::os::Property AddressEventClustered::getContent() const
 {
-    Property prop = AddressEvent::getContent();
+    yarp::os::Property prop = AddressEvent::getContent();
     prop.put("clID",clID);
 
     return prop;
@@ -459,9 +484,9 @@ bool CollisionEvent::operator==(const CollisionEvent &event)
 }
 
 /******************************************************************************/
-Property CollisionEvent::getContent() const
+yarp::os::Property CollisionEvent::getContent() const
 {
-    Property prop = vEvent::getContent();
+    yarp::os::Property prop = vEvent::getContent();
     prop.put("x", x);
     prop.put("y", y);
     prop.put("channel", channel);
@@ -569,9 +594,9 @@ bool ClusterEvent::operator==(const ClusterEvent &event)
 
 
 /******************************************************************************/
-Property ClusterEvent::getContent() const
+yarp::os::Property ClusterEvent::getContent() const
 {
-    Property prop = vEvent::getContent();
+    yarp::os::Property prop = vEvent::getContent();
     prop.put("channel",channel);
     prop.put("polarity", polarity);
     prop.put("id",id);
@@ -704,9 +729,9 @@ bool ClusterEventGauss::operator==(const ClusterEventGauss &event)
 
 
 /******************************************************************************/
-Property ClusterEventGauss::getContent() const
+yarp::os::Property ClusterEventGauss::getContent() const
 {
-    Property prop = vEvent::getContent();
+    yarp::os::Property prop = vEvent::getContent();
     //add extra member properties for human readable here
     prop.put("numAE", numAE);
     prop.put("xSigma2", xSigma2);
@@ -720,9 +745,9 @@ Property ClusterEventGauss::getContent() const
 }
 
 /******************************************************************************/
-//OpticalFlowEvent
+//FlowEvent
 /******************************************************************************/
-OpticalFlowEvent::OpticalFlowEvent(const vEvent &event)
+FlowEvent::FlowEvent(const vEvent &event)
 {
     //most of the constructor is replicated in the assignment operator
     //so we just use that to construct
@@ -731,40 +756,43 @@ OpticalFlowEvent::OpticalFlowEvent(const vEvent &event)
 }
 
 /******************************************************************************/
-vEvent &OpticalFlowEvent::operator=(const vEvent &event)
+vEvent &FlowEvent::operator=(const vEvent &event)
 {
 
     //copy timestamp and type (base class =operator)
     AddressEvent::operator =(event);
 
     //copy other fields if it's compatible
-    const OpticalFlowEvent * ofp = dynamic_cast<const OpticalFlowEvent *>(&event);
+    const FlowEvent * ofp = dynamic_cast<const FlowEvent *>(&event);
     if(ofp) {
         vx=ofp->vx;
         vy=ofp->vy;
+        death = ofp->death;
     } else {
         vx = 0;
         vy = 0;
+        death = 0;
     }
 
     return *this;
 }
 
 /******************************************************************************/
-vEvent* OpticalFlowEvent::clone() {
-    return new OpticalFlowEvent(*this);
+vEvent* FlowEvent::clone() {
+    return new FlowEvent(*this);
 }
 
 /******************************************************************************/
-void OpticalFlowEvent::encode(yarp::os::Bottle &b) const
+void FlowEvent::encode(yarp::os::Bottle &b) const
 {
     AddressEvent::encode(b);
     b.addInt(*(int*)(&vx));
     b.addInt(*(int*)(&vy));
+    b.addInt(death);
 }
 
 /******************************************************************************/
-bool OpticalFlowEvent::decode(const yarp::os::Bottle &packet, int &pos)
+bool FlowEvent::decode(const yarp::os::Bottle &packet, int &pos)
 {
     // check length
     if (AddressEvent::decode(packet, pos) &&
@@ -774,6 +802,7 @@ bool OpticalFlowEvent::decode(const yarp::os::Bottle &packet, int &pos)
         vx=*(float*)(&word1);
         int word2=packet.get(pos+1).asInt();
         vy=*(float*)(&word2);
+        death = packet.get(pos+2).asInt();
 
         pos+=localWordsCoded;
         return true;
@@ -782,21 +811,30 @@ bool OpticalFlowEvent::decode(const yarp::os::Bottle &packet, int &pos)
 }
 
 /******************************************************************************/
-bool OpticalFlowEvent::operator==(const OpticalFlowEvent &event)
+bool FlowEvent::operator==(const FlowEvent &event)
 {
     return ((AddressEvent::operator==(event)) &&
             (vx==event.vx)&&
-            (vy==event.vy));
+            (vy==event.vy)&&
+            (death==event.death));
 }
 
 /******************************************************************************/
-Property OpticalFlowEvent::getContent() const
+yarp::os::Property FlowEvent::getContent() const
 {
-    Property prop = AddressEvent::getContent();
+    yarp::os::Property prop = AddressEvent::getContent();
     prop.put("vx",vx);
     prop.put("vy",vy);
+    prop.put("death", death);
 
     return prop;
+}
+
+void FlowEvent::setDeath()
+{
+    death = (int)(sqrt(pow(vx, 2.0) + pow(vy, 2.0)) / vtsHelper::tstosecs());
+    if(death > 1000000) death = 1000000;
+    death += stamp;
 }
 
 }
