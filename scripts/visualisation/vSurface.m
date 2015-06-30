@@ -14,13 +14,17 @@ events_left_on(:, 2) = events_left_on(:, 2) - events_left_on(1, 2);
 figure(1); 
 clf;
 
-vSurf = zeros(h, w);
+vSurf = zeros(128, 128);
 
 for i=1:size(events_left_on, 1)
     % associate to each incoming event its timestamp in vSurf 
     vSurf(events_left_on(i, 4) + 1, events_left_on(i, 5) + 1) = events_left_on(i, 2);
     if mod(i, 100) == 0
         mesh(vSurf);
+        xlabel('x');
+        ylabel('y');
+        zlabel('ts (s)');
+        grid on;
         drawnow;
     end
 end
