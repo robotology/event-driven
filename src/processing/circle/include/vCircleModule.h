@@ -23,6 +23,7 @@
 #include <fstream>
 #include "vCircleObserver.h"
 
+
 class vCircleReader : public yarp::os::BufferedPort<emorph::vBottle>
 {
 private:
@@ -30,22 +31,22 @@ private:
     //output port for the vBottle with the new events computed by the module
     yarp::os::BufferedPort<emorph::vBottle> outPort;
 
-    //our circle position estimator
-
-
-
     emorph::vtsHelper unwrap;
     double pTS;
+
     //our filter/tracker
-    double periodstart;
+
     bool debugFlag;
+    std::ofstream datawriter;
 
 public:
 
     //we actually allow our observers and trackers
-    vCircleObserver circleFinder;
+    vGeoCircleObserver geomFinder;
+    vHoughCircleObserver houghFinder;
     vCircleTracker circleTracker;
     int inlierThreshold;
+    bool hough;
     
     vCircleReader();
 
@@ -56,10 +57,11 @@ public:
     //this is the entry point to your main functionality
     void    onRead(emorph::vBottle &bot);
 
-    void setDebug(bool debugFlag) { this->debugFlag = debugFlag; }
-    void resetObserverParams(int width, int height, double aDec, double aInj,
-                             int aRad, int oWin, int oTrim);
-    void resetFilterParams(double pvp, double pvs, double mvp, double mvs);
+    bool setDataWriter(std::string datafilename);
+//    void setDebug(bool debugFlag) { this->debugFlag = debugFlag; }
+//    void resetObserverParams(int width, int height, double aDec, double aInj,
+//                             int aRad, int oWin, int oTrim);
+//    void resetFilterParams(double pvp, double pvs, double mvp, double mvs);
 
 };
 

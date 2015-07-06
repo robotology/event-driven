@@ -55,16 +55,30 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
     double measNoiseRad = rf.check("measNoiseRad",
                                    yarp::os::Value(5)).asDouble();
 
+    //data for experiments
+    std::string datafilename = rf.check("datafile",
+                                        yarp::os::Value("")).asString();
+
+    circleReader.hough = rf.check("hough",
+                                  yarp::os::Value(false)).asBool();
+
+    circleReader.houghFinder.qType = rf.check("fifotype",
+                                    yarp::os::Value("lifetime")).asString();
+
+    circleReader.houghFinder.useFlow = rf.check("flowonly",
+                                    yarp::os::Value(false)).asBool();
 
     //initialise the dection and tracking
     circleReader.inlierThreshold = inlierThreshold;
 
-    circleReader.circleFinder.init(width, height, temporalWindow, obsRadius,
+    circleReader.geomFinder.init(width, height, temporalWindow, obsRadius,
                                    inlierThreshold, angleThreshold,
                                    radiusThreshold);
 
     circleReader.circleTracker.init(procNoisePos, procNoiseRad,
                                     measNoisePos, measNoiseRad);
+
+    circleReader.setDataWriter(datafilename);
 
     //open the ports
     if(!circleReader.open(moduleName)) {
@@ -111,7 +125,16 @@ double vCircleModule::getPeriod()
 vCircleReader::vCircleReader()
 {
     inlierThreshold = 5;
-    periodstart = 0;
+    hough = false;
+}
+
+/******************************************************************************/
+bool vCircleReader::setDataWriter(std::string datafilename)
+{
+    if(!datafilename.empty())
+        datawriter.open(datafilename.c_str());
+
+    return datawriter.is_open();
 }
 
 /******************************************************************************/
@@ -151,8 +174,6 @@ void vCircleReader::interrupt()
 /******************************************************************************/
 void vCircleReader::onRead(emorph::vBottle &bot)
 {
-
-    //double tstart = yarp::os::Time::now();
     
     // prepare output vBottle with address events extended with cluster ID (aec)
     // and cluster events (clep)
@@ -160,72 +181,70 @@ void vCircleReader::onRead(emorph::vBottle &bot)
     outBottle = bot;
 
     //create event queue
-    emorph::vQueue q = bot.get<emorph::FlowEvent>();
-    if(!q.size()) return;
-
-    for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
-        emorph::AddressEvent *v = (*qi)->getAs<emorph::FlowEvent>();
-        if(!v || v->getChannel()) continue;
-        //if(!v->getPolarity()) continue;
-
-
-        circleFinder.addEvent(*v);
-    }
+    emorph::vQueue q = bot.get<emorph::AddressEvent>();
 
     bool circlewasfound = false;
-    double count = 0;
+    double count = 0, potential = 0;
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
 
-        //if(yarp::os::Time::now() - tstart > 0.0008) break;
-        if(getPendingReads()) break;
-        count++;
-
-        emorph::AddressEvent *v = (*qi)->getAs<emorph::FlowEvent>();
+        //get the event in the correct form
+        emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
         if(!v || v->getChannel()) continue;
-        //if(!v->getPolarity()) continue;
+        if(!hough) geomFinder.addEvent(*v);
 
+        potential++; //increment our records of possible v's to process
+
+        //if we already have new data to read we need to finish ASAP
+        if(getPendingReads()) continue;
+        count++; //increment our records of v's processed
+
+        //process the observation
         double cx, cy, cr;
-        double inliers = circleFinder.flowcircle(cx, cy, cr);
-        //double e1 = 12;
 
-        if(cr < 5 || cr > 24) continue;
-        if(inliers < inlierThreshold) continue;
+        double inliers = 0;
+        if(hough) {
+            houghFinder.addEvent(*v);
+            if(!houghFinder.found) continue;
+            if(houghFinder.valc < inlierThreshold) continue;
+            cx = houghFinder.xc;
+            cy = houghFinder.yc;
+            cr = houghFinder.rc;
 
+        } else {
+            inliers = geomFinder.flowcircle(cx, cy, cr);
+            if(cr < 5 || cr > 24) continue;
+            if(inliers < inlierThreshold) continue;
+        }
 
         circlewasfound = true;
-//        emorph::ClusterEventGauss circevent;
-//        circevent.setStamp(v->getStamp());
-//        circevent.setChannel(0);
-//        circevent.setXCog(cx);
-//        circevent.setYCog(cy);
-//        circevent.setXSigma2(cr);
-//        circevent.setYSigma2(2);
-//        outBottle.addEvent(circevent);
-//        continue;
 
-
-//        if(false && yarp::os::Time::now() - periodstart > 3) {
-//            circleFinder.flowView();
-//            cv::waitKey(20);
-//            periodstart = yarp::os::Time::now();
-//        }
-
+        //update the filter given the observation
+        double ts = unwrap(v->getStamp());
         if(!circleTracker.isActive()) {
             circleTracker.startTracking(cx, cy, cr);
-            pTS = unwrap(v->getStamp());
         } else {
-            double ts = unwrap(v->getStamp());
             circleTracker.predict((ts - pTS)*emorph::vtsHelper::tstosecs());
             circleTracker.correct(cx, cy, cr);
-            pTS = ts;
+        }
+        pTS = ts;
+
+        //write analysis data if needed
+        if(datawriter.is_open()) {
+            datawriter << ts << " " << cx << " " << cy << " " << cr << " ";
+            double kx, ky, kr;
+            circleTracker.getState(kx, ky, kr);
+            datawriter << kx << " " << ky << " " << kr << std::endl;
         }
 
     }
 
-    if(count != q.size()) {
-        //std::cout << "Processed " << count * 100.0 / q.size() << "%" << std::endl;
+    //at the end of the bottle say how many events were processed
+    if(potential != 0 && count != potential) {
+        std::cout << "Processed " << count * 100.0 / potential << "%" << std::endl;
     }
 
+    //also add a single circle tracking position to the output
+    //at the moment we are just using ClusterEventGauss
     double x, y, r;
     if(circlewasfound && circleTracker.getState(x, y, r)) {
         emorph::ClusterEventGauss circevent;
@@ -238,13 +257,8 @@ void vCircleReader::onRead(emorph::vBottle &bot)
         outBottle.addEvent(circevent);
     }
 
-    //send on the processed events
+    //send on our event bottle
     outPort.write();
-
-    //double tthread = yarp::os::Time::now() - tstart;
-    //if(tthread > 0.001) {
-    //    std::cout << "On Read took too long " << tthread*1000  << "ms" << std::endl;
-    //}
 
 }
 

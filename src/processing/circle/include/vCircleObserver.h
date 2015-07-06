@@ -18,7 +18,10 @@
 //#include <opencv2/opencv.hpp>
 #include <iCub/ctrl/kalman.h>
 
-class vCircleObserver
+/*//////////////////////////////////////////////////////////////////////////////
+  RANSAC OBSERVER
+  ////////////////////////////////////////////////////////////////////////////*/
+class vGeoCircleObserver
 {
 
 private:
@@ -34,8 +37,8 @@ private:
 
 public:
 
-    vCircleObserver();
-    ~vCircleObserver();
+    vGeoCircleObserver();
+    ~vGeoCircleObserver();
 
     void init(int width, int height, int tempWin, int spatialRadius,
               int inlierThresh, double angleThresh, double radThresh);
@@ -53,9 +56,60 @@ public:
 };
 
 /*//////////////////////////////////////////////////////////////////////////////
+  HOUGH OBSERVER
+  ////////////////////////////////////////////////////////////////////////////*/
+class vHoughCircleObserver
+{
+
+private:
+
+    //data
+    std::vector<yarp::sig::Matrix *> H;
+    emorph::vQueue FIFO;
+
+    //parameters
+    int qlength;
+    int qduration;
+
+
+    int r1;
+    int r2;
+    int rsize;
+    int height;
+    int width;
+
+    bool updateH(emorph::vEvent &event, int val);
+    //two methods of general function above
+    void updateHAddress(int xv, int yv, int val);
+    void updateHFlow(int xv, int yv, int val, double dtdx, double dtdy);
+
+
+public:
+
+    bool found;
+    bool useFlow;
+    std::string qType;
+    int xc, yc, rc, valc;
+
+    vHoughCircleObserver();
+    ~vHoughCircleObserver();
+
+    void addEvent(emorph::vEvent &event);
+    //three methods of general function above
+    void addEventFixed(emorph::vEvent &event);
+    void addEventTime(emorph::vEvent &event);
+    void addEventLife(emorph::vEvent &event);
+
+
+    yarp::sig::ImageOf<yarp::sig::PixelMono> makeDebugImage(int r);
+    yarp::sig::ImageOf<yarp::sig::PixelMono> makeDebugImage2();
+
+
+};
+
+/*//////////////////////////////////////////////////////////////////////////////
   CIRCLE TRACKER
   ////////////////////////////////////////////////////////////////////////////*/
-
 class vCircleTracker
 {
 private:
