@@ -1,6 +1,6 @@
 % Displays the surface associated to the events
 
-filename = 'corner2DVS.txt';
+filename = '~/DataBackup/DATASETS/corner_extDVS/corner1.txt';
 events = importdata(filename);
 
 % select polarity and channel 
@@ -17,6 +17,8 @@ clf;
 vSurf = zeros(128, 128);
 
 for i=1:size(events_left_on, 1)
+    
+    if ~ishandle(1); break; end;
     % associate to each incoming event its timestamp in vSurf 
     vSurf(events_left_on(i, 4) + 1, events_left_on(i, 5) + 1) = events_left_on(i, 2);
     if mod(i, 100) == 0
@@ -27,6 +29,7 @@ for i=1:size(events_left_on, 1)
         grid on;
         drawnow;
     end
+    
 end
 
     
