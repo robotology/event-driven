@@ -215,8 +215,8 @@ vHoughCircleObserver::vHoughCircleObserver()
     qlength = 2000;
     qduration = 200000;
     useFlow = false;
-    r1 = 8;
-    r2 = 32;
+    r1 = 10;
+    r2 = 48;
     rsize = r2 - r1;
     height = 128;
     width = 128;
@@ -268,7 +268,7 @@ void vHoughCircleObserver::updateHAddress(int xv, int yv, int val)
                 int y = yv + deltay + s;
                 if(y > 127 || y < 0) continue;
                 (*H[r])[y][x] += val;
-                if(val > 0 && (*H[r])[y][x] > valc) {
+                if(val > 0 && (*H[r])[y][x] >= valc) {
                     valc = (*H[r])[y][x];
                     xc = x;
                     yc = y;
@@ -278,7 +278,7 @@ void vHoughCircleObserver::updateHAddress(int xv, int yv, int val)
                 y = yv - deltay + s;
                 if(y > 127 || y < 0) continue;
                 (*H[r])[y][x] += val;
-                if(val > 0 && (*H[r])[y][x] > valc) {
+                if(val > 0 && (*H[r])[y][x] >= valc) {
                     valc = (*H[r])[y][x];
                     xc = x;
                     yc = y;
@@ -303,13 +303,13 @@ void vHoughCircleObserver::updateHFlow(int xv, int yv, int val, double dtdx, dou
         int x_base = R * cos(theta1) + xv;
         int y_base = R * sin(theta1) + yv;
 
-        for(int y = y_base-2; y < y_base+2; y++) {
-            for(int x = x_base-2; x < x_base+2; x++) {
+        for(int y = y_base-1; y < y_base+1; y++) {
+            for(int x = x_base-1; x < x_base+1; x++) {
 
                 if(x < 0 || x > width-1 || y < 0 || y > height-1) continue;
 
                 (*H[r])[y][x] += val;
-                if(val > 0 && (*H[r])[y][x] > valc) {
+                if(val > 0 && (*H[r])[y][x] >= valc) {
                     valc = (*H[r])[y][x];
                     xc = x;
                     yc = y;
@@ -324,13 +324,13 @@ void vHoughCircleObserver::updateHFlow(int xv, int yv, int val, double dtdx, dou
         x_base = R * cos(theta1) + xv;
         y_base = R * sin(theta1) + yv;
 
-        for(int y = y_base-2; y < y_base+2; y++) {
-            for(int x = x_base-2; x < x_base+2; x++) {
+        for(int y = y_base-1; y < y_base+1; y++) {
+            for(int x = x_base-1; x < x_base+1; x++) {
 
                 if(x < 0 || x > width-1 || y < 0 || y > height-1) continue;
 
                 (*H[r])[y][x] += val;
-                if(val > 0 && (*H[r])[y][x] > valc) {
+                if(val > 0 && (*H[r])[y][x] >= valc) {
                     valc = (*H[r])[y][x];
                     xc = x;
                     yc = y;
@@ -401,16 +401,54 @@ void vHoughCircleObserver::addEventTime(emorph::vEvent &event)
 }
 
 /******************************************************************************/
+//void vHoughCircleObserver::addEventLife(emorph::vEvent &event)
+//{
+
+//    //LIFE REQUIRES FLOW ONLY SO OVERRIDE THE OPTION
+
+//    found = false;
+//    emorph::FlowEvent *v = event.getAs<emorph::FlowEvent>();
+//    if(!v) return;
+//    updateHFlow(v->getX(), v->getY(), 1, v->getVx(), v->getVy());
+//    FIFO.push_front(&event);
+
+//    int cts = v->getStamp();
+//    emorph::vQueue::iterator i = FIFO.begin();
+//    while(i != FIFO.end()) {
+//        v = (*i)->getAs<emorph::FlowEvent>();
+//        int death = v->getDeath();
+//        if(cts < v->getStamp())
+//            death -= emorph::vtsHelper::maxStamp();
+//        if(cts > death || (death >= emorph::vtsHelper::maxStamp() && cts+emorph::vtsHelper::maxStamp() > death)) {
+//            updateHFlow(v->getX(), v->getY(), -1, v->getVx(), v->getVy());
+//            i = FIFO.erase(i);
+//        } else {
+//            i++;
+//        }
+//    }
+
+//    found = true;
+
+//}
+
+/******************************************************************************/
 void vHoughCircleObserver::addEventLife(emorph::vEvent &event)
 {
 
-    //LIFE REQUIRES FLOW ONLY SO OVERRIDE THE OPTION
-
+    //lifetime requires a flow event only
     found = false;
     emorph::FlowEvent *v = event.getAs<emorph::FlowEvent>();
     if(!v) return;
-    updateHFlow(v->getX(), v->getY(), 1, v->getVx(), v->getVy());
+
+    //add this event to the hough space
+    found = updateH(event, 1);
+    if(!found) return;
+
+    //add to queue
     FIFO.push_front(&event);
+
+    //updateHFlow(v->getX(), v->getY(), 1, v->getVx(), v->getVy());
+    //FIFO.push_front(&event);
 
     int cts = v->getStamp();
     emorph::vQueue::iterator i = FIFO.begin();
@@ -420,14 +458,13 @@ void vHoughCircleObserver::addEventLife(emorph::vEvent &event)
         if(cts < v->getStamp())
             death -= emorph::vtsHelper::maxStamp();
         if(cts > death || (death >= emorph::vtsHelper::maxStamp() && cts+emorph::vtsHelper::maxStamp() > death)) {
-            updateHFlow(v->getX(), v->getY(), -1, v->getVx(), v->getVy());
+            updateH(*v, -1);
+            //updateHFlow(v->getX(), v->getY(), -1, v->getVx(), v->getVy());
             i = FIFO.erase(i);
         } else {
             i++;
         }
     }
-
-    found = true;
 
 }
 

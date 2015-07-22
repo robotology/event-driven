@@ -16,6 +16,7 @@
 
 #include "vCircleModule.h"
 #include <sstream>
+#include <iomanip>
 //#include <opencv2/opencv.hpp>
 
 /******************************************************************************/
@@ -35,8 +36,9 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
     //observation parameters
     int obsRadius = rf.check("obsWindow", yarp::os::Value(32)).asDouble();
     int temporalWindow = rf.check("temWindow", yarp::os::Value(200000)).asDouble();
-    int inlierThreshold = rf.check("inlierThreshold",
-                                   yarp::os::Value(5)).asInt();
+    double inlierThreshold = rf.check("inlierThreshold",
+                                   yarp::os::Value(25)).asDouble() / 100.0;
+    if(inlierThreshold > 1) inlierThreshold = 1;
     double angleThreshold = rf.check("angleThreshold",
                                      yarp::os::Value(0.1)).asDouble();
     double radiusThreshold = rf.check("radiusThreshold",
@@ -47,7 +49,7 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
                                    yarp::os::Value(5)).asDouble();
 
     double procNoiseRad = rf.check("procNoiseRad",
-                                   yarp::os::Value(2)).asDouble();
+                                   yarp::os::Value(5)).asDouble();
 
     double measNoisePos = rf.check("measNoisePos",
                                    yarp::os::Value(5)).asDouble();
@@ -60,13 +62,13 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
                                         yarp::os::Value("")).asString();
 
     circleReader.hough = rf.check("hough",
-                                  yarp::os::Value(false)).asBool();
+                                  yarp::os::Value(true)).asBool();
 
-    circleReader.houghFinder.qType = rf.check("fifotype",
-                                    yarp::os::Value("lifetime")).asString();
+    circleReader.houghFinder.qType = rf.check("windowtype",
+                                    yarp::os::Value("Lifetime")).asString();
 
-    circleReader.houghFinder.useFlow = rf.check("flowonly",
-                                    yarp::os::Value(false)).asBool();
+    circleReader.houghFinder.useFlow = rf.check("flowhough",
+                                    yarp::os::Value(true)).asBool();
 
     //initialise the dection and tracking
     circleReader.inlierThreshold = inlierThreshold;
@@ -78,7 +80,10 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
     circleReader.circleTracker.init(procNoisePos, procNoiseRad,
                                     measNoisePos, measNoiseRad);
 
-    circleReader.setDataWriter(datafilename);
+    if(!circleReader.setDataWriter(datafilename)) {
+        std::cerr << "Could not open datafile" << std::endl;
+        return false;
+    }
 
     //open the ports
     if(!circleReader.open(moduleName)) {
@@ -131,10 +136,14 @@ vCircleReader::vCircleReader()
 /******************************************************************************/
 bool vCircleReader::setDataWriter(std::string datafilename)
 {
-    if(!datafilename.empty())
+    //only return false if we are trying to open a file and fail
+    if(!datafilename.empty()) {
         datawriter.open(datafilename.c_str());
+        datawriter << std::fixed << std::setprecision(6);
+        return datawriter.is_open();
+    }
 
-    return datawriter.is_open();
+    return true;
 }
 
 /******************************************************************************/
@@ -181,7 +190,7 @@ void vCircleReader::onRead(emorph::vBottle &bot)
     outBottle = bot;
 
     //create event queue
-    emorph::vQueue q = bot.get<emorph::AddressEvent>();
+    emorph::vQueue q = bot.getSorted<emorph::AddressEvent>();
 
     bool circlewasfound = false;
     double count = 0, potential = 0;
@@ -205,15 +214,18 @@ void vCircleReader::onRead(emorph::vBottle &bot)
         if(hough) {
             houghFinder.addEvent(*v);
             if(!houghFinder.found) continue;
-            if(houghFinder.valc < inlierThreshold) continue;
+            //if(houghFinder.valc < inlierThreshold) continue;
+            if(houghFinder.valc < 6.28 * houghFinder.rc * inlierThreshold) continue;
             cx = houghFinder.xc;
             cy = houghFinder.yc;
             cr = houghFinder.rc;
 
+
         } else {
             inliers = geomFinder.flowcircle(cx, cy, cr);
-            if(cr < 5 || cr > 24) continue;
-            if(inliers < inlierThreshold) continue;
+            if(inliers < 6.28 * cr * inlierThreshold) continue;
+            //if(cr < 5 || cr > 24) continue;
+            //if(inliers < inlierThreshold) continue;
         }
 
         circlewasfound = true;
@@ -230,7 +242,8 @@ void vCircleReader::onRead(emorph::vBottle &bot)
 
         //write analysis data if needed
         if(datawriter.is_open()) {
-            datawriter << ts << " " << cx << " " << cy << " " << cr << " ";
+            datawriter << ts * emorph::vtsHelper::tstosecs() << " " << cx << " "
+                       << cy << " " << cr << " ";
             double kx, ky, kr;
             circleTracker.getState(kx, ky, kr);
             datawriter << kx << " " << ky << " " << kr << std::endl;
@@ -239,9 +252,9 @@ void vCircleReader::onRead(emorph::vBottle &bot)
     }
 
     //at the end of the bottle say how many events were processed
-    if(potential != 0 && count != potential) {
-        std::cout << "Processed " << count * 100.0 / potential << "%" << std::endl;
-    }
+//    if(potential != 0 && count != potential) {
+//        std::cout << "Processed " << count * 100.0 / potential << "%" << std::endl;
+//    }
 
     //also add a single circle tracking position to the output
     //at the moment we are just using ClusterEventGauss

@@ -45,7 +45,7 @@ public:
     vGeoCircleObserver geomFinder;
     vHoughCircleObserver houghFinder;
     vCircleTracker circleTracker;
-    int inlierThreshold;
+    double inlierThreshold;
     bool hough;
     
     vCircleReader();
