@@ -160,8 +160,21 @@ void vQueue::sort() {
 }
 
 
-bool vQueue::temporalSort(const vEvent *e1, const vEvent *e2){
-    return e1->getStamp() < e2->getStamp();
+bool vQueue::temporalSort(const vEvent *e1, const vEvent *e2)
+{
+//    int dt = e2->getStamp() - e1->getStamp();
+//    if(dt > 0 && dt < 1000) return true;
+//    if(dt < 0 && dt < -1000) return true;
+//    return false;
+
+    if(std::abs(e1->getStamp() - e2->getStamp()) > 1000)
+        return e1->getStamp() > e2->getStamp();
+    else
+        return e2->getStamp() > e1->getStamp();
+    //return e1->getStamp() < e2->getStamp() &&
+    //        e2->getStamp() - e1->getStamp() < vtsHelper::maxStamp() / 2;
+    //return e1->getStamp() - e2->getStamp() < vtsHelper::maxStamp() / 2;
+    //return e1->getStamp() < e2->getStamp();
 }
 
 /******************************************************************************/
