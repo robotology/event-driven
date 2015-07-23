@@ -53,6 +53,9 @@ private:
     yarp::sig::Matrix A2;
     yarp::sig::Vector abc;
 
+    int eventsComputed;
+    int eventsPotential;
+    int bottleCount;
 
     void setSobelFilters(uint, yarp::sig::Matrix&, yarp::sig::Matrix&);
     emorph::FlowEvent compute();

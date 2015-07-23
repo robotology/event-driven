@@ -107,6 +107,10 @@ vtsOptFlowManager::vtsOptFlowManager(int height, int width, int sobelSize,
 
     setSobelFilters(sobelSize, sobelx, sobely);
 
+    eventsComputed = 0;
+    eventsPotential = 0;
+    bottleCount = 0;
+
     //create our surface in synchronous mode
     surface = new emorph::vWindow(width, height, temporalWindow, false);
 }
@@ -148,8 +152,6 @@ void vtsOptFlowManager::onRead(emorph::vBottle &inBottle)
 {
     //double starttime = yarp::os::Time::now();
     bool computeflow = true;
-    int eventsComputed = 0;
-    int eventsPotential = 0;
 
     /*prepare output vBottle with AEs extended with optical flow events*/
     emorph::vBottle &outBottle = outPort.prepare();
@@ -161,7 +163,7 @@ void vtsOptFlowManager::onRead(emorph::vBottle &inBottle)
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {
         //if(computeflow && yarp::os::Time::now() - starttime > 0.0009)
-        if(getPendingReads())
+        if(getPendingReads() > 1)
             computeflow = false;
 
         emorph::AddressEvent *aep = (*qi)->getAs<emorph::AddressEvent>();
@@ -186,10 +188,13 @@ void vtsOptFlowManager::onRead(emorph::vBottle &inBottle)
 
     }
 
-    //if(eventsComputed != eventsPotential) {
+    bottleCount++;
+
+    if(bottleCount > 2000) {
         std::cout << (int)(eventsComputed *100.0 / eventsPotential);
         std::cout << "% (" << eventsComputed << ")" << std::endl;
-    //}
+        eventsComputed = 0; eventsPotential = 0; bottleCount = 0;
+    }
 
     outPort.write();
 
