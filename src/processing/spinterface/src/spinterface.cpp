@@ -23,7 +23,7 @@ bool vSpinInterface::configure(yarp::os::ResourceFinder &rf)
 {
     //set the name of the module
     std::string moduleName =
-            rf.check("name", yarp::os::Value("vTemplate")).asString();
+            rf.check("name", yarp::os::Value("spinterface")).asString();
     setName(moduleName.c_str());
 
 
@@ -75,7 +75,8 @@ YARPspinIO::YARPspinIO()
     //here we should initialise the module
     height = 128;
     width = 128;
-    downsamplefactor = 0;
+    downsamplefactor = 2;
+    eventsin.open("eventssenttospinnaker.txt");
     
 }
 
@@ -114,6 +115,7 @@ bool YARPspinIO::open(const std::string &name)
 void YARPspinIO::close()
 {
     //close ports
+    eventsin.close();
     spinReceiver->closeRecvSocket();
     spinSender->closeSendSocket();
     outPort.close();
@@ -155,10 +157,13 @@ void YARPspinIO::onRead(emorph::vBottle &bot)
         if(v->getChannel()) continue;
 
         int neuronID = (v->getY() >> downsamplefactor) *
-                (width / (downsamplefactor+1)) +
+                (width / pow(downsamplefactor, 2.0)) +
                 (v->getX() >> downsamplefactor);
-        std::cout << neuronID << std::endl;
+        //std::cout << (int)(v->getX()) << " " << (int)(v->getY()) << " converts to: " << neuronID;
 
+        //std::cout << std::endl;
+
+        eventsin << (int)(v->getX()) << " " << (int)(v->getY()) << " " << neuronID << std::endl;
         spinSender->addSpikeToSendQueue(neuronID);
 
 
