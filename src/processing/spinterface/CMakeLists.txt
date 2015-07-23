@@ -22,5 +22,6 @@ include_directories(${PROJECT_SOURCE_DIR}/include
 add_executable(${PROJECTNAME} ${source} ${header})
 
 target_link_libraries(${PROJECTNAME} ${YARP_LIBRARIES} eMorphLib /home/aglover/workspace/projects/SpinnIO/build/lib/libSpinnIO.a sqlite3 pthread)
+#target_link_libraries(${PROJECTNAME} ${YARP_LIBRARIES} eMorphLib sqlite3 pthread)
 
 install(TARGETS ${PROJECTNAME} DESTINATION bin)

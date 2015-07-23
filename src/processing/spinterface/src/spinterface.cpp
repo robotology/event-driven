@@ -75,7 +75,7 @@ YARPspinIO::YARPspinIO()
     //here we should initialise the module
     height = 128;
     width = 128;
-    downsamplefactor = 1;
+    downsamplefactor = 0;
     
 }
 
@@ -155,7 +155,7 @@ void YARPspinIO::onRead(emorph::vBottle &bot)
         if(v->getChannel()) continue;
 
         int neuronID = (v->getY() >> downsamplefactor) *
-                (width / downsamplefactor) +
+                (width / (downsamplefactor+1)) +
                 (v->getX() >> downsamplefactor);
         std::cout << neuronID << std::endl;
 
