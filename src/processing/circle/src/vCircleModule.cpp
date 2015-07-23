@@ -204,7 +204,7 @@ void vCircleReader::onRead(emorph::vBottle &bot)
         potential++; //increment our records of possible v's to process
 
         //if we already have new data to read we need to finish ASAP
-        if(getPendingReads()) continue;
+        if(getPendingReads() > 1) continue;
         count++; //increment our records of v's processed
 
         //process the observation
