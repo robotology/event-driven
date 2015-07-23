@@ -22,6 +22,9 @@
 #include <iCub/emorph/all.h>
 #include <iCub/emorph/vtsHelper.h>
 
+#include <EIEIOReceiver.h>
+#include <EIEIOSender.h>
+
 class YARPspinIO : public yarp::os::BufferedPort<emorph::vBottle>
 {
 private:
@@ -29,12 +32,21 @@ private:
     //output port for the vBottle with the new events computed by the module
     yarp::os::BufferedPort<emorph::vBottle> outPort;
 
+    spinnio::EIEIOReceiver *spinReceiver;
+    spinnio::EIEIOSender *spinSender;
+
     //for helping with timestamp wrap around
     emorph::vtsHelper unwrapper;
+
+    int downsamplefactor;
+    int height;
+    int width;
 
 public:
     
     YARPspinIO();
+    void initSpin(int spinPort, int sendPort, std::string ip,
+                  std::string databasefile);
 
     bool    open(const std::string &name);
     void    close();

@@ -16,6 +16,7 @@
  */
 
 #include "spinterface.h"
+#include <map>
 
 /**********************************************************/
 bool vSpinInterface::configure(yarp::os::ResourceFinder &rf)
@@ -32,6 +33,9 @@ bool vSpinInterface::configure(yarp::os::ResourceFinder &rf)
                         "variable description").asString();
     
     /* create the thread and pass pointers to the module parameters */
+    ioManager.initSpin(17895, 12346, "192.168.1.1",
+                       "/home/aglover/workspace/results/spinnioDB/spinnakertest.db");
+
     return ioManager.open(moduleName);
 
 }
@@ -69,8 +73,28 @@ YARPspinIO::YARPspinIO()
 {
 
     //here we should initialise the module
+    height = 128;
+    width = 128;
+    downsamplefactor = 1;
     
 }
+
+/**********************************************************/
+void YARPspinIO::initSpin(int spinPort, int sendPort, std::string ip,
+                          std::string databasefile)
+{
+  spinReceiver  = new spinnio::EIEIOReceiver(spinPort,(char*)ip.c_str(), true,
+                                    (char*)databasefile.c_str());
+
+  std::map<int,int> *keymap = spinReceiver->getIDKeyMap();
+
+  spinSender = new spinnio::EIEIOSender(sendPort,(char*)ip.c_str(), keymap);
+
+  spinReceiver->start();
+  spinSender->start();
+  spinSender->enableSendQueue();
+}
+
 /**********************************************************/
 bool YARPspinIO::open(const std::string &name)
 {
@@ -90,12 +114,12 @@ bool YARPspinIO::open(const std::string &name)
 void YARPspinIO::close()
 {
     //close ports
+    spinReceiver->closeRecvSocket();
+    spinSender->closeSendSocket();
     outPort.close();
     yarp::os::BufferedPort<emorph::vBottle>::close();
 
     //remember to also deallocate any memory allocated by this class
-
-
 }
 
 /**********************************************************/
@@ -112,24 +136,31 @@ void YARPspinIO::onRead(emorph::vBottle &bot)
 {
     //create event queue
     emorph::vQueue q = bot.getAll();
-    //create queue iterator
-    emorph::vQueue::iterator qi;
     
     // prepare output vBottle with address events extended with cluster ID (aec) and cluster events (clep)
-    emorph::vBottle &outBottle = outPort.prepare();
-    outBottle = bot; //start with the incoming bottle
+    //emorph::vBottle &outBottle = outPort.prepare();
+    //outBottle = bot; //start with the incoming bottle
 
     // get the event queue in the vBottle bot
     //bot.getAll(q);
 
-    for(qi = q.begin(); qi != q.end(); qi++)
+    for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {
         //unwrap timestamp
-        unsigned long int ts = unwrapper((*qi)->getStamp());
+        //unsigned long int ts = unwrapper((*qi)->getStamp());
 
         //perhaps you need to filter for a certain type of event?
         emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
         if(!v) continue;
+        if(v->getChannel()) continue;
+
+        int neuronID = (v->getY() >> downsamplefactor) *
+                (width / downsamplefactor) +
+                (v->getX() >> downsamplefactor);
+        std::cout << neuronID << std::endl;
+
+        spinSender->addSpikeToSendQueue(neuronID);
+
 
         //process
 
