@@ -26,15 +26,11 @@
 #include <EIEIOReceiver.h>
 #include <EIEIOSender.h>
 
-class YARPspinIO : public yarp::os::BufferedPort<emorph::vBottle>
+class YARPspinI : public yarp::os::BufferedPort<emorph::vBottle>
 {
 private:
     
-    //output port for the vBottle with the new events computed by the module
-    yarp::os::BufferedPort<emorph::vBottle> outPort;
-
-    spinnio::EIEIOReceiver *spinReceiver;
-    spinnio::EIEIOSender *spinSender;
+    spinnio::EIEIOSender   *spinSender;
 
     //for helping with timestamp wrap around
     emorph::vtsHelper unwrapper;
@@ -46,9 +42,8 @@ private:
 
 public:
     
-    YARPspinIO();
-    void initSpin(int spinPort, int sendPort, std::string ip,
-                  std::string databasefile);
+    YARPspinI();
+
 
     bool    open(const std::string &name);
     void    close();
@@ -59,12 +54,31 @@ public:
 
 };
 
+class YARPspinO : yarp::os::RateThread
+{
+private:
+
+
+public:
+
+    YARPspinO();
+
+    bool threadInit();
+    void run();
+    void threadRelease();
+};
+
 class vSpinInterface : public yarp::os::RFModule
 {
 
     //the event bottle input and output handler
-    YARPspinIO      ioManager;
 
+    YARPspinI      inputManager;
+    YARPspinO      outputManager;
+
+    void initSpin(int spinPort, int sendPort, std::string ip,
+                  std::string databasefile, spinnio::EIEIOReceiver * eir,
+                                  spinnio::EIEIOSender * eis);
 
 public:
 
