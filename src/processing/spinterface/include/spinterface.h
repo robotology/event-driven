@@ -60,15 +60,15 @@ class YARPspinO : public yarp::os::RateThread
 private:
 
     spinnio::EIEIOReceiver   *spinReceiver;
+    yarp::os::BufferedPort<emorph::vBottle> vBottleOut;
 
 public:
 
     YARPspinO();
 
-    bool initThread();
+    bool initThread(std::string moduleName, spinnio::EIEIOReceiver *spinReceiverPtr);
     void run();
     void threadRelease();
-    void attachEIEIOReceiver(spinnio::EIEIOReceiver*);
 };
 
 class vSpinInterface : public yarp::os::RFModule
@@ -80,8 +80,8 @@ class vSpinInterface : public yarp::os::RFModule
     YARPspinO      outputManager;
 
     void initSpin(int spinPort, int sendPort, std::string ip,
-                  std::string databasefile, spinnio::EIEIOReceiver *eir,
-                                  spinnio::EIEIOSender *eis);
+                  std::string databasefile, spinnio::EIEIOReceiver **eir,
+                                  spinnio::EIEIOSender **eis);
 
 public:
 

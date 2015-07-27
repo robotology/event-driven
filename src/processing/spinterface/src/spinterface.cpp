@@ -26,11 +26,6 @@ bool vSpinInterface::configure(yarp::os::ResourceFinder &rf)
             rf.check("name", yarp::os::Value("spinterface")).asString();
     setName(moduleName.c_str());
 
-
-    //set other variables we need from the
-    std::string fileName = rf.check("variable",
-                        yarp::os::Value("variable_defualt"),
-                        "variable description").asString();
     
     /* create the thread and pass pointers to the module parameters */
     spinnio::EIEIOSender   *spinSender;
@@ -38,59 +33,60 @@ bool vSpinInterface::configure(yarp::os::ResourceFinder &rf)
  
     // Create Spin sender and receiver objects
 
-    /*
+
     initSpin(17895, 12346, "192.168.1.1",
                        "/home/ubuntu/VVV/TestNetwork/application_generated_data_files/latest/input_output_database.db",
-             spinReceiver, spinSender);
-    */
+             &spinReceiver, &spinSender);
 
-    int spinPort = 17895;
-    int sendPort = 12346;
-    std::string ip = "192.168.1.1";
-    std::string databasefile =  "/home/ubuntu/VVV/TestNetwork/application_generated_data_files/latest/input_output_database.db";
 
-    spinReceiver  = new spinnio::EIEIOReceiver(spinPort,(char*)ip.c_str(), true, (char*)databasefile.c_str());
+//    int spinPort = 17895;
+//    int sendPort = 12346;
+//    std::string ip = "192.168.1.1";
+//    std::string databasefile =  "/home/ubuntu/VVV/TestNetwork/application_generated_data_files/latest/input_output_database.db";
 
-    std::map<int,int> *keymap = spinReceiver->getIDKeyMap();
+//    spinReceiver  = new spinnio::EIEIOReceiver(spinPort,(char*)ip.c_str(), true, (char*)databasefile.c_str());
 
-    spinSender = new spinnio::EIEIOSender(sendPort,(char*)ip.c_str(), keymap);
+//    std::map<int,int> *keymap = spinReceiver->getIDKeyMap();
 
-    spinReceiver->start();
-    spinSender->start();
-    spinSender->enableSendQueue();
+//    spinSender = new spinnio::EIEIOSender(sendPort,(char*)ip.c_str(), keymap);
 
+//    spinReceiver->start();
+//    spinSender->start();
+//    spinSender->enableSendQueue();
+
+
+    //DO WE NEED THIS CODE? IF SO IT SHOULD BE IN INITSPIN
     int sendQueueSize = spinSender->getSendQueueSize();
     cout << "Send queue size is " << sendQueueSize << endl;
 
-    // Pass pointers to input and output manager objects (?) 
 
-    inputManager.attachEIEIOSender(spinSender);
-
-    outputManager.attachEIEIOReceiver(spinReceiver);
 
     // Start the output manager thread
     outputManager.start();
-    outputManager.initThread();
+    bool oSuccess = outputManager.initThread(moduleName, spinReceiver);
     outputManager.run();
 
-    return inputManager.open(moduleName);
+    inputManager.attachEIEIOSender(spinSender);
+    bool iSuccess = inputManager.open(moduleName);
+
+    return oSuccess && iSuccess;
 
 }
 
 void vSpinInterface::initSpin(int spinPort, int sendPort, std::string ip,
-              std::string databasefile, spinnio::EIEIOReceiver * eir,
-                              spinnio::EIEIOSender * eis)
+              std::string databasefile, spinnio::EIEIOReceiver **eir,
+                              spinnio::EIEIOSender **eis)
 {
-    eir  = new spinnio::EIEIOReceiver(spinPort,(char*)ip.c_str(), true,
+    (*eir)  = new spinnio::EIEIOReceiver(spinPort,(char*)ip.c_str(), true,
                                       (char*)databasefile.c_str());
 
-    std::map<int,int> *keymap = eir->getIDKeyMap();
+    std::map<int,int> *keymap = (*eir)->getIDKeyMap();
 
-    eis = new spinnio::EIEIOSender(sendPort,(char*)ip.c_str(), keymap);
+    (*eis) = new spinnio::EIEIOSender(sendPort,(char*)ip.c_str(), keymap);
 
-    eir->start();
-    eis->start();
-    eis->enableSendQueue();
+    (*eir)->start();
+    (*eis)->start();
+    (*eis)->enableSendQueue();
 
 }
 
@@ -107,6 +103,7 @@ bool vSpinInterface::interruptModule()
 /**********************************************************/
 bool vSpinInterface::close()
 {
+    outputManager.threadRelease();
     inputManager.close();
     yarp::os::RFModule::close();
     return true;
@@ -186,19 +183,10 @@ void YARPspinI::onRead(emorph::vBottle &bot)
     //create event queue
     emorph::vQueue q = bot.getAll();
     
-    // prepare output vBottle with address events extended with cluster ID (aec) and cluster events (clep)
-    //emorph::vBottle &outBottle = outPort.prepare();
-    //outBottle = bot; //start with the incoming bottle
-
-    // get the event queue in the vBottle bot
-    //bot.getAll(q);
 
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {
-        //unwrap timestamp
-        //unsigned long int ts = unwrapper((*qi)->getStamp());
 
-        //perhaps you need to filter for a certain type of event?
         emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
         if(!v) continue;
         if(v->getChannel()) continue;
@@ -206,23 +194,11 @@ void YARPspinI::onRead(emorph::vBottle &bot)
         int neuronID = (v->getY() >> downsamplefactor) *
                 (width / pow(downsamplefactor, 2.0)) +
                 (v->getX() >> downsamplefactor);
-        //std::cout << (int)(v->getX()) << " " << (int)(v->getY()) << " converts to: " << neuronID;
 
-        //std::cout << std::endl;
-
-        eventsin << (int)(v->getX()) << " " << (int)(v->getY()) << " " << neuronID << std::endl;
+        //eventsin << (int)(v->getX()) << " " << (int)(v->getY()) << " " << neuronID << std::endl;
         spinSender->addSpikeToSendQueue(neuronID);
 
-
-        //process
-
-        //add events that need to be added to the out bottle
-        //outBottle.addEvent(**qi);
-
-
     }
-    //send on the processed events
-    //outPort.write();
 
 }
 /**********************************************************/
@@ -235,10 +211,13 @@ YARPspinO::YARPspinO() : yarp::os::RateThread(1)
 
 /**********************************************************/
 
-bool YARPspinO::initThread()
+bool YARPspinO::initThread(std::string moduleName, spinnio::EIEIOReceiver *spinReceiverPtr)
 {
   // Output thread initialisation
+    spinReceiver = spinReceiverPtr;
 
+    std::string outPortName = "/" + moduleName + "/vBottle:o";
+    return vBottleOut.open(outPortName);
 }
 
 
@@ -254,6 +233,9 @@ void YARPspinO::run()
       cout << "Polling Spin receiver queue, size is " << recvQueueSize << endl ;
    }
 
+   //add to a vBottle Here!
+
+
 }
 
 /**********************************************************/
@@ -262,14 +244,6 @@ void YARPspinO::threadRelease()
 {
   // Clean up thread resources
   spinReceiver->closeRecvSocket();
-
-}
-
-/**********************************************************/
-
-void YARPspinO::attachEIEIOReceiver(spinnio::EIEIOReceiver* spinReceiverPtr)
-{
-   spinReceiver = spinReceiverPtr;
 
 }
 
