@@ -48,24 +48,27 @@ public:
     bool    open(const std::string &name);
     void    close();
     void    interrupt();
+    void    attachEIEIOSender(spinnio::EIEIOSender*);
 
     //this is the entry point to your main functionality
     void    onRead(emorph::vBottle &bot);
 
 };
 
-class YARPspinO : yarp::os::RateThread
+class YARPspinO : public yarp::os::RateThread
 {
 private:
 
+    spinnio::EIEIOReceiver   *spinReceiver;
 
 public:
 
     YARPspinO();
 
-    bool threadInit();
+    bool initThread();
     void run();
     void threadRelease();
+    void attachEIEIOReceiver(spinnio::EIEIOReceiver*);
 };
 
 class vSpinInterface : public yarp::os::RFModule
@@ -77,8 +80,8 @@ class vSpinInterface : public yarp::os::RFModule
     YARPspinO      outputManager;
 
     void initSpin(int spinPort, int sendPort, std::string ip,
-                  std::string databasefile, spinnio::EIEIOReceiver * eir,
-                                  spinnio::EIEIOSender * eis);
+                  std::string databasefile, spinnio::EIEIOReceiver *eir,
+                                  spinnio::EIEIOSender *eis);
 
 public:
 
