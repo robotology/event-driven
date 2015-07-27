@@ -17,8 +17,11 @@
 
 #include "spinterface.h"
 #include <map>
+#include <list>
 
-/**********************************************************/
+/******************************************************************************/
+// vSpinInterface
+/******************************************************************************/
 bool vSpinInterface::configure(yarp::os::ResourceFinder &rf)
 {
     //set the name of the module
@@ -73,6 +76,7 @@ bool vSpinInterface::configure(yarp::os::ResourceFinder &rf)
 
 }
 
+/******************************************************************************/
 void vSpinInterface::initSpin(int spinPort, int sendPort, std::string ip,
               std::string databasefile, spinnio::EIEIOReceiver **eir,
                               spinnio::EIEIOSender **eis)
@@ -90,17 +94,16 @@ void vSpinInterface::initSpin(int spinPort, int sendPort, std::string ip,
 
 }
 
-/**********************************************************/
+/******************************************************************************/
 bool vSpinInterface::interruptModule()
 {
-    // interrupt the input port
+    outputManager.stop();
     inputManager.interrupt();
-    // what do we need to do with output thread?
     yarp::os::RFModule::interruptModule();
     return true;
 }
 
-/**********************************************************/
+/******************************************************************************/
 bool vSpinInterface::close()
 {
     outputManager.threadRelease();
@@ -109,19 +112,21 @@ bool vSpinInterface::close()
     return true;
 }
 
-/**********************************************************/
+/******************************************************************************/
 bool vSpinInterface::updateModule()
 {
     return true;
 }
 
-/**********************************************************/
+/******************************************************************************/
 double vSpinInterface::getPeriod()
 {
     return 1;
 }
 
-/**********************************************************/
+/******************************************************************************/
+// YARP - SPIN - INPUT
+/******************************************************************************/
 YARPspinI::YARPspinI()
 {
 
@@ -129,11 +134,11 @@ YARPspinI::YARPspinI()
     height = 128;
     width = 128;
     downsamplefactor = 2;
-    eventsin.open("eventssenttospinnaker.txt");
+    //eventsin.open("eventssenttospinnaker.txt");
     
 }
 
-/**********************************************************/
+/******************************************************************************/
 bool YARPspinI::open(const std::string &name)
 {
     //and open the input port
@@ -141,31 +146,22 @@ bool YARPspinI::open(const std::string &name)
     this->useCallback();
 
     std::string inPortName = "/" + name + "/vBottle:i";
-    bool state1 = yarp::os::BufferedPort<emorph::vBottle>::open(inPortName);
-
-    //std::string outPortName = "/" + name + "/vBottle:o";
-    //bool state2 = outPort.open(outPortName);
-    bool state2 = true;
-    return state1 && state2;
+    return yarp::os::BufferedPort<emorph::vBottle>::open(inPortName);
 }
 
-/**********************************************************/
+/******************************************************************************/
 void YARPspinI::close()
 {
-    //close ports
-    eventsin.close();
     spinSender->closeSendSocket();
-    //outPort.close();
+    delete spinSender;
     yarp::os::BufferedPort<emorph::vBottle>::close();
 
     //remember to also deallocate any memory allocated by this class
 }
 
-/**********************************************************/
+/******************************************************************************/
 void YARPspinI::interrupt()
 {
-    //pass on the interrupt call to everything needed
-    //outPort.interrupt();
     yarp::os::BufferedPort<emorph::vBottle>::interrupt();
 
 }
@@ -174,7 +170,6 @@ void YARPspinI::interrupt()
 void YARPspinI::attachEIEIOSender(spinnio::EIEIOSender* spinSenderPtr)
 {
    spinSender = spinSenderPtr;
-
 }
 
 /**********************************************************/
@@ -206,6 +201,9 @@ YARPspinO::YARPspinO() : yarp::os::RateThread(1)
 {
 
   // Do we need anything here?
+    width = 128;
+    height = 128;
+    downsamplefactor = 2;
     
 }
 
@@ -226,15 +224,34 @@ bool YARPspinO::initThread(std::string moduleName, spinnio::EIEIOReceiver *spinR
 void YARPspinO::run()
 {
 
-   // Main thread code - polling EIEIOReceiver queue?
-   int recvQueueSize = spinReceiver->getRecvQueueSize();
-   if (recvQueueSize > 0)
-   {
-      cout << "Polling Spin receiver queue, size is " << recvQueueSize << endl ;
-   }
+    //get the data
+    int recvQueueSize = spinReceiver->getRecvQueueSize();
+    if (recvQueueSize <= 0) return;
 
-   //add to a vBottle Here!
+    //there is data to process so prepare out outbottle port
+    emorph::vBottle &outbottle = vBottleOut.prepare();
+    outbottle.clear();
 
+    emorph::AddressEvent ae;
+
+    //convert the data to readable packets
+    std::list<std::pair<int, int> > *spikepacket =
+            spinReceiver->getRecvQueue();
+
+    //iterate over all spikes and add them to the bottle
+    std::list<std::pair<int, int> >::iterator i;
+    for(i = spikepacket->begin(); i != spikepacket->end(); i++) {
+        ae.setStamp(i->first);
+        ae.setPolarity(0);
+        int y = (i->second / (int)(width / pow(downsamplefactor, 2.0))) << downsamplefactor;
+        int x = (i->second % (int)(width / pow(downsamplefactor, 2.0))) << downsamplefactor;
+        ae.setY(y);
+        ae.setX(x);
+        outbottle.addEvent(ae);
+    }
+
+    //send the bottle on
+    vBottleOut.write();
 
 }
 

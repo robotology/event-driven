@@ -21,7 +21,6 @@
 #include <yarp/os/all.h>
 #include <iCub/emorph/all.h>
 #include <iCub/emorph/vtsHelper.h>
-#include <fstream>
 
 #include <EIEIOReceiver.h>
 #include <EIEIOSender.h>
@@ -35,7 +34,6 @@ private:
     //for helping with timestamp wrap around
     emorph::vtsHelper unwrapper;
 
-    std::ofstream eventsin;
     int downsamplefactor;
     int height;
     int width;
@@ -61,6 +59,10 @@ private:
 
     spinnio::EIEIOReceiver   *spinReceiver;
     yarp::os::BufferedPort<emorph::vBottle> vBottleOut;
+
+    int width;
+    int height;
+    int downsamplefactor;
 
 public:
 
