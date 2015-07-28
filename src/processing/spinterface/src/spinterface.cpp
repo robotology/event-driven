@@ -42,6 +42,7 @@ bool vSpinInterface::configure(yarp::os::ResourceFinder &rf)
              &spinReceiver, &spinSender);
 
 
+
 //    int spinPort = 17895;
 //    int sendPort = 12346;
 //    std::string ip = "192.168.1.1";
@@ -58,19 +59,15 @@ bool vSpinInterface::configure(yarp::os::ResourceFinder &rf)
 //    spinSender->enableSendQueue();
 
 
-    //DO WE NEED THIS CODE? IF SO IT SHOULD BE IN INITSPIN
-    int sendQueueSize = spinSender->getSendQueueSize();
-    cout << "Send queue size is " << sendQueueSize << endl;
-
-
-
     // Start the output manager thread
-    outputManager.start();
     bool oSuccess = outputManager.initThread(moduleName, spinReceiver);
+    outputManager.start();
     outputManager.run();
 
     inputManager.attachEIEIOSender(spinSender);
     bool iSuccess = inputManager.open(moduleName);
+
+
 
     return oSuccess && iSuccess;
 
@@ -213,7 +210,6 @@ bool YARPspinO::initThread(std::string moduleName, spinnio::EIEIOReceiver *spinR
 {
   // Output thread initialisation
     spinReceiver = spinReceiverPtr;
-
     std::string outPortName = "/" + moduleName + "/vBottle:o";
     return vBottleOut.open(outPortName);
 }
@@ -235,16 +231,17 @@ void YARPspinO::run()
     emorph::AddressEvent ae;
 
     //convert the data to readable packets
-    std::list<std::pair<int, int> > *spikepacket =
-            spinReceiver->getRecvQueue();
+    std::list<std::pair<int, int> > spikepacket =
+            spinReceiver->getNextSpikePacket();
 
     //iterate over all spikes and add them to the bottle
     std::list<std::pair<int, int> >::iterator i;
-    for(i = spikepacket->begin(); i != spikepacket->end(); i++) {
-        ae.setStamp(i->first);
+    for(i = spikepacket.begin(); i != spikepacket.end(); i++) {
+        std::pair<int,int> spikeEvent = *i;
+        ae.setStamp(spikeEvent.first);
         ae.setPolarity(0);
-        int y = (i->second / (int)(width / pow(downsamplefactor, 2.0))) << downsamplefactor;
-        int x = (i->second % (int)(width / pow(downsamplefactor, 2.0))) << downsamplefactor;
+        int y = (spikeEvent.second / (int)(width / pow(downsamplefactor, 2.0))) << downsamplefactor;
+        int x = (spikeEvent.second % (int)(width / pow(downsamplefactor, 2.0))) << downsamplefactor;
         ae.setY(y);
         ae.setX(x);
         outbottle.addEvent(ae);
