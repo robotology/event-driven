@@ -391,10 +391,20 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
     cv::Point p_start,p_end;
     const double pi = 3.1416;
 
+    int cts = eSet.back()->getAs<emorph::vEvent>()->getStamp();
+
     emorph::vQueue::const_iterator qi;
     for(qi = eSet.begin(); qi != eSet.end(); qi++) {
         emorph::FlowEvent *ofp = (*qi)->getAs<emorph::FlowEvent>();
         if(!ofp) continue;
+
+        int death = ofp->getDeath();
+        if(cts < ofp->getStamp())
+            death -= emorph::vtsHelper::maxStamp();
+        if(cts > death || (death >= emorph::vtsHelper::maxStamp() &&
+                           cts+emorph::vtsHelper::maxStamp() > death)) {
+            continue;
+        }
 
         int x = ofp->getY();
         int y = ofp->getX();
