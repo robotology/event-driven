@@ -189,7 +189,7 @@
 
 //within project includes
 #include <iCub/device2yarp.h>
-#include <iCub/Yarp2Device.h>
+#include <iCub/yarp2device.h>
 
 typedef struct sp2neu_gen_reg {
     unsigned int offset;

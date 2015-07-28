@@ -2,9 +2,11 @@
 # Authors: Francesco Rea
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 cmake_minimum_required(VERSION 2.6)
-
 add_subdirectory   (  grabbers                  )
-add_subdirectory   (  processing                )
-add_subdirectory   (  visualization             )
-add_subdirectory(movement)
+
+if(NOT EMORPH_USE_ZINC)
+   add_subdirectory   (  processing                )
+   add_subdirectory   (  visualization             )
+   add_subdirectory(movement)
+endif()
 

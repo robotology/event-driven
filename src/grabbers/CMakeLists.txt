@@ -5,13 +5,10 @@ cmake_minimum_required(VERSION 2.6)
 
 
 IF(NOT WIN32) 
+
+if(NOT  EMORPH_USE_ZINC)
         add_subdirectory   (  vGrabber                   )
+endif()
 	add_subdirectory   (  zynqGrabber                )
 ENDIF (NOT WIN32)
-
-
-if(ICUB_USE_IPOPT)
-#        add_subdirectory ( targetFinder                  )
-#	add_subdirectory (  wingsTranslator              )
-endif(ICUB_USE_IPOPT)
 
