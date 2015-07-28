@@ -349,7 +349,7 @@ void vHoughCircleObserver::updateHFlowAngle(int xv, int yv, int val, double dtdx
 {
     if(val > 0) valc = 0;
     std::vector<double> rot; rot.push_back(0); rot.push_back(M_PI);
-    std::vector<double> err; err.push_back(-9.0*M_PI/180.0); err.push_back(9.0*M_PI/180.0);
+    std::vector<double> err; err.push_back(-5.0*M_PI/180.0); err.push_back(5.0*M_PI/180.0);
     std::vector<double>::iterator errval, rotval;
 
     //do for multiple scales
@@ -364,17 +364,17 @@ void vHoughCircleObserver::updateHFlowAngle(int xv, int yv, int val, double dtdx
             int xExact = R * cos(thetaExact) + xv;
             int yExact = R * sin(thetaExact) + yv;
 
-            //add to the hough space at this point
-            int x = xExact; int y = yExact;
-            if(x < 0 || x > width-1 || y < 0 || y > height-1) continue;
+//            //add to the hough space at this point
+//            int x = xExact; int y = yExact;
+//            if(x < 0 || x > width-1 || y < 0 || y > height-1) continue;
 
-            (*H[r])[y][x] += val;
-            if(val > 0 && (*H[r])[y][x] >= valc) {
-                valc = (*H[r])[y][x];
-                xc = x;
-                yc = y;
-                rc = R;
-            }
+//            (*H[r])[y][x] += val;
+//            if(val > 0 && (*H[r])[y][x] >= valc) {
+//                valc = (*H[r])[y][x];
+//                xc = x;
+//                yc = y;
+//                rc = R;
+//            }
 
             //also for a small anglular error either side of the exact value
             for(errval = err.begin(); errval != err.end(); errval++) {
@@ -385,13 +385,13 @@ void vHoughCircleObserver::updateHFlowAngle(int xv, int yv, int val, double dtdx
                 int yErr = R * sin(thetaErr) + yv;
 
                 //fill in all values between xExact and xErr
-                int xintvl = xExact > xErr ? 1 : -1;
-                int yintvl = yExact > yErr ? 1 : -1;
+                int ystart = std::min(yErr, yExact);
+                int yend   = std::max(yErr, yExact);
+                int xstart = std::min(xErr, xExact);
+                int xend   = std::max(xErr, xExact);
 
-
-
-                for(int y = yErr; y < yExact; y += yintvl) {
-                    for(int x = xErr; x < xExact; x += xintvl) {
+                for(int y = ystart; y < yend+1; y++) {
+                    for(int x = xstart; x < xend+1; x++) {
 
                         if(x < 0 || x > width-1 || y < 0 || y > height-1) continue;
 

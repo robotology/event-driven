@@ -196,7 +196,7 @@ void vCircleReader::onRead(emorph::vBottle &bot)
     emorph::vQueue q = bot.getSorted<emorph::AddressEvent>();
 
     bool circlewasfound = false;
-    double count = 0, potential = 0, detections = 0, inliersMax = 0, threshMax = 0;
+    double count = 0, potential = 0, detections = 0, inliersMax = 0, threshMax = 0, ratioMax = 0, radMax = 0;
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
 
         //get the event in the correct form
@@ -215,28 +215,34 @@ void vCircleReader::onRead(emorph::vBottle &bot)
 
         int inliers = 0;
         if(hough) {
+            //do the observing
             houghFinder.addEvent(*v);
-            if(!houghFinder.found) continue;
-            inliers  = houghFinder.valc;
-            //if(houghFinder.valc < inlierThreshold) continue;
-            //std::cout << houghFinder.valc << std::endl;
-            if(inliers < inlierThreshold * houghFinder.rc * 6.28) continue;
+            //set inliers
+            if(!houghFinder.found) inliers = 0;
+            else inliers  = houghFinder.valc;
+
+            //set circle positions
             cx = houghFinder.xc;
             cy = houghFinder.yc;
             cr = houghFinder.rc;
 
-
         } else {
+            //do finding, set inliers, set circle positions
             inliers = geomFinder.flowcircle(cx, cy, cr);
-            if(inliers < 6.28 * cr * inlierThreshold) continue;
-            //if(cr < 5 || cr > 24) continue;
-            //if(inliers < inlierThreshold) continue;
         }
 
+        double threshold = (6.28*cr*inlierThreshold);
+
+        //find the highest inliers this bottle
         if(inliers > inliersMax) {
+            ratioMax = inliers/threshold;
             inliersMax = inliers;
-            threshMax = 6.28 * cr * inlierThreshold;
+            threshMax = threshold;
+            radMax = cr;
         }
+
+        //if the inliers is not enough we don't continue processing
+        if(inliers < threshold) continue;
 
         circlewasfound = true;
         detections++;
@@ -267,18 +273,20 @@ void vCircleReader::onRead(emorph::vBottle &bot)
         statsOut.clear();
         //we have a scope connection so do some stats processing
         //number of events processed
-        if(!potential) potential = 1;
-        statsOut.addDouble(count * 100.0 / potential);
-        std::cout << count * 100.0 / potential << " ";
+        if(!potential) statsOut.addDouble(100.0);
+        else statsOut.addDouble(count * 100.0 / potential);
+        //std::cout << count * 100.0 / potential << " ";
         //number of inliers
         statsOut.addDouble(inliersMax);
-        std::cout << inliersMax << " ";
+        //std::cout << inliersMax << " ";
         //value of threshold
         statsOut.addDouble(threshMax);
-        std::cout << threshMax << " ";
+        //std::cout << threshMax << " ";
+
+        statsOut.addDouble(radMax);
         //number of detections
         statsOut.addDouble(detections);
-        std::cout << detections << std::endl;
+        //std::cout << detections << std::endl;
         scopeOut.write();
     }
 
