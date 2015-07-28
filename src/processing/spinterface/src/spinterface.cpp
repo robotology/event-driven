@@ -183,9 +183,12 @@ void YARPspinI::onRead(emorph::vBottle &bot)
         if(!v) continue;
         if(v->getChannel()) continue;
 
-        int neuronID = (v->getY() >> downsamplefactor) *
-                (width / pow(downsamplefactor, 2.0)) +
-                (v->getX() >> downsamplefactor);
+        int y = height - 1 - y;
+        int x = width - 1 - x;
+
+        int neuronID = (x >> downsamplefactor) *
+                (height / pow(downsamplefactor, 2.0)) +
+                (y >> downsamplefactor);
 
         //eventsin << (int)(v->getX()) << " " << (int)(v->getY()) << " " << neuronID << std::endl;
         spinSender->addSpikeToSendQueue(neuronID);
@@ -240,8 +243,8 @@ void YARPspinO::run()
         std::pair<int,int> spikeEvent = *i;
         ae.setStamp(spikeEvent.first);
         ae.setPolarity(0);
-        int y = (spikeEvent.second / (int)(width / pow(downsamplefactor, 2.0))) << downsamplefactor;
-        int x = (spikeEvent.second % (int)(width / pow(downsamplefactor, 2.0))) << downsamplefactor;
+        int x = width - 1 - ((spikeEvent.second / (int)(height / pow(downsamplefactor, 2.0))) << downsamplefactor);
+        int y = height - 1 - ((spikeEvent.second % (int)(height / pow(downsamplefactor, 2.0))) << downsamplefactor);
         ae.setY(y);
         ae.setX(x);
         outbottle.addEvent(ae);
