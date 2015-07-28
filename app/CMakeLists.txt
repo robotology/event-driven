@@ -21,6 +21,7 @@ add_subdirectory(vAnalysis)
 add_subdirectory(vView)
 add_subdirectory(vCalib)
 add_subdirectory(vBallDemo)
+add_subdirectory(vZynq)
 
 ## make all applications show up as single target
 #icub_app_all()
