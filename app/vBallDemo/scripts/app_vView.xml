@@ -71,6 +71,12 @@
    <node>localhost</node>
 </module>
 
+<module>
+    <name> yarpscope </name>
+    <parameters> --remote /vCircleFinder/scope:o --index "(0 1 2 3)" --color "(red green blue black)" </parameters>
+    <node> localhost </node>
+</module>
+
 <connection>
   <from>/aexGrabber/vBottle:o</from>
   <to>/vtsOptFlow/vBottle:i</to>

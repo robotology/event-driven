@@ -89,7 +89,7 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
     if(!circleReader.open(moduleName)) {
         std::cerr << "Could not open required ports" << std::endl;
         return false;
-    }
+    }    
 
     return true ;
 }
@@ -158,7 +158,10 @@ bool vCircleReader::open(const std::string &name)
     std::string outPortName = "/" + name + "/vBottle:o";
     bool state2 = outPort.open(outPortName);
 
-    return state1 && state2;
+    std::string scopePortName = "/" + name + "/scope:o";
+    bool state3 = scopeOut.open(scopePortName);
+
+    return state1 && state2 && state3;
 }
 
 /******************************************************************************/
@@ -193,7 +196,7 @@ void vCircleReader::onRead(emorph::vBottle &bot)
     emorph::vQueue q = bot.getSorted<emorph::AddressEvent>();
 
     bool circlewasfound = false;
-    double count = 0, potential = 0;
+    double count = 0, potential = 0, detections = 0, inliersMax = 0, threshMax = 0;
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
 
         //get the event in the correct form
@@ -210,12 +213,14 @@ void vCircleReader::onRead(emorph::vBottle &bot)
         //process the observation
         double cx, cy, cr;
 
-        double inliers = 0;
+        int inliers = 0;
         if(hough) {
             houghFinder.addEvent(*v);
             if(!houghFinder.found) continue;
+            inliers  = houghFinder.valc;
             //if(houghFinder.valc < inlierThreshold) continue;
-            if(houghFinder.valc < 6.28 * houghFinder.rc * inlierThreshold) continue;
+            //std::cout << houghFinder.valc << std::endl;
+            if(inliers < inlierThreshold * houghFinder.rc * 6.28) continue;
             cx = houghFinder.xc;
             cy = houghFinder.yc;
             cr = houghFinder.rc;
@@ -228,7 +233,13 @@ void vCircleReader::onRead(emorph::vBottle &bot)
             //if(inliers < inlierThreshold) continue;
         }
 
+        if(inliers > inliersMax) {
+            inliersMax = inliers;
+            threshMax = 6.28 * cr * inlierThreshold;
+        }
+
         circlewasfound = true;
+        detections++;
 
         //update the filter given the observation
         double ts = unwrap(v->getStamp());
@@ -251,7 +262,28 @@ void vCircleReader::onRead(emorph::vBottle &bot)
 
     }
 
+    if(scopeOut.getOutputCount()) {
+        yarp::os::Bottle &statsOut = scopeOut.prepare();
+        statsOut.clear();
+        //we have a scope connection so do some stats processing
+        //number of events processed
+        if(!potential) potential = 1;
+        statsOut.addDouble(count * 100.0 / potential);
+        std::cout << count * 100.0 / potential << " ";
+        //number of inliers
+        statsOut.addDouble(inliersMax);
+        std::cout << inliersMax << " ";
+        //value of threshold
+        statsOut.addDouble(threshMax);
+        std::cout << threshMax << " ";
+        //number of detections
+        statsOut.addDouble(detections);
+        std::cout << detections << std::endl;
+        scopeOut.write();
+    }
+
     //at the end of the bottle say how many events were processed
+    //std::cout << "Detections: " << detections << std::endl;
 //    if(potential != 0 && count != potential) {
 //        std::cout << "Processed " << count * 100.0 / potential << "%" << std::endl;
 //    }

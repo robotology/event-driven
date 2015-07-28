@@ -30,6 +30,7 @@ private:
     
     //output port for the vBottle with the new events computed by the module
     yarp::os::BufferedPort<emorph::vBottle> outPort;
+    yarp::os::BufferedPort<yarp::os::Bottle> scopeOut;
 
     emorph::vtsHelper unwrap;
     double pTS;

@@ -82,6 +82,7 @@ private:
     //two methods of general function above
     void updateHAddress(int xv, int yv, int val);
     void updateHFlow(int xv, int yv, int val, double dtdx, double dtdy);
+    void updateHFlowAngle(int xv, int yv, int val, double dtdx, double dtdy);
 
 
 public:

@@ -15,6 +15,8 @@
  */
 
 #include "vCircleObserver.h"
+#include <math.h>
+
 
 
 /*//////////////////////////////////////////////////////////////////////////////
@@ -243,7 +245,7 @@ bool vHoughCircleObserver::updateH(emorph::vEvent &event, int val)
     if(useFlow) {
         emorph::FlowEvent *v = event.getAs<emorph::FlowEvent>();
         if(!v) return false;
-        updateHFlow(v->getX(), v->getY(), val, v->getVx(), v->getVy());
+        updateHFlowAngle(v->getX(), v->getY(), val, v->getVx(), v->getVy());
     } else {
         emorph::AddressEvent *v = event.getAs<emorph::AddressEvent>();
         if(!v) return false;
@@ -298,7 +300,6 @@ void vHoughCircleObserver::updateHFlow(int xv, int yv, int val, double dtdx, dou
         int R = r+r1;
 
         double theta1 = atan2(dtdy, dtdx);
-        //double theta2 = 3.14 + theta1;
 
         int x_base = R * cos(theta1) + xv;
         int y_base = R * sin(theta1) + yv;
@@ -318,8 +319,7 @@ void vHoughCircleObserver::updateHFlow(int xv, int yv, int val, double dtdx, dou
             }
         }
 
-        theta1 = atan2(dtdy, dtdx) + 3.14;
-        //double theta2 = 3.14 + theta1;
+        theta1 = atan2(dtdy, dtdx) + M_PI;
 
         x_base = R * cos(theta1) + xv;
         y_base = R * sin(theta1) + yv;
@@ -341,6 +341,71 @@ void vHoughCircleObserver::updateHFlow(int xv, int yv, int val, double dtdx, dou
 
 
 
+    }
+}
+
+/******************************************************************************/
+void vHoughCircleObserver::updateHFlowAngle(int xv, int yv, int val, double dtdx, double dtdy)
+{
+    if(val > 0) valc = 0;
+    std::vector<double> rot; rot.push_back(0); rot.push_back(M_PI);
+    std::vector<double> err; err.push_back(-9.0*M_PI/180.0); err.push_back(9.0*M_PI/180.0);
+    std::vector<double>::iterator errval, rotval;
+
+    //do for multiple scales
+    for(int r = 0; r < rsize; r++) {
+        int R = r+r1;
+
+        //do for 'forward' flow and flow rotated by 180
+        for(rotval = rot.begin(); rotval != rot.end(); rotval++) {
+
+            //calculate centre position in hough space
+            double thetaExact = atan2(dtdy, dtdx) + *rotval;
+            int xExact = R * cos(thetaExact) + xv;
+            int yExact = R * sin(thetaExact) + yv;
+
+            //add to the hough space at this point
+            int x = xExact; int y = yExact;
+            if(x < 0 || x > width-1 || y < 0 || y > height-1) continue;
+
+            (*H[r])[y][x] += val;
+            if(val > 0 && (*H[r])[y][x] >= valc) {
+                valc = (*H[r])[y][x];
+                xc = x;
+                yc = y;
+                rc = R;
+            }
+
+            //also for a small anglular error either side of the exact value
+            for(errval = err.begin(); errval != err.end(); errval++) {
+
+
+                double thetaErr = thetaExact + *errval;
+                int xErr = R * cos(thetaErr) + xv;
+                int yErr = R * sin(thetaErr) + yv;
+
+                //fill in all values between xExact and xErr
+                int xintvl = xExact > xErr ? 1 : -1;
+                int yintvl = yExact > yErr ? 1 : -1;
+
+
+
+                for(int y = yErr; y < yExact; y += yintvl) {
+                    for(int x = xErr; x < xExact; x += xintvl) {
+
+                        if(x < 0 || x > width-1 || y < 0 || y > height-1) continue;
+
+                        (*H[r])[y][x] += val;
+                        if(val > 0 && (*H[r])[y][x] >= valc) {
+                            valc = (*H[r])[y][x];
+                            xc = x;
+                            yc = y;
+                            rc = R;
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -399,37 +464,6 @@ void vHoughCircleObserver::addEventTime(emorph::vEvent &event)
     }
 
 }
-
-/******************************************************************************/
-//void vHoughCircleObserver::addEventLife(emorph::vEvent &event)
-//{
-
-//    //LIFE REQUIRES FLOW ONLY SO OVERRIDE THE OPTION
-
-//    found = false;
-//    emorph::FlowEvent *v = event.getAs<emorph::FlowEvent>();
-//    if(!v) return;
-//    updateHFlow(v->getX(), v->getY(), 1, v->getVx(), v->getVy());
-//    FIFO.push_front(&event);
-
-//    int cts = v->getStamp();
-//    emorph::vQueue::iterator i = FIFO.begin();
-//    while(i != FIFO.end()) {
-//        v = (*i)->getAs<emorph::FlowEvent>();
-//        int death = v->getDeath();
-//        if(cts < v->getStamp())
-//            death -= emorph::vtsHelper::maxStamp();
-//        if(cts > death || (death >= emorph::vtsHelper::maxStamp() && cts+emorph::vtsHelper::maxStamp() > death)) {
-//            updateHFlow(v->getX(), v->getY(), -1, v->getVx(), v->getVy());
-//            i = FIFO.erase(i);
-//        } else {
-//            i++;
-//        }
-//    }
-
-//    found = true;
-
-//}
 
 /******************************************************************************/
 void vHoughCircleObserver::addEventLife(emorph::vEvent &event)
