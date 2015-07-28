@@ -231,7 +231,7 @@ void vCircleReader::onRead(emorph::vBottle &bot)
             inliers = geomFinder.flowcircle(cx, cy, cr);
         }
 
-        double threshold = (6.28*cr*inlierThreshold);
+        double threshold = (6.28*sqrt(cr)* 5 *inlierThreshold);
 
         //find the highest inliers this bottle
         if(inliers > inliersMax) {

@@ -349,7 +349,7 @@ void vHoughCircleObserver::updateHFlowAngle(int xv, int yv, int val, double dtdx
 {
     if(val > 0) valc = 0;
     std::vector<double> rot; rot.push_back(0); rot.push_back(M_PI);
-    std::vector<double> err; err.push_back(-5.0*M_PI/180.0); err.push_back(5.0*M_PI/180.0);
+    std::vector<double> err; err.push_back(-2.5*M_PI/180.0); err.push_back(2.5*M_PI/180.0);
     std::vector<double>::iterator errval, rotval;
 
     //do for multiple scales

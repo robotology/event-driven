@@ -43,7 +43,7 @@
 
 <module>
     <name> vCircle </name>
-    <parameters> --hough true --flowhough true --windowtype Lifetime --inlierThreshold 25 --datafile </parameters>
+    <parameters> --hough true --flowhough true --windowtype Lifetime --inlierThreshold 15 --datafile </parameters>
     <node> localhost </node>
 </module>
 
