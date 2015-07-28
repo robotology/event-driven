@@ -6,6 +6,7 @@ cmake_minimum_required(VERSION 2.6)
 
 IF(NOT WIN32) 
         add_subdirectory   (  vGrabber                   )
+	add_subdirectory   (  zynqGrabber                )
 ENDIF (NOT WIN32)
 
 
