@@ -223,6 +223,7 @@ void YARPspinO::run()
     //get the data
     int recvQueueSize = spinReceiver->getRecvQueueSize();
     if (recvQueueSize <= 0) return;
+    std::cout << "Size: " << recvQueueSize << std::endl;
 
     //there is data to process so prepare out outbottle port
     emorph::vBottle &outbottle = vBottleOut.prepare();
@@ -236,19 +237,24 @@ void YARPspinO::run()
 
     //iterate over all spikes and add them to the bottle
     std::list<std::pair<int, int> >::iterator i;
+
+    int rowsize = width >> downsamplefactor;
     for(i = spikepacket.begin(); i != spikepacket.end(); i++) {
         std::pair<int,int> spikeEvent = *i;
         ae.setStamp(spikeEvent.first);
         ae.setPolarity(0);
-        int y = (spikeEvent.second / (int)(width / pow(downsamplefactor, 2.0))) << downsamplefactor;
-        int x = (spikeEvent.second % (int)(width / pow(downsamplefactor, 2.0))) << downsamplefactor;
+        int y = (spikeEvent.second / rowsize) << downsamplefactor;
+        int x = (spikeEvent.second % rowsize) << downsamplefactor;
         ae.setY(y);
         ae.setX(x);
         outbottle.addEvent(ae);
+        std::cout << "[" << x << "," << y << "] ";
     }
+    std::cout << std::endl;
 
     //send the bottle on
     vBottleOut.write();
+
 
 }
 
