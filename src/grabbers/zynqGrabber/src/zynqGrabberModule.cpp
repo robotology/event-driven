@@ -170,7 +170,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     
     //open bufferedPort Yarp2Device
     
-    if(!Y2D.open(moduleName))
+    if(!Y2D.open(file_desc,moduleName))
     {
         std::cerr << " : Unable to open ports" << std::endl;
         return false;
@@ -300,7 +300,7 @@ void zynqGrabberModule::closeDevice(){
 bool zynqGrabberModule::openDevice(){
     //opening the device
     cout <<"name of the file buffer:" <<portDeviceName.c_str()<< endl;
-    file_desc = open(portDeviceName.c_str(), O_RDWR);// | O_NONBLOCK);
+    file_desc = open(portDeviceName.c_str(), O_RDWR | O_NONBLOCK);
     if (file_desc < 0) {
         printf("Cannot open device file: %s \n",portDeviceName.c_str());
         return false;

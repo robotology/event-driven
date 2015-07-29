@@ -149,15 +149,19 @@ void  device2yarp::run() {
             perror("perror:");
             return;
         }
-    }
+    } else if (devData == 0)
+	{
+	    // everything ok, no data available, just call the run again later
+		return; 
+	}
     
     // Show data
 #ifdef __DEBUG__
-    /*for (i=0; i<(real_data/sizeof(unsigned int)); i++)
-        fprintf(stderr, "%4d 0x%08x %10u %s\n", j++, RXDATA[i],  RXDATA[i], i%2 ? "D" : "T");
+//    for (i=0; i<(devData/sizeof(unsigned int)); i++)
+//        fprintf(stderr, "%4d 0x%08x %10u %s\n", j++, deviceData[i],  deviceData[i], i%2 ? "D" : "T");
     
-    sleep(1);
-    */
+//    sleep(1);
+    
 #endif
     
     //*******************************************************************************************************
@@ -205,8 +209,8 @@ void  device2yarp::run() {
         
             
 #ifdef __DEBUG__
-
-        fprintf(stderr, "vector %4d 0x%08x %10u %s\n", j++, deviceData[i],  deviceData[i], i%2 ? "D" : "T");
+	fprintf(stderr,"read %d events from device\n",devData/sizeof(unsigned int));
+       // fprintf(stderr, "vector %4d 0x%08x %10u %s\n", j++, deviceData[i],  deviceData[i], i%2 ? "D" : "T");
     
 #endif
     
@@ -216,7 +220,7 @@ void  device2yarp::run() {
     
     // write vBottle to output port
     portvBottle.write();
-    countAEs = countAEs + devData;
+    countAEs = countAEs + devData/sizeof(unsigned int);
 
     
     /*if ((offset = (real_data+offset) % sizeof(unsigned int)) != 0)

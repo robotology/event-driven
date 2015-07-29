@@ -9,12 +9,12 @@
 #include "iCub/yarp2device.h"
 #include <unistd.h>
 
-
+#define __DEBUG__
 /******************************************************************************/
 //yarp2device
 /******************************************************************************/
 
-bool yarp2device::open(std::string moduleName)
+bool yarp2device::open(int file_desc, std::string moduleName)
 {
     this->useCallback();
     
@@ -25,18 +25,19 @@ bool yarp2device::open(std::string moduleName)
 
     if (!success)
     {
-        fprintf(stdout,"unable to open port %s",inPortName.c_str());
+        fprintf(stdout,"unable to open port %s\n",inPortName.c_str());
     }
     // flag to initialise timestamp
     flagStart = false;
-    
-    
+    setFileDesc(file_desc); 
+    countAEs = 0;    
     return success;
 }
 
 /******************************************************************************/
 void yarp2device::close()
 {
+	fprintf(stdout,"yarp to device total received events: %d",countAEs);
     BufferedPort<emorph::vBottle >::close();
 }
 
@@ -49,7 +50,9 @@ void yarp2device::interrupt()
 /******************************************************************************/
 void yarp2device::onRead(emorph::vBottle &bot)
 {
-    
+#ifdef __DEBUG__
+//	fprintf(stdout,"y2d: got data from yarp\n");
+#endif
     //create event queue and iterator
     emorph::vQueue q = bot.getAll();
     emorph::vQueue::iterator qi;
@@ -62,6 +65,7 @@ void yarp2device::onRead(emorph::vBottle &bot)
     int           i;
     long int      ts;
     
+    int devData;
     
     i = 0;
     
@@ -70,7 +74,7 @@ void yarp2device::onRead(emorph::vBottle &bot)
     //unsigned int *TXDATA;
     //TXDATA = (unsigned int *) calloc(q.size(), sizeof(unsigned int));
     deviceData.resize(q.size()*2);
-    
+    countAEs += q.size();
     // checks for empty or non valid queue????
     for(qi = q.begin(); qi != q.end(); qi++)
     {
@@ -82,8 +86,10 @@ void yarp2device::onRead(emorph::vBottle &bot)
         x = aep->getX();
         y = aep->getY();
         ts = aep->getStamp();
-        
-        // address
+#ifdef __DEBUG__        
+//        fprintf(stdout, "x:%d y:%d ts:%ld\n", x,  y, ts);
+#endif
+  	// address
         word0 = ((channel&0x01)<<15)|((y&0x7f)<<8)|((x&0x7f)<<1)|(polarity&0x01);
         deviceData[i] = word0;
         
@@ -111,12 +117,13 @@ void yarp2device::onRead(emorph::vBottle &bot)
     
     // write to device
     //    ::write(file_desc, (char *)TXDATA, q.size()*sizeof(unsigned int));
-    ::write(file_desc, (char *)deviceData.data(), q.size()*sizeof(unsigned int));
+    devData = ::write(file_desc, (char *)deviceData.data(), q.size()*sizeof(unsigned int));
     
 #ifdef __DEBUG__
-    for (i=0; i<q.size(); i++)
-        // fprintf(stderr, "Sent data %d : 0x%08x  -  %10d\n", i, TXDATA[i], TXDATA[i]);
-        fprintf(stderr, "Sent data %d : 0x%08x  -  %10d\n", i, deviceData[i], deviceData[i]);
+    fprintf(stdout,"wrote %d events to device\n",devData);
+    //for (i=0; i<q.size(); i++)
+    // fprintf(stderr, "Sent data %d : 0x%08x  -  %10d\n", i, TXDATA[i], TXDATA[i]);
+    //  fprintf(stderr, "Sent data %d : 0x%08x  -  %10d\n", i, deviceData[i], deviceData[i]);
 #endif
     
     //free(TXDATA);
