@@ -93,7 +93,7 @@ void yarp2device::onRead(emorph::vBottle &bot)
     }
     
 
-    int devData = ::write(file_desc, (char *)deviceData.data(), q.size()*sizeof(unsigned int));
+    int devData = ::write(file_desc, (char *)deviceData.data(), 2*q.size()*sizeof(unsigned int));
 
     
 }

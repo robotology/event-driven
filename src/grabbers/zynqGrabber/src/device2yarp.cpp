@@ -96,21 +96,20 @@ void  device2yarp::run() {
     emorph::AddressEvent ae;
     for (i; i < nEvtsRead; i += 2)
     {
+        int ts = deviceData[i] & 0x00ffffff;
         int word0 = deviceData[i+1];
-        int word1 = deviceData[i];
+
         
         int polarity=word0&0x01;
-
         word0>>=1;
+
         int x=word0&0x7f;
-
         word0>>=7;
+
         int y=word0&0x7f;
-
         word0>>=7;
-        int channel=word0&0x01;
 
-        int ts = word1&0x00ffffff;
+        int channel=word0&0x01;
 
         ae.setStamp(ts);
         ae.setChannel(channel);
