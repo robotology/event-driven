@@ -27,8 +27,6 @@ bool vSalientPos::configure(yarp::os::ResourceFinder &rf)
             rf.check("name", yarp::os::Value("salientPos")).asString();
     setName(moduleName.c_str());
 
-    //downsampleHeight = 32;
-    //downsampleWidth = 32;
 
     fullHeight = 128;
     fullWidth = 128;
@@ -38,17 +36,20 @@ bool vSalientPos::configure(yarp::os::ResourceFinder &rf)
     xList = new std::vector<int>(fullWidth,0);
     yList = new std::vector<int>(fullHeight,0);
 
+
+    // pass in x, y arrays to inputManager
+    inputManager.attachXYLists(xList, yList, fullWidth, fullHeight);
+    bool iSuccess = inputManager.open(moduleName);
+
     // pass the x, y accumulator arrays to initThread
-    bool oSuccess = outputManager.initThread(moduleName, xList, yList);
+    bool oSuccess = outputManager.initThread(moduleName, xList, yList, fullWidth, fullHeight);
 
     // Start the output manager thread
     outputManager.start();
     outputManager.run();
 
-    // pass in x, y arrays to inputManager
-    inputManager.attachXYLists(xList, yList);
-    bool iSuccess = inputManager.open(moduleName);
 
+    //bool oSuccess = true;
     return oSuccess && iSuccess;
 
 }
@@ -91,8 +92,6 @@ YARPsalientI::YARPsalientI()
 {
 
     //here we should initialise the module
-
-
     
 }
 
@@ -129,8 +128,10 @@ void YARPsalientI::onRead(emorph::vBottle &bot)
 {
     //create event queue
     emorph::vQueue q = bot.getAll();
+
     
 
+    
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {
 
@@ -141,22 +142,27 @@ void YARPsalientI::onRead(emorph::vBottle &bot)
         int y = v->getY();
         int x = v->getX();
 
-        // accumulate spike events in arrays for x and y?
+        // check what events we actually get
 
+        std::cout << "x " << x << " y " << y << std::endl;
+
+        // accumulate spike events in arrays for x and y
         xList->at(x)++;
         yList->at(y)++;
 
-
-
     }
-
+   
 }
 
 /**********************************************************/
-void YARPsalientI::attachXYLists(std::vector<int>* xListPtr, std::vector<int>* yListPtr)
+void YARPsalientI::attachXYLists(std::vector<int>* xListPtr, std::vector<int>* yListPtr, int xSizeIn, int ySizeIn)
 {
    xList = xListPtr;
    yList = yListPtr;
+   xSize = xSizeIn;
+   ySize = ySizeIn;
+
+
 }
 
 /**********************************************************/
@@ -169,12 +175,14 @@ YARPsalientO::YARPsalientO() : yarp::os::RateThread(1)
 
 /**********************************************************/
 
-bool YARPsalientO::initThread(std::string moduleName, std::vector<int>* xListPtr, std::vector<int>* yListPtr)
+bool YARPsalientO::initThread(std::string moduleName, std::vector<int>* xListPtr, std::vector<int>* yListPtr, int xSizeIn, int ySizeIn)
 {
     // Output thread initialisation
 
     xList = xListPtr;
     yList = yListPtr;
+    xSize = xSizeIn;
+    ySize = ySizeIn;
 
     std::string outPortName = "/" + moduleName + "/vBottle:o";
     return vBottleOut.open(outPortName);
@@ -185,61 +193,28 @@ bool YARPsalientO::initThread(std::string moduleName, std::vector<int>* xListPtr
 
 void YARPsalientO::run()
 {
-
-    // Check we can access the xList and yList
-
-    //std::cout << "x list " << xList->size() << std::endl;
-
-    /*
-    int maxXCount = 0;
-    int maxX = 0;
-    for(std::vector<int>::iterator i = xList->begin(); i != xList->end(); i++) {
-
-        int count = *i;
-        if(count > maxXCount){
-           maxXCount = count;
-           maxX = 
-        }
-        //std::cout << "x item " << count << std::endl;        
-
-    }
-    */
-
     std::vector<int>::iterator xbegin = xList->begin();
     std::vector<int>::iterator xend = xList->end();
     
 
-    //int maxX = *(std::max_element(xbegin, xend));
+    maxXCount = *(std::max_element(xbegin, xend));
 
-    int maxX = std::distance(std::max_element(xbegin, xend), xend);
+    maxX = std::distance(xbegin,std::max_element(xbegin, xend));
 
-    //std::cout << "y list " << yList->size() << std::endl;
-    /*
-    int maxY = 0;
-    for(std::vector<int>::iterator i = yList->begin(); i != yList->end(); i++) {
-
-        int count = *i;
-        if(count > maxX){
-           maxX = count;
-        }
-        //std::cout << "y item " << count << std::endl;        
-
-    }
-    */
 
     std::vector<int>::iterator ybegin = yList->begin();
     std::vector<int>::iterator yend = yList->end();
     
 
-    //int maxY = *(std::max_element(ybegin, yend));
+    maxYCount = *(std::max_element(ybegin, yend));
 
-    int maxY = std::distance(std::max_element(ybegin, yend), yend); 
+    maxY = std::distance(ybegin,std::max_element(ybegin, yend)); 
 
     // get the current max x and y
 
-    std::cout << "current max X " << maxX-1 << " count "<< xList->at(maxX-1) << std::endl;
+    std::cout << "current max X " << maxX << " count "<< maxXCount << std::endl;
 
-    std::cout << "current max Y " << maxY-1 << " count "<< yList->at(maxY-1) << std::endl;
+    std::cout << "current max Y " << maxY << " count "<< maxYCount << std::endl;
 
 
     // Prepare the output port and create event

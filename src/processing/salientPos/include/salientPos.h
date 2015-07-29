@@ -33,6 +33,9 @@ private:
 
     std::vector<int>* xList;
     std::vector<int>* yList;
+    int xSize;
+    int ySize;
+
 
 
 public:
@@ -47,7 +50,7 @@ public:
     //this is the entry point to your main functionality
     void    onRead(emorph::vBottle &bot);
 
-    void    attachXYLists(std::vector<int>*, std::vector<int>*);
+    void    attachXYLists(std::vector<int>* xList, std::vector<int>* yList, int xSize, int ySize);
 
 };
 
@@ -58,13 +61,19 @@ private:
     yarp::os::BufferedPort<emorph::vBottle> vBottleOut;
     std::vector<int>* xList;
     std::vector<int>* yList;
+    int xSize;
+    int ySize;
+    int maxXCount;
+    int maxX;
+    int maxYCount;
+    int maxY;
 
 
 public:
 
     YARPsalientO();
 
-    bool initThread(std::string moduleName, std::vector<int>*, std::vector<int>*);
+    bool initThread(std::string moduleName, std::vector<int>* xList, std::vector<int>* yList, int xSize, int ySize);
     void run();
     void threadRelease();
 };
@@ -78,8 +87,7 @@ class vSalientPos : public yarp::os::RFModule
     YARPsalientO      outputManager;
     std::vector<int>* xList;
     std::vector<int>* yList;
-    //int downsampleHeight;
-    //int downsampleWidth;
+
     int fullHeight;
     int fullWidth;
 
