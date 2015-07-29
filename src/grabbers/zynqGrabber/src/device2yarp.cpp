@@ -43,19 +43,9 @@ bool device2yarp::threadInit(std::string moduleName){
 
 void  device2yarp::run() {
 
+
+    //read the device
     int devData = read(file_desc, (char *)(deviceData.data()), 1024*sizeof(unsigned int));
-    int nEvtsRead = devData / sizeof(unsigned int);
-
-    if(nEvtsRead % 2) {
-        std::cerr << "An odd number of events where read. We need to "
-                     "implement a robust checking of timestamp - data ordering"
-                     << std::endl;
-        std::cerr << "Exiting this thread because we cannot gaurantee the first"
-                     " event is a timestamp! (and we cannot gaurantee it for any"
-                  "of the following data reads either)" << std::endl;
-        return;
-    }
-
     if (devData < 0){
         if (errno != EAGAIN) {
             printf("error reading from spinn2neu: %d\n", (int)errno);
@@ -66,9 +56,37 @@ void  device2yarp::run() {
         // the thread to run again.
         return;
     } else if(devData == 0) {
-	    // everything ok, no data available, just call the run again later
-		return; 
-	}
+        // everything ok, no data available, just call the run again later
+        return;
+    }
+
+
+    int nEvtsRead = devData / sizeof(unsigned int);
+
+    //data will always be less than 2^16 as it fits in the first 16 bits
+    if(deviceData[0] < 65536 && deviceData[1] < 65536) {
+        //we have no way to distinquish between these values...
+        std::cout << "Blind Spot" << std::endl;
+        return;
+    }
+
+    int i = 0;
+    if(deviceData[0] < 65536) {
+        //this is not a timestamp so we want to ignore it.
+        i = 1;
+    }
+
+//    if(nEvtsRead % 2) {
+//        std::cerr << "An odd number of events where read. We need to "
+//                     "implement a robust checking of timestamp - data ordering"
+//                     << std::endl;
+//        std::cerr << "Exiting this thread because we cannot gaurantee the first"
+//                     " event is a timestamp! (and we cannot gaurantee it for any"
+//                  "of the following data reads either)" << std::endl;
+//        return;
+//    }
+
+
 
     // convert data to YARP vBottle
     
@@ -76,36 +94,29 @@ void  device2yarp::run() {
     evtDevice.clear();
     
     emorph::AddressEvent ae;
-    for (int i = 0; i < nEvtsRead; i++)
+    for (i; i < nEvtsRead; i += 2)
     {
-        int word0 = deviceData[i];
+        int word0 = deviceData[i+1];
+        int word1 = deviceData[i];
         
-        if (i%2) // Address
-        {
-            int polarity=word0&0x01;
-            
-            word0>>=1;
-            int x=word0&0x7f;
-            
-            word0>>=7;
-            int y=word0&0x7f;
-            
-            word0>>=7;
-            int channel=word0&0x01;
-            
-            // fill address event
-            
-            ae.setChannel(channel);
-            ae.setPolarity(polarity);
-            ae.setX(x);
-            ae.setY(y);
-            
-        }
-        else // Timestamp
-        {
-            int ts = (word0*4)&0x00ffffff;
-            ae.setStamp(ts);
-        }
+        int polarity=word0&0x01;
+
+        word0>>=1;
+        int x=word0&0x7f;
+
+        word0>>=7;
+        int y=word0&0x7f;
+
+        word0>>=7;
+        int channel=word0&0x01;
+
+        int ts = word1&0x00ffffff;
+
+        ae.setStamp(ts);
+        ae.setChannel(channel);
+        ae.setPolarity(polarity);
+        ae.setX(x);
+        ae.setY(y);
         evtDevice.addEvent(ae);
 
     }
