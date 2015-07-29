@@ -25,6 +25,8 @@
 
 #include <iCub/zynqGrabberModule.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
 
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -200,7 +202,7 @@ bool zynqGrabberModule::close() {
     closing = true;
 
     handlerPort.close();    // rpc of the RF module
-    D2Y->stop();            // ratethread from device to yarp
+    D2Y->threadRelease();            // ratethread from device to yarp
     Y2D.close();            // bufferedport from yarp to device
     closeDevice();          // device
     /* stop the thread */

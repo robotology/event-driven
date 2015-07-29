@@ -35,16 +35,13 @@ class yarp2device : public yarp::os::BufferedPort<emorph::vBottle>
     
 public:
     
- virtual    bool    open(int file_desc, std::string moduleName);
+    yarp2device();
+    virtual    bool    open(int file_desc, std::string moduleName);
     bool    init();
     void    close();
     void    onRead(emorph::vBottle &bot);
     void    interrupt();
-    
-    /*
-     * functions for device spinn2neu
-     */
-    
+        
     
 };
 

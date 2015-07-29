@@ -23,63 +23,37 @@
  * @brief Definition of the ratethread that receives events from DVS camera
  */
 
-#ifndef _DEVICE2YARP_H
-#define _DEVICE2YARP_H
+#ifndef _ZYNQYARP_H
+#define _ZYNQYARP_H
 
-#define __STDC_LIMIT_MACROS
-
-//yarp include
-#include <yarp/os/RateThread.h>
-#include <yarp/os/BufferedPort.h>
-#include <yarp/os/Semaphore.h>
-#include <yarp/os/Bottle.h>
-#include <yarp/os/Time.h>
-
-#include <fcntl.h>
-#include <sys/ioctl.h>
-#include <iostream>
-#include <sstream>
-#include <cstdlib>
-#include <stdint.h>
-#include <fstream>
-
-//within the emorph project includes
-#include <iCub/emorph/eventBuffer.h>
-#include <iCub/emorph/eventBottle.h>
+#include <yarp/os/all.h>
 #include <iCub/emorph/all.h>
 
 class device2yarp : public yarp::os::RateThread {
 public:
+
     device2yarp(int file_desc);
-    ~device2yarp();
     virtual void run();
     virtual void threadRelease();
     virtual bool threadInit(std::string moduleName = "");
   
 private:
+
+    //output port
     yarp::os::BufferedPort<emorph::vBottle> portvBottle;
-    yarp::os::Stamp vStamp;
     
+    //read buffer
     std::vector<unsigned int> deviceData;
     
-    double startInt;                                // time variable for the start of acquisition
-    double stopInt;                                 // time variable for the end of acquisition
-//    double maxCountInWraps;
-//    double minCountInWraps;
-//    double maxRate;
-//    double minRate;
-    
-    int countAEs,countErrors;
-    
-    int file_desc,len,sz;
-    
-    bool wrapOccured;                       // flag that indicates if in the block of events a TS_WA is present
+    //device number to read from
+    int file_desc;
 
-    std::stringstream str_buf;
+    //incrementall count the number of events coming from the device
+    int countAEs;
 
 };
 
-#endif //_DEVICE2YARP_H
+#endif //_ZYNQYARP_H
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------
 
