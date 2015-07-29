@@ -34,7 +34,7 @@ bool yarp2device::open(int file_desc, std::string moduleName)
 /******************************************************************************/
 void yarp2device::close()
 {
-	fprintf(stdout,"yarp to device total received events: %d",countAEs);
+    std::cout << "Y2D: received " << countAEs << " events." << std::endl;
     yarp::os::BufferedPort<emorph::vBottle>::close();
 }
 
@@ -67,7 +67,6 @@ void yarp2device::onRead(emorph::vBottle &bot)
 
         // address
         int word0 = ((channel&0x01)<<15)|((y&0x7f)<<8)|((x&0x7f)<<1)|(polarity&0x01);
-        word0 |= 0x80000000;
         
         // set intial timestamp to compute diff
         if (flagStart == false)
