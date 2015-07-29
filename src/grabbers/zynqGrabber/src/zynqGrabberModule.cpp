@@ -164,7 +164,11 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     
     
     
-    D2Y = new device2yarp(file_desc, moduleName);
+    D2Y = new device2yarp(file_desc);
+    if(!D2Y->threadInit(moduleName)) {
+        //could not start the thread
+        return false;
+    }
     D2Y->start();
     
     

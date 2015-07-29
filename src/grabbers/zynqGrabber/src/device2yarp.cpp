@@ -48,7 +48,7 @@ extern int errno;
 #define THRATE 1
 
 
-device2yarp::device2yarp(int file_desc, string moduleName = " "):RateThread(THRATE) {
+device2yarp::device2yarp(int file_desc):RateThread(THRATE) {
     printf("device2yarp initialization .... \n");
     
     wrapOccured      = false;
@@ -71,18 +71,6 @@ device2yarp::device2yarp(int file_desc, string moduleName = " "):RateThread(THRA
     
     deviceData.resize(1024); //max size of data from device /dev/spinn2neu
     
-    // opening the port for sending out events
-    
-    printf("opening port for sending the events from spinn2neu \n");
-
-    std::string outPortName = moduleName + "/vBottle:o";
-    bool success = portvBottle.open(outPortName);
-    
-    if(!success)
-    {
-        fprintf(stdout,"error opening port %s", outPortName.c_str());
-    }
-        
     startInt=Time::now();
 }
 
@@ -94,8 +82,18 @@ device2yarp::~device2yarp() {
 }
 
 
-bool device2yarp::threadInit(){
+bool device2yarp::threadInit(std::string moduleName){
   //check device?
+    printf("opening port for sending the events from spinn2neu \n");
+    std::string outPortName = moduleName + "/vBottle:o";
+    bool success = portvBottle.open(outPortName);
+
+    if(!success)
+    {
+        fprintf(stdout,"error opening port %s", outPortName.c_str());
+        return false;
+    }
+
     return true;
 }
 

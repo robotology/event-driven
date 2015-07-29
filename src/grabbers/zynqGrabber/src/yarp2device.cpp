@@ -91,7 +91,6 @@ void yarp2device::onRead(emorph::vBottle &bot)
 #endif
   	// address
         word0 = ((channel&0x01)<<15)|((y&0x7f)<<8)|((x&0x7f)<<1)|(polarity&0x01);
-        deviceData[i] = word0;
         
         // set intial timestamp to compute diff
         if (flagStart == false)
@@ -109,7 +108,9 @@ void yarp2device::onRead(emorph::vBottle &bot)
         
         word1 = word1 & 0x00ffffff;
         
-        deviceData[i+1] = word1;
+        deviceData[i] = word1;
+        deviceData[i+1] = word0;
+
         i = i+2;
         tsPrev = ts;
         

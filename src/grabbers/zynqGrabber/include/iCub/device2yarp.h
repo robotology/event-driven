@@ -50,11 +50,11 @@
 
 class device2yarp : public yarp::os::RateThread {
 public:
-    device2yarp(int file_desc, std::string moduleName);
+    device2yarp(int file_desc);
     ~device2yarp();
     virtual void run();
     virtual void threadRelease();
-    virtual bool threadInit();
+    virtual bool threadInit(std::string moduleName = "");
   
 private:
     yarp::os::BufferedPort<emorph::vBottle> portvBottle;
