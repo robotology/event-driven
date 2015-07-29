@@ -91,7 +91,7 @@ void vTrackToRobotManager::close()
 void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
 {
 
-    emorph::vQueue::reverse_iterator qi;
+    //emorph::vQueue::reverse_iterator qi;
     emorph::vQueue q = vBottleIn.getSorted<emorph::ClusterEventGauss>();
     yarp::sig::Vector px(2), x(3);
 
@@ -103,17 +103,17 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
     px[0] = v->getYCog(); px[1] = 127 - v->getXCog();
     //std::cout << "Pixel: " << px.toString() << std::endl;
     gazecontrol->get3DPoint(0, px, 0.5, x);
-    //std::cout << "2D point: " << px.toString() << std::endl;
+    std::cout << "2D point: " << px.toString() << std::endl;
     //std::cout << "3D point: " << x.toString() << std::endl;
 
-    gazecontrol->lookAtFixationPoint(x);
+    //gazecontrol->lookAtFixationPoint(x);
 
 
     yarp::os::Bottle& BottleOut = cartOutPort.prepare();
     BottleOut.clear();
     //add the XYZ position
-    //BottleOut.add(x[0]); BottleOut.add(x[1]); BottleOut.add(x[2]);
-    BottleOut.add(-1.0); BottleOut.add(0.0); BottleOut.add(-0.3);
+    BottleOut.add(x[0]); BottleOut.add(x[1]); BottleOut.add(x[2]);
+    //BottleOut.add(-1.0); BottleOut.add(0.0); BottleOut.add(-0.3);
     //add some buffer ints
     BottleOut.add(0.0); BottleOut.add(0.0); BottleOut.add(0.0);
     //flag that the object is detected

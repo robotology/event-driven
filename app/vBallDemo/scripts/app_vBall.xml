@@ -30,7 +30,7 @@
 </module>
 
 <module>
-    <name> demoGraspManager </name>
+    <name> demoRedBall </name>
         <parameters> --general::robot icubSim </parameters>
     <node> localhost </node>
 </module>
