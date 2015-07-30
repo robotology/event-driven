@@ -47,19 +47,19 @@ void  device2yarp::run() {
     int devData = devManager->readDevice(deviceData);
     
 //    int devData = ::read(devDesc, (char *)(deviceData.data()), 1024*sizeof(unsigned int));
-//    if (devData < 0){
-//        if (errno != EAGAIN) {
-//            printf("error reading from spinn2neu: %d\n", (int)errno);
-//            perror("perror:");
-//        }
-//        //if errno == EAGAIN ther is just no data to read just now
-//        // we are using a non-blocking call so we need to return and wait for
-//        // the thread to run again.
-//        return;
-//    } else if(devData == 0) {
-//        // everything ok, no data available, just call the run again later
-//        return;
-//    }
+    if (devData < 0){
+        if (errno != EAGAIN) {
+            printf("error reading from spinn2neu: %d\n", (int)errno);
+            perror("perror:");
+        }
+        //if errno == EAGAIN ther is just no data to read just now
+        // we are using a non-blocking call so we need to return and wait for
+        // the thread to run again.
+        return;
+    } else if(devData == 0) {
+        // everything ok, no data available, just call the run again later
+        return;
+    }
 
 
     int nEvtsRead = devData / sizeof(unsigned int);

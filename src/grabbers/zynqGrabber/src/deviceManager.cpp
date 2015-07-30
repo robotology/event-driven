@@ -144,20 +144,20 @@ int deviceManager::writeDevice(std::vector<unsigned int> &deviceData){
 
 int deviceManager::readDevice(std::vector<unsigned int> &deviceData){
     int devData = ::read(devDesc, (char *)(deviceData.data()), deviceData.size()*sizeof(unsigned int));
-    if (devData < 0){
-        fprintf(stdout,"error reading from device\n");
-        //if (errno != EAGAIN) {
-        //    printf("error reading from spinn2neu: %d\n", (int)errno);
-        //    perror("perror:");
-        //}
-        //if errno == EAGAIN ther is just no data to read just now
-        // we are using a non-blocking call so we need to return and wait for
-        // the thread to run again.
-        return devData;
-    } else if(devData == 0) {
-        // everything ok, no data available, just call the run again later
-        return devData;
-    }
+//    if (devData < 0){
+//        fprintf(stdout,"error reading from device\n");
+//        //if (errno != EAGAIN) {
+//        //    printf("error reading from spinn2neu: %d\n", (int)errno);
+//        //    perror("perror:");
+//        //}
+//        //if errno == EAGAIN ther is just no data to read just now
+//        // we are using a non-blocking call so we need to return and wait for
+//        // the thread to run again.
+//        return devData;
+//    } else if(devData == 0) {
+//        // everything ok, no data available, just call the run again later
+//        return devData;
+//    }
 return devData;
     
 }
