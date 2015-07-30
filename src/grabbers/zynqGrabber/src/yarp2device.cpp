@@ -120,8 +120,13 @@ void yarp2device::onRead(emorph::vBottle &bot)
     }
     else
     {
-        writtenAEs += devData/(2*sizeof(unsigned int));
+        int wroteData = devData/(2*sizeof(unsigned int));
+        writtenAEs += wroteData;
+        if (wroteData != q.size()){
+            std::cout<<"Y2D mismatch - yarp data: "<<q.size()<<" wrote data:"<<wroteData<<std::endl;
+        }
     }
+    
 }
 
 //void yarp2device::setFileDesc(int devDesc)
