@@ -152,7 +152,7 @@
 #define COMMAND_VOCAB_SUSPEND VOCAB3('s','u','s')
 #define COMMAND_VOCAB_RESUME  VOCAB3('r','e','s')
 #define COMMAND_VOCAB_FAILED  VOCAB4('f','a','i','l')
-#define COMMAND_VOCAB_OK VOCAB2('o','k')
+#define COMMAND_VOCAB_OK      VOCAB2('o','k')
 
 #include <iostream>
 #include <string>
@@ -167,11 +167,13 @@
 #include <iCub/device2yarp.h>
 #include <iCub/yarp2device.h>
 
-typedef struct sp2neu_gen_reg {
-    unsigned int offset;
-    char         rw;
-    unsigned int data;
-} sp2neu_gen_reg_t;
+#include <iCub/deviceManager.h>
+
+//typedef struct sp2neu_gen_reg {
+//    unsigned int offset;
+//    char         rw;
+//    unsigned int data;
+//} sp2neu_gen_reg_t;
 
 
 
@@ -197,9 +199,13 @@ class zynqGrabberModule:public yarp::os::RFModule {
     int file_desc;
     std::string portDeviceName;                 // name of the device which the module will connect to
     
-    void write_generic_sp2neu_reg (int file_desc, unsigned int offset, unsigned int data);
-    unsigned int read_generic_sp2neu_reg (int file_desc, unsigned int offset);
-    void usage (void);
+    
+    // instantiate object of class deviceManager!!!!!
+    deviceManager* devManager;
+    
+    //void write_generic_sp2neu_reg (int file_desc, unsigned int offset, unsigned int data);
+    //unsigned int read_generic_sp2neu_reg (int file_desc, unsigned int offset);
+    //void usage (void);
     
     bool closing; 
     

@@ -33,47 +33,47 @@ using namespace yarp::sig;
 using namespace std;
 
 
-#define MAGIC_NUM 100
-#define SP2NEU_VERSION         _IOR (MAGIC_NUM,  7, void *)
-#define SP2NEU_TIMESTAMP       _IOR (MAGIC_NUM,  8, void *)
-#define SP2NEU_GEN_REG         _IOWR(MAGIC_NUM,  6, void *)
-#define SP2NEU_SET_LOC_LBCK    _IOW (MAGIC_NUM, 10, void *)
-#define SP2NEU_SET_REM_LBCK    _IOW (MAGIC_NUM, 11, void *)
-#define SP2NEU_SET_FAR_LBCK    _IOW (MAGIC_NUM, 12, void *)
-
-
-#define CTRL_REG     0x00
-#define RXDATA_REG   0x08
-#define RXTIME_REG   0x0C
-#define TXDATA_REG   0x10
-#define DMA_REG      0x14
-#define RAWI_REG     0x18
-#define IRQ_REG      0x1C
-#define MASK_REG     0x20
-#define STMP_REG     0x28
-#define ID_REG       0x5c
-
-// CTRL register bit field
-//#define CTRL_ENABLEIP 0x00000001
-#define CTRL_ENABLEINTERRUPT 0x00000004
-#define CTRL_FLUSHFIFO       0x00000010
-#define CTRL_ENABLE_REM_LBCK 0x01000000
-#define CTRL_ENABLE_LOC_LBCK 0x02000000
-#define CTRL_ENABLE_FAR_LBCK 0x04000000
-
-// INterrupt Mask register bit field
-#define MSK_RXBUF_EMPTY  0x00000001
-#define MSK_RXBUF_AEMPTY 0x00000002
-#define MSK_RXBUF_FULL   0x00000004
-#define MSK_TXBUF_EMPTY  0x00000008
-#define MSK_TXBUF_AFULL  0x00000010
-#define MSK_TXBUF_FULL   0x00000020
-#define MSK_TIMEWRAPPING 0x00000080
-#define MSK_RXBUF_READY  0x00000100
-#define MSK_RX_NOT_EMPTY 0x00000200
-#define MSK_TX_DUMPMODE  0x00001000
-#define MSK_RX_PAR_ERR   0x00002000
-#define MSK_RX_MOD_ERR   0x00004000
+//#define MAGIC_NUM 100
+//#define SP2NEU_VERSION         _IOR (MAGIC_NUM,  7, void *)
+//#define SP2NEU_TIMESTAMP       _IOR (MAGIC_NUM,  8, void *)
+//#define SP2NEU_GEN_REG         _IOWR(MAGIC_NUM,  6, void *)
+//#define SP2NEU_SET_LOC_LBCK    _IOW (MAGIC_NUM, 10, void *)
+//#define SP2NEU_SET_REM_LBCK    _IOW (MAGIC_NUM, 11, void *)
+//#define SP2NEU_SET_FAR_LBCK    _IOW (MAGIC_NUM, 12, void *)
+//
+//
+//#define CTRL_REG     0x00
+//#define RXDATA_REG   0x08
+//#define RXTIME_REG   0x0C
+//#define TXDATA_REG   0x10
+//#define DMA_REG      0x14
+//#define RAWI_REG     0x18
+//#define IRQ_REG      0x1C
+//#define MASK_REG     0x20
+//#define STMP_REG     0x28
+//#define ID_REG       0x5c
+//
+//// CTRL register bit field
+////#define CTRL_ENABLEIP 0x00000001
+//#define CTRL_ENABLEINTERRUPT 0x00000004
+//#define CTRL_FLUSHFIFO       0x00000010
+//#define CTRL_ENABLE_REM_LBCK 0x01000000
+//#define CTRL_ENABLE_LOC_LBCK 0x02000000
+//#define CTRL_ENABLE_FAR_LBCK 0x04000000
+//
+//// INterrupt Mask register bit field
+//#define MSK_RXBUF_EMPTY  0x00000001
+//#define MSK_RXBUF_AEMPTY 0x00000002
+//#define MSK_RXBUF_FULL   0x00000004
+//#define MSK_TXBUF_EMPTY  0x00000008
+//#define MSK_TXBUF_AFULL  0x00000010
+//#define MSK_TXBUF_FULL   0x00000020
+//#define MSK_TIMEWRAPPING 0x00000080
+//#define MSK_RXBUF_READY  0x00000100
+//#define MSK_RX_NOT_EMPTY 0x00000200
+//#define MSK_TX_DUMPMODE  0x00001000
+//#define MSK_RX_PAR_ERR   0x00002000
+//#define MSK_RX_MOD_ERR   0x00004000
 
 
 /*
@@ -116,15 +116,15 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     deviceName             = rf.check("deviceName",
                                       Value("/dev/spinn2neu"),
                                       "Device name (string)").asString();
-    devicePortName         =  deviceName ;
-
-    setDeviceName(deviceName);
-    printf("trying to connect to the device %s \n",devicePortName.c_str());
+    //devicePortName         =  deviceName ;
     
-    if (openDevice()==false){
-        fprintf(stdout,"error opening the device\n");
-        return false;
-    }
+    //setDeviceName(deviceName);
+    //    printf("trying to connect to the device %s \n",deviceName.c_str());
+    //
+    //    if (openDevice()==false){
+    //        fprintf(stdout,"error opening the device\n");
+    //        return false;
+    //    }
     
     
     
@@ -164,7 +164,19 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     printf("trying to save events in %s  \n",dumpName.c_str());
     dumpNameComplete = rf.findFile(dumpName.c_str());
     
+    // class manageDevice
+    devManager = new deviceManager(file_desc, deviceName);
     
+    // open device
+    printf("trying to connect to the device %s \n",deviceName.c_str());
+    
+    if (devManager->openDevice()==false){
+        fprintf(stdout,"error opening the device\n");
+        return false;
+    }
+    
+    
+    //open rateThread device2yarp
     
     D2Y = new device2yarp(file_desc);
     if(!D2Y->threadInit(moduleName)) {
@@ -174,7 +186,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     D2Y->start();
     
     
-    //open bufferedPort Yarp2Device
+    //open bufferedPort yarp2device
     
     if(!Y2D.open(file_desc,moduleName))
     {
@@ -184,10 +196,6 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     
     closing = false;
     return true ;
-    
-
-
-    
 }
 
 bool zynqGrabberModule::interruptModule() {
@@ -200,14 +208,13 @@ bool zynqGrabberModule::interruptModule() {
 bool zynqGrabberModule::close() {
     
     closing = true;
-
-    handlerPort.close();    // rpc of the RF module
+    
+    handlerPort.close();        // rpc of the RF module
     Y2D.close();
-    D2Y->stop();      // bufferedport from yarp to device
-    D2Y->threadRelease();            // ratethread from device to yarp
-
-
-    closeDevice();          // device
+    D2Y->stop();                // bufferedport from yarp to device
+    D2Y->threadRelease();       // ratethread from device to yarp
+    
+    devManager->closeDevice();  // device
     /* stop the thread */
     return true;
 }
@@ -261,29 +268,29 @@ bool zynqGrabberModule::respond(const Bottle& command, Bottle& reply) {
         }
             break;
     }
-
-mutex.post();
-
-if (!rec)
-ok = RFModule::respond(command,reply);
-
-if (!ok) {
-    reply.clear();
-    reply.addVocab(COMMAND_VOCAB_FAILED);
-}
-else
-reply.addVocab(COMMAND_VOCAB_OK);
-
-return ok;
-
-return true;
+    
+    mutex.post();
+    
+    if (!rec)
+        ok = RFModule::respond(command,reply);
+    
+    if (!ok) {
+        reply.clear();
+        reply.addVocab(COMMAND_VOCAB_FAILED);
+    }
+    else
+        reply.addVocab(COMMAND_VOCAB_OK);
+    
+    return ok;
+    
+    return true;
 }
 
 /* Called periodically every getPeriod() seconds */
 bool zynqGrabberModule::updateModule() {
-
+    
     return !closing;
-
+    
     return true;
 }
 
@@ -293,95 +300,97 @@ double zynqGrabberModule::getPeriod() {
 }
 
 
-/******************************
- * functions for device opening
-******************************/
-void zynqGrabberModule::setDeviceName(string deviceName) {
-    printf("saving portDevice \n");
-    portDeviceName=deviceName;
-}
+////----------------------------------------------------------------------------------------------------
+//// functions for device opening
+////----------------------------------------------------------------------------------------------------
+//void zynqGrabberModule::setDeviceName(string deviceName) {
+//    printf("saving portDevice \n");
+//    portDeviceName=deviceName;
+//}
+//
+//void zynqGrabberModule::closeDevice(){
+//    ::close(file_desc);
+//    fprintf(stdout, "closing device %s \n",portDeviceName.c_str());
+//}
+//
+//bool zynqGrabberModule::openDevice(){
+//    //opening the device
+//    cout <<"name of the file buffer:" <<portDeviceName.c_str()<< endl;
+//    file_desc = open(portDeviceName.c_str(), O_RDWR | O_NONBLOCK);
+//    if (file_desc < 0) {
+//        printf("Cannot open device file: %s \n",portDeviceName.c_str());
+//        return false;
+//    }
+//
+//    //initialization for writing to device
+//    unsigned long version;
+//    unsigned char hw_major,hw_minor;
+//    char          stringa[4];
+//    int i;
+//    unsigned int  tmp_reg;
+//
+//    ioctl(file_desc, SP2NEU_VERSION, &version);
+//
+//    hw_major = (version & 0xF0) >> 4;
+//    hw_minor = (version & 0x0F);
+//    stringa[3]=0;
+//
+//    for (i=0; i<3; i++) {
+//        stringa[i] = (version&0xFF000000) >> 24;
+//        version = version << 8;
+//    }
+//    fprintf(stderr, "\r\nIdentified: %s version %d.%d\r\n\r\n", stringa, hw_major, hw_minor);
+//
+//    // Write the WrapTimeStamp register with any value if you want to clear it
+//    //write_generic_sp2neu_reg(fp,STMP_REG,0);
+//    fprintf(stderr, "Times wrapping counter: %d\n", read_generic_sp2neu_reg(file_desc, STMP_REG));
+//
+//    // Enable Time wrapping interrupt
+//    write_generic_sp2neu_reg(file_desc, MASK_REG, MSK_TIMEWRAPPING | MSK_TX_DUMPMODE | MSK_RX_PAR_ERR | MSK_RX_MOD_ERR);
+//
+//    // Flush FIFOs
+//    tmp_reg = read_generic_sp2neu_reg(file_desc, CTRL_REG);
+//    write_generic_sp2neu_reg(file_desc, CTRL_REG, tmp_reg | CTRL_FLUSHFIFO); // | CTRL_ENABLEIP);
+//
+//    // Start IP in LoopBack
+//    tmp_reg = read_generic_sp2neu_reg(file_desc, CTRL_REG);
+//    write_generic_sp2neu_reg(file_desc, CTRL_REG, tmp_reg | (CTRL_ENABLEINTERRUPT | CTRL_ENABLE_FAR_LBCK));
+//    //    write_generic_sp2neu_reg(file_desc, CTRL_REG, tmp_reg | CTRL_ENABLE_FAR_LBCK);
+//
+//    tmp_reg = read_generic_sp2neu_reg(file_desc, CTRL_REG);
+//    write_generic_sp2neu_reg(file_desc, CTRL_REG, tmp_reg | CTRL_ENABLE_FAR_LBCK);
+//
+//
+//
+//
+//    return true;
+//}
+//
 
-void zynqGrabberModule::closeDevice(){
-    ::close(file_desc);
-    fprintf(stdout, "closing device %s \n",portDeviceName.c_str());
-}
-
-bool zynqGrabberModule::openDevice(){
-    //opening the device
-    cout <<"name of the file buffer:" <<portDeviceName.c_str()<< endl;
-    file_desc = open(portDeviceName.c_str(), O_RDWR | O_NONBLOCK);
-    if (file_desc < 0) {
-        printf("Cannot open device file: %s \n",portDeviceName.c_str());
-        return false;
-    }
-    
-    //initialization for writing to device
-    unsigned long version;
-    unsigned char hw_major,hw_minor;
-    char          stringa[4];
-    int i;
-    unsigned int  tmp_reg;
-    
-    ioctl(file_desc, SP2NEU_VERSION, &version);
-    
-    hw_major = (version & 0xF0) >> 4;
-    hw_minor = (version & 0x0F);
-    for (i=0; i<3; i++) {
-        stringa[i] = (version&0xFF000000) >> 24;
-        version = version << 8;
-    }
-    fprintf(stderr, "\r\nIdentified: %s version %d.%d\r\n\r\n", stringa, hw_major, hw_minor);
-    
-    // Write the WrapTimeStamp register with any value if you want to clear it
-    //write_generic_sp2neu_reg(fp,STMP_REG,0);
-    fprintf(stderr, "Times wrapping counter: %d\n", read_generic_sp2neu_reg(file_desc, STMP_REG));
-    
-    // Enable Time wrapping interrupt
-    write_generic_sp2neu_reg(file_desc, MASK_REG, MSK_TIMEWRAPPING | MSK_TX_DUMPMODE | MSK_RX_PAR_ERR | MSK_RX_MOD_ERR);
-    
-    // Flush FIFOs
-    tmp_reg = read_generic_sp2neu_reg(file_desc, CTRL_REG);
-    write_generic_sp2neu_reg(file_desc, CTRL_REG, tmp_reg | CTRL_FLUSHFIFO);
-    
-    // Start IP in LoopBack
-    tmp_reg = read_generic_sp2neu_reg(file_desc, CTRL_REG);
-    write_generic_sp2neu_reg(file_desc, CTRL_REG, tmp_reg | (CTRL_ENABLEINTERRUPT | CTRL_ENABLE_FAR_LBCK));
-    //    write_generic_sp2neu_reg(file_desc, CTRL_REG, tmp_reg | CTRL_ENABLE_FAR_LBCK);
-    
-    tmp_reg = read_generic_sp2neu_reg(file_desc, CTRL_REG);
-    write_generic_sp2neu_reg(file_desc, CTRL_REG, tmp_reg | CTRL_ENABLE_FAR_LBCK);
-    
-    
-    
-    
-    return true;
-}
-
-
-void zynqGrabberModule::write_generic_sp2neu_reg (int file_desc, unsigned int offset, unsigned int data) {
-    sp2neu_gen_reg_t reg;
-    
-    reg.rw = 1;
-    reg.data = data;
-    reg.offset = offset;
-    ioctl(file_desc, SP2NEU_GEN_REG, &reg);
-}
-
-
-unsigned int zynqGrabberModule::read_generic_sp2neu_reg (int file_desc, unsigned int offset) {
-    sp2neu_gen_reg_t reg;
-    
-    reg.rw = 0;
-    reg.offset = offset;
-    ioctl(file_desc, SP2NEU_GEN_REG, &reg);
-    
-    return reg.data;
-}
-
-
-void zynqGrabberModule::usage (void) {
-    fprintf (stderr, "%s <even number of data to transfer>\n", __FILE__);
-    //exit(1);
-}
-
+//void zynqGrabberModule::write_generic_sp2neu_reg (int file_desc, unsigned int offset, unsigned int data) {
+//    sp2neu_gen_reg_t reg;
+//
+//    reg.rw = 1;
+//    reg.data = data;
+//    reg.offset = offset;
+//    ioctl(file_desc, SP2NEU_GEN_REG, &reg);
+//}
+//
+//
+//unsigned int zynqGrabberModule::read_generic_sp2neu_reg (int file_desc, unsigned int offset) {
+//    sp2neu_gen_reg_t reg;
+//
+//    reg.rw = 0;
+//    reg.offset = offset;
+//    ioctl(file_desc, SP2NEU_GEN_REG, &reg);
+//
+//    return reg.data;
+//}
+//
+//
+//void zynqGrabberModule::usage (void) {
+//    fprintf (stderr, "%s <even number of data to transfer>\n", __FILE__);
+//    //exit(1);
+//}
+//
 

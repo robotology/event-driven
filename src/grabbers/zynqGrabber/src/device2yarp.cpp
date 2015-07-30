@@ -44,6 +44,8 @@ bool device2yarp::threadInit(std::string moduleName){
 void  device2yarp::run() {
 
 
+
+    
     //read the device
     int devData = read(file_desc, (char *)(deviceData.data()), 1024*sizeof(unsigned int));
     if (devData < 0){
