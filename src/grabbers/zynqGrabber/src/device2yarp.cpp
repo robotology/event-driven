@@ -47,8 +47,8 @@ void  device2yarp::run() {
     int devData = devManager->readDevice(deviceData);
     //fprintf(stdout,"D2Y: devData: %d, size: %lu\n",devData,deviceData.size());
     //int devData = ::read(devManager->devDesc, (char *)(deviceData.data()), 1024*sizeof(unsigned int));
-    fprintf(stdout,"D2Y: fd: %d, devData: %d, size: %lu\n",devManager->devDesc,
-            devData,deviceData.size());
+    //fprintf(stdout,"D2Y: fd: %d, devData: %d, size: %lu\n",devManager->devDesc,
+    //        devData,deviceData.size());
     
     if (devData < 0){
         if (errno != EAGAIN) {
