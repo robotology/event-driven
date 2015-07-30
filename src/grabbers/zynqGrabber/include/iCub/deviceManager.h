@@ -49,8 +49,8 @@ public:
      */
     bool openDevice();
     
-    int readDevice(std::vector<unsigned int> deviceData);
-    int writeDevice(std::vector<unsigned int> deviceData);
+    int readDevice(std::vector<unsigned int> &deviceData);
+    int writeDevice(std::vector<unsigned int> &deviceData);
 
     bool readFifoFull();
     bool readFifoEmpty();

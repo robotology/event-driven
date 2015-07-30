@@ -136,14 +136,14 @@ int deviceManager::timeWrapCount(){
     return time;
 }
 
-int deviceManager::writeDevice(std::vector<unsigned int> deviceData){
+int deviceManager::writeDevice(std::vector<unsigned int> &deviceData){
     int devData = ::write(devDesc, (char *)deviceData.data(), 2*deviceData.size()*sizeof(unsigned int));
     return devData;
     
 }
 
-int deviceManager::readDevice(std::vector<unsigned int> deviceData){
-    int devData = ::read(devDesc, (char *)(deviceData.data()), 1024*sizeof(unsigned int));
+int deviceManager::readDevice(std::vector<unsigned int> &deviceData){
+    int devData = ::read(devDesc, (char *)(deviceData.data()), deviceData.size()*sizeof(unsigned int));
     if (devData < 0){
         fprintf(stdout,"error reading from device\n");
         //if (errno != EAGAIN) {
