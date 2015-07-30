@@ -78,7 +78,7 @@ deviceManager::deviceManager(string deviceName){
 //}
 
 bool deviceManager::readFifoFull(){
-    devData=read_generic_sp2neu_reg(devDesc,RAWI_REG);
+    int devData=read_generic_sp2neu_reg(devDesc,RAWI_REG);
     if((devData & MSK_RXBUF_FULL)==1)
     {
         fprintf(stdout,"FULL RX FIFO!!!!   \n");
@@ -88,7 +88,7 @@ bool deviceManager::readFifoFull(){
 }
 
 bool deviceManager::readFifoEmpty(){
-    devData=read_generic_sp2neu_reg(devDesc,RAWI_REG);
+    int devData=read_generic_sp2neu_reg(devDesc,RAWI_REG);
     if((devData & MSK_RXBUF_EMPTY)==0)
     {
         fprintf(stdout,"EMPTY RX FIFO!!!!   \n");
@@ -98,7 +98,7 @@ bool deviceManager::readFifoEmpty(){
 }
 
 bool deviceManager::writeFifoAFull(){
-    devData=read_generic_sp2neu_reg(devDesc,RAWI_REG);
+    int devData=read_generic_sp2neu_reg(devDesc,RAWI_REG);
     if((devData & MSK_TXBUF_AFULL)==1)
     {
         fprintf(stdout,"Almost FULL TX FIFO!!!!  \n");
@@ -108,7 +108,7 @@ bool deviceManager::writeFifoAFull(){
 }
 
 bool deviceManager::writeFifoFull(){
-    devData=read_generic_sp2neu_reg(devDesc,RAWI_REG);
+    int devData=read_generic_sp2neu_reg(devDesc,RAWI_REG);
     if((devData & MSK_TXBUF_FULL)==1)
     {
         fprintf(stdout,"FULL TX FIFO!!!!   \n");
@@ -118,7 +118,7 @@ bool deviceManager::writeFifoFull(){
 }
 
 bool deviceManager::writeFifoEmpty(){
-    devData=read_generic_sp2neu_reg(devDesc,RAWI_REG);
+    int devData=read_generic_sp2neu_reg(devDesc,RAWI_REG);
     if((devData & MSK_TXBUF_EMPTY)==0)
     {
         fprintf(stdout,"EMPTY TX FIFO!!!!   \n");

@@ -25,7 +25,7 @@ public:
     } sp2neu_gen_reg_t;
 
     int             devDesc;                      // file descriptor for device
-    int             devData;                        // return of the read/write functions
+    //int             devData;                        // return of the read/write functions
     //std::string     portDeviceName;                 // name of the device which the module will connect to
     std::string     deviceName;                     // name of the device
 
