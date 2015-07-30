@@ -44,9 +44,9 @@ bool device2yarp::threadInit(std::string moduleName){
 void  device2yarp::run() {
 
     //read the device
-    //int devData = devManager->readDevice(deviceData);
+    int devData = devManager->readDevice(deviceData);
     //fprintf(stdout,"D2Y: devData: %d, size: %lu\n",devData,deviceData.size());
-    int devData = ::read(devManager->devDesc, (char *)(deviceData.data()), 1024*sizeof(unsigned int));
+    //int devData = ::read(devManager->devDesc, (char *)(deviceData.data()), 1024*sizeof(unsigned int));
     fprintf(stdout,"D2Y: fd: %d, devData: %d, size: %lu\n",devManager->devDesc,
             devData,deviceData.size());
     
