@@ -31,10 +31,22 @@ private:
     //for helping with timestamp wrap around
     emorph::vtsHelper unwrapper;
 
-    std::vector<int>* xList;
-    std::vector<int>* yList;
-    int xSize;
-    int ySize;
+    // output vBottle
+    yarp::os::BufferedPort<emorph::vBottle> vBottleOut;
+
+    std::vector<float>* xList;
+    std::vector<float>* yList;
+    int fullHeight;
+    int fullWidth;
+    int prevTS;
+    int thresh;
+    int maxXCount;
+    int maxX;
+    int maxYCount;
+    int maxY;
+    float decay;
+    int clusterRadiusX;
+    int clusterRadiusY;
 
 
 
@@ -50,33 +62,9 @@ public:
     //this is the entry point to your main functionality
     void    onRead(emorph::vBottle &bot);
 
-    void    attachXYLists(std::vector<int>* xList, std::vector<int>* yList, int xSize, int ySize);
 
 };
 
-class YARPsalientO : public yarp::os::RateThread
-{
-private:
-
-    yarp::os::BufferedPort<emorph::vBottle> vBottleOut;
-    std::vector<int>* xList;
-    std::vector<int>* yList;
-    int xSize;
-    int ySize;
-    int maxXCount;
-    int maxX;
-    int maxYCount;
-    int maxY;
-
-
-public:
-
-    YARPsalientO();
-
-    bool initThread(std::string moduleName, std::vector<int>* xList, std::vector<int>* yList, int xSize, int ySize);
-    void run();
-    void threadRelease();
-};
 
 class vSalientPos : public yarp::os::RFModule
 {
@@ -84,12 +72,6 @@ class vSalientPos : public yarp::os::RFModule
     //the event bottle input and output handler
 
     YARPsalientI      inputManager;
-    YARPsalientO      outputManager;
-    std::vector<int>* xList;
-    std::vector<int>* yList;
-
-    int fullHeight;
-    int fullWidth;
 
 
 public:

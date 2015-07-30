@@ -38,7 +38,7 @@ bool vSpinInterface::configure(yarp::os::ResourceFinder &rf)
 
 
     initSpin(17895, 12346, "192.168.1.1",
-                       "/home/ubuntu/VVV/TestNetwork/application_generated_data_files/latest/input_output_database.db",
+                       "/home/ubuntu/VVV/AttentionNetwork/application_generated_data_files/latest/input_output_database.db",
              &spinReceiver, &spinSender);
 
 
@@ -223,7 +223,7 @@ void YARPspinO::run()
     //get the data
     int recvQueueSize = spinReceiver->getRecvQueueSize();
     if (recvQueueSize <= 0) return;
-    std::cout << "Size: " << recvQueueSize << std::endl;
+    //std::cout << "Size: " << recvQueueSize << std::endl;
 
     //there is data to process so prepare out outbottle port
     emorph::vBottle &outbottle = vBottleOut.prepare();
@@ -248,7 +248,6 @@ void YARPspinO::run()
         ae.setY(y);
         ae.setX(x);
         outbottle.addEvent(ae);
-        std::cout << "[" << x << "," << y << "] ";
     }
     std::cout << std::endl;
 

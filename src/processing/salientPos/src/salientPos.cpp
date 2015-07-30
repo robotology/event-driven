@@ -27,30 +27,10 @@ bool vSalientPos::configure(yarp::os::ResourceFinder &rf)
             rf.check("name", yarp::os::Value("salientPos")).asString();
     setName(moduleName.c_str());
 
-
-    fullHeight = 128;
-    fullWidth = 128;
-
-    // create the x, y accumulator lists here
-
-    xList = new std::vector<int>(fullWidth,0);
-    yList = new std::vector<int>(fullHeight,0);
-
-
-    // pass in x, y arrays to inputManager
-    inputManager.attachXYLists(xList, yList, fullWidth, fullHeight);
     bool iSuccess = inputManager.open(moduleName);
 
-    // pass the x, y accumulator arrays to initThread
-    bool oSuccess = outputManager.initThread(moduleName, xList, yList, fullWidth, fullHeight);
 
-    // Start the output manager thread
-    outputManager.start();
-    outputManager.run();
-
-
-    //bool oSuccess = true;
-    return oSuccess && iSuccess;
+    return iSuccess;
 
 }
 
@@ -58,7 +38,6 @@ bool vSalientPos::configure(yarp::os::ResourceFinder &rf)
 /******************************************************************************/
 bool vSalientPos::interruptModule()
 {
-    outputManager.stop();
     inputManager.interrupt();
     yarp::os::RFModule::interruptModule();
     return true;
@@ -67,7 +46,6 @@ bool vSalientPos::interruptModule()
 /******************************************************************************/
 bool vSalientPos::close()
 {
-    outputManager.threadRelease();
     inputManager.close();
     yarp::os::RFModule::close();
     return true;
@@ -92,7 +70,12 @@ YARPsalientI::YARPsalientI()
 {
 
     //here we should initialise the module
-    
+
+    prevTS = 0;
+    thresh = 200;
+    decay = 1.0;
+    clusterRadiusX = 10;
+    clusterRadiusY = 10;
 }
 
 /******************************************************************************/
@@ -101,6 +84,10 @@ bool YARPsalientI::open(const std::string &name)
     //and open the input port
 
     this->useCallback();
+
+    // open the output port here?
+    std::string outPortName = "/" + name + "/vBottle:o";
+    vBottleOut.open(outPortName);
 
     std::string inPortName = "/" + name + "/vBottle:i";
     return yarp::os::BufferedPort<emorph::vBottle>::open(inPortName);
@@ -111,6 +98,7 @@ void YARPsalientI::close()
 {
 
     yarp::os::BufferedPort<emorph::vBottle>::close();
+    vBottleOut.close();
 
     //remember to also deallocate any memory allocated by this class
 }
@@ -119,6 +107,7 @@ void YARPsalientI::close()
 void YARPsalientI::interrupt()
 {
     yarp::os::BufferedPort<emorph::vBottle>::interrupt();
+    vBottleOut.interrupt();
 
 }
 
@@ -126,11 +115,19 @@ void YARPsalientI::interrupt()
 /**********************************************************/
 void YARPsalientI::onRead(emorph::vBottle &bot)
 {
+    
+    fullHeight = 128;
+    fullWidth = 128;
+
+    // create the x, y accumulator lists here
+
+    xList = new std::vector<float>(fullWidth,0.0);
+    yList = new std::vector<float>(fullHeight,0.0);
+
     //create event queue
     emorph::vQueue q = bot.getAll();
 
-    
-
+    int timeStamp = 0;
     
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {
@@ -144,78 +141,84 @@ void YARPsalientI::onRead(emorph::vBottle &bot)
 
         // check what events we actually get
 
-        std::cout << "x " << x << " y " << y << std::endl;
+        //std::cout << "x " << x << " y " << y << " time " << v->getStamp() << std::endl;
+        
+        //timeStamp = v->getStamp();
+        timeStamp += 10000;
 
         // accumulate spike events in arrays for x and y
-        xList->at(x)++;
-        yList->at(y)++;
-
-    }
-   
-}
-
-/**********************************************************/
-void YARPsalientI::attachXYLists(std::vector<int>* xListPtr, std::vector<int>* yListPtr, int xSizeIn, int ySizeIn)
-{
-   xList = xListPtr;
-   yList = yListPtr;
-   xSize = xSizeIn;
-   ySize = ySizeIn;
+        xList->at(x) += 1.0;
+        yList->at(y) += 1.0;
 
 
-}
+       // decay according to temporal 'window'
+       
+       float timeDiff = float(v->getStamp() - prevTS);
+       // if there's no time difference don't decay
+       if (timeDiff > 0){
 
-/**********************************************************/
-YARPsalientO::YARPsalientO() : yarp::os::RateThread(1)
-{
+          decay = thresh/timeDiff;
 
-  // Do we need anything here?
+       
+          std::transform(xList->begin(), xList->end(), xList->begin(),std::bind1st    (std::multiplies<float>(), decay));
+
+          std::transform(yList->begin(), yList->end(), yList->begin(),std::bind1st(std::multiplies<float>(), decay));
+        }
+
+        // calculate max x and y in terms of number of events
+
+        std::vector<float>::iterator xbegin = xList->begin();
+        std::vector<float>::iterator xend = xList->end();
+
+        int prevMaxX = maxX;
     
-}
+        maxXCount = *(std::max_element(xbegin, xend));
 
-/**********************************************************/
+        if (maxXCount > 0.0){
 
-bool YARPsalientO::initThread(std::string moduleName, std::vector<int>* xListPtr, std::vector<int>* yListPtr, int xSizeIn, int ySizeIn)
-{
-    // Output thread initialisation
+            maxX = std::distance(xbegin,std::max_element(xbegin, xend));
 
-    xList = xListPtr;
-    yList = yListPtr;
-    xSize = xSizeIn;
-    ySize = ySizeIn;
+        } else {
 
-    std::string outPortName = "/" + moduleName + "/vBottle:o";
-    return vBottleOut.open(outPortName);
-}
+            maxX = 64;
+        }  
+
+        // print out the current max x if something has changed
+
+        if (maxX != prevMaxX){
+
+          std::cout << "current max X " << maxX << " count "<< maxXCount << std::endl;
+        }
 
 
-/**********************************************************/
-
-void YARPsalientO::run()
-{
-    std::vector<int>::iterator xbegin = xList->begin();
-    std::vector<int>::iterator xend = xList->end();
+        std::vector<float>::iterator ybegin = yList->begin();
+        std::vector<float>::iterator yend = yList->end();
     
 
-    maxXCount = *(std::max_element(xbegin, xend));
+        int prevMaxY = maxY;
 
-    maxX = std::distance(xbegin,std::max_element(xbegin, xend));
+        maxYCount = *(std::max_element(ybegin, yend));
 
+        if(maxYCount > 0.0){
 
-    std::vector<int>::iterator ybegin = yList->begin();
-    std::vector<int>::iterator yend = yList->end();
-    
+           maxY = std::distance(ybegin,std::max_element(ybegin, yend)); 
 
-    maxYCount = *(std::max_element(ybegin, yend));
+        } else {
 
-    maxY = std::distance(ybegin,std::max_element(ybegin, yend)); 
+           maxY = 64;
 
-    // get the current max x and y
+        }
 
-    std::cout << "current max X " << maxX << " count "<< maxXCount << std::endl;
+        // print out the current max y if something has changed
 
-    std::cout << "current max Y " << maxY << " count "<< maxYCount << std::endl;
+        if (maxY != prevMaxY){
 
+            std::cout << "current max Y " << maxY << " count "<< maxYCount << std::endl; 
+        }        
+
+      prevTS = v->getStamp();
+
+    } // event loop
 
     // Prepare the output port and create event
 
@@ -226,20 +229,15 @@ void YARPsalientO::run()
 
     cge.setYCog(maxY);
     cge.setXCog(maxX);
+    cge.setStamp(timeStamp);
+    cge.setChannel(0);
+    cge.setXSigma2(clusterRadiusX);
+    cge.setYSigma2(clusterRadiusY);
     outbottle.addEvent(cge);
 
     //send the bottle on
     vBottleOut.write();
-
+   
 }
-
-/**********************************************************/
-
-void YARPsalientO::threadRelease()
-{
-  // Clean up thread resources
- 
-}
-
 
 //empty line to make gcc happy
