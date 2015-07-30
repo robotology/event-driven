@@ -131,7 +131,7 @@ void  device2yarp::run() {
 
 void device2yarp::threadRelease() {
 
-    std::cout << "D2Y: has collected " << countAEs << " events from yarp"
+    std::cout << "D2Y: has collected " << countAEs << " events from device"
               << std::endl;
     
     

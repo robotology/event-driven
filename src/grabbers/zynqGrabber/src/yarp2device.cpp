@@ -35,7 +35,7 @@ bool yarp2device::open(std::string moduleName)
 /******************************************************************************/
 void yarp2device::close()
 {
-    std::cout << "Y2D: received " << countAEs << " events." << std::endl;
+    std::cout << "Y2D: received " << countAEs << " events from yarp" << std::endl;
     
     std::cout << "Y2D: written " << writtenAEs << " events to device"
     << std::endl;
@@ -96,12 +96,23 @@ void yarp2device::onRead(emorph::vBottle &bot)
         
     }
     
+    if(devManager->writeFifoAFull()){
+        
+        std::cout<<"Y2D write: warning fifo almost full"<<std::endl;
+        
+    }
+    
+    if(devManager->writeFifoFull()){
+        std::cout<<"Y2D write: error fifo full"<<std::endl;
+        
+        
+    }
     
     //int devData = ::write(devDesc, (char *)deviceData.data(), 2*q.size()*sizeof(unsigned int));
     int devData = devManager->writeDevice(deviceData);
     if (devData < 0)
     {
-        fprintf(stderr,"Y2D write: error writing to device %d events\n", q.size());
+        std::cout<<"Y2D write: error writing to device"<<q.size()<< "events"<<std::endl;
     }
     else if (devData == 0)
     {
