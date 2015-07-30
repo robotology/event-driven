@@ -22,14 +22,14 @@ yarp2device::yarp2device()
 bool yarp2device::open(std::string moduleName)
 {
     //setFileDesc(devDesc);
-
+    
     this->useCallback();
     
     fprintf(stdout,"opening port for receiving the events from yarp \n");
     
     std::string inPortName = moduleName + "/vBottle:i";
     return yarp::os::BufferedPort< emorph::vBottle >::open(inPortName);
-
+    
 }
 
 /******************************************************************************/
@@ -50,90 +50,88 @@ void yarp2device::interrupt()
 
 /******************************************************************************/
 void yarp2device::onRead(emorph::vBottle &bot)
-{   
-
+{
+    
     emorph::vQueue q = bot.getAll();
     deviceData.resize(q.size()*2);
     countAEs += q.size();
-
+    
     // checks for empty or non valid queue????
     int i = 0;
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {
-        emorph::AddressEvent *aep = (*qi)->getAs<emorph::AddressEvent>();
-        if(!aep) continue;
-        
-        int channel = aep->getChannel();
-        int polarity = aep->getPolarity();
-        int x = aep->getX();
-        int y = aep->getY();
-        int ts = aep->getStamp();
-
-        // address
-        int word0 = ((channel&0x01)<<15)|((y&0x7f)<<8)|((x&0x7f)<<1)|(polarity&0x01);
-        
-        // set intial timestamp to compute diff
-        if (flagStart == false)
+        while(i<=512)
         {
+            emorph::AddressEvent *aep = (*qi)->getAs<emorph::AddressEvent>();
+            if(!aep) continue;
+            
+            int channel = aep->getChannel();
+            int polarity = aep->getPolarity();
+            int x = aep->getX();
+            int y = aep->getY();
+            int ts = aep->getStamp();
+            
+            // address
+            int word0 = ((channel&0x01)<<15)|((y&0x7f)<<8)|((x&0x7f)<<1)|(polarity&0x01);
+            
+            // set intial timestamp to compute diff
+            if (flagStart == false)
+            {
+                tsPrev = ts;
+                flagStart = true;
+            }
+            // timestamp difference
+            int word1 = (ts - tsPrev);
+            
+            if (tsPrev > ts)
+            {
+                word1 += emorph::vtsHelper::maxStamp();
+            }
+            
+            word1 = 1;//(4 * word1);
+            
+            deviceData[i] = word1;   //timstamp
+            deviceData[i+1] = word0; //data
+            
+            i += 2;
             tsPrev = ts;
-            flagStart = true;
         }
-        // timestamp difference
-        int word1 = (ts - tsPrev);
         
-        if (tsPrev > ts)
+        if(devManager->writeFifoAFull()){
+            
+            std::cout<<"Y2D write: warning fifo almost full"<<std::endl;
+            
+        }
+        
+        if(devManager->writeFifoFull()){
+            std::cout<<"Y2D write: error fifo full"<<std::endl;
+            
+        }
+        int devData = devManager->writeDevice(deviceData);
+        if (devData < 0)
         {
-           word1 += emorph::vtsHelper::maxStamp();
+            std::cout<<"Y2D write: error writing to device"<<q.size()<< "events"<<std::endl;
         }
-        
-        word1 = 1;//(4 * word1);
-        
-        deviceData[i] = word1;   //timstamp
-        deviceData[i+1] = word0; //data
-
-        i += 2;
-        tsPrev = ts;
-        
-    }
-    
-    if(devManager->writeFifoAFull()){
-        
-        std::cout<<"Y2D write: warning fifo almost full"<<std::endl;
-        
-    }
-    
-    if(devManager->writeFifoFull()){
-        std::cout<<"Y2D write: error fifo full"<<std::endl;
-        
-        
-    }
-    
-    //int devData = ::write(devDesc, (char *)deviceData.data(), 2*q.size()*sizeof(unsigned int));
-    int devData = devManager->writeDevice(deviceData);
-    if (devData < 0)
-    {
-        std::cout<<"Y2D write: error writing to device"<<q.size()<< "events"<<std::endl;
-    }
-    else if (devData == 0)
-    {
-        fprintf(stdout,"Y2D write: devData: %d",devData);
-    }
-    else
-    {
-        int wroteData = devData/(2*sizeof(unsigned int));
-        writtenAEs += wroteData;
-        if (wroteData != q.size()){
-            std::cout<<"Y2D mismatch - yarp data: "<<q.size()<<" wrote data:"<<wroteData<<std::endl;
+        else if (devData == 0)
+        {
+            fprintf(stdout,"Y2D write: devData: %d",devData);
         }
+        else
+        {
+            int wroteData = devData/(2*sizeof(unsigned int));
+            writtenAEs += wroteData;
+            if (wroteData != q.size()){
+                std::cout<<"Y2D mismatch - yarp data: "<<q.size()<<" wrote data:"<<wroteData<<std::endl;
+            }
+        }
+        i = 0;
     }
+    
+    
+    
+    
     
 }
-
-//void yarp2device::setFileDesc(int devDesc)
-//{
-//    this->devDesc = devDesc;
-//}
-
 
 void  yarp2device::attachDeviceManager(deviceManager* devManager) {
     this->devManager = devManager;
