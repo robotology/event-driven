@@ -9,6 +9,11 @@
    <node>pc104</node>
 </module>
 
+<module>
+   <name>salientPos</name>
+   <parameters> </parameters>
+   <node>localhost</node>
+</module>
 
 <module>
     <name> vFramer</name>
