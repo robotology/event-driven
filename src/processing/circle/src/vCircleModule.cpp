@@ -55,7 +55,7 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
                                    yarp::os::Value(5)).asDouble();
 
     double measNoiseRad = rf.check("measNoiseRad",
-                                   yarp::os::Value(5)).asDouble();
+                                   yarp::os::Value(10)).asDouble();
 
     //data for experiments
     std::string datafilename = rf.check("datafile",
