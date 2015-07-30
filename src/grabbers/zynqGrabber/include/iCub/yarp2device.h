@@ -26,7 +26,10 @@ class yarp2device : public yarp::os::BufferedPort<emorph::vBottle>
     bool          flagStart;                    // flag to check if this is the first time we run the callback,
                                                 // used to initialise the timestamp for computing the difference
     long int      tsPrev;                       // FIRST TIMESTAMP TO COMPUTE DIFF
-    int 	  countAEs;    
+    int           countAEs;
+    int           writtenAEs;
+    
+    
     void setFileDesc(int devDesc);
     
     //vector to store the masked address events to the device

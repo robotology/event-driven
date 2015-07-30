@@ -129,9 +129,10 @@ void  device2yarp::run() {
 
 void device2yarp::threadRelease() {
 
-    std::cout << "The grabber has collected " << countAEs << " events"
+    std::cout << "D2Y: has collected " << countAEs << " events from yarp"
               << std::endl;
-
+    
+    
     portvBottle.close();
     
 }

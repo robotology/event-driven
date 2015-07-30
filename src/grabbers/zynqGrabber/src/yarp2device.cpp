@@ -16,6 +16,7 @@ yarp2device::yarp2device()
 {
     flagStart = false;
     countAEs = 0;
+    writtenAEs = 0;
 }
 
 bool yarp2device::open(int devDesc, std::string moduleName)
@@ -35,6 +36,9 @@ bool yarp2device::open(int devDesc, std::string moduleName)
 void yarp2device::close()
 {
     std::cout << "Y2D: received " << countAEs << " events." << std::endl;
+    
+    std::cout << "D2Y: written " << writtenAEs << " events to device"
+    << std::endl;
     yarp::os::BufferedPort<emorph::vBottle>::close();
 }
 
@@ -94,8 +98,15 @@ void yarp2device::onRead(emorph::vBottle &bot)
     
 
     int devData = ::write(devDesc, (char *)deviceData.data(), 2*q.size()*sizeof(unsigned int));
-
     
+    if (devData < 0)
+    {
+        fprintf(stderr,"error writing to device %lu events", q.size());
+    }
+    else
+    {
+    writtenAEs += devData;
+    }
 }
 
 void yarp2device::setFileDesc(int devDesc)
