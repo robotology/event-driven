@@ -174,7 +174,7 @@ void YARPsalientI::onRead(emorph::vBottle &bot)
     
         maxXCount = *(std::max_element(xbegin, xend));
 
-        if (maxXCount > 0.0){
+        if (maxXCount > 30.0){
 
             maxX = std::distance(xbegin,std::max_element(xbegin, xend));
 
@@ -199,7 +199,7 @@ void YARPsalientI::onRead(emorph::vBottle &bot)
 
         maxYCount = *(std::max_element(ybegin, yend));
 
-        if(maxYCount > 0.0){
+        if(maxYCount > 30.0){
 
            maxY = std::distance(ybegin,std::max_element(ybegin, yend)); 
 
