@@ -72,7 +72,7 @@ YARPsalientI::YARPsalientI()
     //here we should initialise the module
 
     prevTS = 0;
-    thresh = 200;
+    thresh = 2000;
     decay = 1.0;
     clusterRadiusX = 10;
     clusterRadiusY = 10;
@@ -178,10 +178,7 @@ void YARPsalientI::onRead(emorph::vBottle &bot)
 
             maxX = std::distance(xbegin,std::max_element(xbegin, xend));
 
-        } else {
-
-            maxX = 64;
-        }  
+        }
 
         // print out the current max x if something has changed
 
@@ -203,11 +200,7 @@ void YARPsalientI::onRead(emorph::vBottle &bot)
 
            maxY = std::distance(ybegin,std::max_element(ybegin, yend)); 
 
-        } else {
-
-           maxY = 64;
-
-        }
+        } 
 
         // print out the current max y if something has changed
 
@@ -222,18 +215,20 @@ void YARPsalientI::onRead(emorph::vBottle &bot)
 
     // Prepare the output port and create event
 
-    emorph::vBottle &outbottle = vBottleOut.prepare();
-    outbottle.clear();
+    if ((maxXCount > 30.0) && (maxYCount > 30.0)){
+       emorph::vBottle &outbottle = vBottleOut.prepare();
+       outbottle.clear();
 
-    emorph::ClusterEventGauss cge;
+       emorph::ClusterEventGauss cge;
 
-    cge.setYCog(maxY);
-    cge.setXCog(maxX);
-    cge.setStamp(timeStamp);
-    cge.setChannel(0);
-    cge.setXSigma2(clusterRadiusX);
-    cge.setYSigma2(clusterRadiusY);
-    outbottle.addEvent(cge);
+       cge.setYCog(maxY);
+       cge.setXCog(maxX);
+       cge.setStamp(timeStamp);
+       cge.setChannel(0);
+       cge.setXSigma2(clusterRadiusX);
+       cge.setYSigma2(clusterRadiusY);
+       outbottle.addEvent(cge);
+    }
 
     //send the bottle on
     vBottleOut.write();
