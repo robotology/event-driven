@@ -27,10 +27,10 @@ extern int errno;
 #define THRATE 1
 
 
-device2yarp::device2yarp(int devDesc):RateThread(THRATE) {
+device2yarp::device2yarp():RateThread(THRATE) {
        
     countAEs = 0;
-    this->devDesc = devDesc;
+    //this->devDesc = devDesc;
     deviceData.resize(1024);
 }
 
@@ -43,24 +43,23 @@ bool device2yarp::threadInit(std::string moduleName){
 
 void  device2yarp::run() {
 
-
-
-    
     //read the device
-    int devData = read(devDesc, (char *)(deviceData.data()), 1024*sizeof(unsigned int));
-    if (devData < 0){
-        if (errno != EAGAIN) {
-            printf("error reading from spinn2neu: %d\n", (int)errno);
-            perror("perror:");
-        }
-        //if errno == EAGAIN ther is just no data to read just now
-        // we are using a non-blocking call so we need to return and wait for
-        // the thread to run again.
-        return;
-    } else if(devData == 0) {
-        // everything ok, no data available, just call the run again later
-        return;
-    }
+    int devData = devManager->readDevice(deviceData);
+    
+//    int devData = ::read(devDesc, (char *)(deviceData.data()), 1024*sizeof(unsigned int));
+//    if (devData < 0){
+//        if (errno != EAGAIN) {
+//            printf("error reading from spinn2neu: %d\n", (int)errno);
+//            perror("perror:");
+//        }
+//        //if errno == EAGAIN ther is just no data to read just now
+//        // we are using a non-blocking call so we need to return and wait for
+//        // the thread to run again.
+//        return;
+//    } else if(devData == 0) {
+//        // everything ok, no data available, just call the run again later
+//        return;
+//    }
 
 
     int nEvtsRead = devData / sizeof(unsigned int);
@@ -123,7 +122,7 @@ void  device2yarp::run() {
     }
 
     portvBottle.write();
-    countAEs = countAEs + nEvtsRead;
+    countAEs = countAEs + nEvtsRead/2;
 
 }
 
@@ -134,5 +133,10 @@ void device2yarp::threadRelease() {
     
     
     portvBottle.close();
+    
+}
+
+void  device2yarp::attachDeviceManager(deviceManager* devManager) {
+    this->devManager = devManager;
     
 }

@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 #include <string>
+#include <vector>
 
 class deviceManager{
     
@@ -28,10 +29,11 @@ public:
     //std::string     portDeviceName;                 // name of the device which the module will connect to
     std::string     deviceName;                     // name of the device
 
+
     void write_generic_sp2neu_reg (int devDesc, unsigned int offset, unsigned int data);
     unsigned int read_generic_sp2neu_reg (int devDesc, unsigned int offset);
     void usage (void);
-
+    
     /**
      * function that sets the device name
      */
@@ -45,7 +47,10 @@ public:
     /**
      * function that correcly opens the device
      */
-    int openDevice();
+    bool openDevice();
+    
+    int readDevice(std::vector<unsigned int> deviceData);
+    int writeDevice(std::vector<unsigned int> deviceData);
 
     bool readFifoFull();
     bool readFifoEmpty();

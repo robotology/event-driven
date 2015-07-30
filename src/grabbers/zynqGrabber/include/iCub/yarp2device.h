@@ -16,6 +16,8 @@
 #include <iCub/emorph/all.h>
 #include <ctime>
 #include <string>
+#include "iCub/deviceManager.h"
+
 
 /******************************************************************************/
 //yarp2device
@@ -28,7 +30,7 @@ class yarp2device : public yarp::os::BufferedPort<emorph::vBottle>
     long int      tsPrev;                       // FIRST TIMESTAMP TO COMPUTE DIFF
     int           countAEs;
     int           writtenAEs;
-    
+    deviceManager* devManager;
     
     void setFileDesc(int devDesc);
     
@@ -39,11 +41,12 @@ class yarp2device : public yarp::os::BufferedPort<emorph::vBottle>
 public:
     
     yarp2device();
-    virtual    bool    open(int devDesc, std::string moduleName);
+    virtual    bool    open(std::string moduleName);
     bool    init();
     void    close();
     void    onRead(emorph::vBottle &bot);
     void    interrupt();
+    void    attachDeviceManager(deviceManager* devManager);
         
     
 };

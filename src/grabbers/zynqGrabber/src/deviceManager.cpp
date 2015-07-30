@@ -136,18 +136,44 @@ int deviceManager::timeWrapCount(){
     return time;
 }
 
+int deviceManager::writeDevice(std::vector<unsigned int> deviceData){
+    int devData = ::write(devDesc, (char *)deviceData.data(), 2*deviceData.size()*sizeof(unsigned int));
+    return devData;
+    
+}
+
+int deviceManager::readDevice(std::vector<unsigned int> deviceData){
+    int devData = ::read(devDesc, (char *)(deviceData.data()), 1024*sizeof(unsigned int));
+    if (devData < 0){
+        fprintf(stdout,"error reading from device\n");
+        //if (errno != EAGAIN) {
+        //    printf("error reading from spinn2neu: %d\n", (int)errno);
+        //    perror("perror:");
+        //}
+        //if errno == EAGAIN ther is just no data to read just now
+        // we are using a non-blocking call so we need to return and wait for
+        // the thread to run again.
+        return devData;
+    } else if(devData == 0) {
+        // everything ok, no data available, just call the run again later
+        return devData;
+    }
+return devData;
+    
+}
+
 void deviceManager::closeDevice(){
     ::close(devDesc);
     fprintf(stdout, "closing device %s \n",deviceName.c_str());
 }
 
-int deviceManager::openDevice(){
+bool deviceManager::openDevice(){
     //opening the device
     fprintf(stdout,"name of the file buffer: %s\n", deviceName.c_str());
     devDesc = open(deviceName.c_str(), O_RDWR | O_NONBLOCK);
     if (devDesc < 0) {
         printf("Cannot open device file: %s \n",deviceName.c_str());
-        return devDesc;
+        return false;
     }
     
     //initialization for writing to device
@@ -188,7 +214,7 @@ int deviceManager::openDevice(){
     tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
     write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | CTRL_ENABLE_FAR_LBCK);
     
-    return devDesc;
+    return true;
 }
 
 

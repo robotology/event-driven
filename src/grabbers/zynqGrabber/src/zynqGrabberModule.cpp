@@ -179,7 +179,8 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     
     //open rateThread device2yarp
     
-    D2Y = new device2yarp(devDesc);
+    D2Y = new device2yarp();
+    D2Y->attachDeviceManager(devManager);
     if(!D2Y->threadInit(moduleName)) {
         //could not start the thread
         return false;
@@ -189,7 +190,8 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     
     //open bufferedPort yarp2device
     
-    if(!Y2D.open(devDesc,moduleName))
+    Y2D.attachDeviceManager(devManager);
+    if(!Y2D.open(moduleName))
     {
         std::cerr << " : Unable to open ports" << std::endl;
         return false;

@@ -19,9 +19,9 @@ yarp2device::yarp2device()
     writtenAEs = 0;
 }
 
-bool yarp2device::open(int devDesc, std::string moduleName)
+bool yarp2device::open(std::string moduleName)
 {
-    setFileDesc(devDesc);
+    //setFileDesc(devDesc);
 
     this->useCallback();
     
@@ -96,9 +96,9 @@ void yarp2device::onRead(emorph::vBottle &bot)
         
     }
     
-
-    int devData = ::write(devDesc, (char *)deviceData.data(), 2*q.size()*sizeof(unsigned int));
     
+    //int devData = ::write(devDesc, (char *)deviceData.data(), 2*q.size()*sizeof(unsigned int));
+    int devData = devManager->writeDevice(deviceData);
     if (devData < 0)
     {
         fprintf(stderr,"Y2D write: error writing to device %d events\n", q.size());
@@ -113,9 +113,15 @@ void yarp2device::onRead(emorph::vBottle &bot)
     }
 }
 
-void yarp2device::setFileDesc(int devDesc)
-{
-    this->devDesc = devDesc;
+//void yarp2device::setFileDesc(int devDesc)
+//{
+//    this->devDesc = devDesc;
+//}
+
+
+void  yarp2device::attachDeviceManager(deviceManager* devManager) {
+    this->devManager = devManager;
+    
 }
 
 

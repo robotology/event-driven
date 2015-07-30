@@ -28,15 +28,17 @@
 
 #include <yarp/os/all.h>
 #include <iCub/emorph/all.h>
+#include "iCub/deviceManager.h"
 
 class device2yarp : public yarp::os::RateThread {
 public:
 
-    device2yarp(int devDesc);
+    device2yarp();
     virtual void run();
     virtual void threadRelease();
     virtual bool threadInit(std::string moduleName = "");
-  
+    void    attachDeviceManager(deviceManager* devManager);
+    
 private:
 
     //output port
@@ -46,8 +48,8 @@ private:
     std::vector<unsigned int> deviceData;
     
     //device number to read from
-    int devDesc;
-
+    //int devDesc;
+    deviceManager* devManager;
     //incrementall count the number of events coming from the device
     int countAEs;
 
