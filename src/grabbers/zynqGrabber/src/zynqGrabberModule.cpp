@@ -213,7 +213,7 @@ bool zynqGrabberModule::close() {
     handlerPort.close();        // rpc of the RF module
     Y2D.close();
     D2Y->stop();                // bufferedport from yarp to device
-    D2Y->threadRelease();       // ratethread from device to yarp
+    //D2Y->threadRelease();       // ratethread from device to yarp
     
     devManager->closeDevice();  // device
     /* stop the thread */
