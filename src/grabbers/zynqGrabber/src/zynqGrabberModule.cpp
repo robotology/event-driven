@@ -169,9 +169,9 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     
     // open device
     printf("trying to connect to the device %s \n",deviceName.c_str());
-    devDesc = devManager->openDevice();
+    bool success = devManager->openDevice();
 
-    if (devDesc == false){
+    if (success == false){
         fprintf(stdout,"error opening the device\n");
         return false;
     }

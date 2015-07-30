@@ -137,7 +137,7 @@ int deviceManager::timeWrapCount(){
 }
 
 int deviceManager::writeDevice(std::vector<unsigned int> &deviceData){
-    int devData = ::write(devDesc, (char *)deviceData.data(), 2*deviceData.size()*sizeof(unsigned int));
+    int devData = ::write(devDesc, (char *)deviceData.data(), deviceData.size()*sizeof(unsigned int));
     return devData;
     
 }
@@ -158,6 +158,7 @@ int deviceManager::readDevice(std::vector<unsigned int> &deviceData){
 //        // everything ok, no data available, just call the run again later
 //        return devData;
 //    }
+
 return devData;
     
 }
