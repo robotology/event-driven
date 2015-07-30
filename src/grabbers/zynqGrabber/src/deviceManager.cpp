@@ -63,9 +63,8 @@ using namespace std;
 
 // costruttore
 
-deviceManager::deviceManager(int file_desc, string deviceName){
+deviceManager::deviceManager(string deviceName){
     
-    this->file_desc = file_desc;
     this->deviceName = deviceName;
     
 }
@@ -79,7 +78,7 @@ deviceManager::deviceManager(int file_desc, string deviceName){
 //}
 
 bool deviceManager::readFifoFull(){
-    devData=read_generic_sp2neu_reg(file_desc,RAWI_REG);
+    devData=read_generic_sp2neu_reg(devDesc,RAWI_REG);
     if((devData & MSK_RXBUF_FULL)==1)
     {
         fprintf(stdout,"FULL RX FIFO!!!!   \n");
@@ -89,7 +88,7 @@ bool deviceManager::readFifoFull(){
 }
 
 bool deviceManager::readFifoEmpty(){
-    devData=read_generic_sp2neu_reg(file_desc,RAWI_REG);
+    devData=read_generic_sp2neu_reg(devDesc,RAWI_REG);
     if((devData & MSK_RXBUF_EMPTY)==0)
     {
         fprintf(stdout,"EMPTY RX FIFO!!!!   \n");
@@ -99,7 +98,7 @@ bool deviceManager::readFifoEmpty(){
 }
 
 bool deviceManager::writeFifoAFull(){
-    devData=read_generic_sp2neu_reg(file_desc,RAWI_REG);
+    devData=read_generic_sp2neu_reg(devDesc,RAWI_REG);
     if((devData & MSK_TXBUF_AFULL)==1)
     {
         fprintf(stdout,"Almost FULL TX FIFO!!!!  \n");
@@ -109,7 +108,7 @@ bool deviceManager::writeFifoAFull(){
 }
 
 bool deviceManager::writeFifoFull(){
-    devData=read_generic_sp2neu_reg(file_desc,RAWI_REG);
+    devData=read_generic_sp2neu_reg(devDesc,RAWI_REG);
     if((devData & MSK_TXBUF_FULL)==1)
     {
         fprintf(stdout,"FULL TX FIFO!!!!   \n");
@@ -119,7 +118,7 @@ bool deviceManager::writeFifoFull(){
 }
 
 bool deviceManager::writeFifoEmpty(){
-    devData=read_generic_sp2neu_reg(file_desc,RAWI_REG);
+    devData=read_generic_sp2neu_reg(devDesc,RAWI_REG);
     if((devData & MSK_TXBUF_EMPTY)==0)
     {
         fprintf(stdout,"EMPTY TX FIFO!!!!   \n");
@@ -131,24 +130,24 @@ bool deviceManager::writeFifoEmpty(){
 int deviceManager::timeWrapCount(){
     int time;
     
-    time = read_generic_sp2neu_reg(file_desc,STMP_REG);
+    time = read_generic_sp2neu_reg(devDesc,STMP_REG);
     fprintf (stdout,"Times wrapping counter: %d\n",time);
     
     return time;
 }
 
 void deviceManager::closeDevice(){
-    ::close(file_desc);
+    ::close(devDesc);
     fprintf(stdout, "closing device %s \n",deviceName.c_str());
 }
 
-bool deviceManager::openDevice(){
+int deviceManager::openDevice(){
     //opening the device
     fprintf(stdout,"name of the file buffer: %s\n", deviceName.c_str());
-    file_desc = open(deviceName.c_str(), O_RDWR | O_NONBLOCK);
-    if (file_desc < 0) {
+    devDesc = open(deviceName.c_str(), O_RDWR | O_NONBLOCK);
+    if (devDesc < 0) {
         printf("Cannot open device file: %s \n",deviceName.c_str());
-        return false;
+        return devDesc;
     }
     
     //initialization for writing to device
@@ -158,7 +157,7 @@ bool deviceManager::openDevice(){
     int i;
     unsigned int  tmp_reg;
     
-    ioctl(file_desc, SP2NEU_VERSION, &version);
+    ioctl(devDesc, SP2NEU_VERSION, &version);
     
     hw_major = (version & 0xF0) >> 4;
     hw_minor = (version & 0x0F);
@@ -172,44 +171,44 @@ bool deviceManager::openDevice(){
     
     // Write the WrapTimeStamp register with any value if you want to clear it
     //write_generic_sp2neu_reg(fp,STMP_REG,0);
-    fprintf(stderr, "Times wrapping counter: %d\n", read_generic_sp2neu_reg(file_desc, STMP_REG));
+    fprintf(stderr, "Times wrapping counter: %d\n", read_generic_sp2neu_reg(devDesc, STMP_REG));
     
     // Enable Time wrapping interrupt
-    write_generic_sp2neu_reg(file_desc, MASK_REG, MSK_TIMEWRAPPING | MSK_TX_DUMPMODE | MSK_RX_PAR_ERR | MSK_RX_MOD_ERR);
+    write_generic_sp2neu_reg(devDesc, MASK_REG, MSK_TIMEWRAPPING | MSK_TX_DUMPMODE | MSK_RX_PAR_ERR | MSK_RX_MOD_ERR);
     
     // Flush FIFOs
-    tmp_reg = read_generic_sp2neu_reg(file_desc, CTRL_REG);
-    write_generic_sp2neu_reg(file_desc, CTRL_REG, tmp_reg | CTRL_FLUSHFIFO); // | CTRL_ENABLEIP);
+    tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
+    write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | CTRL_FLUSHFIFO); // | CTRL_ENABLEIP);
     
     // Start IP in LoopBack
-    tmp_reg = read_generic_sp2neu_reg(file_desc, CTRL_REG);
-    write_generic_sp2neu_reg(file_desc, CTRL_REG, tmp_reg | (CTRL_ENABLEINTERRUPT | CTRL_ENABLE_FAR_LBCK));
-    //    write_generic_sp2neu_reg(file_desc, CTRL_REG, tmp_reg | CTRL_ENABLE_FAR_LBCK);
+    tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
+    write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | (CTRL_ENABLEINTERRUPT | CTRL_ENABLE_FAR_LBCK));
+    //    write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | CTRL_ENABLE_FAR_LBCK);
     
-    tmp_reg = read_generic_sp2neu_reg(file_desc, CTRL_REG);
-    write_generic_sp2neu_reg(file_desc, CTRL_REG, tmp_reg | CTRL_ENABLE_FAR_LBCK);
+    tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
+    write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | CTRL_ENABLE_FAR_LBCK);
     
-    return true;
+    return devDesc;
 }
 
 
 
-void deviceManager::write_generic_sp2neu_reg (int file_desc, unsigned int offset, unsigned int data) {
+void deviceManager::write_generic_sp2neu_reg (int devDesc, unsigned int offset, unsigned int data) {
     sp2neu_gen_reg_t reg;
     
     reg.rw = 1;
     reg.data = data;
     reg.offset = offset;
-    ioctl(file_desc, SP2NEU_GEN_REG, &reg);
+    ioctl(devDesc, SP2NEU_GEN_REG, &reg);
 }
 
 
-unsigned int deviceManager::read_generic_sp2neu_reg (int file_desc, unsigned int offset) {
+unsigned int deviceManager::read_generic_sp2neu_reg (int devDesc, unsigned int offset) {
     sp2neu_gen_reg_t reg;
     
     reg.rw = 0;
     reg.offset = offset;
-    ioctl(file_desc, SP2NEU_GEN_REG, &reg);
+    ioctl(devDesc, SP2NEU_GEN_REG, &reg);
     
     return reg.data;
 }

@@ -196,15 +196,15 @@ class zynqGrabberModule:public yarp::os::RFModule {
     device2yarp* D2Y;                           // reference to the ratethread that reads the device and writes to yarp vBottle
     yarp2device Y2D;                            // bufferedport that reads yarp vBottles and writes to the device
     
-    int file_desc;
+    int devDesc;
     std::string portDeviceName;                 // name of the device which the module will connect to
     
     
     // instantiate object of class deviceManager!!!!!
     deviceManager* devManager;
     
-    //void write_generic_sp2neu_reg (int file_desc, unsigned int offset, unsigned int data);
-    //unsigned int read_generic_sp2neu_reg (int file_desc, unsigned int offset);
+    //void write_generic_sp2neu_reg (int devDesc, unsigned int offset, unsigned int data);
+    //unsigned int read_generic_sp2neu_reg (int devDesc, unsigned int offset);
     //void usage (void);
     
     bool closing; 

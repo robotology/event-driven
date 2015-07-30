@@ -32,7 +32,7 @@
 class device2yarp : public yarp::os::RateThread {
 public:
 
-    device2yarp(int file_desc);
+    device2yarp(int devDesc);
     virtual void run();
     virtual void threadRelease();
     virtual bool threadInit(std::string moduleName = "");
@@ -46,7 +46,7 @@ private:
     std::vector<unsigned int> deviceData;
     
     //device number to read from
-    int file_desc;
+    int devDesc;
 
     //incrementall count the number of events coming from the device
     int countAEs;

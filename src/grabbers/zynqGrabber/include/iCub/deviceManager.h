@@ -15,7 +15,7 @@
 class deviceManager{
     
 public:
-    deviceManager(int file_desc, std::string deviceName);
+    deviceManager(std::string deviceName);
 
     typedef struct sp2neu_gen_reg {
         unsigned int offset;
@@ -23,13 +23,13 @@ public:
         unsigned int data;
     } sp2neu_gen_reg_t;
 
-    int             file_desc;                      // file descriptor for device
+    int             devDesc;                      // file descriptor for device
     int             devData;                        // return of the read/write functions
-    std::string     portDeviceName;                 // name of the device which the module will connect to
+    //std::string     portDeviceName;                 // name of the device which the module will connect to
     std::string     deviceName;                     // name of the device
 
-    void write_generic_sp2neu_reg (int file_desc, unsigned int offset, unsigned int data);
-    unsigned int read_generic_sp2neu_reg (int file_desc, unsigned int offset);
+    void write_generic_sp2neu_reg (int devDesc, unsigned int offset, unsigned int data);
+    unsigned int read_generic_sp2neu_reg (int devDesc, unsigned int offset);
     void usage (void);
 
     /**
@@ -45,7 +45,7 @@ public:
     /**
      * function that correcly opens the device
      */
-    bool openDevice();
+    int openDevice();
 
     bool readFifoFull();
     bool readFifoEmpty();

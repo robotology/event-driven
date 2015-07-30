@@ -18,9 +18,9 @@ yarp2device::yarp2device()
     countAEs = 0;
 }
 
-bool yarp2device::open(int file_desc, std::string moduleName)
+bool yarp2device::open(int devDesc, std::string moduleName)
 {
-    setFileDesc(file_desc);
+    setFileDesc(devDesc);
 
     this->useCallback();
     
@@ -93,14 +93,14 @@ void yarp2device::onRead(emorph::vBottle &bot)
     }
     
 
-    int devData = ::write(file_desc, (char *)deviceData.data(), 2*q.size()*sizeof(unsigned int));
+    int devData = ::write(devDesc, (char *)deviceData.data(), 2*q.size()*sizeof(unsigned int));
 
     
 }
 
-void yarp2device::setFileDesc(int file_desc)
+void yarp2device::setFileDesc(int devDesc)
 {
-    this->file_desc = file_desc;
+    this->devDesc = devDesc;
 }
 
 

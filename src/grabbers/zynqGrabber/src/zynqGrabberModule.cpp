@@ -165,12 +165,13 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     dumpNameComplete = rf.findFile(dumpName.c_str());
     
     // class manageDevice
-    devManager = new deviceManager(file_desc, deviceName);
+    devManager = new deviceManager(deviceName);
     
     // open device
     printf("trying to connect to the device %s \n",deviceName.c_str());
-    
-    if (devManager->openDevice()==false){
+    devDesc = devManager->openDevice();
+
+    if (devDesc == false){
         fprintf(stdout,"error opening the device\n");
         return false;
     }
@@ -178,7 +179,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     
     //open rateThread device2yarp
     
-    D2Y = new device2yarp(file_desc);
+    D2Y = new device2yarp(devDesc);
     if(!D2Y->threadInit(moduleName)) {
         //could not start the thread
         return false;
@@ -188,7 +189,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     
     //open bufferedPort yarp2device
     
-    if(!Y2D.open(file_desc,moduleName))
+    if(!Y2D.open(devDesc,moduleName))
     {
         std::cerr << " : Unable to open ports" << std::endl;
         return false;
@@ -309,15 +310,15 @@ double zynqGrabberModule::getPeriod() {
 //}
 //
 //void zynqGrabberModule::closeDevice(){
-//    ::close(file_desc);
+//    ::close(devDesc);
 //    fprintf(stdout, "closing device %s \n",portDeviceName.c_str());
 //}
 //
 //bool zynqGrabberModule::openDevice(){
 //    //opening the device
 //    cout <<"name of the file buffer:" <<portDeviceName.c_str()<< endl;
-//    file_desc = open(portDeviceName.c_str(), O_RDWR | O_NONBLOCK);
-//    if (file_desc < 0) {
+//    devDesc = open(portDeviceName.c_str(), O_RDWR | O_NONBLOCK);
+//    if (devDesc < 0) {
 //        printf("Cannot open device file: %s \n",portDeviceName.c_str());
 //        return false;
 //    }
@@ -329,7 +330,7 @@ double zynqGrabberModule::getPeriod() {
 //    int i;
 //    unsigned int  tmp_reg;
 //
-//    ioctl(file_desc, SP2NEU_VERSION, &version);
+//    ioctl(devDesc, SP2NEU_VERSION, &version);
 //
 //    hw_major = (version & 0xF0) >> 4;
 //    hw_minor = (version & 0x0F);
@@ -343,22 +344,22 @@ double zynqGrabberModule::getPeriod() {
 //
 //    // Write the WrapTimeStamp register with any value if you want to clear it
 //    //write_generic_sp2neu_reg(fp,STMP_REG,0);
-//    fprintf(stderr, "Times wrapping counter: %d\n", read_generic_sp2neu_reg(file_desc, STMP_REG));
+//    fprintf(stderr, "Times wrapping counter: %d\n", read_generic_sp2neu_reg(devDesc, STMP_REG));
 //
 //    // Enable Time wrapping interrupt
-//    write_generic_sp2neu_reg(file_desc, MASK_REG, MSK_TIMEWRAPPING | MSK_TX_DUMPMODE | MSK_RX_PAR_ERR | MSK_RX_MOD_ERR);
+//    write_generic_sp2neu_reg(devDesc, MASK_REG, MSK_TIMEWRAPPING | MSK_TX_DUMPMODE | MSK_RX_PAR_ERR | MSK_RX_MOD_ERR);
 //
 //    // Flush FIFOs
-//    tmp_reg = read_generic_sp2neu_reg(file_desc, CTRL_REG);
-//    write_generic_sp2neu_reg(file_desc, CTRL_REG, tmp_reg | CTRL_FLUSHFIFO); // | CTRL_ENABLEIP);
+//    tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
+//    write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | CTRL_FLUSHFIFO); // | CTRL_ENABLEIP);
 //
 //    // Start IP in LoopBack
-//    tmp_reg = read_generic_sp2neu_reg(file_desc, CTRL_REG);
-//    write_generic_sp2neu_reg(file_desc, CTRL_REG, tmp_reg | (CTRL_ENABLEINTERRUPT | CTRL_ENABLE_FAR_LBCK));
-//    //    write_generic_sp2neu_reg(file_desc, CTRL_REG, tmp_reg | CTRL_ENABLE_FAR_LBCK);
+//    tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
+//    write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | (CTRL_ENABLEINTERRUPT | CTRL_ENABLE_FAR_LBCK));
+//    //    write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | CTRL_ENABLE_FAR_LBCK);
 //
-//    tmp_reg = read_generic_sp2neu_reg(file_desc, CTRL_REG);
-//    write_generic_sp2neu_reg(file_desc, CTRL_REG, tmp_reg | CTRL_ENABLE_FAR_LBCK);
+//    tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
+//    write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | CTRL_ENABLE_FAR_LBCK);
 //
 //
 //
@@ -367,22 +368,22 @@ double zynqGrabberModule::getPeriod() {
 //}
 //
 
-//void zynqGrabberModule::write_generic_sp2neu_reg (int file_desc, unsigned int offset, unsigned int data) {
+//void zynqGrabberModule::write_generic_sp2neu_reg (int devDesc, unsigned int offset, unsigned int data) {
 //    sp2neu_gen_reg_t reg;
 //
 //    reg.rw = 1;
 //    reg.data = data;
 //    reg.offset = offset;
-//    ioctl(file_desc, SP2NEU_GEN_REG, &reg);
+//    ioctl(devDesc, SP2NEU_GEN_REG, &reg);
 //}
 //
 //
-//unsigned int zynqGrabberModule::read_generic_sp2neu_reg (int file_desc, unsigned int offset) {
+//unsigned int zynqGrabberModule::read_generic_sp2neu_reg (int devDesc, unsigned int offset) {
 //    sp2neu_gen_reg_t reg;
 //
 //    reg.rw = 0;
 //    reg.offset = offset;
-//    ioctl(file_desc, SP2NEU_GEN_REG, &reg);
+//    ioctl(devDesc, SP2NEU_GEN_REG, &reg);
 //
 //    return reg.data;
 //}

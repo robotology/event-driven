@@ -27,10 +27,10 @@ extern int errno;
 #define THRATE 1
 
 
-device2yarp::device2yarp(int file_desc):RateThread(THRATE) {
+device2yarp::device2yarp(int devDesc):RateThread(THRATE) {
        
     countAEs = 0;
-    this->file_desc = file_desc;
+    this->devDesc = devDesc;
     deviceData.resize(1024);
 }
 
@@ -47,7 +47,7 @@ void  device2yarp::run() {
 
     
     //read the device
-    int devData = read(file_desc, (char *)(deviceData.data()), 1024*sizeof(unsigned int));
+    int devData = read(devDesc, (char *)(deviceData.data()), 1024*sizeof(unsigned int));
     if (devData < 0){
         if (errno != EAGAIN) {
             printf("error reading from spinn2neu: %d\n", (int)errno);

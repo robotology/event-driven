@@ -22,12 +22,12 @@
 /******************************************************************************/
 class yarp2device : public yarp::os::BufferedPort<emorph::vBottle>
 {
-    int           file_desc;                    // file descriptor for opening device /dev/spinn2neu
+    int           devDesc;                    // file descriptor for opening device /dev/spinn2neu
     bool          flagStart;                    // flag to check if this is the first time we run the callback,
                                                 // used to initialise the timestamp for computing the difference
     long int      tsPrev;                       // FIRST TIMESTAMP TO COMPUTE DIFF
     int 	  countAEs;    
-    void setFileDesc(int file_desc);
+    void setFileDesc(int devDesc);
     
     //vector to store the masked address events to the device
     std::vector<unsigned int> deviceData;
@@ -36,7 +36,7 @@ class yarp2device : public yarp::os::BufferedPort<emorph::vBottle>
 public:
     
     yarp2device();
-    virtual    bool    open(int file_desc, std::string moduleName);
+    virtual    bool    open(int devDesc, std::string moduleName);
     bool    init();
     void    close();
     void    onRead(emorph::vBottle &bot);
