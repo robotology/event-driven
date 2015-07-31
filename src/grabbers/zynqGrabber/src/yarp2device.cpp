@@ -100,7 +100,7 @@ void yarp2device::onRead(emorph::vBottle &bot)
         
         // the maximum size that can be written to the device is 512, if we hit this value we need to write and then start filling deviceData from i=0
         if (i == MAX_DATA_SIZE){
-            
+            i = 0;
             int devData = devManager->writeDevice(deviceData);
             //std::cout<<"Y2D write: writing to device"<<q.size()<< "events"<<std::endl;
             if (devData <= 0)
@@ -124,7 +124,7 @@ void yarp2device::onRead(emorph::vBottle &bot)
             
         }
     }
-    if (i){
+    if (i>0){
         deviceData.resize(i);
         int devData = devManager->writeDevice(deviceData);
         //std::cout<<"Y2D write: writing to device"<<q.size()<< "events"<<std::endl;
