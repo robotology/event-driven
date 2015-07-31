@@ -58,7 +58,7 @@ void yarp2device::onRead(emorph::vBottle &bot)
     //deviceData.resize(q.size()*2);
     deviceData.resize(MAX_DATA_SIZE);
     countAEs += q.size();
-    std::cout<<"Y2D onRead - deviceData size: "<<deviceData.size()<<std::endl;
+    //std::cout<<"Y2D onRead - deviceData size: "<<deviceData.size()<<std::endl;
     
     // checks for empty or non valid queue????
     int i = 0;
@@ -112,7 +112,7 @@ void yarp2device::onRead(emorph::vBottle &bot)
                 int wroteData = devData/(2*sizeof(unsigned int));
                 writtenAEs += wroteData;
                 if (wroteData != MAX_DATA_SIZE){
-                    std::cout<<"Y2D mismatch - yarp data: "<<MAX_DATA_SIZE<<" wrote data:"<<wroteData<<std::endl;
+                    std::cout<<"Y2D mismatch - yarp events: "<<MAX_DATA_SIZE/2<<" wrote events:"<<wroteData<<std::endl;
                 }
             }
             //            if (deviceData.size()>MAX_DATA_SIZE){
