@@ -90,7 +90,7 @@ bool deviceManager::readFifoFull(){
 
 bool deviceManager::readFifoEmpty(){
     int devData=read_generic_sp2neu_reg(devDesc,RAWI_REG);
-    if((devData & MSK_RXBUF_EMPTY)==0)
+    if((devData & MSK_RXBUF_EMPTY)==1)
     {
         fprintf(stdout,"EMPTY RX FIFO!!!!   \n");
         return true;
@@ -138,7 +138,7 @@ int deviceManager::timeWrapCount(){
 }
 
 int deviceManager::writeDevice(std::vector<unsigned int> &deviceData){
-    
+    /*
     if(writeFifoAFull()){
         std::cout<<"Y2D write: warning fifo almost full"<<std::endl;
     }
@@ -146,7 +146,7 @@ int deviceManager::writeDevice(std::vector<unsigned int> &deviceData){
     if(writeFifoFull()){
         std::cout<<"Y2D write: error fifo full"<<std::endl;
     }
-    
+    */
     int devData = ::write(devDesc, (char *)deviceData.data(), deviceData.size()*sizeof(unsigned int));
     return devData;
     
