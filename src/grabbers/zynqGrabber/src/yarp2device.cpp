@@ -55,7 +55,8 @@ void yarp2device::onRead(emorph::vBottle &bot)
 {
     
     emorph::vQueue q = bot.getAll();
-    deviceData.resize(q.size()*2);
+    //deviceData.resize(q.size()*2);
+    deviceData.resize(MAX_DATA_SIZE);
     countAEs += q.size();
     std::cout<<"Y2D onRead - deviceData size: "<<deviceData.size()<<std::endl;
     
@@ -98,15 +99,8 @@ void yarp2device::onRead(emorph::vBottle &bot)
         tsPrev = ts;
         
         // the maximum size that can be written to the device is 512, if we hit this value we need to write and then start filling deviceData from i=0
-        if (i >= deviceData.size() || i == MAX_DATA_SIZE){
+        if (i == MAX_DATA_SIZE){
             
-            if(devManager->writeFifoAFull()){
-                std::cout<<"Y2D write: warning fifo almost full"<<std::endl;
-            }
-            
-            if(devManager->writeFifoFull()){
-                std::cout<<"Y2D write: error fifo full"<<std::endl;
-            }
             int devData = devManager->writeDevice(deviceData);
             //std::cout<<"Y2D write: writing to device"<<q.size()<< "events"<<std::endl;
             if (devData <= 0)
@@ -117,21 +111,37 @@ void yarp2device::onRead(emorph::vBottle &bot)
             {
                 int wroteData = devData/(2*sizeof(unsigned int));
                 writtenAEs += wroteData;
-                if (wroteData != q.size()){
-                    std::cout<<"Y2D mismatch - yarp data: "<<q.size()<<" wrote data:"<<wroteData<<std::endl;
+                if (wroteData != MAX_DATA_SIZE){
+                    std::cout<<"Y2D mismatch - yarp data: "<<MAX_DATA_SIZE<<" wrote data:"<<wroteData<<std::endl;
                 }
             }
-            if (deviceData.size()>MAX_DATA_SIZE){
-                std::cout<<"Y2D write - deviceData size: "<<deviceData.size()<<std::endl;
-                i = 0;
-                deviceData.resize(deviceData.size() - MAX_DATA_SIZE); //resize the deviceData to the correct amount of events left after the write, it shouldn't be necessary because the for loop iterates on the events queue
-                std::cout<<"Y2D write - deviceData size: "<<deviceData.size()<<std::endl;
-            }
+            //            if (deviceData.size()>MAX_DATA_SIZE){
+            //                std::cout<<"Y2D write - deviceData size: "<<deviceData.size()<<std::endl;
+            //                i = 0;
+            //                deviceData.resize(deviceData.size() - MAX_DATA_SIZE); //resize the deviceData to the correct amount of events left after the write, it shouldn't be necessary because the for loop iterates on the events queue
+            //                std::cout<<"Y2D write - deviceData size: "<<deviceData.size()<<std::endl;
+            //            }
             
         }
     }
+    if (i){
+        deviceData.resize(i);
+        int devData = devManager->writeDevice(deviceData);
+        //std::cout<<"Y2D write: writing to device"<<q.size()<< "events"<<std::endl;
+        if (devData <= 0)
+        {
+            fprintf(stdout,"Y2D write: devData: %d",devData);
+        }
+        else
+        {
+            int wroteData = devData/(2*sizeof(unsigned int));
+            writtenAEs += wroteData;
+            if (wroteData != q.size()){
+                std::cout<<"Y2D mismatch - yarp data: "<< i <<" wrote data:"<<wroteData<<std::endl;
+            }
+        }
+    }
 }
-
 void  yarp2device::attachDeviceManager(deviceManager* devManager) {
     this->devManager = devManager;
     

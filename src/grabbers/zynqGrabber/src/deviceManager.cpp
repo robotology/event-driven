@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#include <iostream>
 
 //using namespace yarp::os;
 //using namespace yarp::sig;
@@ -137,6 +138,15 @@ int deviceManager::timeWrapCount(){
 }
 
 int deviceManager::writeDevice(std::vector<unsigned int> &deviceData){
+    
+    if(writeFifoAFull()){
+        std::cout<<"Y2D write: warning fifo almost full"<<std::endl;
+    }
+    
+    if(writeFifoFull()){
+        std::cout<<"Y2D write: error fifo full"<<std::endl;
+    }
+    
     int devData = ::write(devDesc, (char *)deviceData.data(), deviceData.size()*sizeof(unsigned int));
     return devData;
     
