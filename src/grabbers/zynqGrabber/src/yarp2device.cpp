@@ -55,7 +55,8 @@ void yarp2device::onRead(emorph::vBottle &bot)
     emorph::vQueue q = bot.getAll();
     deviceData.resize(q.size()*2);
     countAEs += q.size();
-    
+    std::cout<<"Y2D onRead - deviceData size: "<<deviceData.size()<<std::endl;
+
     // checks for empty or non valid queue????
     int i = 0;
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
@@ -107,7 +108,7 @@ void yarp2device::onRead(emorph::vBottle &bot)
             int devData = devManager->writeDevice(deviceData);
             if (devData < 0)
             {
-                std::cout<<"Y2D write: error writing to device"<<q.size()<< "events"<<std::endl;
+                std::cout<<"Y2D write: writing to device"<<q.size()<< "events"<<std::endl;
             }
             else if (devData == 0)
             {
@@ -121,8 +122,12 @@ void yarp2device::onRead(emorph::vBottle &bot)
                     std::cout<<"Y2D mismatch - yarp data: "<<q.size()<<" wrote data:"<<wroteData<<std::endl;
                 }
             }
+            std::cout<<"Y2D mismatch - deviceData size: "<<deviceData.size()<<std::endl;
+
             i = 0;
             deviceData.resize(deviceData.size() - 512*i); //resize the deviceData to the correct amount of events left after the write, it shouldn't be necessary because the for loop iterates on the events queue
+            std::cout<<"Y2D mismatch - deviceData size: "<<deviceData.size()<<std::endl;
+
         }
     }
 }
