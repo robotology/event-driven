@@ -106,11 +106,8 @@ void yarp2device::onRead(emorph::vBottle &bot)
                 std::cout<<"Y2D write: error fifo full"<<std::endl;
             }
             int devData = devManager->writeDevice(deviceData);
-            if (devData < 0)
-            {
-                std::cout<<"Y2D write: writing to device"<<q.size()<< "events"<<std::endl;
-            }
-            else if (devData == 0)
+            //std::cout<<"Y2D write: writing to device"<<q.size()<< "events"<<std::endl;
+            if (devData <= 0)
             {
                 fprintf(stdout,"Y2D write: devData: %d",devData);
             }
@@ -122,11 +119,11 @@ void yarp2device::onRead(emorph::vBottle &bot)
                     std::cout<<"Y2D mismatch - yarp data: "<<q.size()<<" wrote data:"<<wroteData<<std::endl;
                 }
             }
-            std::cout<<"Y2D mismatch - deviceData size: "<<deviceData.size()<<std::endl;
+            std::cout<<"Y2D write - deviceData size: "<<deviceData.size()<<std::endl;
 
             i = 0;
-            deviceData.resize(deviceData.size() - 512*i); //resize the deviceData to the correct amount of events left after the write, it shouldn't be necessary because the for loop iterates on the events queue
-            std::cout<<"Y2D mismatch - deviceData size: "<<deviceData.size()<<std::endl;
+            deviceData.resize(deviceData.size() - 512); //resize the deviceData to the correct amount of events left after the write, it shouldn't be necessary because the for loop iterates on the events queue
+            std::cout<<"Y2D write - deviceData size: "<<deviceData.size()<<std::endl;
 
         }
     }
