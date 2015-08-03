@@ -211,19 +211,19 @@ bool deviceManager::openDevice(){
     fprintf(stderr, "Times wrapping counter: %d\n", read_generic_sp2neu_reg(devDesc, STMP_REG));
     
     // Enable Time wrapping interrupt
-    write_generic_sp2neu_reg(devDesc, MASK_REG, MSK_TIMEWRAPPING | MSK_TX_DUMPMODE | MSK_RX_PAR_ERR | MSK_RX_MOD_ERR);
-    
+    //write_generic_sp2neu_reg(devDesc, MASK_REG, MSK_TIMEWRAPPING | MSK_TX_DUMPMODE | MSK_RX_PAR_ERR | MSK_RX_MOD_ERR);
+    write_generic_sp2neu_reg(devDesc, MASK_REG, MSK_TIMEWRAPPING | MSK_RX_PAR_ERR);
     // Flush FIFOs
     tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
     write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | CTRL_FLUSHFIFO); // | CTRL_ENABLEIP);
     
     // Start IP in LoopBack
     tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
-    write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | (CTRL_ENABLEINTERRUPT | CTRL_ENABLE_FAR_LBCK));
+    write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | (CTRL_ENABLEINTERRUPT));// | CTRL_ENABLE_FAR_LBCK));
     //    write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | CTRL_ENABLE_FAR_LBCK);
     
-    tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
-    write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | CTRL_ENABLE_FAR_LBCK);
+    //tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
+    //write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | CTRL_ENABLE_FAR_LBCK);
     
     return true;
 }
