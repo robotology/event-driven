@@ -90,7 +90,7 @@ bool deviceManager::readFifoFull(){
 
 bool deviceManager::readFifoEmpty(){
     int devData=read_generic_sp2neu_reg(devDesc,RAWI_REG);
-    if((devData & MSK_RXBUF_EMPTY)==0)
+    if((devData & MSK_RXBUF_EMPTY)==1)
     {
         fprintf(stdout,"EMPTY RX FIFO!!!!   \n");
         return true;
@@ -138,7 +138,7 @@ int deviceManager::timeWrapCount(){
 }
 
 int deviceManager::writeDevice(std::vector<unsigned int> &deviceData){
-    
+    /*
     if(writeFifoAFull()){
         std::cout<<"Y2D write: warning fifo almost full"<<std::endl;
     }
@@ -146,8 +146,13 @@ int deviceManager::writeDevice(std::vector<unsigned int> &deviceData){
     if(writeFifoFull()){
         std::cout<<"Y2D write: error fifo full"<<std::endl;
     }
+<<<<<<< HEAD
     
     int devData = 512;//::write(devDesc, (char *)deviceData.data(), deviceData.size()*sizeof(unsigned int));
+=======
+    */
+    int devData = ::write(devDesc, (char *)deviceData.data(), deviceData.size()*sizeof(unsigned int));
+>>>>>>> 7f47dc16ec91162feefd1c16bdbbb4ff9f1dfb2b
     return devData;
     
 }
@@ -174,6 +179,9 @@ return devData;
 }
 
 void deviceManager::closeDevice(){
+
+    unsigned int tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
+    write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg & ~(CTRL_ENABLEINTERRUPT));
     ::close(devDesc);
     fprintf(stdout, "closing device %s \n",deviceName.c_str());
 }
@@ -211,19 +219,19 @@ bool deviceManager::openDevice(){
     fprintf(stderr, "Times wrapping counter: %d\n", read_generic_sp2neu_reg(devDesc, STMP_REG));
     
     // Enable Time wrapping interrupt
-    write_generic_sp2neu_reg(devDesc, MASK_REG, MSK_TIMEWRAPPING | MSK_TX_DUMPMODE | MSK_RX_PAR_ERR | MSK_RX_MOD_ERR);
-    
+    //write_generic_sp2neu_reg(devDesc, MASK_REG, MSK_TIMEWRAPPING | MSK_TX_DUMPMODE | MSK_RX_PAR_ERR | MSK_RX_MOD_ERR);
+    write_generic_sp2neu_reg(devDesc, MASK_REG, MSK_TIMEWRAPPING | MSK_RX_PAR_ERR);
     // Flush FIFOs
     tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
     write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | CTRL_FLUSHFIFO); // | CTRL_ENABLEIP);
     
     // Start IP in LoopBack
     tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
-    write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | (CTRL_ENABLEINTERRUPT | CTRL_ENABLE_FAR_LBCK));
+    write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | (CTRL_ENABLEINTERRUPT));// | CTRL_ENABLE_FAR_LBCK));
     //    write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | CTRL_ENABLE_FAR_LBCK);
     
-    tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
-    write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | CTRL_ENABLE_FAR_LBCK);
+    //tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
+    //write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | CTRL_ENABLE_FAR_LBCK);
     
     return true;
 }

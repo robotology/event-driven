@@ -102,6 +102,7 @@ void yarp2device::onRead(emorph::vBottle &bot)
         if (i == MAX_DATA_SIZE){
             i = 0;
             int devData = devManager->writeDevice(deviceData);
+            sleep(0.1);
             //std::cout<<"Y2D write: writing to device"<<q.size()<< "events"<<std::endl;
             if (devData <= 0)
             {
@@ -114,14 +115,16 @@ void yarp2device::onRead(emorph::vBottle &bot)
                 if (wroteData != MAX_DATA_SIZE){
                     std::cout<<"Y2D mismatch - yarp events: "<<MAX_DATA_SIZE/2<<" wrote events:"<<wroteData<<std::endl;
                 }
-            }
+            
+	    }
+return;
             //            if (deviceData.size()>MAX_DATA_SIZE){
             //                std::cout<<"Y2D write - deviceData size: "<<deviceData.size()<<std::endl;
             //                i = 0;
             //                deviceData.resize(deviceData.size() - MAX_DATA_SIZE); //resize the deviceData to the correct amount of events left after the write, it shouldn't be necessary because the for loop iterates on the events queue
             //                std::cout<<"Y2D write - deviceData size: "<<deviceData.size()<<std::endl;
             //            }
-            
+           
         }
     }
     if (i>0){
@@ -137,7 +140,7 @@ void yarp2device::onRead(emorph::vBottle &bot)
             int wroteData = devData/(2*sizeof(unsigned int));
             writtenAEs += wroteData;
             if (wroteData != q.size()){
-                std::cout<<"Y2D mismatch - yarp data: "<< i <<" wrote data:"<<wroteData<<std::endl;
+                std::cout<<"Y2D end cicle - yarp data: "<< i <<" wrote data:"<<wroteData<<std::endl;
             }
         }
     }
