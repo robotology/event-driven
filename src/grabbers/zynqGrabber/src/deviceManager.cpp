@@ -174,6 +174,9 @@ return devData;
 }
 
 void deviceManager::closeDevice(){
+
+    unsigned int tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
+    write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg & ~(CTRL_ENABLEINTERRUPT));
     ::close(devDesc);
     fprintf(stdout, "closing device %s \n",deviceName.c_str());
 }
