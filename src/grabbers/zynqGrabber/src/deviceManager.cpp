@@ -146,14 +146,20 @@ int deviceManager::writeDevice(std::vector<unsigned int> &deviceData){
     if(writeFifoFull()){
         std::cout<<"Y2D write: error fifo full"<<std::endl;
     }
-<<<<<<< HEAD
-    
-    int devData = 512;//::write(devDesc, (char *)deviceData.data(), deviceData.size()*sizeof(unsigned int));
-=======
     */
-    int devData = ::write(devDesc, (char *)deviceData.data(), deviceData.size()*sizeof(unsigned int));
->>>>>>> 7f47dc16ec91162feefd1c16bdbbb4ff9f1dfb2b
-    return devData;
+    int written =0;
+    char* buff = (char *)deviceData.data();
+    unsigned int len = deviceData.size()*sizeof(unsigned int);
+    
+    while (written < len) {
+        
+        int ret = ::write(devDesc, buff + written, len - written);
+        if (ret<0){
+            break;
+        }
+        written += ret;
+    }
+    return written/sizeof(unsigned int);
     
 }
 
