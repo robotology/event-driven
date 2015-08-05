@@ -186,15 +186,16 @@ void yarp2device::onRead(emorph::vBottle &bot)
         // set intial timestamp to compute diff
         if (flagStart == false)
         {
+            std::cout<<"TS prev  :"<<tsPrev<<"us"<<std::endl;
+            std::cout<<"TS       :"<<ts<<"us"<<std::endl;
+            std::cout<<"Delta TS :"<<ts - tsPrev<<"us"<<std::endl;
+
             //std::cout<<"Initial TS"<<ts<<"us"<<std::endl;
             tsPrev = ts;
             flagStart = true;
         }
         // timestamp difference
         int word1 = (ts - tsPrev);
-        std::cout<<"TS prev  :"<<tsPrev<<"us"<<std::endl;
-        std::cout<<"TS       :"<<ts<<"us"<<std::endl;
-        std::cout<<"Delta TS :"<<word1<<"us"<<std::endl;
         
         if (tsPrev > ts)
         {
@@ -204,6 +205,7 @@ void yarp2device::onRead(emorph::vBottle &bot)
             
             //std::cout<<"Wrap TS: max     "<<emorph::vtsHelper::maxStamp()<<"us"<<std::endl;
             std::cout<<"Wrap TS: Delta TS new"<<word1<<"us"<<std::endl;
+            word1 = 0;
             
         }
         
