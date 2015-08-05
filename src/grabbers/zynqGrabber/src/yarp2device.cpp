@@ -186,36 +186,37 @@ void yarp2device::onRead(emorph::vBottle &bot)
         // set intial timestamp to compute diff
         if (flagStart == false)
         {
-            std::cout<<"Initial TS"<<ts<<"us"<<std::endl;
+            //std::cout<<"Initial TS"<<ts<<"us"<<std::endl;
             tsPrev = ts;
             flagStart = true;
         }
         // timestamp difference
         int word1 = (ts - tsPrev);
-        std::cout<<"TS prev  :"<<tsPrev<<"us"<<std::endl;
-        std::cout<<"TS       :"<<ts<<"us"<<std::endl;
-        std::cout<<"Delta TS :"<<word1<<"us"<<std::endl;
+        //std::cout<<"TS prev  :"<<tsPrev<<"us"<<std::endl;
+        //std::cout<<"TS       :"<<ts<<"us"<<std::endl;
+        //std::cout<<"Delta TS :"<<word1<<"us"<<std::endl;
         
         if (tsPrev > ts)
         {
-            std::cout<<"Wrap TS: ts      "<<ts<<"us"<<std::endl;
-            std::cout<<"Wrap TS: ts prev "<<tsPrev<<"us"<<std::endl;
+            //std::cout<<"Wrap TS: ts      "<<ts<<"us"<<std::endl;
+            //std::cout<<"Wrap TS: ts prev "<<tsPrev<<"us"<<std::endl;
             word1 += emorph::vtsHelper::maxStamp();
             
-            std::cout<<"Wrap TS: max     "<<emorph::vtsHelper::maxStamp()<<"us"<<std::endl;
+            //std::cout<<"Wrap TS: max     "<<emorph::vtsHelper::maxStamp()<<"us"<<std::endl;
             std::cout<<"Wrap TS: Delta TS new"<<word1<<"us"<<std::endl;
             
         }
         
-        word1 = 1;//(4 * word1);
+        word1 = (4 * word1);
         
         deviceData[i] = word1;   //timestamp
         deviceData[i+1] = word0; //data
         
         i += 2;
         tsPrev = ts;
+        
     }
-    
+    flagStart = false; // workaround for long delays due to large delta ts across bottles
     // write to the device
     
     int wroteData = devManager->writeDevice(deviceData); // wroteData is the number of data written to the FIFO (double the amount of events)
