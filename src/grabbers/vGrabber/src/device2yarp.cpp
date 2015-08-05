@@ -924,6 +924,8 @@ void  device2yarp::run() {
                     fprintf(fout,"%lu,",(long unsigned int)t);
                 }
             }
+            cout<<"raw ts: "<<t<<std::endl;
+
 
 
             //we delay the sending of the timestamp till when we know the

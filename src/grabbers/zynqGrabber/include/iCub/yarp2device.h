@@ -27,7 +27,7 @@ class yarp2device : public yarp::os::BufferedPort<emorph::vBottle>
     int           devDesc;                    // file descriptor for opening device /dev/spinn2neu
     bool          flagStart;                    // flag to check if this is the first time we run the callback,
                                                 // used to initialise the timestamp for computing the difference
-    long int      tsPrev;                       // FIRST TIMESTAMP TO COMPUTE DIFF
+    int      tsPrev;                       // FIRST TIMESTAMP TO COMPUTE DIFF
     int           countAEs;
     int           writtenAEs;
     deviceManager* devManager;
