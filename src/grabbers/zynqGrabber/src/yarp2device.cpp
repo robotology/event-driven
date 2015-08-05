@@ -192,9 +192,9 @@ void yarp2device::onRead(emorph::vBottle &bot)
         }
         // timestamp difference
         int word1 = (ts - tsPrev);
-        //std::cout<<"TS prev  :"<<tsPrev<<"us"<<std::endl;
-        //std::cout<<"TS       :"<<ts<<"us"<<std::endl;
-        //std::cout<<"Delta TS :"<<word1<<"us"<<std::endl;
+        std::cout<<"TS prev  :"<<tsPrev<<"us"<<std::endl;
+        std::cout<<"TS       :"<<ts<<"us"<<std::endl;
+        std::cout<<"Delta TS :"<<word1<<"us"<<std::endl;
         
         if (tsPrev > ts)
         {
