@@ -204,12 +204,12 @@ void yarp2device::onRead(emorph::vBottle &bot)
             word1 += emorph::vtsHelper::maxStamp();
             
             //std::cout<<"Wrap TS: max     "<<emorph::vtsHelper::maxStamp()<<"us"<<std::endl;
-            std::cout<<"Wrap TS: Delta TS new"<<word1<<"us"<<std::endl;
+            std::cout<<"--------------- Wrap TS: Delta TS new "<<word1<<"us--------------------"<<std::endl;
             word1 = 0;
             
         }
         
-        word1 = (4 * word1);
+        word1 = 1;//(4 * word1);
         
         deviceData[i] = word1;   //timestamp
         deviceData[i+1] = word0; //data
