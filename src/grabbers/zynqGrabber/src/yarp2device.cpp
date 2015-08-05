@@ -164,7 +164,7 @@ void yarp2device::onRead(emorph::vBottle &bot)
     countAEs += q.size(); // counter for total number of events received from yarp port for the whole duration of the thread
     
     std::cout<<"Y2D onRead - events queue size: "<<q.size()<<std::endl;
-    std::cout<<"Y2D onRead - deviceData size: "<<deviceData.size()<<std::endl;
+    std::cout<<"Y2D onRead - deviceData size/2: "<<deviceData.size()/2<<std::endl;
     
     // write events on the vector of unsigned int
     // checks for empty or non valid queue????
@@ -186,15 +186,21 @@ void yarp2device::onRead(emorph::vBottle &bot)
         // set intial timestamp to compute diff
         if (flagStart == false)
         {
+            std::cout<<"Initial TS"<<ts<<"ms"<<std::endl;
             tsPrev = ts;
             flagStart = true;
         }
         // timestamp difference
         int word1 = (ts - tsPrev);
+        std::cout<<"Delta TS:"<<word1<<"us"<<std::endl;
         
         if (tsPrev > ts)
         {
+            std::cout<<"Wrap TS: ts"<<ts<<"us"<<std::endl;
+            std::cout<<"Wrap TS: ts prev"<<tsPrev<<"us"<<std::endl;
             word1 += emorph::vtsHelper::maxStamp();
+            std::cout<<"Wrap TS: Delta TS new"<<word1<<"us"<<std::endl;
+            
         }
         
         word1 = (4 * word1);
