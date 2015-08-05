@@ -199,6 +199,7 @@ void yarp2device::onRead(emorph::vBottle &bot)
             std::cout<<"Wrap TS: ts      "<<ts<<"us"<<std::endl;
             std::cout<<"Wrap TS: ts prev "<<tsPrev<<"us"<<std::endl;
             word1 += emorph::vtsHelper::maxStamp();
+            
             std::cout<<"Wrap TS: max     "<<emorph::vtsHelper::maxStamp()<<"us"<<std::endl;
             std::cout<<"Wrap TS: Delta TS new"<<word1<<"us"<<std::endl;
             
