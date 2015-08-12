@@ -16,17 +16,17 @@ biasManager::biasManager(){
     
     // todo: load names and values from config file (this way to change chip we only have to change the file)
     //tBiases.insert(TStrDoublePair("cas",52458));
-    tBiases.insert(TStrDoublePair("injg",101508));
-    tBiases.insert(TStrDoublePair("reqPd",16777215));
-    tBiases.insert(TStrDoublePair("pux",8053457));
-    tBiases.insert(TStrDoublePair("diffoff",133));
-    tBiases.insert(TStrDoublePair("req",160712));
-    tBiases.insert(TStrDoublePair("refr",944));
-    tBiases.insert(TStrDoublePair("puy",16777215));
-    tBiases.insert(TStrDoublePair("diffon",639172));
-    tBiases.insert(TStrDoublePair("diff",30108));
-    tBiases.insert(TStrDoublePair("foll",20));
-    tBiases.insert(TStrDoublePair("pr",5));
+    //tBiases.insert(TStrDoublePair("injg",101508));
+//    tBiases.insert(TStrDoublePair("reqPd",16777215));
+//    tBiases.insert(TStrDoublePair("pux",8053457));
+//    tBiases.insert(TStrDoublePair("diffoff",133));
+//    tBiases.insert(TStrDoublePair("req",160712));
+//    tBiases.insert(TStrDoublePair("refr",944));
+//    tBiases.insert(TStrDoublePair("puy",16777215));
+//    tBiases.insert(TStrDoublePair("diffon",639172));
+//    tBiases.insert(TStrDoublePair("diff",30108));
+//    tBiases.insert(TStrDoublePair("foll",20));
+//    tBiases.insert(TStrDoublePair("pr",5));
     
     tBiases["cas"] = 52458;
     tBiases["injg"] = 101508;
