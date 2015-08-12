@@ -18,6 +18,9 @@
 #include <iCub/device2yarp.h>
 #include <unistd.h>
 #include <errno.h>
+using namespace std;
+using namespace yarp::os;
+//using namespace emorph::ebuffer;
 
 extern int errno;
 
@@ -48,49 +51,30 @@ void  device2yarp::run() {
     }
     
     
-    //read the device
+    //read the device, returns the number of bytes read
     int devData = devManager->readDevice(deviceData);
     
-    if (devData < 0){
-        if (errno != EAGAIN) {
-            printf("error reading from spinn2neu: %d\n", (int)errno);
-            perror("perror:");
-        }
-        //if errno == EAGAIN ther is just no data to read just now
-        // we are using a non-blocking call so we need to return and wait for
-        // the thread to run again.
-        return;
-    } else if(devData == 0) {
-        // everything ok, no data available, just call the run again later
+    // check this!
+    if (devData <= 0){
         return;
     }
+    
+    // pointer to the vector of events
+    char* buff = (char *)deviceData.data();
 
-
+    /*
     int nEvtsRead = devData / sizeof(unsigned int);
 
-    //data will always be less than 2^16 as it fits in the first 16 bits
-    if(deviceData[0] < 65536 && deviceData[1] < 65536) {
-        //we have no way to distinquish between these values...
-        std::cout << "Blind Spot" << std::endl;
+    if(nEvtsRead % 2) {
+        std::cerr << "An odd number of events where read. We need to "
+                     "implement a robust checking of timestamp - data ordering"
+                     << std::endl;
+        std::cerr << "Exiting this thread because we cannot gaurantee the first"
+                     " event is a timestamp! (and we cannot gaurantee it for any"
+                  "of the following data reads either)" << std::endl;
         return;
     }
-
-    int i = 0;
-    if(deviceData[0] < 65536) {
-        //this is not a timestamp so we want to ignore it.
-        i = 1;
-    }
-
-//    if(nEvtsRead % 2) {
-//        std::cerr << "An odd number of events where read. We need to "
-//                     "implement a robust checking of timestamp - data ordering"
-//                     << std::endl;
-//        std::cerr << "Exiting this thread because we cannot gaurantee the first"
-//                     " event is a timestamp! (and we cannot gaurantee it for any"
-//                  "of the following data reads either)" << std::endl;
-//        return;
-//    }
-
+    */
 
 
     // convert data to YARP vBottle
@@ -98,35 +82,49 @@ void  device2yarp::run() {
     emorph::vBottle &evtDevice = portvBottle.prepare();
     evtDevice.clear();
     
-    emorph::AddressEvent ae;
-    for (i; i < nEvtsRead; i += 2)
-    {
-        int ts = deviceData[i] & 0x00ffffff;
-        int word0 = deviceData[i+1];
-
+    //do some sketchy casting to make things fast at this part of the
+    //project
+    Bottle * bb = (Bottle *)&evtDevice;
+    
+    //now we can add our searchable tag
+    bb->addString("AE");
+    yarp::os::Bottle &eventlist = bb->addList();
+    
+    int bytesdropped = 0;
+    int i = 0;
+    
+    // scan the vector read from the device
+    while(i <= devData - 8) {
         
-        int polarity=word0&0x01;
-        word0>>=1;
-
-        int x=word0&0x7f;
-        word0>>=7;
-
-        int y=word0&0x7f;
-        word0>>=7;
-
-        int channel=word0&0x01;
-
-        ae.setStamp(ts);
-        ae.setChannel(channel);
-        ae.setPolarity(polarity);
-        ae.setX(x);
-        ae.setY(y);
-        evtDevice.addEvent(ae);
-
+        int TS =  *(int *)(buff + i);//= deviceData[i];
+        int AE =  *(int *)(buff + i + 4);//deviceData[i+1];
+        
+        if(!(TS & 0x80000000) || (AE & 0xFFFF0000)) {
+            //misalignment, move on by 1 byte
+            bytesdropped++;
+            i += 1;
+        } else {
+            //successful data match move on by 8 bytes
+            if(!eventlist.size())
+                std::cout << "1 " << (int)(TS & 0x00FFFFFF) << std::endl;
+            else
+                std::cout << "0 " << (int)(TS & 0x00FFFFFF) << std::endl;
+            
+            eventlist.add((int)(TS & 0x80FFFFFF));
+            eventlist.add(AE);
+            i += 8;
+        }
     }
-
+    bytesdropped += devData - i;
+    
+    //if(bytesdropped)
+    //    std::cerr << "Lost " << bytesdropped << " bytes" << std::endl;
+    
+    countAEs += eventlist.size();
+    
+    vStamp.update();
+    portvBottle.setEnvelope(vStamp);
     portvBottle.write();
-    countAEs = countAEs + nEvtsRead/2;
 
 }
 

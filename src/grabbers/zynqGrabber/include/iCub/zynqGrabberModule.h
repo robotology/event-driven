@@ -153,6 +153,9 @@
 #define COMMAND_VOCAB_RESUME  VOCAB3('r','e','s')
 #define COMMAND_VOCAB_FAILED  VOCAB4('f','a','i','l')
 #define COMMAND_VOCAB_OK      VOCAB2('o','k')
+#define COMMAND_VOCAB_SETBIAS VOCAB3('s','e','t') // set biasName biasValue channel
+// TODO if channel is not specificed set both channels
+#define COMMAND_VOCAB_PROG    VOCAB4('p','r','o','g')
 
 #include <iostream>
 #include <string>

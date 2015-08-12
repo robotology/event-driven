@@ -270,6 +270,29 @@ bool zynqGrabberModule::respond(const Bottle& command, Bottle& reply) {
             ok = true;
         }
             break;
+        case COMMAND_VOCAB_SETBIAS:
+            rec = true;
+        {
+            string biasName = command.get(1).asString();
+            double biasValue = command.get(2).asDouble();
+            int channel = command.get(3).asInt();
+            
+            // setBias function
+            // biasManager.setBias(biasName, biasValue, channel);
+            ok = true;
+        }
+            break;
+        case COMMAND_VOCAB_PROG:
+            rec= true;
+        {
+            int channel = command.get(1).asInt();
+            
+            // progBias function
+            // biasManager.progBias(channel);
+            ok = true;
+            
+        }
+            break;
     }
     
     mutex.post();

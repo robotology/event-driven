@@ -43,6 +43,7 @@ private:
 
     //output port
     yarp::os::BufferedPort<emorph::vBottle> portvBottle;
+    yarp::os::Stamp vStamp;
     
     //read buffer
     std::vector<unsigned int> deviceData;
