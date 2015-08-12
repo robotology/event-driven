@@ -116,7 +116,7 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
     //std::cout << "2D point: " << px.toString() << std::endl;
     //std::cout << "3D point: " << x.toString() << std::endl;
 
-    //gazecontrol->lookAtFixationPoint(x);
+    gazecontrol->lookAtFixationPoint(x);
 
     if(!scopeOutPort.getOutputCount()) return;
     yarp::os::Bottle &scopeBot = scopeOutPort.prepare();
@@ -137,6 +137,18 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
         return;
     }
 
+    return;
+
+
+//    yarp::sig::Vector x,o;
+//    gazecontrol->getLeftEyePose(x,o);
+
+//    Matrix T=yarp::sig::axis2dcm(o);
+//    T(0,3)=x[0];
+//    T(1,3)=x[1];
+//    T(2,3)=x[2];
+
+//    targetPos=T*fp;
 
 
     yarp::os::Bottle& BottleOut = cartOutPort.prepare();
