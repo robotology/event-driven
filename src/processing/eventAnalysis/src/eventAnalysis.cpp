@@ -98,17 +98,6 @@ void eventStatisticsDumper::onRead(emorph::vBottle &bot)
     }
     //std::cout << ". ";
 
-    emorph::vQueue qcirc = bot.get<emorph::ClusterEventGauss>();
-    for(emorph::vQueue::iterator qi = qcirc.begin(); qi < qcirc.end(); qi++) {
-        emorph::ClusterEventGauss *cleg = (*qi)->getAs<emorph::ClusterEventGauss>();
-        if(!cleg) continue;
-        unsigned long int ts = unwrapper(cleg->getStamp());
-        stamp_writer << ts << std::endl;
-
-    }
-
-    return;
-
     //create event queue
     emorph::vQueue q = bot.getAll();
     emorph::vQueue::iterator qi, qi2;
@@ -130,18 +119,16 @@ void eventStatisticsDumper::onRead(emorph::vBottle &bot)
         }
         prevstamp = (*qi)->getStamp();
 
-//        emorph::AddressEvent *ae = (*qi)->getAs<emorph::AddressEvent>();
-//        if(ae) {
-//            unsigned long int ts = unwrapper(ae->getStamp());
-//            stamp_writer << ae->getChannel() << " " << ts << " " <<
-//                            (int)ae->getPolarity() << " " << (int)ae->getX() << " " <<
-//                            (int)ae->getY() << std::endl;
-//        }
-        emorph::ClusterEventGauss *cleg = (*qi)->getAs<emorph::ClusterEventGauss>();
-        if(cleg) {
-            unsigned long int ts = unwrapper(cleg->getStamp());
-            stamp_writer << ts << std::endl;
-        }
+        emorph::AddressEvent *ae = (*qi)->getAs<emorph::AddressEvent>();
+        if(!ae) continue;
+        unsigned long int ts = unwrapper(ae->getStamp());
+        stamp_writer << ae->getChannel() << " " << ts << " " << 
+            (int)ae->getPolarity() << " " << (int)ae->getX() << " " <<
+            (int)ae->getY();
+            if(i == 1)
+                stamp_writer << " 1" << std::endl;
+            else
+                stamp_writer << " 0" << std::endl;
     }
 
     count_writer << q.size();
