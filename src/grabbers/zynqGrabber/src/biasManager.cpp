@@ -111,12 +111,12 @@ bool biasManager::setBias(std::string biasName, double biasValue){
 bool biasManager::progBias(){
     // implement here the transformation between the bias value list and the array of n bits that will be sent to the device
     
-    TStrDoubleMap::iterator i;
+   // TStrDoubleMap::iterator i;
     
-    for (i = tBiases.begin(); i!= tBiases.end(); i++) {
-        
-        double bVal = i->second;
-     
+//    for (i = tBiases.begin(); i!= tBiases.end(); i++) {
+//        
+//        double bVal = i->second;
+    
         /* progBias from aexGrabber
          int bitvalue;
          
@@ -135,8 +135,8 @@ bool biasManager::progBias(){
          progBitAEs(bitvalue, camera); // sends a bit value per time
          
          */
-        
-    }
+   
+   // }
     
 }
 
