@@ -11,6 +11,7 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <iostream>
+#include <errno.h>
 
 //using namespace yarp::os;
 //using namespace yarp::sig;
