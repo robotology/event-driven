@@ -25,7 +25,6 @@
 
 #include <iCub/zynqGrabberModule.h>
 
-
 bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 
     /* Process all parameters from both command-line and .ini file */
@@ -93,7 +92,6 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     } else {
         std::cout << "Device: " << device << " not known " << std::endl;
         return false;
-        
     }
     
     configLeft -> programBiases();

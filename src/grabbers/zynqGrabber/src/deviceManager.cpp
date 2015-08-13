@@ -12,7 +12,6 @@
 #include <sys/ioctl.h>
 #include <errno.h>
 
-
 #define MAGIC_NUM 100
 #define SP2NEU_VERSION         _IOR (MAGIC_NUM,  7, void *)
 #define SP2NEU_TIMESTAMP       _IOR (MAGIC_NUM,  8, void *)
@@ -84,16 +83,28 @@ deviceManager::deviceManager(std::string deviceName, unsigned int maxBufferSize)
 
 bool deviceManager::openDevice(){
 
-    //opening the device
-    std::cout << "name of the device: " << deviceName << std::endl;
-    devDesc = ::open(deviceName.c_str(), O_RDWR);
-    if (devDesc < 0) {
-        std::cerr << "Cannot open device file: " << deviceName << std::endl;
-        perror("");
-        return false;
+    if(deviceName == "/dev/aerfx2_0") {
+        //opening the device
+        std::cout << "name of the device: " << deviceName << std::endl;
+        devDesc = ::open(deviceName.c_str(), O_RDWR | O_NONBLOCK);
+        if (devDesc < 0) {
+            std::cerr << "Cannot open device file: " << deviceName << " " << devDesc << " : ";
+            perror("");
+            return false;
+        }
     }
 
     if(deviceName == "/dev/spinn2neu") {
+
+        //opening the device
+        std::cout << "name of the device: " << deviceName << std::endl;
+        devDesc = ::open(deviceName.c_str(), O_RDWR);
+        if (devDesc < 0) {
+            std::cerr << "Cannot open device file: " << deviceName << " " << devDesc << " : ";
+            perror("");
+            return false;
+        }
+
         //initialization for writing to device
         unsigned long version;
         unsigned char hw_major,hw_minor;
@@ -292,16 +303,17 @@ void deviceManager::run(void)
     while(!isStopping()) {
         //read is a blocking call
         safety.wait();
+
         int r = ::read(devDesc, readBuffer.data() + readCount, 
                     maxBufferSize - readCount);
 
         if(r < 0) {
-            std::cerr << "Error reading from " << deviceName << std::endl;
-            perror("perror: ");
-            continue;
+            //std::cerr << "Error reading from " << deviceName << std::endl;
+            //perror("perror: ");
+        } else {
+            readCount += r;
         }
 
-        readCount += r;
         safety.post();
 
         if(readCount >= maxBufferSize) {
