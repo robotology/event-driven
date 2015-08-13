@@ -12,45 +12,33 @@
 #include <stdio.h>
 #include <string>
 #include <vector>
+#include <yarp/os/all.h>
+#include <fstream>
 
-class deviceManager{
-    
-public:
-    deviceManager(std::string deviceName);
+/**
+ * @brief The deviceManager class opens the device and implements a constant
+ * read
+ */
+class deviceManager : yarp::os::Thread {
 
+private:
+
+    //device member variables
+    int devDesc;            // file descriptor for device
+    std::string deviceName; // name of the device
+
+
+    //hardware specific
     typedef struct sp2neu_gen_reg {
         unsigned int offset;
         char         rw;
         unsigned int data;
     } sp2neu_gen_reg_t;
 
-    int             devDesc;                      // file descriptor for device
-    //int             devData;                        // return of the read/write functions
-    //std::string     portDeviceName;                 // name of the device which the module will connect to
-    std::string     deviceName;                     // name of the device
-
-
-    void write_generic_sp2neu_reg (int devDesc, unsigned int offset, unsigned int data);
+    void write_generic_sp2neu_reg (int devDesc, unsigned int offset,
+                                   unsigned int data);
     unsigned int read_generic_sp2neu_reg (int devDesc, unsigned int offset);
     void usage (void);
-    
-    /**
-     * function that sets the device name
-     */
-    //void setDeviceName(std::string name);
-    
-    /**
-     * function that correcly closes the device
-     */
-    void closeDevice();
-
-    /**
-     * function that correcly opens the device
-     */
-    bool openDevice();
-    
-    int readDevice(std::vector<unsigned int> &deviceData);
-    int writeDevice(std::vector<unsigned int> &deviceData);
 
     bool readFifoFull();
     bool readFifoEmpty();
@@ -58,6 +46,27 @@ public:
     bool writeFifoFull();
     bool writeFifoEmpty();
     int timeWrapCount();
+
+
+    //read thread related functions and variables
+    int readCount;
+    unsigned int maxBufferSize;
+    std::vector<char> readBuffer;
+    std::vector<char> accessBuffer;
+    yarp::os::Semaphore safety;
+    virtual void run();
+
+    
+public:
+
+    deviceManager(std::string deviceName, unsigned int maxBufferSize);
+
+    bool openDevice();
+    void closeDevice();
+    //int readDevice(std::vector<unsigned int> &deviceData);
+    int writeDevice(std::vector<unsigned int> &deviceData);
+
+    std::vector<char> &readDevice();
 
 };
 

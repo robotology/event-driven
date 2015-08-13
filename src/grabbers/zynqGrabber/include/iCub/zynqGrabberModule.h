@@ -181,17 +181,6 @@
 
 
 class zynqGrabberModule:public yarp::os::RFModule {
-    std::string moduleName;                     // name of the module (rootname of ports)
-    std::string robotName;                      // name of the robot
-    std::string binaryName;                     // name of the file containing biases
-    std::string binaryNameComplete;             // complete path for the file cointaing biases
-    std::string robotPortName;                  // reference to the head of the robot
-    std::string deviceName;                     // name of the device
-    std::string devicePortName;                 // reference to the device port
-    std::string handlerPortName;                // name of the handler port (comunication with respond function)
-    std::string dumpName;
-    std::string dumpNameComplete;
-    //int ratethread;                           // time constant for ratethread
 
     yarp::os::Port handlerPort;                 // a port to handle messages
     

@@ -10,12 +10,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-#include <iostream>
 #include <errno.h>
-
-//using namespace yarp::os;
-//using namespace yarp::sig;
-using namespace std;
 
 
 #define MAGIC_NUM 100
@@ -65,9 +60,16 @@ using namespace std;
 
 // costruttore
 
-deviceManager::deviceManager(string deviceName){
+deviceManager::deviceManager(std::string deviceName, unsigned int maxBufferSize){
     
     this->deviceName = deviceName;
+    this->maxBufferSize = maxBufferSize;
+
+    //allocate the memory for the readBuffer
+    readBuffer.resize(maxBufferSize);
+    //put the accessBuffer into a memory location which has the potential to
+    //expand to the maximum size
+    accessBuffer.reserve(maxBufferSize);
     
 }
 
@@ -78,6 +80,75 @@ deviceManager::deviceManager(string deviceName){
 //    printf("saving portDevice \n");
 //    portDeviceName=deviceName;
 //}
+
+bool deviceManager::openDevice(){
+
+    //opening the device
+    std::cout << "name of the file buffer: " << deviceName << std::endl;
+    devDesc = open(deviceName.c_str(), O_RDWR);
+    if (devDesc < 0) {
+        std::cerr << "Cannot open device file: " << deviceName << std::endl;
+        return false;
+    }
+
+    //start the read thread
+    start();
+
+    //initialization for writing to device
+    unsigned long version;
+    unsigned char hw_major,hw_minor;
+    char          stringa[4];
+    int i;
+    unsigned int  tmp_reg;
+
+    ioctl(devDesc, SP2NEU_VERSION, &version);
+
+    hw_major = (version & 0xF0) >> 4;
+    hw_minor = (version & 0x0F);
+    stringa[3]=0;
+
+    for (i=0; i<3; i++) {
+        stringa[i] = (version&0xFF000000) >> 24;
+        version = version << 8;
+    }
+    fprintf(stderr, "\r\nIdentified: %s version %d.%d\r\n\r\n", stringa, hw_major, hw_minor);
+
+    // Write the WrapTimeStamp register with any value if you want to clear it
+    //write_generic_sp2neu_reg(fp,STMP_REG,0);
+    fprintf(stderr, "Times wrapping counter: %d\n", read_generic_sp2neu_reg(devDesc, STMP_REG));
+
+    // Enable Time wrapping interrupt
+    //write_generic_sp2neu_reg(devDesc, MASK_REG, MSK_TIMEWRAPPING | MSK_TX_DUMPMODE | MSK_RX_PAR_ERR | MSK_RX_MOD_ERR);
+    write_generic_sp2neu_reg(devDesc, MASK_REG, MSK_TIMEWRAPPING | MSK_RX_PAR_ERR);
+    // Flush FIFOs
+    tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
+    write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | CTRL_FLUSHFIFO); // | CTRL_ENABLEIP);
+
+    // Start IP in LoopBack
+    tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
+    write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | (CTRL_ENABLEINTERRUPT));// | CTRL_ENABLE_FAR_LBCK));
+    //    write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | CTRL_ENABLE_FAR_LBCK);
+
+    //tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
+    //write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | CTRL_ENABLE_FAR_LBCK);
+
+    return true;
+}
+
+void deviceManager::closeDevice()
+{
+    //stop the read thread
+    if(!stop())
+        std::cerr << "Thread did not stop correctly" << std::endl;
+
+    //close the device
+    unsigned int tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
+    write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg & ~(CTRL_ENABLEINTERRUPT));
+    ::close(devDesc);
+    std::cout <<  "closing device " << deviceName << std::endl;
+}
+
+
 
 bool deviceManager::readFifoFull(){
     int devData=read_generic_sp2neu_reg(devDesc,RAWI_REG);
@@ -131,118 +202,12 @@ bool deviceManager::writeFifoEmpty(){
 
 int deviceManager::timeWrapCount(){
     int time;
-    
+
     time = read_generic_sp2neu_reg(devDesc,STMP_REG);
     fprintf (stdout,"Times wrapping counter: %d\n",time);
-    
+
     return time;
 }
-
-int deviceManager::writeDevice(std::vector<unsigned int> &deviceData){
-    /*
-    if(writeFifoAFull()){
-        std::cout<<"Y2D write: warning fifo almost full"<<std::endl;
-    }
-    
-    if(writeFifoFull()){
-        std::cout<<"Y2D write: error fifo full"<<std::endl;
-    }
-    */
-    int written =0;
-    char* buff = (char *)deviceData.data();
-    unsigned int len = deviceData.size()*sizeof(unsigned int);
-    
-    //send the vector to the device, read how many bytes have been written and if smaller than the full vector send the vector again from the location pointed by buff + written
-    while (written < len) {
-        
-        int ret = ::write(devDesc, buff + written, len - written);
-        if (ret<0){
-            break;
-        }
-        written += ret;
-    }
-    return written/sizeof(unsigned int);
-    
-}
-
-int deviceManager::readDevice(std::vector<unsigned int> &deviceData){
-    int devData = ::read(devDesc, (char *)(deviceData.data()), deviceData.size()*sizeof(unsigned int));
-    if (devData < 0){
-        fprintf(stdout,"error reading from device\n");
-        if (errno != EAGAIN) {
-            printf("error reading from spinn2neu: %d\n", (int)errno);
-            perror("perror:");
-        }
-        //if errno == EAGAIN ther is just no data to read just now
-        // we are using a non-blocking call so we need to return and wait for
-        // the thread to run again.
-    } else if(devData == 0) {
-        // everything ok, no data available, just call the run again later
-    }
-
-return devData;
-    
-}
-
-void deviceManager::closeDevice(){
-
-    unsigned int tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
-    write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg & ~(CTRL_ENABLEINTERRUPT));
-    ::close(devDesc);
-    fprintf(stdout, "closing device %s \n",deviceName.c_str());
-}
-
-bool deviceManager::openDevice(){
-    //opening the device
-    fprintf(stdout,"name of the file buffer: %s\n", deviceName.c_str());
-    devDesc = open(deviceName.c_str(), O_RDWR | O_NONBLOCK);
-    if (devDesc < 0) {
-        printf("Cannot open device file: %s \n",deviceName.c_str());
-        return false;
-    }
-    
-    //initialization for writing to device
-    unsigned long version;
-    unsigned char hw_major,hw_minor;
-    char          stringa[4];
-    int i;
-    unsigned int  tmp_reg;
-    
-    ioctl(devDesc, SP2NEU_VERSION, &version);
-    
-    hw_major = (version & 0xF0) >> 4;
-    hw_minor = (version & 0x0F);
-    stringa[3]=0;
-    
-    for (i=0; i<3; i++) {
-        stringa[i] = (version&0xFF000000) >> 24;
-        version = version << 8;
-    }
-    fprintf(stderr, "\r\nIdentified: %s version %d.%d\r\n\r\n", stringa, hw_major, hw_minor);
-    
-    // Write the WrapTimeStamp register with any value if you want to clear it
-    //write_generic_sp2neu_reg(fp,STMP_REG,0);
-    fprintf(stderr, "Times wrapping counter: %d\n", read_generic_sp2neu_reg(devDesc, STMP_REG));
-    
-    // Enable Time wrapping interrupt
-    //write_generic_sp2neu_reg(devDesc, MASK_REG, MSK_TIMEWRAPPING | MSK_TX_DUMPMODE | MSK_RX_PAR_ERR | MSK_RX_MOD_ERR);
-    write_generic_sp2neu_reg(devDesc, MASK_REG, MSK_TIMEWRAPPING | MSK_RX_PAR_ERR);
-    // Flush FIFOs
-    tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
-    write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | CTRL_FLUSHFIFO); // | CTRL_ENABLEIP);
-    
-    // Start IP in LoopBack
-    tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
-    write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | (CTRL_ENABLEINTERRUPT));// | CTRL_ENABLE_FAR_LBCK));
-    //    write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | CTRL_ENABLE_FAR_LBCK);
-    
-    //tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
-    //write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | CTRL_ENABLE_FAR_LBCK);
-    
-    return true;
-}
-
-
 
 void deviceManager::write_generic_sp2neu_reg (int devDesc, unsigned int offset, unsigned int data) {
     sp2neu_gen_reg_t reg;
@@ -266,7 +231,94 @@ unsigned int deviceManager::read_generic_sp2neu_reg (int devDesc, unsigned int o
 
 
 void deviceManager::usage (void) {
-    fprintf (stderr, "%s <even number of data to transfer>\n", __FILE__);
-    //exit(1);
+    std::cerr << __FILE__ << "<even number of data to transfer>\n" << std::endl;
+
 }
+
+//READING AND WRITING TO THE DEVICE
+
+int deviceManager::writeDevice(std::vector<unsigned int> &deviceData){
+    /*
+    if(writeFifoAFull()){
+        std::cout<<"Y2D write: warning fifo almost full"<<std::endl;
+    }
+
+    if(writeFifoFull()){
+        std::cout<<"Y2D write: error fifo full"<<std::endl;
+    }
+    */
+    int written =0;
+    char* buff = (char *)deviceData.data();
+    unsigned int len = deviceData.size()*sizeof(unsigned int);
+
+    //send the vector to the device, read how many bytes have been written and if smaller than the full vector send the vector again from the location pointed by buff + written
+    while (written < len) {
+
+        int ret = ::write(devDesc, buff + written, len - written);
+        if (ret<0){
+            break;
+        }
+        written += ret;
+    }
+    return written/sizeof(unsigned int);
+
+}
+
+std::vector<char> &deviceManager::readDevice()
+{
+
+    //safely copy the data into the accessBuffer and reset the readCount
+    safety.wait();
+    accessBuffer.resize(readCount);
+    for(int i = 0; i < readCount; i++) {
+        accessBuffer[i] = readBuffer[i];
+    }
+    readCount = 0;
+    safety.post();
+
+    //and return the accessBuffer
+    return accessBuffer;
+
+}
+
+
+void deviceManager::run(void)
+{
+
+    while(!isStopping()) {
+        //read is a blocking call
+        safety.wait();
+        int r = ::read(devDesc, readBuffer.data() + readCount, maxBufferSize - readCount);
+        safety.post();
+
+        if(r < 0) {
+            std::cerr << "Error reading from " << deviceName << std::endl;
+            perror("perror: ");
+        }
+
+        if(readCount >= maxBufferSize) {
+            std::cerr << "We reached maximum buffer!" << std::endl;
+        }
+    }
+}
+
+//int deviceManager::readDevice(std::vector<unsigned int> &deviceData){
+//    int devData = ::read(devDesc, (char *)(deviceData.data()), deviceData.size()*sizeof(unsigned int));
+//    if (devData < 0){
+//        fprintf(stdout,"error reading from device\n");
+//        if (errno != EAGAIN) {
+//            printf("error reading from spinn2neu: %d\n", (int)errno);
+//            perror("perror:");
+//        }
+//        //if errno == EAGAIN ther is just no data to read just now
+//        // we are using a non-blocking call so we need to return and wait for
+//        // the thread to run again.
+//    } else if(devData == 0) {
+//        // everything ok, no data available, just call the run again later
+//    }
+
+//return devData;
+
+//}
+
 
