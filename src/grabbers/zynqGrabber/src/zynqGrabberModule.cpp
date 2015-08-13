@@ -76,6 +76,9 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         configLeft -> attachDeviceManager(cfgManager);
         configRight -> attachDeviceManager(cfgManager);
 
+        configLeft -> programBiases();
+        configRight -> programBiases();
+
         
     } else if (device == "ihead")
     {
@@ -88,14 +91,16 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         }
         configLeft -> attachDeviceManager(devManager);
         configRight -> attachDeviceManager(devManager);
+
+        configLeft -> programBiasesAex();
+        configRight -> programBiasesAex();
         
     } else {
         std::cout << "Device: " << device << " not known " << std::endl;
         return false;
     }
     
-    configLeft -> programBiases();
-    configRight -> programBiases();
+
     // todo --- program registers for ATIS
     
     //open rateThread device2yarp

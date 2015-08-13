@@ -224,25 +224,22 @@ std::vector<unsigned int> configManager::prepareBiasesAex(){
     
     seqEvents = 0;
     seqSize_b = 0;
-    
-    int i;
-    for (i = 0; i < biasNames.size(); i++) {
+
+    for (int i = 0; i < biasNames.size(); i++) {
 
         progBiasAex(biasNames[i],24,mBiases[biasNames[i]]);
         
     }
     
-    std::vector<unsigned int> vBiases;
-    vBiases.resize(seqSize_b);
-    int ii = 0;
+    std::vector<unsigned int> vBiases;   
     
     latchCommitAEs();
     releasePowerdown();
 
-    for (i = 0; i<seqSize_b;i++){
-        vBiases[ii] = pseq[i].timestamp;
-        vBiases[ii++] = pseq[i].address;
-        ii++;
+    for (int i = 0; i<seqSize_b;i++){
+        //printf("%08o\n",flags);
+        vBiases.push_back(pseq[i].timestamp);
+        vBiases.push_back(pseq[i].address);
     }
 
     return vBiases;

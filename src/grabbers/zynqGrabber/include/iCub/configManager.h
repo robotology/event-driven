@@ -15,6 +15,7 @@
 #include <vector>
 #include <map>
 #include <iCub/deviceManager.h>
+#include <inttypes.h>
 // --- for aex2 --- //
 
 struct aer {
