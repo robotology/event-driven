@@ -25,24 +25,23 @@
 
 #include "iCub/zynqGrabberModule.h"
 
-using namespace yarp::os;
-using namespace yarp::sig;
-
 
 int main(int argc, char * argv[])
 {
-    Network yarp;
+    yarp::os::Network::init();
     
-    Time::turboBoost();
     zynqGrabberModule module;
 
-    ResourceFinder rf;
+    yarp::os::ResourceFinder rf;
     rf.setVerbose(true);
     rf.setDefaultConfigFile("zynqGrabber.ini"); //overridden by --from parameter
-    rf.setDefaultContext("eMorphApplication/conf");   //overridden by --context parameter
+    rf.setDefaultContext("emorph");   //overridden by --context parameter
     rf.configure(argc, argv);
  
     module.runModule(rf);
+
+    yarp::os::Network::fini();
+
     return 0;
 }
 

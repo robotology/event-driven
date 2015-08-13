@@ -47,19 +47,6 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     //TODO: get all the bias settings
 
 
-
-
-    // attach a port of the same name as the module (prefixed with a /)
-    //to the module so that messages received from the port are redirected to
-    //the respond method
-    std::string handlerPortName =  "/" + moduleName;
-    if (!handlerPort.open(handlerPortName.c_str())) {
-        std::cout << "Unable to open RPC port @ " << handlerPortName << std::endl;
-        return false;
-    }
-    attach(handlerPort);
-            
-    
     // class manageDevice
     devManager = new deviceManager(deviceName, maxBufferSize);
     if(!devManager->openDevice()) {
@@ -85,6 +72,16 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         std::cerr << " : Unable to open ports" << std::endl;
         return false;
     }
+
+    // attach a port of the same name as the module (prefixed with a /)
+    //to the module so that messages received from the port are redirected to
+    //the respond method
+    std::string handlerPortName =  "/" + moduleName;
+    if (!handlerPort.open(handlerPortName.c_str())) {
+        std::cout << "Unable to open RPC port @ " << handlerPortName << std::endl;
+        return false;
+    }
+    attach(handlerPort);
     
     return true;
 }
@@ -97,9 +94,7 @@ bool zynqGrabberModule::interruptModule() {
 }
 
 bool zynqGrabberModule::close() {
-    
-    closing = true;
-    
+        
     handlerPort.close();        // rpc of the RF module
     Y2D.close();
     D2Y->stop();                // bufferedport from yarp to device
@@ -111,8 +106,6 @@ bool zynqGrabberModule::close() {
 
 /* Called periodically every getPeriod() seconds */
 bool zynqGrabberModule::updateModule() {
-    
-    return !closing;
     
     return true;
 }
@@ -144,7 +137,6 @@ bool zynqGrabberModule::respond(const yarp::os::Bottle& command,
         reply.addString("ok");
     }
 
-    mutex.wait();
     switch (command.get(0).asVocab()) {
         case COMMAND_VOCAB_HELP:
             rec = true;
@@ -195,8 +187,6 @@ bool zynqGrabberModule::respond(const yarp::os::Bottle& command,
         }
             break;
     }
-
-    mutex.post();
 
     if (!rec)
         ok = RFModule::respond(command,reply);

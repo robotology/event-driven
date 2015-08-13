@@ -172,34 +172,14 @@
 
 #include <iCub/deviceManager.h>
 
-//typedef struct sp2neu_gen_reg {
-//    unsigned int offset;
-//    char         rw;
-//    unsigned int data;
-//} sp2neu_gen_reg_t;
 
+class zynqGrabberModule : public yarp::os::RFModule {
 
+    yarp::os::Port handlerPort; // a port to handle messages
 
-class zynqGrabberModule:public yarp::os::RFModule {
-
-    yarp::os::Port handlerPort;                 // a port to handle messages
-    
-    yarp::os::Semaphore mutex;                  // semaphore for the respond function
-    device2yarp* D2Y;                           // reference to the ratethread that reads the device and writes to yarp vBottle
-    yarp2device Y2D;                            // bufferedport that reads yarp vBottles and writes to the device
-    
-    //int devDesc;
-    std::string portDeviceName;                 // name of the device which the module will connect to
-    
-    
-    // instantiate object of class deviceManager!!!!!
     deviceManager* devManager;
-    
-    //void write_generic_sp2neu_reg (int devDesc, unsigned int offset, unsigned int data);
-    //unsigned int read_generic_sp2neu_reg (int devDesc, unsigned int offset);
-    //void usage (void);
-    
-    bool closing; 
+    device2yarp* D2Y; // reference to the ratethread that reads the device and writes to yarp vBottle
+    yarp2device Y2D; // bufferedport that reads yarp vBottles and writes to the device
     
 public:
     
@@ -210,32 +190,7 @@ public:
     bool respond(const yarp::os::Bottle& command, yarp::os::Bottle& reply);
     double getPeriod(); 
     bool updateModule();
-    
-    /**
-     * function used to set the name of the port device where biases are sent
-     * @param name name of the port of the device
-     */
-    void setDeviceName(std::string name);
-    
-    /**
-     * function that correcly closes the device
-     */
-    void closeDevice();
-    /**
-     * function that correcly opens the device
-     */
-    bool openDevice();
-    /**
-     * function used to append to a list of commands every single bit necessary to program bias
-     * @param name name of the bias to be set
-     * @param bits data of the programming
-     * @param value value of the programming
-     * @camera reference to the camera (left 1, right 0)
-     */
-
-    
-    
-    
+      
     
 };
 

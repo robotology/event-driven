@@ -85,53 +85,54 @@ deviceManager::deviceManager(std::string deviceName, unsigned int maxBufferSize)
 bool deviceManager::openDevice(){
 
     //opening the device
-    std::cout << "name of the file buffer: " << deviceName << std::endl;
-    devDesc = open(deviceName.c_str(), O_RDWR);
+    std::cout << "name of the device: " << deviceName << std::endl;
+    devDesc = ::open(deviceName.c_str(), O_RDWR);
     if (devDesc < 0) {
         std::cerr << "Cannot open device file: " << deviceName << std::endl;
+        perror("");
         return false;
     }
 
+    if(deviceName == "/dev/spinn2neu") {
+        //initialization for writing to device
+        unsigned long version;
+        unsigned char hw_major,hw_minor;
+        char          stringa[4];
+        int i;
+        unsigned int  tmp_reg;
 
-    //initialization for writing to device
-    unsigned long version;
-    unsigned char hw_major,hw_minor;
-    char          stringa[4];
-    int i;
-    unsigned int  tmp_reg;
+        ioctl(devDesc, SP2NEU_VERSION, &version);
 
-    ioctl(devDesc, SP2NEU_VERSION, &version);
+        hw_major = (version & 0xF0) >> 4;
+        hw_minor = (version & 0x0F);
+        stringa[3]=0;
 
-    hw_major = (version & 0xF0) >> 4;
-    hw_minor = (version & 0x0F);
-    stringa[3]=0;
+        for (i=0; i<3; i++) {
+            stringa[i] = (version&0xFF000000) >> 24;
+            version = version << 8;
+        }
+        fprintf(stderr, "Identified: %s version %d.%d\r\n\r\n", stringa, hw_major, hw_minor);
 
-    for (i=0; i<3; i++) {
-        stringa[i] = (version&0xFF000000) >> 24;
-        version = version << 8;
+        // Write the WrapTimeStamp register with any value if you want to clear it
+        //write_generic_sp2neu_reg(fp,STMP_REG,0);
+        fprintf(stderr, "Times wrapping counter: %d\n", read_generic_sp2neu_reg(devDesc, STMP_REG));
+
+        // Enable Time wrapping interrupt
+        //write_generic_sp2neu_reg(devDesc, MASK_REG, MSK_TIMEWRAPPING | MSK_TX_DUMPMODE | MSK_RX_PAR_ERR | MSK_RX_MOD_ERR);
+        write_generic_sp2neu_reg(devDesc, MASK_REG, MSK_TIMEWRAPPING | MSK_RX_PAR_ERR);
+
+        // Flush FIFOs
+        tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
+        write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | CTRL_FLUSHFIFO); // | CTRL_ENABLEIP);
+
+        // Start IP in LoopBack
+        tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
+        write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | (CTRL_ENABLEINTERRUPT));// | CTRL_ENABLE_FAR_LBCK));
     }
-    fprintf(stderr, "\r\nIdentified: %s version %d.%d\r\n\r\n", stringa, hw_major, hw_minor);
 
-    // Write the WrapTimeStamp register with any value if you want to clear it
-    //write_generic_sp2neu_reg(fp,STMP_REG,0);
-    fprintf(stderr, "Times wrapping counter: %d\n", read_generic_sp2neu_reg(devDesc, STMP_REG));
-
-    // Enable Time wrapping interrupt
-    //write_generic_sp2neu_reg(devDesc, MASK_REG, MSK_TIMEWRAPPING | MSK_TX_DUMPMODE | MSK_RX_PAR_ERR | MSK_RX_MOD_ERR);
-    write_generic_sp2neu_reg(devDesc, MASK_REG, MSK_TIMEWRAPPING | MSK_RX_PAR_ERR);
-    // Flush FIFOs
-    tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
-    write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | CTRL_FLUSHFIFO); // | CTRL_ENABLEIP);
-
-    // Start IP in LoopBack
-    tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
-    write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | (CTRL_ENABLEINTERRUPT));// | CTRL_ENABLE_FAR_LBCK));
-    //    write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | CTRL_ENABLE_FAR_LBCK);
-
-    //tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
-    //write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | CTRL_ENABLE_FAR_LBCK);
     //start the reading thread
     start();
+
     return true;
 }
 
@@ -142,8 +143,11 @@ void deviceManager::closeDevice()
         std::cerr << "Thread did not stop correctly" << std::endl;
 
     //close the device
-    unsigned int tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
-    write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg & ~(CTRL_ENABLEINTERRUPT));
+    if(deviceName == "/dev/spinn2neu") {
+        unsigned int tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
+        write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg & ~(CTRL_ENABLEINTERRUPT));
+    }
+
     ::close(devDesc);
     std::cout <<  "closing device " << deviceName << std::endl;
 }
