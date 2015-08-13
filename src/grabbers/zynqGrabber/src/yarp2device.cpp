@@ -29,7 +29,7 @@ bool yarp2device::open(std::string moduleName)
     
     fprintf(stdout,"opening port for receiving the events from yarp \n");
     
-    std::string inPortName = moduleName + "/vBottle:i";
+    std::string inPortName = "/" + moduleName + "/vBottle:i";
     return yarp::os::BufferedPort< emorph::vBottle >::open(inPortName);
     
 }
@@ -163,8 +163,8 @@ void yarp2device::onRead(emorph::vBottle &bot)
     deviceData.resize(q.size()*2);  // deviceData has TS and ADDRESS, its size is double the number of events
     countAEs += q.size(); // counter for total number of events received from yarp port for the whole duration of the thread
     
-    std::cout<<"Y2D onRead - events queue size: "<<q.size()<<std::endl;
-    std::cout<<"Y2D onRead - deviceData size/2: "<<deviceData.size()/2<<std::endl;
+    //std::cout<<"Y2D onRead - events queue size: "<<q.size()<<std::endl;
+    //std::cout<<"Y2D onRead - deviceData size/2: "<<deviceData.size()/2<<std::endl;
     
     // write events on the vector of unsigned int
     // checks for empty or non valid queue????
@@ -186,8 +186,8 @@ void yarp2device::onRead(emorph::vBottle &bot)
         // set intial timestamp to compute diff
         if (flagStart == false)
         {
-            std::cout<<"TS prev  :"<<tsPrev<<"us"<<std::endl;
-            std::cout<<"TS       :"<<ts<<"us"<<std::endl;
+            //std::cout<<"TS prev  :"<<tsPrev<<"us"<<std::endl;
+            //std::cout<<"TS       :"<<ts<<"us"<<std::endl;
             std::cout<<"Delta TS :"<<ts - tsPrev<<"us"<<std::endl;
 
             //std::cout<<"Initial TS"<<ts<<"us"<<std::endl;

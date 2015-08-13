@@ -64,6 +64,7 @@ deviceManager::deviceManager(std::string deviceName, unsigned int maxBufferSize)
     
     this->deviceName = deviceName;
     this->maxBufferSize = maxBufferSize;
+    readCount = 0;
 
     //allocate the memory for the readBuffer
     readBuffer.resize(maxBufferSize);
@@ -91,8 +92,6 @@ bool deviceManager::openDevice(){
         return false;
     }
 
-    //start the read thread
-    start();
 
     //initialization for writing to device
     unsigned long version;
@@ -131,7 +130,8 @@ bool deviceManager::openDevice(){
 
     //tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
     //write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | CTRL_ENABLE_FAR_LBCK);
-
+    //start the reading thread
+    start();
     return true;
 }
 
@@ -288,16 +288,21 @@ void deviceManager::run(void)
     while(!isStopping()) {
         //read is a blocking call
         safety.wait();
-        int r = ::read(devDesc, readBuffer.data() + readCount, maxBufferSize - readCount);
-        safety.post();
+        int r = ::read(devDesc, readBuffer.data() + readCount, 
+                    maxBufferSize - readCount);
 
         if(r < 0) {
             std::cerr << "Error reading from " << deviceName << std::endl;
             perror("perror: ");
+            continue;
         }
 
+        readCount += r;
+        safety.post();
+
         if(readCount >= maxBufferSize) {
-            std::cerr << "We reached maximum buffer!" << std::endl;
+            std::cerr << "We reached maximum buffer! " << readCount << "/"
+                      << maxBufferSize << std::endl;
         }
     }
 }

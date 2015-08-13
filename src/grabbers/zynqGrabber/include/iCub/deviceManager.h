@@ -49,7 +49,7 @@ private:
 
 
     //read thread related functions and variables
-    int readCount;
+    unsigned int readCount;
     unsigned int maxBufferSize;
     std::vector<char> readBuffer;
     std::vector<char> accessBuffer;
