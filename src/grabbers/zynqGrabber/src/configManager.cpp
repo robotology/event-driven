@@ -24,11 +24,20 @@
 #define THRATE 1
 
 
-configManager::configManager(std::string channel, std::string device){
+configManager::configManager(std::string channel, std::string chip){
     
     // todo: load names and values from config file (this way to change chip we only have to change the file)
     this -> channel = channel;
-    this -> device = device;
+    this -> chip = chip;
+    
+    if (channel == "left"){
+        camera = 1;
+        
+    } else  if (channel == "right"){
+        camera = 0;
+        
+    }
+
     
     mBiases["cas"] = 52458;
     mBiases["injg"] = 101508;
@@ -72,6 +81,24 @@ configManager::configManager(std::string channel, std::string device){
     
 }
 
+// --- write biases to device --- //
+
+bool configManager::programBiases(){
+    
+    std::vector<unsigned int> vBiases = prepareBiases();
+    
+    int wroteData = devManager->writeDevice(vBiases);
+    
+    if (wroteData <= 0)
+    {
+        std::cout<<"Bias write: error writing to device"<<std::endl;
+        return false;
+    }
+    
+    return true;
+}
+
+// --- change the value of a single bias --- //
 bool configManager::setBias(std::string biasName, unsigned int biasValue){
     
     int currBiasVal = mBiases[biasName];
@@ -86,6 +113,7 @@ bool configManager::setBias(std::string biasName, unsigned int biasValue){
     
 }
 
+// --- set the full vector that needs to be written to the device to program the chip --- //
 std::vector<unsigned int> configManager::prepareBiases(){
 
     std::vector<unsigned int> vBiases;
@@ -126,17 +154,17 @@ bool configManager::prepareHeader(){
         return false;
     }
     
-    if (device == "dvs")
+    if (chip == "dvs")
         {
             header = header|2;
         }
-    else if (device == "atis")
+    else if (chip == "atis")
         {
             header = header|3;
         }
     else
     {
-        std::cout << "unrecognised device" << std::endl;
+        std::cout << "unrecognised chip" << std::endl;
         return false;
     }
     
@@ -166,7 +194,7 @@ unsigned int configManager::getBias(std::string biasName){
 
 void configManager::printBiases(){
     std::map<std::string, unsigned int>::iterator im;
-    std::cout << "Current biases for " << device << channel << ":" << std::endl;
+    std::cout << "Current biases for " << chip << channel << ":" << std::endl;
     for (im = mBiases.begin(); im != mBiases.end(); im++) {
     
         std::cout << im -> first << im -> second << std::endl;
@@ -175,10 +203,15 @@ void configManager::printBiases(){
     
 }
 
+void  configManager::attachDeviceManager(deviceManager* devManager) {
+    this->devManager = devManager;
+    
+}
+
 
 // --------------------- from AEX GRABBER needed for iHead board -------------------------- //
 
-void configManager::prepareBiasesAex(){
+std::vector<unsigned int> configManager::prepareBiasesAex(){
     
     //initialisation
     const uint32_t seqAllocChunk_b = SIZE_OF_EVENT * sizeof(struct aer); //allocating the right dimension for biases
@@ -195,17 +228,30 @@ void configManager::prepareBiasesAex(){
     int i;
     for (i = 0; i < biasNames.size(); i++) {
 
-        progBiasAex(biasNames[i],24,mBiases[biasNames[i]],1);
+        progBiasAex(biasNames[i],24,mBiases[biasNames[i]]);
         
     }
-    latchCommitAEs(1);
-    releasePowerdown(1);
+    
+    std::vector<unsigned int> vBiases;
+    vBiases.resize(seqSize_b);
+    int ii = 0;
+    
+    latchCommitAEs();
+    releasePowerdown();
+
+    for (i = 0; i<seqSize_b;i++){
+        vBiases[ii] = pseq[i].timestamp;
+        vBiases[ii++] = pseq[i].address;
+        ii++;
+    }
+
+    return vBiases;
     //sendingBias();
     
 }
 
 
-void configManager::progBiasAex(std::string name,int bits,int value, int camera ) {
+void configManager::progBiasAex(std::string name,int bits,int value) {
     int bitvalue;
     
     for (int i=bits-1;i>=0;i--) {
@@ -220,32 +266,32 @@ void configManager::progBiasAex(std::string name,int bits,int value, int camera 
         else {
             bitvalue = 0;
         }
-        progBitAEs(bitvalue, camera);
+        progBitAEs(bitvalue);
     }
     //after each bias value, set pins back to default value
     //resetPins();
 }
 
-void configManager::latchCommitAEs(int camera ) {
+void configManager::latchCommitAEs() {
     //printf("entering latch_commit \n");
-    biasprogtx(timestep * latchexpand, LATCH_TRANSPARENT, CLOCK_HI, 0,0, camera );
-    biasprogtx(timestep * latchexpand, LATCH_KEEP, CLOCK_HI, 0,0, camera);
-    biasprogtx(timestep * latchexpand, LATCH_KEEP, CLOCK_HI, 0,0, camera);
+    biasprogtx(timestep * latchexpand, LATCH_TRANSPARENT, CLOCK_HI, 0,0);
+    biasprogtx(timestep * latchexpand, LATCH_KEEP, CLOCK_HI, 0,0);
+    biasprogtx(timestep * latchexpand, LATCH_KEEP, CLOCK_HI, 0,0);
     //printf("exiting latch_commit \n");
 }
 
-void configManager::progBitAEs(int bitvalue, int camera ) {
+void configManager::progBitAEs(int bitvalue) {
     
     //set data (now)
-    biasprogtx(0, LATCH_KEEP, CLOCK_HI, bitvalue,0, camera);
+    biasprogtx(0, LATCH_KEEP, CLOCK_HI, bitvalue,0);
     //toggle clock
-    biasprogtx(timestep, LATCH_KEEP, CLOCK_LO, bitvalue,0, camera);
-    biasprogtx(timestep, LATCH_KEEP, CLOCK_HI, bitvalue,0, camera);
+    biasprogtx(timestep, LATCH_KEEP, CLOCK_LO, bitvalue,0);
+    biasprogtx(timestep, LATCH_KEEP, CLOCK_HI, bitvalue,0);
     //and wait a little
-    biasprogtx(timestep, LATCH_KEEP, CLOCK_HI, bitvalue,0, camera);
+    biasprogtx(timestep, LATCH_KEEP, CLOCK_HI, bitvalue,0);
 }
 
-void configManager::biasprogtx(int time,int latch,int clock,int data, int powerdown, int camera ) {
+void configManager::biasprogtx(int time,int latch,int clock,int data, int powerdown) {
     unsigned char addr[4];
     unsigned char t[4];
     //int err;
@@ -325,17 +371,34 @@ void configManager::biasprogtx(int time,int latch,int clock,int data, int powerd
 
 }
 
-void configManager::releasePowerdown(int camera ) {
+void configManager::releasePowerdown() {
     //now
-    biasprogtx(0, LATCH_KEEP, CLOCK_HI, 0, 0, camera);
-    biasprogtx(latchexpand * timestep, LATCH_KEEP, CLOCK_HI, 0, 0, camera);
+    biasprogtx(0, LATCH_KEEP, CLOCK_HI, 0, 0);
+    biasprogtx(latchexpand * timestep, LATCH_KEEP, CLOCK_HI, 0, 0);
     //printf("exiting latch_commit \n");
 }
 
 
-void configManager::setPowerdown(int camera ) {
-    biasprogtx(0, LATCH_KEEP, CLOCK_HI, 0, 1, camera);
-    biasprogtx(powerdownexpand * timestep, LATCH_KEEP, CLOCK_HI, 0, 1, camera);
+void configManager::setPowerdown() {
+    biasprogtx(0, LATCH_KEEP, CLOCK_HI, 0, 1);
+    biasprogtx(powerdownexpand * timestep, LATCH_KEEP, CLOCK_HI, 0, 1);
+}
+
+// --- write biases to device --- //
+
+bool configManager::programBiasesAex(){
+    
+    std::vector<unsigned int> vBiases = prepareBiasesAex();
+    
+    int wroteData = devManager->writeDevice(vBiases);
+    
+    if (wroteData <= 0)
+    {
+        std::cout<<"Bias write: error writing to device"<<std::endl;
+        return false;
+    }
+    
+    return true;
 }
 
 

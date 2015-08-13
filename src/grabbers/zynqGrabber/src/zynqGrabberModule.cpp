@@ -38,22 +38,67 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 
 
      //get the device name which will be used to read events
-    std::string deviceName = rf.check("deviceName",
-                          yarp::os::Value("/dev/spinn2neu")).asString();
+    std::string device = rf.check("device",
+                          yarp::os::Value("zynq")).asString();
 
+    
+    std::string chipName =
+    rf.check("name", yarp::os::Value("dvs")).asString();
+    setName(chipName.c_str());
+
+    
     //get the maximum buffer size to use for device reading
     int maxBufferSize = rf.check("bufferSize", yarp::os::Value(65536)).asInt();
 
     //TODO: get all the bias settings
 
+    // class configManager for left and right sensors
+    configLeft = new configManager("left", chipName);
+    configRight = new configManager("right", chipName);
 
-    // class manageDevice
-    devManager = new deviceManager(deviceName, maxBufferSize);
-    if(!devManager->openDevice()) {
-        std::cerr << "Could not open the device: " << deviceName << std::endl;
+
+    if (device == "zynq"){
+
+        std::string deviceName = "/dev/spinn2neu";
+        // class manageDevice for events
+        devManager = new deviceManager(deviceName, maxBufferSize);
+        if(!devManager->openDevice()) {
+            std::cerr << "Could not open the device: " << deviceName << std::endl;
+            return false;
+        }
+        
+        std::string configName = "/dev/i2c";
+        // class manageDevice for configuration
+        cfgManager = new deviceManager(configName, maxBufferSize);
+        if(!cfgManager->openDevice()) {
+            std::cerr << "Could not open the device: " << configName << std::endl;
+            return false;
+        }
+        configLeft -> attachDeviceManager(cfgManager);
+        configRight -> attachDeviceManager(cfgManager);
+
+        
+    } else if (device == "ihead")
+    {
+        std::string deviceName = "/dev/aerfx2_0";
+        // class manageDevice for events and configuration
+        devManager = new deviceManager(deviceName, maxBufferSize);
+        if(!devManager->openDevice()) {
+            std::cerr << "Could not open the device: " << deviceName << std::endl;
+            return false;
+        }
+        configLeft -> attachDeviceManager(devManager);
+        configRight -> attachDeviceManager(devManager);
+        
+    } else {
+        std::cout << "Device: " << device << " not known " << std::endl;
         return false;
+        
     }
-
+    
+    configLeft -> programBiases();
+    configRight -> programBiases();
+    // todo --- program registers for ATIS
     
     //open rateThread device2yarp
     D2Y = new device2yarp();

@@ -171,15 +171,19 @@
 #include <iCub/yarp2device.h>
 
 #include <iCub/deviceManager.h>
-
+#include <iCub/configManager.h>
 
 class zynqGrabberModule : public yarp::os::RFModule {
 
     yarp::os::Port handlerPort; // a port to handle messages
 
     deviceManager* devManager;
+    deviceManager* cfgManager;
     device2yarp* D2Y; // reference to the ratethread that reads the device and writes to yarp vBottle
     yarp2device Y2D; // bufferedport that reads yarp vBottles and writes to the device
+    configManager* configLeft; // reference to the class for configuring chip (biases and registers)
+    configManager* configRight;// reference to the class for configuring chip (biases and registers)
+    
     
 public:
     
