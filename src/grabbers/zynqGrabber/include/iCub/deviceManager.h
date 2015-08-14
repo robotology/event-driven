@@ -55,8 +55,12 @@ private:
     //read thread related functions and variables
     unsigned int readCount;
     unsigned int maxBufferSize;
-    std::vector<char> readBuffer;
-    std::vector<char> accessBuffer;
+
+    std::vector<char> *readBuffer;
+    std::vector<char> *accessBuffer;
+    std::vector<char> buffer1;
+    std::vector<char> buffer2;
+
     yarp::os::Semaphore safety;
     virtual void run();
 
@@ -70,7 +74,7 @@ public:
     //int readDevice(std::vector<unsigned int> &deviceData);
     int writeDevice(std::vector<unsigned int> &deviceData);
 
-    std::vector<char> &readDevice();
+    std::vector<char> *readDevice(int &nBytesRead);
 
 };
 

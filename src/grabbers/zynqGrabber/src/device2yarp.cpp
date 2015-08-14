@@ -21,6 +21,7 @@
 device2yarp::device2yarp() : RateThread(THRATE) {
        
     countAEs = 0;
+    prevTS = 0;
 
 }
 
@@ -35,8 +36,9 @@ bool device2yarp::threadInit(std::string moduleName){
 void  device2yarp::run() {
     
     //get the data from the device read thread
-    std::vector<char> data = devManager->readDevice();
-    if (!data.size()) return;
+    int nBytesRead = 0;
+    std::vector<char> *data = devManager->readDevice(nBytesRead);
+    if (!nBytesRead) return;
 
 
     // convert data to YARP vBottle
@@ -53,12 +55,16 @@ void  device2yarp::run() {
     
     int bytesdropped = 0;
     int i = 0;
-    
+    int deltabetween = 0;
+    int deltawithin = 0;
+    int pts = 0;
+
     // scan the vector read from the device
-    while(i <= data.size() - 8) {
-        
-        int TS =  *(int *)(data.data() + i);//= deviceData[i];
-        int AE =  *(int *)(data.data() + i + 4);//deviceData[i+1];
+    while(i <= nBytesRead - 8) {
+
+
+        int TS =  *(int *)(data->data() + i);//= deviceData[i];
+        int AE =  *(int *)(data->data() + i + 4);//deviceData[i+1];
         
         if(!(TS & 0x80000000) || (AE & 0xFFFF0000)) {
             //misalignment, move on by 1 byte
@@ -66,21 +72,36 @@ void  device2yarp::run() {
             i += 1;
         } else {
             //successful data match move on by 8 bytes
+
+            //delta between last bottle and this bottle
+            if(!deltabetween) deltabetween = (TS & 0x00FFFFFF) - prevTS;
+            //delta between stamps in the bottle
+            if(pts)
+                deltawithin = std::max(deltawithin, (TS & 0x00FFFFFF) - (pts & 0x00FFFFFF));
+            pts = TS;
+
             eventlist.add((int)(TS & 0x80FFFFFF));
             eventlist.add(AE);
             i += 8;
         }
     }
-    bytesdropped += data.size() - i;
+    int tail = nBytesRead - i;
     
     if(bytesdropped)
-        std::cerr << "Lost " << bytesdropped << " bytes" << std::endl;
+        std::cerr << "Lost " << bytesdropped << " bytes within the data"
+                  << " and " << tail << " at the tail" << std::endl;
+//    std::cout << "Delta between bottles: " << deltabetween << ", Delta within"
+//                 " bottles: " << deltawithin << std::endl;
     
     countAEs += eventlist.size() / 2;
-    
+    prevTS = (pts & 0x00FFFFFF);
+
+
     vStamp.update();
     portvBottle.setEnvelope(vStamp);
     portvBottle.write();
+
+
 
 }
 

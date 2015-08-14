@@ -92,14 +92,13 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         configLeft -> attachDeviceManager(devManager);
         configRight -> attachDeviceManager(devManager);
 
-        configLeft -> programBiasesAex();
-        configRight -> programBiasesAex();
+        //configLeft -> programBiasesAex();
+        //configRight -> programBiasesAex();
         
     } else {
         std::cout << "Device: " << device << " not known " << std::endl;
         return false;
-    }
-    
+    }   
 
     // todo --- program registers for ATIS
     

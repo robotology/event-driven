@@ -11,9 +11,6 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <errno.h>
-#include <fstream>
-
-
 
 #define MAGIC_NUM 100
 #define SP2NEU_VERSION         _IOR (MAGIC_NUM,  7, void *)
@@ -69,15 +66,17 @@ deviceManager::deviceManager(std::string deviceName, unsigned int maxBufferSize)
     readCount = 0;
 
     //allocate the memory for the readBuffer
-    readBuffer.resize(maxBufferSize);
-    //put the accessBuffer into a memory location which has the potential to
-    //expand to the maximum size
-    accessBuffer.reserve(maxBufferSize);
+    buffer1.resize(maxBufferSize);
+    buffer2.resize(maxBufferSize);
+
+    //and point to the memory locations
+    readBuffer = &buffer1;
+    accessBuffer = &buffer2;
+
 #ifdef DEBUG
     writeDump.open("/tmp/writeDump.txt");
     readDump.open("/tmp/readDump.txt");
 #endif
-    
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -89,11 +88,11 @@ deviceManager::deviceManager(std::string deviceName, unsigned int maxBufferSize)
 //}
 
 bool deviceManager::openDevice(){
-    
+
     if(deviceName == "/dev/aerfx2_0") {
         //opening the device
         std::cout << "name of the device: " << deviceName << std::endl;
-        devDesc = ::open(deviceName.c_str(), O_RDWR | O_NONBLOCK);
+        devDesc = ::open(deviceName.c_str(), O_RDWR | O_NONBLOCK | O_SYNC);
         if (devDesc < 0) {
             std::cerr << "Cannot open device file: " << deviceName << " " << devDesc << " : ";
             perror("");
@@ -283,10 +282,14 @@ int deviceManager::writeDevice(std::vector<unsigned int> &deviceData){
     while (written < len) {
 
         int ret = ::write(devDesc, buff + written, len - written);
-        if (ret<0){
+
+        if(ret > 0) {
+            //std::cout << written << std::endl;
+            written += ret;
+        } else if(ret < 0 && errno != EAGAIN) {
+            perror("Error writing because: ");
             break;
         }
-        written += ret;
     }
     
 #ifdef DEBUG
@@ -299,7 +302,7 @@ int deviceManager::writeDevice(std::vector<unsigned int> &deviceData){
 
 }
 
-std::vector<char> &deviceManager::readDevice()
+std::vector<char> *deviceManager::readDevice(int &nBytesRead)
 {
 
 #ifdef DEBUG
@@ -318,16 +321,17 @@ std::vector<char> &deviceManager::readDevice()
        
     //safely copy the data into the accessBuffer and reset the readCount
     safety.wait();
-    accessBuffer.resize(readCount);
-    for(int i = 0; i < readCount; i++) {
-        accessBuffer[i] = readBuffer[i];
-    }
+
+    //switch the buffer the read into
+    std::vector<char> * temp = readBuffer;
+    readBuffer = accessBuffer;
+    accessBuffer = temp;
+
+    //reset the filling position
+    nBytesRead = readCount;
     readCount = 0;
     safety.post();
 
-    
-
-    
     //and return the accessBuffer
     return accessBuffer;
 
@@ -341,14 +345,17 @@ void deviceManager::run(void)
         //read is a blocking call
         safety.wait();
 
-        int r = ::read(devDesc, readBuffer.data() + readCount, 
+        int r = ::read(devDesc, readBuffer + readCount,
                     maxBufferSize - readCount);
 
-        if(r < 0) {
-            //std::cerr << "Error reading from " << deviceName << std::endl;
-            //perror("perror: ");
-        } else {
+        //std::cout << readBuffer << " " <<  readCount << " " << maxBufferSize << std::endl;
+
+        if(r > 0) {
+            //std::cout << "Successful Read" << std::endl;
             readCount += r;
+        } else if(r < 0 && errno != EAGAIN) {
+            std::cerr << "Error reading from " << deviceName << std::endl;
+            perror("perror: ");
         }
 
         safety.post();

@@ -386,12 +386,22 @@ void configManager::setPowerdown() {
 bool configManager::programBiasesAex(){
     
     std::vector<unsigned int> vBiases = prepareBiasesAex();
+
+    for(int i = 0; i < vBiases.size(); i++) {
+        for(int j = 0; j < sizeof(int); j++) {
+            if((1<<j)&vBiases[i]) std::cout << "1";
+            else std::cout << "0";
+        }
+        std::cout << " ";
+    }
+    std::cout << std::endl;
     
     int wroteData = devManager->writeDevice(vBiases);
     
     if (wroteData <= 0)
     {
-        std::cout<<"Bias write: error writing to device"<<std::endl;
+        std::cout<<"Bias write: error writing to device (" << wroteData << ")"
+                << std::endl;
         return false;
     }
     
