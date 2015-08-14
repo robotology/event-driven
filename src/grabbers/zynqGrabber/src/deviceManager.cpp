@@ -11,6 +11,8 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <errno.h>
+#include <fstream>
+
 
 
 #define MAGIC_NUM 100
@@ -72,8 +74,8 @@ deviceManager::deviceManager(std::string deviceName, unsigned int maxBufferSize)
     //expand to the maximum size
     accessBuffer.reserve(maxBufferSize);
 #ifdef DEBUG
-    writeDump = "/tmp/writeDump.txt";
-    readDump = "/tmp/readDump.txt";
+    writeDump.open("/tmp/writeDump.txt");
+    readDump.open("/tmp/readDump.txt");
 #endif
     
 }
@@ -87,21 +89,6 @@ deviceManager::deviceManager(std::string deviceName, unsigned int maxBufferSize)
 //}
 
 bool deviceManager::openDevice(){
-
-#ifdef DEBUG
-    writeDesc = ::open(writeDump.c_str(), O_RDWR);
-    if (writeDesc < 0) {
-        std::cerr << "Cannot open write dump file: " << writeDesc << " : ";
-        perror("");
-        return false;
-    }
-    readDesc = ::open(readDump.c_str(), O_RDWR);
-    if (readDesc < 0) {
-        std::cerr << "Cannot open read dump file: " << readDesc << " : ";
-        perror("");
-        return false;
-    }
-#endif
     
     if(deviceName == "/dev/aerfx2_0") {
         //opening the device
@@ -183,11 +170,8 @@ void deviceManager::closeDevice()
     std::cout <<  "closing device " << deviceName << std::endl;
     
 #ifdef DEBUG
-    ::close(writeDesc);
-    std::cout <<  "closing write dump file " << writeDesc << std::endl;
-    ::close(readDesc);
-    std::cout <<  "closing read dump file " << readDesc << std::endl;
-    
+    writeDump.close();
+    readDump.close();
 #endif
     
 }
@@ -306,7 +290,9 @@ int deviceManager::writeDevice(std::vector<unsigned int> &deviceData){
     }
     
 #ifdef DEBUG
-    int wrote = ::write(writeDesc, buff, len);
+    
+    writeDump << deviceData << std::endl;
+    
 #endif
     
     return written/sizeof(unsigned int);
@@ -327,7 +313,7 @@ std::vector<char> &deviceManager::readDevice()
 
     
 #ifdef DEBUG
-    int read = ::write(readDesc, accessBuffer.data(), accessBuffer.size());
+    readDump << accessBuffer << std::endl;
 #endif
     
     //and return the accessBuffer

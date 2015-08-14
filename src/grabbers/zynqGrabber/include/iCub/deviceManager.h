@@ -28,11 +28,8 @@ private:
     int devDesc;            // file descriptor for device
     std::string deviceName; // name of the device
 #ifdef DEBUG
-    int writeDesc;
-    std::string writeDump; // name of the device
-    int readDesc;
-    std::string readDump; // name of the device
-
+    std::ofstream writeDump;
+    std::ofstream readDump;
 #endif
 
     //hardware specific
