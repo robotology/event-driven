@@ -38,6 +38,7 @@ void  device2yarp::run() {
     std::vector<char> data = devManager->readDevice();
     if (!data.size()) return;
 
+
     // convert data to YARP vBottle
     emorph::vBottle &evtDevice = portvBottle.prepare();
     evtDevice.clear();

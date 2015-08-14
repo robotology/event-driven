@@ -12,6 +12,7 @@
 #include <sys/ioctl.h>
 #include <errno.h>
 
+
 #define MAGIC_NUM 100
 #define SP2NEU_VERSION         _IOR (MAGIC_NUM,  7, void *)
 #define SP2NEU_TIMESTAMP       _IOR (MAGIC_NUM,  8, void *)
@@ -70,6 +71,10 @@ deviceManager::deviceManager(std::string deviceName, unsigned int maxBufferSize)
     //put the accessBuffer into a memory location which has the potential to
     //expand to the maximum size
     accessBuffer.reserve(maxBufferSize);
+#ifdef DEBUG
+    writeDump = "/tmp/writeDump.txt";
+    readDump = "/tmp/readDump.txt";
+#endif
     
 }
 
@@ -83,6 +88,21 @@ deviceManager::deviceManager(std::string deviceName, unsigned int maxBufferSize)
 
 bool deviceManager::openDevice(){
 
+#ifdef DEBUG
+    writeDesc = ::open(writeDump.c_str(), O_RDWR);
+    if (writeDesc < 0) {
+        std::cerr << "Cannot open write dump file: " << writeDesc << " : ";
+        perror("");
+        return false;
+    }
+    readDesc = ::open(readDump.c_str(), O_RDWR);
+    if (readDesc < 0) {
+        std::cerr << "Cannot open read dump file: " << readDesc << " : ";
+        perror("");
+        return false;
+    }
+#endif
+    
     if(deviceName == "/dev/aerfx2_0") {
         //opening the device
         std::cout << "name of the device: " << deviceName << std::endl;
@@ -161,6 +181,15 @@ void deviceManager::closeDevice()
 
     ::close(devDesc);
     std::cout <<  "closing device " << deviceName << std::endl;
+    
+#ifdef DEBUG
+    ::close(writeDesc);
+    std::cout <<  "closing write dump file " << writeDesc << std::endl;
+    ::close(readDesc);
+    std::cout <<  "closing read dump file " << readDesc << std::endl;
+    
+#endif
+    
 }
 
 
@@ -275,6 +304,11 @@ int deviceManager::writeDevice(std::vector<unsigned int> &deviceData){
         }
         written += ret;
     }
+    
+#ifdef DEBUG
+    int wrote = ::write(writeDesc, buff, len);
+#endif
+    
     return written/sizeof(unsigned int);
 
 }
@@ -291,6 +325,11 @@ std::vector<char> &deviceManager::readDevice()
     readCount = 0;
     safety.post();
 
+    
+#ifdef DEBUG
+    int read = ::write(readDesc, accessBuffer.data(), accessBuffer.size());
+#endif
+    
     //and return the accessBuffer
     return accessBuffer;
 

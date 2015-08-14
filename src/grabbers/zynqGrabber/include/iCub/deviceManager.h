@@ -15,6 +15,7 @@
 #include <yarp/os/all.h>
 #include <fstream>
 
+#define DEBUG
 /**
  * @brief The deviceManager class opens the device and implements a constant
  * read
@@ -26,7 +27,13 @@ private:
     //device member variables
     int devDesc;            // file descriptor for device
     std::string deviceName; // name of the device
+#ifdef DEBUG
+    int writeDesc;
+    std::string writeDump; // name of the device
+    int readDesc;
+    std::string readDump; // name of the device
 
+#endif
 
     //hardware specific
     typedef struct sp2neu_gen_reg {
