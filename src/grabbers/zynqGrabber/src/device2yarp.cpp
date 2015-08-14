@@ -39,7 +39,9 @@ void  device2yarp::run() {
     int nBytesRead = 0;
     std::vector<char> *data = devManager->readDevice(nBytesRead);
     if (!nBytesRead) return;
-
+    if(nBytesRead > 16777216/2) {
+        std::cout << "Buffer more than half full!" << std::endl;
+    }
 
     // convert data to YARP vBottle
     emorph::vBottle &evtDevice = portvBottle.prepare();
@@ -59,6 +61,9 @@ void  device2yarp::run() {
     int deltawithin = 0;
     int pts = 0;
 
+    if(nBytesRead % 8)
+        std::cerr << "We aren't reading at 8x" << std::endl;
+
     // scan the vector read from the device
     while(i <= nBytesRead - 8) {
 
@@ -69,6 +74,7 @@ void  device2yarp::run() {
         if(!(TS & 0x80000000) || (AE & 0xFFFF0000)) {
             //misalignment, move on by 1 byte
             bytesdropped++;
+            std::cout << i << " ";
             i += 1;
         } else {
             //successful data match move on by 8 bytes
@@ -89,19 +95,19 @@ void  device2yarp::run() {
     
     if(bytesdropped)
         std::cerr << "Lost " << bytesdropped << " bytes within the data"
-                  << " and " << tail << " at the tail" << std::endl;
-//    std::cout << "Delta between bottles: " << deltabetween << ", Delta within"
-//                 " bottles: " << deltawithin << std::endl;
+                  << " and " << tail << " at the tail (" << nBytesRead
+                  << ")" << std::endl;
+    if(deltabetween > 5000 || deltawithin > 5000) {
+        std::cout << "Delta between bottles: " << deltabetween << ", Delta within"
+                     " bottles: " << deltawithin << std::endl;
+    }
     
     countAEs += eventlist.size() / 2;
     prevTS = (pts & 0x00FFFFFF);
 
-
     vStamp.update();
     portvBottle.setEnvelope(vStamp);
     portvBottle.write();
-
-
 
 }
 

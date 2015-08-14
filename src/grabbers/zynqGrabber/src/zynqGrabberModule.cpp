@@ -47,7 +47,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 
     
     //get the maximum buffer size to use for device reading
-    int maxBufferSize = rf.check("bufferSize", yarp::os::Value(65536)).asInt();
+    int maxBufferSize = rf.check("bufferSize", yarp::os::Value(16777216)).asInt();
 
     //TODO: get all the bias settings
 
@@ -98,7 +98,8 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     } else {
         std::cout << "Device: " << device << " not known " << std::endl;
         return false;
-    }   
+    }
+
 
     // todo --- program registers for ATIS
     

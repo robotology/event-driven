@@ -306,17 +306,19 @@ std::vector<char> *deviceManager::readDevice(int &nBytesRead)
 {
 
 #ifdef DEBUG
-    for(int i = 0; i < readCount; i++) {
-        for(int j = 0; j < 8; j++) {
-            if( (1 << j) & readBuffer[i]) {
-                readDump << "1";
-            } else {
-                readDump << "0";
-            }
-        }
-        readDump << " ";
-    }
-    if(readCount) readDump << std::endl;
+//    THIS NEEDS TO BE MOVED OUT OF DEVICEMANAGER BECAUSE IT KILLS
+//    THE DATA FLOW
+//    for(int i = 0; i < readCount; i++) {
+//        for(int j = 0; j < 8; j++) {
+//            if( (char)(1 << j) & (*readBuffer)[i]) {
+//                readDump << "1";
+//            } else {
+//                readDump << "0";
+//            }
+//        }
+//        readDump << " ";
+//    }
+//    if(readCount) readDump << std::endl;
 #endif
        
     //safely copy the data into the accessBuffer and reset the readCount
@@ -342,10 +344,13 @@ void deviceManager::run(void)
 {
 
     while(!isStopping()) {
-        //read is a blocking call
+
         safety.wait();
 
-        int r = ::read(devDesc, readBuffer + readCount,
+        //std::cout << "Reading events from FIFO" << std::endl;
+
+        //read SHOULD be a blocking call
+        int r = ::read(devDesc, readBuffer->data() + readCount,
                     maxBufferSize - readCount);
 
         //std::cout << readBuffer << " " <<  readCount << " " << maxBufferSize << std::endl;
@@ -356,14 +361,21 @@ void deviceManager::run(void)
         } else if(r < 0 && errno != EAGAIN) {
             std::cerr << "Error reading from " << deviceName << std::endl;
             perror("perror: ");
+            std::cerr << "readCount: " << readCount << "MaxBuffer: "
+                         << maxBufferSize << std::endl;
         }
-
-        safety.post();
 
         if(readCount >= maxBufferSize) {
             std::cerr << "We reached maximum buffer! " << readCount << "/"
                       << maxBufferSize << std::endl;
         }
+
+        //std::cout << "Leaving safe zone" << std::endl;
+        safety.post();
+        //yarp::os::Time::delay(0.00001);
+
+
+        //std::cout << "Done with FIFO" << std::endl;
     }
 }
 
