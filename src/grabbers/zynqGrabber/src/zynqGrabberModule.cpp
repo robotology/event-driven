@@ -37,7 +37,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 
 
      //get the device name which will be used to read events
-    std::string device = rf.check("device",
+    device = rf.check("device",
                           yarp::os::Value("zynq")).asString();
 
     
@@ -215,23 +215,60 @@ bool zynqGrabberModule::respond(const yarp::os::Bottle& command,
             rec = true;
         {
             std::string biasName = command.get(1).asString();
-            double biasValue = command.get(2).asDouble();
-            int channel = command.get(3).asInt();
+            unsigned int biasValue = command.get(2).asInt();
+            std::string channel = command.get(3).asString();
 
             // setBias function
-            // biasManager.setBias(biasName, biasValue, channel);
-            ok = true;
+            if (channel == "left"){
+                configLeft->setBias(biasName, biasValue);
+                ok = true;
+            } else if (channel == "right")
+            {
+                configRight->setBias(biasName, biasValue);
+                ok = true;
+            } else {
+                std::cout << "unrecognised channel" << std::endl;
+                ok =false;
+            }
         }
             break;
         case COMMAND_VOCAB_PROG:
             rec= true;
         {
-            int channel = command.get(1).asInt();
+            std::string channel = command.get(1).asString();
 
             // progBias function
-            // biasManager.progBias(channel);
-            ok = true;
-
+            if (channel == "left"){
+                if (device == "ihead") {
+                    configLeft->programBiases();
+                    ok = true;
+                } else if (device == "zynq")
+                {
+                    configLeft->programBiasesAex();
+                    ok = true;
+                } else {
+                    std::cout << "unrecognised device" << std::endl;
+                    ok = false;
+                }
+                
+            } else if (channel == "right")
+            {
+                if (device == "ihead") {
+                    configRight->programBiases();
+                    ok = true;
+                } else if (device == "zynq")
+                {
+                    configRight->programBiasesAex();
+                    ok = true;
+                } else {
+                    std::cout << "unrecognised device" << std::endl;
+                    ok = false;
+                }
+                
+            } else {
+                std::cout << "unrecognised channel" << std::endl;
+                ok =false;
+            }
         }
             break;
     }

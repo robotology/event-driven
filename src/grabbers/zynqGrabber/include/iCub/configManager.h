@@ -39,7 +39,6 @@ class configManager{
     
     bool prepareHeader(); // prepares the header with chip and channel
     
-    bool setBias(std::string biasName, unsigned int biasValue);
     
     unsigned int getBias(std::string biasName);
     void printBiases();
@@ -66,6 +65,8 @@ public:
     void attachDeviceManager(deviceManager* devManager);
     bool programBiases();
     bool programBiasesAex();
+    bool setBias(std::string biasName, unsigned int biasValue);
+    
     
 };
 

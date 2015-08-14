@@ -183,7 +183,7 @@ class zynqGrabberModule : public yarp::os::RFModule {
     yarp2device Y2D; // bufferedport that reads yarp vBottles and writes to the device
     configManager* configLeft; // reference to the class for configuring chip (biases and registers)
     configManager* configRight;// reference to the class for configuring chip (biases and registers)
-    
+    std::string device;
     
 public:
     
