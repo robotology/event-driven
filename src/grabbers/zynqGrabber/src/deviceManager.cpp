@@ -98,9 +98,7 @@ bool deviceManager::openDevice(){
             perror("");
             return false;
         }
-    }
-
-    if(deviceName == "/dev/spinn2neu") {
+    } else if(deviceName == "/dev/spinn2neu") {
 
         //opening the device
         std::cout << "name of the device: " << deviceName << std::endl;
@@ -145,6 +143,9 @@ bool deviceManager::openDevice(){
         // Start IP in LoopBack
         tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
         write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | (CTRL_ENABLEINTERRUPT));// | CTRL_ENABLE_FAR_LBCK));
+    } else {
+        std::cerr << "Device Unknown to deviceManager" << std::endl;
+        return false;
     }
 
     //start the reading thread
