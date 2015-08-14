@@ -302,6 +302,20 @@ int deviceManager::writeDevice(std::vector<unsigned int> &deviceData){
 std::vector<char> &deviceManager::readDevice()
 {
 
+#ifdef DEBUG
+    for(int i = 0; i < readCount; i++) {
+        for(int j = 0; j < 8; j++) {
+            if( (1 << j) & readBuffer[i]) {
+                readDump << "1";
+            } else {
+                readDump << "0";
+            }
+        }
+        readDump << " ";
+    }
+    if(readCount) readDump << std::endl;
+#endif
+       
     //safely copy the data into the accessBuffer and reset the readCount
     safety.wait();
     accessBuffer.resize(readCount);
@@ -312,9 +326,7 @@ std::vector<char> &deviceManager::readDevice()
     safety.post();
 
     
-#ifdef DEBUG
-    readDump << accessBuffer << std::endl;
-#endif
+
     
     //and return the accessBuffer
     return accessBuffer;
