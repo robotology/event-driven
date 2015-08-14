@@ -66,18 +66,18 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
             return false;
         }
         
-        std::string configName = "/dev/i2c";
-        // class manageDevice for configuration
-        cfgManager = new deviceManager(configName, maxBufferSize);
-        if(!cfgManager->openDevice()) {
-            std::cerr << "Could not open the device: " << configName << std::endl;
-            return false;
-        }
-        configLeft -> attachDeviceManager(cfgManager);
-        configRight -> attachDeviceManager(cfgManager);
-
-        configLeft -> programBiases();
-        configRight -> programBiases();
+//        std::string configName = "/dev/i2c";
+//        // class manageDevice for configuration
+//        cfgManager = new deviceManager(configName, maxBufferSize);
+//        if(!cfgManager->openDevice()) {
+//            std::cerr << "Could not open the device: " << configName << std::endl;
+//            return false;
+//        }
+//        configLeft -> attachDeviceManager(cfgManager);
+//        configRight -> attachDeviceManager(cfgManager);
+//
+//        configLeft -> programBiases();
+//        configRight -> programBiases();
 
         
     } else if (device == "ihead")
@@ -89,8 +89,8 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
             std::cerr << "Could not open the device: " << deviceName << std::endl;
             return false;
         }
-        configLeft -> attachDeviceManager(devManager);
-        configRight -> attachDeviceManager(devManager);
+//        configLeft -> attachDeviceManager(devManager);
+//        configRight -> attachDeviceManager(devManager);
 
         //configLeft -> programBiasesAex();
         //configRight -> programBiasesAex();
