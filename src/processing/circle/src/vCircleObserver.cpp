@@ -245,7 +245,7 @@ bool vHoughCircleObserver::updateH(emorph::vEvent &event, int val)
     if(useFlow) {
         emorph::FlowEvent *v = event.getAs<emorph::FlowEvent>();
         if(!v) return false;
-        updateHFlowAngle(v->getX(), v->getY(), val, v->getVx(), v->getVy());
+        updateHFlow(v->getX(), v->getY(), val, v->getVx(), v->getVy());
     } else {
         emorph::AddressEvent *v = event.getAs<emorph::AddressEvent>();
         if(!v) return false;

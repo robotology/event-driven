@@ -231,21 +231,35 @@ void vCircleReader::onRead(emorph::vBottle &bot)
             inliers = geomFinder.flowcircle(cx, cy, cr);
         }
 
-        double threshold = (6.28*cr*inlierThreshold);
+        //multi step process with intricate rounding to account for more
+        //noise in larger circles. The 0.5 makes int round up!
+        int threshold = (6.2831853 * cr + 0.5);
+        threshold  *= (inlierThreshold + 0.5);
+        threshold *= (inlierThreshold * 0.8 + 0.5);
+        //threshold = (int)((int)(6.2831853 * cr + 0.5) * inlierThreshold + 0.5);
 
         //find the highest inliers this bottle
         if(inliers > inliersMax) {
-            ratioMax = inliers/threshold;
+            ratioMax = inliers/(double)threshold;
             inliersMax = inliers;
             threshMax = threshold;
             radMax = cr;
         }
 
         //if the inliers is not enough we don't continue processing
-        if(inliers < threshold) continue;
+        if(inliers <= threshold) continue;
 
         circlewasfound = true;
         detections++;
+
+        emorph::ClusterEventGauss circevent;
+        circevent.setStamp(v->getStamp());
+        circevent.setChannel(v->getChannel());
+        circevent.setXCog(cx);
+        circevent.setYCog(cy);
+        circevent.setXSigma2(cr);
+        circevent.setYSigma2(1);
+        outBottle.addEvent(circevent);
 
         //update the filter given the observation
         double ts = unwrap(v->getStamp());
@@ -306,7 +320,7 @@ void vCircleReader::onRead(emorph::vBottle &bot)
         circevent.setXCog(x);
         circevent.setYCog(y);
         circevent.setXSigma2(r);
-        circevent.setYSigma2(2);
+        circevent.setYSigma2(1);
         outBottle.addEvent(circevent);
     }
 
