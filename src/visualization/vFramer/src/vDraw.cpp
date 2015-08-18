@@ -27,6 +27,10 @@ vDraw * createDrawer(std::string tag)
     if(tag == newDrawer->getTag()) return newDrawer;
     delete newDrawer;
 
+    newDrawer = new lifeDraw();
+    if(tag == newDrawer->getTag()) return newDrawer;
+    delete newDrawer;
+
     newDrawer = new clusterDraw();
     if(tag == newDrawer->getTag()) return newDrawer;
 	delete newDrawer;
@@ -103,6 +107,65 @@ void addressDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
         }
 
         image.at<cv::Vec3b>(aep->getX(), aep->getY()) = cpc;
+    }
+}
+
+std::string lifeDraw::getTag()
+{
+    return "AEL";
+}
+
+void lifeDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
+{
+
+    image = cv::Mat(Xlimit, Ylimit, CV_8UC3);
+    image.setTo(255);
+
+    if(checkStagnancy(eSet) > clearThreshold) {
+        return;
+    }
+
+    int cts = eSet.back()->getStamp();
+
+    emorph::vQueue::const_iterator qi;
+    for(qi = eSet.begin(); qi != eSet.end(); qi++) {
+        emorph::FlowEvent *v = (*qi)->getAs<emorph::FlowEvent>();
+        if(!v) continue;
+
+        int modts = cts;
+        if(cts < v->getStamp()) //we have wrapped
+            modts += emorph::vtsHelper::maxStamp();
+
+        if(modts > v->getDeath()) continue;
+
+        cv::Vec3b cpc = image.at<cv::Vec3b>(v->getX(), v->getY());
+
+        if(!v->getPolarity())
+        {
+            //blue
+            if(cpc[0] == 1) cpc[0] = 0;   //if positive and negative
+            else cpc[0] = 160;            //if only positive
+            //green
+            if(cpc[1] == 60) cpc[1] = 255;
+            else cpc[1] = 0;
+            //red
+            if(cpc[2] == 0) cpc[2] = 255;
+            else cpc[2] = 160;
+        }
+        else
+        {
+            //blue
+            if(cpc[0] == 160) cpc[0] = 0;   //negative and positive
+            else cpc[0] = 1;                //negative only
+            //green
+            if(cpc[1] == 0) cpc[1] = 255;
+            else cpc[1] = 60;
+            //red
+            if(cpc.val[2] == 160) cpc[2] = 255;
+            else cpc[2] = 0;
+        }
+
+        image.at<cv::Vec3b>(v->getX(), v->getY()) = cpc;
     }
 }
 
