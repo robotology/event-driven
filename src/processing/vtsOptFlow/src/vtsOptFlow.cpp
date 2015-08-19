@@ -37,12 +37,12 @@ bool vtsOptFlow::configure(yarp::os::ResourceFinder &rf)
     int height = rf.check("height", yarp::os::Value(128)).asInt();
     int width = rf.check("width", yarp::os::Value(128)).asInt();
     int sobelSize = rf.check("filterSize", yarp::os::Value(3)).asInt();
-    int tWindow = rf.check("tWindow", yarp::os::Value(50000)).asInt();
+    int coverage = rf.check("coverage", yarp::os::Value(50)).asInt();
     int minEvtsInSobel = rf.check("minEvtsThresh", yarp::os::Value(5)).asInt();
     int minSobelsInFlow = rf.check("minSobelsThresh",
                                    yarp::os::Value(3)).asInt();
 
-    vtsofManager = new vtsOptFlowManager(height, width, sobelSize, tWindow,
+    vtsofManager = new vtsOptFlowManager(height, width, sobelSize, coverage,
                                          minEvtsInSobel, minSobelsInFlow);
     return vtsofManager->open(moduleName);
 
@@ -82,7 +82,7 @@ bool vtsOptFlow::updateModule()
 //vtsOptFlowManager
 /******************************************************************************/
 vtsOptFlowManager::vtsOptFlowManager(int height, int width, int sobelSize,
-                                     int temporalWindow, int minEvtsInSobel,
+                                     int coverage, int minEvtsInSobel,
                                      int minSobelsInFlow)
 {
 
@@ -112,7 +112,7 @@ vtsOptFlowManager::vtsOptFlowManager(int height, int width, int sobelSize,
     bottleCount = 0;
 
     //create our surface in synchronous mode
-    surface = new emorph::vWindow(width, height, temporalWindow, false);
+    surface = new emorph::vSurface(width, height, coverage, false);
 }
 
 /******************************************************************************/
@@ -211,9 +211,9 @@ emorph::FlowEvent vtsOptFlowManager::compute()
     emorph::AddressEvent * vr = surface->getMostRecent()->getAs<emorph::AddressEvent>();
     int rx = vr->getX();
     int ry = vr->getY();
-    int rp = vr->getPolarity();
 
     //we compute multiple gradients around a perimeter of the central position
+    //std::vector<double> dxs, dys;
     double dtdy_mean = 0, dtdx_mean = 0;
     double dtdy = 0, dtdx = 0;
     int n = 0;
@@ -222,7 +222,7 @@ emorph::FlowEvent vtsOptFlowManager::compute()
     for(int x = -sobRad; x <= sobRad; x++) {
         for(int y = -sobRad; y <= sobRad; y += sobelSize-1) {
             //get the surface over which to compute a plane
-            emorph::vQueue subsurf = surface->getSURF(rx+x, ry+y, sobRad, rp);
+            emorph::vQueue subsurf = surface->getSURF(rx+x, ry+y, sobRad);
             if(subsurf.size() < minEvtsInSobel) continue;
 
             //compute!
@@ -231,6 +231,8 @@ emorph::FlowEvent vtsOptFlowManager::compute()
                 dtdy_mean += dtdy;
                 dtdx_mean += dtdx;
                 n++;
+//                dys.push_back(dtdy);
+//                dxs.push_back(dtdx);
             }
         }
     }
@@ -239,7 +241,7 @@ emorph::FlowEvent vtsOptFlowManager::compute()
     for(int x = -sobRad; x <= sobRad; x+=sobelSize-1) {
         for(int y = -sobRad+1; y <= sobRad-1; y++) {
             //get the surface over which to compute a plane
-            emorph::vQueue subsurf = surface->getSURF(rx+x, ry+y, sobRad, rp);
+            emorph::vQueue subsurf = surface->getSURF(rx+x, ry+y, sobRad);
             if(subsurf.size() < minEvtsInSobel) continue;
 
             //compute!
@@ -248,16 +250,30 @@ emorph::FlowEvent vtsOptFlowManager::compute()
                 dtdy_mean += dtdy;
                 dtdx_mean += dtdx;
                 n++;
+//                dys.push_back(dtdy);
+//                dxs.push_back(dtdx);
             }
         }
     }
 
+
+
+
     emorph::FlowEvent opt_flow(*vr);
     if(n > minSobelsInFlow) {
-        //opt_flow.setChannel(vr->getChannel());
-        //opt_flow.setPolarity(vr->getPolarity());
-        //opt_flow.setX(ry);
-        //opt_flow.setY(rx);
+
+//        double yvariance = 0, xvariance = 0;
+//        for(int i = 0; i < dys.size(); i++) {
+//            yvariance += pow(dys[i] - dtdy_mean, 2.0);
+//            xvariance += pow(dxs[i] - dtdx_mean, 2.0);
+//        }
+//        double ystd = sqrt(yvariance / dys.size());
+//        double xstd = sqrt(xvariance / dxs.size());
+
+//        std::cout << std::max(ystd, xstd) << std::endl;
+
+//        if(std::max(ystd, xstd) > 10000000) return opt_flow;
+
         opt_flow.setVx(emorph::vtsHelper::tstosecs() * dtdx_mean / n);
         opt_flow.setVy(emorph::vtsHelper::tstosecs() * dtdy_mean / n);
         opt_flow.setDeath();
@@ -301,7 +317,7 @@ bool vtsOptFlowManager::computeGrads(yarp::sig::Matrix &A, yarp::sig::Vector &Y,
 
 
     double *dataA=A2.data();
-    DET=1/DET;
+    DET=1.0/DET;
     *(dataA+0)=DET*(*(dataATA+8)**(dataATA+4)-*(dataATA+7)**(dataATA+5));
     *(dataA+1)=DET*(*(dataATA+7)**(dataATA+2)-*(dataATA+8)**(dataATA+1));
     *(dataA+2)=DET*(*(dataATA+5)**(dataATA+1)-*(dataATA+4)**(dataATA+2));
@@ -313,6 +329,23 @@ bool vtsOptFlowManager::computeGrads(yarp::sig::Matrix &A, yarp::sig::Vector &Y,
     *(dataA+8)=DET*(*(dataATA+4)**(dataATA+0)-*(dataATA+3)**(dataATA+1));
 
     abc=A2*At*Y;
+
+    // calculating the error of the plane...
+//    double d=0;
+//    for(int i = 0; i < A.rows(); i++) {
+//        d -= abc(0) * A(i, 0) + abc(1)*A(i, 1) + abc(2)*A(i, 2);
+//    }
+//    d /= A.rows();
+
+//    double c = 0;
+//    for(int i = 0; i < A.rows(); i++) {
+//        double dp = abc(0) * A(i, 0) + abc(1)*A(i, 1) + abc(2)*A(i, 2) + d;
+//        dp /= sqrt(abc(0)*abc(0) + abc(1)*abc(1) + abc(2)*abc(2));
+//        c += fabs(dp);
+//    }
+//    c /= A.rows();
+//    std::cout << c << std::endl;
+//    if(c > 0.02) return false;
 
     dtdy = 0; dtdx = 0;
     for(int i=0; i<sobelSize; i++) {
@@ -326,7 +359,7 @@ bool vtsOptFlowManager::computeGrads(yarp::sig::Matrix &A, yarp::sig::Vector &Y,
     }
 
     //I don't know why Charles did this division
-    dtdx /= 12.0;
+    dtdx /= 12.0;//12.0;
     dtdy /= 12.0;
 
     return true;

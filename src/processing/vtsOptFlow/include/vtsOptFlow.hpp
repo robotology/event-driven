@@ -37,7 +37,7 @@ private:
 
     yarp::os::BufferedPort<emorph::vBottle> outPort;
 
-    emorph::vWindow *surface;
+    emorph::vSurface *surface;
 
     int height;
     int width;
@@ -65,7 +65,7 @@ private:
 
 public:
 
-    vtsOptFlowManager(int height, int width, int sobelSize, int temporalWindow,
+    vtsOptFlowManager(int height, int width, int sobelSize, int coverage,
                       int minEvtsInSobel, int minSobelsInFlow);
 
     bool    open(std::string moduleName);

@@ -479,7 +479,7 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
         p_start.y = y*k;
 
         double magnitude = sqrt(pow(vx, 2.0) + pow(vy, 2.0));
-        double hypotenuse = 0.5 / magnitude;
+        double hypotenuse = 1 / magnitude;
         if(hypotenuse < 5) hypotenuse = 5;
         if(hypotenuse > 20) hypotenuse = 20;
         hypotenuse = 15;
