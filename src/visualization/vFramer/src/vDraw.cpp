@@ -449,6 +449,7 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
     if(checkStagnancy(eSet) > clearThreshold) return;
 
 
+    //double vx_mean = 0, vy_mean = 0, n = 0;
     int line_tickness = 1;
     cv::Scalar line_color = CV_RGB(255,0,0);
     cv::Point p_start,p_end;
@@ -461,28 +462,36 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
         emorph::FlowEvent *ofp = (*qi)->getAs<emorph::FlowEvent>();
         if(!ofp) continue;
 
-        int death = ofp->getDeath();
-        if(cts < ofp->getStamp())
-            death -= emorph::vtsHelper::maxStamp();
-        if(cts > death || (death >= emorph::vtsHelper::maxStamp() &&
-                           cts+emorph::vtsHelper::maxStamp() > death)) {
-            continue;
-        }
+//        int death = ofp->getDeath();
+//        if(cts < ofp->getStamp())
+//            death -= emorph::vtsHelper::maxStamp();
+//        if(cts > death || (death >= emorph::vtsHelper::maxStamp() &&
+//                           cts+emorph::vtsHelper::maxStamp() > death)) {
+//            continue;
+//        }
+
+        int modts = cts;
+        if(cts < ofp->getStamp()) //we have wrapped
+            modts += emorph::vtsHelper::maxStamp();
+        if(modts > ofp->getDeath()) continue;
 
         int x = ofp->getY();
         int y = ofp->getX();
-        float vx = ofp->getVx();
-        float vy = ofp->getVy();
+        float vx = ofp->getVy();
+        float vy = ofp->getVx();
+        //vx_mean += vx;
+        //vy_mean += vy;
+        //n++;
 
         //Starting point of the line
         p_start.x = x*k;
         p_start.y = y*k;
 
         double magnitude = sqrt(pow(vx, 2.0) + pow(vy, 2.0));
-        double hypotenuse = 1 / magnitude;
-        if(hypotenuse < 5) hypotenuse = 5;
-        if(hypotenuse > 20) hypotenuse = 20;
-        hypotenuse = 15;
+        double hypotenuse = 10.0 / magnitude;
+        if(hypotenuse < 10) hypotenuse = 10;
+        //if(hypotenuse > 20) hypotenuse = 20;
+        //hypotenuse = 15;
         double angle = atan2(vx, vy);
 
         //Scale the arrow by a factor of three
@@ -502,6 +511,7 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
         cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
 
     }
+    //std::cout << "y: " << vy_mean << "x: " << vx_mean << std::endl;
 
 }
 

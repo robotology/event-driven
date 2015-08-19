@@ -22,6 +22,13 @@ vSurface::vSurface(int width, int height, int coverage, bool asynch)
 {
     this->width = width;
     this->height = height;
+    if(coverage > 90) {
+        std::cout << "Coverage set to maximum (90%)" << std::endl;
+        coverage = 90;
+    } else if(coverage < 1) {
+        std::cout << "Coverage set to minimum (1%)" << std::endl;
+        coverage = 1;
+    }
     this->countLimit = (0.01 * coverage) * width * height;
     this->asynchronous = asynch;
 
@@ -86,15 +93,23 @@ void vSurface::addEvent(AddressEvent &event)
         q.pop_front();
     }
 
+    if(q.size() > countLimit * 1.1) {
+        vQueue::iterator qi = q.begin();
+        while(qi != q.end()) {
+            AddressEvent * f = (*qi)->getAs<AddressEvent>();
+            if(*qi == spatial[f->getY()][f->getX()]) qi++;
+            else qi = q.erase(qi);
+        }
+    }
+
     //leave section
     mutex.post();
-
 }
 
 const vQueue& vSurface::getSURF(int d)
 {
-    return getSURF(q.back()->getAs<AddressEvent>()->getY(),
-                   q.back()->getAs<AddressEvent>()->getX(), d);
+    return getSURF(q.back()->getAs<AddressEvent>()->getX(),
+                   q.back()->getAs<AddressEvent>()->getY(), d);
 }
 
 const vQueue& vSurface::getSURF(int x, int y, int d)

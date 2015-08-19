@@ -39,11 +39,11 @@ bool vtsOptFlow::configure(yarp::os::ResourceFinder &rf)
     int sobelSize = rf.check("filterSize", yarp::os::Value(3)).asInt();
     int coverage = rf.check("coverage", yarp::os::Value(50)).asInt();
     int minEvtsInSobel = rf.check("minEvtsThresh", yarp::os::Value(5)).asInt();
-    int minSobelsInFlow = rf.check("minSobelsThresh",
-                                   yarp::os::Value(3)).asInt();
+    double inlierThreshold = rf.check("inlierThreshold",
+                                   yarp::os::Value(0.1)).asDouble();
 
     vtsofManager = new vtsOptFlowManager(height, width, sobelSize, coverage,
-                                         minEvtsInSobel, minSobelsInFlow);
+                                         minEvtsInSobel, inlierThreshold);
     return vtsofManager->open(moduleName);
 
 }
@@ -83,7 +83,7 @@ bool vtsOptFlow::updateModule()
 /******************************************************************************/
 vtsOptFlowManager::vtsOptFlowManager(int height, int width, int sobelSize,
                                      int coverage, int minEvtsInSobel,
-                                     int minSobelsInFlow)
+                                     double inlierThreshold)
 {
 
     this->height=height;
@@ -94,8 +94,11 @@ vtsOptFlowManager::vtsOptFlowManager(int height, int width, int sobelSize,
     if(!(sobelSize % 2)) sobelSize--;
     this->sobelSize=sobelSize;
     this->sobRad = sobelSize / 2;
-    this->minEvtsInSobel = minEvtsInSobel;
-    this->minSobelsInFlow = minSobelsInFlow;
+    this->fullCount = pow(sobelSize, 2.0);
+    this->halfCount = fullCount / 2.0 + 0.5;
+    this->minEvtsInSobel = std::min((double)minEvtsInSobel, halfCount/2.0+0.5);
+    this->inlierThreshold = inlierThreshold;
+
 
     //for speed we predefine the mememory for some matricies
     sobelx = yarp::sig::Matrix(sobelSize, sobelSize);
@@ -163,7 +166,7 @@ void vtsOptFlowManager::onRead(emorph::vBottle &inBottle)
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {
         //if(computeflow && yarp::os::Time::now() - starttime > 0.0009)
-        if(getPendingReads() > 1)
+        if(getPendingReads())
             computeflow = false;
 
         emorph::AddressEvent *aep = (*qi)->getAs<emorph::AddressEvent>();
@@ -208,15 +211,37 @@ void vtsOptFlowManager::onRead(emorph::vBottle &inBottle)
 /******************************************************************************/
 emorph::FlowEvent vtsOptFlowManager::compute()
 {
+    double dtdy = 0, dtdx = 0;
+
+    //get the most recent event
     emorph::AddressEvent * vr = surface->getMostRecent()->getAs<emorph::AddressEvent>();
+    emorph::FlowEvent opt_flow(*vr);
+
+    //get the surface around the recent event
+    emorph::vQueue subsurf = surface->getSURF(sobRad);
+
+    //take only the most recent half of events
+    subsurf.sort();
+    int halfcount = sobelSize*sobelSize/2;
+    while(subsurf.size() > halfcount) {
+        subsurf.pop_front();
+    }
+    if(subsurf.size() < minEvtsInSobel) return opt_flow;
+
+    //and compute the flow
+    if(computeGrads(subsurf, *vr, dtdy, dtdx)) {
+        opt_flow.setVx(dtdx);
+        opt_flow.setVy(dtdy);
+        opt_flow.setDeath();
+    }
+
+    return opt_flow;
+
+
+    double dtdy_mean = 0, dtdx_mean = 0;
+    int n = 0;
     int rx = vr->getX();
     int ry = vr->getY();
-
-    //we compute multiple gradients around a perimeter of the central position
-    //std::vector<double> dxs, dys;
-    double dtdy_mean = 0, dtdx_mean = 0;
-    double dtdy = 0, dtdx = 0;
-    int n = 0;
 
     //top and bottom perimeter
     for(int x = -sobRad; x <= sobRad; x++) {
@@ -226,7 +251,7 @@ emorph::FlowEvent vtsOptFlowManager::compute()
             if(subsurf.size() < minEvtsInSobel) continue;
 
             //compute!
-            bool fit = computeGrads(subsurf, dtdy, dtdx);
+            bool fit = computeGrads(subsurf, *vr, dtdy, dtdx);
             if(fit) {
                 dtdy_mean += dtdy;
                 dtdx_mean += dtdx;
@@ -245,7 +270,7 @@ emorph::FlowEvent vtsOptFlowManager::compute()
             if(subsurf.size() < minEvtsInSobel) continue;
 
             //compute!
-            bool fit = computeGrads(subsurf, dtdy, dtdx);
+            bool fit = computeGrads(subsurf, *vr, dtdy, dtdx);
             if(fit) {
                 dtdy_mean += dtdy;
                 dtdx_mean += dtdx;
@@ -258,9 +283,7 @@ emorph::FlowEvent vtsOptFlowManager::compute()
 
 
 
-
-    emorph::FlowEvent opt_flow(*vr);
-    if(n > minSobelsInFlow) {
+    //if(n > minSobelsInFlow) {
 
 //        double yvariance = 0, xvariance = 0;
 //        for(int i = 0; i < dys.size(); i++) {
@@ -274,10 +297,10 @@ emorph::FlowEvent vtsOptFlowManager::compute()
 
 //        if(std::max(ystd, xstd) > 10000000) return opt_flow;
 
-        opt_flow.setVx(emorph::vtsHelper::tstosecs() * dtdx_mean / n);
-        opt_flow.setVy(emorph::vtsHelper::tstosecs() * dtdy_mean / n);
-        opt_flow.setDeath();
-    }
+//        opt_flow.setVx(/*emorph::vtsHelper::tstosecs() * */dtdx_mean / n);
+//        opt_flow.setVy(/*emorph::vtsHelper::tstosecs() * */dtdy_mean / n);
+//        opt_flow.setDeath();
+//    }
 
     return opt_flow;
 
@@ -285,6 +308,7 @@ emorph::FlowEvent vtsOptFlowManager::compute()
 
 /******************************************************************************/
 bool vtsOptFlowManager::computeGrads(emorph::vQueue &subsurf,
+                                     emorph::AddressEvent &cen,
                                      double &dtdy, double &dtdx)
 {
 
@@ -295,14 +319,15 @@ bool vtsOptFlowManager::computeGrads(emorph::vQueue &subsurf,
         A(vi, 0) = v->getX();
         A(vi, 1) = v->getY();
         A(vi, 2) = 1;
-        Y(vi) = v->getStamp();
+        Y(vi) = v->getStamp() * emorph::vtsHelper::tstosecs();
     }
 
-    return computeGrads(A, Y, dtdy, dtdx);
+    return computeGrads(A, Y, cen.getX(), cen.getY(), cen.getStamp() * emorph::vtsHelper::tstosecs(), dtdy, dtdx);
 }
 
 /******************************************************************************/
 bool vtsOptFlowManager::computeGrads(yarp::sig::Matrix &A, yarp::sig::Vector &Y,
+                                     double cx, double cy, double cz,
                                      double &dtdy, double &dtdx)
 {
 
@@ -331,36 +356,42 @@ bool vtsOptFlowManager::computeGrads(yarp::sig::Matrix &A, yarp::sig::Vector &Y,
     abc=A2*At*Y;
 
     // calculating the error of the plane...
-//    double d=0;
-//    for(int i = 0; i < A.rows(); i++) {
-//        d -= abc(0) * A(i, 0) + abc(1)*A(i, 1) + abc(2)*A(i, 2);
-//    }
-//    d /= A.rows();
+    double d = -(abc(0)*cx + abc(1)*cy + abc(2)*cz);
 
-//    double c = 0;
-//    for(int i = 0; i < A.rows(); i++) {
-//        double dp = abc(0) * A(i, 0) + abc(1)*A(i, 1) + abc(2)*A(i, 2) + d;
-//        dp /= sqrt(abc(0)*abc(0) + abc(1)*abc(1) + abc(2)*abc(2));
-//        c += fabs(dp);
-//    }
-//    c /= A.rows();
-//    std::cout << c << std::endl;
-//    if(c > 0.02) return false;
+    //for each point then compute the distance
+    double c = 0;
+    for(int i = 0; i < A.rows(); i++) {
 
-    dtdy = 0; dtdx = 0;
-    for(int i=0; i<sobelSize; i++) {
-        for(int ii=0; ii<sobelSize;ii++)
-        {
-            dtdx+=sobelx(i,ii)*
-                    (abc(0)*((sobelSize-1)-i)+abc(1)*((sobelSize-1)-ii)+abc(2));
-            dtdy+=sobely(i,ii)*
-                    (abc(0)*((sobelSize-1)-i)+abc(1)*((sobelSize-1)-ii)+abc(2));
-        }
+        //distance in z direction / time direction
+        double dp = Y(i) + (abc(0)*A(i, 0) + abc(1)*A(i, 1) + d)/abc(2);
+        if(fabs(dp) < inlierThreshold) c++;
+
     }
 
-    //I don't know why Charles did this division
-    dtdx /= 12.0;//12.0;
-    dtdy /= 12.0;
+    if(c < minEvtsInSobel) return false;
+
+//    dtdy = 0; dtdx = 0;
+//    for(int i=0; i<sobelSize; i++) {
+//        for(int ii=0; ii<sobelSize;ii++)
+//        {
+//            dtdx+=sobelx(i,ii)*
+//                    (abc(0)*((sobelSize-1)-i)+abc(1)*((sobelSize-1)-ii)+abc(2));
+//            dtdy+=sobely(i,ii)*
+//                    (abc(0)*((sobelSize-1)-i)+abc(1)*((sobelSize-1)-ii)+abc(2));
+//        }
+//    }
+
+    dtdx = abc(2) / abc(0);
+    dtdy = abc(2) / abc(1);
+    std::cout << abc.toString() << std::endl;
+
+    //dtdx *= sqrt(fabs(dtdx)) / fabs(dtdx);
+    //dtdy *= sqrt(fabs(dtdy)) / fabs(dtdy);
+
+    dtdx /= 1000;//fullCount;//12.0;
+    dtdy /= 1000;//fullCount;
+
+
 
     return true;
 
@@ -393,8 +424,8 @@ void vtsOptFlowManager::setSobelFilters(uint _sz, yarp::sig::Matrix& _sfx, yarp:
         Sx(i-1)=factorial((_sz-1))/((factorial((_sz-1)-(i-1)))*(factorial(i-1)));
         Dx(i-1)=Pasc(i-1,_sz-2)-Pasc(i-2,_sz-2);
     }
-    _sfy=outerProduct(Sx, Dx); //Mx=Sy(:)*Dx;
-    _sfx=_sfy.transposed();
+    _sfx=outerProduct(Sx, Dx); //Mx=Sy(:)*Dx;
+    _sfy=_sfx.transposed();
 }
 
 

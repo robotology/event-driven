@@ -43,8 +43,10 @@ private:
     int width;
     int sobelSize;
     int sobRad;
+    int fullCount;
+    int halfCount;
     int minEvtsInSobel;
-    int minSobelsInFlow;
+    double inlierThreshold;
 
     yarp::sig::Matrix sobelx;
     yarp::sig::Matrix sobely;
@@ -59,14 +61,14 @@ private:
 
     void setSobelFilters(uint, yarp::sig::Matrix&, yarp::sig::Matrix&);
     emorph::FlowEvent compute();
-    bool computeGrads(yarp::sig::Matrix &A, yarp::sig::Vector &Y,
+    bool computeGrads(yarp::sig::Matrix &A, yarp::sig::Vector &Y, double cx, double cy, double cz,
                       double &dtdy, double &dtdx);
-    bool computeGrads(emorph::vQueue &subsurf, double &dtdy, double &dtdx);
+    bool computeGrads(emorph::vQueue &subsurf, emorph::AddressEvent &cen, double &dtdy, double &dtdx);
 
 public:
 
     vtsOptFlowManager(int height, int width, int sobelSize, int coverage,
-                      int minEvtsInSobel, int minSobelsInFlow);
+                      int minEvtsInSobel, double inlierThreshold);
 
     bool    open(std::string moduleName);
     void    close();
