@@ -27,6 +27,10 @@ vDraw * createDrawer(std::string tag)
     if(tag == newDrawer->getTag()) return newDrawer;
     delete newDrawer;
 
+    newDrawer = new lifeDraw();
+    if(tag == newDrawer->getTag()) return newDrawer;
+    delete newDrawer;
+
     newDrawer = new clusterDraw();
     if(tag == newDrawer->getTag()) return newDrawer;
 	delete newDrawer;
@@ -103,6 +107,65 @@ void addressDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
         }
 
         image.at<cv::Vec3b>(aep->getX(), aep->getY()) = cpc;
+    }
+}
+
+std::string lifeDraw::getTag()
+{
+    return "AEL";
+}
+
+void lifeDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
+{
+
+    image = cv::Mat(Xlimit, Ylimit, CV_8UC3);
+    image.setTo(255);
+
+    if(checkStagnancy(eSet) > clearThreshold) {
+        return;
+    }
+
+    int cts = eSet.back()->getStamp();
+
+    emorph::vQueue::const_iterator qi;
+    for(qi = eSet.begin(); qi != eSet.end(); qi++) {
+        emorph::FlowEvent *v = (*qi)->getAs<emorph::FlowEvent>();
+        if(!v) continue;
+
+        int modts = cts;
+        if(cts < v->getStamp()) //we have wrapped
+            modts += emorph::vtsHelper::maxStamp();
+
+        if(modts > v->getDeath()) continue;
+
+        cv::Vec3b cpc = image.at<cv::Vec3b>(v->getX(), v->getY());
+
+        if(!v->getPolarity())
+        {
+            //blue
+            if(cpc[0] == 1) cpc[0] = 0;   //if positive and negative
+            else cpc[0] = 160;            //if only positive
+            //green
+            if(cpc[1] == 60) cpc[1] = 255;
+            else cpc[1] = 0;
+            //red
+            if(cpc[2] == 0) cpc[2] = 255;
+            else cpc[2] = 160;
+        }
+        else
+        {
+            //blue
+            if(cpc[0] == 160) cpc[0] = 0;   //negative and positive
+            else cpc[0] = 1;                //negative only
+            //green
+            if(cpc[1] == 0) cpc[1] = 255;
+            else cpc[1] = 60;
+            //red
+            if(cpc.val[2] == 160) cpc[2] = 255;
+            else cpc[2] = 0;
+        }
+
+        image.at<cv::Vec3b>(v->getX(), v->getY()) = cpc;
     }
 }
 
@@ -386,6 +449,7 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
     if(checkStagnancy(eSet) > clearThreshold) return;
 
 
+    //double vx_mean = 0, vy_mean = 0, n = 0;
     int line_tickness = 1;
     cv::Scalar line_color = CV_RGB(255,0,0);
     cv::Point p_start,p_end;
@@ -398,28 +462,36 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
         emorph::FlowEvent *ofp = (*qi)->getAs<emorph::FlowEvent>();
         if(!ofp) continue;
 
-        int death = ofp->getDeath();
-        if(cts < ofp->getStamp())
-            death -= emorph::vtsHelper::maxStamp();
-        if(cts > death || (death >= emorph::vtsHelper::maxStamp() &&
-                           cts+emorph::vtsHelper::maxStamp() > death)) {
-            continue;
-        }
+//        int death = ofp->getDeath();
+//        if(cts < ofp->getStamp())
+//            death -= emorph::vtsHelper::maxStamp();
+//        if(cts > death || (death >= emorph::vtsHelper::maxStamp() &&
+//                           cts+emorph::vtsHelper::maxStamp() > death)) {
+//            continue;
+//        }
+
+        int modts = cts;
+        if(cts < ofp->getStamp()) //we have wrapped
+            modts += emorph::vtsHelper::maxStamp();
+        if(modts > ofp->getDeath()) continue;
 
         int x = ofp->getY();
         int y = ofp->getX();
-        float vx = ofp->getVx();
-        float vy = ofp->getVy();
+        float vx = ofp->getVy();
+        float vy = ofp->getVx();
+        //vx_mean += vx;
+        //vy_mean += vy;
+        //n++;
 
         //Starting point of the line
         p_start.x = x*k;
         p_start.y = y*k;
 
         double magnitude = sqrt(pow(vx, 2.0) + pow(vy, 2.0));
-        double hypotenuse = 0.5 / magnitude;
-        if(hypotenuse < 5) hypotenuse = 5;
-        if(hypotenuse > 20) hypotenuse = 20;
-        hypotenuse = 15;
+        double hypotenuse = 1.44 / magnitude;
+        if(hypotenuse < 10) hypotenuse = 10;
+        //if(hypotenuse > 20) hypotenuse = 20;
+        //hypotenuse = 40;
         double angle = atan2(vx, vy);
 
         //Scale the arrow by a factor of three
@@ -439,6 +511,7 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
         cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
 
     }
+    //std::cout << "y: " << vy_mean << "x: " << vx_mean << std::endl;
 
 }
 

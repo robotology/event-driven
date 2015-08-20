@@ -45,7 +45,8 @@ private:
     bool owner;
 
     //! sorting events by timestamp comparitor
-    static bool temporalSort(const vEvent *e1, const vEvent *e2);
+    static bool temporalSortWrap(const vEvent *e1, const vEvent *e2);
+    static bool temporalSortStraight(const vEvent *e1, const vEvent *e2);
 
     //!overloaded erase so I don't have to deal with them yet
     //virtual void erase(iterator __first, iterator __last);
@@ -74,6 +75,7 @@ public:
 
     bool getOwner() { return owner; }
     void sort();
+    void wrapSort();
 
 };
 

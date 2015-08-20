@@ -37,21 +37,23 @@ private:
 
     yarp::os::BufferedPort<emorph::vBottle> outPort;
 
-    emorph::vWindow *surface;
+    emorph::vSurface *surface;
 
     int height;
     int width;
-    int sobelSize;
-    int sobRad;
+    int fRad;
+    //int fullCount;
+    int halfCount;
     int minEvtsInSobel;
-    int minSobelsInFlow;
+    double inlierThreshold;
 
-    yarp::sig::Matrix sobelx;
-    yarp::sig::Matrix sobely;
+    //yarp::sig::Matrix sobelx;
+    //yarp::sig::Matrix sobely;
     yarp::sig::Matrix At;
     yarp::sig::Matrix AtA;
     yarp::sig::Matrix A2;
     yarp::sig::Vector abc;
+    //int sobelCount;
 
     int eventsComputed;
     int eventsPotential;
@@ -60,13 +62,15 @@ private:
     void setSobelFilters(uint, yarp::sig::Matrix&, yarp::sig::Matrix&);
     emorph::FlowEvent compute();
     bool computeGrads(yarp::sig::Matrix &A, yarp::sig::Vector &Y,
+                      double cx, double cy, double cz,
                       double &dtdy, double &dtdx);
-    bool computeGrads(emorph::vQueue &subsurf, double &dtdy, double &dtdx);
+    bool computeGrads(emorph::vQueue &subsurf, emorph::AddressEvent &cen,
+                      double &dtdy, double &dtdx);
 
 public:
 
-    vtsOptFlowManager(int height, int width, int sobelSize, int temporalWindow,
-                      int minEvtsInSobel, int minSobelsInFlow);
+    vtsOptFlowManager(int height, int width, int filterSize,
+                      int minEvtsInSobel, double inlierThreshold);
 
     bool    open(std::string moduleName);
     void    close();

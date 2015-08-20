@@ -25,6 +25,7 @@ vTrackToRobotManager::vTrackToRobotManager()
 
     method = fromgaze;
     gazecontrol = 0;
+
 }
 
 bool vTrackToRobotManager::setMethod(std::string methodname)
@@ -48,9 +49,15 @@ bool vTrackToRobotManager::open(const std::string &name)
         return false;
     }
 
-    std::string outPortName = "/" + name + "/Bottle:o";
+    std::string outPortName = "/" + name + "/vCartOut:o";
     if(!cartOutPort.open(outPortName)) {
         std::cerr << "Could not open: " << outPortName << std::endl;
+        return false;
+    }
+
+    std::string scopePortName = "/" + name + "/scope:o";
+    if(!scopeOutPort.open(scopePortName)) {
+        std::cerr << "Could not open: " << scopePortName << std::endl;
         return false;
     }
 
@@ -70,6 +77,7 @@ void vTrackToRobotManager::interrupt()
 {
     std::cout << "Interrupting Manager" << std::endl;
     cartOutPort.interrupt();
+    scopeOutPort.interrupt();
     yarp::os::BufferedPort<emorph::vBottle>::interrupt();
     std::cout << "Interrupted Manager" << std::endl;
 }
@@ -81,6 +89,7 @@ void vTrackToRobotManager::close()
     gazecontrol->stopControl();
     gazedriver.close();
     cartOutPort.close();
+    scopeOutPort.close();
     yarp::os::BufferedPort<emorph::vBottle>::close();
 
     std::cout << "Closed Event Manager" << std::endl;
@@ -91,7 +100,7 @@ void vTrackToRobotManager::close()
 void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
 {
 
-    emorph::vQueue::reverse_iterator qi;
+    //emorph::vQueue::reverse_iterator qi;
     emorph::vQueue q = vBottleIn.getSorted<emorph::ClusterEventGauss>();
     yarp::sig::Vector px(2), x(3);
 
@@ -103,25 +112,60 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
     px[0] = v->getYCog(); px[1] = 127 - v->getXCog();
     //std::cout << "Pixel: " << px.toString() << std::endl;
     gazecontrol->get3DPoint(0, px, 0.5, x);
+
     //std::cout << "2D point: " << px.toString() << std::endl;
     //std::cout << "3D point: " << x.toString() << std::endl;
 
     gazecontrol->lookAtFixationPoint(x);
 
+    if(!scopeOutPort.getOutputCount()) return;
+    yarp::os::Bottle &scopeBot = scopeOutPort.prepare();
+    scopeBot.clear();
+    scopeBot.addDouble(x[0]); scopeBot.addDouble(x[1]); scopeBot.addDouble(x[2]);
+    scopeBot.addDouble(px[0]); scopeBot.addDouble(px[1]);
+    scopeOutPort.write();
+
+    //do some sanity checks on the xyz position so we don't break the robot (again)
+    bool error = false;
+    if(x[0] > -0.2) error = true;
+    if(x[0] < -1) error = true;
+    if(x[1] < -1 || x[1] > 1) error = true;
+    if(x[2] < -0.3 || x[2] > 0.7) error = true;
+
+    if(error) {
+        std::cout << "ERROR: position " << x.toString() << std::endl;
+        return;
+    }
+
+    return;
+
+
+//    yarp::sig::Vector x,o;
+//    gazecontrol->getLeftEyePose(x,o);
+
+//    Matrix T=yarp::sig::axis2dcm(o);
+//    T(0,3)=x[0];
+//    T(1,3)=x[1];
+//    T(2,3)=x[2];
+
+//    targetPos=T*fp;
+
 
     yarp::os::Bottle& BottleOut = cartOutPort.prepare();
     BottleOut.clear();
     //add the XYZ position
-    //BottleOut.add(x[0]); BottleOut.add(x[1]); BottleOut.add(x[2]);
-    BottleOut.add(-1.0); BottleOut.add(0.0); BottleOut.add(-0.3);
+    BottleOut.add(x[0]); BottleOut.add(x[1]); BottleOut.add(x[2]);
+    //BottleOut.add(-1.0); BottleOut.add(0.0); BottleOut.add(-0.3);
     //add some buffer ints
-    BottleOut.add(0.0); BottleOut.add(0.0); BottleOut.add(0.0);
+    BottleOut.add(0.5); BottleOut.add(px[0]); BottleOut.add(px[1]);
     //flag that the object is detected
     BottleOut.add(1.0);
 
     //std::cout << "Bottle: " << BottleOut.toString() << std::endl;
 
     cartOutPort.write();
+
+    //send some data for the scope if one is connected
 
 }
 

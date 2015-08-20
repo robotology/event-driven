@@ -23,7 +23,7 @@
 
 <module>
     <name> vtsOptFlow </name>
-    <parameters> --name vtsOptFlow --height 128 --width 128 --filterSize 5 --tWindow 500000 --minEvtsThresh 8 --minSobelsThresh 4</parameters>
+    <parameters> --name vtsOptFlow --height 128 --width 128 --filterSize 5 --coverage 90 --minEvtsThresh 4 --inlierThreshold 0.1</parameters>
     <node> localhost </node>
 </module>
 
@@ -35,7 +35,7 @@
 
 <module>
     <name> vCircle </name>
-    <parameters> --hough true --flowhough true --windowtype Lifetime --inlierThreshold 25 --datafile</parameters>
+    <parameters> --hough true --flowhough true --windowtype Lifetime --inlierThreshold 17 --procNoisePos 15 --procNoiseRad 15 --measNoisePos 15 --measNoiseRad 15 --datafile</parameters>
     <node> localhost </node>
 </module>
 
@@ -59,7 +59,7 @@
 
 <module>
     <name> vFramer</name>
-    <parameters> --frameRate 60 --eventWindow 0.02 --displays "(0 left (AE CIRC FLOW))"</parameters>
+    <parameters> --frameRate 60 --eventWindow 0.5 --displays "(0 left (AE CIRC FLOW))"</parameters>
     <node>localhost</node>
 </module>
 

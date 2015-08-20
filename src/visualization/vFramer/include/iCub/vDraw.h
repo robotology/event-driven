@@ -105,6 +105,22 @@ public:
 
 };
 
+class lifeDraw : public vDraw {
+
+public:
+
+    ///
+    /// \brief see vDraw
+    ///
+    virtual void draw(cv::Mat &image, const emorph::vQueue &eSet);
+
+    ///
+    /// \brief see vDraw
+    ///
+    virtual std::string getTag();
+
+};
+
 class integralDraw : public vDraw {
 
 private:

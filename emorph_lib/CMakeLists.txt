@@ -17,6 +17,7 @@ SET(folder_source
   src/vBottle.cpp
   src/vCodec.cpp
   src/vWindow.cpp
+  src/vSurface.cpp
 )
 
 SET(folder_header 
@@ -27,6 +28,7 @@ SET(folder_header
   include/iCub/emorph/vCodec.h
   include/iCub/emorph/vtsHelper.h
   include/iCub/emorph/vWindow.h
+  include/iCub/emorph/vSurface.h
 )
 
 # Declare groups of source and header files -- makes things pretty in MSVC.
