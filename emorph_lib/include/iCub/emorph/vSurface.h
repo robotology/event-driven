@@ -36,14 +36,10 @@ class vSurface {
 private:
 
     //Local Memory
-    //! event storage
-    vQueue q;
     //! for quick spatial accessing and surfacing
     std::vector< std::vector <vEvent *> > spatial;
 
     //Parameters
-    //! the number of events to keep (derived from a percentage of height*width)
-    int countLimit;
     //! the sensor width
     int width;
     //! the sensor height
@@ -52,8 +48,7 @@ private:
     bool asynchronous;
 
     //Local Variables
-    //! the current number of events
-    int count;
+    vEvent * mostRecent;
     //! for safe copying of q in the multi-threaded environment
     yarp::os::Semaphore mutex;
     //! member variable for quick memory allocation
@@ -66,7 +61,7 @@ public:
     /// \brief vWindow constructor
     /// \param windowSize optional time to store events (in us)
     ///
-    vSurface(int width = 128, int height = 128, int coverage = 50, bool asynch = true);
+    vSurface(int width = 128, int height = 128, bool asynch = true);
 
     vSurface(const vSurface &);
     vSurface operator=(const vSurface&);

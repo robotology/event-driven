@@ -18,19 +18,12 @@
 
 namespace emorph {
 
-vSurface::vSurface(int width, int height, int coverage, bool asynch)
+vSurface::vSurface(int width, int height, bool asynch)
 {
     this->width = width;
     this->height = height;
-    if(coverage > 100) {
-        std::cout << "Coverage set to maximum (100%)" << std::endl;
-        coverage = 100;
-    } else if(coverage < 1) {
-        std::cout << "Coverage set to minimum (1%)" << std::endl;
-        coverage = 1;
-    }
-    this->countLimit = (0.01 * coverage) * width * height;
     this->asynchronous = asynch;
+    this->mostRecent = 0;
 
     spatial.resize(height);
     for(int y = 0; y < height; y++) {
@@ -39,7 +32,6 @@ vSurface::vSurface(int width, int height, int coverage, bool asynch)
 
     subq = vQueue(asynchronous);
 
-    count = 0;
 }
 
 vSurface::vSurface(const vSurface& that)
@@ -51,16 +43,20 @@ vSurface vSurface::operator=(const vSurface& that)
 {
     this->width = that.width;
     this->height = that.height;
-    this->countLimit = that.countLimit;
     this->asynchronous = that.asynchronous;
-
-    //we don't copy data in a vWindow for now
-    q.clear();
 
     spatial.resize(height);
     for(int y = 0; y < height; y++) {
         spatial[y].resize(width, 0);
     }
+
+    for(int i = 0; i < height; i++) {
+        for(int j = 0; j < width; j++) {
+            //if(that.spatial[i][j]) spatial[i][j] = that.spatial[i][j]->clone();
+        }
+    }
+
+    //we should also copy the data!!
 
     subq = vQueue(asynchronous);
 
@@ -73,34 +69,12 @@ void vSurface::addEvent(AddressEvent &event)
     //enter critcal section
     mutex.wait();
 
-    //add the event to the storage
-    q.push_back(&event);
-    //if we don't already have a spatial event we are going to add one
-    if(!spatial[event.getY()][event.getX()]) count++;
-    //else we just replace it
-    spatial[event.getY()][event.getX()] = q.back();
-
-    //remove any events falling out the back of the window
-    while(count > countLimit) {
-
-        AddressEvent * f = q.front()->getAs<AddressEvent>();
-        if(f == spatial[f->getY()][f->getX()]) {
-            //this is the current surface event we need to remove
-            spatial[f->getY()][f->getX()] = 0;
-            count--;
-        }
-        //in either case remove the event from the queue
-        q.pop_front();
-    }
-
-    if(q.size() > countLimit * 1.1) {
-        vQueue::iterator qi = q.begin();
-        while(qi != q.end()) {
-            AddressEvent * f = (*qi)->getAs<AddressEvent>();
-            if(*qi == spatial[f->getY()][f->getX()]) qi++;
-            else qi = q.erase(qi);
-        }
-    }
+    //if we previously had an event, delete it
+    int x = event.getX(); int y = event.getY();
+    if(spatial[y][x]) delete spatial[y][x];
+    //put our new event in
+    spatial[y][x] = event.clone();
+    mostRecent = spatial[y][x];
 
     //leave section
     mutex.post();
@@ -108,8 +82,8 @@ void vSurface::addEvent(AddressEvent &event)
 
 const vQueue& vSurface::getSURF(int d)
 {
-    return getSURF(q.back()->getAs<AddressEvent>()->getX(),
-                   q.back()->getAs<AddressEvent>()->getY(), d);
+    return getSURF(mostRecent->getAs<AddressEvent>()->getX(),
+                   mostRecent->getAs<AddressEvent>()->getY(), d);
 }
 
 const vQueue& vSurface::getSURF(int x, int y, int d)
@@ -146,9 +120,8 @@ const vQueue& vSurface::getSURF(int xl, int xh, int yl, int yh)
 
 vEvent *vSurface::getMostRecent()
 {
-    if(!q.size()) return 0;
-    if(asynchronous) return q.back()->clone();
-    else return q.back();
+    if(asynchronous) return mostRecent->clone();
+    else return mostRecent;
 }
 
 

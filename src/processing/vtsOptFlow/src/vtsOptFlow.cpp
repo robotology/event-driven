@@ -109,7 +109,7 @@ vtsOptFlowManager::vtsOptFlowManager(int height, int width, int filterSize,
     bottleCount = 0;
 
     //create our surface in synchronous mode
-    surface = new emorph::vSurface(width, height, 100, false);
+    surface = new emorph::vSurface(width, height, false);
 }
 
 /******************************************************************************/
