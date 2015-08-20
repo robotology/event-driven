@@ -22,9 +22,9 @@ vSurface::vSurface(int width, int height, int coverage, bool asynch)
 {
     this->width = width;
     this->height = height;
-    if(coverage > 90) {
-        std::cout << "Coverage set to maximum (90%)" << std::endl;
-        coverage = 90;
+    if(coverage > 100) {
+        std::cout << "Coverage set to maximum (100%)" << std::endl;
+        coverage = 100;
     } else if(coverage < 1) {
         std::cout << "Coverage set to minimum (1%)" << std::endl;
         coverage = 1;

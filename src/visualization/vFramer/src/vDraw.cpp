@@ -488,10 +488,10 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
         p_start.y = y*k;
 
         double magnitude = sqrt(pow(vx, 2.0) + pow(vy, 2.0));
-        double hypotenuse = 10.0 / magnitude;
+        double hypotenuse = 1.44 / magnitude;
         if(hypotenuse < 10) hypotenuse = 10;
         //if(hypotenuse > 20) hypotenuse = 20;
-        //hypotenuse = 15;
+        //hypotenuse = 40;
         double angle = atan2(vx, vy);
 
         //Scale the arrow by a factor of three

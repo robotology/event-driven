@@ -156,21 +156,28 @@ vQueue vQueue::copy(bool hardcopy)
 }
 
 void vQueue::sort() {
-    std::sort(begin(), end(), temporalSort);
+    std::sort(begin(), end(), temporalSortStraight);
 }
 
+void vQueue::wrapSort() {
+    std::sort(begin(), end(), temporalSortWrap);
+}
 
-bool vQueue::temporalSort(const vEvent *e1, const vEvent *e2)
+bool vQueue::temporalSortStraight(const vEvent *e1, const vEvent *e2) {
+    return e2->getStamp() > e1->getStamp();
+}
+
+bool vQueue::temporalSortWrap(const vEvent *e1, const vEvent *e2)
 {
 //    int dt = e2->getStamp() - e1->getStamp();
 //    if(dt > 0 && dt < 1000) return true;
 //    if(dt < 0 && dt < -1000) return true;
 //    return false;
 
-    if(std::abs(e1->getStamp() - e2->getStamp()) > 1000)
-        return e1->getStamp() < e2->getStamp();
+    if(std::abs(e1->getStamp() - e2->getStamp()) > vtsHelper::maxStamp()/2)
+        return e1->getStamp() > e2->getStamp();
     else
-        return e2->getStamp() < e1->getStamp();
+        return e2->getStamp() > e1->getStamp();
     //return e1->getStamp() < e2->getStamp() &&
     //        e2->getStamp() - e1->getStamp() < vtsHelper::maxStamp() / 2;
     //return e1->getStamp() - e2->getStamp() < vtsHelper::maxStamp() / 2;
@@ -845,7 +852,8 @@ yarp::os::Property FlowEvent::getContent() const
 
 void FlowEvent::setDeath()
 {
-    death = (int)(sqrt(pow(vx, 2.0) + pow(vy, 2.0)) / vtsHelper::tstosecs());
+    //1.118033989 is the movement to the corner of the pixel
+    death = (int)(1.414213562 * sqrt(pow(vx, 2.0) + pow(vy, 2.0)) / vtsHelper::tstosecs());
     if(death > 1000000) death = 1000000;
     death += stamp;
 }

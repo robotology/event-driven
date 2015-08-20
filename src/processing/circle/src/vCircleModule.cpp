@@ -193,7 +193,8 @@ void vCircleReader::onRead(emorph::vBottle &bot)
     outBottle = bot;
 
     //create event queue
-    emorph::vQueue q = bot.getSorted<emorph::AddressEvent>();
+    emorph::vQueue q = bot.get<emorph::AddressEvent>();
+    q.wrapSort();
 
     bool circlewasfound = false;
     double count = 0, potential = 0, detections = 0, inliersMax = 0, threshMax = 0, ratioMax = 0, radMax = 0;
