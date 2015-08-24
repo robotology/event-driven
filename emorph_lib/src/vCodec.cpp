@@ -853,8 +853,11 @@ yarp::os::Property FlowEvent::getContent() const
 void FlowEvent::setDeath()
 {
     //1.118033989 is the movement to the corner of the pixel
-    death = (int)(1.414213562 * sqrt(pow(vx, 2.0) + pow(vy, 2.0)) / vtsHelper::tstosecs());
-    if(death > 1000000) death = 1000000;
+    double theta = fabs(atan2(vy, vx));
+    if(theta > 1.5707963) theta -= 1.5707963;
+    if(theta > 0.785398) theta = 1.5707963 - theta;
+    death = 2*(int)(sqrt(pow(vx, 2.0) + pow(vy, 2.0)) / (cos(theta)*vtsHelper::tstosecs()));
+    //if(death > 1000000) death = 1000000;
     death += stamp;
 }
 
