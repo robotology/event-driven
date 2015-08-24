@@ -150,7 +150,7 @@ bool vCircleReader::setDataWriter(std::string datafilename)
 bool vCircleReader::open(const std::string &name)
 {
 
-    this->setStrict();
+    //this->setStrict();
     this->useCallback();
 
     std::string inPortName = "/" + name + "/vBottle:i";
@@ -212,6 +212,7 @@ void vCircleReader::onRead(emorph::vBottle &bot)
 
         potential++; //increment our records of possible v's to process
 
+        //if(getPendingReads()) continue;
         //if we already have new data to read we need to finish ASAP
 //        if(getPendingReads()) {
 //            std::cout << getPendingReads() << std::endl;

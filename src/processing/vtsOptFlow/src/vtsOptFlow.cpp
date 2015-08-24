@@ -111,7 +111,7 @@ vtsOptFlowManager::vtsOptFlowManager(int height, int width, int filterSize,
 /******************************************************************************/
 bool vtsOptFlowManager::open(std::string moduleName)
 {
-    this->setStrict();
+    //this->setStrict();
     this->useCallback();
 
     std::string inPortName = "/" + moduleName + "/vBottle:i";
