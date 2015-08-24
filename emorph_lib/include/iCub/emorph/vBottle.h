@@ -50,6 +50,13 @@ public:
     template<class T> vQueue get() {
 
         vQueue q(true);
+        addtoendof<T>(q);
+        return q;
+
+    }
+
+    template<class T> void addtoendof(vQueue &q) {
+
         //the bottle is stored as TAG (EVENTS) TAG (EVENTS)
         for(int i = 0; i < Bottle::size(); i+=2) {
 
@@ -86,8 +93,6 @@ public:
             delete(e);
 
         }
-
-        return q;
 
     }
 
