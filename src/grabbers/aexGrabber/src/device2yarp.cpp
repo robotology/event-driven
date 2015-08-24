@@ -334,9 +334,9 @@ device2yarp::device2yarp(string portDeviceName, bool i_bool, string i_fileName =
     prepareBiasesRight();
     startInt=Time::now();
 
-    std::cout << "Closing file descriptor after biases set" << std::endl;
-    close(file_desc);
-    std::cout << "Done" << std::endl;
+    //std::cout << "Closing file descriptor after biases set" << std::endl;
+    //close(file_desc);
+    //std::cout << "Done" << std::endl;
 
 }
 
@@ -929,7 +929,7 @@ void  device2yarp::run() {
                     fprintf(fout,"%lu,",(long unsigned int)t);
                 }
             }
-            cout<<"raw ts: "<<t<<std::endl;
+            //cout<<"raw ts: "<<t<<std::endl;
 
 
 

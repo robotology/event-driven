@@ -140,7 +140,7 @@ bool aexGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         D2Y->setDumpEvent(false);
     }
 
-    //D2Y->start();
+    D2Y->start();
 
     return true ;       // let the RFModule know everything went well
                         // so that it will then run the module
