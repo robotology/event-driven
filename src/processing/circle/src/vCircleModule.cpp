@@ -273,12 +273,12 @@ void vCircleReader::onRead(emorph::vBottle &bot)
 
         //update the filter given the observation
         double ts = unwrap(v->getStamp());
-        if(!circleTracker.isActive()) {
-            circleTracker.startTracking(cx, cy, cr);
-        } else {
-            circleTracker.predict((ts - pTS)*emorph::vtsHelper::tstosecs());
-            circleTracker.correct(cx, cy, cr);
-        }
+//        if(!circleTracker.isActive()) {
+//            circleTracker.startTracking(cx, cy, cr);
+//        } else {
+//            circleTracker.predict((ts - pTS)*emorph::vtsHelper::tstosecs());
+//            circleTracker.correct(cx, cy, cr);
+//        }
         pTS = ts;
 
         //write analysis data if needed
@@ -329,7 +329,8 @@ void vCircleReader::onRead(emorph::vBottle &bot)
     //also add a single circle tracking position to the output
     //at the moment we are just using ClusterEventGauss
     double x, y, r;
-    if(false && circlewasfound && circleTracker.getState(x, y, r)) {
+    circleTracker.predict((q.back()->getStamp() - pTS)*emorph::vtsHelper::tstosecs());
+    if(false && circleTracker.getState(x, y, r)) {
         emorph::ClusterEventGauss circevent;
         circevent.setStamp(pTS);
         circevent.setChannel(0);

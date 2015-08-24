@@ -155,8 +155,8 @@ void vtsOptFlowManager::onRead(emorph::vBottle &inBottle)
 
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {
-        if(getPendingReads())
-            computeflow = false;
+//        if(getPendingReads())
+//            computeflow = false;
 
         emorph::AddressEvent *aep = (*qi)->getAs<emorph::AddressEvent>();
         if(!aep) continue;
