@@ -37,13 +37,10 @@ bool vtsOptFlow::configure(yarp::os::ResourceFinder &rf)
     int height = rf.check("height", yarp::os::Value(128)).asInt();
     int width = rf.check("width", yarp::os::Value(128)).asInt();
     int sobelSize = rf.check("filterSize", yarp::os::Value(3)).asInt();
-    int coverage = rf.check("coverage", yarp::os::Value(50)).asInt();
-    int minEvtsInSobel = rf.check("minEvtsThresh", yarp::os::Value(5)).asInt();
-    double inlierThreshold = rf.check("inlierThreshold",
-                                   yarp::os::Value(0.1)).asDouble();
+    int minEvtsOnPlane = rf.check("minEvtsThresh", yarp::os::Value(5)).asInt();
 
-    vtsofManager = new vtsOptFlowManager(height, width, sobelSize,
-                                         minEvtsInSobel, inlierThreshold);
+    vtsofManager =
+            new vtsOptFlowManager(height, width, sobelSize, minEvtsOnPlane);
     return vtsofManager->open(moduleName);
 
 }
@@ -82,7 +79,7 @@ bool vtsOptFlow::updateModule()
 //vtsOptFlowManager
 /******************************************************************************/
 vtsOptFlowManager::vtsOptFlowManager(int height, int width, int filterSize,
-                                     int minEvtsInSobel, double inlierThreshold)
+                                     int minEvtsOnPlane)
 {
 
     this->height=height;
@@ -94,9 +91,8 @@ vtsOptFlowManager::vtsOptFlowManager(int height, int width, int filterSize,
     this->fRad = filterSize / 2;
     this->halfCount = pow(filterSize, 2.0) / 2.0 + 0.5;
 
-    this->minEvtsInSobel = std::min((double)minEvtsInSobel, halfCount/2.0+0.5);
-    this->inlierThreshold = inlierThreshold;
-
+    //this->minEvtsInSobel = std::min((double)minEvtsInSobel, halfCount/2.0+0.5);
+    this->minEvtsOnPlane = minEvtsOnPlane;
 
     //for speed we predefine the mememory for some matricies
     At = yarp::sig::Matrix(3, filterSize * filterSize);
@@ -115,12 +111,13 @@ vtsOptFlowManager::vtsOptFlowManager(int height, int width, int filterSize,
 /******************************************************************************/
 bool vtsOptFlowManager::open(std::string moduleName)
 {
-    /*create all ports*/
+    this->setStrict();
     this->useCallback();
 
     std::string inPortName = "/" + moduleName + "/vBottle:i";
     bool check1 = BufferedPort<emorph::vBottle>::open(inPortName);
 
+    outPort.setStrict();
     std::string outPortName = "/" + moduleName + "/vBottle:o";
     bool check2 = outPort.open(outPortName);
     return check1 && check2;
@@ -147,7 +144,6 @@ void vtsOptFlowManager::interrupt()
 /******************************************************************************/
 void vtsOptFlowManager::onRead(emorph::vBottle &inBottle)
 {
-    //double starttime = yarp::os::Time::now();
     bool computeflow = true;
 
     /*prepare output vBottle with AEs extended with optical flow events*/
@@ -159,7 +155,6 @@ void vtsOptFlowManager::onRead(emorph::vBottle &inBottle)
 
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {
-        //if(computeflow && yarp::os::Time::now() - starttime > 0.0009)
         if(getPendingReads())
             computeflow = false;
 
@@ -195,11 +190,6 @@ void vtsOptFlowManager::onRead(emorph::vBottle &inBottle)
 
     outPort.write();
 
-//    double threadtime = yarp::os::Time::now() - starttime;
-//    if(threadtime > 0.001) {
-//        std::cout << "Thread took too long: " << threadtime * 1000 << "ms";
-//        std::cout << std::endl;
-//    }
 }
 
 /******************************************************************************/
@@ -219,13 +209,12 @@ emorph::FlowEvent vtsOptFlowManager::compute()
             //get the surface around the recent event
             double sobeltsdiff = 0;
             emorph::vQueue subsurf = surface->getSURF(i, j, fRad);
-            if(subsurf.size() < minEvtsInSobel) continue;
+            if(subsurf.size() < minEvtsOnPlane) continue;
 
             for(int k = 0; k < subsurf.size(); k++) {
                 if(subsurf[k]->getStamp() > vr->getStamp())
-                    sobeltsdiff += vr->getStamp() - subsurf[k]->getStamp() + emorph::vtsHelper::maxStamp();
-                else
-                    sobeltsdiff += vr->getStamp() - subsurf[k]->getStamp();
+                    subsurf[k]->setStamp(subsurf[k]->getStamp() - emorph::vtsHelper::maxStamp());
+                sobeltsdiff += vr->getStamp() - subsurf[k]->getStamp();
             }
             sobeltsdiff /= subsurf.size();
             if(sobeltsdiff < bestscore) {
@@ -237,35 +226,21 @@ emorph::FlowEvent vtsOptFlowManager::compute()
 
     if(bestscore > emorph::vtsHelper::maxStamp()) return opt_flow;
 
-    //get the surface around the recent event
-    //BE CAREFUL HERE BECAUSE WE CHANGE THE TIMESTAMP (IN OUR SURFACE)!!
-    //MAKE SURE THERE ARE NO OTHER REPERCUSIONS!!
     emorph::vQueue subsurf = surface->getSURF(besti, bestj, fRad);
-    for(int i = 0; i < subsurf.size(); i++) {
-        if(subsurf[i]->getStamp() > vr->getStamp())
-            subsurf[i]->setStamp(subsurf[i]->getStamp() - emorph::vtsHelper::maxStamp());
-    }
-
-
-    //take only the most recent half of events
-    subsurf.sort();
-    while(subsurf.size() > halfCount) {
-        subsurf.pop_front();
-    }
-    if(subsurf.size() < minEvtsInSobel) return opt_flow;
 
     //and compute the flow
-    if(computeGrads(subsurf, *vr, dtdy, dtdx)) {
+    if(computeGrads(subsurf, *vr, dtdy, dtdx) > minEvtsOnPlane) {
         opt_flow.setVx(dtdx);
         opt_flow.setVy(dtdy);
         opt_flow.setDeath();
+        //std::cout << sqrt(pow(dtdx, 2.0) + pow(dtdy, 2.0)) << std::endl;
     }
 
     return opt_flow;
 }
 
 /******************************************************************************/
-bool vtsOptFlowManager::computeGrads(emorph::vQueue &subsurf,
+int vtsOptFlowManager::computeGrads(emorph::vQueue &subsurf,
                                      emorph::AddressEvent &cen,
                                      double &dtdy, double &dtdx)
 {
@@ -285,7 +260,7 @@ bool vtsOptFlowManager::computeGrads(emorph::vQueue &subsurf,
 }
 
 /******************************************************************************/
-bool vtsOptFlowManager::computeGrads(yarp::sig::Matrix &A, yarp::sig::Vector &Y,
+int vtsOptFlowManager::computeGrads(yarp::sig::Matrix &A, yarp::sig::Vector &Y,
                                      double cx, double cy, double cz,
                                      double &dtdy, double &dtdx)
 {
@@ -297,7 +272,7 @@ bool vtsOptFlowManager::computeGrads(yarp::sig::Matrix &A, yarp::sig::Vector &Y,
     double DET=*dataATA*( *(dataATA+8)**(dataATA+4)-*(dataATA+7)**(dataATA+5))-
             *(dataATA+3)*(*(dataATA+8)**(dataATA+1)-*(dataATA+7)**(dataATA+2))+
             *(dataATA+6)*(*(dataATA+5)**(dataATA+1)-*(dataATA+4)**(dataATA+2));
-    if(DET < 1) return false;
+    if(DET < 1) return 0;
 
 
     double *dataA=A2.data();
@@ -314,20 +289,35 @@ bool vtsOptFlowManager::computeGrads(yarp::sig::Matrix &A, yarp::sig::Vector &Y,
 
     abc=A2*At*Y;
 
-    // calculating the error of the plane...
-    double d = -(abc(1)*cx + abc(0)*cy + abc(2)*cz);
-    //for each point then compute the distance
-    double inliers = 0;
+    dtdx = abc(0); dtdy = abc(1);
+
+    double dtdp = sqrt(pow(dtdx, 2.0) + pow(dtdy, 2.0)) * 0.5;
+
+    int inliers = 0;
     for(int i = 0; i < A.rows(); i++) {
-
-        //distance in z direction / time direction
-        double dp = Y(i) + (abc(1)*A(i, 0) + abc(0)*A(i, 1) + d)/abc(2);
-        if(fabs(dp) < inlierThreshold) inliers++;
-
+        double planedt = dtdx * (A(i, 0) - cx) + dtdy * (A(i, 1) - cy);
+        double actualdt = Y(i) - cz;
+        if(fabs(planedt - actualdt) < dtdp) inliers++;
     }
 
-    if(inliers < minEvtsInSobel) return false;
-    dtdx = abc(1); dtdy = abc(0);
-    return true;
+    return inliers;
+
+
+
+//    // calculating the error of the plane...
+//    double d = -(abc(0)*cx + abc(1)*cy + abc(2)*cz);
+//    //for each point then compute the distance
+//    double inliers = 0;
+//    for(int i = 0; i < A.rows(); i++) {
+
+//        //distance in z direction / time direction
+//        double dp = Y(i) + (abc(0)*A(i, 0) + abc(1)*A(i, 1) + d)/abc(2);
+//        if(fabs(dp) < inlierThreshold) inliers++;
+
+//    }
+
+//    if(inliers < minEvtsInSobel) return false;
+//    dtdx = abc(0); dtdy = abc(1);
+//    return true;
 
 }

@@ -42,35 +42,29 @@ private:
     int height;
     int width;
     int fRad;
-    //int fullCount;
     int halfCount;
-    int minEvtsInSobel;
-    double inlierThreshold;
+    int minEvtsOnPlane;
 
-    //yarp::sig::Matrix sobelx;
-    //yarp::sig::Matrix sobely;
     yarp::sig::Matrix At;
     yarp::sig::Matrix AtA;
     yarp::sig::Matrix A2;
     yarp::sig::Vector abc;
-    //int sobelCount;
 
     int eventsComputed;
     int eventsPotential;
     int bottleCount;
 
-    void setSobelFilters(uint, yarp::sig::Matrix&, yarp::sig::Matrix&);
     emorph::FlowEvent compute();
-    bool computeGrads(yarp::sig::Matrix &A, yarp::sig::Vector &Y,
+    int computeGrads(yarp::sig::Matrix &A, yarp::sig::Vector &Y,
                       double cx, double cy, double cz,
                       double &dtdy, double &dtdx);
-    bool computeGrads(emorph::vQueue &subsurf, emorph::AddressEvent &cen,
+    int computeGrads(emorph::vQueue &subsurf, emorph::AddressEvent &cen,
                       double &dtdy, double &dtdx);
 
 public:
 
     vtsOptFlowManager(int height, int width, int filterSize,
-                      int minEvtsInSobel, double inlierThreshold);
+                      int minEvtsOnPlane);
 
     bool    open(std::string moduleName);
     void    close();
