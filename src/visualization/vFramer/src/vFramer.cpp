@@ -42,6 +42,7 @@ void vReadAndSplit::setWindowSize(int windowsize)
 
 bool vReadAndSplit::open(const std::string portName)
 {
+    this->setStrict();
     this->useCallback();
 
     std::cout << "Opening BufferedPort::vReadAndSplit" << std::endl;
@@ -172,6 +173,7 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
         //extract the portname
         outports[i] = new yarp::os::BufferedPort<
                 yarp::sig::ImageOf<yarp::sig::PixelBgr> >;
+        outports[i]->setStrict();
         std::string outportname = displayList->get(i*3 + 1).asString();
         outports[i]->open("/" + moduleName + "/" + outportname);
 

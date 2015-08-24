@@ -124,6 +124,7 @@ void lifeDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
     if(checkStagnancy(eSet) > clearThreshold) {
         return;
     }
+    if(eSet.empty()) return;
 
     int cts = eSet.back()->getStamp();
 
@@ -477,8 +478,8 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
 
         int x = ofp->getY();
         int y = ofp->getX();
-        float vx = ofp->getVy();
-        float vy = ofp->getVx();
+        float vx = ofp->getVx();
+        float vy = ofp->getVy();
         //vx_mean += vx;
         //vy_mean += vy;
         //n++;
