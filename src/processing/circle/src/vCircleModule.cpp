@@ -150,18 +150,23 @@ bool vCircleReader::setDataWriter(std::string datafilename)
 bool vCircleReader::open(const std::string &name)
 {
 
+    this->setStrict();
     this->useCallback();
 
     std::string inPortName = "/" + name + "/vBottle:i";
     bool state1 = yarp::os::BufferedPort<emorph::vBottle>::open(inPortName);
 
+    outPort.setStrict();
     std::string outPortName = "/" + name + "/vBottle:o";
     bool state2 = outPort.open(outPortName);
 
     std::string scopePortName = "/" + name + "/scope:o";
     bool state3 = scopeOut.open(scopePortName);
 
-    return state1 && state2 && state3;
+    std::string houghPortName = "/" + name + "/debug:o";
+    bool state4 = houghOut.open(houghPortName);
+
+    return state1 && state2 && state3 && state4;
 }
 
 /******************************************************************************/
@@ -208,7 +213,11 @@ void vCircleReader::onRead(emorph::vBottle &bot)
         potential++; //increment our records of possible v's to process
 
         //if we already have new data to read we need to finish ASAP
-        if(getPendingReads() > 1) continue;
+//        if(getPendingReads()) {
+//            std::cout << getPendingReads() << std::endl;
+//            emorph::vBottle * exBot = vCircleReader::read(true);
+//            exBot->addtoendof<emorph::AddressEvent>(q);
+//        }
         count++; //increment our records of v's processed
 
         //process the observation
@@ -305,6 +314,12 @@ void vCircleReader::onRead(emorph::vBottle &bot)
         scopeOut.write();
     }
 
+    if(houghOut.getOutputCount()) {
+        yarp::sig::ImageOf< yarp::sig::PixelMono> &image = houghOut.prepare();
+        image = houghFinder.makeDebugImage(15);
+        houghOut.write();
+    }
+
     //at the end of the bottle say how many events were processed
     //std::cout << "Detections: " << detections << std::endl;
 //    if(potential != 0 && count != potential) {
@@ -314,7 +329,7 @@ void vCircleReader::onRead(emorph::vBottle &bot)
     //also add a single circle tracking position to the output
     //at the moment we are just using ClusterEventGauss
     double x, y, r;
-    if(circlewasfound && circleTracker.getState(x, y, r)) {
+    if(false && circlewasfound && circleTracker.getState(x, y, r)) {
         emorph::ClusterEventGauss circevent;
         circevent.setStamp(pTS);
         circevent.setChannel(0);
