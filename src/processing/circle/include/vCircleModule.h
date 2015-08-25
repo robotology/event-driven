@@ -52,7 +52,7 @@ public:
     
     vCircleReader();
 
-    bool    open(const std::string &name);
+    bool    open(const std::string &name, bool strictness = false);
     void    close();
     void    interrupt();
 

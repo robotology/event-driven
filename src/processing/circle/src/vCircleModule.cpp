@@ -23,10 +23,11 @@
 bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
 {
     //set the name of the module
-    std::string moduleName = rf.check("name",
-                                      yarp::os::Value("vCircleFinder")
-                                      ).asString();
+    std::string moduleName =
+            rf.check("name", yarp::os::Value("vCircleFinder")).asString();
     setName(moduleName.c_str());
+
+    bool strictness = rf.check("strict", yarp::os::Value(false)).asBool();
 
     //sensory size
     int width = rf.check("width", yarp::os::Value(128)).asInt();
@@ -86,7 +87,7 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
     }
 
     //open the ports
-    if(!circleReader.open(moduleName)) {
+    if(!circleReader.open(moduleName, strictness)) {
         std::cerr << "Could not open required ports" << std::endl;
         return false;
     }    
@@ -147,16 +148,17 @@ bool vCircleReader::setDataWriter(std::string datafilename)
 }
 
 /******************************************************************************/
-bool vCircleReader::open(const std::string &name)
+bool vCircleReader::open(const std::string &name, bool strictness)
 {
 
-    //this->setStrict();
+    if(strictness) this->setStrict();
     this->useCallback();
 
     std::string inPortName = "/" + name + "/vBottle:i";
     bool state1 = yarp::os::BufferedPort<emorph::vBottle>::open(inPortName);
 
-    outPort.setStrict();
+
+    if(strictness) outPort.setStrict();
     std::string outPortName = "/" + name + "/vBottle:o";
     bool state2 = outPort.open(outPortName);
 
@@ -200,7 +202,9 @@ void vCircleReader::onRead(emorph::vBottle &bot)
     //create event queue
     emorph::vQueue q = bot.get<emorph::AddressEvent>();
     q.wrapSort();
+    if(!q.size()) return;
 
+    double ts;
     bool circlewasfound = false;
     double count = 0, potential = 0, detections = 0, inliersMax = 0, threshMax = 0, ratioMax = 0, radMax = 0;
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
@@ -210,6 +214,7 @@ void vCircleReader::onRead(emorph::vBottle &bot)
         if(!v || v->getChannel()) continue;
         if(!hough) geomFinder.addEvent(*v);
 
+        ts = unwrap(v->getStamp());
         potential++; //increment our records of possible v's to process
 
         //if(getPendingReads()) continue;
@@ -257,6 +262,15 @@ void vCircleReader::onRead(emorph::vBottle &bot)
             radMax = cr;
         }
 
+        if(datawriter.is_open() && inliers) {
+            datawriter << ts * emorph::vtsHelper::tstosecs() << " " << cx << " "
+                       << cy << " " << cr << " " << inliers << " " << threshold
+                       << std::endl;
+            //double kx, ky, kr;
+            //circleTracker.getState(kx, ky, kr);
+            //datawriter << kx << " " << ky << " " << kr << std::endl;
+        }
+
         //if the inliers is not enough we don't continue processing
         if(inliers <= threshold) continue;
 
@@ -270,25 +284,26 @@ void vCircleReader::onRead(emorph::vBottle &bot)
         circevent.setYCog(cy);
         circevent.setXSigma2(cr);
         circevent.setYSigma2(1);
+        circevent.setID(0);
         outBottle.addEvent(circevent);
 
         //update the filter given the observation
-        double ts = unwrap(v->getStamp());
-//        if(!circleTracker.isActive()) {
-//            circleTracker.startTracking(cx, cy, cr);
-//        } else {
-//            circleTracker.predict((ts - pTS)*emorph::vtsHelper::tstosecs());
-//            circleTracker.correct(cx, cy, cr);
-//        }
+
+        if(!circleTracker.isActive()) {
+            circleTracker.startTracking(cx, cy, cr);
+        } else {
+            circleTracker.predict((ts - pTS)*emorph::vtsHelper::tstosecs());
+            circleTracker.correct(cx, cy, cr);
+        }
         pTS = ts;
 
         //write analysis data if needed
         if(datawriter.is_open()) {
             datawriter << ts * emorph::vtsHelper::tstosecs() << " " << cx << " "
                        << cy << " " << cr << " ";
-            double kx, ky, kr;
-            circleTracker.getState(kx, ky, kr);
-            datawriter << kx << " " << ky << " " << kr << std::endl;
+            //double kx, ky, kr;
+            //circleTracker.getState(kx, ky, kr);
+            //datawriter << kx << " " << ky << " " << kr << std::endl;
         }
 
     }
@@ -330,15 +345,17 @@ void vCircleReader::onRead(emorph::vBottle &bot)
     //also add a single circle tracking position to the output
     //at the moment we are just using ClusterEventGauss
     double x, y, r;
-    circleTracker.predict((q.back()->getStamp() - pTS)*emorph::vtsHelper::tstosecs());
-    if(false && circleTracker.getState(x, y, r)) {
+    circleTracker.predict((ts - pTS)*emorph::vtsHelper::tstosecs());
+    if(circleTracker.getState(x, y, r)) {
+        std::cout << x << " " << y << " " << r << std::endl;
         emorph::ClusterEventGauss circevent;
-        circevent.setStamp(pTS);
+        circevent.setStamp(ts);
         circevent.setChannel(0);
         circevent.setXCog(x);
         circevent.setYCog(y);
         circevent.setXSigma2(r);
         circevent.setYSigma2(1);
+        circevent.setID(1);
         outBottle.addEvent(circevent);
     }
 

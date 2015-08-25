@@ -612,7 +612,7 @@ void vCircleTracker::init(double svPos, double svSiz, double zvPos,
     //these two matrices are dependent on dt so we have to update them everytime
     yarp::sig::Matrix A(6, 6); A = 0;
     A(0, 0) = 1; A(1, 1) = 1; A(2, 2) = 1;
-    A(3, 3) = 1; A(4, 4) = 1; A(5, 5) = 1;
+    A(3, 3) = 1; A(4, 4) = 1; A(5, 5) = 0;
    // A(6, 6) = 1; A(7, 7) = 1; A(8, 8) = 1;
     //we need to update A: (0, 3), (1, 4) and (2, 5) based on delta t
 
@@ -642,25 +642,24 @@ bool vCircleTracker::startTracking(double xz, double yz, double rz)
     return true;
 }
 
-/******************************************************************************/
+/*********************************s*********************************************/
 double vCircleTracker::predict(double dt)
 {
 
     if(!active) return 0;
     //update the tracker position
+    double dtmod = dt > 1.0 ? 0.0 : 1.0 - 0.5*pow(dt, 2.0);
     yarp::sig::Matrix A = filter->get_A();
-    double dt2 = 0.5 * pow(dt, 2.0);
-    double dtmod = dt > 1.0 ? 0.0 : 1 - dt;
     A(0, 3) = dt; A(1, 4) = dt; A(2, 5) = dt;
     //A(3, 6) = dt; A(4, 7) = dt; A(5, 8) = dt;
     //A(0, 6) = dt2; A(1, 7) = dt2; A(2, 8) = dt2
-    A(3, 3) = dtmod; A(4, 4) = dtmod; A(5, 5) = dtmod;
+    A(3, 3) = dtmod; A(4, 4) = dtmod; A(5, 5) = 0;
     filter->set_A(A);
 
     yarp::sig::Matrix Q = filter->get_Q();
     //Q(6, 6) = svPos*dt2; Q(7, 7) = svPos*dt2; Q(8, 8) = svSiz*dt2;
     //Q(0, 0) = svPos*dt; Q(1, 1) = svPos*dt; Q(2, 2) = svSiz*dt;
-    Q(3, 3) = svPos*dt2; Q(4, 4) = svPos*dt2; Q(5, 5) = svSiz*dt2;
+    Q(3, 3) = svPos*dt; Q(4, 4) = svPos*dt; Q(5, 5) = svSiz*dt;
     filter->set_Q(Q);
 
     filter->predict();

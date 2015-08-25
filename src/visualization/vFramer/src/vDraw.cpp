@@ -365,7 +365,15 @@ void circleDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
         double r = v->getXSigma2();
         //we hide the radial variance in Y_sigma_2
         double w = v->getYSigma2();
-        cv::circle(image, centr, r, CV_RGB(0, 0, 255), w);
+
+        CvScalar c;
+        switch(v->getID()) {
+        case(0): c = CV_RGB(0, 0, 255); break;
+        case(1): c = CV_RGB(0, 255, 0); break;
+        default: c = CV_RGB(255, 0, 0);
+        }
+
+        cv::circle(image, centr, r, c, w);
         //n++;
     }
 

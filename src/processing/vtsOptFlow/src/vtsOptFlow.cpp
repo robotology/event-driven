@@ -32,6 +32,7 @@ bool vtsOptFlow::configure(yarp::os::ResourceFinder &rf)
                                       yarp::os::Value("vtsOptFlow")).asString();
     yarp::os::RFModule::setName(moduleName.c_str());
 
+    bool strictness = rf.check("strict", yarp::os::Value(false)).asBool();
 
     /* set parameters */
     int height = rf.check("height", yarp::os::Value(128)).asInt();
@@ -41,7 +42,7 @@ bool vtsOptFlow::configure(yarp::os::ResourceFinder &rf)
 
     vtsofManager =
             new vtsOptFlowManager(height, width, sobelSize, minEvtsOnPlane);
-    return vtsofManager->open(moduleName);
+    return vtsofManager->open(moduleName, strictness);
 
 }
 
@@ -109,15 +110,15 @@ vtsOptFlowManager::vtsOptFlowManager(int height, int width, int filterSize,
 }
 
 /******************************************************************************/
-bool vtsOptFlowManager::open(std::string moduleName)
+bool vtsOptFlowManager::open(std::string moduleName, bool strictness)
 {
-    //this->setStrict();
-    this->useCallback();
+    if(strictness) this->setStrict();
+     this->useCallback();
 
     std::string inPortName = "/" + moduleName + "/vBottle:i";
     bool check1 = BufferedPort<emorph::vBottle>::open(inPortName);
 
-    outPort.setStrict();
+    if(strictness) outPort.setStrict();
     std::string outPortName = "/" + moduleName + "/vBottle:o";
     bool check2 = outPort.open(outPortName);
     return check1 && check2;

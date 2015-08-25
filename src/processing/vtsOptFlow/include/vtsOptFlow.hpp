@@ -66,7 +66,7 @@ public:
     vtsOptFlowManager(int height, int width, int filterSize,
                       int minEvtsOnPlane);
 
-    bool    open(std::string moduleName);
+    bool    open(std::string moduleName, bool strictness = false);
     void    close();
     void    interrupt();
     void    onRead(emorph::vBottle &inBottle);

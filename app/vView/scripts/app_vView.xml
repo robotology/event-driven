@@ -35,7 +35,7 @@
 
 <module>
     <name> vCircle </name>
-    <parameters> --hough true --flowhough true --windowtype Lifetime --inlierThreshold 17 --procNoisePos 15 --procNoiseRad 15 --measNoisePos 15 --measNoiseRad 15 --datafile</parameters>
+    <parameters> --hough true --flowhough true --windowtype Lifetime --inlierThreshold 17 --procNoisePos 0.1 --procNoiseRad 0.1 --measNoisePos 128 --measNoiseRad 128 --datafile</parameters>
     <node> localhost </node>
 </module>
 
