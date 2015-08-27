@@ -1,36 +1,62 @@
 
-dataset = '~/DataBackup/DATASETS/redballtrackdataset/withperson/ball_ExtDVS.txt';
-resultfile = '~/DataBackup/DATASETS/redballtrackdataset/withperson/GT.txt';
-winsize = 0.05; %seconds
-rate = 0.2; %seconds
+if(~exist('GTdataset', 'var'))
+    display('Please specify the path to the dataset in parameter "GTdataset"');
+    return;
+end
+
+GTresultfile = [GTdataset(1:find(GTdataset == '.', 1, 'last')) 'GT'];
+
+% if(~exist('GTresultfile', 'var'))
+%     display('Please specify the path to the dataset in parameter "GTresultfile"');
+%     return;
+% end
+%GTdataset = '~/DataBackup/DATASETS/redballtrackdataset/withperson/ball_ExtDVS.txt';
+%GTresultfile = '~/DataBackup/DATASETS/redballtrackdataset/withperson/GT.txt';
+winsize = 1.0; %seconds
+rate = 1.0; %seconds
 channel = 0;
+if(~exist('GTevents', 'var'))
+    
+    display('Loading data...');
+    %CH TS POL X Y
+    GTevents = importdata(GTdataset); % import data
+    
+    GTevents(GTevents(:, 1) ~= channel, :) = [];
+    GTevents(:, 2) = GTevents(:, 2) / 1000000; % change time scale to seconds
+    
+else 
+    display('Using pre-loaded data');
+end
 
-%CH TS POL X Y
-events = importdata(dataset); % import data
+result = zeros(ceil((GTevents(end, 2) - GTevents(1, 2)) / rate), 4);
 
-events(events(:, 1) ~= channel, :) = [];
-events(:, 2) = events(:, 2) / 1000000; % change time scale to seconds
+display('Press Esc to quit');
+display('Press Enter to log position');
+display('Press Space to skip position');
+display('Press +/- to change circle size');
+display('Move circle with arrows');
 
-result = zeros(ceil((events(end, 2) - events(1, 2)) / rate), 4);
+display(['Approximately ' int2str((GTevents(end, 2) - GTevents(1, 2)) / rate + 0.5) ...
+    ' frames to GT']);
 
 figure(1); clf;
 
-cts = events(1, 2) + winsize;
-ci = find(events(1:end, 2) > cts, 1) - 1;
-cts = events(ci, 2);
+cts = GTevents(1, 2) + winsize;
+ci = find(GTevents(1:end, 2) > cts, 1) - 1;
+cts = GTevents(ci, 2);
 
 res_i = 1;
 x = 64; y = 64; r = 20; 
 
-while cts < events(end, 2)
+while cts < GTevents(end, 2)
     
-    wini  = find(events(1:end, 2) > cts-winsize, 1);
+    wini  = find(GTevents(1:end, 2) > cts-winsize, 1);
     finished = false;
     
     while(~finished)
         clf; hold on;
-        window = events(wini:ci, :);       
-        plot(window(window(:, 3) == -1, 4), window(window(:, 3) == -1, 5), 'g.');
+        window = GTevents(wini:ci, :);       
+        plot(window(window(:, 3) == 0, 4), window(window(:, 3) == 0, 5), 'g.');
         plot(window(window(:, 3) ==  1, 4), window(window(:, 3) ==  1, 5), 'm.');
         rectangle('curvature', [1 1], 'position', [x-r/2 y-r/2 r r]);
         axis([0 128 0 128]);
@@ -76,11 +102,13 @@ while cts < events(end, 2)
    
     res_i = res_i + 1;
     cts = cts + rate;
-    ci = find(events(1:end, 2) > cts, 1) - 1;
-    cts = events(ci, 2);
-    dlmwrite(resultfile, result, 'delimiter', ' ', 'precision', '%0.6f'); 
+    ci = find(GTevents(1:end, 2) > cts, 1) - 1;
+    cts = GTevents(ci, 2);
+    dlmwrite(GTresultfile, result, 'delimiter', ' ', 'precision', '%0.6f'); 
     
 end
+
+display('Finished Ground-truthing');
+close(1);
     
-    
-    
+   
