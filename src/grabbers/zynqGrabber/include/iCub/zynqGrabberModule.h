@@ -156,6 +156,8 @@
 #define COMMAND_VOCAB_SETBIAS VOCAB3('s','e','t') // set biasName biasValue channel
 // TODO if channel is not specificed set both channels
 #define COMMAND_VOCAB_PROG    VOCAB4('p','r','o','g')
+#define COMMAND_VOCAB_PWROFF    VOCAB3('o','f','f')
+#define COMMAND_VOCAB_PWRON    VOCAB2('o','n')
 
 #include <iostream>
 #include <string>
@@ -178,7 +180,8 @@ class zynqGrabberModule : public yarp::os::RFModule {
     yarp::os::Port handlerPort; // a port to handle messages
 
     deviceManager* devManager;
-    deviceManager* cfgManager;
+    deviceManager* cfgMngLeft;
+    deviceManager* cfgMngRight;
     device2yarp* D2Y; // reference to the ratethread that reads the device and writes to yarp vBottle
     yarp2device Y2D; // bufferedport that reads yarp vBottles and writes to the device
     configManager* configLeft; // reference to the class for configuring chip (biases and registers)

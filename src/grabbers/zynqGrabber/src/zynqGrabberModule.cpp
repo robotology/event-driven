@@ -26,38 +26,38 @@
 #include <iCub/zynqGrabberModule.h>
 
 bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
-
+    
     /* Process all parameters from both command-line and .ini file */
     std::cout << "Configuring the zynqGrabberModule" << std::endl;
     
     //printf("moduleName  %s \n", moduleName.c_str());
     std::string moduleName =
-            rf.check("name", yarp::os::Value("zynqGrabber")).asString();
+    rf.check("name", yarp::os::Value("zynqGrabber")).asString();
     setName(moduleName.c_str());
-
-
-     //get the device name which will be used to read events
+    
+    
+    //get the device name which will be used to read events
     device = rf.check("device",
-                          yarp::os::Value("zynq")).asString();
-
+                      yarp::os::Value("zynq")).asString();
+    
     
     std::string chipName =
     rf.check("name", yarp::os::Value("dvs")).asString();
     setName(chipName.c_str());
-
+    
     
     //get the maximum buffer size to use for device reading
     int maxBufferSize = rf.check("bufferSize", yarp::os::Value(16777216)).asInt();
-
+    
     //TODO: get all the bias settings
-
+    
     // class configManager for left and right sensors
     configLeft = new configManager("left", chipName);
     configRight = new configManager("right", chipName);
-
-
+    
+    
     if (device == "zynq"){
-
+        
         std::string deviceName = "/dev/spinn2neu";
         // class manageDevice for events
         devManager = new deviceManager(deviceName, maxBufferSize);
@@ -66,19 +66,21 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
             return false;
         }
         
-//        std::string configName = "/dev/i2c";
-//        // class manageDevice for configuration
-//        cfgManager = new deviceManager(configName, maxBufferSize);
-//        if(!cfgManager->openDevice()) {
-//            std::cerr << "Could not open the device: " << configName << std::endl;
-//            return false;
-//        }
-//        configLeft -> attachDeviceManager(cfgManager);
-//        configRight -> attachDeviceManager(cfgManager);
-//
-//        configLeft -> programBiases();
-//        configRight -> programBiases();
-
+        std::string configNameLeft = "/dev/iit-vscfg-left";
+        std::string configNameRight = "/dev/iit-vscfg-right";
+        // class manageDevice for configuration
+        cfgMngLeft = new deviceManager(configNameLeft, maxBufferSize);
+        cfgMngRight = new deviceManager(configNameRight, maxBufferSize);
+        if(!(cfgMngLeft->openDevice() & cfgMngRight->openDevice())) {
+            std::cerr << "Could not open the i2c devices" << std::endl;
+            return false;
+        }
+        configLeft -> attachDeviceManager(cfgMngLeft);
+        configRight -> attachDeviceManager(cfgMngRight);
+        
+        configLeft -> programBiases();
+        configRight -> programBiases();
+        
         
     } else if (device == "ihead")
     {
@@ -89,9 +91,9 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
             std::cerr << "Could not open the device: " << deviceName << std::endl;
             return false;
         }
-//        configLeft -> attachDeviceManager(devManager);
-//        configRight -> attachDeviceManager(devManager);
-
+        //        configLeft -> attachDeviceManager(devManager);
+        //        configRight -> attachDeviceManager(devManager);
+        
         //configLeft -> programBiasesAex();
         //configRight -> programBiasesAex();
         
@@ -99,8 +101,8 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         std::cout << "Device: " << device << " not known " << std::endl;
         return false;
     }
-
-
+    
+    
     // todo --- program registers for ATIS
     
     //open rateThread device2yarp
@@ -120,7 +122,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         std::cerr << " : Unable to open ports" << std::endl;
         return false;
     }
-
+    
     // attach a port of the same name as the module (prefixed with a /)
     //to the module so that messages received from the port are redirected to
     //the respond method
@@ -142,13 +144,13 @@ bool zynqGrabberModule::interruptModule() {
 }
 
 bool zynqGrabberModule::close() {
-        
+    
     handlerPort.close();        // rpc of the RF module
     Y2D.close();
     D2Y->stop();                // bufferedport from yarp to device
     
     devManager->closeDevice();  // device
-
+    
     return true;
 }
 
@@ -173,9 +175,9 @@ bool zynqGrabberModule::respond(const yarp::os::Bottle& command,
     "quit \n" +
     "set thr <n> ... set the threshold \n" +
     "(where <n> is an integer number) \n";
-
+    
     reply.clear();
-
+    
     if (command.get(0).asString()=="quit") {
         reply.addString("quitting");
         return false;
@@ -184,16 +186,16 @@ bool zynqGrabberModule::respond(const yarp::os::Bottle& command,
         std::cout << helpMessage;
         reply.addString("ok");
     }
-
+    
     switch (command.get(0).asVocab()) {
         case COMMAND_VOCAB_HELP:
             rec = true;
         {
             reply.addString("many");
             reply.addString("help");
-
+            
             reply.addString("");
-
+            
             ok = true;
         }
             break;
@@ -217,7 +219,7 @@ bool zynqGrabberModule::respond(const yarp::os::Bottle& command,
             std::string biasName = command.get(1).asString();
             unsigned int biasValue = command.get(2).asInt();
             std::string channel = command.get(3).asString();
-
+            
             // setBias function
             if (channel == "left"){
                 configLeft->setBias(biasName, biasValue);
@@ -236,15 +238,15 @@ bool zynqGrabberModule::respond(const yarp::os::Bottle& command,
             rec= true;
         {
             std::string channel = command.get(1).asString();
-
+            
             // progBias function
             if (channel == "left"){
                 if (device == "ihead") {
-                    configLeft->programBiases();
+                    configLeft->programBiasesAex();
                     ok = true;
                 } else if (device == "zynq")
                 {
-                    configLeft->programBiasesAex();
+                    configLeft->programBiases();
                     ok = true;
                 } else {
                     std::cout << "unrecognised device" << std::endl;
@@ -254,11 +256,82 @@ bool zynqGrabberModule::respond(const yarp::os::Bottle& command,
             } else if (channel == "right")
             {
                 if (device == "ihead") {
-                    configRight->programBiases();
+                    configRight->programBiasesAex();
                     ok = true;
                 } else if (device == "zynq")
                 {
-                    configRight->programBiasesAex();
+                    configRight->programBiases();
+                    ok = true;
+                } else {
+                    std::cout << "unrecognised device" << std::endl;
+                    ok = false;
+                }
+                
+            } else {
+                std::cout << "unrecognised channel" << std::endl;
+                ok =false;
+            }
+        }
+            break;
+        case COMMAND_VOCAB_PWROFF:
+        {   std::string channel = command.get(1).asString();
+            
+            // progBias function
+            if (channel == "left"){
+                if (device == "ihead") {
+                    std::cout << "Power Off not implemented for iHead setup "<< std::endl;
+                    ok = true;
+                } else if (device == "zynq") {
+                    configLeft->chipPowerDown();
+                    ok = true;
+                } else {
+                    std::cout << "unrecognised device" << std::endl;
+                    ok = false;
+                }
+                
+            } else if (channel == "right") {
+                if (device == "ihead") {
+                    std::cout << "Power Off not implemented for iHead setup "<< std::endl;
+                    ok = true;
+                } else if (device == "zynq")
+                {
+                    configRight->chipPowerDown();
+                    ok = true;
+                } else {
+                    std::cout << "unrecognised device" << std::endl;
+                    ok = false;
+                }
+                
+            } else {
+                std::cout << "unrecognised channel" << std::endl;
+                ok =false;
+            }
+        }
+            break;
+            
+        case COMMAND_VOCAB_PWRON:
+        {   std::string channel = command.get(1).asString();
+            
+            // progBias function
+            if (channel == "left"){
+                if (device == "ihead") {
+                    std::cout << "Power Off not implemented for iHead setup "<< std::endl;
+                    ok = true;
+                } else if (device == "zynq") {
+                    configLeft->chipPowerDown();
+                    ok = true;
+                } else {
+                    std::cout << "unrecognised device" << std::endl;
+                    ok = false;
+                }
+                
+            } else if (channel == "right") {
+                if (device == "ihead") {
+                    std::cout << "Power Off not implemented for iHead setup "<< std::endl;
+                    ok = true;
+                } else if (device == "zynq")
+                {
+                    configRight->chipPowerDown();
                     ok = true;
                 } else {
                     std::cout << "unrecognised device" << std::endl;
@@ -272,19 +345,19 @@ bool zynqGrabberModule::respond(const yarp::os::Bottle& command,
         }
             break;
     }
-
+    
     if (!rec)
         ok = RFModule::respond(command,reply);
-
+    
     if (!ok) {
         reply.clear();
         reply.addVocab(COMMAND_VOCAB_FAILED);
     }
     else
         reply.addVocab(COMMAND_VOCAB_OK);
-
+    
     return ok;
-
+    
     return true;
 }
 

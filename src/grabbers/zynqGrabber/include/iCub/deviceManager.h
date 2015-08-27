@@ -14,6 +14,7 @@
 #include <vector>
 #include <yarp/os/all.h>
 #include <fstream>
+#include <iCub/vsCtrl.h>
 
 #define DEBUG
 /**
@@ -33,11 +34,32 @@ private:
 #endif
 
     //hardware specific
-    typedef struct sp2neu_gen_reg {
-        unsigned int offset;
-        char         rw;
-        unsigned int data;
-    } sp2neu_gen_reg_t;
+//    typedef union vsctrl_ioctl_arg_t {
+//        struct {
+//            uint8_t addr;
+//            char rw;
+//            uint32_t data;
+//        } regs;
+//        struct {
+//            uint32_t prescaler_value;
+//            uint8_t setup_hold_time;
+//            uint8_t clock_active_time;
+//            uint8_t latch_setup_time;
+//            uint8_t latch_active_time;
+//        } bg_timings;
+//        struct {
+//            uint8_t cfg_ack_rel_delay;
+//            uint8_t cfg_sample_delay;
+//            uint8_t cfg_ack_set_delay;
+//        } aer_timings;
+//    } vsctrl_ioctl_arg_t;
+//
+//    
+//    typedef struct sp2neu_gen_reg {
+//        unsigned int offset;
+//        char         rw;
+//        unsigned int data;
+//    } sp2neu_gen_reg_t;
 
     void write_generic_sp2neu_reg (int devDesc, unsigned int offset,
                                    unsigned int data);
@@ -64,6 +86,9 @@ private:
     yarp::os::Semaphore safety;
     virtual void run();
 
+    // vsctrl
+    vsctrl_ioctl_arg_t iocVsctrlArg;
+
     
 public:
 
@@ -75,6 +100,23 @@ public:
     int writeDevice(std::vector<unsigned int> &deviceData);
 
     std::vector<char> *readDevice(int &nBytesRead);
+    
+    // ---- ioctl for i2c device ---- //
+    int chipReset();
+    int chipPowerDown();
+    int chipPowerUp();
+    
+    int getFpgaStatus();
+    int getFpgaRel();
+    int getFpgaInfo();
+    int writeAerTimings(uint8_t ack_rel, uint8_t sample, uint8_t ack_set);
+    
+    int writeBgTimings(uint8_t prescaler, uint8_t hold, uint8_t ck_active, uint8_t latch_setup, uint8_t latch_active);
+    int getBgTimings();
+    int getAerTimings();
+    int initDevice(std::string chipName);
+    int writeGPORegister(uint32_t data);
+    int readGPORegister();
 
 };
 

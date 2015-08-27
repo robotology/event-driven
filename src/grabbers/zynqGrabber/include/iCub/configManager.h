@@ -37,13 +37,18 @@ class configManager{
     std::vector<std::string> biasNames; // ordered
     std::vector<int> biasValues;
     
-    bool prepareHeader(); // prepares the header with chip and channel
+    //bool prepareHeader(); // prepares the header with chip and channel
     
     
     unsigned int getBias(std::string biasName);
     void printBiases();
     std::vector<unsigned int> prepareBiases();
-    std::vector<unsigned int> prepareReset(bool value);
+    
+    
+    
+    
+    
+    //std::vector<unsigned int> prepareReset(bool value);
     
     
     // ---- for aex2 ---- //
@@ -66,6 +71,22 @@ public:
     bool programBiases();
     bool programBiasesAex();
     bool setBias(std::string biasName, unsigned int biasValue);
+    int chipReset();
+    int chipPowerDown();
+    int chipPowerUp();
+    
+    int getFpgaStatus();
+    int getFpgaRel();
+    int getFpgaInfo();
+    int writeAerTimings(uint8_t ack_rel, uint8_t sample, uint8_t ack_set);
+    
+    int writeBgTimings(uint8_t prescaler, uint8_t hold, uint8_t ck_active, uint8_t latch_setup, uint8_t latch_active);
+    int getBgTimings();
+    int getAerTimings();
+    int initDevice(std::string chipName);
+    int writeGPORegister(uint32_t data);
+    int readGPORegister();
+
     
     
 };

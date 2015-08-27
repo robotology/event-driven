@@ -103,6 +103,17 @@ bool configManager::setBias(std::string biasName, unsigned int biasValue){
     
     int currBiasVal = mBiases[biasName];
     if (currBiasVal){
+        
+        if (chip == "dvs")
+        {
+            biasValue = biasValue & 0x00FFFFFF; // 24 bits
+        }
+        else if (chip != "atis")
+        {
+            std::cout << "unrecognised chip" << std::endl;
+            return false;
+        }
+        
         mBiases[biasName] = biasValue;
         std::cout << "setting " << biasName.c_str() << " to value: " << mBiases[biasName] << std::endl;
         return true;
@@ -118,11 +129,11 @@ std::vector<unsigned int> configManager::prepareBiases(){
 
     std::vector<unsigned int> vBiases;
     
-    // write the header
-    unsigned int hd;
-    // set to current header the correct bits for bias programming
-    hd =  header | 200;
-    vBiases.push_back(hd);
+//    // write the header
+//    unsigned int hd;
+//    // set to current header the correct bits for bias programming
+//    hd =  header | 200;
+//    vBiases.push_back(hd);
     
     // implement here the transformation between the bias value list and the vector that will be sent to the device (32 bits per bias sizeof unsigned int)
     int i;
@@ -135,7 +146,7 @@ std::vector<unsigned int> configManager::prepareBiases(){
     return vBiases;
     
 }
-
+/*
 bool configManager::prepareHeader(){
     
     header = 0; // reset the header
@@ -170,8 +181,9 @@ bool configManager::prepareHeader(){
     
     return true;
 }
+*/
 
-
+/*
 std::vector<unsigned int> configManager::prepareReset(bool value){
     
     unsigned int hd;
@@ -184,6 +196,8 @@ std::vector<unsigned int> configManager::prepareReset(bool value){
     
     return vCommand;
 }
+*/
+
 
 unsigned int configManager::getBias(std::string biasName){
     
@@ -207,6 +221,92 @@ void  configManager::attachDeviceManager(deviceManager* devManager) {
     this->devManager = devManager;
     
 }
+
+// -- configuration/reset and power down of chip, using ioctl -- //
+
+int configManager::chipReset(){
+    
+    // write registry address and command on/off
+    int ret = devManager->chipReset();
+    return ret;
+}
+
+int configManager::chipPowerDown(){
+    
+    // write registry address and command on/off
+    int ret = devManager->chipPowerDown();
+    return ret;
+}
+
+int configManager::chipPowerUp(){
+    int ret = devManager->chipPowerUp();
+    return ret;
+    
+    
+}
+
+int configManager::getFpgaStatus(){
+
+    int ret = devManager->getFpgaStatus();
+    return ret;
+    
+}
+
+int configManager::getFpgaRel(){
+    int ret = devManager->getFpgaRel();
+    return ret;
+    
+    
+}
+
+int configManager::getFpgaInfo(){
+    int ret = devManager->getFpgaInfo();
+    return ret;
+
+    
+}
+
+int configManager::writeAerTimings(uint8_t ack_rel, uint8_t sample, uint8_t ack_set){
+    int ret = devManager->writeAerTimings(ack_rel, sample, ack_set);
+    return ret;
+
+}
+
+int configManager::writeBgTimings(uint8_t prescaler, uint8_t hold, uint8_t ck_active, uint8_t latch_setup, uint8_t latch_active){
+    int ret = devManager->writeBgTimings(prescaler, hold, ck_active, latch_setup, latch_active);
+    return ret;
+}
+
+
+int configManager::getBgTimings(){
+    int ret = devManager->getBgTimings();
+    return ret;
+}
+
+int configManager::getAerTimings(){
+    int ret = devManager->getAerTimings();
+    return ret;
+    
+}
+
+int configManager::initDevice(std::string chipName){
+    int ret = devManager->initDevice(chipName);
+    return ret;
+    
+}
+
+int configManager::writeGPORegister(uint32_t data){
+    int ret = devManager->writeGPORegister(data);
+    return ret;
+    
+}
+
+int configManager::readGPORegister(){
+    int ret = devManager->readGPORegister();
+    return ret;
+    
+}
+
 
 
 // --------------------- from AEX GRABBER needed for iHead board -------------------------- //
