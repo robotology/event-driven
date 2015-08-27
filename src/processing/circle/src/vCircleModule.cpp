@@ -264,7 +264,8 @@ void vCircleReader::onRead(emorph::vBottle &bot)
 
         if(datawriter.is_open() && inliers) {
             datawriter << ts * emorph::vtsHelper::tstosecs() << " " << cx << " "
-                       << cy << " " << cr << " " << inliers << std::endl;
+                       << cy << " " << cr << " " << inliers << " " << (int)v->getX()
+                       << " " << (int)v->getY() << std::endl;
             //double kx, ky, kr;
             //circleTracker.getState(kx, ky, kr);
             //datawriter << kx << " " << ky << " " << kr << std::endl;
