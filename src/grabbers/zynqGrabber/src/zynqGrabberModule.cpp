@@ -60,7 +60,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         
         std::string deviceName = "/dev/spinn2neu";
         // class manageDevice for events
-        devManager = new deviceManager(deviceName, maxBufferSize);
+        devManager = new deviceManager(deviceName, true, maxBufferSize);
         if(!devManager->openDevice()) {
             std::cerr << "Could not open the device: " << deviceName << std::endl;
             return false;
@@ -86,7 +86,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     {
         std::string deviceName = "/dev/aerfx2_0";
         // class manageDevice for events and configuration
-        devManager = new deviceManager(deviceName, maxBufferSize);
+        devManager = new deviceManager(deviceName, true, maxBufferSize);
         if(!devManager->openDevice()) {
             std::cerr << "Could not open the device: " << deviceName << std::endl;
             return false;

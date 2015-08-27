@@ -37,7 +37,7 @@ void  device2yarp::run() {
     
     //get the data from the device read thread
     int nBytesRead = 0;
-    std::vector<char> *data = devManager->readDevice(nBytesRead);
+    const std::vector<char> &data = devManager->readDevice(nBytesRead);
     if (!nBytesRead) return;
     if(nBytesRead > 16777216/2) {
         std::cout << "Buffer more than half full!" << std::endl;
@@ -68,8 +68,8 @@ void  device2yarp::run() {
     while(i <= nBytesRead - 8) {
 
 
-        int TS =  *(int *)(data->data() + i);//= deviceData[i];
-        int AE =  *(int *)(data->data() + i + 4);//deviceData[i+1];
+        int TS =  *(int *)(data.data() + i);//= deviceData[i];
+        int AE =  *(int *)(data.data() + i + 4);//deviceData[i+1];
         
         if(!(TS & 0x80000000) || (AE & 0xFFFF0000)) {
             //misalignment, move on by 1 byte

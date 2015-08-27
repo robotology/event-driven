@@ -75,6 +75,7 @@ private:
 
 
     //read thread related functions and variables
+    bool bufferedRead;
     unsigned int readCount;
     unsigned int maxBufferSize;
 
@@ -92,14 +93,14 @@ private:
     
 public:
 
-    deviceManager(std::string deviceName, unsigned int maxBufferSize);
+    deviceManager(std::string deviceName, bool bufferedRead = false, unsigned int maxBufferSize = 16777216);
 
     bool openDevice();
     void closeDevice();
     //int readDevice(std::vector<unsigned int> &deviceData);
     int writeDevice(std::vector<unsigned int> &deviceData);
 
-    std::vector<char> *readDevice(int &nBytesRead);
+    const std::vector<char>& readDevice(int &nBytesRead);
     
     // ---- ioctl for i2c device ---- //
     int chipReset();

@@ -16,19 +16,24 @@
 
 // costruttore
 
-deviceManager::deviceManager(std::string deviceName, unsigned int maxBufferSize){
+deviceManager::deviceManager(std::string deviceName, bool bufferedRead, unsigned int maxBufferSize){
     
     this->deviceName = deviceName;
     this->maxBufferSize = maxBufferSize;
+    this->bufferedRead = bufferedRead;
     readCount = 0;
 
-    //allocate the memory for the readBuffer
+    //allocate memory for reading
     buffer1.resize(maxBufferSize);
-    buffer2.resize(maxBufferSize);
-
-    //and point to the memory locations
     readBuffer = &buffer1;
-    accessBuffer = &buffer2;
+    accessBuffer = &buffer1;
+
+    if(bufferedRead) {
+
+        //allocate extra memory if buffered (constant) reading
+        buffer2.resize(maxBufferSize);
+        accessBuffer = &buffer2;
+    }
 
 #ifdef DEBUG
     writeDump.open("/tmp/writeDump.txt");
@@ -106,7 +111,7 @@ bool deviceManager::openDevice(){
     }
 
     //start the reading thread
-    start();
+    if(bufferedRead) start();
 
     return true;
 }
@@ -260,40 +265,32 @@ int deviceManager::writeDevice(std::vector<unsigned int> &deviceData){
 
 }
 
-std::vector<char> *deviceManager::readDevice(int &nBytesRead)
-{
+const std::vector<char>& deviceManager::readDevice(int &nBytesRead)
+{  
+    if(bufferedRead) {
 
-#ifdef DEBUG
-//    THIS NEEDS TO BE MOVED OUT OF DEVICEMANAGER BECAUSE IT KILLS
-//    THE DATA FLOW
-//    for(int i = 0; i < readCount; i++) {
-//        for(int j = 0; j < 8; j++) {
-//            if( (char)(1 << j) & (*readBuffer)[i]) {
-//                readDump << "1";
-//            } else {
-//                readDump << "0";
-//            }
-//        }
-//        readDump << " ";
-//    }
-//    if(readCount) readDump << std::endl;
-#endif
-       
-    //safely copy the data into the accessBuffer and reset the readCount
-    safety.wait();
+        //safely copy the data into the accessBuffer and reset the readCount
+        safety.wait();
 
-    //switch the buffer the read into
-    std::vector<char> * temp = readBuffer;
-    readBuffer = accessBuffer;
-    accessBuffer = temp;
+        //switch the buffer the read into
+        std::vector<char> * temp = readBuffer;
+        readBuffer = accessBuffer;
+        accessBuffer = temp;
 
-    //reset the filling position
-    nBytesRead = readCount;
-    readCount = 0;
-    safety.post();
+        //reset the filling position
+        nBytesRead = readCount;
+        readCount = 0;
+        safety.post();
+
+    } else {
+
+        nBytesRead = ::read(devDesc, readBuffer->data(), maxBufferSize);
+        if(nBytesRead < 0 && errno != EAGAIN) perror("perror: ");
+
+    }
 
     //and return the accessBuffer
-    return accessBuffer;
+    return *accessBuffer;
 
 }
 
@@ -336,25 +333,6 @@ void deviceManager::run(void)
         //std::cout << "Done with FIFO" << std::endl;
     }
 }
-
-//int deviceManager::readDevice(std::vector<unsigned int> &deviceData){
-//    int devData = ::read(devDesc, (char *)(deviceData.data()), deviceData.size()*sizeof(unsigned int));
-//    if (devData < 0){
-//        fprintf(stdout,"error reading from device\n");
-//        if (errno != EAGAIN) {
-//            printf("error reading from spinn2neu: %d\n", (int)errno);
-//            perror("perror:");
-//        }
-//        //if errno == EAGAIN ther is just no data to read just now
-//        // we are using a non-blocking call so we need to return and wait for
-//        // the thread to run again.
-//    } else if(devData == 0) {
-//        // everything ok, no data available, just call the run again later
-//    }
-
-//return devData;
-
-//}
 
 
 // -------------- ioctl for i2c device ---------------- //
