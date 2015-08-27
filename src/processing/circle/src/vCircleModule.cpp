@@ -264,8 +264,7 @@ void vCircleReader::onRead(emorph::vBottle &bot)
 
         if(datawriter.is_open() && inliers) {
             datawriter << ts * emorph::vtsHelper::tstosecs() << " " << cx << " "
-                       << cy << " " << cr << " " << inliers << " " << threshold
-                       << std::endl;
+                       << cy << " " << cr << " " << inliers << std::endl;
             //double kx, ky, kr;
             //circleTracker.getState(kx, ky, kr);
             //datawriter << kx << " " << ky << " " << kr << std::endl;
@@ -298,13 +297,13 @@ void vCircleReader::onRead(emorph::vBottle &bot)
         pTS = ts;
 
         //write analysis data if needed
-        if(datawriter.is_open()) {
-            datawriter << ts * emorph::vtsHelper::tstosecs() << " " << cx << " "
-                       << cy << " " << cr << " ";
-            //double kx, ky, kr;
-            //circleTracker.getState(kx, ky, kr);
-            //datawriter << kx << " " << ky << " " << kr << std::endl;
-        }
+//        if(datawriter.is_open()) {
+//            datawriter << ts * emorph::vtsHelper::tstosecs() << " " << cx << " "
+//                       << cy << " " << cr << " ";
+//            //double kx, ky, kr;
+//            //circleTracker.getState(kx, ky, kr);
+//            //datawriter << kx << " " << ky << " " << kr << std::endl;
+//        }
 
     }
 
