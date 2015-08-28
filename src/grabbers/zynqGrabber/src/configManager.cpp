@@ -86,23 +86,39 @@ configManager::configManager(std::string channel, std::string chip){
 bool configManager::programBiases(){
     
     std::vector<unsigned int> vBiases = prepareBiases();
+
+    devManager->clearFpgaStatus("biasDone");
+    devManager->chipPowerDown();
     
     int wroteData = devManager->writeDevice(vBiases);
+    
+    int count;
+    count = 0;
     
     if (wroteData <= 0)
     {
         std::cout<<"Bias write: error writing to device"<<std::endl;
         return false;
     }
+
     devManager->getFpgaStatus();
-    if (devManager->fpgaStat->biasDone){
-        devManager->clearFpgaStatus("biasDone");
-    } else {
-        std::cout << "Bias write: failed programming, CRC Error " << devManager->fpgaStat->crcErr << std::endl;
-        devManager->clearFpgaStatus("crcErr");
+        while (!devManager->fpgaStat->biasDone & (count <= 100)){
+            count++;
+            devManager->getFpgaStatus();
+            if (devManager->fpgaStat->crcErr){
+                std::cout << "Bias write: failed programming, CRC Error " << devManager->fpgaStat->crcErr << std::endl;
+                devManager->clearFpgaStatus("crcErr");
+                return false;
+            }
+                
+        }
+    if (count <= 100){
+        std::cout << "Bias write: failed programming, Timeout "  << std::endl;
         return false;
     }
+    devManager->clearFpgaStatus("biasDone");
     std::cout << "Biases correctly programmed" << std::endl;
+    devManager->chipPowerUp();
     return true;
     
 }
