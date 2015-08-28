@@ -94,8 +94,17 @@ bool configManager::programBiases(){
         std::cout<<"Bias write: error writing to device"<<std::endl;
         return false;
     }
-    
+    devManager->getFpgaStatus();
+    if (devManager->fpgaStat->biasDone){
+        devManager->clearFpgaStatus("biasDone");
+    } else {
+        std::cout << "Bias write: failed programming, CRC Error " << devManager->fpgaStat->crcErr << std::endl;
+        devManager->clearFpgaStatus("crcErr");
+        return false;
+    }
+    std::cout << "Biases correctly programmed" << std::endl;
     return true;
+    
 }
 
 // --- change the value of a single bias --- //

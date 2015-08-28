@@ -60,6 +60,16 @@ private:
 //        char         rw;
 //        unsigned int data;
 //    } sp2neu_gen_reg_t;
+    
+    typedef struct fpgaStatus {
+        bool crcErr;
+        bool biasDone;
+        bool i2cTimeout;
+        bool apsFifoFull;
+        bool tdFifoFull;
+    };
+    
+    
 
     void write_generic_sp2neu_reg (int devDesc, unsigned int offset,
                                    unsigned int data);
@@ -93,6 +103,8 @@ private:
     
 public:
 
+    fpgaStatus *fpgaStat;
+    
     deviceManager(std::string deviceName, bool bufferedRead = false, unsigned int maxBufferSize = 16777216);
 
     bool openDevice();
@@ -108,6 +120,7 @@ public:
     int chipPowerUp();
     
     int getFpgaStatus();
+    int clearFpgaStatus(std::string clr);
     int getFpgaRel();
     int getFpgaInfo();
     int writeAerTimings(uint8_t ack_rel, uint8_t sample, uint8_t ack_set);

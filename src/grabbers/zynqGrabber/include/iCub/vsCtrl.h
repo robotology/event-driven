@@ -34,6 +34,7 @@
 #define VSCTRL_SET_BG_TIMINGS    _IOW (VSCTRL_MAGIC_NUM, 17, void *)
 #define VSCTRL_GET_AER_TIMINGS   _IOR (VSCTRL_MAGIC_NUM, 18, void *)
 #define VSCTRL_GET_BG_TIMINGS    _IOR (VSCTRL_MAGIC_NUM, 19, void *)
+#define VSCTRL_CLR_STATUS        _IOW (VSCTRL_MAGIC_NUM, 20, unsigned int)
 
 #define CHIP_DVS   0
 #define CHIP_ATIS  1

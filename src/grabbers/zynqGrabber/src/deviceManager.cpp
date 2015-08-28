@@ -39,6 +39,13 @@ deviceManager::deviceManager(std::string deviceName, bool bufferedRead, unsigned
     writeDump.open("/tmp/writeDump.txt");
     readDump.open("/tmp/readDump.txt");
 #endif
+    
+    fpgaStat->biasDone      = false;
+    fpgaStat->tdFifoFull    = false;
+    fpgaStat->apsFifoFull   = false;
+    fpgaStat->i2cTimeout    = false;
+    fpgaStat->crcErr        = false;
+    
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -401,14 +408,47 @@ int deviceManager::getFpgaRel(){
 int deviceManager::getFpgaStatus(){
     int ret;
     unsigned int fpga_stat;
-    
+
     ret = ioctl(devDesc, VSCTRL_GET_STATUS, &fpga_stat);
     
     if (ret == -1) {
         std::cerr << "read status failed: ioctl error " << errno << std::endl;
     } else {
         std::cout << "FPGA_STAT    = " << (uint8_t)fpga_stat << std::endl;
+     
+        fpgaStat->biasDone      = fpga_stat & 0x00000020;
+        fpgaStat->tdFifoFull    = fpga_stat & 0x00000001;
+        fpgaStat->apsFifoFull   = fpga_stat & 0x00000002;
+        fpgaStat->i2cTimeout    = fpga_stat & 0x00000080;
+        fpgaStat->crcErr        = fpga_stat & 0x00000010;
         
+    }
+    return ret;
+}
+
+int deviceManager::clearFpgaStatus(std::string clr){
+    int ret;
+    unsigned int clrStatus;
+    
+    if (clr == "biasDone") {
+        clrStatus = 0x00000020;
+    } else if (clr == "tdFifoFull") {
+        clrStatus = 0x00000001;
+    } else if (clr == "apsFifoFull"){
+        clrStatus = 0x00000002;
+    } else if (clr == "i2cTimeOut") {
+        clrStatus = 0x00000080;
+    } else if (clr == "crcErr"){
+        clrStatus = 0x00000010;
+    }
+    
+    ret = ioctl(devDesc, VSCTRL_CLR_STATUS, &clrStatus);
+    
+    if (ret == -1) {
+        std::cerr << "clear status failed: ioctl error " << errno << std::endl;
+    } else {
+        
+        std::cout << "cleared field" << std::endl;
     }
     return ret;
 }
