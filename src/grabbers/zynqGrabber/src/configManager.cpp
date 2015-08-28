@@ -102,7 +102,7 @@ bool configManager::programBiases(){
     }
 
     devManager->getFpgaStatus();
-        while (!devManager->fpgaStat->biasDone & (count <= 100)){
+        while (!devManager->fpgaStat->biasDone & (count <= 10000)){
             count++;
             devManager->getFpgaStatus();
             if (devManager->fpgaStat->crcErr){
@@ -112,7 +112,7 @@ bool configManager::programBiases(){
             }
                 
         }
-    if (count <= 100){
+    if (count > 10000){
         std::cout << "Bias write: failed programming, Timeout "  << std::endl;
         return false;
     }

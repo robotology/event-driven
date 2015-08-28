@@ -50,6 +50,7 @@ deviceManager::deviceManager(std::string deviceName, bool bufferedRead, unsigned
     
 }
 
+
 //----------------------------------------------------------------------------------------------------
 // functions for device opening
 //----------------------------------------------------------------------------------------------------
@@ -124,7 +125,14 @@ bool deviceManager::openDevice(){
             perror("");
             return false;
         }
-    }	else {
+   	// clear fpga registers
+    	clearFpgaStatus("biasDone");
+    	clearFpgaStatus("tdFifoFull");
+    	clearFpgaStatus("apsFifoFull");
+    	clearFpgaStatus("i2cTimeout");
+    	clearFpgaStatus("crcErr");
+  
+   	} else {
         std::cerr << "Device Unknown to deviceManager" << std::endl;
         return false;
     }
