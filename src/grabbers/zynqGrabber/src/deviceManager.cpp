@@ -40,6 +40,8 @@ deviceManager::deviceManager(std::string deviceName, bool bufferedRead, unsigned
     readDump.open("/tmp/readDump.txt");
 #endif
     
+    fpgaStat = new fpgaStatus_t;
+    
     fpgaStat->biasDone      = false;
     fpgaStat->tdFifoFull    = false;
     fpgaStat->apsFifoFull   = false;
