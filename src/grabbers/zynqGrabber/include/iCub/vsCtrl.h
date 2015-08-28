@@ -9,6 +9,12 @@
 #ifndef eMorph_vsCtrl_h
 #define eMorph_vsCtrl_h
 
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+
 // vsctrl
 
 #define VSCTRL_MAGIC_NUM 100

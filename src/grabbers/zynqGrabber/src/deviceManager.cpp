@@ -105,7 +105,17 @@ bool deviceManager::openDevice(){
         // Start IP in LoopBack
         tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
         write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | (CTRL_ENABLEINTERRUPT));// | CTRL_ENABLE_FAR_LBCK));
-    } else {
+    } else if(deviceName == "/dev/iit_vsctrl_l" || deviceName == "/dev/iit_vsctrl_r") {
+	bufferedRead = false;
+        //opening the device
+        std::cout << "name of the device: " << deviceName << std::endl;
+        devDesc = ::open(deviceName.c_str(), O_RDWR);
+        if (devDesc < 0) {
+            std::cerr << "Cannot open device file: " << deviceName << " " << devDesc << " : ";
+            perror("");
+            return false;
+        }
+    }	else {
         std::cerr << "Device Unknown to deviceManager" << std::endl;
         return false;
     }
