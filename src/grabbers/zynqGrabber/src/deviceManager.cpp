@@ -416,7 +416,7 @@ int deviceManager::getFpgaStatus(){
     if (ret == -1) {
         std::cerr << "read status failed: ioctl error " << errno << std::endl;
     } else {
-        std::cout << "FPGA_STAT    = " << (uint8_t)fpga_stat << std::endl;
+        std::cout << "FPGA_STAT    = " << fpga_stat << std::endl;
      
         fpgaStat->biasDone      = fpga_stat & 0x00000020;
         fpgaStat->tdFifoFull    = fpga_stat & 0x00000001;
