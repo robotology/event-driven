@@ -60,7 +60,7 @@ bool deviceManager::openDevice(){
             perror("");
             return false;
         }
-    } else if(deviceName == "/dev/spinn2neu") {
+    } else if(deviceName == "/dev/iit_hpucore") {
 
         //opening the device
         std::cout << "name of the device: " << deviceName << std::endl;
@@ -123,7 +123,7 @@ void deviceManager::closeDevice()
         std::cerr << "Thread did not stop correctly" << std::endl;
 
     //close the device
-    if(deviceName == "/dev/spinn2neu") {
+    if(deviceName == "/dev/iit_hpucore") {
         unsigned int tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
         write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg & ~(CTRL_ENABLEINTERRUPT));
     }

@@ -59,7 +59,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     if (device == "zynq"){
         
         //std::string deviceName = "/dev/spinn2neu";
-        std::string deviceName = "/dev/iit_hpu_core";
+        std::string deviceName = "/dev/iit_hpucore";
         // class manageDevice for events
         devManager = new deviceManager(deviceName, true, maxBufferSize);
         if(!devManager->openDevice()) {
@@ -68,7 +68,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         }
         
         std::string configNameLeft = "/dev/iit_vsctrl_l";
-        std::string configNameRight = "/dev/iit_vscfg_r";
+        std::string configNameRight = "/dev/iit_vsctrl_r";
         // class manageDevice for configuration
         cfgMngLeft = new deviceManager(configNameLeft, maxBufferSize);
         cfgMngRight = new deviceManager(configNameRight, maxBufferSize);
