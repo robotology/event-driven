@@ -133,6 +133,13 @@ typedef struct sp2neu_gen_reg {
     unsigned int data;
 } sp2neu_gen_reg_t;
 
+typedef struct fpgaStatus {
+    bool crcErr;
+    bool biasDone;
+    bool i2cTimeout;
+    bool apsFifoFull;
+    bool tdFifoFull;
+} fpgaStatus_t;
 
 
 #endif

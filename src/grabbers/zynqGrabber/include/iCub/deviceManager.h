@@ -61,13 +61,6 @@ private:
 //        unsigned int data;
 //    } sp2neu_gen_reg_t;
     
-    typedef struct fpgaStatus {
-        bool crcErr;
-        bool biasDone;
-        bool i2cTimeout;
-        bool apsFifoFull;
-        bool tdFifoFull;
-    };
     
     
 
@@ -103,7 +96,7 @@ private:
     
 public:
 
-    fpgaStatus *fpgaStat;
+    fpgaStatus_t *fpgaStat;
     
     deviceManager(std::string deviceName, bool bufferedRead = false, unsigned int maxBufferSize = 16777216);
 
