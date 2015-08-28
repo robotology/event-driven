@@ -17,7 +17,7 @@
 
 // vsctrl
 
-#define VSCTRL_MAGIC_NUM 100
+#define VSCTRL_MAGIC_NUM 101
 
 #define VSCTRL_GEN_REG_ACCESS    _IOWR(VSCTRL_MAGIC_NUM,  5, void *)
 #define VSCTRL_GET_FPGAREL       _IOR (VSCTRL_MAGIC_NUM,  6, unsigned int *)
