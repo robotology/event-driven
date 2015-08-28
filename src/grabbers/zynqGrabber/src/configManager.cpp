@@ -129,12 +129,6 @@ std::vector<unsigned int> configManager::prepareBiases(){
 
     std::vector<unsigned int> vBiases;
     
-//    // write the header
-//    unsigned int hd;
-//    // set to current header the correct bits for bias programming
-//    hd =  header | 200;
-//    vBiases.push_back(hd);
-    
     // implement here the transformation between the bias value list and the vector that will be sent to the device (32 bits per bias sizeof unsigned int)
     int i;
     for (i = 0; i < biasNames.size(); i++) {
@@ -146,58 +140,6 @@ std::vector<unsigned int> configManager::prepareBiases(){
     return vBiases;
     
 }
-/*
-bool configManager::prepareHeader(){
-    
-    header = 0; // reset the header
-    
-    if (channel == "left")
-    {
-        header = 0;
-    }
-    else if (channel == "right")
-    {
-        header = 1;
-    }
-    else
-    {
-        std::cout << "unrecognised channel" << std::endl;
-        return false;
-    }
-    
-    if (chip == "dvs")
-        {
-            header = header|2;
-        }
-    else if (chip == "atis")
-        {
-            header = header|3;
-        }
-    else
-    {
-        std::cout << "unrecognised chip" << std::endl;
-        return false;
-    }
-    
-    return true;
-}
-*/
-
-/*
-std::vector<unsigned int> configManager::prepareReset(bool value){
-    
-    unsigned int hd;
-    // set to current header the correct bits for command reset
-    hd =  header | 200;
-    std::vector<unsigned int> vCommand;
-    vCommand.push_back(hd);
-    
-    // write registry address and command on/off
-    
-    return vCommand;
-}
-*/
-
 
 unsigned int configManager::getBias(std::string biasName){
     

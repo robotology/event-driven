@@ -156,8 +156,9 @@
 #define COMMAND_VOCAB_SETBIAS VOCAB3('s','e','t') // set biasName biasValue channel
 // TODO if channel is not specificed set both channels
 #define COMMAND_VOCAB_PROG    VOCAB4('p','r','o','g')
-#define COMMAND_VOCAB_PWROFF    VOCAB3('o','f','f')
-#define COMMAND_VOCAB_PWRON    VOCAB2('o','n')
+#define COMMAND_VOCAB_PWROFF  VOCAB3('o','f','f')
+#define COMMAND_VOCAB_PWRON   VOCAB2('o','n')
+#define COMMAND_VOCAB_RST     VOCAB3('r','s','t')
 
 #include <iostream>
 #include <string>
