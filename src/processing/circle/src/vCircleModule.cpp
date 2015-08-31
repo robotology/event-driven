@@ -151,7 +151,11 @@ bool vCircleReader::setDataWriter(std::string datafilename)
 bool vCircleReader::open(const std::string &name, bool strictness)
 {
 
-    if(strictness) this->setStrict();
+    if(strictness) {
+        std::cout << "Setting " << name << " to strict" << std::endl;
+        this->setStrict();
+    }
+
     this->useCallback();
 
     std::string inPortName = "/" + name + "/vBottle:i";
@@ -202,8 +206,13 @@ void vCircleReader::onRead(emorph::vBottle &bot)
     //create event queue
     emorph::vQueue q = bot.get<emorph::AddressEvent>();
     q.wrapSort();
-    if(!q.size()) return;
 
+    if(!q.size()) {
+        outPort.write();
+        return;
+    }
+
+    int bestx, besty, bestr; double bestinliers = 0, bestts = 0;
     double ts;
     bool circlewasfound = false;
     double count = 0, potential = 0, detections = 0, inliersMax = 0, threshMax = 0, ratioMax = 0, radMax = 0;
@@ -214,7 +223,8 @@ void vCircleReader::onRead(emorph::vBottle &bot)
         if(!v || v->getChannel()) continue;
         if(!hough) geomFinder.addEvent(*v);
 
-        ts = unwrap(v->getStamp());
+        //ts = unwrap(v->getStamp());
+        ts = v->getStamp();
         potential++; //increment our records of possible v's to process
 
         //if(getPendingReads()) continue;
@@ -229,7 +239,7 @@ void vCircleReader::onRead(emorph::vBottle &bot)
         //process the observation
         double cx, cy, cr;
 
-        int inliers = 0;
+        double inliers = 0;
         if(hough) {
             //do the observing
             houghFinder.addEvent(*v);
@@ -249,9 +259,10 @@ void vCircleReader::onRead(emorph::vBottle &bot)
 
         //multi step process with intricate rounding to account for more
         //noise in larger circles. The 0.5 makes int round up!
-        int threshold = (6.2831853 * cr + 0.5);
-        threshold  *= (inlierThreshold + 0.5);
-        threshold *= (inlierThreshold * 0.8 + 0.5);
+        //int threshold = (6.2831853 * cr + 0.5);
+        //threshold  *= (inlierThreshold + 0.5);
+        //threshold *= (inlierThreshold * 0.8 + 0.5);
+        double threshold  = inlierThreshold;
         //threshold = (int)((int)(6.2831853 * cr + 0.5) * inlierThreshold + 0.5);
 
         //find the highest inliers this bottle
@@ -270,6 +281,16 @@ void vCircleReader::onRead(emorph::vBottle &bot)
             //circleTracker.getState(kx, ky, kr);
             //datawriter << kx << " " << ky << " " << kr << std::endl;
         }
+
+        if(inliers > bestinliers) {
+            bestinliers = inliers;
+            bestx = cx;
+            besty = cy;
+            bestr = cr;
+            bestts = ts;
+        }
+
+        continue;
 
         //if the inliers is not enough we don't continue processing
         if(inliers <= threshold) continue;
@@ -332,7 +353,7 @@ void vCircleReader::onRead(emorph::vBottle &bot)
 
     if(houghOut.getOutputCount()) {
         yarp::sig::ImageOf< yarp::sig::PixelMono> &image = houghOut.prepare();
-        image = houghFinder.makeDebugImage(15);
+        image = houghFinder.makeDebugImage2();
         houghOut.write();
     }
 
@@ -344,19 +365,41 @@ void vCircleReader::onRead(emorph::vBottle &bot)
 
     //also add a single circle tracking position to the output
     //at the moment we are just using ClusterEventGauss
-    double x, y, r;
-    circleTracker.predict((ts - pTS)*emorph::vtsHelper::tstosecs());
-    if(circleTracker.getState(x, y, r)) {
-        std::cout << x << " " << y << " " << r << std::endl;
+    if(bestinliers > inlierThreshold) {
+
         emorph::ClusterEventGauss circevent;
-        circevent.setStamp(ts);
+        circevent.setStamp(bestts);
         circevent.setChannel(0);
-        circevent.setXCog(x);
-        circevent.setYCog(y);
-        circevent.setXSigma2(r);
+        circevent.setXCog(bestx);
+        circevent.setYCog(besty);
+        circevent.setXSigma2(bestr);
         circevent.setYSigma2(1);
-        circevent.setID(1);
+        circevent.setID(0);
         outBottle.addEvent(circevent);
+
+        if(!circleTracker.isActive()) {
+            circleTracker.startTracking(bestx, besty, bestr);
+        } else {
+            if(pTS > bestts) pTS -= emorph::vtsHelper::maxStamp();
+            circleTracker.predict((bestts - pTS)*emorph::vtsHelper::tstosecs());
+            circleTracker.correct(bestx, besty, bestr);
+        }
+        pTS = bestts;
+
+
+        double x, y, r;
+        if(circleTracker.getState(x, y, r)) {
+            //std::cout << x << " " << y << " " << r << std::endl;
+            emorph::ClusterEventGauss circevent;
+            circevent.setStamp(ts);
+            circevent.setChannel(0);
+            circevent.setXCog(x);
+            circevent.setYCog(y);
+            circevent.setXSigma2(r);
+            circevent.setYSigma2(1);
+            circevent.setID(1);
+            outBottle.addEvent(circevent);
+        }
     }
 
     //send on our event bottle

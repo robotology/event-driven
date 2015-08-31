@@ -228,6 +228,9 @@ vHoughCircleObserver::vHoughCircleObserver()
 
     for(int r = 0; r < rsize; r++) {
         H.push_back(new yarp::sig::Matrix(height, width));
+        circlesegment.push_back(1.0 / (int)((int)(6.2831853 * (r+r1) + 0.5)*0.5+0.5));
+        //circlesegment.push_back(0.001);
+        //std::cout << circlesegment[r] << std::endl;
     }
 
 }
@@ -264,14 +267,14 @@ void vHoughCircleObserver::updateHAddress(int xv, int yv, int val)
         double R2 = pow(R, 2.0);
         int xstart = std::max(0, xv - R);
         int xend = std::min(width-1, xv + R);
-        for(int x = xstart; x < xend; x++) {
+        for(int x = xstart; x <= xend; x++) {
             //(xv-xc)^2 + (yv - yc)^2 = R^2
             int deltay = (int)sqrt(R2 - pow(x - xv, 2.0));
 
             for(int s = -P; s <= P; s++) {
                 int y = yv + deltay + s;
                 if(y > 127 || y < 0) continue;
-                (*H[r])[y][x] += val;
+                (*H[r])[y][x] += val*circlesegment[r];
                 if(val > 0 && (*H[r])[y][x] >= valc) {
                     valc = (*H[r])[y][x];
                     xc = x;
@@ -281,7 +284,7 @@ void vHoughCircleObserver::updateHAddress(int xv, int yv, int val)
 
                 y = yv - deltay + s;
                 if(y > 127 || y < 0) continue;
-                (*H[r])[y][x] += val;
+                (*H[r])[y][x] += val*circlesegment[r];
                 if(val > 0 && (*H[r])[y][x] >= valc) {
                     valc = (*H[r])[y][x];
                     xc = x;
@@ -297,7 +300,7 @@ void vHoughCircleObserver::updateHAddress(int xv, int yv, int val)
 /******************************************************************************/
 void vHoughCircleObserver::updateHFlow(int xv, int yv, int val, double dtdx, double dtdy)
 {
-    int P = 2;
+    int P = 4;
     if(val > 0) valc = 0;
     for(int r = 0; r < rsize; r++) {
         int R = r+r1;
@@ -312,7 +315,7 @@ void vHoughCircleObserver::updateHFlow(int xv, int yv, int val, double dtdx, dou
 
                 if(x < 0 || x > width-1 || y < 0 || y > height-1) continue;
 
-                (*H[r])[y][x] += val;
+                (*H[r])[y][x] += val*circlesegment[r];
                 if(val > 0 && (*H[r])[y][x] >= valc) {
                     valc = (*H[r])[y][x];
                     xc = x;
@@ -332,7 +335,7 @@ void vHoughCircleObserver::updateHFlow(int xv, int yv, int val, double dtdx, dou
 
                 if(x < 0 || x > width-1 || y < 0 || y > height-1) continue;
 
-                (*H[r])[y][x] += val;
+                (*H[r])[y][x] += val*circlesegment[r];
                 if(val > 0 && (*H[r])[y][x] >= valc) {
                     valc = (*H[r])[y][x];
                     xc = x;
@@ -398,7 +401,7 @@ void vHoughCircleObserver::updateHFlowAngle(int xv, int yv, int val, double dtdx
 
                         if(x < 0 || x > width-1 || y < 0 || y > height-1) continue;
 
-                        (*H[r])[y][x] += val;
+                        (*H[r])[y][x] += val * circlesegment[r];
                         if(val > 0 && (*H[r])[y][x] >= valc) {
                             valc = (*H[r])[y][x];
                             xc = x;
@@ -522,19 +525,27 @@ yarp::sig::ImageOf<yarp::sig::PixelMono> vHoughCircleObserver::makeDebugImage(in
 
     yarp::sig::ImageOf<yarp::sig::PixelMono> canvas;
     canvas.resize(width, height);
+    canvas.zero();
     if(r < r1 && r > r2) return canvas;
     r = r - r1;
 
-    double maxval = 0;
+    double maxval = 0, minval = 1e10;
     for(int y = 0; y < height; y++) {
         for(int x = 0; x < width; x++) {
-            maxval = std::max(maxval, (*H[r])[y][x]);
+            if((*H[r])[y][x] > 0) {
+                maxval = std::max(maxval, (*H[r])[y][x]);
+                minval = std::min(minval, (*H[r])[y][x]);
+            }
         }
     }
+    minval += (maxval - minval) / 2;
 
     for(int y = 0; y < height; y++) {
         for(int x = 0; x < width; x++) {
-            canvas(y,127- x) = 255.0 * (*H[r])[y][x] / maxval;
+            if((*H[r])[y][x] > minval) {
+                canvas(y,127- x) = 255.0 * ((*H[r])[y][x] - minval) / (maxval - minval);
+            }
+
         }
     }
 
@@ -549,7 +560,7 @@ yarp::sig::ImageOf<yarp::sig::PixelMono> vHoughCircleObserver::makeDebugImage2()
     yarp::sig::ImageOf<yarp::sig::PixelMono> canvas;
     canvas.resize(width, height); canvas.zero();
 
-    int bx, by, br, bval = 0;
+    int bx, by, br; double bval = 0;
     for(int r = 0; r < rsize; r++) {
         for(int y = 0; y < height; y++) {
             for(int x = 0; x < width; x++) {
@@ -562,6 +573,8 @@ yarp::sig::ImageOf<yarp::sig::PixelMono> vHoughCircleObserver::makeDebugImage2()
             }
         }
     }
+
+    return makeDebugImage(br+r1);
 
     int R = br+r1;
     int xstart = std::max(0, bx - R);
@@ -612,7 +625,7 @@ void vCircleTracker::init(double svPos, double svSiz, double zvPos,
     //these two matrices are dependent on dt so we have to update them everytime
     yarp::sig::Matrix A(6, 6); A = 0;
     A(0, 0) = 1; A(1, 1) = 1; A(2, 2) = 1;
-    A(3, 3) = 1; A(4, 4) = 1; A(5, 5) = 0;
+    A(3, 3) = 1; A(4, 4) = 1; A(5, 5) = 1;
    // A(6, 6) = 1; A(7, 7) = 1; A(8, 8) = 1;
     //we need to update A: (0, 3), (1, 4) and (2, 5) based on delta t
 
@@ -653,7 +666,7 @@ double vCircleTracker::predict(double dt)
     A(0, 3) = dt; A(1, 4) = dt; A(2, 5) = dt;
     //A(3, 6) = dt; A(4, 7) = dt; A(5, 8) = dt;
     //A(0, 6) = dt2; A(1, 7) = dt2; A(2, 8) = dt2
-    A(3, 3) = dtmod; A(4, 4) = dtmod; A(5, 5) = 0;
+    A(3, 3) = dtmod; A(4, 4) = dtmod; A(5, 5) = dtmod;
     filter->set_A(A);
 
     yarp::sig::Matrix Q = filter->get_Q();

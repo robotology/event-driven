@@ -112,8 +112,11 @@ vtsOptFlowManager::vtsOptFlowManager(int height, int width, int filterSize,
 /******************************************************************************/
 bool vtsOptFlowManager::open(std::string moduleName, bool strictness)
 {
-    if(strictness) this->setStrict();
-     this->useCallback();
+    if(strictness) {
+        std::cout << "Setting " << moduleName << " to strict" << std::endl;
+        this->setStrict();
+    }
+    this->useCallback();
 
     std::string inPortName = "/" + moduleName + "/vBottle:i";
     bool check1 = BufferedPort<emorph::vBottle>::open(inPortName);

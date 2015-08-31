@@ -55,6 +55,10 @@ vDraw * createDrawer(std::string tag)
     if(tag == newDrawer->getTag()) return newDrawer;
     delete newDrawer;
 
+    newDrawer = new fixedDraw();
+    if(tag == newDrawer->getTag()) return newDrawer;
+    delete newDrawer;
+
     return 0;
 }
 
@@ -449,7 +453,7 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
     double k = 4;
     if(image.empty()) {
         image = cv::Mat(Xlimit*k, Ylimit*k, CV_8UC3);
-        image.setTo(0);
+        image.setTo(255);
     } else {
         cv::resize(image, image, cv::Size(0, 0), k, k, cv::INTER_LINEAR);
     }
@@ -522,6 +526,60 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
     }
     //std::cout << "y: " << vy_mean << "x: " << vx_mean << std::endl;
 
+}
+
+std::string fixedDraw::getTag()
+{
+    return "FIXED";
+}
+
+void fixedDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
+{
+
+    image = cv::Mat(Xlimit, Ylimit, CV_8UC3);
+    image.setTo(255);
+
+    if(checkStagnancy(eSet) > clearThreshold) {
+        return;
+    }
+
+    int i = 0;
+    emorph::vQueue::const_reverse_iterator qi;
+    for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
+        emorph::AddressEvent *aep = (*qi)->getAs<emorph::AddressEvent>();
+        if(!aep) continue;
+
+        cv::Vec3b cpc = image.at<cv::Vec3b>(aep->getX(), aep->getY());
+
+        if(!aep->getPolarity())
+        {
+            //blue
+            if(cpc[0] == 1) cpc[0] = 0;   //if positive and negative
+            else cpc[0] = 160;            //if only positive
+            //green
+            if(cpc[1] == 60) cpc[1] = 255;
+            else cpc[1] = 0;
+            //red
+            if(cpc[2] == 0) cpc[2] = 255;
+            else cpc[2] = 160;
+        }
+        else
+        {
+            //blue
+            if(cpc[0] == 160) cpc[0] = 0;   //negative and positive
+            else cpc[0] = 1;                //negative only
+            //green
+            if(cpc[1] == 0) cpc[1] = 255;
+            else cpc[1] = 60;
+            //red
+            if(cpc.val[2] == 160) cpc[2] = 255;
+            else cpc[2] = 0;
+        }
+
+        image.at<cv::Vec3b>(aep->getX(), aep->getY()) = cpc;
+
+        if(++i > 2000) return;
+    }
 }
 
 } //namesapce emorph

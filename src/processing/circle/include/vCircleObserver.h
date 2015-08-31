@@ -65,6 +65,7 @@ private:
 
     //data
     std::vector<yarp::sig::Matrix *> H;
+    std::vector<double> circlesegment;
     emorph::vQueue FIFO;
 
     //parameters
@@ -90,7 +91,8 @@ public:
     bool found;
     bool useFlow;
     std::string qType;
-    int xc, yc, rc, valc;
+    int xc, yc, rc;
+    double valc;
 
     vHoughCircleObserver();
     ~vHoughCircleObserver();

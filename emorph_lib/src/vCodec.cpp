@@ -856,8 +856,8 @@ void FlowEvent::setDeath()
     double theta = fabs(atan2(vy, vx));
     if(theta > 1.5707963) theta -= 1.5707963;
     if(theta > 0.785398) theta = 1.5707963 - theta;
-    death = 2*(int)(sqrt(pow(vx, 2.0) + pow(vy, 2.0)) / (cos(theta)*vtsHelper::tstosecs()));
-    //if(death > 1000000) death = 1000000;
+    death = 3*(int)(sqrt(pow(vx, 2.0) + pow(vy, 2.0)) / (cos(theta)*vtsHelper::tstosecs()));
+    if(death > 1000000) death = 1000000;
     death += stamp;
 }
 
