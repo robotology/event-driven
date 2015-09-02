@@ -91,6 +91,7 @@ vtsOptFlowManager::vtsOptFlowManager(int height, int width, int filterSize,
     if(!(filterSize % 2)) filterSize--;
     this->fRad = filterSize / 2;
     this->halfCount = pow(filterSize, 2.0) / 2.0 + 0.5;
+    this->planeSize = pow(filterSize, 2.0);
 
     //this->minEvtsInSobel = std::min((double)minEvtsInSobel, halfCount/2.0+0.5);
     this->minEvtsOnPlane = minEvtsOnPlane;
@@ -213,7 +214,7 @@ emorph::FlowEvent vtsOptFlowManager::compute()
             //get the surface around the recent event
             double sobeltsdiff = 0;
             emorph::vQueue subsurf = surface->getSURF(i, j, fRad);
-            if(subsurf.size() < minEvtsOnPlane) continue;
+            if(subsurf.size() < planeSize) continue;
 
             for(int k = 0; k < subsurf.size(); k++) {
                 if(subsurf[k]->getStamp() > vr->getStamp())
@@ -233,7 +234,7 @@ emorph::FlowEvent vtsOptFlowManager::compute()
     emorph::vQueue subsurf = surface->getSURF(besti, bestj, fRad);
 
     //and compute the flow
-    if(computeGrads(subsurf, *vr, dtdy, dtdx) > minEvtsOnPlane) {
+    if(computeGrads(subsurf, *vr, dtdy, dtdx) >= minEvtsOnPlane) {
         opt_flow.setVx(dtdx);
         opt_flow.setVy(dtdy);
         opt_flow.setDeath();
@@ -293,35 +294,32 @@ int vtsOptFlowManager::computeGrads(yarp::sig::Matrix &A, yarp::sig::Vector &Y,
 
     abc=A2*At*Y;
 
-    dtdx = abc(0); dtdy = abc(1);
-
-    double dtdp = sqrt(pow(dtdx, 2.0) + pow(dtdy, 2.0)) * 0.5;
-
+    double dtdp = sqrt(pow(abc(0), 2.0) + pow(abc(1), 2.0)) * 0.4;
     int inliers = 0;
     for(int i = 0; i < A.rows(); i++) {
-        double planedt = dtdx * (A(i, 0) - cx) + dtdy * (A(i, 1) - cy);
-        double actualdt = Y(i) - cz;
+        //so I think that abc(0) and abc(1) are already scaled to the magnitude
+        //of the slope of the plane. E.g. when only using abc(0) and abc(1) and
+        //fitting a 3-point plane we always get 0 error. Therefore the differ-
+        //ence in time is perfect with only abc(0,1) and the speed should also
+        //be.
+        double planedt = (abc(0) * (A(i, 0) - cx) + abc(1) * (A(i, 1) - cy));
+        double actualdt =  Y(i) - cz;
+        //double error = fabs(planedt - actualdt);
         if(fabs(planedt - actualdt) < dtdp) inliers++;
+
     }
+
+    if(inliers < minEvtsOnPlane) return 0;
+
+    double speed = 1 / sqrt(pow(abc(0), 2.0) + pow(abc(1), 2.0));
+    //if(speed < 1) return 0;
+
+    double angle = atan2(abc(0), abc(1));
+    dtdx = speed * cos(angle);
+    dtdy = speed * sin(angle);
+
 
     return inliers;
 
-
-
-//    // calculating the error of the plane...
-//    double d = -(abc(0)*cx + abc(1)*cy + abc(2)*cz);
-//    //for each point then compute the distance
-//    double inliers = 0;
-//    for(int i = 0; i < A.rows(); i++) {
-
-//        //distance in z direction / time direction
-//        double dp = Y(i) + (abc(0)*A(i, 0) + abc(1)*A(i, 1) + d)/abc(2);
-//        if(fabs(dp) < inlierThreshold) inliers++;
-
-//    }
-
-//    if(inliers < minEvtsInSobel) return false;
-//    dtdx = abc(0); dtdy = abc(1);
-//    return true;
 
 }

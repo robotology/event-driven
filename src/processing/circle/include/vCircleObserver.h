@@ -88,7 +88,7 @@ private:
 
 public:
 
-    bool found;
+    bool valid;
     bool useFlow;
     std::string qType;
     int xc, yc, rc;

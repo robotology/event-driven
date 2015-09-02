@@ -490,8 +490,8 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
 
         int x = ofp->getY();
         int y = ofp->getX();
-        float vx = ofp->getVx();
-        float vy = ofp->getVy();
+        float vx = ofp->getVy();
+        float vy = ofp->getVx();
         //vx_mean += vx;
         //vy_mean += vy;
         //n++;
@@ -501,15 +501,17 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
         p_start.y = y*k;
 
         double magnitude = sqrt(pow(vx, 2.0) + pow(vy, 2.0));
-        double hypotenuse = 1.44 / magnitude;
+        double hypotenuse = magnitude;
         if(hypotenuse < 10) hypotenuse = 10;
         //if(hypotenuse > 20) hypotenuse = 20;
         //hypotenuse = 40;
-        double angle = atan2(vx, vy);
+        double angle = atan2(vy, vx);
 
         //Scale the arrow by a factor of three
-        p_end.x = (int) (p_start.x + hypotenuse * cos(angle));
-        p_end.y = (int) (p_start.y + hypotenuse * sin(angle));
+//        p_end.x = (int) (p_start.x + hypotenuse * cos(angle));
+//        p_end.y = (int) (p_start.y + hypotenuse * sin(angle));
+        p_end.x = (int) (p_start.x + ofp->getVx());
+        p_end.y = (int) (p_start.y + ofp->getVy());
 
         //Draw the main line of the arrow
         cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
@@ -517,11 +519,11 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
         //Draw the tips of the arrow
         p_start.x = (int) (p_end.x - 3*cos(angle + pi/4));
         p_start.y = (int) (p_end.y - 3*sin(angle + pi/4));
-        cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
+        //cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
 
         p_start.x = (int) (p_end.x - 3*cos(angle - pi/4));
         p_start.y = (int) (p_end.y - 3*sin(angle - pi/4));
-        cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
+        //cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
 
     }
     //std::cout << "y: " << vy_mean << "x: " << vx_mean << std::endl;

@@ -38,8 +38,8 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
     int obsRadius = rf.check("obsWindow", yarp::os::Value(32)).asDouble();
     int temporalWindow = rf.check("temWindow", yarp::os::Value(200000)).asDouble();
     double inlierThreshold = rf.check("inlierThreshold",
-                                   yarp::os::Value(25)).asDouble() / 100.0;
-    if(inlierThreshold > 1) inlierThreshold = 1;
+                                   yarp::os::Value(50)).asDouble() / 100.0;
+    //if(inlierThreshold > 1) inlierThreshold = 1;
     double angleThreshold = rf.check("angleThreshold",
                                      yarp::os::Value(0.1)).asDouble();
     double radiusThreshold = rf.check("radiusThreshold",
@@ -214,154 +214,34 @@ void vCircleReader::onRead(emorph::vBottle &bot)
 
     int bestx, besty, bestr; double bestinliers = 0, bestts = 0;
     double ts;
-    bool circlewasfound = false;
-    double count = 0, potential = 0, detections = 0, inliersMax = 0, threshMax = 0, ratioMax = 0, radMax = 0;
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
 
         //get the event in the correct form
         emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
         if(!v || v->getChannel()) continue;
-        if(!hough) geomFinder.addEvent(*v);
 
-        //ts = unwrap(v->getStamp());
-        ts = v->getStamp();
-        potential++; //increment our records of possible v's to process
+        ts = unwrap(v->getStamp());
+        houghFinder.addEvent(*v);
 
-        //if(getPendingReads()) continue;
-        //if we already have new data to read we need to finish ASAP
-//        if(getPendingReads()) {
-//            std::cout << getPendingReads() << std::endl;
-//            emorph::vBottle * exBot = vCircleReader::read(true);
-//            exBot->addtoendof<emorph::AddressEvent>(q);
-//        }
-        count++; //increment our records of v's processed
-
-        //process the observation
-        double cx, cy, cr;
-
+        //set inliers
         double inliers = 0;
-        if(hough) {
-            //do the observing
-            houghFinder.addEvent(*v);
-            //set inliers
-            if(!houghFinder.found) inliers = 0;
-            else inliers  = houghFinder.valc;
-
-            //set circle positions
-            cx = houghFinder.xc;
-            cy = houghFinder.yc;
-            cr = houghFinder.rc;
-
-        } else {
-            //do finding, set inliers, set circle positions
-            inliers = geomFinder.flowcircle(cx, cy, cr);
-        }
-
-        //multi step process with intricate rounding to account for more
-        //noise in larger circles. The 0.5 makes int round up!
-        //int threshold = (6.2831853 * cr + 0.5);
-        //threshold  *= (inlierThreshold + 0.5);
-        //threshold *= (inlierThreshold * 0.8 + 0.5);
-        double threshold  = inlierThreshold;
-        //threshold = (int)((int)(6.2831853 * cr + 0.5) * inlierThreshold + 0.5);
-
-        //find the highest inliers this bottle
-        if(inliers > inliersMax) {
-            ratioMax = inliers/(double)threshold;
-            inliersMax = inliers;
-            threshMax = threshold;
-            radMax = cr;
-        }
-
-        if(datawriter.is_open() && inliers) {
-            datawriter << ts * emorph::vtsHelper::tstosecs() << " " << cx << " "
-                       << cy << " " << cr << " " << inliers << " " << (int)v->getX()
-                       << " " << (int)v->getY() << std::endl;
-            //double kx, ky, kr;
-            //circleTracker.getState(kx, ky, kr);
-            //datawriter << kx << " " << ky << " " << kr << std::endl;
-        }
+        if(houghFinder.valid)
+            inliers  = houghFinder.valc;
 
         if(inliers > bestinliers) {
             bestinliers = inliers;
-            bestx = cx;
-            besty = cy;
-            bestr = cr;
+            bestx = houghFinder.xc;
+            besty = houghFinder.yc;
+            bestr = houghFinder.rc;
             bestts = ts;
         }
 
-        continue;
-
-        //if the inliers is not enough we don't continue processing
-        if(inliers <= threshold) continue;
-
-        circlewasfound = true;
-        detections++;
-
-        emorph::ClusterEventGauss circevent;
-        circevent.setStamp(v->getStamp());
-        circevent.setChannel(v->getChannel());
-        circevent.setXCog(cx);
-        circevent.setYCog(cy);
-        circevent.setXSigma2(cr);
-        circevent.setYSigma2(1);
-        circevent.setID(0);
-        outBottle.addEvent(circevent);
-
-        //update the filter given the observation
-
-        if(!circleTracker.isActive()) {
-            circleTracker.startTracking(cx, cy, cr);
-        } else {
-            circleTracker.predict((ts - pTS)*emorph::vtsHelper::tstosecs());
-            circleTracker.correct(cx, cy, cr);
+        if(datawriter.is_open() && inliers) {
+            datawriter << ts * emorph::vtsHelper::tstosecs() << " " << houghFinder.xc << " "
+                       << houghFinder.yc << " " << houghFinder.rc << " " << inliers << " " << (int)v->getX()
+                       << " " << (int)v->getY() << std::endl;
         }
-        pTS = ts;
-
-        //write analysis data if needed
-//        if(datawriter.is_open()) {
-//            datawriter << ts * emorph::vtsHelper::tstosecs() << " " << cx << " "
-//                       << cy << " " << cr << " ";
-//            //double kx, ky, kr;
-//            //circleTracker.getState(kx, ky, kr);
-//            //datawriter << kx << " " << ky << " " << kr << std::endl;
-//        }
-
     }
-
-    if(scopeOut.getOutputCount()) {
-        yarp::os::Bottle &statsOut = scopeOut.prepare();
-        statsOut.clear();
-        //we have a scope connection so do some stats processing
-        //number of events processed
-        if(!potential) statsOut.addDouble(100.0);
-        else statsOut.addDouble(count * 100.0 / potential);
-        //std::cout << count * 100.0 / potential << " ";
-        //number of inliers
-        statsOut.addDouble(inliersMax);
-        //std::cout << inliersMax << " ";
-        //value of threshold
-        statsOut.addDouble(threshMax);
-        //std::cout << threshMax << " ";
-
-        statsOut.addDouble(radMax);
-        //number of detections
-        statsOut.addDouble(detections);
-        //std::cout << detections << std::endl;
-        scopeOut.write();
-    }
-
-    if(houghOut.getOutputCount()) {
-        yarp::sig::ImageOf< yarp::sig::PixelMono> &image = houghOut.prepare();
-        image = houghFinder.makeDebugImage2();
-        houghOut.write();
-    }
-
-    //at the end of the bottle say how many events were processed
-    //std::cout << "Detections: " << detections << std::endl;
-//    if(potential != 0 && count != potential) {
-//        std::cout << "Processed " << count * 100.0 / potential << "%" << std::endl;
-//    }
 
     //also add a single circle tracking position to the output
     //at the moment we are just using ClusterEventGauss
@@ -404,6 +284,13 @@ void vCircleReader::onRead(emorph::vBottle &bot)
 
     //send on our event bottle
     outPort.write();
+
+    if(houghOut.getOutputCount()) {
+        yarp::sig::ImageOf< yarp::sig::PixelMono> &image = houghOut.prepare();
+        image = houghFinder.makeDebugImage2();
+        houghOut.write();
+    }
+
 
 }
 

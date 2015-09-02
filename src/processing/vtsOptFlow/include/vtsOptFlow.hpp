@@ -42,6 +42,7 @@ private:
     int height;
     int width;
     int fRad;
+    int planeSize;
     int halfCount;
     int minEvtsOnPlane;
 
