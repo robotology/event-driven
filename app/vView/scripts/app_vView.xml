@@ -23,7 +23,7 @@
 
 <module>
     <name> vtsOptFlow </name>
-    <parameters> --name vtsOptFlow --height 128 --width 128 --filterSize 3 --minEvtsThresh 3 </parameters>
+    <parameters> --name vtsOptFlow --strict true --height 128 --width 128 --filterSize 3 --minEvtsThresh 4 </parameters>
     <node> localhost </node>
 </module>
 
@@ -35,7 +35,7 @@
 
 <module>
     <name> vCircle </name>
-    <parameters> --hough true --flowhough true --windowtype Lifetime --inlierThreshold 17 --procNoisePos 0.1 --procNoiseRad 0.1 --measNoisePos 128 --measNoiseRad 128 --datafile</parameters>
+    <parameters> --strict true --flowhough true --windowtype Fixed --inlierThreshold 30 --procNoisePos 0.5 --procNoiseRad 0.5 --measNoisePos 128 --measNoiseRad 128 --datafile</parameters>
     <node> localhost </node>
 </module>
 
