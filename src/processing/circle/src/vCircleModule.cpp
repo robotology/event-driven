@@ -224,24 +224,24 @@ void vCircleReader::onRead(emorph::vBottle &bot)
         houghFinder.addEvent(*v);
 
         //set inliers
-        double inliers = 0;
-        if(houghFinder.valid)
-            inliers  = houghFinder.valc;
+//        double inliers = 0;
+//        if(houghFinder.valid)
+//            inliers  = houghFinder.valc;
 
-        if(inliers > bestinliers) {
-            bestinliers = inliers;
-            bestx = houghFinder.xc;
-            besty = houghFinder.yc;
-            bestr = houghFinder.rc;
-            bestts = ts;
-        }
+//        if(inliers > bestinliers) {
+//            bestinliers = inliers;
+//            bestx = houghFinder.xc;
+//            besty = houghFinder.yc;
+//            bestr = houghFinder.rc;
+//            bestts = ts;
+//        }
 
-        if(false && datawriter.is_open() && inliers) {
-            datawriter << ts * emorph::vtsHelper::tstosecs() << " " << houghFinder.xc << " "
-                       << houghFinder.yc << " " << houghFinder.rc << " " << inliers << " " << (int)v->getX()
-                       << " " << (int)v->getY() << std::endl;
-        }
-        if(true && datawriter.is_open()) {
+//        if(false && datawriter.is_open() && inliers) {
+//            datawriter << ts * emorph::vtsHelper::tstosecs() << " " << houghFinder.xc << " "
+//                       << houghFinder.yc << " " << houghFinder.rc << " " << inliers << " " << (int)v->getX()
+//                       << " " << (int)v->getY() << std::endl;
+//        }
+        if(false && datawriter.is_open()) {
 
             emorph::FlowEvent *fv = v->getAs<emorph::FlowEvent>();
             if(fv) {
@@ -265,6 +265,15 @@ void vCircleReader::onRead(emorph::vBottle &bot)
         }
     }
 
+
+    bestinliers = houghFinder.getMaximum(bestx, besty, bestr);
+    bestts = ts;
+
+    if(true && datawriter.is_open()) {
+        datawriter << ts * emorph::vtsHelper::tstosecs() << " " << bestx << " "
+                   << besty << " " << bestr << " " << bestinliers << " " << 0 << " " << 0 << std::endl;
+    }
+
     //also add a single circle tracking position to the output
     //at the moment we are just using ClusterEventGauss
     if(bestinliers > inlierThreshold) {
@@ -279,7 +288,7 @@ void vCircleReader::onRead(emorph::vBottle &bot)
         circevent.setID(0);
         outBottle.addEvent(circevent);
 
-        if(true && datawriter.is_open()) {
+        if(false && datawriter.is_open()) {
             datawriter << 2 << " "
                        << bestts * emorph::vtsHelper::tstosecs() << " "
                        << bestx << " "

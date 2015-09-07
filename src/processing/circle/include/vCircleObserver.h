@@ -65,7 +65,8 @@ private:
 
     //data
     std::vector<yarp::sig::Matrix *> H;
-    std::vector<double> circlesegment;
+    std::vector<double> posThreshs;
+    std::vector<double> negThreshs;
     emorph::vQueue FIFO;
 
     //parameters
@@ -81,9 +82,9 @@ private:
 
     bool updateH(emorph::vEvent &event, int val);
     //two methods of general function above
-    void updateHAddress(int xv, int yv, int val);
-    void updateHFlow(int xv, int yv, int val, double dtdx, double dtdy);
-    void updateHFlowAngle(int xv, int yv, int val, double dtdx, double dtdy);
+    void updateHAddress(int xv, int yv, std::vector<double> &threshs);
+    void updateHFlow(int xv, int yv, std::vector<double> &threshs, double dtdx, double dtdy);
+    void updateHFlowAngle(int xv, int yv, std::vector<double> &threshs, double dtdx, double dtdy);
 
 
 public:
@@ -102,6 +103,7 @@ public:
     void addEventFixed(emorph::vEvent &event);
     void addEventTime(emorph::vEvent &event);
     void addEventLife(emorph::vEvent &event);
+    double getMaximum(int &x, int &y, int &r);
 
 
     yarp::sig::ImageOf<yarp::sig::PixelMono> makeDebugImage(int r);

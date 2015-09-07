@@ -228,7 +228,8 @@ vHoughCircleObserver::vHoughCircleObserver()
 
     for(int r = 0; r < rsize; r++) {
         H.push_back(new yarp::sig::Matrix(height, width));
-        circlesegment.push_back(1.0 / (int)(6.2831853 * (r+r1) + 0.5));
+        posThreshs.push_back(1.0 / (int)(6.2831853 * (r+r1) + 0.5));
+        negThreshs.push_back(-1 * posThreshs.back());
     }
 
 }
@@ -318,20 +319,26 @@ bool vHoughCircleObserver::updateH(emorph::vEvent &event, int val)
     if(useFlow) {
         emorph::FlowEvent *v = event.getAs<emorph::FlowEvent>();
         if(!v) return false;
-        updateHFlow(v->getX(), v->getY(), val, v->getVx(), v->getVy());
+        if(val > 0)
+            updateHFlow(v->getX(), v->getY(), posThreshs, v->getVx(), v->getVy());
+        else
+            updateHFlow(v->getX(), v->getY(), negThreshs, v->getVx(), v->getVy());
     } else {
         emorph::AddressEvent *v = event.getAs<emorph::AddressEvent>();
         if(!v) return false;
-        updateHAddress(v->getX(), v->getY(), val);
+        if(val > 0)
+            updateHAddress(v->getX(), v->getY(), posThreshs);
+        else
+            updateHAddress(v->getX(), v->getY(), negThreshs);
     }
     return true;
 }
 
 /******************************************************************************/
-void vHoughCircleObserver::updateHAddress(int xv, int yv, int val)
+void vHoughCircleObserver::updateHAddress(int xv, int yv, std::vector<double> &threshs)
 {
     int P = 2; P-=1;
-    if(val > 0) valc = 0; //val > 0 : we are looking for a circle
+    //if(val > 0) valc = 0; //val > 0 : we are looking for a circle
     for(int r = 0; r < rsize; r++) {
         int R = r+r1;
         double R2 = pow(R, 2.0);
@@ -344,23 +351,23 @@ void vHoughCircleObserver::updateHAddress(int xv, int yv, int val)
             for(int s = -P; s <= P; s++) {
                 int y = yv + deltay + s;
                 if(y > 127 || y < 0) continue;
-                (*H[r])[y][x] += val*circlesegment[r];
-                if(val > 0 && (*H[r])[y][x] >= valc) {
-                    valc = (*H[r])[y][x];
-                    xc = x;
-                    yc = y;
-                    rc = R;
-                }
+                (*H[r])[y][x] += threshs[r];
+//                if(val > 0 && (*H[r])[y][x] >= valc) {
+//                    valc = (*H[r])[y][x];
+//                    xc = x;
+//                    yc = y;
+//                    rc = R;
+//                }
 
                 y = yv - deltay + s;
                 if(y > 127 || y < 0) continue;
-                (*H[r])[y][x] += val*circlesegment[r];
-                if(val > 0 && (*H[r])[y][x] >= valc) {
-                    valc = (*H[r])[y][x];
-                    xc = x;
-                    yc = y;
-                    rc = R;
-                }
+                (*H[r])[y][x] += threshs[r];
+//                if(val > 0 && (*H[r])[y][x] >= valc) {
+//                    valc = (*H[r])[y][x];
+//                    xc = x;
+//                    yc = y;
+//                    rc = R;
+//                }
             }
 
         }
@@ -368,10 +375,10 @@ void vHoughCircleObserver::updateHAddress(int xv, int yv, int val)
 }
 
 /******************************************************************************/
-void vHoughCircleObserver::updateHFlow(int xv, int yv, int val, double dtdx, double dtdy)
+void vHoughCircleObserver::updateHFlow(int xv, int yv, std::vector<double> &threshs, double dtdx, double dtdy)
 {
     int P = 2;
-    if(val > 0) valc = 0;
+    //if(val > 0) valc = 0;
     for(int r = 0; r < rsize; r++) {
         int R = r+r1;
         //P = R / 10 + 1;
@@ -385,13 +392,13 @@ void vHoughCircleObserver::updateHFlow(int xv, int yv, int val, double dtdx, dou
 
                 if(x < 0 || x > width-1 || y < 0 || y > height-1) continue;
 
-                (*H[r])[y][x] += val*circlesegment[r];
-                if(val > 0 && (*H[r])[y][x] >= valc) {
-                    valc = (*H[r])[y][x];
-                    xc = x;
-                    yc = y;
-                    rc = R;
-                }
+                (*H[r])[y][x] += threshs[r];
+//                if(val > 0 && (*H[r])[y][x] >= valc) {
+//                    valc = (*H[r])[y][x];
+//                    xc = x;
+//                    yc = y;
+//                    rc = R;
+//                }
             }
         }
 
@@ -405,13 +412,13 @@ void vHoughCircleObserver::updateHFlow(int xv, int yv, int val, double dtdx, dou
 
                 if(x < 0 || x > width-1 || y < 0 || y > height-1) continue;
 
-                (*H[r])[y][x] += val*circlesegment[r];
-                if(val > 0 && (*H[r])[y][x] >= valc) {
-                    valc = (*H[r])[y][x];
-                    xc = x;
-                    yc = y;
-                    rc = R;
-                }
+                (*H[r])[y][x] += threshs[r];
+//                if(val > 0 && (*H[r])[y][x] >= valc) {
+//                    valc = (*H[r])[y][x];
+//                    xc = x;
+//                    yc = y;
+//                    rc = R;
+//                }
             }
         }
 
@@ -421,9 +428,9 @@ void vHoughCircleObserver::updateHFlow(int xv, int yv, int val, double dtdx, dou
 }
 
 /******************************************************************************/
-void vHoughCircleObserver::updateHFlowAngle(int xv, int yv, int val, double dtdx, double dtdy)
+void vHoughCircleObserver::updateHFlowAngle(int xv, int yv, std::vector<double> &threshs, double dtdx, double dtdy)
 {
-    if(val > 0) valc = 0;
+    //if(val > 0) valc = 0;
     std::vector<double> rot; rot.push_back(0); rot.push_back(M_PI);
     std::vector<double> err; err.push_back(-5.0*M_PI/180.0); err.push_back(5.0*M_PI/180.0);
     std::vector<double>::iterator errval, rotval;
@@ -471,18 +478,43 @@ void vHoughCircleObserver::updateHFlowAngle(int xv, int yv, int val, double dtdx
 
                         if(x < 0 || x > width-1 || y < 0 || y > height-1) continue;
 
-                        (*H[r])[y][x] += val * circlesegment[r];
-                        if(val > 0 && (*H[r])[y][x] >= valc) {
-                            valc = (*H[r])[y][x];
-                            xc = x;
-                            yc = y;
-                            rc = R;
-                        }
+                        (*H[r])[y][x] += threshs[r];
+//                        if(val > 0 && (*H[r])[y][x] >= valc) {
+//                            valc = (*H[r])[y][x];
+//                            xc = x;
+//                            yc = y;
+//                            rc = R;
+//                        }
                     }
                 }
             }
         }
     }
+}
+
+/******************************************************************************/
+double vHoughCircleObserver::getMaximum(int &x, int &y, int &r)
+{
+    double val = 0;
+    for(int ir = 0; ir < rsize; ir++) {
+        for(int iy = 0; iy < height; iy++) {
+            for(int ix = 0; ix < width; ix++) {
+                if((*H[ir])[iy][ix] > val) {
+                    x = ix;
+                    y = iy;
+                    r = ir;
+                    val = (*H[ir])[iy][ix];
+                }
+            }
+        }
+    }
+
+    if(val == 0) {
+        x = 0; y = 0; r = 0;
+    }
+
+    r = r + r1;
+    return val;
 }
 /******************************************************************************/
 
@@ -525,41 +557,43 @@ yarp::sig::ImageOf<yarp::sig::PixelMono> vHoughCircleObserver::makeDebugImage2()
 {
 
     //std::cout << FIFO.size() << std::endl;
-    yarp::sig::ImageOf<yarp::sig::PixelMono> canvas;
-    canvas.resize(width, height); canvas.zero();
+//    yarp::sig::ImageOf<yarp::sig::PixelMono> canvas;
+//    canvas.resize(width, height); canvas.zero();
 
-    int bx, by, br = 0; double bval = 0;
-    for(int r = 0; r < rsize; r++) {
-        for(int y = 0; y < height; y++) {
-            for(int x = 0; x < width; x++) {
-                if((*H[r])[y][x] > bval) {
-                    bx = x;
-                    by = y;
-                    br = r;
-                    bval = (*H[r])[y][x];
-                }
-            }
-        }
-    }
+    int bx, by, br;
+//    for(int r = 0; r < rsize; r++) {
+//        for(int y = 0; y < height; y++) {
+//            for(int x = 0; x < width; x++) {
+//                if((*H[r])[y][x] > bval) {
+//                    bx = x;
+//                    by = y;
+//                    br = r;
+//                    bval = (*H[r])[y][x];
+//                }
+//            }
+//        }
+//    }
 
-    return makeDebugImage(br+r1);
+    getMaximum(bx, by, br);
 
-    int R = br+r1;
-    int xstart = std::max(0, bx - R);
-    int xend = std::min(width-1, bx + R);
-    for(int x = xstart; x < xend; x++) {
-        //(xv-xc)^2 + (yv - yc)^2 = R^2
-        int deltay = (int)sqrt(pow(R, 2.0) - pow(x - bx, 2.0));
+    return makeDebugImage(br);
 
-        int y = by + deltay;
-        if(y > 127) continue;
-        canvas(y, 127 - x) = 255.0;
-        y = by - deltay;
-        if(y < 0) continue;
-        canvas(y, 127 - x) = 255.0;
-    }
+//    int R = br+r1;
+//    int xstart = std::max(0, bx - R);
+//    int xend = std::min(width-1, bx + R);
+//    for(int x = xstart; x < xend; x++) {
+//        //(xv-xc)^2 + (yv - yc)^2 = R^2
+//        int deltay = (int)sqrt(pow(R, 2.0) - pow(x - bx, 2.0));
 
-    return canvas;
+//        int y = by + deltay;
+//        if(y > 127) continue;
+//        canvas(y, 127 - x) = 255.0;
+//        y = by - deltay;
+//        if(y < 0) continue;
+//        canvas(y, 127 - x) = 255.0;
+//    }
+
+//    return canvas;
 }
 
 
