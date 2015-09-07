@@ -241,6 +241,28 @@ void vCircleReader::onRead(emorph::vBottle &bot)
                        << houghFinder.yc << " " << houghFinder.rc << " " << inliers << " " << (int)v->getX()
                        << " " << (int)v->getY() << std::endl;
         }
+        if(true && datawriter.is_open()) {
+
+            emorph::FlowEvent *fv = v->getAs<emorph::FlowEvent>();
+            if(fv) {
+                //flow event save AE plus flow velocity death
+                datawriter << 1 << " "
+                           << ts * emorph::vtsHelper::tstosecs() << " "
+                           << (int)fv->getX() << " "
+                           << (int)fv->getY() << " "
+                           << fv->getVx() << " "
+                           << fv->getVy() << " "
+                           << fv->getDeath() * emorph::vtsHelper::tstosecs()
+                           << std::endl;
+            } else {
+                //address event save AE plus 0 0 0
+                datawriter << 0 << " "
+                           << ts * emorph::vtsHelper::tstosecs() << " "
+                           << (int)v->getX() << " "
+                           << (int)v->getY() << " " << 0 << " " << 0 << " " << 0
+                           << std::endl;
+            }
+        }
     }
 
     //also add a single circle tracking position to the output
@@ -256,6 +278,14 @@ void vCircleReader::onRead(emorph::vBottle &bot)
         circevent.setYSigma2(1);
         circevent.setID(0);
         outBottle.addEvent(circevent);
+
+        if(true && datawriter.is_open()) {
+            datawriter << 2 << " "
+                       << bestts * emorph::vtsHelper::tstosecs() << " "
+                       << bestx << " "
+                       << besty << " "
+                       << bestr << " " << 0 << " " << 0 << std::endl;
+        }
 
         if(!circleTracker.isActive()) {
             circleTracker.startTracking(bestx, besty, bestr);
@@ -280,7 +310,7 @@ void vCircleReader::onRead(emorph::vBottle &bot)
             circevent.setID(1);
             outBottle.addEvent(circevent);
 
-            if(true && datawriter.is_open()) {
+            if(false && datawriter.is_open()) {
                 datawriter << ts * emorph::vtsHelper::tstosecs() << " " << bestx << " "
                            << besty << " " << bestr << " " << bestinliers << " "
                            << x << " " << y << " " << r << std::endl;
