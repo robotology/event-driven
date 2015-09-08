@@ -341,9 +341,9 @@ bool vHoughCircleObserver::updateH(emorph::vEvent &event, int val)
         emorph::FlowEvent *v = event.getAs<emorph::FlowEvent>();
         if(!v) return false;
         if(val > 0)
-            updateHFlow(v->getX(), v->getY(), posThreshs, v->getVx(), v->getVy());
+            updateHFlowAngle(v->getX(), v->getY(), posThreshs, v->getVx(), v->getVy());
         else
-            updateHFlow(v->getX(), v->getY(), negThreshs, v->getVx(), v->getVy());
+            updateHFlowAngle(v->getX(), v->getY(), negThreshs, v->getVx(), v->getVy());
     } else {
         emorph::AddressEvent *v = event.getAs<emorph::AddressEvent>();
         if(!v) return false;
@@ -383,6 +383,9 @@ void vHoughCircleObserver::updateHAddress(int xv, int yv, std::vector<double> &t
 //                    yc = y;
 //                    rc = R;
 //                }
+                if(!deltay) continue; //don't double up on same space
+                if(deltay - P <= -deltay + s) continue;
+
 
                 y = yv - deltay + s;
                 if(y > 127 || y < 0) continue;
@@ -410,7 +413,6 @@ void vHoughCircleObserver::updateHFlow(int xv, int yv, std::vector<double> &thre
     //if(val > 0) valc = 0;
     for(int r = 0; r < rsize; r++) {
         int R = r+r1;
-        //P = R / 10 + 1;
         double theta1 = atan2(dtdx, dtdy);
 
         int x_base = R * cos(theta1) + xv;
@@ -472,66 +474,150 @@ void vHoughCircleObserver::updateHFlowAngle(int xv, int yv, std::vector<double> 
     std::vector<double> err; err.push_back(-5.0*M_PI/180.0); err.push_back(5.0*M_PI/180.0);
     std::vector<double>::iterator errval, rotval;
 
+    int P = 1;
     //do for multiple scales
     for(int r = 0; r < rsize; r++) {
         int R = r+r1;
 
+        int R2 = pow(R, 2.0);
         //do for 'forward' flow and flow rotated by 180
         for(rotval = rot.begin(); rotval != rot.end(); rotval++) {
 
             //calculate centre position in hough space
-            double thetaExact = atan2(dtdy, dtdx) + *rotval;
-            int xExact = R * cos(thetaExact) + xv;
-            int yExact = R * sin(thetaExact) + yv;
+            double thetaExact = atan2(dtdx, dtdy) + *rotval;
+            if(thetaExact > M_PI) thetaExact -= 2 * M_PI; //keep between -pi->pi
 
-//            //add to the hough space at this point
-//            int x = xExact; int y = yExact;
-//            if(x < 0 || x > width-1 || y < 0 || y > height-1) continue;
+            if(fabs(thetaExact - M_PI_2) < M_PI_4 || fabs(thetaExact + M_PI_2) < M_PI_4) {
 
-//            (*H[r])[y][x] += val;
-//            if(val > 0 && (*H[r])[y][x] >= valc) {
-//                valc = (*H[r])[y][x];
-//                xc = x;
-//                yc = y;
-//                rc = R;
-//            }
+                int ysign = R * sin(thetaExact) < 0 ? -1 : 1;
 
-            //also for a small anglular error either side of the exact value
-            for(errval = err.begin(); errval != err.end(); errval++) {
+                int xStart = xv + R * cos(thetaExact+err[0]);
+                int xEnd   = xv + R * cos(thetaExact+err[1]);
 
+                if(xEnd < xStart) {
+                    xStart = xEnd;
+                    xEnd = xv + R * cos(thetaExact+err[0]);
+                }
 
-                double thetaErr = thetaExact + *errval;
-                int xErr = R * cos(thetaErr) + xv;
-                int yErr = R * sin(thetaErr) + yv;
+                xEnd = std::min(width-1, xEnd);
+                xStart = std::max(0, xStart);
 
-                //fill in all values between xExact and xErr
-                int ystart = std::min(yErr, yExact);
-                int yend   = std::max(yErr, yExact);
-                int xstart = std::min(xErr, xExact);
-                int xend   = std::max(xErr, xExact);
+                for(int x = xStart; x <= xEnd; x++) {
 
-                for(int y = ystart; y < yend+1; y++) {
-                    for(int x = xstart; x < xend+1; x++) {
+                    int deltay = (int)sqrt(R2 - pow(x - xv, 2.0)) * ysign;
 
-                        if(x < 0 || x > width-1 || y < 0 || y > height-1) continue;
-
+                    for(int s = -P; s <= P; s++) {
+                        int y = yv + deltay + s;
+                        if(y > height-1 || y < 0) continue;
                         (*H[r])[y][x] += threshs[r];
                         if((*H[r])[y][x] > *obs_max) {
                             r_max = r+r1; y_max = y; x_max = x;
                             obs_max = &(*H[r])[y][x];
                         }
-//                        if(val > 0 && (*H[r])[y][x] >= valc) {
-//                            valc = (*H[r])[y][x];
-//                            xc = x;
-//                            yc = y;
-//                            rc = R;
-//                        }
                     }
                 }
+            } else {
+                int xsign = R * cos(thetaExact) < 0 ? -1 : 1;
+
+                int yStart = yv + R * sin(thetaExact + err[0]);
+                int yEnd   = yv + R * sin(thetaExact + err[1]);
+
+                if(yEnd < yStart) {
+                    yStart = yEnd;
+                    yEnd = yv + R * sin(thetaExact+err[0]);
+                }
+
+                yEnd = std::min(height-1, yEnd);
+                yStart = std::max(0, yStart);
+
+                for(int y = yStart; y <= yEnd; y++) {
+
+                    int deltax = (int)sqrt(R2 - pow(y - yv, 2.0)) * xsign;
+
+                    for(int s = -P; s <= P; s++) {
+                        int x = xv + deltax + s;
+                        if(x > width-1 || x < 0) continue;
+                        (*H[r])[y][x] += threshs[r];
+                        if((*H[r])[y][x] > *obs_max) {
+                            r_max = r+r1; y_max = y; x_max = x;
+                            obs_max = &(*H[r])[y][x];
+                        }
+                    }
+                }
+
             }
         }
     }
 }
+
+/******************************************************************************/
+//void vHoughCircleObserver::updateHFlowAngle(int xv, int yv, std::vector<double> &threshs, double dtdx, double dtdy)
+//{
+//    //if(val > 0) valc = 0;
+//    std::vector<double> rot; rot.push_back(0); rot.push_back(M_PI);
+//    std::vector<double> err; err.push_back(-2.0*M_PI/180.0); err.push_back(2.0*M_PI/180.0);
+//    std::vector<double>::iterator errval, rotval;
+
+//    //do for multiple scales
+//    for(int r = 0; r < rsize; r++) {
+//        int R = r+r1;
+
+//        //do for 'forward' flow and flow rotated by 180
+//        for(rotval = rot.begin(); rotval != rot.end(); rotval++) {
+
+//            //calculate centre position in hough space
+//            double thetaExact = atan2(dtdx, dtdy) + *rotval;
+//            int xExact = R * cos(thetaExact) + xv;
+//            int yExact = R * sin(thetaExact) + yv;
+
+////            //add to the hough space at this point
+////            int x = xExact; int y = yExact;
+////            if(x < 0 || x > width-1 || y < 0 || y > height-1) continue;
+
+////            (*H[r])[y][x] += val;
+////            if(val > 0 && (*H[r])[y][x] >= valc) {
+////                valc = (*H[r])[y][x];
+////                xc = x;
+////                yc = y;
+////                rc = R;
+////            }
+
+//            //also for a small anglular error either side of the exact value
+//            for(errval = err.begin(); errval != err.end(); errval++) {
+
+
+//                double thetaErr = thetaExact + *errval;
+//                int xErr = R * cos(thetaErr) + xv;
+//                int yErr = R * sin(thetaErr) + yv;
+
+//                //fill in all values between xExact and xErr
+//                int ystart = std::min(yErr, yExact);
+//                int yend   = std::max(yErr, yExact);
+//                int xstart = std::min(xErr, xExact);
+//                int xend   = std::max(xErr, xExact);
+
+//                for(int y = ystart; y < yend; y++) {
+//                    for(int x = xstart; x < xend; x++) {
+
+//                        if(x < 0 || x > width-1 || y < 0 || y > height-1) continue;
+
+//                        (*H[r])[y][x] += threshs[r];
+//                        if((*H[r])[y][x] > *obs_max) {
+//                            r_max = r+r1; y_max = y; x_max = x;
+//                            obs_max = &(*H[r])[y][x];
+//                        }
+////                        if(val > 0 && (*H[r])[y][x] >= valc) {
+////                            valc = (*H[r])[y][x];
+////                            xc = x;
+////                            yc = y;
+////                            rc = R;
+////                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
+//}
 
 /******************************************************************************/
 double vHoughCircleObserver::getMaximum(int &x, int &y, int &r)
@@ -578,15 +664,14 @@ yarp::sig::ImageOf<yarp::sig::PixelMono> vHoughCircleObserver::makeDebugImage(in
 //        }
 //    }
 //    minval += (maxval - minval) / 2;
-    std::cout << r << std::endl;
+    //std::cout << r << std::endl;
 
     for(int y = 0; y < height; y++) {
         for(int x = 0; x < width; x++) {
             if((*H[r])[y][x] > 0.5)
                 canvas(y,127- x) = 255.0;
             else
-                canvas(y,127- x) = 255.0 * (*H[r])[y][x];
-
+                canvas(y,127- x) = 255.0 * 2 * (*H[r])[y][x];
 
         }
     }

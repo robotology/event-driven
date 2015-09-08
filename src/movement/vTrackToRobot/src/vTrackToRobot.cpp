@@ -123,11 +123,11 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
 
     //px[0] = v->getYCog(); px[1] = 127 - v->getXCog();
     //std::cout << "Pixel: " << px.toString() << std::endl;
-    gazecontrol->get3DPoint(0, px, 0.5, x);
+    gazecontrol->get3DPoint(0, px, 0.3, x);
 
 
     gazecontrol->lookAtFixationPoint(x);
-    gazecontrol->waitMotionDone(0.05, 1.0);
+    //gazecontrol->waitMotionDone(0.05, 1.0);
 
     return;
 

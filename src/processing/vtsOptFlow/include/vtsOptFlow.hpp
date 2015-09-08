@@ -37,7 +37,9 @@ private:
 
     yarp::os::BufferedPort<emorph::vBottle> outPort;
 
-    emorph::vSurface *surface;
+    emorph::vSurface *surfaceOn;
+    emorph::vSurface *surfaceOf;
+    emorph::vSurface *cSurf;
 
     int height;
     int width;

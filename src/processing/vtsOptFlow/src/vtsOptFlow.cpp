@@ -107,7 +107,8 @@ vtsOptFlowManager::vtsOptFlowManager(int height, int width, int filterSize,
     bottleCount = 0;
 
     //create our surface in synchronous mode
-    surface = new emorph::vSurface(width, height, false);
+    surfaceOn = new emorph::vSurface(width, height, false);
+    surfaceOf = new emorph::vSurface(width, height, false);
 }
 
 /******************************************************************************/
@@ -135,7 +136,8 @@ void vtsOptFlowManager::close()
     outPort.close();
     yarp::os::BufferedPort<emorph::vBottle>::close();
 
-    delete surface;
+    delete surfaceOn;
+    delete surfaceOf;
 
 }
 
@@ -168,10 +170,14 @@ void vtsOptFlowManager::onRead(emorph::vBottle &inBottle)
 
         emorph::AddressEvent *aep = (*qi)->getAs<emorph::AddressEvent>();
         if(!aep) continue;
-        if(aep->getChannel()) continue;
+        if(aep->getChannel()) continue; 
 
+        if(aep->getPolarity())
+            cSurf = surfaceOf;
+        else
+            cSurf = surfaceOn;
 
-        surface->addEvent(*aep);
+        cSurf->addEvent(*aep);
 
         emorph::FlowEvent ofe;
         if(computeflow) {
@@ -207,7 +213,7 @@ emorph::FlowEvent vtsOptFlowManager::compute()
     double dtdy = 0, dtdx = 0;
 
     //get the most recent event
-    emorph::AddressEvent * vr = surface->getMostRecent()->getAs<emorph::AddressEvent>();
+    emorph::AddressEvent * vr = cSurf->getMostRecent()->getAs<emorph::AddressEvent>();
     emorph::FlowEvent opt_flow(*vr);
 
     //find the side of this event that has the collection of temporally nearby
@@ -217,7 +223,7 @@ emorph::FlowEvent vtsOptFlowManager::compute()
         for(int j = vr->getY()-fRad; j <= vr->getY()+fRad; j+=fRad) {
             //get the surface around the recent event
             double sobeltsdiff = 0;
-            emorph::vQueue subsurf = surface->getSURF(i, j, fRad);
+            emorph::vQueue subsurf = cSurf->getSURF(i, j, fRad);
             if(subsurf.size() < planeSize) continue;
 
             for(int k = 0; k < subsurf.size(); k++) {
@@ -235,7 +241,7 @@ emorph::FlowEvent vtsOptFlowManager::compute()
 
     if(bestscore > emorph::vtsHelper::maxStamp()) return opt_flow;
 
-    emorph::vQueue subsurf = surface->getSURF(besti, bestj, fRad);
+    emorph::vQueue subsurf = cSurf->getSURF(besti, bestj, fRad);
 
     //and compute the flow
     if(computeGrads(subsurf, *vr, dtdy, dtdx) >= minEvtsOnPlane) {
@@ -298,7 +304,7 @@ int vtsOptFlowManager::computeGrads(yarp::sig::Matrix &A, yarp::sig::Vector &Y,
 
     abc=A2*At*Y;
 
-    double dtdp = sqrt(pow(abc(0), 2.0) + pow(abc(1), 2.0)) * 0.4;
+    double dtdp = sqrt(pow(abc(0), 2.0) + pow(abc(1), 2.0));
     int inliers = 0;
     for(int i = 0; i < A.rows(); i++) {
         //so I think that abc(0) and abc(1) are already scaled to the magnitude
@@ -313,9 +319,9 @@ int vtsOptFlowManager::computeGrads(yarp::sig::Matrix &A, yarp::sig::Vector &Y,
 
     }
 
-    if(inliers < minEvtsOnPlane) return 0;
+    //if(inliers < minEvtsOnPlane) return 0;
 
-    double speed = 1 / sqrt(pow(abc(0), 2.0) + pow(abc(1), 2.0));
+    double speed = 1.0 / sqrt(pow(abc(0), 2.0) + pow(abc(1), 2.0));
     //if(speed < 1) return 0;
 
     double angle = atan2(abc(0), abc(1));
