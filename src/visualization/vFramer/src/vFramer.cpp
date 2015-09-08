@@ -173,7 +173,7 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
         //extract the portname
         outports[i] = new yarp::os::BufferedPort<
                 yarp::sig::ImageOf<yarp::sig::PixelBgr> >;
-        outports[i]->setStrict();
+        //outports[i]->setStrict();
         std::string outportname = displayList->get(i*3 + 1).asString();
         outports[i]->open("/" + moduleName + "/" + outportname);
 

@@ -232,6 +232,10 @@ vHoughCircleObserver::vHoughCircleObserver()
         negThreshs.push_back(-1 * posThreshs.back());
     }
 
+    x_max = 0; y_max = 0; r_max = 0;
+    obs_max = &(*H[r_max])[y_max][x_max];
+
+
 }
 
 /******************************************************************************/
@@ -255,8 +259,25 @@ void vHoughCircleObserver::addEvent(emorph::vEvent &event)
 void vHoughCircleObserver::addEventFixed(emorph::vEvent &event)
 {
     valid = false;
-    if(!event.getAs<emorph::AddressEvent>())
-        return;
+    emorph::AddressEvent *v = event.getUnsafe<emorph::AddressEvent>();
+    if(!v) return;
+
+    int cts = v->getStamp();
+    int cx = v->getX(); int cy = v->getY();
+    emorph::vQueue::iterator i = FIFO.begin();
+    while(i != FIFO.end()) {
+        //v = (*i)->getAs<emorph::AddressEvent>();
+        v = (*i)->getUnsafe<emorph::AddressEvent>();
+
+        bool samelocation = v->getX() == cx && v->getY() == cy;
+
+        if(samelocation) {
+            updateH(*v, -1);
+            i = FIFO.erase(i);
+        } else {
+            i++;
+        }
+    }
 
     //if successful add it to the FIFO and check to remove others
     FIFO.push_front(&event);
@@ -352,6 +373,10 @@ void vHoughCircleObserver::updateHAddress(int xv, int yv, std::vector<double> &t
                 int y = yv + deltay + s;
                 if(y > 127 || y < 0) continue;
                 (*H[r])[y][x] += threshs[r];
+                if((*H[r])[y][x] > *obs_max) {
+                    r_max = r+r1; y_max = y; x_max = x;
+                    obs_max = &(*H[r])[y][x];
+                }
 //                if(val > 0 && (*H[r])[y][x] >= valc) {
 //                    valc = (*H[r])[y][x];
 //                    xc = x;
@@ -362,6 +387,10 @@ void vHoughCircleObserver::updateHAddress(int xv, int yv, std::vector<double> &t
                 y = yv - deltay + s;
                 if(y > 127 || y < 0) continue;
                 (*H[r])[y][x] += threshs[r];
+                if((*H[r])[y][x] > *obs_max) {
+                    r_max = r+r1; y_max = y; x_max = x;
+                    obs_max = &(*H[r])[y][x];
+                }
 //                if(val > 0 && (*H[r])[y][x] >= valc) {
 //                    valc = (*H[r])[y][x];
 //                    xc = x;
@@ -393,6 +422,10 @@ void vHoughCircleObserver::updateHFlow(int xv, int yv, std::vector<double> &thre
                 if(x < 0 || x > width-1 || y < 0 || y > height-1) continue;
 
                 (*H[r])[y][x] += threshs[r];
+                if((*H[r])[y][x] > *obs_max) {
+                    r_max = r+r1; y_max = y; x_max = x;
+                    obs_max = &(*H[r])[y][x];
+                }
 //                if(val > 0 && (*H[r])[y][x] >= valc) {
 //                    valc = (*H[r])[y][x];
 //                    xc = x;
@@ -413,6 +446,10 @@ void vHoughCircleObserver::updateHFlow(int xv, int yv, std::vector<double> &thre
                 if(x < 0 || x > width-1 || y < 0 || y > height-1) continue;
 
                 (*H[r])[y][x] += threshs[r];
+                if((*H[r])[y][x] > *obs_max) {
+                    r_max = r+r1; y_max = y; x_max = x;
+                    obs_max = &(*H[r])[y][x];
+                }
 //                if(val > 0 && (*H[r])[y][x] >= valc) {
 //                    valc = (*H[r])[y][x];
 //                    xc = x;
@@ -479,6 +516,10 @@ void vHoughCircleObserver::updateHFlowAngle(int xv, int yv, std::vector<double> 
                         if(x < 0 || x > width-1 || y < 0 || y > height-1) continue;
 
                         (*H[r])[y][x] += threshs[r];
+                        if((*H[r])[y][x] > *obs_max) {
+                            r_max = r+r1; y_max = y; x_max = x;
+                            obs_max = &(*H[r])[y][x];
+                        }
 //                        if(val > 0 && (*H[r])[y][x] >= valc) {
 //                            valc = (*H[r])[y][x];
 //                            xc = x;
@@ -537,6 +578,7 @@ yarp::sig::ImageOf<yarp::sig::PixelMono> vHoughCircleObserver::makeDebugImage(in
 //        }
 //    }
 //    minval += (maxval - minval) / 2;
+    std::cout << r << std::endl;
 
     for(int y = 0; y < height; y++) {
         for(int x = 0; x < width; x++) {
@@ -575,6 +617,8 @@ yarp::sig::ImageOf<yarp::sig::PixelMono> vHoughCircleObserver::makeDebugImage2()
 //    }
 
     getMaximum(bx, by, br);
+
+
 
     return makeDebugImage(br);
 

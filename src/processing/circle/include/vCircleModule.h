@@ -57,7 +57,7 @@ public:
     void    interrupt();
 
     //this is the entry point to your main functionality
-    void    onRead(emorph::vBottle &bot);
+    void    onRead(emorph::vBottle &inBot);
 
     bool setDataWriter(std::string datafilename);
 //    void setDebug(bool debugFlag) { this->debugFlag = debugFlag; }

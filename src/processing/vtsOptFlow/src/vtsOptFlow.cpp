@@ -154,6 +154,9 @@ void vtsOptFlowManager::onRead(emorph::vBottle &inBottle)
     /*prepare output vBottle with AEs extended with optical flow events*/
     emorph::vBottle &outBottle = outPort.prepare();
     outBottle.clear();
+    yarp::os::Stamp st;
+    this->getEnvelope(st);
+    std::cout << st.getCount() << std::endl;
 
     /*get the event queue in the vBottle bot*/
     emorph::vQueue q = inBottle.get<emorph::AddressEvent>();
@@ -193,6 +196,7 @@ void vtsOptFlowManager::onRead(emorph::vBottle &inBottle)
         eventsComputed = 0; eventsPotential = 0; bottleCount = 0;
     }
 
+    outPort.setEnvelope(st);
     outPort.write();
 
 }

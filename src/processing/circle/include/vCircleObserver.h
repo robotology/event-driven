@@ -69,6 +69,8 @@ private:
     std::vector<double> negThreshs;
     emorph::vQueue FIFO;
 
+
+
     //parameters
     int qlength;
     int qduration;
@@ -94,6 +96,9 @@ public:
     std::string qType;
     int xc, yc, rc;
     double valc;
+
+    double * obs_max;
+    int x_max, y_max, r_max;
 
     vHoughCircleObserver();
     ~vHoughCircleObserver();

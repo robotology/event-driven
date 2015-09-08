@@ -180,6 +180,8 @@ void vCircleReader::close()
 {
     //close ports
     outPort.close();
+    scopeOut.close();
+    houghOut.close();
     yarp::os::BufferedPort<emorph::vBottle>::close();
 
 }
@@ -189,22 +191,28 @@ void vCircleReader::interrupt()
 {
     //pass on the interrupt call to everything needed
     outPort.interrupt();
+    scopeOut.interrupt();
+    houghOut.interrupt();
     yarp::os::BufferedPort<emorph::vBottle>::interrupt();
 
 
 }
 
 /******************************************************************************/
-void vCircleReader::onRead(emorph::vBottle &bot)
+void vCircleReader::onRead(emorph::vBottle &inBot)
 {
     
     // prepare output vBottle with address events extended with cluster ID (aec)
     // and cluster events (clep)
     emorph::vBottle &outBottle = outPort.prepare();
-    outBottle = bot;
+    outBottle = inBot;
+
+    yarp::os::Stamp st;
+    this->getEnvelope(st);
+    //std::cout << st.getCount() << std::endl;
 
     //create event queue
-    emorph::vQueue q = bot.get<emorph::AddressEvent>();
+    emorph::vQueue q = inBot.get<emorph::AddressEvent>();
     q.wrapSort();
 
     if(!q.size()) {
@@ -266,7 +274,16 @@ void vCircleReader::onRead(emorph::vBottle &bot)
     }
 
 
-    bestinliers = houghFinder.getMaximum(bestx, besty, bestr);
+    //bestinliers = houghFinder.getMaximum(bestx, besty, bestr);
+    //bestts = ts;
+
+    //std::cout << "[" << bestx << " " << besty << " " << bestr << "]" << std::endl;
+    //std::cout << houghFinder.x_max << " " << houghFinder.y_max << " " << houghFinder.r_max << std::endl;
+
+    bestinliers = *houghFinder.obs_max;
+    bestx = houghFinder.x_max;
+    besty = houghFinder.y_max;
+    bestr = houghFinder.r_max;
     bestts = ts;
 
     if(true && datawriter.is_open()) {
@@ -328,6 +345,7 @@ void vCircleReader::onRead(emorph::vBottle &bot)
     }
 
     //send on our event bottle
+    outPort.setEnvelope(st);
     outPort.write();
 
     if(houghOut.getOutputCount()) {

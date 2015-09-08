@@ -126,6 +126,12 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
     gazecontrol->get3DPoint(0, px, 0.5, x);
 
 
+    gazecontrol->lookAtFixationPoint(x);
+    gazecontrol->waitMotionDone(0.05, 1.0);
+
+    return;
+
+
     //this is the eye pose
     yarp::sig::Vector xeye,oeye;
     gazecontrol->getLeftEyePose(xeye,oeye);
@@ -169,7 +175,7 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
 
 
 
-    gazecontrol->lookAtFixationPoint(x);
+
 
 //    if(!scopeOutPort.getOutputCount()) return;
 //    yarp::os::Bottle &scopeBot = scopeOutPort.prepare();

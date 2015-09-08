@@ -26,7 +26,7 @@
 <module>
     <name> iKinGazeCtrl </name>
     <parameters> --robot icub </parameters>
-    <node> localhost </node>
+    <node> icub14 </node>
 </module>
 
 <module>

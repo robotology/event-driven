@@ -48,10 +48,6 @@ private:
     static bool temporalSortWrap(const vEvent *e1, const vEvent *e2);
     static bool temporalSortStraight(const vEvent *e1, const vEvent *e2);
 
-    //!overloaded erase so I don't have to deal with them yet
-    //virtual void erase(iterator __first, iterator __last);
-    //virtual void erase(iterator __position);
-
 public:
 
     vQueue(const bool owner = true) { this->owner = owner; }
@@ -121,6 +117,10 @@ public:
 
     template<class T> T* getAs() {
         return dynamic_cast<T*>(this);
+    }
+
+    template<class T> T* getUnsafe() {
+        return (T*)(this);
     }
 
 };
