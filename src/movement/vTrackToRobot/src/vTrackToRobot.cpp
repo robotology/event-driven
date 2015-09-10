@@ -64,6 +64,13 @@ bool vTrackToRobotManager::open(const std::string &name)
         return false;
     }
 
+    std::string positionPortName = "/" + name + "/posdump:o";
+    if(!positionOutPort.open(positionPortName)) {
+        std::cerr << "Could not open: " << positionPortName << std::endl;
+        return false;
+    }
+
+
     if(method != fromgaze) return true;
 
     yarp::os::Property options;
@@ -81,6 +88,7 @@ void vTrackToRobotManager::interrupt()
     std::cout << "Interrupting Manager" << std::endl;
     cartOutPort.interrupt();
     scopeOutPort.interrupt();
+    positionOutPort.interrupt();
     yarp::os::BufferedPort<emorph::vBottle>::interrupt();
     std::cout << "Interrupted Manager" << std::endl;
 }
@@ -93,6 +101,7 @@ void vTrackToRobotManager::close()
     gazedriver.close();
     cartOutPort.close();
     scopeOutPort.close();
+    positionOutPort.close();
     yarp::os::BufferedPort<emorph::vBottle>::close();
 
     std::cout << "Closed Event Manager" << std::endl;
@@ -103,31 +112,41 @@ void vTrackToRobotManager::close()
 void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
 {
 
-    //emorph::vQueue::reverse_iterator qi;
+    //always print current position
+    yarp::sig::Vector cpx(2), cx(3);
+    cpx(0) = 64; cpx(1) = 64;
+    gazecontrol->get3DPoint(0, cpx, 0.3, cx);
+
+    //get the events and see if we can get a ball observation
+    yarp::sig::Vector px(2), x(3); x = 0;
     emorph::vQueue q = vBottleIn.getSorted<emorph::ClusterEventGauss>();
-    yarp::sig::Vector px(2), x(3);
+    if(q.size()) {
 
-    if(!q.size()) return;
-    for(int i = 0; i < q.size(); i++) {
-        emorph::ClusterEventGauss * v =
+        for(int i = 0; i < q.size(); i++) {
+            emorph::ClusterEventGauss * v =
                     q[i]->getAs<emorph::ClusterEventGauss>();
-        px[0] += v->getYCog();
-        px[1] += (127 - v->getXCog());
+            px[0] += v->getYCog();
+            px[1] += (127 - v->getXCog());
+        }
+        px[0] /= q.size();
+        px[1] /= q.size();
+
+        //turn u/v into xyz
+        gazecontrol->get3DPoint(0, px, 0.3, x);
+
+        //and look there
+        gazecontrol->lookAtFixationPoint(x);
     }
-    px[0] /= q.size();
-    px[1] /= q.size();
 
-//    emorph::ClusterEventGauss * v =
-//            q.back()->getAs<emorph::ClusterEventGauss>();
-//    if(!v) return;
-
-    //px[0] = v->getYCog(); px[1] = 127 - v->getXCog();
-    //std::cout << "Pixel: " << px.toString() << std::endl;
-    gazecontrol->get3DPoint(0, px, 0.3, x);
-
-
-    gazecontrol->lookAtFixationPoint(x);
-    //gazecontrol->waitMotionDone(0.05, 1.0);
+    if(positionOutPort.getOutputCount()) {
+        yarp::os::Bottle &posdump = positionOutPort.prepare();
+        posdump.clear();
+        posdump.addDouble(cx[0]); posdump.addDouble(cx[1]); posdump.addDouble(cx[2]);
+        posdump.addDouble(x[0]); posdump.addDouble(x[1]); posdump.addDouble(x[2]);
+        yarp::os::Stamp st; this->getEnvelope(st);
+        positionOutPort.setEnvelope(st);
+        positionOutPort.write();
+    }
 
     return;
 

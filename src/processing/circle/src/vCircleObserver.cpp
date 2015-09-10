@@ -235,6 +235,9 @@ vHoughCircleObserver::vHoughCircleObserver()
     x_max = 0; y_max = 0; r_max = 0;
     obs_max = &(*H[r_max])[y_max][x_max];
 
+    rot.push_back(0); rot.push_back(M_PI);
+    err.push_back(-5.0*M_PI/180.0); err.push_back(5.0*M_PI/180.0);
+
 
 }
 
@@ -260,9 +263,7 @@ void vHoughCircleObserver::addEventFixed(emorph::vEvent &event)
 {
     valid = false;
     emorph::AddressEvent *v = event.getUnsafe<emorph::AddressEvent>();
-    if(!v) return;
 
-    int cts = v->getStamp();
     int cx = v->getX(); int cy = v->getY();
     emorph::vQueue::iterator i = FIFO.begin();
     while(i != FIFO.end()) {
@@ -308,7 +309,7 @@ void vHoughCircleObserver::addEventLife(emorph::vEvent &event)
     int cx = v->getX(); int cy = v->getY();
     emorph::vQueue::iterator i = FIFO.begin();
     while(i != FIFO.end()) {
-        v = (*i)->getAs<emorph::FlowEvent>();
+        v = (*i)->getUnsafe<emorph::FlowEvent>();
         int modts = cts;
         if(cts < v->getStamp()) //we have wrapped
             modts += emorph::vtsHelper::maxStamp();
@@ -469,11 +470,9 @@ void vHoughCircleObserver::updateHFlow(int xv, int yv, std::vector<double> &thre
 /******************************************************************************/
 void vHoughCircleObserver::updateHFlowAngle(int xv, int yv, std::vector<double> &threshs, double dtdx, double dtdy)
 {
-    //if(val > 0) valc = 0;
-    std::vector<double> rot; rot.push_back(0); rot.push_back(M_PI);
-    std::vector<double> err; err.push_back(-5.0*M_PI/180.0); err.push_back(5.0*M_PI/180.0);
-    std::vector<double>::iterator errval, rotval;
+    std::vector<double>::iterator rotval;
 
+    double thetaBase = atan2(dtdx, dtdy);
     int P = 1;
     //do for multiple scales
     for(int r = 0; r < rsize; r++) {
@@ -484,19 +483,20 @@ void vHoughCircleObserver::updateHFlowAngle(int xv, int yv, std::vector<double> 
         for(rotval = rot.begin(); rotval != rot.end(); rotval++) {
 
             //calculate centre position in hough space
-            double thetaExact = atan2(dtdx, dtdy) + *rotval;
+            double thetaExact = thetaBase + *rotval;
             if(thetaExact > M_PI) thetaExact -= 2 * M_PI; //keep between -pi->pi
 
             if(fabs(thetaExact - M_PI_2) < M_PI_4 || fabs(thetaExact + M_PI_2) < M_PI_4) {
 
-                int ysign = R * sin(thetaExact) < 0 ? -1 : 1;
+                int ysign = thetaExact < 0 ? -1 : 1;
 
                 int xStart = xv + R * cos(thetaExact+err[0]);
                 int xEnd   = xv + R * cos(thetaExact+err[1]);
 
                 if(xEnd < xStart) {
+                    int temp = xStart;
                     xStart = xEnd;
-                    xEnd = xv + R * cos(thetaExact+err[0]);
+                    xEnd = temp;
                 }
 
                 xEnd = std::min(width-1, xEnd);
@@ -517,14 +517,15 @@ void vHoughCircleObserver::updateHFlowAngle(int xv, int yv, std::vector<double> 
                     }
                 }
             } else {
-                int xsign = R * cos(thetaExact) < 0 ? -1 : 1;
+                int xsign = fabs(thetaExact) > M_PI_2 ? -1 : 1;
 
                 int yStart = yv + R * sin(thetaExact + err[0]);
                 int yEnd   = yv + R * sin(thetaExact + err[1]);
 
                 if(yEnd < yStart) {
+                    int temp = yStart;
                     yStart = yEnd;
-                    yEnd = yv + R * sin(thetaExact+err[0]);
+                    yEnd = temp;
                 }
 
                 yEnd = std::min(height-1, yEnd);

@@ -2,11 +2,6 @@
 <name> vBallDemo </name>
 
 <module>
-   <name>aexGrabber</name>
-   <node>pc104</node>
-</module>
-
-<module>
     <name> simCartesianControl </name>
     <node> localhost </node>
 </module>
@@ -36,26 +31,38 @@
 </module>
 
 <module>
+   <name>zynqGrabber</name>
+   <parameters> --device ihead --name aexGrabber </parameters>
+   <node> pc104 </node>
+</module>
+
+<module>
     <name> vtsOptFlow </name>
-    <parameters> --name vtsOptFlow --height 128 --width 128 --filterSize 5 --tWindow 500000 --minEvtsThresh 8 --minSobelsThresh 4 </parameters>
-    <node> localhost </node>
+    <parameters> --strict false --height 128 --width 128 --filterSize 3 --minEvtsThresh 6 </parameters>
+    <node> icub14 </node>
 </module>
 
 <module>
     <name> vCircle </name>
-    <parameters> --hough true --flowhough true --windowtype Lifetime --inlierThreshold 17 --procNoisePos 15 --procNoiseRad 15 --measNoisePos 15 --measNoiseRad 15 --datafile </parameters>
-    <node> localhost </node>
+    <parameters> --strict false --flowhough true --windowtype Fixed --inlierThreshold 25 --procNoisePos 0.5 --procNoiseRad 0.5 --measNoisePos 128 --measNoiseRad 128 </parameters>
+    <node> icub10 </node>
 </module>
 
 <module>
     <name> vTrackToRobot </name>
     <parameters> --name vTrackToRobot --method gaze </parameters>
+    <node> icub10 </node>
+</module>
+
+<module>
+    <name> yarpdatadumper </name>
+    <parameters> --name /datadumper/robotexp/wedmorn2/pos --connect /vTrackToRobot/posdump:o --overwrite </parameters>
     <node> localhost </node>
 </module>
 
 <module>
     <name> vFramer</name>
-    <parameters> --frameRate 60 --eventWindow 0.5 --displays "(0 left (AE CIRC FLOW))"</parameters>
+    <parameters> --frameRate 20 --eventWindow 0.2 --displays "(0 left (AE CIRC FLOW))"</parameters>
     <node>localhost</node>
 </module>
 
@@ -65,11 +72,6 @@
    <node>localhost</node>
 </module>
 
-<module>
-   <name>yarpview</name>
-   <parameters>--name /viewCh1 --x 500 --y 000 --RefreshTime 16 </parameters>
-   <node>localhost</node>
-</module>
 
 <module>
     <name> yarpscope </name>
@@ -118,11 +120,6 @@
   <protocol>tcp</protocol>
 </connection>
 
-<connection>
-  <from>/vFramerModule/right</from>
-  <to>/viewCh1</to>
-  <protocol>tcp</protocol>
-</connection>
 
 
 

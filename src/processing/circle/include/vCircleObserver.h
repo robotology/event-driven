@@ -67,6 +67,8 @@ private:
     std::vector<yarp::sig::Matrix *> H;
     std::vector<double> posThreshs;
     std::vector<double> negThreshs;
+    std::vector<double> rot;
+    std::vector<double> err;
     emorph::vQueue FIFO;
 
 

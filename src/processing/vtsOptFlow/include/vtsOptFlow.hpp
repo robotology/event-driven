@@ -61,7 +61,7 @@ private:
     int computeGrads(yarp::sig::Matrix &A, yarp::sig::Vector &Y,
                       double cx, double cy, double cz,
                       double &dtdy, double &dtdx);
-    int computeGrads(emorph::vQueue &subsurf, emorph::AddressEvent &cen,
+    int computeGrads(const emorph::vQueue &subsurf, emorph::AddressEvent &cen,
                       double &dtdy, double &dtdx);
 
 public:

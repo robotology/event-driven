@@ -208,7 +208,7 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
     outBottle = inBot;
 
     yarp::os::Stamp st;
-    this->getEnvelope(st);
+    this->getEnvelope(st); outPort.setEnvelope(st);
     //std::cout << st.getCount() << std::endl;
 
     //create event queue
@@ -236,12 +236,16 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
 //        if(houghFinder.valid)
 //            inliers  = houghFinder.valc;
 
-//        if(inliers > bestinliers) {
-//            bestinliers = inliers;
-//            bestx = houghFinder.xc;
-//            besty = houghFinder.yc;
-//            bestr = houghFinder.rc;
-//            bestts = ts;
+//        if(houghFinder.valid && houghFinder.valc > inlierThreshold) {
+//            emorph::ClusterEventGauss circevent;
+//            circevent.setStamp(ts);
+//            circevent.setChannel(0);
+//            circevent.setXCog(houghFinder.xc);
+//            circevent.setYCog(houghFinder.yc);
+//            circevent.setXSigma2(houghFinder.rc);
+//            circevent.setYSigma2(1);
+//            circevent.setID(0);
+//            outBottle.addEvent(circevent);
 //        }
 
 //        if(false && datawriter.is_open() && inliers) {
@@ -345,7 +349,7 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
     }
 
     //send on our event bottle
-    outPort.setEnvelope(st);
+    //outPort.setEnvelope(st);
     outPort.write();
 
     if(houghOut.getOutputCount()) {

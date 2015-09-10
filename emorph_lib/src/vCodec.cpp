@@ -852,6 +852,14 @@ yarp::os::Property FlowEvent::getContent() const
 
 void FlowEvent::setDeath()
 {
+    death = 1.0 / (sqrt(pow(vx, 2.0) + pow(vy, 2.0)) * vtsHelper::tstosecs());
+    if(death > 2000000) {
+        death = 2000000;
+    }
+    if(death < 100000) death = 100000;
+    death += stamp;
+    return;
+
     double theta = fabs(atan2(vy, vx));
     if(theta > 1.5707963) theta -= 1.5707963;
     if(theta > 0.785398) theta = 1.5707963 - theta;

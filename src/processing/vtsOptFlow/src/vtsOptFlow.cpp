@@ -157,7 +157,7 @@ void vtsOptFlowManager::onRead(emorph::vBottle &inBottle)
     emorph::vBottle &outBottle = outPort.prepare();
     outBottle.clear();
     yarp::os::Stamp st;
-    this->getEnvelope(st);
+    this->getEnvelope(st); outPort.setEnvelope(st);
     std::cout << st.getCount() << std::endl;
 
     /*get the event queue in the vBottle bot*/
@@ -202,7 +202,7 @@ void vtsOptFlowManager::onRead(emorph::vBottle &inBottle)
         eventsComputed = 0; eventsPotential = 0; bottleCount = 0;
     }
 
-    outPort.setEnvelope(st);
+
     outPort.write();
 
 }
@@ -223,7 +223,7 @@ emorph::FlowEvent vtsOptFlowManager::compute()
         for(int j = vr->getY()-fRad; j <= vr->getY()+fRad; j+=fRad) {
             //get the surface around the recent event
             double sobeltsdiff = 0;
-            emorph::vQueue subsurf = cSurf->getSURF(i, j, fRad);
+            const emorph::vQueue &subsurf = cSurf->getSURF(i, j, fRad);
             if(subsurf.size() < planeSize) continue;
 
             for(int k = 0; k < subsurf.size(); k++) {
@@ -241,7 +241,7 @@ emorph::FlowEvent vtsOptFlowManager::compute()
 
     if(bestscore > emorph::vtsHelper::maxStamp()) return opt_flow;
 
-    emorph::vQueue subsurf = cSurf->getSURF(besti, bestj, fRad);
+    const emorph::vQueue &subsurf = cSurf->getSURF(besti, bestj, fRad);
 
     //and compute the flow
     if(computeGrads(subsurf, *vr, dtdy, dtdx) >= minEvtsOnPlane) {
@@ -255,7 +255,7 @@ emorph::FlowEvent vtsOptFlowManager::compute()
 }
 
 /******************************************************************************/
-int vtsOptFlowManager::computeGrads(emorph::vQueue &subsurf,
+int vtsOptFlowManager::computeGrads(const emorph::vQueue &subsurf,
                                      emorph::AddressEvent &cen,
                                      double &dtdy, double &dtdx)
 {

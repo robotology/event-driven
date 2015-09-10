@@ -93,12 +93,13 @@ const vQueue& vSurface::getSURF(int x, int y, int d)
 
 const vQueue& vSurface::getSURF(int xl, int xh, int yl, int yh)
 {
-    subq.clear();
 
     xl = std::max(xl, 0);
     xh = std::min(xh, width-1);
     yl = std::max(yl, 0);
     yh = std::min(yh, height-1);
+
+    subq.clear();
 
     //critical section
     mutex.wait();
