@@ -521,12 +521,12 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
         cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
 
         //Draw the tips of the arrow
-        p_start.x = (int) (p_end.x - 3*cos(angle + pi/4));
-        p_start.y = (int) (p_end.y - 3*sin(angle + pi/4));
+        p_start.x = (int) (p_end.x - 7*sin(angle + pi/4));
+        p_start.y = (int) (p_end.y - 7*cos(angle + pi/4));
         cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
 
-        p_start.x = (int) (p_end.x - 3*cos(angle - pi/4));
-        p_start.y = (int) (p_end.y - 3*sin(angle - pi/4));
+        p_start.x = (int) (p_end.x - 7*sin(angle - pi/4));
+        p_start.y = (int) (p_end.y - 7*cos(angle - pi/4));
         cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
 
     }
@@ -664,12 +664,12 @@ void fflowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
         cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
 
         //Draw the tips of the arrow
-        p_start.x = (int) (p_end.x - 3*cos(angle + pi/4));
-        p_start.y = (int) (p_end.y - 3*sin(angle + pi/4));
+        p_start.x = (int) (p_end.x - 7*sin(angle + pi/4));
+        p_start.y = (int) (p_end.y - 7*cos(angle + pi/4));
         cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
 
-        p_start.x = (int) (p_end.x - 3*cos(angle - pi/4));
-        p_start.y = (int) (p_end.y - 3*sin(angle - pi/4));
+        p_start.x = (int) (p_end.x - 7*sin(angle - pi/4));
+        p_start.y = (int) (p_end.y - 7*cos(angle - pi/4));
         cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
 
     }

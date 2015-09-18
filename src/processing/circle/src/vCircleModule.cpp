@@ -290,7 +290,7 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
     bestr = houghFinder.r_max;
     bestts = ts;
 
-    if(true && datawriter.is_open()) {
+    if(false && datawriter.is_open()) {
         datawriter << ts * emorph::vtsHelper::tstosecs() << " " << bestx << " "
                    << besty << " " << bestr << " " << bestinliers << " " << 0 << " " << 0 << std::endl;
     }
@@ -340,7 +340,7 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
             circevent.setID(1);
             outBottle.addEvent(circevent);
 
-            if(false && datawriter.is_open()) {
+            if(true && datawriter.is_open()) {
                 datawriter << ts * emorph::vtsHelper::tstosecs() << " " << bestx << " "
                            << besty << " " << bestr << " " << bestinliers << " "
                            << x << " " << y << " " << r << std::endl;

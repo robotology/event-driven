@@ -338,6 +338,7 @@ void vHoughCircleObserver::addEventLife(emorph::vEvent &event)
 /******************************************************************************/
 bool vHoughCircleObserver::updateH(emorph::vEvent &event, int val)
 {
+
     if(useFlow) {
         emorph::FlowEvent *v = event.getAs<emorph::FlowEvent>();
         if(!v) return false;
@@ -359,7 +360,7 @@ bool vHoughCircleObserver::updateH(emorph::vEvent &event, int val)
 /******************************************************************************/
 void vHoughCircleObserver::updateHAddress(int xv, int yv, std::vector<double> &threshs)
 {
-    int P = 2; P-=1;
+    int P = 1;
     //if(val > 0) valc = 0; //val > 0 : we are looking for a circle
     for(int r = 0; r < rsize; r++) {
         int R = r+r1;
@@ -411,10 +412,11 @@ void vHoughCircleObserver::updateHAddress(int xv, int yv, std::vector<double> &t
 void vHoughCircleObserver::updateHFlow(int xv, int yv, std::vector<double> &threshs, double dtdx, double dtdy)
 {
     int P = 2;
+    double theta1 = atan2(dtdx, dtdy);
     //if(val > 0) valc = 0;
     for(int r = 0; r < rsize; r++) {
         int R = r+r1;
-        double theta1 = atan2(dtdx, dtdy);
+
 
         int x_base = R * cos(theta1) + xv;
         int y_base = R * sin(theta1) + yv;
