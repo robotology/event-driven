@@ -4,13 +4,12 @@
 
 cmake_minimum_required(VERSION 2.6)
 
-add_subdirectory(vtsOptFlow)
-add_subdirectory(eventAnalysis )
-add_subdirectory(eventClustering )
-add_subdirectory(template)
-add_subdirectory(dPepper)
-add_subdirectory(circle)
+add_subdirectory(vFlow)
+add_subdirectory(vAnalysis)
+add_subdirectory(vCluster)
+add_subdirectory(vPepper)
+
 if(OPENCV_FOUND)
+    add_subdirectory(vCircle)
     add_subdirectory(vUndistortCam)
 endif(OPENCV_FOUND)
-

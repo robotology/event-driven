@@ -18,7 +18,6 @@
 #define __VWINDOW__
 
 #include <yarp/os/all.h>
-#include <yarp/sig/all.h>
 #include <vector>
 #include "vCodec.h"
 #include "vtsHelper.h"

@@ -18,10 +18,9 @@
  * Public License for more details
 */
 
-#ifndef __EMORPH_ECODEC_H__
-#define __EMORPH_ECODEC_H__
+#ifndef __EMORPH_VCODEC_H__
+#define __EMORPH_VCODEC_H__
 
-#include <yarp/os/all.h>
 #include <iCub/emorph/vtsHelper.h>
 #include <string>
 #include <deque>
