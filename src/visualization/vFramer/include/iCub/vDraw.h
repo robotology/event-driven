@@ -105,6 +105,22 @@ public:
 
 };
 
+class lifeDraw : public vDraw {
+
+public:
+
+    ///
+    /// \brief see vDraw
+    ///
+    virtual void draw(cv::Mat &image, const emorph::vQueue &eSet);
+
+    ///
+    /// \brief see vDraw
+    ///
+    virtual std::string getTag();
+
+};
+
 class integralDraw : public vDraw {
 
 private:
@@ -206,6 +222,38 @@ class surfDraw : public vDraw {
 public:
 
     const static int gradient = 100000;
+
+    ///
+    /// \brief see vDraw
+    ///
+    virtual void draw(cv::Mat &image, const emorph::vQueue &eSet);
+
+    ///
+    /// \brief see vDraw
+    ///
+    virtual std::string getTag();
+
+};
+
+class fixedDraw : public vDraw {
+
+public:
+
+    ///
+    /// \brief see vDraw
+    ///
+    virtual void draw(cv::Mat &image, const emorph::vQueue &eSet);
+
+    ///
+    /// \brief see vDraw
+    ///
+    virtual std::string getTag();
+
+};
+
+class fflowDraw : public vDraw {
+
+public:
 
     ///
     /// \brief see vDraw

@@ -30,6 +30,8 @@ class vTrackToRobotManager : public yarp::os::BufferedPort<emorph::vBottle>
 private:
     
     yarp::os::BufferedPort<yarp::os::Bottle> cartOutPort;
+    yarp::os::BufferedPort<yarp::os::Bottle> scopeOutPort;
+    yarp::os::BufferedPort<yarp::os::Bottle> positionOutPort;
     yarp::dev::PolyDriver gazedriver;
     yarp::dev::IGazeControl *gazecontrol;
 

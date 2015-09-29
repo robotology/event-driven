@@ -1,27 +1,21 @@
-# Copyright: (C) 2010 RobotCub Consortium
-# Authors: Francesco Rea
+# Copyright: (C) 2015 iCub Facility - Istituto Italiano di Tecnologia
+# Authors: Arren Glover
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
-CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
-project(event-driven)
+cmake_minimum_required(VERSION 2.6)
 
-# Check for the minimal set of packages required for the global project.
-# If we include them here, sub-projects can be configured a bit faster.
-# Only a few demo projects are included so far.
+set(PROJECTNAME eMorph)
 
-FIND_PACKAGE(ICUB)
-SET(CMAKE_MODULE_PATH ${ICUB_MODULE_PATH} ${CMAKE_MODULE_PATH})
+include(YarpInstallationHelpers)
 
-include(iCubHelpers)
+file(GLOB conf ${CMAKE_CURRENT_SOURCE_DIR}/conf/*.ini)
+file(GLOB scripts ${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.template
+                  ${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.m)
 
-# default prefix for applications
-SET(ICUB_APPLICATIONS_PREFIX "$ENV{ICUB_ROOT}"  CACHE PATH "Application path prefix")
-				
-add_subdirectory(vAnalysis)
-add_subdirectory(vView)
-add_subdirectory(vCalib)
-add_subdirectory(vBallDemo)
-add_subdirectory(vZynq)
+yarp_install(FILES ${conf}    DESTINATION ${ICUBCONTRIB_CONTEXTS_INSTALL_DIR}/${PROJECTNAME})
+yarp_install(FILES ${scripts} DESTINATION ${ICUBCONTRIB_APPLICATIONS_TEMPLATES_INSTALL_DIR})
 
-## make all applications show up as single target
-#icub_app_all()
+if(EMORPH_QTCREATOR_ADDAPPS)
+    add_custom_target(apptoken SOURCES ${scripts} ${conf})
+endif(EMORPH_QTCREATOR_ADDAPPS)
+

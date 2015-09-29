@@ -27,6 +27,10 @@ vDraw * createDrawer(std::string tag)
     if(tag == newDrawer->getTag()) return newDrawer;
     delete newDrawer;
 
+    newDrawer = new lifeDraw();
+    if(tag == newDrawer->getTag()) return newDrawer;
+    delete newDrawer;
+
     newDrawer = new clusterDraw();
     if(tag == newDrawer->getTag()) return newDrawer;
 	delete newDrawer;
@@ -48,6 +52,14 @@ vDraw * createDrawer(std::string tag)
     delete newDrawer;
 
     newDrawer = new flowDraw();
+    if(tag == newDrawer->getTag()) return newDrawer;
+    delete newDrawer;
+
+    newDrawer = new fixedDraw();
+    if(tag == newDrawer->getTag()) return newDrawer;
+    delete newDrawer;
+
+    newDrawer = new fflowDraw();
     if(tag == newDrawer->getTag()) return newDrawer;
     delete newDrawer;
 
@@ -103,6 +115,66 @@ void addressDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
         }
 
         image.at<cv::Vec3b>(aep->getX(), aep->getY()) = cpc;
+    }
+}
+
+std::string lifeDraw::getTag()
+{
+    return "AEL";
+}
+
+void lifeDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
+{
+
+    image = cv::Mat(Xlimit, Ylimit, CV_8UC3);
+    image.setTo(255);
+
+    if(checkStagnancy(eSet) > clearThreshold) {
+        return;
+    }
+    if(eSet.empty()) return;
+
+    int cts = eSet.back()->getStamp();
+
+    emorph::vQueue::const_iterator qi;
+    for(qi = eSet.begin(); qi != eSet.end(); qi++) {
+        emorph::FlowEvent *v = (*qi)->getAs<emorph::FlowEvent>();
+        if(!v) continue;
+
+        int modts = cts;
+        if(cts < v->getStamp()) //we have wrapped
+            modts += emorph::vtsHelper::maxStamp();
+
+        if(modts > v->getDeath()) continue;
+
+        cv::Vec3b cpc = image.at<cv::Vec3b>(v->getX(), v->getY());
+
+        if(!v->getPolarity())
+        {
+            //blue
+            if(cpc[0] == 1) cpc[0] = 0;   //if positive and negative
+            else cpc[0] = 160;            //if only positive
+            //green
+            if(cpc[1] == 60) cpc[1] = 255;
+            else cpc[1] = 0;
+            //red
+            if(cpc[2] == 0) cpc[2] = 255;
+            else cpc[2] = 160;
+        }
+        else
+        {
+            //blue
+            if(cpc[0] == 160) cpc[0] = 0;   //negative and positive
+            else cpc[0] = 1;                //negative only
+            //green
+            if(cpc[1] == 0) cpc[1] = 255;
+            else cpc[1] = 60;
+            //red
+            if(cpc.val[2] == 160) cpc[2] = 255;
+            else cpc[2] = 0;
+        }
+
+        image.at<cv::Vec3b>(v->getX(), v->getY()) = cpc;
     }
 }
 
@@ -301,7 +373,15 @@ void circleDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
         double r = v->getXSigma2();
         //we hide the radial variance in Y_sigma_2
         double w = v->getYSigma2();
-        cv::circle(image, centr, r, CV_RGB(0, 0, 255), w);
+
+        CvScalar c;
+        switch(v->getID()) {
+        case(0): c = CV_RGB(0, 0, 255); break;
+        case(1): c = CV_RGB(0, 255, 0); break;
+        default: c = CV_RGB(255, 0, 0);
+        }
+
+        cv::circle(image, centr, r, c, w);
         //n++;
     }
 
@@ -377,7 +457,7 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
     double k = 4;
     if(image.empty()) {
         image = cv::Mat(Xlimit*k, Ylimit*k, CV_8UC3);
-        image.setTo(0);
+        image.setTo(255);
     } else {
         cv::resize(image, image, cv::Size(0, 0), k, k, cv::INTER_LINEAR);
     }
@@ -386,49 +466,214 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
     if(checkStagnancy(eSet) > clearThreshold) return;
 
 
+    //double vx_mean = 0, vy_mean = 0, n = 0;
     int line_tickness = 1;
     cv::Scalar line_color = CV_RGB(255,0,0);
     cv::Point p_start,p_end;
     const double pi = 3.1416;
+
+    int cts = eSet.back()->getAs<emorph::vEvent>()->getStamp();
 
     emorph::vQueue::const_iterator qi;
     for(qi = eSet.begin(); qi != eSet.end(); qi++) {
         emorph::FlowEvent *ofp = (*qi)->getAs<emorph::FlowEvent>();
         if(!ofp) continue;
 
+//        int death = ofp->getDeath();
+//        if(cts < ofp->getStamp())
+//            death -= emorph::vtsHelper::maxStamp();
+//        if(cts > death || (death >= emorph::vtsHelper::maxStamp() &&
+//                           cts+emorph::vtsHelper::maxStamp() > death)) {
+//            continue;
+//        }
+
+        int modts = cts;
+        if(cts < ofp->getStamp()) //we have wrapped
+            modts += emorph::vtsHelper::maxStamp();
+        if(modts > ofp->getDeath()) continue;
+
         int x = ofp->getY();
         int y = ofp->getX();
-        float vx = ofp->getVx();
-        float vy = ofp->getVy();
+        float vx = ofp->getVy();
+        float vy = ofp->getVx();
+        //vx_mean += vx;
+        //vy_mean += vy;
+        //n++;
 
         //Starting point of the line
         p_start.x = x*k;
         p_start.y = y*k;
 
         double magnitude = sqrt(pow(vx, 2.0) + pow(vy, 2.0));
-        double hypotenuse = 0.5 / magnitude;
-        if(hypotenuse < 5) hypotenuse = 5;
-        if(hypotenuse > 20) hypotenuse = 20;
-        hypotenuse = 15;
-        double angle = atan2(vx, vy);
+        double hypotenuse = magnitude;
+        if(hypotenuse < 10) hypotenuse = 10;
+        //if(hypotenuse > 20) hypotenuse = 20;
+        //hypotenuse = 40;
+        double angle = atan2(vy, vx);
 
         //Scale the arrow by a factor of three
-        p_end.x = (int) (p_start.x + hypotenuse * cos(angle));
-        p_end.y = (int) (p_start.y + hypotenuse * sin(angle));
+//        p_end.x = (int) (p_start.x + hypotenuse * cos(angle));
+//        p_end.y = (int) (p_start.y + hypotenuse * sin(angle));
+        p_end.x = (int) (p_start.x + ofp->getVx() * 2);
+        p_end.y = (int) (p_start.y + ofp->getVy() * 2);
 
         //Draw the main line of the arrow
         cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
 
         //Draw the tips of the arrow
-        p_start.x = (int) (p_end.x - 3*cos(angle + pi/4));
-        p_start.y = (int) (p_end.y - 3*sin(angle + pi/4));
+        p_start.x = (int) (p_end.x - 7*sin(angle + pi/4));
+        p_start.y = (int) (p_end.y - 7*cos(angle + pi/4));
         cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
 
-        p_start.x = (int) (p_end.x - 3*cos(angle - pi/4));
-        p_start.y = (int) (p_end.y - 3*sin(angle - pi/4));
+        p_start.x = (int) (p_end.x - 7*sin(angle - pi/4));
+        p_start.y = (int) (p_end.y - 7*cos(angle - pi/4));
         cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
 
     }
+    //std::cout << "y: " << vy_mean << "x: " << vx_mean << std::endl;
+
+}
+
+std::string fixedDraw::getTag()
+{
+    return "FIXED";
+}
+
+void fixedDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
+{
+
+    image = cv::Mat(Xlimit, Ylimit, CV_8UC3);
+    image.setTo(255);
+
+    if(checkStagnancy(eSet) > clearThreshold) {
+        return;
+    }
+
+    int i = 0;
+    emorph::vQueue::const_reverse_iterator qi;
+    for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
+        emorph::AddressEvent *aep = (*qi)->getAs<emorph::AddressEvent>();
+        if(!aep) continue;
+
+        cv::Vec3b cpc = image.at<cv::Vec3b>(aep->getX(), aep->getY());
+
+        if(!aep->getPolarity())
+        {
+            //blue
+            if(cpc[0] == 1) cpc[0] = 0;   //if positive and negative
+            else cpc[0] = 160;            //if only positive
+            //green
+            if(cpc[1] == 60) cpc[1] = 255;
+            else cpc[1] = 0;
+            //red
+            if(cpc[2] == 0) cpc[2] = 255;
+            else cpc[2] = 160;
+        }
+        else
+        {
+            //blue
+            if(cpc[0] == 160) cpc[0] = 0;   //negative and positive
+            else cpc[0] = 1;                //negative only
+            //green
+            if(cpc[1] == 0) cpc[1] = 255;
+            else cpc[1] = 60;
+            //red
+            if(cpc.val[2] == 160) cpc[2] = 255;
+            else cpc[2] = 0;
+        }
+
+        image.at<cv::Vec3b>(aep->getX(), aep->getY()) = cpc;
+
+        if(++i > 2000) return;
+    }
+}
+
+std::string fflowDraw::getTag()
+{
+    return "FFLOW";
+}
+
+void fflowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
+{
+    double k = 4;
+    if(image.empty()) {
+        image = cv::Mat(Xlimit*k, Ylimit*k, CV_8UC3);
+        image.setTo(255);
+    } else {
+        cv::resize(image, image, cv::Size(0, 0), k, k, cv::INTER_LINEAR);
+    }
+
+    if(eSet.empty()) return;
+    if(checkStagnancy(eSet) > clearThreshold) return;
+
+
+    //double vx_mean = 0, vy_mean = 0, n = 0;
+    int line_tickness = 1;
+    cv::Scalar line_color = CV_RGB(255,0,0);
+    cv::Point p_start,p_end;
+    const double pi = 3.1416;
+
+    int cts = eSet.back()->getAs<emorph::vEvent>()->getStamp();
+
+    int i = 0;
+    emorph::vQueue::const_reverse_iterator qi;
+    for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
+        if(++i > 2000) return;
+        emorph::FlowEvent *ofp = (*qi)->getAs<emorph::FlowEvent>();
+        if(!ofp) continue;
+
+//        int death = ofp->getDeath();
+//        if(cts < ofp->getStamp())
+//            death -= emorph::vtsHelper::maxStamp();
+//        if(cts > death || (death >= emorph::vtsHelper::maxStamp() &&
+//                           cts+emorph::vtsHelper::maxStamp() > death)) {
+//            continue;
+//        }
+
+        //int modts = cts;
+        //if(cts < ofp->getStamp()) //we have wrapped
+        //    modts += emorph::vtsHelper::maxStamp();
+        //if(modts > ofp->getDeath()) continue;
+
+        int x = ofp->getY();
+        int y = ofp->getX();
+        float vx = ofp->getVy();
+        float vy = ofp->getVx();
+        //vx_mean += vx;
+        //vy_mean += vy;
+        //n++;
+
+        //Starting point of the line
+        p_start.x = x*k;
+        p_start.y = y*k;
+
+        double magnitude = sqrt(pow(vx, 2.0) + pow(vy, 2.0));
+        double hypotenuse = magnitude;
+        if(hypotenuse < 10) hypotenuse = 10;
+        //if(hypotenuse > 20) hypotenuse = 20;
+        //hypotenuse = 40;
+        double angle = atan2(vy, vx);
+
+        //Scale the arrow by a factor of three
+//        p_end.x = (int) (p_start.x + hypotenuse * cos(angle));
+//        p_end.y = (int) (p_start.y + hypotenuse * sin(angle));
+        p_end.x = (int) (p_start.x + ofp->getVx() * 2);
+        p_end.y = (int) (p_start.y + ofp->getVy() * 2);
+
+        //Draw the main line of the arrow
+        cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
+
+        //Draw the tips of the arrow
+        p_start.x = (int) (p_end.x - 7*sin(angle + pi/4));
+        p_start.y = (int) (p_end.y - 7*cos(angle + pi/4));
+        cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
+
+        p_start.x = (int) (p_end.x - 7*sin(angle - pi/4));
+        p_start.y = (int) (p_end.y - 7*cos(angle - pi/4));
+        cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
+
+    }
+    //std::cout << "y: " << vy_mean << "x: " << vx_mean << std::endl;
 
 }
 

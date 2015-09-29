@@ -18,10 +18,9 @@
  * Public License for more details
 */
 
-#ifndef __EMORPH_ECODEC_H__
-#define __EMORPH_ECODEC_H__
+#ifndef __EMORPH_VCODEC_H__
+#define __EMORPH_VCODEC_H__
 
-#include <yarp/os/all.h>
 #include <iCub/emorph/vtsHelper.h>
 #include <string>
 #include <deque>
@@ -45,11 +44,8 @@ private:
     bool owner;
 
     //! sorting events by timestamp comparitor
-    static bool temporalSort(const vEvent *e1, const vEvent *e2);
-
-    //!overloaded erase so I don't have to deal with them yet
-    //virtual void erase(iterator __first, iterator __last);
-    //virtual void erase(iterator __position);
+    static bool temporalSortWrap(const vEvent *e1, const vEvent *e2);
+    static bool temporalSortStraight(const vEvent *e1, const vEvent *e2);
 
 public:
 
@@ -74,6 +70,7 @@ public:
 
     bool getOwner() { return owner; }
     void sort();
+    void wrapSort();
 
 };
 
@@ -119,6 +116,10 @@ public:
 
     template<class T> T* getAs() {
         return dynamic_cast<T*>(this);
+    }
+
+    template<class T> T* getUnsafe() {
+        return (T*)(this);
     }
 
 };

@@ -1,42 +1,29 @@
 # Copyright: (C) 2010 RobotCub Consortium
 # Authors: Francesco Rea
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
-CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
-
-SET(KEYWORD "vFramer")
-PROJECT(${KEYWORD})
 cmake_minimum_required(VERSION 2.6)
 
-#set(ICUB_CONTRIB_DIRS $ENV{ICUB_DIR}/include)
+set(PROJECT_NAME "vFramer")
+project(${PROJECT_NAME})
 
-INCLUDE_DIRECTORIES(
+
+include_directories(
     ${PROJECT_SOURCE_DIR}/include
     ${YARP_INCLUDE_DIRS} 	
-    ${ICUB_CONTRIB_DIRS}
     ${OpenCV_INCLUDE_DIRS}
     ${EMORPHLIB_INCLUDE_DIRS}
 )
 
 # Search for source code.
-FILE(GLOB folder_source src/vFramer.cpp src/vDraw.cpp src/main.cpp)
-FILE(GLOB folder_header include/iCub/vFramer.h include/iCub/vDraw.h)
-SOURCE_GROUP("Source Files" FILES ${folder_source})
-SOURCE_GROUP("Header Files" FILES ${folder_header})
+file(GLOB folder_source src/vFramer.cpp src/vDraw.cpp src/main.cpp)
+file(GLOB folder_header include/iCub/vFramer.h include/iCub/vDraw.h)
+source_group("Source Files" FILES ${folder_source})
+source_group("Header Files" FILES ${folder_header})
 
-# Set up the main executable.
-IF (folder_source)
-    ADD_EXECUTABLE(${KEYWORD} 
-        ${folder_source} 
-        ${folder_header}
-    )
 
-    TARGET_LINK_LIBRARIES(${KEYWORD}        
-      eMorphLib
-      ${YARP_LIBRARIES}
-      ${OpenCV_LIBRARIES}
-      )	
+add_executable(${PROJECT_NAME} ${folder_source} ${folder_header})
 
-    install(TARGETS ${KEYWORD} DESTINATION bin)
-ELSE (folder_source)
-    MESSAGE(FATAL_ERROR "No source code files found. Please add something")
-ENDIF (folder_source)
+target_link_libraries(${PROJECT_NAME} ${YARP_LIBRARIES} ${OpenCV_LIBRARIES} eMorphLib)
+
+install(TARGETS ${PROJECT_NAME} DESTINATION bin)
+

@@ -1,38 +1,78 @@
-
-dataset = '~/DataBackup/DATASETS/redballtrackdataset/withperson/ball_ExtDVS.txt';
-resultfile = '~/DataBackup/DATASETS/redballtrackdataset/withperson/GT.txt';
-winsize = 0.05; %seconds
-rate = 0.2; %seconds
+%% set these options!!
+winsize = 0.1; %seconds
+rate = 1.0; %seconds
 channel = 0;
+start_offset = 0.3;
+randomised = 1;
 
+%%
+if(~exist('GTdataset', 'var'))
+    display('Please specify the path to the dataset in parameter "GTdataset"');
+    return;
+end
+
+GTresultfile = [GTdataset(1:find(GTdataset == '.', 1, 'last')) 'GT'];
+
+
+
+display('Loading data...');
 %CH TS POL X Y
-events = importdata(dataset); % import data
+GTevents = importdata(GTdataset); % import data
 
-events(events(:, 1) ~= channel, :) = [];
-events(:, 2) = events(:, 2) / 1000000; % change time scale to seconds
+GTevents(GTevents(:, 1) ~= channel, :) = [];
+GTevents(:, 2) = GTevents(:, 2) / 1000000; % change time scale to seconds
+start_offset = (GTevents(end, 2) - GTevents(1, 2))*start_offset + GTevents(1, 2);
 
-result = zeros(ceil((events(end, 2) - events(1, 2)) / rate), 4);
+
+
+display('Press Esc to quit');
+display('Press Enter to log position');
+display('Press Space to skip position');
+display('Press +/- to change circle size');
+display('Move circle with arrows');
+
+display(['Approximately ' int2str((GTevents(end, 2) - start_offset) / rate + 0.5) ...
+    ' frames to GT']);
+
+figure(2); clf; hold on;
+prevGT = dlmread(GTresultfile);
+plot(prevGT(:, 1), ones(length(prevGT), 1), 'bx');
+plot(GTevents([1 end], 2), 1, 'o');
+title('GT Distribution');
+xlabel('Time (s)');
+legend('GT Point');
+display(['Previously ' int2str(size(prevGT, 1)) ' GT points']);
 
 figure(1); clf;
 
-cts = events(1, 2) + winsize;
-ci = find(events(1:end, 2) > cts, 1) - 1;
-cts = events(ci, 2);
+cts = start_offset + winsize;
+ci = find(GTevents(1:end, 2) > cts, 1) - 1;
+cts = GTevents(ci, 2);
 
-res_i = 1;
-x = 64; y = 64; r = 20; 
+if(randomised)
+    cts = GTevents(round(rand(1) * length(GTevents)), 2);
+    ci = find(GTevents(1:end, 2) > cts, 1) - 1;
+end
+    
 
-while cts < events(end, 2)
+%res_i = 1;
+x = 64; y = 64; r = 10;
+
+finishedGT = false;
+
+while(~finishedGT)
     
-    wini  = find(events(1:end, 2) > cts-winsize, 1);
-    finished = false;
+    wini  = find(GTevents(:, 2) > cts-winsize, 1);
+    if(ci - wini) < 5000; wini = ci - 5000; end
+    if(wini < 1); wini = 1; end;
+    finishedLOG = false;
     
-    while(~finished)
-        clf; hold on;
-        window = events(wini:ci, :);       
-        plot(window(window(:, 3) == -1, 4), window(window(:, 3) == -1, 5), 'g.');
+    while(~finishedLOG)
+        figure(1); clf; hold on;
+        window = GTevents(wini:ci, :);       
+        plot(window(window(:, 3) == 0, 4), window(window(:, 3) == 0, 5), 'g.');
         plot(window(window(:, 3) ==  1, 4), window(window(:, 3) ==  1, 5), 'm.');
-        rectangle('curvature', [1 1], 'position', [x-r/2 y-r/2 r r]);
+        rectangle('curvature', [1 1], 'position', [x-r y-r r*2 r*2]);
         axis([0 128 0 128]);
         drawnow;
         try
@@ -40,19 +80,28 @@ while cts < events(end, 2)
             if c
                 c = get(1, 'CurrentCharacter');
                 %uint32(get(1, 'currentcharacter'))
+            else
+                mousep = get(gca, 'currentpoint');
+                y = round(mousep(2, 2));
+                x = round(mousep(2, 1));
+                c = -1;
             end
         catch
-            return;
+            c = -1;
+            finishedLOG = true;
+            finishedGT = true;
         end
         
         if c == 13 %enter
-            finished = true;
-            result(res_i, :) = [cts, x, y, r];
+            finishedLOG = true;
+            %result(res_i, :) = [cts, x, y, r];
+            dlmwrite(GTresultfile, [cts, x, y, r], '-append', 'delimiter', ' ', 'precision', '%0.6f'); 
+            figure(2); hold on; plot(cts, 1, 'gx');
         elseif c == 32 %space
-            finished = true;
+            finishedLOG = true;
         elseif c == 27 %ESC
-            close(1);
-            return;
+            finishedLOG = true;
+            finishedGT = true;
         elseif c == '+' || c == '='
             r = r + 1;
         elseif c == '-' || c == '_'
@@ -74,13 +123,43 @@ while cts < events(end, 2)
         
     end
    
-    res_i = res_i + 1;
+    %res_i = res_i + 1;
     cts = cts + rate;
-    ci = find(events(1:end, 2) > cts, 1) - 1;
-    cts = events(ci, 2);
-    dlmwrite(resultfile, result, 'delimiter', ' ', 'precision', '%0.6f'); 
+    if(randomised)
+        cts = GTevents(round(rand(1) * length(GTevents)), 2);
+    end
     
+    try
+        ci = find(GTevents(1:end, 2) > cts, 1) - 1;
+        cts = GTevents(ci, 2);
+    catch
+        finishedGT = true;
+    end
+    
+
+    if cts >= GTevents(end, 2)
+        finishedGT = true;
+    end
+
 end
-    
-    
-    
+
+try
+    allgt = dlmread(GTresultfile);
+    [y, ia, ic] = unique(allgt(:, 1));
+    %[y, i] = sort(allgt(:, 1), 1, 'ascend');
+    dlmwrite(GTresultfile, allgt(ia, :), 'delimiter', ' ', 'precision', '%0.6f');
+    display([int2str(size(allgt, 1)) ' ground truth points']);
+    figure(2); clf; hold on;
+    plot(allgt(ia, 1), ones(length(ia), 1), 'bx');
+    plot(GTevents([1 end], 2), 1, 'o');
+    title('GT Distribution');
+    xlabel('Time (s)');
+    legend('GT Point');
+catch
+    display('No Ground Truth Points');
+end
+
+display('Finished Ground-truthing');
+try close(1); end;
+try close(2); end;
+

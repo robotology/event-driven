@@ -1,9 +1,9 @@
-# Copyright: (C) 2015 iCub Facility - Istituto Italiano di Tecnologia
-# Authors: Arren Glover
+# Copyright: (C) 2010 RobotCub Consortium
+# Authors: Giorgio Metta, Rea Francesco
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
-SET(PROJECT_NAME "zynqGrabber")
+SET(PROJECT_NAME "aexGrabber")
 PROJECT(${PROJECT_NAME})
 
 include_directories(
@@ -23,3 +23,4 @@ add_executable(${PROJECT_NAME} ${folder_source} ${folder_header})
 target_link_libraries(${PROJECT_NAME} ${YARP_LIBRARIES} eMorphLib)
 
 install(TARGETS ${PROJECT_NAME} DESTINATION bin)
+
