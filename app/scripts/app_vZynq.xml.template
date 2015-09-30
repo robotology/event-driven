@@ -5,33 +5,63 @@
 </dependencies>
 
 <module>
-    <name>vFramer</name>
-    <parameters> --frameRate 60 --eventWindow 0.02 --displays "(0 left (AE))"</parameters>
-    <node>localhost</node>
+<name>aexGrabber</name>
+<node>pc104</node>
+</module>
+
+<module>
+<name>vFramer</name>
+<parameters> --name vFramerAex --frameRate 60 --eventWindow 0.02 --displays "(0 aexGrabber (AE))"</parameters>
+<node>localhost</node>
+</module>
+
+<module>
+<name>vFramer</name>
+<parameters> --name vFramerZynq --frameRate 60 --eventWindow 0.02 --displays "(0 zynqGrabber (AE))"</parameters>
+<node>localhost</node>
 </module>
 
 <module>
    <name>yarpview</name>
-   <parameters>--name /viewCh0 --x 000 --y 000 --RefreshTime 16 </parameters>
+   <parameters>--name /viewZynq --x 000 --y 000 --RefreshTime 16 </parameters>
    <node>localhost</node>
 </module>
 
 <module>
    <name>yarpview</name>
-   <parameters>--name /viewCh1 --x 500 --y 000 --RefreshTime 16 </parameters>
+   <parameters>--name /viewAex --x 500 --y 000 --RefreshTime 16 </parameters>
    <node>localhost</node>
 </module>
 
 <connection>
-  <from>/zynqGrabber/vBottle:o</from>
-  <to>/vFramerModule/vBottle:i</to>
-  <protocol>tcp</protocol>
+<from>/zynqGrabber/vBottle:o</from>
+<to>/vFramerZynq/vBottle:i</to>
+<protocol>tcp</protocol>
 </connection>
 
 <connection>
-  <from>/vFramerModule/left</from>
-  <to>/viewCh0</to>
-  <protocol>tcp</protocol>
+<from>/aexGrabber/vBottle:o</from>
+<to>/zynqGrabber/vBottle:i</to>
+<protocol>tcp</protocol>
+</connection>
+
+
+<connection>
+<from>/aexGrabber/vBottle:o</from>
+<to>/vFramerAex/vBottle:i</to>
+<protocol>tcp</protocol>
+</connection>
+
+<connection>
+<from>/vFramerAex/aexGrabber</from>
+<to>/viewAex</to>
+<protocol>tcp</protocol>
+</connection>
+
+<connection>
+<from>/vFramerZynq/zynqGrabber</from>
+<to>/viewZynq</to>
+<protocol>tcp</protocol>
 </connection>
 
 </application>

@@ -8,7 +8,7 @@ project(${PROJECTNAME})
 set(EMORPHLIB_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/emorph_lib/include)
 
 option(EMORPH_BUILD_ZYNQ "Build for ZynqGrabber" OFF)
-option(EMORPH_QTCREATOR_ADDAPPS "Add apps to QtCreator IDE" OFFc)
+option(EMORPH_QTCREATOR_ADDAPPS "Add apps to QtCreator IDE" OFF)
 
 find_package(ICUBcontrib REQUIRED)
 find_package(YARP REQUIRED)
@@ -20,22 +20,20 @@ include(ICUBcontribHelpers)
 icubcontrib_set_default_prefix()
 
 if(NOT EMORPH_BUILD_ZYNQ)
+
     find_package(OpenCV)
     if(NOT OPENCV_FOUND)
          message("Warning: OpenCV Not Found. Certain Modules will not be built")
     endif(NOT OPENCV_FOUND)
+
+	add_subdirectory(app)
+	add_subdirectory(drivers)
+
 endif(NOT EMORPH_BUILD_ZYNQ)
 
-if(NOT EMORPH_BUILD_ZYNQ)
-    ADD_SUBDIRECTORY(app)
-endif(NOT EMORPH_BUILD_ZYNQ)
+add_subdirectory(emorph_lib)
+add_subdirectory(src)
 
-ADD_SUBDIRECTORY(emorph_lib)
-ADD_SUBDIRECTORY(src)
-
-if(EMORPH_QTCREATOR_ADDAPPS)
-    add_subdirectory(drivers)
-endif(EMORPH_QTCREATOR_ADDAPPS)
 
 
 #icubcontrib_finalize_export(emorphLib) #macro added 13/11/2013
