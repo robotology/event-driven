@@ -5,8 +5,6 @@
 cmake_minimum_required(VERSION 2.6)
 
 file(GLOB allfiles ${CMAKE_CURRENT_SOURCE_DIR}/*/*.c ${CMAKE_CURRENT_SOURCE_DIR}/*/*.h)
+add_custom_target(driverstoken SOURCES ${allfiles})
 
-if(EMORPH_QTCREATOR_ADDAPPS)
-    add_custom_target(driverstoken SOURCES ${allfiles})
-endif(EMORPH_QTCREATOR_ADDAPPS)
 

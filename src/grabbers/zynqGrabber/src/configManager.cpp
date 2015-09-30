@@ -89,6 +89,7 @@ bool configManager::programBiases(){
 
     devManager->clearFpgaStatus("biasDone");
     devManager->chipPowerDown();
+    devManager->initDevice(this->chip);
     
     int wroteData = devManager->writeDevice(vBiases);
     
