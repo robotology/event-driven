@@ -33,6 +33,9 @@ endif(NOT EMORPH_BUILD_ZYNQ)
 ADD_SUBDIRECTORY(emorph_lib)
 ADD_SUBDIRECTORY(src)
 
+if(EMORPH_QTCREATOR_ADDAPPS)
+    add_subdirectory(drivers)
+endif(EMORPH_QTCREATOR_ADDAPPS)
 
 
 #icubcontrib_finalize_export(emorphLib) #macro added 13/11/2013
