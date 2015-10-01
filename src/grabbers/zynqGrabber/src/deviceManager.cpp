@@ -554,7 +554,7 @@ int deviceManager::getAerTimings(){
 
 int deviceManager::initDevice(std::string chipName){
     
-    int ret = 0;
+    int ret = -1;
 
     if (chipName == "atis"){
         ret = ioctl(devDesc, VSCTRL_INIT_DEV, CHIP_ATIS);
