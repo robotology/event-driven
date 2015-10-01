@@ -12,7 +12,6 @@ option(EMORPH_QTCREATOR_ADDAPPS "Add apps to QtCreator IDE" OFF)
 
 find_package(ICUBcontrib REQUIRED)
 find_package(YARP REQUIRED)
-find_package(ICUB REQUIRED)
 list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH} ${ICUBCONTRIB_MODULE_PATH})
 
 include(ICUBcontribOptions)
@@ -20,6 +19,8 @@ include(ICUBcontribHelpers)
 icubcontrib_set_default_prefix()
 
 if(NOT EMORPH_BUILD_ZYNQ)
+
+    find_package(ICUB REQUIRED)
 
     find_package(OpenCV)
     if(NOT OPENCV_FOUND)
