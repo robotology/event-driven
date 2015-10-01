@@ -502,6 +502,7 @@ static ssize_t icub_vsctrl_misc_write (struct file *fp, const char __user *buf, 
 #else
         for (i=0; i<length_uint; i++) {
             j = 0;
+            printk(KERN_DEBUG "Bias(%i): %i\n", i, pdata->data_write[i]);
             while (icub_vsctrl_write_word(pdata, C_BG_DATA_ADDR32, pdata->data_write[i])) {
                 if (j++ > 1000) {
                     printk(KERN_ERR MSG_PREFIX "Failed to send bias data\n");
@@ -526,6 +527,7 @@ static ssize_t icub_vsctrl_misc_write (struct file *fp, const char __user *buf, 
         }
 #else
         j = 0;
+        printk(KERN_DEBUG "Bias(%i): %i\n", i, 0x40FFFFFF);
         while (icub_vsctrl_write_word(pdata, C_BG_DATA_ADDR32, 0x40FFFFFF)) {
             if (j++ > 1000) {
                 printk(KERN_ERR MSG_PREFIX "Failed to send last bias data\n");
