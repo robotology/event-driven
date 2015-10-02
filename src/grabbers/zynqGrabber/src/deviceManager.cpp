@@ -115,8 +115,9 @@ bool deviceManager::openDevice(){
         // Start IP in LoopBack
         tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
         write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | (CTRL_ENABLEINTERRUPT));// | CTRL_ENABLE_FAR_LBCK));
+
     } else if(deviceName == "/dev/iit_vsctrl_l" || deviceName == "/dev/iit_vsctrl_r") {
-	bufferedRead = false;
+        bufferedRead = false;
         //opening the device
         std::cout << "name of the device: " << deviceName << std::endl;
         devDesc = ::open(deviceName.c_str(), O_RDWR);
@@ -125,14 +126,14 @@ bool deviceManager::openDevice(){
             perror("");
             return false;
         }
-   	// clear fpga registers
-    	clearFpgaStatus("biasDone");
-    	clearFpgaStatus("tdFifoFull");
-    	clearFpgaStatus("apsFifoFull");
-    	clearFpgaStatus("i2cTimeout");
-    	clearFpgaStatus("crcErr");
-  
-   	} else {
+        // clear fpga registers
+        clearFpgaStatus("biasDone");
+        clearFpgaStatus("tdFifoFull");
+        clearFpgaStatus("apsFifoFull");
+        clearFpgaStatus("i2cTimeout");
+        clearFpgaStatus("crcErr");
+
+    } else {
         std::cerr << "Device Unknown to deviceManager" << std::endl;
         return false;
     }
@@ -333,7 +334,7 @@ void deviceManager::run(void)
 
         //read SHOULD be a blocking call
         int r = ::read(devDesc, readBuffer->data() + readCount,
-                    maxBufferSize - readCount);
+                       maxBufferSize - readCount);
 
         //std::cout << readBuffer << " " <<  readCount << " " << maxBufferSize << std::endl;
 
@@ -344,7 +345,7 @@ void deviceManager::run(void)
             std::cerr << "Error reading from " << deviceName << std::endl;
             perror("perror: ");
             std::cerr << "readCount: " << readCount << "MaxBuffer: "
-                         << maxBufferSize << std::endl;
+                      << maxBufferSize << std::endl;
         }
 
         if(readCount >= maxBufferSize) {
@@ -425,7 +426,7 @@ int deviceManager::getFpgaStatus(){
         std::cerr << "read status failed: ioctl error " << errno << std::endl;
     } else {
         std::cout << "FPGA_STAT    = " << fpga_stat << std::endl;
-     
+
         fpgaStat->biasDone      = fpga_stat & 0x00000020;
         fpgaStat->tdFifoFull    = fpga_stat & 0x00000001;
         fpgaStat->apsFifoFull   = fpga_stat & 0x00000002;

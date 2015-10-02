@@ -32,15 +32,15 @@
 
 
 #define DRV_NAME	"iit-i2c_vsctrl"
-#define MSG_PREFIX      "IIT-VSCtrl: "
+#define MSG_PREFIX  "IIT-VSCtrl: "
 
 #define MAX_CONV_MS  150
 #define DATA_STORAGE_U32 32
 
 struct icub_vsctrl_data {
-	struct i2c_client *client;
-	struct miscdevice misc_dev;
-	struct mutex mutex;
+    struct i2c_client *client;
+    struct miscdevice misc_dev;
+    struct mutex mutex;
     int    open_count;
     
     uint32_t data_write[DATA_STORAGE_U32];
@@ -132,7 +132,6 @@ static int icub_vsctrl_write_word(struct icub_vsctrl_data *pdata,
                                   uint8_t addr, uint32_t value)
 {
     uint8_t wrbuf[5] = {0};
-  
 
     wrbuf[0] = (addr&0x3F)|0x40;
     wrbuf[1] = (value>> 0)&0xFF;
@@ -141,7 +140,6 @@ static int icub_vsctrl_write_word(struct icub_vsctrl_data *pdata,
     wrbuf[4] = (value>>24)&0xFF;
 
     return icub_vsctrl_readwrite(pdata->client, 5, wrbuf, 0, NULL);
-
 }
 
 static int icub_vsctrl_fifowrite_word(struct icub_vsctrl_data *pdata,
@@ -218,7 +216,7 @@ static int icub_vsctrl_fiforead_byte(struct icub_vsctrl_data *pdata,
     error = icub_vsctrl_readwrite(pdata->client, 1, wrbuf, len, rdbuf);
     if (error)
         return error;
-        
+
     while (i < len)
         value[j++] = rdbuf[i++];
 
@@ -240,7 +238,7 @@ static int icub_vsctrl_blockread_byte(struct icub_vsctrl_data *pdata,
     error = icub_vsctrl_readwrite(pdata->client, 1, wrbuf, len, rdbuf);
     if (error)
         return error;
-        
+
     while (i < len)
         value[j++] = rdbuf[i++];
 
@@ -278,7 +276,7 @@ static int icub_vsctrl_fiforead_word(struct icub_vsctrl_data *pdata,
     error = icub_vsctrl_readwrite(pdata->client, 1, wrbuf, 4*len, rdbuf);
     if (error)
         return error;
-        
+
     while (i < len) {
         value[i++] = rdbuf[j]|rdbuf[j+1]<<8|rdbuf[j+2]<<16|rdbuf[j+3]<<24;
         j+=4;
@@ -302,7 +300,7 @@ static int icub_vsctrl_blockread_word(struct icub_vsctrl_data *pdata,
     error = icub_vsctrl_readwrite(pdata->client, 1, wrbuf, 4*len, rdbuf);
     if (error)
         return error;
-        
+
     while (i < len) {
         value[i++] = rdbuf[j]|rdbuf[j+1]<<8|rdbuf[j+2]<<16|rdbuf[j+3]<<24;
         j += 4;
@@ -320,17 +318,17 @@ static uint32_t icub_vsctrl_crc_check(uint32_t *data, int len, uint32_t poly) {
 
 static inline struct icub_vsctrl_data *get_pdata_from_file(struct file *fp)
 {
-	struct miscdevice *dev = fp->private_data;
-	return container_of(dev, struct icub_vsctrl_data, misc_dev);
+    struct miscdevice *dev = fp->private_data;
+    return container_of(dev, struct icub_vsctrl_data, misc_dev);
 }
 
 
 static int icub_vsctrl_init(struct icub_vsctrl_data *pdata, int chip_type) {
     uint8_t tmp_byte;
     
-	printk(KERN_DEBUG "%s()\n", __func__);
+    printk(KERN_DEBUG "%s()\n", __func__);
     
-	//mutex_lock(&pdata->mutex);
+    //mutex_lock(&pdata->mutex);
     if (chip_type == C_CHIP_AUTO) {
         if (icub_vsctrl_read_byte(pdata, C_FPGACFG_ADDR, &tmp_byte)) {
             printk(KERN_ERR MSG_PREFIX "Read from I2C failed\n");
@@ -363,7 +361,7 @@ static int icub_vsctrl_init(struct icub_vsctrl_data *pdata, int chip_type) {
         icub_vsctrl_write_byte(pdata, C_SRCTIM2_ADDR, 5);      // Set the AER Data Sample Delay
         icub_vsctrl_write_byte(pdata, C_SRCTIM3_ADDR, 6);      // Set the AER Acknowledge Release Delay
         
-//        icub_vsctrl_write_word(pdata, C_BG_PRESC_ADDR32, 125000);  // Set the BG Prescaler Value
+        //        icub_vsctrl_write_word(pdata, C_BG_PRESC_ADDR32, 125000);  // Set the BG Prescaler Value
         icub_vsctrl_write_word(pdata, C_BG_PRESC_ADDR32, 1000);    // Set the BG Prescaler Value
         icub_vsctrl_write_byte(pdata, C_BGTIM0_ADDR, 100);         // Set the BG Latch Active Time
         icub_vsctrl_write_byte(pdata, C_BGTIM1_ADDR, 100);         // Set the BG Latch Setup Time
@@ -409,16 +407,16 @@ static int icub_vsctrl_init(struct icub_vsctrl_data *pdata, int chip_type) {
     icub_vsctrl_write_word(pdata, C_STATUS_ADDR32, 0xFFFFFFFF);
 
 lbl_init_exit:
-	//mutex_unlock(&pdata->mutex);
+    //mutex_unlock(&pdata->mutex);
     
-	return 0;
+    return 0;
 }
 
 static int icub_vsctrl_misc_open (struct inode *ip, struct file *fp) {
-	struct icub_vsctrl_data *pdata = get_pdata_from_file(fp);
+    struct icub_vsctrl_data *pdata = get_pdata_from_file(fp);
     uint8_t tmp_byte;
 
-	printk(KERN_DEBUG "%s()\n", __func__);
+    printk(KERN_DEBUG "%s()\n", __func__);
     
     pdata->open_count++;
     if (pdata->open_count > 1) {
@@ -436,35 +434,38 @@ static int icub_vsctrl_misc_open (struct inode *ip, struct file *fp) {
         tmp_byte |= (C_BG_CRCCLR_MSK | C_BG_CRCEN_MSK);
     else
         tmp_byte &= ~C_BG_CRCEN_MSK;
-        
+
     icub_vsctrl_write_byte(pdata, C_BGCTRL1_ADDR, tmp_byte);
 
-	return 0;
+    return 0;
 }
 
 static int icub_vsctrl_misc_release (struct inode *ip, struct file *fp) {
-	struct icub_vsctrl_data *pdata = get_pdata_from_file(fp);
+    struct icub_vsctrl_data *pdata = get_pdata_from_file(fp);
 
-	printk(KERN_DEBUG "%s()\n", __func__);
+    printk(KERN_DEBUG "%s()\n", __func__);
 
     pdata->open_count--;
     if (pdata->open_count > 0) {
         return 0;
     }
     
-	return 0;
+    return 0;
 }
 
 
 static ssize_t icub_vsctrl_misc_write (struct file *fp, const char __user *buf, size_t len, loff_t *ppos) {
-	struct icub_vsctrl_data *pdata = get_pdata_from_file(fp);
+    struct icub_vsctrl_data *pdata = get_pdata_from_file(fp);
     int length_uint;
     int length_trunc;
     uint32_t crc32;
     int i, j;
+
+#ifdef DVS_DONTSEND_LAST_12BIT
     int dvsBiasBitCount = 24;
     int maxBiasBitCount = sizeof(uint32_t) * 8;
     int alignmentBits = maxBiasBitCount - dvsBiasBitCount;
+#endif
 
     printk(KERN_DEBUG "%s()\n", __func__);
 
@@ -482,17 +483,17 @@ static ssize_t icub_vsctrl_misc_write (struct file *fp, const char __user *buf, 
     icub_vsctrl_write_word(pdata, C_BG_CRC_ADDR32, crc32);
 
     if (pdata->chip_type == C_CHIP_DVS) {
-	
+
         //printk(KERN_DEBUG MSG_PREFIX "Sending BIAS for DVS\n");
 #ifdef DVS_DONTSEND_LAST_12BIT
-	
+
         icub_vsctrl_write_byte(pdata, C_BGCTRL0_ADDR, dvsBiasBitCount);  // Set the bias valid bitcount
 #ifdef DVS_USE_FIFOWRITE
         icub_vsctrl_fifowrite_word(pdata, C_BG_DATA_ADDR32, pdata->data_write, length_uint-1);
 #else
         for (i=0; i<length_uint-1; i++) {
             j = 0;
-	    //printk(KERN_DEBUG MSG_PREFIX "Bias(%i): %i\n", i, pdata->data_write[i]);
+            //printk(KERN_DEBUG MSG_PREFIX "Bias(%i): %i\n", i, pdata->data_write[i]);
             while (icub_vsctrl_write_word(pdata, C_BG_DATA_ADDR32, (pdata->data_write[i])<<alignmentBits)) {
                 if (j++ > 1000) {
                     printk(KERN_ERR MSG_PREFIX "Failed to send bias data\n");
@@ -522,11 +523,11 @@ static ssize_t icub_vsctrl_misc_write (struct file *fp, const char __user *buf, 
 #endif  // DVS_DONTSEND_LAST_12BIT
 
 
-// Last bias datum
+        // Last bias datum
 #ifdef DVS_DONTSEND_LAST_12BIT
         icub_vsctrl_write_byte(pdata, C_BGCTRL0_ADDR, 0x80 | dvsBiasBitCount);
         j = 0;
-	//printk(KERN_DEBUG MSG_PREFIX "Bias(%i): %i\n", i, pdata->data_write[length_uint-1]);
+        //printk(KERN_DEBUG MSG_PREFIX "Bias(%i): %i\n", i, pdata->data_write[length_uint-1]);
         while (icub_vsctrl_write_word(pdata, C_BG_DATA_ADDR32, (pdata->data_write[length_uint-1]) << alignmentBits)) {
             if (j++ > 1000) {
                 printk(KERN_ERR MSG_PREFIX "Failed to send last bias data\n");
@@ -544,7 +545,7 @@ static ssize_t icub_vsctrl_misc_write (struct file *fp, const char __user *buf, 
         }
 #endif
     } else if (pdata->chip_type == C_CHIP_ATIS) {
-	//printk(KERN_DEBUG MSG_PREFIX "Sending BIAS for ATIS\n");
+        //printk(KERN_DEBUG MSG_PREFIX "Sending BIAS for ATIS\n");
         icub_vsctrl_write_byte(pdata, C_BGCTRL0_ADDR, 0x44);
         icub_vsctrl_fifowrite_word(pdata, C_BG_DATA_ADDR32, pdata->data_write, length_uint);
         icub_vsctrl_write_byte(pdata, C_BGCTRL0_ADDR, 0x80);
@@ -553,16 +554,16 @@ static ssize_t icub_vsctrl_misc_write (struct file *fp, const char __user *buf, 
     
     mutex_unlock(&pdata->mutex);
 
-	return length_uint << 2;
+    return length_uint << 2;
 }
 
 
 static ssize_t icub_vsctrl_misc_read (struct file *fp, char __user *buf, size_t len, loff_t *ppos) {
-	struct icub_vsctrl_data *pdata = get_pdata_from_file(fp);
+    struct icub_vsctrl_data *pdata = get_pdata_from_file(fp);
     int length_uint;
     int length_trunc;
 
-	printk(KERN_DEBUG "%s()\n", __func__);
+    printk(KERN_DEBUG "%s()\n", __func__);
 
     length_trunc = (len>(DATA_STORAGE_U32<<2)) ? DATA_STORAGE_U32<<2 : len;
     length_uint = length_trunc>>2;
@@ -580,7 +581,7 @@ static ssize_t icub_vsctrl_misc_read (struct file *fp, char __user *buf, size_t 
     }
     mutex_unlock(&pdata->mutex);
     
-	return length_uint << 2;
+    return length_uint << 2;
 }
 
 static long icub_vsctrl_misc_ioctl (struct file *fp, unsigned int cmd, unsigned long arg) {
@@ -589,173 +590,173 @@ static long icub_vsctrl_misc_ioctl (struct file *fp, unsigned int cmd, unsigned 
     uint32_t tmp_word;
     uint8_t  buf[4];
     icub_vsctrl_ioctl_arg_t ioctl_arg;
-	struct icub_vsctrl_data *pdata = get_pdata_from_file(fp);
+    struct icub_vsctrl_data *pdata = get_pdata_from_file(fp);
     
-	printk(KERN_DEBUG "%s()\n", __func__);
+    printk(KERN_DEBUG "%s()\n", __func__);
     
     mutex_lock(&pdata->mutex);
     
     switch (cmd) {
-        case IOC_GEN_REG_ACCESS:
-            if (copy_from_user(&ioctl_arg, (icub_vsctrl_ioctl_arg_t *)arg, sizeof(icub_vsctrl_ioctl_arg_t)))
-                goto cfuser_err;
+    case IOC_GEN_REG_ACCESS:
+        if (copy_from_user(&ioctl_arg, (icub_vsctrl_ioctl_arg_t *)arg, sizeof(icub_vsctrl_ioctl_arg_t)))
+            goto cfuser_err;
 
-            if (ioctl_arg.regs.rw == 0) {
-                if (icub_vsctrl_read_word(pdata, ioctl_arg.regs.addr, &(ioctl_arg.regs.data)))
-                    goto read_err;
-                if (copy_to_user((icub_vsctrl_ioctl_arg_t *)arg, &ioctl_arg, sizeof(icub_vsctrl_ioctl_arg_t)))
-                    goto ctuser_err;
-            }
-            else {
-                if (icub_vsctrl_write_word(pdata, ioctl_arg.regs.addr, ioctl_arg.regs.data))
-                    goto write_err;
-            }
-            break;
-
-        case IOC_GET_FPGAREL:
-            if (icub_vsctrl_read_byte(pdata, C_FPGAREL_ADDR, &tmp_byte))
+        if (ioctl_arg.regs.rw == 0) {
+            if (icub_vsctrl_read_word(pdata, ioctl_arg.regs.addr, &(ioctl_arg.regs.data)))
                 goto read_err;
-            if (copy_to_user((void __user *)arg, &tmp_byte, sizeof(uint8_t)))
-                goto ctuser_err;
-            break;
-            
-        case IOC_GET_INFO:
-            if (icub_vsctrl_read_byte(pdata, C_FPGACFG_ADDR, &tmp_byte))
-                goto read_err;
-            if (copy_to_user((void __user *)arg, &tmp_byte, sizeof(uint8_t)))
-                goto ctuser_err;
-            break;
-            
-        case IOC_GET_STATUS:
-            if (icub_vsctrl_read_word(pdata, C_STATUS_ADDR32, &tmp_word))
-                goto read_err;
-            if (copy_to_user((void __user *)arg, &tmp_word, sizeof(uint32_t)))
-                goto ctuser_err;
-            break;
-
-        case IOC_INIT_DEV:
-            icub_vsctrl_init(pdata, (int)arg);
-            break;
-            
-        case IOC_RESET_ARRAY:
-            if (icub_vsctrl_read_byte(pdata, C_OUTSDBUS0_ADDR, &tmp_byte))
-                goto read_err;
-                
-            if (arg)
-                tmp_byte |= C_ARRAY_RST_MSK;
-            else
-                tmp_byte &= ~C_ARRAY_RST_MSK;
-
-            if (icub_vsctrl_write_byte(pdata, C_OUTSDBUS0_ADDR, tmp_byte))
-                goto write_err;
-            break;
-            
-        case IOC_SET_PWRDWN:
-            if (icub_vsctrl_read_byte(pdata, C_BGCTRL1_ADDR, &tmp_byte))
-                goto read_err;
-                
-            if (arg)
-                tmp_byte |= C_BG_PWRDWN_MSK;
-            else
-                tmp_byte &= ~C_BG_PWRDWN_MSK;
-
-            if (icub_vsctrl_write_byte(pdata, C_BGCTRL1_ADDR, tmp_byte))
-                goto write_err;
-            break;
-            
-        case IOC_SET_BIASGEN:
-            if (icub_vsctrl_read_byte(pdata, C_BGCTRL1_ADDR, &tmp_byte))
-                goto read_err;
-            tmp_byte &= ~C_BG_BIASROI_MSK;
-            if (icub_vsctrl_write_byte(pdata, C_BGCTRL1_ADDR, tmp_byte))
-                goto write_err;
-            pdata->roi_notbg = 0;
-            //pdata->crc_check_en = 1;    // TBD: CRC check function not yet implemented
-            pdata->crc_check_en = 0;
-            break;
-            
-        case IOC_SET_ROIGEN:
-            if (icub_vsctrl_read_byte(pdata, C_BGCTRL1_ADDR, &tmp_byte))
-                goto read_err;
-            tmp_byte |= C_BG_BIASROI_MSK;
-            if (icub_vsctrl_write_byte(pdata, C_BGCTRL1_ADDR, tmp_byte))
-                goto write_err;
-            pdata->roi_notbg = 1;
-            pdata->crc_check_en = 0;
-            break;
-
-        case IOC_SET_GPO:
-            if (icub_vsctrl_write_word(pdata, C_OUT_SDBUS_ADDR32, arg))
-                goto write_err;
-            break;
-        
-        case IOC_GET_GPI:
-            if (icub_vsctrl_read_word(pdata, C_IN_SDBUS_ADDR32, &tmp_word))
-                goto read_err;
-            if (copy_to_user((void __user *)arg, &tmp_word, sizeof(uint32_t)))
-                goto ctuser_err;
-            break;
-        
-        case IOC_SET_AER_TIMINGS:
-            if (copy_from_user(&ioctl_arg, (icub_vsctrl_ioctl_arg_t *)arg, sizeof(icub_vsctrl_ioctl_arg_t)))
-                goto cfuser_err;
-            buf[0] = ioctl_arg.aer_timings.cfg_ack_set_delay;
-            buf[1] = ioctl_arg.aer_timings.cfg_sample_delay;
-            buf[2] = ioctl_arg.aer_timings.cfg_ack_rel_delay;
-            if (icub_vsctrl_blockwrite_byte(pdata, C_SRCTIM1_ADDR, buf, 3))
-                goto write_err;
-            break;
-
-        case IOC_SET_BG_TIMINGS:
-            if (copy_from_user(&ioctl_arg, (icub_vsctrl_ioctl_arg_t *)arg, sizeof(icub_vsctrl_ioctl_arg_t)))
-                goto cfuser_err;
-            if (icub_vsctrl_write_word(pdata, C_BGPRESC0_ADDR, ioctl_arg.bg_timings.prescaler_value))
-                goto write_err;
-            buf[0] = ioctl_arg.bg_timings.latch_active_time;
-            buf[1] = ioctl_arg.bg_timings.latch_setup_time;
-            buf[2] = ioctl_arg.bg_timings.clock_active_time;
-            buf[3] = ioctl_arg.bg_timings.setup_hold_time;
-            if (icub_vsctrl_blockwrite_byte(pdata, C_BGTIM0_ADDR, buf, 4))
-                goto write_err;
-            break;
-
-        case IOC_GET_AER_TIMINGS:
-            if (icub_vsctrl_blockread_byte(pdata, C_SRCTIM1_ADDR, buf, 3))
-                goto read_err;
-            ioctl_arg.aer_timings.cfg_ack_set_delay = buf[0];
-            ioctl_arg.aer_timings.cfg_sample_delay  = buf[1];
-            ioctl_arg.aer_timings.cfg_ack_rel_delay = buf[2];
             if (copy_to_user((icub_vsctrl_ioctl_arg_t *)arg, &ioctl_arg, sizeof(icub_vsctrl_ioctl_arg_t)))
                 goto ctuser_err;
-            break;
-
-        case IOC_GET_BG_TIMINGS:
-            if (icub_vsctrl_read_word(pdata, C_BGPRESC0_ADDR, &(ioctl_arg.bg_timings.prescaler_value)))
-                goto read_err;
-            if (icub_vsctrl_blockread_byte(pdata, C_BGTIM0_ADDR, buf, 4))
-                goto read_err;
-            ioctl_arg.bg_timings.latch_active_time = buf[0];
-            ioctl_arg.bg_timings.latch_setup_time  = buf[1]; 
-            ioctl_arg.bg_timings.clock_active_time = buf[2]; 
-            ioctl_arg.bg_timings.setup_hold_time   = buf[3]; 
-            if (copy_to_user((icub_vsctrl_ioctl_arg_t *)arg, &ioctl_arg, sizeof(icub_vsctrl_ioctl_arg_t)))
-                goto ctuser_err;
-            break;
-
-        case IOC_CLR_STATUS:
-            if (icub_vsctrl_write_word(pdata, C_STATUS_ADDR32, arg))
+        }
+        else {
+            if (icub_vsctrl_write_word(pdata, ioctl_arg.regs.addr, ioctl_arg.regs.data))
                 goto write_err;
-            break;
+        }
+        break;
 
-            break;
+    case IOC_GET_FPGAREL:
+        if (icub_vsctrl_read_byte(pdata, C_FPGAREL_ADDR, &tmp_byte))
+            goto read_err;
+        if (copy_to_user((void __user *)arg, &tmp_byte, sizeof(uint8_t)))
+            goto ctuser_err;
+        break;
 
-        default: 
-            mutex_unlock(&pdata->mutex);
-            return -EINVAL;
+    case IOC_GET_INFO:
+        if (icub_vsctrl_read_byte(pdata, C_FPGACFG_ADDR, &tmp_byte))
+            goto read_err;
+        if (copy_to_user((void __user *)arg, &tmp_byte, sizeof(uint8_t)))
+            goto ctuser_err;
+        break;
+
+    case IOC_GET_STATUS:
+        if (icub_vsctrl_read_word(pdata, C_STATUS_ADDR32, &tmp_word))
+            goto read_err;
+        if (copy_to_user((void __user *)arg, &tmp_word, sizeof(uint32_t)))
+            goto ctuser_err;
+        break;
+
+    case IOC_INIT_DEV:
+        icub_vsctrl_init(pdata, (int)arg);
+        break;
+
+    case IOC_RESET_ARRAY:
+        if (icub_vsctrl_read_byte(pdata, C_OUTSDBUS0_ADDR, &tmp_byte))
+            goto read_err;
+
+        if (arg)
+            tmp_byte |= C_ARRAY_RST_MSK;
+        else
+            tmp_byte &= ~C_ARRAY_RST_MSK;
+
+        if (icub_vsctrl_write_byte(pdata, C_OUTSDBUS0_ADDR, tmp_byte))
+            goto write_err;
+        break;
+
+    case IOC_SET_PWRDWN:
+        if (icub_vsctrl_read_byte(pdata, C_BGCTRL1_ADDR, &tmp_byte))
+            goto read_err;
+
+        if (arg)
+            tmp_byte |= C_BG_PWRDWN_MSK;
+        else
+            tmp_byte &= ~C_BG_PWRDWN_MSK;
+
+        if (icub_vsctrl_write_byte(pdata, C_BGCTRL1_ADDR, tmp_byte))
+            goto write_err;
+        break;
+
+    case IOC_SET_BIASGEN:
+        if (icub_vsctrl_read_byte(pdata, C_BGCTRL1_ADDR, &tmp_byte))
+            goto read_err;
+        tmp_byte &= ~C_BG_BIASROI_MSK;
+        if (icub_vsctrl_write_byte(pdata, C_BGCTRL1_ADDR, tmp_byte))
+            goto write_err;
+        pdata->roi_notbg = 0;
+        //pdata->crc_check_en = 1;    // TBD: CRC check function not yet implemented
+        pdata->crc_check_en = 0;
+        break;
+
+    case IOC_SET_ROIGEN:
+        if (icub_vsctrl_read_byte(pdata, C_BGCTRL1_ADDR, &tmp_byte))
+            goto read_err;
+        tmp_byte |= C_BG_BIASROI_MSK;
+        if (icub_vsctrl_write_byte(pdata, C_BGCTRL1_ADDR, tmp_byte))
+            goto write_err;
+        pdata->roi_notbg = 1;
+        pdata->crc_check_en = 0;
+        break;
+
+    case IOC_SET_GPO:
+        if (icub_vsctrl_write_word(pdata, C_OUT_SDBUS_ADDR32, arg))
+            goto write_err;
+        break;
+        
+    case IOC_GET_GPI:
+        if (icub_vsctrl_read_word(pdata, C_IN_SDBUS_ADDR32, &tmp_word))
+            goto read_err;
+        if (copy_to_user((void __user *)arg, &tmp_word, sizeof(uint32_t)))
+            goto ctuser_err;
+        break;
+        
+    case IOC_SET_AER_TIMINGS:
+        if (copy_from_user(&ioctl_arg, (icub_vsctrl_ioctl_arg_t *)arg, sizeof(icub_vsctrl_ioctl_arg_t)))
+            goto cfuser_err;
+        buf[0] = ioctl_arg.aer_timings.cfg_ack_set_delay;
+        buf[1] = ioctl_arg.aer_timings.cfg_sample_delay;
+        buf[2] = ioctl_arg.aer_timings.cfg_ack_rel_delay;
+        if (icub_vsctrl_blockwrite_byte(pdata, C_SRCTIM1_ADDR, buf, 3))
+            goto write_err;
+        break;
+
+    case IOC_SET_BG_TIMINGS:
+        if (copy_from_user(&ioctl_arg, (icub_vsctrl_ioctl_arg_t *)arg, sizeof(icub_vsctrl_ioctl_arg_t)))
+            goto cfuser_err;
+        if (icub_vsctrl_write_word(pdata, C_BGPRESC0_ADDR, ioctl_arg.bg_timings.prescaler_value))
+            goto write_err;
+        buf[0] = ioctl_arg.bg_timings.latch_active_time;
+        buf[1] = ioctl_arg.bg_timings.latch_setup_time;
+        buf[2] = ioctl_arg.bg_timings.clock_active_time;
+        buf[3] = ioctl_arg.bg_timings.setup_hold_time;
+        if (icub_vsctrl_blockwrite_byte(pdata, C_BGTIM0_ADDR, buf, 4))
+            goto write_err;
+        break;
+
+    case IOC_GET_AER_TIMINGS:
+        if (icub_vsctrl_blockread_byte(pdata, C_SRCTIM1_ADDR, buf, 3))
+            goto read_err;
+        ioctl_arg.aer_timings.cfg_ack_set_delay = buf[0];
+        ioctl_arg.aer_timings.cfg_sample_delay  = buf[1];
+        ioctl_arg.aer_timings.cfg_ack_rel_delay = buf[2];
+        if (copy_to_user((icub_vsctrl_ioctl_arg_t *)arg, &ioctl_arg, sizeof(icub_vsctrl_ioctl_arg_t)))
+            goto ctuser_err;
+        break;
+
+    case IOC_GET_BG_TIMINGS:
+        if (icub_vsctrl_read_word(pdata, C_BGPRESC0_ADDR, &(ioctl_arg.bg_timings.prescaler_value)))
+            goto read_err;
+        if (icub_vsctrl_blockread_byte(pdata, C_BGTIM0_ADDR, buf, 4))
+            goto read_err;
+        ioctl_arg.bg_timings.latch_active_time = buf[0];
+        ioctl_arg.bg_timings.latch_setup_time  = buf[1];
+        ioctl_arg.bg_timings.clock_active_time = buf[2];
+        ioctl_arg.bg_timings.setup_hold_time   = buf[3];
+        if (copy_to_user((icub_vsctrl_ioctl_arg_t *)arg, &ioctl_arg, sizeof(icub_vsctrl_ioctl_arg_t)))
+            goto ctuser_err;
+        break;
+
+    case IOC_CLR_STATUS:
+        if (icub_vsctrl_write_word(pdata, C_STATUS_ADDR32, arg))
+            goto write_err;
+        break;
+
+        break;
+
+    default:
+        mutex_unlock(&pdata->mutex);
+        return -EINVAL;
     }
     
     mutex_unlock(&pdata->mutex);
-	return 0;
+    return 0;
     
 cfuser_err:
     mutex_unlock(&pdata->mutex);
@@ -790,23 +791,23 @@ static const struct file_operations icub_vsctrl_miscdev_fops = {
 
 
 static int icub_vsctrl_probe(struct i2c_client *client, const struct i2c_device_id *id) {
-	int ret = 0;
-	struct icub_vsctrl_data *pdata = NULL;
-	struct device *dev = &client->dev;
+    int ret = 0;
+    struct icub_vsctrl_data *pdata = NULL;
+    struct device *dev = &client->dev;
 
-	printk(KERN_DEBUG "%s()\n", __func__);
-	
-	pdata = devm_kzalloc(dev, sizeof(struct icub_vsctrl_data), GFP_KERNEL);
-	if(!pdata) {
-		printk(KERN_ERR "No memory!\n");
-		ret = -ENOMEM;
+    printk(KERN_DEBUG "%s()\n", __func__);
+
+    pdata = devm_kzalloc(dev, sizeof(struct icub_vsctrl_data), GFP_KERNEL);
+    if(!pdata) {
+        printk(KERN_ERR "No memory!\n");
+        ret = -ENOMEM;
         goto probe_exit;
-	}
+    }
 
-	pdata->client = client;
-	mutex_init(&pdata->mutex);
+    pdata->client = client;
+    mutex_init(&pdata->mutex);
     
-	pdata->misc_dev.minor	= MISC_DYNAMIC_MINOR;
+    pdata->misc_dev.minor	= MISC_DYNAMIC_MINOR;
     if (client->addr == 0x2d) {
         pdata->misc_dev.name	= "vsctrl_r"; // ???
         pdata->misc_dev.nodename = "iit_vsctrl_r";
@@ -816,50 +817,50 @@ static int icub_vsctrl_probe(struct i2c_client *client, const struct i2c_device_
         pdata->misc_dev.nodename = "iit_vsctrl_l";
     }
     
-	pdata->misc_dev.fops	= &icub_vsctrl_miscdev_fops;
+    pdata->misc_dev.fops	= &icub_vsctrl_miscdev_fops;
     pdata->misc_dev.mode    = S_IRUGO | S_IWUGO;
     
     
-	ret = misc_register(&pdata->misc_dev);
-	if (ret < 0) {
+    ret = misc_register(&pdata->misc_dev);
+    if (ret < 0) {
         printk(KERN_ALERT "misc_register() failed for device @addr 0x%x\n", client->addr);
-		goto misc_register_fail;
-	}
+        goto misc_register_fail;
+    }
     
-	i2c_set_clientdata(client, pdata);
+    i2c_set_clientdata(client, pdata);
     
     mutex_lock(&pdata->mutex);
     icub_vsctrl_init(pdata, C_CHIP_AUTO);
     mutex_unlock(&pdata->mutex);
-	
-	//printk(KERN_INFO "%s driver initialized successfully @addr %x!\n", DRV_NAME, client->addr);
+
+    //printk(KERN_INFO "%s driver initialized successfully @addr %x!\n", DRV_NAME, client->addr);
     printk(KERN_INFO "%s driver initialized successfully for chip %s @addr %x!\n", DRV_NAME, pdata->chip_type==C_CHIP_DVS ? "DVS" : (pdata->chip_type==C_CHIP_ATIS ? "ATIS" : "Unkn"), client->addr);
-	return 0;
+    return 0;
 
 misc_register_fail:
-	devm_kfree(dev, pdata);
+    devm_kfree(dev, pdata);
 probe_exit:
-	return ret;
+    return ret;
 }
 
 
 static int icub_vsctrl_remove(struct i2c_client *client)
 {
     struct icub_vsctrl_data *pdata = i2c_get_clientdata(client);
-	struct device *dev = &client->dev;
-	
-	printk(KERN_DEBUG "%s()\n", __func__);
-	
-	misc_deregister(&pdata->misc_dev);
-	devm_kfree(dev, pdata);
-	i2c_set_clientdata(client, NULL);
+    struct device *dev = &client->dev;
+
+    printk(KERN_DEBUG "%s()\n", __func__);
+
+    misc_deregister(&pdata->misc_dev);
+    devm_kfree(dev, pdata);
+    i2c_set_clientdata(client, NULL);
     return 0;
 }
 
 
 static const struct i2c_device_id icub_vsctrl_id[] = {
-    { DRV_NAME, 0 },
-    { }
+{ DRV_NAME, 0 },
+{ }
 };
 
 

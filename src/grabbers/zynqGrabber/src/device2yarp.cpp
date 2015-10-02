@@ -109,6 +109,8 @@ void  device2yarp::run() {
     portvBottle.setEnvelope(vStamp);
     portvBottle.write();
 
+    std::cout << "Read " << nBytesRead << ". TS: " << pts << std::endl;
+
 }
 
 void device2yarp::threadRelease() {
