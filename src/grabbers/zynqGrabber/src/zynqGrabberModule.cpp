@@ -42,7 +42,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     
     
     std::string chipName =
-    rf.check("name", yarp::os::Value("dvs")).asString();
+    rf.check("chip", yarp::os::Value("dvs")).asString();
     setName(chipName.c_str());
     
     
