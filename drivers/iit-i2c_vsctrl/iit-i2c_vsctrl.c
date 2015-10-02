@@ -27,12 +27,12 @@
 // #define DVS_USE_FIFOWRITE
 
 // Override the DVS protocol compatibility problem with the last 12 bits sent
-//#define DVS_DONTSEND_LAST_12BIT
+#define DVS_DONTSEND_LAST_12BIT
 
 
 
-#define DRV_NAME		   "iit-i2c_vsctrl"
-#define MSG_PREFIX         "IIT-VSCtrl: "
+#define DRV_NAME	"iit-i2c_vsctrl"
+#define MSG_PREFIX      "IIT-VSCtrl: "
 
 #define MAX_CONV_MS  150
 #define DATA_STORAGE_U32 32
@@ -54,7 +54,6 @@ struct icub_vsctrl_data {
     //uint32_t prescaler_value;
     // etc.
 };
-
 
 static int icub_vsctrl_readwrite(struct i2c_client *client,
                                  u16 wr_len, uint8_t *wr_buf,
@@ -133,6 +132,7 @@ static int icub_vsctrl_write_word(struct icub_vsctrl_data *pdata,
                                   uint8_t addr, uint32_t value)
 {
     uint8_t wrbuf[5] = {0};
+  
 
     wrbuf[0] = (addr&0x3F)|0x40;
     wrbuf[1] = (value>> 0)&0xFF;
@@ -141,6 +141,7 @@ static int icub_vsctrl_write_word(struct icub_vsctrl_data *pdata,
     wrbuf[4] = (value>>24)&0xFF;
 
     return icub_vsctrl_readwrite(pdata->client, 5, wrbuf, 0, NULL);
+
 }
 
 static int icub_vsctrl_fifowrite_word(struct icub_vsctrl_data *pdata,
@@ -461,8 +462,11 @@ static ssize_t icub_vsctrl_misc_write (struct file *fp, const char __user *buf, 
     int length_trunc;
     uint32_t crc32;
     int i, j;
+    int dvsBiasBitCount = 24;
+    int maxBiasBitCount = sizeof(uint32_t) * 8;
+    int alignmentBits = maxBiasBitCount - dvsBiasBitCount;
 
-	printk(KERN_DEBUG "%s()\n", __func__);
+    printk(KERN_DEBUG "%s()\n", __func__);
 
     
     length_trunc = (len>(DATA_STORAGE_U32<<2)) ? DATA_STORAGE_U32<<2 : len;
@@ -476,17 +480,20 @@ static ssize_t icub_vsctrl_misc_write (struct file *fp, const char __user *buf, 
     }
     crc32 = icub_vsctrl_crc_check(pdata->data_write, length_uint, C_BG_CRC_POLY);
     icub_vsctrl_write_word(pdata, C_BG_CRC_ADDR32, crc32);
-    if (pdata->chip_type == C_CHIP_DVS) {
-        
-#ifdef DVS_DONTSEND_LAST_12BIT
 
-        icub_vsctrl_write_byte(pdata, C_BGCTRL0_ADDR, 0x18);  // Set the bias valid bitcount
+    if (pdata->chip_type == C_CHIP_DVS) {
+	
+        //printk(KERN_DEBUG MSG_PREFIX "Sending BIAS for DVS\n");
+#ifdef DVS_DONTSEND_LAST_12BIT
+	
+        icub_vsctrl_write_byte(pdata, C_BGCTRL0_ADDR, dvsBiasBitCount);  // Set the bias valid bitcount
 #ifdef DVS_USE_FIFOWRITE
         icub_vsctrl_fifowrite_word(pdata, C_BG_DATA_ADDR32, pdata->data_write, length_uint-1);
 #else
         for (i=0; i<length_uint-1; i++) {
             j = 0;
-            while (icub_vsctrl_write_word(pdata, C_BG_DATA_ADDR32, pdata->data_write[i])) {
+	    //printk(KERN_DEBUG MSG_PREFIX "Bias(%i): %i\n", i, pdata->data_write[i]);
+            while (icub_vsctrl_write_word(pdata, C_BG_DATA_ADDR32, (pdata->data_write[i])<<alignmentBits)) {
                 if (j++ > 1000) {
                     printk(KERN_ERR MSG_PREFIX "Failed to send bias data\n");
                     return i;
@@ -502,7 +509,7 @@ static ssize_t icub_vsctrl_misc_write (struct file *fp, const char __user *buf, 
 #else
         for (i=0; i<length_uint; i++) {
             j = 0;
-            printk(KERN_DEBUG "Bias(%i): %i\n", i, pdata->data_write[i]);
+            //printk(KERN_DEBUG MSG_PREFIX "Bias(%i): %i\n", i, pdata->data_write[i]);
             while (icub_vsctrl_write_word(pdata, C_BG_DATA_ADDR32, pdata->data_write[i])) {
                 if (j++ > 1000) {
                     printk(KERN_ERR MSG_PREFIX "Failed to send bias data\n");
@@ -517,9 +524,10 @@ static ssize_t icub_vsctrl_misc_write (struct file *fp, const char __user *buf, 
 
 // Last bias datum
 #ifdef DVS_DONTSEND_LAST_12BIT
-        icub_vsctrl_write_byte(pdata, C_BGCTRL0_ADDR, 0x98);
+        icub_vsctrl_write_byte(pdata, C_BGCTRL0_ADDR, 0x80 | dvsBiasBitCount);
         j = 0;
-        while (icub_vsctrl_write_word(pdata, C_BG_DATA_ADDR32, pdata->data_write[length_uint-1])) {
+	//printk(KERN_DEBUG MSG_PREFIX "Bias(%i): %i\n", i, pdata->data_write[length_uint-1]);
+        while (icub_vsctrl_write_word(pdata, C_BG_DATA_ADDR32, (pdata->data_write[length_uint-1]) << alignmentBits)) {
             if (j++ > 1000) {
                 printk(KERN_ERR MSG_PREFIX "Failed to send last bias data\n");
                 return length_uint; // chiara length-1
@@ -527,7 +535,7 @@ static ssize_t icub_vsctrl_misc_write (struct file *fp, const char __user *buf, 
         }
 #else
         j = 0;
-        printk(KERN_DEBUG "Bias(%i): %i\n", i, 0x40FFFFFF);
+        //printk(KERN_DEBUG MSG_PREFIX "Bias(%i): %i\n", i, 0x40FFFFFF);
         while (icub_vsctrl_write_word(pdata, C_BG_DATA_ADDR32, 0x40FFFFFF)) {
             if (j++ > 1000) {
                 printk(KERN_ERR MSG_PREFIX "Failed to send last bias data\n");
@@ -536,6 +544,7 @@ static ssize_t icub_vsctrl_misc_write (struct file *fp, const char __user *buf, 
         }
 #endif
     } else if (pdata->chip_type == C_CHIP_ATIS) {
+	//printk(KERN_DEBUG MSG_PREFIX "Sending BIAS for ATIS\n");
         icub_vsctrl_write_byte(pdata, C_BGCTRL0_ADDR, 0x44);
         icub_vsctrl_fifowrite_word(pdata, C_BG_DATA_ADDR32, pdata->data_write, length_uint);
         icub_vsctrl_write_byte(pdata, C_BGCTRL0_ADDR, 0x80);
