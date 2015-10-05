@@ -565,6 +565,9 @@ static int icub_hpu_chardev_open(struct inode *i, struct file *f) {
     d_support.burst_err = 0;
     sema_init(&d_support.buf_sem[0], 1);
     sema_init(&d_support.buf_sem[1], 1);
+    
+    uint32_t regvals = ioread32(conf_reg);
+    printk(KERN_DEBUG MSG_PREFIX "CONF_REG %X\n", regvals);
 
     return 0;
 }
@@ -613,7 +616,6 @@ static ssize_t icub_hpu_chardev_read (struct file *fp, char *buf, size_t length,
             else
                 break;
         }
-        printk(KERN_DEBUG MSG_PREFIX "Read %i bits. TS: %i\n", i/2, d_support.data_read[i-1]);
         copy_to_user(buf, d_support.data_read, i<<2);
         return (i<<2);
     }
@@ -642,7 +644,7 @@ static ssize_t icub_hpu_chardev_write(struct file *fp, const char __user *buf, s
     get_register_bits(conf_reg, endma, MSK_CONF_ENAB_DMA);
 
     if (!endma) {
-        lenght_uint=len_trunc>>2;
+        length_uint=len_trunc>>2;
         copy_from_user(&d_support.data_write[0], (unsigned int *)buf, length_uint*sizeof(unsigned int));
         for (i = 0; i < length_uint; i++) {
             // printk(KERN_DEBUG MSG_PREFIX "%d 0x%x\n",i,d_support.data_write[i]);
