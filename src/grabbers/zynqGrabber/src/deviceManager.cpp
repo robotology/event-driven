@@ -116,6 +116,9 @@ bool deviceManager::openDevice(){
         tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
         write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | (CTRL_ENABLEINTERRUPT));// | CTRL_ENABLE_FAR_LBCK));
 
+	ioctl(devDesc, SP2NEU_SET_LOC_LBCK, 0);
+	ioctl(devDesc, SP2NEU_SET_FAR_LBCK, 0);
+	ioctl(devDesc, SP2NEU_SET_REM_LBCK, 0);
     } else if(deviceName == "/dev/iit_vsctrl_l" || deviceName == "/dev/iit_vsctrl_r") {
         bufferedRead = false;
         //opening the device
