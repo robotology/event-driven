@@ -8,11 +8,10 @@ project(${PROJECTNAME})
 set(EMORPHLIB_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/emorph_lib/include)
 
 option(EMORPH_BUILD_ZYNQ "Build for ZynqGrabber" OFF)
-option(EMORPH_QTCREATOR_ADDAPPS "Add apps to QtCreator IDE" OFFc)
+option(EMORPH_USE_QTCREATOR "Add apps/drivers to QtCreator IDE" OFF)
 
 find_package(ICUBcontrib REQUIRED)
 find_package(YARP REQUIRED)
-find_package(ICUB REQUIRED)
 list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH} ${ICUBCONTRIB_MODULE_PATH})
 
 include(ICUBcontribOptions)
@@ -20,18 +19,21 @@ include(ICUBcontribHelpers)
 icubcontrib_set_default_prefix()
 
 if(NOT EMORPH_BUILD_ZYNQ)
+
+    find_package(ICUB REQUIRED)
+
     find_package(OpenCV)
     if(NOT OPENCV_FOUND)
          message("Warning: OpenCV Not Found. Certain Modules will not be built")
     endif(NOT OPENCV_FOUND)
+
+	add_subdirectory(app)
+	add_subdirectory(drivers)
+
 endif(NOT EMORPH_BUILD_ZYNQ)
 
-if(NOT EMORPH_BUILD_ZYNQ)
-    ADD_SUBDIRECTORY(app)
-endif(NOT EMORPH_BUILD_ZYNQ)
-
-ADD_SUBDIRECTORY(emorph_lib)
-ADD_SUBDIRECTORY(src)
+add_subdirectory(emorph_lib)
+add_subdirectory(src)
 
 
 
