@@ -23,7 +23,7 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
 {
     //set the name of the module
     std::string moduleName =
-            rf.check("name", yarp::os::Value("vCircleFinder")).asString();
+            rf.check("name", yarp::os::Value("vCircle")).asString();
     setName(moduleName.c_str());
 
     bool strictness = rf.check("strict", yarp::os::Value(false)).asBool();

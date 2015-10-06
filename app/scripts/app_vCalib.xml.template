@@ -34,18 +34,18 @@
 
 <connection>
   <from>/aexGrabber/vBottle:o</from>
-  <to>/vFramerModule/vBottle:i</to>
+  <to>/vFramer/vBottle:i</to>
   <protocol>udp</protocol>
 </connection>
 
 <connection>
-  <from>/vFramerModule/left</from>
+  <from>/vFramer/left</from>
   <to>/stereoCalib/cam/left:i</to>
   <protocol>udp</protocol>
 </connection>
 
 <connection>
-  <from>/vFramerModule/right</from>
+  <from>/vFramer/right</from>
   <to>/stereoCalib/cam/right:i</to>
   <protocol>udp</protocol>
 </connection>
