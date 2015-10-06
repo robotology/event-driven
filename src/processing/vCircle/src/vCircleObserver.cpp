@@ -714,8 +714,23 @@ yarp::sig::ImageOf<yarp::sig::PixelBgr> vHoughCircleObserver::makeDebugImage4()
     cv::cvtColor(hbig, hbigcol, CV_GRAY2BGR);
 
     //put the two images in the one
-    cve.copyTo(cvfinal(cv::Rect(0, 0, e.width(), e.height())));
-    hbigcol.copyTo(cvfinal(cv::Rect(0, e.height(), e.width(), e.height())));
+    //cv::resize(cve, (cv::Mat)cvfinal(cv::Rect(0, 0, e.width(), e.height())), cv::Size(e.width(), e.height()));
+    //cv::resize(hbigcol, cvfinal(cv::Rect(0, e.height(), e.width(), e.height())), cv::Size(e.width(), e.height()));
+    //cv::OutputArray *cvfinaloa = cvfinal(cv::Rect(0, 0, e.width(), e.height()));
+    //cv::OutputArray a = cvfinal(cv::Rect(0, 0, e.width(), e.height()));
+    //cv::OutputArray * tempoa = (cv::OutputArray *)&temp;
+
+    //workaround for opencv3.1 rather than copyTo used below [untested]
+    for(int j = 0; j < e.height(); j++) {
+        for(int i = 0; i < e.width(); i++) {
+            cvfinal.at<cv::Vec3b>(j, i) = cve.at<cv::Vec3b>(j, i);
+            cvfinal.at<cv::Vec3b>(j, i+e.width()) = hbigcol.at<cv::Vec3b>(j, i);
+        }
+    }
+
+
+    //cve.copyTo(cvfinal(cv::Rect(0, 0, e.width(), e.height())));
+    //hbigcol.copyTo(cvfinal(cv::Rect(0, e.height(), e.width(), e.height())));
 
     return final;
 
