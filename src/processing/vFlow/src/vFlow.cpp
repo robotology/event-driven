@@ -310,15 +310,11 @@ int vFlowManager::computeGrads(yarp::sig::Matrix &A, yarp::sig::Vector &Y,
         //be.
         double planedt = (abc(0) * (A(i, 0) - cx) + abc(1) * (A(i, 1) - cy));
         double actualdt =  Y(i) - cz;
-        //double error = fabs(planedt - actualdt);
         if(fabs(planedt - actualdt) < dtdp) inliers++;
 
     }
 
-    //if(inliers < minEvtsOnPlane) return 0;
-
-    double speed = 1.0 / sqrt(pow(abc(0), 2.0) + pow(abc(1), 2.0));
-    //if(speed < 1) return 0;
+    double speed = 1.0 / dtdp;
 
     double angle = atan2(abc(0), abc(1));
     dtdx = speed * cos(angle);
