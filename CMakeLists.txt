@@ -8,7 +8,7 @@ project(${PROJECTNAME})
 set(EMORPHLIB_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/emorph_lib/include)
 
 option(EMORPH_BUILD_ZYNQ "Build for ZynqGrabber" OFF)
-option(EMORPH_QTCREATOR_ADDAPPS "Add apps to QtCreator IDE" OFF)
+option(EMORPH_USE_QTCREATOR "Add apps/drivers to QtCreator IDE" OFF)
 
 find_package(ICUBcontrib REQUIRED)
 find_package(YARP REQUIRED)
