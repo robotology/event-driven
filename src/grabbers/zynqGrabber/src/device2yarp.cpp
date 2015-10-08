@@ -60,17 +60,30 @@ void  device2yarp::run() {
     //data is aligned correctly and add it to the bottle otherwise we check
     //until we find a misalignment, re-align, then add the rest
     int i = 0;
-    while(i <= nBytesRead - 8) {
+    if((nBytesRead - i) % 8) {
 
-        int *TS =  (int *)(data.data() + i);//= deviceData[i];
-        int *AE =  (int *)(data.data() + i + 4);//deviceData[i+1];
-
-        if(/*(nBytesRead - i) % 8 && */(!(*TS & 0x80000000) || (*AE & 0xFFFF0000)))
-            i++;
-        else {
+        while(i <= nBytesRead - 8) {
+            int *TS =  (int *)(data.data() + i);//= deviceData[i];
+            int *AE =  (int *)(data.data() + i + 4);//deviceData[i+1];
             eventlist.add((int)(*TS & 0x80FFFFFF));
             eventlist.add(*AE);
             i += 8;
+        }
+
+    } else {
+        int i = 0;
+        while(i <= nBytesRead - 8) {
+
+            int *TS =  (int *)(data.data() + i);//= deviceData[i];
+            int *AE =  (int *)(data.data() + i + 4);//deviceData[i+1];
+
+            if((nBytesRead - i) % 8 && (!(*TS & 0x80000000) || (*AE & 0xFFFF0000)))
+                i++;
+            else {
+                eventlist.add((int)(*TS & 0x80FFFFFF));
+                eventlist.add(*AE);
+                i += 8;
+            }
         }
     }
 
