@@ -39,8 +39,9 @@ void  device2yarp::run() {
     int nBytesRead = 0;
     const std::vector<char> &data = devManager->readDevice(nBytesRead);
     if (!nBytesRead) return;
-    if(nBytesRead > 16777216/2) {
-        std::cout << "Buffer more than half full!" << std::endl;
+    if(nBytesRead > devManager->getBufferSize()/2) {
+        std::cerr << "Software buffer was over half full - check the "
+                     "device2yarp thread is not delayed" << std::endl;
     }
 
     // convert data to YARP vBottle
@@ -54,62 +55,87 @@ void  device2yarp::run() {
     bb->addString("AE");
     //and add our bottle to fill with events
     yarp::os::Bottle &eventlist = bb->addList();
-    
-    int bytesdropped = 0;
+
+    //if we read a multiple of 8 bytes (uint32 TS uint32 XYPC) we assume the
+    //data is aligned correctly and add it to the bottle otherwise we check
+    //until we find a misalignment, re-align, then add the rest
     int i = 0;
-    int deltabetween = 0;
-    int deltawithin = 0;
-    int pts = 0;
-
-    if(nBytesRead % 8)
-        std::cerr << "We aren't reading at 8x" << std::endl;
-
-    // scan the vector read from the device
     while(i <= nBytesRead - 8) {
 
+        int *TS =  (int *)(data.data() + i);//= deviceData[i];
+        int *AE =  (int *)(data.data() + i + 4);//deviceData[i+1];
 
-        int TS =  *(int *)(data.data() + i);//= deviceData[i];
-        int AE =  *(int *)(data.data() + i + 4);//deviceData[i+1];
-        
-        if(!(TS & 0x80000000) || (AE & 0xFFFF0000)) {
-            //misalignment, move on by 1 byte
-            bytesdropped++;
-            std::cout << i << " ";
-            i += 1;
-        } else {
-            //successful data match move on by 8 bytes
-
-            //delta between last bottle and this bottle
-            if(!deltabetween) deltabetween = (TS & 0x00FFFFFF) - prevTS;
-            //delta between stamps in the bottle
-            if(pts)
-                deltawithin = std::max(deltawithin, (TS & 0x00FFFFFF) - (pts & 0x00FFFFFF));
-            pts = TS;
-
-            eventlist.add((int)(TS & 0x80FFFFFF));
-            eventlist.add(AE);
+        if(/*(nBytesRead - i) % 8 && */(!(*TS & 0x80000000) || (*AE & 0xFFFF0000)))
+            i++;
+        else {
+            eventlist.add((int)(*TS & 0x80FFFFFF));
+            eventlist.add(*AE);
             i += 8;
         }
     }
-    int tail = nBytesRead - i;
-    
-    if(bytesdropped)
-        std::cerr << "Lost " << bytesdropped << " bytes within the data"
-                  << " and " << tail << " at the tail (" << nBytesRead
-                  << ")" << std::endl;
-    if(deltabetween > 5000 || deltawithin > 5000) {
-        std::cout << "Delta between bottles: " << deltabetween << ", Delta within"
-                     " bottles: " << deltawithin << std::endl;
-    }
-    
+
     countAEs += eventlist.size() / 2;
-    prevTS = (pts & 0x00FFFFFF);
+    std::cout << eventlist.size() << std::endl;
 
     vStamp.update();
     portvBottle.setEnvelope(vStamp);
-    portvBottle.write();
+    portvBottle.writeStrict();
+    
+//    int bytesdropped = 0;
+//    int i = 0;
+//    int deltabetween = 0;
+//    int deltawithin = 0;
+//    int pts = 0;
 
-    std::cout << "Read " << nBytesRead << ". TS: " << pts << std::endl;
+//    if(nBytesRead % 8)
+//        std::cerr << "We aren't reading at 8x" << std::endl;
+
+//    // scan the vector read from the device
+//    while(i <= nBytesRead - 8) {
+
+
+//        int TS =  *(int *)(data.data() + i);//= deviceData[i];
+//        int AE =  *(int *)(data.data() + i + 4);//deviceData[i+1];
+        
+//        if(!(TS & 0x80000000) || (AE & 0xFFFF0000)) {
+//            //misalignment, move on by 1 byte
+//            bytesdropped++;
+//            std::cout << i << " ";
+//            i += 1;
+//        } else {
+//            //successful data match move on by 8 bytes
+
+//            //delta between last bottle and this bottle
+//            if(!deltabetween) deltabetween = (TS & 0x00FFFFFF) - prevTS;
+//            //delta between stamps in the bottle
+//            if(pts)
+//                deltawithin = std::max(deltawithin, (TS & 0x00FFFFFF) - (pts & 0x00FFFFFF));
+//            pts = TS;
+
+//            eventlist.add((int)(TS & 0x80FFFFFF));
+//            eventlist.add(AE);
+//            i += 8;
+//        }
+//    }
+//    int tail = nBytesRead - i;
+    
+//    if(bytesdropped)
+//        std::cerr << "Lost " << bytesdropped << " bytes within the data"
+//                  << " and " << tail << " at the tail (" << nBytesRead
+//                  << ")" << std::endl;
+//    if(deltabetween > 5000 || deltawithin > 5000) {
+//        std::cout << "Delta between bottles: " << deltabetween << ", Delta within"
+//                     " bottles: " << deltawithin << std::endl;
+//    }
+    
+//    countAEs += eventlist.size() / 2;
+//    prevTS = (pts & 0x00FFFFFF);
+
+//    vStamp.update();
+//    portvBottle.setEnvelope(vStamp);
+//    portvBottle.write();
+
+//    std::cout << "Read " << nBytesRead << ". TS: " << pts << std::endl;
 
 }
 

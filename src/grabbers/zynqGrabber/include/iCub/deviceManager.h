@@ -106,6 +106,7 @@ public:
     int writeDevice(std::vector<unsigned int> &deviceData);
 
     const std::vector<char>& readDevice(int &nBytesRead);
+    const unsigned int getBufferSize() { return maxBufferSize; }
     
     // ---- ioctl for i2c device ---- //
     int chipReset();
