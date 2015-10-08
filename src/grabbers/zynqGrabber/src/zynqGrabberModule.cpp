@@ -152,7 +152,7 @@ bool zynqGrabberModule::close() {
     
     devManager->closeDevice();  // device
     configLeft->chipPowerDown();
-    configRight->chipPowerUp();
+    configRight->chipPowerDown();
     
     return true;
 }
