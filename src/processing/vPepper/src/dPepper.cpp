@@ -22,7 +22,7 @@ bool dPepperModule::configure(yarp::os::ResourceFinder &rf)
 {
     //set the name of the module
     std::string moduleName =
-            rf.check("name", yarp::os::Value("dPepper")).asString();
+            rf.check("name", yarp::os::Value("vPepper")).asString();
     setName(moduleName.c_str());
 
 

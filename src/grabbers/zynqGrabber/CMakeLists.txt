@@ -18,8 +18,12 @@ file(GLOB folder_header include/iCub/*.h)
 source_group("Source Files" FILES ${folder_source})
 source_group("Header Files" FILES ${folder_header})
 
-add_executable(${PROJECT_NAME} ${folder_source} ${folder_header})
 
+add_executable(${PROJECT_NAME} ${folder_source} ${folder_header})
 target_link_libraries(${PROJECT_NAME} ${YARP_LIBRARIES} eMorphLib)
 
-install(TARGETS ${PROJECT_NAME} DESTINATION bin)
+#the zynqGrabber should only be installed for the pc104
+if(EMORPH_BUILD_ZYNQ)
+    install(TARGETS ${PROJECT_NAME} DESTINATION bin)
+endif(EMORPH_BUILD_ZYNQ)
+

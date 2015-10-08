@@ -21,8 +21,7 @@
 bool vUndistortModule::configure(yarp::os::ResourceFinder &rf)
 {
     //set the name of the module
-    std::string moduleName = rf.check("name", yarp::os::Value("vTemplate"),
-                                      "module name (string)").asString();
+    std::string moduleName = rf.check("name", yarp::os::Value("vUndistortCam")).asString();
     setName(moduleName.c_str());
 
     //open and attach the rpc port

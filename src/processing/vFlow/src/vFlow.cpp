@@ -26,7 +26,7 @@ bool vFlowModule::configure(yarp::os::ResourceFinder &rf)
 {
     /* set the name of the module */
     std::string moduleName = rf.check("name",
-                                      yarp::os::Value("vFlowModule")).asString();
+                                      yarp::os::Value("vFlow")).asString();
     yarp::os::RFModule::setName(moduleName.c_str());
 
     bool strictness = rf.check("strict", yarp::os::Value(false)).asBool();

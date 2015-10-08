@@ -87,18 +87,18 @@
 
 <connection>
   <from>/aexGrabber/vBottle:o</from>
-  <to>/vtsOptFlow/vBottle:i</to>
+  <to>/vFlow/vBottle:i</to>
   <protocol>tcp</protocol>
 </connection>
 
 <connection>
-  <from>/vtsOptFlow/vBottle:o</from>
-  <to>/vCircleFinder/vBottle:i</to>
+  <from>/vFlow/vBottle:o</from>
+  <to>/vCircle/vBottle:i</to>
   <protocol>tcp</protocol>
 </connection>
 
 <connection>
-  <from>/vCircleFinder/vBottle:o</from>
+  <from>/vCircle/vBottle:o</from>
   <to>/vTrackToRobot/vBottle:i</to>
   <protocol>tcp</protocol>
 </connection>
@@ -109,13 +109,13 @@
 </connection>
 
 <connection>
-  <from>/vCircleFinder/vBottle:o</from>
-  <to>/vFramerModule/vBottle:i</to>
+  <from>/vCircle/vBottle:o</from>
+  <to>/vFramer/vBottle:i</to>
   <protocol>tcp</protocol>
 </connection>
 
 <connection>
-  <from>/vFramerModule/left</from>
+  <from>/vFramer/left</from>
   <to>/viewCh0</to>
   <protocol>tcp</protocol>
 </connection>

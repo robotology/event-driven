@@ -150,7 +150,7 @@ bool eventStatisticsModule::configure(yarp::os::ResourceFinder &rf)
 {
 
     std::string name = rf.check("name",
-                                yarp::os::Value("ESD")).asString();
+                                yarp::os::Value("vAnalysis")).asString();
 
     std::string dir = rf.check("dir",
                                yarp::os::Value("")).asString();

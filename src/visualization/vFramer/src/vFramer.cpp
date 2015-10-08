@@ -116,7 +116,7 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
     //set the module name for port naming
     std::string moduleName = rf.find("name").asString();
     if(moduleName == "")
-        moduleName = "vFramerModule";
+        moduleName = "vFramer";
     setName(moduleName.c_str());
 
     //set the vFrame options (sensor size and eventlife

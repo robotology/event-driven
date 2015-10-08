@@ -151,6 +151,8 @@ bool zynqGrabberModule::close() {
     D2Y->stop();                // bufferedport from yarp to device
     
     devManager->closeDevice();  // device
+    configLeft->chipPowerDown();
+    configRight->chipPowerDown();
     
     return true;
 }
