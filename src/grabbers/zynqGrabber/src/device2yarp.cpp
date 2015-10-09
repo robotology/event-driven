@@ -70,8 +70,8 @@ void  device2yarp::run() {
             while(i <= nBytesRead - 8) {
                 int *TS =  (int *)(data.data() + i);//= deviceData[i];
                 int *AE =  (int *)(data.data() + i + 4);//deviceData[i+1];
-                eventlist.add((int)(*TS & 0x80FFFFFF));
-                eventlist.add(*AE);
+                //eventlist.add((int)(*TS & 0x80FFFFFF));
+                //eventlist.add(*AE);
                 vcount++; cts = *TS & 0x00FFFFFF;
                 i += 8;
             }
@@ -86,8 +86,8 @@ void  device2yarp::run() {
                 if((nBytesRead - i) % 8 && (!(*TS & 0x80000000) || (*AE & 0xFFFF0000)))
                     i++;
                 else {
-                    eventlist.add((int)(*TS & 0x80FFFFFF));
-                    eventlist.add(*AE);
+                    //eventlist.add((int)(*TS & 0x80FFFFFF));
+                    //eventlist.add(*AE);
                     vcount++; cts = *TS & 0x00FFFFFF;
                     i += 8;
                 }
@@ -96,9 +96,9 @@ void  device2yarp::run() {
 
         countAEs += vcount;
 
-        if(countAEs > 20000) {
-            if(prevTS > cts) prevTS -= 2^24;
-            std::cout << 1000000 * countAEs / (cts - prevTS)
+        if(countAEs > 50000) {
+            if(prevTS > cts) prevTS -= 16777216;
+            std::cout << 1000000 * countAEs / (double)(cts - prevTS)
                       << " v/sec" << std::endl;
             countAEs = 0;
             prevTS = cts;
@@ -125,9 +125,9 @@ void  device2yarp::run() {
 
         countAEs += vcount;
 
-        if(countAEs > 20000) {
-            if(prevTS > cts) prevTS -= 2^24;
-            std::cout << 7.8125 * 1000000 * countAEs / (cts - prevTS)
+        if(countAEs > 50000) {
+            if(prevTS > cts) prevTS -= 16777216;
+            std::cout << 7.8125 * 1000000 * countAEs / (double)(cts - prevTS)
                       << " v/sec" << std::endl;
             countAEs = 0;
             prevTS = cts;
