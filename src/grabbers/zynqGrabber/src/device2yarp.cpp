@@ -60,7 +60,7 @@ void  device2yarp::run() {
     //data is aligned correctly and add it to the bottle otherwise we check
     //until we find a misalignment, re-align, then add the rest
     int i = 0;
-    if((nBytesRead - i) % 8) {
+    if((nBytesRead) % 8 == 0) {
 
         while(i <= nBytesRead - 8) {
             int *TS =  (int *)(data.data() + i);//= deviceData[i];
@@ -71,7 +71,7 @@ void  device2yarp::run() {
         }
 
     } else {
-        int i = 0;
+        std::cout << "Alignment Required" << std::endl;
         while(i <= nBytesRead - 8) {
 
             int *TS =  (int *)(data.data() + i);//= deviceData[i];
@@ -87,8 +87,15 @@ void  device2yarp::run() {
         }
     }
 
+    int ts1 = eventlist.get(0).asInt();
+    int ts2 = eventlist.get(eventlist.size()-2).asInt();
+    std::cout << eventlist.size() / ((ts2 - ts1) * 1000000.0 / 7.8125)
+              << " v/sec" << std::endl;
+
+
+
     countAEs += eventlist.size() / 2;
-    std::cout << eventlist.size() << std::endl;
+
 
     vStamp.update();
     portvBottle.setEnvelope(vStamp);
