@@ -86,16 +86,16 @@ void  device2yarp::run() {
             }
         }
     }
-
-    int ts1 = eventlist.get(0).asInt();
-    int ts2 = eventlist.get(eventlist.size()-2).asInt();
-    std::cout << eventlist.size() / ((ts2 - ts1) * 1000000.0 / 7.8125)
-              << " v/sec" << std::endl;
-
-
-
     countAEs += eventlist.size() / 2;
 
+    if(countAEs > 20000) {
+        int ts = (*(int *)(data.data() + nBytesRead - 8)) & 0x80FFFFFF;
+        if(prevTS > ts) prevTS -= 2^24;
+        std::cout << 7.8125 * 1000000 * countAEs / (ts - prevTS)
+                  << " v/sec" << std::endl;
+        countAEs = 0;
+        prevTS = ts;
+    }
 
     vStamp.update();
     portvBottle.setEnvelope(vStamp);
