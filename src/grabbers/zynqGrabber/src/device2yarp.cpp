@@ -56,46 +56,86 @@ void  device2yarp::run() {
     //and add our bottle to fill with events
     yarp::os::Bottle &eventlist = bb->addList();
 
-    //if we read a multiple of 8 bytes (uint32 TS uint32 XYPC) we assume the
-    //data is aligned correctly and add it to the bottle otherwise we check
-    //until we find a misalignment, re-align, then add the rest
-    int i = 0;
-    if((nBytesRead) % 8 == 0) {
+    int vcount = 0, cts = 0;
 
-        while(i <= nBytesRead - 8) {
-            int *TS =  (int *)(data.data() + i);//= deviceData[i];
-            int *AE =  (int *)(data.data() + i + 4);//deviceData[i+1];
-            eventlist.add((int)(*TS & 0x80FFFFFF));
-            eventlist.add(*AE);
-            i += 8;
-        }
+    if(devManager->getDevType() == "/dev/iit_hpucore") {
+        //we are on the zturn
 
-    } else {
-        std::cout << "Alignment Required" << std::endl;
-        while(i <= nBytesRead - 8) {
+        //if we read a multiple of 8 bytes (uint32 TS uint32 XYPC) we assume the
+        //data is aligned correctly and add it to the bottle otherwise we check
+        //until we find a misalignment, re-align, then add the rest
+        int i = 0;
+        if((nBytesRead) % 8 == 0) {
 
-            int *TS =  (int *)(data.data() + i);//= deviceData[i];
-            int *AE =  (int *)(data.data() + i + 4);//deviceData[i+1];
-
-            if((nBytesRead - i) % 8 && (!(*TS & 0x80000000) || (*AE & 0xFFFF0000)))
-                i++;
-            else {
+            while(i <= nBytesRead - 8) {
+                int *TS =  (int *)(data.data() + i);//= deviceData[i];
+                int *AE =  (int *)(data.data() + i + 4);//deviceData[i+1];
                 eventlist.add((int)(*TS & 0x80FFFFFF));
                 eventlist.add(*AE);
+                vcount++; cts = *TS & 0x00FFFFFF;
+                i += 8;
+            }
+
+        } else {
+            std::cout << "Alignment Required" << std::endl;
+            while(i <= nBytesRead - 8) {
+
+                int *TS =  (int *)(data.data() + i);//= deviceData[i];
+                int *AE =  (int *)(data.data() + i + 4);//deviceData[i+1];
+
+                if((nBytesRead - i) % 8 && (!(*TS & 0x80000000) || (*AE & 0xFFFF0000)))
+                    i++;
+                else {
+                    eventlist.add((int)(*TS & 0x80FFFFFF));
+                    eventlist.add(*AE);
+                    vcount++; cts = *TS & 0x00FFFFFF;
+                    i += 8;
+                }
+            }
+        }
+
+        countAEs += vcount;
+
+        if(countAEs > 20000) {
+            if(prevTS > cts) prevTS -= 2^24;
+            std::cout << 1000000 * countAEs / (cts - prevTS)
+                      << " v/sec" << std::endl;
+            countAEs = 0;
+            prevTS = cts;
+        }
+
+    } else if(devManager->getDevType() == "/dev/aerfx2_0") {
+
+        int i = 0;
+        while(i <= nBytesRead - 8) {
+            int* TS =  (int *)(data.data() + i);//= deviceData[i];
+            int* AE =  (int *)(data.data() + i + 4);//deviceData[i+1];
+
+            if(!(*TS & 0x80000000) || (*AE & 0xFFFF0000)) {
+                //misalignment, move on by 1 byte
+                i += 1;
+            } else {
+                //successful data match move on by 8 bytes
+                eventlist.add((int)(*TS & 0x80FFFFFF));
+                eventlist.add(*AE);
+                vcount++; cts = *TS & 0x00FFFFFF;
                 i += 8;
             }
         }
-    }
-    countAEs += eventlist.size() / 2;
 
-    if(countAEs > 20000) {
-        int ts = (*(int *)(data.data() + nBytesRead - 8)) & 0x80FFFFFF;
-        if(prevTS > ts) prevTS -= 2^24;
-        std::cout << 7.8125 * 1000000 * countAEs / (ts - prevTS)
-                  << " v/sec" << std::endl;
-        countAEs = 0;
-        prevTS = ts;
+        countAEs += vcount;
+
+        if(countAEs > 20000) {
+            if(prevTS > cts) prevTS -= 2^24;
+            std::cout << 7.8125 * 1000000 * countAEs / (cts - prevTS)
+                      << " v/sec" << std::endl;
+            countAEs = 0;
+            prevTS = cts;
+        }
+
     }
+
+    //countAEs += eventlist.size() / 2;
 
     vStamp.update();
     portvBottle.setEnvelope(vStamp);
