@@ -53,7 +53,7 @@ private:
     deviceManager* devManager;
     //incrementall count the number of events coming from the device
     int countAEs;
-    int prevTS;
+    double prevTS;
 
 };
 

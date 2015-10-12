@@ -47,7 +47,7 @@ void  device2yarp::run() {
     // convert data to YARP vBottle
     emorph::vBottle &evtDevice = portvBottle.prepare();
     evtDevice.clear();
-    
+
     //do some sketchy casting to make things fast at this part of the project
     yarp::os::Bottle * bb = (yarp::os::Bottle *)&evtDevice;
     
@@ -97,11 +97,10 @@ void  device2yarp::run() {
         countAEs += vcount;
 
         if(countAEs > 50000) {
-            if(prevTS > cts) prevTS -= 16777216;
-            std::cout << 1000000 * countAEs / (double)(cts - prevTS)
+            std::cout << countAEs / (yarp::os::Time::now() - prevTS)
                       << " v/sec" << std::endl;
             countAEs = 0;
-            prevTS = cts;
+            prevTS = yarp::os::Time::now();
         }
 
     } else if(devManager->getDevType() == "/dev/aerfx2_0") {
@@ -126,11 +125,10 @@ void  device2yarp::run() {
         countAEs += vcount;
 
         if(countAEs > 50000) {
-            if(prevTS > cts) prevTS -= 16777216;
-            std::cout << 7.8125 * 1000000 * countAEs / (double)(cts - prevTS)
+            std::cout << countAEs / (yarp::os::Time::now() - prevTS)
                       << " v/sec" << std::endl;
             countAEs = 0;
-            prevTS = cts;
+            prevTS = yarp::os::Time::now();
         }
 
     }
