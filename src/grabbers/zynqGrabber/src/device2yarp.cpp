@@ -56,7 +56,7 @@ void  device2yarp::run() {
     //and add our bottle to fill with events
     yarp::os::Bottle &eventlist = bb->addList();
 
-    int vcount = 0, cts = 0;
+    int vcount = 0;
 
     if(devManager->getDevType() == "/dev/iit_hpucore") {
         //we are on the zturn
@@ -71,8 +71,8 @@ void  device2yarp::run() {
                 int *TS =  (int *)(data.data() + i);//= deviceData[i];
                 int *AE =  (int *)(data.data() + i + 4);//deviceData[i+1];
                 //eventlist.add((int)(*TS & 0x80FFFFFF));
-                //eventlist.add(*AE);
-                vcount++; cts = *TS & 0x00FFFFFF;
+                eventlist.add(*AE);
+                vcount++;
                 i += 8;
             }
 
@@ -87,21 +87,14 @@ void  device2yarp::run() {
                     i++;
                 else {
                     //eventlist.add((int)(*TS & 0x80FFFFFF));
-                    //eventlist.add(*AE);
-                    vcount++; cts = *TS & 0x00FFFFFF;
+                    eventlist.add(*AE);
+                    vcount++;
                     i += 8;
                 }
             }
         }
 
         countAEs += vcount;
-
-        if(countAEs > 50000) {
-            std::cout << countAEs / (yarp::os::Time::now() - prevTS)
-                      << " v/sec" << std::endl;
-            countAEs = 0;
-            prevTS = yarp::os::Time::now();
-        }
 
     } else if(devManager->getDevType() == "/dev/aerfx2_0") {
 
@@ -117,20 +110,12 @@ void  device2yarp::run() {
                 //successful data match move on by 8 bytes
                 eventlist.add((int)(*TS & 0x80FFFFFF));
                 eventlist.add(*AE);
-                vcount++; cts = *TS & 0x00FFFFFF;
+                vcount++;
                 i += 8;
             }
         }
 
         countAEs += vcount;
-
-        if(countAEs > 50000) {
-            std::cout << countAEs / (yarp::os::Time::now() - prevTS)
-                      << " v/sec" << std::endl;
-            countAEs = 0;
-            prevTS = yarp::os::Time::now();
-        }
-
     }
 
     //countAEs += eventlist.size() / 2;
@@ -138,6 +123,17 @@ void  device2yarp::run() {
     vStamp.update();
     portvBottle.setEnvelope(vStamp);
     portvBottle.writeStrict();
+
+    if(countAEs > 50000) {
+        std::cout << "Specialisation Test: " << bb->getSpecialization() << " "
+                  << eventlist.getSpecialization() << std::endl;
+        std::cout << countAEs / (yarp::os::Time::now() - prevTS)
+                  << " v/sec" << std::endl;
+        countAEs = 0;
+        prevTS = yarp::os::Time::now();
+    }
+
+
     
 //    int bytesdropped = 0;
 //    int i = 0;
