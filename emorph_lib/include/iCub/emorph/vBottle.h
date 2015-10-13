@@ -174,6 +174,48 @@ private:
 
 };
 
+class vBottleMimic : public yarp::os::Portable {
+
+private:
+
+    std::vector<u_int32_t> header1;
+    std::vector<char> header2;
+    std::vector<u_int32_t> header3;
+
+public:
+
+    vBottleMimic() {
+        header1.push_back(BOTTLE_TAG_LIST); //bottle code
+        header1.push_back(2); //elements in bottle "AE" then bottle data
+        header1.push_back(BOTTLE_TAG_STRING); //code for string
+        header1.push_back(2); // length of string
+        header2.push_back('A');
+        header2.push_back('E');
+        header3.push_back(BOTTLE_TAG_LIST|BOTTLE_TAG_INT); // bottle code + specialisation with ints
+        header3.push_back(0); // <- set the number of ints here (2 * #v's)
+    }
+
+
+    virtual bool read(yarp::os::ConnectionReader& connection) {
+                return false;
+    }
+    virtual bool write(yarp::os::ConnectionWriter& connection, char * datablock, unsigned int datalength) {
+
+        header3[1] = datalength / sizeof(u_int32_t);
+
+        connection.appendExternalBlock((const char *)header1.data(),
+                                       header1.size() * sizeof(u_int32_t));
+        connection.appendExternalBlock((const char *)header2.data(),
+                                       header2.size() * sizeof(char));
+        connection.appendExternalBlock((const char *)header3.data(),
+                                       header3.size() * sizeof(u_int32_t));
+        connection.appendExternalBlock(datablock, datalength);
+
+        return !connection.isError();
+    }
+
+};
+
 } //end namespace emorph
 
 #endif /*__vBottle__*/
