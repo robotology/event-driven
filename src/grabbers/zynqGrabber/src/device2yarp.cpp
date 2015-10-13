@@ -27,7 +27,7 @@ device2yarp::device2yarp() : RateThread(THRATE) {
 
 bool device2yarp::threadInit(std::string moduleName){
 
-    portvBottle.setStrict();
+    //portvBottle.setStrict();
     std::string outPortName = "/" + moduleName + "/vBottle:o";
     return portvBottle.open(outPortName);
 
@@ -45,88 +45,92 @@ void  device2yarp::run() {
     }
 
     // convert data to YARP vBottle
-    emorph::vBottle &evtDevice = portvBottle.prepare();
-    evtDevice.clear();
+    //emorph::vBottleMimic &sender = portvBottle.prepare();
+
+    //evtDevice.clear();
 
     //do some sketchy casting to make things fast at this part of the project
-    yarp::os::Bottle * bb = (yarp::os::Bottle *)&evtDevice;
+    //yarp::os::Bottle * bb = (yarp::os::Bottle *)&evtDevice;
     
     //now we can add our searchable tag
-    bb->addString("AE");
+    //bb->addString("AE");
     //and add our bottle to fill with events
-    yarp::os::Bottle &eventlist = bb->addList();
+    //yarp::os::Bottle &eventlist = bb->addList();
 
     int vcount = 0;
 
     if(devManager->getDevType() == "/dev/iit_hpucore") {
         //we are on the zturn
 
+        sender.setdata(data.data(), nBytesRead);
+
+
         //if we read a multiple of 8 bytes (uint32 TS uint32 XYPC) we assume the
         //data is aligned correctly and add it to the bottle otherwise we check
         //until we find a misalignment, re-align, then add the rest
-        int i = 0;
-        if((nBytesRead) % 8 == 0) {
+//        int i = 0;
+//        if((nBytesRead) % 8 == 0) {
 
-            while(i <= nBytesRead - 8) {
-                int *TS =  (int *)(data.data() + i);//= deviceData[i];
-                int *AE =  (int *)(data.data() + i + 4);//deviceData[i+1];
-                //eventlist.add((int)(*TS & 0x80FFFFFF));
-                eventlist.add(*AE);
-                vcount++;
-                i += 8;
-            }
+//            while(i <= nBytesRead - 8) {
+//                int *TS =  (int *)(data.data() + i);//= deviceData[i];
+//                int *AE =  (int *)(data.data() + i + 4);//deviceData[i+1];
+//                //eventlist.add((int)(*TS & 0x80FFFFFF));
+//                eventlist.add(*AE);
+//                vcount++;
+//                i += 8;
+//            }
 
-        } else {
-            std::cout << "Alignment Required" << std::endl;
-            while(i <= nBytesRead - 8) {
+//        } else {
+//            std::cout << "Alignment Required" << std::endl;
+//            while(i <= nBytesRead - 8) {
 
-                int *TS =  (int *)(data.data() + i);//= deviceData[i];
-                int *AE =  (int *)(data.data() + i + 4);//deviceData[i+1];
+//                int *TS =  (int *)(data.data() + i);//= deviceData[i];
+//                int *AE =  (int *)(data.data() + i + 4);//deviceData[i+1];
 
-                if((nBytesRead - i) % 8 && (!(*TS & 0x80000000) || (*AE & 0xFFFF0000)))
-                    i++;
-                else {
-                    //eventlist.add((int)(*TS & 0x80FFFFFF));
-                    eventlist.add(*AE);
-                    vcount++;
-                    i += 8;
-                }
-            }
-        }
+//                if((nBytesRead - i) % 8 && (!(*TS & 0x80000000) || (*AE & 0xFFFF0000)))
+//                    i++;
+//                else {
+//                    //eventlist.add((int)(*TS & 0x80FFFFFF));
+//                    eventlist.add(*AE);
+//                    vcount++;
+//                    i += 8;
+//                }
+//            }
+//        }
 
-        countAEs += vcount;
+        countAEs += nBytesRead / 8;
 
     } else if(devManager->getDevType() == "/dev/aerfx2_0") {
 
-        int i = 0;
-        while(i <= nBytesRead - 8) {
-            int* TS =  (int *)(data.data() + i);//= deviceData[i];
-            int* AE =  (int *)(data.data() + i + 4);//deviceData[i+1];
+//        int i = 0;
+//        while(i <= nBytesRead - 8) {
+//            int* TS =  (int *)(data.data() + i);//= deviceData[i];
+//            int* AE =  (int *)(data.data() + i + 4);//deviceData[i+1];
 
-            if(!(*TS & 0x80000000) || (*AE & 0xFFFF0000)) {
-                //misalignment, move on by 1 byte
-                i += 1;
-            } else {
-                //successful data match move on by 8 bytes
-                eventlist.add((int)(*TS & 0x80FFFFFF));
-                eventlist.add(*AE);
-                vcount++;
-                i += 8;
-            }
-        }
+//            if(!(*TS & 0x80000000) || (*AE & 0xFFFF0000)) {
+//                //misalignment, move on by 1 byte
+//                i += 1;
+//            } else {
+//                //successful data match move on by 8 bytes
+//                eventlist.add((int)(*TS & 0x80FFFFFF));
+//                eventlist.add(*AE);
+//                vcount++;
+//                i += 8;
+//            }
+//        }
 
-        countAEs += vcount;
+//        countAEs += vcount;
     }
 
     //countAEs += eventlist.size() / 2;
 
     vStamp.update();
     portvBottle.setEnvelope(vStamp);
-    portvBottle.writeStrict();
+    portvBottle.write(sender);
 
     if(countAEs > 50000) {
-        std::cout << "Specialisation Test: " << bb->getSpecialization() << " "
-                  << eventlist.getSpecialization() << std::endl;
+        //std::cout << "Specialisation Test: " << bb->getSpecialization() << " "
+        //          << eventlist.getSpecialization() << std::endl;
         std::cout << countAEs / (yarp::os::Time::now() - prevTS)
                   << " v/sec" << std::endl;
         countAEs = 0;

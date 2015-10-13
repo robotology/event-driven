@@ -42,11 +42,12 @@ public:
 private:
 
     //output port
-    yarp::os::BufferedPort<emorph::vBottle> portvBottle;
+    emorph::vBottleMimic sender;
+    yarp::os::Port portvBottle;
     yarp::os::Stamp vStamp;
     
     //read buffer
-    std::vector<unsigned int> deviceData;
+    //std::vector<unsigned int> deviceData;
     
     //device number to read from
     //int devDesc;

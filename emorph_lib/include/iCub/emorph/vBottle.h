@@ -182,6 +182,9 @@ private:
     std::vector<char> header2;
     std::vector<u_int32_t> header3;
 
+    const char * datablock;
+    unsigned int datalength;
+
 public:
 
     vBottleMimic() {
@@ -195,13 +198,17 @@ public:
         header3.push_back(0); // <- set the number of ints here (2 * #v's)
     }
 
+    void setdata(const char * datablock, unsigned int datalength) {
+        this->datablock = datablock;
+        this->datalength = datalength;
+        header3[1] = datalength / sizeof(u_int32_t);
+    }
 
     virtual bool read(yarp::os::ConnectionReader& connection) {
                 return false;
     }
-    virtual bool write(yarp::os::ConnectionWriter& connection, char * datablock, unsigned int datalength) {
 
-        header3[1] = datalength / sizeof(u_int32_t);
+    virtual bool write(yarp::os::ConnectionWriter& connection) {
 
         connection.appendExternalBlock((const char *)header1.data(),
                                        header1.size() * sizeof(u_int32_t));
