@@ -61,7 +61,7 @@ public:
     int writeDevice(std::vector<unsigned int> &deviceData);
     const std::vector<char>& readDevice(int &nBytesRead);
     
-    deviceManager(bool bufferedRead = false, unsigned int maxBufferSize = 16777216);
+    deviceManager(bool bufferedRead = false, unsigned int maxBufferSize = MAX_BUF_SIZE);
 
     const unsigned int getBufferSize() { return maxBufferSize; }
     const std::string getDevType() {return deviceName; }
@@ -88,9 +88,6 @@ private:
     //unsigned int header;
     std::vector<std::string> biasNames; // ordered
     std::vector<int> biasValues;
-    
-    //bool prepareHeader(); // prepares the header with chip and channel
-    
     
     unsigned int getBias(std::string biasName);
     void printBiases();
@@ -163,16 +160,12 @@ public:
   ------------------------------------------------------------------- */
 
 class aerfx2_0DevManager : public deviceManager{
-    
+
 public:
     
     aerfx2_0DevManager();
                        
     virtual bool openDevice();
-
-    bool programBiases();
-    bool setBias(std::string biasName, unsigned int biasValue);
-
     
 };
 

@@ -40,14 +40,9 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     device = rf.check("device",
                       yarp::os::Value("zynq_sens")).asString(); // zynq_hpu, zynq_spinn, ihead_aerfx2
     
-    
     std::string chipName =
     rf.check("chip", yarp::os::Value("dvs")).asString();
     setName(chipName.c_str());
-    
-    
-    //get the maximum buffer size to use for device reading
-    int maxBufferSize = rf.check("bufferSize", yarp::os::Value(16777216)).asInt();
     
     //TODO: get all the bias settings
     
@@ -84,11 +79,6 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
             std::cerr << "Could not open the device: " << device << std::endl;
             return false;
         }
-        //        configLeft -> attachDeviceManager(devManager);
-        //        configRight -> attachDeviceManager(devManager);
-        
-        //configLeft -> programBiasesAex();
-        //configRight -> programBiasesAex();
         
     } else {
         std::cout << "Device: " << device << " not known " << std::endl;

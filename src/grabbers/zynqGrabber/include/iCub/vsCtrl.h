@@ -15,6 +15,8 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 
+
+#define MAX_BUF_SIZE 16777216
 // vsctrl
 
 #define VSCTRL_MAGIC_NUM 101
@@ -35,6 +37,8 @@
 #define VSCTRL_GET_AER_TIMINGS   _IOR (VSCTRL_MAGIC_NUM, 18, void *)
 #define VSCTRL_GET_BG_TIMINGS    _IOR (VSCTRL_MAGIC_NUM, 19, void *)
 #define VSCTRL_CLR_STATUS        _IOW (VSCTRL_MAGIC_NUM, 20, unsigned int)
+
+#define VSCTRL_MAX_BUF_SIZE 16777216
 
 #define CHIP_DVS   0
 #define CHIP_ATIS  1
@@ -70,6 +74,7 @@
 #define SP2NEU_SET_REM_LBCK    _IOW (MAGIC_NUM, 11, void *)
 #define SP2NEU_SET_FAR_LBCK    _IOW (MAGIC_NUM, 12, void *)
 
+#define AER_MAX_BUF_SIZE 16777216
 
 #define CTRL_REG     0x00
 #define RXDATA_REG   0x08

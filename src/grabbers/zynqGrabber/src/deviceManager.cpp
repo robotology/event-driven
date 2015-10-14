@@ -43,9 +43,9 @@ deviceManager::deviceManager(bool bufferedRead, unsigned int maxBufferSize){
 }
 
 
-//----------------------------------------------------------------------------------------------------
-// functions for device opening
-//----------------------------------------------------------------------------------------------------
+/*-----------------------------------------------------------
+            functions for device open/close
+--------------------------------------------------------------*/
 
 bool deviceManager::openDevice(){
 
@@ -82,7 +82,9 @@ void deviceManager::closeDevice()
     
 }
 
-//READING AND WRITING TO THE DEVICE
+/*-----------------------------------------------------------
+ functions for device read/write
+ --------------------------------------------------------------*/
 
 int deviceManager::writeDevice(std::vector<unsigned int> &deviceData){
     /*
@@ -192,11 +194,11 @@ void deviceManager::run(void)
         //std::cout << "Done with FIFO" << std::endl;
     }
 }
-/* -----------------------------------------------------
+/* --------------------------------------------------------------------------------
  
-                    vsctrlDevManager
+    vsctrlDevManager -- to send biases and write registers -- specific to sensors
  
- -------------------------------------------------------*/
+ ---------------------------------------------------------------------------------- */
 
 
 
@@ -215,7 +217,7 @@ vsctrlDevManager::vsctrlDevManager(std::string channel, std::string chip){
         std::cout << "vsctrl error: unrecognised channel" << std::endl;
     
     }
-    deviceManager(false, 16777216); // # DEFINE VSCTRL_MAXBUFSIZE 16777216
+    deviceManager(false, VSCTRL_MAX_BUF_SIZE); // # DEFINE VSCTRL_MAXBUFSIZE 16777216
 
     fpgaStat.biasDone      = false;
     fpgaStat.tdFifoFull    = false;
@@ -308,6 +310,9 @@ bool vsctrlDevManager::openDevice(){
     clearFpgaStatus("apsFifoFull");
     clearFpgaStatus("i2cTimeout");
     clearFpgaStatus("crcErr");
+    
+    initDevice();
+    programBiases();
     
     return ret;
 
@@ -687,7 +692,9 @@ int vsctrlDevManager::readGPORegister(){
     
 }
 
-/* inherited: aerDevManager */
+/* -----------------------------------------------------------------
+    aerDevManager -- to handle AER IO: read events from sensors and spinnaker and write events to spinnaker
+----------------------------------------------------------------- */
 aerDevManager::aerDevManager(std::string dev){
     
     if (dev == "spinn")
@@ -706,55 +713,54 @@ aerDevManager::aerDevManager(std::string dev){
             
         }
     
-    deviceManager(true, 16777216); // # DEFINE AER_MAXBUFSIZE 16777216
-        
+    deviceManager(true, AER_MAX_BUF_SIZE);
 }
 
 bool aerDevManager::openDevice(){
     
-    deviceManager::openDevice();
+    bool ret = deviceManager::openDevice();
     
-    //initialization for writing to device
-    unsigned long version;
-    unsigned char hw_major,hw_minor;
-    char          stringa[4];
-    int i;
-    unsigned int  tmp_reg;
-    
-    ioctl(devDesc, SP2NEU_VERSION, &version);
-    
-    hw_major = (version & 0xF0) >> 4;
-    hw_minor = (version & 0x0F);
-    stringa[3]=0;
-    
-    for (i=0; i<3; i++) {
-        stringa[i] = (version&0xFF000000) >> 24;
-        version = version << 8;
+    if (ret!=false){
+        //initialization for writing to device
+        unsigned long version;
+        unsigned char hw_major,hw_minor;
+        char          stringa[4];
+        int i;
+        unsigned int  tmp_reg;
+        
+        ioctl(devDesc, SP2NEU_VERSION, &version);
+        
+        hw_major = (version & 0xF0) >> 4;
+        hw_minor = (version & 0x0F);
+        stringa[3]=0;
+        
+        for (i=0; i<3; i++) {
+            stringa[i] = (version&0xFF000000) >> 24;
+            version = version << 8;
+        }
+        fprintf(stderr, "Identified: %s version %d.%d\r\n\r\n", stringa, hw_major, hw_minor);
+        
+        // Write the WrapTimeStamp register with any value if you want to clear it
+        //write_generic_sp2neu_reg(fp,STMP_REG,0);
+        fprintf(stderr, "Times wrapping counter: %d\n", read_generic_sp2neu_reg(devDesc, STMP_REG));
+        
+        // Enable Time wrapping interrupt
+        //write_generic_sp2neu_reg(devDesc, MASK_REG, MSK_TIMEWRAPPING | MSK_TX_DUMPMODE | MSK_RX_PAR_ERR | MSK_RX_MOD_ERR);
+        write_generic_sp2neu_reg(devDesc, MASK_REG, MSK_TIMEWRAPPING | MSK_RX_PAR_ERR);
+        
+        // Flush FIFOs
+        tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
+        write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | CTRL_FLUSHFIFO); // | CTRL_ENABLEIP);
+        
+        // Start IP in LoopBack
+        tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
+        write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | (CTRL_ENABLEINTERRUPT));// | CTRL_ENABLE_FAR_LBCK));
+        
+        ioctl(devDesc, SP2NEU_SET_LOC_LBCK, 0);
+        ioctl(devDesc, SP2NEU_SET_FAR_LBCK, 0);
+        ioctl(devDesc, SP2NEU_SET_REM_LBCK, 0);
     }
-    fprintf(stderr, "Identified: %s version %d.%d\r\n\r\n", stringa, hw_major, hw_minor);
-    
-    // Write the WrapTimeStamp register with any value if you want to clear it
-    //write_generic_sp2neu_reg(fp,STMP_REG,0);
-    fprintf(stderr, "Times wrapping counter: %d\n", read_generic_sp2neu_reg(devDesc, STMP_REG));
-    
-    // Enable Time wrapping interrupt
-    //write_generic_sp2neu_reg(devDesc, MASK_REG, MSK_TIMEWRAPPING | MSK_TX_DUMPMODE | MSK_RX_PAR_ERR | MSK_RX_MOD_ERR);
-    write_generic_sp2neu_reg(devDesc, MASK_REG, MSK_TIMEWRAPPING | MSK_RX_PAR_ERR);
-    
-    // Flush FIFOs
-    tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
-    write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | CTRL_FLUSHFIFO); // | CTRL_ENABLEIP);
-    
-    // Start IP in LoopBack
-    tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
-    write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | (CTRL_ENABLEINTERRUPT));// | CTRL_ENABLE_FAR_LBCK));
-    
-    ioctl(devDesc, SP2NEU_SET_LOC_LBCK, 0);
-    ioctl(devDesc, SP2NEU_SET_FAR_LBCK, 0);
-    ioctl(devDesc, SP2NEU_SET_REM_LBCK, 0);
-
-    
-    
+    return ret;
 }
 
 void aerDevManager::closeDevice(){
@@ -851,7 +857,9 @@ void aerDevManager::usage (void) {
     
 }
 
-/* inherited aerfx2_0DevManager */
+/* -------------------------------------------------------
+    aerfx2_0DevManager -- handles AER IO for "legacy" iHead board and aerfx2_0 device -- the bias programming does not work for this device: use aexGrabber for this functionality
+------------------------------------------------------- */
 
 aerfx2_0DevManager::aerfx2_0DevManager(){
     
@@ -869,7 +877,7 @@ bool aerfx2_0DevManager::openDevice(){
         return false;
     }
 
-    
+    return true;
 }
 
 
