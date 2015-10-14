@@ -67,8 +67,6 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
                 return false;
             }
         
-            vsctrlMngLeft -> programBiases();
-            vsctrlMngRight -> programBiases();
         }
         
     } else if (device == "ihead_sens")
