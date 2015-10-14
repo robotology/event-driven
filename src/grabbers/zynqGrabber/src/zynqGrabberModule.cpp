@@ -150,6 +150,8 @@ double zynqGrabberModule::getPeriod() {
     return 1.0;
 }
 
+
+// RPC
 bool zynqGrabberModule::respond(const yarp::os::Bottle& command,
                                 yarp::os::Bottle& reply) {
     bool ok = false;
@@ -251,6 +253,7 @@ bool zynqGrabberModule::respond(const yarp::os::Bottle& command,
         }
             break;
         case COMMAND_VOCAB_PWROFF:
+            rec= true;
         {   std::string channel = command.get(1).asString();
             
             if (channel == "left"){
@@ -273,6 +276,7 @@ bool zynqGrabberModule::respond(const yarp::os::Bottle& command,
             break;
             
         case COMMAND_VOCAB_PWRON:
+            rec= true;
         {   std::string channel = command.get(1).asString();
             
             if (channel == "left"){
@@ -295,6 +299,7 @@ bool zynqGrabberModule::respond(const yarp::os::Bottle& command,
             break;
             
         case COMMAND_VOCAB_RST:
+            rec= true;
         {   std::string channel = command.get(1).asString();
             
             if (channel == "left"){

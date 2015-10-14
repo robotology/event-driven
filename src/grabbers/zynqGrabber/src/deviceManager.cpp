@@ -320,10 +320,8 @@ bool vsctrlDevManager::openDevice(){
 
 void vsctrlDevManager::closeDevice(){
     
-    //int ret =
     chipPowerDown();
     deviceManager::closeDevice();
-    //return ret;
     
 }
 
@@ -335,11 +333,6 @@ bool vsctrlDevManager::programBiases(){
     
     clearFpgaStatus("biasDone");
     chipPowerDown();
-    if(initDevice() < 0) {
-        std::cout<<"Bias write: error device not initialised"<<std::endl;
-
-        return false;
-    }
     
     int wroteData = writeDevice(vBiases);
     
@@ -450,6 +443,11 @@ int vsctrlDevManager::chipReset(){
         std::cerr << "reset release not done: ioctl error " << errno << std::endl;
         return ret;
     }
+    else {
+        
+        std::cout << "reset " << chipName << channel << std::endl;
+    }
+    
     return ret;
 }
 
@@ -458,6 +456,9 @@ int vsctrlDevManager::chipPowerDown(){
     ret = ioctl(devDesc, VSCTRL_SET_PWRDWN, 1);
     if (ret == -1) {
         std::cerr << "power off chip not done: ioctl error " << errno << std::endl;
+    } else {
+        
+        std::cout << "power off " << chipName << channel << std::endl;
     }
     return ret;
 }
@@ -467,7 +468,10 @@ int vsctrlDevManager::chipPowerUp(){
     
     ret = ioctl(devDesc, VSCTRL_SET_PWRDWN, 0);
     if (ret == -1) {
-        std::cerr << "power up chip not done: ioctl error " << errno << std::endl;
+        std::cerr << "power on chip not done: ioctl error " << errno << std::endl;
+    } else {
+        
+        std::cout << "power on " << chipName << channel << std::endl;
     }
     return ret;
 }
