@@ -868,6 +868,7 @@ void aerDevManager::usage (void) {
 aerfx2_0DevManager::aerfx2_0DevManager(){
     
     deviceName = "/dev/aerfx2_0";
+    deviceManager(true, AER_MAX_BUF_SIZE);
     
 }
 
