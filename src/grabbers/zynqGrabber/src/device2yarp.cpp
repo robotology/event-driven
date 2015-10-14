@@ -40,8 +40,8 @@ void  device2yarp::run() {
     const std::vector<char> &data = devManager->readDevice(nBytesRead);
     if (!nBytesRead) return;
 
-    if(nBytesRead > devManager->getBufferSize()/2) {
-        std::cerr << "Software buffer was over half full - check the "
+    if(nBytesRead > devManager->getBufferSize()*0.75) {
+        std::cerr << "Software buffer was over 3/4 full - check the "
                      "device2yarp thread is not delayed" << std::endl;
     }
 
@@ -84,7 +84,7 @@ void  device2yarp::run() {
     }
 
     if(nBytesRead - bstart > 0) {
-        sender.setdata(data.data()+bstart, 8*(nBytesRead-bstart)/8);
+        sender.setdata(data.data()+bstart, 8*((nBytesRead-bstart)/8));
         countAEs += (nBytesRead - bstart) / 8;
         vStamp.update();
         portvBottle.setEnvelope(vStamp);

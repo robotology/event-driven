@@ -199,9 +199,10 @@ public:
     }
 
     void setdata(const char * datablock, unsigned int datalength) {
-        this->datablock = datablock;
-        this->datalength = datalength;
         header3[1] = datalength / sizeof(u_int32_t);
+        this->datablock = datablock;
+        this->datalength = sizeof(u_int32_t) *header3[1]; //forced to be x4
+
     }
 
     virtual bool read(yarp::os::ConnectionReader& connection) {
