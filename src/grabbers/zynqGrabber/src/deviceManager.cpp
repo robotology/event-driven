@@ -697,12 +697,12 @@ int vsctrlDevManager::readGPORegister(){
 ----------------------------------------------------------------- */
 aerDevManager::aerDevManager(std::string dev){
     
-    if (dev == "spinn")
+    if (dev == "zynq_spinn")
         {
         
             this->deviceName = "/dev/iit_sp2neu";
     
-        } else if (dev == "sensor")
+        } else if (dev == "zynq_sens")
         {
             
             this->deviceName = "/dev/iit_hpucore";
