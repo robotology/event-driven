@@ -57,12 +57,69 @@ void  device2yarp::run() {
     //and add our bottle to fill with events
     //yarp::os::Bottle &eventlist = bb->addList();
 
-    int vcount = 0;
+    int bstart = 0;
+    int bend = 0;
 
-    if(devManager->getDevType() == "/dev/iit_hpucore") {
+    int *TS =  (int *)(data.data() + bend);
+    int *AE =  (int *)(data.data() + bend + 4);
+    bool BITMISMATCH = !(*TS & 0x80000000) || (*AE & 0xFFFF0000);
+
+    while((nBytesRead-bend) % 8 || BITMISMATCH) {
+
+        //if BITMISMATCH we need to move on 1
+        if(BITMISMATCH) {
+            if(bend - bstart > 0) {
+                sender.setdata(data.data()+bstart, bend-bstart);
+                countAEs += (bend - bstart) / 8;
+                vStamp.update();
+                portvBottle.setEnvelope(vStamp);
+                portvBottle.write(sender);
+            }
+
+            bend++;
+            bstart = bend;
+        } else {
+            bend += 8;
+        }
+
+        int *TS =  (int *)(data.data() + bend);
+        int *AE =  (int *)(data.data() + bend + 4);
+        bool BITMISMATCH = !(*TS & 0x80000000) || (*AE & 0xFFFF0000);
+
+    }
+
+    if(nBytesRead - bstart > 0) {
+        sender.setdata(data.data()+bstart, nBytesRead-bstart);
+        countAEs += (nBytesRead - bstart) / 8;
+        vStamp.update();
+        portvBottle.setEnvelope(vStamp);
+        portvBottle.write(sender);
+    }
+
+//    if(nBytesRead % 8 == 0) {
+//        //assume bytes are aligned
+//        sender.setdata(data.data(), nBytesRead);
+//    } else {
+
+//        int *TS =  (int *)(data.data() + i);//= deviceData[i];
+//        int *AE =  (int *)(data.data() + i + 4);//deviceData[i+1];
+
+//        if((nBytesRead - i) % 8 && (!(*TS & 0x80000000) || (*AE & 0xFFFF0000)))
+//            i++;
+//        else {
+//            //eventlist.add((int)(*TS & 0x80FFFFFF));
+//            eventlist.add(*AE);
+//            vcount++;
+//            i += 8;
+//        }
+
+
+ //   int vcount = 0;
+
+    //if(devManager->getDevType() == "/dev/iit_hpucore") {
         //we are on the zturn
 
-        sender.setdata(data.data(), nBytesRead);
+        //sender.setdata(data.data(), nBytesRead);
 
 
         //if we read a multiple of 8 bytes (uint32 TS uint32 XYPC) we assume the
@@ -98,9 +155,9 @@ void  device2yarp::run() {
 //            }
 //        }
 
-        countAEs += nBytesRead / 8;
+//        countAEs += nBytesRead / 8;
 
-    } else if(devManager->getDevType() == "/dev/aerfx2_0") {
+ //   } else if(devManager->getDevType() == "/dev/aerfx2_0") {
 
 //        int i = 0;
 //        while(i <= nBytesRead - 8) {
@@ -120,13 +177,13 @@ void  device2yarp::run() {
 //        }
 
 //        countAEs += vcount;
-    }
+//    }
 
     //countAEs += eventlist.size() / 2;
 
-    vStamp.update();
-    portvBottle.setEnvelope(vStamp);
-    portvBottle.write(sender);
+ //   vStamp.update();
+ //   portvBottle.setEnvelope(vStamp);
+ //   portvBottle.write(sender);
 
     if(countAEs > 50000) {
         //std::cout << "Specialisation Test: " << bb->getSpecialization() << " "
