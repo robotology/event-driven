@@ -184,6 +184,7 @@ private:
 
     const char * datablock;
     unsigned int datalength;
+    const static unsigned int MINELSZ = sizeof(u_int32_t) * 2;
 
 public:
 
@@ -199,9 +200,9 @@ public:
     }
 
     void setdata(const char * datablock, unsigned int datalength) {
-        header3[1] = datalength / sizeof(u_int32_t);
+        header3[1] = 2 * (datalength / MINELSZ); //forced to be x8
         this->datablock = datablock;
-        this->datalength = sizeof(u_int32_t) *header3[1]; //forced to be x4
+        this->datalength = MINELSZ * header3[1] / 2; //forced to be x8
 
     }
 
