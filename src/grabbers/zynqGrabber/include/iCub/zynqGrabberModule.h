@@ -174,19 +174,24 @@
 #include <iCub/yarp2device.h>
 
 #include <iCub/deviceManager.h>
-#include <iCub/configManager.h>
+//#include <iCub/configManager.h>
 
 class zynqGrabberModule : public yarp::os::RFModule {
 
     yarp::os::Port handlerPort; // a port to handle messages
 
-    deviceManager* devManager;
-    deviceManager* cfgMngLeft;
-    deviceManager* cfgMngRight;
+    // AER
+    deviceManager* aerManager;  // class to handle AER IO (hpucore, spinn, aerfx2_0)
+    
+    // biases and config
+    vsctrlDevManager* vsctrlMngLeft;   // reference to the class for configuring chip (biases and registers)
+    vsctrlDevManager* vsctrlMngRight;  // reference to the class for configuring chip (biases and registers)
+    
+    
+    
     device2yarp* D2Y; // reference to the ratethread that reads the device and writes to yarp vBottle
     yarp2device Y2D; // bufferedport that reads yarp vBottles and writes to the device
-    configManager* configLeft; // reference to the class for configuring chip (biases and registers)
-    configManager* configRight;// reference to the class for configuring chip (biases and registers)
+
     std::string device;
     
 public:
