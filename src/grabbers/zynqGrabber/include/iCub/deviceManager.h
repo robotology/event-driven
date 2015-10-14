@@ -52,7 +52,7 @@ protected:
     int devDesc;            // file descriptor for device
     std::string deviceName; // name of the device
 
-    
+
 public:
 
     virtual bool openDevice();
@@ -130,7 +130,7 @@ public:
  
   ------------------------------------------------------------------- */
 
-class aerDevManager : public deviceManager{
+class aerDevManager : public deviceManager {
 
 public:
     
@@ -159,7 +159,7 @@ public:
  
   ------------------------------------------------------------------- */
 
-class aerfx2_0DevManager : public deviceManager{
+class aerfx2_0DevManager : public deviceManager {
 
 public:
     

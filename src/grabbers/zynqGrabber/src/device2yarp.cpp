@@ -69,6 +69,7 @@ void  device2yarp::run() {
         //if BITMISMATCH we need to move on 1
         if(BITMISMATCH) {
             if(bend - bstart > 0) {
+                std::cerr << "BITMISMATCH in yarp2device" << std::endl;
                 sender.setdata(data.data()+bstart, bend-bstart);
                 countAEs += (bend - bstart) / 8;
                 vStamp.update();
