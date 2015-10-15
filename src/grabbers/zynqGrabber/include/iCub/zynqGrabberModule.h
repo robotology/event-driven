@@ -187,12 +187,8 @@ class zynqGrabberModule : public yarp::os::RFModule {
     vsctrlDevManager* vsctrlMngLeft;   // reference to the class for configuring chip (biases and registers)
     vsctrlDevManager* vsctrlMngRight;  // reference to the class for configuring chip (biases and registers)
     
-    
-    
     device2yarp* D2Y; // reference to the ratethread that reads the device and writes to yarp vBottle
     yarp2device Y2D; // bufferedport that reads yarp vBottles and writes to the device
-
-    std::string device;
     
 public:
     

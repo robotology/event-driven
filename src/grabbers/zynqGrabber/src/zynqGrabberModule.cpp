@@ -27,50 +27,47 @@
 
 bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     
-    /* Process all parameters from both command-line and .ini file */
+    //Process all parameters from both command-line and .ini file
+
     std::cout << "Configuring the zynqGrabberModule" << std::endl;
     
-    //printf("moduleName  %s \n", moduleName.c_str());
     std::string moduleName =
-    rf.check("name", yarp::os::Value("zynqGrabber")).asString();
+            rf.check("name", yarp::os::Value("zynqGrabber")).asString();
     setName(moduleName.c_str());
-    
-    
+      
     //get the device name which will be used to read events
-    device = rf.check("device",
-                      yarp::os::Value("zynq_sens")).asString(); // zynq_hpu, zynq_spinn, ihead_aerfx2
+    // zynq_hpu, zynq_spinn, ihead_aerfx2
+    std::string device = rf.check("device", yarp::os::Value("zynq_sens")).asString();
     
-    std::string chipName =
-    rf.check("chip", yarp::os::Value("dvs")).asString();
-    setName(chipName.c_str());
-    
-    //TODO: get all the bias settings
-    
-    // class configManager for left and right sensors
+    //dvs or atis
+    std::string chipName = rf.check("chip", yarp::os::Value("dvs")).asString();
+    yarp::os::Bottle biaslist = rf.findGroup(chipName + "_BIAS");
+    std::cout << biaslist.toString() << std::endl;
+
+    //configuration classes for the zynq-based sensors
     vsctrlMngLeft = new vsctrlDevManager("left", chipName);
     vsctrlMngRight = new vsctrlDevManager("right", chipName);
+    if(device == "zynq_sens") {
+        if(!vsctrlMngLeft->openDevice() || !vsctrlMngRight->openDevice()) {
+            std::cerr << "Could not open the vsctrl devices" << std::endl;
+            return false;
+        }
+    }
     
     
-    if (device == "zynq_spinn" || device == "zynq_sens"){
+    if(device == "zynq_spinn" || device == "zynq_sens") {
         
         // class manageDevice for events
         aerManager = new aerDevManager(device);
+
         if(!aerManager->openDevice()) {
             std::cerr << "Could not open the aer device: " << device << std::endl;
             return false;
         }
         
-        if (device == "zynq_sens"){
-            
-            if(!(vsctrlMngLeft->openDevice() & vsctrlMngRight->openDevice())) {
-                std::cerr << "Could not open the vsctrl devices" << std::endl;
-                return false;
-            }
-        
-        }
-        
-    } else if (device == "ihead_sens")
-    {
+    } else if(device == "ihead_sens") {
+
+        // device manager for events
         aerManager = new aerfx2_0DevManager();
         
         if(!aerManager->openDevice()) {
@@ -79,12 +76,10 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         }
         
     } else {
+
         std::cout << "Device: " << device << " not known " << std::endl;
         return false;
     }
-    
-    
-    // todo --- program registers for ATIS
     
     //open rateThread device2yarp
     D2Y = new device2yarp();
@@ -107,9 +102,8 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     // attach a port of the same name as the module (prefixed with a /)
     //to the module so that messages received from the port are redirected to
     //the respond method
-    std::string handlerPortName =  "/" + moduleName;
-    if (!handlerPort.open(handlerPortName.c_str())) {
-        std::cout << "Unable to open RPC port @ " << handlerPortName << std::endl;
+    if (!handlerPort.open("/" + moduleName)) {
+        std::cout << "Unable to open RPC port @ /" << moduleName << std::endl;
         return false;
     }
     attach(handlerPort);
