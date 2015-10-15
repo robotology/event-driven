@@ -217,7 +217,9 @@ vsctrlDevManager::vsctrlDevManager(std::string channel, std::string chip){
         std::cout << "vsctrl error: unrecognised channel" << std::endl;
     
     }
+
     deviceManager(false, VSCTRL_MAX_BUF_SIZE); // # DEFINE VSCTRL_MAXBUFSIZE 16777216
+
 
     fpgaStat.biasDone      = false;
     fpgaStat.tdFifoFull    = false;
@@ -229,71 +231,6 @@ vsctrlDevManager::vsctrlDevManager(std::string channel, std::string chip){
     // default biases
     this -> channel = channel;
     this -> chipName = chip;
-    
-    if (chip == "dvs"){
-        
-        mBiases["cas"] = 52458;
-        mBiases["injg"] = 101508;
-        mBiases["reqPd"] = 16777215;
-        mBiases["pux"] = 8053457;
-        mBiases["diffoff"] = 133;
-        mBiases["req"] = 160712;
-        mBiases["refr"] =  944;
-        mBiases["puy"] =  16777215;
-        mBiases["diffon"] =  639172;
-        mBiases["diff"] =  30108;
-        mBiases["foll"] =  20;
-        mBiases["pr"] =  5;
-    
-        biasNames.resize(mBiases.size());
-        int i;
-        i = 0;
-        biasNames[i] = "cas";
-        i++;
-        biasNames[i] = "injg";
-        i++;
-        biasNames[i] = "reqPd";
-        i++;
-        biasNames[i] = "pux";
-        i++;
-        biasNames[i] = "diffoff";
-        i++;
-        biasNames[i] = "req";
-        i++;
-        biasNames[i] = "refr";
-        i++;
-        biasNames[i] = "puy";
-        i++;
-        biasNames[i] = "diffon";
-        i++;
-        biasNames[i] = "diff";
-        i++;
-        biasNames[i] = "foll";
-        i++;
-        biasNames[i] = "pr";
-    
-    } else if (chip == "atis"){
-        
-        
-        mBiases["b1"] = 52458;
-        mBiases["b2"] = 101508;
-        mBiases["b3"] = 16777215;
-        
-        biasNames.resize(mBiases.size());
-        int i;
-        i = 0;
-        biasNames[i] = "b1";
-        i++;
-        biasNames[i] = "b2";
-        i++;
-        biasNames[i] = "b3";
-        i++;
-        
-    } else {
-    
-        std::cout << "vsctrl error: unrecognised chip type" << std::endl;
-        
-    }
 
 };
 
@@ -333,19 +270,14 @@ bool vsctrlDevManager::programBiases(){
     
     clearFpgaStatus("biasDone");
     chipPowerDown();
-    
-    int wroteData = writeDevice(vBiases);
-    
-    int count;
-    count = 0;
-    
-    if (wroteData <= 0)
-    {
-        std::cout<<"Bias write: error writing to device"<<std::endl;
+
+    if (writeDevice(vBiases) <= 0) {
+        std::cout << "Bias write: error writing to device" << std::endl;
         return false;
     }
     
     getFpgaStatus();
+    int count = 0;
     while (!fpgaStat.biasDone & (count <= 10000)){
         count++;
         getFpgaStatus();
@@ -356,13 +288,15 @@ bool vsctrlDevManager::programBiases(){
         }
         
     }
-    if (count > 10000){
+    if (count > 10000) {
         std::cout << "Bias write: failed programming, Timeout "  << std::endl;
         return false;
     }
+
     clearFpgaStatus("biasDone");
     std::cout << "Biases correctly programmed" << std::endl;
     chipPowerUp();
+
     return true;
     
 }
@@ -373,39 +307,20 @@ bool vsctrlDevManager::setBias(yarp::os::Bottle bias)
         return false;
 
     this->bias = bias;
+    return true;
 
 }
 
 // --- change the value of a single bias --- //
-bool vsctrlDevManager::setBias(std::string biasName, unsigned int biasValue){
-    
-    std::cout << "_setBias: " << bias.find(biasName).asInt() << std::endl;
+bool vsctrlDevManager::setBias(std::string biasName, unsigned int biasValue) {
+
     bias.find(biasName) = yarp::os::Value((int)biasValue).asInt();
-
-    return true;
-
-
-    int currBiasVal = mBiases[biasName];
-    if (currBiasVal){
-        
-        if (chipName == "dvs")
-        {
-            biasValue = biasValue & 0x00FFFFFF; // 24 bits
-        }
-        else if (chipName != "atis")
-        {
-            std::cout << "unrecognised chip" << std::endl;
-            return false;
-        }
-        
-        mBiases[biasName] = biasValue;
-        std::cout << "setting " << biasName.c_str() << " to value: " << mBiases[biasName] << std::endl;
-        return true;
-    } else {
-        std::cout << "wrong bias name: please check spelling" << std::endl;
+    if(bias.find(biasName).asInt() != biasValue) {
+        std::cerr << "Could not find " << biasName << " bias" << std::endl;
         return false;
     }
-    
+    return true;
+
 }
 
 // --- set the full vector that needs to be written to the device to program the chip --- //
@@ -415,16 +330,6 @@ std::vector<unsigned int> vsctrlDevManager::prepareBiases(){
 
     for(int i = 1; i < bias.size(); i++)
         vBiases.push_back(bias.get(i).asList()->get(1).asInt());
-
-    return vBiases;
-    
-    // implement here the transformation between the bias value list and the vector that will be sent to the device (32 bits per bias sizeof unsigned int)
-//    int i;
-//    for (i = 0; i < biasNames.size(); i++) {
-        
-//        vBiases.push_back(mBiases[biasNames[i]]);
-        
-//    }
     
     return vBiases;
     
