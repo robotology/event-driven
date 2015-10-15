@@ -27,11 +27,11 @@ if(NOT EMORPH_BUILD_ZYNQ)
          message("Warning: OpenCV Not Found. Certain Modules will not be built")
     endif(NOT OPENCV_FOUND)
 
-	add_subdirectory(app)
 	add_subdirectory(drivers)
 
 endif(NOT EMORPH_BUILD_ZYNQ)
 
+add_subdirectory(app)
 add_subdirectory(emorph_lib)
 add_subdirectory(src)
 

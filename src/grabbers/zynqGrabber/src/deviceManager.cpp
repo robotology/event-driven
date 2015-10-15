@@ -367,9 +367,24 @@ bool vsctrlDevManager::programBiases(){
     
 }
 
+bool vsctrlDevManager::setBias(yarp::os::Bottle bias)
+{
+    if(bias.isNull())
+        return false;
+
+    this->bias = bias;
+
+}
+
 // --- change the value of a single bias --- //
 bool vsctrlDevManager::setBias(std::string biasName, unsigned int biasValue){
     
+    std::cout << "_setBias: " << bias.find(biasName).asInt() << std::endl;
+    bias.find(biasName) = yarp::os::Value((int)biasValue).asInt();
+
+    return true;
+
+
     int currBiasVal = mBiases[biasName];
     if (currBiasVal){
         
@@ -397,34 +412,33 @@ bool vsctrlDevManager::setBias(std::string biasName, unsigned int biasValue){
 std::vector<unsigned int> vsctrlDevManager::prepareBiases(){
     
     std::vector<unsigned int> vBiases;
+
+    for(int i = 1; i < bias.size(); i++)
+        vBiases.push_back(bias.get(i).asList()->get(1).asInt());
+
+    return vBiases;
     
     // implement here the transformation between the bias value list and the vector that will be sent to the device (32 bits per bias sizeof unsigned int)
-    int i;
-    for (i = 0; i < biasNames.size(); i++) {
+//    int i;
+//    for (i = 0; i < biasNames.size(); i++) {
         
-        vBiases.push_back(mBiases[biasNames[i]]);
+//        vBiases.push_back(mBiases[biasNames[i]]);
         
-    }
+//    }
     
     return vBiases;
     
 }
 
-unsigned int vsctrlDevManager::getBias(std::string biasName){
+unsigned int vsctrlDevManager::getBias(std::string biasName) {
     
-    unsigned int biasValue;
-    biasValue = mBiases[biasName];
-    return biasValue;
+    return bias.find(biasName).asInt();
+
 }
 
 void vsctrlDevManager::printBiases(){
-    std::map<std::string, unsigned int>::iterator im;
-    std::cout << "Current biases for " << chipName << channel << ":" << std::endl;
-    for (im = mBiases.begin(); im != mBiases.end(); im++) {
-        
-        std::cout << im -> first << im -> second << std::endl;
-        
-    }
+
+    std::cout << bias.toString() << std::endl;
     
 }
 

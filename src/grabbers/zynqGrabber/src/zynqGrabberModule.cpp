@@ -40,13 +40,25 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     std::string device = rf.check("device", yarp::os::Value("zynq_sens")).asString();
     
     //dvs or atis
-    std::string chipName = rf.check("chip", yarp::os::Value("dvs")).asString();
+    std::string chipName = rf.check("chip", yarp::os::Value("DVS")).asString();
     yarp::os::Bottle biaslist = rf.findGroup(chipName + "_BIAS");
-    std::cout << biaslist.toString() << std::endl;
+    if(biaslist.isNull()) {
+        std::cerr << "Could not load bias list" << std::endl;
+    }
 
     //configuration classes for the zynq-based sensors
     vsctrlMngLeft = new vsctrlDevManager("left", chipName);
     vsctrlMngRight = new vsctrlDevManager("right", chipName);
+    if(!vsctrlMngLeft->setBias(biaslist)) {
+        std::cerr << "Bias file required to run zynqGrabber" << std::endl;
+        return false;
+    }
+
+    vsctrlMngLeft->printBiases();
+    std::cout << "PR bias: " << vsctrlMngLeft->getBias("pr") << std::endl;
+    vsctrlMngLeft->setBias("PR", 9);
+    std::cout << "PR bias: " << vsctrlMngLeft->getBias("pr") << std::endl;
+
     if(device == "zynq_sens") {
         if(!vsctrlMngLeft->openDevice() || !vsctrlMngRight->openDevice()) {
             std::cerr << "Could not open the vsctrl devices" << std::endl;

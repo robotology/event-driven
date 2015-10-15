@@ -80,26 +80,29 @@ private:
     
     vsctrl_ioctl_arg_t iocVsctrlArg;     // vsctrl
     fpgaStatus_t fpgaStat;
-    
-    
+      
     std::string chipName;
     std::string channel;
+    yarp::os::Bottle bias;
     std::map<std::string, unsigned int> mBiases;
     //unsigned int header;
     std::vector<std::string> biasNames; // ordered
     std::vector<int> biasValues;
     
-    unsigned int getBias(std::string biasName);
-    void printBiases();
+
+
     std::vector<unsigned int> prepareBiases();
 
 
 public:
+
+    void printBiases();
+    unsigned int getBias(std::string biasName);
     
     virtual bool openDevice();
     virtual void closeDevice();
 
-    vsctrlDevManager(std::string channel, std::string chip);// : deviceManager(false,1666), fpgaStat(false,false,false,false,false) {}
+    vsctrlDevManager(std::string channel, std::string chip);
     
     // ---- ioctl for i2c device ---- //
     int chipReset();
@@ -121,6 +124,7 @@ public:
     
     bool programBiases();
     bool setBias(std::string biasName, unsigned int biasValue);
+    bool setBias(yarp::os::Bottle bias);
 
 };
 
