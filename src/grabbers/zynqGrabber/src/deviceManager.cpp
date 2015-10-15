@@ -552,7 +552,7 @@ int vsctrlDevManager::initDevice(){
     
     int ret = -1;
 
-    if (chipName == "atis"){
+    if (chipName == "ATIS"){
         ret = ioctl(devDesc, VSCTRL_INIT_DEV, CHIP_ATIS);
         if (ret == -1) {
             std::cerr << "init device failed: ioctl error " << errno << std::endl;
@@ -562,7 +562,7 @@ int vsctrlDevManager::initDevice(){
             
         }
         
-    } else if (chipName == "dvs"){
+    } else if (chipName == "DVS"){
         ret = ioctl(devDesc, VSCTRL_INIT_DEV, CHIP_DVS);
         if (ret == -1) {
             std::cerr << "init device failed: ioctl error " << errno << std::endl;
