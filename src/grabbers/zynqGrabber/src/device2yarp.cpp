@@ -1,18 +1,17 @@
-// -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
-
 /*
- * This class use the USB retina driver wrote by
- * Martin Ebner, IGI / TU Graz (ebner at igi.tugraz.at)
+ * Copyright (C) 2015 iCub Facility - Istituto Italiano di Tecnologia
+ * Author: arren.glover@iit.it
+ * Permission is granted to copy, distribute, and/or modify this program
+ * under the terms of the GNU General Public License, version 2 or any
+ * later version published by the Free Software Foundation.
  *
- *  The term of the contract of the used source is :
+ * A copy of the license can be found at
+ * http://www.robotcub.org/icub/license/gpl.txt
  *
- *	This program is free software; you can redistribute it and/or
- *	modify it under the terms of the GNU General Public License as
- *	published by the Free Software Foundation, version 2.
- *
- * This driver is based on the 2.6.3 version of drivers/usb/usb-skeleton.c
- * (Copyright (C) 2001-2004 Greg Kroah-Hartman (greg@kroah.com))
- *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details
  */
 
 #include <iCub/device2yarp.h>
@@ -56,10 +55,6 @@ void  device2yarp::run() {
     //correctly a TS then AE and we aren't greater than the total # bytes
     while(((nBytesRead-bend) % 8 || BITMISMATCH) && (bend <= nBytesRead - 8)) {
 
-        //note: BITMISMATCH stopped occuring by the time this code was
-        //implemented and as such this never had a chance to be tested.
-        //good luck.
-
         if(BITMISMATCH) {
             //send on what we have checked is not mismatched so far
             if(bend - bstart > 0) {
@@ -83,7 +78,7 @@ void  device2yarp::run() {
 
     }
 
-    if(nBytesRead - bstart > 0) {
+    if(nBytesRead - bstart > 7) {
         sender.setdata(data.data()+bstart, 8*((nBytesRead-bstart)/8));
         countAEs += (nBytesRead - bstart) / 8;
         vStamp.update();
@@ -97,22 +92,12 @@ void  device2yarp::run() {
         prevTS = yarp::os::Time::now();
     }
 
-//    if(countAEs > 50000) {
-//        //std::cout << "Specialisation Test: " << bb->getSpecialization() << " "
-//        //          << eventlist.getSpecialization() << std::endl;
-//        std::cout << countAEs / (yarp::os::Time::now() - prevTS)
-//                  << " v/sec" << std::endl;
-//        countAEs = 0;
-//        prevTS = yarp::os::Time::now();
-//    }
-
 }
 
 void device2yarp::threadRelease() {
 
     std::cout << "D2Y: has collected " << countAEs << " events from device"
               << std::endl;
-    
     
     portvBottle.close();
     
