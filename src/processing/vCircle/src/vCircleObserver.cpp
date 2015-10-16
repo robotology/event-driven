@@ -18,201 +18,6 @@
 #include <math.h>
 #include <cv.h>
 
-
-/*//////////////////////////////////////////////////////////////////////////////
-  GEOMETRIC OBSERVER
-  ////////////////////////////////////////////////////////////////////////////*/
-vGeoCircleObserver::vGeoCircleObserver()
-{
-    spatialRadius = 32;
-    inlierThreshold = 5;
-    angleThreshold = 0.1;
-    radiusThreshold = 1.5;
-
-    window = 0;
-
-}
-
-/******************************************************************************/
-vGeoCircleObserver::~vGeoCircleObserver()
-{
-    if(window) delete window;
-}
-
-/******************************************************************************/
-void vGeoCircleObserver::init(int width, int height, int temporalRadius,
-                           int spatialRadius, int inlierThresh,
-                           double angleThresh, double radThresh)
-{
-    this->spatialRadius = spatialRadius;
-    this->inlierThreshold = inlierThresh;
-    this->angleThreshold = angleThresh;
-    this->radiusThreshold = radThresh;
-
-    this->window = new emorph::vWindow(width, height, temporalRadius, false);
-}
-
-/******************************************************************************/
-void vGeoCircleObserver::addEvent(emorph::vEvent &event) {
-    window->addEvent(event);
-}
-/******************************************************************************/
-int vGeoCircleObserver::flowcircle(double &cx, double &cy, double &cr)
-{
-
-    if(!window) return -1;
-    emorph::FlowEvent *vr = window->getMostRecent()->getAs<emorph::FlowEvent>();
-    if(!vr) return -1;
-
-    //get the recent event and the surface
-    emorph::vQueue q = window->getSMARTSURF(spatialRadius);
-    if(q.size() < inlierThreshold) return -1;
-
-    double main_m = vr->getVy() / vr->getVx();
-    double main_b = vr->getY() - main_m * vr->getX();
-
-    int max_inliers = 0;
-    for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
-        emorph::FlowEvent * v = (*qi)->getAs<emorph::FlowEvent>();
-        if(!v) continue;
-        if(v == vr) continue;
-
-        int y = v->getY();
-        int x = v->getX();
-        double dtdy = v->getVy();
-        double dtdx = v->getVx();
-
-        double flowmag = sqrt(pow(dtdx, 2.0) + pow(dtdy, 2.0)) /
-                emorph::vtsHelper::tstosecs();
-        if(vr->getStamp() - v->getStamp() > flowmag) continue;
-
-        double vm = dtdy / dtdx;
-        double vb = y - vm * x;
-        if(vm == main_m) continue;
-
-        double xX = (vb - main_b) / (main_m - vm);
-        double yX = (main_m*vb - vm*main_b) / (main_m - vm);
-
-        if(vr->getVx() * (xX - vr->getX()) * dtdx * (xX - x) < 0) continue;
-        if(vr->getVy() * (yX - vr->getY()) * dtdy * (yX - y) < 0) continue;
-
-        //if the radius doesn't agree between the two points
-        double main_rad = sqrt(pow(vr->getX()-xX, 2.0) +
-                               pow(vr->getY() - yX, 2.0));
-        double rad1 = sqrt(pow(x-xX, 2.0) + pow(y - yX, 2.0));
-        if(fabs(main_rad - rad1) < radiusThreshold) continue;
-
-        int inliers = 0;
-        for(emorph::vQueue::iterator qi2 = q.begin(); qi2 != q.end(); qi2++) {
-            emorph::FlowEvent * v2 = (*qi2)->getAs<emorph::FlowEvent>();
-            if(!v2) continue;
-
-            //only allow points with the same side of xX to main_x
-            double vm2 = v2->getVy() / v2->getVx();
-            double vb2 = v2->getY() - vm2 * v2->getX();
-            if(vm2 == main_m) continue;
-            double xX2 = (vb2 - main_b) / (main_m - vm2);
-            double yX2 = (main_m*vb2 - vm2*main_b) / (main_m - vm2);
-
-            if(vr->getVx() * (xX2 - vr->getX()) * v2->getVx() *
-                    (xX2 - v2->getX()) < 0) continue;
-            if(vr->getVy() * (yX2 - vr->getY()) * v2->getVy() *
-                    (yX2 - v2->getY()) < 0) continue;
-
-
-            //angle1
-            double angle1 = atan2(v2->getVy(), v2->getVx());
-            double angle2 = atan2(yX - v2->getY(), xX - v2->getX());
-            if(v2->getVx()*(xX-v2->getX()) < 0 ||
-                    v2->getVy()*(yX-v2->getY()) < 0) {
-                angle2 = atan2(v2->getY() - yX, v2->getX() - xX);
-            }
-
-            //this needs to account for wrap
-            double adiff = fabs(angle1 - angle2);
-            adiff = std::min(adiff, fabs(angle1 - angle2 - 6.18));
-            adiff = std::min(adiff, fabs(angle1 - angle2 + 6.18));
-
-            double rad2 = sqrt(pow(v2->getX()-xX, 2.0) +
-                               pow(v2->getY() - yX, 2.0));
-            double rdiff = fabs(main_rad - rad2);
-
-            if(adiff < angleThreshold && rdiff < radiusThreshold) inliers++;
-
-        }
-
-        if(inliers > max_inliers) {
-            max_inliers = inliers;
-            cx = xX;
-            cy = yX;
-        }
-
-
-    }
-
-    cr = sqrt(pow(cx - vr->getX(), 2.0) + pow(cy - vr->getY(), 2.0));
-
-    return max_inliers;
-
-}
-
-/******************************************************************************/
-bool vGeoCircleObserver::calculateCircle(double x1, double x2, double x3,
-                                      double y1, double y2, double y3,
-                                      double &cx, double &cy, double &cr)
-{
-
-
-
-    //if we are all on the same line we can't compute a circle
-    if(y1 == y2 && y1 == y3) return false;
-    if(x1 == x2 && x1 == x3) return false;
-
-    //or if any of the points are duplicate
-    if(x1 == x2 && y1 == y2) return false;
-    if(x1 == x3 && y1 == y3) return false;
-    if(x2 == x3 && y2 == y3) return false;
-
-    //make sure x2 is different to x1 and x3 (else we divide by 0 later)
-    if(x2 == x1) {
-        double tx = x3, ty = y3;
-        x3 = x2; y3 = y2;
-        x2 = tx; y2 = ty;
-    } else if(x2 == x3) {
-        double tx = x1, ty = y1;
-        x1 = x2; y1 = y2;
-        x2 = tx; y2 = ty;
-    }
-
-
-    //calculate the circle from the 3 points
-    double ma = (y2 - y1) / (x2 - x1);
-    double mb = (y3 - y2) / (x3 - x2);
-
-    if(ma == mb) return false;
-    if(ma != ma || mb != mb) {
-        std::cout << "error: (ma|mb) == NaN" << std::endl;
-    }
-
-    cx = (ma * mb * (y1 - y3) + mb * (x1 + x2) -
-                        ma * (x2 + x3)) / (2 * (mb - ma));
-    if(ma)
-        cy = -1 * (cx - (x1+x2)/2.0)/ma + (y1+y2)/2.0;
-    else
-        cy = -1 * (cx - (x2+x3)/2.0)/mb + (y2+y3)/2.0;
-
-
-    if(cx != cx) {
-        std::cout << "error: cx == NaN" << std::endl;
-    }
-    if(cx == INFINITY || cx == -INFINITY) {
-        std::cout << "error: cx == INF" << std::endl;
-    }
-
-    return true;
-
-}
-
 /*//////////////////////////////////////////////////////////////////////////////
   HOUGH CIRCLE
   ////////////////////////////////////////////////////////////////////////////*/
@@ -733,6 +538,178 @@ yarp::sig::ImageOf<yarp::sig::PixelBgr> vHoughCircleObserver::makeDebugImage4()
     //hbigcol.copyTo(cvfinal(cv::Rect(0, e.height(), e.width(), e.height())));
 
     return final;
+
+}
+
+/*//////////////////////////////////////////////////////////////////////////////
+  P-HOUGH OBSERVER
+  ////////////////////////////////////////////////////////////////////////////*/
+vCircleThread::vCircleThread(int R, bool directed, int height, int width)
+{
+    this->R = R;
+    this->Rsqr = pow(R, 2.0);
+    this->directed = directed;
+    this->height = height;
+    this->width = width;
+
+    yarp::sig::Matrix H(height, width);
+    rot.push_back(0); rot.push_back(M_PI);
+    err.push_back(-5.0*M_PI/180.0); err.push_back(5.0*M_PI/180.0);
+    normedStrength = 1.0 / (int)(6.2831853 * R + 0.5);
+
+    valid = false;
+    x_max = 0; y_max = 0;
+
+
+}
+void vCircleThread::addEvent(emorph::vEvent &event)
+{
+
+    this->cEvent = event;
+    this->signedStrength = normedStrength;
+
+}
+void vCircleThread::removeEvent(emorph::vEvent &event)
+{
+
+    this->cEvent = event;
+    this->signedStrength = -normedStrength;
+
+}
+
+void vCircleThread::updateHAddress(int xv, int yv, double strength)
+{
+    int P = 1;
+
+    int xstart = std::max(0, xv - R);
+    int xend = std::min(width-1, xv + R);
+
+    for(int x = xstart; x <= xend; x++) {
+        //(xv-xc)^2 + (yv - yc)^2 = R^2
+        int deltay = (int)sqrt(Rsqr - pow(x - xv, 2.0));
+
+        for(int s = -P; s <= P; s++) {
+            int y = yv + deltay + s;
+            if(y > height-1 || y < 0) continue;
+            H[y][x] += strength;
+            if(H[y][x] > H[y_max][x_max]) {
+                y_max = y; x_max = x;
+            }
+
+            if(!deltay) continue; //don't double up on same space
+            if(deltay - P <= -deltay + s) continue;
+
+            y = yv - deltay + s;
+            if(y > height-1 || y < 0) continue;
+            H[y][x] += strength;
+            if(H[y][x] > H[y_max][x_max]) {
+                y_max = y; x_max = x;
+            }
+        }
+    }
+}
+
+void vCircleThread::updateHFlowAngle(int xv, int yv, double strength,
+                                     double dtdx, double dtdy)
+{
+
+    std::vector<double>::iterator rotval;
+
+    double thetaBase = atan2(dtdx, dtdy);
+    int P = 1;
+
+    //do for 'forward' flow and flow rotated by 180
+    for(rotval = rot.begin(); rotval != rot.end(); rotval++) {
+
+        //calculate centre position in hough space
+        double thetaExact = thetaBase + *rotval;
+        if(thetaExact > M_PI) thetaExact -= 2 * M_PI; //keep between -pi->pi
+
+        if(fabs(thetaExact - M_PI_2) < M_PI_4 ||
+                fabs(thetaExact + M_PI_2) < M_PI_4) {
+
+            int ysign = thetaExact < 0 ? -1 : 1;
+
+            int xStart = xv + R * cos(thetaExact+err[0]);
+            int xEnd   = xv + R * cos(thetaExact+err[1]);
+
+            if(xEnd < xStart) {
+                int temp = xStart;
+                xStart = xEnd;
+                xEnd = temp;
+            }
+
+            xEnd = std::min(width-1, xEnd);
+            xStart = std::max(0, xStart);
+
+            for(int x = xStart; x <= xEnd; x++) {
+
+                int deltay = (int)sqrt(Rsqr - pow(x - xv, 2.0)) * ysign;
+
+                for(int s = -P; s <= P; s++) {
+                    int y = yv + deltay + s;
+                    if(y > height-1 || y < 0) continue;
+                    H[y][x] += strength;
+                    if(H[y][x] > H[y_max][x_max]) {
+                        y_max = y; x_max = x;
+                    }
+                }
+            }
+        } else {
+            int xsign = fabs(thetaExact) > M_PI_2 ? -1 : 1;
+
+            int yStart = yv + R * sin(thetaExact + err[0]);
+            int yEnd   = yv + R * sin(thetaExact + err[1]);
+
+            if(yEnd < yStart) {
+                int temp = yStart;
+                yStart = yEnd;
+                yEnd = temp;
+            }
+
+            yEnd = std::min(height-1, yEnd);
+            yStart = std::max(0, yStart);
+
+            for(int y = yStart; y <= yEnd; y++) {
+
+                int deltax = (int)sqrt(Rsqr - pow(y - yv, 2.0)) * xsign;
+
+                for(int s = -P; s <= P; s++) {
+                    int x = xv + deltax + s;
+                    if(x > width-1 || x < 0) continue;
+                    H[y][x] += strength;
+                    if(H[y][x] > H[y_max][x_max]) {
+                        y_max = y; x_max = x;
+                    }
+                }
+            }
+
+        }
+    }
+
+}
+
+void vCircleThread::run()
+{
+
+    if(directed) {
+        emorph::FlowEvent * v = cEvent.getAs<emorph::FlowEvent>();
+        if(!v) {
+            valid = false;
+        } else {
+            updateHFlowAngle(v->getX(), v->getY(), signedStrength,
+                             v->getVx(), v->getVy());
+        }
+    } else {
+        emorph::AddressEvent * v = cEvent.getAs<emorph::AddressEvent>();
+        if(!v) {
+            valid = false;
+        } else {
+            updateHAddress(v->getX(), v->getY(), signedStrength);
+        }
+    }
+
+
 
 }
 

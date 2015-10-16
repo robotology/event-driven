@@ -44,7 +44,6 @@ private:
 public:
 
     //we actually allow our observers and trackers
-    vGeoCircleObserver geomFinder;
     vHoughCircleObserver houghFinder;
     vCircleTracker circleTracker;
     double inlierThreshold;

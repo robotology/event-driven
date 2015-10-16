@@ -74,10 +74,6 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
     //initialise the dection and tracking
     circleReader.inlierThreshold = inlierThreshold;
 
-    circleReader.geomFinder.init(width, height, temporalWindow, obsRadius,
-                                   inlierThreshold, angleThreshold,
-                                   radiusThreshold);
-
     circleReader.circleTracker.init(procNoisePos, procNoiseRad,
                                     measNoisePos, measNoiseRad);
 

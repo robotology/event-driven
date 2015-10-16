@@ -19,43 +19,6 @@
 #include <iCub/ctrl/kalman.h>
 
 /*//////////////////////////////////////////////////////////////////////////////
-  RANSAC OBSERVER
-  ////////////////////////////////////////////////////////////////////////////*/
-class vGeoCircleObserver
-{
-
-private:
-
-    //data
-    emorph::vWindow *window;
-
-    //parameters
-    int spatialRadius;
-    int inlierThreshold;
-    double angleThreshold;
-    double radiusThreshold;
-
-public:
-
-    vGeoCircleObserver();
-    ~vGeoCircleObserver();
-
-    void init(int width, int height, int tempWin, int spatialRadius,
-              int inlierThresh, double angleThresh, double radThresh);
-
-    bool calculateCircle(double x1, double x2, double x3,
-                         double y1, double y2, double y3,
-                         double &cx, double &cy, double &cr);
-
-    void addEvent(emorph::vEvent &event);
-    //double RANSAC(double &cx, double &cy, double &cr);
-    int flowcircle(double &cx, double &cy, double &cr);
-    int flowView();
-
-
-};
-
-/*//////////////////////////////////////////////////////////////////////////////
   HOUGH OBSERVER
   ////////////////////////////////////////////////////////////////////////////*/
 class vHoughCircleObserver
@@ -117,6 +80,71 @@ public:
     yarp::sig::ImageOf<yarp::sig::PixelBgr> makeDebugImage3(int s = 4);
     yarp::sig::ImageOf<yarp::sig::PixelBgr> makeDebugImage4();
 
+
+};
+
+/*//////////////////////////////////////////////////////////////////////////////
+  P-HOUGH OBSERVER
+  ////////////////////////////////////////////////////////////////////////////*/
+//class vCircleMultiSize
+//{
+
+//private:
+
+//    std::vector<vCircleThread *> htransforms;
+
+
+//public:
+
+//    vCircleMultiSize()
+
+//};
+
+/*//////////////////////////////////////////////////////////////////////////////
+  P-HOUGH THREAD
+  ////////////////////////////////////////////////////////////////////////////*/
+class vCircleThread : public yarp::os::Thread
+{
+
+private:
+
+    //parameters
+    int R;
+    double Rsqr;
+    bool directed;
+    int height;
+    int width;
+
+    //data
+    yarp::sig::Matrix H;
+    std::vector<double> rot;
+    std::vector<double> err;
+    double normedStrength;
+    int x_max, y_max;
+    bool valid;
+
+    //current data
+    emorph::vEvent cEvent;
+    double signedStrength;
+
+    void updateHAddress(int xv, int yv, double strength);
+    void updateHFlowAngle(int xv, int yv, double strength, double dtdx,
+                          double dtdy);
+
+    virtual void run();
+
+public:
+
+    vCircleThread(int R, bool directed, int height = 128, int width = 128);
+
+    void addEvent(emorph::vEvent &event);
+    void removeEvent(emorph::vEvent &event);
+
+    bool wasUpdated() { return valid; }
+    double getScore() { return H[y_max][x_max]; }
+    int getX() { return x_max; }
+    int getY() { return y_max; }
+    int getR() { return R; }
 
 };
 
