@@ -18,9 +18,9 @@
 #include <math.h>
 #include <cv.h>
 
-/*//////////////////////////////////////////////////////////////////////////////
-  HOUGH CIRCLE
-  ////////////////////////////////////////////////////////////////////////////*/
+/*////////////////////////////////////////////////////////////////////////////*/
+//vHoughCircleObserver
+/*////////////////////////////////////////////////////////////////////////////*/
 vHoughCircleObserver::vHoughCircleObserver()
 {
 
@@ -52,7 +52,6 @@ vHoughCircleObserver::vHoughCircleObserver()
 
 }
 
-/******************************************************************************/
 vHoughCircleObserver::~vHoughCircleObserver()
 {
     for(int r = 0; r < rsize; r++) {
@@ -60,7 +59,6 @@ vHoughCircleObserver::~vHoughCircleObserver()
     }
 }
 
-/******************************************************************************/
 void vHoughCircleObserver::addEvent(emorph::vEvent &event)
 {
     if(qType == "Fixed")
@@ -69,7 +67,6 @@ void vHoughCircleObserver::addEvent(emorph::vEvent &event)
         addEventLife(event);
 }
 
-/******************************************************************************/
 void vHoughCircleObserver::addEventFixed(emorph::vEvent &event)
 {
     valid = false;
@@ -102,7 +99,6 @@ void vHoughCircleObserver::addEventFixed(emorph::vEvent &event)
 
 }
 
-/******************************************************************************/
 void vHoughCircleObserver::addEventLife(emorph::vEvent &event)
 {
 
@@ -141,7 +137,6 @@ void vHoughCircleObserver::addEventLife(emorph::vEvent &event)
 
 }
 
-/******************************************************************************/
 bool vHoughCircleObserver::updateH(emorph::vEvent &event, int val)
 {
 
@@ -165,7 +160,6 @@ bool vHoughCircleObserver::updateH(emorph::vEvent &event, int val)
     return true;
 }
 
-/******************************************************************************/
 void vHoughCircleObserver::updateHAddress(int xv, int yv,
                                           std::vector<double> &threshs)
 {
@@ -206,7 +200,6 @@ void vHoughCircleObserver::updateHAddress(int xv, int yv,
     }
 }
 
-/******************************************************************************/
 void vHoughCircleObserver::updateHFlow(int xv, int yv,
                                        std::vector<double> &threshs,
                                        double dtdx, double dtdy)
@@ -257,7 +250,6 @@ void vHoughCircleObserver::updateHFlow(int xv, int yv,
     }
 }
 
-/******************************************************************************/
 void vHoughCircleObserver::updateHFlowAngle(int xv, int yv,
                                             std::vector<double> &threshs,
                                             double dtdx, double dtdy)
@@ -344,7 +336,6 @@ void vHoughCircleObserver::updateHFlowAngle(int xv, int yv,
     }
 }
 
-/******************************************************************************/
 double vHoughCircleObserver::getMaximum(int &x, int &y, int &r)
 {
     double val = 0;
@@ -369,8 +360,6 @@ double vHoughCircleObserver::getMaximum(int &x, int &y, int &r)
     return val;
 }
 
-/******************************************************************************/
-
 yarp::sig::ImageOf<yarp::sig::PixelMono> vHoughCircleObserver::makeDebugImage(
         int r)
 {
@@ -394,7 +383,6 @@ yarp::sig::ImageOf<yarp::sig::PixelMono> vHoughCircleObserver::makeDebugImage(
     return canvas;
 }
 
-/******************************************************************************/
 yarp::sig::ImageOf<yarp::sig::PixelMono> vHoughCircleObserver::makeDebugImage2()
 {
 
@@ -404,9 +392,6 @@ yarp::sig::ImageOf<yarp::sig::PixelMono> vHoughCircleObserver::makeDebugImage2()
 
 }
 
-
-
-/******************************************************************************/
 yarp::sig::ImageOf<yarp::sig::PixelBgr> vHoughCircleObserver::makeDebugImage3(
         int s)
 {
@@ -541,9 +526,9 @@ yarp::sig::ImageOf<yarp::sig::PixelBgr> vHoughCircleObserver::makeDebugImage4()
 
 }
 
-/*//////////////////////////////////////////////////////////////////////////////
-  P-HOUGH OBSERVER
-  ////////////////////////////////////////////////////////////////////////////*/
+/*////////////////////////////////////////////////////////////////////////////*/
+//vCircleThread
+/*////////////////////////////////////////////////////////////////////////////*/
 vCircleThread::vCircleThread(int R, bool directed, int height, int width)
 {
     this->R = R;
@@ -713,10 +698,9 @@ void vCircleThread::run()
 
 }
 
-/*//////////////////////////////////////////////////////////////////////////////
-  CIRCLE TRACKER
-  ////////////////////////////////////////////////////////////////////////////*/
-
+/*////////////////////////////////////////////////////////////////////////////*/
+//vCircleTracker
+/*////////////////////////////////////////////////////////////////////////////*/
 vCircleTracker::vCircleTracker()
 {
     svPos = 5;
@@ -726,13 +710,11 @@ vCircleTracker::vCircleTracker()
 
 }
 
-/******************************************************************************/
 vCircleTracker::~vCircleTracker()
 {
     if(filter) delete filter;
 }
 
-/******************************************************************************/
 void vCircleTracker::init(double svPos, double svSiz, double zvPos,
                           double zvSiz)
 {
@@ -760,7 +742,6 @@ void vCircleTracker::init(double svPos, double svSiz, double zvPos,
     filter = new iCub::ctrl::Kalman(A, H, Q, R);
 }
 
-/******************************************************************************/
 bool vCircleTracker::startTracking(double xz, double yz, double rz)
 {
     if(!filter) return false;
@@ -773,7 +754,6 @@ bool vCircleTracker::startTracking(double xz, double yz, double rz)
     return true;
 }
 
-/*********************************s********************************************/
 double vCircleTracker::predict(double dt)
 {
 
@@ -798,7 +778,6 @@ double vCircleTracker::predict(double dt)
     return 0;
 }
 
-/******************************************************************************/
 bool vCircleTracker::correct(double xz, double yz, double rz)
 {
     if(!active) return false;
@@ -807,7 +786,6 @@ bool vCircleTracker::correct(double xz, double yz, double rz)
     return true;
 }
 
-/******************************************************************************/
 bool vCircleTracker::getState(double &x, double &y, double &r)
 {
     if(!active) return false;
