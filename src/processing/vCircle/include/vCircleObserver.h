@@ -120,8 +120,8 @@ public:
 
     vCircleThread(int R, bool directed, int height = 128, int width = 128);
 
-    void addEvent(emorph::vEvent &event);
-    void removeEvent(emorph::vEvent &event);
+    void setAddEvent(emorph::vEvent &event);
+    void setRemEvent(emorph::vEvent &event);
 
     bool wasUpdated() { return valid; }
     double getScore() { return H[y_max][x_max]; }
@@ -139,15 +139,31 @@ class vCircleMultiSize
 
 private:
 
+    //parameters
+    std::string qType;
+    int qlength;
+    int qduration;
+
+    double score;
+    int x, y, r;
+
+    emorph::vQueue FIFO;
     std::vector<vCircleThread *> htransforms;
+
+    void addHough(emorph::vEvent &event);
+    void remHough(emorph::vEvent &event);
+
+    void addFixed(emorph::vEvent &event);
+    void addTime(emorph::vEvent &event);
+    void addLife(emorph::vEvent &event);
 
 public:
 
-    vCircleMultiSize(int rLow = 8, int rHigh = 38, bool directed = true,
-                     int height = 128, int width = 128);
+    vCircleMultiSize(std::string qType, int rLow = 8, int rHigh = 38,
+                     bool directed = true, int height = 128, int width = 128);
 
     void addEvent(emorph::vEvent &event);
-    bool getObs(int &x, int &y, int &r);
+    double getObs(int &x, int &y, int &r);
 
 };
 

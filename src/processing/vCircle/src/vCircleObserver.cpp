@@ -547,14 +547,14 @@ vCircleThread::vCircleThread(int R, bool directed, int height, int width)
 
 
 }
-void vCircleThread::addEvent(emorph::vEvent &event)
+void vCircleThread::setAddEvent(emorph::vEvent &event)
 {
 
     this->cEvent = event;
     this->signedStrength = normedStrength;
 
 }
-void vCircleThread::removeEvent(emorph::vEvent &event)
+void vCircleThread::setRemEvent(emorph::vEvent &event)
 {
 
     this->cEvent = event;
@@ -695,6 +695,138 @@ void vCircleThread::run()
     }
 
 
+
+}
+/*////////////////////////////////////////////////////////////////////////////*/
+//VCIRCLEMULTISIZE
+/*////////////////////////////////////////////////////////////////////////////*/
+vCircleMultiSize::vCircleMultiSize(std::string qType, int rLow, int rHigh,
+                                   bool directed, int height, int width)
+{
+    this->qType = qType;
+
+    for(int r = rLow; r <= rHigh; r++)
+        htransforms.push_back(new vCircleThread(r, directed, height, width));
+
+}
+
+void vCircleMultiSize::addHough(emorph::vEvent &event)
+{
+
+    std::vector<vCircleThread *>::iterator i;
+    for(i = htransforms.begin(); i != htransforms.begin(); i++) {
+        (*i)->setAddEvent(event);
+        (*i)->start();
+
+    }
+
+    score = 0;
+    for(i = htransforms.begin(); i != htransforms.begin(); i++) {
+        (*i)->join();
+        if((*i)->wasUpdated() && (*i)->getScore() > score) {
+            score = (*i)->getScore();
+            x = (*i)->getX();
+            y = (*i)->getY();
+            r = (*i)->getR();
+        }
+    }
+
+}
+
+void vCircleMultiSize::remHough(emorph::vEvent &event)
+{
+    std::vector<vCircleThread *>::iterator i;
+    for(i = htransforms.begin(); i != htransforms.begin(); i++) {
+        (*i)->setRemEvent(event);
+        (*i)->start();
+    }
+
+    for(i = htransforms.begin(); i != htransforms.begin(); i++) {
+        (*i)->join();
+    }
+
+}
+
+void vCircleMultiSize::addEvent(emorph::vEvent &event)
+{
+    if(qType == "Fixed")
+        addFixed(event);
+    else if(qType == "Lifetime")
+        addLife(event);
+}
+
+double vCircleMultiSize::getObs(int &x, int &y, int &r)
+{
+    x = this->x;
+    y = this->y;
+    r = this->r;
+    return this->score;
+
+}
+
+void vCircleMultiSize::addFixed(emorph::vEvent &event)
+{
+
+    emorph::AddressEvent *v = event.getUnsafe<emorph::AddressEvent>();
+
+    int cx = v->getX(); int cy = v->getY();
+    emorph::vQueue::iterator i = FIFO.begin();
+    while(i != FIFO.end()) {
+        //v = (*i)->getAs<emorph::AddressEvent>();
+        v = (*i)->getUnsafe<emorph::AddressEvent>();
+
+        bool samelocation = v->getX() == cx && v->getY() == cy;
+
+        if(samelocation) {
+            remHough(event);
+            i = FIFO.erase(i);
+        } else {
+            i++;
+        }
+    }
+
+    //if successful add it to the FIFO and check to remove others
+    FIFO.push_front(&event);
+    while(FIFO.size() > qlength) {
+        remHough(*FIFO.back());
+        FIFO.pop_back();
+    }
+    //add this event to the hough space
+    addHough(event);
+
+}
+
+void vCircleMultiSize::addLife(emorph::vEvent &event)
+{
+
+    //lifetime requires a flow event only
+    emorph::FlowEvent *v = event.getAs<emorph::FlowEvent>();
+    if(!v) return;
+
+    int cts = v->getStamp();
+    int cx = v->getX(); int cy = v->getY();
+    emorph::vQueue::iterator i = FIFO.begin();
+    while(i != FIFO.end()) {
+        v = (*i)->getUnsafe<emorph::FlowEvent>();
+        int modts = cts;
+        if(cts < v->getStamp()) //we have wrapped
+            modts += emorph::vtsHelper::maxStamp();
+
+        bool samelocation = v->getX() == cx && v->getY() == cy;
+
+        if(modts > v->getDeath() || samelocation) {
+            remHough(event);
+            i = FIFO.erase(i);
+        } else {
+            i++;
+        }
+    }
+
+    //add to queue
+    FIFO.push_front(&event);
+
+    //add this event to the hough space
+    addHough(event);
 
 }
 
