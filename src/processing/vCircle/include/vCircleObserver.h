@@ -61,6 +61,8 @@ public:
     int xc, yc, rc;
     double valc;
 
+    double computationtime;
+
     double * obs_max;
     int x_max, y_max, r_max;
 
@@ -102,13 +104,16 @@ private:
     yarp::sig::Matrix H;
     std::vector<double> rot;
     std::vector<double> err;
-    double normedStrength;
+    double Rstrength;
     int x_max, y_max;
     bool valid;
 
+    yarp::os::Mutex mstart;
+    yarp::os::Mutex mdone;
+
     //current data
-    emorph::vEvent cEvent;
-    double signedStrength;
+    emorph::vQueue * adds;
+    emorph::vQueue * subs;
 
     void updateHAddress(int xv, int yv, double strength);
     void updateHFlowAngle(int xv, int yv, double strength, double dtdx,
@@ -116,18 +121,24 @@ private:
 
     virtual void run();
 
+    void waitforstart() { mstart.lock(); }
+    void signalfinish() { mdone.unlock(); }
+
 public:
 
     vCircleThread(int R, bool directed, int height = 128, int width = 128);
 
-    void setAddEvent(emorph::vEvent &event);
-    void setRemEvent(emorph::vEvent &event);
+//    void setAddEvent(emorph::vEvent &event);
+//    void setRemEvent(emorph::vEvent &event);
 
     bool wasUpdated() { return valid; }
     double getScore() { return H[y_max][x_max]; }
     int getX() { return x_max; }
     int getY() { return y_max; }
     int getR() { return R; }
+
+    void process(emorph::vQueue &adds, emorph::vQueue &subs);
+    void waitfordone() { mdone.lock(); }
 
 };
 
@@ -152,17 +163,20 @@ private:
 
     void addHough(emorph::vEvent &event);
     void remHough(emorph::vEvent &event);
+    void updateHough(emorph::vQueue &adds, emorph::vQueue &subs);
 
-    void addFixed(emorph::vEvent &event);
-    void addTime(emorph::vEvent &event);
-    void addLife(emorph::vEvent &event);
+    void addFixed(emorph::vQueue &additions);
+    void addTime(emorph::vQueue &additions);
+    void addLife(emorph::vQueue &additions);
 
 public:
 
     vCircleMultiSize(std::string qType, int rLow = 8, int rHigh = 38,
                      bool directed = true, int height = 128, int width = 128);
+    ~vCircleMultiSize();
 
     void addEvent(emorph::vEvent &event);
+    void addQueue(emorph::vQueue &additions);
     double getObs(int &x, int &y, int &r);
 
 };

@@ -67,11 +67,16 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
     circleReader.hough = rf.check("hough",
                                   yarp::os::Value(true)).asBool();
 
-    circleReader.houghFinder.qType = rf.check("windowtype",
-                                    yarp::os::Value("Lifetime")).asString();
+    std::string qType = rf.check("windowtype",
+                                 yarp::os::Value("Lifetime")).asString();
+    circleReader.houghFinder.qType = qType;
 
-    circleReader.houghFinder.useFlow = rf.check("flowhough",
-                                    yarp::os::Value(true)).asBool();
+    bool flowhough = rf.check("flowhough",
+                              yarp::os::Value(true)).asBool();
+
+    circleReader.houghFinder.useFlow = flowhough;
+    circleReader.cObserver =
+            new vCircleMultiSize(qType, 10, 36, flowhough, 128, 128);
 
     //initialise the dection and tracking
     circleReader.inlierThreshold = inlierThreshold;
@@ -218,51 +223,76 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
         return;
     }
 
+    double t1 = yarp::os::Time::now();
+    cObserver->addQueue(q);
+    double t2 = yarp::os::Time::now();
+
     int bestx, besty, bestr; double bestinliers = 0, bestts = 0;
-    double ts;
+    double ts = unwrap(q.back()->getStamp());
+
+    houghFinder.computationtime = 0;
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
 
-        //get the event in the correct form
+//        //get the event in the correct form
         emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
         if(!v || v->getChannel()) continue;
 
-        ts = unwrap(v->getStamp());
+//        ts = unwrap(v->getStamp());
+//        double t1 = yarp::os::Time::now();
+
         houghFinder.addEvent(*v);
+//
 
-        if(false && datawriter.is_open()) {
+//        cObserver->addEvent(*v);
+//
 
-            emorph::FlowEvent *fv = v->getAs<emorph::FlowEvent>();
-            if(fv) {
-                //flow event save AE plus flow velocity death
-                datawriter << 1 << " "
-                           << ts * emorph::vtsHelper::tstosecs() << " "
-                           << (int)fv->getX() << " "
-                           << (int)fv->getY() << " "
-                           << fv->getVx() << " "
-                           << fv->getVy() << " "
-                           << fv->getDeath() * emorph::vtsHelper::tstosecs()
-                           << std::endl;
-            } else {
-                //address event save AE plus 0 0 0
-                datawriter << 0 << " "
-                           << ts * emorph::vtsHelper::tstosecs() << " "
-                           << (int)v->getX() << " "
-                           << (int)v->getY() << " " << 0 << " " << 0 << " " << 0
-                           << std::endl;
-            }
-        }
+//        std::cout << t2 - t1 << " " << t3 - t2 << std::endl;
+
+////        if(false && datawriter.is_open()) {
+
+////            emorph::FlowEvent *fv = v->getAs<emorph::FlowEvent>();
+////            if(fv) {
+////                //flow event save AE plus flow velocity death
+////                datawriter << 1 << " "
+////                           << ts * emorph::vtsHelper::tstosecs() << " "
+////                           << (int)fv->getX() << " "
+////                           << (int)fv->getY() << " "
+////                           << fv->getVx() << " "
+////                           << fv->getVy() << " "
+////                           << fv->getDeath() * emorph::vtsHelper::tstosecs()
+////                           << std::endl;
+////            } else {
+////                //address event save AE plus 0 0 0
+////                datawriter << 0 << " "
+////                           << ts * emorph::vtsHelper::tstosecs() << " "
+////                           << (int)v->getX() << " "
+////                           << (int)v->getY() << " " << 0 << " " << 0 << " " << 0
+////                           << std::endl;
+////            }
+////        }
     }
 
-    bestinliers = *houghFinder.obs_max;
-    bestx = houghFinder.x_max;
-    besty = houghFinder.y_max;
-    bestr = houghFinder.r_max;
+    double t3 = yarp::os::Time::now();
+
+    std::cout << "Serial Hough: " << houghFinder.computationtime << std::endl;
+    std::cout << "Serial: " << t3 - t2 << " & Parallel: " << t2 - t1 << std::endl;
+
+
+//    bestinliers = *houghFinder.obs_max;
+//    bestx = houghFinder.x_max;
+//    besty = houghFinder.y_max;
+//    bestr = houghFinder.r_max;
     bestts = ts;
 
-    if(false && datawriter.is_open()) {
-        datawriter << ts * emorph::vtsHelper::tstosecs() << " " << bestx << " "
-                   << besty << " " << bestr << " " << bestinliers << " " << 0 << " " << 0 << std::endl;
-    }
+    bestinliers = cObserver->getObs(bestx, besty, bestr);
+    //std::cout << bestinliers << std::endl;
+
+    //ts = unwrap(v->getStamp());std::cout << bestinliers << std::endl;
+
+//    if(false && datawriter.is_open()) {
+//        datawriter << ts * emorph::vtsHelper::tstosecs() << " " << bestx << " "
+//                   << besty << " " << bestr << " " << bestinliers << " " << 0 << " " << 0 << std::endl;
+//    }
 
     //also add a single circle tracking position to the output
     //at the moment we are just using ClusterEventGauss
@@ -278,56 +308,56 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
         circevent.setID(0);
         outBottle.addEvent(circevent);
 
-        if(false && datawriter.is_open()) {
-            datawriter << 2 << " "
-                       << bestts * emorph::vtsHelper::tstosecs() << " "
-                       << bestx << " "
-                       << besty << " "
-                       << bestr << " " << 0 << " " << 0 << std::endl;
-        }
+//        if(false && datawriter.is_open()) {
+//            datawriter << 2 << " "
+//                       << bestts * emorph::vtsHelper::tstosecs() << " "
+//                       << bestx << " "
+//                       << besty << " "
+//                       << bestr << " " << 0 << " " << 0 << std::endl;
+//        }
 
-        if(!circleTracker.isActive()) {
-            circleTracker.startTracking(bestx, besty, bestr);
-        } else {
-            if(pTS > bestts) pTS -= emorph::vtsHelper::maxStamp();
-            circleTracker.predict((bestts - pTS)*emorph::vtsHelper::tstosecs());
-            circleTracker.correct(bestx, besty, bestr);
-        }
-        pTS = bestts;
+//        if(!circleTracker.isActive()) {
+//            circleTracker.startTracking(bestx, besty, bestr);
+//        } else {
+//            if(pTS > bestts) pTS -= emorph::vtsHelper::maxStamp();
+//            circleTracker.predict((bestts - pTS)*emorph::vtsHelper::tstosecs());
+//            circleTracker.correct(bestx, besty, bestr);
+//        }
+//        pTS = bestts;
 
 
-        double x, y, r;
-        if(circleTracker.getState(x, y, r)) {
-            //std::cout << x << " " << y << " " << r << std::endl;
-            emorph::ClusterEventGauss circevent;
-            circevent.setStamp(ts);
-            circevent.setChannel(0);
-            circevent.setXCog(x);
-            circevent.setYCog(y);
-            circevent.setXSigma2(r);
-            circevent.setYSigma2(1);
-            circevent.setID(1);
-            outBottle.addEvent(circevent);
+//        double x, y, r;
+//        if(circleTracker.getState(x, y, r)) {
+//            //std::cout << x << " " << y << " " << r << std::endl;
+//            emorph::ClusterEventGauss circevent;
+//            circevent.setStamp(ts);
+//            circevent.setChannel(0);
+//            circevent.setXCog(x);
+//            circevent.setYCog(y);
+//            circevent.setXSigma2(r);
+//            circevent.setYSigma2(1);
+//            circevent.setID(1);
+//            outBottle.addEvent(circevent);
 
-            if(false && datawriter.is_open()) {
-                datawriter << ts * emorph::vtsHelper::tstosecs() << " " << bestx << " "
-                           << besty << " " << bestr << " " << bestinliers << " "
-                           << x << " " << y << " " << r << std::endl;
-            }
-        }
+//            if(false && datawriter.is_open()) {
+//                datawriter << ts * emorph::vtsHelper::tstosecs() << " " << bestx << " "
+//                           << besty << " " << bestr << " " << bestinliers << " "
+//                           << x << " " << y << " " << r << std::endl;
+//            }
+//        }
     }
 
     //send on our event bottle
-    outPort.write();
+    outPort.writeStrict();
 
-    double dstamp = st.getTime() - pstamp.getTime();
-    if(houghOut.getOutputCount() && (dstamp > 0.03333 || dstamp < 0)) {
-        pstamp = st;
-        yarp::sig::ImageOf< yarp::sig::PixelBgr> &image = houghOut.prepare();
-        image = houghFinder.makeDebugImage4();
-        houghOut.setEnvelope(st);
-        houghOut.write();
-    }
+//    double dstamp = st.getTime() - pstamp.getTime();
+//    if(houghOut.getOutputCount() && (dstamp > 0.03333 || dstamp < 0)) {
+//        pstamp = st;
+//        yarp::sig::ImageOf< yarp::sig::PixelBgr> &image = houghOut.prepare();
+//        image = houghFinder.makeDebugImage4();
+//        houghOut.setEnvelope(st);
+//        houghOut.write();
+//    }
 
 
 }

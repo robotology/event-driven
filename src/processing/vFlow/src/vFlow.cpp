@@ -199,7 +199,7 @@ void vFlowManager::onRead(emorph::vBottle &inBottle)
     }
 
 
-    outPort.write();
+    outPort.writeStrict();
 
 }
 
