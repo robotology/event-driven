@@ -29,10 +29,11 @@ vHoughCircleObserver::vHoughCircleObserver()
     qduration = 200000;
     useFlow = false;
     r1 = 10;
-    r2 = 36;
+    r2 = 20;
     rsize = r2 - r1;
     height = 128;
     width = 128;
+    double error = 5;
 
     valid = false;
     xc = 0; yc = 0; rc = 0; valc = 0;
@@ -41,6 +42,8 @@ vHoughCircleObserver::vHoughCircleObserver()
         H.push_back(new yarp::sig::Matrix(height, width));
         posThreshs.push_back(1.0 / (int)(6.2831853 * (r+r1) + 0.5));
         negThreshs.push_back(-1 * posThreshs.back());
+
+        a.push_back((r+r1) * tan(error * M_PI / 180.0));
     }
 
     x_max = 0; y_max = 0; r_max = 0;
@@ -148,10 +151,10 @@ bool vHoughCircleObserver::updateH(emorph::vEvent &event, int val)
         emorph::FlowEvent *v = event.getAs<emorph::FlowEvent>();
         if(!v) return false;
         if(val > 0)
-            updateHFlowAngle(v->getX(), v->getY(), posThreshs, v->getVx(),
+            updateHFlowAngle2(v->getX(), v->getY(), posThreshs, v->getVx(),
                              v->getVy());
         else
-            updateHFlowAngle(v->getX(), v->getY(), negThreshs, v->getVx(),
+            updateHFlowAngle2(v->getX(), v->getY(), negThreshs, v->getVx(),
                              v->getVy());
     } else {
         emorph::AddressEvent *v = event.getAs<emorph::AddressEvent>();
@@ -341,6 +344,139 @@ void vHoughCircleObserver::updateHFlowAngle(int xv, int yv,
     }
 }
 
+void vHoughCircleObserver::updateHFlowAngle2(int xv, int yv,
+                                            std::vector<double> &threshs,
+                                            double dtdx, double dtdy)
+{
+    int P = 1;
+    double temp = dtdx;
+    dtdx = dtdy;
+    dtdy = temp;
+
+    bool horquad = abs(dtdx/dtdy) < 1;
+    double velR = sqrt(pow(dtdx, 2.0) + pow(dtdy, 2.0));
+    double xn = dtdx / velR;
+    double yn = dtdy / velR;
+
+    for(int r = 0; r < rsize; r++) {
+
+        //calculate the radius in pixels
+        double R = r1+r;
+        double Rsq = pow(R, 2.0);
+
+        //calculate the end position of the tangent to the arc
+        double x2 = R * xn - yn * a[r];
+        double y2 = R * yn + xn * a[r];
+
+        double nonadjR = sqrt(pow(x2, 2.0) + pow(y2, 2.0));
+
+        //then adjust to fit the radius R
+        double x2h = R * x2 / nonadjR;
+        double y2h = R * y2 / nonadjR;
+
+        //also for the other end of the arc
+        double x3 = R * xn + yn * a[r];
+        double y3 = R * yn - xn * a[r];
+
+        double x3h = R * x3 / nonadjR; //nonadjR is the same for both 2 and 3
+        double y3h = R * y3 / nonadjR;
+
+        //treat it differently depending on the angle
+        if(horquad) {
+
+            //we are mostly left or right of the centre
+            int sign = xn < 0 ? -1 : 1;
+
+            //get the starting position
+            int yStart = y2h+0.5, yEnd = y3h+0.5;
+            if(y2h > y3h) {
+                yStart = y3h+0.5; yEnd = y2h+0.5;
+            }
+
+            //and then go through the y values
+            for(int yd = yStart; yd <= yEnd; yd++) {
+
+                //calculate the x value
+                int xd = (int)((sqrt(Rsq - pow(yd, 2.0))+0.5) * sign);
+
+                //for both forward and reverse directions
+                for(int dir = 1; dir >= -1; dir -= 2) {
+
+                    //update the direction
+                    int xdd = xd * dir;
+                    int ydd = yd * dir;
+
+                    //calculate x pixel location and check limits
+                    int ypix = yv + ydd;
+                    if(!(ypix > 0 && ypix < width)) continue;
+
+                    //then for some error band add in the values
+                    for(int s = -P; s <= P; s++) {
+
+                        //calculate the y value
+                        int xpix = xv + xdd + s;
+                        if(!(xpix > 0 && xpix < height)) continue;
+
+                        //update and check the hough transform
+                        (*H[r])[ypix][xpix] += threshs[r];
+                        if((*H[r])[ypix][xpix] > *obs_max) {
+                            r_max = R; y_max = ypix; x_max = xpix;
+                            obs_max = &(*H[r])[ypix][xpix];
+                        }
+                    }
+                }
+            }
+        } else {
+
+
+            //we are mostly vertical either above or below the centre
+            int sign = yn < 0 ? -1 : 1;
+
+            //get the starting position
+            int xStart = x2h+0.5, xEnd = x3h+0.5;
+            if(x2h > x3h) {
+                xStart = x3h+0.5; xEnd = x2h+0.5;
+            }
+
+            //and then go through the x values
+            for(int xd = xStart; xd <= xEnd; xd++) {
+
+                //calculate the y value
+                int yd = (int)((sqrt(Rsq - pow(xd, 2.0))+0.5) * sign);
+
+                //for both forward and reverse directions
+                for(int dir = 1; dir >= -1; dir -= 2) {
+
+                    //update the direction
+                    int xdd = xd * dir;
+                    int ydd = yd * dir;
+
+                    //calculate x pixel location and check limits
+                    int xpix = xv + xdd;
+                    if(!(xpix > 0 && xpix < width)) continue;
+
+                    //then for some error band add in the values
+                    for(int s = -P; s <= P; s++) {
+
+                        //calculate the y value
+                        int ypix = yv + ydd + s;
+                        if(!(ypix > 0 && ypix < height)) continue;
+
+                        //update and check the hough transform
+                        (*H[r])[ypix][xpix] += threshs[0];
+                        if((*H[r])[ypix][xpix] > *obs_max) {
+                            r_max = R; y_max = ypix; x_max = xpix;
+                            obs_max = &(*H[r])[ypix][xpix];
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+}
+
 double vHoughCircleObserver::getMaximum(int &x, int &y, int &r)
 {
     double val = 0;
@@ -365,11 +501,11 @@ double vHoughCircleObserver::getMaximum(int &x, int &y, int &r)
     return val;
 }
 
-yarp::sig::ImageOf<yarp::sig::PixelMono> vHoughCircleObserver::makeDebugImage(
+yarp::sig::ImageOf<yarp::sig::PixelBgr> vHoughCircleObserver::makeDebugImage(
         int r)
 {
 
-    yarp::sig::ImageOf<yarp::sig::PixelMono> canvas;
+    yarp::sig::ImageOf<yarp::sig::PixelBgr> canvas;
     canvas.resize(width, height);
     canvas.zero();
     if(r < r1 || r > r2) return canvas;
@@ -377,10 +513,13 @@ yarp::sig::ImageOf<yarp::sig::PixelMono> vHoughCircleObserver::makeDebugImage(
 
     for(int y = 0; y < height; y++) {
         for(int x = 0; x < width; x++) {
-            if((*H[r])[y][x] > 0.3)
-                canvas(y,127- x) = 255.0;
+            double I;
+            if((*H[r])[y][x] > 0.2)
+                I = 255.0;
             else
-                canvas(y,127- x) = 255.0 * (*H[r])[y][x] / 0.3;
+                I = 255.0 * (*H[r])[y][x] / 0.2;
+            canvas(y,127- x) = yarp::sig::PixelBgr(I, I, I);
+
 
         }
     }
@@ -388,7 +527,7 @@ yarp::sig::ImageOf<yarp::sig::PixelMono> vHoughCircleObserver::makeDebugImage(
     return canvas;
 }
 
-yarp::sig::ImageOf<yarp::sig::PixelMono> vHoughCircleObserver::makeDebugImage2()
+yarp::sig::ImageOf<yarp::sig::PixelBgr> vHoughCircleObserver::makeDebugImage2()
 {
 
     int bx, by, br;
@@ -493,7 +632,7 @@ yarp::sig::ImageOf<yarp::sig::PixelBgr> vHoughCircleObserver::makeDebugImage4()
 {
 
     int scale = 4;
-    yarp::sig::ImageOf<yarp::sig::PixelMono>  h = makeDebugImage2();
+    yarp::sig::ImageOf<yarp::sig::PixelBgr>  h = makeDebugImage2();
     yarp::sig::ImageOf<yarp::sig::PixelBgr>   e = makeDebugImage3(scale);
     yarp::sig::ImageOf<yarp::sig::PixelBgr> final;
     final.resize(e.width(), e.height()*2);
@@ -502,11 +641,11 @@ yarp::sig::ImageOf<yarp::sig::PixelBgr> vHoughCircleObserver::makeDebugImage4()
     cv::Mat cve = (IplImage *)e.getIplImage();
 
     //resize the hough image
-    cv::Mat hbig(cvh.size() * scale, CV_8U);
-    cv::resize(cvh, hbig, cvh.size() * scale);
+    cv::Mat hbigcol(cvh.size() * scale, CV_8UC3);
+    cv::resize(cvh, hbigcol, cvh.size() * scale);
     //color the hough image
-    cv::Mat hbigcol(hbig.size(), CV_8UC3);
-    cv::cvtColor(hbig, hbigcol, CV_GRAY2BGR);
+    //cv::Mat hbigcol(hbig.size(), CV_8UC3);
+    //cv::cvtColor(hbig, hbigcol, CV_GRAY2BGR);
 
     //put the two images in the one
     //cv::resize(cve, (cv::Mat)cvfinal(cv::Rect(0, 0, e.width(), e.height())), cv::Size(e.width(), e.height()));

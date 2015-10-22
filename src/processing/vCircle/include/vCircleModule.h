@@ -53,6 +53,7 @@ public:
     vCircleMultiSize * cObserver;
     double inlierThreshold;
     bool hough;
+    double timecounter;
     
     vCircleReader();
 

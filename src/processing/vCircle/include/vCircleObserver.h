@@ -32,6 +32,7 @@ private:
     std::vector<double> negThreshs;
     std::vector<double> rot;
     std::vector<double> err;
+    std::vector<double> a;
     emorph::vQueue FIFO;
 
     //parameters
@@ -50,6 +51,8 @@ private:
     void updateHFlow(int xv, int yv, std::vector<double> &threshs,
                      double dtdx, double dtdy);
     void updateHFlowAngle(int xv, int yv, std::vector<double> &threshs,
+                          double dtdx, double dtdy);
+    void updateHFlowAngle2(int xv, int yv, std::vector<double> &threshs,
                           double dtdx, double dtdy);
 
 
@@ -77,8 +80,8 @@ public:
     double getMaximum(int &x, int &y, int &r);
 
 
-    yarp::sig::ImageOf<yarp::sig::PixelMono> makeDebugImage(int r);
-    yarp::sig::ImageOf<yarp::sig::PixelMono> makeDebugImage2();
+    yarp::sig::ImageOf<yarp::sig::PixelBgr> makeDebugImage(int r);
+    yarp::sig::ImageOf<yarp::sig::PixelBgr> makeDebugImage2();
     yarp::sig::ImageOf<yarp::sig::PixelBgr> makeDebugImage3(int s = 4);
     yarp::sig::ImageOf<yarp::sig::PixelBgr> makeDebugImage4();
 

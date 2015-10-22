@@ -135,6 +135,7 @@ vCircleReader::vCircleReader()
 {
     inlierThreshold = 5;
     hough = false;
+    timecounter = 0;
 }
 
 /******************************************************************************/
@@ -224,7 +225,7 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
     }
 
     double t1 = yarp::os::Time::now();
-    cObserver->addQueue(q);
+    //cObserver->addQueue(q);
     double t2 = yarp::os::Time::now();
 
     int bestx, besty, bestr; double bestinliers = 0, bestts = 0;
@@ -274,17 +275,18 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
 
     double t3 = yarp::os::Time::now();
 
-    std::cout << "Serial Hough: " << houghFinder.computationtime << std::endl;
-    std::cout << "Serial: " << t3 - t2 << " & Parallel: " << t2 - t1 << std::endl;
+    //std::cout << "Serial Hough: " << houghFinder.computationtime << std::endl;
+    //std::cout << "Serial: " << t3 - t2 << " & Parallel: " << t2 - t1 << std::endl;
 
+    timecounter += t3 - t2;
 
-//    bestinliers = *houghFinder.obs_max;
-//    bestx = houghFinder.x_max;
-//    besty = houghFinder.y_max;
-//    bestr = houghFinder.r_max;
+    bestinliers = *houghFinder.obs_max;
+    bestx = houghFinder.x_max;
+    besty = houghFinder.y_max;
+    bestr = houghFinder.r_max;
     bestts = ts;
 
-    bestinliers = cObserver->getObs(bestx, besty, bestr);
+    //bestinliers = cObserver->getObs(bestx, besty, bestr);
     //std::cout << bestinliers << std::endl;
 
     //ts = unwrap(v->getStamp());std::cout << bestinliers << std::endl;
@@ -350,14 +352,16 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
     //send on our event bottle
     outPort.writeStrict();
 
-//    double dstamp = st.getTime() - pstamp.getTime();
-//    if(houghOut.getOutputCount() && (dstamp > 0.03333 || dstamp < 0)) {
-//        pstamp = st;
-//        yarp::sig::ImageOf< yarp::sig::PixelBgr> &image = houghOut.prepare();
-//        image = houghFinder.makeDebugImage4();
-//        houghOut.setEnvelope(st);
-//        houghOut.write();
-//    }
+    double dstamp = st.getTime() - pstamp.getTime();
+    if(houghOut.getOutputCount() && (dstamp > 0.03333 || dstamp < 0)) {
+        pstamp = st;
+        yarp::sig::ImageOf< yarp::sig::PixelBgr> &image = houghOut.prepare();
+        image = houghFinder.makeDebugImage2();
+        houghOut.setEnvelope(st);
+        houghOut.write();
+        std::cout << timecounter << std::endl;
+        //timecounter = 0;
+    }
 
 
 }
