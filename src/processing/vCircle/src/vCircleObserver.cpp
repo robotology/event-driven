@@ -151,10 +151,10 @@ bool vHoughCircleObserver::updateH(emorph::vEvent &event, int val)
         emorph::FlowEvent *v = event.getAs<emorph::FlowEvent>();
         if(!v) return false;
         if(val > 0)
-            updateHFlowAngle2(v->getX(), v->getY(), posThreshs, v->getVx(),
+            updateHFlowAngle(v->getX(), v->getY(), posThreshs, v->getVx(),
                              v->getVy());
         else
-            updateHFlowAngle2(v->getX(), v->getY(), negThreshs, v->getVx(),
+            updateHFlowAngle(v->getX(), v->getY(), negThreshs, v->getVx(),
                              v->getVy());
     } else {
         emorph::AddressEvent *v = event.getAs<emorph::AddressEvent>();
@@ -696,7 +696,7 @@ vCircleThread::vCircleThread(int R, bool directed, int height, int width)
 
 }
 
-void vCircleThread::process(emorph::vQueue &adds, emorph::vQueue &subs) {
+void vCircleThread::process(emorph::vList &adds, emorph::vList &subs) {
 
     this->adds = &adds;
     this->subs = &subs;
@@ -825,7 +825,6 @@ void vCircleThread::run()
 
         for(int i = 0; i < subs->size(); i++) {
 
-
             if(directed) {
 
                 emorph::FlowEvent * vadd = (*adds)[i]->getAs<emorph::FlowEvent>();
@@ -859,6 +858,7 @@ void vCircleThread::run()
                     updateHAddress(vadd->getX(), vadd->getY(), Rstrength);
                 }
             }
+
         }
 
         signalfinish();
@@ -877,12 +877,13 @@ vCircleMultiSize::vCircleMultiSize(std::string qType, int rLow, int rHigh,
     for(int r = rLow; r <= rHigh; r++)
         htransforms.push_back(new vCircleThread(r, directed, height, width));
 
+    dummy.referto();
 }
 
 vCircleMultiSize::~vCircleMultiSize()
 {
 
-    emorph::vQueue dummy1, dummy2;
+    emorph::vList dummy1, dummy2;
     std::vector<vCircleThread *>::iterator i;
     for(i = htransforms.begin(); i != htransforms.end(); i++) {
         (*i)->stop();
@@ -954,7 +955,7 @@ void vCircleMultiSize::addQueue(emorph::vQueue &additions) {
 
 }
 
-void vCircleMultiSize::updateHough(emorph::vQueue &adds, emorph::vQueue &subs)
+void vCircleMultiSize::updateHough(emorph::vList &adds, emorph::vList &subs)
 {
 
     score = 0;
@@ -991,20 +992,29 @@ double vCircleMultiSize::getObs(int &x, int &y, int &r)
 void vCircleMultiSize::addFixed(emorph::vQueue &additions)
 {
 
-    emorph::vQueue subtractions;
-    emorph::vEvent dummy;
+    emorph::vList listadditions;
+    emorph::vList subtractions;
+
+    emorph::vQueue::iterator vqi;
+    for(vqi = additions.begin(); vqi != additions.end(); vqi++)
+        listadditions.push_back((*vqi)->clone());
 
     double t1 = yarp::os::Time::now();
-    emorph::vQueue::iterator vi;
-    for(vi = additions.begin(); vi != additions.end(); vi++) {
+
+    emorph::vList::iterator vi;
+    for(vi = listadditions.begin(); vi != listadditions.end(); vi++) {
+
+
 
         emorph::AddressEvent *v = (*vi)->getAs<emorph::AddressEvent>();
         if(!v || v->getChannel()) continue;
 
+
+
         int cx = v->getX(); int cy = v->getY();
 
         bool removed = false;
-        emorph::vQueue::iterator i = FIFO.begin();
+        emorph::vList::iterator i = FIFO.end();
         while(i != FIFO.end()) {
             //we only add Address Events therefore we can do an unsafe cast
             v = (*i)->getUnsafe<emorph::AddressEvent>();
@@ -1021,14 +1031,28 @@ void vCircleMultiSize::addFixed(emorph::vQueue &additions)
             }
         }
 
+
+
         //if successful add it to the FIFO and check to remove others
         FIFO.push_front(*vi);
-        while(FIFO.size() > qlength) {
-            //remHough(*FIFO.back());
+
+        if(FIFO.size() > qlength) {
+
+            emorph::vEvent * temp = FIFO.back();
+            continue;
             subtractions.push_back(FIFO.back());
             FIFO.pop_back();
             removed = true;
         }
+
+
+//        while(FIFO.size() > qlength) {
+//            //remHough(*FIFO.back());
+//            subtractions.push_back(FIFO.back());
+//            FIFO.pop_back();
+//            removed = true;
+//        }
+
         if(!removed) subtractions.push_back(&dummy);
         //add this event to the hough space
         //addHough(event);
@@ -1036,7 +1060,7 @@ void vCircleMultiSize::addFixed(emorph::vQueue &additions)
 
     std::cout << "Paralell Set-up: " << yarp::os::Time::now() - t1 << std::endl;
 
-    updateHough(additions, subtractions);
+    updateHough(listadditions, subtractions);
 
 }
 

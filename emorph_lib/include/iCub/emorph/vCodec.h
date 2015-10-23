@@ -81,6 +81,7 @@ class vEvent
 private:
     const static int localWordsCoded = 1;
 
+
 protected:
 
     const static unsigned int max_stamp = 16777215; //2^24
@@ -88,9 +89,13 @@ protected:
 
 public:
     //!blank constructor required at base level
-    vEvent() : stamp(0) { }
+    vEvent() : stamp(0), refcount(0) { }
     //!copy constructor
     vEvent(const vEvent &event);
+
+    int refcount;
+    void referto() { refcount++; }
+    bool destroy() { return !(--refcount > 0); }
 
     virtual std::string getType() const { return "TS";}
 

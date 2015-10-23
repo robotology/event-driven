@@ -182,6 +182,7 @@ bool vCircleReader::open(const std::string &name, bool strictness)
 /******************************************************************************/
 void vCircleReader::close()
 {
+    std::cout << this->timecounter << std::endl;
     //close ports
     outPort.close();
     scopeOut.close();
@@ -218,6 +219,7 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
     //create event queue
     emorph::vQueue q = inBot.get<emorph::AddressEvent>();
     q.wrapSort();
+    emorph::vList vl;
 
     if(!q.size()) {
         outPort.write();
@@ -225,7 +227,7 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
     }
 
     double t1 = yarp::os::Time::now();
-    //cObserver->addQueue(q);
+    cObserver->addQueue(q);
     double t2 = yarp::os::Time::now();
 
     int bestx, besty, bestr; double bestinliers = 0, bestts = 0;
@@ -234,6 +236,10 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
     houghFinder.computationtime = 0;
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
 
+        //std::cout << (*qi)->refcount << std::endl;
+        //vl.push_back(*qi);
+        //std::cout << vl.back()->refcount << std::endl;
+
 //        //get the event in the correct form
         emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
         if(!v || v->getChannel()) continue;
@@ -241,7 +247,7 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
 //        ts = unwrap(v->getStamp());
 //        double t1 = yarp::os::Time::now();
 
-        houghFinder.addEvent(*v);
+        //houghFinder.addEvent(*v);
 //
 
 //        cObserver->addEvent(*v);

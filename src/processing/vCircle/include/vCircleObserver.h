@@ -115,8 +115,8 @@ private:
     yarp::os::Mutex mdone;
 
     //current data
-    emorph::vQueue * adds;
-    emorph::vQueue * subs;
+    emorph::vList * adds;
+    emorph::vList * subs;
 
     void updateHAddress(int xv, int yv, double strength);
     void updateHFlowAngle(int xv, int yv, double strength, double dtdx,
@@ -140,7 +140,7 @@ public:
     int getY() { return y_max; }
     int getR() { return R; }
 
-    void process(emorph::vQueue &adds, emorph::vQueue &subs);
+    void process(emorph::vList &adds, emorph::vList &subs);
     void waitfordone() { mdone.lock(); }
 
 };
@@ -161,12 +161,13 @@ private:
     double score;
     int x, y, r;
 
-    emorph::vQueue FIFO;
+    emorph::vList FIFO;
+    emorph::vEvent dummy;
     std::vector<vCircleThread *> htransforms;
 
     void addHough(emorph::vEvent &event);
     void remHough(emorph::vEvent &event);
-    void updateHough(emorph::vQueue &adds, emorph::vQueue &subs);
+    void updateHough(emorph::vList &adds, emorph::vList &subs);
 
     void addFixed(emorph::vQueue &additions);
     void addTime(emorph::vQueue &additions);
