@@ -24,7 +24,8 @@
 class vHoughCircleObserver
 {
 
-private:
+public:
+//private:
 
     //data
     std::vector<yarp::sig::Matrix *> H;
@@ -94,9 +95,11 @@ public:
 class vCircleThread : public yarp::os::Thread
 {
 
-private:
+//private:
+public:
 
     //parameters
+    bool parallel;
     int R;
     double Rsqr;
     bool directed;
@@ -105,8 +108,9 @@ private:
 
     //data
     yarp::sig::Matrix H;
-    std::vector<double> rot;
-    std::vector<double> err;
+    double a; //tangent to arc length
+    //std::vector<double> rot;
+    //std::vector<double> err;
     double Rstrength;
     int x_max, y_max;
     bool valid;
@@ -122,6 +126,7 @@ private:
     void updateHFlowAngle(int xv, int yv, double strength, double dtdx,
                           double dtdy);
 
+    void performHough();
     virtual void run();
 
     void waitforstart() { mstart.lock(); }
@@ -129,7 +134,7 @@ private:
 
 public:
 
-    vCircleThread(int R, bool directed, int height = 128, int width = 128);
+    vCircleThread(int R, bool directed, bool parallel = false, int height = 128, int width = 128);
 
 //    void setAddEvent(emorph::vEvent &event);
 //    void setRemEvent(emorph::vEvent &event);
@@ -141,7 +146,7 @@ public:
     int getR() { return R; }
 
     void process(emorph::vList &adds, emorph::vList &subs);
-    void waitfordone() { mdone.lock(); }
+    void waitfordone();
 
 };
 
@@ -151,13 +156,15 @@ public:
 class vCircleMultiSize
 {
 
-private:
+//private:
+public:
 
     //parameters
     std::string qType;
     int qlength;
     int qduration;
 
+    std::vector<vCircleThread *>::iterator best;
     double score;
     int x, y, r;
 
@@ -175,8 +182,8 @@ private:
 
 public:
 
-    vCircleMultiSize(std::string qType, int rLow = 8, int rHigh = 38,
-                     bool directed = true, int height = 128, int width = 128);
+    vCircleMultiSize(std::string qType, int qLength = 2000, int rLow = 8, int rHigh = 38,
+                     bool directed = true, bool parallel = false, int height = 128, int width = 128);
     ~vCircleMultiSize();
 
     void addEvent(emorph::vEvent &event);

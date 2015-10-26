@@ -76,7 +76,7 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
 
     circleReader.houghFinder.useFlow = flowhough;
     circleReader.cObserver =
-            new vCircleMultiSize(qType, 10, 36, flowhough, 128, 128);
+            new vCircleMultiSize(qType, 2000, 10, 35, flowhough, false, 128, 128);
 
     //initialise the dection and tracking
     circleReader.inlierThreshold = inlierThreshold;
@@ -93,7 +93,7 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
     if(!circleReader.open(moduleName, strictness)) {
         std::cerr << "Could not open required ports" << std::endl;
         return false;
-    }    
+    }
 
     return true ;
 }
@@ -219,10 +219,9 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
     //create event queue
     emorph::vQueue q = inBot.get<emorph::AddressEvent>();
     q.wrapSort();
-    emorph::vList vl;
 
     if(!q.size()) {
-        outPort.write();
+        outPort.writeStrict();
         return;
     }
 
@@ -233,19 +232,21 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
     int bestx, besty, bestr; double bestinliers = 0, bestts = 0;
     double ts = unwrap(q.back()->getStamp());
 
-    houghFinder.computationtime = 0;
-    for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
+    //houghFinder.computationtime = 0;
+    //for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
 
         //std::cout << (*qi)->refcount << std::endl;
         //vl.push_back(*qi);
         //std::cout << vl.back()->refcount << std::endl;
 
 //        //get the event in the correct form
-        emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
-        if(!v || v->getChannel()) continue;
+        //emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
+        //if(!v || v->getChannel()) continue;
+
 
 //        ts = unwrap(v->getStamp());
 //        double t1 = yarp::os::Time::now();
+
 
         //houghFinder.addEvent(*v);
 //
@@ -277,22 +278,50 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
 ////                           << std::endl;
 ////            }
 ////        }
-    }
+//    }
 
-    double t3 = yarp::os::Time::now();
+    //std::cout << "Old: " << houghFinder.FIFO.size() << " " <<  houghFinder.FIFO.back()->getStamp() << std::endl;
+    //double t3 = yarp::os::Time::now();
 
     //std::cout << "Serial Hough: " << houghFinder.computationtime << std::endl;
     //std::cout << "Serial: " << t3 - t2 << " & Parallel: " << t2 - t1 << std::endl;
 
-    timecounter += t3 - t2;
+    timecounter += t2 - t1;
 
-    bestinliers = *houghFinder.obs_max;
-    bestx = houghFinder.x_max;
-    besty = houghFinder.y_max;
-    bestr = houghFinder.r_max;
+//    bestinliers = *houghFinder.obs_max;
+//    bestx = houghFinder.x_max;
+//    besty = houghFinder.y_max;
+//    bestr = houghFinder.r_max;
     bestts = ts;
 
-    //bestinliers = cObserver->getObs(bestx, besty, bestr);
+    //double pInliers;
+    //int pX, pY, pR;
+    //pInliers  = cObserver->getObs(pX, pY, pR);
+    bestinliers = cObserver->getObs(bestx, besty, bestr);
+
+//    for(int yi = 0; yi < 128; yi++) {
+//        for(int xi = 0; xi < 128; xi++) {
+//            if((*houghFinder.H[1])[yi][xi] != cObserver->htransforms[1]->H[yi][xi]) {
+//                std::cout << "Hough's not equal" << std::endl;
+//            }
+//        }
+//    }
+
+//    if(bestinliers > pInliers /*|| bestr != pR || bestx != pX || besty != pY*/) {
+//        std::cout << "Serial: " << bestinliers << " " << bestr << " " << bestx << " " << besty << std::endl;
+//        for(int i = 0; i < cObserver->htransforms.size(); i++) {
+//            int pX = cObserver->htransforms[i]->x_max;
+//            int pY = cObserver->htransforms[i]->y_max;
+//            double pScore = cObserver->htransforms[i]->H[pY][pX];
+//            double sScore = cObserver->htransforms[i]->H[besty][bestx];
+//            int pR = cObserver->htransforms[i]->R;
+//            std::cout << "Parallel(SMAX): " << sScore << " " << pR << " " << bestx << " " << besty << std::endl;
+//            std::cout << "Parallel(PMAX): " << pScore << " " << pR << " " << pX << " " << pY << std::endl;
+//        }
+//        //std::cout << "Old -> New" << std::endl;
+//        //std::cout << bestinliers << " " << pInliers << " " << bestr << " " << pR << std::endl;
+//        //std::cout << bestx << " " << pX << " " << besty << " " << pY << std::endl << std::endl;
+//    }
     //std::cout << bestinliers << std::endl;
 
     //ts = unwrap(v->getStamp());std::cout << bestinliers << std::endl;
