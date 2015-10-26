@@ -41,6 +41,7 @@ private:
 
     //our filter/tracker
 
+    bool strictness;
     bool debugFlag;
     std::ofstream datawriter;
     yarp::os::Stamp pstamp;

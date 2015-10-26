@@ -23,12 +23,14 @@
 /*////////////////////////////////////////////////////////////////////////////*/
 bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
 {
-    //set the name of the module
+    //administrative options
     std::string moduleName =
             rf.check("name", yarp::os::Value("vCircle")).asString();
     setName(moduleName.c_str());
 
     bool strictness = rf.check("strict", yarp::os::Value(false)).asBool();
+
+    bool parallel = rf.check("parallel", yarp::os::Value(false)).asBool();
 
     //sensory size
     int width = rf.check("width", yarp::os::Value(128)).asInt();
@@ -36,16 +38,14 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
 
 
     //observation parameters
-    int obsRadius = rf.check("obsWindow", yarp::os::Value(32)).asDouble();
-    int temporalWindow =
-            rf.check("temWindow", yarp::os::Value(200000)).asDouble();
     double inlierThreshold = rf.check("inlierThreshold",
                                    yarp::os::Value(50)).asDouble() / 100.0;
-    //if(inlierThreshold > 1) inlierThreshold = 1;
-    double angleThreshold = rf.check("angleThreshold",
-                                     yarp::os::Value(0.1)).asDouble();
-    double radiusThreshold = rf.check("radiusThreshold",
-                                      yarp::os::Value(1.5)).asDouble();
+
+    std::string qType = rf.check("qType",
+                                 yarp::os::Value("Lifetime")).asString();
+
+    std::string houghType = rf.check("houghType",
+                              yarp::os::Value(true)).asString();
 
     //filter parameters
     double procNoisePos = rf.check("procNoisePos",
@@ -64,19 +64,13 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
     std::string datafilename = rf.check("datafile",
                                         yarp::os::Value("")).asString();
 
-    circleReader.hough = rf.check("hough",
-                                  yarp::os::Value(true)).asBool();
+    bool flowhough = true;
+    if(houghType == "full") flowhough = false;
+    //circleReader.houghFinder.qType = qType;
+    //circleReader.houghFinder.useFlow = flowhough;
 
-    std::string qType = rf.check("windowtype",
-                                 yarp::os::Value("Lifetime")).asString();
-    circleReader.houghFinder.qType = qType;
-
-    bool flowhough = rf.check("flowhough",
-                              yarp::os::Value(true)).asBool();
-
-    circleReader.houghFinder.useFlow = flowhough;
     circleReader.cObserver =
-            new vCircleMultiSize(qType, 2000, 10, 35, flowhough, false, 128, 128);
+            new vCircleMultiSize(qType, 2000, 10, 35, flowhough, parallel, width, height);
 
     //initialise the dection and tracking
     circleReader.inlierThreshold = inlierThreshold;
@@ -109,24 +103,21 @@ bool vCircleModule::interruptModule()
 /******************************************************************************/
 bool vCircleModule::close()
 {
-    std::cout << "Closing vCircleModule" << std::endl;
     circleReader.close();
     yarp::os::RFModule::close();
-    std::cout << "Closed vCircleModule" << std::endl;
     return true;
 }
 
 /******************************************************************************/
 bool vCircleModule::updateModule()
 {
-
     return true;
 }
 
 /******************************************************************************/
 double vCircleModule::getPeriod()
 {
-    return 0.3;
+    return 1;
 
 }
 
@@ -136,6 +127,7 @@ vCircleReader::vCircleReader()
     inlierThreshold = 5;
     hough = false;
     timecounter = 0;
+    strictness = false;
 }
 
 /******************************************************************************/
@@ -154,8 +146,8 @@ bool vCircleReader::setDataWriter(std::string datafilename)
 /******************************************************************************/
 bool vCircleReader::open(const std::string &name, bool strictness)
 {
-
     if(strictness) {
+        this->strictness = true;
         std::cout << "Setting " << name << " to strict" << std::endl;
         this->setStrict();
     }
@@ -182,7 +174,8 @@ bool vCircleReader::open(const std::string &name, bool strictness)
 /******************************************************************************/
 void vCircleReader::close()
 {
-    std::cout << this->timecounter << std::endl;
+    std::cout << "vCirle spent " << this->timecounter
+              << " seconds processing events" << std::endl;
     //close ports
     outPort.close();
     scopeOut.close();
@@ -207,8 +200,6 @@ void vCircleReader::interrupt()
 void vCircleReader::onRead(emorph::vBottle &inBot)
 {
     
-    // prepare output vBottle with address events extended with cluster ID (aec)
-    // and cluster events (clep)
     emorph::vBottle &outBottle = outPort.prepare();
     outBottle = inBot;
 
@@ -221,119 +212,19 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
     q.wrapSort();
 
     if(!q.size()) {
-        outPort.writeStrict();
+        if(strictness) outPort.writeStrict();
+        else outPort.write();
         return;
     }
 
     double t1 = yarp::os::Time::now();
     cObserver->addQueue(q);
-    double t2 = yarp::os::Time::now();
+    timecounter += yarp::os::Time::now() - t1;
 
-    int bestx, besty, bestr; double bestinliers = 0, bestts = 0;
-    double ts = unwrap(q.back()->getStamp());
+    int bestx, besty, bestr;
+    double bestts = unwrap(q.back()->getStamp());
 
-    //houghFinder.computationtime = 0;
-    //for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
-
-        //std::cout << (*qi)->refcount << std::endl;
-        //vl.push_back(*qi);
-        //std::cout << vl.back()->refcount << std::endl;
-
-//        //get the event in the correct form
-        //emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
-        //if(!v || v->getChannel()) continue;
-
-
-//        ts = unwrap(v->getStamp());
-//        double t1 = yarp::os::Time::now();
-
-
-        //houghFinder.addEvent(*v);
-//
-
-//        cObserver->addEvent(*v);
-//
-
-//        std::cout << t2 - t1 << " " << t3 - t2 << std::endl;
-
-////        if(false && datawriter.is_open()) {
-
-////            emorph::FlowEvent *fv = v->getAs<emorph::FlowEvent>();
-////            if(fv) {
-////                //flow event save AE plus flow velocity death
-////                datawriter << 1 << " "
-////                           << ts * emorph::vtsHelper::tstosecs() << " "
-////                           << (int)fv->getX() << " "
-////                           << (int)fv->getY() << " "
-////                           << fv->getVx() << " "
-////                           << fv->getVy() << " "
-////                           << fv->getDeath() * emorph::vtsHelper::tstosecs()
-////                           << std::endl;
-////            } else {
-////                //address event save AE plus 0 0 0
-////                datawriter << 0 << " "
-////                           << ts * emorph::vtsHelper::tstosecs() << " "
-////                           << (int)v->getX() << " "
-////                           << (int)v->getY() << " " << 0 << " " << 0 << " " << 0
-////                           << std::endl;
-////            }
-////        }
-//    }
-
-    //std::cout << "Old: " << houghFinder.FIFO.size() << " " <<  houghFinder.FIFO.back()->getStamp() << std::endl;
-    //double t3 = yarp::os::Time::now();
-
-    //std::cout << "Serial Hough: " << houghFinder.computationtime << std::endl;
-    //std::cout << "Serial: " << t3 - t2 << " & Parallel: " << t2 - t1 << std::endl;
-
-    timecounter += t2 - t1;
-
-//    bestinliers = *houghFinder.obs_max;
-//    bestx = houghFinder.x_max;
-//    besty = houghFinder.y_max;
-//    bestr = houghFinder.r_max;
-    bestts = ts;
-
-    //double pInliers;
-    //int pX, pY, pR;
-    //pInliers  = cObserver->getObs(pX, pY, pR);
-    bestinliers = cObserver->getObs(bestx, besty, bestr);
-
-//    for(int yi = 0; yi < 128; yi++) {
-//        for(int xi = 0; xi < 128; xi++) {
-//            if((*houghFinder.H[1])[yi][xi] != cObserver->htransforms[1]->H[yi][xi]) {
-//                std::cout << "Hough's not equal" << std::endl;
-//            }
-//        }
-//    }
-
-//    if(bestinliers > pInliers /*|| bestr != pR || bestx != pX || besty != pY*/) {
-//        std::cout << "Serial: " << bestinliers << " " << bestr << " " << bestx << " " << besty << std::endl;
-//        for(int i = 0; i < cObserver->htransforms.size(); i++) {
-//            int pX = cObserver->htransforms[i]->x_max;
-//            int pY = cObserver->htransforms[i]->y_max;
-//            double pScore = cObserver->htransforms[i]->H[pY][pX];
-//            double sScore = cObserver->htransforms[i]->H[besty][bestx];
-//            int pR = cObserver->htransforms[i]->R;
-//            std::cout << "Parallel(SMAX): " << sScore << " " << pR << " " << bestx << " " << besty << std::endl;
-//            std::cout << "Parallel(PMAX): " << pScore << " " << pR << " " << pX << " " << pY << std::endl;
-//        }
-//        //std::cout << "Old -> New" << std::endl;
-//        //std::cout << bestinliers << " " << pInliers << " " << bestr << " " << pR << std::endl;
-//        //std::cout << bestx << " " << pX << " " << besty << " " << pY << std::endl << std::endl;
-//    }
-    //std::cout << bestinliers << std::endl;
-
-    //ts = unwrap(v->getStamp());std::cout << bestinliers << std::endl;
-
-//    if(false && datawriter.is_open()) {
-//        datawriter << ts * emorph::vtsHelper::tstosecs() << " " << bestx << " "
-//                   << besty << " " << bestr << " " << bestinliers << " " << 0 << " " << 0 << std::endl;
-//    }
-
-    //also add a single circle tracking position to the output
-    //at the moment we are just using ClusterEventGauss
-    if(bestinliers > inlierThreshold) {
+    if(cObserver->getObs(bestx, besty, bestr) > inlierThreshold) {
 
         emorph::ClusterEventGauss circevent;
         circevent.setStamp(bestts);
@@ -345,47 +236,11 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
         circevent.setID(0);
         outBottle.addEvent(circevent);
 
-//        if(false && datawriter.is_open()) {
-//            datawriter << 2 << " "
-//                       << bestts * emorph::vtsHelper::tstosecs() << " "
-//                       << bestx << " "
-//                       << besty << " "
-//                       << bestr << " " << 0 << " " << 0 << std::endl;
-//        }
-
-//        if(!circleTracker.isActive()) {
-//            circleTracker.startTracking(bestx, besty, bestr);
-//        } else {
-//            if(pTS > bestts) pTS -= emorph::vtsHelper::maxStamp();
-//            circleTracker.predict((bestts - pTS)*emorph::vtsHelper::tstosecs());
-//            circleTracker.correct(bestx, besty, bestr);
-//        }
-//        pTS = bestts;
-
-
-//        double x, y, r;
-//        if(circleTracker.getState(x, y, r)) {
-//            //std::cout << x << " " << y << " " << r << std::endl;
-//            emorph::ClusterEventGauss circevent;
-//            circevent.setStamp(ts);
-//            circevent.setChannel(0);
-//            circevent.setXCog(x);
-//            circevent.setYCog(y);
-//            circevent.setXSigma2(r);
-//            circevent.setYSigma2(1);
-//            circevent.setID(1);
-//            outBottle.addEvent(circevent);
-
-//            if(false && datawriter.is_open()) {
-//                datawriter << ts * emorph::vtsHelper::tstosecs() << " " << bestx << " "
-//                           << besty << " " << bestr << " " << bestinliers << " "
-//                           << x << " " << y << " " << r << std::endl;
-//            }
-//        }
     }
 
     //send on our event bottle
-    outPort.writeStrict();
+    if(strictness) outPort.writeStrict();
+    else outPort.write();
 
     double dstamp = st.getTime() - pstamp.getTime();
     if(houghOut.getOutputCount() && (dstamp > 0.03333 || dstamp < 0)) {
@@ -395,10 +250,7 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
         houghOut.setEnvelope(st);
         houghOut.write();
         std::cout << timecounter << std::endl;
-        //timecounter = 0;
     }
 
 
 }
-
-//empty line to make gcc happy
