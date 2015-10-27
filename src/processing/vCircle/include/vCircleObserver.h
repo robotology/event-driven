@@ -123,8 +123,10 @@ public:
     emorph::vList * subs;
 
     void updateHAddress(int xv, int yv, double strength);
-    void updateHFlowAngle(int xv, int yv, double strength, double dtdx,
+    double updateHFlowAngle(int xv, int yv, double strength, double dtdx,
                           double dtdy);
+    double updateHFlowAngle3(int xv, int yv, double strength,
+                                         double dtdx, double dtdy);
 
     void performHough();
     virtual void run();

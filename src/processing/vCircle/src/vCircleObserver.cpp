@@ -751,18 +751,21 @@ void vCircleThread::updateHAddress(int xv, int yv, double strength)
     }
 }
 
-void vCircleThread::updateHFlowAngle(int xv, int yv, double strength,
+double vCircleThread::updateHFlowAngle(int xv, int yv, double strength,
                                      double dtdx, double dtdy)
 {
 
+    double total = 0;
     int P = 1;
+
+    //this switch could be done when passing arguments to the function
     double temp = dtdx;
     dtdx = dtdy;
     dtdy = temp;
 
     bool horquad = fabs(dtdx/dtdy) < 1;
 
-    //this is the same for all R try passing it to the function instead
+    //this is the same for all R try passing xn/yn to the function instead
     double velR = sqrt(pow(dtdx, 2.0) + pow(dtdy, 2.0));
     double xn = dtdx / velR;
     double yn = dtdy / velR;
@@ -825,6 +828,7 @@ void vCircleThread::updateHFlowAngle(int xv, int yv, double strength,
                     if(H[ypix][xpix] > H[y_max][x_max]) {
                         y_max = ypix; x_max = xpix;
                     }
+                    total += strength;
                 }
             }
         }
@@ -869,10 +873,65 @@ void vCircleThread::updateHFlowAngle(int xv, int yv, double strength,
                     if(H[ypix][xpix] > H[y_max][x_max]) {
                         y_max = ypix; x_max = xpix;
                     }
+                    total += strength;
                 }
             }
         }
     }
+
+    return total;
+
+}
+
+double vCircleThread::updateHFlowAngle3(int xv, int yv, double strength,
+                                     double dtdx, double dtdy)
+{
+
+    double total = 0;
+    double temp = dtdx;
+    dtdx = dtdy;
+    dtdy = temp;
+
+    //calculate the non-exact energy per pixel (doesn't account for pixel
+    //rounding or image edges
+    double eval = strength / (M_PI * Rsqr * 2);
+
+    //this is the same for all R try passing it to the function instead
+    double velR = sqrt(pow(dtdx, 2.0) + pow(dtdy, 2.0));
+    double xn = dtdx / velR;
+    double yn = dtdy / velR;
+
+
+
+    //for forward and backward flows
+    for(int dir = 1; dir >= -1; dir -= 2) {
+
+        //calculate the centre position
+        double x1 = dir * R * xn + xv;
+        double y1 = dir * R * yn + yv;
+
+        //and then go through the y values of a circle (this could actually be
+        //hardcoded fairly easily rather than calculated every time
+        for(int ydi = -R; ydi <= R; ydi++) {
+
+            int xd = (int)(sqrt(Rsqr - pow(ydi, 2.0))+0.5);
+
+            for(int xdi = -xd; xdi <= xd; xdi++) {
+
+                int xpix = x1 + xdi;
+                int ypix = y1 + ydi;
+
+                if(!(xpix > 0 && xpix < width)) continue;
+                if(!(ypix > 0 && ypix < height)) continue;
+
+                H[ypix][xpix] -= eval;
+                total -= eval;
+
+            }
+        }
+    }
+
+    return total;
 
 }
 
@@ -898,6 +957,10 @@ void vCircleThread::performHough()
                 valid = true;
                 updateHFlowAngle(vadd->getX(), vadd->getY(), Rstrength,
                                  vadd->getVx(), vadd->getVy());
+                //double eout = updateHFlowAngle3(vadd->getX(), vadd->getY(), ein,
+                //                  vadd->getVx(), vadd->getVy());
+
+                //std::cout << ein << " " << eout << std::endl;
                 //std::cout << "P: 1 " << (int)vadd->getX() << " " << (int)vadd->getY() << " " << vadd->getStamp() << std::endl;
             }
 
