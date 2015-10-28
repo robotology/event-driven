@@ -19,8 +19,9 @@
 
 #include <yarp/os/all.h>
 #include <vector>
-#include "vCodec.h"
-#include "vtsHelper.h"
+#include <iCub/emorph/vCodec.h>
+#include <iCub/emorph/vQueue.h>
+#include <iCub/emorph/vtsHelper.h>
 
 namespace emorph {
 
@@ -40,13 +41,13 @@ private:
     int width;
     int height;
     int duration;
-    //! whether to deep copy or shallow copy
-    bool asynchronous;
     //! for safe copying of q in the multi-threaded environment
     yarp::os::Semaphore mutex;
     //! for quick spatial accessing and surfacing
     std::vector< std::vector <vQueue> > spatial;
     vQueue subq;
+    //! for memory management of most recent
+    vEvent * mostrecent;
 
 
 public:
@@ -55,7 +56,7 @@ public:
     /// \brief vWindow constructor
     /// \param windowSize optional time to store events (in us)
     ///
-    vWindow(int width = 128, int height = 128, int duration = 20000, bool asynch = true);
+    vWindow(int width = 128, int height = 128, int duration = 20000);
 
     vWindow(const vWindow&);
     vWindow operator=(const vWindow&);

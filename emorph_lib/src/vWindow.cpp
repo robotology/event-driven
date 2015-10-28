@@ -18,18 +18,17 @@
 
 namespace emorph {
 
-vWindow::vWindow(int width, int height, int duration, bool asynch)
+vWindow::vWindow(int width, int height, int duration)
 {
     this->width = width;
     this->height = height;
     this->duration = duration;
-    this->asynchronous = asynch;
+    this->mostrecent = NULL;
 
     spatial.resize(height);
     for(int y = 0; y < height; y++) {
-        spatial[y].resize(width, vQueue(false));
+        spatial[y].resize(width);
     }
-    subq = vQueue(asynch);
 }
 
 vWindow::vWindow(const vWindow& that)
@@ -42,14 +41,13 @@ vWindow vWindow::operator=(const vWindow& that)
     this->width = that.width;
     this->height = that.height;
     this->duration = that.duration;
-    this->asynchronous = that.asynchronous;
 
     //we don't copy data in a vWindow for now
     q.clear();
 
     spatial.resize(height);
     for(int y = 0; y < height; y++) {
-        spatial[y].resize(width, vQueue(false));
+        spatial[y].resize(width);
         for(int x = 0; x < width; x++) {
             spatial[y][x].clear();
         }
@@ -94,7 +92,7 @@ void vWindow::addEvent(vEvent &event)
 const vQueue& vWindow::getTW()
 {
     mutex.wait();
-    subq = q.copy(asynchronous);
+    subq = q;
     mutex.post();
 
     return subq;
@@ -112,7 +110,7 @@ const vQueue& vWindow::getSMARTSTW(int d)
         subq.clear();
         return subq;
     }
-    return getSTW(v->getX(), v->getY(), d);;
+    return getSTW(v->getX(), v->getY(), d);
 
 }
 
@@ -220,10 +218,21 @@ const vQueue& vWindow::getSURF(int xl, int xh, int yl, int yh, int pol)
 
 vEvent *vWindow::getMostRecent()
 {
+    //return nothing if we are empty
     if(!q.size()) return 0;
-    if(asynchronous) return q.back()->clone();
-    else return q.back();
-    return 0;
+
+    //if we had a previous most recent event allow it to be deallocated
+    if(mostrecent) {
+        mostrecent->destroy();
+        mostrecent = NULL;
+    }
+
+    //then set the most recent to be the back of the q and make sure it has
+    //a reference so it doesn't get deallocted
+    mostrecent = q.back();
+    mostrecent->referto();
+    return mostrecent;
+
 }
 
 
