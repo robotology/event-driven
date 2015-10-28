@@ -246,7 +246,7 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
     if(houghOut.getOutputCount() && (dstamp > 0.03333 || dstamp < 0)) {
         pstamp = st;
         yarp::sig::ImageOf< yarp::sig::PixelBgr> &image = houghOut.prepare();
-        image = houghFinder.makeDebugImage2();
+        image = cObserver->makeDebugImage();
         houghOut.setEnvelope(st);
         houghOut.write();
         std::cout << timecounter << std::endl;

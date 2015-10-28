@@ -95,25 +95,21 @@ public:
 class vCircleThread : public yarp::os::Thread
 {
 
-//private:
-public:
+private:
 
     //parameters
-    bool parallel;
     int R;
-    double Rsqr;
     bool directed;
+    bool threaded;
     int height;
     int width;
 
     //data
     yarp::sig::Matrix H;
     double a; //tangent to arc length
-    //std::vector<double> rot;
-    //std::vector<double> err;
-    double Rstrength;
+    double Rsqr;
+    double Hstr;
     int x_max, y_max;
-    bool valid;
 
     yarp::os::Mutex mstart;
     yarp::os::Mutex mdone;
@@ -138,10 +134,6 @@ public:
 
     vCircleThread(int R, bool directed, bool parallel = false, int height = 128, int width = 128);
 
-//    void setAddEvent(emorph::vEvent &event);
-//    void setRemEvent(emorph::vEvent &event);
-
-    bool wasUpdated() { return valid; }
     double getScore() { return H[y_max][x_max]; }
     int getX() { return x_max; }
     int getY() { return y_max; }
@@ -149,6 +141,8 @@ public:
 
     void process(emorph::vList &adds, emorph::vList &subs);
     void waitfordone();
+
+    yarp::sig::ImageOf<yarp::sig::PixelBgr> makeDebugImage();
 
 };
 
@@ -158,21 +152,18 @@ public:
 class vCircleMultiSize
 {
 
-//private:
-public:
+private:
 
     //parameters
     std::string qType;
     int qlength;
     int qduration;
 
-    std::vector<vCircleThread *>::iterator best;
-    double score;
-    int x, y, r;
-
+    //internal data
     emorph::vList FIFO;
     emorph::vEvent dummy;
     std::vector<vCircleThread *> htransforms;
+    std::vector<vCircleThread *>::iterator best;
 
     void addHough(emorph::vEvent &event);
     void remHough(emorph::vEvent &event);
@@ -184,13 +175,13 @@ public:
 
 public:
 
-    vCircleMultiSize(std::string qType, int qLength = 2000, int rLow = 8, int rHigh = 38,
+    vCircleMultiSize(std::string qType = "Fixed", int qLength = 2000, int rLow = 8, int rHigh = 38,
                      bool directed = true, bool parallel = false, int height = 128, int width = 128);
     ~vCircleMultiSize();
 
-    void addEvent(emorph::vEvent &event);
     void addQueue(emorph::vQueue &additions);
     double getObs(int &x, int &y, int &r);
+    yarp::sig::ImageOf<yarp::sig::PixelBgr> makeDebugImage();
 
 };
 
