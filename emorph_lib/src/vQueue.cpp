@@ -19,58 +19,58 @@
 */
 
 
-#include "iCub/emorph/vList.h"
+#include "iCub/emorph/vQueue.h"
 #include <algorithm>
 
 namespace emorph
 {
 
 /******************************************************************************/
-//VLIST
+//VQUEUE
 /******************************************************************************/
 
-void vList::destroyall()
+void vQueue::destroyall()
 {
-    for(vList::const_iterator qi = this->begin(); qi != this->end(); qi++)
+    for(vQueue::const_iterator qi = this->begin(); qi != this->end(); qi++)
         (*qi)->destroy();
 }
 
-void vList::referall()
+void vQueue::referall()
 {
-    for(vList::const_iterator qi = this->begin(); qi != this->end(); qi++)
+    for(vQueue::const_iterator qi = this->begin(); qi != this->end(); qi++)
         (*qi)->referto();
 }
 
-vList::~vList()
+vQueue::~vQueue()
 {
     this->clear();
 }
 
-void vList::clear()
+void vQueue::clear()
 {
     destroyall();
     deque::clear();
 }
 
-void vList::push_back(const value_type &__x)
+void vQueue::push_back(const value_type &__x)
 {
     __x->referto();
     deque::push_back(__x);
 }
 
-void vList::push_front(const value_type &__x)
+void vQueue::push_front(const value_type &__x)
 {  
     __x->referto();
     deque::push_front(__x);
 }
 
-void vList::pop_back()
+void vQueue::pop_back()
 {
     back()->destroy();
     deque::pop_back();
 }
 
-void vList::pop_front()
+void vQueue::pop_front()
 {
     front()->destroy();
     deque::pop_front();

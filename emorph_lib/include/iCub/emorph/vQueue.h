@@ -18,19 +18,17 @@
  * Public License for more details
 */
 
-#ifndef __EMORPH_VLIST__
-#define __EMORPH_VLIST__
+#ifndef __EMORPH_VQUEUE__
+#define __EMORPH_VQUEUE__
 
 #include <iCub/emorph/vtsHelper.h>
 #include <iCub/emorph/vCodec.h>
 #include <deque>
 
-
 namespace emorph {
 
 
-/**************************************************************************/
-class vList : public std::deque<vEvent*>
+class vQueue : public std::deque<vEvent*>
 {
 private:
 
@@ -43,13 +41,13 @@ private:
 
 public:
 
-    vList() {}
-    ~vList();
+    vQueue() {}
+    ~vQueue();
 
     virtual void clear();
 
-    vList(const vList&);
-    vList operator=(const vList&);
+    vQueue(const vQueue&);
+    vQueue operator=(const vQueue&);
 
     virtual void push_back(const value_type &__x);
     virtual void push_front(const value_type &__x);

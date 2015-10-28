@@ -30,8 +30,9 @@
 #define __vBottle__
 
 
-#include <yarp/os/all.h>
+#include <yarp/os/Bottle.h>
 #include <iCub/emorph/vCodec.h>
+#include <iCub/emorph/vQueue.h>
 
 namespace emorph {
 
@@ -49,7 +50,7 @@ public:
     //all get functions call this to do the meat of the getting function
     template<class T> vQueue get() {
 
-        vQueue q(true);
+        vQueue q;
         addtoendof<T>(q);
         return q;
 
@@ -104,7 +105,7 @@ public:
     }
 
     vQueue getAll() {
-        vQueue q = this->get<vEvent>(); //all events are of type vEvent so we get all
+        vQueue q = this->get<vEvent>(); //all events are of type vEvent
         return q;
     }
 
