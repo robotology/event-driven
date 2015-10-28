@@ -21,56 +21,110 @@
 /*////////////////////////////////////////////////////////////////////////////*/
 //VCIRCLETHREAD
 /*////////////////////////////////////////////////////////////////////////////*/
+///
+/// \brief The vCircleThread class performs a circular Hough transform
+///
+/// The class gives the maximal location and strength of a circular shape of a
+/// single given radius. The class can use the directed transform and can be
+/// threaded for use on multi-core systems.
+///
 class vCircleThread : public yarp::os::Thread
 {
 
 private:
 
     //parameters
-    int R;
-    bool directed;
-    bool threaded;
-    int height;
-    int width;
+    int R; /// the Hough Radius (pixels)
+    bool directed; /// use the directed Hough transform
+    bool threaded; /// perform calculations in a separate thread
+    int height; /// sensor height
+    int width; /// sensor width
 
     //data
-    yarp::sig::Matrix H;
-    double a; //tangent to arc length
-    double Rsqr;
-    double Hstr;
-    int x_max, y_max;
+    yarp::sig::Matrix H; /// stores the Hough strength over the sensor plane
+    double a; /// length of tangent line to the directed Hough arc
+    double Rsqr; /// precompute the square of the radius
+    double Hstr; /// normalised Hough strength given the radius
+    int x_max; /// strongest response along the x axis
+    int y_max; /// strongest response along the y axis
 
-    yarp::os::Mutex mstart;
-    yarp::os::Mutex mdone;
+    yarp::os::Mutex mstart; /// for thread safety when starting computation
+    yarp::os::Mutex mdone; /// for thread safety when computation is finished
 
     //current data
-    emorph::vList * adds;
-    emorph::vList * subs;
+    emorph::vList * adds; /// pointer to list of events to add to Hough space
+    emorph::vList * subs; /// pointer to list of events to remove from Hough
 
+    /// update the Hough space using standard method
     void updateHAddress(int xv, int yv, double strength);
+
+    /// update the Hough space using directed method
     double updateHFlowAngle(int xv, int yv, double strength, double dtdx,
                           double dtdy);
-    double updateHFlowAngle3(int xv, int yv, double strength,
-                                         double dtdx, double dtdy);
+//    double updateHFlowAngle3(int xv, int yv, double strength,
+//                                         double dtdx, double dtdy);
 
+    /// update the Hough space given adds and subs
     void performHough();
+
+    /// calls performHough in separate thread
     virtual void run();
 
+    /// wait for call to perform Hough when threaded
     void waitforstart() { mstart.lock(); }
+
+    /// tell the calling function that the computation has ended
     void signalfinish() { mdone.unlock(); }
 
 public:
 
+    ///
+    /// \brief vCircleThread constructor
+    /// \param R circle radius
+    /// \param directed use directed Hough transform
+    /// \param parallel use a separate thread for computation
+    /// \param height sensor height
+    /// \param width sensor width
+    ///
     vCircleThread(int R, bool directed, bool parallel = false, int height = 128, int width = 128);
 
+    ///
+    /// \brief getScore get the maximum strength in Hough space
+    /// \return the maximum strength in Hough space
+    ///
     double getScore() { return H[y_max][x_max]; }
+    ///
+    /// \brief getX get the maximum strength location
+    /// \return maximum strength location along x axis
+    ///
     int getX() { return x_max; }
+    ///
+    /// \brief getY get the maximum strength location
+    /// \return maximum strength location along y axis
+    ///
     int getY() { return y_max; }
+    ///
+    /// \brief getR return the radius of the circle to be detected
+    /// \return the radius R
+    ///
     int getR() { return R; }
 
+    ///
+    /// \brief process update the Hough transform (threaded or non-threaded)
+    /// \param adds list of events to add
+    /// \param subs list of events to remove
+    ///
     void process(emorph::vList &adds, emorph::vList &subs);
+
+    ///
+    /// \brief waitfordone wait for computation to finish if threaded
+    ///
     void waitfordone();
 
+    ///
+    /// \brief makeDebugImage create an image visualising the Hough space
+    /// \return a BGR yarp image
+    ///
     yarp::sig::ImageOf<yarp::sig::PixelBgr> makeDebugImage();
 
 };
