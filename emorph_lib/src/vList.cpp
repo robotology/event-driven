@@ -32,8 +32,7 @@ namespace emorph
 void vList::destroyall()
 {
     for(vList::const_iterator qi = this->begin(); qi != this->end(); qi++)
-        if((*qi)->destroy())
-            delete *qi;
+        (*qi)->destroy();
 }
 
 void vList::referall()
@@ -67,20 +66,20 @@ void vList::push_front(const value_type &__x)
 
 void vList::pop_back()
 {
-    if(back()->destroy()) delete back();
+    back()->destroy();
     deque::pop_back();
 }
 
 void vList::pop_front()
 {
-    if(front()->destroy()) delete front();
+    front()->destroy();
     deque::pop_front();
 }
 
 vList::iterator vList::erase(iterator __first, iterator __last)
 {
     for(iterator i = __first; i != __last; i++)
-        if((*i)->destroy()) delete *i;
+        (*i)->destroy();
 
     return deque::erase(__first, __last);
 }
@@ -88,7 +87,7 @@ vList::iterator vList::erase(iterator __first, iterator __last)
 vList::iterator vList::erase(iterator __position)
 {
     //deallocate memory
-    if((*__position)->destroy()) delete *__position;
+    (*__position)->destroy();
 
     //normal erase
     return deque::erase(__position);
