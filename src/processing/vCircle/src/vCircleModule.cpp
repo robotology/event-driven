@@ -18,15 +18,19 @@
 #include <sstream>
 #include <iomanip>
 
-/******************************************************************************/
+/*////////////////////////////////////////////////////////////////////////////*/
+//vCircleModule
+/*////////////////////////////////////////////////////////////////////////////*/
 bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
 {
-    //set the name of the module
+    //administrative options
     std::string moduleName =
             rf.check("name", yarp::os::Value("vCircle")).asString();
     setName(moduleName.c_str());
 
     bool strictness = rf.check("strict", yarp::os::Value(false)).asBool();
+
+    bool parallel = rf.check("parallel", yarp::os::Value(false)).asBool();
 
     //sensory size
     int width = rf.check("width", yarp::os::Value(128)).asInt();
@@ -34,16 +38,14 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
 
 
     //observation parameters
-    int obsRadius = rf.check("obsWindow", yarp::os::Value(32)).asDouble();
-    int temporalWindow =
-            rf.check("temWindow", yarp::os::Value(200000)).asDouble();
     double inlierThreshold = rf.check("inlierThreshold",
                                    yarp::os::Value(50)).asDouble() / 100.0;
-    //if(inlierThreshold > 1) inlierThreshold = 1;
-    double angleThreshold = rf.check("angleThreshold",
-                                     yarp::os::Value(0.1)).asDouble();
-    double radiusThreshold = rf.check("radiusThreshold",
-                                      yarp::os::Value(1.5)).asDouble();
+
+    std::string qType = rf.check("qType",
+                                 yarp::os::Value("Lifetime")).asString();
+
+    std::string houghType = rf.check("houghType",
+                              yarp::os::Value(true)).asString();
 
     //filter parameters
     double procNoisePos = rf.check("procNoisePos",
@@ -62,21 +64,16 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
     std::string datafilename = rf.check("datafile",
                                         yarp::os::Value("")).asString();
 
-    circleReader.hough = rf.check("hough",
-                                  yarp::os::Value(true)).asBool();
+    bool flowhough = true;
+    if(houghType == "full") flowhough = false;
+    //circleReader.houghFinder.qType = qType;
+    //circleReader.houghFinder.useFlow = flowhough;
 
-    circleReader.houghFinder.qType = rf.check("windowtype",
-                                    yarp::os::Value("Lifetime")).asString();
-
-    circleReader.houghFinder.useFlow = rf.check("flowhough",
-                                    yarp::os::Value(true)).asBool();
+    circleReader.cObserver =
+            new vCircleMultiSize(qType, 2000, 10, 35, flowhough, parallel, width, height);
 
     //initialise the dection and tracking
     circleReader.inlierThreshold = inlierThreshold;
-
-    circleReader.geomFinder.init(width, height, temporalWindow, obsRadius,
-                                   inlierThreshold, angleThreshold,
-                                   radiusThreshold);
 
     circleReader.circleTracker.init(procNoisePos, procNoiseRad,
                                     measNoisePos, measNoiseRad);
@@ -90,7 +87,7 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
     if(!circleReader.open(moduleName, strictness)) {
         std::cerr << "Could not open required ports" << std::endl;
         return false;
-    }    
+    }
 
     return true ;
 }
@@ -106,24 +103,21 @@ bool vCircleModule::interruptModule()
 /******************************************************************************/
 bool vCircleModule::close()
 {
-    std::cout << "Closing vCircleModule" << std::endl;
     circleReader.close();
     yarp::os::RFModule::close();
-    std::cout << "Closed vCircleModule" << std::endl;
     return true;
 }
 
 /******************************************************************************/
 bool vCircleModule::updateModule()
 {
-
     return true;
 }
 
 /******************************************************************************/
 double vCircleModule::getPeriod()
 {
-    return 0.3;
+    return 1;
 
 }
 
@@ -132,6 +126,8 @@ vCircleReader::vCircleReader()
 {
     inlierThreshold = 5;
     hough = false;
+    timecounter = 0;
+    strictness = false;
 }
 
 /******************************************************************************/
@@ -150,8 +146,8 @@ bool vCircleReader::setDataWriter(std::string datafilename)
 /******************************************************************************/
 bool vCircleReader::open(const std::string &name, bool strictness)
 {
-
     if(strictness) {
+        this->strictness = true;
         std::cout << "Setting " << name << " to strict" << std::endl;
         this->setStrict();
     }
@@ -178,6 +174,8 @@ bool vCircleReader::open(const std::string &name, bool strictness)
 /******************************************************************************/
 void vCircleReader::close()
 {
+    std::cout << "vCirle spent " << this->timecounter
+              << " seconds processing events" << std::endl;
     //close ports
     outPort.close();
     scopeOut.close();
@@ -202,8 +200,6 @@ void vCircleReader::interrupt()
 void vCircleReader::onRead(emorph::vBottle &inBot)
 {
     
-    // prepare output vBottle with address events extended with cluster ID (aec)
-    // and cluster events (clep)
     emorph::vBottle &outBottle = outPort.prepare();
     outBottle = inBot;
 
@@ -216,59 +212,19 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
     q.wrapSort();
 
     if(!q.size()) {
-        outPort.write();
+        if(strictness) outPort.writeStrict();
+        else outPort.write();
         return;
     }
 
-    int bestx, besty, bestr; double bestinliers = 0, bestts = 0;
-    double ts;
-    for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
+    double t1 = yarp::os::Time::now();
+    cObserver->addQueue(q);
+    timecounter += yarp::os::Time::now() - t1;
 
-        //get the event in the correct form
-        emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
-        if(!v || v->getChannel()) continue;
+    int bestx, besty, bestr;
+    double bestts = unwrap(q.back()->getStamp());
 
-        ts = unwrap(v->getStamp());
-        houghFinder.addEvent(*v);
-
-        if(false && datawriter.is_open()) {
-
-            emorph::FlowEvent *fv = v->getAs<emorph::FlowEvent>();
-            if(fv) {
-                //flow event save AE plus flow velocity death
-                datawriter << 1 << " "
-                           << ts * emorph::vtsHelper::tstosecs() << " "
-                           << (int)fv->getX() << " "
-                           << (int)fv->getY() << " "
-                           << fv->getVx() << " "
-                           << fv->getVy() << " "
-                           << fv->getDeath() * emorph::vtsHelper::tstosecs()
-                           << std::endl;
-            } else {
-                //address event save AE plus 0 0 0
-                datawriter << 0 << " "
-                           << ts * emorph::vtsHelper::tstosecs() << " "
-                           << (int)v->getX() << " "
-                           << (int)v->getY() << " " << 0 << " " << 0 << " " << 0
-                           << std::endl;
-            }
-        }
-    }
-
-    bestinliers = *houghFinder.obs_max;
-    bestx = houghFinder.x_max;
-    besty = houghFinder.y_max;
-    bestr = houghFinder.r_max;
-    bestts = ts;
-
-    if(false && datawriter.is_open()) {
-        datawriter << ts * emorph::vtsHelper::tstosecs() << " " << bestx << " "
-                   << besty << " " << bestr << " " << bestinliers << " " << 0 << " " << 0 << std::endl;
-    }
-
-    //also add a single circle tracking position to the output
-    //at the moment we are just using ClusterEventGauss
-    if(bestinliers > inlierThreshold) {
+    if(cObserver->getObs(bestx, besty, bestr) > inlierThreshold) {
 
         emorph::ClusterEventGauss circevent;
         circevent.setStamp(bestts);
@@ -280,58 +236,21 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
         circevent.setID(0);
         outBottle.addEvent(circevent);
 
-        if(false && datawriter.is_open()) {
-            datawriter << 2 << " "
-                       << bestts * emorph::vtsHelper::tstosecs() << " "
-                       << bestx << " "
-                       << besty << " "
-                       << bestr << " " << 0 << " " << 0 << std::endl;
-        }
-
-        if(!circleTracker.isActive()) {
-            circleTracker.startTracking(bestx, besty, bestr);
-        } else {
-            if(pTS > bestts) pTS -= emorph::vtsHelper::maxStamp();
-            circleTracker.predict((bestts - pTS)*emorph::vtsHelper::tstosecs());
-            circleTracker.correct(bestx, besty, bestr);
-        }
-        pTS = bestts;
-
-
-        double x, y, r;
-        if(circleTracker.getState(x, y, r)) {
-            //std::cout << x << " " << y << " " << r << std::endl;
-            emorph::ClusterEventGauss circevent;
-            circevent.setStamp(ts);
-            circevent.setChannel(0);
-            circevent.setXCog(x);
-            circevent.setYCog(y);
-            circevent.setXSigma2(r);
-            circevent.setYSigma2(1);
-            circevent.setID(1);
-            outBottle.addEvent(circevent);
-
-            if(false && datawriter.is_open()) {
-                datawriter << ts * emorph::vtsHelper::tstosecs() << " " << bestx << " "
-                           << besty << " " << bestr << " " << bestinliers << " "
-                           << x << " " << y << " " << r << std::endl;
-            }
-        }
     }
 
     //send on our event bottle
-    outPort.write();
+    if(strictness) outPort.writeStrict();
+    else outPort.write();
 
     double dstamp = st.getTime() - pstamp.getTime();
     if(houghOut.getOutputCount() && (dstamp > 0.03333 || dstamp < 0)) {
         pstamp = st;
         yarp::sig::ImageOf< yarp::sig::PixelBgr> &image = houghOut.prepare();
-        image = houghFinder.makeDebugImage4();
+        image = cObserver->makeDebugImage();
         houghOut.setEnvelope(st);
         houghOut.write();
+        std::cout << timecounter << std::endl;
     }
 
 
 }
-
-//empty line to make gcc happy

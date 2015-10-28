@@ -4,3 +4,4 @@
 #include <iCub/emorph/vtsHelper.h>
 #include <iCub/emorph/vWindow.h>
 #include <iCub/emorph/vSurface.h>
+#include <iCub/emorph/vList.h>

@@ -21,8 +21,6 @@
 #include <algorithm>
 #include "iCub/emorph/vCodec.h"
 #include <cmath>
-//using namespace emorph;
-//using namespace yarp::os;
 
 namespace emorph
 {
@@ -208,6 +206,7 @@ bool vEvent::decode(const yarp::os::Bottle &packet, int &pos)
 
 vEvent::vEvent(const vEvent &event)
 {
+    refcount = 0;
     *this = event;
 
 }

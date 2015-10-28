@@ -23,6 +23,10 @@
 #include <iCub/ctrl/kalman.h>
 #include "vCircleObserver.h"
 
+
+/*////////////////////////////////////////////////////////////////////////////*/
+//VCIRCLEREADER
+/*////////////////////////////////////////////////////////////////////////////*/
 class vCircleReader : public yarp::os::BufferedPort<emorph::vBottle>
 {
 private:
@@ -37,6 +41,7 @@ private:
 
     //our filter/tracker
 
+    bool strictness;
     bool debugFlag;
     std::ofstream datawriter;
     yarp::os::Stamp pstamp;
@@ -44,11 +49,11 @@ private:
 public:
 
     //we actually allow our observers and trackers
-    vGeoCircleObserver geomFinder;
-    vHoughCircleObserver houghFinder;
     vCircleTracker circleTracker;
+    vCircleMultiSize * cObserver;
     double inlierThreshold;
     bool hough;
+    double timecounter;
     
     vCircleReader();
 
@@ -63,6 +68,9 @@ public:
 
 };
 
+/*////////////////////////////////////////////////////////////////////////////*/
+//VCIRCLEMODULE
+/*////////////////////////////////////////////////////////////////////////////*/
 class vCircleModule : public yarp::os::RFModule
 {
     //the event bottle input and output handler

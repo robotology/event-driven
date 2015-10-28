@@ -18,111 +18,105 @@
 #include <iCub/emorph/all.h>
 #include <iCub/ctrl/kalman.h>
 
-/*//////////////////////////////////////////////////////////////////////////////
-  RANSAC OBSERVER
-  ////////////////////////////////////////////////////////////////////////////*/
-class vGeoCircleObserver
+/*////////////////////////////////////////////////////////////////////////////*/
+//VCIRCLETHREAD
+/*////////////////////////////////////////////////////////////////////////////*/
+class vCircleThread : public yarp::os::Thread
 {
 
 private:
 
-    //data
-    emorph::vWindow *window;
-
     //parameters
-    int spatialRadius;
-    int inlierThreshold;
-    double angleThreshold;
-    double radiusThreshold;
-
-public:
-
-    vGeoCircleObserver();
-    ~vGeoCircleObserver();
-
-    void init(int width, int height, int tempWin, int spatialRadius,
-              int inlierThresh, double angleThresh, double radThresh);
-
-    bool calculateCircle(double x1, double x2, double x3,
-                         double y1, double y2, double y3,
-                         double &cx, double &cy, double &cr);
-
-    void addEvent(emorph::vEvent &event);
-    //double RANSAC(double &cx, double &cy, double &cr);
-    int flowcircle(double &cx, double &cy, double &cr);
-    int flowView();
-
-
-};
-
-/*//////////////////////////////////////////////////////////////////////////////
-  HOUGH OBSERVER
-  ////////////////////////////////////////////////////////////////////////////*/
-class vHoughCircleObserver
-{
-
-private:
-
-    //data
-    std::vector<yarp::sig::Matrix *> H;
-    std::vector<double> posThreshs;
-    std::vector<double> negThreshs;
-    std::vector<double> rot;
-    std::vector<double> err;
-    emorph::vQueue FIFO;
-
-    //parameters
-    int qlength;
-    int qduration;
-
-    int r1;
-    int r2;
-    int rsize;
+    int R;
+    bool directed;
+    bool threaded;
     int height;
     int width;
 
-    bool updateH(emorph::vEvent &event, int val);
-    //two methods of general function above
-    void updateHAddress(int xv, int yv, std::vector<double> &threshs);
-    void updateHFlow(int xv, int yv, std::vector<double> &threshs,
-                     double dtdx, double dtdy);
-    void updateHFlowAngle(int xv, int yv, std::vector<double> &threshs,
-                          double dtdx, double dtdy);
+    //data
+    yarp::sig::Matrix H;
+    double a; //tangent to arc length
+    double Rsqr;
+    double Hstr;
+    int x_max, y_max;
 
+    yarp::os::Mutex mstart;
+    yarp::os::Mutex mdone;
+
+    //current data
+    emorph::vList * adds;
+    emorph::vList * subs;
+
+    void updateHAddress(int xv, int yv, double strength);
+    double updateHFlowAngle(int xv, int yv, double strength, double dtdx,
+                          double dtdy);
+    double updateHFlowAngle3(int xv, int yv, double strength,
+                                         double dtdx, double dtdy);
+
+    void performHough();
+    virtual void run();
+
+    void waitforstart() { mstart.lock(); }
+    void signalfinish() { mdone.unlock(); }
 
 public:
 
-    bool valid;
-    bool useFlow;
-    std::string qType;
-    int xc, yc, rc;
-    double valc;
+    vCircleThread(int R, bool directed, bool parallel = false, int height = 128, int width = 128);
 
-    double * obs_max;
-    int x_max, y_max, r_max;
+    double getScore() { return H[y_max][x_max]; }
+    int getX() { return x_max; }
+    int getY() { return y_max; }
+    int getR() { return R; }
 
-    vHoughCircleObserver();
-    ~vHoughCircleObserver();
+    void process(emorph::vList &adds, emorph::vList &subs);
+    void waitfordone();
 
-    void addEvent(emorph::vEvent &event);
-    //three methods of general function above
-    void addEventFixed(emorph::vEvent &event);
-    void addEventTime(emorph::vEvent &event);
-    void addEventLife(emorph::vEvent &event);
-    double getMaximum(int &x, int &y, int &r);
-
-
-    yarp::sig::ImageOf<yarp::sig::PixelMono> makeDebugImage(int r);
-    yarp::sig::ImageOf<yarp::sig::PixelMono> makeDebugImage2();
-    yarp::sig::ImageOf<yarp::sig::PixelBgr> makeDebugImage3(int s = 4);
-    yarp::sig::ImageOf<yarp::sig::PixelBgr> makeDebugImage4();
-
+    yarp::sig::ImageOf<yarp::sig::PixelBgr> makeDebugImage();
 
 };
 
-/*//////////////////////////////////////////////////////////////////////////////
-  CIRCLE TRACKER
-  ////////////////////////////////////////////////////////////////////////////*/
+/*////////////////////////////////////////////////////////////////////////////*/
+//VCIRCLEMULTISIZE
+/*////////////////////////////////////////////////////////////////////////////*/
+class vCircleMultiSize
+{
+
+private:
+
+    //parameters
+    std::string qType;
+    int qlength;
+    int qduration;
+
+    //internal data
+    emorph::vList FIFO;
+    emorph::vEvent dummy;
+    std::vector<vCircleThread *> htransforms;
+    std::vector<vCircleThread *>::iterator best;
+
+    void addHough(emorph::vEvent &event);
+    void remHough(emorph::vEvent &event);
+    void updateHough(emorph::vList &adds, emorph::vList &subs);
+
+    void addFixed(emorph::vQueue &additions);
+    void addTime(emorph::vQueue &additions);
+    void addLife(emorph::vQueue &additions);
+
+public:
+
+    vCircleMultiSize(std::string qType = "Fixed", int qLength = 2000, int rLow = 8, int rHigh = 38,
+                     bool directed = true, bool parallel = false, int height = 128, int width = 128);
+    ~vCircleMultiSize();
+
+    void addQueue(emorph::vQueue &additions);
+    double getObs(int &x, int &y, int &r);
+    yarp::sig::ImageOf<yarp::sig::PixelBgr> makeDebugImage();
+
+};
+
+/*////////////////////////////////////////////////////////////////////////////*/
+//VCIRCLETRACKER
+/*////////////////////////////////////////////////////////////////////////////*/
 class vCircleTracker
 {
 private:

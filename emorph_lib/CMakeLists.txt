@@ -13,6 +13,7 @@ set(folder_source
   src/vCodec.cpp
   src/vWindow.cpp
   src/vSurface.cpp
+  src/vList.cpp
 )
 
 set(folder_header
@@ -24,6 +25,7 @@ set(folder_header
   include/iCub/emorph/vtsHelper.h
   include/iCub/emorph/vWindow.h
   include/iCub/emorph/vSurface.h
+  include/iCub/emorph/vList.h
 )
 
 # Declare groups of source and header files -- makes things pretty in MSVC.
