@@ -64,7 +64,7 @@ void vReadAndSplit::onRead(emorph::vBottle &incoming)
     for(qi = q.begin(); qi != q.end(); qi++) {
         int ch = (*qi)->getChannel();
         if(!windows.count(ch)) {
-            windows[ch] = new vWindow(128, 128, windowsize, true);
+            windows[ch] = new vWindow(128, 128, windowsize);
         }
         windows[ch]->addEvent(**qi);
     }

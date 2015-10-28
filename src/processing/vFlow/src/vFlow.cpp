@@ -154,7 +154,6 @@ void vFlowManager::onRead(emorph::vBottle &inBottle)
     outBottle.clear();
     yarp::os::Stamp st;
     this->getEnvelope(st); outPort.setEnvelope(st);
-    std::cout << st.getCount() << std::endl;
 
     /*get the event queue in the vBottle bot*/
     emorph::vQueue q = inBottle.get<emorph::AddressEvent>();

@@ -86,7 +86,7 @@ public:
             int pos = 0;
             while(pos < b->size()) {
                 if(e->decode(*b, pos)) {
-                    q.push_back(e);
+                    q.push_back(e->clone());
                 }
             }
 
