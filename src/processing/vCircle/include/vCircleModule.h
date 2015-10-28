@@ -14,8 +14,69 @@
  * Public License for more details
  */
 
+/// @file aexGrabbberModule.h
+/// @brief A module for performing event-based circle detection
+
 #ifndef __VCIRCLE__
 #define __VCIRCLE__
+
+
+/**
+ *
+ * \defgroup processing Processing
+ * \ingroup vCircle
+ *
+ * This module uses the Hough transform at several radii to detect circles in
+ * the event-driven data stream.
+ *
+ * \section reference
+ *
+ * Submitted.
+ *
+ *
+ * \section parameters_sec Parameters
+ *
+ * - \c name \c vCircle \n
+ *   set the root string for port naming e.g. /vCircle/vBottle:i
+ *
+ * - \c strict \c true | false \n
+ *   set port writing strictness of this module
+ *
+ * - \c houghType \c directed | full \n
+ *   set the Hough transform method: full (standard) or directed
+ *
+ * - \c qType \c Fixed | Lifetime \n
+ *   set the vQueue method using a fixed size or using the event-lifetime
+ *
+ * - \c inlierThreshold \c 25 \n
+ *   set the threshold on positive circle detection
+ *
+ * \section portsa_sec Ports Accessed
+ *
+ *
+ * \section portsc_sec Ports Created
+ *
+ *  <b> Input ports </b>
+ *
+ *  - \c /vCircle/vBottle:i \n
+ *   input port for vBottles containing AddressEvents or FlowEvents
+ *
+ * <b> Output ports </b>
+ *
+ *  - \c /vCircle/vBottle:o \n
+ *   appends the input bottle with circle detection events
+ *
+ *  - \c /vCircle/debug:o \n
+ *   a yarp image visualising the hough space (slows down detection rate)
+ *
+ * \section example_sec Example Instantiation of the Module
+ *
+ * <tt>aexGrabber --name vCircle --strict true --houghType directed
+ * -- qType Fixed --inlierThreshold 25 </tt>
+ *
+ * \author Arren Glover
+ *
+ */
 
 #include <fstream>
 #include <yarp/os/all.h>
