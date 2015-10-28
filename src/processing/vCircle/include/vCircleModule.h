@@ -49,7 +49,6 @@ private:
 public:
 
     //we actually allow our observers and trackers
-    vHoughCircleObserver houghFinder;
     vCircleTracker circleTracker;
     vCircleMultiSize * cObserver;
     double inlierThreshold;
