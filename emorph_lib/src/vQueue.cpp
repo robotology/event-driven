@@ -76,7 +76,7 @@ void vQueue::pop_front()
     deque::pop_front();
 }
 
-vList::iterator vList::erase(iterator __first, iterator __last)
+vQueue::iterator vQueue::erase(iterator __first, iterator __last)
 {
     for(iterator i = __first; i != __last; i++)
         (*i)->destroy();
@@ -84,7 +84,7 @@ vList::iterator vList::erase(iterator __first, iterator __last)
     return deque::erase(__first, __last);
 }
 
-vList::iterator vList::erase(iterator __position)
+vQueue::iterator vQueue::erase(iterator __position)
 {
     //deallocate memory
     (*__position)->destroy();
@@ -94,7 +94,7 @@ vList::iterator vList::erase(iterator __position)
 
 }
 
-vList::vList(const vList& that)
+vQueue::vQueue(const vQueue& that)
 {
     deque * lp = this;
     *lp = deque(*(deque *)(&that));
@@ -102,7 +102,7 @@ vList::vList(const vList& that)
     referall();
 }
 
-vList vList::operator=(const vList& that)
+vQueue vQueue::operator=(const vQueue& that)
 {
     this->clear();
 
@@ -114,19 +114,19 @@ vList vList::operator=(const vList& that)
     return *this;
 }
 
-void vList::sort() {
+void vQueue::sort() {
     std::sort(begin(), end(), temporalSortStraight);
 }
 
-void vList::wrapSort() {
+void vQueue::wrapSort() {
     std::sort(begin(), end(), temporalSortWrap);
 }
 
-bool vList::temporalSortStraight(const vEvent *e1, const vEvent *e2) {
+bool vQueue::temporalSortStraight(const vEvent *e1, const vEvent *e2) {
     return e2->getStamp() > e1->getStamp();
 }
 
-bool vList::temporalSortWrap(const vEvent *e1, const vEvent *e2)
+bool vQueue::temporalSortWrap(const vEvent *e1, const vEvent *e2)
 {
 
     if(std::abs(e1->getStamp() - e2->getStamp()) > vtsHelper::maxStamp()/2)

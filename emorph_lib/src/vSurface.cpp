@@ -18,19 +18,17 @@
 
 namespace emorph {
 
-vSurface::vSurface(int width, int height, bool asynch)
+vSurface::vSurface(int width, int height)
 {
     this->width = width;
     this->height = height;
-    this->asynchronous = asynch;
-    this->mostRecent = 0;
+    this->mostRecent = NULL;
+    this->justRemoved = NULL;
 
     spatial.resize(height);
     for(int y = 0; y < height; y++) {
         spatial[y].resize(width, 0);
     }
-
-    subq = vQueue(asynchronous);
 
 }
 
@@ -41,9 +39,14 @@ vSurface::vSurface(const vSurface& that)
 
 vSurface vSurface::operator=(const vSurface& that)
 {
+    //destroy all current events
+    this->clear();
+
+    //remake like 'that'
     this->width = that.width;
     this->height = that.height;
-    this->asynchronous = that.asynchronous;
+    this->mostRecent = that.mostRecent;
+    this->mostRecent->referto();
 
     spatial.resize(height);
     for(int y = 0; y < height; y++) {
@@ -52,29 +55,61 @@ vSurface vSurface::operator=(const vSurface& that)
 
     for(int i = 0; i < height; i++) {
         for(int j = 0; j < width; j++) {
-            //if(that.spatial[i][j]) spatial[i][j] = that.spatial[i][j]->clone();
+            if(that.spatial[i][j]) spatial[i][j] = that.spatial[i][j];
+            spatial[i][j]->referto();
         }
     }
-
-    //we should also copy the data!!
-
-    subq = vQueue(asynchronous);
 
     return *this;
 }
 
-void vSurface::addEvent(AddressEvent &event)
+void vSurface::clear()
+{
+    for(int i = 0; i < height; i++) {
+        for(int j = 0; j < width; j++) {
+            if(spatial[i][j]) spatial[i][j]->destroy();
+            spatial[i][j] = NULL;
+        }
+    }
+
+    subq.clear();
+
+    if(mostRecent) {
+        mostRecent->destroy();
+        mostRecent = NULL;
+    }
+
+    if(justRemoved) {
+        justRemoved->destroy();
+        mostRecent = NULL;
+    }
+
+}
+
+vEvent * vSurface::addEvent(AddressEvent &event)
 {
 
-    //enter critcal section
+    //enter critical section
     mutex.wait();
 
-    //if we previously had an event, delete it
+    //remove the event that was previously destroyed
+    if(justRemoved) {
+        justRemoved->destroy();
+        justRemoved = 0;
+    }
+
+    //if we previously had an event move it to the justRemoved
     int x = event.getX(); int y = event.getY();
-    if(spatial[y][x]) delete spatial[y][x];
-    //put our new event in
-    spatial[y][x] = event.clone();
+    if(spatial[y][x]) justRemoved = spatial[y][x];
+
+    //put our new event in and add a reference
+    spatial[y][x] = &event;
+    event.referto();
+
+    //then set our mostRecent with a second reference
+    if(mostRecent) mostRecent->destroy();
     mostRecent = spatial[y][x];
+    mostRecent->referto();
 
     //leave section
     mutex.post();
@@ -82,8 +117,8 @@ void vSurface::addEvent(AddressEvent &event)
 
 const vQueue& vSurface::getSURF(int d)
 {
-    return getSURF(mostRecent->getAs<AddressEvent>()->getX(),
-                   mostRecent->getAs<AddressEvent>()->getY(), d);
+    return getSURF(mostRecent->getUnsafe<AddressEvent>()->getX(),
+                   mostRecent->getUnsafe<AddressEvent>()->getY(), d);
 }
 
 const vQueue& vSurface::getSURF(int x, int y, int d)
@@ -117,12 +152,9 @@ const vQueue& vSurface::getSURF(int xl, int xh, int yl, int yh)
 }
 
 
-
-
 vEvent *vSurface::getMostRecent()
 {
-    if(asynchronous) return mostRecent->clone();
-    else return mostRecent;
+    return mostRecent;
 }
 
 
