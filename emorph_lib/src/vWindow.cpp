@@ -41,6 +41,8 @@ vWindow vWindow::operator=(const vWindow& that)
     this->width = that.width;
     this->height = that.height;
     this->duration = that.duration;
+    if(this->mostrecent) mostrecent->destroy();
+    mostrecent = NULL;
 
     //we don't copy data in a vWindow for now
     q.clear();
@@ -89,9 +91,16 @@ void vWindow::addEvent(vEvent &event)
 
 }
 
-const vQueue& vWindow::getTW()
+void vWindow::copyTWTO(vQueue &that)
 {
     mutex.wait();
+    that = q;
+    mutex.post();
+}
+
+const vQueue& vWindow::getTW()
+{
+    mutex.wait(); 
     subq = q;
     mutex.post();
 
@@ -143,75 +152,13 @@ const vQueue& vWindow::getSTW(int xl, int xh, int yl, int yh)
     }
 
 
-
-//    vQueue qcopy2(asynchronous);
-//    vQueue::iterator qi;
-//    for (qi = q.begin(); qi != q.end(); qi++) {
-//        AddressEvent *v = (*qi)->getAs<AddressEvent>();
-//        if(!v) continue;
-//        int x = v->getX(); int y = v->getY();
-//        if(x < xl || x > xh || y < yl || y > yh) continue;
-//        qcopy2.push_back(*qi);
-//    }
-//    std::cout << qcopy.size() << " " << qcopy2.size() << std::endl;
-
     mutex.post();
 
     return subq;
 
 }
 
-const vQueue& vWindow::getSURF(int pol)
-{
-    return getSURF(0, width, 0, height, pol);
-}
 
-const vQueue& vWindow::getSMARTSURF(int d) {
-    AddressEvent *v = 0;
-    for(vQueue::reverse_iterator qi = q.rbegin(); qi != q.rend(); qi++) {
-        v = (*qi)->getAs<AddressEvent>();
-        if(v) break;
-    }
-    if(!v) {
-        subq.clear();
-        return subq;
-    }
-    return getSURF(v->getX(), v->getY(), d, v->getPolarity());
-}
-
-const vQueue& vWindow::getSURF(int x, int y, int d, int pol)
-{
-    return getSURF(x - d, x + d, y - d, y + d, pol);
-}
-
-const vQueue& vWindow::getSURF(int xl, int xh, int yl, int yh, int pol)
-{
-    subq.clear();
-
-    xl = std::max(xl, 0);
-    xh = std::min(xh, width-1);
-    yl = std::max(yl, 0);
-    yh = std::min(yh, height-1);
-
-    //critical section
-    mutex.wait();
-
-    for(int y = yl; y <= yh; y++) {
-        for(int x = xl; x <= xh; x++) {
-            for(int t = spatial[y][x].size()-1; t > -1; t--) {
-                if(spatial[y][x][t]->getPolarity() == pol) {
-                    subq.push_back(spatial[y][x][t]);
-                    break;
-                }
-            }
-        }
-    }
-
-    mutex.post();
-
-    return subq;
-
-}
 
 
 

@@ -111,7 +111,7 @@ public:
 
     vQueue getAllSorted() {
         vQueue q = getAll();
-        q.sort();
+        q.wrapSort();
         return q;
     }
 

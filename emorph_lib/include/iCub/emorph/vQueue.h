@@ -47,7 +47,7 @@ public:
     virtual void clear();
 
     vQueue(const vQueue&);
-    vQueue operator=(const vQueue&);
+    vQueue& operator=(const vQueue&);
 
     virtual void push_back(const value_type &__x);
     virtual void push_front(const value_type &__x);

@@ -29,10 +29,6 @@ vReadAndSplit::~vReadAndSplit()
         delete wi->second;
     }
 
-    std::map<int, vQueue*>::iterator qi;
-    for(qi = snaps.begin(); qi != snaps.end(); qi++) {
-        delete qi->second;
-    }
 }
 
 void vReadAndSplit::setWindowSize(int windowsize)
@@ -59,35 +55,27 @@ void vReadAndSplit::onRead(emorph::vBottle &incoming)
 {
 
     emorph::vQueue q = incoming.getAllSorted();
-    emorph::vQueue::iterator qi;
-    //incoming.getAllSorted(q);
-    for(qi = q.begin(); qi != q.end(); qi++) {
+    for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
         int ch = (*qi)->getChannel();
         if(!windows.count(ch)) {
             windows[ch] = new vWindow(128, 128, windowsize);
         }
         windows[ch]->addEvent(**qi);
     }
-
 }
 
 void vReadAndSplit::snapshotAllWindows()
 {
     std::map<int, vWindow*>::iterator wi;
     for(wi = windows.begin(); wi != windows.end(); wi++) {
-        if(snaps[wi->first]) {
-            delete snaps[wi->first];
-        }
-        snaps[wi->first] = new vQueue((wi->second)->getTW());
+        wi->second->copyTWTO(snaps[wi->first]);
+        //snaps[wi->first] = wi->second->getTW();
     }
 }
 
-const emorph::vQueue & vReadAndSplit::getSnap(const int channel)
+const emorph::vQueue& vReadAndSplit::getSnap(const int channel)
 {
-    if(!snaps.count(channel))
-            snaps[channel] = new vQueue();
-    return *(snaps[channel]);
-
+    return snaps[channel];
 }
 
 

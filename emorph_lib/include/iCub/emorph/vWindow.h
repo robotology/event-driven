@@ -86,6 +86,8 @@ public:
     ///
     const vQueue& getTW();
 
+    void copyTWTO(vQueue &that);
+
     ///
     /// \brief getSpatialWindow returns AddressEvents within a spatial window
     /// \param x x centre

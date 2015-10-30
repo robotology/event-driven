@@ -46,9 +46,9 @@ private:
     int windowsize;
 
     //! storage of vWindows
-    std::map<int, vWindow*> windows;
+    std::map<int, vWindow *> windows;
     //! storage of window snapshots
-    std::map<int, vQueue *> snaps;
+    std::map<int, vQueue> snaps;
 
 public:
 

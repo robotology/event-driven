@@ -75,7 +75,7 @@ public:
     /// \brief getMostRecent
     /// \return
     ///
-    vEvent *getMostRecent();
+    vEvent * getMostRecent();
 
 
     void clear();

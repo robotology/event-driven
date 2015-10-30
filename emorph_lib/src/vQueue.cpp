@@ -96,18 +96,15 @@ vQueue::iterator vQueue::erase(iterator __position)
 
 vQueue::vQueue(const vQueue& that)
 {
-    deque * lp = this;
-    *lp = deque(*(deque *)(&that));
-
-    referall();
+    *this = that;
 }
 
-vQueue vQueue::operator=(const vQueue& that)
+vQueue& vQueue::operator=(const vQueue& that)
 {
     this->clear();
 
-    deque * lp = this;
-    *lp = (deque)that;
+    deque<vEvent *> * lp = static_cast<deque<vEvent *> *>(this);
+   *lp = static_cast<const deque<vEvent *> &>(that);
 
     referall();
 
