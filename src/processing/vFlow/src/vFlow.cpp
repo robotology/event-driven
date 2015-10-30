@@ -89,7 +89,6 @@ vFlowManager::vFlowManager(int height, int width, int filterSize,
     this->halfCount = pow(filterSize, 2.0) / 2.0 + 0.5;
     this->planeSize = pow(filterSize, 2.0);
 
-    //this->minEvtsInSobel = std::min((double)minEvtsInSobel, halfCount/2.0+0.5);
     this->minEvtsOnPlane = minEvtsOnPlane;
 
     //for speed we predefine the mememory for some matricies
@@ -103,8 +102,8 @@ vFlowManager::vFlowManager(int height, int width, int filterSize,
     bottleCount = 0;
 
     //create our surface in synchronous mode
-    surfaceOn = new emorph::vSurface(width, height, false);
-    surfaceOf = new emorph::vSurface(width, height, false);
+    surfaceOn = new emorph::vSurface(width, height);
+    surfaceOf = new emorph::vSurface(width, height);
 }
 
 /******************************************************************************/
@@ -154,7 +153,6 @@ void vFlowManager::onRead(emorph::vBottle &inBottle)
     outBottle.clear();
     yarp::os::Stamp st;
     this->getEnvelope(st); outPort.setEnvelope(st);
-    std::cout << st.getCount() << std::endl;
 
     /*get the event queue in the vBottle bot*/
     emorph::vQueue q = inBottle.get<emorph::AddressEvent>();
@@ -200,7 +198,6 @@ void vFlowManager::onRead(emorph::vBottle &inBottle)
 
 
     outPort.writeStrict();
-
 }
 
 /******************************************************************************/
@@ -209,12 +206,15 @@ emorph::FlowEvent vFlowManager::compute()
     double dtdy = 0, dtdx = 0;
 
     //get the most recent event
-    emorph::AddressEvent * vr = cSurf->getMostRecent()->getAs<emorph::AddressEvent>();
+    emorph::AddressEvent * vr =
+            cSurf->getMostRecent()->getAs<emorph::AddressEvent>();
     emorph::FlowEvent opt_flow(*vr);
 
     //find the side of this event that has the collection of temporally nearby
     //events
-    double bestscore = emorph::vtsHelper::maxStamp()+1; int besti = 0, bestj = 0;
+    double bestscore = emorph::vtsHelper::maxStamp()+1;
+    int besti = 0, bestj = 0;
+
     for(int i = vr->getX()-fRad; i <= vr->getX()+fRad; i+=fRad) {
         for(int j = vr->getY()-fRad; j <= vr->getY()+fRad; j+=fRad) {
             //get the surface around the recent event
@@ -223,8 +223,10 @@ emorph::FlowEvent vFlowManager::compute()
             if(subsurf.size() < planeSize) continue;
 
             for(int k = 0; k < subsurf.size(); k++) {
-                if(subsurf[k]->getStamp() > vr->getStamp())
-                    subsurf[k]->setStamp(subsurf[k]->getStamp() - emorph::vtsHelper::maxStamp());
+                if(subsurf[k]->getStamp() > vr->getStamp()) {
+                    subsurf[k]->setStamp(subsurf[k]->getStamp() -
+                                         emorph::vtsHelper::maxStamp());
+                }
                 sobeltsdiff += vr->getStamp() - subsurf[k]->getStamp();
             }
             sobeltsdiff /= subsurf.size();

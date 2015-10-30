@@ -23,57 +23,14 @@
 
 #include <iCub/emorph/vtsHelper.h>
 #include <string>
-#include <deque>
 
 #define encoderr std::cerr << "Warning: code bits not sufficient" << std::endl;
 
 namespace emorph {
 
-//forward declaration
 class vEvent;
 
 vEvent * createEvent(const std::string type);
-
-/**************************************************************************/
-class vQueue : public std::deque<vEvent*>
-{
-private:
-
-    //! whether of not the storage needs to be freed or if it is a pointer to
-    //! something stored elsewhere
-    bool owner;
-
-    //! sorting events by timestamp comparitor
-    static bool temporalSortWrap(const vEvent *e1, const vEvent *e2);
-    static bool temporalSortStraight(const vEvent *e1, const vEvent *e2);
-
-public:
-
-    vQueue(const bool owner = true) { this->owner = owner; }
-
-    ~vQueue();
-    virtual void clear();
-
-    vQueue(const vQueue&);
-    vQueue operator=(const vQueue&);
-
-    virtual void push_back(const value_type &__x);
-    virtual void push_front(const value_type &__x);
-
-    virtual void pop_back();
-    virtual void pop_front();
-
-    virtual iterator erase(iterator __first, iterator __last);
-    virtual iterator erase(iterator __position);
-
-    vQueue copy(bool hardcopy = true);
-
-    bool getOwner() { return owner; }
-    void sort();
-    void wrapSort();
-
-};
-
 
 /**************************************************************************/
 class vEvent

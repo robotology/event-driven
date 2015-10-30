@@ -43,7 +43,7 @@ vCircleThread::vCircleThread(int R, bool directed, bool parallel, int height, in
 
 }
 
-void vCircleThread::process(emorph::vList &adds, emorph::vList &subs) {
+void vCircleThread::process(emorph::vQueue &adds, emorph::vQueue &subs) {
 
     this->adds = &adds;
     this->subs = &subs;
@@ -367,7 +367,7 @@ vCircleMultiSize::vCircleMultiSize(std::string qType, int qLength, int rLow, int
 vCircleMultiSize::~vCircleMultiSize()
 {
 
-    emorph::vList dummy1, dummy2;
+    emorph::vQueue dummy1, dummy2;
     std::vector<vCircleThread *>::iterator i;
     for(i = htransforms.begin(); i != htransforms.end(); i++) {
         (*i)->stop();
@@ -391,7 +391,7 @@ void vCircleMultiSize::addQueue(emorph::vQueue &additions) {
 
 }
 
-void vCircleMultiSize::updateHough(emorph::vList &adds, emorph::vList &subs)
+void vCircleMultiSize::updateHough(emorph::vQueue &adds, emorph::vQueue &subs)
 {
 
     std::vector<vCircleThread *>::iterator i;
@@ -420,16 +420,10 @@ double vCircleMultiSize::getObs(int &x, int &y, int &r)
 void vCircleMultiSize::addFixed(emorph::vQueue &additions)
 {
 
-    emorph::vList listadditions;
-    emorph::vList subtractions;
+    emorph::vQueue subtractions;
 
-    //when conversion to reference-based vQueue happens we don't need this
-    emorph::vQueue::iterator vqi;
-    for(vqi = additions.begin(); vqi != additions.end(); vqi++)
-        listadditions.push_back((*vqi)->clone());
-
-    emorph::vList::iterator vi;
-    for(vi = listadditions.begin(); vi != listadditions.end(); vi++) {
+    emorph::vQueue::iterator vi;
+    for(vi = additions.begin(); vi != additions.end(); vi++) {
 
         //GET THE EVENTS AS CORRECT TYPE
         emorph::AddressEvent *v = (*vi)->getAs<emorph::AddressEvent>();
@@ -438,7 +432,7 @@ void vCircleMultiSize::addFixed(emorph::vQueue &additions)
 
         //CHECK TO REMOVE "SAME LOCATION EVENTS FIRST"
         int cx = v->getX(); int cy = v->getY();
-        emorph::vList::iterator i = FIFO.begin();
+        emorph::vQueue::iterator i = FIFO.begin();
         while(i != FIFO.end()) {
             //we only add Address Events therefore we can do an unsafe cast
             v = (*i)->getUnsafe<emorph::AddressEvent>();
@@ -467,7 +461,7 @@ void vCircleMultiSize::addFixed(emorph::vQueue &additions)
         if(!removed) subtractions.push_back(&dummy);
     }
 
-    updateHough(listadditions, subtractions);
+    updateHough(additions, subtractions);
 
 }
 

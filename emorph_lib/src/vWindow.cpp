@@ -18,18 +18,17 @@
 
 namespace emorph {
 
-vWindow::vWindow(int width, int height, int duration, bool asynch)
+vWindow::vWindow(int width, int height, int duration)
 {
     this->width = width;
     this->height = height;
     this->duration = duration;
-    this->asynchronous = asynch;
+    this->mostrecent = NULL;
 
     spatial.resize(height);
     for(int y = 0; y < height; y++) {
-        spatial[y].resize(width, vQueue(false));
+        spatial[y].resize(width);
     }
-    subq = vQueue(asynch);
 }
 
 vWindow::vWindow(const vWindow& that)
@@ -42,14 +41,15 @@ vWindow vWindow::operator=(const vWindow& that)
     this->width = that.width;
     this->height = that.height;
     this->duration = that.duration;
-    this->asynchronous = that.asynchronous;
+    if(this->mostrecent) mostrecent->destroy();
+    mostrecent = NULL;
 
     //we don't copy data in a vWindow for now
     q.clear();
 
     spatial.resize(height);
     for(int y = 0; y < height; y++) {
-        spatial[y].resize(width, vQueue(false));
+        spatial[y].resize(width);
         for(int x = 0; x < width; x++) {
             spatial[y][x].clear();
         }
@@ -91,10 +91,17 @@ void vWindow::addEvent(vEvent &event)
 
 }
 
-const vQueue& vWindow::getTW()
+void vWindow::copyTWTO(vQueue &that)
 {
     mutex.wait();
-    subq = q.copy(asynchronous);
+    that = q;
+    mutex.post();
+}
+
+const vQueue& vWindow::getTW()
+{
+    mutex.wait(); 
+    subq = q;
     mutex.post();
 
     return subq;
@@ -112,7 +119,7 @@ const vQueue& vWindow::getSMARTSTW(int d)
         subq.clear();
         return subq;
     }
-    return getSTW(v->getX(), v->getY(), d);;
+    return getSTW(v->getX(), v->getY(), d);
 
 }
 
@@ -145,85 +152,34 @@ const vQueue& vWindow::getSTW(int xl, int xh, int yl, int yh)
     }
 
 
-
-//    vQueue qcopy2(asynchronous);
-//    vQueue::iterator qi;
-//    for (qi = q.begin(); qi != q.end(); qi++) {
-//        AddressEvent *v = (*qi)->getAs<AddressEvent>();
-//        if(!v) continue;
-//        int x = v->getX(); int y = v->getY();
-//        if(x < xl || x > xh || y < yl || y > yh) continue;
-//        qcopy2.push_back(*qi);
-//    }
-//    std::cout << qcopy.size() << " " << qcopy2.size() << std::endl;
-
     mutex.post();
 
     return subq;
 
 }
 
-const vQueue& vWindow::getSURF(int pol)
-{
-    return getSURF(0, width, 0, height, pol);
-}
 
-const vQueue& vWindow::getSMARTSURF(int d) {
-    AddressEvent *v = 0;
-    for(vQueue::reverse_iterator qi = q.rbegin(); qi != q.rend(); qi++) {
-        v = (*qi)->getAs<AddressEvent>();
-        if(v) break;
-    }
-    if(!v) {
-        subq.clear();
-        return subq;
-    }
-    return getSURF(v->getX(), v->getY(), d, v->getPolarity());
-}
-
-const vQueue& vWindow::getSURF(int x, int y, int d, int pol)
-{
-    return getSURF(x - d, x + d, y - d, y + d, pol);
-}
-
-const vQueue& vWindow::getSURF(int xl, int xh, int yl, int yh, int pol)
-{
-    subq.clear();
-
-    xl = std::max(xl, 0);
-    xh = std::min(xh, width-1);
-    yl = std::max(yl, 0);
-    yh = std::min(yh, height-1);
-
-    //critical section
-    mutex.wait();
-
-    for(int y = yl; y <= yh; y++) {
-        for(int x = xl; x <= xh; x++) {
-            for(int t = spatial[y][x].size()-1; t > -1; t--) {
-                if(spatial[y][x][t]->getPolarity() == pol) {
-                    subq.push_back(spatial[y][x][t]);
-                    break;
-                }
-            }
-        }
-    }
-
-    mutex.post();
-
-    return subq;
-
-}
 
 
 
 
 vEvent *vWindow::getMostRecent()
 {
+    //return nothing if we are empty
     if(!q.size()) return 0;
-    if(asynchronous) return q.back()->clone();
-    else return q.back();
-    return 0;
+
+    //if we had a previous most recent event allow it to be deallocated
+    if(mostrecent) {
+        mostrecent->destroy();
+        mostrecent = NULL;
+    }
+
+    //then set the most recent to be the back of the q and make sure it has
+    //a reference so it doesn't get deallocted
+    mostrecent = q.back();
+    mostrecent->referto();
+    return mostrecent;
+
 }
 
 

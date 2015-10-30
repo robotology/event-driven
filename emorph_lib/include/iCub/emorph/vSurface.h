@@ -17,10 +17,11 @@
 #ifndef __VSURFACE__
 #define __VSURFACE__
 
-#include <yarp/os/all.h>
+//#include <yarp/os/all.h>
 #include <vector>
-#include "vCodec.h"
-#include "vtsHelper.h"
+#include <iCub/emorph/vCodec.h>
+#include <iCub/emorph/vQueue.h>
+#include <iCub/emorph/vtsHelper.h>
 
 namespace emorph {
 
@@ -43,16 +44,14 @@ private:
     int width;
     //! the sensor height
     int height;
-    //! whether to deep copy or shallow copy
-    bool asynchronous;
 
     //Local Variables
     vEvent * mostRecent;
+    vEvent * justRemoved;
     //! for safe copying of q in the multi-threaded environment
     yarp::os::Semaphore mutex;
     //! member variable for quick memory allocation
     vQueue subq;
-
 
 public:
 
@@ -60,7 +59,7 @@ public:
     /// \brief vWindow constructor
     /// \param windowSize optional time to store events (in us)
     ///
-    vSurface(int width = 128, int height = 128, bool asynch = true);
+    vSurface(int width = 128, int height = 128);
 
     vSurface(const vSurface &);
     vSurface operator=(const vSurface&);
@@ -70,14 +69,16 @@ public:
     /// events.
     /// \param event the event to add
     ///
-    void addEvent(emorph::AddressEvent &event);
+    vEvent * addEvent(emorph::AddressEvent &event);
 
     ///
     /// \brief getMostRecent
     /// \return
     ///
-    vEvent *getMostRecent();
+    vEvent * getMostRecent();
 
+
+    void clear();
 
     const vQueue& getSURF(int d);
     const vQueue& getSURF(int x, int y, int d);
