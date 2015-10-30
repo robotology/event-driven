@@ -74,10 +74,7 @@ void vSurface::clear()
 
     subq.clear();
 
-    if(mostRecent) {
-        mostRecent->destroy();
-        mostRecent = NULL;
-    }
+    mostRecent = NULL;
 
     if(justRemoved) {
         justRemoved->destroy();
@@ -107,16 +104,17 @@ vEvent * vSurface::addEvent(AddressEvent &event)
     event.referto();
 
     //then set our mostRecent with a second reference
-    if(mostRecent) mostRecent->destroy();
     mostRecent = spatial[y][x];
-    mostRecent->referto();
 
     //leave section
     mutex.post();
+
+    return justRemoved;
 }
 
 const vQueue& vSurface::getSURF(int d)
 {
+    if(!mostRecent) return subq;
     return getSURF(mostRecent->getUnsafe<AddressEvent>()->getX(),
                    mostRecent->getUnsafe<AddressEvent>()->getY(), d);
 }
