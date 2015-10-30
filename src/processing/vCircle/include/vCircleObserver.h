@@ -143,6 +143,7 @@ private:
     int qduration;
 
     //internal data
+    emorph::vSurface surface;
     emorph::vQueue FIFO;
     emorph::vEvent dummy;
     std::vector<vCircleThread *> htransforms;
@@ -155,6 +156,7 @@ private:
     void addFixed(emorph::vQueue &additions);
     void addTime(emorph::vQueue &additions);
     void addLife(emorph::vQueue &additions);
+    void addSurf(emorph::vQueue &additions);
 
 public:
 
