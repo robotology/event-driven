@@ -14,16 +14,16 @@
  * Public License for more details
 */
 
-/**
- * \defgroup
- * @ingroup emorph_lib
- *
- * Data transport method for the eMorph project
- *
- * Author: Arren Glover 2014
- * Copyright (C) 2010 RobotCub Consortium
- * CopyPolicy: Released under the terms of the GNU GPL v2.0.
-*/
+///
+/// \ingroup emorphlib
+///
+/// \title vBottle
+///
+/// yarp::os::Bottle wrapper for sending events through the yarp system with
+/// particular attention to using data dumper and data players
+///
+/// \author Arren Glover
+///
 
 
 #ifndef __vBottle__

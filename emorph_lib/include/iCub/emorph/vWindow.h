@@ -14,6 +14,16 @@
  * Public License for more details
  */
 
+///
+/// \ingroup emorphlib
+///
+/// \title vWindow
+///
+/// A storage class which automatically discards events after a given timeperiod
+///
+/// \author Arren Glover
+///
+
 #ifndef __VWINDOW__
 #define __VWINDOW__
 

@@ -18,6 +18,16 @@
  * Public License for more details
 */
 
+///
+/// \ingroup emorphlib
+///
+/// \title vCodec
+///
+/// class hierarchy for different types of events
+///
+/// \author Arren Glover
+///
+
 #ifndef __EMORPH_VCODEC_H__
 #define __EMORPH_VCODEC_H__
 

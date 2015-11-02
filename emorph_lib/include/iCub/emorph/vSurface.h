@@ -14,10 +14,20 @@
  * Public License for more details
  */
 
+///
+/// \ingroup emorphlib
+///
+/// \title vSurface
+///
+/// A data representation which stores only the most recent event at each pixel
+/// location
+///
+/// \author Arren Glover
+///
+
 #ifndef __VSURFACE__
 #define __VSURFACE__
 
-//#include <yarp/os/all.h>
 #include <vector>
 #include <iCub/emorph/vCodec.h>
 #include <iCub/emorph/vQueue.h>

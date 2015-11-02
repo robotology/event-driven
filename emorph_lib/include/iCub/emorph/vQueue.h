@@ -18,6 +18,17 @@
  * Public License for more details
 */
 
+///
+/// \ingroup emorphlib
+///
+/// \title vQueue
+///
+/// A wrapper for a dequeue of event pointers with functionality for memory
+/// management of events
+///
+/// \author Arren Glover
+///
+
 #ifndef __EMORPH_VQUEUE__
 #define __EMORPH_VQUEUE__
 
