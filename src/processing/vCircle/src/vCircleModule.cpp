@@ -249,7 +249,7 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
         image = cObserver->makeDebugImage();
         houghOut.setEnvelope(st);
         houghOut.write();
-        std::cout << timecounter << std::endl;
+        std::cout << "Processing Time" << timecounter << ", Hough response: " << cObserver->getObs(bestx, besty, bestr) << std::endl;
     }
 
 

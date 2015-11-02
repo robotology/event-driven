@@ -339,8 +339,8 @@ yarp::sig::ImageOf<yarp::sig::PixelBgr> vCircleThread::makeDebugImage()
     for(int y = 0; y < height; y++) {
         for(int x = 0; x < width; x++) {
             double I;
-            if(H[y][x] > 0.2) I = 255.0;
-            else I = 255.0 * H[y][x] / 0.2;
+            if(H[y][x] >= H[y_max][x_max]) I = 255.0;
+            else I = 255.0 * H[y][x] / H[y_max][x_max];
             canvas(y, 127 - x) = yarp::sig::PixelBgr(I, I, I);
         }
     }
@@ -386,6 +386,8 @@ void vCircleMultiSize::addQueue(emorph::vQueue &additions) {
             addFixed(additions);
         else if(qType == "Lifetime")
             addLife(additions);
+        else if(qType == "surf")
+            addSurf(additions);
         else
             std::cerr << "Did not understand qType" << std::endl;
 
@@ -509,6 +511,24 @@ void vCircleMultiSize::addLife(emorph::vQueue &additions)
 
 //    //add this event to the hough space
 //    addHough(event);
+
+}
+
+void vCircleMultiSize::addSurf(emorph::vQueue &additions)
+{
+
+    emorph::vQueue subtractions;
+    emorph::vQueue::iterator qi;
+    for(qi = additions.begin(); qi != additions.end(); qi++) {
+        emorph::AddressEvent * v = (*qi)->getAs<emorph::AddressEvent>();
+        if(!v) continue;
+        emorph::vEvent * removed = surface.addEvent(*v);
+        if(removed) subtractions.push_back(removed);
+        else subtractions.push_back(&dummy);
+
+    }
+
+    updateHough(additions, subtractions);
 
 }
 
