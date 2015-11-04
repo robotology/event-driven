@@ -1,17 +1,5 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
-/**
- * \defgroup
- * @ingroup emorph_lib
- *
- * Data transport method for the eMorph project using the standard Bottle
- * format tailored for vEvents
- *
- * Author: Arren Glover 2014
- * Copyright (C) 2010 RobotCub Consortium
- * CopyPolicy: Released under the terms of the GNU GPL v2.0.
-*/
-
 #include <iCub/emorph/vBottle.h>
 
 

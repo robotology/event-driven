@@ -15,6 +15,11 @@
  * Public License for more details
  */
 
+/// \defgroup processing Processing
+/// \defgroup vPepper vPepper
+/// \ingroup processing
+/// \brief remove salt and pepper noise
+
 #ifndef __ICUB_DPEPPER_MOD_H__
 #define __ICUB_DPEPPER_MOD_H__
 

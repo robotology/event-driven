@@ -27,11 +27,11 @@
 #define _AEX_GRABBER_MODULE_H_
 
 /** 
+ * \defgroup HardwareIO HardwareIO
+ * \defgroup aexGrabber aexGrabber
+ * @ingroup HardwareIO
  *
- * \defgroup icub_aexGrabber aexGrabber
- * @ingroup icub_eMorph
- *
- *
+ * \brief
  * This is a module that extracts independent event-driven response to changes in the luminance sensed 
  * 
  * Event driven asynchronous sensors transmit the local pixel-level changes caused by movement in a scene at the time they occur.

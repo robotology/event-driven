@@ -1,0 +1,74 @@
+\hypertarget{group__aexGrabber}{\section{aex\-Grabber}
+\label{group__aexGrabber}\index{aex\-Grabber@{aex\-Grabber}}
+}
+
+
+This is a module that extracts independent event-\/driven response to changes in the luminance sensed.  
+
+
+This is a module that extracts independent event-\/driven response to changes in the luminance sensed. Event driven asynchronous sensors transmit the local pixel-\/level changes caused by movement in a scene at the time they occur. The result is a stream of events at microsecond time resolution with very low redundancy that drastically reduces power, data storage and computational requirements.\hypertarget{group__aexGrabber_reference}{}\subsection{reference}\label{group__aexGrabber_reference}
+The address-\/event representation communication protocol A\-E\-R 0.\-02, Caltech, Pasadena, C\-A, Internal Memo, Feb. 1993 \mbox{[}Online\mbox{]}. Available\-: \href{http://www.ini.uzh.ch/~amw/scx/std002.pdf}{\tt http\-://www.\-ini.\-uzh.\-ch/$\sim$amw/scx/std002.\-pdf}
+
+S. R. Deiss, T. Delbrück, R. J. Douglas, M. Fischer, M. Mahowald, T. Matthews, and A. M. Whatley, Address-\/event asynchronous local broadcast protocol, Inst. Neuroinform., Zurich, Switzerland, 1994 \mbox{[}Online\mbox{]}. Available\-: \href{http://www.ini.uzh.ch/~amw/scx/aeprotocol.html}{\tt http\-://www.\-ini.\-uzh.\-ch/$\sim$amw/scx/aeprotocol.\-html}
+
+A. M. Whatley, P\-C\-I-\/\-A\-E\-R Board Driver, Library \& Documentation, Inst. Neuroinform., Zurich, Switzerland, 2007 \mbox{[}Online\mbox{]}. Available\-: \href{http://www.ini.uzh.ch/~amw/pciaer/}{\tt http\-://www.\-ini.\-uzh.\-ch/$\sim$amw/pciaer/}
+
+S. R. Deiss, R. J. Douglas, and A. M. Whatley, \char`\"{}\-A pulse-\/coded communications infrastructure for neuromorphic systems\char`\"{}, in Pulsed Neural Networks, W. Maass and C. M. Bishop, Eds. Cambridge, M\-A\-: M\-I\-T Press, 1998, ch. 6, pp. 157–178.
+
+V. Dante, P. Del Giudice, and A. M. Whatley, “\-P\-C\-I-\/\-A\-E\-R—hardware and software for interfacing to address-\/event based neuromorphic systems,” The Neuromorphic Engineer vol. 2, no. 1, pp. 5–6, 2005 \mbox{[}Online\mbox{]}. Available\-: \href{http://ine-web.org/research/newsletters/index.html}{\tt http\-://ine-\/web.\-org/research/newsletters/index.\-html}\hypertarget{group__aexGrabber_Description}{}\subsection{Description}\label{group__aexGrabber_Description}
+\hypertarget{group__aexGrabber_lib_sec}{}\subsection{Libraries}\label{group__aexGrabber_lib_sec}
+Y\-A\-R\-P.\hypertarget{group__aexGrabber_parameters_sec}{}\subsection{Parameters}\label{group__aexGrabber_parameters_sec}
+{\bfseries Command-\/line Parameters}
+
+The following key-\/value pairs can be specified as command-\/line parameters by prefixing {\ttfamily --} to the key (e.\-g. {\ttfamily --from} file.\-ini. The value part can be changed to suit your needs; the default values are shown below.
+
+
+\begin{DoxyItemize}
+\item {\ttfamily from} {\ttfamily aex\-Grabber.\-ini} \par
+ specifies the configuration file
+\item {\ttfamily context} {\ttfamily aex\-Grabber/conf} \par
+ specifies the sub-\/path from {\ttfamily \$\-I\-C\-U\-B\-\_\-\-R\-O\-O\-T/icub/app} to the configuration file
+\item {\ttfamily name} {\ttfamily aex\-Grabber} \par
+ specifies the name of the module (used to form the stem of module port names)
+\item {\ttfamily robot} {\ttfamily icub} \par
+ specifies the name of the robot (used to form the root of robot port names)
+\end{DoxyItemize}
+
+{\bfseries Configuration File Parameters}
+
+The following key-\/value pairs can be specified as parameters in the configuration file (they can also be specified as command-\/line parameters if you so wish). The value part can be changed to suit your needs; the default values are shown below.\hypertarget{group__aexGrabber_portsa_sec}{}\subsection{Ports Accessed}\label{group__aexGrabber_portsa_sec}
+
+\begin{DoxyItemize}
+\item None
+\end{DoxyItemize}\hypertarget{group__aexGrabber_portsc_sec}{}\subsection{Ports Created}\label{group__aexGrabber_portsc_sec}
+{\bfseries Input ports}
+
+
+\begin{DoxyItemize}
+\item {\ttfamily /aex\-Grabber} \par
+ This port is used to change the parameters of the module at run time or stop the module. \par
+ The following commands are available
+\item {\ttfamily help} \par
+
+\item {\ttfamily quit} \par
+ Note that the name of this port mirrors whatever is provided by the {\ttfamily --name} parameter value The port is attached to the terminal so that you can type in commands and receive replies. The port can be used by other modules but also interactively by a user through the yarp rpc directive, viz.\-: {\ttfamily yarp} {\ttfamily rpc} {\ttfamily /visual\-Filter} This opens a connection from a terminal to the port and allows the user to then type in commands and receive replies.
+\item {\ttfamily /aex\-Grabber/image}\-:i \par
+ {\bfseries Output ports}
+\item {\ttfamily /aex\-Grabber} \par
+ see above
+\item {\ttfamily /aex\-Grabber/image}\-:o \par
+ {\bfseries Port types}
+\end{DoxyItemize}\hypertarget{group__aexGrabber_in_files_sec}{}\subsection{Input Data Files}\label{group__aexGrabber_in_files_sec}
+None\hypertarget{group__aexGrabber_out_data_sec}{}\subsection{Output Data Files}\label{group__aexGrabber_out_data_sec}
+None\hypertarget{group__aexGrabber_conf_file_sec}{}\subsection{Configuration Files}\label{group__aexGrabber_conf_file_sec}
+{\ttfamily aex\-Grabber.\-ini} in {\ttfamily \$\-I\-C\-U\-B\-\_\-\-R\-O\-O\-T/app/aex\-Grabber/conf} \par
+ \hypertarget{group__aexGrabber_tested_os_sec}{}\subsection{Tested O\-S}\label{group__aexGrabber_tested_os_sec}
+Windows, Linux\hypertarget{group__aexGrabber_example_sec}{}\subsection{Example Instantiation of the Module}\label{group__aexGrabber_example_sec}
+{\ttfamily aex\-Grabber --name aex\-Grabber --context aex\-Grabber/conf --from aex\-Grabber.\-ini --robot icub}
+
+\begin{DoxyAuthor}{Author}
+Rea Francesco
+\end{DoxyAuthor}
+Copyright (C) 2010 Robot\-Cub Consortium\par
+Copy\-Policy\-: Released under the terms of the G\-N\-U G\-P\-L v2.\-0.\par
+This file can be edited at {\ttfamily \$\-I\-C\-U\-B\-\_\-\-R\-O\-O\-T/contrib/src/e\-Morph/aex\-Grabber/include/i\-Cub/aex\-Grabber\-Module}.h 

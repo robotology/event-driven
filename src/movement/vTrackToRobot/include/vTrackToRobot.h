@@ -14,6 +14,11 @@
  * Public License for more details
  */
 
+/// \defgroup robotBehaviour robotBehaviour
+/// \defgroup vTrackToRobot vTrackToRobot
+/// \ingroup robotBehaviour
+/// \brief perform gaze control given cluster track events
+
 #ifndef __ICUB_VTRACKTOROBOT_H__
 #define __ICUB_VTRACKTOROBOT_H__
 

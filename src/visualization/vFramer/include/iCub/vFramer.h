@@ -14,6 +14,12 @@
  * Public License for more details
  */
 
+/// \defgroup visualisation Visualisation
+/// \defgroup vFramer vFramer
+/// \ingroup visualisation
+/// \brief frame events in a temporal window which are drawn with a
+/// emorph::vDraw
+
 #ifndef __vFramer__
 #define __vFramer__
 

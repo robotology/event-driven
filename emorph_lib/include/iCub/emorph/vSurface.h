@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2010 eMorph Group iCub Facility
- * Authors: Arren Glover
+ * Copyright (C) 2015 iCub Facility - Istituto Italiano di Tecnologia
+ * Author: arren.glover@iit.it
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
  * later version published by the Free Software Foundation.
@@ -12,18 +12,14 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details
- */
+*/
 
-///
-/// \ingroup emorphlib
-///
-/// \title vSurface
-///
+/// \defgroup emorphLib emorphLib
+/// \defgroup vSurface vSurface
+/// \ingroup emorphLib
+/// \brief
 /// A data representation which stores only the most recent event at each pixel
 /// location
-///
-/// \author Arren Glover
-///
 
 #ifndef __VSURFACE__
 #define __VSURFACE__

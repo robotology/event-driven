@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2010 eMorph Group iCub Facility
- * Authors: Arren Glover
+ * Copyright (C) 2015 iCub Facility - Istituto Italiano di Tecnologia
+ * Author: arren.glover@iit.it
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
  * later version published by the Free Software Foundation.
@@ -12,17 +12,12 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details
- */
+*/
 
-///
-/// \ingroup emorphlib
-///
-/// \title vWindow
-///
-/// A storage class which automatically discards events after a given timeperiod
-///
-/// \author Arren Glover
-///
+/// \defgroup emorphLib emorphLib
+/// \defgroup vWindow vWindow
+/// \ingroup emorphLib
+/// \brief A storage class which automatically discards events after a given timeperiod
 
 #ifndef __VWINDOW__
 #define __VWINDOW__

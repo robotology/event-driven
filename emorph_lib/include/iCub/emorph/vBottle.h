@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2014 iCub Facility - Istituto Italiano di Tecnologia
- * Author: Arren Glover (@itt.it)
+ * Copyright (C) 2015 iCub Facility - Istituto Italiano di Tecnologia
+ * Author: arren.glover@iit.it
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
  * later version published by the Free Software Foundation.
@@ -14,17 +14,11 @@
  * Public License for more details
 */
 
-///
-/// \ingroup emorphlib
-///
-/// \title vBottle
-///
-/// yarp::os::Bottle wrapper for sending events through the yarp system with
+/// \defgroup emorphLib emorphLib
+/// \defgroup vBottle vBottle
+/// \ingroup emorphLib
+/// \brief yarp::os::Bottle wrapper for sending events through the yarp system with
 /// particular attention to using data dumper and data players
-///
-/// \author Arren Glover
-///
-
 
 #ifndef __vBottle__
 #define __vBottle__

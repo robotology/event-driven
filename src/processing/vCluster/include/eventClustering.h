@@ -16,6 +16,11 @@
  * Public License for more details
  */
 
+/// \defgroup processing Processing
+/// \defgroup vCluster vCluster
+/// \ingroup processing
+/// \brief track gaussian clusters in the event stream
+
 #ifndef __ICUB_EVENTCLUSTERING_MOD_H__
 #define __ICUB_EVENTCLUSTERING_MOD_H__
 

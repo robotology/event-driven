@@ -14,25 +14,23 @@
  * Public License for more details
  */
 
-/// @file aexGrabbberModule.h
-/// @brief A module for performing event-based circle detection
-
 #ifndef __VCIRCLE__
 #define __VCIRCLE__
 
+/// \defgroup processing Processing
+/// \defgroup vCircle vCircle
+/// \ingroup processing
+/// \brief track circular shapes in event stream
+///
+/// \section parameters Parameters
+///
+/// - \c name \c vCircle \n
+/// set the root string for port naming e.g. /vCircle/vBottle:i
 
 /**
  *
- * \defgroup processing Processing
- * \ingroup vCircle
- *
  * This module uses the Hough transform at several radii to detect circles in
  * the event-driven data stream.
- *
- * \section reference
- *
- * Submitted.
- *
  *
  * \section parameters_sec Parameters
  *

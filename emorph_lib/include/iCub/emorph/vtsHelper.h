@@ -14,15 +14,11 @@
  * Public License for more details
 */
 
-///
-/// \ingroup emorphlib
-///
-/// \title vtsHelper
-///
+/// \defgroup emorphLib emorphLib
+/// \defgroup vtsHelper vtsHelper
+/// \ingroup emorphLib
+/// \brief
 /// a helper class for unwrapping timestamps into long ints when overflow occurs
-///
-/// \author Valentina Vasco
-///
 
 #ifndef __VTSHELPER__
 #define __VTSHELPER__

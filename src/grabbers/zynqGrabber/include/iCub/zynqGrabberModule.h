@@ -18,6 +18,10 @@
  * Public License for more details
  */
 
+/// \defgroup HardwareIO HardwareIO
+/// \defgroup zynqGrabber zynqGrabber
+/// \ingroup HardwareIO
+/// \brief flexible IO designed for zboard/zturn
 
 #ifndef _ZYNQ_GRABBER_MODULE_H_
 #define _ZYNQ_GRABBER_MODULE_H_

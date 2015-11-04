@@ -15,6 +15,11 @@
  * Public License for more details
  */
 
+/// \defgroup processing Processing
+/// \defgroup vUndistortCam vUndistortCam
+/// \ingroup processing
+/// \brief undistort the DVS camera using camera calibration parameters
+
 #ifndef __ICUB_EVENTCLUSTERING_MOD_H__
 #define __ICUB_EVENTCLUSTERING_MOD_H__
 

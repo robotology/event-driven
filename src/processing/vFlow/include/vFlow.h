@@ -14,10 +14,14 @@
  * Public License for more details
  */
 
-/*
- * @file tsOptFlow.h
- * @brief A module that reads vBottle from a yarp port and computes optical flow
- */
+/// \defgroup processing Processing
+/// \defgroup vFlow vFlow
+/// \ingroup processing
+/// \brief calculate optical flow using plane fitting technique (vFlowManager)
+/// \file vFlow.h
+///
+/// \section class Class
+/// emorph::vFlowManager
 
 #ifndef __VFLOW__
 #define __VFLOW__
@@ -28,25 +32,27 @@
 #include <yarp/sig/all.h>
 #include <yarp/math/Math.h>
 #include <yarp/math/SVD.h>
-
 #include <iCub/emorph/all.h>
 
+///
+/// \brief The vFlowManager class performs event-based optical flow
+///
 class vFlowManager : public yarp::os::BufferedPort<emorph::vBottle>
 {
 private:
 
     yarp::os::BufferedPort<emorph::vBottle> outPort;
 
-    emorph::vSurface *surfaceOn;
-    emorph::vSurface *surfaceOf;
-    emorph::vSurface *cSurf;
+    emorph::vSurface *surfaceOn; ///< emorph::vSurface for on polarity events
+    emorph::vSurface *surfaceOf; ///< emorph::vSurface for off polarity events
+    emorph::vSurface *cSurf;     //! pointer to current surface (on or off)
 
-    int height;
-    int width;
-    int fRad;
-    int planeSize;
-    int halfCount;
-    int minEvtsOnPlane;
+    int height; //! sensor height
+    int width;  //! sensor width
+    int fRad;   //! filter radius
+    int planeSize; //! edge length of fitted plane
+    int halfCount; //! plane area divided by 2
+    int minEvtsOnPlane; //! minimum number of events for plane validity
 
     yarp::sig::Matrix At;
     yarp::sig::Matrix AtA;
@@ -68,6 +74,12 @@ public:
 
     vFlowManager(int height, int width, int filterSize, int minEvtsOnPlane);
 
+    ///
+    /// \brief open the port and start callback
+    /// \param moduleName defines port names (default vFlow)
+    /// \param strictness read and write strcitly such that events are not lost
+    /// \return true on successful open
+    ///
     bool    open(std::string moduleName, bool strictness = false);
     void    close();
     void    interrupt();

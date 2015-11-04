@@ -1,10 +1,6 @@
-// -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
-
-/* 
- * Copyright (C) 2011 Department of Robotics Brain and Cognitive Sciences -
- * Istituto Italiano di Tecnologia
- * Author: Ugo Pattacini, modified by Arren Glover(10/14)
- * email:  ugo.pattacini@iit.it
+/*
+ * Copyright (C) 2015 iCub Facility - Istituto Italiano di Tecnologia
+ * Author: arren.glover@iit.it
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
  * later version published by the Free Software Foundation.
@@ -18,16 +14,13 @@
  * Public License for more details
 */
 
-///
-/// \ingroup emorphlib
-///
-/// \title vQueue
-///
+/// \defgroup emorphLib emorphLib
+/// \defgroup vQueue vQueue
+/// \ingroup emorphLib
+/// \brief
 /// A wrapper for a dequeue of event pointers with functionality for memory
 /// management of events
-///
-/// \author Arren Glover
-///
+
 
 #ifndef __EMORPH_VQUEUE__
 #define __EMORPH_VQUEUE__
