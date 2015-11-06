@@ -628,7 +628,7 @@ aerDevManager::aerDevManager(std::string dev) : deviceManager(true, AER_MAX_BUF_
     if (dev == "zynq_spinn")
         {
         
-            this->deviceName = "/dev/iit_sp2neu";
+            this->deviceName = "/dev/spinn2neu";
     
         } else if (dev == "zynq_sens")
         {
