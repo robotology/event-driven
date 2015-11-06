@@ -64,15 +64,15 @@
 #define VSCTRL_GPO_ADDR          0x38
 #define VSCTRL_GPI_ADDR          0x3C
 
-// Spinn2Neu
+// hpu_core & spinn2neu
 
 #define MAGIC_NUM 100
-#define SP2NEU_VERSION         _IOR (MAGIC_NUM,  7, void *)
-#define SP2NEU_TIMESTAMP       _IOR (MAGIC_NUM,  8, void *)
-#define SP2NEU_GEN_REG         _IOWR(MAGIC_NUM,  6, void *)
-#define SP2NEU_SET_LOC_LBCK    _IOW (MAGIC_NUM, 10, void *)
-#define SP2NEU_SET_REM_LBCK    _IOW (MAGIC_NUM, 11, void *)
-#define SP2NEU_SET_FAR_LBCK    _IOW (MAGIC_NUM, 12, void *)
+#define AER_VERSION         _IOR (MAGIC_NUM,  7, void *)
+#define AER_TIMESTAMP       _IOR (MAGIC_NUM,  8, void *)
+#define AER_GEN_REG         _IOWR(MAGIC_NUM,  6, void *)
+#define AER_SET_LOC_LBCK    _IOW (MAGIC_NUM, 10, void *)
+#define AER_SET_REM_LBCK    _IOW (MAGIC_NUM, 11, void *)
+#define AER_SET_FAR_LBCK    _IOW (MAGIC_NUM, 12, void *)
 
 #define AER_MAX_BUF_SIZE 16777216
 
@@ -111,6 +111,8 @@
 //#define MASK_RX_EMPTY    0x01
 //#define MASK_RX_FULL     0x04
 
+
+
 typedef union vsctrl_ioctl_arg_t {
     struct {
         uint8_t addr;
@@ -132,11 +134,11 @@ typedef union vsctrl_ioctl_arg_t {
 } vsctrl_ioctl_arg_t;
 
 
-typedef struct sp2neu_gen_reg {
+typedef struct aerGenReg {
     unsigned int offset;
     char         rw;
     unsigned int data;
-} sp2neu_gen_reg_t;
+} aerGenReg_t;
 
 typedef struct fpgaStatus {
     bool crcErr;

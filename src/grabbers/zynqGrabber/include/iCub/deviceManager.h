@@ -151,9 +151,9 @@ public:
     virtual bool openDevice();
     virtual void closeDevice();
     
-    void write_generic_sp2neu_reg (int devDesc, unsigned int offset,
+    void aerWriteGenericReg (int devDesc, unsigned int offset,
                                    unsigned int data);
-    unsigned int read_generic_sp2neu_reg (int devDesc, unsigned int offset);
+    unsigned int aerReadGenericReg (int devDesc, unsigned int offset);
     void usage (void);
     
     bool readFifoFull();

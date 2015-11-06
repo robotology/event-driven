@@ -655,7 +655,7 @@ bool aerDevManager::openDevice(){
         int i;
         unsigned int  tmp_reg;
         
-        ioctl(devDesc, SP2NEU_VERSION, &version);
+        ioctl(devDesc, AER_VERSION, &version);
         
         hw_major = (version & 0xF0) >> 4;
         hw_minor = (version & 0x0F);
@@ -668,24 +668,24 @@ bool aerDevManager::openDevice(){
         fprintf(stderr, "Identified: %s version %d.%d\r\n\r\n", stringa, hw_major, hw_minor);
         
         // Write the WrapTimeStamp register with any value if you want to clear it
-        //write_generic_sp2neu_reg(fp,STMP_REG,0);
-        fprintf(stderr, "Times wrapping counter: %d\n", read_generic_sp2neu_reg(devDesc, STMP_REG));
+        //aerWriteGenericReg(fp,STMP_REG,0);
+        fprintf(stderr, "Times wrapping counter: %d\n", aerReadGenericReg(devDesc, STMP_REG));
         
         // Enable Time wrapping interrupt
-        //write_generic_sp2neu_reg(devDesc, MASK_REG, MSK_TIMEWRAPPING | MSK_TX_DUMPMODE | MSK_RX_PAR_ERR | MSK_RX_MOD_ERR);
-        write_generic_sp2neu_reg(devDesc, MASK_REG, MSK_TIMEWRAPPING | MSK_RX_PAR_ERR);
+        //aerWriteGenericReg(devDesc, MASK_REG, MSK_TIMEWRAPPING | MSK_TX_DUMPMODE | MSK_RX_PAR_ERR | MSK_RX_MOD_ERR);
+        aerWriteGenericReg(devDesc, MASK_REG, MSK_TIMEWRAPPING | MSK_RX_PAR_ERR);
         
         // Flush FIFOs
-        tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
-        write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | CTRL_FLUSHFIFO); // | CTRL_ENABLEIP);
+        tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
+        aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg | CTRL_FLUSHFIFO); // | CTRL_ENABLEIP);
         
         // Start IP in LoopBack
-        tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
-        write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg | (CTRL_ENABLEINTERRUPT));// | CTRL_ENABLE_FAR_LBCK));
+        tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
+        aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg | (CTRL_ENABLEINTERRUPT));// | CTRL_ENABLE_FAR_LBCK));
         
-        ioctl(devDesc, SP2NEU_SET_LOC_LBCK, 0);
-        ioctl(devDesc, SP2NEU_SET_FAR_LBCK, 0);
-        ioctl(devDesc, SP2NEU_SET_REM_LBCK, 0);
+        ioctl(devDesc, AER_SET_LOC_LBCK, 0);
+        ioctl(devDesc, AER_SET_FAR_LBCK, 0);
+        ioctl(devDesc, AER_SET_REM_LBCK, 0);
     }
     return ret;
 }
@@ -693,14 +693,14 @@ bool aerDevManager::openDevice(){
 void aerDevManager::closeDevice(){
 
     deviceManager::closeDevice();
-    unsigned int tmp_reg = read_generic_sp2neu_reg(devDesc, CTRL_REG);
-    write_generic_sp2neu_reg(devDesc, CTRL_REG, tmp_reg & ~(CTRL_ENABLEINTERRUPT));
+    unsigned int tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
+    aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg & ~(CTRL_ENABLEINTERRUPT));
 
     
 }
 
 bool aerDevManager::readFifoFull(){
-    int devData=read_generic_sp2neu_reg(devDesc,RAWI_REG);
+    int devData=aerReadGenericReg(devDesc,RAWI_REG);
     if((devData & MSK_RXBUF_FULL)==1)
     {
         fprintf(stdout,"FULL RX FIFO!!!!   \n");
@@ -710,7 +710,7 @@ bool aerDevManager::readFifoFull(){
 }
 
 bool aerDevManager::readFifoEmpty(){
-    int devData=read_generic_sp2neu_reg(devDesc,RAWI_REG);
+    int devData=aerReadGenericReg(devDesc,RAWI_REG);
     if((devData & MSK_RXBUF_EMPTY)==1)
     {
         fprintf(stdout,"EMPTY RX FIFO!!!!   \n");
@@ -720,7 +720,7 @@ bool aerDevManager::readFifoEmpty(){
 }
 
 bool aerDevManager::writeFifoAFull(){
-    int devData=read_generic_sp2neu_reg(devDesc,RAWI_REG);
+    int devData=aerReadGenericReg(devDesc,RAWI_REG);
     if((devData & MSK_TXBUF_AFULL)==1)
     {
         fprintf(stdout,"Almost FULL TX FIFO!!!!  \n");
@@ -730,7 +730,7 @@ bool aerDevManager::writeFifoAFull(){
 }
 
 bool aerDevManager::writeFifoFull(){
-    int devData=read_generic_sp2neu_reg(devDesc,RAWI_REG);
+    int devData=aerReadGenericReg(devDesc,RAWI_REG);
     if((devData & MSK_TXBUF_FULL)==1)
     {
         fprintf(stdout,"FULL TX FIFO!!!!   \n");
@@ -740,7 +740,7 @@ bool aerDevManager::writeFifoFull(){
 }
 
 bool aerDevManager::writeFifoEmpty(){
-    int devData=read_generic_sp2neu_reg(devDesc,RAWI_REG);
+    int devData=aerReadGenericReg(devDesc,RAWI_REG);
     if((devData & MSK_TXBUF_EMPTY)==0)
     {
         fprintf(stdout,"EMPTY TX FIFO!!!!   \n");
@@ -752,28 +752,28 @@ bool aerDevManager::writeFifoEmpty(){
 int aerDevManager::timeWrapCount(){
     int time;
     
-    time = read_generic_sp2neu_reg(devDesc,STMP_REG);
+    time = aerReadGenericReg(devDesc,STMP_REG);
     fprintf (stdout,"Times wrapping counter: %d\n",time);
     
     return time;
 }
 
-void aerDevManager::write_generic_sp2neu_reg (int devDesc, unsigned int offset, unsigned int data) {
-    sp2neu_gen_reg_t reg;
+void aerDevManager::aerWriteGenericReg (int devDesc, unsigned int offset, unsigned int data) {
+    aerGenReg_t reg;
     
     reg.rw = 1;
     reg.data = data;
     reg.offset = offset;
-    ioctl(devDesc, SP2NEU_GEN_REG, &reg);
+    ioctl(devDesc, AER_GEN_REG, &reg);
 }
 
 
-unsigned int aerDevManager::read_generic_sp2neu_reg (int devDesc, unsigned int offset) {
-    sp2neu_gen_reg_t reg;
+unsigned int aerDevManager::aerReadGenericReg (int devDesc, unsigned int offset) {
+    aerGenReg_t reg;
     
     reg.rw = 0;
     reg.offset = offset;
-    ioctl(devDesc, SP2NEU_GEN_REG, &reg);
+    ioctl(devDesc, AER_GEN_REG, &reg);
     
     return reg.data;
 }
