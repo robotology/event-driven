@@ -47,13 +47,12 @@ void  device2yarp::run() {
     int bstart = 0;
     int bend = 0;
 
-    int *TS =  (int *)(data.data() + bend);
-    int *AE =  (int *)(data.data() + bend + 4);
-    bool BITMISMATCH = !(*TS & 0x80000000) || (*AE & 0xFFEF0000);
+    while(bend < nBytesRead - 7) {
 
-    //while we have a non multiple of 8 bytes, the first two ints are not
-    //correctly a TS then AE and we aren't greater than the total # bytes
-    while(((nBytesRead-bend) % 8 || BITMISMATCH) && (bend <= nBytesRead - 8)) {
+        //check validity
+        int *TS =  (int *)(data.data() + bend);
+        int *AE =  (int *)(data.data() + bend + 4);
+        bool BITMISMATCH = !(*TS & 0x80000000) || (*AE & 0xFEFF0000);
 
         if(BITMISMATCH) {
             //send on what we have checked is not mismatched so far
@@ -63,27 +62,61 @@ void  device2yarp::run() {
                 countAEs += (bend - bstart) / 8;
                 vStamp.update();
                 portvBottle.setEnvelope(vStamp);
-                portvBottle.write(sender);
+                portvBottle.write(sender); //port is always strict
             }
             //then increment by 1 to find the next alignment
             bend++;
             bstart = bend;
         } else {
+            //else scale the timestamp
+            *TS = 0x80000000 | ((*TS & 0x7FFFFFFF) * 1);
+            //and then check the next two ints
             bend += 8;
         }
-
-        TS =  (int *)(data.data() + bend);
-        AE =  (int *)(data.data() + bend + 4);
-        BITMISMATCH = !(*TS & 0x80000000) || (*AE & 0xFFEF0000);
-
     }
+
+
+
+//    int bstart = 0;
+//    int bend = 0;
+
+//    int *TS =  (int *)(data.data() + bend);
+//    int *AE =  (int *)(data.data() + bend + 4);
+//    bool BITMISMATCH = !(*TS & 0x80000000) || (*AE & 0xFFFF0000);
+
+//    //while we have a non multiple of 8 bytes, the first two ints are not
+//    //correctly a TS then AE and we aren't greater than the total # bytes
+//    while(((nBytesRead-bend) % 8 || BITMISMATCH) && (bend <= nBytesRead - 8)) {
+
+//        if(BITMISMATCH) {
+//            //send on what we have checked is not mismatched so far
+//            if(bend - bstart > 0) {
+//                std::cerr << "BITMISMATCH in yarp2device" << std::endl;
+//                sender.setdata(data.data()+bstart, bend-bstart);
+//                countAEs += (bend - bstart) / 8;
+//                vStamp.update();
+//                portvBottle.setEnvelope(vStamp);
+//                portvBottle.write(sender);
+//            }
+//            //then increment by 1 to find the next alignment
+//            bend++;
+//            bstart = bend;
+//        } else {
+//            bend += 8;
+//        }
+
+//        TS =  (int *)(data.data() + bend);
+//        AE =  (int *)(data.data() + bend + 4);
+//        BITMISMATCH = !(*TS & 0x80000000) || (*AE & 0xFFFF0000);
+
+//    }
 
     if(nBytesRead - bstart > 7) {
         sender.setdata(data.data()+bstart, 8*((nBytesRead-bstart)/8));
         countAEs += (nBytesRead - bstart) / 8;
         vStamp.update();
         portvBottle.setEnvelope(vStamp);
-        portvBottle.write(sender);
+        portvBottle.write(sender); //port is always strict
     }
 
     if(yarp::os::Time::now() - prevTS > 15) {
