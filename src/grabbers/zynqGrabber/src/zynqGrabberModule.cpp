@@ -70,7 +70,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     if(device == "zynq_spinn" || device == "zynq_sens") {
         
         // class manageDevice for events
-        aerManager = new aerDevManager(device,clockPeriod);
+        aerManager = new aerDevManager(device, clockPeriod);
 
         if(!aerManager->openDevice()) {
             std::cerr << "Could not open the aer device: " << device << std::endl;
