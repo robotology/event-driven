@@ -623,8 +623,11 @@ int vsctrlDevManager::readGPORegister(){
 /* -----------------------------------------------------------------
     aerDevManager -- to handle AER IO: read events from sensors and spinnaker and write events to spinnaker
 ----------------------------------------------------------------- */
-aerDevManager::aerDevManager(std::string dev) : deviceManager(true, AER_MAX_BUF_SIZE) {
-    
+aerDevManager::aerDevManager(std::string dev, int clockPeriod) : deviceManager(true, AER_MAX_BUF_SIZE) {
+
+    this->tickToUs = 1000.0/clockPeriod; // to scale the timestamp to 1us temporal resolution
+    this->usToTick = 1.0/tickToUs; // to scale the 1us temporal resolution to hw clock ticks
+
     if (dev == "zynq_spinn")
         {
         
@@ -642,7 +645,6 @@ aerDevManager::aerDevManager(std::string dev) : deviceManager(true, AER_MAX_BUF_
             std::cout << "aer device error: unrecognised device" << std::endl;
             
         }
-    
 }
 
 bool aerDevManager::openDevice(){
@@ -792,7 +794,7 @@ void aerDevManager::usage (void) {
 
 aerfx2_0DevManager::aerfx2_0DevManager() : deviceManager(true, AER_MAX_BUF_SIZE) {
     
-    deviceName = "/dev/aerfx2_0";
+    deviceName = "/dev/aerfx2_0"; 
 }
 
 bool aerfx2_0DevManager::openDevice(){

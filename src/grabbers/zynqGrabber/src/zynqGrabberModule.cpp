@@ -39,6 +39,8 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     // zynq_hpu, zynq_spinn, ihead_aerfx2
     std::string device = rf.check("device", yarp::os::Value("zynq_sens")).asString();
     
+    int clockPeriod = rf.check("clockPeriod", yarp::os::Value(100)).asInt(); //add check instead of default value
+    
     //dvs or atis
     std::string chipName = rf.check("chip", yarp::os::Value("DVS")).asString();
 
@@ -68,7 +70,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     if(device == "zynq_spinn" || device == "zynq_sens") {
         
         // class manageDevice for events
-        aerManager = new aerDevManager(device);
+        aerManager = new aerDevManager(device,clockPeriod);
 
         if(!aerManager->openDevice()) {
             std::cerr << "Could not open the aer device: " << device << std::endl;
@@ -93,7 +95,11 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     
     //open rateThread device2yarp
     D2Y = new device2yarp();
-    D2Y->attachDeviceManager(aerManager);
+    if(!D2Y->attachDeviceManager(aerManager))
+    {
+        //could not start the thread
+        return false;
+    }
     if(!D2Y->threadInit(moduleName)) {
         //could not start the thread
         return false;
@@ -102,7 +108,11 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     
     
     //open bufferedPort yarp2device
-    Y2D.attachDeviceManager(aerManager);
+    if(!Y2D.attachDeviceManager(aerManager))
+    {
+        //could not start the thread
+        return false;
+    }
     if(!Y2D.open(moduleName))
     {
         std::cerr << " : Unable to open ports" << std::endl;

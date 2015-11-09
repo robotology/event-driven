@@ -30,7 +30,9 @@ class yarp2device : public yarp::os::BufferedPort<emorph::vBottle>
     int      tsPrev;                       // FIRST TIMESTAMP TO COMPUTE DIFF
     int           countAEs;
     int           writtenAEs;
-    deviceManager* devManager;
+    double clockScale;
+    
+    aerDevManager* devManager;
     
     void setFileDesc(int devDesc);
     
@@ -46,7 +48,7 @@ public:
     void    close();
     void    onRead(emorph::vBottle &bot);
     void    interrupt();
-    void    attachDeviceManager(deviceManager* devManager);
+    bool    attachDeviceManager(deviceManager* devManager);
         
     
 };

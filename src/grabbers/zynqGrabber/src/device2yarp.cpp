@@ -21,8 +21,6 @@ device2yarp::device2yarp() : RateThread(THRATE) {
        
     countAEs = 0;
     prevTS = 0;
-    clockRes = devManager->getCkRes();
-
 
 }
 
@@ -141,6 +139,13 @@ void device2yarp::threadRelease() {
 bool  device2yarp::attachDeviceManager(deviceManager* devManager) {
     this->devManager = dynamic_cast<aerDevManager*>(devManager);
     
-    return devManager != 0 ? true : false;
+    if (!devManager){
+        return false;
+        
+    }
+    
+    clockScale = this->devManager->getTickToUs();
+    return true;
+    
     
 }

@@ -55,7 +55,7 @@ private:
     //incrementall count the number of events coming from the device
     int countAEs;
     double prevTS;
-    int clockRes;
+    double clockScale;
 
 };
 
