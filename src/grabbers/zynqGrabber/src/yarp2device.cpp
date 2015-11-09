@@ -215,7 +215,7 @@ void yarp2device::onRead(emorph::vBottle &bot)
             
         }
         
-        //word1 = word1 / 4;
+        word1 = word1 * 4;
         
         deviceData[i] = word1;   //timestamp
         deviceData[i+1] = word0; //data

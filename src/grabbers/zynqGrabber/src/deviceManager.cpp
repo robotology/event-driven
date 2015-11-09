@@ -683,7 +683,7 @@ bool aerDevManager::openDevice(){
         tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
         aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg | (CTRL_ENABLEINTERRUPT));// | CTRL_ENABLE_FAR_LBCK));
         
-        ioctl(devDesc, AER_SET_LOC_LBCK, 0);
+        ioctl(devDesc, AER_SET_LOC_LBCK, 1);
         ioctl(devDesc, AER_SET_FAR_LBCK, 0);
         ioctl(devDesc, AER_SET_REM_LBCK, 0);
     }
