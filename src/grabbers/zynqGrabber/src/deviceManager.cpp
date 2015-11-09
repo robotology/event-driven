@@ -629,11 +629,13 @@ aerDevManager::aerDevManager(std::string dev) : deviceManager(true, AER_MAX_BUF_
         {
         
             this->deviceName = "/dev/spinn2neu";
+            clockRes = 1;
     
         } else if (dev == "zynq_sens")
         {
             
             this->deviceName = "/dev/iit_hpucore";
+            clockRes = 1;
         
         } else {
             

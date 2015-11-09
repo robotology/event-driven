@@ -37,7 +37,7 @@ public:
     virtual void run();
     virtual void threadRelease();
     virtual bool threadInit(std::string moduleName = "");
-    void    attachDeviceManager(deviceManager* devManager);
+    bool    attachDeviceManager(deviceManager* devManager);
     
 private:
 
@@ -51,10 +51,11 @@ private:
     
     //device number to read from
     //int devDesc;
-    deviceManager* devManager;
+    aerDevManager* devManager;
     //incrementall count the number of events coming from the device
     int countAEs;
     double prevTS;
+    int clockRes;
 
 };
 

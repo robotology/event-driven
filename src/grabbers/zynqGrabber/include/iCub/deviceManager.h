@@ -144,9 +144,11 @@ public:
 
 class aerDevManager : public deviceManager {
 
+    int clockRes; // resolution of the clock -- it might be different across devices, we use it to transorm the timestamp in us
+
 public:
-    
-    aerDevManager(std::string dev); 
+
+    aerDevManager(std::string dev);
     
     virtual bool openDevice();
     virtual void closeDevice();
@@ -162,6 +164,7 @@ public:
     bool writeFifoFull();
     bool writeFifoEmpty();
     int timeWrapCount();
+    int getCkRes() {return clockRes;};
     
 };
 
