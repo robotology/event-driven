@@ -147,10 +147,11 @@ class aerDevManager : public deviceManager {
     // resolution of the clock -- it might be different across devices, we use it to transorm the timestamp in us
     double tickToUs;
     double usToTick;
+    std::string loopBack;
 
 public:
 
-    aerDevManager(std::string dev, int clockPeriod);
+    aerDevManager(std::string dev, int clockPeriod, std::string loopBack);
     
     virtual bool openDevice();
     virtual void closeDevice();

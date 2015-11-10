@@ -623,23 +623,22 @@ int vsctrlDevManager::readGPORegister(){
 /* -----------------------------------------------------------------
     aerDevManager -- to handle AER IO: read events from sensors and spinnaker and write events to spinnaker
 ----------------------------------------------------------------- */
-aerDevManager::aerDevManager(std::string dev, int clockPeriod) : deviceManager(true, AER_MAX_BUF_SIZE) {
+aerDevManager::aerDevManager(std::string dev, int clockPeriod, std::string loopBack) : deviceManager(true, AER_MAX_BUF_SIZE) {
 
     this->tickToUs = 1000.0/clockPeriod; // to scale the timestamp to 1us temporal resolution
     this->usToTick = 1.0/tickToUs; // to scale the 1us temporal resolution to hw clock ticks
-
+    this->loopBack = loopBack;
+    
     if (dev == "zynq_spinn")
         {
         
             this->deviceName = "/dev/spinn2neu";
             clockRes = 1;
-    
         } else if (dev == "zynq_sens")
         {
             
             this->deviceName = "/dev/iit_hpucore";
             clockRes = 1;
-        
         } else {
             
             std::cout << "aer device error: unrecognised device" << std::endl;
@@ -687,9 +686,29 @@ bool aerDevManager::openDevice(){
         tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
         aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg | (CTRL_ENABLEINTERRUPT));// | CTRL_ENABLE_FAR_LBCK));
         
-        ioctl(devDesc, AER_SET_LOC_LBCK, 1);
-        ioctl(devDesc, AER_SET_FAR_LBCK, 0);
-        ioctl(devDesc, AER_SET_REM_LBCK, 0);
+        int loc = 0;
+        int far = 0;
+        int rem = 0;
+        
+        if (loopBack == "loc"){
+            std::cout << "Setting Local loopback" << std::endl;
+            loc = 1;
+            
+        } else if (loopBack == "far"){
+            std::cout << "Setting Far loopback" << std::endl;
+            
+            far = 1;
+            
+        } else if (loopBack == "rem"){
+            std::cout << "Setting Remote loopback" << std::endl;
+            
+            rem = 1;
+            
+        }
+        
+        ioctl(devDesc, AER_SET_LOC_LBCK, loc);
+        ioctl(devDesc, AER_SET_FAR_LBCK, far);
+        ioctl(devDesc, AER_SET_REM_LBCK, rem);
     }
     return ret;
 }
@@ -794,7 +813,7 @@ void aerDevManager::usage (void) {
 
 aerfx2_0DevManager::aerfx2_0DevManager() : deviceManager(true, AER_MAX_BUF_SIZE) {
     
-    deviceName = "/dev/aerfx2_0"; 
+    deviceName = "/dev/aerfx2_0";
 }
 
 bool aerfx2_0DevManager::openDevice(){

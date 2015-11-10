@@ -39,7 +39,12 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     // zynq_hpu, zynq_spinn, ihead_aerfx2
     std::string device = rf.check("device", yarp::os::Value("zynq_sens")).asString();
     
+    // get the correct clock of each device
     int clockPeriod = rf.check("clockPeriod", yarp::os::Value(100)).asInt(); //add check instead of default value
+    
+    // set the loopback (needed only for debug)
+    std::string loopBack = rf.check("loopBack", yarp::os::Value("none")).asString(); //add check instead of default value
+    
     
     //dvs or atis
     std::string chipName = rf.check("chip", yarp::os::Value("DVS")).asString();
@@ -70,7 +75,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     if(device == "zynq_spinn" || device == "zynq_sens") {
         
         // class manageDevice for events
-        aerManager = new aerDevManager(device, clockPeriod);
+        aerManager = new aerDevManager(device, clockPeriod, loopBack);
 
         if(!aerManager->openDevice()) {
             std::cerr << "Could not open the aer device: " << device << std::endl;
