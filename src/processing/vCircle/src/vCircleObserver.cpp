@@ -30,7 +30,7 @@ vCircleThread::vCircleThread(int R, bool directed, bool parallel, int height, in
     this->width = width;
 
     H.resize(height, width);
-    a = R * tan(5 * M_PI / 180.0);
+    a = R * tan(1.0 * M_PI / 180.0);
     Hstr = 1.0 / (int)(6.2831853 * R + 0.5);
 
     x_max = 0; y_max = 0;
