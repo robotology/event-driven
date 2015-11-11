@@ -63,6 +63,10 @@ vDraw * createDrawer(std::string tag)
     if(tag == newDrawer->getTag()) return newDrawer;
     delete newDrawer;
 
+    newDrawer = new isoDraw();
+    if(tag == newDrawer->getTag()) return newDrawer;
+    delete newDrawer;
+
     return 0;
 }
 
@@ -674,6 +678,161 @@ void fflowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
 
     }
     //std::cout << "y: " << vy_mean << "x: " << vx_mean << std::endl;
+
+}
+
+isoDraw::isoDraw()
+{
+
+    maxdt = 1;
+
+    theta1 = 25 * 3.14 / 180.0;
+    theta2 = -60 * 3.14 / 180.0;
+
+    c1 = cos(theta1); s1 = sin(theta1);
+    c2 = cos(theta2); s2 = sin(theta2);
+
+    imageheight = Ylimit * 2;
+    imagewidth = (c1 * Xlimit - s1 * 0) - (c1 * 0 - s1 * Ylimit) + 2;
+    imagexshift = abs(c1 * 0 - s1 * Ylimit) + 1;
+    scale = (imageheight  - c2 * (s1 * Xlimit + c1 * Ylimit)) / -s2 - 1;
+
+    baseimage = cv::Mat(imageheight, imagewidth, CV_8UC3);
+    baseimage.setTo(0);
+
+    //cv::putText(baseimage, std::string("X"), cv::Point(100, 100), 1, 0.5, CV_RGB(0, 0, 0));
+
+    cv::Scalar c = CV_RGB(125, 125, 125);
+    int x, y;
+    for(int xi = 0; xi < Xlimit; xi++) {
+        x = c1 * xi - s1 * 0;
+        y = c2 * (s1 * xi + c1 * 0) - (s2 * scale);
+        baseimage.at<cv::Vec3b>(y, x + imagexshift) = cv::Vec3b(255, 255, 255);
+
+
+        x = c1 * xi - s1 * Ylimit;
+        y = c2 * (s1 * xi + c1 * Ylimit) - (s2 * scale);
+        baseimage.at<cv::Vec3b>(y, x + imagexshift) = cv::Vec3b(255, 255, 255);
+        if(xi == Xlimit / 2) {
+            cv::putText(baseimage, std::string("y"), cv::Point(x-10+imagexshift, y+5),
+                        cv::FONT_ITALIC, 0.5, c, 1, 8, true);
+        }
+    }
+
+    for(int yi = 0; yi < Ylimit; yi++) {
+        x = c1 * 0 - s1 * yi;
+        y = c2 * (s1 * 0 + c1 * yi) - (s2 * scale);
+        baseimage.at<cv::Vec3b>(y, x + imagexshift) = cv::Vec3b(255, 255, 255);
+
+        if(yi == Ylimit / 2) {
+            cv::putText(baseimage, std::string("x"), cv::Point(x-10+imagexshift, y-10),
+                        cv::FONT_ITALIC, 0.5, c, 1, 8, true);
+        }
+
+        x = c1 * Xlimit - s1 * yi;
+        y = c2 * (s1 * Xlimit + c1 * yi) - (s2 * scale);
+        baseimage.at<cv::Vec3b>(y, x + imagexshift) = cv::Vec3b(255, 255, 255);
+
+    }
+
+    for(int tsi = 0; tsi < scale; tsi++) {
+        x = c1 * 0 - s1 * Ylimit;
+        y = c2 * (s1 * 0 + c1 * Ylimit) - (s2 * tsi);
+        baseimage.at<cv::Vec3b>(y, x + imagexshift) = cv::Vec3b(255, 255, 255);
+        if(tsi == (int)scale / 2) {
+            cv::putText(baseimage, std::string("t"), cv::Point(x+1+imagexshift, y-10),
+                        cv::FONT_ITALIC, 0.5, c, 1, 8, true);
+        }
+    }
+
+}
+
+std::string isoDraw::getTag()
+{
+    return "ISO";
+}
+
+void isoDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
+{
+
+    image = baseimage.clone();
+    image.setTo(255);
+
+    if(checkStagnancy(eSet) > clearThreshold) {
+        return;
+    }
+
+    if(eSet.empty()) return;
+
+    int dt = eSet.back()->getStamp() - eSet.front()->getStamp();
+    if(dt < 0) dt += emorph::vtsHelper::maxStamp();
+    maxdt = std::max(maxdt, dt);
+    //double maxpossibley = c2 * (s1 * Xlimit + c1 * Ylimit) - (s2 * maxdt);
+    //double scale = (imageheight - minpossibley);
+
+    //std::cout << scale << std::endl;
+
+    emorph::vQueue::const_iterator qi;
+    for(qi = eSet.begin(); qi != eSet.end(); qi++) {
+        emorph::AddressEvent *aep = (*qi)->getAs<emorph::AddressEvent>();
+        if(!aep) continue;
+
+        //transform values
+        double dt = aep->getStamp() - eSet.front()->getStamp();
+        if(dt < 0) dt += emorph::vtsHelper::maxStamp();
+        dt /= (double)maxdt;
+        int ts = dt * scale;
+        int x = c1 * aep->getX() - s1 * aep->getY() + imagexshift;
+        int y = c2 * (s1 * aep->getX() + c1 * aep->getY()) - (s2 * ts);
+
+        if(x < 0 || x >= imagewidth || y < 0 || y >= imageheight) {
+            //std::cerr << "Incorrect mapping in isodraw:" << std::endl;
+            //std::cerr << "TS: " << ts << " x: " << x << " y: " << y << std::endl;
+            continue;
+        }
+
+        if(!aep->getPolarity()) {
+            //image.at<cv::Vec3b>(y, x) = cv::Vec3b(255 - (95*dt), 255 - 255*dt, 255 - 95*dt);
+            image.at<cv::Vec3b>(y, x) = cv::Vec3b(160, 0, 160);
+        } else {
+            //image.at<cv::Vec3b>(y, x) = cv::Vec3b(255 - 255*dt, 255 - 195*dt, 255 - 255*dt);
+            image.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 160, 0);
+        }
+
+
+        cv::Vec3b cpc = image.at<cv::Vec3b>(y, x);
+
+
+//        if(!aep->getPolarity())
+//        {
+//            //blue
+//            if(cpc[0] == 1) cpc[0] = 0;   //if positive and negative
+//            else cpc[0] = 160;            //if only positive
+//            //green
+//            if(cpc[1] == 60) cpc[1] = 255;
+//            else cpc[1] = 0;
+//            //red
+//            if(cpc[2] == 0) cpc[2] = 255;
+//            else cpc[2] = 160;
+//        }
+//        else
+//        {
+//            //blue
+//            if(cpc[0] == 160) cpc[0] = 0;   //negative and positive
+//            else cpc[0] = 1;                //negative only
+//            //green
+//            if(cpc[1] == 0) cpc[1] = 255;
+//            else cpc[1] = 60;
+//            //red
+//            if(cpc.val[2] == 160) cpc[2] = 255;
+//            else cpc[2] = 0;
+//        }
+
+//        image.at<cv::Vec3b>(y, x) = cpc;
+    }
+
+    image = image - baseimage;
+    //cv::resize(image, image, image.size() * 8);
 
 }
 
