@@ -782,8 +782,8 @@ void isoDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
         if(dt < 0) dt += emorph::vtsHelper::maxStamp();
         dt /= (double)maxdt;
         int ts = dt * scale;
-        int x = c1 * aep->getX() - s1 * aep->getY() + imagexshift;
-        int y = c2 * (s1 * aep->getX() + c1 * aep->getY()) - (s2 * ts);
+        int x = c1 * aep->getX() - s1 * (Ylimit - aep->getY()) + imagexshift;
+        int y = c2 * (s1 * aep->getX()+ c1 * (Ylimit - aep->getY())) - (s2 * ts);
 
         if(x < 0 || x >= imagewidth || y < 0 || y >= imageheight) {
             //std::cerr << "Incorrect mapping in isodraw:" << std::endl;
