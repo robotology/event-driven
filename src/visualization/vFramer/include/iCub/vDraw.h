@@ -267,6 +267,41 @@ public:
 
 };
 
+class isoDraw : public vDraw {
+private:
+
+    //angles
+    double theta1;
+    double theta2;
+    double c1, s1;
+    double c2, s2;
+
+    //image with warped square drawn
+    cv::Mat baseimage;
+
+    int tsscalar;
+    int maxdt;
+    int imagewidth;
+    int imageheight;
+    int imagexshift;
+    double scale;
+
+
+public:
+
+    isoDraw();
+    ///
+    /// \brief see vDraw
+    ///
+    virtual void draw(cv::Mat &image, const emorph::vQueue &eSet);
+
+    ///
+    /// \brief see vDraw
+    ///
+    virtual std::string getTag();
+
+};
+
 /**
  * @brief createDrawer returns an instance of a drawer that matches the tag
  * specified
@@ -278,6 +313,8 @@ vDraw * createDrawer(std::string tag);
 
 
 } //namespace emorph
+
+
 
 #endif
 
