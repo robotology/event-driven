@@ -24,7 +24,8 @@
 
 #include <yarp/os/all.h>
 #include <iCub/emorph/all.h>
-#include <yarp/dev/all.h>
+#include <yarp/dev/GazeControl.h>
+#include <yarp/dev/PolyDriver.h>
 
 /*//////////////////////////////////////////////////////////////////////////////
   VBOTTLE READER/PROCESSOR

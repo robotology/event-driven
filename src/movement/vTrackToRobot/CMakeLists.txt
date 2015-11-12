@@ -17,6 +17,6 @@ include_directories(${PROJECT_SOURCE_DIR}/include/
 
 add_executable(${PROJECTNAME} ${source} ${header})
 
-target_link_libraries(${PROJECTNAME} ${YARP_LIBRARIES} icubmod eMorphLib)
+target_link_libraries(${PROJECTNAME} ${YARP_LIBRARIES} eMorphLib)
 
 install(TARGETS ${PROJECTNAME} DESTINATION bin)
