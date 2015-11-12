@@ -44,7 +44,7 @@
 
 <module>
     <name> vCircle </name>
-    <parameters> --strict false --flowhough true --windowtype Fixed --inlierThreshold 25 --procNoisePos 0.5 --procNoiseRad 0.5 --measNoisePos 128 --measNoiseRad 128 </parameters>
+    <parameters> --strict false --houghType directed --qType Fixed --inlierThreshold 19 --procNoisePos 0.5 --procNoiseRad 0.5 --measNoisePos 128 --measNoiseRad 128 </parameters>
     <node> icub10 </node>
 </module>
 
@@ -62,13 +62,25 @@
 
 <module>
     <name> vFramer</name>
-    <parameters> --frameRate 20 --eventWindow 0.2 --displays "(0 left (AE CIRC FLOW))"</parameters>
+    <parameters> --frameRate 30 --eventWindow 0.2 --displays "(0 left (AE CIRC FLOW))"</parameters>
+    <node>localhost</node>
+</module>
+
+<module>
+    <name> vFramer</name>
+    <parameters> --name vFramerISO --frameRate 30 --eventWindow 2 --displays "(0 left (ISO))"</parameters>
     <node>localhost</node>
 </module>
 
 <module>
    <name>yarpview</name>
-   <parameters>--name /viewCh0 --x 000 --y 000 --RefreshTime 16 </parameters>
+   <parameters>--name /viewCircle --x 000 --y 000 --RefreshTime 16 </parameters>
+   <node>localhost</node>
+</module>
+
+<module>
+   <name>yarpview</name>
+   <parameters>--name /viewISO --x 000 --y 000 --RefreshTime 16 </parameters>
    <node>localhost</node>
 </module>
 
@@ -115,8 +127,20 @@
 </connection>
 
 <connection>
+  <from>/vCircle/vBottle:o</from>
+  <to>/vFramerISO/vBottle:i</to>
+  <protocol>tcp</protocol>
+</connection>
+
+<connection>
   <from>/vFramer/left</from>
-  <to>/viewCh0</to>
+  <to>/viewCircle</to>
+  <protocol>tcp</protocol>
+</connection>
+
+<connection>
+  <from>/vFramerISO/left</from>
+  <to>/viewISO</to>
   <protocol>tcp</protocol>
 </connection>
 
