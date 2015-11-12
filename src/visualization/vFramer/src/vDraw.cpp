@@ -686,7 +686,7 @@ isoDraw::isoDraw()
 
     maxdt = 1;
 
-    theta1 = 25 * 3.14 / 180.0;
+    theta1 = 45 * 3.14 / 180.0;
     theta2 = -60 * 3.14 / 180.0;
 
     c1 = cos(theta1); s1 = sin(theta1);
@@ -713,10 +713,16 @@ isoDraw::isoDraw()
         x = c1 * xi - s1 * Ylimit;
         y = c2 * (s1 * xi + c1 * Ylimit) - (s2 * scale);
         baseimage.at<cv::Vec3b>(y, x + imagexshift) = cv::Vec3b(255, 255, 255);
+
         if(xi == Xlimit / 2) {
             cv::putText(baseimage, std::string("y"), cv::Point(x-10+imagexshift, y+5),
                         cv::FONT_ITALIC, 0.5, c, 1, 8, true);
         }
+
+        x = c1 * xi - s1 * 0;
+        y = c2 * (s1 * xi + c1 * 0) - (s2 * 0);
+        baseimage.at<cv::Vec3b>(y, x + imagexshift) = cv::Vec3b(255, 255, 255);
+
     }
 
     for(int yi = 0; yi < Ylimit; yi++) {
@@ -733,6 +739,10 @@ isoDraw::isoDraw()
         y = c2 * (s1 * Xlimit + c1 * yi) - (s2 * scale);
         baseimage.at<cv::Vec3b>(y, x + imagexshift) = cv::Vec3b(255, 255, 255);
 
+        x = c1 * 0 - s1 * yi;
+        y = c2 * (s1 * 0 + c1 * yi) - (s2 * 0);
+        baseimage.at<cv::Vec3b>(y, x + imagexshift) = cv::Vec3b(255, 255, 255);
+
     }
 
     for(int tsi = 0; tsi < scale; tsi++) {
@@ -743,6 +753,15 @@ isoDraw::isoDraw()
             cv::putText(baseimage, std::string("t"), cv::Point(x+1+imagexshift, y-10),
                         cv::FONT_ITALIC, 0.5, c, 1, 8, true);
         }
+
+        x = c1 * 0 - s1 * 0;
+        y = c2 * (s1 * 0 + c1 * 0) - (s2 * tsi);
+        baseimage.at<cv::Vec3b>(y, x + imagexshift) = cv::Vec3b(255, 255, 255);
+
+        x = c1 * Xlimit - s1 * 0;
+        y = c2 * (s1 * Xlimit + c1 * 0) - (s2 * tsi);
+        baseimage.at<cv::Vec3b>(y, x + imagexshift) = cv::Vec3b(255, 255, 255);
+
     }
 
 }
@@ -793,10 +812,16 @@ void isoDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
 
         if(!aep->getPolarity()) {
             //image.at<cv::Vec3b>(y, x) = cv::Vec3b(255 - (95*dt), 255 - 255*dt, 255 - 95*dt);
-            image.at<cv::Vec3b>(y, x) = cv::Vec3b(160, 0, 160);
+            if(dt < 0.9)
+                image.at<cv::Vec3b>(y, x) = cv::Vec3b(80, 0, 80);
+            else
+                image.at<cv::Vec3b>(y, x) = cv::Vec3b(255, 0, 255);
         } else {
             //image.at<cv::Vec3b>(y, x) = cv::Vec3b(255 - 255*dt, 255 - 195*dt, 255 - 255*dt);
-            image.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 160, 0);
+            if(dt < 0.9)
+                image.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 80, 0);
+            else
+                image.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 255, 0);
         }
 
 
