@@ -15,6 +15,7 @@
  */
 
 #include "iCub/emorph/vSurface.h"
+#include <math.h>
 
 namespace emorph {
 
@@ -46,7 +47,9 @@ vSurface vSurface::operator=(const vSurface& that)
     this->width = that.width;
     this->height = that.height;
     this->mostRecent = that.mostRecent;
-    this->mostRecent->referto();
+    this->justRemoved = that.justRemoved;
+    if(this->justRemoved) justRemoved->referto();
+    //this->mostRecent->referto();
 
     spatial.resize(height);
     for(int y = 0; y < height; y++) {
@@ -55,8 +58,8 @@ vSurface vSurface::operator=(const vSurface& that)
 
     for(int i = 0; i < height; i++) {
         for(int j = 0; j < width; j++) {
-            if(that.spatial[i][j]) spatial[i][j] = that.spatial[i][j];
-            spatial[i][j]->referto();
+            spatial[i][j] = that.spatial[i][j];
+            if(that.spatial[i][j]) spatial[i][j]->referto();
         }
     }
 
@@ -103,7 +106,7 @@ vEvent * vSurface::addEvent(AddressEvent &event)
     spatial[y][x] = &event;
     event.referto();
 
-    //then set our mostRecent with a second reference
+    //then set our mostRecent
     mostRecent = spatial[y][x];
 
     //leave section
@@ -153,6 +156,54 @@ const vQueue& vSurface::getSURF(int xl, int xh, int yl, int yh)
 vEvent *vSurface::getMostRecent()
 {
     return mostRecent;
+}
+
+#define COS135on2 0.38268
+vQueue vEdge::addEvent(emorph::FlowEvent &event)
+{
+    vQueue removed;
+    //enter critical section
+    mutex.wait();
+
+    //if we previously had an event move it to the justRemoved
+    int x = event.getX(); int y = event.getY();
+    if(spatial[y][x]) {
+        removed.push_back(spatial[y][x]);
+        spatial[y][x]->destroy();
+    }
+
+
+    //also remove the event that is 'down the flow slope'
+    double vx = event.getVx(); double vy = event.getVy();
+    double mag = sqrt(pow(vx, 2.0) + pow(vy, 2.0));
+    vx /= mag;
+    vy /= mag;
+
+    int px = x;
+    if(vx > COS135on2) px++; //cos(67.5)
+    if(vx < -COS135on2) px--;
+    int py = y;
+    if(vy > COS135on2) py++;
+    if(vy < -COS135on2) py--;
+
+    if(px >= 0 && px < width && py >= 0 && py < height) {
+        removed.push_back(spatial[py][px]);
+        spatial[py][px]->destroy();
+        spatial[py][px] = NULL;
+    }
+
+    //put our new event in and add a reference
+    spatial[y][x] = &event;
+    event.referto();
+
+    //then set our mostRecent
+    mostRecent = spatial[y][x];
+
+    //leave section
+    mutex.post();
+
+    return removed;
+
 }
 
 

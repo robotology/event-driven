@@ -37,9 +37,10 @@ namespace emorph {
  * expired events are removed. At any point in time a copy of the current list
  * of events can be requested.
  */
-class vSurface {
+class vSurface
+{
 
-private:
+protected:
 
     //Local Memory
     //! for quick spatial accessing and surfacing
@@ -90,6 +91,21 @@ public:
     const vQueue& getSURF(int x, int y, int d);
     const vQueue& getSURF(int xl, int xh, int yl, int yh);
 
+
+};
+
+class vEdge : public vSurface
+{
+private:
+
+    //set the previous add event to be private so it cannot be used in vEdge
+    //there could be a better way to achieve this.
+    vEvent * addEvent(emorph::AddressEvent &event);
+
+
+public:
+
+    vQueue addEvent(emorph::FlowEvent &event);
 
 };
 
