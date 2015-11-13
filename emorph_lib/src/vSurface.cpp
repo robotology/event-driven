@@ -180,16 +180,18 @@ vQueue vEdge::addEvent(emorph::FlowEvent &event)
     vy /= mag;
 
     int px = x;
-    if(vx > COS135on2) px++; //cos(67.5)
-    if(vx < -COS135on2) px--;
+    if(vx > COS135on2) px--; //cos(67.5)
+    if(vx < -COS135on2) px++;
     int py = y;
-    if(vy > COS135on2) py++;
-    if(vy < -COS135on2) py--;
+    if(vy > COS135on2) py--;
+    if(vy < -COS135on2) py++;
 
     if(px >= 0 && px < width && py >= 0 && py < height) {
-        removed.push_back(spatial[py][px]);
-        spatial[py][px]->destroy();
-        spatial[py][px] = NULL;
+        if(spatial[py][px]) {
+            removed.push_back(spatial[py][px]);
+            spatial[py][px]->destroy();
+            spatial[py][px] = NULL;
+        }
     }
 
     //put our new event in and add a reference
