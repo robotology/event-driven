@@ -52,8 +52,8 @@ private:
     yarp::os::Mutex mdone; /// for thread safety when computation is finished
 
     //current data
-    emorph::vQueue * adds; /// pointer to list of events to add to Hough space
-    emorph::vQueue * subs; /// pointer to list of events to remove from Hough
+    emorph::vQueue * procQueue; /// pointer to list of events to add to Hough space
+    std::vector<int> * procType; /// pointer to list of events to remove from Hough
 
     /// update the Hough space using standard method
     void updateHAddress(int xv, int yv, double strength);
@@ -114,7 +114,7 @@ public:
     /// \param adds list of events to add
     /// \param subs list of events to remove
     ///
-    void process(emorph::vQueue &adds, emorph::vQueue &subs);
+    void process(emorph::vQueue &procQueue, std::vector<int> &procType);
 
     ///
     /// \brief waitfordone wait for computation to finish if threaded
@@ -144,6 +144,7 @@ private:
 
     //internal data
     emorph::vSurface surface;
+    emorph::vEdge edge;
     emorph::vQueue FIFO;
     emorph::vEvent dummy;
     std::vector<vCircleThread *> htransforms;
@@ -151,12 +152,13 @@ private:
 
     void addHough(emorph::vEvent &event);
     void remHough(emorph::vEvent &event);
-    void updateHough(emorph::vQueue &adds, emorph::vQueue &subs);
+    void updateHough(emorph::vQueue &procQueue, std::vector<int> &procType);
 
     void addFixed(emorph::vQueue &additions);
     void addTime(emorph::vQueue &additions);
     void addLife(emorph::vQueue &additions);
     void addSurf(emorph::vQueue &additions);
+    void addEdge(emorph::vQueue &additions);
 
 public:
 

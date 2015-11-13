@@ -43,10 +43,10 @@ vCircleThread::vCircleThread(int R, bool directed, bool parallel, int height, in
 
 }
 
-void vCircleThread::process(emorph::vQueue &adds, emorph::vQueue &subs) {
+void vCircleThread::process(emorph::vQueue &procQueue, std::vector<int> &procType) {
 
-    this->adds = &adds;
-    this->subs = &subs;
+    this->procQueue = &procQueue;
+    this->procType = &procType;
 
     if(threaded)
         mstart.unlock();
@@ -278,34 +278,24 @@ double vCircleThread::updateHFlowAngle(int xv, int yv, double strength,
 void vCircleThread::performHough()
 {
 
-    for(int i = 0; i < subs->size(); i++) {
+    for(int i = 0; i < procQueue->size(); i++) {
 
         if(directed) {
 
-            emorph::FlowEvent * vadd = (*adds)[i]->getAs<emorph::FlowEvent>();
-            emorph::FlowEvent * vsub = (*subs)[i]->getAs<emorph::FlowEvent>();
+            emorph::FlowEvent * v = (*procQueue)[i]->getAs<emorph::FlowEvent>();
 
-            if(vsub) {
-                updateHFlowAngle(vsub->getX(), vsub->getY(), -Hstr,
-                                 vsub->getVx(), vsub->getVy());
+            if(v) {
+                updateHFlowAngle(v->getX(), v->getY(), (*procType)[i] * Hstr,
+                                 v->getVx(), v->getVy());
             }
 
-            if(vadd) {
-                updateHFlowAngle(vadd->getX(), vadd->getY(), Hstr,
-                                 vadd->getVx(), vadd->getVy());
-            }
 
         } else {
 
-            emorph::AddressEvent * vadd = (*adds)[i]->getAs<emorph::AddressEvent>();
-            emorph::AddressEvent * vsub = (*subs)[i]->getAs<emorph::AddressEvent>();
+            emorph::AddressEvent * v = (*procQueue)[i]->getAs<emorph::AddressEvent>();
 
-            if(vsub) {
-                updateHAddress(vsub->getX(), vsub->getY(), -Hstr);
-            }
-
-            if(vadd) {
-                updateHAddress(vadd->getX(), vadd->getY(), Hstr);
+            if(v) {
+                updateHAddress(v->getX(), v->getY(), (*procType)[i] * Hstr);
             }
 
         }
@@ -367,7 +357,8 @@ vCircleMultiSize::vCircleMultiSize(std::string qType, int qLength, int rLow, int
 vCircleMultiSize::~vCircleMultiSize()
 {
 
-    emorph::vQueue dummy1, dummy2;
+    emorph::vQueue dummy1;
+    std::vector<int> dummy2;
     std::vector<vCircleThread *>::iterator i;
     for(i = htransforms.begin(); i != htransforms.end(); i++) {
         (*i)->stop();
@@ -388,17 +379,19 @@ void vCircleMultiSize::addQueue(emorph::vQueue &additions) {
             addLife(additions);
         else if(qType == "surf")
             addSurf(additions);
+        else if(qType == "edge")
+            addEdge(additions);
         else
             std::cerr << "Did not understand qType" << std::endl;
 
 }
 
-void vCircleMultiSize::updateHough(emorph::vQueue &adds, emorph::vQueue &subs)
+void vCircleMultiSize::updateHough(emorph::vQueue &procQueue, std::vector<int> &procType)
 {
 
     std::vector<vCircleThread *>::iterator i;
     for(i = htransforms.begin(); i != htransforms.end(); i++)
-        (*i)->process(adds, subs);
+        (*i)->process(procQueue, procType);
 
     for(i = htransforms.begin(); i != htransforms.end(); i++)
         (*i)->waitfordone();
@@ -422,7 +415,8 @@ double vCircleMultiSize::getObs(int &x, int &y, int &r)
 void vCircleMultiSize::addFixed(emorph::vQueue &additions)
 {
 
-    emorph::vQueue subtractions;
+    emorph::vQueue procQueue;
+    std::vector<int> procType;
 
     emorph::vQueue::iterator vi;
     for(vi = additions.begin(); vi != additions.end(); vi++) {
@@ -430,6 +424,11 @@ void vCircleMultiSize::addFixed(emorph::vQueue &additions)
         //GET THE EVENTS AS CORRECT TYPE
         emorph::AddressEvent *v = (*vi)->getAs<emorph::AddressEvent>();
         if(!v || v->getChannel()) continue;
+
+        procQueue.push_back(v);
+        procType.push_back(1);
+
+
         bool removed = false;
 
         //CHECK TO REMOVE "SAME LOCATION EVENTS FIRST"
@@ -440,7 +439,8 @@ void vCircleMultiSize::addFixed(emorph::vQueue &additions)
             v = (*i)->getUnsafe<emorph::AddressEvent>();
             removed = v->getX() == cx && v->getY() == cy;
             if(removed) {
-                subtractions.push_back(*i);
+                procQueue.push_back(v);
+                procType.push_back(-1);
                 i = FIFO.erase(i);
                 break;
             } else {
@@ -453,17 +453,15 @@ void vCircleMultiSize::addFixed(emorph::vQueue &additions)
 
         //KEEP FIFO TO LIMITED SIZE
         while(FIFO.size() > qlength) {
-            subtractions.push_back(FIFO.back());
+            procQueue.push_back(FIFO.back());
+            procType.push_back(-1);
             FIFO.pop_back();
             removed = true;
         }
 
-        //subractions should be same size as additions so add the dummy event
-        //if no event was pushed to subtractions
-        if(!removed) subtractions.push_back(&dummy);
     }
 
-    updateHough(additions, subtractions);
+    updateHough(procQueue, procType);
 
 }
 
@@ -517,18 +515,47 @@ void vCircleMultiSize::addLife(emorph::vQueue &additions)
 void vCircleMultiSize::addSurf(emorph::vQueue &additions)
 {
 
-    emorph::vQueue subtractions;
+    emorph::vQueue procQueue;
+    std::vector<int> procType;
+
     emorph::vQueue::iterator qi;
     for(qi = additions.begin(); qi != additions.end(); qi++) {
         emorph::AddressEvent * v = (*qi)->getAs<emorph::AddressEvent>();
         if(!v) continue;
+        procQueue.push_back(v);
+        procType.push_back(1);
+
         emorph::vEvent * removed = surface.addEvent(*v);
-        if(removed) subtractions.push_back(removed);
-        else subtractions.push_back(&dummy);
+        if(removed) {
+            procQueue.push_back(removed);
+            procType.push_back(-1);
+        }
 
     }
 
-    updateHough(additions, subtractions);
+    updateHough(procQueue, procType);
+
+}
+
+void vCircleMultiSize::addEdge(emorph::vQueue &additions)
+{
+    emorph::vQueue procQueue;
+    std::vector<int> procType;
+
+    emorph::vQueue::iterator qi;
+    for(qi = additions.begin(); qi != additions.end(); qi++) {
+        emorph::FlowEvent * v = (*qi)->getAs<emorph::FlowEvent>();
+        if(!v) continue;
+        procQueue.push_back(v);
+        procType.push_back(1);
+        emorph::vQueue removed = edge.addEvent(*v);
+        for(int i = 0; i < removed.size(); i++) {
+            procQueue.push_back(removed[i]);
+            procType.push_back(-1);
+        }
+    }
+
+    updateHough(procQueue, procType);
 
 }
 
