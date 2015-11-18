@@ -63,7 +63,7 @@ void vCircleThread::waitfordone()
 
 void vCircleThread::updateHAddress(int xv, int yv, double strength)
 {
-    int P = 1;
+    int P = 0;
 
 
     int xstart = std::max(0, xv - R);
@@ -329,8 +329,8 @@ yarp::sig::ImageOf<yarp::sig::PixelBgr> vCircleThread::makeDebugImage()
     for(int y = 0; y < height; y++) {
         for(int x = 0; x < width; x++) {
             double I;
-            if(H[y][x] >= H[y_max][x_max]) I = 255.0;
-            else I = 255.0 * H[y][x] / H[y_max][x_max];
+            if(H[y][x] >= H[y_max][x_max]*0.9) I = 255.0;
+            else I = 255.0 * pow(H[y][x] / H[y_max][x_max], 2.0);
             canvas(y, 127 - x) = yarp::sig::PixelBgr(I, I, I);
         }
     }
@@ -561,6 +561,25 @@ void vCircleMultiSize::addEdge(emorph::vQueue &additions)
 
 yarp::sig::ImageOf<yarp::sig::PixelBgr> vCircleMultiSize::makeDebugImage()
 {
+
+//    yarp::sig::ImageOf<yarp::sig::PixelBgr> image;
+//    image.resize(128, 128);
+//    image.zero();
+
+//    emorph::vQueue q;
+//    if(qType == "surf")
+//        q = surface.getSURF(0, 127, 0, 127);
+//    else if(qType == "edge")
+//        q = edge.getSURF(0, 127, 0, 127);
+
+//    for(int i = 0; i < q.size(); i++) {
+//        emorph::AddressEvent *v = q[i]->getUnsafe<emorph::AddressEvent>();
+//        image(v->getY(), 127 - v->getX()) = yarp::sig::PixelBgr(255, 255, 255);
+//    }
+
+//    return image;
+
+
     return (*best)->makeDebugImage();
 }
 
