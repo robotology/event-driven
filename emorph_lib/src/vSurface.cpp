@@ -172,34 +172,207 @@ vQueue vEdge::addEvent(emorph::FlowEvent &event)
         spatial[y][x]->destroy();
     }
 
-
-    //also remove the event that is 'down the flow slope'
-    double vx = event.getVx(); double vy = event.getVy();
-    double mag = sqrt(pow(vx, 2.0) + pow(vy, 2.0));
-    vx /= mag;
-    vy /= mag;
-
-    int px = x;
-    if(vx > COS135on2) px--; //cos(67.5)
-    if(vx < -COS135on2) px++;
-    int py = y;
-    if(vy > COS135on2) py--;
-    if(vy < -COS135on2) py++;
-
-    if(px >= 0 && px < width && py >= 0 && py < height) {
-        if(spatial[py][px]) {
-            removed.push_back(spatial[py][px]);
-            spatial[py][px]->destroy();
-            spatial[py][px] = NULL;
-        }
-    }
-
     //put our new event in and add a reference
     spatial[y][x] = &event;
     event.referto();
 
     //then set our mostRecent
     mostRecent = spatial[y][x];
+
+
+    //also remove the event that is 'down the flow slope'
+    double vx = event.getVy(); double vy = event.getVx();
+    double mag = sqrt(pow(vx, 2.0) + pow(vy, 2.0));
+    vx /= (mag * COS135on2);
+    vy /= (mag * COS135on2);
+    int dx = 0, dy = 0;
+    if(vx > 1) dx = 1; if(vx < -1) dx = -1;
+    if(vy > 1) dy = 1; if(vy < -1) dy = -1;
+
+    dx *= -1;
+    dy *= -1;
+
+    //int dx = vx + 0.5;
+    //int dy = vy + 0.5;
+
+    x += dx; y += dy;
+
+    int px, py;
+
+    //corners
+    if(dx && dy) {
+        px = x + dx * 2; py = y + dy * 2;
+        if(px >= 0 && px < width && py >= 0 && py < height) {
+            if(spatial[py][px]) {
+                removed.push_back(spatial[py][px]);
+                spatial[py][px]->destroy();
+                spatial[py][px] = NULL;
+            }
+        }
+        px = x;      py = y + dy * 2;
+        if(px >= 0 && px < width && py >= 0 && py < height) {
+            if(spatial[py][px]) {
+                removed.push_back(spatial[py][px]);
+                spatial[py][px]->destroy();
+                spatial[py][px] = NULL;
+            }
+        }
+        px = dx * 2+x; py = 0+y;
+        if(px >= 0 && px < width && py >= 0 && py < height) {
+            if(spatial[py][px]) {
+                removed.push_back(spatial[py][px]);
+                spatial[py][px]->destroy();
+                spatial[py][px] = NULL;
+            }
+        }
+        px = dx+x; py = dy+y;
+        if(px >= 0 && px < width && py >= 0 && py < height) {
+            if(spatial[py][px]) {
+                removed.push_back(spatial[py][px]);
+                spatial[py][px]->destroy();
+                spatial[py][px] = NULL;
+            }
+        }
+        px = dx*2 + x;      py = dy + y;
+        if(px >= 0 && px < width && py >= 0 && py < height) {
+            if(spatial[py][px]) {
+                removed.push_back(spatial[py][px]);
+                spatial[py][px]->destroy();
+                spatial[py][px] = NULL;
+            }
+        }
+        px = dx + x; py = dy*2 + y;
+        if(px >= 0 && px < width && py >= 0 && py < height) {
+            if(spatial[py][px]) {
+                removed.push_back(spatial[py][px]);
+                spatial[py][px]->destroy();
+                spatial[py][px] = NULL;
+            }
+        }
+    }
+
+    //velocity in x
+    else if(dx) {
+        px = dx * 2+x; py = -1+y;
+        if(px >= 0 && px < width && py >= 0 && py < height) {
+            if(spatial[py][px]) {
+                removed.push_back(spatial[py][px]);
+                spatial[py][px]->destroy();
+                spatial[py][px] = NULL;
+            }
+        }
+        px = dx * 2+x; py = 0+y;
+        if(px >= 0 && px < width && py >= 0 && py < height) {
+            if(spatial[py][px]) {
+                removed.push_back(spatial[py][px]);
+                spatial[py][px]->destroy();
+                spatial[py][px] = NULL;
+            }
+        }
+        px = dx * 2+x; py = 1+y;
+        if(px >= 0 && px < width && py >= 0 && py < height) {
+            if(spatial[py][px]) {
+                removed.push_back(spatial[py][px]);
+                spatial[py][px]->destroy();
+                spatial[py][px] = NULL;
+            }
+        }
+        px = dx+x; py = -1+y;
+        if(px >= 0 && px < width && py >= 0 && py < height) {
+            if(spatial[py][px]) {
+                removed.push_back(spatial[py][px]);
+                spatial[py][px]->destroy();
+                spatial[py][px] = NULL;
+            }
+        }
+        px = dx+x; py = 0+y;
+        if(px >= 0 && px < width && py >= 0 && py < height) {
+            if(spatial[py][px]) {
+                removed.push_back(spatial[py][px]);
+                spatial[py][px]->destroy();
+                spatial[py][px] = NULL;
+            }
+        }
+        px = dx+x; py = 1+y;
+        if(px >= 0 && px < width && py >= 0 && py < height) {
+            if(spatial[py][px]) {
+                removed.push_back(spatial[py][px]);
+                spatial[py][px]->destroy();
+                spatial[py][px] = NULL;
+            }
+        }
+
+    }
+
+    //velocity in y
+    else if(dy) {
+        px = -1+x; py = dy * 2+y;
+        if(px >= 0 && px < width && py >= 0 && py < height) {
+            if(spatial[py][px]) {
+                removed.push_back(spatial[py][px]);
+                spatial[py][px]->destroy();
+                spatial[py][px] = NULL;
+            }
+        }
+        px = 0+x; py = dy * 2+y;
+        if(px >= 0 && px < width && py >= 0 && py < height) {
+            if(spatial[py][px]) {
+                removed.push_back(spatial[py][px]);
+                spatial[py][px]->destroy();
+                spatial[py][px] = NULL;
+            }
+        }
+        px = 1+x; py = dy * 2+y;
+        if(px >= 0 && px < width && py >= 0 && py < height) {
+            if(spatial[py][px]) {
+                removed.push_back(spatial[py][px]);
+                spatial[py][px]->destroy();
+                spatial[py][px] = NULL;
+            }
+        }
+        px = -1+x; py = dy+y;
+        if(px >= 0 && px < width && py >= 0 && py < height) {
+            if(spatial[py][px]) {
+                removed.push_back(spatial[py][px]);
+                spatial[py][px]->destroy();
+                spatial[py][px] = NULL;
+            }
+        }
+        px = 0+x; py = dy+y;
+        if(px >= 0 && px < width && py >= 0 && py < height) {
+            if(spatial[py][px]) {
+                removed.push_back(spatial[py][px]);
+                spatial[py][px]->destroy();
+                spatial[py][px] = NULL;
+            }
+        }
+        px = 1+x; py = dy+y;
+        if(px >= 0 && px < width && py >= 0 && py < height) {
+            if(spatial[py][px]) {
+                removed.push_back(spatial[py][px]);
+                spatial[py][px]->destroy();
+                spatial[py][px] = NULL;
+            }
+        }
+
+
+    }
+
+//    int px = x;
+//    if(vx > 1) px+=1; //cos(67.5)
+//    if(vx < -1) px-=1;
+//    int py = y;
+//    if(vy > 1) py+=1;
+//    if(vy < -1) py-=1;
+
+//    if(px >= 0 && px < width && py >= 0 && py < height) {
+//        if(spatial[py][px]) {
+//            removed.push_back(spatial[py][px]);
+//            spatial[py][px]->destroy();
+//            spatial[py][px] = NULL;
+//        }
+//    }
+
 
     //leave section
     mutex.post();
