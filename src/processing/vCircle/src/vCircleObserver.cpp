@@ -469,46 +469,48 @@ void vCircleMultiSize::addFixed(emorph::vQueue &additions)
 
 void vCircleMultiSize::addLife(emorph::vQueue &additions)
 {
+    emorph::vQueue procQueue;
+    std::vector<int> procType;
 
-//    emorph::vList listadditions;
-//    emorph::vList subtractions;
+    emorph::vQueue::iterator vi;
+    for(vi = additions.begin(); vi != additions.end(); vi++) {
 
-//    //when conversion to reference-based vQueue happens we don't need this
-//    emorph::vQueue::iterator vqi;
-//    for(vqi = additions.begin(); vqi != additions.end(); vqi++)
-//        listadditions.push_back((*vqi)->clone());
+        //lifetime requires a flow event only
+        emorph::FlowEvent *v = (*vi)->getAs<emorph::FlowEvent>();
+        if(!v) return;
 
-//    emorph::vList::iterator vi;
-//    for(vi = listadditions.begin(); vi != listadditions.end(); vi++) {
+        //add this event
+        procQueue.push_back(v);
+        procType.push_back(1);
 
-//        //lifetime requires a flow event only
-//        emorph::FlowEvent *v = (*vi)->getAs<emorph::FlowEvent>();
-//        if(!v) return;
+        //then find any events that should be removed
+        int cts = v->getStamp();
+        int cx = v->getX(); int cy = v->getY();
+        emorph::FlowEvent * v2;
+        emorph::vQueue::iterator i = FIFO.begin();
+        while(i != FIFO.end()) {
+            v2 = (*i)->getUnsafe<emorph::FlowEvent>();
+            int modts = cts;
+            if(cts < v2->getStamp()) //we have wrapped
+                modts += emorph::vtsHelper::maxStamp();
 
-//        int cts = v->getStamp();
-//        int cx = v->getX(); int cy = v->getY();
-//        emorph::vList::iterator i = FIFO.begin();
-//        while(i != FIFO.end()) {
-//            v = (*i)->getUnsafe<emorph::FlowEvent>();
-//            int modts = cts;
-//            if(cts < v->getStamp()) //we have wrapped
-//                modts += emorph::vtsHelper::maxStamp();
+            bool samelocation = v2->getX() == cx && v2->getY() == cy;
 
-//            bool samelocation = v->getX() == cx && v->getY() == cy;
+            if(modts > v2->getDeath() || samelocation) {
+                procQueue.push_back(v2);
+                procType.push_back(-1);
+                i = FIFO.erase(i);
+            } else {
+                i++;
+            }
+        }
 
-//            if(modts > v->getDeath() || samelocation) {
-//                remHough(event);
-//                i = FIFO.erase(i);
-//            } else {
-//                i++;
-//            }
-//        }
+        //add to queue
+        FIFO.push_front(v);
+    }
 
-//    //add to queue
-//    FIFO.push_front(&event);
-
-//    //add this event to the hough space
-//    addHough(event);
+    //add this event to the hough space
+    updateHough(procQueue, procType);
 
 }
 
@@ -562,25 +564,35 @@ void vCircleMultiSize::addEdge(emorph::vQueue &additions)
 yarp::sig::ImageOf<yarp::sig::PixelBgr> vCircleMultiSize::makeDebugImage()
 {
 
-//    yarp::sig::ImageOf<yarp::sig::PixelBgr> image;
-//    image.resize(128, 128);
-//    image.zero();
+    yarp::sig::ImageOf<yarp::sig::PixelBgr> image;
+    image.resize(256, 128);
+    image.zero();
 
-//    emorph::vQueue q;
-//    if(qType == "surf")
-//        q = surface.getSURF(0, 127, 0, 127);
-//    else if(qType == "edge")
-//        q = edge.getSURF(0, 127, 0, 127);
+    emorph::vQueue q;
+    if(qType == "Fixed")
+        q = this->FIFO;
+    else if(qType == "Lifetime")
+        q = this->FIFO;
+    else if(qType == "surf")
+        q = surface.getSURF(0, 127, 0, 127);
+    else if(qType == "edge")
+        q = edge.getSURF(0, 127, 0, 127);
 
-//    for(int i = 0; i < q.size(); i++) {
-//        emorph::AddressEvent *v = q[i]->getUnsafe<emorph::AddressEvent>();
-//        image(v->getY(), 127 - v->getX()) = yarp::sig::PixelBgr(255, 255, 255);
-//    }
+    for(int i = 0; i < q.size(); i++) {
+        emorph::AddressEvent *v = q[i]->getUnsafe<emorph::AddressEvent>();
+        image(v->getY(), 127 - v->getX()) = yarp::sig::PixelBgr(255, 255, 255);
+    }
 
-//    return image;
+    yarp::sig::ImageOf<yarp::sig::PixelBgr> image2 = (*best)->makeDebugImage();
+
+    for(int x = 0; x < 128; x++) {
+        for(int y = 0; y < 128; y++) {
+            image(x+128, y) = image2(x, y);
+        }
+    }
 
 
-    return (*best)->makeDebugImage();
+    return image;
 }
 
 /*////////////////////////////////////////////////////////////////////////////*/

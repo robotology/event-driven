@@ -47,6 +47,9 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
     std::string houghType = rf.check("houghType",
                               yarp::os::Value(true)).asString();
 
+    double radmin = rf.check("radmin", yarp::os::Value(10)).asInt();
+    double radmax = rf.check("radmax", yarp::os::Value(35)).asInt();
+
     //filter parameters
     double procNoisePos = rf.check("procNoisePos",
                                    yarp::os::Value(5)).asDouble();
@@ -70,7 +73,7 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
     //circleReader.houghFinder.useFlow = flowhough;
 
     circleReader.cObserver =
-            new vCircleMultiSize(qType, 2000, 10, 35, flowhough, parallel, width, height);
+            new vCircleMultiSize(qType, 2000, radmin, radmax, flowhough, parallel, width, height);
 
     //initialise the dection and tracking
     circleReader.inlierThreshold = inlierThreshold;
