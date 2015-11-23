@@ -109,6 +109,7 @@ vFlowManager::vFlowManager(int height, int width, int filterSize,
 /******************************************************************************/
 bool vFlowManager::open(std::string moduleName, bool strictness)
 {
+    this->strictness = strictness;
     if(strictness) {
         std::cout << "Setting " << moduleName << " to strict" << std::endl;
         this->setStrict();
@@ -146,7 +147,7 @@ void vFlowManager::interrupt()
 /******************************************************************************/
 void vFlowManager::onRead(emorph::vBottle &inBottle)
 {
-    bool computeflow = true;
+    //bool computeflow = true;
 
     /*prepare output vBottle with AEs extended with optical flow events*/
     emorph::vBottle &outBottle = outPort.prepare();
@@ -159,9 +160,6 @@ void vFlowManager::onRead(emorph::vBottle &inBottle)
 
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {
-//        if(getPendingReads())
-//            computeflow = false;
-
         emorph::AddressEvent *aep = (*qi)->getAs<emorph::AddressEvent>();
         if(!aep) continue;
         if(aep->getChannel()) continue; 
@@ -173,42 +171,40 @@ void vFlowManager::onRead(emorph::vBottle &inBottle)
 
         cSurf->addEvent(*aep);
 
-        emorph::FlowEvent ofe;
-        if(computeflow) {
-            ofe = compute();
-            eventsComputed++;
-        }
-        eventsPotential++;
+        emorph::FlowEvent *ofe = compute();
+//        eventsComputed++;
+//        eventsPotential++;
 
-        if(ofe.getVx() || ofe.getVy()) {
-            outBottle.addEvent(ofe);
-        } else {
-            outBottle.addEvent(*aep);
-        }
+        if(ofe) outBottle.addEvent(*ofe);
+        else outBottle.addEvent(*aep);
 
     }
 
-    bottleCount++;
+//    bottleCount++;
 
-    if(bottleCount > 2000) {
-        std::cout << (int)(eventsComputed *100.0 / eventsPotential);
-        std::cout << "% (" << eventsComputed << ")" << std::endl;
-        eventsComputed = 0; eventsPotential = 0; bottleCount = 0;
-    }
+//    if(bottleCount > 2000) {
+//        std::cout << (int)(eventsComputed *100.0 / eventsPotential);
+//        std::cout << "% (" << eventsComputed << ")" << std::endl;
+//        eventsComputed = 0; eventsPotential = 0; bottleCount = 0;
+//    }
 
 
-    outPort.writeStrict();
+    if(strictness) outPort.writeStrict();
+    else outPort.write();
+
 }
 
 /******************************************************************************/
-emorph::FlowEvent vFlowManager::compute()
+#define COS135on2 0.38268
+emorph::FlowEvent *vFlowManager::compute()
 {
+    emorph::FlowEvent * vf = NULL;
     double dtdy = 0, dtdx = 0;
 
     //get the most recent event
     emorph::AddressEvent * vr =
             cSurf->getMostRecent()->getAs<emorph::AddressEvent>();
-    emorph::FlowEvent opt_flow(*vr);
+
 
     //find the side of this event that has the collection of temporally nearby
     //events
@@ -237,19 +233,63 @@ emorph::FlowEvent vFlowManager::compute()
         }
     }
 
-    if(bestscore > emorph::vtsHelper::maxStamp()) return opt_flow;
+    if(bestscore > emorph::vtsHelper::maxStamp()) return vf;
 
     const emorph::vQueue &subsurf = cSurf->getSURF(besti, bestj, fRad);
 
     //and compute the flow
     if(computeGrads(subsurf, *vr, dtdy, dtdx) >= minEvtsOnPlane) {
-        opt_flow.setVx(dtdx);
-        opt_flow.setVy(dtdy);
-        opt_flow.setDeath();
-        //std::cout << sqrt(pow(dtdx, 2.0) + pow(dtdy, 2.0)) << std::endl;
+        vf = new emorph::FlowEvent(*vr);
+        vf->setVx(dtdx);
+        vf->setVy(dtdy);
+        vf->setDeath();
     }
+//    if(!vf) {
+//        //the continuation
 
-    return opt_flow;
+//        double adx = 0, ady = 0;
+//        int an = 0;
+//        emorph::vQueue::const_iterator qi;
+//        for(qi = subsurf.begin(); qi != subsurf.end(); qi++) {
+
+//            emorph::FlowEvent *vf2 = (*qi)->getAs<emorph::FlowEvent>();
+//            if(!vf2) continue;
+
+////            adx += vf2->getVx();
+////            ady += vf2->getVy();
+////            an++;
+
+//            double vx = vf2->getVy(); double vy = vf2->getVx();
+//            double mag = sqrt(pow(vx, 2.0) + pow(vy, 2.0));
+//            vx /= (mag * COS135on2);
+//            vy /= (mag * COS135on2);
+//            int dx = 0, dy = 0;
+//            if(vx > 1) dx = 1; if(vx < -1) dx = -1;
+//            if(vy > 1) dy = 1; if(vy < -1) dy = -1;
+
+//            if(vf2->getX() + dx == vr->getX() && vf2->getY() - dy == vr->getY()
+//                    || vf2->getX() - dx == vr->getX() && vf2->getY() + dy == vr->getY()
+//                    || vf2->getX() + dx == vr->getX() && vf2->getY() + dy == vr->getY()
+//                    ) {
+//                adx += vf2->getVx();
+//                ady += vf2->getVy();
+//                an++;
+//            }
+//        }
+
+//        if(an > 1) {
+//            vf = new emorph::FlowEvent(*vr);
+//            vf->setVx(adx / an);
+//            vf->setVy(ady / an);
+//            vf->setDeath();
+//            std::cout << "Upgraded event from " << an << " others" << std::endl;
+//        }
+
+//    }
+
+    if(vf) cSurf->addEvent(*vf);
+
+    return vf;
 }
 
 /******************************************************************************/
