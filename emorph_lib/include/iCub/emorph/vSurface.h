@@ -89,7 +89,7 @@ public:
 
     const vQueue& getSURF(int d);
     const vQueue& getSURF(int x, int y, int d);
-    const vQueue& getSURF(int xl, int xh, int yl, int yh);
+    virtual const vQueue& getSURF(int xl, int xh, int yl, int yh);
 
 
 };
@@ -102,10 +102,15 @@ private:
     //there could be a better way to achieve this.
     vEvent * addEvent(emorph::AddressEvent &event);
 
+    vQueue addressremove(AddressEvent * v);
+    vQueue flowremove(FlowEvent * vf);
 
 public:
 
-    vQueue addEvent(emorph::FlowEvent &event);
+    vQueue addEventToEdge(AddressEvent *event);
+    FlowEvent * upgradeEvent(AddressEvent *event);
+
+    virtual const vQueue& getSURF(int xl, int xh, int yl, int yh);
 
 };
 
