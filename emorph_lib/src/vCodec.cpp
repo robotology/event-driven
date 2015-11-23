@@ -725,10 +725,10 @@ yarp::os::Property FlowEvent::getContent() const
 void FlowEvent::setDeath()
 {
     death = 1.0 / (sqrt(pow(vx, 2.0) + pow(vy, 2.0)) * vtsHelper::tstosecs());
-    if(death > 2000000) {
-        death = 2000000;
-    }
-    if(death < 100000) death = 100000;
+    //if(death > 2000000) {
+    //    death = 2000000;
+    //}
+    //if(death < 100000) death = 100000;
     death += stamp;
     return;
 
