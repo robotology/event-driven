@@ -61,8 +61,8 @@ private:
     /// update the Hough space using directed method
     double updateHFlowAngle(int xv, int yv, double strength, double dtdx,
                           double dtdy);
-//    double updateHFlowAngle3(int xv, int yv, double strength,
-//                                         double dtdx, double dtdy);
+    double updateHFlowAngle2(int xv, int yv, double strength,
+                                         double dtdx, double dtdy);
 
     /// update the Hough space given adds and subs
     void performHough();
