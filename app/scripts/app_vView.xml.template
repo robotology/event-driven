@@ -5,11 +5,6 @@
 </dependencies>
 
 <module>
-   <name>aexGrabber</name>
-   <node>pc104</node>
-</module>
-
-<module>
    <name> vPepper </name>
    <parameters> --temporalSize 10000 --spatialSize 1</parameters>
    <node>localhost</node>
@@ -17,7 +12,7 @@
 
 <module>
    <name>vUndistortCam</name>
-   <parameters> --sensorHeight 128 --sensorWidth 128 --truncate true --strict </parameters>
+   <parameters> --sensorHeight 128 --sensorWidth 128 --strict </parameters>
    <node>localhost</node>
 </module>
 
@@ -35,7 +30,7 @@
 
 <module>
     <name> vCircle </name>
-    <parameters> --strict true --houghType directed --qType Fixed --inlierThreshold 25 --procNoisePos 0.5 --procNoiseRad 0.5 --measNoisePos 128 --measNoiseRad 128 --datafile</parameters>
+    <parameters> --strict true --houghType directed --qType edge --datafile</parameters>
     <node> localhost </node>
 </module>
 
@@ -59,7 +54,7 @@
 
 <module>
     <name> vFramer</name>
-    <parameters> --frameRate 60 --eventWindow 0.5 --displays "(0 left (AE) 1 right (AE))"</parameters>
+    <parameters> --frameRate 30 --eventWindow 0.5 --displays "(0 left (AE CIRC FLOW))"</parameters>
     <node>localhost</node>
 </module>
 
@@ -76,7 +71,7 @@
 </module>
 
 <connection>
-  <from>/aexGrabber/vBottle:o</from>
+  <from>/zynqGrabber/vBottle:o</from>
   <to>/vFlow/vBottle:i</to>
   <protocol>tcp</protocol>
 </connection>
@@ -100,7 +95,7 @@
 </connection>
 
 <connection>
-  <from>/vFramer/right</from>
+  <from>/vCircle/debug:o</from>
   <to>/viewCh1</to>
   <protocol>tcp</protocol>
 </connection>
