@@ -52,8 +52,8 @@ private:
     yarp::os::Mutex mdone; /// for thread safety when computation is finished
 
     //current data
-    emorph::vQueue * adds; /// pointer to list of events to add to Hough space
-    emorph::vQueue * subs; /// pointer to list of events to remove from Hough
+    emorph::vQueue * procQueue; /// pointer to list of events to add to Hough space
+    std::vector<int> * procType; /// pointer to list of events to remove from Hough
 
     /// update the Hough space using standard method
     void updateHAddress(int xv, int yv, double strength);
@@ -61,8 +61,8 @@ private:
     /// update the Hough space using directed method
     double updateHFlowAngle(int xv, int yv, double strength, double dtdx,
                           double dtdy);
-//    double updateHFlowAngle3(int xv, int yv, double strength,
-//                                         double dtdx, double dtdy);
+    double updateHFlowAngle2(int xv, int yv, double strength,
+                                         double dtdx, double dtdy);
 
     /// update the Hough space given adds and subs
     void performHough();
@@ -114,7 +114,7 @@ public:
     /// \param adds list of events to add
     /// \param subs list of events to remove
     ///
-    void process(emorph::vQueue &adds, emorph::vQueue &subs);
+    void process(emorph::vQueue &procQueue, std::vector<int> &procType);
 
     ///
     /// \brief waitfordone wait for computation to finish if threaded
@@ -125,7 +125,7 @@ public:
     /// \brief makeDebugImage create an image visualising the Hough space
     /// \return a BGR yarp image
     ///
-    yarp::sig::ImageOf<yarp::sig::PixelBgr> makeDebugImage();
+    yarp::sig::ImageOf<yarp::sig::PixelBgr> makeDebugImage(double refval = -1);
 
 };
 
@@ -144,6 +144,7 @@ private:
 
     //internal data
     emorph::vSurface surface;
+    emorph::vEdge edge;
     emorph::vQueue FIFO;
     emorph::vEvent dummy;
     std::vector<vCircleThread *> htransforms;
@@ -151,12 +152,13 @@ private:
 
     void addHough(emorph::vEvent &event);
     void remHough(emorph::vEvent &event);
-    void updateHough(emorph::vQueue &adds, emorph::vQueue &subs);
+    void updateHough(emorph::vQueue &procQueue, std::vector<int> &procType);
 
     void addFixed(emorph::vQueue &additions);
     void addTime(emorph::vQueue &additions);
     void addLife(emorph::vQueue &additions);
     void addSurf(emorph::vQueue &additions);
+    void addEdge(emorph::vQueue &additions);
 
 public:
 

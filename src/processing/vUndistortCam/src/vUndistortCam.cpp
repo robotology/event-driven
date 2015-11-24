@@ -21,21 +21,12 @@
 bool vUndistortModule::configure(yarp::os::ResourceFinder &rf)
 {
     //set the name of the module
-    std::string moduleName = rf.check("name", yarp::os::Value("vUndistortCam")).asString();
+    std::string moduleName =
+            rf.check("name", yarp::os::Value("vUndistortCam")).asString();
     setName(moduleName.c_str());
 
-    //open and attach the rpc port
-    std::string rpcPortName  =  "/" + moduleName + "/rpc:i";
-
-    if (!rpcPort.open(rpcPortName))
-    {
-        std::cerr << getName() << " : Unable to open rpc port at " <<
-                     rpcPortName << std::endl;
-        return false;
-    }
-
-    //make the respond method of this RF module respond to the rpcPort
-    attach(rpcPort);
+    //set port strictness
+    bool strictio = rf.check("strict");
 
     //set sensor size
     int height = rf.check("sensorHeight",
@@ -64,7 +55,7 @@ bool vUndistortModule::configure(yarp::os::ResourceFinder &rf)
     eventBottleManager.setCamParams(leftParams, rightParams);
 
     //open our bottle manager
-    eventBottleManager.open(moduleName);
+    eventBottleManager.open(moduleName, strictio);
 
     return true ;
 }
@@ -119,13 +110,16 @@ EventBottleManager::EventBottleManager()
     sensorWidth = 128;
 
     truncate = true;
+    strictio = false;
 
 }
 /**********************************************************/
-bool EventBottleManager::open(const std::string &name)
+bool EventBottleManager::open(const std::string &name, bool strictio)
 {
     //and open the input port
 
+    if(strictio) this->setStrict();
+    this->strictio = strictio;
     this->useCallback();
 
     std::string inPortName = "/" + name + "/vBottle:i";
@@ -221,19 +215,19 @@ void EventBottleManager::onRead(emorph::vBottle &bot)
         return;
     }
 
-    //create event queue
-    emorph::vQueue q = bot.getAll();
-    //create queue iterator
-    emorph::vQueue::iterator qi;
-    
     // prepare output vBottle with address events extended with cluster ID (aec) and cluster events (clep)
     emorph::vBottle &outBottle = outPort.prepare();
     outBottle.clear();
 
-    // get the event queue in the vBottle bot
-    //bot.getAll(q);
+    //push the envelope through
+    yarp::os::Stamp yst;
+    this->getEnvelope(yst);
+    outPort.setEnvelope(yst);
 
-    for(qi = q.begin(); qi != q.end(); qi++)
+    //create event queue
+    emorph::vQueue q = bot.getAll();
+
+    for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {
 
         emorph::AddressEvent * v = (*qi)->getAs<emorph::AddressEvent>();
@@ -256,7 +250,8 @@ void EventBottleManager::onRead(emorph::vBottle &bot)
 
     }
     //send on the processed events
-    outPort.write();
+    if(strictio) outPort.writeStrict();
+    else outPort.write();
 
 }
 

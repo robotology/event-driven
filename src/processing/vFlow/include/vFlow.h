@@ -41,6 +41,7 @@ class vFlowManager : public yarp::os::BufferedPort<emorph::vBottle>
 {
 private:
 
+    bool strictness;
     yarp::os::BufferedPort<emorph::vBottle> outPort;
 
     emorph::vSurface *surfaceOn; ///< emorph::vSurface for on polarity events
@@ -63,7 +64,7 @@ private:
     int eventsPotential;
     int bottleCount;
 
-    emorph::FlowEvent compute();
+    emorph::FlowEvent *compute();
     int computeGrads(yarp::sig::Matrix &A, yarp::sig::Vector &Y,
                       double cx, double cy, double cz,
                       double &dtdy, double &dtdx);

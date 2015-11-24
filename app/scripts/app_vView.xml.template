@@ -17,7 +17,7 @@
 
 <module>
    <name>vUndistortCam</name>
-   <parameters> --sensorHeight 128 --sensorWidth 128 --truncate true </parameters>
+   <parameters> --sensorHeight 128 --sensorWidth 128 --truncate true --strict </parameters>
    <node>localhost</node>
 </module>
 

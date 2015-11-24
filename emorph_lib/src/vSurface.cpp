@@ -15,6 +15,7 @@
  */
 
 #include "iCub/emorph/vSurface.h"
+#include <math.h>
 
 namespace emorph {
 
@@ -46,7 +47,9 @@ vSurface vSurface::operator=(const vSurface& that)
     this->width = that.width;
     this->height = that.height;
     this->mostRecent = that.mostRecent;
-    this->mostRecent->referto();
+    this->justRemoved = that.justRemoved;
+    if(this->justRemoved) justRemoved->referto();
+    //this->mostRecent->referto();
 
     spatial.resize(height);
     for(int y = 0; y < height; y++) {
@@ -55,8 +58,8 @@ vSurface vSurface::operator=(const vSurface& that)
 
     for(int i = 0; i < height; i++) {
         for(int j = 0; j < width; j++) {
-            if(that.spatial[i][j]) spatial[i][j] = that.spatial[i][j];
-            spatial[i][j]->referto();
+            spatial[i][j] = that.spatial[i][j];
+            if(that.spatial[i][j]) spatial[i][j]->referto();
         }
     }
 
@@ -103,7 +106,7 @@ vEvent * vSurface::addEvent(AddressEvent &event)
     spatial[y][x] = &event;
     event.referto();
 
-    //then set our mostRecent with a second reference
+    //then set our mostRecent
     mostRecent = spatial[y][x];
 
     //leave section
@@ -153,6 +156,341 @@ const vQueue& vSurface::getSURF(int xl, int xh, int yl, int yh)
 vEvent *vSurface::getMostRecent()
 {
     return mostRecent;
+}
+
+
+#define COS135on2 0.38268
+//FlowEvent * vEdge::upgradeEvent(AddressEvent *event)
+//{
+//    FlowEvent * vf = event->getAs<FlowEvent>();
+//    if(vf) return vf;
+
+//    int sr = 2;
+//    double adx = 0, ady = 0;
+//    int an = 0;
+//    for(int y = -sr + event->getY(); y <= sr + event->getY(); y++) {
+//        for(int x = -sr + event->getX(); x <= sr + event->getX(); x++) {
+//            if(x < 0 || y < 0 || x >= width || y >= height) continue;
+//            if(!spatial[y][x]) continue;
+//            FlowEvent *vf2 = spatial[y][x]->getAs<FlowEvent>();
+//            if(!vf2) continue;
+
+//            double vx = vf2->getVy(); double vy = vf2->getVx();
+//            double mag = sqrt(pow(vx, 2.0) + pow(vy, 2.0));
+//            vx /= (mag * COS135on2);
+//            vy /= (mag * COS135on2);
+//            int dx = 0, dy = 0;
+//            if(vx > 1) dx = 1; if(vx < -1) dx = -1;
+//            if(vy > 1) dy = 1; if(vy < -1) dy = -1;
+
+//            dx *= sr; dy *= sr;
+//            if(x + dy == event->getX() && y + dx == event->getY()) {
+//                //change this to a flow event
+//                //std::cout << "Conditions met to upgrade" << std::endl;
+//                adx += vf2->getVx(); ady += vf2->getVy();
+//                an++;
+//                //vf = new FlowEvent(*event);
+//                //vf->setVx(vf2->getVx()); vf->setVy(vf2->getVy());
+//                //vf->setDeath();
+//            }
+//            //if(vf) break;
+//        }
+//        //if(vf) break;
+//    }
+
+//    if(an > 1) {
+//        vf = new FlowEvent(*event);
+//        vf->setVx(adx / an);
+//        vf->setVy(ady / an);
+//        vf->setDeath();
+//        std::cout << "Upgraded with " << an << " events" << std::endl;
+//    }
+
+//    return vf;
+//}
+
+
+vQueue vEdge::flowremove(FlowEvent *vf)
+{
+    vQueue removed;
+
+    int x = vf->getX(); int y = vf->getY();
+    double vx = vf->getVy(); double vy = vf->getVx();
+    double mag = sqrt(pow(vx, 2.0) + pow(vy, 2.0));
+    vx /= (mag * COS135on2);
+    vy /= (mag * COS135on2);
+    int dx = 0, dy = 0;
+    if(vx > 1) dx = 1; if(vx < -1) dx = -1;
+    if(vy > 1) dy = 1; if(vy < -1) dy = -1;
+
+    dx *= -1;
+    dy *= -1;
+
+    x += dx; y += dy;
+    int px, py;
+
+    //corners
+    if(dx && dy) {
+        px = x + dx * 2; py = y + dy * 2;
+        if(px >= 0 && px < width && py >= 0 && py < height) {
+            if(spatial[py][px]) {
+                removed.push_back(spatial[py][px]);
+                spatial[py][px]->destroy();
+                spatial[py][px] = NULL;
+            }
+        }
+        px = x;      py = y + dy * 2;
+        if(px >= 0 && px < width && py >= 0 && py < height) {
+            if(spatial[py][px]) {
+                removed.push_back(spatial[py][px]);
+                spatial[py][px]->destroy();
+                spatial[py][px] = NULL;
+            }
+        }
+        px = dx * 2+x; py = 0+y;
+        if(px >= 0 && px < width && py >= 0 && py < height) {
+            if(spatial[py][px]) {
+                removed.push_back(spatial[py][px]);
+                spatial[py][px]->destroy();
+                spatial[py][px] = NULL;
+            }
+        }
+        px = dx+x; py = dy+y;
+        if(px >= 0 && px < width && py >= 0 && py < height) {
+            if(spatial[py][px]) {
+                removed.push_back(spatial[py][px]);
+                spatial[py][px]->destroy();
+                spatial[py][px] = NULL;
+            }
+        }
+        px = dx*2 + x;      py = dy + y;
+        if(px >= 0 && px < width && py >= 0 && py < height) {
+            if(spatial[py][px]) {
+                removed.push_back(spatial[py][px]);
+                spatial[py][px]->destroy();
+                spatial[py][px] = NULL;
+            }
+        }
+        px = dx + x; py = dy*2 + y;
+        if(px >= 0 && px < width && py >= 0 && py < height) {
+            if(spatial[py][px]) {
+                removed.push_back(spatial[py][px]);
+                spatial[py][px]->destroy();
+                spatial[py][px] = NULL;
+            }
+        }
+    }
+
+    //velocity in x
+    else if(dx) {
+        px = dx * 2+x; py = -1+y;
+        if(px >= 0 && px < width && py >= 0 && py < height) {
+            if(spatial[py][px]) {
+                removed.push_back(spatial[py][px]);
+                spatial[py][px]->destroy();
+                spatial[py][px] = NULL;
+            }
+        }
+        px = dx * 2+x; py = 0+y;
+        if(px >= 0 && px < width && py >= 0 && py < height) {
+            if(spatial[py][px]) {
+                removed.push_back(spatial[py][px]);
+                spatial[py][px]->destroy();
+                spatial[py][px] = NULL;
+            }
+        }
+        px = dx * 2+x; py = 1+y;
+        if(px >= 0 && px < width && py >= 0 && py < height) {
+            if(spatial[py][px]) {
+                removed.push_back(spatial[py][px]);
+                spatial[py][px]->destroy();
+                spatial[py][px] = NULL;
+            }
+        }
+        px = dx+x; py = -1+y;
+        if(px >= 0 && px < width && py >= 0 && py < height) {
+            if(spatial[py][px]) {
+                removed.push_back(spatial[py][px]);
+                spatial[py][px]->destroy();
+                spatial[py][px] = NULL;
+            }
+        }
+        px = dx+x; py = 0+y;
+        if(px >= 0 && px < width && py >= 0 && py < height) {
+            if(spatial[py][px]) {
+                removed.push_back(spatial[py][px]);
+                spatial[py][px]->destroy();
+                spatial[py][px] = NULL;
+            }
+        }
+        px = dx+x; py = 1+y;
+        if(px >= 0 && px < width && py >= 0 && py < height) {
+            if(spatial[py][px]) {
+                removed.push_back(spatial[py][px]);
+                spatial[py][px]->destroy();
+                spatial[py][px] = NULL;
+            }
+        }
+
+    }
+
+    //velocity in y
+    else if(dy) {
+        px = -1+x; py = dy * 2+y;
+        if(px >= 0 && px < width && py >= 0 && py < height) {
+            if(spatial[py][px]) {
+                removed.push_back(spatial[py][px]);
+                spatial[py][px]->destroy();
+                spatial[py][px] = NULL;
+            }
+        }
+        px = 0+x; py = dy * 2+y;
+        if(px >= 0 && px < width && py >= 0 && py < height) {
+            if(spatial[py][px]) {
+                removed.push_back(spatial[py][px]);
+                spatial[py][px]->destroy();
+                spatial[py][px] = NULL;
+            }
+        }
+        px = 1+x; py = dy * 2+y;
+        if(px >= 0 && px < width && py >= 0 && py < height) {
+            if(spatial[py][px]) {
+                removed.push_back(spatial[py][px]);
+                spatial[py][px]->destroy();
+                spatial[py][px] = NULL;
+            }
+        }
+        px = -1+x; py = dy+y;
+        if(px >= 0 && px < width && py >= 0 && py < height) {
+            if(spatial[py][px]) {
+                removed.push_back(spatial[py][px]);
+                spatial[py][px]->destroy();
+                spatial[py][px] = NULL;
+            }
+        }
+        px = 0+x; py = dy+y;
+        if(px >= 0 && px < width && py >= 0 && py < height) {
+            if(spatial[py][px]) {
+                removed.push_back(spatial[py][px]);
+                spatial[py][px]->destroy();
+                spatial[py][px] = NULL;
+            }
+        }
+        px = 1+x; py = dy+y;
+        if(px >= 0 && px < width && py >= 0 && py < height) {
+            if(spatial[py][px]) {
+                removed.push_back(spatial[py][px]);
+                spatial[py][px]->destroy();
+                spatial[py][px] = NULL;
+            }
+        }
+
+    } else {
+        std::cerr << "Flow not set correctly" << std::endl;
+    }
+
+    return removed;
+
+}
+
+vQueue vEdge::addressremove(AddressEvent * v)
+{
+    vQueue removed;
+    for(int y = -1 + v->getY(); y <= 1 + v->getY(); y++) {
+        for(int x = -1 + v->getX(); x <= 1 + v->getX(); x++) {
+            if(x < 0 || y < 0 || x >= width || y >= height) continue;
+            if(!spatial[y][x]) continue;
+            FlowEvent *vf2 = spatial[y][x]->getAs<FlowEvent>();
+            if(!vf2) continue;
+
+            double vx = vf2->getVy(); double vy = vf2->getVx();
+            double mag = sqrt(pow(vx, 2.0) + pow(vy, 2.0));
+            vx /= (mag * COS135on2);
+            vy /= (mag * COS135on2);
+            int dx = 0, dy = 0;
+            if(vx > 1) dx = 1; if(vx < -1) dx = -1;
+            if(vy > 1) dy = 1; if(vy < -1) dy = -1;
+
+            if(x + dx == v->getX() && y + dy == v->getY()) {
+                removed.push_back(spatial[y][x]);
+                spatial[y][x]->destroy();
+                spatial[y][x] = NULL;
+            }
+
+        }
+
+    }
+
+    return removed;
+
+
+}
+
+
+
+vQueue vEdge::addEventToEdge(AddressEvent *event)
+{
+    vQueue removed;
+
+
+
+    //enter critical section
+    mutex.wait();
+
+    //remove non edge events
+    FlowEvent * vf = event->getAs<FlowEvent>();
+    if(!vf) {
+        removed = addressremove(event);
+    } else {
+        removed = flowremove(vf);
+    }
+
+    //remove previous event at this pixel
+    int x = event->getX(); int y = event->getY();
+    if(spatial[y][x]) {
+        removed.push_back(spatial[y][x]);
+        spatial[y][x]->destroy();
+    }
+
+    //put our new event in and add a reference
+    spatial[y][x] = event;
+    event->referto();
+
+    //then set our mostRecent
+    mostRecent = spatial[y][x];
+
+
+    //leave section
+    mutex.post();
+
+    return removed;
+
+}
+
+const vQueue& vEdge::getSURF(int xl, int xh, int yl, int yh)
+{
+
+    xl = std::max(xl, 0);
+    xh = std::min(xh, width-1);
+    yl = std::max(yl, 0);
+    yh = std::min(yh, height-1);
+
+    subq.clear();
+
+    //critical section
+    mutex.wait();
+
+    for(int y = yl; y <= yh; y++) {
+        for(int x = xl; x <= xh; x++) {
+            if(spatial[y][x] && spatial[y][x]->getAs<FlowEvent>())
+                subq.push_back(spatial[y][x]);
+        }
+    }
+
+    mutex.post();
+
+    return subq;
+
 }
 
 
