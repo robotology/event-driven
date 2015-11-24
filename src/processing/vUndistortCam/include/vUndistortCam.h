@@ -34,6 +34,8 @@ private:
     //output port for the vBottle with the new events computed by the module
     yarp::os::BufferedPort<emorph::vBottle> outPort;
 
+    bool strictio;
+
     //we store an openCV map to use as a look-up table for the undistortion
     //given the camera parameters provided
     cv::Mat leftMap;
@@ -62,7 +64,7 @@ public:
     bool setCamParams(const yarp::os::Bottle &left,
                       const yarp::os::Bottle &right);
 
-    bool    open(const std::string &name);
+    bool    open(const std::string &name, bool strictio);
     void    close();
     void    interrupt();
 
