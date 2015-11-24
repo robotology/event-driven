@@ -226,7 +226,7 @@ vQueue vEdge::flowremove(FlowEvent *vf)
     dx *= -1;
     dy *= -1;
 
-    //x += dx; y += dy;
+    x += dx; y += dy;
     int px, py;
 
     //corners

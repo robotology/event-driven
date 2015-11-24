@@ -30,8 +30,9 @@ vCircleThread::vCircleThread(int R, bool directed, bool parallel, int height, in
     this->width = width;
 
     H.resize(height, width);
-    a = R * fabs(tan(5.0 * M_PI / 180.0));
-    Hstr = 1.0 / (int)(2 * M_PI * R + 0.5);
+    a = R * fabs(tan(20.0 * M_PI / 180.0));
+    //Hstr = 1.0 / (int)(2 * M_PI * R + 0.5);
+    Hstr = 1.0 / (2.0 * M_PI * R);
 
     x_max = 0; y_max = 0;
 
@@ -63,7 +64,7 @@ void vCircleThread::waitfordone()
 
 void vCircleThread::updateHAddress(int xv, int yv, double strength)
 {
-    int P = 5;
+    int P = 0;
 
     int xstart = std::max(0, xv - R);
     int xend = std::min(width-1, xv + R);
@@ -97,8 +98,7 @@ double vCircleThread::updateHFlowAngle(int xv, int yv, double strength,
                                      double dtdx, double dtdy)
 {
 
-    int P = 2;
-    int hack = 0;
+    int P = 0;
 
     //this switch could be done when passing arguments to the function
     double temp = dtdx;
@@ -113,21 +113,21 @@ double vCircleThread::updateHFlowAngle(int xv, int yv, double strength,
     double yn = dtdy / velR;
 
     //calculate the end position of the tangent to the arc
-    double x2 = (R-hack) * xn - yn * a;
-    double y2 = (R-hack) * yn + xn * a;
+    double x2 = R * xn - yn * a;
+    double y2 = R * yn + xn * a;
 
     double nonadjR = sqrt(pow(x2, 2.0) + pow(y2, 2.0));
 
     //then adjust to fit the radius R
-    double x2h = (R-hack) * x2 / nonadjR;
-    double y2h = (R-hack) * y2 / nonadjR;
+    double x2h = R * x2 / nonadjR;
+    double y2h = R * y2 / nonadjR;
 
     //also for the other end of the arc
-    double x3 = (R-hack) * xn + yn * a;
-    double y3 = (R-hack) * yn - xn * a;
+    double x3 = R * xn + yn * a;
+    double y3 = R * yn - xn * a;
 
-    double x3h = (R-hack) * x3 / nonadjR; //nonadjR is the same for both 2 and 3
-    double y3h = (R-hack) * y3 / nonadjR;
+    double x3h = R * x3 / nonadjR; //nonadjR is the same for both 2 and 3
+    double y3h = R * y3 / nonadjR;
 
     //treat it differently depending on the angle
     if(horquad) {
@@ -145,7 +145,7 @@ double vCircleThread::updateHFlowAngle(int xv, int yv, double strength,
         for(int yd = yStart; yd <= yEnd; yd++) {
 
             //calculate the x value
-            int xd = (int)((sqrt(Rsqr - pow(yd, 2.0))+0.5) * sign);
+            int xd = (int)(sqrt(Rsqr - pow(yd, 2.0)) * sign + 0.5);
 
             //for both forward and reverse directions
             for(int dir = 1; dir >= -1; dir -= 2) {
@@ -189,7 +189,7 @@ double vCircleThread::updateHFlowAngle(int xv, int yv, double strength,
         for(int xd = xStart; xd <= xEnd; xd++) {
 
             //calculate the y value
-            int yd = (int)((sqrt(Rsqr - pow(xd, 2.0))+0.5) * sign);
+            int yd = (int)(sqrt(Rsqr - pow(xd, 2.0)) * sign + 0.5);
 
             //for both forward and reverse directions
             for(int dir = 1; dir >= -1; dir -= 2) {
@@ -229,7 +229,7 @@ double vCircleThread::updateHFlowAngle2(int xv, int yv, double strength,
 
     double m = dtdx / dtdy;
     double b = yv - m * xv;
-    int bmd = 1;
+    int bmd = 0;
     int dr = 1;
 
     for(int x = 0; x < width; x++) {
@@ -237,7 +237,7 @@ double vCircleThread::updateHFlowAngle2(int xv, int yv, double strength,
         int y = m * x + b + 0.5;
         double delta = sqrt(pow(x - xv, 2.0) + pow(y - yv, 2.0));
 
-        if(delta > R - dr && delta < R + dr) {
+        //if(delta > R - dr && delta < R + dr) {
 
             for(int bmod = -bmd; bmod <= bmd; bmod++) {
                 y = m * x + b + bmod + 0.5;
@@ -264,7 +264,7 @@ double vCircleThread::updateHFlowAngle2(int xv, int yv, double strength,
 //            if(H[y][x] > H[y_max][x_max]) {
 //                y_max = y; x_max = x;
 //            }
-        }
+        //}
 
     }
 
@@ -334,7 +334,7 @@ void vCircleThread::performHough()
             emorph::FlowEvent * v = (*procQueue)[i]->getAs<emorph::FlowEvent>();
 
             if(v) {
-                updateHFlowAngle2(v->getX(), v->getY(), (*procType)[i] * Hstr,
+                updateHFlowAngle(v->getX(), v->getY(), (*procType)[i] * Hstr,
                                  v->getVx(), v->getVy());
             }
 
@@ -368,15 +368,15 @@ void vCircleThread::run()
     }
 }
 
-yarp::sig::ImageOf<yarp::sig::PixelBgr> vCircleThread::makeDebugImage()
+yarp::sig::ImageOf<yarp::sig::PixelBgr> vCircleThread::makeDebugImage(double refval)
 {
 
     yarp::sig::ImageOf<yarp::sig::PixelBgr> canvas;
     canvas.resize(width, height);
     canvas.zero();
 
-    double refval = H[y_max][x_max];
-    refval = 0.2;
+    if(refval < 0)
+        refval = H[y_max][x_max];
 
     for(int y = 0; y < height; y++) {
         for(int x = 0; x < width; x++) {
@@ -623,9 +623,33 @@ void vCircleMultiSize::addEdge(emorph::vQueue &additions)
 yarp::sig::ImageOf<yarp::sig::PixelBgr> vCircleMultiSize::makeDebugImage()
 {
 
-    //yarp::sig::ImageOf<yarp::sig::PixelBgr> image;
+    //update best
+    std::vector<vCircleThread *>::iterator i;
+    for(i = htransforms.begin(); i != htransforms.end(); i++)
+        if((*i)->getScore() > (*best)->getScore())
+            best = i;
 
-    yarp::sig::ImageOf<yarp::sig::PixelBgr> image = (*best)->makeDebugImage();
+    double score = (*best)->getScore();
+    score = 0.2;
+
+    i = htransforms.begin();
+    yarp::sig::ImageOf<yarp::sig::PixelBgr> imagebase =
+            (*i)->makeDebugImage(score);
+
+    for(i++; i != htransforms.end(); i++) {
+        yarp::sig::ImageOf<yarp::sig::PixelBgr> image = (*i)->makeDebugImage(score);
+        for(int y = 0; y < image.height(); y++) {
+            for(int x = 0; x < image.width(); x++) {
+                yarp::sig::PixelBgr pixbase = imagebase(x, y);
+                yarp::sig::PixelBgr piximg  = image(x, y);
+                if(piximg.b > pixbase.b)
+                    imagebase(x, y) = piximg;
+            }
+        }
+    }
+
+
+    // = (*best)->makeDebugImage((*best)->getScore());
     //image.resize(128, 128);
     //image.zero();
 
@@ -641,7 +665,7 @@ yarp::sig::ImageOf<yarp::sig::PixelBgr> vCircleMultiSize::makeDebugImage()
 
     for(int i = 0; i < q.size(); i++) {
         emorph::AddressEvent *v = q[i]->getUnsafe<emorph::AddressEvent>();
-        image(v->getY(), 127 - v->getX()) = yarp::sig::PixelBgr(180, 0, 180);
+        imagebase(v->getY(), 127 - v->getX()) = yarp::sig::PixelBgr(255, 0, 255);
     }
 
 
@@ -653,7 +677,7 @@ yarp::sig::ImageOf<yarp::sig::PixelBgr> vCircleMultiSize::makeDebugImage()
 //    }
 
 
-    return image;
+    return imagebase;
 }
 
 /*////////////////////////////////////////////////////////////////////////////*/

@@ -125,7 +125,7 @@ public:
     /// \brief makeDebugImage create an image visualising the Hough space
     /// \return a BGR yarp image
     ///
-    yarp::sig::ImageOf<yarp::sig::PixelBgr> makeDebugImage();
+    yarp::sig::ImageOf<yarp::sig::PixelBgr> makeDebugImage(double refval = -1);
 
 };
 
