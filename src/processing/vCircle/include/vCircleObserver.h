@@ -39,6 +39,7 @@ private:
     bool threaded; /// perform calculations in a separate thread
     int height; /// sensor height
     int width; /// sensor width
+    int Hscale;
 
     //data
     yarp::sig::Matrix H; /// stores the Hough strength over the sensor plane
@@ -86,7 +87,7 @@ public:
     /// \param height sensor height
     /// \param width sensor width
     ///
-    vCircleThread(int R, bool directed, bool parallel = false, int height = 128, int width = 128);
+    vCircleThread(int R, bool directed, bool parallel = false, int height = 128, int width = 128, int scale = 1, double arclength = 20);
 
     ///
     /// \brief getScore get the maximum strength in Hough space
@@ -97,17 +98,17 @@ public:
     /// \brief getX get the maximum strength location
     /// \return maximum strength location along x axis
     ///
-    int getX() { return x_max; }
+    int getX() { return x_max / Hscale; }
     ///
     /// \brief getY get the maximum strength location
     /// \return maximum strength location along y axis
     ///
-    int getY() { return y_max; }
+    int getY() { return y_max / Hscale; }
     ///
     /// \brief getR return the radius of the circle to be detected
     /// \return the radius R
     ///
-    int getR() { return R; }
+    int getR() { return R / Hscale; }
 
     ///
     /// \brief process update the Hough transform (threaded or non-threaded)
@@ -162,7 +163,7 @@ private:
 
 public:
 
-    vCircleMultiSize(std::string qType = "Fixed", int qLength = 2000, int rLow = 8, int rHigh = 38,
+    vCircleMultiSize(std::string qType = "edge", int qLength = 2000, int rLow = 8, int rHigh = 38,
                      bool directed = true, bool parallel = false, int height = 128, int width = 128);
     ~vCircleMultiSize();
 

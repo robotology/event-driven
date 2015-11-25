@@ -30,7 +30,7 @@
 
 <module>
     <name> vCircle </name>
-    <parameters> --strict true --houghType directed --qType edge --datafile</parameters>
+    <parameters> --strict --qType edge --inlierThreshold 20 --radmin 10 --radmax 30 --datafile</parameters>
     <node> localhost </node>
 </module>
 

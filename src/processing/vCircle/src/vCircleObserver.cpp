@@ -20,19 +20,20 @@
 /*////////////////////////////////////////////////////////////////////////////*/
 //vCircleThread
 /*////////////////////////////////////////////////////////////////////////////*/
-vCircleThread::vCircleThread(int R, bool directed, bool parallel, int height, int width)
+vCircleThread::vCircleThread(int R, bool directed, bool parallel, int height, int width, int scale, double arclength)
 {
     this->threaded = parallel;
-    this->R = R;
-    this->Rsqr = pow(R, 2.0);
+    this->Hscale = scale < 1 ? 1 : scale;
+    this->R = R * Hscale;
+    this->Rsqr = pow(this->R, 2.0);
     this->directed = directed;
-    this->height = height;
-    this->width = width;
+    this->height = height * Hscale;
+    this->width = width * Hscale;
 
-    H.resize(height, width);
-    a = R * fabs(tan(20.0 * M_PI / 180.0));
-    //Hstr = 1.0 / (int)(2 * M_PI * R + 0.5);
-    Hstr = 1.0 / (2.0 * M_PI * R * 0.5);
+
+    H.resize(this->height, this->width);
+    a = this->R * fabs(tan(arclength * M_PI / 180.0));
+    Hstr = 1.0 / (2.0 * M_PI * R * 0.5); //should not be scaled by scale
 
     x_max = 0; y_max = 0;
 
@@ -334,8 +335,8 @@ void vCircleThread::performHough()
             emorph::FlowEvent * v = (*procQueue)[i]->getAs<emorph::FlowEvent>();
 
             if(v) {
-                updateHFlowAngle(v->getX(), v->getY(), (*procType)[i] * Hstr,
-                                 v->getVx(), v->getVy());
+                updateHFlowAngle(v->getX() * Hscale, v->getY() * Hscale, (*procType)[i] * Hstr,
+                                 v->getVx() * Hscale, v->getVy() * Hscale);
             }
 
 
@@ -344,7 +345,7 @@ void vCircleThread::performHough()
             emorph::AddressEvent * v = (*procQueue)[i]->getAs<emorph::AddressEvent>();
 
             if(v) {
-                updateHAddress(v->getX(), v->getY(), (*procType)[i] * Hstr);
+                updateHAddress(v->getX() * Hscale, v->getY() * Hscale, (*procType)[i] * Hstr);
             }
 
         }
@@ -372,7 +373,7 @@ yarp::sig::ImageOf<yarp::sig::PixelBgr> vCircleThread::makeDebugImage(double ref
 {
 
     yarp::sig::ImageOf<yarp::sig::PixelBgr> canvas;
-    canvas.resize(width, height);
+    canvas.resize(width / Hscale, height / Hscale);
     canvas.zero();
 
     if(refval < 0)
@@ -380,10 +381,11 @@ yarp::sig::ImageOf<yarp::sig::PixelBgr> vCircleThread::makeDebugImage(double ref
 
     for(int y = 0; y < height; y++) {
         for(int x = 0; x < width; x++) {
-            double I;
+            int I;
             if(H[y][x] >= refval*0.9) I = 255.0;
             else I = 255.0 * pow(H[y][x] / refval, 2.0);
-            canvas(y, 127 - x) = yarp::sig::PixelBgr(I, I, I);
+            if(canvas(y / Hscale, width / Hscale - 1 - x / Hscale).b < I)
+                canvas(y / Hscale, width / Hscale - 1 - x / Hscale) = yarp::sig::PixelBgr(I, I, I);
         }
     }
 
@@ -425,9 +427,9 @@ vCircleMultiSize::~vCircleMultiSize()
 
 void vCircleMultiSize::addQueue(emorph::vQueue &additions) {
 
-        if(qType == "Fixed")
+        if(qType == "fixed")
             addFixed(additions);
-        else if(qType == "Lifetime")
+        else if(qType == "lifetime")
             addLife(additions);
         else if(qType == "surf")
             addSurf(additions);
@@ -654,9 +656,9 @@ yarp::sig::ImageOf<yarp::sig::PixelBgr> vCircleMultiSize::makeDebugImage()
     //image.zero();
 
     emorph::vQueue q;
-    if(qType == "Fixed")
+    if(qType == "fixed")
         q = this->FIFO;
-    else if(qType == "Lifetime")
+    else if(qType == "lifetime")
         q = this->FIFO;
     else if(qType == "surf")
         q = surface.getSURF(0, 127, 0, 127);

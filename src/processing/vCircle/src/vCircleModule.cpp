@@ -28,9 +28,8 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
             rf.check("name", yarp::os::Value("vCircle")).asString();
     setName(moduleName.c_str());
 
-    bool strictness = rf.check("strict", yarp::os::Value(false)).asBool();
-
-    bool parallel = rf.check("parallel", yarp::os::Value(false)).asBool();
+    bool strictness = rf.check("strict");
+    bool parallel = rf.check("parallel");
 
     //sensory size
     int width = rf.check("width", yarp::os::Value(128)).asInt();
@@ -42,13 +41,14 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
                                    yarp::os::Value(50)).asDouble() / 100.0;
 
     std::string qType = rf.check("qType",
-                                 yarp::os::Value("Lifetime")).asString();
+                                 yarp::os::Value("edge")).asString();
 
-    std::string houghType = rf.check("houghType",
-                              yarp::os::Value(true)).asString();
+    bool fullHough = rf.check("full");
 
-    double radmin = rf.check("radmin", yarp::os::Value(10)).asInt();
-    double radmax = rf.check("radmax", yarp::os::Value(35)).asInt();
+    int radmin = rf.check("radmin", yarp::os::Value(10)).asInt();
+    int radmax = rf.check("radmax", yarp::os::Value(35)).asInt();
+    int scale = rf.check("scale", yarp::os::Value(1)).asInt();
+    double arclength = rf.check("arclength", yarp::os::Value(20.0)).asDouble();
 
     //filter parameters
     double procNoisePos = rf.check("procNoisePos",
@@ -67,13 +67,8 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
     std::string datafilename = rf.check("datafile",
                                         yarp::os::Value("")).asString();
 
-    bool flowhough = true;
-    if(houghType == "full") flowhough = false;
-    //circleReader.houghFinder.qType = qType;
-    //circleReader.houghFinder.useFlow = flowhough;
-
     circleReader.cObserver =
-            new vCircleMultiSize(qType, 2000, radmin, radmax, flowhough, parallel, width, height);
+            new vCircleMultiSize(qType, 2000, radmin, radmax, !fullHough, parallel, width, height);
 
     //initialise the dection and tracking
     circleReader.inlierThreshold = inlierThreshold;
@@ -177,7 +172,7 @@ bool vCircleReader::open(const std::string &name, bool strictness)
 /******************************************************************************/
 void vCircleReader::close()
 {
-    std::cout << "vCirle spent " << this->timecounter
+    std::cout << "vCircle spent " << this->timecounter
               << " seconds processing events" << std::endl;
     //close ports
     outPort.close();

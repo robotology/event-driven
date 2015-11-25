@@ -396,6 +396,8 @@ vQueue vEdge::flowremove(FlowEvent *vf)
 vQueue vEdge::addressremove(AddressEvent * v)
 {
     vQueue removed;
+    return removed;
+
     for(int y = -1 + v->getY(); y <= 1 + v->getY(); y++) {
         for(int x = -1 + v->getX(); x <= 1 + v->getX(); x++) {
             if(x < 0 || y < 0 || x >= width || y >= height) continue;
