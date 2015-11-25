@@ -47,6 +47,7 @@ private:
     double Hstr; /// normalised Hough strength given the radius
     int x_max; /// strongest response along the x axis
     int y_max; /// strongest response along the y axis
+    yarp::sig::ImageOf<yarp::sig::PixelBgr> canvas;
 
     yarp::os::Mutex mstart; /// for thread safety when starting computation
     yarp::os::Mutex mdone; /// for thread safety when computation is finished
@@ -139,8 +140,8 @@ private:
 
     //parameters
     std::string qType;
-    int qlength;
     int qduration;
+    double threshold;
 
     //internal data
     emorph::vSurface surface;
@@ -163,8 +164,10 @@ private:
 
 public:
 
-    vCircleMultiSize(std::string qType = "edge", int qLength = 2000, int rLow = 8, int rHigh = 38,
-                     bool directed = true, bool parallel = false, int height = 128, int width = 128);
+    vCircleMultiSize(double threshold, std::string qType = "edge",
+                     int rLow = 8, int rHigh = 38,
+                     bool directed = true, bool parallel = false,
+                     int height = 128, int width = 128);
     ~vCircleMultiSize();
 
     void addQueue(emorph::vQueue &additions);

@@ -36,6 +36,9 @@ vCircleThread::vCircleThread(int R, bool directed, bool parallel, int height, in
 
     x_max = 0; y_max = 0;
 
+    canvas.resize(width, height);
+    canvas.zero();
+
     mstart.lock();
     mdone.lock();
 
@@ -208,19 +211,24 @@ void vCircleThread::run()
 yarp::sig::ImageOf<yarp::sig::PixelBgr> vCircleThread::makeDebugImage(double refval)
 {
 
-    yarp::sig::ImageOf<yarp::sig::PixelBgr> canvas;
-    canvas.resize(width, height);
-    //canvas.zero();
-
     if(refval < 0)
         refval = H[y_max][x_max];
 
     for(int y = 0; y < height; y++) {
         for(int x = 0; x < width; x++) {
-            int I = 0;
-            if(H[y][x] >= refval*0.9) I = 255.0;
-            else I = 255.0 * pow(H[y][x] / refval, 2.0);
-            canvas(y, width - 1 - x) = yarp::sig::PixelBgr(I, I, I);
+            if(H[y][x] >= refval*0.9)
+                canvas(y, width - 1 - x) = yarp::sig::PixelBgr(255, 255, 255);
+            else {
+                int I = 255.0 * pow(H[y][x] / refval, 2.0);
+                if(I > 254) I = 254;
+                //I = 0;
+                canvas(y, width - 1 - x) = yarp::sig::PixelBgr(0, I, 0);
+            }
+//            if(H[y][x] >= refval*0.9) {
+//                canvas(y, width - 1 - x) = yarp::sig::PixelBgr(
+//                I = 255.0;
+//            else I =
+
         }
     }
 
@@ -230,11 +238,13 @@ yarp::sig::ImageOf<yarp::sig::PixelBgr> vCircleThread::makeDebugImage(double ref
 /*////////////////////////////////////////////////////////////////////////////*/
 //VCIRCLEMULTISIZE
 /*////////////////////////////////////////////////////////////////////////////*/
-vCircleMultiSize::vCircleMultiSize(std::string qType, int qLength, int rLow, int rHigh,
-                                   bool directed, bool parallel, int height, int width)
+vCircleMultiSize::vCircleMultiSize(double threshold, std::string qType,
+                                   int rLow, int rHigh,
+                                   bool directed, bool parallel,
+                                   int height, int width)
 {
     this->qType = qType;
-    this->qlength = qLength;
+    this->threshold = threshold;
 
     for(int r = rLow; r <= rHigh; r++)
         htransforms.push_back(new vCircleThread(r, directed, parallel, height, width));
@@ -341,7 +351,7 @@ void vCircleMultiSize::addFixed(emorph::vQueue &additions)
         FIFO.push_front(*vi);
 
         //KEEP FIFO TO LIMITED SIZE
-        while(FIFO.size() > qlength) {
+        while(FIFO.size() > 2000) {
             procQueue.push_back(FIFO.back());
             procType.push_back(-1);
             FIFO.pop_back();
@@ -462,26 +472,16 @@ yarp::sig::ImageOf<yarp::sig::PixelBgr> vCircleMultiSize::makeDebugImage()
 
     std::vector<vCircleThread *>::iterator i;
 
-    //update best
-//    for(i = htransforms.begin(); i != htransforms.end(); i++)
-//        if((*i)->getScore() > (*best)->getScore())
-//            best = i;
-
-    //double score = (*best)->getScore();
-    double score = 0.2;
-
     i = htransforms.begin();
     yarp::sig::ImageOf<yarp::sig::PixelBgr> imagebase =
-            (*i)->makeDebugImage(score);
+            (*i)->makeDebugImage(threshold);
 
     for(i++; i != htransforms.end(); i++) {
-        yarp::sig::ImageOf<yarp::sig::PixelBgr> image = (*i)->makeDebugImage(score);
+        yarp::sig::ImageOf<yarp::sig::PixelBgr> image = (*i)->makeDebugImage(threshold);
         for(int y = 0; y < image.height(); y++) {
             for(int x = 0; x < image.width(); x++) {
-                yarp::sig::PixelBgr pixbase = imagebase(x, y);
-                yarp::sig::PixelBgr piximg  = image(x, y);
-                if(piximg.b > pixbase.b)
-                    imagebase(x, y) = piximg;
+                if(image(x, y).g > imagebase(x, y).g)
+                    imagebase(x, y) = image(x, y);
             }
         }
     }

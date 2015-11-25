@@ -38,7 +38,7 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
 
     //observation parameters
     double inlierThreshold = rf.check("inlierThreshold",
-                                   yarp::os::Value(50)).asDouble() / 100.0;
+                                   yarp::os::Value(30)).asDouble() / 100.0;
 
     std::string qType = rf.check("qType",
                                  yarp::os::Value("edge")).asString();
@@ -68,7 +68,8 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
                                         yarp::os::Value("")).asString();
 
     circleReader.cObserver =
-            new vCircleMultiSize(qType, 2000, radmin, radmax, !fullHough, parallel, width, height);
+            new vCircleMultiSize(inlierThreshold, qType, radmin, radmax,
+                                 !fullHough, parallel, width, height);
 
     //initialise the dection and tracking
     circleReader.inlierThreshold = inlierThreshold;
