@@ -39,7 +39,6 @@ private:
     bool threaded; /// perform calculations in a separate thread
     int height; /// sensor height
     int width; /// sensor width
-    int Hscale;
 
     //data
     yarp::sig::Matrix H; /// stores the Hough strength over the sensor plane
@@ -87,7 +86,7 @@ public:
     /// \param height sensor height
     /// \param width sensor width
     ///
-    vCircleThread(int R, bool directed, bool parallel = false, int height = 128, int width = 128, int scale = 1, double arclength = 20);
+    vCircleThread(int R, bool directed, bool parallel = false, int height = 128, int width = 128, double arclength = 20);
 
     ///
     /// \brief getScore get the maximum strength in Hough space
@@ -98,17 +97,17 @@ public:
     /// \brief getX get the maximum strength location
     /// \return maximum strength location along x axis
     ///
-    int getX() { return x_max / Hscale; }
+    int getX() { return x_max; }
     ///
     /// \brief getY get the maximum strength location
     /// \return maximum strength location along y axis
     ///
-    int getY() { return y_max / Hscale; }
+    int getY() { return y_max; }
     ///
     /// \brief getR return the radius of the circle to be detected
     /// \return the radius R
     ///
-    int getR() { return R / Hscale; }
+    int getR() { return R; }
 
     ///
     /// \brief process update the Hough transform (threaded or non-threaded)
@@ -150,6 +149,7 @@ private:
     emorph::vEvent dummy;
     std::vector<vCircleThread *> htransforms;
     std::vector<vCircleThread *>::iterator best;
+    std::vector<int> procType;
 
     void addHough(emorph::vEvent &event);
     void remHough(emorph::vEvent &event);
