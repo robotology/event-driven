@@ -100,6 +100,7 @@ private:
 
     //set the previous add event to be private so it cannot be used in vEdge
     //there could be a better way to achieve this.
+    int thickness;
     vEvent * addEvent(emorph::AddressEvent &event);
 
     vQueue addressremove(AddressEvent * v);
@@ -107,8 +108,11 @@ private:
 
 public:
 
+    vEdge(int width = 128, int height = 128) : vSurface(width, height) {thickness = 2;}
+
     vQueue addEventToEdge(AddressEvent *event);
     FlowEvent * upgradeEvent(AddressEvent *event);
+    void setThickness(int pixels) {thickness = pixels;}
 
     virtual const vQueue& getSURF(int xl, int xh, int yl, int yh);
 

@@ -160,55 +160,6 @@ vEvent *vSurface::getMostRecent()
 
 
 #define COS135on2 0.38268
-//FlowEvent * vEdge::upgradeEvent(AddressEvent *event)
-//{
-//    FlowEvent * vf = event->getAs<FlowEvent>();
-//    if(vf) return vf;
-
-//    int sr = 2;
-//    double adx = 0, ady = 0;
-//    int an = 0;
-//    for(int y = -sr + event->getY(); y <= sr + event->getY(); y++) {
-//        for(int x = -sr + event->getX(); x <= sr + event->getX(); x++) {
-//            if(x < 0 || y < 0 || x >= width || y >= height) continue;
-//            if(!spatial[y][x]) continue;
-//            FlowEvent *vf2 = spatial[y][x]->getAs<FlowEvent>();
-//            if(!vf2) continue;
-
-//            double vx = vf2->getVy(); double vy = vf2->getVx();
-//            double mag = sqrt(pow(vx, 2.0) + pow(vy, 2.0));
-//            vx /= (mag * COS135on2);
-//            vy /= (mag * COS135on2);
-//            int dx = 0, dy = 0;
-//            if(vx > 1) dx = 1; if(vx < -1) dx = -1;
-//            if(vy > 1) dy = 1; if(vy < -1) dy = -1;
-
-//            dx *= sr; dy *= sr;
-//            if(x + dy == event->getX() && y + dx == event->getY()) {
-//                //change this to a flow event
-//                //std::cout << "Conditions met to upgrade" << std::endl;
-//                adx += vf2->getVx(); ady += vf2->getVy();
-//                an++;
-//                //vf = new FlowEvent(*event);
-//                //vf->setVx(vf2->getVx()); vf->setVy(vf2->getVy());
-//                //vf->setDeath();
-//            }
-//            //if(vf) break;
-//        }
-//        //if(vf) break;
-//    }
-
-//    if(an > 1) {
-//        vf = new FlowEvent(*event);
-//        vf->setVx(adx / an);
-//        vf->setVy(ady / an);
-//        vf->setDeath();
-//        std::cout << "Upgraded with " << an << " events" << std::endl;
-//    }
-
-//    return vf;
-//}
-
 
 vQueue vEdge::flowremove(FlowEvent *vf)
 {
@@ -226,7 +177,9 @@ vQueue vEdge::flowremove(FlowEvent *vf)
     dx *= -1;
     dy *= -1;
 
-    x += dx; y += dy;
+    x += (thickness - 1) * dx;
+    y += (thickness - 1) * dy;
+
     int px, py;
 
     //corners

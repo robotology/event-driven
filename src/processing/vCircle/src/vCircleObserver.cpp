@@ -251,6 +251,7 @@ vCircleMultiSize::vCircleMultiSize(double threshold, std::string qType,
 
     best = htransforms.begin();
     dummy.referto();
+    edge.setThickness(1);
 }
 
 vCircleMultiSize::~vCircleMultiSize()
