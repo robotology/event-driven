@@ -26,6 +26,7 @@
 #include <iCub/emorph/all.h>
 #include <yarp/dev/GazeControl.h>
 #include <yarp/dev/PolyDriver.h>
+#include <deque>
 
 /*//////////////////////////////////////////////////////////////////////////////
   VBOTTLE READER/PROCESSOR
@@ -44,6 +45,7 @@ private:
     enum { fromgaze, fromsize, fromstereo };
 
     int method;
+    std::deque<yarp::sig::Vector> recentgazelocs;
 
 public:
     

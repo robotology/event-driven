@@ -120,22 +120,39 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
     //get the events and see if we can get a ball observation
     yarp::sig::Vector px(2), x(3); x = 0;
     emorph::vQueue q = vBottleIn.getSorted<emorph::ClusterEventGauss>();
+
     if(q.size()) {
 
-        for(int i = 0; i < q.size(); i++) {
-            emorph::ClusterEventGauss * v =
-                    q[i]->getAs<emorph::ClusterEventGauss>();
-            px[0] += v->getYCog();
-            px[1] += (127 - v->getXCog());
+        emorph::ClusterEventGauss * v =
+                q.back()->getAs<emorph::ClusterEventGauss>();
+
+        px[0] += v->getYCog();
+        px[1] += (127 - v->getXCog());
+
+        recentgazelocs.push_back(px);
+        if(recentgazelocs.size() > 10) {
+            recentgazelocs.pop_front();
+
+            bool gaze = true;
+            for(int i = 1; i < recentgazelocs.size(); i++) {
+                bool dx1 = abs(recentgazelocs[0][0] - recentgazelocs[i][0]) > 10;
+                bool dx2 = abs(recentgazelocs[0][1] - recentgazelocs[i][1]) > 10;
+                if(dx1 || dx2) {
+                    gaze = false;
+                    break;
+                }
+            }
+
+            if(gaze) {
+                //turn u/v into xyz
+                gazecontrol->get3DPoint(0, px, 0.3, x);
+
+                //and look there
+                gazecontrol->lookAtFixationPoint(x);
+            }
+
         }
-        px[0] /= q.size();
-        px[1] /= q.size();
 
-        //turn u/v into xyz
-        gazecontrol->get3DPoint(0, px, 0.3, x);
-
-        //and look there
-        gazecontrol->lookAtFixationPoint(x);
     }
 
     if(positionOutPort.getOutputCount()) {
