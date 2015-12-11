@@ -67,6 +67,10 @@ vDraw * createDrawer(std::string tag)
     if(tag == newDrawer->getTag()) return newDrawer;
     delete newDrawer;
 
+    newDrawer = new interestDraw();
+    if(tag == newDrawer->getTag()) return newDrawer;
+    delete newDrawer;
+
     return 0;
 }
 
@@ -858,6 +862,35 @@ void isoDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
 
     image = image - baseimage;
     //cv::resize(image, image, image.size() * 8);
+
+}
+
+std::string interestDraw::getTag()
+{
+    return "AE-INT";
+}
+
+void interestDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
+{
+
+    if(image.empty()) {
+        image = cv::Mat(Xlimit, Ylimit, CV_8UC3);
+        image.setTo(255);
+    }
+
+    if(checkStagnancy(eSet) > clearThreshold) {
+        return;
+    }
+
+    int r = 1;
+    CvScalar c = CV_RGB(255, 0, 0);
+    emorph::vQueue::const_iterator qi;
+    for(qi = eSet.begin(); qi != eSet.end(); qi++) {
+        emorph::InterestEvent *v = (*qi)->getAs<emorph::InterestEvent>();
+        if(!v) continue;
+        cv::Point centr(v->getY(), v->getX());
+        cv::circle(image, centr, r, c);
+    }
 
 }
 

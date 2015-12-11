@@ -51,6 +51,10 @@ vEvent * createEvent(const std::string type)
     if(type == ret->getType()) return ret;
     else delete(ret);
 
+    ret = new InterestEvent();
+    if(type == ret->getType()) return ret;
+    else delete(ret);
+
     return 0;
 
 }
@@ -748,6 +752,82 @@ void FlowEvent::setDeath()
 //    death = 7.8125* (int)(sqrt(pow(vx, 2.0) + pow(vy, 2.0)) / vtsHelper::tstosecs());
 //    if(death > 1000000) death = 1000000;
 //    death += stamp;
+}
+
+/******************************************************************************/
+//InterestEvent
+/******************************************************************************/
+InterestEvent::InterestEvent(const vEvent &event/*always vEvent*/)
+{
+    //most of the constructor is replicated in the assignment operator
+    //so we just use that to construct
+    *this = event;
+
+}
+
+/******************************************************************************/
+vEvent &InterestEvent::operator=(const vEvent &event/*always vEvent*/)
+{
+
+    //copy timestamp and type (base class =operator)
+    AddressEvent::operator =(event);
+
+    //copy other fields if it's compatible
+    const InterestEvent * aep =
+            dynamic_cast<const InterestEvent *>(&event);
+    if(aep) {
+        intID = aep->intID;
+    } else {
+        intID = 0;
+    }
+
+    return *this;
+}
+
+/******************************************************************************/
+vEvent* InterestEvent::clone() {
+    return new InterestEvent(*this);
+}
+
+/******************************************************************************/
+void InterestEvent::encode(yarp::os::Bottle &b) const
+{
+    AddressEvent::encode(b);
+    b.addInt(intID);
+}
+
+/******************************************************************************/
+bool InterestEvent::decode(const yarp::os::Bottle &packet, int &pos)
+{
+    // check length
+    if (AddressEvent::decode(packet, pos) &&
+            pos + localWordsCoded <= packet.size())
+    {
+        int word0=packet.get(pos).asInt();
+        intID = word0;
+        pos += localWordsCoded;
+        return true;
+    }
+
+    return false;
+}
+
+
+
+/******************************************************************************/
+bool InterestEvent::operator==(const InterestEvent &event)
+{
+    return ((AddressEvent::operator==(event)) &&
+            (intID==event.intID));
+}
+
+/******************************************************************************/
+yarp::os::Property InterestEvent::getContent() const
+{
+    yarp::os::Property prop = AddressEvent::getContent();
+    prop.put("intID",intID);
+
+    return prop;
 }
 
 }
