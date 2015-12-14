@@ -115,7 +115,7 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
     //always print current position
     yarp::sig::Vector cpx(2), cx(3);
     cpx(0) = 64; cpx(1) = 64;
-    gazecontrol->get3DPoint(0, cpx, 0.3, cx);
+    gazecontrol->get3DPoint(0, cpx, 0.5, cx);
 
     //get the events and see if we can get a ball observation
     yarp::sig::Vector px(2), x(3); x = 0;
@@ -145,7 +145,7 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
 
             if(gaze) {
                 //turn u/v into xyz
-                gazecontrol->get3DPoint(0, px, 0.3, x);
+                gazecontrol->get3DPoint(0, px, 0.5, x);
 
                 //and look there
                 gazecontrol->lookAtFixationPoint(x);
