@@ -39,6 +39,7 @@ private:
     int height;
     int width;
     int sobelsize;
+    int thickness;
     double thresh;
     int fRad;
     int minEvts;
@@ -60,7 +61,7 @@ private:
 
 public:
     
-    vCornerManager(int height, int width, int filterSize, double thresh);
+    vCornerManager(int height, int width, int filterSize, int thickness, double thresh);
 
     bool    open(const std::string moduleName, bool strictness = false);
     void    close();

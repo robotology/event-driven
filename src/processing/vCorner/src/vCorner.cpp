@@ -31,10 +31,11 @@ bool vCornerModule::configure(yarp::os::ResourceFinder &rf)
     int height = rf.check("height", yarp::os::Value(128)).asInt();
     int width = rf.check("width", yarp::os::Value(128)).asInt();
     int sobelsize = rf.check("filterSize", yarp::os::Value(3)).asInt();
-    double thresh = rf.check("thresh", yarp::os::Value(0.005)).asDouble();
+    int thickness = rf.check("thick", yarp::os::Value(2)).asInt();
+    double thresh = rf.check("thresh", yarp::os::Value(0.05)).asDouble();
     
     /* create the thread and pass pointers to the module parameters */
-    cornermanager = new vCornerManager(height, width, sobelsize, thresh);
+    cornermanager = new vCornerManager(height, width, sobelsize, thickness, thresh);
     return cornermanager->open(moduleName, strictness);
 
 }
@@ -71,7 +72,7 @@ double vCornerModule::getPeriod()
 /******************************************************************************/
 //vCornerManager
 /******************************************************************************/
-vCornerManager::vCornerManager(int height, int width, int sobelsize, double thresh)
+vCornerManager::vCornerManager(int height, int width, int sobelsize, int thickness, double thresh)
 {
     this->height = height;
     this->width = width;
@@ -81,19 +82,19 @@ vCornerManager::vCornerManager(int height, int width, int sobelsize, double thre
     if(sobelsize < 5) sobelsize = 3;
     if(!(sobelsize % 2)) sobelsize--;
 
+    this->thickness = thickness;
+
     this->thresh = thresh;
     this->fRad = sobelsize / 2;
     this->minEvts = 3;
 
     //create our edge
     edge = new emorph::vEdge(width, height);
-    edge->setThickness(2);
+    edge->setThickness(thickness);
 
     //for speed we predefine the mememory for some matricies
     sobelx = yarp::sig::Matrix(sobelsize, sobelsize);
     sobely = yarp::sig::Matrix(sobelsize, sobelsize);
-//    dtdx = yarp::sig::Matrix(sobelsize, sobelsize);
-//    dtdy = yarp::sig::Matrix(sobelsize, sobelsize);
 
     //create sobel filters
     setSobelFilters(sobelsize, sobelx, sobely);
@@ -184,7 +185,7 @@ bool vCornerManager::detectcorner() //(const emorph::vQueue &edge)
 {
     double dtdx = 0, dtdy = 0,
             dttdx = 0, dttdy = 0, dttdxy = 0, dttdyx = 0,
-            normdx = 0, normdy = 0,
+            //normdx = 0, normdy = 0,
             score = 0;
     bool isc;
 
@@ -206,18 +207,18 @@ bool vCornerManager::detectcorner() //(const emorph::vQueue &edge)
             dtdy = convSobel(subedge, sobely, x, y);
             int dx = x - vr->getX() + fRad;
             int dy = y - vr->getY() + fRad;
-            dttdx += singleSobel(dtdx, sobelx, dx, dy); normdx += fabs(sobelx[dx][dy]);
-            dttdy += singleSobel(dtdy, sobely, dx, dy); normdy += fabs(sobely[dx][dy]);
+            dttdx += singleSobel(dtdx, sobelx, dx, dy); //normdx += fabs(sobelx[dx][dy]);
+            dttdy += singleSobel(dtdy, sobely, dx, dy); //normdy += fabs(sobely[dx][dy]);
             dttdxy += singleSobel(dtdx, sobely, dx, dy);
             dttdyx += singleSobel(dtdy, sobelx, dx, dy);
 
         }
     } // end for
 
-    dttdx = dttdx / 8;//normdx;
-    dttdy = dttdy / 8;//normdy;
-    dttdxy = dttdxy / 8;//normdy;
-    dttdyx = dttdyx / 8;//normdx;
+    dttdx = dttdx / (sobelsize*sobelsize - 1);//normdx;
+    dttdy = dttdy / (sobelsize*sobelsize - 1);//normdy;
+    dttdxy = dttdxy / (sobelsize*sobelsize - 1);//normdy;
+    dttdyx = dttdyx / (sobelsize*sobelsize - 1);//normdx;
 
 //    std::cout << "dxx " << dttdx << std::endl;
 //    std::cout << "dyy " << dttdy << std::endl;
@@ -240,18 +241,7 @@ bool vCornerManager::detectcorner() //(const emorph::vQueue &edge)
 /**********************************************************/
 double vCornerManager::convSobel(const emorph::vQueue &subedge, yarp::sig::Matrix &sobel, int x, int y)
 {
-    double val = 0, norm = 0;
-
-//    //compute the min and the max timestamp in the window
-//    int tsMin = subedge[0]->getStamp();
-//    int tsMax = subedge[0]->getStamp();
-//    for(int k = 0; k < subedge.size(); k++) {
-//        int t = subedge[k]->getStamp();
-//        if(t > tsMax)
-//            tsMax = t;
-//        else if(t < tsMin)
-//            tsMin = t;
-//    }
+    double val = 0; //norm = 0;
 
     int tsMin = 0;//getMinStamp(subedge);
     int tsMax = getMaxStamp(subedge);
@@ -263,10 +253,10 @@ double vCornerManager::convSobel(const emorph::vQueue &subedge, yarp::sig::Matri
         int dx = x - subedge[k]->getUnsafe<emorph::AddressEvent>()->getX() + fRad;
         int dy = y - subedge[k]->getUnsafe<emorph::AddressEvent>()->getY() + fRad;
         val += singleSobel(((double)(ts - tsMin) / (tsMax - tsMin)), sobel, dx, dy);
-        norm += fabs(sobel[dx][dy]);
+        //norm += fabs(sobel[dx][dy]);
     }
 
-    return(val / 8);
+    return(val / (sobelsize*sobelsize - 1));
 
 }
 
