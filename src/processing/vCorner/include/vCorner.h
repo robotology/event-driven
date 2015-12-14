@@ -84,8 +84,6 @@ public:
     virtual bool configure(yarp::os::ResourceFinder &rf);
     virtual bool interruptModule();
     virtual bool close();
-    virtual bool respond(const yarp::os::Bottle &command,
-                         yarp::os::Bottle &reply);
     virtual double getPeriod();
     virtual bool updateModule();
 

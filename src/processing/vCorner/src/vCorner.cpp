@@ -65,14 +65,7 @@ bool vCornerModule::updateModule()
 /**********************************************************/
 double vCornerModule::getPeriod()
 {
-    return 0.1;
-}
-
-bool vCornerModule::respond(const yarp::os::Bottle &command,
-                              yarp::os::Bottle &reply)
-{
-    //fill in all command/response plus module update methods here
-    return true;
+    return 1;
 }
 
 /******************************************************************************/
@@ -94,6 +87,7 @@ vCornerManager::vCornerManager(int height, int width, int sobelsize, double thre
 
     //create our edge
     edge = new emorph::vEdge(width, height);
+    edge->setThickness(2);
 
     //for speed we predefine the mememory for some matricies
     sobelx = yarp::sig::Matrix(sobelsize, sobelsize);
@@ -156,6 +150,7 @@ void vCornerManager::onRead(emorph::vBottle &bot)
 
     /*get the event queue in the vBottle bot*/
     emorph::vQueue q = bot.get<emorph::AddressEvent>();
+    q.wrapSort();
 
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {
@@ -167,6 +162,8 @@ void vCornerManager::onRead(emorph::vBottle &bot)
 
         bool isc = detectcorner();
 
+        //THIS COULD BE PROBLEMATIC AS FLOW WILL BE OVERWRITTEN BY IEs
+        //THEREFORE THE NEXT MODULE LOSES THE FLOW INFORMATION
         if(isc) {
             emorph::InterestEvent ce = *aep;
             ce.setID(isc);
@@ -217,10 +214,10 @@ bool vCornerManager::detectcorner() //(const emorph::vQueue &edge)
         }
     } // end for
 
-    dttdx = dttdx / normdx;
-    dttdy = dttdy / normdy;
-    dttdxy = dttdxy / normdy;
-    dttdyx = dttdyx / normdx;
+    dttdx = dttdx / 8;//normdx;
+    dttdy = dttdy / 8;//normdy;
+    dttdxy = dttdxy / 8;//normdy;
+    dttdyx = dttdyx / 8;//normdx;
 
 //    std::cout << "dxx " << dttdx << std::endl;
 //    std::cout << "dyy " << dttdy << std::endl;
@@ -256,7 +253,7 @@ double vCornerManager::convSobel(const emorph::vQueue &subedge, yarp::sig::Matri
 //            tsMin = t;
 //    }
 
-    int tsMin = getMinStamp(subedge);
+    int tsMin = 0;//getMinStamp(subedge);
     int tsMax = getMaxStamp(subedge);
 
     //compute the sparse convolution between the filter and the window
@@ -269,7 +266,7 @@ double vCornerManager::convSobel(const emorph::vQueue &subedge, yarp::sig::Matri
         norm += fabs(sobel[dx][dy]);
     }
 
-    return(val / norm);
+    return(val / 8);
 
 }
 
