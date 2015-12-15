@@ -9,6 +9,7 @@ add_subdirectory(vAnalysis)
 add_subdirectory(vCluster)
 add_subdirectory(vPepper)
 add_subdirectory(vCircle)
+add_subdirectory(vCorner)
 
 if(OPENCV_FOUND)
     add_subdirectory(vUndistortCam)

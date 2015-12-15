@@ -475,6 +475,42 @@ public:
 
 };
 
+/**************************************************************************/
+class InterestEvent : public AddressEvent
+{
+private:
+    const static int localWordsCoded = 1;
+
+protected:
+
+    int intID;
+
+public:
+
+    virtual std::string getType() const { return "AE-INT";}
+    int getID() const                       { return intID;              }
+
+    void setID(const int intID)              { this->intID = intID;        }
+
+    InterestEvent() : AddressEvent(), intID(0) {}
+    InterestEvent(const vEvent &event);
+    vEvent &operator=(const vEvent &event);
+    virtual vEvent* clone();
+
+    bool operator==(const InterestEvent &event);
+    bool operator==(const vEvent &event) {
+        return operator==(dynamic_cast<const InterestEvent&>(event)); }
+    virtual void encode(yarp::os::Bottle &b) const;
+    yarp::os::Property getContent() const;
+    virtual bool decode(const yarp::os::Bottle &packet, int &pos);
+
+    //this is the total number of bytes used to code this event
+    virtual int nBytesCoded() const         { return localWordsCoded *
+                sizeof(int) + AddressEvent::nBytesCoded(); }
+
+
+};
+
 }
 
 #endif
