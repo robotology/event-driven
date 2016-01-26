@@ -48,6 +48,9 @@ private:
     int x_max; /// strongest response along the x axis
     int y_max; /// strongest response along the y axis
     yarp::sig::ImageOf<yarp::sig::PixelBgr> canvas;
+    std::vector<int> hx;
+    std::vector<int> hy;
+    std::vector<int> hang;
 
     yarp::os::Mutex mstart; /// for thread safety when starting computation
     yarp::os::Mutex mdone; /// for thread safety when computation is finished
@@ -87,7 +90,7 @@ public:
     /// \param height sensor height
     /// \param width sensor width
     ///
-    vCircleThread(int R, bool directed, bool parallel = false, int height = 128, int width = 128, double arclength = 20);
+    vCircleThread(int R, bool directed, bool parallel = false, int height = 128, int width = 128, double arclength = 30);
 
     ///
     /// \brief getScore get the maximum strength in Hough space
@@ -121,6 +124,8 @@ public:
     /// \brief waitfordone wait for computation to finish if threaded
     ///
     void waitfordone();
+
+    int findScores(std::vector<double> &values, double threshold);
 
     ///
     /// \brief makeDebugImage create an image visualising the Hough space
@@ -167,11 +172,12 @@ public:
     vCircleMultiSize(double threshold, std::string qType = "edge",
                      int rLow = 8, int rHigh = 38,
                      bool directed = true, bool parallel = false,
-                     int height = 128, int width = 128);
+                     int height = 128, int width = 128, int arclength = 20);
     ~vCircleMultiSize();
 
     void addQueue(emorph::vQueue &additions);
     double getObs(int &x, int &y, int &r);
+    std::vector<double> getPercentile(double p, double thMin);
     yarp::sig::ImageOf<yarp::sig::PixelBgr> makeDebugImage();
 
 };

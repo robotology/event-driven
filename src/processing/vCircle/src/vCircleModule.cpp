@@ -43,12 +43,12 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
     std::string qType = rf.check("qType",
                                  yarp::os::Value("edge")).asString();
 
+    int arc = rf.check("arc", yarp::os::Value(20)).asInt();
+
     bool fullHough = rf.check("full");
 
     int radmin = rf.check("radmin", yarp::os::Value(10)).asInt();
     int radmax = rf.check("radmax", yarp::os::Value(35)).asInt();
-    int scale = rf.check("scale", yarp::os::Value(1)).asInt();
-    double arclength = rf.check("arclength", yarp::os::Value(20.0)).asDouble();
 
     //filter parameters
     double procNoisePos = rf.check("procNoisePos",
@@ -69,7 +69,7 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
 
     circleReader.cObserver =
             new vCircleMultiSize(inlierThreshold, qType, radmin, radmax,
-                                 !fullHough, parallel, width, height);
+                                 !fullHough, parallel, width, height, arc);
 
     //initialise the dection and tracking
     circleReader.inlierThreshold = inlierThreshold;
@@ -222,6 +222,19 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
 
     int bestx, besty, bestr;
     double bestts = unwrap(q.back()->getStamp());
+
+    if(datawriter.is_open()) {
+//        std::vector<double> percentiles  = cObserver->getPercentile(0.5, 0.1);
+//        for(int i = 0; i < percentiles.size(); i += 4) {
+//            datawriter << bestts << " " << (int)percentiles[i] << " "
+//                       << (int)percentiles[i + 1] << " " << (int)percentiles[i + 2] << " "
+//                       << percentiles[i + 3] << " " << 0 << std::endl;
+//        }
+        double bestscore = cObserver->getObs(bestx, besty, bestr);
+        datawriter << bestts << " " << bestx << " " << besty << " "
+                   << bestr << " " << bestscore << std::endl;
+        std::cout << bestts << std::endl;
+    }
 
     if(cObserver->getObs(bestx, besty, bestr) > inlierThreshold) {
 

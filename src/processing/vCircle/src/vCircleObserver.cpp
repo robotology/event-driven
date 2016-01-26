@@ -32,7 +32,57 @@ vCircleThread::vCircleThread(int R, bool directed, bool parallel, int height, in
 
     H.resize(this->height, this->width);
     a = this->R * fabs(tan(arclength * M_PI / 180.0));
-    Hstr = 1.0 / (2.0 * M_PI * R * 0.5); //should not be scaled by scale
+    Hstr = 1.0 / (2.0 * M_PI * R); //should not be scaled by scale
+    //Hstr = 1.0 / (2.0 * R);
+    //okay I make a list of events with x, y, angle.
+    //for full transform I go through the list, done.
+    //for partial transform, I go through list, compare angle with computed angle <- i could use something more like dy-dx ratio but careful of
+    //dividing by 0.
+    //
+
+    double count = 0;
+    for(int y = -R; y <= R; y++) {
+        for(int x = -R; x <= R; x++) {
+            if(fabs(sqrt(pow(x, 2.0) + pow(y, 2.0)) - R) < 0.5) {
+                hy.push_back(y);
+                hx.push_back(x);
+                count++;
+            }
+        }
+    }
+    Hstr = 1.0 / count;
+
+//    double count = 0;
+//    int x = R; int y = 0;
+//    for(double th = 0; th <= 2 * M_PI; th+=0.01) {
+
+//        int xn = R * cos(th) + 0.5;
+//        int yn = R * sin(th) + 0.5;
+
+//        if(xn != x && yn != y) {
+//            x = xn;
+//            y = yn;
+//            if(abs(x) == R) y = 0;
+//            if(abs(y) == R) x = 0;
+//            hy.push_back(y);
+//            hx.push_back(x);
+//            count++;
+//        }
+//    }
+
+//    Hstr = 1.0 / count;
+
+//    double count = 0;
+//    for(int y = 0; y < 2*R+1; y++) {
+//        for(int x = 0; x < 2*R+1; x++) {
+//            if(fabs(sqrt(pow(x - R, 2.0) + pow(y - R, 2.0)) - R) < 0.5) {
+//                count++;
+//            }
+//        }
+//    }
+//    Hstr = 1.0 / count;
+
+
 
     x_max = 0; y_max = 0;
 
@@ -67,30 +117,79 @@ void vCircleThread::waitfordone()
 
 void vCircleThread::updateHAddress(int xv, int yv, double strength)
 {
-    int xstart = std::max(0, xv - R);
-    int xend = std::min(width-1, xv + R);
 
-    for(int x = xstart; x <= xend; x++) {
-        //(xv-xc)^2 + (yv - yc)^2 = R^2
-        int deltay = (int)sqrt(Rsqr - pow(x - xv, 2.0));
+    //std::cout << "Updating with LUT" << std::endl;
+    for(int i = 0; i < hx.size(); i++) {
 
-        int y = yv + deltay;
-        if(y > height-1 || y < 0) continue;
-        H[y][x] += strength;
-        if(H[y][x] > H[y_max][x_max]) {
-            y_max = y; x_max = x;
-        }
+        int x = xv + hx[i];
+        int y = yv + hy[i];
+        if(y > height - 1 || y < 0 || x > width -1 || x < 0) continue;
 
-        if(!deltay) continue; //don't double up on same space
+        //std::cout << y << " " << x << std::endl;
 
-        y = yv - deltay;
-        if(y > height-1 || y < 0) continue;
         H[y][x] += strength;
         if(H[y][x] > H[y_max][x_max]) {
             y_max = y; x_max = x;
         }
     }
+    return;
+
+//    std::cout << "Updating with function" << std::endl;
+//    int xstart = std::max(0, xv - R);
+//    int xend = std::min(width-1, xv + R);
+//    for(int x = xstart; x <= xend; x++) {
+//        //(xv-xc)^2 + (yv - yc)^2 = R^2
+//        int deltay = (int)sqrt(Rsqr - pow(x - xv, 2.0));
+
+//        int y = yv + deltay;
+//        if(y > height-1 || y < 0) continue;
+//        std::cout << y << " " << x << std::endl;
+//        H[y][x] += strength;
+//        if(H[y][x] > H[y_max][x_max]) {
+//            y_max = y; x_max = x;
+//        }
+
+//        if(!deltay) continue; //don't double up on same space
+
+//        y = yv - deltay;
+//        if(y > height-1 || y < 0) continue;
+//        std::cout << y << " " << x << std::endl;
+//        H[y][x] += strength;
+//        if(H[y][x] > H[y_max][x_max]) {
+//            y_max = y; x_max = x;
+//        }
+//    }
+
+//    std::cout << "Done" << std::endl;
 }
+
+
+//void vCircleThread::updateHAddress(int xv, int yv, double strength)
+//{
+//    int xstart = std::max(0, xv - R);
+//    int xend = std::min(width-1, xv + R);
+
+//    for(int x = xstart; x <= xend; x++) {
+//        //(xv-xc)^2 + (yv - yc)^2 = R^2
+//        int deltay = (int)sqrt(Rsqr - pow(x - xv, 2.0));
+
+//        int y = yv + deltay;
+//        if(y > height-1 || y < 0) continue;
+//        H[y][x] += strength;
+//        if(H[y][x] > H[y_max][x_max]) {
+//            y_max = y; x_max = x;
+//        }
+
+//        if(!deltay) continue; //don't double up on same space
+
+//        y = yv - deltay;
+//        if(y > height-1 || y < 0) continue;
+//        H[y][x] += strength;
+//        if(H[y][x] > H[y_max][x_max]) {
+//            y_max = y; x_max = x;
+//        }
+//    }
+//}
 
 double vCircleThread::updateHFlowAngle(int xv, int yv, double strength,
                                      double dtdx, double dtdy)
@@ -102,67 +201,118 @@ double vCircleThread::updateHFlowAngle(int xv, int yv, double strength,
     double yn = dtdx / velR;
 
     //calculate the end position of the tangent to the arc
-    double x2 = R * xn - yn * a;
-    double y2 = R * yn + xn * a;
-
-    double nonadjR = sqrt(pow(x2, 2.0) + pow(y2, 2.0));
-
-    //then adjust to fit the radius R
-    double x2h = R * x2 / nonadjR;
-    double y2h = R * y2 / nonadjR;
+    int x2 = R * xn - yn * a + 0.5;
+    int y2 = R * yn + xn * a + 0.5;
 
     //also for the other end of the arc
-    double x3 = R * xn + yn * a;
-    double y3 = R * yn - xn * a;
-
-    double x3h = R * x3 / nonadjR; //nonadjR is the same for both 2 and 3
-    double y3h = R * y3 / nonadjR;
+    int x3 = R * xn + yn * a + 0.5;
+    int y3 = R * yn - xn * a + 0.5;
 
 
-    //we are mostly left or right of the centre
-    int sign = xn < 0 ? -1 : 1;
+    //std::cout << "Updating with LUT" << std::endl;
+    for(int i = 0; i < hx.size(); i++) {
 
-    //get the starting position
-    int yStart, yEnd;
-    if(y2h > y3h) {
-        yStart = y3h+0.5; yEnd = y2h+0.5;
-    } else {
-        yStart = y2h+0.5, yEnd = y3h+0.5;
-    }
+        if( (hx[i]-x2) * (hx[i]-x3) > 0 ) continue;
+        if( (hy[i]-y2) * (hy[i]-y3) > 0 ) continue;
 
-    //and then go through the y values
-    for(int yd = yStart; yd <= yEnd; yd++) {
+        int x = xv + hx[i];
+        int y = yv + hy[i];
+        if(y > height - 1 || y < 0 || x > width -1 || x < 0) continue;
 
-        //calculate the x value
-        int xd = (int)(sqrt(Rsqr - pow(yd, 2.0)) * sign + 0.5);
+        //std::cout << y << " " << x << std::endl;
 
-        //for both forward and reverse directions
-        for(int dir = 1; dir >= -1; dir -= 2) {
-
-            //update the direction
-            int xdd = xd * dir;
-            int ydd = yd * dir;
-
-            //calculate x pixel location and check limits
-            int ypix = yv + ydd;
-            if(!(ypix > 0 && ypix < height)) continue;
-
-            //calculate the y value
-            int xpix = xv + xdd;
-            if(!(xpix > 0 && xpix < width)) continue;
-
-            //update and check the hough transform
-            H[ypix][xpix] += strength;
-            if(H[ypix][xpix] > H[y_max][x_max]) {
-                y_max = ypix; x_max = xpix;
-            }
-
+        H[y][x] += strength;
+        if(H[y][x] > H[y_max][x_max]) {
+            y_max = y; x_max = x;
         }
-    }
 
+        x = xv - hx[i];
+        y = yv - hy[i];
+        if(y > height - 1 || y < 0 || x > width -1 || x < 0) continue;
+
+        //std::cout << y << " " << x << std::endl;
+
+        H[y][x] += strength;
+        if(H[y][x] > H[y_max][x_max]) {
+            y_max = y; x_max = x;
+        }
+
+    }
     return 0;
 
 }
+
+//double vCircleThread::updateHFlowAngle(int xv, int yv, double strength,
+//                                     double dtdx, double dtdy)
+//{
+
+//    //this is the same for all R try passing xn/yn to the function instead
+//    double velR = sqrt(pow(dtdx, 2.0) + pow(dtdy, 2.0));
+//    double xn = dtdy / velR;
+//    double yn = dtdx / velR;
+
+//    //calculate the end position of the tangent to the arc
+//    double x2 = R * xn - yn * a;
+//    double y2 = R * yn + xn * a;
+
+//    double nonadjR = sqrt(pow(x2, 2.0) + pow(y2, 2.0));
+
+//    //then adjust to fit the radius R
+//    double x2h = R * x2 / nonadjR;
+//    double y2h = R * y2 / nonadjR;
+
+//    //also for the other end of the arc
+//    double x3 = R * xn + yn * a;
+//    double y3 = R * yn - xn * a;
+
+//    double x3h = R * x3 / nonadjR; //nonadjR is the same for both 2 and 3
+//    double y3h = R * y3 / nonadjR;
+
+
+//    //we are mostly left or right of the centre
+//    int sign = xn < 0 ? -1 : 1;
+
+//    //get the starting position
+//    int yStart, yEnd;
+//    if(y2h > y3h) {
+//        yStart = y3h+0.5; yEnd = y2h+0.5;
+//    } else {
+//        yStart = y2h+0.5, yEnd = y3h+0.5;
+//    }
+
+//    //and then go through the y values
+//    for(int yd = yStart; yd <= yEnd; yd++) {
+
+//        //calculate the x value
+//        int xd = (int)(sqrt(Rsqr - pow(yd, 2.0)) * sign + 0.5);
+
+//        //for both forward and reverse directions
+//        for(int dir = 1; dir >= -1; dir -= 2) {
+
+//            //update the direction
+//            int xdd = xd * dir;
+//            int ydd = yd * dir;
+
+//            //calculate x pixel location and check limits
+//            int ypix = yv + ydd;
+//            if(!(ypix > 0 && ypix < height)) continue;
+
+//            //calculate the y value
+//            int xpix = xv + xdd;
+//            if(!(xpix > 0 && xpix < width)) continue;
+
+//            //update and check the hough transform
+//            H[ypix][xpix] += strength;
+//            if(H[ypix][xpix] > H[y_max][x_max]) {
+//                y_max = ypix; x_max = xpix;
+//            }
+
+//        }
+//    }
+
+//    return 0;
+
+//}
 
 void vCircleThread::performHough()
 {
@@ -208,6 +358,25 @@ void vCircleThread::run()
     }
 }
 
+int vCircleThread::findScores(std::vector<double> &values, double threshold)
+{
+    int c = 0;
+    for(int y = 0; y < height; y++) {
+        for(int x = 0; x < width; x++) {
+            if(H[y][x] > threshold) {
+                values.push_back(x);
+                values.push_back(y);
+                values.push_back(R);
+                values.push_back(H[y][x]);
+                c++;
+            }
+        }
+    }
+
+    return c;
+
+}
+
 yarp::sig::ImageOf<yarp::sig::PixelBgr> vCircleThread::makeDebugImage(double refval)
 {
 
@@ -241,13 +410,13 @@ yarp::sig::ImageOf<yarp::sig::PixelBgr> vCircleThread::makeDebugImage(double ref
 vCircleMultiSize::vCircleMultiSize(double threshold, std::string qType,
                                    int rLow, int rHigh,
                                    bool directed, bool parallel,
-                                   int height, int width)
+                                   int height, int width, int arclength)
 {
     this->qType = qType;
     this->threshold = threshold;
 
     for(int r = rLow; r <= rHigh; r++)
-        htransforms.push_back(new vCircleThread(r, directed, parallel, height, width));
+        htransforms.push_back(new vCircleThread(r, directed, parallel, height, width, arclength));
 
     best = htransforms.begin();
     dummy.referto();
@@ -310,6 +479,20 @@ double vCircleMultiSize::getObs(int &x, int &y, int &r)
     r = (*best)->getR();
     return (*best)->getScore();
 
+}
+
+std::vector<double> vCircleMultiSize::getPercentile(double p, double thMin)
+{
+    int x, y, r;
+    double maxval = getObs(x, y, r);
+    double threshold = std::max(p * maxval, (double)thMin);
+
+    std::vector<double> values;
+    std::vector<vCircleThread *>::iterator i;
+    for(i = htransforms.begin(); i != htransforms.end(); i++)
+        (*i)->findScores(values, threshold);
+
+    return values;
 }
 
 void vCircleMultiSize::addFixed(emorph::vQueue &additions)
