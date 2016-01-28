@@ -147,6 +147,7 @@ private:
     std::string qType;
     int qduration;
     double threshold;
+    int fifolength;
 
     //internal data
     emorph::vSurface surface;
@@ -172,7 +173,8 @@ public:
     vCircleMultiSize(double threshold, std::string qType = "edge",
                      int rLow = 8, int rHigh = 38,
                      bool directed = true, bool parallel = false,
-                     int height = 128, int width = 128, int arclength = 20);
+                     int height = 128, int width = 128, int arclength = 20,
+                     int fifolength = 2000);
     ~vCircleMultiSize();
 
     void addQueue(emorph::vQueue &additions);

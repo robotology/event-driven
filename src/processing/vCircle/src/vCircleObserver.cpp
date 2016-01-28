@@ -50,7 +50,7 @@ vCircleThread::vCircleThread(int R, bool directed, bool parallel, int height, in
             }
         }
     }
-    Hstr = 1.0 / count;
+//    Hstr = 1.0 / count;
 
 //    double count = 0;
 //    int x = R; int y = 0;
@@ -69,7 +69,6 @@ vCircleThread::vCircleThread(int R, bool directed, bool parallel, int height, in
 //            count++;
 //        }
 //    }
-
 //    Hstr = 1.0 / count;
 
 //    double count = 0;
@@ -410,10 +409,11 @@ yarp::sig::ImageOf<yarp::sig::PixelBgr> vCircleThread::makeDebugImage(double ref
 vCircleMultiSize::vCircleMultiSize(double threshold, std::string qType,
                                    int rLow, int rHigh,
                                    bool directed, bool parallel,
-                                   int height, int width, int arclength)
+                                   int height, int width, int arclength, int fifolength)
 {
     this->qType = qType;
     this->threshold = threshold;
+    this->fifolength = fifolength;
 
     for(int r = rLow; r <= rHigh; r++)
         htransforms.push_back(new vCircleThread(r, directed, parallel, height, width, arclength));
@@ -535,7 +535,7 @@ void vCircleMultiSize::addFixed(emorph::vQueue &additions)
         FIFO.push_front(*vi);
 
         //KEEP FIFO TO LIMITED SIZE
-        while(FIFO.size() > 2000) {
+        while(FIFO.size() > fifolength) {
             procQueue.push_back(FIFO.back());
             procType.push_back(-1);
             FIFO.pop_back();

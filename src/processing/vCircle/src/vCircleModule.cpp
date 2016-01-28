@@ -43,9 +43,10 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
     std::string qType = rf.check("qType",
                                  yarp::os::Value("edge")).asString();
 
-    int arc = rf.check("arc", yarp::os::Value(20)).asInt();
+    int fifolength = rf.check("fifo", yarp::os::Value(2000)).asInt();
 
-    bool fullHough = rf.check("full");
+    bool usedirected = rf.check("arc");
+    int arc = rf.check("arc", yarp::os::Value(15)).asInt();
 
     int radmin = rf.check("radmin", yarp::os::Value(10)).asInt();
     int radmax = rf.check("radmax", yarp::os::Value(35)).asInt();
@@ -69,7 +70,7 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
 
     circleReader.cObserver =
             new vCircleMultiSize(inlierThreshold, qType, radmin, radmax,
-                                 !fullHough, parallel, width, height, arc);
+                                 usedirected, parallel, width, height, arc, fifolength);
 
     //initialise the dection and tracking
     circleReader.inlierThreshold = inlierThreshold;
