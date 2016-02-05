@@ -39,7 +39,6 @@ private:
     bool threaded; /// perform calculations in a separate thread
     int height; /// sensor height
     int width; /// sensor width
-    int scale;
 
     //data
     yarp::sig::Matrix H; /// stores the Hough strength over the sensor plane
@@ -102,17 +101,17 @@ public:
     /// \brief getX get the maximum strength location
     /// \return maximum strength location along x axis
     ///
-    int getX() { return x_max / scale; }
+    int getX() { return x_max; }
     ///
     /// \brief getY get the maximum strength location
     /// \return maximum strength location along y axis
     ///
-    int getY() { return y_max / scale; }
+    int getY() { return y_max; }
     ///
     /// \brief getR return the radius of the circle to be detected
     /// \return the radius R
     ///
-    int getR() { return R / scale; }
+    int getR() { return R; }
 
     ///
     /// \brief process update the Hough transform (threaded or non-threaded)
