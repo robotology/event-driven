@@ -45,14 +45,14 @@ vCircleThread::vCircleThread(int R, bool directed, bool parallel, int height, in
     double count = 0;
     for(int y = -this->R-1; y <= this->R+1; y++) {
         for(int x = -this->R-1; x <= this->R+1; x++) {
-            if(fabs(sqrt(pow(x, 2.0) + pow(y, 2.0)) - this->R) < 0.4) {
+            if(fabs(sqrt(pow(x, 2.0) + pow(y, 2.0)) - this->R) < 0.5) {
                 hy.push_back(y);
                 hx.push_back(x);
                 count++;
             }
         }
     }
-    Hstr = scale * 1.0 / count;
+    Hstr = 0.5;//scale * 1.0 / count;
 
 //    double count = 0;
 //    int x = R; int y = 0;
@@ -204,12 +204,12 @@ double vCircleThread::updateHFlowAngle(int xv, int yv, double strength,
     double yn = dtdx / velR;
 
     //calculate the end position of the tangent to the arc
-    double x2a = R * xn - yn * a;
-    double y2a = R * yn + xn * a;
+    double x2a = (R * xn) - (yn * a);
+    double y2a = (R * yn) + (xn * a);
 
     //also for the other end of the arc
-    double x3a = R * xn + yn * a;
-    double y3a = R * yn - xn * a;
+    double x3a = (R * xn) + (yn * a);
+    double y3a = (R * yn) - (xn * a);
 
     double nonadjR = sqrt(pow(x2a, 2.0) + pow(y2a, 2.0));
 

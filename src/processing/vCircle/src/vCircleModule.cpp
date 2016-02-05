@@ -47,6 +47,7 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
 
     bool usedirected = rf.check("arc");
     int arc = rf.check("arc", yarp::os::Value(15)).asInt();
+    if(!arc) usedirected = false;
 
     int radmin = rf.check("radmin", yarp::os::Value(10)).asInt();
     int radmax = rf.check("radmax", yarp::os::Value(35)).asInt();
