@@ -204,13 +204,20 @@ double vCircleThread::updateHFlowAngle(int xv, int yv, double strength,
     double yn = dtdx / velR;
 
     //calculate the end position of the tangent to the arc
-    int x2 = R * xn - yn * a + 0.5;
-    int y2 = R * yn + xn * a + 0.5;
+    double x2a = R * xn - yn * a;
+    double y2a = R * yn + xn * a;
 
     //also for the other end of the arc
-    int x3 = R * xn + yn * a + 0.5;
-    int y3 = R * yn - xn * a + 0.5;
+    double x3a = R * xn + yn * a;
+    double y3a = R * yn - xn * a;
 
+    double nonadjR = sqrt(pow(x2a, 2.0) + pow(y2a, 2.0));
+
+    int x2 = R * x2a / nonadjR + 0.5;
+    int y2 = R * y2a / nonadjR + 0.5;
+
+    int x3 = R * x3a / nonadjR + 0.5;
+    int y3 = R * y3a / nonadjR + 0.5;
 
     //std::cout << "Updating with LUT" << std::endl;
     for(int i = 0; i < hx.size(); i++) {
