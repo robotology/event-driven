@@ -239,6 +239,7 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
 
     if(cObserver->getObs(bestx, besty, bestr) > inlierThreshold) {
 
+        //std::cout << bestx << " " << besty << " " << bestr << std::endl;
         emorph::ClusterEventGauss circevent;
         circevent.setStamp(bestts);
         circevent.setChannel(0);
@@ -262,7 +263,7 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
         image = cObserver->makeDebugImage();
         houghOut.setEnvelope(st);
         houghOut.write();
-        std::cout << "Processing Time" << timecounter << ", Hough response: " << cObserver->getObs(bestx, besty, bestr) << std::endl;
+        //std::cout << "Processing Time" << timecounter << ", Hough response: " << cObserver->getObs(bestx, besty, bestr) << std::endl;
     }
 
 

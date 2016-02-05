@@ -22,17 +22,19 @@
 /*////////////////////////////////////////////////////////////////////////////*/
 vCircleThread::vCircleThread(int R, bool directed, bool parallel, int height, int width, double arclength)
 {
+    this->scale = 1;
     this->threaded = parallel;
-    this->R = R;
+    this->R = R * scale;
     this->Rsqr = pow(this->R, 2.0);
     this->directed = directed;
-    this->height = height;
-    this->width = width;
+    this->height = height * scale;
+    this->width = width * scale;
+
 
 
     H.resize(this->height, this->width);
     a = this->R * fabs(tan(arclength * M_PI / 180.0));
-    Hstr = 1.0 / (2.0 * M_PI * R); //should not be scaled by scale
+    Hstr = ((double)scale) / (2.0 * M_PI * this->R);
     //Hstr = 1.0 / (2.0 * R);
     //okay I make a list of events with x, y, angle.
     //for full transform I go through the list, done.
@@ -41,16 +43,16 @@ vCircleThread::vCircleThread(int R, bool directed, bool parallel, int height, in
     //
 
     double count = 0;
-    for(int y = -R; y <= R; y++) {
-        for(int x = -R; x <= R; x++) {
-            if(fabs(sqrt(pow(x, 2.0) + pow(y, 2.0)) - R) < 0.5) {
+    for(int y = -this->R-1; y <= this->R+1; y++) {
+        for(int x = -this->R-1; x <= this->R+1; x++) {
+            if(fabs(sqrt(pow(x, 2.0) + pow(y, 2.0)) - this->R) < 0.4) {
                 hy.push_back(y);
                 hx.push_back(x);
                 count++;
             }
         }
     }
-//    Hstr = 1.0 / count;
+    Hstr = scale * 1.0 / count;
 
 //    double count = 0;
 //    int x = R; int y = 0;
@@ -116,6 +118,7 @@ void vCircleThread::waitfordone()
 
 void vCircleThread::updateHAddress(int xv, int yv, double strength)
 {
+    xv = xv*scale + (int)((scale-0.5)/2.0); yv = yv*scale + (int)((scale-0.5)/2.0);
 
     //std::cout << "Updating with LUT" << std::endl;
     for(int i = 0; i < hx.size(); i++) {
@@ -194,6 +197,7 @@ double vCircleThread::updateHFlowAngle(int xv, int yv, double strength,
                                      double dtdx, double dtdy)
 {
 
+    xv = xv*scale + (int)((scale-0.5)/2.0); yv = yv*scale + (int)((scale-0.5)/2.0);
     //this is the same for all R try passing xn/yn to the function instead
     double velR = sqrt(pow(dtdx, 2.0) + pow(dtdy, 2.0));
     double xn = dtdy / velR;
@@ -360,12 +364,12 @@ void vCircleThread::run()
 int vCircleThread::findScores(std::vector<double> &values, double threshold)
 {
     int c = 0;
-    for(int y = 0; y < height; y++) {
-        for(int x = 0; x < width; x++) {
+    for(int y = 0; y < height; y += scale) {
+        for(int x = 0; x < width; x += scale) {
             if(H[y][x] > threshold) {
-                values.push_back(x);
-                values.push_back(y);
-                values.push_back(R);
+                values.push_back(x / scale);
+                values.push_back(y / scale);
+                values.push_back(R / scale);
                 values.push_back(H[y][x]);
                 c++;
             }
@@ -382,15 +386,21 @@ yarp::sig::ImageOf<yarp::sig::PixelBgr> vCircleThread::makeDebugImage(double ref
     if(refval < 0)
         refval = H[y_max][x_max];
 
-    for(int y = 0; y < height; y++) {
-        for(int x = 0; x < width; x++) {
-            if(H[y][x] >= refval*0.9)
-                canvas(y, width - 1 - x) = yarp::sig::PixelBgr(255, 255, 255);
+    for(int y = 0; y < height; y += scale) {
+        for(int x = 0; x < width; x += scale) {
+            double v = 0;
+            for(int i = 0; i < scale; i++) {
+                for(int j = 0; j < scale; j++) {
+                    v = std::max(v, H[y+i][x+i]);
+                }
+            }
+            if(v >= refval*0.9)
+                canvas(y/scale, width/scale - 1 - x/scale) = yarp::sig::PixelBgr(255, 255, 255);
             else {
-                int I = 255.0 * pow(H[y][x] / refval, 2.0);
+                int I = 255.0 * pow(v / refval, 2.0);
                 if(I > 254) I = 254;
                 //I = 0;
-                canvas(y, width - 1 - x) = yarp::sig::PixelBgr(0, I, 0);
+                canvas(y/scale, width/scale - 1 - x/scale) = yarp::sig::PixelBgr(0, I, 0);
             }
 //            if(H[y][x] >= refval*0.9) {
 //                canvas(y, width - 1 - x) = yarp::sig::PixelBgr(
