@@ -29,7 +29,7 @@ vCircleThread::vCircleThread(int R, bool directed, bool parallel, int height, in
     this->height = height;
     this->width = width;
 
-    H.resize(this->height, this->width);
+    H.resize(this->height, this->width); H.zero();
     double alr  = arclength * M_PI / 180.0;
 
     a = 0;
@@ -85,7 +85,7 @@ void vCircleThread::waitfordone()
         mdone.lock();
 }
 
-void vCircleThread::updateHAddress(int xv, int yv, double strength)
+void vCircleThread::updateHAddress(int xv, int yv, int strength)
 {
 
     //std::cout << "Updating with LUT" << std::endl;
@@ -97,15 +97,15 @@ void vCircleThread::updateHAddress(int xv, int yv, double strength)
 
         //std::cout << y << " " << x << std::endl;
 
-        H[y][x] += strength;
-        if(H[y][x] > H[y_max][x_max]) {
+        H(y, x) += strength;
+        if(H(y, x) > H(y_max, x_max)) {
             y_max = y; x_max = x;
         }
     }
     return;
 }
 
-double vCircleThread::updateHFlowAngle(int xv, int yv, double strength,
+double vCircleThread::updateHFlowAngle(int xv, int yv, int strength,
                                      double dtdx, double dtdy)
 {
 
@@ -114,16 +114,9 @@ double vCircleThread::updateHFlowAngle(int xv, int yv, double strength,
     double xr = R * dtdy / velR;
     double yr = R * dtdx / velR;
 
-    //find the best starting pixel - this should be faster!
-    double bd = 2 * R; int bir = 0;
-    for(int i = 0; i < hang.size(); i++) {
-
-        double d = sqrt(pow(xr - hx[i], 2.0) + pow(yr - hy[i], 2.0));
-        if(d < bd) {
-            bd = d;
-            bir = i;
-        }
-    }
+    double theta = acos(xr/R) / (2 * M_PI);
+    if(yr < 0) theta = 1 - theta;
+    int bir = theta * hx.size();
 
     //now fill in the pixels from that starting pixel for a pixels forward and
     //backward
@@ -136,14 +129,12 @@ double vCircleThread::updateHFlowAngle(int xv, int yv, double strength,
         if(i < 0)
             modi = i + hx.size();
 
-
-
         int x = xv + hx[modi];
         int y = yv + hy[modi];
 
         if(y >= 0 && y < height && x >= 0 && x < width) {
-            H[y][x] += strength;
-            if(H[y][x] > H[y_max][x_max]) {
+            H(y, x) += strength;
+            if(H(y, x) > H(y_max, x_max)) {
                 y_max = y; x_max = x;
             }
         }
@@ -152,8 +143,8 @@ double vCircleThread::updateHFlowAngle(int xv, int yv, double strength,
         y = yv - hy[modi];
 
         if(y >= 0 && y < height && x >= 0 && x < width) {
-            H[y][x] += strength;
-            if(H[y][x] > H[y_max][x_max]) {
+            H(y, x) += strength;
+            if(H(y, x) > H(y_max, x_max)) {
                 y_max = y; x_max = x;
             }
         }
@@ -174,7 +165,7 @@ void vCircleThread::performHough()
             emorph::FlowEvent * v = (*procQueue)[i]->getAs<emorph::FlowEvent>();
 
             if(v) {
-                updateHFlowAngle(v->getX(), v->getY(), (*procType)[i] * Hstr,
+                updateHFlowAngle(v->getX(), v->getY(), (*procType)[i],
                                  v->getVx(), v->getVy());
             }
 
@@ -184,7 +175,7 @@ void vCircleThread::performHough()
             emorph::AddressEvent * v = (*procQueue)[i]->getAs<emorph::AddressEvent>();
 
             if(v) {
-                updateHAddress(v->getX(), v->getY(), (*procType)[i] * Hstr);
+                updateHAddress(v->getX(), v->getY(), (*procType)[i]);
             }
 
         }
@@ -213,11 +204,11 @@ int vCircleThread::findScores(std::vector<double> &values, double threshold)
     int c = 0;
     for(int y = 0; y < height; y += 1) {
         for(int x = 0; x < width; x += 1) {
-            if(H[y][x] > threshold) {
+            if(H(y, x) > threshold) {
                 values.push_back(x);
                 values.push_back(y);
                 values.push_back(R);
-                values.push_back(H[y][x]);
+                values.push_back(H(y, x)*Hstr);
                 c++;
             }
         }
@@ -231,15 +222,15 @@ yarp::sig::ImageOf<yarp::sig::PixelBgr> vCircleThread::makeDebugImage(double ref
 {
 
     if(refval < 0)
-        refval = H[y_max][x_max];
+        refval = H(y_max, x_max)*Hstr;
 
     for(int y = 0; y < height; y += 1) {
         for(int x = 0; x < width; x += 1) {
 
-            if(H[y][x] >= refval*0.9)
+            if(H(y, x)*Hstr >= refval*0.9)
                 canvas(y, width - 1 - x) = yarp::sig::PixelBgr(255, 255, 255);
             else {
-                int I = 255.0 * pow(H[y][x] / refval, 2.0);
+                int I = 255.0 * pow(H(y, x)*Hstr / refval, 2.0);
                 if(I > 254) I = 254;
                 //I = 0;
                 if(directed)
@@ -371,6 +362,7 @@ void vCircleMultiSize::addFixed(emorph::vQueue &additions)
         bool removed = false;
 
         //CHECK TO REMOVE "SAME LOCATION EVENTS FIRST"
+        // <----------THIS IS THE SLOWEST PART OF BALL TRACKING -------->
         int cx = v->getX(); int cy = v->getY();
         emorph::vQueue::iterator i = FIFO.begin();
         while(i != FIFO.end()) {
@@ -386,6 +378,7 @@ void vCircleMultiSize::addFixed(emorph::vQueue &additions)
                 i++;
             }
         }
+        // <---------------------------------------------------- -------->
 
         //ADD THE CURRENT EVENT
         FIFO.push_front(*vi);

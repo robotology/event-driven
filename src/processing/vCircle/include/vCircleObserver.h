@@ -41,7 +41,8 @@ private:
     int width; /// sensor width
 
     //data
-    yarp::sig::Matrix H; /// stores the Hough strength over the sensor plane
+    //yarp::sig::Matrix H; /// stores the Hough strength over the sensor plane
+    yarp::sig::ImageOf<yarp::sig::PixelMono16> H;
     double a; /// length of tangent line to the directed Hough arc
     double Rsqr; /// precompute the square of the radius
     double Hstr; /// normalised Hough strength given the radius
@@ -60,10 +61,10 @@ private:
     std::vector<int> * procType; /// pointer to list of events to remove from Hough
 
     /// update the Hough space using standard method
-    void updateHAddress(int xv, int yv, double strength);
+    void updateHAddress(int xv, int yv, int strength);
 
     /// update the Hough space using directed method
-    double updateHFlowAngle(int xv, int yv, double strength, double dtdx,
+    double updateHFlowAngle(int xv, int yv, int strength, double dtdx,
                           double dtdy);
     double updateHFlowAngle2(int xv, int yv, double strength,
                                          double dtdx, double dtdy);
@@ -90,13 +91,13 @@ public:
     /// \param height sensor height
     /// \param width sensor width
     ///
-    vCircleThread(int R, bool directed, bool parallel = false, int height = 128, int width = 128, double arclength = 30);
+    vCircleThread(int R, bool directed, bool parallel = false, int height = 128, int width = 128, double arclength = 15);
 
     ///
     /// \brief getScore get the maximum strength in Hough space
     /// \return the maximum strength in Hough space
     ///
-    double getScore() { return H[y_max][x_max]; }
+    double getScore() { return H(y_max, x_max) * Hstr; }
     ///
     /// \brief getX get the maximum strength location
     /// \return maximum strength location along x axis
