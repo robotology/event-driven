@@ -121,6 +121,7 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
     yarp::sig::Vector px(2), x(3); x = 0;
     emorph::vQueue q = vBottleIn.getSorted<emorph::ClusterEventGauss>();
 
+    double eyez_mean = 0;
     if(q.size()) {
 
         emorph::ClusterEventGauss * v =
@@ -128,46 +129,54 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
 
         px[0] += v->getYCog();
         px[1] += (127 - v->getXCog());
-        int eyez = (-0.51429 * v->getXSigma2() + 31.715) / 100.0;
+        double eyez = (-2.5 * v->getXSigma2() + 70)/100.0;
 
         recentgazelocs.push_back(px);
         recenteyezs.push_back(eyez);
 
-        if(recentgazelocs.size() > 10) {
+        if(recentgazelocs.size() > 20) {
             recentgazelocs.pop_front();
             recenteyezs.pop_front();
 
-            double eyez_mean = 0;
-            bool gaze = true;
-            for(int i = 1; i < recentgazelocs.size(); i++) {
+            for(int i = 1; i < recenteyezs.size(); i++)
                 eyez_mean += recenteyezs[i];
-                bool dx1 = abs(recentgazelocs[0][0] - recentgazelocs[i][0]) > 10;
-                bool dx2 = abs(recentgazelocs[0][1] - recentgazelocs[i][1]) > 10;
-                if(dx1 || dx2) {
-                    gaze = false;
-                    break;
-                }
+            eyez_mean /= recenteyezs.size();
+
+            double x_mean = 0, y_mean = 0;
+            for(int i = 1; i < recentgazelocs.size(); i++) {
+                x_mean += recentgazelocs[i][0];
+                y_mean += recentgazelocs[i][1];
             }
+            x_mean /= recentgazelocs.size();
+            y_mean /= recentgazelocs.size();
+
+            bool gaze = false;
+            if(x_mean - px[0] < 5 && y_mean - px[1] < 5)
+                gaze = true;
+
 
             if(gaze) {
-                eyez_mean /= recenteyezs.size();
+
                 //turn u/v into xyz
-                gazecontrol->get3DPoint(0, px, 0.5, x);
-                std::cout << eyez_mean << std::endl;
+                gazecontrol->get3DPoint(0, px, eyez_mean, x);
+                //std::cout << eyez_mean << std::endl;
 
                 //and look there
+                //std::cout << x[0] << " " << x[1] << " " << x[2] << std::endl;
                 gazecontrol->lookAtFixationPoint(x);
             }
+
 
         }
 
     }
 
-    if(positionOutPort.getOutputCount()) {
+    if(positionOutPort.getOutputCount() && eyez_mean) {
         yarp::os::Bottle &posdump = positionOutPort.prepare();
         posdump.clear();
-        posdump.addDouble(cx[0]); posdump.addDouble(cx[1]); posdump.addDouble(cx[2]);
-        posdump.addDouble(x[0]); posdump.addDouble(x[1]); posdump.addDouble(x[2]);
+        posdump.addDouble(eyez_mean);
+        //posdump.addDouble(cx[0]); posdump.addDouble(cx[1]); posdump.addDouble(cx[2]);
+        //posdump.addDouble(x[0]); posdump.addDouble(x[1]); posdump.addDouble(x[2]);
         yarp::os::Stamp st; this->getEnvelope(st);
         positionOutPort.setEnvelope(st);
         positionOutPort.write();

@@ -238,7 +238,9 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
         std::cout << bestts << std::endl;
     }
 
-    if(cObserver->getObs(bestx, besty, bestr) > inlierThreshold) {
+    double bestScore = cObserver->getObs(bestx, besty, bestr);
+
+    if(bestScore > inlierThreshold) {
 
         //std::cout << bestx << " " << besty << " " << bestr << std::endl;
         emorph::ClusterEventGauss circevent;
@@ -257,6 +259,16 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
     if(strictness) outPort.writeStrict();
     else outPort.write();
 
+    //send on our scope if needed
+    if(scopeOut.getOutputCount() && bestScore > inlierThreshold) {
+        yarp::os::Bottle &scopebottle = scopeOut.prepare();
+        scopebottle.clear();
+        scopebottle.add(bestr);
+        scopeOut.setEnvelope(st);
+        scopeOut.write();
+    }
+
+    //send on our debug image if needed
     double dstamp = st.getTime() - pstamp.getTime();
     if(houghOut.getOutputCount() && (dstamp > 0.03333 || dstamp < 0)) {
         pstamp = st;
