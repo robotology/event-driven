@@ -114,7 +114,7 @@ double vCircleThread::updateHFlowAngle(int xv, int yv, double strength,
     double xr = R * dtdy / velR;
     double yr = R * dtdx / velR;
 
-    //find the best starting pixel
+    //find the best starting pixel - this should be faster!
     double bd = 2 * R; int bir = 0;
     for(int i = 0; i < hang.size(); i++) {
 
@@ -130,7 +130,7 @@ double vCircleThread::updateHFlowAngle(int xv, int yv, double strength,
 
     for(int i = bir - a; i <= bir + a; i++) {
 
-        int modi = i % hx.size();
+        int modi =  i;
         if(i >= hx.size())
             modi = i - hx.size();
         if(i < 0)
@@ -242,7 +242,11 @@ yarp::sig::ImageOf<yarp::sig::PixelBgr> vCircleThread::makeDebugImage(double ref
                 int I = 255.0 * pow(H[y][x] / refval, 2.0);
                 if(I > 254) I = 254;
                 //I = 0;
-                canvas(y, width - 1 - x) = yarp::sig::PixelBgr(0, I, 0);
+                if(directed)
+                    canvas(y, width - 1 - x) = yarp::sig::PixelBgr(0, I, 0);
+                else
+                    canvas(y, width - 1 - x) = yarp::sig::PixelBgr(0, 0, I);
+
             }
 //            if(H[y][x] >= refval*0.9) {
 //                canvas(y, width - 1 - x) = yarp::sig::PixelBgr(
@@ -507,13 +511,17 @@ yarp::sig::ImageOf<yarp::sig::PixelBgr> vCircleMultiSize::makeDebugImage()
 {
 
     std::vector<vCircleThread *>::iterator i;
+    //int dum1, dum2, dum3;
+    double v;
+    //v = this->getObs(dum1, dum2, dum3);
+    v = threshold;
 
     i = htransforms.begin();
     yarp::sig::ImageOf<yarp::sig::PixelBgr> imagebase =
-            (*i)->makeDebugImage(threshold);
+            (*i)->makeDebugImage(v);
 
     for(i++; i != htransforms.end(); i++) {
-        yarp::sig::ImageOf<yarp::sig::PixelBgr> image = (*i)->makeDebugImage(threshold);
+        yarp::sig::ImageOf<yarp::sig::PixelBgr> image = (*i)->makeDebugImage(v);
         for(int y = 0; y < image.height(); y++) {
             for(int x = 0; x < image.width(); x++) {
                 if(image(x, y).g > imagebase(x, y).g)
