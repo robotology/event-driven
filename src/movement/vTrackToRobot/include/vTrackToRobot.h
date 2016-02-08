@@ -46,6 +46,7 @@ private:
 
     int method;
     std::deque<yarp::sig::Vector> recentgazelocs;
+    std::deque<double> recenteyezs;
 
 public:
     

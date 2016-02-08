@@ -128,13 +128,19 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
 
         px[0] += v->getYCog();
         px[1] += (127 - v->getXCog());
+        int eyez = (-0.51429 * v->getXSigma2() + 31.715) / 100.0;
 
         recentgazelocs.push_back(px);
+        recenteyezs.push_back(eyez);
+
         if(recentgazelocs.size() > 10) {
             recentgazelocs.pop_front();
+            recenteyezs.pop_front();
 
+            double eyez_mean = 0;
             bool gaze = true;
             for(int i = 1; i < recentgazelocs.size(); i++) {
+                eyez_mean += recenteyezs[i];
                 bool dx1 = abs(recentgazelocs[0][0] - recentgazelocs[i][0]) > 10;
                 bool dx2 = abs(recentgazelocs[0][1] - recentgazelocs[i][1]) > 10;
                 if(dx1 || dx2) {
@@ -144,8 +150,10 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
             }
 
             if(gaze) {
+                eyez_mean /= recenteyezs.size();
                 //turn u/v into xyz
                 gazecontrol->get3DPoint(0, px, 0.5, x);
+                std::cout << eyez_mean << std::endl;
 
                 //and look there
                 gazecontrol->lookAtFixationPoint(x);
