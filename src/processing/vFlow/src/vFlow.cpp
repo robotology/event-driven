@@ -352,7 +352,7 @@ int vFlowManager::computeGrads(yarp::sig::Matrix &A, yarp::sig::Vector &Y,
         //be.
         double planedt = (abc(0) * (A(i, 0) - cx) + abc(1) * (A(i, 1) - cy));
         double actualdt =  Y(i) - cz;
-        if(fabs(planedt - actualdt) < dtdp) inliers++;
+        if(fabs(planedt - actualdt) < dtdp/2) inliers++;
 
     }
 
