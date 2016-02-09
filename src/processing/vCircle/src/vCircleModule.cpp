@@ -129,6 +129,7 @@ vCircleReader::vCircleReader()
     hough = false;
     timecounter = 0;
     strictness = false;
+    pstampcounter = -1;
 }
 
 /******************************************************************************/
@@ -207,6 +208,7 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
     yarp::os::Stamp st;
     this->getEnvelope(st); outPort.setEnvelope(st);
     if(!pstamp.isValid()) pstamp = st;
+    if(pstampcounter < 0) pstampcounter = st.getCount();
 
     //create event queue
     emorph::vQueue q = inBot.get<emorph::AddressEvent>();
@@ -260,13 +262,14 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
     else outPort.write();
 
     //send on our scope if needed
-    if(scopeOut.getOutputCount() && bestScore > inlierThreshold) {
+    if(scopeOut.getOutputCount()) {
         yarp::os::Bottle &scopebottle = scopeOut.prepare();
         scopebottle.clear();
-        scopebottle.add(bestr);
+        scopebottle.add(st.getCount() - pstampcounter);
         scopeOut.setEnvelope(st);
         scopeOut.write();
     }
+    pstampcounter = st.getCount();
 
     //send on our debug image if needed
     double dstamp = st.getTime() - pstamp.getTime();

@@ -104,6 +104,7 @@ private:
     bool debugFlag;
     std::ofstream datawriter;
     yarp::os::Stamp pstamp;
+    int pstampcounter;
 
 public:
 
