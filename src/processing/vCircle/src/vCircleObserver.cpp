@@ -169,7 +169,6 @@ void vCircleThread::performHough()
                                  v->getVx(), v->getVy());
             }
 
-
         } else {
 
             emorph::AddressEvent * v = (*procQueue)[i]->getAs<emorph::AddressEvent>();
@@ -352,7 +351,8 @@ void vCircleMultiSize::addFixed(emorph::vQueue &additions)
     for(vi = additions.begin(); vi != additions.end(); vi++) {
 
         //GET THE EVENTS AS CORRECT TYPE
-        emorph::AddressEvent *v = (*vi)->getAs<emorph::AddressEvent>();
+        //emorph::AddressEvent *v = (*vi)->getAs<emorph::AddressEvent>();
+        emorph::FlowEvent *v = (*vi)->getAs<emorph::FlowEvent>();
         if(!v || v->getChannel()) continue;
 
         procQueue.push_back(v);
@@ -367,7 +367,8 @@ void vCircleMultiSize::addFixed(emorph::vQueue &additions)
         emorph::vQueue::iterator i = FIFO.begin();
         while(i != FIFO.end()) {
             //we only add Address Events therefore we can do an unsafe cast
-            v = (*i)->getUnsafe<emorph::AddressEvent>();
+            //v = (*i)->getUnsafe<emorph::AddressEvent>();
+            v = (*i)->getUnsafe<emorph::FlowEvent>();
             removed = v->getX() == cx && v->getY() == cy;
             if(removed) {
                 procQueue.push_back(v);
