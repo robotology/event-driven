@@ -516,14 +516,14 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
         double hypotenuse = magnitude;
         if(hypotenuse < 10) hypotenuse = 10;
         //if(hypotenuse > 20) hypotenuse = 20;
-        //hypotenuse = 40;
+        hypotenuse = 20;
         double angle = atan2(vy, vx);
 
         //Scale the arrow by a factor of three
-//        p_end.x = (int) (p_start.x + hypotenuse * cos(angle));
-//        p_end.y = (int) (p_start.y + hypotenuse * sin(angle));
-        p_end.x = (int) (p_start.x + ofp->getVx() * 2);
-        p_end.y = (int) (p_start.y + ofp->getVy() * 2);
+        p_end.x = (int) (p_start.x + hypotenuse * sin(angle));
+        p_end.y = (int) (p_start.y + hypotenuse * cos(angle));
+        //p_end.x = (int) (p_start.x + ofp->getVx() * 2);
+        //p_end.y = (int) (p_start.y + ofp->getVy() * 2);
 
         //Draw the main line of the arrow
         cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
