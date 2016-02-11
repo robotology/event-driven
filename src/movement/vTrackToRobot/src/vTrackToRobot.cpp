@@ -28,6 +28,7 @@ vTrackToRobotManager::vTrackToRobotManager()
 
     method = fromgaze;
     gazecontrol = 0;
+    p_eyez = 0.5;
 
 }
 
@@ -115,13 +116,15 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
     //always print current position
     yarp::sig::Vector cpx(2), cx(3);
     cpx(0) = 64; cpx(1) = 64;
-    gazecontrol->get3DPoint(0, cpx, 0.5, cx);
+    gazecontrol->get3DPoint(0, cpx, p_eyez, cx);
 
     //get the events and see if we can get a ball observation
     yarp::sig::Vector px(2), x(3); x = 0;
     emorph::vQueue q = vBottleIn.getSorted<emorph::ClusterEventGauss>();
+    emorph::vQueue qforts = vBottleIn.getAll();
+    qforts.wrapSort();
 
-    double eyez_mean = 0;
+
     if(q.size()) {
 
         emorph::ClusterEventGauss * v =
@@ -138,6 +141,7 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
             recentgazelocs.pop_front();
             recenteyezs.pop_front();
 
+            double eyez_mean = 0;
             for(int i = 1; i < recenteyezs.size(); i++)
                 eyez_mean += recenteyezs[i];
             eyez_mean /= recenteyezs.size();
@@ -159,6 +163,7 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
 
                 //turn u/v into xyz
                 gazecontrol->get3DPoint(0, px, eyez_mean, x);
+                p_eyez = eyez_mean;
                 //std::cout << eyez_mean << std::endl;
 
                 //and look there
@@ -171,12 +176,12 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
 
     }
 
-    if(positionOutPort.getOutputCount() && eyez_mean) {
+    if(positionOutPort.getOutputCount()) {
         yarp::os::Bottle &posdump = positionOutPort.prepare();
         posdump.clear();
-        posdump.addDouble(eyez_mean);
-        //posdump.addDouble(cx[0]); posdump.addDouble(cx[1]); posdump.addDouble(cx[2]);
-        //posdump.addDouble(x[0]); posdump.addDouble(x[1]); posdump.addDouble(x[2]);
+        posdump.addInt(q.front()->getStamp());
+        posdump.addDouble(cx[0]); posdump.addDouble(cx[1]); posdump.addDouble(cx[2]);
+        posdump.addDouble(x[0]); posdump.addDouble(x[1]); posdump.addDouble(x[2]);
         yarp::os::Stamp st; this->getEnvelope(st);
         positionOutPort.setEnvelope(st);
         positionOutPort.write();
