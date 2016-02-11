@@ -29,6 +29,7 @@ vTrackToRobotManager::vTrackToRobotManager()
     method = fromgaze;
     gazecontrol = 0;
     p_eyez = 0.5;
+    gazingActive = true;
 
 }
 
@@ -168,7 +169,8 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
 
                 //and look there
                 //std::cout << x[0] << " " << x[1] << " " << x[2] << std::endl;
-                gazecontrol->lookAtFixationPoint(x);
+                if(gazingActive)
+                    gazecontrol->lookAtFixationPoint(x);
             }
 
 
@@ -179,7 +181,7 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
     if(positionOutPort.getOutputCount()) {
         yarp::os::Bottle &posdump = positionOutPort.prepare();
         posdump.clear();
-        posdump.addInt(q.front()->getStamp());
+        posdump.addInt(qforts.front()->getStamp());
         posdump.addDouble(cx[0]); posdump.addDouble(cx[1]); posdump.addDouble(cx[2]);
         posdump.addDouble(x[0]); posdump.addDouble(x[1]); posdump.addDouble(x[2]);
         yarp::os::Stamp st; this->getEnvelope(st);
@@ -300,6 +302,12 @@ bool vTrackToRobotModule::configure(yarp::os::ResourceFinder &rf)
     std::string method =
             rf.check("method", yarp::os::Value("usegaze")).asString();
 
+    std::string rpcportname = "/" + moduleName + "/control";
+    if(!rpcPort.open(rpcportname)) {
+        std::cerr << "Could not open RPC port" << std::endl;
+    }
+    this->attach(rpcPort);
+
     vTrackToRobot.setMethod(method);
     if(!vTrackToRobot.open(moduleName)) {
         std::cerr << "Could Not Open vTrackToRobotModule" << std::endl;
@@ -337,6 +345,25 @@ double vTrackToRobotModule::getPeriod()
     return 1;
 }
 
+bool vTrackToRobotModule::respond(const yarp::os::Bottle &command,
+                                  yarp::os::Bottle &reply)
+{
+    reply.clear();
+
+    if(command.get(0).asString() == "start") {
+        reply.addString("starting");
+        this->vTrackToRobot.startGazing();
+    } else if(command.get(0).asString() == "stop") {
+        reply.addString("stopping");
+        this->vTrackToRobot.stopGazing();
+    } else {
+        return false;
+    }
+
+    return true;
+
+
+}
 
 
 

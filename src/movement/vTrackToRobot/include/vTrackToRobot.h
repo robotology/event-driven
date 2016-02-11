@@ -45,6 +45,7 @@ private:
     enum { fromgaze, fromsize, fromstereo };
 
     int method;
+    bool gazingActive;
     std::deque<yarp::sig::Vector> recentgazelocs;
     std::deque<double> recenteyezs;
     double p_eyez;
@@ -54,6 +55,8 @@ public:
     vTrackToRobotManager();
 
     bool setMethod(std::string methodname);
+    void startGazing() {gazingActive = true;}
+    void stopGazing() {gazingActive = false;}
 
     bool open(const std::string &name);
     void onRead(emorph::vBottle &bot);
@@ -73,6 +76,9 @@ private:
     //the event bottle input and output handler
     vTrackToRobotManager      vTrackToRobot;
 
+    //the remote procedure port
+    yarp::os::RpcServer     rpcPort;
+
 
     //robot control settings
 //    yarp::dev::PolyDriver mdriver;
@@ -88,6 +94,9 @@ public:
     virtual bool close();
     virtual double getPeriod();
     virtual bool updateModule();
+
+    virtual bool respond(const yarp::os::Bottle &command,
+                         yarp::os::Bottle &reply);
 
 };
 
