@@ -399,6 +399,10 @@ vQueue vEdge::addEventToEdge(AddressEvent *event)
     } else {
         removed = flowremove(vf);
     }
+//    if(!vf) {
+//        mutex.post();
+//        return removed;
+//    }
 
     //remove previous event at this pixel
     int x = event->getX(); int y = event->getY();
