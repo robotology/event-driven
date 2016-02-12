@@ -290,7 +290,7 @@ void vCircleMultiSize::addQueue(emorph::vQueue &additions) {
 
         if(qType == "fixed")
             addFixed(additions);
-        else if(qType == "lifetime")
+        else if(qType == "life")
             addLife(additions);
         else if(qType == "surf")
             addSurf(additions);
@@ -408,7 +408,7 @@ void vCircleMultiSize::addLife(emorph::vQueue &additions)
 
         //lifetime requires a flow event only
         emorph::FlowEvent *v = (*vi)->getAs<emorph::FlowEvent>();
-        if(!v) return;
+        if(!v) continue;
 
         //add this event
         procQueue.push_back(v);
@@ -427,7 +427,7 @@ void vCircleMultiSize::addLife(emorph::vQueue &additions)
 
             bool samelocation = v2->getX() == cx && v2->getY() == cy;
 
-            if(modts > (v2->getDeath() - v2->getStamp()) * 78.125 + v2->getStamp() || samelocation) {
+            if(modts > v2->getDeath() || samelocation) {
                 procQueue.push_back(v2);
                 procType.push_back(-1);
                 i = FIFO.erase(i);
@@ -527,7 +527,7 @@ yarp::sig::ImageOf<yarp::sig::PixelBgr> vCircleMultiSize::makeDebugImage()
     emorph::vQueue q;
     if(qType == "fixed")
         q = this->FIFO;
-    else if(qType == "lifetime")
+    else if(qType == "life")
         q = this->FIFO;
     else if(qType == "surf")
         q = surface.getSURF(0, imagebase.width(), 0, imagebase.height());
