@@ -132,12 +132,17 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
 
     yarp::os::Stamp st;
     this->getEnvelope(st);
-    int bestts;
+
+    //we just need to get our updated TS
+    emorph::vQueue q = vBottleIn.getAllSorted();
+    int bestts = q.back()->getStamp();
+    FIFO.updateTime(bestts);
 
     //get the events and see if we can get a ball observation
-    emorph::vQueue q = vBottleIn.getSorted<emorph::ClusterEventGauss>();
+    q = vBottleIn.getSorted<emorph::ClusterEventGauss>();
 
     bool dogaze = false;
+    int n = 0;
     if(q.size()) {
 
         emorph::ClusterEventGauss * vc =
@@ -155,72 +160,89 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
 
         //and then get everything in the current window
         q = FIFO.getTW();
-        int n = q.size();
+        n = q.size();
 
         //compute the median
         std::vector<int> xs, ys;
         xs.resize(n); ys.resize(n);
         for(int i = 0; i < n; i++) {
-            vc = q[i]->getUnsafe<emorph::ClusterEventGauss>();
-            xs[i] = vc->getXCog();
-            ys[i] = vc->getYCog();
+            emorph::ClusterEventGauss *vtw = q[i]->getUnsafe<emorph::ClusterEventGauss>();
+            xs[i] = vtw->getXCog();
+            ys[i] = vtw->getYCog();
+            p_eyez = std::max(p_eyez, (double)vtw->getXSigma2());
         }
 
         std::sort(xs.begin(), xs.end());
         std::sort(ys.begin(), ys.end());
 
-        switch(n % 2) {
-        case(0):
-            medx = (xs[n / 2 - 1] + xs[n / 2]) / 2.0;
-            medx = (ys[n / 2 - 1] + ys[n / 2]) / 2.0;
-            break;
-        case(1):
-            medx = xs[n / 2];
-            medy = ys[n / 2];
-            break;
-        }
+        medx = xs[n / 2];
+        medy = ys[n / 2];
+
+//        switch(n % 2) {
+//        case(0):
+//            medx = (xs[n / 2 - 1] + xs[n / 2]) / 2.0;
+//            medx = (ys[n / 2 - 1] + ys[n / 2]) / 2.0;
+//            break;
+//        case(1):
+//            medx = xs[n / 2];
+//            medy = ys[n / 2];
+//            break;
+//        }
 
         //do error check for too much noise
         double medstdx = 0, medstdy = 0;
         for(int i = 0; i < n; i++) {
             medstdx += pow(xs[i] - medx, 2.0);
-            medstdy += pow(ys[i] - medx, 2.0);
+            medstdy += pow(ys[i] - medy, 2.0);
         }
         medstdx = sqrt(medstdx / n);
         medstdy = sqrt(medstdy / n);
 
-        if(medstdx < 20 && medstdy < 20 && q.size() > 10)
-            dogaze = true;
+        if(abs(vc->getXCog() - medx) < medstdx && abs(vc->getYCog() - medy) < medstdy) {
+            if(medstdx < 20 && medstdy < 20 && n > 80)
+                dogaze = true;
+        }
 
-    } else {
-        //we just need to get our updated TS
-        q = vBottleIn.getAllSorted();
-        bestts = q.back()->getStamp();
     }
 
-    //find the median position in xyz space
+
+    //DO GAZE
+    //find the median position in xyz space and gaze there
     yarp::sig::Vector px(2);        //pixel in uv
     yarp::sig::Vector x(3); x = 0;  //position in xyz (eye ref frame)
-
-
     px[0] = medy;
     px[1] = 127 - medx;
-
     if(gazedriver.isValid() && gazingActive && dogaze) {
 
         //turn u/v into xyz
-        gazecontrol->get3DPoint(0, px, p_eyez, x);
+        gazecontrol->get3DPoint(0, px, (-2.5 * p_eyez + 70)/100.0, x);
         gazecontrol->lookAtFixationPoint(x);
     }
 
 
+    //DUMP POSITIONS
+    //find the position of the eyes in the current position
+    yarp::sig::Vector cpx(2); cpx[0] = 64; cpx[1] = 64;
+    yarp::sig::Vector cx(3); cx = 0;  //position in xyz (eye ref frame)
+    if(gazedriver.isValid()) {
+        gazecontrol->get3DPoint(0, cpx, (-2.5 * p_eyez + 70)/100.0, cx);
+    }
+    if(positionOutPort.getOutputCount()) {
+        yarp::os::Bottle &posdump = positionOutPort.prepare();
+        posdump.clear();
+        posdump.addInt(bestts);
+        posdump.addDouble(cx[0]); posdump.addDouble(cx[1]); posdump.addDouble(cx[2]);
+        posdump.addDouble(x[0]); posdump.addDouble(x[1]); posdump.addDouble(x[2]);
+        positionOutPort.setEnvelope(st);
+        positionOutPort.write();
+    }
+
+
+    //PASS THROUGH EVENTS
     if(eventsOutPort.getOutputCount()) {
         //add all the address and flow events
         emorph::vBottle &vBottleOut = eventsOutPort.prepare();
         vBottleOut = vBottleIn;
-        //vBottleOut.clear();
-        //vBottleOut.append<emorph::AddressEvent>(vBottleIn);
-        //vBottleOut.append<emorph::FlowEvent>(vBottleIn);
 
         //add the gaze point event
         if(dogaze) {
@@ -233,7 +255,7 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
             circevent.setYSigma2(1);
             circevent.setID(1);
             vBottleOut.addEvent(circevent);
-            //std::cout << medx << " " << medy << " " << p_eyez << std::endl;
+
         }
 
         //write the output
@@ -243,16 +265,7 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
 
 
 
-//    if(positionOutPort.getOutputCount()) {
-//        yarp::os::Bottle &posdump = positionOutPort.prepare();
-//        posdump.clear();
-//        posdump.addInt(qforts.front()->getStamp());
-//        posdump.addDouble(cx[0]); posdump.addDouble(cx[1]); posdump.addDouble(cx[2]);
-//        posdump.addDouble(x[0]); posdump.addDouble(x[1]); posdump.addDouble(x[2]);
-//        yarp::os::Stamp st; this->getEnvelope(st);
-//        positionOutPort.setEnvelope(st);
-//        positionOutPort.write();
-//    }
+
 
     return;
 
