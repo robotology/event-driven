@@ -79,6 +79,8 @@ public:
     ///
     void addEvent(emorph::vEvent &event);
 
+    void updateTime(int ctime);
+
     ///
     /// \brief getMostRecent
     /// \return

@@ -62,8 +62,24 @@ vWindow vWindow::operator=(const vWindow& that)
 void vWindow::addEvent(vEvent &event)
 {
 
+    //add event in critical section
+    mutex.wait();
+
+    q.push_back(&event);
+    AddressEvent *c = event.getAs<AddressEvent>();
+    if(c) spatial[c->getY()][c->getX()].push_back(q.back());
+
+    mutex.post();
+
+
+    //remove any events falling out the back of the window
+    updateTime(event.getStamp());
+
+}
+
+void vWindow::updateTime(int ctime)
+{
     //calculate event window boundaries based on latest timestamp
-    int ctime = event.getStamp();
     int upper = ctime + vtsHelper::maxStamp() - duration;
     int lower = ctime - duration;
 
@@ -71,12 +87,8 @@ void vWindow::addEvent(vEvent &event)
     //enter critcal section
     mutex.wait();
 
-    q.push_back(&event);
-    AddressEvent *c = event.getAs<AddressEvent>();
-    if(c) spatial[c->getY()][c->getX()].push_back(q.back());
-
     //remove any events falling out the back of the window
-    while(true) {
+    while(q.size()) {
 
         int vtime = q.front()->getStamp();
         if((vtime > ctime && vtime < upper) || vtime < lower) {
@@ -87,7 +99,9 @@ void vWindow::addEvent(vEvent &event)
             break;
         }
     }
+
     mutex.post();
+
 
 }
 
