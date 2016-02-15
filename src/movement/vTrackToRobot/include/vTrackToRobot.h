@@ -39,16 +39,21 @@ private:
     yarp::os::BufferedPort<yarp::os::Bottle> cartOutPort;
     yarp::os::BufferedPort<yarp::os::Bottle> scopeOutPort;
     yarp::os::BufferedPort<yarp::os::Bottle> positionOutPort;
+    yarp::os::BufferedPort<emorph::vBottle> eventsOutPort;
     yarp::dev::PolyDriver gazedriver;
     yarp::dev::IGazeControl *gazecontrol;
 
     enum { fromgaze, fromsize, fromstereo };
-
     int method;
     bool gazingActive;
+
+
+    emorph::vWindow FIFO;
     std::deque<yarp::sig::Vector> recentgazelocs;
     std::deque<double> recenteyezs;
     double p_eyez;
+    double medx;
+    double medy;
 
 public:
     
