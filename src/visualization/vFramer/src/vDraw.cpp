@@ -690,82 +690,90 @@ isoDraw::isoDraw()
 
     maxdt = 1;
 
-    theta1 = 45 * 3.14 / 180.0;
-    theta2 = -60 * 3.14 / 180.0;
+    theta1 = -45 * 3.14 / 180.0;
+    theta2 = 30 * 3.14 / 180.0;
 
     c1 = cos(theta1); s1 = sin(theta1);
     c2 = cos(theta2); s2 = sin(theta2);
 
-    imageheight = Ylimit * 2;
-    imagewidth = (c1 * Xlimit - s1 * 0) - (c1 * 0 - s1 * Ylimit) + 2;
-    imagexshift = abs(c1 * 0 - s1 * Ylimit) + 1;
-    scale = (imageheight  - c2 * (s1 * Xlimit + c1 * Ylimit)) / -s2 - 1;
+    //int x = c1*px - s1*pts + imagexshift;
+    //int y = c2*py - s2*(-s1*px - c1*pts) + imageyshift;
+    scale = Xlimit;
+    imagexshift = 0 + 10;
+    imageyshift = -(c2*0 - s2*(-s1*Xlimit - c1*0)) + 1;
+
+    int imageymax = c2*Ylimit - s2*(-s1*0 - c1*scale);
+    int imagexmax = c1*Xlimit - s1*scale;
+
+    imagewidth = imagexmax + imagexshift + 1; //(c1 * Xlimit - s1 * 0) - (c1 * 0 - s1 * Ylimit) + 2;
+    imageheight = imageymax + imageyshift + 1; // * 2;
+
 
     baseimage = cv::Mat(imageheight, imagewidth, CV_8UC3);
     baseimage.setTo(0);
+
 
     //cv::putText(baseimage, std::string("X"), cv::Point(100, 100), 1, 0.5, CV_RGB(0, 0, 0));
 
     cv::Scalar c = CV_RGB(125, 125, 125);
     int x, y;
     for(int xi = 0; xi < Xlimit; xi++) {
-        x = c1 * xi - s1 * 0;
-        y = c2 * (s1 * xi + c1 * 0) - (s2 * scale);
-        baseimage.at<cv::Vec3b>(y, x + imagexshift) = cv::Vec3b(255, 255, 255);
-
-
-        x = c1 * xi - s1 * Ylimit;
-        y = c2 * (s1 * xi + c1 * Ylimit) - (s2 * scale);
-        baseimage.at<cv::Vec3b>(y, x + imagexshift) = cv::Vec3b(255, 255, 255);
+        x = c1*xi - s1*0 + imagexshift;
+        y = c2*0 - s2*(-s1*xi - c1*0) + imageyshift;
+        baseimage.at<cv::Vec3b>(y, x) = cv::Vec3b(255, 255, 255);
 
         if(xi == Xlimit / 2) {
-            cv::putText(baseimage, std::string("y"), cv::Point(x-10+imagexshift, y+5),
+            cv::putText(baseimage, std::string("x"), cv::Point(x-10, y-8),
                         cv::FONT_ITALIC, 0.5, c, 1, 8, true);
         }
 
-        x = c1 * xi - s1 * 0;
-        y = c2 * (s1 * xi + c1 * 0) - (s2 * 0);
-        baseimage.at<cv::Vec3b>(y, x + imagexshift) = cv::Vec3b(255, 255, 255);
+        x = c1*xi - s1*0 + imagexshift;
+        y = c2*Ylimit - s2*(-s1*xi - c1*0) + imageyshift;
+        baseimage.at<cv::Vec3b>(y, x) = cv::Vec3b(255, 255, 255);
+
+        x = c1*xi - s1*scale + imagexshift;
+        y = c2*Ylimit - s2*(-s1*xi - c1*scale) + imageyshift;
+        baseimage.at<cv::Vec3b>(y, x) = cv::Vec3b(255, 255, 255);
 
     }
 
-    for(int yi = 0; yi < Ylimit; yi++) {
-        x = c1 * 0 - s1 * yi;
-        y = c2 * (s1 * 0 + c1 * yi) - (s2 * scale);
-        baseimage.at<cv::Vec3b>(y, x + imagexshift) = cv::Vec3b(255, 255, 255);
+    for(int yi = 0; yi <= Ylimit; yi++) {
+        x = c1*0 - s1*0 + imagexshift;
+        y = c2*yi - s2*(-s1*0 - c1*0) + imageyshift;
+        baseimage.at<cv::Vec3b>(y, x) = cv::Vec3b(255, 255, 255);
 
         if(yi == Ylimit / 2) {
-            cv::putText(baseimage, std::string("x"), cv::Point(x-10+imagexshift, y-10),
+            cv::putText(baseimage, std::string("y"), cv::Point(x-9, y),
                         cv::FONT_ITALIC, 0.5, c, 1, 8, true);
         }
 
-        x = c1 * Xlimit - s1 * yi;
-        y = c2 * (s1 * Xlimit + c1 * yi) - (s2 * scale);
-        baseimage.at<cv::Vec3b>(y, x + imagexshift) = cv::Vec3b(255, 255, 255);
+        x = c1*Xlimit - s1*0 + imagexshift;
+        y = c2*yi - s2*(-s1*Xlimit - c1*0) + imageyshift;
+        baseimage.at<cv::Vec3b>(y, x) = cv::Vec3b(255, 255, 255);
 
-        x = c1 * 0 - s1 * yi;
-        y = c2 * (s1 * 0 + c1 * yi) - (s2 * 0);
-        baseimage.at<cv::Vec3b>(y, x + imagexshift) = cv::Vec3b(255, 255, 255);
+        x = c1*Xlimit - s1*scale + imagexshift;
+        y = c2*yi - s2*(-s1*Xlimit - c1*scale) + imageyshift;
+        baseimage.at<cv::Vec3b>(y, x) = cv::Vec3b(255, 255, 255);
 
     }
 
     for(int tsi = 0; tsi < scale; tsi++) {
-        x = c1 * 0 - s1 * Ylimit;
-        y = c2 * (s1 * 0 + c1 * Ylimit) - (s2 * tsi);
-        baseimage.at<cv::Vec3b>(y, x + imagexshift) = cv::Vec3b(255, 255, 255);
-        if(tsi == (int)scale / 2) {
-            cv::putText(baseimage, std::string("t"), cv::Point(x+1+imagexshift, y-10),
+        x = c1*Xlimit - s1*tsi + imagexshift;
+        y = c2*0 - s2*(-s1*Xlimit - c1*tsi) + imageyshift;
+        baseimage.at<cv::Vec3b>(y, x) = cv::Vec3b(255, 255, 255);
+
+        if(tsi == scale / 2) {
+            cv::putText(baseimage, std::string("t"), cv::Point(x, y-11),
                         cv::FONT_ITALIC, 0.5, c, 1, 8, true);
         }
 
-        x = c1 * 0 - s1 * 0;
-        y = c2 * (s1 * 0 + c1 * 0) - (s2 * tsi);
-        baseimage.at<cv::Vec3b>(y, x + imagexshift) = cv::Vec3b(255, 255, 255);
+        x = c1*Xlimit - s1*tsi + imagexshift;
+        y = c2*Ylimit - s2*(-s1*Xlimit - c1*tsi) + imageyshift;
+        baseimage.at<cv::Vec3b>(y, x) = cv::Vec3b(255, 255, 255);
 
-        x = c1 * Xlimit - s1 * 0;
-        y = c2 * (s1 * Xlimit + c1 * 0) - (s2 * tsi);
-        baseimage.at<cv::Vec3b>(y, x + imagexshift) = cv::Vec3b(255, 255, 255);
-
+        x = c1*0 - s1*tsi + imagexshift;
+        y = c2*Ylimit - s2*(-s1*0 - c1*tsi) + imageyshift;
+        baseimage.at<cv::Vec3b>(y, x) = cv::Vec3b(255, 255, 255);
     }
 
 }
@@ -778,8 +786,8 @@ std::string isoDraw::getTag()
 void isoDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
 {
 
-    image = baseimage.clone();
-    image.setTo(255);
+    cv::Mat isoimage = baseimage.clone();
+    isoimage.setTo(255);
 
     if(checkStagnancy(eSet) > clearThreshold) {
         return;
@@ -790,10 +798,7 @@ void isoDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
     int dt = eSet.back()->getStamp() - eSet.front()->getStamp();
     if(dt < 0) dt += emorph::vtsHelper::maxStamp();
     maxdt = std::max(maxdt, dt);
-    //double maxpossibley = c2 * (s1 * Xlimit + c1 * Ylimit) - (s2 * maxdt);
-    //double scale = (imageheight - minpossibley);
 
-    //std::cout << scale << std::endl;
 
     emorph::vQueue::const_iterator qi;
     for(qi = eSet.begin(); qi != eSet.end(); qi++) {
@@ -804,64 +809,58 @@ void isoDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
         double dt = aep->getStamp() - eSet.front()->getStamp();
         if(dt < 0) dt += emorph::vtsHelper::maxStamp();
         dt /= (double)maxdt;
-        int ts = dt * scale;
-        int x = c1 * aep->getX() - s1 * (Ylimit - aep->getY()) + imagexshift;
-        int y = c2 * (s1 * aep->getX()+ c1 * (Ylimit - aep->getY())) - (s2 * ts);
+        int pts = (1-dt) * scale;
+        int px = aep->getY();
+        int py = aep->getX();
+
+        int x = c1*px - s1*pts + imagexshift;
+        int y = c2*py - s2*(-s1*px - c1*pts) + imageyshift;
+
+        //int x = c1 * ts - s1 * (Ylimit - aep->getY()) + imagexshift;
+        //int y = c2 * (s1 * ts + c1 * (Ylimit - aep->getY())) - (s2 * aep->getX());
+//        int x = c1 * aep->getX() - s1 * (Ylimit - aep->getY()) + imagexshift;
+//        int y = c2 * (s1 * aep->getX()+ c1 * (Ylimit - aep->getY())) - (s2 * ts);
 
         if(x < 0 || x >= imagewidth || y < 0 || y >= imageheight) {
-            //std::cerr << "Incorrect mapping in isodraw:" << std::endl;
-            //std::cerr << "TS: " << ts << " x: " << x << " y: " << y << std::endl;
             continue;
         }
 
         if(!aep->getPolarity()) {
-            //image.at<cv::Vec3b>(y, x) = cv::Vec3b(255 - (95*dt), 255 - 255*dt, 255 - 95*dt);
             if(dt < 0.9)
-                image.at<cv::Vec3b>(y, x) = cv::Vec3b(80, 0, 80);
+                isoimage.at<cv::Vec3b>(y, x) = cv::Vec3b(80, 0, 80);
             else
-                image.at<cv::Vec3b>(y, x) = cv::Vec3b(255, 0, 255);
+                isoimage.at<cv::Vec3b>(y, x) = cv::Vec3b(255, 0, 255);
         } else {
-            //image.at<cv::Vec3b>(y, x) = cv::Vec3b(255 - 255*dt, 255 - 195*dt, 255 - 255*dt);
             if(dt < 0.9)
-                image.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 80, 0);
+                isoimage.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 80, 0);
             else
-                image.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 255, 0);
+                isoimage.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 255, 0);
         }
 
-
-        cv::Vec3b cpc = image.at<cv::Vec3b>(y, x);
-
-
-//        if(!aep->getPolarity())
-//        {
-//            //blue
-//            if(cpc[0] == 1) cpc[0] = 0;   //if positive and negative
-//            else cpc[0] = 160;            //if only positive
-//            //green
-//            if(cpc[1] == 60) cpc[1] = 255;
-//            else cpc[1] = 0;
-//            //red
-//            if(cpc[2] == 0) cpc[2] = 255;
-//            else cpc[2] = 160;
-//        }
-//        else
-//        {
-//            //blue
-//            if(cpc[0] == 160) cpc[0] = 0;   //negative and positive
-//            else cpc[0] = 1;                //negative only
-//            //green
-//            if(cpc[1] == 0) cpc[1] = 255;
-//            else cpc[1] = 60;
-//            //red
-//            if(cpc.val[2] == 160) cpc[2] = 255;
-//            else cpc[2] = 0;
-//        }
-
-//        image.at<cv::Vec3b>(y, x) = cpc;
     }
 
-    image = image - baseimage;
-    //cv::resize(image, image, image.size() * 8);
+    if(!image.empty()) {
+        for(int y = 0; y < image.rows; y++) {
+            for(int x = 0; x < image.cols; x++) {
+
+                if(image.at<cv::Vec3b>(y, x)[0] != 255
+                        || image.at<cv::Vec3b>(y, x)[1] != 255
+                        || image.at<cv::Vec3b>(y, x)[2] != 255) {
+
+                    int tx = c1*x - s1*0 + imagexshift;
+                    int ty = c2*y - s2*(-s1*x - c1*0) + imageyshift;
+                    if(tx < 0 || tx >= imagewidth || ty < 0 || ty >= imageheight)
+                        continue;
+
+                    isoimage.at<cv::Vec3b>(ty, tx) = image.at<cv::Vec3b>(y, x);
+                }
+            }
+        }
+    }
+
+
+
+    image = isoimage - baseimage;
 
 }
 

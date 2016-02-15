@@ -284,6 +284,7 @@ private:
     int imagewidth;
     int imageheight;
     int imagexshift;
+    int imageyshift;
     double scale;
 
 
