@@ -212,11 +212,12 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
     yarp::sig::Vector x(3); x = 0;  //position in xyz (eye ref frame)
     px[0] = medy;
     px[1] = 127 - medx;
-    if(gazedriver.isValid() && gazingActive && dogaze) {
+    if(gazedriver.isValid() && dogaze) {
 
         //turn u/v into xyz
         gazecontrol->get3DPoint(0, px, (-2.5 * p_eyez + 70)/100.0, x);
-        gazecontrol->lookAtFixationPoint(x);
+        if(gazingActive)
+            gazecontrol->lookAtFixationPoint(x);
     }
 
 
