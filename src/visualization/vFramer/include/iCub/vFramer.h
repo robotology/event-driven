@@ -56,6 +56,8 @@ private:
     //! storage of window snapshots
     std::map<int, vQueue> snaps;
 
+    yarp::os::Stamp yarptime;
+
 public:
 
     ///
@@ -69,6 +71,8 @@ public:
     /// \param windowsize (in us)
     ///
     void setWindowSize(int windowsize);
+
+    yarp::os::Stamp getYarpTime() {return yarptime;}
 
     ///
     /// \brief snapshotAllWindows freeze the current list of events for each
@@ -105,6 +109,9 @@ private:
 
     //! the period between images being published
     double period;
+
+    double pyarptime;
+
 
     //! the vBottle reading port that splits events by channel
     vReadAndSplit vReader;

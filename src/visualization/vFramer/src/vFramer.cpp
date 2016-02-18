@@ -54,6 +54,8 @@ bool vReadAndSplit::open(const std::string portName)
 void vReadAndSplit::onRead(emorph::vBottle &incoming)
 {
 
+    this->getEnvelope(yarptime);
+
     emorph::vQueue q = incoming.getAllSorted();
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
         int ch = (*qi)->getChannel();
@@ -62,6 +64,7 @@ void vReadAndSplit::onRead(emorph::vBottle &incoming)
         }
         windows[ch]->addEvent(**qi);
     }
+
 }
 
 void vReadAndSplit::snapshotAllWindows()
@@ -98,32 +101,20 @@ vFramerModule::~vFramerModule()
 
 bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
 {
-    //read in config file
 
-
-    //set the module name for port naming
-    std::string moduleName = rf.find("name").asString();
-    if(moduleName == "")
-        moduleName = "vFramer";
+    //admin options
+    std::string moduleName =
+            rf.check("name", yarp::os::Value("vFramer")).asString();
     setName(moduleName.c_str());
 
-    //set the vFrame options (sensor size and eventlife
-    int retinaHeight = rf.find("retinaHeight").asInt();
-    if(!retinaHeight) {
-        std::cerr << "Warning: setting retina size to default values (128x128)."
-                     "Ensure this is correct for your sensor" << std::endl;
-        retinaHeight = 128;
-    }
+    int retinaHeight = rf.check("height", yarp::os::Value(128)).asInt();
+    int retinaWidth = rf.check("width", yarp::os::Value(128)).asInt();
 
-    int retinaWidth = rf.find("retinaWidth").asInt();
-    if(!retinaWidth) {
-        retinaWidth = 128;
-    }
-
-    double eventWindow = rf.find("eventWindow").asDouble();
-    if(eventWindow == 0) eventWindow = 0.5;
+    double eventWindow =
+            rf.check("eventWindow", yarp::os::Value(0.5)).asDouble();
     eventWindow = eventWindow / vtsHelper::tstosecs();
 
+    //viewer options
     //set up the default channel list
     yarp::os::Bottle tempDisplayList, *bp;
     tempDisplayList.addInt(0);
@@ -189,10 +180,9 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
     vReader.open(moduleName);
 
     //set up the frameRate
-    period = rf.find("frameRate").asInt();
-    if(period == 0) period = 30;
-    period = 1.0 / period;
+    period = 1.0 / rf.check("frameRate", yarp::os::Value(30)).asInt();
 
+    pyarptime = 0;
 
     return true;
 
@@ -232,6 +222,24 @@ bool vFramerModule::updateModule()
 {
 
     if(isStopping()) return false;
+
+    yarp::os::Stamp yarptime = vReader.getYarpTime();
+
+    if(yarptime.isValid()) {
+        //std::cout << "yarptime valid: " << yarptime.getTime() << std::endl;
+        double dt = yarptime.getTime() - pyarptime;
+        if(dt < 0)
+            //we restarted something from yarpdataplayer
+            pyarptime = yarptime.getTime();
+
+        if(yarptime.getTime() - pyarptime < period)
+            return true;
+        pyarptime = yarptime.getTime();
+    } else {
+        return true;
+        //std::cout << "invalid" << std::endl;
+    }
+
     //get a snapshot of current events
     vReader.snapshotAllWindows();
 
@@ -262,6 +270,7 @@ bool vFramerModule::updateModule()
         cv::Mat publishMat((IplImage *)o.getIplImage(), false);
         cv::flip(canvas, canvas, 0);
         canvas.copyTo(publishMat);
+        if(yarptime.isValid()) outports[i]->setEnvelope(yarptime);
         outports[i]->write();
 
     }
@@ -271,7 +280,7 @@ bool vFramerModule::updateModule()
 
 double vFramerModule::getPeriod()
 {
-    return period;
+    return 0.3 * period;
 }
 
 } //namespace emorph
