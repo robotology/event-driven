@@ -22,46 +22,46 @@ void vBottle::addEvent(emorph::vEvent &e) {
 
 }
 
-void vBottle::append(vBottle &eb)
-{
-    //we need to access the data in eb as if it were a normal bottle
-    //so we cast it to a Bottle
+//void vBottle::append(vBottle &eb)
+//{
+//    //we need to access the data in eb as if it were a normal bottle
+//    //so we cast it to a Bottle
 
-    //TODO: just make sure the functions are available but protected should
-    //      make the casting unnecessary
-    yarp::os::Bottle * bb = dynamic_cast<yarp::os::Bottle *>(&eb);
+//    //TODO: just make sure the functions are available but protected should
+//    //      make the casting unnecessary
+//    yarp::os::Bottle * bb = dynamic_cast<yarp::os::Bottle *>(&eb);
 
-    //for each list of events
-    for(int tagi = 0; tagi < bb->size(); tagi+=2) {
+//    //for each list of events
+//    for(int tagi = 0; tagi < bb->size(); tagi+=2) {
 
-        //get the appended event type
-        const std::string tagname = bb->get(tagi).asString();
-        if(!tagname.size()) {
-            std::cerr << "Warning: Could not get tagname during vBottle append."
-                         "Check vBottle integrity." << std::endl;
-            continue;
-        }
+//        //get the appended event type
+//        const std::string tagname = bb->get(tagi).asString();
+//        if(!tagname.size()) {
+//            std::cerr << "Warning: Could not get tagname during vBottle append."
+//                         "Check vBottle integrity." << std::endl;
+//            continue;
+//        }
 
-        //and the contents to append
-        yarp::os::Bottle *b_from = bb->get(tagi+1).asList();
-        if(!b_from->size()) {
-            std::cerr << "Warning: From-list empty during vBottle append."
-                         "Check vBottle integrity." << std::endl;
-            continue;
-        }
+//        //and the contents to append
+//        yarp::os::Bottle *b_from = bb->get(tagi+1).asList();
+//        if(!b_from->size()) {
+//            std::cerr << "Warning: From-list empty during vBottle append."
+//                         "Check vBottle integrity." << std::endl;
+//            continue;
+//        }
 
-        //get the correct bottle to append to (or create a new one)
-        yarp::os::Bottle *b_to = yarp::os::Bottle::find(tagname).asList();
-        if(!b_to) {
-            yarp::os::Bottle::addString(tagname);
-            b_to = &(yarp::os::Bottle::addList());
-        }
+//        //get the correct bottle to append to (or create a new one)
+//        yarp::os::Bottle *b_to = yarp::os::Bottle::find(tagname).asList();
+//        if(!b_to) {
+//            yarp::os::Bottle::addString(tagname);
+//            b_to = &(yarp::os::Bottle::addList());
+//        }
 
-        //and do it
-        b_to->append(*b_from);
-    }
+//        //and do it
+//        b_to->append(*b_from);
+//    }
 
-}
+//}
 
 //void vBottle::getAll(emorph::vQueue &q)
 //{
