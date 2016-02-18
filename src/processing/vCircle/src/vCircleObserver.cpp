@@ -229,7 +229,7 @@ yarp::sig::ImageOf<yarp::sig::PixelBgr> vCircleThread::makeDebugImage(double ref
             if(H(y, x)*Hstr >= refval*0.9)
                 canvas(y, width - 1 - x) = yarp::sig::PixelBgr(255, 255, 255);
             else {
-                int I = 255.0 * pow(H(y, x)*Hstr / refval, 2.0);
+                int I = 255.0 * pow(H(y, x)*Hstr / refval, 1.0);
                 if(I > 254) I = 254;
                 //I = 0;
                 if(directed)
