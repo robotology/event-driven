@@ -149,6 +149,7 @@ private:
     int qduration;
     double threshold;
     int fifolength;
+    bool directed;
 
     //internal data
     emorph::vSurface surface;

@@ -260,6 +260,7 @@ vCircleMultiSize::vCircleMultiSize(double threshold, std::string qType,
     this->qType = qType;
     this->threshold = threshold;
     this->fifolength = fifolength;
+    this->directed = directed;
 
     for(int r = rLow; r <= rHigh; r++)
         htransforms.push_back(new vCircleThread(r, directed, parallel, height, width, arclength));
@@ -346,13 +347,18 @@ void vCircleMultiSize::addFixed(emorph::vQueue &additions)
 
     emorph::vQueue procQueue;
     procType.clear();
+    emorph::AddressEvent *v;
 
     emorph::vQueue::iterator vi;
     for(vi = additions.begin(); vi != additions.end(); vi++) {
 
         //GET THE EVENTS AS CORRECT TYPE
         //emorph::AddressEvent *v = (*vi)->getAs<emorph::AddressEvent>();
-        emorph::FlowEvent *v = (*vi)->getAs<emorph::FlowEvent>();
+        if(directed)
+            v = (*vi)->getAs<emorph::FlowEvent>();
+        else
+            v = (*vi)->getAs<emorph::AddressEvent>();
+
         if(!v || v->getChannel()) continue;
 
         procQueue.push_back(v);
@@ -367,8 +373,7 @@ void vCircleMultiSize::addFixed(emorph::vQueue &additions)
         emorph::vQueue::iterator i = FIFO.begin();
         while(i != FIFO.end()) {
             //we only add Address Events therefore we can do an unsafe cast
-            //v = (*i)->getUnsafe<emorph::AddressEvent>();
-            v = (*i)->getUnsafe<emorph::FlowEvent>();
+            v = (*i)->getUnsafe<emorph::AddressEvent>(); //this may break now?
             removed = v->getX() == cx && v->getY() == cy;
             if(removed) {
                 procQueue.push_back(v);
@@ -450,10 +455,14 @@ void vCircleMultiSize::addSurf(emorph::vQueue &additions)
 
     emorph::vQueue procQueue;
     procType.clear();
+    emorph::AddressEvent *v;
 
     emorph::vQueue::iterator qi;
     for(qi = additions.begin(); qi != additions.end(); qi++) {
-        emorph::AddressEvent * v = (*qi)->getAs<emorph::AddressEvent>();
+        if(directed)
+            v = (*qi)->getAs<emorph::FlowEvent>();
+        else
+            v = (*qi)->getAs<emorph::AddressEvent>();
         if(!v) continue;
         procQueue.push_back(v);
         procType.push_back(1);
