@@ -48,7 +48,7 @@ private:
     bool gazingActive;
 
 
-    emorph::vWindow FIFO;
+    emorph::temporalWindow FIFO;
     std::deque<yarp::sig::Vector> recentgazelocs;
     std::deque<double> recenteyezs;
     double p_eyez;

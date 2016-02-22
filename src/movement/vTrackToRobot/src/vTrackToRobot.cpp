@@ -136,7 +136,7 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
     //we just need to get our updated TS
     emorph::vQueue q = vBottleIn.getAllSorted();
     int bestts = q.back()->getStamp();
-    FIFO.updateTime(bestts);
+    FIFO.removeEvents(*(q.back()));
 
     //get the events and see if we can get a ball observation
     q = vBottleIn.getSorted<emorph::ClusterEventGauss>();
