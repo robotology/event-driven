@@ -52,6 +52,12 @@ while(ischar(l))
     temp = length(bottle) / 2;
     vi = vi + length(bottle) / 2;
     bottle = reshape(bottle, 2, length(bottle)/2)';
+    errors = bottle(:, 1) > 0 | bottle(:, 2) < 0 | bottle(:, 2) > 65535;
+    if(sum(errors))
+        display(['Bottle Data Corrupt (' int2str(sum(errors)) ') in ' ...
+            'bottle index: ' int2str(bi)]);
+        bottle = bottle(~errors, :);
+    end
     
     textformat = zeros(size(bottle, 1), 6);
     textformat(:, TS) = bitand(int32(bottle(:, 1)), TSBITS) + wraps * MAXSTAMP;
