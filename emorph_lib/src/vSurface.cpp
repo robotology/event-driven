@@ -25,6 +25,7 @@ vSurface::vSurface(int width, int height)
     this->height = height;
     this->mostRecent = NULL;
     this->justRemoved = NULL;
+    eventCount = 0;
 
     spatial.resize(height);
     for(int y = 0; y < height; y++) {
@@ -46,6 +47,7 @@ vSurface vSurface::operator=(const vSurface& that)
     //remake like 'that'
     this->width = that.width;
     this->height = that.height;
+    this->eventCount = that.eventCount;
     this->mostRecent = that.mostRecent;
     this->justRemoved = that.justRemoved;
     if(this->justRemoved) justRemoved->referto();
@@ -84,6 +86,8 @@ void vSurface::clear()
         mostRecent = NULL;
     }
 
+    eventCount = 0;
+
 }
 
 vEvent * vSurface::addEvent(AddressEvent &event)
@@ -100,11 +104,15 @@ vEvent * vSurface::addEvent(AddressEvent &event)
 
     //if we previously had an event move it to the justRemoved
     int x = event.getX(); int y = event.getY();
-    if(spatial[y][x]) justRemoved = spatial[y][x];
+    if(spatial[y][x]) {
+        justRemoved = spatial[y][x];
+        eventCount--;
+    }
 
     //put our new event in and add a reference
     spatial[y][x] = &event;
     event.referto();
+    eventCount++;
 
     //then set our mostRecent
     mostRecent = spatial[y][x];
@@ -166,6 +174,11 @@ vQueue vEdge::flowremove(FlowEvent *vf)
     vQueue removed;
 
     int x = vf->getX(); int y = vf->getY();
+    if(spatial[y][x]) {
+        removed.push_back(spatial[y][x]);
+        spatial[y][x]->destroy();
+    }
+
     double vx = vf->getVy(); double vy = vf->getVx();
     double mag = sqrt(pow(vx, 2.0) + pow(vy, 2.0));
     vx /= (mag * COS135on2);
@@ -349,6 +362,13 @@ vQueue vEdge::flowremove(FlowEvent *vf)
 vQueue vEdge::addressremove(AddressEvent * v)
 {
     vQueue removed;
+
+    int x = v->getX(); int y = v->getY();
+    if(spatial[y][x]) {
+        removed.push_back(spatial[y][x]);
+        spatial[y][x]->destroy();
+    }
+
     return removed;
 
     for(int y = -1 + v->getY(); y <= 1 + v->getY(); y++) {
@@ -387,7 +407,7 @@ vQueue vEdge::addEventToEdge(AddressEvent *event)
 {
     vQueue removed;
 
-
+    if(!event) return removed;
 
     //enter critical section
     mutex.wait();
@@ -398,7 +418,16 @@ vQueue vEdge::addEventToEdge(AddressEvent *event)
         removed = addressremove(event);
     } else {
         removed = flowremove(vf);
+
     }
+
+    if(trackCount) {
+        if(vf) eventCount++;
+        for(vQueue::iterator qi = removed.begin(); qi != removed.end(); qi++)
+            if((*qi)->getAs<FlowEvent>())
+                eventCount--;
+    }
+
 //    if(!vf) {
 //        mutex.post();
 //        return removed;
@@ -406,10 +435,10 @@ vQueue vEdge::addEventToEdge(AddressEvent *event)
 
     //remove previous event at this pixel
     int x = event->getX(); int y = event->getY();
-    if(spatial[y][x]) {
-        removed.push_back(spatial[y][x]);
-        spatial[y][x]->destroy();
-    }
+//    if(spatial[y][x]) {
+//        removed.push_back(spatial[y][x]);
+//        spatial[y][x]->destroy();
+//    }
 
     //put our new event in and add a reference
     spatial[y][x] = event;
