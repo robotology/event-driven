@@ -105,8 +105,9 @@ private:
     bool trackCount;
     vEvent * addEvent(emorph::AddressEvent &event);
 
-    vQueue addressremove(AddressEvent * v);
-    vQueue flowremove(FlowEvent * vf);
+    bool addressremove(vQueue &removed, AddressEvent * v);
+    bool flowremove(vQueue &removed, FlowEvent *vf);
+    bool pepperCheck(int y, int x);
 
 public:
 
