@@ -62,8 +62,7 @@ public:
     virtual iterator erase(iterator __first, iterator __last);
     virtual iterator erase(iterator __position);
 
-    void sort();
-    void wrapSort();
+    void sort(bool respectWraps = false);
 
 };
 

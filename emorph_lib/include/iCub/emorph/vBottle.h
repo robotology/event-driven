@@ -160,7 +160,7 @@ public:
 
     vQueue getAllSorted() {
         vQueue q = getAll();
-        q.wrapSort();
+        q.sort(true);
         return q;
     }
 
