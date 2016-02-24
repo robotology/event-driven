@@ -212,7 +212,7 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
 
     //create event queue
     emorph::vQueue q = inBot.get<emorph::AddressEvent>();
-    q.wrapSort();
+    q.sort(true);
 
     if(!q.size()) {
         if(strictness) outPort.writeStrict();

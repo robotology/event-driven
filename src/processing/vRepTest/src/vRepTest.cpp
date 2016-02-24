@@ -64,6 +64,9 @@ double vRepTestHandler::getPeriod()
 vRepTest::vRepTest()
 {
     edge.track();
+    fWindow.setFixedWindowSize(1000);
+    tWindow.setTemporalWindowSize(125000);
+    edge.setThickness(1);
     //here we should initialise the module
     
 }
@@ -117,35 +120,42 @@ void vRepTest::interrupt()
 void vRepTest::onRead(emorph::vBottle &inBottle)
 {
     yarp::os::Stamp yts; getEnvelope(yts);
-
-    emorph::vBottle &outBottle = eventsOut.prepare();
-    outBottle.clear();
+    unsigned long unwts;
 
     //create event queue
     emorph::vQueue q = inBottle.getAll();
+    q.sort(true);
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {
+        unwts = unwrapper((*qi)->getStamp());
         tWindow.addEvent(**qi);
         fWindow.addEvent(**qi);
         lWindow.addEvent(**qi);
         edge.addEventToEdge((*qi)->getAs<emorph::AddressEvent>());
 
-
-        emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
-        if(v && v->getX() < 64)
-            outBottle.addEvent(**qi);
-
     }
 
     //dump modified dataset
-    if(eventsOut.getOutputCount()) {
+    if(eventsOut.getOutputCount() && q.size()) {
+        emorph::vBottle &outBottle = eventsOut.prepare();
+        outBottle.clear();
+
+        for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
+        {
+            emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
+            if(v && v->getX() < 64)
+                outBottle.addEvent(**qi);
+        }
+
         eventsOut.setEnvelope(yts);
         eventsOut.writeStrict();
     }
 
     //dump statistics
-    if(dumper.getOutputCount()) {
+    if(dumper.getOutputCount() && q.size()) {
         yarp::os::Bottle &outBottle = dumper.prepare();
+        outBottle.clear();
+        outBottle.addInt64(unwts);
         outBottle.addInt(tWindow.getEventCount());
         outBottle.addInt(fWindow.getEventCount());
         outBottle.addInt(lWindow.getEventCount());
@@ -156,7 +166,7 @@ void vRepTest::onRead(emorph::vBottle &inBottle)
     }
 
     //make debug image
-    if(imPort.getOutputCount()) {
+    if(imPort.getOutputCount() && q.size()) {
         yarp::sig::ImageOf<yarp::sig::PixelBgr> &image = imPort.prepare();
         image.resize(128 * 2 + 15, 128 * 2 + 15);
         image.zero();
@@ -175,8 +185,12 @@ void vRepTest::drawDebug(yarp::sig::ImageOf<yarp::sig::PixelBgr> &image, const e
 
     for(int i = 0; i < q.size(); i++) {
         emorph::AddressEvent *v = q[i]->getUnsafe<emorph::AddressEvent>();
-        image(v->getY()+yoff, image.width() - 1 - v->getX() - xoff) =
-                yarp::sig::PixelBgr(255, 0, 255);
+        if(q[i]->getAs<emorph::FlowEvent>())
+            image(v->getY()+yoff, image.width() - 1 - v->getX() - xoff) =
+                    yarp::sig::PixelBgr(0, 255, 0);
+        else
+            image(v->getY()+yoff, image.width() - 1 - v->getX() - xoff) =
+                    yarp::sig::PixelBgr(255, 0, 255);
     }
 
 }
