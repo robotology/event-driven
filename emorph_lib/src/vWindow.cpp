@@ -285,7 +285,6 @@ vQueue lifetimeWindow::removeEvents(vEvent &toAdd)
             modts += emorph::vtsHelper::maxStamp();
 
         bool samelocation = v->getX() == cx && v->getY() == cy;
-        samelocation = false;
 
         if(modts > v->getDeath() || samelocation) {
             //it could be dangerous if spatial gets more than 1 event per pixel
