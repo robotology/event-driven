@@ -27,7 +27,7 @@ bool vRepTestHandler::configure(yarp::os::ResourceFinder &rf)
 
 
     /* create the thread and pass pointers to the module parameters */
-    reptest.open(moduleName);
+    return reptest.open(moduleName);
 
     return true ;
 }
@@ -166,29 +166,35 @@ void vRepTest::onRead(emorph::vBottle &inBottle)
     }
 
     //make debug image
-    if(imPort.getOutputCount() && q.size()) {
+    if(imPort.getOutputCount() && yts.getCount() % 100 == 0) {
         yarp::sig::ImageOf<yarp::sig::PixelBgr> &image = imPort.prepare();
-        image.resize(128 * 2 + 15, 128 * 2 + 15);
+        //image.resize(128 * 2 + 15, 128 * 2 + 15);
+        image.resize(128, 128);
         image.zero();
-        drawDebug(image, tWindow.getTW(), 5, 5);
-        drawDebug(image, fWindow.getTW(), 127 + 10, 5);
-        drawDebug(image, lWindow.getTW(), 5, 127 + 10);
-        drawDebug(image, edge.getSURF(0, 127, 0, 127), 127+10, 127+10);
+        //drawDebug(image, tWindow.getTW(), 5, 5);
+        //drawDebug(image, fWindow.getTW(), 127 + 10, 5);
+        //drawDebug(image, lWindow.getTW(), 5, 127 + 10);
+        //drawDebug(image, edge.getSURF(0, 127, 0, 127), 127+10, 127+10);
+        //drawDebug(image, tWindow.getTW(), 0, 0);
+        //drawDebug(image, fWindow.getTW(), 0, 0);
+        //drawDebug(image, lWindow.getTW(), 0, 0);
+        drawDebug(image, edge.getSURF(0, 127, 0, 127), 0, 0);
         imPort.setEnvelope(yts);
         imPort.writeStrict();
     }
 
 }
 
-void vRepTest::drawDebug(yarp::sig::ImageOf<yarp::sig::PixelBgr> &image, const emorph::vQueue &q, int xoff, int yoff)
+void vRepTest::drawDebug(yarp::sig::ImageOf<yarp::sig::PixelBgr> &image,
+                         const emorph::vQueue &q, int xoff, int yoff)
 {
 
     for(int i = 0; i < q.size(); i++) {
         emorph::AddressEvent *v = q[i]->getUnsafe<emorph::AddressEvent>();
-        if(q[i]->getAs<emorph::FlowEvent>())
-            image(v->getY()+yoff, image.width() - 1 - v->getX() - xoff) =
-                    yarp::sig::PixelBgr(0, 255, 0);
-        else
+//        if(q[i]->getAs<emorph::FlowEvent>())
+//            image(v->getY()+yoff, image.width() - 1 - v->getX() - xoff) =
+//                    yarp::sig::PixelBgr(0, 255, 0);
+//        else
             image(v->getY()+yoff, image.width() - 1 - v->getX() - xoff) =
                     yarp::sig::PixelBgr(255, 0, 255);
     }
