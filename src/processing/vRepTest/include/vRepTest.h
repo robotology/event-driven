@@ -39,12 +39,14 @@ private:
     emorph::fixedWindow fWindow;
     emorph::lifetimeWindow lWindow;
 
+    std::string vistype;
     void drawDebug(yarp::sig::ImageOf<yarp::sig::PixelBgr> &image,
                    const emorph::vQueue &q, int xoff, int yoff);
 
 public:
     
     vRepTest();
+    bool setVisType(std::string vis) {this->vistype = vis;}
 
     bool    open(const std::string &name);
     void    close();

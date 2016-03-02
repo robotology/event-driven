@@ -25,6 +25,10 @@ bool vRepTestHandler::configure(yarp::os::ResourceFinder &rf)
             rf.check("name", yarp::os::Value("vRepTest")).asString();
     setName(moduleName.c_str());
 
+    std::string vis = rf.check("vis", yarp::os::Value("all")).asString();
+
+    reptest.setVisType(vis);
+
 
     /* create the thread and pass pointers to the module parameters */
     return reptest.open(moduleName);
@@ -143,7 +147,7 @@ void vRepTest::onRead(emorph::vBottle &inBottle)
         for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
         {
             emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
-            if(v && v->getX() < 64)
+            if(v && v->getX() < 128)
                 outBottle.addEvent(**qi);
         }
 
@@ -168,17 +172,28 @@ void vRepTest::onRead(emorph::vBottle &inBottle)
     //make debug image
     if(imPort.getOutputCount() && yts.getCount() % 100 == 0) {
         yarp::sig::ImageOf<yarp::sig::PixelBgr> &image = imPort.prepare();
-        //image.resize(128 * 2 + 15, 128 * 2 + 15);
-        image.resize(128, 128);
-        image.zero();
-        //drawDebug(image, tWindow.getTW(), 5, 5);
-        //drawDebug(image, fWindow.getTW(), 127 + 10, 5);
-        //drawDebug(image, lWindow.getTW(), 5, 127 + 10);
-        //drawDebug(image, edge.getSURF(0, 127, 0, 127), 127+10, 127+10);
-        //drawDebug(image, tWindow.getTW(), 0, 0);
-        //drawDebug(image, fWindow.getTW(), 0, 0);
-        //drawDebug(image, lWindow.getTW(), 0, 0);
-        drawDebug(image, edge.getSURF(0, 127, 0, 127), 0, 0);
+
+        if(vistype == "all") {
+            image.resize(128 * 2 + 15, 128 * 2 + 15);
+            image.zero();
+            drawDebug(image, tWindow.getTW(), 5, 5);
+            drawDebug(image, fWindow.getTW(), 127 + 10, 5);
+            drawDebug(image, lWindow.getTW(), 5, 127 + 10);
+            drawDebug(image, edge.getSURF(0, 127, 0, 127), 127+10, 127+10);
+        } else {
+            image.resize(128, 128);
+            image.zero();
+        }
+
+        if(vistype == "time")
+            drawDebug(image, tWindow.getTW(), 0, 0);
+        else if(vistype == "fixed")
+            drawDebug(image, fWindow.getTW(), 0, 0);
+        else if(vistype == "life")
+            drawDebug(image, lWindow.getTW(), 0, 0);
+        else if(vistype == "edge")
+            drawDebug(image, edge.getSURF(0, 127, 0, 127), 0, 0);
+
         imPort.setEnvelope(yts);
         imPort.writeStrict();
     }
