@@ -182,8 +182,8 @@ bool vEdge::flowremove(vQueue &removed, FlowEvent *vf)
         spatial[y][x] = NULL;
     }
 
-    double a = 1;
-    double t = 1.1;//0.708;
+    double a = 0.5;
+    double t = 0.8;//0.708;
     int f = 3;
     double vx1 = vx + a * vy; double vy1 = vy - a * vx;
     double vx2 = vx - a * vy; double vy2 = vy + a * vx;
