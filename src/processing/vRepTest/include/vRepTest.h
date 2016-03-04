@@ -33,6 +33,7 @@ private:
 
     //for helping with timestamp wrap around
     emorph::vtsHelper unwrapper;
+    double ytime;
 
     emorph::vEdge edge;
     emorph::temporalWindow tWindow;
@@ -46,6 +47,8 @@ private:
 public:
     
     vRepTest();
+    void setTemporalWindow(int dt) {tWindow.setTemporalWindowSize(dt);}
+    void setFixedWindow(int N) {fWindow.setFixedWindowSize(N);}
     bool setVisType(std::string vis) {this->vistype = vis;}
 
     bool    open(const std::string &name);

@@ -27,8 +27,10 @@ bool vRepTestHandler::configure(yarp::os::ResourceFinder &rf)
 
     std::string vis = rf.check("vis", yarp::os::Value("all")).asString();
 
-    reptest.setVisType(vis);
 
+    reptest.setVisType(vis);
+    reptest.setTemporalWindow(rf.check("tWin", yarp::os::Value(125000)).asInt());
+    reptest.setFixedWindow(rf.check("fWin", yarp::os::Value(1000)).asInt());
 
     /* create the thread and pass pointers to the module parameters */
     return reptest.open(moduleName);
@@ -71,6 +73,7 @@ vRepTest::vRepTest()
     fWindow.setFixedWindowSize(1000);
     tWindow.setTemporalWindowSize(125000);
     edge.setThickness(1);
+    ytime = 0;
     //here we should initialise the module
     
 }
@@ -124,6 +127,7 @@ void vRepTest::interrupt()
 void vRepTest::onRead(emorph::vBottle &inBottle)
 {
     yarp::os::Stamp yts; getEnvelope(yts);
+    if(ytime == 0) ytime = yts.getTime() + 0.033;
     unsigned long unwts;
 
     //create event queue
@@ -170,7 +174,11 @@ void vRepTest::onRead(emorph::vBottle &inBottle)
     }
 
     //make debug image
-    if(imPort.getOutputCount() && yts.getCount() % 100 == 0) {
+    if(yts.getTime() < ytime - 0.033)
+        ytime = yts.getTime();
+
+    if(imPort.getOutputCount() && yts.getTime() > ytime) {
+        ytime += 0.033;
         yarp::sig::ImageOf<yarp::sig::PixelBgr> &image = imPort.prepare();
 
         if(vistype == "all") {
