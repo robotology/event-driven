@@ -51,7 +51,7 @@ vCircleThread::vCircleThread(int R, bool directed, bool parallel, int height, in
 
         if(!a && th > alr) a = hx.size();
     }
-    Hstr = 1.0 / count;
+    Hstr = 0.05;
 
     x_max = 0; y_max = 0;
 
