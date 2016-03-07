@@ -46,6 +46,8 @@ private:
     enum { fromgaze, fromsize, fromstereo };
     int method;
     bool gazingActive;
+    enum { gazedemo, graspdemo };
+    int demo;
 
 
     emorph::temporalWindow FIFO;
@@ -60,6 +62,7 @@ public:
     vTrackToRobotManager();
 
     bool setMethod(std::string methodname);
+    bool setDemo(std::string demoname);
     void startGazing() {gazingActive = true;}
     void stopGazing() {gazingActive = false;}
 
