@@ -188,6 +188,27 @@ vQueue temporalWindow::removeEvents(vEvent &toAdd)
         }
     }
 
+    AddressEvent * toAddae = toAdd.getAs<emorph::AddressEvent>();
+    int x, y;
+    if(toAddae) {
+        x = toAddae->getX();
+        y = toAddae->getY();
+    }
+    if(toAddae && spatial[y][x].size()) {
+        //search for specific event to remove
+        AddressEvent * v = spatial[y][x].front()->getAs<emorph::AddressEvent>();
+        for(vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
+            if(v == *qi) {
+                //delete this event
+                removed.push_back(*qi);
+                spatial[y][x].pop_front();
+                q.erase(qi);
+                break;
+            }
+        }
+    }
+
+
     mutex.post();
 
     return removed;
