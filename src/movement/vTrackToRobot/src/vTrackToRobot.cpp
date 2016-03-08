@@ -33,6 +33,17 @@ vTrackToRobotManager::vTrackToRobotManager()
     gazecontrol = 0;
     p_eyez = 0.5;
     gazingActive = true;
+    //inital gaze
+    xrobref.resize(3);
+    xrobref[0]=-0.4; //x = -0.4 (distance infront -ive)
+    xrobref[1]=0; //y = 0 (left-right)
+    xrobref[2]=0.3; //z = 0.3 (up/down)
+    px.resize(2);
+    medx = 64;
+    medy = 64;
+    px[0] = medy;
+    px[1] = 127 - medx;
+    lastdogazetime = 0;
 
     FIFO.setTemporalWindowSize(250000 * 7.8125);
 
@@ -149,7 +160,12 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
     //get the events and see if we can get a ball observation
     q = vBottleIn.getSorted<emorph::ClusterEventGauss>();
 
-    bool dogaze = false;
+    bool dogaze;
+    if(yarp::os::Time::now() > lastdogazetime + 5)
+        dogaze = false;
+    else
+        dogaze = true;
+
     int n = 0;
     if(q.size()) {
 
@@ -196,8 +212,14 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
         medstdy = sqrt(medstdy / n);
 
         if(abs(vc->getXCog() - medx) < medstdx && abs(vc->getYCog() - medy) < medstdy) {
-            if(medstdx < 20 && medstdy < 20 && n > 80)
+            if(medstdx < 20 && medstdy < 20 && n > 40) {
                 dogaze = true;
+                lastdogazetime = yarp::os::Time::now();
+                px[0] = medy;
+                px[1] = 127 - medx;
+                //turn u/v into xyz
+                gazecontrol->get3DPoint(0, px, (-2.5 * p_eyez + 70)/100.0, xrobref);
+            }
         }
 
     }
@@ -205,16 +227,72 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
 
     //DO GAZE
     //find the median position in xyz space and gaze there
-    yarp::sig::Vector px(2);        //pixel in uv
-    yarp::sig::Vector x(3); x = 0;  //position in xyz (eye ref frame)
-    px[0] = medy;
-    px[1] = 127 - medx;
-    if(gazedriver.isValid() && dogaze) {
+    //yarp::sig::Vector px(2);        //pixel in uv
+    //yarp::sig::Vector x(3); x = 0;  //position in xyz (iCub ref frame)
+    //px[0] = medy;
+    //px[1] = 127 - medx;
+    if(gazedriver.isValid()  && dogaze) {
 
-        //turn u/v into xyz
-        gazecontrol->get3DPoint(0, px, (-2.5 * p_eyez + 70)/100.0, x);
+        //if we use the gaze controller to gaze then go ahead
         if(demo == gazedemo && gazingActive)
-            gazecontrol->lookAtFixationPoint(x);
+            gazecontrol->lookAtFixationPoint(xrobref);
+    }
+
+    if(gazedriver.isValid() && dogaze && demo == graspdemo && gazingActive) {
+    //if(gazedriver.isValid() && demo == graspdemo && gazingActive) {
+
+        //this is the eye pose
+        yarp::sig::Vector xeye,oeye;
+        gazecontrol->getLeftEyePose(xeye,oeye);
+
+        //this does the transformation
+        yarp::sig::Matrix T=yarp::math::axis2dcm(oeye);
+        T(0,3)=xeye[0];
+        T(1,3)=xeye[1];
+        T(2,3)=xeye[2];
+        //std::cout << "initial rotation matrix" << std::endl;
+        //std::cout << T.toString() << std::endl;
+
+        //std::cout << "initial translations" << std::endl;
+        //std::cout << xeye.toString() << std::endl;
+
+        yarp::sig::Matrix Ti = yarp::math::SE3inv(T);
+        //std::cout << "inverted rotation matrix" << std::endl;
+        //std::cout << Ti.toString() << std::endl;
+
+
+        //this was the target in eye coordinates
+        yarp::sig::Vector fp(4);
+        fp[0]=xrobref[0];
+        fp[1]=xrobref[1];
+        fp[2]=xrobref[2];
+        fp[3]=1.0;
+
+        //std::cout << "Multiplied by" << std::endl;
+        //std::cout << fp.toString() << std::endl;
+
+
+        yarp::sig::Vector tp=Ti*fp;
+        //std::cout << "Equals:" << std::endl;
+        //std::cout << tp.toString() << std::endl;
+        if(cartOutPort.getOutputCount()) {
+            yarp::os::Bottle &cartcoords = cartOutPort.prepare();
+            cartcoords.clear();
+            //    //add the XYZ position
+            cartcoords.add(tp[0]); cartcoords.add(tp[1]); cartcoords.add(tp[2]);
+            //cartcoords.add(-1.0); cartcoords.add(0.0); cartcoords.add(-0.3);
+            //    //add some buffer ints
+            cartcoords.add(0.5); cartcoords.add(px[0]); cartcoords.add(px[1]);
+            //    //flag that the object is detected
+            cartcoords.add(1.0);
+
+            //std::cout << "Bottle: " << cartcoords.toString() << std::endl;
+            //targetPos in the eye reference frame
+            //std::cout << "2D point: " << px.toString() << std::endl;
+            //std::cout << "3D point: " << x.toString() << std::endl;
+            cartOutPort.write();
+        }
+
     }
 
 
@@ -230,7 +308,7 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
         posdump.clear();
         posdump.addInt(bestts);
         posdump.addDouble(cx[0]); posdump.addDouble(cx[1]); posdump.addDouble(cx[2]);
-        posdump.addDouble(x[0]); posdump.addDouble(x[1]); posdump.addDouble(x[2]);
+        posdump.addDouble(xrobref[0]); posdump.addDouble(xrobref[1]); posdump.addDouble(xrobref[2]);
         positionOutPort.setEnvelope(st);
         positionOutPort.write();
     }
@@ -261,61 +339,9 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
         eventsOutPort.write();
     }
 
-    if(gazedriver.isValid() && dogaze && demo == graspdemo && gazingActive) {
-
-        //this is the eye pose
-        yarp::sig::Vector xeye,oeye;
-        gazecontrol->getLeftEyePose(xeye,oeye);
-
-        //this does the transformation
-        yarp::sig::Matrix T=yarp::math::axis2dcm(oeye);
-        T(0,3)=xeye[0];
-        T(1,3)=xeye[1];
-        T(2,3)=xeye[2];
-        //std::cout << "initial rotation matrix" << std::endl;
-        //std::cout << T.toString() << std::endl;
-
-        //std::cout << "initial translations" << std::endl;
-        //std::cout << xeye.toString() << std::endl;
-
-        yarp::sig::Matrix Ti = yarp::math::SE3inv(T);
-        //std::cout << "inverted rotation matrix" << std::endl;
-        //std::cout << Ti.toString() << std::endl;
 
 
-        //this was the target in eye coordinates
-        yarp::sig::Vector fp(4);
-        fp[0]=x[0];
-        fp[1]=x[1];
-        fp[2]=x[2];
-        fp[3]=1.0;
 
-        //std::cout << "Multiplied by" << std::endl;
-        //std::cout << fp.toString() << std::endl;
-
-
-        yarp::sig::Vector tp=Ti*fp;
-        //std::cout << "Equals:" << std::endl;
-        //std::cout << tp.toString() << std::endl;
-
-        if(cartOutPort.getOutputCount()) {
-            yarp::os::Bottle &cartcoords = cartOutPort.prepare();
-            cartcoords.clear();
-            //    //add the XYZ position
-            cartcoords.add(tp[0]); cartcoords.add(tp[1]); cartcoords.add(tp[2]);
-            //cartcoords.add(-1.0); cartcoords.add(0.0); cartcoords.add(-0.3);
-            //    //add some buffer ints
-            cartcoords.add(0.5); cartcoords.add(px[0]); cartcoords.add(px[1]);
-            //    //flag that the object is detected
-            cartcoords.add(1.0);
-
-            //std::cout << "Bottle: " << cartcoords.toString() << std::endl;
-            //targetPos in the eye reference frame
-            //std::cout << "2D point: " << px.toString() << std::endl;
-            //std::cout << "3D point: " << x.toString() << std::endl;
-            cartOutPort.write();
-        }
-    }
 
     return;
 

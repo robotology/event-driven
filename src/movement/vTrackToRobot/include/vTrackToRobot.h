@@ -48,6 +48,7 @@ private:
     bool gazingActive;
     enum { gazedemo, graspdemo };
     int demo;
+    double lastdogazetime;
 
 
     emorph::temporalWindow FIFO;
@@ -56,6 +57,8 @@ private:
     double p_eyez;
     double medx;
     double medy;
+    yarp::sig::Vector xrobref; //this stores the gaze position in eye ref frame
+    yarp::sig::Vector px; //the pixel position to make a gaze
 
 public:
     
