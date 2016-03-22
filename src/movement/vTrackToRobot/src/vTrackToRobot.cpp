@@ -218,7 +218,10 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
                 px[0] = medy;
                 px[1] = 127 - medx;
                 //turn u/v into xyz
-                gazecontrol->get3DPoint(0, px, (-2.5 * p_eyez + 70)/100.0, xrobref);
+                if(gazedriver.isValid()) {
+                    gazecontrol->get3DPoint(0, px, (-2.5 * p_eyez + 70)/100.0,
+                                            xrobref);
+                }
             }
         }
 
@@ -231,7 +234,7 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
     //yarp::sig::Vector x(3); x = 0;  //position in xyz (iCub ref frame)
     //px[0] = medy;
     //px[1] = 127 - medx;
-    if(gazedriver.isValid()  && dogaze) {
+    if(gazedriver.isValid() && dogaze) {
 
         //if we use the gaze controller to gaze then go ahead
         if(demo == gazedemo && gazingActive)
