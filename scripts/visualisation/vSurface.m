@@ -1,6 +1,6 @@
 % Displays the surface associated to the events
 
-filename = '/home/aglover/workspace/datasets/redballtrackdataset/move2/dvs/data.log.txt';
+filename = '/home/aglover/workspace/datasets/iros_circle/fasthand/dvs/data.log.txt';
 events = importdata(filename);
 
 % select polarity and channel 
@@ -14,9 +14,14 @@ events_left_on(:, 2) = events_left_on(:, 2) - events_left_on(1, 2);
 
 figure(1); 
 clf;
+set(gcf, 'CurrentCharacter', 'a')
 paused = false;
+recordvideo = false;
 
-vSurf = zeros(128, 128);
+if(recordvideo)
+    vidwriter = VideoWriter('uncompressed.avi', 'uncompressed avi');
+    open(vidwriter);
+end
 
 for i=1:size(events_left_on, 1)
     
@@ -33,9 +38,14 @@ for i=1:size(events_left_on, 1)
         xlabel('x');
         ylabel('y');
         zlabel('ts (s)');
-        set(gca, 'zlim', [events_left_on(i, 2) - 2e7 events_left_on(i, 2)]);
+        zlim1 = max(events_left_on(i, 2)-2e5, 0);
+        set(gca, 'zlim', [zlim1, zlim1+2e5]);
         grid on;
+        campos([-694.21       426.36    1.376e+08]);
         drawnow;
+        if(recordvideo)
+            writeVideo(vidwriter, getframe(gcf));
+        end
         c = get(gcf , 'CurrentCharacter');
         if(c == 32) %space
             %pause
@@ -44,7 +54,7 @@ for i=1:size(events_left_on, 1)
             %continue
             paused = false;
         elseif(c == 27) %ESC
-            close(1);
+            %close(1);
             break;
         end
         if(paused)
