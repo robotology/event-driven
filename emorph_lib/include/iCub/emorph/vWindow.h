@@ -38,14 +38,13 @@ namespace emorph {
  */
 class vWindow {
 
-private:
+protected:
 
     //! event storage
     vQueue q;
     //! the length of time to store events (in us)
     int width;
     int height;
-    int duration;
     //! for safe copying of q in the multi-threaded environment
     yarp::os::Semaphore mutex;
     //! for quick spatial accessing and surfacing
@@ -61,31 +60,29 @@ public:
     /// \brief vWindow constructor
     /// \param windowSize optional time to store events (in us)
     ///
-    vWindow(int width = 128, int height = 128, int duration = 20000);
+    vWindow(int width = 128, int height = 128);
+    //virtual ~vWindow() = 0;
 
     vWindow(const vWindow&);
-    vWindow operator=(const vWindow&);
+    vWindow& operator=(const vWindow&);
 
-    ///
-    /// \brief setWindowSize sets the length of time to store events
-    /// \param windowSize the time period (in us)
-    ///
-    void setTemporalWindowSize(int duration)  { this->duration = duration; }
 
     ///
     /// \brief addEvent adds an event to the window. Also checks for expired
     /// events.
     /// \param event the event to add
     ///
-    void addEvent(emorph::vEvent &event);
+    virtual vQueue addEvent(emorph::vEvent &event);
 
-    void updateTime(int ctime);
+    virtual vQueue removeEvents(vEvent &toAdd) = 0;
 
     ///
     /// \brief getMostRecent
     /// \return
     ///
     vEvent *getMostRecent();
+
+    int getEventCount() {return q.size();}
 
     ///
     /// \brief getWindow
@@ -124,7 +121,55 @@ public:
 
 
 };
+/******************************************************************************/
+class temporalWindow : public vWindow
+{
+private:
+
+    int duration;
+
+public:
+
+    temporalWindow(int duration = 100000, int width = 128, int height = 128) :
+        vWindow(width, height), duration(duration) {}
+    virtual vQueue removeEvents(vEvent &toAdd);
+
+    void setTemporalWindowSize(int duration) {this->duration = duration;}
+
+};
+
+/******************************************************************************/
+class fixedWindow : public vWindow
+{
+private:
+
+    int qlength;
+
+public:
+
+    fixedWindow(int qlength = 2000, int width = 128, int height = 128)  :
+        vWindow(width, height), qlength(qlength) {}
+    virtual vQueue removeEvents(vEvent &toAdd);
+
+    void setFixedWindowSize(int length) {this->qlength = length;}
+};
+
+/******************************************************************************/
+class lifetimeWindow : public vWindow
+{
+private:
+
+
+public:
+
+    lifetimeWindow(int width = 128, int height = 128) :
+        vWindow(width, height) {}
+    virtual vQueue addEvent(emorph::vEvent &event);
+    virtual vQueue removeEvents(vEvent &toAdd);
+};
 
 }
+
+
 
 #endif

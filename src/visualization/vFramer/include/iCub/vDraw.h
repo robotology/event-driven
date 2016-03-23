@@ -53,7 +53,7 @@ protected:
 public:
 
     vDraw() : Xlimit(128), Ylimit(128), stagnantCount(0), pTS(0),
-            clearThreshold(30), twindow(781250) {}
+            clearThreshold(30), twindow(781250/2) {}
 
     ///
     /// \brief setLimits sets the maximum possible values of the position of

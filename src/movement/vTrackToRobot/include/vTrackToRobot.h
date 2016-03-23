@@ -46,20 +46,26 @@ private:
     enum { fromgaze, fromsize, fromstereo };
     int method;
     bool gazingActive;
+    enum { gazedemo, graspdemo };
+    int demo;
+    double lastdogazetime;
 
 
-    emorph::vWindow FIFO;
+    emorph::temporalWindow FIFO;
     std::deque<yarp::sig::Vector> recentgazelocs;
     std::deque<double> recenteyezs;
     double p_eyez;
     double medx;
     double medy;
+    yarp::sig::Vector xrobref; //this stores the gaze position in eye ref frame
+    yarp::sig::Vector px; //the pixel position to make a gaze
 
 public:
     
     vTrackToRobotManager();
 
     bool setMethod(std::string methodname);
+    bool setDemo(std::string demoname);
     void startGazing() {gazingActive = true;}
     void stopGazing() {gazingActive = false;}
 

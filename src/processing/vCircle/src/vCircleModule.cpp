@@ -43,7 +43,7 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
     std::string qType = rf.check("qType",
                                  yarp::os::Value("edge")).asString();
 
-    int fifolength = rf.check("fifo", yarp::os::Value(2000)).asInt();
+    double fifolength = rf.check("fifo", yarp::os::Value(1000.0)).asDouble();
 
     bool usedirected = rf.check("arc");
     int arc = rf.check("arc", yarp::os::Value(15)).asInt();
@@ -198,6 +198,26 @@ void vCircleReader::interrupt()
 
 }
 
+void drawcircle(yarp::sig::ImageOf<yarp::sig::PixelBgr> &image, int cx, int cy, int cr)
+{
+
+    for(int y = -cr; y <= cr; y++) {
+        for(int x = -cr; x <= cr; x++) {
+            if(fabs(sqrt(pow(x, 2.0) + pow(y, 2.0)) - (double)cr) > 0.8) continue;
+            int px = cx + x; int py = cy + y;
+            if(py < 0 | py > 127 | px < 0 | px > 127) continue;
+            image(py, 127 - px) = yarp::sig::PixelBgr(0, 0, 255);
+
+
+
+
+        }
+    }
+
+
+
+}
+
 /******************************************************************************/
 void vCircleReader::onRead(emorph::vBottle &inBot)
 {
@@ -212,7 +232,7 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
 
     //create event queue
     emorph::vQueue q = inBot.get<emorph::AddressEvent>();
-    q.wrapSort();
+    q.sort(true);
 
     if(!q.size()) {
         if(strictness) outPort.writeStrict();
@@ -237,7 +257,7 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
         double bestscore = cObserver->getObs(bestx, besty, bestr);
         datawriter << bestts << " " << bestx << " " << besty << " "
                    << bestr << " " << bestscore << std::endl;
-        std::cout << bestts << std::endl;
+        //std::cout << bestts << std::endl;
     }
 
     double bestScore = cObserver->getObs(bestx, besty, bestr);
@@ -277,6 +297,9 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
         pstamp = st;
         yarp::sig::ImageOf< yarp::sig::PixelBgr> &image = houghOut.prepare();
         image = cObserver->makeDebugImage();
+        if(bestScore > inlierThreshold) {
+            drawcircle(image, bestx, besty, bestr);
+        }
         houghOut.setEnvelope(st);
         houghOut.write();
         //std::cout << "Processing Time" << timecounter << ", Hough response: " << cObserver->getObs(bestx, besty, bestr) << std::endl;

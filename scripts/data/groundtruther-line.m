@@ -61,6 +61,8 @@ end
 
 %res_i = 1;
 x = 64; y = 64; r = 10;
+%linecoords = [x x y y];
+linecoords = [];
 
 finishedGT = false;
 
@@ -76,7 +78,8 @@ while(~finishedGT)
         window = GTevents(wini:ci, :);       
         plot(window(window(:, 3) == 0, 4), window(window(:, 3) == 0, 5), 'g.');
         plot(window(window(:, 3) ==  1, 4), window(window(:, 3) ==  1, 5), 'm.');
-        rectangle('curvature', [1 1], 'position', [x-r y-r r*2 r*2]);
+        %rectangle('curvature', [1 1], 'position', [x-r y-r r*2 r*2]);
+        %plot lines
         axis([0 128 0 128]);
         drawnow;
         try
@@ -99,6 +102,8 @@ while(~finishedGT)
         if c == 13 %enter
             finishedLOG = true;
             %result(res_i, :) = [cts, x, y, r];
+            %calculate how many pixels are in the lines
+            %save that with the cts
             dlmwrite(GTresultfile, [cts, x, y, r], '-append', 'delimiter', ' ', 'precision', '%0.6f'); 
             figure(2); hold on; plot(cts, 1, 'gx');
         elseif c == 32 %space

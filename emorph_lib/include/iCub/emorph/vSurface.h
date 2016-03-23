@@ -59,6 +59,7 @@ protected:
     yarp::os::Semaphore mutex;
     //! member variable for quick memory allocation
     vQueue subq;
+    int eventCount;
 
 public:
 
@@ -84,7 +85,7 @@ public:
     ///
     vEvent * getMostRecent();
 
-
+    int getEventCount() { return eventCount; }
     void clear();
 
     const vQueue& getSURF(int d);
@@ -101,18 +102,22 @@ private:
     //set the previous add event to be private so it cannot be used in vEdge
     //there could be a better way to achieve this.
     int thickness;
+    bool trackCount;
     vEvent * addEvent(emorph::AddressEvent &event);
 
-    vQueue addressremove(AddressEvent * v);
-    vQueue flowremove(FlowEvent * vf);
+    bool addressremove(vQueue &removed, AddressEvent * v);
+    bool flowremove(vQueue &removed, FlowEvent *vf);
+    bool pepperCheck(int y, int x);
 
 public:
 
-    vEdge(int width = 128, int height = 128) : vSurface(width, height) {thickness = 2;}
+    vEdge(int width = 128, int height = 128) :
+        vSurface(width, height), thickness(2), trackCount(false) {}
 
     vQueue addEventToEdge(AddressEvent *event);
     FlowEvent * upgradeEvent(AddressEvent *event);
     void setThickness(int pixels) {thickness = pixels;}
+    void track(bool trackCount = true) {this->trackCount = trackCount;}
 
     virtual const vQueue& getSURF(int xl, int xh, int yl, int yh);
 

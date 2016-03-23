@@ -111,12 +111,11 @@ vQueue& vQueue::operator=(const vQueue& that)
     return *this;
 }
 
-void vQueue::sort() {
-    std::sort(begin(), end(), temporalSortStraight);
-}
-
-void vQueue::wrapSort() {
-    std::sort(begin(), end(), temporalSortWrap);
+void vQueue::sort(bool respectWraps) {
+    if(respectWraps)
+        std::sort(begin(), end(), temporalSortWrap);
+    else
+        std::sort(begin(), end(), temporalSortStraight);
 }
 
 bool vQueue::temporalSortStraight(const vEvent *e1, const vEvent *e2) {

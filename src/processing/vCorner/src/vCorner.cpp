@@ -151,7 +151,7 @@ void vCornerManager::onRead(emorph::vBottle &bot)
 
     /*get the event queue in the vBottle bot*/
     emorph::vQueue q = bot.get<emorph::AddressEvent>();
-    q.wrapSort();
+    q.sort(true);
 
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {

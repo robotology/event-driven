@@ -25,6 +25,7 @@ vSurface::vSurface(int width, int height)
     this->height = height;
     this->mostRecent = NULL;
     this->justRemoved = NULL;
+    eventCount = 0;
 
     spatial.resize(height);
     for(int y = 0; y < height; y++) {
@@ -46,6 +47,7 @@ vSurface vSurface::operator=(const vSurface& that)
     //remake like 'that'
     this->width = that.width;
     this->height = that.height;
+    this->eventCount = that.eventCount;
     this->mostRecent = that.mostRecent;
     this->justRemoved = that.justRemoved;
     if(this->justRemoved) justRemoved->referto();
@@ -84,6 +86,8 @@ void vSurface::clear()
         mostRecent = NULL;
     }
 
+    eventCount = 0;
+
 }
 
 vEvent * vSurface::addEvent(AddressEvent &event)
@@ -100,11 +104,15 @@ vEvent * vSurface::addEvent(AddressEvent &event)
 
     //if we previously had an event move it to the justRemoved
     int x = event.getX(); int y = event.getY();
-    if(spatial[y][x]) justRemoved = spatial[y][x];
+    if(spatial[y][x]) {
+        justRemoved = spatial[y][x];
+        eventCount--;
+    }
 
     //put our new event in and add a reference
     spatial[y][x] = &event;
     event.referto();
+    eventCount++;
 
     //then set our mostRecent
     mostRecent = spatial[y][x];
@@ -158,227 +166,101 @@ vEvent *vSurface::getMostRecent()
     return mostRecent;
 }
 
-
-#define COS135on2 0.38268
-
-vQueue vEdge::flowremove(FlowEvent *vf)
+bool vEdge::flowremove(vQueue &removed, FlowEvent *vf)
 {
-    vQueue removed;
 
     int x = vf->getX(); int y = vf->getY();
     double vx = vf->getVy(); double vy = vf->getVx();
-    double mag = sqrt(pow(vx, 2.0) + pow(vy, 2.0));
-    vx /= (mag * COS135on2);
-    vy /= (mag * COS135on2);
-    int dx = 0, dy = 0;
-    if(vx > 1) dx = 1; if(vx < -1) dx = -1;
-    if(vy > 1) dy = 1; if(vy < -1) dy = -1;
-
-    dx *= -1;
-    dy *= -1;
-
-    x += (thickness - 1) * dx;
-    y += (thickness - 1) * dy;
-
+    double vmag = sqrt(pow(vx, 2.0) + pow(vy, 2.0));
+    vx = vx / vmag; vy = vy / vmag;
     int px, py;
 
-    //corners
-    if(dx && dy) {
-        px = x + dx * 2; py = y + dy * 2;
-        if(px >= 0 && px < width && py >= 0 && py < height) {
-            if(spatial[py][px]) {
-                removed.push_back(spatial[py][px]);
-                spatial[py][px]->destroy();
-                spatial[py][px] = NULL;
-            }
-        }
-        px = x;      py = y + dy * 2;
-        if(px >= 0 && px < width && py >= 0 && py < height) {
-            if(spatial[py][px]) {
-                removed.push_back(spatial[py][px]);
-                spatial[py][px]->destroy();
-                spatial[py][px] = NULL;
-            }
-        }
-        px = dx * 2+x; py = 0+y;
-        if(px >= 0 && px < width && py >= 0 && py < height) {
-            if(spatial[py][px]) {
-                removed.push_back(spatial[py][px]);
-                spatial[py][px]->destroy();
-                spatial[py][px] = NULL;
-            }
-        }
-        px = dx+x; py = dy+y;
-        if(px >= 0 && px < width && py >= 0 && py < height) {
-            if(spatial[py][px]) {
-                removed.push_back(spatial[py][px]);
-                spatial[py][px]->destroy();
-                spatial[py][px] = NULL;
-            }
-        }
-        px = dx*2 + x;      py = dy + y;
-        if(px >= 0 && px < width && py >= 0 && py < height) {
-            if(spatial[py][px]) {
-                removed.push_back(spatial[py][px]);
-                spatial[py][px]->destroy();
-                spatial[py][px] = NULL;
-            }
-        }
-        px = dx + x; py = dy*2 + y;
-        if(px >= 0 && px < width && py >= 0 && py < height) {
-            if(spatial[py][px]) {
-                removed.push_back(spatial[py][px]);
-                spatial[py][px]->destroy();
-                spatial[py][px] = NULL;
+    //remove event at this location
+    if(spatial[y][x]) {
+        removed.push_back(spatial[y][x]);
+        spatial[y][x]->destroy();
+        spatial[y][x] = NULL;
+    }
+
+    double a = 0.5;
+    double t = 0.8;//0.708;
+    int f = 3;
+    double vx1 = vx + a * vy; double vy1 = vy - a * vx;
+    double vx2 = vx - a * vy; double vy2 = vy + a * vx;
+
+    //remove events not on the perpendicular line
+    for(int yi = -f; yi <= f; yi++) {
+        for(int xi = -f; xi <= f; xi++) {
+            double d1 = xi * vx1 + yi * vy1;
+            double d2 = xi * vx2 + yi * vy2;
+            if(fabs(d1) > t && fabs(d2) > t && d1 * d2 >= 0) {
+                px = x + xi; py = y + yi;
+                if(px >= 0 && py >= 0 && px < width && py < height) {
+                    if(spatial[py][px]) {
+                        removed.push_back(spatial[py][px]);
+                        spatial[py][px]->destroy();
+                        spatial[py][px] = NULL;
+                    }
+                }
             }
         }
     }
 
-    //velocity in x
-    else if(dx) {
-        px = dx * 2+x; py = -1+y;
-        if(px >= 0 && px < width && py >= 0 && py < height) {
-            if(spatial[py][px]) {
-                removed.push_back(spatial[py][px]);
-                spatial[py][px]->destroy();
-                spatial[py][px] = NULL;
-            }
-        }
-        px = dx * 2+x; py = 0+y;
-        if(px >= 0 && px < width && py >= 0 && py < height) {
-            if(spatial[py][px]) {
-                removed.push_back(spatial[py][px]);
-                spatial[py][px]->destroy();
-                spatial[py][px] = NULL;
-            }
-        }
-        px = dx * 2+x; py = 1+y;
-        if(px >= 0 && px < width && py >= 0 && py < height) {
-            if(spatial[py][px]) {
-                removed.push_back(spatial[py][px]);
-                spatial[py][px]->destroy();
-                spatial[py][px] = NULL;
-            }
-        }
-        px = dx+x; py = -1+y;
-        if(px >= 0 && px < width && py >= 0 && py < height) {
-            if(spatial[py][px]) {
-                removed.push_back(spatial[py][px]);
-                spatial[py][px]->destroy();
-                spatial[py][px] = NULL;
-            }
-        }
-        px = dx+x; py = 0+y;
-        if(px >= 0 && px < width && py >= 0 && py < height) {
-            if(spatial[py][px]) {
-                removed.push_back(spatial[py][px]);
-                spatial[py][px]->destroy();
-                spatial[py][px] = NULL;
-            }
-        }
-        px = dx+x; py = 1+y;
-        if(px >= 0 && px < width && py >= 0 && py < height) {
-            if(spatial[py][px]) {
-                removed.push_back(spatial[py][px]);
-                spatial[py][px]->destroy();
-                spatial[py][px] = NULL;
-            }
-        }
-
-    }
-
-    //velocity in y
-    else if(dy) {
-        px = -1+x; py = dy * 2+y;
-        if(px >= 0 && px < width && py >= 0 && py < height) {
-            if(spatial[py][px]) {
-                removed.push_back(spatial[py][px]);
-                spatial[py][px]->destroy();
-                spatial[py][px] = NULL;
-            }
-        }
-        px = 0+x; py = dy * 2+y;
-        if(px >= 0 && px < width && py >= 0 && py < height) {
-            if(spatial[py][px]) {
-                removed.push_back(spatial[py][px]);
-                spatial[py][px]->destroy();
-                spatial[py][px] = NULL;
-            }
-        }
-        px = 1+x; py = dy * 2+y;
-        if(px >= 0 && px < width && py >= 0 && py < height) {
-            if(spatial[py][px]) {
-                removed.push_back(spatial[py][px]);
-                spatial[py][px]->destroy();
-                spatial[py][px] = NULL;
-            }
-        }
-        px = -1+x; py = dy+y;
-        if(px >= 0 && px < width && py >= 0 && py < height) {
-            if(spatial[py][px]) {
-                removed.push_back(spatial[py][px]);
-                spatial[py][px]->destroy();
-                spatial[py][px] = NULL;
-            }
-        }
-        px = 0+x; py = dy+y;
-        if(px >= 0 && px < width && py >= 0 && py < height) {
-            if(spatial[py][px]) {
-                removed.push_back(spatial[py][px]);
-                spatial[py][px]->destroy();
-                spatial[py][px] = NULL;
-            }
-        }
-        px = 1+x; py = dy+y;
-        if(px >= 0 && px < width && py >= 0 && py < height) {
-            if(spatial[py][px]) {
-                removed.push_back(spatial[py][px]);
-                spatial[py][px]->destroy();
-                spatial[py][px] = NULL;
-            }
-        }
-
-    } else {
-        std::cerr << "Flow not set correctly" << std::endl;
-    }
-
-    return removed;
+    return true;
 
 }
 
-vQueue vEdge::addressremove(AddressEvent * v)
+bool vEdge::addressremove(vQueue &removed, AddressEvent * v)
 {
-    vQueue removed;
-    return removed;
 
-    for(int y = -1 + v->getY(); y <= 1 + v->getY(); y++) {
-        for(int x = -1 + v->getX(); x <= 1 + v->getX(); x++) {
-            if(x < 0 || y < 0 || x >= width || y >= height) continue;
-            if(!spatial[y][x]) continue;
-            FlowEvent *vf2 = spatial[y][x]->getAs<FlowEvent>();
-            if(!vf2) continue;
-
-            double vx = vf2->getVy(); double vy = vf2->getVx();
-            double mag = sqrt(pow(vx, 2.0) + pow(vy, 2.0));
-            vx /= (mag * COS135on2);
-            vy /= (mag * COS135on2);
-            int dx = 0, dy = 0;
-            if(vx > 1) dx = 1; if(vx < -1) dx = -1;
-            if(vy > 1) dy = 1; if(vy < -1) dy = -1;
-
-            if(x + dx == v->getX() && y + dy == v->getY()) {
-                removed.push_back(spatial[y][x]);
-                spatial[y][x]->destroy();
-                spatial[y][x] = NULL;
-            }
-
-        }
-
+    int x = v->getX(); int y = v->getY();
+    if(spatial[y][x]) {
+        removed.push_back(spatial[y][x]);
+        spatial[y][x]->destroy();
+        spatial[y][x] = NULL;
     }
 
-    return removed;
+
+    for(int yi = -1 + y; yi <= 1 + y; yi++) {
+        for(int xi = -1 + x; xi <= 1 + x; xi++) {
+
+            if(yi < 0 || xi < 0 || yi >= height || xi >= width) continue;
+            if(spatial[yi][xi] && pepperCheck(yi, xi)) {
+                removed.push_back(spatial[yi][xi]);
+                spatial[yi][xi]->destroy();
+                spatial[yi][xi] = NULL;
+            }
+        }
+    }
+
+    return !pepperCheck(y, x);
 
 
+}
+
+bool vEdge::pepperCheck(int y, int x)
+{
+    if(y == 0 || y == height-1 || x == 0 || x == width -1)
+        return true;
+
+    if(spatial[y-1][x] && spatial[y-1][x]->getAs<FlowEvent>())
+        return false;
+    if(spatial[y+1][x] && spatial[y+1][x]->getAs<FlowEvent>())
+        return false;
+    if(spatial[y][x-1] && spatial[y][x-1]->getAs<FlowEvent>())
+        return false;
+    if(spatial[y][x+1] && spatial[y][x+1]->getAs<FlowEvent>())
+        return false;
+    if(spatial[y+1][x+1] && spatial[y+1][x+1]->getAs<FlowEvent>())
+        return false;
+    if(spatial[y-1][x+1] && spatial[y-1][x+1]->getAs<FlowEvent>())
+        return false;
+    if(spatial[y+1][x-1] && spatial[y+1][x-1]->getAs<FlowEvent>())
+        return false;
+    if(spatial[y-1][x-1] && spatial[y-1][x-1]->getAs<FlowEvent>())
+        return false;
+
+    return true;
 }
 
 
@@ -386,8 +268,9 @@ vQueue vEdge::addressremove(AddressEvent * v)
 vQueue vEdge::addEventToEdge(AddressEvent *event)
 {
     vQueue removed;
+    bool add = false;
 
-
+    if(!event) return removed;
 
     //enter critical section
     mutex.wait();
@@ -395,28 +278,31 @@ vQueue vEdge::addEventToEdge(AddressEvent *event)
     //remove non edge events
     FlowEvent * vf = event->getAs<FlowEvent>();
     if(!vf) {
-        removed = addressremove(event);
+        addressremove(removed, event);
     } else {
-        removed = flowremove(vf);
-    }
-//    if(!vf) {
-//        mutex.post();
-//        return removed;
-//    }
-
-    //remove previous event at this pixel
-    int x = event->getX(); int y = event->getY();
-    if(spatial[y][x]) {
-        removed.push_back(spatial[y][x]);
-        spatial[y][x]->destroy();
+        add = flowremove(removed, vf);
     }
 
-    //put our new event in and add a reference
-    spatial[y][x] = event;
-    event->referto();
 
-    //then set our mostRecent
-    mostRecent = spatial[y][x];
+    if(trackCount) {
+        if(add) eventCount++;
+        eventCount -= removed.size();
+        //for(vQueue::iterator qi = removed.begin(); qi != removed.end(); qi++)
+        //    if((*qi)->getAs<FlowEvent>())
+        //        eventCount--;
+    }
+
+    if(add) {
+        //put our new event in and add a reference
+        spatial[event->getY()][event->getX()] = event;
+        event->referto();
+
+        //then set our mostRecent
+        mostRecent = spatial[event->getY()][event->getX()];
+    }
+
+
+
 
 
     //leave section
@@ -428,11 +314,10 @@ vQueue vEdge::addEventToEdge(AddressEvent *event)
 
 const vQueue& vEdge::getSURF(int xl, int xh, int yl, int yh)
 {
-
-    xl = std::max(xl, 0);
-    xh = std::min(xh, width-1);
-    yl = std::max(yl, 0);
-    yh = std::min(yh, height-1);
+    xl = std::max(xl, 1);
+    xh = std::min(xh, width-2);
+    yl = std::max(yl, 1);
+    yh = std::min(yh, height-2);
 
     subq.clear();
 
@@ -441,7 +326,9 @@ const vQueue& vEdge::getSURF(int xl, int xh, int yl, int yh)
 
     for(int y = yl; y <= yh; y++) {
         for(int x = xl; x <= xh; x++) {
-            if(spatial[y][x] && spatial[y][x]->getAs<FlowEvent>())
+            if(spatial[y][x])
+            //if(spatial[y][x] && !pepperCheck(y, x))
+            //if(spatial[y][x] && spatial[y][x]->getAs<FlowEvent>())
                 subq.push_back(spatial[y][x]);
         }
     }

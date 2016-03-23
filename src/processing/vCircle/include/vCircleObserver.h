@@ -152,9 +152,10 @@ private:
     bool directed;
 
     //internal data
-    emorph::vSurface surface;
-    emorph::vEdge edge;
-    emorph::vQueue FIFO;
+    emorph::vEdge eFIFO;
+    emorph::fixedWindow fFIFO;
+    emorph::temporalWindow tFIFO;
+    emorph::lifetimeWindow lFIFO;
     emorph::vEvent dummy;
     std::vector<vCircleThread *> htransforms;
     std::vector<vCircleThread *>::iterator best;
@@ -167,7 +168,6 @@ private:
     void addFixed(emorph::vQueue &additions);
     void addTime(emorph::vQueue &additions);
     void addLife(emorph::vQueue &additions);
-    void addSurf(emorph::vQueue &additions);
     void addEdge(emorph::vQueue &additions);
 
 public:
@@ -176,7 +176,7 @@ public:
                      int rLow = 8, int rHigh = 38,
                      bool directed = true, bool parallel = false,
                      int height = 128, int width = 128, int arclength = 20,
-                     int fifolength = 2000);
+                     double fifolength = 2000);
     ~vCircleMultiSize();
 
     void addQueue(emorph::vQueue &additions);
