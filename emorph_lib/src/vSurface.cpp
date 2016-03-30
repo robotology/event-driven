@@ -339,6 +339,111 @@ const vQueue& vEdge::getSURF(int xl, int xh, int yl, int yh)
 
 }
 
+vFuzzyEdge::vFuzzyEdge(int width, int height, double delta) :
+    vEdge(width, height)
+{
+    this->delta = delta;
+    scores.resize(height);
+    for(int y = 0; y < height; y++) {
+        scores[y].resize(width, 0);
+    }
+
+
+}
+vQueue vFuzzyEdge::addEventToEdge(AddressEvent *event)
+{
+
+    if(!event) return vQueue();
+    emorph::FlowEvent * vf = event->getAs<emorph::FlowEvent>();
+    if(!vf) return vQueue();
+
+    int x = vf->getX(); int y = vf->getY();
+    double vx = vf->getVy(); double vy = vf->getVx();
+    double vmag = sqrt(pow(vx, 2.0) + pow(vy, 2.0));
+    //vx = vx / vmag; vy = vy / vmag;
+    int px, py;
+
+    //remove event at this location
+
+    //double a = 0;
+    double t = 0.708;//0.708;
+    int f = 3;
+
+    int y1 = -std::min(y, f);
+    int y2 = std::min(height - 1 - y, f);
+    int x1 = -std::min(x, f);
+    int x2 = std::min(width - 1 - x, f);
+
+    //double vx1 = vx + a * vy; double vy1 = vy - a * vx;
+    //double vx2 = vx - a * vy; double vy2 = vy + a * vx;
+
+    //remove events not on the perpendicular line
+    for(int yi = y1; yi <= y2; yi++) {
+        for(int xi = x1; xi <= x2; xi++) {
+            double dcenter = sqrt(pow(yi, 2.0) + pow(xi, 2.0));
+            if(dcenter > f) continue; //use LUT here
+
+            //if(px < 0 || py < 0 || px > width-1 || py > height-1) continue;
+
+            double d = (xi * vx + yi * vy) / vmag;
+            double p = 0.4 * pow(2.718281, -pow(d, 2.0) / t) - 0.2;
+            //p *= (f - dcenter/2) / f;
+            px = x + xi; py = y + yi;
+//            if(scores[py][px] < 0.5) {
+//                scores[py][px] += p;
+//                scores[py][px] = std::max(scores[py][px], 0.0);
+//                if(scores[py][px] > 0.5) scores[py][px] = 1.0;
+//            } else {
+//                scores[py][px] += p;
+//                scores[py][px] = std::min(scores[py][px], 1.0);
+//                if(scores[py][px] < 0.5) scores[py][px] = 0.0;
+//            }
+
+            scores[py][px] += p;
+            scores[py][px] = std::min(scores[py][px], 1.0);
+            scores[py][px] = std::max(scores[py][px], 0.0);
+
+//            double d1 = xi * vx1 + yi * vy1;
+//            double d2 = xi * vx2 + yi * vy2;
+//            if(fabs(d1) > t && fabs(d2) > t && d1 * d2 >= 0) {
+//                scores[py][px] = std::max(scores[py][px] - 0.2, 0.0);
+//            } else {
+//                scores[py][px] = std::min(scores[py][px] + 0.2, 1.0);
+//            }
+        }
+    }
+
+    return vQueue();
+
+}
+
+const vQueue& vFuzzyEdge::getSURF(int xl, int xh, int yl, int yh)
+{
+    xl = std::max(xl, 1);
+    xh = std::min(xh, width-2);
+    yl = std::max(yl, 1);
+    yh = std::min(yh, height-2);
+
+    subq.clear();
+
+    //critical section
+    mutex.wait();
+
+    for(int y = yl; y <= yh; y++) {
+        for(int x = xl; x <= xh; x++) {
+            if(scores[y][x] > 0.5) {
+                emorph::AddressEvent * ae = new emorph::AddressEvent();
+                ae->setX(x); ae->setY(y); ae->setChannel(0); ae->setPolarity(0); ae->setStamp(0);
+                subq.push_back(ae);
+            }
+        }
+    }
+
+    mutex.post();
+
+    return subq;
+}
+
 
 
 }

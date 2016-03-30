@@ -140,7 +140,7 @@ void vRepTest::onRead(emorph::vBottle &inBottle)
         fWindow.addEvent(**qi);
         lWindow.addEvent(**qi);
         edge.addEventToEdge((*qi)->getAs<emorph::AddressEvent>());
-
+        fedge.addEventToEdge((*qi)->getAs<emorph::AddressEvent>());
     }
 
     //dump modified dataset
@@ -174,7 +174,7 @@ void vRepTest::onRead(emorph::vBottle &inBottle)
     }
 
     //make debug image
-    if(yts.getTime() < ytime - 0.033)
+    if(yts.getTime() < ytime - 0.01)
         ytime = yts.getTime();
 
     if(imPort.getOutputCount() && yts.getTime() > ytime) {
@@ -201,6 +201,8 @@ void vRepTest::onRead(emorph::vBottle &inBottle)
             drawDebug(image, lWindow.getTW(), 0, 0);
         else if(vistype == "edge")
             drawDebug(image, edge.getSURF(0, 127, 0, 127), 0, 0);
+        else if(vistype == "fedge")
+            drawDebug(image, fedge.getSURF(0, 127, 0, 127), 0, 0);
 
         imPort.setEnvelope(yts);
         imPort.writeStrict();
