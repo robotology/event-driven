@@ -138,7 +138,6 @@ const std::vector<char>& deviceManager::readDevice(int &nBytesRead)
 {  
     if(bufferedRead) {
 
-        std::cout << "Buffered Read" << std::endl;
         //safely copy the data into the accessBuffer and reset the readCount
         safety.wait();
 
@@ -154,7 +153,6 @@ const std::vector<char>& deviceManager::readDevice(int &nBytesRead)
 
     } else {
 
-        std::cout << "Direct Read" << std::endl;
         nBytesRead = ::read(devDesc, readBuffer->data(), maxBufferSize);
         if(nBytesRead < 0 && errno != EAGAIN) perror("perror: ");
 
