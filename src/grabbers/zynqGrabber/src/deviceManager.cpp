@@ -138,6 +138,7 @@ const std::vector<char>& deviceManager::readDevice(int &nBytesRead)
 {  
     if(bufferedRead) {
 
+        std::cout << "Buffered Read" << std::endl;
         //safely copy the data into the accessBuffer and reset the readCount
         safety.wait();
 
@@ -153,6 +154,7 @@ const std::vector<char>& deviceManager::readDevice(int &nBytesRead)
 
     } else {
 
+        std::cout << "Direct Read" << std::endl;
         nBytesRead = ::read(devDesc, readBuffer->data(), maxBufferSize);
         if(nBytesRead < 0 && errno != EAGAIN) perror("perror: ");
 
@@ -210,7 +212,7 @@ void deviceManager::run(void)
 
 
 
-vsctrlDevManager::vsctrlDevManager(std::string channel, std::string chip){
+vsctrlDevManager::vsctrlDevManager(std::string channel, std::string chip) : deviceManager(false, VSCTRL_MAX_BUF_SIZE) {
 
     if (channel == "left"){
       
@@ -225,9 +227,6 @@ vsctrlDevManager::vsctrlDevManager(std::string channel, std::string chip){
         std::cout << "vsctrl error: unrecognised channel" << std::endl;
     
     }
-
-    deviceManager(false, VSCTRL_MAX_BUF_SIZE); // # DEFINE VSCTRL_MAXBUFSIZE 16777216
-
 
     fpgaStat.biasDone      = false;
     fpgaStat.tdFifoFull    = false;
@@ -626,7 +625,7 @@ int vsctrlDevManager::readGPORegister(){
 /* -----------------------------------------------------------------
     aerDevManager -- to handle AER IO: read events from sensors and spinnaker and write events to spinnaker
 ----------------------------------------------------------------- */
-aerDevManager::aerDevManager(std::string dev){
+aerDevManager::aerDevManager(std::string dev) : deviceManager(true, AER_MAX_BUF_SIZE) {
     
     if (dev == "zynq_spinn")
         {
@@ -644,7 +643,6 @@ aerDevManager::aerDevManager(std::string dev){
             
         }
     
-    deviceManager(true, AER_MAX_BUF_SIZE);
 }
 
 bool aerDevManager::openDevice(){
@@ -792,11 +790,9 @@ void aerDevManager::usage (void) {
     aerfx2_0DevManager -- handles AER IO for "legacy" iHead board and aerfx2_0 device -- the bias programming does not work for this device: use aexGrabber for this functionality
 ------------------------------------------------------- */
 
-aerfx2_0DevManager::aerfx2_0DevManager(){
+aerfx2_0DevManager::aerfx2_0DevManager() : deviceManager(true, AER_MAX_BUF_SIZE) {
     
     deviceName = "/dev/aerfx2_0";
-    deviceManager(true, AER_MAX_BUF_SIZE);
-    
 }
 
 bool aerfx2_0DevManager::openDevice(){
