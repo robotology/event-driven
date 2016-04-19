@@ -68,6 +68,8 @@ void  device2yarp::run() {
             bend++;
             bstart = bend;
         } else {
+            //if we are checkout all timestamps for scaling
+            //we could also move the channel bit?
             //else scale the timestamp
             *TS = 0x80000000 | ((*TS & 0x7FFFFFFF) * 1);
             //and then check the next two ints
