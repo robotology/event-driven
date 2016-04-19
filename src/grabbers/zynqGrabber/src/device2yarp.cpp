@@ -74,7 +74,7 @@ void  device2yarp::run() {
 
         TS =  (int *)(data.data() + bend);
         AE =  (int *)(data.data() + bend + 4);
-        BITMISMATCH = !(*TS & 0x80000000) || (*AE & 0xFFFF0000);
+        BITMISMATCH = !(*TS & 0x80000000) || (*AE & 0xFFEF0000);
 
     }
 
