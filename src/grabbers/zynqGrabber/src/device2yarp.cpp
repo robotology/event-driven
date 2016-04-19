@@ -49,7 +49,7 @@ void  device2yarp::run() {
 
     int *TS =  (int *)(data.data() + bend);
     int *AE =  (int *)(data.data() + bend + 4);
-    bool BITMISMATCH = !(*TS & 0x80000000) || (*AE & 0xFFFF0000);
+    bool BITMISMATCH = !(*TS & 0x80000000) || (*AE & 0xFFEF0000);
 
     //while we have a non multiple of 8 bytes, the first two ints are not
     //correctly a TS then AE and we aren't greater than the total # bytes
