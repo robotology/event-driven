@@ -25,7 +25,7 @@
 // costruttore
 
 deviceManager::deviceManager(bool bufferedRead, unsigned int maxBufferSize){
-    
+
     //this->deviceName = deviceName;
     this->maxBufferSize = maxBufferSize;
     this->bufferedRead = bufferedRead;
@@ -65,8 +65,8 @@ bool deviceManager::openDevice(){
         perror("");
         return false;
     }
-    
-    
+
+
 
     //start the reading thread
     if(bufferedRead) start();
@@ -82,12 +82,12 @@ void deviceManager::closeDevice()
 
     ::close(devDesc);
     std::cout <<  "closing device " << deviceName << std::endl;
-    
+
 #ifdef DEBUG
     writeDump.close();
     readDump.close();
 #endif
-    
+
 }
 
 /*-----------------------------------------------------------
@@ -99,7 +99,7 @@ int deviceManager::writeDevice(std::vector<unsigned int> &deviceData){
      if(writeFifoAFull()){
      std::cout<<"Y2D write: warning fifo almost full"<<std::endl;
      }
-     
+
      if(writeFifoFull()){
      std::cout<<"Y2D write: error fifo full"<<std::endl;
      }
@@ -107,12 +107,12 @@ int deviceManager::writeDevice(std::vector<unsigned int> &deviceData){
     int written =0;
     char* buff = (char *)deviceData.data();
     unsigned int len = deviceData.size()*sizeof(unsigned int);
-    
+
     //send the vector to the device, read how many bytes have been written and if smaller than the full vector send the vector again from the location pointed by buff + written
     while (written < len) {
-        
+
         int ret = ::write(devDesc, buff + written, len - written);
-        
+
         if(ret > 0) {
             //std::cout << written << std::endl;
             written += ret;
@@ -121,21 +121,21 @@ int deviceManager::writeDevice(std::vector<unsigned int> &deviceData){
             break;
         }
     }
-    
+
 #ifdef DEBUG
-    
+
     writeDump << deviceData << std::endl;
-    
+
 #endif
-    
+
     return written/sizeof(unsigned int);
-    
+
 }
 
 
 
 const std::vector<char>& deviceManager::readDevice(int &nBytesRead)
-{  
+{
     if(bufferedRead) {
 
         //safely copy the data into the accessBuffer and reset the readCount
@@ -203,9 +203,9 @@ void deviceManager::run(void)
     }
 }
 /* --------------------------------------------------------------------------------
- 
+
     vsctrlDevManager -- to send biases and write registers -- specific to sensors
- 
+
  ---------------------------------------------------------------------------------- */
 
 
@@ -213,17 +213,17 @@ void deviceManager::run(void)
 vsctrlDevManager::vsctrlDevManager(std::string channel, std::string chip) : deviceManager(false, VSCTRL_MAX_BUF_SIZE) {
 
     if (channel == "left"){
-      
+
         this->deviceName = "/dev/iit_vsctrl_l";
-        
+
     } else if (channel == "right"){
-        
+
         this->deviceName = "/dev/iit_vsctrl_r";
-        
+
     } else {
-    
+
         std::cout << "vsctrl error: unrecognised channel" << std::endl;
-    
+
     }
 
     fpgaStat.biasDone      = false;
@@ -231,8 +231,8 @@ vsctrlDevManager::vsctrlDevManager(std::string channel, std::string chip) : devi
     fpgaStat.apsFifoFull   = false;
     fpgaStat.i2cTimeout    = false;
     fpgaStat.crcErr        = false;
-    
-    
+
+
     // default biases
     this -> channel = channel;
     this -> chipName = chip;
@@ -240,39 +240,39 @@ vsctrlDevManager::vsctrlDevManager(std::string channel, std::string chip) : devi
 };
 
 bool vsctrlDevManager::openDevice(){
-    
+
     bufferedRead = false;
     //opening the device
-    
+
     bool ret = deviceManager::openDevice();
-    
+
     // clear fpga registers
     clearFpgaStatus("biasDone");
     clearFpgaStatus("tdFifoFull");
     clearFpgaStatus("apsFifoFull");
     clearFpgaStatus("i2cTimeout");
     clearFpgaStatus("crcErr");
-    
+
     initDevice();
     programBiases();
-    
+
     return ret;
 
 }
 
 void vsctrlDevManager::closeDevice(){
-    
+
     chipPowerDown();
     deviceManager::closeDevice();
-    
+
 }
 
 // --- write biases to device --- //
 
 bool vsctrlDevManager::programBiases(){
-    
+
     std::vector<unsigned int> vBiases = prepareBiases();
-    
+
     clearFpgaStatus("biasDone");
     chipPowerDown();
 
@@ -280,7 +280,7 @@ bool vsctrlDevManager::programBiases(){
         std::cout << "Bias write: error writing to device" << std::endl;
         return false;
     }
-    
+
     getFpgaStatus();
     int count = 0;
     while (!fpgaStat.biasDone & (count <= 10000)){
@@ -291,7 +291,7 @@ bool vsctrlDevManager::programBiases(){
             clearFpgaStatus("crcErr");
             return false;
         }
-        
+
     }
     if (count > 10000) {
         std::cout << "Bias write: failed programming, Timeout "  << std::endl;
@@ -303,7 +303,7 @@ bool vsctrlDevManager::programBiases(){
     chipPowerUp();
 
     return true;
-    
+
 }
 
 bool vsctrlDevManager::setBias(yarp::os::Bottle bias)
@@ -330,18 +330,18 @@ bool vsctrlDevManager::setBias(std::string biasName, unsigned int biasValue) {
 
 // --- set the full vector that needs to be written to the device to program the chip --- //
 std::vector<unsigned int> vsctrlDevManager::prepareBiases(){
-    
+
     std::vector<unsigned int> vBiases;
 
     for(int i = 1; i < bias.size(); i++)
         vBiases.push_back(bias.get(i).asList()->get(1).asInt());
-    
+
     return vBiases;
-    
+
 }
 
 unsigned int vsctrlDevManager::getBias(std::string biasName) {
-    
+
     return bias.find(biasName).asInt();
 
 }
@@ -349,12 +349,12 @@ unsigned int vsctrlDevManager::getBias(std::string biasName) {
 void vsctrlDevManager::printBiases(){
 
     std::cout << bias.toString() << std::endl;
-    
+
 }
 
 // -------------- ioctl for i2c device ---------------- //
 int vsctrlDevManager::chipReset(){
-    
+
     int ret;
     ret = ioctl(devDesc, VSCTRL_RESET_ARRAY, 0);
     if (ret == -1) {
@@ -368,10 +368,10 @@ int vsctrlDevManager::chipReset(){
         return ret;
     }
     else {
-        
+
         std::cout << "reset " << chipName << channel << std::endl;
     }
-    
+
     return ret;
 }
 
@@ -381,7 +381,7 @@ int vsctrlDevManager::chipPowerDown(){
     if (ret == -1) {
         std::cerr << "power off chip not done: ioctl error " << errno << std::endl;
     } else {
-        
+
         std::cout << "power off " << chipName << channel << std::endl;
     }
     return ret;
@@ -389,12 +389,12 @@ int vsctrlDevManager::chipPowerDown(){
 
 int vsctrlDevManager::chipPowerUp(){
     int ret;
-    
+
     ret = ioctl(devDesc, VSCTRL_SET_PWRDWN, 0);
     if (ret == -1) {
         std::cerr << "power on chip not done: ioctl error " << errno << std::endl;
     } else {
-        
+
         std::cout << "power on " << chipName << channel << std::endl;
     }
     return ret;
@@ -405,7 +405,7 @@ int vsctrlDevManager::getFpgaRel(){
     unsigned int fpga_rel;
 
     ret = ioctl(devDesc, VSCTRL_GET_FPGAREL, &fpga_rel);
-    
+
     if (ret == -1) {
         std::cerr << "read release failed: ioctl error " << errno << std::endl;
     } else {
@@ -421,7 +421,7 @@ int vsctrlDevManager::getFpgaStatus(){
     unsigned int fpga_stat;
 
     ret = ioctl(devDesc, VSCTRL_GET_STATUS, &fpga_stat);
-    
+
     if (ret == -1) {
         std::cerr << "read status failed: ioctl error " << errno << std::endl;
     } else {
@@ -432,7 +432,7 @@ int vsctrlDevManager::getFpgaStatus(){
         fpgaStat.apsFifoFull   = fpga_stat & 0x00000002;
         fpgaStat.i2cTimeout    = fpga_stat & 0x00000080;
         fpgaStat.crcErr        = fpga_stat & 0x00000010;
-        
+
     }
     return ret;
 }
@@ -440,7 +440,7 @@ int vsctrlDevManager::getFpgaStatus(){
 int vsctrlDevManager::clearFpgaStatus(std::string clr){
     int ret;
     unsigned int clrStatus;
-    
+
     if (clr == "biasDone") {
         clrStatus = 0x00000020;
     } else if (clr == "tdFifoFull") {
@@ -452,13 +452,13 @@ int vsctrlDevManager::clearFpgaStatus(std::string clr){
     } else if (clr == "crcErr"){
         clrStatus = 0x00000010;
     }
-    
+
     ret = ioctl(devDesc, VSCTRL_CLR_STATUS, &clrStatus);
-    
+
     if (ret == -1) {
         std::cerr << "clear status failed: ioctl error " << errno << std::endl;
     } else {
-        
+
         std::cout << "cleared field" << std::endl;
     }
     return ret;
@@ -468,37 +468,37 @@ int vsctrlDevManager::clearFpgaStatus(std::string clr){
 int vsctrlDevManager::getFpgaInfo(){
     int ret;
     unsigned int fpga_info;
-    
+
     ret = ioctl(devDesc, VSCTRL_GET_INFO, &fpga_info);
-    
+
     if (ret == -1) {
         std::cerr << "read info failed: ioctl error " << errno << std::endl;
     } else {
         std::cout << "FPGA_INFO    = " << (uint8_t)fpga_info << std::endl;
-        
+
     }
     return ret;
 }
 
 int vsctrlDevManager::writeAerTimings(uint8_t ack_rel, uint8_t sample, uint8_t ack_set){
-    
+
     int ret;
     iocVsctrlArg.aer_timings.cfg_ack_rel_delay = ack_rel;
     iocVsctrlArg.aer_timings.cfg_sample_delay  = sample;
     iocVsctrlArg.aer_timings.cfg_ack_set_delay = ack_set;
     ret = ioctl(devDesc, VSCTRL_SET_AER_TIMINGS, &iocVsctrlArg);
-    
-    
+
+
     if (ret == -1) {
         std::cerr << "write AER timings failed: ioctl error " << errno << std::endl;
     }
-    
+
     return ret;
 }
 
 
 int vsctrlDevManager::writeBgTimings(uint8_t prescaler, uint8_t hold, uint8_t ck_active, uint8_t latch_setup, uint8_t latch_active){
-    
+
     int ret;
     iocVsctrlArg.bg_timings.prescaler_value   = prescaler;
     iocVsctrlArg.bg_timings.setup_hold_time   = hold;
@@ -506,55 +506,55 @@ int vsctrlDevManager::writeBgTimings(uint8_t prescaler, uint8_t hold, uint8_t ck
     iocVsctrlArg.bg_timings.latch_setup_time  = latch_setup;
     iocVsctrlArg.bg_timings.latch_active_time = latch_active;
     ret = ioctl(devDesc, VSCTRL_SET_BG_TIMINGS, &iocVsctrlArg);
-    
-    
+
+
     if (ret == -1) {
         std::cerr << "write AER timings failed: ioctl error " << errno << std::endl;
     }
-    
+
     return ret;
 }
 
 
 int vsctrlDevManager::getBgTimings(){
-    
+
     int ret;
     ret = ioctl(devDesc, VSCTRL_GET_BG_TIMINGS, &iocVsctrlArg);
-    
-    
+
+
     if (ret == -1) {
         std::cerr << "read Bg timings failed: ioctl error " << errno << std::endl;
     } else {
-        
+
         std::cout << "Bg Timings:" << std::endl << "Prescaler = " <<  iocVsctrlArg.bg_timings.prescaler_value  << std::endl << "Setup/Hold Time = " <<  iocVsctrlArg.bg_timings.setup_hold_time  << std::endl << "Clock Active Time = " <<  iocVsctrlArg.bg_timings.clock_active_time << std::endl << "Latch Setup Time = " <<  iocVsctrlArg.bg_timings.latch_setup_time  << std::endl << "Latch Active Time = " << iocVsctrlArg.bg_timings.latch_active_time << std::endl;
-        
+
     }
-    
-    
+
+
     return ret;
 }
 
 int vsctrlDevManager::getAerTimings(){
-    
+
     int ret;
     ret = ioctl(devDesc, VSCTRL_GET_AER_TIMINGS, &iocVsctrlArg);
-    
-    
+
+
     if (ret == -1) {
         std::cerr << "read AER timings failed: ioctl error " << errno << std::endl;
     } else {
-        
+
         std::cout << "AER Timings:" << std::endl << "Ack Release Delay = " <<  iocVsctrlArg.aer_timings.cfg_ack_rel_delay  << std::endl << "Sample Delay = " <<  iocVsctrlArg.aer_timings.cfg_sample_delay << std::endl << "Ack Set Delay = " <<  iocVsctrlArg.aer_timings.cfg_ack_set_delay << std::endl;
-        
+
     }
-    
-    
+
+
     return ret;
 }
 
 
 int vsctrlDevManager::initDevice(){
-    
+
     int ret = -1;
 
     if (chipName == "ATIS"){
@@ -562,43 +562,43 @@ int vsctrlDevManager::initDevice(){
         if (ret == -1) {
             std::cerr << "init device failed: ioctl error " << errno << std::endl;
         } else {
-            
+
             std::cout << "Initializing device as ATIS" << std::endl;
-            
+
         }
-        
+
     } else if (chipName == "DVS"){
         ret = ioctl(devDesc, VSCTRL_INIT_DEV, CHIP_DVS);
         if (ret == -1) {
             std::cerr << "init device failed: ioctl error " << errno << std::endl;
         } else {
-            
+
             std::cout << "Initializing device as DVS" << std::endl;
-            
+
         }
-        
+
     } else {
         std::cout << "Error: " << chipName << "unsupported" << std::endl;
-        
+
     }
-    
+
     return ret;
 }
 
 
 int vsctrlDevManager::writeGPORegister(uint32_t data){
-    
+
     int ret;
     ret = ioctl(devDesc, VSCTRL_SET_GPO, &data);
     if (ret == -1) {
         std::cerr << "read GPO register failed: ioctl error " << errno << std::endl;
     } else {
-        
+
         std::cout << "GPO register = " << iocVsctrlArg.regs.data << std::endl;
-        
+
     }
     return ret;
-    
+
 }
 
 int vsctrlDevManager::readGPORegister(){
@@ -611,13 +611,13 @@ int vsctrlDevManager::readGPORegister(){
     if (ret == -1) {
         std::cerr << "read GPO register failed: ioctl error " << errno << std::endl;
     } else {
-        
+
         std::cout << "GPO register = " << iocVsctrlArg.regs.data << std::endl;
-        
+
     }
-    
+
     return ret;
-    
+
 }
 
 /* -----------------------------------------------------------------
@@ -628,28 +628,28 @@ aerDevManager::aerDevManager(std::string dev, int clockPeriod, std::string loopB
     this->tickToUs = 1000.0/clockPeriod; // to scale the timestamp to 1us temporal resolution
     this->usToTick = 1.0/tickToUs; // to scale the 1us temporal resolution to hw clock ticks
     this->loopBack = loopBack;
-    
+
     if (dev == "zynq_spinn")
-        {
-        
-            this->deviceName = "/dev/spinn2neu";
-            clockRes = 1;
-        } else if (dev == "zynq_sens")
-        {
-            
-            this->deviceName = "/dev/iit_hpucore";
-            clockRes = 1;
-        } else {
-            
-            std::cout << "aer device error: unrecognised device" << std::endl;
-            
-        }
+    {
+
+        this->deviceName = "/dev/spinn2neu";
+        //clockRes = 1;
+    } else if (dev == "zynq_sens")
+    {
+
+        this->deviceName = "/dev/iit_hpucore";
+        //clockRes = 1;
+    } else {
+
+        std::cout << "aer device error: unrecognised device" << std::endl;
+
+    }
 }
 
 bool aerDevManager::openDevice(){
-    
+
     bool ret = deviceManager::openDevice();
-    
+
     if (ret!=false){
         //initialization for writing to device
         unsigned long version;
@@ -657,55 +657,55 @@ bool aerDevManager::openDevice(){
         char          stringa[4];
         int i;
         unsigned int  tmp_reg;
-        
+
         ioctl(devDesc, AER_VERSION, &version);
-        
+
         hw_major = (version & 0xF0) >> 4;
         hw_minor = (version & 0x0F);
         stringa[3]=0;
-        
+
         for (i=0; i<3; i++) {
             stringa[i] = (version&0xFF000000) >> 24;
             version = version << 8;
         }
         fprintf(stderr, "Identified: %s version %d.%d\r\n\r\n", stringa, hw_major, hw_minor);
-        
+
         // Write the WrapTimeStamp register with any value if you want to clear it
         //aerWriteGenericReg(fp,STMP_REG,0);
         fprintf(stderr, "Times wrapping counter: %d\n", aerReadGenericReg(devDesc, STMP_REG));
-        
+
         // Enable Time wrapping interrupt
         //aerWriteGenericReg(devDesc, MASK_REG, MSK_TIMEWRAPPING | MSK_TX_DUMPMODE | MSK_RX_PAR_ERR | MSK_RX_MOD_ERR);
         aerWriteGenericReg(devDesc, MASK_REG, MSK_TIMEWRAPPING | MSK_RX_PAR_ERR);
-        
+
         // Flush FIFOs
         tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
         aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg | CTRL_FLUSHFIFO); // | CTRL_ENABLEIP);
-        
+
         // Start IP in LoopBack
         tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
         aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg | (CTRL_ENABLEINTERRUPT));// | CTRL_ENABLE_FAR_LBCK));
-        
+
         int loc = 0;
         int far = 0;
         int rem = 0;
-        
+
         if (loopBack == "loc"){
             std::cout << "Setting Local loopback" << std::endl;
             loc = 1;
-            
+
         } else if (loopBack == "far"){
             std::cout << "Setting Far loopback" << std::endl;
-            
+
             far = 1;
-            
+
         } else if (loopBack == "rem"){
             std::cout << "Setting Remote loopback" << std::endl;
-            
+
             rem = 1;
-            
+
         }
-        
+
         ioctl(devDesc, AER_SET_LOC_LBCK, loc);
         ioctl(devDesc, AER_SET_FAR_LBCK, far);
         ioctl(devDesc, AER_SET_REM_LBCK, rem);
@@ -719,7 +719,7 @@ void aerDevManager::closeDevice(){
     unsigned int tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
     aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg & ~(CTRL_ENABLEINTERRUPT));
 
-    
+
 }
 
 bool aerDevManager::readFifoFull(){
@@ -774,16 +774,16 @@ bool aerDevManager::writeFifoEmpty(){
 
 int aerDevManager::timeWrapCount(){
     int time;
-    
+
     time = aerReadGenericReg(devDesc,STMP_REG);
     fprintf (stdout,"Times wrapping counter: %d\n",time);
-    
+
     return time;
 }
 
 void aerDevManager::aerWriteGenericReg (int devDesc, unsigned int offset, unsigned int data) {
     aerGenReg_t reg;
-    
+
     reg.rw = 1;
     reg.data = data;
     reg.offset = offset;
@@ -793,18 +793,18 @@ void aerDevManager::aerWriteGenericReg (int devDesc, unsigned int offset, unsign
 
 unsigned int aerDevManager::aerReadGenericReg (int devDesc, unsigned int offset) {
     aerGenReg_t reg;
-    
+
     reg.rw = 0;
     reg.offset = offset;
     ioctl(devDesc, AER_GEN_REG, &reg);
-    
+
     return reg.data;
 }
 
 
 void aerDevManager::usage (void) {
     std::cerr << __FILE__ << "<even number of data to transfer>\n" << std::endl;
-    
+
 }
 
 /* -------------------------------------------------------
@@ -812,12 +812,12 @@ void aerDevManager::usage (void) {
 ------------------------------------------------------- */
 
 aerfx2_0DevManager::aerfx2_0DevManager() : deviceManager(true, AER_MAX_BUF_SIZE) {
-    
+
     deviceName = "/dev/aerfx2_0";
 }
 
 bool aerfx2_0DevManager::openDevice(){
-    
+
     std::cout << "name of the device: " << deviceName << std::endl;
     devDesc = ::open(deviceName.c_str(), O_RDWR | O_NONBLOCK | O_SYNC);
     if (devDesc < 0) {
