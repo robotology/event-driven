@@ -50,12 +50,13 @@ void  device2yarp::run() {
         //check validity
         int *TS =  (int *)(data.data() + bend);
         int *AE =  (int *)(data.data() + bend + 4);
-        bool BITMISMATCH = !(*TS & 0x80000000) || (*AE & 0xFEFF0000);
+        bool BITMISMATCH = !(*TS & 0x80000000) || (*AE & 0xFFEF0000);
 
         if(BITMISMATCH) {
             //send on what we have checked is not mismatched so far
             if(bend - bstart > 0) {
                 std::cerr << "BITMISMATCH in yarp2device" << std::endl;
+                std::cerr << *TS << " " << *AE << std::endl;
                 sender.setdata(data.data()+bstart, bend-bstart);
                 countAEs += (bend - bstart) / 8;
                 vStamp.update();
@@ -69,7 +70,7 @@ void  device2yarp::run() {
             //if we are checkout all timestamps for scaling
             //we could also move the channel bit?
             //else scale the timestamp
-            *TS = 0x80000000 | ((*TS & 0x7FFFFFFF) * 1);
+            //*TS = 0x80000000 | ((*TS & 0x7FFFFFFF) * 1);
             //and then check the next two ints
             bend += 8;
         }
