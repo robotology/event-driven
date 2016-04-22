@@ -50,6 +50,7 @@ private:
     std::vector<char> buffer2;
 
     yarp::os::Semaphore safety;
+    yarp::os::Semaphore signal;
     virtual void run();
 
 protected:

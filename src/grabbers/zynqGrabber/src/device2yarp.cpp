@@ -119,7 +119,7 @@ void  device2yarp::run() {
         portvBottle.write(sender); //port is always strict
     }
 
-    if(yarp::os::Time::now() - prevTS > 15) {
+    if(yarp::os::Time::now() - prevTS > 10) {
         std::cout << "ZynqGrabber running happily: " << countAEs
                   << " events" << std::endl;
         prevTS = yarp::os::Time::now();

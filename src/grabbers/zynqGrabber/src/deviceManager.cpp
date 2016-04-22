@@ -76,6 +76,8 @@ bool deviceManager::openDevice(){
 
 void deviceManager::closeDevice()
 {
+
+    signal.post();
     //stop the read thread
     if(!stop())
         std::cerr << "Thread did not stop correctly" << std::endl;
@@ -139,6 +141,8 @@ const std::vector<char>& deviceManager::readDevice(int &nBytesRead)
     if(bufferedRead) {
 
         //safely copy the data into the accessBuffer and reset the readCount
+        signal.post(); //tell the other thread we are ready (no wait)
+        //std::cout << "signal++" << std::endl;
         safety.wait();
 
         //switch the buffer the read into
@@ -150,9 +154,11 @@ const std::vector<char>& deviceManager::readDevice(int &nBytesRead)
         nBytesRead = readCount;
         readCount = 0;
         safety.post();
+        signal.post(); //tell the other thread we are done
 
     } else {
 
+        std::cout << "Direct Read" << std::endl;
         nBytesRead = ::read(devDesc, readBuffer->data(), maxBufferSize);
         if(nBytesRead < 0 && errno != EAGAIN) perror("perror: ");
 
@@ -172,10 +178,19 @@ void deviceManager::run(void)
         safety.wait();
 
         //std::cout << "Reading events from FIFO" << std::endl;
+        //aerDevManager * tempcast = dynamic_cast<aerDevManager *>(this);
+        //if(!tempcast) std::cout << "casting not working" << std::endl;
+        //else {
+	//    if(tempcast->readFifoFull())
+	//	std::cout << "Fifo Full" << std::endl;
+	//}
 
         //read SHOULD be a blocking call
         int r = ::read(devDesc, readBuffer->data() + readCount,
-                       maxBufferSize - readCount);
+                       std::min(maxBufferSize - readCount, (unsigned int)2048));
+        //int r = ::read(devDesc, readBuffer->data() + readCount,
+        //               maxBufferSize - readCount);
+
 
         //std::cout << readBuffer << " " <<  readCount << " " << maxBufferSize << std::endl;
 
@@ -196,7 +211,12 @@ void deviceManager::run(void)
 
         //std::cout << "Leaving safe zone" << std::endl;
         safety.post();
-        //yarp::os::Time::delay(0.00001);
+        //yarp::os::Time::delay(10);
+        if(signal.check()) {
+            //the other thread is read to read
+            //std::cout << "signal > 0. read was called" << std::endl;
+            signal.wait(); //wait for it to do the read
+        }
 
 
         //std::cout << "Done with FIFO" << std::endl;
