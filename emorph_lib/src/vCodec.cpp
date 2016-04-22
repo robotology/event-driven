@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2011 Department of Robotics Brain and Cognitive Sciences -
  * Istituto Italiano di Tecnologia
  * Author: Ugo Pattacini, edited by Arren Glover(10/14)
@@ -164,7 +164,7 @@ vEvent* AddressEvent::clone() {
 void AddressEvent::encode(yarp::os::Bottle &b) const
 {
     vEvent::encode(b);
-    b.addInt(((channel&0x01)<<20)|((y&0x7f)<<8)|((x&0x7f)<<1)|(polarity&0x01));
+    b.addInt(((channel&0x01)<<15)|((y&0x7f)<<8)|((x&0x7f)<<1)|(polarity&0x01));
 }
 
 /******************************************************************************/
@@ -183,8 +183,7 @@ bool AddressEvent::decode(const yarp::os::Bottle &packet, int &pos)
         word0>>=7;
         y=word0&0x7f;
 
-        //word0>>=7;
-        word0 >>= 12;
+        word0>>=7;
         channel=word0&0x01;
 
         pos += localWordsCoded;
@@ -600,7 +599,7 @@ bool ClusterEventGauss::decode(const yarp::os::Bottle &packet, int &pos)
         yVel=word2&0xffff;
         word2>>=16;
         xVel=word2&0xffff;
-        
+
         pos += localWordsCoded;
         return true;
 
