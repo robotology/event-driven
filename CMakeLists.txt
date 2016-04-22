@@ -12,6 +12,7 @@ option(EMORPH_USE_QTCREATOR "Add apps/drivers to QtCreator IDE" OFF)
 
 find_package(ICUBcontrib REQUIRED)
 find_package(YARP REQUIRED)
+
 list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH} ${ICUBCONTRIB_MODULE_PATH})
 
 include(ICUBcontribOptions)
@@ -20,14 +21,17 @@ icubcontrib_set_default_prefix()
 
 if(NOT EMORPH_BUILD_ZYNQ)
 
-    find_package(ICUB REQUIRED)
+    find_package(ICUB)
+    if(NOT ICUB_FOUND)
+        message("Warning: ICUB not found. Certain Modules will not be built")
+    endif(NOT ICUB_FOUND)
 
     find_package(OpenCV)
     if(NOT OPENCV_FOUND)
          message("Warning: OpenCV Not Found. Certain Modules will not be built")
     endif(NOT OPENCV_FOUND)
 
-	add_subdirectory(drivers)
+    add_subdirectory(drivers)
 
 endif(NOT EMORPH_BUILD_ZYNQ)
 

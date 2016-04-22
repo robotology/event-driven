@@ -8,7 +8,10 @@ add_subdirectory(vFlow)
 #add_subdirectory(vAnalysis)
 add_subdirectory(vCluster)
 #add_subdirectory(vPepper)
-add_subdirectory(vCircle)
+if(ICUB_FOUND)
+    add_subdirectory(vCircle)
+endif(ICUB_FOUND)
+
 add_subdirectory(vCorner)
 add_subdirectory(vRepTest)
 
