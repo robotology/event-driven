@@ -173,6 +173,10 @@ const std::vector<char>& deviceManager::readDevice(int &nBytesRead)
 void deviceManager::run(void)
 {
 
+    int ntimesr = 0;
+    int ntimesr0 = 0;
+    double ytime = yarp::os::Time::now();
+
     while(!isStopping()) {
 
         safety.wait();
@@ -181,9 +185,9 @@ void deviceManager::run(void)
         //aerDevManager * tempcast = dynamic_cast<aerDevManager *>(this);
         //if(!tempcast) std::cout << "casting not working" << std::endl;
         //else {
-	//    if(tempcast->readFifoFull())
-	//	std::cout << "Fifo Full" << std::endl;
-	//}
+    //    if(tempcast->readFifoFull())
+    //	std::cout << "Fifo Full" << std::endl;
+    //}
 
         //read SHOULD be a blocking call
         int r = ::read(devDesc, readBuffer->data() + readCount,
@@ -197,11 +201,15 @@ void deviceManager::run(void)
         if(r > 0) {
             //std::cout << "Successful Read" << std::endl;
             readCount += r;
+            ntimesr++;
         } else if(r < 0 && errno != EAGAIN) {
             std::cerr << "Error reading from " << deviceName << std::endl;
             perror("perror: ");
             std::cerr << "readCount: " << readCount << "MaxBuffer: "
                       << maxBufferSize << std::endl;
+            ntimesr0++;
+        } else {
+            ntimesr0++;
         }
 
         if(readCount >= maxBufferSize) {
@@ -216,6 +224,10 @@ void deviceManager::run(void)
             //the other thread is read to read
             //std::cout << "signal > 0. read was called" << std::endl;
             signal.wait(); //wait for it to do the read
+            std::cout << ntimesr << " " << ntimesr0 << " " << (yarp::os::Time::now() - ytime)*1000 << std::endl;
+            ntimesr = 0;
+            ntimesr0 = 0;
+            ytime = yarp::os::Time::now();
         }
 
 
