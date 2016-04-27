@@ -15,7 +15,7 @@
  */
 
 #include <iCub/device2yarp.h>
-#define THRATE 1
+#define THRATE 2
 
 device2yarp::device2yarp() : RateThread(THRATE) {
     countAEs = 0;

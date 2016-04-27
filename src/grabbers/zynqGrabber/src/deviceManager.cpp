@@ -81,6 +81,8 @@ void deviceManager::closeDevice()
     //stop the read thread
     if(!stop())
         std::cerr << "Thread did not stop correctly" << std::endl;
+    else
+        std::cout << "Thread stopped. Continuing shutdown." << std::endl;
 
     ::close(devDesc);
     std::cout <<  "closing device " << deviceName << std::endl;
@@ -176,6 +178,7 @@ void deviceManager::run(void)
     int ntimesr = 0;
     int ntimesr0 = 0;
     double ytime = yarp::os::Time::now();
+    signal.check();
 
     while(!isStopping()) {
 
@@ -191,7 +194,7 @@ void deviceManager::run(void)
 
         //read SHOULD be a blocking call
         int r = ::read(devDesc, readBuffer->data() + readCount,
-                       std::min(maxBufferSize - readCount, (unsigned int)2048));
+                       std::min(maxBufferSize - readCount, (unsigned int)256));
         //int r = ::read(devDesc, readBuffer->data() + readCount,
         //               maxBufferSize - readCount);
 
@@ -222,7 +225,7 @@ void deviceManager::run(void)
         //yarp::os::Time::delay(10);
         if(signal.check()) {
             //the other thread is read to read
-            //std::cout << "signal > 0. read was called" << std::endl;
+            std::cout << "Read called with " << readCount << std::endl;
             signal.wait(); //wait for it to do the read
             std::cout << ntimesr << " " << ntimesr0 << " " << (yarp::os::Time::now() - ytime)*1000 << std::endl;
             ntimesr = 0;
