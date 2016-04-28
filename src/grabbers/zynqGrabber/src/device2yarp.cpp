@@ -15,7 +15,7 @@
  */
 
 #include <iCub/device2yarp.h>
-#define THRATE 2
+#define THRATE 1
 
 device2yarp::device2yarp() : RateThread(THRATE) {
     countAEs = 0;
@@ -31,6 +31,13 @@ bool device2yarp::threadInit(std::string moduleName){
 }
 
 void  device2yarp::run() {
+
+    //display an output to let everyone know we are still working.
+    if(yarp::os::Time::now() - prevTS > 10) {
+        std::cout << "ZynqGrabber running happily: " << countAEs
+                  << " events" << std::endl;
+        prevTS = yarp::os::Time::now();
+    }
 
     //get the data from the device read thread
     int nBytesRead = 0;
@@ -119,11 +126,7 @@ void  device2yarp::run() {
         portvBottle.write(sender); //port is always strict
     }
 
-    if(yarp::os::Time::now() - prevTS > 10) {
-        std::cout << "ZynqGrabber running happily: " << countAEs
-                  << " events" << std::endl;
-        prevTS = yarp::os::Time::now();
-    }
+
 
 }
 

@@ -180,9 +180,9 @@ const std::vector<char>& deviceManager::readDevice(int &nBytesRead)
 void deviceManager::run(void)
 {
 
-    int ntimesr = 0;
-    int ntimesr0 = 0;
-    double ytime = yarp::os::Time::now();
+    //int ntimesr = 0;
+    //int ntimesr0 = 0;
+    //double ytime = yarp::os::Time::now();
     signal.check();
 
     while(!isStopping()) {
@@ -209,16 +209,16 @@ void deviceManager::run(void)
         if(r > 0) {
             //std::cout << "Successful Read" << std::endl;
             readCount += r;
-            ntimesr++;
+            //ntimesr++;
         } else if(r < 0 && errno != EAGAIN) {
             std::cerr << "Error reading from " << deviceName << std::endl;
             perror("perror: ");
             std::cerr << "readCount: " << readCount << "MaxBuffer: "
                       << maxBufferSize << std::endl;
-            ntimesr0++;
-        } else {
-            ntimesr0++;
-        }
+            //ntimesr0++;
+        }// else {
+        //    ntimesr0++;
+        //}
 
         if(readCount >= maxBufferSize) {
             std::cerr << "We reached maximum buffer! " << readCount << "/"
@@ -231,12 +231,12 @@ void deviceManager::run(void)
         //if(signal.check()) {
         if(bufferedreadwaiting) {
             //the other thread is read to read
-            std::cout << "Read called with " << readCount << std::endl;
+            //std::cout << "Read called with " << readCount << std::endl;
             signal.wait(); //wait for it to do the read
-            std::cout << ntimesr << " " << ntimesr0 << " " << (yarp::os::Time::now() - ytime)*1000 << std::endl;
-            ntimesr = 0;
-            ntimesr0 = 0;
-            ytime = yarp::os::Time::now();
+            //std::cout << ntimesr << " " << ntimesr0 << " " << (yarp::os::Time::now() - ytime)*1000 << std::endl;
+            //ntimesr = 0;
+            //ntimesr0 = 0;
+            //ytime = yarp::os::Time::now();
         }
 
 
