@@ -20,10 +20,12 @@
 device2yarp::device2yarp() : RateThread(THRATE) {
     countAEs = 0;
     prevTS = 0;
+    strict = false;
 }
 
 bool device2yarp::threadInit(std::string moduleName, bool strict){
 
+    this->strict = strict;
     if(strict) {
         std::cout << "D2Y: setting output port to strict" << std::endl;
         portvBottle.setStrict();
@@ -75,7 +77,8 @@ void  device2yarp::run() {
                 countAEs += (bend - bstart) / 8;
                 vStamp.update();
                 portvBottle.setEnvelope(vStamp);
-                portvBottle.write(); //port is always strict
+                if(strict) portvBottle.writeStrict();
+                else portvBottle.write();
 
 //                sender.setdata(data.data()+bstart, bend-bstart);
 //                countAEs += (bend - bstart) / 8;
@@ -137,7 +140,8 @@ void  device2yarp::run() {
         countAEs += (nBytesRead - bstart) / 8;
         vStamp.update();
         portvBottle.setEnvelope(vStamp);
-        portvBottle.write(); //port is always strict
+        if(strict) portvBottle.writeStrict();
+        else portvBottle.write();
     }
 
 

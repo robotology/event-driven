@@ -47,6 +47,7 @@ private:
     //yarp::os::Port portvBottle;
     yarp::os::Stamp vStamp;
 
+    bool strict;
     //read buffer
     //std::vector<unsigned int> deviceData;
 
