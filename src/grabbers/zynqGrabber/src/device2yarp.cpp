@@ -22,9 +22,9 @@ device2yarp::device2yarp() : RateThread(THRATE) {
     prevTS = 0;
 }
 
-bool device2yarp::threadInit(std::string moduleName){
+bool device2yarp::threadInit(std::string moduleName, bool strict){
 
-    //portvBottle.setStrict();
+    if(strict) portvBottle.setStrict();
     std::string outPortName = "/" + moduleName + "/vBottle:o";
     return portvBottle.open(outPortName);
 
@@ -64,11 +64,19 @@ void  device2yarp::run() {
             if(bend - bstart > 0) {
                 std::cerr << "BITMISMATCH in yarp2device" << std::endl;
                 std::cerr << *TS << " " << *AE << std::endl;
-                sender.setdata(data.data()+bstart, bend-bstart);
+
+                emorph::vBottleMimic &vbm = portvBottle.prepare();
+                vbm.setdata(data.data()+bstart, bend-bstart);
                 countAEs += (bend - bstart) / 8;
                 vStamp.update();
                 portvBottle.setEnvelope(vStamp);
-                portvBottle.write(sender); //port is always strict
+                portvBottle.write(); //port is always strict
+
+//                sender.setdata(data.data()+bstart, bend-bstart);
+//                countAEs += (bend - bstart) / 8;
+//                vStamp.update();
+//                portvBottle.setEnvelope(vStamp);
+//                portvBottle.write(sender); //port is always strict
             }
             //then increment by 1 to find the next alignment
             bend++;
@@ -119,11 +127,12 @@ void  device2yarp::run() {
     //    }
 
     if(nBytesRead - bstart > 7) {
-        sender.setdata(data.data()+bstart, 8*((nBytesRead-bstart)/8));
+        emorph::vBottleMimic &vbm = portvBottle.prepare();
+        vbm.setdata(data.data()+bstart, 8*((nBytesRead-bstart)/8));
         countAEs += (nBytesRead - bstart) / 8;
         vStamp.update();
         portvBottle.setEnvelope(vStamp);
-        portvBottle.write(sender); //port is always strict
+        portvBottle.write(); //port is always strict
     }
 
 

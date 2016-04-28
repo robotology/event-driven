@@ -46,6 +46,8 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     std::string loopBack = rf.check("loopBack", yarp::os::Value("none")).asString(); //add check instead of default value
 
 
+
+
     //dvs or atis
     std::string chipName = rf.check("chip", yarp::os::Value("DVS")).asString();
 
@@ -105,7 +107,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         //could not start the thread
         return false;
     }
-    if(!D2Y->threadInit(moduleName)) {
+    if(!D2Y->threadInit(moduleName, rf.check("strict"))) {
         //could not start the thread
         return false;
     }

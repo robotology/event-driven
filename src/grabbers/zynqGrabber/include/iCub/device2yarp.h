@@ -36,14 +36,15 @@ public:
     device2yarp();
     virtual void run();
     virtual void threadRelease();
-    virtual bool threadInit(std::string moduleName = "");
+    virtual bool threadInit(std::string moduleName = "", bool strict = false);
     bool    attachDeviceManager(deviceManager* devManager);
 
 private:
 
     //output port
     emorph::vBottleMimic sender;
-    yarp::os::Port portvBottle;
+    yarp::os::BufferedPort<emorph::vBottleMimic> portvBottle;
+    //yarp::os::Port portvBottle;
     yarp::os::Stamp vStamp;
 
     //read buffer
