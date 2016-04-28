@@ -51,6 +51,7 @@ private:
 
     yarp::os::Semaphore safety;
     yarp::os::Semaphore signal;
+    bool bufferedreadwaiting;
     virtual void run();
 
 protected:

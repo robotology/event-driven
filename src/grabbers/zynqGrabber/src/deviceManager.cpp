@@ -30,6 +30,7 @@ deviceManager::deviceManager(bool bufferedRead, unsigned int maxBufferSize){
     this->maxBufferSize = maxBufferSize;
     this->bufferedRead = bufferedRead;
     readCount = 0;
+    bufferedreadwaiting = false;
 
     //allocate memory for reading
     buffer1.resize(maxBufferSize);
@@ -143,9 +144,12 @@ const std::vector<char>& deviceManager::readDevice(int &nBytesRead)
     if(bufferedRead) {
 
         //safely copy the data into the accessBuffer and reset the readCount
-        signal.post(); //tell the other thread we are ready (no wait)
+        //signal.post(); //tell the other thread we are ready (no wait)
+        bufferedreadwaiting = true;
         //std::cout << "signal++" << std::endl;
         safety.wait();
+
+        bufferedreadwaiting = false;
 
         //switch the buffer the read into
         std::vector<char> * temp = readBuffer;
@@ -156,6 +160,7 @@ const std::vector<char>& deviceManager::readDevice(int &nBytesRead)
         nBytesRead = readCount;
         readCount = 0;
         safety.post();
+        signal.check();
         signal.post(); //tell the other thread we are done
 
     } else {
@@ -223,7 +228,8 @@ void deviceManager::run(void)
         //std::cout << "Leaving safe zone" << std::endl;
         safety.post();
         //yarp::os::Time::delay(10);
-        if(signal.check()) {
+        //if(signal.check()) {
+        if(bufferedreadwaiting) {
             //the other thread is read to read
             std::cout << "Read called with " << readCount << std::endl;
             signal.wait(); //wait for it to do the read
