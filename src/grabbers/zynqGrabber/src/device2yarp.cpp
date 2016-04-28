@@ -24,7 +24,12 @@ device2yarp::device2yarp() : RateThread(THRATE) {
 
 bool device2yarp::threadInit(std::string moduleName, bool strict){
 
-    if(strict) portvBottle.setStrict();
+    if(strict) {
+        std::cout << "D2Y: setting output port to strict" << std::endl;
+        portvBottle.setStrict();
+    } else {
+        std::cout << "D2Y: setting output port to not-strict" << std::endl;
+    }
     std::string outPortName = "/" + moduleName + "/vBottle:o";
     return portvBottle.open(outPortName);
 
