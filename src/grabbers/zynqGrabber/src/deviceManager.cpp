@@ -727,10 +727,16 @@ bool aerDevManager::openDevice(){
         tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
         aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg | (CTRL_ENABLEINTERRUPT));// | CTRL_ENABLE_FAR_LBCK));
 
-        int loc = 0;
-        int far = 0;
-        int rem = 0;
+        //int loc = 0;
+        //int far = 0;
+        //int rem = 0;
 
+
+        //turn off all loopbacks
+        tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
+        aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg & !CTRL_ENABLE_LOC_LBCK&!CTRL_ENABLE_FAR_LBCK&!CTRL_ENABLE_REM_LBCK);// | CTRL_ENABLE_FAR_LBCK));
+
+        //if loopback is specified, then set it.
         if (loopBack == "loc"){
             std::cout << "Setting Local loopback" << std::endl;
             tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
