@@ -733,23 +733,24 @@ bool aerDevManager::openDevice(){
 
         if (loopBack == "loc"){
             std::cout << "Setting Local loopback" << std::endl;
-            loc = 1;
+            tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
+            aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg | (CTRL_ENABLE_LOC_LBCK));// | CTRL_ENABLE_FAR_LBCK));
 
         } else if (loopBack == "far"){
             std::cout << "Setting Far loopback" << std::endl;
-
-            far = 1;
+            tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
+            aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg | (CTRL_ENABLE_FAR_LBCK));// | CTRL_ENABLE_FAR_LBCK));
 
         } else if (loopBack == "rem"){
             std::cout << "Setting Remote loopback" << std::endl;
-
-            rem = 1;
+            tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
+            aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg | (CTRL_ENABLE_REM_LBCK));// | CTRL_ENABLE_FAR_LBCK));
 
         }
 
-        ioctl(devDesc, AER_SET_LOC_LBCK, loc);
-        ioctl(devDesc, AER_SET_FAR_LBCK, far);
-        ioctl(devDesc, AER_SET_REM_LBCK, rem);
+        //ioctl(devDesc, AER_SET_LOC_LBCK, loc);
+        //ioctl(devDesc, AER_SET_FAR_LBCK, far);
+        //ioctl(devDesc, AER_SET_REM_LBCK, rem);
     }
     return ret;
 }
