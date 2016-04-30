@@ -11,14 +11,18 @@ option(EMORPH_BUILD_ZYNQ "Build for ZynqGrabber" OFF)
 option(EMORPH_USE_QTCREATOR "Add apps/drivers to QtCreator IDE" OFF)
 option(EMORPH_SPINNTERFACE "Build the SpiNNaker Ethernet Interface" OFF)
 
-find_package(ICUBcontrib REQUIRED)
 find_package(YARP REQUIRED)
+list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH})
 
-list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH} ${ICUBCONTRIB_MODULE_PATH})
-
-include(ICUBcontribOptions)
-include(ICUBcontribHelpers)
-icubcontrib_set_default_prefix()
+find_package(ICUBcontrib)
+if(ICUBcontrib_FOUND)
+    list(APPEND CMAKE_MODULE_PATH ${ICUBCONTRIB_MODULE_PATH})
+    include(ICUBcontribOptions)
+    include(ICUBcontribHelpers)
+    icubcontrib_set_default_prefix()
+else(ICUBcontrib_FOUND)
+    message("Warning: ICUBcontrib not found. Make Install may not install to the correct location")
+endif(ICUBcontrib_FOUND)
 
 if(NOT EMORPH_BUILD_ZYNQ)
 
