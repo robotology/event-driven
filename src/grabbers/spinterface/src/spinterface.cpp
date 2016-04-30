@@ -18,6 +18,7 @@
 #include "spinterface.h"
 #include <map>
 #include <list>
+#include <math.h>
 
 /******************************************************************************/
 // vSpinInterface
@@ -29,15 +30,15 @@ bool vSpinInterface::configure(yarp::os::ResourceFinder &rf)
             rf.check("name", yarp::os::Value("spinterface")).asString();
     setName(moduleName.c_str());
 
-    
+
     /* create the thread and pass pointers to the module parameters */
     spinnio::EIEIOSender   *spinSender;
     spinnio::EIEIOReceiver *spinReceiver;
- 
+
     // Create Spin sender and receiver objects
 
 
-    initSpin(17895, 12346, "192.168.1.1",
+    initSpin(17895, 12346, "192.168.240.254",
                        "/home/ubuntu/VVV/AttentionNetwork/application_generated_data_files/latest/input_output_database.db",
              &spinReceiver, &spinSender);
 
@@ -132,7 +133,7 @@ YARPspinI::YARPspinI()
     width = 128;
     downsamplefactor = 2;
     //eventsin.open("eventssenttospinnaker.txt");
-    
+
 }
 
 /******************************************************************************/
@@ -174,7 +175,7 @@ void YARPspinI::onRead(emorph::vBottle &bot)
 {
     //create event queue
     emorph::vQueue q = bot.getAll();
-    
+
 
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {
@@ -201,7 +202,7 @@ YARPspinO::YARPspinO() : yarp::os::RateThread(1)
     width = 128;
     height = 128;
     downsamplefactor = 2;
-    
+
 }
 
 /**********************************************************/

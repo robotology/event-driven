@@ -1,7 +1,7 @@
 # Copyright: 2012 iCub Facility, Istituto Italiano di Tecnologia
 # Author: Arren Glover
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
-# 
+#
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 SET(PROJECTNAME spinterface)
@@ -17,11 +17,11 @@ include_directories(${PROJECT_SOURCE_DIR}/include
                     ${YARP_INCLUDE_DIRS}
                     ${ICUB_INCLUDE_DIRS}
                     ${EMORPHLIB_INCLUDE_DIRS}
-                    /usr/local/include)
+                    /home/aglover/workspace/projects/SpinnIO/library_src/include)
 
 add_executable(${PROJECTNAME} ${source} ${header})
 
-target_link_libraries(${PROJECTNAME} ${YARP_LIBRARIES} eMorphLib /usr/local/lib/libSpinnIO.a sqlite3 pthread)
+target_link_libraries(${PROJECTNAME} ${YARP_LIBRARIES} eMorphLib /home/aglover/workspace/projects/SpinnIO/build/lib/libSpinnIO.a sqlite3 pthread)
 #target_link_libraries(${PROJECTNAME} ${YARP_LIBRARIES} eMorphLib sqlite3 pthread)
 
 install(TARGETS ${PROJECTNAME} DESTINATION bin)
