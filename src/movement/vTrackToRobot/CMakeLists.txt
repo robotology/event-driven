@@ -1,9 +1,9 @@
 # Copyright: 2012 iCub Facility, Istituto Italiano di Tecnologia
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 
-CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
-SET(PROJECTNAME vTrackToRobot)
-PROJECT(${PROJECTNAME})
+cmake_minimum_required(VERSION 2.6)
+set(PROJECTNAME vTrackToRobot)
+project(${PROJECTNAME})
 
 file(GLOB source src/*.cpp)
 file(GLOB header include/*.h)
@@ -11,13 +11,12 @@ file(GLOB header include/*.h)
 source_group("Source Files" FILES ${source})
 source_group("Header Files" FILES ${header})
 
-include_directories(${PROJECT_SOURCE_DIR}/include
+include_directories(${PROJECT_SOURCE_DIR}/include/
                     ${YARP_INCLUDE_DIRS}
-                    ${ICUB_INCLUDE_DIRS}
                     ${EMORPHLIB_INCLUDE_DIRS})
 
 add_executable(${PROJECTNAME} ${source} ${header})
 
-target_link_libraries(${PROJECTNAME} ${YARP_LIBRARIES} icubmod eMorphLib )
+target_link_libraries(${PROJECTNAME} ${YARP_LIBRARIES} eMorphLib)
 
 install(TARGETS ${PROJECTNAME} DESTINATION bin)

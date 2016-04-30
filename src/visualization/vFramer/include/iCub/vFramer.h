@@ -14,6 +14,12 @@
  * Public License for more details
  */
 
+/// \defgroup visualisation Visualisation
+/// \defgroup vFramer vFramer
+/// \ingroup visualisation
+/// \brief frame events in a temporal window which are drawn with a
+/// emorph::vDraw
+
 #ifndef __vFramer__
 #define __vFramer__
 
@@ -46,9 +52,11 @@ private:
     int windowsize;
 
     //! storage of vWindows
-    std::map<int, vWindow*> windows;
+    std::map<int, vWindow *> windows;
     //! storage of window snapshots
-    std::map<int, vQueue *> snaps;
+    std::map<int, vQueue> snaps;
+
+    yarp::os::Stamp yarptime;
 
 public:
 
@@ -63,6 +71,8 @@ public:
     /// \param windowsize (in us)
     ///
     void setWindowSize(int windowsize);
+
+    yarp::os::Stamp getYarpTime() {return yarptime;}
 
     ///
     /// \brief snapshotAllWindows freeze the current list of events for each
@@ -99,6 +109,9 @@ private:
 
     //! the period between images being published
     double period;
+
+    double pyarptime;
+
 
     //! the vBottle reading port that splits events by channel
     vReadAndSplit vReader;

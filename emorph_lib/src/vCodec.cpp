@@ -1,6 +1,4 @@
-// -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
-
-/* 
+/*
  * Copyright (C) 2011 Department of Robotics Brain and Cognitive Sciences -
  * Istituto Italiano di Tecnologia
  * Author: Ugo Pattacini, edited by Arren Glover(10/14)
@@ -21,8 +19,6 @@
 #include <algorithm>
 #include "iCub/emorph/vCodec.h"
 #include <cmath>
-//using namespace emorph;
-//using namespace yarp::os;
 
 namespace emorph
 {
@@ -55,126 +51,12 @@ vEvent * createEvent(const std::string type)
     if(type == ret->getType()) return ret;
     else delete(ret);
 
+    ret = new InterestEvent();
+    if(type == ret->getType()) return ret;
+    else delete(ret);
+
     return 0;
 
-}
-
-/******************************************************************************/
-//vQueue
-/******************************************************************************/
-vQueue::~vQueue()
-{
-    this->clear();
-}
-
-void vQueue::clear()
-{
-    if (owner)
-        for (size_t i=0; i<size(); i++)
-            if ((*this)[i]!=NULL)
-                delete (*this)[i];
-    deque::clear();
-}
-
-void vQueue::push_back(const value_type &__x)
-{
-    if(owner) {
-        deque::push_back(__x->clone());
-    } else {
-        deque::push_back(__x);
-    }
-}
-
-void vQueue::push_front(const value_type &__x)
-{
-    if(owner)
-        deque::push_front(__x->clone());
-    else
-        deque::push_front(__x);
-}
-
-void vQueue::pop_back()
-{
-    if(owner)
-        delete back();
-    deque::pop_back();
-}
-
-void vQueue::pop_front()
-{
-    if(owner)
-        delete front();
-    deque::pop_front();
-}
-
-vQueue::iterator vQueue::erase(iterator __first, iterator __last)
-{
-    //deallocation memory
-    if(owner) {
-        for(iterator i = __first; i != __last; i++)
-            delete *i;
-    }
-
-    //normal erase
-    return deque::erase(__first, __last);
-}
-
-vQueue::iterator vQueue::erase(iterator __position)
-{
-    //deallocate memory
-    if(owner) {
-        delete *__position;
-    }
-
-    //normal erase
-    return deque::erase(__position);
-
-}
-
-vQueue::vQueue(const vQueue& that)
-{
-    this->owner = that.owner;
-    for(vQueue::const_iterator qi = that.begin(); qi != that.end(); qi++)
-        this->push_back(*qi);
-}
-
-vQueue vQueue::operator=(const vQueue& that)
-{
-    this->clear();
-    this->owner = that.owner;
-    for(vQueue::const_iterator qi = that.begin(); qi != that.end(); qi++)
-        this->push_back(*qi);
-    return *this;
-}
-
-vQueue vQueue::copy(bool hardcopy)
-{
-    vQueue newq(hardcopy);
-    for(vQueue::iterator qi = this->begin(); qi != this->end(); qi++)
-        newq.push_back(*qi);
-    return newq;
-}
-
-void vQueue::sort() {
-    std::sort(begin(), end(), temporalSort);
-}
-
-
-bool vQueue::temporalSort(const vEvent *e1, const vEvent *e2)
-{
-//    int dt = e2->getStamp() - e1->getStamp();
-//    if(dt > 0 && dt < 1000) return true;
-//    if(dt < 0 && dt < -1000) return true;
-//    return false;
-
-    if(std::abs(e1->getStamp() - e2->getStamp()) > 1000)
-        return e1->getStamp() > e2->getStamp();
-    else
-        return e2->getStamp() > e1->getStamp();
-    //return e1->getStamp() < e2->getStamp() &&
-    //        e2->getStamp() - e1->getStamp() < vtsHelper::maxStamp() / 2;
-    //return e1->getStamp() - e2->getStamp() < vtsHelper::maxStamp() / 2;
-    //return e1->getStamp() < e2->getStamp();
 }
 
 /******************************************************************************/
@@ -201,6 +83,7 @@ bool vEvent::decode(const yarp::os::Bottle &packet, int &pos)
 
 vEvent::vEvent(const vEvent &event)
 {
+    refcount = 0;
     *this = event;
 
 }
@@ -716,7 +599,7 @@ bool ClusterEventGauss::decode(const yarp::os::Bottle &packet, int &pos)
         yVel=word2&0xffff;
         word2>>=16;
         xVel=word2&0xffff;
-        
+
         pos += localWordsCoded;
         return true;
 
@@ -845,9 +728,106 @@ yarp::os::Property FlowEvent::getContent() const
 
 void FlowEvent::setDeath()
 {
-    death = (int)(sqrt(pow(vx, 2.0) + pow(vy, 2.0)) / vtsHelper::tstosecs());
-    if(death > 1000000) death = 1000000;
+    death = 1.0 / (sqrt(pow(vx, 2.0) + pow(vy, 2.0)) * vtsHelper::tstosecs());
+    //if(death > 2000000) {
+    //    death = 2000000;
+    //}
+    //if(death < 100000) death = 100000;
     death += stamp;
+    return;
+
+    double theta = fabs(atan2(vy, vx));
+    if(theta > 1.5707963) theta -= 1.5707963;
+    if(theta > 0.785398) theta = 1.5707963 - theta;
+    //death = 7.8125*(int)(sqrt(pow(vx, 2.0) + pow(vy, 2.0)) / (cos(theta)*vtsHelper::tstosecs()));
+    death = 1.0 / (sqrt(pow(vx, 2.0) + pow(vy, 2.0)) * cos(theta) * vtsHelper::tstosecs());
+    if(death > 2000000) {
+        death = 2000000;
+    }
+    if(death < 500000) death = 500000;
+    death += stamp;
+
+    //double f = std::min(fabs(vx), fabs(vy));
+    //death = 7.8125 * f / vtsHelper::tstosecs();
+//    death = 7.8125* (int)(sqrt(pow(vx, 2.0) + pow(vy, 2.0)) / vtsHelper::tstosecs());
+//    if(death > 1000000) death = 1000000;
+//    death += stamp;
+}
+
+/******************************************************************************/
+//InterestEvent
+/******************************************************************************/
+InterestEvent::InterestEvent(const vEvent &event/*always vEvent*/)
+{
+    //most of the constructor is replicated in the assignment operator
+    //so we just use that to construct
+    *this = event;
+
+}
+
+/******************************************************************************/
+vEvent &InterestEvent::operator=(const vEvent &event/*always vEvent*/)
+{
+
+    //copy timestamp and type (base class =operator)
+    AddressEvent::operator =(event);
+
+    //copy other fields if it's compatible
+    const InterestEvent * aep =
+            dynamic_cast<const InterestEvent *>(&event);
+    if(aep) {
+        intID = aep->intID;
+    } else {
+        intID = 0;
+    }
+
+    return *this;
+}
+
+/******************************************************************************/
+vEvent* InterestEvent::clone() {
+    return new InterestEvent(*this);
+}
+
+/******************************************************************************/
+void InterestEvent::encode(yarp::os::Bottle &b) const
+{
+    AddressEvent::encode(b);
+    b.addInt(intID);
+}
+
+/******************************************************************************/
+bool InterestEvent::decode(const yarp::os::Bottle &packet, int &pos)
+{
+    // check length
+    if (AddressEvent::decode(packet, pos) &&
+            pos + localWordsCoded <= packet.size())
+    {
+        int word0=packet.get(pos).asInt();
+        intID = word0;
+        pos += localWordsCoded;
+        return true;
+    }
+
+    return false;
+}
+
+
+
+/******************************************************************************/
+bool InterestEvent::operator==(const InterestEvent &event)
+{
+    return ((AddressEvent::operator==(event)) &&
+            (intID==event.intID));
+}
+
+/******************************************************************************/
+yarp::os::Property InterestEvent::getContent() const
+{
+    yarp::os::Property prop = AddressEvent::getContent();
+    prop.put("intID",intID);
+
+    return prop;
 }
 
 }

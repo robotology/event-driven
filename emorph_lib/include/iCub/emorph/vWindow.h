@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2010 eMorph Group iCub Facility
- * Authors: Arren Glover
+ * Copyright (C) 2015 iCub Facility - Istituto Italiano di Tecnologia
+ * Author: arren.glover@iit.it
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
  * later version published by the Free Software Foundation.
@@ -12,16 +12,21 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details
- */
+*/
+
+/// \defgroup emorphLib emorphLib
+/// \defgroup vWindow vWindow
+/// \ingroup emorphLib
+/// \brief A storage class which automatically discards events after a given timeperiod
 
 #ifndef __VWINDOW__
 #define __VWINDOW__
 
 #include <yarp/os/all.h>
-#include <yarp/sig/all.h>
 #include <vector>
-#include "vCodec.h"
-#include "vtsHelper.h"
+#include <iCub/emorph/vCodec.h>
+#include <iCub/emorph/vQueue.h>
+#include <iCub/emorph/vtsHelper.h>
 
 namespace emorph {
 
@@ -33,21 +38,20 @@ namespace emorph {
  */
 class vWindow {
 
-private:
+protected:
 
     //! event storage
     vQueue q;
     //! the length of time to store events (in us)
     int width;
     int height;
-    int duration;
-    //! whether to deep copy or shallow copy
-    bool asynchronous;
     //! for safe copying of q in the multi-threaded environment
     yarp::os::Semaphore mutex;
     //! for quick spatial accessing and surfacing
     std::vector< std::vector <vQueue> > spatial;
     vQueue subq;
+    //! for memory management of most recent
+    vEvent * mostrecent;
 
 
 public:
@@ -56,23 +60,21 @@ public:
     /// \brief vWindow constructor
     /// \param windowSize optional time to store events (in us)
     ///
-    vWindow(int width = 128, int height = 128, int duration = 20000, bool asynch = true);
+    vWindow(int width = 128, int height = 128);
+    //virtual ~vWindow() = 0;
 
     vWindow(const vWindow&);
-    vWindow operator=(const vWindow&);
+    vWindow& operator=(const vWindow&);
 
-    ///
-    /// \brief setWindowSize sets the length of time to store events
-    /// \param windowSize the time period (in us)
-    ///
-    void setTemporalWindowSize(int duration)  { this->duration = duration; }
 
     ///
     /// \brief addEvent adds an event to the window. Also checks for expired
     /// events.
     /// \param event the event to add
     ///
-    void addEvent(emorph::vEvent &event);
+    virtual vQueue addEvent(emorph::vEvent &event);
+
+    virtual vQueue removeEvents(vEvent &toAdd) = 0;
 
     ///
     /// \brief getMostRecent
@@ -80,11 +82,15 @@ public:
     ///
     vEvent *getMostRecent();
 
+    int getEventCount() {return q.size();}
+
     ///
     /// \brief getWindow
     /// \return
     ///
     const vQueue& getTW();
+
+    void copyTWTO(vQueue &that);
 
     ///
     /// \brief getSpatialWindow returns AddressEvents within a spatial window
@@ -115,7 +121,55 @@ public:
 
 
 };
+/******************************************************************************/
+class temporalWindow : public vWindow
+{
+private:
+
+    int duration;
+
+public:
+
+    temporalWindow(int duration = 100000, int width = 128, int height = 128) :
+        vWindow(width, height), duration(duration) {}
+    virtual vQueue removeEvents(vEvent &toAdd);
+
+    void setTemporalWindowSize(int duration) {this->duration = duration;}
+
+};
+
+/******************************************************************************/
+class fixedWindow : public vWindow
+{
+private:
+
+    int qlength;
+
+public:
+
+    fixedWindow(int qlength = 2000, int width = 128, int height = 128)  :
+        vWindow(width, height), qlength(qlength) {}
+    virtual vQueue removeEvents(vEvent &toAdd);
+
+    void setFixedWindowSize(int length) {this->qlength = length;}
+};
+
+/******************************************************************************/
+class lifetimeWindow : public vWindow
+{
+private:
+
+
+public:
+
+    lifetimeWindow(int width = 128, int height = 128) :
+        vWindow(width, height) {}
+    virtual vQueue addEvent(emorph::vEvent &event);
+    virtual vQueue removeEvents(vEvent &toAdd);
+};
 
 }
+
+
 
 #endif

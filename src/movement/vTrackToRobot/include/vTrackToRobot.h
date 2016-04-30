@@ -14,12 +14,19 @@
  * Public License for more details
  */
 
+/// \defgroup robotBehaviour robotBehaviour
+/// \defgroup vTrackToRobot vTrackToRobot
+/// \ingroup robotBehaviour
+/// \brief perform gaze control given cluster track events
+
 #ifndef __ICUB_VTRACKTOROBOT_H__
 #define __ICUB_VTRACKTOROBOT_H__
 
 #include <yarp/os/all.h>
 #include <iCub/emorph/all.h>
-#include <yarp/dev/all.h>
+#include <yarp/dev/GazeControl.h>
+#include <yarp/dev/PolyDriver.h>
+#include <deque>
 
 /*//////////////////////////////////////////////////////////////////////////////
   VBOTTLE READER/PROCESSOR
@@ -30,18 +37,37 @@ class vTrackToRobotManager : public yarp::os::BufferedPort<emorph::vBottle>
 private:
     
     yarp::os::BufferedPort<yarp::os::Bottle> cartOutPort;
+    yarp::os::BufferedPort<yarp::os::Bottle> scopeOutPort;
+    yarp::os::BufferedPort<yarp::os::Bottle> positionOutPort;
+    yarp::os::BufferedPort<emorph::vBottle> eventsOutPort;
     yarp::dev::PolyDriver gazedriver;
     yarp::dev::IGazeControl *gazecontrol;
 
     enum { fromgaze, fromsize, fromstereo };
-
     int method;
+    bool gazingActive;
+    enum { gazedemo, graspdemo };
+    int demo;
+    double lastdogazetime;
+
+
+    emorph::temporalWindow FIFO;
+    std::deque<yarp::sig::Vector> recentgazelocs;
+    std::deque<double> recenteyezs;
+    double p_eyez;
+    double medx;
+    double medy;
+    yarp::sig::Vector xrobref; //this stores the gaze position in eye ref frame
+    yarp::sig::Vector px; //the pixel position to make a gaze
 
 public:
     
     vTrackToRobotManager();
 
     bool setMethod(std::string methodname);
+    bool setDemo(std::string demoname);
+    void startGazing() {gazingActive = true;}
+    void stopGazing() {gazingActive = false;}
 
     bool open(const std::string &name);
     void onRead(emorph::vBottle &bot);
@@ -61,6 +87,9 @@ private:
     //the event bottle input and output handler
     vTrackToRobotManager      vTrackToRobot;
 
+    //the remote procedure port
+    yarp::os::RpcServer     rpcPort;
+
 
     //robot control settings
 //    yarp::dev::PolyDriver mdriver;
@@ -76,6 +105,9 @@ public:
     virtual bool close();
     virtual double getPeriod();
     virtual bool updateModule();
+
+    virtual bool respond(const yarp::os::Bottle &command,
+                         yarp::os::Bottle &reply);
 
 };
 

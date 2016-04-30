@@ -1,10 +1,6 @@
-// -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
-
-/* 
- * Copyright (C) 2011 Department of Robotics Brain and Cognitive Sciences -
- * Istituto Italiano di Tecnologia
- * Author: Ugo Pattacini, modified by Arren Glover(10/14)
- * email:  ugo.pattacini@iit.it
+/*
+ * Copyright (C) 2015 iCub Facility - Istituto Italiano di Tecnologia
+ * Author: arren.glover@iit.it
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
  * later version published by the Free Software Foundation.
@@ -18,71 +14,123 @@
  * Public License for more details
 */
 
-#ifndef __EMORPH_ECODEC_H__
-#define __EMORPH_ECODEC_H__
+/// \defgroup emorphLib emorphLib
+/// \defgroup vCodec vCodec
+/// \ingroup emorphLib
+/// \brief class hierarchy for different types of emorph::vEvent
+///
+/// Event Coding
+/// ============
+///
+/// Events are serialised and coded in a standardised format for sending and
+/// receiving between modules. In addition a packet containing multiple
+/// different types of events is segmented by event-type such that a search can
+/// quickly retrieve events of only a specific type. The packet is formed as
+/// such:
+///
+///     EVENTTYPE-1-TAG ( serialised and concatinated events of type 1) EVENTTYPE-2-TAG ( serialised and concatinated events of type 2) ...
+///
+/// Each event class defines the TAG used to identify itself and also the
+/// method with which the event data is serialised. Managing the serialisation
+/// and de-serialisation of the event data is then simply a case of using the
+/// event class to write/read its TAG and then call its encode/decode functions
+/// on the serialised data. The emorph::vBottle class handles the coding of
+/// packets in the event-driven project.
+///
+/// Events are defined in a class hierarchy, with each child class calling its
+/// parent encode/decode function before its own. Adding a new event therefore
+/// only requires defining the serialisation method for any new data that the
+/// event-class contains (e.g. the Flow event only defines how the velocities
+/// are encoded and calls its parent class, the AdressEvent, to encode other
+/// information, such as position and timestamp).
+///
+/// ![The Event-Type Class Hierarchy](@ref classemorph_1_1vEvent.png)
+///
+/// Event Coding Definitions
+/// ------------------------
+///
+/// The **vEvent** uses 4 bytes to encode a timestamp (_T_)
+///
+///     [10000000 TTTTTTT TTTTTTTT TTTTTTTT]
+///
+/// An **AddressEvent** uses 4 bytes to encode position (_X_, _Y_), polarity
+/// (_P_) and channel (_C_). Importantly as AddressEvent is of type vEvent the
+/// timestamp information of this event is always encoded as well.
+///
+///     [00000000 00000000 CYYYYYYY XXXXXXXP]
+///
+/// A **FlowEvent** uses 8 bytes to encode velocity (ẋ, ẏ), each 4 bytes
+/// represent a _float_. Similarly as FlowEvent is of time AddressEvent the
+/// FlowEvent also encodes all the position and timestamp information above.
+///
+///     [ẋẋẋẋẋẋẋẋ ẋẋẋẋẋẋẋẋ ẏẏẏẏẏẏẏẏ ẏẏẏẏẏẏẏẏ]
+///
+/// An **AddressEventClustered** is labelled as belonging to a group ID (_I_)
+/// using a 4 byte _int_.
+///
+///     [IIIIIIIII IIIIIIIII IIIIIIIII IIIIIIIII]
+///
+/// A **ClusterEvent** is encodes the central position (_X_, _Y_) of a labelled
+/// cluster (_I_) and also has a polarity (_P_) and channel (_C_)
+///
+///     [IIIIIIII IIIIIIII CYYYYYYY XXXXXXXP]
+///
+/// _NOTE: Cluster Event and AddressEventClustered could be consolidated in
+/// some way_
+///
+/// A **ClusterEventGauss** extends a cluster event with a 2 dimensional
+/// Gaussian distribution parameterised by (_sx_, _sy_, _sxy_) a count of events
+/// falling in this distribution (_n_) and its velocity (ẋ, ẏ) using a
+/// total of 12 bytes.
+///
+///     [sxysxysxysxysxysxysxysxy sxysxysxysxysxysxysxysxy nnnnnnnn nnnnnnnn
+///      sxsxsxsxsxsxsxsx sxsxsxsxsxsxsxsx sysysysysysysysy sysysysysysysysy
+///      ẋẋẋẋẋẋẋẋ ẋẋẋẋẋẋẋẋ ẏẏẏẏẏẏẏẏ ẏẏẏẏẏẏẏẏ]
+///
+/// A **CollisionEvent** uses 1 byte to encode collision position (_X_, _Y_),
+/// the channel (_C_) and the two cluster IDs that collided (_I1_, _I2_)
+///
+///     [I1I1I1I1I1I1I1I1 I2I2I2I2I2I2I2I2 CXXXXXXX 0YYYYYYY]
+///
+/// Coding in YARP
+/// --------------
+///
+/// The emorph::vBottle class wraps the encoding and decoding operations into a
+/// yarp::os::Bottle such that an example vBottle will appear as:
+///
+///     AE (-2140812352 15133 -2140811609 13118) FLOW (-2140812301 13865 -1056003417 -1055801578)
+///
+/// _NOTE: The actual data sent by YARP for a bottle includes signifiers for
+/// data type and data length, adding extra data to the bottle as above._
+///
+///     256 4 4 2 'A' 'E' 257 4 -2140812352 15133 -2140811609 13118 4 4 'F' 'L' 'O' 'W' 257 4 -2140812301 13865 -1056003417 -1055801578
+///
+/// Coding in ROS
+/// -------------
+///
+/// Here explain how the coding would/will be performed for ROS. How does the
+/// YARP/ROS interface consolidate the above two formats.
+///
 
-#include <yarp/os/all.h>
+#ifndef __EMORPH_VCODEC_H__
+#define __EMORPH_VCODEC_H__
+
 #include <iCub/emorph/vtsHelper.h>
 #include <string>
-#include <deque>
 
 #define encoderr std::cerr << "Warning: code bits not sufficient" << std::endl;
 
 namespace emorph {
 
-//forward declaration
 class vEvent;
 
 vEvent * createEvent(const std::string type);
-
-/**************************************************************************/
-class vQueue : public std::deque<vEvent*>
-{
-private:
-
-    //! whether of not the storage needs to be freed or if it is a pointer to
-    //! something stored elsewhere
-    bool owner;
-
-    //! sorting events by timestamp comparitor
-    static bool temporalSort(const vEvent *e1, const vEvent *e2);
-
-    //!overloaded erase so I don't have to deal with them yet
-    //virtual void erase(iterator __first, iterator __last);
-    //virtual void erase(iterator __position);
-
-public:
-
-    vQueue(const bool owner = true) { this->owner = owner; }
-
-    ~vQueue();
-    virtual void clear();
-
-    vQueue(const vQueue&);
-    vQueue operator=(const vQueue&);
-
-    virtual void push_back(const value_type &__x);
-    virtual void push_front(const value_type &__x);
-
-    virtual void pop_back();
-    virtual void pop_front();
-
-    virtual iterator erase(iterator __first, iterator __last);
-    virtual iterator erase(iterator __position);
-
-    vQueue copy(bool hardcopy = true);
-
-    bool getOwner() { return owner; }
-    void sort();
-
-};
-
-
 /**************************************************************************/
 class vEvent
 {
 private:
     const static int localWordsCoded = 1;
+
 
 protected:
 
@@ -91,9 +139,14 @@ protected:
 
 public:
     //!blank constructor required at base level
-    vEvent() : stamp(0) { }
+    vEvent() : stamp(0), refcount(0) { }
     //!copy constructor
     vEvent(const vEvent &event);
+
+    int refcount;
+    void referto() { refcount++; }
+    //bool destroy() { return !(--refcount > 0); }
+    void destroy() { if(!(--refcount > 0)) delete this; }
 
     virtual std::string getType() const { return "TS";}
 
@@ -119,6 +172,10 @@ public:
 
     template<class T> T* getAs() {
         return dynamic_cast<T*>(this);
+    }
+
+    template<class T> T* getUnsafe() {
+        return (T*)(this);
     }
 
 };
@@ -347,7 +404,7 @@ public:
     int getXYSigma()    const               { return xySigma;          }
     int getXVel()       const               { return xVel;             }
     int getYVel()       const               { return yVel;             }
-    
+
     void setNumAE(const int numAE)          { this->numAE=numAE;       }
     void setXSigma2(const int xSigma2)      { this->xSigma2=xSigma2;   }
     void setYSigma2(const int ySigma2)      { this->ySigma2=ySigma2;   }
@@ -414,6 +471,42 @@ public:
     //this is the total number of bytes used to code this event
     virtual int nBytesCoded() const         { return localWordsCoded *
                 sizeof(int) + vEvent::nBytesCoded(); }
+
+
+};
+
+/**************************************************************************/
+class InterestEvent : public AddressEvent
+{
+private:
+    const static int localWordsCoded = 1;
+
+protected:
+
+    int intID;
+
+public:
+
+    virtual std::string getType() const { return "AE-INT";}
+    int getID() const                       { return intID;              }
+
+    void setID(const int intID)              { this->intID = intID;        }
+
+    InterestEvent() : AddressEvent(), intID(0) {}
+    InterestEvent(const vEvent &event);
+    vEvent &operator=(const vEvent &event);
+    virtual vEvent* clone();
+
+    bool operator==(const InterestEvent &event);
+    bool operator==(const vEvent &event) {
+        return operator==(dynamic_cast<const InterestEvent&>(event)); }
+    virtual void encode(yarp::os::Bottle &b) const;
+    yarp::os::Property getContent() const;
+    virtual bool decode(const yarp::os::Bottle &packet, int &pos);
+
+    //this is the total number of bytes used to code this event
+    virtual int nBytesCoded() const         { return localWordsCoded *
+                sizeof(int) + AddressEvent::nBytesCoded(); }
 
 
 };

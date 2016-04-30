@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2014 iCub Facility - Istituto Italiano di Tecnologia
- * Author: Arren Glover (@itt.it)
+ * Copyright (C) 2015 iCub Facility - Istituto Italiano di Tecnologia
+ * Author: arren.glover@iit.it
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
  * later version published by the Free Software Foundation.
@@ -14,24 +14,19 @@
  * Public License for more details
 */
 
-/**
- * \defgroup
- * @ingroup emorph_lib
- *
- * Data transport method for the eMorph project
- *
- * Author: Arren Glover 2014
- * Copyright (C) 2010 RobotCub Consortium
- * CopyPolicy: Released under the terms of the GNU GPL v2.0.
-*/
-
+/// \defgroup emorphLib emorphLib
+/// \defgroup vBottle vBottle
+/// \ingroup emorphLib
+/// \brief yarp::os::Bottle wrapper for sending events through the yarp system with
+/// particular attention to using data dumper and data players
 
 #ifndef __vBottle__
 #define __vBottle__
 
 
-#include <yarp/os/all.h>
+#include <yarp/os/Bottle.h>
 #include <iCub/emorph/vCodec.h>
+#include <iCub/emorph/vQueue.h>
 
 namespace emorph {
 
@@ -44,12 +39,74 @@ public:
 
     //you can only modify contents by adding events and append other vBottles
     void addEvent(emorph::vEvent &e);
-    void append(vBottle &eb);
+
+    void append(vBottle &eb)
+    {
+        append<emorph::vEvent>(eb);
+    }
+
+    template<class T> void append(vBottle &eb)
+    {
+        //we need to access the data in eb as if it were a normal bottle
+        //so we cast it to a Bottle
+
+        //TODO: just make sure the functions are available but protected should
+        //      make the casting unnecessary
+        yarp::os::Bottle * bb = dynamic_cast<yarp::os::Bottle *>(&eb);
+
+        //for each list of events
+        for(int tagi = 0; tagi < bb->size(); tagi+=2) {
+
+            //get the appended event type
+            const std::string tagname = bb->get(tagi).asString();
+            if(!tagname.size()) {
+                std::cerr << "Warning: Could not get tagname during vBottle append."
+                             "Check vBottle integrity." << std::endl;
+                continue;
+            }
+
+            //check to see if we want to append this event type
+            vEvent * e = emorph::createEvent(tagname);
+            if(!e) {
+                std::cerr << "Warning: could not get bottle type during vBottle::"
+                             "append<>(). Check vBottle integrity." << std::endl;
+                continue;
+            }
+            if(!dynamic_cast<T*>(e)) continue;
+
+
+            //we want to append these events so get the data from bb
+            yarp::os::Bottle *b_from = bb->get(tagi+1).asList();
+            if(!b_from->size()) {
+                std::cerr << "Warning: From-list empty during vBottle append."
+                             "Check vBottle integrity." << std::endl;
+                continue;
+            }
+
+            //get the correct bottle to append to (or create a new one)
+            yarp::os::Bottle *b_to = yarp::os::Bottle::find(tagname).asList();
+            if(!b_to) {
+                yarp::os::Bottle::addString(tagname);
+                b_to = &(yarp::os::Bottle::addList());
+            }
+
+            //and do it
+            b_to->append(*b_from);
+        }
+
+    }
 
     //all get functions call this to do the meat of the getting function
     template<class T> vQueue get() {
 
-        vQueue q(true);
+        vQueue q;
+        addtoendof<T>(q);
+        return q;
+
+    }
+
+    template<class T> void addtoendof(vQueue &q) {
+
         //the bottle is stored as TAG (EVENTS) TAG (EVENTS)
         for(int i = 0; i < Bottle::size(); i+=2) {
 
@@ -78,7 +135,7 @@ public:
             int pos = 0;
             while(pos < b->size()) {
                 if(e->decode(*b, pos)) {
-                    q.push_back(e);
+                    q.push_back(e->clone());
                 }
             }
 
@@ -86,8 +143,6 @@ public:
             delete(e);
 
         }
-
-        return q;
 
     }
 
@@ -99,13 +154,13 @@ public:
     }
 
     vQueue getAll() {
-        vQueue q = this->get<vEvent>(); //all events are of type vEvent so we get all
+        vQueue q = this->get<vEvent>(); //all events are of type vEvent
         return q;
     }
 
     vQueue getAllSorted() {
         vQueue q = getAll();
-        q.sort();
+        q.sort(true);
         return q;
     }
 
@@ -166,6 +221,57 @@ private:
     yarp::os::Value& get();
 
     yarp::os::Value pop();
+
+};
+
+class vBottleMimic : public yarp::os::Portable {
+
+private:
+
+    std::vector<u_int32_t> header1;
+    std::vector<char> header2;
+    std::vector<u_int32_t> header3;
+
+    const char * datablock;
+    unsigned int datalength;
+    const static unsigned int MINELSZ = sizeof(u_int32_t) * 2;
+
+public:
+
+    vBottleMimic() {
+        header1.push_back(BOTTLE_TAG_LIST); //bottle code
+        header1.push_back(2); //elements in bottle "AE" then bottle data
+        header1.push_back(BOTTLE_TAG_STRING); //code for string
+        header1.push_back(2); // length of string
+        header2.push_back('A');
+        header2.push_back('E');
+        header3.push_back(BOTTLE_TAG_LIST|BOTTLE_TAG_INT); // bottle code + specialisation with ints
+        header3.push_back(0); // <- set the number of ints here (2 * #v's)
+    }
+
+    void setdata(const char * datablock, unsigned int datalength) {
+        header3[1] = 2 * (datalength / MINELSZ); //forced to be x8
+        this->datablock = datablock;
+        this->datalength = MINELSZ * header3[1] / 2; //forced to be x8
+
+    }
+
+    virtual bool read(yarp::os::ConnectionReader& connection) {
+                return false;
+    }
+
+    virtual bool write(yarp::os::ConnectionWriter& connection) {
+
+        connection.appendBlock((const char *)header1.data(),
+                                       header1.size() * sizeof(u_int32_t));
+        connection.appendBlock((const char *)header2.data(),
+                                       header2.size() * sizeof(char));
+        connection.appendBlock((const char *)header3.data(),
+                                       header3.size() * sizeof(u_int32_t));
+        connection.appendBlock(datablock, datalength);
+
+        return !connection.isError();
+    }
 
 };
 

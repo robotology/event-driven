@@ -38,6 +38,7 @@ protected:
     int stagnantCount;
     int pTS;
     int clearThreshold;
+    int twindow;
 
     int checkStagnancy(const emorph::vQueue &eSet) {
         if(!eSet.size()) return 0;
@@ -52,7 +53,7 @@ protected:
 public:
 
     vDraw() : Xlimit(128), Ylimit(128), stagnantCount(0), pTS(0),
-            clearThreshold(30) {}
+            clearThreshold(30), twindow(781250/2) {}
 
     ///
     /// \brief setLimits sets the maximum possible values of the position of
@@ -64,6 +65,11 @@ public:
     {
         this->Xlimit = Xlimit;
         this->Ylimit = Ylimit;
+    }
+
+    void setWindow(int twindow)
+    {
+        this->twindow = twindow;
     }
 
     ///
@@ -90,6 +96,22 @@ public:
  * argument list.
  */
 class addressDraw : public vDraw {
+
+public:
+
+    ///
+    /// \brief see vDraw
+    ///
+    virtual void draw(cv::Mat &image, const emorph::vQueue &eSet);
+
+    ///
+    /// \brief see vDraw
+    ///
+    virtual std::string getTag();
+
+};
+
+class lifeDraw : public vDraw {
 
 public:
 
@@ -219,6 +241,90 @@ public:
 
 };
 
+class fixedDraw : public vDraw {
+
+public:
+
+    ///
+    /// \brief see vDraw
+    ///
+    virtual void draw(cv::Mat &image, const emorph::vQueue &eSet);
+
+    ///
+    /// \brief see vDraw
+    ///
+    virtual std::string getTag();
+
+};
+
+class fflowDraw : public vDraw {
+
+public:
+
+    ///
+    /// \brief see vDraw
+    ///
+    virtual void draw(cv::Mat &image, const emorph::vQueue &eSet);
+
+    ///
+    /// \brief see vDraw
+    ///
+    virtual std::string getTag();
+
+};
+
+class isoDraw : public vDraw {
+private:
+
+    //angles
+    double theta1;
+    double theta2;
+    double c1, s1;
+    double c2, s2;
+
+    //image with warped square drawn
+    cv::Mat baseimage;
+
+    int tsscalar;
+    int maxdt;
+    int imagewidth;
+    int imageheight;
+    int imagexshift;
+    int imageyshift;
+    double scale;
+
+
+public:
+
+    isoDraw();
+    ///
+    /// \brief see vDraw
+    ///
+    virtual void draw(cv::Mat &image, const emorph::vQueue &eSet);
+
+    ///
+    /// \brief see vDraw
+    ///
+    virtual std::string getTag();
+
+};
+
+class interestDraw : public vDraw {
+
+public:
+
+    ///
+    /// \brief see vDraw
+    ///
+    virtual void draw(cv::Mat &image, const emorph::vQueue &eSet);
+
+    ///
+    /// \brief see vDraw
+    ///
+    virtual std::string getTag();
+
+};
+
 /**
  * @brief createDrawer returns an instance of a drawer that matches the tag
  * specified
@@ -230,6 +336,8 @@ vDraw * createDrawer(std::string tag);
 
 
 } //namespace emorph
+
+
 
 #endif
 

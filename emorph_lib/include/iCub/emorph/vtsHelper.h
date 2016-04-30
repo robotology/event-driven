@@ -14,16 +14,11 @@
  * Public License for more details
 */
 
-/**
- * \defgroup
- * @ingroup emorph_lib
- *
- * Data transport method for the eMorph project
- *
- * Author: Valentina Vasco 2015
- * Copyright (C) 2010 RobotCub Consortium
- * CopyPolicy: Released under the terms of the GNU GPL v2.0.
-*/
+/// \defgroup emorphLib emorphLib
+/// \defgroup vtsHelper vtsHelper
+/// \ingroup emorphLib
+/// \brief
+/// a helper class for unwrapping timestamps into long ints when overflow occurs
 
 #ifndef __VTSHELPER__
 #define __VTSHELPER__

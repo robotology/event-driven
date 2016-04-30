@@ -14,6 +14,11 @@
  * Public License for more details
  */
 
+/// \defgroup robotBehaviour Robot Behaviour
+/// \defgroup autoSaccade autoSaccade
+/// \ingroup robotBehaviour
+/// \brief automatically elicit iCub eye movement when event rate is low
+
 #ifndef __ICUB_EVENTCLUSTERING_MOD_H__
 #define __ICUB_EVENTCLUSTERING_MOD_H__
 
