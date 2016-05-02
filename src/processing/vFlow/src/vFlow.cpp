@@ -102,8 +102,10 @@ vFlowManager::vFlowManager(int height, int width, int filterSize,
     bottleCount = 0;
 
     //create our surface in synchronous mode
-    surfaceOn = new emorph::vSurface(width, height);
-    surfaceOf = new emorph::vSurface(width, height);
+    surfaceOnL = new emorph::vSurface(width, height);
+    surfaceOfL = new emorph::vSurface(width, height);
+    surfaceOnR = new emorph::vSurface(width, height);
+    surfaceOfR = new emorph::vSurface(width, height);
 }
 
 /******************************************************************************/
@@ -132,8 +134,10 @@ void vFlowManager::close()
     outPort.close();
     yarp::os::BufferedPort<emorph::vBottle>::close();
 
-    delete surfaceOn;
-    delete surfaceOf;
+    delete surfaceOnL;
+    delete surfaceOfL;
+    delete surfaceOnR;
+    delete surfaceOfR;
 
 }
 
@@ -162,12 +166,19 @@ void vFlowManager::onRead(emorph::vBottle &inBottle)
     {
         emorph::AddressEvent *aep = (*qi)->getAs<emorph::AddressEvent>();
         if(!aep) continue;
-        if(aep->getChannel()) continue; 
+        //if(aep->getChannel()) continue;
 
-        if(aep->getPolarity())
-            cSurf = surfaceOf;
-        else
-            cSurf = surfaceOn;
+        if(aep->getChannel()) {
+            if(aep->getPolarity())
+                cSurf = surfaceOfR;
+            else
+                cSurf = surfaceOnR;
+        } else {
+            if(aep->getPolarity())
+                cSurf = surfaceOfR;
+            else
+                cSurf = surfaceOnR;
+        }
 
         cSurf->addEvent(*aep);
 

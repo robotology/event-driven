@@ -44,8 +44,10 @@ private:
     bool strictness;
     yarp::os::BufferedPort<emorph::vBottle> outPort;
 
-    emorph::vSurface *surfaceOn; ///< emorph::vSurface for on polarity events
-    emorph::vSurface *surfaceOf; ///< emorph::vSurface for off polarity events
+    emorph::vSurface *surfaceOnL;
+    emorph::vSurface *surfaceOfL;
+    emorph::vSurface *surfaceOnR; ///< emorph::vSurface for on polarity events
+    emorph::vSurface *surfaceOfR; ///< emorph::vSurface for off polarity events
     emorph::vSurface *cSurf;     //! pointer to current surface (on or off)
 
     int height; //! sensor height
