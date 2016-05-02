@@ -150,6 +150,8 @@ private:
     double threshold;
     int fifolength;
     bool directed;
+    int channel; //circle detection shouldn't really care about channel!
+    //channel splitting should be done at a higher level
 
     //internal data
     emorph::vEdge eFIFO;
@@ -179,6 +181,7 @@ public:
                      double fifolength = 2000);
     ~vCircleMultiSize();
 
+    void setChannel(int channelNumber) { channel = channelNumber; }
     void addQueue(emorph::vQueue &additions);
     double getObs(int &x, int &y, int &r);
     std::vector<double> getPercentile(double p, double thMin);

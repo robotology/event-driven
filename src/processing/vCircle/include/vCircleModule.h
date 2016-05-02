@@ -110,7 +110,8 @@ public:
 
     //we actually allow our observers and trackers
     vCircleTracker circleTracker;
-    vCircleMultiSize * cObserver;
+    vCircleMultiSize * cObserverL;
+    vCircleMultiSize * cObserverR;
     double inlierThreshold;
     bool hough;
     double timecounter;

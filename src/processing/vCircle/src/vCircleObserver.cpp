@@ -270,6 +270,7 @@ vCircleMultiSize::vCircleMultiSize(double threshold, std::string qType,
     //eFIFO.setThickness(1);
     fFIFO.setFixedWindowSize(fifolength);
     tFIFO.setTemporalWindowSize(fifolength * 7812.5);
+    channel = 0;
 
 }
 
@@ -361,7 +362,7 @@ void vCircleMultiSize::addFixed(emorph::vQueue &additions)
         else
             v = (*vi)->getAs<emorph::AddressEvent>();
 
-        if(!v || v->getChannel()) continue;
+        if(!v || v->getChannel() != channel) continue;
 
         procQueue.push_back(v);
         procType.push_back(1);
@@ -388,7 +389,7 @@ void vCircleMultiSize::addTime(emorph::vQueue &additions)
     for(vi = additions.begin(); vi != additions.end(); vi++) {
 
         v = (*vi)->getAs<emorph::AddressEvent>();
-        if(!v || v->getChannel()) continue;
+        if(!v || v->getChannel() != channel) continue;
 
         procQueue.push_back(v);
         procType.push_back(1);
@@ -415,7 +416,7 @@ void vCircleMultiSize::addLife(emorph::vQueue &additions)
     for(vi = additions.begin(); vi != additions.end(); vi++) {
 
         v = (*vi)->getAs<emorph::FlowEvent>();
-        if(!v || v->getChannel()) continue;
+        if(!v || v->getChannel() != channel) continue;
 
         procQueue.push_back(v);
         procType.push_back(1);
@@ -548,7 +549,7 @@ void vCircleMultiSize::addEdge(emorph::vQueue &additions)
     emorph::vQueue::iterator qi;
     for(qi = additions.begin(); qi != additions.end(); qi++) {
         emorph::AddressEvent * v = (*qi)->getAs<emorph::AddressEvent>();
-        if(!v || v->getChannel()) continue;
+        if(!v || v->getChannel() != channel) continue;
 
         emorph::FlowEvent * vf = v->getAs<emorph::FlowEvent>();
         //emorph::FlowEvent * vf = edge.upgradeEvent(v);
