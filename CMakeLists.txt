@@ -16,6 +16,7 @@ list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH})
 
 find_package(ICUBcontrib)
 if(ICUBcontrib_FOUND)
+    #message("iCub Module Path: "  ${ICUBCONTRIB_MODULE_PATH})
     list(APPEND CMAKE_MODULE_PATH ${ICUBCONTRIB_MODULE_PATH})
     include(ICUBcontribOptions)
     include(ICUBcontribHelpers)
