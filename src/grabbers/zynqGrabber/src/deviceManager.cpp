@@ -735,7 +735,7 @@ bool aerDevManager::openDevice(){
         //turn off all loopbacks
         tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
         //aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg & !CTRL_ENABLE_LOC_LBCK&!CTRL_ENABLE_FAR_LBCK&!CTRL_ENABLE_REM_LBCK);// | CTRL_ENABLE_FAR_LBCK));
-        aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg & 0x0CFFFFFF);// | CTRL_ENABLE_FAR_LBCK));
+        aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg & 0x00FFFFFF);// | CTRL_ENABLE_FAR_LBCK));
 
         //if loopback is specified, then set it.
         if (loopBack == "loc"){
