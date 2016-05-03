@@ -151,7 +151,7 @@ void EventBottleManager::interrupt()
 
 }
 /******************************************************************************/
-bool EventBottleManager::setCamParams(const yarp::os::Bottle &left,
+void EventBottleManager::setCamParams(const yarp::os::Bottle &left,
                                       const yarp::os::Bottle &right)
 {
 
@@ -180,8 +180,8 @@ bool EventBottleManager::setCamParams(const yarp::os::Bottle &left,
 
 
         cv::Mat allpoints(sensorHeight * sensorWidth, 1, CV_32FC2);
-        for(int y = 0; y < sensorHeight; y++) {
-            for(int x = 0; x < sensorWidth; x++) {
+        for(unsigned int y = 0; y < sensorHeight; y++) {
+            for(unsigned int x = 0; x < sensorWidth; x++) {
                 allpoints.at<cv::Vec2f>(y * sensorWidth + x) = cv::Vec2f(x, y);
             }
         }
@@ -194,8 +194,8 @@ bool EventBottleManager::setCamParams(const yarp::os::Bottle &left,
                             cv::noArray(), defCamMat);
 
         *(maps[i]) = cv::Mat(sensorHeight, sensorWidth, CV_32SC2);
-        for(int y = 0; y < sensorHeight; y++) {
-            for(int x = 0; x < sensorWidth; x++) {
+        for(unsigned int y = 0; y < sensorHeight; y++) {
+            for(unsigned int x = 0; x < sensorWidth; x++) {
                 maps[i]->at<cv::Vec2i>(x, y) =
                         mappoints.at<cv::Vec2f>(y * sensorWidth + x);
 //                std::cout << "[" << x << ", " << y << "] -> " <<
@@ -239,8 +239,8 @@ void EventBottleManager::onRead(emorph::vBottle &bot)
         else
             mapPix = rightMap.at<cv::Vec2i>(v->getX(), v->getY());
 
-        bool withinSensorBounds = mapPix[0] >= 0 && mapPix[0] < sensorWidth
-                && mapPix[1] >= 0 && mapPix[1] < sensorHeight;
+        bool withinSensorBounds = mapPix[0] >= 0.0 && mapPix[0] < (double)sensorWidth
+                && mapPix[1] >= 0.0 && mapPix[1] < (double)sensorHeight;
         if(withinSensorBounds || !truncate) {
             v->setX(mapPix[0]);
             v->setY(mapPix[1]);

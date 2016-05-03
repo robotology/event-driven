@@ -31,7 +31,7 @@ class vtsHelper {
 
 private:
 
-    unsigned int last_stamp;
+    int last_stamp;
     unsigned int n_wraps;
     static const long int max_stamp = 16777215; //2^24
 

@@ -227,11 +227,11 @@ void yarp2device::onRead(emorph::vBottle &bot)
     flagStart = false; // workaround for long delays due to large delta ts across bottles
     // write to the device
 
-    int wroteData = devManager->writeDevice(deviceData); // wroteData is the number of data written to the FIFO (double the amount of events)
+    unsigned int wroteData = devManager->writeDevice(deviceData); // wroteData is the number of data written to the FIFO (double the amount of events)
 
     //    std::cout<<"Y2D write: writing to device"<<deviceData.size()<< "elements"<<std::endl;
     //    std::cout<<"Y2D write: wrote to device"<<wroteData<< "elements"<<std::endl;
-    if (wroteData <= 0)
+    if (!wroteData)
     {
         std::cout<<"Y2D write: error writing to device"<<std::endl;
         return;

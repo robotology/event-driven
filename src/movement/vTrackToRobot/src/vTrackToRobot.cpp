@@ -49,15 +49,14 @@ vTrackToRobotManager::vTrackToRobotManager()
 
 }
 
-bool vTrackToRobotManager::setMethod(std::string methodname)
+void vTrackToRobotManager::setMethod(std::string methodname)
 {
     if(methodname == "gaze") method = fromgaze;
     if(methodname == "size") method = fromsize;
     if(methodname == "stereo") method = fromstereo;
-
 }
 
-bool vTrackToRobotManager::setDemo(std::string demoname)
+void vTrackToRobotManager::setDemo(std::string demoname)
 {
     if(demoname == "gaze") demo = gazedemo;
     if(demoname == "grasp") demo = graspdemo;

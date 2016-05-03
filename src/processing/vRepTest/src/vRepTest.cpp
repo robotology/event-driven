@@ -75,7 +75,7 @@ vRepTest::vRepTest()
     edge.setThickness(1);
     ytime = 0;
     //here we should initialise the module
-    
+
 }
 /**********************************************************/
 bool vRepTest::open(const std::string &name)
@@ -128,7 +128,7 @@ void vRepTest::onRead(emorph::vBottle &inBottle)
 {
     yarp::os::Stamp yts; getEnvelope(yts);
     if(ytime == 0) ytime = yts.getTime() + 0.033;
-    unsigned long unwts;
+    unsigned long unwts = 0;
 
     //create event queue
     emorph::vQueue q = inBottle.getAll();
@@ -212,7 +212,7 @@ void vRepTest::drawDebug(yarp::sig::ImageOf<yarp::sig::PixelBgr> &image,
                          const emorph::vQueue &q, int xoff, int yoff)
 {
 
-    for(int i = 0; i < q.size(); i++) {
+    for(unsigned int i = 0; i < q.size(); i++) {
         emorph::AddressEvent *v = q[i]->getUnsafe<emorph::AddressEvent>();
 //        if(q[i]->getAs<emorph::FlowEvent>())
 //            image(v->getY()+yoff, image.width() - 1 - v->getX() - xoff) =

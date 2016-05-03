@@ -35,7 +35,7 @@ vDraw * createDrawer(std::string tag)
 
     newDrawer = new clusterDraw();
     if(tag == newDrawer->getTag()) return newDrawer;
-	delete newDrawer;
+    delete newDrawer;
 
     newDrawer = new integralDraw();
     if(tag == newDrawer->getTag()) return newDrawer;
@@ -643,7 +643,7 @@ void fflowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
     cv::Point p_start,p_end;
     const double pi = 3.1416;
 
-    int cts = eSet.back()->getAs<emorph::vEvent>()->getStamp();
+    //int cts = eSet.back()->getAs<emorph::vEvent>()->getStamp();
 
     int i = 0;
     emorph::vQueue::const_reverse_iterator qi;

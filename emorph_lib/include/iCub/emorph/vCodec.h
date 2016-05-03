@@ -142,6 +142,7 @@ public:
     vEvent() : stamp(0), refcount(0) { }
     //!copy constructor
     vEvent(const vEvent &event);
+    virtual ~vEvent() {}
 
     int refcount;
     void referto() { refcount++; }

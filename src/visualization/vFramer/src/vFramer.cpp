@@ -87,13 +87,13 @@ const emorph::vQueue& vReadAndSplit::getSnap(const int channel)
 /*////////////////////////////////////////////////////////////////////////////*/
 vFramerModule::~vFramerModule()
 {
-    for(int i = 0; i < drawers.size(); i++) {
-        for(int j = 0; j < drawers[i].size(); j++) {
+    for(unsigned int i = 0; i < drawers.size(); i++) {
+        for(unsigned int j = 0; j < drawers[i].size(); j++) {
             delete drawers[i][j];
         }
     }
 
-    for(int i = 0; i < outports.size(); i++) {
+    for(unsigned int i = 0; i < outports.size(); i++) {
         delete outports[i];
     }
 
@@ -192,7 +192,7 @@ bool vFramerModule::interruptModule()
 {
     std::cout << "Interrupting" << std::endl;
     vReader.interrupt();
-    for(int i = 0; i < outports.size(); i++)
+    for(unsigned int i = 0; i < outports.size(); i++)
         outports[i]->interrupt();
     RFModule::interruptModule();
     std::cout << "Done" << std::endl;
@@ -203,7 +203,7 @@ bool vFramerModule::close()
 {
     std::cout << "Closing" << std::endl;
     vReader.close();
-    for(int i = 0; i < outports.size(); i++)
+    for(unsigned int i = 0; i < outports.size(); i++)
         outports[i]->close();
     RFModule::close();
     std::cout << "Done" << std::endl;
@@ -245,7 +245,7 @@ bool vFramerModule::updateModule()
 
 
     //for each output image needed
-    for(int i = 0; i < channels.size(); i++) {
+    for(unsigned int i = 0; i < channels.size(); i++) {
 
         //make a new image
         cv::Mat canvas;
@@ -256,7 +256,7 @@ bool vFramerModule::updateModule()
         //emorph::vQueue q;
 
         //for each drawer, draw what is needed
-        for(int j = 0; j < drawers[i].size(); j++) {
+        for(unsigned int j = 0; j < drawers[i].size(); j++) {
             drawers[i][j]->draw(canvas, q);
         }
         //debug with opencv

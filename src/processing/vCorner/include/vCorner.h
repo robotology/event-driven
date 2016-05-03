@@ -42,7 +42,7 @@ private:
     int thickness;
     double thresh;
     int fRad;
-    int minEvts;
+    unsigned int minEvts;
 
     yarp::sig::Matrix sobelx;
     yarp::sig::Matrix sobely;
@@ -60,7 +60,7 @@ private:
     int Pasc(int k, int n);
 
 public:
-    
+
     vCornerManager(int height, int width, int filterSize, int thickness, double thresh);
 
     bool    open(const std::string moduleName, bool strictness = false);

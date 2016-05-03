@@ -71,6 +71,7 @@ public:
 
     vSurface(const vSurface &);
     vSurface operator=(const vSurface&);
+    virtual ~vSurface() {}
 
     ///
     /// \brief addEvent adds an event to the window. Also checks for expired

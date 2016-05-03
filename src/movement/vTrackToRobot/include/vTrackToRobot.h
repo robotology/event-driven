@@ -35,7 +35,7 @@
 class vTrackToRobotManager : public yarp::os::BufferedPort<emorph::vBottle>
 {
 private:
-    
+
     yarp::os::BufferedPort<yarp::os::Bottle> cartOutPort;
     yarp::os::BufferedPort<yarp::os::Bottle> scopeOutPort;
     yarp::os::BufferedPort<yarp::os::Bottle> positionOutPort;
@@ -61,11 +61,11 @@ private:
     yarp::sig::Vector px; //the pixel position to make a gaze
 
 public:
-    
+
     vTrackToRobotManager();
 
-    bool setMethod(std::string methodname);
-    bool setDemo(std::string demoname);
+    void setMethod(std::string methodname);
+    void setDemo(std::string demoname);
     void startGazing() {gazingActive = true;}
     void stopGazing() {gazingActive = false;}
 

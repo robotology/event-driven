@@ -229,7 +229,7 @@ emorph::FlowEvent *vFlowManager::compute()
             const emorph::vQueue &subsurf = cSurf->getSURF(i, j, fRad);
             if(subsurf.size() < planeSize) continue;
 
-            for(int k = 0; k < subsurf.size(); k++) {
+            for(unsigned int k = 0; k < subsurf.size(); k++) {
                 if(subsurf[k]->getStamp() > vr->getStamp()) {
                     subsurf[k]->setStamp(subsurf[k]->getStamp() -
                                          emorph::vtsHelper::maxStamp());
@@ -311,7 +311,7 @@ int vFlowManager::computeGrads(const emorph::vQueue &subsurf,
 
     yarp::sig::Matrix A(subsurf.size(), 3);
     yarp::sig::Vector Y(subsurf.size());
-    for(int vi = 0; vi < subsurf.size(); vi++) {
+    for(unsigned int vi = 0; vi < subsurf.size(); vi++) {
         emorph::AddressEvent *v = subsurf[vi]->getAs<emorph::AddressEvent>();
         A(vi, 0) = v->getX();
         A(vi, 1) = v->getY();

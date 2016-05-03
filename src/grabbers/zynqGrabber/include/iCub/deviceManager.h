@@ -68,7 +68,7 @@ public:
     virtual bool openDevice();
     virtual void closeDevice();
 
-    int writeDevice(std::vector<unsigned int> &deviceData);
+    unsigned int writeDevice(std::vector<unsigned int> &deviceData);
     const std::vector<char>& readDevice(int &nBytesRead);
 
     deviceManager(bool bufferedRead = false, unsigned int maxBufferSize = MAX_BUF_SIZE);

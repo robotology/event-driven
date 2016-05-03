@@ -61,7 +61,7 @@ public:
     /// \param windowSize optional time to store events (in us)
     ///
     vWindow(int width = 128, int height = 128);
-    //virtual ~vWindow() = 0;
+    virtual ~vWindow() { if(mostrecent) mostrecent->destroy(); }
 
     vWindow(const vWindow&);
     vWindow& operator=(const vWindow&);
@@ -143,15 +143,15 @@ class fixedWindow : public vWindow
 {
 private:
 
-    int qlength;
+    unsigned int qlength;
 
 public:
 
-    fixedWindow(int qlength = 2000, int width = 128, int height = 128)  :
+    fixedWindow(unsigned int qlength = 2000, int width = 128, int height = 128)  :
         vWindow(width, height), qlength(qlength) {}
     virtual vQueue removeEvents(vEvent &toAdd);
 
-    void setFixedWindowSize(int length) {this->qlength = length;}
+    void setFixedWindowSize(unsigned int length) {this->qlength = length;}
 };
 
 /******************************************************************************/

@@ -99,7 +99,7 @@ void deviceManager::closeDevice()
  functions for device read/write
  --------------------------------------------------------------*/
 
-int deviceManager::writeDevice(std::vector<unsigned int> &deviceData){
+unsigned int deviceManager::writeDevice(std::vector<unsigned int> &deviceData){
     /*
      if(writeFifoAFull()){
      std::cout<<"Y2D write: warning fifo almost full"<<std::endl;
@@ -109,7 +109,7 @@ int deviceManager::writeDevice(std::vector<unsigned int> &deviceData){
      std::cout<<"Y2D write: error fifo full"<<std::endl;
      }
      */
-    int written =0;
+    unsigned int written =0;
     char* buff = (char *)deviceData.data();
     unsigned int len = deviceData.size()*sizeof(unsigned int);
 
@@ -361,7 +361,7 @@ bool vsctrlDevManager::setBias(yarp::os::Bottle bias)
 bool vsctrlDevManager::setBias(std::string biasName, unsigned int biasValue) {
 
     bias.find(biasName) = yarp::os::Value((int)biasValue).asInt();
-    if(bias.find(biasName).asInt() != biasValue) {
+    if((unsigned int)bias.find(biasName).asInt() != biasValue) {
         std::cerr << "Could not find " << biasName << " bias" << std::endl;
         return false;
     }

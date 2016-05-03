@@ -7,8 +7,8 @@ set(PROJECTNAME eMorphLib)
 project(${PROJECTNAME})
 
 set(folder_source
-  src/eventBuffer.cpp
-  src/eventBottle.cpp
+  #src/eventBuffer.cpp
+  #src/eventBottle.cpp
   src/vBottle.cpp
   src/vCodec.cpp
   src/vWindow.cpp
@@ -18,8 +18,8 @@ set(folder_source
 
 set(folder_header
   include/iCub/emorph/all.h
-  include/iCub/emorph/eventBottle.h
-  include/iCub/emorph/eventBuffer.h
+  #include/iCub/emorph/eventBottle.h
+  #include/iCub/emorph/eventBuffer.h
   include/iCub/emorph/vBottle.h
   include/iCub/emorph/vCodec.h
   include/iCub/emorph/vtsHelper.h

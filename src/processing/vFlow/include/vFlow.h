@@ -53,7 +53,7 @@ private:
     int height; //! sensor height
     int width;  //! sensor width
     int fRad;   //! filter radius
-    int planeSize; //! edge length of fitted plane
+    unsigned int planeSize; //! edge length of fitted plane
     int halfCount; //! plane area divided by 2
     int minEvtsOnPlane; //! minimum number of events for plane validity
 
