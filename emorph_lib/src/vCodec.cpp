@@ -728,7 +728,7 @@ yarp::os::Property FlowEvent::getContent() const
 
 void FlowEvent::setDeath()
 {
-    death = 1.0 / (sqrt(pow(vx, 2.0) + pow(vy, 2.0)) * vtsHelper::tstosecs());
+    death = 1.0 / (sqrt(pow(vx, 2.0f) + pow(vy, 2.0f)) * vtsHelper::tstosecs());
     //if(death > 2000000) {
     //    death = 2000000;
     //}
@@ -740,7 +740,7 @@ void FlowEvent::setDeath()
     if(theta > 1.5707963) theta -= 1.5707963;
     if(theta > 0.785398) theta = 1.5707963 - theta;
     //death = 7.8125*(int)(sqrt(pow(vx, 2.0) + pow(vy, 2.0)) / (cos(theta)*vtsHelper::tstosecs()));
-    death = 1.0 / (sqrt(pow(vx, 2.0) + pow(vy, 2.0)) * cos(theta) * vtsHelper::tstosecs());
+    death = 1.0 / (sqrt(pow(vx, 2.0f) + pow(vy, 2.0f)) * cos(theta) * vtsHelper::tstosecs());
     if(death > 2000000) {
         death = 2000000;
     }

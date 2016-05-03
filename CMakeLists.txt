@@ -4,6 +4,7 @@
 
 cmake_minimum_required(VERSION 2.6)
 set(PROJECTNAME eMorph)
+set(CMAKE_CXX_FLAGS -Wall)
 project(${PROJECTNAME})
 set(EMORPHLIB_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/emorph_lib/include)
 

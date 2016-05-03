@@ -11,6 +11,7 @@ add_subdirectory(vCluster)
 
 if(ICUB_FOUND)
     add_subdirectory(vCircle)
+    add_subdirectory(vCircleDisparity)
 endif(ICUB_FOUND)
 
 add_subdirectory(vCorner)

@@ -228,13 +228,13 @@ class vBottleMimic : public yarp::os::Portable {
 
 private:
 
-    std::vector<u_int32_t> header1;
+    std::vector<YARP_INT32> header1;
     std::vector<char> header2;
-    std::vector<u_int32_t> header3;
+    std::vector<YARP_INT32> header3;
 
     const char * datablock;
     unsigned int datalength;
-    const static unsigned int MINELSZ = sizeof(u_int32_t) * 2;
+    const static unsigned int MINELSZ = sizeof(YARP_INT32) * 2;
 
 public:
 
@@ -263,11 +263,11 @@ public:
     virtual bool write(yarp::os::ConnectionWriter& connection) {
 
         connection.appendBlock((const char *)header1.data(),
-                                       header1.size() * sizeof(u_int32_t));
+                                       header1.size() * sizeof(YARP_INT32));
         connection.appendBlock((const char *)header2.data(),
                                        header2.size() * sizeof(char));
         connection.appendBlock((const char *)header3.data(),
-                                       header3.size() * sizeof(u_int32_t));
+                                       header3.size() * sizeof(YARP_INT32));
         connection.appendBlock(datablock, datalength);
 
         return !connection.isError();

@@ -15,6 +15,8 @@
  */
 
 #include "iCub/vDraw.h"
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 namespace emorph
 {
@@ -532,7 +534,7 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
         p_start.x = x*k;
         p_start.y = y*k;
 
-        double magnitude = sqrt(pow(vx, 2.0) + pow(vy, 2.0));
+        double magnitude = sqrt(pow(vx, 2.0f) + pow(vy, 2.0f));
         double hypotenuse = magnitude;
         if(hypotenuse < 10) hypotenuse = 10;
         //if(hypotenuse > 20) hypotenuse = 20;
@@ -675,7 +677,7 @@ void fflowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
         p_start.x = x*k;
         p_start.y = y*k;
 
-        double magnitude = sqrt(pow(vx, 2.0) + pow(vy, 2.0));
+        double magnitude = sqrt(pow(vx, 2.0f) + pow(vy, 2.0f));
         double hypotenuse = magnitude;
         if(hypotenuse < 10) hypotenuse = 10;
         //if(hypotenuse > 20) hypotenuse = 20;
