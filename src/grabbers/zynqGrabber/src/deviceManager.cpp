@@ -734,7 +734,8 @@ bool aerDevManager::openDevice(){
 
         //turn off all loopbacks
         tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
-        aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg & !CTRL_ENABLE_LOC_LBCK&!CTRL_ENABLE_FAR_LBCK&!CTRL_ENABLE_REM_LBCK);// | CTRL_ENABLE_FAR_LBCK));
+        //aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg & !CTRL_ENABLE_LOC_LBCK&!CTRL_ENABLE_FAR_LBCK&!CTRL_ENABLE_REM_LBCK);// | CTRL_ENABLE_FAR_LBCK));
+        aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg & 0x0CFFFFFF);// | CTRL_ENABLE_FAR_LBCK));
 
         //if loopback is specified, then set it.
         if (loopBack == "loc"){
@@ -745,7 +746,7 @@ bool aerDevManager::openDevice(){
         } else if (loopBack == "far"){
             std::cout << "Setting Far loopback" << std::endl;
             tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
-            aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg | (CTRL_ENABLE_FAR_LBCK));// | CTRL_ENABLE_FAR_LBCK));
+            aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg | 0xF0000000);// | CTRL_ENABLE_FAR_LBCK));
 
         } else if (loopBack == "rem"){
             std::cout << "Setting Remote loopback" << std::endl;
