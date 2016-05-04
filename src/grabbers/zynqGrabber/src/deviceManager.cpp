@@ -735,37 +735,39 @@ bool aerDevManager::openDevice(){
         int far = 0;
         int rem = 0;
 
-
         //turn off all loopbacks
         tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
         std::cout << "Before Turn off loopbacks: " << tmp_reg << std::endl;
         //aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg & !CTRL_ENABLE_LOC_LBCK&!CTRL_ENABLE_FAR_LBCK&!CTRL_ENABLE_REM_LBCK);// | CTRL_ENABLE_FAR_LBCK));
-        aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg & 0x00FFFFFF);// | CTRL_ENABLE_FAR_LBCK));
+        //aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg & 0x00FFFFFF);// | CTRL_ENABLE_FAR_LBCK));
 
         //if loopback is specified, then set it.
         if (loopBack == "loc"){
             std::cout << "Setting Local loopback" << std::endl;
-            tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
-            aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg | (CTRL_ENABLE_LOC_LBCK));// | CTRL_ENABLE_FAR_LBCK));
+            loc = 1;
+            //tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
+            //aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg | (CTRL_ENABLE_LOC_LBCK));// | CTRL_ENABLE_FAR_LBCK));
 
         } else if (loopBack == "far"){
             std::cout << "Setting Far loopback" << std::endl;
-            tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
-            aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg | 0xF0000000);// | CTRL_ENABLE_FAR_LBCK));
+            far = 1;
+            //tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
+            //aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg | 0xF0000000);// | CTRL_ENABLE_FAR_LBCK));
 
         } else if (loopBack == "rem"){
             std::cout << "Setting Remote loopback" << std::endl;
-            tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
-            aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg | (CTRL_ENABLE_REM_LBCK));// | CTRL_ENABLE_FAR_LBCK));
+            rem = 1;
+            //tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
+            //aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg | (CTRL_ENABLE_REM_LBCK));// | CTRL_ENABLE_FAR_LBCK));
 
         }
+        ioctl(devDesc, AER_SET_LOC_LBCK, loc);
+        ioctl(devDesc, AER_SET_FAR_LBCK, far);
+        ioctl(devDesc, AER_SET_REM_LBCK, rem);
 
         tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
         std::cout << "After Turn on loopbacks: " << tmp_reg << std::endl;
 
-        //ioctl(devDesc, AER_SET_LOC_LBCK, loc);
-        //ioctl(devDesc, AER_SET_FAR_LBCK, far);
-        //ioctl(devDesc, AER_SET_REM_LBCK, rem);
     }
     return ret;
 }
