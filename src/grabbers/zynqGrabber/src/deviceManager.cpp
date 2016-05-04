@@ -721,6 +721,7 @@ bool aerDevManager::openDevice(){
         aerWriteGenericReg(devDesc, MASK_REG, MSK_RX_PAR_ERR);
 
         // Flush FIFOs
+        aerWriteGenericReg(devDesc, CTRL_REG, 0);
         tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
         std::cout << "Before Flush: " << tmp_reg << std::endl;
         aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg | CTRL_FLUSHFIFO); // | CTRL_ENABLEIP);
@@ -730,9 +731,9 @@ bool aerDevManager::openDevice(){
         std::cout << "Before Enable Interrupt: " << tmp_reg << std::endl;
         aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg | (CTRL_ENABLEINTERRUPT));// | CTRL_ENABLE_FAR_LBCK));
 
-        //int loc = 0;
-        //int far = 0;
-        //int rem = 0;
+        int loc = 0;
+        int far = 0;
+        int rem = 0;
 
 
         //turn off all loopbacks
