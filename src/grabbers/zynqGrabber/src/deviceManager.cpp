@@ -717,14 +717,17 @@ bool aerDevManager::openDevice(){
 
         // Enable Time wrapping interrupt
         //aerWriteGenericReg(devDesc, MASK_REG, MSK_TIMEWRAPPING | MSK_TX_DUMPMODE | MSK_RX_PAR_ERR | MSK_RX_MOD_ERR);
-        aerWriteGenericReg(devDesc, MASK_REG, MSK_TIMEWRAPPING | MSK_RX_PAR_ERR);
+        //aerWriteGenericReg(devDesc, MASK_REG, MSK_TIMEWRAPPING | MSK_RX_PAR_ERR);
+        aerWriteGenericReg(devDesc, MASK_REG, MSK_RX_PAR_ERR);
 
         // Flush FIFOs
         tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
+        std::cout << "Before Flush: " << tmp_reg << std::endl;
         aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg | CTRL_FLUSHFIFO); // | CTRL_ENABLEIP);
 
         // Start IP in LoopBack
         tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
+        std::cout << "Before Enable Interrupt: " << tmp_reg << std::endl;
         aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg | (CTRL_ENABLEINTERRUPT));// | CTRL_ENABLE_FAR_LBCK));
 
         //int loc = 0;
@@ -734,6 +737,7 @@ bool aerDevManager::openDevice(){
 
         //turn off all loopbacks
         tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
+        std::cout << "Before Turn off loopbacks: " << tmp_reg << std::endl;
         //aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg & !CTRL_ENABLE_LOC_LBCK&!CTRL_ENABLE_FAR_LBCK&!CTRL_ENABLE_REM_LBCK);// | CTRL_ENABLE_FAR_LBCK));
         aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg & 0x00FFFFFF);// | CTRL_ENABLE_FAR_LBCK));
 
@@ -754,6 +758,9 @@ bool aerDevManager::openDevice(){
             aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg | (CTRL_ENABLE_REM_LBCK));// | CTRL_ENABLE_FAR_LBCK));
 
         }
+
+        tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
+        std::cout << "After Turn on loopbacks: " << tmp_reg << std::endl;
 
         //ioctl(devDesc, AER_SET_LOC_LBCK, loc);
         //ioctl(devDesc, AER_SET_FAR_LBCK, far);
