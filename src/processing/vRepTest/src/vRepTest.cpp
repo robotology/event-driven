@@ -135,6 +135,8 @@ void vRepTest::onRead(emorph::vBottle &inBottle)
     q.sort(true);
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {
+        emorph::AddressEvent * ae = (*qi)->getAs<emorph::AddressEvent>();
+        if(!ae || ae->getChannel()) continue;
         unwts = unwrapper((*qi)->getStamp());
         tWindow.addEvent(**qi);
         fWindow.addEvent(**qi);
