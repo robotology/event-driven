@@ -194,7 +194,10 @@ void YARPspinI::onRead(emorph::vBottle &bot)
     }
 
 }
-/**********************************************************/
+
+/******************************************************************************/
+// YARP - SPIN - OUTPUT
+/******************************************************************************/
 YARPspinO::YARPspinO() : yarp::os::RateThread(1)
 {
 
@@ -264,6 +267,142 @@ void YARPspinO::threadRelease()
 {
   // Clean up thread resources
   spinReceiver->closeRecvSocket();
+
+}
+
+/******************************************************************************/
+// YARP - SPIN - INPUT/OUTPUT
+/******************************************************************************/
+YARPspinIO::YARPspinIO()
+{
+
+    //here we should initialise the module
+    height = 128;
+    width = 128;
+    downsamplefactor = 0;
+
+    spinSender = 0;
+    spinReceiver = 0;
+    //eventsin.open("eventssenttospinnaker.txt");
+
+}
+
+/******************************************************************************/
+bool YARPspinIO::open(const std::string &name)
+{
+    //and open the input port
+
+    this->useCallback();
+
+    if(!yarp::os::BufferedPort<emorph::vBottle>::open("/" + name + "/vBottle:i"))
+        return false;
+    if(!vBottleOut.open("/" + name + "/vBottle:o"))
+        return false;
+
+    return true;
+}
+
+/******************************************************************************/
+void YARPspinIO::close()
+{
+    if(spinReceiver) spinReceiver->closeRecvSocket();
+    if(spinSender) spinSender->closeSendSocket();
+    delete spinSender; spinSender = 0;
+    delete spinReceiver; spinReceiver = 0;
+    vBottleOut.close();
+    yarp::os::BufferedPort<emorph::vBottle>::close();
+
+    //remember to also deallocate any memory allocated by this class
+}
+
+/******************************************************************************/
+void YARPspinIO::interrupt()
+{
+    vBottleOut.interrupt();
+    yarp::os::BufferedPort<emorph::vBottle>::interrupt();
+}
+
+/**********************************************************/
+void YARPspinIO::attachEIEIOmodules(spinnio::EIEIOSender* spinSenderPtr,
+                                    spinnio::EIEIOReceiver *spinReceiverPtr)
+{
+    spinReceiver = spinReceiverPtr;
+    spinSender = spinSenderPtr;
+}
+
+/**********************************************************/
+void YARPspinIO::onRead(emorph::vBottle &inbottle)
+{
+    //create event queue
+    yarp::os::Stamp yts;
+    this->getEnvelope(yts);
+
+    emorph::vBottle &outbottle = vBottleOut.prepare();
+    outbottle = inbottle;
+
+    emorph::vQueue q = inbottle.getAll();
+    if(!q.size()) {
+        std::cerr << "Callback function received no packets?" << std::endl;
+        return;
+    }
+
+    int latestts = q.back()->getStamp();
+
+    //first send on our packets we have read
+    for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
+    {
+
+        emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
+        if(!v) continue;
+        if(v->getChannel()) continue;
+
+        int neuronID = (v->getY() >> downsamplefactor) *
+                (width / pow(downsamplefactor, 2.0)) +
+                (v->getX() >> downsamplefactor);
+
+        //eventsin << (int)(v->getX()) << " " << (int)(v->getY()) << " " << neuronID << std::endl;
+        spinSender->addSpikeToSendQueue(neuronID);
+
+    }
+
+    //and then see if there are spikes to receive
+    //int recvQueueSize = spinReceiver->getRecvQueueSize();
+
+    //there is data to process so prepare out outbottle port
+    emorph::ClusterEventGauss gaborevent;
+
+    if(spinReceiver->getRecvQueueSize()) {
+        //convert the data to readable packets
+        std::list<std::pair<int, int> > spikepacket =
+                spinReceiver->getNextSpikePacket();
+
+        //iterate over all spikes and add them to the bottle
+        std::list<std::pair<int, int> >::iterator i;
+        for(i = spikepacket.begin(); i != spikepacket.end(); i++) {
+            std::pair<int,int> spikeEvent = *i;
+            gaborevent.setStamp(latestts);
+            gaborevent.setPolarity(0);
+            gaborevent.setXCog(64);
+            gaborevent.setYCog(64);
+            if(spikeEvent.second == 0)  {
+                gaborevent.setXYSigma(0);
+                gaborevent.setYSigma2(5);
+                gaborevent.setXSigma2(5);
+            } else {
+                gaborevent.setXYSigma(1);
+                gaborevent.setYSigma2(5);
+                gaborevent.setXSigma2(5);
+            }
+            gaborevent.setXVel(0);
+            gaborevent.setYVel(0);
+            outbottle.addEvent(gaborevent);
+        }
+
+    }
+
+    //send the bottle on
+    if(vBottleOut.getOutputCount())
+        vBottleOut.write();
 
 }
 

@@ -28,7 +28,7 @@
 class YARPspinI : public yarp::os::BufferedPort<emorph::vBottle>
 {
 private:
-    
+
     spinnio::EIEIOSender   *spinSender;
 
     //for helping with timestamp wrap around
@@ -39,7 +39,7 @@ private:
     int width;
 
 public:
-    
+
     YARPspinI();
 
 
@@ -71,6 +71,32 @@ public:
     bool initThread(std::string moduleName, spinnio::EIEIOReceiver *spinReceiverPtr);
     void run();
     void threadRelease();
+};
+
+class YARPspinIO : public yarp::os::BufferedPort<emorph::vBottle>
+{
+private:
+
+    spinnio::EIEIOSender   *spinSender;
+    spinnio::EIEIOReceiver   *spinReceiver;
+    yarp::os::BufferedPort<emorph::vBottle> vBottleOut;
+
+    int downsamplefactor;
+    int height;
+    int width;
+
+public:
+
+    YARPspinIO();
+
+    bool    open(const std::string &name);
+    void    close();
+    void    interrupt();
+    void    attachEIEIOmodules(spinnio::EIEIOSender* spinSenderPtr, spinnio::EIEIOReceiver *spinReceiverPtr);
+
+    //this is the entry point to your main functionality
+    void    onRead(emorph::vBottle &inbottle);
+
 };
 
 class vSpinInterface : public yarp::os::RFModule
