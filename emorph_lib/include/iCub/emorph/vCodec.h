@@ -512,6 +512,41 @@ public:
 
 };
 
+/**************************************************************************/
+class NeuronIDEvent : public vEvent
+{
+private:
+    const static int localWordsCoded = 1;
+
+protected:
+
+    int neurID;
+
+public:
+
+    virtual std::string getType() const { return "N_ID";}
+    int getID() const                       { return neurID;              }
+
+    void setID(const int neurID)              { this->neurID = neurID;        }
+
+    NeuronIDEvent() : vEvent(), neurID(0) {}
+    NeuronIDEvent(const vEvent &event);
+    vEvent &operator=(const vEvent &event);
+    virtual vEvent* clone();
+
+    bool operator==(const NeuronIDEvent &event);
+    bool operator==(const vEvent &event) {
+        return operator==(dynamic_cast<const vEvent&>(event)); }
+    virtual void encode(yarp::os::Bottle &b) const;
+    yarp::os::Property getContent() const;
+    virtual bool decode(const yarp::os::Bottle &packet, int &pos);
+
+    //this is the total number of bytes used to code this event
+    virtual int nBytesCoded() const         { return localWordsCoded *
+                sizeof(int) + vEvent::nBytesCoded(); }
+
+};
+
 }
 
 #endif
