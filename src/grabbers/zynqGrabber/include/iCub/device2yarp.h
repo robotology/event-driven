@@ -38,6 +38,7 @@ public:
     virtual void threadRelease();
     virtual bool threadInit(std::string moduleName = "", bool strict = false);
     bool    attachDeviceManager(deviceManager* devManager);
+    bool doChannelShift;
 
 private:
 

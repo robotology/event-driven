@@ -21,6 +21,7 @@ device2yarp::device2yarp() : RateThread(THRATE) {
     countAEs = 0;
     prevTS = 0;
     strict = false;
+    doChannelShift = true;
 }
 
 bool device2yarp::threadInit(std::string moduleName, bool strict){
@@ -92,7 +93,8 @@ void  device2yarp::run() {
         } else {
             //else scale the timestamp
             //*TS = 0x80000000 | ((*TS & 0x7FFFFFFF) * 1);
-            *AE = (((*AE & 0x00100000) >> 5) | *AE) & 0xFFEFFFFF;
+            if(doChannelShift)
+                *AE = (((*AE & 0x00100000) >> 5) | *AE) & 0xFFEFFFFF;
             //and then check the next two ints
             bend += 8;
         }
@@ -164,6 +166,9 @@ bool  device2yarp::attachDeviceManager(deviceManager* devManager) {
         return false;
 
     }
+
+    if(devManager->getDevType() == "/dev/aerfx2_0")
+        doChannelShift = false;
 
     clockScale = this->devManager->getTickToUs();
     return true;
