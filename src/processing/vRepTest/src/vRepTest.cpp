@@ -178,16 +178,17 @@ void vRepTest::onRead(emorph::vBottle &inBottle)
         ytime = yts.getTime();
 
     if(imPort.getOutputCount() && yts.getTime() > ytime) {
-        ytime += 0.033;
+        ytime += 0.01;
         yarp::sig::ImageOf<yarp::sig::PixelBgr> &image = imPort.prepare();
 
         if(vistype == "all") {
-            image.resize(128 * 2 + 15, 128 * 2 + 15);
+            image.resize(128 * 3 + 20, 128 * 2 + 15);
             image.zero();
             drawDebug(image, tWindow.getTW(), 5, 5);
-            drawDebug(image, fWindow.getTW(), 127 + 10, 5);
-            drawDebug(image, lWindow.getTW(), 5, 127 + 10);
+            drawDebug(image, fWindow.getTW(), 5, 127 + 10);
+            drawDebug(image, lWindow.getTW(), 127 + 10, 5);
             drawDebug(image, edge.getSURF(0, 127, 0, 127), 127+10, 127+10);
+            drawDebug(image, fedge.getSURF(0, 127, 0, 127), 127+127+15, 127+10);
         } else {
             image.resize(128, 128);
             image.zero();
@@ -220,7 +221,7 @@ void vRepTest::drawDebug(yarp::sig::ImageOf<yarp::sig::PixelBgr> &image,
 //            image(v->getY()+yoff, image.width() - 1 - v->getX() - xoff) =
 //                    yarp::sig::PixelBgr(0, 255, 0);
 //        else
-            image(v->getY()+yoff, image.width() - 1 - v->getX() - xoff) =
+            image(v->getY()+xoff, image.height() - 1 - v->getX() - yoff) =
                     yarp::sig::PixelBgr(255, 0, 255);
     }
 
