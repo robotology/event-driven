@@ -4,8 +4,9 @@
 
 cmake_minimum_required(VERSION 2.6)
 set(PROJECTNAME eMorph)
-set(CMAKE_CXX_FLAGS -Wall)
 project(${PROJECTNAME})
+
+set(CMAKE_CXX_FLAGS "-Wall -fno-strict-aliasing")
 set(EMORPHLIB_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/emorph_lib/include)
 
 option(EMORPH_BUILD_ZYNQ "Build for ZynqGrabber" OFF)

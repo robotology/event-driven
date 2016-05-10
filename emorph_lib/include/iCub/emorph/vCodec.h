@@ -536,7 +536,7 @@ public:
 
     bool operator==(const NeuronIDEvent &event);
     bool operator==(const vEvent &event) {
-        return operator==(dynamic_cast<const vEvent&>(event)); }
+        return operator==(dynamic_cast<const NeuronIDEvent&>(event)); }
     virtual void encode(yarp::os::Bottle &b) const;
     yarp::os::Property getContent() const;
     virtual bool decode(const yarp::os::Bottle &packet, int &pos);
