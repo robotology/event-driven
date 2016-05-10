@@ -153,6 +153,7 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
 
     //we just need to get our updated TS
     emorph::vQueue q = vBottleIn.getAllSorted();
+    if(q.empty()) return;
     int bestts = q.back()->getStamp();
     FIFO.removeEvents(*(q.back()));
 
@@ -177,6 +178,7 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
         //get radius
         //p_eyez = (-2.5 * vc->getXSigma2() + 70)/100.0;
         p_eyez = vc->getXSigma2();
+        p_eyez = std::min(p_eyez, 16.0);
 
         //update our window
         FIFO.addEvent(*q.back());
@@ -193,6 +195,7 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
             xs[i] = vtw->getXCog();
             ys[i] = vtw->getYCog();
             p_eyez = std::max(p_eyez, (double)vtw->getXSigma2());
+            p_eyez = std::min(p_eyez, 16.0);
         }
 
         std::sort(xs.begin(), xs.end());
@@ -217,10 +220,8 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
                 px[0] = medy;
                 px[1] = 127 - medx;
                 //turn u/v into xyz
-                if(gazedriver.isValid()) {
-                    gazecontrol->get3DPoint(0, px, (-2.5 * p_eyez + 70)/100.0,
-                                            xrobref);
-                }
+                if(gazedriver.isValid())
+                    gazecontrol->get3DPoint(0, px, (-2.5 * p_eyez + 70)/100.0, xrobref);
             }
         }
 

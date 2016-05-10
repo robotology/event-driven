@@ -116,10 +116,25 @@ public:
         vSurface(width, height), thickness(2), trackCount(false) {}
 
     vQueue addEventToEdge(AddressEvent *event);
-    FlowEvent * upgradeEvent(AddressEvent *event);
     void setThickness(int pixels) {thickness = pixels;}
     void track(bool trackCount = true) {this->trackCount = trackCount;}
 
+    virtual const vQueue& getSURF(int xl, int xh, int yl, int yh);
+
+};
+
+class vFuzzyEdge : public vEdge
+{
+
+private:
+
+    double delta;
+    std::vector < std::vector <double> > scores;
+
+public:
+
+    vFuzzyEdge(int width = 128, int height = 128, double delta = 0.4);
+    vQueue addEventToEdge(AddressEvent *event);
     virtual const vQueue& getSURF(int xl, int xh, int yl, int yh);
 
 };

@@ -39,6 +39,7 @@ private:
     emorph::temporalWindow tWindow;
     emorph::fixedWindow fWindow;
     emorph::lifetimeWindow lWindow;
+    emorph::vFuzzyEdge fedge;
 
     std::string vistype;
     void drawDebug(yarp::sig::ImageOf<yarp::sig::PixelBgr> &image,
