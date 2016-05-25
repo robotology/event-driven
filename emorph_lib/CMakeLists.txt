@@ -12,6 +12,7 @@ set(folder_source
   src/vBottle.cpp
   src/vCodec.cpp
   src/vWindow.cpp
+  src/vTempWindow.cpp
   src/vSurface.cpp
   src/vQueue.cpp
 )
