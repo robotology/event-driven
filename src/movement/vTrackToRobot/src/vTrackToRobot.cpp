@@ -213,7 +213,7 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
         medstdx = sqrt(medstdx / n);
         medstdy = sqrt(medstdy / n);
 
-        if(abs(vc->getXCog() - medx) < medstdx && abs(vc->getYCog() - medy) < medstdy) {
+        if(std::abs(vc->getXCog() - medx) < medstdx && std::abs(vc->getYCog() - medy) < medstdy) {
             if(medstdx < 20 && medstdy < 20 && n > 40) {
                 dogaze = true;
                 lastdogazetime = yarp::os::Time::now();
