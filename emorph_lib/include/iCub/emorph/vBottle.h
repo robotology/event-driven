@@ -119,7 +119,10 @@ public:
             }
 
             //and if e is of type T we can continue to get the events
-            if(!dynamic_cast<T*>(e)) continue;
+            if(!dynamic_cast<T*>(e)) {
+                delete(e);
+                continue;
+            }
 
             //we get the (EVENTS)
             Bottle * b = Bottle::get(i+1).asList();
