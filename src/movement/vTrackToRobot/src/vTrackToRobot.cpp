@@ -45,7 +45,7 @@ vTrackToRobotManager::vTrackToRobotManager()
     px[1] = 127 - medx;
     lastdogazetime = 0;
 
-    FIFO.setTemporalWindowSize(250000 * 7.8125);
+    FIFO.setTemporalSize(250000 * 7.8125);
 
 }
 
@@ -184,7 +184,7 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
         FIFO.addEvent(*q.back());
 
         //and then get everything in the current window
-        q = FIFO.getTW();
+        q = FIFO.getSurf();
         n = q.size();
 
         //compute the median

@@ -51,7 +51,7 @@ private:
     double lastdogazetime;
 
 
-    emorph::temporalWindow FIFO;
+    emorph::temporalSurface FIFO;
     std::deque<yarp::sig::Vector> recentgazelocs;
     std::deque<double> recenteyezs;
     double p_eyez;
