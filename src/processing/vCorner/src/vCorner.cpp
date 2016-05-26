@@ -25,7 +25,8 @@ bool vCornerModule::configure(yarp::os::ResourceFinder &rf)
             rf.check("name", yarp::os::Value("vCorner")).asString();
     yarp::os::RFModule::setName(moduleName.c_str());
 
-    bool strictness = rf.check("strict", yarp::os::Value(false)).asBool();
+    bool strict = rf.check("strict") &&
+            rf.check("strict", yarp::os::Value(true)).asBool();
 
     /* set parameters */
     int height = rf.check("height", yarp::os::Value(128)).asInt();
@@ -36,7 +37,7 @@ bool vCornerModule::configure(yarp::os::ResourceFinder &rf)
 
     /* create the thread and pass pointers to the module parameters */
     cornermanager = new vCornerManager(height, width, sobelsize, thickness, thresh);
-    return cornermanager->open(moduleName, strictness);
+    return cornermanager->open(moduleName, strict);
 
 }
 

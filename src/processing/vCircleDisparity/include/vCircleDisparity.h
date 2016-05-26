@@ -41,7 +41,7 @@ public:
 
     circleDisparity();
 
-    bool    open(const std::string &name);
+    bool    open(const std::string &name, bool strict = false);
     void    close();
     void    interrupt();
 

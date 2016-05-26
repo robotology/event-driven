@@ -26,8 +26,11 @@ bool vcdModule::configure(yarp::os::ResourceFinder &rf)
             rf.check("name", yarp::os::Value("vCircleDisparity")).asString();
     setName(moduleName.c_str());
 
+    bool strict = rf.check("strict") &&
+            rf.check("strict", yarp::os::Value(true)).asBool();
+
     /* create the thread and pass pointers to the module parameters */
-    circledisparity.open(moduleName);
+    circledisparity.open(moduleName, strict);
 
     return true ;
 }
@@ -70,11 +73,12 @@ circleDisparity::circleDisparity()
 
 }
 /**********************************************************/
-bool circleDisparity::open(const std::string &name)
+bool circleDisparity::open(const std::string &name, bool strict)
 {
     //and open the input port
 
     this->useCallback();
+    if(strict) this->setStrict();
 
     //std::string inPortName = "/" + name + "/vBottle:i";
     if(!yarp::os::BufferedPort<emorph::vBottle>::open("/" + name + "/vBottle:i"))

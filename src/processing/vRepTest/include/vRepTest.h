@@ -52,7 +52,7 @@ public:
     void setFixedWindow(int N) {fWindow.setFixedWindowSize(N);}
     void setVisType(std::string vis) {this->vistype = vis;}
 
-    bool    open(const std::string &name);
+    bool    open(const std::string &name, bool strict = false);
     void    close();
     void    interrupt();
 

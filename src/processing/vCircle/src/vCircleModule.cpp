@@ -28,7 +28,8 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
             rf.check("name", yarp::os::Value("vCircle")).asString();
     setName(moduleName.c_str());
 
-    bool strictness = rf.check("strict");
+    bool strict = rf.check("strict") &&
+            rf.check("strict", yarp::os::Value(true)).asBool();
     bool parallel = rf.check("parallel");
 
     //sensory size
@@ -91,7 +92,7 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
     }
 
     //open the ports
-    if(!circleReader.open(moduleName, strictness)) {
+    if(!circleReader.open(moduleName, strict)) {
         std::cerr << "Could not open required ports" << std::endl;
         return false;
     }

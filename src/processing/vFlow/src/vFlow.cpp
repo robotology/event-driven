@@ -29,7 +29,8 @@ bool vFlowModule::configure(yarp::os::ResourceFinder &rf)
                                       yarp::os::Value("vFlow")).asString();
     yarp::os::RFModule::setName(moduleName.c_str());
 
-    bool strictness = rf.check("strict", yarp::os::Value(false)).asBool();
+    bool strict = rf.check("strict") &&
+            rf.check("strict", yarp::os::Value(true)).asBool();
 
     /* set parameters */
     int height = rf.check("height", yarp::os::Value(128)).asInt();
@@ -38,7 +39,7 @@ bool vFlowModule::configure(yarp::os::ResourceFinder &rf)
     int minEvtsOnPlane = rf.check("minEvtsThresh", yarp::os::Value(5)).asInt();
 
     flowmanager = new vFlowManager(height, width, sobelSize, minEvtsOnPlane);
-    return flowmanager->open(moduleName, strictness);
+    return flowmanager->open(moduleName, strict);
 
 }
 

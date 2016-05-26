@@ -27,13 +27,16 @@ bool vRepTestHandler::configure(yarp::os::ResourceFinder &rf)
 
     std::string vis = rf.check("vis", yarp::os::Value("all")).asString();
 
+    bool strict = rf.check("strict") &&
+            rf.check("strict", yarp::os::Value(true)).asBool();
+
 
     reptest.setVisType(vis);
     //reptest.setTemporalWindow(rf.check("tWin", yarp::os::Value(125000)).asInt());
     reptest.setFixedWindow(rf.check("fWin", yarp::os::Value(1000)).asInt());
 
     /* create the thread and pass pointers to the module parameters */
-    return reptest.open(moduleName);
+    return reptest.open(moduleName, strict);
 
     return true ;
 }
@@ -78,12 +81,12 @@ vRepTest::vRepTest()
 
 }
 /**********************************************************/
-bool vRepTest::open(const std::string &name)
+bool vRepTest::open(const std::string &name, bool strict)
 {
     //and open the input port
 
     this->useCallback();
-    this->setStrict();
+    if(strict) this->setStrict();
 
     std::string portname;
 
