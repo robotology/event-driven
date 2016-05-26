@@ -40,9 +40,6 @@ private:
     static bool temporalSortWrap(const vEvent *e1, const vEvent *e2);
     static bool temporalSortStraight(const vEvent *e1, const vEvent *e2);
 
-    void destroyall();
-    void referall();
-
 public:
 
     vQueue() {}

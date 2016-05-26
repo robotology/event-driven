@@ -146,7 +146,6 @@ public:
 
     int refcount;
     void referto() { refcount++; }
-    //bool destroy() { return !(--refcount > 0); }
     void destroy() { if(!(--refcount > 0)) delete this; }
 
     virtual std::string getType() const { return "TS";}

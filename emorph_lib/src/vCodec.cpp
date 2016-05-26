@@ -100,7 +100,8 @@ vEvent &vEvent::operator=(const vEvent &event)
     return *this;
 }
 
-vEvent *vEvent::clone() {
+vEvent *vEvent::clone()
+{
     return new vEvent(*this);
 }
 

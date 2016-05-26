@@ -123,19 +123,19 @@ vEvent * vSurface::addEvent(AddressEvent &event)
     return justRemoved;
 }
 
-const vQueue& vSurface::getSURF(int d)
+const vQueue& vSurface::getSurf(int d)
 {
     if(!mostRecent) return subq;
-    return getSURF(mostRecent->getUnsafe<AddressEvent>()->getX(),
+    return getSurf(mostRecent->getUnsafe<AddressEvent>()->getX(),
                    mostRecent->getUnsafe<AddressEvent>()->getY(), d);
 }
 
-const vQueue& vSurface::getSURF(int x, int y, int d)
+const vQueue& vSurface::getSurf(int x, int y, int d)
 {
-    return getSURF(x - d, x + d, y - d, y + d);
+    return getSurf(x - d, x + d, y - d, y + d);
 }
 
-const vQueue& vSurface::getSURF(int xl, int xh, int yl, int yh)
+const vQueue& vSurface::getSurf(int xl, int xh, int yl, int yh)
 {
 
     xl = std::max(xl, 0);
@@ -312,7 +312,7 @@ vQueue vEdge::addEventToEdge(AddressEvent *event)
 
 }
 
-const vQueue& vEdge::getSURF(int xl, int xh, int yl, int yh)
+const vQueue& vEdge::getSurf(int xl, int xh, int yl, int yh)
 {
     xl = std::max(xl, 1);
     xh = std::min(xh, width-2);
