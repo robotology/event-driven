@@ -94,13 +94,13 @@ void addressDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
 
     if(eSet.empty()) return;
 
-    emorph::vQueue::const_iterator qi;
-    for(qi = eSet.begin(); qi != eSet.end(); qi++) {
+    emorph::vQueue::const_reverse_iterator qi;
+    for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
 
 
         int dt = eSet.back()->getStamp() - (*qi)->getStamp();
         if(dt < 0) dt += emorph::vtsHelper::maxStamp();
-        if(dt > twindow) continue;
+        if(dt > twindow) break;
 
 
         emorph::AddressEvent *aep = (*qi)->getAs<emorph::AddressEvent>();
@@ -538,7 +538,7 @@ void flowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
         double hypotenuse = magnitude;
         if(hypotenuse < 10) hypotenuse = 10;
         //if(hypotenuse > 20) hypotenuse = 20;
-        hypotenuse = 14;
+        hypotenuse = 20;
         double angle = atan2(vy, vx);
 
         //Scale the arrow by a factor of three
@@ -832,7 +832,8 @@ void isoDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
 
     if(eSet.empty()) return;
 
-    int dt = eSet.back()->getStamp() - eSet.front()->getStamp();
+    int cts = eSet.back()->getStamp();
+    int dt = cts - eSet.front()->getStamp();
     if(dt < 0) dt += emorph::vtsHelper::maxStamp();
     maxdt = std::max(maxdt, dt);
 
@@ -843,10 +844,10 @@ void isoDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
         if(!aep) continue;
 
         //transform values
-        double dt = aep->getStamp() - eSet.front()->getStamp();
+        double dt = cts - aep->getStamp();
         if(dt < 0) dt += emorph::vtsHelper::maxStamp();
         dt /= (double)maxdt;
-        int pts = (1-dt) * scale;
+        int pts = dt * scale;
         int px = aep->getY();
         int py = aep->getX();
 
