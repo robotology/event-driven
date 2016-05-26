@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2011 Department of Robotics Brain and Cognitive Sciences -
  * Istituto Italiano di Tecnologia
  * Author: Ugo Pattacini, edited by Arren Glover(10/14)
@@ -55,6 +55,10 @@ vEvent * createEvent(const std::string type)
     if(type == ret->getType()) return ret;
     else delete(ret);
 
+    ret = new NeuronIDEvent();
+    if(type == ret->getType()) return ret;
+    else delete(ret);
+
     return 0;
 
 }
@@ -96,7 +100,8 @@ vEvent &vEvent::operator=(const vEvent &event)
     return *this;
 }
 
-vEvent *vEvent::clone() {
+vEvent *vEvent::clone()
+{
     return new vEvent(*this);
 }
 
@@ -599,7 +604,7 @@ bool ClusterEventGauss::decode(const yarp::os::Bottle &packet, int &pos)
         yVel=word2&0xffff;
         word2>>=16;
         xVel=word2&0xffff;
-        
+
         pos += localWordsCoded;
         return true;
 
@@ -728,7 +733,7 @@ yarp::os::Property FlowEvent::getContent() const
 
 void FlowEvent::setDeath()
 {
-    death = 1.0 / (sqrt(pow(vx, 2.0) + pow(vy, 2.0)) * vtsHelper::tstosecs());
+    death = 1.0 / (sqrt(pow(vx, 2.0f) + pow(vy, 2.0f)) * vtsHelper::tstosecs());
     //if(death > 2000000) {
     //    death = 2000000;
     //}
@@ -740,7 +745,7 @@ void FlowEvent::setDeath()
     if(theta > 1.5707963) theta -= 1.5707963;
     if(theta > 0.785398) theta = 1.5707963 - theta;
     //death = 7.8125*(int)(sqrt(pow(vx, 2.0) + pow(vy, 2.0)) / (cos(theta)*vtsHelper::tstosecs()));
-    death = 1.0 / (sqrt(pow(vx, 2.0) + pow(vy, 2.0)) * cos(theta) * vtsHelper::tstosecs());
+    death = 1.0 / (sqrt(pow(vx, 2.0f) + pow(vy, 2.0f)) * cos(theta) * vtsHelper::tstosecs());
     if(death > 2000000) {
         death = 2000000;
     }
@@ -826,6 +831,82 @@ yarp::os::Property InterestEvent::getContent() const
 {
     yarp::os::Property prop = AddressEvent::getContent();
     prop.put("intID",intID);
+
+    return prop;
+}
+
+/******************************************************************************/
+//NeuronIDEvent
+/******************************************************************************/
+NeuronIDEvent::NeuronIDEvent(const vEvent &event/*always vEvent*/)
+{
+    //most of the constructor is replicated in the assignment operator
+    //so we just use that to construct
+    *this = event;
+
+}
+
+/******************************************************************************/
+vEvent &NeuronIDEvent::operator=(const vEvent &event/*always vEvent*/)
+{
+
+    //copy timestamp and type (base class =operator)
+    vEvent::operator =(event);
+
+    //copy other fields if it's compatible
+    const NeuronIDEvent * np =
+            dynamic_cast<const NeuronIDEvent *>(&event);
+    if(np) {
+        neurID = np->neurID;
+    } else {
+        neurID = 0;
+    }
+
+    return *this;
+}
+
+/******************************************************************************/
+vEvent* NeuronIDEvent::clone() {
+    return new NeuronIDEvent(*this);
+}
+
+/******************************************************************************/
+void NeuronIDEvent::encode(yarp::os::Bottle &b) const
+{
+    vEvent::encode(b);
+    b.addInt(neurID);
+}
+
+/******************************************************************************/
+bool NeuronIDEvent::decode(const yarp::os::Bottle &packet, int &pos)
+{
+    // check length
+    if (vEvent::decode(packet, pos) &&
+            pos + localWordsCoded <= packet.size())
+    {
+        int word0=packet.get(pos).asInt();
+        neurID = word0;
+        pos += localWordsCoded;
+        return true;
+    }
+
+    return false;
+}
+
+
+
+/******************************************************************************/
+bool NeuronIDEvent::operator==(const NeuronIDEvent &event)
+{
+    return ((NeuronIDEvent::operator==(event)) &&
+            (neurID==event.neurID));
+}
+
+/******************************************************************************/
+yarp::os::Property NeuronIDEvent::getContent() const
+{
+    yarp::os::Property prop = vEvent::getContent();
+    prop.put("N_ID", neurID);
 
     return prop;
 }

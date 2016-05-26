@@ -25,7 +25,7 @@
 class vRepTest : public yarp::os::BufferedPort<emorph::vBottle>
 {
 private:
-    
+
     //output port for the vBottle with the new events computed by the module
     yarp::os::BufferedPort<yarp::os::Bottle> dumper;
     yarp::os::BufferedPort<emorph::vBottle> eventsOut;
@@ -36,9 +36,9 @@ private:
     double ytime;
 
     emorph::vEdge edge;
-    emorph::temporalWindow tWindow;
-    emorph::fixedWindow fWindow;
-    emorph::lifetimeWindow lWindow;
+    emorph::temporalSurface tWindow;
+    emorph::fixedSurface fWindow;
+    emorph::lifetimeSurface lWindow;
     emorph::vFuzzyEdge fedge;
 
     std::string vistype;
@@ -46,11 +46,11 @@ private:
                    const emorph::vQueue &q, int xoff, int yoff);
 
 public:
-    
+
     vRepTest();
-    void setTemporalWindow(int dt) {tWindow.setTemporalWindowSize(dt);}
+    void setTemporalWindow(int dt) {tWindow.setTemporalSize(dt);}
     void setFixedWindow(int N) {fWindow.setFixedWindowSize(N);}
-    bool setVisType(std::string vis) {this->vistype = vis;}
+    void setVisType(std::string vis) {this->vistype = vis;}
 
     bool    open(const std::string &name);
     void    close();

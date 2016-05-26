@@ -45,19 +45,18 @@ vTrackToRobotManager::vTrackToRobotManager()
     px[1] = 127 - medx;
     lastdogazetime = 0;
 
-    FIFO.setTemporalWindowSize(250000 * 7.8125);
+    FIFO.setTemporalSize(250000 * 7.8125);
 
 }
 
-bool vTrackToRobotManager::setMethod(std::string methodname)
+void vTrackToRobotManager::setMethod(std::string methodname)
 {
     if(methodname == "gaze") method = fromgaze;
     if(methodname == "size") method = fromsize;
     if(methodname == "stereo") method = fromstereo;
-
 }
 
-bool vTrackToRobotManager::setDemo(std::string demoname)
+void vTrackToRobotManager::setDemo(std::string demoname)
 {
     if(demoname == "gaze") demo = gazedemo;
     if(demoname == "grasp") demo = graspdemo;
@@ -185,7 +184,7 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
         FIFO.addEvent(*q.back());
 
         //and then get everything in the current window
-        q = FIFO.getTW();
+        q = FIFO.getSurf();
         n = q.size();
 
         //compute the median

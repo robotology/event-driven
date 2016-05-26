@@ -89,7 +89,7 @@
 class vCircleReader : public yarp::os::BufferedPort<emorph::vBottle>
 {
 private:
-    
+
     //output port for the vBottle with the new events computed by the module
     yarp::os::BufferedPort<emorph::vBottle> outPort;
     yarp::os::BufferedPort<yarp::os::Bottle> scopeOut;
@@ -110,11 +110,12 @@ public:
 
     //we actually allow our observers and trackers
     vCircleTracker circleTracker;
-    vCircleMultiSize * cObserver;
+    vCircleMultiSize * cObserverL;
+    vCircleMultiSize * cObserverR;
     double inlierThreshold;
     bool hough;
     double timecounter;
-    
+
     vCircleReader();
 
     bool    open(const std::string &name, bool strictness = false);

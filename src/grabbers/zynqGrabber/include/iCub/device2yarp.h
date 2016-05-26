@@ -1,10 +1,10 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
-/* 
+/*
  * Copyright (C) 2010 RobotCub Consortium, European Commission FP6 Project IST-004370
  * Authors: Rea Francesco, Charles Clercq
  * email:   francesco.rea@iit.it, charles.clercq@iit.it
- * website: www.robotcub.org 
+ * website: www.robotcub.org
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
  * later version published by the Free Software Foundation.
@@ -36,25 +36,29 @@ public:
     device2yarp();
     virtual void run();
     virtual void threadRelease();
-    virtual bool threadInit(std::string moduleName = "");
-    void    attachDeviceManager(deviceManager* devManager);
-    
+    virtual bool threadInit(std::string moduleName = "", bool strict = false);
+    bool    attachDeviceManager(deviceManager* devManager);
+    bool doChannelShift;
+
 private:
 
     //output port
     emorph::vBottleMimic sender;
-    yarp::os::Port portvBottle;
+    yarp::os::BufferedPort<emorph::vBottleMimic> portvBottle;
+    //yarp::os::Port portvBottle;
     yarp::os::Stamp vStamp;
-    
+
+    bool strict;
     //read buffer
     //std::vector<unsigned int> deviceData;
-    
+
     //device number to read from
     //int devDesc;
-    deviceManager* devManager;
+    aerDevManager* devManager;
     //incrementall count the number of events coming from the device
     int countAEs;
     double prevTS;
+    double clockScale;
 
 };
 

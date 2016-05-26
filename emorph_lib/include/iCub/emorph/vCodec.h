@@ -142,10 +142,10 @@ public:
     vEvent() : stamp(0), refcount(0) { }
     //!copy constructor
     vEvent(const vEvent &event);
+    virtual ~vEvent() {}
 
     int refcount;
     void referto() { refcount++; }
-    //bool destroy() { return !(--refcount > 0); }
     void destroy() { if(!(--refcount > 0)) delete this; }
 
     virtual std::string getType() const { return "TS";}
@@ -508,6 +508,41 @@ public:
     virtual int nBytesCoded() const         { return localWordsCoded *
                 sizeof(int) + AddressEvent::nBytesCoded(); }
 
+
+};
+
+/**************************************************************************/
+class NeuronIDEvent : public vEvent
+{
+private:
+    const static int localWordsCoded = 1;
+
+protected:
+
+    int neurID;
+
+public:
+
+    virtual std::string getType() const { return "N_ID";}
+    int getID() const                       { return neurID;              }
+
+    void setID(const int neurID)              { this->neurID = neurID;        }
+
+    NeuronIDEvent() : vEvent(), neurID(0) {}
+    NeuronIDEvent(const vEvent &event);
+    vEvent &operator=(const vEvent &event);
+    virtual vEvent* clone();
+
+    bool operator==(const NeuronIDEvent &event);
+    bool operator==(const vEvent &event) {
+        return operator==(dynamic_cast<const NeuronIDEvent&>(event)); }
+    virtual void encode(yarp::os::Bottle &b) const;
+    yarp::os::Property getContent() const;
+    virtual bool decode(const yarp::os::Bottle &packet, int &pos);
+
+    //this is the total number of bytes used to code this event
+    virtual int nBytesCoded() const         { return localWordsCoded *
+                sizeof(int) + vEvent::nBytesCoded(); }
 
 };
 

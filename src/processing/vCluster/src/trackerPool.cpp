@@ -89,7 +89,7 @@ int TrackerPool::update(emorph::AddressEvent &event,
     if(ts_last_reg_ < 0) ts_last_reg_ = ev_t;
 
     // We look for the tracker with the biggest p
-    for(int ii=0; ii<trackers_.size(); ii++){
+    for(unsigned int ii=0; ii<trackers_.size(); ii++){
         // only among the Active and Inactive clusters
         if(trackers_[ii].is_on() && trackers_[ii].dist2event(ev_x, ev_y) < max_dist){
             double p = trackers_[ii].compute_p(ev_x, ev_y);
@@ -130,7 +130,7 @@ int TrackerPool::update(emorph::AddressEvent &event,
     ts_last_reg_ = ev_t;
     count_ = 0;
 
-    for(int i = 0; i < trackers_.size(); i++){
+    for(unsigned int i = 0; i < trackers_.size(); i++){
         // We update the activity of each Active tracker
         if(!(trackers_[i].is_on())) continue;
         bool spiked = trackers_[i].decayActivity(dt, decay_tau,
@@ -144,7 +144,7 @@ int TrackerPool::update(emorph::AddressEvent &event,
 int TrackerPool::getNewTracker()
 {
     //check to see if there is a free tracker already created
-    for(int i = 0; i < trackers_.size(); i++) {
+    for(unsigned int i = 0; i < trackers_.size(); i++) {
         if(trackers_[i].isFree()) {
             trackers_[i].initialiseShape(sig_x2_, sig_y2_, sig_xy_, alpha_pos,
                                         alpha_shape, fixed_shape_);
@@ -201,7 +201,7 @@ emorph::ClusterEventGauss TrackerPool::makeEvent(int i, int ts)
 //            int dy = trackers_[ii].get_y() - trackers_[jj].get_y();
 //            double dist = sqrt(dx*dx + dy*dy);
 //            //printf("distance = %f and d_rep = %d\n", dist, d_rep_);
-            
+
 //            // If the distance is smaller than the minimum, we apply the repulsion filter
 //            if(dist<d_rep_){
 //                // The repulsion field will be a liner function of the distance. If the distance is zero, then it is one. If
@@ -213,7 +213,7 @@ emorph::ClusterEventGauss TrackerPool::makeEvent(int i, int ts)
 //                int dir_y = dy>0?1:-1;
 //                double act_sum = trackers_[ii].get_act()+trackers_[jj].get_act();
 //                double f_i, f_j;
-                
+
 //                if(act_sum > 0){
 //                    f_i = trackers_[jj].get_act()/act_sum;
 //                    f_j = trackers_[ii].get_act()/act_sum;

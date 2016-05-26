@@ -44,14 +44,16 @@ private:
     bool strictness;
     yarp::os::BufferedPort<emorph::vBottle> outPort;
 
-    emorph::vSurface *surfaceOn; ///< emorph::vSurface for on polarity events
-    emorph::vSurface *surfaceOf; ///< emorph::vSurface for off polarity events
-    emorph::vSurface *cSurf;     //! pointer to current surface (on or off)
+    emorph::vSurface2 *surfaceOnL;
+    emorph::vSurface2 *surfaceOfL;
+    emorph::vSurface2 *surfaceOnR; ///< emorph::vSurface for on polarity events
+    emorph::vSurface2 *surfaceOfR; ///< emorph::vSurface for off polarity events
+    emorph::vSurface2 *cSurf;     //! pointer to current surface (on or off)
 
     int height; //! sensor height
     int width;  //! sensor width
     int fRad;   //! filter radius
-    int planeSize; //! edge length of fitted plane
+    unsigned int planeSize; //! edge length of fitted plane
     int halfCount; //! plane area divided by 2
     int minEvtsOnPlane; //! minimum number of events for plane validity
 

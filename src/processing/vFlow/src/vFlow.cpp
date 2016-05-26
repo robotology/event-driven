@@ -102,8 +102,11 @@ vFlowManager::vFlowManager(int height, int width, int filterSize,
     bottleCount = 0;
 
     //create our surface in synchronous mode
-    surfaceOn = new emorph::vSurface(width, height);
-    surfaceOf = new emorph::vSurface(width, height);
+    surfaceOnL = new emorph::temporalSurface(width, height);
+    surfaceOfL = new emorph::temporalSurface(width, height);
+    surfaceOnR = new emorph::temporalSurface(width, height);
+    surfaceOfR = new emorph::temporalSurface(width, height);
+
 }
 
 /******************************************************************************/
@@ -132,8 +135,10 @@ void vFlowManager::close()
     outPort.close();
     yarp::os::BufferedPort<emorph::vBottle>::close();
 
-    delete surfaceOn;
-    delete surfaceOf;
+    delete surfaceOnL;
+    delete surfaceOfL;
+    delete surfaceOnR;
+    delete surfaceOfR;
 
 }
 
@@ -162,12 +167,19 @@ void vFlowManager::onRead(emorph::vBottle &inBottle)
     {
         emorph::AddressEvent *aep = (*qi)->getAs<emorph::AddressEvent>();
         if(!aep) continue;
-        if(aep->getChannel()) continue; 
+        //if(aep->getChannel()) continue;
 
-        if(aep->getPolarity())
-            cSurf = surfaceOf;
-        else
-            cSurf = surfaceOn;
+        if(aep->getChannel()) {
+            if(aep->getPolarity())
+                cSurf = surfaceOfR;
+            else
+                cSurf = surfaceOnR;
+        } else {
+            if(aep->getPolarity())
+                cSurf = surfaceOfL;
+            else
+                cSurf = surfaceOnL;
+        }
 
         cSurf->addEvent(*aep);
 
@@ -215,15 +227,16 @@ emorph::FlowEvent *vFlowManager::compute()
         for(int j = vr->getY()-fRad; j <= vr->getY()+fRad; j+=fRad) {
             //get the surface around the recent event
             double sobeltsdiff = 0;
-            const emorph::vQueue &subsurf = cSurf->getSURF(i, j, fRad);
+            const emorph::vQueue &subsurf = cSurf->getSurf(i, j, fRad);
             if(subsurf.size() < planeSize) continue;
 
-            for(int k = 0; k < subsurf.size(); k++) {
-                if(subsurf[k]->getStamp() > vr->getStamp()) {
-                    subsurf[k]->setStamp(subsurf[k]->getStamp() -
-                                         emorph::vtsHelper::maxStamp());
-                }
+            for(unsigned int k = 0; k < subsurf.size(); k++) {
                 sobeltsdiff += vr->getStamp() - subsurf[k]->getStamp();
+                if(subsurf[k]->getStamp() > vr->getStamp()) {
+                    //subsurf[k]->setStamp(subsurf[k]->getStamp() -
+                    //                     emorph::vtsHelper::maxStamp());
+                    sobeltsdiff += emorph::vtsHelper::maxStamp();
+                }
             }
             sobeltsdiff /= subsurf.size();
             if(sobeltsdiff < bestscore) {
@@ -235,7 +248,7 @@ emorph::FlowEvent *vFlowManager::compute()
 
     if(bestscore > emorph::vtsHelper::maxStamp()) return vf;
 
-    const emorph::vQueue &subsurf = cSurf->getSURF(besti, bestj, fRad);
+    const emorph::vQueue &subsurf = cSurf->getSurf(besti, bestj, fRad);
 
     //and compute the flow
     if(computeGrads(subsurf, *vr, dtdy, dtdx) >= minEvtsOnPlane) {
@@ -300,12 +313,16 @@ int vFlowManager::computeGrads(const emorph::vQueue &subsurf,
 
     yarp::sig::Matrix A(subsurf.size(), 3);
     yarp::sig::Vector Y(subsurf.size());
-    for(int vi = 0; vi < subsurf.size(); vi++) {
+    for(unsigned int vi = 0; vi < subsurf.size(); vi++) {
         emorph::AddressEvent *v = subsurf[vi]->getAs<emorph::AddressEvent>();
         A(vi, 0) = v->getX();
         A(vi, 1) = v->getY();
         A(vi, 2) = 1;
-        Y(vi) = v->getStamp() * emorph::vtsHelper::tstosecs();
+        if(v->getStamp() > cen.getStamp()) {
+            Y(vi) = (v->getStamp() - emorph::vtsHelper::maxStamp()) * emorph::vtsHelper::tstosecs();
+        } else {
+            Y(vi) = v->getStamp() * emorph::vtsHelper::tstosecs();
+        }
     }
 
     return computeGrads(A, Y, cen.getX(), cen.getY(), cen.getStamp() *

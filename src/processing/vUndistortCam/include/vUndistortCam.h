@@ -57,11 +57,11 @@ public:
         this->sensorWidth = sensorWidth;
     }
 
-    bool setToTruncate(bool truncate) {
+    void setToTruncate(bool truncate) {
         this->truncate = truncate;
     }
 
-    bool setCamParams(const yarp::os::Bottle &left,
+    void setCamParams(const yarp::os::Bottle &left,
                       const yarp::os::Bottle &right);
 
     bool    open(const std::string &name, bool strictio);

@@ -71,6 +71,7 @@ public:
 
     vSurface(const vSurface &);
     vSurface operator=(const vSurface&);
+    virtual ~vSurface() {}
 
     ///
     /// \brief addEvent adds an event to the window. Also checks for expired
@@ -88,9 +89,9 @@ public:
     int getEventCount() { return eventCount; }
     void clear();
 
-    const vQueue& getSURF(int d);
-    const vQueue& getSURF(int x, int y, int d);
-    virtual const vQueue& getSURF(int xl, int xh, int yl, int yh);
+    const vQueue& getSurf(int d);
+    const vQueue& getSurf(int x, int y, int d);
+    virtual const vQueue& getSurf(int xl, int xh, int yl, int yh);
 
 
 };
@@ -118,7 +119,8 @@ public:
     void setThickness(int pixels) {thickness = pixels;}
     void track(bool trackCount = true) {this->trackCount = trackCount;}
 
-    virtual const vQueue& getSURF(int xl, int xh, int yl, int yh);
+    virtual const vQueue& getSurf(int xl, int xh, int yl, int yh);
+    using vSurface::getSurf;
 
 };
 

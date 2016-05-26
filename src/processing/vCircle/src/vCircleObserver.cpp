@@ -89,7 +89,7 @@ void vCircleThread::updateHAddress(int xv, int yv, int strength)
 {
 
     //std::cout << "Updating with LUT" << std::endl;
-    for(int i = 0; i < hx.size(); i++) {
+    for(unsigned int i = 0; i < hx.size(); i++) {
 
         int x = xv + hx[i];
         int y = yv + hy[i];
@@ -124,7 +124,7 @@ double vCircleThread::updateHFlowAngle(int xv, int yv, int strength,
     for(int i = bir - a; i <= bir + a; i++) {
 
         int modi =  i;
-        if(i >= hx.size())
+        if(i >= (int)hx.size())
             modi = i - hx.size();
         if(i < 0)
             modi = i + hx.size();
@@ -158,7 +158,7 @@ double vCircleThread::updateHFlowAngle(int xv, int yv, int strength,
 void vCircleThread::performHough()
 {
 
-    for(int i = 0; i < procQueue->size(); i++) {
+    for(unsigned int i = 0; i < procQueue->size(); i++) {
 
         if(directed) {
 
@@ -266,10 +266,10 @@ vCircleMultiSize::vCircleMultiSize(double threshold, std::string qType,
         htransforms.push_back(new vCircleThread(r, directed, parallel, height, width, arclength));
 
     best = htransforms.begin();
-    dummy.referto();
     //eFIFO.setThickness(1);
     fFIFO.setFixedWindowSize(fifolength);
-    tFIFO.setTemporalWindowSize(fifolength * 7812.5);
+    tFIFO.setTemporalSize(fifolength * 7812.5);
+    channel = 0;
 
 }
 
@@ -285,9 +285,6 @@ vCircleMultiSize::~vCircleMultiSize()
         (*i)->waitfordone();
         delete *i;
     }
-    dummy.destroy();
-
-
 }
 
 void vCircleMultiSize::addQueue(emorph::vQueue &additions) {
@@ -361,14 +358,14 @@ void vCircleMultiSize::addFixed(emorph::vQueue &additions)
         else
             v = (*vi)->getAs<emorph::AddressEvent>();
 
-        if(!v || v->getChannel()) continue;
+        if(!v || v->getChannel() != channel) continue;
 
         procQueue.push_back(v);
         procType.push_back(1);
 
         emorph::vQueue removed = fFIFO.addEvent(*v);
 
-        for(int i = 0; i < removed.size(); i++) {
+        for(unsigned int i = 0; i < removed.size(); i++) {
             procQueue.push_back(removed[i]);
             procType.push_back(-1);
         }
@@ -388,14 +385,14 @@ void vCircleMultiSize::addTime(emorph::vQueue &additions)
     for(vi = additions.begin(); vi != additions.end(); vi++) {
 
         v = (*vi)->getAs<emorph::AddressEvent>();
-        if(!v || v->getChannel()) continue;
+        if(!v || v->getChannel() != channel) continue;
 
         procQueue.push_back(v);
         procType.push_back(1);
 
         emorph::vQueue removed = tFIFO.addEvent(*v);
 
-        for(int i = 0; i < removed.size(); i++) {
+        for(unsigned int i = 0; i < removed.size(); i++) {
             procQueue.push_back(removed[i]);
             procType.push_back(-1);
         }
@@ -415,14 +412,14 @@ void vCircleMultiSize::addLife(emorph::vQueue &additions)
     for(vi = additions.begin(); vi != additions.end(); vi++) {
 
         v = (*vi)->getAs<emorph::FlowEvent>();
-        if(!v || v->getChannel()) continue;
+        if(!v || v->getChannel() != channel) continue;
 
         procQueue.push_back(v);
         procType.push_back(1);
 
         emorph::vQueue removed = lFIFO.addEvent(*v);
 
-        for(int i = 0; i < removed.size(); i++) {
+        for(unsigned int i = 0; i < removed.size(); i++) {
             procQueue.push_back(removed[i]);
             procType.push_back(-1);
         }
@@ -548,7 +545,7 @@ void vCircleMultiSize::addEdge(emorph::vQueue &additions)
     emorph::vQueue::iterator qi;
     for(qi = additions.begin(); qi != additions.end(); qi++) {
         emorph::AddressEvent * v = (*qi)->getAs<emorph::AddressEvent>();
-        if(!v || v->getChannel()) continue;
+        if(!v || v->getChannel() != channel) continue;
 
         emorph::FlowEvent * vf = v->getAs<emorph::FlowEvent>();
         //emorph::FlowEvent * vf = edge.upgradeEvent(v);
@@ -559,7 +556,7 @@ void vCircleMultiSize::addEdge(emorph::vQueue &additions)
         }
 
         emorph::vQueue removed = eFIFO.addEventToEdge(v);
-        for(int i = 0; i < removed.size(); i++) {
+        for(unsigned int i = 0; i < removed.size(); i++) {
             if(removed[i]->getAs<emorph::FlowEvent>()) {
                 procQueue.push_back(removed[i]);
                 procType.push_back(-1);
@@ -596,15 +593,15 @@ yarp::sig::ImageOf<yarp::sig::PixelBgr> vCircleMultiSize::makeDebugImage()
 
     emorph::vQueue q;
     if(qType == "fixed")
-        q = fFIFO.getTW();
+        q = fFIFO.getSurf();
     else if(qType == "life")
-        q = lFIFO.getTW();
+        q = lFIFO.getSurf();
     else if(qType == "time")
-        q = tFIFO.getTW();
+        q = tFIFO.getSurf();
     else if(qType == "edge")
-        q = eFIFO.getSURF(0, imagebase.width(), 0, imagebase.height());
+        q = eFIFO.getSurf(0, imagebase.width(), 0, imagebase.height());
 
-    for(int i = 0; i < q.size(); i++) {
+    for(unsigned int i = 0; i < q.size(); i++) {
         emorph::AddressEvent *v = q[i]->getUnsafe<emorph::AddressEvent>();
         imagebase(v->getY(), imagebase.width() - 1 - v->getX()) =
                 yarp::sig::PixelBgr(255, 0, 255);

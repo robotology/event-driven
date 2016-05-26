@@ -36,23 +36,22 @@ namespace emorph {
  * expired events are removed. At any point in time a copy of the current list
  * of events can be requested.
  */
-class vWindow {
+class vSurface2 {
 
 protected:
 
     //! event storage
     vQueue q;
-    //! the length of time to store events (in us)
+
+    //! for quick spatial accessing and surfacing
+    std::vector< std::vector <vEvent *> > spatial;
+
+    //!retina size
     int width;
     int height;
-    //! for safe copying of q in the multi-threaded environment
-    yarp::os::Semaphore mutex;
-    //! for quick spatial accessing and surfacing
-    std::vector< std::vector <vQueue> > spatial;
-    vQueue subq;
-    //! for memory management of most recent
-    vEvent * mostrecent;
 
+    //! active events
+    int count;
 
 public:
 
@@ -60,12 +59,8 @@ public:
     /// \brief vWindow constructor
     /// \param windowSize optional time to store events (in us)
     ///
-    vWindow(int width = 128, int height = 128);
-    //virtual ~vWindow() = 0;
-
-    vWindow(const vWindow&);
-    vWindow& operator=(const vWindow&);
-
+    vSurface2(int width = 128, int height = 128);
+    virtual ~vSurface2() {}
 
     ///
     /// \brief addEvent adds an event to the window. Also checks for expired
@@ -82,15 +77,17 @@ public:
     ///
     vEvent *getMostRecent();
 
-    int getEventCount() {return q.size();}
+    int getEventCount() { return count; }
 
     ///
     /// \brief getWindow
     /// \return
     ///
-    const vQueue& getTW();
+    vQueue getSurf();
 
-    void copyTWTO(vQueue &that);
+
+
+    vQueue getSurf(int d);
 
     ///
     /// \brief getSpatialWindow returns AddressEvents within a spatial window
@@ -99,7 +96,7 @@ public:
     /// \param d distance of the half-length of a square window
     /// \return a vQueue containing a copy of the events
     ///
-    const vQueue& getSTW(int x, int y, int d);
+    vQueue getSurf(int x, int y, int d);
 
     ///
     /// \brief getSpatialWindow returns AddressEvents within a spatial window
@@ -109,20 +106,11 @@ public:
     /// \param yh upper y value of window
     /// \return a vQueue containing a copy of the events
     ///
-    const vQueue& getSTW(int xl, int xh, int yl, int yh);
-
-    const vQueue& getSMARTSTW(int d);
-
-
-    const vQueue& getSURF(int pol);
-    const vQueue& getSMARTSURF(int d);
-    const vQueue& getSURF(int x, int y, int d, int pol);
-    const vQueue& getSURF(int xl, int xh, int yl, int yh, int pol);
-
+    vQueue getSurf(int xl, int xh, int yl, int yh);
 
 };
 /******************************************************************************/
-class temporalWindow : public vWindow
+class temporalSurface : public vSurface2
 {
 private:
 
@@ -130,16 +118,17 @@ private:
 
 public:
 
-    temporalWindow(int duration = 100000, int width = 128, int height = 128) :
-        vWindow(width, height), duration(duration) {}
+    temporalSurface(int width = 128, int height = 128,
+                   int duration = vtsHelper::maxStamp() * 0.5) :
+        vSurface2(width, height), duration(duration) {}
     virtual vQueue removeEvents(vEvent &toAdd);
 
-    void setTemporalWindowSize(int duration) {this->duration = duration;}
+    void setTemporalSize(int duration) {this->duration = duration;}
 
 };
 
 /******************************************************************************/
-class fixedWindow : public vWindow
+class fixedSurface : public vSurface2
 {
 private:
 
@@ -147,25 +136,45 @@ private:
 
 public:
 
-    fixedWindow(int qlength = 2000, int width = 128, int height = 128)  :
-        vWindow(width, height), qlength(qlength) {}
+    fixedSurface(int qlength = 2000, int width = 128, int height = 128)  :
+        vSurface2(width, height), qlength(qlength) {}
     virtual vQueue removeEvents(vEvent &toAdd);
 
     void setFixedWindowSize(int length) {this->qlength = length;}
 };
 
 /******************************************************************************/
-class lifetimeWindow : public vWindow
+class lifetimeSurface : public vSurface2
 {
-private:
-
 
 public:
 
-    lifetimeWindow(int width = 128, int height = 128) :
-        vWindow(width, height) {}
+    lifetimeSurface(int width = 128, int height = 128) :
+        vSurface2(width, height) {}
     virtual vQueue addEvent(emorph::vEvent &event);
     virtual vQueue removeEvents(vEvent &toAdd);
+};
+
+/******************************************************************************/
+class vTempWindow {
+
+protected:
+
+    //! event storage
+    vQueue q;
+    //! camera resolution
+    int width;
+    int height;
+    //!precalculated thresholds
+    int tUpper;
+    int tLower;
+
+public:
+
+    vTempWindow(int width = 128, int height = 128);
+    void addEvent(emorph::vEvent &event);
+    void addEvents(const vQueue &events);
+    vQueue getWindow();
 };
 
 }

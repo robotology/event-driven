@@ -33,7 +33,7 @@ bool vCornerModule::configure(yarp::os::ResourceFinder &rf)
     int sobelsize = rf.check("filterSize", yarp::os::Value(3)).asInt();
     int thickness = rf.check("thick", yarp::os::Value(2)).asInt();
     double thresh = rf.check("thresh", yarp::os::Value(0.05)).asDouble();
-    
+
     /* create the thread and pass pointers to the module parameters */
     cornermanager = new vCornerManager(height, width, sobelsize, thickness, thresh);
     return cornermanager->open(moduleName, strictness);
@@ -98,7 +98,7 @@ vCornerManager::vCornerManager(int height, int width, int sobelsize, int thickne
 
     //create sobel filters
     setSobelFilters(sobelsize, sobelx, sobely);
-    
+
 }
 /**********************************************************/
 bool vCornerManager::open(const std::string moduleName, bool strictness)
@@ -196,8 +196,7 @@ bool vCornerManager::detectcorner() //(const emorph::vQueue &edge)
     for(int x = vr->getX()-fRad; x <= vr->getX()+fRad; x+=fRad) {
         for(int y = vr->getY()-fRad; y <= vr->getY()+fRad; y+=fRad) {
             //get the surface around the recent event
-            const emorph::vQueue &subedge = edge->getSURF(x - fRad, x + fRad,
-                                                          y - fRad, y + fRad);
+            const emorph::vQueue &subedge = edge->getSurf(x, y, fRad);
 
             //we need at least 3 events to say that it's a corner
             if(subedge.size() < minEvts) continue;
@@ -248,7 +247,7 @@ double vCornerManager::convSobel(const emorph::vQueue &subedge, yarp::sig::Matri
 
     //compute the sparse convolution between the filter and the window
     //normalized by the minimum timestamp
-    for(int k = 0; k < subedge.size(); k++) {
+    for(unsigned int k = 0; k < subedge.size(); k++) {
         int ts = subedge[k]->getStamp();
         int dx = x - subedge[k]->getUnsafe<emorph::AddressEvent>()->getX() + fRad;
         int dy = y - subedge[k]->getUnsafe<emorph::AddressEvent>()->getY() + fRad;
@@ -270,7 +269,7 @@ inline double vCornerManager::singleSobel(double val, yarp::sig::Matrix &sobel, 
 int vCornerManager::getMinStamp(const emorph::vQueue &subedge)
 {
     int tsMin = subedge[0]->getStamp();
-    for(int k = 0; k < subedge.size(); k++) {
+    for(unsigned int k = 0; k < subedge.size(); k++) {
         int t = subedge[k]->getStamp();
         if(t < tsMin)
             tsMin = t;
@@ -282,7 +281,7 @@ int vCornerManager::getMinStamp(const emorph::vQueue &subedge)
 int vCornerManager::getMaxStamp(const emorph::vQueue &subedge)
 {
     int tsMax = subedge[0]->getStamp();
-    for(int k = 0; k < subedge.size(); k++) {
+    for(unsigned int k = 0; k < subedge.size(); k++) {
         int t = subedge[k]->getStamp();
         if(t > tsMax)
             tsMax = t;

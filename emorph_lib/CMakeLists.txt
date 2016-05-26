@@ -7,19 +7,20 @@ set(PROJECTNAME eMorphLib)
 project(${PROJECTNAME})
 
 set(folder_source
-  src/eventBuffer.cpp
-  src/eventBottle.cpp
+  #src/eventBuffer.cpp
+  #src/eventBottle.cpp
   src/vBottle.cpp
   src/vCodec.cpp
   src/vWindow.cpp
+  src/vTempWindow.cpp
   src/vSurface.cpp
   src/vQueue.cpp
 )
 
 set(folder_header
   include/iCub/emorph/all.h
-  include/iCub/emorph/eventBottle.h
-  include/iCub/emorph/eventBuffer.h
+  #include/iCub/emorph/eventBottle.h
+  #include/iCub/emorph/eventBuffer.h
   include/iCub/emorph/vBottle.h
   include/iCub/emorph/vCodec.h
   include/iCub/emorph/vtsHelper.h
@@ -34,7 +35,7 @@ source_group("Header Files" FILES ${folder_header})
 
 include_directories(
     ${PROJECT_SOURCE_DIR}/include
-	${YARP_INCLUDE_DIRS}
+    ${YARP_INCLUDE_DIRS}
 )
 
 # Create everything needed to build our library
@@ -47,9 +48,11 @@ endif(MSVC)
 
 target_link_libraries(${PROJECTNAME} ${YARP_LIBRARIES})
 
-icubcontrib_export_library(${PROJECTNAME}
-    INTERNAL_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/include
-    EXTERNAL_INCLUDE_DIRS ${YARP_INCLUDE_DIRS}
-    DESTINATION include/iCub/emorph
-    FILES  ${folder_header}
-)
+if(ICUBcontrib_FOUND)
+    icubcontrib_export_library(${PROJECTNAME}
+        INTERNAL_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/include
+        EXTERNAL_INCLUDE_DIRS ${YARP_INCLUDE_DIRS}
+        DESTINATION include/iCub/emorph
+        FILES  ${folder_header}
+    )
+endif(ICUBcontrib_FOUND)

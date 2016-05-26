@@ -29,7 +29,7 @@ bool vRepTestHandler::configure(yarp::os::ResourceFinder &rf)
 
 
     reptest.setVisType(vis);
-    reptest.setTemporalWindow(rf.check("tWin", yarp::os::Value(125000)).asInt());
+    //reptest.setTemporalWindow(rf.check("tWin", yarp::os::Value(125000)).asInt());
     reptest.setFixedWindow(rf.check("fWin", yarp::os::Value(1000)).asInt());
 
     /* create the thread and pass pointers to the module parameters */
@@ -71,11 +71,11 @@ vRepTest::vRepTest()
 {
     edge.track();
     fWindow.setFixedWindowSize(1000);
-    tWindow.setTemporalWindowSize(125000);
+    tWindow.setTemporalSize(125000);
     edge.setThickness(1);
     ytime = 0;
     //here we should initialise the module
-    
+
 }
 /**********************************************************/
 bool vRepTest::open(const std::string &name)
@@ -128,13 +128,15 @@ void vRepTest::onRead(emorph::vBottle &inBottle)
 {
     yarp::os::Stamp yts; getEnvelope(yts);
     if(ytime == 0) ytime = yts.getTime() + 0.033;
-    unsigned long unwts;
+    unsigned long unwts = 0;
 
     //create event queue
     emorph::vQueue q = inBottle.getAll();
     q.sort(true);
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {
+        emorph::AddressEvent * ae = (*qi)->getAs<emorph::AddressEvent>();
+        if(!ae || ae->getChannel()) continue;
         unwts = unwrapper((*qi)->getStamp());
         tWindow.addEvent(**qi);
         fWindow.addEvent(**qi);
@@ -184,10 +186,10 @@ void vRepTest::onRead(emorph::vBottle &inBottle)
         if(vistype == "all") {
             image.resize(128 * 3 + 20, 128 * 2 + 15);
             image.zero();
-            drawDebug(image, tWindow.getTW(), 5, 5);
-            drawDebug(image, fWindow.getTW(), 5, 127 + 10);
-            drawDebug(image, lWindow.getTW(), 127 + 10, 5);
-            drawDebug(image, edge.getSURF(0, 127, 0, 127), 127+10, 127+10);
+            drawDebug(image, tWindow.getSurf(), 5, 5);
+            drawDebug(image, fWindow.getSurf(), 5, 127 + 10);
+            drawDebug(image, lWindow.getSurf(), 127 + 10, 5);
+            drawDebug(image, edge.getSurf(0, 127, 0, 127), 127+10, 127+10);
             drawDebug(image, fedge.getSURF(0, 127, 0, 127), 127+127+15, 127+10);
         } else {
             image.resize(128, 128);
@@ -195,13 +197,13 @@ void vRepTest::onRead(emorph::vBottle &inBottle)
         }
 
         if(vistype == "time")
-            drawDebug(image, tWindow.getTW(), 0, 0);
+            drawDebug(image, tWindow.getSurf(), 0, 0);
         else if(vistype == "fixed")
-            drawDebug(image, fWindow.getTW(), 0, 0);
+            drawDebug(image, fWindow.getSurf(), 0, 0);
         else if(vistype == "life")
-            drawDebug(image, lWindow.getTW(), 0, 0);
+            drawDebug(image, lWindow.getSurf(), 0, 0);
         else if(vistype == "edge")
-            drawDebug(image, edge.getSURF(0, 127, 0, 127), 0, 0);
+            drawDebug(image, edge.getSurf(0, 127, 0, 127), 0, 0);
         else if(vistype == "fedge")
             drawDebug(image, fedge.getSURF(0, 127, 0, 127), 0, 0);
 
@@ -215,7 +217,7 @@ void vRepTest::drawDebug(yarp::sig::ImageOf<yarp::sig::PixelBgr> &image,
                          const emorph::vQueue &q, int xoff, int yoff)
 {
 
-    for(int i = 0; i < q.size(); i++) {
+    for(unsigned int i = 0; i < q.size(); i++) {
         emorph::AddressEvent *v = q[i]->getUnsafe<emorph::AddressEvent>();
 //        if(q[i]->getAs<emorph::FlowEvent>())
 //            image(v->getY()+yoff, image.width() - 1 - v->getX() - xoff) =

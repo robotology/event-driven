@@ -5,3 +5,7 @@ cmake_minimum_required(VERSION 2.6)
 
 #add_subdirectory(aexGrabber)
 add_subdirectory(zynqGrabber)
+
+if(EMORPH_SPINNTERFACE)
+    add_subdirectory(spinterface)
+endif(EMORPH_SPINNTERFACE)

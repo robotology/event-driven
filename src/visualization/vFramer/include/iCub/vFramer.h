@@ -34,8 +34,6 @@
 namespace emorph {
 
 
-
-
 /**
  * @brief The vReadAndSplit class splits events into different vWindows based
  * on the channel parameter. At any point in time a snapshot of all windows can
@@ -48,31 +46,23 @@ class vReadAndSplit : public yarp::os::BufferedPort<emorph::vBottle>
 
 private:
 
-    //! the temporal window size to use
-    int windowsize;
-
     //! storage of vWindows
-    std::map<int, vWindow *> windows;
+    std::map<int, vTempWindow> windows;
     //! storage of window snapshots
     std::map<int, vQueue> snaps;
 
     yarp::os::Stamp yarptime;
+
+    yarp::os::Mutex safety;
 
 public:
 
     ///
     /// \brief vReadAndSplit constructor with default windowsize parameter
     ///
-    vReadAndSplit() : windowsize(20000) {}
-    ~vReadAndSplit();
+    //vReadAndSplit() {}
 
-    ///
-    /// \brief setWindowSize sets the length of time events are stored
-    /// \param windowsize (in us)
-    ///
-    void setWindowSize(int windowsize);
-
-    yarp::os::Stamp getYarpTime() {return yarptime;}
+    yarp::os::Stamp getYarpTime() { return yarptime; }
 
     ///
     /// \brief snapshotAllWindows freeze the current list of events for each
@@ -92,10 +82,7 @@ public:
     /// \param incoming the vBottle with events of all channels
     ///
     virtual void onRead(emorph::vBottle &incoming);
-    virtual bool open(const std::string portName);
-
-
-
+    virtual bool open(const std::string portName, bool strict = false);
 };
 
 /**
@@ -133,9 +120,7 @@ public:
     // configure all the module parameters and return true if successful
     virtual bool configure(yarp::os::ResourceFinder &rf);
     virtual bool interruptModule();         // interrupt, e.g., the ports
-    virtual bool close();                   // close and shut down the module
-    virtual bool respond(const yarp::os::Bottle& command,
-                         yarp::os::Bottle& reply);
+    virtual bool close();                   // close and shut down the modulereturn
 
     //when we call update module we want to send the frame on the output port
     //we use the framerate to determine how often we do this

@@ -1,0 +1,80 @@
+<application>
+<name>vViewSpinn </name>
+
+<dependencies>	
+</dependencies>
+
+<module>
+   <name>aexGrabber</name>
+   <node>pc104</node>
+</module>
+
+<module>
+   <name>salientPos</name>
+   <parameters> </parameters>
+   <node>localhost</node>
+</module>
+
+<module>
+    <name> vFramer</name>
+    <parameters> --name framerAE --frameRate 60 --eventWindow 0.2 --displays "(0 address (AE))"</parameters>
+    <node>localhost</node>
+</module>
+
+<module>
+    <name> vFramer</name>
+    <parameters> --name framerCIRC --frameRate 60 --eventWindow 0.02 --displays "(0 attention (CIRC))"</parameters>
+    <node>localhost</node>
+</module>
+
+<module>
+   <name>yarpview</name>
+   <parameters>--name /viewCh0AE --x 000 --y 000 --RefreshTime 16 </parameters>
+   <node>localhost</node>
+</module>
+
+<module>
+   <name>yarpview</name>
+   <parameters>--name /viewCh0CIRC --x 000 --y 000 --RefreshTime 16 </parameters>
+   <node>localhost</node>
+</module>
+
+<connection>
+  <from>/aexGrabber/vBottle:o</from>
+  <to>/spinterface/vBottle:i</to>
+  <protocol>tcp</protocol>
+</connection>
+
+
+<connection>
+  <from>/aexGrabber/vBottle:o</from>
+  <to>/framerAE/vBottle:i</to>
+  <protocol>tcp</protocol>
+</connection>
+
+<connection>
+  <from>/salientPos/vBottle:o</from>
+  <to>/framerCIRC/vBottle:i</to>
+  <protocol>tcp</protocol>
+
+</connection>
+
+<connection>
+  <from>/spinterface/vBottle:o</from>
+  <to>/salientPos/vBottle:i</to>
+  <protocol>tcp</protocol>
+</connection>
+
+<connection>
+  <from>/framerAE/address</from>
+  <to>/viewCh0AE</to>
+  <protocol>tcp</protocol>
+</connection>
+
+<connection>
+  <from>/framerCIRC/attention</from>
+  <to>/viewCh0CIRC</to>
+  <protocol>tcp</protocol>
+</connection>
+
+</application>

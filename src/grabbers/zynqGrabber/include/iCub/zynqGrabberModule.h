@@ -1,10 +1,10 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
-/* 
+/*
  * Copyright (C) 2010 RobotCub Consortium, European Commission FP6 Project IST-004370
  * Authors: Rea Francesco
  * email:   francesco.rea@iit.it
- * website: www.robotcub.org 
+ * website: www.robotcub.org
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
  * later version published by the Free Software Foundation.
@@ -61,25 +61,25 @@ class zynqGrabberModule : public yarp::os::RFModule {
 
     // AER
     deviceManager* aerManager;  // class to handle AER IO (hpucore, spinn, aerfx2_0)
-    
+
     // biases and config
     vsctrlDevManager* vsctrlMngLeft;   // reference to the class for configuring chip (biases and registers)
     vsctrlDevManager* vsctrlMngRight;  // reference to the class for configuring chip (biases and registers)
-    
+
     device2yarp* D2Y; // reference to the ratethread that reads the device and writes to yarp vBottle
     yarp2device Y2D; // bufferedport that reads yarp vBottles and writes to the device
-    
+
 public:
-    
-    
+
+
     bool configure(yarp::os::ResourceFinder &rf); // configure all the module parameters and return true if successful
-    bool interruptModule();                       // interrupt, e.g., the ports 
+    bool interruptModule();                       // interrupt, e.g., the ports
     bool close();                                 // close and shut down the module
     bool respond(const yarp::os::Bottle& command, yarp::os::Bottle& reply);
-    double getPeriod(); 
+    double getPeriod();
     bool updateModule();
-      
-    
+
+
 };
 
 
