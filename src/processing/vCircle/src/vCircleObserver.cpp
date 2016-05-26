@@ -266,10 +266,9 @@ vCircleMultiSize::vCircleMultiSize(double threshold, std::string qType,
         htransforms.push_back(new vCircleThread(r, directed, parallel, height, width, arclength));
 
     best = htransforms.begin();
-    dummy.referto();
     //eFIFO.setThickness(1);
     fFIFO.setFixedWindowSize(fifolength);
-    tFIFO.setTemporalWindowSize(fifolength * 7812.5);
+    tFIFO.setTemporalSize(fifolength * 7812.5);
     channel = 0;
 
 }
@@ -286,9 +285,6 @@ vCircleMultiSize::~vCircleMultiSize()
         (*i)->waitfordone();
         delete *i;
     }
-    dummy.destroy();
-
-
 }
 
 void vCircleMultiSize::addQueue(emorph::vQueue &additions) {
@@ -597,13 +593,13 @@ yarp::sig::ImageOf<yarp::sig::PixelBgr> vCircleMultiSize::makeDebugImage()
 
     emorph::vQueue q;
     if(qType == "fixed")
-        q = fFIFO.getTW();
+        q = fFIFO.getSurf();
     else if(qType == "life")
-        q = lFIFO.getTW();
+        q = lFIFO.getSurf();
     else if(qType == "time")
-        q = tFIFO.getTW();
+        q = tFIFO.getSurf();
     else if(qType == "edge")
-        q = eFIFO.getSURF(0, imagebase.width(), 0, imagebase.height());
+        q = eFIFO.getSurf(0, imagebase.width(), 0, imagebase.height());
 
     for(unsigned int i = 0; i < q.size(); i++) {
         emorph::AddressEvent *v = q[i]->getUnsafe<emorph::AddressEvent>();

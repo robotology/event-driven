@@ -196,8 +196,7 @@ bool vCornerManager::detectcorner() //(const emorph::vQueue &edge)
     for(int x = vr->getX()-fRad; x <= vr->getX()+fRad; x+=fRad) {
         for(int y = vr->getY()-fRad; y <= vr->getY()+fRad; y+=fRad) {
             //get the surface around the recent event
-            const emorph::vQueue &subedge = edge->getSURF(x - fRad, x + fRad,
-                                                          y - fRad, y + fRad);
+            const emorph::vQueue &subedge = edge->getSurf(x, y, fRad);
 
             //we need at least 3 events to say that it's a corner
             if(subedge.size() < minEvts) continue;

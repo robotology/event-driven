@@ -29,7 +29,7 @@ bool vRepTestHandler::configure(yarp::os::ResourceFinder &rf)
 
 
     reptest.setVisType(vis);
-    reptest.setTemporalWindow(rf.check("tWin", yarp::os::Value(125000)).asInt());
+    //reptest.setTemporalWindow(rf.check("tWin", yarp::os::Value(125000)).asInt());
     reptest.setFixedWindow(rf.check("fWin", yarp::os::Value(1000)).asInt());
 
     /* create the thread and pass pointers to the module parameters */
@@ -71,7 +71,7 @@ vRepTest::vRepTest()
 {
     edge.track();
     fWindow.setFixedWindowSize(1000);
-    tWindow.setTemporalWindowSize(125000);
+    tWindow.setTemporalSize(125000);
     edge.setThickness(1);
     ytime = 0;
     //here we should initialise the module
@@ -186,10 +186,10 @@ void vRepTest::onRead(emorph::vBottle &inBottle)
         if(vistype == "all") {
             image.resize(128 * 3 + 20, 128 * 2 + 15);
             image.zero();
-            drawDebug(image, tWindow.getTW(), 5, 5);
-            drawDebug(image, fWindow.getTW(), 5, 127 + 10);
-            drawDebug(image, lWindow.getTW(), 127 + 10, 5);
-            drawDebug(image, edge.getSURF(0, 127, 0, 127), 127+10, 127+10);
+            drawDebug(image, tWindow.getSurf(), 5, 5);
+            drawDebug(image, fWindow.getSurf(), 5, 127 + 10);
+            drawDebug(image, lWindow.getSurf(), 127 + 10, 5);
+            drawDebug(image, edge.getSurf(0, 127, 0, 127), 127+10, 127+10);
             drawDebug(image, fedge.getSURF(0, 127, 0, 127), 127+127+15, 127+10);
         } else {
             image.resize(128, 128);
@@ -197,13 +197,13 @@ void vRepTest::onRead(emorph::vBottle &inBottle)
         }
 
         if(vistype == "time")
-            drawDebug(image, tWindow.getTW(), 0, 0);
+            drawDebug(image, tWindow.getSurf(), 0, 0);
         else if(vistype == "fixed")
-            drawDebug(image, fWindow.getTW(), 0, 0);
+            drawDebug(image, fWindow.getSurf(), 0, 0);
         else if(vistype == "life")
-            drawDebug(image, lWindow.getTW(), 0, 0);
+            drawDebug(image, lWindow.getSurf(), 0, 0);
         else if(vistype == "edge")
-            drawDebug(image, edge.getSURF(0, 127, 0, 127), 0, 0);
+            drawDebug(image, edge.getSurf(0, 127, 0, 127), 0, 0);
         else if(vistype == "fedge")
             drawDebug(image, fedge.getSURF(0, 127, 0, 127), 0, 0);
 

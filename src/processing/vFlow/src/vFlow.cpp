@@ -102,10 +102,11 @@ vFlowManager::vFlowManager(int height, int width, int filterSize,
     bottleCount = 0;
 
     //create our surface in synchronous mode
-    surfaceOnL = new emorph::vSurface(width, height);
-    surfaceOfL = new emorph::vSurface(width, height);
-    surfaceOnR = new emorph::vSurface(width, height);
-    surfaceOfR = new emorph::vSurface(width, height);
+    surfaceOnL = new emorph::temporalSurface(width, height);
+    surfaceOfL = new emorph::temporalSurface(width, height);
+    surfaceOnR = new emorph::temporalSurface(width, height);
+    surfaceOfR = new emorph::temporalSurface(width, height);
+
 }
 
 /******************************************************************************/
@@ -175,9 +176,9 @@ void vFlowManager::onRead(emorph::vBottle &inBottle)
                 cSurf = surfaceOnR;
         } else {
             if(aep->getPolarity())
-                cSurf = surfaceOfR;
+                cSurf = surfaceOfL;
             else
-                cSurf = surfaceOnR;
+                cSurf = surfaceOnL;
         }
 
         cSurf->addEvent(*aep);
@@ -226,15 +227,16 @@ emorph::FlowEvent *vFlowManager::compute()
         for(int j = vr->getY()-fRad; j <= vr->getY()+fRad; j+=fRad) {
             //get the surface around the recent event
             double sobeltsdiff = 0;
-            const emorph::vQueue &subsurf = cSurf->getSURF(i, j, fRad);
+            const emorph::vQueue &subsurf = cSurf->getSurf(i, j, fRad);
             if(subsurf.size() < planeSize) continue;
 
             for(unsigned int k = 0; k < subsurf.size(); k++) {
-                if(subsurf[k]->getStamp() > vr->getStamp()) {
-                    subsurf[k]->setStamp(subsurf[k]->getStamp() -
-                                         emorph::vtsHelper::maxStamp());
-                }
                 sobeltsdiff += vr->getStamp() - subsurf[k]->getStamp();
+                if(subsurf[k]->getStamp() > vr->getStamp()) {
+                    //subsurf[k]->setStamp(subsurf[k]->getStamp() -
+                    //                     emorph::vtsHelper::maxStamp());
+                    sobeltsdiff += emorph::vtsHelper::maxStamp();
+                }
             }
             sobeltsdiff /= subsurf.size();
             if(sobeltsdiff < bestscore) {
@@ -246,7 +248,7 @@ emorph::FlowEvent *vFlowManager::compute()
 
     if(bestscore > emorph::vtsHelper::maxStamp()) return vf;
 
-    const emorph::vQueue &subsurf = cSurf->getSURF(besti, bestj, fRad);
+    const emorph::vQueue &subsurf = cSurf->getSurf(besti, bestj, fRad);
 
     //and compute the flow
     if(computeGrads(subsurf, *vr, dtdy, dtdx) >= minEvtsOnPlane) {
@@ -316,7 +318,11 @@ int vFlowManager::computeGrads(const emorph::vQueue &subsurf,
         A(vi, 0) = v->getX();
         A(vi, 1) = v->getY();
         A(vi, 2) = 1;
-        Y(vi) = v->getStamp() * emorph::vtsHelper::tstosecs();
+        if(v->getStamp() > cen.getStamp()) {
+            Y(vi) = (v->getStamp() - emorph::vtsHelper::maxStamp()) * emorph::vtsHelper::tstosecs();
+        } else {
+            Y(vi) = v->getStamp() * emorph::vtsHelper::tstosecs();
+        }
     }
 
     return computeGrads(A, Y, cen.getX(), cen.getY(), cen.getStamp() *

@@ -26,9 +26,9 @@ class circleDisparity : public yarp::os::BufferedPort<emorph::vBottle>
 {
 private:
 
-    emorph::temporalWindow FIFOL;
-    emorph::temporalWindow FIFOR;
-    emorph::temporalWindow *FIFOc;
+    emorph::temporalSurface FIFOL;
+    emorph::temporalSurface FIFOR;
+    emorph::temporalSurface *FIFOc;
 
     //output port for the vBottle with the new events computed by the module
     yarp::os::BufferedPort<emorph::vBottle> outPort;

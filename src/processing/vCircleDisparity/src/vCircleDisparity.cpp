@@ -65,8 +65,8 @@ circleDisparity::circleDisparity()
 {
 
     //here we should initialise the module
-    FIFOL.setTemporalWindowSize(100000 * 7.8125);
-    FIFOR.setTemporalWindowSize(100000 * 7.8125);
+    FIFOL.setTemporalSize(100000 * 7.8125);
+    FIFOR.setTemporalSize(100000 * 7.8125);
 
 }
 /**********************************************************/
@@ -148,7 +148,7 @@ void circleDisparity::onRead(emorph::vBottle &vBottleIn)
 
         FIFOc->addEvent(*q[i]);
 
-        fq = FIFOc->getTW();
+        fq = FIFOc->getSurf();
         int n = fq.size();
         xs.resize(n); ys.resize(n); rs.resize(n);
         for(int i = 0; i < n; i++) {

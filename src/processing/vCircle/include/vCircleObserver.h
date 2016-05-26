@@ -155,9 +155,9 @@ private:
 
     //internal data
     emorph::vEdge eFIFO;
-    emorph::fixedWindow fFIFO;
-    emorph::temporalWindow tFIFO;
-    emorph::lifetimeWindow lFIFO;
+    emorph::fixedSurface fFIFO;
+    emorph::temporalSurface tFIFO;
+    emorph::lifetimeSurface lFIFO;
     emorph::vEvent dummy;
     std::vector<vCircleThread *> htransforms;
     std::vector<vCircleThread *>::iterator best;
