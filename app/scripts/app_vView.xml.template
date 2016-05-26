@@ -1,60 +1,12 @@
 <application>
 <name>vView </name>
 
-<dependencies>	
+<dependencies>
 </dependencies>
 
 <module>
-   <name> vPepper </name>
-   <parameters> --temporalSize 10000 --spatialSize 1</parameters>
-   <node>localhost</node>
-</module>
-
-<module>
-   <name>vUndistortCam</name>
-   <parameters> --sensorHeight 128 --sensorWidth 128 --strict </parameters>
-   <node>localhost</node>
-</module>
-
-<module>
-    <name> vFlow </name>
-    <parameters> --strict true --height 128 --width 128 --filterSize 3 --minEvtsThresh 6 </parameters>
-    <node> localhost </node>
-</module>
-
-<module>
-   <name> vCluster </name>
-   <parameters> --decay 15000 --tAct 20 --tInact 5 --tFree 5 --maxDist 8 --tEvent 0.5 </parameters>
-   <node>localhost</node>
-</module>
-
-<module>
-    <name> vCircle </name>
-    <parameters> --strict --qType edge --inlierThreshold 20 --radmin 10 --radmax 30 --datafile</parameters>
-    <node> localhost </node>
-</module>
-
-<module>
-    <name> vAnalysis </name>
-    <parameters> --dir $HOME/workspace/results/esd/</parameters>
-    <node>localhost</node>
-</module>
-
-<module>
-    <name> autoSaccade </name>
-    <parameters> --robot icub --checkPeriod 0.5 --minVpS 800 --sVel 1000 --sMag 2</parameters>
-    <node>localhost</node>
-</module>
-
-<module>
-    <name> yarpdatadumper </name>
-    <parameters> --name /datadumper/experimenttype/experimentnumber/dvs/ </parameters>
-    <node> localhost </node>
-</module>
-
-<module>
     <name> vFramer</name>
-    <parameters> --frameRate 30 --eventWindow 0.5 --displays "(0 left (AE CIRC FLOW))"</parameters>
+    <parameters> --frameRate 30 --displays "(0 left (AE ISO) 1 right (AE ISO))"</parameters>
     <node>localhost</node>
 </module>
 
@@ -70,6 +22,54 @@
    <node>localhost</node>
 </module>
 
+<module>
+    <name> vFlow </name>
+    <parameters> --strict --filterSize 3 --minEvtsThresh 3 </parameters>
+    <node> localhost </node>
+</module>
+
+<module>
+    <name> vCircle </name>
+    <parameters> --strict --qType time --arc 1 --fifo 100 --inlierThreshold 60 --radmin 10 --radmax 20 </parameters>
+    <node> localhost </node>
+</module>
+
+<module>
+    <name> vRepTest </name>
+    <parameters> --vis all </parameters>
+    <node> localhost </node>
+</module>
+
+<module>
+   <name> vCluster </name>
+   <parameters> --decay 15000 --tAct 20 --tInact 5 --tFree 5 --maxDist 8 --tEvent 0.5 </parameters>
+   <node>localhost</node>
+</module>
+
+<module>
+    <name> vCircleDisparity </name>
+    <parameters> --strict </parameters>
+    <node> localhost </node>
+</module>
+
+<module>
+   <name>vUndistortCam</name>
+   <parameters> --sensorHeight 128 --sensorWidth 128 --truncate true </parameters>
+   <node>localhost</node>
+</module>
+
+<module>
+    <name> autoSaccade </name>
+    <parameters> --robot icub --checkPeriod 0.5 --minVpS 800 --sVel 1000 --sMag 2</parameters>
+    <node>localhost</node>
+</module>
+
+<connection>
+  <from>/zynqGrabber/vBottle:o</from>
+  <to>/vFramer/vBottle:i</to>
+  <protocol>tcp</protocol>
+</connection>
+
 <connection>
   <from>/zynqGrabber/vBottle:o</from>
   <to>/vFlow/vBottle:i</to>
@@ -84,7 +84,7 @@
 
 <connection>
   <from>/vCircle/vBottle:o</from>
-  <to>/vFramer/vBottle:i</to>
+  <to>/vCircleDisparity/vBottle:i</to>
   <protocol>tcp</protocol>
 </connection>
 
@@ -95,7 +95,7 @@
 </connection>
 
 <connection>
-  <from>/vCircle/debug:o</from>
+  <from>/vFramer/right</from>
   <to>/viewCh1</to>
   <protocol>tcp</protocol>
 </connection>
@@ -112,7 +112,6 @@
   <protocol>tcp</protocol>
 
 </connection>
-
 
 
 </application>

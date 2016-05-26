@@ -2,98 +2,44 @@
 <name> vBallDemo </name>
 
 <module>
-    <name> simCartesianControl </name>
-    <node> localhost </node>
-</module>
-
-<module>
-    <name> iKinCartesianSolver </name>
-    <parameters> --context simCartesianControl --part right_arm </parameters>
-    <node> localhost </node>
-</module>
-
-<module>
-    <name> iKinCartesianSolver </name>
-    <parameters> --context simCartesianControl --part left_arm </parameters>
-    <node> localhost </node>
-</module>
-
-<module>
-    <name> iKinGazeCtrl </name>
-    <parameters> --robot icub </parameters>
-    <node> icub14 </node>
-</module>
-
-<module>
-    <name> demoRedBall </name>
-        <parameters> --general::robot icubSim </parameters>
-    <node> localhost </node>
-</module>
-
-<module>
-   <name> zynqGrabber </name>
-   <parameters> --device ihead --name aexGrabber </parameters>
-   <node> pc104 </node>
-</module>
-
-<module>
     <name> vFlow </name>
-    <parameters> --strict false --height 128 --width 128 --filterSize 3 --minEvtsThresh 6 </parameters>
+    <parameters> --strict false --height 128 --width 128 --filterSize 3 --minEvtsThresh 3 </parameters>
     <node> icub14 </node>
 </module>
 
 <module>
     <name> vCircle </name>
-    <parameters> --strict false --houghType directed --qType Fixed --inlierThreshold 19 --procNoisePos 0.5 --procNoiseRad 0.5 --measNoisePos 128 --measNoiseRad 128 </parameters>
+    <parameters> --strict false --qType time --arc 1 --fifo 100 --inlierThreshold 60 --radmin 10 --radmax 20 </parameters>
     <node> icub10 </node>
+</module>
+
+<module>
+    <name> vFramer</name>
+    <parameters> --strict false --frameRate 30 --displays "(0 left (AE CIRC ISO) 1 right (AE CIRC ISO))"</parameters>
+    <node>localhost</node>
+</module>
+
+<module>
+   <name>yarpview</name>
+   <parameters>--name /viewLeft --x 000 --y 000 --RefreshTime 16 </parameters>
+   <node>localhost</node>
+</module>
+
+<module>
+   <name>yarpview</name>
+   <parameters>--name /viewRight --x 000 --y 000 --RefreshTime 16 </parameters>
+   <node>localhost</node>
 </module>
 
 <module>
     <name> vTrackToRobot </name>
-    <parameters> --name vTrackToRobot --method gaze </parameters>
+    <parameters> --method grasp </parameters>
     <node> icub10 </node>
 </module>
 
 <module>
-    <name> yarpdatadumper </name>
-    <parameters> --name /datadumper/robotexp/wedmorn2/pos --connect /vTrackToRobot/posdump:o --overwrite </parameters>
-    <node> localhost </node>
-</module>
-
-<module>
-    <name> vFramer</name>
-    <parameters> --frameRate 30 --eventWindow 0.2 --displays "(0 left (AE CIRC FLOW))"</parameters>
-    <node>localhost</node>
-</module>
-
-<module>
-    <name> vFramer</name>
-    <parameters> --name vFramerISO --frameRate 30 --eventWindow 2 --displays "(0 left (ISO))"</parameters>
-    <node>localhost</node>
-</module>
-
-<module>
-   <name>yarpview</name>
-   <parameters>--name /viewCircle --x 000 --y 000 --RefreshTime 16 </parameters>
-   <node>localhost</node>
-</module>
-
-<module>
-   <name>yarpview</name>
-   <parameters>--name /viewISO --x 000 --y 000 --RefreshTime 16 </parameters>
-   <node>localhost</node>
-</module>
-
-
-<module>
-    <name> yarpscope </name>
-    <parameters> --remote /vCircleFinder/scope:o --index "(0 1 2 3 4)" --color "(black blue red  orange green)" --carrier "udp" </parameters>
-    <node> localhost </node>
-</module>
-
-<module>
-    <name> yarpscope </name>
-    <parameters> --remote /vTrackToRobot/scope:o --index "(0 1 2 3 4)" --color "(black blue green orange red)" --carrier "udp" </parameters>
+    <name> demoRedBall </name>
+        <parameters> </parameters>
     <node> localhost </node>
 </module>
 
