@@ -22,6 +22,10 @@ source_group("Header Files" FILES ${folder_header})
 add_executable(${PROJECT_NAME} ${folder_source} ${folder_header})
 target_link_libraries(${PROJECT_NAME} ${YARP_LIBRARIES} eMorphLib)
 
+if(EMORPH_10BITCODEC)
+    set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_DEFINITIONS TENBITCODEC)
+endif(EMORPH_10BITCODEC)
+
 #the zynqGrabber should only be installed for the pc104
 if(EMORPH_BUILD_ZYNQ)
     install(TARGETS ${PROJECT_NAME} DESTINATION bin)

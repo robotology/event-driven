@@ -93,8 +93,17 @@ void  device2yarp::run() {
         } else {
             //else scale the timestamp
             //*TS = 0x80000000 | ((*TS & 0x7FFFFFFF) * 1);
+#ifdef TENBITCODEC
+            if(doChannelShift) //using FPGA with C@bit20
+                *AE = (((*AE & 0x00100000) << 1) | *AE) & 0xFFEFFFFF;
+            else {
+                *AE = (((*AE & 0x00008000) << 6) | *AE) & 0xFFFF7FFF; //ch
+                *AE = (((*AE & 0x00007F00) << 3) | *AE) & 0xFFFFF8FF; //y
+            }
+#else
             if(doChannelShift)
                 *AE = (((*AE & 0x00100000) >> 5) | *AE) & 0xFFEFFFFF;
+#endif
             //and then check the next two ints
             bend += 8;
         }
