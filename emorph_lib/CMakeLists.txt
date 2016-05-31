@@ -46,6 +46,11 @@ if(MSVC)
     set_target_properties(${PROJECTNAME} PROPERTIES COMPILE_FLAGS /wd4996)
 endif(MSVC)
 
+if(EMORPH_10BITCODEC)
+    #message("Using 10bit codec")
+    set_target_properties(${PROJECTNAME} PROPERTIES COMPILE_DEFINITIONS TENBITCODEC)
+endif(EMORPH_10BITCODEC)
+
 target_link_libraries(${PROJECTNAME} ${YARP_LIBRARIES})
 
 if(ICUBcontrib_FOUND)

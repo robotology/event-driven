@@ -12,6 +12,7 @@ set(EMORPHLIB_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/emorph_lib/include)
 option(EMORPH_BUILD_ZYNQ "Build for ZynqGrabber" OFF)
 option(EMORPH_USE_QTCREATOR "Add apps/drivers to QtCreator IDE" OFF)
 option(EMORPH_SPINNTERFACE "Build the SpiNNaker Ethernet Interface" OFF)
+option(EMORPH_10BITCODEC "Build codec with 10bit address space" OFF)
 
 find_package(YARP REQUIRED)
 list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH})
