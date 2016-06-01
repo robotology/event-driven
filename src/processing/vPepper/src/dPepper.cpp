@@ -74,9 +74,11 @@ dPepperIO::dPepperIO()
     //here we should initialise the module
     double temporalSize = 10000;
     spatialSize = 1;
-    leftWindow.setTemporalWindowSize(temporalSize);
-    rightWindow.setTemporalWindowSize(temporalSize);
-    
+    leftWindow = emorph::temporalSurface(1024, 1024, temporalSize);
+    rightWindow = emorph::temporalSurface(1024, 1024, temporalSize);
+    //leftWindow.setTemporalSize(temporalSize);
+    //rightWindow.setTemporalSize(temporalSize);
+
 }
 /**********************************************************/
 bool dPepperIO::open(const std::string &name)
@@ -114,13 +116,16 @@ void dPepperIO::interrupt()
 void dPepperIO::onRead(emorph::vBottle &bot)
 {
     //create event queue
+    yarp::os::Stamp yts;
+    this->getEnvelope(yts);
     emorph::vQueue q = bot.getAll();
     //create queue iterator
     emorph::vQueue::iterator qi, wi;
-    
+
     // prepare output vBottle with address events extended with cluster ID (aec) and cluster events (clep)
     emorph::vBottle &outBottle = outPort.prepare();
     outBottle.clear();
+    outPort.setEnvelope(yts);
 
     // get the event queue in the vBottle bot
     //bot.getAll(q);
@@ -136,11 +141,11 @@ void dPepperIO::onRead(emorph::vBottle &bot)
         emorph::vQueue tw;
         if(v->getChannel()) {
             rightWindow.addEvent(**qi);
-            tw = rightWindow.getSTW(v->getX(), v->getY(), spatialSize);
+            tw = rightWindow.getSurf(v->getX(), v->getY(), spatialSize);
         }
         else {
             leftWindow.addEvent(**qi);
-            tw = leftWindow.getSTW(v->getX(), v->getY(), spatialSize);
+            tw = leftWindow.getSurf(v->getX(), v->getY(), spatialSize);
         }
 
         bool addit = false;
@@ -166,8 +171,8 @@ void dPepperIO::onRead(emorph::vBottle &bot)
 
 void dPepperIO::setTemporalSize(double microseconds)
 {
-    leftWindow.setTemporalWindowSize(microseconds);
-    rightWindow.setTemporalWindowSize(microseconds);
+    leftWindow.setTemporalSize(microseconds);
+    rightWindow.setTemporalSize(microseconds);
 }
 
 void dPepperIO::setSpatialSize(double pixelradius)
