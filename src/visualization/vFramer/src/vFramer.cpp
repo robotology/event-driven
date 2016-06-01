@@ -142,6 +142,7 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
             if(newDrawer) {
                 newDrawer->setLimits(retinaWidth, retinaHeight);
                 newDrawer->setWindow(eventWindow);
+                newDrawer->initialise();
                 drawers[i].push_back(newDrawer);
             }
             else {

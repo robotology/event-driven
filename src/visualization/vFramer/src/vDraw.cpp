@@ -707,9 +707,8 @@ void fflowDraw::draw(cv::Mat &image, const emorph::vQueue &eSet)
 
 }
 
-isoDraw::isoDraw()
+void isoDraw::initialise()
 {
-
     maxdt = 1;
 
     theta1 = -40 * 3.14 / 180.0;
@@ -809,9 +808,6 @@ isoDraw::isoDraw()
         baseimage.at<cv::Vec3b>(y, x) = cv::Vec3b(255, 255, 255);
 
     }
-
-
-
 
 }
 

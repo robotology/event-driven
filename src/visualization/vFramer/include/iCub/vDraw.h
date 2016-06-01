@@ -73,6 +73,8 @@ public:
         this->twindow = twindow;
     }
 
+    virtual void initialise() {}
+
     ///
     /// \brief draw takes an image and overlays the new visualisation textures
     /// \param canvas is the image which may or may not yet exist
@@ -297,7 +299,7 @@ private:
 
 public:
 
-    isoDraw();
+    void initialise();
     ///
     /// \brief see vDraw
     ///
