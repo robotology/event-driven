@@ -190,20 +190,20 @@ private:
 protected:
 
     //add new member variables here
-    int x:10;
-    int y:10;
-    int channel:1;
-    int polarity:1;
+    unsigned int x:10;
+    unsigned int y:10;
+    unsigned int channel:1;
+    unsigned int polarity:1;
 
 
 public:
 
     //these are new the member get functions
     virtual std::string getType() const { return "AE";}
-    int getChannel() const                  { return channel;           }
-    int getPolarity() const                 { return polarity;          }
-    int getX() const                        { return x;                 }
-    int getY() const                        { return y;                 }
+    int getChannel() const                  { return (int)channel;           }
+    int getPolarity() const                 { return (int)polarity;          }
+    int getX() const                        { return (int)x;                 }
+    int getY() const                        { return (int)y;                 }
 
     void setChannel(const int channel)      { this->channel=channel;    }
     void setPolarity(const int polarity)    { this->polarity=polarity;  }

@@ -231,10 +231,10 @@ bool AddressEvent::operator==(const AddressEvent &event)
 yarp::os::Property AddressEvent::getContent() const
 {
     yarp::os::Property prop = vEvent::getContent();
-    prop.put("channel",channel);
-    prop.put("polarity",polarity);
-    prop.put("x",x);
-    prop.put("y",y);
+    prop.put("channel", (int)channel);
+    prop.put("polarity", (int)polarity);
+    prop.put("x", (int)x);
+    prop.put("y", (int)y);
 
     return prop;
 }
