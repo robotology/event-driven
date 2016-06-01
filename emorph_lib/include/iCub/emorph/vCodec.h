@@ -190,31 +190,28 @@ private:
 protected:
 
     //add new member variables here
-    char channel;
-    unsigned char polarity;
-    unsigned char x;
-    unsigned char y;
+    int x:10;
+    int y:10;
+    int channel:1;
+    int polarity:1;
+
 
 public:
 
     //these are new the member get functions
     virtual std::string getType() const { return "AE";}
-    int getChannel() const                      { return channel;       }
-    int getPolarity() const                     { return polarity;      }
-    unsigned char getX() const                  { return x;             }
-    unsigned char getY() const                  { return y;             }
+    int getChannel() const                  { return channel;           }
+    int getPolarity() const                 { return polarity;          }
+    int getX() const                        { return x;                 }
+    int getY() const                        { return y;                 }
 
-    void setChannel(const unsigned char channel)    {
-        if(channel>1) encoderr; this->channel=channel; }
-    void setPolarity(const unsigned char polarity)  {
-        if(polarity > 1) encoderr; this->polarity=polarity; }
-    void setX(const unsigned char x)                {
-        if(x > 127) encoderr; this->x=x; }
-    void setY(const unsigned char y)                {
-        if(y > 127) encoderr; this->y=y; }
+    void setChannel(const int channel)      { this->channel=channel;    }
+    void setPolarity(const int polarity)    { this->polarity=polarity;  }
+    void setX(const int x)                  { this->x=x;                }
+    void setY(const int y)                  { this->y=y;                }
 
     //these functions need to be defined correctly for inheritance
-    AddressEvent() : vEvent(), channel(0), polarity(0), x(0), y(0) {}
+    AddressEvent() : vEvent(), x(0), y(0), channel(0), polarity(0) {}
     AddressEvent(const vEvent &event);
     vEvent &operator=(const vEvent &event);
     virtual vEvent* clone();
