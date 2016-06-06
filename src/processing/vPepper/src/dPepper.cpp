@@ -29,8 +29,8 @@ bool dPepperModule::configure(yarp::os::ResourceFinder &rf)
                                          yarp::os::Value(1)).asDouble());
     eventManager.setTemporalSize(rf.check("temporalSize",
                                           yarp::os::Value(10000)).asDouble());
-    eventManager.setResolution(rf.check("h", 128).asInt(),
-                               rf.check("w", 128).asInt());
+    eventManager.setResolution(rf.check("height", 128).asInt(),
+                               rf.check("width", 128).asInt());
     eventManager.open(moduleName);
 
     return true ;
