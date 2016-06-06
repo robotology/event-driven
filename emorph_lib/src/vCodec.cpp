@@ -461,8 +461,7 @@ vEvent* ClusterEvent::clone() {
 void ClusterEvent::encode(yarp::os::Bottle &b) const
 {
     vEvent::encode(b);
-    b.addInt((8<<26)|((id&0x02ff)<<16)|((yCog&0x7f)<<9)|((xCog&0x7f)<<2)|
-             ((polarity&0x01)<<1)|(channel&0x01));
+    b.addInt(((id&0x3FF)<<22)|((yCog&0x3FF)<<12)|((xCog&0x3FF)<<2)|((polarity&0x01)<<1)|(channel&0x01));
 }
 
 /******************************************************************************/
@@ -480,13 +479,13 @@ bool ClusterEvent::decode(const yarp::os::Bottle &packet, int &pos)
         polarity = word0&0x01;
         word0>>=1;
 
-        xCog=word0&0x7f;
-        word0>>=7;
+        xCog=word0&0x3FF;
+        word0>>=10;
 
-        yCog=word0&0x7f;
-        word0>>=7;
+        yCog=word0&0x3FF;
+        word0>>=10;
 
-        id=word0&0x02ff;
+        id=word0&0x3FF;
         //word0>>10;
 
         //code=word0&0x3f;
@@ -516,11 +515,11 @@ bool ClusterEvent::operator==(const ClusterEvent &event)
 yarp::os::Property ClusterEvent::getContent() const
 {
     yarp::os::Property prop = vEvent::getContent();
-    prop.put("channel",channel);
-    prop.put("polarity", polarity);
-    prop.put("id",id);
-    prop.put("xCog",xCog);
-    prop.put("yCog",yCog);
+    prop.put("channel", (int)channel);
+    prop.put("polarity", (int)polarity);
+    prop.put("id",(int)id);
+    prop.put("xCog",(int)xCog);
+    prop.put("yCog",(int)yCog);
 
     return prop;
 }

@@ -327,32 +327,27 @@ private:
 protected:
 
     //add new member variables here
-    short int id;
-    unsigned char channel;
-    unsigned char xCog;
-    unsigned char yCog;
-    unsigned char polarity;
+    int id:10;
+    unsigned int channel:1;
+    unsigned int xCog:10;
+    unsigned int yCog:10;
+    unsigned int polarity:1;
 
 public:
 
     //these are new the member get functions
     virtual std::string getType() const { return "CLE";}
-    int getChannel() const             { return channel;        }
-    int getID()      const             { return id;             }
-    int getXCog()    const             { return xCog;           }
-    int getYCog()    const             { return yCog;           }
-    int getPolarity()const             { return polarity;           }
+    int getChannel() const             { return (int)channel;        }
+    int getID()      const             { return (int)id;             }
+    int getXCog()    const             { return (int)xCog;           }
+    int getYCog()    const             { return (int)yCog;           }
+    int getPolarity()const             { return (int)polarity;           }
 
-    void setChannel(const int channel)   { if(channel>1) encoderr;
-        this->channel = channel;  }
-    void setID(const int id)             { if(id>1023) encoderr;
-        this->id = id;            }
-    void setXCog(const int xCog)         { if(xCog>127) encoderr;
-        this->xCog = xCog;        }
-    void setYCog(const int yCog)         { if(yCog>127) encoderr;
-        this->yCog = yCog;        }
-    void setPolarity(const int polarity) { if(polarity > 1) encoderr;
-        this->polarity = polarity;}
+    void setChannel(const int channel)   { this->channel = channel;  }
+    void setID(const int id)             { this->id = id;            }
+    void setXCog(const int xCog)         { this->xCog = xCog;        }
+    void setYCog(const int yCog)         { this->yCog = yCog;        }
+    void setPolarity(const int polarity) { this->polarity = polarity;}
 
 
     //these functions need to be defined correctly for inheritance
