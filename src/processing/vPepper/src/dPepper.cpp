@@ -25,15 +25,12 @@ bool dPepperModule::configure(yarp::os::ResourceFinder &rf)
             rf.check("name", yarp::os::Value("vPepper")).asString();
     setName(moduleName.c_str());
 
-
-    //set other variables we need from the
-    double temporalSize =
-            rf.check("temporalSize", yarp::os::Value(10000)).asDouble();
-    double spatialSize =
-            rf.check("spatialSize", yarp::os::Value(1)).asDouble();
-
-    eventManager.setSpatialSize(spatialSize);
-    eventManager.setTemporalSize(temporalSize);
+    eventManager.setSpatialSize(rf.check("spatialSize",
+                                         yarp::os::Value(1)).asDouble());
+    eventManager.setTemporalSize(rf.check("temporalSize",
+                                          yarp::os::Value(10000)).asDouble());
+    eventManager.setResolution(rf.check("h", 128).asInt(),
+                               rf.check("w", 128).asInt());
     eventManager.open(moduleName);
 
     return true ;
@@ -72,12 +69,12 @@ dPepperIO::dPepperIO()
 {
 
     //here we should initialise the module
-    double temporalSize = 10000;
+    temporalSize = 10000;
     spatialSize = 1;
-    leftWindow = emorph::temporalSurface(1024, 1024, temporalSize);
-    rightWindow = emorph::temporalSurface(1024, 1024, temporalSize);
-    //leftWindow.setTemporalSize(temporalSize);
-    //rightWindow.setTemporalSize(temporalSize);
+    height = 128;
+    width = 128;
+    leftWindow = emorph::temporalSurface(width, height, temporalSize);
+    rightWindow = emorph::temporalSurface(width, height, temporalSize);
 
 }
 /**********************************************************/
@@ -136,6 +133,7 @@ void dPepperIO::onRead(emorph::vBottle &bot)
         //leftWindow.addEvent(**qi);
         emorph::AddressEvent *v = (*qi)->getAs<emorph::AddressEvent>();
         if(!v) continue;
+        if(v->getY() == 1023) continue;
 
         //keep each channel independently
         emorph::vQueue tw;
@@ -178,6 +176,15 @@ void dPepperIO::setTemporalSize(double microseconds)
 void dPepperIO::setSpatialSize(double pixelradius)
 {
     spatialSize = pixelradius;
+}
+
+void dPepperIO::setResolution(int height, int width)
+{
+    this->height = height;
+    this->width = width;
+    leftWindow = emorph::temporalSurface(this->width, this->height, temporalSize);
+    rightWindow = emorph::temporalSurface(this->width, this->height, temporalSize);
+
 }
 
 //empty line to make gcc happy

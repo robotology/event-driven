@@ -37,7 +37,10 @@ private:
     emorph::temporalSurface rightWindow;
 
     //paramters
+    int height;
+    int width;
     double spatialSize;
+    double temporalSize;
 
 public:
 
@@ -52,6 +55,7 @@ public:
 
     void setTemporalSize(double microseconds);
     void setSpatialSize(double pixelradius);
+    void setResolution(int height, int width);
 
 };
 
