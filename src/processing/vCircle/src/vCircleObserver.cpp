@@ -266,9 +266,11 @@ vCircleMultiSize::vCircleMultiSize(double threshold, std::string qType,
         htransforms.push_back(new vCircleThread(r, directed, parallel, height, width, arclength));
 
     best = htransforms.begin();
+    fFIFO = emorph::fixedSurface(fifolength, width, height);
+    tFIFO = emorph::temporalSurface(width, height, fifolength * fifolength * 7812.5);
     //eFIFO.setThickness(1);
-    fFIFO.setFixedWindowSize(fifolength);
-    tFIFO.setTemporalSize(fifolength * 7812.5);
+    //fFIFO.setFixedWindowSize(fifolength);
+    //tFIFO.setTemporalSize(fifolength * 7812.5);
     channel = 0;
 
 }
