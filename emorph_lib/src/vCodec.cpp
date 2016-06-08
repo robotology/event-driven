@@ -119,8 +119,8 @@ bool vEvent::operator==(const vEvent &event)
 yarp::os::Property vEvent::getContent() const
 {
     yarp::os::Property prop;
-    prop.put("type",getType().c_str());
-    prop.put("stamp",stamp);
+    prop.put("type", getType().c_str());
+    prop.put("stamp", (int)stamp);
 
     return prop;
 }
@@ -406,11 +406,11 @@ bool CollisionEvent::operator==(const CollisionEvent &event)
 yarp::os::Property CollisionEvent::getContent() const
 {
     yarp::os::Property prop = vEvent::getContent();
-    prop.put("x", x);
-    prop.put("y", y);
-    prop.put("channel", channel);
-    prop.put("clid1", clid1);
-    prop.put("clid2", clid2);
+    prop.put("x", (int)x);
+    prop.put("y", (int)y);
+    prop.put("channel", (int)channel);
+    prop.put("clid1", (int)clid1);
+    prop.put("clid2", (int)clid2);
 
     return prop;
 }
@@ -651,12 +651,12 @@ yarp::os::Property ClusterEventGauss::getContent() const
 {
     yarp::os::Property prop = vEvent::getContent();
     //add extra member properties for human readable here
-    prop.put("numAE", numAE);
-    prop.put("xSigma2", xSigma2);
-    prop.put("ySigma2", ySigma2);
-    prop.put("xySigma", xySigma);
-    prop.put("xVel", xVel);
-    prop.put("yVel", yVel);
+    prop.put("numAE", (int)numAE);
+    prop.put("xSigma2", (int)xSigma2);
+    prop.put("ySigma2", (int)ySigma2);
+    prop.put("xySigma", (int)xySigma);
+    prop.put("xVel", (int)xVel);
+    prop.put("yVel", (int)yVel);
 
 
     return prop;

@@ -118,8 +118,6 @@
 #include <iCub/emorph/vtsHelper.h>
 #include <string>
 
-#define encoderr std::cerr << "Warning: code bits not sufficient" << std::endl;
-
 namespace emorph {
 
 class vEvent;
@@ -128,30 +126,29 @@ vEvent * createEvent(const std::string type);
 /**************************************************************************/
 class vEvent
 {
-private:
-    const static int localWordsCoded = 1;
-
 
 protected:
 
-    const static unsigned int max_stamp = 16777215; //2^24
-    int stamp;
+    unsigned int stamp:24;
+
+private:
+    int refcount:8;
+    const static int localWordsCoded = 1;
 
 public:
     //!blank constructor required at base level
-    vEvent() : stamp(0), refcount(0) { }
+    vEvent() : stamp(0), refcount(0) {}
     //!copy constructor
     vEvent(const vEvent &event);
     virtual ~vEvent() {}
 
-    int refcount;
     void referto() { refcount++; }
     void destroy() { if(!(--refcount > 0)) delete this; }
 
     virtual std::string getType() const { return "TS";}
 
 
-    void setStamp(const long int stamp)   { this->stamp=(int)(stamp%max_stamp);}
+    void setStamp(const unsigned int stamp)   { this->stamp = stamp; }
     int getStamp() const            { return stamp;         }
 
     virtual int getChannel() const  { return -1;            }
@@ -273,25 +270,22 @@ private:
 
 protected:
 
-    unsigned char x; //7
-    unsigned char y; //7
-    char channel; //1
-    unsigned char clid1; //8
-    unsigned char clid2; //8
+    unsigned int x:10; //7
+    unsigned int y:10; //7
+    unsigned int channel:1; //1
+    unsigned int clid1:5; //8
+    unsigned int clid2:5; //8
 
 
 public:
 
     //accessors
     virtual std::string getType() const { return "COL";}
-    void setX(unsigned char x) {if(x>127)encoderr; this->x = x;}
-    void setY(unsigned char y) {if(y>127)encoderr; this->y = y;}
-    void setChannel(unsigned char channel) {
-        if (channel != 0 || channel != 1) encoderr; this->channel = channel;}
-    void setClid1(unsigned char clid1) {
-        if(clid1>255)encoderr; this->clid1 = clid1;}
-    void setClid2(unsigned char clid2) {
-        if(clid2>255)encoderr; this->clid2 = clid2;}
+    void setX(unsigned int x) { this->x = x;}
+    void setY(unsigned int y) { this->y = y;}
+    void setChannel(unsigned int channel) { this->channel = channel;}
+    void setClid1(unsigned int clid1) { this->clid1 = clid1;}
+    void setClid2(unsigned int clid2) { this->clid2 = clid2;}
 
     unsigned char getX()        {return x;}
     unsigned char getY()        {return y;}
@@ -328,20 +322,20 @@ protected:
 
     //add new member variables here
     int id:10;
-    unsigned int channel:1;
     unsigned int xCog:10;
     unsigned int yCog:10;
     unsigned int polarity:1;
+    unsigned int channel:1;
 
 public:
 
     //these are new the member get functions
     virtual std::string getType() const { return "CLE";}
-    int getChannel() const             { return (int)channel;        }
-    int getID()      const             { return (int)id;             }
-    int getXCog()    const             { return (int)xCog;           }
-    int getYCog()    const             { return (int)yCog;           }
-    int getPolarity()const             { return (int)polarity;           }
+    int getChannel() const             { return channel;        }
+    int getID()      const             { return id;             }
+    int getXCog()    const             { return xCog;           }
+    int getYCog()    const             { return yCog;           }
+    int getPolarity()const             { return polarity;           }
 
     void setChannel(const int channel)   { this->channel = channel;  }
     void setID(const int id)             { this->id = id;            }
@@ -352,7 +346,7 @@ public:
 
     //these functions need to be defined correctly for inheritance
     ClusterEvent() :
-        vEvent(), id(0), channel(0), xCog(0), yCog(0), polarity(1) {}
+        vEvent(), id(0), xCog(0), yCog(0), polarity(1), channel(0) {}
     ClusterEvent(const vEvent &event);
     vEvent &operator=(const vEvent &event);
     virtual vEvent* clone();
@@ -379,12 +373,12 @@ private:
 protected:
 
     //add new member variables here
-    unsigned short int numAE;
-    short int xySigma;
-    unsigned short int xSigma2;
-    unsigned short int ySigma2;
-    short int xVel;
-    short int yVel;
+    unsigned int numAE:16;
+    unsigned int xySigma:16;
+    unsigned int xSigma2:16;
+    unsigned int ySigma2:16;
+    int xVel:16;
+    int yVel:16;
 
 public:
 
