@@ -165,7 +165,7 @@ const std::vector<char>& deviceManager::readDevice(int &nBytesRead)
 
     } else {
 
-        std::cout << "Direct Read" << std::endl;
+        //std::cout << "Direct Read" << std::endl;
         nBytesRead = ::read(devDesc, readBuffer->data(), maxBufferSize);
         if(nBytesRead < 0 && errno != EAGAIN) perror("perror: ");
 
@@ -211,10 +211,10 @@ void deviceManager::run(void)
             readCount += r;
             //ntimesr++;
         } else if(r < 0 && errno != EAGAIN) {
-            std::cerr << "Error reading from " << deviceName << std::endl;
+            std::cerr << "Error reading from " << deviceName << " with error: " << r << std::endl;
             perror("perror: ");
             std::cerr << "readCount: " << readCount << "MaxBuffer: "
-                      << maxBufferSize << std::endl;
+                      << maxBufferSize << std::endl << std::endl;
             //ntimesr0++;
         }// else {
         //    ntimesr0++;
@@ -870,7 +870,7 @@ void aerDevManager::usage (void) {
     aerfx2_0DevManager -- handles AER IO for "legacy" iHead board and aerfx2_0 device -- the bias programming does not work for this device: use aexGrabber for this functionality
 ------------------------------------------------------- */
 
-aerfx2_0DevManager::aerfx2_0DevManager() : deviceManager(true, AER_MAX_BUF_SIZE) {
+aerfx2_0DevManager::aerfx2_0DevManager() : deviceManager(false, AER_MAX_BUF_SIZE) {
 
     deviceName = "/dev/aerfx2_0";
 }
@@ -884,6 +884,8 @@ bool aerfx2_0DevManager::openDevice(){
         perror("");
         return false;
     }
+
+    if(bufferedRead) this->start();
 
     return true;
 }

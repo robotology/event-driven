@@ -32,7 +32,7 @@ class yarp2device : public yarp::os::BufferedPort<emorph::vBottle>
     int           writtenAEs;
     double clockScale;
 
-    aerDevManager* devManager;
+    deviceManager* devManager;
 
     void setFileDesc(int devDesc);
 

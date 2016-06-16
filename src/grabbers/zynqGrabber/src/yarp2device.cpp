@@ -25,6 +25,7 @@ yarp2device::yarp2device()
     flagStart = false;
     countAEs = 0;
     writtenAEs = 0;
+    clockScale = 1;
 }
 
 bool yarp2device::open(std::string moduleName)
@@ -250,13 +251,13 @@ void yarp2device::onRead(emorph::vBottle &bot)
 
 bool  yarp2device::attachDeviceManager(deviceManager* devManager) {
 
-    this->devManager = dynamic_cast<aerDevManager*>(devManager);
+    aerDevManager* tempdm = dynamic_cast<aerDevManager*>(devManager);
+    if(tempdm)
+        clockScale = tempdm->getUsToTick();
 
-    if (!devManager){
-        return false;
-    }
+    this->devManager = devManager;
 
-    clockScale = this->devManager->getUsToTick();
+
     return true;
 
 

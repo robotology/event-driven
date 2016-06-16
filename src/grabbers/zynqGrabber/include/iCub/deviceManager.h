@@ -30,7 +30,7 @@
  * @brief The deviceManager class opens the device and implements a constant
  * read
  */
-class deviceManager : yarp::os::Thread {
+class deviceManager : public yarp::os::Thread {
 
 private:
 

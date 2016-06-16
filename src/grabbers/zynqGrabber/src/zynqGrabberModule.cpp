@@ -29,8 +29,6 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 
     //Process all parameters from both command-line and .ini file
 
-    std::cout << "Configuring the zynqGrabberModule" << std::endl;
-
     std::string moduleName =
             rf.check("name", yarp::os::Value("zynqGrabber")).asString();
     setName(moduleName.c_str());
@@ -111,9 +109,6 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         //could not start the thread
         return false;
     }
-    D2Y->start();
-
-
     //open bufferedPort yarp2device
     if(!Y2D.attachDeviceManager(aerManager))
     {
@@ -134,6 +129,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         return false;
     }
     attach(handlerPort);
+    D2Y->start();
 
     return true;
 }

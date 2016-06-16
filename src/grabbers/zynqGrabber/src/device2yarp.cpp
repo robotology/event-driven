@@ -22,6 +22,7 @@ device2yarp::device2yarp() : RateThread(THRATE) {
     prevTS = 0;
     strict = false;
     doChannelShift = true;
+    clockScale = 1;
 }
 
 bool device2yarp::threadInit(std::string moduleName, bool strict){
@@ -169,17 +170,17 @@ void device2yarp::threadRelease() {
 }
 
 bool  device2yarp::attachDeviceManager(deviceManager* devManager) {
-    this->devManager = dynamic_cast<aerDevManager*>(devManager);
 
-    if (!devManager){
-        return false;
+    this->devManager = devManager;
 
-    }
-
-    if(devManager->getDevType() == "/dev/aerfx2_0")
+    aerfx2_0DevManager* tempfx2manager = dynamic_cast<aerfx2_0DevManager*>(devManager);
+    if(tempfx2manager)
         doChannelShift = false;
 
-    clockScale = this->devManager->getTickToUs();
+    aerDevManager * tempdevmanager = dynamic_cast<aerDevManager*>(devManager);
+    if(tempdevmanager)
+        clockScale = tempdevmanager->getTickToUs();
+
     return true;
 
 

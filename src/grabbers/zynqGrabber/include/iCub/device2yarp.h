@@ -54,7 +54,7 @@ private:
 
     //device number to read from
     //int devDesc;
-    aerDevManager* devManager;
+    deviceManager* devManager;
     //incrementall count the number of events coming from the device
     int countAEs;
     double prevTS;
