@@ -94,17 +94,18 @@ private:
     yarp::os::BufferedPort<emorph::vBottle> outPort;
     yarp::os::BufferedPort<yarp::os::Bottle> scopeOut;
     yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelBgr> > houghOut;
+    yarp::os::BufferedPort<yarp::os::Bottle> dumpOut;
 
     emorph::vtsHelper unwrap;
     double pTS;
 
-    //our filter/tracker
-
     bool strictness;
-    bool debugFlag;
-    std::ofstream datawriter;
     yarp::os::Stamp pstamp;
     int pstampcounter;
+
+    bool singleq;
+    double tsoffset;
+
 
 public:
 
@@ -118,14 +119,14 @@ public:
 
     vCircleReader();
 
+    void setSingleQ(bool singleq = true) { this->singleq = singleq; }
+
     bool    open(const std::string &name, bool strictness = false);
     void    close();
     void    interrupt();
 
     //this is the entry point to your main functionality
     void    onRead(emorph::vBottle &inBot);
-
-    bool setDataWriter(std::string datafilename);
 
 };
 

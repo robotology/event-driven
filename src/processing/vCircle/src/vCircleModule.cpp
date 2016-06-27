@@ -30,6 +30,8 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
 
     bool strict = rf.check("strict") &&
             rf.check("strict", yarp::os::Value(true)).asBool();
+    bool singleq = rf.check("everyevent") &&
+            rf.check("everyevent", yarp::os::Value(true)).asBool();
     bool parallel = rf.check("parallel");
 
     //sensory size
@@ -67,9 +69,6 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
 //                                   yarp::os::Value(5)).asDouble();
 
     //data for experiments
-    std::string datafilename = rf.check("datafile",
-                                        yarp::os::Value("")).asString();
-
     circleReader.cObserverL =
             new vCircleMultiSize(inlierThreshold, qType, radmin, radmax,
                                  usedirected, parallel, width, height, arc, fifolength);
@@ -82,14 +81,10 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
 
     //initialise the dection and tracking
     circleReader.inlierThreshold = inlierThreshold;
+    circleReader.setSingleQ(singleq);
 
     //circleReader.circleTracker.init(procNoisePos, procNoiseRad,
     //                                measNoisePos, measNoiseRad);
-
-    if(!circleReader.setDataWriter(datafilename)) {
-        std::cerr << "Could not open datafile" << std::endl;
-        return false;
-    }
 
     //open the ports
     if(!circleReader.open(moduleName, strict)) {
@@ -137,19 +132,8 @@ vCircleReader::vCircleReader()
     timecounter = 0;
     strictness = false;
     pstampcounter = -1;
-}
-
-/******************************************************************************/
-bool vCircleReader::setDataWriter(std::string datafilename)
-{
-    //only return false if we are trying to open a file and fail
-    if(!datafilename.empty()) {
-        datawriter.open(datafilename.c_str());
-        datawriter << std::fixed << std::setprecision(6);
-        return datawriter.is_open();
-    }
-
-    return true;
+    singleq = false;
+    tsoffset = 0;
 }
 
 /******************************************************************************/
@@ -177,6 +161,8 @@ bool vCircleReader::open(const std::string &name, bool strictness)
     std::string houghPortName = "/" + name + "/debug:o";
     bool state4 = houghOut.open(houghPortName);
 
+    if(!dumpOut.open("/" + name + "/dump:o")) return false;
+
     return state1 && state2 && state3 && state4;
 }
 
@@ -189,6 +175,7 @@ void vCircleReader::close()
     outPort.close();
     scopeOut.close();
     houghOut.close();
+    dumpOut.close();
     yarp::os::BufferedPort<emorph::vBottle>::close();
 
 }
@@ -200,6 +187,7 @@ void vCircleReader::interrupt()
     outPort.interrupt();
     scopeOut.interrupt();
     houghOut.interrupt();
+    dumpOut.interrupt();
     yarp::os::BufferedPort<emorph::vBottle>::interrupt();
 
 
@@ -212,11 +200,8 @@ void drawcircle(yarp::sig::ImageOf<yarp::sig::PixelBgr> &image, int cx, int cy, 
         for(int x = -cr; x <= cr; x++) {
             if(fabs(sqrt(pow(x, 2.0) + pow(y, 2.0)) - (double)cr) > 0.8) continue;
             int px = cx + x; int py = cy + y;
-            if(py < 0 || py > 127 || px < 0 || px > 127) continue;
-            image(py, 127 - px) = yarp::sig::PixelBgr(0, 0, 255);
-
-
-
+            if(py < 0 || py > image.height()-1 || px < 0 || px > image.width()-1) continue;
+            image(py, image.width() - px) = yarp::sig::PixelBgr(0, 0, 255);
 
         }
     }
@@ -228,6 +213,9 @@ void drawcircle(yarp::sig::ImageOf<yarp::sig::PixelBgr> &image, int cx, int cy, 
 /******************************************************************************/
 void vCircleReader::onRead(emorph::vBottle &inBot)
 {
+    // ///////////////////
+    // get the data & set-up
+    // ///////////////////
 
     emorph::vBottle &outBottle = outPort.prepare();
     outBottle = inBot;
@@ -247,55 +235,82 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
         return;
     }
 
-    double t1 = yarp::os::Time::now();
-    cObserverL->addQueue(q);
-    cObserverR->addQueue(q);
-    timecounter += yarp::os::Time::now() - t1;
+    if(tsoffset == 0)
+        tsoffset = yarp::os::Time::now() - st.getTime();
 
-    int bestx, besty, bestr;
-    double bestts = unwrap(q.back()->getStamp());
+    // ///////////////////
+    // processing & data dumping if required
+    // ///////////////////
 
-    if(datawriter.is_open()) {
-//        std::vector<double> percentiles  = cObserver->getPercentile(0.5, 0.1);
-//        for(int i = 0; i < percentiles.size(); i += 4) {
-//            datawriter << bestts << " " << (int)percentiles[i] << " "
-//                       << (int)percentiles[i + 1] << " " << (int)percentiles[i + 2] << " "
-//                       << percentiles[i + 3] << " " << 0 << std::endl;
-//        }
-        double bestscore = cObserverL->getObs(bestx, besty, bestr);
-        datawriter << bestts << " " << bestx << " " << besty << " "
-                   << bestr << " " << bestscore << std::endl;
-        //std::cout << bestts << std::endl;
+    if(singleq) {
+        double bestScore;
+        int bestx, besty, bestr;
+        emorph::vQueue singleQ; singleQ.push_back(q.front());
+        for(unsigned int i = 0; i < q.size(); i++) {
+            //singleQ.push_back(q[i]);
+            singleQ[0] = q[i];
+            if(q[i]->getChannel() == 0) {
+                cObserverL->addQueue(singleQ);
+                bestScore = cObserverL->getObs(bestx, besty, bestr);
+            } else {
+                cObserverR->addQueue(singleQ);
+                bestScore = cObserverR->getObs(bestx, besty, bestr);
+            }
+            //save the results
+            if(dumpOut.getOutputCount()) {
+                yarp::os::Bottle &dumper = dumpOut.prepare();
+                dumper.clear();
+                dumper.addDouble(yarp::os::Time::now() - tsoffset);
+                dumper.addInt(singleQ[0]->getStamp());
+                dumper.addInt(q[i]->getChannel());
+                dumper.addInt(bestx);
+                dumper.addInt(besty);
+                dumper.addInt(bestr);
+                dumper.addDouble(bestScore);
+                dumpOut.setEnvelope(st);
+                dumpOut.writeStrict();
+            }
+            singleQ[0] = q.front();
+            //singleQ.clear();
+        }
+    } else {
+        cObserverL->addQueue(q);
+        cObserverR->addQueue(q);
     }
 
-    double bestScore = cObserverL->getObs(bestx, besty, bestr);
+    // ///////////////////
+    // send the results through in vBottle
+    // ///////////////////
+    int bestxL, bestyL, bestrL;
+    double bestScoreL = cObserverL->getObs(bestxL, bestyL, bestrL);
 
-    if(bestScore > inlierThreshold) {
+    if(bestScoreL > inlierThreshold) {
 
         //std::cout << bestx << " " << besty << " " << bestr << std::endl;
         emorph::ClusterEventGauss circevent;
-        circevent.setStamp(bestts);
+        circevent.setStamp(q.back()->getStamp());
         circevent.setChannel(0);
-        circevent.setXCog(bestx);
-        circevent.setYCog(besty);
-        circevent.setXSigma2(bestr);
+        circevent.setXCog(bestxL);
+        circevent.setYCog(bestyL);
+        circevent.setXSigma2(bestrL);
         circevent.setYSigma2(1);
         circevent.setID(0);
         outBottle.addEvent(circevent);
 
     }
 
-    bestScore = cObserverR->getObs(bestx, besty, bestr);
+    int bestxR, bestyR, bestrR;
+    double bestScoreR = cObserverR->getObs(bestxR, bestyR, bestrR);
 
-    if(bestScore > inlierThreshold) {
+    if(bestScoreR > inlierThreshold) {
 
         //std::cout << bestx << " " << besty << " " << bestr << std::endl;
         emorph::ClusterEventGauss circevent;
-        circevent.setStamp(bestts);
+        circevent.setStamp(q.back()->getStamp());
         circevent.setChannel(1);
-        circevent.setXCog(bestx);
-        circevent.setYCog(besty);
-        circevent.setXSigma2(bestr);
+        circevent.setXCog(bestxR);
+        circevent.setYCog(bestyR);
+        circevent.setXSigma2(bestrR);
         circevent.setYSigma2(1);
         circevent.setID(0);
         outBottle.addEvent(circevent);
@@ -305,6 +320,40 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
     //send on our event bottle
     if(strictness) outPort.writeStrict();
     else outPort.write();
+
+    // ///////////////////
+    // scope and debug images
+    // ///////////////////
+
+    //save the results
+    if(!singleq && dumpOut.getOutputCount()) {
+
+        double offsetts = yarp::os::Time::now() - tsoffset;
+
+        yarp::os::Bottle &dumperL = dumpOut.prepare();
+        dumperL.clear();
+        dumperL.addDouble(offsetts);
+        dumperL.addInt(q.back()->getStamp());
+        dumperL.addInt(0);
+        dumperL.addInt(bestxL);
+        dumperL.addInt(bestyL);
+        dumperL.addInt(bestrL);
+        dumperL.addDouble(bestScoreL);
+        dumpOut.setEnvelope(st);
+        dumpOut.writeStrict();
+
+        yarp::os::Bottle &dumperR = dumpOut.prepare();
+        dumperR.clear();
+        dumperR.addDouble(offsetts);
+        dumperR.addInt(q.back()->getStamp());
+        dumperR.addInt(1);
+        dumperR.addInt(bestxR);
+        dumperR.addInt(bestyR);
+        dumperR.addInt(bestrR);
+        dumperR.addDouble(bestScoreR);
+        dumpOut.setEnvelope(st);
+        dumpOut.writeStrict();
+    }
 
     //send on our scope if needed
     if(scopeOut.getOutputCount()) {
@@ -322,8 +371,8 @@ void vCircleReader::onRead(emorph::vBottle &inBot)
         pstamp = st;
         yarp::sig::ImageOf< yarp::sig::PixelBgr> &image = houghOut.prepare();
         image = cObserverL->makeDebugImage();
-        if(bestScore > inlierThreshold) {
-            drawcircle(image, bestx, besty, bestr);
+        if(bestScoreL > inlierThreshold) {
+            drawcircle(image, bestxL, bestyL, bestrL);
         }
         houghOut.setEnvelope(st);
         houghOut.write();
