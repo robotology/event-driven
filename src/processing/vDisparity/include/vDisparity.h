@@ -21,6 +21,7 @@
 #include <yarp/os/all.h>
 #include <iCub/emorph/all.h>
 #include <iCub/emorph/vtsHelper.h>
+#include "gaborfilters.h"
 
 class vDisparityManager : public yarp::os::BufferedPort<emorph::vBottle>
 {
@@ -35,9 +36,23 @@ private:
     //for helping with timestamp wrap around
     emorph::vtsHelper unwrapper;
 
+    //representation for the events
+    emorph::vSurface2 *fifo;
+
+    //filters
+    gaborfilters filters;
+
+    int width;
+    int height;
+    int tempWin;
+    int numberOri;
+    int numberPhases;
+    double sigma;
+    int winsize;
+
 public:
     
-    vDisparityManager();
+    vDisparityManager(int width, int height, int tempWin, int numberOri, int numberPhases, double sigma, int winsize);
 
     bool    open(const std::string &name, bool strictness);
     void    close();
