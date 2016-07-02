@@ -26,10 +26,17 @@ bool vDisparityModule::configure(yarp::os::ResourceFinder &rf)
     setName(moduleName.c_str());
 
     //set other variables we need
-    bool strict = rf.check("strict", yarp::os::Value("false")).asBool();
+    bool strict = rf.check("strict", yarp::os::Value("true")).asBool();
+    int width = rf.check("width", yarp::os::Value(128)).asInt();
+    int height = rf.check("height", yarp::os::Value(128)).asInt();
+    int tempWin = rf.check("tempWin", yarp::os::Value(50)).asInt();
+    int numberOri = rf.check("ori", yarp::os::Value(1)).asInt();
+    int numberPhases = rf.check("phases", yarp::os::Value(1)).asInt();
+    double sigma = rf.check("sigma", yarp::os::Value(16)).asDouble();
+    int winsize = rf.check("winsize", yarp::os::Value(32)).asInt();
     
     /* create the thread and pass pointers to the module parameters */
-    disparityManager = new vDisparityManager();
+    disparityManager = new vDisparityManager(width, height, tempWin, numberOri, numberPhases, sigma, winsize);
 
     return disparityManager->open(moduleName, strict);
 }
@@ -71,10 +78,21 @@ bool vDisparityModule::respond(const yarp::os::Bottle &command,
 
 
 /**********************************************************/
-vDisparityManager::vDisparityManager()
+vDisparityManager::vDisparityManager(int width, int height, int tempWin, int numberOri, int numberPhases, double sigma, int winsize)
 {
+    this->width = width;
+    this->height = height;
+    this->tempWin = tempWin;
+    this->numberOri = numberOri;
+    this->numberPhases = numberPhases;
+    this->sigma = sigma;
+    this->winsize = winsize;
 
-    //here we should initialise the module
+    fifo = new emorph::temporalSurface(width, height, tempWin * 7812.5);
+
+    //set filter parameters
+    filters.setCenter(64, 64);
+    filters.setParameters(sigma, 0, 0);
     
 }
 /**********************************************************/
@@ -109,7 +127,7 @@ void vDisparityManager::close()
     yarp::os::BufferedPort<emorph::vBottle>::close();
 
     //remember to also deallocate any memory allocated by this class
-
+    delete fifo;
 
 }
 
@@ -134,24 +152,44 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
     /*get the event queue in the vBottle bot*/
     emorph::vQueue q = bot.get<emorph::AddressEvent>();
 
+    emorph::vQueue removed;
+
+    double response = 0;
+
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {
-        //unwrap timestamp
-//        unsigned long int ts = unwrapper((*qi)->getStamp());
 
         emorph::AddressEvent *aep = (*qi)->getAs<emorph::AddressEvent>();
         if(!aep) continue;
 
+        //consider only events around the center
+        if(abs(aep->getX() - 64) > winsize / 2 || abs(aep->getY() - 64) > winsize / 2) continue;
+
+        //add event to the fifo
+        removed = fifo->addEvent(*aep);
+
+//        if(!removed.size()) continue;
+
+//        emorph::vQueue::iterator re = removed.end() - 1;
+//        emorph::AddressEvent *rep = (*re)->getAs<emorph::AddressEvent>();
 
         //process
+//        response = filters.process(*aep) + filters.process(*rep);
+        response = filters.process(fifo->getSurf()) + filters.process(removed);
+
+        std::cout << response << std::endl;
+
+        yarp::os::Bottle &scopebot = scopeOut.prepare();
+        scopebot.clear();
+        scopebot.addDouble(response);
+        scopeOut.write();
 
         //add events that need to be added to the out bottle
         //outBottle.addEvent(**qi);
 
-
     }
     //send on the processed events
-    outPort.write();
+//    outPort.write();
 
 }
 
