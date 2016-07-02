@@ -16,6 +16,7 @@ endif(ICUB_FOUND)
 
 add_subdirectory(vCorner)
 add_subdirectory(vRepTest)
+add_subdirectory(vDisparity)
 
 if(OPENCV_FOUND)
     add_subdirectory(vUndistortCam)
