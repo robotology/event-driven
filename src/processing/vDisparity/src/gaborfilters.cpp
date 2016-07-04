@@ -30,9 +30,12 @@ gaborfilter::gaborfilter()
     costheta = cos(orientation);
     sintheta = sin(orientation);
     neg2var = -2.0 * pow(sigma, 2.0);
-    coscoeff = 2.0 * M_PI * fspatial;
+    coeff = 2.0 * M_PI * fspatial;
 
     response = 0;
+    evenresponse = 0;
+    oddresponse = 0;
+    complexgabor = true;
 }
 
 void gaborfilter::setCenter(int cx, int cy)
@@ -51,7 +54,20 @@ void gaborfilter::setParameters(double sigma, double orientation, double phase)
     costheta = cos(orientation);
     sintheta = sin(orientation);
     neg2var = -2.0 * pow(sigma, 2.0);
-    coscoeff = 2.0 * M_PI * fspatial;
+    coeff = 2.0 * M_PI * fspatial;
+}
+
+double gaborfilter::getResponse() {
+    if(!complexgabor)
+        return response;
+    else
+        return sqrt(pow(evenresponse, 2.0) + pow(oddresponse, 2.0));
+}
+
+void gaborfilter::resetResponse() {
+    response = 0.0;
+    oddresponse = 0.0;
+    evenresponse = 0.0;
 }
 
 void gaborfilter::process(emorph::vEvent &evt, double gain)
@@ -71,13 +87,30 @@ void gaborfilter::process(emorph::vEvent &evt, double gain)
     //double gaussianComponent = exp( (pow(dx_theta, 2.0) + pow(dy_theta, 2.0)) / neg2var );
     double gaussianComponent = exp( (pow(dx_theta, 2.0) + pow(dy_theta, 2.0)) / neg2var );
     //add in the even component also
-    double cosComponent = 1.0;
+    double cosComponent = 0.0;
+    double sinComponent = 0.0;
     if(ae->getChannel())
-        cosComponent = cos( (coscoeff * dx_theta ) + phase );
+    {
+        cosComponent = cos( (coeff * dx_theta ) + phase );
+        sinComponent = sin( (coeff * dx_theta ) + phase );
+    }
     else
-        cosComponent = cos( (coscoeff * dx_theta ) );
+    {
+        cosComponent = cos( (coeff * dx_theta ) );
+        sinComponent = sin( (coeff * dx_theta ) );
+    }
 
-    response += gain * gaussianComponent * cosComponent;
+
+    if(complexgabor)
+    {
+        evenresponse += gain * gaussianComponent * cosComponent;
+        oddresponse  += gain * gaussianComponent * sinComponent;
+        //response = evenresponse * evenresponse + oddresponse * oddresponse;
+    }
+    else
+    {
+        response += gain * gaussianComponent * cosComponent;
+    }
 }
 
 void gaborfilter::process(emorph::vQueue &q, double gain)

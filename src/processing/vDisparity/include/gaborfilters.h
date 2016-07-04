@@ -32,16 +32,17 @@ private:
     double phase;
     double sigma;
     double fspatial;
+    bool complexgabor;
 
     //precalculations
     double costheta;
     double sintheta;
     double neg2var;
-    double coscoeff;
+    double coeff;
 
     double response;
-    //double evenresponse;
-    //double oddresponse;
+    double evenresponse;
+    double oddresponse;
 
 public:
 
@@ -49,10 +50,12 @@ public:
 
     void setCenter(int cx, int cy);
     void setParameters(double sigma, double orientation, double phase);
+    void setComplex(bool complex = true) { complexgabor = complex; }
     void process(emorph::vEvent &evt, double gain = 1.0);
     void process(emorph::vQueue &q, double gain = 1.0);
-    double getResponse() { return response; }
-    void resetResponse() { response = 0.0; }
+    double getResponse();
+    void resetResponse();
+
 
 
 };
