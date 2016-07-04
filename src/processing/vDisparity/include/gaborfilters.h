@@ -29,8 +29,9 @@ private:
     int cx;
     int cy;
     double orientation;
-    double phase;
+    double disppx;
     double sigma;
+    double stdsperlambda;
     double fspatial;
     bool complexgabor;
 
@@ -49,7 +50,7 @@ public:
     gaborfilter();
 
     void setCenter(int cx, int cy);
-    void setParameters(double sigma, double orientation, double phase);
+    void setParameters(double sigma, double stdsperlambda, double orientation, double disppx);
     void setComplex(bool complex = true) { complexgabor = complex; }
     void process(emorph::vEvent &evt, double gain = 1.0);
     void process(emorph::vQueue &q, double gain = 1.0);

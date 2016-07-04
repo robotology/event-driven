@@ -31,7 +31,7 @@ bool vDisparityModule::configure(yarp::os::ResourceFinder &rf)
     int height = rf.check("height", yarp::os::Value(128)).asInt();
     int tempWin = rf.check("tempWin", yarp::os::Value(50)).asInt();
     int numberOri = rf.check("ori", yarp::os::Value(1)).asInt();
-    int numberPhases = rf.check("phases", yarp::os::Value(1)).asInt();
+    int numberPhases = rf.check("phases", yarp::os::Value(5)).asInt();
     double sigma = rf.check("sigma", yarp::os::Value(5)).asDouble();
     int winsize = rf.check("winsize", yarp::os::Value(32)).asInt();
 
@@ -85,8 +85,13 @@ vDisparityManager::vDisparityManager(int width, int height, int tempWin, int num
     this->tempWin = tempWin;
     this->numberOri = numberOri;
     this->numberPhases = 2 * (numberPhases / 2) + 1;
-    this->sigma = sigma;
-    this->winsize = winsize;
+
+    double maxdisp = 15;
+    double stdsperlambda = 6.0;
+    this->sigma = maxdisp * 8.0 / (stdsperlambda * 3.0);
+    //this->sigma = sigma;
+    this->winsize = maxdisp * 8.0 / 3.0;
+
 
     //fifoLeft = new emorph::temporalSurface(width, height, tempWin * 7812.5);
     //fifoRight = new emorph::temporalSurface(width, height, tempWin * 7812.5);
@@ -99,8 +104,13 @@ vDisparityManager::vDisparityManager(int width, int height, int tempWin, int num
     std::cout << "Phases:";
     for(int i = 0; i < this->numberPhases; i++) {
         filters[i].setCenter(64, 64);
-        int lambda = -winsize + i * (double)winsize / (this->numberPhases / 2) + 0.5;
-        filters[i].setParameters(sigma, M_PI * 0.5, lambda);
+        int lambda;
+        if(this->numberPhases == 1)
+            lambda = 0;
+        else
+            lambda = -maxdisp + i * maxdisp * 2.0 / (this->numberPhases - 1) + 0.5;
+
+        filters[i].setParameters(sigma, stdsperlambda, M_PI * 0.5, lambda);
         std::cout << " " << lambda;
     }
     std::cout << std::endl;

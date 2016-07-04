@@ -23,8 +23,9 @@ gaborfilter::gaborfilter()
     cy = 0;
 
     orientation = 0;
-    phase = 0;
+    disppx = 0;
     sigma = 0;
+    stdsperlambda = 6.0;
     fspatial = 1.0 / (2.0 * sigma);
 
     costheta = cos(orientation);
@@ -44,12 +45,13 @@ void gaborfilter::setCenter(int cx, int cy)
     this->cy = cy;
 }
 
-void gaborfilter::setParameters(double sigma, double orientation, double phase)
+void gaborfilter::setParameters(double sigma, double stdsperlambda, double orientation, double disppx)
 {
     this->sigma = sigma;
-    this->fspatial = 1.0 / (4.0 * sigma);
+    this->stdsperlambda = stdsperlambda;
+    this->fspatial = 1.0 / (this->stdsperlambda * sigma);
     this->orientation = orientation;
-    this->phase = phase;
+    this->disppx = disppx;
 
     costheta = cos(orientation);
     sintheta = sin(orientation);
@@ -85,14 +87,14 @@ void gaborfilter::process(emorph::vEvent &evt, double gain)
 
     //the gaussian component assumes a circular Gaussian shape? should it be an elipse instead?
     //double gaussianComponent = exp( (pow(dx_theta, 2.0) + pow(dy_theta, 2.0)) / neg2var );
-    double gaussianComponent = exp( (pow(dx_theta, 2.0) + pow(dy_theta, 2.0)) / neg2var );
+    double gaussianComponent = exp( /*(pow(dx_theta, 2.0) +*/ pow(dy_theta, 2.0) / neg2var );
     //add in the even component also
     double cosComponent = 0.0;
     double sinComponent = 0.0;
     if(ae->getChannel())
     {
-        cosComponent = cos( (coeff * dx_theta ) + phase );
-        sinComponent = sin( (coeff * dx_theta ) + phase );
+        cosComponent = cos( coeff * (dx_theta + disppx ) );
+        sinComponent = sin( coeff * (dx_theta + disppx ) );
     }
     else
     {
