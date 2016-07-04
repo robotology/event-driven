@@ -44,7 +44,7 @@ private:
     emorph::vSurface2 *fifoCurr;
 
     //filters
-    gaborfilter filters;
+    std::vector<gaborfilter> filters;
 
     int width;
     int height;

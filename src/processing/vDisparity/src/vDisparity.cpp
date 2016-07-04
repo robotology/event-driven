@@ -84,7 +84,7 @@ vDisparityManager::vDisparityManager(int width, int height, int tempWin, int num
     this->height = height;
     this->tempWin = tempWin;
     this->numberOri = numberOri;
-    this->numberPhases = numberPhases;
+    this->numberPhases = 2 * (numberPhases / 2) + 1;
     this->sigma = sigma;
     this->winsize = winsize;
 
@@ -94,9 +94,16 @@ vDisparityManager::vDisparityManager(int width, int height, int tempWin, int num
     fifoLeft = new emorph::fixedSurface(200, width, height);
     fifoRight = new emorph::fixedSurface(200, width, height);
 
-    //set filter parameters
-    filters.setCenter(64, 64);
-    filters.setParameters(sigma, M_PI * 0.5, 0);
+    std::cout << "Initialising Filterbank" << std::endl;
+    filters.resize(this->numberPhases);
+    std::cout << "Phases:";
+    for(int i = 0; i < this->numberPhases; i++) {
+        filters[i].setCenter(64, 64);
+        int lambda = -winsize + i * (double)winsize / (this->numberPhases / 2) + 0.5;
+        filters[i].setParameters(sigma, M_PI * 0.5, lambda);
+        std::cout << " " << lambda;
+    }
+    std::cout << std::endl;
 
 }
 /**********************************************************/
@@ -185,20 +192,24 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
 
         //process
 //        response = filters.process(fifo->getSurf()) + filters.process(*rep);
-        filters.process(*aep);
-        filters.process(removed, -1.0);
+        for(unsigned int i = 0; i < filters.size(); i++) {
+            filters[i].process(*aep);
+            filters[i].process(removed, -1.0);
+        }
 
         //add events that need to be added to the out bottle
-        outBottle.addEvent(**qi);
+        //outBottle.addEvent(**qi);
 
     }
 
     yarp::os::Bottle &scopebot = scopeOut.prepare();
     scopebot.clear();
-    if(filters.getResponse() > 0)
-        scopebot.addDouble(filters.getResponse());
-    else
-        scopebot.addDouble(0.0);
+    for(unsigned int i = 0; i < filters.size(); i++) {
+        if(filters[i].getResponse() > 0)
+            scopebot.addDouble(filters[i].getResponse());
+        else
+            scopebot.addDouble(0.0);
+    }
     scopeOut.write();
 
     static int i = 0;
