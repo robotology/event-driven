@@ -32,7 +32,7 @@ bool vDisparityModule::configure(yarp::os::ResourceFinder &rf)
     int tempWin = rf.check("tempWin", yarp::os::Value(50)).asInt();
     int numberOri = rf.check("ori", yarp::os::Value(1)).asInt();
     int numberPhases = rf.check("phases", yarp::os::Value(1)).asInt();
-    double sigma = rf.check("sigma", yarp::os::Value(16)).asDouble();
+    double sigma = rf.check("sigma", yarp::os::Value(5)).asDouble();
     int winsize = rf.check("winsize", yarp::os::Value(32)).asInt();
 
     /* create the thread and pass pointers to the module parameters */
@@ -88,11 +88,15 @@ vDisparityManager::vDisparityManager(int width, int height, int tempWin, int num
     this->sigma = sigma;
     this->winsize = winsize;
 
-    fifo = new emorph::temporalSurface(width, height, tempWin * 7812.5);
+    //fifoLeft = new emorph::temporalSurface(width, height, tempWin * 7812.5);
+    //fifoRight = new emorph::temporalSurface(width, height, tempWin * 7812.5);
+
+    fifoLeft = new emorph::fixedSurface(200, width, height);
+    fifoRight = new emorph::fixedSurface(200, width, height);
 
     //set filter parameters
     filters.setCenter(64, 64);
-    filters.setParameters(sigma, 0, 0);
+    filters.setParameters(sigma, M_PI * 0.5, 0);
 
 }
 /**********************************************************/
@@ -130,7 +134,8 @@ void vDisparityManager::close()
     yarp::os::BufferedPort<emorph::vBottle>::close();
 
     //remember to also deallocate any memory allocated by this class
-    delete fifo;
+    delete fifoLeft;
+    delete fifoRight;
 
 }
 
@@ -165,8 +170,13 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
         //consider only events around the center
         if(abs(aep->getX() - 64) > winsize / 2 || abs(aep->getY() - 64) > winsize / 2) continue;
 
+        if(aep->getChannel())
+            fifoCurr = fifoRight;
+        else
+            fifoCurr = fifoLeft;
+
         //add event to the fifo
-        emorph::vQueue removed = fifo->addEvent(*aep);
+        emorph::vQueue removed = fifoCurr->addEvent(*aep);
 
 //        if(!removed.size()) continue;
 
@@ -185,7 +195,10 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
 
     yarp::os::Bottle &scopebot = scopeOut.prepare();
     scopebot.clear();
-    scopebot.addDouble(filters.getResponse());
+    if(filters.getResponse() > 0)
+        scopebot.addDouble(filters.getResponse());
+    else
+        scopebot.addDouble(0.0);
     scopeOut.write();
 
     static int i = 0;
@@ -195,12 +208,20 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
         image.resize(128, 128);
         image.zero();
 
-        emorph::vQueue curwin = fifo->getSurf();
+        emorph::vQueue curwin = fifoLeft->getSurf();
         for(unsigned int j = 0; j < curwin.size(); j++) {
             emorph::AddressEvent *v = curwin[j]->getAs<emorph::AddressEvent>();
             if(!v) continue;
 
             image(v->getY(), 127 - v->getX()) = yarp::sig::PixelBgr(255, 255, 0);
+        }
+
+        curwin = fifoRight->getSurf();
+        for(unsigned int j = 0; j < curwin.size(); j++) {
+            emorph::AddressEvent *v = curwin[j]->getAs<emorph::AddressEvent>();
+            if(!v) continue;
+
+            image(v->getY(), 127 - v->getX()) = yarp::sig::PixelBgr(255, 0, 255);
         }
 
         debugOut.write();

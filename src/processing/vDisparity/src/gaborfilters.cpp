@@ -44,7 +44,7 @@ void gaborfilter::setCenter(int cx, int cy)
 void gaborfilter::setParameters(double sigma, double orientation, double phase)
 {
     this->sigma = sigma;
-    this->fspatial = 1.0 / (2.0 * sigma);
+    this->fspatial = 1.0 / (4.0 * sigma);
     this->orientation = orientation;
     this->phase = phase;
 
@@ -68,9 +68,15 @@ void gaborfilter::process(emorph::vEvent &evt, double gain)
     //double gain = (1.0 / (2.0 * M_PI * pow(sigma, 2.0)));
 
     //the gaussian component assumes a circular Gaussian shape? should it be an elipse instead?
+    //double gaussianComponent = exp( (pow(dx_theta, 2.0) + pow(dy_theta, 2.0)) / neg2var );
     double gaussianComponent = exp( (pow(dx_theta, 2.0) + pow(dy_theta, 2.0)) / neg2var );
     //add in the even component also
-    double cosComponent = cos( (coscoeff * dx_theta ) + phase );
+    double cosComponent = 1.0;
+    if(ae->getChannel())
+        cosComponent = cos( (coscoeff * dx_theta ) + phase );
+    else
+        cosComponent = cos( (coscoeff * dx_theta ) );
+
     response += gain * gaussianComponent * cosComponent;
 }
 

@@ -39,7 +39,9 @@ private:
     emorph::vtsHelper unwrapper;
 
     //representation for the events
-    emorph::vSurface2 *fifo;
+    emorph::vSurface2 *fifoLeft;
+    emorph::vSurface2 *fifoRight;
+    emorph::vSurface2 *fifoCurr;
 
     //filters
     gaborfilter filters;
