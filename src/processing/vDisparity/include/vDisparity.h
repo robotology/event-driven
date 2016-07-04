@@ -19,6 +19,7 @@
 #define __VDISPARITY__
 
 #include <yarp/os/all.h>
+#include <yarp/sig/all.h>
 #include <iCub/emorph/all.h>
 #include <iCub/emorph/vtsHelper.h>
 #include "gaborfilters.h"
@@ -26,12 +27,13 @@
 class vDisparityManager : public yarp::os::BufferedPort<emorph::vBottle>
 {
 private:
-    
+
     bool strictness;
 
     //output port for the vBottle with the new events computed by the module
     yarp::os::BufferedPort<emorph::vBottle> outPort;
     yarp::os::BufferedPort<yarp::os::Bottle> scopeOut;
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr> > debugOut;
 
     //for helping with timestamp wrap around
     emorph::vtsHelper unwrapper;
@@ -40,7 +42,7 @@ private:
     emorph::vSurface2 *fifo;
 
     //filters
-    gaborfilters filters;
+    gaborfilter filters;
 
     int width;
     int height;
@@ -51,7 +53,7 @@ private:
     int winsize;
 
 public:
-    
+
     vDisparityManager(int width, int height, int tempWin, int numberOri, int numberPhases, double sigma, int winsize);
 
     bool    open(const std::string &name, bool strictness);

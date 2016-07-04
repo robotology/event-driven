@@ -21,27 +21,39 @@
 #include <iCub/emorph/all.h>
 #include <math.h>
 
-class gaborfilters {
+class gaborfilter {
 
 private:
 
+    //parameters
     int cx;
     int cy;
     double orientation;
     double phase;
     double sigma;
     double fspatial;
-    double evenresponse;
-    double oddresponse;
+
+    //precalculations
+    double costheta;
+    double sintheta;
+    double neg2var;
+    double coscoeff;
+
+    double response;
+    //double evenresponse;
+    //double oddresponse;
 
 public:
 
-    gaborfilters();
+    gaborfilter();
 
     void setCenter(int cx, int cy);
     void setParameters(double sigma, double orientation, double phase);
-    double process(emorph::vEvent &evt);
-    double process(emorph::vQueue q);
+    void process(emorph::vEvent &evt, double gain = 1.0);
+    void process(emorph::vQueue &q, double gain = 1.0);
+    double getResponse() { return response; }
+    void resetResponse() { response = 0.0; }
+
 
 };
 

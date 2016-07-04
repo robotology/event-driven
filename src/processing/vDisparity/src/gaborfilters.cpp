@@ -17,64 +17,67 @@
 
 #include "gaborfilters.h"
 
-gaborfilters::gaborfilters()
+gaborfilter::gaborfilter()
 {
+    cx = 0;
+    cy = 0;
 
+    orientation = 0;
+    phase = 0;
+    sigma = 0;
+    fspatial = 1.0 / (2.0 * sigma);
+
+    costheta = cos(orientation);
+    sintheta = sin(orientation);
+    neg2var = -2.0 * pow(sigma, 2.0);
+    coscoeff = 2.0 * M_PI * fspatial;
+
+    response = 0;
 }
 
-void gaborfilters::setCenter(int cx, int cy)
+void gaborfilter::setCenter(int cx, int cy)
 {
     this->cx = cx;
     this->cy = cy;
 }
 
-void gaborfilters::setParameters(double sigma, double orientation, double phase)
+void gaborfilter::setParameters(double sigma, double orientation, double phase)
 {
     this->sigma = sigma;
     this->fspatial = 1.0 / (2.0 * sigma);
     this->orientation = orientation;
     this->phase = phase;
+
+    costheta = cos(orientation);
+    sintheta = sin(orientation);
+    neg2var = -2.0 * pow(sigma, 2.0);
+    coscoeff = 2.0 * M_PI * fspatial;
 }
 
-double gaborfilters::process(emorph::vEvent &evt)
+void gaborfilter::process(emorph::vEvent &evt, double gain)
 {
     emorph::AddressEvent *ae = evt.getAs<emorph::AddressEvent>();
+    if(!ae) return;
     int dx = ae->getX() - cx;
     int dy = ae->getY() - cy;
 
-    double dx_theta =  dx * cos(orientation) + dy * sin(orientation);
-    double dy_theta = -dx * sin(orientation) + dy * cos(orientation);
+    double dx_theta =  dx * costheta + dy * sintheta;
+    double dy_theta = -dx * sintheta + dy * costheta;
 
-    double gain = (1.0 / (2.0 * M_PI * pow(sigma, 2.0)));
-    double gaussianComponent = exp( -( pow(dx_theta, 2.0) + pow(dy_theta, 2.0) ) / ( 2.0 * pow(sigma, 2.0) ) );
-    double cosComponent = cos( (2.0 * M_PI * fspatial * dx_theta ) + phase );
-    double response = gain * gaussianComponent * cosComponent;
+    //gain is extra computation that should be the same for all filters
+    //double gain = (1.0 / (2.0 * M_PI * pow(sigma, 2.0)));
 
-    return response;
-
+    //the gaussian component assumes a circular Gaussian shape? should it be an elipse instead?
+    double gaussianComponent = exp( (pow(dx_theta, 2.0) + pow(dy_theta, 2.0)) / neg2var );
+    //add in the even component also
+    double cosComponent = cos( (coscoeff * dx_theta ) + phase );
+    response += gain * gaussianComponent * cosComponent;
 }
 
-double gaborfilters::process(emorph::vQueue q)
+void gaborfilter::process(emorph::vQueue &q, double gain)
 {
-    double response = 0;
     for(emorph::vQueue::iterator wi = q.begin(); wi != q.end(); wi++)
-    {
-        emorph::AddressEvent *vp = (*wi)->getAs<emorph::AddressEvent>();
-        int dx = vp->getX() - cx;
-        int dy = vp->getY() - cy;
-
-        double dx_theta =  dx * cos(orientation) + dy * sin(orientation);
-        double dy_theta = -dx * sin(orientation) + dy * cos(orientation);
-
-        double gain = (1.0 / (2.0 * M_PI * pow(sigma, 2.0)));
-        double gaussianComponent = exp( -( pow(dx_theta, 2.0) + pow(dy_theta, 2.0) ) / ( 2.0 * pow(sigma, 2.0) ) );
-        double cosComponent = cos( (2.0 * M_PI * fspatial * dx_theta ) + phase );
-        response += gain * gaussianComponent * cosComponent;
-
-    }
-
-    return response;
-
+        process(**wi, gain);
 }
 
 //empty line to make gcc happy
