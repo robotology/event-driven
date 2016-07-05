@@ -29,11 +29,10 @@ bool vDisparityModule::configure(yarp::os::ResourceFinder &rf)
     bool strict = rf.check("strict") &&
             rf.check("strict", yarp::os::Value(true)).asBool();
 
-
     /* create the thread and pass pointers to the module parameters */
     disparityManager = new vDisparityManager(rf.check("width", yarp::os::Value(128)).asInt(),
                                              rf.check("height", yarp::os::Value(128)).asInt(),
-                                             rf.check("tempWin", yarp::os::Value(200)).asInt(),
+                                             rf.check("nEvents", yarp::os::Value(200)).asInt(),
                                              rf.check("ori", yarp::os::Value(1)).asInt(),
                                              rf.check("phases", yarp::os::Value(5)).asInt(),
                                              rf.check("disparity", yarp::os::Value(14)).asInt(),
@@ -100,16 +99,18 @@ vDisparityManager::vDisparityManager(int width, int height, int nEvents, int num
             lambda = 0;
         else
             lambda = -maxDisparity + i * maxDisparity * 2.0 / (numberPhases - 1) + 0.5;
-
         filters[i].setParameters(sigma, stdsPerLambda, M_PI * 0.5, lambda);
         std::cout << " " << lambda;
     }
+
     std::cout << std::endl;
 
 
+    filterweights.resize(numberPhases);
     //create the filter weights
     //this needs to be more robust (i.e. use filter disparity to set weight)
     for(unsigned int i = 0; i < filters.size(); i++) {
+
         if(i < (filters.size() - 1) / 2)
         {
             filterweights[i] = -1;
@@ -122,7 +123,6 @@ vDisparityManager::vDisparityManager(int width, int height, int nEvents, int num
                 filterweights[i] = 1;
         }
     }
-
 
     //create the surface representations
     fifoLeft = new emorph::fixedSurface(nEvents, width, height);
@@ -148,13 +148,13 @@ bool vDisparityManager::open(const std::string &name, bool strictness)
     if(!outPort.open("/" + name + "/vBottle:o"))
         return false;
 
-    if(scopeOut.open("/" + name + "/scope:o"))
+    if(!scopeOut.open("/" + name + "/scope:o"))
         return false;
 
-    if(!debugOut.open("/"+name+"/debug:o"))
+    if(!debugOut.open("/" + name + "/debug:o"))
         return false;
 
-	yarp::os::Property options;
+    yarp::os::Property options;
     options.put("device", "gazecontrollerclient");
     options.put("local", "/" + name);
     options.put("remote", "/iKinGazeCtrl");
@@ -240,6 +240,13 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
         //outBottle.addEvent(**qi);
 
     }
+
+//    yarp::sig::Vector angles(3);
+//    if(gazedriver.isValid())
+//    {
+//        gazecontrol->getAngles(angles);
+//        std::cout << angles[0] << " " << angles[1] << " " << angles[2] << std::endl;
+//    }
 
     yarp::os::Bottle &scopebot = scopeOut.prepare();
     scopebot.clear();
