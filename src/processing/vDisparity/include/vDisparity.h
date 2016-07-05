@@ -48,15 +48,16 @@ private:
 
     int width;
     int height;
-    int tempWin;
+//    int tempWin;
+    int nEvents;
     int numberOri;
     int numberPhases;
-    double sigma;
+//    double sigma;
     int winsize;
 
 public:
 
-    vDisparityManager(int width, int height, int tempWin, int numberOri, int numberPhases, double sigma, int winsize);
+    vDisparityManager(int width, int height, int nEvents, int numberOri, int numberPhases);
 
     bool    open(const std::string &name, bool strictness);
     void    close();

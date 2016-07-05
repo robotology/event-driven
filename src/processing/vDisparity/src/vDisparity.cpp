@@ -29,14 +29,15 @@ bool vDisparityModule::configure(yarp::os::ResourceFinder &rf)
     bool strict = rf.check("strict", yarp::os::Value("true")).asBool();
     int width = rf.check("width", yarp::os::Value(128)).asInt();
     int height = rf.check("height", yarp::os::Value(128)).asInt();
-    int tempWin = rf.check("tempWin", yarp::os::Value(50)).asInt();
+//    int tempWin = rf.check("tempWin", yarp::os::Value(50)).asInt();
+    int nEvents = rf.check("tempWin", yarp::os::Value(200)).asInt();
     int numberOri = rf.check("ori", yarp::os::Value(1)).asInt();
     int numberPhases = rf.check("phases", yarp::os::Value(5)).asInt();
-    double sigma = rf.check("sigma", yarp::os::Value(5)).asDouble();
-    int winsize = rf.check("winsize", yarp::os::Value(32)).asInt();
+//    double sigma = rf.check("sigma", yarp::os::Value(5)).asDouble();
+//    int winsize = rf.check("winsize", yarp::os::Value(32)).asInt();
 
     /* create the thread and pass pointers to the module parameters */
-    disparityManager = new vDisparityManager(width, height, tempWin, numberOri, numberPhases, sigma, winsize);
+    disparityManager = new vDisparityManager(width, height, nEvents, numberOri, numberPhases);
 
     return disparityManager->open(moduleName, strict);
 }
@@ -78,26 +79,25 @@ bool vDisparityModule::respond(const yarp::os::Bottle &command,
 
 
 /**********************************************************/
-vDisparityManager::vDisparityManager(int width, int height, int tempWin, int numberOri, int numberPhases, double sigma, int winsize)
+vDisparityManager::vDisparityManager(int width, int height, int nEvents, int numberOri, int numberPhases)
 {
     this->width = width;
     this->height = height;
-    this->tempWin = tempWin;
+//    this->tempWin = tempWin;
+    this->nEvents = nEvents;
     this->numberOri = numberOri;
     this->numberPhases = 2 * (numberPhases / 2) + 1;
 
     double maxdisp = 15;
     double stdsperlambda = 6.0;
-    this->sigma = maxdisp * 8.0 / (stdsperlambda * 3.0);
-    //this->sigma = sigma;
+    double sigma = maxdisp * 8.0 / (stdsperlambda * 3.0);
     this->winsize = maxdisp * 8.0 / 3.0;
-
 
     //fifoLeft = new emorph::temporalSurface(width, height, tempWin * 7812.5);
     //fifoRight = new emorph::temporalSurface(width, height, tempWin * 7812.5);
 
-    fifoLeft = new emorph::fixedSurface(200, width, height);
-    fifoRight = new emorph::fixedSurface(200, width, height);
+    fifoLeft = new emorph::fixedSurface(nEvents, width, height);
+    fifoRight = new emorph::fixedSurface(nEvents, width, height);
 
     std::cout << "Initialising Filterbank" << std::endl;
     filters.resize(this->numberPhases);
@@ -214,12 +214,29 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
 
     yarp::os::Bottle &scopebot = scopeOut.prepare();
     scopebot.clear();
+    double respsum = 0.0;
+    std::vector<int> weights;
+    weights.resize(numberPhases);
+
     for(unsigned int i = 0; i < filters.size(); i++) {
+        if(i < (filters.size() - 1) / 2)
+        {
+            weights[i] = -1;
+        }
+        else
+        {
+            if(i == (filters.size() - 1) / 2)
+                weights[i] = 0;
+            else
+                weights[i] = 1;
+        }
+            respsum += weights[i] * filters[i].getResponse();
         if(filters[i].getResponse() > 0)
             scopebot.addDouble(filters[i].getResponse());
         else
             scopebot.addDouble(0.0);
     }
+    scopebot.addDouble(respsum);
     scopeOut.write();
 
     static int i = 0;
