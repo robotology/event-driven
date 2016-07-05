@@ -35,9 +35,6 @@ private:
     yarp::os::BufferedPort<yarp::os::Bottle> scopeOut;
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr> > debugOut;
 
-    //for helping with timestamp wrap around
-    emorph::vtsHelper unwrapper;
-
     //representation for the events
     emorph::vSurface2 *fifoLeft;
     emorph::vSurface2 *fifoRight;
@@ -45,19 +42,15 @@ private:
 
     //filters
     std::vector<gaborfilter> filters;
+    std::vector<double> filterweights;
 
     int width;
     int height;
-//    int tempWin;
-    int nEvents;
-    int numberOri;
-    int numberPhases;
-//    double sigma;
     int winsize;
 
 public:
 
-    vDisparityManager(int width, int height, int nEvents, int numberOri, int numberPhases);
+    vDisparityManager(int width, int height, int nEvents, int numberOri, int numberPhases, int maxDisparity, double stdsPerLambda);
 
     bool    open(const std::string &name, bool strictness);
     void    close();

@@ -21,25 +21,25 @@
 bool vDisparityModule::configure(yarp::os::ResourceFinder &rf)
 {
     //set the name of the module
-    std::string moduleName =
-            rf.check("name", yarp::os::Value("vDisparity")).asString();
-    setName(moduleName.c_str());
+    //std::string moduleName =
+    //        rf.check("name", yarp::os::Value("vDisparity")).asString();
+    setName(rf.check("name", yarp::os::Value("vDisparity")).asString().c_str());
 
     //set other variables we need
-    bool strict = rf.check("strict", yarp::os::Value("true")).asBool();
-    int width = rf.check("width", yarp::os::Value(128)).asInt();
-    int height = rf.check("height", yarp::os::Value(128)).asInt();
-//    int tempWin = rf.check("tempWin", yarp::os::Value(50)).asInt();
-    int nEvents = rf.check("tempWin", yarp::os::Value(200)).asInt();
-    int numberOri = rf.check("ori", yarp::os::Value(1)).asInt();
-    int numberPhases = rf.check("phases", yarp::os::Value(5)).asInt();
-//    double sigma = rf.check("sigma", yarp::os::Value(5)).asDouble();
-//    int winsize = rf.check("winsize", yarp::os::Value(32)).asInt();
+    bool strict = rf.check("strict") &&
+            rf.check("strict", yarp::os::Value(true)).asBool();
+
 
     /* create the thread and pass pointers to the module parameters */
-    disparityManager = new vDisparityManager(width, height, nEvents, numberOri, numberPhases);
+    disparityManager = new vDisparityManager(rf.check("width", yarp::os::Value(128)).asInt(),
+                                             rf.check("height", yarp::os::Value(128)).asInt(),
+                                             rf.check("tempWin", yarp::os::Value(200)).asInt(),
+                                             rf.check("ori", yarp::os::Value(1)).asInt(),
+                                             rf.check("phases", yarp::os::Value(5)).asInt(),
+                                             rf.check("disparity", yarp::os::Value(14)).asInt(),
+                                             rf.check("stdsperlambda", yarp::os::Value(6.0)).asDouble());
 
-    return disparityManager->open(moduleName, strict);
+    return disparityManager->open(getName(), strict);
 }
 
 /**********************************************************/
@@ -79,41 +79,54 @@ bool vDisparityModule::respond(const yarp::os::Bottle &command,
 
 
 /**********************************************************/
-vDisparityManager::vDisparityManager(int width, int height, int nEvents, int numberOri, int numberPhases)
+vDisparityManager::vDisparityManager(int width, int height, int nEvents, int numberOri, int numberPhases, int maxDisparity, double stdsPerLambda)
 {
     this->width = width;
     this->height = height;
-//    this->tempWin = tempWin;
-    this->nEvents = nEvents;
-    this->numberOri = numberOri;
-    this->numberPhases = 2 * (numberPhases / 2) + 1;
+    this->winsize = maxDisparity * 8.0 / 3.0;
 
-    double maxdisp = 15;
-    double stdsperlambda = 6.0;
-    double sigma = maxdisp * 8.0 / (stdsperlambda * 3.0);
-    this->winsize = maxdisp * 8.0 / 3.0;
+    //enforce an odd number of phases
+    numberPhases = 2 * (numberPhases / 2) + 1;
+    double sigma = maxDisparity * 8.0 / (stdsPerLambda * 3.0);
 
-    //fifoLeft = new emorph::temporalSurface(width, height, tempWin * 7812.5);
-    //fifoRight = new emorph::temporalSurface(width, height, tempWin * 7812.5);
-
-    fifoLeft = new emorph::fixedSurface(nEvents, width, height);
-    fifoRight = new emorph::fixedSurface(nEvents, width, height);
-
+    //create the filterbank
     std::cout << "Initialising Filterbank" << std::endl;
-    filters.resize(this->numberPhases);
+    filters.resize(numberPhases);
     std::cout << "Phases:";
-    for(int i = 0; i < this->numberPhases; i++) {
-        filters[i].setCenter(64, 64);
+    for(int i = 0; i < numberPhases; i++) {
+        filters[i].setCenter(width/2, height/2);
         int lambda;
-        if(this->numberPhases == 1)
+        if(numberPhases == 1)
             lambda = 0;
         else
-            lambda = -maxdisp + i * maxdisp * 2.0 / (this->numberPhases - 1) + 0.5;
+            lambda = -maxDisparity + i * maxDisparity * 2.0 / (numberPhases - 1) + 0.5;
 
-        filters[i].setParameters(sigma, stdsperlambda, M_PI * 0.5, lambda);
+        filters[i].setParameters(sigma, stdsPerLambda, M_PI * 0.5, lambda);
         std::cout << " " << lambda;
     }
     std::cout << std::endl;
+
+
+    //create the filter weights
+    //this needs to be more robust (i.e. use filter disparity to set weight)
+    for(unsigned int i = 0; i < filters.size(); i++) {
+        if(i < (filters.size() - 1) / 2)
+        {
+            filterweights[i] = -1;
+        }
+        else
+        {
+            if(i == (filters.size() - 1) / 2)
+                filterweights[i] = 0;
+            else
+                filterweights[i] = 1;
+        }
+    }
+
+
+    //create the surface representations
+    fifoLeft = new emorph::fixedSurface(nEvents, width, height);
+    fifoRight = new emorph::fixedSurface(nEvents, width, height);
 
 }
 /**********************************************************/
@@ -128,19 +141,19 @@ bool vDisparityManager::open(const std::string &name, bool strictness)
 
     this->useCallback();
 
-    std::string inPortName = "/" + name + "/vBottle:i";
-    bool check1 = yarp::os::BufferedPort<emorph::vBottle>::open(inPortName);
+    if(!yarp::os::BufferedPort<emorph::vBottle>::open("/" + name + "/vBottle:i"))
+        return false;
 
-    std::string outPortName = "/" + name + "/vBottle:o";
-    bool check2 = outPort.open(outPortName);
+    if(!outPort.open("/" + name + "/vBottle:o"))
+        return false;
 
-    std::string scopePortName = "/" + name + "/scope:o";
-    bool check3 = scopeOut.open(scopePortName);
+    if(scopeOut.open("/" + name + "/scope:o"))
+        return false;
 
     if(!debugOut.open("/"+name+"/debug:o"))
-            return false;
+        return false;
 
-    return check1 && check2 && check3;
+    return true;
 }
 
 /**********************************************************/
@@ -148,6 +161,8 @@ void vDisparityManager::close()
 {
     //close ports
     outPort.close();
+    scopeOut.close();
+    debugOut.close();
     yarp::os::BufferedPort<emorph::vBottle>::close();
 
     //remember to also deallocate any memory allocated by this class
@@ -161,6 +176,8 @@ void vDisparityManager::interrupt()
 {
     //pass on the interrupt call to everything needed
     outPort.interrupt();
+    scopeOut.interrupt();
+    debugOut.interrupt();
     yarp::os::BufferedPort<emorph::vBottle>::interrupt();
 
 }
@@ -185,7 +202,7 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
         if(!aep) continue;
 
         //consider only events around the center
-        if(abs(aep->getX() - 64) > winsize / 2 || abs(aep->getY() - 64) > winsize / 2) continue;
+        if(abs(aep->getX() - width/2) > winsize / 2 || abs(aep->getY() - height/2) > winsize / 2) continue;
 
         if(aep->getChannel())
             fifoCurr = fifoRight;
@@ -195,13 +212,6 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
         //add event to the fifo
         emorph::vQueue removed = fifoCurr->addEvent(*aep);
 
-//        if(!removed.size()) continue;
-
-//        emorph::vQueue::iterator re = removed.end() - 1;
-//        emorph::AddressEvent *rep = (*re)->getAs<emorph::AddressEvent>();
-
-        //process
-//        response = filters.process(fifo->getSurf()) + filters.process(*rep);
         for(unsigned int i = 0; i < filters.size(); i++) {
             filters[i].process(*aep);
             filters[i].process(removed, -1.0);
@@ -215,22 +225,10 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
     yarp::os::Bottle &scopebot = scopeOut.prepare();
     scopebot.clear();
     double respsum = 0.0;
-    std::vector<int> weights;
-    weights.resize(numberPhases);
 
     for(unsigned int i = 0; i < filters.size(); i++) {
-        if(i < (filters.size() - 1) / 2)
-        {
-            weights[i] = -1;
-        }
-        else
-        {
-            if(i == (filters.size() - 1) / 2)
-                weights[i] = 0;
-            else
-                weights[i] = 1;
-        }
-            respsum += weights[i] * filters[i].getResponse();
+
+        respsum += filterweights[i] * filters[i].getResponse();
         if(filters[i].getResponse() > 0)
             scopebot.addDouble(filters[i].getResponse());
         else
@@ -243,7 +241,7 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
     if(i % 10 == 0 && debugOut.getOutputCount()) {
 
         yarp::sig::ImageOf< yarp::sig::PixelBgr > &image = debugOut.prepare();
-        image.resize(128, 128);
+        image.resize(height, width);
         image.zero();
 
         emorph::vQueue curwin = fifoLeft->getSurf();
@@ -251,7 +249,7 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
             emorph::AddressEvent *v = curwin[j]->getAs<emorph::AddressEvent>();
             if(!v) continue;
 
-            image(v->getY(), 127 - v->getX()) = yarp::sig::PixelBgr(255, 255, 0);
+            image(v->getY(), width - 1 - v->getX()) = yarp::sig::PixelBgr(255, 255, 0);
         }
 
         curwin = fifoRight->getSurf();
@@ -259,7 +257,7 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
             emorph::AddressEvent *v = curwin[j]->getAs<emorph::AddressEvent>();
             if(!v) continue;
 
-            image(v->getY(), 127 - v->getX()) = yarp::sig::PixelBgr(255, 0, 255);
+            image(v->getY(), width - 1 - v->getX()) = yarp::sig::PixelBgr(255, 0, 255);
         }
 
         debugOut.write();
