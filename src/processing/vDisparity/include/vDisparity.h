@@ -22,6 +22,8 @@
 #include <yarp/sig/all.h>
 #include <iCub/emorph/all.h>
 #include <iCub/emorph/vtsHelper.h>
+#include <yarp/dev/PolyDriver.h>
+#include <yarp/dev/GazeControl.h>
 #include "gaborfilters.h"
 
 class vDisparityManager : public yarp::os::BufferedPort<emorph::vBottle>
@@ -43,6 +45,11 @@ private:
     //filters
     std::vector<gaborfilter> filters;
     std::vector<double> filterweights;
+
+    //gaze controller
+    yarp::dev::PolyDriver gazedriver;
+    yarp::dev::IGazeControl *gazecontrol;
+
 
     int width;
     int height;

@@ -128,6 +128,7 @@ vDisparityManager::vDisparityManager(int width, int height, int nEvents, int num
     fifoLeft = new emorph::fixedSurface(nEvents, width, height);
     fifoRight = new emorph::fixedSurface(nEvents, width, height);
 
+	gazecontrol = 0;
 }
 /**********************************************************/
 bool vDisparityManager::open(const std::string &name, bool strictness)
@@ -153,6 +154,17 @@ bool vDisparityManager::open(const std::string &name, bool strictness)
     if(!debugOut.open("/"+name+"/debug:o"))
         return false;
 
+	yarp::os::Property options;
+    options.put("device", "gazecontrollerclient");
+    options.put("local", "/" + name);
+    options.put("remote", "/iKinGazeCtrl");
+    gazedriver.open(options);
+    if(gazedriver.isValid())
+        gazedriver.view(gazecontrol);
+    else
+        std::cerr << "Gaze Driver not opened and will not be used" << std::endl;
+
+
     return true;
 }
 
@@ -161,9 +173,16 @@ void vDisparityManager::close()
 {
     //close ports
     outPort.close();
+    yarp::os::BufferedPort<emorph::vBottle>::close();
     scopeOut.close();
     debugOut.close();
-    yarp::os::BufferedPort<emorph::vBottle>::close();
+
+    //close controller
+    if(gazedriver.isValid())
+    {
+        gazecontrol->stopControl();
+        gazedriver.close();
+    }
 
     //remember to also deallocate any memory allocated by this class
     delete fifoLeft;
@@ -176,9 +195,9 @@ void vDisparityManager::interrupt()
 {
     //pass on the interrupt call to everything needed
     outPort.interrupt();
+    yarp::os::BufferedPort<emorph::vBottle>::interrupt();
     scopeOut.interrupt();
     debugOut.interrupt();
-    yarp::os::BufferedPort<emorph::vBottle>::interrupt();
 
 }
 
