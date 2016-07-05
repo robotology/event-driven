@@ -128,7 +128,10 @@ vDisparityManager::vDisparityManager(int width, int height, int nEvents, int num
     fifoLeft = new emorph::fixedSurface(nEvents, width, height);
     fifoRight = new emorph::fixedSurface(nEvents, width, height);
 
-	gazecontrol = 0;
+//	gazecontrol = 0;
+    enccontrol = 0;
+    poscontrol = 0;
+    desiredvergence = 20;
 }
 /**********************************************************/
 bool vDisparityManager::open(const std::string &name, bool strictness)
@@ -154,15 +157,40 @@ bool vDisparityManager::open(const std::string &name, bool strictness)
     if(!debugOut.open("/" + name + "/debug:o"))
         return false;
 
+//    yarp::os::Property options;
+//    options.put("device", "gazecontrollerclient");
+//    options.put("local", "/" + name);
+//    options.put("remote", "/iKinGazeCtrl");
+//    gazedriver.open(options);
+//    if(gazedriver.isValid())
+//        gazedriver.view(gazecontrol);
+//    else
+//        std::cerr << "Gaze Driver not opened and will not be used" << std::endl;
+
     yarp::os::Property options;
-    options.put("device", "gazecontrollerclient");
-    options.put("local", "/" + name);
-    options.put("remote", "/iKinGazeCtrl");
-    gazedriver.open(options);
-    if(gazedriver.isValid())
-        gazedriver.view(gazecontrol);
-    else
-        std::cerr << "Gaze Driver not opened and will not be used" << std::endl;
+    options.put("robot", "icub");
+    options.put("device", "remote_controlboard");
+
+    yarp::os::Value& robotname = options.find("robot");
+    options.put("local", "/" + robotname.asString() + "/head/control");
+    options.put("remote", "/" + robotname.asString() + "/head");
+    encdriver.open(options);
+    if(encdriver.isValid())
+    {
+        encdriver.view(enccontrol);
+        encdriver.view(poscontrol);
+
+        poscontrol->setRefSpeed(5, 10);
+        poscontrol->positionMove(5, desiredvergence);
+        int joints = 0;
+        enccontrol->getAxes(&joints);
+        encs.resize(joints);
+    }
+        else
+    {
+        std::cerr << "Encoder driver not opened" << std::endl;
+    }
+
 
 
     return true;
@@ -177,12 +205,16 @@ void vDisparityManager::close()
     scopeOut.close();
     debugOut.close();
 
+//    //close controller
+//    if(gazedriver.isValid())
+//    {
+//        gazecontrol->stopControl();
+//        gazedriver.close();
+//    }
+
     //close controller
-    if(gazedriver.isValid())
-    {
-        gazecontrol->stopControl();
-        gazedriver.close();
-    }
+    if(encdriver.isValid())
+        encdriver.close();
 
     //remember to also deallocate any memory allocated by this class
     delete fifoLeft;
@@ -241,20 +273,71 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
 
     }
 
-//    yarp::sig::Vector angles(3);
+    double respsum = 0.0;
+    for(unsigned int i = 0; i < filters.size(); i++) {
+        if(filters[i].getResponse() > 0)
+            respsum += filterweights[i] * filters[i].getResponse();
+    }
+
+
 //    if(gazedriver.isValid())
 //    {
+//        yarp::sig::Vector angles(3);
 //        gazecontrol->getAngles(angles);
-//        std::cout << angles[0] << " " << angles[1] << " " << angles[2] << std::endl;
+//        //std::cout << angles[0] << " " << angles[1] << " " << angles[2] << std::endl;
+//        if(respsum > 100) {
+//            std::cout << "Trying to move: ";
+//            angles(2) = angles(2) + 1;
+//            std::cout << angles[0] << " " << angles[1] << " " << angles[2] << std::endl;
+//            yarp::sig::Vector pose(3); pose[0] = -1; pose[1] = 0.5; pose[2] = 0.4;
+//            gazecontrol->lookAtFixationPoint(pose);
+//            //if(!gazecontrol->lookAtAbsAngles(angles))
+//                //std::cout << "Error moving" << std::endl;
+//        } else if(respsum < -100) {
+//            angles(2) = angles(2) - 1;
+//            if(!gazecontrol->lookAtAbsAngles(angles))
+//                std::cout << "Error moving" << std::endl;
+//        }
 //    }
+
+    //static int i = 0;
+    if(encdriver.isValid())
+    {
+
+        enccontrol->getEncoders(encs.data());
+
+        desiredvergence  = encs[5] + respsum / 100;
+
+        if(abs(respsum) > 50) {
+            std::cout << "Trying to move to : " << desiredvergence << std::endl;
+            poscontrol->setRefSpeed(5, 100);
+            if(poscontrol->positionMove(5, desiredvergence))
+                std::cout << "Moved " << std::endl;
+            //bool motiondone = false;
+//            while(!motiondone)
+//                poscontrol->checkMotionDone(&motiondone);
+
+        }
+        //        if(respsum > 120) {
+//            std::cout << "Trying to verge in: ";
+//            std::cout << encs[5] + 1 << std::endl;
+//            if(poscontrol->positionMove(5, encs[5] + 1))
+//                std::cout << "Verged in " << std::endl;
+
+//        }
+//        else if(respsum < -120) {
+//            std::cout << "Trying to verge out: ";
+//            std::cout << encs[5] - 1 << std::endl;
+//            if(poscontrol->positionMove(5, encs[5] - 1))
+//                std::cout << "Verged out " << std::endl;
+//        }
+    }
 
     yarp::os::Bottle &scopebot = scopeOut.prepare();
     scopebot.clear();
-    double respsum = 0.0;
-
     for(unsigned int i = 0; i < filters.size(); i++) {
 
-        respsum += filterweights[i] * filters[i].getResponse();
+        //respsum += filterweights[i] * filters[i].getResponse();
         if(filters[i].getResponse() > 0)
             scopebot.addDouble(filters[i].getResponse());
         else
