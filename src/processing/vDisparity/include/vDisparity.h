@@ -26,6 +26,8 @@
 //#include <yarp/dev/GazeControl.h>
 #include <yarp/dev/IEncoders.h>
 #include <yarp/dev/IPositionControl.h>
+#include <yarp/dev/IVelocityControl.h>
+#include <yarp/dev/IControlMode2.h>
 #include "gaborfilters.h"
 
 class vDisparityManager : public yarp::os::BufferedPort<emorph::vBottle>
@@ -56,7 +58,10 @@ private:
     yarp::dev::PolyDriver encdriver;
     yarp::dev::IEncoders *enccontrol;
     yarp::dev::IPositionControl *poscontrol;
+    yarp::dev::IVelocityControl *velcontrol;
+    yarp::dev::IControlMode2 *controlmode;
     std::vector<double> encs;
+    std::vector<double> vels;
     double desiredvergence;
 
 

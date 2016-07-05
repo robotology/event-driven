@@ -130,8 +130,9 @@ vDisparityManager::vDisparityManager(int width, int height, int nEvents, int num
 
 //	gazecontrol = 0;
     enccontrol = 0;
-    poscontrol = 0;
-    desiredvergence = 20;
+//    poscontrol = 0;
+    velcontrol = 0;
+//    desiredvergence = 20;
 }
 /**********************************************************/
 bool vDisparityManager::open(const std::string &name, bool strictness)
@@ -178,19 +179,25 @@ bool vDisparityManager::open(const std::string &name, bool strictness)
     if(encdriver.isValid())
     {
         encdriver.view(enccontrol);
-        encdriver.view(poscontrol);
+//        encdriver.view(poscontrol);
+        encdriver.view(velcontrol);
+        encdriver.view(controlmode);
 
-        poscontrol->setRefSpeed(5, 10);
-        poscontrol->positionMove(5, desiredvergence);
+//        poscontrol->setRefSpeed(5, 10);
+//        poscontrol->positionMove(5, desiredvergence);
+
+//        velcontrol->setRefAcceleration(5, 50.0);
+//        velcontrol->setVelocityMode();
+        controlmode->setControlMode(5, VOCAB_CM_VELOCITY);
         int joints = 0;
         enccontrol->getAxes(&joints);
         encs.resize(joints);
+        vels.resize(joints);
     }
         else
     {
         std::cerr << "Encoder driver not opened" << std::endl;
     }
-
 
 
     return true;
@@ -300,37 +307,68 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
 //        }
 //    }
 
-    //static int i = 0;
+//    //static int i = 0;
+//    if(encdriver.isValid())
+//    {
+
+//        enccontrol->getEncoders(encs.data());
+
+//        desiredvergence  = encs[5] + respsum / 100;
+
+//        if(abs(respsum) > 50) {
+//            std::cout << "Trying to move to : " << desiredvergence << std::endl;
+//            poscontrol->setRefSpeed(5, 100);
+//            if(poscontrol->positionMove(5, desiredvergence))
+//                std::cout << "Motion done " << std::endl;
+//            //bool motiondone = false;
+////            while(!motiondone)
+////                poscontrol->checkMotionDone(&motiondone);
+
+//        }
+//        //        if(respsum > 120) {
+////            std::cout << "Trying to verge in: ";
+////            std::cout << encs[5] + 1 << std::endl;
+////            if(poscontrol->positionMove(5, encs[5] + 1))
+////                std::cout << "Verged in " << std::endl;
+
+////        }
+////        else if(respsum < -120) {
+////            std::cout << "Trying to verge out: ";
+////            std::cout << encs[5] - 1 << std::endl;
+////            if(poscontrol->positionMove(5, encs[5] - 1))
+////                std::cout << "Verged out " << std::endl;
+////        }
+//    }
+
+
+    double kp = 0.5;
     if(encdriver.isValid())
     {
 
-        enccontrol->getEncoders(encs.data());
+        if(abs(respsum) > 20) {
 
-        desiredvergence  = encs[5] + respsum / 100;
-
-        if(abs(respsum) > 50) {
-            std::cout << "Trying to move to : " << desiredvergence << std::endl;
-            poscontrol->setRefSpeed(5, 100);
-            if(poscontrol->positionMove(5, desiredvergence))
-                std::cout << "Moved " << std::endl;
-            //bool motiondone = false;
-//            while(!motiondone)
-//                poscontrol->checkMotionDone(&motiondone);
-
+            std::cout << "Controlling velocity to " << respsum * kp << std::endl;
+            if(velcontrol->velocityMove(5, respsum * kp))
+                std::cout << "Moving " << std::endl;
         }
-        //        if(respsum > 120) {
-//            std::cout << "Trying to verge in: ";
-//            std::cout << encs[5] + 1 << std::endl;
-//            if(poscontrol->positionMove(5, encs[5] + 1))
-//                std::cout << "Verged in " << std::endl;
+        else
+            velcontrol->velocityMove(5, 0);
 
+//        if(respsum > 40) {
+
+//            std::cout << "Controlling velocity to : 50 " << std::endl;
+//            if(velcontrol->velocityMove(5, 50))
+//                std::cout << "Moving" << std::endl;
 //        }
-//        else if(respsum < -120) {
-//            std::cout << "Trying to verge out: ";
-//            std::cout << encs[5] - 1 << std::endl;
-//            if(poscontrol->positionMove(5, encs[5] - 1))
-//                std::cout << "Verged out " << std::endl;
+//        else if(respsum < -40) {
+
+//            std::cout << "Controlling velocity : -50 " << std::endl;
+//            if(velcontrol->velocityMove(5, -50))
+//                std::cout << "Moving" << std::endl;
 //        }
+//        else
+//            velcontrol->velocityMove(5, 0);
+
     }
 
     yarp::os::Bottle &scopebot = scopeOut.prepare();
