@@ -91,8 +91,9 @@ vDisparityManager::vDisparityManager(int width, int height, int nEvents, int num
     //create the filterbank
     std::cout << "Initialising Filterbank" << std::endl;
     filters.resize(numberPhases);
+    filterweights.resize(numberPhases);
     std::cout << "Phases:";
-    for(int i = 0; i < numberPhases; i++) {
+    for(unsigned int i = 0; i < filters.size(); i++) {
         filters[i].setCenter(width/2, height/2);
         int lambda;
         if(numberPhases == 1)
@@ -100,15 +101,18 @@ vDisparityManager::vDisparityManager(int width, int height, int nEvents, int num
         else
             lambda = -maxDisparity + i * maxDisparity * 2.0 / (numberPhases - 1) + 0.5;
         filters[i].setParameters(sigma, stdsPerLambda, M_PI * 0.5, lambda);
+//        if(i == (filters.size() - 1) / 2)
+//            filterweights[i] = 0;
+//        else
+//            filterweights[i] = 2.0 / lambda; //lambda / 4.0;
         std::cout << " " << lambda;
     }
 
     std::cout << std::endl;
 
-
-    filterweights.resize(numberPhases);
     //create the filter weights
     //this needs to be more robust (i.e. use filter disparity to set weight)
+    std::cout << "Weights: ";
     for(unsigned int i = 0; i < filters.size(); i++) {
 
         if(i < (filters.size() - 1) / 2)
@@ -122,7 +126,10 @@ vDisparityManager::vDisparityManager(int width, int height, int nEvents, int num
             else
                 filterweights[i] = 1;
         }
+
+        std::cout << filterweights[i] << " ";
     }
+    std::cout << std::endl;
 
     //create the surface representations
     fifoLeft = new emorph::fixedSurface(nEvents, width, height);
@@ -133,6 +140,8 @@ vDisparityManager::vDisparityManager(int width, int height, int nEvents, int num
 //    poscontrol = 0;
     velcontrol = 0;
 //    desiredvergence = 20;
+
+    depth = 0;
 }
 /**********************************************************/
 bool vDisparityManager::open(const std::string &name, bool strictness)
@@ -158,15 +167,15 @@ bool vDisparityManager::open(const std::string &name, bool strictness)
     if(!debugOut.open("/" + name + "/debug:o"))
         return false;
 
-//    yarp::os::Property options;
-//    options.put("device", "gazecontrollerclient");
-//    options.put("local", "/" + name);
-//    options.put("remote", "/iKinGazeCtrl");
-//    gazedriver.open(options);
-//    if(gazedriver.isValid())
-//        gazedriver.view(gazecontrol);
-//    else
-//        std::cerr << "Gaze Driver not opened and will not be used" << std::endl;
+    yarp::os::Property optionsgaze;
+    optionsgaze.put("device", "gazecontrollerclient");
+    optionsgaze.put("local", "/" + name);
+    optionsgaze.put("remote", "/iKinGazeCtrl");
+    gazedriver.open(optionsgaze);
+    if(gazedriver.isValid())
+        gazedriver.view(gazecontrol);
+    else
+        std::cerr << "Gaze Driver not opened and will not be used" << std::endl;
 
     yarp::os::Property options;
     options.put("robot", "icub");
@@ -186,13 +195,11 @@ bool vDisparityManager::open(const std::string &name, bool strictness)
 //        poscontrol->setRefSpeed(5, 10);
 //        poscontrol->positionMove(5, desiredvergence);
 
-//        velcontrol->setRefAcceleration(5, 50.0);
 //        velcontrol->setVelocityMode();
         controlmode->setControlMode(5, VOCAB_CM_VELOCITY);
         int joints = 0;
         enccontrol->getAxes(&joints);
         encs.resize(joints);
-        vels.resize(joints);
     }
         else
     {
@@ -212,12 +219,12 @@ void vDisparityManager::close()
     scopeOut.close();
     debugOut.close();
 
-//    //close controller
-//    if(gazedriver.isValid())
-//    {
-//        gazecontrol->stopControl();
-//        gazedriver.close();
-//    }
+    //close controller
+    if(gazedriver.isValid())
+    {
+        gazecontrol->stopControl();
+        gazedriver.close();
+    }
 
     //close controller
     if(encdriver.isValid())
@@ -341,13 +348,34 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
 //    }
 
 
+    yarp::sig::Vector fp(3);
     double kp = 0.5;
     if(encdriver.isValid())
     {
 
-        std::cout << "Controlling velocity to " << respsum * kp << std::endl;
-        if(velcontrol->velocityMove(5, respsum * kp))
-            std::cout << "Moving " << std::endl;
+//        enccontrol->getEncoders(encs.data());
+
+//        if(encs[5] > 45) {
+//            std::cout << encs[5] << std::endl;
+//            std::cout << "Verging too much... " << std::endl;
+//            std::cout << "Reducing velocity to " << respsum * kp << std::endl;
+//            velcontrol->velocityMove(5, -respsum * kp);
+//        }
+//        else if(encs[5] < 5) {
+//            std::cout << "Current velocity "; // << respsum * kp << std::endl;
+//            std::cout << "Increasing velocity to " << respsum * kp << std::endl;
+//            velcontrol->velocityMove(5, respsum * kp);
+//        }
+//        else {
+            std::cout << "Controlling velocity to " << respsum * kp << std::endl;
+            if(velcontrol->velocityMove(5, respsum * kp)) {
+                //std::cout << "Moving... " << std::endl;
+                gazecontrol->getFixationPoint(fp);
+                depth = -fp(0) * 100;
+//                std::cout << fp(0) * 100 << " " << fp(1) * 100 << " " << fp(2) * 100 << std::endl;
+
+            }
+//        }
 
 //        if(abs(respsum) > 10) {
 
@@ -386,6 +414,7 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
             scopebot.addDouble(0.0);
     }
     scopebot.addDouble(respsum);
+    scopebot.addDouble(depth);
     scopeOut.write();
 
     static int i = 0;

@@ -23,7 +23,7 @@
 #include <iCub/emorph/all.h>
 #include <iCub/emorph/vtsHelper.h>
 #include <yarp/dev/PolyDriver.h>
-//#include <yarp/dev/GazeControl.h>
+#include <yarp/dev/GazeControl.h>
 #include <yarp/dev/IEncoders.h>
 #include <yarp/dev/IPositionControl.h>
 #include <yarp/dev/IVelocityControl.h>
@@ -50,19 +50,20 @@ private:
     std::vector<gaborfilter> filters;
     std::vector<double> filterweights;
 
-//    //gaze controller
-//    yarp::dev::PolyDriver gazedriver;
-//    yarp::dev::IGazeControl *gazecontrol;
+    //gaze controller
+    yarp::dev::PolyDriver gazedriver;
+    yarp::dev::IGazeControl *gazecontrol;
 
     //encoders controller
     yarp::dev::PolyDriver encdriver;
     yarp::dev::IEncoders *enccontrol;
-    yarp::dev::IPositionControl *poscontrol;
+//    yarp::dev::IPositionControl *poscontrol;
     yarp::dev::IVelocityControl *velcontrol;
     yarp::dev::IControlMode2 *controlmode;
     std::vector<double> encs;
-    std::vector<double> vels;
-    double desiredvergence;
+//    double desiredvergence;
+
+    double depth;
 
 
     int width;
