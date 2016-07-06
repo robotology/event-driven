@@ -34,7 +34,7 @@ bool vDisparityModule::configure(yarp::os::ResourceFinder &rf)
                                              rf.check("height", yarp::os::Value(128)).asInt(),
                                              rf.check("nEvents", yarp::os::Value(200)).asInt(),
                                              rf.check("ori", yarp::os::Value(1)).asInt(),
-                                             rf.check("phases", yarp::os::Value(5)).asInt(),
+                                             rf.check("phases", yarp::os::Value(7)).asInt(),
                                              rf.check("disparity", yarp::os::Value(14)).asInt(),
                                              rf.check("stdsperlambda", yarp::os::Value(6.0)).asDouble());
 
@@ -345,14 +345,18 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
     if(encdriver.isValid())
     {
 
-        if(abs(respsum) > 20) {
+        std::cout << "Controlling velocity to " << respsum * kp << std::endl;
+        if(velcontrol->velocityMove(5, respsum * kp))
+            std::cout << "Moving " << std::endl;
 
-            std::cout << "Controlling velocity to " << respsum * kp << std::endl;
-            if(velcontrol->velocityMove(5, respsum * kp))
-                std::cout << "Moving " << std::endl;
-        }
-        else
-            velcontrol->velocityMove(5, 0);
+//        if(abs(respsum) > 10) {
+
+//            std::cout << "Controlling velocity to " << respsum * kp << std::endl;
+//            if(velcontrol->velocityMove(5, respsum * kp))
+//                std::cout << "Moving " << std::endl;
+//        }
+//        else
+//            velcontrol->velocityMove(5, 0);
 
 //        if(respsum > 40) {
 
