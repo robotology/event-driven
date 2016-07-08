@@ -137,11 +137,12 @@ vDisparityManager::vDisparityManager(int width, int height, int nEvents, int num
 
 //	gazecontrol = 0;
     enccontrol = 0;
-//    poscontrol = 0;
+    poscontrol = 0;
     velcontrol = 0;
 //    desiredvergence = 20;
 
     depth = 0;
+    currvel = 0;
 }
 /**********************************************************/
 bool vDisparityManager::open(const std::string &name, bool strictness)
@@ -188,7 +189,7 @@ bool vDisparityManager::open(const std::string &name, bool strictness)
     if(encdriver.isValid())
     {
         encdriver.view(enccontrol);
-//        encdriver.view(poscontrol);
+        encdriver.view(poscontrol);
         encdriver.view(velcontrol);
         encdriver.view(controlmode);
 
@@ -350,32 +351,35 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
 
     yarp::sig::Vector fp(3);
     double kp = 0.5;
+
     if(encdriver.isValid())
     {
 
-//        enccontrol->getEncoders(encs.data());
-
-//        if(encs[5] > 45) {
+        enccontrol->getEncoders(encs.data());
+        if(encs[5] > 45) {
 //            std::cout << encs[5] << std::endl;
-//            std::cout << "Verging too much... " << std::endl;
-//            std::cout << "Reducing velocity to " << respsum * kp << std::endl;
-//            velcontrol->velocityMove(5, -respsum * kp);
-//        }
+            std::cout << "Verging too much... " << std::endl;
+            std::cout << "Current vel " << currvel << std::endl;
+//            std::cout << "Reducing velocity to " << - 5 << std::endl;
+            velcontrol->velocityMove(5, -5);
+
+        }
 //        else if(encs[5] < 5) {
 //            std::cout << "Current velocity "; // << respsum * kp << std::endl;
 //            std::cout << "Increasing velocity to " << respsum * kp << std::endl;
 //            velcontrol->velocityMove(5, respsum * kp);
 //        }
-//        else {
-            std::cout << "Controlling velocity to " << respsum * kp << std::endl;
+        else {
+//            std::cout << "Controlling velocity to " << respsum * kp << std::endl;
             if(velcontrol->velocityMove(5, respsum * kp)) {
                 //std::cout << "Moving... " << std::endl;
                 gazecontrol->getFixationPoint(fp);
-                depth = -fp(0) * 100;
+                currvel = respsum * kp;
+                depth = -fp(0) * 1000;
 //                std::cout << fp(0) * 100 << " " << fp(1) * 100 << " " << fp(2) * 100 << std::endl;
 
             }
-//        }
+        }
 
 //        if(abs(respsum) > 10) {
 
@@ -405,15 +409,15 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
 
     yarp::os::Bottle &scopebot = scopeOut.prepare();
     scopebot.clear();
-    for(unsigned int i = 0; i < filters.size(); i++) {
+//    for(unsigned int i = 0; i < filters.size(); i++) {
 
-        //respsum += filterweights[i] * filters[i].getResponse();
-        if(filters[i].getResponse() > 0)
-            scopebot.addDouble(filters[i].getResponse());
-        else
-            scopebot.addDouble(0.0);
-    }
-    scopebot.addDouble(respsum);
+//        //respsum += filterweights[i] * filters[i].getResponse();
+//        if(filters[i].getResponse() > 0)
+//            scopebot.addDouble(filters[i].getResponse());
+//        else
+//            scopebot.addDouble(0.0);
+//    }
+//    scopebot.addDouble(respsum);
     scopebot.addDouble(depth);
     scopeOut.write();
 

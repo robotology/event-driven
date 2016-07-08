@@ -57,11 +57,12 @@ private:
     //encoders controller
     yarp::dev::PolyDriver encdriver;
     yarp::dev::IEncoders *enccontrol;
-//    yarp::dev::IPositionControl *poscontrol;
+    yarp::dev::IPositionControl *poscontrol;
     yarp::dev::IVelocityControl *velcontrol;
     yarp::dev::IControlMode2 *controlmode;
     std::vector<double> encs;
 //    double desiredvergence;
+    double currvel;
 
     double depth;
 
