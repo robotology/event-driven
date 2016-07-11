@@ -183,6 +183,9 @@ bool vDisparityManager::open(const std::string &name, bool strictness)
     if(!scopeOut.open("/" + name + "/scope:o"))
         return false;
 
+    if(!scopeFiltersOut.open("/" + name + "/scopefilters:o"))
+        return false;
+
     if(!debugOut.open("/" + name + "/debug:o"))
         return false;
 
@@ -235,6 +238,7 @@ void vDisparityManager::close()
     outPort.close();
     yarp::os::BufferedPort<emorph::vBottle>::close();
     scopeOut.close();
+    scopeFiltersOut.close();
     debugOut.close();
 
     //close controller
@@ -261,6 +265,7 @@ void vDisparityManager::interrupt()
     outPort.interrupt();
     yarp::os::BufferedPort<emorph::vBottle>::interrupt();
     scopeOut.interrupt();
+    scopeFiltersOut.interrupt();
     debugOut.interrupt();
 
 }
@@ -441,16 +446,19 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
         scopebot.addInt((int)doVergence);
         scopeOut.write();
     }
-//    for(unsigned int i = 0; i < filters.size(); i++) {
 
-//        //respsum += filterweights[i] * filters[i].getResponse();
-//        if(filters[i].getResponse() > 0)
-//            scopebot.addDouble(filters[i].getResponse());
-//        else
-//            scopebot.addDouble(0.0);
-//    }
-//    scopebot.addDouble(respsum);
+    yarp::os::Bottle &scopefiltersbot = scopeFiltersOut.prepare();
+    scopefiltersbot.clear();
+    for(unsigned int i = 0; i < filters.size(); i++) {
 
+        //respsum += filterweights[i] * filters[i].getResponse();
+        if(filters[i].getResponse() > 0)
+            scopefiltersbot.addDouble(filters[i].getResponse());
+        else
+            scopefiltersbot.addDouble(0.0);
+    }
+    scopefiltersbot.addDouble(respsum);
+    scopeFiltersOut.write();
 
     static int i = 0;
     if(i % 10 == 0 && debugOut.getOutputCount()) {

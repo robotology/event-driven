@@ -39,6 +39,7 @@ private:
     //output port for the vBottle with the new events computed by the module
     yarp::os::BufferedPort<emorph::vBottle> outPort;
     yarp::os::BufferedPort<yarp::os::Bottle> scopeOut;
+    yarp::os::BufferedPort<yarp::os::Bottle> scopeFiltersOut;
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr> > debugOut;
 
     //representation for the events
