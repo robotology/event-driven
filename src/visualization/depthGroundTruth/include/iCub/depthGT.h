@@ -35,6 +35,7 @@ private:
     int roiSize;
     int roiX;
     int roiY;
+    int offset;
 
 public:
 
