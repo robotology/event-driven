@@ -71,7 +71,7 @@ bool depthgt::updateModule()
     for(int y = 0; y < roiSize; y++) {
         for(int x = 0; x < roiSize; x++) {
             roiim(x, y) = (*imin)(roiX + x - roiSize / 2, roiY + y - roiSize / 2);
-            if(roiim(x, y) > 480 && roiim(x, y) < 980) {
+            if(roiim(x, y) > 480 && roiim(x, y) < 1480) {
                 closest = std::min(closest, roiim(x, y));
             }
         }
