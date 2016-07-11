@@ -29,6 +29,7 @@ bool depthgt::configure(yarp::os::ResourceFinder &rf)
     roiSize = rf.check("roisize", yarp::os::Value(80)).asInt();
     roiY = rf.check("roiy", yarp::os::Value(120)).asInt();
     roiX = rf.check("roix", yarp::os::Value(220)).asInt();
+    offset = rf.check("offset", yarp::os::Value(-550)).asInt();
 
     if(!depthImIn.open("/"+getName()+"/depthim:i")) return false;
     if(!depthImOut.open("/"+getName()+"/depthim:o")) return false;
@@ -83,7 +84,7 @@ bool depthgt::updateModule()
     std::cout << closest << std::endl;
     if(closest != 65535) {
         yarp::os::Bottle &gtval = depthOut.prepare();
-        gtval.clear(); gtval.addInt(closest);
+        gtval.clear(); gtval.addInt(closest + offset);
         depthOut.write();
     }
 
