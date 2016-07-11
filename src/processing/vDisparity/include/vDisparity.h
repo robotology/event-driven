@@ -66,14 +66,19 @@ private:
 
     double depth;
 
-
     int width;
     int height;
     int winsize;
 
+    //flag to start the vergence
+    bool doVergence;
+
 public:
 
     vDisparityManager(int width, int height, int nEvents, int numberOri, int numberPhases, int maxDisparity, double stdsPerLambda);
+
+    void startVerging();
+    void resetVergence();
 
     bool    open(const std::string &name, bool strictness);
     void    close();
@@ -86,9 +91,12 @@ public:
 
 class vDisparityModule : public yarp::os::RFModule
 {
+    //rpc port
+    yarp::os::RpcServer rpcOut;
 
     //the event bottle input and output handler
     vDisparityManager      *disparityManager;
+
 
 
 public:

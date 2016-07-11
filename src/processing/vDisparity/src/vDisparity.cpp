@@ -29,6 +29,13 @@ bool vDisparityModule::configure(yarp::os::ResourceFinder &rf)
     bool strict = rf.check("strict") &&
             rf.check("strict", yarp::os::Value(true)).asBool();
 
+    //open rpc port
+    if(!rpcOut.open("/" + getName() + "/rpctrigger:i"))
+        return false;
+
+    //make the respond method of this RF module respond to the rpcPort
+    attach(rpcOut);
+
     /* create the thread and pass pointers to the module parameters */
     disparityManager = new vDisparityManager(rf.check("width", yarp::os::Value(128)).asInt(),
                                              rf.check("height", yarp::os::Value(128)).asInt(),
@@ -44,6 +51,7 @@ bool vDisparityModule::configure(yarp::os::ResourceFinder &rf)
 /**********************************************************/
 bool vDisparityModule::interruptModule()
 {
+    rpcOut.interrupt();
     disparityManager->interrupt();
     yarp::os::RFModule::interruptModule();
     return true;
@@ -52,6 +60,7 @@ bool vDisparityModule::interruptModule()
 /**********************************************************/
 bool vDisparityModule::close()
 {
+    rpcOut.close();
     disparityManager->close();
     yarp::os::RFModule::close();
     return true;
@@ -72,7 +81,15 @@ double vDisparityModule::getPeriod()
 bool vDisparityModule::respond(const yarp::os::Bottle &command,
                               yarp::os::Bottle &reply)
 {
-    //fill in all command/response plus module update methods here
+    if (command.get(0).asString() == "start") {
+        reply.addString("Starting Verging...");
+        this->disparityManager->startVerging();
+   }
+    else if (command.get(0).asString() == "reset") {
+        reply.addString("Resetting...");
+        this->disparityManager->resetVergence();
+
+    }
     return true;
 }
 
@@ -83,6 +100,8 @@ vDisparityManager::vDisparityManager(int width, int height, int nEvents, int num
     this->width = width;
     this->height = height;
     this->winsize = maxDisparity * 8.0 / 3.0;
+
+    doVergence = true;
 
     //enforce an odd number of phases
     numberPhases = 2 * (numberPhases / 2) + 1;
@@ -135,9 +154,9 @@ vDisparityManager::vDisparityManager(int width, int height, int nEvents, int num
     fifoLeft = new emorph::fixedSurface(nEvents, width, height);
     fifoRight = new emorph::fixedSurface(nEvents, width, height);
 
-//	gazecontrol = 0;
+    gazecontrol = 0;
     enccontrol = 0;
-//    poscontrol = 0;
+    poscontrol = 0;
     velcontrol = 0;
 //    desiredvergence = 20;
 
@@ -188,15 +207,14 @@ bool vDisparityManager::open(const std::string &name, bool strictness)
     if(encdriver.isValid())
     {
         encdriver.view(enccontrol);
-//        encdriver.view(poscontrol);
+        encdriver.view(poscontrol);
         encdriver.view(velcontrol);
         encdriver.view(controlmode);
 
 //        poscontrol->setRefSpeed(5, 10);
 //        poscontrol->positionMove(5, desiredvergence);
 
-//        velcontrol->setVelocityMode();
-        controlmode->setControlMode(5, VOCAB_CM_VELOCITY);
+//        controlmode->setControlMode(5, VOCAB_CM_VELOCITY);
         int joints = 0;
         enccontrol->getAxes(&joints);
         encs.resize(joints);
@@ -348,16 +366,16 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
 //    }
 
 
-    yarp::sig::Vector fp(3);
+//    yarp::sig::Vector fp(3);
 //    yarp::sig::Vector ang(6);
-    double kp = 0.5;
+    double kp = 0.2;
 
-    if(encdriver.isValid())
+    if(encdriver.isValid() && doVergence)
     {
 
         enccontrol->getEncoders(encs.data());
 
-        if(encs[5] > 45.0 && respsum > 0.0) {
+        if(encs[5] > 47 && respsum > 0.0) {
             //            std::cout << "Verging too much... " << std::endl;
             respsum = 0;
         }
@@ -367,7 +385,11 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
             respsum = 0;
         }
 
-        if(velcontrol->velocityMove(5, respsum * kp)) {
+        double cvel = respsum * kp;
+//        if(fabs(cvel) < 10) {
+//            cvel = cvel / fabs(cvel) * 10;
+//        }
+        if(velcontrol->velocityMove(5, cvel)) {
             //            std::cout << "Moving at " << respsum * kp << std::endl;
             //            gazecontrol->getAngles(ang);
             //            gazecontrol->get3DPointFromAngles(0, ang, fp);
@@ -409,12 +431,14 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
 
         yarp::sig::Vector ang(6);
         gazecontrol->getAngles(ang);
+//        std::cout << ang.toString() << std::endl;
 
-        depth = 220 / (2*tan(ang[5] * M_PI / 180.0));
+        depth = 220 / (2*tan(ang[2] * M_PI / 180.0));
 
         //depth = -fp(0) * 1000;
         scopebot.clear();
         scopebot.addDouble(depth);
+        scopebot.addInt((int)doVergence);
         scopeOut.write();
     }
 //    for(unsigned int i = 0; i < filters.size(); i++) {
@@ -459,6 +483,25 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
 //        outPort.writeStrict();
 //    else
 //        outPort.write();
+
+}
+
+void vDisparityManager::startVerging() {
+
+    doVergence = true;
+    if(encdriver.isValid()) {
+        controlmode->setControlMode(5, VOCAB_CM_VELOCITY);
+    }
+
+}
+void vDisparityManager::resetVergence() {
+
+    doVergence = false;
+    if(encdriver.isValid()) {
+        controlmode->setControlMode(5, VOCAB_CM_POSITION);
+        poscontrol->positionMove(5, 20);
+    }
+
 
 }
 
