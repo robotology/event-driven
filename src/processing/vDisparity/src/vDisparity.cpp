@@ -358,54 +358,65 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
         enccontrol->getEncoders(encs.data());
 
         if(encs[5] > 45.0 && respsum > 0.0) {
-//            std::cout << "Verging too much... " << std::endl;
+            //            std::cout << "Verging too much... " << std::endl;
             respsum = 0;
         }
 
         if(encs[5] < 5.0 && respsum < 0.0) {
-//            std::cout << "Diverging too much... " << std::endl;
+            //            std::cout << "Diverging too much... " << std::endl;
             respsum = 0;
         }
 
-            if(velcontrol->velocityMove(5, respsum * kp)) {
-//            std::cout << "Moving at " << respsum * kp << std::endl;
-//            gazecontrol->getAngles(ang);
-//            gazecontrol->get3DPointFromAngles(0, ang, fp);
+        if(velcontrol->velocityMove(5, respsum * kp)) {
+            //            std::cout << "Moving at " << respsum * kp << std::endl;
+            //            gazecontrol->getAngles(ang);
+            //            gazecontrol->get3DPointFromAngles(0, ang, fp);
 
-            gazecontrol->getFixationPoint(fp);
-            depth = -fp(0) * 1000;
-//            std::cout << fp(0) * 1000 << " " << fp(1) * 100 << " " << fp(2) * 100 << std::endl;
 
-            }
+            //            std::cout << fp(0) * 1000 << " " << fp(1) * 100 << " " << fp(2) * 100 << std::endl;
 
-//        if(abs(respsum) > 10) {
+        }
 
-//            std::cout << "Controlling velocity to " << respsum * kp << std::endl;
-//            if(velcontrol->velocityMove(5, respsum * kp))
-//                std::cout << "Moving " << std::endl;
-//        }
-//        else
-//            velcontrol->velocityMove(5, 0);
+        //        if(abs(respsum) > 10) {
 
-//        if(respsum > 20) {
+        //            std::cout << "Controlling velocity to " << respsum * kp << std::endl;
+        //            if(velcontrol->velocityMove(5, respsum * kp))
+        //                std::cout << "Moving " << std::endl;
+        //        }
+        //        else
+        //            velcontrol->velocityMove(5, 0);
 
-//            std::cout << "Controlling velocity to : 50 " << std::endl;
-//            if(velcontrol->velocityMove(5, 50))
-//                std::cout << "Moving" << std::endl;
-//        }
-//        else if(respsum < -20) {
+        //        if(respsum > 20) {
 
-//            std::cout << "Controlling velocity : -50 " << std::endl;
-//            if(velcontrol->velocityMove(5, -50))
-//                std::cout << "Moving" << std::endl;
-//        }
-//        else
-//            velcontrol->velocityMove(5, 0);
+        //            std::cout << "Controlling velocity to : 50 " << std::endl;
+        //            if(velcontrol->velocityMove(5, 50))
+        //                std::cout << "Moving" << std::endl;
+        //        }
+        //        else if(respsum < -20) {
+
+        //            std::cout << "Controlling velocity : -50 " << std::endl;
+        //            if(velcontrol->velocityMove(5, -50))
+        //                std::cout << "Moving" << std::endl;
+        //        }
+        //        else
+        //            velcontrol->velocityMove(5, 0);
 
     }
 
-    yarp::os::Bottle &scopebot = scopeOut.prepare();
-    scopebot.clear();
+    if(gazedriver.isValid()) {
+        yarp::os::Bottle &scopebot = scopeOut.prepare();
+        //gazecontrol->getFixationPoint(fp);
+
+        yarp::sig::Vector ang(6);
+        gazecontrol->getAngles(ang);
+
+        depth = 220 / (2*tan(ang[5] * M_PI / 180.0));
+
+        //depth = -fp(0) * 1000;
+        scopebot.clear();
+        scopebot.addDouble(depth);
+        scopeOut.write();
+    }
 //    for(unsigned int i = 0; i < filters.size(); i++) {
 
 //        //respsum += filterweights[i] * filters[i].getResponse();
@@ -415,8 +426,7 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
 //            scopebot.addDouble(0.0);
 //    }
 //    scopebot.addDouble(respsum);
-    scopebot.addDouble(depth);
-    scopeOut.write();
+
 
     static int i = 0;
     if(i % 10 == 0 && debugOut.getOutputCount()) {
