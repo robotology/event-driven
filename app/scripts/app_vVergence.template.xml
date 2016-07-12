@@ -1,0 +1,62 @@
+<application>
+<name> vVergence </name>
+
+<module>
+    <name> depthGT </name>
+    <node> localhost </node>
+</module>
+
+<module>
+    <name> vDisparity </name>
+    <node> localhost </node>
+</module>
+
+<module>
+    <name> yarpdatadumper </name>
+    <parameters> --name /depthgt --connect /depthgt/gt:o --rxTime </parameters>
+    <node> localhost </node>
+</module>
+
+<module>
+    <name> yarpdatadumper </name>
+    <parameters> --name /computeddepth --connect /vDisparity/scope:o --rxTime </parameters>
+    <node> localhost </node>
+</module>
+
+<module>
+    <name> yarpscope </name>
+    <parameters> --xml vergenceConf.xml </parameters>
+    <node> localhost </node>
+</module>
+
+<module>
+    <name> yarpview </name>
+    <parameters> --name /viewGT </parameters>
+    <node> localhost </node>
+</module>
+
+<module>
+    <name> yarpview </name>
+    <parameters> --name /viewDebug </parameters>
+    <node> localhost </node>
+</module>
+
+<connection>
+  <from>/zynqGrabber/vBottle:o</from>
+  <to>/vDisparity/vBottle:i</to>
+  <protocol>tcp</protocol>
+</connection>
+
+<connection>
+  <from>/vDisparity/debug:o</from>
+  <to>/viewDebug </to>
+  <protocol>tcp</protocol>
+</connection>
+
+<connection>
+  <from>/depthgt/depthim:o</from>
+  <to>/viewGT </to>
+  <protocol>tcp</protocol>
+</connection>
+
+</application>
