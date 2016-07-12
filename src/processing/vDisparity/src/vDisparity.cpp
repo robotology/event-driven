@@ -217,7 +217,7 @@ bool vDisparityManager::open(const std::string &name, bool strictness)
 //        poscontrol->setRefSpeed(5, 10);
 //        poscontrol->positionMove(5, desiredvergence);
 
-//        controlmode->setControlMode(5, VOCAB_CM_VELOCITY);
+        controlmode->setControlMode(5, VOCAB_CM_VELOCITY);
         int joints = 0;
         enccontrol->getAxes(&joints);
         encs.resize(joints);
