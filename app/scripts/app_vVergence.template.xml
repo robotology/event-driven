@@ -30,6 +30,12 @@
 </module>
 
 <module>
+    <name> yarpscope </name>
+    <parameters> --xml filtersConf.xml </parameters>
+    <node> localhost </node>
+</module>
+
+<module>
     <name> yarpview </name>
     <parameters> --name /viewGT </parameters>
     <node> localhost </node>
