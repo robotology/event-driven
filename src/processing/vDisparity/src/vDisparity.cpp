@@ -40,7 +40,7 @@ bool vDisparityModule::configure(yarp::os::ResourceFinder &rf)
     disparityManager = new vDisparityManager(rf.check("width", yarp::os::Value(128)).asInt(),
                                              rf.check("height", yarp::os::Value(128)).asInt(),
                                              rf.check("nEvents", yarp::os::Value(200)).asInt(),
-                                             rf.check("ori", yarp::os::Value(1)).asInt(),
+                                             rf.check("ori", yarp::os::Value(2)).asInt(),
                                              rf.check("phases", yarp::os::Value(7)).asInt(),
                                              rf.check("disparity", yarp::os::Value(14)).asInt(),
                                              rf.check("stdsperlambda", yarp::os::Value(6.0)).asDouble());
@@ -100,6 +100,8 @@ vDisparityManager::vDisparityManager(int width, int height, int nEvents, int num
     this->width = width;
     this->height = height;
     this->winsize = maxDisparity * 8.0 / 3.0;
+    this->numberOri = numberOri;
+    this->numberPhases = numberPhases;
 
     doVergence = true;
 
@@ -108,47 +110,75 @@ vDisparityManager::vDisparityManager(int width, int height, int nEvents, int num
     double sigma = maxDisparity * 8.0 / (stdsPerLambda * 3.0);
 
     //create the filterbank
-    std::cout << "Initialising Filterbank" << std::endl;
-    filters.resize(numberPhases);
-    filterweights.resize(numberPhases);
-    std::cout << "Phases:";
-    for(unsigned int i = 0; i < filters.size(); i++) {
-        filters[i].setCenter(width/2, height/2);
-        int lambda;
-        if(numberPhases == 1)
-            lambda = 0;
-        else
-            lambda = -maxDisparity + i * maxDisparity * 2.0 / (numberPhases - 1) + 0.5;
-        filters[i].setParameters(sigma, stdsPerLambda, M_PI * 0.5, lambda);
-//        if(i == (filters.size() - 1) / 2)
-//            filterweights[i] = 0;
-//        else
-//            filterweights[i] = lambda / 4.0; // 2.0 / lambda;
-        std::cout << " " << lambda;
-    }
+    std::cout << "Initialising Filterbank..." << std::endl;
 
-    std::cout << std::endl;
+    filters.resize(numberOri * numberPhases);
+    filterweights.resize(numberOri * numberPhases);
 
-    //create the filter weights
-    //this needs to be more robust (i.e. use filter disparity to set weight)
-    std::cout << "Weights: ";
-    for(unsigned int i = 0; i < filters.size(); i++) {
-
-        if(i < (filters.size() - 1) / 2)
-        {
-            filterweights[i] = -1;
-        }
-        else
-        {
-            if(i == (filters.size() - 1) / 2)
-                filterweights[i] = 0;
+    for(int i = 0; i < numberOri; i++) {
+        std::cout << "Orientation " << (i * 180)/ numberOri << " with Phases (Weights): " << std::endl;
+        for(int j = 0; j < numberPhases; j++) {
+            filters[j + i * numberPhases].setCenter(width/2, height/2);
+            int lambda;
+            if(numberPhases == 1)
+                lambda = 0;
             else
-                filterweights[i] = 1;
-        }
+                lambda = -maxDisparity + j * maxDisparity * 2.0 / (numberPhases - 1) + 0.5;
+            filters[j + i * numberPhases].setParameters(sigma, stdsPerLambda, (M_PI * i) / numberOri, lambda);
+             std::cout << lambda;
 
-        std::cout << filterweights[i] << " ";
+             //create the filter weights
+             if(j < (numberPhases - 1) / 2)
+                 filterweights[j + i * numberPhases] = -1;
+             else if(j == (numberPhases - 1) / 2)
+                 filterweights[j + i * numberPhases] = 0;
+             else
+                 filterweights[j + i * numberPhases] = 1;
+             std::cout << " (" << filterweights[j + i * numberPhases] << ") ";
+        }
+        std::cout << std::endl << std::endl;
     }
-    std::cout << std::endl;
+
+//    filters.resize(numberPhases);
+//    filterweights.resize(numberPhases);
+//    std::cout << "Phases:";
+//    for(unsigned int i = 0; i < filters.size(); i++) {
+//        filters[i].setCenter(width/2, height/2);
+//        int lambda;
+//        if(numberPhases == 1)
+//            lambda = 0;
+//        else
+//            lambda = -maxDisparity + i * maxDisparity * 2.0 / (numberPhases - 1) + 0.5;
+//        filters[i].setParameters(sigma, stdsPerLambda, M_PI * 0.5, lambda);
+////        if(i == (filters.size() - 1) / 2)
+////            filterweights[i] = 0;
+////        else
+////            filterweights[i] = lambda / 4.0; // 2.0 / lambda;
+//        std::cout << " " << lambda;
+//    }
+
+//    std::cout << std::endl;
+
+//    //create the filter weights
+//    //this needs to be more robust (i.e. use filter disparity to set weight)
+//    std::cout << "Weights: ";
+//    for(unsigned int i = 0; i < filters.size(); i++) {
+
+//        if(i < (filters.size() - 1) / 2)
+//        {
+//            filterweights[i] = -1;
+//        }
+//        else
+//        {
+//            if(i == (filters.size() - 1) / 2)
+//                filterweights[i] = 0;
+//            else
+//                filterweights[i] = 1;
+//        }
+
+//        std::cout << filterweights[i] << " ";
+//    }
+//    std::cout << std::endl;
 
     //create the surface representations
     fifoLeft = new emorph::fixedSurface(nEvents, width, height);
@@ -311,10 +341,18 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
     }
 
     double respsum = 0.0;
-    for(unsigned int i = 0; i < filters.size(); i++) {
-        if(filters[i].getResponse() > 0)
-            respsum += filterweights[i] * filters[i].getResponse();
+    for(int i = 0; i < numberOri; i++) {
+        for(int j = 0; j < numberPhases; j++) {
+            if(filters[j + i * numberPhases].getResponse() > 0)
+                respsum += filterweights[j + i * numberPhases] * filters[j + i * numberPhases].getResponse();
+        }
     }
+
+//    double respsum = 0.0;
+//    for(unsigned int i = 0; i < filters.size(); i++) {
+//        if(filters[i].getResponse() > 0)
+//            respsum += filterweights[i] * filters[i].getResponse();
+//    }
 
 
 //    if(gazedriver.isValid())
@@ -449,16 +487,29 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
 
     yarp::os::Bottle &scopefiltersbot = scopeFiltersOut.prepare();
     scopefiltersbot.clear();
-    for(unsigned int i = 0; i < filters.size(); i++) {
-
-        //respsum += filterweights[i] * filters[i].getResponse();
-        if(filters[i].getResponse() > 0)
-            scopefiltersbot.addDouble(filters[i].getResponse());
-        else
-            scopefiltersbot.addDouble(0.0);
+    for(int i = 0; i < numberOri; i++) {
+        for(int j = 0; j < numberPhases; j++) {
+            if(filters[j + i * numberPhases].getResponse() > 0)
+                scopefiltersbot.addDouble(filters[j + i * numberPhases].getResponse());
+            else
+                scopefiltersbot.addDouble(0.0);
+        }
     }
     scopefiltersbot.addDouble(respsum);
     scopeFiltersOut.write();
+
+//    yarp::os::Bottle &scopefiltersbot = scopeFiltersOut.prepare();
+//    scopefiltersbot.clear();
+//    for(unsigned int i = 0; i < filters.size(); i++) {
+
+//        //respsum += filterweights[i] * filters[i].getResponse();
+//        if(filters[i].getResponse() > 0)
+//            scopefiltersbot.addDouble(filters[i].getResponse());
+//        else
+//            scopefiltersbot.addDouble(0.0);
+//    }
+//    scopefiltersbot.addDouble(respsum);
+//    scopeFiltersOut.write();
 
     static int i = 0;
     if(i % 10 == 0 && debugOut.getOutputCount()) {

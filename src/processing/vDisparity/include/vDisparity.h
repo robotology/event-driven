@@ -70,6 +70,8 @@ private:
     int width;
     int height;
     int winsize;
+    int numberOri;
+    int numberPhases;
 
     //flag to start the vergence
     bool doVergence;
