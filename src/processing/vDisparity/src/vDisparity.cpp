@@ -43,7 +43,8 @@ bool vDisparityModule::configure(yarp::os::ResourceFinder &rf)
                                              rf.check("ori", yarp::os::Value(2)).asInt(),
                                              rf.check("phases", yarp::os::Value(7)).asInt(),
                                              rf.check("disparity", yarp::os::Value(14)).asInt(),
-                                             rf.check("stdsperlambda", yarp::os::Value(6.0)).asDouble());
+                                             rf.check("stdsperlambda", yarp::os::Value(6.0)).asDouble(),
+                                             rf.check("threshold", yarp::os::Value(0.0)).asDouble());
 
     return disparityManager->open(getName(), strict);
 }
@@ -95,13 +96,14 @@ bool vDisparityModule::respond(const yarp::os::Bottle &command,
 
 
 /**********************************************************/
-vDisparityManager::vDisparityManager(int width, int height, int nEvents, int numberOri, int numberPhases, int maxDisparity, double stdsPerLambda)
+vDisparityManager::vDisparityManager(int width, int height, int nEvents, int numberOri, int numberPhases, int maxDisparity, double stdsPerLambda, double threshold)
 {
     this->width = width;
     this->height = height;
     this->winsize = maxDisparity * 8.0 / 3.0;
     this->numberOri = numberOri;
     this->numberPhases = numberPhases;
+    this->threshold = threshold;
 
     doVergence = true;
 
@@ -343,7 +345,7 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
     double respsum = 0.0;
     for(int i = 0; i < numberOri; i++) {
         for(int j = 0; j < numberPhases; j++) {
-            if(filters[j + i * numberPhases].getResponse() > 0)
+            if(filters[j + i * numberPhases].getResponse() > threshold)
                 respsum += filterweights[j + i * numberPhases] * filters[j + i * numberPhases].getResponse();
         }
     }

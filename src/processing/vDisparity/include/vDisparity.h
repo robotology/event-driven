@@ -72,13 +72,14 @@ private:
     int winsize;
     int numberOri;
     int numberPhases;
+    double threshold;
 
     //flag to start the vergence
     bool doVergence;
 
 public:
 
-    vDisparityManager(int width, int height, int nEvents, int numberOri, int numberPhases, int maxDisparity, double stdsPerLambda);
+    vDisparityManager(int width, int height, int nEvents, int numberOri, int numberPhases, int maxDisparity, double stdsPerLambda, double threshold);
 
     void startVerging();
     void resetVergence();
