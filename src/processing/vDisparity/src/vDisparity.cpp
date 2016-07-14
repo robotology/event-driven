@@ -343,12 +343,18 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
     }
 
     double respsum = 0.0;
+    double totale = 0.0;
     for(int i = 0; i < numberOri; i++) {
         for(int j = 0; j < numberPhases; j++) {
             if(filters[j + i * numberPhases].getResponse() > threshold)
+            {
                 respsum += filterweights[j + i * numberPhases] * filters[j + i * numberPhases].getResponse();
+                totale  += filters[j + i * numberPhases].getResponse();
+            }
         }
     }
+
+    respsum = (respsum * numberOri * numberPhases) / totale;
 
 //    double respsum = 0.0;
 //    for(unsigned int i = 0; i < filters.size(); i++) {
@@ -413,7 +419,7 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
 
 //    yarp::sig::Vector fp(3);
 //    yarp::sig::Vector ang(6);
-    double kp = 0.2;
+    double kp = 20; // 0.2;
 
     if(encdriver.isValid() && doVergence)
     {
