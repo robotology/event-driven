@@ -40,7 +40,7 @@ bool vDisparityModule::configure(yarp::os::ResourceFinder &rf)
     disparityManager = new vDisparityManager(rf.check("width", yarp::os::Value(128)).asInt(),
                                              rf.check("height", yarp::os::Value(128)).asInt(),
                                              rf.check("nEvents", yarp::os::Value(200)).asInt(),
-                                             rf.check("ori", yarp::os::Value(2)).asInt(),
+                                             rf.check("ori", yarp::os::Value(1)).asInt(),
                                              rf.check("phases", yarp::os::Value(7)).asInt(),
                                              rf.check("disparity", yarp::os::Value(14)).asInt(),
                                              rf.check("stdsperlambda", yarp::os::Value(6.0)).asDouble(),
@@ -117,8 +117,20 @@ vDisparityManager::vDisparityManager(int width, int height, int nEvents, int num
     filters.resize(numberOri * numberPhases);
     filterweights.resize(numberOri * numberPhases);
 
+    double minAngle = M_PI / 4;
+    double maxAngle = 3 * M_PI / 4;
+    double deltaAngle = (maxAngle - minAngle) / (numberOri - 1);
     for(int i = 0; i < numberOri; i++) {
-        std::cout << "Orientation " << (i * 180)/ numberOri << " with Phases (Weights): " << std::endl;
+
+        double scaledtheta;
+        if(numberOri == 1) {
+            scaledtheta = M_PI / 2;
+        }
+        else {
+            scaledtheta = minAngle + i * deltaAngle;
+        }
+
+        std::cout << "Orientation " << scaledtheta * (180 / M_PI) << " with Phases (Weights): " << std::endl;
         for(int j = 0; j < numberPhases; j++) {
             filters[j + i * numberPhases].setCenter(width/2, height/2);
             int lambda;
@@ -126,7 +138,8 @@ vDisparityManager::vDisparityManager(int width, int height, int nEvents, int num
                 lambda = 0;
             else
                 lambda = -maxDisparity + j * maxDisparity * 2.0 / (numberPhases - 1) + 0.5;
-            filters[j + i * numberPhases].setParameters(sigma, stdsPerLambda, (M_PI * i) / numberOri, lambda);
+            filters[j + i * numberPhases].setParameters(sigma, stdsPerLambda, scaledtheta, lambda);
+
              std::cout << lambda;
 
              //create the filter weights
@@ -137,6 +150,7 @@ vDisparityManager::vDisparityManager(int width, int height, int nEvents, int num
              else
                  filterweights[j + i * numberPhases] = 1;
              std::cout << " (" << filterweights[j + i * numberPhases] << ") ";
+
         }
         std::cout << std::endl << std::endl;
     }
