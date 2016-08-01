@@ -74,6 +74,7 @@ private:
     int numberPhases;
     double threshold;
 
+    double totweights;
     double error_d;
     double errorPrev;
     double kp;

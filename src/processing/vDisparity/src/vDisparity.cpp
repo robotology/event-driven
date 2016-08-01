@@ -129,6 +129,7 @@ vDisparityManager::vDisparityManager(int width, int height, int nEvents, int num
     filters.resize(numberOri * numberPhases);
     filterweights.resize(numberOri * numberPhases);
 
+    totweights = 0;
     double minAngle = M_PI / 4;
     double maxAngle = 3 * M_PI / 4;
     double deltaAngle = (maxAngle - minAngle) / (numberOri - 1);
@@ -155,12 +156,19 @@ vDisparityManager::vDisparityManager(int width, int height, int nEvents, int num
              std::cout << lambda;
 
              //create the filter weights
+//             if(j == (numberPhases - 1) / 2)
+//                 filterweights[j + i * numberPhases] = 0;
+//             else
+//                 filterweights[j + i * numberPhases] = lambda / 2.0; // 4.0 / lambda;
+
              if(j < (numberPhases - 1) / 2)
                  filterweights[j + i * numberPhases] = -1;
              else if(j == (numberPhases - 1) / 2)
                  filterweights[j + i * numberPhases] = 0;
              else
                  filterweights[j + i * numberPhases] = 1;
+
+             totweights += fabs(filterweights[j + i * numberPhases]);
              std::cout << " (" << filterweights[j + i * numberPhases] << ") ";
 
         }
