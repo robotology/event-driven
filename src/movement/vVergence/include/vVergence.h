@@ -15,8 +15,8 @@
  * Public License for more details
  */
 
-#ifndef __VDISPARITY__
-#define __VDISPARITY__
+#ifndef __VVERGENCE__
+#define __VVERGENCE__
 
 #include <yarp/os/all.h>
 #include <yarp/sig/all.h>
@@ -30,7 +30,7 @@
 #include <yarp/dev/IControlMode2.h>
 #include "gaborfilters.h"
 
-class vDisparityManager : public yarp::os::BufferedPort<emorph::vBottle>
+class vVergenceManager : public yarp::os::BufferedPort<emorph::vBottle>
 {
 private:
 
@@ -85,7 +85,7 @@ private:
 
 public:
 
-    vDisparityManager(int width, int height, int nEvents, int numberOri, int numberPhases, int maxDisparity, double stdsPerLambda, double threshold);
+    vVergenceManager(int width, int height, int nEvents, int numberOri, int numberPhases, int maxDisparity, double stdsPerLambda, double threshold);
 
     void startVerging();
     void resetVergence();
@@ -102,13 +102,13 @@ public:
 
 };
 
-class vDisparityModule : public yarp::os::RFModule
+class vVergenceModule : public yarp::os::RFModule
 {
     //rpc port
     yarp::os::RpcServer rpcOut;
 
     //the event bottle input and output handler
-    vDisparityManager      *disparityManager;
+    vVergenceManager      *vergenceManager;
 
 
 

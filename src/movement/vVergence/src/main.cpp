@@ -16,7 +16,7 @@
  */
 
 
-#include "vDisparity.h"
+#include "vVergence.h"
 
 int main(int argc, char * argv[])
 {
@@ -24,7 +24,7 @@ int main(int argc, char * argv[])
     yarp::os::Network::init();
 
     /* create the module */
-    vDisparityModule vDisparityModuleInstance;
+    vVergenceModule vVergenceModuleInstance;
 
     /* prepare and configure the resource finder */
     yarp::os::ResourceFinder rf;
@@ -34,7 +34,7 @@ int main(int argc, char * argv[])
     rf.configure( argc, argv );
 
     /* run the module: runModule() calls configure first and, if successful, it then runs */
-    vDisparityModuleInstance.runModule(rf);
+    vVergenceModuleInstance.runModule(rf);
     yarp::os::Network::fini();
 
     return 0;

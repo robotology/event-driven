@@ -15,15 +15,13 @@
  * Public License for more details
  */
 
-#include "vDisparity.h"
+#include "vVergence.h"
 
 /**********************************************************/
-bool vDisparityModule::configure(yarp::os::ResourceFinder &rf)
+bool vVergenceModule::configure(yarp::os::ResourceFinder &rf)
 {
     //set the name of the module
-    //std::string moduleName =
-    //        rf.check("name", yarp::os::Value("vDisparity")).asString();
-    setName(rf.check("name", yarp::os::Value("vDisparity")).asString().c_str());
+    setName(rf.check("name", yarp::os::Value("vVergence")).asString().c_str());
 
     //set other variables we need
     bool strict = rf.check("strict") &&
@@ -37,7 +35,7 @@ bool vDisparityModule::configure(yarp::os::ResourceFinder &rf)
     attach(rpcOut);
 
     /* create the thread and pass pointers to the module parameters */
-    disparityManager = new vDisparityManager(rf.check("width", yarp::os::Value(128)).asInt(),
+    vergenceManager = new vVergenceManager(rf.check("width", yarp::os::Value(128)).asInt(),
                                              rf.check("height", yarp::os::Value(128)).asInt(),
                                              rf.check("nEvents", yarp::os::Value(200)).asInt(),
                                              rf.check("ori", yarp::os::Value(1)).asInt(),
@@ -46,59 +44,59 @@ bool vDisparityModule::configure(yarp::os::ResourceFinder &rf)
                                              rf.check("stdsperlambda", yarp::os::Value(6.0)).asDouble(),
                                              rf.check("threshold", yarp::os::Value(0.0)).asDouble());
 
-    return disparityManager->open(getName(), strict);
+    return vergenceManager->open(getName(), strict);
 }
 
 /**********************************************************/
-bool vDisparityModule::interruptModule()
+bool vVergenceModule::interruptModule()
 {
     rpcOut.interrupt();
-    disparityManager->interrupt();
+    vergenceManager->interrupt();
     yarp::os::RFModule::interruptModule();
     return true;
 }
 
 /**********************************************************/
-bool vDisparityModule::close()
+bool vVergenceModule::close()
 {
     rpcOut.close();
-    disparityManager->close();
+    vergenceManager->close();
     yarp::os::RFModule::close();
     return true;
 }
 
 /**********************************************************/
-bool vDisparityModule::updateModule()
+bool vVergenceModule::updateModule()
 {
     return true;
 }
 
 /**********************************************************/
-double vDisparityModule::getPeriod()
+double vVergenceModule::getPeriod()
 {
     return 0.1;
 }
 
-bool vDisparityModule::respond(const yarp::os::Bottle &command,
+bool vVergenceModule::respond(const yarp::os::Bottle &command,
                               yarp::os::Bottle &reply)
 {
     if (command.get(0).asString() == "start") {
         reply.addString("Starting Verging...");
-        this->disparityManager->startVerging();
+        this->vergenceManager->startVerging();
    }
     else if (command.get(0).asString() == "reset") {
         reply.addString("Resetting...");
-        this->disparityManager->resetVergence();
+        this->vergenceManager->resetVergence();
 
     }
     else if (command.get(0).asString() == "kp") {
         reply.addString("Setting kp...");
-        this->disparityManager->setkp(command.get(1).asDouble());
+        this->vergenceManager->setkp(command.get(1).asDouble());
 
     }
     else if (command.get(0).asString() == "kd") {
         reply.addString("Setting kd...");
-        this->disparityManager->setkd(command.get(1).asDouble());
+        this->vergenceManager->setkd(command.get(1).asDouble());
 
     }
     return true;
@@ -106,7 +104,7 @@ bool vDisparityModule::respond(const yarp::os::Bottle &command,
 
 
 /**********************************************************/
-vDisparityManager::vDisparityManager(int width, int height, int nEvents, int numberOri, int numberPhases, int maxDisparity, double stdsPerLambda, double threshold)
+vVergenceManager::vVergenceManager(int width, int height, int nEvents, int numberOri, int numberPhases, int maxDisparity, double stdsPerLambda, double threshold)
 {
     this->width = width;
     this->height = height;
@@ -190,7 +188,7 @@ vDisparityManager::vDisparityManager(int width, int height, int nEvents, int num
     error_d = 0;
 }
 /**********************************************************/
-bool vDisparityManager::open(const std::string &name, bool strictness)
+bool vVergenceManager::open(const std::string &name, bool strictness)
 {
     //and open the input port
     if(strictness) {
@@ -259,7 +257,7 @@ bool vDisparityManager::open(const std::string &name, bool strictness)
 }
 
 /**********************************************************/
-void vDisparityManager::close()
+void vVergenceManager::close()
 {
     //close ports
     outPort.close();
@@ -286,7 +284,7 @@ void vDisparityManager::close()
 }
 
 /**********************************************************/
-void vDisparityManager::interrupt()
+void vVergenceManager::interrupt()
 {
     //pass on the interrupt call to everything needed
     outPort.interrupt();
@@ -298,7 +296,7 @@ void vDisparityManager::interrupt()
 }
 
 /**********************************************************/
-void vDisparityManager::onRead(emorph::vBottle &bot)
+void vVergenceManager::onRead(emorph::vBottle &bot)
 {
     /*prepare output vBottle with AEs extended with optical flow events*/
     emorph::vBottle &outBottle = outPort.prepare();
@@ -443,7 +441,7 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
 
 }
 
-void vDisparityManager::startVerging() {
+void vVergenceManager::startVerging() {
 
     doVergence = true;
     if(encdriver.isValid()) {
@@ -451,7 +449,7 @@ void vDisparityManager::startVerging() {
     }
 
 }
-void vDisparityManager::resetVergence() {
+void vVergenceManager::resetVergence() {
 
     doVergence = false;
     if(encdriver.isValid()) {
