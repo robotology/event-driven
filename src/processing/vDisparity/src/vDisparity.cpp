@@ -91,6 +91,16 @@ bool vDisparityModule::respond(const yarp::os::Bottle &command,
         this->disparityManager->resetVergence();
 
     }
+    else if (command.get(0).asString() == "kp") {
+        reply.addString("Setting kp...");
+        this->disparityManager->setkp(command.get(1).asDouble());
+
+    }
+    else if (command.get(0).asString() == "kd") {
+        reply.addString("Setting kd...");
+        this->disparityManager->setkd(command.get(1).asDouble());
+
+    }
     return true;
 }
 
@@ -104,6 +114,8 @@ vDisparityManager::vDisparityManager(int width, int height, int nEvents, int num
     this->numberOri = numberOri;
     this->numberPhases = numberPhases;
     this->threshold = threshold;
+    this->kp = 5000;
+    this->kd = 0;
 
     doVergence = true;
 
@@ -207,6 +219,8 @@ vDisparityManager::vDisparityManager(int width, int height, int nEvents, int num
 //    desiredvergence = 20;
 
     depth = 0;
+    errorPrev = 0;
+    error_d = 0;
 }
 /**********************************************************/
 bool vDisparityManager::open(const std::string &name, bool strictness)
@@ -368,7 +382,8 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
         }
     }
 
-    respsum = (respsum * numberOri * numberPhases) / totale;
+    respsum = respsum / (numberOri * numberPhases * totale);
+//    respsum = respsum / (numberOri * numberPhases * totweights);
 
 //    double respsum = 0.0;
 //    for(unsigned int i = 0; i < filters.size(); i++) {
@@ -433,8 +448,10 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
 
 //    yarp::sig::Vector fp(3);
 //    yarp::sig::Vector ang(6);
-    double kp = 20; // 0.2;
+   // double kp = 5000; // 10000; //15;
+//    double kp = 5; //4; // 0.2;
 
+    double cvel = 0;
     if(encdriver.isValid() && doVergence)
     {
 
@@ -450,45 +467,13 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
             respsum = 0;
         }
 
-        double cvel = respsum * kp;
-//        if(fabs(cvel) < 10) {
-//            cvel = cvel / fabs(cvel) * 10;
-//        }
-        if(velcontrol->velocityMove(5, cvel)) {
-            //            std::cout << "Moving at " << respsum * kp << std::endl;
-            //            gazecontrol->getAngles(ang);
-            //            gazecontrol->get3DPointFromAngles(0, ang, fp);
+        error_d = respsum - errorPrev;
+        errorPrev = respsum;
 
-
-            //            std::cout << fp(0) * 1000 << " " << fp(1) * 100 << " " << fp(2) * 100 << std::endl;
-
-        }
-
-        //        if(abs(respsum) > 10) {
-
-        //            std::cout << "Controlling velocity to " << respsum * kp << std::endl;
-        //            if(velcontrol->velocityMove(5, respsum * kp))
-        //                std::cout << "Moving " << std::endl;
-        //        }
-        //        else
-        //            velcontrol->velocityMove(5, 0);
-
-        //        if(respsum > 20) {
-
-        //            std::cout << "Controlling velocity to : 50 " << std::endl;
-        //            if(velcontrol->velocityMove(5, 50))
-        //                std::cout << "Moving" << std::endl;
-        //        }
-        //        else if(respsum < -20) {
-
-        //            std::cout << "Controlling velocity : -50 " << std::endl;
-        //            if(velcontrol->velocityMove(5, -50))
-        //                std::cout << "Moving" << std::endl;
-        //        }
-        //        else
-        //            velcontrol->velocityMove(5, 0);
-
+        cvel = respsum * kp + error_d * kd;
+        velcontrol->velocityMove(5, cvel);
     }
+
 
     if(gazedriver.isValid()) {
         yarp::os::Bottle &scopebot = scopeOut.prepare();

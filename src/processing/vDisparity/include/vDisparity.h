@@ -74,6 +74,11 @@ private:
     int numberPhases;
     double threshold;
 
+    double error_d;
+    double errorPrev;
+    double kp;
+    double kd;
+
     //flag to start the vergence
     bool doVergence;
 
@@ -84,12 +89,15 @@ public:
     void startVerging();
     void resetVergence();
 
-    bool    open(const std::string &name, bool strictness);
-    void    close();
-    void    interrupt();
+    bool open(const std::string &name, bool strictness);
+    void close();
+    void interrupt();
+
+    void setkp(double kp) {this->kp = kp;}
+    void setkd(double kd) {this->kd = kd;}
 
     //this is the entry point to your main functionality
-    void    onRead(emorph::vBottle &bot);
+    void onRead(emorph::vBottle &bot);
 
 };
 
