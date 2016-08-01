@@ -7,7 +7,7 @@
 </module>
 
 <module>
-    <name> vDisparity </name>
+    <name> vVergence </name>
     <node> localhost </node>
 </module>
 
@@ -19,7 +19,7 @@
 
 <module>
     <name> yarpdatadumper </name>
-    <parameters> --name /computeddepth --connect /vDisparity/scope:o --rxTime </parameters>
+    <parameters> --name /computeddepth --connect /vVergence/scope:o --rxTime </parameters>
     <node> localhost </node>
 </module>
 
@@ -49,12 +49,12 @@
 
 <connection>
   <from>/zynqGrabber/vBottle:o</from>
-  <to>/vDisparity/vBottle:i</to>
+  <to>/vVergence/vBottle:i</to>
   <protocol>tcp</protocol>
 </connection>
 
 <connection>
-  <from>/vDisparity/debug:o</from>
+  <from>/vVergence/debug:o</from>
   <to>/viewDebug </to>
   <protocol>tcp</protocol>
 </connection>
