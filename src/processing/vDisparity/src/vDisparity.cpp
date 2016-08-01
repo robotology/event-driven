@@ -343,6 +343,8 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
     /*get the event queue in the vBottle bot*/
     emorph::vQueue q = bot.get<emorph::AddressEvent>();
 
+    int countA = 0;
+    int countR = 0;
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {
 
@@ -359,6 +361,8 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
 
         //add event to the fifo
         emorph::vQueue removed = fifoCurr->addEvent(*aep);
+        countA++;
+        countR += removed.size();
 
         for(unsigned int i = 0; i < filters.size(); i++) {
             filters[i].process(*aep);
@@ -489,6 +493,8 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
         scopebot.clear();
         scopebot.addDouble(depth);
         scopebot.addInt((int)doVergence);
+        scopebot.addInt(countA);
+        scopebot.addInt(countR);
         scopeOut.write();
     }
 
