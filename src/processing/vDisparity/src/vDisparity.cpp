@@ -175,47 +175,6 @@ vDisparityManager::vDisparityManager(int width, int height, int nEvents, int num
         std::cout << std::endl << std::endl;
     }
 
-//    filters.resize(numberPhases);
-//    filterweights.resize(numberPhases);
-//    std::cout << "Phases:";
-//    for(unsigned int i = 0; i < filters.size(); i++) {
-//        filters[i].setCenter(width/2, height/2);
-//        int lambda;
-//        if(numberPhases == 1)
-//            lambda = 0;
-//        else
-//            lambda = -maxDisparity + i * maxDisparity * 2.0 / (numberPhases - 1) + 0.5;
-//        filters[i].setParameters(sigma, stdsPerLambda, M_PI * 0.5, lambda);
-////        if(i == (filters.size() - 1) / 2)
-////            filterweights[i] = 0;
-////        else
-////            filterweights[i] = lambda / 4.0; // 2.0 / lambda;
-//        std::cout << " " << lambda;
-//    }
-
-//    std::cout << std::endl;
-
-//    //create the filter weights
-//    //this needs to be more robust (i.e. use filter disparity to set weight)
-//    std::cout << "Weights: ";
-//    for(unsigned int i = 0; i < filters.size(); i++) {
-
-//        if(i < (filters.size() - 1) / 2)
-//        {
-//            filterweights[i] = -1;
-//        }
-//        else
-//        {
-//            if(i == (filters.size() - 1) / 2)
-//                filterweights[i] = 0;
-//            else
-//                filterweights[i] = 1;
-//        }
-
-//        std::cout << filterweights[i] << " ";
-//    }
-//    std::cout << std::endl;
-
     //create the surface representations
     fifoLeft = new emorph::fixedSurface(nEvents, width, height);
     fifoRight = new emorph::fixedSurface(nEvents, width, height);
@@ -397,72 +356,6 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
     respsum = respsum / (numberOri * numberPhases * totale);
 //    respsum = respsum / (numberOri * numberPhases * totweights);
 
-//    double respsum = 0.0;
-//    for(unsigned int i = 0; i < filters.size(); i++) {
-//        if(filters[i].getResponse() > 0)
-//            respsum += filterweights[i] * filters[i].getResponse();
-//    }
-
-
-//    if(gazedriver.isValid())
-//    {
-//        yarp::sig::Vector angles(3);
-//        gazecontrol->getAngles(angles);
-//        //std::cout << angles[0] << " " << angles[1] << " " << angles[2] << std::endl;
-//        if(respsum > 100) {
-//            std::cout << "Trying to move: ";
-//            angles(2) = angles(2) + 1;
-//            std::cout << angles[0] << " " << angles[1] << " " << angles[2] << std::endl;
-//            yarp::sig::Vector pose(3); pose[0] = -1; pose[1] = 0.5; pose[2] = 0.4;
-//            gazecontrol->lookAtFixationPoint(pose);
-//            //if(!gazecontrol->lookAtAbsAngles(angles))
-//                //std::cout << "Error moving" << std::endl;
-//        } else if(respsum < -100) {
-//            angles(2) = angles(2) - 1;
-//            if(!gazecontrol->lookAtAbsAngles(angles))
-//                std::cout << "Error moving" << std::endl;
-//        }
-//    }
-
-//    //static int i = 0;
-//    if(encdriver.isValid())
-//    {
-
-//        enccontrol->getEncoders(encs.data());
-
-//        desiredvergence  = encs[5] + respsum / 100;
-
-//        if(abs(respsum) > 50) {
-//            std::cout << "Trying to move to : " << desiredvergence << std::endl;
-//            poscontrol->setRefSpeed(5, 100);
-//            if(poscontrol->positionMove(5, desiredvergence))
-//                std::cout << "Motion done " << std::endl;
-//            //bool motiondone = false;
-////            while(!motiondone)
-////                poscontrol->checkMotionDone(&motiondone);
-
-//        }
-//        //        if(respsum > 120) {
-////            std::cout << "Trying to verge in: ";
-////            std::cout << encs[5] + 1 << std::endl;
-////            if(poscontrol->positionMove(5, encs[5] + 1))
-////                std::cout << "Verged in " << std::endl;
-
-////        }
-////        else if(respsum < -120) {
-////            std::cout << "Trying to verge out: ";
-////            std::cout << encs[5] - 1 << std::endl;
-////            if(poscontrol->positionMove(5, encs[5] - 1))
-////                std::cout << "Verged out " << std::endl;
-////        }
-//    }
-
-
-//    yarp::sig::Vector fp(3);
-//    yarp::sig::Vector ang(6);
-   // double kp = 5000; // 10000; //15;
-//    double kp = 5; //4; // 0.2;
-
     double cvel = 0;
     if(encdriver.isValid() && doVergence)
     {
@@ -489,15 +382,12 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
 
     if(gazedriver.isValid()) {
         yarp::os::Bottle &scopebot = scopeOut.prepare();
-        //gazecontrol->getFixationPoint(fp);
 
         yarp::sig::Vector ang(6);
         gazecontrol->getAngles(ang);
-//        std::cout << ang.toString() << std::endl;
 
         depth = 220 / (2*tan(ang[2] * M_PI / 180.0));
 
-        //depth = -fp(0) * 1000;
         scopebot.clear();
         scopebot.addDouble(depth);
         scopebot.addInt((int)doVergence);
@@ -518,19 +408,6 @@ void vDisparityManager::onRead(emorph::vBottle &bot)
     }
     scopefiltersbot.addDouble(respsum);
     scopeFiltersOut.write();
-
-//    yarp::os::Bottle &scopefiltersbot = scopeFiltersOut.prepare();
-//    scopefiltersbot.clear();
-//    for(unsigned int i = 0; i < filters.size(); i++) {
-
-//        //respsum += filterweights[i] * filters[i].getResponse();
-//        if(filters[i].getResponse() > 0)
-//            scopefiltersbot.addDouble(filters[i].getResponse());
-//        else
-//            scopefiltersbot.addDouble(0.0);
-//    }
-//    scopefiltersbot.addDouble(respsum);
-//    scopeFiltersOut.write();
 
     static int i = 0;
     if(i % 10 == 0 && debugOut.getOutputCount()) {
