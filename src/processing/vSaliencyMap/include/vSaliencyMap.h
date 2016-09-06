@@ -33,16 +33,16 @@
 class vFeatureMapProcessor : public yarp::os::BufferedPort<emorph::vBottle>
 {
 private:
-    
+
     bool strictness;
     //bool timestampUpdate;
-    
+
     int retinalSize;                    // dimension of the retina device
     int saliencySize;                   // dimension of the saliency map
-    
+
     double maxLeft,minLeft;
     double maxRight, minRight;
-    
+
     double* featureMapLeft;                // map of the feature for the left image; always 128 x 128
     double* featureMapRight;               // map of the feature for the right image; always 128 x 128
     unsigned long* timestampMapLeft;       //
@@ -53,28 +53,28 @@ private:
      @param q reference to the queue of events
      */
     void spatialSelection(emorph::vQueue *q);
-    
+
     /**
      * function that reduces the response using a function of difference in timestamp
      */
     void forgettingMemory();
-    
+
 public:
-    
+
     vFeatureMapProcessor();
     ~vFeatureMapProcessor();
-    
+
     bool    open(const std::string moduleName, bool strictness = false);
     void    close();
     void    interrupt();
-    
+
     //this is the entry point to your main functionality
     void    onRead(emorph::vBottle &bot);
     void copyFeatureMapLeft(double *pointer);
     void copyTimestampMapLeft(unsigned long *pointer);
     //unsigned long getLastTimestamp() {return last_ts;};
-    
-    
+
+
 };
 
 
@@ -98,7 +98,7 @@ private:
     unsigned long lcprev;
     unsigned long rcprev;
     unsigned long rc;
-    
+
     double forgettingFactor;            // forgetting factor subtracted to pixel of feature map [0.0,1.0]
     double microseconds;
     double microsecondsPrev;
@@ -110,9 +110,9 @@ private:
     int height_orig, width_orig;        // original dimension of the input and output images
     int synchPeriod;                    // synchronization period between events and viewer
     int responseGradient;               // responseGradient parameter
-    
+
     std::string name;                   // rootname of all the ports opened by this thread
-   
+
     //bool verb;
     bool synchronised;                  // flag to check whether the microsecond counter has been synchronised
     //bool greaterHalf;                   // indicates whether the counter has passed the half of the range
@@ -127,7 +127,7 @@ private:
     unsigned long minCountRight;
     unsigned long maxCountRight;
     unsigned long* lasttimestamp;       // timestamp of the last event represented
-    
+
     double maxDistance;                  // distance from the center of the WTA
     double startTimer;
     double interTimer;
@@ -135,7 +135,7 @@ private:
     yarp::os::Semaphore mutex;           // semaphore thar regulates the access to the buffer resource
     clock_t endTime,startTime;
     long T1,T2;
-    
+
     //unmask* unmask_events;               // object that unmask events
     char* bufferRead;                    // buffer of events read from the port
     char* bufferCopy;                    // local copy of the events read
@@ -143,10 +143,10 @@ private:
     FILE* fstore;                        // file for the saving of wta position with timestamps
     FILE* istore;                        // file for the saving of ini
     FILE* raw;                           // file dumper for debug
-    
+
     double* saliencyMapLeft;             // saliencyMap of the left camera
     double* saliencyMapRight;            // saliencyMap of the right camera
-    
+
     double* featureMap41Left;            // 1 feature map from the type 4 (left):
     double* featureMap41Right;           // 1 feature map from the type 4 (right);
     double* featureMap42Left;            // 2 feature map from the type 4 (left):
@@ -157,10 +157,10 @@ private:
     double* featureMapA1Right;           // 1 feature map from the type A (right);
     double* featureMapA2Left;            // 2 feature map from the type A (left);
     double* featureMapA2Right;           // 2 feature map from the type A (right);
-    
+
     unsigned char* saliencyMap;          // saliencyMap collection of responses in different feature maps
     int* featureMap;                     // map of the feature;
-    
+
     unsigned long* timestampMapLeft;     // timestamp reference for the map of the feature
     unsigned long* timestampMap41Left;   // pointer to the copy of the timestamp map (41-Left)
     unsigned long* timestampMap41Right;  // pointer to the copy of the timestamp map (41-Right)
@@ -173,38 +173,38 @@ private:
     unsigned long* timestampMapA2Left;   // pointer to the copy of the timestamp map (A2-Left)
     unsigned long* timestampMapA2Right;  // pointer to the copy of the timestamp map (A2-Right)
     //AER_struct* unmaskedEvents;          // trained of unmasked events
-    
+
     yarp::sig::ImageOf<yarp::sig::PixelRgb>*  imageLeft;                                  //image representing the signal on the leftcamera
     yarp::sig::ImageOf<yarp::sig::PixelRgb>*  imageRight;                                 //image representing the signal on the right camera
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageLeftBW;                               //image representing the signal on the leftcamera
     yarp::sig::ImageOf<yarp::sig::PixelMono>* imageRightBW;                              //image
-    
+
     //plotterThread* pThread;                                              // plotterThread for the trasformation of the event in images
-    
+
     /* ----- Ports ------ */
-    
+
     yarp::os::BufferedPort<yarp::os::Bottle > outputCmdPort;             // port that is dedicated to sending the typology of the gaze behaviour and some params
     yarp::os::BufferedPort<emorph::vBottle> smEventsPort;                // port that sends bottles of saliency map events
-    
+
     /* ----- Buffered port threads that take each feature map output from ------ */
     /* vFeatureMap and compute the analog feature maps as input of the           */
     /* saliency map                                                              */
-    
+
     vFeatureMapProcessor* bptA1;                                        // processor thread of the bottle whole retina events 1
     vFeatureMapProcessor* bptA2;                                        // processor thread of the bottle whole retina events 2
     vFeatureMapProcessor* bpt41;                                        // processor thread of the bottle feature map 1
     vFeatureMapProcessor* bpt42;                                        // processor thread of the bottle feature map 2
     vFeatureMapProcessor* bpt43;                                        // processor thread of the bottle feature map 3
-    
+
     bool plotLatency;
     double timeStart, timeStop;                                          // variables that measures the computation load
     FILE* latencyFile;                                                   // file where all the latency measurements are saved
-    
+
 public:
 
     vSaliencyMapManager();
-    ~vSaliencyMapManager();
-    
+    ~vSaliencyMapManager() {} //THIS NEEDS TO BE DEFINED AS THERE IS LOTS OF MEMORY ALLOCATION IN THIS CLASS
+
     bool threadInit();
     void threadRelease();
 
@@ -220,12 +220,12 @@ public:
      */
     void getMonoImage(yarp::sig::ImageOf<yarp::sig::PixelRgb>* image, unsigned long minCount,unsigned long maxCount, bool camera);
 
-    
+
     /**
      * function that reduces the response using a function of difference in timestamp
      */
-    void setName(std::string str){this->name=str;};
-    void setStrictness(bool strictness){this->strictness=strictness;};
+    void setName(std::string str){this->name=str;}
+    void setStrictness(bool strictness){this->strictness=strictness;}
     //std::string getName(const char* p);
 
     /**
@@ -236,7 +236,7 @@ public:
     void resizeAll(int width, int height);
 
 
-    
+
 };
 
 /* ----------------------------------------------------------------------------------------------- */
