@@ -181,7 +181,12 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
         p_eyez = std::min(p_eyez, 16.0);
 
         //update our window
-        FIFO.addEvent(*q.back());
+        emorph::AddressEvent *v = new emorph::AddressEvent(*vc);
+        v->setChannel(vc->getChannel());
+        v->setPolarity(vc->getChannel());
+        v->setX(vc->getXCog());
+        v->setY(vc->getYCog());
+        FIFO.addEvent(*v);
 
         //and then get everything in the current window
         q = FIFO.getSurf();
@@ -191,11 +196,11 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
         std::vector<int> xs, ys;
         xs.resize(n); ys.resize(n);
         for(int i = 0; i < n; i++) {
-            emorph::ClusterEventGauss *vtw = q[i]->getUnsafe<emorph::ClusterEventGauss>();
-            xs[i] = vtw->getXCog();
-            ys[i] = vtw->getYCog();
-            p_eyez = std::max(p_eyez, (double)vtw->getXSigma2());
-            p_eyez = std::min(p_eyez, 16.0);
+            emorph::AddressEvent *vtw = q[i]->getUnsafe<emorph::AddressEvent>();
+            xs[i] = vtw->getX();
+            ys[i] = vtw->getY();
+            //p_eyez = std::max(p_eyez, (double)vtw->getXSigma2());
+            //p_eyez = std::min(p_eyez, 16.0);
         }
 
         std::sort(xs.begin(), xs.end());
@@ -214,7 +219,9 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
         medstdy = sqrt(medstdy / n);
 
         if(std::abs(vc->getXCog() - medx) < medstdx && std::abs(vc->getYCog() - medy) < medstdy) {
-            if(medstdx < 20 && medstdy < 20 && n > 40) {
+            //std::cout << "current observation within 1 std" << std::endl;
+            //std::cout << medstdx << " " << medstdy << " " << n << std::endl;
+            if(medstdx < 20 && medstdy < 20 && n > 5) {
                 dogaze = true;
                 lastdogazetime = yarp::os::Time::now();
                 px[0] = medy;
