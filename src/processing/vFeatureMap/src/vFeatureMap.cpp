@@ -64,14 +64,14 @@ bool vFeatureMapModule::configure(yarp::os::ResourceFinder &rf)
 
     /* set parameters */
     int retSize = rf.check("retSize", yarp::os::Value(128)).asInt();
-    int featSize = rf.check("featSize", yarp::os::Value(128)).asInt();
+    int featSize = rf.check("featSize", yarp::os::Value(32)).asInt();
     int thrOn = rf.check("thrOn", yarp::os::Value(127)).asInt();
     int thrOff = rf.check("thrOff", yarp::os::Value(10)).asInt();
     int constLeak = rf.check("constLeak", yarp::os::Value(1)).asInt();
     
     /* create the thread and pass pointers to the module parameters */
     fmmanager = new vFeatureMapManager(retSize, featSize, thrOn, thrOff, constLeak);
-    fmmanager->setMapURL(mapNameComplete);
+    fmmanager->setMapURL(mapNameComplete); // needed?
 
     return fmmanager->open(moduleName, strict);
 
@@ -419,7 +419,6 @@ void vFeatureMapManager::interrupt()
 /**********************************************************/
 void vFeatureMapManager::onRead(emorph::vBottle &bot)
 {
-    //int detectedCorners = 0;
 
     /*prepare output vBottle with AEs */
     emorph::vBottle &outBottle = outPort.prepare();
@@ -523,7 +522,6 @@ void vFeatureMapManager::updateFeatureMap(emorph::AddressEvent *aep, emorph::vBo
             int posFeaImage     = yevent * rowSizeFea + xevent ;
             
             // depressing the feature map in the location
-            
             if(polarity>0){
                 // positive event in the surround of center-on
                 if(pFeaOn[posFeaImage] >=  devianceFeaSurround) {

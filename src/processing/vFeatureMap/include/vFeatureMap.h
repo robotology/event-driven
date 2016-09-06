@@ -64,7 +64,7 @@ private:
     yarp::sig::ImageOf <yarp::sig::PixelMono>* rightFeaOutputImageOff;   // output image of feature left center-off response (registry)
 
     //for helping with timestamp wrap around
-    emorph::vtsHelper unwrapper;
+    //emorph::vtsHelper unwrapper;
 
     void updateFeatureMap(emorph::AddressEvent *aep, emorph::vBottle *outBottle);
     void leakFeatureMap(unsigned char* pFea);
