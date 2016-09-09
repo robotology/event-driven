@@ -267,7 +267,7 @@ vCircleMultiSize::vCircleMultiSize(double threshold, std::string qType,
 
     best = htransforms.begin();
     fFIFO = emorph::fixedSurface(fifolength, width, height);
-    tFIFO = emorph::temporalSurface(width, height, fifolength * fifolength * 7812.5);
+    tFIFO = emorph::temporalSurface(width, height, fifolength * 7812.5);
     //eFIFO.setThickness(1);
     //fFIFO.setFixedWindowSize(fifolength);
     //tFIFO.setTemporalSize(fifolength * 7812.5);

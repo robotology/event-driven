@@ -2,49 +2,43 @@
 <name> vBallDemo </name>
 
 <module>
+    <name> demoRedBall </name>
+        <parameters>  </parameters>
+    <node> icub23 </node>
+</module>
+
+<module>
     <name> vFlow </name>
     <parameters> --strict false --height 128 --width 128 --filterSize 3 --minEvtsThresh 3 </parameters>
-    <node> icub14 </node>
+    <node> icub23 </node>
 </module>
 
 <module>
     <name> vCircle </name>
-    <parameters> --strict false --qType time --arc 1 --fifo 100 --inlierThreshold 60 --radmin 10 --radmax 20 </parameters>
-    <node> icub10 </node>
-</module>
-
-<module>
-    <name> vFramer</name>
-    <parameters> --strict false --frameRate 30 --displays "(0 left (AE CIRC ISO) 1 right (AE CIRC ISO))"</parameters>
-    <node>localhost</node>
-</module>
-
-<module>
-   <name>yarpview</name>
-   <parameters>--name /viewLeft --x 000 --y 000 --RefreshTime 16 </parameters>
-   <node>localhost</node>
-</module>
-
-<module>
-   <name>yarpview</name>
-   <parameters>--name /viewRight --x 000 --y 000 --RefreshTime 16 </parameters>
-   <node>localhost</node>
+    <parameters> --inlierThreshold 35 --qType time --arc 1 --fifo 5 --radmin 10 --radmax 20 </parameters>
+    <node> icub23 </node>
 </module>
 
 <module>
     <name> vTrackToRobot </name>
-    <parameters> --method grasp </parameters>
-    <node> icub10 </node>
+    <parameters> --name vTrackToRobot --method gaze --demo grasp </parameters>
+    <node> icub23 </node>
 </module>
 
 <module>
-    <name> demoRedBall </name>
-        <parameters> </parameters>
-    <node> localhost </node>
+    <name> vFramer </name>
+    <parameters> --name vFramer --frameRate 30 --displays "(0 left (AE CIRC ISO))"</parameters>
+    <node>icub23</node>
+</module>
+
+<module>
+   <name>yarpview</name>
+   <parameters> --name /viewISO --x 700 --y 200 --h 800 --w 750 --RefreshTime 33 --compact </parameters>
+   <node> icub24 </node>
 </module>
 
 <connection>
-  <from>/aexGrabber/vBottle:o</from>
+  <from>/zynqGrabber/vBottle:o</from>
   <to>/vFlow/vBottle:i</to>
   <protocol>tcp</protocol>
 </connection>
@@ -57,39 +51,32 @@
 
 <connection>
   <from>/vCircle/vBottle:o</from>
-  <to>/vTrackToRobot/vBottle:i</to>
-  <protocol>tcp</protocol>
-</connection>
-
-<connection>
-    <from> /vTrackToRobot/Bottle:o </from>
-    <to>   /demoGraspManager/trackTarget:i </to>
-</connection>
-
-<connection>
-  <from>/vCircle/vBottle:o</from>
   <to>/vFramer/vBottle:i</to>
   <protocol>tcp</protocol>
 </connection>
 
 <connection>
-  <from>/vCircle/vBottle:o</from>
-  <to>/vFramerISO/vBottle:i</to>
-  <protocol>tcp</protocol>
-</connection>
-
-<connection>
   <from>/vFramer/left</from>
-  <to>/viewCircle</to>
-  <protocol>tcp</protocol>
-</connection>
-
-<connection>
-  <from>/vFramerISO/left</from>
   <to>/viewISO</to>
   <protocol>tcp</protocol>
 </connection>
 
+<connection>
+  <from>/vCircle/vBottle:o</from>
+  <to>/vTrackToRobot/vBottle:i</to>
+  <protocol>tcp</protocol>
+</connection>
+
+<connection>
+    <from> /vTrackToRobot/vCartOut:o </from>
+    <to>   /demoRedBall/trackTarget:i </to>
+</connection>
+
+<connection>
+  <from>/demoRedBall/cmdFace:rpc</from>
+  <to>/icub/face/emotions/in</to>
+  <protocol>tcp</protocol>
+</connection>
 
 
 

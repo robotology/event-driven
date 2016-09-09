@@ -161,7 +161,7 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
     q = vBottleIn.getSorted<emorph::ClusterEventGauss>();
 
     bool dogaze;
-    if(yarp::os::Time::now() > lastdogazetime + 5)
+    if(yarp::os::Time::now() > lastdogazetime + 3)
         dogaze = false;
     else
         dogaze = true;
@@ -221,14 +221,14 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
         if(std::abs(vc->getXCog() - medx) < medstdx && std::abs(vc->getYCog() - medy) < medstdy) {
             //std::cout << "current observation within 1 std" << std::endl;
             //std::cout << medstdx << " " << medstdy << " " << n << std::endl;
-            if(medstdx < 20 && medstdy < 20 && n > 5) {
+            if(medstdx < 10 && medstdy < 10 && n > 5) {
                 dogaze = true;
                 lastdogazetime = yarp::os::Time::now();
                 px[0] = medy;
                 px[1] = 127 - medx;
                 //turn u/v into xyz
                 if(gazedriver.isValid())
-                    gazecontrol->get3DPoint(0, px, (-2.5 * p_eyez + 70)/100.0, xrobref);
+                    gazecontrol->get3DPoint(0, px, (-2.4 * p_eyez + 70)/100.0, xrobref);
             }
         }
 
@@ -311,7 +311,7 @@ void vTrackToRobotManager::onRead(emorph::vBottle &vBottleIn)
     yarp::sig::Vector cpx(2); cpx[0] = 64; cpx[1] = 64;
     yarp::sig::Vector cx(3); cx = 0;  //position in xyz (eye ref frame)
     if(gazedriver.isValid()) {
-        gazecontrol->get3DPoint(0, cpx, (-2.5 * p_eyez + 70)/100.0, cx);
+        gazecontrol->get3DPoint(0, cpx, (-2.4 * p_eyez + 70)/100.0, cx);
     }
     if(positionOutPort.getOutputCount()) {
         yarp::os::Bottle &posdump = positionOutPort.prepare();
