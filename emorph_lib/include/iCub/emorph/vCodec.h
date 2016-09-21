@@ -134,6 +134,7 @@ protected:
 private:
     int refcount:8;
     const static int localWordsCoded = 1;
+    yarp::os::Mutex test;
 
 public:
     //!blank constructor required at base level
@@ -142,8 +143,22 @@ public:
     vEvent(const vEvent &event);
     virtual ~vEvent() {}
 
-    void referto() { refcount++; }
-    void destroy() { if(!(--refcount > 0)) delete this; }
+    void referto()
+    {
+        test.lock();
+        refcount++;
+        test.unlock();
+    }
+    //void destroy() { if(!(--refcount > 0)) delete this; }
+    int getrefcount() { return refcount;}
+    void destroy() {
+        test.lock();
+        refcount--;
+        test.unlock();
+        if(refcount <= 0) delete this;
+    }
+
+
 
     virtual std::string getType() const { return "TS";}
 

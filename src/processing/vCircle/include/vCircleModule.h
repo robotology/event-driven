@@ -79,9 +79,9 @@
 #include <fstream>
 #include <yarp/os/all.h>
 #include <iCub/emorph/all.h>
-#include <iCub/ctrl/kalman.h>
-#include "vCircleObserver.h"
 
+#include "vCircleObserver.h"
+#include "vCircleTrack.h"
 
 /*////////////////////////////////////////////////////////////////////////////*/
 //VCIRCLEREADER

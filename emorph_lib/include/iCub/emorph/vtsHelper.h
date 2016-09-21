@@ -43,12 +43,18 @@ public:
         if(last_stamp > timestamp)
             n_wraps++;
         last_stamp = timestamp;
-        return (unsigned long int)timestamp + (max_stamp*n_wraps);
+        return currentTime();
     }
 
     static long int maxStamp() { return max_stamp; }
     static double tstosecs() { return 0.000001; }
+    unsigned long int currentTime() { return (unsigned long int)last_stamp + (max_stamp*n_wraps); }
 
+};
+
+struct resolution {
+    unsigned int width:10;
+    unsigned int height:10;
 };
 
 }

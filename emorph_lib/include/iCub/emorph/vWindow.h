@@ -86,7 +86,6 @@ public:
     vQueue getSurf();
 
 
-
     vQueue getSurf(int d);
 
     ///
@@ -107,6 +106,16 @@ public:
     /// \return a vQueue containing a copy of the events
     ///
     vQueue getSurf(int xl, int xh, int yl, int yh);
+
+    vQueue getSurf_Tlim(int dt);
+    vQueue getSurf_Tlim(int dt, int d);
+    vQueue getSurf_Tlim(int dt, int x, int y, int d);
+    vQueue getSurf_Tlim(int dt, int xl, int xh, int yl, int yh);
+
+    vQueue getSurf_Clim(int c);
+    vQueue getSurf_Clim(int c, int d);
+    vQueue getSurf_Clim(int c, int x, int y, int d);
+    vQueue getSurf_Clim(int c, int xl, int xh, int yl, int yh);
 
 };
 /******************************************************************************/

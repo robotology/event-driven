@@ -14,9 +14,11 @@
  * Public License for more details
  */
 
+#ifndef __VCIRCLE_OBS__
+#define __VCIRCLE_OBS__
+
 #include <yarp/sig/all.h>
 #include <iCub/emorph/all.h>
-#include <iCub/ctrl/kalman.h>
 
 /*////////////////////////////////////////////////////////////////////////////*/
 //VCIRCLETHREAD
@@ -189,37 +191,4 @@ public:
 
 };
 
-/*////////////////////////////////////////////////////////////////////////////*/
-//VCIRCLETRACKER
-/*////////////////////////////////////////////////////////////////////////////*/
-class vCircleTracker
-{
-private:
-
-    iCub::ctrl::Kalman *filter;
-    bool active;
-
-    //system variance
-    double svPos;
-    double svSiz;
-
-    //private functions
-    //double Pvgd(double xv, double yv);
-
-public:
-
-    vCircleTracker();
-    ~vCircleTracker();
-
-    void init(double svPos, double svSiz, double zvPos, double zvSiz);
-
-    bool startTracking(double xz, double yz, double rz);
-
-    double predict(double dt);
-    bool correct(double xz, double yz, double rz);
-    bool getState(double &x, double &y, double &r);
-    double Pzgd(double xz, double yz, double rz);
-
-    bool isActive() { return active; }
-
-};
+#endif

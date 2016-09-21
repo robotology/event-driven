@@ -27,7 +27,8 @@ namespace emorph
 /******************************************************************************/
 vQueue::~vQueue()
 {
-    this->clear();
+    for(vQueue::iterator qi = this->begin(); qi != this->end(); qi++)
+        (*qi)->destroy();
 }
 
 void vQueue::clear()
@@ -64,7 +65,6 @@ void vQueue::pop_front()
 
 vQueue::iterator vQueue::erase(iterator __first, iterator __last)
 {
-
     for(iterator i = __first; i != __last; i++)
         (*i)->destroy();
 
@@ -91,7 +91,6 @@ vQueue& vQueue::operator=(const vQueue& that)
         (*qi)->destroy();
 
     deque::operator =(that);
-
     return *this;
 }
 

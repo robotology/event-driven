@@ -90,6 +90,128 @@ vQueue vSurface2::getSurf(int xl, int xh, int yl, int yh)
 
 }
 
+vQueue vSurface2::getSurf_Tlim(int dt)
+{
+    return getSurf_Tlim(dt, 0, width, 0, height);
+}
+
+vQueue vSurface2::getSurf_Tlim(int dt, int d)
+{
+    AddressEvent *v = 0;
+    for(vQueue::reverse_iterator qi = q.rbegin(); qi != q.rend(); qi++) {
+        v = (*qi)->getAs<AddressEvent>();
+        if(v) break;
+    }
+    if(!v) return vQueue();
+
+    return getSurf_Tlim(dt, v->getX(), v->getY(), d);
+
+}
+
+vQueue vSurface2::getSurf_Tlim(int dt, int x, int y, int d)
+{
+    return getSurf_Tlim(dt, x - d, x + d, y - d, y + d);
+
+}
+
+vQueue vSurface2::getSurf_Tlim(int dt, int xl, int xh, int yl, int yh)
+{
+    vQueue qcopy;
+    if(q.empty()) return qcopy;
+    int t = q.back()->getStamp();
+    int vt = 0;
+
+    vQueue::reverse_iterator rqit;
+    for(rqit = q.rbegin(); rqit != q.rend(); rqit++) {
+        vt = (*rqit)->getStamp();
+        if(vt > t) vt -= vtsHelper::maxStamp();
+        if(vt + dt <= t) break;
+        emorph::AddressEvent *v = (*rqit)->getUnsafe<emorph::AddressEvent>();
+        if(v != spatial[v->getY()][v->getX()]) continue;
+        if(v->getX() >= xl && v->getX() <= xh) {
+            if(v->getY() >= yl && v->getY() <= yh) {
+                qcopy.push_back(v);
+            }
+        }
+    }
+
+    return qcopy;
+}
+
+//vQueue vSurface2::getSurf_Tlim(int dt, int xl, int xh, int yl, int yh)
+//{
+//    vQueue qcopy;
+//    if(q.empty()) return qcopy;
+//    int t = q.back()->getStamp();
+//    int vt = 0;
+
+//    xl = std::max(xl, 0);
+//    xh = std::min(xh, width-1);
+//    yl = std::max(yl, 0);
+//    yh = std::min(yh, height-1);
+
+//    for(int y = yl; y <= yh; y++) {
+//        for(int x = xl; x <= xh; x++) {
+//            if(spatial[y][x]) {
+//                vt = spatial[y][x]->getStamp();
+//                if(vt > t) vt -= vtsHelper::maxStamp();
+//                if(vt + dt > t)
+//                    qcopy.push_back(spatial[y][x]);
+//            }
+//        }
+//    }
+
+//    return qcopy;
+//}
+
+vQueue vSurface2::getSurf_Clim(int c)
+{
+    return getSurf_Clim(c, 0, width, 0, height);
+}
+
+vQueue vSurface2::getSurf_Clim(int c, int d)
+{
+    AddressEvent *v = 0;
+    for(vQueue::reverse_iterator qi = q.rbegin(); qi != q.rend(); qi++) {
+        v = (*qi)->getAs<AddressEvent>();
+        if(v) break;
+    }
+    if(!v) return vQueue();
+
+    return getSurf_Clim(c, v->getX(), v->getY(), d);
+
+}
+
+vQueue vSurface2::getSurf_Clim(int c, int x, int y, int d)
+{
+    return getSurf_Clim(c, x - d, x + d, y - d, y + d);
+
+}
+
+vQueue vSurface2::getSurf_Clim(int c, int xl, int xh, int yl, int yh)
+{
+    vQueue qcopy;
+    if(q.empty()) return qcopy;
+
+    xl = std::max(xl, 0);
+    xh = std::min(xh, width-1);
+    yl = std::max(yl, 0);
+    yh = std::min(yh, height-1);
+
+    for(int y = yl; y <= yh; y++) {
+        for(int x = xl; x <= xh; x++) {
+            if(spatial[y][x]) qcopy.push_back(spatial[y][x]);
+        }
+    }
+
+    qcopy.sort(true);
+    while(qcopy.size() > (unsigned int)c)
+        qcopy.pop_front();
+
+    return qcopy;
+}
+
+
 vEvent *vSurface2::getMostRecent()
 {
     if(!q.size()) return NULL;

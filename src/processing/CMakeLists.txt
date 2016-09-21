@@ -12,6 +12,7 @@ add_subdirectory(vPepper)
 if(ICUB_FOUND)
     add_subdirectory(vCircle)
     add_subdirectory(vCircleDisparity)
+  add_subdirectory(vParticleFilter)
 endif(ICUB_FOUND)
 
 add_subdirectory(vCorner)
