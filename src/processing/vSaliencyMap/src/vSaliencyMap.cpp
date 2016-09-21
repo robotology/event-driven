@@ -78,33 +78,12 @@ bool vFeatureMapProcessor::open(const std::string moduleName, bool strictness){
     std::string inPortName = "/" + moduleName + "/vBottle:i";
     bool check1 = BufferedPort<emorph::vBottle>::open(inPortName);
 
-    //    startTimer = Time::now();
-
-    featureMapLeft  = (double*) malloc(saliencySize * saliencySize * sizeof(double));
-    featureMapRight = (double*) malloc(saliencySize * saliencySize * sizeof(double));
-    memset(featureMapLeft ,0, saliencySize * saliencySize * sizeof(double));
-    memset(featureMapRight,0, saliencySize * saliencySize * sizeof(double));
-  
-    for (int k = 0; k < saliencySize * saliencySize; k++) {
-        featureMapLeft[k] =0;
-        featureMapRight[k] = 0;
-    }
-
-    timestampMapLeft  = (unsigned long*) malloc(saliencySize * saliencySize * sizeof(unsigned long) );
-    timestampMapRight = (unsigned long*) malloc(saliencySize * saliencySize * sizeof(unsigned long) );
-    memset(timestampMapLeft ,0, saliencySize * saliencySize * sizeof(unsigned long));
-    memset(timestampMapRight,0, saliencySize * saliencySize * sizeof(unsigned long));
-    
     return check1;
 }
 
 void vFeatureMapProcessor::close(){
     
     yarp::os::BufferedPort<emorph::vBottle>::close();
-    free(featureMapLeft);
-    free(featureMapRight);
-    free(timestampMapLeft);
-    free(timestampMapRight);
     
 }
 
