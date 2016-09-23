@@ -849,7 +849,8 @@ void aerDevManager::aerWriteGenericReg (int devDesc, unsigned int offset, unsign
     ioctl(devDesc, AER_GEN_REG, &reg);
 }
 
-
+// clean up the code!! either use ioctl or this wrapper everywhere
+// here we do not really need to pass devDesc to the function, as it is already in the deviceManager
 unsigned int aerDevManager::aerReadGenericReg (int devDesc, unsigned int offset) {
     aerGenReg_t reg;
 

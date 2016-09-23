@@ -47,7 +47,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 
 
     //dvs or atis
-    std::string chipName = rf.check("chip", yarp::os::Value("DVS")).asString();
+    std::string chipName = rf.check("chip", yarp::os::Value("ATIS")).asString();
 
     //bias values
     yarp::os::Bottle biaslistl = rf.findGroup(chipName + "_BIAS_LEFT");

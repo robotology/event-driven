@@ -39,14 +39,22 @@ public:
     virtual bool threadInit(std::string moduleName = "", bool strict = false);
     bool    attachDeviceManager(deviceManager* devManager);
     bool doChannelShift;
+    int prevPayload;
+    int countLostEvts;
+    int countTotEvts;
+    
+    double firstTs;
 
+    emorph::vtsHelper unwrap;
+    
 private:
 
     //output port
     emorph::vBottleMimic sender;
     yarp::os::BufferedPort<emorph::vBottleMimic> portvBottle;
-    //yarp::os::Port portvBottle;
+    yarp::os::BufferedPort<yarp::os::Bottle> portScope;
     yarp::os::Stamp vStamp;
+    yarp::os::Stamp scStamp;
 
     bool strict;
     //read buffer
