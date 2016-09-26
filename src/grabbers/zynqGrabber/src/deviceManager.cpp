@@ -253,19 +253,7 @@ void deviceManager::run(void)
 
 vsctrlDevManager::vsctrlDevManager(std::string channel, std::string chip) : deviceManager(false, VSCTRL_MAX_BUF_SIZE) {
 
-    if (channel == "left"){
-
-        this->deviceName = "/dev/iit_vsctrl_l";
-
-    } else if (channel == "right"){
-
-        this->deviceName = "/dev/iit_vsctrl_r";
-
-    } else {
-
-        std::cout << "vsctrl error: unrecognised channel" << std::endl;
-
-    }
+    this->deviceName = "/dev/i2c-2";
 
     fpgaStat.biasDone      = false;
     fpgaStat.tdFifoFull    = false;

@@ -19,6 +19,7 @@
 #define MAX_BUF_SIZE 16777216
 // vsctrl
 
+/* --- not needed as the driver is not there anymore and these are for the driver's ioctl
 #define VSCTRL_MAGIC_NUM 101
 
 #define VSCTRL_GEN_REG_ACCESS    _IOWR(VSCTRL_MAGIC_NUM,  5, void *)
@@ -37,6 +38,7 @@
 #define VSCTRL_GET_AER_TIMINGS   _IOR (VSCTRL_MAGIC_NUM, 18, void *)
 #define VSCTRL_GET_BG_TIMINGS    _IOR (VSCTRL_MAGIC_NUM, 19, void *)
 #define VSCTRL_CLR_STATUS        _IOW (VSCTRL_MAGIC_NUM, 20, unsigned int)
+*/
 
 #define VSCTRL_MAX_BUF_SIZE 16777216
 
@@ -44,9 +46,12 @@
 #define CHIP_ATIS  1
 #define CHIP_AUTO -1
 
+/*
 #define VSCTRL_IOC_READ  0
 #define VSCTRL_IOC_WRITE 1
+*/
 
+// --- addresses of the registers --- //
 #define VSCTRL_INFO_ADDR         0x00
 #define VSCTRL_STATUS_ADDR       0x04
 #define VSCTRL_RSVD_08_ADDR      0x08
@@ -63,6 +68,30 @@
 #define VSCTRL_RSVD_34_ADDR      0x34
 #define VSCTRL_GPO_ADDR          0x38
 #define VSCTRL_GPI_ADDR          0x3C
+
+// --- default values for ATIS chip --- //
+
+// --- register VSCTRL_SRC_CNFG_ADDR --- //
+#define ACK_REL_DEL              0x05 // 50ns (one tick is 10ns)
+#define ACK_SAM_DEL              0x03 // 30ns
+#define ACK_SET_DEL              0x02 // 20ns
+#define AER_LVL                  0x15 // overwrite = 1, ack active low, req active high (ATIS default)
+// --- register VSCTRL_SRC_DST_CTRL_ADDR --- //
+#define TD_APS_CTRL              0x0A // TD loopback = 0, TD EN =1, APS loppback = 0, APS EN = 1, flush fifo = 0, ignore FIFO Full = 0
+#define SRC_CTRL                 0x12
+// --- register VSCTRL_HSSAER_CNFG_ADDR --- //
+#define CH_EN                    0x07 // enable ch0, ch1, ch2
+// --- register VSCTRL_BG_CNFG_ADDR --- //
+#define BG_CFG                   0x39 // BGtype = 1 (ATIS), BG overwrite = 1, CK active level = 1, LATCH active level = 1
+#define BG_SHIFT_COUNT           0x20 // LetchOut@end = 1, ShiftCount = 32
+#define BG_ROI                   0x00 // Choose if setting ROI or setting BG (0 -> BG, 1 -> ROI)
+#define BG_PWRDWN                0x10 // powerdown chip
+// --- register VSCTRL_BG_PRESC_ADDR --- //
+#define BG_PRESC                 50 // 50x10ns diventa il periodo del clock
+#define BG_LAT                   0x00 // 510ns
+#define BG_LS                    0x01 // 1.02us
+#define BG_CAT                   0x00 // 510ns
+#define BG_SHT                   4 // (4+1)(50+1)(10ns) = 2.51us
 
 // hpu_core & spinn2neu
 
