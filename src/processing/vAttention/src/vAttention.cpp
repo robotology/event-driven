@@ -30,12 +30,6 @@ bool vAttentionModule::configure(yarp::os::ResourceFinder &rf)
     bool strict = rf.check("strict") &&
             rf.check("strict", yarp::os::Value(true)).asBool();
     
-    /* name of the file where the feature map is stored */
-    std::string mapName =
-            rf.check("mode", yarp::os::Value("intensity")).asString();
-    mapName += ".txt";
-    std::string mapNameComplete = rf.findFile(mapName.c_str());
-    
     /* attach a port of the same name as the module (prefixed with a /) to the module 
      so that messages received from the port are redirected to the respond method */
     
@@ -52,8 +46,8 @@ bool vAttentionModule::configure(yarp::os::ResourceFinder &rf)
     /* set parameters */
     int sensorSize = rf.check("sensorSize", yarp::os::Value(128)).asInt();
     int filterSize = rf.check("filterSize", yarp::os::Value(3)).asInt();
-    double tau = rf.check("tau", yarp::os::Value(3)).asDouble();
-    double thrSal = rf.check("thr", yarp::os::Value(0.3)).asDouble();
+    double tau = rf.check("tau", yarp::os::Value(1)).asDouble();
+    double thrSal = rf.check("thr", yarp::os::Value(16)).asDouble();
     
     /* create the thread and pass pointers to the module parameters */
     attManager = new vAttentionManager(sensorSize, filterSize, tau, thrSal);
@@ -120,22 +114,20 @@ vAttentionManager::vAttentionManager(int sensorSize, int filterSize, double tau,
     this -> tau = tau;
     this -> thrSal = thrSal;
     
-    subMatrixSize = filterSize/2;
     normSal = thrSal/255;
     
     ptime = 0; // past time stamp
     
     
     //for speed we predefine the mememory for some matricies
-    salMapLeft = yarp::sig::Matrix(sensorSize, sensorSize); // from vFlow
-    salMapRight = yarp::sig::Matrix(sensorSize, sensorSize); // from vFlow
-    filterMap = yarp::sig::Matrix(filterSize, filterSize); // from vFlow
+    salMapLeft  = yarp::sig::Matrix(sensorSize+filterSize-1, sensorSize+filterSize-1);
+    salMapRight = yarp::sig::Matrix(sensorSize+filterSize-1, sensorSize+filterSize-1);
+    filterMap   = yarp::sig::Matrix(filterSize, filterSize);
     
     // initialise saliency map to zero
     salMapLeft.zero();
     salMapRight.zero();
     
-
     // compute the filter
     for(int r = 0; r < filterSize; r++) {
         for(int c = 0; c < filterSize; c++) {
@@ -169,11 +161,14 @@ bool vAttentionManager::open(const std::string moduleName, bool strictness)
     
     std::cout << "opened ports: " << std::endl << "vBottle:i " << check1  << std::endl << "vBottle:o "<< check2  << std::endl<< "/salMapLeft:o " << check3  << std::endl<< "/salMapRight:o " << check4 << std::endl;
     
-    //salMapImageLeft   = new yarp::sig::ImageOf<yarp::sig::PixelMono>;
-    //salMapImageRight  = new yarp::sig::ImageOf<yarp::sig::PixelMono>;
+    salMapImageLeft   = new yarp::sig::ImageOf<yarp::sig::PixelMono>;
+    salMapImageRight  = new yarp::sig::ImageOf<yarp::sig::PixelMono>;
 
-    //salMapImageLeft ->resize(sensorSize,sensorSize);
-    //salMapImageRight->resize(sensorSize,sensorSize);
+    salMapImageLeft ->resize(sensorSize,sensorSize);
+    salMapImageRight->resize(sensorSize,sensorSize);
+    
+    salMapImageLeft ->zero();
+    salMapImageRight->zero();
     
     // ---- initialise the images of the saliency maps left and right to 0 ---- //
     //memset((void*)salMapImageLeft, 0, sensorSize * sensorSize * sizeof(unsigned char));
@@ -219,10 +214,6 @@ void vAttentionManager::onRead(emorph::vBottle &bot)
     /* get the event queue in the vBottle bot */
     emorph::vQueue q = bot.get<emorph::AddressEvent>();
     q.sort(true);
-    //q.back()->getStamp();
-    
-    //unsigned long int dt  = unwrap(q.back()->getStamp()) - ptime;
-    //ptime = unwrap.currentTime();
     
     unsigned long int t  = unwrap(q.back()->getStamp());
     unsigned long int dt  = t - ptime;
@@ -230,23 +221,73 @@ void vAttentionManager::onRead(emorph::vBottle &bot)
     
     // ---- decay saliency map ---- //
     
-    decaySaliencyMap(salMapLeft,dt);
-    decaySaliencyMap(salMapRight,dt);
+    //decaySaliencyMap(salMapLeft,dt);
+    //decaySaliencyMap(salMapRight,dt);
+    
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {
         emorph::AddressEvent *aep = (*qi)->getAs<emorph::AddressEvent>();
         if(!aep) continue;
         // --- increase energy of saliency map  --- //
         
-        if (aep->getChannel() == 0){
-            updateSaliencyMap(salMapLeft,aep);
+        if (aep->getChannel() == 0)
+        {
+            //updateSaliencyMap(salMapLeft,aep);
+            
+            int cartX     = aep->getX();
+            int cartY     = aep->getY();
+            
+            int rf, cf;
+            rf = 0;
+            
+            // ---- increase energy in the location of the event ---- //
+            
+            for(int r = cartX; r < cartX + filterSize; r++) {
+                cf = 0;
+                for(int c = cartY; c < cartY + filterSize; c++) {
+                    
+                    salMapLeft(r,c) += filterMap(rf,cf);
+                    
+                    cf ++;
+                }
+                rf ++;
+            }
+            
         }
-        else{
-            updateSaliencyMap(salMapRight,aep);
+        else
+        {
+            int cartX     = aep->getX();
+            int cartY     = aep->getY();
+            
+            int rf, cf;
+            rf = 0;
+            
+            // ---- increase energy in the location of the event ---- //
+            
+            for(int r = cartX; r < cartX + filterSize; r++) {
+                cf = 0;
+                for(int c = cartY; c < cartY + filterSize; c++) {
+                    
+                    salMapRight(r,c) += filterMap(rf,cf);
+                    
+                    cf ++;
+                }
+                rf ++;
+            }
+            //updateSaliencyMap(salMapRight,aep);
         }
     }
-    std::cout << "update done" << std::endl;
     
+    
+    for(int r = 0; r < sensorSize + filterSize - 1; r++) {
+        for(int c = 0; c < sensorSize + filterSize - 1; c++) {
+            
+            salMapLeft(r,c) = salMapLeft(r,c) * exp(-dt/tau);
+            salMapRight(r,c) = salMapRight(r,c) * exp(-dt/tau);
+            
+        }
+    }
+
     // ---- normalise saliency map ---- //
     
     //normaliseSaliencyMap(salMapLeft);
@@ -278,70 +319,78 @@ void vAttentionManager::onRead(emorph::vBottle &bot)
      */
     
     //  --- convert to images for display --- //
-    /*
+    
     unsigned char* pSalImgLeft   = salMapImageLeft->getRawImage();
     unsigned char* pSalImgRight  = salMapImageRight->getRawImage();
 
-    for(int r = 0; r < sensorSize; r++) {
-        for(int c = 0; c < sensorSize; c++) {
+    int shift = filterSize/2;
+    
+    
+    for(int r = shift; r < sensorSize+shift; r++) {
+        for(int c = shift; c < sensorSize+shift; c++) {
             *pSalImgLeft = std::min(salMapLeft(r,c),thrSal)/normSal;
+            //std::cout << "salMapLeft ("<<r<<","<<c<<"): " << *pSalImgLeft << " - " << pSalImgLeft << " - " << &pSalImgLeft << " - " << std::min(salMapLeft(r,c),thrSal)/normSal << std::endl;
+            
             pSalImgLeft++;
             *pSalImgRight = std::min(salMapRight(r,c),thrSal)/normSal;
             pSalImgRight++;
         }
     }
-    */
+    
     // --- writing vBottle on buffered output port
     if (strictness) outPort.writeStrict();
     else outPort.write();
     
     // --- writing images of left and right saliency maps on output port
     if(outSalMapLeftPort.getOutputCount()) {
-        std::cout << "sending left image"<< std::endl;
+        //std::cout << "sending left image"<< std::endl;
         outSalMapLeftPort.prepare()  = *salMapImageLeft;
         outSalMapLeftPort.write();
     }
     if(outSalMapRightPort.getOutputCount()) {
-        std::cout << "sending right image"<< std::endl;
+        //std::cout << "sending right image"<< std::endl;
         outSalMapRightPort.prepare()  = *salMapImageRight;
         outSalMapRightPort.write();
     }
 }
 
 /**********************************************************/
-void vAttentionManager::updateSaliencyMap(yarp::sig::Matrix &salMap, emorph::AddressEvent *aep)
+void vAttentionManager::updateSaliencyMap(yarp::sig::Matrix salMap, emorph::AddressEvent *aep)
 {
     // unmask event: get x, y, pol, channel
-    int cartY     = aep->getX();
-    int cartX     = aep->getY();
-    
-    int rf, cf;
-    rf = 0;
-    cf = 0;
-    
-    int r1, r2, c1, c2;
-    r1 = cartX-subMatrixSize;
-    r2 = cartX+subMatrixSize;
-    c1 = cartY-subMatrixSize;
-    c2 = cartY-subMatrixSize;
-    
-    // ---- increase energy in the location of the event ---- //
-    
-    for(int r = r1; r < filterSize; r++) {
-        for(int c = c1; c < filterSize; c++) {
-            salMap(r,c) += filterMap(rf,cf);
-            rf ++;
-            cf ++;
-        }
-    }
-    
+//    int cartX     = aep->getX();
+//    int cartY     = aep->getY();
+//    
+//    int rf, cf;
+//    rf = 0;
+//    
+//    // ---- increase energy in the location of the event ---- //
+//    
+//    for(int r = cartX; r < cartX + filterSize; r++) {
+//        cf = 0;
+//        for(int c = cartY; c < cartY + filterSize; c++) {
+//            
+//            salMapLeft(r,c) += filterMap(rf,cf);
+//            
+//            cf ++;
+//        }
+//        rf ++;
+//    }
+//    
 }
 
-void vAttentionManager::decaySaliencyMap(yarp::sig::Matrix &salMap, unsigned long int dt)
+void vAttentionManager::decaySaliencyMap(yarp::sig::Matrix salMap, unsigned long int dt)
 {
-    //    std::cout << "saliency map decay" << std::endl;
-    double expDecay = exp(dt/tau);
-    salMap = salMap * expDecay;
+    std::cout << "saliency map decay" << std::endl;
+    //salMap = salMap * exp(-dt/tau);
+    //salMapLeft = salMapLeft*1;// exp(-dt/tau);
+    for(int r = 0; r < sensorSize + filterSize - 1; r++) {
+        for(int c = 0; c < sensorSize + filterSize - 1; c++) {
+            
+      //      salMapLeft(r,c) = salMapLeft(r,c) * exp(-dt/tau);
+            
+        }
+    }
     
 }
 

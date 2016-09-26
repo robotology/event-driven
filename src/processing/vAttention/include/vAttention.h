@@ -43,7 +43,6 @@ private:
     
     int sensorSize;
     int filterSize;
-    int subMatrixSize; // half of the filterSize, to extract the submatrix from the saliency map
     double tau;
     unsigned long int ptime; // past time stamp
     double thrSal; // threshold to put a maximum on the saliency map (whatever is above thr will be set to the maximum value)
@@ -55,9 +54,9 @@ private:
     yarp::sig::Matrix salMapRight;      // saliency map is a matrix (sensorSize*sensorSize)
     yarp::sig::Matrix filterMap;        // filter is a matrix (filterSize*filterSize)
     
-    void updateSaliencyMap(yarp::sig::Matrix &salMap, emorph::AddressEvent *aep);
+    void updateSaliencyMap(yarp::sig::Matrix salMap, emorph::AddressEvent *aep);
     // void normaliseSaliencyMap(yarp::sig::Matrix &salMap);
-    void decaySaliencyMap(yarp::sig::Matrix &salMap, unsigned long int dt);
+    void decaySaliencyMap(yarp::sig::Matrix salMap, unsigned long int dt);
     
 public:
 
