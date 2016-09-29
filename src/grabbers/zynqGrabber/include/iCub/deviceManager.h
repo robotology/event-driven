@@ -108,24 +108,32 @@ public:
 
     void printBiases();
     unsigned int getBias(std::string biasName);
-
+    int setLatchAtEnd(bool Enable);
+    int setPowerDown(bool Enable);
+        
     virtual bool openDevice();
+    virtual int writeDevice(unsigned char reg, unsigned char data);
+    
     virtual void closeDevice();
-
+    virtual unsigned char readDevice(unsigned char reg);
+    
     vsctrlDevManager(std::string channel, std::string chip);
 
     // ---- ioctl for i2c device ---- //
+/*
     int chipReset();
     int chipPowerDown();
     int chipPowerUp();
-
+*/
     int getFpgaStatus();
     int clearFpgaStatus(std::string clr);
     int getFpgaRel();
     int getFpgaInfo();
-    int writeAerTimings(uint8_t ack_rel, uint8_t sample, uint8_t ack_set);
+ 
 
-    int writeBgTimings(uint8_t prescaler, uint8_t hold, uint8_t ck_active, uint8_t latch_setup, uint8_t latch_active);
+    int writeRegConfig(unsigned char regAddr, std::vector<uint8_t> regConfig);
+    
+    int setShiftCount(uint8_t shiftCount);
     int getBgTimings();
     int getAerTimings();
     int initDevice();
@@ -133,6 +141,7 @@ public:
     int readGPORegister();
 
     bool programBiases();
+    int writeBiases(std::vector<unsigned int> &deviceData);
     bool setBias(std::string biasName, unsigned int biasValue);
     bool setBias(yarp::os::Bottle bias);
 

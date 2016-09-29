@@ -14,42 +14,16 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-
+//#include <linux/i2c-dev.h> // da mettere su zynq
+#define I2C_SLAVE 0x00 // da togliere su zynq
 
 #define MAX_BUF_SIZE 16777216
 // vsctrl
 
-/* --- not needed as the driver is not there anymore and these are for the driver's ioctl
-#define VSCTRL_MAGIC_NUM 101
-
-#define VSCTRL_GEN_REG_ACCESS    _IOWR(VSCTRL_MAGIC_NUM,  5, void *)
-#define VSCTRL_GET_FPGAREL       _IOR (VSCTRL_MAGIC_NUM,  6, unsigned int *)
-#define VSCTRL_GET_INFO          _IOR (VSCTRL_MAGIC_NUM,  7, unsigned int *)
-#define VSCTRL_GET_STATUS        _IOR (VSCTRL_MAGIC_NUM,  8, unsigned int *)
-#define VSCTRL_INIT_DEV          _IOW (VSCTRL_MAGIC_NUM,  9, unsigned int)
-#define VSCTRL_RESET_ARRAY       _IOW (VSCTRL_MAGIC_NUM, 10, unsigned int)
-#define VSCTRL_SET_PWRDWN        _IOW (VSCTRL_MAGIC_NUM, 11, unsigned int)
-#define VSCTRL_SET_BIASGEN       _IOW (VSCTRL_MAGIC_NUM, 12, unsigned int)
-#define VSCTRL_SET_ROIGEN        _IOW (VSCTRL_MAGIC_NUM, 13, unsigned int)
-#define VSCTRL_SET_GPO           _IOW (VSCTRL_MAGIC_NUM, 14, unsigned int)
-#define VSCTRL_GET_GPI           _IOR (VSCTRL_MAGIC_NUM, 15, unsigned int *)
-#define VSCTRL_SET_AER_TIMINGS   _IOW (VSCTRL_MAGIC_NUM, 16, void *)
-#define VSCTRL_SET_BG_TIMINGS    _IOW (VSCTRL_MAGIC_NUM, 17, void *)
-#define VSCTRL_GET_AER_TIMINGS   _IOR (VSCTRL_MAGIC_NUM, 18, void *)
-#define VSCTRL_GET_BG_TIMINGS    _IOR (VSCTRL_MAGIC_NUM, 19, void *)
-#define VSCTRL_CLR_STATUS        _IOW (VSCTRL_MAGIC_NUM, 20, unsigned int)
-*/
-
 #define VSCTRL_MAX_BUF_SIZE 16777216
 
-#define CHIP_DVS   0
-#define CHIP_ATIS  1
-#define CHIP_AUTO -1
-
-/*
-#define VSCTRL_IOC_READ  0
-#define VSCTRL_IOC_WRITE 1
-*/
+#define I2C_ADDRESS_VSCTRL       0x10
+#define I2C_ADDRESS              I2C_ADDRESS_VSCTRL
 
 // --- addresses of the registers --- //
 #define VSCTRL_INFO_ADDR         0x00
@@ -72,26 +46,41 @@
 // --- default values for ATIS chip --- //
 
 // --- register VSCTRL_SRC_CNFG_ADDR --- //
-#define ACK_REL_DEL              0x05 // 50ns (one tick is 10ns)
-#define ACK_SAM_DEL              0x03 // 30ns
-#define ACK_SET_DEL              0x02 // 20ns
-#define AER_LVL                  0x15 // overwrite = 1, ack active low, req active high (ATIS default)
+//#define ACK_REL_DEL              0x05 // 50ns (one tick is 10ns)
+//#define ACK_SAM_DEL              0x03 // 30ns
+//#define ACK_SET_DEL              0x02 // 20ns
+//#define AER_LVL                  0x15 // overwrite = 1, ack active low, req active high (ATIS default)
 // --- register VSCTRL_SRC_DST_CTRL_ADDR --- //
-#define TD_APS_CTRL              0x0A // TD loopback = 0, TD EN =1, APS loppback = 0, APS EN = 1, flush fifo = 0, ignore FIFO Full = 0
-#define SRC_CTRL                 0x12
+//#define TD_APS_CTRL              0x0A // TD loopback = 0, TD EN =1, APS loppback = 0, APS EN = 1, flush fifo = 0, ignore FIFO Full = 0
+//#define SRC_CTRL                 0x12
 // --- register VSCTRL_HSSAER_CNFG_ADDR --- //
-#define CH_EN                    0x07 // enable ch0, ch1, ch2
+//#define CH_EN                    0x07 // enable ch0, ch1, ch2
 // --- register VSCTRL_BG_CNFG_ADDR --- //
-#define BG_CFG                   0x39 // BGtype = 1 (ATIS), BG overwrite = 1, CK active level = 1, LATCH active level = 1
-#define BG_SHIFT_COUNT           0x20 // LetchOut@end = 1, ShiftCount = 32
-#define BG_ROI                   0x00 // Choose if setting ROI or setting BG (0 -> BG, 1 -> ROI)
-#define BG_PWRDWN                0x10 // powerdown chip
+//#define BG_PWRDWN                0x10 // powerdown chip
+#define BG_PWRDWN_MSK                   0x01 // powerdown chip mask
+
 // --- register VSCTRL_BG_PRESC_ADDR --- //
-#define BG_PRESC                 50 // 50x10ns diventa il periodo del clock
-#define BG_LAT                   0x00 // 510ns
-#define BG_LS                    0x01 // 1.02us
-#define BG_CAT                   0x00 // 510ns
-#define BG_SHT                   4 // (4+1)(50+1)(10ns) = 2.51us
+//#define BG_PRESC                 50 // 50x10ns diventa il periodo del clock
+//#define BG_LAT                   0x00 // 510ns
+//#define BG_LS                    0x01 // 1.02us
+//#define BG_CAT                   0x00 // 510ns
+//#define BG_SHT                   4 // (4+1)(50+1)(10ns) = 2.51us
+
+// --- register VSCTRL_STATUS --- //
+
+// --- masks --- //
+#define ST_TD_FIFO_FULL_MSK             0x01
+#define ST_APS_FIFO_FULL_MSK            0x02
+#define ST_CRC_ERR_MSK                  0x10
+#define ST_BIAS_DONE_MSK                0x20
+#define ST_I2C_TIMEOUT_MSK              0x80
+
+// --- BG masks --- //
+#define BG_SHIFT_COUNT_MSK           0x3F // mask of bg shift count
+//#define BG_SHIFT_AUTORST_MSK         0x40 // mask of bg shift count
+#define BG_LATOUTEND_MSK             0x80 // mask of bg shift count
+//#define BG_ROISEL_MSK                0x20
+#define BG_VAL_MSK                    0x1FFFFF // mask of 21 bit for bg value
 
 // hpu_core & spinn2neu
 
@@ -114,7 +103,7 @@
 #define IRQ_REG      0x1C
 #define MASK_REG     0x20
 #define STMP_REG     0x28
-#define ID_REG       0x5c
+#define ID_REG       0x5C
 
 // CTRL register bit field
 //#define CTRL_ENABLEIP 0x00000001
