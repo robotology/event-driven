@@ -103,13 +103,14 @@ bool vParticle::predict(unsigned long timestamp)
 
     //double dt = timestamp - this->stamp;
 
-    double sigmatw = 100000;
-    tw += abs(generateGaussianNoise(0, sigmatw));
+    //double sigmatw = 10000;
+    //tw += abs(generateGaussianNoise(0, sigmatw));
+    tw += (timestamp - this->stamp);
 
-    double sigmap = 1;
+    double sigmap = 2.0;
     x = generateGaussianNoise(x, sigmap);
     y = generateGaussianNoise(y, sigmap);
-    r = generateGaussianNoise(r, sigmap * 0.4);
+    r = generateGaussianNoise(r, sigmap * 0.1);
     if(r < 10) r = 10;
     if(r > 36) r = 36;
 
@@ -270,7 +271,7 @@ void vParticle::incrementalLikelihood(int vx, int vy, int dt)
 {
     double dx = vx - x;
     double dy = vy - y;
-    //if(abs(dx) > r + 4 || abs(dy) > r + 4) return;
+    if(abs(dx) > r + 2 || abs(dy) > r + 2) return;
     double sqrd = sqrt(pow(dx, 2.0) + pow(dy, 2.0)) - r;
     if(abs(sqrd) < 2) {
         likelihood++;
@@ -282,19 +283,20 @@ void vParticle::incrementalLikelihood(int vx, int vy, int dt)
         likelihood -= 3;
     }
 
-//    if(inlierCount > r) {
-//        if(likelihood - 1.0*sqrt(pow(leftMass / inlierCount, 2.0) + pow(topMass / inlierCount, 2.0)) > maxlikelihood) {
-//            maxlikelihood = likelihood - 1.0*sqrt(pow(leftMass / inlierCount, 2.0) + pow(topMass / inlierCount, 2.0));
-//            maxtw = dt;
-//        }
-//    }
-
     if(inlierCount > r) {
-        if(likelihood > maxlikelihood) {
-            maxlikelihood = likelihood;
+        double massval = sqrt(pow(leftMass / inlierCount, 2.0) + pow(topMass / inlierCount, 2.0));
+        if(likelihood - massval > maxlikelihood) {
+            maxlikelihood = likelihood - massval;
             maxtw = dt;
         }
     }
+
+//    if(inlierCount > r) {
+//        if(likelihood > maxlikelihood) {
+//            maxlikelihood = likelihood;
+//            maxtw = dt;
+//        }
+//    }
 }
 
 void vParticle::concludeLikelihood()
@@ -336,7 +338,8 @@ void vParticle::updateWeightSync(double normval)
 void vParticle::resample(double w, unsigned long int t)
 {
 
-    initState(rand()%128, rand()%128, 10+rand()%26, 10000 + rand()%200000);
+    //initState(rand()%128, rand()%128, 10+rand()%26, 10000 + rand()%200000);
+    initState(rand()%128, rand()%128, 10+rand()%26, 100);
     initWeight(w);
     initTiming(t);
     return;

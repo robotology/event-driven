@@ -255,7 +255,7 @@ particleProcessor::particleProcessor(unsigned int height, unsigned int weight, s
     avgtw = 0;
     maxtw = 0;
     maxlikelihood = 1;
-    nparticles = 100;
+    nparticles = 50;
     rate = 0;
     nThreads = 3;
 
@@ -382,43 +382,43 @@ void particleProcessor::run()
         //thread parameter -> index range
         //pass -> deltats, indexedlist, stw
 
-        for(int i = 0; i < nparticles; i++) {
-            indexedlist[i].initLikelihood();
-        }
+//        for(int i = 0; i < nparticles; i++) {
+//            indexedlist[i].initLikelihood();
+//        }
 
-        for(int j = 0; j < nparticles; j++) {
-            for(unsigned int i = 0; i < stw.size(); i++) {
-                if(deltats[i] < indexedlist[j].gettw()) {
-                    emorph::AddressEvent *v = stw[i]->getUnsafe<emorph::AddressEvent>();
-                    indexedlist[j].incrementalLikelihood(v->getX(), v->getY(), deltats[i]);
-                } else {
-                    break;
-                }
-            }
-        }
+//        for(int j = 0; j < nparticles; j++) {
+//            for(unsigned int i = 0; i < stw.size(); i++) {
+//                if(deltats[i] < indexedlist[j].gettw()) {
+//                    emorph::AddressEvent *v = stw[i]->getUnsafe<emorph::AddressEvent>();
+//                    indexedlist[j].incrementalLikelihood(v->getX(), v->getY(), deltats[i]);
+//                } else {
+//                    break;
+//                }
+//            }
+//        }
 
-        maxlikelihood = 0;
-        double normval = 0.0;
-        for(int i = 0; i < nparticles; i++) {
-            indexedlist[i].concludeLikelihood();
-            normval += indexedlist[i].getw();
-            maxlikelihood = std::max(maxlikelihood, indexedlist[i].getl());
-        }
+//        maxlikelihood = 0;
+//        double normval = 0.0;
+//        for(int i = 0; i < nparticles; i++) {
+//            indexedlist[i].concludeLikelihood();
+//            normval += indexedlist[i].getw();
+//            maxlikelihood = std::max(maxlikelihood, indexedlist[i].getl());
+//        }
 
         //return normval for those events
         //END SINGLE-THREAD
 
         //START MULTI-THREAD
-//        for(int k = 0; k < nThreads; k++) {
-//            computeThreads[k]->setDataSources(&indexedlist, &deltats, &stw);
-//            computeThreads[k]->start();
-//        }
+        for(int k = 0; k < nThreads; k++) {
+            computeThreads[k]->setDataSources(&indexedlist, &deltats, &stw);
+            computeThreads[k]->start();
+        }
 
-//        double normval = 0.0;
-//        for(int k = 0; k < nThreads; k++) {
-//            while(computeThreads[k]->isRunning());
-//            normval += computeThreads[k]->getNormVal();
-//        }
+        double normval = 0.0;
+        for(int k = 0; k < nThreads; k++) {
+            computeThreads[k]->join();
+            normval += computeThreads[k]->getNormVal();
+        }
         //END MULTI-THREAD
 
         //normalisation
