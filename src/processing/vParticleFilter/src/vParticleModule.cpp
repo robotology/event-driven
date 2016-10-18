@@ -257,7 +257,7 @@ particleProcessor::particleProcessor(unsigned int height, unsigned int weight, s
     maxlikelihood = 1;
     nparticles = 50;
     rate = 0;
-    nThreads = 3;
+    nThreads = 7;
 
     for(int i = 0; i < nThreads; i++) {
         int pStart = i * (nparticles / nThreads);
@@ -463,7 +463,8 @@ void particleProcessor::run()
                 image(py, 127 - px) = yarp::sig::PixelBgr(255, 255, 255);
 
             }
-            drawEvents(image, stw, avgtw);
+            //drawEvents(image, stw, avgtw);
+            drawEvents(image, stw, pmax.gettw());
             debugOut.write();
         }
 

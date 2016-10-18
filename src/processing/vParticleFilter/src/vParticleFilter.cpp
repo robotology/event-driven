@@ -103,15 +103,15 @@ bool vParticle::predict(unsigned long timestamp)
 
     //double dt = timestamp - this->stamp;
 
-    //double sigmatw = 10000;
-    //tw += abs(generateGaussianNoise(0, sigmatw));
-    tw += (timestamp - this->stamp);
+    double sigmatw = 20000;
+    tw += abs(generateGaussianNoise(0, sigmatw));
+    //tw += timestamp - this->stamp;
 
-    double sigmap = 2.0;
+    double sigmap = 1.5;
     x = generateGaussianNoise(x, sigmap);
     y = generateGaussianNoise(y, sigmap);
     r = generateGaussianNoise(r, sigmap * 0.1);
-    if(r < 10) r = 10;
+    if(r < 8) r = 8;
     if(r > 36) r = 36;
 
 
@@ -273,18 +273,18 @@ void vParticle::incrementalLikelihood(int vx, int vy, int dt)
     double dy = vy - y;
     if(abs(dx) > r + 2 || abs(dy) > r + 2) return;
     double sqrd = sqrt(pow(dx, 2.0) + pow(dy, 2.0)) - r;
-    if(abs(sqrd) < 2) {
+    if(abs(sqrd) < 1.5) {
         likelihood++;
         inlierCount++;
         leftMass += dx;
         topMass += dy;
-    //} else if(sqrd < 3) {
+    //} else if(sqrd < -2) {
     } else if(sqrd > -4 && sqrd < 0) {
-        likelihood -= 3;
+        likelihood -= 2;
     }
 
     if(inlierCount > r) {
-        double massval = sqrt(pow(leftMass / inlierCount, 2.0) + pow(topMass / inlierCount, 2.0));
+        double massval = 10*sqrt(pow(leftMass / inlierCount, 2.0) + pow(topMass / inlierCount, 2.0));
         if(likelihood - massval > maxlikelihood) {
             maxlikelihood = likelihood - massval;
             maxtw = dt;
@@ -306,8 +306,9 @@ void vParticle::concludeLikelihood()
 //    if(inlierCount)
 //        likelihood -= 1.0 * sqrt(pow(leftMass / inlierCount, 2.0) + pow(topMass / inlierCount, 2.0));
 
-    if(likelihood <= 0 || inlierCount < r) {
-        likelihood = 1;
+    //if(likelihood <= 0 || inlierCount < 2.0*r) {
+    if(likelihood <= r) {
+        likelihood = 1.0;
     } else {
         tw = maxtw;
     }
