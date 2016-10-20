@@ -141,6 +141,8 @@ vSurfaceHandler::vSurfaceHandler(unsigned int width, unsigned int height)
     ptime = yarp::os::Time::now();
     condTime = 0;
     tw = 0;
+    eventrate = 0;
+    bottletime = yarp::os::Time::now();
     eventsQueried = false;
     waitsignal.wait(); //lock the resource to start with
 
@@ -208,6 +210,15 @@ void vSurfaceHandler::onRead(eventdriven::vBottle &inputBottle)
 
 
     }
+
+    double ctime = yarp::os::Time::now();
+    eventrate = 0.5 * (eventrate + q.size() / (ctime - bottletime));
+    bottletime = ctime;
+
+
+   // if(q.size() > 1)
+     //   std::cout << (double)q.size() * 7812500 / (q.back()->getStamp() - q.front()->getStamp()) <<std::endl;
+
 
 
 }
@@ -283,6 +294,10 @@ bool particleProcessor::threadInit()
 
     if(!scopeOut.open("/" + name + "/scope:o")) {
         std::cout << "could not open scope port" << std::endl;
+        return false;
+    }
+    if(!vBottleOut.open("/" + name + "/vBottle:o")) {
+        std::cout << "coult not open vBottleOut port" << std::endl;
         return false;
     }
 
@@ -432,21 +447,43 @@ void particleProcessor::run()
         double Tobs = (yarp::os::Time::now() - ptime)*1000.0;
         ptime = yarp::os::Time::now();
 
-        static int i = 0;
-        if(i++ % 1 == 0) {
-        //if(false) {
+        //extract target position
+        avgx = 0;
+        avgy = 0;
+        avgr = 0;
+        avgtw = 0;
 
-            avgx = 0;
-            avgy = 0;
-            avgr = 0;
-            avgtw = 0;
+        for(int i = 0; i < nparticles; i ++) {
+            avgx += indexedlist[i].getx() * indexedlist[i].getw();
+            avgy += indexedlist[i].gety() * indexedlist[i].getw();
+            avgr += indexedlist[i].getr() * indexedlist[i].getw();
+            avgtw += indexedlist[i].gettw() * indexedlist[i].getw();
+        }
 
-            for(int i = 0; i < nparticles; i ++) {
-                avgx += indexedlist[i].getx() * indexedlist[i].getw();
-                avgy += indexedlist[i].gety() * indexedlist[i].getw();
-                avgr += indexedlist[i].getr() * indexedlist[i].getw();
-                avgtw += indexedlist[i].gettw() * indexedlist[i].getw();
-            }
+        if(vBottleOut.getOutputCount()) {
+            emorph::vBottle &eventsout = vBottleOut.prepare();
+            eventsout.clear();
+            emorph::ClusterEventGauss ceg;
+            ceg.setStamp(stw.front()->getStamp());
+            ceg.setChannel(1);
+            ceg.setID(0);
+            ceg.setNumAE(0);
+            ceg.setPolarity(0);
+            ceg.setXCog(avgx);
+            ceg.setYCog(avgy);
+            ceg.setXSigma2(avgr);
+            ceg.setYSigma2(1);
+            ceg.setXVel(0);
+            ceg.setYVel(0);
+            ceg.setXYSigma(0);
+
+            eventsout.addEvent(ceg);
+            vBottleOut.write();
+        }
+
+
+        //static int i = 0;
+        if(debugOut.getOutputCount()) {
 
             yarp::sig::ImageOf< yarp::sig::PixelBgr> &image = debugOut.prepare();
             image.resize(res.width, res.height);
@@ -477,10 +514,12 @@ void particleProcessor::run()
 //            scopedata.addDouble(avgtw / 10000.0);
 //            scopedata.addDouble(pmax.gettw() / 10000.0);
 
-            scopedata.addDouble(Tget);
-            scopedata.addDouble(Tresample);
-            scopedata.addDouble(Tpredict);
-            scopedata.addDouble(Tobs);
+            //scopedata.addDouble(Tget);
+            //scopedata.addDouble(Tresample);
+            //scopedata.addDouble(Tpredict);
+            //scopedata.addDouble(Tobs);
+            scopedata.addDouble(1000.0 / (Tget + Tresample + Tpredict + Tobs));
+            scopedata.addDouble(eventhandler.geteventrate());
 
             scopeOut.write();
         }

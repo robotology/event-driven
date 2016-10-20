@@ -99,12 +99,15 @@ private:
     yarp::os::Semaphore waitsignal;
     yarp::os::Mutex mutexsignal;
     double ptime;
+    double eventrate;
+    double bottletime;
 
 public:
 
     vSurfaceHandler(unsigned int width = 128, unsigned int height = 128);
 
     eventdriven::vQueue queryEvents(unsigned long int conditionTime, unsigned int temporalWindow);
+    double geteventrate() { return eventrate; }
 
     bool    open(const std::string &name, bool strictness = false);
     void    onRead(eventdriven::vBottle &inBot);
