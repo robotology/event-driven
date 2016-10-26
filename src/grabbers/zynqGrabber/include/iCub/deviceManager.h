@@ -88,7 +88,6 @@ class vsctrlDevManager : public deviceManager {
 
 private:
 
-    vsctrl_ioctl_arg_t iocVsctrlArg;     // vsctrl
     fpgaStatus_t fpgaStat;
 
     std::string chipName;
@@ -99,49 +98,40 @@ private:
     std::vector<std::string> biasNames; // ordered
     std::vector<int> biasValues;
 
-
-
     std::vector<unsigned int> prepareBiases();
-
-
-public:
-
-    void printBiases();
-    unsigned int getBias(std::string biasName);
     int setLatchAtEnd(bool Enable);
-    int setPowerDown(bool Enable);
-        
-    virtual bool openDevice();
     virtual int writeDevice(unsigned char reg, unsigned char data);
-    
-    virtual void closeDevice();
     virtual unsigned char readDevice(unsigned char reg);
-    
-    vsctrlDevManager(std::string channel, std::string chip);
-
-    // ---- ioctl for i2c device ---- //
-/*
-    int chipReset();
-    int chipPowerDown();
-    int chipPowerUp();
-*/
-    int getFpgaStatus();
-    int clearFpgaStatus(std::string clr);
-    int getFpgaRel();
-    int getFpgaInfo();
- 
-
     int writeRegConfig(unsigned char regAddr, std::vector<uint8_t> regConfig);
-    
     int setShiftCount(uint8_t shiftCount);
     int getBgTimings();
     int getAerTimings();
-    int initDevice();
-    int writeGPORegister(uint32_t data);
-    int readGPORegister();
-
-    bool programBiases();
+    bool initDevice();
     int writeBiases(std::vector<unsigned int> &deviceData);
+    int getFpgaStatus();
+    bool clearFpgaStatus(std::string clr);
+    //int getFpgaRel();
+    //int getFpgaInfo();
+    
+public:
+
+    virtual bool openDevice();
+    virtual void closeDevice();
+    
+    vsctrlDevManager(std::string channel, std::string chip);
+
+    // ---- i2c device ---- //
+
+    int chipReset();
+    int chipPowerDown();
+    int chipPowerUp();
+    
+    //int writeGPORegister(uint32_t data);
+    //int readGPORegister();
+    
+    void printBiases();
+    unsigned int getBias(std::string biasName);
+    bool programBiases();
     bool setBias(std::string biasName, unsigned int biasValue);
     bool setBias(yarp::os::Bottle bias);
 

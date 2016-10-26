@@ -46,25 +46,28 @@
 // --- default values for ATIS chip --- //
 
 // --- register VSCTRL_SRC_CNFG_ADDR --- //
-//#define ACK_REL_DEL              0x05 // 50ns (one tick is 10ns)
-//#define ACK_SAM_DEL              0x03 // 30ns
-//#define ACK_SET_DEL              0x02 // 20ns
-//#define AER_LVL                  0x15 // overwrite = 1, ack active low, req active high (ATIS default)
+#define ACK_REL_DEL              0x05 // 50ns (one tick is 10ns)
+#define ACK_SAM_DEL              0x03 // 30n
+#define ACK_SET_DEL              0x02 // 20n
+#define AER_LVL                  0x15 // overwrite = 1, ack active low, req active high (ATIS default)
 // --- register VSCTRL_SRC_DST_CTRL_ADDR --- //
-//#define TD_APS_CTRL              0x0A // TD loopback = 0, TD EN =1, APS loppback = 0, APS EN = 1, flush fifo = 0, ignore FIFO Full = 0
-//#define SRC_CTRL                 0x12
+#define TD_APS_CTRL              0x0A // TD loopback = 0, TD EN =1, APS loppback = 0, APS EN = 1, flush fifo = 0, ignore FIFO Full = 0
+#define SRC_CTRL                 0x12
 // --- register VSCTRL_HSSAER_CNFG_ADDR --- //
-//#define CH_EN                    0x07 // enable ch0, ch1, ch2
+#define CH_SAER_EN                    0x07 // enable ch0, ch1, ch2
+// --- register VSCTRL_HSSAER_CNFG_ADDR --- //
+#define TX_PAER_CFG                    0x03 // enable ch0, ch1, ch2
 // --- register VSCTRL_BG_CNFG_ADDR --- //
-//#define BG_PWRDWN                0x10 // powerdown chip
-#define BG_PWRDWN_MSK                   0x01 // powerdown chip mask
+#define BG_CNFG                 0x39 // BGtype = 1 (ATIS), BG overwrite = 1, CK active level = 1, LATCH active level = 1
+#define BG_LATEND_SHCNT         0x20 // LatchOut@end = 1, ShiftCount = 32
+#define BG_ROI                  0x00 // Choose if setting ROI or setting BG (0 -> BG, 1 -> ROI)
 
 // --- register VSCTRL_BG_PRESC_ADDR --- //
-//#define BG_PRESC                 50 // 50x10ns diventa il periodo del clock
-//#define BG_LAT                   0x00 // 510ns
-//#define BG_LS                    0x01 // 1.02us
-//#define BG_CAT                   0x00 // 510ns
-//#define BG_SHT                   4 // (4+1)(50+1)(10ns) = 2.51us
+#define BG_PRESC                 24 // 24x10ns diventa il periodo del clock
+#define BG_LAT                   3  // Latch Active Time
+#define BG_LS                    4  // Latch Setup
+#define BG_CAT                   2  // Clock Active Time
+#define BG_SHT                   1  // Setup Hold Time
 
 // --- register VSCTRL_STATUS --- //
 
@@ -76,6 +79,7 @@
 #define ST_I2C_TIMEOUT_MSK              0x80
 
 // --- BG masks --- //
+#define BG_PWRDWN_MSK            0x01 // powerdown chip mask
 #define BG_SHIFT_COUNT_MSK           0x3F // mask of bg shift count
 //#define BG_SHIFT_AUTORST_MSK         0x40 // mask of bg shift count
 #define BG_LATOUTEND_MSK             0x80 // mask of bg shift count
@@ -131,27 +135,27 @@
 
 
 
-typedef union vsctrl_ioctl_arg_t {
-    struct {
-        uint8_t addr;
-        char rw;
-        uint32_t data;
-    } regs;
-    struct {
-        uint32_t prescaler_value;
-        uint8_t setup_hold_time;
-        uint8_t clock_active_time;
-        uint8_t latch_setup_time;
-        uint8_t latch_active_time;
-    } bg_timings;
-    struct {
-        uint8_t cfg_ack_rel_delay;
-        uint8_t cfg_sample_delay;
-        uint8_t cfg_ack_set_delay;
-    } aer_timings;
-} vsctrl_ioctl_arg_t;
-
-
+//typedef union vsctrl_ioctl_arg_t {
+//    struct {
+//        uint8_t addr;
+//        char rw;
+//        uint32_t data;
+//    } regs;
+//    struct {
+//        uint32_t prescaler_value;
+//        uint8_t setup_hold_time;
+//        uint8_t clock_active_time;
+//        uint8_t latch_setup_time;
+//        uint8_t latch_active_time;
+//    } bg_timings;
+//    struct {
+//        uint8_t cfg_ack_rel_delay;
+//        uint8_t cfg_sample_delay;
+//        uint8_t cfg_ack_set_delay;
+//    } aer_timings;
+//} vsctrl_ioctl_arg_t;
+//
+//
 typedef struct aerGenReg {
     unsigned int offset;
     char         rw;
