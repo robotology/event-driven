@@ -780,7 +780,7 @@ aerDevManager::aerDevManager(std::string dev, int clockPeriod, std::string loopB
     } else if (dev == "zynq_sens")
     {
         
-        this->deviceName = "/dev/iit_hpucore";
+        this->deviceName = "/dev/iit_hpucore_dma";
         //clockRes = 1;
     } else {
         
