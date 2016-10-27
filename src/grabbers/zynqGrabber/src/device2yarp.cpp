@@ -60,6 +60,7 @@ void  device2yarp::run() {
     //get the data from the device read thread
     int nBytesRead = 0;
     const std::vector<char> &data = devManager->readDevice(nBytesRead);
+    std::cout << "nBytesRead " << nBytesRead << std::endl;
     if (!nBytesRead) return;
 
     if(nBytesRead > devManager->getBufferSize()*0.75) {
@@ -77,12 +78,23 @@ void  device2yarp::run() {
     
     while(bend < nBytesRead - 7) {
 
+        // debug prints
+        
+        printf("T: 0x%08X --> ", data[bend]);
+        if (data[bend+1] & 0x40000)
+        {
+            printf("APS: 0x%08X \n", data[bend+1]);
+        } else {
+            printf("TD: 0x%08X \n", data[bend+1]);
+            
+        }
+
         //check validity
         int *TS =  (int *)(data.data() + bend);
         int *AE =  (int *)(data.data() + bend + 4);
         bool BITMISMATCH = !(*TS & 0x80000000) || (*AE & 0xFFEF0000);
 
-        if(BITMISMATCH) {
+/*        if(BITMISMATCH) {
             //send on what we have checked is not mismatched so far
             if(bend - bstart > 0) {
                 std::cerr << "BITMISMATCH in yarp2device" << std::endl;
@@ -99,34 +111,34 @@ void  device2yarp::run() {
             //then increment by 1 to find the next alignment
             bend++;
             bstart = bend;
-        } else {
+        } else {*/
             countTotEvts ++;
             
-            if (prevPayload == -1){
-                firstTs = *TS & 0x7FFFFFFF;
-    
-            }
-            prevTs = unwrap.currentTime();
-            unwrap(*TS & 0x7FFFFFFF);
-            int currPayload = (*AE & 0x0003FFFF);
-            if (prevPayload != -1){
-                
-                if (prevPayload > currPayload){ // wraps of the address
-                    countLostEvts = currPayload - prevPayload - 1 + 0x0003FFFF;
-                    
-                } else if (prevPayload == currPayload){
-                    std::cout << "Error! Same address! " << std::endl;
-                }
-                else {
-                
-                countLostEvts = currPayload - prevPayload - 1;
-                }
-                diffTs[countBotEvts] = unwrap.currentTime() - prevTs;
-                countBotEvts ++;
-                
-            }
-            prevPayload = currPayload;
-        
+//            if (prevPayload == -1){
+//                firstTs = *TS & 0x7FFFFFFF;
+//    
+//            }
+//            prevTs = unwrap.currentTime();
+//            unwrap(*TS & 0x7FFFFFFF);
+//            int currPayload = (*AE & 0x0003FFFF);
+//            if (prevPayload != -1){
+//                
+//                if (prevPayload > currPayload){ // wraps of the address
+//                    countLostEvts = currPayload - prevPayload - 1 + 0x0003FFFF;
+//                    
+//                } else if (prevPayload == currPayload){
+//                    std::cout << "Error! Same address! " << std::endl;
+//                }
+//                else {
+//                
+//                countLostEvts = currPayload - prevPayload - 1;
+//                }
+//                diffTs[countBotEvts] = unwrap.currentTime() - prevTs;
+//                countBotEvts ++;
+//                
+//            }
+//            prevPayload = currPayload;
+//        
             int tempAE;
             tempAE = 0;
             // find ch - bit 20 put it to bit 21
@@ -142,7 +154,7 @@ void  device2yarp::run() {
             
             //and then check the next two ints
             bend += 8;
-        }
+  //      }
     }
     
     std::cout << "Evts: " << countTotEvts << ", Lost: " << countLostEvts <<", Time: " << unwrap.currentTime() - firstTs << std::endl;
