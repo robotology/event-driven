@@ -14,8 +14,8 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-//#include <linux/i2c-dev.h> // da mettere su zynq
-#define I2C_SLAVE 0x00 // da togliere su zynq
+#include <linux/i2c-dev.h> // da mettere su zynq
+//#define I2C_SLAVE 0x00 // da togliere su zynq
 
 #define MAX_BUF_SIZE 16777216
 // vsctrl
