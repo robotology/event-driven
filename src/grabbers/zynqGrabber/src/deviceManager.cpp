@@ -466,7 +466,7 @@ int vsctrlDevManager::writeDevice(unsigned char reg, unsigned char data){
     
     ret = ioctl(devDesc, I2C_SLAVE, I2C_ADDRESS);
     if (ret == -1) {
-        std::cerr << "i2c write failed: ioctl error " << errno << std::endl;
+        std::cerr << "i2c write failed: ioctl(devDesc, I2C_SLAVE, I2C_ADDRESS) error " << errno << std::endl;
         return ret;
     } else {
         
@@ -585,6 +585,7 @@ int vsctrlDevManager::chipReset(){
     //    }
     //
     //    return ret;
+    std::cout << "Warning: Chip Reset not implemented yet!" << std::endl;
     return 1;
 }
 
