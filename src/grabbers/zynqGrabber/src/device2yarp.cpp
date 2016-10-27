@@ -93,7 +93,7 @@ void  device2yarp::run() {
         int *TS =  (int *)(data.data() + bend);
         int *AE =  (int *)(data.data() + bend + 4);
         std::cout << "TS: " << *TS << " AE: " << *AE << std::endl;
-        //std::cout << "TS: " << *TS  & 0x80000000 << " AE: " << *AE & 0xFFEF0000 << std::endl;
+        std::cout << "TS: " << static_cast<unsigned>(*TS  & 0x80000000) << " AE: " << static_cast<unsigned>(*AE & 0xFFEF0000) << std::endl;
         
 //        bool BITMISMATCH = !(*TS & 0x80000000) || (*AE & 0xFFEF0000);
 
@@ -156,7 +156,7 @@ void  device2yarp::run() {
             *AE = tempAE;
             
             //and then check the next two ints
-            bend += 2;
+            bend += 8;
   //      }
     }
     
