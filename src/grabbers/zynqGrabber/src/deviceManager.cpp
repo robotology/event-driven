@@ -811,64 +811,21 @@ bool aerDevManager::openDevice(){
             stringa[i] = (version&0xFF000000) >> 24;
             version = version << 8;
         }
-        fprintf(stderr, "Identified: %s version %d.%d\r\n\r\n", stringa, hw_major, hw_minor);
-        return ret;
-        // Write the WrapTimeStamp register with any value if you want to clear it
-        //aerWriteGenericReg(fp,STMP_REG,0);
-        fprintf(stderr, "Times wrapping counter: %d\n", aerReadGenericReg(devDesc, STMP_REG));
         
-        // Enable Time wrapping interrupt
-        //aerWriteGenericReg(devDesc, MASK_REG, MSK_TIMEWRAPPING | MSK_TX_DUMPMODE | MSK_RX_PAR_ERR | MSK_RX_MOD_ERR);
-        //aerWriteGenericReg(devDesc, MASK_REG, MSK_TIMEWRAPPING | MSK_RX_PAR_ERR);
-        aerWriteGenericReg(devDesc, MASK_REG, MSK_RX_PAR_ERR);
+        std::cout << "Identified: " << stringa << "version " << hw_major << "." << hw_minor << std::endl;
+        
+        // Write the WrapTimeStamp register with any value if you want to clear it
+        //aerWriteGenericReg(devDesc,STMP_REG,0);
+        
+        // Set mask for enabling interrupts
+        aerWriteGenericReg(devDesc, MASK_REG, MSK_RX_PAER_ERR);
+        std::cout << "Enabled FIFO Full interrupt " << tmp_reg << std::endl;
+        
+        tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
         
         // Flush FIFOs
-        aerWriteGenericReg(devDesc, CTRL_REG, 0);
-        tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
-        std::cout << "Before Flush: " << tmp_reg << std::endl;
-        aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg | CTRL_FLUSHFIFO); // | CTRL_ENABLEIP);
-        
-        // Start IP in LoopBack
-        tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
-        std::cout << "Before Enable Interrupt: " << tmp_reg << std::endl;
-        aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg | (CTRL_ENABLEINTERRUPT));// | CTRL_ENABLE_FAR_LBCK));
-        
-        int loc = 0;
-        int far = 0;
-        int rem = 0;
-        
-        //turn off all loopbacks
-        tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
-        std::cout << "Before Turn off loopbacks: " << tmp_reg << std::endl;
-        //aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg & !CTRL_ENABLE_LOC_LBCK&!CTRL_ENABLE_FAR_LBCK&!CTRL_ENABLE_REM_LBCK);// | CTRL_ENABLE_FAR_LBCK));
-        //aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg & 0x00FFFFFF);// | CTRL_ENABLE_FAR_LBCK));
-        
-        //if loopback is specified, then set it.
-        if (loopBack == "loc"){
-            std::cout << "Setting Local loopback" << std::endl;
-            loc = 1;
-            //tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
-            //aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg | (CTRL_ENABLE_LOC_LBCK));// | CTRL_ENABLE_FAR_LBCK));
-            
-        } else if (loopBack == "far"){
-            std::cout << "Setting Far loopback" << std::endl;
-            far = 1;
-            //tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
-            //aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg | 0xF0000000);// | CTRL_ENABLE_FAR_LBCK));
-            
-        } else if (loopBack == "rem"){
-            std::cout << "Setting Remote loopback" << std::endl;
-            rem = 1;
-            //tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
-            //aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg | (CTRL_ENABLE_REM_LBCK));// | CTRL_ENABLE_FAR_LBCK));
-            
-        }
-        ioctl(devDesc, AER_SET_LOC_LBCK, loc);
-        ioctl(devDesc, AER_SET_FAR_LBCK, far);
-        ioctl(devDesc, AER_SET_REM_LBCK, rem);
-        
-        tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
-        std::cout << "After Turn on loopbacks: " << tmp_reg << std::endl;
+        aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg | CTRL_FLUSHFIFO | (CTRL_ENABLEINTERRUPT));
+        std::cout << "FIFO Flushed and Interrupt enabled " << std::endl;
         
     }
     return ret;
@@ -879,7 +836,6 @@ void aerDevManager::closeDevice(){
     deviceManager::closeDevice();
     unsigned int tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
     aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg & ~(CTRL_ENABLEINTERRUPT));
-    
     
 }
 

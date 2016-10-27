@@ -128,7 +128,7 @@
 #define MSK_RXBUF_READY  0x00000100
 #define MSK_RX_NOT_EMPTY 0x00000200
 #define MSK_TX_DUMPMODE  0x00001000
-#define MSK_RX_PAR_ERR   0x00002000
+#define MSK_RX_PAER_ERR   0x00007000 // fifo full from left, right, aux
 #define MSK_RX_MOD_ERR   0x00004000
 //#define MASK_RX_EMPTY    0x01
 //#define MASK_RX_FULL     0x04
