@@ -812,7 +812,7 @@ bool aerDevManager::openDevice(){
             version = version << 8;
         }
         fprintf(stderr, "Identified: %s version %d.%d\r\n\r\n", stringa, hw_major, hw_minor);
-        
+        return ret;
         // Write the WrapTimeStamp register with any value if you want to clear it
         //aerWriteGenericReg(fp,STMP_REG,0);
         fprintf(stderr, "Times wrapping counter: %d\n", aerReadGenericReg(devDesc, STMP_REG));

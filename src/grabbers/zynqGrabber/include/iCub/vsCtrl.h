@@ -88,8 +88,8 @@
 
 // hpu_core & spinn2neu
 
-#define MAGIC_NUM 100
-#define AER_VERSION         _IOR (MAGIC_NUM,  7, void *)
+#define MAGIC_NUM 0
+#define AER_VERSION         _IOR (MAGIC_NUM,  3, void *)
 #define AER_TIMESTAMP       _IOR (MAGIC_NUM,  8, void *)
 #define AER_GEN_REG         _IOWR(MAGIC_NUM,  6, void *)
 #define AER_SET_LOC_LBCK    _IOW (MAGIC_NUM, 10, void *)
