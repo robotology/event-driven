@@ -156,7 +156,7 @@ void  device2yarp::run() {
             *AE = tempAE;
             
             //and then check the next two ints
-            bend += 8;
+            bend += 2;
   //      }
     }
     
