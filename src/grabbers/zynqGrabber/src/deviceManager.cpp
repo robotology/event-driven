@@ -278,7 +278,8 @@ bool vsctrlDevManager::openDevice(){
     // set static configuration registers
     bool ret3 = initDevice();
     // program chip biases
-    bool ret4 = programBiases();
+    //bool ret4 = programBiases();
+    bool ret4 = true;
     
     return ret1 & ret2 & ret3 & ret4;
 }
@@ -740,6 +741,7 @@ bool vsctrlDevManager::initDevice(){ // TODO sistemare i ret!
         } else {
             std::cout << "HSSAER Channels configured " << std::endl;
         }
+    /*
     //} else if (chipName == "spinn") {
     // --- configure PAER Ack and Req levels --- //
         valReg[0] =  TX_PAER_CFG;     // enable ch0, ch1, ch2
@@ -756,6 +758,7 @@ bool vsctrlDevManager::initDevice(){ // TODO sistemare i ret!
             std::cout << "HSSAER Channels configured " << std::endl;
         }
     //}
+    */
     return retInit;
 }
 
