@@ -813,7 +813,7 @@ bool aerDevManager::openDevice(){
         }
         
         std::cout << "Identified: " << stringa << " version " << hw_major << "." << hw_minor << std::endl;
-        
+        fprintf(stderr,"%d.%d \n",hw_major,hw_minor);
         // Write the WrapTimeStamp register with any value if you want to clear it
         //aerWriteGenericReg(devDesc,STMP_REG,0);
         
