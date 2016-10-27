@@ -812,14 +812,14 @@ bool aerDevManager::openDevice(){
             version = version << 8;
         }
         
-        std::cout << "Identified: " << stringa << "version " << hw_major << "." << hw_minor << std::endl;
+        std::cout << "Identified: " << stringa << " version " << hw_major << "." << hw_minor << std::endl;
         
         // Write the WrapTimeStamp register with any value if you want to clear it
         //aerWriteGenericReg(devDesc,STMP_REG,0);
         
         // Set mask for enabling interrupts
         aerWriteGenericReg(devDesc, MASK_REG, MSK_RX_PAER_ERR);
-        std::cout << "Enabled FIFO Full interrupt " << tmp_reg << std::endl;
+        std::cout << "Enabled FIFO Full interrupt " << std::endl;
         
         tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
         
