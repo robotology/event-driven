@@ -92,7 +92,10 @@ void  device2yarp::run() {
         //check validity
         int *TS =  (int *)(data.data() + bend);
         int *AE =  (int *)(data.data() + bend + 4);
-        bool BITMISMATCH = !(*TS & 0x80000000) || (*AE & 0xFFEF0000);
+        std::cout << "TS: " << *TS << " AE: " << *AE << std::endl;
+        std::cout << "TS: " << *TS  & 0x80000000 << " AE: " << *AE & 0xFFEF0000 << std::endl;
+        
+//        bool BITMISMATCH = !(*TS & 0x80000000) || (*AE & 0xFFEF0000);
 
 /*        if(BITMISMATCH) {
             //send on what we have checked is not mismatched so far
