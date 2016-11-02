@@ -29,7 +29,7 @@ device2yarp::device2yarp() : RateThread(THRATE) {
     countLostEvts = 0;
     prevPayload = -1;
     firstTs = 0;
-    
+
 }
 
 bool device2yarp::threadInit(std::string moduleName, bool strict){
@@ -43,7 +43,7 @@ bool device2yarp::threadInit(std::string moduleName, bool strict){
         std::cout << "D2Y: setting output port to not-strict" << std::endl;
     }
     std::string outPortName = "/" + moduleName + "/vBottle:o";
- 
+
     return portvBottle.open(outPortName)& portScope.open("/" + moduleName + "/scope");
 
 }
@@ -75,29 +75,26 @@ void  device2yarp::run() {
     diffTs.resize((nBytesRead/8));
     long unsigned int prevTs;
     int countBotEvts = 0;
-    
-    while(bend < nBytesRead - 7) {
 
-        // debug prints
-        
-        printf("T: 0x%08X --> ", data[bend]);
-        if (data[bend+1] & 0x40000)
-        {
-            printf("APS: 0x%08X \n", data[bend+1]);
-        } else {
-            printf("TD: 0x%08X \n", data[bend+1]);
-            
-        }
+    while(bend < nBytesRead - 7) {
 
         //check validity
         int *TS =  (int *)(data.data() + bend);
         int *AE =  (int *)(data.data() + bend + 4);
-        std::cout << "TS: " << *TS << " AE: " << *AE << std::endl;
-        std::cout << "TS: " << static_cast<unsigned>(*TS  & 0x80000000) << " AE: " << static_cast<unsigned>(*AE & 0xFFEF0000) << std::endl;
-        
-//        bool BITMISMATCH = !(*TS & 0x80000000) || (*AE & 0xFFEF0000);
 
-/*        if(BITMISMATCH) {
+        printf("T: 0x%08X --> ", *TS);
+        if (*AE & 0x40000) {
+            printf("APS: 0x%08X \n", *AE);
+        } else {
+            printf("TD: 0x%08X \n", *AE);
+
+        }
+
+        //std::cout << "TS: " << *TS << " AE: " << *AE << std::endl;
+
+        bool BITMISMATCH = !(*TS & 0x80000000) || (*AE & 0xFFEF0000);
+
+        if(BITMISMATCH) {
             //send on what we have checked is not mismatched so far
             if(bend - bstart > 0) {
                 std::cerr << "BITMISMATCH in yarp2device" << std::endl;
@@ -114,34 +111,34 @@ void  device2yarp::run() {
             //then increment by 1 to find the next alignment
             bend++;
             bstart = bend;
-        } else {*/
+        } else {
             countTotEvts ++;
-            
-//            if (prevPayload == -1){
-//                firstTs = *TS & 0x7FFFFFFF;
-//    
-//            }
-//            prevTs = unwrap.currentTime();
-//            unwrap(*TS & 0x7FFFFFFF);
-//            int currPayload = (*AE & 0x0003FFFF);
-//            if (prevPayload != -1){
-//                
-//                if (prevPayload > currPayload){ // wraps of the address
-//                    countLostEvts = currPayload - prevPayload - 1 + 0x0003FFFF;
-//                    
-//                } else if (prevPayload == currPayload){
-//                    std::cout << "Error! Same address! " << std::endl;
-//                }
-//                else {
-//                
-//                countLostEvts = currPayload - prevPayload - 1;
-//                }
-//                diffTs[countBotEvts] = unwrap.currentTime() - prevTs;
-//                countBotEvts ++;
-//                
-//            }
-//            prevPayload = currPayload;
-//        
+
+            if (prevPayload == -1){
+                firstTs = *TS & 0x7FFFFFFF;
+
+            }
+            prevTs = unwrap.currentTime();
+            unwrap(*TS & 0x7FFFFFFF);
+            int currPayload = (*AE & 0x0003FFFF);
+            if (prevPayload != -1){
+
+                if (prevPayload > currPayload){ // wraps of the address
+                    countLostEvts = currPayload - prevPayload - 1 + 0x0003FFFF;
+
+                } else if (prevPayload == currPayload){
+                    std::cout << "Error! Same address! " << std::endl;
+                }
+                else {
+
+                countLostEvts = currPayload - prevPayload - 1;
+                }
+                diffTs[countBotEvts] = unwrap.currentTime() - prevTs;
+                countBotEvts ++;
+
+            }
+            prevPayload = currPayload;
+
             int tempAE;
             tempAE = 0;
             // find ch - bit 20 put it to bit 21
@@ -152,17 +149,17 @@ void  device2yarp::run() {
             tempAE |= (*AE & 0x000003FE);
             // find y - bits 17-10 to 20-11
             tempAE |= (*AE & 0x0003FC00) << 1;
-            
+
             *AE = tempAE;
-            
+
             //and then check the next two ints
             bend += 8;
-  //      }
+        }
     }
-    
+
     std::cout << "Evts: " << countTotEvts << ", Lost: " << countLostEvts <<", Time: " << unwrap.currentTime() - firstTs << std::endl;
-    
-    
+
+
     if(nBytesRead - bstart > 7) {
         emorph::vBottleMimic &vbm = portvBottle.prepare();
         vbm.setdata(data.data()+bstart, 8*((nBytesRead-bstart)/8));
@@ -178,32 +175,32 @@ void  device2yarp::run() {
         sbot.clear();
         int sum = 0;
         for (int i = 0; i < countBotEvts; i++){
-            
+
             sum += diffTs[i];
-            
+
         }
-        
+
         double meanTs;
         meanTs = ((double)sum)/countBotEvts;
         double stdTs = 0;
-        
+
         for (int i = 0; i < countBotEvts; i++){
-            
+
             stdTs += pow(diffTs[i] - meanTs, 2.0);
         }
-        
+
         stdTs /= countBotEvts;
         stdTs = sqrt(stdTs);
-        
+
         sbot.addDouble(meanTs);
         sbot.addDouble(stdTs);
-        
+
         scStamp.update();
         portScope.setEnvelope(scStamp);
         if(strict) portScope.writeStrict();
         else portScope.write();
     }
-    
+
 }
 
 void device2yarp::threadRelease() {
