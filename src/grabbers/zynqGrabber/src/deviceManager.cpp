@@ -453,11 +453,14 @@ unsigned char vsctrlDevManager::readDevice(unsigned char reg)
     
     ret = ioctl(devDesc, I2C_SLAVE, I2C_ADDRESS);
     buf[0] = reg;
-    
+    if (ret == -1) {
+        std::cerr << "i2c read failed: ioctl(devDesc, I2C_SLAVE, I2C_ADDRESS) error " << errno << std::endl;
+        return ret;
+    } else {
     ret = write(devDesc, buf, 1);
     
     ret = read(devDesc, buf, 1);
-    
+    }
     return buf[0];
 }
 
