@@ -90,12 +90,12 @@ void  device2yarp::run() {
 //
 //        }
 
-        std::cout << "TS: " << *TS << std::endl;
+        std::cout << "TS: " << *TS << " --> ";
    if (*AE & 0x40000) {
-       std::cout << " TD: " << *AE << std::endl;
+       std::cout << " APS: " << *AE << std::endl;
        
    } else {
-       std::cout << " EM: " << *AE << std::endl;
+       std::cout << " TD: " << *AE << std::endl;
        
    }
        
