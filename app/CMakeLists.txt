@@ -15,7 +15,7 @@ file(GLOB scripts ${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.template
 yarp_install(FILES ${conf}    DESTINATION ${ICUBCONTRIB_CONTEXTS_INSTALL_DIR}/${PROJECTNAME})
 yarp_install(FILES ${scripts} DESTINATION ${ICUBCONTRIB_APPLICATIONS_TEMPLATES_INSTALL_DIR})
 
-if(EMORPH_USE_QTCREATOR)
+if(V_USE_QTCREATOR)
     add_custom_target(apptoken SOURCES ${scripts} ${conf})
-endif(EMORPH_USE_QTCREATOR)
+endif(V_USE_QTCREATOR)
 
