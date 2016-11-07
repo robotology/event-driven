@@ -32,7 +32,7 @@ int main(int argc, char * argv[])
     /* prepare and configure the resource finder */
     ResourceFinder rf;
     rf.setVerbose( false );
-    rf.setDefaultContext( "eMorph" );
+    rf.setDefaultContext( "eventdriven" );
     rf.setDefaultConfigFile( "cluster.ini" );
     rf.configure( argc, argv );
 

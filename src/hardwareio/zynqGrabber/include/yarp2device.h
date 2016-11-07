@@ -16,7 +16,7 @@
 #include <iCub/eventdriven/all.h>
 #include <ctime>
 #include <string>
-#include "iCub/deviceManager.h"
+#include "deviceManager.h"
 
 
 /******************************************************************************/

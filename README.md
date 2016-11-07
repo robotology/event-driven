@@ -7,8 +7,9 @@ Libraries that handle neuromorphic sensors, such as the dynamic vision sensor, i
 
 How to Install:
 
-eventDriven is installed as an iCub-contrib module and requires, at the minimum yarp to be install. Instructions are here:
-http://wiki.icub.org/wiki/Linux:Installation_from_sources
+[] Install YARP: http://wiki.icub.org/wiki/Linux:Installation_from_sources
+[] If the iCub is being used install icub-main and icub-contrib-common following the instructions for YARP. It is possible to run event-driven without iCub install however some modules cannot be used and will not be installed.
+[] Clone event-driven and build as a icub-contrib-module if using the iCub environment, or manually if not (YARP is still required)
 
 
 

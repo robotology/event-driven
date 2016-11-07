@@ -49,10 +49,10 @@
 #include <yarp/os/Thread.h>
 
 //within project includes
-#include <iCub/device2yarp.h>
-#include <iCub/yarp2device.h>
+#include <device2yarp.h>
+#include <yarp2device.h>
 
-#include <iCub/deviceManager.h>
+#include <deviceManager.h>
 //#include <iCub/configManager.h>
 
 class zynqGrabberModule : public yarp::os::RFModule {

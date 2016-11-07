@@ -15,8 +15,8 @@
  * Public License for more details
  */
 
-#ifndef __EMORPH_CIRCDISP__
-#define __EMORPH_CIRCDISP__
+#ifndef __CIRCDISP__
+#define __CIRCDISP__
 
 #include <yarp/os/all.h>
 #include <iCub/eventdriven/all.h>

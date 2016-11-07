@@ -15,7 +15,7 @@
  *
  */
 
-#include <iCub/device2yarp.h>
+#include <device2yarp.h>
 //#include <sys/types.h>
 #include <assert.h>
 #include <unistd.h>

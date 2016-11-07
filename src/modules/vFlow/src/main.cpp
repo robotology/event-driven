@@ -35,7 +35,7 @@ int main(int argc, char * argv[])
     /* prepare and configure the resource finder */
     yarp::os::ResourceFinder rf;
     rf.setDefaultConfigFile("opticalflow.ini");
-    rf.setDefaultContext("eMorph");
+    rf.setDefaultContext("eventdriven");
     rf.configure(argc, argv);
 
     module.runModule(rf);

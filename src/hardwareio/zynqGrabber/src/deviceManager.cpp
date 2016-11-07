@@ -14,7 +14,7 @@
  * Public License for more details
  */
 
-#include "iCub/deviceManager.h"
+#include "deviceManager.h"
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>

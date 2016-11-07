@@ -14,7 +14,7 @@
  * Public License for more details
  */
 
-#include "iCub/yarp2device.h"
+#include "yarp2device.h"
 //#include <unistd.h>
 
 /******************************************************************************/

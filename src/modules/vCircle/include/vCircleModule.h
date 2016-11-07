@@ -109,7 +109,6 @@ private:
 
 public:
 
-    //we actually allow our observers and trackers
     vCircleTracker circleTracker;
     vCircleMultiSize * cObserverL;
     vCircleMultiSize * cObserverR;

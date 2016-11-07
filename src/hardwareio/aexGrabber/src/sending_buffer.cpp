@@ -1,10 +1,10 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
-/* 
+/*
  * Copyright (C) 2010 RobotCub Consortium, European Commission FP6 Project IST-004370
  * Authors: Rea Francesco, Charles Clercq
  * email:   francesco.rea@iit.it, charles.clercq@iit.it
- * website: www.robotcub.org 
+ * website: www.robotcub.org
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
  * later version published by the Free Software Foundation.
@@ -23,7 +23,7 @@
  * @brief Sends information on a YARP port (see header sending_buffer.h)
  */
 
-#include <iCub/sending_buffer.h>
+#include <sending_buffer.h>
 #include <yarp/os/Bottle.h>
 
 using namespace std;

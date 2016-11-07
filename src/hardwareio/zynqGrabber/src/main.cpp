@@ -1,4 +1,4 @@
-#include "iCub/zynqGrabberModule.h"
+#include "zynqGrabberModule.h"
 
 
 int main(int argc, char * argv[])
@@ -10,7 +10,7 @@ int main(int argc, char * argv[])
     yarp::os::ResourceFinder rf;
     rf.setVerbose(true);
     rf.setDefaultConfigFile("zynqGrabber.ini"); //overridden by --from parameter
-    rf.setDefaultContext("eMorph");   //overridden by --context parameter
+    rf.setDefaultContext("eventdriven");   //overridden by --context parameter
     rf.configure(argc, argv);
 
     module.runModule(rf);

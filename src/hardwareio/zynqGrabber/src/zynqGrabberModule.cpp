@@ -23,7 +23,7 @@
  * @brief Implementation of the zynqGrabberModule (see header file).
  */
 
-#include <iCub/zynqGrabberModule.h>
+#include <zynqGrabberModule.h>
 
 bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 

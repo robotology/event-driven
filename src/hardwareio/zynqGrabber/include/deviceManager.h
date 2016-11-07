@@ -14,8 +14,8 @@
  * Public License for more details
  */
 
-#ifndef __eMorph__deviceManager__
-#define __eMorph__deviceManager__
+#ifndef __deviceManager__
+#define __deviceManager__
 
 #include <stdio.h>
 #include <string>
@@ -23,7 +23,7 @@
 #include <map>
 #include <yarp/os/all.h>
 #include <fstream>
-#include <iCub/vsCtrl.h>
+#include <vsCtrl.h>
 
 #define DEBUG
 /**
@@ -192,4 +192,4 @@ public:
 
 
 
-#endif /* defined(__eMorph__deviceManager__) */
+#endif /* defined(__deviceManager__) */

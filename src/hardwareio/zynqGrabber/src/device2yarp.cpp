@@ -14,7 +14,7 @@
  * Public License for more details
  */
 
-#include <iCub/device2yarp.h>
+#include <device2yarp.h>
 #define THRATE 1
 
 device2yarp::device2yarp() : RateThread(THRATE) {

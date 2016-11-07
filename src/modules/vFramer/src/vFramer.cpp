@@ -14,7 +14,7 @@
  * Public License for more details
  */
 
-#include "iCub/vFramer.h"
+#include "vFramer.h"
 #include <sstream>
 
 namespace eventdriven {
@@ -27,7 +27,6 @@ bool vReadAndSplit::open(const std::string portName, bool strict)
     if(strict) this->setStrict();
     this->useCallback();
 
-    std::cout << "Opening BufferedPort::vReadAndSplit" << std::endl;
     return BufferedPort<eventdriven::vBottle>::open("/" + portName + "/vBottle:i");
 }
 
@@ -168,24 +167,19 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
 
 bool vFramerModule::interruptModule()
 {
-    std::cout << "Interrupting" << std::endl;
     vReader.interrupt();
     for(unsigned int i = 0; i < outports.size(); i++)
         outports[i]->interrupt();
     RFModule::interruptModule();
-    std::cout << "Done" << std::endl;
     return true;
 }
 
 bool vFramerModule::close()
 {
-    std::cout << "Closing" << std::endl;
     vReader.close();
     for(unsigned int i = 0; i < outports.size(); i++)
         outports[i]->close();
     RFModule::close();
-    std::cout << "Done" << std::endl;
-
     return true;
 }
 

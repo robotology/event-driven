@@ -1,13 +1,12 @@
 //
 //  vsCtrl.h
-//  eMorph
 //
 //  Created by Chiara Bartolozzi on 27/08/15.
 //
 //
 
-#ifndef eMorph_vsCtrl_h
-#define eMorph_vsCtrl_h
+#ifndef _vsCtrl_h__
+#define _vsCtrl_h__
 
 #include <stdio.h>
 #include <stdint.h>

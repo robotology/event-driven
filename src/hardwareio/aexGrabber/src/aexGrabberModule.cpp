@@ -1,10 +1,10 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
-/* 
+/*
  * Copyright (C) 2010 RobotCub Consortium, European Commission FP6 Project IST-004370
  * Authors: Francesco Rea
  * email:   francesco.rea@iit.it
- * website: www.robotcub.org 
+ * website: www.robotcub.org
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
  * later version published by the Free Software Foundation.
@@ -23,16 +23,16 @@
  * @brief Implementation of the aexGrabberModule (see header file).
  */
 
-#include <iCub/aexGrabberModule.h>
+#include <aexGrabberModule.h>
 
 using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
-/* 
+/*
  * Configure method. Receive a previously initialized
  * resource finder object. Use it to configure your module.
- * If you are migrating from the old Module, this is the 
+ * If you are migrating from the old Module, this is the
  *  equivalent of the "open" method.
  */
 
@@ -41,14 +41,14 @@ bool aexGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     printf("configure in aexGrabberModule \n");
 
     //printf("moduleName  %s \n", moduleName.c_str());
-    moduleName            = rf.check("name", 
-                           Value("/aexGrabber"), 
+    moduleName            = rf.check("name",
+                           Value("/aexGrabber"),
                            "module name (string)").asString();
     printf("extracted the module name \n");
-    
-    
+
+
     /*
-    * before continuing, set the module name before getting any other parameters, 
+    * before continuing, set the module name before getting any other parameters,
     * specifically the port names which are dependent on the module name
     */
     printf("setting the module rootname \n");
@@ -58,22 +58,22 @@ bool aexGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     * get the robot name which will form the stem of the robot ports names
     * and append the specific part and device required
     */
-    robotName             = rf.check("robot", 
-                           Value("icub"), 
+    robotName             = rf.check("robot",
+                           Value("icub"),
                            "Robot name (string)").asString();
     robotPortName         = "/" + robotName + "/head";
 
     /*
     * get the device name which will be used to read events
     */
-    deviceName             = rf.check("deviceName", 
-                           Value("/dev/aerfx2_0"), 
+    deviceName             = rf.check("deviceName",
+                           Value("/dev/aerfx2_0"),
                            "Device name (string)").asString();
     devicePortName         =  deviceName ;
     printf("trying to connect to the device %s \n",devicePortName.c_str());
 
 
-    
+
 
 
 
@@ -83,23 +83,23 @@ bool aexGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     * so that messages received from the port are redirected to the respond method
     */
     handlerPortName =  "";
-    handlerPortName += getName();         // use getName() rather than a literal 
+    handlerPortName += getName();         // use getName() rather than a literal
 
-    if (!handlerPort.open(handlerPortName.c_str())) {           
-        cout << getName() << ": Unable to open port " << handlerPortName << endl;  
+    if (!handlerPort.open(handlerPortName.c_str())) {
+        cout << getName() << ": Unable to open port " << handlerPortName << endl;
         return false;
     }
 
     attach(handlerPort);                  // attach to port
 
-    bool _save = false;
+    //bool _save = false;
     std::string deviceNum = "0";
 
     /*
     * get the file name of binaries when the biases are read from this file
     */
-    binaryName             = rf.check("file", 
-                           Value("none"), 
+    binaryName             = rf.check("file",
+                           Value("none"),
                            "filename of the binary (string)").asString();
     printf("trying to read %s  for biases \n",binaryName.c_str());
     binaryNameComplete = rf.findFile(binaryName.c_str());
@@ -108,14 +108,14 @@ bool aexGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     * get the file name of binaries when the biases are read from this file
     */
     dumpNameComplete = "";
-    dumpName             = rf.check("dumpFile", 
-                           Value("none"), 
+    dumpName             = rf.check("dumpFile",
+                           Value("none"),
                            "filename of the binary (string)").asString();
     printf("trying to save events in %s  \n",dumpName.c_str());
     dumpNameComplete = rf.findFile(dumpName.c_str());
 
-    
-    
+
+
     if(!strcmp(binaryName.c_str(),"none")) {
         printf("not reading from binary \n");
         D2Y=new device2yarp(devicePortName, false,binaryName);
@@ -124,12 +124,12 @@ bool aexGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     else {
         printf("reading from binary \n");
         //D2Y->setFromBinary(true);
-        D2Y=new device2yarp(devicePortName, true, binaryNameComplete);        
+        D2Y=new device2yarp(devicePortName, true, binaryNameComplete);
         //D2Y->setBinaryFile(f);
     }
 
     if(rf.check("onlyLeft")){
-        D2Y->setOnlyLeft();        
+        D2Y->setOnlyLeft();
     }
 
     if (strcmp(dumpNameComplete.c_str(),"" )) {
@@ -161,18 +161,18 @@ bool aexGrabberModule::close() {
 bool aexGrabberModule::respond(const Bottle& command, Bottle& reply) {
     bool ok = false;
     bool rec = false; // is the command recognized?
-    string helpMessage =  string(getName().c_str()) + 
-                        " commands are: \n" +  
-                        "help \n" + 
-                        "quit \n" + 
-                        "set thr <n> ... set the threshold \n" + 
+    string helpMessage =  string(getName().c_str()) +
+                        " commands are: \n" +
+                        "help \n" +
+                        "quit \n" +
+                        "set thr <n> ... set the threshold \n" +
                         "(where <n> is an integer number) \n";
 
-    reply.clear(); 
+    reply.clear();
 
     if (command.get(0).asString()=="quit") {
         reply.addString("quitting");
-        return false;     
+        return false;
     }
     else if (command.get(0).asString()=="help") {
         cout << helpMessage;
@@ -294,7 +294,7 @@ bool aexGrabberModule::respond(const Bottle& command, Bottle& reply) {
         {
             switch(command.get(1).asVocab()) {
             case COMMAND_VOCAB_LEFT: {
-                switch(command.get(2).asVocab()) {                    
+                switch(command.get(2).asVocab()) {
                 case COMMAND_VOCAB_PR:{
                     double w = command.get(3).asDouble();
                     if(D2Y!=0)
@@ -366,15 +366,15 @@ bool aexGrabberModule::respond(const Bottle& command, Bottle& reply) {
                     if(D2Y!=0)
                         D2Y->setCAS(w);
                     ok = true;
-                } break;                    
+                } break;
                 default: {
                 } break;
                 } //closing the switch internal
-            
+
             } break;
             case COMMAND_VOCAB_RIGHT:{
                 switch(command.get(2).asVocab()) {
-                    
+
                 case COMMAND_VOCAB_PR:{
                     double w = command.get(3).asDouble();
                     if(D2Y!=0)
@@ -529,7 +529,7 @@ bool aexGrabberModule::respond(const Bottle& command, Bottle& reply) {
             }
             break;
             default: {
-                
+
             }
                 break;
             }
@@ -545,7 +545,7 @@ bool aexGrabberModule::respond(const Bottle& command, Bottle& reply) {
                 Time::delay(1);
                 D2Y->setFromBinary(false);
                 D2Y->prepareBiases();
-                
+
                 ok = true;
             }
             break;
@@ -555,12 +555,12 @@ bool aexGrabberModule::respond(const Bottle& command, Bottle& reply) {
                 Time::delay(1);
                 D2Y->setFromBinary(false);
                 D2Y->prepareBiasesRight();
-                
+
                 ok = true;
             }
             break;
             default: {
-                
+
             }
                 break;
             }
@@ -575,8 +575,8 @@ bool aexGrabberModule::respond(const Bottle& command, Bottle& reply) {
                     printf("request of start dumping events arrived \n");
                  string S = command.get(2).asString().c_str();
                    printf("Writing to file: %s \n",S.c_str());
-	//	 D2Y->setDumpFile("dump.txt");
-               	D2Y->setDumpFile(S.c_str());
+    //	 D2Y->setDumpFile("dump.txt");
+                D2Y->setDumpFile(S.c_str());
                     D2Y->setDumpEvent(true);
                     printf("success in opening the dump file \n");
                   ok = true;
@@ -590,7 +590,7 @@ bool aexGrabberModule::respond(const Bottle& command, Bottle& reply) {
                     break;
                 }
             }
-            break;            
+            break;
         case COMMAND_VOCAB_SYNC:
             rec = true;
             printf("recognised the command SYNC \n");
@@ -604,10 +604,10 @@ bool aexGrabberModule::respond(const Bottle& command, Bottle& reply) {
         }
     }
     mutex.post();
-    
+
     if (!rec)
         ok = RFModule::respond(command,reply);
-    
+
     if (!ok) {
         reply.clear();
         reply.addVocab(COMMAND_VOCAB_FAILED);
@@ -616,7 +616,7 @@ bool aexGrabberModule::respond(const Bottle& command, Bottle& reply) {
         reply.addVocab(COMMAND_VOCAB_OK);
 
     return ok;
-    
+
     return true;
 }
 

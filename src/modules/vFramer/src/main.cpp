@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 eMorph Group iCub Facility
+ * Copyright (C) 2010 iCub Facility
  * Authors: Arren Glover
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
@@ -13,9 +13,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details
  */
-  
 
-#include "iCub/vFramer.h"
+
+#include "vFramer.h"
 #include <yarp/os/all.h>
 #include <iCub/eventdriven/all.h>
 
@@ -23,20 +23,21 @@
 int main(int argc, char * argv[])
 {
 
-    yarp::os::Network::init();
-    eventdriven::vFramerModule module;
+    yarp::os::Network yarp;
+    if (!yarp.checkNetwork())
+    {
+        yError("unable to find YARP server!");
+        return 1;
+    }
+
     yarp::os::ResourceFinder rf;
-
-    //set up the resource finder
-    rf.setDefaultConfigFile("vFramer.ini"); //overridden by --from parameter
-    rf.setDefaultContext("eMorph");   //overridden by --context parameter
+    rf.setVerbose(true);
+    rf.setDefaultConfigFile("vFramer.ini");
+    rf.setDefaultContext("eventdriven");
     rf.configure(argc, argv);
- 
-    //run the module
-    module.runModule(rf);
 
-    yarp::os::Network::fini();
-    return 0;
+    eventdriven::vFramerModule module;
+    return module.runModule(rf);
 }
 
 

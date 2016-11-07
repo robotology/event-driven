@@ -16,7 +16,7 @@ include_directories(
 
 # Search for source code.
 file(GLOB folder_source src/vFramer.cpp src/vDraw.cpp src/main.cpp)
-file(GLOB folder_header include/iCub/vFramer.h include/iCub/vDraw.h)
+file(GLOB folder_header include/vFramer.h include/vDraw.h)
 source_group("Source Files" FILES ${folder_source})
 source_group("Header Files" FILES ${folder_header})
 

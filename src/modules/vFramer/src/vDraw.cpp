@@ -14,7 +14,7 @@
  * Public License for more details
  */
 
-#include "iCub/vDraw.h"
+#include "vDraw.h"
 #define _USE_MATH_DEFINES
 #include <math.h>
 

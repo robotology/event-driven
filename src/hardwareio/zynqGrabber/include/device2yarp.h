@@ -28,7 +28,7 @@
 
 #include <yarp/os/all.h>
 #include <iCub/eventdriven/all.h>
-#include "iCub/deviceManager.h"
+#include "deviceManager.h"
 
 class device2yarp : public yarp::os::RateThread {
 public:

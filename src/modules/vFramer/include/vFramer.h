@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 eMorph Group iCub Facility
+ * Copyright (C) 2010 iCub Facility
  * Authors: Arren Glover
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any

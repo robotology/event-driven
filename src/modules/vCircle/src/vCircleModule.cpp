@@ -49,7 +49,7 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
     double fifolength = rf.check("fifo", yarp::os::Value(1000.0)).asDouble();
 
     bool usedirected = rf.check("arc");
-    int arc = rf.check("arc", yarp::os::Value(15)).asInt();
+    int arc = rf.check("arc", yarp::os::Value(1)).asInt();
     if(!arc) usedirected = false;
 
     int radmin = rf.check("radmin", yarp::os::Value(10)).asInt();
