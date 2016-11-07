@@ -14,9 +14,9 @@
  * Public License for more details
 */
 
-/// \defgroup lib-event-driven lib-event-driven
+/// \defgroup eventdrivenlib eventdrivenlib
 /// \defgroup vCodec vCodec
-/// \ingroup lib-event-driven
+/// \ingroup eventdrivenlib
 /// \brief class hierarchy for different types of eventdriven::vEvent
 ///
 /// Event Coding

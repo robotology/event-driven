@@ -14,9 +14,9 @@
  * Public License for more details
 */
 
-/// \defgroup eventdrivenLib eventdrivenLib
+/// \defgroup eventdrivenlib eventdrivenlib
 /// \defgroup vSurface vSurface
-/// \ingroup eventdrivenLib
+/// \ingroup eventdrivenlib
 /// \brief
 /// A data representation which stores only the most recent event at each pixel
 /// location

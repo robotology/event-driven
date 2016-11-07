@@ -14,9 +14,9 @@
  * Public License for more details
 */
 
-/// \defgroup lib-event-driven lib-event-driven
+/// \defgroup eventdrivenlib eventdrivenlib
 /// \defgroup vBottle vBottle
-/// \ingroup lib-event-driven
+/// \ingroup eventdrivenlib
 /// \brief yarp::os::Bottle wrapper for sending events through the yarp system with
 /// particular attention to using data dumper and data players
 
