@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml-stylesheet type="text/xsl" href="yarpmanifest.xsl"?>
+
+<module>
+    <name>autosaccade</name>
+    <doxygen-group>robotio</doxygen-group>
+    <description>Performs saccades automatically</description>
+    <copypolicy>Released under the terms of the GNU GPL v2.0</copypolicy>
+    <version>1.0</version>
+
+    <description-long>
+      Measures the event-rate and produces a saccadic motion when the scene is stationary.
+    </description-long>
+
+    <arguments>
+        <param desc="Specifies the stem name of ports created by the module." default="autosaccade"> name </param>
+        <switch>verbosity</switch>
+    </arguments>
+
+    <authors>
+        <author email="arren.glover@iit.it"> Arren Glover </author>
+    </authors>
+
+     <data>
+        <input>
+            <type>eventdriven::vBottle</type>
+            <port carrier="tcp">/vCircle/vBottle:i</port>
+            <required>yes</required>
+            <priority>no</priority>
+            <description>
+                Accepts the address events and/or flow events in the vBottle
+                container
+            </description>
+        </input>
+        <output>
+            <type>eventdriven::vBottle</type>
+            <port carrier="tcp">/vCircle/vBottle:o</port>
+            <description>
+                Outputs the cirlce detections in the form of an
+                eventdriven::ClusterEventGauss. The vBottle also contains all
+                events in the vBottle received as input.
+            </description>
+        </output>
+        <output>
+            <type>yarp::os::Bottle</type>
+            <port carrier="udp">/vCircle/scope:o</port>
+            <description>
+                Outputs debug information for use with yarpscope. The gap
+                between input bottle numbers is written to detect data being
+                lost.
+            </description>
+        </output>
+        <output>
+            <type>yarp::sig::Image</type>
+            <port carrier="udp">/vCirlce/debug:o</port>
+            <description>
+                Outputs a debugging images displaying events in the event-queue
+                as well as the strength of the Hough transform from the same
+                events.
+            </description>
+        </output>
+        <output>
+            <type>yarp::os::Bottle</type>
+            <port carrier="tcp">/vCircle/dump:o</port>
+            <description>
+                Outputs a dump of detections for experiment analysis. The format
+                 is "Time Offset | Event Timestamp | X | Y | R | Score".
+            </description>
+        </output>
+    </data>
+
+<!--    <services>
+      <server>
+        <port carrier="tcp">/motionCUT/rpc</port>
+        <description>
+            The parameters winSize, recogThres, adjNodesThres, blobMinSizeThres, framesPersistence, cropSize,
+            numThreads, verbosity can be changed/retrieved through the commands set/get. Moreover, the further
+            switch inhibition can be accessed in order to enable/disable the motion detection at run-time.
+        </description>
+      </server>
+    </services>-->
+</module>
