@@ -461,9 +461,9 @@ void particleProcessor::run()
         }
 
         if(vBottleOut.getOutputCount()) {
-            emorph::vBottle &eventsout = vBottleOut.prepare();
+            eventdriven::vBottle &eventsout = vBottleOut.prepare();
             eventsout.clear();
-            emorph::ClusterEventGauss ceg;
+            eventdriven::ClusterEventGauss ceg;
             ceg.setStamp(stw.front()->getStamp());
             ceg.setChannel(1);
             ceg.setID(0);

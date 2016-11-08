@@ -156,6 +156,7 @@ private:
     eventdriven::resolution res;
     double ptime;
 
+    yarp::os::BufferedPort<eventdriven::vBottle> vBottleOut;
     yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelBgr> > debugOut;
     yarp::os::BufferedPort<yarp::os::Bottle> scopeOut;
     eventdriven::vtsHelper unwrap;
