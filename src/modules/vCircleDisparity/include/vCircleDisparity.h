@@ -15,6 +15,11 @@
  * Public License for more details
  */
 
+/// \defgroup Modules Modules
+/// \defgroup vCircleDisparity vCircleDisparity
+/// \ingroup Modules
+/// \brief detects pixel disparity in stereo circle detection events
+
 #ifndef __CIRCDISP__
 #define __CIRCDISP__
 

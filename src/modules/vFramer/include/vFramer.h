@@ -14,11 +14,10 @@
  * Public License for more details
  */
 
-/// \defgroup visualisation Visualisation
+/// \defgroup Visualisation Visualisation
 /// \defgroup vFramer vFramer
-/// \ingroup visualisation
-/// \brief frame events in a temporal window which are drawn with a
-/// eventdriven::vDraw
+/// \ingroup Visualisation
+/// \brief converts the event-stream to an yarpview-able image
 
 #ifndef __vFramer__
 #define __vFramer__

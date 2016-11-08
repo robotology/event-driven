@@ -16,10 +16,10 @@
  * Public License for more details
  */
 
-/// \defgroup processing Processing
+/// \defgroup Modules Modules
 /// \defgroup vCluster vCluster
-/// \ingroup processing
-/// \brief track gaussian clusters in the event stream
+/// \ingroup Modules
+/// \brief detects clusters of events assuming Gaussian distribution
 
 #ifndef __ICUB_EVENTCLUSTERING_MOD_H__
 #define __ICUB_EVENTCLUSTERING_MOD_H__
@@ -44,9 +44,9 @@ class EventBottleManager : public yarp::os::BufferedPort<eventdriven::vBottle>
         //create trackers, left and right
         TrackerPool tracker_pool_left;
         TrackerPool tracker_pool_right;
-    
+
     public:
-    
+
         void setAllParameters(double alpha_shape, double alpha_pos,
                               double Tact, double Tinact, double Tfree,
                               double Tevent, double SigX, double SigY,
@@ -59,7 +59,7 @@ class EventBottleManager : public yarp::os::BufferedPort<eventdriven::vBottle>
         void    close();
         void    onRead(eventdriven::vBottle &bot);
         void    interrupt();
-  
+
 };
 
 /******************************************************************************/

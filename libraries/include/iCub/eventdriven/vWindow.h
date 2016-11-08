@@ -14,9 +14,9 @@
  * Public License for more details
 */
 
-/// \defgroup eventdrivenlib eventdrivenlib
+/// \defgroup Library Library
 /// \defgroup vWindow vWindow
-/// \ingroup eventdrivenLib
+/// \ingroup Library
 /// \brief A storage class which automatically discards events after a given timeperiod
 
 #ifndef __VWINDOW__

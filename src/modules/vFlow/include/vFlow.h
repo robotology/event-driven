@@ -14,14 +14,10 @@
  * Public License for more details
  */
 
-/// \defgroup processing Processing
+/// \defgroup Modules Modules
 /// \defgroup vFlow vFlow
-/// \ingroup processing
-/// \brief calculate optical flow using plane fitting technique (vFlowManager)
-/// \file vFlow.h
-///
-/// \section class Class
-/// eventdriven::vFlowManager
+/// \ingroup Modules
+/// \brief calculates optical flow using plane fitting
 
 #ifndef __VFLOW__
 #define __VFLOW__

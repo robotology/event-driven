@@ -21,7 +21,7 @@
 /// \defgroup HardwareIO HardwareIO
 /// \defgroup zynqGrabber zynqGrabber
 /// \ingroup HardwareIO
-/// \brief flexible IO designed for zboard/zturn
+/// \brief flexibile YARP-hardware interface for multiple sensor types
 
 #ifndef _ZYNQ_GRABBER_MODULE_H_
 #define _ZYNQ_GRABBER_MODULE_H_

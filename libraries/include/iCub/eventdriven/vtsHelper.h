@@ -14,9 +14,9 @@
  * Public License for more details
 */
 
-/// \defgroup eventdrivenlib eventdrivenlib
+/// \defgroup Library Library
 /// \defgroup vtsHelper vtsHelper
-/// \ingroup eventdrivenlib
+/// \ingroup Library
 /// \brief
 /// a helper class for unwrapping timestamps into long ints when overflow occurs
 

@@ -14,9 +14,9 @@
  * Public License for more details
 */
 
-/// \defgroup eventdrivenlib eventdrivenlibs
+/// \defgroup Library Library
 /// \defgroup vQueue vQueue
-/// \ingroup eventdrivenlib
+/// \ingroup Library
 /// \brief
 /// A wrapper for a dequeue of event pointers with functionality for memory
 /// management of events

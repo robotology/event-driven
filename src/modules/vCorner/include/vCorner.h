@@ -15,6 +15,11 @@
  * Public License for more details
  */
 
+/// \defgroup Modules Modules
+/// \defgroup vCorner vCorner
+/// \ingroup Modules
+/// \brief detects corner events using the Harris method
+
 #ifndef __VCORNER__
 #define __VCORNER__
 

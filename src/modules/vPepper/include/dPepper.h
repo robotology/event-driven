@@ -15,10 +15,10 @@
  * Public License for more details
  */
 
-/// \defgroup processing Processing
+/// \defgroup Modules Modules
 /// \defgroup vPepper vPepper
-/// \ingroup processing
-/// \brief remove salt and pepper noise
+/// \ingroup Modules
+/// \brief removes salt-and-pepper noise from the event stream
 
 #ifndef __ICUB_DPEPPER_MOD_H__
 #define __ICUB_DPEPPER_MOD_H__

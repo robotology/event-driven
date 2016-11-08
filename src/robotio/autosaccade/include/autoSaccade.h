@@ -14,9 +14,9 @@
  * Public License for more details
  */
 
-/// \defgroup robotBehaviour Robot Behaviour
-/// \defgroup autoSaccade autoSaccade
-/// \ingroup robotBehaviour
+/// \defgroup RobotIO RobotIO
+/// \defgroup autosaccade autosaccade
+/// \ingroup RobotIO
 /// \brief automatically elicit iCub eye movement when event rate is low
 
 #ifndef __ICUB_EVENTCLUSTERING_MOD_H__
@@ -29,7 +29,7 @@
 class EventBottleManager : public yarp::os::BufferedPort<eventdriven::vBottle>
 {
 private:
-    
+
     //for helping with timestamp wrap around
     eventdriven::vtsHelper unwrapper;
 
@@ -39,7 +39,7 @@ private:
     unsigned int vCount;
 
 public:
-    
+
     EventBottleManager();
 
     bool    open(const std::string &name);

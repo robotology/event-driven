@@ -14,12 +14,13 @@
  * Public License for more details
  */
 
+/// \defgroup Modules Modules
+/// \defgroup vCircle vCircle
+/// \ingroup Modules
+/// \brief detects circles using the Hough transform
+
 #ifndef __VCIRCLE__
 #define __VCIRCLE__
-
-/// \defgroup modules Modules
-/// \defgroup vCircle vCircle
-/// \ingroup modules
 
 #include <fstream>
 #include <yarp/os/all.h>
