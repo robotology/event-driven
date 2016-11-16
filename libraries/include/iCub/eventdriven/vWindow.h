@@ -117,6 +117,8 @@ public:
     vQueue getSurf_Clim(int c, int x, int y, int d);
     vQueue getSurf_Clim(int c, int xl, int xh, int yl, int yh);
 
+    void getSurfSorted(vQueue &fillq);
+
 };
 /******************************************************************************/
 class temporalSurface : public vSurface2

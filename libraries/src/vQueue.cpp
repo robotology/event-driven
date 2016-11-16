@@ -79,7 +79,13 @@ vQueue::iterator vQueue::erase(iterator __position)
 
 vQueue::vQueue(const vQueue& that)
 {
-    *this = that;
+    for(vQueue::const_iterator qi = that.begin(); qi != that.end(); qi++)
+        (*qi)->referto();
+
+    for(vQueue::iterator qi = this->begin(); qi != this->end(); qi++)
+        (*qi)->destroy();
+
+    deque::operator =(that);
 }
 
 vQueue& vQueue::operator=(const vQueue& that)

@@ -74,6 +74,19 @@ vQueue vSurface2::getSurf(int xl, int xh, int yl, int yh)
 
 }
 
+void vSurface2::getSurfSorted(vQueue &fillq)
+{
+    fillq.clear();
+    if(q.empty()) return;
+
+    vQueue::reverse_iterator rqit;
+    for(rqit = q.rbegin(); rqit != q.rend(); rqit++) {
+        AddressEvent *v = (*rqit)->getUnsafe<AddressEvent>();
+        if(v != spatial[v->getY()][v->getX()]) continue;
+        fillq.push_back(v);
+    }
+}
+
 vQueue vSurface2::getSurf_Tlim(int dt)
 {
     return getSurf_Tlim(dt, 0, width, 0, height);
