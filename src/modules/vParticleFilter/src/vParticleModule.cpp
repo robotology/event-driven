@@ -73,7 +73,16 @@ bool vParticleModule::configure(yarp::os::ResourceFinder &rf)
     bool strict = rf.check("strict") &&
             rf.check("strict", yarp::os::Value(true)).asBool();
 
+    int nParticles = rf.check("particles", yarp::os::Value(100)).asInt();
+    double nRandResample =
+            1.0 + rf.check("randoms", yarp::os::Value(2)).asDouble() / 100.0;
+    bool adaptivesampling = rf.check("adaptive", yarp::os::Value(false)).asBool();
+    double minlikelihood = rf.check("obsmin", yarp::os::Value(1.0)).asDouble();
+    double parlikelihood = rf.check("obsparameter", yarp::os::Value(0.7)).asDouble();
+    bool realtime = rf.check("userealtime", yarp::os::Value(true)).asBool();
+
 #if 0
+    particleThread = 0;
     /* USE FULL PROCESS IN CALLBACK */
     particleCallback = new vParticleReader(
                 rf.check("width", yarp::os::Value(128)).asInt(),
@@ -85,6 +94,7 @@ bool vParticleModule::configure(yarp::os::ResourceFinder &rf)
         return false;
     }
 #else
+    particleCallback = 0;
     /* USE REAL-TIME THREAD */
     particleThread = new particleProcessor(
                 rf.check("width", yarp::os::Value(128)).asInt(),
@@ -102,17 +112,17 @@ bool vParticleModule::configure(yarp::os::ResourceFinder &rf)
 /******************************************************************************/
 bool vParticleModule::interruptModule()
 {
-    particleCallback->interrupt();
-    yarp::os::RFModule::interruptModule();
+    if(particleCallback) particleCallback->interrupt();
+    if(particleThread) particleThread->stop();
+    std::cout << "Interrupt Successful" << std::endl;
     return true;
 }
 
 /******************************************************************************/
 bool vParticleModule::close()
 {
-    particleThread->stop();
-    particleCallback->close();
-    yarp::os::RFModule::close();
+    if(particleCallback) particleCallback->close();
+    std::cout << "Close Successful" << std::endl;
     return true;
 }
 
@@ -128,8 +138,9 @@ double vParticleModule::getPeriod()
     return 1;
 
 }
-/******************************************************************************/
-/******************************************************************************/
+/*////////////////////////////////////////////////////////////////////////////*/
+//surfacehandler
+/*////////////////////////////////////////////////////////////////////////////*/
 vSurfaceHandler::vSurfaceHandler(unsigned int width, unsigned int height)
 {
 
@@ -211,9 +222,9 @@ void vSurfaceHandler::onRead(eventdriven::vBottle &inputBottle)
 
     }
 
-    double ctime = yarp::os::Time::now();
-    eventrate = 0.5 * (eventrate + q.size() / (ctime - bottletime));
-    bottletime = ctime;
+//    double ctime = yarp::os::Time::now();
+//    eventrate = 0.5 * (eventrate + q.size() / (ctime - bottletime));
+//    bottletime = ctime;
 
 
    // if(q.size() > 1)
@@ -221,6 +232,29 @@ void vSurfaceHandler::onRead(eventdriven::vBottle &inputBottle)
 
 
 
+}
+
+eventdriven::vQueue vSurfaceHandler::queryEventList(std::vector<vParticle> &ps)
+{
+
+    mutexsignal.lock();
+    std::vector<vParticle>::iterator i;
+    eventdriven::vQueue temp;
+    for(i = ps.begin(); i < ps.end(); i++) {
+        temp = surfaceLeft.getSurf_Tlim(i->gettw(), i->getx(), i->gety(), i->getr() + 2);
+    }
+    mutexsignal.unlock();
+
+    return temp;
+
+}
+
+void vSurfaceHandler::queryEvents(eventdriven::vQueue &fillq, unsigned int temporalwindow)
+{
+    mutexsignal.lock();
+    //surfaceLeft.getSurfSorted(fillq);
+    fillq = surfaceLeft.getSurf_Tlim(temporalwindow);
+    mutexsignal.unlock();
 }
 
 eventdriven::vQueue vSurfaceHandler::queryEvents(unsigned long int conditionTime, unsigned int temporalWindow)
@@ -235,10 +269,13 @@ eventdriven::vQueue vSurfaceHandler::queryEvents(unsigned long int conditionTime
 //        eventsQueried = true;
 //        waitsignal.wait();
 //    }
-
     mutexsignal.lock();
-    eventdriven::vQueue temp = surfaceLeft.getSurf_Tlim(tw);
+    //eventdriven::vQueue temp = surfaceLeft.getSurf_Tlim(tw);
+    eventdriven::vQueue temp;
+    surfaceLeft.getSurfSorted(temp);
     mutexsignal.unlock();
+
+
 
     return temp;
 
@@ -251,8 +288,9 @@ eventdriven::vQueue vSurfaceHandler::queryEvents(unsigned long int conditionTime
 //    waitsignal.wait();
 //    return queriedQ;
 }
-/******************************************************************************/
-/******************************************************************************/
+/*////////////////////////////////////////////////////////////////////////////*/
+//particleprocessor (real-time)
+/*////////////////////////////////////////////////////////////////////////////*/
 particleProcessor::particleProcessor(unsigned int height, unsigned int weight, std::string name, bool strict)
 {
     res.height = height;
@@ -269,6 +307,7 @@ particleProcessor::particleProcessor(unsigned int height, unsigned int weight, s
     nparticles = 50;
     rate = 0;
     nThreads = 7;
+    pwsumsq = 0;
 
     for(int i = 0; i < nThreads; i++) {
         int pStart = i * (nparticles / nThreads);
@@ -307,13 +346,13 @@ bool particleProcessor::threadInit()
     }
 
     std::cout << "Port open - querying initialisation events" << std::endl;
-    eventdriven::vQueue stw;
-    while(!stw.size()) {
-           yarp::os::Time::delay(0.01);
-           stw = eventhandler.queryEvents(0, 1);
-    }
+//    eventdriven::vQueue stw;
+//    while(!stw.size()) {
+//           yarp::os::Time::delay(0.01);
+//           stw = eventhandler.queryEvents(0, 1);
+//    }
 
-    unsigned int tnow = unwrap(stw.back()->getStamp());
+//    unsigned int tnow = unwrap(stw.back()->getStamp());
 
 
     //initialise the particles
@@ -322,7 +361,7 @@ bool particleProcessor::threadInit()
 
     for(int i = 0; i < nparticles; i++) {
         p.setid(i);
-        p.resample(1.0/nparticles, tnow);
+        p.resample(1.0/nparticles, 0);
         p.initWeight(1.0/nparticles);
         maxtw = std::max(maxtw, p.gettw());
         indexedlist.push_back(p);
@@ -337,13 +376,22 @@ void particleProcessor::run()
 {
     std::cout << "Thread starting" << std::endl;
 
+    eventdriven::vQueue stw;
     //double maxlikelihood;
     while(!isStopping()) {
 
+        //std::cout << "GETTING EVENTS" <<std::endl;
         ptime = yarp::os::Time::now();
-        eventdriven::vQueue stw = eventhandler.queryEvents(unwrap.currentTime() + rate, maxtw);
+        eventhandler.queryEvents(stw, maxtw);
+        //eventdriven::vQueue stw = eventhandler.queryEvents(unwrap.currentTime() + rate, eventdriven::vtsHelper::maxStamp() * 0.5);
+        //eventdriven::vQueue stw = eventhandler.queryEventList(indexedlist);
         double Tget = (yarp::os::Time::now() - ptime)*1000.0;
+        //std::cout << "size: " << stw.size() << "tw: " << maxtw << std::endl;
+        //continue;
+        //std::cout << "GOTTEN" <<std::endl;
+
         ptime = yarp::os::Time::now();
+
 
         if(!stw.size()) continue;
 
@@ -352,18 +400,20 @@ void particleProcessor::run()
         std::vector<vParticle> indexedSnap = indexedlist;
 
         //resampling
-        for(int i = 0; i < nparticles; i++) {
-            //if(indexedlist[i].getw() > (0.1 / nparticles)) continue;
-            double rn = 1.02 * (double)rand() / RAND_MAX;
-            if(rn > 1.0)
-                indexedlist[i].resample(1.0/nparticles, t);
-            else {
-                double accum = 0.0; int j = 0;
-                for(j = 0; j < nparticles; j++) {
-                    accum += indexedSnap[j].getw();
-                    if(accum > rn) break;
+        if(pwsumsq * nparticles > 2.0) {
+            for(int i = 0; i < nparticles; i++) {
+                //if(indexedlist[i].getw() > (0.1 / nparticles)) continue;
+                double rn = 1.02 * (double)rand() / RAND_MAX;
+                if(rn > 1.0)
+                    indexedlist[i].resample(1.0/nparticles, t);
+                else {
+                    double accum = 0.0; int j = 0;
+                    for(j = 0; j < nparticles; j++) {
+                        accum += indexedSnap[j].getw();
+                        if(accum > rn) break;
+                    }
+                    indexedlist[i].resample(indexedSnap[j], 1.0/nparticles, t);
                 }
-                indexedlist[i].resample(indexedSnap[j], 1.0/nparticles, t);
             }
         }
 
@@ -437,9 +487,11 @@ void particleProcessor::run()
         //END MULTI-THREAD
 
         //normalisation
+        pwsumsq = 0;
         vParticle pmax = indexedlist[0];
         for(int i = 0; i < nparticles; i ++) {
             indexedlist[i].updateWeightSync(normval);
+            pwsumsq += pow(indexedlist[i].getw(), 2.0);
             if(indexedlist[i].getw() > pmax.getw())
                 pmax = indexedlist[i];
         }
@@ -459,6 +511,7 @@ void particleProcessor::run()
             avgr += indexedlist[i].getr() * indexedlist[i].getw();
             avgtw += indexedlist[i].gettw() * indexedlist[i].getw();
         }
+        //std::cout << "CALCULATED AVERAGE" <<std::endl;
 
         if(vBottleOut.getOutputCount()) {
             eventdriven::vBottle &eventsout = vBottleOut.prepare();
@@ -481,7 +534,6 @@ void particleProcessor::run()
             vBottleOut.write();
         }
 
-
         //static int i = 0;
         if(debugOut.getOutputCount()) {
 
@@ -502,6 +554,7 @@ void particleProcessor::run()
             }
             //drawEvents(image, stw, avgtw);
             drawEvents(image, stw, pmax.gettw());
+            //drawEvents(image, stw, eventdriven::vtsHelper::maxStamp());
             debugOut.write();
         }
 
@@ -514,28 +567,32 @@ void particleProcessor::run()
 //            scopedata.addDouble(avgtw / 10000.0);
 //            scopedata.addDouble(pmax.gettw() / 10000.0);
 
-            //scopedata.addDouble(Tget);
-            //scopedata.addDouble(Tresample);
-            //scopedata.addDouble(Tpredict);
-            //scopedata.addDouble(Tobs);
-            scopedata.addDouble(1000.0 / (Tget + Tresample + Tpredict + Tobs));
-            scopedata.addDouble(eventhandler.geteventrate());
+            scopedata.addDouble(Tget);
+            scopedata.addDouble(Tresample);
+            scopedata.addDouble(Tpredict);
+            scopedata.addDouble(Tobs);
+            //scopedata.addDouble(1000.0 / (Tget + Tresample + Tpredict + Tobs));
+            //scopedata.addDouble(eventhandler.geteventrate());
+            //scopedata.addDouble(stw.size());
 
             scopeOut.write();
         }
-
     }
 
+    std::cout << "Thread Stopped" << std::endl;
 }
 void particleProcessor::threadRelease()
 {
     scopeOut.close();
     debugOut.close();
     eventhandler.close();
+    yarp::os::Thread::threadRelease();
+    std::cout << "Thread Released Successfully" <<std::endl;
 
 }
-/******************************************************************************/
-/******************************************************************************/
+/*////////////////////////////////////////////////////////////////////////////*/
+//particleobserver (threaded observer)
+/*////////////////////////////////////////////////////////////////////////////*/
 
 vPartObsThread::vPartObsThread(int pStart, int pEnd)
 {
@@ -576,8 +633,9 @@ void vPartObsThread::run()
     }
 }
 
-/******************************************************************************/
-/******************************************************************************/
+/*////////////////////////////////////////////////////////////////////////////*/
+//particle reader (callback)
+/*////////////////////////////////////////////////////////////////////////////*/
 vParticleReader::vParticleReader(unsigned int width, unsigned int height)
 {
 

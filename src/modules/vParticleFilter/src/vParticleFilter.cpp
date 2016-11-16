@@ -35,22 +35,22 @@ vParticle::vParticle()
 {
     weight = 1.0;
     likelihood = 1.0;
+    minlikelihood = 1.0;
     stamp = 0;
     nextUpdate = 0;
     fixedrate = 0;
-//    vx = 0;
-//    vy = 0;
-//    vr = 0;
-//    ax = 0;
-//    ay = 0;
-//    ar = 0;
     tw = 50000;
     leftMass = 0;
     topMass = 0;
     inlierCount = 0;
     maxlikelihood = 0;
-    //doneLikelihood = false;
-
+    maxtw = 0;
+    observationparameter = 0.5;
+    outlierCount = 0;
+    angMass = 0;
+    angbuckets = 128;
+    angdist.resize(angbuckets);
+    negdist.resize(angbuckets);
 }
 
 void vParticle::initState(double x, double y, double r, double tw)
@@ -69,10 +69,6 @@ void vParticle::initState(double x, double y, double r, double vx, double vy,
     this->x = x;
     this->y = y;
     this->r = r;
-//    this->vx = vx;
-//    this->vy = vy;
-//    this->vr = vr;
-
 }
 
 void vParticle::initTiming(unsigned long int stamp)
@@ -101,16 +97,18 @@ bool vParticle::predict(unsigned long timestamp)
 
 #if 1
 
-    //double dt = timestamp - this->stamp;
+    double dt = timestamp - this->stamp;
 
-    double sigmatw = 20000;
-    tw += abs(generateGaussianNoise(0, sigmatw));
+    //double sigmatw = 20000;
+    //tw += abs(generateGaussianNoise(0, sigmatw));
     //tw += timestamp - this->stamp;
+    //tw *= 1.5;
+    tw += (dt*1.5);
 
-    double sigmap = 1.5;
+    double sigmap = 2.0;
     x = generateGaussianNoise(x, sigmap);
     y = generateGaussianNoise(y, sigmap);
-    r = generateGaussianNoise(r, sigmap * 0.1);
+    r = generateGaussianNoise(r, sigmap * 0.2);
     if(r < 8) r = 8;
     if(r > 36) r = 36;
 
@@ -259,11 +257,14 @@ double vParticle::calcLikelihood(eventdriven::vQueue &events, int nparticles)
 
 void vParticle::initLikelihood()
 {
-    likelihood = 0;
+    likelihood = minlikelihood;
     inlierCount = 0;
+    outlierCount = 0;
     leftMass = 0;
     topMass = 0;
-    maxlikelihood = 0;
+    angMass = 0;
+    angdist.zero();
+    negdist.zero();
     maxtw = 0;
 }
 
@@ -273,48 +274,114 @@ void vParticle::incrementalLikelihood(int vx, int vy, int dt)
     double dy = vy - y;
     if(abs(dx) > r + 2 || abs(dy) > r + 2) return;
     double sqrd = sqrt(pow(dx, 2.0) + pow(dy, 2.0)) - r;
-    if(abs(sqrd) < 1.5) {
-        likelihood++;
-        inlierCount++;
-        leftMass += dx;
-        topMass += dy;
-    //} else if(sqrd < -2) {
-    } else if(sqrd > -4 && sqrd < 0) {
-        likelihood -= 2;
+    if(abs(sqrd) < r / 10.0) { //2.0
+        //inlierCount++;
+        //leftMass += dx;
+        //topMass += dy;
+
+        int a = 0.5 + (angbuckets-1) * (atan2(dy, dx) + M_PI) / (2.0 * M_PI);
+        if(!angdist[a])
+            inlierCount++;
+        angdist[a] = 1;
+        //if(angMass < angbuckets) return;
+
+
+        //if(inlierCount > 3.0 * angbuckets / 4.0) {
+            //double massval = sqrt(pow(leftMass / inlierCount, 2.0) + pow(topMass / inlierCount, 2.0));
+            //double score = inlierCount - 2.0 * outlierCount - 10.0 * massval;
+            //double score = inlierCount - outlierCount;
+            double score = inlierCount - outlierCount;
+            //if(score > likelihood && inlierCount > thresh * std::min(2.0 * M_PI * r, (double)angbuckets)) {
+            if(score > likelihood && inlierCount > observationparameter * 2.0 * M_PI * r) {
+                likelihood = score;
+                maxtw = dt;
+                topMass = inlierCount;
+                leftMass = outlierCount;
+            }
+        //}
+
+    } else if(sqrd < -3.0 * r / 10.0 && sqrd > -6.0 * r / 10.0) { //-3 < X < -5
+    //} else if(sqrd < 0) {
+        //outlierCount++;
+
+        int a = 0.5 + (angbuckets-1) * (atan2(dy, dx) + M_PI) / (2.0 * M_PI);
+        if(!negdist[a])
+            outlierCount++;
+        negdist[a] = 1;
     }
 
-    if(inlierCount > r) {
-        double massval = 10*sqrt(pow(leftMass / inlierCount, 2.0) + pow(topMass / inlierCount, 2.0));
-        if(likelihood - massval > maxlikelihood) {
-            maxlikelihood = likelihood - massval;
-            maxtw = dt;
-        }
-    }
 
-//    if(inlierCount > r) {
-//        if(likelihood > maxlikelihood) {
-//            maxlikelihood = likelihood;
-//            maxtw = dt;
-//        }
-//    }
+
 }
 
 void vParticle::concludeLikelihood()
 {
-    likelihood = maxlikelihood;
-
-//    if(inlierCount)
-//        likelihood -= 1.0 * sqrt(pow(leftMass / inlierCount, 2.0) + pow(topMass / inlierCount, 2.0));
-
-    //if(likelihood <= 0 || inlierCount < 2.0*r) {
-    if(likelihood <= r) {
-        likelihood = 1.0;
-    } else {
+    if(likelihood > minlikelihood) {
         tw = maxtw;
-    }
 
+        //std::cout << topMass << " - " << leftMass << " = " << likelihood << std::endl;
+    }
     weight = likelihood * weight;
 }
+
+//void vParticle::initLikelihood()
+//{
+//    likelihood = 0;
+//    inlierCount = 0;
+//    leftMass = 0;
+//    topMass = 0;
+//    maxlikelihood = 0;
+//    maxtw = 0;
+//}
+
+//void vParticle::incrementalLikelihood(int vx, int vy, int dt)
+//{
+//    double dx = vx - x;
+//    double dy = vy - y;
+//    if(abs(dx) > r + 2 || abs(dy) > r + 2) return;
+//    double sqrd = sqrt(pow(dx, 2.0) + pow(dy, 2.0)) - r;
+//    if(abs(sqrd) < 1.5) {
+//        likelihood++;
+//        inlierCount++;
+//        leftMass += dx;
+//        topMass += dy;
+//    //} else if(sqrd < -2) {
+//    } else if(sqrd > -4 && sqrd < 0) {
+//        likelihood -= 2;
+//    }
+
+//    if(inlierCount > r) {
+//        double massval = 10*sqrt(pow(leftMass / inlierCount, 2.0) + pow(topMass / inlierCount, 2.0));
+//        if(likelihood - massval > maxlikelihood) {
+//            maxlikelihood = likelihood - massval;
+//            maxtw = dt;
+//        }
+//    }
+
+////    if(inlierCount > r) {
+////        if(likelihood > maxlikelihood) {
+////            maxlikelihood = likelihood;
+////            maxtw = dt;
+////        }
+////    }
+//}
+
+//void vParticle::concludeLikelihood()
+//{
+//    likelihood = maxlikelihood;
+
+////    if(inlierCount)
+////        likelihood -= 1.0 * sqrt(pow(leftMass / inlierCount, 2.0) + pow(topMass / inlierCount, 2.0));
+
+//    //if(likelihood <= 0 || inlierCount < 2.0*r) {
+//    if(likelihood <= r) {
+//        likelihood = 1.0;
+//    } else {
+//        tw = maxtw;
+//    }
+
+//    weight = likelihood * weight;
+//}
 
 void vParticle::updateWeight(double l, double n)
 {

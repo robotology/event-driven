@@ -107,6 +107,8 @@ public:
     vSurfaceHandler(unsigned int width = 128, unsigned int height = 128);
 
     eventdriven::vQueue queryEvents(unsigned long int conditionTime, unsigned int temporalWindow);
+    eventdriven::vQueue queryEventList(std::vector<vParticle> &ps);
+    void queryEvents(eventdriven::vQueue &fillq, unsigned int temporalwindow);
     double geteventrate() { return eventrate; }
 
     bool    open(const std::string &name, bool strictness = false);
@@ -167,6 +169,7 @@ private:
     double avgtw;
     double maxtw;
     double maxlikelihood;
+    double pwsumsq;
     int nparticles;
     int rate;
     std::string name;

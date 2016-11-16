@@ -21,7 +21,7 @@
 int main(int argc, char * argv[])
 {
     /* initialize yarp network */
-    yarp::os::Network::init();
+    yarp::os::Network yarp;
 
     /* create the module */
     vParticleModule particleModule;
@@ -33,9 +33,5 @@ int main(int argc, char * argv[])
     rf.setDefaultConfigFile( "vParticleFilter.ini" );
     rf.configure( argc, argv );
 
-    /* run the module: runModule() calls configure first and, if successful, it then runs */
-    particleModule.runModule(rf);
-    yarp::os::Network::fini();
-
-    return 0;
+    return particleModule.runModule(rf);
 }

@@ -18,23 +18,23 @@ private:
     //weight
     double weight;
     double likelihood;
+    double observationparameter;
     double leftMass;
     double topMass;
+    double angMass;
+    int    outlierCount;
     int    inlierCount;
     double maxlikelihood;
+    double minlikelihood;
     double maxtw;
-    //bool doneLikelihood;
+    int angbuckets;
+    yarp::sig::Vector angdist;
+    yarp::sig::Vector negdist;
 
     //state - this should be a yarp::sig::vector
     double x;
     double y;
     double r;
-    //double vx;
-    //double vy;
-    //double vr;
-    //double ax;
-    //double ay;
-    //double ar;
     double tw;
 
     //timing
@@ -61,6 +61,8 @@ public:
     unsigned int getTemporalWindow();
 
     void setRate(unsigned int rate) { fixedrate = rate; }
+    void setMinLikelihood(double minlikelihood) { this->minlikelihood = minlikelihood; }
+    void setObservationParameter(double value) { this->observationparameter = value; }
 
     void resample(double w, unsigned long int t);
     void resample(const vParticle &seeder, double w, unsigned long int t);
@@ -80,12 +82,6 @@ public:
     double getx() { return x; }
     double gety() { return y; }
     double getr() { return r; }
-    //double getvx() { return vx; }
-    //double getvy() { return vy; }
-    //double getvr() { return vr; }
-    //double getax() { return ax; }
-    //double getay() { return ay; }
-    //double getar() { return ar; }
     double getw() { return weight; }
     double getl() { return likelihood; }
     double gettw() { return tw; }
