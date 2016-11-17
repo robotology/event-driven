@@ -8,9 +8,9 @@ vTempWindow::vTempWindow()
     tUpper = vtsHelper::maxStamp() - tLower;
 }
 
-void vTempWindow::addEvent(vEvent &event)
+void vTempWindow::addEvent(vptr<> event)
 {
-    int ctime = event.getStamp();
+    int ctime = event->getStamp();
     int upper = ctime + tUpper;
     int lower = ctime - tLower;
 
@@ -33,7 +33,7 @@ void vTempWindow::addEvent(vEvent &event)
         }
     }
 
-    q.push_back(&event);
+    q.push_back(event);
 }
 
 void vTempWindow::addEvents(const vQueue &events)
@@ -42,7 +42,7 @@ void vTempWindow::addEvents(const vQueue &events)
     for(qi = events.begin(); qi != events.end() - 1; qi++)
         q.push_back(*qi);
 
-    addEvent(*events.back());
+    addEvent(events.back());
 }
 
 vQueue vTempWindow::getWindow()

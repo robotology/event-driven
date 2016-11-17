@@ -44,7 +44,7 @@ protected:
 
     //Local Memory
     //! for quick spatial accessing and surfacing
-    std::vector< std::vector <vEvent *> > spatial;
+    std::vector< std::vector < event<> > > spatial;
 
     //Parameters
     //! the sensor width

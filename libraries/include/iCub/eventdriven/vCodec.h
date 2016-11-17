@@ -117,12 +117,16 @@
 
 #include <iCub/eventdriven/vtsHelper.h>
 #include <string>
+#include <memory>
 
 namespace eventdriven {
 
 class vEvent;
+using std::dynamic_pointer_cast;
+using std::static_pointer_cast;
+template<typename V = vEvent> using event = std::shared_ptr<V>;
 
-vEvent * createEvent(const std::string type);
+event<> createEvent(const std::string type);
 /**************************************************************************/
 class vEvent
 {
@@ -136,33 +140,14 @@ protected:
 #endif
 
 private:
-    int refcount:8;
     const static int localWordsCoded = 1;
-    yarp::os::Mutex test;
 
 public:
     //!blank constructor required at base level
-    vEvent() : stamp(0), refcount(0) {}
+    vEvent() : stamp(0) {}
     //!copy constructor
     vEvent(const vEvent &event);
     virtual ~vEvent() {}
-
-    void referto()
-    {
-        test.lock();
-        refcount++;
-        test.unlock();
-    }
-    //void destroy() { if(!(--refcount > 0)) delete this; }
-    int getrefcount() { return refcount;}
-    void destroy() {
-        test.lock();
-        refcount--;
-        test.unlock();
-        if(refcount <= 0) delete this;
-    }
-
-
 
     virtual std::string getType() const { return "TS";}
 
@@ -185,14 +170,6 @@ public:
     virtual bool decode(const yarp::os::Bottle &packet, int &pos);
     virtual yarp::os::Property getContent() const;
     virtual int nBytesCoded() const {return localWordsCoded * sizeof(int);}
-
-    template<class T> T* getAs() {
-        return dynamic_cast<T*>(this);
-    }
-
-    template<class T> T* getUnsafe() {
-        return (T*)(this);
-    }
 
 };
 

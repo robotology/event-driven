@@ -26,7 +26,7 @@ void drawEvents(yarp::sig::ImageOf< yarp::sig::PixelBgr> &image, eventdriven::vQ
             if(dt < 0) dt += eventdriven::vtsHelper::maxStamp();
             if(dt > tw) break;
         }
-        eventdriven::AddressEvent *v = q[i]->getUnsafe<eventdriven::AddressEvent>();
+        eventdriven::event<eventdriven::AddressEvent> v = eventdriven::static_pointer_cast<eventdriven::AddressEvent>(q[i]);
         image(v->getY(), 127 - v->getX()) = yarp::sig::PixelBgr(0, 255, 0);
     }
 }
@@ -189,9 +189,9 @@ void vSurfaceHandler::onRead(eventdriven::vBottle &inputBottle)
 
         mutexsignal.lock();
         if((*qi)->getChannel() == 0)
-            surfaceLeft.addEvent(**qi);
+            surfaceLeft.addEvent(*qi);
         else if((*qi)->getChannel() == 1)
-            surfaceRight.addEvent(**qi);
+            surfaceRight.addEvent(*qi);
         else
             std::cout << "Unknown channel" << std::endl;
         mutexsignal.unlock();
@@ -326,7 +326,8 @@ void particleProcessor::run()
     while(!isStopping()) {
 
         ptime = yarp::os::Time::now();
-        eventdriven::vQueue stw = eventhandler.queryEvents(unwrap.currentTime() + rate, maxtw);
+        //eventdriven::vQueue stw = eventhandler.queryEvents(unwrap.currentTime() + rate, maxtw);
+        eventdriven::vQueue stw = eventhandler.queryEvents(unwrap.currentTime() + rate, eventdriven::vtsHelper::maxStamp() * 0.5);
         double Tget = (yarp::os::Time::now() - ptime)*1000.0;
         ptime = yarp::os::Time::now();
 
@@ -522,7 +523,7 @@ void vPartObsThread::run()
     for(int i = pStart; i < pEnd; i++) {
         for(unsigned int j = 0; j < (*stw).size(); j++) {
             if((*deltats)[j] < (*particles)[i].gettw()) {
-                eventdriven::AddressEvent *v = (*stw)[j]->getUnsafe<eventdriven::AddressEvent>();
+                eventdriven::event<eventdriven::AddressEvent> v = eventdriven::static_pointer_cast<eventdriven::AddressEvent>((*stw)[j]);
                 (*particles)[i].incrementalLikelihood(v->getX(), v->getY(), (*deltats)[j]);
             } else {
                 break;
@@ -647,7 +648,7 @@ void vParticleReader::onRead(eventdriven::vBottle &inputBottle)
 
         if((*qi)->getChannel()) continue;
 
-        surfaceLeft.addEvent(**qi);
+        surfaceLeft.addEvent(*qi);
 
         t = unwrap((*qi)->getStamp());
 
@@ -713,7 +714,7 @@ void vParticleReader::onRead(eventdriven::vBottle &inputBottle)
                 double dt = ctime - stw[i]->getStamp();
                 if(dt < 0)
                     dt += eventdriven::vtsHelper::maxStamp();
-                eventdriven::AddressEvent *v = stw[i]->getUnsafe<eventdriven::AddressEvent>();
+                eventdriven::event<eventdriven::AddressEvent> v = eventdriven::static_pointer_cast<eventdriven::AddressEvent>(stw[i]);
                 int x = v->getX();
                 int y = v->getY();
                 for(int i = 0; i < nparticles; i++) {

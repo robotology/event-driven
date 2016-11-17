@@ -230,7 +230,7 @@ double vParticle::calcLikelihood(eventdriven::vQueue &events, int nparticles)
     double bottom = 0;
     for(unsigned int i = 0; i < events.size(); i++) {
 
-        eventdriven::AddressEvent * v = events[i]->getUnsafe<eventdriven::AddressEvent>();
+        eventdriven::event<eventdriven::AddressEvent> v = eventdriven::static_pointer_cast<eventdriven::AddressEvent>(events[i]);
 
         double sqrd = sqrt(pow(v->getX() - x, 2.0) + pow(v->getY() - y, 2.0)) - r;
         sqrd = abs(sqrd);

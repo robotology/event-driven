@@ -23,43 +23,44 @@
 namespace eventdriven
 {
 
-vEvent * createEvent(const std::string type)
+event<> createEvent(const std::string type)
 {
-    vEvent * ret = 0;
+    vEvent * ret = nullptr;
 
     ret = new AddressEvent();
-    if(type == ret->getType()) return ret;
+    if(type == ret->getType()) return event<>(ret);
     else delete(ret);
 
     ret = new AddressEventClustered();
-    if(type == ret->getType()) return ret;
+    if(type == ret->getType()) return event<>(ret);
     else delete(ret);
 
     ret = new ClusterEvent();
-    if(type == ret->getType()) return ret;
+    if(type == ret->getType()) return event<>(ret);
     else delete(ret);
 
     ret = new ClusterEventGauss();
-    if(type == ret->getType()) return ret;
+    if(type == ret->getType()) return event<>(ret);
     else delete(ret);
 
     ret = new CollisionEvent();
-    if(type == ret->getType()) return ret;
+    if(type == ret->getType()) return event<>(ret);
     else delete(ret);
 
     ret = new FlowEvent();
-    if(type == ret->getType()) return ret;
+    if(type == ret->getType()) return event<>(ret);
     else delete(ret);
 
     ret = new InterestEvent();
-    if(type == ret->getType()) return ret;
+    if(type == ret->getType()) return event<>(ret);
     else delete(ret);
 
     ret = new NeuronIDEvent();
-    if(type == ret->getType()) return ret;
+    if(type == ret->getType()) return event<>(ret);
     else delete(ret);
+    ret = nullptr;
 
-    return 0;
+    return event<>(nullptr);
 
 }
 
@@ -95,16 +96,13 @@ bool vEvent::decode(const yarp::os::Bottle &packet, int &pos)
 
 vEvent::vEvent(const vEvent &event)
 {
-    refcount = 0;
-    *this = event;
-
+    stamp = event.stamp;
 }
 
 /******************************************************************************/
 vEvent &vEvent::operator=(const vEvent &event)
 {
     stamp = event.stamp;
-
     return *this;
 }
 

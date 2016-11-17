@@ -7,11 +7,10 @@ set(PROJECTNAME ${EVENTDRIVEN_LIBRARIES})
 project(${PROJECTNAME})
 
 set(folder_source
-  src/vBottle.cpp
   src/vCodec.cpp
   src/vWindow.cpp
-  src/vTempWindow.cpp
-  src/vSurface.cpp
+  #src/vTempWindow.cpp
+  #src/vSurface.cpp
   src/vQueue.cpp
 )
 
@@ -21,7 +20,7 @@ set(folder_header
   include/iCub/eventdriven/vCodec.h
   include/iCub/eventdriven/vtsHelper.h
   include/iCub/eventdriven/vWindow.h
-  include/iCub/eventdriven/vSurface.h
+  #include/iCub/eventdriven/vSurface.h
   include/iCub/eventdriven/vQueue.h
 )
 

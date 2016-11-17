@@ -38,7 +38,22 @@ public:
     vBottle() : yarp::os::Bottle() {}
 
     //you can only modify contents by adding events and append other vBottles
-    void addEvent(vEvent &e);
+    void addEvent(event<> e) {
+
+        //first append a searchable string
+        //yarp::os::Bottle::addString(e.getType());
+        yarp::os::Bottle * b = yarp::os::Bottle::find(e->getType()).asList();
+
+        if(!b) {
+            yarp::os::Bottle::addString(e->getType());
+            b = &(yarp::os::Bottle::addList());
+        }
+
+        //add the coded event to the end of the bottle
+        e->encode(*b);
+        //b->append(e.encode());
+
+    }
 
     void append(vBottle &eb)
     {
@@ -47,18 +62,12 @@ public:
 
     template<class T> void append(vBottle &eb)
     {
-        //we need to access the data in eb as if it were a normal bottle
-        //so we cast it to a Bottle
-
-        //TODO: just make sure the functions are available but protected should
-        //      make the casting unnecessary
-        yarp::os::Bottle * bb = dynamic_cast<yarp::os::Bottle *>(&eb);
 
         //for each list of events
-        for(int tagi = 0; tagi < bb->size(); tagi+=2) {
+        for(int tagi = 0; tagi < eb.yarp::os::Bottle::size(); tagi+=2) {
 
             //get the appended event type
-            const std::string tagname = bb->get(tagi).asString();
+            const std::string tagname = eb.yarp::os::Bottle::get(tagi).asString();
             if(!tagname.size()) {
                 std::cerr << "Warning: Could not get tagname during vBottle append."
                              "Check vBottle integrity." << std::endl;
@@ -66,17 +75,17 @@ public:
             }
 
             //check to see if we want to append this event type
-            vEvent * e = createEvent(tagname);
+            event<> e = createEvent(tagname);
             if(!e) {
                 std::cerr << "Warning: could not get bottle type during vBottle::"
                              "append<>(). Check vBottle integrity." << std::endl;
                 continue;
             }
-            if(!dynamic_cast<T*>(e)) continue;
+            if(!std::dynamic_pointer_cast<T>(e)) continue;
 
 
             //we want to append these events so get the data from bb
-            yarp::os::Bottle *b_from = bb->get(tagi+1).asList();
+            yarp::os::Bottle *b_from = eb.yarp::os::Bottle::get(tagi+1).asList();
             if(!b_from->size()) {
                 std::cerr << "Warning: From-list empty during vBottle append."
                              "Check vBottle integrity." << std::endl;
@@ -111,7 +120,7 @@ public:
         for(int i = 0; i < Bottle::size(); i+=2) {
 
             //so for each TAG we create an event of that type
-            vEvent * e = createEvent(Bottle::get(i).asString());
+            event<> e = createEvent(Bottle::get(i).asString());
             if(!e) {
                 std::cerr << "Warning: could not get bottle type during vBottle::"
                              "get<>(). Check vBottle integrity." << std::endl;
@@ -119,8 +128,7 @@ public:
             }
 
             //and if e is of type T we can continue to get the events
-            if(!dynamic_cast<T*>(e)) {
-                delete(e);
+            if(!std::dynamic_pointer_cast<T>(e)) {
                 continue;
             }
 
@@ -130,7 +138,6 @@ public:
                 std::cerr << "Warning: could not get event data as a list after "
                              "getting correct tag (e.g. AE) in vBottle::getAll(). "
                              "Check vBottle integrity" << std::endl;
-                delete(e);
                 break;
             }
 
@@ -138,13 +145,9 @@ public:
             int pos = 0;
             while(pos < b->size()) {
                 if(e->decode(*b, pos)) {
-                    q.push_back(e->clone());
+                    q.push_back(event<>(e->clone()));
                 }
             }
-
-            //finally we don't need the last event
-            delete(e);
-
         }
 
     }

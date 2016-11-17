@@ -44,7 +44,7 @@ protected:
     vQueue q;
 
     //! for quick spatial accessing and surfacing
-    std::vector< std::vector <vEvent *> > spatial;
+    std::vector< std::vector < event<> > > spatial;
 
     //!retina size
     int width;
@@ -67,15 +67,15 @@ public:
     /// events.
     /// \param event the event to add
     ///
-    virtual vQueue addEvent(vEvent &event);
+    virtual vQueue addEvent(event<> v);
 
-    virtual vQueue removeEvents(vEvent &toAdd) = 0;
+    virtual vQueue removeEvents(event<> toAdd) = 0;
 
     ///
     /// \brief getMostRecent
     /// \return
     ///
-    vEvent *getMostRecent();
+    event<> getMostRecent();
 
     int getEventCount() { return count; }
 
@@ -130,7 +130,7 @@ public:
     temporalSurface(int width = 128, int height = 128,
                    int duration = vtsHelper::maxStamp() * 0.5) :
         vSurface2(width, height), duration(duration) {}
-    virtual vQueue removeEvents(vEvent &toAdd);
+    virtual vQueue removeEvents(event<> toAdd);
 
     void setTemporalSize(int duration) {this->duration = duration;}
 
@@ -147,7 +147,7 @@ public:
 
     fixedSurface(int qlength = 2000, int width = 128, int height = 128)  :
         vSurface2(width, height), qlength(qlength) {}
-    virtual vQueue removeEvents(vEvent &toAdd);
+    virtual vQueue removeEvents(event<> toAdd);
 
     void setFixedWindowSize(int length) {this->qlength = length;}
 };
@@ -160,8 +160,8 @@ public:
 
     lifetimeSurface(int width = 128, int height = 128) :
         vSurface2(width, height) {}
-    virtual vQueue addEvent(vEvent &event);
-    virtual vQueue removeEvents(vEvent &toAdd);
+    virtual vQueue addEvent(event<> toAdd);
+    virtual vQueue removeEvents(event<> toAdd);
 };
 
 /******************************************************************************/
@@ -178,7 +178,7 @@ protected:
 public:
 
     vTempWindow();
-    void addEvent(vEvent &event);
+    void addEvent(event<> event);
     void addEvents(const vQueue &events);
     vQueue getWindow();
 };
