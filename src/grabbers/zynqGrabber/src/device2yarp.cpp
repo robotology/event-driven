@@ -27,8 +27,10 @@ device2yarp::device2yarp() : RateThread(THRATE) {
     clockScale = 1;
     countTotEvts = 0;
     countLostEvts = 0;
-    prevPayload = -1;
+    prevAPSval = -1;
+    prevTDval = -1;
     firstTs = 0;
+    prevPayload = -1;
 
 }
 
@@ -60,7 +62,7 @@ void  device2yarp::run() {
     //get the data from the device read thread
     int nBytesRead = 0;
     const std::vector<char> &data = devManager->readDevice(nBytesRead);
-    std::cout << "nBytesRead " << nBytesRead << std::endl;
+
     if (!nBytesRead) return;
 
     if(nBytesRead > devManager->getBufferSize()*0.75) {
@@ -76,7 +78,8 @@ void  device2yarp::run() {
         std::cout << "BUFFER NOT A MULTIPLE OF 8 BYTES: " <<  nBytesRead << std::endl;
     }
 
-    if(true && nBytesRead > 8) {
+    if(false && nBytesRead > 8) {
+        std::cout << "nBytesRead " << nBytesRead << std::endl;
         //FIRST EVENT
         int *TS =  (int *)(data.data());
         int *AE =  (int *)(data.data()  + 4);
@@ -110,6 +113,29 @@ void  device2yarp::run() {
         if((*AE & 0xF3C80000) != 0x00000000) {
             dataError = true;
             std::cout << "AE mismatch" << std::endl;
+        }
+
+        if (*AE & 0x40000) {
+            if(prevAPSval >= 0) {
+                if((*AE & 0x0003FFFF) != 0 && *AE != prevAPSval + 1) {
+                    std::cout << "APS out of sequence: ";
+                    printf("0x%08X ", prevAPSval);
+                    printf("0x%08X\n", *AE);
+                }
+            }
+
+            prevAPSval = *AE;
+
+        } else {
+            if(prevTDval >= 0) {
+                if((*AE & 0x0003FFFF) != 0 && *AE != prevTDval + 1) {
+                    std::cout << "TD out of sequence: ";
+                    printf("0x%08X ", prevTDval);
+                    printf("0x%08X\n", *AE);
+                }
+            }
+
+            prevTDval = *AE;
         }
 
         int tempAE = 0;

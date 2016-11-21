@@ -39,14 +39,16 @@ public:
     virtual bool threadInit(std::string moduleName = "", bool strict = false);
     bool    attachDeviceManager(deviceManager* devManager);
     bool doChannelShift;
+    int prevAPSval;
+    int prevTDval;
     int prevPayload;
     int countLostEvts;
     int countTotEvts;
-    
+
     double firstTs;
 
     emorph::vtsHelper unwrap;
-    
+
 private:
 
     //output port
