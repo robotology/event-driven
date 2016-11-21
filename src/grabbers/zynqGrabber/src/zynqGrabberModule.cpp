@@ -204,14 +204,14 @@ bool zynqGrabberModule::respond(const yarp::os::Bottle& command,
     case COMMAND_VOCAB_SUSPEND:
         rec = true;
     {
-        D2Y->suspend();
+        //D2Y->suspend();
         ok = true;
     }
         break;
     case COMMAND_VOCAB_RESUME:
         rec = true;
     {
-        D2Y->resume();
+        //D2Y->resume();
         ok = true;
     }
         break;

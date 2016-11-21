@@ -19,7 +19,8 @@
 
 #define THRATE 1
 
-device2yarp::device2yarp() : RateThread(THRATE) {
+//device2yarp::device2yarp() : RateThread(THRATE) {
+device2yarp::device2yarp() {
     countAEs = 0;
     prevTS = 0;
     strict = false;
