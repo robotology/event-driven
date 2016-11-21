@@ -60,7 +60,7 @@ void  device2yarp::run() {
     //get the data from the device read thread
     int nBytesRead = 0;
     const std::vector<char> &data = devManager->readDevice(nBytesRead);
-    std::cout << "nBytesRead " << nBytesRead << std::endl;
+    //std::cout << "nBytesRead " << nBytesRead << std::endl;
     if (!nBytesRead) return;
 
     if(nBytesRead > devManager->getBufferSize()*0.75) {
@@ -165,7 +165,7 @@ void  device2yarp::run() {
         }
     }
 
-    std::cout << "Evts: " << countTotEvts << ", Lost: " << countLostEvts <<", Time: " << unwrap.currentTime() - firstTs << std::endl;
+    //std::cout << "Evts: " << countTotEvts << ", Lost: " << countLostEvts <<", Time: " << unwrap.currentTime() - firstTs << std::endl;
 
 
     if(nBytesRead - bstart > 7) {
