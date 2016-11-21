@@ -30,8 +30,8 @@
 #include <iCub/emorph/all.h>
 #include "iCub/deviceManager.h"
 
-//class device2yarp : public yarp::os::RateThread {
-class device2yarp : public yarp::os::Thread {
+class device2yarp : public yarp::os::RateThread {
+//class device2yarp : public yarp::os::Thread {
 public:
 
     device2yarp();
