@@ -68,12 +68,16 @@ void  device2yarp::run() {
                      "device2yarp thread is not delayed" << std::endl;
     }
 
+    bool dataError = false;
 
-    //std::cout << "Buffer Size: " << accessBuffer->size() << std::endl;
-    if(nBytesRead % 8)
+    //ERROR CHECKING BUT NOT FIXING
+    if(nBytesRead % 8) {
+        dataError = true;
         std::cout << "BUFFER NOT A MULTIPLE OF 8 BYTES: " <<  nBytesRead << std::endl;
+    }
 
-    if(nBytesRead > 8) {
+    if(true && nBytesRead > 8) {
+        //FIRST EVENT
         int *TS =  (int *)(data.data());
         int *AE =  (int *)(data.data()  + 4);
 
@@ -83,6 +87,57 @@ void  device2yarp::run() {
         else
             printf(" TD: 0x%08X\n", *AE);
 
+        //LAST EVENT
+        TS =  (int *)(data.data() + nBytesRead - 8);
+        AE =  (int *)(data.data() + nBytesRead - 4);
+
+        printf("T: 0x%08X --> ", *TS);
+        if (*AE & 0x40000)
+            printf("APS: 0x%08X\n", *AE);
+        else
+            printf(" TD: 0x%08X\n", *AE);
+    }
+
+    //we need to shift some bits around to send onward
+    for(int i = 0; i < nBytesRead / 8; i+=8) {
+        int *TS =  (int *)(data.data() + i);
+        int *AE =  (int *)(data.data() + i + 4);
+
+        if((*TS & 0xFF000000) != 0x80000000) {
+            dataError = true;
+            std::cout << "TS mismatch" << std::endl;
+        }
+        if((*AE & 0xF3C80000) != 0x00000000) {
+            dataError = true;
+            std::cout << "AE mismatch" << std::endl;
+        }
+
+        int tempAE = 0;
+        // put channel in bit 21
+        tempAE |= (*AE & 0x00100000) << 1;
+        //put polarity in bit 0
+        tempAE |= (*AE & 0x00000001);
+        // find x - bits 9-1 to 10-1
+        tempAE |= (*AE & 0x000003FE);
+        // find y - bits 17-10 to 20-11
+        tempAE |= (*AE & 0x0003FC00) << 1;
+
+        *AE = tempAE;
+
+        //and then check the next two ints
+        i += 8;
+
+
+    }
+
+    if(portvBottle.getOutputCount() && nBytesRead > 8 && !dataError) {
+        emorph::vBottleMimic &vbm = portvBottle.prepare();
+        vbm.setdata(data.data(), nBytesRead);
+        countAEs += nBytesRead / 8;
+        vStamp.update();
+        portvBottle.setEnvelope(vStamp);
+        if(strict) portvBottle.writeStrict();
+        else portvBottle.write();
     }
 
     return;
