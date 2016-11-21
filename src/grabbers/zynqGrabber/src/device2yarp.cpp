@@ -121,7 +121,10 @@ void  device2yarp::run() {
                     std::cout << "APS out of sequence: ";
                     printf("0x%08X ", prevAPSval);
                     printf("0x%08X\n", *AE);
+                } else {
+                    std::cout << "." << std::endl;
                 }
+
             }
 
             prevAPSval = *AE;
@@ -132,6 +135,8 @@ void  device2yarp::run() {
                     std::cout << "TD out of sequence: ";
                     printf("0x%08X ", prevTDval);
                     printf("0x%08X\n", *AE);
+                } else {
+                    std::cout << "." << std::endl;
                 }
             }
 
