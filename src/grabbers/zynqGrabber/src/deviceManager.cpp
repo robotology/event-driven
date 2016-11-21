@@ -171,22 +171,6 @@ const std::vector<char>& deviceManager::readDevice(int &nBytesRead)
 
     }
 
-    //std::cout << "Buffer Size: " << accessBuffer->size() << std::endl;
-    if(nBytesRead % 8)
-        std::cout << "BUFFER NOT A MULTIPLE OF 8 BYTES: " <<  nBytesRead << std::endl;
-
-    if(nBytesRead > 8) {
-        int *TS =  (int *)(accessBuffer->data());
-        int *AE =  (int *)(accessBuffer->data()  + 4);
-
-        printf("T: 0x%08X --> ", *TS);
-        if (*AE & 0x40000)
-            printf("APS: 0x%08X\n", *AE);
-        else
-            printf(" TD: 0x%08X\n", *AE);
-
-    }
-
     //and return the accessBuffer
     return *accessBuffer;
 

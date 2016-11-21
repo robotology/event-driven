@@ -60,13 +60,32 @@ void  device2yarp::run() {
     //get the data from the device read thread
     int nBytesRead = 0;
     const std::vector<char> &data = devManager->readDevice(nBytesRead);
-    //std::cout << "nBytesRead " << nBytesRead << std::endl;
+    std::cout << "nBytesRead " << nBytesRead << std::endl;
     if (!nBytesRead) return;
 
     if(nBytesRead > devManager->getBufferSize()*0.75) {
         std::cerr << "Software buffer was over 3/4 full - check the "
                      "device2yarp thread is not delayed" << std::endl;
     }
+
+
+    //std::cout << "Buffer Size: " << accessBuffer->size() << std::endl;
+    if(nBytesRead % 8)
+        std::cout << "BUFFER NOT A MULTIPLE OF 8 BYTES: " <<  nBytesRead << std::endl;
+
+    if(nBytesRead > 8) {
+        int *TS =  (int *)(data.data());
+        int *AE =  (int *)(data.data()  + 4);
+
+        printf("T: 0x%08X --> ", *TS);
+        if (*AE & 0x40000)
+            printf("APS: 0x%08X\n", *AE);
+        else
+            printf(" TD: 0x%08X\n", *AE);
+
+    }
+
+    return;
 
     int bstart = 0;
     int bend = 0;
