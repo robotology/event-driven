@@ -82,24 +82,24 @@ void  device2yarp::run() {
         int *TS =  (int *)(data.data() + bend);
         int *AE =  (int *)(data.data() + bend + 4);
 
-//        printf("T: 0x%08X --> ", *TS);
+        //        printf("T: 0x%08X --> ", *TS);
+        //        if (*AE & 0x40000) {
+        //            printf("APS: 0x%08X \n", *AE);
+        //        } else {
+        //            printf("TD: 0x%08X \n", *AE);
+        //
+        //        }
+
+//        std::cout << "T: 0x" << std::hex << *TS << " --> ";
 //        if (*AE & 0x40000) {
-//            printf("APS: 0x%08X \n", *AE);
+//            std::cout << " APS: 0x" << *AE << std::endl;
+
 //        } else {
-//            printf("TD: 0x%08X \n", *AE);
-//
+//            std::cout << "  TD: 0x" << *AE << std::endl;
+
 //        }
 
-        std::cout << "TS: " << *TS << " --> ";
-   if (*AE & 0x40000) {
-       std::cout << " APS: " << *AE << std::endl;
-       
-   } else {
-       std::cout << " TD: " << *AE << std::endl;
-       
-   }
-       
-       
+
         bool BITMISMATCH = !(*TS & 0x80000000) || (*AE & 0xFFEF0000);
 
         if(BITMISMATCH) {
