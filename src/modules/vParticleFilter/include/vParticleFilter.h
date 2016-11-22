@@ -18,13 +18,10 @@ private:
     //weight
     double weight;
     double likelihood;
-    double observationparameter;
-    double leftMass;
-    double topMass;
-    double angMass;
+    double inlierParameter;
+    double outlierParameter;
     int    outlierCount;
     int    inlierCount;
-    double maxlikelihood;
     double minlikelihood;
     double maxtw;
     int angbuckets;
@@ -62,7 +59,8 @@ public:
 
     void setRate(unsigned int rate) { fixedrate = rate; }
     void setMinLikelihood(double minlikelihood) { this->minlikelihood = minlikelihood; }
-    void setObservationParameter(double value) { this->observationparameter = value; }
+    void setOutlierParameter(double value) { this->outlierParameter = value; }
+    void setInlierParameter(double value) {this->inlierParameter = value; }
 
     void resample(double w, unsigned long int t);
     void resample(const vParticle &seeder, double w, unsigned long int t);

@@ -39,15 +39,10 @@ vParticle::vParticle()
     stamp = 0;
     nextUpdate = 0;
     fixedrate = 0;
-    tw = 50000;
-    leftMass = 0;
-    topMass = 0;
+    tw = 0;
     inlierCount = 0;
-    maxlikelihood = 0;
     maxtw = 0;
-    observationparameter = 0.5;
     outlierCount = 0;
-    angMass = 0;
     angbuckets = 128;
     angdist.resize(angbuckets);
     negdist.resize(angbuckets);
@@ -170,9 +165,6 @@ void vParticle::initLikelihood()
     likelihood = minlikelihood;
     inlierCount = 0;
     outlierCount = 0;
-    leftMass = 0;
-    topMass = 0;
-    angMass = 0;
     angdist.zero();
     negdist.zero();
     maxtw = 0;
@@ -213,7 +205,6 @@ void vParticle::incrementalLikelihood(int vx, int vy, int dt)
         angdist[a] = 1;
 
         double score = inlierCount - outlierCount;
-        //if(score > likelihood && inlierCount > observationparameter * std::min(2.0 * M_PI * r, (double)angbuckets)) {
         if(score > likelihood) {
             likelihood = score;
             maxtw = dt;
@@ -234,25 +225,17 @@ void vParticle::incrementalLikelihood(int vx, int vy, int dt)
 
 void vParticle::concludeLikelihood()
 {
-    if(likelihood > minlikelihood) {
-        tw = maxtw;
-
-        //std::cout << topMass << " - " << leftMass << " = " << likelihood << std::endl;
-    }
+    if(likelihood > minlikelihood) tw = maxtw;
     weight = likelihood * weight;
 }
 
 void vParticle::updateWeight(double l, double n)
 {
     weight = l * weight / n;
-    //weight = l * weight / (l * weight + (n-weight)*n);
-    //weight = l * weight / (l * weight + (1.0 - 1.0/n)*n);
 }
 
 void vParticle::updateWeight2(double likelihood, double pwsumsq)
 {
-    //weight = likelihood * weight / (likelihood * weight + pwsumsq - (weight*weight));
-
 
     weight = likelihood / (likelihood + pwsumsq/weight - weight);
 
@@ -264,21 +247,9 @@ void vParticle::updateWeightSync(double normval)
 
 void vParticle::resample(double w, unsigned long int t)
 {
-
-    //initState(rand()%128, rand()%128, 10+rand()%26, 10000 + rand()%200000);
     initState(rand()%128, rand()%128, 10+rand()%26, 100);
     initWeight(w);
     initTiming(t);
-    return;
-//    int s1 = rand() % 2 > 0 ? 1 : -1;
-//    int s2 = rand() % 2 > 0 ? 1 : -1;
-
-//    initState(rand()%128, rand()%128, 12+rand()%8,
-//              7.8125*s1*(0.5e-6 + ((double)rand() / RAND_MAX) * 2.5e-6),
-//              7.8125*s2*(0.5e-6 + ((double)rand() / RAND_MAX) * 2.5e-6), 0);
-//    initTiming(t);
-    //initWeight(w);
-
 }
 
 void vParticle::resample(const vParticle &seeder, double w, unsigned long int t)

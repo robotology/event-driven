@@ -78,7 +78,8 @@ bool vParticleModule::configure(yarp::os::ResourceFinder &rf)
             1.0 + rf.check("randoms", yarp::os::Value(2)).asDouble() / 100.0;
     bool adaptivesampling = rf.check("adaptive", yarp::os::Value(false)).asBool();
     double minlikelihood = rf.check("obsmin", yarp::os::Value(1.0)).asDouble();
-    double parlikelihood = rf.check("obsparameter", yarp::os::Value(0.7)).asDouble();
+    double inlierParameter = rf.check("inlierPar", yarp::os::Value(1.5)).asDouble();
+    double outlierParameter = rf.check("outlierPar", yarp::os::Value(3.0)).asDouble();
     bool realtime = rf.check("userealtime", yarp::os::Value(true)).asBool();
 
     if(!realtime) {
@@ -106,7 +107,7 @@ bool vParticleModule::configure(yarp::os::ResourceFinder &rf)
     }
 
 
-    return true ;
+    return true;
 }
 
 /******************************************************************************/

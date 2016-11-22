@@ -29,7 +29,7 @@ int main(int argc, char * argv[])
     /* prepare and configure the resource finder */
     yarp::os::ResourceFinder rf;
     rf.setVerbose( true );
-    rf.setDefaultContext( "eMorph" );
+    rf.setDefaultContext( "eventdriven" );
     rf.setDefaultConfigFile( "vParticleFilter.ini" );
     rf.configure( argc, argv );
 
