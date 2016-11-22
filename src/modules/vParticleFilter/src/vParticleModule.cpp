@@ -513,6 +513,15 @@ void particleProcessor::run()
         }
         //std::cout << "CALCULATED AVERAGE" <<std::endl;
 
+//        particleVariance = 0;
+//        for(int i = 0; i < nparticles; i ++) {
+//            //particleVariance = indexedlist[i].getw() *
+//            particleVariance =
+//                    (pow(avgx - indexedlist[i].getx(), 2.0) + pow(avgy - indexedlist[i].gety(), 2.0));
+//        }
+//        particleVariance /= nparticles;
+
+
         if(vBottleOut.getOutputCount()) {
             eventdriven::vBottle &eventsout = vBottleOut.prepare();
             eventsout.clear();
@@ -541,7 +550,7 @@ void particleProcessor::run()
             image.resize(res.width, res.height);
             image.zero();
 
-            drawcircle(image, avgx, avgy, avgr+0.5, 2);
+
 
             for(unsigned int i = 0; i < indexedlist.size(); i++) {
 
@@ -555,6 +564,9 @@ void particleProcessor::run()
             //drawEvents(image, stw, avgtw);
             drawEvents(image, stw, pmax.gettw());
             //drawEvents(image, stw, eventdriven::vtsHelper::maxStamp());
+
+            drawcircle(image, avgx, avgy, avgr+0.5, 2);
+
             debugOut.write();
         }
 

@@ -170,6 +170,7 @@ private:
     double maxtw;
     double maxlikelihood;
     double pwsumsq;
+    double particleVariance;
     int nparticles;
     int rate;
     std::string name;

@@ -35,7 +35,7 @@ vParticle::vParticle()
 {
     weight = 1.0;
     likelihood = 1.0;
-    minlikelihood = 1.0;
+    minlikelihood = 20.0;
     stamp = 0;
     nextUpdate = 0;
     fixedrate = 0;
@@ -94,16 +94,13 @@ void vParticle::initWeight(double weight)
 
 bool vParticle::predict(unsigned long timestamp)
 {
-
-#if 1
-
     double dt = timestamp - this->stamp;
 
     //double sigmatw = 20000;
     //tw += abs(generateGaussianNoise(0, sigmatw));
     //tw += timestamp - this->stamp;
     //tw *= 1.5;
-    tw += (dt*1.5);
+    tw += (dt*1.0);
 
     double sigmap = 2.0;
     x = generateGaussianNoise(x, sigmap);
@@ -111,93 +108,6 @@ bool vParticle::predict(unsigned long timestamp)
     r = generateGaussianNoise(r, sigmap * 0.2);
     if(r < 8) r = 8;
     if(r > 36) r = 36;
-
-
-#elif 0
-
-    double dt = timestamp - this->stamp;
-    double halfdtsqrd = 0.5 * pow(dt, 2.0);
-
-    double sigmap = 12 * (1e-6 * dt / 7.8125);
-    double sigmav = 1e-3 * (1e-6 * dt / 7.8125);
-    double sigmaa = 1e-15 * (1e-6 * dt / 7.8125);
-
-    x = generateGaussianNoise(x + vx*dt + ax*halfdtsqrd, sigmap);
-    y = generateGaussianNoise(y + vy*dt + ay*halfdtsqrd, sigmap);
-    r = generateGaussianNoise(r + vr*dt + ar*halfdtsqrd, sigmap);
-
-    vx = generateGaussianNoise(vx + ax*dt, sigmav);
-    vy = generateGaussianNoise(vy + ay*dt, sigmav);
-    vr = generateGaussianNoise(vr + ar*dt, sigmav);
-
-    ax = generateGaussianNoise(ax, sigmaa);
-    ay = generateGaussianNoise(ay, sigmaa);
-    ar = generateGaussianNoise(ar, sigmaa);
-
-
-#elif 1
-    //constant velocity
-    double dt = timestamp - this->stamp;
-    double halfdtsqrd = 0.5 * pow(dt, 2.0);
-    //double vel = sqrt(pow(vx, 2.0) + pow(vy, 2.0) + pow(vr, 2.0));
-    //double acc = sqrt(pow(ax, 2.0) + pow(ay, 2.0) + pow(ar, 2.0));
-
-    double deltax = vx * dt + ax * halfdtsqrd;
-    double deltay = vy * dt + ay * halfdtsqrd;
-    double deltar = vr * dt + ar * halfdtsqrd;
-    double delta_mag = sqrt(pow(deltax, 2.0) + pow(deltay, 2.0) + pow(deltar, 2.0));
-
-    double sigma = std::max(0.5 * delta_mag, 256 * (1e-6 * dt / 7.8125));
-    if(!id) {
-        std::cout << "Pixels: " << delta_mag << " std: ";
-        std::cout << sigma << " over " << dt * 1e-6 / 7.8125 << " seconds";
-        std::cout << " = " << sigma * 7.8125 * 1e6 / dt << "std / sec" <<std::endl;
-    }
-
-    double xt = generateGaussianNoise(x + deltax, sigma);
-    double yt = generateGaussianNoise(y + deltay, sigma);
-    double rt = generateGaussianNoise(r + deltar, sigma);
-
-    double alpha = 0.25;
-    double beta = 1-alpha;
-    double vxt = beta*vx + alpha*(xt - x) / dt;
-    double vyt = beta*vy + alpha*(yt - y) / dt;
-    double vrt = beta*vr + alpha*(rt - r) / dt;
-
-    ax = beta*ax + alpha*(vxt - vx) / dt;
-    ay = beta*ay + alpha*(vyt - vy) / dt;
-    ar = beta*ar + alpha*(vrt - vr) / dt;
-
-    vx = vxt;
-    vy = vyt;
-    vr = vrt;
-
-    x = xt;
-    y = yt;
-    r = rt;
-
-#else
-    //constant acceleration
-    double dt = timestamp - this->stamp;
-    double halfdtsqrd = 0.5 * pow(dt, 2.0);
-    double sigma = 0.001e-11 * (dt * 1e-6 / 7.8125);
-    x += vx * dt + ax * halfdtsqrd;
-    y += vy * dt + ay * halfdtsqrd;
-    r += vr * dt + ar * halfdtsqrd;
-
-    vx += ax * dt;
-    vy += ay * dt;
-    vr += ar * dt;
-
-    ax = generateGaussianNoise(ax, sigma);
-    ay = generateGaussianNoise(ay, sigma);
-    ar = generateGaussianNoise(ar, sigma);
-
-
-
-
-
-#endif
 
     initTiming(timestamp);
 
@@ -295,45 +205,30 @@ void vParticle::incrementalLikelihood(int vx, int vy, int dt)
     double dy = vy - y;
     if(std::abs(dx) > r + 2 || std::abs(dy) > r + 2) return;
     double sqrd = sqrt(pow(dx, 2.0) + pow(dy, 2.0)) - r;
-    if(std::abs(sqrd) < r / 10.0) { //2.0
-
-//        double z1 = atan2(dy, dx);
-//        double z2 = approxatan2(dy, dx);
-//        if(std::abs(z1 - z2) > 0.004)
-//            std::cout << dy << " " << dx << " " << z1 << " " << z2 << std::endl;
+    if(std::abs(sqrd) < 1.5) { //2.0
 
         int a = 0.5 + (angbuckets-1) * (atan2(dy, dx) + M_PI) / (2.0 * M_PI);
         if(!angdist[a])
             inlierCount++;
         angdist[a] = 1;
-        //if(angMass < angbuckets) return;
+
+        double score = inlierCount - outlierCount;
+        //if(score > likelihood && inlierCount > observationparameter * std::min(2.0 * M_PI * r, (double)angbuckets)) {
+        if(score > likelihood) {
+            likelihood = score;
+            maxtw = dt;
+
+        }
 
 
-        //if(inlierCount > 3.0 * angbuckets / 4.0) {
-            //double massval = sqrt(pow(leftMass / inlierCount, 2.0) + pow(topMass / inlierCount, 2.0));
-            //double score = inlierCount - 2.0 * outlierCount - 10.0 * massval;
-            //double score = inlierCount - outlierCount;
-            double score = inlierCount - outlierCount;
-            //if(score > likelihood && inlierCount > thresh * std::min(2.0 * M_PI * r, (double)angbuckets)) {
-            if(score > likelihood && inlierCount > observationparameter * 2.0 * M_PI * r) {
-                likelihood = score;
-                maxtw = dt;
-                //topMass = inlierCount;
-                //leftMass = outlierCount;
-            }
-        //}
-
-    } else if(sqrd < -3.0 * r / 10.0 && sqrd > -6.0 * r / 10.0) { //-3 < X < -5
-    //} else if(sqrd < 0) {
-        //outlierCount++;
+    } else if(sqrd > -3 && sqrd < 0) { //-3 < X < -5
 
         int a = 0.5 + (angbuckets-1) * (atan2(dy, dx) + M_PI) / (2.0 * M_PI);
         if(!negdist[a])
             outlierCount++;
         negdist[a] = 1;
+
     }
-
-
 
 }
 
@@ -346,65 +241,6 @@ void vParticle::concludeLikelihood()
     }
     weight = likelihood * weight;
 }
-
-//void vParticle::initLikelihood()
-//{
-//    likelihood = 0;
-//    inlierCount = 0;
-//    leftMass = 0;
-//    topMass = 0;
-//    maxlikelihood = 0;
-//    maxtw = 0;
-//}
-
-//void vParticle::incrementalLikelihood(int vx, int vy, int dt)
-//{
-//    double dx = vx - x;
-//    double dy = vy - y;
-//    if(abs(dx) > r + 2 || abs(dy) > r + 2) return;
-//    double sqrd = sqrt(pow(dx, 2.0) + pow(dy, 2.0)) - r;
-//    if(abs(sqrd) < 1.5) {
-//        likelihood++;
-//        inlierCount++;
-//        leftMass += dx;
-//        topMass += dy;
-//    //} else if(sqrd < -2) {
-//    } else if(sqrd > -4 && sqrd < 0) {
-//        likelihood -= 2;
-//    }
-
-//    if(inlierCount > r) {
-//        double massval = 10*sqrt(pow(leftMass / inlierCount, 2.0) + pow(topMass / inlierCount, 2.0));
-//        if(likelihood - massval > maxlikelihood) {
-//            maxlikelihood = likelihood - massval;
-//            maxtw = dt;
-//        }
-//    }
-
-////    if(inlierCount > r) {
-////        if(likelihood > maxlikelihood) {
-////            maxlikelihood = likelihood;
-////            maxtw = dt;
-////        }
-////    }
-//}
-
-//void vParticle::concludeLikelihood()
-//{
-//    likelihood = maxlikelihood;
-
-////    if(inlierCount)
-////        likelihood -= 1.0 * sqrt(pow(leftMass / inlierCount, 2.0) + pow(topMass / inlierCount, 2.0));
-
-//    //if(likelihood <= 0 || inlierCount < 2.0*r) {
-//    if(likelihood <= r) {
-//        likelihood = 1.0;
-//    } else {
-//        tw = maxtw;
-//    }
-
-//    weight = likelihood * weight;
-//}
 
 void vParticle::updateWeight(double l, double n)
 {
@@ -451,12 +287,6 @@ void vParticle::resample(const vParticle &seeder, double w, unsigned long int t)
     x = seeder.x;
     y = seeder.y;
     r = seeder.r;
-//    vx = seeder.vx;
-//    vy = seeder.vy;
-//    vy = seeder.vy;
-//    ax = seeder.ax;
-//    ay = seeder.ay;
-//    ar = seeder.ar;
 
     stamp = seeder.stamp;
     weight = seeder.weight;
