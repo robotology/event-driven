@@ -169,6 +169,7 @@ void dPepperIO::onRead(eventdriven::vBottle &bot)
 
 void dPepperIO::setTemporalSize(double microseconds)
 {
+    temporalSize = microseconds;
     leftWindow.setTemporalSize(microseconds);
     rightWindow.setTemporalSize(microseconds);
 }
