@@ -81,29 +81,29 @@ bool vParticleModule::configure(yarp::os::ResourceFinder &rf)
     double parlikelihood = rf.check("obsparameter", yarp::os::Value(0.7)).asDouble();
     bool realtime = rf.check("userealtime", yarp::os::Value(true)).asBool();
 
-#if 0
-    particleThread = 0;
-    /* USE FULL PROCESS IN CALLBACK */
-    particleCallback = new vParticleReader(
-                rf.check("width", yarp::os::Value(128)).asInt(),
-                rf.check("height", yarp::os::Value(128)).asInt());
+    if(!realtime) {
+        particleThread = 0;
+        /* USE FULL PROCESS IN CALLBACK */
+        particleCallback = new vParticleReader(
+                    rf.check("width", yarp::os::Value(128)).asInt(),
+                    rf.check("height", yarp::os::Value(128)).asInt());
 
-    //open the ports
-    if(!particleCallback->open(getName(), strict)) {
-        std::cerr << "Could not open required ports" << std::endl;
-        return false;
+        //open the ports
+        if(!particleCallback->open(getName(), strict)) {
+            std::cerr << "Could not open required ports" << std::endl;
+            return false;
+        }
+    } else {
+        particleCallback = 0;
+        /* USE REAL-TIME THREAD */
+        particleThread = new particleProcessor(
+                    rf.check("width", yarp::os::Value(128)).asInt(),
+                    rf.check("height", yarp::os::Value(128)).asInt(),
+                    this->getName(), strict);
+
+        if(!particleThread->start())
+            return false;
     }
-#else
-    particleCallback = 0;
-    /* USE REAL-TIME THREAD */
-    particleThread = new particleProcessor(
-                rf.check("width", yarp::os::Value(128)).asInt(),
-                rf.check("height", yarp::os::Value(128)).asInt(),
-                this->getName(), strict);
-
-    if(!particleThread->start())
-        return false;
-#endif
 
 
     return true ;

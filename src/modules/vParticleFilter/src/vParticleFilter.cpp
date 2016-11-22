@@ -268,16 +268,39 @@ void vParticle::initLikelihood()
     maxtw = 0;
 }
 
+double approxatan2(double y, double x) {
+
+    double ax = std::abs(x); double ay = std::abs(y);
+    double a = std::min (ax, ay) / std::max (ax, ay);
+    //double s = pow(a, 2.0);
+    //double r = ((-0.0464964749 * s + 0.15931422) * s - 0.327622764) * s * a + a;
+
+    double r = a * (M_PI_4 - (a - 1) * 0.273318560862312);
+
+    if(ay > ax)
+        r = 1.57079637 - r;
+
+    if(x < 0)
+        r = 3.14159274 - r;
+    if(y < 0)
+        r = -r;
+
+    return r;
+
+}
+
 void vParticle::incrementalLikelihood(int vx, int vy, int dt)
 {
     double dx = vx - x;
     double dy = vy - y;
-    if(abs(dx) > r + 2 || abs(dy) > r + 2) return;
+    if(std::abs(dx) > r + 2 || std::abs(dy) > r + 2) return;
     double sqrd = sqrt(pow(dx, 2.0) + pow(dy, 2.0)) - r;
-    if(abs(sqrd) < r / 10.0) { //2.0
-        //inlierCount++;
-        //leftMass += dx;
-        //topMass += dy;
+    if(std::abs(sqrd) < r / 10.0) { //2.0
+
+//        double z1 = atan2(dy, dx);
+//        double z2 = approxatan2(dy, dx);
+//        if(std::abs(z1 - z2) > 0.004)
+//            std::cout << dy << " " << dx << " " << z1 << " " << z2 << std::endl;
 
         int a = 0.5 + (angbuckets-1) * (atan2(dy, dx) + M_PI) / (2.0 * M_PI);
         if(!angdist[a])
@@ -295,8 +318,8 @@ void vParticle::incrementalLikelihood(int vx, int vy, int dt)
             if(score > likelihood && inlierCount > observationparameter * 2.0 * M_PI * r) {
                 likelihood = score;
                 maxtw = dt;
-                topMass = inlierCount;
-                leftMass = outlierCount;
+                //topMass = inlierCount;
+                //leftMass = outlierCount;
             }
         //}
 
