@@ -70,17 +70,23 @@ bool vParticleModule::configure(yarp::os::ResourceFinder &rf)
     //administrative options
     setName((rf.check("name", yarp::os::Value("vParticleFilter")).asString()).c_str());
 
+    //flags
     bool strict = rf.check("strict") &&
             rf.check("strict", yarp::os::Value(true)).asBool();
+    bool realtime = rf.check("realtime") &&
+            rf.check("realtime", yarp::os::Value(true)).asBool();
+    bool adaptivesampling = rf.check("adaptive") &&
+            rf.check("adaptive", yarp::os::Value(true)).asBool();
 
-    int nParticles = rf.check("particles", yarp::os::Value(100)).asInt();
-    double nRandResample =
-            1.0 + rf.check("randoms", yarp::os::Value(2)).asDouble() / 100.0;
-    bool adaptivesampling = rf.check("adaptive", yarp::os::Value(false)).asBool();
-    double minlikelihood = rf.check("obsmin", yarp::os::Value(1.0)).asDouble();
-    double inlierParameter = rf.check("inlierPar", yarp::os::Value(1.5)).asDouble();
-    double outlierParameter = rf.check("outlierPar", yarp::os::Value(3.0)).asDouble();
-    bool realtime = rf.check("userealtime", yarp::os::Value(true)).asBool();
+    //filter paramters
+    int nParticles = rf.check("particles", yarp::os::Value(50)).asInt();
+    double nRandResample = rf.check("randoms", yarp::os::Value(0.02)).asDouble();
+
+    //observation parameters
+    double minlikelihood = rf.check("obsthresh", yarp::os::Value(20.0)).asDouble();
+    double inlierParameter = rf.check("obsinlier", yarp::os::Value(1.5)).asDouble();
+    double outlierParameter = rf.check("obsoutlier", yarp::os::Value(3.0)).asDouble();
+
 
     if(!realtime) {
         particleThread = 0;
@@ -101,6 +107,10 @@ bool vParticleModule::configure(yarp::os::ResourceFinder &rf)
                     rf.check("width", yarp::os::Value(128)).asInt(),
                     rf.check("height", yarp::os::Value(128)).asInt(),
                     this->getName(), strict);
+        particleThread->setFilterParameters(nParticles, nRandResample,
+                                            adaptivesampling);
+        particleThread->setObservationParameters(minlikelihood, inlierParameter,
+                                                 outlierParameter);
 
         if(!particleThread->start())
             return false;
@@ -299,16 +309,31 @@ particleProcessor::particleProcessor(unsigned int height, unsigned int weight, s
     this->name = name;
     this->strict = strict;
 
+    nparticles = 50;
+    nThreads = 7;
+    rate = 0;
+    nRandomise = 1.0 + 0.02;
+    adaptive = false;
+
+    obsInlier = 1.5;
+    obsOutlier = 3.0;
+    obsThresh = 20.0;
+
     avgx = 0;
     avgy = 0;
     avgr = 0;
     avgtw = 0;
     maxtw = 0;
-    maxlikelihood = 1;
-    nparticles = 50;
-    rate = 0;
-    nThreads = 7;
     pwsumsq = 0;
+    maxlikelihood = 1;
+
+
+
+}
+
+bool particleProcessor::threadInit()
+{
+    std::cout << "Initialising thread" << std::endl;
 
     for(int i = 0; i < nThreads; i++) {
         int pStart = i * (nparticles / nThreads);
@@ -319,13 +344,6 @@ particleProcessor::particleProcessor(unsigned int height, unsigned int weight, s
         std::cout << pStart << "->" << pEnd-1 << std::endl;
         computeThreads.push_back(new vPartObsThread(pStart, pEnd));
     }
-
-}
-bool particleProcessor::threadInit()
-{
-    std::cout << "Initialising thread" << std::endl;
-
-    ptime = yarp::os::Time::now();
 
     if(!debugOut.open("/" + name + "/debug:o")) {
         std::cout << "could not open debug port" << std::endl;
@@ -346,7 +364,7 @@ bool particleProcessor::threadInit()
         return false;
     }
 
-    std::cout << "Port open - querying initialisation events" << std::endl;
+//    std::cout << "Port open - querying initialisation events" << std::endl;
 //    eventdriven::vQueue stw;
 //    while(!stw.size()) {
 //           yarp::os::Time::delay(0.01);
@@ -359,11 +377,15 @@ bool particleProcessor::threadInit()
     //initialise the particles
     vParticle p;
     p.setRate(rate);
+    p.initWeight(1.0/nparticles);
+    p.setInlierParameter(obsInlier);
+    p.setOutlierParameter(obsOutlier);
+    p.setMinLikelihood(obsThresh);
 
+    indexedlist.clear();
     for(int i = 0; i < nparticles; i++) {
         p.setid(i);
         p.resample(1.0/nparticles, 0);
-        p.initWeight(1.0/nparticles);
         maxtw = std::max(maxtw, p.gettw());
         indexedlist.push_back(p);
     }
@@ -401,10 +423,10 @@ void particleProcessor::run()
         std::vector<vParticle> indexedSnap = indexedlist;
 
         //resampling
-        if(pwsumsq * nparticles > 2.0) {
+        if(!adaptive || pwsumsq * nparticles > 2.0) {
             for(int i = 0; i < nparticles; i++) {
                 //if(indexedlist[i].getw() > (0.1 / nparticles)) continue;
-                double rn = 1.02 * (double)rand() / RAND_MAX;
+                double rn = nRandomise * (double)rand() / RAND_MAX;
                 if(rn > 1.0)
                     indexedlist[i].resample(1.0/nparticles, t);
                 else {

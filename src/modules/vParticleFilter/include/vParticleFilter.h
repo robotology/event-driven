@@ -12,17 +12,18 @@ class vParticle
 {
 private:
 
+    double minlikelihood;
+    double inlierParameter;
+    double outlierParameter;
+
     //id
     int id;
 
     //weight
     double weight;
     double likelihood;
-    double inlierParameter;
-    double outlierParameter;
     int    outlierCount;
     int    inlierCount;
-    double minlikelihood;
     double maxtw;
     int angbuckets;
     yarp::sig::Vector angdist;

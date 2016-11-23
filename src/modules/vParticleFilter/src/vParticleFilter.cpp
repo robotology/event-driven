@@ -36,6 +36,8 @@ vParticle::vParticle()
     weight = 1.0;
     likelihood = 1.0;
     minlikelihood = 20.0;
+    inlierParameter = 1.5;
+    outlierParameter = 3.0;
     stamp = 0;
     nextUpdate = 0;
     fixedrate = 0;
@@ -197,7 +199,7 @@ void vParticle::incrementalLikelihood(int vx, int vy, int dt)
     double dy = vy - y;
     if(std::abs(dx) > r + 2 || std::abs(dy) > r + 2) return;
     double sqrd = sqrt(pow(dx, 2.0) + pow(dy, 2.0)) - r;
-    if(std::abs(sqrd) < 1.5) { //2.0
+    if(std::abs(sqrd) < inlierParameter) { //2.0
 
         int a = 0.5 + (angbuckets-1) * (atan2(dy, dx) + M_PI) / (2.0 * M_PI);
         if(!angdist[a])
@@ -212,7 +214,7 @@ void vParticle::incrementalLikelihood(int vx, int vy, int dt)
         }
 
 
-    } else if(sqrd > -3 && sqrd < 0) { //-3 < X < -5
+    } else if(sqrd > -outlierParameter && sqrd < 0) { //-3 < X < -5
 
         int a = 0.5 + (angbuckets-1) * (atan2(dy, dx) + M_PI) / (2.0 * M_PI);
         if(!negdist[a])

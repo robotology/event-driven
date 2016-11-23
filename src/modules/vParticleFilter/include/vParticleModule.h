@@ -171,12 +171,24 @@ private:
     double maxlikelihood;
     double pwsumsq;
     double particleVariance;
-    int nparticles;
     int rate;
     std::string name;
     bool strict;
 
+    int nparticles;
+    double nRandomise;
+    bool adaptive;
+
+    double obsThresh;
+    double obsInlier;
+    double obsOutlier;
+
 public:
+
+    void setFilterParameters(int nParticles, double nRandomise, bool adaptive) {
+        nparticles = nParticles; this->nRandomise = 1.0 + nRandomise; this->adaptive = adaptive; }
+    void setObservationParameters(double minLikelihood, double inlierPar, double outlierPar) {
+        obsThresh = minLikelihood; obsInlier = inlierPar; obsOutlier = outlierPar; }
 
     particleProcessor(unsigned int height, unsigned int weight, std::string name, bool strict);
     bool threadInit();
