@@ -265,6 +265,7 @@ void vSurfaceHandler::queryEvents(eventdriven::vQueue &fillq, unsigned int tempo
     mutexsignal.lock();
     //surfaceLeft.getSurfSorted(fillq);
     fillq = surfaceLeft.getSurf_Tlim(temporalwindow);
+    //surfaceLeft.getSurf_Tlim(temporalwindow, fillq);
     mutexsignal.unlock();
 }
 
@@ -310,7 +311,7 @@ particleProcessor::particleProcessor(unsigned int height, unsigned int weight, s
     this->strict = strict;
 
     nparticles = 50;
-    nThreads = 7;
+    nThreads = 3;
     rate = 0;
     nRandomise = 1.0 + 0.02;
     adaptive = false;
