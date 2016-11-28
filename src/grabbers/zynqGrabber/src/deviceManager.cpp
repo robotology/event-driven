@@ -284,7 +284,7 @@ bool vsctrlDevManager::openDevice(){
     bool ret4 = programBiases();
     //bool ret4 = true;
     
-    return false;
+    //return false;
 
     return ret1 & ret2 & ret3 & ret4;
 }
@@ -856,7 +856,7 @@ bool vsctrlDevManager::initDevice(){ // TODO sistemare i ret!
 /* -----------------------------------------------------------------
  aerDevManager -- to handle AER IO: read events from sensors and spinnaker and write events to spinnaker
  ----------------------------------------------------------------- */
-aerDevManager::aerDevManager(std::string dev, int clockPeriod, std::string loopBack) : deviceManager(false, AER_MAX_BUF_SIZE) {
+aerDevManager::aerDevManager(std::string dev, int clockPeriod, std::string loopBack) : deviceManager(true, AER_MAX_BUF_SIZE) {
 
     this->tickToUs = 1000.0/clockPeriod; // to scale the timestamp to 1us temporal resolution
     this->usToTick = 1.0/tickToUs; // to scale the 1us temporal resolution to hw clock ticks
