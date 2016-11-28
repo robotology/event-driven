@@ -80,9 +80,9 @@
 
 // --- BG masks --- //
 #define BG_PWRDWN_MSK            0x01 // powerdown chip mask
-#define BG_SHIFT_COUNT_MSK           0x3F // mask of bg shift count
+#define BG_SHIFT_COUNT_MSK           0x003F0000 // mask of bg shift count
 //#define BG_SHIFT_AUTORST_MSK         0x40 // mask of bg shift count
-#define BG_LATOUTEND_MSK             0x80 // mask of bg shift count
+#define BG_LATOUTEND_MSK             0x00800000 // mask of bg shift count
 //#define BG_ROISEL_MSK                0x20
 #define BG_VAL_MSK                    0x1FFFFF // mask of 21 bit for bg value
 
@@ -97,6 +97,8 @@
 #define AER_SET_FAR_LBCK    _IOW (MAGIC_NUM, 12, void *)
 
 #define AER_MAX_BUF_SIZE 16777216
+
+#define AUTOINCR      0x80
 
 #define CTRL_REG     0x00
 #define RXDATA_REG   0x08

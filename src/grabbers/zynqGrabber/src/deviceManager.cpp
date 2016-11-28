@@ -166,7 +166,7 @@ const std::vector<char>& deviceManager::readDevice(int &nBytesRead)
     } else {
 
         //std::cout << "Direct Read" << std::endl;
-        nBytesRead = ::read(devDesc, readBuffer->data(), maxBufferSize);
+        nBytesRead = ::read(devDesc, readBuffer->data(), 256);
         if(nBytesRead < 0 && errno != EAGAIN) perror("perror: ");
 
     }
@@ -278,8 +278,13 @@ bool vsctrlDevManager::openDevice(){
     // set static configuration registers
     bool ret3 = initDevice();
     // program chip biases
-    //bool ret4 = programBiases();
-    bool ret4 = true;
+    
+    dumpRegisterValues();
+    
+    bool ret4 = programBiases();
+    //bool ret4 = true;
+    
+    return false;
 
     return ret1 & ret2 & ret3 & ret4;
 }
@@ -370,6 +375,42 @@ std::vector<unsigned int> vsctrlDevManager::prepareBiases(){
 
 }
 
+/****************************************************************
+
+* i2c_write
+
+****************************************************************/
+
+int i2c_write(int handle, unsigned char reg, unsigned char *data, unsigned char eye, unsigned int size)
+
+{
+
+int ret;
+
+unsigned char *tmp;
+
+int i;
+
+ 
+
+       ret = ioctl(handle, I2C_SLAVE, eye);
+
+       tmp=(unsigned char *) malloc ((size+1)*sizeof(unsigned char));
+
+       tmp[0]= size>1 ? reg|AUTOINCR : reg;
+
+       for (i=0; i<size; i++)
+
+             tmp[1+i]=data[i];
+
+       ret = write (handle, tmp, size+1);
+
+       free(tmp);
+
+return (ret-1); // -1 because of one is the starting register
+
+}
+
 bool vsctrlDevManager::programBiases(){
 
     clearFpgaStatus("biasDone");
@@ -382,29 +423,38 @@ bool vsctrlDevManager::programBiases(){
 
     // send the first 4 bits (disabling the Latch)
     ret = setLatchAtEnd(false);
-    shiftCount = 4;
+    shiftCount = 4; //paddrivestrength
     ret = setShiftCount(shiftCount);
     ret = writeDevice(VSCTRL_BG_DATA_ADDR, 0);
     ret = writeDevice(VSCTRL_BG_DATA_ADDR+3, 0); // write register from i2c
 
     // set the number of bits in each bias (ATIS is 32, DVS is 24)
     shiftCount = 32; // bisogna farlo configurabile!!!!!!!
+    ret = setShiftCount(shiftCount);
 
-    for(int bias = 1; bias < vBiases.size(); bias++)
+	std::cout << "Programming " << vBiases.size() << " biases" << std::endl;
+    for(int bias = 0; bias < vBiases.size(); bias++)
     {
+		
+
 
         if(bias == vBiases.size()-1){
             // set the latch at the end of transmission
             ret = setLatchAtEnd(true);
+            std::cout << "setting the latch true for bias number: " << bias << std::endl;
         }
+        
+        //std::cout << vBiases[bias] << std::endl;
+		//printf("BG Config: 0x%08X\n", readDevice(VSCTRL_BG_CNFG_ADDR));
 
         int biasVal = vBiases[bias];
 
-        for (int i = 0; i < 4; i++){
-            valReg[i]  = (biasVal >> (i*8)) & 0xFF;
-        }
+        //for (int i = 0; i < 4; i++){
+        //    valReg[i]  = (biasVal >> (i*8)) & 0xFF;
+        //}
 
-        ret = writeRegConfig(VSCTRL_BG_DATA_ADDR, valReg);
+        //ret = writeRegConfig(VSCTRL_BG_DATA_ADDR, valReg);
+        ret = i2c_write(devDesc, VSCTRL_BG_DATA_ADDR, (unsigned char *)&biasVal, I2C_ADDRESS, sizeof(unsigned int));
 
     }
     // --- checks --- //
@@ -446,22 +496,34 @@ void vsctrlDevManager::printBiases(){
 
 }
 
-unsigned char vsctrlDevManager::readDevice(unsigned char reg)
+
+
+
+unsigned int vsctrlDevManager::readDevice(unsigned char reg)
 {
     int ret;
-    unsigned char buf[2];
+    unsigned char buf[4];
 
     ret = ioctl(devDesc, I2C_SLAVE, I2C_ADDRESS);
-    buf[0] = reg;
-    if (ret == -1) {
-        std::cerr << "i2c read failed: ioctl(devDesc, I2C_SLAVE, I2C_ADDRESS) error " << errno << std::endl;
-        return ret;
-    } else {
-    ret = write(devDesc, buf, 1);
+    if( ret < 0) {
+		std::cerr << "i2c read failed: ioctl(devDesc, I2C_SLAVE, I2C_ADDRESS) error " << errno << std::endl;
+		return ret;
+	}
+    
+    reg |= AUTOINCR;
 
-    ret = read(devDesc, buf, 1);
-    }
-    return buf[0];
+	ret = write(devDesc, &reg, 1);
+	if(ret < 0) {
+		std::cerr << "write failed" << errno << std::endl;
+		return ret;
+	}
+	ret = read(devDesc, buf, 4);
+	if(ret < 0) {
+		std::cerr << "read failed" << errno << std::endl;
+		return ret;
+	}
+
+    return *((unsigned int *)buf);
 }
 
 int vsctrlDevManager::writeDevice(unsigned char reg, unsigned char data){
@@ -507,11 +569,15 @@ int vsctrlDevManager::writeRegConfig(unsigned char regAddr, std::vector<uint8_t>
 int vsctrlDevManager::setShiftCount(uint8_t shiftCount){
 
     int ret;
-    unsigned char val;
+    unsigned int val;
 
     val = readDevice(VSCTRL_BG_CNFG_ADDR);
+    //printf("BiasConfigRegister: 0x%08X\n", val);
 
-    ret = writeDevice(VSCTRL_BG_CNFG_ADDR, val | (shiftCount & BG_SHIFT_COUNT_MSK));
+	val = (val & ~BG_SHIFT_COUNT_MSK) | ((shiftCount << 16) & BG_SHIFT_COUNT_MSK);
+    //ret = writeDevice(VSCTRL_BG_CNFG_ADDR, (val & ~VSCTRL_BG_CNFG_ADDR) | (shiftCount & BG_SHIFT_COUNT_MSK));
+    i2c_write(devDesc, VSCTRL_BG_CNFG_ADDR, (unsigned char *)(&val), I2C_ADDRESS, sizeof(int));
+    printf("Updated: BG Config: 0x%08X\n", readDevice(VSCTRL_BG_CNFG_ADDR));
 
     if (ret == -1) {
         std::cerr << "write shift count failed: i2c write error " << errno << std::endl;
@@ -522,15 +588,17 @@ int vsctrlDevManager::setShiftCount(uint8_t shiftCount){
 
 int vsctrlDevManager::setLatchAtEnd(bool Enable){
 
-    int ret;
-    unsigned char val;
+    int ret = 0;
+    unsigned int val;
 
     val = readDevice(VSCTRL_BG_CNFG_ADDR);
 
     if (Enable == true){
-        ret = writeDevice(VSCTRL_BG_CNFG_ADDR, val | (BG_LATOUTEND_MSK));
+        val |= BG_LATOUTEND_MSK;
+        i2c_write(devDesc, VSCTRL_BG_CNFG_ADDR, (unsigned char *)(&val), I2C_ADDRESS, sizeof(int));
     } else{
-        ret = writeDevice(VSCTRL_BG_CNFG_ADDR, val & (~BG_LATOUTEND_MSK));
+        val &= ~BG_LATOUTEND_MSK;
+        i2c_write(devDesc, VSCTRL_BG_CNFG_ADDR, (unsigned char *)(&val), I2C_ADDRESS, sizeof(int));
     }
     if (ret == -1) {
         std::cerr << "write shift count failed: i2c write error " << errno << std::endl;
@@ -639,6 +707,20 @@ bool vsctrlDevManager::clearFpgaStatus(std::string clr){
         std::cout << "cleared field: " << clr << std::endl;
         return true;
     }
+}
+
+void vsctrlDevManager::dumpRegisterValues()
+{
+	printf("Info: 0x%08X\n", readDevice(VSCTRL_INFO_ADDR));
+	printf("Status: 0x%08X\n", readDevice(VSCTRL_STATUS_ADDR));
+	printf("Source Config: 0x%08X\n", readDevice(VSCTRL_SRC_CNFG_ADDR));
+	printf("Source Dest. Cont.: 0x%08X\n", readDevice(VSCTRL_SRC_DST_CTRL_ADDR));
+	printf("PAER Config: 0x%08X\n", readDevice(VSCTRL_PAER_CNFG_ADDR));
+	printf("HSSAER Config: 0x%08X\n", readDevice(VSCTRL_HSSAER_CNFG_ADDR));
+	printf("GTP Config: 0x%08X\n", readDevice(VSCTRL_GTP_CNFG_ADDR));
+	printf("BG Config: 0x%08X\n", readDevice(VSCTRL_BG_CNFG_ADDR));
+	printf("BG Prescaler: 0x%08X\n", readDevice(VSCTRL_BG_PRESC_ADDR));
+	printf("BG Timing: 0x%08X\n", readDevice(VSCTRL_BG_TIMINGS_ADDR));	
 }
 
 bool vsctrlDevManager::initDevice(){ // TODO sistemare i ret!
@@ -762,6 +844,11 @@ bool vsctrlDevManager::initDevice(){ // TODO sistemare i ret!
         }
     //}
     */
+    
+    
+    
+    
+    
     return retInit;
 }
 
@@ -769,7 +856,7 @@ bool vsctrlDevManager::initDevice(){ // TODO sistemare i ret!
 /* -----------------------------------------------------------------
  aerDevManager -- to handle AER IO: read events from sensors and spinnaker and write events to spinnaker
  ----------------------------------------------------------------- */
-aerDevManager::aerDevManager(std::string dev, int clockPeriod, std::string loopBack) : deviceManager(true, AER_MAX_BUF_SIZE) {
+aerDevManager::aerDevManager(std::string dev, int clockPeriod, std::string loopBack) : deviceManager(false, AER_MAX_BUF_SIZE) {
 
     this->tickToUs = 1000.0/clockPeriod; // to scale the timestamp to 1us temporal resolution
     this->usToTick = 1.0/tickToUs; // to scale the 1us temporal resolution to hw clock ticks

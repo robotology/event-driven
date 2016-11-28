@@ -101,7 +101,8 @@ private:
     std::vector<unsigned int> prepareBiases();
     int setLatchAtEnd(bool Enable);
     virtual int writeDevice(unsigned char reg, unsigned char data);
-    virtual unsigned char readDevice(unsigned char reg);
+    unsigned int readDevice(unsigned char reg);
+    void dumpRegisterValues();
     int writeRegConfig(unsigned char regAddr, std::vector<uint8_t> regConfig);
     int setShiftCount(uint8_t shiftCount);
     int getBgTimings();
