@@ -79,7 +79,7 @@ void  device2yarp::run() {
         std::cout << "BUFFER NOT A MULTIPLE OF 8 BYTES: " <<  nBytesRead << std::endl;
     }
 
-    if(false && nBytesRead > 8) {
+    if(true && nBytesRead > 8) {
         std::cout << "nBytesRead " << nBytesRead << std::endl;
         //FIRST EVENT
         int *TS =  (int *)(data.data());

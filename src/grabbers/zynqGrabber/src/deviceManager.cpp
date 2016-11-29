@@ -423,10 +423,13 @@ bool vsctrlDevManager::programBiases(){
 
     // send the first 4 bits (disabling the Latch)
     ret = setLatchAtEnd(false);
-    shiftCount = 4; //paddrivestrength
+    shiftCount = 4; 
     ret = setShiftCount(shiftCount);
-    ret = writeDevice(VSCTRL_BG_DATA_ADDR, 0);
-    ret = writeDevice(VSCTRL_BG_DATA_ADDR+3, 0); // write register from i2c
+    unsigned int paddrivestrength = 3; //paddrivestrength
+    i2c_write(devDesc, VSCTRL_BG_DATA_ADDR, (unsigned char *)&paddrivestrength, I2C_ADDRESS, sizeof(unsigned int));
+    
+    //ret = writeDevice(VSCTRL_BG_DATA_ADDR, 0);
+    //ret = writeDevice(VSCTRL_BG_DATA_ADDR+3, 0); // write register from i2c
 
     // set the number of bits in each bias (ATIS is 32, DVS is 24)
     shiftCount = 32; // bisogna farlo configurabile!!!!!!!
@@ -856,7 +859,7 @@ bool vsctrlDevManager::initDevice(){ // TODO sistemare i ret!
 /* -----------------------------------------------------------------
  aerDevManager -- to handle AER IO: read events from sensors and spinnaker and write events to spinnaker
  ----------------------------------------------------------------- */
-aerDevManager::aerDevManager(std::string dev, int clockPeriod, std::string loopBack) : deviceManager(true, AER_MAX_BUF_SIZE) {
+aerDevManager::aerDevManager(std::string dev, int clockPeriod, std::string loopBack) : deviceManager(false, AER_MAX_BUF_SIZE) {
 
     this->tickToUs = 1000.0/clockPeriod; // to scale the timestamp to 1us temporal resolution
     this->usToTick = 1.0/tickToUs; // to scale the 1us temporal resolution to hw clock ticks
