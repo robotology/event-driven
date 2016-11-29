@@ -64,7 +64,7 @@ void  device2yarp::run() {
     int nBytesRead = 0;
     const std::vector<char> &data = devManager->readDevice(nBytesRead);
 
-    if (!nBytesRead) return;
+    if (nBytesRead <= 0) return;
 
     if(nBytesRead > devManager->getBufferSize()*0.75) {
         std::cerr << "Software buffer was over 3/4 full - check the "

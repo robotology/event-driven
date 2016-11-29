@@ -22,7 +22,7 @@
 
 #define VSCTRL_MAX_BUF_SIZE 16777216
 
-#define I2C_ADDRESS_VSCTRL       0x10
+#define I2C_ADDRESS_VSCTRL       0x11
 #define I2C_ADDRESS              I2C_ADDRESS_VSCTRL
 
 // --- addresses of the registers --- //
@@ -79,7 +79,7 @@
 #define ST_I2C_TIMEOUT_MSK              0x80
 
 // --- BG masks --- //
-#define BG_PWRDWN_MSK            0x01 // powerdown chip mask
+#define BG_PWRDWN_MSK            0x10000000 // powerdown chip mask
 #define BG_SHIFT_COUNT_MSK           0x003F0000 // mask of bg shift count
 //#define BG_SHIFT_AUTORST_MSK         0x40 // mask of bg shift count
 #define BG_LATOUTEND_MSK             0x00800000 // mask of bg shift count

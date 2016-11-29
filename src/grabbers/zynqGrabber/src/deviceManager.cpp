@@ -341,6 +341,7 @@ bool vsctrlDevManager::setBias(yarp::os::Bottle bias)
         return false;
 
     this->bias = bias;
+    std::cout << this->bias.toString() << std::endl;
     return true;
 
 }
@@ -482,6 +483,7 @@ bool vsctrlDevManager::programBiases(){
     clearFpgaStatus("biasDone");
     std::cout << "Biases correctly programmed" << std::endl;
     chipPowerUp();
+    dumpRegisterValues();
 
     return true;
 
@@ -580,7 +582,6 @@ int vsctrlDevManager::setShiftCount(uint8_t shiftCount){
 	val = (val & ~BG_SHIFT_COUNT_MSK) | ((shiftCount << 16) & BG_SHIFT_COUNT_MSK);
     //ret = writeDevice(VSCTRL_BG_CNFG_ADDR, (val & ~VSCTRL_BG_CNFG_ADDR) | (shiftCount & BG_SHIFT_COUNT_MSK));
     i2c_write(devDesc, VSCTRL_BG_CNFG_ADDR, (unsigned char *)(&val), I2C_ADDRESS, sizeof(int));
-    printf("Updated: BG Config: 0x%08X\n", readDevice(VSCTRL_BG_CNFG_ADDR));
 
     if (ret == -1) {
         std::cerr << "write shift count failed: i2c write error " << errno << std::endl;
@@ -612,12 +613,14 @@ int vsctrlDevManager::setLatchAtEnd(bool Enable){
 
 int vsctrlDevManager::chipPowerDown(){
 
-    int ret;
-    unsigned char val;
+    int ret = 0;
+    unsigned int val;
 
-    val = readDevice(VSCTRL_BG_CNFG_ADDR);
-
-    ret = writeDevice(VSCTRL_BG_CNFG_ADDR, val | (BG_PWRDWN_MSK));
+    val = readDevice(VSCTRL_BG_CNFG_ADDR) | BG_PWRDWN_MSK;
+	i2c_write(devDesc, VSCTRL_BG_CNFG_ADDR, (unsigned char *)(&val), I2C_ADDRESS, sizeof(int));
+	
+	
+    //ret = writeDevice(VSCTRL_BG_CNFG_ADDR, val | (BG_PWRDWN_MSK));
     if (ret == -1) {
         std::cerr << "write power down failed: i2c write error " << errno << std::endl;
     } else {
@@ -630,12 +633,13 @@ int vsctrlDevManager::chipPowerDown(){
 
 int vsctrlDevManager::chipPowerUp(){
 
-    int ret;
-    unsigned char val;
+    int ret = 0;
+    unsigned int val;
 
-    val = readDevice(VSCTRL_BG_CNFG_ADDR);
+	val = readDevice(VSCTRL_BG_CNFG_ADDR) & ~BG_PWRDWN_MSK;
+    i2c_write(devDesc, VSCTRL_BG_CNFG_ADDR, (unsigned char *)(&val), I2C_ADDRESS, sizeof(int));
 
-    ret = writeDevice(VSCTRL_BG_CNFG_ADDR, val | (~BG_PWRDWN_MSK));
+    //ret = writeDevice(VSCTRL_BG_CNFG_ADDR, val | (~BG_PWRDWN_MSK));
     if (ret == -1) {
         std::cerr << "write power on failed: i2c write error " << errno << std::endl;
     } else {
@@ -723,7 +727,9 @@ void vsctrlDevManager::dumpRegisterValues()
 	printf("GTP Config: 0x%08X\n", readDevice(VSCTRL_GTP_CNFG_ADDR));
 	printf("BG Config: 0x%08X\n", readDevice(VSCTRL_BG_CNFG_ADDR));
 	printf("BG Prescaler: 0x%08X\n", readDevice(VSCTRL_BG_PRESC_ADDR));
-	printf("BG Timing: 0x%08X\n", readDevice(VSCTRL_BG_TIMINGS_ADDR));	
+	printf("BG Timing: 0x%08X\n", readDevice(VSCTRL_BG_TIMINGS_ADDR));
+	printf("GPO Config: 0x%08X\n", readDevice(VSCTRL_GPO_ADDR));
+	printf("GPI Config: 0x%08X\n", readDevice(VSCTRL_GPI_ADDR));
 }
 
 bool vsctrlDevManager::initDevice(){ // TODO sistemare i ret!
@@ -848,6 +854,14 @@ bool vsctrlDevManager::initDevice(){ // TODO sistemare i ret!
     //}
     */
     
+    // --- configure GPO register --- //
+    valReg[0] =  0; 
+    valReg[1] = 0; 
+    valReg[2] = 0; 
+    valReg[3] = 0;     
+
+    ret = writeRegConfig(VSCTRL_GPO_ADDR, valReg);
+    
     
     
     
@@ -926,8 +940,8 @@ bool aerDevManager::openDevice(){
 void aerDevManager::closeDevice(){
 
     deviceManager::closeDevice();
-    unsigned int tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
-    aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg & ~(CTRL_ENABLEINTERRUPT));
+    //unsigned int tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
+    //aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg & ~(CTRL_ENABLEINTERRUPT));
 
 }
 
