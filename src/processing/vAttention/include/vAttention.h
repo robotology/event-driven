@@ -43,6 +43,7 @@ private:
     
     int sensorSize;
     int filterSize;
+    int shift;
     double tau;
     unsigned long int ptime; // past time stamp
     double thrSal; // threshold to put a maximum on the saliency map (whatever is above thr will be set to the maximum value)
@@ -54,10 +55,13 @@ private:
     yarp::sig::Matrix salMapRight;      // saliency map is a matrix (sensorSize*sensorSize)
     yarp::sig::Matrix filterMap;        // filter is a matrix (filterSize*filterSize)
     
-    void updateSaliencyMap(yarp::sig::Matrix salMap, emorph::AddressEvent *aep);
-    // void normaliseSaliencyMap(yarp::sig::Matrix &salMap);
-    void decaySaliencyMap(yarp::sig::Matrix salMap, unsigned long int dt);
-    
+    void updateSaliencyMap(yarp::sig::Matrix &salMap, emorph::AddressEvent *aep);
+    void normaliseSaliencyMap(yarp::sig::Matrix &salMap);
+    void decaySaliencyMap(yarp::sig::Matrix &salMap, unsigned long int dt);
+    void printSaliencyMap(yarp::sig::Matrix &salMap);
+    bool loadFilter() ;
+    void displaySaliencymap();
+
 public:
 
     vAttentionManager(int sensorSize, int filterSize, double tau, double thrSal);
@@ -68,7 +72,8 @@ public:
 
     //this is the entry point to your main functionality
     void    onRead(emorph::vBottle &bot);
-    
+
+
 };
 
 class vAttentionModule : public yarp::os::RFModule
