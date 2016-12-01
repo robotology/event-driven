@@ -166,7 +166,7 @@ const std::vector<char>& deviceManager::readDevice(int &nBytesRead)
     } else {
 
         //std::cout << "Direct Read" << std::endl;
-        nBytesRead = ::read(devDesc, readBuffer->data(), 256);
+        nBytesRead = ::read(devDesc, readBuffer->data(), 1024);
         if(nBytesRead < 0 && errno != EAGAIN) perror("perror: ");
 
     }
@@ -251,9 +251,10 @@ void deviceManager::run(void)
 
 
 
-vsctrlDevManager::vsctrlDevManager(std::string channel, std::string chip) : deviceManager(false, VSCTRL_MAX_BUF_SIZE) {
+vsctrlDevManager::vsctrlDevManager(std::string chip, unsigned char i2cAddress) : deviceManager(false, VSCTRL_MAX_BUF_SIZE) {
 
     this->deviceName = "/dev/i2c-2";
+    this->I2CAddress = i2cAddress;
 
     fpgaStat.biasDone      = false;
     fpgaStat.tdFifoFull    = false;
@@ -264,7 +265,7 @@ vsctrlDevManager::vsctrlDevManager(std::string channel, std::string chip) : devi
     bufferedRead = false;
 
     // default biases
-    this -> channel = channel;
+    //this -> channel = channel;
     this -> chipName = chip;
 
 };
@@ -417,6 +418,8 @@ bool vsctrlDevManager::programBiases(){
     clearFpgaStatus("biasDone");
 
     std::vector<unsigned int> vBiases = prepareBiases();
+    
+    chipPowerDown();
 
     std::vector<uint8_t> valReg(4);
     int ret;
@@ -427,7 +430,7 @@ bool vsctrlDevManager::programBiases(){
     shiftCount = 4; 
     ret = setShiftCount(shiftCount);
     unsigned int paddrivestrength = 3; //paddrivestrength
-    i2c_write(devDesc, VSCTRL_BG_DATA_ADDR, (unsigned char *)&paddrivestrength, I2C_ADDRESS, sizeof(unsigned int));
+    i2c_write(devDesc, VSCTRL_BG_DATA_ADDR, (unsigned char *)&paddrivestrength, I2CAddress, sizeof(unsigned int));
     
     //ret = writeDevice(VSCTRL_BG_DATA_ADDR, 0);
     //ret = writeDevice(VSCTRL_BG_DATA_ADDR+3, 0); // write register from i2c
@@ -458,7 +461,7 @@ bool vsctrlDevManager::programBiases(){
         //}
 
         //ret = writeRegConfig(VSCTRL_BG_DATA_ADDR, valReg);
-        ret = i2c_write(devDesc, VSCTRL_BG_DATA_ADDR, (unsigned char *)&biasVal, I2C_ADDRESS, sizeof(unsigned int));
+        ret = i2c_write(devDesc, VSCTRL_BG_DATA_ADDR, (unsigned char *)&biasVal, I2CAddress, sizeof(unsigned int));
 
     }
     // --- checks --- //
@@ -509,9 +512,9 @@ unsigned int vsctrlDevManager::readDevice(unsigned char reg)
     int ret;
     unsigned char buf[4];
 
-    ret = ioctl(devDesc, I2C_SLAVE, I2C_ADDRESS);
+    ret = ioctl(devDesc, I2C_SLAVE, I2CAddress);
     if( ret < 0) {
-		std::cerr << "i2c read failed: ioctl(devDesc, I2C_SLAVE, I2C_ADDRESS) error " << errno << std::endl;
+		std::cerr << "i2c read failed: ioctl(devDesc, I2C_SLAVE, I2CAddress) error " << errno << std::endl;
 		return ret;
 	}
     
@@ -535,7 +538,7 @@ int vsctrlDevManager::writeDevice(unsigned char reg, unsigned char data){
     int ret;
     unsigned char buf[2];
 
-    ret = ioctl(devDesc, I2C_SLAVE, I2C_ADDRESS);
+    ret = ioctl(devDesc, I2C_SLAVE, I2CAddress);
     if (ret == -1) {
         std::cerr << "i2c write failed: ioctl(devDesc, I2C_SLAVE, I2C_ADDRESS) error " << errno << std::endl;
         return ret;
@@ -550,7 +553,7 @@ int vsctrlDevManager::writeDevice(unsigned char reg, unsigned char data){
             std::cerr << "i2c write failed: ioctl error " << errno << std::endl;
             return ret;
         } else {
-            std::cout << "i2c write successful " << chipName << channel << std::endl;
+            std::cout << "i2c write successful " << chipName << std::endl;
             return ret;
         }
     }
@@ -581,7 +584,7 @@ int vsctrlDevManager::setShiftCount(uint8_t shiftCount){
 
 	val = (val & ~BG_SHIFT_COUNT_MSK) | ((shiftCount << 16) & BG_SHIFT_COUNT_MSK);
     //ret = writeDevice(VSCTRL_BG_CNFG_ADDR, (val & ~VSCTRL_BG_CNFG_ADDR) | (shiftCount & BG_SHIFT_COUNT_MSK));
-    i2c_write(devDesc, VSCTRL_BG_CNFG_ADDR, (unsigned char *)(&val), I2C_ADDRESS, sizeof(int));
+    i2c_write(devDesc, VSCTRL_BG_CNFG_ADDR, (unsigned char *)(&val), I2CAddress, sizeof(int));
 
     if (ret == -1) {
         std::cerr << "write shift count failed: i2c write error " << errno << std::endl;
@@ -599,10 +602,10 @@ int vsctrlDevManager::setLatchAtEnd(bool Enable){
 
     if (Enable == true){
         val |= BG_LATOUTEND_MSK;
-        i2c_write(devDesc, VSCTRL_BG_CNFG_ADDR, (unsigned char *)(&val), I2C_ADDRESS, sizeof(int));
+        i2c_write(devDesc, VSCTRL_BG_CNFG_ADDR, (unsigned char *)(&val), I2CAddress, sizeof(int));
     } else{
         val &= ~BG_LATOUTEND_MSK;
-        i2c_write(devDesc, VSCTRL_BG_CNFG_ADDR, (unsigned char *)(&val), I2C_ADDRESS, sizeof(int));
+        i2c_write(devDesc, VSCTRL_BG_CNFG_ADDR, (unsigned char *)(&val), I2CAddress, sizeof(int));
     }
     if (ret == -1) {
         std::cerr << "write shift count failed: i2c write error " << errno << std::endl;
@@ -617,7 +620,7 @@ int vsctrlDevManager::chipPowerDown(){
     unsigned int val;
 
     val = readDevice(VSCTRL_BG_CNFG_ADDR) | BG_PWRDWN_MSK;
-	i2c_write(devDesc, VSCTRL_BG_CNFG_ADDR, (unsigned char *)(&val), I2C_ADDRESS, sizeof(int));
+	i2c_write(devDesc, VSCTRL_BG_CNFG_ADDR, (unsigned char *)(&val), I2CAddress, sizeof(int));
 	
 	
     //ret = writeDevice(VSCTRL_BG_CNFG_ADDR, val | (BG_PWRDWN_MSK));
@@ -637,7 +640,7 @@ int vsctrlDevManager::chipPowerUp(){
     unsigned int val;
 
 	val = readDevice(VSCTRL_BG_CNFG_ADDR) & ~BG_PWRDWN_MSK;
-    i2c_write(devDesc, VSCTRL_BG_CNFG_ADDR, (unsigned char *)(&val), I2C_ADDRESS, sizeof(int));
+    i2c_write(devDesc, VSCTRL_BG_CNFG_ADDR, (unsigned char *)(&val), I2CAddress, sizeof(int));
 
     //ret = writeDevice(VSCTRL_BG_CNFG_ADDR, val | (~BG_PWRDWN_MSK));
     if (ret == -1) {

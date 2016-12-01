@@ -91,7 +91,7 @@ private:
     fpgaStatus_t fpgaStat;
 
     std::string chipName;
-    std::string channel;
+    unsigned char I2CAddress;
     yarp::os::Bottle bias;
     std::map<std::string, unsigned int> mBiases;
     //unsigned int header;
@@ -119,7 +119,7 @@ public:
     virtual bool openDevice();
     virtual void closeDevice();
     
-    vsctrlDevManager(std::string channel, std::string chip);
+    vsctrlDevManager(std::string chip, unsigned char i2cAddress);
 
     // ---- i2c device ---- //
 

@@ -54,8 +54,8 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     yarp::os::Bottle biaslistr = rf.findGroup(chipName + "_BIAS_RIGHT");
 
     //configuration classes for the zynq-based sensors
-    vsctrlMngLeft = new vsctrlDevManager("left", chipName);
-    vsctrlMngRight = new vsctrlDevManager("right", chipName);
+    vsctrlMngLeft = new vsctrlDevManager(chipName, I2C_ADDRESS_LEFT);
+    vsctrlMngRight = new vsctrlDevManager(chipName, I2C_ADDRESS_RIGHT);
 
 
     if(device == "zynq_sens") {
@@ -66,16 +66,15 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         }
         if(!vsctrlMngLeft->openDevice()) {
             std::cerr << "Could not open the left vsctrl devices" << std::endl;
-            return false;
+            //return false;
         }
-        //if(!vsctrlMngRight->openDevice()) {
-        //    std::cerr << "Could not open the right vsctrl devices" << std::endl;
-        //    return false;
-        //}
+        if(!vsctrlMngRight->openDevice()) {
+            std::cerr << "Could not open the right vsctrl devices" << std::endl;
+            //return false;
+        }
         
 
     }
-
 
     if(device == "zynq_spinn" || device == "zynq_sens") {
 

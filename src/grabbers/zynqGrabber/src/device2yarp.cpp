@@ -63,13 +63,14 @@ void  device2yarp::run() {
     //get the data from the device read thread
     int nBytesRead = 0;
     const std::vector<char> &data = devManager->readDevice(nBytesRead);
-
+    
     if (nBytesRead <= 0) return;
 
-    if(nBytesRead > devManager->getBufferSize()*0.75) {
-        std::cerr << "Software buffer was over 3/4 full - check the "
-                     "device2yarp thread is not delayed" << std::endl;
-    }
+
+    //if(nBytesRead > devManager->getBufferSize()*0.75) {
+    //    std::cerr << "Software buffer was over 3/4 full - check the "
+    //                 "device2yarp thread is not delayed" << std::endl;
+    //}
 
     bool dataError = false;
 
@@ -79,7 +80,7 @@ void  device2yarp::run() {
         std::cout << "BUFFER NOT A MULTIPLE OF 8 BYTES: " <<  nBytesRead << std::endl;
     }
 
-    if(true && nBytesRead > 8) {
+    if(false && nBytesRead > 8) {
         std::cout << "nBytesRead " << nBytesRead << std::endl;
         //FIRST EVENT
         int *TS =  (int *)(data.data());
@@ -103,46 +104,46 @@ void  device2yarp::run() {
     }
 
     //we need to shift some bits around to send onward
-    for(int i = 0; i < nBytesRead / 8; i+=8) {
+    for(int i = 0; i < nBytesRead; i+=8) {
         int *TS =  (int *)(data.data() + i);
         int *AE =  (int *)(data.data() + i + 4);
 
-        if((*TS & 0xFF000000) != 0x80000000) {
-            dataError = true;
-            std::cout << "TS mismatch" << std::endl;
-        }
-        if((*AE & 0xF3C80000) != 0x00000000) {
-            dataError = true;
-            std::cout << "AE mismatch" << std::endl;
-        }
+        //if((*TS & 0xFF000000) != 0x80000000) {
+            //dataError = true;
+            //std::cout << "TS mismatch" << std::endl;
+        //}
+        //if((*AE & 0xF3C80000) != 0x00000000) {
+            //dataError = true;
+            //std::cout << "AE mismatch" << std::endl;
+        //}
 
-        if (*AE & 0x40000) {
-            if(prevAPSval >= 0) {
-                if((*AE & 0x0003FFFF) != 0 && *AE != prevAPSval + 1) {
-                    std::cout << "APS out of sequence: ";
-                    printf("0x%08X ", prevAPSval);
-                    printf("0x%08X\n", *AE);
-                } else {
-                    std::cout << "." << std::endl;
-                }
+        //if (*AE & 0x40000) {
+            //if(prevAPSval >= 0) {
+                //if((*AE & 0x0003FFFF) != 0 && *AE != prevAPSval + 1) {
+                    //std::cout << "APS out of sequence: ";
+                    //printf("0x%08X ", prevAPSval);
+                    //printf("0x%08X\n", *AE);
+                //} else {
+                    //std::cout << "." << std::endl;
+                //}
 
-            }
+            //}
 
-            prevAPSval = *AE;
+            //prevAPSval = *AE;
 
-        } else {
-            if(prevTDval >= 0) {
-                if((*AE & 0x0003FFFF) != 0 && *AE != prevTDval + 1) {
-                    std::cout << "TD out of sequence: ";
-                    printf("0x%08X ", prevTDval);
-                    printf("0x%08X\n", *AE);
-                } else {
-                    std::cout << "." << std::endl;
-                }
-            }
+        //} else {
+            //if(prevTDval >= 0) {
+                //if((*AE & 0x0003FFFF) != 0 && *AE != prevTDval + 1) {
+                    //std::cout << "TD out of sequence: ";
+                    //printf("0x%08X ", prevTDval);
+                    //printf("0x%08X\n", *AE);
+                //} else {
+                    //std::cout << "." << std::endl;
+                //}
+            //}
 
-            prevTDval = *AE;
-        }
+            //prevTDval = *AE;
+        //}
 
         int tempAE = 0;
         // put channel in bit 21

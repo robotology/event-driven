@@ -22,8 +22,10 @@
 
 #define VSCTRL_MAX_BUF_SIZE 16777216
 
-#define I2C_ADDRESS_VSCTRL       0x11
-#define I2C_ADDRESS              I2C_ADDRESS_VSCTRL
+#define I2C_ADDRESS_LEFT		 0x10
+#define I2C_ADDRESS_RIGHT		 0x11
+//#define I2C_ADDRESS_VSCTRL       0x11
+//#define I2C_ADDRESS              I2C_ADDRESS_VSCTRL
 
 // --- addresses of the registers --- //
 #define VSCTRL_INFO_ADDR         0x00
