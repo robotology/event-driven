@@ -135,6 +135,7 @@ public:
     bool programBiases();
     bool setBias(std::string biasName, unsigned int biasValue);
     bool setBias(yarp::os::Bottle bias);
+    void dumpBiasAsHex();
 
 };
 

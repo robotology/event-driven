@@ -735,6 +735,14 @@ void vsctrlDevManager::dumpRegisterValues()
 	printf("GPI Config: 0x%08X\n", readDevice(VSCTRL_GPI_ADDR));
 }
 
+void vsctrlDevManager::dumpBiasAsHex() 
+{
+	printf("0x%02X\n", 3);
+    for(int i = 1; i < bias.size(); i++)
+        printf("0x%08X\n", bias.get(i).asList()->get(1).asInt());
+
+}
+
 bool vsctrlDevManager::initDevice(){ // TODO sistemare i ret!
 
     bool retInit = true;

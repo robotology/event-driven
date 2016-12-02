@@ -64,6 +64,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
             std::cerr << "Bias file required to run zynqGrabber" << std::endl;
             return false;
         }
+        vsctrlMngLeft->dumpBiasAsHex();
         if(!vsctrlMngLeft->openDevice()) {
             std::cerr << "Could not open the left vsctrl devices" << std::endl;
             //return false;
