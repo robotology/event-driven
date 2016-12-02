@@ -85,27 +85,47 @@ void  device2yarp::run() {
         //FIRST EVENT
         int *TS =  (int *)(data.data());
         int *AE =  (int *)(data.data()  + 4);
+        
+        unsigned int polarity = *AE & 0x00000001;
+		unsigned int x = (*AE & 0x000003FE) >> 1;
+		unsigned int y = (*AE & 0x0003FC00) >> 10;
+		unsigned int channel = (*AE & 0x00100000) >> 20;
+		
+		std::cout << "P: " << polarity;
+		std::cout << " X: " << x;
+		std::cout << " Y: " << y;
+		std::cout << " C: " << channel << std::endl;
 
-        printf("T: 0x%08X --> ", *TS);
-        if (*AE & 0x40000)
-            printf("APS: 0x%08X\n", *AE);
-        else
-            printf(" TD: 0x%08X\n", *AE);
+        //printf("T: 0x%08X --> ", *TS);
+        //if (*AE & 0x40000)
+        //    printf("APS: 0x%08X\n", *AE);
+        //else
+        //    printf(" TD: 0x%08X\n", *AE);
 
         //LAST EVENT
         TS =  (int *)(data.data() + nBytesRead - 8);
         AE =  (int *)(data.data() + nBytesRead - 4);
 
-        printf("T: 0x%08X --> ", *TS);
-        if (*AE & 0x40000)
-            printf("APS: 0x%08X\n", *AE);
-        else
-            printf(" TD: 0x%08X\n", *AE);
+        //printf("T: 0x%08X --> ", *TS);
+        //if (*AE & 0x40000)
+        //    printf("APS: 0x%08X\n", *AE);
+        //else
+        //    printf(" TD: 0x%08X\n", *AE);
+        
+        polarity = *AE & 0x00000001;
+		x = (*AE & 0x000003FE) >> 1;
+		y = (*AE & 0x0003FC00) >> 10;
+		channel = (*AE & 0x00100000) >> 20;
+		
+		std::cout << "P: " << polarity;
+		std::cout << " X: " << x;
+		std::cout << " Y: " << y;
+		std::cout << " C: " << channel << std::endl;
     }
 
     //we need to shift some bits around to send onward
     for(int i = 0; i < nBytesRead; i+=8) {
-        int *TS =  (int *)(data.data() + i);
+        //int *TS =  (int *)(data.data() + i);
         int *AE =  (int *)(data.data() + i + 4);
 
         //if((*TS & 0xFF000000) != 0x80000000) {
@@ -145,21 +165,22 @@ void  device2yarp::run() {
             //prevTDval = *AE;
         //}
 
-        int tempAE = 0;
-        // put channel in bit 21
-        tempAE |= (*AE & 0x00100000) << 1;
-        //put polarity in bit 0
-        tempAE |= (*AE & 0x00000001);
-        // find x - bits 9-1 to 10-1
-        tempAE |= (*AE & 0x000003FE);
-        // find y - bits 17-10 to 20-11
-        tempAE |= (*AE & 0x0003FC00) << 1;
+        //unsigned int polarity = *AE & 0x00000001;
+		//unsigned int x = (*AE & 0x000003FE) >> 1;
+		//unsigned int y = (*AE & 0x0003FC00) >> 10;
+		//unsigned int channel = (*AE & 0x00100000) >> 20;
+		//if(x > 304 || y > 240) {
+		//	std::cout << "P: " << polarity;
+		//	std::cout << " X: " << x;
+		//	std::cout << " Y: " << y;
+		//	std::cout << " C: " << channel << std::endl;
+		//}
+
+        int tempAE = *AE & 0x3FF;
+        tempAE |= ((*AE & 0x0003FC00) << 1);
+        tempAE |= ((*AE & 0x00100000) << 1);
 
         *AE = tempAE;
-
-        //and then check the next two ints
-        i += 8;
-
 
     }
 
