@@ -32,6 +32,7 @@ device2yarp::device2yarp() : RateThread(THRATE) {
     prevTDval = -1;
     firstTs = 0;
     prevPayload = -1;
+    prevAEs = 0;
 
 }
 
@@ -54,10 +55,12 @@ bool device2yarp::threadInit(std::string moduleName, bool strict){
 void  device2yarp::run() {
 
     //display an output to let everyone know we are still working.
-    if(yarp::os::Time::now() - prevTS > 10) {
+    if(yarp::os::Time::now() - prevTS > 5) {
         std::cout << "ZynqGrabber running happily: " << countAEs
-                  << " events" << std::endl;
+                  << " events. ";
+        std::cout << (countAEs - prevAEs) / 5.0 << "v / second" << std::endl;
         prevTS = yarp::os::Time::now();
+        prevAEs = countAEs;
     }
 
     //get the data from the device read thread
@@ -124,7 +127,7 @@ void  device2yarp::run() {
     }
 
     //we need to shift some bits around to send onward
-    for(int i = 0; i < nBytesRead; i+=8) {
+    for(int i = 0; i < 0; i+=8) {
         //int *TS =  (int *)(data.data() + i);
         int *AE =  (int *)(data.data() + i + 4);
 
@@ -184,10 +187,10 @@ void  device2yarp::run() {
 
     }
 
+	countAEs += nBytesRead / 8;
     if(portvBottle.getOutputCount() && nBytesRead > 8 && !dataError) {
         emorph::vBottleMimic &vbm = portvBottle.prepare();
         vbm.setdata(data.data(), nBytesRead);
-        countAEs += nBytesRead / 8;
         vStamp.update();
         portvBottle.setEnvelope(vStamp);
         if(strict) portvBottle.writeStrict();

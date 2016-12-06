@@ -213,7 +213,7 @@ void deviceManager::run(void)
         } else if(r < 0 && errno != EAGAIN) {
             std::cerr << "Error reading from " << deviceName << " with error: " << r << std::endl;
             perror("perror: ");
-            std::cerr << "readCount: " << readCount << "MaxBuffer: "
+            std::cerr << "readCount: " << readCount << " MaxBuffer: "
             << maxBufferSize << std::endl << std::endl;
             //ntimesr0++;
         }// else {
@@ -884,7 +884,7 @@ bool vsctrlDevManager::initDevice(){ // TODO sistemare i ret!
 /* -----------------------------------------------------------------
  aerDevManager -- to handle AER IO: read events from sensors and spinnaker and write events to spinnaker
  ----------------------------------------------------------------- */
-aerDevManager::aerDevManager(std::string dev, int clockPeriod, std::string loopBack) : deviceManager(false, AER_MAX_BUF_SIZE) {
+aerDevManager::aerDevManager(std::string dev, int clockPeriod, std::string loopBack) : deviceManager(true, AER_MAX_BUF_SIZE) {
 
     this->tickToUs = 1000.0/clockPeriod; // to scale the timestamp to 1us temporal resolution
     this->usToTick = 1.0/tickToUs; // to scale the 1us temporal resolution to hw clock ticks

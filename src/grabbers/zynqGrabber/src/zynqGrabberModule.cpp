@@ -73,6 +73,9 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
             std::cerr << "Could not open the right vsctrl devices" << std::endl;
             //return false;
         }
+        //vsctrlMngRight->closeDevice();
+        vsctrlMngLeft->closeDevice();
+        
         
 
     }
