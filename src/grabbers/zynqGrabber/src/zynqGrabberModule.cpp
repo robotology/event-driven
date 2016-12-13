@@ -74,7 +74,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
             //return false;
         }
         //vsctrlMngRight->closeDevice();
-        vsctrlMngLeft->closeDevice();
+        //vsctrlMngLeft->closeDevice();
         
         
 
@@ -151,13 +151,18 @@ bool zynqGrabberModule::interruptModule() {
 
 bool zynqGrabberModule::close() {
 
+	std::cout << "breaking YARP connections" << std::endl;
     handlerPort.close();        // rpc of the RF module
     Y2D.close();
     D2Y->stop();                // bufferedport from yarp to device
 
+	std::cout << "closing device drivers" << std::endl;
     aerManager->closeDevice();  // device
+    std::cout << "AER closed" << std::endl;
     vsctrlMngLeft->closeDevice();
+    std::cout << "left controller closed" << std::endl;
     vsctrlMngRight->closeDevice();
+    std::cout << "right controller closed" << std::endl;
 
     return true;
 }

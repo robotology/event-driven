@@ -78,15 +78,19 @@ bool deviceManager::openDevice(){
 void deviceManager::closeDevice()
 {
 
-    signal.post();
-    //stop the read thread
-    if(!stop())
-        std::cerr << "Thread did not stop correctly" << std::endl;
-    else
-        std::cout << "Thread stopped. Continuing shutdown." << std::endl;
+	if(bufferedRead) {
+		signal.post();
+		//stop the read thread
+		if(!stop())
+			std::cerr << "Thread did not stop correctly" << std::endl;
+		else
+			std::cout << "Thread stopped. Continuing shutdown." << std::endl;
+	}
 
-    ::close(devDesc);
-    std::cout <<  "closing device " << deviceName << std::endl;
+    if(devDesc > 0)
+		::close(devDesc);
+		
+    std::cout <<  "device closed" << deviceName << std::endl;
 
 #ifdef DEBUG
     writeDump.close();
