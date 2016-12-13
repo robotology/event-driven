@@ -388,6 +388,8 @@ bool vDevCtrl::clearFpgaStatus(std::string clr)
 void vDevCtrl::printConfiguration()
 {
 
+    std::cout << "Configuration for control device: " << I2CAddress << std::endl;
+
     std::cout << bias.toString() << std::endl;
 
     printf("0x%02X\n", 3);

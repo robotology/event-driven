@@ -67,16 +67,21 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
             std::cerr << "Bias file required to run zynqGrabber" << std::endl;
             return false;
         }
-        if(!vsctrlMngLeft.connect() && !vsctrlMngLeft.configure()) {
-            std::cerr << "Could not connect and configure the left vsctrl devices" << std::endl;
-            //return false;
+        if(!vsctrlMngLeft.connect())
+            std::cerr << "Could not connect to vision controller left" << std::endl;
+        else
+            if(!vsctrlMngLeft.configure(true)) {
+                std::cerr << "Could not configure left camera" << std::endl;
+            }
+
+        if(vsctrlMngRight.connect())
+            std::cerr << "Could not connect to vision controller right" << std::endl;
+        else {
+            if(!vsctrlMngRight.configure(true)) {
+                std::cerr << "Could not configure right camera" << std::endl;
+            }
         }
-        if(!vsctrlMngRight.connect() && !vsctrlMngRight.configure()) {
-            std::cerr << "Could not open the right vsctrl devices" << std::endl;
-            //return false;
-        }
-        //vsctrlMngRight->closeDevice();
-        //vsctrlMngLeft->closeDevice();
+
 
 
 
