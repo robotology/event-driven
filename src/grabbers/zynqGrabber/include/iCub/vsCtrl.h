@@ -71,6 +71,11 @@
 #define BG_CAT                   2  // Clock Active Time
 #define BG_SHT                   1  // Setup Hold Time
 
+// --- paddrivestrength --- //
+#define ATIS_PDSHIFT 4
+#define ATIS_PDSTRENGTH 3
+#define ATIS_BIASSHIFT 32
+
 // --- register VSCTRL_STATUS --- //
 
 // --- masks --- //
