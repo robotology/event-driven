@@ -47,7 +47,7 @@ private:
 
     //WRAPPERS?
     bool configureRegisters(); //new initDevice
-    bool configureBiases();
+
 
     bool setLatchAtEnd(bool Enable);
     bool setShiftCount(uint8_t shiftCount);
@@ -55,12 +55,10 @@ private:
     int getFpgaStatus();
     bool clearFpgaStatus(std::string clr);
 
-    void configureasATIS();
-
 public:
 
     //REQUIRE: devicefilename, chiptype (eg DVS/ATIS), chipFPGAaddress (eg LEFT or RIGHT)
-    vDevCtrl(std::string deviceName, std::string chipName, unsigned char i2cAddress);
+    vDevCtrl(std::string deviceName = "", std::string chipName = "", unsigned char i2cAddress = 0);
 
     //SET/GET CONFIGURATION
     bool setBias(std::string biasName, unsigned int biasValue);
@@ -70,9 +68,12 @@ public:
     //CONNECTION
     bool connect(void);
     bool configure(bool verbose = false);
-    void disconnect(bool powerdown = true);
+    void disconnect(bool andturnoff = true);
     bool activate(bool active = true);
     bool suspend(void); //wraps activate(false);
+
+    //COMMANDS
+    bool configureBiases();
 
     //DEBUG OUTPUTS
     void printConfiguration(void); // bias file, void dumpRegisterValues();

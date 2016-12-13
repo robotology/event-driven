@@ -51,6 +51,7 @@
 //within project includes
 #include <iCub/device2yarp.h>
 #include <iCub/yarp2device.h>
+#include <iCub/vDevCtrl.h>
 
 #include <iCub/deviceManager.h>
 //#include <iCub/configManager.h>
@@ -63,14 +64,15 @@ class zynqGrabberModule : public yarp::os::RFModule {
     deviceManager* aerManager;  // class to handle AER IO (hpucore, spinn, aerfx2_0)
 
     // biases and config
-    vsctrlDevManager* vsctrlMngLeft;   // reference to the class for configuring chip (biases and registers)
-    vsctrlDevManager* vsctrlMngRight;  // reference to the class for configuring chip (biases and registers)
+    //vsctrlDevManager* vsctrlMngLeft;   // reference to the class for configuring chip (biases and registers)
+    //vsctrlDevManager* vsctrlMngRight;  // reference to the class for configuring chip (biases and registers)
+    vDevCtrl vsctrlMngLeft;
+    vDevCtrl vsctrlMngRight;
 
     device2yarp* D2Y; // reference to the ratethread that reads the device and writes to yarp vBottle
     yarp2device Y2D; // bufferedport that reads yarp vBottles and writes to the device
 
 public:
-
 
     bool configure(yarp::os::ResourceFinder &rf); // configure all the module parameters and return true if successful
     bool interruptModule();                       // interrupt, e.g., the ports

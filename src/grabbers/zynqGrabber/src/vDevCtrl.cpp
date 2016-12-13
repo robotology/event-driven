@@ -14,7 +14,7 @@
  * Public License for more details
  */
 
-#include "iCub/configDevice.h"
+#include "iCub/vDevCtrl.h"
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
@@ -52,10 +52,10 @@ bool vDevCtrl::connect()
     return true;
 }
 
-void vDevCtrl::disconnect(bool powerdown)
+void vDevCtrl::disconnect(bool andturnoff)
 {
     if(fd > 0) {
-        if(powerdown) suspend();
+        if(andturnoff) suspend();
         close(fd);
     }
     std::cout << deviceName << " disconnected" << std::endl;
