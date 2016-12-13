@@ -74,7 +74,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
                 std::cerr << "Could not configure left camera" << std::endl;
             }
 
-        if(vsctrlMngRight.connect())
+        if(!vsctrlMngRight.connect())
             std::cerr << "Could not connect to vision controller right" << std::endl;
         else {
             if(!vsctrlMngRight.configure(true)) {

@@ -241,9 +241,9 @@ bool vDevCtrl::configureBiases(){
     if(!setShiftCount(ATIS_BIASSHIFT))
         return false;
 
-    std::cout << "Programming " << bias.size() << " biases" << std::endl;
-    int i = 0;
-    for(i = 0; i < bias.size() - 1; i++) {
+    std::cout << "Programming " << bias.size() << " biases:" << std::endl;
+    int i;
+    for(i = 1; i < bias.size() - 1; i++) {
         int biasVal = bias.get(i).asList()->get(1).asInt();
         if(i2cWrite(VSCTRL_BG_DATA_ADDR, (unsigned char *)&biasVal, sizeof(biasVal)) != sizeof(biasVal))
             return false;
@@ -254,7 +254,6 @@ bool vDevCtrl::configureBiases(){
     int biasVal = bias.get(i).asList()->get(1).asInt();
     if(i2cWrite(VSCTRL_BG_DATA_ADDR, (unsigned char *)&biasVal, sizeof(biasVal)) != sizeof(biasVal))
         return false;
-
 
     // --- checks --- //
 
@@ -388,19 +387,41 @@ bool vDevCtrl::clearFpgaStatus(std::string clr)
 void vDevCtrl::printConfiguration()
 {
 
-    std::cout << "Configuration for control device: " << I2CAddress << std::endl;
+    std::cout << "Configuration for control device: " << (unsigned int)I2CAddress << std::endl;
 
     std::cout << bias.toString() << std::endl;
 
-    printf("0x%02X\n", 3);
-    for(int i = 1; i < bias.size(); i++)
-        printf("0x%08X\n", bias.get(i).asList()->get(1).asInt());
+//    printf("0x%02X\n", 3);
+//    for(int i = 1; i < bias.size(); i++)
+//        printf("0x%08X\n", bias.get(i).asList()->get(1).asInt());
 
-//    unsigned int regval = 0;
-//    i2cRead(VSCTRL_INFO_ADDR, (unsigned char *)&regval, sizeof(regval));
-//    printf("Info: 0x%08X\n", regval);
-//    i2cRead(VSCTRL_INFO_ADDR, (unsigned char *)&regval, sizeof(regval));
-//    printf("Status: 0x%08X\n", i2cRead(VSCTRL_STATUS_ADDR));
+    unsigned int regval = 0;
+    i2cRead(VSCTRL_INFO_ADDR, (unsigned char *)&regval, sizeof(regval));
+    printf("Info: 0x%08X\n", regval);
+    i2cRead(VSCTRL_STATUS_ADDR, (unsigned char *)&regval, sizeof(regval));
+    printf("Status: 0x%08X\n", regval);
+    i2cRead(VSCTRL_SRC_CNFG_ADDR, (unsigned char *)&regval, sizeof(regval));
+    printf("Config: 0x%08X\n", regval);
+    i2cRead(VSCTRL_SRC_DST_CTRL_ADDR, (unsigned char *)&regval, sizeof(regval));
+	printf("DstCtrl: 0x%08X\n", regval);
+    i2cRead(VSCTRL_PAER_CNFG_ADDR, (unsigned char *)&regval, sizeof(regval));
+    printf("PEAR-config: 0x%08X\n", regval);
+    i2cRead(VSCTRL_HSSAER_CNFG_ADDR, (unsigned char *)&regval, sizeof(regval));
+    printf("HSSAER-config: 0x%08X\n", regval);
+    i2cRead(VSCTRL_GTP_CNFG_ADDR, (unsigned char *)&regval, sizeof(regval));
+    printf("GTP-config: 0x%08X\n", regval);
+    i2cRead(VSCTRL_BG_CNFG_ADDR, (unsigned char *)&regval, sizeof(regval));
+    printf("BG-config: 0x%08X\n", regval);
+    i2cRead(VSCTRL_BG_PRESC_ADDR, (unsigned char *)&regval, sizeof(regval));
+    printf("BG-prescaler: 0x%08X\n", regval);
+    i2cRead(VSCTRL_BG_TIMINGS_ADDR, (unsigned char *)&regval, sizeof(regval));
+    printf("BG-timings: 0x%08X\n", regval);
+    i2cRead(VSCTRL_GPO_ADDR, (unsigned char *)&regval, sizeof(regval));
+    printf("GPO: 0x%08X\n", regval);
+    i2cRead(VSCTRL_GPI_ADDR, (unsigned char *)&regval, sizeof(regval));
+    printf("GPI: 0x%08X\n", regval);
+    
+
 //    printf("Source Config: 0x%08X\n", i2cRead(VSCTRL_SRC_CNFG_ADDR));
 //    printf("Source Dest. Cont.: 0x%08X\n", i2cRead(VSCTRL_SRC_DST_CTRL_ADDR));
 //    printf("PAER Config: 0x%08X\n", i2cRead(VSCTRL_PAER_CNFG_ADDR));
