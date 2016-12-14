@@ -939,14 +939,14 @@ bool aerDevManager::openDevice(){
         //aerWriteGenericReg(devDesc,STMP_REG,0);
 
         // Set mask for enabling interrupts
-        aerWriteGenericReg(devDesc, MASK_REG, MSK_RX_PAER_ERR);
-        std::cout << "Enabled FIFO Full interrupt " << std::endl;
+        //aerWriteGenericReg(devDesc, MASK_REG, MSK_RX_PAER_ERR);
+        //std::cout << "Enabled FIFO Full interrupt " << std::endl;
 
-        tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
+        //tmp_reg = aerReadGenericReg(devDesc, CTRL_REG);
 
         // Flush FIFOs
-        aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg | CTRL_FLUSHFIFO | (CTRL_ENABLEINTERRUPT));
-        std::cout << "FIFO Flushed and Interrupt enabled " << std::endl;
+        //aerWriteGenericReg(devDesc, CTRL_REG, tmp_reg | CTRL_FLUSHFIFO | (CTRL_ENABLEINTERRUPT));
+        //std::cout << "FIFO Flushed and Interrupt enabled " << std::endl;
 
     }
     return ret;
