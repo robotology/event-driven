@@ -13,6 +13,7 @@ option(EMORPH_BUILD_ZYNQ "Build for ZynqGrabber" OFF)
 option(EMORPH_USE_QTCREATOR "Add apps/drivers to QtCreator IDE" OFF)
 option(EMORPH_SPINNTERFACE "Build the SpiNNaker Ethernet Interface" OFF)
 option(EMORPH_10BITCODEC "Build codec with 10bit address space" OFF)
+option(EMORPH_32BITTS "Build codec with 32bit timestamp" OFF)
 
 find_package(YARP REQUIRED)
 list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH})

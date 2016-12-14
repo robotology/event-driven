@@ -129,7 +129,11 @@ class vEvent
 
 protected:
 
+#ifdef LARGETS
+    unsigned int stamp:31;
+#else
     unsigned int stamp:24;
+#endif
 
 private:
     int refcount:8;

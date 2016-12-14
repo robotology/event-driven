@@ -68,7 +68,11 @@ vEvent * createEvent(const std::string type)
 /******************************************************************************/
 void vEvent::encode(yarp::os::Bottle &b) const
 {
+#ifdef LARGETS
+    b.addInt(stamp&0x7FFFFFFF);
+#else
     b.addInt((32<<26)|(stamp&0x00ffffff));
+#endif
 }
 
 /******************************************************************************/
@@ -77,7 +81,11 @@ bool vEvent::decode(const yarp::os::Bottle &packet, int &pos)
     if(pos + localWordsCoded <= packet.size()) {
 
         //TODO: this needs to take into account the code aswell
+#ifdef LARGETS
         stamp = packet.get(pos).asInt()&0x00ffffff;
+#else
+        stamp = packet.get(pos).asInt()&0x7FFFFFFF;
+#endif
         pos += localWordsCoded;
         return true;
     }

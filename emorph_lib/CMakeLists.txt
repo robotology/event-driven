@@ -51,6 +51,11 @@ if(EMORPH_10BITCODEC)
     set_target_properties(${PROJECTNAME} PROPERTIES COMPILE_DEFINITIONS TENBITCODEC)
 endif(EMORPH_10BITCODEC)
 
+if(EMORPH_32BITTS)
+    #message("Using 10bit codec")
+    set_target_properties(${PROJECTNAME} PROPERTIES COMPILE_DEFINITIONS LARGETS)
+endif(EMORPH_32BITTS)
+
 target_link_libraries(${PROJECTNAME} ${YARP_LIBRARIES})
 
 if(ICUBcontrib_FOUND)
