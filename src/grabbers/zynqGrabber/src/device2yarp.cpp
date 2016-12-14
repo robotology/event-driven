@@ -127,7 +127,7 @@ void  device2yarp::run() {
     }
 
     //we need to shift some bits around to send onward
-    for(int i = 0; i < nBytesRead; i+=8) {
+    for(int i = 0; i < 0; i+=8) {
         //int *TS =  (int *)(data.data() + i);
         int *AE =  (int *)(data.data() + i + 4);
 

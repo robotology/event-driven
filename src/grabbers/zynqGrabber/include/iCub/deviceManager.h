@@ -78,67 +78,6 @@ public:
 
 };
 
-/* -------------------------------------------------------------------
-
-    inherited class to manage vsctrl_i2c devices
-
-  ------------------------------------------------------------------- */
-
-class vsctrlDevManager : public deviceManager {
-
-private:
-
-    fpgaStatus_t fpgaStat;
-
-    std::string chipName;
-    unsigned char I2CAddress;
-    yarp::os::Bottle bias;
-    std::map<std::string, unsigned int> mBiases;
-    //unsigned int header;
-    std::vector<std::string> biasNames; // ordered
-    std::vector<int> biasValues;
-
-    std::vector<unsigned int> prepareBiases();
-    int setLatchAtEnd(bool Enable);
-    virtual int writeDevice(unsigned char reg, unsigned char data);
-    unsigned int readDevice(unsigned char reg);
-    void dumpRegisterValues();
-    int writeRegConfig(unsigned char regAddr, std::vector<uint8_t> regConfig);
-    int setShiftCount(uint8_t shiftCount);
-    int getBgTimings();
-    int getAerTimings();
-    bool initDevice();
-    int writeBiases(std::vector<unsigned int> &deviceData);
-    int getFpgaStatus();
-    bool clearFpgaStatus(std::string clr);
-    //int getFpgaRel();
-    //int getFpgaInfo();
-    
-public:
-
-    virtual bool openDevice();
-    virtual void closeDevice();
-    
-    vsctrlDevManager(std::string chip, unsigned char i2cAddress);
-
-    // ---- i2c device ---- //
-
-    int chipReset();
-    int chipPowerDown();
-    int chipPowerUp();
-    
-    //int writeGPORegister(uint32_t data);
-    //int readGPORegister();
-    
-    void printBiases();
-    unsigned int getBias(std::string biasName);
-    bool programBiases();
-    bool setBias(std::string biasName, unsigned int biasValue);
-    bool setBias(yarp::os::Bottle bias);
-    void dumpBiasAsHex();
-
-};
-
 /*  -------------------------------------------------------------------
 
         inherited class to manage aer (hpucore or spinn) device

@@ -60,6 +60,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     vsctrlMngRight = vDevCtrl("/dev/i2c-2", chipName, I2C_ADDRESS_RIGHT);
 
 
+	bool con_success = false;
 
     if(device == "zynq_sens") {
 
@@ -72,20 +73,25 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         else
             if(!vsctrlMngLeft.configure(true)) {
                 std::cerr << "Could not configure left camera" << std::endl;
-            }
+            } else {
+				con_success = true;
+			}
 
         if(!vsctrlMngRight.connect())
             std::cerr << "Could not connect to vision controller right" << std::endl;
         else {
             if(!vsctrlMngRight.configure(true)) {
                 std::cerr << "Could not configure right camera" << std::endl;
-            }
+            } else {
+				con_success = true;
+			}
         }
 
 
 
 
     }
+    if(!con_success) return false;
 
     if(device == "zynq_spinn" || device == "zynq_sens") {
 
