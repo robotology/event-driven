@@ -156,7 +156,7 @@ private:
     std::vector<vPartObsThread *> computeThreads;
     int nThreads;
     eventdriven::resolution res;
-    double ptime;
+    double ptime, ptime2;
 
     yarp::os::BufferedPort<eventdriven::vBottle> vBottleOut;
     yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelBgr> > debugOut;

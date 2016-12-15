@@ -309,6 +309,7 @@ particleProcessor::particleProcessor(unsigned int height, unsigned int weight, s
     res.width  = weight;
     this->name = name;
     this->strict = strict;
+    ptime2 = yarp::os::Time::now();
 
     nparticles = 50;
     nThreads = 3;
@@ -597,16 +598,19 @@ void particleProcessor::run()
         if(scopeOut.getOutputCount()) {
             yarp::os::Bottle &scopedata = scopeOut.prepare();
             scopedata.clear();
+            double temptime = yarp::os::Time::now();
+            scopedata.addDouble(1.0 / (temptime - ptime2));
+            ptime2 = temptime;
 //            scopedata.addDouble(stw.front()->getStamp() * 0.001);
 //            scopedata.addDouble((t - previouseventstamp) * 0.001 / 7.8125);
 //            scopedata.addDouble(maxlikelihood);
 //            scopedata.addDouble(avgtw / 10000.0);
 //            scopedata.addDouble(pmax.gettw() / 10000.0);
 
-            scopedata.addDouble(Tget);
-            scopedata.addDouble(Tresample);
-            scopedata.addDouble(Tpredict);
-            scopedata.addDouble(Tobs);
+            //scopedata.addDouble(Tget);
+            //scopedata.addDouble(Tresample);
+            //scopedata.addDouble(Tpredict);
+            //scopedata.addDouble(Tobs);
             //scopedata.addDouble(1000.0 / (Tget + Tresample + Tpredict + Tobs));
             //scopedata.addDouble(eventhandler.geteventrate());
             //scopedata.addDouble(stw.size());
