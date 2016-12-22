@@ -48,12 +48,12 @@
 // --- default values for ATIS chip --- //
 
 // --- register VSCTRL_SRC_CNFG_ADDR --- //
-#define ACK_REL_DEL              0x05 // 50ns (one tick is 10ns)
-#define ACK_SAM_DEL              0x03 // 30n
-#define ACK_SET_DEL              0x02 // 20n
+#define ACK_REL_DEL              0x3 //0x05 // 50ns (one tick is 10ns)
+#define ACK_SAM_DEL              0x1 //0x03 // 30n
+#define ACK_SET_DEL              0x0 //0x02 // 20n
 #define AER_LVL                  0x15 // overwrite = 1, ack active low, req active high (ATIS default)
 // --- register VSCTRL_SRC_DST_CTRL_ADDR --- //
-#define TD_APS_CTRL              0x0A // TD loopback = 0, TD EN =1, APS loppback = 0, APS EN = 1, flush fifo = 0, ignore FIFO Full = 0
+#define TD_APS_CTRL              0x02 // TD loopback = 0, TD EN =1, APS loppback = 0, APS EN = 1, flush fifo = 0, ignore FIFO Full = 0
 #define SRC_CTRL                 0x12
 // --- register VSCTRL_HSSAER_CNFG_ADDR --- //
 #define CH_SAER_EN                    0x07 // enable ch0, ch1, ch2

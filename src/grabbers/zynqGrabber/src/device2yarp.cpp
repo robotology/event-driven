@@ -125,7 +125,7 @@ void  device2yarp::run() {
 		std::cout << " Y: " << y;
 		std::cout << " C: " << channel << std::endl;
     }
-
+    
     //we need to shift some bits around to send onward
     for(int i = 0; i < 0; i+=8) {
         //int *TS =  (int *)(data.data() + i);

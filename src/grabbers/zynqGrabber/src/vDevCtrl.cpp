@@ -186,10 +186,10 @@ bool vDevCtrl::configureRegisters()
     if(i2cWrite(VSCTRL_HSSAER_CNFG_ADDR, valReg, 4) < 0) return false;
 
     // --- configure GPO register --- //
-    valReg[0] = 0;
-    valReg[1] = 0;
-    valReg[2] = 0;
-    valReg[3] = 0;
+    valReg[0] = 0x2;
+    valReg[1] = 0x0;
+    valReg[2] = 0x0;
+    valReg[3] = 0x0;
     if(i2cWrite(VSCTRL_GPO_ADDR, valReg, 4) < 0) return false;
 
     return true;
@@ -391,9 +391,9 @@ void vDevCtrl::printConfiguration()
 
     std::cout << bias.toString() << std::endl;
 
-//    printf("0x%02X\n", 3);
-//    for(int i = 1; i < bias.size(); i++)
-//        printf("0x%08X\n", bias.get(i).asList()->get(1).asInt());
+    //printf("0x%02X\n", 3);
+    //for(int i = 1; i < bias.size(); i++)
+    //    printf("0x%08X\n", bias.get(i).asList()->get(1).asInt());
 
     unsigned int regval = 0;
     i2cRead(VSCTRL_INFO_ADDR, (unsigned char *)&regval, sizeof(regval));

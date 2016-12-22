@@ -91,7 +91,10 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 
 
     }
-    if(!con_success) return false;
+    if(!con_success) {
+		std::cerr << "Did not connect to any configuration device" << std::endl;
+		return false;
+	}
 
     if(device == "zynq_spinn" || device == "zynq_sens") {
 

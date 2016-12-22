@@ -203,7 +203,7 @@ void deviceManager::run(void)
 
         //read SHOULD be a blocking call
         int r = ::read(devDesc, readBuffer->data() + readCount,
-                       std::min(maxBufferSize - readCount, (unsigned int)256));
+                       std::min(maxBufferSize - readCount, (unsigned int)1024));
         //int r = ::read(devDesc, readBuffer->data() + readCount,
         //               maxBufferSize - readCount);
 
