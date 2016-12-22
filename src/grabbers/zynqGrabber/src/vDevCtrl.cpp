@@ -251,7 +251,13 @@ bool vDevCtrl::configureBiases(){
     //set the latch true for the last bias
     //i = bias.size()
     if(!setLatchAtEnd(true)) return false;
-    int biasVal = bias.get(i).asList()->get(1).asInt();
+    yarp::os::Bottle &biasdata = bias.get(i).asList();
+    double vref = biasdata.get(1).asInt();
+    int header = biasdata.get(2).asInt();
+    double voltage = biasdata.get(3).asInt();
+
+    unsigned int biasVal = 255 * (voltage / vref);
+    biasVal += header << 21;
     if(i2cWrite(VSCTRL_BG_DATA_ADDR, (unsigned char *)&biasVal, sizeof(biasVal)) != sizeof(biasVal))
         return false;
 
@@ -284,7 +290,7 @@ bool vDevCtrl::configureBiases(){
 
 unsigned int vDevCtrl::getBias(std::string biasName)
 {
-    return bias.find(biasName).asInt();
+    return bias.findGroup(biasName).get(2).asInt();
 }
 
 bool vDevCtrl::setShiftCount(uint8_t shiftCount){
@@ -403,7 +409,7 @@ void vDevCtrl::printConfiguration()
     i2cRead(VSCTRL_SRC_CNFG_ADDR, (unsigned char *)&regval, sizeof(regval));
     printf("Config: 0x%08X\n", regval);
     i2cRead(VSCTRL_SRC_DST_CTRL_ADDR, (unsigned char *)&regval, sizeof(regval));
-	printf("DstCtrl: 0x%08X\n", regval);
+    printf("DstCtrl: 0x%08X\n", regval);
     i2cRead(VSCTRL_PAER_CNFG_ADDR, (unsigned char *)&regval, sizeof(regval));
     printf("PEAR-config: 0x%08X\n", regval);
     i2cRead(VSCTRL_HSSAER_CNFG_ADDR, (unsigned char *)&regval, sizeof(regval));
@@ -420,7 +426,7 @@ void vDevCtrl::printConfiguration()
     printf("GPO: 0x%08X\n", regval);
     i2cRead(VSCTRL_GPI_ADDR, (unsigned char *)&regval, sizeof(regval));
     printf("GPI: 0x%08X\n", regval);
-    
+
 
 //    printf("Source Config: 0x%08X\n", i2cRead(VSCTRL_SRC_CNFG_ADDR));
 //    printf("Source Dest. Cont.: 0x%08X\n", i2cRead(VSCTRL_SRC_DST_CTRL_ADDR));
