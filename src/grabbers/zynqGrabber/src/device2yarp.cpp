@@ -139,6 +139,9 @@ void  device2yarp::run() {
             //dataError = true;
             //std::cout << "AE mismatch" << std::endl;
         //}
+        if (*AE & 0x40000) {
+			std::cout << "APS event detected" << std::endl;
+		}
 
         //if (*AE & 0x40000) {
             //if(prevAPSval >= 0) {
@@ -178,15 +181,15 @@ void  device2yarp::run() {
 		//	std::cout << " Y: " << y;
 		//	std::cout << " C: " << channel << std::endl;
 		//}
-		int temp = ((*AE) & 0x0003FC00) >> 10;
-		std::cout << temp << std::endl;
-		continue;
+		//int temp = ((*AE) & 0x0003FC00) >> 10;
+		//std::cout << temp << std::endl;
+		//continue;
 
-        int tempAE = *AE & 0x3FF;
-        tempAE |= ((*AE & 0x0003FC00) << 1);
-        tempAE |= ((*AE & 0x00100000) << 1);
+        //int tempAE = *AE & 0x3FF;
+        //tempAE |= ((*AE & 0x0003FC00) << 1);
+        //tempAE |= ((*AE & 0x00100000) << 1);
 
-        *AE = tempAE;
+        //*AE = tempAE;
 
     }
 

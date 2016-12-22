@@ -187,7 +187,7 @@ bool vDevCtrl::configureRegisters()
 
     // --- configure GPO register --- //
     valReg[0] = 0x2;
-    valReg[1] = 0x0;
+    valReg[1] = 0x4;
     valReg[2] = 0x0;
     valReg[3] = 0x0;
     if(i2cWrite(VSCTRL_GPO_ADDR, valReg, 4) < 0) return false;
@@ -207,20 +207,18 @@ bool vDevCtrl::setBias(yarp::os::Bottle bias)
 // --- change the value of a single bias --- //
 bool vDevCtrl::setBias(std::string biasName, unsigned int biasValue)
 {
-    // add header to bias Value
-    int biasCurr;
-    biasCurr = bias.find(biasName).asInt() & ~BG_VAL_MSK; // put zero to the bits from 0 to 21
-
-    // assign the new value to the 21 LSB of the int that will be written to the chip
-    bias.find(biasName) = biasCurr | (yarp::os::Value((int)biasValue).asInt() & BG_VAL_MSK);
-
-    //bias.find(biasName) = yarp::os::Value((int)biasValue).asInt();
-    if((unsigned int)bias.find(biasName).asInt() != (biasValue & BG_VAL_MSK)) {
-        std::cerr << "Could not find " << biasName << " bias" << std::endl;
-        return false;
-    }
-
+	yarp::os::Bottle &vals = bias.findGroup(biasName);
+    if(vals.isNull()) return false;
+    vals.pop(); //remove the old value
+    vals.addInt(biasValue);
     return true;
+}
+
+unsigned int vDevCtrl::getBias(std::string biasName)
+{
+    yarp::os::Bottle &vals = bias.findGroup(biasName);
+    if(vals.isNull()) return -1;
+    return vals.get(3).asInt();
 }
 
 bool vDevCtrl::configureBiases(){
@@ -242,22 +240,31 @@ bool vDevCtrl::configureBiases(){
         return false;
 
     std::cout << "Programming " << bias.size() << " biases:" << std::endl;
+    double vref, voltage;
+    int header;
     int i;
     for(i = 1; i < bias.size() - 1; i++) {
-        int biasVal = bias.get(i).asList()->get(1).asInt();
+        yarp::os::Bottle *biasdata = bias.get(i).asList();
+        vref = biasdata->get(1).asInt();
+		header = biasdata->get(2).asInt();
+		voltage = biasdata->get(3).asInt();
+        unsigned int biasVal = 255 * (voltage / vref);
+		biasVal += header << 21;
+		//std::cout << biasdata->get(0).asString() << " " << biasVal << std::endl;
         if(i2cWrite(VSCTRL_BG_DATA_ADDR, (unsigned char *)&biasVal, sizeof(biasVal)) != sizeof(biasVal))
             return false;
     }
     //set the latch true for the last bias
     //i = bias.size()
     if(!setLatchAtEnd(true)) return false;
-    yarp::os::Bottle &biasdata = bias.get(i).asList();
-    double vref = biasdata.get(1).asInt();
-    int header = biasdata.get(2).asInt();
-    double voltage = biasdata.get(3).asInt();
+    yarp::os::Bottle *biasdata = bias.get(i).asList();
+    vref = biasdata->get(1).asInt();
+    header = biasdata->get(2).asInt();
+    voltage = biasdata->get(3).asInt();
 
     unsigned int biasVal = 255 * (voltage / vref);
     biasVal += header << 21;
+    //std::cout << biasdata->get(0).asString() << " " << biasVal << std::endl;
     if(i2cWrite(VSCTRL_BG_DATA_ADDR, (unsigned char *)&biasVal, sizeof(biasVal)) != sizeof(biasVal))
         return false;
 
@@ -288,10 +295,7 @@ bool vDevCtrl::configureBiases(){
 
 }
 
-unsigned int vDevCtrl::getBias(std::string biasName)
-{
-    return bias.findGroup(biasName).get(2).asInt();
-}
+
 
 bool vDevCtrl::setShiftCount(uint8_t shiftCount){
 
@@ -395,12 +399,25 @@ void vDevCtrl::printConfiguration()
 
     std::cout << "Configuration for control device: " << (unsigned int)I2CAddress << std::endl;
 
+	std::cout << "== Bias Values ==" << std::endl;
     std::cout << bias.toString() << std::endl;
 
-    //printf("0x%02X\n", 3);
-    //for(int i = 1; i < bias.size(); i++)
-    //    printf("0x%08X\n", bias.get(i).asList()->get(1).asInt());
+    std::cout << "== Bias Hex Stream ==" << std::endl;
+    double vref, voltage;
+    int header;
+    int i;
+    printf("0x%02X\n", 3);
+    for(i = 1; i < bias.size(); i++) {
+        yarp::os::Bottle *biasdata = bias.get(i).asList();
+        vref = biasdata->get(1).asInt();
+		header = biasdata->get(2).asInt();
+		voltage = biasdata->get(3).asInt();
+        unsigned int biasVal = 255 * (voltage / vref);
+		biasVal += header << 21;
+		printf("0x%08X\n", biasVal);
+    }
 
+	std::cout << "== FPGA Register Values ==" << std::endl;
     unsigned int regval = 0;
     i2cRead(VSCTRL_INFO_ADDR, (unsigned char *)&regval, sizeof(regval));
     printf("Info: 0x%08X\n", regval);

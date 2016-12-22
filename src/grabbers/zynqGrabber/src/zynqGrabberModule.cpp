@@ -244,6 +244,64 @@ bool zynqGrabberModule::respond(const yarp::os::Bottle& command,
         ok = true;
     }
         break;
+    case COMMAND_VOCAB_GETBIAS:
+        rec = true;
+    {
+        std::string biasName = command.get(1).asString();
+        std::string channel = command.get(2).asString();
+
+        // setBias function
+        if (channel == "left") {
+            int val = vsctrlMngLeft.getBias(biasName);
+            if(val >= 0) {
+				reply.addString("Left: ");
+				reply.addString(biasName);
+				reply.addInt(val);
+				ok = true;
+			} else {
+				reply.addString("Left Unknown Bias");
+				ok = false;
+			}
+        } else if (channel == "right") {
+            int val = vsctrlMngRight.getBias(biasName);
+            if(val >= 0) {
+				reply.addString("Right: ");
+				reply.addString(biasName);
+				reply.addInt(val);
+				ok = true;
+			} else {
+				reply.addString("Right Unknown Bias");
+				ok = false;
+			}
+        } else if (channel == "") {
+			int val = vsctrlMngLeft.getBias(biasName);
+            if(val >= 0) {
+				reply.addString("Left: ");
+				reply.addString(biasName);
+				reply.addInt(val);
+				ok = true;
+			} else {
+				reply.addString("Left Unknown Bias");
+				ok = false;
+			}
+			val = vsctrlMngRight.getBias(biasName);
+            if(val >= 0) {
+				reply.addString("Right: ");
+				reply.addString(biasName);
+				reply.addInt(val);
+				ok = true & ok;
+			} else {
+				reply.addString("RightUnknown Bias");
+				ok = false;
+			}
+        }
+        else {
+            std::cout << "unrecognised channel" << std::endl;
+            ok = false;
+        }
+    }
+        break;
+        
     case COMMAND_VOCAB_SETBIAS:
         rec = true;
     {
@@ -372,7 +430,7 @@ bool zynqGrabberModule::respond(const yarp::os::Bottle& command,
         ok = RFModule::respond(command,reply);
 
     if (!ok) {
-        reply.clear();
+        //reply.clear();
         reply.addVocab(COMMAND_VOCAB_FAILED);
     }
     else
@@ -380,7 +438,6 @@ bool zynqGrabberModule::respond(const yarp::os::Bottle& command,
 
     return ok;
 
-    return true;
 }
 
 
