@@ -15,7 +15,7 @@
  * Public License for more details
  */
 
-#include "dPepper.h"
+#include "vPepper.h"
 
 /**********************************************************/
 bool dPepperModule::configure(yarp::os::ResourceFinder &rf)
@@ -171,6 +171,7 @@ void dPepperIO::setTemporalSize(double microseconds)
 {
     leftWindow.setTemporalSize(microseconds);
     rightWindow.setTemporalSize(microseconds);
+    this->temporalSize = microseconds;
 }
 
 void dPepperIO::setSpatialSize(double pixelradius)
