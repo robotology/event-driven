@@ -36,6 +36,8 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     //get the device name which will be used to read events
     // zynq_hpu, zynq_spinn, ihead_aerfx2
     std::string device = rf.check("device", yarp::os::Value("zynq_sens")).asString();
+    std::string dataDevice =
+            rf.check("dataDevice", yarp::os::Value("/dev/iit-hpu0")).asString();
 
     // get the correct clock of each device
     int clockPeriod = rf.check("clockPeriod", yarp::os::Value(100)).asInt(); //add check instead of default value
@@ -60,7 +62,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     vsctrlMngRight = vDevCtrl("/dev/i2c-2", chipName, I2C_ADDRESS_RIGHT);
 
 
-	bool con_success = false;
+    bool con_success = false;
 
     if(device == "zynq_sens") {
 
@@ -74,8 +76,8 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
             if(!vsctrlMngLeft.configure(true)) {
                 std::cerr << "Could not configure left camera" << std::endl;
             } else {
-				con_success = true;
-			}
+                con_success = true;
+            }
 
         if(!vsctrlMngRight.connect())
             std::cerr << "Could not connect to vision controller right" << std::endl;
@@ -83,8 +85,8 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
             if(!vsctrlMngRight.configure(true)) {
                 std::cerr << "Could not configure right camera" << std::endl;
             } else {
-				con_success = true;
-			}
+                con_success = true;
+            }
         }
 
 
@@ -92,47 +94,50 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 
     }
     if(!con_success) {
-		std::cerr << "Did not connect to any configuration device" << std::endl;
-		return false;
-	}
-
-    if(device == "zynq_spinn" || device == "zynq_sens") {
-
-        // class manageDevice for events
-        aerManager = new aerDevManager(device, clockPeriod, loopBack);
-
-        if(!aerManager->openDevice()) {
-            std::cerr << "Could not open the aer device: " << device << std::endl;
-            return false;
-        }
-
-    } else if(device == "ihead_sens") {
-
-        // device manager for events
-        aerManager = new aerfx2_0DevManager();
-
-        if(!aerManager->openDevice()) {
-            std::cerr << "Could not open the device: " << device << std::endl;
-            return false;
-        }
-
-    } else {
-
-        std::cout << "Device: " << device << " not known " << std::endl;
+        std::cerr << "Did not connect to any configuration device" << std::endl;
         return false;
     }
+
+//    if(device == "zynq_spinn" || device == "zynq_sens") {
+
+//        // class manageDevice for events
+//        aerManager = new aerDevManager(device, clockPeriod, loopBack);
+
+//        if(!aerManager->openDevice()) {
+//            std::cerr << "Could not open the aer device: " << device << std::endl;
+//            return false;
+//        }
+
+//    } else if(device == "ihead_sens") {
+
+//        // device manager for events
+//        aerManager = new aerfx2_0DevManager();
+
+//        if(!aerManager->openDevice()) {
+//            std::cerr << "Could not open the device: " << device << std::endl;
+//            return false;
+//        }
+
+//    } else {
+
+//        std::cout << "Device: " << device << " not known " << std::endl;
+//        return false;
+//    }
 
     //open rateThread device2yarp
-    D2Y = new device2yarp();
-    if(!D2Y->attachDeviceManager(aerManager))
-    {
-        //could not start the thread
-        return false;
+    if(!D2Y.initialise(moduleName, rf.check("strict"), dataDevice)) {
+        std::cout << "Could not initialise yarp interface" << std::endl;
     }
-    if(!D2Y->threadInit(moduleName, rf.check("strict"))) {
-        //could not start the thread
-        return false;
-    }
+    D2Y.start();
+//    if(!D2Y->attachDeviceManager(aerManager))
+//    {
+//        //could not start the thread
+//        return false;
+//    }
+//    if(!D2Y->initialise(moduleName, rf.check("strict"), )) {
+//        //could not start the thread
+//        return false;
+//    }
     //open bufferedPort yarp2device
     if(!Y2D.attachDeviceManager(aerManager))
     {
@@ -153,7 +158,6 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         return false;
     }
     attach(handlerPort);
-    D2Y->start();
 
     return true;
 }
@@ -170,7 +174,7 @@ bool zynqGrabberModule::close() {
     std::cout << "breaking YARP connections" << std::endl;
     handlerPort.close();        // rpc of the RF module
     Y2D.close();
-    D2Y->stop();                // bufferedport from yarp to device
+    D2Y.stop();                // bufferedport from yarp to device
 
     std::cout << "closing device drivers" << std::endl;
     aerManager->closeDevice();  // device
@@ -233,14 +237,14 @@ bool zynqGrabberModule::respond(const yarp::os::Bottle& command,
     case COMMAND_VOCAB_SUSPEND:
         rec = true;
     {
-        D2Y->suspend();
+        D2Y.suspend();
         ok = true;
     }
         break;
     case COMMAND_VOCAB_RESUME:
         rec = true;
     {
-        D2Y->resume();
+        D2Y.resume();
         ok = true;
     }
         break;
@@ -254,46 +258,46 @@ bool zynqGrabberModule::respond(const yarp::os::Bottle& command,
         if (channel == "left") {
             int val = vsctrlMngLeft.getBias(biasName);
             if(val >= 0) {
-				reply.addString("Left: ");
-				reply.addString(biasName);
-				reply.addInt(val);
-				ok = true;
-			} else {
-				reply.addString("Left Unknown Bias");
-				ok = false;
-			}
+                reply.addString("Left: ");
+                reply.addString(biasName);
+                reply.addInt(val);
+                ok = true;
+            } else {
+                reply.addString("Left Unknown Bias");
+                ok = false;
+            }
         } else if (channel == "right") {
             int val = vsctrlMngRight.getBias(biasName);
             if(val >= 0) {
-				reply.addString("Right: ");
-				reply.addString(biasName);
-				reply.addInt(val);
-				ok = true;
-			} else {
-				reply.addString("Right Unknown Bias");
-				ok = false;
-			}
+                reply.addString("Right: ");
+                reply.addString(biasName);
+                reply.addInt(val);
+                ok = true;
+            } else {
+                reply.addString("Right Unknown Bias");
+                ok = false;
+            }
         } else if (channel == "") {
-			int val = vsctrlMngLeft.getBias(biasName);
+            int val = vsctrlMngLeft.getBias(biasName);
             if(val >= 0) {
-				reply.addString("Left: ");
-				reply.addString(biasName);
-				reply.addInt(val);
-				ok = true;
-			} else {
-				reply.addString("Left Unknown Bias");
-				ok = false;
-			}
-			val = vsctrlMngRight.getBias(biasName);
+                reply.addString("Left: ");
+                reply.addString(biasName);
+                reply.addInt(val);
+                ok = true;
+            } else {
+                reply.addString("Left Unknown Bias");
+                ok = false;
+            }
+            val = vsctrlMngRight.getBias(biasName);
             if(val >= 0) {
-				reply.addString("Right: ");
-				reply.addString(biasName);
-				reply.addInt(val);
-				ok = true & ok;
-			} else {
-				reply.addString("RightUnknown Bias");
-				ok = false;
-			}
+                reply.addString("Right: ");
+                reply.addString(biasName);
+                reply.addInt(val);
+                ok = true & ok;
+            } else {
+                reply.addString("RightUnknown Bias");
+                ok = false;
+            }
         }
         else {
             std::cout << "unrecognised channel" << std::endl;
@@ -301,7 +305,7 @@ bool zynqGrabberModule::respond(const yarp::os::Bottle& command,
         }
     }
         break;
-        
+
     case COMMAND_VOCAB_SETBIAS:
         rec = true;
     {

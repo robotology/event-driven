@@ -23,7 +23,7 @@
  * @brief Definition of the ratethread that receives events from DVS camera
  */
 
-#ifndef _ZYNQYARP_H
+#ifdef _ZYNQYARP_H
 #define _ZYNQYARP_H
 
 #include <yarp/os/all.h>

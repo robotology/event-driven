@@ -50,11 +50,11 @@
 #include <yarp/os/Thread.h>
 
 //within project includes
-#include <iCub/device2yarp.h>
+#include <iCub/yarpInterface.h>
 #include <iCub/yarp2device.h>
 #include <iCub/vDevCtrl.h>
 
-#include <iCub/deviceManager.h>
+//#include <iCub/deviceManager.h>
 //#include <iCub/configManager.h>
 
 class zynqGrabberModule : public yarp::os::RFModule {
@@ -70,7 +70,7 @@ class zynqGrabberModule : public yarp::os::RFModule {
     vDevCtrl vsctrlMngLeft;
     vDevCtrl vsctrlMngRight;
 
-    device2yarp* D2Y; // reference to the ratethread that reads the device and writes to yarp vBottle
+    device2yarp D2Y; // reference to the ratethread that reads the device and writes to yarp vBottle
     yarp2device Y2D; // bufferedport that reads yarp vBottles and writes to the device
 
 public:

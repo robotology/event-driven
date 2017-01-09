@@ -78,18 +78,18 @@ bool deviceManager::openDevice(){
 void deviceManager::closeDevice()
 {
 
-	if(bufferedRead) {
-		signal.post();
-		//stop the read thread
-		if(!stop())
-			std::cerr << "Thread did not stop correctly" << std::endl;
-		else
-			std::cout << "Thread stopped. Continuing shutdown." << std::endl;
-	}
+    if(bufferedRead) {
+        signal.post();
+        //stop the read thread
+        if(!stop())
+            std::cerr << "Thread did not stop correctly" << std::endl;
+        else
+            std::cout << "Thread stopped. Continuing shutdown." << std::endl;
+    }
 
     if(devDesc > 0)
-		::close(devDesc);
-		
+        ::close(devDesc);
+
     std::cout <<  "device closed" << deviceName << std::endl;
 
 #ifdef DEBUG
@@ -252,7 +252,7 @@ void deviceManager::run(void)
 /* -----------------------------------------------------------------
  aerDevManager -- to handle AER IO: read events from sensors and spinnaker and write events to spinnaker
  ----------------------------------------------------------------- */
-aerDevManager::aerDevManager(std::string dev, int clockPeriod, std::string loopBack) : deviceManager(true, AER_MAX_BUF_SIZE) {
+aerDevManager::aerDevManager(std::string dev, int clockPeriod, std::string loopBack) : deviceManager(false, AER_MAX_BUF_SIZE) {
 
     this->tickToUs = 1000.0/clockPeriod; // to scale the timestamp to 1us temporal resolution
     this->usToTick = 1.0/tickToUs; // to scale the 1us temporal resolution to hw clock ticks

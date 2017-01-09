@@ -13,7 +13,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details
  */
-
+#ifdef _ZYNQYARP_H
 #include <iCub/device2yarp.h>
 #include <math.h>
 
@@ -66,7 +66,7 @@ void  device2yarp::run() {
     //get the data from the device read thread
     int nBytesRead = 0;
     const std::vector<char> &data = devManager->readDevice(nBytesRead);
-    
+
     if (nBytesRead <= 0) return;
 
 
@@ -88,16 +88,16 @@ void  device2yarp::run() {
         //FIRST EVENT
         int *TS =  (int *)(data.data());
         int *AE =  (int *)(data.data()  + 4);
-        
+
         unsigned int polarity = *AE & 0x00000001;
-		unsigned int x = (*AE & 0x000003FE) >> 1;
-		unsigned int y = (*AE & 0x0003FC00) >> 10;
-		unsigned int channel = (*AE & 0x00100000) >> 20;
-		
-		std::cout << "P: " << polarity;
-		std::cout << " X: " << x;
-		std::cout << " Y: " << y;
-		std::cout << " C: " << channel << std::endl;
+        unsigned int x = (*AE & 0x000003FE) >> 1;
+        unsigned int y = (*AE & 0x0003FC00) >> 10;
+        unsigned int channel = (*AE & 0x00100000) >> 20;
+
+        std::cout << "P: " << polarity;
+        std::cout << " X: " << x;
+        std::cout << " Y: " << y;
+        std::cout << " C: " << channel << std::endl;
 
         //printf("T: 0x%08X --> ", *TS);
         //if (*AE & 0x40000)
@@ -114,18 +114,18 @@ void  device2yarp::run() {
         //    printf("APS: 0x%08X\n", *AE);
         //else
         //    printf(" TD: 0x%08X\n", *AE);
-        
+
         polarity = *AE & 0x00000001;
-		x = (*AE & 0x000003FE) >> 1;
-		y = (*AE & 0x0003FC00) >> 10;
-		channel = (*AE & 0x00100000) >> 20;
-		
-		std::cout << "P: " << polarity;
-		std::cout << " X: " << x;
-		std::cout << " Y: " << y;
-		std::cout << " C: " << channel << std::endl;
+        x = (*AE & 0x000003FE) >> 1;
+        y = (*AE & 0x0003FC00) >> 10;
+        channel = (*AE & 0x00100000) >> 20;
+
+        std::cout << "P: " << polarity;
+        std::cout << " X: " << x;
+        std::cout << " Y: " << y;
+        std::cout << " C: " << channel << std::endl;
     }
-    
+
     //we need to shift some bits around to send onward
     for(int i = 0; i < 0; i+=8) {
         //int *TS =  (int *)(data.data() + i);
@@ -140,8 +140,8 @@ void  device2yarp::run() {
             //std::cout << "AE mismatch" << std::endl;
         //}
         if (*AE & 0x40000) {
-			std::cout << "APS event detected" << std::endl;
-		}
+            std::cout << "APS event detected" << std::endl;
+        }
 
         //if (*AE & 0x40000) {
             //if(prevAPSval >= 0) {
@@ -172,18 +172,18 @@ void  device2yarp::run() {
         //}
 
         //unsigned int polarity = *AE & 0x00000001;
-		//unsigned int x = (*AE & 0x000003FE) >> 1;
-		//unsigned int y = (*AE & 0x0003FC00) >> 10;
-		//unsigned int channel = (*AE & 0x00100000) >> 20;
-		//if(x > 304 || y > 240) {
-		//	std::cout << "P: " << polarity;
-		//	std::cout << " X: " << x;
-		//	std::cout << " Y: " << y;
-		//	std::cout << " C: " << channel << std::endl;
-		//}
-		//int temp = ((*AE) & 0x0003FC00) >> 10;
-		//std::cout << temp << std::endl;
-		//continue;
+        //unsigned int x = (*AE & 0x000003FE) >> 1;
+        //unsigned int y = (*AE & 0x0003FC00) >> 10;
+        //unsigned int channel = (*AE & 0x00100000) >> 20;
+        //if(x > 304 || y > 240) {
+        //	std::cout << "P: " << polarity;
+        //	std::cout << " X: " << x;
+        //	std::cout << " Y: " << y;
+        //	std::cout << " C: " << channel << std::endl;
+        //}
+        //int temp = ((*AE) & 0x0003FC00) >> 10;
+        //std::cout << temp << std::endl;
+        //continue;
 
         //int tempAE = *AE & 0x3FF;
         //tempAE |= ((*AE & 0x0003FC00) << 1);
@@ -193,7 +193,7 @@ void  device2yarp::run() {
 
     }
 
-	countAEs += nBytesRead / 8;
+    countAEs += nBytesRead / 8;
     if(portvBottle.getOutputCount() && nBytesRead > 8 && !dataError) {
         emorph::vBottleMimic &vbm = portvBottle.prepare();
         vbm.setdata(data.data(), nBytesRead);
@@ -373,3 +373,4 @@ bool  device2yarp::attachDeviceManager(deviceManager* devManager) {
 
 
 }
+#endif
