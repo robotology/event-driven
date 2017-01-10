@@ -42,12 +42,6 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     // get the correct clock of each device
     int clockPeriod = rf.check("clockPeriod", yarp::os::Value(100)).asInt(); //add check instead of default value
 
-    // set the loopback (needed only for debug)
-    std::string loopBack = rf.check("loopBack", yarp::os::Value("none")).asString(); //add check instead of default value
-
-
-
-
     //dvs or atis
     std::string chipName = rf.check("chip", yarp::os::Value("ATIS")).asString();
 
@@ -56,8 +50,6 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     yarp::os::Bottle biaslistr = rf.findGroup(chipName + "_BIAS_RIGHT");
 
     //configuration classes for the zynq-based sensors
-    //vsctrlMngLeft = new vsctrlDevManager(chipName, I2C_ADDRESS_LEFT);
-    //vsctrlMngRight = new vsctrlDevManager(chipName, I2C_ADDRESS_RIGHT);
     vsctrlMngLeft = vDevCtrl("/dev/i2c-2", chipName, I2C_ADDRESS_LEFT);
     vsctrlMngRight = vDevCtrl("/dev/i2c-2", chipName, I2C_ADDRESS_RIGHT);
 
@@ -177,8 +169,6 @@ bool zynqGrabberModule::close() {
     D2Y.stop();                // bufferedport from yarp to device
 
     std::cout << "closing device drivers" << std::endl;
-    aerManager->closeDevice();  // device
-    std::cout << "AER closed" << std::endl;
     vsctrlMngLeft.disconnect(true);
     std::cout << "left controller closed" << std::endl;
     vsctrlMngRight.disconnect(true);

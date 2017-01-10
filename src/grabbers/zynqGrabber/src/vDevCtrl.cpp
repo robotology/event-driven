@@ -58,8 +58,6 @@ void vDevCtrl::disconnect(bool andturnoff)
         if(andturnoff) suspend();
         close(fd);
     }
-    std::cout << deviceName << " disconnected" << std::endl;
-
 }
 
 int vDevCtrl::i2cWrite(unsigned char reg, unsigned char *data, unsigned int size)

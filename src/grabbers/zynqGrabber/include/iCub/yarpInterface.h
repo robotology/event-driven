@@ -21,15 +21,15 @@ private:
     //internal variables/storage
     int fd;
     unsigned int readCount;
+    unsigned int lossCount;
     unsigned int bytesperevent;
-    unsigned int bytestoread;
     bool msgflag;
 
-    std::vector<int32_t> *readBuffer;
-    std::vector<int32_t> *accessBuffer;
-    std::vector<int32_t> buffer1;
-    std::vector<int32_t> buffer2;
-    std::vector<int32_t> discardbuffer;
+    std::vector<unsigned char> *readBuffer;
+    std::vector<unsigned char> *accessBuffer;
+    std::vector<unsigned char> buffer1;
+    std::vector<unsigned char> buffer2;
+    std::vector<unsigned char> discardbuffer;
 
     yarp::os::Semaphore safety;
     yarp::os::Semaphore signal;
@@ -40,13 +40,13 @@ public:
     vDevReadBuffer();
 
     bool initialise(std::string devicename, unsigned int bufferSize = 0,
-                    unsigned int readSize = 0, unsigned int bytesperevent = 8);
+                    unsigned int readSize = 0);
 
     //virtual bool threadInit();      //run before thread starts
     virtual void run();             //main function
     //virtual void onStop();          //run when stop() is called (first)
     virtual void threadRelease();   //run after thread stops (second)
-    unsigned int getBuffer(std::vector<int32_t> *bufferpointer);
+    std::vector<unsigned char>& getBuffer(unsigned int &nBytesRead, unsigned int &nBytesLost);
 
 };
 
@@ -63,6 +63,7 @@ private:
     //internal variables
     yarp::os::BufferedPort<emorph::vBottleMimic> portvBottle;
     int countAEs;
+    int countLoss;
     double rate;
     int prevAEs;
     double prevTS;
@@ -76,11 +77,11 @@ public:
 
     device2yarp();
     bool initialise(std::string moduleName = "", bool strict = false,
-                    std::string deviceName = "", unsigned int bufferSize = 5000,
-                    unsigned int readSize = 128);
+                    std::string deviceName = "", unsigned int bufferSize = 800000,
+                    unsigned int readSize = 1024);
     virtual void run();
     virtual void threadRelease();
-    virtual void afterStart();
+    virtual void afterStart(bool success);
 
 
 };

@@ -9,19 +9,13 @@
 vDevReadBuffer::vDevReadBuffer()
 {
     //parameters
-    bufferSize = 5000;  //events
-    readSize = 128;     //events
+    bufferSize = 800000;  //bytes
+    readSize = 1024;      //bytes
 
     //internal variables/storage
     fd = -1;
     readCount = 0;
-
-    buffer1.resize(bufferSize);
-    buffer2.resize(bufferSize);
-    discardbuffer.resize(readSize);
-
-    readBuffer = &buffer1;
-    accessBuffer = &buffer2;
+    lossCount = 0;
 
     bufferedreadwaiting = false;
 
@@ -29,24 +23,21 @@ vDevReadBuffer::vDevReadBuffer()
 
 bool vDevReadBuffer::initialise(std::string devicename,
                                 unsigned int bufferSize,
-                                unsigned int readSize,
-                                unsigned int bytesperevent)
+                                unsigned int readSize)
 {
 
     fd = open(devicename.c_str(), O_RDWR);
     if(fd < 0) return false;
 
-    if(bufferSize > 0) {
-        this->bufferSize = bufferSize;
-        buffer1.resize(bufferSize);
-        buffer2.resize(bufferSize);
-    }
-
-    if(readSize > 0) {
-        this->readSize = readSize;
-        discardbuffer.resize(readSize);
-    }
-    this->bytestoread = readSize * bytesperevent;
+    if(bufferSize > 0) this->bufferSize = bufferSize;
+    if(readSize > 0) this->readSize = readSize;
+    
+	buffer1.resize(bufferSize);
+	buffer2.resize(bufferSize);
+	discardbuffer.resize(readSize);
+    
+    readBuffer = &buffer1;
+    accessBuffer = &buffer2;
 
     return true;
 
@@ -54,6 +45,12 @@ bool vDevReadBuffer::initialise(std::string devicename,
 
 void vDevReadBuffer::run()
 {
+	
+	if(fd < 0) {
+		std::cout << "Event Reading Device uninistialised. Please run "
+			"initialisation before starting the thread" << std::endl;
+		return;
+	}
 
     signal.check();
 
@@ -65,15 +62,11 @@ void vDevReadBuffer::run()
         if(readCount >= bufferSize) {
             //we have reached maximum software buffer - read from the HW but
             //just discard the result.
-            if(!msgflag) {
-                std::cout << "Buffer Full - events discarded" << std::endl;
-                msgflag = true;
-            }
-            r = read(fd, discardbuffer.data(), bytestoread);
+            r = read(fd, discardbuffer.data(), readSize);
+            if(r > 0) lossCount += r;
         } else {
             //we read and fill up the buffer
-            msgflag = false;
-            r = read(fd, readBuffer->data() + readCount, std::min(bufferSize - readCount, bytestoread));
+            r = read(fd, readBuffer->data() + readCount, std::min(bufferSize - readCount, readSize));
             if(r > 0) readCount += r;
         }
 
@@ -97,7 +90,7 @@ void vDevReadBuffer::threadRelease()
     if(fd) close(fd);
 }
 
-unsigned int vDevReadBuffer::getBuffer(std::vector<int32_t> *bufferpointer)
+std::vector<unsigned char>& vDevReadBuffer::getBuffer(unsigned int &nBytesRead, unsigned int &nBytesLost)
 {
 
     //safely copy the data into the accessBuffer and reset the readCount
@@ -106,18 +99,23 @@ unsigned int vDevReadBuffer::getBuffer(std::vector<int32_t> *bufferpointer)
     bufferedreadwaiting = false;
 
     //switch the buffer the read into
-    bufferpointer = readBuffer;
+    std::vector<unsigned char> *temp;
+    temp = readBuffer;
     readBuffer = accessBuffer;
-    accessBuffer = bufferpointer;
+    accessBuffer = temp;   
 
     //reset the filling position
-    unsigned int nBytesRead = readCount;
+    nBytesRead = readCount;
+    nBytesLost = lossCount;
     readCount = 0;
+    lossCount = 0;
+    
+    //send the correct signals to restart the grabbing thread
     safety.post();
     signal.check();
     signal.post(); //tell the other thread we are done
 
-    return nBytesRead;
+    return *accessBuffer;
 
 }
 
@@ -127,6 +125,7 @@ unsigned int vDevReadBuffer::getBuffer(std::vector<int32_t> *bufferpointer)
 
 device2yarp::device2yarp() : RateThread(THRATE) {
     countAEs = 0;
+    countLoss = 0;
     strict = false;
 }
 
@@ -149,27 +148,31 @@ bool device2yarp::initialise(std::string moduleName, bool strict,
 
 }
 
-void device2yarp::afterStart()
+void device2yarp::afterStart(bool success)
 {
-    deviceReader.start();
+    if(success) deviceReader.start();
 }
 
 void  device2yarp::run() {
 
     //display an output to let everyone know we are still working.
-    if(yarp::os::Time::now() - prevTS > 5) {
-        std::cout << "ZynqGrabber running happily: " << countAEs
-                  << " events. ";
-        std::cout << (countAEs - prevAEs) / 5.0 << "v / second" << std::endl;
+    if(yarp::os::Time::now() - prevTS > 5.0) {
+        std::cout << "Event grabber running happily: ";
+        std::cout << (int)((countAEs - prevAEs) / 5.0) << " v/s" << std::endl;
+        std::cout << "                         Lost: ";
+        std::cout << (int)(countLoss / 5.0) << " v/s" << std::endl;
+        countLoss = 0;
         prevTS = yarp::os::Time::now();
         prevAEs = countAEs;
     }
 
     //get the data from the device read thread
-
-    std::vector<int32_t> *data = 0;
-    int nBytesRead = deviceReader.getBuffer(data);
+	unsigned int nBytesRead, nBytesLost;
+    std::vector<unsigned char> &data = deviceReader.getBuffer(nBytesRead, nBytesLost);
+    countAEs += nBytesRead / 8;
+    countLoss += nBytesLost / 8;
     if (nBytesRead <= 0) return;
+    
 
     bool dataError = false;
 
@@ -179,10 +182,10 @@ void  device2yarp::run() {
         std::cout << "BUFFER NOT A MULTIPLE OF 8 BYTES: " <<  nBytesRead << std::endl;
     }
 
-    countAEs += nBytesRead / 8;
+    
     if(portvBottle.getOutputCount() && nBytesRead > 8 && !dataError) {
         emorph::vBottleMimic &vbm = portvBottle.prepare();
-        vbm.setdata((const char *)(data->data()), nBytesRead);
+        vbm.setdata((const char *)data.data(), nBytesRead);
         vStamp.update();
         portvBottle.setEnvelope(vStamp);
         if(strict) portvBottle.writeStrict();
