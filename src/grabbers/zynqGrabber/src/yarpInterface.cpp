@@ -204,7 +204,7 @@ void  device2yarp::run() {
     if(!portvBottle.getOutputCount() || nBytesRead < 8 || dataError)
         return;
 
-    //we have something to send so go ahead
+    //typical ZYNQ behaviour to skip error checking
     if(!errorchecking) {
         emorph::vBottleMimic &vbm = portvBottle.prepare();
         vbm.setdata((const char *)data.data(), nBytesRead);
@@ -212,7 +212,7 @@ void  device2yarp::run() {
         portvBottle.setEnvelope(vStamp);
         if(strict) portvBottle.writeStrict();
         else portvBottle.write();
-        return;
+        return;						//return here.
     }
 
     //or go through data and check for consistency
@@ -224,7 +224,7 @@ void  device2yarp::run() {
         //check validity
         int *TS =  (int *)(data.data() + bend);
         int *AE =  (int *)(data.data() + bend + 4);
-        bool BITMISMATCH = !(*TS & 0x80000000) || (*AE & 0xFFE00000);
+        bool BITMISMATCH = !(*TS & 0x80000000) || (*AE & 0xFBE00000);
 
         if(BITMISMATCH) {
             //send on what we have checked is not mismatched so far
