@@ -43,7 +43,11 @@ bool vDevReadBuffer::initialise(std::string devicename,
 {
 
     fd = open(devicename.c_str(), O_RDONLY);
-    if(fd < 0) return false;
+    if(fd < 0) {
+        fd = open(devicename.c_str(), O_RDONLY | O_NONBLOCK);
+        if(fd < 0)
+            return false;
+    }
 
     if(bufferSize > 0) this->bufferSize = bufferSize;
     if(readSize > 0) this->readSize = readSize;
@@ -201,11 +205,11 @@ void  device2yarp::run() {
     }
 
     //if we don't want or have nothing to send or there is an error finish here.
-    if(!portvBottle.getOutputCount() || nBytesRead < 8 || dataError)
+    if(!portvBottle.getOutputCount() || nBytesRead < 8)
         return;
 
     //typical ZYNQ behaviour to skip error checking
-    if(!errorchecking) {
+    if(!errorchecking && !dataError) {
         emorph::vBottleMimic &vbm = portvBottle.prepare();
         vbm.setdata((const char *)data.data(), nBytesRead);
         vStamp.update();

@@ -24,6 +24,7 @@
 vDevCtrl::vDevCtrl(std::string deviceName, unsigned char i2cAddress)
 {
 
+    fd = -1;
     this->deviceName = deviceName;
     this->I2CAddress = i2cAddress;
 

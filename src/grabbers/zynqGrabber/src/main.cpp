@@ -29,11 +29,10 @@ int main(int argc, char * argv[])
     rf.setDefaultContext("eMorph");   //overridden by --context parameter
     rf.configure(argc, argv);
 
-    module.runModule(rf);
+    return module.runModule(rf);
 
-    yarp::os::Network::fini();
+    //yarp::os::Network::fini();
 
-    return 0;
 }
 
 
