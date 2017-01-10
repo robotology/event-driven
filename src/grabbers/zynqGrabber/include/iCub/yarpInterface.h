@@ -106,7 +106,7 @@ class yarp2device : public yarp::os::BufferedPort<emorph::vBottle>
 public:
 
     yarp2device();
-    virtual    bool    open(std::string moduleName, std::string deviceName);
+    bool    initialise(std::string moduleName, std::string deviceName);
     bool    init();
     void    close();
     void    onRead(emorph::vBottle &bot);

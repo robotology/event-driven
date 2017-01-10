@@ -88,17 +88,17 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         int readPacketSize = 8 * rf.check("readPacketSize", yarp::os::Value("128")).asInt();
         int maxBottleSize = 8 * rf.check("maxBottleSize", yarp::os::Value("100000")).asInt();
 
-        if(!D2Y.initialise(moduleName, strict, dataDevice, readPacketSize, maxBottleSize)) {
+        if(!D2Y.initialise(moduleName, strict, dataDevice, maxBottleSize, readPacketSize)) {
             std::cout << "A data device was specified but could not be initialised" << std::endl;
             return false;
         } else {
             D2Y.start();
         }
 
-        if(!Y2D.open(moduleName, dataDevice)) {
-            std::cerr << "Could not open YARP ports for Y2D" << std::endl;
-            return false;
-        }
+        //if(!Y2D.initialise(moduleName, dataDevice)) {
+        //    std::cerr << "Could not open YARP ports for Y2D" << std::endl;
+        //    return false;
+        //}
     }
 
     if (!handlerPort.open("/" + moduleName)) {

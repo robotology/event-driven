@@ -26,15 +26,15 @@ bool vDevReadBuffer::initialise(std::string devicename,
                                 unsigned int readSize)
 {
 
-    fd = open(devicename.c_str(), O_RDWR);
+    fd = open(devicename.c_str(), O_RDONLY);
     if(fd < 0) return false;
-
+    
     if(bufferSize > 0) this->bufferSize = bufferSize;
     if(readSize > 0) this->readSize = readSize;
 
-    buffer1.resize(bufferSize);
-    buffer2.resize(bufferSize);
-    discardbuffer.resize(readSize);
+    buffer1.resize(this->bufferSize);
+    buffer2.resize(this->bufferSize);
+    discardbuffer.resize(this->readSize);
 
     readBuffer = &buffer1;
     accessBuffer = &buffer2;
@@ -218,10 +218,10 @@ yarp2device::yarp2device()
     clockScale = 1;
 }
 
-bool yarp2device::open(std::string moduleName, std::string deviceName)
+bool yarp2device::initialise(std::string moduleName, std::string deviceName)
 {
 
-    devDesc = ::open(deviceName.c_str(), O_RDWR);
+    devDesc = ::open(deviceName.c_str(), O_WRONLY);
     if(devDesc < 0)
         return false;
 
