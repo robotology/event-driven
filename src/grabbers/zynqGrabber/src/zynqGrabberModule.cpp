@@ -1,10 +1,6 @@
-// -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
-
 /*
- * Copyright (C) 2010 RobotCub Consortium, European Commission FP6 Project IST-004370
- * Authors: Francesco Rea, Chiara Bartolozzi, Arren Glover
- * email:   francesco.rea@iit.it
- * website: www.robotcub.org
+ * Copyright (C) 2017 iCub Facility - Istituto Italiano di Tecnologia
+ * Author: arren.glover@iit.it, chiara.bartolozzi@iit.it
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
  * later version published by the Free Software Foundation.
