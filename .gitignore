@@ -18,3 +18,4 @@ build-ubuntu/
 build-pc104/
 
 *.autosave
+.idea/
