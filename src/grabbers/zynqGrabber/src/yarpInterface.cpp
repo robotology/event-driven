@@ -143,15 +143,17 @@ device2yarp::device2yarp() : RateThread(THRATE) {
     countAEs = 0;
     countLoss = 0;
     strict = false;
+    errorchecking = false;
 }
 
-bool device2yarp::initialise(std::string moduleName, bool strict,
+bool device2yarp::initialise(std::string moduleName, bool strict, bool check,
                              std::string deviceName, unsigned int bufferSize,
                              unsigned int readSize) {
 
     if(!deviceReader.initialise(deviceName, bufferSize, readSize))
         return false;
 
+    this->errorchecking = check;
     this->strict = strict;
     if(strict) {
         std::cout << "D2Y: setting output port to strict" << std::endl;
@@ -198,10 +200,60 @@ void  device2yarp::run() {
         std::cout << "BUFFER NOT A MULTIPLE OF 8 BYTES: " <<  nBytesRead << std::endl;
     }
 
+    //if we don't want or have nothing to send or there is an error finish here.
+    if(!portvBottle.getOutputCount() || nBytesRead < 8 || dataError)
+        return;
 
-    if(portvBottle.getOutputCount() && nBytesRead > 8 && !dataError) {
+    //we have something to send so go ahead
+    if(!errorchecking) {
         emorph::vBottleMimic &vbm = portvBottle.prepare();
         vbm.setdata((const char *)data.data(), nBytesRead);
+        vStamp.update();
+        portvBottle.setEnvelope(vStamp);
+        if(strict) portvBottle.writeStrict();
+        else portvBottle.write();
+        return;
+    }
+
+    //or go through data and check for consistency
+    int bstart = 0;
+    int bend = 0;
+
+    while(bend < (int)nBytesRead - 7) {
+
+        //check validity
+        int *TS =  (int *)(data.data() + bend);
+        int *AE =  (int *)(data.data() + bend + 4);
+        bool BITMISMATCH = !(*TS & 0x80000000) || (*AE & 0xFFE00000);
+
+        if(BITMISMATCH) {
+            //send on what we have checked is not mismatched so far
+            if(bend - bstart > 0) {
+                std::cerr << "BITMISMATCH in yarp2device" << std::endl;
+                std::cerr << *TS << " " << *AE << std::endl;
+
+                emorph::vBottleMimic &vbm = portvBottle.prepare();
+                vbm.setdata((const char *)data.data()+bstart, bend-bstart);
+                countAEs += (bend - bstart) / 8;
+                vStamp.update();
+                portvBottle.setEnvelope(vStamp);
+                if(strict) portvBottle.writeStrict();
+                else portvBottle.write();
+            }
+
+            //then increment by 1 to find the next alignment
+            bend++;
+            bstart = bend;
+        } else {
+            //and then check the next two ints
+            bend += 8;
+        }
+    }
+
+    if(nBytesRead - bstart > 7) {
+        emorph::vBottleMimic &vbm = portvBottle.prepare();
+        vbm.setdata((const char *)data.data()+bstart, 8*((nBytesRead-bstart)/8));
+        countAEs += (nBytesRead - bstart) / 8;
         vStamp.update();
         portvBottle.setEnvelope(vStamp);
         if(strict) portvBottle.writeStrict();

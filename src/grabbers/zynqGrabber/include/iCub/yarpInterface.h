@@ -75,6 +75,7 @@ private:
 
     //parameters
     bool strict;
+    bool errorchecking;
 
     //internal variables
     yarp::os::BufferedPort<emorph::vBottleMimic> portvBottle;
@@ -92,7 +93,7 @@ private:
 public:
 
     device2yarp();
-    bool initialise(std::string moduleName = "", bool strict = false,
+    bool initialise(std::string moduleName = "", bool strict = false, bool check = false,
                     std::string deviceName = "", unsigned int bufferSize = 800000,
                     unsigned int readSize = 1024);
     virtual void run();
