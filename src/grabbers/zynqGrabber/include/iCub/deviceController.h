@@ -17,10 +17,22 @@
 #ifndef __VDEVCTRL__
 #define __VDEVCTRL__
 
-#include <string>
+#include <iCub/deviceRegisters.h>
 #include <yarp/os/Bottle.h>
-#include <fstream>
-#include <iCub/vsCtrl.h>
+
+#include <string>
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <linux/i2c-dev.h>
+
+typedef struct fpgaStatus {
+    bool crcErr;
+    bool biasDone;
+    bool i2cTimeout;
+    bool apsFifoFull;
+    bool tdFifoFull;
+} fpgaStatus_t;
 
 class vDevCtrl
 {
@@ -28,7 +40,6 @@ private:
 
     //PARAMETERS
     std::string deviceName;
-    std::string chipName;
     unsigned char I2CAddress;
 
     //INTERNAL VARIABLES
@@ -41,13 +52,8 @@ private:
     int i2cRead(unsigned char reg, unsigned char *data, unsigned int size);
     int i2cWrite(unsigned char reg, unsigned char *data, unsigned int size);
 
-    //int writeRegConfig(unsigned char regAddr, std::vector<uint8_t> regConfig); // do we need this?
-
-    //std::vector<unsigned int> prepareBiases(); //do we need this?
-
     //WRAPPERS?
     bool configureRegisters(); //new initDevice
-
 
     bool setLatchAtEnd(bool Enable);
     bool setShiftCount(uint8_t shiftCount);
@@ -58,7 +64,7 @@ private:
 public:
 
     //REQUIRE: devicefilename, chiptype (eg DVS/ATIS), chipFPGAaddress (eg LEFT or RIGHT)
-    vDevCtrl(std::string deviceName = "", std::string chipName = "", unsigned char i2cAddress = 0);
+    vDevCtrl(std::string deviceName = "", unsigned char i2cAddress = 0);
 
     //SET/GET CONFIGURATION
     bool setBias(std::string biasName, unsigned int biasValue);

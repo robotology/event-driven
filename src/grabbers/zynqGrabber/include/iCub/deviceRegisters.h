@@ -6,26 +6,20 @@
 //
 //
 
-#ifndef eMorph_vsCtrl_h
-#define eMorph_vsCtrl_h
+#ifndef _VDEVICEREGISTERS_
+#define _VDEVICEREGISTERS_
 
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <fcntl.h>
-#include <sys/ioctl.h>
-#include <linux/i2c-dev.h> // da mettere su zynq
+ // da mettere su zynq
 //#define I2C_SLAVE 0x00 // da togliere su zynq
 
-#define MAX_BUF_SIZE 16777216
 // vsctrl
-
-#define VSCTRL_MAX_BUF_SIZE 16777216
 
 #define I2C_ADDRESS_LEFT		 0x10
 #define I2C_ADDRESS_RIGHT		 0x11
 //#define I2C_ADDRESS_VSCTRL       0x11
 //#define I2C_ADDRESS              I2C_ADDRESS_VSCTRL
+
+#define AUTOINCR      0x80
 
 // --- addresses of the registers --- //
 #define VSCTRL_INFO_ADDR         0x00
@@ -103,10 +97,6 @@
 #define AER_SET_REM_LBCK    _IOW (MAGIC_NUM, 11, void *)
 #define AER_SET_FAR_LBCK    _IOW (MAGIC_NUM, 12, void *)
 
-#define AER_MAX_BUF_SIZE 16777216
-
-#define AUTOINCR      0x80
-
 #define CTRL_REG     0x00
 #define RXDATA_REG   0x08
 #define RXTIME_REG   0x0C
@@ -141,43 +131,6 @@
 #define MSK_RX_MOD_ERR   0x00004000
 //#define MASK_RX_EMPTY    0x01
 //#define MASK_RX_FULL     0x04
-
-
-
-//typedef union vsctrl_ioctl_arg_t {
-//    struct {
-//        uint8_t addr;
-//        char rw;
-//        uint32_t data;
-//    } regs;
-//    struct {
-//        uint32_t prescaler_value;
-//        uint8_t setup_hold_time;
-//        uint8_t clock_active_time;
-//        uint8_t latch_setup_time;
-//        uint8_t latch_active_time;
-//    } bg_timings;
-//    struct {
-//        uint8_t cfg_ack_rel_delay;
-//        uint8_t cfg_sample_delay;
-//        uint8_t cfg_ack_set_delay;
-//    } aer_timings;
-//} vsctrl_ioctl_arg_t;
-//
-//
-typedef struct aerGenReg {
-    unsigned int offset;
-    char         rw;
-    unsigned int data;
-} aerGenReg_t;
-
-typedef struct fpgaStatus {
-    bool crcErr;
-    bool biasDone;
-    bool i2cTimeout;
-    bool apsFifoFull;
-    bool tdFifoFull;
-} fpgaStatus_t;
 
 
 #endif

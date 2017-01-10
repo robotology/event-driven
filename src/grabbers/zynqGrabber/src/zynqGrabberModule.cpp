@@ -27,36 +27,26 @@
 
 bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 
-    //Process all parameters from both command-line and .ini file
 
-    std::string moduleName =
-            rf.check("name", yarp::os::Value("zynqGrabber")).asString();
+    std::string moduleName = rf.check("name", yarp::os::Value("zynqGrabber")).asString();
     setName(moduleName.c_str());
-
-    //get the device name which will be used to read events
-    // zynq_hpu, zynq_spinn, ihead_aerfx2
-    std::string device = rf.check("device", yarp::os::Value("zynq_sens")).asString();
-    std::string dataDevice =
-            rf.check("dataDevice", yarp::os::Value("/dev/iit-hpu0")).asString();
-
-    // get the correct clock of each device
-    int clockPeriod = rf.check("clockPeriod", yarp::os::Value(100)).asInt(); //add check instead of default value
-
-    //dvs or atis
-    std::string chipName = rf.check("chip", yarp::os::Value("ATIS")).asString();
-
-    //bias values
-    yarp::os::Bottle biaslistl = rf.findGroup(chipName + "_BIAS_LEFT");
-    yarp::os::Bottle biaslistr = rf.findGroup(chipName + "_BIAS_RIGHT");
-
-    //configuration classes for the zynq-based sensors
-    vsctrlMngLeft = vDevCtrl("/dev/i2c-2", chipName, I2C_ADDRESS_LEFT);
-    vsctrlMngRight = vDevCtrl("/dev/i2c-2", chipName, I2C_ADDRESS_RIGHT);
+    bool strict = rf.check("strict") && rf.check("strict", yarp::os::Value(true)).asBool();
 
 
-    bool con_success = false;
 
-    if(device == "zynq_sens") {
+
+    if(rf.check("controllerDevice")) {
+
+        std::string controllerDevice = rf.find("controllerDevice").asString();
+
+        vsctrlMngLeft = vDevCtrl(controllerDevice, I2C_ADDRESS_LEFT);
+        vsctrlMngRight = vDevCtrl(controllerDevice, I2C_ADDRESS_RIGHT);
+
+        //bias values
+        yarp::os::Bottle biaslistl = rf.findGroup("ATIS_BIAS_LEFT");
+        yarp::os::Bottle biaslistr = rf.findGroup("ATIS_BIAS_RIGHT");
+
+        bool con_success = false;
 
         if(!vsctrlMngLeft.setBias(biaslistl) || !vsctrlMngRight.setBias(biaslistr) ) {
             std::cerr << "Bias file required to run zynqGrabber" << std::endl;
@@ -82,69 +72,35 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         }
 
 
-
+        if(!con_success) {
+            std::cerr << "A configuration device was specified but could not be connected" << std::endl;
+            return false;
+        }
 
     }
-    if(!con_success) {
-        std::cerr << "Did not connect to any configuration device" << std::endl;
-        return false;
-    }
 
-//    if(device == "zynq_spinn" || device == "zynq_sens") {
 
-//        // class manageDevice for events
-//        aerManager = new aerDevManager(device, clockPeriod, loopBack);
-
-//        if(!aerManager->openDevice()) {
-//            std::cerr << "Could not open the aer device: " << device << std::endl;
-//            return false;
-//        }
-
-//    } else if(device == "ihead_sens") {
-
-//        // device manager for events
-//        aerManager = new aerfx2_0DevManager();
-
-//        if(!aerManager->openDevice()) {
-//            std::cerr << "Could not open the device: " << device << std::endl;
-//            return false;
-//        }
-
-//    } else {
-
-//        std::cout << "Device: " << device << " not known " << std::endl;
-//        return false;
-//    }
 
     //open rateThread device2yarp
-    if(!D2Y.initialise(moduleName, rf.check("strict"), dataDevice)) {
-        std::cout << "Could not initialise yarp interface" << std::endl;
-    }
-    D2Y.start();
-//    if(!D2Y->attachDeviceManager(aerManager))
-//    {
-//        //could not start the thread
-//        return false;
-//    }
-//    if(!D2Y->initialise(moduleName, rf.check("strict"), )) {
-//        //could not start the thread
-//        return false;
-//    }
-    //open bufferedPort yarp2device
-    if(!Y2D.attachDeviceManager(aerManager))
-    {
-        //could not start the thread
-        return false;
-    }
-    if(!Y2D.open(moduleName))
-    {
-        std::cerr << " : Unable to open ports" << std::endl;
-        return false;
+    if(rf.check("dataDevice")) {
+
+        std::string dataDevice = rf.find("dataDevice").asString();
+        int readPacketSize = 8 * rf.check("readPacketSize", yarp::os::Value("128")).asInt();
+        int maxBottleSize = 8 * rf.check("maxBottleSize", yarp::os::Value("100000")).asInt();
+
+        if(!D2Y.initialise(moduleName, strict, dataDevice, readPacketSize, maxBottleSize)) {
+            std::cout << "A data device was specified but could not be initialised" << std::endl;
+            return false;
+        } else {
+            D2Y.start();
+        }
+
+        if(!Y2D.open(moduleName, dataDevice)) {
+            std::cerr << "Could not open YARP ports for Y2D" << std::endl;
+            return false;
+        }
     }
 
-    // attach a port of the same name as the module (prefixed with a /)
-    //to the module so that messages received from the port are redirected to
-    //the respond method
     if (!handlerPort.open("/" + moduleName)) {
         std::cout << "Unable to open RPC port @ /" << moduleName << std::endl;
         return false;

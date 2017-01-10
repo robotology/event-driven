@@ -14,19 +14,17 @@
  * Public License for more details
  */
 
-#include "iCub/vDevCtrl.h"
+#include "iCub/deviceController.h"
+#include "iCub/deviceRegisters.h"
+
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-#include <errno.h>
-#include <vector>
-#include "iCub/vsCtrl.h"
 
-vDevCtrl::vDevCtrl(std::string deviceName, std::string chipName, unsigned char i2cAddress)
+vDevCtrl::vDevCtrl(std::string deviceName, unsigned char i2cAddress)
 {
 
     this->deviceName = deviceName;
-    this->chipName = chipName;
     this->I2CAddress = i2cAddress;
 
     fpgaStat.biasDone      = false;
@@ -95,36 +93,6 @@ int vDevCtrl::i2cRead(unsigned char reg, unsigned char *data, unsigned int size)
     return ret;
 
 }
-
-//void program_eye (int handle, unsigned char eye) {
-
-//       unsigned int value;
-
-
-
-//       i2c_read (handle, SRCCNFG_REG, (unsigned char*) &value, eye, sizeof(value));
-
-//       value |= ( (ACKSETDELAY<<8) | (SAMPLEDELAY<<16) | (ACKRELEASEDELAY<<24) );
-
-//       i2c_write (handle, SRCCNFG_REG, (unsigned char*) &value, eye, sizeof(value));
-
-
-
-//       value = ENABLECH0 | ENABLECH1 | ENABLECH2;
-
-//       i2c_write (handle, HSSAERCNFG_REG, (unsigned char*) &value, eye, 1);
-
-
-
-//       value = (SELDESTHSSAER<<SELDEST_SH) | (1<<ENABLESAER_SH);
-
-//       i2c_write (handle, SRCDSTCTRL_REG+1, (unsigned char*) &value, eye, 1);
-
-//       value = (1<<APS_EN_SH) | (1<<TD_EN_SH);
-
-//       i2c_write (handle, SRCDSTCTRL_REG, (unsigned char*) &value, eye, 1);
-
-//}
 
 bool vDevCtrl::configure(bool verbose)
 {
@@ -205,7 +173,7 @@ bool vDevCtrl::setBias(yarp::os::Bottle bias)
 // --- change the value of a single bias --- //
 bool vDevCtrl::setBias(std::string biasName, unsigned int biasValue)
 {
-	yarp::os::Bottle &vals = bias.findGroup(biasName);
+    yarp::os::Bottle &vals = bias.findGroup(biasName);
     if(vals.isNull()) return false;
     vals.pop(); //remove the old value
     vals.addInt(biasValue);
@@ -244,11 +212,11 @@ bool vDevCtrl::configureBiases(){
     for(i = 1; i < bias.size() - 1; i++) {
         yarp::os::Bottle *biasdata = bias.get(i).asList();
         vref = biasdata->get(1).asInt();
-		header = biasdata->get(2).asInt();
-		voltage = biasdata->get(3).asInt();
+        header = biasdata->get(2).asInt();
+        voltage = biasdata->get(3).asInt();
         unsigned int biasVal = 255 * (voltage / vref);
-		biasVal += header << 21;
-		//std::cout << biasdata->get(0).asString() << " " << biasVal << std::endl;
+        biasVal += header << 21;
+        //std::cout << biasdata->get(0).asString() << " " << biasVal << std::endl;
         if(i2cWrite(VSCTRL_BG_DATA_ADDR, (unsigned char *)&biasVal, sizeof(biasVal)) != sizeof(biasVal))
             return false;
     }
@@ -292,8 +260,6 @@ bool vDevCtrl::configureBiases(){
     return true;
 
 }
-
-
 
 bool vDevCtrl::setShiftCount(uint8_t shiftCount){
 
@@ -397,7 +363,7 @@ void vDevCtrl::printConfiguration()
 
     std::cout << "Configuration for control device: " << (unsigned int)I2CAddress << std::endl;
 
-	std::cout << "== Bias Values ==" << std::endl;
+    std::cout << "== Bias Values ==" << std::endl;
     std::cout << bias.toString() << std::endl;
 
     std::cout << "== Bias Hex Stream ==" << std::endl;
@@ -408,14 +374,14 @@ void vDevCtrl::printConfiguration()
     for(i = 1; i < bias.size(); i++) {
         yarp::os::Bottle *biasdata = bias.get(i).asList();
         vref = biasdata->get(1).asInt();
-		header = biasdata->get(2).asInt();
-		voltage = biasdata->get(3).asInt();
+        header = biasdata->get(2).asInt();
+        voltage = biasdata->get(3).asInt();
         unsigned int biasVal = 255 * (voltage / vref);
-		biasVal += header << 21;
-		printf("0x%08X\n", biasVal);
+        biasVal += header << 21;
+        printf("0x%08X\n", biasVal);
     }
 
-	std::cout << "== FPGA Register Values ==" << std::endl;
+    std::cout << "== FPGA Register Values ==" << std::endl;
     unsigned int regval = 0;
     i2cRead(VSCTRL_INFO_ADDR, (unsigned char *)&regval, sizeof(regval));
     printf("Info: 0x%08X\n", regval);
@@ -441,18 +407,6 @@ void vDevCtrl::printConfiguration()
     printf("GPO: 0x%08X\n", regval);
     i2cRead(VSCTRL_GPI_ADDR, (unsigned char *)&regval, sizeof(regval));
     printf("GPI: 0x%08X\n", regval);
-
-
-//    printf("Source Config: 0x%08X\n", i2cRead(VSCTRL_SRC_CNFG_ADDR));
-//    printf("Source Dest. Cont.: 0x%08X\n", i2cRead(VSCTRL_SRC_DST_CTRL_ADDR));
-//    printf("PAER Config: 0x%08X\n", i2cRead(VSCTRL_PAER_CNFG_ADDR));
-//    printf("HSSAER Config: 0x%08X\n", i2cRead(VSCTRL_HSSAER_CNFG_ADDR));
-//    printf("GTP Config: 0x%08X\n", i2cRead(VSCTRL_GTP_CNFG_ADDR));
-//    printf("BG Config: 0x%08X\n", i2cRead(VSCTRL_BG_CNFG_ADDR));
-//    printf("BG Prescaler: 0x%08X\n", i2cRead(VSCTRL_BG_PRESC_ADDR));
-//    printf("BG Timing: 0x%08X\n", i2cRead(VSCTRL_BG_TIMINGS_ADDR));
-//    printf("GPO Config: 0x%08X\n", i2cRead(VSCTRL_GPO_ADDR));
-//    printf("GPI Config: 0x%08X\n", i2cRead(VSCTRL_GPI_ADDR));
 
 }
 
