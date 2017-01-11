@@ -15,7 +15,7 @@
  * Public License for more details
  */
 
-#include "dPepper.h"
+#include "vPepper.h"
 
 /**********************************************************/
 bool dPepperModule::configure(yarp::os::ResourceFinder &rf)

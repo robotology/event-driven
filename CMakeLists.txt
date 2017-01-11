@@ -14,6 +14,7 @@ option(V_BUILD_ZYNQ "Build for ZynqGrabber" OFF)
 option(V_USE_QTCREATOR "Add apps/drivers to QtCreator IDE" OFF)
 option(V_SPINNTERFACE "Build the SpiNNaker Ethernet Interface" OFF)
 option(V_10BITCODEC "Build codec with 10bit address space" OFF)
+option(V_32BITTIME "Build codec using a 32bit timestamp" OFF)
 
 #YARP
 find_package(YARP REQUIRED)

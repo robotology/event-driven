@@ -789,6 +789,13 @@ void isoDraw::initialise()
                         cv::FONT_ITALIC, 0.5, c, 1, 8, true);
         }
 
+        //at scale tsi = vtsHelper::maxStamp() * 0.5  * 80 / (10^9) = 671 ms
+        if(tsi == (int)(scale / 67.1)) {
+            cv::circle(baseimage, cv::Point(x, y), 6, CV_RGB(0, 255, 100), CV_FILLED);
+            cv::putText(baseimage, std::string("10ms"), cv::Point(x, y),
+                        cv::FONT_ITALIC, 0.5, c, 1, 8, true);
+        }
+
         //x = c1*Xlimit - s1*tsi + imagexshift;
         //y = c2*Ylimit - s2*(-s1*Xlimit - c1*tsi) + imageyshift;
         //baseimage.at<cv::Vec3b>(y, x) = cv::Vec3b(255, 255, 255);
@@ -864,11 +871,13 @@ void isoDraw::draw(cv::Mat &image, const eventdriven::vQueue &eSet)
 //                isoimage.at<cv::Vec3b>(y, x) = cv::Vec3b(80, 0, 80);
 //            else
                 isoimage.at<cv::Vec3b>(y, x) = cv::Vec3b(255, 160, 255);
+                //isoimage.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 0, 0);
         } else {
 //            if(dt < 0.9)
 //                isoimage.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 80, 0);
 //            else
                 isoimage.at<cv::Vec3b>(y, x) = cv::Vec3b(160, 255, 160);
+                //isoimage.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 0, 0);
         }
 
     }

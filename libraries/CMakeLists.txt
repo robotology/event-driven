@@ -47,6 +47,11 @@ if(V_10BITCODEC)
     set_target_properties(${PROJECTNAME} PROPERTIES COMPILE_DEFINITIONS TENBITCODEC)
 endif(V_10BITCODEC)
 
+if(V_32BITTIME)
+    #message("Using 10bit codec")
+    set_target_properties(${PROJECTNAME} PROPERTIES COMPILE_DEFINITIONS TIME32BIT)
+endif(V_32BITTIME)
+
 target_link_libraries(${PROJECTNAME} ${YARP_LIBRARIES})
 
 if(ICUBcontrib_FOUND)

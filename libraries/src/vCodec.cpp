@@ -68,7 +68,11 @@ vEvent * createEvent(const std::string type)
 /******************************************************************************/
 void vEvent::encode(yarp::os::Bottle &b) const
 {
+#ifdef TIME32BIT
+    b.addInt(stamp&0x7FFFFFFF);
+#else
     b.addInt((32<<26)|(stamp&0x00ffffff));
+#endif
 }
 
 /******************************************************************************/
@@ -77,7 +81,11 @@ bool vEvent::decode(const yarp::os::Bottle &packet, int &pos)
     if(pos + localWordsCoded <= packet.size()) {
 
         //TODO: this needs to take into account the code aswell
+#ifdef TIME32BIT
         stamp = packet.get(pos).asInt()&0x00ffffff;
+#else
+        stamp = packet.get(pos).asInt()&0x7FFFFFFF;
+#endif
         pos += localWordsCoded;
         return true;
     }
@@ -170,7 +178,7 @@ void AddressEvent::encode(yarp::os::Bottle &b) const
 {
     vEvent::encode(b);
 #ifdef TENBITCODEC
-    b.addInt(((channel&0x01)<<21)|((y&0x3FF)<<11)|((x&0x3FF)<<1)|(polarity&0x01));
+    b.addInt(((channel&0x01)<<20)|((y&0x0FF)<<10)|((x&0x1FF)<<1)|(polarity&0x01));
 #else
     b.addInt(((channel&0x01)<<15)|((y&0x7f)<<8)|((x&0x7f)<<1)|(polarity&0x01));
 #endif
@@ -188,10 +196,10 @@ bool AddressEvent::decode(const yarp::os::Bottle &packet, int &pos)
         polarity=word0&0x01;
 
         word0>>=1;
-        x=word0&0x3FF;
+        x=word0&0x1FF;
 
-        word0>>=10;
-        y=word0&0x3FF;
+        word0>>=9;
+        y=word0&0xFF;
 
         word0>>=10;
         channel=word0&0x01;
