@@ -143,7 +143,8 @@ std::vector<unsigned char>& vDevReadBuffer::getBuffer(unsigned int &nBytesRead, 
 //device2yarp
 /******************************************************************************/
 
-device2yarp::device2yarp() : RateThread(THRATE) {
+//device2yarp::device2yarp() : RateThread(THRATE) {
+device2yarp::device2yarp() {
     countAEs = 0;
     countLoss = 0;
     strict = false;
@@ -177,91 +178,94 @@ void device2yarp::afterStart(bool success)
 
 void  device2yarp::run() {
 
-    //display an output to let everyone know we are still working.
-    if(yarp::os::Time::now() - prevTS > 5.0) {
-        std::cout << "Event grabber running happily: ";
-        std::cout << (int)((countAEs - prevAEs) / 5.0) << " v/s" << std::endl;
-        std::cout << "                         Lost: ";
-        std::cout << (int)(countLoss / 5.0) << " v/s" << std::endl;
-        countLoss = 0;
-        prevTS = yarp::os::Time::now();
-        prevAEs = countAEs;
-    }
+    while(!isStopping()) {
 
-    //get the data from the device read thread
-    unsigned int nBytesRead, nBytesLost;
-    std::vector<unsigned char> &data = deviceReader.getBuffer(nBytesRead, nBytesLost);
-    countAEs += nBytesRead / 8;
-    countLoss += nBytesLost / 8;
-    if (nBytesRead <= 0) return;
-
-
-    bool dataError = false;
-
-    //SMALL ERROR CHECKING BUT NOT FIXING
-    if(nBytesRead % 8) {
-        dataError = true;
-        std::cout << "BUFFER NOT A MULTIPLE OF 8 BYTES: " <<  nBytesRead << std::endl;
-    }
-
-    //if we don't want or have nothing to send or there is an error finish here.
-    if(!portvBottle.getOutputCount() || nBytesRead < 8)
-        return;
-
-    //typical ZYNQ behaviour to skip error checking
-    if(!errorchecking && !dataError) {
-        eventdriven::vBottleMimic &vbm = portvBottle.prepare();
-        vbm.setdata((const char *)data.data(), nBytesRead);
-        vStamp.update();
-        portvBottle.setEnvelope(vStamp);
-        if(strict) portvBottle.writeStrict();
-        else portvBottle.write();
-        return;						//return here.
-    }
-
-    //or go through data and check for consistency
-    int bstart = 0;
-    int bend = 0;
-
-    while(bend < (int)nBytesRead - 7) {
-
-        //check validity
-        int *TS =  (int *)(data.data() + bend);
-        int *AE =  (int *)(data.data() + bend + 4);
-        bool BITMISMATCH = !(*TS & 0x80000000) || (*AE & 0xFBE00000);
-
-        if(BITMISMATCH) {
-            //send on what we have checked is not mismatched so far
-            if(bend - bstart > 0) {
-                std::cerr << "BITMISMATCH in yarp2device" << std::endl;
-                std::cerr << *TS << " " << *AE << std::endl;
-
-                eventdriven::vBottleMimic &vbm = portvBottle.prepare();
-                vbm.setdata((const char *)data.data()+bstart, bend-bstart);
-                countAEs += (bend - bstart) / 8;
-                vStamp.update();
-                portvBottle.setEnvelope(vStamp);
-                if(strict) portvBottle.writeStrict();
-                else portvBottle.write();
-            }
-
-            //then increment by 1 to find the next alignment
-            bend++;
-            bstart = bend;
-        } else {
-            //and then check the next two ints
-            bend += 8;
+        //display an output to let everyone know we are still working.
+        if(yarp::os::Time::now() - prevTS > 5.0) {
+            std::cout << "Event grabber running happily: ";
+            std::cout << (int)((countAEs - prevAEs) / 5.0) << " v/s" << std::endl;
+            std::cout << "                         Lost: ";
+            std::cout << (int)(countLoss / 5.0) << " v/s" << std::endl;
+            countLoss = 0;
+            prevTS = yarp::os::Time::now();
+            prevAEs = countAEs;
         }
-    }
 
-    if(nBytesRead - bstart > 7) {
-        eventdriven::vBottleMimic &vbm = portvBottle.prepare();
-        vbm.setdata((const char *)data.data()+bstart, 8*((nBytesRead-bstart)/8));
-        countAEs += (nBytesRead - bstart) / 8;
-        vStamp.update();
-        portvBottle.setEnvelope(vStamp);
-        if(strict) portvBottle.writeStrict();
-        else portvBottle.write();
+        //get the data from the device read thread
+        unsigned int nBytesRead, nBytesLost;
+        std::vector<unsigned char> &data = deviceReader.getBuffer(nBytesRead, nBytesLost);
+        countAEs += nBytesRead / 8;
+        countLoss += nBytesLost / 8;
+        if (nBytesRead <= 0) return;
+
+
+        bool dataError = false;
+
+        //SMALL ERROR CHECKING BUT NOT FIXING
+        if(nBytesRead % 8) {
+            dataError = true;
+            std::cout << "BUFFER NOT A MULTIPLE OF 8 BYTES: " <<  nBytesRead << std::endl;
+        }
+
+        //if we don't want or have nothing to send or there is an error finish here.
+        if(!portvBottle.getOutputCount() || nBytesRead < 8)
+            return;
+
+        //typical ZYNQ behaviour to skip error checking
+        if(!errorchecking && !dataError) {
+            eventdriven::vBottleMimic &vbm = portvBottle.prepare();
+            vbm.setdata((const char *)data.data(), nBytesRead);
+            vStamp.update();
+            portvBottle.setEnvelope(vStamp);
+            if(strict) portvBottle.writeStrict();
+            else portvBottle.write();
+            return;						//return here.
+        }
+
+        //or go through data and check for consistency
+        int bstart = 0;
+        int bend = 0;
+
+        while(bend < (int)nBytesRead - 7) {
+
+            //check validity
+            int *TS =  (int *)(data.data() + bend);
+            int *AE =  (int *)(data.data() + bend + 4);
+            bool BITMISMATCH = !(*TS & 0x80000000) || (*AE & 0xFBE00000);
+
+            if(BITMISMATCH) {
+                //send on what we have checked is not mismatched so far
+                if(bend - bstart > 0) {
+                    std::cerr << "BITMISMATCH in yarp2device" << std::endl;
+                    std::cerr << *TS << " " << *AE << std::endl;
+
+                    eventdriven::vBottleMimic &vbm = portvBottle.prepare();
+                    vbm.setdata((const char *)data.data()+bstart, bend-bstart);
+                    countAEs += (bend - bstart) / 8;
+                    vStamp.update();
+                    portvBottle.setEnvelope(vStamp);
+                    if(strict) portvBottle.writeStrict();
+                    else portvBottle.write();
+                }
+
+                //then increment by 1 to find the next alignment
+                bend++;
+                bstart = bend;
+            } else {
+                //and then check the next two ints
+                bend += 8;
+            }
+        }
+
+        if(nBytesRead - bstart > 7) {
+            eventdriven::vBottleMimic &vbm = portvBottle.prepare();
+            vbm.setdata((const char *)data.data()+bstart, 8*((nBytesRead-bstart)/8));
+            countAEs += (nBytesRead - bstart) / 8;
+            vStamp.update();
+            portvBottle.setEnvelope(vStamp);
+            if(strict) portvBottle.writeStrict();
+            else portvBottle.write();
+        }
     }
 
 }
