@@ -19,9 +19,7 @@
 
 int main(int argc, char * argv[])
 {
-    yarp::os::Network::init();
-
-    zynqGrabberModule module;
+    yarp::os::Network yarp;
 
     yarp::os::ResourceFinder rf;
     rf.setVerbose(true);
@@ -29,9 +27,8 @@ int main(int argc, char * argv[])
     rf.setDefaultContext("eventdriven");   //overridden by --context parameter
     rf.configure(argc, argv);
 
+	zynqGrabberModule module;
     return module.runModule(rf);
-
-    //yarp::os::Network::fini();
 
 }
 

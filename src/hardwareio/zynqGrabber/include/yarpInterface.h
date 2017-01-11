@@ -69,7 +69,6 @@ public:
 /******************************************************************************/
 //device2yarp
 /******************************************************************************/
-//class device2yarp : public yarp::os::RateThread {
 class device2yarp : public yarp::os::Thread {
 
 private:

@@ -177,22 +177,22 @@ bool zynqGrabberModule::respond(const yarp::os::Bottle& command,
         ok = true;
     }
         break;
-    case COMMAND_VOCAB_SUSPEND:
-        rec = true;
-    {
-        //D2Y.suspend();
-        std::cout << "Not implemented" << std::endl;
-        ok = true;
-    }
-        break;
-    case COMMAND_VOCAB_RESUME:
-        rec = true;
-    {
-        //D2Y.resume();
-        std::cout << "Not implemented" << std::endl;
-        ok = true;
-    }
-        break;
+//    case COMMAND_VOCAB_SUSPEND:
+//        rec = true;
+//    {
+//        //D2Y.suspend();
+//        std::cout << "Not implemented" << std::endl;
+//        ok = true;
+//    }
+//        break;
+//    case COMMAND_VOCAB_RESUME:
+//        rec = true;
+//    {
+//        //D2Y.resume();
+//        std::cout << "Not implemented" << std::endl;
+//        ok = true;
+//    }
+//        break;
     case COMMAND_VOCAB_GETBIAS:
         rec = true;
     {

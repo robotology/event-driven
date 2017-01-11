@@ -143,7 +143,6 @@ std::vector<unsigned char>& vDevReadBuffer::getBuffer(unsigned int &nBytesRead, 
 //device2yarp
 /******************************************************************************/
 
-//device2yarp::device2yarp() : RateThread(THRATE) {
 device2yarp::device2yarp() {
     countAEs = 0;
     countLoss = 0;
@@ -196,7 +195,7 @@ void  device2yarp::run() {
         std::vector<unsigned char> &data = deviceReader.getBuffer(nBytesRead, nBytesLost);
         countAEs += nBytesRead / 8;
         countLoss += nBytesLost / 8;
-        if (nBytesRead <= 0) return;
+        if (nBytesRead <= 0) continue;
 
 
         bool dataError = false;
@@ -209,7 +208,7 @@ void  device2yarp::run() {
 
         //if we don't want or have nothing to send or there is an error finish here.
         if(!portvBottle.getOutputCount() || nBytesRead < 8)
-            return;
+            continue;
 
         //typical ZYNQ behaviour to skip error checking
         if(!errorchecking && !dataError) {
@@ -219,7 +218,7 @@ void  device2yarp::run() {
             portvBottle.setEnvelope(vStamp);
             if(strict) portvBottle.writeStrict();
             else portvBottle.write();
-            return;						//return here.
+            continue;						//return here.
         }
 
         //or go through data and check for consistency
