@@ -25,13 +25,16 @@ bool dPepperModule::configure(yarp::os::ResourceFinder &rf)
             rf.check("name", yarp::os::Value("vPepper")).asString();
     setName(moduleName.c_str());
 
+    bool strict = rf.check("strict") &&
+            rf.check("strict", yarp::os::Value(true)).asBool();
+
     eventManager.setSpatialSize(rf.check("spatialSize",
                                          yarp::os::Value(1)).asDouble());
     eventManager.setTemporalSize(rf.check("temporalSize",
                                           yarp::os::Value(10000)).asDouble());
     eventManager.setResolution(rf.check("height", 128).asInt(),
                                rf.check("width", 128).asInt());
-    eventManager.open(moduleName);
+    eventManager.open(moduleName, strict);
 
     return true ;
 }
@@ -75,20 +78,20 @@ dPepperIO::dPepperIO()
     width = 128;
     leftWindow = eventdriven::temporalSurface(width, height, temporalSize);
     rightWindow = eventdriven::temporalSurface(width, height, temporalSize);
+    strict = false;
 
 }
 /**********************************************************/
-bool dPepperIO::open(const std::string &name)
+bool dPepperIO::open(const std::string &name, bool strict)
 {
     //and open the input port
 
     this->useCallback();
+    this->strict = strict;
+    if(strict) this->setStrict();
 
-    std::string inPortName = "/" + name + "/vBottle:i";
-    yarp::os::BufferedPort<eventdriven::vBottle>::open(inPortName);
-
-    std::string outPortName = "/" + name + "/vBottle:o";
-    outPort.open(outPortName);
+    yarp::os::BufferedPort<eventdriven::vBottle>::open("/" + name + "/vBottle:i");
+    outPort.open("/" + name + "/vBottle:o");
 
     return true;
 }
@@ -115,6 +118,7 @@ void dPepperIO::onRead(eventdriven::vBottle &bot)
     //create event queue
     yarp::os::Stamp yts;
     this->getEnvelope(yts);
+
     eventdriven::vQueue q = bot.getAll();
     //create queue iterator
     eventdriven::vQueue::iterator qi, wi;
@@ -163,7 +167,10 @@ void dPepperIO::onRead(eventdriven::vBottle &bot)
 
     }
     //send on the processed events
-    outPort.write();
+    if(strict)
+        outPort.writeStrict();
+    else
+        outPort.write();
 
 }
 

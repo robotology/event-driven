@@ -41,12 +41,13 @@ private:
     int width;
     double spatialSize;
     double temporalSize;
+    bool strict;
 
 public:
 
     dPepperIO();
 
-    bool open(const std::string &name);
+    bool open(const std::string &name, bool strict);
     void close();
     void interrupt();
 
