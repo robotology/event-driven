@@ -49,9 +49,9 @@ bool vAttentionModule::configure(yarp::os::ResourceFinder &rf) {
 
     /* set parameters */
     int sensorSize = rf.check("sensorSize", yarp::os::Value(128)).asInt();
-    int filterSize = rf.check("filterSize", yarp::os::Value(9)).asInt();
-    double tau = rf.check("tau", yarp::os::Value(1000000)).asDouble();
-    double thrSal = rf.check("thr", yarp::os::Value(20)).asDouble();
+    int filterSize = rf.check("filterSize", yarp::os::Value(20)).asInt();
+    double tau = rf.check("tau", yarp::os::Value(500000.0)).asDouble();
+    double thrSal = rf.check("thr", yarp::os::Value(30)).asDouble();
 
     /* create the thread and pass pointers to the module parameters */
     attManager = new vAttentionManager(sensorSize, filterSize, tau, thrSal);
@@ -112,7 +112,7 @@ vAttentionManager::vAttentionManager(int sensorSize, int filterSize, double tau,
     this -> filterSize = filterSize;
     this -> tau = tau;
     this -> thrSal = thrSal;
-    this -> shift = filterSize/2;
+    this -> filterSize_2 = filterSize/2;
 
     normSal = thrSal/255;
 
@@ -120,6 +120,7 @@ vAttentionManager::vAttentionManager(int sensorSize, int filterSize, double tau,
 
 
     //for speed we predefine the memory for some matrices
+    //The saliency map is bigger than the image by the size of the filter
     salMapLeft  = yarp::sig::Matrix(sensorSize+filterSize, sensorSize+filterSize);
     salMapRight = yarp::sig::Matrix(sensorSize+filterSize, sensorSize+filterSize);
     filterMap   = yarp::sig::Matrix(filterSize, filterSize);
@@ -129,66 +130,20 @@ vAttentionManager::vAttentionManager(int sensorSize, int filterSize, double tau,
     salMapRight.zero();
 //    loadFilter();
 
-   // double sigma = 2;
+    double sigma = 2;
     
     for (int r = 0; r < filterSize; r++){
         for (int c = 0; c < filterSize; c++){
-//            double center = filterSize/2;
-//            double rDist = r - center;
-//            double cDist = c - center;
-//            filterMap (r,c) = exp(-(pow(rDist,2)/(2*pow(sigma,2)) + pow(cDist,2)/(2*pow(sigma,2))));
-            filterMap(r,c) = 0.1;
+            double center = filterSize/2;
+            double rDist = r - center;
+            double cDist = c - center;
+            filterMap (r,c) = exp(-(pow(rDist,2)/(2*pow(sigma,2)) + pow(cDist,2)/(2*pow(sigma,2))));
+//            filterMap(r,c) = 0.1;
         }
     }
 
     printSaliencyMap(filterMap);
 
-}
-
-bool vAttentionManager::loadFilter()  {
-
-    //TODO
-    const int MAX_CHARS_PER_LINE = 512;
-//    const int MAX_TOKENS_PER_LINE = 20;
-    const char* const DELIMITER = " ";
-
-    // create a file-reading object
-    ifstream fin;
-    fin.open("data.txt"); // open a file
-    if (!fin.good())
-        return false; // exit if file not found
-
-    double numTokens;
-
-    // read each line of the file
-    while (!fin.eof())
-    {
-        // read an entire line into memory
-        char buf[MAX_CHARS_PER_LINE];
-        fin.getline(buf, MAX_CHARS_PER_LINE);
-
-        // parse the line into blank-delimited tokens
-        int n = 0; // a for-loop index
-
-        // array to store memory addresses of the tokens in buf
-        char* token = 0;
-
-        // parse the line
-        token = strtok(buf, DELIMITER); // first token
-        numTokens = 0;
-        while(token){
-            token = strtok(buf,DELIMITER);
-            numTokens ++;
-            this ->filterSize = numTokens;
-        }
-
-
-        // process (print) the tokens
-        for (int i = 0; i < n; i++) // n = #of tokens
-            cout << "Token[" << i << "] = " << token[i] << endl;
-        cout << endl;
-    }
-    return true;
 }
 
 /**********************************************************/
@@ -216,14 +171,14 @@ bool vAttentionManager::open(const std::string moduleName, bool strictness) {
 
     std::cout << "opened ports: " << std::endl << "vBottle:i " << check1  << std::endl << "vBottle:o "<< check2  << std::endl<< "/salMapLeft:o " << check3  << std::endl<< "/salMapRight:o " << check4 << std::endl;
 
-    salMapImageLeft   = new yarp::sig::ImageOf<yarp::sig::PixelMono>;
-    salMapImageRight  = new yarp::sig::ImageOf<yarp::sig::PixelMono>;
-
-    salMapImageLeft ->resize(sensorSize,sensorSize);
-    salMapImageRight->resize(sensorSize,sensorSize);
-
-    salMapImageLeft ->zero();
-    salMapImageRight->zero();
+//    salMapImageLeft   = new yarp::sig::ImageOf<yarp::sig::PixelMono>;
+//    salMapImageRight  = new yarp::sig::ImageOf<yarp::sig::PixelMono>;
+//
+//    salMapImageLeft ->resize(sensorSize,sensorSize);
+//    salMapImageRight->resize(sensorSize,sensorSize);
+//
+//    salMapImageLeft ->zero();
+//    salMapImageRight->zero();
 
     // ---- initialise the images of the saliency maps left and right to 0 ---- //
     //memset((void*)salMapImageLeft, 0, sensorSize * sensorSize * sizeof(unsigned char));
@@ -265,7 +220,6 @@ void vAttentionManager::onRead(emorph::vBottle &bot) {
     unsigned long int dt  = t - ptime;
     ptime = t;
 
-    int numEvent = 0;
     for(emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
         emorph::AddressEvent *aep = (*qi)->getAs<emorph::AddressEvent>();
         if(!aep) continue;
@@ -277,15 +231,10 @@ void vAttentionManager::onRead(emorph::vBottle &bot) {
         else {
             updateSaliencyMap(salMapRight,aep);
         }
-        numEvent ++;
     }
 
-    //std::cout << "numEvent = " << numEvent << std::endl;
-
-
-    decaySaliencyMap(salMapLeft, dt);
-    decaySaliencyMap(salMapRight, dt);
-
+//    decaySaliencyMap(salMapLeft, dt);
+//    decaySaliencyMap(salMapRight, dt);
 
     // ---- normalise saliency map ---- //
 
@@ -316,74 +265,83 @@ void vAttentionManager::onRead(emorph::vBottle &bot) {
      outBottle->addEvent(ae);
      
      }
-     */
-
-    //  --- convert to images for display --- //
-
-    displaySaliencymap();
-
-}
-
-void vAttentionManager::displaySaliencymap() {
-
-    /*prepare output vBottle with AEs */
     emorph::vBottle &outBottle = outPort.prepare();
     outBottle.clear();
     yarp::os::Stamp st;
     this->getEnvelope(st);
     outPort.setEnvelope(st);
-
-    unsigned char* pSalImgLeft   = salMapImageLeft->getRawImage();
-    unsigned char* pSalImgRight  = salMapImageRight->getRawImage();
-
-    for(int r = shift; r < sensorSize + shift; r++) {
-        for(int c = shift; c < sensorSize + shift; c++) {
-            *pSalImgLeft = std::min(salMapLeft(r, c), thrSal)/normSal;
-//            std::cout << "salMapLeft ("<<r<<","<<c<<"): " << *pSalImgLeft << " - " << pSalImgLeft << " - " << &pSalImgLeft << " - " << std::min(salMapLeft(r,c),thrSal)/*/normSal*/ << std::endl;
-//            std::cout << std::min (salMapLeft(r,c), thrSal) << " ";
-
-            pSalImgLeft++;
-            *pSalImgRight = std::min(salMapRight(r, c), thrSal)/normSal;
-            pSalImgRight++;
-        }
-//        std::cout << std::endl;
-    }
-
     // --- writing vBottle on buffered output port
     if (strictness) {
         outPort.writeStrict();
     } else {
         outPort.write();
     }
+     */
+
+    //  --- convert to images for display --- //
+
+
+    yarp::sig::ImageOf<yarp::sig::PixelBgr> &imageLeft = outSalMapLeftPort.prepare();
+    yarp::sig::ImageOf<yarp::sig::PixelBgr> &imageRight = outSalMapRightPort.prepare();
+
+    convertToImage(salMapLeft, imageLeft);
+    convertToImage(salMapRight, imageRight);
 
     // --- writing images of left and right saliency maps on output port
     if(outSalMapLeftPort.getOutputCount()) {
-        //std::cout << "sending left image"<< std::endl;
-        outSalMapLeftPort.prepare()  = *salMapImageLeft;
         outSalMapLeftPort.write();
     }
-
     if(outSalMapRightPort.getOutputCount()) {
-        //std::cout << "sending right image"<< std::endl;
-        outSalMapRightPort.prepare()  = *salMapImageRight;
         outSalMapRightPort.write();
     }
 }
 
-/**********************************************************/
+void vAttentionManager::convertToImage(yarp::sig::Matrix &salMap, yarp::sig::ImageOf<yarp::sig::PixelBgr> &image) {
+
+    /*prepare output vBottle with images */
+    image.resize(sensorSize,sensorSize);
+    image.setTopIsLowIndex(true);
+    image.zero();
+
+    double* attentionPoint = computeAttentionPoint(salMap);
+
+    for(int r = sensorSize; r > 0; r--) {
+        for(int c = 0; c < sensorSize; c++) {
+            yarp::sig::PixelBgr pixelBgr;
+
+            //Coordinates of saliency map are shifted by filterSize_2 wrt the image
+            double pixelValue = std::min(salMap(r + filterSize_2, c + filterSize_2), thrSal);
+
+            //Normalize to maximum pixel bgr value 255
+            pixelValue /= normSal;
+
+            //Attention point is highlighted in red
+            if (&salMap(r,c) == attentionPoint) {
+                pixelBgr.r = 255;
+            }
+            else {
+                pixelBgr.g = pixelValue;
+            }
+
+            image(c,sensorSize - r) = pixelBgr;
+        }
+    }
+}
+
 void vAttentionManager::updateSaliencyMap(yarp::sig::Matrix &salMap, emorph::AddressEvent *aep) {
     // unmask event: get x, y, pol, channel
-    int cartX = aep->getX() + shift;
-    int cartY = aep->getY() + shift;
+    //Pixel coordinates are shifted to match with the location in the saliency map
+    int cartX = aep->getX() + filterSize_2;
+    int cartY = aep->getY() + filterSize_2;
 
     int rf, cf;
     rf = 0;
 
     // ---- increase energy in the location of the event ---- //
 
-    for(int r = cartX - shift; r < cartX + filterSize - shift; r++) {
+    for(int r = cartX - filterSize_2; r < cartX + filterSize_2; r++) {
         cf = 0;
-        for(int c = cartY - shift; c < cartY + filterSize - shift; c++) {
+        for(int c = cartY - filterSize_2; c < cartY + filterSize_2; c++) {
             salMap(r,c) += filterMap(rf,cf);
             cf ++;
         }
@@ -443,4 +401,19 @@ void vAttentionManager::normaliseSaliencyMap(yarp::sig::Matrix &salMap) {
     }
 }
 
+double* vAttentionManager::computeAttentionPoint(yarp::sig::Matrix &salMap){
+    double max = 0;
+    int rMax = 0;
+    int cMax = 0;
+    for(int r = 0; r < sensorSize; r++) {
+        for(int c = 0; c < sensorSize; c++) {
+            if (salMap(r,c) > max){
+                max = salMap(r,c);
+                rMax = r;
+                cMax = c;
+            }
+        }
+    }
+    return &salMap(rMax,cMax);
+}
 //empty line to make gcc happy

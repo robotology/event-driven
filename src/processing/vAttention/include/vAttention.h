@@ -34,16 +34,13 @@ private:
     // output port for the vBottle with the new events computed by the module
     yarp::os::BufferedPort<emorph::vBottle> outPort; // /vBottle:o
     // output port where the output saliency map image (left) is sent
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outSalMapLeftPort;
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr> > outSalMapLeftPort;
     // output port where the output saliency map image (right) is sent
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > outSalMapRightPort;
-    
-    yarp::sig::ImageOf<yarp::sig::PixelMono>*    salMapImageLeft;
-    yarp::sig::ImageOf<yarp::sig::PixelMono>*    salMapImageRight;
-    
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr> > outSalMapRightPort;
+
     int sensorSize;
     int filterSize;
-    int shift;
+    int filterSize_2;
     double tau;
     unsigned long int ptime; // past time stamp
     double thrSal; // threshold to put a maximum on the saliency map (whatever is above thr will be set to the maximum value)
@@ -54,13 +51,13 @@ private:
     yarp::sig::Matrix salMapLeft;       // saliency map is a matrix (sensorSize*sensorSize)
     yarp::sig::Matrix salMapRight;      // saliency map is a matrix (sensorSize*sensorSize)
     yarp::sig::Matrix filterMap;        // filter is a matrix (filterSize*filterSize)
-    
+
     void updateSaliencyMap(yarp::sig::Matrix &salMap, emorph::AddressEvent *aep);
     void normaliseSaliencyMap(yarp::sig::Matrix &salMap);
     void decaySaliencyMap(yarp::sig::Matrix &salMap, unsigned long int dt);
     void printSaliencyMap(yarp::sig::Matrix &salMap);
-    bool loadFilter() ;
-    void displaySaliencymap();
+    void convertToImage(yarp::sig::Matrix &salMap, yarp::sig::ImageOf<yarp::sig::PixelBgr> &image);
+    double* computeAttentionPoint(yarp::sig::Matrix &salMap);
 
 public:
 
