@@ -10,6 +10,7 @@ set(CMAKE_CXX_FLAGS "-Wall -fno-strict-aliasing")
 set(EVENTDRIVENLIBS_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/libraries/include)
 set(EVENTDRIVEN_LIBRARIES eventdriven)
 
+option(V_ADVMODULES "Build advanced modules" OFF)
 option(V_BUILD_ZYNQ "Build for ZynqGrabber" OFF)
 option(V_USE_QTCREATOR "Add apps/drivers to QtCreator IDE" OFF)
 option(V_SPINNTERFACE "Build the SpiNNaker Ethernet Interface" OFF)
