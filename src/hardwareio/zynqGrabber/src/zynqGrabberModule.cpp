@@ -82,7 +82,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     if(rf.check("dataDevice")) {
 
         std::string dataDevice = rf.find("dataDevice").asString();
-        int readPacketSize = 8 * rf.check("readPacketSize", yarp::os::Value("128")).asInt();
+        int readPacketSize = 8 * rf.check("readPacketSize", yarp::os::Value("512")).asInt();
         int maxBottleSize = 8 * rf.check("maxBottleSize", yarp::os::Value("100000")).asInt();
 
         if(!D2Y.initialise(moduleName, strict, errorcheck, dataDevice, maxBottleSize, readPacketSize)) {
@@ -116,17 +116,17 @@ bool zynqGrabberModule::interruptModule() {
 
 bool zynqGrabberModule::close() {
 
-    std::cout << "breaking YARP connections" << std::endl;
+    std::cout << "breaking YARP connections.. ";
     handlerPort.close();        // rpc of the RF module
     Y2D.close();
     D2Y.stop();                // bufferedport from yarp to device
-
-    std::cout << "closing device drivers" << std::endl;
+    std::cout << "done" << std::endl;
+    
+    std::cout << "closing device drivers.. ";
     vsctrlMngLeft.disconnect(true);
-    std::cout << "left controller closed" << std::endl;
     vsctrlMngRight.disconnect(true);
-    std::cout << "right controller closed" << std::endl;
-
+    std::cout << "done" << std::endl;
+    
     return true;
 }
 
