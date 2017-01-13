@@ -49,7 +49,7 @@ bool vAttentionModule::configure(yarp::os::ResourceFinder &rf) {
     /* set parameters */
     int sensorSize = rf.check("sensorSize", yarp::os::Value(128)).asInt();
     int filterSize = rf.check("filterSize", yarp::os::Value(1)).asInt();
-    double tau = rf.check("tau", yarp::os::Value(600000.0)).asDouble();
+    double tau = rf.check("tau", yarp::os::Value(120000.0)).asDouble();
     double thrSal = rf.check("thr", yarp::os::Value(30)).asDouble();
 
     /* create the thread and pass pointers to the module parameters */
@@ -102,7 +102,6 @@ bool vAttentionModule::respond(const yarp::os::Bottle& command, yarp::os::Bottle
 /******************************************************************************/
 //vAttentionManager
 /******************************************************************************/
-
 
 void vAttentionManager::load_filter(std::string filename, yarp::sig::Matrix &filterMap, int &filterSize) {
 
@@ -162,17 +161,18 @@ vAttentionManager::vAttentionManager(int sensorSize, int filterSize, double tau,
     std::string filterDirectoryPath = "../../filters/";
 
     load_filter(filterDirectoryPath + "horizFilter.txt", horizFilterMap, filterSize);
-    load_filter(filterDirectoryPath + "vertFilter.txt", vertFilterMap, filterSize);
+//    load_filter(filterDirectoryPath + "vertFilter.txt", vertFilterMap, filterSize);
+    vertFilterMap = horizFilterMap.transposed();
     load_filter(filterDirectoryPath + "uniformFilter.txt", uniformFilterMap, filterSize);
     uniformFilterMap *= 0.6;
     horizFilterMap *= 2;
-    vertFilterMap *= -0.5;
+    vertFilterMap *= 2;
 
     /** Gaussian Filter computation**/
 
-    double sigma = 10;
+    double sigma = 7;
 
-    int gaussianFilterSize = 50;
+    int gaussianFilterSize = 30;
     gaussianFilterMap.resize(gaussianFilterSize,gaussianFilterSize);
     for (int r = 0; r < gaussianFilterSize; r++){
         for (int c = 0; c < gaussianFilterSize; c++){
@@ -183,6 +183,8 @@ vAttentionManager::vAttentionManager(int sensorSize, int filterSize, double tau,
         }
     }
     filterSize = max(gaussianFilterSize,filterSize);
+    gaussianFilterMap *= 0.5;
+
     printSaliencyMap(uniformFilterMap);
     printSaliencyMap(vertFilterMap);
     printSaliencyMap(horizFilterMap);
@@ -203,9 +205,6 @@ vAttentionManager::vAttentionManager(int sensorSize, int filterSize, double tau,
 
     salMapLeft = 1;
     salMapRight = 1;
-
-    
-    
 
 }
 
@@ -285,6 +284,7 @@ void vAttentionManager::onRead(emorph::vBottle &bot) {
 
         // --- increase energy of saliency map  --- //
         if (aep->getChannel() == 0) {
+            updateSaliencyMap(salMapLeft, vertFilterMap, aep);
             updateSaliencyMap(salMapLeft, horizFilterMap, aep);
             updateSaliencyMap(salMapLeft, gaussianFilterMap, aep);
         }
@@ -375,7 +375,7 @@ void vAttentionManager::convertToImage(yarp::sig::Matrix &salMap, yarp::sig::Ima
             //Normalize to maximum pixel bgr value 255
             pixelValue /= normSal;
 
-            //Attention point is highlighted in red
+            //Attention point is highlighted in red, negative values in blue, positive in green
             if (&salMap(r,c) == attentionPoint) {
                 pixelBgr.r = 255;
             }
@@ -408,8 +408,8 @@ void vAttentionManager::updateSaliencyMap(yarp::sig::Matrix &salMap, yarp::sig::
     for(int rf = -filterRows/2; rf < filterRows/2; rf++) {
         for(int cf = -filterCols/2; cf < filterCols/2; cf++) {
             salMap(r, c) += fabs(salMap(r + rf, c + cf)) * filterMap(rf + filterRows/2,cf + filterCols/2);
-            salMap(r,c) = min(salMap(r, c), 255.0);
-            salMap(r,c) = max(salMap(r, c), -255.0);
+            salMap(r,c) = min(salMap(r, c), 2000.0);
+            salMap(r,c) = max(salMap(r, c), -2000.0);
             cf ++;
         }
         rf ++;
