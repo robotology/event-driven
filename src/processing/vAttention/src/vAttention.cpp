@@ -24,7 +24,6 @@
 using namespace yarp::math;
 using namespace std;
 
-/**********************************************************/
 bool vAttentionModule::configure(yarp::os::ResourceFinder &rf) {
     //set the name of the module
     std::string moduleName =
@@ -49,7 +48,7 @@ bool vAttentionModule::configure(yarp::os::ResourceFinder &rf) {
 
     /* set parameters */
     int sensorSize = rf.check("sensorSize", yarp::os::Value(128)).asInt();
-    int filterSize = rf.check("filterSize", yarp::os::Value(20)).asInt();
+    int filterSize = rf.check("filterSize", yarp::os::Value(7)).asInt();
     double tau = rf.check("tau", yarp::os::Value(500000.0)).asDouble();
     double thrSal = rf.check("thr", yarp::os::Value(30)).asDouble();
 
@@ -60,14 +59,12 @@ bool vAttentionModule::configure(yarp::os::ResourceFinder &rf) {
 
 }
 
-/**********************************************************/
 bool vAttentionModule::interruptModule() {
     attManager->interrupt();
     yarp::os::RFModule::interruptModule();
     return true;
 }
 
-/**********************************************************/
 bool vAttentionModule::close() {
     attManager->close();
     delete attManager;
@@ -75,16 +72,14 @@ bool vAttentionModule::close() {
     return true;
 }
 
-/**********************************************************/
 bool vAttentionModule::updateModule() {
     return true;
 }
 
-/**********************************************************/
 double vAttentionModule::getPeriod() {
     return 1;
 }
-/**********************************************************/
+
 bool vAttentionModule::respond(const yarp::os::Bottle& command, yarp::os::Bottle& reply) {
     std::string helpMessage =  std::string(getName().c_str()) +
                                " commands are: \n" +
@@ -107,6 +102,43 @@ bool vAttentionModule::respond(const yarp::os::Bottle& command, yarp::os::Bottle
 /******************************************************************************/
 //vAttentionManager
 /******************************************************************************/
+
+
+void vAttentionManager::load_filter(std::string filename, yarp::sig::Matrix &filterMap) {
+
+    //Opening filter file.
+    ifstream file;
+    file.open(filename.c_str(), ios::in | ios::out);
+    if(!file.is_open()){
+        std::cerr << "Could not open filter file " << filename << std::endl;
+    }
+
+    string line;
+    int r = 0;
+    int c = 0;
+
+    //File is parsed line by line. Values are separated by spaces
+    while(!std::getline(file, line, '\n').eof()) {
+        istringstream reader(line);
+        string::const_iterator i = line.begin();
+        if (line.empty())
+            continue;
+        c = 0;
+
+        while(!reader.eof()) {
+
+            double val;
+            reader >> val;
+            filterMap(r,c) = val;
+            c++;
+
+        }
+
+        r++;
+    }
+    filterMap.resize(r,c);
+}
+
 vAttentionManager::vAttentionManager(int sensorSize, int filterSize, double tau, double thrSal) {
     this -> sensorSize = sensorSize;
     this -> filterSize = filterSize;
@@ -118,20 +150,35 @@ vAttentionManager::vAttentionManager(int sensorSize, int filterSize, double tau,
 
     ptime = 0; // past time stamp
 
-
     //for speed we predefine the memory for some matrices
     //The saliency map is bigger than the image by the size of the filter
     salMapLeft  = yarp::sig::Matrix(sensorSize+filterSize, sensorSize+filterSize);
     salMapRight = yarp::sig::Matrix(sensorSize+filterSize, sensorSize+filterSize);
-    filterMap   = yarp::sig::Matrix(filterSize, filterSize);
+    uniformFilterMap   = yarp::sig::Matrix(100,100);
+    vertFilterMap   = yarp::sig::Matrix(100,100);
+    horizFilterMap   = yarp::sig::Matrix(100,100);
 
     // initialise saliency map to zero
     salMapLeft.zero();
     salMapRight.zero();
-//    loadFilter();
+
+    std::string filterDirectoryPath = "../../filters/";
+
+    load_filter(filterDirectoryPath + "horizFilter.txt", horizFilterMap);
+    load_filter(filterDirectoryPath + "vertFilter.txt", vertFilterMap);
+    load_filter(filterDirectoryPath + "uniformFilter.txt", uniformFilterMap);
+    uniformFilterMap *= 0.1;
+    horizFilterMap *= -0.1;
+    vertFilterMap *= -0.1;
+    printSaliencyMap(uniformFilterMap);
+    printSaliencyMap(vertFilterMap);
+    printSaliencyMap(horizFilterMap);
+
+
+    /** Gaussian Filter computation**
 
     double sigma = 2;
-    
+
     for (int r = 0; r < filterSize; r++){
         for (int c = 0; c < filterSize; c++){
             double center = filterSize/2;
@@ -141,12 +188,10 @@ vAttentionManager::vAttentionManager(int sensorSize, int filterSize, double tau,
 //            filterMap(r,c) = 0.1;
         }
     }
-
-    printSaliencyMap(filterMap);
+    */
 
 }
 
-/**********************************************************/
 bool vAttentionManager::open(const std::string moduleName, bool strictness) {
     this->strictness = strictness;
     if(strictness) {
@@ -189,7 +234,6 @@ bool vAttentionManager::open(const std::string moduleName, bool strictness) {
     return check1 && check2 && check3 && check4;
 }
 
-/**********************************************************/
 void vAttentionManager::close() {
     //close ports
     outPort.close();
@@ -201,7 +245,6 @@ void vAttentionManager::close() {
     //free(salMapImageRight);
 }
 
-/**********************************************************/
 void vAttentionManager::interrupt() {
     //pass on the interrupt call to everything needed
     outPort.interrupt();
@@ -210,7 +253,6 @@ void vAttentionManager::interrupt() {
     outSalMapRightPort.interrupt();
 }
 
-/**********************************************************/
 void vAttentionManager::onRead(emorph::vBottle &bot) {
     /* get the event queue in the vBottle bot */
     emorph::vQueue q = bot.get<emorph::AddressEvent>();
@@ -342,7 +384,10 @@ void vAttentionManager::updateSaliencyMap(yarp::sig::Matrix &salMap, emorph::Add
     for(int r = cartX - filterSize_2; r < cartX + filterSize_2; r++) {
         cf = 0;
         for(int c = cartY - filterSize_2; c < cartY + filterSize_2; c++) {
-            salMap(r,c) += filterMap(rf,cf);
+//            salMap(r,c) += uniformFilterMap(rf,cf);
+//            salMap(r,c) += horizFilterMap(rf,cf);
+            salMap(r,c) += vertFilterMap(rf,cf);
+            salMap(r,c) = std::max(0.0,salMap(r,c));
             cf ++;
         }
         rf ++;
@@ -352,7 +397,7 @@ void vAttentionManager::updateSaliencyMap(yarp::sig::Matrix &salMap, emorph::Add
 void vAttentionManager::printSaliencyMap (yarp::sig::Matrix &salMap) {
     for (int r = 0; r < salMap.rows(); r ++){
         for (int c = 0; c < salMap.cols(); c++){
-            std::cout << std::setprecision(1) << salMap(r,c) << " ";
+            std::cout << salMap(r,c) << " ";
         }
         std::cout << std::endl;
     }
@@ -416,4 +461,5 @@ double* vAttentionManager::computeAttentionPoint(yarp::sig::Matrix &salMap){
     }
     return &salMap(rMax,cMax);
 }
+
 //empty line to make gcc happy
