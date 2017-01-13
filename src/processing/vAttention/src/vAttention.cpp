@@ -164,16 +164,33 @@ vAttentionManager::vAttentionManager(int sensorSize, int filterSize, double tau,
     load_filter(filterDirectoryPath + "horizFilter.txt", horizFilterMap, filterSize);
     load_filter(filterDirectoryPath + "vertFilter.txt", vertFilterMap, filterSize);
     load_filter(filterDirectoryPath + "uniformFilter.txt", uniformFilterMap, filterSize);
-    uniformFilterMap *= 0.4;
-    horizFilterMap *= 0.4;
+    uniformFilterMap *= 0.6;
+    horizFilterMap *= 2;
     vertFilterMap *= -0.5;
 
+    /** Gaussian Filter computation**/
+
+    double sigma = 10;
+
+    int gaussianFilterSize = 50;
+    gaussianFilterMap.resize(gaussianFilterSize,gaussianFilterSize);
+    for (int r = 0; r < gaussianFilterSize; r++){
+        for (int c = 0; c < gaussianFilterSize; c++){
+            double center = gaussianFilterSize / 2;
+            double rDist = r - center;
+            double cDist = c - center;
+            gaussianFilterMap (r,c) = exp(-(pow(rDist,2)/(2*pow(sigma,2)) + pow(cDist,2)/(2*pow(sigma,2))));
+        }
+    }
+    filterSize = max(gaussianFilterSize,filterSize);
     printSaliencyMap(uniformFilterMap);
     printSaliencyMap(vertFilterMap);
     printSaliencyMap(horizFilterMap);
+    printSaliencyMap(gaussianFilterMap);
+
 
     this->filterSize = filterSize;
-    this -> filterSize_2 = filterSize/2;
+    this -> salMapPadding = filterSize/2;
 
     //for speed we predefine the memory for some matrices
     //The saliency map is bigger than the image by the maximum size among the loaded filters
@@ -187,20 +204,8 @@ vAttentionManager::vAttentionManager(int sensorSize, int filterSize, double tau,
     salMapLeft = 1;
     salMapRight = 1;
 
-    /** Gaussian Filter computation**
-
-    double sigma = 2;
-
-    for (int r = 0; r < filterSize; r++){
-        for (int c = 0; c < filterSize; c++){
-            double center = filterSize/2;
-            double rDist = r - center;
-            double cDist = c - center;
-            filterMap (r,c) = exp(-(pow(rDist,2)/(2*pow(sigma,2)) + pow(cDist,2)/(2*pow(sigma,2))));
-//            filterMap(r,c) = 0.1;
-        }
-    }
-    */
+    
+    
 
 }
 
@@ -281,7 +286,7 @@ void vAttentionManager::onRead(emorph::vBottle &bot) {
         // --- increase energy of saliency map  --- //
         if (aep->getChannel() == 0) {
             updateSaliencyMap(salMapLeft, horizFilterMap, aep);
-            updateSaliencyMap(salMapLeft, uniformFilterMap, aep);
+            updateSaliencyMap(salMapLeft, gaussianFilterMap, aep);
         }
         else {
             updateSaliencyMap(salMapRight, horizFilterMap, aep);
@@ -364,8 +369,8 @@ void vAttentionManager::convertToImage(yarp::sig::Matrix &salMap, yarp::sig::Ima
         for(int c = 0; c < sensorSize; c++) {
             yarp::sig::PixelBgr pixelBgr;
 
-            //Coordinates of saliency map are shifted by filterSize_2 wrt the image
-            double pixelValue = std::min(salMap(r + filterSize_2, c + filterSize_2), thrSal);
+//            Coordinates of saliency map are shifted by salMapPadding wrt the image
+            double pixelValue = std::min(salMap(r + salMapPadding, c + salMapPadding), thrSal);
 
             //Normalize to maximum pixel bgr value 255
             pixelValue /= normSal;
@@ -374,9 +379,11 @@ void vAttentionManager::convertToImage(yarp::sig::Matrix &salMap, yarp::sig::Ima
             if (&salMap(r,c) == attentionPoint) {
                 pixelBgr.r = 255;
             }
-            else {
-                pixelBgr.g = pixelValue;
-            }
+            else if (pixelValue <= 0) {
+//                pixelBgr.b = std::min (fabs(pixelValue),255.0);
+            }else {
+                pixelBgr.g = std::min (fabs(pixelValue),255.0);
+                }
 
             image(c,sensorSize - r) = pixelBgr;
         }
@@ -384,23 +391,25 @@ void vAttentionManager::convertToImage(yarp::sig::Matrix &salMap, yarp::sig::Ima
 }
 
 void vAttentionManager::updateSaliencyMap(yarp::sig::Matrix &salMap, yarp::sig::Matrix &filterMap, emorph::AddressEvent *aep) {
-    // unmask event: get x, y, pol, channel
     //Pixel coordinates are shifted to match with the location in the saliency map
 
-    int filterSize = std::max(filterMap.rows(), filterMap.cols());
-    int filterSize_2 = filterSize / 2;
-    int r = aep->getX() + filterSize_2;
-    int c = aep->getY() + filterSize_2;
+    int filterRows = filterMap.rows();
+    int filterCols = filterMap.cols();
+
+    // unmask event: get x, y
+    int r = aep->getX() + salMapPadding;
+    int c = aep->getY() + salMapPadding;
 
     // ---- increase energy in the location of the event ---- //
 
-    int rows = salMap.rows();
-    int cols = salMap.cols();
+//    int rows = salMap.rows();
+//    int cols = salMap.cols();
 
-    for(int rf = - filterSize_2; rf < filterSize_2; rf++) {
-        for(int cf = - filterSize_2; cf < filterSize_2; cf++) {
-            salMap(r, c) += salMap(r + rf, c + cf) * filterMap(rf + filterSize_2,cf + filterSize_2);
-            salMap(r + rf,c + cf) = std::max(0.0,salMap(r + rf,c + cf));
+    for(int rf = -filterRows/2; rf < filterRows/2; rf++) {
+        for(int cf = -filterCols/2; cf < filterCols/2; cf++) {
+            salMap(r, c) += fabs(salMap(r + rf, c + cf)) * filterMap(rf + filterRows/2,cf + filterCols/2);
+            salMap(r,c) = min(salMap(r, c), 255.0);
+            salMap(r,c) = max(salMap(r, c), -255.0);
             cf ++;
         }
         rf ++;
@@ -410,7 +419,7 @@ void vAttentionManager::updateSaliencyMap(yarp::sig::Matrix &salMap, yarp::sig::
 void vAttentionManager::printSaliencyMap (yarp::sig::Matrix &salMap) {
     for (int r = 0; r < salMap.rows(); r ++){
         for (int c = 0; c < salMap.cols(); c++){
-            std::cout << salMap(r,c) << " ";
+            std::cout << setprecision(2) << salMap(r,c) << " ";
         }
         std::cout << std::endl;
     }

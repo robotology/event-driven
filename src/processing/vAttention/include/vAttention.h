@@ -40,17 +40,18 @@ private:
 
     int sensorSize;
     int filterSize;
-    int filterSize_2;
+    int salMapPadding;
     double tau;
     unsigned long int ptime; // past time stamp
     double thrSal; // threshold to put a maximum on the saliency map (whatever is above thr will be set to the maximum value)
     double normSal;
-    
+
     emorph::vtsHelper unwrap;
     
     yarp::sig::Matrix salMapLeft;       // saliency map is a matrix (sensorSize*sensorSize)
     yarp::sig::Matrix salMapRight;      // saliency map is a matrix (sensorSize*sensorSize)
     yarp::sig::Matrix uniformFilterMap;        // filter is a matrix (filterSize*filterSize)
+    yarp::sig::Matrix gaussianFilterMap;        // filter is a matrix (filterSize*filterSize)
     yarp::sig::Matrix horizFilterMap;        // filter is a matrix (filterSize*filterSize)
     yarp::sig::Matrix vertFilterMap;        // filter is a matrix (filterSize*filterSize)
 
