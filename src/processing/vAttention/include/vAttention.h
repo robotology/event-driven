@@ -54,12 +54,12 @@ private:
     yarp::sig::Matrix horizFilterMap;        // filter is a matrix (filterSize*filterSize)
     yarp::sig::Matrix vertFilterMap;        // filter is a matrix (filterSize*filterSize)
 
-    void updateSaliencyMap(yarp::sig::Matrix &salMap, emorph::AddressEvent *aep);
+    void updateSaliencyMap(yarp::sig::Matrix &salMap, yarp::sig::Matrix &filterMap, emorph::AddressEvent *aep);
     void normaliseSaliencyMap(yarp::sig::Matrix &salMap);
     void decaySaliencyMap(yarp::sig::Matrix &salMap, unsigned long int dt);
     void printSaliencyMap(yarp::sig::Matrix &salMap);
     void convertToImage(yarp::sig::Matrix &salMap, yarp::sig::ImageOf<yarp::sig::PixelBgr> &image);
-    void load_filter(std::string filename, yarp::sig::Matrix &filterMap);
+    void load_filter(std::string filename, yarp::sig::Matrix &filterMap, int &filterSize);
     double* computeAttentionPoint(yarp::sig::Matrix &salMap);
 
 public:

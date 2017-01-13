@@ -48,8 +48,8 @@ bool vAttentionModule::configure(yarp::os::ResourceFinder &rf) {
 
     /* set parameters */
     int sensorSize = rf.check("sensorSize", yarp::os::Value(128)).asInt();
-    int filterSize = rf.check("filterSize", yarp::os::Value(7)).asInt();
-    double tau = rf.check("tau", yarp::os::Value(500000.0)).asDouble();
+    int filterSize = rf.check("filterSize", yarp::os::Value(1)).asInt();
+    double tau = rf.check("tau", yarp::os::Value(600000.0)).asDouble();
     double thrSal = rf.check("thr", yarp::os::Value(30)).asDouble();
 
     /* create the thread and pass pointers to the module parameters */
@@ -104,7 +104,7 @@ bool vAttentionModule::respond(const yarp::os::Bottle& command, yarp::os::Bottle
 /******************************************************************************/
 
 
-void vAttentionManager::load_filter(std::string filename, yarp::sig::Matrix &filterMap) {
+void vAttentionManager::load_filter(std::string filename, yarp::sig::Matrix &filterMap, int &filterSize) {
 
     //Opening filter file.
     ifstream file;
@@ -129,51 +129,63 @@ void vAttentionManager::load_filter(std::string filename, yarp::sig::Matrix &fil
 
             double val;
             reader >> val;
+
+            //Resize the map to contain new values if necessary
+            if (r + 1> filterMap.rows()){
+                filterMap.resize(r + 1, filterMap.cols());
+            }
+            if (c + 1> filterMap.cols()){
+                filterMap.resize(filterMap.rows(), c + 1);
+            }
+
             filterMap(r,c) = val;
             c++;
-
         }
-
         r++;
     }
-    filterMap.resize(r,c);
+
+    //The returned filterSize is updated with the maximum dimension of the filter
+    int maxDimension = std::max(filterMap.rows(),filterMap.cols());
+    filterSize = max (filterSize,maxDimension);
 }
 
 vAttentionManager::vAttentionManager(int sensorSize, int filterSize, double tau, double thrSal) {
     this -> sensorSize = sensorSize;
-    this -> filterSize = filterSize;
     this -> tau = tau;
     this -> thrSal = thrSal;
-    this -> filterSize_2 = filterSize/2;
 
     normSal = thrSal/255;
 
     ptime = 0; // past time stamp
 
-    //for speed we predefine the memory for some matrices
-    //The saliency map is bigger than the image by the size of the filter
-    salMapLeft  = yarp::sig::Matrix(sensorSize+filterSize, sensorSize+filterSize);
-    salMapRight = yarp::sig::Matrix(sensorSize+filterSize, sensorSize+filterSize);
-    uniformFilterMap   = yarp::sig::Matrix(100,100);
-    vertFilterMap   = yarp::sig::Matrix(100,100);
-    horizFilterMap   = yarp::sig::Matrix(100,100);
-
-    // initialise saliency map to zero
-    salMapLeft.zero();
-    salMapRight.zero();
 
     std::string filterDirectoryPath = "../../filters/";
 
-    load_filter(filterDirectoryPath + "horizFilter.txt", horizFilterMap);
-    load_filter(filterDirectoryPath + "vertFilter.txt", vertFilterMap);
-    load_filter(filterDirectoryPath + "uniformFilter.txt", uniformFilterMap);
-    uniformFilterMap *= 0.1;
-    horizFilterMap *= -0.1;
-    vertFilterMap *= -0.1;
+    load_filter(filterDirectoryPath + "horizFilter.txt", horizFilterMap, filterSize);
+    load_filter(filterDirectoryPath + "vertFilter.txt", vertFilterMap, filterSize);
+    load_filter(filterDirectoryPath + "uniformFilter.txt", uniformFilterMap, filterSize);
+    uniformFilterMap *= 0.4;
+    horizFilterMap *= 0.4;
+    vertFilterMap *= -0.5;
+
     printSaliencyMap(uniformFilterMap);
     printSaliencyMap(vertFilterMap);
     printSaliencyMap(horizFilterMap);
 
+    this->filterSize = filterSize;
+    this -> filterSize_2 = filterSize/2;
+
+    //for speed we predefine the memory for some matrices
+    //The saliency map is bigger than the image by the maximum size among the loaded filters
+    salMapLeft  = yarp::sig::Matrix(sensorSize+filterSize, sensorSize+filterSize);
+    salMapRight = yarp::sig::Matrix(sensorSize+filterSize, sensorSize+filterSize);
+
+    // initialise saliency map to zero
+//    salMapLeft.zero();
+//    salMapRight.zero();
+
+    salMapLeft = 1;
+    salMapRight = 1;
 
     /** Gaussian Filter computation**
 
@@ -268,15 +280,16 @@ void vAttentionManager::onRead(emorph::vBottle &bot) {
 
         // --- increase energy of saliency map  --- //
         if (aep->getChannel() == 0) {
-            updateSaliencyMap(salMapLeft,aep);
+            updateSaliencyMap(salMapLeft, horizFilterMap, aep);
+            updateSaliencyMap(salMapLeft, uniformFilterMap, aep);
         }
         else {
-            updateSaliencyMap(salMapRight,aep);
+            updateSaliencyMap(salMapRight, horizFilterMap, aep);
         }
     }
 
-//    decaySaliencyMap(salMapLeft, dt);
-//    decaySaliencyMap(salMapRight, dt);
+    decaySaliencyMap(salMapLeft, dt);
+    decaySaliencyMap(salMapRight, dt);
 
     // ---- normalise saliency map ---- //
 
@@ -370,24 +383,24 @@ void vAttentionManager::convertToImage(yarp::sig::Matrix &salMap, yarp::sig::Ima
     }
 }
 
-void vAttentionManager::updateSaliencyMap(yarp::sig::Matrix &salMap, emorph::AddressEvent *aep) {
+void vAttentionManager::updateSaliencyMap(yarp::sig::Matrix &salMap, yarp::sig::Matrix &filterMap, emorph::AddressEvent *aep) {
     // unmask event: get x, y, pol, channel
     //Pixel coordinates are shifted to match with the location in the saliency map
-    int cartX = aep->getX() + filterSize_2;
-    int cartY = aep->getY() + filterSize_2;
 
-    int rf, cf;
-    rf = 0;
+    int filterSize = std::max(filterMap.rows(), filterMap.cols());
+    int filterSize_2 = filterSize / 2;
+    int r = aep->getX() + filterSize_2;
+    int c = aep->getY() + filterSize_2;
 
     // ---- increase energy in the location of the event ---- //
 
-    for(int r = cartX - filterSize_2; r < cartX + filterSize_2; r++) {
-        cf = 0;
-        for(int c = cartY - filterSize_2; c < cartY + filterSize_2; c++) {
-//            salMap(r,c) += uniformFilterMap(rf,cf);
-//            salMap(r,c) += horizFilterMap(rf,cf);
-            salMap(r,c) += vertFilterMap(rf,cf);
-            salMap(r,c) = std::max(0.0,salMap(r,c));
+    int rows = salMap.rows();
+    int cols = salMap.cols();
+
+    for(int rf = - filterSize_2; rf < filterSize_2; rf++) {
+        for(int cf = - filterSize_2; cf < filterSize_2; cf++) {
+            salMap(r, c) += salMap(r + rf, c + cf) * filterMap(rf + filterSize_2,cf + filterSize_2);
+            salMap(r + rf,c + cf) = std::max(0.0,salMap(r + rf,c + cf));
             cf ++;
         }
         rf ++;
