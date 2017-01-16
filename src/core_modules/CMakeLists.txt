@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 2.6)
 add_subdirectory(vPepper)
 
 if(OPENCV_FOUND)
-    add_subdirectory(vUndistortCam)
+    #add_subdirectory(vUndistortCam)
     add_subdirectory(vFramer)
 endif(OPENCV_FOUND)
 
