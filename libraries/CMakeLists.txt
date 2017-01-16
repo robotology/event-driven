@@ -58,7 +58,8 @@ if(ICUBcontrib_FOUND)
     icubcontrib_export_library(${PROJECTNAME}
         INTERNAL_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/include
         EXTERNAL_INCLUDE_DIRS ${YARP_INCLUDE_DIRS}
-        DESTINATION include/eventdriven
+        DESTINATION include/iCub/eventdriven
         FILES  ${folder_header}
     )
+    icubcontrib_finalize_export(${PROJECTNAME})
 endif(ICUBcontrib_FOUND)
