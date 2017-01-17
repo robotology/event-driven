@@ -497,14 +497,15 @@ void flowDraw::draw(cv::Mat &image, const eventdriven::vQueue &eSet)
     cv::Point p_start,p_end;
     const double pi = 3.1416;
 
-    int cts = eSet.back()->getAs<eventdriven::vEvent>()->getStamp();
+    //int cts = eSet.back()->getAs<eventdriven::vEvent>()->getStamp();
 
-    eventdriven::vQueue::const_iterator qi;
-    for(qi = eSet.begin(); qi != eSet.end(); qi++) {
+    eventdriven::vQueue::const_reverse_iterator qi;
+    for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
+
 
         int dt = eSet.back()->getStamp() - (*qi)->getStamp();
         if(dt < 0) dt += eventdriven::vtsHelper::maxStamp();
-        if(dt > twindow) continue;
+        if(dt > twindow) break;
 
         eventdriven::FlowEvent *ofp = (*qi)->getAs<eventdriven::FlowEvent>();
         if(!ofp) continue;
@@ -517,10 +518,10 @@ void flowDraw::draw(cv::Mat &image, const eventdriven::vQueue &eSet)
 //            continue;
 //        }
 
-        int modts = cts;
-        if(cts < ofp->getStamp()) //we have wrapped
-            modts += eventdriven::vtsHelper::maxStamp();
-        if(modts > ofp->getDeath()) continue;
+//        int modts = cts;
+//        if(cts < ofp->getStamp()) //we have wrapped
+//            modts += eventdriven::vtsHelper::maxStamp();
+//        if(modts > ofp->getDeath()) continue;
 
         int x = ofp->getY();
         int y = ofp->getX();
