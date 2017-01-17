@@ -2,10 +2,8 @@
 
 namespace eventdriven {
 
-vTempWindow::vTempWindow(int width, int height)
+vTempWindow::vTempWindow()
 {
-    this->width = width;
-    this->height = height;
     tLower = vtsHelper::maxStamp() * 0.5;
     tUpper = vtsHelper::maxStamp() - tLower;
 }

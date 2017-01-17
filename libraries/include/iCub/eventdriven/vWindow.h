@@ -171,16 +171,13 @@ protected:
 
     //! event storage
     vQueue q;
-    //! camera resolution
-    int width;
-    int height;
     //!precalculated thresholds
     int tUpper;
     int tLower;
 
 public:
 
-    vTempWindow(int width = 128, int height = 128);
+    vTempWindow();
     void addEvent(vEvent &event);
     void addEvents(const vQueue &events);
     vQueue getWindow();

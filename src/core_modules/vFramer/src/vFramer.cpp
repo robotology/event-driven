@@ -143,8 +143,7 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
                 newDrawer->setWindow(eventWindow);
                 newDrawer->initialise();
                 drawers[i].push_back(newDrawer);
-            }
-            else {
+            } else {
                 std::cerr << "Could not find draw tag "
                           << drawtypelist->get(j).asString()
                           << ". No drawer created" << std::endl;
