@@ -121,12 +121,20 @@
 
 namespace eventdriven {
 
+
+
 class vEvent;
-using std::dynamic_pointer_cast;
-using std::static_pointer_cast;
+//using std::static_pointer_cast;
 template<typename V = vEvent> using event = std::shared_ptr<V>;
 
 event<> createEvent(const std::string type);
+
+//event<AddressEvent> c = dynamic_pointer_cast<AddressEvent>(v);
+template<typename V1, typename V2> event<V1> getas(event<V2> orig_event) {
+    return std::dynamic_pointer_cast<V1>(orig_event);
+}
+
+
 /**************************************************************************/
 class vEvent
 {

@@ -5,7 +5,7 @@ file(GLOB xmldocumentation ${CMAKE_CURRENT_SOURCE_DIR}/hardwareio/*/*.xml)
 
 if(NOT V_BUILD_ZYNQ)
 
-    add_subdirectory(core_modules)
+    #add_subdirectory(core_modules)
     file(GLOB xmldocumentation ${xmldocumentation} ${CMAKE_CURRENT_SOURCE_DIR}/core_modules/*/*.xml)
 
     if(V_ADVMODULES)

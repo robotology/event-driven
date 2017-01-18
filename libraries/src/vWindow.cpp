@@ -20,7 +20,7 @@ vQueue vSurface2::addEvent(event<> v)
     vQueue removed = removeEvents(v);
 
     q.push_back(v);
-    event<AddressEvent> c = dynamic_pointer_cast<AddressEvent>(v);
+    event<AddressEvent> c = getas<AddressEvent>(v);
     if(c) {
         if(spatial[c->getY()][c->getX()])
             removed.push_back(spatial[c->getY()][c->getX()]);
@@ -43,7 +43,7 @@ vQueue vSurface2::getSurf(int d)
 {
     event<AddressEvent> v(nullptr);
     for(vQueue::reverse_iterator qi = q.rbegin(); qi != q.rend(); qi++) {
-        v = dynamic_pointer_cast<AddressEvent>(*qi);
+        v = getas<AddressEvent>(*qi);
         if(v) break;
     }
     if(!v) return vQueue();
@@ -83,7 +83,7 @@ vQueue vSurface2::getSurf_Tlim(int dt, int d)
 {
     event<AddressEvent> v(nullptr);
     for(vQueue::reverse_iterator qi = q.rbegin(); qi != q.rend(); qi++) {
-        v = dynamic_pointer_cast<AddressEvent>(*qi);
+        v = getas<AddressEvent>(*qi);
         if(v) break;
     }
     if(!v) return vQueue();
@@ -110,7 +110,7 @@ vQueue vSurface2::getSurf_Tlim(int dt, int xl, int xh, int yl, int yh)
         vt = (*rqit)->getStamp();
         if(vt > t) vt -= vtsHelper::maxStamp();
         if(vt + dt <= t) break;
-        event<AddressEvent> v = static_pointer_cast<AddressEvent>(*rqit);
+        event<AddressEvent> v = getas<AddressEvent>(*rqit);
         if(v != spatial[v->getY()][v->getX()]) continue;
         if(v->getX() >= xl && v->getX() <= xh) {
             if(v->getY() >= yl && v->getY() <= yh) {
@@ -157,7 +157,7 @@ vQueue vSurface2::getSurf_Clim(int c, int d)
 {
     event<AddressEvent> v(nullptr);
     for(vQueue::reverse_iterator qi = q.rbegin(); qi != q.rend(); qi++) {
-        v = dynamic_pointer_cast<AddressEvent>(*qi);
+        v = getas<AddressEvent>(*qi);
         if(v) break;
     }
     if(!v) return vQueue();
@@ -215,7 +215,7 @@ vQueue temporalSurface::removeEvents(event<> toAdd)
     //remove any events falling out the back of the window
     while(q.size()) {
 
-        event<AddressEvent> v = dynamic_pointer_cast<AddressEvent>(q.front());
+        event<AddressEvent> v = getas<AddressEvent>(q.front());
         if(v && v != spatial[v->getY()][v->getX()]) {
             q.pop_front();
             continue;
@@ -235,7 +235,7 @@ vQueue temporalSurface::removeEvents(event<> toAdd)
 
     while(q.size()) {
 
-        event<AddressEvent> v = dynamic_pointer_cast<AddressEvent>(q.back());
+        event<AddressEvent> v = getas<AddressEvent>(q.back());
         if(v && v != spatial[v->getY()][v->getX()]) {
             q.pop_back();
             continue;
@@ -264,7 +264,7 @@ vQueue fixedSurface::removeEvents(event<> toAdd)
 
     while(q.size()) {
 
-        event<AddressEvent> v = dynamic_pointer_cast<AddressEvent>(q.front());
+        event<AddressEvent> v = getas<AddressEvent>(q.front());
         if(v && v != spatial[v->getY()][v->getX()]) {
             q.pop_front();
         } else {
@@ -275,7 +275,7 @@ vQueue fixedSurface::removeEvents(event<> toAdd)
     if(count > qlength) {
 
         removed.push_back(q.front());
-        event<AddressEvent> v = dynamic_pointer_cast<AddressEvent>(q.front());
+        event<AddressEvent> v = getas<AddressEvent>(q.front());
         if(v) spatial[v->getY()][v->getX()] = NULL;
         q.pop_front();
         count--;
@@ -289,7 +289,7 @@ vQueue fixedSurface::removeEvents(event<> toAdd)
 vQueue lifetimeSurface::addEvent(event<> toAdd)
 {
 
-    event<FlowEvent> v = dynamic_pointer_cast<FlowEvent>(toAdd);
+    event<FlowEvent> v = getas<FlowEvent>(toAdd);
     if(!v) return vQueue();
     return vSurface2::addEvent(v);
 }
@@ -302,7 +302,7 @@ vQueue lifetimeSurface::removeEvents(event<> toAdd)
 
 
     //lifetime requires a flow event only
-    event<FlowEvent> toAddflow = dynamic_pointer_cast<FlowEvent>(toAdd);
+    event<FlowEvent> toAddflow = getas<FlowEvent>(toAdd);
     if(!toAddflow)
         return vQueue();
 
@@ -312,7 +312,7 @@ vQueue lifetimeSurface::removeEvents(event<> toAdd)
 
     vQueue::iterator i = q.begin();
     while(i != q.end()) {
-        event<FlowEvent> v = static_pointer_cast<FlowEvent>(*i);
+        event<FlowEvent> v = std::static_pointer_cast<FlowEvent>(*i);
         int modts = cts;
         if(cts < v->getStamp()) //we have wrapped
             modts += vtsHelper::maxStamp();
