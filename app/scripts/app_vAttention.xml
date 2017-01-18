@@ -1,0 +1,45 @@
+<application>
+<name> app_vAttention </name>
+
+<module>
+    <name> vAttention </name>
+    <parameters> --sensorSize 128 --tau 120000 --thr 20 --filtersPath /home/miacono/workspace/event-driven/src/processing/vAttention/filters</parameters>
+    <node> localhost </node>
+</module>
+
+<module>
+   <name>yarpview</name>
+   <parameters>--name /viewLeft --x 000 --y 000 --RefreshTime 16 </parameters>
+   <node>localhost</node>
+</module>
+
+    <module>
+        <name>yarpview</name>
+        <parameters>--name /viewRight --x 300 --y 00 --RefreshTime 16 </parameters>
+        <node>localhost</node>
+    </module>
+
+    <module>
+        <name>yarpdataplayer</name>
+        <node>localhost</node>
+    </module>
+
+<connection>
+  <from>/zynqGrabber/vBottle:o</from>
+  <to>/vAttention/vBottle:i</to>
+  <protocol>tcp</protocol>
+</connection>
+
+<connection>
+  <from>/vAttention/salMapLeft:o</from>
+  <to>/viewLeft</to>
+  <protocol>tcp</protocol>
+</connection>
+
+<connection>
+    <from>/vAttention/salMapRight:o</from>
+    <to>/viewRight</to>
+    <protocol>tcp</protocol>
+</connection>
+
+</application>

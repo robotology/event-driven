@@ -28,8 +28,8 @@ bool vAttentionModule::configure(yarp::os::ResourceFinder &rf) {
             rf.check("name", yarp::os::Value("vAttention")).asString();
     yarp::os::RFModule::setName(moduleName.c_str());
 
-    bool strict = rf.check("strict") &&
-                  rf.check("strict", yarp::os::Value(true)).asBool();
+    bool strictness = rf.check("strictness") &&
+                  rf.check("strictness", yarp::os::Value(true)).asBool();
 
     /* attach a port of the same name as the module (prefixed with a /) to the module
      so that messages received from the port are redirected to the respond method */
@@ -46,14 +46,14 @@ bool vAttentionModule::configure(yarp::os::ResourceFinder &rf) {
 
     /* set parameters */
     int sensorSize = rf.check("sensorSize", yarp::os::Value(128)).asInt();
-    int filterSize = rf.check("filterSize", yarp::os::Value(1)).asInt();
-    double tau = rf.check("tau", yarp::os::Value(120000.0)).asDouble();
+    double tau = rf.check("tau", yarp::os::Value(20000.0)).asDouble();
     double thrSal = rf.check("thr", yarp::os::Value(20)).asDouble();
+    string filtersPath = rf.check("filtersPath", yarp::os::Value("../../src/processing/vAttention/filters/")).asString();
 
     /* create the thread and pass pointers to the module parameters */
-    attManager = new vAttentionManager(sensorSize, filterSize, tau, thrSal);
+    attManager = new vAttentionManager(sensorSize, tau, thrSal, filtersPath);
 
-    return attManager->open(moduleName, strict);
+    return attManager->open(moduleName, strictness);
 
 }
 
@@ -83,7 +83,6 @@ bool vAttentionModule::respond(const yarp::os::Bottle &command, yarp::os::Bottle
                               " commands are: \n" +
                               "help \n" +
                               "quit \n";
-
     reply.clear();
 
     if (command.get(0).asString() == "quit") {
@@ -93,6 +92,7 @@ bool vAttentionModule::respond(const yarp::os::Bottle &command, yarp::os::Bottle
         std::cout << helpMessage;
         reply.addString("ok");
     }
+
     return true;
 }
 
@@ -145,7 +145,7 @@ void vAttentionManager::load_filter(std::string filename, yarp::sig::Matrix &fil
     filterSize = max(filterSize, maxDimension);
 }
 
-vAttentionManager::vAttentionManager(int sensorSize, int filterSize, double tau, double thrSal) {
+vAttentionManager::vAttentionManager(int sensorSize, double tau, double thrSal, std::string &filtersPath) {
     this->sensorSize = sensorSize;
     this->tau = tau;
     this->thrSal = thrSal;
@@ -155,17 +155,16 @@ vAttentionManager::vAttentionManager(int sensorSize, int filterSize, double tau,
     ptime = 0; // past time stamp
 
 
-    std::string filterDirectoryPath = "../../src/processing/vAttention/filters/";
 
-    load_filter(filterDirectoryPath + "horizFilter.txt", horizFilterMap, filterSize);
-    load_filter(filterDirectoryPath + "bigHorizFilter.txt", bigHorizFilterMap, filterSize);
+    load_filter(filtersPath + "/horizFilter.txt", horizFilterMap, filterSize);
+//    load_filter(filtersPath + "/bigHorizFilter.txt", bigHorizFilterMap, filterSize);
 //    load_filter(filterDirectoryPath + "vertFilter.txt", vertFilterMap, filterSize);
     vertFilterMap = horizFilterMap.transposed();
     bigVertFilterMap = bigHorizFilterMap.transposed();
-    load_filter(filterDirectoryPath + "uniformFilter.txt", uniformFilterMap, filterSize);
+//    load_filter(filtersPath + "/uniformFilter.txt", uniformFilterMap, filterSize);
     uniformFilterMap *= 0.6;
     horizFilterMap *= 3;
-    vertFilterMap *= 3;
+    vertFilterMap *= 1;
     bigHorizFilterMap *= 1;
     bigVertFilterMap *= 1;
     /** Gaussian Filter computation**/
@@ -175,19 +174,13 @@ vAttentionManager::vAttentionManager(int sensorSize, int filterSize, double tau,
     generateGaussianFilter(bigGaussianFilterMap, 10, 50, filterSize);
     bigGaussianFilterMap *= 1;
 
-    printSaliencyMap(uniformFilterMap);
-    printSaliencyMap(vertFilterMap);
-    printSaliencyMap(horizFilterMap);
-    printSaliencyMap(gaussianFilterMap);
-
-
-    this->filterSize = filterSize;
     this->salMapPadding = filterSize / 2;
 
     //for speed we predefine the memory for some matrices
     //The saliency map is bigger than the image by the maximum size among the loaded filters
     salMapLeft = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
     salMapRight = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
+    vertFeatureMap = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
 
     // initialise saliency map to zero
 //    salMapLeft.zero();
@@ -195,6 +188,7 @@ vAttentionManager::vAttentionManager(int sensorSize, int filterSize, double tau,
 
     salMapLeft = 1;
     salMapRight = 1;
+    vertFeatureMap = 1;
 
 }
 
@@ -293,25 +287,14 @@ void vAttentionManager::onRead(emorph::vBottle &bot) {
 
         // --- increase energy of saliency map  --- //
         if (aep->getChannel() == 0) {
-            updateSaliencyMap(salMapLeft, bigVertFilterMap, aep);
-            updateSaliencyMap(salMapLeft, vertFilterMap, aep);
-            updateSaliencyMap(salMapLeft, horizFilterMap, aep);
-            updateSaliencyMap(salMapLeft, bigHorizFilterMap, aep);
-            updateSaliencyMap(salMapLeft, gaussianFilterMap, aep);
-            updateSaliencyMap(salMapLeft, bigGaussianFilterMap, aep);
-
+            updateMap(vertFeatureMap, vertFilterMap, aep);
         } else {
-            updateSaliencyMap(salMapRight, horizFilterMap, aep);
+            updateMap(salMapRight, horizFilterMap, aep);
         }
     }
-
-    decaySaliencyMap(salMapLeft, dt);
-    decaySaliencyMap(salMapRight, dt);
-
-    // ---- normalise saliency map ---- //
-
-//    normaliseSaliencyMap(salMapLeft);
-//    normaliseSaliencyMap(salMapRight);
+//printMap(vertFeatureMap);
+    decayMap(vertFeatureMap,dt);
+    normaliseMap(vertFeatureMap, normalisedVertFeatureMap);
 
     // ---- adding the event to the output vBottle if it passes thresholds ---- //
 
@@ -356,7 +339,7 @@ void vAttentionManager::onRead(emorph::vBottle &bot) {
     yarp::sig::ImageOf<yarp::sig::PixelBgr> &imageLeft = outSalMapLeftPort.prepare();
     yarp::sig::ImageOf<yarp::sig::PixelBgr> &imageRight = outSalMapRightPort.prepare();
 
-    convertToImage(salMapLeft, imageLeft);
+    convertToImage(normalisedVertFeatureMap, imageLeft);
     convertToImage(salMapRight, imageRight);
 
     // --- writing images of left and right saliency maps on output port
@@ -368,27 +351,27 @@ void vAttentionManager::onRead(emorph::vBottle &bot) {
     }
 }
 
-void vAttentionManager::convertToImage(yarp::sig::Matrix &salMap, yarp::sig::ImageOf<yarp::sig::PixelBgr> &image) {
+void vAttentionManager::convertToImage(yarp::sig::Matrix &map, yarp::sig::ImageOf<yarp::sig::PixelBgr> &image) {
 
     /*prepare output vBottle with images */
     image.resize(sensorSize, sensorSize);
     image.setTopIsLowIndex(true);
     image.zero();
 
-    double *attentionPoint = computeAttentionPoint(salMap);
+    double *attentionPoint = computeAttentionPoint(map);
 
     for (int r = sensorSize; r > 0; r--) {
         for (int c = 0; c < sensorSize; c++) {
             yarp::sig::PixelBgr pixelBgr;
 
 //            Coordinates of saliency map are shifted by salMapPadding wrt the image
-            double pixelValue = std::min(salMap(r + salMapPadding, c + salMapPadding), thrSal);
-
-            //Normalize to maximum pixel bgr value 255
-            pixelValue /= normSal;
-
+//            double pixelValue = std::min(map(r + salMapPadding, c + salMapPadding), thrSal);
+//
+//            //Normalize to maximum pixel bgr value 255
+//            pixelValue /= normSal;
+            double pixelValue = map(r + salMapPadding, c + salMapPadding);
             //Attention point is highlighted in red, negative values in blue, positive in green
-            if (&salMap(r, c) == attentionPoint) {
+            if (&map(r, c) == attentionPoint) {
                 pixelBgr.r = 255;
             } else if (pixelValue <= 0) {
                 pixelBgr.b = std::min (fabs(pixelValue),255.0);
@@ -401,99 +384,106 @@ void vAttentionManager::convertToImage(yarp::sig::Matrix &salMap, yarp::sig::Ima
     }
 }
 
-void vAttentionManager::updateSaliencyMap(yarp::sig::Matrix &salMap, yarp::sig::Matrix &filterMap,
-                                          emorph::AddressEvent *aep) {
+void vAttentionManager::updateMap(yarp::sig::Matrix &map, yarp::sig::Matrix &filterMap,
+                                  emorph::AddressEvent *aep) {
     //Pixel coordinates are shifted to match with the location in the saliency map
-
+//    printMap(map);
     int filterRows = filterMap.rows();
     int filterCols = filterMap.cols();
 
     // unmask event: get x, y
     int r = aep->getX() + salMapPadding;
     int c = aep->getY() + salMapPadding;
-
+double val;
     // ---- increase energy in the location of the event ---- //
 
-//    int rows = salMap.rows();
-//    int cols = salMap.cols();
-
-    for (int rf = -filterRows / 2; rf < filterRows / 2; rf++) {
-        for (int cf = -filterCols / 2; cf < filterCols / 2; cf++) {
-            salMap(r, c) += fabs(salMap(r + rf, c + cf)) * filterMap(rf + filterRows / 2, cf + filterCols / 2);
-            salMap(r, c) = min(salMap(r, c), 2000.0);
-            salMap(r, c) = max(salMap(r, c), -2000.0);
-            cf++;
+    for (int rf = -filterRows / 2; rf < filterRows / 2 + filterRows % 2; rf++) {
+        for (int cf = -filterCols / 2; cf < filterCols / 2 + filterCols % 2; cf++) {
+            val = fabs(map(r + rf, c + cf)) * filterMap(rf + filterRows / 2, cf + filterCols / 2);
+            map(r, c) += val;
+            map(r, c) = min(map(r, c), 2000.0);
+            map(r, c) = max(map(r, c), -2000.0);
         }
-        rf++;
     }
+//    printMap(map);
 }
 
-void vAttentionManager::printSaliencyMap(yarp::sig::Matrix &salMap) {
-    for (int r = 0; r < salMap.rows(); r++) {
-        for (int c = 0; c < salMap.cols(); c++) {
-            std::cout << setprecision(2) << salMap(r, c) << " ";
+void vAttentionManager::printMap(yarp::sig::Matrix &map) {
+    for (int r = 0; r < map.rows(); r++) {
+        for (int c = 0; c < map.cols(); c++) {
+            std::cout << setprecision(2) << map(r, c) << " ";
         }
         std::cout << std::endl;
     }
     std::cout << std::endl;
 }
 
-void vAttentionManager::decaySaliencyMap(yarp::sig::Matrix &salMap, unsigned long int dt) {
+void vAttentionManager::decayMap(yarp::sig::Matrix &map, unsigned long int dt) {
     double decayFactor = exp(-((double) dt) / tau);
-//    std::cout << "exp(-dt/tau) = " << decayFactor << std::endl;
-    for (int r = 0; r < sensorSize + filterSize - 1; r++) {
-        for (int c = 0; c < sensorSize + filterSize - 1; c++) {
-            salMap(r, c) = salMap(r, c) * decayFactor;
-        }
-    }
-
+    map*= decayFactor;
 }
 
-void vAttentionManager::normaliseSaliencyMap(yarp::sig::Matrix &salMap) {
-    double min;
-    double max;
+//void vAttentionManager::normaliseMap(yarp::sig::Matrix &map) {
+//    double min;
+//    double max;
+//
+//    min = map(0, 0);
+//    max = min;
+//
+//    // ---- find max and min values of saliency map ---- //
+//    for (int r = 0; r < map.rows(); r++) {
+//        for (int c = 0; c < map.cols(); c++) {
+//            if (map(r, c) > max) {
+//                max = map(r, c);
+//            }
+//            if (map(r, c) < min) {
+//                min = map(r, c);
+//            }
+//        }
+//    }
+//
+//    if (max == min) {
+//        return;
+//    }
+//    double value;
+//    double salValue;
+//    // ---- normalise ---- //
+//    for (int r = 0; r < map.rows(); r++) {
+//        for (int c = 0; c < map.cols(); c++) {
+//            salValue = map(r,c);
+//            value = (map(r, c) - min) / (max - min);
+//            map(r, c) = value;
+//        }
+//    }
+//}
 
-    min = salMap(0, 0);
-    max = min;
 
-    // ---- find max and min values of saliency map ---- //
-    for (int r = 0; r < sensorSize; r++) {
-        for (int c = 0; c < sensorSize; c++) {
-            if (salMap(r, c) > max) {
-                max = salMap(r, c);
-            }
-            if (salMap(r, c) < min) {
-                min = salMap(r, c);
-            }
+void vAttentionManager::normaliseMap(yarp::sig::Matrix &map, yarp::sig::Matrix &normalisedMap) {
+    double totalEnergy;
+    normalisedMap = map;
+    for (int r = 0; r < map.rows(); ++r) {
+        for (int c = 0; c < map.cols(); ++c) {
+            totalEnergy += map(r,c);
         }
     }
-
-    if (max == min) {
-        return;
-    }
-
-    // ---- normalise ---- //
-    for (int r = 0; r < sensorSize; r++) {
-        for (int c = 0; c < sensorSize; c++) {
-            salMap(r, c) = (salMap(r, c) - min) / (max - min);
-        }
-    }
+    normalisedMap /= totalEnergy;
+    normalisedMap *= 255;
 }
 
-double *vAttentionManager::computeAttentionPoint(yarp::sig::Matrix &salMap) {
+double *vAttentionManager::computeAttentionPoint(yarp::sig::Matrix &map) {
     double max = 0;
     int rMax = 0;
     int cMax = 0;
     for (int r = 0; r < sensorSize; r++) {
         for (int c = 0; c < sensorSize; c++) {
-            if (salMap(r, c) > max) {
-                max = salMap(r, c);
+            if (map(r, c) > max) {
+                max = map(r, c);
                 rMax = r;
                 cMax = c;
             }
         }
     }
-    return &salMap(rMax, cMax);
+    return &map(rMax, cMax);
 }
 
 //empty line to make gcc happy

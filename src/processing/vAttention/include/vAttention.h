@@ -58,18 +58,21 @@ private:
     yarp::sig::Matrix bigVertFilterMap;        // filter is a matrix (filterSize*filterSize)
     yarp::sig::Matrix bigHorizFilterMap;        // filter is a matrix (filterSize*filterSize)
 
-    void updateSaliencyMap(yarp::sig::Matrix &salMap, yarp::sig::Matrix &filterMap, emorph::AddressEvent *aep);
-    void normaliseSaliencyMap(yarp::sig::Matrix &salMap);
-    void decaySaliencyMap(yarp::sig::Matrix &salMap, unsigned long int dt);
-    void printSaliencyMap(yarp::sig::Matrix &salMap);
-    void convertToImage(yarp::sig::Matrix &salMap, yarp::sig::ImageOf<yarp::sig::PixelBgr> &image);
+    yarp::sig::Matrix vertFeatureMap;
+    yarp::sig::Matrix normalisedVertFeatureMap;
+
+    void updateMap(yarp::sig::Matrix &map, yarp::sig::Matrix &filterMap, emorph::AddressEvent *aep);
+    void normaliseMap(yarp::sig::Matrix &map, yarp::sig::Matrix &normalisedMap);
+    void decayMap(yarp::sig::Matrix &map, unsigned long int dt);
+    void printMap(yarp::sig::Matrix &map);
+    void convertToImage(yarp::sig::Matrix &map, yarp::sig::ImageOf<yarp::sig::PixelBgr> &image);
     void load_filter(std::string filename, yarp::sig::Matrix &filterMap, int &filterSize);
-    double* computeAttentionPoint(yarp::sig::Matrix &salMap);
+    double* computeAttentionPoint(yarp::sig::Matrix &map);
     void generateGaussianFilter(yarp::sig::Matrix& filterMap, double sigma, int gaussianFilterSize, int &filterSize);
 
 public:
 
-    vAttentionManager(int sensorSize, int filterSize, double tau, double thrSal);
+    vAttentionManager(int sensorSize, double tau, double thrSal, std::string &filtersPath);
 
     bool    open(const std::string moduleName, bool strictness = false);
     void    close();
