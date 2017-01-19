@@ -46,7 +46,7 @@ bool vAttentionModule::configure(yarp::os::ResourceFinder &rf) {
 
     /* set parameters */
     int sensorSize = rf.check("sensorSize", yarp::os::Value(128)).asInt();
-    double tau = rf.check("tau", yarp::os::Value(20000.0)).asDouble();
+    double tau = rf.check("tau", yarp::os::Value(200000.0)).asDouble();
     double thrSal = rf.check("thr", yarp::os::Value(20)).asDouble();
     string filtersPath = rf.check("filtersPath", yarp::os::Value("../../src/processing/vAttention/filters/")).asString();
 
@@ -157,22 +157,17 @@ vAttentionManager::vAttentionManager(int sensorSize, double tau, double thrSal, 
 
 
     load_filter(filtersPath + "/horizFilter.txt", horizFilterMap, filterSize);
-//    load_filter(filtersPath + "/bigHorizFilter.txt", bigHorizFilterMap, filterSize);
+    load_filter(filtersPath + "/bigHorizFilter.txt", bigHorizFilterMap, filterSize);
 //    load_filter(filterDirectoryPath + "vertFilter.txt", vertFilterMap, filterSize);
     vertFilterMap = horizFilterMap.transposed();
     bigVertFilterMap = bigHorizFilterMap.transposed();
-//    load_filter(filtersPath + "/uniformFilter.txt", uniformFilterMap, filterSize);
-    uniformFilterMap *= 0.6;
-    horizFilterMap *= 3;
-    vertFilterMap *= 1;
-    bigHorizFilterMap *= 1;
-    bigVertFilterMap *= 1;
+    load_filter(filtersPath + "/uniformFilter.txt", uniformFilterMap, filterSize);
+
     /** Gaussian Filter computation**/
 
     generateGaussianFilter(gaussianFilterMap, 4, 15, filterSize);
-    gaussianFilterMap *= 2;
     generateGaussianFilter(bigGaussianFilterMap, 10, 50, filterSize);
-    bigGaussianFilterMap *= 1;
+
 
     this->salMapPadding = filterSize / 2;
 
@@ -181,6 +176,10 @@ vAttentionManager::vAttentionManager(int sensorSize, double tau, double thrSal, 
     salMapLeft = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
     salMapRight = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
     vertFeatureMap = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
+    horizFeatureMap = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
+    bigHorizFeatureMap = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
+    gaussianFeatureMap = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
+    bigGaussianFeatureMap = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
 
     // initialise saliency map to zero
 //    salMapLeft.zero();
@@ -189,6 +188,10 @@ vAttentionManager::vAttentionManager(int sensorSize, double tau, double thrSal, 
     salMapLeft = 1;
     salMapRight = 1;
     vertFeatureMap = 1;
+    horizFeatureMap = 1;
+    bigHorizFeatureMap = 1;
+    gaussianFeatureMap = 1;
+    bigGaussianFeatureMap = 1;
 
 }
 
@@ -288,13 +291,33 @@ void vAttentionManager::onRead(emorph::vBottle &bot) {
         // --- increase energy of saliency map  --- //
         if (aep->getChannel() == 0) {
             updateMap(vertFeatureMap, vertFilterMap, aep);
+            updateMap(horizFeatureMap, horizFilterMap, aep);
+            updateMap(bigHorizFeatureMap, bigHorizFilterMap, aep);
+            updateMap(gaussianFeatureMap, gaussianFilterMap, aep);
+            updateMap(bigGaussianFeatureMap, bigGaussianFilterMap, aep);
+
         } else {
             updateMap(salMapRight, horizFilterMap, aep);
         }
     }
 //printMap(vertFeatureMap);
     decayMap(vertFeatureMap,dt);
+    decayMap(horizFeatureMap,dt);
+    decayMap(bigHorizFeatureMap,dt);
+    decayMap(gaussianFeatureMap,dt);
+    decayMap(bigGaussianFeatureMap,dt);
     normaliseMap(vertFeatureMap, normalisedVertFeatureMap);
+    normaliseMap(horizFeatureMap, normalisedHorizFeatureMap);
+    normaliseMap(bigHorizFeatureMap, normalisedBigHorizFeatureMap);
+    normaliseMap(gaussianFeatureMap, normalisedGaussianFeatureMap);
+    normaliseMap(bigGaussianFeatureMap, normalisedBigGaussianFeatureMap);
+
+    //salMapLeft = normalisedVertFeatureMap + 5*normalisedGaussianFeatureMap + normalisedHorizFeatureMap;
+    //salMapLeft = 3*normalisedGaussianFeatureMap;
+
+//    salMapLeft = 2*(normalisedBigGaussianFeatureMap+normalisedGaussianFeatureMap) + vertFeatureMap + horizFeatureMap;
+    salMapLeft = bigHorizFeatureMap + horizFeatureMap;
+    salMapLeft *= 2000;
 
     // ---- adding the event to the output vBottle if it passes thresholds ---- //
 
@@ -339,7 +362,7 @@ void vAttentionManager::onRead(emorph::vBottle &bot) {
     yarp::sig::ImageOf<yarp::sig::PixelBgr> &imageLeft = outSalMapLeftPort.prepare();
     yarp::sig::ImageOf<yarp::sig::PixelBgr> &imageRight = outSalMapRightPort.prepare();
 
-    convertToImage(normalisedVertFeatureMap, imageLeft);
+    convertToImage(salMapLeft, imageLeft);
     convertToImage(salMapRight, imageRight);
 
     // --- writing images of left and right saliency maps on output port
@@ -371,7 +394,7 @@ void vAttentionManager::convertToImage(yarp::sig::Matrix &map, yarp::sig::ImageO
 //            pixelValue /= normSal;
             double pixelValue = map(r + salMapPadding, c + salMapPadding);
             //Attention point is highlighted in red, negative values in blue, positive in green
-            if (&map(r, c) == attentionPoint) {
+            if (&map(r + salMapPadding, c + salMapPadding) == attentionPoint) {
                 pixelBgr.r = 255;
             } else if (pixelValue <= 0) {
                 pixelBgr.b = std::min (fabs(pixelValue),255.0);
@@ -467,15 +490,14 @@ void vAttentionManager::normaliseMap(yarp::sig::Matrix &map, yarp::sig::Matrix &
         }
     }
     normalisedMap /= totalEnergy;
-    normalisedMap *= 255;
 }
 
 double *vAttentionManager::computeAttentionPoint(yarp::sig::Matrix &map) {
     double max = 0;
     int rMax = 0;
     int cMax = 0;
-    for (int r = 0; r < sensorSize; r++) {
-        for (int c = 0; c < sensorSize; c++) {
+    for (int r = 0; r < map.rows(); r++) {
+        for (int c = 0; c < map.cols(); c++) {
             if (map(r, c) > max) {
                 max = map(r, c);
                 rMax = r;
@@ -483,6 +505,7 @@ double *vAttentionManager::computeAttentionPoint(yarp::sig::Matrix &map) {
             }
         }
     }
+
     return &map(rMax, cMax);
 }
 

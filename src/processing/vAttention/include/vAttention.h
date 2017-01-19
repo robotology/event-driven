@@ -59,7 +59,15 @@ private:
     yarp::sig::Matrix bigHorizFilterMap;        // filter is a matrix (filterSize*filterSize)
 
     yarp::sig::Matrix vertFeatureMap;
+    yarp::sig::Matrix horizFeatureMap;
+    yarp::sig::Matrix bigHorizFeatureMap;
+    yarp::sig::Matrix gaussianFeatureMap;
+    yarp::sig::Matrix bigGaussianFeatureMap;
     yarp::sig::Matrix normalisedVertFeatureMap;
+    yarp::sig::Matrix normalisedHorizFeatureMap;
+    yarp::sig::Matrix normalisedBigHorizFeatureMap;
+    yarp::sig::Matrix normalisedGaussianFeatureMap;
+    yarp::sig::Matrix normalisedBigGaussianFeatureMap;
 
     void updateMap(yarp::sig::Matrix &map, yarp::sig::Matrix &filterMap, emorph::AddressEvent *aep);
     void normaliseMap(yarp::sig::Matrix &map, yarp::sig::Matrix &normalisedMap);
