@@ -165,10 +165,12 @@ vAttentionManager::vAttentionManager(int sensorSize, double tau, double thrSal, 
 
     /** Gaussian Filter computation**/
 
-    generateGaussianFilter(gaussianFilterMap, 4, 15, filterSize);
-    generateGaussianFilter(bigGaussianFilterMap, 10, 50, filterSize);
+    generateGaussianFilter(gaussianFilterMap, 2, 20, filterSize);
+    generateGaussianFilter(bigGaussianFilterMap, 2.5, 20, filterSize);
 
-
+    DOGFilterMap = bigGaussianFilterMap - gaussianFilterMap;
+    DOGFilterMap *= 150;
+    printMap(DOGFilterMap);
     this->salMapPadding = filterSize / 2;
 
     //for speed we predefine the memory for some matrices
@@ -181,6 +183,7 @@ vAttentionManager::vAttentionManager(int sensorSize, double tau, double thrSal, 
     bigHorizFeatureMap = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
     gaussianFeatureMap = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
     bigGaussianFeatureMap = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
+    DOGFeatureMap = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
 
     // initialise saliency map to zero
 //    salMapLeft.zero();
@@ -194,6 +197,7 @@ vAttentionManager::vAttentionManager(int sensorSize, double tau, double thrSal, 
     bigHorizFeatureMap = 1;
     gaussianFeatureMap = 1;
     bigGaussianFeatureMap = 1;
+    DOGFeatureMap = 1;
 
 }
 
@@ -208,7 +212,7 @@ void vAttentionManager::generateGaussianFilter(yarp::sig::Matrix &filterMap, dou
             double center = gaussianFilterSize / 2;
             double rDist = r - center;
             double cDist = c - center;
-            filterMap(r, c) = exp(-(pow(rDist, 2) / (2 * pow(sigma, 2)) + pow(cDist, 2) / (2 * pow(sigma, 2))));
+            filterMap(r, c) =(1/(sigma * sqrt(2*M_PI)))* exp(-(pow(rDist, 2) / (2 * pow(sigma, 2)) + pow(cDist, 2) / (2 * pow(sigma, 2))));
         }
     }
     //Update filterSize to comply with new filter
@@ -292,37 +296,39 @@ void vAttentionManager::onRead(emorph::vBottle &bot) {
 
         // --- increase energy of saliency map  --- //
         if (aep->getChannel() == 0) {
-            updateMap(vertFeatureMap, vertFilterMap, aep);
-            updateMap(bigVertFeatureMap, vertFilterMap, aep);
-            updateMap(horizFeatureMap, horizFilterMap, aep);
-            updateMap(bigHorizFeatureMap, bigHorizFilterMap, aep);
-            updateMap(gaussianFeatureMap, gaussianFilterMap, aep);
-            updateMap(bigGaussianFeatureMap, bigGaussianFilterMap, aep);
+//            updateMap(vertFeatureMap, vertFilterMap, aep);
+//            updateMap(bigVertFeatureMap, vertFilterMap, aep);
+//            updateMap(horizFeatureMap, horizFilterMap, aep);
+//            updateMap(bigHorizFeatureMap, bigHorizFilterMap, aep);
+//            updateMap(gaussianFeatureMap, gaussianFilterMap, aep);
+//            updateMap(bigGaussianFeatureMap, bigGaussianFilterMap, aep);
+            updateMap(DOGFeatureMap,DOGFilterMap, aep);
 
         } else {
             updateMap(salMapRight, horizFilterMap, aep);
         }
     }
 //printMap(vertFeatureMap);
-    decayMap(vertFeatureMap,dt);
-    decayMap(bigVertFeatureMap,dt);
-    decayMap(horizFeatureMap,dt);
-    decayMap(bigHorizFeatureMap,dt);
-    decayMap(gaussianFeatureMap,dt);
-    decayMap(bigGaussianFeatureMap,dt);
-    normaliseMap(vertFeatureMap, normalisedVertFeatureMap);
-    normaliseMap(bigVertFeatureMap, normalisedVertFeatureMap);
-    normaliseMap(horizFeatureMap, normalisedHorizFeatureMap);
-    normaliseMap(bigHorizFeatureMap, normalisedBigHorizFeatureMap);
-    normaliseMap(gaussianFeatureMap, normalisedGaussianFeatureMap);
-    normaliseMap(bigGaussianFeatureMap, normalisedBigGaussianFeatureMap);
-
+//    decayMap(vertFeatureMap,dt);
+//    decayMap(bigVertFeatureMap,dt);
+//    decayMap(horizFeatureMap,dt);
+//    decayMap(bigHorizFeatureMap,dt);
+//    decayMap(gaussianFeatureMap,dt);
+//    decayMap(bigGaussianFeatureMap,dt);
+    decayMap(DOGFeatureMap, dt);
+//    normaliseMap(vertFeatureMap, normalisedVertFeatureMap);
+//    normaliseMap(bigVertFeatureMap, normalisedVertFeatureMap);
+//    normaliseMap(horizFeatureMap, normalisedHorizFeatureMap);
+//    normaliseMap(bigHorizFeatureMap, normalisedBigHorizFeatureMap);
+//    normaliseMap(gaussianFeatureMap, normalisedGaussianFeatureMap);
+//    normaliseMap(bigGaussianFeatureMap, normalisedBigGaussianFeatureMap);
+//    normaliseMap(DOGFeatureMap, normalisedGaussianFeatureMap);
     //salMapLeft = normalisedVertFeatureMap + 5*normalisedGaussianFeatureMap + normalisedHorizFeatureMap;
-    //salMapLeft = 3*normalisedGaussianFeatureMap;
+    salMapLeft = DOGFeatureMap;
 
-    salMapLeft = 2*(normalisedBigGaussianFeatureMap+normalisedGaussianFeatureMap) + vertFeatureMap + bigVertFeatureMap + horizFeatureMap + bigHorizFeatureMap;
+//    salMapLeft = 2*(normalisedBigGaussianFeatureMap+normalisedGaussianFeatureMap) + vertFeatureMap + bigVertFeatureMap + horizFeatureMap + bigHorizFeatureMap;
 //    salMapLeft = bigHorizFeatureMap + horizFeatureMap;
-    salMapLeft *= 2000;
+//    salMapLeft *= 20000;
 
     // ---- adding the event to the output vBottle if it passes thresholds ---- //
 
@@ -403,7 +409,7 @@ void vAttentionManager::convertToImage(yarp::sig::Matrix &map, yarp::sig::ImageO
                 pixelBgr.r = 255;
                 drawSquare(image, r + salMapPadding, c + salMapPadding, pixelBgr);
             } else if (pixelValue <= 0) {
-//                pixelBgr.b = std::min (fabs(pixelValue),255.0);
+                pixelBgr.b = std::min (fabs(pixelValue),255.0);
             } else {
                 pixelBgr.g = (unsigned char)std::min(fabs(pixelValue), 255.0);
             }
@@ -440,10 +446,14 @@ double val;
 
     for (int rf = -filterRows / 2; rf < filterRows / 2 + filterRows % 2; rf++) {
         for (int cf = -filterCols / 2; cf < filterCols / 2 + filterCols % 2; cf++) {
-            val = fabs(map(r + rf, c + cf)) * filterMap(rf + filterRows / 2, cf + filterCols / 2);
-            map(r, c) += val;
-            map(r, c) = min(map(r, c), 2000.0);
-            map(r, c) = max(map(r, c), -2000.0);
+//            val = fabs(map(r + rf, c + cf)) * filterMap(rf + filterRows / 2, cf + filterCols / 2);
+//            map(r, c) += val;
+//            map(r, c) = min(map(r, c), 2000.0);
+//            map(r, c) = min(map(r, c), 2000.0);
+            map(r + rf, c + cf) += filterMap(rf + filterRows /2, cf + filterCols /2);
+            map(r + rf, c + cf) = min(map(r + rf, c + cf), 2000.0);
+            map(r + rf, c + cf) = max(map(r + rf, c + cf), -2000.0);
+
         }
     }
 //    printMap(map);

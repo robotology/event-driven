@@ -48,15 +48,16 @@ private:
 
     emorph::vtsHelper unwrap;
     
-    yarp::sig::Matrix salMapLeft;       // saliency map is a matrix (sensorSize*sensorSize)
-    yarp::sig::Matrix salMapRight;      // saliency map is a matrix (sensorSize*sensorSize)
-    yarp::sig::Matrix uniformFilterMap;        // filter is a matrix (filterSize*filterSize)
-    yarp::sig::Matrix gaussianFilterMap;        // filter is a matrix (filterSize*filterSize)
-    yarp::sig::Matrix bigGaussianFilterMap;        // filter is a matrix (filterSize*filterSize)
-    yarp::sig::Matrix horizFilterMap;        // filter is a matrix (filterSize*filterSize)
-    yarp::sig::Matrix vertFilterMap;        // filter is a matrix (filterSize*filterSize)
-    yarp::sig::Matrix bigVertFilterMap;        // filter is a matrix (filterSize*filterSize)
-    yarp::sig::Matrix bigHorizFilterMap;        // filter is a matrix (filterSize*filterSize)
+    yarp::sig::Matrix salMapLeft;
+    yarp::sig::Matrix salMapRight;
+    yarp::sig::Matrix uniformFilterMap;
+    yarp::sig::Matrix gaussianFilterMap;
+    yarp::sig::Matrix bigGaussianFilterMap;
+    yarp::sig::Matrix DOGFilterMap;
+    yarp::sig::Matrix horizFilterMap;
+    yarp::sig::Matrix vertFilterMap;
+    yarp::sig::Matrix bigVertFilterMap;
+    yarp::sig::Matrix bigHorizFilterMap;
 
     yarp::sig::Matrix vertFeatureMap;
     yarp::sig::Matrix bigVertFeatureMap;
@@ -64,6 +65,7 @@ private:
     yarp::sig::Matrix bigHorizFeatureMap;
     yarp::sig::Matrix gaussianFeatureMap;
     yarp::sig::Matrix bigGaussianFeatureMap;
+    yarp::sig::Matrix DOGFeatureMap;
     yarp::sig::Matrix normalisedVertFeatureMap;
     yarp::sig::Matrix normalisedHorizFeatureMap;
     yarp::sig::Matrix normalisedBigHorizFeatureMap;
