@@ -59,6 +59,7 @@ private:
     yarp::sig::Matrix bigHorizFilterMap;        // filter is a matrix (filterSize*filterSize)
 
     yarp::sig::Matrix vertFeatureMap;
+    yarp::sig::Matrix bigVertFeatureMap;
     yarp::sig::Matrix horizFeatureMap;
     yarp::sig::Matrix bigHorizFeatureMap;
     yarp::sig::Matrix gaussianFeatureMap;
@@ -77,6 +78,7 @@ private:
     void load_filter(std::string filename, yarp::sig::Matrix &filterMap, int &filterSize);
     double* computeAttentionPoint(yarp::sig::Matrix &map);
     void generateGaussianFilter(yarp::sig::Matrix& filterMap, double sigma, int gaussianFilterSize, int &filterSize);
+    void drawSquare( yarp::sig::ImageOf<yarp::sig::PixelBgr> &image, int r, int c, yarp::sig::PixelBgr &pixelBgr) ;
 
 public:
 

@@ -176,6 +176,7 @@ vAttentionManager::vAttentionManager(int sensorSize, double tau, double thrSal, 
     salMapLeft = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
     salMapRight = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
     vertFeatureMap = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
+    bigVertFeatureMap = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
     horizFeatureMap = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
     bigHorizFeatureMap = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
     gaussianFeatureMap = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
@@ -188,6 +189,7 @@ vAttentionManager::vAttentionManager(int sensorSize, double tau, double thrSal, 
     salMapLeft = 1;
     salMapRight = 1;
     vertFeatureMap = 1;
+    bigVertFeatureMap = 1;
     horizFeatureMap = 1;
     bigHorizFeatureMap = 1;
     gaussianFeatureMap = 1;
@@ -291,6 +293,7 @@ void vAttentionManager::onRead(emorph::vBottle &bot) {
         // --- increase energy of saliency map  --- //
         if (aep->getChannel() == 0) {
             updateMap(vertFeatureMap, vertFilterMap, aep);
+            updateMap(bigVertFeatureMap, vertFilterMap, aep);
             updateMap(horizFeatureMap, horizFilterMap, aep);
             updateMap(bigHorizFeatureMap, bigHorizFilterMap, aep);
             updateMap(gaussianFeatureMap, gaussianFilterMap, aep);
@@ -302,11 +305,13 @@ void vAttentionManager::onRead(emorph::vBottle &bot) {
     }
 //printMap(vertFeatureMap);
     decayMap(vertFeatureMap,dt);
+    decayMap(bigVertFeatureMap,dt);
     decayMap(horizFeatureMap,dt);
     decayMap(bigHorizFeatureMap,dt);
     decayMap(gaussianFeatureMap,dt);
     decayMap(bigGaussianFeatureMap,dt);
     normaliseMap(vertFeatureMap, normalisedVertFeatureMap);
+    normaliseMap(bigVertFeatureMap, normalisedVertFeatureMap);
     normaliseMap(horizFeatureMap, normalisedHorizFeatureMap);
     normaliseMap(bigHorizFeatureMap, normalisedBigHorizFeatureMap);
     normaliseMap(gaussianFeatureMap, normalisedGaussianFeatureMap);
@@ -315,8 +320,8 @@ void vAttentionManager::onRead(emorph::vBottle &bot) {
     //salMapLeft = normalisedVertFeatureMap + 5*normalisedGaussianFeatureMap + normalisedHorizFeatureMap;
     //salMapLeft = 3*normalisedGaussianFeatureMap;
 
-//    salMapLeft = 2*(normalisedBigGaussianFeatureMap+normalisedGaussianFeatureMap) + vertFeatureMap + horizFeatureMap;
-    salMapLeft = bigHorizFeatureMap + horizFeatureMap;
+    salMapLeft = 2*(normalisedBigGaussianFeatureMap+normalisedGaussianFeatureMap) + vertFeatureMap + bigVertFeatureMap + horizFeatureMap + bigHorizFeatureMap;
+//    salMapLeft = bigHorizFeatureMap + horizFeatureMap;
     salMapLeft *= 2000;
 
     // ---- adding the event to the output vBottle if it passes thresholds ---- //
@@ -396,8 +401,9 @@ void vAttentionManager::convertToImage(yarp::sig::Matrix &map, yarp::sig::ImageO
             //Attention point is highlighted in red, negative values in blue, positive in green
             if (&map(r + salMapPadding, c + salMapPadding) == attentionPoint) {
                 pixelBgr.r = 255;
+                drawSquare(image, r + salMapPadding, c + salMapPadding, pixelBgr);
             } else if (pixelValue <= 0) {
-                pixelBgr.b = std::min (fabs(pixelValue),255.0);
+//                pixelBgr.b = std::min (fabs(pixelValue),255.0);
             } else {
                 pixelBgr.g = (unsigned char)std::min(fabs(pixelValue), 255.0);
             }
@@ -405,6 +411,18 @@ void vAttentionManager::convertToImage(yarp::sig::Matrix &map, yarp::sig::ImageO
             image(c, sensorSize - r) = pixelBgr;
         }
     }
+}
+
+void vAttentionManager::drawSquare( yarp::sig::ImageOf<yarp::sig::PixelBgr> &image, int r, int c,
+                                   yarp::sig::PixelBgr &pixelBgr)  {
+    int squareSize = 2;
+    for (int i = -squareSize; i <= squareSize; ++i) {
+                    for (int j = -squareSize; j <= squareSize; ++j) {
+                        if ((r + i< (image.height() -1)) && r + i>= 0)
+                            if ((c +j< (image.width() -1)) && c + j>= 0)
+                                image(r +i,c+j) = pixelBgr;
+                    }
+                }
 }
 
 void vAttentionManager::updateMap(yarp::sig::Matrix &map, yarp::sig::Matrix &filterMap,
@@ -505,7 +523,7 @@ double *vAttentionManager::computeAttentionPoint(yarp::sig::Matrix &map) {
             }
         }
     }
-
+    map(rMax,cMax) *= 3;
     return &map(rMax, cMax);
 }
 
