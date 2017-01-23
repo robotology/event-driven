@@ -88,7 +88,12 @@ bool dPepperIO::open(const std::string &name, bool strict)
 
     this->useCallback();
     this->strict = strict;
-    if(strict) this->setStrict();
+    if(strict) {
+        std::cout << "Using STRICT communication" << std::endl;
+        this->setStrict();
+    } else {
+        std::cout << "NOT using strict communication" << std::endl;
+    }
 
     yarp::os::BufferedPort<eventdriven::vBottle>::open("/" + name + "/vBottle:i");
     outPort.open("/" + name + "/vBottle:o");
@@ -118,6 +123,8 @@ void dPepperIO::onRead(eventdriven::vBottle &bot)
     //create event queue
     yarp::os::Stamp yts;
     this->getEnvelope(yts);
+
+    //return;
 
     eventdriven::vQueue q = bot.getAll();
     //create queue iterator

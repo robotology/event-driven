@@ -29,7 +29,7 @@ int main(int argc, char * argv[])
     /* prepare and configure the resource finder */
     yarp::os::ResourceFinder rf;
     rf.setDefaultContext( "eventdriven" );
-    rf.setDefaultConfigFile( "dpepper.ini" );
+    rf.setDefaultConfigFile( "vpepper.ini" );
     rf.configure( argc, argv );
 
     /* run the module: runModule() calls configure first and, if successful, it then runs */
