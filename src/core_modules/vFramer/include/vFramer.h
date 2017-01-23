@@ -30,15 +30,12 @@
 
 #include "vDraw.h"
 
-namespace eventdriven {
-
-
 /**
  * @brief The vReadAndSplit class splits events into different vWindows based
  * on the channel parameter. At any point in time a snapshot of all windows can
  * be performed, after which the resulting vQueues can be accessed.
  */
-class vReadAndSplit : public yarp::os::BufferedPort<eventdriven::vBottle>
+class vReadAndSplit : public yarp::os::BufferedPort<ev::vBottle>
 {
     //has an onRead() function that updates an eImage based on the draw
     //functions and then outputs the image at a certain rate
@@ -46,9 +43,9 @@ class vReadAndSplit : public yarp::os::BufferedPort<eventdriven::vBottle>
 private:
 
     //! storage of vWindows
-    std::map<int, vTempWindow> windows;
+    std::map<int, ev::vTempWindow> windows;
     //! storage of window snapshots
-    std::map<int, vQueue> snaps;
+    std::map<int, ev::vQueue> snaps;
 
     yarp::os::Stamp yarptime;
 
@@ -74,13 +71,13 @@ public:
     /// \param channel the channel value to access
     /// \return the list of events in a vQueue
     ///
-    const eventdriven::vQueue & getSnap(const int channel);
+    const ev::vQueue & getSnap(const int channel);
 
     ///
     /// \brief onRead splitting is performed as an asynchronous onRead function
     /// \param incoming the vBottle with events of all channels
     ///
-    virtual void onRead(eventdriven::vBottle &incoming);
+    virtual void onRead(ev::vBottle &incoming);
     virtual bool open(const std::string portName, bool strict = false);
 };
 
@@ -127,8 +124,6 @@ public:
     virtual double getPeriod();
 };
 
-
-} //namespace eventdriven
 
 #endif //vFramer
 

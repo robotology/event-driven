@@ -23,7 +23,7 @@
 
      <data>
         <input>
-            <type>eventdriven::vBottle</type>
+            <type>vBottle</type>
             <port carrier="tcp">/vCircle/vBottle:i</port>
             <required>yes</required>
             <priority>no</priority>
@@ -33,11 +33,11 @@
             </description>
         </input>
         <output>
-            <type>eventdriven::vBottle</type>
+            <type>vBottle</type>
             <port carrier="tcp">/vCircle/vBottle:o</port>
             <description>
                 Outputs the cirlce detections in the form of an
-                eventdriven::ClusterEventGauss. The vBottle also contains all
+                ClusterEventGauss. The vBottle also contains all
                 events in the vBottle received as input.
             </description>
         </output>

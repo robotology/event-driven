@@ -20,7 +20,7 @@
 #include <iCub/eventdriven/vCodec.h>
 #include <cmath>
 
-namespace eventdriven
+namespace ev
 {
 
 event<> createEvent(const std::string type)

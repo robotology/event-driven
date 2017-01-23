@@ -25,7 +25,7 @@
 
 #include <yarp/os/all.h>
 
-namespace eventdriven {
+namespace ev {
 
 class vtsHelper {
 

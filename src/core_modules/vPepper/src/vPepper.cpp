@@ -18,7 +18,7 @@
 #include "vPepper.h"
 
 /**********************************************************/
-bool dPepperModule::configure(yarp::os::ResourceFinder &rf)
+bool vPepperModule::configure(yarp::os::ResourceFinder &rf)
 {
     //set the name of the module
     std::string moduleName =
@@ -40,7 +40,7 @@ bool dPepperModule::configure(yarp::os::ResourceFinder &rf)
 }
 
 /**********************************************************/
-bool dPepperModule::interruptModule()
+bool vPepperModule::interruptModule()
 {
     eventManager.interrupt();
     yarp::os::RFModule::interruptModule();
@@ -48,7 +48,7 @@ bool dPepperModule::interruptModule()
 }
 
 /**********************************************************/
-bool dPepperModule::close()
+bool vPepperModule::close()
 {
     eventManager.close();
     yarp::os::RFModule::close();
@@ -56,19 +56,19 @@ bool dPepperModule::close()
 }
 
 /**********************************************************/
-bool dPepperModule::updateModule()
+bool vPepperModule::updateModule()
 {
     return true;
 }
 
 /**********************************************************/
-double dPepperModule::getPeriod()
+double vPepperModule::getPeriod()
 {
     return 1.0;
 }
 
 /**********************************************************/
-dPepperIO::dPepperIO()
+vPepperIO::vPepperIO()
 {
 
     //here we should initialise the module
@@ -76,13 +76,13 @@ dPepperIO::dPepperIO()
     spatialSize = 1;
     height = 128;
     width = 128;
-    leftWindow = eventdriven::temporalSurface(width, height, temporalSize);
-    rightWindow = eventdriven::temporalSurface(width, height, temporalSize);
+    leftWindow = ev::temporalSurface(width, height, temporalSize);
+    rightWindow = ev::temporalSurface(width, height, temporalSize);
     strict = false;
 
 }
 /**********************************************************/
-bool dPepperIO::open(const std::string &name, bool strict)
+bool vPepperIO::open(const std::string &name, bool strict)
 {
     //and open the input port
 
@@ -95,30 +95,30 @@ bool dPepperIO::open(const std::string &name, bool strict)
         std::cout << "NOT using strict communication" << std::endl;
     }
 
-    yarp::os::BufferedPort<eventdriven::vBottle>::open("/" + name + "/vBottle:i");
+    yarp::os::BufferedPort<ev::vBottle>::open("/" + name + "/vBottle:i");
     outPort.open("/" + name + "/vBottle:o");
 
     return true;
 }
 
 /**********************************************************/
-void dPepperIO::close()
+void vPepperIO::close()
 {
     //close ports
     outPort.close();
-    yarp::os::BufferedPort<eventdriven::vBottle>::close();
+    yarp::os::BufferedPort<ev::vBottle>::close();
 }
 
 /**********************************************************/
-void dPepperIO::interrupt()
+void vPepperIO::interrupt()
 {
     //pass on the interrupt call to everything needed
     outPort.interrupt();
-    yarp::os::BufferedPort<eventdriven::vBottle>::interrupt();
+    yarp::os::BufferedPort<ev::vBottle>::interrupt();
 }
 
 /**********************************************************/
-void dPepperIO::onRead(eventdriven::vBottle &bot)
+void vPepperIO::onRead(ev::vBottle &bot)
 {
     //create event queue
     yarp::os::Stamp yts;
@@ -126,12 +126,12 @@ void dPepperIO::onRead(eventdriven::vBottle &bot)
 
     //return;
 
-    eventdriven::vQueue q = bot.getAll();
+    ev::vQueue q = bot.getAll();
     //create queue iterator
-    eventdriven::vQueue::iterator qi, wi;
+    ev::vQueue::iterator qi, wi;
 
     // prepare output vBottle with address events extended with cluster ID (aec) and cluster events (clep)
-    eventdriven::vBottle &outBottle = outPort.prepare();
+    ev::vBottle &outBottle = outPort.prepare();
     outBottle.clear();
     outPort.setEnvelope(yts);
 
@@ -142,24 +142,24 @@ void dPepperIO::onRead(eventdriven::vBottle &bot)
     {
 
         //leftWindow.addEvent(**qi);
-        eventdriven::AddressEvent *v = (*qi)->getAs<eventdriven::AddressEvent>();
+        ev::event<ev::AddressEvent> v = ev::getas<ev::AddressEvent>(*qi);
         if(!v) continue;
-        if(v->getY() == 1023) continue;
+        if(v->getY() == 1023) continue; //put in for USB ATIS
 
         //keep each channel independently
-        eventdriven::vQueue tw;
+        ev::vQueue tw;
         if(v->getChannel()) {
-            rightWindow.addEvent(**qi);
+            rightWindow.addEvent(*qi);
             tw = rightWindow.getSurf(v->getX(), v->getY(), spatialSize);
         }
         else {
-            leftWindow.addEvent(**qi);
+            leftWindow.addEvent(*qi);
             tw = leftWindow.getSurf(v->getX(), v->getY(), spatialSize);
         }
 
         bool addit = false;
         for(wi = tw.begin(); wi != tw.end(); wi++) {
-            eventdriven::AddressEvent *pv = (*wi)->getAs<eventdriven::AddressEvent>();
+            ev::event<ev::AddressEvent> pv = ev::getas<ev::AddressEvent>(*wi);
             if((pv->getX() != v->getX() || pv->getY() != v->getY()) &&
                     pv->getPolarity() == v->getPolarity() &&
                     pv->getChannel() == v->getChannel()) {
@@ -170,7 +170,7 @@ void dPepperIO::onRead(eventdriven::vBottle &bot)
 
 
         if(addit)
-            outBottle.addEvent(**qi);
+            outBottle.addEvent(*qi);
 
     }
     //send on the processed events
@@ -181,24 +181,24 @@ void dPepperIO::onRead(eventdriven::vBottle &bot)
 
 }
 
-void dPepperIO::setTemporalSize(double microseconds)
+void vPepperIO::setTemporalSize(double microseconds)
 {
     temporalSize = microseconds;
     leftWindow.setTemporalSize(microseconds);
     rightWindow.setTemporalSize(microseconds);
 }
 
-void dPepperIO::setSpatialSize(double pixelradius)
+void vPepperIO::setSpatialSize(double pixelradius)
 {
     spatialSize = pixelradius;
 }
 
-void dPepperIO::setResolution(int height, int width)
+void vPepperIO::setResolution(int height, int width)
 {
     this->height = height;
     this->width = width;
-    leftWindow = eventdriven::temporalSurface(this->width, this->height, temporalSize);
-    rightWindow = eventdriven::temporalSurface(this->width, this->height, temporalSize);
+    leftWindow = ev::temporalSurface(this->width, this->height, temporalSize);
+    rightWindow = ev::temporalSurface(this->width, this->height, temporalSize);
 
 }
 

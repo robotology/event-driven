@@ -21,9 +21,6 @@
 #include <string>
 #include <opencv2/opencv.hpp>
 
-namespace eventdriven
-{
-
 /**
  * @brief The vDraw class is the base class from which all vDrawers should
  * inherit. It contains the draw and getTag functions which must be overloaded,
@@ -40,7 +37,7 @@ protected:
     int clearThreshold;
     int twindow;
 
-    int checkStagnancy(const eventdriven::vQueue &eSet) {
+    int checkStagnancy(const ev::vQueue &eSet) {
         if(!eSet.size()) return 0;
         if(pTS == eSet.back()->getStamp())
             stagnantCount++;
@@ -80,7 +77,7 @@ public:
     /// \param canvas is the image which may or may not yet exist
     /// \param eSet is the set of events which could possibly be drawn
     ///
-    virtual void draw(cv::Mat &canvas, const eventdriven::vQueue &eSet) = 0;
+    virtual void draw(cv::Mat &canvas, const ev::vQueue &eSet) = 0;
 
     ///
     /// \brief getTag returns the unique code for this drawing method. The
@@ -105,7 +102,7 @@ public:
     ///
     /// \brief see vDraw
     ///
-    virtual void draw(cv::Mat &image, const eventdriven::vQueue &eSet);
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet);
 
     ///
     /// \brief see vDraw
@@ -121,7 +118,7 @@ public:
     ///
     /// \brief see vDraw
     ///
-    virtual void draw(cv::Mat &image, const eventdriven::vQueue &eSet);
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet);
 
     ///
     /// \brief see vDraw
@@ -143,7 +140,7 @@ public:
     ///
     /// \brief see vDraw
     ///
-    virtual void draw(cv::Mat &image, const eventdriven::vQueue &eSet);
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet);
 
     ///
     /// \brief see vDraw
@@ -159,7 +156,7 @@ public:
     ///
     /// \brief see vDraw
     ///
-    virtual void draw(cv::Mat &image, const eventdriven::vQueue &eSet);
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet);
 
     ///
     /// \brief see vDraw
@@ -176,7 +173,7 @@ class clusterDraw : public vDraw {
 
 protected:
 
-    std::map<int, eventdriven::ClusterEvent *> persistance;
+    std::map<int, ev::event<ev::ClusterEvent>> persistance;
     int stagnantCount;
 
 public:
@@ -184,7 +181,7 @@ public:
     ///
     /// \brief see vDraw
     ///
-    virtual void draw(cv::Mat &image, const eventdriven::vQueue &eSet);
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet);
 
     ///
     /// \brief see vDraw
@@ -200,7 +197,7 @@ public:
     ///
     /// \brief see vDraw
     ///
-    virtual void draw(cv::Mat &image, const eventdriven::vQueue &eSet);
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet);
 
     ///
     /// \brief see vDraw
@@ -216,7 +213,7 @@ public:
     ///
     /// \brief see vDraw
     ///
-    virtual void draw(cv::Mat &image, const eventdriven::vQueue &eSet);
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet);
 
     ///
     /// \brief see vDraw
@@ -235,7 +232,7 @@ public:
     ///
     /// \brief see vDraw
     ///
-    virtual void draw(cv::Mat &image, const eventdriven::vQueue &eSet);
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet);
 
     ///
     /// \brief see vDraw
@@ -251,7 +248,7 @@ public:
     ///
     /// \brief see vDraw
     ///
-    virtual void draw(cv::Mat &image, const eventdriven::vQueue &eSet);
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet);
 
     ///
     /// \brief see vDraw
@@ -267,7 +264,7 @@ public:
     ///
     /// \brief see vDraw
     ///
-    virtual void draw(cv::Mat &image, const eventdriven::vQueue &eSet);
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet);
 
     ///
     /// \brief see vDraw
@@ -303,7 +300,7 @@ public:
     ///
     /// \brief see vDraw
     ///
-    virtual void draw(cv::Mat &image, const eventdriven::vQueue &eSet);
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet);
 
     ///
     /// \brief see vDraw
@@ -319,7 +316,7 @@ public:
     ///
     /// \brief see vDraw
     ///
-    virtual void draw(cv::Mat &image, const eventdriven::vQueue &eSet);
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet);
 
     ///
     /// \brief see vDraw
@@ -337,8 +334,6 @@ public:
  */
 vDraw * createDrawer(std::string tag);
 
-
-} //namespace eventdriven
 
 
 

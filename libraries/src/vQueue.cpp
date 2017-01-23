@@ -19,7 +19,7 @@
 #include <iCub/eventdriven/vQueue.h>
 #include <algorithm>
 
-namespace eventdriven
+namespace ev
 {
 
 /******************************************************************************/

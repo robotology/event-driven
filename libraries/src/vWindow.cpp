@@ -1,6 +1,6 @@
 #include <iCub/eventdriven/vWindow.h>
 
-namespace eventdriven {
+namespace ev {
 
 vSurface2::vSurface2(int width, int height)
 {

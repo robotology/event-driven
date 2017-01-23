@@ -28,7 +28,7 @@
 #include <iCub/eventdriven/vCodec.h>
 #include <iCub/eventdriven/vQueue.h>
 
-namespace eventdriven {
+namespace ev {
 
 class vBottle : public yarp::os::Bottle {
 
@@ -281,7 +281,7 @@ public:
 
 };
 
-} //end namespace eventdriven
+} //end namespace ev
 
 #endif /*__vBottle__*/
 

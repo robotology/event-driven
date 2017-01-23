@@ -26,15 +26,15 @@
 #include <yarp/os/all.h>
 #include <iCub/eventdriven/all.h>
 
-class dPepperIO : public yarp::os::BufferedPort<eventdriven::vBottle>
+class vPepperIO : public yarp::os::BufferedPort<ev::vBottle>
 {
 private:
 
     //output port for the vBottle with the new events computed by the module
-    yarp::os::BufferedPort<eventdriven::vBottle> outPort;
+    yarp::os::BufferedPort<ev::vBottle> outPort;
 
-    eventdriven::temporalSurface leftWindow;
-    eventdriven::temporalSurface rightWindow;
+    ev::temporalSurface leftWindow;
+    ev::temporalSurface rightWindow;
 
     //paramters
     int height;
@@ -45,14 +45,14 @@ private:
 
 public:
 
-    dPepperIO();
+    vPepperIO();
 
     bool open(const std::string &name, bool strict);
     void close();
     void interrupt();
 
     //this is the entry point to your main functionality
-    void onRead(eventdriven::vBottle &bot);
+    void onRead(ev::vBottle &bot);
 
     void setTemporalSize(double microseconds);
     void setSpatialSize(double pixelradius);
@@ -60,10 +60,10 @@ public:
 
 };
 
-class dPepperModule : public yarp::os::RFModule
+class vPepperModule : public yarp::os::RFModule
 {
     //the event bottle input and output handler
-    dPepperIO      eventManager;
+    vPepperIO      eventManager;
 
 
 public:

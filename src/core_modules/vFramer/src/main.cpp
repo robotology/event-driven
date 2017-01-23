@@ -36,7 +36,7 @@ int main(int argc, char * argv[])
     rf.setDefaultContext("eventdriven");
     rf.configure(argc, argv);
 
-    eventdriven::vFramerModule module;
+    vFramerModule module;
     return module.runModule(rf);
 }
 

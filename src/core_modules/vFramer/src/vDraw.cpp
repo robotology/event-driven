@@ -18,8 +18,9 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-namespace eventdriven
-{
+using ev::event;
+using ev::vQueue;
+using ev::getas;
 
 vDraw * createDrawer(std::string tag)
 {
@@ -82,7 +83,7 @@ std::string addressDraw::getTag()
     return "AE";
 }
 
-void addressDraw::draw(cv::Mat &image, const eventdriven::vQueue &eSet)
+void addressDraw::draw(cv::Mat &image, const ev::vQueue &eSet)
 {
 
     image = cv::Mat(Xlimit, Ylimit, CV_8UC3);
@@ -94,16 +95,16 @@ void addressDraw::draw(cv::Mat &image, const eventdriven::vQueue &eSet)
 
     if(eSet.empty()) return;
 
-    eventdriven::vQueue::const_reverse_iterator qi;
+    ev::vQueue::const_reverse_iterator qi;
     for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
 
 
         int dt = eSet.back()->getStamp() - (*qi)->getStamp();
-        if(dt < 0) dt += eventdriven::vtsHelper::maxStamp();
+        if(dt < 0) dt += ev::vtsHelper::maxStamp();
         if(dt > twindow) break;
 
 
-        eventdriven::AddressEvent *aep = (*qi)->getAs<eventdriven::AddressEvent>();
+        event<ev::AddressEvent> aep = getas<ev::AddressEvent>(*qi);
         if(!aep) continue;
 
         cv::Vec3b cpc = image.at<cv::Vec3b>(aep->getX(), aep->getY());
@@ -142,7 +143,7 @@ std::string lifeDraw::getTag()
     return "AEL";
 }
 
-void lifeDraw::draw(cv::Mat &image, const eventdriven::vQueue &eSet)
+void lifeDraw::draw(cv::Mat &image, const vQueue &eSet)
 {
 
     image = cv::Mat(Xlimit, Ylimit, CV_8UC3);
@@ -155,15 +156,15 @@ void lifeDraw::draw(cv::Mat &image, const eventdriven::vQueue &eSet)
 
     int cts = eSet.back()->getStamp();
 
-    eventdriven::vQueue::const_iterator qi;
+    vQueue::const_iterator qi;
     for(qi = eSet.begin(); qi != eSet.end(); qi++) {
 
-        eventdriven::FlowEvent *v = (*qi)->getAs<eventdriven::FlowEvent>();
+        event<ev::FlowEvent> v = getas<ev::FlowEvent>(*qi);
         if(!v) continue;
 
         int modts = cts;
         if(cts < v->getStamp()) //we have wrapped
-            modts += eventdriven::vtsHelper::maxStamp();
+            modts += ev::vtsHelper::maxStamp();
 
         if(modts > v->getDeath()) continue;
 
@@ -203,7 +204,7 @@ std::string clusterDraw::getTag()
     return "CLE";
 }
 
-void clusterDraw::draw(cv::Mat &image, const eventdriven::vQueue &eSet)
+void clusterDraw::draw(cv::Mat &image, const vQueue &eSet)
 {
 
     std::stringstream ss;
@@ -225,21 +226,23 @@ void clusterDraw::draw(cv::Mat &image, const eventdriven::vQueue &eSet)
 
     cv::Mat textImg(image.rows, image.cols, image.type()); textImg.setTo(0);
 
-    eventdriven::vQueue::const_iterator qi;
+    vQueue::const_iterator qi;
     for(qi = eSet.begin(); qi != eSet.end(); qi++) {
-        eventdriven::ClusterEvent *vp = (*qi)->getAs<eventdriven::ClusterEvent>();
+        event<ev::ClusterEvent> vp = getas<ev::ClusterEvent>(*qi);
         if(vp) {
-            if(persistance[vp->getID()]) {
-                delete persistance[vp->getID()];
-                persistance[vp->getID()] = 0;
-            }
-            persistance[vp->getID()] = vp->clone()->getAs<eventdriven::ClusterEvent>();
+//            if(persistance[vp->getID()]) {
+//                delete persistance[vp->getID()];
+//                persistance[vp->getID()] = 0;
+//            }
+
+            //persistance[vp->getID()] = vp->clone()->getAs<eventdriven::ClusterEvent>();
+            persistance[vp->getID()] = vp;
             //latest[vp->getID()] = vp;
         }
 
     }
 
-    std::map<int, eventdriven::ClusterEvent *>::iterator ci;
+    std::map<int, event<ev::ClusterEvent> >::iterator ci;
     for(ci = persistance.begin(); ci != persistance.end(); ci++) {
 
         if(!ci->second->getPolarity()) continue;
@@ -249,7 +252,7 @@ void clusterDraw::draw(cv::Mat &image, const eventdriven::vQueue &eSet)
 
         //the event could be a gaussian cluster or a regular cluster have
         //display options for both
-        eventdriven::ClusterEventGauss *clegp = ci->second->getAs<eventdriven::ClusterEventGauss>();
+        event<ev::ClusterEventGauss> clegp = getas<ev::ClusterEventGauss>(ci->second);
         if(clegp) {
             double sig_x2_ = clegp->getXSigma2();
             double sig_y2_ = clegp->getYSigma2();
@@ -296,16 +299,16 @@ std::string blobDraw::getTag()
     return "BLOB";
 }
 
-void blobDraw::draw(cv::Mat &image, const eventdriven::vQueue &eSet)
+void blobDraw::draw(cv::Mat &image, const ev::vQueue &eSet)
 {
 
     cv::Mat canvas(Xlimit, Ylimit, CV_8UC3);
     canvas.setTo(255);
 
-    eventdriven::vQueue::const_iterator qi;
+    vQueue::const_iterator qi;
     for(qi = eSet.begin(); qi != eSet.end(); qi++) {
 
-        eventdriven::AddressEvent *aep = (*qi)->getAs<eventdriven::AddressEvent>();
+        event<ev::AddressEvent> aep = getas<ev::AddressEvent>(*qi);
         if(!aep) continue;
 
         cv::Vec3b cpc = canvas.at<cv::Vec3b>(aep->getX(), aep->getY());
@@ -337,13 +340,13 @@ std::string integralDraw::getTag()
     return "INTI";
 }
 
-void integralDraw::draw(cv::Mat &image, const eventdriven::vQueue &eSet)
+void integralDraw::draw(cv::Mat &image, const vQueue &eSet)
 {
 
     int d = 5;
-    eventdriven::vQueue::const_iterator qi;
+    vQueue::const_iterator qi;
     for(qi = eSet.begin(); qi != eSet.end(); qi++) {
-        eventdriven::AddressEvent *aep = (*qi)->getAs<eventdriven::AddressEvent>();
+        event<ev::AddressEvent> aep = getas<ev::AddressEvent>(*qi);
         if(aep) {
 
             unsigned char c = iimage.at<unsigned char>(aep->getX(), aep->getY());
@@ -371,7 +374,7 @@ std::string circleDraw::getTag()
     return "CIRC";
 }
 
-void circleDraw::draw(cv::Mat &image, const eventdriven::vQueue &eSet)
+void circleDraw::draw(cv::Mat &image, const vQueue &eSet)
 {
 
     if(image.empty()) {
@@ -384,14 +387,14 @@ void circleDraw::draw(cv::Mat &image, const eventdriven::vQueue &eSet)
     }
 
     //int n = 0;
-    eventdriven::vQueue::const_iterator qi;
+    vQueue::const_iterator qi;
     for(qi = eSet.begin(); qi != eSet.end(); qi++) {
 
         int dt = eSet.back()->getStamp() - (*qi)->getStamp();
-        if(dt < 0) dt += eventdriven::vtsHelper::maxStamp();
+        if(dt < 0) dt += ev::vtsHelper::maxStamp();
         if(dt > twindow) continue;
 
-        eventdriven::ClusterEventGauss *v = (*qi)->getAs<eventdriven::ClusterEventGauss>();
+        event<ev::ClusterEventGauss> v = getas<ev::ClusterEventGauss>(*qi);
         if(!v) continue;
         cv::Point centr(v->getYCog(), v->getXCog());
         //we hide the radius in in X_sigma_2
@@ -421,7 +424,7 @@ std::string surfDraw::getTag()
     return "SURF";
 }
 
-void surfDraw::draw(cv::Mat &image, const eventdriven::vQueue &eSet)
+void surfDraw::draw(cv::Mat &image, const vQueue &eSet)
 {
 
     image = cv::Mat(Xlimit, Ylimit*2, CV_8UC3);
@@ -432,9 +435,9 @@ void surfDraw::draw(cv::Mat &image, const eventdriven::vQueue &eSet)
 
     double cts = eSet.back()->getStamp();
 
-    eventdriven::vQueue::const_reverse_iterator qi;
+    vQueue::const_reverse_iterator qi;
     for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
-        eventdriven::AddressEvent *v = (*qi)->getAs<eventdriven::AddressEvent>();
+        event<ev::AddressEvent> v = getas<ev::AddressEvent>(*qi);
         if(!v) continue;
 
         //cpc[blue][green][red]
@@ -445,7 +448,7 @@ void surfDraw::draw(cv::Mat &image, const eventdriven::vQueue &eSet)
             if(cpc[1]) continue;
 
             double tts = v->getStamp();
-            if(tts > cts) tts = tts - eventdriven::vtsHelper::maxStamp();
+            if(tts > cts) tts = tts - ev::vtsHelper::maxStamp();
             if(cts - tts > gradient) continue;
             int val = 255 - 255.0 * (cts - tts)/ gradient;
             cpc[1] = std::max(val, 0);
@@ -458,7 +461,7 @@ void surfDraw::draw(cv::Mat &image, const eventdriven::vQueue &eSet)
             if(cpc[2]) continue;
 
             double tts = v->getStamp();
-            if(tts > cts) tts = tts - eventdriven::vtsHelper::maxStamp();
+            if(tts > cts) tts = tts - ev::vtsHelper::maxStamp();
             if(cts - tts > gradient) continue;
             int val = 255 - 255 * (cts - tts) / gradient;
             cpc[2] = std::max(val, 0);
@@ -477,7 +480,7 @@ std::string flowDraw::getTag()
     return "FLOW";
 }
 
-void flowDraw::draw(cv::Mat &image, const eventdriven::vQueue &eSet)
+void flowDraw::draw(cv::Mat &image, const vQueue &eSet)
 {
     double k = 4;
     if(image.empty()) {
@@ -499,15 +502,15 @@ void flowDraw::draw(cv::Mat &image, const eventdriven::vQueue &eSet)
 
     //int cts = eSet.back()->getAs<eventdriven::vEvent>()->getStamp();
 
-    eventdriven::vQueue::const_reverse_iterator qi;
+    vQueue::const_reverse_iterator qi;
     for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
 
 
         int dt = eSet.back()->getStamp() - (*qi)->getStamp();
-        if(dt < 0) dt += eventdriven::vtsHelper::maxStamp();
+        if(dt < 0) dt += ev::vtsHelper::maxStamp();
         if(dt > twindow) break;
 
-        eventdriven::FlowEvent *ofp = (*qi)->getAs<eventdriven::FlowEvent>();
+        event<ev::FlowEvent> ofp = getas<ev::FlowEvent>(*qi);
         if(!ofp) continue;
 
 //        int death = ofp->getDeath();
@@ -570,7 +573,7 @@ std::string fixedDraw::getTag()
     return "FIXED";
 }
 
-void fixedDraw::draw(cv::Mat &image, const eventdriven::vQueue &eSet)
+void fixedDraw::draw(cv::Mat &image, const vQueue &eSet)
 {
 
     image = cv::Mat(Xlimit, Ylimit, CV_8UC3);
@@ -581,9 +584,9 @@ void fixedDraw::draw(cv::Mat &image, const eventdriven::vQueue &eSet)
     }
 
     int i = 0;
-    eventdriven::vQueue::const_reverse_iterator qi;
+    vQueue::const_reverse_iterator qi;
     for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
-        eventdriven::AddressEvent *aep = (*qi)->getAs<eventdriven::AddressEvent>();
+        event<ev::AddressEvent> aep = getas<ev::AddressEvent>(*qi);
         if(!aep) continue;
 
         cv::Vec3b cpc = image.at<cv::Vec3b>(aep->getX(), aep->getY());
@@ -624,7 +627,7 @@ std::string fflowDraw::getTag()
     return "FFLOW";
 }
 
-void fflowDraw::draw(cv::Mat &image, const eventdriven::vQueue &eSet)
+void fflowDraw::draw(cv::Mat &image, const vQueue &eSet)
 {
     double k = 4;
     if(image.empty()) {
@@ -647,10 +650,10 @@ void fflowDraw::draw(cv::Mat &image, const eventdriven::vQueue &eSet)
     //int cts = eSet.back()->getAs<eventdriven::vEvent>()->getStamp();
 
     int i = 0;
-    eventdriven::vQueue::const_reverse_iterator qi;
+    ev::vQueue::const_reverse_iterator qi;
     for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
         if(++i > 2000) return;
-        eventdriven::FlowEvent *ofp = (*qi)->getAs<eventdriven::FlowEvent>();
+        event<ev::FlowEvent> ofp = getas<ev::FlowEvent>(*qi);
         if(!ofp) continue;
 
 //        int death = ofp->getDeath();
@@ -824,7 +827,7 @@ std::string isoDraw::getTag()
     return "ISO";
 }
 
-void isoDraw::draw(cv::Mat &image, const eventdriven::vQueue &eSet)
+void isoDraw::draw(cv::Mat &image, const ev::vQueue &eSet)
 {
 
     cv::Mat isoimage = baseimage.clone();
@@ -838,18 +841,18 @@ void isoDraw::draw(cv::Mat &image, const eventdriven::vQueue &eSet)
 
     int cts = eSet.back()->getStamp();
     int dt = cts - eSet.front()->getStamp();
-    if(dt < 0) dt += eventdriven::vtsHelper::maxStamp();
+    if(dt < 0) dt += ev::vtsHelper::maxStamp();
     maxdt = std::max(maxdt, dt);
 
 
-    eventdriven::vQueue::const_iterator qi;
+    ev::vQueue::const_iterator qi;
     for(qi = eSet.begin(); qi != eSet.end(); qi++) {
-        eventdriven::AddressEvent *aep = (*qi)->getAs<eventdriven::AddressEvent>();
+        event<ev::AddressEvent> aep = getas<ev::AddressEvent>(*qi);
         if(!aep) continue;
 
         //transform values
         double dt = cts - aep->getStamp();
-        if(dt < 0) dt += eventdriven::vtsHelper::maxStamp();
+        if(dt < 0) dt += ev::vtsHelper::maxStamp();
         dt /= (double)maxdt;
         int pts = dt * scale;
         int px = aep->getY();
@@ -913,7 +916,7 @@ std::string interestDraw::getTag()
     return "AE-INT";
 }
 
-void interestDraw::draw(cv::Mat &image, const eventdriven::vQueue &eSet)
+void interestDraw::draw(cv::Mat &image, const ev::vQueue &eSet)
 {
 
     if(image.empty()) {
@@ -927,9 +930,9 @@ void interestDraw::draw(cv::Mat &image, const eventdriven::vQueue &eSet)
 
     int r = 1;
     CvScalar c = CV_RGB(255, 0, 0);
-    eventdriven::vQueue::const_iterator qi;
+    ev::vQueue::const_iterator qi;
     for(qi = eSet.begin(); qi != eSet.end(); qi++) {
-        eventdriven::InterestEvent *v = (*qi)->getAs<eventdriven::InterestEvent>();
+        event<ev::InterestEvent> v = getas<ev::InterestEvent>(*qi);
         if(!v) continue;
         cv::Point centr(v->getY(), v->getX());
         cv::circle(image, centr, r, c);
@@ -937,5 +940,4 @@ void interestDraw::draw(cv::Mat &image, const eventdriven::vQueue &eSet)
 
 }
 
-} //namesapce eventdriven
 

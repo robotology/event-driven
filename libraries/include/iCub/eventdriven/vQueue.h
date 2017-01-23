@@ -30,7 +30,7 @@
 #include <deque>
 #include <memory>
 
-namespace eventdriven {
+namespace ev {
 
 class vQueue : public std::deque< event<vEvent> >
 {

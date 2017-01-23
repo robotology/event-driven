@@ -17,8 +17,6 @@
 #include "vFramer.h"
 #include <sstream>
 
-namespace eventdriven {
-
 /*////////////////////////////////////////////////////////////////////////////*/
 //vReadAndSplit
 /*////////////////////////////////////////////////////////////////////////////*/
@@ -27,23 +25,23 @@ bool vReadAndSplit::open(const std::string portName, bool strict)
     if(strict) this->setStrict();
     this->useCallback();
 
-    return BufferedPort<eventdriven::vBottle>::open("/" + portName + "/vBottle:i");
+    return BufferedPort<ev::vBottle>::open("/" + portName + "/vBottle:i");
 }
 
-void vReadAndSplit::onRead(eventdriven::vBottle &incoming)
+void vReadAndSplit::onRead(ev::vBottle &incoming)
 {
     this->getEnvelope(yarptime);
-    eventdriven::vQueue q = incoming.getAllSorted();
+    ev::vQueue q = incoming.getAllSorted();
 
     safety.lock();
-    for(eventdriven::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
-        windows[(*qi)->getChannel()].addEvent(**qi);
+    for(ev::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
+        windows[(*qi)->getChannel()].addEvent(*qi);
     safety.unlock();
 }
 
 void vReadAndSplit::snapshotAllWindows()
 {
-    std::map<int, vTempWindow>::iterator wi;
+    std::map<int, ev::vTempWindow>::iterator wi;
 
     safety.lock();
     for(wi = windows.begin(); wi != windows.end(); wi++)
@@ -51,7 +49,7 @@ void vReadAndSplit::snapshotAllWindows()
     safety.unlock();
 }
 
-const eventdriven::vQueue& vReadAndSplit::getSnap(const int channel)
+const ev::vQueue& vReadAndSplit::getSnap(const int channel)
 {
     return snaps[channel];
 }
@@ -87,7 +85,7 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
 
     double eventWindow =
             rf.check("eventWindow", yarp::os::Value(0.5)).asDouble();
-    eventWindow = eventWindow / vtsHelper::tstosecs();
+    eventWindow = eventWindow / ev::vtsHelper::tstosecs();
 
     bool strict = rf.check("strict") &&
             rf.check("strict", yarp::os::Value(true)).asBool();
@@ -214,7 +212,7 @@ bool vFramerModule::updateModule()
         cv::Mat canvas;
 
         //get the event queue associated with the correct channel
-        const eventdriven::vQueue &q = vReader.getSnap(channels[i]);
+        const ev::vQueue &q = vReader.getSnap(channels[i]);
 
         //for each drawer, draw what is needed
         for(unsigned int j = 0; j < drawers[i].size(); j++) {
@@ -240,4 +238,3 @@ double vFramerModule::getPeriod()
     return 0.3 * period;
 }
 
-} //namespace eventdriven

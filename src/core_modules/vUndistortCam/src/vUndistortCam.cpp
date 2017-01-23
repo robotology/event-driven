@@ -122,11 +122,8 @@ bool EventBottleManager::open(const std::string &name, bool strictio)
     this->strictio = strictio;
     this->useCallback();
 
-    std::string inPortName = "/" + name + "/vBottle:i";
-    yarp::os::BufferedPort<eventdriven::vBottle>::open(inPortName);
-
-    std::string outPortName = "/" + name + "/vBottle:o";
-    outPort.open(outPortName);
+    yarp::os::BufferedPort<ev::vBottle>::open("/" + name + "/vBottle:i");
+    outPort.open("/" + name + "/vBottle:o");
     return true;
 }
 
@@ -135,7 +132,7 @@ void EventBottleManager::close()
 {
     //close ports
     outPort.close();
-    yarp::os::BufferedPort<eventdriven::vBottle>::close();
+    yarp::os::BufferedPort<ev::vBottle>::close();
 
     //remember to also deallocate any memory allocated by this class
 
@@ -147,7 +144,7 @@ void EventBottleManager::interrupt()
 {
     //pass on the interrupt call to everything needed
     outPort.interrupt();
-    yarp::os::BufferedPort<eventdriven::vBottle>::interrupt();
+    yarp::os::BufferedPort<ev::vBottle>::interrupt();
 
 }
 /******************************************************************************/
@@ -207,7 +204,7 @@ void EventBottleManager::setCamParams(const yarp::os::Bottle &left,
 }
 
 /**********************************************************/
-void EventBottleManager::onRead(eventdriven::vBottle &bot)
+void EventBottleManager::onRead(ev::vBottle &bot)
 {
 
     //if we haven't loaded our camera parameters properly don't do anything
@@ -216,7 +213,7 @@ void EventBottleManager::onRead(eventdriven::vBottle &bot)
     }
 
     // prepare output vBottle with address events extended with cluster ID (aec) and cluster events (clep)
-    eventdriven::vBottle &outBottle = outPort.prepare();
+    ev::vBottle &outBottle = outPort.prepare();
     outBottle.clear();
 
     //push the envelope through
@@ -225,12 +222,12 @@ void EventBottleManager::onRead(eventdriven::vBottle &bot)
     outPort.setEnvelope(yst);
 
     //create event queue
-    eventdriven::vQueue q = bot.getAll();
+    ev::vQueue q = bot.getAll();
 
-    for(eventdriven::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
+    for(ev::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {
 
-        eventdriven::AddressEvent * v = (*qi)->getAs<eventdriven::AddressEvent>();
+        ev::event<ev::AddressEvent> v = ev::getas<ev::AddressEvent>(*qi);
         if(!v) continue;
 
         cv::Vec2i mapPix;
@@ -244,7 +241,7 @@ void EventBottleManager::onRead(eventdriven::vBottle &bot)
         if(withinSensorBounds || !truncate) {
             v->setX(mapPix[0]);
             v->setY(mapPix[1]);
-            outBottle.addEvent(*v);
+            outBottle.addEvent(v);
         }
 
 

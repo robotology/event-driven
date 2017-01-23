@@ -27,12 +27,12 @@
 #include <iCub/eventdriven/all.h>
 #include <opencv/cv.h>
 
-class EventBottleManager : public yarp::os::BufferedPort<eventdriven::vBottle>
+class EventBottleManager : public yarp::os::BufferedPort<ev::vBottle>
 {
 private:
 
     //output port for the vBottle with the new events computed by the module
-    yarp::os::BufferedPort<eventdriven::vBottle> outPort;
+    yarp::os::BufferedPort<ev::vBottle> outPort;
 
     bool strictio;
 
@@ -69,7 +69,7 @@ public:
     void    interrupt();
 
     //this is the entry point to your main functionality
-    void    onRead(eventdriven::vBottle &bot);
+    void    onRead(ev::vBottle &bot);
 
 };
 

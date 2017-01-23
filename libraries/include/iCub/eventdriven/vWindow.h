@@ -28,7 +28,7 @@
 #include <iCub/eventdriven/vQueue.h>
 #include <iCub/eventdriven/vtsHelper.h>
 
-namespace eventdriven {
+namespace ev {
 
 /**
  * @brief The vWindow class holds a list of events for a period of time as
@@ -178,7 +178,7 @@ protected:
 public:
 
     vTempWindow();
-    void addEvent(event<> event);
+    void addEvent(event<> v);
     void addEvents(const vQueue &events);
     vQueue getWindow();
 };

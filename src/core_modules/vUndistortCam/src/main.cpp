@@ -21,23 +21,19 @@
 int main(int argc, char * argv[])
 {
     /* initialize yarp network */
-    yarp::os::Network::init();
+    yarp::os::Network yarp;
 
-    /* create the module */
-    vUndistortModule undistorter;
+
 
     /* prepare and configure the resource finder */
     yarp::os::ResourceFinder rf;
     rf.setVerbose( true );
     rf.setDefaultContext( "cameraCalibration" );
     rf.setDefaultConfigFile( "outputCalib.ini" );
-    rf.setDefault("name","vUndistortCam");
     rf.configure( argc, argv );
 
-    /* run the module: runModule() calls configure first and, if successful, it then runs */
-    undistorter.runModule(rf);
-    yarp::os::Network::fini();
-
-    return 0;
+    /* create the module */
+    vUndistortModule undistorter;
+    return undistorter.runModule(rf);
 }
 //empty line to make gcc happy

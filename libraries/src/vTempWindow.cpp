@@ -1,6 +1,6 @@
 #include <iCub/eventdriven/vWindow.h>
 
-namespace eventdriven {
+namespace ev {
 
 vTempWindow::vTempWindow()
 {
@@ -8,9 +8,9 @@ vTempWindow::vTempWindow()
     tUpper = vtsHelper::maxStamp() - tLower;
 }
 
-void vTempWindow::addEvent(vptr<> event)
+void vTempWindow::addEvent(event<> v)
 {
-    int ctime = event->getStamp();
+    int ctime = v->getStamp();
     int upper = ctime + tUpper;
     int lower = ctime - tLower;
 
@@ -33,7 +33,7 @@ void vTempWindow::addEvent(vptr<> event)
         }
     }
 
-    q.push_back(event);
+    q.push_back(v);
 }
 
 void vTempWindow::addEvents(const vQueue &events)

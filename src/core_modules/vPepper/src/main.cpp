@@ -21,21 +21,17 @@
 int main(int argc, char * argv[])
 {
     /* initialize yarp network */
-    yarp::os::Network::init();
-
-    /* create the module */
-    dPepperModule dPepperInstance;
+    yarp::os::Network yarp;
 
     /* prepare and configure the resource finder */
     yarp::os::ResourceFinder rf;
     rf.setDefaultContext( "eventdriven" );
-    rf.setDefaultConfigFile( "vpepper.ini" );
+    rf.setDefaultConfigFile( "vPepper.ini" );
     rf.configure( argc, argv );
 
+    /* create the module */
+    vPepperModule vPepperInstance;
     /* run the module: runModule() calls configure first and, if successful, it then runs */
-    dPepperInstance.runModule(rf);
-    yarp::os::Network::fini();
-
-    return 0;
+    return vPepperInstance.runModule(rf);
 }
 //empty line to make gcc happy
