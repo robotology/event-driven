@@ -32,14 +32,14 @@
   VBOTTLE READER/PROCESSOR
   ////////////////////////////////////////////////////////////////////////////*/
 
-class vTrackToRobotManager : public yarp::os::BufferedPort<eventdriven::vBottle>
+class vTrackToRobotManager : public yarp::os::BufferedPort<ev::vBottle>
 {
 private:
 
     yarp::os::BufferedPort<yarp::os::Bottle> cartOutPort;
     yarp::os::BufferedPort<yarp::os::Bottle> scopeOutPort;
     yarp::os::BufferedPort<yarp::os::Bottle> positionOutPort;
-    yarp::os::BufferedPort<eventdriven::vBottle> eventsOutPort;
+    yarp::os::BufferedPort<ev::vBottle> eventsOutPort;
     yarp::dev::PolyDriver gazedriver;
     yarp::dev::IGazeControl *gazecontrol;
 
@@ -51,7 +51,7 @@ private:
     double lastdogazetime;
 
 
-    eventdriven::temporalSurface FIFO;
+    ev::temporalSurface FIFO;
     std::deque<yarp::sig::Vector> recentgazelocs;
     std::deque<double> recenteyezs;
     double p_eyez;
@@ -70,7 +70,7 @@ public:
     void stopGazing() {gazingActive = false;}
 
     bool open(const std::string &name);
-    void onRead(eventdriven::vBottle &bot);
+    void onRead(ev::vBottle &bot);
     void interrupt();
     void close();
 

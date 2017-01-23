@@ -71,7 +71,7 @@ bool vTrackToRobotManager::open(const std::string &name)
     this->useCallback();
 
     std::string vInPortName = "/" + name + "/vBottle:i";
-    if(!yarp::os::BufferedPort<eventdriven::vBottle>::open(vInPortName)) {
+    if(!yarp::os::BufferedPort<ev::vBottle>::open(vInPortName)) {
         std::cerr << "Could not open: " << vInPortName << std::endl;
         return false;
     }
@@ -122,7 +122,7 @@ void vTrackToRobotManager::interrupt()
     cartOutPort.interrupt();
     scopeOutPort.interrupt();
     positionOutPort.interrupt();
-    yarp::os::BufferedPort<eventdriven::vBottle>::interrupt();
+    yarp::os::BufferedPort<ev::vBottle>::interrupt();
     std::cout << "Interrupted Manager" << std::endl;
 }
 
@@ -138,27 +138,27 @@ void vTrackToRobotManager::close()
     cartOutPort.close();
     scopeOutPort.close();
     positionOutPort.close();
-    yarp::os::BufferedPort<eventdriven::vBottle>::close();
+    yarp::os::BufferedPort<ev::vBottle>::close();
 
     std::cout << "Closed Event Manager" << std::endl;
 
 }
 
 /******************************************************************************/
-void vTrackToRobotManager::onRead(eventdriven::vBottle &vBottleIn)
+void vTrackToRobotManager::onRead(ev::vBottle &vBottleIn)
 {
 
     yarp::os::Stamp st;
     this->getEnvelope(st);
 
     //we just need to get our updated TS
-    eventdriven::vQueue q = vBottleIn.getAllSorted();
+    ev::vQueue q = vBottleIn.getAllSorted();
     if(q.empty()) return;
     int bestts = q.back()->getStamp();
-    FIFO.removeEvents(*(q.back()));
+    FIFO.removeEvents(q.back());
 
     //get the events and see if we can get a ball observation
-    q = vBottleIn.getSorted<eventdriven::ClusterEventGauss>();
+    q = vBottleIn.getSorted<ev::ClusterEventGauss>();
 
     bool dogaze;
     if(yarp::os::Time::now() > lastdogazetime + 3)
@@ -169,8 +169,7 @@ void vTrackToRobotManager::onRead(eventdriven::vBottle &vBottleIn)
     int n = 0;
     if(q.size()) {
 
-        eventdriven::ClusterEventGauss * vc =
-                q.back()->getUnsafe<eventdriven::ClusterEventGauss>();
+        ev::event<ev::ClusterEventGauss> vc = ev::getas<ev::ClusterEventGauss>(q.back());
 
         //get the stamp
         bestts = vc->getStamp();
@@ -181,12 +180,12 @@ void vTrackToRobotManager::onRead(eventdriven::vBottle &vBottleIn)
         p_eyez = std::min(p_eyez, 16.0);
 
         //update our window
-        eventdriven::AddressEvent *v = new eventdriven::AddressEvent(*vc);
+        ev::event<ev::AddressEvent> v = ev::event<ev::AddressEvent>(new ev::AddressEvent());
         v->setChannel(vc->getChannel());
         v->setPolarity(vc->getChannel());
         v->setX(vc->getXCog());
         v->setY(vc->getYCog());
-        FIFO.addEvent(*v);
+        FIFO.addEvent(v);
 
         //and then get everything in the current window
         q = FIFO.getSurf();
@@ -196,7 +195,7 @@ void vTrackToRobotManager::onRead(eventdriven::vBottle &vBottleIn)
         std::vector<int> xs, ys;
         xs.resize(n); ys.resize(n);
         for(int i = 0; i < n; i++) {
-            eventdriven::AddressEvent *vtw = q[i]->getUnsafe<eventdriven::AddressEvent>();
+            ev::event<ev::AddressEvent> vtw = ev::getas<ev::AddressEvent>(q[i]);
             xs[i] = vtw->getX();
             ys[i] = vtw->getY();
             //p_eyez = std::max(p_eyez, (double)vtw->getXSigma2());
@@ -327,19 +326,19 @@ void vTrackToRobotManager::onRead(eventdriven::vBottle &vBottleIn)
     //PASS THROUGH EVENTS
     if(eventsOutPort.getOutputCount()) {
         //add all the address and flow events
-        eventdriven::vBottle &vBottleOut = eventsOutPort.prepare();
+        ev::vBottle &vBottleOut = eventsOutPort.prepare();
         vBottleOut = vBottleIn;
 
         //add the gaze point event
         if(dogaze) {
-            eventdriven::ClusterEventGauss circevent;
-            circevent.setStamp(bestts);
-            circevent.setChannel(0);
-            circevent.setXCog((int)medx);
-            circevent.setYCog((int)medy);
-            circevent.setXSigma2((int)p_eyez);
-            circevent.setYSigma2(1);
-            circevent.setID(1);
+            ev::event<ev::ClusterEventGauss> circevent = ev::event<ev::ClusterEventGauss>(new ev::ClusterEventGauss());
+            circevent->setStamp(bestts);
+            circevent->setChannel(0);
+            circevent->setXCog((int)medx);
+            circevent->setYCog((int)medy);
+            circevent->setXSigma2((int)p_eyez);
+            circevent->setYSigma2(1);
+            circevent->setID(1);
             vBottleOut.addEvent(circevent);
 
         }
