@@ -146,6 +146,7 @@ std::vector<unsigned char>& vDevReadBuffer::getBuffer(unsigned int &nBytesRead, 
 device2yarp::device2yarp() {
     countAEs = 0;
     countLoss = 0;
+    prevAEs = 0;
     strict = false;
     errorchecking = false;
 }
