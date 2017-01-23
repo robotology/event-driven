@@ -23,11 +23,8 @@ using namespace yarp::os;
 
 int main(int argc, char * argv[])
 {
-    /* initialize yarp network */
-    Network::init();
+    yarp::os::Network yarp;
 
-    /* create the module */
-    EventClustering eventClustering;
 
     /* prepare and configure the resource finder */
     ResourceFinder rf;
@@ -36,10 +33,11 @@ int main(int argc, char * argv[])
     rf.setDefaultConfigFile( "cluster.ini" );
     rf.configure( argc, argv );
 
-    /* run the module: runModule() calls configure first and, if successful, it then runs */
-    eventClustering.runModule(rf);
-    Network::fini();
 
-    return 0;
+    /* create the module */
+    EventClustering eventClustering;
+
+    /* run the module: runModule() calls configure first and, if successful, it then runs */
+    return eventClustering.runModule(rf);
 }
 //empty line to make gcc happy

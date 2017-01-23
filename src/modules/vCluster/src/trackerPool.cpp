@@ -74,13 +74,13 @@ void TrackerPool::setClusterLimit(int limit)
     clusterLimit = limit;
 }
 
-int TrackerPool::update(eventdriven::AddressEvent &event,
-                        std::vector<eventdriven::ClusterEventGauss> &clEvts)
+int TrackerPool::update(ev::event<ev::AddressEvent> v,
+                        std::vector<ev::event<ev::ClusterEventGauss> > &clEvts)
 {
 
-    unsigned long int ev_t = unwrap(event.getStamp());
-    int ev_x = event.getX();
-    int ev_y = event.getY();
+    unsigned long int ev_t = unwrap(v->getStamp());
+    int ev_x = v->getX();
+    int ev_y = v->getY();
 
     double max_p = 0;
     int trackId = -1;
@@ -118,7 +118,7 @@ int TrackerPool::update(eventdriven::AddressEvent &event,
         bool spiked = trackers_[trackId].addActivity(ev_x, ev_y, ev_t, Tact,
                                                      Tevent);
         if(spiked) {
-            clEvts.push_back(makeEvent(trackId, event.getStamp()));
+            clEvts.push_back(makeEvent(trackId, v->getStamp()));
         }
     }
 
@@ -135,7 +135,7 @@ int TrackerPool::update(eventdriven::AddressEvent &event,
         if(!(trackers_[i].is_on())) continue;
         bool spiked = trackers_[i].decayActivity(dt, decay_tau,
                                                  Tinact, Tfree);
-        if(spiked) clEvts.push_back(makeEvent(i, event.getStamp()));
+        if(spiked) clEvts.push_back(makeEvent(i, v->getStamp()));
     }
 
     return trackId;
@@ -168,25 +168,25 @@ int TrackerPool::getNewTracker()
 
 }
 
-eventdriven::ClusterEventGauss TrackerPool::makeEvent(int i, int ts)
+ev::event<ev::ClusterEventGauss> TrackerPool::makeEvent(int i, int ts)
 {
-    eventdriven::ClusterEventGauss clep;
+    ev::event<ev::ClusterEventGauss> clep = ev::event<ev::ClusterEventGauss>(new ev::ClusterEventGauss());
 
-    clep.setStamp(ts);
+    clep->setStamp(ts);
     if(trackers_[i].is_active()) {
-        clep.setPolarity(1);
+        clep->setPolarity(1);
     } else {
-        clep.setPolarity(0);
+        clep->setPolarity(0);
     }
-    clep.setXCog(trackers_[i].get_x());
-    clep.setYCog(trackers_[i].get_y());
-    clep.setXSigma2(trackers_[i].get_sigx2());
-    clep.setYSigma2(trackers_[i].get_sigy2());
-    clep.setXYSigma(trackers_[i].get_sigxy());
-    clep.setXVel(trackers_[i].get_vx());
-    clep.setYVel(trackers_[i].get_vy());
-    clep.setNumAE(trackers_[i].get_act());
-    clep.setID(i);
+    clep->setXCog(trackers_[i].get_x());
+    clep->setYCog(trackers_[i].get_y());
+    clep->setXSigma2(trackers_[i].get_sigx2());
+    clep->setYSigma2(trackers_[i].get_sigy2());
+    clep->setXYSigma(trackers_[i].get_sigxy());
+    clep->setXVel(trackers_[i].get_vx());
+    clep->setYVel(trackers_[i].get_vy());
+    clep->setNumAE(trackers_[i].get_act());
+    clep->setID(i);
 
     trackers_[i].clusterSpiked();
     return clep;

@@ -70,7 +70,7 @@ bool EventClustering::configure(yarp::os::ResourceFinder &rf)
 
 
 
-    
+
     eventBottleManager.setAllParameters(alphaShape, alphaPos, Tact, Tinact,
                                         Tfree, Tevent, SigX, SigY, SigXY,
                                         Fixedshape, Regrate, Maxdist,
@@ -156,14 +156,14 @@ bool EventBottleManager::open(std::string moduleName)
     this->useCallback();
 
     std::string inPortName = "/" + moduleName + "/vBottle:i";
-    bool success1 = yarp::os::BufferedPort< eventdriven::vBottle >::open(inPortName);
+    bool success1 = yarp::os::BufferedPort< ev::vBottle >::open(inPortName);
 
 
     std::string outPortName = "/" + moduleName + "/vBottle:o";
     bool success2 = outPort.open(outPortName);
 
     if(!success1 || !success2) {
-        yarp::os::BufferedPort< eventdriven::vBottle >::close();
+        yarp::os::BufferedPort< ev::vBottle >::close();
         outPort.close();
     }
 
@@ -174,37 +174,37 @@ bool EventBottleManager::open(std::string moduleName)
 void EventBottleManager::close()
 {
     outPort.close();
-    BufferedPort<eventdriven::vBottle >::close();
+    BufferedPort<ev::vBottle >::close();
 }
 
 /******************************************************************************/
 void EventBottleManager::interrupt()
 {
     outPort.interrupt();
-    BufferedPort< eventdriven::vBottle >::interrupt();
+    BufferedPort< ev::vBottle >::interrupt();
 }
 
 /******************************************************************************/
-void EventBottleManager::onRead(eventdriven::vBottle &bot)
+void EventBottleManager::onRead(ev::vBottle &bot)
 {
 
     // prepare output vBottle with address events extended with
     // cluster ID (aec) and cluster events (clep)
-    eventdriven::vBottle &evtCluster = outPort.prepare();
+    ev::vBottle &evtCluster = outPort.prepare();
     evtCluster.clear();
-    std::vector<eventdriven::ClusterEventGauss> clEvts;
-    std::vector<eventdriven::ClusterEventGauss>::iterator ceit;
+    std::vector<ev::event<ev::ClusterEventGauss> > clEvts;
+    std::vector<ev::event<ev::ClusterEventGauss> >::iterator ceit;
 
 
     //create event queue and iterator
-    eventdriven::vQueue q = bot.getAll();
-    eventdriven::vQueue::iterator qi;
+    ev::vQueue q = bot.getAll();
+    ev::vQueue::iterator qi;
     //bot.getAll(q);
 
     // checks for empty or non valid queue????
     for(qi = q.begin(); qi != q.end(); qi++)
     {
-        eventdriven::AddressEvent *aep = (*qi)->getAs<eventdriven::AddressEvent>();
+        ev::event<ev::AddressEvent> aep = ev::getas<ev::AddressEvent>(*qi);
         if(!aep) continue;
 
         short channel           = aep->getChannel();
@@ -212,20 +212,20 @@ void EventBottleManager::onRead(eventdriven::vBottle &bot)
         if (channel == 0) //Process events for left camera
         {
             clEvts.clear();
-            int clusterAssignedTo = tracker_pool_left.update(*aep, clEvts);
+            int clusterAssignedTo = tracker_pool_left.update(aep, clEvts);
 
             //add the event depending if it was assigned a cluster
             if(clusterAssignedTo >= 0) {
-                eventdriven::AddressEventClustered aec = *aep;
-                aec.setID(clusterAssignedTo);
+                ev::event<ev::AddressEventClustered> aec = ev::event<ev::AddressEventClustered>(new ev::AddressEventClustered(*(aep.get())));
+                aec->setID(clusterAssignedTo);
                 evtCluster.addEvent(aec);
             } else {
-                evtCluster.addEvent(*aep);
+                evtCluster.addEvent(aep);
             }
 
             //add the clusterEvents
             for(ceit = clEvts.begin(); ceit != clEvts.end(); ceit++) {
-                ceit->setChannel(0);
+                (*ceit)->setChannel(0);
                 evtCluster.addEvent(*ceit);
             }
 
@@ -233,20 +233,20 @@ void EventBottleManager::onRead(eventdriven::vBottle &bot)
         else
         {
             clEvts.clear();
-            int clusterAssignedTo = tracker_pool_right.update(*aep, clEvts);
+            int clusterAssignedTo = tracker_pool_right.update(aep, clEvts);
 
             //add the event depending if it was assigned a cluster
             if(clusterAssignedTo >= 0) {
-                eventdriven::AddressEventClustered aec = *aep;
-                aec.setID(clusterAssignedTo);
+                ev::event<ev::AddressEventClustered> aec = ev::event<ev::AddressEventClustered>(new ev::AddressEventClustered(*(aep.get())));
+                aec->setID(clusterAssignedTo);
                 evtCluster.addEvent(aec);
             } else {
-                evtCluster.addEvent(*aep);
+                evtCluster.addEvent(aep);
             }
 
             //add the clusterEvents
             for(ceit = clEvts.begin(); ceit != clEvts.end(); ceit++) {
-                ceit->setChannel(1);
+                (*ceit)->setChannel(1);
                 evtCluster.addEvent(*ceit);
 
             }
