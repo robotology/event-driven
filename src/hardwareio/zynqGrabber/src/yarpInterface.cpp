@@ -213,7 +213,7 @@ void  device2yarp::run() {
 
         //typical ZYNQ behaviour to skip error checking
         if(!errorchecking && !dataError) {
-            eventdriven::vBottleMimic &vbm = portvBottle.prepare();
+            ev::vBottleMimic &vbm = portvBottle.prepare();
             vbm.setdata((const char *)data.data(), nBytesRead);
             vStamp.update();
             portvBottle.setEnvelope(vStamp);
@@ -239,7 +239,7 @@ void  device2yarp::run() {
                     std::cerr << "BITMISMATCH in yarp2device" << std::endl;
                     std::cerr << *TS << " " << *AE << std::endl;
 
-                    eventdriven::vBottleMimic &vbm = portvBottle.prepare();
+                    ev::vBottleMimic &vbm = portvBottle.prepare();
                     vbm.setdata((const char *)data.data()+bstart, bend-bstart);
                     countAEs += (bend - bstart) / 8;
                     vStamp.update();
@@ -258,7 +258,7 @@ void  device2yarp::run() {
         }
 
         if(nBytesRead - bstart > 7) {
-            eventdriven::vBottleMimic &vbm = portvBottle.prepare();
+            ev::vBottleMimic &vbm = portvBottle.prepare();
             vbm.setdata((const char *)data.data()+bstart, 8*((nBytesRead-bstart)/8));
             countAEs += (nBytesRead - bstart) / 8;
             vStamp.update();
@@ -304,7 +304,7 @@ bool yarp2device::initialise(std::string moduleName, std::string deviceName)
 
     fprintf(stdout,"opening port for receiving the events from yarp \n");
     this->useCallback();
-    return yarp::os::BufferedPort<eventdriven::vBottle>::open("/" + moduleName + "/vBottle:i");
+    return yarp::os::BufferedPort<ev::vBottle>::open("/" + moduleName + "/vBottle:i");
 
 }
 
@@ -314,18 +314,18 @@ void yarp2device::close()
 
     std::cout << "Y2D: written " << writtenAEs << " events to device"
               << std::endl;
-    yarp::os::BufferedPort<eventdriven::vBottle>::close();
+    yarp::os::BufferedPort<ev::vBottle>::close();
 }
 
 void yarp2device::interrupt()
 {
-    yarp::os::BufferedPort<eventdriven::vBottle>::interrupt();
+    yarp::os::BufferedPort<ev::vBottle>::interrupt();
 }
 
-void yarp2device::onRead(eventdriven::vBottle &bot)
+void yarp2device::onRead(ev::vBottle &bot)
 {
 
-    eventdriven::vQueue q = bot.getAll();
+    ev::vQueue q = bot.getAll();
     deviceData.resize(q.size()*2);  // deviceData has TS and ADDRESS, its size is double the number of events
     countAEs += q.size(); // counter for total number of events received from yarp port for the whole duration of the thread
 
@@ -335,9 +335,9 @@ void yarp2device::onRead(eventdriven::vBottle &bot)
     // write events on the vector of unsigned int
     // checks for empty or non valid queue????
     int i = 0;
-    for(eventdriven::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
+    for(ev::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {
-        eventdriven::AddressEvent *aep = (*qi)->getAs<eventdriven::AddressEvent>();
+        ev::event<ev::AddressEvent> aep = ev::getas<ev::AddressEvent>(*qi);
         if(!aep) continue;
 
         int channel = aep->getChannel();
@@ -367,7 +367,7 @@ void yarp2device::onRead(eventdriven::vBottle &bot)
         {
             //std::cout<<"Wrap TS: ts      "<<ts<<"us"<<std::endl;
             //std::cout<<"Wrap TS: ts prev "<<tsPrev<<"us"<<std::endl;
-            word1 += eventdriven::vtsHelper::maxStamp();
+            word1 += ev::vtsHelper::maxStamp();
 
             //std::cout<<"Wrap TS: max     "<<eventdriven::vtsHelper::maxStamp()<<"us"<<std::endl;
             std::cout<<"--------------- Wrap TS: Delta TS new "<<word1<<"us--------------------"<<std::endl;

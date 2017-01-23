@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.6)
 
-#add_subdirectory(hardwareio)
+add_subdirectory(hardwareio)
 file(GLOB xmldocumentation ${CMAKE_CURRENT_SOURCE_DIR}/hardwareio/*/*.xml)
 
 if(NOT V_BUILD_ZYNQ)

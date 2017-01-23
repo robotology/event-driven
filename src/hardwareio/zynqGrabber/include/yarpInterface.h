@@ -78,7 +78,7 @@ private:
     bool errorchecking;
 
     //internal variables
-    yarp::os::BufferedPort<eventdriven::vBottleMimic> portvBottle;
+    yarp::os::BufferedPort<ev::vBottleMimic> portvBottle;
     int countAEs;
     int countLoss;
     double rate;
@@ -106,7 +106,7 @@ public:
 /******************************************************************************/
 //yarp2device
 /******************************************************************************/
-class yarp2device : public yarp::os::BufferedPort<eventdriven::vBottle>
+class yarp2device : public yarp::os::BufferedPort<ev::vBottle>
 {
     int           devDesc;                    // file descriptor for opening device /dev/spinn2neu
     bool          flagStart;                    // flag to check if this is the first time we run the callback,
@@ -126,7 +126,7 @@ public:
     bool    initialise(std::string moduleName, std::string deviceName);
     bool    init();
     void    close();
-    void    onRead(eventdriven::vBottle &bot);
+    void    onRead(ev::vBottle &bot);
     void    interrupt();
 
 
