@@ -4,7 +4,7 @@ if(V_ADVMODULES)
 
   add_subdirectory(vCluster)
   #add_subdirectory(vCorner)
-  #add_subdirectory(vRepTest)
+  add_subdirectory(vRepTest)
 
   if(ICUB_FOUND)
       #add_subdirectory(vCircleDisparity)
@@ -13,7 +13,7 @@ if(V_ADVMODULES)
 
 endif(V_ADVMODULES)
 
-#add_subdirectory(vFlow)
+add_subdirectory(vFlow)
 if(ICUB_FOUND)
   #add_subdirectory(vCircle)
 endif(ICUB_FOUND)

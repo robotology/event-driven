@@ -17,6 +17,9 @@
 
 #include "vRepTest.h"
 
+using ev::event;
+using ev::getas;
+
 /**********************************************************/
 bool vRepTestHandler::configure(yarp::os::ResourceFinder &rf)
 {
@@ -88,19 +91,11 @@ bool vRepTest::open(const std::string &name, bool strict)
     this->useCallback();
     if(strict) this->setStrict();
 
-    std::string portname;
+    yarp::os::BufferedPort<ev::vBottle>::open("/" + name + "/vBottle:i");
 
-    portname = "/" + name + "/vBottle:i";
-    yarp::os::BufferedPort<eventdriven::vBottle>::open(portname);
-
-    portname = "/" + name + "/dump:o";
-    dumper.open(portname);
-
-    portname = "/" + name + "/vBottle:o";
-    eventsOut.open(portname);
-
-    portname = "/" + name + "/image:o";
-    imPort.open(portname);
+    dumper.open("/" + name + "/dump:o");
+    eventsOut.open("/" + name + "/vBottle:o");
+    imPort.open("/" + name + "/image:o");
 
     return true;
 }
@@ -110,7 +105,7 @@ void vRepTest::close()
 {
     //close ports
     dumper.close();
-    yarp::os::BufferedPort<eventdriven::vBottle>::close();
+    yarp::os::BufferedPort<ev::vBottle>::close();
 
     //remember to also deallocate any memory allocated by this class
 
@@ -122,42 +117,44 @@ void vRepTest::interrupt()
 {
     //pass on the interrupt call to everything needed
     dumper.interrupt();
-    yarp::os::BufferedPort<eventdriven::vBottle>::interrupt();
+    yarp::os::BufferedPort<ev::vBottle>::interrupt();
 
 }
 
 /**********************************************************/
-void vRepTest::onRead(eventdriven::vBottle &inBottle)
+void vRepTest::onRead(ev::vBottle &inBottle)
 {
     yarp::os::Stamp yts; getEnvelope(yts);
     if(ytime == 0) ytime = yts.getTime() + 0.033;
     unsigned long unwts = 0;
 
     //create event queue
-    eventdriven::vQueue q = inBottle.getAll();
+    ev::vQueue q = inBottle.getAll();
     q.sort(true);
-    for(eventdriven::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
+    for(ev::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {
-        eventdriven::AddressEvent * ae = (*qi)->getAs<eventdriven::AddressEvent>();
+        event<ev::AddressEvent> ae = getas<ev::AddressEvent>(*qi);
         if(!ae || ae->getChannel()) continue;
+        if(ae->getX() > 127 || ae->getY() > 127) continue;
+
         unwts = unwrapper((*qi)->getStamp());
-        tWindow.addEvent(**qi);
-        fWindow.addEvent(**qi);
-        lWindow.addEvent(**qi);
-        edge.addEventToEdge((*qi)->getAs<eventdriven::AddressEvent>());
-        fedge.addEventToEdge((*qi)->getAs<eventdriven::AddressEvent>());
+        tWindow.addEvent(*qi);
+        fWindow.addEvent(*qi);
+        lWindow.addEvent(*qi);
+        edge.addEventToEdge(getas<ev::AddressEvent>(*qi));
+        fedge.addEventToEdge(getas<ev::AddressEvent>(*qi));
     }
 
     //dump modified dataset
     if(eventsOut.getOutputCount() && q.size()) {
-        eventdriven::vBottle &outBottle = eventsOut.prepare();
+        ev::vBottle &outBottle = eventsOut.prepare();
         outBottle.clear();
 
-        for(eventdriven::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
+        for(ev::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
         {
-            eventdriven::AddressEvent *v = (*qi)->getAs<eventdriven::AddressEvent>();
+            event<ev::AddressEvent> v = getas<ev::AddressEvent>(*qi);
             if(v && v->getX() < 128)
-                outBottle.addEvent(**qi);
+                outBottle.addEvent(*qi);
         }
 
         eventsOut.setEnvelope(yts);
@@ -217,11 +214,11 @@ void vRepTest::onRead(eventdriven::vBottle &inBottle)
 }
 
 void vRepTest::drawDebug(yarp::sig::ImageOf<yarp::sig::PixelBgr> &image,
-                         const eventdriven::vQueue &q, int xoff, int yoff)
+                         const ev::vQueue &q, int xoff, int yoff)
 {
 
     for(unsigned int i = 0; i < q.size(); i++) {
-        eventdriven::AddressEvent *v = q[i]->getUnsafe<eventdriven::AddressEvent>();
+        event<ev::AddressEvent> v = getas<ev::AddressEvent>(q[i]);
 //        if(q[i]->getAs<eventdriven::FlowEvent>())
 //            image(v->getY()+yoff, image.width() - 1 - v->getX() - xoff) =
 //                    yarp::sig::PixelBgr(0, 255, 0);
