@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 2.6)
 
-add_subdirectory(hardwareio)
 file(GLOB xmldocumentation ${CMAKE_CURRENT_SOURCE_DIR}/hardwareio/*/*.xml)
 
 if(NOT V_BUILD_ZYNQ)
@@ -22,4 +21,5 @@ endif(NOT V_BUILD_ZYNQ)
 
 if(V_USE_QTCREATOR)
     #add_custom_target(doctoken SOURCES ${xmldocumentation})
+    add_subdirectory(hardwareio)
 endif(V_USE_QTCREATOR)
