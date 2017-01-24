@@ -32,17 +32,17 @@
 /*////////////////////////////////////////////////////////////////////////////*/
 //VCIRCLEREADER
 /*////////////////////////////////////////////////////////////////////////////*/
-class vCircleReader : public yarp::os::BufferedPort<eventdriven::vBottle>
+class vCircleReader : public yarp::os::BufferedPort<ev::vBottle>
 {
 private:
 
     //output port for the vBottle with the new events computed by the module
-    yarp::os::BufferedPort<eventdriven::vBottle> outPort;
+    yarp::os::BufferedPort<ev::vBottle> outPort;
     yarp::os::BufferedPort<yarp::os::Bottle> scopeOut;
     yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelBgr> > houghOut;
     yarp::os::BufferedPort<yarp::os::Bottle> dumpOut;
 
-    eventdriven::vtsHelper unwrap;
+    ev::vtsHelper unwrap;
     double pTS;
 
     bool strictness;
@@ -71,7 +71,7 @@ public:
     void    interrupt();
 
     //this is the entry point to your main functionality
-    void    onRead(eventdriven::vBottle &inBot);
+    void    onRead(ev::vBottle &inBot);
 
 };
 

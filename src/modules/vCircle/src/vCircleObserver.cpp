@@ -17,6 +17,11 @@
 #include "vCircleObserver.h"
 #include <math.h>
 
+using ev::event;
+using ev::getas;
+using ev::AddressEvent;
+using ev::FlowEvent;
+
 /*////////////////////////////////////////////////////////////////////////////*/
 //vCircleThread
 /*////////////////////////////////////////////////////////////////////////////*/
@@ -66,7 +71,7 @@ vCircleThread::vCircleThread(int R, bool directed, bool parallel, int height, in
 
 }
 
-void vCircleThread::process(eventdriven::vQueue &procQueue, std::vector<int> &procType)
+void vCircleThread::process(ev::vQueue &procQueue, std::vector<int> &procType)
 {
 
     this->procQueue = &procQueue;
@@ -162,7 +167,7 @@ void vCircleThread::performHough()
 
         if(directed) {
 
-            eventdriven::FlowEvent * v = (*procQueue)[i]->getAs<eventdriven::FlowEvent>();
+            event<FlowEvent> v = getas<FlowEvent>((*procQueue)[i]);
 
             if(v) {
                 updateHFlowAngle(v->getX(), v->getY(), (*procType)[i],
@@ -171,7 +176,7 @@ void vCircleThread::performHough()
 
         } else {
 
-            eventdriven::AddressEvent * v = (*procQueue)[i]->getAs<eventdriven::AddressEvent>();
+            event<AddressEvent> v = getas<AddressEvent>((*procQueue)[i]);
 
             if(v) {
                 updateHAddress(v->getX(), v->getY(), (*procType)[i]);
@@ -266,8 +271,8 @@ vCircleMultiSize::vCircleMultiSize(double threshold, std::string qType,
         htransforms.push_back(new vCircleThread(r, directed, parallel, height, width, arclength));
 
     best = htransforms.begin();
-    fFIFO = eventdriven::fixedSurface(fifolength, width, height);
-    tFIFO = eventdriven::temporalSurface(width, height, fifolength * 7812.5);
+    fFIFO = ev::fixedSurface(fifolength, width, height);
+    tFIFO = ev::temporalSurface(width, height, fifolength * 7812.5);
     //eFIFO.setThickness(1);
     //fFIFO.setFixedWindowSize(fifolength);
     //tFIFO.setTemporalSize(fifolength * 7812.5);
@@ -278,7 +283,7 @@ vCircleMultiSize::vCircleMultiSize(double threshold, std::string qType,
 vCircleMultiSize::~vCircleMultiSize()
 {
 
-    eventdriven::vQueue dummy1;
+    ev::vQueue dummy1;
     std::vector<int> dummy2;
     std::vector<vCircleThread *>::iterator i;
     for(i = htransforms.begin(); i != htransforms.end(); i++) {
@@ -289,7 +294,7 @@ vCircleMultiSize::~vCircleMultiSize()
     }
 }
 
-void vCircleMultiSize::addQueue(eventdriven::vQueue &additions) {
+void vCircleMultiSize::addQueue(ev::vQueue &additions) {
 
         if(qType == "fixed")
             addFixed(additions);
@@ -304,7 +309,7 @@ void vCircleMultiSize::addQueue(eventdriven::vQueue &additions) {
 
 }
 
-void vCircleMultiSize::updateHough(eventdriven::vQueue &procQueue, std::vector<int> &procType)
+void vCircleMultiSize::updateHough(ev::vQueue &procQueue, std::vector<int> &procType)
 {
 
     std::vector<vCircleThread *>::iterator i;
@@ -344,28 +349,28 @@ std::vector<double> vCircleMultiSize::getPercentile(double p, double thMin)
     return values;
 }
 
-void vCircleMultiSize::addFixed(eventdriven::vQueue &additions)
+void vCircleMultiSize::addFixed(ev::vQueue &additions)
 {
-    eventdriven::vQueue procQueue;
+    ev::vQueue procQueue;
     procType.clear();
-    eventdriven::AddressEvent *v;
+    event<AddressEvent> v = event<AddressEvent>(nullptr);
 
-    eventdriven::vQueue::iterator vi;
+    ev::vQueue::iterator vi;
     for(vi = additions.begin(); vi != additions.end(); vi++) {
 
         //GET THE EVENTS AS CORRECT TYPE
         //eventdriven::AddressEvent *v = (*vi)->getAs<eventdriven::AddressEvent>();
         if(directed)
-            v = (*vi)->getAs<eventdriven::FlowEvent>();
+            v = getas<FlowEvent>(*vi);
         else
-            v = (*vi)->getAs<eventdriven::AddressEvent>();
+            v = getas<AddressEvent>(*vi);
 
         if(!v || v->getChannel() != channel) continue;
 
         procQueue.push_back(v);
         procType.push_back(1);
 
-        eventdriven::vQueue removed = fFIFO.addEvent(*v);
+        ev::vQueue removed = fFIFO.addEvent(v);
 
         for(unsigned int i = 0; i < removed.size(); i++) {
             procQueue.push_back(removed[i]);
@@ -377,22 +382,22 @@ void vCircleMultiSize::addFixed(eventdriven::vQueue &additions)
     updateHough(procQueue, procType);
 }
 
-void vCircleMultiSize::addTime(eventdriven::vQueue &additions)
+void vCircleMultiSize::addTime(ev::vQueue &additions)
 {
-    eventdriven::vQueue procQueue;
+    ev::vQueue procQueue;
     procType.clear();
-    eventdriven::AddressEvent *v;
+    event<AddressEvent> v = event<AddressEvent>(nullptr);
 
-    eventdriven::vQueue::iterator vi;
+    ev::vQueue::iterator vi;
     for(vi = additions.begin(); vi != additions.end(); vi++) {
 
-        v = (*vi)->getAs<eventdriven::AddressEvent>();
+        v = getas<AddressEvent>(*vi);
         if(!v || v->getChannel() != channel) continue;
 
         procQueue.push_back(v);
         procType.push_back(1);
 
-        eventdriven::vQueue removed = tFIFO.addEvent(*v);
+        ev::vQueue removed = tFIFO.addEvent(v);
 
         for(unsigned int i = 0; i < removed.size(); i++) {
             procQueue.push_back(removed[i]);
@@ -404,22 +409,22 @@ void vCircleMultiSize::addTime(eventdriven::vQueue &additions)
     updateHough(procQueue, procType);
 }
 
-void vCircleMultiSize::addLife(eventdriven::vQueue &additions)
+void vCircleMultiSize::addLife(ev::vQueue &additions)
 {
-    eventdriven::vQueue procQueue;
+    ev::vQueue procQueue;
     procType.clear();
-    eventdriven::AddressEvent *v;
+    event<AddressEvent> v = event<AddressEvent>(nullptr);
 
-    eventdriven::vQueue::iterator vi;
+    ev::vQueue::iterator vi;
     for(vi = additions.begin(); vi != additions.end(); vi++) {
 
-        v = (*vi)->getAs<eventdriven::FlowEvent>();
+        v = getas<FlowEvent>(*vi);
         if(!v || v->getChannel() != channel) continue;
 
         procQueue.push_back(v);
         procType.push_back(1);
 
-        eventdriven::vQueue removed = lFIFO.addEvent(*v);
+        ev::vQueue removed = lFIFO.addEvent(v);
 
         for(unsigned int i = 0; i < removed.size(); i++) {
             procQueue.push_back(removed[i]);
@@ -539,27 +544,26 @@ void vCircleMultiSize::addLife(eventdriven::vQueue &additions)
 
 //}
 
-void vCircleMultiSize::addEdge(eventdriven::vQueue &additions)
+void vCircleMultiSize::addEdge(ev::vQueue &additions)
 {
-    eventdriven::vQueue procQueue;
+    ev::vQueue procQueue;
     procType.clear();
 
-    eventdriven::vQueue::iterator qi;
+    ev::vQueue::iterator qi;
     for(qi = additions.begin(); qi != additions.end(); qi++) {
-        eventdriven::AddressEvent * v = (*qi)->getAs<eventdriven::AddressEvent>();
+        event<AddressEvent> v = getas<AddressEvent>(*qi);
         if(!v || v->getChannel() != channel) continue;
 
-        eventdriven::FlowEvent * vf = v->getAs<eventdriven::FlowEvent>();
-        //eventdriven::FlowEvent * vf = edge.upgradeEvent(v);
+        event<FlowEvent> vf = getas<FlowEvent>(v);
 
         if(vf) {
             procQueue.push_back(vf);
             procType.push_back(1);
         }
 
-        eventdriven::vQueue removed = eFIFO.addEventToEdge(v);
+        ev::vQueue removed = eFIFO.addEventToEdge(v);
         for(unsigned int i = 0; i < removed.size(); i++) {
-            if(removed[i]->getAs<eventdriven::FlowEvent>()) {
+            if(getas<FlowEvent>(removed[i])) {
                 procQueue.push_back(removed[i]);
                 procType.push_back(-1);
             }
@@ -593,7 +597,7 @@ yarp::sig::ImageOf<yarp::sig::PixelBgr> vCircleMultiSize::makeDebugImage()
         }
     }
 
-    eventdriven::vQueue q;
+    ev::vQueue q;
     if(qType == "fixed")
         q = fFIFO.getSurf();
     else if(qType == "life")
@@ -604,7 +608,7 @@ yarp::sig::ImageOf<yarp::sig::PixelBgr> vCircleMultiSize::makeDebugImage()
         q = eFIFO.getSurf(0, imagebase.width(), 0, imagebase.height());
 
     for(unsigned int i = 0; i < q.size(); i++) {
-        eventdriven::AddressEvent *v = q[i]->getUnsafe<eventdriven::AddressEvent>();
+        event<AddressEvent> v = getas<AddressEvent>(q[i]);
         imagebase(v->getY(), imagebase.width() - 1 - v->getX()) =
                 yarp::sig::PixelBgr(255, 0, 255);
     }

@@ -2,6 +2,10 @@
 #include <cmath>
 #include <limits>
 
+using ev::event;
+using ev::getas;
+using ev::AddressEvent;
+
 double generateGaussianNoise(double mu, double sigma)
 {
     const double epsilon = std::numeric_limits<double>::min();
@@ -203,8 +207,8 @@ bool vParticle::predict(unsigned long timestamp)
 
     initTiming(timestamp);
 
-    if(x < -r || y < -r || x > 127+r || y > 127+r)
-        return true;
+    //if(x < -r || y < -r || x > this->+r || y > 127+r)
+    //    return true;
     return false;
 
 }
@@ -216,7 +220,7 @@ bool vParticle::needsUpdating(unsigned long int stamp)
 
 
 
-double vParticle::calcLikelihood(eventdriven::vQueue &events, int nparticles)
+double vParticle::calcLikelihood(ev::vQueue &events, int nparticles)
 {
     double defaultweight = 0.0001;
     if(events.empty()) {
@@ -230,7 +234,7 @@ double vParticle::calcLikelihood(eventdriven::vQueue &events, int nparticles)
     double bottom = 0;
     for(unsigned int i = 0; i < events.size(); i++) {
 
-        eventdriven::event<eventdriven::AddressEvent> v = eventdriven::static_pointer_cast<eventdriven::AddressEvent>(events[i]);
+        event<AddressEvent> v = std::static_pointer_cast<AddressEvent>(events[i]);
 
         double sqrd = sqrt(pow(v->getX() - x, 2.0) + pow(v->getY() - y, 2.0)) - r;
         sqrd = abs(sqrd);

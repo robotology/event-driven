@@ -18,6 +18,8 @@
 #include <sstream>
 #include <iomanip>
 
+using ev::event;
+
 /*////////////////////////////////////////////////////////////////////////////*/
 //vCircleModule
 /*////////////////////////////////////////////////////////////////////////////*/
@@ -148,7 +150,7 @@ bool vCircleReader::open(const std::string &name, bool strictness)
     this->useCallback();
 
     std::string inPortName = "/" + name + "/vBottle:i";
-    bool state1 = yarp::os::BufferedPort<eventdriven::vBottle>::open(inPortName);
+    bool state1 = yarp::os::BufferedPort<ev::vBottle>::open(inPortName);
 
 
     if(strictness) outPort.setStrict();
@@ -176,7 +178,7 @@ void vCircleReader::close()
     scopeOut.close();
     houghOut.close();
     dumpOut.close();
-    yarp::os::BufferedPort<eventdriven::vBottle>::close();
+    yarp::os::BufferedPort<ev::vBottle>::close();
 
 }
 
@@ -188,7 +190,7 @@ void vCircleReader::interrupt()
     scopeOut.interrupt();
     houghOut.interrupt();
     dumpOut.interrupt();
-    yarp::os::BufferedPort<eventdriven::vBottle>::interrupt();
+    yarp::os::BufferedPort<ev::vBottle>::interrupt();
 
 
 }
@@ -211,13 +213,13 @@ void drawcircle(yarp::sig::ImageOf<yarp::sig::PixelBgr> &image, int cx, int cy, 
 }
 
 /******************************************************************************/
-void vCircleReader::onRead(eventdriven::vBottle &inBot)
+void vCircleReader::onRead(ev::vBottle &inBot)
 {
     // ///////////////////
     // get the data & set-up
     // ///////////////////
 
-    eventdriven::vBottle &outBottle = outPort.prepare();
+    ev::vBottle &outBottle = outPort.prepare();
     outBottle = inBot;
 
     yarp::os::Stamp st;
@@ -226,7 +228,7 @@ void vCircleReader::onRead(eventdriven::vBottle &inBot)
     if(pstampcounter < 0) pstampcounter = st.getCount();
 
     //create event queue
-    eventdriven::vQueue q = inBot.get<eventdriven::AddressEvent>();
+    ev::vQueue q = inBot.get<ev::AddressEvent>();
     q.sort(true);
 
     if(!q.size()) {
@@ -245,7 +247,7 @@ void vCircleReader::onRead(eventdriven::vBottle &inBot)
     if(singleq) {
         double bestScore;
         int bestx, besty, bestr;
-        eventdriven::vQueue singleQ; singleQ.push_back(q.front());
+        ev::vQueue singleQ; singleQ.push_back(q.front());
         for(unsigned int i = 0; i < q.size(); i++) {
             //singleQ.push_back(q[i]);
             singleQ[0] = q[i];
@@ -287,14 +289,15 @@ void vCircleReader::onRead(eventdriven::vBottle &inBot)
     if(bestScoreL > inlierThreshold) {
 
         //std::cout << bestx << " " << besty << " " << bestr << std::endl;
-        eventdriven::ClusterEventGauss circevent;
-        circevent.setStamp(q.back()->getStamp());
-        circevent.setChannel(0);
-        circevent.setXCog(bestxL);
-        circevent.setYCog(bestyL);
-        circevent.setXSigma2(bestrL);
-        circevent.setYSigma2(1);
-        circevent.setID(0);
+        event<ev::ClusterEventGauss> circevent = event<ev::ClusterEventGauss>(new ev::ClusterEventGauss());
+
+        circevent->setStamp(q.back()->getStamp());
+        circevent->setChannel(0);
+        circevent->setXCog(bestxL);
+        circevent->setYCog(bestyL);
+        circevent->setXSigma2(bestrL);
+        circevent->setYSigma2(1);
+        circevent->setID(0);
         outBottle.addEvent(circevent);
 
     }
@@ -305,14 +308,14 @@ void vCircleReader::onRead(eventdriven::vBottle &inBot)
     if(bestScoreR > inlierThreshold) {
 
         //std::cout << bestx << " " << besty << " " << bestr << std::endl;
-        eventdriven::ClusterEventGauss circevent;
-        circevent.setStamp(q.back()->getStamp());
-        circevent.setChannel(1);
-        circevent.setXCog(bestxR);
-        circevent.setYCog(bestyR);
-        circevent.setXSigma2(bestrR);
-        circevent.setYSigma2(1);
-        circevent.setID(0);
+        event<ev::ClusterEventGauss> circevent = event<ev::ClusterEventGauss>(new ev::ClusterEventGauss());
+        circevent->setStamp(q.back()->getStamp());
+        circevent->setChannel(1);
+        circevent->setXCog(bestxR);
+        circevent->setYCog(bestyR);
+        circevent->setXSigma2(bestrR);
+        circevent->setYSigma2(1);
+        circevent->setID(0);
         outBottle.addEvent(circevent);
 
     }
@@ -370,9 +373,9 @@ void vCircleReader::onRead(eventdriven::vBottle &inBot)
     if(houghOut.getOutputCount() && (dstamp > 0.03333 || dstamp < 0)) {
         pstamp = st;
         yarp::sig::ImageOf< yarp::sig::PixelBgr> &image = houghOut.prepare();
-        image = cObserverL->makeDebugImage();
-        if(bestScoreL > inlierThreshold) {
-            drawcircle(image, bestxL, bestyL, bestrL);
+        image = cObserverR->makeDebugImage();
+        if(bestScoreR > inlierThreshold) {
+            drawcircle(image, bestxR, bestyR, bestrR);
         }
         houghOut.setEnvelope(st);
         houghOut.write();

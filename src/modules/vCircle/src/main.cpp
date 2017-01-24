@@ -21,10 +21,7 @@
 int main(int argc, char * argv[])
 {
     /* initialize yarp network */
-    yarp::os::Network::init();
-
-    /* create the module */
-    vCircleModule vCircleInstance;
+    yarp::os::Network yarp;
 
     /* prepare and configure the resource finder */
     yarp::os::ResourceFinder rf;
@@ -33,9 +30,8 @@ int main(int argc, char * argv[])
     rf.setDefaultConfigFile( "vCircle.ini" );
     rf.configure( argc, argv );
 
+    /* create the module */
+    vCircleModule vCircleInstance;
     /* run the module: runModule() calls configure first and, if successful, it then runs */
-    vCircleInstance.runModule(rf);
-    yarp::os::Network::fini();
-
-    return 0;
+    return vCircleInstance.runModule(rf);
 }

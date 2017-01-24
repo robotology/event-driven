@@ -8,12 +8,12 @@ if(V_ADVMODULES)
 
   if(ICUB_FOUND)
       #add_subdirectory(vCircleDisparity)
-      #add_subdirectory(vParticleFilter)
+      add_subdirectory(vParticleFilter)
   endif(ICUB_FOUND)
 
 endif(V_ADVMODULES)
 
 add_subdirectory(vFlow)
 if(ICUB_FOUND)
-  #add_subdirectory(vCircle)
+  add_subdirectory(vCircle)
 endif(ICUB_FOUND)

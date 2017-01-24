@@ -32,7 +32,7 @@
 /*////////////////////////////////////////////////////////////////////////////*/
 //VPARTICLEREADER
 /*////////////////////////////////////////////////////////////////////////////*/
-class vParticleReader : public yarp::os::BufferedPort<eventdriven::vBottle>
+class vParticleReader : public yarp::os::BufferedPort<ev::vBottle>
 {
 private:
 
@@ -44,8 +44,8 @@ private:
 
 
     //event reps
-    eventdriven::temporalSurface surfaceLeft;
-    eventdriven::vtsHelper unwrap;
+    ev::temporalSurface surfaceLeft;
+    ev::vtsHelper unwrap;
 
     //particle storage and variables
     std::priority_queue<vParticle> sortedlist;
@@ -59,7 +59,7 @@ private:
     double avgtw;
 
     //parameters
-    eventdriven::resolution res;
+    ev::resolution res;
     bool strict;
     int nparticles;
     int rate;
@@ -69,7 +69,7 @@ public:
     vParticleReader(unsigned int width = 128, unsigned int height = 128);
 
     bool    open(const std::string &name, bool strictness = false);
-    void    onRead(eventdriven::vBottle &inBot);
+    void    onRead(ev::vBottle &inBot);
     void    close();
     void    interrupt();
 
@@ -78,20 +78,20 @@ public:
 /*////////////////////////////////////////////////////////////////////////////*/
 //vTemporalHandler
 /*////////////////////////////////////////////////////////////////////////////*/
-class vSurfaceHandler : public yarp::os::BufferedPort<eventdriven::vBottle>
+class vSurfaceHandler : public yarp::os::BufferedPort<ev::vBottle>
 {
 private:
 
     //parameters
-    eventdriven::resolution res;
+    ev::resolution res;
     bool strict;
 
     //data
-    eventdriven::vQueue queriedQ;
-    eventdriven::temporalSurface surfaceLeft;
-    eventdriven::temporalSurface surfaceRight;
+    ev::vQueue queriedQ;
+    ev::temporalSurface surfaceLeft;
+    ev::temporalSurface surfaceRight;
     yarp::os::Stamp pstamp;
-    eventdriven::vtsHelper unwrap;
+    ev::vtsHelper unwrap;
     unsigned long int tnow;
     unsigned int condTime;
     unsigned int tw;
@@ -104,10 +104,12 @@ public:
 
     vSurfaceHandler(unsigned int width = 128, unsigned int height = 128);
 
-    eventdriven::vQueue queryEvents(unsigned long int conditionTime, unsigned int temporalWindow);
+    void resize(unsigned int width, unsigned int height);
+
+    ev::vQueue queryEvents(unsigned long int conditionTime, unsigned int temporalWindow);
 
     bool    open(const std::string &name, bool strictness = false);
-    void    onRead(eventdriven::vBottle &inBot);
+    void    onRead(ev::vBottle &inBot);
     void    close();
     void    interrupt();
 
@@ -127,13 +129,13 @@ private:
 
     std::vector<vParticle> *particles;
     std::vector<int> *deltats;
-    eventdriven::vQueue *stw;
+    ev::vQueue *stw;
 
 public:
 
     vPartObsThread(int pStart, int pEnd);
     void setDataSources(std::vector<vParticle> *particles,
-                        std::vector<int> *deltats, eventdriven::vQueue *stw);
+                        std::vector<int> *deltats, ev::vQueue *stw);
     double getNormVal() { return normval; }
     bool threadInit() { return true; }
     void run();
@@ -150,12 +152,12 @@ private:
     vSurfaceHandler eventhandler;
     std::vector<vPartObsThread *> computeThreads;
     int nThreads;
-    eventdriven::resolution res;
+    ev::resolution res;
     double ptime;
 
     yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelBgr> > debugOut;
     yarp::os::BufferedPort<yarp::os::Bottle> scopeOut;
-    eventdriven::vtsHelper unwrap;
+    ev::vtsHelper unwrap;
     std::vector<vParticle> indexedlist;
     double avgx;
     double avgy;
@@ -170,7 +172,7 @@ private:
 
 public:
 
-    particleProcessor(unsigned int height, unsigned int weight, std::string name, bool strict);
+    particleProcessor(unsigned int height, unsigned int width, std::string name, bool strict);
     bool threadInit();
     void run();
     void threadRelease();

@@ -16,18 +16,22 @@
 
 #include "vParticleModule.h"
 
-void drawEvents(yarp::sig::ImageOf< yarp::sig::PixelBgr> &image, eventdriven::vQueue &q, double tw = 0) {
+using ev::event;
+using ev::getas;
+using ev::AddressEvent;
+
+void drawEvents(yarp::sig::ImageOf< yarp::sig::PixelBgr> &image, ev::vQueue &q, double tw = 0) {
 
     int tnow = q.front()->getStamp(); //only valid for certain q's!!
 
     for(unsigned int i = 0; i < q.size(); i++) {
         if(tw) {
             double dt = tnow - q[i]->getStamp();
-            if(dt < 0) dt += eventdriven::vtsHelper::maxStamp();
+            if(dt < 0) dt += ev::vtsHelper::maxStamp();
             if(dt > tw) break;
         }
-        eventdriven::event<eventdriven::AddressEvent> v = eventdriven::static_pointer_cast<eventdriven::AddressEvent>(q[i]);
-        image(v->getY(), 127 - v->getX()) = yarp::sig::PixelBgr(0, 255, 0);
+        event<AddressEvent> v = std::static_pointer_cast<AddressEvent>(q[i]);
+        image(v->getY(), image.width()-1 - v->getX()) = yarp::sig::PixelBgr(0, 255, 0);
     }
 }
 
@@ -38,19 +42,19 @@ void drawcircle(yarp::sig::ImageOf<yarp::sig::PixelBgr> &image, int cx, int cy, 
         for(int x = -cr; x <= cr; x++) {
             if(fabs(sqrt(pow(x, 2.0) + pow(y, 2.0)) - (double)cr) > 0.8) continue;
             int px = cx + x; int py = cy + y;
-            if(py < 0 || py > 127 || px < 0 || px > 127) continue;
+            if(py < 0 || py > image.height()-1 || px < 0 || px > image.width()-1) continue;
             switch(id) {
             case(0): //green
-                image(py, 127 - px) = yarp::sig::PixelBgr(0, 255, 0);
+                image(py, image.width()-1 - px) = yarp::sig::PixelBgr(0, 255, 0);
                 break;
             case(1): //blue
-                image(py, 127 - px) = yarp::sig::PixelBgr(0, 0, 255);
+                image(py, image.width()-1 - px) = yarp::sig::PixelBgr(0, 0, 255);
                 break;
             case(2): //red
-                image(py, 127 - px) = yarp::sig::PixelBgr(255, 0, 0);
+                image(py, image.width()-1 - px) = yarp::sig::PixelBgr(255, 0, 0);
                 break;
             default:
-                image(py, 127 - px) = yarp::sig::PixelBgr(255, 255, 0);
+                image(py, image.width()-1 - px) = yarp::sig::PixelBgr(255, 255, 0);
                 break;
 
             }
@@ -134,8 +138,8 @@ vSurfaceHandler::vSurfaceHandler(unsigned int width, unsigned int height)
 {
 
     res.width = width; res.height = height;
-    surfaceLeft = eventdriven::temporalSurface(width, height);
-    surfaceRight = eventdriven::temporalSurface(width, height);
+    surfaceLeft = ev::temporalSurface(width, height);
+    surfaceRight = ev::temporalSurface(width, height);
     strict = false;
     pstamp = yarp::os::Stamp();
     ptime = yarp::os::Time::now();
@@ -144,6 +148,13 @@ vSurfaceHandler::vSurfaceHandler(unsigned int width, unsigned int height)
     eventsQueried = false;
     waitsignal.wait(); //lock the resource to start with
 
+}
+
+void vSurfaceHandler::resize(unsigned int width, unsigned int height)
+{
+    res.width = width; res.height = height;
+    surfaceLeft = ev::temporalSurface(width, height);
+    surfaceRight = ev::temporalSurface(width, height);
 }
 
 bool vSurfaceHandler::open(const std::string &name, bool strictness)
@@ -155,7 +166,7 @@ bool vSurfaceHandler::open(const std::string &name, bool strictness)
     }
 
     this->useCallback();
-    if(!yarp::os::BufferedPort<eventdriven::vBottle>::open("/" + name + "/vBottle:i"))
+    if(!yarp::os::BufferedPort<ev::vBottle>::open("/" + name + "/vBottle:i"))
         return false;
 
     return true;
@@ -163,15 +174,15 @@ bool vSurfaceHandler::open(const std::string &name, bool strictness)
 
 void vSurfaceHandler::close()
 {
-    yarp::os::BufferedPort<eventdriven::vBottle>::close();
+    yarp::os::BufferedPort<ev::vBottle>::close();
 }
 
 void vSurfaceHandler::interrupt()
 {
-    yarp::os::BufferedPort<eventdriven::vBottle>::interrupt();
+    yarp::os::BufferedPort<ev::vBottle>::interrupt();
 }
 
-void vSurfaceHandler::onRead(eventdriven::vBottle &inputBottle)
+void vSurfaceHandler::onRead(ev::vBottle &inputBottle)
 {
     yarp::os::Stamp st;
     getEnvelope(st);
@@ -182,10 +193,10 @@ void vSurfaceHandler::onRead(eventdriven::vBottle &inputBottle)
 
 
     //create event queue
-    eventdriven::vQueue q = inputBottle.get<eventdriven::AddressEvent>();
+    ev::vQueue q = inputBottle.get<AddressEvent>();
     q.sort(true);
 
-    for(eventdriven::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
+    for(ev::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
 
         mutexsignal.lock();
         if((*qi)->getChannel() == 0)
@@ -212,7 +223,7 @@ void vSurfaceHandler::onRead(eventdriven::vBottle &inputBottle)
 
 }
 
-eventdriven::vQueue vSurfaceHandler::queryEvents(unsigned long int conditionTime, unsigned int temporalWindow)
+ev::vQueue vSurfaceHandler::queryEvents(unsigned long int conditionTime, unsigned int temporalWindow)
 {
 
 
@@ -226,7 +237,7 @@ eventdriven::vQueue vSurfaceHandler::queryEvents(unsigned long int conditionTime
 //    }
 
     mutexsignal.lock();
-    eventdriven::vQueue temp = surfaceLeft.getSurf_Tlim(tw);
+    ev::vQueue temp = surfaceRight.getSurf_Tlim(tw);
     mutexsignal.unlock();
 
     return temp;
@@ -242,12 +253,14 @@ eventdriven::vQueue vSurfaceHandler::queryEvents(unsigned long int conditionTime
 }
 /******************************************************************************/
 /******************************************************************************/
-particleProcessor::particleProcessor(unsigned int height, unsigned int weight, std::string name, bool strict)
+particleProcessor::particleProcessor(unsigned int height, unsigned int width, std::string name, bool strict)
 {
     res.height = height;
-    res.width  = weight;
+    res.width  = width;
     this->name = name;
     this->strict = strict;
+
+    eventhandler.resize(width, height);
 
     avgx = 0;
     avgy = 0;
@@ -292,7 +305,7 @@ bool particleProcessor::threadInit()
     }
 
     std::cout << "Port open - querying initialisation events" << std::endl;
-    eventdriven::vQueue stw;
+    ev::vQueue stw;
     while(!stw.size()) {
            yarp::os::Time::delay(0.01);
            stw = eventhandler.queryEvents(0, 1);
@@ -327,7 +340,7 @@ void particleProcessor::run()
 
         ptime = yarp::os::Time::now();
         //eventdriven::vQueue stw = eventhandler.queryEvents(unwrap.currentTime() + rate, maxtw);
-        eventdriven::vQueue stw = eventhandler.queryEvents(unwrap.currentTime() + rate, eventdriven::vtsHelper::maxStamp() * 0.5);
+        ev::vQueue stw = eventhandler.queryEvents(unwrap.currentTime() + rate, ev::vtsHelper::maxStamp() * 0.5);
         double Tget = (yarp::os::Time::now() - ptime)*1000.0;
         ptime = yarp::os::Time::now();
 
@@ -375,7 +388,7 @@ void particleProcessor::run()
         for(unsigned int i = 0; i < stw.size(); i++) {
             double dt = stampnow - stw[i]->getStamp();
             if(dt < 0)
-                dt += eventdriven::vtsHelper::maxStamp();
+                dt += ev::vtsHelper::maxStamp();
             deltats[i] = dt;
         }
 
@@ -460,8 +473,8 @@ void particleProcessor::run()
                 int py = indexedlist[i].gety();
                 int px = indexedlist[i].getx();
 
-                if(py < 0 || py > 127 || px < 0 || px > 127) continue;
-                image(py, 127 - px) = yarp::sig::PixelBgr(255, 255, 255);
+                if(py < 0 || py > res.height || px < 0 || px > res.width) continue;
+                image(px, py) = yarp::sig::PixelBgr(255, 255, 255);
 
             }
             //drawEvents(image, stw, avgtw);
@@ -506,7 +519,7 @@ vPartObsThread::vPartObsThread(int pStart, int pEnd)
 }
 
 void vPartObsThread::setDataSources(std::vector<vParticle> *particles,
-                    std::vector<int> *deltats, eventdriven::vQueue *stw)
+                    std::vector<int> *deltats, ev::vQueue *stw)
 {
     this->particles = particles;
     this->deltats = deltats;
@@ -523,7 +536,7 @@ void vPartObsThread::run()
     for(int i = pStart; i < pEnd; i++) {
         for(unsigned int j = 0; j < (*stw).size(); j++) {
             if((*deltats)[j] < (*particles)[i].gettw()) {
-                eventdriven::event<eventdriven::AddressEvent> v = eventdriven::static_pointer_cast<eventdriven::AddressEvent>((*stw)[j]);
+                event<AddressEvent> v = std::static_pointer_cast<AddressEvent>((*stw)[j]);
                 (*particles)[i].incrementalLikelihood(v->getX(), v->getY(), (*deltats)[j]);
             } else {
                 break;
@@ -544,7 +557,7 @@ vParticleReader::vParticleReader(unsigned int width, unsigned int height)
 {
 
     res.width = width; res.height = height;
-    surfaceLeft = eventdriven::temporalSurface(width, height);
+    surfaceLeft = ev::temporalSurface(width, height);
     strict = false;
     pmax.initWeight(0.0);
     srand(yarp::os::Time::now());
@@ -569,7 +582,7 @@ bool vParticleReader::open(const std::string &name, bool strictness)
     }
 
     this->useCallback();
-    if(!yarp::os::BufferedPort<eventdriven::vBottle>::open("/" + name + "/vBottle:i"))
+    if(!yarp::os::BufferedPort<ev::vBottle>::open("/" + name + "/vBottle:i"))
         return false;
     if(!scopeOut.open("/" + name + "/scope:o"))
         return false;
@@ -585,7 +598,7 @@ void vParticleReader::close()
     //close ports
     scopeOut.close();
     debugOut.close();
-    yarp::os::BufferedPort<eventdriven::vBottle>::close();
+    yarp::os::BufferedPort<ev::vBottle>::close();
 
 }
 
@@ -595,18 +608,18 @@ void vParticleReader::interrupt()
     //pass on the interrupt call to everything needed
     scopeOut.interrupt();
     debugOut.interrupt();
-    yarp::os::BufferedPort<eventdriven::vBottle>::interrupt();
+    yarp::os::BufferedPort<ev::vBottle>::interrupt();
 }
 
 
 
-eventdriven::vQueue temporalSelection(eventdriven::vQueue &q, int ctime, int dtime)
+ev::vQueue temporalSelection(ev::vQueue &q, int ctime, int dtime)
 {
-    eventdriven::vQueue subq;
+    ev::vQueue subq;
 
     if(ctime - dtime < 0) {
         for(unsigned int i = 0; i < q.size(); i++) {
-            if(q[i]->getStamp() > ctime - dtime + eventdriven::vtsHelper::maxStamp() || q[i]->getStamp() < ctime)
+            if(q[i]->getStamp() > ctime - dtime + ev::vtsHelper::maxStamp() || q[i]->getStamp() < ctime)
                 subq.push_back(q[i]);
         }
     } else {
@@ -625,7 +638,7 @@ eventdriven::vQueue temporalSelection(eventdriven::vQueue &q, int ctime, int dti
 
 
 /******************************************************************************/
-void vParticleReader::onRead(eventdriven::vBottle &inputBottle)
+void vParticleReader::onRead(ev::vBottle &inputBottle)
 {
 
     yarp::os::Stamp st;
@@ -636,15 +649,15 @@ void vParticleReader::onRead(eventdriven::vBottle &inputBottle)
     pstamp = st;
 
     //create event queue
-    eventdriven::vQueue q = inputBottle.get<eventdriven::AddressEvent>();
+    ev::vQueue q = inputBottle.get<AddressEvent>();
     //q.sort(true);
 
-    eventdriven::vQueue stw;
+    ev::vQueue stw;
     unsigned long t = 0;
     int resampled = 0;
     int processed = 0;
 
-    for(eventdriven::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
+    for(ev::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
 
         if((*qi)->getChannel()) continue;
 
@@ -713,8 +726,8 @@ void vParticleReader::onRead(eventdriven::vBottle &inputBottle)
                 //calc dt
                 double dt = ctime - stw[i]->getStamp();
                 if(dt < 0)
-                    dt += eventdriven::vtsHelper::maxStamp();
-                eventdriven::event<eventdriven::AddressEvent> v = eventdriven::static_pointer_cast<eventdriven::AddressEvent>(stw[i]);
+                    dt += ev::vtsHelper::maxStamp();
+                event<AddressEvent> v = std::static_pointer_cast<AddressEvent>(stw[i]);
                 int x = v->getX();
                 int y = v->getY();
                 for(int i = 0; i < nparticles; i++) {
@@ -889,9 +902,9 @@ void vParticleReader::onRead(eventdriven::vBottle &inputBottle)
             int py = indexedlist[i].gety();
             int px = indexedlist[i].getx();
 
-            if(py < 0 || py > 127 || px < 0 || px > 127) continue;
+            if(py < 0 || py > res.height-1 || px < 0 || px > res.width-1) continue;
             pcol = yarp::sig::PixelBgr(255*indexedlist[i].getw()/pmax.getw(), 255*indexedlist[i].getw()/pmax.getw(), 255);
-            image(py, 127 - px) = pcol;
+            image(py, res.width-1 - px) = pcol;
         //drawcircle(image, indexedlist[i].getx(), indexedlist[i].gety(), indexedlist[i].getr(), indexedlist[i].getid());
         }
         drawEvents(image, stw);
