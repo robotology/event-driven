@@ -316,8 +316,8 @@ void vAttentionManager::onRead(emorph::vBottle &bot) {
 //    normaliseMap(DOGFeatureMap, normalisedGaussianFeatureMap);
     //salMapLeft = normalisedVertFeatureMap + 5*normalisedGaussianFeatureMap + normalisedHorizFeatureMap;
     salMapLeft = DOGFeatureMap;
-    int rMax,cMax;
-    computeAttentionPoint(salMapLeft, rMax, cMax);
+
+    computeAttentionPoint(salMapLeft);
 //    decayMap(activationMap,dt);
 //    salMapLeft = 2*(normalisedBigGaussianFeatureMap+normalisedGaussianFeatureMap) + vertFeatureMap + bigVertFeatureMap + horizFeatureMap + bigHorizFeatureMap;
 //    salMapLeft = bigHorizFeatureMap + horizFeatureMap;
@@ -365,9 +365,9 @@ void vAttentionManager::onRead(emorph::vBottle &bot) {
     yarp::sig::ImageOf<yarp::sig::PixelBgr> &imageLeft = outSalMapLeftPort.prepare();
     yarp::sig::ImageOf<yarp::sig::PixelBgr> &imageRight = outSalMapRightPort.prepare();
 
-    convertToImage(salMapLeft, imageLeft, rMax, cMax);
+    convertToImage(salMapLeft, imageLeft, attPointY, attPointX);
 //    convertToImage(salMapRight, imageRight);
-    convertToImage(activationMap, imageRight, rMax, cMax);
+    convertToImage(activationMap, imageRight, attPointY, attPointX);
 
     // --- writing images of left and right saliency maps on output port
     if (outSalMapLeftPort.getOutputCount()) {
@@ -517,30 +517,58 @@ void vAttentionManager::normaliseMap(yarp::sig::Matrix &map, yarp::sig::Matrix &
     normalisedMap /= totalEnergy;
 }
 
-void vAttentionManager::computeAttentionPoint(yarp::sig::Matrix &map, int &rMax, int &cMax) {
+void vAttentionManager::computeAttentionPoint(yarp::sig::Matrix &map) {
 
-    maxInMap(map, rMax, cMax);
-    activationMap(rMax,cMax) ++;
-    maxInMap(activationMap,rMax, cMax);
-//    std::cout << "max Activation = " << activationMap(rMax,cMax) << std::endl;
-//    std::cout << "rMax = " << rMax << std::endl;
-//    std::cout << "cMax = " << cMax << std::endl;
-//    map(rMax,cMax) *= 100;
+    maxInMap(map);
+    activationMap(attPointY,attPointX) ++;
+    maxInMap(activationMap);
+//    std::cout << "max Activation = " << activationMap(attPointY,attPointX) << std::endl;
+//    std::cout << "attPointY = " << attPointY << std::endl;
+//    std::cout << "attPointX = " << attPointX << std::endl;
+//    map(attPointY,attPointX) *= 100;
 }
 
-void vAttentionManager::maxInMap(const yarp::sig::Matrix &map, int &rMax, int &cMax) const {
+void vAttentionManager::maxInMap(const yarp::sig::Matrix &map) {
     double max = 0;
-    rMax = 0;
-    cMax = 0;
+    attPointX = 0;
+    attPointY = 0;
     for (int r = 0; r < map.rows(); r++) {
         for (int c = 0; c < map.cols(); c++) {
             if (map(r, c) > max) {
                 max = map(r, c);
-                rMax = r;
-                cMax = c;
+                attPointY = r;
+                attPointX = c;
             }
         }
     }
+}
+
+void vAttentionManager::computeBoundingBox(yarp::sig::Matrix &map, double threshold) {
+    double internalEnergy = 0;
+    double previousInternalEnergy = 0;
+    int boxWidth = 0;
+    int boxHeight = 0;
+    int topX, topY;
+    int bottomX, bottomY;
+    do{
+
+        previousInternalEnergy = internalEnergy;
+        internalEnergy = 0;
+        boxWidth += 5;
+        boxHeight += 5;
+        topY = max(attPointY - boxHeight/2,0);
+        bottomY = min(attPointY + boxHeight/2, map.rows());
+        topX = max(attPointX-boxWidth/2,0);
+        bottomX = min (attPointX + boxWidth/2, map.cols());
+        //compute energy inside the box
+        for (int r = topY; r < bottomY; ++r) {
+            for (int c = topX; c < bottomX; ++c) {
+                internalEnergy += map(r,c);
+            }
+        }
+    }while (internalEnergy - previousInternalEnergy < threshold);
+
+    //TODO debug and draw bounding box
 }
 
 //empty line to make gcc happy

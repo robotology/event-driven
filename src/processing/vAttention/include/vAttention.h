@@ -24,6 +24,7 @@
 #include <iCub/emorph/all.h>
 #include <iCub/emorph/vtsHelper.h>
 #include <math.h>
+#include <ostream>
 
 class vAttentionManager : public yarp::os::BufferedPort<emorph::vBottle>
 {
@@ -40,6 +41,8 @@ private:
 
     int sensorSize;
     int filterSize;
+    int attPointY;
+    int attPointX;
     int salMapPadding;
     int numIterations;
     double tau;
@@ -82,9 +85,11 @@ private:
     void convertToImage(yarp::sig::Matrix &map, yarp::sig::ImageOf<yarp::sig::PixelBgr> &image, int rMax,
                             int cMax);
     void load_filter(std::string filename, yarp::sig::Matrix &filterMap, int &filterSize);
-    void computeAttentionPoint(yarp::sig::Matrix &map, int &rMax, int &cMax);
+    void computeAttentionPoint(yarp::sig::Matrix &map);
     void generateGaussianFilter(yarp::sig::Matrix& filterMap, double sigma, int gaussianFilterSize, int &filterSize);
     void drawSquare( yarp::sig::ImageOf<yarp::sig::PixelBgr> &image, int r, int c, yarp::sig::PixelBgr &pixelBgr) ;
+    void computeBoundingBox(yarp::sig::Matrix &map, double threshold);
+    void maxInMap(const yarp::sig::Matrix &map);
 
 public:
 
@@ -98,7 +103,7 @@ public:
     void    onRead(emorph::vBottle &bot);
 
 
-    void maxInMap(const yarp::sig::Matrix &map, int &rMax, int &cMax) const;
+
 };
 
 class vAttentionModule : public yarp::os::RFModule
