@@ -223,7 +223,7 @@ bool vFramerModule::updateModule()
         yarp::sig::ImageOf<yarp::sig::PixelBgr> &o = outports[i]->prepare();
         o.resize(canvas.cols, canvas.rows);
         cv::Mat publishMat((IplImage *)o.getIplImage(), false);
-        cv::flip(canvas, canvas, 0);
+        //cv::flip(canvas, canvas, 0);
         canvas.copyTo(publishMat);
         if(yarptime.isValid()) outports[i]->setEnvelope(yarptime);
         outports[i]->write();

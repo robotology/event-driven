@@ -85,7 +85,6 @@ std::string addressDraw::getTag()
 
 void addressDraw::draw(cv::Mat &image, const ev::vQueue &eSet)
 {
-
     image = cv::Mat(Xlimit, Ylimit, CV_8UC3);
     image.setTo(255);
 
@@ -107,7 +106,7 @@ void addressDraw::draw(cv::Mat &image, const ev::vQueue &eSet)
         event<ev::AddressEvent> aep = getas<ev::AddressEvent>(*qi);
         if(!aep) continue;
 
-        cv::Vec3b cpc = image.at<cv::Vec3b>(aep->getX(), aep->getY());
+        cv::Vec3b cpc = image.at<cv::Vec3b>(aep->getY(), aep->getX());
 
         if(!aep->getPolarity())
         {
@@ -134,7 +133,7 @@ void addressDraw::draw(cv::Mat &image, const ev::vQueue &eSet)
             else cpc[2] = 0;
         }
 
-        image.at<cv::Vec3b>(aep->getX(), aep->getY()) = cpc;
+        image.at<cv::Vec3b>(aep->getY(), aep->getX()) = cpc;
     }
 }
 
@@ -711,12 +710,22 @@ void fflowDraw::draw(cv::Mat &image, const vQueue &eSet)
 
 }
 
+void pttr(int &x, int &y, int &z) {
+    // we want a negative rotation around the y axis (yaw)
+    // a positive rotation around the x axis (pitch) (no roll)
+    // the z should always be negative values.
+    // the points need to be shifted across by negligble amount
+    // the points need to be shifted up by (x = max, y = 0, ts = 0 rotation)
+
+
+}
+
 void isoDraw::initialise()
 {
     maxdt = 1;
 
-    theta1 = -40 * 3.14 / 180.0;
-    theta2 = 20 * 3.14 / 180.0;
+    theta1 = -40 * 3.14 / 180.0; //horizontal rot
+    theta2 = 20 * 3.14 / 180.0;  //vertical rot
 
     c1 = cos(theta1); s1 = sin(theta1);
     c2 = cos(theta2); s2 = sin(theta2);
@@ -855,8 +864,8 @@ void isoDraw::draw(cv::Mat &image, const ev::vQueue &eSet)
         if(dt < 0) dt += ev::vtsHelper::maxStamp();
         dt /= (double)maxdt;
         int pts = dt * scale;
-        int px = aep->getY();
-        int py = aep->getX();
+        int px = aep->getX();
+        int py = aep->getY();
 
         int x = c1*px - s1*pts + imagexshift;
         int y = c2*py - s2*(-s1*px - c1*pts) + imageyshift;
