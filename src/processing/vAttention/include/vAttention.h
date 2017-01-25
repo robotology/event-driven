@@ -41,6 +41,7 @@ private:
     int sensorSize;
     int filterSize;
     int salMapPadding;
+    int numIterations;
     double tau;
     unsigned long int ptime; // past time stamp
     double thrSal; // threshold to put a maximum on the saliency map (whatever is above thr will be set to the maximum value)
@@ -59,6 +60,8 @@ private:
     yarp::sig::Matrix bigVertFilterMap;
     yarp::sig::Matrix bigHorizFilterMap;
 
+    yarp::sig::Matrix activationMap;
+
     yarp::sig::Matrix vertFeatureMap;
     yarp::sig::Matrix bigVertFeatureMap;
     yarp::sig::Matrix horizFeatureMap;
@@ -76,9 +79,10 @@ private:
     void normaliseMap(yarp::sig::Matrix &map, yarp::sig::Matrix &normalisedMap);
     void decayMap(yarp::sig::Matrix &map, unsigned long int dt);
     void printMap(yarp::sig::Matrix &map);
-    void convertToImage(yarp::sig::Matrix &map, yarp::sig::ImageOf<yarp::sig::PixelBgr> &image);
+    void convertToImage(yarp::sig::Matrix &map, yarp::sig::ImageOf<yarp::sig::PixelBgr> &image, int rMax,
+                            int cMax);
     void load_filter(std::string filename, yarp::sig::Matrix &filterMap, int &filterSize);
-    double* computeAttentionPoint(yarp::sig::Matrix &map);
+    void computeAttentionPoint(yarp::sig::Matrix &map, int &rMax, int &cMax);
     void generateGaussianFilter(yarp::sig::Matrix& filterMap, double sigma, int gaussianFilterSize, int &filterSize);
     void drawSquare( yarp::sig::ImageOf<yarp::sig::PixelBgr> &image, int r, int c, yarp::sig::PixelBgr &pixelBgr) ;
 
@@ -94,6 +98,7 @@ public:
     void    onRead(emorph::vBottle &bot);
 
 
+    void maxInMap(const yarp::sig::Matrix &map, int &rMax, int &cMax) const;
 };
 
 class vAttentionModule : public yarp::os::RFModule

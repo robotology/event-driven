@@ -165,12 +165,14 @@ vAttentionManager::vAttentionManager(int sensorSize, double tau, double thrSal, 
 
     /** Gaussian Filter computation**/
 
-    generateGaussianFilter(gaussianFilterMap, 2, 20, filterSize);
-    generateGaussianFilter(bigGaussianFilterMap, 2.5, 20, filterSize);
+    generateGaussianFilter(gaussianFilterMap, 2, 21, filterSize);
+    generateGaussianFilter(bigGaussianFilterMap, 2.3, 21, filterSize);
 
     DOGFilterMap = bigGaussianFilterMap - gaussianFilterMap;
     DOGFilterMap *= 150;
-    printMap(DOGFilterMap);
+    uniformFilterMap *= 10;
+printMap(DOGFilterMap);
+
     this->salMapPadding = filterSize / 2;
 
     //for speed we predefine the memory for some matrices
@@ -184,21 +186,8 @@ vAttentionManager::vAttentionManager(int sensorSize, double tau, double thrSal, 
     gaussianFeatureMap = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
     bigGaussianFeatureMap = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
     DOGFeatureMap = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
-
-    // initialise saliency map to zero
-//    salMapLeft.zero();
-//    salMapRight.zero();
-
-    salMapLeft = 1;
-    salMapRight = 1;
-    vertFeatureMap = 1;
-    bigVertFeatureMap = 1;
-    horizFeatureMap = 1;
-    bigHorizFeatureMap = 1;
-    gaussianFeatureMap = 1;
-    bigGaussianFeatureMap = 1;
-    DOGFeatureMap = 1;
-
+    activationMap = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
+    activationMap.zero();
 }
 
 
@@ -282,6 +271,7 @@ void vAttentionManager::interrupt() {
 }
 
 void vAttentionManager::onRead(emorph::vBottle &bot) {
+    numIterations ++;
     /* get the event queue in the vBottle bot */
     emorph::vQueue q = bot.get<emorph::AddressEvent>();
     q.sort(true);
@@ -303,6 +293,7 @@ void vAttentionManager::onRead(emorph::vBottle &bot) {
 //            updateMap(gaussianFeatureMap, gaussianFilterMap, aep);
 //            updateMap(bigGaussianFeatureMap, bigGaussianFilterMap, aep);
             updateMap(DOGFeatureMap,DOGFilterMap, aep);
+//            updateMap(DOGFeatureMap,uniformFilterMap, aep);
 
         } else {
             updateMap(salMapRight, horizFilterMap, aep);
@@ -325,7 +316,9 @@ void vAttentionManager::onRead(emorph::vBottle &bot) {
 //    normaliseMap(DOGFeatureMap, normalisedGaussianFeatureMap);
     //salMapLeft = normalisedVertFeatureMap + 5*normalisedGaussianFeatureMap + normalisedHorizFeatureMap;
     salMapLeft = DOGFeatureMap;
-
+    int rMax,cMax;
+    computeAttentionPoint(salMapLeft, rMax, cMax);
+//    decayMap(activationMap,dt);
 //    salMapLeft = 2*(normalisedBigGaussianFeatureMap+normalisedGaussianFeatureMap) + vertFeatureMap + bigVertFeatureMap + horizFeatureMap + bigHorizFeatureMap;
 //    salMapLeft = bigHorizFeatureMap + horizFeatureMap;
 //    salMapLeft *= 20000;
@@ -369,12 +362,12 @@ void vAttentionManager::onRead(emorph::vBottle &bot) {
 
     //  --- convert to images for display --- //
 
-
     yarp::sig::ImageOf<yarp::sig::PixelBgr> &imageLeft = outSalMapLeftPort.prepare();
     yarp::sig::ImageOf<yarp::sig::PixelBgr> &imageRight = outSalMapRightPort.prepare();
 
-    convertToImage(salMapLeft, imageLeft);
-    convertToImage(salMapRight, imageRight);
+    convertToImage(salMapLeft, imageLeft, rMax, cMax);
+//    convertToImage(salMapRight, imageRight);
+    convertToImage(activationMap, imageRight, rMax, cMax);
 
     // --- writing images of left and right saliency maps on output port
     if (outSalMapLeftPort.getOutputCount()) {
@@ -385,33 +378,37 @@ void vAttentionManager::onRead(emorph::vBottle &bot) {
     }
 }
 
-void vAttentionManager::convertToImage(yarp::sig::Matrix &map, yarp::sig::ImageOf<yarp::sig::PixelBgr> &image) {
+void vAttentionManager::convertToImage(yarp::sig::Matrix &map, yarp::sig::ImageOf<yarp::sig::PixelBgr> &image, int rMax,
+                                       int cMax) {
 
     /*prepare output vBottle with images */
     image.resize(sensorSize, sensorSize);
     image.setTopIsLowIndex(true);
     image.zero();
 
-    double *attentionPoint = computeAttentionPoint(map);
-
+    int shiftedR, shiftedC;
     for (int r = sensorSize; r > 0; r--) {
         for (int c = 0; c < sensorSize; c++) {
             yarp::sig::PixelBgr pixelBgr;
 
-//            Coordinates of saliency map are shifted by salMapPadding wrt the image
-//            double pixelValue = std::min(map(r + salMapPadding, c + salMapPadding), thrSal);
+//          Coordinates of saliency map are shifted by salMapPadding wrt the image
+            shiftedR = r + salMapPadding;
+            shiftedC = c + salMapPadding;
+
+//            double pixelValue = std::min(map(shiftedR, shiftedC), thrSal);
 //
 //            //Normalize to maximum pixel bgr value 255
 //            pixelValue /= normSal;
-            double pixelValue = map(r + salMapPadding, c + salMapPadding);
+
+            double pixelValue = map(shiftedR, shiftedC);
             //Attention point is highlighted in red, negative values in blue, positive in green
-            if (&map(r + salMapPadding, c + salMapPadding) == attentionPoint) {
+            if (shiftedR == rMax && shiftedC == cMax) {
                 pixelBgr.r = 255;
-                drawSquare(image, r + salMapPadding, c + salMapPadding, pixelBgr);
+//                drawSquare(image, r + salMapPadding, c + salMapPadding, pixelBgr);
             } else if (pixelValue <= 0) {
                 pixelBgr.b = std::min (fabs(pixelValue),255.0);
             } else {
-                pixelBgr.g = (unsigned char)std::min(fabs(pixelValue), 255.0);
+                pixelBgr.g = std::min(fabs(pixelValue), 255.0);
             }
 
             image(c, sensorSize - r) = pixelBgr;
@@ -520,10 +517,21 @@ void vAttentionManager::normaliseMap(yarp::sig::Matrix &map, yarp::sig::Matrix &
     normalisedMap /= totalEnergy;
 }
 
-double *vAttentionManager::computeAttentionPoint(yarp::sig::Matrix &map) {
+void vAttentionManager::computeAttentionPoint(yarp::sig::Matrix &map, int &rMax, int &cMax) {
+
+    maxInMap(map, rMax, cMax);
+    activationMap(rMax,cMax) ++;
+    maxInMap(activationMap,rMax, cMax);
+//    std::cout << "max Activation = " << activationMap(rMax,cMax) << std::endl;
+//    std::cout << "rMax = " << rMax << std::endl;
+//    std::cout << "cMax = " << cMax << std::endl;
+//    map(rMax,cMax) *= 100;
+}
+
+void vAttentionManager::maxInMap(const yarp::sig::Matrix &map, int &rMax, int &cMax) const {
     double max = 0;
-    int rMax = 0;
-    int cMax = 0;
+    rMax = 0;
+    cMax = 0;
     for (int r = 0; r < map.rows(); r++) {
         for (int c = 0; c < map.cols(); c++) {
             if (map(r, c) > max) {
@@ -533,8 +541,6 @@ double *vAttentionManager::computeAttentionPoint(yarp::sig::Matrix &map) {
             }
         }
     }
-    map(rMax,cMax) *= 3;
-    return &map(rMax, cMax);
 }
 
 //empty line to make gcc happy
