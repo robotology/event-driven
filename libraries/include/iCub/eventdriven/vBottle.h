@@ -23,7 +23,6 @@
 #ifndef __vBottle__
 #define __vBottle__
 
-
 #include <yarp/os/Bottle.h>
 #include <iCub/eventdriven/vCodec.h>
 #include <iCub/eventdriven/vQueue.h>
@@ -216,7 +215,9 @@ private:
     void copyPortable();
     //yarp::os::Value& find(const yarp::os::ConstString &key);
     //yarp::os::Value& find(const ConstString &key) : Bottle::find(const yarp::os::ConstString &key) {};
-    void findGroup();
+    //Bottle& findGroup(const yarp::os::ConstString& key) const;
+    //void findGroup();
+    using yarp::os::Bottle::findGroup;
     yarp::os::Bottle tail() const;
 
 
