@@ -223,8 +223,8 @@ void vTrackToRobotManager::onRead(ev::vBottle &vBottleIn)
             if(medstdx < 10 && medstdy < 10 && n > 5) {
                 dogaze = true;
                 lastdogazetime = yarp::os::Time::now();
-                px[0] = medy;
-                px[1] = 127 - medx;
+                px[0] = medx;
+                px[1] = medy;
                 //turn u/v into xyz
                 if(gazedriver.isValid())
                     gazecontrol->get3DPoint(0, px, (-2.4 * p_eyez + 70)/100.0, xrobref);

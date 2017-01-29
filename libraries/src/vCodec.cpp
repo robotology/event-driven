@@ -178,7 +178,8 @@ void AddressEvent::encode(yarp::os::Bottle &b) const
 #ifdef TENBITCODEC
     b.addInt(((channel&0x01)<<20)|((y&0x0FF)<<10)|((x&0x1FF)<<1)|(polarity&0x01));
 #else
-    b.addInt(((channel&0x01)<<15)|((y&0x7f)<<8)|((x&0x7f)<<1)|(polarity&0x01));
+    //b.addInt(((channel&0x01)<<15)|((y&0x7f)<<8)|((x&0x7f)<<1)|(polarity&0x01));
+    b.addInt(((channel&0x01)<<15)|((x&0x7f)<<8)|(((127-y)&0x7f)<<1)|(polarity&0x01));
 #endif
 }
 
@@ -202,13 +203,23 @@ bool AddressEvent::decode(const yarp::os::Bottle &packet, int &pos)
         word0>>=10;
         channel=word0&0x01;
 #else
+//        polarity=word0&0x01;
+
+//        word0>>=1;
+//        x=word0&0x7f;
+
+//        word0>>=7;
+//        y=word0&0x7f;
+
+//        word0>>=7;
+//        channel=word0&0x01;
         polarity=word0&0x01;
 
         word0>>=1;
-        x=word0&0x7f;
+        y=127-(word0&0x7f);
 
         word0>>=7;
-        y=word0&0x7f;
+        x=word0&0x7f;
 
         word0>>=7;
         channel=word0&0x01;

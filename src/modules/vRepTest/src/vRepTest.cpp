@@ -135,6 +135,8 @@ void vRepTest::onRead(ev::vBottle &inBottle)
     {
         event<ev::AddressEvent> ae = getas<ev::AddressEvent>(*qi);
         if(!ae || ae->getChannel()) continue;
+        //the following is a hack until all hard-coded values can be removed
+        //from the module
         if(ae->getX() > 127 || ae->getY() > 127) continue;
 
         unwts = unwrapper((*qi)->getStamp());

@@ -22,6 +22,9 @@ vQueue vSurface2::addEvent(event<> v)
     q.push_back(v);
     event<AddressEvent> c = getas<AddressEvent>(v);
     if(c) {
+        if(c->getY() >= height || c->getX() >= width) {
+            std::cout << "WHY" << std::endl;
+        }
         if(spatial[c->getY()][c->getX()])
             removed.push_back(spatial[c->getY()][c->getX()]);
         else

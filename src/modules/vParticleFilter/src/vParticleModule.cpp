@@ -31,7 +31,7 @@ void drawEvents(yarp::sig::ImageOf< yarp::sig::PixelBgr> &image, ev::vQueue &q, 
             if(dt > tw) break;
         }
         event<AddressEvent> v = std::static_pointer_cast<AddressEvent>(q[i]);
-        image(v->getY(), image.width()-1 - v->getX()) = yarp::sig::PixelBgr(0, 255, 0);
+        image(v->getX(), v->getY()) = yarp::sig::PixelBgr(0, 255, 0);
     }
 }
 
@@ -45,16 +45,16 @@ void drawcircle(yarp::sig::ImageOf<yarp::sig::PixelBgr> &image, int cx, int cy, 
             if(py < 0 || py > image.height()-1 || px < 0 || px > image.width()-1) continue;
             switch(id) {
             case(0): //green
-                image(py, image.width()-1 - px) = yarp::sig::PixelBgr(0, 255, 0);
+                image(px, py) = yarp::sig::PixelBgr(0, 255, 0);
                 break;
             case(1): //blue
-                image(py, image.width()-1 - px) = yarp::sig::PixelBgr(0, 0, 255);
+                image(px, image.width()-1 - px) = yarp::sig::PixelBgr(0, 0, 255);
                 break;
             case(2): //red
-                image(py, image.width()-1 - px) = yarp::sig::PixelBgr(255, 0, 0);
+                image(px, image.width()-1 - px) = yarp::sig::PixelBgr(255, 0, 0);
                 break;
             default:
-                image(py, image.width()-1 - px) = yarp::sig::PixelBgr(255, 255, 0);
+                image(px, image.width()-1 - px) = yarp::sig::PixelBgr(255, 255, 0);
                 break;
 
             }

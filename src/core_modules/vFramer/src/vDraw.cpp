@@ -85,8 +85,7 @@ std::string addressDraw::getTag()
 
 void addressDraw::draw(cv::Mat &image, const ev::vQueue &eSet)
 {
-
-    image = cv::Mat(Xlimit, Ylimit, CV_8UC3);
+    image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
     image.setTo(255);
 
     if(checkStagnancy(eSet) > clearThreshold) {
@@ -107,7 +106,7 @@ void addressDraw::draw(cv::Mat &image, const ev::vQueue &eSet)
         event<ev::AddressEvent> aep = getas<ev::AddressEvent>(*qi);
         if(!aep) continue;
 
-        cv::Vec3b cpc = image.at<cv::Vec3b>(aep->getX(), aep->getY());
+        cv::Vec3b &cpc = image.at<cv::Vec3b>(aep->getY(), aep->getX());
 
         if(!aep->getPolarity())
         {
@@ -133,8 +132,6 @@ void addressDraw::draw(cv::Mat &image, const ev::vQueue &eSet)
             if(cpc.val[2] == 160) cpc[2] = 255;
             else cpc[2] = 0;
         }
-
-        image.at<cv::Vec3b>(aep->getX(), aep->getY()) = cpc;
     }
 }
 
@@ -146,7 +143,7 @@ std::string lifeDraw::getTag()
 void lifeDraw::draw(cv::Mat &image, const vQueue &eSet)
 {
 
-    image = cv::Mat(Xlimit, Ylimit, CV_8UC3);
+    image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
     image.setTo(255);
 
     if(checkStagnancy(eSet) > clearThreshold) {
@@ -168,7 +165,7 @@ void lifeDraw::draw(cv::Mat &image, const vQueue &eSet)
 
         if(modts > v->getDeath()) continue;
 
-        cv::Vec3b cpc = image.at<cv::Vec3b>(v->getX(), v->getY());
+        cv::Vec3b &cpc = image.at<cv::Vec3b>(v->getY(), v->getX());
 
         if(!v->getPolarity())
         {
@@ -194,8 +191,6 @@ void lifeDraw::draw(cv::Mat &image, const vQueue &eSet)
             if(cpc.val[2] == 160) cpc[2] = 255;
             else cpc[2] = 0;
         }
-
-        image.at<cv::Vec3b>(v->getX(), v->getY()) = cpc;
     }
 }
 
@@ -230,14 +225,7 @@ void clusterDraw::draw(cv::Mat &image, const vQueue &eSet)
     for(qi = eSet.begin(); qi != eSet.end(); qi++) {
         event<ev::ClusterEvent> vp = getas<ev::ClusterEvent>(*qi);
         if(vp) {
-//            if(persistance[vp->getID()]) {
-//                delete persistance[vp->getID()];
-//                persistance[vp->getID()] = 0;
-//            }
-
-            //persistance[vp->getID()] = vp->clone()->getAs<eventdriven::ClusterEvent>();
             persistance[vp->getID()] = vp;
-            //latest[vp->getID()] = vp;
         }
 
     }
@@ -302,7 +290,7 @@ std::string blobDraw::getTag()
 void blobDraw::draw(cv::Mat &image, const ev::vQueue &eSet)
 {
 
-    cv::Mat canvas(Xlimit, Ylimit, CV_8UC3);
+    cv::Mat canvas(Ylimit, Xlimit, CV_8UC3);
     canvas.setTo(255);
 
     vQueue::const_iterator qi;
@@ -311,7 +299,7 @@ void blobDraw::draw(cv::Mat &image, const ev::vQueue &eSet)
         event<ev::AddressEvent> aep = getas<ev::AddressEvent>(*qi);
         if(!aep) continue;
 
-        cv::Vec3b cpc = canvas.at<cv::Vec3b>(aep->getX(), aep->getY());
+        cv::Vec3b &cpc = canvas.at<cv::Vec3b>(aep->getY(), aep->getX());
 
         if(!aep->getPolarity())
         {
@@ -319,19 +307,16 @@ void blobDraw::draw(cv::Mat &image, const ev::vQueue &eSet)
             cpc[1] = 0;
             cpc[2] = 0;
         }
-
-        canvas.at<cv::Vec3b>(aep->getX(), aep->getY()) = cpc;
-
     }
 
     cv::medianBlur(canvas, canvas, 5);
     cv::blur(canvas, canvas, cv::Size(5, 5));
-    cv::resize(canvas, image, cv::Size(Xlimit*2, Ylimit*2));
+    cv::resize(canvas, image, cv::Size(Ylimit*2, Xlimit*2));
 }
 
 integralDraw::integralDraw()
 {
-    iimage = cv::Mat(Xlimit, Ylimit, CV_8UC1);
+    iimage = cv::Mat(Ylimit, Xlimit, CV_8UC1);
     iimage.setTo(128);
 }
 
@@ -349,7 +334,7 @@ void integralDraw::draw(cv::Mat &image, const vQueue &eSet)
         event<ev::AddressEvent> aep = getas<ev::AddressEvent>(*qi);
         if(aep) {
 
-            unsigned char c = iimage.at<unsigned char>(aep->getX(), aep->getY());
+            unsigned char c = iimage.at<unsigned char>(aep->getY(), aep->getX());
             int i = c;
             if(aep->getPolarity())
                 i += d;
@@ -359,14 +344,12 @@ void integralDraw::draw(cv::Mat &image, const vQueue &eSet)
             //i =+ aep->getPolarity()?d:-d;
             i = std::max(i, 0);
             i = std::min(i, 255);
-            iimage.at<unsigned char>(aep->getX(), aep->getY()) = (unsigned char)i;
+            iimage.at<unsigned char>(aep->getY(), aep->getX()) = (unsigned char)i;
         }
 
     }
 
     cv::cvtColor(iimage, image, CV_GRAY2BGR);
-    //iimage.copyTo(image);
-
 }
 
 std::string circleDraw::getTag()
@@ -386,7 +369,6 @@ void circleDraw::draw(cv::Mat &image, const vQueue &eSet)
         return;
     }
 
-    //int n = 0;
     vQueue::const_iterator qi;
     for(qi = eSet.begin(); qi != eSet.end(); qi++) {
 
@@ -396,7 +378,7 @@ void circleDraw::draw(cv::Mat &image, const vQueue &eSet)
 
         event<ev::ClusterEventGauss> v = getas<ev::ClusterEventGauss>(*qi);
         if(!v) continue;
-        cv::Point centr(v->getYCog(), v->getXCog());
+        cv::Point centr(v->getXCog(), v->getYCog());
         //we hide the radius in in X_sigma_2
         double r = v->getXSigma2();
         //we hide the radial variance in Y_sigma_2
@@ -404,19 +386,13 @@ void circleDraw::draw(cv::Mat &image, const vQueue &eSet)
 
         CvScalar c;
         switch(v->getID()) {
-        case(0): c = CV_RGB(0, 0, 255); break;
-        case(1): c = CV_RGB(0, 255, 0); break;
-        default: c = CV_RGB(255, 0, 0);
+            case(0): c = CV_RGB(0, 0, 255); break;
+            case(1): c = CV_RGB(0, 255, 0); break;
+            default: c = CV_RGB(255, 0, 0);
         }
 
         cv::circle(image, centr, r, c, w);
-        //n++;
     }
-
-//    std::stringstream ss;
-//    ss << n;
-//    cv::putText(image, ss.str().c_str(), cv::Point(0, 0), 0, 0.5, CV_RGB(0, 0, 0), 1, 8, true);
-
 }
 
 std::string surfDraw::getTag()
@@ -427,7 +403,7 @@ std::string surfDraw::getTag()
 void surfDraw::draw(cv::Mat &image, const vQueue &eSet)
 {
 
-    image = cv::Mat(Xlimit, Ylimit*2, CV_8UC3);
+    image = cv::Mat(Ylimit, Xlimit*2, CV_8UC3);
     image.setTo(0);
 
     if(eSet.empty()) return;
@@ -444,7 +420,7 @@ void surfDraw::draw(cv::Mat &image, const vQueue &eSet)
 
         if(v->getPolarity())
         {
-            cv::Vec3b cpc = image.at<cv::Vec3b>(v->getX(), v->getY());
+            cv::Vec3b cpc = image.at<cv::Vec3b>(v->getY(), v->getX());
             if(cpc[1]) continue;
 
             double tts = v->getStamp();
@@ -452,12 +428,12 @@ void surfDraw::draw(cv::Mat &image, const vQueue &eSet)
             if(cts - tts > gradient) continue;
             int val = 255 - 255.0 * (cts - tts)/ gradient;
             cpc[1] = std::max(val, 0);
-            image.at<cv::Vec3b>(v->getX(), v->getY()) = cpc;
+            image.at<cv::Vec3b>(v->getY(), v->getX()) = cpc;
 
         }
         else
         {
-            cv::Vec3b cpc = image.at<cv::Vec3b>(v->getX(), v->getY()+Ylimit);
+            cv::Vec3b cpc = image.at<cv::Vec3b>(v->getY(), v->getX()+Ylimit);
             if(cpc[2]) continue;
 
             double tts = v->getStamp();
@@ -466,7 +442,7 @@ void surfDraw::draw(cv::Mat &image, const vQueue &eSet)
             int val = 255 - 255 * (cts - tts) / gradient;
             cpc[2] = std::max(val, 0);
             cpc[0] = std::max(val, 0);
-            image.at<cv::Vec3b>(v->getX(), v->getY()+Ylimit) = cpc;
+            image.at<cv::Vec3b>(v->getY(), v->getX()+Ylimit) = cpc;
         }
 
 
@@ -484,7 +460,7 @@ void flowDraw::draw(cv::Mat &image, const vQueue &eSet)
 {
     double k = 4;
     if(image.empty()) {
-        image = cv::Mat(Xlimit*k, Ylimit*k, CV_8UC3);
+        image = cv::Mat(Ylimit*k, Xlimit*k, CV_8UC3);
         image.setTo(255);
     } else {
         cv::resize(image, image, cv::Size(0, 0), k, k, cv::INTER_LINEAR);
@@ -498,7 +474,6 @@ void flowDraw::draw(cv::Mat &image, const vQueue &eSet)
     int line_tickness = 1;
     cv::Scalar line_color = CV_RGB(255,0,0);
     cv::Point p_start,p_end;
-    const double pi = 3.1416;
 
     //int cts = eSet.back()->getAs<eventdriven::vEvent>()->getStamp();
 
@@ -526,10 +501,10 @@ void flowDraw::draw(cv::Mat &image, const vQueue &eSet)
 //            modts += eventdriven::vtsHelper::maxStamp();
 //        if(modts > ofp->getDeath()) continue;
 
-        int x = ofp->getY();
-        int y = ofp->getX();
-        float vx = ofp->getVy();
-        float vy = ofp->getVx();
+        int x = ofp->getX();
+        int y = ofp->getY();
+        float vx = ofp->getVx();
+        float vy = ofp->getVy();
         //vx_mean += vx;
         //vy_mean += vy;
         //n++;
@@ -555,12 +530,12 @@ void flowDraw::draw(cv::Mat &image, const vQueue &eSet)
         cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
 
         //Draw the tips of the arrow
-        p_start.x = (int) (p_end.x - 7*sin(angle + pi/4));
-        p_start.y = (int) (p_end.y - 7*cos(angle + pi/4));
+        p_start.x = (int) (p_end.x - 7*sin(angle + M_PI/4));
+        p_start.y = (int) (p_end.y - 7*cos(angle + M_PI/4));
         cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
 
-        p_start.x = (int) (p_end.x - 7*sin(angle - pi/4));
-        p_start.y = (int) (p_end.y - 7*cos(angle - pi/4));
+        p_start.x = (int) (p_end.x - 7*sin(angle - M_PI/4));
+        p_start.y = (int) (p_end.y - 7*cos(angle - M_PI/4));
         cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
 
     }
@@ -576,7 +551,7 @@ std::string fixedDraw::getTag()
 void fixedDraw::draw(cv::Mat &image, const vQueue &eSet)
 {
 
-    image = cv::Mat(Xlimit, Ylimit, CV_8UC3);
+    image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
     image.setTo(255);
 
     if(checkStagnancy(eSet) > clearThreshold) {
@@ -631,7 +606,7 @@ void fflowDraw::draw(cv::Mat &image, const vQueue &eSet)
 {
     double k = 4;
     if(image.empty()) {
-        image = cv::Mat(Xlimit*k, Ylimit*k, CV_8UC3);
+        image = cv::Mat(Ylimit*k, Xlimit*k, CV_8UC3);
         image.setTo(255);
     } else {
         cv::resize(image, image, cv::Size(0, 0), k, k, cv::INTER_LINEAR);
@@ -645,7 +620,6 @@ void fflowDraw::draw(cv::Mat &image, const vQueue &eSet)
     int line_tickness = 1;
     cv::Scalar line_color = CV_RGB(255,0,0);
     cv::Point p_start,p_end;
-    const double pi = 3.1416;
 
     //int cts = eSet.back()->getAs<eventdriven::vEvent>()->getStamp();
 
@@ -669,10 +643,10 @@ void fflowDraw::draw(cv::Mat &image, const vQueue &eSet)
         //    modts += eventdriven::vtsHelper::maxStamp();
         //if(modts > ofp->getDeath()) continue;
 
-        int x = ofp->getY();
-        int y = ofp->getX();
-        float vx = ofp->getVy();
-        float vy = ofp->getVx();
+        int x = ofp->getX();
+        int y = ofp->getY();
+        float vx = ofp->getVx();
+        float vy = ofp->getVy();
         //vx_mean += vx;
         //vy_mean += vy;
         //n++;
@@ -698,12 +672,12 @@ void fflowDraw::draw(cv::Mat &image, const vQueue &eSet)
         cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
 
         //Draw the tips of the arrow
-        p_start.x = (int) (p_end.x - 7*sin(angle + pi/4));
-        p_start.y = (int) (p_end.y - 7*cos(angle + pi/4));
+        p_start.x = (int) (p_end.x - 7*sin(angle + M_PI/4));
+        p_start.y = (int) (p_end.y - 7*cos(angle + M_PI/4));
         cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
 
-        p_start.x = (int) (p_end.x - 7*sin(angle - pi/4));
-        p_start.y = (int) (p_end.y - 7*cos(angle - pi/4));
+        p_start.x = (int) (p_end.x - 7*sin(angle - M_PI/4));
+        p_start.y = (int) (p_end.y - 7*cos(angle - M_PI/4));
         cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
 
     }
@@ -711,28 +685,52 @@ void fflowDraw::draw(cv::Mat &image, const vQueue &eSet)
 
 }
 
+void isoDraw::pttr(int &x, int &y, int &z) {
+    // we want a negative rotation around the y axis (yaw)
+    // a positive rotation around the x axis (pitch) (no roll)
+    // the z should always be negative values.
+    // the points need to be shifted across by negligble amount
+    // the points need to be shifted up by (x = max, y = 0, ts = 0 rotation)
+
+    int xmod = x*CY + z*SY + 0.5; // +0.5 rounds rather than floor
+    int ymod = y*CX - SX*(-x*SY + z*CY) + 0.5;
+    int zmod = y*SX + CX*(-x*SY + z*CY) + 0.5;
+    x = xmod; y = ymod; z = zmod;
+}
+
 void isoDraw::initialise()
 {
-    maxdt = 1;
+    maxdt = 1; //just to initialise (but we don't use here)
+    Zlimit = Xlimit * 3;
 
-    theta1 = -40 * 3.14 / 180.0;
-    theta2 = 20 * 3.14 / 180.0;
+    thetaX = 20 * 3.14 / 180.0;  //PITCH
+    thetaY = 40 * 3.14 / 180.0; //YAW
 
-    c1 = cos(theta1); s1 = sin(theta1);
-    c2 = cos(theta2); s2 = sin(theta2);
+    CY = cos(thetaY); SY = sin(thetaY);
+    CX = cos(thetaX); SX = sin(thetaX);
 
-    //int x = c1*px - s1*pts + imagexshift;
-    //int y = c2*py - s2*(-s1*px - c1*pts) + imageyshift;
-    scale = Xlimit * 3;
-    imagexshift = 0 + 10;
-    imageyshift = -(c2*0 - s2*(-s1*Xlimit - c1*0)) + 1;
+    //the following calculations make the assumption of a negative yaw and
+    //a positive pitch
+    int x, y, z;
+    int maxx = 0, maxy = 0, miny = Ylimit, minx = Xlimit;
+    for(int xi = 0; xi <= Xlimit; xi+=Xlimit) {
+        for(int yi = 0; yi <= Ylimit; yi+=Ylimit) {
+            for(int zi = 0; zi <= Zlimit; zi+=Zlimit) {
+                x = xi; y = yi; z = zi; pttr(x, y, z);
+                maxx = std::max(maxx, x);
+                maxy = std::max(maxy, y);
+                minx = std::min(minx, x);
+                miny = std::min(miny, y);
+            }
+        }
+    }
 
-    int imageymax = c2*Ylimit - s2*(-s1*0 - c1*scale);
-    int imagexmax = c1*Xlimit - s1*scale;
 
-    imagewidth = imagexmax + imagexshift + 1; //(c1 * Xlimit - s1 * 0) - (c1 * 0 - s1 * Ylimit) + 2;
-    imageheight = imageymax + imageyshift + 1; // * 2;
+    imagexshift = -minx + 10;
+    imageyshift = -miny + 10;
 
+    imagewidth = maxx + imagexshift + 10;
+    imageheight = maxy + imageyshift + 10;
 
     baseimage = cv::Mat(imageheight, imagewidth, CV_8UC3);
     baseimage.setTo(0);
@@ -740,84 +738,59 @@ void isoDraw::initialise()
 
     //cv::putText(baseimage, std::string("X"), cv::Point(100, 100), 1, 0.5, CV_RGB(0, 0, 0));
 
-    cv::Scalar c = CV_RGB(125, 125, 125);
-    int x, y;
+    cv::Scalar invertedtextc = CV_RGB(125, 125, 125);
+    cv::Vec3b invertedaxisc = cv::Vec3b(255, 255, 255);
+
     for(int xi = 0; xi < Xlimit; xi++) {
-        x = c1*xi - s1*0 + imagexshift;
-        y = c2*0 - s2*(-s1*xi - c1*0) + imageyshift;
-        baseimage.at<cv::Vec3b>(y, x) = cv::Vec3b(255, 255, 255);
-
+        x = xi; y = 0; z = 0; pttr(x, y, z);
+        y += imageyshift; x += imagexshift;
+        baseimage.at<cv::Vec3b>(y, x) = invertedaxisc;
+        x = xi; y = Ylimit; z = 0; pttr(x, y, z);
+        y += imageyshift; x += imagexshift;
+        baseimage.at<cv::Vec3b>(y, x) = invertedaxisc;
         if(xi == Xlimit / 2) {
-            cv::putText(baseimage, std::string("x"), cv::Point(x-10, y-9),
-                        cv::FONT_ITALIC, 0.5, c, 1, 8, true);
+            cv::putText(baseimage, std::string("x"), cv::Point(x-10, y+10),
+                        cv::FONT_ITALIC, 0.5, invertedtextc, 1, 8, false);
         }
-
-        x = c1*xi - s1*0 + imagexshift;
-        y = c2*Ylimit - s2*(-s1*xi - c1*0) + imageyshift;
-        baseimage.at<cv::Vec3b>(y, x) = cv::Vec3b(255, 255, 255);
-
-        //x = c1*xi - s1*scale + imagexshift;
-        //y = c2*Ylimit - s2*(-s1*xi - c1*scale) + imageyshift;
-        //baseimage.at<cv::Vec3b>(y, x) = cv::Vec3b(255, 255, 255);
-
     }
 
     for(int yi = 0; yi <= Ylimit; yi++) {
-        x = c1*0 - s1*0 + imagexshift;
-        y = c2*yi - s2*(-s1*0 - c1*0) + imageyshift;
-        baseimage.at<cv::Vec3b>(y, x) = cv::Vec3b(255, 255, 255);
-
+        x = 0; y = yi; z = 0; pttr(x, y, z);
+        y += imageyshift; x += imagexshift;
+        baseimage.at<cv::Vec3b>(y, x) = invertedaxisc;
         if(yi == Ylimit / 2) {
-            cv::putText(baseimage, std::string("y"), cv::Point(x-9, y),
-                        cv::FONT_ITALIC, 0.5, c, 1, 8, true);
+            cv::putText(baseimage, std::string("y"), cv::Point(x-10, y+10),
+                        cv::FONT_ITALIC, 0.5, invertedtextc, 1, 8, false);
         }
-
-        x = c1*Xlimit - s1*0 + imagexshift;
-        y = c2*yi - s2*(-s1*Xlimit - c1*0) + imageyshift;
-        baseimage.at<cv::Vec3b>(y, x) = cv::Vec3b(255, 255, 255);
-
-        //x = c1*Xlimit - s1*scale + imagexshift;
-        //y = c2*yi - s2*(-s1*Xlimit - c1*scale) + imageyshift;
-        //baseimage.at<cv::Vec3b>(y, x) = cv::Vec3b(255, 255, 255);
+        x = Xlimit; y = yi; z = 0; pttr(x, y, z);
+        y += imageyshift; x += imagexshift;
+        baseimage.at<cv::Vec3b>(y, x) = invertedaxisc;
 
     }
 
     int tsi;
-    for(tsi = 0; tsi < (int)(scale*0.3); tsi++) {
-        x = c1*Xlimit - s1*tsi + imagexshift;
-        y = c2*0 - s2*(-s1*Xlimit - c1*tsi) + imageyshift;
-        baseimage.at<cv::Vec3b>(y, x) = cv::Vec3b(255, 255, 255);
+    for(tsi = 0; tsi < (int)(Zlimit*0.3); tsi++) {
 
-        if(tsi == (int)(scale *0.15)) {
-            cv::putText(baseimage, std::string("t"), cv::Point(x, y-12),
-                        cv::FONT_ITALIC, 0.5, c, 1, 8, true);
+        x = Xlimit; y = Ylimit; z = tsi; pttr(x, y, z);
+        y += imageyshift; x += imagexshift;
+        baseimage.at<cv::Vec3b>(y, x) = invertedaxisc;
+
+        if(tsi == (int)(Zlimit *0.15)) {
+            cv::putText(baseimage, std::string("t"), cv::Point(x, y+12),
+                        cv::FONT_ITALIC, 0.5, invertedtextc, 1, 8, false);
         }
 
-        //at scale tsi = vtsHelper::maxStamp() * 0.5  * 80 / (10^9) = 671 ms
-        if(tsi == (int)(scale / 67.1)) {
-            cv::circle(baseimage, cv::Point(x, y), 6, CV_RGB(0, 255, 100), CV_FILLED);
-            cv::putText(baseimage, std::string("10ms"), cv::Point(x, y),
-                        cv::FONT_ITALIC, 0.5, c, 1, 8, true);
-        }
-
-        //x = c1*Xlimit - s1*tsi + imagexshift;
-        //y = c2*Ylimit - s2*(-s1*Xlimit - c1*tsi) + imageyshift;
-        //baseimage.at<cv::Vec3b>(y, x) = cv::Vec3b(255, 255, 255);
-
-        //x = c1*0 - s1*tsi + imagexshift;
-        //y = c2*Ylimit - s2*(-s1*0 - c1*tsi) + imageyshift;
-        //baseimage.at<cv::Vec3b>(y, x) = cv::Vec3b(255, 255, 255);
     }
 
     for(int i = 0; i < 14; i++) {
-        x = c1*(Xlimit-i/2) - s1*(tsi-i) + imagexshift;
-        y = c2*0 - s2*(-s1*(Xlimit-i/2) - c1*(tsi-i)) + imageyshift;
-        baseimage.at<cv::Vec3b>(y, x) = cv::Vec3b(255, 255, 255);
 
-        x = c1*(Xlimit+i/2) - s1*(tsi-i) + imagexshift;
-        y = c2*0 - s2*(-s1*(Xlimit+i/2) - c1*(tsi-i)) + imageyshift;
-        baseimage.at<cv::Vec3b>(y, x) = cv::Vec3b(255, 255, 255);
+        x = Xlimit-i/2; y = Ylimit; z = tsi-i; pttr(x, y, z);
+        y += imageyshift; x += imagexshift;
+        baseimage.at<cv::Vec3b>(y, x) = invertedaxisc;
 
+        x = Xlimit+i/2; y = Ylimit; z = tsi-i; pttr(x, y, z);
+        y += imageyshift; x += imagexshift;
+        baseimage.at<cv::Vec3b>(y, x) = invertedaxisc;
     }
 
 }
@@ -844,44 +817,30 @@ void isoDraw::draw(cv::Mat &image, const ev::vQueue &eSet)
     if(dt < 0) dt += ev::vtsHelper::maxStamp();
     maxdt = std::max(maxdt, dt);
 
-
     ev::vQueue::const_iterator qi;
     for(qi = eSet.begin(); qi != eSet.end(); qi++) {
         event<ev::AddressEvent> aep = getas<ev::AddressEvent>(*qi);
         if(!aep) continue;
 
         //transform values
-        double dt = cts - aep->getStamp();
+        int dt = cts - aep->getStamp();
         if(dt < 0) dt += ev::vtsHelper::maxStamp();
-        dt /= (double)maxdt;
-        int pts = dt * scale;
-        int px = aep->getY();
-        int py = aep->getX();
+        dt = ((double)dt / maxdt) * Zlimit + 0.5;
+        int px = aep->getX();
+        int py = aep->getY();
+        int pz = dt;
+        pttr(px, py, pz);
+        px += imagexshift;
+        py += imageyshift;
 
-        int x = c1*px - s1*pts + imagexshift;
-        int y = c2*py - s2*(-s1*px - c1*pts) + imageyshift;
-
-        //int x = c1 * ts - s1 * (Ylimit - aep->getY()) + imagexshift;
-        //int y = c2 * (s1 * ts + c1 * (Ylimit - aep->getY())) - (s2 * aep->getX());
-//        int x = c1 * aep->getX() - s1 * (Ylimit - aep->getY()) + imagexshift;
-//        int y = c2 * (s1 * aep->getX()+ c1 * (Ylimit - aep->getY())) - (s2 * ts);
-
-        if(x < 0 || x >= imagewidth || y < 0 || y >= imageheight) {
+        if(px < 0 || px >= imagewidth || py < 0 || py >= imageheight) {
             continue;
         }
 
         if(!aep->getPolarity()) {
-//            if(dt < 0.9)
-//                isoimage.at<cv::Vec3b>(y, x) = cv::Vec3b(80, 0, 80);
-//            else
-                isoimage.at<cv::Vec3b>(y, x) = cv::Vec3b(255, 160, 255);
-                //isoimage.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 0, 0);
+                isoimage.at<cv::Vec3b>(py, px) = cv::Vec3b(255, 160, 255);
         } else {
-//            if(dt < 0.9)
-//                isoimage.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 80, 0);
-//            else
-                isoimage.at<cv::Vec3b>(y, x) = cv::Vec3b(160, 255, 160);
-                //isoimage.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 0, 0);
+                isoimage.at<cv::Vec3b>(py, px) = cv::Vec3b(160, 255, 160);
         }
 
     }
@@ -889,17 +848,17 @@ void isoDraw::draw(cv::Mat &image, const ev::vQueue &eSet)
     if(!image.empty()) {
         for(int y = 0; y < image.rows; y++) {
             for(int x = 0; x < image.cols; x++) {
+                cv::Vec3b &pixel = image.at<cv::Vec3b>(y, x);
 
-                if(image.at<cv::Vec3b>(y, x)[0] != 255
-                        || image.at<cv::Vec3b>(y, x)[1] != 255
-                        || image.at<cv::Vec3b>(y, x)[2] != 255) {
+                if(pixel[0] != 255 || pixel[1] != 255 || pixel[2] != 255) {
 
-                    int tx = c1*x - s1*0 + imagexshift;
-                    int ty = c2*y - s2*(-s1*x - c1*0) + imageyshift;
-                    if(tx < 0 || tx >= imagewidth || ty < 0 || ty >= imageheight)
+                    int px = x, py = y, pz = 0; pttr(px, py, pz);
+                    px += imagexshift;
+                    py += imageyshift;
+                    if(px < 0 || px >= imagewidth || py < 0 || py >= imageheight)
                         continue;
 
-                    isoimage.at<cv::Vec3b>(ty, tx) = image.at<cv::Vec3b>(y, x);
+                    isoimage.at<cv::Vec3b>(py, px) = pixel;
                 }
             }
         }
@@ -920,7 +879,7 @@ void interestDraw::draw(cv::Mat &image, const ev::vQueue &eSet)
 {
 
     if(image.empty()) {
-        image = cv::Mat(Xlimit, Ylimit, CV_8UC3);
+        image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
         image.setTo(255);
     }
 

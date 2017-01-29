@@ -277,21 +277,24 @@ class isoDraw : public vDraw {
 private:
 
     //angles
-    double theta1;
-    double theta2;
-    double c1, s1;
-    double c2, s2;
+    double thetaY;
+    double thetaX;
+    double CY, SY;
+    double CX, SX;
 
     //image with warped square drawn
     cv::Mat baseimage;
 
     int tsscalar;
-    int maxdt;
+    int Zlimit;
     int imagewidth;
     int imageheight;
     int imagexshift;
     int imageyshift;
-    double scale;
+    int maxdt;
+
+    //private functions
+    void pttr(int &x, int &y, int &z);
 
 
 public:
