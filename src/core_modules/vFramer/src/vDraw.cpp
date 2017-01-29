@@ -85,7 +85,7 @@ std::string addressDraw::getTag()
 
 void addressDraw::draw(cv::Mat &image, const ev::vQueue &eSet)
 {
-    image = cv::Mat(Xlimit, Ylimit, CV_8UC3);
+    image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
     image.setTo(255);
 
     if(checkStagnancy(eSet) > clearThreshold) {
@@ -106,7 +106,7 @@ void addressDraw::draw(cv::Mat &image, const ev::vQueue &eSet)
         event<ev::AddressEvent> aep = getas<ev::AddressEvent>(*qi);
         if(!aep) continue;
 
-        cv::Vec3b cpc = image.at<cv::Vec3b>(aep->getY(), aep->getX());
+        cv::Vec3b &cpc = image.at<cv::Vec3b>(aep->getY(), aep->getX());
 
         if(!aep->getPolarity())
         {
@@ -132,8 +132,6 @@ void addressDraw::draw(cv::Mat &image, const ev::vQueue &eSet)
             if(cpc.val[2] == 160) cpc[2] = 255;
             else cpc[2] = 0;
         }
-
-        image.at<cv::Vec3b>(aep->getY(), aep->getX()) = cpc;
     }
 }
 
@@ -145,7 +143,7 @@ std::string lifeDraw::getTag()
 void lifeDraw::draw(cv::Mat &image, const vQueue &eSet)
 {
 
-    image = cv::Mat(Xlimit, Ylimit, CV_8UC3);
+    image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
     image.setTo(255);
 
     if(checkStagnancy(eSet) > clearThreshold) {
@@ -167,7 +165,7 @@ void lifeDraw::draw(cv::Mat &image, const vQueue &eSet)
 
         if(modts > v->getDeath()) continue;
 
-        cv::Vec3b cpc = image.at<cv::Vec3b>(v->getX(), v->getY());
+        cv::Vec3b &cpc = image.at<cv::Vec3b>(v->getY(), v->getX());
 
         if(!v->getPolarity())
         {
@@ -193,8 +191,6 @@ void lifeDraw::draw(cv::Mat &image, const vQueue &eSet)
             if(cpc.val[2] == 160) cpc[2] = 255;
             else cpc[2] = 0;
         }
-
-        image.at<cv::Vec3b>(v->getX(), v->getY()) = cpc;
     }
 }
 
@@ -229,14 +225,7 @@ void clusterDraw::draw(cv::Mat &image, const vQueue &eSet)
     for(qi = eSet.begin(); qi != eSet.end(); qi++) {
         event<ev::ClusterEvent> vp = getas<ev::ClusterEvent>(*qi);
         if(vp) {
-//            if(persistance[vp->getID()]) {
-//                delete persistance[vp->getID()];
-//                persistance[vp->getID()] = 0;
-//            }
-
-            //persistance[vp->getID()] = vp->clone()->getAs<eventdriven::ClusterEvent>();
             persistance[vp->getID()] = vp;
-            //latest[vp->getID()] = vp;
         }
 
     }
@@ -301,7 +290,7 @@ std::string blobDraw::getTag()
 void blobDraw::draw(cv::Mat &image, const ev::vQueue &eSet)
 {
 
-    cv::Mat canvas(Xlimit, Ylimit, CV_8UC3);
+    cv::Mat canvas(Ylimit, Xlimit, CV_8UC3);
     canvas.setTo(255);
 
     vQueue::const_iterator qi;
@@ -310,7 +299,7 @@ void blobDraw::draw(cv::Mat &image, const ev::vQueue &eSet)
         event<ev::AddressEvent> aep = getas<ev::AddressEvent>(*qi);
         if(!aep) continue;
 
-        cv::Vec3b cpc = canvas.at<cv::Vec3b>(aep->getX(), aep->getY());
+        cv::Vec3b &cpc = canvas.at<cv::Vec3b>(aep->getY(), aep->getX());
 
         if(!aep->getPolarity())
         {
@@ -318,19 +307,16 @@ void blobDraw::draw(cv::Mat &image, const ev::vQueue &eSet)
             cpc[1] = 0;
             cpc[2] = 0;
         }
-
-        canvas.at<cv::Vec3b>(aep->getX(), aep->getY()) = cpc;
-
     }
 
     cv::medianBlur(canvas, canvas, 5);
     cv::blur(canvas, canvas, cv::Size(5, 5));
-    cv::resize(canvas, image, cv::Size(Xlimit*2, Ylimit*2));
+    cv::resize(canvas, image, cv::Size(Ylimit*2, Xlimit*2));
 }
 
 integralDraw::integralDraw()
 {
-    iimage = cv::Mat(Xlimit, Ylimit, CV_8UC1);
+    iimage = cv::Mat(Ylimit, Xlimit, CV_8UC1);
     iimage.setTo(128);
 }
 
@@ -348,7 +334,7 @@ void integralDraw::draw(cv::Mat &image, const vQueue &eSet)
         event<ev::AddressEvent> aep = getas<ev::AddressEvent>(*qi);
         if(aep) {
 
-            unsigned char c = iimage.at<unsigned char>(aep->getX(), aep->getY());
+            unsigned char c = iimage.at<unsigned char>(aep->getY(), aep->getX());
             int i = c;
             if(aep->getPolarity())
                 i += d;
@@ -358,14 +344,12 @@ void integralDraw::draw(cv::Mat &image, const vQueue &eSet)
             //i =+ aep->getPolarity()?d:-d;
             i = std::max(i, 0);
             i = std::min(i, 255);
-            iimage.at<unsigned char>(aep->getX(), aep->getY()) = (unsigned char)i;
+            iimage.at<unsigned char>(aep->getY(), aep->getX()) = (unsigned char)i;
         }
 
     }
 
     cv::cvtColor(iimage, image, CV_GRAY2BGR);
-    //iimage.copyTo(image);
-
 }
 
 std::string circleDraw::getTag()
@@ -385,7 +369,6 @@ void circleDraw::draw(cv::Mat &image, const vQueue &eSet)
         return;
     }
 
-    //int n = 0;
     vQueue::const_iterator qi;
     for(qi = eSet.begin(); qi != eSet.end(); qi++) {
 
@@ -395,7 +378,7 @@ void circleDraw::draw(cv::Mat &image, const vQueue &eSet)
 
         event<ev::ClusterEventGauss> v = getas<ev::ClusterEventGauss>(*qi);
         if(!v) continue;
-        cv::Point centr(v->getYCog(), v->getXCog());
+        cv::Point centr(v->getXCog(), v->getYCog());
         //we hide the radius in in X_sigma_2
         double r = v->getXSigma2();
         //we hide the radial variance in Y_sigma_2
@@ -403,19 +386,13 @@ void circleDraw::draw(cv::Mat &image, const vQueue &eSet)
 
         CvScalar c;
         switch(v->getID()) {
-        case(0): c = CV_RGB(0, 0, 255); break;
-        case(1): c = CV_RGB(0, 255, 0); break;
-        default: c = CV_RGB(255, 0, 0);
+            case(0): c = CV_RGB(0, 0, 255); break;
+            case(1): c = CV_RGB(0, 255, 0); break;
+            default: c = CV_RGB(255, 0, 0);
         }
 
         cv::circle(image, centr, r, c, w);
-        //n++;
     }
-
-//    std::stringstream ss;
-//    ss << n;
-//    cv::putText(image, ss.str().c_str(), cv::Point(0, 0), 0, 0.5, CV_RGB(0, 0, 0), 1, 8, true);
-
 }
 
 std::string surfDraw::getTag()
@@ -426,7 +403,7 @@ std::string surfDraw::getTag()
 void surfDraw::draw(cv::Mat &image, const vQueue &eSet)
 {
 
-    image = cv::Mat(Xlimit, Ylimit*2, CV_8UC3);
+    image = cv::Mat(Ylimit, Xlimit*2, CV_8UC3);
     image.setTo(0);
 
     if(eSet.empty()) return;
@@ -443,7 +420,7 @@ void surfDraw::draw(cv::Mat &image, const vQueue &eSet)
 
         if(v->getPolarity())
         {
-            cv::Vec3b cpc = image.at<cv::Vec3b>(v->getX(), v->getY());
+            cv::Vec3b cpc = image.at<cv::Vec3b>(v->getY(), v->getX());
             if(cpc[1]) continue;
 
             double tts = v->getStamp();
@@ -451,12 +428,12 @@ void surfDraw::draw(cv::Mat &image, const vQueue &eSet)
             if(cts - tts > gradient) continue;
             int val = 255 - 255.0 * (cts - tts)/ gradient;
             cpc[1] = std::max(val, 0);
-            image.at<cv::Vec3b>(v->getX(), v->getY()) = cpc;
+            image.at<cv::Vec3b>(v->getY(), v->getX()) = cpc;
 
         }
         else
         {
-            cv::Vec3b cpc = image.at<cv::Vec3b>(v->getX(), v->getY()+Ylimit);
+            cv::Vec3b cpc = image.at<cv::Vec3b>(v->getY(), v->getX()+Ylimit);
             if(cpc[2]) continue;
 
             double tts = v->getStamp();
@@ -465,7 +442,7 @@ void surfDraw::draw(cv::Mat &image, const vQueue &eSet)
             int val = 255 - 255 * (cts - tts) / gradient;
             cpc[2] = std::max(val, 0);
             cpc[0] = std::max(val, 0);
-            image.at<cv::Vec3b>(v->getX(), v->getY()+Ylimit) = cpc;
+            image.at<cv::Vec3b>(v->getY(), v->getX()+Ylimit) = cpc;
         }
 
 
@@ -483,7 +460,7 @@ void flowDraw::draw(cv::Mat &image, const vQueue &eSet)
 {
     double k = 4;
     if(image.empty()) {
-        image = cv::Mat(Xlimit*k, Ylimit*k, CV_8UC3);
+        image = cv::Mat(Ylimit*k, Xlimit*k, CV_8UC3);
         image.setTo(255);
     } else {
         cv::resize(image, image, cv::Size(0, 0), k, k, cv::INTER_LINEAR);
@@ -497,7 +474,6 @@ void flowDraw::draw(cv::Mat &image, const vQueue &eSet)
     int line_tickness = 1;
     cv::Scalar line_color = CV_RGB(255,0,0);
     cv::Point p_start,p_end;
-    const double pi = 3.1416;
 
     //int cts = eSet.back()->getAs<eventdriven::vEvent>()->getStamp();
 
@@ -525,10 +501,10 @@ void flowDraw::draw(cv::Mat &image, const vQueue &eSet)
 //            modts += eventdriven::vtsHelper::maxStamp();
 //        if(modts > ofp->getDeath()) continue;
 
-        int x = ofp->getY();
-        int y = ofp->getX();
-        float vx = ofp->getVy();
-        float vy = ofp->getVx();
+        int x = ofp->getX();
+        int y = ofp->getY();
+        float vx = ofp->getVx();
+        float vy = ofp->getVy();
         //vx_mean += vx;
         //vy_mean += vy;
         //n++;
@@ -554,12 +530,12 @@ void flowDraw::draw(cv::Mat &image, const vQueue &eSet)
         cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
 
         //Draw the tips of the arrow
-        p_start.x = (int) (p_end.x - 7*sin(angle + pi/4));
-        p_start.y = (int) (p_end.y - 7*cos(angle + pi/4));
+        p_start.x = (int) (p_end.x - 7*sin(angle + M_PI/4));
+        p_start.y = (int) (p_end.y - 7*cos(angle + M_PI/4));
         cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
 
-        p_start.x = (int) (p_end.x - 7*sin(angle - pi/4));
-        p_start.y = (int) (p_end.y - 7*cos(angle - pi/4));
+        p_start.x = (int) (p_end.x - 7*sin(angle - M_PI/4));
+        p_start.y = (int) (p_end.y - 7*cos(angle - M_PI/4));
         cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
 
     }
@@ -575,7 +551,7 @@ std::string fixedDraw::getTag()
 void fixedDraw::draw(cv::Mat &image, const vQueue &eSet)
 {
 
-    image = cv::Mat(Xlimit, Ylimit, CV_8UC3);
+    image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
     image.setTo(255);
 
     if(checkStagnancy(eSet) > clearThreshold) {
@@ -630,7 +606,7 @@ void fflowDraw::draw(cv::Mat &image, const vQueue &eSet)
 {
     double k = 4;
     if(image.empty()) {
-        image = cv::Mat(Xlimit*k, Ylimit*k, CV_8UC3);
+        image = cv::Mat(Ylimit*k, Xlimit*k, CV_8UC3);
         image.setTo(255);
     } else {
         cv::resize(image, image, cv::Size(0, 0), k, k, cv::INTER_LINEAR);
@@ -644,7 +620,6 @@ void fflowDraw::draw(cv::Mat &image, const vQueue &eSet)
     int line_tickness = 1;
     cv::Scalar line_color = CV_RGB(255,0,0);
     cv::Point p_start,p_end;
-    const double pi = 3.1416;
 
     //int cts = eSet.back()->getAs<eventdriven::vEvent>()->getStamp();
 
@@ -668,10 +643,10 @@ void fflowDraw::draw(cv::Mat &image, const vQueue &eSet)
         //    modts += eventdriven::vtsHelper::maxStamp();
         //if(modts > ofp->getDeath()) continue;
 
-        int x = ofp->getY();
-        int y = ofp->getX();
-        float vx = ofp->getVy();
-        float vy = ofp->getVx();
+        int x = ofp->getX();
+        int y = ofp->getY();
+        float vx = ofp->getVx();
+        float vy = ofp->getVy();
         //vx_mean += vx;
         //vy_mean += vy;
         //n++;
@@ -697,12 +672,12 @@ void fflowDraw::draw(cv::Mat &image, const vQueue &eSet)
         cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
 
         //Draw the tips of the arrow
-        p_start.x = (int) (p_end.x - 7*sin(angle + pi/4));
-        p_start.y = (int) (p_end.y - 7*cos(angle + pi/4));
+        p_start.x = (int) (p_end.x - 7*sin(angle + M_PI/4));
+        p_start.y = (int) (p_end.y - 7*cos(angle + M_PI/4));
         cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
 
-        p_start.x = (int) (p_end.x - 7*sin(angle - pi/4));
-        p_start.y = (int) (p_end.y - 7*cos(angle - pi/4));
+        p_start.x = (int) (p_end.x - 7*sin(angle - M_PI/4));
+        p_start.y = (int) (p_end.y - 7*cos(angle - M_PI/4));
         cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
 
     }
@@ -904,7 +879,7 @@ void interestDraw::draw(cv::Mat &image, const ev::vQueue &eSet)
 {
 
     if(image.empty()) {
-        image = cv::Mat(Xlimit, Ylimit, CV_8UC3);
+        image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
         image.setTo(255);
     }
 
