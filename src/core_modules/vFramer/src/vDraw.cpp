@@ -458,7 +458,7 @@ std::string flowDraw::getTag()
 
 void flowDraw::draw(cv::Mat &image, const vQueue &eSet)
 {
-    double k = 4;
+    double k = 2;
     if(image.empty()) {
         image = cv::Mat(Ylimit*k, Xlimit*k, CV_8UC3);
         image.setTo(255);
@@ -515,7 +515,7 @@ void flowDraw::draw(cv::Mat &image, const vQueue &eSet)
 
         double magnitude = sqrt(pow(vx, 2.0f) + pow(vy, 2.0f));
         double hypotenuse = magnitude;
-        if(hypotenuse < 10) hypotenuse = 10;
+        //if(hypotenuse < 10) hypotenuse = 10;
         //if(hypotenuse > 20) hypotenuse = 20;
         hypotenuse = 20;
         double angle = atan2(vy, vx);
@@ -530,12 +530,12 @@ void flowDraw::draw(cv::Mat &image, const vQueue &eSet)
         cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
 
         //Draw the tips of the arrow
-        p_start.x = (int) (p_end.x - 7*sin(angle + M_PI/4));
-        p_start.y = (int) (p_end.y - 7*cos(angle + M_PI/4));
+        p_start.x = (int) (p_end.x - 5*sin(angle + M_PI/4));
+        p_start.y = (int) (p_end.y - 5*cos(angle + M_PI/4));
         cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
 
-        p_start.x = (int) (p_end.x - 7*sin(angle - M_PI/4));
-        p_start.y = (int) (p_end.y - 7*cos(angle - M_PI/4));
+        p_start.x = (int) (p_end.x - 5*sin(angle - M_PI/4));
+        p_start.y = (int) (p_end.y - 5*cos(angle - M_PI/4));
         cv::line(image, p_start, p_end, line_color, line_tickness, CV_AA);
 
     }
