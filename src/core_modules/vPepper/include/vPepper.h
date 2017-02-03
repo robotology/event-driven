@@ -33,8 +33,10 @@ private:
     //output port for the vBottle with the new events computed by the module
     yarp::os::BufferedPort<ev::vBottle> outPort;
 
-    ev::temporalSurface leftWindow;
-    ev::temporalSurface rightWindow;
+    ev::temporalSurface leftWindowH;
+    ev::temporalSurface leftWindowL;
+    ev::temporalSurface rightWindowH;
+    ev::temporalSurface rightWindowL;
 
     //paramters
     int height;

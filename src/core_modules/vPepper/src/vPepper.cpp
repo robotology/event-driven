@@ -76,8 +76,10 @@ vPepperIO::vPepperIO()
     spatialSize = 1;
     height = 128;
     width = 128;
-    leftWindow = ev::temporalSurface(width, height, temporalSize);
-    rightWindow = ev::temporalSurface(width, height, temporalSize);
+    leftWindowL = ev::temporalSurface(width, height, temporalSize);
+    rightWindowL = ev::temporalSurface(width, height, temporalSize);
+    leftWindowH = ev::temporalSurface(width, height, temporalSize);
+    rightWindowH = ev::temporalSurface(width, height, temporalSize);
     strict = false;
 
 }
@@ -140,37 +142,60 @@ void vPepperIO::onRead(ev::vBottle &bot)
 
     for(qi = q.begin(); qi != q.end(); qi++)
     {
-
-        //leftWindow.addEvent(**qi);
-        ev::event<ev::AddressEvent> v = ev::getas<ev::AddressEvent>(*qi);
-        if(!v) continue;
-        if(v->getY() == 1023) continue; //put in for USB ATIS
-
-        //keep each channel independently
         ev::vQueue tw;
-        if(v->getChannel()) {
-            rightWindow.addEvent(*qi);
-            tw = rightWindow.getSurf(v->getX(), v->getY(), spatialSize);
-        }
-        else {
-            leftWindow.addEvent(*qi);
-            tw = leftWindow.getSurf(v->getX(), v->getY(), spatialSize);
-        }
-
-        bool addit = false;
-        for(wi = tw.begin(); wi != tw.end(); wi++) {
-            ev::event<ev::AddressEvent> pv = ev::getas<ev::AddressEvent>(*wi);
-            if((pv->getX() != v->getX() || pv->getY() != v->getY()) &&
-                    pv->getPolarity() == v->getPolarity() &&
-                    pv->getChannel() == v->getChannel()) {
-                addit = true;
-                break;
+        if((*qi)->getChannel()) {
+            if((*qi)->getPolarity()) {
+                rightWindowH.addEvent(*qi);
+                tw = rightWindowH.getSurf(spatialSize);
+            } else {
+                rightWindowL.addEvent(*qi);
+                tw = rightWindowL.getSurf(spatialSize);
+            }
+        } else {
+            if((*qi)->getPolarity()) {
+                leftWindowH.addEvent(*qi);
+                tw = leftWindowH.getSurf(spatialSize);
+            } else {
+                leftWindowL.addEvent(*qi);
+                tw = leftWindowL.getSurf(spatialSize);
             }
         }
 
-
-        if(addit)
+        if(tw.size() > 1) //there is another event in the spatiotemporal window
             outBottle.addEvent(*qi);
+
+
+
+        //leftWindow.addEvent(**qi);
+        //ev::event<ev::AddressEvent> v = ev::getas<ev::AddressEvent>(*qi);
+        //if(!v) continue;
+        //if(v->getY() == 1023) continue; //put in for USB ATIS
+
+        //keep each channel independently
+//        ev::vQueue tw;
+//        if(v->getChannel()) {
+//            rightWindow.addEvent(*qi);
+//            tw = rightWindow.getSurf(v->getX(), v->getY(), spatialSize);
+//        }
+//        else {
+//            leftWindow.addEvent(*qi);
+//            tw = leftWindow.getSurf(v->getX(), v->getY(), spatialSize);
+//        }
+
+//        bool addit = false;
+//        for(wi = tw.begin(); wi != tw.end(); wi++) {
+//            ev::event<ev::AddressEvent> pv = ev::getas<ev::AddressEvent>(*wi);
+//            if((pv->getX() != v->getX() || pv->getY() != v->getY()) &&
+//                    pv->getPolarity() == v->getPolarity() &&
+//                    pv->getChannel() == v->getChannel()) {
+//                addit = true;
+//                break;
+//            }
+//        }
+
+
+//        if(addit)
+//            outBottle.addEvent(*qi);
 
     }
     //send on the processed events
@@ -184,8 +209,10 @@ void vPepperIO::onRead(ev::vBottle &bot)
 void vPepperIO::setTemporalSize(double microseconds)
 {
     temporalSize = microseconds;
-    leftWindow.setTemporalSize(microseconds);
-    rightWindow.setTemporalSize(microseconds);
+    leftWindowL.setTemporalSize(microseconds);
+    rightWindowL.setTemporalSize(microseconds);
+    leftWindowH.setTemporalSize(microseconds);
+    rightWindowH.setTemporalSize(microseconds);
 }
 
 void vPepperIO::setSpatialSize(double pixelradius)
@@ -197,9 +224,10 @@ void vPepperIO::setResolution(int height, int width)
 {
     this->height = height;
     this->width = width;
-    leftWindow = ev::temporalSurface(this->width, this->height, temporalSize);
-    rightWindow = ev::temporalSurface(this->width, this->height, temporalSize);
-
+    leftWindowL = ev::temporalSurface(this->width, this->height, temporalSize);
+    rightWindowL = ev::temporalSurface(this->width, this->height, temporalSize);
+    leftWindowH = ev::temporalSurface(this->width, this->height, temporalSize);
+    rightWindowH = ev::temporalSurface(this->width, this->height, temporalSize);
 }
 
 //empty line to make gcc happy
