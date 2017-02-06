@@ -1,3 +1,6 @@
+#ifndef __VFILTER__
+#define __VFILTER__
+
 #include <iCub/eventdriven/all.h>
 #include <yarp/sig/Image.h>
 
@@ -12,7 +15,7 @@ private:
 
     yarp::sig::ImageOf <yarp::sig::PixelInt> TSleftL;
     yarp::sig::ImageOf <yarp::sig::PixelInt> TSleftH;
-    yarp::sig::ImageOf <yarp::sig::PixelInt> TSrighttL;
+    yarp::sig::ImageOf <yarp::sig::PixelInt> TSrightL;
     yarp::sig::ImageOf <yarp::sig::PixelInt> TSrightH;
 
 public:
@@ -22,8 +25,8 @@ public:
     void initialise(double width, double height, int Tsize, unsigned int Ssize)
     {
         TSleftL.resize(width + 2 * Ssize, height + 2 * Ssize);
-        TSrightH.resize(width + 2 * Ssize, height + 2 * Ssize);
-        TSleftL.resize(width + 2 * Ssize, height + 2 * Ssize);
+        TSleftH.resize(width + 2 * Ssize, height + 2 * Ssize);
+        TSrightL.resize(width + 2 * Ssize, height + 2 * Ssize);
         TSrightH.resize(width + 2 * Ssize, height + 2 * Ssize);
 
         TSleftL.zero();
@@ -39,7 +42,7 @@ public:
     {
         if(!Ssize) return false;
 
-        yarp::sig::ImageOf <yarp::sig::PixelInt> > *active;
+        yarp::sig::ImageOf<yarp::sig::PixelInt> *active = 0;
         if(c == 0) {
             if(p == 0) {
                 active = &TSleftL;
@@ -53,14 +56,16 @@ public:
                 active = &TSrightH;
             }
         }
+        if(!active) return false;
+
         x += Ssize;
         y += Ssize;
 
 
         bool add = false;
         (*active)(x, y) = ts;
-        for(int xi = x - Ssize; xi < x + Ssize; xi++) {
-            for(int yi = y - Ssize; yi < y + Ssize; yi++) {
+        for(int xi = x - Ssize; xi <= x + Ssize; xi++) {
+            for(int yi = y - Ssize; yi <= y + Ssize; yi++) {
                 int dt = ts - (*active)(xi, yi);
                 if(dt < 0) {
                     dt += vtsHelper::maxStamp();
@@ -80,3 +85,5 @@ public:
 
 
 }
+
+#endif
