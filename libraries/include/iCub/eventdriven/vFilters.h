@@ -69,7 +69,7 @@ public:
                 int dt = ts - (*active)(xi, yi);
                 if(dt < 0) {
                     dt += vtsHelper::maxStamp();
-                    (*active)(xi, yi) += vtsHelper::maxStamp();
+                    (*active)(xi, yi) -= vtsHelper::maxStamp();
                 }
                 if(dt && dt < Tsize) {
                     add = true;

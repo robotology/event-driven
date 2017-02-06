@@ -149,6 +149,7 @@ device2yarp::device2yarp() {
     prevAEs = 0;
     strict = false;
     errorchecking = false;
+    applyfilter = false;
 }
 
 bool device2yarp::initialise(std::string moduleName, bool strict, bool check,
