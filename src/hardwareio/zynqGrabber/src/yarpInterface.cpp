@@ -233,10 +233,8 @@ void  device2yarp::run() {
             std::cout << "BUFFER NOT A MULTIPLE OF 8 BYTES: " <<  nBytesRead << std::endl;
         }
 
-	std::cout << nBytesRead << " -> ";
         if(applyfilter)
             nBytesRead = applysaltandpepperfilter(data, nBytesRead);
-	std::cout << nBytesRead << std::endl;
 
         //if we don't want or have nothing to send or there is an error finish here.
         if(!portvBottle.getOutputCount() || nBytesRead < 8)
