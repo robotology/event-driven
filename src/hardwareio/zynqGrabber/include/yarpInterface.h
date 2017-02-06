@@ -76,6 +76,7 @@ private:
     //parameters
     bool strict;
     bool errorchecking;
+    bool applyfilter;
 
     //internal variables
     yarp::os::BufferedPort<ev::vBottleMimic> portvBottle;
@@ -85,9 +86,12 @@ private:
     int prevAEs;
     double prevTS;
     yarp::os::Stamp vStamp;
+    ev::vNoiseFilter vfilter;
 
     //data buffer thread
     vDevReadBuffer deviceReader;
+
+    int applysaltandpepperfilter(std::vector<unsigned char> &data);
 
 
 public:
@@ -96,6 +100,12 @@ public:
     bool initialise(std::string moduleName = "", bool strict = false, bool check = false,
                     std::string deviceName = "", unsigned int bufferSize = 800000,
                     unsigned int readSize = 1024);
+    void initialiseFilter(bool applyfilter, int width, int height, int temporalsize, int spatialSize)
+    {
+        this->applyfilter = applyfilter;
+        vfilter.initialise(width, height, temporalsize, spatialSize);
+    }
+
     virtual void run();
     virtual void threadRelease();
     virtual void afterStart(bool success);

@@ -89,6 +89,20 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
             std::cout << "A data device was specified but could not be initialised" << std::endl;
             return false;
         } else {
+            //see if we want to apply a filter to the events
+            yarp::os::Bottle filp = rf.findGroup("FILTER_PARAMS");
+            if(!filp.isNull()) {
+                if(filp.find("applyFilter").asBool()) {
+                    std::cout << "APPLYING EVENT FILTER: " << std::endl;
+                    std::cout << filp.toString() << std::endl;
+                }
+                D2Y.initialiseFilter(filp.find("applyFilter").asBool(),
+                                     filp.find("width").asInt(),
+                                     filp.find("height").asInt(),
+                                     filp.find("tsize").asInt(),
+                                     filp.find("ssize").asInt());
+            }
+
             D2Y.start();
         }
 
@@ -121,12 +135,12 @@ bool zynqGrabberModule::close() {
     Y2D.close();
     D2Y.stop();                // bufferedport from yarp to device
     std::cout << "done" << std::endl;
-    
+
     std::cout << "closing device drivers.. ";
     vsctrlMngLeft.disconnect(true);
     vsctrlMngRight.disconnect(true);
     std::cout << "done" << std::endl;
-    
+
     return true;
 }
 

@@ -159,6 +159,7 @@ bool device2yarp::initialise(std::string moduleName, bool strict, bool check,
         return false;
 
     this->errorchecking = check;
+
     this->strict = strict;
     if(strict) {
         std::cout << "D2Y: setting output port to strict" << std::endl;
@@ -174,6 +175,31 @@ bool device2yarp::initialise(std::string moduleName, bool strict, bool check,
 void device2yarp::afterStart(bool success)
 {
     if(success) deviceReader.start();
+}
+
+int device2yarp::applysaltandpepperfilter(std::vector<unsigned char> &data)
+{
+    int k = 0;
+    for(unsigned int i = 0; i < data.size(); i+=8) {
+        int *TS =  (int *)(data.data() + i);
+        int *AE =  (int *)(data.data() + i + 4);
+
+        int p = (*AE)&0x01;
+        int x = ((*AE)>>1)&0x7F;
+        int y = ((*AE)>>10)&0xFF;
+        int c = ((*AE)>>20)&0x01;
+        int ts = (*TS) & 0x7FFFFFFF;
+
+        if(vfilter.check(x, y, p, c, ts)) {
+            for(int j = 0; j < 8; j++) {
+                data[k++] = data[j++];
+            }
+        }
+
+    }
+
+    return k / 8;
+
 }
 
 void  device2yarp::run() {
@@ -210,6 +236,9 @@ void  device2yarp::run() {
         //if we don't want or have nothing to send or there is an error finish here.
         if(!portvBottle.getOutputCount() || nBytesRead < 8)
             continue;
+
+        if(applyfilter)
+            nBytesRead = applysaltandpepperfilter(data);
 
         //typical ZYNQ behaviour to skip error checking
         if(!errorchecking && !dataError) {
