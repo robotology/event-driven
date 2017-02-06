@@ -22,6 +22,7 @@ set(folder_header
   include/iCub/eventdriven/vWindow.h
   include/iCub/eventdriven/vSurface.h
   include/iCub/eventdriven/vQueue.h
+  include/iCub/eventdriven/vFilters.h
 )
 
 # Declare groups of source and header files -- makes things pretty in MSVC.
