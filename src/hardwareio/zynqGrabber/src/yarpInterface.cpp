@@ -191,7 +191,7 @@ int device2yarp::applysaltandpepperfilter(std::vector<unsigned char> &data)
         int ts = (*TS) & 0x7FFFFFFF;
 
         if(vfilter.check(x, y, p, c, ts)) {
-            for(int j = 0; j < 8; j++) {
+            for(int j = i; j < 8; j++) {
                 data[k++] = data[j];
             }
         }
@@ -233,12 +233,14 @@ void  device2yarp::run() {
             std::cout << "BUFFER NOT A MULTIPLE OF 8 BYTES: " <<  nBytesRead << std::endl;
         }
 
+	std::cout << nBytesRead << " -> ";
+        if(applyfilter)
+            nBytesRead = applysaltandpepperfilter(data);
+	std::cout << nBytesRead << std::endl;
+
         //if we don't want or have nothing to send or there is an error finish here.
         if(!portvBottle.getOutputCount() || nBytesRead < 8)
             continue;
-
-        if(applyfilter)
-            nBytesRead = applysaltandpepperfilter(data);
 
         //typical ZYNQ behaviour to skip error checking
         if(!errorchecking && !dataError) {
