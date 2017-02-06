@@ -177,10 +177,10 @@ void device2yarp::afterStart(bool success)
     if(success) deviceReader.start();
 }
 
-int device2yarp::applysaltandpepperfilter(std::vector<unsigned char> &data)
+int device2yarp::applysaltandpepperfilter(std::vector<unsigned char> &data, int nBytesRead)
 {
     int k = 0;
-    for(unsigned int i = 0; i < data.size(); i+=8) {
+    for(unsigned int i = 0; i < nBytesRead; i+=8) {
         int *TS =  (int *)(data.data() + i);
         int *AE =  (int *)(data.data() + i + 4);
 
@@ -191,7 +191,7 @@ int device2yarp::applysaltandpepperfilter(std::vector<unsigned char> &data)
         int ts = (*TS) & 0x7FFFFFFF;
 
         if(vfilter.check(x, y, p, c, ts)) {
-            for(int j = i; j < 8; j++) {
+            for(int j = i; j < i+8; j++) {
                 data[k++] = data[j];
             }
         }
@@ -235,7 +235,7 @@ void  device2yarp::run() {
 
 	std::cout << nBytesRead << " -> ";
         if(applyfilter)
-            nBytesRead = applysaltandpepperfilter(data);
+            nBytesRead = applysaltandpepperfilter(data, nBytesRead);
 	std::cout << nBytesRead << std::endl;
 
         //if we don't want or have nothing to send or there is an error finish here.

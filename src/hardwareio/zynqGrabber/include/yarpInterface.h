@@ -91,7 +91,7 @@ private:
     //data buffer thread
     vDevReadBuffer deviceReader;
 
-    int applysaltandpepperfilter(std::vector<unsigned char> &data);
+    int applysaltandpepperfilter(std::vector<unsigned char> &data, int nBytesRead);
 
 
 public:
