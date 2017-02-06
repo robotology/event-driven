@@ -192,7 +192,7 @@ int device2yarp::applysaltandpepperfilter(std::vector<unsigned char> &data)
 
         if(vfilter.check(x, y, p, c, ts)) {
             for(int j = 0; j < 8; j++) {
-                data[k++] = data[j++];
+                data[k++] = data[j];
             }
         }
 
