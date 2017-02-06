@@ -90,17 +90,19 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
             return false;
         } else {
             //see if we want to apply a filter to the events
-            yarp::os::Bottle filp = rf.findGroup("FILTER_PARAMS");
-            if(!filp.isNull()) {
-                if(filp.find("applyFilter").asBool()) {
+            if(rf.check("applyFilter", yarp::os::Value("false")).asBool()) {
+
+                yarp::os::Bottle filp = rf.findGroup("FILTER_PARAMS");
+                if(!filp.isNull()) {
                     std::cout << "APPLYING EVENT FILTER: " << std::endl;
                     std::cout << filp.toString() << std::endl;
+
+                    D2Y.initialiseFilter(true,
+                                         filp.find("width").asInt(),
+                                         filp.find("height").asInt(),
+                                         filp.find("tsize").asInt(),
+                                         filp.find("ssize").asInt());
                 }
-                D2Y.initialiseFilter(filp.find("applyFilter").asBool(),
-                                     filp.find("width").asInt(),
-                                     filp.find("height").asInt(),
-                                     filp.find("tsize").asInt(),
-                                     filp.find("ssize").asInt());
             }
 
             D2Y.start();

@@ -180,7 +180,7 @@ void device2yarp::afterStart(bool success)
 int device2yarp::applysaltandpepperfilter(std::vector<unsigned char> &data, int nBytesRead)
 {
     int k = 0;
-    for(unsigned int i = 0; i < nBytesRead; i+=8) {
+    for(int i = 0; i < nBytesRead; i+=8) {
         int *TS =  (int *)(data.data() + i);
         int *AE =  (int *)(data.data() + i + 4);
 
