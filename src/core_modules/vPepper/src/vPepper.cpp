@@ -28,12 +28,11 @@ bool vPepperModule::configure(yarp::os::ResourceFinder &rf)
     bool strict = rf.check("strict") &&
             rf.check("strict", yarp::os::Value(true)).asBool();
 
-    eventManager.setSpatialSize(rf.check("spatialSize",
-                                         yarp::os::Value(1)).asDouble());
-    eventManager.setTemporalSize(rf.check("temporalSize",
-                                          yarp::os::Value(10000)).asDouble());
-    eventManager.setResolution(rf.check("height", 128).asInt(),
-                               rf.check("width", 128).asInt());
+    eventManager.initialise(rf.check("height", 240).asInt(),
+                            rf.check("width", 304).asInt(),
+                            rf.check("spatialSize", yarp::os::Value(1)).asDouble(),
+                            rf.check("temporalSize", yarp::os::Value(10000)).asDouble());
+
     eventManager.open(moduleName, strict);
 
     return true ;
@@ -74,15 +73,20 @@ vPepperIO::vPepperIO()
     //here we should initialise the module
     temporalSize = 10000;
     spatialSize = 1;
-    height = 128;
-    width = 128;
-    leftWindowL = ev::temporalSurface(width, height, temporalSize);
-    rightWindowL = ev::temporalSurface(width, height, temporalSize);
-    leftWindowH = ev::temporalSurface(width, height, temporalSize);
-    rightWindowH = ev::temporalSurface(width, height, temporalSize);
+    res.height = 128;
+    res.width = 128;
     strict = false;
 
 }
+
+void vPepperIO::initialise(int height, int width, int spatialSize, int temporalSize)
+{
+    res.height = height;
+    res.width = width;
+    thefilter.initialise(res.width, res.height, temporalSize, spatialSize);
+
+}
+
 /**********************************************************/
 bool vPepperIO::open(const std::string &name, bool strict)
 {
@@ -97,8 +101,10 @@ bool vPepperIO::open(const std::string &name, bool strict)
         std::cout << "NOT using strict communication" << std::endl;
     }
 
-    yarp::os::BufferedPort<ev::vBottle>::open("/" + name + "/vBottle:i");
-    outPort.open("/" + name + "/vBottle:o");
+    if(!yarp::os::BufferedPort<ev::vBottle>::open("/" + name + "/vBottle:i"))
+        return false;
+    if(!outPort.open("/" + name + "/vBottle:o"))
+        return false;
 
     return true;
 }
@@ -125,109 +131,26 @@ void vPepperIO::onRead(ev::vBottle &bot)
     //create event queue
     yarp::os::Stamp yts;
     this->getEnvelope(yts);
-
-    //return;
-
-    ev::vQueue q = bot.getAll();
-    //create queue iterator
-    ev::vQueue::iterator qi, wi;
-
-    // prepare output vBottle with address events extended with cluster ID (aec) and cluster events (clep)
     ev::vBottle &outBottle = outPort.prepare();
     outBottle.clear();
     outPort.setEnvelope(yts);
 
-    // get the event queue in the vBottle bot
-    //bot.getAll(q);
-
-    for(qi = q.begin(); qi != q.end(); qi++)
+    ev::vQueue q = bot.getAll();
+    for(ev::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {
-        ev::vQueue tw;
-        if((*qi)->getChannel()) {
-            if((*qi)->getPolarity()) {
-                rightWindowH.addEvent(*qi);
-                tw = rightWindowH.getSurf(spatialSize);
-            } else {
-                rightWindowL.addEvent(*qi);
-                tw = rightWindowL.getSurf(spatialSize);
-            }
-        } else {
-            if((*qi)->getPolarity()) {
-                leftWindowH.addEvent(*qi);
-                tw = leftWindowH.getSurf(spatialSize);
-            } else {
-                leftWindowL.addEvent(*qi);
-                tw = leftWindowL.getSurf(spatialSize);
-            }
+        event<AddressEvent> v = getas<AddressEvent>(*qi);
+        if(!v) continue;
+        if(thefilter.check(v->getX(), v->getY(), v->getPolarity(), v->getChannel(), v->getStamp())) {
+            outBottle.addEvent(v);
         }
-
-        if(tw.size() > 1) //there is another event in the spatiotemporal window
-            outBottle.addEvent(*qi);
-
-
-
-        //leftWindow.addEvent(**qi);
-        //ev::event<ev::AddressEvent> v = ev::getas<ev::AddressEvent>(*qi);
-        //if(!v) continue;
-        //if(v->getY() == 1023) continue; //put in for USB ATIS
-
-        //keep each channel independently
-//        ev::vQueue tw;
-//        if(v->getChannel()) {
-//            rightWindow.addEvent(*qi);
-//            tw = rightWindow.getSurf(v->getX(), v->getY(), spatialSize);
-//        }
-//        else {
-//            leftWindow.addEvent(*qi);
-//            tw = leftWindow.getSurf(v->getX(), v->getY(), spatialSize);
-//        }
-
-//        bool addit = false;
-//        for(wi = tw.begin(); wi != tw.end(); wi++) {
-//            ev::event<ev::AddressEvent> pv = ev::getas<ev::AddressEvent>(*wi);
-//            if((pv->getX() != v->getX() || pv->getY() != v->getY()) &&
-//                    pv->getPolarity() == v->getPolarity() &&
-//                    pv->getChannel() == v->getChannel()) {
-//                addit = true;
-//                break;
-//            }
-//        }
-
-
-//        if(addit)
-//            outBottle.addEvent(*qi);
-
     }
+
     //send on the processed events
     if(strict)
         outPort.writeStrict();
     else
         outPort.write();
 
-}
-
-void vPepperIO::setTemporalSize(double microseconds)
-{
-    temporalSize = microseconds;
-    leftWindowL.setTemporalSize(microseconds);
-    rightWindowL.setTemporalSize(microseconds);
-    leftWindowH.setTemporalSize(microseconds);
-    rightWindowH.setTemporalSize(microseconds);
-}
-
-void vPepperIO::setSpatialSize(double pixelradius)
-{
-    spatialSize = pixelradius;
-}
-
-void vPepperIO::setResolution(int height, int width)
-{
-    this->height = height;
-    this->width = width;
-    leftWindowL = ev::temporalSurface(this->width, this->height, temporalSize);
-    rightWindowL = ev::temporalSurface(this->width, this->height, temporalSize);
-    leftWindowH = ev::temporalSurface(this->width, this->height, temporalSize);
-    rightWindowH = ev::temporalSurface(this->width, this->height, temporalSize);
 }
 
 //empty line to make gcc happy

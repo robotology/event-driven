@@ -22,6 +22,10 @@ int main(int argc, char * argv[])
 {
     /* initialize yarp network */
     yarp::os::Network yarp;
+    if(!yarp.checkNetwork()) {
+        std::cout << "Could not find YARP" << std::endl;
+        return false;
+    }
 
     /* prepare and configure the resource finder */
     yarp::os::ResourceFinder rf;

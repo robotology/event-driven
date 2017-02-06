@@ -25,6 +25,7 @@
 
 #include <yarp/os/all.h>
 #include <iCub/eventdriven/all.h>
+using namespace::ev;
 
 class vPepperIO : public yarp::os::BufferedPort<ev::vBottle>
 {
@@ -33,14 +34,11 @@ private:
     //output port for the vBottle with the new events computed by the module
     yarp::os::BufferedPort<ev::vBottle> outPort;
 
-    ev::temporalSurface leftWindowH;
-    ev::temporalSurface leftWindowL;
-    ev::temporalSurface rightWindowH;
-    ev::temporalSurface rightWindowL;
+    ev::vNoiseFilter thefilter;
+
 
     //paramters
-    int height;
-    int width;
+    ev::resolution res;
     double spatialSize;
     double temporalSize;
     bool strict;
@@ -49,16 +47,14 @@ public:
 
     vPepperIO();
 
+    void initialise(int height, int width, int spatialSize, int temporalSize);
+
     bool open(const std::string &name, bool strict);
     void close();
     void interrupt();
 
     //this is the entry point to your main functionality
     void onRead(ev::vBottle &bot);
-
-    void setTemporalSize(double microseconds);
-    void setSpatialSize(double pixelradius);
-    void setResolution(int height, int width);
 
 };
 
