@@ -6,14 +6,16 @@ cmake_minimum_required(VERSION 2.6)
 set(PROJECTNAME icub-event-driven)
 project(${PROJECTNAME})
 
-set(CMAKE_CXX_FLAGS "-Wall -fno-strict-aliasing")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fno-strict-aliasing -std=c++11 -fPIC")
 set(EVENTDRIVENLIBS_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/libraries/include)
 set(EVENTDRIVEN_LIBRARIES eventdriven)
 
+option(V_ADVMODULES "Build advanced modules" OFF)
 option(V_BUILD_ZYNQ "Build for ZynqGrabber" OFF)
 option(V_USE_QTCREATOR "Add apps/drivers to QtCreator IDE" OFF)
 option(V_SPINNTERFACE "Build the SpiNNaker Ethernet Interface" OFF)
 option(V_10BITCODEC "Build codec with 10bit address space" OFF)
+option(V_32BITTIME "Build codec using a 32bit timestamp" OFF)
 
 #YARP
 find_package(YARP REQUIRED)

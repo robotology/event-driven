@@ -28,36 +28,21 @@
 #include <iCub/eventdriven/vtsHelper.h>
 #include <iCub/eventdriven/vCodec.h>
 #include <deque>
+#include <memory>
 
-namespace eventdriven {
+namespace ev {
 
-
-class vQueue : public std::deque<vEvent*>
+class vQueue : public std::deque< event<vEvent> >
 {
 private:
 
     //! sorting events by timestamp comparitor
-    static bool temporalSortWrap(const vEvent *e1, const vEvent *e2);
-    static bool temporalSortStraight(const vEvent *e1, const vEvent *e2);
+    static bool temporalSortWrap(const event<> e1, event<> e2);
+    static bool temporalSortStraight(const event<> e1, event<> e2);
 
 public:
 
     vQueue() {}
-    ~vQueue();
-
-    virtual void clear();
-
-    vQueue(const vQueue&);
-    vQueue& operator=(const vQueue&);
-
-    virtual void push_back(const value_type &__x);
-    virtual void push_front(const value_type &__x);
-
-    virtual void pop_back();
-    virtual void pop_front();
-
-    virtual iterator erase(iterator __first, iterator __last);
-    virtual iterator erase(iterator __position);
 
     void sort(bool respectWraps = false);
 

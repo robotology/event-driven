@@ -427,7 +427,7 @@ private:
     //yarp::os::BufferedPort<sendingBuffer> port;               // port sending events
     yarp::os::BufferedPort<yarp::os::Bottle> portDimension;     // port sending dimension of packets
     //yarp::os::BufferedPort<eventBottle> portEventBottle;        // port sending events as bottle
-    yarp::os::BufferedPort<eventdriven::vBottle> portvBottle;
+    yarp::os::BufferedPort<ev::vBottle> portvBottle;
     yarp::os::Stamp vStamp;
 
     yarp::os::Bottle* bottle2send;                              // bottle to send on the eventBottle port

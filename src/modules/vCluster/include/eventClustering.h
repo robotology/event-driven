@@ -35,11 +35,11 @@
 /******************************************************************************/
 //EventBottleManager
 /******************************************************************************/
-class EventBottleManager : public yarp::os::BufferedPort<eventdriven::vBottle>
+class EventBottleManager : public yarp::os::BufferedPort<ev::vBottle>
 {
     private:
 
-        yarp::os::BufferedPort<eventdriven::vBottle>     outPort;            //output port for the eventBottle with the new events computed by the module
+        yarp::os::BufferedPort<ev::vBottle>     outPort;            //output port for the eventBottle with the new events computed by the module
 
         //create trackers, left and right
         TrackerPool tracker_pool_left;
@@ -57,7 +57,7 @@ class EventBottleManager : public yarp::os::BufferedPort<eventdriven::vBottle>
         bool    open(std::string moduleName);
         bool    init();
         void    close();
-        void    onRead(eventdriven::vBottle &bot);
+        void    onRead(ev::vBottle &bot);
         void    interrupt();
 
 };

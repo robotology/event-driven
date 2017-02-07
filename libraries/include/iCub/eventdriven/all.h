@@ -4,3 +4,4 @@
 #include <iCub/eventdriven/vWindow.h>
 #include <iCub/eventdriven/vSurface.h>
 #include <iCub/eventdriven/vQueue.h>
+#include <iCub/eventdriven/vFilters.h>

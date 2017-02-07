@@ -17,14 +17,14 @@
 #include <iCub/eventdriven/vSurface.h>
 #include <math.h>
 
-namespace eventdriven {
+namespace ev {
 
 vSurface::vSurface(int width, int height)
 {
     this->width = width;
     this->height = height;
-    this->mostRecent = NULL;
-    this->justRemoved = NULL;
+    this->mostRecent = event<AddressEvent>(nullptr);
+    this->justRemoved = event<>(nullptr);
     eventCount = 0;
 
     spatial.resize(height);
@@ -50,7 +50,7 @@ vSurface vSurface::operator=(const vSurface& that)
     this->eventCount = that.eventCount;
     this->mostRecent = that.mostRecent;
     this->justRemoved = that.justRemoved;
-    if(this->justRemoved) justRemoved->referto();
+    //if(this->justRemoved) justRemoved->referto();
     //this->mostRecent->referto();
 
     spatial.resize(height);
@@ -61,7 +61,6 @@ vSurface vSurface::operator=(const vSurface& that)
     for(int i = 0; i < height; i++) {
         for(int j = 0; j < width; j++) {
             spatial[i][j] = that.spatial[i][j];
-            if(that.spatial[i][j]) spatial[i][j]->referto();
         }
     }
 
@@ -72,50 +71,37 @@ void vSurface::clear()
 {
     for(int i = 0; i < height; i++) {
         for(int j = 0; j < width; j++) {
-            if(spatial[i][j]) spatial[i][j]->destroy();
-            spatial[i][j] = NULL;
+            spatial[i][j] = 0;//event<>(nullptr);
         }
     }
 
     subq.clear();
 
-    mostRecent = NULL;
-
-    if(justRemoved) {
-        justRemoved->destroy();
-        mostRecent = NULL;
-    }
-
+    mostRecent = event<AddressEvent>(nullptr);
+    justRemoved = event<>(nullptr);
     eventCount = 0;
 
 }
 
-vEvent * vSurface::addEvent(AddressEvent &event)
+event<> vSurface::addEvent(event<AddressEvent> v)
 {
 
     //enter critical section
     mutex.wait();
 
-    //remove the event that was previously destroyed
-    if(justRemoved) {
-        justRemoved->destroy();
-        justRemoved = 0;
-    }
-
     //if we previously had an event move it to the justRemoved
-    int x = event.getX(); int y = event.getY();
+    int x = v->getX(); int y = v->getY();
     if(spatial[y][x]) {
         justRemoved = spatial[y][x];
         eventCount--;
     }
 
     //put our new event in and add a reference
-    spatial[y][x] = &event;
-    event.referto();
+    spatial[y][x] = v;
     eventCount++;
 
     //then set our mostRecent
-    mostRecent = spatial[y][x];
+    mostRecent = v;
 
     //leave section
     mutex.post();
@@ -126,8 +112,9 @@ vEvent * vSurface::addEvent(AddressEvent &event)
 const vQueue& vSurface::getSurf(int d)
 {
     if(!mostRecent) return subq;
-    return getSurf(mostRecent->getUnsafe<AddressEvent>()->getX(),
-                   mostRecent->getUnsafe<AddressEvent>()->getY(), d);
+    //return getSurf(mostRecent->getUnsafe<AddressEvent>()->getX(),
+    //               mostRecent->getUnsafe<AddressEvent>()->getY(), d);
+    return getSurf(mostRecent->getX(), mostRecent->getY(), d);
 }
 
 const vQueue& vSurface::getSurf(int x, int y, int d)
@@ -161,12 +148,12 @@ const vQueue& vSurface::getSurf(int xl, int xh, int yl, int yh)
 }
 
 
-vEvent *vSurface::getMostRecent()
+event<> vSurface::getMostRecent()
 {
     return mostRecent;
 }
 
-bool vEdge::flowremove(vQueue &removed, FlowEvent *vf)
+bool vEdge::flowremove(vQueue &removed, event<FlowEvent> vf)
 {
 
     int x = vf->getX(); int y = vf->getY();
@@ -178,8 +165,7 @@ bool vEdge::flowremove(vQueue &removed, FlowEvent *vf)
     //remove event at this location
     if(spatial[y][x]) {
         removed.push_back(spatial[y][x]);
-        spatial[y][x]->destroy();
-        spatial[y][x] = NULL;
+        spatial[y][x] = event<>(nullptr);
     }
 
     double a = 0.5;
@@ -198,8 +184,7 @@ bool vEdge::flowremove(vQueue &removed, FlowEvent *vf)
                 if(px >= 0 && py >= 0 && px < width && py < height) {
                     if(spatial[py][px]) {
                         removed.push_back(spatial[py][px]);
-                        spatial[py][px]->destroy();
-                        spatial[py][px] = NULL;
+                        spatial[py][px] = event<>(nullptr);
                     }
                 }
             }
@@ -210,14 +195,13 @@ bool vEdge::flowremove(vQueue &removed, FlowEvent *vf)
 
 }
 
-bool vEdge::addressremove(vQueue &removed, AddressEvent * v)
+bool vEdge::addressremove(vQueue &removed, event<AddressEvent> v)
 {
 
     int x = v->getX(); int y = v->getY();
     if(spatial[y][x]) {
         removed.push_back(spatial[y][x]);
-        spatial[y][x]->destroy();
-        spatial[y][x] = NULL;
+        spatial[y][x] = event<>(nullptr);
     }
 
 
@@ -227,8 +211,7 @@ bool vEdge::addressremove(vQueue &removed, AddressEvent * v)
             if(yi < 0 || xi < 0 || yi >= height || xi >= width) continue;
             if(spatial[yi][xi] && pepperCheck(yi, xi)) {
                 removed.push_back(spatial[yi][xi]);
-                spatial[yi][xi]->destroy();
-                spatial[yi][xi] = NULL;
+                spatial[yi][xi] = event<>(nullptr);;
             }
         }
     }
@@ -243,21 +226,21 @@ bool vEdge::pepperCheck(int y, int x)
     if(y == 0 || y == height-1 || x == 0 || x == width -1)
         return true;
 
-    if(spatial[y-1][x] && spatial[y-1][x]->getAs<FlowEvent>())
+    if(spatial[y-1][x] && getas<FlowEvent>(spatial[y-1][x]))
         return false;
-    if(spatial[y+1][x] && spatial[y+1][x]->getAs<FlowEvent>())
+    if(spatial[y+1][x] && getas<FlowEvent>(spatial[y+1][x]))
         return false;
-    if(spatial[y][x-1] && spatial[y][x-1]->getAs<FlowEvent>())
+    if(spatial[y][x-1] && getas<FlowEvent>(spatial[y][x-1]))
         return false;
-    if(spatial[y][x+1] && spatial[y][x+1]->getAs<FlowEvent>())
+    if(spatial[y][x+1] && getas<FlowEvent>(spatial[y][x+1]))
         return false;
-    if(spatial[y+1][x+1] && spatial[y+1][x+1]->getAs<FlowEvent>())
+    if(spatial[y+1][x+1] && getas<FlowEvent>(spatial[y+1][x+1]))
         return false;
-    if(spatial[y-1][x+1] && spatial[y-1][x+1]->getAs<FlowEvent>())
+    if(spatial[y-1][x+1] && getas<FlowEvent>(spatial[y-1][x+1]))
         return false;
-    if(spatial[y+1][x-1] && spatial[y+1][x-1]->getAs<FlowEvent>())
+    if(spatial[y+1][x-1] && getas<FlowEvent>(spatial[y+1][x-1]))
         return false;
-    if(spatial[y-1][x-1] && spatial[y-1][x-1]->getAs<FlowEvent>())
+    if(spatial[y-1][x-1] && getas<FlowEvent>(spatial[y-1][x-1]))
         return false;
 
     return true;
@@ -265,20 +248,20 @@ bool vEdge::pepperCheck(int y, int x)
 
 
 
-vQueue vEdge::addEventToEdge(AddressEvent *event)
+vQueue vEdge::addEventToEdge(event<AddressEvent> v)
 {
     vQueue removed;
     bool add = false;
 
-    if(!event) return removed;
+    if(!v) return removed;
 
     //enter critical section
     mutex.wait();
 
     //remove non edge events
-    FlowEvent * vf = event->getAs<FlowEvent>();
+    event<FlowEvent> vf = getas<FlowEvent>(v);
     if(!vf) {
-        addressremove(removed, event);
+        addressremove(removed, v);
     } else {
         add = flowremove(removed, vf);
     }
@@ -287,18 +270,14 @@ vQueue vEdge::addEventToEdge(AddressEvent *event)
     if(trackCount) {
         if(add) eventCount++;
         eventCount -= removed.size();
-        //for(vQueue::iterator qi = removed.begin(); qi != removed.end(); qi++)
-        //    if((*qi)->getAs<FlowEvent>())
-        //        eventCount--;
     }
 
     if(add) {
         //put our new event in and add a reference
-        spatial[event->getY()][event->getX()] = event;
-        event->referto();
+        spatial[v->getY()][v->getX()] = v;
 
         //then set our mostRecent
-        mostRecent = spatial[event->getY()][event->getX()];
+        mostRecent = v;
     }
 
 
@@ -350,11 +329,11 @@ vFuzzyEdge::vFuzzyEdge(int width, int height, double delta) :
 
 
 }
-vQueue vFuzzyEdge::addEventToEdge(AddressEvent *event)
+vQueue vFuzzyEdge::addEventToEdge(event<AddressEvent> v)
 {
 
-    if(!event) return vQueue();
-    FlowEvent * vf = event->getAs<FlowEvent>();
+    if(!v) return vQueue();
+    event<FlowEvent> vf = getas<FlowEvent>(v);
     if(!vf) return vQueue();
 
     int x = vf->getX(); int y = vf->getY();
@@ -432,7 +411,7 @@ const vQueue& vFuzzyEdge::getSURF(int xl, int xh, int yl, int yh)
     for(int y = yl; y <= yh; y++) {
         for(int x = xl; x <= xh; x++) {
             if(scores[y][x] > 0.5) {
-                AddressEvent * ae = new AddressEvent();
+                event<AddressEvent> ae = event<AddressEvent>(new AddressEvent());
                 ae->setX(x); ae->setY(y); ae->setChannel(0); ae->setPolarity(0); ae->setStamp(0);
                 subq.push_back(ae);
             }

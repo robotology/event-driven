@@ -24,13 +24,14 @@
 #include <yarp/sig/all.h>
 
 
+/******************************************************************************/
+//main
+/******************************************************************************/
+
 int main(int argc, char * argv[])
 {
     /* initialize yarp network */
-    yarp::os::Network::init();
-
-    /* instantiate the module */
-    vFlowModule module;
+    yarp::os::Network yarp;
 
     /* prepare and configure the resource finder */
     yarp::os::ResourceFinder rf;
@@ -38,10 +39,7 @@ int main(int argc, char * argv[])
     rf.setDefaultContext("eventdriven");
     rf.configure(argc, argv);
 
-    module.runModule(rf);
-
-    /* deinitilize yarp network */
-    yarp::os::Network::fini();
-
-    return 0;
+    /* instantiate the module */
+    vFlowModule module;
+    return module.runModule(rf);
 }

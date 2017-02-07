@@ -30,14 +30,14 @@
 #include <EIEIOReceiver.h>
 #include <EIEIOSender.h>
 
-class YARPspinI : public yarp::os::BufferedPort<eventdriven::vBottle>
+class YARPspinI : public yarp::os::BufferedPort<ev::vBottle>
 {
 private:
 
     spinnio::EIEIOSender   *spinSender;
 
     //for helping with timestamp wrap around
-    eventdriven::vtsHelper unwrapper;
+    ev::vtsHelper unwrapper;
 
     int downsamplefactor;
     int height;
@@ -54,7 +54,7 @@ public:
     void    attachEIEIOSender(spinnio::EIEIOSender*);
 
     //this is the entry point to your main functionality
-    void    onRead(eventdriven::vBottle &bot);
+    void    onRead(ev::vBottle &bot);
 
 };
 
@@ -63,7 +63,7 @@ class YARPspinO : public yarp::os::RateThread
 private:
 
     spinnio::EIEIOReceiver   *spinReceiver;
-    yarp::os::BufferedPort<eventdriven::vBottle> vBottleOut;
+    yarp::os::BufferedPort<ev::vBottle> vBottleOut;
 
     int width;
     int height;
@@ -78,13 +78,13 @@ public:
     void threadRelease();
 };
 
-class YARPspinIO : public yarp::os::BufferedPort<eventdriven::vBottle>
+class YARPspinIO : public yarp::os::BufferedPort<ev::vBottle>
 {
 private:
 
     spinnio::EIEIOSender   *spinSender;
     spinnio::EIEIOReceiver   *spinReceiver;
-    yarp::os::BufferedPort<eventdriven::vBottle> vBottleOut;
+    yarp::os::BufferedPort<ev::vBottle> vBottleOut;
 
     int downsamplefactor;
     int height;
@@ -100,7 +100,7 @@ public:
     void    attachEIEIOmodules(spinnio::EIEIOSender* spinSenderPtr, spinnio::EIEIOReceiver *spinReceiverPtr);
 
     //this is the entry point to your main functionality
-    void    onRead(eventdriven::vBottle &inbottle);
+    void    onRead(ev::vBottle &inbottle);
 
 };
 

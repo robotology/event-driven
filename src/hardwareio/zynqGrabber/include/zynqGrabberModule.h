@@ -1,10 +1,6 @@
-// -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
-
 /*
- * Copyright (C) 2010 RobotCub Consortium, European Commission FP6 Project IST-004370
- * Authors: Rea Francesco
- * email:   francesco.rea@iit.it
- * website: www.robotcub.org
+ * Copyright (C) 2017 iCub Facility - Istituto Italiano di Tecnologia
+ * Author: arren.glover@iit.it, chiara.bartolozzi@iit.it
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
  * later version published by the Free Software Foundation.
@@ -32,8 +28,8 @@
 #define COMMAND_VOCAB_RESUME  VOCAB3('r','e','s')
 #define COMMAND_VOCAB_FAILED  VOCAB4('f','a','i','l')
 #define COMMAND_VOCAB_OK      VOCAB2('o','k')
-#define COMMAND_VOCAB_SETBIAS VOCAB3('s','e','t') // set biasName biasValue channel
-// TODO if channel is not specificed set both channels
+#define COMMAND_VOCAB_GETBIAS VOCAB3('g','e','t') // get biasName <channel>
+#define COMMAND_VOCAB_SETBIAS VOCAB3('s','e','t') // set biasName biasValue <channel>
 #define COMMAND_VOCAB_PROG    VOCAB4('p','r','o','g')
 #define COMMAND_VOCAB_PWROFF  VOCAB3('o','f','f')
 #define COMMAND_VOCAB_PWRON   VOCAB2('o','n')
@@ -49,28 +45,22 @@
 #include <yarp/os/Thread.h>
 
 //within project includes
-#include <device2yarp.h>
-#include <yarp2device.h>
-
-#include <deviceManager.h>
-//#include <iCub/configManager.h>
+#include <yarpInterface.h>
+#include <deviceController.h>
 
 class zynqGrabberModule : public yarp::os::RFModule {
 
     yarp::os::Port handlerPort; // a port to handle messages
 
-    // AER
-    deviceManager* aerManager;  // class to handle AER IO (hpucore, spinn, aerfx2_0)
+    //HANDLES DEVICE CONFIGURATION
+    vDevCtrl vsctrlMngLeft;
+    vDevCtrl vsctrlMngRight;
 
-    // biases and config
-    vsctrlDevManager* vsctrlMngLeft;   // reference to the class for configuring chip (biases and registers)
-    vsctrlDevManager* vsctrlMngRight;  // reference to the class for configuring chip (biases and registers)
-
-    device2yarp* D2Y; // reference to the ratethread that reads the device and writes to yarp vBottle
+    //HANDLES READING WRITING TO DATA DEVICE AND YARP
+    device2yarp D2Y; // ratethread that reads the device and writes to yarp vBottle
     yarp2device Y2D; // bufferedport that reads yarp vBottles and writes to the device
 
 public:
-
 
     bool configure(yarp::os::ResourceFinder &rf); // configure all the module parameters and return true if successful
     bool interruptModule();                       // interrupt, e.g., the ports
@@ -79,11 +69,6 @@ public:
     double getPeriod();
     bool updateModule();
 
-
 };
 
-
 #endif // __ZYNQ_GRABBER_MODULE_H__
-
-//----- end-of-file --- ( next line intentionally left blank ) ------------------
-

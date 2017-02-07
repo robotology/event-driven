@@ -234,7 +234,7 @@ EventBottleManager::EventBottleManager()
     vCount = 0;
     latestStamp = 0;
 
-    
+
 }
 /**********************************************************/
 bool EventBottleManager::open(const std::string &name)
@@ -244,19 +244,19 @@ bool EventBottleManager::open(const std::string &name)
     this->useCallback();
 
     std::string inPortName = "/" + name + "/vBottle:i";
-    yarp::os::BufferedPort<eventdriven::vBottle>::open(inPortName);
+    yarp::os::BufferedPort<ev::vBottle>::open(inPortName);
 
     return true;
 }
 
 /**********************************************************/
-void EventBottleManager::onRead(eventdriven::vBottle &bot)
+void EventBottleManager::onRead(ev::vBottle &bot)
 {
     //create event queue
-    eventdriven::vQueue q = bot.getSorted<eventdriven::AddressEvent>();
+    ev::vQueue q = bot.getSorted<ev::AddressEvent>();
     //create queue iterator
-    eventdriven::vQueue::iterator qi;
-    
+    ev::vQueue::iterator qi;
+
     // get the event queue in the vBottle bot
     //bot.getSorted<eventdriven::AddressEvent>(q);
     if(q.empty()) return;

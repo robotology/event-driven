@@ -19,86 +19,12 @@
 #include <iCub/eventdriven/vQueue.h>
 #include <algorithm>
 
-namespace eventdriven
+namespace ev
 {
 
 /******************************************************************************/
 //VQUEUE
 /******************************************************************************/
-vQueue::~vQueue()
-{
-    for(vQueue::iterator qi = this->begin(); qi != this->end(); qi++)
-        (*qi)->destroy();
-}
-
-void vQueue::clear()
-{
-    for(vQueue::iterator qi = this->begin(); qi != this->end(); qi++)
-        (*qi)->destroy();
-
-    deque::clear();
-}
-
-void vQueue::push_back(const value_type &__x)
-{
-    __x->referto();
-    deque::push_back(__x);
-}
-
-void vQueue::push_front(const value_type &__x)
-{
-    __x->referto();
-    deque::push_front(__x);
-}
-
-void vQueue::pop_back()
-{
-    back()->destroy();
-    deque::pop_back();
-}
-
-void vQueue::pop_front()
-{
-    front()->destroy();
-    deque::pop_front();
-}
-
-vQueue::iterator vQueue::erase(iterator __first, iterator __last)
-{
-    for(iterator i = __first; i != __last; i++)
-        (*i)->destroy();
-
-    return deque::erase(__first, __last);
-}
-
-vQueue::iterator vQueue::erase(iterator __position)
-{
-    (*__position)->destroy();
-    return deque::erase(__position);
-}
-
-vQueue::vQueue(const vQueue& that)
-{
-    for(vQueue::const_iterator qi = that.begin(); qi != that.end(); qi++)
-        (*qi)->referto();
-
-    for(vQueue::iterator qi = this->begin(); qi != this->end(); qi++)
-        (*qi)->destroy();
-
-    deque::operator =(that);
-}
-
-vQueue& vQueue::operator=(const vQueue& that)
-{
-    for(vQueue::const_iterator qi = that.begin(); qi != that.end(); qi++)
-        (*qi)->referto();
-
-    for(vQueue::iterator qi = this->begin(); qi != this->end(); qi++)
-        (*qi)->destroy();
-
-    deque::operator =(that);
-    return *this;
-}
 
 void vQueue::sort(bool respectWraps) {
     if(respectWraps)
@@ -107,11 +33,11 @@ void vQueue::sort(bool respectWraps) {
         std::sort(begin(), end(), temporalSortStraight);
 }
 
-bool vQueue::temporalSortStraight(const vEvent *e1, const vEvent *e2) {
+bool vQueue::temporalSortStraight(const event<> e1, const event<> e2) {
     return e2->getStamp() > e1->getStamp();
 }
 
-bool vQueue::temporalSortWrap(const vEvent *e1, const vEvent *e2)
+bool vQueue::temporalSortWrap(const event<> e1, const event<> e2)
 {
 
     if(std::abs(e1->getStamp() - e2->getStamp()) > vtsHelper::maxStamp()/2)

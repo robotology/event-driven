@@ -1,29 +1,19 @@
-#Copyright: (C) 2010 RobotCub Consortium
-# Authors: Francesco Rea
-# CopyPolicy: Released under the terms of the GNU GPL v2.0.
-
 cmake_minimum_required(VERSION 2.6)
 
+if(V_ADVMODULES)
+
+  add_subdirectory(vCluster)
+  #add_subdirectory(vCorner)
+  add_subdirectory(vRepTest)
+
+  if(ICUB_FOUND)
+      #add_subdirectory(vCircleDisparity)
+      add_subdirectory(vParticleFilter)
+  endif(ICUB_FOUND)
+
+endif(V_ADVMODULES)
+
 add_subdirectory(vFlow)
-#add_subdirectory(vAnalysis)
-add_subdirectory(vCluster)
-add_subdirectory(vPepper)
-
 if(ICUB_FOUND)
-    add_subdirectory(vCircle)
-    add_subdirectory(vCircleDisparity)
-    add_subdirectory(vParticleFilter)
+  add_subdirectory(vCircle)
 endif(ICUB_FOUND)
-
-add_subdirectory(vCorner)
-add_subdirectory(vRepTest)
-
-if(OPENCV_FOUND)
-    add_subdirectory(vUndistortCam)
-    add_subdirectory(vFramer)
-endif(OPENCV_FOUND)
-
-#if(V_USE_QTCREATOR)
-#    file(GLOB xmldocumentation ${CMAKE_CURRENT_SOURCE_DIR}/*/*.xml)
-#    add_custom_target(doctoken SOURCES ${xmldocumentation})
-#endif(V_USE_QTCREATOR)

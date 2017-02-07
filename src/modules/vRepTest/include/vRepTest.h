@@ -27,28 +27,28 @@
 #include <yarp/sig/all.h>
 #include <iCub/eventdriven/all.h>
 
-class vRepTest : public yarp::os::BufferedPort<eventdriven::vBottle>
+class vRepTest : public yarp::os::BufferedPort<ev::vBottle>
 {
 private:
 
     //output port for the vBottle with the new events computed by the module
     yarp::os::BufferedPort<yarp::os::Bottle> dumper;
-    yarp::os::BufferedPort<eventdriven::vBottle> eventsOut;
+    yarp::os::BufferedPort<ev::vBottle> eventsOut;
     yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelBgr> > imPort;
 
     //for helping with timestamp wrap around
-    eventdriven::vtsHelper unwrapper;
+    ev::vtsHelper unwrapper;
     double ytime;
 
-    eventdriven::vEdge edge;
-    eventdriven::temporalSurface tWindow;
-    eventdriven::fixedSurface fWindow;
-    eventdriven::lifetimeSurface lWindow;
-    eventdriven::vFuzzyEdge fedge;
+    ev::vEdge edge;
+    ev::temporalSurface tWindow;
+    ev::fixedSurface fWindow;
+    ev::lifetimeSurface lWindow;
+    ev::vFuzzyEdge fedge;
 
     std::string vistype;
     void drawDebug(yarp::sig::ImageOf<yarp::sig::PixelBgr> &image,
-                   const eventdriven::vQueue &q, int xoff, int yoff);
+                   const ev::vQueue &q, int xoff, int yoff);
 
 public:
 
@@ -62,7 +62,7 @@ public:
     void    interrupt();
 
     //this is the entry point to your main functionality
-    void    onRead(eventdriven::vBottle &inBottle);
+    void    onRead(ev::vBottle &inBottle);
 
 };
 

@@ -1,10 +1,6 @@
-// -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
-
 /*
- * Copyright (C) 2010 RobotCub Consortium, European Commission FP6 Project IST-004370
- * Authors: Francesco Rea, Chiara Bartolozzi, Arren Glover
- * email:   francesco.rea@iit.it
- * website: www.robotcub.org
+ * Copyright (C) 2017 iCub Facility - Istituto Italiano di Tecnologia
+ * Author: arren.glover@iit.it, chiara.bartolozzi@iit.it
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
  * later version published by the Free Software Foundation.
@@ -27,109 +23,86 @@
 
 bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 
-    //Process all parameters from both command-line and .ini file
 
-    std::string moduleName =
-            rf.check("name", yarp::os::Value("zynqGrabber")).asString();
+    std::string moduleName = rf.check("name", yarp::os::Value("zynqGrabber")).asString();
     setName(moduleName.c_str());
-
-    //get the device name which will be used to read events
-    // zynq_hpu, zynq_spinn, ihead_aerfx2
-    std::string device = rf.check("device", yarp::os::Value("zynq_sens")).asString();
-
-    // get the correct clock of each device
-    int clockPeriod = rf.check("clockPeriod", yarp::os::Value(100)).asInt(); //add check instead of default value
-
-    // set the loopback (needed only for debug)
-    std::string loopBack = rf.check("loopBack", yarp::os::Value("none")).asString(); //add check instead of default value
+    bool strict = rf.check("strict") && rf.check("strict", yarp::os::Value(true)).asBool();
+    bool errorcheck = rf.check("errorcheck") && rf.check("errorcheck", yarp::os::Value(true)).asBool();
 
 
 
 
-    //dvs or atis
-    std::string chipName = rf.check("chip", yarp::os::Value("DVS")).asString();
+    if(rf.check("controllerDevice")) {
 
-    //bias values
-    yarp::os::Bottle biaslistl = rf.findGroup(chipName + "_BIAS_LEFT");
-    yarp::os::Bottle biaslistr = rf.findGroup(chipName + "_BIAS_RIGHT");
+        std::string controllerDevice = rf.find("controllerDevice").asString();
 
-    //configuration classes for the zynq-based sensors
-    vsctrlMngLeft = new vsctrlDevManager("left", chipName);
-    vsctrlMngRight = new vsctrlDevManager("right", chipName);
+        vsctrlMngLeft = vDevCtrl(controllerDevice, I2C_ADDRESS_LEFT);
+        vsctrlMngRight = vDevCtrl(controllerDevice, I2C_ADDRESS_RIGHT);
 
+        //bias values
+        yarp::os::Bottle biaslistl = rf.findGroup("ATIS_BIAS_LEFT");
+        yarp::os::Bottle biaslistr = rf.findGroup("ATIS_BIAS_RIGHT");
 
-    if(device == "zynq_sens") {
+        bool con_success = false;
 
-        if(!vsctrlMngLeft->setBias(biaslistl) || !vsctrlMngRight->setBias(biaslistr) ) {
+        if(!vsctrlMngLeft.setBias(biaslistl) || !vsctrlMngRight.setBias(biaslistr) ) {
             std::cerr << "Bias file required to run zynqGrabber" << std::endl;
             return false;
         }
-        if(!vsctrlMngLeft->openDevice() || !vsctrlMngRight->openDevice()) {
-            std::cerr << "Could not open the vsctrl devices" << std::endl;
+        if(!vsctrlMngLeft.connect())
+            std::cerr << "Could not connect to vision controller left" << std::endl;
+        else
+            if(!vsctrlMngLeft.configure(true)) {
+                std::cerr << "Could not configure left camera" << std::endl;
+            } else {
+                con_success = true;
+            }
+
+        if(!vsctrlMngRight.connect())
+            std::cerr << "Could not connect to vision controller right" << std::endl;
+        else {
+            if(!vsctrlMngRight.configure(true)) {
+                std::cerr << "Could not configure right camera" << std::endl;
+            } else {
+                con_success = true;
+            }
+        }
+
+
+        if(!con_success) {
+            std::cerr << "A configuration device was specified but could not be connected" << std::endl;
             return false;
         }
 
     }
 
 
-    if(device == "zynq_spinn" || device == "zynq_sens") {
-
-        // class manageDevice for events
-        aerManager = new aerDevManager(device, clockPeriod, loopBack);
-
-        if(!aerManager->openDevice()) {
-            std::cerr << "Could not open the aer device: " << device << std::endl;
-            return false;
-        }
-
-    } else if(device == "ihead_sens") {
-
-        // device manager for events
-        aerManager = new aerfx2_0DevManager();
-
-        if(!aerManager->openDevice()) {
-            std::cerr << "Could not open the device: " << device << std::endl;
-            return false;
-        }
-
-    } else {
-
-        std::cout << "Device: " << device << " not known " << std::endl;
-        return false;
-    }
 
     //open rateThread device2yarp
-    D2Y = new device2yarp();
-    if(!D2Y->attachDeviceManager(aerManager))
-    {
-        //could not start the thread
-        return false;
-    }
-    if(!D2Y->threadInit(moduleName, rf.check("strict"))) {
-        //could not start the thread
-        return false;
-    }
-    //open bufferedPort yarp2device
-    if(!Y2D.attachDeviceManager(aerManager))
-    {
-        //could not start the thread
-        return false;
-    }
-    if(!Y2D.open(moduleName))
-    {
-        std::cerr << " : Unable to open ports" << std::endl;
-        return false;
+    if(rf.check("dataDevice")) {
+
+        std::string dataDevice = rf.find("dataDevice").asString();
+        int readPacketSize = 8 * rf.check("readPacketSize", yarp::os::Value("512")).asInt();
+        int maxBottleSize = 8 * rf.check("maxBottleSize", yarp::os::Value("100000")).asInt();
+
+        if(!D2Y.initialise(moduleName, strict, errorcheck, dataDevice, maxBottleSize, readPacketSize)) {
+            std::cout << "A data device was specified but could not be initialised" << std::endl;
+            return false;
+        } else {
+            D2Y.start();
+        }
+
+        //if(!Y2D.initialise(moduleName, dataDevice)) {
+        //    std::cerr << "Could not open YARP ports for Y2D" << std::endl;
+        //    return false;
+        //}
     }
 
-    // attach a port of the same name as the module (prefixed with a /)
-    //to the module so that messages received from the port are redirected to
-    //the respond method
     if (!handlerPort.open("/" + moduleName)) {
         std::cout << "Unable to open RPC port @ /" << moduleName << std::endl;
         return false;
     }
     attach(handlerPort);
-    D2Y->start();
 
     return true;
 }
@@ -143,14 +116,17 @@ bool zynqGrabberModule::interruptModule() {
 
 bool zynqGrabberModule::close() {
 
+    std::cout << "breaking YARP connections.. ";
     handlerPort.close();        // rpc of the RF module
     Y2D.close();
-    D2Y->stop();                // bufferedport from yarp to device
-
-    aerManager->closeDevice();  // device
-    vsctrlMngLeft->closeDevice();
-    vsctrlMngRight->closeDevice();
-
+    D2Y.stop();                // bufferedport from yarp to device
+    std::cout << "done" << std::endl;
+    
+    std::cout << "closing device drivers.. ";
+    vsctrlMngLeft.disconnect(true);
+    vsctrlMngRight.disconnect(true);
+    std::cout << "done" << std::endl;
+    
     return true;
 }
 
@@ -201,20 +177,80 @@ bool zynqGrabberModule::respond(const yarp::os::Bottle& command,
         ok = true;
     }
         break;
-    case COMMAND_VOCAB_SUSPEND:
+//    case COMMAND_VOCAB_SUSPEND:
+//        rec = true;
+//    {
+//        //D2Y.suspend();
+//        std::cout << "Not implemented" << std::endl;
+//        ok = true;
+//    }
+//        break;
+//    case COMMAND_VOCAB_RESUME:
+//        rec = true;
+//    {
+//        //D2Y.resume();
+//        std::cout << "Not implemented" << std::endl;
+//        ok = true;
+//    }
+//        break;
+    case COMMAND_VOCAB_GETBIAS:
         rec = true;
     {
-        D2Y->suspend();
-        ok = true;
+        std::string biasName = command.get(1).asString();
+        std::string channel = command.get(2).asString();
+
+        // setBias function
+        if (channel == "left") {
+            int val = vsctrlMngLeft.getBias(biasName);
+            if(val >= 0) {
+                reply.addString("Left: ");
+                reply.addString(biasName);
+                reply.addInt(val);
+                ok = true;
+            } else {
+                reply.addString("Left Unknown Bias");
+                ok = false;
+            }
+        } else if (channel == "right") {
+            int val = vsctrlMngRight.getBias(biasName);
+            if(val >= 0) {
+                reply.addString("Right: ");
+                reply.addString(biasName);
+                reply.addInt(val);
+                ok = true;
+            } else {
+                reply.addString("Right Unknown Bias");
+                ok = false;
+            }
+        } else if (channel == "") {
+            int val = vsctrlMngLeft.getBias(biasName);
+            if(val >= 0) {
+                reply.addString("Left: ");
+                reply.addString(biasName);
+                reply.addInt(val);
+                ok = true;
+            } else {
+                reply.addString("Left Unknown Bias");
+                ok = false;
+            }
+            val = vsctrlMngRight.getBias(biasName);
+            if(val >= 0) {
+                reply.addString("Right: ");
+                reply.addString(biasName);
+                reply.addInt(val);
+                ok = true & ok;
+            } else {
+                reply.addString("RightUnknown Bias");
+                ok = false;
+            }
+        }
+        else {
+            std::cout << "unrecognised channel" << std::endl;
+            ok = false;
+        }
     }
         break;
-    case COMMAND_VOCAB_RESUME:
-        rec = true;
-    {
-        D2Y->resume();
-        ok = true;
-    }
-        break;
+
     case COMMAND_VOCAB_SETBIAS:
         rec = true;
     {
@@ -224,16 +260,16 @@ bool zynqGrabberModule::respond(const yarp::os::Bottle& command,
 
         // setBias function
         if (channel == "left"){
-            vsctrlMngLeft->setBias(biasName, biasValue);
+            vsctrlMngLeft.setBias(biasName, biasValue);
             ok = true;
         } else if (channel == "right")
         {
-            vsctrlMngRight->setBias(biasName, biasValue);
+            vsctrlMngRight.setBias(biasName, biasValue);
             ok = true;
         } else if (channel == "")
         {
-            vsctrlMngLeft->setBias(biasName, biasValue);
-            vsctrlMngRight->setBias(biasName, biasValue);
+            vsctrlMngLeft.setBias(biasName, biasValue);
+            vsctrlMngRight.setBias(biasName, biasValue);
             ok = true;
         }
         else {
@@ -249,17 +285,17 @@ bool zynqGrabberModule::respond(const yarp::os::Bottle& command,
 
         // progBias function
         if (channel == "left"){
-            vsctrlMngLeft->programBiases();
+            vsctrlMngLeft.configureBiases();
             ok = true;
         } else if (channel == "right")
         {
-            vsctrlMngRight->programBiases();
+            vsctrlMngRight.configureBiases();
             ok = true;
         }
         else if (channel == "")
         {
-            vsctrlMngLeft->programBiases();
-            vsctrlMngRight->programBiases();
+            vsctrlMngLeft.configureBiases();
+            vsctrlMngRight.configureBiases();
             ok = true;
         } else {
             std::cout << "unrecognised channel" << std::endl;
@@ -272,15 +308,15 @@ bool zynqGrabberModule::respond(const yarp::os::Bottle& command,
     {   std::string channel = command.get(1).asString();
 
         if (channel == "left"){
-            vsctrlMngLeft->chipPowerDown();
+            vsctrlMngLeft.suspend();
             ok = true;
 
         } else if (channel == "right") {
-            vsctrlMngRight->chipPowerDown();
+            vsctrlMngRight.suspend();
             ok = true;
         } else if (channel == "") { // if channel is not specified power off both
-            vsctrlMngRight->chipPowerDown();
-            vsctrlMngLeft->chipPowerDown();
+            vsctrlMngRight.suspend();
+            vsctrlMngLeft.suspend();
             ok = true;
         } else {
             std::cout << "unrecognised channel" << std::endl;
@@ -295,15 +331,15 @@ bool zynqGrabberModule::respond(const yarp::os::Bottle& command,
     {   std::string channel = command.get(1).asString();
 
         if (channel == "left"){
-            vsctrlMngLeft->chipPowerUp();
+            vsctrlMngLeft.activate();
             ok = true;
 
         } else if (channel == "right") {
-            vsctrlMngRight->chipPowerUp();
+            vsctrlMngRight.activate();
             ok = true;
         } else if (channel == "") { // if channel is not specified power off both
-            vsctrlMngRight->chipPowerUp();
-            vsctrlMngLeft->chipPowerUp();
+            vsctrlMngRight.activate();
+            vsctrlMngLeft.activate();
             ok = true;
         } else {
             std::cout << "unrecognised channel" << std::endl;
@@ -313,28 +349,28 @@ bool zynqGrabberModule::respond(const yarp::os::Bottle& command,
     }
         break;
 
-    case COMMAND_VOCAB_RST:
-        rec= true;
-    {   std::string channel = command.get(1).asString();
+//    case COMMAND_VOCAB_RST:
+//        rec= true;
+//    {   std::string channel = command.get(1).asString();
 
-        if (channel == "left"){
-            vsctrlMngLeft->chipReset();
-            ok = true;
+//        if (channel == "left"){
+//            vsctrlMngLeft->chipReset();
+//            ok = true;
 
-        } else if (channel == "right") {
-            vsctrlMngRight->chipReset();
-            ok = true;
-        } else if (channel == "") { // if channel is not specified power off both
-            vsctrlMngRight->chipReset();
-            vsctrlMngLeft->chipReset();
-            ok = true;
-        } else {
-            std::cout << "unrecognised channel" << std::endl;
-            ok = false;
+//        } else if (channel == "right") {
+//            vsctrlMngRight->chipReset();
+//            ok = true;
+//        } else if (channel == "") { // if channel is not specified power off both
+//            vsctrlMngRight->chipReset();
+//            vsctrlMngLeft->chipReset();
+//            ok = true;
+//        } else {
+//            std::cout << "unrecognised channel" << std::endl;
+//            ok = false;
 
-        }
-    }
-        break;
+//        }
+//    }
+//        break;
 
 
     }
@@ -343,7 +379,7 @@ bool zynqGrabberModule::respond(const yarp::os::Bottle& command,
         ok = RFModule::respond(command,reply);
 
     if (!ok) {
-        reply.clear();
+        //reply.clear();
         reply.addVocab(COMMAND_VOCAB_FAILED);
     }
     else
@@ -351,7 +387,6 @@ bool zynqGrabberModule::respond(const yarp::os::Bottle& command,
 
     return ok;
 
-    return true;
 }
 
 

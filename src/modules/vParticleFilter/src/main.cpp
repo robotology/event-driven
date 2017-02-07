@@ -22,6 +22,10 @@ int main(int argc, char * argv[])
 {
     /* initialize yarp network */
     yarp::os::Network yarp;
+    if(!yarp.checkNetwork()) {
+        std::cout << "Could not connect to YARP" << std::endl;
+        return false;
+    }
 
     /* create the module */
     vParticleModule particleModule;

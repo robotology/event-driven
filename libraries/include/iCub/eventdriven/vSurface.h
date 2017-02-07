@@ -29,7 +29,7 @@
 #include <iCub/eventdriven/vQueue.h>
 #include <iCub/eventdriven/vtsHelper.h>
 
-namespace eventdriven {
+namespace ev {
 
 /**
  * @brief The vWindow class holds a list of events for a period of time as
@@ -44,7 +44,7 @@ protected:
 
     //Local Memory
     //! for quick spatial accessing and surfacing
-    std::vector< std::vector <vEvent *> > spatial;
+    std::vector< std::vector < event<> > > spatial;
 
     //Parameters
     //! the sensor width
@@ -53,8 +53,8 @@ protected:
     int height;
 
     //Local Variables
-    vEvent * mostRecent;
-    vEvent * justRemoved;
+    event<ev::AddressEvent> mostRecent;
+    event<> justRemoved;
     //! for safe copying of q in the multi-threaded environment
     yarp::os::Semaphore mutex;
     //! member variable for quick memory allocation
@@ -78,13 +78,13 @@ public:
     /// events.
     /// \param event the event to add
     ///
-    vEvent * addEvent(AddressEvent &event);
+    event<> addEvent(event<AddressEvent> v);
 
     ///
     /// \brief getMostRecent
     /// \return
     ///
-    vEvent * getMostRecent();
+    event<> getMostRecent();
 
     int getEventCount() { return eventCount; }
     void clear();
@@ -104,10 +104,10 @@ private:
     //there could be a better way to achieve this.
     int thickness;
     bool trackCount;
-    vEvent * addEvent(AddressEvent &event);
+    event<> addEvent(event<AddressEvent> v);
 
-    bool addressremove(vQueue &removed, AddressEvent * v);
-    bool flowremove(vQueue &removed, FlowEvent *vf);
+    bool addressremove(vQueue &removed, event<AddressEvent> v);
+    bool flowremove(vQueue &removed, event<FlowEvent> vf);
     bool pepperCheck(int y, int x);
 
 public:
@@ -115,7 +115,7 @@ public:
     vEdge(int width = 128, int height = 128) :
         vSurface(width, height), thickness(2), trackCount(false) {}
 
-    vQueue addEventToEdge(AddressEvent *event);
+    vQueue addEventToEdge(event<AddressEvent> v);
     void setThickness(int pixels) {thickness = pixels;}
     void track(bool trackCount = true) {this->trackCount = trackCount;}
 
@@ -135,7 +135,7 @@ private:
 public:
 
     vFuzzyEdge(int width = 128, int height = 128, double delta = 0.4);
-    vQueue addEventToEdge(AddressEvent *event);
+    vQueue addEventToEdge(event<AddressEvent> event);
     virtual const vQueue& getSURF(int xl, int xh, int yl, int yh);
 
 };

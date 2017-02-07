@@ -14,11 +14,6 @@
  * Public License for more details
  */
 
-/// \defgroup Modules Modules
-/// \defgroup vFlow vFlow
-/// \ingroup Modules
-/// \brief calculates optical flow using plane fitting
-
 #ifndef __VFLOW__
 #define __VFLOW__
 
@@ -30,75 +25,61 @@
 #include <yarp/math/SVD.h>
 #include <iCub/eventdriven/all.h>
 
-///
-/// \brief The vFlowManager class performs event-based optical flow
-///
-class vFlowManager : public yarp::os::BufferedPort<eventdriven::vBottle>
+class vFlowManager : public yarp::os::BufferedPort<ev::vBottle>
 {
 private:
 
-    bool strictness;
-    yarp::os::BufferedPort<eventdriven::vBottle> outPort;
+    //parameters
+    int fRad;               //! radius of the fitted plane
+    unsigned int planeSize; //! area of the fitted plane
+    int minEvtsOnPlane;     //! minimum number of events for a valid plane
+    bool strictness;        //! don't lose events!
 
-    eventdriven::vSurface2 *surfaceOnL;
-    eventdriven::vSurface2 *surfaceOfL;
-    eventdriven::vSurface2 *surfaceOnR; ///< eventdriven::vSurface for on polarity events
-    eventdriven::vSurface2 *surfaceOfR; ///< eventdriven::vSurface for off polarity events
-    eventdriven::vSurface2 *cSurf;     //! pointer to current surface (on or off)
+    //ports
+    yarp::os::BufferedPort<ev::vBottle> outPort;
 
-    int height; //! sensor height
-    int width;  //! sensor width
-    int fRad;   //! filter radius
-    unsigned int planeSize; //! edge length of fitted plane
-    int halfCount; //! plane area divided by 2
-    int minEvtsOnPlane; //! minimum number of events for plane validity
+    //data structures
+    ev::vSurface2 *surfaceOnL;
+    ev::vSurface2 *surfaceOfL;
+    ev::vSurface2 *surfaceOnR;
+    ev::vSurface2 *surfaceOfR;
 
     yarp::sig::Matrix At;
     yarp::sig::Matrix AtA;
     yarp::sig::Matrix A2;
     yarp::sig::Vector abc;
 
-    int eventsComputed;
-    int eventsPotential;
-    int bottleCount;
-
-    eventdriven::FlowEvent *compute();
+    //coputation functions
+    bool compute(ev::vSurface2 *surf, double &vx, double &vy);
     int computeGrads(yarp::sig::Matrix &A, yarp::sig::Vector &Y,
                       double cx, double cy, double cz,
                       double &dtdy, double &dtdx);
-    int computeGrads(const eventdriven::vQueue &subsurf, eventdriven::AddressEvent &cen,
+    int computeGrads(const ev::vQueue &subsurf, ev::event<ev::AddressEvent> cen,
                       double &dtdy, double &dtdx);
 
 public:
 
     vFlowManager(int height, int width, int filterSize, int minEvtsOnPlane);
 
-    ///
-    /// \brief open the port and start callback
-    /// \param moduleName defines port names (default vFlow)
-    /// \param strictness read and write strcitly such that events are not lost
-    /// \return true on successful open
-    ///
     bool    open(std::string moduleName, bool strictness = false);
     void    close();
     void    interrupt();
-    void    onRead(eventdriven::vBottle &inBottle);
+    void    onRead(ev::vBottle &inBottle);
 
 };
 
-
 class vFlowModule:public yarp::os::RFModule {
-
 
     vFlowManager *flowmanager;
 
 public:
 
-    virtual bool configure(yarp::os::ResourceFinder &rf); // configure all the module parameters and return true if successful
-    virtual bool interruptModule();                       // interrupt, e.g., the ports
-    virtual bool close();                                 // close and shut down the module
+    virtual bool configure(yarp::os::ResourceFinder &rf);
+    virtual bool interruptModule();
+    virtual bool close();
     virtual bool updateModule();
     virtual double getPeriod();
 };
+
 #endif //__VFLOW__
 

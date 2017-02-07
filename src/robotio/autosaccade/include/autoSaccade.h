@@ -26,12 +26,12 @@
 #include <iCub/eventdriven/all.h>
 #include <yarp/dev/all.h>
 
-class EventBottleManager : public yarp::os::BufferedPort<eventdriven::vBottle>
+class EventBottleManager : public yarp::os::BufferedPort<ev::vBottle>
 {
 private:
 
     //for helping with timestamp wrap around
-    eventdriven::vtsHelper unwrapper;
+    ev::vtsHelper unwrapper;
 
     //rate counters
     yarp::os::Semaphore mutex;
@@ -45,7 +45,7 @@ public:
     bool    open(const std::string &name);
 
     //this is the entry point to your main functionality
-    void    onRead(eventdriven::vBottle &bot);
+    void    onRead(ev::vBottle &bot);
 
     //the getting functions of the parent class
     unsigned long int getTime();

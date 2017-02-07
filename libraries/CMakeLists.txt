@@ -7,7 +7,6 @@ set(PROJECTNAME ${EVENTDRIVEN_LIBRARIES})
 project(${PROJECTNAME})
 
 set(folder_source
-  src/vBottle.cpp
   src/vCodec.cpp
   src/vWindow.cpp
   src/vTempWindow.cpp
@@ -23,6 +22,7 @@ set(folder_header
   include/iCub/eventdriven/vWindow.h
   include/iCub/eventdriven/vSurface.h
   include/iCub/eventdriven/vQueue.h
+  include/iCub/eventdriven/vFilters.h
 )
 
 # Declare groups of source and header files -- makes things pretty in MSVC.
@@ -47,13 +47,19 @@ if(V_10BITCODEC)
     set_target_properties(${PROJECTNAME} PROPERTIES COMPILE_DEFINITIONS TENBITCODEC)
 endif(V_10BITCODEC)
 
+if(V_32BITTIME)
+    #message("Using 10bit codec")
+    set_target_properties(${PROJECTNAME} PROPERTIES COMPILE_DEFINITIONS TIME32BIT)
+endif(V_32BITTIME)
+
 target_link_libraries(${PROJECTNAME} ${YARP_LIBRARIES})
 
 if(ICUBcontrib_FOUND)
     icubcontrib_export_library(${PROJECTNAME}
         INTERNAL_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/include
         EXTERNAL_INCLUDE_DIRS ${YARP_INCLUDE_DIRS}
-        DESTINATION include/eventdriven
+        DESTINATION include/iCub/eventdriven
         FILES  ${folder_header}
     )
+    icubcontrib_finalize_export(${PROJECTNAME})
 endif(ICUBcontrib_FOUND)

@@ -144,7 +144,7 @@ bool YARPspinI::open(const std::string &name)
     this->useCallback();
 
     std::string inPortName = "/" + name + "/vBottle:i";
-    return yarp::os::BufferedPort<eventdriven::vBottle>::open(inPortName);
+    return yarp::os::BufferedPort<ev::vBottle>::open(inPortName);
 }
 
 /******************************************************************************/
@@ -152,7 +152,7 @@ void YARPspinI::close()
 {
     spinSender->closeSendSocket();
     delete spinSender;
-    yarp::os::BufferedPort<eventdriven::vBottle>::close();
+    yarp::os::BufferedPort<ev::vBottle>::close();
 
     //remember to also deallocate any memory allocated by this class
 }
@@ -160,7 +160,7 @@ void YARPspinI::close()
 /******************************************************************************/
 void YARPspinI::interrupt()
 {
-    yarp::os::BufferedPort<eventdriven::vBottle>::interrupt();
+    yarp::os::BufferedPort<ev::vBottle>::interrupt();
 
 }
 
@@ -171,16 +171,16 @@ void YARPspinI::attachEIEIOSender(spinnio::EIEIOSender* spinSenderPtr)
 }
 
 /**********************************************************/
-void YARPspinI::onRead(eventdriven::vBottle &bot)
+void YARPspinI::onRead(ev::vBottle &bot)
 {
     //create event queue
-    eventdriven::vQueue q = bot.getAll();
+    ev::vQueue q = bot.getAll();
 
 
-    for(eventdriven::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
+    for(ev::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {
 
-        eventdriven::AddressEvent *v = (*qi)->getAs<eventdriven::AddressEvent>();
+        ev::event<ev::AddressEvent> v = ev::getas<ev::AddressEvent>(*qi);
         if(!v) continue;
         if(v->getChannel()) continue;
 
@@ -230,10 +230,10 @@ void YARPspinO::run()
     //std::cout << "Size: " << recvQueueSize << std::endl;
 
     //there is data to process so prepare out outbottle port
-    eventdriven::vBottle &outbottle = vBottleOut.prepare();
+    ev::vBottle &outbottle = vBottleOut.prepare();
     outbottle.clear();
 
-    eventdriven::AddressEvent ae;
+    ev::event<ev::AddressEvent> ae = ev::event<ev::AddressEvent>(new ev::AddressEvent());
 
     //convert the data to readable packets
     std::list<std::pair<int, int> > spikepacket =
@@ -245,12 +245,12 @@ void YARPspinO::run()
     int rowsize = width >> downsamplefactor;
     for(i = spikepacket.begin(); i != spikepacket.end(); i++) {
         std::pair<int,int> spikeEvent = *i;
-        ae.setStamp(spikeEvent.first);
-        ae.setPolarity(0);
+        ae->setStamp(spikeEvent.first);
+        ae->setPolarity(0);
         int y = (spikeEvent.second / rowsize) << downsamplefactor;
         int x = (spikeEvent.second % rowsize) << downsamplefactor;
-        ae.setY(y);
-        ae.setX(x);
+        ae->setY(y);
+        ae->setX(x);
         outbottle.addEvent(ae);
     }
     std::cout << std::endl;
@@ -294,7 +294,7 @@ bool YARPspinIO::open(const std::string &name)
 
     this->useCallback();
 
-    if(!yarp::os::BufferedPort<eventdriven::vBottle>::open("/" + name + "/vBottle:i"))
+    if(!yarp::os::BufferedPort<ev::vBottle>::open("/" + name + "/vBottle:i"))
         return false;
     if(!vBottleOut.open("/" + name + "/vBottle:o"))
         return false;
@@ -310,7 +310,7 @@ void YARPspinIO::close()
     delete spinSender; spinSender = 0;
     delete spinReceiver; spinReceiver = 0;
     vBottleOut.close();
-    yarp::os::BufferedPort<eventdriven::vBottle>::close();
+    yarp::os::BufferedPort<ev::vBottle>::close();
 
     //remember to also deallocate any memory allocated by this class
 }
@@ -319,7 +319,7 @@ void YARPspinIO::close()
 void YARPspinIO::interrupt()
 {
     vBottleOut.interrupt();
-    yarp::os::BufferedPort<eventdriven::vBottle>::interrupt();
+    yarp::os::BufferedPort<ev::vBottle>::interrupt();
 }
 
 /**********************************************************/
@@ -331,16 +331,16 @@ void YARPspinIO::attachEIEIOmodules(spinnio::EIEIOSender* spinSenderPtr,
 }
 
 /**********************************************************/
-void YARPspinIO::onRead(eventdriven::vBottle &inbottle)
+void YARPspinIO::onRead(ev::vBottle &inbottle)
 {
     //create event queue
     yarp::os::Stamp yts;
     this->getEnvelope(yts);
 
-    eventdriven::vBottle &outbottle = vBottleOut.prepare();
+    ev::vBottle &outbottle = vBottleOut.prepare();
     outbottle = inbottle;
 
-    eventdriven::vQueue q = inbottle.getAll();
+    ev::vQueue q = inbottle.getAll();
     if(!q.size()) {
         std::cerr << "Callback function received no packets?" << std::endl;
         return;
@@ -349,10 +349,10 @@ void YARPspinIO::onRead(eventdriven::vBottle &inbottle)
     int latestts = q.back()->getStamp();
 
     //first send on our packets we have read
-    for(eventdriven::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
+    for(ev::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {
 
-        eventdriven::AddressEvent *v = (*qi)->getAs<eventdriven::AddressEvent>();
+        ev::event<ev::AddressEvent> v = ev::getas<ev::AddressEvent>(*qi);
         if(!v) continue;
         if(v->getChannel()) continue;
 
@@ -369,7 +369,8 @@ void YARPspinIO::onRead(eventdriven::vBottle &inbottle)
     //int recvQueueSize = spinReceiver->getRecvQueueSize();
 
     //there is data to process so prepare out outbottle port
-    eventdriven::ClusterEventGauss gaborevent;
+    ev::event<ev::ClusterEventGauss> gaborevent =
+            ev::event<ev::ClusterEventGauss>(new ev::ClusterEventGauss());
 
     if(spinReceiver->getRecvQueueSize()) {
         //convert the data to readable packets
@@ -380,21 +381,21 @@ void YARPspinIO::onRead(eventdriven::vBottle &inbottle)
         std::list<std::pair<int, int> >::iterator i;
         for(i = spikepacket.begin(); i != spikepacket.end(); i++) {
             std::pair<int,int> spikeEvent = *i;
-            gaborevent.setStamp(latestts);
-            gaborevent.setPolarity(0);
-            gaborevent.setXCog(64);
-            gaborevent.setYCog(64);
+            gaborevent->setStamp(latestts);
+            gaborevent->setPolarity(0);
+            gaborevent->setXCog(64);
+            gaborevent->setYCog(64);
             if(spikeEvent.second == 0)  {
-                gaborevent.setXYSigma(0);
-                gaborevent.setYSigma2(5);
-                gaborevent.setXSigma2(5);
+                gaborevent->setXYSigma(0);
+                gaborevent->setYSigma2(5);
+                gaborevent->setXSigma2(5);
             } else {
-                gaborevent.setXYSigma(1);
-                gaborevent.setYSigma2(5);
-                gaborevent.setXSigma2(5);
+                gaborevent->setXYSigma(1);
+                gaborevent->setYSigma2(5);
+                gaborevent->setXSigma2(5);
             }
-            gaborevent.setXVel(0);
-            gaborevent.setYVel(0);
+            gaborevent->setXVel(0);
+            gaborevent->setYVel(0);
             outbottle.addEvent(gaborevent);
         }
 

@@ -20,10 +20,7 @@
 int main(int argc, char * argv[])
 {
     /* initialize yarp network */
-    yarp::os::Network::init();
-
-    /* create the module */
-    vRepTestHandler vTemplateModuleInstance;
+    yarp::os::Network yarp;
 
     /* prepare and configure the resource finder */
     yarp::os::ResourceFinder rf;
@@ -32,9 +29,7 @@ int main(int argc, char * argv[])
     rf.setDefaultConfigFile( "vRepTest.ini" );
     rf.configure( argc, argv );
 
-    /* run the module: runModule() calls configure first and, if successful, it then runs */
-    vTemplateModuleInstance.runModule(rf);
-    yarp::os::Network::fini();
-
-    return 0;
+    /* create the module */
+    vRepTestHandler vTemplateModuleInstance;
+    return vTemplateModuleInstance.runModule(rf);
 }

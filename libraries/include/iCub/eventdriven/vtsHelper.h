@@ -25,7 +25,7 @@
 
 #include <yarp/os/all.h>
 
-namespace eventdriven {
+namespace ev {
 
 class vtsHelper {
 
@@ -33,7 +33,11 @@ private:
 
     int last_stamp;
     unsigned int n_wraps;
+#ifdef LARGETS
+    static const long int max_stamp = 2147483647; //2^31
+#else
     static const long int max_stamp = 16777215; //2^24
+#endif
 
 public:
 

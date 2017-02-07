@@ -59,7 +59,7 @@ private:
     yarp::os::Mutex mdone; /// for thread safety when computation is finished
 
     //current data
-    eventdriven::vQueue * procQueue; /// pointer to list of events to add to Hough space
+    ev::vQueue * procQueue; /// pointer to list of events to add to Hough space
     std::vector<int> * procType; /// pointer to list of events to remove from Hough
 
     /// update the Hough space using standard method
@@ -121,7 +121,7 @@ public:
     /// \param adds list of events to add
     /// \param subs list of events to remove
     ///
-    void process(eventdriven::vQueue &procQueue, std::vector<int> &procType);
+    void process(ev::vQueue &procQueue, std::vector<int> &procType);
 
     ///
     /// \brief waitfordone wait for computation to finish if threaded
@@ -156,23 +156,23 @@ private:
     //channel splitting should be done at a higher level
 
     //internal data
-    eventdriven::vEdge eFIFO;
-    eventdriven::fixedSurface fFIFO;
-    eventdriven::temporalSurface tFIFO;
-    eventdriven::lifetimeSurface lFIFO;
-    eventdriven::vEvent dummy;
+    ev::vEdge eFIFO;
+    ev::fixedSurface fFIFO;
+    ev::temporalSurface tFIFO;
+    ev::lifetimeSurface lFIFO;
+    ev::event<> dummy;
     std::vector<vCircleThread *> htransforms;
     std::vector<vCircleThread *>::iterator best;
     std::vector<int> procType;
 
-    void addHough(eventdriven::vEvent &event);
-    void remHough(eventdriven::vEvent &event);
-    void updateHough(eventdriven::vQueue &procQueue, std::vector<int> &procType);
+    void addHough(ev::event<> event);
+    void remHough(ev::event<> event);
+    void updateHough(ev::vQueue &procQueue, std::vector<int> &procType);
 
-    void addFixed(eventdriven::vQueue &additions);
-    void addTime(eventdriven::vQueue &additions);
-    void addLife(eventdriven::vQueue &additions);
-    void addEdge(eventdriven::vQueue &additions);
+    void addFixed(ev::vQueue &additions);
+    void addTime(ev::vQueue &additions);
+    void addLife(ev::vQueue &additions);
+    void addEdge(ev::vQueue &additions);
 
 public:
 
@@ -184,7 +184,7 @@ public:
     ~vCircleMultiSize();
 
     void setChannel(int channelNumber) { channel = channelNumber; }
-    void addQueue(eventdriven::vQueue &additions);
+    void addQueue(ev::vQueue &additions);
     double getObs(int &x, int &y, int &r);
     std::vector<double> getPercentile(double p, double thMin);
     yarp::sig::ImageOf<yarp::sig::PixelBgr> makeDebugImage();

@@ -42,8 +42,8 @@ protected:
     double clusterLimit;
 
     int getNewTracker();
-    eventdriven::ClusterEventGauss makeEvent(int i, int ts);
-    eventdriven::vtsHelper unwrap;
+    ev::event<ev::ClusterEventGauss> makeEvent(int i, int ts);
+    ev::vtsHelper unwrap;
 
 
     // Parameters of the repulsive field
@@ -53,7 +53,7 @@ protected:
 
 
 public:
-    
+
     TrackerPool();
 
     void setInitialParams(double sig_x, double sig_y, double sig_xy,
@@ -64,8 +64,8 @@ public:
     void setComparisonParams(double max_dist);
     void setClusterLimit(int limit);
 
-    int update(eventdriven::AddressEvent &event,
-               std::vector<eventdriven::ClusterEventGauss> &clEvts);
+    int update(ev::event<ev::AddressEvent> v,
+               std::vector<ev::event<ev::ClusterEventGauss> > &clEvts);
 
 };
 

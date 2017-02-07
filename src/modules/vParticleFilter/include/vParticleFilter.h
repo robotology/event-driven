@@ -68,7 +68,7 @@ public:
 
 
     bool predict(unsigned long int stamp);
-    double calcLikelihood(eventdriven::vQueue &events, int nparticles);
+    double calcLikelihood(ev::vQueue &events, int nparticles);
     void initLikelihood();
     void incrementalLikelihood(int vx, int vy, int dt);
     void concludeLikelihood();

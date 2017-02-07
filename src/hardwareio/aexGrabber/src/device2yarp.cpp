@@ -1132,7 +1132,7 @@ void  device2yarp::run() {
 //    }
 
     if (portvBottle.getOutputCount()) {
-        eventdriven::vBottle &vb = portvBottle.prepare();
+        ev::vBottle &vb = portvBottle.prepare();
         vb.clear();
 
         //do some sketchy casting to make things fast at this part of the
