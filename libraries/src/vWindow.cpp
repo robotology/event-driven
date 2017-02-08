@@ -127,7 +127,7 @@ vQueue vSurface2::getSurf_Tlim(int dt, int xl, int xh, int yl, int yh)
         vt = (*rqit)->getStamp();
         if(vt > t) vt -= vtsHelper::maxStamp();
         if(vt + dt <= t) break;
-        event<AddressEvent> v = getas<AddressEvent>(*rqit);
+        event<AddressEvent> v = std::static_pointer_cast<AddressEvent>(*rqit);
         if(v != spatial[v->getY()][v->getX()]) continue;
         if(v->getX() >= xl && v->getX() <= xh) {
             if(v->getY() >= yl && v->getY() <= yh) {

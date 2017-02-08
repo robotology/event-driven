@@ -17,7 +17,6 @@
 #include "vParticleModule.h"
 
 using ev::event;
-using ev::getas;
 using ev::AddressEvent;
 
 void drawEvents(yarp::sig::ImageOf< yarp::sig::PixelBgr> &image, ev::vQueue &q, double tw = 0) {
@@ -251,7 +250,8 @@ void vSurfaceHandler::queryEvents(ev::vQueue &fillq, unsigned int temporalwindow
     tw = temporalwindow;
 
     mutexsignal.lock();
-    surfaceLeft.getSurfSorted(fillq);
+    //surfaceLeft.getSurfSorted(fillq);
+    fillq = surfaceLeft.getSurf_Tlim(temporalwindow);
     mutexsignal.unlock();
 
 }
@@ -581,7 +581,7 @@ void particleProcessor::run()
             yarp::os::Bottle &scopedata = scopeOut.prepare();
             scopedata.clear();
             double temptime = yarp::os::Time::now();
-            scopedata.addDouble(1.0 / (temptime - ptime2));
+            //scopedata.addDouble(1.0 / (temptime - ptime2));
             ptime2 = temptime;
 //            scopedata.addDouble(stw.front()->getStamp() * 0.001);
 //            scopedata.addDouble((t - previouseventstamp) * 0.001 / 7.8125);
@@ -589,10 +589,10 @@ void particleProcessor::run()
 //            scopedata.addDouble(avgtw / 10000.0);
 //            scopedata.addDouble(pmax.gettw() / 10000.0);
 
-            //scopedata.addDouble(Tget);
-            //scopedata.addDouble(Tresample);
-            //scopedata.addDouble(Tpredict);
-            //scopedata.addDouble(Tobs);
+            scopedata.addDouble(Tget);
+            scopedata.addDouble(Tresample);
+            scopedata.addDouble(Tpredict);
+            scopedata.addDouble(Tobs);
             //scopedata.addDouble(1000.0 / (Tget + Tresample + Tpredict + Tobs));
             //scopedata.addDouble(eventhandler.geteventrate());
             //scopedata.addDouble(stw.size());
@@ -642,7 +642,8 @@ void vPartObsThread::run()
         for(unsigned int j = 0; j < (*stw).size(); j++) {
             if((*deltats)[j] < (*particles)[i].gettw()) {
                 //ev::AddressEvent *v = (*stw)[j]->getUnsafe<ev::AddressEvent>();
-                event<AddressEvent> v = getas<AddressEvent>((*stw)[j]);
+                event<AddressEvent> v = std::static_pointer_cast<AddressEvent>((*stw)[j]);
+                //event<AddressEvent> v = getas<AddressEvent>((*stw)[j]);
                 (*particles)[i].incrementalLikelihood(v->getX(), v->getY(), (*deltats)[j]);
             } else {
                 break;

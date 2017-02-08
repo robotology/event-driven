@@ -3,7 +3,6 @@
 #include <limits>
 
 using ev::event;
-using ev::getas;
 using ev::AddressEvent;
 
 double generateGaussianNoise(double mu, double sigma)
@@ -101,7 +100,7 @@ bool vParticle::predict(unsigned long timestamp)
     //tw += abs(generateGaussianNoise(0, sigmatw));
     //tw += timestamp - this->stamp;
     //tw *= 1.5;
-    tw += (dt*1.0);
+    tw += (dt*1.2);
 
     double sigmap = 2.0;
     x = generateGaussianNoise(x, sigmap);
