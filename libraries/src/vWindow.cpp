@@ -85,7 +85,7 @@ void vSurface2::getSurfSorted(vQueue &fillq)
     unsigned int i = 0;
     vQueue::reverse_iterator rqit;
     for(rqit = q.rbegin(); rqit != q.rend(); rqit++) {
-        event<AddressEvent> v = getas<AddressEvent>(*rqit);
+        event<AddressEvent> v = std::static_pointer_cast<AddressEvent>(*rqit);
         if(v != spatial[v->getY()][v->getX()]) continue;
         fillq[i++] = v;
     }

@@ -95,24 +95,15 @@ void vParticle::initWeight(double weight)
 bool vParticle::predict(unsigned long timestamp)
 {
     double dt = timestamp - this->stamp;
-
-    //double sigmatw = 20000;
-    //tw += abs(generateGaussianNoise(0, sigmatw));
-    //tw += timestamp - this->stamp;
-    //tw *= 1.5;
-    tw += (dt*1.2);
+    tw += (dt*1.5);
 
     double sigmap = 2.0;
     x = generateGaussianNoise(x, sigmap);
     y = generateGaussianNoise(y, sigmap);
     r = generateGaussianNoise(r, sigmap * 0.2);
-    if(r < 8) r = 8;
-    if(r > 44) r = 44;
 
     initTiming(timestamp);
 
-    if(x < -r || y < -r || x > 304+r || y > 240+r)
-        return true;
     return false;
 
 }
@@ -251,9 +242,9 @@ void vParticle::updateWeightSync(double normval)
     weight = weight / normval;
 }
 
-void vParticle::resample(double w, unsigned long int t)
+void vParticle::resample(double w, unsigned long int t, int x, int y, int r)
 {
-    initState(rand()%128, rand()%128, 10+rand()%26, 100);
+    initState(rand()%x, rand()%y, rand()%r, 100);
     initWeight(w);
     initTiming(t);
 }

@@ -184,6 +184,8 @@ private:
     double obsInlier;
     double obsOutlier;
 
+    bool inbounds(vParticle &p);
+
 public:
 
     void setFilterParameters(int nParticles, double nRandomise, bool adaptive) {

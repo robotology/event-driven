@@ -374,7 +374,7 @@ bool particleProcessor::threadInit()
     indexedlist.clear();
     for(int i = 0; i < nparticles; i++) {
         p.setid(i);
-        p.resample(1.0/nparticles, 0);
+        p.resample(1.0/nparticles, 0, res.width, res.height, 30);
         maxtw = std::max(maxtw, p.gettw());
         indexedlist.push_back(p);
     }
@@ -412,7 +412,7 @@ void particleProcessor::run()
                 //if(indexedlist[i].getw() > (0.1 / nparticles)) continue;
                 double rn = nRandomise * (double)rand() / RAND_MAX;
                 if(rn > 1.0)
-                    indexedlist[i].resample(1.0/nparticles, t);
+                    indexedlist[i].resample(1.0/nparticles, t, res.width, res.height, 30.0);
                 else {
                     double accum = 0.0; int j = 0;
                     for(j = 0; j < nparticles; j++) {
@@ -430,9 +430,17 @@ void particleProcessor::run()
         //prediction
         maxtw = 0; //also calculate maxtw for next processing step
         for(int i = 0; i < nparticles; i++) {
-            if(indexedlist[i].predict(t)) {
-                indexedlist[i].resample(1.0/nparticles, t);
-            }
+            indexedlist[i].predict(t);
+            if(!inbounds(indexedlist[i]))
+                indexedlist[i].resample(1.0/nparticles, t, res.width, res.height, 30.0);
+
+            //if(indexedlist[i].predict(t))
+            //    indexedlist[i].resample(1.0/nparticles, t);
+            //else
+            //    if(!inbounds(indexedlist[i]))
+            //        std::cout << "Inbounds not computed correctly " << indexedlist[i].getx() << " " << indexedlist[i].gety() << " " << indexedlist[i].getr() << std::endl;
+
+            //if(!inbounds(indexedlist[i]))
             if(indexedlist[i].gettw() > maxtw)
                 maxtw = indexedlist[i].gettw();
         }
@@ -604,6 +612,20 @@ void particleProcessor::run()
 
     std::cout << "Thread Stopped" << std::endl;
 }
+
+bool particleProcessor::inbounds(vParticle &p)
+{
+    int r = p.getr();
+    if(p.getx() < -r || p.getx() > res.width + r)
+        return false;
+    if(p.gety() < -r || p.gety() > res.height + r)
+        return false;
+
+    return true;
+}
+
+
+
 void particleProcessor::threadRelease()
 {
     scopeOut.close();
@@ -781,7 +803,7 @@ void vParticleReader::onRead(ev::vBottle &inputBottle)
 
             for(int i = 0; i < nparticles; i++) {
                 p.setid(i);
-                p.resample(1.0/nparticles, t);
+                p.resample(1.0/nparticles, t, res.width, res.height, 30.0);
                 p.initWeight(1.0/nparticles);
                 sortedlist.push(p);
                 indexedlist.push_back(p);
@@ -801,7 +823,7 @@ void vParticleReader::onRead(ev::vBottle &inputBottle)
                 for(int i = 0; i < nparticles; i++) {
                     double rn = 1.05 * pwsum * (double)rand() / RAND_MAX;
                     if(rn > pwsum)
-                        indexedlist[i].resample(1.0/nparticles, t);
+                        indexedlist[i].resample(1.0/nparticles, t, res.width, res.height, 30.0);
                     else {
                         double accum = 0.0; int j = 0;
                         for(j = 0; j < nparticles; j++) {
@@ -817,7 +839,7 @@ void vParticleReader::onRead(ev::vBottle &inputBottle)
             unsigned int maxtw = 0;
             for(int i = 0; i < nparticles; i++) {
                 if(indexedlist[i].predict(t)) {
-                    indexedlist[i].resample(1.0/nparticles, t);
+                    indexedlist[i].resample(1.0/nparticles, t, res.width, res.height, 30.0);
                 }
                 if(indexedlist[i].gettw() > maxtw)
                     maxtw = indexedlist[i].gettw();
@@ -910,7 +932,7 @@ void vParticleReader::onRead(ev::vBottle &inputBottle)
                 resampled++;
                 double rn = (1.0*pwsum) * (double)rand() / RAND_MAX;
                 if(rn > pwsum)
-                    p.resample(1.0/nparticles, t);
+                    p.resample(1.0/nparticles, t, res.width, res.height, 30.0);
                 else {
                     double accum = 0.0; int i = 0;
                     for(i = 0; i < nparticles; i++) {
@@ -929,7 +951,7 @@ void vParticleReader::onRead(ev::vBottle &inputBottle)
             }
 
             if(p.predict(t)) {
-                p.resample(1.0/nparticles, t);
+                p.resample(1.0/nparticles, t, res.width, res.height, 30.0);
             }
 
 

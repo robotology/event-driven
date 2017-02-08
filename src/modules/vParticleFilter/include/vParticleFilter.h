@@ -55,7 +55,6 @@ public:
     void initTiming(unsigned long int stamp);
     void initWeight(double weight);
 
-
     unsigned int getTemporalWindow();
 
     void setRate(unsigned int rate) { fixedrate = rate; }
@@ -63,7 +62,7 @@ public:
     void setOutlierParameter(double value) { this->outlierParameter = value; }
     void setInlierParameter(double value) {this->inlierParameter = value; }
 
-    void resample(double w, unsigned long int t);
+    void resample(double w, unsigned long int t, int x, int y, int r);
     void resample(const vParticle &seeder, double w, unsigned long int t);
 
 
