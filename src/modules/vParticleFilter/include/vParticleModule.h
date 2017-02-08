@@ -42,7 +42,6 @@ private:
     yarp::os::Bottle weights;
     yarp::os::Stamp pstamp;
 
-
     //event reps
     ev::temporalSurface surfaceLeft;
     ev::vtsHelper unwrap;
@@ -63,10 +62,13 @@ private:
     bool strict;
     int nparticles;
     int rate;
+    double nRandomise;
+    bool adaptive;
 
 public:
 
-    vParticleReader(unsigned int width = 128, unsigned int height = 128);
+    vParticleReader();
+    void initialise(unsigned int width , unsigned int height, unsigned int nParticles, unsigned int rate, double nRands, bool adaptive);
 
     bool    open(const std::string &name, bool strictness = false);
     void    onRead(ev::vBottle &inBot);

@@ -84,6 +84,7 @@ bool vParticleModule::configure(yarp::os::ResourceFinder &rf)
     //filter paramters
     int nParticles = rf.check("particles", yarp::os::Value(50)).asInt();
     double nRandResample = rf.check("randoms", yarp::os::Value(0.02)).asDouble();
+    int rate = rf.check("rate", yarp::os::Value(1000)).asDouble();
 
     //observation parameters
     double minlikelihood = rf.check("obsthresh", yarp::os::Value(20.0)).asDouble();
@@ -94,9 +95,10 @@ bool vParticleModule::configure(yarp::os::ResourceFinder &rf)
     if(!realtime) {
         particleThread = 0;
         /* USE FULL PROCESS IN CALLBACK */
-        particleCallback = new vParticleReader(
-                    rf.check("width", yarp::os::Value(128)).asInt(),
-                    rf.check("height", yarp::os::Value(128)).asInt());
+        particleCallback = new vParticleReader;
+        particleCallback->initialise(rf.check("width", yarp::os::Value(128)).asInt(),
+                                     rf.check("height", yarp::os::Value(128)).asInt(),
+                                     nParticles, rate, nRandResample, adaptivesampling);
 
         //open the ports
         if(!particleCallback->open(getName(), strict)) {
@@ -620,6 +622,8 @@ bool particleProcessor::inbounds(vParticle &p)
         return false;
     if(p.gety() < -r || p.gety() > res.height + r)
         return false;
+    //if(r < 10 || r > 50)
+    //    return false;
 
     return true;
 }
@@ -683,11 +687,9 @@ void vPartObsThread::run()
 /*////////////////////////////////////////////////////////////////////////////*/
 //particle reader (callback)
 /*////////////////////////////////////////////////////////////////////////////*/
-vParticleReader::vParticleReader(unsigned int width, unsigned int height)
+vParticleReader::vParticleReader()
 {
 
-    res.width = width; res.height = height;
-    surfaceLeft = ev::temporalSurface(width, height);
     strict = false;
     pmax.initWeight(0.0);
     srand(yarp::os::Time::now());
@@ -695,11 +697,41 @@ vParticleReader::vParticleReader(unsigned int width, unsigned int height)
     avgx = 64;
     avgy = 64;
     avgr = 20;
-    nparticles = 500;
+    nparticles = 50;
     pwsum = 1.0;
     pwsumsq = nparticles * pow(1.0 / nparticles, 2.0);
-    //rate = 100 * 7.8125;
     rate = 1000;
+}
+
+void vParticleReader::initialise(unsigned int width , unsigned int height, unsigned int nParticles, unsigned int rate, double nRands, bool adaptive)
+{
+    //parameters
+    res.width = width;
+    res.height = height;
+
+    surfaceLeft = ev::temporalSurface(width, height);
+
+    nparticles = nParticles;
+    this->nRandomise = 1.0 + nRands;
+    this->adaptive = adaptive;
+    this->rate = rate;
+
+    pwsumsq = nparticles * pow(1.0 / nparticles, 2.0);
+
+    //initialise the particles
+    vParticle p;
+    p.setRate(rate);
+
+    for(int i = 0; i < nparticles; i++) {
+        p.setid(i);
+        p.resample(1.0/nparticles, 0, res.width, res.height, 30.0);
+        p.initWeight(1.0/nparticles);
+        sortedlist.push(p);
+        indexedlist.push_back(p);
+    }
+
+
+
 }
 
 /******************************************************************************/
@@ -743,27 +775,27 @@ void vParticleReader::interrupt()
 
 
 
-ev::vQueue temporalSelection(ev::vQueue &q, int ctime, int dtime)
-{
-    ev::vQueue subq;
+//ev::vQueue temporalSelection(ev::vQueue &q, int ctime, int dtime)
+//{
+//    ev::vQueue subq;
 
-    if(ctime - dtime < 0) {
-        for(unsigned int i = 0; i < q.size(); i++) {
-            if(q[i]->getStamp() > ctime - dtime + ev::vtsHelper::maxStamp() || q[i]->getStamp() < ctime)
-                subq.push_back(q[i]);
-        }
-    } else {
-        for(unsigned int i = 0; i < q.size(); i++) {
-            if(q[i]->getStamp() < ctime && q[i]->getStamp() > (ctime - dtime))
-                subq.push_back(q[i]);
-        }
-    }
+//    if(ctime - dtime < 0) {
+//        for(unsigned int i = 0; i < q.size(); i++) {
+//            if(q[i]->getStamp() > ctime - dtime + ev::vtsHelper::maxStamp() || q[i]->getStamp() < ctime)
+//                subq.push_back(q[i]);
+//        }
+//    } else {
+//        for(unsigned int i = 0; i < q.size(); i++) {
+//            if(q[i]->getStamp() < ctime && q[i]->getStamp() > (ctime - dtime))
+//                subq.push_back(q[i]);
+//        }
+//    }
 
-    //std::cout << q.size() << " " << subq.size() << std::endl;
+//    //std::cout << q.size() << " " << subq.size() << std::endl;
 
-    return subq;
+//    return subq;
 
-}
+//}
 
 
 
@@ -795,20 +827,7 @@ void vParticleReader::onRead(ev::vBottle &inputBottle)
 
         t = unwrap((*qi)->getStamp());
 
-        //initialise if needed
-        if(sortedlist.empty()) {
-            //initialise the particles
-            vParticle p;
-            p.setRate(rate);
 
-            for(int i = 0; i < nparticles; i++) {
-                p.setid(i);
-                p.resample(1.0/nparticles, t, res.width, res.height, 30.0);
-                p.initWeight(1.0/nparticles);
-                sortedlist.push(p);
-                indexedlist.push_back(p);
-            }
-        }
 
         //update at a fixed rate
         if(rate && indexedlist[0].needsUpdating(t)) {
@@ -817,11 +836,11 @@ void vParticleReader::onRead(ev::vBottle &inputBottle)
             //resampling
             //if(pwsumsq * nparticles > 2.0) {
 
-            if(true) {
+            if(!adaptive || pwsumsq * nparticles > 2.0) {
                 resampled = nparticles;
                 std::vector<vParticle> indexedSnap = indexedlist;
                 for(int i = 0; i < nparticles; i++) {
-                    double rn = 1.05 * pwsum * (double)rand() / RAND_MAX;
+                    double rn = this->nRandomise * pwsum * (double)rand() / RAND_MAX;
                     if(rn > pwsum)
                         indexedlist[i].resample(1.0/nparticles, t, res.width, res.height, 30.0);
                     else {
@@ -910,84 +929,85 @@ void vParticleReader::onRead(ev::vBottle &inputBottle)
             indexedlist[0].initTiming(t);
 
         }
-
-
-
-
-        vParticle p = sortedlist.top();
-        while(!rate && p.needsUpdating(t)) {
-            //std::cout << "Asynchronous Update" << std::endl;
-            processed++;
-
-            double oldweight = p.getw();
-
-//            if((double)rand() / RAND_MAX < 0.1) {
-//                p.resample(1.0/nparticles, t);
-//            } else
-
-            //if((1.0 / pwsumsq) < (0.5*nparticles)) {
-            if(1.0 / (pwsumsq * nparticles) < (double)rand() / RAND_MAX) {
-            //if(1.0 / (pwsumsq * nparticles) < p.getw()) {
-            //if(false) {
-                resampled++;
-                double rn = (1.0*pwsum) * (double)rand() / RAND_MAX;
-                if(rn > pwsum)
-                    p.resample(1.0/nparticles, t, res.width, res.height, 30.0);
-                else {
-                    double accum = 0.0; int i = 0;
-                    for(i = 0; i < nparticles; i++) {
-                        accum += indexedlist[i].getw();
-                        if(accum > rn) break;
-                    }
-                    p.resample(indexedlist[i], 1.0/nparticles, t);
-                    //p.resample(pmax, 1.0/nparticles, t);
-                }
-//                if((double)rand() / RAND_MAX < 0.1) {
-//                    p.resample(1.0/nparticles, t);
-//                } else {
-//                    p.resample(pmax, 1.0/nparticles, t);
-//                }
-//                resampled = true;
-            }
-
-            if(p.predict(t)) {
-                p.resample(1.0/nparticles, t, res.width, res.height, 30.0);
-            }
-
-
-            //get the stw
-            int prad = (int)(p.getr()*1.0 + 4 +0.5);
-            stw = surfaceLeft.getSurf_Tlim(p.getTemporalWindow(), p.getx(), p.gety(), prad);
-            //stw = temporalSelectionq(sw, (*qi)->getStamp(), p.getTemporalWindow());
-
-            //calculate the likelihood and update weight
-            //p.updateWeight(p.calcLikelihood(stw, nparticles, prad*2 + 1), pwsum);
-            p.updateWeight2(p.calcLikelihood(stw, nparticles), pwsumsq);
-
-
-            //update our best particle
-            if(p.getw() > pmax.getw() || p.getid() == pmax.getid()) {
-                pmax = p;
-            }
-
-            //update our estimate of particle weights
-            pwsum += p.getw() - oldweight;
-            pwsumsq += pow(p.getw(), 2.0) - pow(oldweight, 2.0);
-            //std::cout << pwsum << std::endl;
-            //if(pwsum > 1.0)
-            //    std::cout << "PWSUM error" << std::endl;
-
-            //remove it and push it back in
-            sortedlist.pop();
-            sortedlist.push(p);
-
-            //visualisations out
-            indexedlist[p.getid()] = p;
-
-            p = sortedlist.top();
-        }
-
     }
+
+
+
+
+//        vParticle p = sortedlist.top();
+//        while(!rate && p.needsUpdating(t)) {
+//            //std::cout << "Asynchronous Update" << std::endl;
+//            processed++;
+
+//            double oldweight = p.getw();
+
+////            if((double)rand() / RAND_MAX < 0.1) {
+////                p.resample(1.0/nparticles, t);
+////            } else
+
+//            //if((1.0 / pwsumsq) < (0.5*nparticles)) {
+//            if(1.0 / (pwsumsq * nparticles) < (double)rand() / RAND_MAX) {
+//            //if(1.0 / (pwsumsq * nparticles) < p.getw()) {
+//            //if(false) {
+//                resampled++;
+//                double rn = (1.0*pwsum) * (double)rand() / RAND_MAX;
+//                if(rn > pwsum)
+//                    p.resample(1.0/nparticles, t, res.width, res.height, 30.0);
+//                else {
+//                    double accum = 0.0; int i = 0;
+//                    for(i = 0; i < nparticles; i++) {
+//                        accum += indexedlist[i].getw();
+//                        if(accum > rn) break;
+//                    }
+//                    p.resample(indexedlist[i], 1.0/nparticles, t);
+//                    //p.resample(pmax, 1.0/nparticles, t);
+//                }
+////                if((double)rand() / RAND_MAX < 0.1) {
+////                    p.resample(1.0/nparticles, t);
+////                } else {
+////                    p.resample(pmax, 1.0/nparticles, t);
+////                }
+////                resampled = true;
+//            }
+
+//            if(p.predict(t)) {
+//                p.resample(1.0/nparticles, t, res.width, res.height, 30.0);
+//            }
+
+
+//            //get the stw
+//            int prad = (int)(p.getr()*1.0 + 4 +0.5);
+//            stw = surfaceLeft.getSurf_Tlim(p.getTemporalWindow(), p.getx(), p.gety(), prad);
+//            //stw = temporalSelectionq(sw, (*qi)->getStamp(), p.getTemporalWindow());
+
+//            //calculate the likelihood and update weight
+//            //p.updateWeight(p.calcLikelihood(stw, nparticles, prad*2 + 1), pwsum);
+//            p.updateWeight2(p.calcLikelihood(stw, nparticles), pwsumsq);
+
+
+//            //update our best particle
+//            if(p.getw() > pmax.getw() || p.getid() == pmax.getid()) {
+//                pmax = p;
+//            }
+
+//            //update our estimate of particle weights
+//            pwsum += p.getw() - oldweight;
+//            pwsumsq += pow(p.getw(), 2.0) - pow(oldweight, 2.0);
+//            //std::cout << pwsum << std::endl;
+//            //if(pwsum > 1.0)
+//            //    std::cout << "PWSUM error" << std::endl;
+
+//            //remove it and push it back in
+//            sortedlist.pop();
+//            sortedlist.push(p);
+
+//            //visualisations out
+//            indexedlist[p.getid()] = p;
+
+//            p = sortedlist.top();
+//        }
+
+//    }
 //    if(q.size() > 1) {
 //        std::cout << (double)processed / q.size() << " particles processed / event\t|| ";
 //        std::cout << (double)processed / ((q.back()->getStamp() - q.front()->getStamp())*(1e-3)*7.8125) << " particles processed / ms" << std::endl;
@@ -1006,7 +1026,7 @@ void vParticleReader::onRead(ev::vBottle &inputBottle)
     //std::cout << pwsum << std::endl;
     //static int i = 0;
     //if(i++ % 50 == 0) {
-    if(resampled) {
+    if(true) {
         //std::cout << pmax.getTemporalWindow() << "clock ticks" << std::endl;
         if(resampled > 255) resampled = 255;
         yarp::sig::PixelBgr pcol = yarp::sig::PixelBgr(255-resampled, 255-resampled, 255);
@@ -1015,7 +1035,7 @@ void vParticleReader::onRead(ev::vBottle &inputBottle)
         image.resize(res.width, res.height);
         image.zero();
         //drawcircle(image, avgx, avgy, avgr, 2);
-        drawcircle(image, pmax.getx(), pmax.gety(), pmax.getr()+0.5, 2);
+        //drawcircle(image, pmax.getx(), pmax.gety(), pmax.getr()+0.5, 2);
         //stw = surfaceLeft.getSurfLim(pmax.getTemporalWindow(), pmax.getx(), pmax.gety(), pmax.getr()+2);
         //stw = surfaceLeft.getSurf_Tlim(pmax.getTemporalWindow());
         stw = surfaceLeft.getSurf_Tlim(avgtw);
@@ -1032,16 +1052,16 @@ void vParticleReader::onRead(ev::vBottle &inputBottle)
             int py = indexedlist[i].gety();
             int px = indexedlist[i].getx();
 
-            if(py < 0 || py > res.height-1 || px < 0 || px > res.width-1) continue;
-            pcol = yarp::sig::PixelBgr(255*indexedlist[i].getw()/pmax.getw(), 255*indexedlist[i].getw()/pmax.getw(), 255);
-            image(py, res.width-1 - px) = pcol;
+            if(py < 0 || py >= res.height || px < 0 || px >= res.width) continue;
+            //pcol = yarp::sig::PixelBgr(255*indexedlist[i].getw()/pmax.getw(), 255*indexedlist[i].getw()/pmax.getw(), 255);
+            image(px, py) = yarp::sig::PixelBgr(255, 255, 255);
         //drawcircle(image, indexedlist[i].getx(), indexedlist[i].gety(), indexedlist[i].getr(), indexedlist[i].getid());
         }
         drawEvents(image, stw);
         //stw = surfaceLeft.getSurf_Clim(pmax.getr()*2.0*M_PI, pmax.getx(), pmax.gety(), pmax.getr() + 0.5);
         //drawEvents(image, stw);
         //drawcircle(image, pmax.getx(), pmax.gety(), pmax.getr(), pmax.getid());
-        //drawcircle(image, avgx, avgy, avgr, 0);
+        drawcircle(image, avgx, avgy, avgr, 1);
         //std::cout << 1.0 / pwsumsq << " " << nparticles << std::endl;
         debugOut.write();
 

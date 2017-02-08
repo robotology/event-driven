@@ -95,12 +95,13 @@ void vParticle::initWeight(double weight)
 bool vParticle::predict(unsigned long timestamp)
 {
     double dt = timestamp - this->stamp;
-    tw += (dt*1.5);
+    //tw += (dt*1.5);
+    tw += std::max(dt, 20000.0);
 
-    double sigmap = 2.0;
+    double sigmap = 0.3;
     x = generateGaussianNoise(x, sigmap);
     y = generateGaussianNoise(y, sigmap);
-    r = generateGaussianNoise(r, sigmap * 0.2);
+    r = generateGaussianNoise(r, sigmap);
 
     initTiming(timestamp);
 
