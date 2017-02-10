@@ -1,4 +1,4 @@
-#include "vParticleFilter.h"
+#include "vParticle.h"
 #include <cmath>
 #include <limits>
 
@@ -28,6 +28,50 @@ double generateGaussianNoise(double mu, double sigma)
     z0 = sqrt(-2.0 * log(u1)) * cos(two_pi * u2);
     z1 = sqrt(-2.0 * log(u1)) * sin(two_pi * u2);
     return z0 * sigma + mu;
+}
+
+void drawEvents(yarp::sig::ImageOf< yarp::sig::PixelBgr> &image, ev::vQueue &q, double tw) {
+
+    int tnow = q.front()->getStamp(); //only valid for certain q's!!
+
+    for(unsigned int i = 0; i < q.size(); i++) {
+        if(tw) {
+            double dt = tnow - q[i]->getStamp();
+            if(dt < 0) dt += ev::vtsHelper::maxStamp();
+            if(dt > tw) break;
+        }
+        event<AddressEvent> v = std::static_pointer_cast<AddressEvent>(q[i]);
+        image(v->getX(), v->getY()) = yarp::sig::PixelBgr(0, 255, 0);
+    }
+}
+
+void drawcircle(yarp::sig::ImageOf<yarp::sig::PixelBgr> &image, int cx, int cy, int cr, int id)
+{
+
+    for(int y = -cr; y <= cr; y++) {
+        for(int x = -cr; x <= cr; x++) {
+            if(fabs(sqrt(pow(x, 2.0) + pow(y, 2.0)) - (double)cr) > 0.8) continue;
+            int px = cx + x; int py = cy + y;
+            if(py < 0 || py > image.height()-1 || px < 0 || px > image.width()-1) continue;
+            switch(id) {
+            case(0): //green
+                image(px, py) = yarp::sig::PixelBgr(0, 255, 0);
+                break;
+            case(1): //blue
+                image(px, py) = yarp::sig::PixelBgr(0, 0, 255);
+                break;
+            case(2): //red
+                image(px, py) = yarp::sig::PixelBgr(255, 0, 0);
+                break;
+            default:
+                image(px, py) = yarp::sig::PixelBgr(255, 255, 0);
+                break;
+
+            }
+
+        }
+    }
+
 }
 
 /*////////////////////////////////////////////////////////////////////////////*/
@@ -98,7 +142,7 @@ bool vParticle::predict(unsigned long timestamp)
     //tw += (dt*1.5);
     tw += std::max(dt, 20000.0);
 
-    double sigmap = 0.3;
+    double sigmap = 0.5;
     x = generateGaussianNoise(x, sigmap);
     y = generateGaussianNoise(y, sigmap);
     r = generateGaussianNoise(r, sigmap);

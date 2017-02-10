@@ -1,9 +1,14 @@
-
-#ifndef __V_PARTICLEFILTER__
-#define __V_PARTICLEFILTER__
+#ifndef __VPARTICLE__
+#define __VPARTICLE__
 
 #include <iCub/eventdriven/all.h>
 #include <yarp/sig/all.h>
+
+using namespace ev;
+
+void drawEvents(yarp::sig::ImageOf< yarp::sig::PixelBgr> &image, ev::vQueue &q, double tw = 0);
+
+void drawcircle(yarp::sig::ImageOf<yarp::sig::PixelBgr> &image, int cx, int cy, int cr, int id = 0);
 
 /*////////////////////////////////////////////////////////////////////////////*/
 //VPARTICLETRACKER
