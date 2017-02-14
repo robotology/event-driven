@@ -311,7 +311,7 @@ void blobDraw::draw(cv::Mat &image, const ev::vQueue &eSet)
 
     cv::medianBlur(canvas, canvas, 5);
     cv::blur(canvas, canvas, cv::Size(5, 5));
-    cv::resize(canvas, image, cv::Size(Ylimit*2, Xlimit*2));
+    cv::resize(canvas, image, cv::Size(Ylimit, Xlimit));
 }
 
 integralDraw::integralDraw()
