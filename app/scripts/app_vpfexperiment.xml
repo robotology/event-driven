@@ -11,15 +11,15 @@
 </module>
 
 <module>
-    <name> yarpscope </name>
-    <parameters> --remote /vpf/scope:o --index "(0 1 2 3)" --color "(red blue green black)" </parameters>
-    <node> localhost </node>
-</module>
-
-<module>
    <name> yarpview </name>
    <parameters>--name /viewTracker --x 500 --y 000 --RefreshTime 33 --compact </parameters>
    <node> localhost </node>
+</module>
+
+<module>
+    <name> yarpscope </name>
+    <parameters> --remote /vpf/scope:o --index "(0 1 2 3)" --color "(red blue green black)" </parameters>
+    <node> localhost </node>
 </module>
 
 <module>
