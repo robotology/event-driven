@@ -20,7 +20,7 @@ vQueue vSurface2::addEvent(event<> v)
     vQueue removed = removeEvents(v);
 
     q.push_back(v);
-    event<AddressEvent> c = getas<AddressEvent>(v);
+    event<AddressEvent> c = std::static_pointer_cast<AddressEvent>(v);
     if(c) {
         if(c->getY() >= height || c->getX() >= width) {
             std::cout << "WHY" << std::endl;
@@ -232,7 +232,7 @@ vQueue temporalSurface::removeEvents(event<> toAdd)
     //remove any events falling out the back of the window
     while(q.size()) {
 
-        event<AddressEvent> v = getas<AddressEvent>(q.front());
+        event<AddressEvent> v = std::static_pointer_cast<AddressEvent>(q.front());
         if(v && v != spatial[v->getY()][v->getX()]) {
             q.pop_front();
             continue;
@@ -252,7 +252,7 @@ vQueue temporalSurface::removeEvents(event<> toAdd)
 
     while(q.size()) {
 
-        event<AddressEvent> v = getas<AddressEvent>(q.back());
+        event<AddressEvent> v = std::static_pointer_cast<AddressEvent>(q.back());
         if(v && v != spatial[v->getY()][v->getX()]) {
             q.pop_back();
             continue;
