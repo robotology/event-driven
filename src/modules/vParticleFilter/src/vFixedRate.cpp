@@ -20,9 +20,15 @@ vParticleReader::vParticleReader()
     pwsumsq = nparticles * pow(1.0 / nparticles, 2.0);
     rate = 1000;
     seedx = 0; seedy = 0; seedr = 0;
+
+    obsThresh = 30.0;
+    obsInlier = 1.5;
+    obsOutlier = 3.0;
 }
 
-void vParticleReader::initialise(unsigned int width , unsigned int height, unsigned int nParticles, unsigned int rate, double nRands, bool adaptive)
+void vParticleReader::initialise(unsigned int width , unsigned int height,
+                                 unsigned int nParticles, unsigned int rate,
+                                 double nRands, bool adaptive, double pVariance)
 {
     //parameters
     res.width = width;
@@ -40,6 +46,11 @@ void vParticleReader::initialise(unsigned int width , unsigned int height, unsig
     //initialise the particles
     vParticle p;
     p.setRate(rate);
+    p.initWeight(1.0/nparticles);
+    p.setInlierParameter(obsInlier);
+    p.setOutlierParameter(obsOutlier);
+    p.setMinLikelihood(obsThresh);
+    p.setVariance(pVariance);
 
     for(int i = 0; i < nparticles; i++) {
         p.setid(i);
@@ -96,6 +107,19 @@ void vParticleReader::interrupt()
     yarp::os::BufferedPort<ev::vBottle>::interrupt();
 }
 
+bool vParticleReader::inbounds(vParticle &p)
+{
+    int r = p.getr();
+    if(p.getx() < -r || p.getx() > res.width + r)
+        return false;
+    if(p.gety() < -r || p.gety() > res.height + r)
+        return false;
+    if(r < 6 || r > 50)
+        return false;
+
+    return true;
+}
+
 
 /******************************************************************************/
 void vParticleReader::onRead(ev::vBottle &inputBottle)
@@ -146,7 +170,8 @@ void vParticleReader::onRead(ev::vBottle &inputBottle)
         //PREDICT
         unsigned int maxtw = 0;
         for(int i = 0; i < nparticles; i++) {
-            if(indexedlist[i].predict(t)) {
+            indexedlist[i].predict(t);
+            if(!inbounds(indexedlist[i])) {
                 indexedlist[i].resample(1.0/nparticles, t, res.width, res.height, 30.0);
             }
             if(indexedlist[i].gettw() > maxtw)

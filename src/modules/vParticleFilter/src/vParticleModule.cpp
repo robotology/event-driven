@@ -69,19 +69,23 @@ bool vParticleModule::configure(yarp::os::ResourceFinder &rf)
     double minlikelihood = rf.check("obsthresh", yarp::os::Value(20.0)).asDouble();
     double inlierParameter = rf.check("obsinlier", yarp::os::Value(1.5)).asDouble();
     double outlierParameter = rf.check("obsoutlier", yarp::os::Value(3.0)).asDouble();
+    double particleVariance = rf.check("variance", yarp::os::Value(0.5)).asDouble();
 
 
     if(!realtime) {
         particleThread = 0;
         /* USE FULL PROCESS IN CALLBACK */
         particleCallback = new vParticleReader;
-        particleCallback->initialise(rf.check("width", yarp::os::Value(128)).asInt(),
-                                     rf.check("height", yarp::os::Value(128)).asInt(),
-                                     nParticles, rate, nRandResample, adaptivesampling);
+        particleCallback->setObservationParameters(minlikelihood, inlierParameter,
+                                                 outlierParameter);
         if(seed && seed->size() == 3) {
             std::cout << "Using initial seed location: " << seed->toString() << std::endl;
             particleCallback->setSeed(seed->get(0).asDouble(), seed->get(1).asDouble(), seed->get(2).asDouble());
         }
+        particleCallback->initialise(rf.check("width", yarp::os::Value(128)).asInt(),
+                                     rf.check("height", yarp::os::Value(128)).asInt(),
+                                     nParticles, rate, nRandResample, adaptivesampling,
+                                     particleVariance);
 
         //open the ports
         if(!particleCallback->open(getName(), strict)) {

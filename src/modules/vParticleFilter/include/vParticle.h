@@ -20,6 +20,7 @@ private:
     double minlikelihood;
     double inlierParameter;
     double outlierParameter;
+    double variance;
 
     //id
     int id;
@@ -66,6 +67,7 @@ public:
     void setMinLikelihood(double minlikelihood) { this->minlikelihood = minlikelihood; }
     void setOutlierParameter(double value) { this->outlierParameter = value; }
     void setInlierParameter(double value) {this->inlierParameter = value; }
+    void setVariance(double value) { this->variance = value; }
 
     void resample(double w, unsigned long int t, int x, int y, int r);
     void resample(const vParticle &seeder, double w, unsigned long int t);

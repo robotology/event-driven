@@ -47,10 +47,19 @@ private:
     double nRandomise;
     bool adaptive;
 
+    double obsThresh;
+    double obsInlier;
+    double obsOutlier;
+
+    bool inbounds(vParticle &p);
+
 public:
 
     vParticleReader();
-    void initialise(unsigned int width , unsigned int height, unsigned int nParticles, unsigned int rate, double nRands, bool adaptive);
+    void initialise(unsigned int width , unsigned int height, unsigned int nParticles, unsigned int rate, double nRands, bool adaptive, double pVariance);
+    void setObservationParameters(double minLikelihood, double inlierPar, double outlierPar) {
+        obsThresh = minLikelihood; obsInlier = inlierPar; obsOutlier = outlierPar; }
+
     void setSeed(int x, int y, int r)
     {
         seedx = x; seedy = y; seedr = r;

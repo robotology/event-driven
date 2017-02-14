@@ -85,6 +85,7 @@ vParticle::vParticle()
     minlikelihood = 20.0;
     inlierParameter = 1.5;
     outlierParameter = 3.0;
+    variance = 0.5;
     stamp = 0;
     nextUpdate = 0;
     fixedrate = 0;
@@ -138,14 +139,18 @@ void vParticle::initWeight(double weight)
 
 bool vParticle::predict(unsigned long timestamp)
 {
-    double dt = timestamp - this->stamp;
+    double dt;
+    if(this->stamp)
+        dt = timestamp - this->stamp;
+    else
+        dt = 0;
     //tw += (dt*1.5);
-    tw += std::max(dt, 20000.0);
+    tw += std::max(dt, 10000.0);
 
-    double sigmap = 0.5;
-    x = generateGaussianNoise(x, sigmap);
-    y = generateGaussianNoise(y, sigmap);
-    r = generateGaussianNoise(r, sigmap);
+    //double sigmap = 0.5;
+    x = generateGaussianNoise(x, variance);
+    y = generateGaussianNoise(y, variance);
+    r = generateGaussianNoise(r, variance * 0.3);
 
     initTiming(timestamp);
 
@@ -245,14 +250,6 @@ void vParticle::incrementalLikelihood(int vx, int vy, int dt)
             angdist[a] = 1;
         }
 
-        double score = inlierCount - outlierCount;
-        if(score > likelihood) {
-            likelihood = score;
-            maxtw = dt;
-
-        }
-
-
     } else if(sqrd > -outlierParameter && sqrd < 0) { //-3 < X < -5
 
         int a = 0.5 + (angbuckets-1) * (atan2(dy, dx) + M_PI) / (2.0 * M_PI);
@@ -260,6 +257,13 @@ void vParticle::incrementalLikelihood(int vx, int vy, int dt)
             outlierCount++;
             negdist[a] = 1;
         }
+
+    }
+
+    double score = inlierCount - outlierCount;
+    if(score >= likelihood) {
+        likelihood = score;
+        maxtw = dt;
 
     }
 
