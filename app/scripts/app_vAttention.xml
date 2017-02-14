@@ -1,21 +1,57 @@
 <application>
-<name> app_vAttention </name>
+    <name> app_vAttention </name>
 
-<module>
-    <name> vAttention </name>
-    <parameters> --sensorSize 128 --tau 120000 --thr 20 --filtersPath /home/miacono/workspace/event-driven/src/processing/vAttention/filters</parameters>
-    <node> localhost </node>
-</module>
-
-<module>
-   <name>yarpview</name>
-   <parameters>--name /viewLeft --x 000 --y 000 --RefreshTime 16 </parameters>
-   <node>localhost</node>
-</module>
+    <module>
+        <name> vAttention </name>
+        <parameters> --sensorSize 128 --tau 120000 --thr 20 --filtersPath /home/miacono/workspace/event-driven/src/processing/vAttention/filters</parameters>
+        <node> localhost </node>
+    </module>
 
     <module>
         <name>yarpview</name>
-        <parameters>--name /viewRight --x 300 --y 00 --RefreshTime 16 </parameters>
+        <parameters>--name /viewLeft --x 000 --y 000 --RefreshTime 16 </parameters>
+        <node>localhost</node>
+    </module>
+
+    <module>
+        <name>yarpview</name>
+        <parameters>--name /uniform --x 350 --y 00 --RefreshTime 16 </parameters>
+        <node>localhost</node>
+    </module>
+
+    <module>
+        <name>yarpview</name>
+        <parameters>--name /orient0 --x 700 --y 00 --RefreshTime 16 </parameters>
+        <node>localhost</node>
+    </module>
+
+    <module>
+        <name>yarpview</name>
+        <parameters>--name /orient45 --x 00 --y 350 --RefreshTime 16 </parameters>
+        <node>localhost</node>
+    </module>
+
+    <module>
+        <name>yarpview</name>
+        <parameters>--name /orient90 --x 350 --y 350 --RefreshTime 16 </parameters>
+        <node>localhost</node>
+    </module>
+
+    <module>
+        <name>yarpview</name>
+        <parameters>--name /orient135 --x 700 --y 350 --RefreshTime 16 </parameters>
+        <node>localhost</node>
+    </module>
+
+    <module>
+        <name>yarpview</name>
+        <parameters>--name /gaussian --x 00 --y 700 --RefreshTime 16 </parameters>
+        <node>localhost</node>
+    </module>
+
+    <module>
+        <name>yarpview</name>
+        <parameters>--name /DOG --x 350 --y 700 --RefreshTime 16 </parameters>
         <node>localhost</node>
     </module>
 
@@ -24,22 +60,64 @@
         <node>localhost</node>
     </module>
 
-<connection>
-  <from>/zynqGrabber/vBottle:o</from>
-  <to>/vAttention/vBottle:i</to>
-  <protocol>tcp</protocol>
-</connection>
+    <connection>
+        <from>/zynqGrabber/vBottle:o</from>
+        <to>/vAttention/vBottle:i</to>
+        <protocol>tcp</protocol>
+    </connection>
 
-<connection>
-  <from>/vAttention/salMapLeft:o</from>
-  <to>/viewLeft</to>
-  <protocol>tcp</protocol>
-</connection>
+    <connection>
+        <from>/vAttention/salMapLeft:o</from>
+        <to>/viewLeft</to>
+        <protocol>tcp</protocol>
+    </connection>
 
-<connection>
-    <from>/vAttention/salMapRight:o</from>
-    <to>/viewRight</to>
-    <protocol>tcp</protocol>
-</connection>
+    <connection>
+        <from>/vAttention/salMapRight:o</from>
+        <to>/viewRight</to>
+        <protocol>tcp</protocol>
+    </connection>
+
+    <connection>
+        <from>/vAttention/DOG:o</from>
+        <to>/DOG</to>
+        <protocol>tcp</protocol>
+    </connection>
+
+    <connection>
+        <from>/vAttention/gaussian:o</from>
+        <to>/gaussian</to>
+        <protocol>tcp</protocol>
+    </connection>
+
+    <connection>
+        <from>/vAttention/orient0:o</from>
+        <to>/orient0</to>
+        <protocol>tcp</protocol>
+    </connection>
+
+    <connection>
+        <from>/vAttention/orient45:o</from>
+        <to>/orient45</to>
+        <protocol>tcp</protocol>
+    </connection>
+
+    <connection>
+        <from>/vAttention/orient90:o</from>
+        <to>/orient90</to>
+        <protocol>tcp</protocol>
+    </connection>
+
+    <connection>
+        <from>/vAttention/orient135:o</from>
+        <to>/orient135</to>
+        <protocol>tcp</protocol>
+    </connection>
+
+    <connection>
+        <from>/vAttention/uniform:o</from>
+        <to>/uniform</to>
+        <protocol>tcp</protocol>
+    </connection>
 
 </application>

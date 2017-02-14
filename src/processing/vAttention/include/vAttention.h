@@ -38,6 +38,13 @@ private:
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr> > outSalMapLeftPort;
     // output port where the output saliency map image (right) is sent
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr> > outSalMapRightPort;
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr> > outorient0Port;
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr> > outorient90Port;
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr> > outorient45Port;
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr> > outorient135Port;
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr> > outgaussianPort;
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr> > outDOGPort;
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr> > outuniformPort;
 
     int sensorSize;
     int filterSize;
@@ -46,47 +53,46 @@ private:
     int salMapPadding;
     int numIterations;
     double tau;
-    unsigned long int ptime; // past time stamp
     double thrSal; // threshold to put a maximum on the saliency map (whatever is above thr will be set to the maximum value)
     double normSal;
 
     emorph::vtsHelper unwrap;
-    
+
+    yarp::sig::Matrix timeMap;
+    yarp::sig::Matrix activationMap;
     yarp::sig::Matrix salMapLeft;
     yarp::sig::Matrix salMapRight;
+
+    //Filters
     yarp::sig::Matrix uniformFilterMap;
     yarp::sig::Matrix gaussianFilterMap;
     yarp::sig::Matrix bigGaussianFilterMap;
     yarp::sig::Matrix DOGFilterMap;
-    yarp::sig::Matrix horizFilterMap;
-    yarp::sig::Matrix vertFilterMap;
-    yarp::sig::Matrix bigVertFilterMap;
-    yarp::sig::Matrix bigHorizFilterMap;
+    yarp::sig::Matrix orient0FilterMap;
+    yarp::sig::Matrix orient45FilterMap;
+    yarp::sig::Matrix orient90FilterMap;
+    yarp::sig::Matrix orient135FilterMap;
 
-    yarp::sig::Matrix activationMap;
-
-    yarp::sig::Matrix vertFeatureMap;
-    yarp::sig::Matrix bigVertFeatureMap;
-    yarp::sig::Matrix horizFeatureMap;
-    yarp::sig::Matrix bigHorizFeatureMap;
-    yarp::sig::Matrix gaussianFeatureMap;
-    yarp::sig::Matrix bigGaussianFeatureMap;
+    //Feature Maps
+    yarp::sig::Matrix uniformFeatureMap;
     yarp::sig::Matrix DOGFeatureMap;
-    yarp::sig::Matrix normalisedVertFeatureMap;
-    yarp::sig::Matrix normalisedHorizFeatureMap;
-    yarp::sig::Matrix normalisedBigHorizFeatureMap;
-    yarp::sig::Matrix normalisedGaussianFeatureMap;
-    yarp::sig::Matrix normalisedBigGaussianFeatureMap;
+    yarp::sig::Matrix orient0FeatureMap;
+    yarp::sig::Matrix orient45FeatureMap;
+    yarp::sig::Matrix orient90FeatureMap;
+    yarp::sig::Matrix orient135FeatureMap;
+    yarp::sig::Matrix gaussianFeatureMap;
 
-    void updateMap(yarp::sig::Matrix &map, yarp::sig::Matrix &filterMap, emorph::AddressEvent *aep);
+    void updateMap(yarp::sig::Matrix &map, yarp::sig::Matrix &filterMap, emorph::AddressEvent *aep,
+                       unsigned long int dt);
     void normaliseMap(yarp::sig::Matrix &map, yarp::sig::Matrix &normalisedMap);
     void decayMap(yarp::sig::Matrix &map, unsigned long int dt);
     void printMap(yarp::sig::Matrix &map);
-    void convertToImage(yarp::sig::Matrix &map, yarp::sig::ImageOf<yarp::sig::PixelBgr> &image, int rMax,
-                            int cMax);
+    void convertToImage(yarp::sig::Matrix &map, yarp::sig::ImageOf<yarp::sig::PixelBgr> &image, int rMax = -1,
+                            int cMax = -1);
     void load_filter(std::string filename, yarp::sig::Matrix &filterMap, int &filterSize);
     void computeAttentionPoint(yarp::sig::Matrix &map);
     void generateGaussianFilter(yarp::sig::Matrix& filterMap, double sigma, int gaussianFilterSize, int &filterSize);
+    void generateGaborFilter(yarp::sig::Matrix &filterMap, int gaborFilterSize, int theta, int &filterSize);
     void drawSquare( yarp::sig::ImageOf<yarp::sig::PixelBgr> &image, int r, int c, yarp::sig::PixelBgr &pixelBgr) ;
     void computeBoundingBox(yarp::sig::Matrix &map, double threshold);
     void maxInMap(const yarp::sig::Matrix &map);

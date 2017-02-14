@@ -29,7 +29,7 @@ bool vAttentionModule::configure(yarp::os::ResourceFinder &rf) {
     yarp::os::RFModule::setName(moduleName.c_str());
 
     bool strictness = rf.check("strictness") &&
-                  rf.check("strictness", yarp::os::Value(true)).asBool();
+                      rf.check("strictness", yarp::os::Value(true)).asBool();
 
     /* attach a port of the same name as the module (prefixed with a /) to the module
      so that messages received from the port are redirected to the respond method */
@@ -46,7 +46,7 @@ bool vAttentionModule::configure(yarp::os::ResourceFinder &rf) {
 
     /* set parameters */
     int sensorSize = rf.check("sensorSize", yarp::os::Value(128)).asInt();
-    double tau = rf.check("tau", yarp::os::Value(200000.0)).asDouble();
+    double tau = rf.check("tau", yarp::os::Value(1000000000.0)).asDouble();
     double thrSal = rf.check("thr", yarp::os::Value(20)).asDouble();
     string filtersPath = rf.check("filtersPath", yarp::os::Value("../../src/processing/vAttention/filters/")).asString();
 
@@ -152,16 +152,8 @@ vAttentionManager::vAttentionManager(int sensorSize, double tau, double thrSal, 
 
     normSal = thrSal / 255;
 
-    ptime = 0; // past time stamp
 
-
-
-    load_filter(filtersPath + "/horizFilter.txt", horizFilterMap, filterSize);
-    load_filter(filtersPath + "/bigHorizFilter.txt", bigHorizFilterMap, filterSize);
-//    load_filter(filterDirectoryPath + "vertFilter.txt", vertFilterMap, filterSize);
-    vertFilterMap = horizFilterMap.transposed();
-    bigVertFilterMap = bigHorizFilterMap.transposed();
-    load_filter(filtersPath + "/uniformFilter.txt", uniformFilterMap, filterSize);
+    uniformFilterMap *= 10;
 
     /** Gaussian Filter computation**/
 
@@ -170,8 +162,12 @@ vAttentionManager::vAttentionManager(int sensorSize, double tau, double thrSal, 
 
     DOGFilterMap = bigGaussianFilterMap - gaussianFilterMap;
     DOGFilterMap *= 150;
-    uniformFilterMap *= 10;
-printMap(DOGFilterMap);
+
+    generateGaborFilter(orient0FilterMap, 21, 0, filterSize);
+    generateGaborFilter(orient45FilterMap, 21, 45, filterSize);
+    generateGaborFilter(orient90FilterMap, 21, 90, filterSize);
+    generateGaborFilter(orient135FilterMap, 21, 135, filterSize);
+
 
     this->salMapPadding = filterSize / 2;
 
@@ -179,14 +175,20 @@ printMap(DOGFilterMap);
     //The saliency map is bigger than the image by the maximum size among the loaded filters
     salMapLeft = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
     salMapRight = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
-    vertFeatureMap = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
-    bigVertFeatureMap = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
-    horizFeatureMap = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
-    bigHorizFeatureMap = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
+    orient0FeatureMap = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
+    orient45FeatureMap = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
+    orient90FeatureMap = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
+    orient135FeatureMap = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
+    uniformFeatureMap = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
     gaussianFeatureMap = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
-    bigGaussianFeatureMap = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
     DOGFeatureMap = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
+
     activationMap = yarp::sig::Matrix(sensorSize + filterSize, sensorSize + filterSize);
+    timeMap.resize(sensorSize,sensorSize);
+
+    timeMap.zero();
+    salMapLeft.zero();
+    salMapRight.zero();
     activationMap.zero();
 }
 
@@ -208,6 +210,27 @@ void vAttentionManager::generateGaussianFilter(yarp::sig::Matrix &filterMap, dou
     filterSize = max(gaussianFilterSize, filterSize);
 }
 
+void vAttentionManager::generateGaborFilter(yarp::sig::Matrix &filterMap, int gaborFilterSize, int theta, int &filterSize)
+{
+
+    double th_r = (double)theta *M_PI/180.0;
+    filterMap.resize(gaborFilterSize, gaborFilterSize);
+    filterMap.zero();
+    double B = 1.0;
+    double sigma =(double) gaborFilterSize / 4.0;
+    double f = 1.0 /(double) gaborFilterSize;
+    for (double x = 0; x < gaborFilterSize; ++x) {
+        for (double y = 0; y < gaborFilterSize; ++y) {
+            double  x1 = x - (double)gaborFilterSize/2.0;
+            double  y1 = y - (double)gaborFilterSize/2.0;
+
+            filterMap(x,y)=B * exp(-(pow(x1,2.0)+pow(y1,2.0))/(2*pow(sigma,2))) * sin(2.0*M_PI*f*(x1*cos(th_r)+y1*sin(th_r)));
+        }
+    }
+
+    filterSize = max(gaborFilterSize,filterSize);
+
+}
 bool vAttentionManager::open(const std::string moduleName, bool strictness) {
     this->strictness = strictness;
     if (strictness) {
@@ -218,37 +241,42 @@ bool vAttentionManager::open(const std::string moduleName, bool strictness) {
 
     // why is the input port treated differently???? both in open and close
     std::string inPortName = "/" + moduleName + "/vBottle:i";
-    bool check1 = BufferedPort<emorph::vBottle>::open(inPortName);
+    bool check = BufferedPort<emorph::vBottle>::open(inPortName);
 
     if (strictness) outPort.setStrict();
     std::string outPortName = "/" + moduleName + "/vBottle:o";
-    bool check2 = outPort.open(outPortName);
+    check &= outPort.open(outPortName);
 
     outPortName = "/" + moduleName + "/salMapLeft:o";
-    bool check3 = outSalMapLeftPort.open(outPortName);
+    check &= outSalMapLeftPort.open(outPortName);
 
     outPortName = "/" + moduleName + "/salMapRight:o";
-    bool check4 = outSalMapRightPort.open(outPortName);
+    check &= outSalMapRightPort.open(outPortName);
 
-    std::cout << "opened ports: " << std::endl << "vBottle:i " << check1 << std::endl << "vBottle:o " << check2
-              << std::endl << "/salMapLeft:o " << check3 << std::endl << "/salMapRight:o " << check4 << std::endl;
+    outPortName = "/" + moduleName + "/orient0:o";
+    check &= outorient0Port.open(outPortName);
 
-//    salMapImageLeft   = new yarp::sig::ImageOf<yarp::sig::PixelMono>;
-//    salMapImageRight  = new yarp::sig::ImageOf<yarp::sig::PixelMono>;
-//
-//    salMapImageLeft ->resize(sensorSize,sensorSize);
-//    salMapImageRight->resize(sensorSize,sensorSize);
-//
-//    salMapImageLeft ->zero();
-//    salMapImageRight->zero();
+    outPortName = "/" + moduleName + "/orient90:o";
+    check &= outorient90Port.open(outPortName);
 
-    // ---- initialise the images of the saliency maps left and right to 0 ---- //
-    //memset((void*)salMapImageLeft, 0, sensorSize * sensorSize * sizeof(unsigned char));
-    //memset((void*)salMapImageRight, 0, sensorSize * sensorSize * sizeof(unsigned char));
+    outPortName = "/" + moduleName + "/orient45:o";
+    check &= outorient45Port.open(outPortName);
+
+    outPortName = "/" + moduleName + "/orient135:o";
+    check &= outorient135Port.open(outPortName);
+
+    outPortName = "/" + moduleName + "/gaussian:o";
+    check &= outgaussianPort.open(outPortName);
+
+    outPortName = "/" + moduleName + "/DOG:o";
+    check &= outDOGPort.open(outPortName);
+
+    outPortName = "/" + moduleName + "/uniform:o";
+    check &= outuniformPort.open(outPortName);
 
     std::cout << "initialisation correctly ended" << std::endl;
 
-    return check1 && check2 && check3 && check4;
+    return check;
 }
 
 void vAttentionManager::close() {
@@ -257,9 +285,6 @@ void vAttentionManager::close() {
     yarp::os::BufferedPort<emorph::vBottle>::close();
     outSalMapLeftPort.close();
     outSalMapRightPort.close();
-
-    //free(salMapImageLeft);
-    //free(salMapImageRight);
 }
 
 void vAttentionManager::interrupt() {
@@ -276,52 +301,42 @@ void vAttentionManager::onRead(emorph::vBottle &bot) {
     emorph::vQueue q = bot.get<emorph::AddressEvent>();
     q.sort(true);
 
-    unsigned long int t = unwrap(q.back()->getStamp());
-    unsigned long int dt = t - ptime;
-    ptime = t;
+    unsigned long int t;
+    unsigned long int dt;
 
+    int x,y;
     for (emorph::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
         emorph::AddressEvent *aep = (*qi)->getAs<emorph::AddressEvent>();
         if (!aep) continue;
 
+        x = aep->getX();
+        y = aep->getY();
+        t = unwrap(aep->getStamp());
+        dt = t - timeMap(x,y);
+        timeMap(x,y) = t;
         // --- increase energy of saliency map  --- //
         if (aep->getChannel() == 0) {
-//            updateMap(vertFeatureMap, vertFilterMap, aep);
-//            updateMap(bigVertFeatureMap, vertFilterMap, aep);
-//            updateMap(horizFeatureMap, horizFilterMap, aep);
-//            updateMap(bigHorizFeatureMap, bigHorizFilterMap, aep);
-//            updateMap(gaussianFeatureMap, gaussianFilterMap, aep);
-//            updateMap(bigGaussianFeatureMap, bigGaussianFilterMap, aep);
-            updateMap(DOGFeatureMap,DOGFilterMap, aep);
-//            updateMap(DOGFeatureMap,uniformFilterMap, aep);
-
+            //TODO handle left and right salMap
+            updateMap(DOGFeatureMap, DOGFilterMap, aep, dt);
+            updateMap(orient0FeatureMap, orient0FilterMap, aep, dt);
+            updateMap(orient45FeatureMap, orient45FilterMap, aep, dt);
+            updateMap(orient90FeatureMap, orient90FilterMap, aep, dt);
+            updateMap(orient135FeatureMap, orient135FilterMap, aep, dt);
+            updateMap(uniformFeatureMap,uniformFilterMap, aep, dt);
+            updateMap(gaussianFeatureMap,gaussianFilterMap, aep, dt);
         } else {
-            updateMap(salMapRight, horizFilterMap, aep);
+            //TODO
         }
     }
-//printMap(vertFeatureMap);
-//    decayMap(vertFeatureMap,dt);
-//    decayMap(bigVertFeatureMap,dt);
-//    decayMap(horizFeatureMap,dt);
-//    decayMap(bigHorizFeatureMap,dt);
-//    decayMap(gaussianFeatureMap,dt);
-//    decayMap(bigGaussianFeatureMap,dt);
-    decayMap(DOGFeatureMap, dt);
-//    normaliseMap(vertFeatureMap, normalisedVertFeatureMap);
-//    normaliseMap(bigVertFeatureMap, normalisedVertFeatureMap);
-//    normaliseMap(horizFeatureMap, normalisedHorizFeatureMap);
-//    normaliseMap(bigHorizFeatureMap, normalisedBigHorizFeatureMap);
-//    normaliseMap(gaussianFeatureMap, normalisedGaussianFeatureMap);
-//    normaliseMap(bigGaussianFeatureMap, normalisedBigGaussianFeatureMap);
-//    normaliseMap(DOGFeatureMap, normalisedGaussianFeatureMap);
+
     //salMapLeft = normalisedVertFeatureMap + 5*normalisedGaussianFeatureMap + normalisedHorizFeatureMap;
-    salMapLeft = DOGFeatureMap;
+//    salMapLeft = uniformFeatureMap;
 
     computeAttentionPoint(salMapLeft);
-//    decayMap(activationMap,dt);
-//    salMapLeft = 2*(normalisedBigGaussianFeatureMap+normalisedGaussianFeatureMap) + vertFeatureMap + bigVertFeatureMap + horizFeatureMap + bigHorizFeatureMap;
-//    salMapLeft = bigHorizFeatureMap + horizFeatureMap;
-//    salMapLeft *= 20000;
+
+//    salMapLeft = 2*(normalisedBigGaussianFeatureMap+normalisedGaussianFeatureMap) + vertFeatureMap + bigVertFeatureMap + uniformFeatureMap + bigHorizFeatureMap;
+//    salMapLeft = bigHorizFeatureMap + uniformFeatureMap;
+//    salMapLeft *= 10;
 
     // ---- adding the event to the output vBottle if it passes thresholds ---- //
 
@@ -364,10 +379,23 @@ void vAttentionManager::onRead(emorph::vBottle &bot) {
 
     yarp::sig::ImageOf<yarp::sig::PixelBgr> &imageLeft = outSalMapLeftPort.prepare();
     yarp::sig::ImageOf<yarp::sig::PixelBgr> &imageRight = outSalMapRightPort.prepare();
+    yarp::sig::ImageOf<yarp::sig::PixelBgr> &imageUniform = outuniformPort.prepare();
+    yarp::sig::ImageOf<yarp::sig::PixelBgr> &imageOrient0 = outorient0Port.prepare();
+    yarp::sig::ImageOf<yarp::sig::PixelBgr> &imageOrient45 = outorient45Port.prepare();
+    yarp::sig::ImageOf<yarp::sig::PixelBgr> &imageOrient90 = outorient90Port.prepare();
+    yarp::sig::ImageOf<yarp::sig::PixelBgr> &imageOrient135 = outorient135Port.prepare();
+    yarp::sig::ImageOf<yarp::sig::PixelBgr> &imageGaussian = outgaussianPort.prepare();
+    yarp::sig::ImageOf<yarp::sig::PixelBgr> &imageDOG = outDOGPort.prepare();
 
     convertToImage(salMapLeft, imageLeft, attPointY, attPointX);
-//    convertToImage(salMapRight, imageRight);
     convertToImage(activationMap, imageRight, attPointY, attPointX);
+    convertToImage(orient0FeatureMap,imageOrient0);
+    convertToImage(orient45FeatureMap,imageOrient45);
+    convertToImage(orient90FeatureMap,imageOrient90);
+    convertToImage(orient135FeatureMap,imageOrient135);
+    convertToImage(gaussianFeatureMap,imageGaussian);
+    convertToImage(DOGFeatureMap,imageDOG);
+    convertToImage(uniformFeatureMap,imageUniform);
 
     // --- writing images of left and right saliency maps on output port
     if (outSalMapLeftPort.getOutputCount()) {
@@ -376,6 +404,28 @@ void vAttentionManager::onRead(emorph::vBottle &bot) {
     if (outSalMapRightPort.getOutputCount()) {
         outSalMapRightPort.write();
     }
+    if (outorient135Port.getOutputCount()) {
+        outorient135Port.write();
+    }
+    if (outorient0Port.getOutputCount()) {
+        outorient0Port.write();
+    }
+    if (outorient45Port.getOutputCount()) {
+        outorient45Port.write();
+    }
+    if (outorient90Port.getOutputCount()) {
+        outorient90Port.write();
+    }
+    if (outgaussianPort.getOutputCount()) {
+        outgaussianPort.write();
+    }
+    if (outDOGPort.getOutputCount()) {
+        outDOGPort.write();
+    }
+    if (outuniformPort.getOutputCount()) {
+        outuniformPort.write();
+    }
+
 }
 
 void vAttentionManager::convertToImage(yarp::sig::Matrix &map, yarp::sig::ImageOf<yarp::sig::PixelBgr> &image, int rMax,
@@ -417,49 +467,44 @@ void vAttentionManager::convertToImage(yarp::sig::Matrix &map, yarp::sig::ImageO
 }
 
 void vAttentionManager::drawSquare( yarp::sig::ImageOf<yarp::sig::PixelBgr> &image, int r, int c,
-                                   yarp::sig::PixelBgr &pixelBgr)  {
+                                    yarp::sig::PixelBgr &pixelBgr)  {
     int squareSize = 2;
     for (int i = -squareSize; i <= squareSize; ++i) {
-                    for (int j = -squareSize; j <= squareSize; ++j) {
-                        if ((r + i< (image.height() -1)) && r + i>= 0)
-                            if ((c +j< (image.width() -1)) && c + j>= 0)
-                                image(r +i,c+j) = pixelBgr;
-                    }
-                }
+        for (int j = -squareSize; j <= squareSize; ++j) {
+            if ((r + i< (image.height() -1)) && r + i>= 0)
+                if ((c +j< (image.width() -1)) && c + j>= 0)
+                    image(r +i,c+j) = pixelBgr;
+        }
+    }
 }
 
-void vAttentionManager::updateMap(yarp::sig::Matrix &map, yarp::sig::Matrix &filterMap,
-                                  emorph::AddressEvent *aep) {
+void vAttentionManager::updateMap(yarp::sig::Matrix &map, yarp::sig::Matrix &filterMap, emorph::AddressEvent *aep,
+                                  unsigned long int dt) {
     //Pixel coordinates are shifted to match with the location in the saliency map
-//    printMap(map);
+
     int filterRows = filterMap.rows();
     int filterCols = filterMap.cols();
 
     // unmask event: get x, y
-    int r = aep->getX() + salMapPadding;
-    int c = aep->getY() + salMapPadding;
-double val;
+    int r = aep->getX();
+    int c = aep->getY();
     // ---- increase energy in the location of the event ---- //
 
-    for (int rf = -filterRows / 2; rf < filterRows / 2 + filterRows % 2; rf++) {
-        for (int cf = -filterCols / 2; cf < filterCols / 2 + filterCols % 2; cf++) {
-//            val = fabs(map(r + rf, c + cf)) * filterMap(rf + filterRows / 2, cf + filterCols / 2);
-//            map(r, c) += val;
-//            map(r, c) = min(map(r, c), 2000.0);
-//            map(r, c) = min(map(r, c), 2000.0);
-            map(r + rf, c + cf) += filterMap(rf + filterRows /2, cf + filterCols /2);
+    for (int rf = 0; rf < filterRows; rf++) {
+        for (int cf = 0; cf < filterCols; cf++) {
+            map(r + rf, c + cf) += filterMap(rf, cf);
             map(r + rf, c + cf) = min(map(r + rf, c + cf), 2000.0);
             map(r + rf, c + cf) = max(map(r + rf, c + cf), -2000.0);
-
         }
     }
-//    printMap(map);
+
+//    decayMap(map,dt);
 }
 
 void vAttentionManager::printMap(yarp::sig::Matrix &map) {
     for (int r = 0; r < map.rows(); r++) {
         for (int c = 0; c < map.cols(); c++) {
-            std::cout << setprecision(2) << map(r, c) << " ";
+            std::cout << std::setprecision(2) << map(r, c) << " ";
         }
         std::cout << std::endl;
     }
@@ -522,10 +567,7 @@ void vAttentionManager::computeAttentionPoint(yarp::sig::Matrix &map) {
     maxInMap(map);
     activationMap(attPointY,attPointX) ++;
     maxInMap(activationMap);
-//    std::cout << "max Activation = " << activationMap(attPointY,attPointX) << std::endl;
-//    std::cout << "attPointY = " << attPointY << std::endl;
-//    std::cout << "attPointX = " << attPointX << std::endl;
-//    map(attPointY,attPointX) *= 100;
+    activationMap *= 0.95;
 }
 
 void vAttentionManager::maxInMap(const yarp::sig::Matrix &map) {
