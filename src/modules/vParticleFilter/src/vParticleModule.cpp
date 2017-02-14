@@ -42,7 +42,6 @@ int main(int argc, char * argv[])
 }
 
 
-
 /*////////////////////////////////////////////////////////////////////////////*/
 //vParticleModule
 /*////////////////////////////////////////////////////////////////////////////*/
@@ -64,6 +63,8 @@ bool vParticleModule::configure(yarp::os::ResourceFinder &rf)
     double nRandResample = rf.check("randoms", yarp::os::Value(0.02)).asDouble();
     int rate = rf.check("rate", yarp::os::Value(1000)).asDouble();
 
+    yarp::os::Bottle * seed = rf.find("seed").asList();
+
     //observation parameters
     double minlikelihood = rf.check("obsthresh", yarp::os::Value(20.0)).asDouble();
     double inlierParameter = rf.check("obsinlier", yarp::os::Value(1.5)).asDouble();
@@ -77,6 +78,10 @@ bool vParticleModule::configure(yarp::os::ResourceFinder &rf)
         particleCallback->initialise(rf.check("width", yarp::os::Value(128)).asInt(),
                                      rf.check("height", yarp::os::Value(128)).asInt(),
                                      nParticles, rate, nRandResample, adaptivesampling);
+        if(seed && seed->size() == 3) {
+            std::cout << "Using initial seed location: " << seed->toString() << std::endl;
+            particleCallback->setSeed(seed->get(0).asDouble(), seed->get(1).asDouble(), seed->get(2).asDouble());
+        }
 
         //open the ports
         if(!particleCallback->open(getName(), strict)) {

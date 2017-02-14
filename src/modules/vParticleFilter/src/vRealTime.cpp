@@ -39,7 +39,7 @@ bool vSurfaceHandler::open(const std::string &name, bool strictness)
     }
 
     this->useCallback();
-    if(!yarp::os::BufferedPort<ev::vBottle>::open("/" + name + "/vBottle:i"))
+    if(!yarp::os::BufferedPort<ev::vBottle>::open(name + "/vBottle:i"))
         return false;
 
     return true;
@@ -185,16 +185,16 @@ bool particleProcessor::threadInit()
         computeThreads.push_back(new vPartObsThread(pStart, pEnd));
     }
 
-    if(!debugOut.open("/" + name + "/debug:o")) {
+    if(!debugOut.open(name + "/debug:o")) {
         std::cout << "could not open debug port" << std::endl;
         return false;
     }
 
-    if(!scopeOut.open("/" + name + "/scope:o")) {
+    if(!scopeOut.open(name + "/scope:o")) {
         std::cout << "could not open scope port" << std::endl;
         return false;
     }
-    if(!vBottleOut.open("/" + name + "/vBottle:o")) {
+    if(!vBottleOut.open(name + "/vBottle:o")) {
         std::cout << "coult not open vBottleOut port" << std::endl;
         return false;
     }

@@ -19,6 +19,7 @@ vParticleReader::vParticleReader()
     pwsum = 1.0;
     pwsumsq = nparticles * pow(1.0 / nparticles, 2.0);
     rate = 1000;
+    seedx = 0; seedy = 0; seedr = 0;
 }
 
 void vParticleReader::initialise(unsigned int width , unsigned int height, unsigned int nParticles, unsigned int rate, double nRands, bool adaptive)
@@ -43,6 +44,8 @@ void vParticleReader::initialise(unsigned int width , unsigned int height, unsig
     for(int i = 0; i < nparticles; i++) {
         p.setid(i);
         p.resample(1.0/nparticles, 0, res.width, res.height, 30.0);
+        if(seedr)
+            p.initState(seedx, seedy, seedr, 100);
         p.initWeight(1.0/nparticles);
         sortedlist.push(p);
         indexedlist.push_back(p);
@@ -62,11 +65,13 @@ bool vParticleReader::open(const std::string &name, bool strictness)
     }
 
     this->useCallback();
-    if(!yarp::os::BufferedPort<ev::vBottle>::open("/" + name + "/vBottle:i"))
+    if(!yarp::os::BufferedPort<ev::vBottle>::open(name + "/vBottle:i"))
         return false;
-    if(!scopeOut.open("/" + name + "/scope:o"))
+    if(!scopeOut.open(name + "/scope:o"))
         return false;
-    if(!debugOut.open("/" + name + "/debug:o"))
+    if(!debugOut.open(name + "/debug:o"))
+        return false;
+    if(!resultOut.open(name + "/result:o"))
         return false;
 
     return true;
@@ -109,7 +114,6 @@ void vParticleReader::onRead(ev::vBottle &inputBottle)
 
     ev::vQueue stw;
     unsigned long t = 0;
-    int resampled = 0;
 
     for(ev::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
 
@@ -119,105 +123,110 @@ void vParticleReader::onRead(ev::vBottle &inputBottle)
 
         t = unwrap((*qi)->getStamp());
 
+        if(!indexedlist[0].needsUpdating(t)) continue;
 
-
-        //update at a fixed rate
-        if(rate && indexedlist[0].needsUpdating(t)) {
-
-
-            //resampling
-            //if(pwsumsq * nparticles > 2.0) {
-
-            if(!adaptive || pwsumsq * nparticles > 2.0) {
-                resampled = nparticles;
-                std::vector<vParticle> indexedSnap = indexedlist;
-                for(int i = 0; i < nparticles; i++) {
-                    double rn = this->nRandomise * pwsum * (double)rand() / RAND_MAX;
-                    if(rn > pwsum)
-                        indexedlist[i].resample(1.0/nparticles, t, res.width, res.height, 30.0);
-                    else {
-                        double accum = 0.0; int j = 0;
-                        for(j = 0; j < nparticles; j++) {
-                            accum += indexedSnap[j].getw();
-                            if(accum > rn) break;
-                        }
-                        indexedlist[i].resample(indexedSnap[j], 1.0/nparticles, t);
-                    }
-                }
-            }
-
-            //prediction
-            unsigned int maxtw = 0;
+        //RESAMPLE
+        if(!adaptive || pwsumsq * nparticles > 2.0) {
+            std::vector<vParticle> indexedSnap = indexedlist;
             for(int i = 0; i < nparticles; i++) {
-                if(indexedlist[i].predict(t)) {
+                double rn = this->nRandomise * pwsum * (double)rand() / RAND_MAX;
+                if(rn > pwsum)
                     indexedlist[i].resample(1.0/nparticles, t, res.width, res.height, 30.0);
+                else {
+                    double accum = 0.0; int j = 0;
+                    for(j = 0; j < nparticles; j++) {
+                        accum += indexedSnap[j].getw();
+                        if(accum > rn) break;
+                    }
+                    indexedlist[i].resample(indexedSnap[j], 1.0/nparticles, t);
                 }
-                if(indexedlist[i].gettw() > maxtw)
-                    maxtw = indexedlist[i].gettw();
             }
+        }
 
-            //likelihood observation
+        //PREDICT
+        unsigned int maxtw = 0;
+        for(int i = 0; i < nparticles; i++) {
+            if(indexedlist[i].predict(t)) {
+                indexedlist[i].resample(1.0/nparticles, t, res.width, res.height, 30.0);
+            }
+            if(indexedlist[i].gettw() > maxtw)
+                maxtw = indexedlist[i].gettw();
+        }
+
+        //OBSERVE
+        for(int i = 0; i < nparticles; i++) {
+            indexedlist[i].initLikelihood();
+        }
+
+        stw = surfaceLeft.getSurf_Tlim(maxtw);
+        unsigned int ctime = (*qi)->getStamp();
+        for(unsigned int i = 0; i < stw.size(); i++) {
+            //calc dt
+            double dt = ctime - stw[i]->getStamp();
+            if(dt < 0)
+                dt += ev::vtsHelper::maxStamp();
+            event<AddressEvent> v = std::static_pointer_cast<AddressEvent>(stw[i]);
+            int x = v->getX();
+            int y = v->getY();
             for(int i = 0; i < nparticles; i++) {
-                indexedlist[i].initLikelihood();
+                if(dt < indexedlist[i].gettw())
+                    indexedlist[i].incrementalLikelihood(x, y, dt);
             }
-
-            stw = surfaceLeft.getSurf_Tlim(maxtw);
-            unsigned int ctime = (*qi)->getStamp();
-            for(unsigned int i = 0; i < stw.size(); i++) {
-                //calc dt
-                double dt = ctime - stw[i]->getStamp();
-                if(dt < 0)
-                    dt += ev::vtsHelper::maxStamp();
-                event<AddressEvent> v = std::static_pointer_cast<AddressEvent>(stw[i]);
-                int x = v->getX();
-                int y = v->getY();
-                for(int i = 0; i < nparticles; i++) {
-                    if(dt < indexedlist[i].gettw())
-                        indexedlist[i].incrementalLikelihood(x, y, dt);
-                }
-
-            }
-
-            double normval = 0.0;
-            for(int i = 0; i < nparticles; i++) {
-                indexedlist[i].concludeLikelihood();
-                normval += indexedlist[i].getw();
-            }
-
-            //normalisation
-            pwsum = 0;
-            pwsumsq = 0;
-            avgx = 0;
-            avgy = 0;
-            avgr = 0;
-            avgtw = 0;
-
-            pmax = indexedlist[0];
-            for(int i = 0; i < nparticles; i ++) {
-                indexedlist[i].updateWeightSync(normval);
-                if(indexedlist[i].getw() > pmax.getw()) {
-                    pmax = indexedlist[i];
-                }
-
-                pwsum += indexedlist[i].getw();
-                pwsumsq += pow(indexedlist[i].getw(), 2.0);
-                avgx += indexedlist[i].getx() * indexedlist[i].getw();
-                avgy += indexedlist[i].gety() * indexedlist[i].getw();
-                avgr += indexedlist[i].getr() * indexedlist[i].getw();
-                avgtw += indexedlist[i].gettw() * indexedlist[i].getw();
-            }
-
-            indexedlist[0].initTiming(t);
 
         }
+
+        //NORMALISE
+        double normval = 0.0;
+        for(int i = 0; i < nparticles; i++) {
+            indexedlist[i].concludeLikelihood();
+            normval += indexedlist[i].getw();
+        }
+
+
+        //FIND THE AVERAGE POSITION
+        pwsum = 0;
+        pwsumsq = 0;
+        avgx = 0;
+        avgy = 0;
+        avgr = 0;
+        avgtw = 0;
+
+        pmax = indexedlist[0];
+        for(int i = 0; i < nparticles; i ++) {
+            indexedlist[i].updateWeightSync(normval);
+            if(indexedlist[i].getw() > pmax.getw()) {
+                pmax = indexedlist[i];
+            }
+
+            pwsum += indexedlist[i].getw();
+            pwsumsq += pow(indexedlist[i].getw(), 2.0);
+            avgx += indexedlist[i].getx() * indexedlist[i].getw();
+            avgy += indexedlist[i].gety() * indexedlist[i].getw();
+            avgr += indexedlist[i].getr() * indexedlist[i].getw();
+            avgtw += indexedlist[i].gettw() * indexedlist[i].getw();
+        }
+
+        indexedlist[0].initTiming(t);
+
+        yarp::os::Bottle &trackBottle = resultOut.prepare();
+        trackBottle.clear();
+        resultOut.setEnvelope(st);
+        trackBottle.addInt(t);
+        trackBottle.addDouble(avgx);
+        trackBottle.addDouble(avgy);
+        trackBottle.addDouble(avgr);
+        trackBottle.addDouble(avgtw);
+
+        resultOut.writeStrict();
+
     }
 
-    yarp::os::Bottle &sob = scopeOut.prepare();
-    sob.clear();
-    sob.addDouble(t);
-    if(q.size())
-        sob.addDouble(q.back()->getStamp());
-    scopeOut.write();
+    //yarp::os::Bottle &sob = scopeOut.prepare();
+    //sob.clear();
+    //sob.addDouble(t);
+    //if(q.size())
+        //sob.addDouble(q.back()->getStamp());
+    //scopeOut.write();
 
 
     if(debugOut.getOutputCount()) {

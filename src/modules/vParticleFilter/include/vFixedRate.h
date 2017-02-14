@@ -16,6 +16,7 @@ private:
     //debug stuff
     yarp::os::BufferedPort<yarp::os::Bottle> scopeOut;
     yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelBgr> > debugOut;
+    yarp::os::BufferedPort<yarp::os::Bottle> resultOut;
     yarp::os::Bottle weights;
     yarp::os::Stamp pstamp;
 
@@ -34,6 +35,10 @@ private:
     double avgr;
     double avgtw;
 
+    double seedx;
+    double seedy;
+    double seedr;
+
     //parameters
     ev::resolution res;
     bool strict;
@@ -46,6 +51,10 @@ public:
 
     vParticleReader();
     void initialise(unsigned int width , unsigned int height, unsigned int nParticles, unsigned int rate, double nRands, bool adaptive);
+    void setSeed(int x, int y, int r)
+    {
+        seedx = x; seedy = y; seedr = r;
+    }
 
     bool    open(const std::string &name, bool strictness = false);
     void    onRead(ev::vBottle &inBot);
