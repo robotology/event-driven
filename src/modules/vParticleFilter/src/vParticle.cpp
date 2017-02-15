@@ -260,7 +260,7 @@ void vParticle::incrementalLikelihood(int vx, int vy, int dt)
 
     }
 
-    double score = inlierCount - outlierCount;
+    int score = inlierCount - outlierCount;
     if(score >= likelihood) {
         likelihood = score;
         maxtw = dt;

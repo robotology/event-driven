@@ -110,11 +110,13 @@ void vParticleReader::interrupt()
 bool vParticleReader::inbounds(vParticle &p)
 {
     int r = p.getr();
+    if(r < 10) {
+        p.setr(10);
+        r = 10;
+    }
     if(p.getx() < -r || p.getx() > res.width + r)
         return false;
     if(p.gety() < -r || p.gety() > res.height + r)
-        return false;
-    if(r < 6 || r > 50)
         return false;
 
     return true;

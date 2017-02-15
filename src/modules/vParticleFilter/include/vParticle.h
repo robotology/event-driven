@@ -92,6 +92,7 @@ public:
     double gettw() { return tw; }
     unsigned long getUpdateTime() { return nextUpdate; }
     unsigned long getStamp() { return stamp; }
+    void setr(double value) { this->r = value; }
     bool needsUpdating(unsigned long int stamp);
 
     bool operator<(const vParticle &p) const
