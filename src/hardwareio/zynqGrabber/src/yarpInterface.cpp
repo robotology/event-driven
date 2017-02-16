@@ -186,10 +186,10 @@ int device2yarp::applysaltandpepperfilter(std::vector<unsigned char> &data, int 
         int *AE =  (int *)(data.data() + i + 4);
 
         int p = (*AE)&0x01;
-        int x = ((*AE)>>1)&0x7F;
+        int x = ((*AE)>>1)&0x1FF;
         int y = ((*AE)>>10)&0xFF;
         int c = ((*AE)>>20)&0x01;
-        int ts = (*TS) & 0x7FFFFFFF;
+        int ts = (*TS) & 0x00FFFFFF;
 
         if(vfilter.check(x, y, p, c, ts)) {
             for(int j = i; j < i+8; j++) {
@@ -199,7 +199,7 @@ int device2yarp::applysaltandpepperfilter(std::vector<unsigned char> &data, int 
 
     }
 
-    return k / 8;
+    return k;
 
 }
 
