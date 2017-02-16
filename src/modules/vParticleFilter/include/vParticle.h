@@ -1,9 +1,14 @@
-
-#ifndef __V_PARTICLEFILTER__
-#define __V_PARTICLEFILTER__
+#ifndef __VPARTICLE__
+#define __VPARTICLE__
 
 #include <iCub/eventdriven/all.h>
 #include <yarp/sig/all.h>
+
+using namespace ev;
+
+void drawEvents(yarp::sig::ImageOf< yarp::sig::PixelBgr> &image, ev::vQueue &q, double tw = 0);
+
+void drawcircle(yarp::sig::ImageOf<yarp::sig::PixelBgr> &image, int cx, int cy, int cr, int id = 0);
 
 /*////////////////////////////////////////////////////////////////////////////*/
 //VPARTICLETRACKER
@@ -12,29 +17,28 @@ class vParticle
 {
 private:
 
+    double minlikelihood;
+    double inlierParameter;
+    double outlierParameter;
+    double variance;
+
     //id
     int id;
 
     //weight
     double weight;
     double likelihood;
-    double leftMass;
-    double topMass;
+    int    outlierCount;
     int    inlierCount;
-    double maxlikelihood;
     double maxtw;
-    //bool doneLikelihood;
+    int angbuckets;
+    yarp::sig::Vector angdist;
+    yarp::sig::Vector negdist;
 
     //state - this should be a yarp::sig::vector
     double x;
     double y;
     double r;
-    //double vx;
-    //double vy;
-    //double vr;
-    //double ax;
-    //double ay;
-    //double ar;
     double tw;
 
     //timing
@@ -57,12 +61,15 @@ public:
     void initTiming(unsigned long int stamp);
     void initWeight(double weight);
 
-
     unsigned int getTemporalWindow();
 
     void setRate(unsigned int rate) { fixedrate = rate; }
+    void setMinLikelihood(double minlikelihood) { this->minlikelihood = minlikelihood; }
+    void setOutlierParameter(double value) { this->outlierParameter = value; }
+    void setInlierParameter(double value) {this->inlierParameter = value; }
+    void setVariance(double value) { this->variance = value; }
 
-    void resample(double w, unsigned long int t);
+    void resample(double w, unsigned long int t, int x, int y, int r);
     void resample(const vParticle &seeder, double w, unsigned long int t);
 
 
@@ -80,17 +87,12 @@ public:
     double getx() { return x; }
     double gety() { return y; }
     double getr() { return r; }
-    //double getvx() { return vx; }
-    //double getvy() { return vy; }
-    //double getvr() { return vr; }
-    //double getax() { return ax; }
-    //double getay() { return ay; }
-    //double getar() { return ar; }
     double getw() { return weight; }
     double getl() { return likelihood; }
     double gettw() { return tw; }
     unsigned long getUpdateTime() { return nextUpdate; }
     unsigned long getStamp() { return stamp; }
+    void setr(double value) { this->r = value; }
     bool needsUpdating(unsigned long int stamp);
 
     bool operator<(const vParticle &p) const

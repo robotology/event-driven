@@ -1,0 +1,49 @@
+<application>
+<name> exp_IROS_PF </name>
+
+<dependencies>
+</dependencies>
+
+<module>
+    <name> vParticleFilter </name>
+    <parameters> --name /vpf --realtime false --rate 10000 --particles 50 --randoms 0.02 --obsthresh 50.0 </parameters>
+    <node> localhost </node>
+</module>
+
+<module>
+   <name> yarpview </name>
+   <parameters>--name /viewTracker --x 500 --y 000 --RefreshTime 33 --compact </parameters>
+   <node> localhost </node>
+</module>
+
+<module>
+    <name> yarpscope </name>
+    <parameters> --remote /vpf/scope:o --index "(0 1 2 3)" --color "(red blue green black)" </parameters>
+    <node> localhost </node>
+</module>
+
+<module>
+    <name> yarpdatadumper </name>
+    <parameters> --txTime --name /dump/IROS17/1/position</parameters>
+    <node> localhost </node>
+</module>
+
+<connection>
+  <from>/zynqGrabber/vBottle:o</from>
+  <to>/vpf/vBottle:i</to>
+  <protocol>tcp</protocol>
+</connection>
+
+<connection>
+  <from>/vpf/debug:o</from>
+  <to>/viewTracker</to>
+  <protocol>tcp</protocol>
+</connection>
+
+<connection>
+  <from>/vpf/result:o</from>
+  <to>/dump/IROS17/1/position</to>
+  <protocol>tcp</protocol>
+</connection>
+
+</application>

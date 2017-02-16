@@ -20,7 +20,7 @@ vQueue vSurface2::addEvent(event<> v)
     vQueue removed = removeEvents(v);
 
     q.push_back(v);
-    event<AddressEvent> c = getas<AddressEvent>(v);
+    event<AddressEvent> c = std::static_pointer_cast<AddressEvent>(v);
     if(c) {
         if(c->getY() >= height || c->getX() >= width) {
             std::cout << "WHY" << std::endl;
@@ -77,6 +77,20 @@ vQueue vSurface2::getSurf(int xl, int xh, int yl, int yh)
 
 }
 
+void vSurface2::getSurfSorted(vQueue &fillq)
+{
+    fillq.resize(count);
+    if(!count) return;
+
+    unsigned int i = 0;
+    vQueue::reverse_iterator rqit;
+    for(rqit = q.rbegin(); rqit != q.rend(); rqit++) {
+        event<AddressEvent> v = std::static_pointer_cast<AddressEvent>(*rqit);
+        if(v != spatial[v->getY()][v->getX()]) continue;
+        fillq[i++] = v;
+    }
+}
+
 vQueue vSurface2::getSurf_Tlim(int dt)
 {
     return getSurf_Tlim(dt, 0, width, 0, height);
@@ -113,7 +127,7 @@ vQueue vSurface2::getSurf_Tlim(int dt, int xl, int xh, int yl, int yh)
         vt = (*rqit)->getStamp();
         if(vt > t) vt -= vtsHelper::maxStamp();
         if(vt + dt <= t) break;
-        event<AddressEvent> v = getas<AddressEvent>(*rqit);
+        event<AddressEvent> v = std::static_pointer_cast<AddressEvent>(*rqit);
         if(v != spatial[v->getY()][v->getX()]) continue;
         if(v->getX() >= xl && v->getX() <= xh) {
             if(v->getY() >= yl && v->getY() <= yh) {
@@ -218,7 +232,7 @@ vQueue temporalSurface::removeEvents(event<> toAdd)
     //remove any events falling out the back of the window
     while(q.size()) {
 
-        event<AddressEvent> v = getas<AddressEvent>(q.front());
+        event<AddressEvent> v = std::static_pointer_cast<AddressEvent>(q.front());
         if(v && v != spatial[v->getY()][v->getX()]) {
             q.pop_front();
             continue;
@@ -238,7 +252,7 @@ vQueue temporalSurface::removeEvents(event<> toAdd)
 
     while(q.size()) {
 
-        event<AddressEvent> v = getas<AddressEvent>(q.back());
+        event<AddressEvent> v = std::static_pointer_cast<AddressEvent>(q.back());
         if(v && v != spatial[v->getY()][v->getX()]) {
             q.pop_back();
             continue;

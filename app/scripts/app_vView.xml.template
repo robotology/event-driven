@@ -5,6 +5,13 @@
 </dependencies>
 
 <module>
+    <name> yarpscope </name>
+    <parameters> --remote /vpf/scope:o --index "(0 1 2 3)" --color "(red blue green black)" </parameters>
+    <node> localhost </node>
+</module>
+
+
+<module>
     <name> vFramer</name>
     <parameters> --frameRate 30 --displays "(0 left (AE ISO) 1 right (AE ISO))"</parameters>
     <node>localhost</node>
@@ -12,14 +19,20 @@
 
 <module>
    <name> yarpview </name>
-   <parameters>--name /viewCh0 --x 000 --y 000 --RefreshTime 16 </parameters>
+   <parameters>--name /viewCh0 --x 000 --y 000 --RefreshTime 16 --compact </parameters>
    <node>localhost</node>
 </module>
 
 <module>
    <name> yarpview </name>
-   <parameters>--name /viewCh1 --x 500 --y 000 --RefreshTime 16 </parameters>
+   <parameters>--name /viewCh1 --x 500 --y 000 --RefreshTime 16 --compact </parameters>
    <node>localhost</node>
+</module>
+
+<module>
+    <name> vParticleFilter </name>
+    <parameters> --name vpf --strict --realtime true --rate 10000 --adaptive --particles 50 --randoms 0.05 --obsthresh 50.0 --obsinlier 1.5 --obsoutlier 3.0 </parameters>
+    <node> localhost </node>
 </module>
 
 <module>
@@ -31,6 +44,12 @@
 <module>
     <name> vCircle </name>
     <parameters> --strict --qType time --arc 1 --fifo 100 --inlierThreshold 60 --radmin 10 --radmax 20 </parameters>
+    <node> localhost </node>
+</module>
+
+<module>
+    <name> vPepper </name>
+    <parameters> --height 304 --width 304 --temporalSize 1000000 </parameters>
     <node> localhost </node>
 </module>
 
@@ -72,7 +91,7 @@
 
 <connection>
   <from>/zynqGrabber/vBottle:o</from>
-  <to>/vFlow/vBottle:i</to>
+  <to>/vpf/vBottle:i</to>
   <protocol>tcp</protocol>
 </connection>
 
@@ -95,7 +114,7 @@
 </connection>
 
 <connection>
-  <from>/vFramer/right</from>
+  <from>/vpf/debug:o</from>
   <to>/viewCh1</to>
   <protocol>tcp</protocol>
 </connection>
