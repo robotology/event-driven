@@ -143,7 +143,7 @@ void vParticleReader::onRead(ev::vBottle &inputBottle)
 
     for(ev::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
 
-        if((*qi)->getChannel()) continue;
+        if(!(*qi)->getChannel()) continue;
 
         surfaceLeft.addEvent(*qi);
 

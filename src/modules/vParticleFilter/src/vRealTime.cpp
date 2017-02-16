@@ -102,7 +102,7 @@ void vSurfaceHandler::queryEvents(ev::vQueue &fillq, unsigned int temporalwindow
 
     mutexsignal.lock();
     //surfaceLeft.getSurfSorted(fillq);
-    fillq = surfaceLeft.getSurf_Tlim(temporalwindow);
+    fillq = surfaceRight.getSurf_Tlim(temporalwindow);
     mutexsignal.unlock();
 
 }
@@ -123,7 +123,7 @@ ev::vQueue vSurfaceHandler::queryEvents(unsigned long int conditionTime, unsigne
     mutexsignal.lock();
     //ev::vQueue temp = surfaceLeft.getSurf_Tlim(tw);
     ev::vQueue temp;
-    surfaceLeft.getSurfSorted(temp);
+    surfaceRight.getSurfSorted(temp);
     mutexsignal.unlock();
 
     return temp;

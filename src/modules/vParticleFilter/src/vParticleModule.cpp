@@ -96,8 +96,8 @@ bool vParticleModule::configure(yarp::os::ResourceFinder &rf)
         particleCallback = 0;
         /* USE REAL-TIME THREAD */
         particleThread = new particleProcessor(
-                    rf.check("width", yarp::os::Value(128)).asInt(),
                     rf.check("height", yarp::os::Value(128)).asInt(),
+                    rf.check("width", yarp::os::Value(128)).asInt(),
                     this->getName(), strict);
         particleThread->setFilterParameters(nParticles, nRandResample,
                                             adaptivesampling, particleVariance);

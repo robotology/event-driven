@@ -32,6 +32,7 @@ double generateGaussianNoise(double mu, double sigma)
 
 void drawEvents(yarp::sig::ImageOf< yarp::sig::PixelBgr> &image, ev::vQueue &q, double tw) {
 
+    if(q.empty()) return;
     int tnow = q.front()->getStamp(); //only valid for certain q's!!
 
     for(unsigned int i = 0; i < q.size(); i++) {
