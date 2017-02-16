@@ -150,7 +150,7 @@ bool vParticle::predict(unsigned long timestamp)
     //double sigmap = 0.5;
     x = generateGaussianNoise(x, variance);
     y = generateGaussianNoise(y, variance);
-    r = generateGaussianNoise(r, variance * 0.3);
+    r = generateGaussianNoise(r, variance * 0.5);
 
     initTiming(timestamp);
 

@@ -100,7 +100,7 @@ bool vParticleModule::configure(yarp::os::ResourceFinder &rf)
                     rf.check("height", yarp::os::Value(128)).asInt(),
                     this->getName(), strict);
         particleThread->setFilterParameters(nParticles, nRandResample,
-                                            adaptivesampling);
+                                            adaptivesampling, particleVariance);
         particleThread->setObservationParameters(minlikelihood, inlierParameter,
                                                  outlierParameter);
 

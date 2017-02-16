@@ -107,6 +107,7 @@ private:
     int nparticles;
     double nRandomise;
     bool adaptive;
+    double pVariance;
 
     double obsThresh;
     double obsInlier;
@@ -116,8 +117,8 @@ private:
 
 public:
 
-    void setFilterParameters(int nParticles, double nRandomise, bool adaptive) {
-        nparticles = nParticles; this->nRandomise = 1.0 + nRandomise; this->adaptive = adaptive; }
+    void setFilterParameters(int nParticles, double nRandomise, bool adaptive, double variance) {
+        nparticles = nParticles; this->nRandomise = 1.0 + nRandomise; this->adaptive = adaptive; this->pVariance = variance;}
     void setObservationParameters(double minLikelihood, double inlierPar, double outlierPar) {
         obsThresh = minLikelihood; obsInlier = inlierPar; obsOutlier = outlierPar; }
 

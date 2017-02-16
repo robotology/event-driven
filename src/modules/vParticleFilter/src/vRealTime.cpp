@@ -149,7 +149,7 @@ particleProcessor::particleProcessor(unsigned int height, unsigned int width, st
     ptime2 = yarp::os::Time::now();
 
     nparticles = 50;
-    nThreads = 3;
+    nThreads = 8;
     rate = 0;
     nRandomise = 1.0 + 0.02;
     adaptive = false;
@@ -165,6 +165,7 @@ particleProcessor::particleProcessor(unsigned int height, unsigned int width, st
     maxtw = 0;
     pwsumsq = 0;
     maxlikelihood = 1;
+    pVariance = 0.5;
 
     eventhandler.resize(width, height);
 
@@ -221,6 +222,7 @@ bool particleProcessor::threadInit()
     p.setInlierParameter(obsInlier);
     p.setOutlierParameter(obsOutlier);
     p.setMinLikelihood(obsThresh);
+    p.setVariance(pVariance);
 
     indexedlist.clear();
     for(int i = 0; i < nparticles; i++) {
@@ -378,7 +380,7 @@ void particleProcessor::run()
             avgtw += indexedlist[i].gettw() * indexedlist[i].getw();
         }
 
-        std::cout << avgx << " " << avgy << " " << avgr << " " << avgtw << std::endl;
+        //std::cout << avgx << " " << avgy << " " << avgr << " " << avgtw << std::endl;
         //std::cout << "CALCULATED AVERAGE" <<std::endl;
 
 //        particleVariance = 0;
@@ -469,12 +471,14 @@ void particleProcessor::run()
 bool particleProcessor::inbounds(vParticle &p)
 {
     int r = p.getr();
+    if(r < 20) {
+        p.setr(20);
+        r = 20;
+    }
     if(p.getx() < -r || p.getx() > res.width + r)
         return false;
     if(p.gety() < -r || p.gety() > res.height + r)
         return false;
-    //if(r < 10 || r > 50)
-    //    return false;
 
     return true;
 }
