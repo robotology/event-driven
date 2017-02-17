@@ -16,15 +16,17 @@ vSurface2::vSurface2(int width, int height)
 
 vQueue vSurface2::addEvent(event<> v)
 {
+    event<AddressEvent> c = std::static_pointer_cast<AddressEvent>(v);
+    if(c->getY() >= height || c->getX() >= width) {
+        //std::cout << "WHY" << std::endl;
+        return vQueue();
+    }
 
     vQueue removed = removeEvents(v);
 
     q.push_back(v);
-    event<AddressEvent> c = std::static_pointer_cast<AddressEvent>(v);
     if(c) {
-        if(c->getY() >= height || c->getX() >= width) {
-            std::cout << "WHY" << std::endl;
-        }
+
         if(spatial[c->getY()][c->getX()])
             removed.push_back(spatial[c->getY()][c->getX()]);
         else
