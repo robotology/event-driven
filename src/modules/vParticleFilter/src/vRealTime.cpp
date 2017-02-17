@@ -67,7 +67,7 @@ void vSurfaceHandler::onRead(ev::vBottle &inputBottle)
 
     //create event queue
     ev::vQueue q = inputBottle.get<AddressEvent>();
-    q.sort(true);
+    //q.sort(true);
 
     for(ev::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
 
@@ -78,7 +78,9 @@ void vSurfaceHandler::onRead(ev::vBottle &inputBottle)
             surfaceRight.addEvent(*qi);
         else
             std::cout << "Unknown channel" << std::endl;
+
         mutexsignal.unlock();
+
 
 
         //tnow = unwrap((*qi)->getStamp());
@@ -94,7 +96,21 @@ void vSurfaceHandler::onRead(ev::vBottle &inputBottle)
     }
 
 
+
 }
+
+void vSurfaceHandler::queryROI(ev::vQueue &fillq, unsigned int temporalwindow, int x, int y, int r)
+{
+    tw = temporalwindow;
+
+    mutexsignal.lock();
+    //surfaceLeft.getSurfSorted(fillq);
+    fillq = surfaceRight.getSurf_Tlim(temporalwindow, x, y, r);
+    //fillq.sort(true);
+    mutexsignal.unlock();
+
+}
+
 
 void vSurfaceHandler::queryEvents(ev::vQueue &fillq, unsigned int temporalwindow)
 {
@@ -149,7 +165,7 @@ particleProcessor::particleProcessor(unsigned int height, unsigned int width, st
     ptime2 = yarp::os::Time::now();
 
     nparticles = 50;
-    nThreads = 8;
+    nThreads = 3;
     rate = 0;
     nRandomise = 1.0 + 0.02;
     adaptive = false;
@@ -158,11 +174,11 @@ particleProcessor::particleProcessor(unsigned int height, unsigned int width, st
     obsOutlier = 3.0;
     obsThresh = 20.0;
 
-    avgx = 0;
-    avgy = 0;
-    avgr = 0;
-    avgtw = 0;
-    maxtw = 0;
+    avgx = 10;
+    avgy = 10;
+    avgr = 10;
+    avgtw = 100;
+    maxtw = 10000;
     pwsumsq = 0;
     maxlikelihood = 1;
     pVariance = 0.5;
@@ -247,7 +263,8 @@ void particleProcessor::run()
 
         //std::cout << "GETTING EVENTS" <<std::endl;
         ptime = yarp::os::Time::now();
-        eventhandler.queryEvents(stw, maxtw);
+        //eventhandler.queryEvents(stw, maxtw);
+        eventhandler.queryROI(stw, maxtw, avgx, avgy, avgr * 1.5);
         //eventdriven::vQueue stw = eventhandler.queryEvents(unwrap.currentTime() + rate, eventdriven::vtsHelper::maxStamp() * 0.5);
         //eventdriven::vQueue stw = eventhandler.queryEventList(indexedlist);
         double Tget = (yarp::os::Time::now() - ptime)*1000.0;
@@ -419,8 +436,6 @@ void particleProcessor::run()
             yarp::sig::ImageOf< yarp::sig::PixelBgr> &image = debugOut.prepare();
             image.resize(res.width, res.height);
             image.zero();
-
-
 
             for(unsigned int i = 0; i < indexedlist.size(); i++) {
 

@@ -38,6 +38,7 @@ public:
     ev::vQueue queryEvents(unsigned long int conditionTime, unsigned int temporalWindow);
     ev::vQueue queryEventList(std::vector<vParticle> &ps);
     void queryEvents(ev::vQueue &fillq, unsigned int temporalwindow);
+    void queryROI(ev::vQueue &fillq, unsigned int temporalwindow, int x, int y, int r);
     double geteventrate() { return eventrate; }
 
     bool    open(const std::string &name, bool strictness = false);
