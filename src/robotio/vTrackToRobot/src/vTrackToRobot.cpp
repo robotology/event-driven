@@ -45,6 +45,7 @@ vTrackToRobotManager::vTrackToRobotManager()
     px[1] = 127 - medx;
     lastdogazetime = 0;
 
+    FIFO = ev::temporalSurface(340, 340);
     FIFO.setTemporalSize(250000 * 7.8125);
 
 }
@@ -196,8 +197,8 @@ void vTrackToRobotManager::onRead(ev::vBottle &vBottleIn)
         xs.resize(n); ys.resize(n);
         for(int i = 0; i < n; i++) {
             ev::event<ev::AddressEvent> vtw = ev::getas<ev::AddressEvent>(q[i]);
-            xs[i] = vtw->getX();
-            ys[i] = vtw->getY();
+            xs[i] = 303 - vtw->getX();
+            ys[i] = 239 - vtw->getY();
             //p_eyez = std::max(p_eyez, (double)vtw->getXSigma2());
             //p_eyez = std::min(p_eyez, 16.0);
         }
@@ -217,19 +218,22 @@ void vTrackToRobotManager::onRead(ev::vBottle &vBottleIn)
         medstdx = sqrt(medstdx / n);
         medstdy = sqrt(medstdy / n);
 
-        if(std::abs(vc->getXCog() - medx) < medstdx && std::abs(vc->getYCog() - medy) < medstdy) {
+        //if(std::abs(vc->getXCog() - medx) < medstdx && std::abs(vc->getYCog() - medy) < medstdy) {
             //std::cout << "current observation within 1 std" << std::endl;
             //std::cout << medstdx << " " << medstdy << " " << n << std::endl;
-            if(medstdx < 10 && medstdy < 10 && n > 5) {
+            //if(medstdx < 10 && medstdy < 10 && n > 5) {
                 dogaze = true;
                 lastdogazetime = yarp::os::Time::now();
                 px[0] = medx;
                 px[1] = medy;
                 //turn u/v into xyz
-                if(gazedriver.isValid())
-                    gazecontrol->get3DPoint(0, px, (-2.4 * p_eyez + 70)/100.0, xrobref);
-            }
-        }
+                if(gazedriver.isValid()) {
+                    //gazecontrol->get3DPoint(0, px, (-2.4 * p_eyez + 70)/100.0, xrobref);
+                    gazecontrol->get3DPoint(0, px, 0.6, xrobref);
+                    std::cout << px.toString() << " " << xrobref.toString() << std::endl;
+                }
+            //}
+        //}
 
     }
 
