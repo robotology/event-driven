@@ -412,7 +412,7 @@ void particleProcessor::run()
         if(vBottleOut.getOutputCount()) {
             ev::vBottle &eventsout = vBottleOut.prepare();
             eventsout.clear();
-            ev::event<ev::ClusterEventGauss> ceg;
+            ev::event<ev::ClusterEventGauss> ceg = ev::event<ev::ClusterEventGauss>(new ev::ClusterEventGauss());
             ceg->setStamp(stw.front()->getStamp());
             ceg->setChannel(1);
             ceg->setID(0);
