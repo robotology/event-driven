@@ -165,7 +165,7 @@ particleProcessor::particleProcessor(unsigned int height, unsigned int width, st
     ptime2 = yarp::os::Time::now();
 
     nparticles = 50;
-    nThreads = 3;
+    nThreads = 8;
     rate = 0;
     nRandomise = 1.0 + 0.02;
     adaptive = false;
@@ -452,6 +452,8 @@ void particleProcessor::run()
 
             drawcircle(image, avgx, avgy, avgr+0.5, 2);
 
+
+
             debugOut.write();
         }
 
@@ -489,6 +491,10 @@ bool particleProcessor::inbounds(vParticle &p)
     if(r < 20) {
         p.setr(20);
         r = 20;
+    }
+    if(r > res.width / 6) {
+        p.setr(res.width/6);
+        r = res.width/6;
     }
     if(p.getx() < -r || p.getx() > res.width + r)
         return false;
