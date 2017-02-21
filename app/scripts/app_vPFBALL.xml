@@ -33,7 +33,7 @@
 
 <module>
     <name> vFramer </name>
-    <parameters> --name /vFramer --displays "(1 left (AE CIRC ISO))" --height 240 --width 304 </parameters>
+    <parameters> --name vFramer --displays "(1 left (AE CIRC ISO))" --height 240 --width 304 </parameters>
     <node>icub24</node>
 </module>
 
@@ -56,7 +56,7 @@
 </connection>
 
 <connection>
-  <from>/vpf/vBottle:o</from>
+  <from>/zynqGrabber/vBottle:o</from>
   <to>/vFramer/vBottle:i</to>
   <protocol>tcp</protocol>
 </connection>
