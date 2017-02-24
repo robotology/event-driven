@@ -80,6 +80,7 @@ private:
 
     //internal variables
     yarp::os::BufferedPort<ev::vBottleMimic> portvBottle;
+    yarp::os::BufferedPort<yarp::os::Bottle> portEventCount;
     int countAEs;
     int countLoss;
     double rate;

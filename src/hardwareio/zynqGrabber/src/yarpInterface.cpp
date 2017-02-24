@@ -169,6 +169,9 @@ bool device2yarp::initialise(std::string moduleName, bool strict, bool check,
         std::cout << "D2Y: setting output port to not-strict" << std::endl;
     }
 
+    if(!portEventCount.open("/" + moduleName + "/eventCount:o"))
+        return false;
+
     return portvBottle.open("/" + moduleName + "/vBottle:o");
 
 }
@@ -236,6 +239,13 @@ void  device2yarp::run() {
 
         if(applyfilter)
             nBytesRead = applysaltandpepperfilter(data, nBytesRead);
+
+        if(portEventCount.getOutputCount() && nBytesRead) {
+            yarp::os::Bottle &ecb = portEventCount.prepare();
+            ecb.clear();
+            ecb.addInt(nBytesRead / 8);
+            portEventCount.write();
+        }
 
         //if we don't want or have nothing to send or there is an error finish here.
         if(!portvBottle.getOutputCount() || nBytesRead < 8)
