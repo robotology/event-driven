@@ -303,19 +303,27 @@ void particleProcessor::run()
 {
     std::cout << "Thread starting" << std::endl;
 
-    ev::vQueue stw;
+    ev::vQueue stw, stw2;
+    unsigned long int t;
     //double maxlikelihood;
-//    while(!stw.size()) {
-//        yarp::os::Time::delay(0.1);
-//        eventhandler2.queryROI(stw, 0, 100000, res.width/2, res.height/2, res.width/2);
-//    }
+    while(!stw2.size()) {
+        yarp::os::Time::delay(0.1);
+        eventhandler2.queryROI(stw2, 0, 100000, res.width/2, res.height/2, res.width/2);
+    }
+    //t = unwrap(stw2.front()->getStamp());
 
     while(!isStopping()) {
+        ptime = yarp::os::Time::now();
+
+            //stw.swap(stw2);
+        //stw.swap(stw2);
+        stw = stw2;
+        //stw2.clear();
 
         //std::cout << "GETTING EVENTS" <<std::endl;
-        ptime = yarp::os::Time::now();
+
         //eventhandler.queryEvents(stw, maxtw);
-        eventhandler2.queryROI(stw, 0, maxtw, avgx, avgy, avgr * 1.5);
+        //eventhandler2.queryROI(stw, 0, maxtw, avgx, avgy, avgr * 1.5);
         //std::cout << stw.size() << std::endl;
         //eventdriven::vQueue stw = eventhandler.queryEvents(unwrap.currentTime() + rate, eventdriven::vtsHelper::maxStamp() * 0.5);
         //eventdriven::vQueue stw = eventhandler.queryEventList(indexedlist);
@@ -325,7 +333,8 @@ void particleProcessor::run()
 
         //if(!stw.size()) continue;
 
-        unsigned long int t = unwrap(stw.front()->getStamp());
+        if(stw.size())
+            t = unwrap(stw.front()->getStamp());
 
         std::vector<vParticle> indexedSnap = indexedlist;
 
@@ -417,13 +426,14 @@ void particleProcessor::run()
         }
 
         //std::cout << "getting new event window" << std::endl;
-        //eventhandler2.queryROI(stw, 0, maxtw, avgx, avgy, avgr * 1.5);
+        eventhandler2.queryROI(stw2, 0, maxtw, avgx, avgy, avgr * 1.5);
 
         double normval = 0.0;
         for(int k = 0; k < nThreads; k++) {
             computeThreads[k]->join();
             normval += computeThreads[k]->getNormVal();
         }
+
         //END MULTI-THREAD
 
         //normalisation
@@ -451,6 +461,8 @@ void particleProcessor::run()
             avgr += indexedlist[i].getr() * indexedlist[i].getw();
             avgtw += indexedlist[i].gettw() * indexedlist[i].getw();
         }
+
+
 
         //std::cout << avgx << " " << avgy << " " << avgr << " " << avgtw << std::endl;
         //std::cout << "CALCULATED AVERAGE" <<std::endl;
@@ -518,7 +530,7 @@ void particleProcessor::run()
             yarp::os::Bottle &scopedata = scopeOut.prepare();
             scopedata.clear();
             double temptime = yarp::os::Time::now();
-            //scopedata.addDouble(1.0 / (temptime - ptime2));
+            scopedata.addDouble(1.0 / (temptime - ptime2));
             ptime2 = temptime;
 //            scopedata.addDouble(stw.front()->getStamp() * 0.001);
 //            scopedata.addDouble((t - previouseventstamp) * 0.001 / 7.8125);
@@ -526,10 +538,10 @@ void particleProcessor::run()
 //            scopedata.addDouble(avgtw / 10000.0);
 //            scopedata.addDouble(pmax.gettw() / 10000.0);
 
-            scopedata.addDouble(Tget);
-            scopedata.addDouble(Tresample);
-            scopedata.addDouble(Timage);
-            scopedata.addDouble(Tobs);
+//            scopedata.addDouble(Tget);
+//            scopedata.addDouble(Tresample);
+//            scopedata.addDouble(Timage);
+//            scopedata.addDouble(Tobs);
             //scopedata.addDouble(1000.0 / (Tget + Tresample + Tpredict + Tobs));
             //scopedata.addDouble(eventhandler.geteventrate());
             //scopedata.addDouble(stw.size());
