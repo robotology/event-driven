@@ -11,6 +11,8 @@ vSurfaceHandler::vSurfaceHandler(unsigned int width, unsigned int height)
     res.width = width; res.height = height;
     surfaceLeft = ev::temporalSurface(width, height);
     surfaceRight = ev::temporalSurface(width, height);
+    roiwinLeft.getWindow(0, width , 0, height, 50000);
+    roiwinRight.getWindow(0, width , 0, height, 50000);
     strict = false;
     pstamp = yarp::os::Stamp();
     ptime = yarp::os::Time::now();
@@ -20,6 +22,7 @@ vSurfaceHandler::vSurfaceHandler(unsigned int width, unsigned int height)
     bottletime = yarp::os::Time::now();
     eventsQueried = false;
     waitsignal.wait(); //lock the resource to start with
+    vcount = 0;
 
 }
 
@@ -64,20 +67,33 @@ void vSurfaceHandler::onRead(ev::vBottle &inputBottle)
     }
     pstamp = st;
 
-
     //create event queue
+    //static double accum = 0;
+    //double temp1 = yarp::os::Time::now();
     ev::vQueue q = inputBottle.get<AddressEvent>();
+    //accum += (yarp::os::Time::now() - temp1);
+    //temp1 = yarp::os::Time::now() - temp1;
+    //std::cout << accum << std::endl;
     //q.sort(true);
 
+   // double temp2 = yarp::os::Time::now();
     for(ev::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
 
         mutexsignal.lock();
+
+        vcount++;
+
+
         if((*qi)->getChannel() == 0)
-            surfaceLeft.addEvent(*qi);
+            surfaceLeft.fastAddEvent(*qi);
+        //roiwinLeft.addEvent(std::static_pointer_cast<AddressEvent>(*qi));
         else if((*qi)->getChannel() == 1)
-            surfaceRight.addEvent(*qi);
+            surfaceRight.fastAddEvent(*qi);
+        //roiwinRight.addEvent(std::static_pointer_cast<AddressEvent>(*qi));
         else
             std::cout << "Unknown channel" << std::endl;
+
+
 
         mutexsignal.unlock();
 
@@ -95,19 +111,42 @@ void vSurfaceHandler::onRead(ev::vBottle &inputBottle)
 
     }
 
+    //accum += (yarp::os::Time::now() - temp2);
+
+
+
+   // std::cout << temp1*1000 << " " << accum*1000 << std::endl;
+    //accum = 0;
+
 
 
 }
 
-void vSurfaceHandler::queryROI(ev::vQueue &fillq, unsigned int temporalwindow, int x, int y, int r)
+double vSurfaceHandler::queryROI(ev::vQueue &fillq, unsigned int temporalwindow, int x, int y, int r)
 {
+
+    //std::cout << vcount << std::endl;
+    if(!vcount) return 0;
+
     tw = temporalwindow;
 
     mutexsignal.lock();
+
     //surfaceLeft.getSurfSorted(fillq);
-    fillq = surfaceRight.getSurf_Tlim(temporalwindow, x, y, r);
+    //fillq = roiwinLeft.getWindow(x - r, x + r, y - r, y + r, temporalwindow);
+    //fillq = surfaceRight.getSurf_Tlim(temporalwindow, x, y, r);
+    double t1 = yarp::os::Time::now();
+    fillq = surfaceLeft.getSurf_Tlim(temporalwindow, x, y, r);
+    double t2 = yarp::os::Time::now();
     //fillq.sort(true);
+
+
+    vcount = 0;
+
     mutexsignal.unlock();
+
+    return t2 - t1;
+
 
 }
 
@@ -118,6 +157,7 @@ void vSurfaceHandler::queryEvents(ev::vQueue &fillq, unsigned int temporalwindow
 
     mutexsignal.lock();
     //surfaceLeft.getSurfSorted(fillq);
+    //fillq = surfaceRight.getSurf_Tlim(temporalwindow);
     fillq = surfaceRight.getSurf_Tlim(temporalwindow);
     mutexsignal.unlock();
 
@@ -165,7 +205,7 @@ particleProcessor::particleProcessor(unsigned int height, unsigned int width, st
     ptime2 = yarp::os::Time::now();
 
     nparticles = 50;
-    nThreads = 8;
+    nThreads = 2;
     rate = 0;
     nRandomise = 1.0 + 0.02;
     adaptive = false;
@@ -184,7 +224,7 @@ particleProcessor::particleProcessor(unsigned int height, unsigned int width, st
     pVariance = 0.5;
 
     eventhandler.resize(width, height);
-
+    eventhandler2.configure(height, width);
 
 }
 
@@ -216,10 +256,16 @@ bool particleProcessor::threadInit()
         return false;
     }
 
-    if(!eventhandler.open(name, strict)) {
-        std::cout << "Could not open eventhandler ports" << std::endl;
+    if(!eventhandler2.open(name + "/vBottle:i")) {
+        std::cout << "Could not open eventhandler2 ports" << std::endl;
         return false;
     }
+
+
+//    if(!eventhandler.open(name, strict)) {
+//        std::cout << "Could not open eventhandler ports" << std::endl;
+//        return false;
+//    }
 
     //std::cout << "Port open - querying initialisation events" << std::endl;
     //ev::vQueue stw;
@@ -259,18 +305,25 @@ void particleProcessor::run()
 
     ev::vQueue stw;
     //double maxlikelihood;
+//    while(!stw.size()) {
+//        yarp::os::Time::delay(0.1);
+//        eventhandler2.queryROI(stw, 0, 100000, res.width/2, res.height/2, res.width/2);
+//    }
+
     while(!isStopping()) {
 
         //std::cout << "GETTING EVENTS" <<std::endl;
         ptime = yarp::os::Time::now();
         //eventhandler.queryEvents(stw, maxtw);
-        eventhandler.queryROI(stw, maxtw, avgx, avgy, avgr * 1.5);
+        eventhandler2.queryROI(stw, 0, maxtw, avgx, avgy, avgr * 1.5);
+        //std::cout << stw.size() << std::endl;
         //eventdriven::vQueue stw = eventhandler.queryEvents(unwrap.currentTime() + rate, eventdriven::vtsHelper::maxStamp() * 0.5);
         //eventdriven::vQueue stw = eventhandler.queryEventList(indexedlist);
+
         double Tget = (yarp::os::Time::now() - ptime)*1000.0;
         ptime = yarp::os::Time::now();
 
-        if(!stw.size()) continue;
+        //if(!stw.size()) continue;
 
         unsigned long int t = unwrap(stw.front()->getStamp());
 
@@ -320,11 +373,11 @@ void particleProcessor::run()
 
         //likelihood observation
         std::vector<int> deltats; deltats.resize(stw.size());
-        double stampnow = stw.front()->getStamp();
+        double stampnow = stw.front()->stamp;
         for(unsigned int i = 0; i < stw.size(); i++) {
-            double dt = stampnow - stw[i]->getStamp();
+            double dt = stampnow - stw[i]->stamp;
             if(dt < 0)
-                dt += ev::vtsHelper::maxStamp();
+                dt += ev::vtsHelper::max_stamp;
             deltats[i] = dt;
         }
 
@@ -339,7 +392,7 @@ void particleProcessor::run()
 //        for(int j = 0; j < nparticles; j++) {
 //            for(unsigned int i = 0; i < stw.size(); i++) {
 //                if(deltats[i] < indexedlist[j].gettw()) {
-//                    eventdriven::AddressEvent *v = stw[i]->getUnsafe<eventdriven::AddressEvent>();
+//                    event<AddressEvent> v = std::static_pointer_cast<AddressEvent>(stw[i]);
 //                    indexedlist[j].incrementalLikelihood(v->getX(), v->getY(), deltats[i]);
 //                } else {
 //                    break;
@@ -347,15 +400,14 @@ void particleProcessor::run()
 //            }
 //        }
 
-//        maxlikelihood = 0;
+//        //maxlikelihood = 0;
 //        double normval = 0.0;
 //        for(int i = 0; i < nparticles; i++) {
 //            indexedlist[i].concludeLikelihood();
 //            normval += indexedlist[i].getw();
-//            maxlikelihood = std::max(maxlikelihood, indexedlist[i].getl());
+//            //maxlikelihood = std::max(maxlikelihood, indexedlist[i].getl());
 //        }
 
-        //return normval for those events
         //END SINGLE-THREAD
 
         //START MULTI-THREAD
@@ -363,6 +415,9 @@ void particleProcessor::run()
             computeThreads[k]->setDataSources(&indexedlist, &deltats, &stw);
             computeThreads[k]->start();
         }
+
+        //std::cout << "getting new event window" << std::endl;
+        //eventhandler2.queryROI(stw, 0, maxtw, avgx, avgy, avgr * 1.5);
 
         double normval = 0.0;
         for(int k = 0; k < nThreads; k++) {
@@ -431,6 +486,7 @@ void particleProcessor::run()
         }
 
         //static int i = 0;
+        double Timage = yarp::os::Time::now();
         if(debugOut.getOutputCount()) {
 
             yarp::sig::ImageOf< yarp::sig::PixelBgr> &image = debugOut.prepare();
@@ -456,6 +512,7 @@ void particleProcessor::run()
 
             debugOut.write();
         }
+        Timage = (yarp::os::Time::now() - Timage)*1000;
 
         if(scopeOut.getOutputCount()) {
             yarp::os::Bottle &scopedata = scopeOut.prepare();
@@ -471,7 +528,7 @@ void particleProcessor::run()
 
             scopedata.addDouble(Tget);
             scopedata.addDouble(Tresample);
-            scopedata.addDouble(Tpredict);
+            scopedata.addDouble(Timage);
             scopedata.addDouble(Tobs);
             //scopedata.addDouble(1000.0 / (Tget + Tresample + Tpredict + Tobs));
             //scopedata.addDouble(eventhandler.geteventrate());
@@ -488,13 +545,15 @@ void particleProcessor::run()
 bool particleProcessor::inbounds(vParticle &p)
 {
     int r = p.getr();
-    if(r < 20) {
-        p.setr(20);
-        r = 20;
+    int minr = res.width/15;
+    int maxr = res.width/5;
+    if(r < minr) {
+        p.setr(minr);
+        r = minr;
     }
-    if(r > res.width / 6) {
-        p.setr(res.width/6);
-        r = res.width/6;
+    if(r > maxr) {
+        p.setr(maxr);
+        r = maxr;
     }
     if(p.getx() < -r || p.getx() > res.width + r)
         return false;
@@ -546,7 +605,7 @@ void vPartObsThread::run()
                 //ev::AddressEvent *v = (*stw)[j]->getUnsafe<ev::AddressEvent>();
                 event<AddressEvent> v = std::static_pointer_cast<AddressEvent>((*stw)[j]);
                 //event<AddressEvent> v = getas<AddressEvent>((*stw)[j]);
-                (*particles)[i].incrementalLikelihood(v->getX(), v->getY(), (*deltats)[j]);
+                (*particles)[i].incrementalLikelihood(v->x, v->y, (*deltats)[j]);
             } else {
                 break;
             }
