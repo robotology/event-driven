@@ -135,7 +135,10 @@ event<> createEvent(const std::string type);
 class vEvent
 {
 
-protected:
+private:
+    const static int localWordsCoded = 1;
+
+public:
 
 #ifdef TIME32BIT
     unsigned int stamp:31;
@@ -143,10 +146,6 @@ protected:
     unsigned int stamp:24;
 #endif
 
-private:
-    const static int localWordsCoded = 1;
-
-public:
     //!blank constructor required at base level
     vEvent() : stamp(0) {}
     //!copy constructor
@@ -184,16 +183,13 @@ class AddressEvent : public vEvent
 private:
     const static int localWordsCoded = 1;
 
-protected:
+public:
 
     //add new member variables here
     unsigned int x:10;
     unsigned int y:10;
     unsigned int channel:1;
     unsigned int polarity:1;
-
-
-public:
 
     //these are new the member get functions
     virtual std::string getType() const { return "AE";}
@@ -210,6 +206,15 @@ public:
     //these functions need to be defined correctly for inheritance
     AddressEvent() : vEvent(), x(0), y(0), channel(0), polarity(0) {}
     AddressEvent(const vEvent &event);
+    AddressEvent(const AddressEvent * v)
+    {
+        stamp = v->stamp;
+        channel = v->channel;
+        polarity = v->polarity;
+        x = v->x;
+        y = v->y;
+
+    }
     vEvent &operator=(const vEvent &event);
     virtual vEvent* clone();
 
