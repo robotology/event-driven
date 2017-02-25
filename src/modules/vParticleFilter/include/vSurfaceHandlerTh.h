@@ -129,10 +129,10 @@ public:
 
     }
 
-    void queryROI(ev::vQueue &fillq, int c, unsigned int t, int x, int y, int r)
+    bool queryROI(ev::vQueue &fillq, int c, unsigned int t, int x, int y, int r)
     {
 
-        if(!vcount) return;
+        if(!vcount) return false;
 
         m.lock();
         if(c == 0)
@@ -141,6 +141,7 @@ public:
             fillq = surfaceRight.getSurf_Tlim(t, x, y, r);
         vcount = 0;
         m.unlock();
+        return true;
 
     }
 
