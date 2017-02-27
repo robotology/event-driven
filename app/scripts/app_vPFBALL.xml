@@ -43,6 +43,12 @@
    <node> icub24 </node>
 </module>
 
+<module>
+    <name> yarpdatadumper </name>
+    <parameters> --txTime --name /dump/IROS17_video/1/atis</parameters>
+    <node> icub24 </node>
+</module>
+
 <connection>
   <from>/zynqGrabber/vBottle:o</from>
   <to>/vpf/vBottle:i</to>
@@ -58,7 +64,7 @@
 <connection>
   <from>/zynqGrabber/vBottle:o</from>
   <to>/vFramer/vBottle:i</to>
-  <protocol>tcp</protocol>
+  <protocol>udp</protocol>
 </connection>
 
 <connection>
@@ -82,6 +88,12 @@
   <from>/demoRedBall/cmdFace:rpc</from>
   <to>/icub/face/emotions/in</to>
   <protocol>tcp</protocol>
+</connection>
+
+<connection>
+  <from>/zynqGrabber/vBottle:o</from>
+  <to>/dump/IROS17_video/1/atis</to>
+  <protocol>udp</protocol>
 </connection>
 
 
