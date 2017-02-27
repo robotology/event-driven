@@ -132,7 +132,7 @@ public:
     bool queryROI(ev::vQueue &fillq, int c, unsigned int t, int x, int y, int r)
     {
 
-        if(!vcount) return false;
+        //if(!vcount) return false;
 
         m.lock();
         if(c == 0)

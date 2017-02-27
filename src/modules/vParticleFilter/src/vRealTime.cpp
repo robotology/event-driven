@@ -308,7 +308,7 @@ void particleProcessor::run()
     //double maxlikelihood;
     while(!stw2.size()) {
         yarp::os::Time::delay(0.1);
-        eventhandler2.queryROI(stw2, 0, 100000, res.width/2, res.height/2, res.width/2);
+        eventhandler2.queryROI(stw2, 1, 100000, res.width/2, res.height/2, res.width/2);
     }
     //t = unwrap(stw2.front()->getStamp());
 
@@ -426,7 +426,7 @@ void particleProcessor::run()
         }
 
         //std::cout << "getting new event window" << std::endl;
-        eventhandler2.queryROI(stw2, 0, maxtw, avgx, avgy, avgr * 1.5);
+        eventhandler2.queryROI(stw2, 1, maxtw, avgx, avgy, avgr * 1.5);
 
         double normval = 0.0;
         for(int k = 0; k < nThreads; k++) {
@@ -531,6 +531,7 @@ void particleProcessor::run()
             scopedata.clear();
             double temptime = yarp::os::Time::now();
             scopedata.addDouble(1.0 / (temptime - ptime2));
+            //scopedata.addDouble(avgr);
             ptime2 = temptime;
 //            scopedata.addDouble(stw.front()->getStamp() * 0.001);
 //            scopedata.addDouble((t - previouseventstamp) * 0.001 / 7.8125);
@@ -557,7 +558,7 @@ void particleProcessor::run()
 bool particleProcessor::inbounds(vParticle &p)
 {
     int r = p.getr();
-    int minr = res.width/15;
+    int minr = res.width/18;
     int maxr = res.width/5;
     if(r < minr) {
         p.setr(minr);
