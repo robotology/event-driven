@@ -96,9 +96,79 @@ public:
     bool needsUpdating(unsigned long int stamp);
 
     bool operator<(const vParticle &p) const
-                 {return this->nextUpdate > p.nextUpdate; }
+        { return this->nextUpdate > p.nextUpdate; }
     bool operator>(const vParticle &p) const
-                 {return this->nextUpdate < p.nextUpdate; }
+        { return this->nextUpdate < p.nextUpdate; }
+
+};
+
+class preComputedBins
+{
+
+private:
+
+    yarp::sig::Matrix ds;
+    yarp::sig::Matrix bs;
+    int rows;
+    int cols;
+    int offsetx;
+    int offsety;
+
+public:
+
+    preComputedBins()
+    {
+        rows = 0;
+        cols = 0;
+        offsetx = 0;
+        offsety = 0;
+    }
+
+    void configure(int height, int width, double maxrad, int nBins)
+    {
+        rows = (height + maxrad) * 2 + 1;
+        cols = (width + maxrad) * 2 + 1;
+
+        ds.resize(rows, cols);
+        bs.resize(rows, cols);
+        for(int i = 0; i < rows; i++) {
+            for(int j = 0; j < cols; j++) {
+
+                int dy = i - (rows/2+1);
+                int dx = j - (cols/2+1);
+
+                ds(i, j) = sqrt(dx*dx + dy*dy);
+                bs(i, j) = (nBins-1) * (atan2(dy, dx) + M_PI) / (2.0 * M_PI);
+
+            }
+        }
+    }
+
+    double queryDistance(int dy, int dx)
+    {
+        dy += rows/2+1; dx += cols/2+1;
+        if(dy < 0 || dy > rows || dx < 0 || dx > cols) {
+            std::cout << "preComputatedBins not large enough" << std::endl;
+            return 0.0;
+        }
+
+        return ds(dy, dx);
+    }
+    int queryBinNumber(double dy, double dx)
+    {
+        dy += rows/2+1; dx += cols/2+1;
+        if(dy < 0 || dy > rows || dx < 0 || dx > cols) {
+            std::cout << "preComputatedBins not large enough" << std::endl;
+            return 0.0;
+        }
+
+        return (int)(bs(dy, dx) + 0.5);
+
+
+
+    }
+
+
 
 };
 
