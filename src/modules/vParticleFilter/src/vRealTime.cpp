@@ -203,6 +203,7 @@ particleProcessor::particleProcessor(unsigned int height, unsigned int width, st
     this->name = name;
     this->strict = strict;
     ptime2 = yarp::os::Time::now();
+    pytime = 0;
 
     nparticles = 50;
     nThreads = 2;
@@ -213,6 +214,12 @@ particleProcessor::particleProcessor(unsigned int height, unsigned int width, st
     obsInlier = 1.5;
     obsOutlier = 3.0;
     obsThresh = 20.0;
+
+    camera = 0;
+    useroi = false;
+    seedx = 0;
+    seedy = 0;
+    seedr = 0;
 
     avgx = 10;
     avgy = 10;
@@ -290,6 +297,8 @@ bool particleProcessor::threadInit()
     for(int i = 0; i < nparticles; i++) {
         p.setid(i);
         p.resample(1.0/nparticles, 0, res.width, res.height, 30);
+        if(seedr)
+            p.initState(seedx, seedy, seedr, 100);
         maxtw = std::max(maxtw, p.gettw());
         indexedlist.push_back(p);
     }
@@ -305,10 +314,14 @@ void particleProcessor::run()
 
     ev::vQueue stw, stw2;
     unsigned long int t;
+    yarp::os::Stamp yarpstamp;
     //double maxlikelihood;
     while(!stw2.size()) {
         yarp::os::Time::delay(0.1);
-        eventhandler2.queryROI(stw2, 1, 100000, res.width/2, res.height/2, res.width/2);
+        if(useroi)
+            yarpstamp = eventhandler2.queryROI(stw2, camera, 100000, res.width/2, res.height/2, res.width/2);
+        else
+            yarpstamp = eventhandler2.queryWindow(stw2, camera, 100000);
     }
     //t = unwrap(stw2.front()->getStamp());
 
@@ -426,7 +439,10 @@ void particleProcessor::run()
         }
 
         //std::cout << "getting new event window" << std::endl;
-        eventhandler2.queryROI(stw2, 1, maxtw, avgx, avgy, avgr * 1.5);
+        if(useroi)
+            yarpstamp = eventhandler2.queryROI(stw2, camera, maxtw, avgx, avgy, avgr * 1.5);
+        else
+            yarpstamp = eventhandler2.queryWindow(stw2, camera, maxtw);
 
         double normval = 0.0;
         for(int k = 0; k < nThreads; k++) {
@@ -462,20 +478,6 @@ void particleProcessor::run()
             avgtw += indexedlist[i].gettw() * indexedlist[i].getw();
         }
 
-
-
-        //std::cout << avgx << " " << avgy << " " << avgr << " " << avgtw << std::endl;
-        //std::cout << "CALCULATED AVERAGE" <<std::endl;
-
-//        particleVariance = 0;
-//        for(int i = 0; i < nparticles; i ++) {
-//            //particleVariance = indexedlist[i].getw() *
-//            particleVariance =
-//                    (pow(avgx - indexedlist[i].getx(), 2.0) + pow(avgy - indexedlist[i].gety(), 2.0));
-//        }
-//        particleVariance /= nparticles;
-
-
         if(vBottleOut.getOutputCount()) {
             ev::vBottle &eventsout = vBottleOut.prepare();
             eventsout.clear();
@@ -494,12 +496,12 @@ void particleProcessor::run()
             ceg->setXYSigma(0);
 
             eventsout.addEvent(ceg);
+            vBottleOut.setEnvelope(yarpstamp);
             vBottleOut.write();
         }
 
-        //static int i = 0;
         double Timage = yarp::os::Time::now();
-        if(debugOut.getOutputCount()) {
+        if(debugOut.getOutputCount() && yarpstamp.getTime() - pytime > 0.03) {
 
             yarp::sig::ImageOf< yarp::sig::PixelBgr> &image = debugOut.prepare();
             image.resize(res.width, res.height);
@@ -511,17 +513,17 @@ void particleProcessor::run()
                 int px = indexedlist[i].getx();
 
                 if(py < 0 || py >= res.height || px < 0 || px >= res.width) continue;
-                image(px, py) = yarp::sig::PixelBgr(255, 255, 255);
+                image(res.width-1 - px, res.height - 1 - py) = yarp::sig::PixelBgr(255, 255, 255);
 
             }
-            //drawEvents(image, stw, avgtw);
-            drawEvents(image, stw, pmax.gettw());
+            drawEvents(image, stw, avgtw, true);
+            //drawEvents(image, stw, pmax.gettw());
             //drawEvents(image, stw, eventdriven::vtsHelper::maxStamp());
 
-            drawcircle(image, avgx, avgy, avgr+0.5, 2);
+            drawcircle(image, res.width-1 - avgx, res.height-1 - avgy, avgr+0.5, 2);
 
-
-
+            pytime = yarpstamp.getTime();
+            debugOut.setEnvelope(yarpstamp);
             debugOut.write();
         }
         Timage = (yarp::os::Time::now() - Timage)*1000;
@@ -531,21 +533,14 @@ void particleProcessor::run()
             scopedata.clear();
             double temptime = yarp::os::Time::now();
             scopedata.addDouble(1.0 / (temptime - ptime2));
-            //scopedata.addDouble(avgr);
             ptime2 = temptime;
-//            scopedata.addDouble(stw.front()->getStamp() * 0.001);
-//            scopedata.addDouble((t - previouseventstamp) * 0.001 / 7.8125);
-//            scopedata.addDouble(maxlikelihood);
-//            scopedata.addDouble(avgtw / 10000.0);
-//            scopedata.addDouble(pmax.gettw() / 10000.0);
 
+//            scopedata.addDouble(avgr);
 //            scopedata.addDouble(Tget);
 //            scopedata.addDouble(Tresample);
 //            scopedata.addDouble(Timage);
 //            scopedata.addDouble(Tobs);
-            //scopedata.addDouble(1000.0 / (Tget + Tresample + Tpredict + Tobs));
-            //scopedata.addDouble(eventhandler.geteventrate());
-            //scopedata.addDouble(stw.size());
+
 
             scopeOut.write();
         }

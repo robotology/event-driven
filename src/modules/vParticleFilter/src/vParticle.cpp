@@ -30,19 +30,23 @@ double generateGaussianNoise(double mu, double sigma)
     return z0 * sigma + mu;
 }
 
-void drawEvents(yarp::sig::ImageOf< yarp::sig::PixelBgr> &image, ev::vQueue &q, double tw) {
+void drawEvents(yarp::sig::ImageOf< yarp::sig::PixelBgr> &image, ev::vQueue &q, double tw, bool flip) {
 
     if(q.empty()) return;
-    int tnow = q.front()->getStamp(); //only valid for certain q's!!
+    int tnow = q.front()->stamp; //only valid for certain q's!!
 
     for(unsigned int i = 0; i < q.size(); i++) {
         if(tw) {
-            double dt = tnow - q[i]->getStamp();
-            if(dt < 0) dt += ev::vtsHelper::maxStamp();
+            double dt = tnow - q[i]->stamp;
+            if(dt < 0) dt += ev::vtsHelper::max_stamp;
             if(dt > tw) break;
         }
         event<AddressEvent> v = std::static_pointer_cast<AddressEvent>(q[i]);
-        image(v->getX(), v->getY()) = yarp::sig::PixelBgr(0, 255, 0);
+        if(flip)
+            image(image.width() - 1 - v->x, image.height() - 1 - v->y) = yarp::sig::PixelBgr(0, 255, 0);
+        else
+            image(v->x, v->y) = yarp::sig::PixelBgr(0, 255, 0);
+
     }
 }
 

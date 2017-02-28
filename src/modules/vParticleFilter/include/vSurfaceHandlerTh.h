@@ -11,6 +11,7 @@ class queueAllocator : public yarp::os::BufferedPort<ev::vBottle>
 private:
 
     std::deque<ev::vQueue *> qq;
+    std::deque<yarp::os::Stamp> sq;
     yarp::os::Mutex m;
     yarp::os::Mutex dataready;
 
@@ -35,16 +36,20 @@ public:
         //make a new vQueue
         m.lock();
         qq.push_back(new vQueue);
+        yarp::os::Stamp yarpstamp;
+        getEnvelope(yarpstamp);
+        sq.push_back(yarpstamp);
         m.unlock();
         //and decode the data
         inputbottle.addtoendof<ev::AddressEvent>(*(qq.back()));
         dataready.unlock();
     }
 
-    ev::vQueue* getNextQ()
+    ev::vQueue* getNextQ(yarp::os::Stamp &yarpstamp)
     {
         dataready.lock();
         if(qq.size() > 1) {
+            yarpstamp = sq.front();
             return qq.front();
         }
         else
@@ -57,6 +62,7 @@ public:
         m.lock();
         delete qq.front();
         qq.pop_front();
+        sq.pop_front();
         m.unlock();
     }
 
@@ -72,6 +78,7 @@ private:
     queueAllocator allocatorCallback;
 
     yarp::os::Mutex m;
+    yarp::os::Stamp yarpstamp;
 
     int vcount;
 
@@ -104,7 +111,7 @@ public:
 
             ev::vQueue *q = 0;
             while(!q)
-                q = allocatorCallback.getNextQ();
+                q = allocatorCallback.getNextQ(yarpstamp);
 
             for(ev::vQueue::iterator qi = q->begin(); qi != q->end(); qi++) {
 
@@ -129,7 +136,7 @@ public:
 
     }
 
-    bool queryROI(ev::vQueue &fillq, int c, unsigned int t, int x, int y, int r)
+    yarp::os::Stamp queryROI(ev::vQueue &fillq, int c, unsigned int t, int x, int y, int r)
     {
 
         //if(!vcount) return false;
@@ -141,7 +148,23 @@ public:
             fillq = surfaceRight.getSurf_Tlim(t, x, y, r);
         vcount = 0;
         m.unlock();
-        return true;
+        return yarpstamp;
+
+
+    }
+
+    yarp::os::Stamp queryWindow(ev::vQueue &fillq, int c, unsigned int t)
+    {
+
+        m.lock();
+        if(c == 0)
+            fillq = surfaceLeft.getSurf_Tlim(t);
+        else
+            fillq = surfaceRight.getSurf_Tlim(t);
+        vcount = 0;
+        m.unlock();
+        return yarpstamp;
+
 
     }
 
