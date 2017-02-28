@@ -117,7 +117,26 @@ void vSurface2::getSurfSorted(vQueue &fillq)
 
 vQueue vSurface2::getSurf_Tlim(int dt)
 {
-    return getSurf_Tlim(dt, 0, width, 0, height);
+    vQueue qcopy;
+    if(q.empty()) return qcopy;
+
+    int t = q.back()->stamp;
+
+    for(vQueue::reverse_iterator rqit = q.rbegin(); rqit != q.rend(); rqit++) {
+
+        //check it is on the surface
+        event<AddressEvent> v = std::static_pointer_cast<AddressEvent>(*rqit);
+        if(v != spatial[v->y][v->x]) continue;
+
+        //check temporal constraint
+        int vt = (*rqit)->stamp;
+        if(vt > t) vt -= vtsHelper::max_stamp;
+        if(vt + dt <= t) break;
+
+        qcopy.push_back(v);
+    }
+
+    return qcopy;
 }
 
 vQueue vSurface2::getSurf_Tlim(int dt, int d)
