@@ -230,9 +230,9 @@ void vTrackToRobotManager::onRead(ev::vBottle &vBottleIn)
                 //turn u/v into xyz
                 if(gazedriver.isValid()) {
                     //gazecontrol->get3DPoint(0, px, (-2.4 * p_eyez + 70)/100.0, xrobref);
-                    double zpos = -0.02 * p_eyez + 0.76;
-                    zpos = std::min(zpos, 0.4);
-                    zpos = std::max(zpos, 0.25);
+                    double zpos = -0.02 * p_eyez + 0.8;
+                    zpos = std::min(zpos, 0.5);
+                    zpos = std::max(zpos, 0.3);
 
                     gazecontrol->get3DPoint(1, px, zpos, xrobref);
                     std::cout << px.toString() << " " << xrobref.toString() << std::endl;

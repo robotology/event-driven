@@ -520,7 +520,7 @@ void particleProcessor::run()
             //drawEvents(image, stw, pmax.gettw());
             //drawEvents(image, stw, eventdriven::vtsHelper::maxStamp());
 
-            drawcircle(image, res.width-1 - avgx, res.height-1 - avgy, avgr+0.5, 2);
+            drawcircle(image, res.width-1 - avgx, res.height-1 - avgy, avgr+0.5, 1);
 
             pytime = yarpstamp.getTime();
             debugOut.setEnvelope(yarpstamp);
@@ -553,8 +553,8 @@ void particleProcessor::run()
 bool particleProcessor::inbounds(vParticle &p)
 {
     int r = p.getr();
-    int minr = res.width/18;
-    int maxr = res.width/5;
+    int minr = res.width/16;
+    int maxr = res.width/7;
     if(r < minr) {
         p.setr(minr);
         r = minr;
