@@ -128,14 +128,16 @@ public:
     {
         rows = (height + maxrad) * 2 + 1;
         cols = (width + maxrad) * 2 + 1;
+        offsetx = rows/2 + 1;
+        offsety = cols/2 + 1;
 
         ds.resize(rows, cols);
         bs.resize(rows, cols);
         for(int i = 0; i < rows; i++) {
             for(int j = 0; j < cols; j++) {
 
-                int dy = i - (rows/2+1);
-                int dx = j - (cols/2+1);
+                int dy = i - offsety;
+                int dx = j - offsetx;
 
                 ds(i, j) = sqrt(dx*dx + dy*dy);
                 bs(i, j) = (nBins-1) * (atan2(dy, dx) + M_PI) / (2.0 * M_PI);
@@ -146,26 +148,22 @@ public:
 
     double queryDistance(int dy, int dx)
     {
-        dy += rows/2+1; dx += cols/2+1;
+        dy += offsety; dx += offsetx;
         if(dy < 0 || dy > rows || dx < 0 || dx > cols) {
             std::cout << "preComputatedBins not large enough" << std::endl;
             return 0.0;
         }
-
         return ds(dy, dx);
     }
+
     int queryBinNumber(double dy, double dx)
     {
-        dy += rows/2+1; dx += cols/2+1;
+        dy += offsety; dx += offsetx;
         if(dy < 0 || dy > rows || dx < 0 || dx > cols) {
             std::cout << "preComputatedBins not large enough" << std::endl;
             return 0.0;
         }
-
         return (int)(bs(dy, dx) + 0.5);
-
-
-
     }
 
 
