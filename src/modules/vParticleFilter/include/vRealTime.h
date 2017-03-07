@@ -88,12 +88,14 @@ class particleProcessor : public yarp::os::Thread
 private:
 
     surfaceThread eventhandler2;
-    vSurfaceHandler eventhandler;
+    preComputedBins pcb;
     std::vector<vPartObsThread *> computeThreads;
     int nThreads;
     ev::resolution res;
     double ptime, ptime2;
     double pytime;
+    int rbound_min;
+    int rbound_max;
 
     yarp::os::BufferedPort<ev::vBottle> vBottleOut;
     yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelBgr> > debugOut;

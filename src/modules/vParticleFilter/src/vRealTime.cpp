@@ -3,197 +3,6 @@
 using namespace ev;
 
 /*////////////////////////////////////////////////////////////////////////////*/
-//surfacehandler
-/*////////////////////////////////////////////////////////////////////////////*/
-vSurfaceHandler::vSurfaceHandler(unsigned int width, unsigned int height)
-{
-
-    res.width = width; res.height = height;
-    surfaceLeft = ev::temporalSurface(width, height);
-    surfaceRight = ev::temporalSurface(width, height);
-    roiwinLeft.getWindow(0, width , 0, height, 50000);
-    roiwinRight.getWindow(0, width , 0, height, 50000);
-    strict = false;
-    pstamp = yarp::os::Stamp();
-    ptime = yarp::os::Time::now();
-    condTime = 0;
-    tw = 0;
-    eventrate = 0;
-    bottletime = yarp::os::Time::now();
-    eventsQueried = false;
-    waitsignal.wait(); //lock the resource to start with
-    vcount = 0;
-
-}
-
-void vSurfaceHandler::resize(unsigned int width, unsigned int height)
-{
-    res.width = width; res.height = height;
-    surfaceLeft = ev::temporalSurface(width, height);
-    surfaceRight = ev::temporalSurface(width, height);
-}
-
-bool vSurfaceHandler::open(const std::string &name, bool strictness)
-{
-    if(strictness) {
-        this->strict = true;
-        std::cout << "Setting " << name << " to strict" << std::endl;
-        this->setStrict();
-    }
-
-    this->useCallback();
-    if(!yarp::os::BufferedPort<ev::vBottle>::open(name + "/vBottle:i"))
-        return false;
-
-    return true;
-}
-
-void vSurfaceHandler::close()
-{
-    yarp::os::BufferedPort<ev::vBottle>::close();
-}
-
-void vSurfaceHandler::interrupt()
-{
-    yarp::os::BufferedPort<ev::vBottle>::interrupt();
-}
-
-void vSurfaceHandler::onRead(ev::vBottle &inputBottle)
-{
-    yarp::os::Stamp st;
-    getEnvelope(st);
-    if(st.getCount() != pstamp.getCount() +1 && pstamp.isValid()) {
-        std::cout << "Lost Bottle" << std::endl;
-    }
-    pstamp = st;
-
-    //create event queue
-    //static double accum = 0;
-    //double temp1 = yarp::os::Time::now();
-    ev::vQueue q = inputBottle.get<AddressEvent>();
-    //accum += (yarp::os::Time::now() - temp1);
-    //temp1 = yarp::os::Time::now() - temp1;
-    //std::cout << accum << std::endl;
-    //q.sort(true);
-
-   // double temp2 = yarp::os::Time::now();
-    for(ev::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
-
-        mutexsignal.lock();
-
-        vcount++;
-
-
-        if((*qi)->getChannel() == 0)
-            surfaceLeft.fastAddEvent(*qi);
-        //roiwinLeft.addEvent(std::static_pointer_cast<AddressEvent>(*qi));
-        else if((*qi)->getChannel() == 1)
-            surfaceRight.fastAddEvent(*qi);
-        //roiwinRight.addEvent(std::static_pointer_cast<AddressEvent>(*qi));
-        else
-            std::cout << "Unknown channel" << std::endl;
-
-
-
-        mutexsignal.unlock();
-
-
-
-        //tnow = unwrap((*qi)->getStamp());
-
-
-//        if(eventsQueried /*&& tnow > condTime*/) {
-//            //queriedQ = surfaceLeft.getSurf_Tlim(tw);
-//            eventsQueried = false;
-//            waitsignal.post();
-//        }
-
-
-    }
-
-    //accum += (yarp::os::Time::now() - temp2);
-
-
-
-   // std::cout << temp1*1000 << " " << accum*1000 << std::endl;
-    //accum = 0;
-
-
-
-}
-
-double vSurfaceHandler::queryROI(ev::vQueue &fillq, unsigned int temporalwindow, int x, int y, int r)
-{
-
-    //std::cout << vcount << std::endl;
-    if(!vcount) return 0;
-
-    tw = temporalwindow;
-
-    mutexsignal.lock();
-
-    //surfaceLeft.getSurfSorted(fillq);
-    //fillq = roiwinLeft.getWindow(x - r, x + r, y - r, y + r, temporalwindow);
-    //fillq = surfaceRight.getSurf_Tlim(temporalwindow, x, y, r);
-    double t1 = yarp::os::Time::now();
-    fillq = surfaceLeft.getSurf_Tlim(temporalwindow, x, y, r);
-    double t2 = yarp::os::Time::now();
-    //fillq.sort(true);
-
-
-    vcount = 0;
-
-    mutexsignal.unlock();
-
-    return t2 - t1;
-
-
-}
-
-
-void vSurfaceHandler::queryEvents(ev::vQueue &fillq, unsigned int temporalwindow)
-{
-    tw = temporalwindow;
-
-    mutexsignal.lock();
-    //surfaceLeft.getSurfSorted(fillq);
-    //fillq = surfaceRight.getSurf_Tlim(temporalwindow);
-    fillq = surfaceRight.getSurf_Tlim(temporalwindow);
-    mutexsignal.unlock();
-
-}
-
-ev::vQueue vSurfaceHandler::queryEvents(unsigned long int conditionTime, unsigned int temporalWindow)
-{
-
-
-
-    condTime = conditionTime;
-    tw = temporalWindow;
-
-//    if(false) { //tnow < condTime
-//        eventsQueried = true;
-//        waitsignal.wait();
-//    }
-
-    mutexsignal.lock();
-    //ev::vQueue temp = surfaceLeft.getSurf_Tlim(tw);
-    ev::vQueue temp;
-    surfaceRight.getSurfSorted(temp);
-    mutexsignal.unlock();
-
-    return temp;
-
-
-
-
-//    condTime = conditionTime;
-//    tw = temporalWindow;
-//    eventsQueried = true;
-//    waitsignal.wait();
-//    return queriedQ;
-}
-/*////////////////////////////////////////////////////////////////////////////*/
 //particleprocessor (real-time)
 /*////////////////////////////////////////////////////////////////////////////*/
 particleProcessor::particleProcessor(unsigned int height, unsigned int width, std::string name, bool strict)
@@ -229,8 +38,9 @@ particleProcessor::particleProcessor(unsigned int height, unsigned int width, st
     pwsumsq = 0;
     maxlikelihood = 1;
     pVariance = 0.5;
+    rbound_max = 50;
+    rbound_min = 10;
 
-    eventhandler.resize(width, height);
     eventhandler2.configure(height, width);
 
 }
@@ -248,6 +58,11 @@ bool particleProcessor::threadInit()
         std::cout << pStart << "->" << pEnd-1 << std::endl;
         computeThreads.push_back(new vPartObsThread(pStart, pEnd));
     }
+
+    rbound_min = res.width/16;
+    rbound_max = res.width/7;
+
+    pcb.configure(res.height, res.width, rbound_max, 128);
 
     if(!debugOut.open(name + "/debug:o")) {
         std::cout << "could not open debug port" << std::endl;
@@ -284,6 +99,7 @@ bool particleProcessor::threadInit()
     //unsigned int tnow = unwrap(stw.back()->getStamp());
 
 
+
     //initialise the particles
     vParticle p;
     p.setRate(rate);
@@ -296,7 +112,8 @@ bool particleProcessor::threadInit()
     indexedlist.clear();
     for(int i = 0; i < nparticles; i++) {
         p.setid(i);
-        p.resample(1.0/nparticles, 0, res.width, res.height, 30);
+        p.setPCB(&pcb);
+        p.resample(1.0/nparticles, 0, res.width, res.height, 30, avgtw);
         if(seedr)
             p.initState(seedx, seedy, seedr, 100);
         maxtw = std::max(maxtw, p.gettw());
@@ -330,6 +147,10 @@ void particleProcessor::run()
 
             //stw.swap(stw2);
         //stw.swap(stw2);
+//        if(useroi)
+//            yarpstamp = eventhandler2.queryROI(stw2, camera, maxtw, avgx, avgy, avgr * 1.5);
+//        else
+//            yarpstamp = eventhandler2.queryWindow(stw2, camera, maxtw);
         stw = stw2;
         //stw2.clear();
 
@@ -347,7 +168,7 @@ void particleProcessor::run()
         //if(!stw.size()) continue;
 
         if(stw.size())
-            t = unwrap(stw.front()->getStamp());
+            t = unwrap(eventhandler2.queryVTime());
 
         std::vector<vParticle> indexedSnap = indexedlist;
 
@@ -357,7 +178,7 @@ void particleProcessor::run()
                 //if(indexedlist[i].getw() > (0.1 / nparticles)) continue;
                 double rn = nRandomise * (double)rand() / RAND_MAX;
                 if(rn > 1.0)
-                    indexedlist[i].resample(1.0/nparticles, t, res.width, res.height, 30.0);
+                    indexedlist[i].resample(1.0/nparticles, t, res.width, res.height, 30.0, avgtw);
                 else {
                     double accum = 0.0; int j = 0;
                     for(j = 0; j < nparticles; j++) {
@@ -377,7 +198,7 @@ void particleProcessor::run()
         for(int i = 0; i < nparticles; i++) {
             indexedlist[i].predict(t);
             if(!inbounds(indexedlist[i]))
-                indexedlist[i].resample(1.0/nparticles, t, res.width, res.height, 30.0);
+                indexedlist[i].resample(1.0/nparticles, t, res.width, res.height, 30.0, avgtw);
 
             //if(indexedlist[i].predict(t))
             //    indexedlist[i].resample(1.0/nparticles, t);
@@ -501,7 +322,8 @@ void particleProcessor::run()
         }
 
         double Timage = yarp::os::Time::now();
-        if(debugOut.getOutputCount() && yarpstamp.getTime() - pytime > 0.03) {
+        double ydt = yarpstamp.getTime() - pytime;
+        if(debugOut.getOutputCount() && (ydt > 0.03 || ydt < 0)) {
 
             yarp::sig::ImageOf< yarp::sig::PixelBgr> &image = debugOut.prepare();
             image.resize(res.width, res.height);
@@ -532,14 +354,14 @@ void particleProcessor::run()
             yarp::os::Bottle &scopedata = scopeOut.prepare();
             scopedata.clear();
             double temptime = yarp::os::Time::now();
-            scopedata.addDouble(1.0 / (temptime - ptime2));
+            //scopedata.addDouble(1.0 / (temptime - ptime2));
             ptime2 = temptime;
 
 //            scopedata.addDouble(avgr);
-//            scopedata.addDouble(Tget);
-//            scopedata.addDouble(Tresample);
-//            scopedata.addDouble(Timage);
-//            scopedata.addDouble(Tobs);
+            scopedata.addDouble(Tget);
+            scopedata.addDouble(avgtw * 10e-6);
+            scopedata.addDouble(maxtw * 10e-6);
+            scopedata.addDouble(Tobs);
 
 
             scopeOut.write();
@@ -553,15 +375,14 @@ void particleProcessor::run()
 bool particleProcessor::inbounds(vParticle &p)
 {
     int r = p.getr();
-    int minr = res.width/16;
-    int maxr = res.width/7;
-    if(r < minr) {
-        p.setr(minr);
-        r = minr;
+
+    if(r < rbound_min) {
+        p.setr(rbound_min);
+        r = rbound_min;
     }
-    if(r > maxr) {
-        p.setr(maxr);
-        r = maxr;
+    if(r > rbound_max) {
+        p.setr(rbound_max);
+        r = rbound_max;
     }
     if(p.getx() < -r || p.getx() > res.width + r)
         return false;
@@ -577,8 +398,7 @@ void particleProcessor::threadRelease()
 {
     scopeOut.close();
     debugOut.close();
-    eventhandler.close();
-    yarp::os::Thread::threadRelease();
+    eventhandler2.stop();
     std::cout << "Thread Released Successfully" <<std::endl;
 
 }

@@ -57,7 +57,7 @@ void vParticleReader::initialise(unsigned int width , unsigned int height,
 
     for(int i = 0; i < nparticles; i++) {
         p.setid(i);
-        p.resample(1.0/nparticles, 0, res.width, res.height, 30.0);
+        p.resample(1.0/nparticles, 0, res.width, res.height, 30.0, avgtw);
         if(seedr)
             p.initState(seedx, seedy, seedr, 100);
         p.initWeight(1.0/nparticles);
@@ -160,7 +160,7 @@ void vParticleReader::onRead(ev::vBottle &inputBottle)
             for(int i = 0; i < nparticles; i++) {
                 double rn = this->nRandomise * pwsum * (double)rand() / RAND_MAX;
                 if(rn > pwsum)
-                    indexedlist[i].resample(1.0/nparticles, t, res.width, res.height, 30.0);
+                    indexedlist[i].resample(1.0/nparticles, t, res.width, res.height, 30.0, avgtw);
                 else {
                     double accum = 0.0; int j = 0;
                     for(j = 0; j < nparticles; j++) {
@@ -177,7 +177,7 @@ void vParticleReader::onRead(ev::vBottle &inputBottle)
         for(int i = 0; i < nparticles; i++) {
             indexedlist[i].predict(t);
             if(!inbounds(indexedlist[i])) {
-                indexedlist[i].resample(1.0/nparticles, t, res.width, res.height, 30.0);
+                indexedlist[i].resample(1.0/nparticles, t, res.width, res.height, 30.0, avgtw);
             }
             if(indexedlist[i].gettw() > maxtw)
                 maxtw = indexedlist[i].gettw();
