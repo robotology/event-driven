@@ -45,6 +45,7 @@ vTrackToRobotManager::vTrackToRobotManager()
     px[1] = 127 - medx;
     lastdogazetime = 0;
 
+    FIFO = ev::temporalSurface(340, 340);
     FIFO.setTemporalSize(250000 * 7.8125);
 
 }
@@ -158,7 +159,8 @@ void vTrackToRobotManager::onRead(ev::vBottle &vBottleIn)
     FIFO.removeEvents(q.back());
 
     //get the events and see if we can get a ball observation
-    q = vBottleIn.getSorted<ev::ClusterEventGauss>();
+    //q = vBottleIn.getSorted<ev::ClusterEventGauss>();
+    q = vBottleIn.get<ev::ClusterEventGauss>();
 
     bool dogaze;
     if(yarp::os::Time::now() > lastdogazetime + 3)
@@ -177,59 +179,66 @@ void vTrackToRobotManager::onRead(ev::vBottle &vBottleIn)
         //get radius
         //p_eyez = (-2.5 * vc->getXSigma2() + 70)/100.0;
         p_eyez = vc->getXSigma2();
-        p_eyez = std::min(p_eyez, 16.0);
+        //p_eyez = std::min(p_eyez, 16.0);
 
         //update our window
-        ev::event<ev::AddressEvent> v = ev::event<ev::AddressEvent>(new ev::AddressEvent());
-        v->setChannel(vc->getChannel());
-        v->setPolarity(vc->getChannel());
-        v->setX(vc->getXCog());
-        v->setY(vc->getYCog());
-        FIFO.addEvent(v);
+//        ev::event<ev::AddressEvent> v = ev::event<ev::AddressEvent>(new ev::AddressEvent());
+//        v->setChannel(vc->getChannel());
+//        v->setPolarity(vc->getChannel());
+//        v->setX(vc->getXCog());
+//        v->setY(vc->getYCog());
+//        FIFO.addEvent(v);
 
-        //and then get everything in the current window
-        q = FIFO.getSurf();
-        n = q.size();
+//        //and then get everything in the current window
+//        q = FIFO.getSurf();
+//        n = q.size();
 
-        //compute the median
-        std::vector<int> xs, ys;
-        xs.resize(n); ys.resize(n);
-        for(int i = 0; i < n; i++) {
-            ev::event<ev::AddressEvent> vtw = ev::getas<ev::AddressEvent>(q[i]);
-            xs[i] = vtw->getX();
-            ys[i] = vtw->getY();
-            //p_eyez = std::max(p_eyez, (double)vtw->getXSigma2());
-            //p_eyez = std::min(p_eyez, 16.0);
-        }
+//        //compute the median
+//        std::vector<int> xs, ys;
+//        xs.resize(n); ys.resize(n);
+//        for(int i = 0; i < n; i++) {
+//            ev::event<ev::AddressEvent> vtw = ev::getas<ev::AddressEvent>(q[i]);
+//            xs[i] = 303 - vtw->getX();
+//            ys[i] = 239 - vtw->getY();
+//            //p_eyez = std::max(p_eyez, (double)vtw->getXSigma2());
+//            //p_eyez = std::min(p_eyez, 16.0);
+//        }
 
-        std::sort(xs.begin(), xs.end());
-        std::sort(ys.begin(), ys.end());
+//        std::sort(xs.begin(), xs.end());
+//        std::sort(ys.begin(), ys.end());
 
-        medx = xs[n / 2];
-        medy = ys[n / 2];
+//        medx = xs[n / 2];
+//        medy = ys[n / 2];
 
         //do error check for too much noise
-        double medstdx = 0, medstdy = 0;
-        for(int i = 0; i < n; i++) {
-            medstdx += pow(xs[i] - medx, 2.0);
-            medstdy += pow(ys[i] - medy, 2.0);
-        }
-        medstdx = sqrt(medstdx / n);
-        medstdy = sqrt(medstdy / n);
+//        double medstdx = 0, medstdy = 0;
+//        for(int i = 0; i < n; i++) {
+//            medstdx += pow(xs[i] - medx, 2.0);
+//            medstdy += pow(ys[i] - medy, 2.0);
+//        }
+//        medstdx = sqrt(medstdx / n);
+//        medstdy = sqrt(medstdy / n);
 
-        if(std::abs(vc->getXCog() - medx) < medstdx && std::abs(vc->getYCog() - medy) < medstdy) {
+        //if(std::abs(vc->getXCog() - medx) < medstdx && std::abs(vc->getYCog() - medy) < medstdy) {
             //std::cout << "current observation within 1 std" << std::endl;
             //std::cout << medstdx << " " << medstdy << " " << n << std::endl;
-            if(medstdx < 10 && medstdy < 10 && n > 5) {
+            //if(medstdx < 10 && medstdy < 10 && n > 5) {
                 dogaze = true;
                 lastdogazetime = yarp::os::Time::now();
-                px[0] = medx;
-                px[1] = medy;
+                px[0] = 303 - vc->getXCog();
+                px[1] = 239 - vc->getYCog();
                 //turn u/v into xyz
-                if(gazedriver.isValid())
-                    gazecontrol->get3DPoint(0, px, (-2.4 * p_eyez + 70)/100.0, xrobref);
-            }
-        }
+                if(gazedriver.isValid()) {
+                    //gazecontrol->get3DPoint(0, px, (-2.4 * p_eyez + 70)/100.0, xrobref);
+                    double zpos = -0.02 * p_eyez + 0.8;
+                    zpos = std::min(zpos, 0.5);
+                    zpos = std::max(zpos, 0.3);
+
+                    gazecontrol->get3DPoint(1, px, zpos, xrobref);
+                    std::cout << px.toString() << " " << xrobref.toString() << std::endl;
+                }
+            //}
+        //}
 
     }
 

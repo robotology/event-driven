@@ -46,6 +46,8 @@ private:
     int rate;
     double nRandomise;
     bool adaptive;
+    int camera;
+    bool useroi;
 
     double obsThresh;
     double obsInlier;
@@ -56,7 +58,7 @@ private:
 public:
 
     vParticleReader();
-    void initialise(unsigned int width , unsigned int height, unsigned int nParticles, unsigned int rate, double nRands, bool adaptive, double pVariance);
+    void initialise(unsigned int width , unsigned int height, unsigned int nParticles, unsigned int rate, double nRands, bool adaptive, double pVariance, int camera, bool useROI);
     void setObservationParameters(double minLikelihood, double inlierPar, double outlierPar) {
         obsThresh = minLikelihood; obsInlier = inlierPar; obsOutlier = outlierPar; }
 

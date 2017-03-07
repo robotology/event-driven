@@ -14,23 +14,47 @@ vSurface2::vSurface2(int width, int height)
     }
 }
 
+void vSurface2::fastAddEvent(event <> v, bool onlyAdd)
+{
+    event<AddressEvent> c = std::static_pointer_cast<AddressEvent>(v);
+    if(c->y >= height || c->x >= width) {
+        return;
+    }
+
+    if(!onlyAdd)
+        fastRemoveEvents(v);
+
+    q.push_back(v);
+
+    if(!spatial[c->y][c->x])
+        count++;
+
+    spatial[c->y][c->x] = c;
+
+    return;
+
+
+}
+
 vQueue vSurface2::addEvent(event<> v)
 {
+    event<AddressEvent> c = std::static_pointer_cast<AddressEvent>(v);
+    if(c->y >= height || c->x >= width) {
+        //std::cout << "WHY" << std::endl;
+        return vQueue();
+    }
 
     vQueue removed = removeEvents(v);
 
     q.push_back(v);
-    event<AddressEvent> c = std::static_pointer_cast<AddressEvent>(v);
     if(c) {
-        if(c->getY() >= height || c->getX() >= width) {
-            std::cout << "WHY" << std::endl;
-        }
-        if(spatial[c->getY()][c->getX()])
-            removed.push_back(spatial[c->getY()][c->getX()]);
+
+        if(spatial[c->y][c->x])
+            removed.push_back(spatial[c->y][c->x]);
         else
             count++;
 
-        spatial[c->getY()][c->getX()] = c;
+        spatial[c->y][c->x] = c;
     }
 
     return removed;
@@ -51,7 +75,7 @@ vQueue vSurface2::getSurf(int d)
     }
     if(!v) return vQueue();
 
-    return getSurf(v->getX(), v->getY(), d);
+    return getSurf(v->x, v->y, d);
 
 }
 
@@ -86,14 +110,33 @@ void vSurface2::getSurfSorted(vQueue &fillq)
     vQueue::reverse_iterator rqit;
     for(rqit = q.rbegin(); rqit != q.rend(); rqit++) {
         event<AddressEvent> v = std::static_pointer_cast<AddressEvent>(*rqit);
-        if(v != spatial[v->getY()][v->getX()]) continue;
+        if(v != spatial[v->y][v->x]) continue;
         fillq[i++] = v;
     }
 }
 
 vQueue vSurface2::getSurf_Tlim(int dt)
 {
-    return getSurf_Tlim(dt, 0, width, 0, height);
+    vQueue qcopy;
+    if(q.empty()) return qcopy;
+
+    int t = q.back()->stamp;
+
+    for(vQueue::reverse_iterator rqit = q.rbegin(); rqit != q.rend(); rqit++) {
+
+        //check it is on the surface
+        event<AddressEvent> v = std::static_pointer_cast<AddressEvent>(*rqit);
+        if(v != spatial[v->y][v->x]) continue;
+
+        //check temporal constraint
+        int vt = (*rqit)->stamp;
+        if(vt > t) vt -= vtsHelper::max_stamp;
+        if(vt + dt <= t) break;
+
+        qcopy.push_back(v);
+    }
+
+    return qcopy;
 }
 
 vQueue vSurface2::getSurf_Tlim(int dt, int d)
@@ -105,7 +148,7 @@ vQueue vSurface2::getSurf_Tlim(int dt, int d)
     }
     if(!v) return vQueue();
 
-    return getSurf_Tlim(dt, v->getX(), v->getY(), d);
+    return getSurf_Tlim(dt, v->x, v->y, d);
 
 }
 
@@ -119,18 +162,23 @@ vQueue vSurface2::getSurf_Tlim(int dt, int xl, int xh, int yl, int yh)
 {
     vQueue qcopy;
     if(q.empty()) return qcopy;
-    int t = q.back()->getStamp();
-    int vt = 0;
 
-    vQueue::reverse_iterator rqit;
-    for(rqit = q.rbegin(); rqit != q.rend(); rqit++) {
-        vt = (*rqit)->getStamp();
-        if(vt > t) vt -= vtsHelper::maxStamp();
-        if(vt + dt <= t) break;
+    int t = q.back()->stamp;
+
+    for(vQueue::reverse_iterator rqit = q.rbegin(); rqit != q.rend(); rqit++) {
+
+        //check it is on the surface
         event<AddressEvent> v = std::static_pointer_cast<AddressEvent>(*rqit);
-        if(v != spatial[v->getY()][v->getX()]) continue;
-        if(v->getX() >= xl && v->getX() <= xh) {
-            if(v->getY() >= yl && v->getY() <= yh) {
+        if(v != spatial[v->y][v->x]) continue;
+
+        //check temporal constraint
+        int vt = (*rqit)->stamp;
+        if(vt > t) vt -= vtsHelper::max_stamp;
+        if(vt + dt <= t) break;
+
+        //check spatial constraint
+        if(v->x >= xl && v->x <= xh) {
+            if(v->y >= yl && v->y <= yh) {
                 qcopy.push_back(v);
             }
         }
@@ -225,24 +273,24 @@ vQueue temporalSurface::removeEvents(event<> toAdd)
     vQueue removed;
 
     //calculate event window boundaries based on latest timestamp
-    int ctime = toAdd->getStamp();
-    int upper = ctime + vtsHelper::maxStamp() - duration;
+    int ctime = toAdd->stamp;
+    int upper = ctime + vtsHelper::max_stamp - duration;
     int lower = ctime - duration;
 
     //remove any events falling out the back of the window
     while(q.size()) {
 
         event<AddressEvent> v = std::static_pointer_cast<AddressEvent>(q.front());
-        if(v && v != spatial[v->getY()][v->getX()]) {
+        if(v && v != spatial[v->y][v->x]) {
             q.pop_front();
             continue;
         }
 
-        int vtime = q.front()->getStamp();
+        int vtime = q.front()->stamp;
 
         if((vtime > ctime && vtime < upper) || vtime < lower) {
             removed.push_back(q.front());
-            if(v) spatial[v->getY()][v->getX()] = NULL;
+            if(v) spatial[v->y][v->x] = NULL;
             q.pop_front();
             count--;
         } else {
@@ -253,16 +301,16 @@ vQueue temporalSurface::removeEvents(event<> toAdd)
     while(q.size()) {
 
         event<AddressEvent> v = std::static_pointer_cast<AddressEvent>(q.back());
-        if(v && v != spatial[v->getY()][v->getX()]) {
+        if(v && v != spatial[v->y][v->x]) {
             q.pop_back();
             continue;
         }
 
-        int vtime = q.back()->getStamp();
+        int vtime = q.back()->stamp;
 
         if((vtime > ctime && vtime < upper) || vtime < lower) {
             removed.push_back(q.back());
-            if(v) spatial[v->getY()][v->getX()] = NULL;
+            if(v) spatial[v->y][v->x] = NULL;
             q.pop_back();
             count--;
         } else {
@@ -271,6 +319,55 @@ vQueue temporalSurface::removeEvents(event<> toAdd)
     }
 
     return removed;
+}
+
+/******************************************************************************/
+void temporalSurface::fastRemoveEvents(event<> toAdd)
+{
+
+    //calculate event window boundaries based on latest timestamp
+    int ctime = toAdd->stamp;
+    int upper = ctime + vtsHelper::max_stamp - duration;
+    int lower = ctime - duration;
+
+    //remove any events falling out the back of the window
+    while(q.size()) {
+
+        event<AddressEvent> v = std::static_pointer_cast<AddressEvent>(q.front());
+        if(v && v != spatial[v->y][v->x]) {
+            q.pop_front();
+            continue;
+        }
+
+        int vtime = v->stamp;
+
+        if((vtime > ctime && vtime < upper) || vtime < lower) {
+            if(v) spatial[v->y][v->x] = NULL;
+            q.pop_front();
+            count--;
+        } else {
+            break;
+        }
+    }
+
+//    while(q.size()) {
+
+//        event<AddressEvent> v = std::static_pointer_cast<AddressEvent>(q.back());
+//        if(v && v != spatial[v->y][v->x]) {
+//            q.pop_back();
+//            continue;
+//        }
+
+//        int vtime = v->stamp;
+
+//        if((vtime > ctime && vtime < upper) || vtime < lower) {
+//            if(v) spatial[v->y][v->x] = NULL;
+//            q.pop_back();
+//            count--;
+//        } else {
+//            break;
+//        }
+//    }
 }
 
 /******************************************************************************/
@@ -299,6 +396,29 @@ vQueue fixedSurface::removeEvents(event<> toAdd)
     }
 
     return removed;
+
+}
+
+void fixedSurface::fastRemoveEvents(event<> toAdd)
+{
+
+    while(q.size()) {
+
+        event<AddressEvent> v = getas<AddressEvent>(q.front());
+        if(v && v != spatial[v->getY()][v->getX()]) {
+            q.pop_front();
+        } else {
+            break;
+        }
+    }
+
+    if(count > qlength) {
+
+        event<AddressEvent> v = getas<AddressEvent>(q.front());
+        if(v) spatial[v->getY()][v->getX()] = NULL;
+        q.pop_front();
+        count--;
+    }
 
 }
 
@@ -351,6 +471,38 @@ vQueue lifetimeSurface::removeEvents(event<> toAdd)
 
 }
 
+void lifetimeSurface::fastRemoveEvents(event<> toAdd)
+{
+
+    //lifetime requires a flow event only
+    event<FlowEvent> toAddflow = getas<FlowEvent>(toAdd);
+    if(!toAddflow)
+        return;
+
+    int cts = toAddflow->getStamp();
+    int cx = toAddflow->getX(); int cy = toAddflow->getY();
+
+
+    vQueue::iterator i = q.begin();
+    while(i != q.end()) {
+        event<FlowEvent> v = std::static_pointer_cast<FlowEvent>(*i);
+        int modts = cts;
+        if(cts < v->getStamp()) //we have wrapped
+            modts += vtsHelper::maxStamp();
+
+        bool samelocation = v->getX() == cx && v->getY() == cy;
+
+        if(modts > v->getDeath() || samelocation) {
+            //it could be dangerous if spatial gets more than 1 event per pixel
+            spatial[v->getY()][v->getX()] = NULL;
+            i = q.erase(i);
+            count--;
+        } else {
+            i++;
+        }
+    }
+
+}
 
 
 }

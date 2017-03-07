@@ -49,6 +49,7 @@ bool vParticleModule::configure(yarp::os::ResourceFinder &rf)
 {
     //administrative options
     setName((rf.check("name", yarp::os::Value("vParticleFilter")).asString()).c_str());
+    int nthread = rf.check("threads", yarp::os::Value(2)).asInt();
 
     //flags
     bool strict = rf.check("strict") &&
@@ -57,6 +58,11 @@ bool vParticleModule::configure(yarp::os::ResourceFinder &rf)
             rf.check("realtime", yarp::os::Value(true)).asBool();
     bool adaptivesampling = rf.check("adaptive") &&
             rf.check("adaptive", yarp::os::Value(true)).asBool();
+    bool useroi = rf.check("useroi") &&
+            rf.check("useroi", yarp::os::Value(true)).asBool();
+    int camera = 0;
+    if(rf.check("camera") && rf.find("camera").asString() == "right")
+        camera = 1;
 
     //filter paramters
     int nParticles = rf.check("particles", yarp::os::Value(50)).asInt();
@@ -85,7 +91,7 @@ bool vParticleModule::configure(yarp::os::ResourceFinder &rf)
         particleCallback->initialise(rf.check("width", yarp::os::Value(128)).asInt(),
                                      rf.check("height", yarp::os::Value(128)).asInt(),
                                      nParticles, rate, nRandResample, adaptivesampling,
-                                     particleVariance);
+                                     particleVariance, camera, useroi);
 
         //open the ports
         if(!particleCallback->open(getName(), strict)) {
@@ -99,10 +105,15 @@ bool vParticleModule::configure(yarp::os::ResourceFinder &rf)
                     rf.check("height", yarp::os::Value(128)).asInt(),
                     rf.check("width", yarp::os::Value(128)).asInt(),
                     this->getName(), strict);
+        particleThread->setComputeOptions(camera, nthread, useroi);
         particleThread->setFilterParameters(nParticles, nRandResample,
                                             adaptivesampling, particleVariance);
         particleThread->setObservationParameters(minlikelihood, inlierParameter,
                                                  outlierParameter);
+        if(seed && seed->size() == 3) {
+            std::cout << "Using initial seed location: " << seed->toString() << std::endl;
+            particleThread->setSeed(seed->get(0).asDouble(), seed->get(1).asDouble(), seed->get(2).asDouble());
+        }
 
         if(!particleThread->start())
             return false;

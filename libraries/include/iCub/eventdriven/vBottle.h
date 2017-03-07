@@ -141,9 +141,10 @@ public:
             }
 
             //and decode each one also creating the memory with clone
-            int pos = 0;
-            while(pos < b->size()) {
-                if(e->decode(*b, pos)) {
+            //NOTE: push_back seems as fast as preallocation for a deque
+            int pos_b = 0;
+            while(pos_b < b->size()) {
+                if(e->decode(*b, pos_b)) {
                     q.push_back(event<>(e->clone()));
                 }
             }
@@ -218,6 +219,8 @@ private:
     //Bottle& findGroup(const yarp::os::ConstString& key) const;
     //void findGroup();
     using yarp::os::Bottle::findGroup;
+    using yarp::os::Bottle::find;
+
     yarp::os::Bottle tail() const;
 
 

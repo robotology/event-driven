@@ -33,13 +33,14 @@ private:
 
     int last_stamp;
     unsigned int n_wraps;
+
+public:
+
 #ifdef LARGETS
     static const long int max_stamp = 2147483647; //2^31
 #else
     static const long int max_stamp = 16777215; //2^24
 #endif
-
-public:
 
     vtsHelper(): last_stamp(0), n_wraps(0) {}
 
@@ -53,6 +54,7 @@ public:
     static long int maxStamp() { return max_stamp; }
     static double tstosecs() { return 0.000001; }
     unsigned long int currentTime() { return (unsigned long int)last_stamp + (max_stamp*n_wraps); }
+
 
 };
 

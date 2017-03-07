@@ -28,11 +28,14 @@ vParticleReader::vParticleReader()
 
 void vParticleReader::initialise(unsigned int width , unsigned int height,
                                  unsigned int nParticles, unsigned int rate,
-                                 double nRands, bool adaptive, double pVariance)
+                                 double nRands, bool adaptive, double pVariance, int camera, bool useROI)
 {
     //parameters
     res.width = width;
     res.height = height;
+
+    this->camera = camera;
+    this->useroi = useROI;
 
     surfaceLeft = ev::temporalSurface(width, height);
 
@@ -54,7 +57,7 @@ void vParticleReader::initialise(unsigned int width , unsigned int height,
 
     for(int i = 0; i < nparticles; i++) {
         p.setid(i);
-        p.resample(1.0/nparticles, 0, res.width, res.height, 30.0);
+        p.resample(1.0/nparticles, 0, res.width, res.height, 30.0, avgtw);
         if(seedr)
             p.initState(seedx, seedy, seedr, 100);
         p.initWeight(1.0/nparticles);
@@ -143,7 +146,7 @@ void vParticleReader::onRead(ev::vBottle &inputBottle)
 
     for(ev::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
 
-        if(!(*qi)->getChannel()) continue;
+        if((*qi)->getChannel() != camera) continue;
 
         surfaceLeft.addEvent(*qi);
 
@@ -157,7 +160,7 @@ void vParticleReader::onRead(ev::vBottle &inputBottle)
             for(int i = 0; i < nparticles; i++) {
                 double rn = this->nRandomise * pwsum * (double)rand() / RAND_MAX;
                 if(rn > pwsum)
-                    indexedlist[i].resample(1.0/nparticles, t, res.width, res.height, 30.0);
+                    indexedlist[i].resample(1.0/nparticles, t, res.width, res.height, 30.0, avgtw);
                 else {
                     double accum = 0.0; int j = 0;
                     for(j = 0; j < nparticles; j++) {
@@ -174,7 +177,7 @@ void vParticleReader::onRead(ev::vBottle &inputBottle)
         for(int i = 0; i < nparticles; i++) {
             indexedlist[i].predict(t);
             if(!inbounds(indexedlist[i])) {
-                indexedlist[i].resample(1.0/nparticles, t, res.width, res.height, 30.0);
+                indexedlist[i].resample(1.0/nparticles, t, res.width, res.height, 30.0, avgtw);
             }
             if(indexedlist[i].gettw() > maxtw)
                 maxtw = indexedlist[i].gettw();
@@ -186,18 +189,15 @@ void vParticleReader::onRead(ev::vBottle &inputBottle)
         }
 
         stw = surfaceLeft.getSurf_Tlim(maxtw);
-        unsigned int ctime = (*qi)->getStamp();
+        unsigned int ctime = (*qi)->stamp;
         for(unsigned int i = 0; i < stw.size(); i++) {
             //calc dt
-            double dt = ctime - stw[i]->getStamp();
-            if(dt < 0)
-                dt += ev::vtsHelper::maxStamp();
+            double dt = ctime - stw[i]->stamp;
+            if(dt < 0) dt += ev::vtsHelper::max_stamp;
             event<AddressEvent> v = std::static_pointer_cast<AddressEvent>(stw[i]);
-            int x = v->getX();
-            int y = v->getY();
             for(int i = 0; i < nparticles; i++) {
                 if(dt < indexedlist[i].gettw())
-                    indexedlist[i].incrementalLikelihood(x, y, dt);
+                    indexedlist[i].incrementalLikelihood(v->x, v->y, dt);
             }
 
         }
@@ -235,16 +235,18 @@ void vParticleReader::onRead(ev::vBottle &inputBottle)
 
         indexedlist[0].initTiming(t);
 
-        yarp::os::Bottle &trackBottle = resultOut.prepare();
-        trackBottle.clear();
-        resultOut.setEnvelope(st);
-        trackBottle.addInt(t);
-        trackBottle.addDouble(avgx);
-        trackBottle.addDouble(avgy);
-        trackBottle.addDouble(avgr);
-        trackBottle.addDouble(avgtw);
-
-        resultOut.writeStrict();
+        if(resultOut.getOutputCount()) {
+            yarp::os::Bottle &trackBottle = resultOut.prepare();
+            trackBottle.clear();
+            resultOut.setEnvelope(st);
+            trackBottle.addInt(t);
+            trackBottle.addDouble(avgx);
+            trackBottle.addDouble(avgy);
+            trackBottle.addDouble(avgr);
+            trackBottle.addDouble(avgtw);
+            resultOut.setEnvelope(st);
+            resultOut.writeStrict();
+        }
 
     }
 
@@ -260,7 +262,7 @@ void vParticleReader::onRead(ev::vBottle &inputBottle)
         yarp::sig::ImageOf< yarp::sig::PixelBgr> &image = debugOut.prepare();
         image.resize(res.width, res.height);
         image.zero();
-        stw = surfaceLeft.getSurf_Tlim(avgtw);
+        //stw = surfaceLeft.getSurf_Tlim(avgtw);
 
         for(unsigned int i = 0; i < indexedlist.size(); i++) {
 
@@ -269,11 +271,12 @@ void vParticleReader::onRead(ev::vBottle &inputBottle)
 
             if(py < 0 || py >= res.height || px < 0 || px >= res.width) continue;
             //pcol = yarp::sig::PixelBgr(255*indexedlist[i].getw()/pmax.getw(), 255*indexedlist[i].getw()/pmax.getw(), 255);
-            image(px, py) = yarp::sig::PixelBgr(255, 255, 255);
+            image(res.width - px - 1, res.height - py - 1) = yarp::sig::PixelBgr(255, 255, 255);
             //drawcircle(image, indexedlist[i].getx(), indexedlist[i].gety(), indexedlist[i].getr(), indexedlist[i].getid());
         }
-        drawEvents(image, stw);
-        drawcircle(image, avgx, avgy, avgr, 1);
+        drawEvents(image, stw, avgtw, true);
+        drawcircle(image, res.width - 1 - avgx, res.height - 1 - avgy, avgr, 1);
+        debugOut.setEnvelope(st);
         debugOut.write();
     }
 

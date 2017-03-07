@@ -68,8 +68,10 @@ public:
     /// \param event the event to add
     ///
     virtual vQueue addEvent(event<> v);
+    void fastAddEvent(event <> v, bool onlyAdd = false);
 
     virtual vQueue removeEvents(event<> toAdd) = 0;
+    virtual void fastRemoveEvents(event<> toAdd) = 0;
 
     ///
     /// \brief getMostRecent
@@ -78,6 +80,8 @@ public:
     event<> getMostRecent();
 
     int getEventCount() { return count; }
+
+    vQueue getEverything() { return q; }
 
     ///
     /// \brief getWindow
@@ -133,6 +137,7 @@ public:
                    int duration = vtsHelper::maxStamp() * 0.5) :
         vSurface2(width, height), duration(duration) {}
     virtual vQueue removeEvents(event<> toAdd);
+    virtual void fastRemoveEvents(event<> toAdd);
 
     void setTemporalSize(int duration) {this->duration = duration;}
 
@@ -150,6 +155,7 @@ public:
     fixedSurface(int qlength = 2000, int width = 128, int height = 128)  :
         vSurface2(width, height), qlength(qlength) {}
     virtual vQueue removeEvents(event<> toAdd);
+    virtual void fastRemoveEvents(event<> toAdd);
 
     void setFixedWindowSize(int length) {this->qlength = length;}
 };
@@ -164,6 +170,7 @@ public:
         vSurface2(width, height) {}
     virtual vQueue addEvent(event<> toAdd);
     virtual vQueue removeEvents(event<> toAdd);
+    virtual void fastRemoveEvents(event<> toAdd);
 };
 
 /******************************************************************************/
@@ -183,6 +190,27 @@ public:
     void addEvent(event<> v);
     void addEvents(const vQueue &events);
     vQueue getWindow();
+};
+
+/******************************************************************************/
+class vROIWindow {
+
+protected:
+
+    //! event storage
+    vQueue q;
+    int xl;
+    int xh;
+    int yl;
+    int yh;
+    int dt;
+
+
+public:
+
+    vROIWindow();
+    void addEvent(event<AddressEvent> v);
+    vQueue getWindow(int xl, int xh, int yl, int yh, int dt);
 };
 
 }

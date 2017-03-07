@@ -30,19 +30,23 @@ double generateGaussianNoise(double mu, double sigma)
     return z0 * sigma + mu;
 }
 
-void drawEvents(yarp::sig::ImageOf< yarp::sig::PixelBgr> &image, ev::vQueue &q, double tw) {
+void drawEvents(yarp::sig::ImageOf< yarp::sig::PixelBgr> &image, ev::vQueue &q, double tw, bool flip) {
 
     if(q.empty()) return;
-    int tnow = q.front()->getStamp(); //only valid for certain q's!!
+    int tnow = q.front()->stamp; //only valid for certain q's!!
 
     for(unsigned int i = 0; i < q.size(); i++) {
         if(tw) {
-            double dt = tnow - q[i]->getStamp();
-            if(dt < 0) dt += ev::vtsHelper::maxStamp();
+            double dt = tnow - q[i]->stamp;
+            if(dt < 0) dt += ev::vtsHelper::max_stamp;
             if(dt > tw) break;
         }
         event<AddressEvent> v = std::static_pointer_cast<AddressEvent>(q[i]);
-        image(v->getX(), v->getY()) = yarp::sig::PixelBgr(0, 255, 0);
+        if(flip)
+            image(image.width() - 1 - v->x, image.height() - 1 - v->y) = yarp::sig::PixelBgr(0, 255, 0);
+        else
+            image(v->x, v->y) = yarp::sig::PixelBgr(0, 255, 0);
+
     }
 }
 
@@ -94,6 +98,7 @@ vParticle::vParticle()
     inlierCount = 0;
     maxtw = 0;
     outlierCount = 0;
+    pcb = 0;
     angbuckets = 128;
     angdist.resize(angbuckets);
     negdist.resize(angbuckets);
@@ -145,10 +150,8 @@ bool vParticle::predict(unsigned long timestamp)
         dt = timestamp - this->stamp;
     else
         dt = 0;
-    //tw += (dt*1.5);
     tw += std::max(dt, 10000.0);
 
-    //double sigmap = 0.5;
     x = generateGaussianNoise(x, variance);
     y = generateGaussianNoise(y, variance);
     r = generateGaussianNoise(r, variance * 0.5);
@@ -242,18 +245,35 @@ void vParticle::incrementalLikelihood(int vx, int vy, int dt)
 {
     double dx = vx - x;
     double dy = vy - y;
-    double sqrd = sqrt(pow(dx, 2.0) + pow(dy, 2.0)) - r;
+    int rdx, rdy;
+    if(dx > 0) rdx = dx + 0.5;
+    else rdx = dx - 0.5;
+    if(dy > 0) rdy = dy + 0.5;
+    else rdy = dy - 0.5;
+
+    double sqrd = pcb->queryDistance(rdy, rdx) - r;
+    //double sqrd = sqrt(pow(dx, 2.0) + pow(dy, 2.0)) - r;
+
     if(sqrd > -inlierParameter && sqrd < inlierParameter) {
 
-        int a = 0.5 + (angbuckets-1) * (atan2(dy, dx) + M_PI) / (2.0 * M_PI);
+        int a = pcb->queryBinNumber(rdy, rdx);
+        //int a = 0.5 + (angbuckets-1) * (atan2(dy, dx) + M_PI) / (2.0 * M_PI);
         if(!angdist[a]) {
             inlierCount++;
             angdist[a] = 1;
         }
 
+        int score = inlierCount - outlierCount;
+        if(score >= likelihood) {
+            likelihood = score;
+            maxtw = dt;
+
+        }
+
     } else if(sqrd > -outlierParameter && sqrd < 0) { //-3 < X < -5
 
-        int a = 0.5 + (angbuckets-1) * (atan2(dy, dx) + M_PI) / (2.0 * M_PI);
+        int a = pcb->queryBinNumber(rdy, rdx);
+        //int a = 0.5 + (angbuckets-1) * (atan2(dy, dx) + M_PI) / (2.0 * M_PI);
         if(!negdist[a]) {
             outlierCount++;
             negdist[a] = 1;
@@ -261,12 +281,11 @@ void vParticle::incrementalLikelihood(int vx, int vy, int dt)
 
     }
 
-    int score = inlierCount - outlierCount;
-    if(score >= likelihood) {
-        likelihood = score;
-        maxtw = dt;
 
-    }
+
+
+
+
 
 }
 
@@ -292,9 +311,9 @@ void vParticle::updateWeightSync(double normval)
     weight = weight / normval;
 }
 
-void vParticle::resample(double w, unsigned long int t, int x, int y, int r)
+void vParticle::resample(double w, unsigned long int t, int x, int y, int r, int tw)
 {
-    initState(rand()%x, rand()%y, rand()%r, 100);
+    initState(rand()%x, rand()%y, rand()%r, 100000);
     initWeight(w);
     initTiming(t);
 }
@@ -305,6 +324,7 @@ void vParticle::resample(const vParticle &seeder, double w, unsigned long int t)
     x = seeder.x;
     y = seeder.y;
     r = seeder.r;
+    tw = seeder.tw;
 
     stamp = seeder.stamp;
     weight = seeder.weight;

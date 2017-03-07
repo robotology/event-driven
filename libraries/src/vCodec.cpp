@@ -168,7 +168,7 @@ vEvent &AddressEvent::operator=(const vEvent &event)
 
 /******************************************************************************/
 vEvent* AddressEvent::clone() {
-    return new AddressEvent(*this);
+    return new AddressEvent(this);
 }
 
 /******************************************************************************/
