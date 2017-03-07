@@ -6,7 +6,7 @@
 
 <module>
     <name> vParticleFilter </name>
-    <parameters> --name /vpf --realtime false --rate 10000 --particles 50 --randoms 0.02 --obsthresh 50.0 </parameters>
+    <parameters> --realtime false --rate 10000 --randoms 0.02 --obsthresh 50.0 --height 128 --width 128 --adaptive</parameters>
     <node> localhost </node>
 </module>
 
