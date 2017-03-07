@@ -22,13 +22,15 @@ public:
         useCallback();
         setStrict();
     }
+
     ~queueAllocator()
     {
+        m.lock();
         for(std::deque<ev::vQueue *>::iterator i = qq.begin(); i != qq.end(); i++)
             delete *i;
+        qq.clear();
+        m.unlock();
     }
-
-    void configure() {}
 
     void onRead(ev::vBottle &inputbottle)
     {
@@ -66,6 +68,11 @@ public:
         m.unlock();
     }
 
+    void releaseDataLock()
+    {
+        dataready.unlock();
+    }
+
 };
 
 class surfaceThread : public yarp::os::Thread
@@ -79,6 +86,7 @@ private:
 
     yarp::os::Mutex m;
     yarp::os::Stamp yarpstamp;
+    unsigned int ctime;
 
     int vcount;
 
@@ -88,6 +96,7 @@ public:
     surfaceThread()
     {
         vcount = 0;
+        ctime = 0;
     }
 
     void configure(int height, int width)
@@ -104,14 +113,23 @@ public:
         return true;
     }
 
+    void onStop()
+    {
+        allocatorCallback.close();
+        allocatorCallback.releaseDataLock();
+    }
 
     void run()
     {
-        while(!isStopping()) {
+        while(true) {
 
             ev::vQueue *q = 0;
-            while(!q)
+            while(!q && !isStopping()) {
                 q = allocatorCallback.getNextQ(yarpstamp);
+            }
+            if(isStopping()) break;
+
+            ctime = q->back()->stamp;
 
             for(ev::vQueue::iterator qi = q->begin(); qi != q->end(); qi++) {
 
@@ -164,8 +182,11 @@ public:
         vcount = 0;
         m.unlock();
         return yarpstamp;
+    }
 
-
+    unsigned int queryVTime()
+    {
+        return ctime;
     }
 
 };
