@@ -4,30 +4,30 @@
 <module>
     <name> demoRedBall </name>
         <parameters>  </parameters>
-    <node> icub23 </node>
+    <node> icub24 </node>
 </module>
 
 <module>
     <name> vParticleFilter </name>
-    <parameters> --name /vpf --realtime true --adaptive false --particles 50 --randoms 0.00 --variance 2.0 --obsthresh 20.0 --height 240 --width 304 </parameters>
+    <parameters> --realtime --camera right --adaptive false --threads 6 --randoms 0.00 --variance 2.0 --obsthresh 20.0 --useroi </parameters>
     <node> icub23 </node>
 </module>
 
 <module>
    <name> yarpview </name>
-   <parameters>--name /viewTracker --x 500 --y 000 --RefreshTime 33 --compact </parameters>
-   <node> icub23 </node>
+   <parameters> --name /viewTracker --x 850 --y 100 --h 480 --w 608 --compact </parameters>
+   <node> icub24 </node>
 </module>
 
 <module>
     <name> yarpscope </name>
     <parameters> --remote /vpf/scope:o --index "(0 1 2 3)" --color "(red blue green black)" </parameters>
-    <node> icub23 </node>
+    <node> icub24 </node>
 </module>
 
 <module>
     <name> vTrackToRobot </name>
-    <parameters> --name vTrackToRobot --method gaze --demo grasp </parameters>
+    <parameters> --name vTrackToRobot --method gaze --demo gaze </parameters>
     <node> icub23 </node>
 </module>
 
@@ -39,7 +39,7 @@
 
 <module>
    <name>yarpview</name>
-   <parameters> --name /viewISO --x 700 --y 200 --h 800 --w 750 --RefreshTime 33 --compact </parameters>
+   <parameters> --name /viewISO --x 100 --y 100 --h 480 --w 608 --RefreshTime 33 --compact </parameters>
    <node> icub24 </node>
 </module>
 
