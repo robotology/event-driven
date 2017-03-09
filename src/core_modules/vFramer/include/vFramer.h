@@ -51,12 +51,20 @@ private:
 
     yarp::os::Mutex safety;
 
+    bool flip;
+    ev::resolution res;
+
 public:
 
     ///
     /// \brief vReadAndSplit constructor with default windowsize parameter
     ///
-    //vReadAndSplit() {}
+    vReadAndSplit()
+    {
+        flip = false;
+        res.width = 0;
+        res.height = 0;
+    }
 
     yarp::os::Stamp getYarpTime() { return yarptime; }
 
@@ -79,6 +87,12 @@ public:
     ///
     virtual void onRead(ev::vBottle &incoming);
     virtual bool open(const std::string portName, bool strict = false);
+    void setFlip(bool flip, int h, int w)
+    {
+        this->flip = flip;
+        res.height = h;
+        res.width = w;
+    }
 };
 
 /**

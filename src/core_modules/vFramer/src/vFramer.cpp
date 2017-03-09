@@ -34,8 +34,13 @@ void vReadAndSplit::onRead(ev::vBottle &incoming)
     ev::vQueue q = incoming.getAllSorted();
 
     safety.lock();
-    for(ev::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
+    for(ev::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
+        if(flip) {
+            ev::event<ev::AddressEvent> v = std::static_pointer_cast<ev::AddressEvent>(*qi);
+            v->x = res.width-1 - v->x; v->y = res.height-1 - v->y;
+        }
         windows[(*qi)->getChannel()].addEvent(*qi);
+    }
     safety.unlock();
 }
 
@@ -89,6 +94,8 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
 
     bool strict = rf.check("strict") &&
             rf.check("strict", yarp::os::Value(true)).asBool();
+    bool flip = rf.check("flip") &&
+            rf.check("flip", yarp::os::Value(true)).asBool();
 
     //viewer options
     //set up the default channel list
@@ -148,6 +155,8 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
             }
         }
     }
+
+    vReader.setFlip(flip, retinaHeight, retinaWidth);
 
     //open our event reader given the channel list
     if(!vReader.open(moduleName, strict))
