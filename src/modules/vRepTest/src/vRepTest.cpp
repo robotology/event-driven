@@ -17,8 +17,7 @@
 
 #include "vRepTest.h"
 
-using ev::event;
-using ev::getas;
+using namespace ev;
 
 /**********************************************************/
 bool vRepTestHandler::configure(yarp::os::ResourceFinder &rf)
@@ -130,21 +129,21 @@ void vRepTest::onRead(ev::vBottle &inBottle)
 
     //create event queue
     ev::vQueue q = inBottle.getAll();
-    q.sort(true);
+    ev::qsort(q, true);
     for(ev::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {
-        event<ev::AddressEvent> ae = getas<ev::AddressEvent>(*qi);
+        auto ae = as_event<AE>(*qi);
         if(!ae || ae->getChannel()) continue;
         //the following is a hack until all hard-coded values can be removed
         //from the module
-        if(ae->getX() > 127 || ae->getY() > 127) continue;
+        if(ae->x > 127 || ae->y > 127) continue;
 
-        unwts = unwrapper((*qi)->getStamp());
+        unwts = unwrapper((*qi)->stamp);
         tWindow.addEvent(*qi);
         fWindow.addEvent(*qi);
         lWindow.addEvent(*qi);
-        edge.addEventToEdge(getas<ev::AddressEvent>(*qi));
-        fedge.addEventToEdge(getas<ev::AddressEvent>(*qi));
+        edge.addEventToEdge(ae);
+        fedge.addEventToEdge(ae);
     }
 
     //dump modified dataset
@@ -154,8 +153,8 @@ void vRepTest::onRead(ev::vBottle &inBottle)
 
         for(ev::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
         {
-            event<ev::AddressEvent> v = getas<ev::AddressEvent>(*qi);
-            if(v && v->getX() < 128)
+            auto v = as_event<AE>(*qi);
+            if(v && v->x < 128)
                 outBottle.addEvent(*qi);
         }
 
@@ -220,12 +219,12 @@ void vRepTest::drawDebug(yarp::sig::ImageOf<yarp::sig::PixelBgr> &image,
 {
 
     for(unsigned int i = 0; i < q.size(); i++) {
-        event<ev::AddressEvent> v = getas<ev::AddressEvent>(q[i]);
+        auto v = as_event<AE>(q[i]);
 //        if(q[i]->getAs<eventdriven::FlowEvent>())
 //            image(v->getY()+yoff, image.width() - 1 - v->getX() - xoff) =
 //                    yarp::sig::PixelBgr(0, 255, 0);
 //        else
-            image(v->getY()+xoff, image.height() - 1 - v->getX() - yoff) =
+            image(v->y+xoff, image.height() - 1 - v->x - yoff) =
                     yarp::sig::PixelBgr(255, 0, 255);
     }
 

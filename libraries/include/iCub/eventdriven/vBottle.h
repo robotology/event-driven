@@ -20,12 +20,11 @@
 /// \brief yarp::os::Bottle wrapper for sending events through the yarp system with
 /// particular attention to using data dumper and data players
 
-#ifndef __vBottle__
-#define __vBottle__
+#ifndef __VBOTTLE__
+#define __VBOTTLE__
 
 #include <yarp/os/Bottle.h>
-#include <iCub/eventdriven/vCodec.h>
-#include <iCub/eventdriven/vQueue.h>
+#include "iCub/eventdriven/vCodec.h"
 
 namespace ev {
 
@@ -145,7 +144,7 @@ public:
             int pos_b = 0;
             while(pos_b < b->size()) {
                 if(e->decode(*b, pos_b)) {
-                    q.push_back(event<>(e->clone()));
+                    q.push_back(e->clone());
                 }
             }
         }
@@ -155,7 +154,7 @@ public:
     template<class T> vQueue getSorted()
     {
         vQueue q = get<T>();
-        q.sort();
+        qsort(q);
         return q;
     }
 
@@ -166,7 +165,7 @@ public:
 
     vQueue getAllSorted() {
         vQueue q = getAll();
-        q.sort(true);
+        qsort(q, true);
         return q;
     }
 

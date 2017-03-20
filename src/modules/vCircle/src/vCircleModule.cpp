@@ -229,7 +229,7 @@ void vCircleReader::onRead(ev::vBottle &inBot)
 
     //create event queue
     ev::vQueue q = inBot.get<ev::AddressEvent>();
-    q.sort(true);
+    ev::qsort(q, true);
 
     if(!q.size()) {
         if(strictness) outPort.writeStrict();
@@ -263,7 +263,7 @@ void vCircleReader::onRead(ev::vBottle &inBot)
                 yarp::os::Bottle &dumper = dumpOut.prepare();
                 dumper.clear();
                 dumper.addDouble(yarp::os::Time::now() - tsoffset);
-                dumper.addInt(singleQ[0]->getStamp());
+                dumper.addInt(singleQ[0]->stamp);
                 dumper.addInt(q[i]->getChannel());
                 dumper.addInt(bestx);
                 dumper.addInt(besty);
@@ -289,15 +289,14 @@ void vCircleReader::onRead(ev::vBottle &inBot)
     if(bestScoreL > inlierThreshold) {
 
         //std::cout << bestx << " " << besty << " " << bestr << std::endl;
-        event<ev::ClusterEventGauss> circevent = event<ev::ClusterEventGauss>(new ev::ClusterEventGauss());
+        auto circevent = ev::make_event<ev::GaussianAE>();
 
-        circevent->setStamp(q.back()->getStamp());
+        circevent->stamp = q.back()->stamp;
         circevent->setChannel(0);
-        circevent->setXCog(bestxL);
-        circevent->setYCog(bestyL);
-        circevent->setXSigma2(bestrL);
-        circevent->setYSigma2(1);
-        circevent->setID(0);
+        circevent->x = bestxL;
+        circevent->y = bestyL;
+        circevent->sigx = bestrL;
+        circevent->sigy = 1;
         outBottle.addEvent(circevent);
 
     }
@@ -308,14 +307,13 @@ void vCircleReader::onRead(ev::vBottle &inBot)
     if(bestScoreR > inlierThreshold) {
 
         //std::cout << bestx << " " << besty << " " << bestr << std::endl;
-        event<ev::ClusterEventGauss> circevent = event<ev::ClusterEventGauss>(new ev::ClusterEventGauss());
-        circevent->setStamp(q.back()->getStamp());
+        auto circevent = ev::make_event<ev::GaussianAE>();
+        circevent->stamp = q.back()->stamp;
         circevent->setChannel(1);
-        circevent->setXCog(bestxR);
-        circevent->setYCog(bestyR);
-        circevent->setXSigma2(bestrR);
-        circevent->setYSigma2(1);
-        circevent->setID(0);
+        circevent->x = bestxR;
+        circevent->y = bestyR;
+        circevent->sigx = bestrR;
+        circevent->sigy = 1;
         outBottle.addEvent(circevent);
 
     }
@@ -336,7 +334,7 @@ void vCircleReader::onRead(ev::vBottle &inBot)
         yarp::os::Bottle &dumperL = dumpOut.prepare();
         dumperL.clear();
         dumperL.addDouble(offsetts);
-        dumperL.addInt(q.back()->getStamp());
+        dumperL.addInt(q.back()->stamp);
         dumperL.addInt(0);
         dumperL.addInt(bestxL);
         dumperL.addInt(bestyL);
@@ -348,7 +346,7 @@ void vCircleReader::onRead(ev::vBottle &inBot)
         yarp::os::Bottle &dumperR = dumpOut.prepare();
         dumperR.clear();
         dumperR.addDouble(offsetts);
-        dumperR.addInt(q.back()->getStamp());
+        dumperR.addInt(q.back()->stamp);
         dumperR.addInt(1);
         dumperR.addInt(bestxR);
         dumperR.addInt(bestyR);

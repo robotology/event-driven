@@ -20,6 +20,8 @@
 #include <list>
 #include <math.h>
 
+using namespace ev;
+
 /******************************************************************************/
 // vSpinInterface
 /******************************************************************************/
@@ -174,21 +176,19 @@ void YARPspinI::attachEIEIOSender(spinnio::EIEIOSender* spinSenderPtr)
 void YARPspinI::onRead(ev::vBottle &bot)
 {
     //create event queue
-    ev::vQueue q = bot.getAll();
-
+    ev::vQueue q = bot.get<AE>();
 
     for(ev::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {
 
-        ev::event<ev::AddressEvent> v = ev::getas<ev::AddressEvent>(*qi);
-        if(!v) continue;
+        auto v = is_event<AddressEvent>(*qi);
         if(v->getChannel()) continue;
 
-        int neuronID = (v->getY() >> downsamplefactor) *
+        int neuronID = (v->y >> downsamplefactor) *
                 (width / pow(downsamplefactor, 2.0)) +
-                (v->getX() >> downsamplefactor);
+                (v->x >> downsamplefactor);
 
-        //eventsin << (int)(v->getX()) << " " << (int)(v->getY()) << " " << neuronID << std::endl;
+        //eventsin << (int)(v->x) << " " << (int)(v->y) << " " << neuronID << std::endl;
         spinSender->addSpikeToSendQueue(neuronID);
 
     }
@@ -233,7 +233,7 @@ void YARPspinO::run()
     ev::vBottle &outbottle = vBottleOut.prepare();
     outbottle.clear();
 
-    ev::event<ev::AddressEvent> ae = ev::event<ev::AddressEvent>(new ev::AddressEvent());
+    auto ae = make_event<AddressEvent>();
 
     //convert the data to readable packets
     std::list<std::pair<int, int> > spikepacket =
@@ -245,12 +245,10 @@ void YARPspinO::run()
     int rowsize = width >> downsamplefactor;
     for(i = spikepacket.begin(); i != spikepacket.end(); i++) {
         std::pair<int,int> spikeEvent = *i;
-        ae->setStamp(spikeEvent.first);
-        ae->setPolarity(0);
-        int y = (spikeEvent.second / rowsize) << downsamplefactor;
-        int x = (spikeEvent.second % rowsize) << downsamplefactor;
-        ae->setY(y);
-        ae->setX(x);
+        ae->stamp = spikeEvent.first;
+        ae->polarity = 0;
+        ae->y = (spikeEvent.second / rowsize) << downsamplefactor;
+        ae->x = (spikeEvent.second % rowsize) << downsamplefactor;
         outbottle.addEvent(ae);
     }
     std::cout << std::endl;
@@ -337,30 +335,28 @@ void YARPspinIO::onRead(ev::vBottle &inbottle)
     yarp::os::Stamp yts;
     this->getEnvelope(yts);
 
-    ev::vBottle &outbottle = vBottleOut.prepare();
+    vBottle &outbottle = vBottleOut.prepare();
     outbottle = inbottle;
 
-    ev::vQueue q = inbottle.getAll();
+    vQueue q = inbottle.get<AE>();
     if(!q.size()) {
         std::cerr << "Callback function received no packets?" << std::endl;
         return;
     }
 
-    int latestts = q.back()->getStamp();
+    int latestts = q.back()->stamp;
 
     //first send on our packets we have read
     for(ev::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {
-
-        ev::event<ev::AddressEvent> v = ev::getas<ev::AddressEvent>(*qi);
-        if(!v) continue;
+        auto v = is_event<AE>(*qi);
         if(v->getChannel()) continue;
 
-        int neuronID = (v->getY() >> downsamplefactor) *
+        int neuronID = (v->y >> downsamplefactor) *
                 (width / pow(downsamplefactor, 2.0)) +
-                (v->getX() >> downsamplefactor);
+                (v->x >> downsamplefactor);
 
-        //eventsin << (int)(v->getX()) << " " << (int)(v->getY()) << " " << neuronID << std::endl;
+        //eventsin << (int)(v->x) << " " << (int)(v->y) << " " << neuronID << std::endl;
         spinSender->addSpikeToSendQueue(neuronID);
 
     }
@@ -369,8 +365,7 @@ void YARPspinIO::onRead(ev::vBottle &inbottle)
     //int recvQueueSize = spinReceiver->getRecvQueueSize();
 
     //there is data to process so prepare out outbottle port
-    ev::event<ev::ClusterEventGauss> gaborevent =
-            ev::event<ev::ClusterEventGauss>(new ev::ClusterEventGauss());
+    auto gaborevent = make_event<GaussianAE>();
 
     if(spinReceiver->getRecvQueueSize()) {
         //convert the data to readable packets
@@ -381,21 +376,19 @@ void YARPspinIO::onRead(ev::vBottle &inbottle)
         std::list<std::pair<int, int> >::iterator i;
         for(i = spikepacket.begin(); i != spikepacket.end(); i++) {
             std::pair<int,int> spikeEvent = *i;
-            gaborevent->setStamp(latestts);
-            gaborevent->setPolarity(0);
-            gaborevent->setXCog(64);
-            gaborevent->setYCog(64);
+            gaborevent->stamp = latestts;
+            gaborevent->polarity = 0;
+            gaborevent->x = 64;
+            gaborevent->y = 64;
             if(spikeEvent.second == 0)  {
-                gaborevent->setXYSigma(0);
-                gaborevent->setYSigma2(5);
-                gaborevent->setXSigma2(5);
+                gaborevent->sigxy = 0;
+                gaborevent->sigy = 5;
+                gaborevent->sigx = 5;
             } else {
-                gaborevent->setXYSigma(1);
-                gaborevent->setYSigma2(5);
-                gaborevent->setXSigma2(5);
+                gaborevent->sigxy = 1;
+                gaborevent->sigy = 5;
+                gaborevent->sigx = 5;
             }
-            gaborevent->setXVel(0);
-            gaborevent->setYVel(0);
             outbottle.addEvent(gaborevent);
         }
 

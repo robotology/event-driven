@@ -1,4 +1,5 @@
-#include <iCub/eventdriven/vWindow.h>
+#include "iCub/eventdriven/vWindow_adv.h"
+#include <math.h>
 
 namespace ev {
 
@@ -16,7 +17,7 @@ vSurface2::vSurface2(int width, int height)
 
 void vSurface2::fastAddEvent(event <> v, bool onlyAdd)
 {
-    event<AddressEvent> c = std::static_pointer_cast<AddressEvent>(v);
+    event<AE> c = as_event<AE>(v);
     if(c->y >= height || c->x >= width) {
         return;
     }
@@ -70,7 +71,7 @@ vQueue vSurface2::getSurf(int d)
 {
     event<AddressEvent> v(nullptr);
     for(vQueue::reverse_iterator qi = q.rbegin(); qi != q.rend(); qi++) {
-        v = getas<AddressEvent>(*qi);
+        v = as_event<AddressEvent>(*qi);
         if(v) break;
     }
     if(!v) return vQueue();
@@ -143,7 +144,7 @@ vQueue vSurface2::getSurf_Tlim(int dt, int d)
 {
     event<AddressEvent> v(nullptr);
     for(vQueue::reverse_iterator qi = q.rbegin(); qi != q.rend(); qi++) {
-        v = getas<AddressEvent>(*qi);
+        v = as_event<AddressEvent>(*qi);
         if(v) break;
     }
     if(!v) return vQueue();
@@ -191,7 +192,7 @@ vQueue vSurface2::getSurf_Tlim(int dt, int xl, int xh, int yl, int yh)
 //{
 //    vQueue qcopy;
 //    if(q.empty()) return qcopy;
-//    int t = q.back()->getStamp();
+//    int t = q.back()->stamp;
 //    int vt = 0;
 
 //    xl = std::max(xl, 0);
@@ -202,7 +203,7 @@ vQueue vSurface2::getSurf_Tlim(int dt, int xl, int xh, int yl, int yh)
 //    for(int y = yl; y <= yh; y++) {
 //        for(int x = xl; x <= xh; x++) {
 //            if(spatial[y][x]) {
-//                vt = spatial[y][x]->getStamp();
+//                vt = spatial[y][x]->stamp;
 //                if(vt > t) vt -= vtsHelper::maxStamp();
 //                if(vt + dt > t)
 //                    qcopy.push_back(spatial[y][x]);
@@ -222,12 +223,12 @@ vQueue vSurface2::getSurf_Clim(int c, int d)
 {
     event<AddressEvent> v(nullptr);
     for(vQueue::reverse_iterator qi = q.rbegin(); qi != q.rend(); qi++) {
-        v = getas<AddressEvent>(*qi);
+        v = as_event<AddressEvent>(*qi);
         if(v) break;
     }
     if(!v) return vQueue();
 
-    return getSurf_Clim(c, v->getX(), v->getY(), d);
+    return getSurf_Clim(c, v->x, v->y, d);
 
 }
 
@@ -253,7 +254,7 @@ vQueue vSurface2::getSurf_Clim(int c, int xl, int xh, int yl, int yh)
         }
     }
 
-    qcopy.sort(true);
+    qsort(qcopy, true);
     while(qcopy.size() > (unsigned int)c)
         qcopy.pop_front();
 
@@ -378,8 +379,8 @@ vQueue fixedSurface::removeEvents(event<> toAdd)
 
     while(q.size()) {
 
-        event<AddressEvent> v = getas<AddressEvent>(q.front());
-        if(v && v != spatial[v->getY()][v->getX()]) {
+        event<AddressEvent> v = as_event<AddressEvent>(q.front());
+        if(v && v != spatial[v->y][v->x]) {
             q.pop_front();
         } else {
             break;
@@ -389,8 +390,8 @@ vQueue fixedSurface::removeEvents(event<> toAdd)
     if(count > qlength) {
 
         removed.push_back(q.front());
-        event<AddressEvent> v = getas<AddressEvent>(q.front());
-        if(v) spatial[v->getY()][v->getX()] = NULL;
+        event<AddressEvent> v = as_event<AddressEvent>(q.front());
+        if(v) spatial[v->y][v->x] = NULL;
         q.pop_front();
         count--;
     }
@@ -404,8 +405,8 @@ void fixedSurface::fastRemoveEvents(event<> toAdd)
 
     while(q.size()) {
 
-        event<AddressEvent> v = getas<AddressEvent>(q.front());
-        if(v && v != spatial[v->getY()][v->getX()]) {
+        event<AddressEvent> v = as_event<AddressEvent>(q.front());
+        if(v && v != spatial[v->y][v->x]) {
             q.pop_front();
         } else {
             break;
@@ -414,8 +415,8 @@ void fixedSurface::fastRemoveEvents(event<> toAdd)
 
     if(count > qlength) {
 
-        event<AddressEvent> v = getas<AddressEvent>(q.front());
-        if(v) spatial[v->getY()][v->getX()] = NULL;
+        event<AddressEvent> v = as_event<AddressEvent>(q.front());
+        if(v) spatial[v->y][v->x] = NULL;
         q.pop_front();
         count--;
     }
@@ -426,7 +427,7 @@ void fixedSurface::fastRemoveEvents(event<> toAdd)
 vQueue lifetimeSurface::addEvent(event<> toAdd)
 {
 
-    event<FlowEvent> v = getas<FlowEvent>(toAdd);
+    event<FlowEvent> v = as_event<FlowEvent>(toAdd);
     if(!v) return vQueue();
     return vSurface2::addEvent(v);
 }
@@ -439,27 +440,27 @@ vQueue lifetimeSurface::removeEvents(event<> toAdd)
 
 
     //lifetime requires a flow event only
-    event<FlowEvent> toAddflow = getas<FlowEvent>(toAdd);
+    event<FlowEvent> toAddflow = as_event<FlowEvent>(toAdd);
     if(!toAddflow)
         return vQueue();
 
-    int cts = toAddflow->getStamp();
-    int cx = toAddflow->getX(); int cy = toAddflow->getY();
+    int cts = toAddflow->stamp;
+    int cx = toAddflow->x; int cy = toAddflow->y;
 
 
     vQueue::iterator i = q.begin();
     while(i != q.end()) {
         event<FlowEvent> v = std::static_pointer_cast<FlowEvent>(*i);
         int modts = cts;
-        if(cts < v->getStamp()) //we have wrapped
-            modts += vtsHelper::maxStamp();
+        if(cts < v->stamp) //we have wrapped
+            modts += vtsHelper::max_stamp;
 
-        bool samelocation = v->getX() == cx && v->getY() == cy;
+        bool samelocation = v->x == cx && v->y == cy;
 
         if(modts > v->getDeath() || samelocation) {
             //it could be dangerous if spatial gets more than 1 event per pixel
             removed.push_back(*i);
-            spatial[v->getY()][v->getX()] = NULL;
+            spatial[v->y][v->x] = NULL;
             i = q.erase(i);
             count--;
         } else {
@@ -475,26 +476,26 @@ void lifetimeSurface::fastRemoveEvents(event<> toAdd)
 {
 
     //lifetime requires a flow event only
-    event<FlowEvent> toAddflow = getas<FlowEvent>(toAdd);
+    event<FlowEvent> toAddflow = as_event<FlowEvent>(toAdd);
     if(!toAddflow)
         return;
 
-    int cts = toAddflow->getStamp();
-    int cx = toAddflow->getX(); int cy = toAddflow->getY();
+    int cts = toAddflow->stamp;
+    int cx = toAddflow->x; int cy = toAddflow->y;
 
 
     vQueue::iterator i = q.begin();
     while(i != q.end()) {
         event<FlowEvent> v = std::static_pointer_cast<FlowEvent>(*i);
         int modts = cts;
-        if(cts < v->getStamp()) //we have wrapped
-            modts += vtsHelper::maxStamp();
+        if(cts < v->stamp) //we have wrapped
+            modts += vtsHelper::max_stamp;
 
-        bool samelocation = v->getX() == cx && v->getY() == cy;
+        bool samelocation = v->x == cx && v->y == cy;
 
         if(modts > v->getDeath() || samelocation) {
             //it could be dangerous if spatial gets more than 1 event per pixel
-            spatial[v->getY()][v->getX()] = NULL;
+            spatial[v->y][v->x] = NULL;
             i = q.erase(i);
             count--;
         } else {
@@ -502,6 +503,254 @@ void lifetimeSurface::fastRemoveEvents(event<> toAdd)
         }
     }
 
+}
+
+bool vEdge::flowremove(vQueue &removed, event<FlowEvent> vf)
+{
+
+    int x = vf->x; int y = vf->y;
+    double vx = vf->vy; double vy = vf->vx;
+    double vmag = sqrt(pow(vx, 2.0) + pow(vy, 2.0));
+    vx = vx / vmag; vy = vy / vmag;
+    int px, py;
+
+    //remove event at this location
+    if(spatial[y][x]) {
+        removed.push_back(spatial[y][x]);
+        spatial[y][x] = event<AE>(nullptr);
+    }
+
+    double a = 0.5;
+    double t = 0.8;//0.708;
+    int f = 3;
+    double vx1 = vx + a * vy; double vy1 = vy - a * vx;
+    double vx2 = vx - a * vy; double vy2 = vy + a * vx;
+
+    //remove events not on the perpendicular line
+    for(int yi = -f; yi <= f; yi++) {
+        for(int xi = -f; xi <= f; xi++) {
+            double d1 = xi * vx1 + yi * vy1;
+            double d2 = xi * vx2 + yi * vy2;
+            if(fabs(d1) > t && fabs(d2) > t && d1 * d2 >= 0) {
+                px = x + xi; py = y + yi;
+                if(px >= 0 && py >= 0 && px < res.width && py < res.height) {
+                    if(spatial[py][px]) {
+                        removed.push_back(spatial[py][px]);
+                        spatial[py][px] = event<AE>(nullptr);
+                    }
+                }
+            }
+        }
+    }
+
+    return true;
+
+}
+
+bool vEdge::addressremove(vQueue &removed, event<AddressEvent> v)
+{
+
+    int x = v->x; int y = v->y;
+    if(spatial[y][x]) {
+        removed.push_back(spatial[y][x]);
+        spatial[y][x] = event<AE>(nullptr);
+    }
+
+
+    for(int yi = -1 + y; yi <= 1 + y; yi++) {
+        for(int xi = -1 + x; xi <= 1 + x; xi++) {
+
+            if(yi < 0 || xi < 0 || yi >= res.height || xi >= res.width) continue;
+            if(spatial[yi][xi] && pepperCheck(yi, xi)) {
+                removed.push_back(spatial[yi][xi]);
+                spatial[yi][xi] = event<AE>(nullptr);;
+            }
+        }
+    }
+
+    return !pepperCheck(y, x);
+
+
+}
+
+bool vEdge::pepperCheck(int y, int x)
+{
+    if(y == 0 || y == res.height-1 || x == 0 || x == res.width -1)
+        return true;
+
+    if(spatial[y-1][x] && as_event<FlowEvent>(spatial[y-1][x]))
+        return false;
+    if(spatial[y+1][x] && as_event<FlowEvent>(spatial[y+1][x]))
+        return false;
+    if(spatial[y][x-1] && as_event<FlowEvent>(spatial[y][x-1]))
+        return false;
+    if(spatial[y][x+1] && as_event<FlowEvent>(spatial[y][x+1]))
+        return false;
+    if(spatial[y+1][x+1] && as_event<FlowEvent>(spatial[y+1][x+1]))
+        return false;
+    if(spatial[y-1][x+1] && as_event<FlowEvent>(spatial[y-1][x+1]))
+        return false;
+    if(spatial[y+1][x-1] && as_event<FlowEvent>(spatial[y+1][x-1]))
+        return false;
+    if(spatial[y-1][x-1] && as_event<FlowEvent>(spatial[y-1][x-1]))
+        return false;
+
+    return true;
+}
+
+
+
+vQueue vEdge::addEventToEdge(event<AddressEvent> v)
+{
+    vQueue removed;
+    bool add = false;
+
+    if(!v) return removed;
+
+    //remove non edge events
+    event<FlowEvent> vf = as_event<FlowEvent>(v);
+    if(!vf) {
+        addressremove(removed, v);
+    } else {
+        add = flowremove(removed, vf);
+    }
+
+
+    if(trackCount) {
+        if(add) eventCount++;
+        eventCount -= removed.size();
+    }
+
+    if(add) {
+        //put our new event in and add a reference
+        spatial[v->y][v->x] = v;
+
+        //then set our mostRecent
+        mostRecent = v;
+    }
+
+    return removed;
+
+}
+
+const vQueue vEdge::getSurf(int xl, int xh, int yl, int yh)
+{
+    xl = std::max(xl, 1);
+    xh = std::min(xh, res.width-2);
+    yl = std::max(yl, 1);
+    yh = std::min(yh, res.height-2);
+
+    vQueue subq;
+
+    for(int y = yl; y <= yh; y++) {
+        for(int x = xl; x <= xh; x++) {
+            if(spatial[y][x])
+                subq.push_back(spatial[y][x]);
+        }
+    }
+
+    return subq;
+
+}
+
+vFuzzyEdge::vFuzzyEdge(int width, int height, double delta) :
+    vEdge(width, height)
+{
+    this->delta = delta;
+    scores.resize(height);
+    for(int y = 0; y < height; y++) {
+        scores[y].resize(width, 0);
+    }
+
+
+}
+vQueue vFuzzyEdge::addEventToEdge(event<AddressEvent> v)
+{
+
+    if(!v) return vQueue();
+    event<FlowEvent> vf = as_event<FlowEvent>(v);
+    if(!vf) return vQueue();
+
+    int x = vf->x; int y = vf->y;
+    double vx = vf->vy; double vy = vf->vx;
+    double vmag = sqrt(pow(vx, 2.0) + pow(vy, 2.0));
+    //vx = vx / vmag; vy = vy / vmag;
+    int px, py;
+
+    //remove event at this location
+
+    //double a = 0;
+    double t = 0.708;//0.708;
+    int f = 3;
+
+    int y1 = -std::min(y, f);
+    int y2 = std::min(res.height - 1 - y, f);
+    int x1 = -std::min(x, f);
+    int x2 = std::min(res.width - 1 - x, f);
+
+    //double vx1 = vx + a * vy; double vy1 = vy - a * vx;
+    //double vx2 = vx - a * vy; double vy2 = vy + a * vx;
+
+    //remove events not on the perpendicular line
+    for(int yi = y1; yi <= y2; yi++) {
+        for(int xi = x1; xi <= x2; xi++) {
+            double dcenter = sqrt(pow(yi, 2.0) + pow(xi, 2.0));
+            if(dcenter > f) continue; //use LUT here
+
+            //if(px < 0 || py < 0 || px > width-1 || py > height-1) continue;
+
+            double d = (xi * vx + yi * vy) / vmag;
+            double p = 0.4 * pow(2.718281, -pow(d, 2.0) / t) - 0.2;
+            //p *= (f - dcenter/2) / f;
+            px = x + xi; py = y + yi;
+//            if(scores[py][px] < 0.5) {
+//                scores[py][px] += p;
+//                scores[py][px] = std::max(scores[py][px], 0.0);
+//                if(scores[py][px] > 0.5) scores[py][px] = 1.0;
+//            } else {
+//                scores[py][px] += p;
+//                scores[py][px] = std::min(scores[py][px], 1.0);
+//                if(scores[py][px] < 0.5) scores[py][px] = 0.0;
+//            }
+
+            scores[py][px] += p;
+            scores[py][px] = std::min(scores[py][px], 1.0);
+            scores[py][px] = std::max(scores[py][px], 0.0);
+
+//            double d1 = xi * vx1 + yi * vy1;
+//            double d2 = xi * vx2 + yi * vy2;
+//            if(fabs(d1) > t && fabs(d2) > t && d1 * d2 >= 0) {
+//                scores[py][px] = std::max(scores[py][px] - 0.2, 0.0);
+//            } else {
+//                scores[py][px] = std::min(scores[py][px] + 0.2, 1.0);
+//            }
+        }
+    }
+
+    return vQueue();
+
+}
+
+const vQueue vFuzzyEdge::getSURF(int xl, int xh, int yl, int yh)
+{
+    xl = std::max(xl, 1);
+    xh = std::min(xh, res.width-2);
+    yl = std::max(yl, 1);
+    yh = std::min(yh, res.height-2);
+
+    vQueue subq;
+
+    for(int y = yl; y <= yh; y++) {
+        for(int x = xl; x <= xh; x++) {
+            if(scores[y][x] > 0.5) {
+                auto ae = make_event<AddressEvent>();
+                ae->x = x; ae->y = y; ae->setChannel(0); ae->polarity = 0; ae->stamp = 0;
+                subq.push_back(ae);
+            }
+        }
+    }
+
+    return subq;
 }
 
 

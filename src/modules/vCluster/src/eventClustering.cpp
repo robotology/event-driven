@@ -192,8 +192,8 @@ void EventBottleManager::onRead(ev::vBottle &bot)
     // cluster ID (aec) and cluster events (clep)
     ev::vBottle &evtCluster = outPort.prepare();
     evtCluster.clear();
-    std::vector<ev::event<ev::ClusterEventGauss> > clEvts;
-    std::vector<ev::event<ev::ClusterEventGauss> >::iterator ceit;
+    std::vector<ev::event<ev::GaussianAE> > clEvts;
+    std::vector<ev::event<ev::GaussianAE> >::iterator ceit;
 
 
     //create event queue and iterator
@@ -204,7 +204,7 @@ void EventBottleManager::onRead(ev::vBottle &bot)
     // checks for empty or non valid queue????
     for(qi = q.begin(); qi != q.end(); qi++)
     {
-        ev::event<ev::AddressEvent> aep = ev::getas<ev::AddressEvent>(*qi);
+        auto aep = ev::as_event<ev::AddressEvent>(*qi);
         if(!aep) continue;
 
         short channel           = aep->getChannel();
@@ -216,8 +216,8 @@ void EventBottleManager::onRead(ev::vBottle &bot)
 
             //add the event depending if it was assigned a cluster
             if(clusterAssignedTo >= 0) {
-                ev::event<ev::AddressEventClustered> aec = ev::event<ev::AddressEventClustered>(new ev::AddressEventClustered(*(aep.get())));
-                aec->setID(clusterAssignedTo);
+                auto aec = ev::make_event<ev::LabelledAE>(aep);
+                aec->ID = clusterAssignedTo;
                 evtCluster.addEvent(aec);
             } else {
                 evtCluster.addEvent(aep);
@@ -237,8 +237,8 @@ void EventBottleManager::onRead(ev::vBottle &bot)
 
             //add the event depending if it was assigned a cluster
             if(clusterAssignedTo >= 0) {
-                ev::event<ev::AddressEventClustered> aec = ev::event<ev::AddressEventClustered>(new ev::AddressEventClustered(*(aep.get())));
-                aec->setID(clusterAssignedTo);
+                auto aec = ev::make_event<ev::LabelledAE>(aep);
+                aec->ID = clusterAssignedTo;
                 evtCluster.addEvent(aec);
             } else {
                 evtCluster.addEvent(aep);

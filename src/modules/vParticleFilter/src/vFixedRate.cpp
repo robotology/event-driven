@@ -24,6 +24,10 @@ vParticleReader::vParticleReader()
     obsThresh = 30.0;
     obsInlier = 1.5;
     obsOutlier = 3.0;
+
+    rbound_max = 50;
+    rbound_min = 10;
+
 }
 
 void vParticleReader::initialise(unsigned int width , unsigned int height,
@@ -38,6 +42,11 @@ void vParticleReader::initialise(unsigned int width , unsigned int height,
     this->useroi = useROI;
 
     surfaceLeft = ev::temporalSurface(width, height);
+
+    rbound_min = res.width/16;
+    rbound_max = res.width/7;
+
+    pcb.configure(res.height, res.width, rbound_max, 128);
 
     nparticles = nParticles;
     this->nRandomise = 1.0 + nRands;
@@ -54,6 +63,7 @@ void vParticleReader::initialise(unsigned int width , unsigned int height,
     p.setOutlierParameter(obsOutlier);
     p.setMinLikelihood(obsThresh);
     p.setVariance(pVariance);
+    p.setPCB(&pcb);
 
     for(int i = 0; i < nparticles; i++) {
         p.setid(i);
@@ -113,9 +123,14 @@ void vParticleReader::interrupt()
 bool vParticleReader::inbounds(vParticle &p)
 {
     int r = p.getr();
-    if(r < 20) {
-        p.setr(20);
-        r = 20;
+
+    if(r < rbound_min) {
+        p.setr(rbound_min);
+        r = rbound_min;
+    }
+    if(r > rbound_max) {
+        p.setr(rbound_max);
+        r = rbound_max;
     }
     if(p.getx() < -r || p.getx() > res.width + r)
         return false;
@@ -138,7 +153,7 @@ void vParticleReader::onRead(ev::vBottle &inputBottle)
     pstamp = st;
 
     //create event queue
-    ev::vQueue q = inputBottle.get<AddressEvent>();
+    vQueue q = inputBottle.get<AE>();
     //q.sort(true);
 
     ev::vQueue stw;
@@ -150,7 +165,7 @@ void vParticleReader::onRead(ev::vBottle &inputBottle)
 
         surfaceLeft.addEvent(*qi);
 
-        t = unwrap((*qi)->getStamp());
+        t = unwrap((*qi)->stamp);
 
         if(!indexedlist[0].needsUpdating(t)) continue;
 
@@ -194,7 +209,7 @@ void vParticleReader::onRead(ev::vBottle &inputBottle)
             //calc dt
             double dt = ctime - stw[i]->stamp;
             if(dt < 0) dt += ev::vtsHelper::max_stamp;
-            event<AddressEvent> v = std::static_pointer_cast<AddressEvent>(stw[i]);
+            auto v = is_event<AE>(stw[i]);
             for(int i = 0; i < nparticles; i++) {
                 if(dt < indexedlist[i].gettw())
                     indexedlist[i].incrementalLikelihood(v->x, v->y, dt);
@@ -274,7 +289,7 @@ void vParticleReader::onRead(ev::vBottle &inputBottle)
             image(res.width - px - 1, res.height - py - 1) = yarp::sig::PixelBgr(255, 255, 255);
             //drawcircle(image, indexedlist[i].getx(), indexedlist[i].gety(), indexedlist[i].getr(), indexedlist[i].getid());
         }
-        drawEvents(image, stw, avgtw, true);
+        drawEvents(image, stw, avgtw, false);
         drawcircle(image, res.width - 1 - avgx, res.height - 1 - avgy, avgr, 1);
         debugOut.setEnvelope(st);
         debugOut.write();

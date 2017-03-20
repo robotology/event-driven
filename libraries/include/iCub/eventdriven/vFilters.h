@@ -1,7 +1,6 @@
 #ifndef __VFILTER__
 #define __VFILTER__
 
-#include <iCub/eventdriven/all.h>
 #include <yarp/sig/Image.h>
 
 namespace ev {
@@ -68,8 +67,8 @@ public:
             for(int yi = y - Ssize; yi <= y + Ssize; yi++) {
                 int dt = ts - (*active)(xi, yi);
                 if(dt < 0) {
-                    dt += vtsHelper::maxStamp();
-                    (*active)(xi, yi) -= vtsHelper::maxStamp();
+                    dt += vtsHelper::max_stamp;
+                    (*active)(xi, yi) -= vtsHelper::max_stamp;
                 }
                 if(dt && dt < Tsize) {
                     add = true;

@@ -20,6 +20,7 @@
 #include <cmath>
 
 using namespace yarp::math;
+using namespace ev;
 
 /*//////////////////////////////////////////////////////////////////////////////
   VBOTTLE READER/PROCESSOR
@@ -155,12 +156,12 @@ void vTrackToRobotManager::onRead(ev::vBottle &vBottleIn)
     //we just need to get our updated TS
     ev::vQueue q = vBottleIn.getAllSorted();
     if(q.empty()) return;
-    int bestts = q.back()->getStamp();
+    int bestts = q.back()->stamp;
     FIFO.removeEvents(q.back());
 
     //get the events and see if we can get a ball observation
     //q = vBottleIn.getSorted<ev::ClusterEventGauss>();
-    q = vBottleIn.get<ev::ClusterEventGauss>();
+    q = vBottleIn.get<GaussianAE>();
 
     bool dogaze;
     if(yarp::os::Time::now() > lastdogazetime + 3)
@@ -168,17 +169,16 @@ void vTrackToRobotManager::onRead(ev::vBottle &vBottleIn)
     else
         dogaze = true;
 
-    int n = 0;
     if(q.size()) {
 
-        ev::event<ev::ClusterEventGauss> vc = ev::getas<ev::ClusterEventGauss>(q.back());
+        auto vc = is_event<GaussianAE>(q.back());
 
         //get the stamp
-        bestts = vc->getStamp();
+        bestts = vc->stamp;
 
         //get radius
         //p_eyez = (-2.5 * vc->getXSigma2() + 70)/100.0;
-        p_eyez = vc->getXSigma2();
+        p_eyez = vc->sigxy;
         //p_eyez = std::min(p_eyez, 16.0);
 
         //update our window
@@ -197,9 +197,9 @@ void vTrackToRobotManager::onRead(ev::vBottle &vBottleIn)
 //        std::vector<int> xs, ys;
 //        xs.resize(n); ys.resize(n);
 //        for(int i = 0; i < n; i++) {
-//            ev::event<ev::AddressEvent> vtw = ev::getas<ev::AddressEvent>(q[i]);
-//            xs[i] = 303 - vtw->getX();
-//            ys[i] = 239 - vtw->getY();
+//            ev::event<ev::AddressEvent> vtw = ev::as_event<ev::AddressEvent>(q[i]);
+//            xs[i] = 303 - vtw->x;
+//            ys[i] = 239 - vtw->y;
 //            //p_eyez = std::max(p_eyez, (double)vtw->getXSigma2());
 //            //p_eyez = std::min(p_eyez, 16.0);
 //        }
@@ -225,8 +225,8 @@ void vTrackToRobotManager::onRead(ev::vBottle &vBottleIn)
             //if(medstdx < 10 && medstdy < 10 && n > 5) {
                 dogaze = true;
                 lastdogazetime = yarp::os::Time::now();
-                px[0] = 303 - vc->getXCog();
-                px[1] = 239 - vc->getYCog();
+                px[0] = 303 - vc->x;
+                px[1] = 239 - vc->y;
                 //turn u/v into xyz
                 if(gazedriver.isValid()) {
                     //gazecontrol->get3DPoint(0, px, (-2.4 * p_eyez + 70)/100.0, xrobref);
@@ -340,14 +340,14 @@ void vTrackToRobotManager::onRead(ev::vBottle &vBottleIn)
 
         //add the gaze point event
         if(dogaze) {
-            ev::event<ev::ClusterEventGauss> circevent = ev::event<ev::ClusterEventGauss>(new ev::ClusterEventGauss());
-            circevent->setStamp(bestts);
+            auto circevent = make_event<GaussianAE>();
+            circevent->stamp = bestts;
             circevent->setChannel(0);
-            circevent->setXCog((int)medx);
-            circevent->setYCog((int)medy);
-            circevent->setXSigma2((int)p_eyez);
-            circevent->setYSigma2(1);
-            circevent->setID(1);
+            circevent->x = (int)medx;
+            circevent->y = (int)medy;
+            circevent->sigx = (int)p_eyez;
+            circevent->sigy = 1;
+            circevent->ID = 1;
             vBottleOut.addEvent(circevent);
 
         }
@@ -434,7 +434,7 @@ void vTrackToRobotManager::onRead(ev::vBottle &vBottleIn)
 //    if(positionOutPort.getOutputCount()) {
 //        yarp::os::Bottle &posdump = positionOutPort.prepare();
 //        posdump.clear();
-//        posdump.addInt(qforts.front()->getStamp());
+//        posdump.addInt(qforts.front()->stamp);
 //        posdump.addDouble(cx[0]); posdump.addDouble(cx[1]); posdump.addDouble(cx[2]);
 //        posdump.addDouble(x[0]); posdump.addDouble(x[1]); posdump.addDouble(x[2]);
 //        yarp::os::Stamp st; this->getEnvelope(st);

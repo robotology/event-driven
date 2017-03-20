@@ -2,56 +2,7 @@
 #define __VREALTIMEPF__
 
 #include "vParticle.h"
-#include "vSurfaceHandlerTh.h"
-
-/*////////////////////////////////////////////////////////////////////////////*/
-//vTemporalHandler
-/*////////////////////////////////////////////////////////////////////////////*/
-class vSurfaceHandler : public yarp::os::BufferedPort<ev::vBottle>
-{
-private:
-
-    //parameters
-    ev::resolution res;
-    bool strict;
-
-
-    //data
-    ev::vQueue queriedQ;
-    ev::temporalSurface surfaceLeft;
-    ev::temporalSurface surfaceRight;
-    ev::vROIWindow roiwinLeft;
-    ev::vROIWindow roiwinRight;
-    yarp::os::Stamp pstamp;
-    ev::vtsHelper unwrap;
-    unsigned long int tnow;
-    unsigned int condTime;
-    unsigned int tw;
-    bool eventsQueried;
-    yarp::os::Semaphore waitsignal;
-    yarp::os::Mutex mutexsignal;
-    double ptime;
-    double eventrate;
-    double bottletime;
-    int vcount;
-
-public:
-
-    vSurfaceHandler(unsigned int width = 128, unsigned int height = 128);
-
-    void resize(unsigned int width, unsigned int height);
-    ev::vQueue queryEvents(unsigned long int conditionTime, unsigned int temporalWindow);
-    ev::vQueue queryEventList(std::vector<vParticle> &ps);
-    void queryEvents(ev::vQueue &fillq, unsigned int temporalwindow);
-    double queryROI(ev::vQueue &fillq, unsigned int temporalwindow, int x, int y, int r);
-    double geteventrate() { return eventrate; }
-
-    bool    open(const std::string &name, bool strictness = false);
-    void    onRead(ev::vBottle &inBot);
-    void    close();
-    void    interrupt();
-
-};
+#include <iCub/eventdriven/vSurfaceHandlerTh.h>
 
 /*////////////////////////////////////////////////////////////////////////////*/
 // vParticleObserver

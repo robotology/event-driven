@@ -23,6 +23,7 @@ private:
     //event reps
     ev::temporalSurface surfaceLeft;
     ev::vtsHelper unwrap;
+    preComputedBins pcb;
 
     //particle storage and variables
     std::priority_queue<vParticle> sortedlist;
@@ -38,6 +39,9 @@ private:
     double seedx;
     double seedy;
     double seedr;
+
+    int rbound_min;
+    int rbound_max;
 
     //parameters
     ev::resolution res;

@@ -6,28 +6,26 @@ cmake_minimum_required(VERSION 2.6)
 set(PROJECTNAME ${EVENTDRIVEN_LIBRARIES})
 project(${PROJECTNAME})
 
-set(folder_source
-  src/vCodec.cpp
-  src/vWindow.cpp
-  src/vTempWindow.cpp
-  src/vSurface.cpp
-  src/vQueue.cpp
+file(GLOB folder_source
+  src/codecs/codec_*.cpp
+  src/vWindow_adv.cpp
+  src/vWindow_basic.cpp
 )
 
-set(folder_header
-  include/iCub/eventdriven/all.h
-  include/iCub/eventdriven/vBottle.h
-  include/iCub/eventdriven/vCodec.h
+file(GLOB folder_header
   include/iCub/eventdriven/vtsHelper.h
-  include/iCub/eventdriven/vWindow.h
-  include/iCub/eventdriven/vSurface.h
-  include/iCub/eventdriven/vQueue.h
+  include/iCub/eventdriven/vCodec.h
+  include/iCub/eventdriven/vBottle.h
+  include/iCub/eventdriven/vWindow_adv.h
+  include/iCub/eventdriven/vWindow_basic.h
   include/iCub/eventdriven/vFilters.h
+  include/iCub/eventdriven/vSurfaceHandlerTh.h
+  include/iCub/eventdriven/all.h
 )
 
 # Declare groups of source and header files -- makes things pretty in MSVC.
-source_group("Source Files" FILES ${folder_source})
-source_group("Header Files" FILES ${folder_header})
+#source_group("Source Files" FILES ${folder_source})
+#source_group("Header Files" FILES ${folder_header} ${codec_header})
 
 include_directories(
     ${PROJECT_SOURCE_DIR}/include

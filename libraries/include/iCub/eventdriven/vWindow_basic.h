@@ -21,13 +21,12 @@
 /// A data representation which stores only the most recent event at each pixel
 /// location
 
-#ifndef __VSURFACE__
-#define __VSURFACE__
+#ifndef __VWINDOW_BASIC__
+#define __VWINDOW_BASIC__
 
 #include <vector>
-#include <iCub/eventdriven/vCodec.h>
-#include <iCub/eventdriven/vQueue.h>
-#include <iCub/eventdriven/vtsHelper.h>
+#include "iCub/eventdriven/vCodec.h"
+#include "iCub/eventdriven/vtsHelper.h"
 
 namespace ev {
 
@@ -44,21 +43,13 @@ protected:
 
     //Local Memory
     //! for quick spatial accessing and surfacing
-    std::vector< std::vector < event<> > > spatial;
+    std::vector< std::vector < event<AE> > > spatial;
 
     //Parameters
-    //! the sensor width
-    int width;
-    //! the sensor height
-    int height;
+    resolution res;
 
     //Local Variables
-    event<ev::AddressEvent> mostRecent;
-    event<> justRemoved;
-    //! for safe copying of q in the multi-threaded environment
-    yarp::os::Semaphore mutex;
-    //! member variable for quick memory allocation
-    vQueue subq;
+    event<AE> mostRecent;
     int eventCount;
 
 public:
@@ -78,66 +69,42 @@ public:
     /// events.
     /// \param event the event to add
     ///
-    event<> addEvent(event<AddressEvent> v);
+    event<AE> addEvent(event<AE> v);
 
     ///
     /// \brief getMostRecent
     /// \return
     ///
-    event<> getMostRecent();
+    event<AE> getMostRecent();
 
     int getEventCount() { return eventCount; }
     void clear();
 
-    const vQueue& getSurf(int d);
-    const vQueue& getSurf(int x, int y, int d);
-    virtual const vQueue& getSurf(int xl, int xh, int yl, int yh);
+    const vQueue getSurf(int d);
+    const vQueue getSurf(int x, int y, int d);
+    virtual const vQueue getSurf(int xl, int xh, int yl, int yh);
 
 
 };
 
-class vEdge : public vSurface
-{
-private:
+/******************************************************************************/
 
-    //set the previous add event to be private so it cannot be used in vEdge
-    //there could be a better way to achieve this.
-    int thickness;
-    bool trackCount;
-    event<> addEvent(event<AddressEvent> v);
+class vTempWindow {
 
-    bool addressremove(vQueue &removed, event<AddressEvent> v);
-    bool flowremove(vQueue &removed, event<FlowEvent> vf);
-    bool pepperCheck(int y, int x);
+protected:
+
+    //! event storage
+    vQueue q;
+    //!precalculated thresholds
+    int tUpper;
+    int tLower;
 
 public:
 
-    vEdge(int width = 128, int height = 128) :
-        vSurface(width, height), thickness(2), trackCount(false) {}
-
-    vQueue addEventToEdge(event<AddressEvent> v);
-    void setThickness(int pixels) {thickness = pixels;}
-    void track(bool trackCount = true) {this->trackCount = trackCount;}
-
-    virtual const vQueue& getSurf(int xl, int xh, int yl, int yh);
-    using vSurface::getSurf;
-
-};
-
-class vFuzzyEdge : public vEdge
-{
-
-private:
-
-    double delta;
-    std::vector < std::vector <double> > scores;
-
-public:
-
-    vFuzzyEdge(int width = 128, int height = 128, double delta = 0.4);
-    vQueue addEventToEdge(event<AddressEvent> event);
-    virtual const vQueue& getSURF(int xl, int xh, int yl, int yh);
-
+    vTempWindow();
+    void addEvent(event<> v);
+    void addEvents(const vQueue &events);
+    vQueue getWindow();
 };
 
 }

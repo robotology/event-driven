@@ -19,14 +19,14 @@
 /// \ingroup Library
 /// \brief A storage class which automatically discards events after a given timeperiod
 
-#ifndef __VWINDOW__
-#define __VWINDOW__
+#ifndef __VWINDOW_ADV__
+#define __VWINDOW_ADV__
 
 #include <yarp/os/all.h>
 #include <vector>
-#include <iCub/eventdriven/vCodec.h>
-#include <iCub/eventdriven/vQueue.h>
-#include <iCub/eventdriven/vtsHelper.h>
+#include "iCub/eventdriven/vCodec.h"
+#include "iCub/eventdriven/vtsHelper.h"
+#include "iCub/eventdriven/vWindow_basic.h"
 
 namespace ev {
 
@@ -174,43 +174,48 @@ public:
 };
 
 /******************************************************************************/
-class vTempWindow {
+class vEdge : public vSurface
+{
+private:
 
-protected:
+    //set the previous add event to be private so it cannot be used in vEdge
+    //there could be a better way to achieve this.
+    int thickness;
+    bool trackCount;
+    event<> addEvent(event<AddressEvent> v);
 
-    //! event storage
-    vQueue q;
-    //!precalculated thresholds
-    int tUpper;
-    int tLower;
+    bool addressremove(vQueue &removed, event<AddressEvent> v);
+    bool flowremove(vQueue &removed, event<FlowEvent> vf);
+    bool pepperCheck(int y, int x);
 
 public:
 
-    vTempWindow();
-    void addEvent(event<> v);
-    void addEvents(const vQueue &events);
-    vQueue getWindow();
+    vEdge(int width = 128, int height = 128) :
+        vSurface(width, height), thickness(2), trackCount(false) {}
+
+    vQueue addEventToEdge(event<AddressEvent> v);
+    void setThickness(int pixels) {thickness = pixels;}
+    void track(bool trackCount = true) {this->trackCount = trackCount;}
+
+    virtual const vQueue getSurf(int xl, int xh, int yl, int yh);
+    using vSurface::getSurf;
+
 };
 
-/******************************************************************************/
-class vROIWindow {
+class vFuzzyEdge : public vEdge
+{
 
-protected:
+private:
 
-    //! event storage
-    vQueue q;
-    int xl;
-    int xh;
-    int yl;
-    int yh;
-    int dt;
-
+    double delta;
+    std::vector < std::vector <double> > scores;
 
 public:
 
-    vROIWindow();
-    void addEvent(event<AddressEvent> v);
-    vQueue getWindow(int xl, int xh, int yl, int yh, int dt);
+    vFuzzyEdge(int width = 128, int height = 128, double delta = 0.4);
+    vQueue addEventToEdge(event<AddressEvent> event);
+    virtual const vQueue getSURF(int xl, int xh, int yl, int yh);
+
 };
 
 }

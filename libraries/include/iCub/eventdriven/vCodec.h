@@ -112,429 +112,132 @@
 /// YARP/ROS interface consolidate the above two formats.
 ///
 
-#ifndef __VCODEC_H__
-#define __VCODEC_H__
+#ifndef __VCODEC__
+#define __VCODEC__
 
-#include <iCub/eventdriven/vtsHelper.h>
-#include <string>
+#include <yarp/os/Bottle.h>
 #include <memory>
+#include <deque>
+#include <math.h>
 
 namespace ev {
 
+//macros
 class vEvent;
-
 template<typename V = vEvent> using event = std::shared_ptr<V>;
-template<typename V1, typename V2> event<V1> getas(event<V2> orig_event) {
+template<typename V1, typename V2> event<V1> as_event(event<V2> orig_event) {
     return std::dynamic_pointer_cast<V1>(orig_event);
 }
+template<typename V1, typename V2> event<V1> is_event(event<V2> orig_event) {
+    return std::static_pointer_cast<V1>(orig_event);
+}
+template<typename V> event<V> make_event(void) {
+    return std::make_shared<V>();
+}
+template<typename V1, typename V2> event<V1> make_event(event<V2> orig_event) {
+    return std::make_shared<V1>(*(orig_event.get()));
+}
+using vQueue = std::deque< event<vEvent> >;
 
-event<> createEvent(const std::string type);
+void qsort(vQueue &q, bool respectWraps = false);
+event<> createEvent(const std::string &type);
 
-
-/**************************************************************************/
+//event declarations
 class vEvent
 {
-
-private:
-    const static int localWordsCoded = 1;
-
 public:
-
 #ifdef TIME32BIT
     unsigned int stamp:31;
 #else
     unsigned int stamp:24;
 #endif
 
-    //!blank constructor required at base level
-    vEvent() : stamp(0) {}
-    //!copy constructor
-    vEvent(const vEvent &event);
-    virtual ~vEvent() {}
+    vEvent();
+    virtual ~vEvent();
 
-    virtual std::string getType() const { return "TS";}
-
-
-    void setStamp(const unsigned int stamp)   { this->stamp = stamp; }
-    int getStamp() const            { return stamp;         }
-
-    virtual int getChannel() const  { return -1;            }
-    virtual int getPolarity() const { return -1;            }
-
-    virtual vEvent &operator=(const vEvent &event);
-    virtual bool operator==(const vEvent &event);
-    virtual bool operator<(const vEvent &event) const
-                 {return this->stamp < event.stamp; }
-    virtual bool operator>(const vEvent &event) const
-                 {return this->stamp > event.stamp; }
-    virtual vEvent* clone();
-
+    virtual event<> clone();
     virtual void encode(yarp::os::Bottle &b) const;
     virtual bool decode(const yarp::os::Bottle &packet, int &pos);
     virtual yarp::os::Property getContent() const;
-    virtual int nBytesCoded() const {return localWordsCoded * sizeof(int);}
-
+    virtual std::string getType() const;
+    virtual int getChannel() const;
+    virtual void setChannel();
 };
 
-
-/**************************************************************************/
 class AddressEvent : public vEvent
 {
-private:
-    const static int localWordsCoded = 1;
-
 public:
-
-    //add new member variables here
     unsigned int x:10;
     unsigned int y:10;
     unsigned int channel:1;
     unsigned int polarity:1;
 
-    //these are new the member get functions
-    virtual std::string getType() const { return "AE";}
-    int getChannel() const                  { return (int)channel;           }
-    int getPolarity() const                 { return (int)polarity;          }
-    int getX() const                        { return (int)x;                 }
-    int getY() const                        { return (int)y;                 }
+    AddressEvent();
+    AddressEvent(const vEvent &v);
+    AddressEvent(const AddressEvent &v);
 
-    void setChannel(const int channel)      { this->channel=channel;    }
-    void setPolarity(const int polarity)    { this->polarity=polarity;  }
-    void setX(const int x)                  { this->x=x;                }
-    void setY(const int y)                  { this->y=y;                }
-
-    //these functions need to be defined correctly for inheritance
-    AddressEvent() : vEvent(), x(0), y(0), channel(0), polarity(0) {}
-    AddressEvent(const vEvent &event);
-    AddressEvent(const AddressEvent * v)
-    {
-        stamp = v->stamp;
-        channel = v->channel;
-        polarity = v->polarity;
-        x = v->x;
-        y = v->y;
-
-    }
-    vEvent &operator=(const vEvent &event);
-    virtual vEvent* clone();
-
-    bool operator==(const AddressEvent &event);
-    bool operator==(const vEvent &event) {
-        return operator==(dynamic_cast<const AddressEvent&>(event)); }
+    virtual event<> clone();
     virtual void encode(yarp::os::Bottle &b) const;
-    yarp::os::Property getContent() const;
     virtual bool decode(const yarp::os::Bottle &packet, int &pos);
-
-    //this is the total number of bytes used to code this event
-    virtual int nBytesCoded() const         { return localWordsCoded *
-                sizeof(int) + vEvent::nBytesCoded();                 }
-
-
+    virtual yarp::os::Property getContent() const;
+    virtual std::string getType() const;
+    virtual int getChannel() const;
+    virtual void setChannel(const int channel);
 };
+using AE = AddressEvent;
 
-/**************************************************************************/
-class AddressEventClustered : public AddressEvent
-{
-private:
-    const static int localWordsCoded = 1;
-
-protected:
-
-    int clID;
-
-public:
-
-    virtual std::string getType() const { return "AE-C";}
-    int getID() const                       { return clID;              }
-
-    void setID(const int clID)              { this->clID = clID;        }
-
-    AddressEventClustered() : AddressEvent(), clID(0) {}
-    AddressEventClustered(const vEvent &event);
-    vEvent &operator=(const vEvent &event);
-    virtual vEvent* clone();
-
-    bool operator==(const AddressEventClustered &event);
-    bool operator==(const vEvent &event) {
-        return operator==(dynamic_cast<const AddressEventClustered&>(event)); }
-    virtual void encode(yarp::os::Bottle &b) const;
-    yarp::os::Property getContent() const;
-    virtual bool decode(const yarp::os::Bottle &packet, int &pos);
-
-    //this is the total number of bytes used to code this event
-    virtual int nBytesCoded() const         { return localWordsCoded *
-                sizeof(int) + AddressEvent::nBytesCoded(); }
-
-};
-
-/**************************************************************************/
-class CollisionEvent : public vEvent
-{
-private:
-    const static int localWordsCoded = 1;
-
-protected:
-
-    unsigned int x:10; //7
-    unsigned int y:10; //7
-    unsigned int channel:1; //1
-    unsigned int clid1:5; //8
-    unsigned int clid2:5; //8
-
-
-public:
-
-    //accessors
-    virtual std::string getType() const { return "COL";}
-    void setX(unsigned int x) { this->x = x;}
-    void setY(unsigned int y) { this->y = y;}
-    void setChannel(unsigned int channel) { this->channel = channel;}
-    void setClid1(unsigned int clid1) { this->clid1 = clid1;}
-    void setClid2(unsigned int clid2) { this->clid2 = clid2;}
-
-    unsigned char getX()        {return x;}
-    unsigned char getY()        {return y;}
-    virtual int getChannel()    {return channel;}
-    unsigned char getClid1()    {return clid1;}
-    unsigned char getClid2()    {return clid2;}
-
-
-    CollisionEvent() : vEvent(), x(0), y(0), channel(0), clid1(0), clid2(0) {}
-    CollisionEvent(const vEvent &event);
-    vEvent &operator=(const vEvent &event);
-    virtual vEvent* clone();
-
-    bool operator==(const CollisionEvent &event);
-    bool operator==(const vEvent &event) {
-        return operator==(dynamic_cast<const CollisionEvent&>(event)); }
-    virtual void encode(yarp::os::Bottle &b) const;
-    yarp::os::Property getContent() const;
-    virtual bool decode(const yarp::os::Bottle &packet, int &pos);
-
-    //this is the total number of bytes used to code this event
-    virtual int nBytesCoded() const         { return localWordsCoded *
-                sizeof(int) + vEvent::nBytesCoded(); }
-
-};
-
-/**************************************************************************/
-class ClusterEvent : public vEvent
-{
-private:
-    const static int localWordsCoded = 1;
-
-protected:
-
-    //add new member variables here
-    int id:10;
-    unsigned int xCog:10;
-    unsigned int yCog:10;
-    unsigned int polarity:1;
-    unsigned int channel:1;
-
-public:
-
-    //these are new the member get functions
-    virtual std::string getType() const { return "CLE";}
-    int getChannel() const             { return channel;        }
-    int getID()      const             { return id;             }
-    int getXCog()    const             { return xCog;           }
-    int getYCog()    const             { return yCog;           }
-    int getPolarity()const             { return polarity;           }
-
-    void setChannel(const int channel)   { this->channel = channel;  }
-    void setID(const int id)             { this->id = id;            }
-    void setXCog(const int xCog)         { this->xCog = xCog;        }
-    void setYCog(const int yCog)         { this->yCog = yCog;        }
-    void setPolarity(const int polarity) { this->polarity = polarity;}
-
-
-    //these functions need to be defined correctly for inheritance
-    ClusterEvent() :
-        vEvent(), id(0), xCog(0), yCog(0), polarity(1), channel(0) {}
-    ClusterEvent(const vEvent &event);
-    vEvent &operator=(const vEvent &event);
-    virtual vEvent* clone();
-
-    bool operator==(const ClusterEvent &event);
-    bool operator==(const vEvent &event) {
-        return operator==(dynamic_cast<const ClusterEvent&>(event)); }
-    virtual void encode(yarp::os::Bottle &b) const;
-    yarp::os::Property getContent() const;
-    virtual bool decode(const yarp::os::Bottle &packet, int &pos);
-    //this is the total number of bytes used to code this event
-    virtual int nBytesCoded() const         { return localWordsCoded *
-                sizeof(int) + vEvent::nBytesCoded(); }
-
-};
-
-
-/**************************************************************************/
-class ClusterEventGauss : public ClusterEvent
-{
-private:
-    const static int localWordsCoded = 3;
-
-protected:
-
-    //add new member variables here
-    unsigned int numAE:16;
-    unsigned int xySigma:16;
-    unsigned int xSigma2:16;
-    unsigned int ySigma2:16;
-    int xVel:16;
-    int yVel:16;
-
-public:
-
-    //these are new the member get functions
-    virtual std::string getType() const { return "CLEG";}
-    int getNumAE()      const               { return numAE;            }
-    int getXSigma2()    const               { return xSigma2;          }
-    int getYSigma2()    const               { return ySigma2;          }
-    int getXYSigma()    const               { return xySigma;          }
-    int getXVel()       const               { return xVel;             }
-    int getYVel()       const               { return yVel;             }
-
-    void setNumAE(const int numAE)          { this->numAE=numAE;       }
-    void setXSigma2(const int xSigma2)      { this->xSigma2=xSigma2;   }
-    void setYSigma2(const int ySigma2)      { this->ySigma2=ySigma2;   }
-    void setXYSigma(const int xySigma)      { this->xySigma=xySigma;   }
-    void setXVel(const int xVel)            { this->xVel=xVel;   }
-    void setYVel(const int yVel)            { this->yVel=yVel;   }
-
-    //these functions need to be defined correctly for inheritance
-    ClusterEventGauss() : ClusterEvent(), numAE(0), xSigma2(0), ySigma2(0),
-        xVel(0), yVel(0) {}
-    ClusterEventGauss(const vEvent &event);
-    vEvent &operator=(const vEvent &event);
-    virtual vEvent* clone();
-
-    bool operator==(const ClusterEventGauss &event);
-    bool operator==(const vEvent &event) {
-        return operator==(dynamic_cast<const ClusterEventGauss&>(event)); }
-    virtual void encode(yarp::os::Bottle &b) const;
-    yarp::os::Property getContent() const;
-    virtual bool decode(const yarp::os::Bottle &packet, int &pos);
-    //this is the total number of bytes used to code this event
-    virtual int nBytesCoded() const         { return localWordsCoded *
-                sizeof(int) + ClusterEvent::nBytesCoded(); }
-};
-
-
-/**************************************************************************/
 class FlowEvent : public AddressEvent
 {
-private:
-    const static int localWordsCoded = 3;
-
-protected:
-
-    //add new member variables here
+public:
     float vx;
     float vy;
-    int death;
 
-public:
+    FlowEvent();
+    FlowEvent(const vEvent &v);
+    FlowEvent(const FlowEvent &v);
 
-    //these are new the member get functions
-    virtual std::string getType() const { return "FLOW";}
-    float getVx() const                     { return vx;                }
-    float getVy() const                     { return vy;                }
-    int getDeath() const { return death; }
-
-    void setVx(float vx)                    { this->vx=vx;              }
-    void setVy(float vy)                    { this->vy=vy;              }
-    void setDeath();
-
-    //these functions need to be defined correctly for inheritance
-    FlowEvent() : AddressEvent(), vx(0), vy(0), death(0) {}
-    FlowEvent(const vEvent &event);
-    vEvent &operator=(const vEvent &event);
-    virtual vEvent* clone();
-
-    bool operator==(const FlowEvent &event);
-    bool operator==(const vEvent &event) {
-        return operator==(dynamic_cast<const FlowEvent&>(event)); }
+    virtual event<> clone();
     virtual void encode(yarp::os::Bottle &b) const;
-    yarp::os::Property getContent() const;
     virtual bool decode(const yarp::os::Bottle &packet, int &pos);
-    //this is the total number of bytes used to code this event
-    virtual int nBytesCoded() const         { return localWordsCoded *
-                sizeof(int) + vEvent::nBytesCoded(); }
+    virtual yarp::os::Property getContent() const;
+    virtual std::string getType() const;
 
-
+    int getDeath() const;
 };
 
-/**************************************************************************/
-class InterestEvent : public AddressEvent
+class LabelledAE : public AddressEvent
 {
-private:
-    const static int localWordsCoded = 1;
-
-protected:
-
-    int intID;
-
 public:
+    int ID;
 
-    virtual std::string getType() const { return "AE-INT";}
-    int getID() const                       { return intID;              }
+    LabelledAE();
+    LabelledAE(const vEvent &v);
+    LabelledAE(const LabelledAE &v);
 
-    void setID(const int intID)              { this->intID = intID;        }
-
-    InterestEvent() : AddressEvent(), intID(0) {}
-    InterestEvent(const vEvent &event);
-    vEvent &operator=(const vEvent &event);
-    virtual vEvent* clone();
-
-    bool operator==(const InterestEvent &event);
-    bool operator==(const vEvent &event) {
-        return operator==(dynamic_cast<const InterestEvent&>(event)); }
+    virtual event<> clone();
     virtual void encode(yarp::os::Bottle &b) const;
-    yarp::os::Property getContent() const;
     virtual bool decode(const yarp::os::Bottle &packet, int &pos);
-
-    //this is the total number of bytes used to code this event
-    virtual int nBytesCoded() const         { return localWordsCoded *
-                sizeof(int) + AddressEvent::nBytesCoded(); }
-
-
+    virtual yarp::os::Property getContent() const;
+    virtual std::string getType() const;
 };
 
-/**************************************************************************/
-class NeuronIDEvent : public vEvent
+class GaussianAE : public LabelledAE
 {
-private:
-    const static int localWordsCoded = 1;
-
-protected:
-
-    int neurID;
-
 public:
 
-    virtual std::string getType() const { return "N_ID";}
-    int getID() const                       { return neurID;              }
+    float sigx;
+    float sigy;
+    float sigxy;
 
-    void setID(const int neurID)              { this->neurID = neurID;        }
+    GaussianAE();
+    GaussianAE(const vEvent &v);
+    GaussianAE(const GaussianAE &v);
 
-    NeuronIDEvent() : vEvent(), neurID(0) {}
-    NeuronIDEvent(const vEvent &event);
-    vEvent &operator=(const vEvent &event);
-    virtual vEvent* clone();
-
-    bool operator==(const NeuronIDEvent &event);
-    bool operator==(const vEvent &event) {
-        return operator==(dynamic_cast<const NeuronIDEvent&>(event)); }
+    virtual event<> clone();
     virtual void encode(yarp::os::Bottle &b) const;
-    yarp::os::Property getContent() const;
     virtual bool decode(const yarp::os::Bottle &packet, int &pos);
-
-    //this is the total number of bytes used to code this event
-    virtual int nBytesCoded() const         { return localWordsCoded *
-                sizeof(int) + vEvent::nBytesCoded(); }
-
+    virtual yarp::os::Property getContent() const;
+    virtual std::string getType() const;
 };
 
 }

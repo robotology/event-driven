@@ -133,7 +133,7 @@ void particleProcessor::run()
     unsigned long int t;
     yarp::os::Stamp yarpstamp;
     //double maxlikelihood;
-    while(!stw2.size()) {
+    while(!stw2.size() && !isStopping()) {
         yarp::os::Time::delay(0.1);
         if(useroi)
             yarpstamp = eventhandler2.queryROI(stw2, camera, 100000, res.width/2, res.height/2, res.width/2);
@@ -236,7 +236,7 @@ void particleProcessor::run()
 //            for(unsigned int i = 0; i < stw.size(); i++) {
 //                if(deltats[i] < indexedlist[j].gettw()) {
 //                    event<AddressEvent> v = std::static_pointer_cast<AddressEvent>(stw[i]);
-//                    indexedlist[j].incrementalLikelihood(v->getX(), v->getY(), deltats[i]);
+//                    indexedlist[j].incrementalLikelihood(v->x, v->y, deltats[i]);
 //                } else {
 //                    break;
 //                }
@@ -302,20 +302,15 @@ void particleProcessor::run()
         if(vBottleOut.getOutputCount()) {
             ev::vBottle &eventsout = vBottleOut.prepare();
             eventsout.clear();
-            ev::event<ev::ClusterEventGauss> ceg = ev::event<ev::ClusterEventGauss>(new ev::ClusterEventGauss());
-            ceg->setStamp(stw.front()->getStamp());
-            ceg->setChannel(1);
-            ceg->setID(0);
-            ceg->setNumAE(0);
-            ceg->setPolarity(0);
-            ceg->setXCog(avgx);
-            ceg->setYCog(avgy);
-            ceg->setXSigma2(avgr);
-            ceg->setYSigma2(1);
-            ceg->setXVel(0);
-            ceg->setYVel(0);
-            ceg->setXYSigma(0);
-
+            //ev::event<ev::ClusterEventGauss> ceg = ev::event<ev::ClusterEventGauss>(new ev::ClusterEventGauss());
+            auto ceg = make_event<GaussianAE>();
+            ceg->stamp = stw.front()->stamp;
+            ceg->setChannel(camera);
+            ceg->x = avgx;
+            ceg->y = avgy;
+            ceg->sigx = avgr;
+            ceg->sigy = avgr;
+            ceg->sigxy = 0;
             eventsout.addEvent(ceg);
             vBottleOut.setEnvelope(yarpstamp);
             vBottleOut.write();
@@ -432,7 +427,7 @@ void vPartObsThread::run()
             if((*deltats)[j] < (*particles)[i].gettw()) {
                 //ev::AddressEvent *v = (*stw)[j]->getUnsafe<ev::AddressEvent>();
                 event<AddressEvent> v = std::static_pointer_cast<AddressEvent>((*stw)[j]);
-                //event<AddressEvent> v = getas<AddressEvent>((*stw)[j]);
+                //event<AddressEvent> v = as_event<AddressEvent>((*stw)[j]);
                 (*particles)[i].incrementalLikelihood(v->x, v->y, (*deltats)[j]);
             } else {
                 break;

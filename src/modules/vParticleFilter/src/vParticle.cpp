@@ -187,12 +187,12 @@ double vParticle::calcLikelihood(ev::vQueue &events, int nparticles)
 
         event<AddressEvent> v = std::static_pointer_cast<AddressEvent>(events[i]);
 
-        double sqrd = sqrt(pow(v->getX() - x, 2.0) + pow(v->getY() - y, 2.0)) - r;
+        double sqrd = sqrt(pow(v->x - x, 2.0) + pow(v->y - y, 2.0)) - r;
         sqrd = abs(sqrd);
         if(sqrd < 2) {
             inliers++; count++;
-            left += v->getX() - x;
-            bottom += v->getY() - y;
+            left += v->x - x;
+            bottom += v->y - y;
         } else if(sqrd < 4) {
             count -= 2;
         }

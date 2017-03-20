@@ -15,13 +15,32 @@
  */
 
 #include "vFlow.h"
+#include <yarp/os/all.h>
 
 using yarp::math::operator *;
 using yarp::math::outerProduct;
 
-using ev::event;
-using ev::getas;
+using namespace ev;
 
+int main(int argc, char * argv[])
+{
+    /* initialize yarp network */
+    yarp::os::Network yarp;
+    if(!yarp.checkNetwork()) {
+        yError("unable to find YARP server!");
+        return 1;
+    }
+
+    /* prepare and configure the resource finder */
+    yarp::os::ResourceFinder rf;
+    rf.setDefaultConfigFile("vFlow.ini");
+    rf.setDefaultContext("eventdriven");
+    rf.configure(argc, argv);
+
+    /* instantiate the module */
+    vFlowModule module;
+    return module.runModule(rf);
+}
 
 /******************************************************************************/
 //vFlowManager
@@ -37,22 +56,21 @@ void vFlowManager::onRead(ev::vBottle &inBottle)
     this->getEnvelope(st); outPort.setEnvelope(st);
 
     /*get the event queue in the vBottle bot*/
-    ev::vQueue q = inBottle.get<ev::AddressEvent>();
+    vQueue q = inBottle.get<AE>();
 
-    for(ev::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
+    for(vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {
-        event<ev::AddressEvent> aep = getas<ev::AddressEvent>(*qi);
-        if(!aep) continue;
+        auto aep = is_event<AE>(*qi);
 
         //add the event to the appropriate surface
-        ev::vSurface2 * cSurf;
+        vSurface2 * cSurf;
         if(aep->getChannel()) {
-            if(aep->getPolarity())
+            if(aep->polarity)
                 cSurf = surfaceOfR;
             else
                 cSurf = surfaceOnR;
         } else {
-            if(aep->getPolarity())
+            if(aep->polarity)
                 cSurf = surfaceOfL;
             else
                 cSurf = surfaceOnL;
@@ -63,9 +81,9 @@ void vFlowManager::onRead(ev::vBottle &inBottle)
         double vx, vy;
         if(compute(cSurf, vx, vy)) {
             //successfully computed a flow event
-            event<ev::FlowEvent> vf = event<ev::FlowEvent>(new ev::FlowEvent(*(aep.get())));
-            vf->setVx(vx);
-            vf->setVy(vy);
+            auto vf = make_event<FlowEvent>(aep);
+            vf->vx = vx;
+            vf->vy = vy;
             outBottle.addEvent(vf);
         } else {
             outBottle.addEvent(aep);
@@ -113,11 +131,11 @@ bool vFlowManager::open(std::string moduleName, bool strictness)
 
     //open the input port
     this->useCallback(); //we need callback to use the onRead() function
-    if(!yarp::os::BufferedPort<ev::vBottle>::open("/" + moduleName + "/vBottle:i"))
+    if(!yarp::os::BufferedPort<ev::vBottle>::open(moduleName + "/vBottle:i"))
         return false;
 
     //open the output port
-    if(!outPort.open("/" + moduleName + "/vBottle:o"))
+    if(!outPort.open(moduleName + "/vBottle:o"))
         return false;
 
     return true;
@@ -146,26 +164,26 @@ bool vFlowManager::compute(ev::vSurface2 *surf, double &vx, double &vy)
 {
 
     //get the most recent event
-    event<ev::AddressEvent> vr = getas<ev::AddressEvent>(surf->getMostRecent());
+    auto vr = is_event<AE>(surf->getMostRecent());
 
     //find the side of this event that has the collection of temporally nearby
     //events. Heuristically more likely to be the correct plane.
-    double bestscore = ev::vtsHelper::maxStamp()+1;
+    double bestscore = ev::vtsHelper::max_stamp+1;
     int besti = 0, bestj = 0;
 
-    for(int i = vr->getX()-fRad; i <= vr->getX()+fRad; i+=fRad) {
-        for(int j = vr->getY()-fRad; j <= vr->getY()+fRad; j+=fRad) {
+    for(int i = vr->x-fRad; i <= vr->x+fRad; i+=fRad) {
+        for(int j = vr->y-fRad; j <= vr->y+fRad; j+=fRad) {
             //get the surface around the recent event
             double sobeltsdiff = 0;
-            const ev::vQueue &subsurf = surf->getSurf(i, j, fRad);
+            const vQueue subsurf = surf->getSurf(i, j, fRad);
             if(subsurf.size() < planeSize) continue;
 
             for(unsigned int k = 0; k < subsurf.size(); k++) {
-                sobeltsdiff += vr->getStamp() - subsurf[k]->getStamp();
-                if(subsurf[k]->getStamp() > vr->getStamp()) {
-                    //subsurf[k]->setStamp(subsurf[k]->getStamp() -
+                sobeltsdiff += vr->stamp - subsurf[k]->stamp;
+                if(subsurf[k]->stamp > vr->stamp) {
+                    //subsurf[k]->setStamp(subsurf[k]->stamp -
                     //                     eventdriven::vtsHelper::maxStamp());
-                    sobeltsdiff += ev::vtsHelper::maxStamp();
+                    sobeltsdiff += ev::vtsHelper::max_stamp;
                 }
             }
             sobeltsdiff /= subsurf.size();
@@ -176,10 +194,10 @@ bool vFlowManager::compute(ev::vSurface2 *surf, double &vx, double &vy)
         }
     }
     //return if we don't find a good candidate plane
-    if(bestscore > ev::vtsHelper::maxStamp()) return false;
+    if(bestscore > ev::vtsHelper::max_stamp) return false;
 
     //get the events
-    const ev::vQueue &subsurf = surf->getSurf(besti, bestj, fRad);
+    const vQueue &subsurf = surf->getSurf(besti, bestj, fRad);
 
     //and compute the gradients of the plane
     if(computeGrads(subsurf, vr, vy, vx) < minEvtsOnPlane)
@@ -196,18 +214,18 @@ int vFlowManager::computeGrads(const ev::vQueue &subsurf,
     yarp::sig::Matrix A(subsurf.size(), 3);
     yarp::sig::Vector Y(subsurf.size());
     for(unsigned int vi = 0; vi < subsurf.size(); vi++) {
-        event<ev::AddressEvent> v = getas<ev::AddressEvent>(subsurf[vi]);
-        A(vi, 0) = v->getX();
-        A(vi, 1) = v->getY();
+        event<ev::AddressEvent> v = as_event<ev::AddressEvent>(subsurf[vi]);
+        A(vi, 0) = v->x;
+        A(vi, 1) = v->y;
         A(vi, 2) = 1;
-        if(v->getStamp() > cen->getStamp()) {
-            Y(vi) = (v->getStamp() - ev::vtsHelper::maxStamp()) * ev::vtsHelper::tstosecs();
+        if(v->stamp > cen->stamp) {
+            Y(vi) = (v->stamp - ev::vtsHelper::max_stamp) * ev::vtsHelper::tstosecs();
         } else {
-            Y(vi) = v->getStamp() * ev::vtsHelper::tstosecs();
+            Y(vi) = v->stamp * ev::vtsHelper::tstosecs();
         }
     }
 
-    return computeGrads(A, Y, cen->getX(), cen->getY(), cen->getStamp() *
+    return computeGrads(A, Y, cen->x, cen->y, cen->stamp *
                         ev::vtsHelper::tstosecs(), dtdy, dtdx);
 }
 
@@ -271,7 +289,7 @@ bool vFlowModule::configure(yarp::os::ResourceFinder &rf)
 {
     /* set the name of the module */
     std::string moduleName = rf.check("name",
-                                      yarp::os::Value("vFlow")).asString();
+                                      yarp::os::Value("/vFlow")).asString();
     yarp::os::RFModule::setName(moduleName.c_str());
 
     bool strict = rf.check("strict") &&

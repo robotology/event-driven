@@ -39,11 +39,11 @@ protected:
 
     int checkStagnancy(const ev::vQueue &eSet) {
         if(!eSet.size()) return 0;
-        if(pTS == eSet.back()->getStamp())
+        if(pTS == eSet.back()->stamp)
             stagnantCount++;
         else
             stagnantCount = 0;
-        pTS = eSet.back()->getStamp();
+        pTS = eSet.back()->stamp;
         return stagnantCount;
     }
 
@@ -89,62 +89,11 @@ public:
 
 };
 
-/**
- * @brief The addressDraw class is the standard instance of a vDrawer that draws
- *  simple address events. The addressDraw will completely overwrite any
- * images previously drawn beforehand and thus should always be first in the
- * argument list.
- */
 class addressDraw : public vDraw {
 
 public:
 
-    ///
-    /// \brief see vDraw
-    ///
     virtual void draw(cv::Mat &image, const ev::vQueue &eSet);
-
-    ///
-    /// \brief see vDraw
-    ///
-    virtual std::string getTag();
-
-};
-
-class lifeDraw : public vDraw {
-
-public:
-
-    ///
-    /// \brief see vDraw
-    ///
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet);
-
-    ///
-    /// \brief see vDraw
-    ///
-    virtual std::string getTag();
-
-};
-
-class integralDraw : public vDraw {
-
-private:
-
-    cv::Mat iimage;
-
-public:
-
-    integralDraw();
-
-    ///
-    /// \brief see vDraw
-    ///
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet);
-
-    ///
-    /// \brief see vDraw
-    ///
     virtual std::string getTag();
 
 };
@@ -153,39 +102,30 @@ class flowDraw : public vDraw {
 
 public:
 
-    ///
-    /// \brief see vDraw
-    ///
     virtual void draw(cv::Mat &image, const ev::vQueue &eSet);
-
-    ///
-    /// \brief see vDraw
-    ///
     virtual std::string getTag();
 
 };
 
-/**
- * @brief The clusterDrawer overlays the image with visualisation of event
- * clusters.
- */
+class lifeDraw : public vDraw {
+
+public:
+
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet);
+    virtual std::string getTag();
+
+};
+
 class clusterDraw : public vDraw {
 
 protected:
 
-    std::map<int, ev::event<ev::ClusterEvent>> persistance;
+    std::map<int, ev::event<ev::LabelledAE>> persistance;
     int stagnantCount;
 
 public:
 
-    ///
-    /// \brief see vDraw
-    ///
     virtual void draw(cv::Mat &image, const ev::vQueue &eSet);
-
-    ///
-    /// \brief see vDraw
-    ///
     virtual std::string getTag();
 
 };
@@ -194,81 +134,16 @@ class blobDraw : public vDraw {
 
 public:
 
-    ///
-    /// \brief see vDraw
-    ///
     virtual void draw(cv::Mat &image, const ev::vQueue &eSet);
-
-    ///
-    /// \brief see vDraw
-    ///
     virtual std::string getTag();
 
 };
 
-class circleDraw : public vDraw {
+class interestDraw : public vDraw {
 
 public:
 
-    ///
-    /// \brief see vDraw
-    ///
     virtual void draw(cv::Mat &image, const ev::vQueue &eSet);
-
-    ///
-    /// \brief see vDraw
-    ///
-    virtual std::string getTag();
-
-};
-
-
-class surfDraw : public vDraw {
-
-public:
-
-    const static int gradient = 100000;
-
-    ///
-    /// \brief see vDraw
-    ///
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet);
-
-    ///
-    /// \brief see vDraw
-    ///
-    virtual std::string getTag();
-
-};
-
-class fixedDraw : public vDraw {
-
-public:
-
-    ///
-    /// \brief see vDraw
-    ///
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet);
-
-    ///
-    /// \brief see vDraw
-    ///
-    virtual std::string getTag();
-
-};
-
-class fflowDraw : public vDraw {
-
-public:
-
-    ///
-    /// \brief see vDraw
-    ///
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet);
-
-    ///
-    /// \brief see vDraw
-    ///
     virtual std::string getTag();
 
 };
@@ -300,33 +175,12 @@ private:
 public:
 
     void initialise();
-    ///
-    /// \brief see vDraw
-    ///
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet);
 
-    ///
-    /// \brief see vDraw
-    ///
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet);
     virtual std::string getTag();
 
 };
 
-class interestDraw : public vDraw {
-
-public:
-
-    ///
-    /// \brief see vDraw
-    ///
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet);
-
-    ///
-    /// \brief see vDraw
-    ///
-    virtual std::string getTag();
-
-};
 
 /**
  * @brief createDrawer returns an instance of a drawer that matches the tag

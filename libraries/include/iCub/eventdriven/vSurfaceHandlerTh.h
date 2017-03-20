@@ -2,9 +2,12 @@
 #define __VSURFACEHANDLER__
 
 #include <yarp/os/all.h>
-#include <iCub/eventdriven/all.h>
+#include <iCub/eventdriven/vBottle.h>
+#include <iCub/eventdriven/vCodec.h>
 #include <deque>
 #include <string>
+
+namespace ev {
 
 class queueAllocator : public yarp::os::BufferedPort<ev::vBottle>
 {
@@ -191,6 +194,6 @@ public:
 
 };
 
-
+}
 
 #endif

@@ -18,7 +18,7 @@
 #include <math.h>
 
 using ev::event;
-using ev::getas;
+using ev::as_event;
 using ev::AddressEvent;
 using ev::FlowEvent;
 
@@ -167,19 +167,19 @@ void vCircleThread::performHough()
 
         if(directed) {
 
-            event<FlowEvent> v = getas<FlowEvent>((*procQueue)[i]);
+            event<FlowEvent> v = as_event<FlowEvent>((*procQueue)[i]);
 
             if(v) {
-                updateHFlowAngle(v->getX(), v->getY(), (*procType)[i],
-                                 v->getVx(), v->getVy());
+                updateHFlowAngle(v->x, v->y, (*procType)[i],
+                                 v->vx, v->vy);
             }
 
         } else {
 
-            event<AddressEvent> v = getas<AddressEvent>((*procQueue)[i]);
+            event<AddressEvent> v = as_event<AddressEvent>((*procQueue)[i]);
 
             if(v) {
-                updateHAddress(v->getX(), v->getY(), (*procType)[i]);
+                updateHAddress(v->x, v->y, (*procType)[i]);
             }
 
         }
@@ -361,9 +361,9 @@ void vCircleMultiSize::addFixed(ev::vQueue &additions)
         //GET THE EVENTS AS CORRECT TYPE
         //eventdriven::AddressEvent *v = (*vi)->getAs<eventdriven::AddressEvent>();
         if(directed)
-            v = getas<FlowEvent>(*vi);
+            v = as_event<FlowEvent>(*vi);
         else
-            v = getas<AddressEvent>(*vi);
+            v = as_event<AddressEvent>(*vi);
 
         if(!v || v->getChannel() != channel) continue;
 
@@ -391,7 +391,7 @@ void vCircleMultiSize::addTime(ev::vQueue &additions)
     ev::vQueue::iterator vi;
     for(vi = additions.begin(); vi != additions.end(); vi++) {
 
-        v = getas<AddressEvent>(*vi);
+        v = as_event<AddressEvent>(*vi);
         if(!v || v->getChannel() != channel) continue;
 
         procQueue.push_back(v);
@@ -418,7 +418,7 @@ void vCircleMultiSize::addLife(ev::vQueue &additions)
     ev::vQueue::iterator vi;
     for(vi = additions.begin(); vi != additions.end(); vi++) {
 
-        v = getas<FlowEvent>(*vi);
+        v = as_event<FlowEvent>(*vi);
         if(!v || v->getChannel() != channel) continue;
 
         procQueue.push_back(v);
@@ -463,12 +463,12 @@ void vCircleMultiSize::addLife(ev::vQueue &additions)
 
 //        //CHECK TO REMOVE "SAME LOCATION EVENTS FIRST"
 //        // <----------THIS IS THE SLOWEST PART OF BALL TRACKING -------->
-//        int cx = v->getX(); int cy = v->getY();
+//        int cx = v->X; int cy = v->y;
 //        eventdriven::vQueue::iterator i = FIFO.begin();
 //        while(i != FIFO.end()) {
 //            //we only add Address Events therefore we can do an unsafe cast
 //            v = (*i)->getUnsafe<eventdriven::AddressEvent>(); //this may break now?
-//            removed = v->getX() == cx && v->getY() == cy;
+//            removed = v->X == cx && v->y == cy;
 //            if(removed) {
 //                procQueue.push_back(v);
 //                procType.push_back(-1);
@@ -515,7 +515,7 @@ void vCircleMultiSize::addLife(ev::vQueue &additions)
 
 //        //then find any events that should be removed
 //        int cts = v->getStamp();
-//        int cx = v->getX(); int cy = v->getY();
+//        int cx = v->X; int cy = v->y;
 //        eventdriven::FlowEvent * v2;
 //        eventdriven::vQueue::iterator i = FIFO.begin();
 //        while(i != FIFO.end()) {
@@ -524,7 +524,7 @@ void vCircleMultiSize::addLife(ev::vQueue &additions)
 //            if(cts < v2->getStamp()) //we have wrapped
 //                modts += eventdriven::vtsHelper::maxStamp();
 
-//            bool samelocation = v2->getX() == cx && v2->getY() == cy;
+//            bool samelocation = v2->X == cx && v2->y == cy;
 
 //            if(modts > v2->getDeath() || samelocation) {
 //                procQueue.push_back(v2);
@@ -551,10 +551,10 @@ void vCircleMultiSize::addEdge(ev::vQueue &additions)
 
     ev::vQueue::iterator qi;
     for(qi = additions.begin(); qi != additions.end(); qi++) {
-        event<AddressEvent> v = getas<AddressEvent>(*qi);
+        event<AddressEvent> v = as_event<AddressEvent>(*qi);
         if(!v || v->getChannel() != channel) continue;
 
-        event<FlowEvent> vf = getas<FlowEvent>(v);
+        event<FlowEvent> vf = as_event<FlowEvent>(v);
 
         if(vf) {
             procQueue.push_back(vf);
@@ -563,7 +563,7 @@ void vCircleMultiSize::addEdge(ev::vQueue &additions)
 
         ev::vQueue removed = eFIFO.addEventToEdge(v);
         for(unsigned int i = 0; i < removed.size(); i++) {
-            if(getas<FlowEvent>(removed[i])) {
+            if(as_event<FlowEvent>(removed[i])) {
                 procQueue.push_back(removed[i]);
                 procType.push_back(-1);
             }
@@ -608,8 +608,8 @@ yarp::sig::ImageOf<yarp::sig::PixelBgr> vCircleMultiSize::makeDebugImage()
         q = eFIFO.getSurf(0, imagebase.width(), 0, imagebase.height());
 
     for(unsigned int i = 0; i < q.size(); i++) {
-        event<AddressEvent> v = getas<AddressEvent>(q[i]);
-        imagebase(v->getY(), imagebase.width() - 1 - v->getX()) =
+        event<AddressEvent> v = as_event<AddressEvent>(q[i]);
+        imagebase(v->y, imagebase.width() - 1 - v->x) =
                 yarp::sig::PixelBgr(255, 0, 255);
     }
 

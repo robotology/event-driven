@@ -42,7 +42,7 @@ protected:
     double clusterLimit;
 
     int getNewTracker();
-    ev::event<ev::ClusterEventGauss> makeEvent(int i, int ts);
+    ev::event<ev::GaussianAE> makeEvent(int i, int ts);
     ev::vtsHelper unwrap;
 
 
@@ -65,7 +65,7 @@ public:
     void setClusterLimit(int limit);
 
     int update(ev::event<ev::AddressEvent> v,
-               std::vector<ev::event<ev::ClusterEventGauss> > &clEvts);
+               std::vector<ev::event<ev::GaussianAE> > &clEvts);
 
 };
 

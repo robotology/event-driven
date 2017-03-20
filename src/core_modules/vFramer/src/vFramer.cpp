@@ -17,6 +17,27 @@
 #include "vFramer.h"
 #include <sstream>
 
+using namespace ev;
+
+int main(int argc, char * argv[])
+{
+    yarp::os::Network yarp;
+    if(!yarp.checkNetwork()) {
+        yError() << "Could not find yarp network";
+        return 1;
+    }
+
+    yarp::os::ResourceFinder rf;
+    rf.setVerbose( true );
+    rf.setDefaultContext( "eventdriven" );
+    rf.setDefaultConfigFile( "vFramer.ini" );
+    rf.configure( argc, argv );
+
+    vFramerModule framerModule;
+    return framerModule.runModule(rf);
+}
+
+
 /*////////////////////////////////////////////////////////////////////////////*/
 //vReadAndSplit
 /*////////////////////////////////////////////////////////////////////////////*/
@@ -25,19 +46,22 @@ bool vReadAndSplit::open(const std::string portName, bool strict)
     if(strict) this->setStrict();
     this->useCallback();
 
-    return BufferedPort<ev::vBottle>::open("/" + portName + "/vBottle:i");
+    return BufferedPort<vBottle>::open(portName + "/vBottle:i");
 }
 
-void vReadAndSplit::onRead(ev::vBottle &incoming)
+void vReadAndSplit::onRead(vBottle &incoming)
 {
     this->getEnvelope(yarptime);
-    ev::vQueue q = incoming.getAllSorted();
+    vQueue q = incoming.getAllSorted();
 
     safety.lock();
-    for(ev::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
+    for(vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
         if(flip) {
-            ev::event<ev::AddressEvent> v = std::static_pointer_cast<ev::AddressEvent>(*qi);
-            v->x = res.width-1 - v->x; v->y = res.height-1 - v->y;
+            auto v = as_event<AE>(*qi);
+            if(v) {
+                v->x = res.width-1 - v->x;
+                v->y = res.height-1 - v->y;
+            }
         }
         windows[(*qi)->getChannel()].addEvent(*qi);
     }
@@ -46,7 +70,7 @@ void vReadAndSplit::onRead(ev::vBottle &incoming)
 
 void vReadAndSplit::snapshotAllWindows()
 {
-    std::map<int, ev::vTempWindow>::iterator wi;
+    std::map<int, vTempWindow>::iterator wi;
 
     safety.lock();
     for(wi = windows.begin(); wi != windows.end(); wi++)
@@ -54,7 +78,7 @@ void vReadAndSplit::snapshotAllWindows()
     safety.unlock();
 }
 
-const ev::vQueue& vReadAndSplit::getSnap(const int channel)
+const vQueue& vReadAndSplit::getSnap(const int channel)
 {
     return snaps[channel];
 }
@@ -82,11 +106,11 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
 
     //admin options
     std::string moduleName =
-            rf.check("name", yarp::os::Value("vFramer")).asString();
+            rf.check("name", yarp::os::Value("/vFramer")).asString();
     setName(moduleName.c_str());
 
-    int retinaHeight = rf.check("height", yarp::os::Value(128)).asInt();
-    int retinaWidth = rf.check("width", yarp::os::Value(128)).asInt();
+    int retinaHeight = rf.check("height", yarp::os::Value(240)).asInt();
+    int retinaWidth = rf.check("width", yarp::os::Value(304)).asInt();
 
     double eventWindow =
             rf.check("eventWindow", yarp::os::Value(0.5)).asDouble();
@@ -101,10 +125,10 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
     //set up the default channel list
     yarp::os::Bottle tempDisplayList, *bp;
     tempDisplayList.addInt(0);
-    tempDisplayList.addString("Left");
+    tempDisplayList.addString("/Left");
     bp = &(tempDisplayList.addList()); bp->addString("AE");
     tempDisplayList.addInt(1);
-    tempDisplayList.addString("Right");
+    tempDisplayList.addString("/Right");
     bp = &(tempDisplayList.addList()); bp->addString("AE");
 
     //set the output channels
@@ -137,7 +161,7 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
                 yarp::sig::ImageOf<yarp::sig::PixelBgr> >;
         //outports[i]->setStrict();
         std::string outportname = displayList->get(i*3 + 1).asString();
-        if(!outports[i]->open("/" + moduleName + "/" + outportname))
+        if(!outports[i]->open(moduleName + outportname))
             return false;
 
         yarp::os::Bottle * drawtypelist = displayList->get(i*3 + 2).asList();
@@ -196,6 +220,7 @@ bool vFramerModule::updateModule()
 
     yarp::os::Stamp yarptime = vReader.getYarpTime();
 
+    //if yarptime is valid we try to update at that frameRate.
     if(yarptime.isValid()) {
         //std::cout << "yarptime valid: " << yarptime.getTime() << std::endl;
         double dt = yarptime.getTime() - pyarptime;
@@ -206,12 +231,9 @@ bool vFramerModule::updateModule()
         if(yarptime.getTime() - pyarptime < period)
             return true;
         pyarptime = yarptime.getTime();
-    }/* else {
-        return true;
-    }*/
+    }
 
     //get a snapshot of current events
-    //std::cout << yarptime.getCount() << std::endl;
     vReader.snapshotAllWindows();
 
     //for each output image needed

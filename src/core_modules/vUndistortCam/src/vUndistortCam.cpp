@@ -17,12 +17,14 @@
 
 #include "vUndistortCam.h"
 
+using namespace ev;
+
 /**********************************************************/
 bool vUndistortModule::configure(yarp::os::ResourceFinder &rf)
 {
     //set the name of the module
     std::string moduleName =
-            rf.check("name", yarp::os::Value("vUndistortCam")).asString();
+            rf.check("name", yarp::os::Value("/vUndistortCam")).asString();
     setName(moduleName.c_str());
 
     //set port strictness
@@ -222,25 +224,24 @@ void EventBottleManager::onRead(ev::vBottle &bot)
     outPort.setEnvelope(yst);
 
     //create event queue
-    ev::vQueue q = bot.getAll();
+    vQueue q = bot.get<AE>();
 
     for(ev::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {
 
-        ev::event<ev::AddressEvent> v = ev::getas<ev::AddressEvent>(*qi);
-        if(!v) continue;
+        auto v = ev::is_event<AddressEvent>(*qi);
 
         cv::Vec2i mapPix;
         if(!v->getChannel())
-             mapPix = leftMap.at<cv::Vec2i>(v->getX(), v->getY());
+             mapPix = leftMap.at<cv::Vec2i>(v->x, v->y);
         else
-            mapPix = rightMap.at<cv::Vec2i>(v->getX(), v->getY());
+            mapPix = rightMap.at<cv::Vec2i>(v->x, v->y);
 
         bool withinSensorBounds = mapPix[0] >= 0.0 && mapPix[0] < (double)sensorWidth
                 && mapPix[1] >= 0.0 && mapPix[1] < (double)sensorHeight;
         if(withinSensorBounds || !truncate) {
-            v->setX(mapPix[0]);
-            v->setY(mapPix[1]);
+            v->x = mapPix[0];
+            v->y = mapPix[1];
             outBottle.addEvent(v);
         }
 

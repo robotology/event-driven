@@ -22,7 +22,7 @@ bool vPepperModule::configure(yarp::os::ResourceFinder &rf)
 {
     //set the name of the module
     std::string moduleName =
-            rf.check("name", yarp::os::Value("vPepper")).asString();
+            rf.check("name", yarp::os::Value("/vPepper")).asString();
     setName(moduleName.c_str());
 
     bool strict = rf.check("strict") &&
@@ -101,9 +101,9 @@ bool vPepperIO::open(const std::string &name, bool strict)
         std::cout << "NOT using strict communication" << std::endl;
     }
 
-    if(!yarp::os::BufferedPort<ev::vBottle>::open("/" + name + "/vBottle:i"))
+    if(!yarp::os::BufferedPort<ev::vBottle>::open(name + "/vBottle:i"))
         return false;
-    if(!outPort.open("/" + name + "/vBottle:o"))
+    if(!outPort.open(name + "/vBottle:o"))
         return false;
 
     return true;
@@ -135,12 +135,11 @@ void vPepperIO::onRead(ev::vBottle &bot)
     outBottle.clear();
     outPort.setEnvelope(yts);
 
-    ev::vQueue q = bot.getAll();
+    ev::vQueue q = bot.get<AE>();
     for(ev::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {
-        event<AddressEvent> v = getas<AddressEvent>(*qi);
-        if(!v) continue;
-        if(thefilter.check(v->getX(), v->getY(), v->getPolarity(), v->getChannel(), v->getStamp())) {
+        auto v = is_event<AddressEvent>(*qi);
+        if(thefilter.check(v->x, v->y, v->polarity, v->getChannel(), v->stamp)) {
             outBottle.addEvent(v);
         }
     }
