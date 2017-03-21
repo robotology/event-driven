@@ -5,3 +5,4 @@ cmake_minimum_required(VERSION 2.6)
 
 add_subdirectory(autosaccade)
 add_subdirectory(vTrackToRobot)
+add_subdirectory(vVergence)

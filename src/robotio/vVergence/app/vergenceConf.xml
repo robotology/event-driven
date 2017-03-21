@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<portscope carrier="mcast">
+    <plot gridx="0"
+          gridy="0"
+          hspan="1"
+          vspan="1"
+          title="Disparity"
+          size="201"
+          minval="0"
+          maxval="500"
+          interval="1000"
+          bgcolor="#EEFFEE">
+        <graph remote="/vDisparity/scope:o"
+               index="0"
+               color="Green"
+               type="lines"
+               size="1" />
+        <graph remote="/vDisparity/scope:o"
+               index="1"
+               color="Black"
+               type="lines"
+               size="1" />
+        <graph remote="/depthgt/gt:o"
+               index="0"
+               color="BLue"
+               type="lines"
+               size="1" />
+    </plot>
+</portscope>
