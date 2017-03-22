@@ -104,6 +104,14 @@ event<> createEvent(const std::string &type)
     if(type == ret->getType()) return event<>(ret);
     else delete(ret);
 
+    ret = new GaussianAE();
+    if(type == ret->getType()) return event<>(ret);
+    else delete(ret);
+
+    ret = new LabelledAE();
+    if(type == ret->getType()) return event<>(ret);
+    else delete(ret);
+
 //    ret = new AddressEventClustered();
 //    if(type == ret->getType()) return event<>(ret);
 //    else delete(ret);
