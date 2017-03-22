@@ -44,13 +44,17 @@ private:
     //parameters
     int height;
     int width;
-    int sobelRad;
+    int sobelsize;
     int windowRad;
+    double sigma;
     int nEvents;
     double thresh;
 
+    int gaussiansize;
+
     yarp::sig::Matrix sobelx;
     yarp::sig::Matrix sobely;
+    yarp::sig::Matrix gaussian;
 
     //data structures
     ev::vSurface2 *surfaceOnL;
@@ -63,13 +67,14 @@ private:
 
     bool detectcorner(ev::vSurface2 *surf);
     double convSobel(const ev::vQueue &window, yarp::sig::Matrix &sobel, int a, int b);
-    void setSobelFilters(int sobelsize, yarp::sig::Matrix &sobelx, yarp::sig::Matrix &sobely);
+    void setSobelFilters(yarp::sig::Matrix &sobelx, yarp::sig::Matrix &sobely);
     int factorial(int a);
     int Pasc(int k, int n);
+    void setGaussianFilter(double sigma, yarp::sig::Matrix &gaussian);
 
 public:
 
-    vCornerManager(int height, int width, int filterSize, int windowRad, int nEvents, double thresh);
+    vCornerManager(int height, int width, int filterSize, int windowRad, double sigma, int nEvents, double thresh);
 
     bool    open(const std::string moduleName, bool strictness = false);
     void    close();
