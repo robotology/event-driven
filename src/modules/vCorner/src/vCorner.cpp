@@ -17,6 +17,10 @@
 
 #include "vCorner.h"
 
+#include <iomanip>
+
+using namespace ev;
+
 /**********************************************************/
 bool vCornerModule::configure(yarp::os::ResourceFinder &rf)
 {
@@ -31,12 +35,13 @@ bool vCornerModule::configure(yarp::os::ResourceFinder &rf)
     /* set parameters */
     int height = rf.check("height", yarp::os::Value(128)).asInt();
     int width = rf.check("width", yarp::os::Value(128)).asInt();
-    int sobelsize = rf.check("filterSize", yarp::os::Value(3)).asInt();
-    int thickness = rf.check("thick", yarp::os::Value(2)).asInt();
-    double thresh = rf.check("thresh", yarp::os::Value(0.05)).asDouble();
+    int sobelRad = rf.check("filterSize", yarp::os::Value(3)).asInt();
+    int windowRad = rf.check("spatial", yarp::os::Value(3)).asInt();
+    int nEvents = rf.check("nEvents", yarp::os::Value(5000)).asInt();
+    double thresh = rf.check("thresh", yarp::os::Value(0.08)).asDouble();
 
     /* create the thread and pass pointers to the module parameters */
-    cornermanager = new vCornerManager(height, width, sobelsize, thickness, thresh);
+    cornermanager = new vCornerManager(height, width, sobelRad, windowRad, nEvents, thresh);
     return cornermanager->open(moduleName, strict);
 
 }
@@ -73,32 +78,35 @@ double vCornerModule::getPeriod()
 /******************************************************************************/
 //vCornerManager
 /******************************************************************************/
-vCornerManager::vCornerManager(int height, int width, int sobelsize, int thickness, double thresh)
+vCornerManager::vCornerManager(int height, int width, int sobelRad, int windowRad, int nEvents, double thresh)
 {
     this->height = height;
     this->width = width;
 
-    this->sobelsize = sobelsize;
-    //ensure sobel size is at least 3 and an odd number
-    if(sobelsize < 5) sobelsize = 3;
-    if(!(sobelsize % 2)) sobelsize--;
+    this->sobelRad = sobelRad;
+    this->windowRad = windowRad;
 
-    this->thickness = thickness;
+    //ensure sobel size is less than length of spatial window
+    if(sobelRad > windowRad)
+        std::cerr << "ERROR: sobelRad needs to be less than windowRad " << std::endl;
 
+    this->nEvents = nEvents;
     this->thresh = thresh;
-    this->fRad = sobelsize / 2;
-    this->minEvts = 3;
 
-    //create our edge
-    edge = new eventdriven::vEdge(width, height);
-    edge->setThickness(thickness);
-
-    //for speed we predefine the mememory for some matricies
+    //for speed we predefine the memory for some matricies
+    int sobelsize = 2*sobelRad + 1;
+    if(!(sobelsize % 2)) std::cout << "WARNING: filter size is not odd " << std::endl;
     sobelx = yarp::sig::Matrix(sobelsize, sobelsize);
     sobely = yarp::sig::Matrix(sobelsize, sobelsize);
 
     //create sobel filters
     setSobelFilters(sobelsize, sobelx, sobely);
+
+    //create surface representations
+    surfaceOfR = new ev::fixedSurface(nEvents, width, height);
+    surfaceOnR = new ev::fixedSurface(nEvents, width, height);
+    surfaceOfL = new ev::fixedSurface(nEvents, width, height);
+    surfaceOnL = new ev::fixedSurface(nEvents, width, height);
 
 }
 /**********************************************************/
@@ -112,12 +120,16 @@ bool vCornerManager::open(const std::string moduleName, bool strictness)
     this->useCallback();
 
     std::string inPortName = "/" + moduleName + "/vBottle:i";
-    bool check1 = BufferedPort<eventdriven::vBottle>::open(inPortName);
+    bool check1 = BufferedPort<ev::vBottle>::open(inPortName);
 
     if(strictness) outPort.setStrict();
     std::string outPortName = "/" + moduleName + "/vBottle:o";
     bool check2 = outPort.open(outPortName);
-    return check1 && check2;
+
+    std::string debugPortName = "/" + moduleName + "/debug:o";
+    bool check3 = debugPort.open(debugPortName);
+
+    return check1 && check2 && check3;
 
 }
 
@@ -126,9 +138,14 @@ void vCornerManager::close()
 {
     //close ports
     outPort.close();
-    yarp::os::BufferedPort<eventdriven::vBottle>::close();
+    yarp::os::BufferedPort<ev::vBottle>::close();
+    debugPort.close();
 
-    delete edge;
+    delete surfaceOnL;
+    delete surfaceOfL;
+    delete surfaceOnR;
+    delete surfaceOfR;
+
 }
 
 /**********************************************************/
@@ -136,44 +153,55 @@ void vCornerManager::interrupt()
 {
     //pass on the interrupt call to everything needed
     outPort.interrupt();
-    yarp::os::BufferedPort<eventdriven::vBottle>::interrupt();
+    yarp::os::BufferedPort<ev::vBottle>::interrupt();
+    debugPort.interrupt();
 }
 
 /**********************************************************/
-void vCornerManager::onRead(eventdriven::vBottle &bot)
+void vCornerManager::onRead(ev::vBottle &bot)
 {
-    int detectedCorners = 0;
-
-    /*prepare output vBottle with AEs extended with optical flow events*/
-    eventdriven::vBottle &outBottle = outPort.prepare();
+    /*prepare output vBottle*/
+    ev::vBottle &outBottle = outPort.prepare();
     outBottle.clear();
     yarp::os::Stamp st;
     this->getEnvelope(st); outPort.setEnvelope(st);
 
     /*get the event queue in the vBottle bot*/
-    eventdriven::vQueue q = bot.get<eventdriven::AddressEvent>();
-    q.sort(true);
+    ev::vQueue q = bot.get<AE>();
 
-    for(eventdriven::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
+    for(ev::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {
-        eventdriven::AddressEvent *aep = (*qi)->getAs<eventdriven::AddressEvent>();
-        if(!aep) continue;
-        if(aep->getChannel()) continue;
+        auto aep = is_event<AE>(*qi);
+//        if(!aep) continue;
 
-        edge->addEventToEdge(aep);
-
-        bool isc = detectcorner();
-
-        //THIS COULD BE PROBLEMATIC AS FLOW WILL BE OVERWRITTEN BY IEs
-        //THEREFORE THE NEXT MODULE LOSES THE FLOW INFORMATION
-        if(isc) {
-            eventdriven::InterestEvent ce = *aep;
-            ce.setID(isc);
-            outBottle.addEvent(ce);
-            detectedCorners++;
-//            std::cout << "corners detected in the bottle " << detectedCorners << std::endl;
+        //add the event to the appropriate surface
+        ev::vSurface2 * cSurf;
+        if(aep->getChannel()) {
+            if(aep->polarity)
+                cSurf = surfaceOfR;
+            else
+                cSurf = surfaceOnR;
+        } else {
+            if(aep->polarity)
+                cSurf = surfaceOfL;
+            else
+                cSurf = surfaceOnL;
         }
-        else outBottle.addEvent(*aep);
+
+        cSurf->addEvent(aep);
+
+        //detect corner
+        bool isc = detectcorner(cSurf);
+
+        //add corner event to the output bottle
+        if(isc) {
+            auto ce = make_event<LabelledAE>(aep);
+            ce->ID = 1;
+            outBottle.addEvent(ce);
+        }
+        else
+            outBottle.addEvent(aep);
+
     }
 
     if (strictness) outPort.writeStrict();
@@ -182,52 +210,36 @@ void vCornerManager::onRead(eventdriven::vBottle &bot)
 }
 
 /**********************************************************/
-bool vCornerManager::detectcorner() //(const eventdriven::vQueue &edge)
+
+bool vCornerManager::detectcorner(ev::vSurface2 *surf)
 {
-    double dtdx = 0, dtdy = 0,
-            dttdx = 0, dttdy = 0, dttdxy = 0, dttdyx = 0,
-            //normdx = 0, normdy = 0,
-            score = 0;
+    double dx = 0.0, dy = 0.0, dxy = 0.0, score = 0.0;
     bool isc;
 
     //get the most recent event
-    eventdriven::AddressEvent * vr =
-            edge->getMostRecent()->getAs<eventdriven::AddressEvent>();
+    auto vr = is_event<AE>(surf->getMostRecent());
 
-    for(int x = vr->getX()-fRad; x <= vr->getX()+fRad; x+=fRad) {
-        for(int y = vr->getY()-fRad; y <= vr->getY()+fRad; y+=fRad) {
-            //get the surface around the recent event
-            const eventdriven::vQueue &subedge = edge->getSurf(x, y, fRad);
+    for(int i = vr->x-windowRad; i <= vr->x+windowRad; i+=windowRad) {
+        for(int j = vr->y-windowRad; j <= vr->y+windowRad; j+=windowRad) {
 
-            //we need at least 3 events to say that it's a corner
-            if(subedge.size() < minEvts) continue;
+            //get the surface around the current event
+            const vQueue &subsurf = surf->getSurf(i, j, sobelRad);
 
             //compute the derivatives
-            dtdx = convSobel(subedge, sobelx, x, y);
-            dtdy = convSobel(subedge, sobely, x, y);
-            int dx = x - vr->getX() + fRad;
-            int dy = y - vr->getY() + fRad;
-            dttdx += singleSobel(dtdx, sobelx, dx, dy); //normdx += fabs(sobelx[dx][dy]);
-            dttdy += singleSobel(dtdy, sobely, dx, dy); //normdy += fabs(sobely[dx][dy]);
-            dttdxy += singleSobel(dtdx, sobely, dx, dy);
-            dttdyx += singleSobel(dtdy, sobelx, dx, dy);
+            dx += pow(convSobel(subsurf, sobelx, i, j), 2);
+            dy += pow(convSobel(subsurf, sobely, i, j), 2);
+            dxy += convSobel(subsurf, sobelx, i, j) * convSobel(subsurf, sobely, i, j);
 
         }
-    } // end for
-
-    dttdx = dttdx / (sobelsize*sobelsize - 1);//normdx;
-    dttdy = dttdy / (sobelsize*sobelsize - 1);//normdy;
-    dttdxy = dttdxy / (sobelsize*sobelsize - 1);//normdy;
-    dttdyx = dttdyx / (sobelsize*sobelsize - 1);//normdx;
-
-//    std::cout << "dxx " << dttdx << std::endl;
-//    std::cout << "dyy " << dttdy << std::endl;
-//    std::cout << "dxy " << dttdxy << std::endl;
-//    std::cout << "dyx " << dttdyx << std::endl;
+    }
 
     //compute score
-    score = fabs(dttdx*dttdy - dttdxy*dttdyx) - 0.04*pow((dttdx + dttdy), 2);
-//    std::cout << "score " << score << std::endl;
+    score = (dx*dy - dxy*dxy) - 0.04*((dx + dy) * (dx + dy));
+
+    yarp::os::Bottle &scorebottleout = debugPort.prepare();
+    scorebottleout.clear();
+    scorebottleout.addDouble(score);
+    debugPort.write();
 
     //if score > thresh tag ae as ce
     if(score > thresh) {
@@ -237,57 +249,28 @@ bool vCornerManager::detectcorner() //(const eventdriven::vQueue &edge)
         return isc = false;
     }
 }
-
 /**********************************************************/
-double vCornerManager::convSobel(const eventdriven::vQueue &subedge, yarp::sig::Matrix &sobel, int x, int y)
+double vCornerManager::convSobel(const ev::vQueue &w, yarp::sig::Matrix &sobel, int a, int b)
 {
-    double val = 0; //norm = 0;
+    double val = 0.0, norm = 0.0;
 
-    int tsMin = 0;//getMinStamp(subedge);
-    int tsMax = getMaxStamp(subedge);
+    //compute the convolution between the filter and the window
+    for(unsigned int k = 0; k < w.size(); k++) {
 
-    //compute the sparse convolution between the filter and the window
-    //normalized by the minimum timestamp
-    for(unsigned int k = 0; k < subedge.size(); k++) {
-        int ts = subedge[k]->getStamp();
-        int dx = x - subedge[k]->getUnsafe<eventdriven::AddressEvent>()->getX() + fRad;
-        int dy = y - subedge[k]->getUnsafe<eventdriven::AddressEvent>()->getY() + fRad;
-        val += singleSobel(((double)(ts - tsMin) / (tsMax - tsMin)), sobel, dx, dy);
-        //norm += fabs(sobel[dx][dy]);
+        auto vi = is_event<AE>(w[k]);
+        int deltax = a - vi->x + sobelRad;
+        int deltay = b - vi->y + sobelRad;
+        val += sobel[deltax][deltay];
     }
 
-    return(val / (sobelsize*sobelsize - 1));
-
-}
-
-/**********************************************************/
-inline double vCornerManager::singleSobel(double val, yarp::sig::Matrix &sobel, int dx, int dy)
-{
-    return (val * sobel[dx][dy]);
-}
-
-/**********************************************************/
-int vCornerManager::getMinStamp(const eventdriven::vQueue &subedge)
-{
-    int tsMin = subedge[0]->getStamp();
-    for(unsigned int k = 0; k < subedge.size(); k++) {
-        int t = subedge[k]->getStamp();
-        if(t < tsMin)
-            tsMin = t;
+    for(int i = 0; i < (2*sobelRad+1); i++) {
+        for(int j = 0; j < (2*sobelRad+1); j++){
+            norm += fabs(sobel[i][j]);
+        }
     }
-    return(tsMin);
-}
 
-/**********************************************************/
-int vCornerManager::getMaxStamp(const eventdriven::vQueue &subedge)
-{
-    int tsMax = subedge[0]->getStamp();
-    for(unsigned int k = 0; k < subedge.size(); k++) {
-        int t = subedge[k]->getStamp();
-        if(t > tsMax)
-            tsMax = t;
-    }
-    return(tsMax);
+    return (val / norm);
+
 }
 
 /**********************************************************/
@@ -303,6 +286,7 @@ void vCornerManager::setSobelFilters(int sobelsize, yarp::sig::Matrix &sobelx, y
 
     sobelx = yarp::math::outerProduct(Sx, Dx); //Mx=Sy(:)*Dx;
     sobely = sobelx.transposed();
+
 }
 
 int vCornerManager::factorial(int a)

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.6)
 
 add_subdirectory(vCluster)
-#add_subdirectory(vCorner)
+add_subdirectory(vCorner)
 add_subdirectory(vRepTest)
 add_subdirectory(vFlow)
 
