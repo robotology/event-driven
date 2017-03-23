@@ -6,7 +6,7 @@
 
 <module>
     <name> vFramer</name>
-    <parameters> --frameRate 30 --displays "(0 left (AE ISO) 1 right (AE ISO))" --height 240 --width 304 --strict</parameters>
+    <parameters> --frameRate 30 --displays "(0 /left (AE ISO) 1 /right (AE ISO))" --height 240 --width 304 --strict --flip</parameters>
     <node>icub24</node>
 </module>
 

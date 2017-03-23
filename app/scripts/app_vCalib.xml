@@ -5,13 +5,8 @@
 </dependencies>
 
 <module>
-   <name>aexGrabber</name>
-   <node>pc104</node>
-</module>
-
-<module>
     <name> vFramer</name>
-    <parameters> --frameRate 30 --eventWindow 0.5 --displays "(0 left (BLOB) 1 right (BLOB))"</parameters>
+    <parameters> --frameRate 30 --strict --displays "(0 /left (BLOB) 1 /right (BLOB))"</parameters>
 </module>
 
 <module>
@@ -28,7 +23,7 @@
 
 <module>
    <name>yarpview</name>
-   <parameters>--name /viewCh1 --x 000 --y 000 --RefreshTime 33 </parameters>
+   <parameters>--name /viewCh1 --x 000 --y 400 --RefreshTime 33 </parameters>
    <node>localhost</node>
 </module>
 
