@@ -28,7 +28,7 @@
 </module>
 
 <connection>
-  <from>/aexGrabber/vBottle:o</from>
+  <from>/zynqGrabber/vBottle:o</from>
   <to>/vFramer/vBottle:i</to>
   <protocol>udp</protocol>
 </connection>
