@@ -221,7 +221,7 @@ void vCornerManager::onRead(ev::vBottle &bot)
 bool vCornerManager::detectcorner(ev::vSurface2 *surf)
 {
     double dx = 0.0, dy = 0.0, dxy = 0.0, score = 0.0;
-    bool isc;
+
 //    int count = 0;
 
     //get the most recent event
@@ -246,9 +246,11 @@ bool vCornerManager::detectcorner(ev::vSurface2 *surf)
 //            count++;
 
             //compute the derivatives
-            dx += gaussian(deltax, deltay) * pow(convSobel(subsurf, sobelx, i, j), 2);
-            dy += gaussian(deltax, deltay) * pow(convSobel(subsurf, sobely, i, j), 2);
-            dxy += gaussian(deltax, deltay) * convSobel(subsurf, sobelx, i, j) * convSobel(subsurf, sobely, i, j);
+            double cx = convSobel(subsurf, sobelx, i, j);
+            double cy = convSobel(subsurf, sobely, i, j);
+            dx += gaussian(deltax, deltay) * pow(cx, 2);
+            dy += gaussian(deltax, deltay) * pow(cy, 2);
+            dxy += gaussian(deltax, deltay) * cx * cy;
 
         }
     }
@@ -256,18 +258,16 @@ bool vCornerManager::detectcorner(ev::vSurface2 *surf)
     //compute score
     score = (dx*dy - dxy*dxy) - 0.04*((dx + dy) * (dx + dy));
 
-    yarp::os::Bottle &scorebottleout = debugPort.prepare();
-    scorebottleout.clear();
-    scorebottleout.addDouble(score);
-    debugPort.write();
+    if(debugPort.getOutputCount()) {
+        yarp::os::Bottle &scorebottleout = debugPort.prepare();
+        scorebottleout.clear();
+        scorebottleout.addDouble(score);
+        debugPort.write();
+    }
 
     //if score > thresh tag ae as ce
-    if(score > thresh) {
-        return isc = true;
-    }
-    else {
-        return isc = false;
-    }
+    return score > thresh;
+
 }
 /**********************************************************/
 double vCornerManager::convSobel(const ev::vQueue &w, yarp::sig::Matrix &sobel, int a, int b)
