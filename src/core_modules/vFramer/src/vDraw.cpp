@@ -275,28 +275,31 @@ std::string blobDraw::getTag()
 void blobDraw::draw(cv::Mat &image, const ev::vQueue &eSet)
 {
 
-    cv::Mat canvas(Ylimit, Xlimit, CV_8UC3);
-    canvas.setTo(255);
+    image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
+    image.setTo(255);
 
-    vQueue::const_iterator qi;
-    for(qi = eSet.begin(); qi != eSet.end(); qi++) {
-
-        auto aep = as_event<AddressEvent>(*qi);
-        if(!aep) continue;
-
-        cv::Vec3b &cpc = canvas.at<cv::Vec3b>(aep->y, aep->x);
-
-        if(!aep->polarity)
-        {
-            cpc[0] = 0;
-            cpc[1] = 0;
-            cpc[2] = 0;
-        }
+    if(checkStagnancy(eSet) > clearThreshold) {
+        return;
     }
 
-    cv::medianBlur(canvas, canvas, 5);
-    cv::blur(canvas, canvas, cv::Size(5, 5));
-    cv::resize(canvas, image, cv::Size(Ylimit, Xlimit));
+    if(eSet.empty()) return;
+
+    ev::vQueue::const_reverse_iterator qi;
+    for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
+
+
+        int dt = eSet.back()->stamp - (*qi)->stamp;
+        if(dt < 0) dt += ev::vtsHelper::maxStamp();
+        if(dt > twindow) break;
+
+        auto aep = as_event<AE>(*qi);
+        if(!aep) continue;
+        if(!aep->polarity)
+            image.at<cv::Vec3b>(aep->y, aep->x) = cv::Vec3b(0, 0, 0);
+    }
+
+    cv::medianBlur(image, image, 5);
+    cv::blur(image, image, cv::Size(5, 5));
 }
 
 //std::string circleDraw::getTag()
