@@ -134,7 +134,7 @@ bool vCornerManager::open(const std::string moduleName, bool strictness)
     std::string outPortName = "/" + moduleName + "/vBottle:o";
     bool check2 = outPort.open(outPortName);
 
-    std::string debugPortName = "/" + moduleName + "/debug:o";
+    std::string debugPortName = "/" + moduleName + "/score:o";
     bool check3 = debugPort.open(debugPortName);
 
     return check1 && check2 && check3;
