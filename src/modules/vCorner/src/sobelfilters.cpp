@@ -56,24 +56,26 @@ void sobelfilter::resetResponses() {
     responsey.zero();
 }
 
-//double sobelfilter::process(vEvent &evt)
-//{
-//    auto ae = is_event<AE>(evt.clone());
-//    int dx = ae->x - cx + sobelrad;
-//    int dy = ae->y - cy + sobelrad;
+std::pair<double, double> sobelfilter::process(vEvent &evt)
+{
+    auto ae = is_event<AE>(evt.clone());
+    int dx = ae->x - cx + sobelrad;
+    int dy = ae->y - cy + sobelrad;
+    return std::make_pair (sobelx(dx, dy), sobely(dx, dy));
+//    return gain;
+}
 
-//    return sobelx(dx, dy);
-//}
+void sobelfilter::updateresponse(vEvent &curr_evt, vEvent &cent_evt)
+{
+    auto cente = is_event<AE>(cent_evt.clone());
+    auto curre = is_event<AE>(curr_evt.clone());
+    int centerx = cx - cente->x + lrad;
+    int centery = cy - cente->y + lrad;
 
-//void sobelfilter::process(vEvent &evt, int currx, int curry)
-//{
-//    int centerx = cx - currx + lrad;
-//    int centery = cy - curry + lrad;
+    this->responsex(centerx, centery) += process(*curre).first;
+    this->responsey(centerx, centery) += process(*curre).second;
 
-//    this->responsex(centerx, centery) += process(*evt, sobelx);
-//    this->responsey(centerx, centery) += process(*evt, sobely);
-
-//}
+}
 
 void sobelfilter::process(ev::vEvent &evt, int currx, int curry)
 {
@@ -82,11 +84,6 @@ void sobelfilter::process(ev::vEvent &evt, int currx, int curry)
     int dy = ae->y - cy + sobelrad;
     int centerx = cx - currx + lrad;
     int centery = cy - curry + lrad;
-
-//    std::cout << "(" << ae->x << "," << ae->y << ")"
-//              << "(" << cx << "," << cy << ") "
-//              << dx << " " << dy << " "
-//              << centerx << " " << centery << std::endl;
 
     double gainx = sobelx(dx, dy);
     double gainy = sobely(dx, dy);

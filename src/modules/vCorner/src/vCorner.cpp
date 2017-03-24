@@ -225,7 +225,6 @@ void vCornerManager::onRead(ev::vBottle &bot)
 bool vCornerManager::detectcorner(ev::vSurface2 *surf)
 {
     double dx = 0.0, dy = 0.0, dxy = 0.0, score = 0.0;
-    int count = 0;
 
     //get the most recent event
     auto vc = is_event<AE>(surf->getMostRecent());
@@ -238,8 +237,6 @@ bool vCornerManager::detectcorner(ev::vSurface2 *surf)
     //get the queue of events
     const vQueue &subsurf = surf->getSurf(vc->x, vc->y, windowRad);
 
-//    std::cout << currx << " " << curry << std::endl;
-
     //update filter response
     for(unsigned int i = 0; i < subsurf.size(); i++)
     {
@@ -250,25 +247,20 @@ bool vCornerManager::detectcorner(ev::vSurface2 *surf)
 
 //        std::cout << i << " " << "(" << x << "," << y << ")" << " (" << cx << "," << cy << ")" <<  std::endl;
 
-        count = 0;
-        for(int j = currx-l; j <= currx+l; j++)
+        for(int cx = currx-l; cx <= currx+l; cx++)
         {
-            for(int k = curry-l; k <= curry+l; k++)
+            for(int cy = curry-l; cy <= curry+l; cy++)
             {
-                if(abs(x - j) <= sobelrad && abs(y - k) <= sobelrad)
+                if(abs(x - cx) <= sobelrad && abs(y - cy) <= sobelrad)
                 {
-                    sobel.setCenter(j, k);
-//                    std::cout << "(" << x << "," << y << ")"
-//                              << "(" << j << "," << k << ")" << std::endl;
+                    //(cx,cy) is the pixel where we apply the sobel filter
+                    sobel.setCenter(cx, cy);
                     sobel.process(*vi, currx, curry);
-                    count ++;
+//                    sobel.updateresponse(*vi, *vc);
                 }
             }
         }
-//        std::cout << count << std::endl << std::endl;
     }
-
-//    std::cout << std::endl;
 
     //get the final response
     for(int m = 0; m < 2*l+1; m++)
@@ -277,10 +269,11 @@ bool vCornerManager::detectcorner(ev::vSurface2 *surf)
         {
             double sx = sobel.getResponseX(m, n);
             double sy = sobel.getResponseY(m, n);
+            double g = gaussian(m, n);
 //            std::cout << m << " " << n << " " << sx << " " << sy << std::endl;
-            dx += gaussian(m, n) * pow(sx, 2);
-            dy += gaussian(m, n) * pow(sy, 2);
-            dxy += gaussian(m, n) * sx * sy;
+            dx += g * pow(sx, 2);
+            dy += g * pow(sy, 2);
+            dxy += g * sx * sy;
         }
     }
 
