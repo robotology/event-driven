@@ -28,6 +28,7 @@
 #include <yarp/math/Math.h>
 #include <iCub/eventdriven/all.h>
 #include <iCub/eventdriven/vtsHelper.h>
+#include <sobelfilters.h>
 #include <fstream>
 #include <math.h>
 
@@ -45,6 +46,7 @@ private:
     int height;
     int width;
     int sobelsize;
+    int sobelrad;
     int windowRad;
     double sigma;
     int nEvents;
@@ -52,8 +54,9 @@ private:
 
     int gaussiansize;
 
-    yarp::sig::Matrix sobelx;
-    yarp::sig::Matrix sobely;
+//    yarp::sig::Matrix sobelx;
+//    yarp::sig::Matrix sobely;
+    sobelfilter sobel;
     yarp::sig::Matrix gaussian;
 
     //data structures
@@ -67,9 +70,9 @@ private:
 
     bool detectcorner(ev::vSurface2 *surf);
     double convSobel(const ev::vQueue &window, yarp::sig::Matrix &sobel, int a, int b);
-    void setSobelFilters(yarp::sig::Matrix &sobelx, yarp::sig::Matrix &sobely);
-    int factorial(int a);
-    int Pasc(int k, int n);
+//    void setSobelFilters(yarp::sig::Matrix &sobelx, yarp::sig::Matrix &sobely);
+//    int factorial(int a);
+//    int Pasc(int k, int n);
     void setGaussianFilter(double sigma, yarp::sig::Matrix &gaussian);
 
 public:
