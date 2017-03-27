@@ -3,6 +3,8 @@
 
 namespace ev {
 
+const std::string FlowEvent::tag = "FLOW";
+
 FlowEvent::FlowEvent() : AddressEvent(), vx(0), vy(0) {}
 
 FlowEvent::FlowEvent(const vEvent &v) : AddressEvent(v)
@@ -60,7 +62,7 @@ yarp::os::Property FlowEvent::getContent() const
 
 std::string FlowEvent::getType() const
 {
-    return "FLOW";
+    return FlowEvent::tag;
 }
 
 int FlowEvent::getDeath() const

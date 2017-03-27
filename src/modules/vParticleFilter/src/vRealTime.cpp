@@ -311,6 +311,7 @@ void particleProcessor::run()
             ceg->sigx = avgr;
             ceg->sigy = avgr;
             ceg->sigxy = 0;
+            ceg->polarity = 1;
             eventsout.addEvent(ceg);
             vBottleOut.setEnvelope(yarpstamp);
             vBottleOut.write();

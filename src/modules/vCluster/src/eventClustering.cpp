@@ -214,14 +214,14 @@ void EventBottleManager::onRead(ev::vBottle &bot)
             clEvts.clear();
             int clusterAssignedTo = tracker_pool_left.update(aep, clEvts);
 
-            //add the event depending if it was assigned a cluster
-            if(clusterAssignedTo >= 0) {
-                auto aec = ev::make_event<ev::LabelledAE>(aep);
-                aec->ID = clusterAssignedTo;
-                evtCluster.addEvent(aec);
-            } else {
-                evtCluster.addEvent(aep);
-            }
+//            //add the event depending if it was assigned a cluster
+//            if(clusterAssignedTo >= 0) {
+//                auto aec = ev::make_event<ev::LabelledAE>(aep);
+//                aec->ID = clusterAssignedTo;
+//                evtCluster.addEvent(aec);
+//            } else {
+//                evtCluster.addEvent(aep);
+//            }
 
             //add the clusterEvents
             for(ceit = clEvts.begin(); ceit != clEvts.end(); ceit++) {
@@ -235,14 +235,14 @@ void EventBottleManager::onRead(ev::vBottle &bot)
             clEvts.clear();
             int clusterAssignedTo = tracker_pool_right.update(aep, clEvts);
 
-            //add the event depending if it was assigned a cluster
-            if(clusterAssignedTo >= 0) {
-                auto aec = ev::make_event<ev::LabelledAE>(aep);
-                aec->ID = clusterAssignedTo;
-                evtCluster.addEvent(aec);
-            } else {
-                evtCluster.addEvent(aep);
-            }
+//            //add the event depending if it was assigned a cluster
+//            if(clusterAssignedTo >= 0) {
+//                auto aec = ev::make_event<ev::LabelledAE>(aep);
+//                aec->ID = clusterAssignedTo;
+//                evtCluster.addEvent(aec);
+//            } else {
+//                evtCluster.addEvent(aep);
+//            }
 
             //add the clusterEvents
             for(ceit = clEvts.begin(); ceit != clEvts.end(); ceit++) {

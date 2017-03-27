@@ -3,6 +3,8 @@
 
 namespace ev {
 
+const std::string GaussianAE::tag = "GAE";
+
 GaussianAE::GaussianAE() : LabelledAE(), sigx(0), sigy(0), sigxy(0) {}
 
 GaussianAE::GaussianAE(const vEvent &v) : LabelledAE(v)
@@ -63,7 +65,7 @@ yarp::os::Property GaussianAE::getContent() const
 
 std::string GaussianAE::getType() const
 {
-    return "GAE";
+    return GaussianAE::tag;
 }
 
 

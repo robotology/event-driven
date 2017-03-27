@@ -17,7 +17,7 @@ vSurface2::vSurface2(int width, int height)
 
 void vSurface2::fastAddEvent(event <> v, bool onlyAdd)
 {
-    event<AE> c = as_event<AE>(v);
+    auto c = as_event<AE>(v);
     if(c->y >= height || c->x >= width) {
         return;
     }
@@ -39,7 +39,7 @@ void vSurface2::fastAddEvent(event <> v, bool onlyAdd)
 
 vQueue vSurface2::addEvent(event<> v)
 {
-    event<AddressEvent> c = std::static_pointer_cast<AddressEvent>(v);
+    auto c = is_event<AE>(v);
     if(c->y >= height || c->x >= width) {
         //std::cout << "WHY" << std::endl;
         return vQueue();

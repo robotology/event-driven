@@ -180,8 +180,8 @@ ev::event<ev::GaussianAE> TrackerPool::makeEvent(int i, int ts)
     }
     clep->x = trackers_[i].get_x();
     clep->y = trackers_[i].get_y();
-    clep->sigx = trackers_[i].get_sigx2();
-    clep->sigy = trackers_[i].get_sigy2();
+    clep->sigx = trackers_[i].get_sigx2() / 5.0;
+    clep->sigy = trackers_[i].get_sigy2() / 5.0;
     clep->sigxy = trackers_[i].get_sigxy();
     clep->ID = i;
 

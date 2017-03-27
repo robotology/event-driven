@@ -3,6 +3,8 @@
 
 namespace ev {
 
+const std::string LabelledAE::tag = "LAE";
+
 LabelledAE::LabelledAE() : AddressEvent(), ID(0) {}
 
 LabelledAE::LabelledAE(const vEvent &v) : AddressEvent(v)
@@ -49,7 +51,7 @@ yarp::os::Property LabelledAE::getContent() const
 
 std::string LabelledAE::getType() const
 {
-    return "LAE";
+    return LabelledAE::tag;
 }
 
 }

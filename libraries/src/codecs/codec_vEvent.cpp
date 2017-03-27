@@ -8,7 +8,10 @@
 
 namespace ev {
 
+const std::string vEvent::tag = "TS";
+
 vEvent::vEvent() : stamp(0) {}
+
 vEvent::~vEvent() {}
 
 event<> vEvent::clone()
@@ -54,7 +57,7 @@ yarp::os::Property vEvent::getContent() const
 
 std::string vEvent::getType() const
 {
-    return "TS";
+    return vEvent::tag;
 }
 
 int vEvent::getChannel() const
@@ -94,49 +97,15 @@ void qsort(vQueue &q, bool respectWraps)
 
 event<> createEvent(const std::string &type)
 {
-    vEvent * ret = nullptr;
 
-    ret = new AddressEvent();
-    if(type == ret->getType()) return event<>(ret);
-    else delete(ret);
-
-    ret = new FlowEvent();
-    if(type == ret->getType()) return event<>(ret);
-    else delete(ret);
-
-    ret = new GaussianAE();
-    if(type == ret->getType()) return event<>(ret);
-    else delete(ret);
-
-    ret = new LabelledAE();
-    if(type == ret->getType()) return event<>(ret);
-    else delete(ret);
-
-//    ret = new AddressEventClustered();
-//    if(type == ret->getType()) return event<>(ret);
-//    else delete(ret);
-
-//    ret = new ClusterEvent();
-//    if(type == ret->getType()) return event<>(ret);
-//    else delete(ret);
-
-//    ret = new ClusterEventGauss();
-//    if(type == ret->getType()) return event<>(ret);
-//    else delete(ret);
-
-//    ret = new CollisionEvent();
-//    if(type == ret->getType()) return event<>(ret);
-//    else delete(ret);
-
-//    ret = new InterestEvent();
-//    if(type == ret->getType()) return event<>(ret);
-//    else delete(ret);
-
-//    ret = new NeuronIDEvent();
-//    if(type == ret->getType()) return event<>(ret);
-//    else delete(ret);
-//    ret = nullptr;
-
+    if(type == AddressEvent::tag)
+        return make_event<AE>();
+    if(type == LabelledAE::tag)
+        return make_event<LabelledAE>();
+    if(type == FlowEvent::tag)
+        return make_event<FlowEvent>();
+    if(type == GaussianAE::tag)
+        return make_event<GaussianAE>();
     return event<>(nullptr);
 
 }

@@ -22,52 +22,44 @@ using namespace ev;
 
 vDraw * createDrawer(std::string tag)
 {
-    vDraw * newDrawer = 0;
 
-    newDrawer = new addressDraw();
-    if(tag == newDrawer->getTag()) return newDrawer;
-    delete newDrawer;
-
-    newDrawer = new flowDraw();
-    if(tag == newDrawer->getTag()) return newDrawer;
-    delete newDrawer;
-
-    newDrawer = new isoDraw();
-    if(tag == newDrawer->getTag()) return newDrawer;
-    delete newDrawer;
-
-    newDrawer = new interestDraw();
-    if(tag == newDrawer->getTag()) return newDrawer;
-    delete newDrawer;
-
-    newDrawer = new lifeDraw();
-    if(tag == newDrawer->getTag()) return newDrawer;
-    delete newDrawer;
-
-    newDrawer = new clusterDraw();
-    if(tag == newDrawer->getTag()) return newDrawer;
-    delete newDrawer;
-
-    newDrawer = new blobDraw();
-    if(tag == newDrawer->getTag()) return newDrawer;
-    delete newDrawer;
-
+    if(tag == addressDraw::drawtype)
+        return new addressDraw();
+    if(tag == isoDraw::drawtype)
+        return new isoDraw();
+    if(tag == interestDraw::drawtype)
+        return new interestDraw();
+    if(tag == flowDraw::drawtype)
+        return new flowDraw();
+    if(tag == lifeDraw::drawtype)
+        return new lifeDraw();
+    if(tag == clusterDraw::drawtype)
+        return new clusterDraw();
+    if(tag == blobDraw::drawtype)
+        return new blobDraw();
     return 0;
+
 }
 
+const std::string addressDraw::drawtype = "AE";
 
-std::string addressDraw::getTag()
+std::string addressDraw::getDrawType()
 {
-    return "AE";
+    return addressDraw::drawtype;
 }
 
-void addressDraw::draw(cv::Mat &image, const ev::vQueue &eSet)
+std::string addressDraw::getEventType()
+{
+    return AddressEvent::tag;
+}
+
+void addressDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 {
     image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
     image.setTo(255);
 
     if(checkStagnancy(eSet) > clearThreshold) {
-        return;
+ //       return;
     }
 
     if(eSet.empty()) return;
@@ -81,8 +73,7 @@ void addressDraw::draw(cv::Mat &image, const ev::vQueue &eSet)
         if(dt > twindow) break;
 
 
-        auto aep = as_event<AddressEvent>(*qi);
-        if(!aep) continue;
+        auto aep = is_event<AddressEvent>(*qi);
 
         cv::Vec3b &cpc = image.at<cv::Vec3b>(aep->y, aep->x);
 
@@ -113,12 +104,19 @@ void addressDraw::draw(cv::Mat &image, const ev::vQueue &eSet)
     }
 }
 
-std::string lifeDraw::getTag()
+const std::string lifeDraw::drawtype = "LIFE";
+
+std::string lifeDraw::getDrawType()
 {
-    return "AEL";
+    return lifeDraw::drawtype;
 }
 
-void lifeDraw::draw(cv::Mat &image, const vQueue &eSet)
+std::string lifeDraw::getEventType()
+{
+    return FlowEvent::tag;
+}
+
+void lifeDraw::draw(cv::Mat &image, const vQueue &eSet, int vTime)
 {
 
     image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
@@ -172,21 +170,21 @@ void lifeDraw::draw(cv::Mat &image, const vQueue &eSet)
     }
 }
 
-std::string clusterDraw::getTag()
+const std::string clusterDraw::drawtype = "CLE";
+
+std::string clusterDraw::getDrawType()
 {
-    return "CLE";
+    return clusterDraw::drawtype;
 }
 
-void clusterDraw::draw(cv::Mat &image, const vQueue &eSet)
+std::string clusterDraw::getEventType()
 {
+    return GaussianAE::tag;
+}
 
-    std::stringstream ss;
-
-
-    cv::Scalar red = CV_RGB(255, 0, 0);
-    cv::Scalar green = CV_RGB(0, 255, 0);
+void clusterDraw::draw(cv::Mat &image, const vQueue &eSet, int vTime)
+{
     cv::Scalar blue = CV_RGB(0, 0, 255);
-    cv::Scalar color = red;
 
     if(image.empty()) {
         image = cv::Mat(Xlimit, Ylimit, CV_8UC3);
@@ -194,85 +192,65 @@ void clusterDraw::draw(cv::Mat &image, const vQueue &eSet)
     }
 
     if(checkStagnancy(eSet) > clearThreshold) {
-        persistance.clear();
-        return;
+        //        persistance.clear();
+        //        return;
     }
 
-    cv::Mat textImg(image.rows, image.cols, image.type()); textImg.setTo(0);
+    if(eSet.empty()) return;
 
-    vQueue::const_iterator qi;
-    for(qi = eSet.begin(); qi != eSet.end(); qi++) {
-        auto vp = as_event<LabelledAE>(*qi);
+    //update the 'persistence' the current state of each of the cluster ID's
+    for(vQueue::const_iterator qi = eSet.begin(); qi != eSet.end(); qi++) {
+        auto vp = is_event<GaussianAE>(*qi);
         if(vp) {
             persistance[vp->ID] = vp;
         }
-
     }
 
-    std::map<int, event<LabelledAE> >::iterator ci;
+    std::map<int, event<GaussianAE> >::iterator ci;
     for(ci = persistance.begin(); ci != persistance.end(); ci++) {
 
-        if(!ci->second->polarity) continue;
+        auto v = ci->second;
 
-        cv::Point centr(ci->second->y, ci->second->x);
-        ss.str(""); ss << ci->second->ID;
-
-        //the event could be a gaussian cluster or a regular cluster have
-        //display options for both
-        auto clegp = as_event<GaussianAE>(ci->second);
-        if(clegp) {
-            double sig_x2_ = clegp->sigx;
-            double sig_y2_ = clegp->sigy;
-            double sig_xy_ = clegp->sigxy;
-            double tmp = sqrt( (sig_x2_ - sig_y2_) * (sig_x2_ - sig_y2_) + 4*sig_xy_*sig_xy_ );
-            double l_max = 0.5*(sig_x2_ + sig_y2_ + tmp);
-            double l_min = 0.5*(sig_x2_ + sig_y2_ - tmp);
+        //polarity indicates the cluster has died.
+        if(!v->polarity) continue;
 
 
-            if(l_min < -5) {
-                std::cout << "l_min error: shape distorted" << std::endl;
-            }
+        cv::Point centr(v->x, v->y);
 
-            double a = sqrt(std::fabs(l_max)) * 2;
-            double b = sqrt(std::fabs(l_min)) * 2;
-            double alpha = 0.5*atan2f(2*sig_xy_, sig_y2_ - sig_x2_);
+        double sig_x2_ = v->sigx;
+        double sig_y2_ = v->sigy;
+        double sig_xy_ = v->sigxy;
+        double tmp = sqrt( (sig_x2_ - sig_y2_) * (sig_x2_ - sig_y2_) + 4*sig_xy_*sig_xy_ );
+        double l_max = 0.5*(sig_x2_ + sig_y2_ + tmp);
+        double l_min = 0.5*(sig_x2_ + sig_y2_ - tmp);
 
-            alpha = alpha * 180 / M_PI; //convert to degrees for openCV ellipse function
-
-            switch(clegp->ID) {
-            case(0): color = blue; break;
-            case(1): color = green; break;
-            default: color = red;
-            }
-
-            cv::ellipse(image, centr, cv::Size(a,b), alpha, 0, 360, color);
-
-        } else {
-            switch(ci->second->ID) {
-            case(0): color = blue; break;
-            case(1): color = green; break;
-            default: color = red;
-            }
-            cv::circle(image, centr, 4, color);
+        if(l_min < -5) {
+            std::cout << "l_min error: shape distorted" << std::endl;
         }
 
-        cv::putText(textImg, ss.str(),
-                    cv::Point(ci->second->y,
-                              Xlimit - ci->second->x),
-                    0, 0.3, CV_RGB(0, 0, 0));
+        double a = sqrt(std::fabs(l_max)) * 5;
+        double b = sqrt(std::fabs(l_min)) * 5;
+        double alpha = 0.5*atan2f(2*sig_xy_, sig_y2_ - sig_x2_);
+
+        alpha = alpha * 180 / M_PI; //convert to degrees for openCV ellipse function
+        cv::ellipse(image, centr, cv::Size(a,b), alpha, 0, 360, blue, 2);
     }
 
-    cv::flip(textImg, textImg, 0);
-    image += textImg;
-
 }
 
-std::string blobDraw::getTag()
+const std::string blobDraw::drawtype = "BLOB";
+
+std::string blobDraw::getDrawType()
 {
-    return "BLOB";
+    return blobDraw::drawtype;
 }
 
-void blobDraw::draw(cv::Mat &image, const ev::vQueue &eSet)
+std::string blobDraw::getEventType()
+{
+    return AE::tag;
+}
+
+void blobDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 {
 
     image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
@@ -302,56 +280,19 @@ void blobDraw::draw(cv::Mat &image, const ev::vQueue &eSet)
     cv::blur(image, image, cv::Size(5, 5));
 }
 
-//std::string circleDraw::getTag()
-//{
-//    return "CIRC";
-//}
+const std::string flowDraw::drawtype = "FLOW";
 
-//void circleDraw::draw(cv::Mat &image, const vQueue &eSet)
-//{
-
-//    if(image.empty()) {
-//        image = cv::Mat(Xlimit, Ylimit, CV_8UC3);
-//        image.setTo(255);
-//    }
-
-//    if(checkStagnancy(eSet) > clearThreshold) {
-//        return;
-//    }
-
-//    vQueue::const_iterator qi;
-//    for(qi = eSet.begin(); qi != eSet.end(); qi++) {
-
-//        int dt = eSet.back()->stamp - (*qi)->stamp;
-//        if(dt < 0) dt += ev::vtsHelper::maxStamp();
-//        if(dt > twindow) continue;
-
-//        event<ev::ClusterEventGauss> v = as_event<ev::ClusterEventGauss>(*qi);
-//        if(!v) continue;
-//        cv::Point centr(v->getXCog(), v->getYCog());
-//        //we hide the radius in in X_sigma_2
-//        double r = v->getXSigma2();
-//        //we hide the radial variance in Y_sigma_2
-//        double w = v->getYSigma2();
-
-//        CvScalar c;
-//        switch(v->getID()) {
-//            case(0): c = CV_RGB(0, 0, 255); break;
-//            case(1): c = CV_RGB(0, 255, 0); break;
-//            default: c = CV_RGB(255, 0, 0);
-//        }
-
-//        cv::circle(image, centr, r, c, w);
-//    }
-//}
-
-
-std::string flowDraw::getTag()
+std::string flowDraw::getDrawType()
 {
-    return "FLOW";
+    return flowDraw::drawtype;
 }
 
-void flowDraw::draw(cv::Mat &image, const vQueue &eSet)
+std::string flowDraw::getEventType()
+{
+    return FlowEvent::tag;
+}
+
+void flowDraw::draw(cv::Mat &image, const vQueue &eSet, int vTime)
 {
     if(image.empty()) {
         image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
@@ -370,13 +311,11 @@ void flowDraw::draw(cv::Mat &image, const vQueue &eSet)
     vQueue::const_reverse_iterator qi;
     for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
 
-
         int dt = eSet.back()->stamp - (*qi)->stamp;
         if(dt < 0) dt += ev::vtsHelper::max_stamp;
         if(dt > twindow/4) break;
 
-        auto ofp = as_event<ev::FlowEvent>(*qi);
-        if(!ofp) continue;
+        auto ofp = is_event<ev::FlowEvent>(*qi);
 
         int x = ofp->x;
         int y = ofp->y;
@@ -410,12 +349,19 @@ void flowDraw::draw(cv::Mat &image, const vQueue &eSet)
 
 }
 
-std::string interestDraw::getTag()
+const std::string interestDraw::drawtype = "AE-INT";
+
+std::string interestDraw::getDrawType()
 {
-    return "AE-INT";
+    return interestDraw::drawtype;
 }
 
-void interestDraw::draw(cv::Mat &image, const ev::vQueue &eSet)
+std::string interestDraw::getEventType()
+{
+    return LabelledAE::tag;
+}
+
+void interestDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 {
 
     if(image.empty()) {
@@ -437,6 +383,18 @@ void interestDraw::draw(cv::Mat &image, const ev::vQueue &eSet)
         cv::circle(image, centr, r, c);
     }
 
+}
+
+const std::string isoDraw::drawtype = "ISO";
+
+std::string isoDraw::getDrawType()
+{
+    return isoDraw::drawtype;
+}
+
+std::string isoDraw::getEventType()
+{
+    return AddressEvent::tag;
 }
 
 void isoDraw::pttr(int &x, int &y, int &z) {
@@ -549,19 +507,14 @@ void isoDraw::initialise()
 
 }
 
-std::string isoDraw::getTag()
-{
-    return "ISO";
-}
-
-void isoDraw::draw(cv::Mat &image, const ev::vQueue &eSet)
+void isoDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 {
 
     cv::Mat isoimage = baseimage.clone();
     isoimage.setTo(255);
 
     if(checkStagnancy(eSet) > clearThreshold) {
-        return;
+       // return;
     }
 
     if(eSet.empty()) return;
@@ -573,8 +526,8 @@ void isoDraw::draw(cv::Mat &image, const ev::vQueue &eSet)
 
     ev::vQueue::const_iterator qi;
     for(qi = eSet.begin(); qi != eSet.end(); qi++) {
-        event<ev::AddressEvent> aep = as_event<ev::AddressEvent>(*qi);
-        if(!aep) continue;
+
+        auto aep = is_event<AE>(*qi);
 
         //transform values
         int dt = cts - aep->stamp;

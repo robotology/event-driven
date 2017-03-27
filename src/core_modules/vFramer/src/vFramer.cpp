@@ -37,73 +37,13 @@ int main(int argc, char * argv[])
     return framerModule.runModule(rf);
 }
 
-
-/*////////////////////////////////////////////////////////////////////////////*/
-//vReadAndSplit
-/*////////////////////////////////////////////////////////////////////////////*/
-bool vReadAndSplit::open(const std::string portName, bool strict)
-{
-    if(strict) this->setStrict();
-    this->useCallback();
-
-    return BufferedPort<vBottle>::open(portName + "/vBottle:i");
-}
-
-void vReadAndSplit::onRead(vBottle &incoming)
-{
-    this->getEnvelope(yarptime);
-    vQueue q = incoming.getAllSorted();
-
-    safety.lock();
-    for(vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
-        if(flip) {
-            auto v = as_event<AE>(*qi);
-            if(v) {
-                v->x = res.width-1 - v->x;
-                v->y = res.height-1 - v->y;
-            }
-        }
-        windows[(*qi)->getChannel()].addEvent(*qi);
-    }
-    safety.unlock();
-}
-
-void vReadAndSplit::snapshotAllWindows()
-{
-    std::map<int, vTempWindow>::iterator wi;
-
-    safety.lock();
-    for(wi = windows.begin(); wi != windows.end(); wi++)
-        snaps[wi->first] = wi->second.getWindow();
-    safety.unlock();
-}
-
-const vQueue& vReadAndSplit::getSnap(const int channel)
-{
-    return snaps[channel];
-}
-
-
 /*////////////////////////////////////////////////////////////////////////////*/
 //vFramerModule
 /*////////////////////////////////////////////////////////////////////////////*/
-vFramerModule::~vFramerModule()
-{
-    for(unsigned int i = 0; i < drawers.size(); i++) {
-        for(unsigned int j = 0; j < drawers[i].size(); j++) {
-            delete drawers[i][j];
-        }
-    }
 
-    for(unsigned int i = 0; i < outports.size(); i++) {
-        delete outports[i];
-    }
-
-}
 
 bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
 {
-
     //admin options
     std::string moduleName =
             rf.check("name", yarp::os::Value("/vFramer")).asString();
@@ -172,6 +112,8 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
                 newDrawer->setWindow(eventWindow);
                 newDrawer->initialise();
                 drawers[i].push_back(newDrawer);
+                if(!vReader.open(moduleName, newDrawer->getEventType()))
+                    yError() << "Could not open input port";
             } else {
                 std::cerr << "Could not find draw tag "
                           << drawtypelist->get(j).asString()
@@ -180,11 +122,11 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
         }
     }
 
-    vReader.setFlip(flip, retinaHeight, retinaWidth);
+    //vReader.setFlip(flip, retinaHeight, retinaWidth);
 
     //open our event reader given the channel list
-    if(!vReader.open(moduleName, strict))
-        return false;
+//    if(!vReader.open(moduleName, strict))
+//        return false;
 
     //set up the frameRate
     period = 1.0 / rf.check("frameRate", yarp::os::Value(30)).asInt();
@@ -197,7 +139,7 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
 
 bool vFramerModule::interruptModule()
 {
-    vReader.interrupt();
+    //vReader.();
     for(unsigned int i = 0; i < outports.size(); i++)
         outports[i]->interrupt();
     RFModule::interruptModule();
@@ -218,23 +160,20 @@ bool vFramerModule::updateModule()
 
     if(isStopping()) return false;
 
-    yarp::os::Stamp yarptime = vReader.getYarpTime();
+    yarp::os::Stamp yarptime = vReader.getystamp();
 
-    //if yarptime is valid we try to update at that frameRate.
-    if(yarptime.isValid()) {
-        //std::cout << "yarptime valid: " << yarptime.getTime() << std::endl;
-        double dt = yarptime.getTime() - pyarptime;
-        if(dt < 0)
-            //we restarted something from yarpdataplayer
-            pyarptime = yarptime.getTime();
+//    //if yarptime is valid we try to update at that frameRate.
+//    if(yarptime.isValid()) {
+//        //std::cout << "yarptime valid: " << yarptime.getTime() << std::endl;
+//        double dt = yarptime.getTime() - pyarptime;
+//        if(dt < 0)
+//            //we restarted something from yarpdataplayer
+//            pyarptime = yarptime.getTime();
 
-        if(yarptime.getTime() - pyarptime < period)
-            return true;
-        pyarptime = yarptime.getTime();
-    }
-
-    //get a snapshot of current events
-    vReader.snapshotAllWindows();
+//        if(yarptime.getTime() - pyarptime < period)
+//            return true;
+//        pyarptime = yarptime.getTime();
+//    }
 
     //for each output image needed
     for(unsigned int i = 0; i < channels.size(); i++) {
@@ -242,13 +181,12 @@ bool vFramerModule::updateModule()
         //make a new image
         cv::Mat canvas;
 
-        //get the event queue associated with the correct channel
-        const ev::vQueue &q = vReader.getSnap(channels[i]);
-
-        //for each drawer, draw what is needed
         for(unsigned int j = 0; j < drawers[i].size(); j++) {
-            drawers[i][j]->draw(canvas, q);
+            drawers[i][j]->draw(canvas,
+                                vReader.queryWindow(drawers[i][j]->getEventType(), channels[i]),
+                                vReader.getvstamp());
         }
+
 
         //then copy the image to the port and send it on
         yarp::sig::ImageOf<yarp::sig::PixelBgr> &o = outports[i]->prepare();
@@ -267,5 +205,19 @@ bool vFramerModule::updateModule()
 double vFramerModule::getPeriod()
 {
     return 0.3 * period;
+}
+
+vFramerModule::~vFramerModule()
+{
+    for(unsigned int i = 0; i < drawers.size(); i++) {
+        for(unsigned int j = 0; j < drawers[i].size(); j++) {
+            delete drawers[i][j];
+        }
+    }
+
+    for(unsigned int i = 0; i < outports.size(); i++) {
+        delete outports[i];
+    }
+
 }
 

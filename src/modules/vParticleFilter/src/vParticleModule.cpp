@@ -48,7 +48,7 @@ int main(int argc, char * argv[])
 bool vParticleModule::configure(yarp::os::ResourceFinder &rf)
 {
     //administrative options
-    setName((rf.check("name", yarp::os::Value("vParticleFilter")).asString()).c_str());
+    setName((rf.check("name", yarp::os::Value("/vParticleFilter")).asString()).c_str());
     int nthread = rf.check("threads", yarp::os::Value(2)).asInt();
 
     //flags

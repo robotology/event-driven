@@ -9,7 +9,7 @@
 
 <module>
     <name> vParticleFilter </name>
-    <parameters> --realtime --camera right --adaptive false --threads 6 --randoms 0.00 --variance 2.0 --obsthresh 20.0 --useroi </parameters>
+    <parameters> --realtime --camera right --adaptive false --threads 6 --randoms 0.00 --variance 2.0 --obsthresh 5.0 --useroi </parameters>
     <node> icub23 </node>
 </module>
 
@@ -33,7 +33,7 @@
 
 <module>
     <name> vFramer </name>
-    <parameters> --name /vFramer --displays "(1 /left (AE CIRC ISO))" --height 240 --width 304 </parameters>
+    <parameters> --name /vFramer --displays "(1 /left (AE CLE ISO))" --height 240 --width 304 </parameters>
     <node>icub24</node>
 </module>
 
@@ -49,22 +49,40 @@
     <node> icub24 </node>
 </module>
 
+<module>
+    <name> yarpdatadumper </name>
+    <parameters> --txTime --name /dump/IROS17_video/1/AE</parameters>
+    <node> icub24 </node>
+</module>
+
+<module>
+    <name> yarpdatadumper </name>
+    <parameters> --txTime --name /dump/IROS17_video/1/GAE</parameters>
+    <node> icub24 </node>
+</module>
+
+<connection>
+  <from>/zynqGrabber/vBottle:o</from>
+  <to>/vFramer/AE:i</to>
+  <protocol>tcp</protocol>
+</connection>
+
 <connection>
   <from>/zynqGrabber/vBottle:o</from>
   <to>/vpf/vBottle:i</to>
-  <protocol>udp</protocol>
+  <protocol>tcp</protocol>
 </connection>
 
 <connection>
   <from>/vpf/debug:o</from>
   <to>/viewTracker</to>
-  <protocol>udp</protocol>
+  <protocol>tcp</protocol>
 </connection>
 
 <connection>
-  <from>/zynqGrabber/vBottle:o</from>
-  <to>/vFramer/vBottle:i</to>
-  <protocol>udp</protocol>
+  <from>/vpf/vBottle:o</from>
+  <to>/vFramer/GAE:i</to>
+  <protocol>tcp</protocol>
 </connection>
 
 <connection>
@@ -92,8 +110,14 @@
 
 <connection>
   <from>/zynqGrabber/vBottle:o</from>
-  <to>/dump/IROS17_video/1/atis</to>
-  <protocol>udp</protocol>
+  <to>/dump/IROS17_video/1/AE</to>
+  <protocol>tcp</protocol>
+</connection>
+
+<connection>
+  <from>/vpf/vBottle:o</from>
+  <to>/dump/IROS17_video/1/GAE</to>
+  <protocol>tcp</protocol>
 </connection>
 
 

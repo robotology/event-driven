@@ -50,10 +50,7 @@ void vFlowManager::onRead(ev::vBottle &inBottle)
 {
 
     /*prepare output vBottle with AEs extended with optical flow events*/
-    ev::vBottle &outBottle = outPort.prepare();
-    outBottle.clear();
-    yarp::os::Stamp st;
-    this->getEnvelope(st); outPort.setEnvelope(st);
+    ev::vBottle * outBottle = 0;
 
     /*get the event queue in the vBottle bot*/
     vQueue q = inBottle.get<AE>();
@@ -77,22 +74,27 @@ void vFlowManager::onRead(ev::vBottle &inBottle)
         }
 
         //compute the flow
-        cSurf->addEvent(aep);
+        cSurf->fastAddEvent(aep);
         double vx, vy;
         if(compute(cSurf, vx, vy)) {
             //successfully computed a flow event
             auto vf = make_event<FlowEvent>(aep);
             vf->vx = vx;
             vf->vy = vy;
-            outBottle.addEvent(vf);
-        } else {
-            outBottle.addEvent(aep);
+            if(!outBottle) {
+                outBottle = &outPort.prepare();
+                outBottle->clear();
+            }
+            outBottle->addEvent(vf);
         }
-
     }
 
-    if(strictness) outPort.writeStrict();
-    else outPort.write();
+    if(outBottle) {
+        yarp::os::Stamp st;
+        this->getEnvelope(st); outPort.setEnvelope(st);
+        if(strictness) outPort.writeStrict();
+        else outPort.write();
+    }
 }
 
 vFlowManager::vFlowManager(int height, int width, int filterSize,
@@ -166,6 +168,7 @@ bool vFlowManager::compute(ev::vSurface2 *surf, double &vx, double &vy)
     //get the most recent event
     auto vr = is_event<AE>(surf->getMostRecent());
 
+
     //find the side of this event that has the collection of temporally nearby
     //events. Heuristically more likely to be the correct plane.
     double bestscore = ev::vtsHelper::max_stamp+1;
@@ -196,8 +199,10 @@ bool vFlowManager::compute(ev::vSurface2 *surf, double &vx, double &vy)
     //return if we don't find a good candidate plane
     if(bestscore > ev::vtsHelper::max_stamp) return false;
 
+
     //get the events
     const vQueue &subsurf = surf->getSurf(besti, bestj, fRad);
+    //const vQueue &subsurf = surf->getSurf(vr->x, vr->y, fRad);
 
     //and compute the gradients of the plane
     if(computeGrads(subsurf, vr, vy, vx) < minEvtsOnPlane)

@@ -3,6 +3,8 @@
 
 namespace ev {
 
+const std::string AddressEvent::tag = "AE";
+
 AddressEvent::AddressEvent() : vEvent(), x(0), y(0), channel(0), polarity(0) {}
 
 AddressEvent::AddressEvent(const vEvent &v) : vEvent(v)
@@ -101,7 +103,7 @@ yarp::os::Property AddressEvent::getContent() const
 
 std::string AddressEvent::getType() const
 {
-    return "AE";
+    return AddressEvent::tag;
 }
 
 int AddressEvent::getChannel() const

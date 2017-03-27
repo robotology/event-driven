@@ -30,70 +30,6 @@
 
 #include "vDraw.h"
 
-/**
- * @brief The vReadAndSplit class splits events into different vWindows based
- * on the channel parameter. At any point in time a snapshot of all windows can
- * be performed, after which the resulting vQueues can be accessed.
- */
-class vReadAndSplit : public yarp::os::BufferedPort<ev::vBottle>
-{
-    //has an onRead() function that updates an eImage based on the draw
-    //functions and then outputs the image at a certain rate
-
-private:
-
-    //! storage of vWindows
-    std::map<int, ev::vTempWindow> windows;
-    //! storage of window snapshots
-    std::map<int, ev::vQueue> snaps;
-
-    yarp::os::Stamp yarptime;
-
-    yarp::os::Mutex safety;
-
-    bool flip;
-    ev::resolution res;
-
-public:
-
-    ///
-    /// \brief vReadAndSplit constructor with default windowsize parameter
-    ///
-    vReadAndSplit()
-    {
-        flip = false;
-        res.width = 0;
-        res.height = 0;
-    }
-
-    yarp::os::Stamp getYarpTime() { return yarptime; }
-
-    ///
-    /// \brief snapshotAllWindows freeze the current list of events for each
-    /// channel
-    ///
-    void snapshotAllWindows();
-
-    ///
-    /// \brief getSnap get a list of snapshotted events
-    /// \param channel the channel value to access
-    /// \return the list of events in a vQueue
-    ///
-    const ev::vQueue & getSnap(const int channel);
-
-    ///
-    /// \brief onRead splitting is performed as an asynchronous onRead function
-    /// \param incoming the vBottle with events of all channels
-    ///
-    virtual void onRead(ev::vBottle &incoming);
-    virtual bool open(const std::string portName, bool strict = false);
-    void setFlip(bool flip, int h, int w)
-    {
-        this->flip = flip;
-        res.height = h;
-        res.width = w;
-    }
-};
 
 /**
  * @brief The vFramerModule class runs the event reading and channel splitting,
@@ -111,7 +47,7 @@ private:
 
 
     //! the vBottle reading port that splits events by channel
-    vReadAndSplit vReader;
+    ev::syncvstreams vReader;
 
     //! the list of channels for each output image
     std::vector<int> channels;

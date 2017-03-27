@@ -77,14 +77,16 @@ public:
     /// \param canvas is the image which may or may not yet exist
     /// \param eSet is the set of events which could possibly be drawn
     ///
-    virtual void draw(cv::Mat &canvas, const ev::vQueue &eSet) = 0;
+    virtual void draw(cv::Mat &canvas, const ev::vQueue &eSet, int vTime) = 0;
 
     ///
     /// \brief getTag returns the unique code for this drawing method. The
     /// arguments given on the command line must match this code exactly
     /// \return the tag code
     ///
-    virtual std::string getTag() = 0;
+    virtual std::string getDrawType() = 0;
+
+    virtual std::string getEventType() = 0;
 
 
 };
@@ -93,8 +95,10 @@ class addressDraw : public vDraw {
 
 public:
 
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet);
-    virtual std::string getTag();
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
 
 };
 
@@ -102,8 +106,10 @@ class flowDraw : public vDraw {
 
 public:
 
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet);
-    virtual std::string getTag();
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
 
 };
 
@@ -111,8 +117,10 @@ class lifeDraw : public vDraw {
 
 public:
 
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet);
-    virtual std::string getTag();
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
 
 };
 
@@ -120,13 +128,15 @@ class clusterDraw : public vDraw {
 
 protected:
 
-    std::map<int, ev::event<ev::LabelledAE>> persistance;
+    std::map<int, ev::event<ev::GaussianAE>> persistance;
     int stagnantCount;
 
 public:
 
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet);
-    virtual std::string getTag();
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
 
 };
 
@@ -134,8 +144,10 @@ class blobDraw : public vDraw {
 
 public:
 
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet);
-    virtual std::string getTag();
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
 
 };
 
@@ -143,8 +155,10 @@ class interestDraw : public vDraw {
 
 public:
 
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet);
-    virtual std::string getTag();
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
 
 };
 
@@ -176,8 +190,10 @@ public:
 
     void initialise();
 
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet);
-    virtual std::string getTag();
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
 
 };
 

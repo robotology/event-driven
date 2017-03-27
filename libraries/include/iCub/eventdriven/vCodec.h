@@ -146,6 +146,7 @@ event<> createEvent(const std::string &type);
 class vEvent
 {
 public:
+    static const std::string tag;
 #ifdef TIME32BIT
     unsigned int stamp:31;
 #else
@@ -167,6 +168,7 @@ public:
 class AddressEvent : public vEvent
 {
 public:
+    static const std::string tag;
     unsigned int x:10;
     unsigned int y:10;
     unsigned int channel:1;
@@ -189,6 +191,7 @@ using AE = AddressEvent;
 class FlowEvent : public AddressEvent
 {
 public:
+    static const std::string tag;
     float vx;
     float vy;
 
@@ -208,6 +211,7 @@ public:
 class LabelledAE : public AddressEvent
 {
 public:
+    static const std::string tag;
     int ID;
 
     LabelledAE();
@@ -224,7 +228,7 @@ public:
 class GaussianAE : public LabelledAE
 {
 public:
-
+    static const std::string tag;
     float sigx;
     float sigy;
     float sigxy;
