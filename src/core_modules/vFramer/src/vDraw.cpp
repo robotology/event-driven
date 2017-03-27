@@ -74,8 +74,15 @@ void addressDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 
 
         auto aep = is_event<AddressEvent>(*qi);
+        int y = aep->y;
+        int x = aep->x;
+        if(flip) {
+            y = Ylimit - 1 - y;
+            x = Xlimit - 1 - x;
+        }
 
-        cv::Vec3b &cpc = image.at<cv::Vec3b>(aep->y, aep->x);
+
+        cv::Vec3b &cpc = image.at<cv::Vec3b>(y, x);
 
         if(!aep->polarity)
         {
@@ -214,8 +221,11 @@ void clusterDraw::draw(cv::Mat &image, const vQueue &eSet, int vTime)
         //polarity indicates the cluster has died.
         if(!v->polarity) continue;
 
-
         cv::Point centr(v->x, v->y);
+        if(flip) {
+            centr.x = Xlimit - 1 - centr.x;
+            centr.y = Ylimit - 1 - centr.y;
+        }
 
         double sig_x2_ = v->sigx;
         double sig_y2_ = v->sigy;

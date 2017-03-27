@@ -36,6 +36,7 @@ protected:
     int pTS;
     int clearThreshold;
     int twindow;
+    bool flip;
 
     int checkStagnancy(const ev::vQueue &eSet) {
         if(!eSet.size()) return 0;
@@ -50,7 +51,7 @@ protected:
 public:
 
     vDraw() : Xlimit(128), Ylimit(128), stagnantCount(0), pTS(0),
-            clearThreshold(30), twindow(781250/2) {}
+            clearThreshold(30), twindow(781250/2), flip(false) {}
     virtual ~vDraw() {}
 
     ///
@@ -68,6 +69,11 @@ public:
     void setWindow(int twindow)
     {
         this->twindow = twindow;
+    }
+
+    void setFlip(bool flip)
+    {
+        this->flip = flip;
     }
 
     virtual void initialise() {}

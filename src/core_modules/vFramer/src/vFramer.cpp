@@ -110,6 +110,7 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
             if(newDrawer) {
                 newDrawer->setLimits(retinaWidth, retinaHeight);
                 newDrawer->setWindow(eventWindow);
+                newDrawer->setFlip(flip);
                 newDrawer->initialise();
                 drawers[i].push_back(newDrawer);
                 if(!vReader.open(moduleName, newDrawer->getEventType()))
