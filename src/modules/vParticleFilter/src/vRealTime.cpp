@@ -59,8 +59,8 @@ bool particleProcessor::threadInit()
         computeThreads.push_back(new vPartObsThread(pStart, pEnd));
     }
 
-    rbound_min = res.width/16;
-    rbound_max = res.width/7;
+    rbound_min = res.width/25;
+    rbound_max = res.width/6;
 
     pcb.configure(res.height, res.width, rbound_max, 128);
 

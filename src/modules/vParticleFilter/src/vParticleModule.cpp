@@ -88,8 +88,8 @@ bool vParticleModule::configure(yarp::os::ResourceFinder &rf)
             std::cout << "Using initial seed location: " << seed->toString() << std::endl;
             particleCallback->setSeed(seed->get(0).asDouble(), seed->get(1).asDouble(), seed->get(2).asDouble());
         }
-        particleCallback->initialise(rf.check("width", yarp::os::Value(128)).asInt(),
-                                     rf.check("height", yarp::os::Value(128)).asInt(),
+        particleCallback->initialise(rf.check("width", yarp::os::Value(304)).asInt(),
+                                     rf.check("height", yarp::os::Value(240)).asInt(),
                                      nParticles, rate, nRandResample, adaptivesampling,
                                      particleVariance, camera, useroi);
 
@@ -102,8 +102,8 @@ bool vParticleModule::configure(yarp::os::ResourceFinder &rf)
         particleCallback = 0;
         /* USE REAL-TIME THREAD */
         particleThread = new particleProcessor(
-                    rf.check("height", yarp::os::Value(128)).asInt(),
-                    rf.check("width", yarp::os::Value(128)).asInt(),
+                    rf.check("height", yarp::os::Value(240)).asInt(),
+                    rf.check("width", yarp::os::Value(304)).asInt(),
                     this->getName(), strict);
         particleThread->setComputeOptions(camera, nthread, useroi);
         particleThread->setFilterParameters(nParticles, nRandResample,

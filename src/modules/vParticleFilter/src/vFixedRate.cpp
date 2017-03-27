@@ -43,8 +43,8 @@ void vParticleReader::initialise(unsigned int width , unsigned int height,
 
     surfaceLeft = ev::temporalSurface(width, height);
 
-    rbound_min = res.width/16;
-    rbound_max = res.width/7;
+    rbound_min = res.width/25;
+    rbound_max = res.width/6;
 
     pcb.configure(res.height, res.width, rbound_max, 128);
 

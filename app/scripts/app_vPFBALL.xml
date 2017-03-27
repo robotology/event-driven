@@ -9,7 +9,7 @@
 
 <module>
     <name> vParticleFilter </name>
-    <parameters> --realtime --camera right --adaptive false --threads 6 --randoms 0.00 --variance 2.0 --obsthresh 5.0 --useroi </parameters>
+    <parameters> --threads 6 </parameters>
     <node> icub23 </node>
 </module>
 
@@ -41,12 +41,6 @@
    <name>yarpview</name>
    <parameters> --name /viewISO --x 100 --y 100 --h 480 --w 608 --RefreshTime 33 </parameters>
    <node> icub24 </node>
-</module>
-
-<module>
-    <name> yarpdatadumper </name>
-    <parameters> --txTime --name /dump/IROS17_video/1/atis</parameters>
-    <node> icub24 </node>
 </module>
 
 <module>
