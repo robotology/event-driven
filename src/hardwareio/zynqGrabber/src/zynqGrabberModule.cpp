@@ -65,6 +65,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
             std::cerr << "Bias file required to run zynqGrabber" << std::endl;
             return false;
         }
+        std::cout << std::endl;
         if(!vsctrlMngLeft.connect())
             std::cerr << "Could not connect to vision controller left" << std::endl;
         else
@@ -74,6 +75,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
                 con_success = true;
             }
 
+		std::cout << std::endl;
         if(!vsctrlMngRight.connect())
             std::cerr << "Could not connect to vision controller right" << std::endl;
         else {
@@ -83,6 +85,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
                 con_success = true;
             }
         }
+        std::cout << std::endl;
 
         if(!con_success) {
             std::cerr << "A configuration device was specified but could not be connected" << std::endl;
@@ -92,7 +95,11 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     }
 
     if(!yarp::os::Network::checkNetwork()) {
-        yError() << "Could not connect to YARP network... exiting.";
+        yError() << "Could not connect to YARP network";
+        vsctrlMngLeft.disconnect(true);
+        std::cout << "Left camera off" << std::endl;
+		vsctrlMngRight.disconnect(true);
+		std::cout << "Right camera off" << std::endl;
         return false;
     }
 

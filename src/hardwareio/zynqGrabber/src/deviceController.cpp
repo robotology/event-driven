@@ -39,14 +39,19 @@ vDevCtrl::vDevCtrl(std::string deviceName, unsigned char i2cAddress)
 bool vDevCtrl::connect()
 {
 
-    std::cout << "Connecting to " << deviceName << " for device configuration" << std::endl;
+    std::cout << "Connecting to " << deviceName << " for " << (int)I2CAddress << " device configuration" << std::endl;
     fd = open(deviceName.c_str(), O_RDWR);
     if (fd < 0) {
         perror("Cannot open device: ");
         return false;
     }
 
-    clearFpgaStatus("all");
+    if(!clearFpgaStatus("all")) {
+        std::cout << "Cannot write to " << deviceName << ":" << (int)I2CAddress << std::endl;
+        std::cout << "Check sensor has correct I2CAddress and is physically connected" << std::endl;
+        close(fd);
+        return false;
+	}
 
     return true;
 }
@@ -99,8 +104,10 @@ bool vDevCtrl::configure(bool verbose)
 {
     if(!configureRegisters())
         return false;
+    std::cout << deviceName << ":" << (int)I2CAddress << " registers configured." << std::endl;
     if(!configureBiases())
         return false;
+    std::cout << deviceName << ":" << (int)I2CAddress << " biases configured." << std::endl;
     if(verbose)
         printConfiguration();
     return true;
@@ -255,7 +262,6 @@ bool vDevCtrl::configureBiases(){
     }
 
     clearFpgaStatus("biasDone");
-    std::cout << "Biases correctly programmed" << std::endl;
     activate();
 
     return true;
