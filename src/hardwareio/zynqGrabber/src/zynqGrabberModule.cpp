@@ -21,16 +21,32 @@
 
 #include <zynqGrabberModule.h>
 
+int main(int argc, char * argv[])
+{
+    yarp::os::Network yarp;
+    //we do a network check only after programming the biases to ensure the
+    //cameras are configured in a good operational state.
+
+    yarp::os::ResourceFinder rf;
+    rf.setVerbose(true);
+    rf.setDefaultConfigFile("zynqGrabber.ini"); //overridden by --from parameter
+    rf.setDefaultContext("eventdriven");   //overridden by --context parameter
+    rf.configure(argc, argv);
+
+    zynqGrabberModule module;
+    return module.runModule(rf);
+
+}
+
+
 bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 
 
-    std::string moduleName = rf.check("name", yarp::os::Value("zynqGrabber")).asString();
+    std::string moduleName = rf.check("name", yarp::os::Value("/zynqGrabber")).asString();
     setName(moduleName.c_str());
     bool strict = rf.check("strict") && rf.check("strict", yarp::os::Value(true)).asBool();
     bool errorcheck = rf.check("errorcheck") && rf.check("errorcheck", yarp::os::Value(true)).asBool();
-
-
-
+    bool verbose = rf.check("verbose") && rf.check("verbose", yarp::os::Value(true)).asBool();
 
     if(rf.check("controllerDevice")) {
 
@@ -52,7 +68,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         if(!vsctrlMngLeft.connect())
             std::cerr << "Could not connect to vision controller left" << std::endl;
         else
-            if(!vsctrlMngLeft.configure(true)) {
+            if(!vsctrlMngLeft.configure(verbose)) {
                 std::cerr << "Could not configure left camera" << std::endl;
             } else {
                 con_success = true;
@@ -61,13 +77,12 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         if(!vsctrlMngRight.connect())
             std::cerr << "Could not connect to vision controller right" << std::endl;
         else {
-            if(!vsctrlMngRight.configure(true)) {
+            if(!vsctrlMngRight.configure(verbose)) {
                 std::cerr << "Could not configure right camera" << std::endl;
             } else {
                 con_success = true;
             }
         }
-
 
         if(!con_success) {
             std::cerr << "A configuration device was specified but could not be connected" << std::endl;
@@ -76,6 +91,10 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 
     }
 
+    if(!yarp::os::Network::checkNetwork()) {
+        yError() << "Could not connect to YARP network... exiting.";
+        return false;
+    }
 
 
     //open rateThread device2yarp
@@ -114,7 +133,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         //}
     }
 
-    if (!handlerPort.open("/" + moduleName)) {
+    if (!handlerPort.open(moduleName)) {
         std::cout << "Unable to open RPC port @ /" << moduleName << std::endl;
         return false;
     }

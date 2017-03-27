@@ -169,10 +169,10 @@ bool device2yarp::initialise(std::string moduleName, bool strict, bool check,
         std::cout << "D2Y: setting output port to not-strict" << std::endl;
     }
 
-    if(!portEventCount.open("/" + moduleName + "/eventCount:o"))
+    if(!portEventCount.open(moduleName + "/eventCount:o"))
         return false;
 
-    return portvBottle.open("/" + moduleName + "/vBottle:o");
+    return portvBottle.open(moduleName + "/vBottle:o");
 
 }
 
