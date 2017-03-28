@@ -244,6 +244,7 @@ void clusterDraw::draw(cv::Mat &image, const vQueue &eSet, int vTime)
 
         alpha = alpha * 180 / M_PI; //convert to degrees for openCV ellipse function
         cv::ellipse(image, centr, cv::Size(a,b), alpha, 0, 360, blue, 2);
+        //cv::circle(image, centr, v->sigx, blue, 2);
     }
 
 }
@@ -545,6 +546,10 @@ void isoDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         dt = ((double)dt / maxdt) * Zlimit + 0.5;
         int px = aep->x;
         int py = aep->y;
+        if(flip) {
+            px = Xlimit - 1 - px;
+            py = Ylimit - 1 - py;
+        }
         int pz = dt;
         pttr(px, py, pz);
         px += imagexshift;

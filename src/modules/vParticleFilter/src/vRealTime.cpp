@@ -59,8 +59,8 @@ bool particleProcessor::threadInit()
         computeThreads.push_back(new vPartObsThread(pStart, pEnd));
     }
 
-    rbound_min = res.width/25;
-    rbound_max = res.width/6;
+    rbound_min = res.width/16;
+    rbound_max = res.width/7;
 
     pcb.configure(res.height, res.width, rbound_max, 128);
 
@@ -350,14 +350,14 @@ void particleProcessor::run()
             yarp::os::Bottle &scopedata = scopeOut.prepare();
             scopedata.clear();
             double temptime = yarp::os::Time::now();
-            //scopedata.addDouble(1.0 / (temptime - ptime2));
+            scopedata.addDouble(1.0 / (temptime - ptime2));
             ptime2 = temptime;
 
 //            scopedata.addDouble(avgr);
-            scopedata.addDouble(Tget);
-            scopedata.addDouble(avgtw * 10e-6);
-            scopedata.addDouble(maxtw * 10e-6);
-            scopedata.addDouble(Tobs);
+//            scopedata.addDouble(Tget);
+//            scopedata.addDouble(avgtw * 10e-6);
+//            scopedata.addDouble(maxtw * 10e-6);
+//            scopedata.addDouble(Tobs);
 
 
             scopeOut.write();
