@@ -47,7 +47,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     bool strict = rf.check("strict") && rf.check("strict", yarp::os::Value(true)).asBool();
     bool errorcheck = rf.check("errorcheck") && rf.check("errorcheck", yarp::os::Value(true)).asBool();
     bool verbose = rf.check("verbose") && rf.check("verbose", yarp::os::Value(true)).asBool();
-    bool biaswrite = rf.check("verbose") && rf.check("verbose", yarp::os::Value(true)).asBool();
+    bool biaswrite = rf.check("biaswrite") && rf.check("biaswrite", yarp::os::Value(true)).asBool();
 
     if(rf.check("controllerDevice")) {
 
