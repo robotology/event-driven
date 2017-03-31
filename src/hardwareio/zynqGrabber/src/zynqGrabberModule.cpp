@@ -47,6 +47,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     bool strict = rf.check("strict") && rf.check("strict", yarp::os::Value(true)).asBool();
     bool errorcheck = rf.check("errorcheck") && rf.check("errorcheck", yarp::os::Value(true)).asBool();
     bool verbose = rf.check("verbose") && rf.check("verbose", yarp::os::Value(true)).asBool();
+    bool biaswrite = rf.check("verbose") && rf.check("verbose", yarp::os::Value(true)).asBool();
 
     if(rf.check("controllerDevice")) {
 
@@ -75,7 +76,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
                 con_success = true;
             }
 
-		std::cout << std::endl;
+        std::cout << std::endl;
         if(!vsctrlMngRight.connect())
             std::cerr << "Could not connect to vision controller right" << std::endl;
         else {
@@ -94,12 +95,15 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 
     }
 
-    if(!yarp::os::Network::checkNetwork()) {
+    bool yarppresent = yarp::os::Network::checkNetwork();
+    if(!yarppresent)
         yError() << "Could not connect to YARP network";
+
+    if(!yarppresent || biaswrite) {
         vsctrlMngLeft.disconnect(true);
         std::cout << "Left camera off" << std::endl;
-		vsctrlMngRight.disconnect(true);
-		std::cout << "Right camera off" << std::endl;
+        vsctrlMngRight.disconnect(true);
+        std::cout << "Right camera off" << std::endl;
         return false;
     }
 
