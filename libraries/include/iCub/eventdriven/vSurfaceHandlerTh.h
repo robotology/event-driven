@@ -134,13 +134,13 @@ public:
             }
             if(isStopping()) break;
 
-            ctime = q->back()->stamp;
-
             for(ev::vQueue::iterator qi = q->begin(); qi != q->end(); qi++) {
 
                 m.lock();
 
                 vcount++;
+
+                ctime = (*qi)->stamp;
 
                 if((*qi)->getChannel() == 0)
                     surfaceLeft.fastAddEvent(*qi);
@@ -239,11 +239,11 @@ public:
             }
             if(isStopping()) break;
 
-            ctime = q->back()->stamp;
-
             for(ev::vQueue::iterator qi = q->begin(); qi != q->end(); qi++) {
 
                 m.lock();
+
+                ctime = (*qi)->stamp;
 
                 if((*qi)->getChannel() == 0)
                     windowleft.addEvent(*qi);

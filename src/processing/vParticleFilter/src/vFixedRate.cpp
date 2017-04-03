@@ -97,6 +97,8 @@ bool vParticleReader::open(const std::string &name, bool strictness)
         return false;
     if(!resultOut.open(name + "/result:o"))
         return false;
+    if(!vBottleOut.open(name + "/vBottle:o"))
+        return false;
 
     return true;
 }
@@ -107,6 +109,8 @@ void vParticleReader::close()
     //close ports
     scopeOut.close();
     debugOut.close();
+    vBottleOut.close();
+    resultOut.close();
     yarp::os::BufferedPort<ev::vBottle>::close();
 
 }
@@ -117,6 +121,8 @@ void vParticleReader::interrupt()
     //pass on the interrupt call to everything needed
     scopeOut.interrupt();
     debugOut.interrupt();
+    vBottleOut.interrupt();
+    resultOut.interrupt();
     yarp::os::BufferedPort<ev::vBottle>::interrupt();
 }
 
@@ -157,6 +163,7 @@ void vParticleReader::onRead(ev::vBottle &inputBottle)
     //q.sort(true);
 
     ev::vQueue stw;
+    unsigned long pt = 0;
     unsigned long t = 0;
 
     for(ev::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
@@ -250,6 +257,23 @@ void vParticleReader::onRead(ev::vBottle &inputBottle)
 
         indexedlist[0].initTiming(t);
 
+        if(vBottleOut.getOutputCount()) {
+            ev::vBottle &eventsout = vBottleOut.prepare();
+            eventsout.clear();
+            auto ceg = make_event<GaussianAE>();
+            ceg->stamp = stw.front()->stamp;
+            ceg->setChannel(camera);
+            ceg->x = avgx;
+            ceg->y = avgy;
+            ceg->sigx = avgr;
+            ceg->sigy = avgr;
+            ceg->sigxy = 0;
+            ceg->polarity = 1;
+            eventsout.addEvent(ceg);
+            vBottleOut.setEnvelope(st);
+            vBottleOut.write();
+        }
+
         if(resultOut.getOutputCount()) {
             yarp::os::Bottle &trackBottle = resultOut.prepare();
             trackBottle.clear();
@@ -265,12 +289,18 @@ void vParticleReader::onRead(ev::vBottle &inputBottle)
 
     }
 
-    //yarp::os::Bottle &sob = scopeOut.prepare();
-    //sob.clear();
-    //sob.addDouble(t);
-    //if(q.size())
-        //sob.addDouble(q.back()->getStamp());
-    //scopeOut.write();
+    if(scopeOut.getOutputCount()) {
+
+        yarp::os::Bottle &sob = scopeOut.prepare();
+        sob.clear();
+
+        double dt = q.back()->stamp - q.front()->stamp;
+        if(dt < 0) dt += ev::vtsHelper::max_stamp;
+        sob.addDouble(dt);
+        sob.addDouble(q.size());
+        scopeOut.setEnvelope(st);
+        scopeOut.write();
+    }
 
 
     if(debugOut.getOutputCount()) {
@@ -286,11 +316,13 @@ void vParticleReader::onRead(ev::vBottle &inputBottle)
 
             if(py < 0 || py >= res.height || px < 0 || px >= res.width) continue;
             //pcol = yarp::sig::PixelBgr(255*indexedlist[i].getw()/pmax.getw(), 255*indexedlist[i].getw()/pmax.getw(), 255);
-            image(res.width - px - 1, res.height - py - 1) = yarp::sig::PixelBgr(255, 255, 255);
+            //image(res.width - px - 1, res.height - py - 1) = yarp::sig::PixelBgr(255, 255, 255);
+            image(px, py) = yarp::sig::PixelBgr(255, 255, 255);
             //drawcircle(image, indexedlist[i].getx(), indexedlist[i].gety(), indexedlist[i].getr(), indexedlist[i].getid());
         }
         drawEvents(image, stw, avgtw, false);
-        drawcircle(image, res.width - 1 - avgx, res.height - 1 - avgy, avgr, 1);
+        //drawcircle(image, res.width - 1 - avgx, res.height - 1 - avgy, avgr, 1);
+        drawcircle(image, avgx, avgy, avgr, 1);
         debugOut.setEnvelope(st);
         debugOut.write();
     }

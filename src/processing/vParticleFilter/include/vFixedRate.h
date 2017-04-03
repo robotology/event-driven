@@ -17,6 +17,7 @@ private:
     yarp::os::BufferedPort<yarp::os::Bottle> scopeOut;
     yarp::os::BufferedPort<yarp::sig::ImageOf <yarp::sig::PixelBgr> > debugOut;
     yarp::os::BufferedPort<yarp::os::Bottle> resultOut;
+    yarp::os::BufferedPort<ev::vBottle> vBottleOut;
     yarp::os::Bottle weights;
     yarp::os::Stamp pstamp;
 

@@ -130,7 +130,8 @@ void particleProcessor::run()
     std::cout << "Thread starting" << std::endl;
 
     ev::vQueue stw, stw2;
-    unsigned long int t;
+    unsigned long int pt = 0;
+    unsigned long int t = 0;
     yarp::os::Stamp yarpstamp;
     //double maxlikelihood;
     while(!stw2.size() && !isStopping()) {
@@ -140,6 +141,8 @@ void particleProcessor::run()
         else
             yarpstamp = eventhandler2.queryWindow(stw2, camera, 100000);
     }
+    unsigned int dtezero = 0;
+    unsigned int dtnezero = 0;
     //t = unwrap(stw2.front()->getStamp());
 
     while(!isStopping()) {
@@ -167,8 +170,14 @@ void particleProcessor::run()
 
         //if(!stw.size()) continue;
 
-        if(stw.size())
+        if(stw.size()) {
+            pt = t;
             t = unwrap(eventhandler2.queryVTime());
+            if(t == pt)
+                dtezero++;
+            else
+                dtnezero++;
+        }
 
         std::vector<vParticle> indexedSnap = indexedlist;
 
@@ -350,8 +359,16 @@ void particleProcessor::run()
             yarp::os::Bottle &scopedata = scopeOut.prepare();
             scopedata.clear();
             double temptime = yarp::os::Time::now();
-            scopedata.addDouble(1.0 / (temptime - ptime2));
+            //scopedata.addDouble(1.0 / (temptime - ptime2));
             ptime2 = temptime;
+
+            scopedata.addDouble(t - pt);
+
+            scopedata.addDouble(dtnezero / (double)(dtnezero + dtezero));
+            if(dtnezero + dtezero > 1000) {
+                dtnezero = 0;
+                dtezero = 0;
+            }
 
 //            scopedata.addDouble(avgr);
 //            scopedata.addDouble(Tget);
