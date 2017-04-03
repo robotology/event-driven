@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.6)
 
-set(MODULENAME zynqGrabber)
+set(MODULENAME vRepTest)
 project(${MODULENAME})
 
 file(GLOB source src/*.cpp)
@@ -14,13 +14,9 @@ add_executable(${MODULENAME} ${source} ${header})
 
 target_link_libraries(${MODULENAME} ${YARP_LIBRARIES} ${EVENTDRIVEN_LIBRARIES})
 
-if(V_10BITCODEC)
-    set_target_properties(${MODULENAME} PROPERTIES COMPILE_DEFINITIONS TENBITCODEC)
-endif(V_10BITCODEC)
-
 install(TARGETS ${MODULENAME} DESTINATION bin)
 
 yarp_install(FILES ${MODULENAME}.ini DESTINATION ${ICUBCONTRIB_CONTEXTS_INSTALL_DIR}/${CONTEXT_DIR})
 if(USE_QTCREATOR)
-    add_custom_target(${MODULENAME}_token SOURCES ${MODULENAME}.ini ${MODULENAME}.xml)
+    add_custom_target(${MODULENAME}_token SOURCES ${MODULENAME}.ini ${MODULENAME}.xml app_${MODULENAME}.xml)
 endif(USE_QTCREATOR)

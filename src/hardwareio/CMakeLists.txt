@@ -1,12 +1,13 @@
-#Copyright: (C) 2010 RobotCub Consortium
-# Authors: Francesco Rea
-# CopyPolicy: Released under the terms of the GNU GPL v2.0.
 cmake_minimum_required(VERSION 2.6)
 
-if(V_BUILD_ZYNQ OR V_USE_QTCREATOR)
-    add_subdirectory(zynqGrabber)
-endif(V_BUILD_ZYNQ OR V_USE_QTCREATOR)
+option(ENABLE_spinterface "Build the SpiNNaker Ethernet Interface" OFF)
+option(ENABLE_zynqgrabber "Build zynqGrabber" OFF)
 
-if(V_SPINNTERFACE)
+if(ENABLE_spinterface)
     add_subdirectory(spinterface)
-endif(V_SPINNTERFACE)
+endif(ENABLE_spinterface)
+
+if(ENABLE_zynqgrabber)
+    add_subdirectory(zynqGrabber)
+endif(ENABLE_zynqgrabber)
+

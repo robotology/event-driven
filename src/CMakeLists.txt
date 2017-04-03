@@ -1,22 +1,17 @@
 cmake_minimum_required(VERSION 2.6)
 
-if(NOT V_BUILD_ZYNQ)
+option(BUILD_APPLICATIONS "Build event-driven applications" OFF)
+option(BUILD_HARDWAREIO "Build event-driven hardware interfaces" OFF)
+option(BUILD_PROCESSING "Build event-driven processing modules" OFF)
 
-    add_subdirectory(core_modules)
-    file(GLOB xmldocumentation ${xmldocumentation} ${CMAKE_CURRENT_SOURCE_DIR}/core_modules/*/*.xml)
+if(BUILD_APPLICATIONS)
+    add_subdirectory(applications)
+endif(BUILD_APPLICATIONS)
 
-    if(V_ADVMODULES)
-      add_subdirectory(modules)
-      file(GLOB xmldocumentation ${xmldocumentation} ${CMAKE_CURRENT_SOURCE_DIR}/modules/*/*.xml)
-    endif(V_ADVMODULES)
+if(BUILD_HARDWAREIO)
+    add_subdirectory(processing)
+endif(BUILD_HARDWAREIO)
 
-    if(ICUB_FOUND)
-        add_subdirectory(robotio)
-        file(GLOB xmldocumentation ${xmldocumentation} ${CMAKE_CURRENT_SOURCE_DIR}/robotio/*/*.xml)
-    endif(ICUB_FOUND)
-
-endif(NOT V_BUILD_ZYNQ)
-
-add_subdirectory(hardwareio)
-
-file(GLOB xmldocumentation ${CMAKE_CURRENT_SOURCE_DIR}/hardwareio/*/*.xml)
+if(BUILD_PROCESSING)
+    add_subdirectory(hardwareio)
+endif(BUILD_PROCESSING)

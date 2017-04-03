@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.6)
 
-set(MODULENAME zynqGrabber)
+set(MODULENAME vFramer)
 project(${MODULENAME})
 
 file(GLOB source src/*.cpp)
@@ -8,15 +8,12 @@ file(GLOB header include/*.h)
 
 include_directories(${PROJECT_SOURCE_DIR}/include
                     ${YARP_INCLUDE_DIRS}
+                    ${OpenCV_INCLUDE_DIRS}
                     ${EVENTDRIVENLIBS_INCLUDE_DIRS})
 
 add_executable(${MODULENAME} ${source} ${header})
 
-target_link_libraries(${MODULENAME} ${YARP_LIBRARIES} ${EVENTDRIVEN_LIBRARIES})
-
-if(V_10BITCODEC)
-    set_target_properties(${MODULENAME} PROPERTIES COMPILE_DEFINITIONS TENBITCODEC)
-endif(V_10BITCODEC)
+target_link_libraries(${MODULENAME} ${YARP_LIBRARIES} ${OpenCV_LIBRARIES} ${EVENTDRIVEN_LIBRARIES})
 
 install(TARGETS ${MODULENAME} DESTINATION bin)
 

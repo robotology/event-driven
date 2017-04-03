@@ -3,6 +3,9 @@
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 cmake_minimum_required(VERSION 2.6)
 
+option(VLIB_10BITCODEC "Build codec with 10bit address space" OFF)
+option(VLIB_32BITTIME "Build codec using a 32bit timestamp" OFF)
+
 set(PROJECTNAME ${EVENTDRIVEN_LIBRARIES})
 project(${PROJECTNAME})
 
@@ -24,8 +27,8 @@ file(GLOB folder_header
 )
 
 # Declare groups of source and header files -- makes things pretty in MSVC.
-#source_group("Source Files" FILES ${folder_source})
-#source_group("Header Files" FILES ${folder_header} ${codec_header})
+source_group("Source Files" FILES ${folder_source})
+source_group("Header Files" FILES ${folder_header})
 
 include_directories(
     ${PROJECT_SOURCE_DIR}/include
@@ -41,12 +44,10 @@ if(MSVC)
 endif(MSVC)
 
 if(V_10BITCODEC)
-    #message("Using 10bit codec")
     set_target_properties(${PROJECTNAME} PROPERTIES COMPILE_DEFINITIONS TENBITCODEC)
 endif(V_10BITCODEC)
 
 if(V_32BITTIME)
-    #message("Using 10bit codec")
     set_target_properties(${PROJECTNAME} PROPERTIES COMPILE_DEFINITIONS TIME32BIT)
 endif(V_32BITTIME)
 

@@ -1,0 +1,18 @@
+cmake_minimum_required(VERSION 2.6)
+
+find_package(OpenCV)
+if(OPENCV_FOUND)
+    add_subdirectory(vFramer)
+    add_subdirectory(vUndistortCam)
+else(OPENCV_FOUND)
+    message("Warning: OpenCV not found. Skipping vFramer, vUndistortCam")
+endif(OPENCV_FOUND)
+
+add_subdirectory(vCircle)
+add_subdirectory(vCluster)
+add_subdirectory(vFlow)
+add_subdirectory(vParticleFilter)
+add_subdirectory(vPepper)
+#add_subdirectory(vCorner)
+
+

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.6)
 
-set(MODULENAME zynqGrabber)
+set(MODULENAME vCircle)
 project(${MODULENAME})
 
 file(GLOB source src/*.cpp)
@@ -13,10 +13,6 @@ include_directories(${PROJECT_SOURCE_DIR}/include
 add_executable(${MODULENAME} ${source} ${header})
 
 target_link_libraries(${MODULENAME} ${YARP_LIBRARIES} ${EVENTDRIVEN_LIBRARIES})
-
-if(V_10BITCODEC)
-    set_target_properties(${MODULENAME} PROPERTIES COMPILE_DEFINITIONS TENBITCODEC)
-endif(V_10BITCODEC)
 
 install(TARGETS ${MODULENAME} DESTINATION bin)
 
