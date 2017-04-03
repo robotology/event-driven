@@ -9,9 +9,9 @@ if(BUILD_APPLICATIONS)
 endif(BUILD_APPLICATIONS)
 
 if(BUILD_HARDWAREIO)
-    add_subdirectory(processing)
+    add_subdirectory(hardwareio)
 endif(BUILD_HARDWAREIO)
 
 if(BUILD_PROCESSING)
-    add_subdirectory(hardwareio)
+    add_subdirectory(processing)
 endif(BUILD_PROCESSING)
