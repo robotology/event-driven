@@ -161,6 +161,7 @@ vQueue vSurface2::getSurf_Tlim(int dt, int x, int y, int d)
 
 vQueue vSurface2::getSurf_Tlim(int dt, int xl, int xh, int yl, int yh)
 {
+
     vQueue qcopy;
     if(q.empty()) return qcopy;
 
@@ -187,32 +188,6 @@ vQueue vSurface2::getSurf_Tlim(int dt, int xl, int xh, int yl, int yh)
 
     return qcopy;
 }
-
-//vQueue vSurface2::getSurf_Tlim(int dt, int xl, int xh, int yl, int yh)
-//{
-//    vQueue qcopy;
-//    if(q.empty()) return qcopy;
-//    int t = q.back()->stamp;
-//    int vt = 0;
-
-//    xl = std::max(xl, 0);
-//    xh = std::min(xh, width-1);
-//    yl = std::max(yl, 0);
-//    yh = std::min(yh, height-1);
-
-//    for(int y = yl; y <= yh; y++) {
-//        for(int x = xl; x <= xh; x++) {
-//            if(spatial[y][x]) {
-//                vt = spatial[y][x]->stamp;
-//                if(vt > t) vt -= vtsHelper::maxStamp();
-//                if(vt + dt > t)
-//                    qcopy.push_back(spatial[y][x]);
-//            }
-//        }
-//    }
-
-//    return qcopy;
-//}
 
 vQueue vSurface2::getSurf_Clim(int c)
 {
@@ -751,6 +726,74 @@ const vQueue vFuzzyEdge::getSURF(int xl, int xh, int yl, int yh)
     }
 
     return subq;
+}
+
+/******************************************************************************/
+
+void historicalSurface::initialise(int height, int width)
+{
+    surface.resize(width, height);
+}
+
+vQueue historicalSurface::getSurface(int queryTime, int queryWindow)
+{
+    if(q.empty()) return vQueue();
+
+    vQueue qret;
+    int ctime = q.back()->stamp;
+    int breaktime = queryTime + queryWindow;
+
+    for(vQueue::reverse_iterator qi = q.rbegin(); qi != q.rend(); qi++) {
+        auto v = is_event<AE>(*qi);
+        if(surface(v->x, v->y)) continue;
+
+        double cdeltat = ctime - v->stamp;
+        if(cdeltat < 0) cdeltat += vtsHelper::max_stamp;
+        if(cdeltat > breaktime) break;
+        if(cdeltat > queryTime) {
+            qret.push_back(*qi);
+            surface(v->x, v->y) = 1;
+        }
+    }
+    return qret;
+}
+
+vQueue historicalSurface::getSurface(int queryTime, int queryWindow, int d)
+{
+    if(q.empty()) return vQueue();
+
+    auto v = is_event<AE>(q.back());
+    return getSurface(queryTime, queryWindow, d, v->x, v->y);
+}
+vQueue historicalSurface::getSurface(int queryTime, int queryWindow, int d, int x, int y)
+{
+    if(q.empty()) return vQueue();
+    return getSurface(queryTime, queryWindow, x - d, x + d, y - d, y + d);
+}
+
+vQueue historicalSurface::getSurface(int queryTime, int queryWindow, int xl, int xh, int yl, int yh)
+{
+    if(q.empty()) return vQueue();
+
+    vQueue qret;
+    int ctime = q.back()->stamp;
+    int breaktime = queryTime + queryWindow;
+
+    for(vQueue::reverse_iterator qi = q.rbegin(); qi != q.rend(); qi++) {
+        auto v = is_event<AE>(*qi);
+        if(surface(v->x, v->y)) continue;
+
+        double cdeltat = ctime - v->stamp;
+        if(cdeltat < 0) cdeltat += vtsHelper::max_stamp;
+        if(cdeltat > breaktime) break;
+        if(cdeltat > queryTime) {
+            surface(v->x, v->y) = 1;
+            if(v->x >= xl && v->x <= xh && v->y >= yl && v->y <= yh)
+                qret.push_back(*qi);
+
+        }
+    }
+    return qret;
 }
 
 

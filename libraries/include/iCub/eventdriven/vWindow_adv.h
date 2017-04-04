@@ -23,6 +23,7 @@
 #define __VWINDOW_ADV__
 
 #include <yarp/os/all.h>
+#include <yarp/sig/all.h>
 #include <vector>
 #include "iCub/eventdriven/vCodec.h"
 #include "iCub/eventdriven/vtsHelper.h"
@@ -215,6 +216,27 @@ public:
     vFuzzyEdge(int width = 128, int height = 128, double delta = 0.4);
     vQueue addEventToEdge(event<AddressEvent> event);
     virtual const vQueue getSURF(int xl, int xh, int yl, int yh);
+
+};
+
+class historicalSurface : public vTempWindow
+{
+private:
+
+    yarp::sig::ImageOf<yarp::sig::PixelMono> surface;
+
+
+public:
+
+    historicalSurface() {}
+
+    void initialise(int height, int width);
+
+    vQueue getSurface(int queryTime, int queryWindow);
+    vQueue getSurface(int queryTime, int queryWindow, int d);
+    vQueue getSurface(int queryTime, int queryWindow, int d, int x, int y);
+    vQueue getSurface(int queryTime, int queryWindow, int xl, int xh, int yl, int yh);
+
 
 };
 
