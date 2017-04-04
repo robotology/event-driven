@@ -14,9 +14,9 @@ add_executable(${MODULENAME} ${source} ${header})
 
 target_link_libraries(${MODULENAME} ${YARP_LIBRARIES} ${EVENTDRIVEN_LIBRARIES})
 
-if(V_10BITCODEC)
+if(VLIB_10BITCODEC)
     set_target_properties(${MODULENAME} PROPERTIES COMPILE_DEFINITIONS TENBITCODEC)
-endif(V_10BITCODEC)
+endif(VLIB_10BITCODEC)
 
 install(TARGETS ${MODULENAME} DESTINATION bin)
 
