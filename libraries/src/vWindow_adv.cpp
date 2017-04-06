@@ -790,7 +790,6 @@ vQueue historicalSurface::getSurface(int queryTime, int queryWindow, int xl, int
             surface(v->x, v->y) = 1;
             if(v->x >= xl && v->x <= xh && v->y >= yl && v->y <= yh)
                 qret.push_back(*qi);
-
         }
     }
     return qret;
