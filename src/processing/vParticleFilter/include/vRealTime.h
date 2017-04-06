@@ -38,7 +38,8 @@ class particleProcessor : public yarp::os::Thread
 {
 private:
 
-    surfaceThread eventhandler2;
+    //surfaceThread eventhandler2;
+    hSurfThread eventhandler2;
     preComputedBins pcb;
     std::vector<vPartObsThread *> computeThreads;
     int nThreads;

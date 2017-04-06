@@ -284,17 +284,29 @@ public:
 
     }
 
-//    vQueue queryROI(int channel, unsigned int t, int x, int y, int r)
-//    {
-//        m.lock();
-//        if(c == 0)
-//            fillq = surfaceLeft.getSurf_Tlim(t, x, y, r);
-//        else
-//            fillq = surfaceRight.getSurf_Tlim(t, x, y, r);
-//        vcount = 0;
-//        m.unlock();
-//        return yarpstamp;
-//    }
+    vQueue queryROI(int channel, unsigned int querySize, int x, int y, int r)
+    {
+        double cpunow = yarp::os::Time::now();
+
+        vQueue q;
+
+        m.lock();
+
+        cpudelay -= (cpunow - cputime) / vtsHelper::tsscaler;
+        cputime = cpunow;
+
+        if(cpudelay < 0) cpudelay = 0;
+        if(cpudelay > maxcpudelay) cpudelay = maxcpudelay;
+
+
+        if(channel == 0)
+            q = surfaceleft.getSurface(cpudelay, querySize, r, x, y);
+        else
+            q = surfaceright.getSurface(cpudelay, querySize, r, x, y);
+        m.unlock();
+
+        return q;
+    }
 
     vQueue queryWindow(int channel, unsigned int querySize)
     {
@@ -304,7 +316,7 @@ public:
 
         m.lock();
 
-        cpudelay -= (cpunow - cputime) / vtsHelper::max_stamp;
+        cpudelay -= (cpunow - cputime) / vtsHelper::tsscaler;
         cputime = cpunow;
 
         if(cpudelay < 0) cpudelay = 0;
@@ -320,10 +332,19 @@ public:
         return q;
     }
 
-    void queryStamps(yarp::os::Stamp &yStamp, int &vStamp)
+    double queryDelay()
     {
-        yStamp = ystamp;
-        vStamp = vstamp;
+        return cpudelay * vtsHelper::tsscaler;
+    }
+
+    yarp::os::Stamp queryYstamp()
+    {
+        return ystamp;
+    }
+
+    int queryVstamp()
+    {
+        return vstamp;
     }
 
 };

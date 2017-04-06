@@ -41,7 +41,7 @@ particleProcessor::particleProcessor(unsigned int height, unsigned int width, st
     rbound_max = 50;
     rbound_min = 10;
 
-    eventhandler2.configure(height, width);
+    eventhandler2.configure(height, width, 0.5);
 
 }
 
@@ -132,15 +132,17 @@ void particleProcessor::run()
     ev::vQueue stw, stw2;
     unsigned long int pt = 0;
     unsigned long int t = 0;
-    yarp::os::Stamp yarpstamp;
     //double maxlikelihood;
     while(!stw2.size() && !isStopping()) {
         yarp::os::Time::delay(0.1);
         if(useroi)
-            yarpstamp = eventhandler2.queryROI(stw2, camera, 100000, res.width/2, res.height/2, res.width/2);
+            stw2 = eventhandler2.queryROI(camera, 100000, res.width/2, res.height/2, res.width/2);
+            //yarpstamp = eventhandler2.queryROI(stw2, camera, 100000, res.width/2, res.height/2, res.width/2);
         else
-            yarpstamp = eventhandler2.queryWindow(stw2, camera, 100000);
+            stw2 = eventhandler2.queryWindow(camera, 100000);
+            //yarpstamp = eventhandler2.queryWindow(stw2, camera, 100000);
     }
+    yarp::os::Stamp yarpstamp = eventhandler2.queryYstamp();
     unsigned int dtezero = 0;
     unsigned int dtnezero = 0;
     //t = unwrap(stw2.front()->getStamp());
@@ -172,7 +174,7 @@ void particleProcessor::run()
 
         if(stw.size()) {
             pt = t;
-            t = unwrap(eventhandler2.queryVTime());
+            t = unwrap(eventhandler2.queryVstamp());
             if(t == pt)
                 dtezero++;
             else
@@ -269,10 +271,16 @@ void particleProcessor::run()
         }
 
         //std::cout << "getting new event window" << std::endl;
+//        if(useroi)
+//            yarpstamp = eventhandler2.queryROI(stw2, camera, maxtw, avgx, avgy, avgr * 1.5);
+//        else
+//            yarpstamp = eventhandler2.queryWindow(stw2, camera, maxtw);
+
         if(useroi)
-            yarpstamp = eventhandler2.queryROI(stw2, camera, maxtw, avgx, avgy, avgr * 1.5);
+            stw2 = eventhandler2.queryROI(camera, maxtw, avgx, avgy, avgr * 1.5);
         else
-            yarpstamp = eventhandler2.queryWindow(stw2, camera, maxtw);
+            stw2 = eventhandler2.queryWindow(camera, maxtw);
+        yarpstamp = eventhandler2.queryYstamp();
 
         double normval = 0.0;
         for(int k = 0; k < nThreads; k++) {
@@ -358,6 +366,8 @@ void particleProcessor::run()
         if(scopeOut.getOutputCount()) {
             yarp::os::Bottle &scopedata = scopeOut.prepare();
             scopedata.clear();
+            scopedata.addDouble(eventhandler2.queryDelay());
+
             double temptime = yarp::os::Time::now();
             //scopedata.addDouble(1.0 / (temptime - ptime2));
             ptime2 = temptime;
@@ -369,6 +379,9 @@ void particleProcessor::run()
                 dtnezero = 0;
                 dtezero = 0;
             }
+
+            scopedata.addDouble(stw.size());
+
 
 //            scopedata.addDouble(avgr);
 //            scopedata.addDouble(Tget);

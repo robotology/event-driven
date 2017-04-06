@@ -742,6 +742,7 @@ vQueue historicalSurface::getSurface(int queryTime, int queryWindow)
     vQueue qret;
     int ctime = q.back()->stamp;
     int breaktime = queryTime + queryWindow;
+    surface.zero();
 
     for(vQueue::reverse_iterator qi = q.rbegin(); qi != q.rend(); qi++) {
         auto v = is_event<AE>(*qi);
@@ -778,6 +779,7 @@ vQueue historicalSurface::getSurface(int queryTime, int queryWindow, int xl, int
     vQueue qret;
     int ctime = q.back()->stamp;
     int breaktime = queryTime + queryWindow;
+    surface.zero();
 
     for(vQueue::reverse_iterator qi = q.rbegin(); qi != q.rend(); qi++) {
         auto v = is_event<AE>(*qi);
