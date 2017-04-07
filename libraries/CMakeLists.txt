@@ -6,10 +6,10 @@ cmake_minimum_required(VERSION 2.6)
 option(VLIB_10BITCODEC "Build codec with 10bit address space" OFF)
 option(VLIB_32BITTIME "Build codec using a 32bit timestamp" OFF)
 
-set(PROJECTNAME ${EVENTDRIVEN_LIBRARIES})
-project(${PROJECTNAME})
+project(${EVENTDRIVEN_LIBRARIES})
 
 file(GLOB folder_source
+  src/vtsHelper.cpp
   src/codecs/codec_*.cpp
   src/vWindow_adv.cpp
   src/vWindow_basic.cpp
@@ -36,29 +36,24 @@ include_directories(
 )
 
 # Create everything needed to build our library
-add_library(${PROJECTNAME} ${folder_source} ${folder_header})
-
-# Makes VS a bit quiter wrt warnings.
-if(MSVC)
-    set_target_properties(${PROJECTNAME} PROPERTIES COMPILE_FLAGS /wd4996)
-endif(MSVC)
-
-if(VLIB_10BITCODEC)
-    set_target_properties(${PROJECTNAME} PROPERTIES COMPILE_DEFINITIONS TENBITCODEC)
-endif(VLIB_10BITCODEC)
+add_library(${EVENTDRIVEN_LIBRARIES} ${folder_source} ${folder_header})
 
 if(VLIB_32BITTIME)
-    set_target_properties(${PROJECTNAME} PROPERTIES COMPILE_DEFINITIONS TIME32BIT)
+    set_target_properties(${EVENTDRIVEN_LIBRARIES} PROPERTIES COMPILE_DEFINITIONS TIME32BIT)
 endif(VLIB_32BITTIME)
 
-target_link_libraries(${PROJECTNAME} ${YARP_LIBRARIES})
+if(VLIB_10BITCODEC)
+    set_target_properties(${EVENTDRIVEN_LIBRARIES} PROPERTIES COMPILE_DEFINITIONS TENBITCODEC)
+endif(VLIB_10BITCODEC)
+
+target_link_libraries(${EVENTDRIVEN_LIBRARIES} ${YARP_LIBRARIES})
 
 if(ICUBcontrib_FOUND)
-    icubcontrib_export_library(${PROJECTNAME}
+    icubcontrib_export_library(${EVENTDRIVEN_LIBRARIES}
         INTERNAL_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/include
         EXTERNAL_INCLUDE_DIRS ${YARP_INCLUDE_DIRS}
         DESTINATION include/iCub/eventdriven
         FILES  ${folder_header}
     )
-    icubcontrib_finalize_export(${PROJECTNAME})
+    icubcontrib_finalize_export(${EVENTDRIVEN_LIBRARIES})
 endif(ICUBcontrib_FOUND)

@@ -34,9 +34,9 @@ bool vEvent::decode(const yarp::os::Bottle &packet, int &pos)
 
         //TODO: this needs to take into account the code aswell
 #ifdef TIME32BIT
-        stamp = packet.get(pos).asInt()&0x00ffffff;
-#else
         stamp = packet.get(pos).asInt()&0x7FFFFFFF;
+#else
+        stamp = packet.get(pos).asInt()&0x00ffffff;
 #endif
         pos += 1;
         return true;

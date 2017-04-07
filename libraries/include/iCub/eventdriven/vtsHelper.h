@@ -36,17 +36,9 @@ private:
 
 public:
 
-#ifdef LARGETS
-    static const long int max_stamp = 2147483647; //2^31
-#else
-    static const long int max_stamp = 16777215; //2^24
-#endif
-
-#ifdef TENBITCODEC
-    static constexpr double tsscaler = 80e-9;
-#else
-    static constexpr double tsscaler = 128e-9;
-#endif
+    static long int max_stamp;
+    static double tsscaler;
+    static double vtsscaler;
 
     vtsHelper(): last_stamp(0), n_wraps(0) {}
 

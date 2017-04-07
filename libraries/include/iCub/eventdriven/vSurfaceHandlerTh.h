@@ -292,11 +292,11 @@ public:
 
         m.lock();
 
-        cpudelay -= (cpunow - cputime) / vtsHelper::tsscaler;
+        cpudelay -= (cpunow - cputime) * vtsHelper::vtsscaler;
         cputime = cpunow;
 
         if(cpudelay < 0) cpudelay = 0;
-        if(cpudelay > maxcpudelay) cpudelay = maxcpudelay;
+        if(cpudelay > maxcpudelay) cpudelay = 0;
 
 
         if(channel == 0)
@@ -316,7 +316,7 @@ public:
 
         m.lock();
 
-        cpudelay -= (cpunow - cputime) / vtsHelper::tsscaler;
+        cpudelay -= (cpunow - cputime) * vtsHelper::vtsscaler;
         cputime = cpunow;
 
         if(cpudelay < 0) cpudelay = 0;

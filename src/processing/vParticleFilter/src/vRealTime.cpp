@@ -41,7 +41,7 @@ particleProcessor::particleProcessor(unsigned int height, unsigned int width, st
     rbound_max = 50;
     rbound_min = 10;
 
-    eventhandler2.configure(height, width, 0.5);
+    eventhandler2.configure(height, width, 0.1);
 
 }
 
@@ -369,10 +369,10 @@ void particleProcessor::run()
             scopedata.addDouble(eventhandler2.queryDelay());
 
             double temptime = yarp::os::Time::now();
-            //scopedata.addDouble(1.0 / (temptime - ptime2));
+            scopedata.addDouble(1.0 / (temptime - ptime2));
             ptime2 = temptime;
 
-            scopedata.addDouble(t - pt);
+            //scopedata.addDouble(t - pt);
 
             scopedata.addDouble(dtnezero / (double)(dtnezero + dtezero));
             if(dtnezero + dtezero > 1000) {

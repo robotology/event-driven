@@ -53,11 +53,11 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
     int retinaWidth = rf.check("width", yarp::os::Value(304)).asInt();
 
     double eventWindow =
-            rf.check("eventWindow", yarp::os::Value(0.5)).asDouble();
-    eventWindow = eventWindow / ev::vtsHelper::tstosecs();
+            rf.check("eventWindow", yarp::os::Value(0.1)).asDouble();
+    eventWindow = eventWindow / ev::vtsHelper::tsscaler;
 
-    bool strict = rf.check("strict") &&
-            rf.check("strict", yarp::os::Value(true)).asBool();
+    //bool strict = rf.check("strict") &&
+    //        rf.check("strict", yarp::os::Value(true)).asBool();
     bool flip = rf.check("flip") &&
             rf.check("flip", yarp::os::Value(true)).asBool();
 
