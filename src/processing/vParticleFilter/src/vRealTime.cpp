@@ -366,13 +366,13 @@ void particleProcessor::run()
         if(scopeOut.getOutputCount()) {
             yarp::os::Bottle &scopedata = scopeOut.prepare();
             scopedata.clear();
-            scopedata.addDouble(eventhandler2.queryDelay());
+            scopedata.addDouble(eventhandler2.queryDelay() * 100000);
 
             double temptime = yarp::os::Time::now();
-            scopedata.addDouble(1.0 / (temptime - ptime2));
+            //scopedata.addDouble(1.0 / (temptime - ptime2));
             ptime2 = temptime;
 
-            //scopedata.addDouble(t - pt);
+            scopedata.addDouble(t - pt);
 
             scopedata.addDouble(dtnezero / (double)(dtnezero + dtezero));
             if(dtnezero + dtezero > 1000) {

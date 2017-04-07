@@ -320,7 +320,7 @@ public:
         cputime = cpunow;
 
         if(cpudelay < 0) cpudelay = 0;
-        if(cpudelay > maxcpudelay) cpudelay = maxcpudelay;
+        if(cpudelay > maxcpudelay) cpudelay = 0;
 
 
         if(channel == 0)
@@ -344,7 +344,9 @@ public:
 
     int queryVstamp()
     {
-        return vstamp;
+        int modvstamp = vstamp - cpudelay;
+        if(modvstamp < 0) modvstamp += vtsHelper::max_stamp;
+        return modvstamp;
     }
 
 };
