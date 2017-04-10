@@ -231,6 +231,7 @@ public:
     historicalSurface() {}
 
     void initialise(int height, int width);
+    void addEvent(event<> v);
 
     vQueue getSurface(int queryTime, int queryWindow);
     vQueue getSurface(int queryTime, int queryWindow, int d);

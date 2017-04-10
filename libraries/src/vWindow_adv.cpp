@@ -735,6 +735,17 @@ void historicalSurface::initialise(int height, int width)
     surface.resize(width, height);
 }
 
+void historicalSurface::addEvent(event<> v)
+{
+    auto ae = is_event<AE>(v);
+    if(ae->x > surface.width() - 1 || ae->y > surface.height() - 1) {
+        yError() << "Pixel Out of Range: " << ae->getContent().toString();
+    } else {
+        vTempWindow::addEvent(v);
+    }
+
+}
+
 vQueue historicalSurface::getSurface(int queryTime, int queryWindow)
 {
     if(q.empty()) return vQueue();
