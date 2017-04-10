@@ -3,6 +3,7 @@
 
 #include "vParticle.h"
 #include <iCub/eventdriven/vSurfaceHandlerTh.h>
+#include <yarp/sig/Image.h>
 
 /*////////////////////////////////////////////////////////////////////////////*/
 // vParticleObserver
@@ -19,12 +20,13 @@ private:
     std::vector<vParticle> *particles;
     std::vector<int> *deltats;
     ev::vQueue *stw;
+    yarp::sig::ImageOf < yarp::sig::PixelBgr> *debugIm;
 
 public:
 
     vPartObsThread(int pStart, int pEnd);
     void setDataSources(std::vector<vParticle> *particles,
-                        std::vector<int> *deltats, ev::vQueue *stw);
+                        std::vector<int> *deltats, ev::vQueue *stw, yarp::sig::ImageOf<yarp::sig::PixelBgr> *debugIm);
     double getNormVal() { return normval; }
     bool threadInit() { return true; }
     void run();

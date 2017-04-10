@@ -143,6 +143,7 @@ void particleProcessor::run()
             //yarpstamp = eventhandler2.queryWindow(stw2, camera, 100000);
     }
     yarp::os::Stamp yarpstamp = eventhandler2.queryYstamp();
+    int currentstamp = eventhandler2.queryVstamp();
     unsigned int dtezero = 0;
     unsigned int dtnezero = 0;
     //t = unwrap(stw2.front()->getStamp());
@@ -172,14 +173,15 @@ void particleProcessor::run()
 
         //if(!stw.size()) continue;
 
-        if(stw.size()) {
+        //int currentstamp = eventhandler2.queryVstamp();
+        //if(stw.size()) {
             pt = t;
-            t = unwrap(eventhandler2.queryVstamp());
+            t = unwrap(currentstamp);
             if(t == pt)
                 dtezero++;
             else
                 dtnezero++;
-        }
+        //}
 
         std::vector<vParticle> indexedSnap = indexedlist;
 
@@ -227,9 +229,8 @@ void particleProcessor::run()
 
         //likelihood observation
         std::vector<int> deltats; deltats.resize(stw.size());
-        double stampnow = stw.front()->stamp;
         for(unsigned int i = 0; i < stw.size(); i++) {
-            double dt = stampnow - stw[i]->stamp;
+            double dt = currentstamp - stw[i]->stamp;
             if(dt < 0)
                 dt += ev::vtsHelper::max_stamp;
             deltats[i] = dt;
@@ -265,8 +266,11 @@ void particleProcessor::run()
         //END SINGLE-THREAD
 
         //START MULTI-THREAD
+        yarp::sig::ImageOf <yarp::sig::PixelBgr> likedebug;
+        likedebug.resize(nparticles * 4, stw.size());
+        likedebug.zero();
         for(int k = 0; k < nThreads; k++) {
-            computeThreads[k]->setDataSources(&indexedlist, &deltats, &stw);
+            computeThreads[k]->setDataSources(&indexedlist, &deltats, &stw, &likedebug);
             computeThreads[k]->start();
         }
 
@@ -281,6 +285,7 @@ void particleProcessor::run()
         else
             stw2 = eventhandler2.queryWindow(camera, maxtw);
         yarpstamp = eventhandler2.queryYstamp();
+        currentstamp = eventhandler2.queryVstamp();
 
         double normval = 0.0;
         for(int k = 0; k < nThreads; k++) {
@@ -321,7 +326,7 @@ void particleProcessor::run()
             eventsout.clear();
             //ev::event<ev::ClusterEventGauss> ceg = ev::event<ev::ClusterEventGauss>(new ev::ClusterEventGauss());
             auto ceg = make_event<GaussianAE>();
-            ceg->stamp = stw.front()->stamp;
+            ceg->stamp = currentstamp;
             ceg->setChannel(camera);
             ceg->x = avgx;
             ceg->y = avgy;
@@ -348,16 +353,20 @@ void particleProcessor::run()
                 int px = indexedlist[i].getx();
 
                 if(py < 0 || py >= res.height || px < 0 || px >= res.width) continue;
-                image(res.width-1 - px, res.height - 1 - py) = yarp::sig::PixelBgr(255, 255, 255);
+                //image(res.width-1 - px, res.height - 1 - py) = yarp::sig::PixelBgr(255, 255, 255);
 
             }
-            drawEvents(image, stw, avgtw, true);
+            drawEvents(image, stw, currentstamp, pmax.gettw(), false);
             //drawEvents(image, stw, pmax.gettw());
             //drawEvents(image, stw, eventdriven::vtsHelper::maxStamp());
 
-            drawcircle(image, res.width-1 - avgx, res.height-1 - avgy, avgr+0.5, 1);
+            //drawcircle(image, res.width-1 - avgx, res.height-1 - avgy, avgr+0.5, 1);
 
             pytime = yarpstamp.getTime();
+
+            //image = likedebug;
+            //drawDistribution(image, indexedlist);
+
             debugOut.setEnvelope(yarpstamp);
             debugOut.write();
         }
@@ -439,11 +448,12 @@ vPartObsThread::vPartObsThread(int pStart, int pEnd)
 }
 
 void vPartObsThread::setDataSources(std::vector<vParticle> *particles,
-                    std::vector<int> *deltats, ev::vQueue *stw)
+                    std::vector<int> *deltats, ev::vQueue *stw, yarp::sig::ImageOf < yarp::sig::PixelBgr> *debugIm)
 {
     this->particles = particles;
     this->deltats = deltats;
     this->stw = stw;
+    this->debugIm = debugIm;
 }
 
 void vPartObsThread::run()
@@ -456,10 +466,17 @@ void vPartObsThread::run()
     for(int i = pStart; i < pEnd; i++) {
         for(unsigned int j = 0; j < (*stw).size(); j++) {
             if((*deltats)[j] < (*particles)[i].gettw()) {
-                //ev::AddressEvent *v = (*stw)[j]->getUnsafe<ev::AddressEvent>();
-                event<AddressEvent> v = std::static_pointer_cast<AddressEvent>((*stw)[j]);
-                //event<AddressEvent> v = as_event<AddressEvent>((*stw)[j]);
-                (*particles)[i].incrementalLikelihood(v->x, v->y, (*deltats)[j]);
+                auto v = is_event<AE>((*stw)[j]);
+                int l = 2 * (*particles)[i].incrementalLikelihood(v->x, v->y, (*deltats)[j]);
+                if(debugIm) {
+                    l += 128;
+                    if(l > 255) l = 255;
+                    if(l < 0) l = 0;
+                    (*debugIm)(i*4 + 0, j) = yarp::sig::PixelBgr(l, l, l);
+                    (*debugIm)(i*4 + 1, j) = yarp::sig::PixelBgr(l, l, l);
+                    (*debugIm)(i*4 + 2, j) = yarp::sig::PixelBgr(l, l, l);
+                    (*debugIm)(i*4 + 3, j) = yarp::sig::PixelBgr(l, l, l);
+                }
             } else {
                 break;
             }

@@ -6,9 +6,14 @@
 
 using namespace ev;
 
-void drawEvents(yarp::sig::ImageOf< yarp::sig::PixelBgr> &image, ev::vQueue &q, double tw = 0, bool flip = false);
+class vParticle;
+
+void drawEvents(yarp::sig::ImageOf< yarp::sig::PixelBgr> &image, ev::vQueue &q, int currenttime, double tw = 0, bool flip = false);
 
 void drawcircle(yarp::sig::ImageOf<yarp::sig::PixelBgr> &image, int cx, int cy, int cr, int id = 0);
+
+void drawDistribution(yarp::sig::ImageOf<yarp::sig::PixelBgr> &image, std::vector<vParticle> &indexedlist);
+
 class preComputedBins;
 
 /*////////////////////////////////////////////////////////////////////////////*/
@@ -80,7 +85,7 @@ public:
     bool predict(unsigned long int stamp);
     double calcLikelihood(ev::vQueue &events, int nparticles);
     void initLikelihood();
-    void incrementalLikelihood(int vx, int vy, int dt);
+    int incrementalLikelihood(int vx, int vy, int dt);
     void concludeLikelihood();
 
 
