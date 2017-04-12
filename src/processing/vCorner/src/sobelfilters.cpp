@@ -56,37 +56,36 @@ void sobelfilter::resetResponses() {
     responsey.zero();
 }
 
-std::pair<double, double> sobelfilter::process(vEvent &evt)
+//std::pair<double, double> sobelfilter::process(ev::event<AE> evt)
+//{
+//    //auto ae = is_event<AE>(evt.clone());
+//    int dx = evt->x - cx + sobelrad;
+//    int dy = evt->y - cy + sobelrad;
+//    return std::make_pair (sobelx(dx, dy), sobely(dx, dy));
+////    return gain;
+//}
+
+//void sobelfilter::updateresponse(vEvent &curr_evt, vEvent &cent_evt)
+//{
+//    auto cente = is_event<AE>(cent_evt.clone());
+//    auto curre = is_event<AE>(curr_evt.clone());
+//    int centerx = cx - cente->x + lrad;
+//    int centery = cy - cente->y + lrad;
+
+//    this->responsex(centerx, centery) += process(*curre).first;
+//    this->responsey(centerx, centery) += process(*curre).second;
+
+//}
+
+void sobelfilter::process(ev::event<AE> evt, int currx, int curry)
 {
-    auto ae = is_event<AE>(evt.clone());
-    int dx = ae->x - cx + sobelrad;
-    int dy = ae->y - cy + sobelrad;
-    return std::make_pair (sobelx(dx, dy), sobely(dx, dy));
-//    return gain;
-}
-
-void sobelfilter::updateresponse(vEvent &curr_evt, vEvent &cent_evt)
-{
-    auto cente = is_event<AE>(cent_evt.clone());
-    auto curre = is_event<AE>(curr_evt.clone());
-    int centerx = cx - cente->x + lrad;
-    int centery = cy - cente->y + lrad;
-
-    this->responsex(centerx, centery) += process(*curre).first;
-    this->responsey(centerx, centery) += process(*curre).second;
-
-}
-
-void sobelfilter::process(ev::vEvent &evt, int currx, int curry)
-{
-    auto ae = is_event<AE>(evt.clone());
-    int dx = ae->x - cx + sobelrad;
-    int dy = ae->y - cy + sobelrad;
+    int dx = evt->x - cx;
+    int dy = evt->y - cy;
     int centerx = cx - currx + lrad;
     int centery = cy - curry + lrad;
 
-    double gainx = sobelx(dx, dy);
-    double gainy = sobely(dx, dy);
+    double gainx = sobelx(dx + sobelrad, dy + sobelrad);
+    double gainy = sobely(dx + sobelrad, dy + sobelrad);
 
     this->responsex(centerx, centery) += gainx;
     this->responsey(centerx, centery) += gainy;

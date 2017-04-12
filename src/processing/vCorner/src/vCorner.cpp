@@ -199,7 +199,7 @@ void vCornerManager::onRead(ev::vBottle &bot)
                 cSurf = surfaceOnL;
         }
 
-        cSurf->addEvent(aep);
+        cSurf->fastAddEvent(aep);
 
         //detect corner
         bool isc = detectcorner(cSurf);
@@ -235,15 +235,13 @@ bool vCornerManager::detectcorner(ev::vSurface2 *surf)
     int l = windowRad - sobelrad;
 
     //get the queue of events
-    const vQueue &subsurf = surf->getSurf(vc->x, vc->y, windowRad);
+    const vQueue subsurf = surf->getSurf(vc->x, vc->y, windowRad);
 
     //update filter response
     for(unsigned int i = 0; i < subsurf.size(); i++)
     {
         //events are in the surface
         auto vi = is_event<AE>(subsurf[i]);
-        int x = vi->x;
-        int y = vi->y;    
 
 //        std::cout << i << " " << "(" << x << "," << y << ")" << " (" << cx << "," << cy << ")" <<  std::endl;
 
@@ -251,12 +249,14 @@ bool vCornerManager::detectcorner(ev::vSurface2 *surf)
         {
             for(int cy = curry-l; cy <= curry+l; cy++)
             {
-                if(abs(x - cx) <= sobelrad && abs(y - cy) <= sobelrad)
+                if(abs(vi->x - cx) <= sobelrad && abs(vi->y - cy) <= sobelrad)
                 {
                     //(cx,cy) is the pixel where we apply the sobel filter
                     sobel.setCenter(cx, cy);
-                    sobel.process(*vi, currx, curry);
+                    sobel.process(vi, currx, curry);
 //                    sobel.updateresponse(*vi, *vc);
+                } else {
+                    //break;
                 }
             }
         }

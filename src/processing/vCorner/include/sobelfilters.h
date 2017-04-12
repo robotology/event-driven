@@ -49,9 +49,9 @@ public:
     void setSobelFilters(int sobelsize);
     int factorial(int a);
     int Pasc(int k, int n);
-    std::pair<double, double> process(ev::vEvent &evt);
+    std::pair<double, double> process(ev::event<ev::AE> evt);
     void updateresponse(ev::vEvent &curr_evt, ev::vEvent &cent_evt);
-    void process(ev::vEvent &evt, int currx, int curry);
+    void process(ev::event<ev::AE> evt, int currx, int curry);
     double getResponseX(int i, int j);
     double getResponseY(int i, int j);
     void resetResponses();
