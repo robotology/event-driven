@@ -173,7 +173,8 @@ bool vParticle::predict(unsigned long timestamp)
         dt = 0;
     //tw += std::max(dt, 10000.0);
     tw += dt;
-    tw = std::max(tw, 50000.0);
+    //tw = std::max(tw, 50000.0);
+    //tw += 10000;
 
     x = generateGaussianNoise(x, variance);
     y = generateGaussianNoise(y, variance);

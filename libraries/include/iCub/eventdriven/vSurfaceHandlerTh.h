@@ -229,7 +229,8 @@ public:
 
     void configure(int height, int width, double maxcpudelay)
     {
-        this->maxcpudelay = maxcpudelay / vtsHelper::tsscaler;
+        //this->maxcpudelay = maxcpudelay / vtsHelper::tsscaler;
+        this->maxcpudelay = vtsHelper::max_stamp * 0.25;
         surfaceleft.initialise(height, width);
         surfaceright.initialise(height, width);
     }
@@ -297,7 +298,7 @@ public:
         cputime = cpunow;
 
         if(cpudelay < 0) cpudelay = 0;
-        //if(cpudelay > maxcpudelay) cpudelay = maxcpudelay;
+        if(cpudelay > maxcpudelay) cpudelay = maxcpudelay;
 
 
         if(channel == 0)
@@ -321,7 +322,7 @@ public:
         cputime = cpunow;
 
         if(cpudelay < 0) cpudelay = 0;
-        //if(cpudelay > maxcpudelay) cpudelay = maxcpudelay;
+        if(cpudelay > maxcpudelay) cpudelay = maxcpudelay;
 
 
         if(channel == 0)
@@ -345,9 +346,13 @@ public:
 
     int queryVstamp()
     {
+        m.lock();
         int modvstamp = vstamp - cpudelay;
+        m.unlock();
+
         if(modvstamp < 0) modvstamp += vtsHelper::max_stamp;
         return modvstamp;
+
     }
 
 };
