@@ -283,8 +283,17 @@ void blobDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 
         auto aep = as_event<AE>(*qi);
         if(!aep) continue;
+
+        int y = aep->y;
+        int x = aep->x;
+
+        if(flip) {
+            y = Ylimit - 1 - y;
+            x = Xlimit - 1 - x;
+        }
+
         if(!aep->polarity)
-            image.at<cv::Vec3b>(aep->y, aep->x) = cv::Vec3b(0, 0, 0);
+            image.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 0, 0);
     }
 
     cv::medianBlur(image, image, 5);
