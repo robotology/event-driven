@@ -738,11 +738,22 @@ void historicalSurface::initialise(int height, int width)
 void historicalSurface::addEvent(event<> v)
 {
     auto ae = is_event<AE>(v);
+    bool error = false;
+
     if(ae->x > surface.width() - 1 || ae->y > surface.height() - 1) {
         yError() << "Pixel Out of Range: " << ae->getContent().toString();
-    } else {
-        vTempWindow::addEvent(v);
+        error = true;
     }
+
+    int dt = ae->stamp - debugstamp;
+    if(dt < 0 && dt > -vtsHelper::max_stamp*0.5 ) {
+        yError() << "Stamp Out of Order: " << debugstamp << " " << ae->stamp;
+        error = true;
+    }
+    debugstamp = ae->stamp;
+
+    if(!error) vTempWindow::addEvent(v);
+
 
 }
 

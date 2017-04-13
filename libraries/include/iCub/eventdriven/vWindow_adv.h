@@ -224,11 +224,12 @@ class historicalSurface : public vTempWindow
 private:
 
     yarp::sig::ImageOf<yarp::sig::PixelMono> surface;
+    int debugstamp;
 
 
 public:
 
-    historicalSurface() {}
+    historicalSurface(): debugstamp(0) {}
 
     void initialise(int height, int width);
     void addEvent(event<> v);

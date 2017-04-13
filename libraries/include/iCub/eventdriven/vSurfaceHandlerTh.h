@@ -286,17 +286,18 @@ public:
 
     vQueue queryROI(int channel, unsigned int querySize, int x, int y, int r)
     {
-        double cpunow = yarp::os::Time::now();
+
 
         vQueue q;
 
         m.lock();
+        double cpunow = yarp::os::Time::now();
 
-        cpudelay -= (cpunow - cputime) * vtsHelper::vtsscaler;
+        cpudelay -= (cpunow - cputime) * vtsHelper::vtsscaler * 1.1;
         cputime = cpunow;
 
         if(cpudelay < 0) cpudelay = 0;
-        if(cpudelay > maxcpudelay) cpudelay = 0;
+        //if(cpudelay > maxcpudelay) cpudelay = maxcpudelay;
 
 
         if(channel == 0)
@@ -316,11 +317,11 @@ public:
 
         m.lock();
 
-        cpudelay -= (cpunow - cputime) * vtsHelper::vtsscaler;
+        cpudelay -= (cpunow - cputime) * vtsHelper::vtsscaler * 1.1;
         cputime = cpunow;
 
         if(cpudelay < 0) cpudelay = 0;
-        if(cpudelay > maxcpudelay) cpudelay = 0;
+        //if(cpudelay > maxcpudelay) cpudelay = maxcpudelay;
 
 
         if(channel == 0)
