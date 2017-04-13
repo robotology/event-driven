@@ -30,9 +30,9 @@ particleProcessor::particleProcessor(unsigned int height, unsigned int width, st
     seedy = 0;
     seedr = 0;
 
-    avgx = 10;
-    avgy = 10;
-    avgr = 10;
+    avgx = 64;
+    avgy = 64;
+    avgr = 12;
     avgtw = 100;
     maxtw = 10000;
     pwsumsq = 0;
@@ -148,47 +148,34 @@ void particleProcessor::run()
     unsigned int dtnezero = 0;
     //t = unwrap(stw2.front()->getStamp());
 
+    stw = stw2;
+
     while(!isStopping()) {
         ptime = yarp::os::Time::now();
 
-            //stw.swap(stw2);
-        //stw.swap(stw2);
-//        if(useroi)
-//            yarpstamp = eventhandler2.queryROI(stw2, camera, maxtw, avgx, avgy, avgr * 1.5);
-//        else
-//            yarpstamp = eventhandler2.queryWindow(stw2, camera, maxtw);
-        stw = stw2;
-        //stw2.clear();
-
-        //std::cout << "GETTING EVENTS" <<std::endl;
-
-        //eventhandler.queryEvents(stw, maxtw);
-        //eventhandler2.queryROI(stw, 0, maxtw, avgx, avgy, avgr * 1.5);
-        //std::cout << stw.size() << std::endl;
-        //eventdriven::vQueue stw = eventhandler.queryEvents(unwrap.currentTime() + rate, eventdriven::vtsHelper::maxStamp() * 0.5);
-        //eventdriven::vQueue stw = eventhandler.queryEventList(indexedlist);
+        if(useroi)
+            stw = eventhandler2.queryROI(camera, maxtw, avgx, avgy, avgr * 1.5);
+        else
+            stw = eventhandler2.queryWindow(camera, maxtw);
+        yarpstamp = eventhandler2.queryYstamp();
+        currentstamp = eventhandler2.queryVstamp();
 
         double Tget = (yarp::os::Time::now() - ptime)*1000.0;
         ptime = yarp::os::Time::now();
 
-        //if(!stw.size()) continue;
+        pt = t;
+        t = unwrap(currentstamp);
+        if(t == pt)
+            dtezero++;
+        else
+            dtnezero++;
 
-        //int currentstamp = eventhandler2.queryVstamp();
-        //if(stw.size()) {
-            pt = t;
-            t = unwrap(currentstamp);
-            if(t == pt)
-                dtezero++;
-            else
-                dtnezero++;
-        //}
 
         std::vector<vParticle> indexedSnap = indexedlist;
 
         //resampling
         if(!adaptive || pwsumsq * nparticles > 2.0) {
             for(int i = 0; i < nparticles; i++) {
-                //if(indexedlist[i].getw() > (0.1 / nparticles)) continue;
                 double rn = nRandomise * (double)rand() / RAND_MAX;
                 if(rn > 1.0)
                     indexedlist[i].resample(1.0/nparticles, t, res.width, res.height, 30.0, avgtw);
@@ -213,13 +200,6 @@ void particleProcessor::run()
             if(!inbounds(indexedlist[i]))
                 indexedlist[i].resample(1.0/nparticles, t, res.width, res.height, 30.0, avgtw);
 
-            //if(indexedlist[i].predict(t))
-            //    indexedlist[i].resample(1.0/nparticles, t);
-            //else
-            //    if(!inbounds(indexedlist[i]))
-            //        std::cout << "Inbounds not computed correctly " << indexedlist[i].getx() << " " << indexedlist[i].gety() << " " << indexedlist[i].getr() << std::endl;
-
-            //if(!inbounds(indexedlist[i]))
             if(indexedlist[i].gettw() > maxtw)
                 maxtw = indexedlist[i].gettw();
         }
@@ -280,12 +260,12 @@ void particleProcessor::run()
 //        else
 //            yarpstamp = eventhandler2.queryWindow(stw2, camera, maxtw);
 
-        if(useroi)
-            stw2 = eventhandler2.queryROI(camera, maxtw, avgx, avgy, avgr * 1.5);
-        else
-            stw2 = eventhandler2.queryWindow(camera, maxtw);
-        yarpstamp = eventhandler2.queryYstamp();
-        currentstamp = eventhandler2.queryVstamp();
+//        if(useroi)
+//            stw2 = eventhandler2.queryROI(camera, maxtw, avgx, avgy, avgr * 1.5);
+//        else
+//            stw2 = eventhandler2.queryWindow(camera, maxtw);
+//        yarpstamp = eventhandler2.queryYstamp();
+//        currentstamp = eventhandler2.queryVstamp();
 
         double normval = 0.0;
         for(int k = 0; k < nThreads; k++) {
@@ -324,7 +304,6 @@ void particleProcessor::run()
         if(vBottleOut.getOutputCount()) {
             ev::vBottle &eventsout = vBottleOut.prepare();
             eventsout.clear();
-            //ev::event<ev::ClusterEventGauss> ceg = ev::event<ev::ClusterEventGauss>(new ev::ClusterEventGauss());
             auto ceg = make_event<GaussianAE>();
             ceg->stamp = currentstamp;
             ceg->setChannel(camera);
@@ -375,7 +354,7 @@ void particleProcessor::run()
         if(scopeOut.getOutputCount()) {
             yarp::os::Bottle &scopedata = scopeOut.prepare();
             scopedata.clear();
-            scopedata.addDouble(eventhandler2.queryDelay() * 100000);
+            scopedata.addDouble(eventhandler2.queryDelay() * ev::vtsHelper::vtsscaler);
 
             double temptime = yarp::os::Time::now();
             //scopedata.addDouble(1.0 / (temptime - ptime2));
@@ -383,13 +362,15 @@ void particleProcessor::run()
 
             scopedata.addDouble(t - pt);
 
-            scopedata.addDouble(dtnezero / (double)(dtnezero + dtezero));
-            if(dtnezero + dtezero > 1000) {
-                dtnezero = 0;
-                dtezero = 0;
-            }
+//            scopedata.addDouble(dtnezero / (double)(dtnezero + dtezero));
+//            if(dtnezero + dtezero > 1000) {
+//                dtnezero = 0;
+//                dtezero = 0;
+//            }
 
-            scopedata.addDouble(stw.size());
+            //scopedata.addDouble(stw.size());
+            scopedata.addDouble(maxtw);
+            scopedata.addDouble(pmax.gettw());
 
 
 //            scopedata.addDouble(avgr);
