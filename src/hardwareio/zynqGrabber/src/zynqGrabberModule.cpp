@@ -136,7 +136,10 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
                 }
             }
 
-            if(jumpcheck) D2Y.checkForTSJumps();
+            if(jumpcheck) {
+                std::cout << "CHECKING FOR ERRORS IN TIMESTAMPS" << std::endl;
+                D2Y.checkForTSJumps();
+            }
             D2Y.start();
         }
 
