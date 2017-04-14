@@ -747,10 +747,14 @@ void historicalSurface::addEvent(event<> v)
 
     int dt = ae->stamp - debugstamp;
     if(dt < 0 && dt > -vtsHelper::max_stamp*0.5 ) {
-        yError() << "Stamp Out of Order: " << debugstamp << " " << ae->stamp;
+        if(q.size() > 1)
+            yError() << "Stamp Out of Order: " << (*(q.end()-2))->stamp << " " << debugstamp << " " << ae->stamp;
+        else
+            yError() << "Stamp Out of Order: " << debugstamp << " " << ae->stamp;
         error = true;
+    } else {
+        debugstamp = ae->stamp;
     }
-    debugstamp = ae->stamp;
 
     if(!error) vTempWindow::addEvent(v);
 

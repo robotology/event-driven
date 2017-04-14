@@ -144,6 +144,7 @@ void particleProcessor::run()
     }
     yarp::os::Stamp yarpstamp = eventhandler2.queryYstamp();
     int currentstamp = eventhandler2.queryVstamp();
+    int previousstamp = currentstamp;
     unsigned int dtezero = 0;
     unsigned int dtnezero = 0;
     //t = unwrap(stw2.front()->getStamp());
@@ -158,6 +159,7 @@ void particleProcessor::run()
         else
             stw = eventhandler2.queryWindow(camera, maxtw);
         yarpstamp = eventhandler2.queryYstamp();
+        previousstamp = currentstamp;
         currentstamp = eventhandler2.queryVstamp();
 
         double Tget = (yarp::os::Time::now() - ptime)*1000.0;
@@ -165,6 +167,10 @@ void particleProcessor::run()
 
         pt = t;
         t = unwrap(currentstamp);
+        int dt = t - pt;
+        if(dt > 450000) {
+            std::cout << previousstamp << " " << currentstamp << std::endl;
+        }
         if(t == pt)
             dtezero++;
         else
