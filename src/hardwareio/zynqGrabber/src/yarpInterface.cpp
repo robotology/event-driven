@@ -150,6 +150,7 @@ device2yarp::device2yarp() {
     strict = false;
     errorchecking = false;
     applyfilter = false;
+    jumpcheck = false;
 }
 
 bool device2yarp::initialise(std::string moduleName, bool strict, bool check,
@@ -179,6 +180,19 @@ bool device2yarp::initialise(std::string moduleName, bool strict, bool check,
 void device2yarp::afterStart(bool success)
 {
     if(success) deviceReader.start();
+}
+
+void device2yarp::tsjumpcheck(std::vector<unsigned char> &data, int nBytesRead)
+{
+    int pTS = *((int *)(data.data() + 0)) & 0x7FFFFFFF;
+    for(int i = 0; i < nBytesRead; i+=8) {
+        int TS =  *((int *)(data.data() + i)) & 0x7FFFFFFF;
+        int dt = TS - pTS;
+        if(dt < 0 && dt > -ev::vtsHelper::max_stamp * 0.5) {
+            yError() << "stamp jump" << pTS << " " << TS;
+        }
+        pTS = TS;
+    }
 }
 
 int device2yarp::applysaltandpepperfilter(std::vector<unsigned char> &data, int nBytesRead)
@@ -236,6 +250,9 @@ void  device2yarp::run() {
             dataError = true;
             std::cout << "BUFFER NOT A MULTIPLE OF 8 BYTES: " <<  nBytesRead << std::endl;
         }
+
+        if(jumpcheck)
+            tsjumpcheck(data, nBytesRead);
 
         if(applyfilter)
             nBytesRead = applysaltandpepperfilter(data, nBytesRead);
