@@ -269,7 +269,7 @@ void  device2yarp::run() {
             continue;
 
         //typical ZYNQ behaviour to skip error checking
-        int chunksize = 80000, i = 0;
+        unsigned int chunksize = 80000, i = 0;
         if(!errorchecking && !dataError) {
 
             while((i+1) * chunksize < nBytesRead) {
