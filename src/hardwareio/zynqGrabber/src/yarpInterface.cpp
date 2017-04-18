@@ -188,7 +188,7 @@ void device2yarp::tsjumpcheck(std::vector<unsigned char> &data, int nBytesRead)
     for(int i = 0; i < nBytesRead; i+=8) {
         int TS =  *((int *)(data.data() + i)) & 0x7FFFFFFF;
         int dt = TS - pTS;
-        if(dt < 0 && dt > -ev::vtsHelper::max_stamp * 0.5) {
+        if(dt < 0) {
             yError() << "stamp jump" << pTS << " " << TS;
         }
         pTS = TS;
@@ -251,11 +251,11 @@ void  device2yarp::run() {
             std::cout << "BUFFER NOT A MULTIPLE OF 8 BYTES: " <<  nBytesRead << std::endl;
         }
 
-        if(jumpcheck)
-            tsjumpcheck(data, nBytesRead);
-
         if(applyfilter)
             nBytesRead = applysaltandpepperfilter(data, nBytesRead);
+            
+	    if(jumpcheck)
+	        tsjumpcheck(data, nBytesRead);
 
         if(portEventCount.getOutputCount() && nBytesRead) {
             yarp::os::Bottle &ecb = portEventCount.prepare();
@@ -269,13 +269,28 @@ void  device2yarp::run() {
             continue;
 
         //typical ZYNQ behaviour to skip error checking
+        int chunksize = 80000, i = 0;
         if(!errorchecking && !dataError) {
+
+            while((i+1) * chunksize < nBytesRead) {
+
+                ev::vBottleMimic &vbm = portvBottle.prepare();
+                vbm.setdata((const char *)data.data() + i*chunksize, chunksize);
+                vStamp.update();
+                portvBottle.setEnvelope(vStamp);
+                portvBottle.write(strict);
+                portvBottle.waitForWrite();
+
+                i++;
+            }
+
             ev::vBottleMimic &vbm = portvBottle.prepare();
-            vbm.setdata((const char *)data.data(), nBytesRead);
+            vbm.setdata((const char *)data.data() + i*chunksize, nBytesRead - i*chunksize);
             vStamp.update();
             portvBottle.setEnvelope(vStamp);
-            if(strict) portvBottle.writeStrict();
-            else portvBottle.write();
+            portvBottle.write(strict);
+            portvBottle.waitForWrite();
+
             continue;						//return here.
         }
 
