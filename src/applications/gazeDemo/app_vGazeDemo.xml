@@ -1,0 +1,119 @@
+<application>
+<name> vPFBallDemo </name>
+
+<module>
+    <name> demoRedBall </name>
+        <parameters>  </parameters>
+    <node> icub24 </node>
+</module>
+
+<module>
+    <name> vParticleFilter </name>
+    <parameters> --threads 6 </parameters>
+    <node> icub23 </node>
+</module>
+
+<module>
+   <name> yarpview </name>
+   <parameters> --name /viewTracker --x 850 --y 100 --h 480 --w 608 </parameters>
+   <node> icub24 </node>
+</module>
+
+<module>
+    <name> yarpscope </name>
+    <parameters> --remote /vpf/scope:o --index "(0 1 2 3)" --color "(red blue green black)" </parameters>
+    <node> icub24 </node>
+</module>
+
+<module>
+    <name> vTrackToRobot </name>
+    <parameters> --name vTrackToRobot --method gaze --demo gaze </parameters>
+    <node> icub23 </node>
+</module>
+
+<module>
+    <name> vFramer </name>
+    <parameters> --name /vFramer --displays "(1 /left (AE CLE ISO))" --height 240 --width 304 </parameters>
+    <node>icub24</node>
+</module>
+
+<module>
+   <name>yarpview</name>
+   <parameters> --name /viewISO --x 100 --y 100 --h 480 --w 608 --RefreshTime 33 </parameters>
+   <node> icub24 </node>
+</module>
+
+<module>
+    <name> yarpdatadumper </name>
+    <parameters> --txTime --name /dump/IROS17_video/1/AE</parameters>
+    <node> icub24 </node>
+</module>
+
+<module>
+    <name> yarpdatadumper </name>
+    <parameters> --txTime --name /dump/IROS17_video/1/GAE</parameters>
+    <node> icub24 </node>
+</module>
+
+<connection>
+  <from>/zynqGrabber/vBottle:o</from>
+  <to>/vFramer/AE:i</to>
+  <protocol>tcp</protocol>
+</connection>
+
+<connection>
+  <from>/zynqGrabber/vBottle:o</from>
+  <to>/vpf/vBottle:i</to>
+  <protocol>tcp</protocol>
+</connection>
+
+<connection>
+  <from>/vpf/debug:o</from>
+  <to>/viewTracker</to>
+  <protocol>tcp</protocol>
+</connection>
+
+<connection>
+  <from>/vpf/vBottle:o</from>
+  <to>/vFramer/GAE:i</to>
+  <protocol>tcp</protocol>
+</connection>
+
+<connection>
+  <from>/vFramer/left</from>
+  <to>/viewISO</to>
+  <protocol>tcp</protocol>
+</connection>
+
+<connection>
+  <from>/vpf/vBottle:o</from>
+  <to>/vTrackToRobot/vBottle:i</to>
+  <protocol>tcp</protocol>
+</connection>
+
+<connection>
+    <from> /vTrackToRobot/vCartOut:o </from>
+    <to>   /demoRedBall/trackTarget:i </to>
+</connection>
+
+<connection>
+  <from>/demoRedBall/cmdFace:rpc</from>
+  <to>/icub/face/emotions/in</to>
+  <protocol>tcp</protocol>
+</connection>
+
+<connection>
+  <from>/zynqGrabber/vBottle:o</from>
+  <to>/dump/IROS17_video/1/AE</to>
+  <protocol>tcp</protocol>
+</connection>
+
+<connection>
+  <from>/vpf/vBottle:o</from>
+  <to>/dump/IROS17_video/1/GAE</to>
+  <protocol>tcp</protocol>
+</connection>
+
+
+
+</application>
