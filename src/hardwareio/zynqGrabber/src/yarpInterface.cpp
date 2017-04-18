@@ -188,7 +188,7 @@ void device2yarp::tsjumpcheck(std::vector<unsigned char> &data, int nBytesRead)
     for(int i = 0; i < nBytesRead; i+=8) {
         int TS =  *((int *)(data.data() + i)) & 0x7FFFFFFF;
         int dt = TS - pTS;
-        if(dt < 0 && dt > -ev::vtsHelper::max_stamp * 0.5) {
+        if(dt < 0) {
             yError() << "stamp jump" << pTS << " " << TS;
         }
         pTS = TS;
@@ -251,11 +251,11 @@ void  device2yarp::run() {
             std::cout << "BUFFER NOT A MULTIPLE OF 8 BYTES: " <<  nBytesRead << std::endl;
         }
 
-        if(jumpcheck)
-            tsjumpcheck(data, nBytesRead);
-
         if(applyfilter)
             nBytesRead = applysaltandpepperfilter(data, nBytesRead);
+            
+	    if(jumpcheck)
+	        tsjumpcheck(data, nBytesRead);
 
         if(portEventCount.getOutputCount() && nBytesRead) {
             yarp::os::Bottle &ecb = portEventCount.prepare();
@@ -274,8 +274,8 @@ void  device2yarp::run() {
             vbm.setdata((const char *)data.data(), nBytesRead);
             vStamp.update();
             portvBottle.setEnvelope(vStamp);
-            if(strict) portvBottle.writeStrict();
-            else portvBottle.write();
+            portvBottle.write(strict);
+            portvBottle.waitForWrite();
             continue;						//return here.
         }
 
