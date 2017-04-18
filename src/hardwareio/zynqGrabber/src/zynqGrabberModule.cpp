@@ -48,6 +48,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     bool errorcheck = rf.check("errorcheck") && rf.check("errorcheck", yarp::os::Value(true)).asBool();
     bool verbose = rf.check("verbose") && rf.check("verbose", yarp::os::Value(true)).asBool();
     bool biaswrite = rf.check("biaswrite") && rf.check("biaswrite", yarp::os::Value(true)).asBool();
+    bool jumpcheck = rf.check("jumpcheck") && rf.check("jumpcheck", yarp::os::Value(true)).asBool();
 
     if(rf.check("controllerDevice")) {
 
@@ -135,6 +136,10 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
                 }
             }
 
+            if(jumpcheck) {
+                std::cout << "CHECKING FOR ERRORS IN TIMESTAMPS" << std::endl;
+                D2Y.checkForTSJumps();
+            }
             D2Y.start();
         }
 

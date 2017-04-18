@@ -29,7 +29,7 @@
 
 <connection>
   <from>/zynqGrabber/vBottle:o</from>
-  <to>/vFramer/vBottle:i</to>
+  <to>/vFramer/AE:i</to>
   <protocol>udp</protocol>
 </connection>
 

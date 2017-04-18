@@ -283,8 +283,17 @@ void blobDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 
         auto aep = as_event<AE>(*qi);
         if(!aep) continue;
+
+        int y = aep->y;
+        int x = aep->x;
+
+        if(flip) {
+            y = Ylimit - 1 - y;
+            x = Xlimit - 1 - x;
+        }
+
         if(!aep->polarity)
-            image.at<cv::Vec3b>(aep->y, aep->x) = cv::Vec3b(0, 0, 0);
+            image.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 0, 0);
     }
 
     cv::medianBlur(image, image, 5);
@@ -386,11 +395,15 @@ void interestDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 
     int r = 1;
     CvScalar c = CV_RGB(255, 0, 0);
-    ev::vQueue::const_iterator qi;
-    for(qi = eSet.begin(); qi != eSet.end(); qi++) {
+    ev::vQueue::const_reverse_iterator qi;
+    for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
+        int dt = eSet.back()->stamp - (*qi)->stamp;
+        if(dt < 0) dt += ev::vtsHelper::maxStamp();
+        if(dt > twindow) continue;
+
         auto v = as_event<ev::LabelledAE>(*qi);
         if(!v) continue;
-        cv::Point centr(v->y, v->x);
+        cv::Point centr(v->x, v->y);
         cv::circle(image, centr, r, c);
     }
 

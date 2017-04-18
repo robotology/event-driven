@@ -77,6 +77,7 @@ private:
     bool strict;
     bool errorchecking;
     bool applyfilter;
+    bool jumpcheck;
 
     //internal variables
     yarp::os::BufferedPort<ev::vBottleMimic> portvBottle;
@@ -93,6 +94,7 @@ private:
     vDevReadBuffer deviceReader;
 
     int applysaltandpepperfilter(std::vector<unsigned char> &data, int nBytesRead);
+    void tsjumpcheck(std::vector<unsigned char> &data, int nBytesRead);
 
 
 public:
@@ -105,6 +107,11 @@ public:
     {
         this->applyfilter = applyfilter;
         vfilter.initialise(width, height, temporalsize, spatialSize);
+    }
+
+    void checkForTSJumps()
+    {
+        jumpcheck = true;
     }
 
     virtual void run();

@@ -28,52 +28,63 @@
 #include <yarp/math/Math.h>
 #include <iCub/eventdriven/all.h>
 #include <iCub/eventdriven/vtsHelper.h>
+#include <sobelfilters.h>
+#include <fstream>
 #include <math.h>
 
-class vCornerManager : public yarp::os::BufferedPort<eventdriven::vBottle>
+class vCornerManager : public yarp::os::BufferedPort<ev::vBottle>
 {
 private:
 
     bool strictness;
 
     //output port for the vBottle with the new events computed by the module
-    yarp::os::BufferedPort<eventdriven::vBottle> outPort;
+    yarp::os::BufferedPort<ev::vBottle> outPort;
+    yarp::os::BufferedPort<yarp::os::Bottle> debugPort;
 
-    eventdriven::vEdge *edge;
-
+    //parameters
     int height;
     int width;
     int sobelsize;
-    int thickness;
+    int sobelrad;
+    int windowRad;
+    double sigma;
+    int nEvents;
     double thresh;
-    int fRad;
-    unsigned int minEvts;
 
-    yarp::sig::Matrix sobelx;
-    yarp::sig::Matrix sobely;
+    int gaussiansize;
+
+//    yarp::sig::Matrix sobelx;
+//    yarp::sig::Matrix sobely;
+    sobelfilter sobel;
+    yarp::sig::Matrix gaussian;
+
+    //data structures
+    ev::vSurface2 *surfaceOnL;
+    ev::vSurface2 *surfaceOfL;
+    ev::vSurface2 *surfaceOnR;
+    ev::vSurface2 *surfaceOfR;
 
     //for helping with timestamp wrap around
-    eventdriven::vtsHelper unwrapper;
+    ev::vtsHelper unwrapper;
 
-    bool detectcorner(); //(const eventdriven::vQueue &edge);
-    double convSobel(const eventdriven::vQueue &subedge, yarp::sig::Matrix &sobel, int x, int y);
-    inline double singleSobel(double val, yarp::sig::Matrix &sobel, int dx, int dy);
-    int getMinStamp(const eventdriven::vQueue &subedge);
-    int getMaxStamp(const eventdriven::vQueue &subedge);
-    void setSobelFilters(int sobelsize, yarp::sig::Matrix &sobelx, yarp::sig::Matrix &sobely);
-    int factorial(int a);
-    int Pasc(int k, int n);
+    bool detectcorner(ev::vSurface2 *surf);
+    double convSobel(const ev::vQueue &window, yarp::sig::Matrix &sobel, int a, int b);
+//    void setSobelFilters(yarp::sig::Matrix &sobelx, yarp::sig::Matrix &sobely);
+//    int factorial(int a);
+//    int Pasc(int k, int n);
+    void setGaussianFilter(double sigma, yarp::sig::Matrix &gaussian);
 
 public:
 
-    vCornerManager(int height, int width, int filterSize, int thickness, double thresh);
+    vCornerManager(int height, int width, int filterSize, int windowRad, double sigma, int nEvents, double thresh);
 
     bool    open(const std::string moduleName, bool strictness = false);
     void    close();
     void    interrupt();
 
     //this is the entry point to your main functionality
-    void    onRead(eventdriven::vBottle &bot);
+    void    onRead(ev::vBottle &bot);
 
 };
 

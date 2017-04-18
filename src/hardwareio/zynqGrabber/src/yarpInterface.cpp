@@ -150,6 +150,7 @@ device2yarp::device2yarp() {
     strict = false;
     errorchecking = false;
     applyfilter = false;
+    jumpcheck = false;
 }
 
 bool device2yarp::initialise(std::string moduleName, bool strict, bool check,
@@ -179,6 +180,19 @@ bool device2yarp::initialise(std::string moduleName, bool strict, bool check,
 void device2yarp::afterStart(bool success)
 {
     if(success) deviceReader.start();
+}
+
+void device2yarp::tsjumpcheck(std::vector<unsigned char> &data, int nBytesRead)
+{
+    int pTS = *((int *)(data.data() + 0)) & 0x7FFFFFFF;
+    for(int i = 0; i < nBytesRead; i+=8) {
+        int TS =  *((int *)(data.data() + i)) & 0x7FFFFFFF;
+        int dt = TS - pTS;
+        if(dt < 0) {
+            yError() << "stamp jump" << pTS << " " << TS;
+        }
+        pTS = TS;
+    }
 }
 
 int device2yarp::applysaltandpepperfilter(std::vector<unsigned char> &data, int nBytesRead)
@@ -239,6 +253,9 @@ void  device2yarp::run() {
 
         if(applyfilter)
             nBytesRead = applysaltandpepperfilter(data, nBytesRead);
+            
+	    if(jumpcheck)
+	        tsjumpcheck(data, nBytesRead);
 
         if(portEventCount.getOutputCount() && nBytesRead) {
             yarp::os::Bottle &ecb = portEventCount.prepare();
@@ -252,13 +269,28 @@ void  device2yarp::run() {
             continue;
 
         //typical ZYNQ behaviour to skip error checking
+        unsigned int chunksize = 80000, i = 0;
         if(!errorchecking && !dataError) {
+
+            while((i+1) * chunksize < nBytesRead) {
+
+                ev::vBottleMimic &vbm = portvBottle.prepare();
+                vbm.setdata((const char *)data.data() + i*chunksize, chunksize);
+                vStamp.update();
+                portvBottle.setEnvelope(vStamp);
+                portvBottle.write(strict);
+                portvBottle.waitForWrite();
+
+                i++;
+            }
+
             ev::vBottleMimic &vbm = portvBottle.prepare();
-            vbm.setdata((const char *)data.data(), nBytesRead);
+            vbm.setdata((const char *)data.data() + i*chunksize, nBytesRead - i*chunksize);
             vStamp.update();
             portvBottle.setEnvelope(vStamp);
-            if(strict) portvBottle.writeStrict();
-            else portvBottle.write();
+            portvBottle.write(strict);
+            portvBottle.waitForWrite();
+
             continue;						//return here.
         }
 
