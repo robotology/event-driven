@@ -269,13 +269,28 @@ void  device2yarp::run() {
             continue;
 
         //typical ZYNQ behaviour to skip error checking
+        int chunksize = 80000, i = 0;
         if(!errorchecking && !dataError) {
+
+            while((i+1) * chunksize < nBytesRead) {
+
+                ev::vBottleMimic &vbm = portvBottle.prepare();
+                vbm.setdata((const char *)data.data() + i*chunksize, chunksize);
+                vStamp.update();
+                portvBottle.setEnvelope(vStamp);
+                portvBottle.write(strict);
+                portvBottle.waitForWrite();
+
+                i++;
+            }
+
             ev::vBottleMimic &vbm = portvBottle.prepare();
-            vbm.setdata((const char *)data.data(), nBytesRead);
+            vbm.setdata((const char *)data.data() + i*chunksize, nBytesRead - i*chunksize);
             vStamp.update();
             portvBottle.setEnvelope(vStamp);
             portvBottle.write(strict);
             portvBottle.waitForWrite();
+
             continue;						//return here.
         }
 
