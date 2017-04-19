@@ -1,0 +1,51 @@
+<application>
+    <name> app_autoSaccade </name>
+
+    <module>
+        <name> autosaccade </name>
+        <parameters>--minVpS 75000 --robotName icubSim --timeout 1 --camWidth 304 --camHeight 240   </parameters>
+        <node> localhost </node>
+    </module>
+
+    <module>
+        <name>yarpview</name>
+        <parameters>--name /viewLeft --x 0 --y 20 --RefreshTime 16 </parameters>
+        <node>localhost</node>
+    </module>
+
+    <module>
+        <name>yarpview</name>
+        <parameters>--name /viewRight --x 400 --y 20 --RefreshTime 16 </parameters>
+        <node>localhost</node>
+    </module>
+
+    <module>
+        <name>yarpdataplayer</name>
+        <node>localhost</node>
+    </module>
+
+    <module>
+        <name>yarpscope</name>
+        <parameters>--remote /autoSaccade/vRate:o</parameters>
+        <node>localhost</node>
+    </module>
+
+    <connection>
+        <from>/zynqGrabber/vBottle:o</from>
+        <to>/autoSaccade/vBottle:i</to>
+        <protocol>tcp</protocol>
+    </connection>
+
+    <connection>
+        <from>/autoSaccade/imgL:o</from>
+        <to>/viewLeft</to>
+        <protocol>tcp</protocol>
+    </connection>
+
+    <connection>
+        <from>/autoSaccade/imgR:o</from>
+        <to>/viewRight</to>
+        <protocol>tcp</protocol>
+    </connection>
+
+</application>

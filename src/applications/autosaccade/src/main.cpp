@@ -23,7 +23,7 @@ int main(int argc, char * argv[])
     yarp::os::Network::init();
 
     /* create the module */
-    saccadeModule saccadeModuleInstance;
+    AutoSaccadeModule saccadeModuleInstance;
 
     /* prepare and configure the resource finder */
     yarp::os::ResourceFinder rf;
