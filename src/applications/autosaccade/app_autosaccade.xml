@@ -1,34 +1,35 @@
 <application>
-    <name> app_autoSaccade </name>
+    <name> vAutoSaccadeDemo </name>
+
+<module>
+<name> zynqGrabber </name>
+<parameters> </parameters>
+<node>icub-zynq</node>
+</module>
 
     <module>
         <name> autosaccade </name>
-        <parameters>--minVpS 75000 --robotName icubSim --timeout 1 --camWidth 304 --camHeight 240   </parameters>
-        <node> localhost </node>
+        <parameters> --minVpS 100000 --robotName icub --timeout 1  </parameters>
+        <node> icub23 </node>
     </module>
 
-    <module>
-        <name>yarpview</name>
-        <parameters>--name /viewLeft --x 0 --y 20 --RefreshTime 16 </parameters>
-        <node>localhost</node>
-    </module>
+<module>
+    <name> vFramer</name>
+    <parameters> --frameRate 30 --displays "(0 /left (AE ISO) 1 /right (AE ISO))" --height 240 --width 304 --strict --flip</parameters>
+    <node>icub24</node>
+</module>
 
-    <module>
-        <name>yarpview</name>
-        <parameters>--name /viewRight --x 400 --y 20 --RefreshTime 16 </parameters>
-        <node>localhost</node>
-    </module>
+<module>
+   <name> yarpview </name>
+   <parameters>--name /viewLeft --x 30 --y 30 --w 608 --h 480 --RefreshTime 33 </parameters>
+   <node>icub24</node>
+</module>
 
-    <module>
-        <name>yarpdataplayer</name>
-        <node>localhost</node>
-    </module>
-
-    <module>
-        <name>yarpscope</name>
-        <parameters>--remote /autoSaccade/vRate:o</parameters>
-        <node>localhost</node>
-    </module>
+<module>
+   <name> yarpview </name>
+   <parameters>--name /viewRight --x 648 --y 30 --w 608 --h 480 --RefreshTime 33 </parameters>
+   <node>icub24</node>
+</module>
 
     <connection>
         <from>/zynqGrabber/vBottle:o</from>
@@ -37,13 +38,19 @@
     </connection>
 
     <connection>
-        <from>/autoSaccade/imgL:o</from>
+        <from>/zynqGrabber/vBottle:o</from>
+        <to>/vFramer/AE:i</to>
+        <protocol>tcp</protocol>
+    </connection>
+
+    <connection>
+        <from>/vFramer/left</from>
         <to>/viewLeft</to>
         <protocol>tcp</protocol>
     </connection>
 
     <connection>
-        <from>/autoSaccade/imgR:o</from>
+        <from>/vFramer/right</from>
         <to>/viewRight</to>
         <protocol>tcp</protocol>
     </connection>

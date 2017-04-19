@@ -21,6 +21,30 @@ using namespace yarp::sig;
 using namespace yarp::math;
 using namespace std;
 
+int main(int argc, char * argv[])
+{
+    /* initialize yarp network */
+    yarp::os::Network yarp;
+    if(!yarp.checkNetwork()) {
+        std::cout << "Could not connect to YARP" << std::endl;
+        return false;
+    }
+
+    /* create the module */
+    AutoSaccadeModule saccadeModuleInstance;
+
+    /* prepare and configure the resource finder */
+    yarp::os::ResourceFinder rf;
+    rf.setVerbose( true );
+    rf.setDefaultContext( "eventdriven" );
+    rf.setDefaultConfigFile( "autosaccade.ini" );
+    rf.configure( argc, argv );
+
+    /* run the module: runModule() calls configure first and, if successful, it then runs */
+    return saccadeModuleInstance.runModule(rf);
+
+}
+
 /***********************SaccadeModule***********************/
 
 bool AutoSaccadeModule::configure(ResourceFinder &rf){
@@ -40,8 +64,8 @@ bool AutoSaccadeModule::openPorts() {
     bool check = true;
     check &= eventBottleManager.open( getName( "/vBottle:i" ) );
     check &= vRatePort.open( getName( "/vRate:o" ) );
-    check &= leftImgPort.open( getName( "/imgL:o" ) );
-    check &= rightImagePort.open( getName( "/imgR:o" ) );
+    //check &= leftImgPort.open( getName( "/imgL:o" ) );
+    //check &= rightImagePort.open( getName( "/imgR:o" ) );
     check &= rpcPort.open( getName( "/rpc" ) );
     
     if (check) {
@@ -150,7 +174,7 @@ bool AutoSaccadeModule::close() {
     eventBottleManager.close();
     mdriver.close();
     gazeDriver.close();
-    delete ipos; delete imod;
+    //delete ipos; delete imod;
     cout << "Finished Closing" << endl;
     return true;
 }
@@ -166,6 +190,8 @@ void AutoSaccadeModule::performSaccade() {
     while (!motionDone){
         ipos ->checkMotionDone(2,joints, &motionDone);
     }
+    Time::delay(0.2);
+
 }
 
 double AutoSaccadeModule::computeEventRate() {
@@ -200,8 +226,8 @@ bool AutoSaccadeModule::updateModule() {
     vRateBottle.addDouble( eventRate );
     vRatePort.write(vRateBottle);
     
-    ImageOf<PixelBgr> &leftImage = leftImgPort.prepare();
-    ImageOf<PixelBgr> &rightImage = rightImagePort.prepare();
+    //ImageOf<PixelBgr> &leftImage = leftImgPort.prepare();
+    //ImageOf<PixelBgr> &rightImage = rightImagePort.prepare();
     ev::vQueue q = eventBottleManager.getEvents();
     //visualizeEvents( leftImage, rightImage, q );
     
@@ -228,8 +254,8 @@ bool AutoSaccadeModule::updateModule() {
             cout << "          r:(" << cmR( 0 ) << ", " << cmR( 1 ) << ")" << endl;
     
             //Making attention point red in image
-            leftImage((int) cmL( 0 ),(int) cmL( 1 ) ) = PixelBgr( 255, 0, 0 );
-            rightImage( (int) cmR( 0 ),(int) cmR( 1 ) ) = PixelBgr( 255, 0, 0 );
+            //leftImage((int) cmL( 0 ),(int) cmL( 1 ) ) = PixelBgr( 255, 0, 0 );
+            //rightImage( (int) cmR( 0 ),(int) cmR( 1 ) ) = PixelBgr( 255, 0, 0 );
 
             //Images are flipped wrt camera orientation
             cmL(0) = camWidth - 1 - cmL(0);
@@ -241,12 +267,13 @@ bool AutoSaccadeModule::updateModule() {
             gazeControl->restoreContext( context0 );
             gazeControl->lookAtMonoPixelSync(0, cmL);
             //gazeControl->lookAtStereoPixels( cmL, cmR );
-            gazeControl->waitMotionDone( 2.0 );
+            gazeControl->waitMotionDone( 0.1,5.0 );
+            cout << "Finished gazing" << endl;
         }
     }
 
-    leftImgPort.write();
-    rightImagePort.write();
+    //leftImgPort.write();
+    //rightImagePort.write();
     return true;
 }
 

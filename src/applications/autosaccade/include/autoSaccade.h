@@ -97,8 +97,8 @@ private:
     double timeout;
     
     yarp::os::Port vRatePort;
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr>> leftImgPort;
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr>> rightImagePort;
+    //yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr>> leftImgPort;
+    //yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr>> rightImagePort;
     
     //timestamp for comparison
     double prevStamp;
