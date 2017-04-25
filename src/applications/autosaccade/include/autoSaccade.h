@@ -39,6 +39,7 @@ private:
     yarp::os::Semaphore mutex;
     unsigned long int latestStamp;
     unsigned int vCount;
+    double yRate;
     bool isReading;
     ev::vQueue vQueue;
 
@@ -54,6 +55,7 @@ public:
     //the getting functions of the parent class
     unsigned long int getTime();
     unsigned long int popCount();
+    double getEventRate() { return yRate; }
     
     ev::vQueue getEvents() ;
     bool start();

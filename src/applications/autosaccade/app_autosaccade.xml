@@ -9,7 +9,7 @@
 
     <module>
         <name> autosaccade </name>
-        <parameters> --minVpS 100000 --robotName icub --timeout 1  </parameters>
+        <parameters> --minVpS 50000 --robotName icub --timeout 1  </parameters>
         <node> icub23 </node>
     </module>
 
@@ -34,13 +34,13 @@
     <connection>
         <from>/zynqGrabber/vBottle:o</from>
         <to>/autoSaccade/vBottle:i</to>
-        <protocol>tcp</protocol>
+        <protocol>udp</protocol>
     </connection>
 
     <connection>
         <from>/zynqGrabber/vBottle:o</from>
         <to>/vFramer/AE:i</to>
-        <protocol>tcp</protocol>
+        <protocol>udp</protocol>
     </connection>
 
     <connection>
