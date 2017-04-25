@@ -243,8 +243,8 @@ void clusterDraw::draw(cv::Mat &image, const vQueue &eSet, int vTime)
         double alpha = 0.5*atan2f(2*sig_xy_, sig_y2_ - sig_x2_);
 
         alpha = alpha * 180 / M_PI; //convert to degrees for openCV ellipse function
-        cv::ellipse(image, centr, cv::Size(a,b), alpha, 0, 360, blue, 2);
-        //cv::circle(image, centr, v->sigx, blue, 2);
+        //cv::ellipse(image, centr, cv::Size(a,b), alpha, 0, 360, blue, 2);
+        cv::circle(image, centr, v->sigx, blue, 2);
     }
 
 }
