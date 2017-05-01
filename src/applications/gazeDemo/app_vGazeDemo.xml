@@ -2,6 +2,12 @@
 <name> vPFBallDemo </name>
 
 <module>
+<name> zynqGrabber </name>
+<parameters> --applyFilter false</parameters>
+<node>icub-zynq</node>
+</module>
+
+<module>
     <name> demoRedBall </name>
         <parameters>  </parameters>
     <node> icub24 </node>
@@ -9,7 +15,7 @@
 
 <module>
     <name> vParticleFilter </name>
-    <parameters> --threads 6 </parameters>
+    <parameters> --threads 6 --obsthresh 1.0 --variance 4.0 --particles 100 </parameters>
     <node> icub23 </node>
 </module>
 
@@ -33,7 +39,7 @@
 
 <module>
     <name> vFramer </name>
-    <parameters> --name /vFramer --displays "(1 /left (AE CLE ISO))" --height 240 --width 304 </parameters>
+    <parameters> --name /vFramer --displays "(1 /left (AE CLE ISO))" --height 240 --width 304 --flip </parameters>
     <node>icub24</node>
 </module>
 

@@ -171,14 +171,14 @@ bool vParticle::predict(unsigned long timestamp)
         dt = timestamp - this->stamp;
     else
         dt = 0;
-    //tw += std::max(dt, 10000.0);
-    tw += dt;
+    tw += std::max(dt, 50000.0);
+    //tw += dt;
     //tw = std::max(tw, 50000.0);
     //tw += 10000;
 
     x = generateGaussianNoise(x, variance);
     y = generateGaussianNoise(y, variance);
-    r = generateGaussianNoise(r, variance * 0.5);
+    r = generateGaussianNoise(r, variance * 0.2);
 
     initTiming(timestamp);
 
@@ -287,12 +287,7 @@ int vParticle::incrementalLikelihood(int vx, int vy, int dt)
             angdist[a] = 1;
         }
 
-        int score = inlierCount - outlierCount;
-        if(score >= likelihood) {
-            likelihood = score;
-            maxtw = dt;
 
-        }
 
     } else if(sqrd > -outlierParameter && sqrd < 0) { //-3 < X < -5
 
@@ -302,6 +297,13 @@ int vParticle::incrementalLikelihood(int vx, int vy, int dt)
             outlierCount++;
             negdist[a] = 1;
         }
+
+    }
+
+    int score = inlierCount - outlierCount;
+    if(score >= likelihood) {
+        likelihood = score;
+        maxtw = dt;
 
     }
 

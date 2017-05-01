@@ -6,6 +6,7 @@
 #include <iCub/eventdriven/vCodec.h>
 #include <iCub/eventdriven/vWindow_basic.h>
 #include <iCub/eventdriven/vWindow_adv.h>
+#include <iCub/eventdriven/vFilters.h>
 #include <deque>
 #include <string>
 #include <map>
@@ -205,6 +206,7 @@ private:
     queueAllocator allocatorCallback;
     historicalSurface surfaceleft;
     historicalSurface surfaceright;
+    ev::vNoiseFilter filter;
 
     yarp::os::Mutex m;
 
@@ -233,6 +235,7 @@ public:
         this->maxcpudelay = vtsHelper::max_stamp * 0.25;
         surfaceleft.initialise(height, width);
         surfaceright.initialise(height, width);
+        filter.initialise(width, height, 100000, 1);
     }
 
     bool open(std::string portname)
@@ -262,6 +265,11 @@ public:
             if(isStopping()) break;
 
             for(ev::vQueue::iterator qi = q->begin(); qi != q->end(); qi++) {
+
+                auto ae = is_event<AE>(*qi);
+                if(!filter.check(ae->x, ae->y, ae->polarity, ae->channel, ae->stamp)) {
+                    continue;
+                }
 
                 m.lock();
 
@@ -294,7 +302,7 @@ public:
         m.lock();
         double cpunow = yarp::os::Time::now();
 
-        cpudelay -= (cpunow - cputime) * vtsHelper::vtsscaler * 1.1;
+        cpudelay -= (cpunow - cputime) * vtsHelper::vtsscaler * 1.02;
         cputime = cpunow;
 
         if(cpudelay < 0) cpudelay = 0;
@@ -318,7 +326,7 @@ public:
 
         m.lock();
 
-        cpudelay -= (cpunow - cputime) * vtsHelper::vtsscaler * 1.1;
+        cpudelay -= (cpunow - cputime) * vtsHelper::vtsscaler * 1.02;
         cputime = cpunow;
 
         if(cpudelay < 0) cpudelay = 0;
