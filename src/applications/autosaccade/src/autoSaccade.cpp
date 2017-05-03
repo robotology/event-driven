@@ -273,7 +273,7 @@ bool AutoSaccadeModule::updateModule() {
             gazeControl->restoreContext( context0 );
             gazeControl->lookAtMonoPixelSync(0, cmL);
             //gazeControl->lookAtStereoPixels( cmL, cmR );
-            gazeControl->waitMotionDone( 0.1,5.0 );
+            gazeControl->waitMotionDone( 0.1, 4.0 );
             cout << "Finished gazing" << endl;
         }
     }
@@ -333,13 +333,13 @@ bool AutoSaccadeModule::computeCenterMass( Vector &cmR, Vector &cmL, ev::vQueue 
     cmL.resize(2);
     for ( ev::vQueue::iterator i = q.begin(); i != q.end(); ++i ) {
         auto aep = ev::is_event<ev::AE>( *i );
-        if (aep.get()->channel) {
-            xr += aep.get()->x;
-            yr += aep.get()->y;
+        if (aep->channel) {
+            xr += aep->x;
+            yr += aep->y;
             rSize++;
         } else {
-            xl += aep.get()->x;
-            yl += aep.get()->y;
+            xl += aep->x;
+            yl += aep->y;
             lSize++;
         }
     }
