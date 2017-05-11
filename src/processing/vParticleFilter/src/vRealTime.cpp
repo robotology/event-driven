@@ -252,11 +252,12 @@ void particleProcessor::run()
         //END SINGLE-THREAD
 
         //START MULTI-THREAD
-        yarp::sig::ImageOf <yarp::sig::PixelBgr> likedebug;
-        likedebug.resize(nparticles * 4, stw.size());
-        likedebug.zero();
+        //yarp::sig::ImageOf <yarp::sig::PixelBgr> likedebug;
+        //likedebug.resize(nparticles * 4, stw.size());
+        //likedebug.zero();
         for(int k = 0; k < nThreads; k++) {
-            computeThreads[k]->setDataSources(&indexedlist, &deltats, &stw, &likedebug);
+            //computeThreads[k]->setDataSources(&indexedlist, &deltats, &stw, &likedebug);
+            computeThreads[k]->setDataSources(&indexedlist, &deltats, &stw, 0);
             computeThreads[k]->start();
         }
 
