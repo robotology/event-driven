@@ -42,6 +42,7 @@ private:
     yarp::sig::Vector negdist;
     preComputedBins *pcb;
 
+
     //state - this should be a yarp::sig::vector
     double x;
     double y;
@@ -92,6 +93,9 @@ public:
     void updateWeight(double l, double n);
     void updateWeight2(double likelihood, double pwsumsq);
     void updateWeightSync(double normval);
+
+    double dtavg;
+    double dtvar;
 
     double getx() { return x; }
     double gety() { return y; }

@@ -284,10 +284,8 @@ int vParticle::incrementalLikelihood(int vx, int vy, int dt)
         //int a = 0.5 + (angbuckets-1) * (atan2(dy, dx) + M_PI) / (2.0 * M_PI);
         if(!angdist[a]) {
             inlierCount++;
-            angdist[a] = 1;
+            angdist[a] = dt + 1;
         }
-
-
 
     } else if(sqrd > -outlierParameter && sqrd < 0) { //-3 < X < -5
 
@@ -304,7 +302,6 @@ int vParticle::incrementalLikelihood(int vx, int vy, int dt)
     if(score >= likelihood) {
         likelihood = score;
         maxtw = dt;
-
     }
 
 
@@ -314,8 +311,30 @@ int vParticle::incrementalLikelihood(int vx, int vy, int dt)
 
 void vParticle::concludeLikelihood()
 {
+    dtavg = 0;
+    dtvar = 0;
+    int n = 0;
+
+    for(int i = 0; i < angdist.size(); i++) {
+        if(angdist[i] == 0) continue;
+        dtavg += angdist[i];
+        n++;
+    }
+    if(n > 10) {
+        dtavg /= n;
+        for(int i = 0; i < angdist.size(); i++) {
+            if(angdist[i] == 0) continue;
+            dtvar += (dtavg - angdist[i]) * (dtavg - angdist[i]);
+        }
+        dtvar /= n;
+        dtvar = 0.000001 + 1.0 / sqrt(dtvar * 2.0 * M_PI);
+    } else {
+        dtvar = 0.000001;
+    }
+
     if(likelihood > minlikelihood) tw = maxtw;
-    weight = likelihood * weight;
+    weight = likelihood * weight * dtvar;
+
 }
 
 void vParticle::updateWeight(double l, double n)
