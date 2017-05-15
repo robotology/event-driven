@@ -210,14 +210,12 @@ double AutoSaccadeModule::computeEventRate() {
 }
 
 bool AutoSaccadeModule::updateModule() {
-
-
     
     //collect events for some time
     eventBottleManager.start();
     Time::delay(timeout);
     eventBottleManager.stop();
-
+    
     //if there is no connection don't do anything yet
     if(!eventBottleManager.getInputCount()) return true;
     
@@ -231,7 +229,7 @@ bool AutoSaccadeModule::updateModule() {
     
     //ImageOf<PixelBgr> &leftImage = leftImgPort.prepare();
     //ImageOf<PixelBgr> &rightImage = rightImagePort.prepare();
-
+    ev::vQueue q = eventBottleManager.getEvents();
     //visualizeEvents( leftImage, rightImage, q );
     
     //Face straight (for simulation only)
@@ -254,27 +252,31 @@ bool AutoSaccadeModule::updateModule() {
         ev::vQueue q = eventBottleManager.getEvents();
 
         Vector cmL,cmR;
+        gazeControl->restoreContext( context0 );
         
         if (computeCenterMass( cmR, cmL, q )) {
-            cout << "gazing at l:(" << cmL( 0 ) << ", " << cmL( 1 ) << ")" << endl;
-            cout << "          r:(" << cmR( 0 ) << ", " << cmR( 1 ) << ")" << endl;
+            if (cmL.size()) {  //left
+                if (cmR.size()) { //left + right
+                    gazeControl->lookAtStereoPixelsSync( cmL, cmR );
+                    cout << "gazing stereo l:(" << cmL( 0 ) << ", " << cmL( 1 ) << ")" << endl;
+                    cout << "          r:(" << cmR( 0 ) << ", " << cmR( 1 ) << ")" << endl;
+                } else { //left but not right
+                    gazeControl->lookAtMonoPixelSync(0, cmL);
+                    cout << "gazing left :(" << cmL( 0 ) << ", " << cmL( 1 ) << ")" << endl;
+                }
+            } else if (cmR.size()) { //right but not left
+                gazeControl->lookAtMonoPixelSync(0, cmR);
+                cout << "gazing right :(" << cmR( 0 ) << ", " << cmR( 1 ) << ")" << endl;
+            } else { //nor left nor right
+                return true;
+            }
+            gazeControl->waitMotionDone( 0.1,5.0 );
+            cout << "Finished gazing" << endl;
     
             //Making attention point red in image
             //leftImage((int) cmL( 0 ),(int) cmL( 1 ) ) = PixelBgr( 255, 0, 0 );
             //rightImage( (int) cmR( 0 ),(int) cmR( 1 ) ) = PixelBgr( 255, 0, 0 );
-
-            //Images are flipped wrt camera orientation
-            cmL(0) = camWidth - 1 - cmL(0);
-            cmL(1) = camHeight - 1 - cmL(1);
             
-            cmR(0) = camWidth - 1 - cmR(0);
-            cmR(1) = camHeight - 1 - cmR(1);
-
-            gazeControl->restoreContext( context0 );
-            gazeControl->lookAtMonoPixelSync(0, cmL);
-            //gazeControl->lookAtStereoPixels( cmL, cmR );
-            gazeControl->waitMotionDone( 0.1, 4.0 );
-            cout << "Finished gazing" << endl;
         }
     }
 
@@ -344,18 +346,36 @@ bool AutoSaccadeModule::computeCenterMass( Vector &cmR, Vector &cmL, ev::vQueue 
         }
     }
     
-    if (lSize == 0 || rSize == 0)
+    if (lSize == 0 && rSize == 0)
         return false;
     
-    xl /= lSize;
-    yl /= lSize;
-    xr /= rSize;
-    yr /= rSize;
+    if (lSize != 0) {
+        xl /= lSize;
+        yl /= lSize;
+    }
+    if (rSize != 0) {
+        xr /= rSize;
+        yr /= rSize;
+    }
     
-    cmR(0) = xr;
-    cmR(1) = yr;
-    cmL(0) = xl;
-    cmL(1) = yl;
+    std::cout << "lSize = " << lSize << std::endl;
+    std::cout << "rSize = " << rSize << std::endl;
+    
+    
+    if (rSize > minVpS/2) {
+        //Images are flipped wrt camera orientation
+        cmR(0) = camWidth - 1 - xr;
+        cmR(1) = camHeight - 1 - yr;
+    } else {
+        cmR.resize(0);
+    }
+    if (lSize > minVpS/2) {
+        //Images are flipped wrt camera orientation
+        cmL(0) = camWidth - 1 - xl;
+        cmL(1) = camHeight - 1 - yl;
+    } else{
+        cmL.resize( 0 );
+    }
     
     return true;
 }
