@@ -361,13 +361,13 @@ void particleProcessor::run()
         if(scopeOut.getOutputCount()) {
             yarp::os::Bottle &scopedata = scopeOut.prepare();
             scopedata.clear();
-            scopedata.addDouble(eventhandler2.queryDelay() * ev::vtsHelper::vtsscaler);
+            scopedata.addDouble(eventhandler2.queryDelay());
 
             double temptime = yarp::os::Time::now();
             //scopedata.addDouble(1.0 / (temptime - ptime2));
             ptime2 = temptime;
 
-            scopedata.addDouble(t - pt);
+            scopedata.addDouble((t - pt) * vtsHelper::tsscaler);
 
 //            scopedata.addDouble(dtnezero / (double)(dtnezero + dtezero));
 //            if(dtnezero + dtezero > 1000) {
@@ -376,8 +376,8 @@ void particleProcessor::run()
 //            }
 
             //scopedata.addDouble(stw.size());
-            scopedata.addDouble(maxtw);
-            scopedata.addDouble(pmax.gettw());
+            scopedata.addDouble(pmax.dtvar);
+            scopedata.addDouble(pmax.gettw() * vtsHelper::tsscaler);
 
 
 //            scopedata.addDouble(avgr);
