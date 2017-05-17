@@ -4,25 +4,54 @@ if(~exist('infilename', 'var'))
 end
 outfilename = [infilename '.txt'];
 
+if(~exist('CODEC10', 'var'))
+    display('Please specify if using ATIS by setting "CODEC10" to 1');
+    return;
+end
+
 display(['Reading from file ' infilename]);
 display(['Writing to file ' outfilename]);
 
-CH = 1;
-TS = 2;
-POL = 3;
-X = 5;
-Y = 4;
 
-POLSH = 0;
-CHSH  = 15;
-XSH   = 1;
-YSH   = 8;
+if(~CODEC10)
+    
+    CH = 1;
+    TS = 2;
+    POL = 3;
+    X = 5;
+    Y = 4;
+    
+    POLSH = 0;
+    CHSH  = 15;
+    XSH   = 1;
+    YSH   = 8;
+    
+    TSBITS = int32(2^31-1); %all but most significant bit
+    POLBIT = int32(2^POLSH); %0th bit
+    CHBIT  = int32(2^CHSH); %15th bit
+    XBITS  = bitshift(int32(2^7-1), XSH);
+    YBITS  = bitshift(int32(2^7-1), YSH);
 
-TSBITS = int32(2^31-1); %all but most significant bit
-POLBIT = int32(2^POLSH); %0th bit
-CHBIT  = int32(2^CHSH); %15th bit
-XBITS  = bitshift(int32(2^7-1), XSH);
-YBITS  = bitshift(int32(2^7-1), YSH);
+else
+    
+    CH = 1;
+    TS = 2;
+    POL = 3;
+    X = 4;
+    Y = 5;
+    
+    POLSH = 0;
+    CHSH  = 20;
+    XSH   = 1;
+    YSH   = 10;
+    
+    TSBITS = int32(2^31-1); %all but most significant bit
+    POLBIT = int32(2^POLSH); %0th bit
+    CHBIT  = int32(2^CHSH);
+    XBITS  = bitshift(int32(2^9-1), XSH);
+    YBITS  = bitshift(int32(2^8-1), YSH);
+    
+end
 
 MAXSTAMP = 2^24-1;
 
@@ -52,11 +81,13 @@ while(ischar(l))
     temp = length(bottle) / 2;
     vi = vi + length(bottle) / 2;
     bottle = reshape(bottle, 2, length(bottle)/2)';
-    errors = bottle(:, 1) > 0 | bottle(:, 2) < 0 | bottle(:, 2) > 65535;
-    if(sum(errors))
-        display(['Bottle Data Corrupt (' int2str(sum(errors)) ') in ' ...
-            'bottle index: ' int2str(bi)]);
-        bottle = bottle(~errors, :);
+    if(~CODEC10)
+        errors = bottle(:, 1) > 0 | bottle(:, 2) < 0 | bottle(:, 2) > 65535;
+        if(sum(errors))
+            display(['Bottle Data Corrupt (' int2str(sum(errors)) ') in ' ...
+                'bottle index: ' int2str(bi)]);
+            bottle = bottle(~errors, :);
+        end
     end
     
     textformat = zeros(size(bottle, 1), 6);
@@ -64,7 +95,7 @@ while(ischar(l))
     textformat(:, CH) = bitshift(bitand(int32(bottle(:, 2)), CHBIT), -CHSH);
     textformat(:, POL) = bitshift(bitand(int32(bottle(:, 2)), POLBIT), -POLSH);
     textformat(:, X) = bitshift(bitand(int32(bottle(:, 2)), XBITS), -XSH);
-    textformat(:, Y) = bitshift(bitand(int32(bottle(:, 2)), YBITS), -YSH);
+    textformat(:, Y) = bitshift(bitand(int32(bottle(:, 2)), YBITS), -YSH);    
     textformat(1, 6) = 1;
     
     %check for wraps
