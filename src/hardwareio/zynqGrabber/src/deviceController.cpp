@@ -34,6 +34,8 @@ vDevCtrl::vDevCtrl(std::string deviceName, unsigned char i2cAddress)
     fpgaStat.i2cTimeout    = false;
     fpgaStat.crcErr        = false;
 
+    iBias = false;
+
 }
 
 bool vDevCtrl::connect()
@@ -51,7 +53,7 @@ bool vDevCtrl::connect()
         std::cout << "Check sensor has correct I2CAddress and is physically connected" << std::endl;
         close(fd);
         return false;
-	}
+    }
 
     return true;
 }
@@ -195,6 +197,11 @@ unsigned int vDevCtrl::getBias(std::string biasName)
     return vals.get(3).asInt();
 }
 
+void vDevCtrl::useCurrentBias(bool flag)
+{
+    iBias = flag;
+}
+
 bool vDevCtrl::configureBiases(){
 
     clearFpgaStatus("biasDone");
@@ -222,7 +229,11 @@ bool vDevCtrl::configureBiases(){
         vref = biasdata->get(1).asInt();
         header = biasdata->get(2).asInt();
         voltage = biasdata->get(3).asInt();
-        unsigned int biasVal = 255 * (voltage / vref);
+        unsigned int biasVal = 0;
+        if(iBias)
+            biasVal = voltage;
+        else
+            biasVal = 255 * (voltage / vref);
         biasVal += header << 21;
         //std::cout << biasdata->get(0).asString() << " " << biasVal << std::endl;
         if(i2cWrite(VSCTRL_BG_DATA_ADDR, (unsigned char *)&biasVal, sizeof(biasVal)) != sizeof(biasVal))
@@ -235,8 +246,11 @@ bool vDevCtrl::configureBiases(){
     vref = biasdata->get(1).asInt();
     header = biasdata->get(2).asInt();
     voltage = biasdata->get(3).asInt();
-
-    unsigned int biasVal = 255 * (voltage / vref);
+    unsigned int biasVal = 0;
+    if(iBias)
+        biasVal = voltage;
+    else
+        biasVal = 255 * (voltage / vref);
     biasVal += header << 21;
     //std::cout << biasdata->get(0).asString() << " " << biasVal << std::endl;
     if(i2cWrite(VSCTRL_BG_DATA_ADDR, (unsigned char *)&biasVal, sizeof(biasVal)) != sizeof(biasVal))

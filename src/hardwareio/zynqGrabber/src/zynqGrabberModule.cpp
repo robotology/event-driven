@@ -49,6 +49,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     bool verbose = rf.check("verbose") && rf.check("verbose", yarp::os::Value(true)).asBool();
     bool biaswrite = rf.check("biaswrite") && rf.check("biaswrite", yarp::os::Value(true)).asBool();
     bool jumpcheck = rf.check("jumpcheck") && rf.check("jumpcheck", yarp::os::Value(true)).asBool();
+    bool iBias = rf.check("iBias") && rf.check("iBias", yarp::os::Value(true)).asBool();
 
     if(rf.check("controllerDevice")) {
 
@@ -56,6 +57,9 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 
         vsctrlMngLeft = vDevCtrl(controllerDevice, I2C_ADDRESS_LEFT);
         vsctrlMngRight = vDevCtrl(controllerDevice, I2C_ADDRESS_RIGHT);
+
+        vsctrlMngLeft.useCurrentBias(iBias);
+        vsctrlMngRight.useCurrentBias(iBias);
 
         //bias values
         yarp::os::Bottle biaslistl = rf.findGroup("ATIS_BIAS_LEFT");
