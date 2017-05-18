@@ -39,13 +39,19 @@
 
 <module>
     <name> vFramer </name>
-    <parameters> --name /vFramer --displays "(1 /left (AE CLE ISO))" --height 240 --width 304 --flip </parameters>
+    <parameters> --name /vFramer --displays "(0 /left (AE CLE ISO) 1 /right (AE CLE ISO))" --height 240 --width 304 --flip </parameters>
     <node>icub24</node>
 </module>
 
 <module>
    <name>yarpview</name>
-   <parameters> --name /viewISO --x 100 --y 100 --h 480 --w 608 --RefreshTime 33 </parameters>
+   <parameters> --name /viewLeft --x 100 --y 100 --h 480 --w 608 --RefreshTime 33 </parameters>
+   <node> icub24 </node>
+</module>
+
+<module>
+   <name>yarpview</name>
+   <parameters> --name /viewRight --x 100 --y 100 --h 480 --w 608 --RefreshTime 33 </parameters>
    <node> icub24 </node>
 </module>
 
@@ -87,7 +93,13 @@
 
 <connection>
   <from>/vFramer/left</from>
-  <to>/viewISO</to>
+  <to>/viewLeft</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
+  <from>/vFramer/left</from>
+  <to>/viewRight</to>
   <protocol>udp</protocol>
 </connection>
 

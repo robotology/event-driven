@@ -149,33 +149,26 @@ void particleProcessor::run()
     unsigned int dtnezero = 0;
     //t = unwrap(stw2.front()->getStamp());
 
-    stw = stw2;
+    //stw = stw2;
 
     while(!isStopping()) {
         ptime = yarp::os::Time::now();
 
-        if(useroi)
-            stw = eventhandler2.queryROI(camera, maxtw, avgx, avgy, avgr * 1.5);
-        else
-            stw = eventhandler2.queryWindow(camera, maxtw);
-        yarpstamp = eventhandler2.queryYstamp();
-        previousstamp = currentstamp;
-        currentstamp = eventhandler2.queryVstamp();
+        stw = stw2;
+
+//        if(useroi)
+//            stw = eventhandler2.queryROI(camera, maxtw, avgx, avgy, avgr * 1.5);
+//        else
+//            stw = eventhandler2.queryWindow(camera, maxtw);
+//        yarpstamp = eventhandler2.queryYstamp();
+//        previousstamp = currentstamp;
+//        currentstamp = eventhandler2.queryVstamp();
 
         double Tget = (yarp::os::Time::now() - ptime)*1000.0;
         ptime = yarp::os::Time::now();
 
         pt = t;
         t = unwrap(currentstamp);
-        int dt = t - pt;
-        if(dt > 450000) {
-            std::cout << previousstamp << " " << currentstamp << std::endl;
-        }
-        if(t == pt)
-            dtezero++;
-        else
-            dtnezero++;
-
 
         std::vector<vParticle> indexedSnap = indexedlist;
 
@@ -267,12 +260,12 @@ void particleProcessor::run()
 //        else
 //            yarpstamp = eventhandler2.queryWindow(stw2, camera, maxtw);
 
-//        if(useroi)
-//            stw2 = eventhandler2.queryROI(camera, maxtw, avgx, avgy, avgr * 1.5);
-//        else
-//            stw2 = eventhandler2.queryWindow(camera, maxtw);
-//        yarpstamp = eventhandler2.queryYstamp();
-//        currentstamp = eventhandler2.queryVstamp();
+        if(useroi)
+            stw2 = eventhandler2.queryROI(camera, maxtw, avgx, avgy, avgr * 1.5);
+        else
+            stw2 = eventhandler2.queryWindow(camera, maxtw);
+        yarpstamp = eventhandler2.queryYstamp();
+        currentstamp = eventhandler2.queryVstamp();
 
         double normval = 0.0;
         for(int k = 0; k < nThreads; k++) {
@@ -376,8 +369,8 @@ void particleProcessor::run()
 //            }
 
             //scopedata.addDouble(stw.size());
-            scopedata.addDouble(pmax.dtvar);
-            scopedata.addDouble(pmax.gettw() * vtsHelper::tsscaler);
+            //scopedata.addDouble(pmax.dtvar);
+            //scopedata.addDouble(pmax.gettw() * vtsHelper::tsscaler);
 
 
 //            scopedata.addDouble(avgr);

@@ -232,7 +232,7 @@ public:
     void configure(int height, int width, double maxcpudelay)
     {
         //this->maxcpudelay = maxcpudelay / vtsHelper::tsscaler;
-        this->maxcpudelay = vtsHelper::max_stamp * 0.25;
+        this->maxcpudelay = 0.05; //vtsHelper::max_stamp * 0.25;
         surfaceleft.initialise(height, width);
         surfaceright.initialise(height, width);
         filter.initialise(width, height, 100000, 1);
@@ -302,7 +302,7 @@ public:
         m.lock();
         double cpunow = yarp::os::Time::now();
 
-        cpudelay -= (cpunow - cputime) * vtsHelper::vtsscaler * 1.02;
+        cpudelay -= (cpunow - cputime) * vtsHelper::vtsscaler * 1.01;
         cputime = cpunow;
 
         if(cpudelay < 0) cpudelay = 0;
@@ -326,7 +326,7 @@ public:
 
         m.lock();
 
-        cpudelay -= (cpunow - cputime) * vtsHelper::vtsscaler * 1.02;
+        cpudelay -= (cpunow - cputime) * vtsHelper::vtsscaler * 1.01;
         cputime = cpunow;
 
         if(cpudelay < 0) cpudelay = 0;
