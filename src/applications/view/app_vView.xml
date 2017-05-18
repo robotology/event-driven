@@ -32,19 +32,19 @@
 <connection>
   <from>/zynqGrabber/vBottle:o</from>
   <to>/vFramer/AE:i</to>
-  <protocol>tcp</protocol>
+  <protocol>udp</protocol>
 </connection>
 
 <connection>
   <from>/vFramer/left</from>
   <to>/viewCh0</to>
-  <protocol>tcp</protocol>
+  <protocol>udp</protocol>
 </connection>
 
 <connection>
   <from>/vFramer/right</from>
   <to>/viewCh1</to>
-  <protocol>tcp</protocol>
+  <protocol>udp</protocol>
 </connection>
 
 
