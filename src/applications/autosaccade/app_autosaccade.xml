@@ -46,13 +46,13 @@
     <connection>
         <from>/vFramer/left</from>
         <to>/viewLeft</to>
-        <protocol>tcp</protocol>
+        <protocol>udp</protocol>
     </connection>
 
     <connection>
         <from>/vFramer/right</from>
         <to>/viewRight</to>
-        <protocol>tcp</protocol>
+        <protocol>udp</protocol>
     </connection>
 
 </application>
