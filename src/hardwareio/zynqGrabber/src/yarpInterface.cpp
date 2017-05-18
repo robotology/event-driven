@@ -15,6 +15,9 @@
  */
 
 #include "yarpInterface.h"
+#include "deviceRegisters.h"
+
+#include <sys/ioctl.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
@@ -22,6 +25,14 @@
 /******************************************************************************/
 //vDevReadBuffer
 /******************************************************************************/
+
+typedef struct gen_reg {
+    unsigned int offset;
+    char         rw;
+    unsigned int data;
+} gen_reg_t;
+
+
 vDevReadBuffer::vDevReadBuffer()
 {
     //parameters
@@ -48,6 +59,17 @@ bool vDevReadBuffer::initialise(std::string devicename,
         if(fd < 0)
             return false;
     }
+
+//    gen_reg_t reg;
+//    reg.offset = CTRL_REG;
+//    reg.rw = 0;
+//    reg.data = 0;
+//    ioctl(fd, AER_GEN_REG, &reg);
+
+//    reg.rw = 1;
+//    reg.data |= CTRL_32BITCLOCK;
+//    ioctl(fd, AER_GEN_REG, &reg);
+
 
     if(bufferSize > 0) this->bufferSize = bufferSize;
     if(readSize > 0) this->readSize = readSize;
@@ -253,9 +275,9 @@ void  device2yarp::run() {
 
         if(applyfilter)
             nBytesRead = applysaltandpepperfilter(data, nBytesRead);
-            
-	    if(jumpcheck)
-	        tsjumpcheck(data, nBytesRead);
+
+        if(jumpcheck)
+            tsjumpcheck(data, nBytesRead);
 
         if(portEventCount.getOutputCount() && nBytesRead) {
             yarp::os::Bottle &ecb = portEventCount.prepare();
