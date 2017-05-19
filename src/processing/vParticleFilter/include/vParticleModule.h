@@ -34,7 +34,10 @@ class vParticleModule : public yarp::os::RFModule
 {
     //the event bottle input and output handler
     vParticleReader *particleCallback;
-    particleProcessor *particleThread;
+    particleProcessor *rightThread;
+    particleProcessor *leftThread;
+    hSurfThread eventhandler;
+    collectorPort outport;
 
 public:
 

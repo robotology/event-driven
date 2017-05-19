@@ -50,6 +50,8 @@ bool vParticleModule::configure(yarp::os::ResourceFinder &rf)
     //administrative options
     setName((rf.check("name", yarp::os::Value("/vParticleFilter")).asString()).c_str());
     int nthread = rf.check("threads", yarp::os::Value(2)).asInt();
+    int height = rf.check("height", yarp::os::Value(240)).asInt();
+    int width = rf.check("width", yarp::os::Value(304)).asInt();
 
     //flags
     bool strict = rf.check("strict") &&
@@ -60,13 +62,11 @@ bool vParticleModule::configure(yarp::os::ResourceFinder &rf)
             rf.check("adaptive", yarp::os::Value(true)).asBool();
     bool useroi = rf.check("useroi") &&
             rf.check("useroi", yarp::os::Value(true)).asBool();
-    int camera = 0;
-    if(rf.check("camera") && rf.find("camera").asString() == "right")
-        camera = 1;
 
     //filter paramters
-    int nParticles = rf.check("particles", yarp::os::Value(50)).asInt();
-    double nRandResample = rf.check("randoms", yarp::os::Value(0.02)).asDouble();
+    int rightParticles = rf.check("rParticles", yarp::os::Value(100)).asInt();
+    int leftParticles = rf.check("lParticles", yarp::os::Value(0)).asInt();
+    double nRandResample = rf.check("randoms", yarp::os::Value(0.0)).asDouble();
     int rate = rf.check("rate", yarp::os::Value(1000)).asDouble();
 
     yarp::os::Bottle * seed = rf.find("seed").asList();
@@ -77,9 +77,12 @@ bool vParticleModule::configure(yarp::os::ResourceFinder &rf)
     double outlierParameter = rf.check("obsoutlier", yarp::os::Value(3.0)).asDouble();
     double particleVariance = rf.check("variance", yarp::os::Value(0.5)).asDouble();
 
+    particleCallback = 0;
+    leftThread = 0;
+    rightThread = 0;
 
     if(!realtime) {
-        particleThread = 0;
+
         /* USE FULL PROCESS IN CALLBACK */
         particleCallback = new vParticleReader;
         particleCallback->setObservationParameters(minlikelihood, inlierParameter,
@@ -88,10 +91,9 @@ bool vParticleModule::configure(yarp::os::ResourceFinder &rf)
             std::cout << "Using initial seed location: " << seed->toString() << std::endl;
             particleCallback->setSeed(seed->get(0).asDouble(), seed->get(1).asDouble(), seed->get(2).asDouble());
         }
-        particleCallback->initialise(rf.check("width", yarp::os::Value(304)).asInt(),
-                                     rf.check("height", yarp::os::Value(240)).asInt(),
-                                     nParticles, rate, nRandResample, adaptivesampling,
-                                     particleVariance, camera, useroi);
+        particleCallback->initialise(width, height, rightParticles, rate,
+                                     nRandResample, adaptivesampling,
+                                     particleVariance, 1, useroi);
 
         //open the ports
         if(!particleCallback->open(getName(), strict)) {
@@ -99,24 +101,49 @@ bool vParticleModule::configure(yarp::os::ResourceFinder &rf)
             return false;
         }
     } else {
-        particleCallback = 0;
+
         /* USE REAL-TIME THREAD */
-        particleThread = new particleProcessor(
-                    rf.check("height", yarp::os::Value(240)).asInt(),
-                    rf.check("width", yarp::os::Value(304)).asInt(),
-                    this->getName(), strict);
-        particleThread->setComputeOptions(camera, nthread, useroi);
-        particleThread->setFilterParameters(nParticles, nRandResample,
-                                            adaptivesampling, particleVariance);
-        particleThread->setObservationParameters(minlikelihood, inlierParameter,
-                                                 outlierParameter);
-        if(seed && seed->size() == 3) {
-            std::cout << "Using initial seed location: " << seed->toString() << std::endl;
-            particleThread->setSeed(seed->get(0).asDouble(), seed->get(1).asDouble(), seed->get(2).asDouble());
+        eventhandler.configure(height, width, 0.05);
+
+        if(leftParticles) {
+            leftThread = new particleProcessor(height, width, &eventhandler, &outport);
+            leftThread->setComputeOptions(0, nthread, useroi);
+            leftThread->setFilterParameters(leftParticles, nRandResample,
+                                                adaptivesampling, particleVariance);
+            leftThread->setObservationParameters(minlikelihood, inlierParameter,
+                                                     outlierParameter);
+            if(seed && seed->size() == 3) {
+                std::cout << "Using initial seed location: " << seed->toString() << std::endl;
+                leftThread->setSeed(seed->get(0).asDouble(), seed->get(1).asDouble(), seed->get(2).asDouble());
+            }
+            if(!leftThread->start())
+                return false;
         }
 
-        if(!particleThread->start())
+        if(rightParticles) {
+            rightThread = new particleProcessor(height, width, &eventhandler, &outport);
+            rightThread->setComputeOptions(1, nthread, useroi);
+            rightThread->setFilterParameters(rightParticles, nRandResample,
+                                                adaptivesampling, particleVariance);
+            rightThread->setObservationParameters(minlikelihood, inlierParameter,
+                                                     outlierParameter);
+            if(seed && seed->size() == 3) {
+                std::cout << "Using initial seed location: " << seed->toString() << std::endl;
+                rightThread->setSeed(seed->get(0).asDouble(), seed->get(1).asDouble(), seed->get(2).asDouble());
+            }
+            if(!rightThread->start())
+                return false;
+        }
+
+        if(!outport.open(getName() + "/vBottle:o"))
             return false;
+        if(!outport.start())
+            return false;
+        if(!eventhandler.open(getName() + "/vBottle:i"))
+            return false;
+        if(!eventhandler.start())
+            return false;
+
     }
 
     return true;
@@ -125,8 +152,12 @@ bool vParticleModule::configure(yarp::os::ResourceFinder &rf)
 /******************************************************************************/
 bool vParticleModule::interruptModule()
 {
+    if(!particleCallback) outport.stop();
+    if(!particleCallback) eventhandler.stop();
     if(particleCallback) particleCallback->interrupt();
-    if(particleThread) particleThread->stop();
+    if(leftThread) leftThread->stop();
+    if(rightThread) rightThread->stop();
+
     std::cout << "Interrupt Successful" << std::endl;
     return true;
 }

@@ -40,8 +40,8 @@ class particleProcessor : public yarp::os::Thread
 {
 private:
 
-    //surfaceThread eventhandler2;
-    hSurfThread eventhandler2;
+    hSurfThread* eventhandler;
+    collectorPort* eventsender;
     preComputedBins pcb;
     std::vector<vPartObsThread *> computeThreads;
     int nThreads;
@@ -65,8 +65,7 @@ private:
     double pwsumsq;
     double particleVariance;
     int rate;
-    std::string name;
-    bool strict;
+
     int camera;
     bool useroi;
 
@@ -97,7 +96,7 @@ public:
         seedx = x; seedy = y; seedr = r;
     }
 
-    particleProcessor(unsigned int height, unsigned int width, std::string name, bool strict);
+    particleProcessor(unsigned int height, unsigned int width, hSurfThread* eventhandler, collectorPort* eventsender);
     bool threadInit();
     void run();
     void threadRelease();

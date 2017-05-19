@@ -5,12 +5,12 @@ using namespace ev;
 /*////////////////////////////////////////////////////////////////////////////*/
 //particleprocessor (real-time)
 /*////////////////////////////////////////////////////////////////////////////*/
-particleProcessor::particleProcessor(unsigned int height, unsigned int width, std::string name, bool strict)
+particleProcessor::particleProcessor(unsigned int height, unsigned int width, hSurfThread* eventhandler, collectorPort *eventsender)
 {
     res.height = height;
     res.width  = width;
-    this->name = name;
-    this->strict = strict;
+    this->eventhandler = eventhandler;
+    this->eventsender = eventsender;
     ptime2 = yarp::os::Time::now();
     pytime = 0;
 
@@ -41,8 +41,6 @@ particleProcessor::particleProcessor(unsigned int height, unsigned int width, st
     rbound_max = 50;
     rbound_min = 10;
 
-    eventhandler2.configure(height, width, 0.1);
-
 }
 
 bool particleProcessor::threadInit()
@@ -59,46 +57,27 @@ bool particleProcessor::threadInit()
         computeThreads.push_back(new vPartObsThread(pStart, pEnd));
     }
 
-    rbound_min = res.width/16;
-    rbound_max = res.width/7;
+    rbound_min = res.width/18;
+    rbound_max = res.width/6;
 
     pcb.configure(res.height, res.width, rbound_max, 128);
 
-    if(!debugOut.open(name + "/debug:o")) {
-        std::cout << "could not open debug port" << std::endl;
-        return false;
-    }
+//    if(camera == 0) {
+//        if(!debugOut.open(name + "/debug:o")) {
+//            std::cout << "could not open debug port" << std::endl;
+//            return false;
+//        }
 
-    if(!scopeOut.open(name + "/scope:o")) {
-        std::cout << "could not open scope port" << std::endl;
-        return false;
-    }
-    if(!vBottleOut.open(name + "/vBottle:o")) {
-        std::cout << "coult not open vBottleOut port" << std::endl;
-        return false;
-    }
+//        if(!scopeOut.open(name + "/scope:o")) {
+//            std::cout << "could not open scope port" << std::endl;
+//            return false;
+//        }
 
-    if(!eventhandler2.open(name + "/vBottle:i")) {
-        std::cout << "Could not open eventhandler2 ports" << std::endl;
-        return false;
-    }
-
-
-//    if(!eventhandler.open(name, strict)) {
-//        std::cout << "Could not open eventhandler ports" << std::endl;
-//        return false;
+//        if(!vBottleOut.open(name + "/vBottle:o")) {
+//            std::cout << "coult not open vBottleOut port" << std::endl;
+//            return false;
+//        }
 //    }
-
-    //std::cout << "Port open - querying initialisation events" << std::endl;
-    //ev::vQueue stw;
-    //while(!stw.size()) {
-    //       yarp::os::Time::delay(0.01);
-    //       stw = eventhandler.queryEvents(0, 1);
-    //}
-
-    //unsigned int tnow = unwrap(stw.back()->getStamp());
-
-
 
     //initialise the particles
     vParticle p;
@@ -136,18 +115,14 @@ void particleProcessor::run()
     while(!stw2.size() && !isStopping()) {
         yarp::os::Time::delay(0.1);
         if(useroi)
-            stw2 = eventhandler2.queryROI(camera, 100000, res.width/2, res.height/2, res.width/2);
+            stw2 = eventhandler->queryROI(camera, 100000, res.width/2, res.height/2, res.width/2);
             //yarpstamp = eventhandler2.queryROI(stw2, camera, 100000, res.width/2, res.height/2, res.width/2);
         else
-            stw2 = eventhandler2.queryWindow(camera, 100000);
+            stw2 = eventhandler->queryWindow(camera, 100000);
             //yarpstamp = eventhandler2.queryWindow(stw2, camera, 100000);
     }
-    yarp::os::Stamp yarpstamp = eventhandler2.queryYstamp();
-    int currentstamp = eventhandler2.queryVstamp();
-    int previousstamp = currentstamp;
-    unsigned int dtezero = 0;
-    unsigned int dtnezero = 0;
-    //t = unwrap(stw2.front()->getStamp());
+    yarp::os::Stamp yarpstamp = eventhandler->queryYstamp();
+    int currentstamp = eventhandler->queryVstamp(camera);
 
     //stw = stw2;
 
@@ -261,11 +236,11 @@ void particleProcessor::run()
 //            yarpstamp = eventhandler2.queryWindow(stw2, camera, maxtw);
 
         if(useroi)
-            stw2 = eventhandler2.queryROI(camera, maxtw, avgx, avgy, avgr * 1.5);
+            stw2 = eventhandler->queryROI(camera, maxtw, avgx, avgy, avgr * 1.5);
         else
-            stw2 = eventhandler2.queryWindow(camera, maxtw);
-        yarpstamp = eventhandler2.queryYstamp();
-        currentstamp = eventhandler2.queryVstamp();
+            stw2 = eventhandler->queryWindow(camera, maxtw);
+        yarpstamp = eventhandler->queryYstamp();
+        currentstamp = eventhandler->queryVstamp(camera);
 
         double normval = 0.0;
         for(int k = 0; k < nThreads; k++) {
@@ -301,87 +276,91 @@ void particleProcessor::run()
             avgtw += indexedlist[i].gettw() * indexedlist[i].getw();
         }
 
-        if(vBottleOut.getOutputCount()) {
-            ev::vBottle &eventsout = vBottleOut.prepare();
-            eventsout.clear();
-            auto ceg = make_event<GaussianAE>();
-            ceg->stamp = currentstamp;
-            ceg->setChannel(camera);
-            ceg->x = avgx;
-            ceg->y = avgy;
-            ceg->sigx = avgr;
-            ceg->sigy = avgr;
-            ceg->sigxy = 0;
-            ceg->polarity = 1;
-            eventsout.addEvent(ceg);
-            vBottleOut.setEnvelope(yarpstamp);
-            vBottleOut.write();
-        }
+        auto ceg = make_event<GaussianAE>();
+        ceg->stamp = currentstamp;
+        ceg->setChannel(camera);
+        ceg->x = avgx;
+        ceg->y = avgy;
+        ceg->sigx = avgr;
+        ceg->sigy = avgr;
+        ceg->sigxy = 0;
+        ceg->polarity = 1;
 
-        double Timage = yarp::os::Time::now();
-        double ydt = yarpstamp.getTime() - pytime;
-        if(debugOut.getOutputCount() && (ydt > 0.03 || ydt < 0)) {
+        eventsender->pushevent(ceg, yarpstamp);
 
-            yarp::sig::ImageOf< yarp::sig::PixelBgr> &image = debugOut.prepare();
-            image.resize(res.width, res.height);
-            image.zero();
+//        if(vBottleOut.getOutputCount()) {
+//            ev::vBottle &eventsout = vBottleOut.prepare();
+//            eventsout.clear();
 
-            for(unsigned int i = 0; i < indexedlist.size(); i++) {
+//            eventsout.addEvent(ceg);
+//            vBottleOut.setEnvelope(yarpstamp);
+//            vBottleOut.write();
+//        }
 
-                int py = indexedlist[i].gety();
-                int px = indexedlist[i].getx();
+//        double Timage = yarp::os::Time::now();
+//        double ydt = yarpstamp.getTime() - pytime;
+//        if(debugOut.getOutputCount() && (ydt > 0.03 || ydt < 0)) {
 
-                if(py < 0 || py >= res.height || px < 0 || px >= res.width) continue;
-                //image(res.width-1 - px, res.height - 1 - py) = yarp::sig::PixelBgr(255, 255, 255);
+//            yarp::sig::ImageOf< yarp::sig::PixelBgr> &image = debugOut.prepare();
+//            image.resize(res.width, res.height);
+//            image.zero();
 
-            }
-            drawEvents(image, stw, currentstamp, pmax.gettw(), false);
-            //drawEvents(image, stw, pmax.gettw());
-            //drawEvents(image, stw, eventdriven::vtsHelper::maxStamp());
+//            for(unsigned int i = 0; i < indexedlist.size(); i++) {
 
-            //drawcircle(image, res.width-1 - avgx, res.height-1 - avgy, avgr+0.5, 1);
+//                int py = indexedlist[i].gety();
+//                int px = indexedlist[i].getx();
 
-            pytime = yarpstamp.getTime();
+//                if(py < 0 || py >= res.height || px < 0 || px >= res.width) continue;
+//                //image(res.width-1 - px, res.height - 1 - py) = yarp::sig::PixelBgr(255, 255, 255);
 
-            //image = likedebug;
-            //drawDistribution(image, indexedlist);
-
-            debugOut.setEnvelope(yarpstamp);
-            debugOut.write();
-        }
-        Timage = (yarp::os::Time::now() - Timage)*1000;
-
-        if(scopeOut.getOutputCount()) {
-            yarp::os::Bottle &scopedata = scopeOut.prepare();
-            scopedata.clear();
-            scopedata.addDouble(eventhandler2.queryDelay());
-
-            double temptime = yarp::os::Time::now();
-            //scopedata.addDouble(1.0 / (temptime - ptime2));
-            ptime2 = temptime;
-
-            scopedata.addDouble((t - pt) * vtsHelper::tsscaler);
-
-//            scopedata.addDouble(dtnezero / (double)(dtnezero + dtezero));
-//            if(dtnezero + dtezero > 1000) {
-//                dtnezero = 0;
-//                dtezero = 0;
 //            }
+//            drawEvents(image, stw, currentstamp, pmax.gettw(), false);
+//            //drawEvents(image, stw, pmax.gettw());
+//            //drawEvents(image, stw, eventdriven::vtsHelper::maxStamp());
 
-            //scopedata.addDouble(stw.size());
-            //scopedata.addDouble(pmax.dtvar);
-            //scopedata.addDouble(pmax.gettw() * vtsHelper::tsscaler);
+//            //drawcircle(image, res.width-1 - avgx, res.height-1 - avgy, avgr+0.5, 1);
+
+//            pytime = yarpstamp.getTime();
+
+//            //image = likedebug;
+//            //drawDistribution(image, indexedlist);
+
+//            debugOut.setEnvelope(yarpstamp);
+//            debugOut.write();
+//        }
+//        Timage = (yarp::os::Time::now() - Timage)*1000;
+
+//        if(scopeOut.getOutputCount()) {
+//            yarp::os::Bottle &scopedata = scopeOut.prepare();
+//            scopedata.clear();
+//            scopedata.addDouble(eventhandler->queryDelay(camera));
+
+//            double temptime = yarp::os::Time::now();
+//            //scopedata.addDouble(1.0 / (temptime - ptime2));
+//            ptime2 = temptime;
+
+//            scopedata.addDouble((t - pt) * vtsHelper::tsscaler);
+
+////            scopedata.addDouble(dtnezero / (double)(dtnezero + dtezero));
+////            if(dtnezero + dtezero > 1000) {
+////                dtnezero = 0;
+////                dtezero = 0;
+////            }
+
+//            //scopedata.addDouble(stw.size());
+//            //scopedata.addDouble(pmax.dtvar);
+//            //scopedata.addDouble(pmax.gettw() * vtsHelper::tsscaler);
 
 
-//            scopedata.addDouble(avgr);
-//            scopedata.addDouble(Tget);
-//            scopedata.addDouble(avgtw * 10e-6);
-//            scopedata.addDouble(maxtw * 10e-6);
-//            scopedata.addDouble(Tobs);
+////            scopedata.addDouble(avgr);
+////            scopedata.addDouble(Tget);
+////            scopedata.addDouble(avgtw * 10e-6);
+////            scopedata.addDouble(maxtw * 10e-6);
+////            scopedata.addDouble(Tobs);
 
 
-            scopeOut.write();
-        }
+//            scopeOut.write();
+//        }
 
     }
 
@@ -414,7 +393,6 @@ void particleProcessor::threadRelease()
 {
     scopeOut.close();
     debugOut.close();
-    eventhandler2.stop();
     std::cout << "Thread Released Successfully" <<std::endl;
 
 }
