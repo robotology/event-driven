@@ -150,7 +150,7 @@ public:
 #ifdef TIME32BIT
     unsigned int stamp:31;
 #else
-    unsigned int stamp:24;
+    unsigned int stamp:31;
 #endif
 
     vEvent();
