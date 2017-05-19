@@ -154,93 +154,35 @@ void vTrackToRobotManager::onRead(ev::vBottle &vBottleIn)
     this->getEnvelope(st);
 
     //we just need to get our updated TS
-    ev::vQueue q = vBottleIn.getAllSorted();
-    if(q.empty()) return;
-    int bestts = q.back()->stamp;
-    FIFO.removeEvents(q.back());
+    //ev::vQueue q = vBottleIn.getAllSorted();
+    //if(q.empty()) return;
+    //int bestts = q.back()->stamp;
+    //FIFO.removeEvents(q.back());
 
     //get the events and see if we can get a ball observation
     //q = vBottleIn.getSorted<ev::ClusterEventGauss>();
-    q = vBottleIn.get<GaussianAE>();
+    ev::vQueue q = vBottleIn.get<GaussianAE>();
 
-    bool dogaze;
-    if(yarp::os::Time::now() > lastdogazetime + 3)
-        dogaze = false;
-    else
-        dogaze = true;
+    if(q.empty()) return;
 
-    if(q.size()) {
+    bool dogaze = true;
+    auto vc = is_event<GaussianAE>(q.back());
+    int bestts = vc->stamp;
 
-        auto vc = is_event<GaussianAE>(q.back());
+    px[0] = 303 - vc->x;
+    px[1] = 239 - vc->y;
+    //turn u/v into xyz
+    if(gazedriver.isValid()) {
+        //gazecontrol->get3DPoint(0, px, (-2.4 * p_eyez + 70)/100.0, xrobref);
+        double zpos = -0.02 * p_eyez + 0.8;
+        zpos = std::min(zpos, 0.5);
+        zpos = std::max(zpos, 0.3);
 
-        //get the stamp
-        bestts = vc->stamp;
-
-        //get radius
-        //p_eyez = (-2.5 * vc->getXSigma2() + 70)/100.0;
-        p_eyez = vc->sigxy;
-        //p_eyez = std::min(p_eyez, 16.0);
-
-        //update our window
-//        ev::event<ev::AddressEvent> v = ev::event<ev::AddressEvent>(new ev::AddressEvent());
-//        v->setChannel(vc->getChannel());
-//        v->setPolarity(vc->getChannel());
-//        v->setX(vc->getXCog());
-//        v->setY(vc->getYCog());
-//        FIFO.addEvent(v);
-
-//        //and then get everything in the current window
-//        q = FIFO.getSurf();
-//        n = q.size();
-
-//        //compute the median
-//        std::vector<int> xs, ys;
-//        xs.resize(n); ys.resize(n);
-//        for(int i = 0; i < n; i++) {
-//            ev::event<ev::AddressEvent> vtw = ev::as_event<ev::AddressEvent>(q[i]);
-//            xs[i] = 303 - vtw->x;
-//            ys[i] = 239 - vtw->y;
-//            //p_eyez = std::max(p_eyez, (double)vtw->getXSigma2());
-//            //p_eyez = std::min(p_eyez, 16.0);
-//        }
-
-//        std::sort(xs.begin(), xs.end());
-//        std::sort(ys.begin(), ys.end());
-
-//        medx = xs[n / 2];
-//        medy = ys[n / 2];
-
-        //do error check for too much noise
-//        double medstdx = 0, medstdy = 0;
-//        for(int i = 0; i < n; i++) {
-//            medstdx += pow(xs[i] - medx, 2.0);
-//            medstdy += pow(ys[i] - medy, 2.0);
-//        }
-//        medstdx = sqrt(medstdx / n);
-//        medstdy = sqrt(medstdy / n);
-
-        //if(std::abs(vc->getXCog() - medx) < medstdx && std::abs(vc->getYCog() - medy) < medstdy) {
-            //std::cout << "current observation within 1 std" << std::endl;
-            //std::cout << medstdx << " " << medstdy << " " << n << std::endl;
-            //if(medstdx < 10 && medstdy < 10 && n > 5) {
-                dogaze = true;
-                lastdogazetime = yarp::os::Time::now();
-                px[0] = 303 - vc->x;
-                px[1] = 239 - vc->y;
-                //turn u/v into xyz
-                if(gazedriver.isValid()) {
-                    //gazecontrol->get3DPoint(0, px, (-2.4 * p_eyez + 70)/100.0, xrobref);
-                    double zpos = -0.02 * p_eyez + 0.8;
-                    zpos = std::min(zpos, 0.5);
-                    zpos = std::max(zpos, 0.3);
-
-                    gazecontrol->get3DPoint(1, px, zpos, xrobref);
-                    std::cout << px.toString() << " " << xrobref.toString() << std::endl;
-                }
-            //}
-        //}
-
+        gazecontrol->get3DPoint(1, px, zpos, xrobref);
+        std::cout << px.toString() << " " << xrobref.toString() << std::endl;
     }
+
+
 
 
     //DO GAZE
@@ -249,12 +191,17 @@ void vTrackToRobotManager::onRead(ev::vBottle &vBottleIn)
     //yarp::sig::Vector x(3); x = 0;  //position in xyz (iCub ref frame)
     //px[0] = medy;
     //px[1] = 127 - medx;
-    if(gazedriver.isValid() && dogaze) {
+    if(gazedriver.isValid()) {
 
         //if we use the gaze controller to gaze then go ahead
-        if(demo == gazedemo && gazingActive)
+        bool motionDone = false;
+        gazecontrol->checkMotionDone(&motionDone);
+        if(demo == gazedemo && gazingActive) {
             gazecontrol->lookAtFixationPoint(xrobref);
+        }
     }
+
+    return;
 
     if(gazedriver.isValid() && dogaze && demo == graspdemo && gazingActive) {
     //if(gazedriver.isValid() && demo == graspdemo && gazingActive) {

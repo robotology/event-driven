@@ -98,7 +98,7 @@
 </connection>
 
 <connection>
-  <from>/vFramer/left</from>
+  <from>/vFramer/right</from>
   <to>/viewRight</to>
   <protocol>udp</protocol>
 </connection>
