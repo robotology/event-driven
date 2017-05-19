@@ -216,23 +216,24 @@ private:
 
     //synchronising value (add to it when stamps come in, subtract from it
     // when querying events).
-    double cputime;
-    int cpudelay;
+    double cputimeL;
+    int cpudelayL;
+    double cputimeR;
+    int cpudelayR;
 
 public:
 
     hSurfThread()
     {
-        cpudelay = 0;
         vstamp = 0;
-        cputime = yarp::os::Time::now();
-        maxcpudelay = 0.5 / vtsHelper::tsscaler;
+        cpudelayL = cpudelayR = 0;
+        cputimeL = cputimeR = yarp::os::Time::now();
+        maxcpudelay = 0.05 * vtsHelper::vtsscaler;
     }
 
     void configure(int height, int width, double maxcpudelay)
     {
-        //this->maxcpudelay = maxcpudelay / vtsHelper::tsscaler;
-        this->maxcpudelay = 0.05; //vtsHelper::max_stamp * 0.25;
+        this->maxcpudelay = maxcpudelay * vtsHelper::vtsscaler;
         surfaceleft.initialise(height, width);
         surfaceright.initialise(height, width);
         filter.initialise(width, height, 100000, 1);
@@ -275,7 +276,8 @@ public:
 
                 int dt = (*qi)->stamp - vstamp;
                 if(dt < 0) dt += vtsHelper::max_stamp;
-                cpudelay += dt;
+                cpudelayL += dt;
+                cpudelayR += dt;
                 vstamp = (*qi)->stamp;
 
                 if((*qi)->getChannel() == 0)
@@ -295,24 +297,39 @@ public:
 
     vQueue queryROI(int channel, unsigned int querySize, int x, int y, int r)
     {
-
-
         vQueue q;
 
         m.lock();
+
         double cpunow = yarp::os::Time::now();
 
-        cpudelay -= (cpunow - cputime) * vtsHelper::vtsscaler * 1.01;
-        cputime = cpunow;
+        if(channel == 0) {
 
-        if(cpudelay < 0) cpudelay = 0;
-        if(cpudelay > maxcpudelay) cpudelay = maxcpudelay;
+            cpudelayL -= (cpunow - cputimeL) * vtsHelper::vtsscaler * 1.01;
+            cputimeL = cpunow;
 
+            if(cpudelayL < 0) cpudelayL = 0;
+            if(cpudelayL > maxcpudelay) {
+                yWarning() << "CPU delay hit maximum";
+                cpudelayL = maxcpudelay;
+            }
 
-        if(channel == 0)
-            q = surfaceleft.getSurface(cpudelay, querySize, r, x, y);
-        else
-            q = surfaceright.getSurface(cpudelay, querySize, r, x, y);
+            q = surfaceleft.getSurface(cpudelayL, querySize, r, x, y);
+        }
+        else {
+
+            cpudelayR -= (cpunow - cputimeR) * vtsHelper::vtsscaler * 1.01;
+            cputimeR = cpunow;
+
+            if(cpudelayR < 0) cpudelayR = 0;
+            if(cpudelayR > maxcpudelay) {
+                yWarning() << "CPU delay hit maximum";
+                cpudelayR = maxcpudelay;
+            }
+
+            q = surfaceright.getSurface(cpudelayR, querySize, r, x, y);
+        }
+
         m.unlock();
 
         return q;
@@ -320,31 +337,51 @@ public:
 
     vQueue queryWindow(int channel, unsigned int querySize)
     {
-        double cpunow = yarp::os::Time::now();
-
         vQueue q;
 
         m.lock();
 
-        cpudelay -= (cpunow - cputime) * vtsHelper::vtsscaler * 1.01;
-        cputime = cpunow;
+        double cpunow = yarp::os::Time::now();
 
-        if(cpudelay < 0) cpudelay = 0;
-        if(cpudelay > maxcpudelay) cpudelay = maxcpudelay;
+        if(channel == 0) {
 
+            cpudelayL -= (cpunow - cputimeL) * vtsHelper::vtsscaler * 1.01;
+            cputimeL = cpunow;
 
-        if(channel == 0)
-            q = surfaceleft.getSurface(cpudelay, querySize);
-        else
-            q = surfaceright.getSurface(cpudelay, querySize);
+            if(cpudelayL < 0) cpudelayL = 0;
+            if(cpudelayL > maxcpudelay) {
+                yWarning() << "CPU delay hit maximum";
+                cpudelayL = maxcpudelay;
+            }
+
+            q = surfaceleft.getSurface(cpudelayL, querySize);
+        }
+        else {
+
+            cpudelayR -= (cpunow - cputimeR) * vtsHelper::vtsscaler * 1.01;
+            cputimeR = cpunow;
+
+            if(cpudelayR < 0) cpudelayR = 0;
+            if(cpudelayR > maxcpudelay) {
+                yWarning() << "CPU delay hit maximum";
+                cpudelayR = maxcpudelay;
+            }
+
+            q = surfaceright.getSurface(cpudelayR, querySize);
+        }
+
         m.unlock();
 
         return q;
     }
 
-    double queryDelay()
+    double queryDelay(int channel = 0)
     {
-        return cpudelay * vtsHelper::tsscaler;
+        if(channel) {
+            return cpudelayR * vtsHelper::tsscaler;
+        } else {
+            return cpudelayL * vtsHelper::tsscaler;
+        }
     }
 
     yarp::os::Stamp queryYstamp()
@@ -352,10 +389,15 @@ public:
         return ystamp;
     }
 
-    int queryVstamp()
+    int queryVstamp(int channel = 0)
     {
+        int modvstamp;
         m.lock();
-        int modvstamp = vstamp - cpudelay;
+        if(channel) {
+            modvstamp = vstamp - cpudelayR;
+        } else {
+            modvstamp = vstamp - cpudelayL;
+        }
         m.unlock();
 
         if(modvstamp < 0) modvstamp += vtsHelper::max_stamp;
