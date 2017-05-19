@@ -23,6 +23,7 @@ file(GLOB folder_header
   include/iCub/eventdriven/vWindow_basic.h
   include/iCub/eventdriven/vFilters.h
   include/iCub/eventdriven/vSurfaceHandlerTh.h
+  include/iCub/eventdriven/vCollectSend.h
   include/iCub/eventdriven/all.h
 )
 
