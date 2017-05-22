@@ -59,13 +59,13 @@ bool vDevReadBuffer::initialise(std::string devicename,
         if(fd < 0)
             return false;
     }
-    
+
 #ifdef TIME32BIT
     yInfo() << "Using 32bit timestamps";
     unsigned int timestampswitch = 1;
 #else
-	yInfo() << "Using 24bit timestamps";
-	unsigned int timestampswitch = 1;
+    yInfo() << "Using 24bit timestamps";
+    unsigned int timestampswitch = 0;
 #endif
     ioctl(fd, IOC_SET_TS_TYPE, &timestampswitch);
 
