@@ -26,13 +26,6 @@
 //vDevReadBuffer
 /******************************************************************************/
 
-typedef struct gen_reg {
-    unsigned int offset;
-    char         rw;
-    unsigned int data;
-} gen_reg_t;
-
-
 vDevReadBuffer::vDevReadBuffer()
 {
     //parameters
@@ -60,13 +53,7 @@ bool vDevReadBuffer::initialise(std::string devicename,
             return false;
     }
 
-#ifdef TIME32BIT
-    yInfo() << "Using 32bit timestamps";
     unsigned int timestampswitch = 1;
-#else
-    yInfo() << "Using 24bit timestamps";
-    unsigned int timestampswitch = 0;
-#endif
     ioctl(fd, IOC_SET_TS_TYPE, &timestampswitch);
 
     if(bufferSize > 0) this->bufferSize = bufferSize;

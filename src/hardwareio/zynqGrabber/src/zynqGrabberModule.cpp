@@ -129,7 +129,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 
                 yarp::os::Bottle filp = rf.findGroup("FILTER_PARAMS");
                 if(!filp.isNull()) {
-                    std::cout << "APPLYING EVENT FILTER: " << std::endl;
+                    yInfo() << "APPLYING FILTER";
                     std::cout << filp.toString() << std::endl;
 
                     D2Y.initialiseFilter(true,
@@ -141,7 +141,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
             }
 
             if(jumpcheck) {
-                std::cout << "CHECKING FOR ERRORS IN TIMESTAMPS" << std::endl;
+                yInfo() << "CHECKING FOR TIMESTAMP JUMPS";
                 D2Y.checkForTSJumps();
             }
             D2Y.start();

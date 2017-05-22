@@ -147,11 +147,7 @@ class vEvent
 {
 public:
     static const std::string tag;
-#ifdef TIME32BIT
     unsigned int stamp:31;
-#else
-    unsigned int stamp:31;
-#endif
 
     vEvent();
     virtual ~vEvent();
