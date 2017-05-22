@@ -2,7 +2,7 @@
 
 namespace ev {
 
-#ifdef TIMEALLBITS
+#ifdef TIME32BIT
     //long int vtsHelper::max_stamp = 2147483647; //2^31
     long int vtsHelper::max_stamp = 33554431; //2^25
 #else
