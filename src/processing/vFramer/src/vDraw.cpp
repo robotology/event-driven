@@ -436,11 +436,11 @@ void isoDraw::pttr(int &x, int &y, int &z) {
 
 void isoDraw::initialise()
 {
-    maxdt = 1; //just to initialise (but we don't use here)
+    maxdt = vtsHelper::max_stamp / 2.0; //just to initialise (but we don't use here)
     Zlimit = Xlimit * 3;
 
     thetaX = 20 * 3.14 / 180.0;  //PITCH
-    thetaY = 40 * 3.14 / 180.0; //YAW
+    thetaY = 40 * 3.14 / 180.0;  //YAW
 
     CY = cos(thetaY); SY = sin(thetaY);
     CX = cos(thetaX); SX = sin(thetaX);
@@ -476,6 +476,7 @@ void isoDraw::initialise()
 
     cv::Scalar invertedtextc = CV_RGB(125, 125, 125);
     cv::Vec3b invertedaxisc = cv::Vec3b(255, 255, 255);
+    cv::Vec3b invertedframec = cv::Vec3b(125, 125, 125);
 
     for(int xi = 0; xi < Xlimit; xi++) {
         x = xi; y = 0; z = 0; pttr(x, y, z);
@@ -529,6 +530,35 @@ void isoDraw::initialise()
         baseimage.at<cv::Vec3b>(y, x) = invertedaxisc;
     }
 
+    for(tsi = vtsHelper::vtsscaler / 10.0; tsi < vtsHelper::max_stamp / 2; tsi += vtsHelper::vtsscaler / 10.0) {
+
+        int zc = ((double)tsi / maxdt) * Zlimit + 0.5;
+
+        for(int xi = 0; xi < Xlimit; xi++) {
+            x = xi; y = 0; z = zc; pttr(x, y, z);
+            y += imageyshift; x += imagexshift;
+            baseimage.at<cv::Vec3b>(y, x) = invertedframec;
+            x = xi; y = Ylimit; z = zc; pttr(x, y, z);
+            y += imageyshift; x += imagexshift;
+            baseimage.at<cv::Vec3b>(y, x) = invertedframec;
+        }
+
+        for(int yi = 0; yi <= Ylimit; yi++) {
+            x = 0; y = yi; z = zc; pttr(x, y, z);
+            y += imageyshift; x += imagexshift;
+            baseimage.at<cv::Vec3b>(y, x) = invertedframec;
+            x = Xlimit; y = yi; z = zc; pttr(x, y, z);
+            y += imageyshift; x += imagexshift;
+            baseimage.at<cv::Vec3b>(y, x) = invertedframec;
+
+        }
+
+    }
+
+    yInfo() << "Finished setting up ISO draw";
+
+
+
 }
 
 void isoDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
@@ -545,7 +575,7 @@ void isoDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 
     int cts = eSet.back()->stamp;
     int dt = cts - eSet.front()->stamp;
-    if(dt < 0) dt += ev::vtsHelper::maxStamp();
+    if(dt < 0) dt += ev::vtsHelper::max_stamp;
     maxdt = std::max(maxdt, dt);
 
     ev::vQueue::const_iterator qi;
