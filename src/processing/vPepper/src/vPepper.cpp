@@ -31,7 +31,7 @@ bool vPepperModule::configure(yarp::os::ResourceFinder &rf)
     eventManager.initialise(rf.check("height", 240).asInt(),
                             rf.check("width", 304).asInt(),
                             rf.check("spatialSize", yarp::os::Value(1)).asDouble(),
-                            rf.check("temporalSize", yarp::os::Value(10000)).asDouble());
+                            rf.check("temporalSize", yarp::os::Value(100000)).asDouble());
 
     eventManager.open(moduleName, strict);
 
@@ -63,7 +63,7 @@ bool vPepperModule::updateModule()
 /**********************************************************/
 double vPepperModule::getPeriod()
 {
-    return 1.0;
+    return 5.0;
 }
 
 /**********************************************************/
@@ -71,10 +71,10 @@ vPepperIO::vPepperIO()
 {
 
     //here we should initialise the module
-    temporalSize = 10000;
+    temporalSize = 100000;
     spatialSize = 1;
-    res.height = 128;
-    res.width = 128;
+    res.height = 240;
+    res.width = 304;
     strict = false;
 
 }
@@ -95,10 +95,10 @@ bool vPepperIO::open(const std::string &name, bool strict)
     this->useCallback();
     this->strict = strict;
     if(strict) {
-        std::cout << "Using STRICT communication" << std::endl;
+        yInfo() << "Using STRICT communication";
         this->setStrict();
     } else {
-        std::cout << "NOT using strict communication" << std::endl;
+        yInfo() << "NOT using strict communication";
     }
 
     if(!yarp::os::BufferedPort<ev::vBottle>::open(name + "/vBottle:i"))
