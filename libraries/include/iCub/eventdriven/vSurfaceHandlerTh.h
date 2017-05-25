@@ -51,6 +51,10 @@ public:
         m.unlock();
         //and decode the data
         inputbottle.addtoendof<ev::AddressEvent>(*(qq.back()));
+
+        if(qq.size() > 2000)
+            yWarning() << "vQueueAllocator: > 2000 in queue";
+
         dataready.unlock();
     }
 
