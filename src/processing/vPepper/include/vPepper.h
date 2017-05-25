@@ -20,41 +20,36 @@
 /// \ingroup Modules
 /// \brief removes salt-and-pepper noise from the event stream
 
-#ifndef __ICUB_DPEPPER_MOD_H__
-#define __ICUB_DPEPPER_MOD_H__
+#ifndef __VPEPPERMODULE__
+#define __VPEPPERMODULE__
 
 #include <yarp/os/all.h>
 #include <iCub/eventdriven/all.h>
 using namespace::ev;
 
-class vPepperIO : public yarp::os::BufferedPort<ev::vBottle>
+class vPepperIO : public yarp::os::Thread
 {
 private:
 
     //output port for the vBottle with the new events computed by the module
+    ev::queueAllocator inPort;
     yarp::os::BufferedPort<ev::vBottle> outPort;
 
+    //filter class
     ev::vNoiseFilter thefilter;
 
-
-    //paramters
-    ev::resolution res;
-    double spatialSize;
-    double temporalSize;
-    bool strict;
+    //parameters
+    std::string name;
 
 public:
 
-    vPepperIO();
-
-    void initialise(int height, int width, int spatialSize, int temporalSize);
-
-    bool open(const std::string &name, bool strict);
-    void close();
-    void interrupt();
-
-    //this is the entry point to your main functionality
-    void onRead(ev::vBottle &bot);
+    vPepperIO() : name("/vPepper") {}
+    ~vPepperIO();
+    void initialise(std::string name, int height, int width, int spatialSize,
+                    int temporalSize);
+    void run();
+    void onStop();
+    bool threadInit();
 
 };
 
@@ -63,12 +58,10 @@ class vPepperModule : public yarp::os::RFModule
     //the event bottle input and output handler
     vPepperIO      eventManager;
 
-
 public:
 
     //the virtual functions that need to be overloaded
     virtual bool configure(yarp::os::ResourceFinder &rf);
-    virtual bool interruptModule();
     virtual bool close();
 
     virtual double getPeriod();
@@ -78,4 +71,4 @@ public:
 
 
 #endif
-//empty line to make gcc happy
+

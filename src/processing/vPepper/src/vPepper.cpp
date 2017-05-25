@@ -17,139 +17,118 @@
 
 #include "vPepper.h"
 
-/**********************************************************/
+int main(int argc, char * argv[])
+{
+    /* initialize yarp network */
+    yarp::os::Network yarp;
+    if(!yarp.checkNetwork()) {
+        yError() << "Could not find YARP";
+        return false;
+    }
+
+    /* prepare and configure the resource finder */
+    yarp::os::ResourceFinder rf;
+    rf.setDefaultContext( "eventdriven" );
+    rf.setDefaultConfigFile( "vPepper.ini" );
+    rf.configure( argc, argv );
+
+    /* create the module */
+    vPepperModule vPepperInstance;
+    /* run the module: runModule() calls configure first and, if successful, it then runs */
+    return vPepperInstance.runModule(rf);
+}
+
+/******************************************************************************/
 bool vPepperModule::configure(yarp::os::ResourceFinder &rf)
 {
-    //set the name of the module
-    std::string moduleName =
-            rf.check("name", yarp::os::Value("/vPepper")).asString();
-    setName(moduleName.c_str());
 
-    bool strict = rf.check("strict") &&
-            rf.check("strict", yarp::os::Value(true)).asBool();
-
-    eventManager.initialise(rf.check("height", 240).asInt(),
+    eventManager.initialise(rf.check("name", yarp::os::Value("/vPepper")).asString(),
+                            rf.check("height", 240).asInt(),
                             rf.check("width", 304).asInt(),
                             rf.check("spatialSize", yarp::os::Value(1)).asDouble(),
                             rf.check("temporalSize", yarp::os::Value(100000)).asDouble());
+    return eventManager.start();
 
-    eventManager.open(moduleName, strict);
-
-    return true ;
 }
 
-/**********************************************************/
-bool vPepperModule::interruptModule()
-{
-    eventManager.interrupt();
-    yarp::os::RFModule::interruptModule();
-    return true;
-}
-
-/**********************************************************/
 bool vPepperModule::close()
 {
-    eventManager.close();
-    yarp::os::RFModule::close();
-    return true;
+    eventManager.stop();
+    return yarp::os::RFModule::close();
 }
 
-/**********************************************************/
 bool vPepperModule::updateModule()
 {
     return true;
 }
 
-/**********************************************************/
 double vPepperModule::getPeriod()
 {
     return 5.0;
 }
+/******************************************************************************/
 
-/**********************************************************/
-vPepperIO::vPepperIO()
+vPepperIO::~vPepperIO()
 {
-
-    //here we should initialise the module
-    temporalSize = 100000;
-    spatialSize = 1;
-    res.height = 240;
-    res.width = 304;
-    strict = false;
-
+    if(!outPort.isClosed())
+        outPort.close();
+    if(!inPort.isClosed())
+        inPort.close();
 }
 
-void vPepperIO::initialise(int height, int width, int spatialSize, int temporalSize)
+void vPepperIO::initialise(std::string name, int height, int width,
+                           int spatialSize, int temporalSize)
 {
-    res.height = height;
-    res.width = width;
-    thefilter.initialise(res.width, res.height, temporalSize, spatialSize);
-
+    thefilter.initialise(width, height, temporalSize, spatialSize);
+    this->name = name;
 }
 
-/**********************************************************/
-bool vPepperIO::open(const std::string &name, bool strict)
+void vPepperIO::run()
 {
-    //and open the input port
+    yarp::os::Stamp ystamp;
 
-    this->useCallback();
-    this->strict = strict;
-    if(strict) {
-        yInfo() << "Using STRICT communication";
-        this->setStrict();
-    } else {
-        yInfo() << "NOT using strict communication";
+    while(true) {
+
+        ev::vQueue *q = 0;
+        while(!q && !isStopping()) {
+            q = inPort.getNextQ(ystamp);
+        }
+        if(isStopping()) break;
+
+        ev::vBottle &outBottle = outPort.prepare();
+        outBottle.clear();
+        outPort.setEnvelope(ystamp);
+
+        for(ev::vQueue::iterator qi = q->begin(); qi != q->end(); qi++) {
+
+            auto v = is_event<AE>(*qi);
+            if(thefilter.check(v->x, v->y, v->polarity, v->channel, v->stamp))
+                outBottle.addEvent(*qi);
+        }
+
+        if(outBottle.size())
+            outPort.writeStrict();
+        else
+            outPort.unprepare();
+
+        inPort.scrapQ();
     }
 
-    if(!yarp::os::BufferedPort<ev::vBottle>::open(name + "/vBottle:i"))
-        return false;
+}
+
+void vPepperIO::onStop()
+{
+    outPort.close();
+    inPort.close();
+    inPort.releaseDataLock();
+}
+
+bool vPepperIO::threadInit()
+{
     if(!outPort.open(name + "/vBottle:o"))
         return false;
-
+    if(!inPort.open(name + "/vBottle:i"))
+        return false;
     return true;
 }
 
-/**********************************************************/
-void vPepperIO::close()
-{
-    //close ports
-    outPort.close();
-    yarp::os::BufferedPort<ev::vBottle>::close();
-}
-
-/**********************************************************/
-void vPepperIO::interrupt()
-{
-    //pass on the interrupt call to everything needed
-    outPort.interrupt();
-    yarp::os::BufferedPort<ev::vBottle>::interrupt();
-}
-
-/**********************************************************/
-void vPepperIO::onRead(ev::vBottle &bot)
-{
-    //create event queue
-    yarp::os::Stamp yts;
-    this->getEnvelope(yts);
-    ev::vBottle &outBottle = outPort.prepare();
-    outBottle.clear();
-    outPort.setEnvelope(yts);
-
-    ev::vQueue q = bot.get<AE>();
-    for(ev::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
-    {
-        auto v = is_event<AddressEvent>(*qi);
-        if(thefilter.check(v->x, v->y, v->polarity, v->getChannel(), v->stamp)) {
-            outBottle.addEvent(v);
-        }
-    }
-
-    //send on the processed events
-    if(strict)
-        outPort.writeStrict();
-    else
-        outPort.write();
-
-}
-
-//empty line to make gcc happy
