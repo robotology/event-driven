@@ -7,6 +7,12 @@
 </module>
 
 <module>
+    <name>vPepper</name>
+    <parameters>--strict --width 304 --height 240 --temporalSize 100000</parameters>
+    <node>localhost</node>
+</module>
+
+<module>
     <name> vVergence </name>
     <node> localhost </node>
 </module>
@@ -26,13 +32,13 @@
 <module>
     <name> yarpscope </name>
     <parameters> --xml vergenceConf.xml </parameters>
-    <node> localhost </node>
+    <node> icub24 </node>
 </module>
 
 <module>
     <name> yarpscope </name>
     <parameters> --xml filtersConf.xml </parameters>
-    <node> localhost </node>
+    <node> icub24 </node>
 </module>
 
 <module>
@@ -44,13 +50,19 @@
 <module>
     <name> yarpview </name>
     <parameters> --name /viewDebug </parameters>
-    <node> localhost </node>
+    <node> icub24 </node>
 </module>
 
 <connection>
   <from>/zynqGrabber/vBottle:o</from>
+  <to>/vPepper/vBottle:i</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
+  <from>/vPepper/vBottle:o</from>
   <to>/vVergence/vBottle:i</to>
-  <protocol>tcp</protocol>
+  <protocol>udp</protocol>
 </connection>
 
 <connection>

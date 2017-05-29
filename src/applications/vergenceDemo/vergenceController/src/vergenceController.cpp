@@ -117,7 +117,7 @@ vVergenceManager::vVergenceManager(int width, int height, int nEvents, int numbe
     this->kp = 5000;
     this->kd = 0;
 
-    doVergence = true;
+    doVergence = false;
 
     //enforce an odd number of phases
     numberPhases = 2 * (numberPhases / 2) + 1;
@@ -137,7 +137,7 @@ vVergenceManager::vVergenceManager(int width, int height, int nEvents, int numbe
 
         double scaledtheta;
         if(numberOri == 1) {
-            scaledtheta = M_PI / 2;
+            scaledtheta = 0; // M_PI / 2;
         }
         else {
             scaledtheta = minAngle + i * deltaAngle;
@@ -162,11 +162,11 @@ vVergenceManager::vVergenceManager(int width, int height, int nEvents, int numbe
 //                 filterweights[j + i * numberPhases] = lambda / 2.0; // 4.0 / lambda;
 
              if(j < (numberPhases - 1) / 2)
-                 filterweights[j + i * numberPhases] = -1;
+                 filterweights[j + i * numberPhases] = 1;
              else if(j == (numberPhases - 1) / 2)
                  filterweights[j + i * numberPhases] = 0;
              else
-                 filterweights[j + i * numberPhases] = 1;
+                 filterweights[j + i * numberPhases] = -1;
 
              totweights += fabs(filterweights[j + i * numberPhases]);
              std::cout << " (" << filterweights[j + i * numberPhases] << ") ";
@@ -216,15 +216,15 @@ bool vVergenceManager::open(const std::string &name, bool strictness)
     if(!debugOut.open("/" + name + "/debug:o"))
         return false;
 
-    yarp::os::Property optionsgaze;
-    optionsgaze.put("device", "gazecontrollerclient");
-    optionsgaze.put("local", "/" + name);
-    optionsgaze.put("remote", "/iKinGazeCtrl");
-    gazedriver.open(optionsgaze);
-    if(gazedriver.isValid())
-        gazedriver.view(gazecontrol);
-    else
-        std::cerr << "Gaze Driver not opened and will not be used" << std::endl;
+//    yarp::os::Property optionsgaze;
+//    optionsgaze.put("device", "gazecontrollerclient");
+//    optionsgaze.put("local", "/" + name);
+//    optionsgaze.put("remote", "/iKinGazeCtrl");
+//    gazedriver.open(optionsgaze);
+//    if(gazedriver.isValid())
+//        gazedriver.view(gazecontrol);
+//    else
+//        std::cerr << "Gaze Driver not opened and will not be used" << std::endl;
 
     yarp::os::Property options;
     options.put("robot", "icub");
@@ -268,12 +268,12 @@ void vVergenceManager::close()
     scopeFiltersOut.close();
     debugOut.close();
 
-    //close controller
-    if(gazedriver.isValid())
-    {
-        gazecontrol->stopControl();
-        gazedriver.close();
-    }
+//    //close controller
+//    if(gazedriver.isValid())
+//    {
+//        gazecontrol->stopControl();
+//        gazedriver.close();
+//    }
 
     //close controller
     if(encdriver.isValid())
@@ -320,7 +320,7 @@ void vVergenceManager::onRead(ev::vBottle &bot)
         //consider only events around the center
         if(abs(aep->x - width/2) > winsize / 2 || abs(aep->y - height/2) > winsize / 2) continue;
 
-        if(aep->getChannel())
+        if(!aep->getChannel())
             fifoCurr = fifoRight;
         else
             fifoCurr = fifoLeft;
@@ -331,7 +331,7 @@ void vVergenceManager::onRead(ev::vBottle &bot)
         countR += removed.size();
 
         for(unsigned int i = 0; i < filters.size(); i++) {
-            filters[i].process(*aep);
+            filters[i].process(aep);
             filters[i].process(removed, -1.0);
         }
 
@@ -360,6 +360,7 @@ void vVergenceManager::onRead(ev::vBottle &bot)
     {
 
         enccontrol->getEncoders(encs.data());
+//        std::cout << encs[5] << std::endl;
 
         if(encs[5] > 47 && respsum > 0.0) {
             //            std::cout << "Verging too much... " << std::endl;
@@ -375,25 +376,26 @@ void vVergenceManager::onRead(ev::vBottle &bot)
         errorPrev = respsum;
 
         cvel = respsum * kp + error_d * kd;
+//        std::cout << "Verging..." << std::endl;
         velcontrol->velocityMove(5, cvel);
     }
 
 
-    if(gazedriver.isValid()) {
-        yarp::os::Bottle &scopebot = scopeOut.prepare();
+//    if(gazedriver.isValid()) {
+//        yarp::os::Bottle &scopebot = scopeOut.prepare();
 
-        yarp::sig::Vector ang(6);
-        gazecontrol->getAngles(ang);
+//        yarp::sig::Vector ang(6);
+//        gazecontrol->getAngles(ang);
 
-        depth = 220 / (2*tan(ang[2] * M_PI / 180.0));
+//        depth = 220 / (2*tan(ang[2] * M_PI / 180.0));
 
-        scopebot.clear();
-        scopebot.addDouble(depth);
-        scopebot.addInt((int)doVergence);
-        scopebot.addInt(countA);
-        scopebot.addInt(countR);
-        scopeOut.write();
-    }
+//        scopebot.clear();
+//        scopebot.addDouble(depth);
+//        scopebot.addInt((int)doVergence);
+//        scopebot.addInt(countA);
+//        scopebot.addInt(countR);
+//        scopeOut.write();
+//    }
 
     yarp::os::Bottle &scopefiltersbot = scopeFiltersOut.prepare();
     scopefiltersbot.clear();
@@ -420,7 +422,12 @@ void vVergenceManager::onRead(ev::vBottle &bot)
             auto v = as_event<AE>(curwin[j]);
             if(!v) continue;
 
-            image(v->y, width - 1 - v->x) = yarp::sig::PixelBgr(255, 255, 0);
+//            std::cout << v->x << " " << v->y << " " << width/2 - v->x << " " << height/2 - v->y << std::endl;
+
+//            image(v->y, width - 1 - v->x) = yarp::sig::PixelBgr(255, 255, 0);
+//            image(v->x, height -1 - v->y) = yarp::sig::PixelBgr(255, 255, 0);
+            image(width/2 - v->x + winsize, height/2 - v->y + winsize) = yarp::sig::PixelBgr(255, 255, 0);
+
         }
 
         curwin = fifoRight->getSurf();
@@ -428,7 +435,9 @@ void vVergenceManager::onRead(ev::vBottle &bot)
             auto v = as_event<AE>(curwin[j]);
             if(!v) continue;
 
-            image(v->y, width - 1 - v->x) = yarp::sig::PixelBgr(255, 0, 255);
+//            image(v->y, width - 1 - v->x) = yarp::sig::PixelBgr(255, 0, 255);
+//            image(v->x, height - 1 - v->y) = yarp::sig::PixelBgr(255, 0, 255);
+            image(width/2 - v->x + winsize, height/2 - v->y + winsize) = yarp::sig::PixelBgr(255, 0, 255);
         }
 
         debugOut.write();
@@ -455,7 +464,7 @@ void vVergenceManager::resetVergence() {
     doVergence = false;
     if(encdriver.isValid()) {
         controlmode->setControlMode(5, VOCAB_CM_POSITION);
-        poscontrol->positionMove(5, 20);
+        poscontrol->positionMove(5, 10);
     }
 
 

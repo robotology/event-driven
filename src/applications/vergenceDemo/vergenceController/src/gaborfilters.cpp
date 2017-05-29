@@ -74,13 +74,10 @@ void gaborfilter::resetResponse() {
     evenresponse = 0.0;
 }
 
-void gaborfilter::process(ev::vEvent &evt, double gain)
+void gaborfilter::process(ev::event<ev::AE> evt, double gain)
 {
-    auto ae = as_event<AE>(evt.clone());
-
-    if(!ae) return;
-    int dx = ae->x - cx;
-    int dy = ae->y - cy;
+    int dx = evt->x - cx;
+    int dy = evt->y - cy;
 
     double dx_theta =  dx * costheta + dy * sintheta;
     double dy_theta = -dx * sintheta + dy * costheta;
@@ -94,7 +91,7 @@ void gaborfilter::process(ev::vEvent &evt, double gain)
     //add in the even component also
     double cosComponent = 0.0;
     double sinComponent = 0.0;
-    if(ae->getChannel())
+    if(evt->getChannel())
     {
         cosComponent = cos( coeff * (dx_theta + disppx ) );
         sinComponent = sin( coeff * (dx_theta + disppx ) );
@@ -120,8 +117,10 @@ void gaborfilter::process(ev::vEvent &evt, double gain)
 
 void gaborfilter::process(ev::vQueue &q, double gain)
 {
-    for(ev::vQueue::iterator wi = q.begin(); wi != q.end(); wi++)
-        process(**wi, gain);
+    for(ev::vQueue::iterator wi = q.begin(); wi != q.end(); wi++) {
+        auto aep = is_event<AE>(*wi);
+        process(aep, gain);
+    }
 }
 
 //empty line to make gcc happy

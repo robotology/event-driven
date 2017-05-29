@@ -52,7 +52,7 @@ public:
     void setCenter(int cx, int cy);
     void setParameters(double sigma, double stdsperlambda, double orientation, double disppx);
     void setComplex(bool complex = true) { complexgabor = complex; }
-    void process(ev::vEvent &evt, double gain = 1.0);
+    void process(ev::event<ev::AE> evt, double gain = 1.0);
     void process(ev::vQueue &q, double gain = 1.0);
     double getResponse();
     void resetResponse();
