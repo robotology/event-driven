@@ -3,7 +3,7 @@
 
 <module>
     <name>vCluster</name>
-    <doxygen-group>modules</doxygen-group>
+    <doxygen-group>processing</doxygen-group>
     <description>Clustering and tracking events</description>
     <copypolicy>Released under the terms of the GNU GPL v2.0</copypolicy>
     <version>1.0</version>

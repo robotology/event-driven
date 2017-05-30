@@ -2,8 +2,8 @@
 <?xml-stylesheet type="text/xsl" href="yarpmanifest.xsl"?>
 
 <module>
-    <name>vTrackToRobot</name>
-    <doxygen-group>robotio</doxygen-group>
+    <name>vGazeDemo</name>
+    <doxygen-group>applications</doxygen-group>
     <description>An interface between processed events and robot behaviour control</description>
     <copypolicy>Released under the terms of the GNU GPL v2.0</copypolicy>
     <version>1.0</version>

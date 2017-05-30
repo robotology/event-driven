@@ -3,7 +3,7 @@
 
 <module>
     <name>vFramer</name>
-    <doxygen-group>visualisation</doxygen-group>
+    <doxygen-group>processing</doxygen-group>
     <description>Converts an event stream to an image</description>
     <copypolicy>Released under the terms of the GNU GPL v2.0</copypolicy>
     <version>1.0</version>

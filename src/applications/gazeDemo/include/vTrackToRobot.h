@@ -14,10 +14,10 @@
  * Public License for more details
  */
 
-/// \defgroup RobotIO RobotIO
-/// \defgroup vTrackToRobot vTrackToRobot
-/// \ingroup RobotIO
-/// \brief perform gaze control given cluster track events
+// \defgroup RobotIO RobotIO
+// \defgroup vTrackToRobot vTrackToRobot
+// \ingroup RobotIO
+// \brief perform gaze control given cluster track events
 
 #ifndef __ICUB_VTRACKTOROBOT_H__
 #define __ICUB_VTRACKTOROBOT_H__

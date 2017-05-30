@@ -3,7 +3,7 @@
 
 <module>
     <name>vUndistortCam</name>
-    <doxygen-group>modules</doxygen-group>
+    <doxygen-group>processing</doxygen-group>
     <description>Removes lens distortion from the event camera</description>
     <copypolicy>Released under the terms of the GNU GPL v2.0</copypolicy>
     <version>1.0</version>

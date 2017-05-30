@@ -16,11 +16,6 @@
  * Public License for more details
  */
 
-/// \defgroup Modules Modules
-/// \defgroup vCluster vCluster
-/// \ingroup Modules
-/// \brief detects clusters of events assuming Gaussian distribution
-
 #ifndef __ICUB_EVENTCLUSTERING_MOD_H__
 #define __ICUB_EVENTCLUSTERING_MOD_H__
 
