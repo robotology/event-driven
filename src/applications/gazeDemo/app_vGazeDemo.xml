@@ -15,7 +15,7 @@
 
 <module>
     <name> vParticleFilter </name>
-    <parameters> --threads 6 --obsthresh 1.0 --variance 4.0 --particles 100 </parameters>
+    <parameters> --threads 10 --variance 4.0 </parameters>
     <node> icub23 </node>
 </module>
 
@@ -33,7 +33,7 @@
 
 <module>
     <name> vGazeDemo </name>
-    <parameters> --name vTrackToRobot --method gaze --demo gaze </parameters>
+    <parameters> </parameters>
     <node> icub23 </node>
 </module>
 
@@ -105,12 +105,12 @@
 
 <connection>
   <from>/vpf/vBottle:o</from>
-  <to>/vTrackToRobot/vBottle:i</to>
+  <to>/vGazeDemo/vBottle:i</to>
   <protocol>udp</protocol>
 </connection>
 
 <connection>
-    <from> /vTrackToRobot/vCartOut:o </from>
+    <from> /vGazeDemo/vCartOut:o </from>
     <to>   /demoRedBall/trackTarget:i </to>
     <protocol> udp </protocol>
 </connection>

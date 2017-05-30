@@ -28,51 +28,66 @@
 #include <yarp/dev/PolyDriver.h>
 #include <deque>
 
+using namespace ev;
+
 /*//////////////////////////////////////////////////////////////////////////////
   VBOTTLE READER/PROCESSOR
   ////////////////////////////////////////////////////////////////////////////*/
 
-class vTrackToRobotManager : public yarp::os::BufferedPort<ev::vBottle>
+class positionReader : public yarp::os::BufferedPort<ev::vBottle>
 {
 private:
 
-    yarp::os::BufferedPort<yarp::os::Bottle> cartOutPort;
-    yarp::os::BufferedPort<yarp::os::Bottle> scopeOutPort;
-    yarp::os::BufferedPort<yarp::os::Bottle> positionOutPort;
-    yarp::os::BufferedPort<ev::vBottle> eventsOutPort;
-    yarp::dev::PolyDriver gazedriver;
-    yarp::dev::IGazeControl *gazecontrol;
-
-    enum { fromgaze, fromsize, fromstereo };
-    int method;
-    bool gazingActive;
-    enum { gazedemo, graspdemo };
-    int demo;
-    double lastdogazetime;
-
-
-    ev::temporalSurface FIFO;
-    std::deque<yarp::sig::Vector> recentgazelocs;
-    std::deque<double> recenteyezs;
-    double p_eyez;
-    double medx;
-    double medy;
-    yarp::sig::Vector xrobref; //this stores the gaze position in eye ref frame
-    yarp::sig::Vector px; //the pixel position to make a gaze
+    yarp::sig::Vector leftTarget;
+    yarp::sig::Vector rightTarget;
 
 public:
 
-    vTrackToRobotManager();
+    positionReader()
+    {
+        leftTarget.resize(3);
+        rightTarget.resize(3);
+        leftTarget[2] = -100;
+        useCallback();
+    }
 
-    void setMethod(std::string methodname);
-    void setDemo(std::string demoname);
-    void startGazing() {gazingActive = true;}
-    void stopGazing() {gazingActive = false;}
+    void onRead(vBottle &vBottleIn)
+    {
 
-    bool open(const std::string &name);
-    void onRead(ev::vBottle &bot);
-    void interrupt();
-    void close();
+        //get the Q
+        vQueue q = vBottleIn.get<GaussianAE>();
+        if(q.empty()) {
+            yWarning() << "q empty in callback function?";
+            return;
+        }
+
+        //update our current best position of the ball in both cameras
+        bool leftupdated = false, rightupdated = false;
+        vQueue::reverse_iterator qi = q.rbegin();
+        while((!leftupdated || !rightupdated) && qi != q.rend()) {
+            auto v = is_event<GaussianAE>(*qi);
+            if(v->channel == VRIGHT && !rightupdated) {
+                rightupdated = true;
+                rightTarget[0] = v->x;
+                rightTarget[1] = v->y;
+                rightTarget[2] = v->sigx; //radius
+            } else if(v->channel == VLEFT && !leftupdated) {
+                leftupdated = true;
+                leftTarget[0] = v->x;
+                leftTarget[1] = v->y;
+                leftTarget[2] = v->sigx; //radius
+            }
+            qi++;
+        }
+
+    }
+
+    void getTargets(yarp::sig::Vector &left, yarp::sig::Vector &right)
+    {
+        left = leftTarget;
+        right = rightTarget;
+    }
+
 
 };
 
@@ -85,16 +100,19 @@ class vTrackToRobotModule : public yarp::os::RFModule
 private:
 
     //the event bottle input and output handler
-    vTrackToRobotManager      vTrackToRobot;
+    positionReader inputPort;
 
     //the remote procedure port
-    yarp::os::RpcServer     rpcPort;
+    yarp::os::RpcServer rpcPort;
 
+    yarp::dev::PolyDriver gazedriver;
+    yarp::dev::IGazeControl *gazecontrol;
 
-    //robot control settings
-//    yarp::dev::PolyDriver mdriver;
-//    yarp::dev::IPositionControl *pc;
-//    yarp::dev::IEncoders *ec;
+    double yThresh;
+    double rThresh;
+    bool gazingActive;
+
+    double period;
 
 
 public:

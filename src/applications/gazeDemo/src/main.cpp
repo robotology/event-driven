@@ -17,24 +17,5 @@
 #include "yarp/dev/all.h"
 #include "vTrackToRobot.h"
 
-int main(int argc, char * argv[])
-{
-    /* initialize yarp network */
-    yarp::os::Network::init();
 
-    /* create the module */
-    vTrackToRobotModule module;
-
-    /* prepare and configure the resource finder */
-    yarp::os::ResourceFinder rf;
-    rf.setDefaultContext( "eventdriven" );
-    rf.setDefaultConfigFile( "vtracktorobot.ini" );
-    rf.configure( argc, argv );
-
-    /* run the module: runModule() calls configure first and, if successful, it then runs */
-    module.runModule(rf);
-    yarp::os::Network::fini();
-
-    return 0;
-}
 //empty line to make gcc happy
