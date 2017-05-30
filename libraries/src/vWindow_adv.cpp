@@ -735,32 +735,6 @@ void historicalSurface::initialise(int height, int width)
     surface.resize(width, height);
 }
 
-void historicalSurface::addEvent(event<> v)
-{
-    auto ae = is_event<AE>(v);
-    bool error = false;
-
-    if(ae->x > surface.width() - 1 || ae->y > surface.height() - 1) {
-        yError() << "Pixel Out of Range: " << ae->getContent().toString();
-        error = true;
-    }
-
-    int dt = ae->stamp - debugstamp;
-    if(dt < 0 && dt > -vtsHelper::max_stamp*0.5 ) {
-        if(q.size() > 1)
-            yError() << "Stamp Out of Order: " << (*(q.end()-2))->stamp << " " << debugstamp << " " << ae->stamp;
-        else
-            yError() << "Stamp Out of Order: " << debugstamp << " " << ae->stamp;
-        error = true;
-    } else {
-        debugstamp = ae->stamp;
-    }
-
-    if(!error) vTempWindow::addEvent(v);
-
-
-}
-
 vQueue historicalSurface::getSurface(int queryTime, int queryWindow)
 {
     if(q.empty()) return vQueue();
