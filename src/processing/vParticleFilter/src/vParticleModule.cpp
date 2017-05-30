@@ -135,6 +135,7 @@ bool vParticleModule::configure(yarp::os::ResourceFinder &rf)
                 return false;
         }
 
+        outport.setRate(10);
         if(!outport.open(getName() + "/vBottle:o"))
             return false;
         if(!outport.start())
