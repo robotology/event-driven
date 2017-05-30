@@ -47,9 +47,11 @@ public:
             sendPort.setEnvelope(ystamp);
             m.unlock();
 
+            sendPort.write();
+
         }
 
-        sendPort.write();
+
 
     }
 
