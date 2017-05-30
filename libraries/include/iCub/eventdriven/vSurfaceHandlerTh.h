@@ -210,8 +210,6 @@ private:
     queueAllocator allocatorCallback;
     historicalSurface surfaceleft;
     historicalSurface surfaceright;
-    ev::vNoiseFilter filter;
-
     yarp::os::Mutex m;
 
     //current stamp to propagate
@@ -240,7 +238,6 @@ public:
         this->maxcpudelay = maxcpudelay * vtsHelper::vtsscaler;
         surfaceleft.initialise(height, width);
         surfaceright.initialise(height, width);
-        filter.initialise(width, height, 100000, 1);
     }
 
     bool open(std::string portname)
@@ -270,11 +267,6 @@ public:
             if(isStopping()) break;
 
             for(ev::vQueue::iterator qi = q->begin(); qi != q->end(); qi++) {
-
-                auto ae = is_event<AE>(*qi);
-                if(!filter.check(ae->x, ae->y, ae->polarity, ae->channel, ae->stamp)) {
-                    continue;
-                }
 
                 m.lock();
 

@@ -2,15 +2,15 @@
 <name> vPFBallDemo </name>
 
 <module>
-<name> zynqGrabber </name>
-<parameters> --applyFilter false</parameters>
-<node>icub-zynq</node>
+    <name> zynqGrabber </name>
+    <parameters> --applyFilter false</parameters>
+    <node>icub-zynq</node>
 </module>
 
 <module>
-    <name> demoRedBall </name>
-        <parameters>  </parameters>
-    <node> icub24 </node>
+    <name> vPepper </name>
+    <parameters> </parameters>
+    <node>icub23</node>
 </module>
 
 <module>
@@ -20,21 +20,9 @@
 </module>
 
 <module>
-   <name> yarpview </name>
-   <parameters> --name /viewTracker --x 850 --y 100 --h 480 --w 608 </parameters>
-   <node> icub24 </node>
-</module>
-
-<module>
     <name> yarpscope </name>
     <parameters> --remote /vpf/scope:o --index "(0 1 2 3)" --color "(red blue green black)" </parameters>
     <node> icub24 </node>
-</module>
-
-<module>
-    <name> vGazeDemo </name>
-    <parameters> </parameters>
-    <node> icub23 </node>
 </module>
 
 <module>
@@ -56,33 +44,33 @@
 </module>
 
 <module>
-    <name> yarpdatadumper </name>
-    <parameters> --txTime --name /dump/IROS17_video/1/AE</parameters>
-    <node> icub24 </node>
+    <name> vGazeDemo </name>
+    <parameters> </parameters>
+    <node> icub23 </node>
 </module>
 
 <module>
-    <name> yarpdatadumper </name>
-    <parameters> --txTime --name /dump/IROS17_video/1/GAE</parameters>
+    <name> demoRedBall </name>
+        <parameters>  </parameters>
     <node> icub24 </node>
 </module>
 
 <connection>
   <from>/zynqGrabber/vBottle:o</from>
+  <to>/vPepper/vBottle:i</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
+  <from>/vPepper/vBottle:o</from>
   <to>/vFramer/AE:i</to>
-  <protocol>udp</protocol>
+  <protocol>shmem</protocol>
 </connection>
 
 <connection>
-  <from>/zynqGrabber/vBottle:o</from>
+  <from>/vPepper/vBottle:o</from>
   <to>/vpf/vBottle:i</to>
-  <protocol>udp</protocol>
-</connection>
-
-<connection>
-  <from>/vpf/debug:o</from>
-  <to>/viewTracker</to>
-  <protocol>udp</protocol>
+  <protocol>shmem</protocol>
 </connection>
 
 <connection>
@@ -110,29 +98,10 @@
 </connection>
 
 <connection>
-    <from> /vGazeDemo/vCartOut:o </from>
-    <to>   /demoRedBall/trackTarget:i </to>
-    <protocol> udp </protocol>
-</connection>
-
-<connection>
   <from>/demoRedBall/cmdFace:rpc</from>
   <to>/icub/face/emotions/in</to>
   <protocol>udp</protocol>
 </connection>
-
-<connection>
-  <from>/zynqGrabber/vBottle:o</from>
-  <to>/dump/IROS17_video/1/AE</to>
-  <protocol>udp</protocol>
-</connection>
-
-<connection>
-  <from>/vpf/vBottle:o</from>
-  <to>/dump/IROS17_video/1/GAE</to>
-  <protocol>udp</protocol>
-</connection>
-
 
 
 </application>
