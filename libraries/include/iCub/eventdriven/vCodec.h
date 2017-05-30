@@ -142,6 +142,8 @@ using vQueue = std::deque< event<vEvent> >;
 void qsort(vQueue &q, bool respectWraps = false);
 event<> createEvent(const std::string &type);
 
+enum { VLEFT = 0, VRIGHT = 1 } ;
+
 //event declarations
 class vEvent
 {
