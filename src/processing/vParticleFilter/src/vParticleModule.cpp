@@ -106,7 +106,7 @@ bool vParticleModule::configure(yarp::os::ResourceFinder &rf)
         eventhandler.configure(height, width, 0.05);
 
         if(leftParticles) {
-            leftThread = new particleProcessor(height, width, &eventhandler, &outport);
+            leftThread = new particleProcessor(getName(), height, width, &eventhandler, &outport);
             leftThread->setComputeOptions(0, nthread, useroi);
             leftThread->setFilterParameters(leftParticles, nRandResample,
                                                 adaptivesampling, particleVariance);
@@ -121,7 +121,7 @@ bool vParticleModule::configure(yarp::os::ResourceFinder &rf)
         }
 
         if(rightParticles) {
-            rightThread = new particleProcessor(height, width, &eventhandler, &outport);
+            rightThread = new particleProcessor(getName(), height, width, &eventhandler, &outport);
             rightThread->setComputeOptions(1, nthread, useroi);
             rightThread->setFilterParameters(rightParticles, nRandResample,
                                                 adaptivesampling, particleVariance);
