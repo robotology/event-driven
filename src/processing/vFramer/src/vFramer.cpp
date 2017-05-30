@@ -76,7 +76,7 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
     if(!displayList)
         displayList = &tempDisplayList;
 
-    std::cout << displayList->toString() << std::endl;
+    yInfo() << displayList->toString();
 
     if(displayList->size() % 3) {
         std::cerr << "Error: display incorrectly configured in provided "
