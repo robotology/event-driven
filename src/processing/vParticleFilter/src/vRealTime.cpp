@@ -70,44 +70,26 @@ bool particleProcessor::threadInit()
         }
     }
 
-//    if(camera == 0) {
-//        if(!debugOut.open(name + "/debug:o")) {
-//            std::cout << "could not open debug port" << std::endl;
-//            return false;
-//        }
-
-//        if(!scopeOut.open(name + "/scope:o")) {
-//            std::cout << "could not open scope port" << std::endl;
-//            return false;
-//        }
-
-//        if(!vBottleOut.open(name + "/vBottle:o")) {
-//            std::cout << "coult not open vBottleOut port" << std::endl;
-//            return false;
-//        }
-//    }
-
     //initialise the particles
     vParticle p;
-    p.setRate(rate);
-    p.initWeight(1.0/nparticles);
-    p.setInlierParameter(obsInlier);
-    p.setOutlierParameter(obsOutlier);
-    p.setMinLikelihood(obsThresh);
-    p.setVariance(pVariance);
 
     indexedlist.clear();
     for(int i = 0; i < nparticles; i++) {
-        p.setid(i);
-        p.setPCB(&pcb);
-        p.resample(1.0/nparticles, 0, res.width, res.height, 30, avgtw);
+        p.initialiseParameters(i, obsThresh, obsOutlier, obsInlier, pVariance, 128);
+        p.attachPCB(&pcb);
+
         if(seedr)
-            p.initState(seedx, seedy, seedr, 100);
+            p.initialiseState(seedx, seedy, seedr, 50000);
+        else
+            p.randomise(res.width, res.height, 30, 50000);
+
+        p.resetWeight(1.0/nparticles);
+
         maxtw = std::max(maxtw, p.gettw());
         indexedlist.push_back(p);
     }
 
-    std::cout << "Thread initialised" << std::endl;
+    yInfo() << "Thread and particles initialised";
     return true;
 
 }
@@ -147,14 +129,14 @@ void particleProcessor::run()
             for(int i = 0; i < nparticles; i++) {
                 double rn = nRandomise * (double)rand() / RAND_MAX;
                 if(rn > 1.0)
-                    indexedlist[i].resample(1.0/nparticles, t, res.width, res.height, 30.0, avgtw);
+                    indexedlist[i].randomise(res.width, res.height, 30.0, avgtw);
                 else {
                     double accum = 0.0; int j = 0;
                     for(j = 0; j < nparticles; j++) {
                         accum += indexedSnap[j].getw();
                         if(accum > rn) break;
                     }
-                    indexedlist[i].resample(indexedSnap[j], 1.0/nparticles, t);
+                    indexedlist[i] = indexedSnap[j];
                 }
             }
         }
@@ -164,7 +146,7 @@ void particleProcessor::run()
         for(int i = 0; i < nparticles; i++) {
             indexedlist[i].predict(t);
             if(!inbounds(indexedlist[i]))
-                indexedlist[i].resample(1.0/nparticles, t, res.width, res.height, 30.0, avgtw);
+                indexedlist[i].randomise(res.width, res.height, 30.0, avgtw);
 
             if(indexedlist[i].gettw() > maxtw)
                 maxtw = indexedlist[i].gettw();
@@ -328,11 +310,11 @@ bool particleProcessor::inbounds(vParticle &p)
     int r = p.getr();
 
     if(r < rbound_min) {
-        p.setr(rbound_min);
+        p.resetRadius(rbound_min);
         r = rbound_min;
     }
     if(r > rbound_max) {
-        p.setr(rbound_max);
+        p.resetRadius(rbound_max);
         r = rbound_max;
     }
     if(p.getx() < -r || p.getx() > res.width + r)

@@ -27,7 +27,7 @@ private:
     preComputedBins pcb;
 
     //particle storage and variables
-    std::priority_queue<vParticle> sortedlist;
+    //std::priority_queue<vParticle> sortedlist;
     std::vector<vParticle> indexedlist;
     vParticle pmax;
     double pwsum;
