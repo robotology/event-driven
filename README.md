@@ -28,6 +28,14 @@ Libraries that handle neuromorphic sensors, such as the dynamic vision sensor, i
 1. Install [YARP](https://github.com/robotology/yarp) and [icub-contrib-common](https://github.com/robotology/icub-contrib-common) following these [instructions](http://wiki.icub.org/wiki/Linux:Installation_from_sources).
 3. Clone event-driven and install as an icub-contrib module.
 
+## References
+
+Glover, A., and Bartolozzi C. (2016) *Event-driven ball detection and gaze fixation in clutter*. In IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS), October 2016, Daejeon, Korea. **Finalist for RoboCup Best Paper Award**
+
+Vasco V., Glover A., and Bartolozzi C. (2016) *Fast event-based harris corner detection exploiting the advantages of event-driven cameras*. In IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS), October 2016, Daejeon, Korea.
+
+V. Vasco, A. Glover, Y. Tirupachuri, F. Solari, M. Chessa, and Bartolozzi C. *Vergence control with a neuromorphic iCub. In IEEE-RAS International Conference on Humanoid Robots (Humanoids)*, November 2016, Mexico.
+
 
 
 
