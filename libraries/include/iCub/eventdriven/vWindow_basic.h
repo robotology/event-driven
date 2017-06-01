@@ -14,12 +14,6 @@
  * Public License for more details
 */
 
-/// \defgroup Library Library
-/// \defgroup vSurface vSurface
-/// \ingroup Library
-/// \brief
-/// A data representation which stores only the most recent event at each pixel
-/// location
 
 #ifndef __VWINDOW_BASIC__
 #define __VWINDOW_BASIC__
@@ -88,7 +82,7 @@ public:
 };
 
 /******************************************************************************/
-
+/// \brief store events for a fixed amount of time in a vQueue
 class vTempWindow {
 
 protected:

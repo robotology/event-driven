@@ -14,11 +14,8 @@
  * Public License for more details
 */
 
-/// \defgroup Library Library
-/// \defgroup vBottle vBottle
-/// \ingroup Library
-/// \brief yarp::os::Bottle wrapper for sending events through the yarp system with
-/// particular attention to using data dumper and data players
+
+
 
 #ifndef __VBOTTLE__
 #define __VBOTTLE__
@@ -28,6 +25,8 @@
 
 namespace ev {
 
+/// \brief yarp::os::Bottle wrapper for sending events through the yarp system with
+/// particular attention to using data dumper and data players
 class vBottle : public yarp::os::Bottle {
 
 public:
@@ -233,6 +232,8 @@ private:
 
 };
 
+/// \brief add header data to a block of data to correctly send it as a vBottle
+/// without copying data
 class vBottleMimic : public yarp::os::Portable {
 
 private:

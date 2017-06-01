@@ -14,10 +14,10 @@
  * Public License for more details
  */
 
-/// \defgroup Modules Modules
-/// \defgroup vParticleFilter vParticleFilter
-/// \ingroup Modules
-/// \brief tracks targets using a particle filter
+// \defgroup Modules Modules
+// \defgroup vParticleFilter vParticleFilter
+// \ingroup Modules
+// \brief tracks targets using a particle filter
 
 #ifndef __V_PARTICLEMODULE__
 #define __V_PARTICLEMODULE__

@@ -14,11 +14,6 @@
  * Public License for more details
 */
 
-/// \defgroup Library Library
-/// \defgroup vWindow vWindow
-/// \ingroup Library
-/// \brief A storage class which automatically discards events after a given timeperiod
-
 #ifndef __VWINDOW_ADV__
 #define __VWINDOW_ADV__
 
@@ -31,12 +26,7 @@
 
 namespace ev {
 
-/**
- * @brief The vWindow class holds a list of events for a period of time as
- * specified. Event expiry is checked each time new events are added and
- * expired events are removed. At any point in time a copy of the current list
- * of events can be requested.
- */
+/// \brief a spatial-temporal surface storage data structure
 class vSurface2 {
 
 protected:
@@ -126,6 +116,8 @@ public:
 
 };
 /******************************************************************************/
+
+/// \brief a spatio-temporal surface storing events for a limited time
 class temporalSurface : public vSurface2
 {
 private:
@@ -145,6 +137,8 @@ public:
 };
 
 /******************************************************************************/
+
+/// \brief a spatio-temporal surface storing only a fixed number of events
 class fixedSurface : public vSurface2
 {
 private:
@@ -162,6 +156,9 @@ public:
 };
 
 /******************************************************************************/
+
+/// \brief a spatio-temporal surface storing events for a "lifetime" given by
+/// the inverse of velocity
 class lifetimeSurface : public vSurface2
 {
 
@@ -175,6 +172,9 @@ public:
 };
 
 /******************************************************************************/
+
+/// \brief a spatio-temporal surface storing events along edges as given by
+/// plane fitting
 class vEdge : public vSurface
 {
 private:
@@ -203,6 +203,7 @@ public:
 
 };
 
+/// \brief a vEdge structure that keeps events given a "fuzzy" scoring system
 class vFuzzyEdge : public vEdge
 {
 

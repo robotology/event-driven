@@ -15,10 +15,10 @@
  * Public License for more details
  */
 
-/// \defgroup Modules Modules
-/// \defgroup vRepTest vRepTest
-/// \ingroup Modules
-/// \brief tests different event representation types
+// \defgroup Modules Modules
+// \defgroup vRepTest vRepTest
+// \ingroup Modules
+// \brief tests different event representation types
 
 #ifndef __REPTEST__
 #define __REPTEST__

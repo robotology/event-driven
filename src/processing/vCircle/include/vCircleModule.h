@@ -14,10 +14,10 @@
  * Public License for more details
  */
 
-/// \defgroup Modules Modules
-/// \defgroup vCircle vCircle
-/// \ingroup Modules
-/// \brief detects circles using the Hough transform
+// \defgroup Modules Modules
+// \defgroup vCircle vCircle
+// \ingroup Modules
+// \brief detects circles using the Hough transform
 
 #ifndef __VCIRCLE__
 #define __VCIRCLE__

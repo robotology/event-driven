@@ -3,7 +3,7 @@
 
 <module>
     <name>spinterface</name>
-    <doxygen-group>hardwareio</doxygen-group>
+    <doxygen-group>hardwareIO</doxygen-group>
     <description>An interface between YARP and SpiNNaker using the EIEIO protocol</description>
     <copypolicy>Released under the terms of the GNU GPL v2.0</copypolicy>
     <version>1.0</version>

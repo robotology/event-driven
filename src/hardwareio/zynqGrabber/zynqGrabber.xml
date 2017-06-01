@@ -3,7 +3,7 @@
 
 <module>
     <name>zynqGrabber</name>
-    <doxygen-group>hardwareio</doxygen-group>
+    <doxygen-group>hardwareIO</doxygen-group>
     <description>Interfaces to DVS or ATIS sensors connected with zynq-based boards</description>
     <copypolicy>Released under the terms of the GNU GPL v2.0</copypolicy>
     <version>1.0</version>

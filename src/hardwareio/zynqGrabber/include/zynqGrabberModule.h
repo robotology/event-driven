@@ -14,10 +14,10 @@
  * Public License for more details
  */
 
-/// \defgroup HardwareIO HardwareIO
-/// \defgroup zynqGrabber zynqGrabber
-/// \ingroup HardwareIO
-/// \brief flexibile YARP-hardware interface for multiple sensor types
+// \defgroup HardwareIO HardwareIO
+// \defgroup zynqGrabber zynqGrabber
+// \ingroup HardwareIO
+// \brief flexibile YARP-hardware interface for multiple sensor types
 
 #ifndef _ZYNQ_GRABBER_MODULE_H_
 #define _ZYNQ_GRABBER_MODULE_H_

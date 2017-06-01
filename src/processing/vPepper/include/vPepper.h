@@ -15,10 +15,10 @@
  * Public License for more details
  */
 
-/// \defgroup Modules Modules
-/// \defgroup vPepper vPepper
-/// \ingroup Modules
-/// \brief removes salt-and-pepper noise from the event stream
+// \defgroup Modules Modules
+// \defgroup vPepper vPepper
+// \ingroup Modules
+// \brief removes salt-and-pepper noise from the event stream
 
 #ifndef __VPEPPERMODULE__
 #define __VPEPPERMODULE__

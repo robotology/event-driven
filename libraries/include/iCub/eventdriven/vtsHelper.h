@@ -14,12 +14,6 @@
  * Public License for more details
 */
 
-/// \defgroup Library Library
-/// \defgroup vtsHelper vtsHelper
-/// \ingroup Library
-/// \brief
-/// a helper class for unwrapping timestamps into long ints when overflow occurs
-
 #ifndef __VTSHELPER__
 #define __VTSHELPER__
 
@@ -27,6 +21,7 @@
 
 namespace ev {
 
+/// \brief helper class to deal with timestamp conversion and wrapping
 class vtsHelper {
 
 private:
@@ -56,6 +51,7 @@ public:
 
 };
 
+/// \brief an efficient structure for storing sensor resolution
 struct resolution {
     unsigned int width:10;
     unsigned int height:10;

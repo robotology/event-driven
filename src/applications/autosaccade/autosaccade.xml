@@ -3,7 +3,7 @@
 
 <module>
     <name>autosaccade</name>
-    <doxygen-group>robotio</doxygen-group>
+    <doxygen-group>applications</doxygen-group>
     <description>Performs saccades automatically</description>
     <copypolicy>Released under the terms of the GNU GPL v2.0</copypolicy>
     <version>1.0</version>

@@ -15,10 +15,10 @@
  * Public License for more details
  */
 
-/// \defgroup HardwareIO HardwareIO
-/// \defgroup spinterface spinterface
-/// \ingroup HardwareIO
-/// \brief reads and writes events to SpiNNaker using EIEIO protocol
+// \defgroup HardwareIO HardwareIO
+// \defgroup spinterface spinterface
+// \ingroup HardwareIO
+// \brief reads and writes events to SpiNNaker using EIEIO protocol
 
 #ifndef __ICUB_SPINTERFACE__
 #define __ICUB_SPINTERFACE__
