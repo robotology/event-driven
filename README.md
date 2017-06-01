@@ -2,6 +2,7 @@
 
 [![event-driven-icub ball](https://img.youtube.com/vi/xS-7xYRYSLc/0.jpg)](https://youtu.be/xS-7xYRYSLc)
 ![event-stream ball](https://github.com/robotology-playground/event-driven/blob/master/documentation/images/ballstream.png)
+Click the thumbnail to watch the [video](https://youtu.be/xS-7xYRYSLc)!
 
 # The event-driven YARP Project
 
