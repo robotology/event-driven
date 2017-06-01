@@ -1,7 +1,7 @@
 | Read the [Documentation](http://robotology-playground.github.io/event-driven/doxygen/doc/html/index.html) | Download the [Code](https://github.com/robotology-playground/event-driven) |
 
-![event-driven-icub ball](documentation/images/icubandball.png)
-![event-stream ball](documentation/images/ballstream.png)
+![event-driven-icub ball](https://github.com/robotology-playground/event-driven/blob/master/documentation/images/icubandball.png)
+![event-stream ball](https://github.com/robotology-playground/event-driven/blob/master/documentation/images/ballstream.png)
 
 # The event-driven YARP Project
 
