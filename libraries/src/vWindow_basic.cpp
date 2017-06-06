@@ -132,14 +132,14 @@ void vTempWindow::addEvent(event<> v)
     int upper = ctime + tUpper;
     int lower = ctime - tLower;
 
-    while(q.size()) {
-        int vtime = q.back()->stamp;
-        if((vtime >= ctime && vtime < upper) || vtime < lower) {
-            q.pop_back();
-        } else {
-            break;
-        }
-    }
+//    while(q.size()) {
+//        int vtime = q.back()->stamp;
+//        if((vtime >= ctime && vtime < upper) || vtime < lower) {
+//            q.pop_back();
+//        } else {
+//            break;
+//        }
+//    }
 
     while(q.size()) {
 
