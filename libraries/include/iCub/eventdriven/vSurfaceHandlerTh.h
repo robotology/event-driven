@@ -282,7 +282,7 @@ public:
 
     void run()
     {
-        static int maxqs = 10;
+        static int maxqs = 4;
         bool allowproc = true;
 
         while(true) {
