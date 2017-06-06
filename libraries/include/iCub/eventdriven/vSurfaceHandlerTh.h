@@ -87,6 +87,11 @@ public:
 
     }
 
+    int queryunprocessed()
+    {
+        return qq.size();
+    }
+
     void scrapQ()
     {
         m.lock();
@@ -277,6 +282,9 @@ public:
 
     void run()
     {
+        static int maxqs = 10;
+        bool allowproc = true;
+
         while(true) {
 
             ev::vQueue *q = 0;
@@ -285,24 +293,34 @@ public:
             }
             if(isStopping()) break;
 
-            for(ev::vQueue::iterator qi = q->begin(); qi != q->end(); qi++) {
 
+            int nqs = allocatorCallback.queryunprocessed();
+
+            if(allowproc)
                 m.lock();
 
-                int dt = (*qi)->stamp - vstamp;
-                if(dt < 0) dt += vtsHelper::max_stamp;
-                cpudelayL += dt;
-                cpudelayR += dt;
-                vstamp = (*qi)->stamp;
+            if(nqs >= maxqs)
+                allowproc = false;
+            else if(nqs < maxqs)
+                allowproc = true;
+
+            int dt = q->back()->stamp - vstamp;
+            if(dt < 0) dt += vtsHelper::max_stamp;
+            cpudelayL += dt;
+            cpudelayR += dt;
+            vstamp = q->back()->stamp;
+
+            for(ev::vQueue::iterator qi = q->begin(); qi != q->end(); qi++) {
 
                 if((*qi)->getChannel() == 0)
                     surfaceleft.addEvent(*qi);
                 else if((*qi)->getChannel() == 1)
                     surfaceright.addEvent(*qi);
 
-                m.unlock();
-
             }
+
+            if(allowproc)
+                m.unlock();
 
             allocatorCallback.scrapQ();
 
@@ -312,15 +330,18 @@ public:
 
     vQueue queryROI(int channel, unsigned int querySize, int x, int y, int r)
     {
+
+        double cpunow = yarp::os::Time::now();
+
         vQueue q;
 
         m.lock();
 
-        double cpunow = yarp::os::Time::now();
-
         if(channel == 0) {
 
-            cpudelayL -= (cpunow - cputimeL) * vtsHelper::vtsscaler * 1.01;
+
+
+            cpudelayL -= (cpunow - cputimeL) * vtsHelper::vtsscaler * 1.02;
             cputimeL = cpunow;
 
             if(cpudelayL < 0) cpudelayL = 0;
@@ -330,10 +351,9 @@ public:
             }
 
             q = surfaceleft.getSurface(cpudelayL, querySize, r, x, y);
-        }
-        else {
+        } else {
 
-            cpudelayR -= (cpunow - cputimeR) * vtsHelper::vtsscaler * 1.01;
+            cpudelayR -= (cpunow - cputimeR) * vtsHelper::vtsscaler * 1.02;
             cputimeR = cpunow;
 
             if(cpudelayR < 0) cpudelayR = 0;
@@ -418,6 +438,11 @@ public:
         if(modvstamp < 0) modvstamp += vtsHelper::max_stamp;
         return modvstamp;
 
+    }
+
+    int queryQDelay()
+    {
+        return allocatorCallback.queryunprocessed();
     }
 
 };

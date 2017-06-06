@@ -72,7 +72,49 @@ public:
     void predict(unsigned long int stamp);
 
     void initLikelihood();
-    int incrementalLikelihood(int vx, int vy, int dt);
+    inline int incrementalLikelihood(int vx, int vy, int dt)
+    {
+        double dx = vx - x;
+        double dy = vy - y;
+    //    int rdx, rdy;
+    //    if(dx > 0) rdx = dx + 0.5;
+    //    else rdx = dx - 0.5;
+    //    if(dy > 0) rdy = dy + 0.5;
+    //    else rdy = dy - 0.5;
+
+        //double sqrd = pcb->queryDistance(rdy, rdx) - r;
+        double sqrd = sqrt(pow(dx, 2.0) + pow(dy, 2.0)) - r;
+
+        if(sqrd > -inlierParameter && sqrd < inlierParameter) {
+
+            //int a = pcb->queryBinNumber(rdy, rdx);
+            int a = 0.5 + (angbuckets-1) * (atan2(dy, dx) + M_PI) / (2.0 * M_PI);
+            if(!angdist[a]) {
+                inlierCount++;
+                angdist[a] = dt + 1;
+            }
+
+        } else if(sqrd > -outlierParameter && sqrd < 0) { //-3 < X < -5
+
+            //int a = pcb->queryBinNumber(rdy, rdx);
+            int a = 0.5 + (angbuckets-1) * (atan2(dy, dx) + M_PI) / (2.0 * M_PI);
+            if(!negdist[a]) {
+                outlierCount++;
+                negdist[a] = 1;
+            }
+
+        }
+
+        int score = inlierCount - outlierCount;
+        if(score >= likelihood) {
+            likelihood = score;
+            maxtw = dt;
+        }
+
+
+        return inlierCount - outlierCount;
+
+    }
     void concludeLikelihood();
 
     void updateWeightSync(double normval);

@@ -274,8 +274,11 @@ void particleProcessor::run()
             //scopedata.addDouble(eventhandler->queryDelay(camera));
 
             double temptime = yarp::os::Time::now();
-            scopedata.addDouble(1.0 / (temptime - ptime2));
+            scopedata.addDouble((temptime - ptime2));
             ptime2 = temptime;
+
+            scopedata.addDouble(eventhandler->queryDelay((camera)));
+            scopedata.addDouble(eventhandler->queryQDelay() / 1000.0);
 
             //scopedata.addDouble((t - pt) * vtsHelper::tsscaler);
 
