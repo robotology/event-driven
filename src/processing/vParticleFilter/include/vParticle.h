@@ -92,7 +92,16 @@ public:
             if(!angdist[a]) {
                 inlierCount++;
                 angdist[a] = dt + 1;
+
+                int score = inlierCount - outlierCount;
+                if(score >= likelihood) {
+                    likelihood = score;
+                    maxtw = dt;
+                }
+
             }
+
+
 
         } else if(sqrd > -outlierParameter && sqrd < 0) { //-3 < X < -5
 
@@ -104,13 +113,6 @@ public:
             }
 
         }
-
-        int score = inlierCount - outlierCount;
-        if(score >= likelihood) {
-            likelihood = score;
-            maxtw = dt;
-        }
-
 
         return inlierCount - outlierCount;
 

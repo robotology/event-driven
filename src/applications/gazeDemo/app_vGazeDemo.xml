@@ -10,13 +10,13 @@
 <module>
     <name> vPepper </name>
     <parameters> </parameters>
-    <node>icub23</node>
+    <node> icub23 </node>
 </module>
 
 <module>
     <name> vParticleFilter </name>
     <parameters> --threads 10 --variance 4.0 </parameters>
-    <node> icub23 </node>
+    <node> icub-blade </node>
 </module>
 
 <module>
@@ -32,21 +32,21 @@
 </module>
 
 <module>
-   <name>yarpview</name>
-   <parameters> --name /viewLeft --x 100 --y 100 --h 480 --w 608 --RefreshTime 33 </parameters>
-   <node> icub24 </node>
+   <name> yarpview </name>
+   <parameters>--name /viewLeft --x 30 --y 30 --w 608 --h 480 --synch </parameters>
+   <node>icub24</node>
 </module>
 
 <module>
-   <name>yarpview</name>
-   <parameters> --name /viewRight --x 100 --y 100 --h 480 --w 608 --RefreshTime 33 </parameters>
-   <node> icub24 </node>
+   <name> yarpview </name>
+   <parameters>--name /viewRight --x 658 --y 30 --w 608 --h 480 --synch </parameters>
+   <node>icub24</node>
 </module>
 
 <module>
     <name> vGazeDemo </name>
     <parameters> </parameters>
-    <node> icub23 </node>
+    <node> icub24 </node>
 </module>
 
 <module>
@@ -64,13 +64,13 @@
 <connection>
   <from>/vPepper/vBottle:o</from>
   <to>/vFramer/AE:i</to>
-  <protocol>shmem</protocol>
+  <protocol>udp</protocol>
 </connection>
 
 <connection>
   <from>/vPepper/vBottle:o</from>
   <to>/vpf/vBottle:i</to>
-  <protocol>shmem</protocol>
+  <protocol>udp</protocol>
 </connection>
 
 <connection>

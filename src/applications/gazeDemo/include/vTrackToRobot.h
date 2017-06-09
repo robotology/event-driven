@@ -111,6 +111,7 @@ private:
     double yThresh;
     double rThresh;
     bool gazingActive;
+    bool useDemoRedBall;
 
     double period;
 
