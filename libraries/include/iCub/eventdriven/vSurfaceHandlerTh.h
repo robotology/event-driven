@@ -341,7 +341,7 @@ public:
 
 
 
-            cpudelayL -= (cpunow - cputimeL) * vtsHelper::vtsscaler * 1.02;
+            cpudelayL -= (cpunow - cputimeL) * vtsHelper::vtsscaler * 1.01;
             cputimeL = cpunow;
 
             if(cpudelayL < 0) cpudelayL = 0;
@@ -353,7 +353,7 @@ public:
             q = surfaceleft.getSurface(cpudelayL, querySize, r, x, y);
         } else {
 
-            cpudelayR -= (cpunow - cputimeR) * vtsHelper::vtsscaler * 1.02;
+            cpudelayR -= (cpunow - cputimeR) * vtsHelper::vtsscaler * 1.01;
             cputimeR = cpunow;
 
             if(cpudelayR < 0) cpudelayR = 0;
