@@ -9,12 +9,18 @@
     <version>1.0</version>
 
     <description-long>
-      Removes salt and pepper noise from the event stream
+      Removes salt and pepper noise from the event stream. If an event is the only one occured within its surrounding
+        (spatialSize parameter) in a certain temporal window (temporalSize parameter), it is ignored.
     </description-long>
 
     <arguments>
-        <param desc="Specifies the stem name of ports created by the module." default="vPepper"> name </param>
-        <switch>verbosity</switch>
+        <param desc="Specifies the stem name of ports created by the module." default="/vPepper"> name </param>
+        <param desc="Number of pixels on the y-axis of the sensor." default="240"> height </param>
+        <param desc="Number of pixels on the x-axis of the sensor." default="304"> width </param>
+        <param desc="Size of the spatial window around the event" default="1"> spatialSize </param>
+        <param desc="How long the filter will look for events in the past within the spatial window" default="100000">
+            temporalSize
+        </param>
     </arguments>
 
     <authors>
@@ -24,59 +30,20 @@
      <data>
         <input>
             <type>vBottle</type>
-            <port carrier="tcp">/vCircle/vBottle:i</port>
-            <required>yes</required>
-            <priority>no</priority>
+            <port carrier="tcp">/vPepper/vBottle:i</port>
             <description>
-                Accepts the address events and/or flow events in the vBottle
-                container
+                Input event stream to be filtered
             </description>
         </input>
+
         <output>
             <type>vBottle</type>
-            <port carrier="tcp">/vCircle/vBottle:o</port>
+            <port carrier="tcp">/vPepper/vBottle:o</port>
             <description>
-                Outputs the cirlce detections in the form of an
-                ClusterEventGauss. The vBottle also contains all
-                events in the vBottle received as input.
+                Outputs the filtered event stream
             </description>
         </output>
-        <output>
-            <type>yarp::os::Bottle</type>
-            <port carrier="udp">/vCircle/scope:o</port>
-            <description>
-                Outputs debug information for use with yarpscope. The gap
-                between input bottle numbers is written to detect data being
-                lost.
-            </description>
-        </output>
-        <output>
-            <type>yarp::sig::Image</type>
-            <port carrier="udp">/vCirlce/debug:o</port>
-            <description>
-                Outputs a debugging images displaying events in the event-queue
-                as well as the strength of the Hough transform from the same
-                events.
-            </description>
-        </output>
-        <output>
-            <type>yarp::os::Bottle</type>
-            <port carrier="tcp">/vCircle/dump:o</port>
-            <description>
-                Outputs a dump of detections for experiment analysis. The format
-                 is "Time Offset | Event Timestamp | X | Y | R | Score".
-            </description>
-        </output>
+
     </data>
 
-<!--    <services>
-      <server>
-        <port carrier="tcp">/motionCUT/rpc</port>
-        <description>
-            The parameters winSize, recogThres, adjNodesThres, blobMinSizeThres, framesPersistence, cropSize,
-            numThreads, verbosity can be changed/retrieved through the commands set/get. Moreover, the further
-            switch inhibition can be accessed in order to enable/disable the motion detection at run-time.
-        </description>
-      </server>
-    </services>-->
 </module>

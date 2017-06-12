@@ -31,11 +31,11 @@ bool vUndistortModule::configure(yarp::os::ResourceFinder &rf)
     bool strictio = rf.check("strict");
 
     //set sensor size
-    int height = rf.check("sensorHeight",
-                          yarp::os::Value(128),
+    int height = rf.check("height",
+                          yarp::os::Value(240),
                           "camera resolution height").asInt();
-    int width = rf.check("sensorWidth",
-                         yarp::os::Value(128),
+    int width = rf.check("width",
+                         yarp::os::Value(304),
                          "camera resolution width").asInt();
 
     eventBottleManager.setSensorSize(height, width);
