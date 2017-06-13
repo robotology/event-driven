@@ -330,16 +330,13 @@ public:
 
     vQueue queryROI(int channel, unsigned int querySize, int x, int y, int r)
     {
-
-        double cpunow = yarp::os::Time::now();
-
         vQueue q;
 
         m.lock();
 
+        double cpunow = yarp::os::Time::now();
+
         if(channel == 0) {
-
-
 
             cpudelayL -= (cpunow - cputimeL) * vtsHelper::vtsscaler * 1.01;
             cputimeL = cpunow;

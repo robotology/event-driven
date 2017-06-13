@@ -63,7 +63,7 @@ bool particleProcessor::threadInit()
 
     pcb.configure(res.height, res.width, rbound_max, 128);
 
-    if(camera == 1) {
+    if(camera == 0) {
         if(!scopeOut.open(name + "/scope:o")) {
             std::cout << "could not open scope port" << std::endl;
             return false;
@@ -153,7 +153,6 @@ void particleProcessor::run()
             if(indexedlist[i].gettw() > maxtw)
                 maxtw = indexedlist[i].gettw();
         }
-
 
         //likelihood observation
         std::vector<int> deltats; deltats.resize(stw.size());
@@ -287,7 +286,7 @@ void particleProcessor::run()
             ptime2 = temptime;
 
             val2 = std::max(val2, eventhandler->queryDelay((camera)));
-            val3 = std::max(val3, eventhandler->queryQDelay() / 1000.0);
+            val3 = std::max(val3, maxtw * ev::vtsHelper::tsscaler);
 
             double vdt = currentstamp - pvstamp;
             pvstamp = currentstamp;

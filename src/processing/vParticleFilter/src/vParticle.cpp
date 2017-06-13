@@ -167,7 +167,7 @@ vParticle& vParticle::operator=(const vParticle &rhs)
     this->tw = rhs.tw;
     this->weight = rhs.weight;
     this->stamp = rhs.stamp;
-
+    return *this;
 }
 
 void vParticle::initialiseState(double x, double y, double r, double tw)
@@ -204,7 +204,7 @@ void vParticle::predict(unsigned long timestamp)
     if(stamp) dt = timestamp - this->stamp;
     stamp = timestamp;
 
-    tw += dt;
+    tw += std::max(dt, 12500.0);
     tw = std::max(tw, 50000.0);
 
     //double k = 1.0 / sqrt(2.0 * M_PI * variance * variance);
@@ -217,7 +217,7 @@ void vParticle::predict(unsigned long timestamp)
     y += gy;
     r += gr;
 
-    double pr = exp(-(gr*gr) / (2.0 * 0.01 * variance * variance));
+    double pr = exp(-(gr*gr) / (2.0 * 0.16 * variance * variance));
     double py = exp(-(gy*gy) / (2.0 * variance * variance));
     double px = exp(-(gx*gx) / (2.0 * variance * variance));
     predlike = px * py * pr;
@@ -307,7 +307,7 @@ void vParticle::concludeLikelihood()
     }
 
     if(likelihood > minlikelihood) tw = maxtw;
-    weight = likelihood * weight * dtvar * predlike;
+    weight = likelihood * weight * dtvar;// * predlike;
 
 }
 
