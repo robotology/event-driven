@@ -26,6 +26,7 @@ how to move the robot eyes.
  ------------
  * `/zynqGrabber/vBottle:o`
  * `/autosaccade/vBottle:i`
+ * `/vFramer/AE:i`
  * `/vFramer/left`
  * `/vFramer/right`
  * `/viewleft`
@@ -41,7 +42,8 @@ You can now run yarpmanager.
 Inside the Application folder in the yarpmanager gui, you should see an entry called vAutosaccadeDemo. Double click and 
 open it.
 
-Run the robot (or the iCubSim), the yarprobotinterface and the iKinGazeCtrl.
+Run the robot (or the iCubSim), the yarprobotinterface and the iKinGazeCtrl. Make sure to specify the correct robot 
+name passing the proper parameter to the autosaccade module.
 
 Now you are ready to run the application! Hit the run button and then connect on the yarpmanager gui.
 
