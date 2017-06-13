@@ -28,7 +28,6 @@
         <param desc="Specifies the maximum distance an event can be from the centre of the cluster." default="10"> maxDista </param>
         <param desc="Specifies how slowly events decay." default="10000"> decay </param>
         <param desc="Specifies a limit on the number of clusters." default="-1"> clusterLimit </param>
-        <switch>verbosity</switch>
     </arguments>
 
     <authors>

@@ -19,7 +19,6 @@
         <param desc="Number of pixels on the y-axis of the sensor." default="128"> height </param>
         <param desc="Lenght of the spatial window in pixels." default="3"> filterSize </param>
         <param desc="Minimum number of events on the plane." default="5"> minEvtsThresh </param>
-        <switch>verbosity</switch>
     </arguments>
 
     <authors>

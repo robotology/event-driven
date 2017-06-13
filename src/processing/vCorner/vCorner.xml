@@ -23,7 +23,6 @@
         <param desc="Standard deviation of the Gaussian filter." default="1.0"> sigma </param>
         <param desc="Threshold for a confirmed corner event detection." default="8.0"> thresh </param>
         <param desc="Number of threads used for the computation." default="2"> nthreads </param>
-        <switch>verbosity</switch>
     </arguments>
 
     <authors>
