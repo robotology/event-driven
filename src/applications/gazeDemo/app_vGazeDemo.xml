@@ -15,7 +15,7 @@
 
 <module>
     <name> vParticleFilter </name>
-    <parameters> --threads 10 --variance 4.0 --lParticles 300 --rParticles 300 --obsinlier 1.5 --obsoutlier 5.0 --obsthresh 10.0 </parameters>
+    <parameters> --threads 10 --variance 2.0 --lParticles 150 --rParticles 150 --obsinlier 1.0 --obsoutlier 6.0 --obsthresh 10.0 --adaptive </parameters>
     <node> icub-blade </node>
 </module>
 
@@ -45,7 +45,7 @@
 
 <module>
     <name> vGazeDemo </name>
-    <parameters> </parameters>
+    <parameters> --period 0.01 </parameters>
     <node> icub24 </node>
 </module>
 

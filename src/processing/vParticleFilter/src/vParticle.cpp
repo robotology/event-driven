@@ -205,7 +205,7 @@ void vParticle::predict(unsigned long timestamp)
     stamp = timestamp;
 
     tw += std::max(dt, 12500.0);
-    tw = std::max(tw, 50000.0);
+    //tw = std::max(tw, 50000.0);
 
     //double k = 1.0 / sqrt(2.0 * M_PI * variance * variance);
 

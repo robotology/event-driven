@@ -75,7 +75,7 @@ bool particleProcessor::threadInit()
 
     indexedlist.clear();
     for(int i = 0; i < nparticles; i++) {
-        p.initialiseParameters(i, obsThresh, obsOutlier, obsInlier, pVariance, 128);
+        p.initialiseParameters(i, obsThresh, obsOutlier, obsInlier, pVariance, 64);
         p.attachPCB(&pcb);
 
         if(seedr)
