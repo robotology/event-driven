@@ -1,4 +1,4 @@
-| Read the [Documentation](http://robotology-playground.github.io/event-driven/doxygen/doc/html/index.html) | Download the [Code](https://github.com/robotology-playground/event-driven) |
+| Read the [Documentation](http://robotology.github.io/event-driven/doxygen/doc/html/index.html) | Download the [Code](https://github.com/robotology-playground/event-driven) |
 
 [![event-driven-icub ball](https://img.youtube.com/vi/xS-7xYRYSLc/0.jpg)](https://youtu.be/xS-7xYRYSLc)
 ![event-stream ball](https://github.com/robotology-playground/event-driven/blob/master/documentation/images/ballstream.png)
