@@ -129,6 +129,7 @@ vParticle::vParticle()
 {
     weight = 1.0;
     likelihood = 1.0;
+    predlike = 1.0;
     minlikelihood = 20.0;
     inlierParameter = 1.5;
     outlierParameter = 3.0;
@@ -206,9 +207,25 @@ void vParticle::predict(unsigned long timestamp)
     tw += dt;
     tw = std::max(tw, 50000.0);
 
-    x = generateGaussianNoise(x, variance);
-    y = generateGaussianNoise(y, variance);
-    r = generateGaussianNoise(r, variance * 0.4);
+    //double k = 1.0 / sqrt(2.0 * M_PI * variance * variance);
+
+    double gx = generateGaussianNoise(0, variance);
+    double gy = generateGaussianNoise(0, variance);
+    double gr = generateGaussianNoise(0, variance * 0.1);
+
+    x += gx;
+    y += gy;
+    r += gr;
+
+    double pr = exp(-(gr*gr) / (2.0 * 0.01 * variance * variance));
+    double py = exp(-(gy*gy) / (2.0 * variance * variance));
+    double px = exp(-(gx*gx) / (2.0 * variance * variance));
+    predlike = px * py * pr;
+
+
+//    x = generateGaussianNoise(x, variance);
+//    y = generateGaussianNoise(y, variance);
+//    r = generateGaussianNoise(r, variance * 0.4);
 
 }
 
@@ -273,14 +290,14 @@ void vParticle::concludeLikelihood()
     int n = 0;
 
     for(unsigned int i = 0; i < angdist.size(); i++) {
-        if(angdist[i] == 0) continue;
+        if(angdist[i] == 0 || angdist[i] > maxtw) continue;
         dtavg += angdist[i];
         n++;
     }
-    if(n > 10) {
+    if(n > minlikelihood) {
         dtavg /= n;
         for(unsigned int i = 0; i < angdist.size(); i++) {
-            if(angdist[i] == 0) continue;
+            if(angdist[i] == 0 || angdist[i] > maxtw) continue;
             dtvar += (dtavg - angdist[i]) * (dtavg - angdist[i]);
         }
         dtvar /= n;
@@ -290,7 +307,7 @@ void vParticle::concludeLikelihood()
     }
 
     if(likelihood > minlikelihood) tw = maxtw;
-    weight = likelihood * weight * dtvar;
+    weight = likelihood * weight * dtvar * predlike;
 
 }
 

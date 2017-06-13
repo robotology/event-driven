@@ -100,8 +100,10 @@ void particleProcessor::run()
 
     ptime2 = yarp::os::Time::now();
     ev::vQueue stw, stw2;
+    int smoothcount = 1e6; double val1 = 0, val2 = 0, val3 = 0, val4 = 0;
     unsigned long int pt = 0;
     unsigned long int t = 0;
+    int pvstamp = 0;
     //double maxlikelihood;
     while(!stw2.size() && !isStopping()) {
         yarp::os::Time::delay(0.1);
@@ -268,17 +270,35 @@ void particleProcessor::run()
 //        Timage = (yarp::os::Time::now() - Timage)*1000;
 
         if(scopeOut.getOutputCount()) {
-            yarp::os::Bottle &scopedata = scopeOut.prepare();
-            scopedata.clear();
 
-            //scopedata.addDouble(eventhandler->queryDelay(camera));
+            smoothcount++;
+            if(smoothcount > 10) {
+                smoothcount = 0;
+                val1 = -ev::vtsHelper::max_stamp;
+                val2 = -ev::vtsHelper::max_stamp;
+                val3 = -ev::vtsHelper::max_stamp;
+                val4 = -ev::vtsHelper::max_stamp;
+            }
 
             double temptime = yarp::os::Time::now();
-            scopedata.addDouble((temptime - ptime2));
+            val1 = std::max(val1, (temptime - ptime2));
             ptime2 = temptime;
 
-            scopedata.addDouble(eventhandler->queryDelay((camera)));
-            scopedata.addDouble(eventhandler->queryQDelay() / 1000.0);
+            val2 = std::max(val2, eventhandler->queryDelay((camera)));
+            val3 = std::max(val3, eventhandler->queryQDelay() / 1000.0);
+
+            double vdt = currentstamp - pvstamp;
+            pvstamp = currentstamp;
+            if(vdt < 0) vdt += ev::vtsHelper::max_stamp;
+            val4 = std::max(val4, vdt * ev::vtsHelper::tsscaler);
+
+            yarp::os::Bottle &scopedata = scopeOut.prepare();
+            scopedata.clear();
+            scopedata.addDouble(val1);
+            scopedata.addDouble(val2);
+            scopedata.addDouble(val3);
+            scopedata.addDouble(val4);
+
 
             //scopedata.addDouble((t - pt) * vtsHelper::tsscaler);
 

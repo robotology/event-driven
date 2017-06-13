@@ -34,6 +34,7 @@ private:
 
     //temporary parameters (on update cycle)
     double likelihood;
+    double predlike;
     int    outlierCount;
     int    inlierCount;
     double maxtw;
