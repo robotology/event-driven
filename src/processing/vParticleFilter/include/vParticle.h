@@ -94,11 +94,7 @@ public:
                 inlierCount++;
                 angdist[a] = dt + 1;
 
-                int score = inlierCount - outlierCount;
-                if(score >= likelihood) {
-                    likelihood = score;
-                    maxtw = dt;
-                }
+
 
             }
 
@@ -113,6 +109,12 @@ public:
                 negdist[a] = 1;
             }
 
+        }
+
+        int score = inlierCount - outlierCount;
+        if(score >= likelihood) {
+            likelihood = score;
+            maxtw = dt;
         }
 
         return inlierCount - outlierCount;

@@ -211,7 +211,7 @@ void vParticle::predict(unsigned long timestamp)
 
     double gx = generateGaussianNoise(0, variance);
     double gy = generateGaussianNoise(0, variance);
-    double gr = generateGaussianNoise(0, variance * 0.1);
+    double gr = generateGaussianNoise(0, variance * 0.4);
 
     x += gx;
     y += gy;

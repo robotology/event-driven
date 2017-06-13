@@ -186,6 +186,8 @@ void particleProcessor::run()
 
         double normval = 0.0;
         for(int k = 0; k < nThreads; k++) {
+            //if(computeThreads[k]->isRunning())
+            //    yInfo() << "Compute thread bottleneck";
             computeThreads[k]->join();
             normval += computeThreads[k]->getNormVal();
         }
@@ -272,7 +274,7 @@ void particleProcessor::run()
         if(scopeOut.getOutputCount()) {
 
             smoothcount++;
-            if(smoothcount > 10) {
+            if(smoothcount > 30) {
                 smoothcount = 0;
                 val1 = -ev::vtsHelper::max_stamp;
                 val2 = -ev::vtsHelper::max_stamp;
@@ -387,16 +389,17 @@ void vPartObsThread::run()
         for(unsigned int j = 0; j < (*stw).size(); j++) {
             if((*deltats)[j] < (*particles)[i].gettw()) {
                 auto v = is_event<AE>((*stw)[j]);
-                int l = 2 * (*particles)[i].incrementalLikelihood(v->x, v->y, (*deltats)[j]);
-                if(debugIm) {
-                    l += 128;
-                    if(l > 255) l = 255;
-                    if(l < 0) l = 0;
-                    (*debugIm)(i*4 + 0, j) = yarp::sig::PixelBgr(l, l, l);
-                    (*debugIm)(i*4 + 1, j) = yarp::sig::PixelBgr(l, l, l);
-                    (*debugIm)(i*4 + 2, j) = yarp::sig::PixelBgr(l, l, l);
-                    (*debugIm)(i*4 + 3, j) = yarp::sig::PixelBgr(l, l, l);
-                }
+                (*particles)[i].incrementalLikelihood(v->x, v->y, (*deltats)[j]);
+//                int l = 2 * (*particles)[i].incrementalLikelihood(v->x, v->y, (*deltats)[j]);
+//                if(debugIm) {
+//                    l += 128;
+//                    if(l > 255) l = 255;
+//                    if(l < 0) l = 0;
+//                    (*debugIm)(i*4 + 0, j) = yarp::sig::PixelBgr(l, l, l);
+//                    (*debugIm)(i*4 + 1, j) = yarp::sig::PixelBgr(l, l, l);
+//                    (*debugIm)(i*4 + 2, j) = yarp::sig::PixelBgr(l, l, l);
+//                    (*debugIm)(i*4 + 3, j) = yarp::sig::PixelBgr(l, l, l);
+//                }
             } else {
                 break;
             }
