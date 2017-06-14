@@ -37,7 +37,6 @@ particleProcessor::particleProcessor(std::string name, unsigned int height, unsi
     avgtw = 100;
     maxtw = 10000;
     pwsumsq = 0;
-    maxlikelihood = 1;
     pVariance = 0.5;
     rbound_max = 50;
     rbound_min = 10;
@@ -65,7 +64,11 @@ bool particleProcessor::threadInit()
 
     if(camera == 0) {
         if(!scopeOut.open(name + "/scope:o")) {
-            std::cout << "could not open scope port" << std::endl;
+            yError() << "Could not open scope port";
+            return false;
+        }
+        if(!debugOut.open(name + "/debug:o")) {
+            yError() << "Could not open debug image output port";
             return false;
         }
     }
@@ -98,19 +101,22 @@ void particleProcessor::run()
 {
     yInfo() << "VPF Thread starting for camera: " << camera;
 
+    double maxlikelihood = 0;
+    double stagnantstart = 0;
+    bool detection = false;
     ptime2 = yarp::os::Time::now();
     ev::vQueue stw, stw2;
     int smoothcount = 1e6; double val1 = 0, val2 = 0, val3 = 0, val4 = 0;
-    unsigned long int pt = 0;
+    //unsigned long int pt = 0;
     unsigned long int t = 0;
     int pvstamp = 0;
     //double maxlikelihood;
     while(!stw2.size() && !isStopping()) {
         yarp::os::Time::delay(0.1);
-        if(useroi)
-            stw2 = eventhandler->queryROI(camera, 100000, res.width/2, res.height/2, res.width/2);
+        //if(useroi)
+            //stw2 = eventhandler->queryROI(camera, 100000, res.width/2, res.height/2, res.width/2);
             //yarpstamp = eventhandler2.queryROI(stw2, camera, 100000, res.width/2, res.height/2, res.width/2);
-        else
+        //else
             stw2 = eventhandler->queryWindow(camera, 100000);
             //yarpstamp = eventhandler2.queryWindow(stw2, camera, 100000);
     }
@@ -121,7 +127,7 @@ void particleProcessor::run()
 
         stw = stw2;
 
-        pt = t;
+        //pt = t;
         t = unwrap(currentstamp);
 
         std::vector<vParticle> indexedSnap = indexedlist;
@@ -131,7 +137,7 @@ void particleProcessor::run()
             for(int i = 0; i < nparticles; i++) {
                 double rn = nRandomise * (double)rand() / RAND_MAX;
                 if(rn > 1.0)
-                    indexedlist[i].randomise(res.width, res.height, 30.0, avgtw);
+                    indexedlist[i].randomise(res.width, res.height, rbound_max, 0.01 * vtsHelper::vtsscaler);
                 else {
                     double accum = 0.0; int j = 0;
                     for(j = 0; j < nparticles; j++) {
@@ -148,7 +154,7 @@ void particleProcessor::run()
         for(int i = 0; i < nparticles; i++) {
             indexedlist[i].predict(t);
             if(!inbounds(indexedlist[i]))
-                indexedlist[i].randomise(res.width, res.height, 30.0, avgtw);
+                indexedlist[i].randomise(res.width, res.height, rbound_max, avgtw);
 
             if(indexedlist[i].gettw() > maxtw)
                 maxtw = indexedlist[i].gettw();
@@ -174,9 +180,9 @@ void particleProcessor::run()
             computeThreads[k]->start();
         }
 
-
+            //grab the new events in parallel as computing the likelihoods
         if(useroi)
-            stw2 = eventhandler->queryROI(camera, maxtw, avgx, avgy, avgr * 1.5);
+            stw2 = eventhandler->queryROI(camera, maxtw, avgx, avgy, avgr + 5);
         else
             stw2 = eventhandler->queryWindow(camera, maxtw);
 
@@ -193,14 +199,35 @@ void particleProcessor::run()
 
         //END MULTI-THREAD
 
+        //check for stagnancy
+        if(maxlikelihood == obsThresh) {
+            detection = false;
+            if(!stagnantstart) {
+                stagnantstart = yarp::os::Time::now();
+            } else {
+                if(yarp::os::Time::now() - stagnantstart > 1.0) {
+                    for(int i = 0; i < nparticles; i++)
+                        indexedlist[i].randomise(res.width, res.height, rbound_max, 1.0 * vtsHelper::vtsscaler);
+                    stw2 = eventhandler->queryWindow(camera, 1.0 * vtsHelper::vtsscaler);
+                    stagnantstart = 0;
+                    yInfo() << "Performing full resample";
+                }
+            }
+        } else {
+            detection = true;
+            stagnantstart = 0;
+        }
+
         //normalisation
         pwsumsq = 0;
         vParticle pmax = indexedlist[0];
+        maxlikelihood = 0;
         for(int i = 0; i < nparticles; i ++) {
             indexedlist[i].updateWeightSync(normval);
             pwsumsq += pow(indexedlist[i].getw(), 2.0);
             if(indexedlist[i].getw() > pmax.getw())
                 pmax = indexedlist[i];
+            maxlikelihood = std::max(maxlikelihood, indexedlist[i].getl());
         }
 
         //extract target position
@@ -216,59 +243,45 @@ void particleProcessor::run()
             avgtw += indexedlist[i].gettw() * indexedlist[i].getw();
         }
 
-        auto ceg = make_event<GaussianAE>();
-        ceg->stamp = currentstamp;
-        ceg->setChannel(camera);
-        ceg->x = avgx;
-        ceg->y = avgy;
-        ceg->sigx = avgr;
-        ceg->sigy = avgr;
-        ceg->sigxy = 0;
-        ceg->polarity = 1;
+        if(detection) {
+            auto ceg = make_event<GaussianAE>();
+            ceg->stamp = currentstamp;
+            ceg->setChannel(camera);
+            ceg->x = avgx;
+            ceg->y = avgy;
+            ceg->sigx = avgr;
+            ceg->sigy = avgr;
+            ceg->sigxy = 0;
+            ceg->polarity = 1;
 
-        eventsender->pushevent(ceg, yarpstamp);
+            eventsender->pushevent(ceg, yarpstamp);
+        }
 
-//        if(vBottleOut.getOutputCount()) {
-//            ev::vBottle &eventsout = vBottleOut.prepare();
-//            eventsout.clear();
+        double imagedt = yarp::os::Time::now() - pytime;
+        if(debugOut.getOutputCount() && (imagedt > 0.03 || imagedt < 0)) {
 
-//            eventsout.addEvent(ceg);
-//            vBottleOut.setEnvelope(yarpstamp);
-//            vBottleOut.write();
-//        }
+            pytime = yarp::os::Time::now();
 
-//        double Timage = yarp::os::Time::now();
-//        double ydt = yarpstamp.getTime() - pytime;
-//        if(debugOut.getOutputCount() && (ydt > 0.03 || ydt < 0)) {
+            yarp::sig::ImageOf< yarp::sig::PixelBgr> &image = debugOut.prepare();
+            image.resize(res.width, res.height);
+            image.zero();
 
-//            yarp::sig::ImageOf< yarp::sig::PixelBgr> &image = debugOut.prepare();
-//            image.resize(res.width, res.height);
-//            image.zero();
+            for(unsigned int i = 0; i < indexedlist.size(); i++) {
 
-//            for(unsigned int i = 0; i < indexedlist.size(); i++) {
+                int py = indexedlist[i].gety();
+                int px = indexedlist[i].getx();
 
-//                int py = indexedlist[i].gety();
-//                int px = indexedlist[i].getx();
+                if(py < 0 || py >= res.height || px < 0 || px >= res.width) continue;
+                image(res.width-1 - px, res.height - 1 - py) = yarp::sig::PixelBgr(255, 255, 255);
 
-//                if(py < 0 || py >= res.height || px < 0 || px >= res.width) continue;
-//                //image(res.width-1 - px, res.height - 1 - py) = yarp::sig::PixelBgr(255, 255, 255);
+            }
+            drawEvents(image, stw, currentstamp, avgtw, true);
 
-//            }
-//            drawEvents(image, stw, currentstamp, pmax.gettw(), false);
-//            //drawEvents(image, stw, pmax.gettw());
-//            //drawEvents(image, stw, eventdriven::vtsHelper::maxStamp());
+            drawcircle(image, res.width-1 - avgx, res.height-1 - avgy, avgr+0.5, 1);
 
-//            //drawcircle(image, res.width-1 - avgx, res.height-1 - avgy, avgr+0.5, 1);
-
-//            pytime = yarpstamp.getTime();
-
-//            //image = likedebug;
-//            //drawDistribution(image, indexedlist);
-
-//            debugOut.setEnvelope(yarpstamp);
-//            debugOut.write();
-//        }
-//        Timage = (yarp::os::Time::now() - Timage)*1000;
+            debugOut.setEnvelope(yarpstamp);
+            debugOut.write();
+        }
 
         if(scopeOut.getOutputCount()) {
 
@@ -286,7 +299,7 @@ void particleProcessor::run()
             ptime2 = temptime;
 
             val2 = std::max(val2, eventhandler->queryDelay((camera)));
-            val3 = std::max(val3, maxtw * ev::vtsHelper::tsscaler);
+            val3 = std::max(val3, maxlikelihood);
 
             double vdt = currentstamp - pvstamp;
             pvstamp = currentstamp;
@@ -299,27 +312,6 @@ void particleProcessor::run()
             scopedata.addDouble(val2);
             scopedata.addDouble(val3);
             scopedata.addDouble(val4);
-
-
-            //scopedata.addDouble((t - pt) * vtsHelper::tsscaler);
-
-//            scopedata.addDouble(dtnezero / (double)(dtnezero + dtezero));
-//            if(dtnezero + dtezero > 1000) {
-//                dtnezero = 0;
-//                dtezero = 0;
-//            }
-
-            //scopedata.addDouble(stw.size());
-            //scopedata.addDouble(pmax.dtvar);
-            //scopedata.addDouble(pmax.gettw() * vtsHelper::tsscaler);
-
-
-//            scopedata.addDouble(avgr);
-//            scopedata.addDouble(Tget);
-//            scopedata.addDouble(avgtw * 10e-6);
-//            scopedata.addDouble(maxtw * 10e-6);
-//            scopedata.addDouble(Tobs);
-
 
             scopeOut.write();
         }
