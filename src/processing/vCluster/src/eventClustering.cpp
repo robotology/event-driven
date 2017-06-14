@@ -212,7 +212,8 @@ void EventBottleManager::onRead(ev::vBottle &bot)
         if (channel == 0) //Process events for left camera
         {
             clEvts.clear();
-            int clusterAssignedTo = tracker_pool_left.update(aep, clEvts);
+            //int clusterAssignedTo = tracker_pool_left.update(aep, clEvts);
+            tracker_pool_left.update(aep, clEvts);
 
 //            //add the event depending if it was assigned a cluster
 //            if(clusterAssignedTo >= 0) {
@@ -233,7 +234,8 @@ void EventBottleManager::onRead(ev::vBottle &bot)
         else
         {
             clEvts.clear();
-            int clusterAssignedTo = tracker_pool_right.update(aep, clEvts);
+            //int clusterAssignedTo = tracker_pool_right.update(aep, clEvts);
+            tracker_pool_right.update(aep, clEvts);
 
 //            //add the event depending if it was assigned a cluster
 //            if(clusterAssignedTo >= 0) {
