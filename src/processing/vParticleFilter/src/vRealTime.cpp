@@ -181,7 +181,7 @@ void particleProcessor::run()
         }
 
             //grab the new events in parallel as computing the likelihoods
-        if(useroi)
+        if(useroi && detection)
             stw2 = eventhandler->queryROI(camera, maxtw, avgx, avgy, avgr + 5);
         else
             stw2 = eventhandler->queryWindow(camera, maxtw);
@@ -201,14 +201,15 @@ void particleProcessor::run()
 
         //check for stagnancy
         if(maxlikelihood == obsThresh) {
-            detection = false;
+
             if(!stagnantstart) {
                 stagnantstart = yarp::os::Time::now();
             } else {
-                if(yarp::os::Time::now() - stagnantstart > 1.0) {
+                if(yarp::os::Time::now() - stagnantstart > 0.1) {
                     for(int i = 0; i < nparticles; i++)
-                        indexedlist[i].randomise(res.width, res.height, rbound_max, 1.0 * vtsHelper::vtsscaler);
-                    stw2 = eventhandler->queryWindow(camera, 1.0 * vtsHelper::vtsscaler);
+                        indexedlist[i].randomise(res.width, res.height, rbound_max, 0.01 * vtsHelper::vtsscaler);
+                    detection = false;
+                    //stw2 = eventhandler->queryWindow(camera, 0.1 * vtsHelper::vtsscaler);
                     stagnantstart = 0;
                     yInfo() << "Performing full resample";
                 }
