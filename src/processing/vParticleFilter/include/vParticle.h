@@ -34,6 +34,7 @@ private:
 
     //temporary parameters (on update cycle)
     double likelihood;
+
     double predlike;
     int    outlierCount;
     int    inlierCount;
@@ -52,6 +53,8 @@ private:
     unsigned long int stamp;
 
 public:
+
+    int score;
 
 
     vParticle();
@@ -73,15 +76,15 @@ public:
     void predict(unsigned long int stamp);
 
     void initLikelihood();
-    inline int incrementalLikelihood(int vx, int vy, int dt)
+    inline void incrementalLikelihood(int vx, int vy, int dt)
     {
         double dx = vx - x;
         double dy = vy - y;
-    //    int rdx, rdy;
-    //    if(dx > 0) rdx = dx + 0.5;
-    //    else rdx = dx - 0.5;
-    //    if(dy > 0) rdy = dy + 0.5;
-    //    else rdy = dy - 0.5;
+//        int rdx, rdy;
+//        if(dx > 0) rdx = dx + 0.5;
+//        else rdx = dx - 0.5;
+//        if(dy > 0) rdy = dy + 0.5;
+//        else rdy = dy - 0.5;
 
         //double sqrd = pcb->queryDistance(rdy, rdx) - r;
         double sqrd = sqrt(pow(dx, 2.0) + pow(dy, 2.0)) - r;
@@ -93,12 +96,7 @@ public:
             if(!angdist[a]) {
                 inlierCount++;
                 angdist[a] = dt + 1;
-
-
-
             }
-
-
 
         } else if(sqrd > -outlierParameter && sqrd < 0) { //-3 < X < -5
 
@@ -111,13 +109,13 @@ public:
 
         }
 
-        int score = inlierCount - outlierCount;
+        score = inlierCount - outlierCount;
         if(score >= likelihood) {
             likelihood = score;
             maxtw = dt;
         }
 
-        return inlierCount - outlierCount;
+        //return score;
 
     }
     void concludeLikelihood();

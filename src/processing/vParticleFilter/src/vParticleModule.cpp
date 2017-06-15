@@ -103,7 +103,7 @@ bool vParticleModule::configure(yarp::os::ResourceFinder &rf)
     } else {
 
         /* USE REAL-TIME THREAD */
-        eventhandler.configure(height, width, 0.05);
+        eventhandler.configure(height, width, 0.15);
 
         if(leftParticles) {
             leftThread = new particleProcessor(getName(), height, width, &eventhandler, &outport);

@@ -57,7 +57,7 @@ bool particleProcessor::threadInit()
         computeThreads.push_back(new vPartObsThread(pStart, pEnd));
     }
 
-    rbound_min = res.width/18;
+    rbound_min = res.width/17;
     rbound_max = res.width/6;
 
     pcb.configure(res.height, res.width, rbound_max, 128);
@@ -117,7 +117,7 @@ void particleProcessor::run()
             //stw2 = eventhandler->queryROI(camera, 100000, res.width/2, res.height/2, res.width/2);
             //yarpstamp = eventhandler2.queryROI(stw2, camera, 100000, res.width/2, res.height/2, res.width/2);
         //else
-            stw2 = eventhandler->queryWindow(camera, 100000);
+            stw2 = eventhandler->queryWindow(camera, 0.01 * vtsHelper::vtsscaler);
             //yarpstamp = eventhandler2.queryWindow(stw2, camera, 100000);
     }
     yarp::os::Stamp yarpstamp = eventhandler->queryYstamp();
@@ -130,14 +130,15 @@ void particleProcessor::run()
         //pt = t;
         t = unwrap(currentstamp);
 
-        std::vector<vParticle> indexedSnap = indexedlist;
+
 
         //resampling
         if(!adaptive || pwsumsq * nparticles > 2.0) {
+            std::vector<vParticle> indexedSnap = indexedlist;
             for(int i = 0; i < nparticles; i++) {
                 double rn = nRandomise * (double)rand() / RAND_MAX;
                 if(rn > 1.0)
-                    indexedlist[i].randomise(res.width, res.height, rbound_max, 0.01 * vtsHelper::vtsscaler);
+                    indexedlist[i].randomise(res.width, res.height, rbound_max, 0.001 * vtsHelper::vtsscaler);
                 else {
                     double accum = 0.0; int j = 0;
                     for(j = 0; j < nparticles; j++) {
@@ -181,7 +182,7 @@ void particleProcessor::run()
         }
 
             //grab the new events in parallel as computing the likelihoods
-        if(useroi && detection)
+        if(useroi)
             stw2 = eventhandler->queryROI(camera, maxtw, avgx, avgy, avgr + 5);
         else
             stw2 = eventhandler->queryWindow(camera, maxtw);
@@ -189,35 +190,24 @@ void particleProcessor::run()
         yarpstamp = eventhandler->queryYstamp();
         currentstamp = eventhandler->queryVstamp(camera);
 
+//        bool obsbotneck = false;
+//        for(int k = 0; k < nThreads; k++) {
+//            if(computeThreads[k]->isRunning()) {
+//                obsbotneck = true;
+//                break;
+//            }
+
+//        }
+//        if(!obsbotneck)
+//            yInfo() << "Data Access bottleneck";
+
         double normval = 0.0;
         for(int k = 0; k < nThreads; k++) {
-            //if(computeThreads[k]->isRunning())
-            //    yInfo() << "Compute thread bottleneck";
             computeThreads[k]->join();
             normval += computeThreads[k]->getNormVal();
         }
 
         //END MULTI-THREAD
-
-        //check for stagnancy
-        if(maxlikelihood == obsThresh) {
-
-            if(!stagnantstart) {
-                stagnantstart = yarp::os::Time::now();
-            } else {
-                if(yarp::os::Time::now() - stagnantstart > 0.1) {
-                    for(int i = 0; i < nparticles; i++)
-                        indexedlist[i].randomise(res.width, res.height, rbound_max, 0.01 * vtsHelper::vtsscaler);
-                    detection = false;
-                    //stw2 = eventhandler->queryWindow(camera, 0.1 * vtsHelper::vtsscaler);
-                    stagnantstart = 0;
-                    yInfo() << "Performing full resample";
-                }
-            }
-        } else {
-            detection = true;
-            stagnantstart = 0;
-        }
 
         //normalisation
         pwsumsq = 0;
@@ -229,6 +219,25 @@ void particleProcessor::run()
             if(indexedlist[i].getw() > pmax.getw())
                 pmax = indexedlist[i];
             maxlikelihood = std::max(maxlikelihood, indexedlist[i].getl());
+        }
+
+        //check for stagnancy
+        if(maxlikelihood == obsThresh) {
+
+            if(!stagnantstart) {
+                stagnantstart = yarp::os::Time::now();
+            } else {
+                if(yarp::os::Time::now() - stagnantstart > 0.5) {
+                    for(int i = 0; i < nparticles; i++)
+                        indexedlist[i].initialiseState(res.width/2.0, res.height/2.0, (rbound_max + rbound_min) / 2.0, 0.001 * vtsHelper::vtsscaler);
+                    detection = false;
+                    stagnantstart = 0;
+                    yInfo() << "Performing full resample";
+                }
+            }
+        } else {
+            detection = true;
+            stagnantstart = 0;
         }
 
         //extract target position
@@ -244,7 +253,7 @@ void particleProcessor::run()
             avgtw += indexedlist[i].gettw() * indexedlist[i].getw();
         }
 
-        if(detection) {
+        //if(detection) {
             auto ceg = make_event<GaussianAE>();
             ceg->stamp = currentstamp;
             ceg->setChannel(camera);
@@ -256,7 +265,7 @@ void particleProcessor::run()
             ceg->polarity = 1;
 
             eventsender->pushevent(ceg, yarpstamp);
-        }
+        //}
 
         double imagedt = yarp::os::Time::now() - pytime;
         if(debugOut.getOutputCount() && (imagedt > 0.03 || imagedt < 0)) {
@@ -286,8 +295,9 @@ void particleProcessor::run()
 
         if(scopeOut.getOutputCount()) {
 
+
             smoothcount++;
-            if(smoothcount > 30) {
+            if(smoothcount > 10) {
                 smoothcount = 0;
                 val1 = -ev::vtsHelper::max_stamp;
                 val2 = -ev::vtsHelper::max_stamp;
@@ -307,14 +317,17 @@ void particleProcessor::run()
             if(vdt < 0) vdt += ev::vtsHelper::max_stamp;
             val4 = std::max(val4, vdt * ev::vtsHelper::tsscaler);
 
-            yarp::os::Bottle &scopedata = scopeOut.prepare();
-            scopedata.clear();
-            scopedata.addDouble(val1);
-            scopedata.addDouble(val2);
-            scopedata.addDouble(val3);
-            scopedata.addDouble(val4);
+            if((imagedt > 0.1 || imagedt < 0)) {
+                pytime = yarp::os::Time::now();
+                yarp::os::Bottle &scopedata = scopeOut.prepare();
+                scopedata.clear();
+                scopedata.addDouble(val1);
+                scopedata.addDouble(val2);
+                scopedata.addDouble(val3);
+                scopedata.addDouble(val4);
 
-            scopeOut.write();
+                scopeOut.write();
+            }
         }
 
     }
@@ -382,6 +395,7 @@ void vPartObsThread::run()
             if((*deltats)[j] < (*particles)[i].gettw()) {
                 auto v = is_event<AE>((*stw)[j]);
                 (*particles)[i].incrementalLikelihood(v->x, v->y, (*deltats)[j]);
+                if((*particles)[i].score < -20) break;
 //                int l = 2 * (*particles)[i].incrementalLikelihood(v->x, v->y, (*deltats)[j]);
 //                if(debugIm) {
 //                    l += 128;
