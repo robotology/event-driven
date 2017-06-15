@@ -578,10 +578,13 @@ void isoDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     if(dt < 0) dt += ev::vtsHelper::max_stamp;
     maxdt = std::max(maxdt, dt);
 
-    ev::vQueue::const_iterator qi;
-    for(qi = eSet.begin(); qi != eSet.end(); qi++) {
+    int skip = 1 + eSet.size() / 50000;
 
-        auto aep = is_event<AE>(*qi);
+    //ev::vQueue::const_iterator qi;
+    //for(qi = eSet.begin(); qi != eSet.end(); qi += skip) {
+    for(int i = eSet.size() - 1; i >= 0; i -= skip) {
+
+        auto aep = is_event<AE>(eSet[i]);
 
         //transform values
         int dt = cts - aep->stamp;
