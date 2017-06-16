@@ -15,7 +15,7 @@
 
 <module>
     <name> vParticleFilter </name>
-    <parameters> --threads 10 --variance 2.0 --lParticles 150 --rParticles 150 --obsinlier 1.0 --obsoutlier 6.0 --obsthresh 10.0 --adaptive </parameters>
+    <parameters> --threads 10 --variance 1.0 --lParticles 200 --rParticles 200 --obsinlier 1.0 --obsoutlier 6.0 --obsthresh 10.0 --adaptive </parameters>
     <node> icub-blade </node>
 </module>
 

@@ -60,7 +60,7 @@ bool particleProcessor::threadInit()
     rbound_min = res.width/17;
     rbound_max = res.width/6;
 
-    pcb.configure(res.height, res.width, rbound_max, 128);
+    pcb.configure(res.height, res.width, rbound_max, 64);
 
     if(camera == 0) {
         if(!scopeOut.open(name + "/scope:o")) {
@@ -82,9 +82,9 @@ bool particleProcessor::threadInit()
         p.attachPCB(&pcb);
 
         if(seedr)
-            p.initialiseState(seedx, seedy, seedr, 50000);
+            p.initialiseState(seedx, seedy, seedr, 0.01 * vtsHelper::vtsscaler);
         else
-            p.randomise(res.width, res.height, 30, 50000);
+            p.randomise(res.width, res.height, rbound_max, 0.01 * vtsHelper::vtsscaler);
 
         p.resetWeight(1.0/nparticles);
 
@@ -183,7 +183,7 @@ void particleProcessor::run()
 
             //grab the new events in parallel as computing the likelihoods
         if(useroi)
-            stw2 = eventhandler->queryROI(camera, maxtw, avgx, avgy, avgr + 5);
+            stw2 = eventhandler->queryROI(camera, maxtw, avgx, avgy, avgr * 1.5);
         else
             stw2 = eventhandler->queryWindow(camera, maxtw);
 
@@ -227,7 +227,7 @@ void particleProcessor::run()
             if(!stagnantstart) {
                 stagnantstart = yarp::os::Time::now();
             } else {
-                if(yarp::os::Time::now() - stagnantstart > 0.5) {
+                if(yarp::os::Time::now() - stagnantstart > 0.2) {
                     for(int i = 0; i < nparticles; i++)
                         indexedlist[i].initialiseState(res.width/2.0, res.height/2.0, (rbound_max + rbound_min) / 2.0, 0.001 * vtsHelper::vtsscaler);
                     detection = false;
@@ -262,7 +262,7 @@ void particleProcessor::run()
             ceg->sigx = avgr;
             ceg->sigy = avgr;
             ceg->sigxy = 0;
-            ceg->polarity = 1;
+            ceg->polarity = detection;
 
             eventsender->pushevent(ceg, yarpstamp);
         //}
