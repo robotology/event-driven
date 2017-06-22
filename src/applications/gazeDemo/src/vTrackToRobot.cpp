@@ -211,13 +211,13 @@ bool vTrackToRobotModule::updateModule()
     if(!useDemoRedBall) {
 
         //yInfo() << "Doing gaze";
+        yarp::sig::Vector tp;
+        gazecontrol->triangulate3DPoint(pleft, pright, tp);
 
-        gazecontrol->lookAtStereoPixels(pleft, pright);
+        if(tp[0] < -0.2)
+            gazecontrol->lookAtStereoPixels(pleft, pright);
 
         if(armdriver.isValid()) {
-
-            yarp::sig::Vector tp;
-            gazecontrol->triangulate3DPoint(pleft, pright, tp);
 
             tp[1] += -0.15;
             tp[2] += -0.15;
