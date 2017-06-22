@@ -7,6 +7,12 @@
 <node>icub-zynq</node>
 </module>
 
+<module>
+    <name> vPepper </name>
+    <parameters> </parameters>
+    <node> icub23 </node>
+</module>
+
     <module>
         <name> autosaccade </name>
         <parameters> --minVpS 50000 --robotName icub --timeout 1  </parameters>
@@ -33,12 +39,18 @@
 
     <connection>
         <from>/zynqGrabber/vBottle:o</from>
+        <to>/vPepper/vBottle:i</to>
+        <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+        <from>/vPepper/vBottle:o</from>
         <to>/autoSaccade/vBottle:i</to>
         <protocol>udp</protocol>
     </connection>
 
     <connection>
-        <from>/zynqGrabber/vBottle:o</from>
+        <from>/vPepper/vBottle:o</from>
         <to>/vFramer/AE:i</to>
         <protocol>udp</protocol>
     </connection>
