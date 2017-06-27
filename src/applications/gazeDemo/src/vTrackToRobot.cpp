@@ -234,10 +234,41 @@ bool vTrackToRobotModule::updateModule()
 
     } else {
 
-        yarp::sig::Vector tp;
-        gazecontrol->triangulate3DPoint(pleft, pright, tp);
+        yarp::sig::Vector xrobref, xeye, oeye;
+        gazecontrol->triangulate3DPoint(pleft, pright, xrobref);
+
+        gazecontrol->getLeftEyePose(xeye,oeye);
+
+        //this does the transformation
+        yarp::sig::Matrix T=yarp::math::axis2dcm(oeye);
+        T(0,3)=xeye[0];
+        T(1,3)=xeye[1];
+        T(2,3)=xeye[2];
+        //std::cout << "initial rotation matrix" << std::endl;
+        //std::cout << T.toString() << std::endl;
+
+        //std::cout << "initial translations" << std::endl;
+        //std::cout << xeye.toString() << std::endl;
+
+        yarp::sig::Matrix Ti = yarp::math::SE3inv(T);
+        //std::cout << "inverted rotation matrix" << std::endl;
+        //std::cout << Ti.toString() << std::endl;
 
 
+        //this was the target in eye coordinates
+        yarp::sig::Vector fp(4);
+        fp[0]=xrobref[0];
+        fp[1]=xrobref[1];
+        fp[2]=xrobref[2];
+        fp[3]=1.0;
+
+        //std::cout << "Multiplied by" << std::endl;
+        //std::cout << fp.toString() << std::endl;
+
+
+        yarp::sig::Vector tp=Ti*fp;
+        //std::cout << "Equals:" << std::endl;
+        //std::cout << tp.toString() << std::endl;
         if(cartOutPort.getOutputCount()) {
             yarp::os::Bottle &cartcoords = cartOutPort.prepare();
             cartcoords.clear();
