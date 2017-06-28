@@ -10,7 +10,7 @@
 <module>
     <name> vPepper </name>
     <parameters> </parameters>
-    <node> icub23 </node>
+    <node> icub-blade </node>
 </module>
 
 <module>
@@ -70,7 +70,7 @@
 <connection>
   <from>/vPepper/vBottle:o</from>
   <to>/vpf/vBottle:i</to>
-  <protocol>udp</protocol>
+  <protocol>shmem</protocol>
 </connection>
 
 <connection>

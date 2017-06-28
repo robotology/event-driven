@@ -229,7 +229,7 @@ void particleProcessor::run()
             } else {
                 if(yarp::os::Time::now() - stagnantstart > 0.2) {
                     for(int i = 0; i < nparticles; i++)
-                        indexedlist[i].initialiseState(res.width/2.0, res.height/2.0, (rbound_max + rbound_min) / 2.0, 0.001 * vtsHelper::vtsscaler);
+                        indexedlist[i].initialiseState(res.width/2.0, res.height/2.0, (rbound_max + rbound_min) / 3.0, 0.001 * vtsHelper::vtsscaler);
                     detection = false;
                     stagnantstart = 0;
                     yInfo() << "Performing full resample";
