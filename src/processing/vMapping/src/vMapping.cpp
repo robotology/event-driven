@@ -30,17 +30,20 @@ bool vMappingModule::updateModule() {
     if (imagePortIn.isImageReady()){
         yarp::sig::ImageOf<yarp::sig::PixelBgr > &frame = imagePortOut.prepare();
         frame = imagePortIn.getImage();
-        
-        ev::vQueue vQueue = vPort.getEvents();
 
+        ev::vQueue vQueue = vPort.getEvents();
+        //std::cout << vQueue.size() << std::endl;
         for (auto it = vQueue.begin(); it != vQueue.end(); ++it){
+
             auto v = ev::is_event<ev::AE >(*it);
+            if (v->channel) continue;
             unsigned int x = (304 - v->x);
             unsigned int y = (240 - v->y);
-//            x *= 4.21;
-//            y *= 4.26;
+            x *= 4.21;
+            y *= 4.26;
             frame(x,y) = yarp::sig::PixelBgr(255,0,0);
         }
+
           imagePortOut.write();
     }
     
@@ -120,14 +123,15 @@ void EventBottleManager::onRead(ev::vBottle &bot) {
     //get new events
     ev::vQueue newQueue = bot.get<ev::AE>();
     if(newQueue.empty()){
+        std::cout << "Empty queue" << std::endl;
         return;
     }
     
     mutex.wait();
     //append new events to queue
     vQueue.insert(vQueue.end(), newQueue.begin(), newQueue.end());
-    latestStamp = unwrapper(newQueue.back()->stamp);
-    vCount += newQueue.size();
+    //latestStamp = unwrapper(newQueue.back()->stamp);
+    //vCount += newQueue.size();
     mutex.post();
 }
 
@@ -165,9 +169,12 @@ bool EventBottleManager::stop() {
 }
 
 ev::vQueue EventBottleManager::getEvents() {
+    mutex.wait();
     if (!&vQueue)
         return ev::vQueue();
     ev::vQueue outQueue = vQueue;
     vQueue.clear();
+    mutex.post();
+
     return outQueue;
 }

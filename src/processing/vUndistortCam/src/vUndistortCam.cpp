@@ -108,8 +108,8 @@ EventBottleManager::EventBottleManager()
     leftMap.deallocate();
     rightMap.deallocate();
 
-    sensorHeight = 128;
-    sensorWidth = 128;
+    sensorHeight = 240;
+    sensorWidth = 304;
 
     truncate = true;
     strictio = false;

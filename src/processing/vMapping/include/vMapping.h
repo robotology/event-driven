@@ -52,10 +52,10 @@ private:
     bool imageReady;
 public:
     
-    ImagePort() : imageReady(false) { this->useCallback(); };
+    ImagePort() : imageReady(false) { this->useCallback(); }
     virtual void onRead( yarp::sig::ImageOf<yarp::sig::PixelBgr> &inImg );
     yarp::sig::ImageOf<yarp::sig::PixelBgr> getImage();
-    bool isImageReady() { return imageReady;};
+    bool isImageReady() { return imageReady;}
 };
 
 
