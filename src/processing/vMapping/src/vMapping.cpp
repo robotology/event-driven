@@ -27,11 +27,11 @@ int main(int argc, char * argv[])
 
 bool vMappingModule::updateModule() {
    
-    if (imagePortIn.isImageReady()){
+    if (imageCollector.isImageReady()){
         yarp::sig::ImageOf<yarp::sig::PixelBgr > &frame = imagePortOut.prepare();
-        frame = imagePortIn.getImage();
+        frame = imageCollector.getImage();
 
-        ev::vQueue vQueue = vPort.getEvents();
+        ev::vQueue vQueue = eventCollector.getEvents();
         //std::cout << vQueue.size() << std::endl;
         for (auto it = vQueue.begin(); it != vQueue.end(); ++it){
 
@@ -54,24 +54,25 @@ bool vMappingModule::configure( yarp::os::ResourceFinder &rf ) {
     std::string moduleName = rf.check("name",yarp::os::Value("/vMapping")).asString();
     setName(moduleName.c_str());
     
-    imagePortIn.open(getName("/img:i"));
-    vPort.open(getName("/vBottle:i"));
+    imageCollector.open(getName("/img:i"));
+    eventCollector.open(getName("/vBottle:i"));
     imagePortOut.open(getName("/img:o"));
-    vPort.start();
+    eventCollector.start();
+    imageCollector.start();
     return true;
 }
 
 bool vMappingModule::interruptModule() {
     imagePortOut.interrupt();
-    imagePortIn.interrupt();
-    vPort.interrupt();
+    imageCollector.interrupt();
+    eventCollector.interrupt();
     return true;
 }
 
 bool vMappingModule::close() {
     imagePortOut.close();
-    imagePortIn.close();
-    vPort.close();
+    imageCollector.close();
+    eventCollector.close();
     return true;
 }
 

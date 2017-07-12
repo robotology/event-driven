@@ -405,6 +405,7 @@ bool EventBottleManager::open(const string &name) {
     this->useCallback();
     
     BufferedPort<ev::vBottle>::open(name);
+    this->start();
     return true;
 }
 

@@ -58,13 +58,36 @@ public:
     bool isImageReady() { return imageReady;}
 };
 
+class EventCollector : public yarp::os::Thread {
+private:
+    EventBottleManager vPort;
+public:
+    bool open (const std::string &name){ return vPort.open(name); }
+    void close() { vPort.close();}
+    void interrupt() {vPort.interrupt(); }
+    ev::vQueue getEvents(){return vPort.getEvents();}
+    void run(){}
+};
+
+class ImageCollector : public yarp::os::Thread {
+private:
+    ImagePort imagePort;
+public:
+    bool open (const std::string &name) { return imagePort.open(name); }
+    void close() { imagePort.close();}
+    void interrupt() { imagePort.interrupt(); }
+    bool isImageReady() { return imagePort.isImageReady();}
+    yarp::sig::ImageOf <yarp::sig::PixelBgr> getImage() {return imagePort.getImage(); }
+    void run(){}
+};
+
 
 class vMappingModule : public yarp::os::RFModule {
 private :
     
-    ImagePort imagePortIn;
+    ImageCollector imageCollector;
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr > > imagePortOut;
-    EventBottleManager vPort;
+    EventCollector eventCollector;
 
 public :
     
@@ -73,8 +96,7 @@ public :
     virtual bool interruptModule();         // interrupt, e.g., the ports
     virtual bool close();                   // close and shut down the modulereturn
     
-    //when we call update module we want to send the frame on the output port
-    //we use the framerate to determine how often we do this
+    
     virtual bool updateModule();
     virtual double getPeriod();
     
