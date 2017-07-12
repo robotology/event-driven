@@ -39,11 +39,10 @@ bool vMappingModule::updateModule() {
             if (v->channel) continue;
             unsigned int x = (304 - v->x);
             unsigned int y = (240 - v->y);
-            x *= 4.21;
-            y *= 4.26;
-            frame(x,y) = yarp::sig::PixelBgr(255,0,0);
+            //x *= 4.21;
+            //y *= 4.26;
+            frame(x,y) = yarp::sig::PixelBgr(255,255,255);
         }
-
           imagePortOut.write();
     }
     
