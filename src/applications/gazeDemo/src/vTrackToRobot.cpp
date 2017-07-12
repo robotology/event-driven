@@ -115,6 +115,9 @@ bool vTrackToRobotModule::configure(yarp::os::ResourceFinder &rf)
     period = rf.check("period", yarp::os::Value(0.01)).asDouble();
     gazingActive = rf.check("start", yarp::os::Value(false)).asBool();
     useDemoRedBall = rf.check("grasp", yarp::os::Value(false)).asBool();
+    res.height = rf.check("height", yarp::os::Value(240)).asDouble();
+    res.width = rf.check("width", yarp::os::Value(304)).asDouble();
+    bool usearm = rf.check("arm") && rf.check("arm", yarp::os::Value(true)).asBool();
 
     if(!rpcPort.open(getName() + "/control"))
         return false;
@@ -123,6 +126,9 @@ bool vTrackToRobotModule::configure(yarp::os::ResourceFinder &rf)
     //inputPort.setDemo(rf.check("demo", yarp::os::Value("gaze")).asString());
 
     if(!inputPort.open(getName() + "/vBottle:i"))
+        return false;
+
+    if(!cartOutPort.open(getName() + "/cart:o"))
         return false;
 
     yarp::os::Property options;
@@ -134,6 +140,42 @@ bool vTrackToRobotModule::configure(yarp::os::ResourceFinder &rf)
         gazedriver.view(gazecontrol);
     else
         yWarning() << "Gaze Driver not opened and will not be used";
+
+    options.put("device","cartesiancontrollerclient");
+    // left arm
+    options.put("remote","/icub/cartesianController/left_arm");
+    options.put("local","/cartesian_client/left_arm");
+    //right arm
+//    options.put("remote","/icub/cartesianController/right_arm");
+//    options.put("local","/cartesian_client/right_arm");
+    if(usearm) armdriver.open(options);
+    if(armdriver.isValid()) {
+        armdriver.view(arm);
+        arm->storeContext(&startup_context_id);
+        arm->setTrajTime(1.5);
+        // get the torso dofs
+        yarp::sig::Vector newDof, curDof;
+        arm->getDOF(curDof);
+        newDof=curDof;
+
+        // enable the torso yaw and pitch
+        // disable the torso roll
+        newDof[0]=0;
+        newDof[1]=0;
+        newDof[2]=0;
+        arm->setDOF(newDof,curDof);
+
+        double min, max;
+        // we keep the lower limit
+        arm->getLimits(0,&min,&max);
+        arm->setLimits(0,min,30.0);
+
+        arm->getPose(armhomepos, armhomerot);
+
+    } else
+        yWarning() << "Arm driver not opened and will not be used";
+
+
 
     return true ;
 }
@@ -158,25 +200,44 @@ bool vTrackToRobotModule::updateModule()
         return true;
     }
 
+    yarp::sig::Vector pleft = leftTarget.subVector(0, 1);
+    pleft[0] = res.width - 1 - pleft[0];
+    pleft[1] = res.height - 1 - pleft[1];
+
+    yarp::sig::Vector pright = rightTarget.subVector(0, 1);
+    pright[0] = res.width - 1 - pright[0];
+    pright[1] = res.height - 1 - pright[1];
+
     if(!useDemoRedBall) {
 
         //yInfo() << "Doing gaze";
+        yarp::sig::Vector tp;
+        gazecontrol->triangulate3DPoint(pleft, pright, tp);
 
-        yarp::sig::Vector pleft = leftTarget.subVector(0, 1);
-        pleft[0] = 303 - pleft[0];
-        pleft[1] = 239 - pleft[1];
+        if(tp[0] < -0.2)
+            gazecontrol->lookAtStereoPixels(pleft, pright);
 
-        yarp::sig::Vector pright = rightTarget.subVector(0, 1);
-        pright[0] = 303 - pright[0];
-        pright[1] = 239 - pright[1];
+        if(armdriver.isValid()) {
 
-        gazecontrol->lookAtStereoPixels(pleft, pright);
+            tp[1] += -0.15;
+            tp[2] += -0.15;
 
-    } /*else {
+            //tp[0] = std::max(tp[0], -0.15);
+            tp[0] = std::min(tp[0], -0.20);
+            //tp[1] = std::max(tp[1], -0.6);
+            tp[1] = std::min(tp[1],  0.0);
+            //tp[2] = std::max(tp[2],  0.0); tp[2] = std::min(tp[2],  0.6);
 
-        //this is the eye pose
-        yarp::sig::Vector xeye, oeye;
-        gazecontrol->getLeftEyePose(xeye, oeye);
+            arm->goToPosition(tp);
+
+        }
+
+    } else {
+
+        yarp::sig::Vector xrobref, xeye, oeye;
+        gazecontrol->triangulate3DPoint(pleft, pright, xrobref);
+
+        gazecontrol->getLeftEyePose(xeye,oeye);
 
         //this does the transformation
         yarp::sig::Matrix T=yarp::math::axis2dcm(oeye);
@@ -215,7 +276,7 @@ bool vTrackToRobotModule::updateModule()
             cartcoords.add(tp[0]); cartcoords.add(tp[1]); cartcoords.add(tp[2]);
             //cartcoords.add(-1.0); cartcoords.add(0.0); cartcoords.add(-0.3);
             //    //add some buffer ints
-            cartcoords.add(0.5); cartcoords.add(px[0]); cartcoords.add(px[1]);
+            cartcoords.add(0.5); cartcoords.add(pleft[0]); cartcoords.add(pleft[1]);
             //    //flag that the object is detected
             cartcoords.add(1.0);
 
@@ -226,9 +287,7 @@ bool vTrackToRobotModule::updateModule()
             cartOutPort.write();
         }
 
-
-
-    }*/
+    }
 
     return !isStopping();
 }
@@ -270,6 +329,14 @@ bool vTrackToRobotModule::close()
         gazecontrol->stopControl();
         gazedriver.close();
     }
+
+    if(armdriver.isValid()) {
+        arm->stopControl();
+        arm->restoreContext(startup_context_id);
+        armdriver.close();
+    }
+
+
     inputPort.close();
     return yarp::os::RFModule::close();
 }

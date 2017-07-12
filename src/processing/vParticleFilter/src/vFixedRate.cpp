@@ -161,8 +161,8 @@ void vParticleReader::onRead(ev::vBottle &inputBottle)
     //q.sort(true);
 
     ev::vQueue stw;
-    unsigned long pt = 0;
-    unsigned long t = 0;
+    unsigned long int pt = 0;
+    unsigned long int t = 0;
 
     for(ev::vQueue::iterator qi = q.begin(); qi != q.end(); qi++) {
 
@@ -171,7 +171,7 @@ void vParticleReader::onRead(ev::vBottle &inputBottle)
         surfaceLeft.addEvent(*qi);
 
         t = unwrap((*qi)->stamp);
-        if(t - pt < rate) continue;
+        if((int)(t - pt) < rate) continue;
         pt = t;
 
         //if(!indexedlist[0].needsUpdating(t)) continue;

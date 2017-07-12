@@ -24,6 +24,7 @@
 
 #include <yarp/os/all.h>
 #include <iCub/eventdriven/all.h>
+#include <yarp/dev/CartesianControl.h>
 #include <yarp/dev/GazeControl.h>
 #include <yarp/dev/PolyDriver.h>
 #include <deque>
@@ -48,6 +49,7 @@ public:
         leftTarget.resize(3);
         rightTarget.resize(3);
         leftTarget[2] = -100;
+        rightTarget[2] = 100;
         useCallback();
     }
 
@@ -68,14 +70,22 @@ public:
             auto v = is_event<GaussianAE>(*qi);
             if(v->channel == VRIGHT && !rightupdated) {
                 rightupdated = true;
-                rightTarget[0] = v->x;
-                rightTarget[1] = v->y;
-                rightTarget[2] = v->sigx; //radius
+                if(v->polarity == 0) {
+                    rightTarget[2] = 100;
+                } else {
+                    rightTarget[0] = v->x;
+                    rightTarget[1] = v->y;
+                    rightTarget[2] = v->sigx; //radius
+                }
             } else if(v->channel == VLEFT && !leftupdated) {
                 leftupdated = true;
-                leftTarget[0] = v->x;
-                leftTarget[1] = v->y;
-                leftTarget[2] = v->sigx; //radius
+                if(v->polarity == 0) {
+                    leftTarget[2] = -100;
+                } else {
+                    leftTarget[0] = v->x;
+                    leftTarget[1] = v->y;
+                    leftTarget[2] = v->sigx; //radius
+                }
             }
             qi++;
         }
@@ -99,14 +109,22 @@ class vTrackToRobotModule : public yarp::os::RFModule
 {
 private:
 
+    ev::resolution res;
     //the event bottle input and output handler
     positionReader inputPort;
+    yarp::os::BufferedPort<yarp::os::Bottle> cartOutPort;
 
     //the remote procedure port
     yarp::os::RpcServer rpcPort;
 
     yarp::dev::PolyDriver gazedriver;
     yarp::dev::IGazeControl *gazecontrol;
+
+    yarp::sig::Vector armhomepos, armhomerot;
+    bool usearm;
+    yarp::dev::PolyDriver armdriver;
+    yarp::dev::ICartesianControl *arm;
+    int startup_context_id;
 
     double yThresh;
     double rThresh;

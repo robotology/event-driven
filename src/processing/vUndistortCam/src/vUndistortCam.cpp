@@ -195,7 +195,7 @@ void EventBottleManager::setCamParams(const yarp::os::Bottle &left,
         *(maps[i]) = cv::Mat(sensorHeight, sensorWidth, CV_32SC2);
         for(unsigned int y = 0; y < sensorHeight; y++) {
             for(unsigned int x = 0; x < sensorWidth; x++) {
-                maps[i]->at<cv::Vec2i>(x, y) =
+                maps[i]->at<cv::Vec2i>(y, x) =
                         mappoints.at<cv::Vec2f>(y * sensorWidth + x);
 //                std::cout << "[" << x << ", " << y << "] -> " <<
 //                             maps[i]->at<cv::Vec2i>(x, y) << std::endl;
@@ -233,9 +233,9 @@ void EventBottleManager::onRead(ev::vBottle &bot)
 
         cv::Vec2i mapPix;
         if(!v->getChannel())
-             mapPix = leftMap.at<cv::Vec2i>(v->x, v->y);
+             mapPix = leftMap.at<cv::Vec2i>(v->y, v->x);
         else
-            mapPix = rightMap.at<cv::Vec2i>(v->x, v->y);
+            mapPix = rightMap.at<cv::Vec2i>(v->y, v->x);
 
         bool withinSensorBounds = mapPix[0] >= 0.0 && mapPix[0] < (double)sensorWidth
                 && mapPix[1] >= 0.0 && mapPix[1] < (double)sensorHeight;

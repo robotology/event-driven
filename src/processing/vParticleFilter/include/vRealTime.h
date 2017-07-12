@@ -61,7 +61,6 @@ private:
     double avgr;
     double avgtw;
     double maxtw;
-    double maxlikelihood;
     double pwsumsq;
     double particleVariance;
     int rate;

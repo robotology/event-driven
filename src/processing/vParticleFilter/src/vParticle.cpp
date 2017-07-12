@@ -200,32 +200,32 @@ void vParticle::resetRadius(double value)
 
 void vParticle::predict(unsigned long timestamp)
 {
-    double dt = 0;
-    if(stamp) dt = timestamp - this->stamp;
-    stamp = timestamp;
+    //double dt = 0;
+    //if(stamp) dt = timestamp - this->stamp;
+    //stamp = timestamp;
 
-    tw += std::max(dt, 12500.0);
+    //tw += std::max(dt, 12500.0);
     //tw = std::max(tw, 50000.0);
 
     //double k = 1.0 / sqrt(2.0 * M_PI * variance * variance);
+    tw += 12500;
+//    double gx = generateGaussianNoise(0, variance);
+//    double gy = generateGaussianNoise(0, variance);
+//    double gr = generateGaussianNoise(0, variance * 0.4);
 
-    double gx = generateGaussianNoise(0, variance);
-    double gy = generateGaussianNoise(0, variance);
-    double gr = generateGaussianNoise(0, variance * 0.4);
+//    x += gx;
+//    y += gy;
+//    r += gr;
 
-    x += gx;
-    y += gy;
-    r += gr;
-
-    double pr = exp(-(gr*gr) / (2.0 * 0.16 * variance * variance));
-    double py = exp(-(gy*gy) / (2.0 * variance * variance));
-    double px = exp(-(gx*gx) / (2.0 * variance * variance));
-    predlike = px * py * pr;
+//    double pr = exp(-(gr*gr) / (2.0 * 0.16 * variance * variance));
+//    double py = exp(-(gy*gy) / (2.0 * variance * variance));
+//    double px = exp(-(gx*gx) / (2.0 * variance * variance));
+//    predlike = px * py * pr;
 
 
-//    x = generateGaussianNoise(x, variance);
-//    y = generateGaussianNoise(y, variance);
-//    r = generateGaussianNoise(r, variance * 0.4);
+    x = generateGaussianNoise(x, variance);
+    y = generateGaussianNoise(y, variance);
+    r = generateGaussianNoise(r, variance * 0.4);
 
 }
 
@@ -237,6 +237,7 @@ void vParticle::initLikelihood()
     angdist.zero();
     negdist.zero();
     maxtw = 0;
+    score = 0;
 }
 
 //int vParticle::incrementalLikelihood(int vx, int vy, int dt)
