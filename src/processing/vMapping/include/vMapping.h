@@ -66,7 +66,7 @@ public:
     void close() { vPort.close();}
     void interrupt() {vPort.interrupt(); }
     ev::vQueue getEvents(){return vPort.getEvents();}
-    void run(){}
+    void run(){vPort.start();}
 };
 
 class ImageCollector : public yarp::os::Thread {
