@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<application>
+    <name>mapping </name>
+
+    <dependencies>
+    </dependencies>
+
+    <module>
+        <name> zynqGrabber </name>
+        <parameters> </parameters>
+        <node> icub-zynq </node>
+    </module>
+
+    <module>
+        <name> vMapping</name>
+        <parameters> </parameters>
+        <node>icub24</node>
+    </module>
+ <module>
+        <name> yarpview </name>
+        <parameters>--name /left --x 30 --y 30 --w 608 --h 480 --synch </parameters>
+        <node>icub24</node>
+    </module>
+
+    <connection>
+        <from>/zynqGrabber/vBottle:o</from>
+        <to>/vMapping/vBottle:i</to>
+        <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+        <from>/icub/cam/left</from>
+        <to>/vMapping/img:i</to>
+        <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+        <from>/vMapping/img:o</from>
+        <to>/left</to>
+        <protocol>udp</protocol>
+    </connection>
+
+</application>

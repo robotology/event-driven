@@ -37,8 +37,8 @@ bool vMappingModule::updateModule() {
 
             auto v = ev::is_event<ev::AE >(*it);
             if (v->channel) continue;
-            unsigned int x = (304 - v->x);
-            unsigned int y = (240 - v->y);
+            unsigned int x = (303 - v->x);
+            unsigned int y = (239 - v->y);
             //x *= 4.21;
             //y *= 4.26;
             frame(x,y) = yarp::sig::PixelBgr(255,255,255);
