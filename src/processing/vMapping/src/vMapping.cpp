@@ -64,6 +64,14 @@ bool vMappingModule::updateModule() {
             cv::Mat cR(pointbufR);
             drawChessboardCorners(mat, boardSize, cL, foundL);
             drawChessboardCorners(vMat, boardSize, cR, foundR);
+            cv::Mat h = cv::findHomography(pointbufL, pointbufR, CV_RANSAC);
+            for (int r = 0; r < h.rows; ++r) {
+                for (int c  = 0; c  < h.cols; ++c ) {
+                    std::cout << h.at(r,c) << " ";
+                }
+                std::cout << std::endl;
+            }
+            
 //            count++;
         }
         
