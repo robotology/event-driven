@@ -7,7 +7,9 @@
 
 #include <yarp/os/all.h>
 #include <yarp/sig/all.h>
+# include <yarp/math/Math.h>
 #include <iCub/eventdriven/all.h>
+#include <opencv2/opencv.hpp>
 
 //TODO There is a copy of this class in the autosaccade module. Find a better location
 class EventBottleManager : public yarp::os::BufferedPort<ev::vBottle> {
@@ -81,14 +83,14 @@ public:
     void run(){}
 };
 
-
 class vMappingModule : public yarp::os::RFModule {
 private :
     
     ImageCollector imageCollector;
+    ImageCollector vImageCollector;
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr > > imagePortOut;
     EventCollector eventCollector;
-
+    yarp::sig::Matrix homography;
 public :
     
     // configure all the module parameters and return true if successful

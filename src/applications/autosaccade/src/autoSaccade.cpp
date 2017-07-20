@@ -467,11 +467,13 @@ bool EventBottleManager::stop() {
 }
 
 ev::vQueue EventBottleManager::getEvents() {
-    //if (!&vQueue)
-    //    return ev::vQueue();
-    //ev::vQueue outQueue = vQueue;
-    //vQueue.clear();
-    return vQueue;
+    mutex.wait();
+    if (!&vQueue)
+        return ev::vQueue();
+    ev::vQueue outQueue = vQueue;
+    vQueue.clear();
+    mutex.post();
+    return outQueue;
 }
 
 //empty line to make gcc happy
