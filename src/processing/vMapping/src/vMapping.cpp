@@ -27,14 +27,69 @@ int main(int argc, char * argv[])
 }
 
 bool vMappingModule::updateModule() {
-   
+    
+    //if calibrate parameter is set the update will perform a calibration step maxIter times
+    if (calibrate) {
+        if ( imageCollector.isImageReady() && vImageCollector.isImageReady() ) {
+            yarp::sig::ImageOf<yarp::sig::PixelBgr> frame = imageCollector.getImage();
+            yarp::sig::ImageOf<yarp::sig::PixelBgr> vImg = vImageCollector.getImage();
+        
+            auto *frameIplImg = (IplImage *) frame.getIplImage();
+            cv::Mat frameMat = cv::cvarrToMat( frameIplImg );
+            cv::imshow( "img", frameMat );
+        
+            auto *vIplImg = (IplImage *) vImg.getIplImage();
+            cv::Mat vMat = cv::cvarrToMat( vIplImg );
+            cv::imshow( "vImg", vMat );
+            cv::waitKey( 1 );
+            cv::Size boardSize( 4, 11 );
+            std::vector<cv::Point2f> frameCenters; //Vector for storing centers of circle grid on frame image
+            std::vector<cv::Point2f> vCenters; //Vector for storing centers of circle grid on event image
+        
+            bool frameFound = cv::findCirclesGrid( frameMat, boardSize, frameCenters,
+                                               cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING );
+            bool eventFound = cv::findCirclesGrid( vMat, boardSize, vCenters,
+                                               cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING );
+                
+            if ( frameFound && eventFound ) {
+                cvCvtColor( frameIplImg, frameIplImg, CV_RGB2BGR );
+                cvCvtColor( vIplImg, vIplImg, CV_RGB2BGR );
+
+                cv::Mat frameCentersMat( frameCenters );
+                cv::Mat vCentersMat( vCenters );
+                drawChessboardCorners( frameMat, boardSize, frameCentersMat, frameFound );
+                drawChessboardCorners( vMat, boardSize, vCentersMat, eventFound );
+                cv::Mat h = cv::findHomography( vCenters, frameCenters, CV_RANSAC );
+                cv::imshow( "img", frameMat );
+                cv::imshow( "vImg", vMat );
+                cv::waitKey( 1000 );
+                for (int r = 0; r < homography.rows(); ++r) {
+                    for (int c  = 0; c  < homography.cols(); ++c ) {
+                        homography(r,c) += h.at<double>(r,c);
+                    }
+                }
+                nIter++;
+                
+                //When max number of iteration is reached calibration is finalized
+                if (nIter > maxIter){
+                    homography /= nIter;
+                    homography = homography.transposed();
+                    cv::destroyAllWindows();
+                    yInfo() << "Calibration is over after " << nIter << " steps";
+                    calibrate = false;
+                }
+            }
+        
+        }
+    
+        return true;
+    }
+    
+    //If image is ready remap and draw events on it
     if (imageCollector.isImageReady()){
         yarp::sig::ImageOf<yarp::sig::PixelBgr > &frame = imagePortOut.prepare();
         frame = imageCollector.getImage();
-//        std::cout << "frame.height() = " << frame.height() << std::endl;
-//        std::cout << "frame.width() = " << frame.width() << std::endl;
         ev::vQueue vQueue = eventCollector.getEvents();
-//        std::cout << vQueue.size() << std::endl;
         for (auto it = vQueue.begin(); it != vQueue.end(); ++it){
             
             auto v = ev::is_event<ev::AE >(*it);
@@ -42,23 +97,20 @@ bool vMappingModule::updateModule() {
             double x = (303 - v->x);
             double y = (239 - v->y);
             yarp::sig::Vector evCoord (3);
+            
+            //Converting to homogeneous coordinates
             evCoord[0] = x;
             evCoord[1] = y;
             evCoord[2] = 1;
-//            std::cout << "x bef = " << x << std::endl;
-//            std::cout << "y bef = " << y << std::endl;
             
+            //Applying trasformation
             evCoord *= homography;
             
-//            std::cout << "evCoord[0] = " << evCoord[0] << std::endl;
-//            std::cout << "evCoord[1] = " << evCoord[1] << std::endl;
-//            std::cout << "evCoord[2] = " << evCoord[2] << std::endl;
-            //x *= 4.21;
-            //y *= 4.26;
+            //Converting back from homogenous coordinates
             x = evCoord[0] / evCoord[2];
             y = evCoord[1] / evCoord[2];
-//            std::cout << "x = " << x << std::endl;
-//            std::cout << "y = " << y << std::endl;
+            
+            //Drawing event on img
             if (x >= 0 && x < frame.width())
                 if (y >= 0 && y < frame.height())
                     frame(x,y) = yarp::sig::PixelBgr(255,255,255);
@@ -66,71 +118,29 @@ bool vMappingModule::updateModule() {
         imagePortOut.write();
     }
     
-    return true; 
-
-    if (imageCollector.isImageReady() && vImageCollector.isImageReady()){
-        yarp::sig::ImageOf<yarp::sig::PixelBgr> frame = imageCollector.getImage();
-        yarp::sig::ImageOf<yarp::sig::PixelBgr> vImg = vImageCollector.getImage();
-        
-        IplImage* imgL= (IplImage*) frame.getIplImage();
-        cv::Mat mat= cv::cvarrToMat(imgL);
-        cv::imshow("img",mat);
-        
-        IplImage* vImgL= (IplImage*) vImg.getIplImage();
-        cv::Mat vMat= cv::cvarrToMat(vImgL);
-        cv::imshow("vImg",vMat);
-        
-        cv::waitKey(1);
-        cv::Size boardSize (4 , 11);
-        std::vector <cv::Point2f> pointbufL;
-        std::vector <cv::Point2f> pointbufR;
-        
-        bool foundL = cv::findCirclesGrid(mat, boardSize, pointbufL, cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING);
-        bool foundR = cv::findCirclesGrid(vMat, boardSize, pointbufR, cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING);
-        
-        //if (foundL) std::cout << "frame" << std::endl;
-        //if (foundR) std::cout << "events" << std::endl;
-        if(foundL && foundR) {
-            //std::cout << "found" << std::endl;
-            cvCvtColor(imgL,imgL,CV_RGB2BGR);
-            cvCvtColor(vImgL,vImgL, CV_RGB2BGR);
-//            cv::saveStereoImage(pathImg.c_str(),imgL,vImgL,count);
-
-//            imageListR.push_back(imr);
-//            imageListL.push_back(iml);
-//            imageListLR.push_back(iml);
-//            imageListLR.push_back(imr);
-            cv::Mat cL(pointbufL);
-            cv::Mat cR(pointbufR);
-            drawChessboardCorners(mat, boardSize, cL, foundL);
-            drawChessboardCorners(vMat, boardSize, cR, foundR);
-            cv::Mat h = cv::findHomography(pointbufR, pointbufL, CV_RANSAC);
-            std::cout << h << std::endl << std::endl;
-            
-//            count++;
-        }
-        
-    }
-    
     return true;
+
+   
 }
 
 bool vMappingModule::configure( yarp::os::ResourceFinder &rf ) {
     std::string moduleName = rf.check("name",yarp::os::Value("/vMapping")).asString();
+    calibrate = rf.check("calibrate", yarp::os::Value(false)).asBool();
+    
     setName(moduleName.c_str());
     homography.resize(3,3);
-    homography(0,0) = 1.553509692150836;
-    homography(0,1) = -0.03204146238532902;
-    homography(0,2) = -126.1716599747018;
-    homography(1,0) = 0.002140828524680886;
-    homography(1,1) =  1.481284340326434;
-    homography(1,2) = -8.950266164271969;
-    homography(2,0) = 0.0001706129403882854;
-    homography(2,1) = -0.0004468557077937145;
-    homography(2,2) = 1;
+//    homography(0,0) = 1.553509692150836;
+//    homography(0,1) = -0.03204146238532902;
+//    homography(0,2) = -126.1716599747018;
+//    homography(1,0) = 0.002140828524680886;
+//    homography(1,1) =  1.481284340326434;
+//    homography(1,2) = -8.950266164271969;
+//    homography(2,0) = 0.0001706129403882854;
+//    homography(2,1) = -0.0004468557077937145;
+//    homography(2,2) = 1;
+//
+//    homography = homography.transposed();
 
-    homography = homography.transposed();
-//    homography = yarp::sig::Matrix::eye();
     for (int r = 0; r < homography.rows(); ++r) {
         for (int c = 0; c < homography.cols(); ++c) {
             std::cout << homography(r, c) << " ";
@@ -138,7 +148,13 @@ bool vMappingModule::configure( yarp::os::ResourceFinder &rf ) {
         std::cout << std::endl;
     }
     imageCollector.open(getName("/img:i"));
-    vImageCollector.open(getName("/vImg:i"));
+    
+    if (calibrate) {
+        vImageCollector.open( getName( "/vImg:i" ) );
+        maxIter = rf.check( "maxIter", yarp::os::Value( 20 ) ).asInt();
+        nIter = 0;
+    }
+    
     eventCollector.open(getName("/vBottle:i"));
     imagePortOut.open(getName("/img:o"));
     eventCollector.start();

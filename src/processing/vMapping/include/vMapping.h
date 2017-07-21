@@ -86,8 +86,13 @@ public:
 class vMappingModule : public yarp::os::RFModule {
 private :
     
+    //Variables for calibration
+    bool calibrate;
+    int nIter;
+    int maxIter;
+    
     ImageCollector imageCollector;
-    ImageCollector vImageCollector;
+    ImageCollector vImageCollector; //used for calibration
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr > > imagePortOut;
     EventCollector eventCollector;
     yarp::sig::Matrix homography;
@@ -96,7 +101,7 @@ public :
     // configure all the module parameters and return true if successful
     virtual bool configure(yarp::os::ResourceFinder &rf);
     virtual bool interruptModule();         // interrupt, e.g., the ports
-    virtual bool close();                   // close and shut down the modulereturn
+    virtual bool close();                   // close and shut down the module return
     
     
     virtual bool updateModule();
