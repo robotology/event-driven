@@ -33,11 +33,11 @@ bool vMappingModule::updateModule() {
         if ( imageCollector.isImageReady() && vImageCollector.isImageReady() ) {
             yarp::sig::ImageOf<yarp::sig::PixelBgr> frame = imageCollector.getImage();
             yarp::sig::ImageOf<yarp::sig::PixelBgr> vImg = vImageCollector.getImage();
-        
+            
             auto *frameIplImg = (IplImage *) frame.getIplImage();
             cv::Mat frameMat = cv::cvarrToMat( frameIplImg );
             cv::imshow( "img", frameMat );
-        
+            
             auto *vIplImg = (IplImage *) vImg.getIplImage();
             cv::Mat vMat = cv::cvarrToMat( vIplImg );
             cv::imshow( "vImg", vMat );
@@ -45,16 +45,16 @@ bool vMappingModule::updateModule() {
             cv::Size boardSize( 4, 11 );
             std::vector<cv::Point2f> frameCenters; //Vector for storing centers of circle grid on frame image
             std::vector<cv::Point2f> vCenters; //Vector for storing centers of circle grid on event image
-        
+            
             bool frameFound = cv::findCirclesGrid( frameMat, boardSize, frameCenters,
-                                               cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING );
+                                                   cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING );
             bool eventFound = cv::findCirclesGrid( vMat, boardSize, vCenters,
-                                               cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING );
-                
+                                                   cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING );
+            
             if ( frameFound && eventFound ) {
                 cvCvtColor( frameIplImg, frameIplImg, CV_RGB2BGR );
                 cvCvtColor( vIplImg, vIplImg, CV_RGB2BGR );
-
+                
                 cv::Mat frameCentersMat( frameCenters );
                 cv::Mat vCentersMat( vCenters );
                 drawChessboardCorners( frameMat, boardSize, frameCentersMat, frameFound );
@@ -76,12 +76,26 @@ bool vMappingModule::updateModule() {
                     homography = homography.transposed();
                     cv::destroyAllWindows();
                     yInfo() << "Calibration is over after " << nIter << " steps";
+                    yInfo() << "Saving calibration results to "<< confFileName;
+                    std::ofstream out;
+                    out.open(confFileName.c_str()); //camCalibFile.c_str());
+                    if (out.is_open()){
+                        out << "[MAPPING_LEFT]" << std::endl;
+                        out << "homography ( ";
+                        for (int r = 0; r < homography.rows(); ++r) {
+                            for (int c  = 0; c  < homography.cols(); ++c ) {
+                                out << homography(r, c ) << " ";
+                            }
+                        }
+                        out << ") " << std:: endl;
+                        out.close();
+                    }
                     calibrate = false;
                 }
             }
-        
+            
         }
-    
+        
         return true;
     }
     
@@ -119,34 +133,58 @@ bool vMappingModule::updateModule() {
     }
     
     return true;
-
-   
+    
+    
 }
 
 bool vMappingModule::configure( yarp::os::ResourceFinder &rf ) {
     std::string moduleName = rf.check("name",yarp::os::Value("/vMapping")).asString();
-    calibrate = rf.check("calibrate", yarp::os::Value(false)).asBool();
-    this -> outFileName = rf.getHomeContextPath().c_str();
-    outFileName += "/vMapping.ini";
-
-    yInfo() << "fileName = " << outFileName.c_str();
-    yInfo() << "ASdjfafksnfdka";
     setName(moduleName.c_str());
-    homography.resize(3,3);
-
-    imageCollector.open(getName("/img:i"));
     
+    calibrate = rf.check("calibrate", yarp::os::Value(false)).asBool();
+    
+    this -> confFileName = rf.getHomeContextPath().c_str();
+    confFileName += "/vMapping.ini";
+    
+    //If no calibration required, read homography from config file
+    if (!calibrate) {
+        yarp::os::Bottle &leftConf = rf.findGroup( "MAPPING_LEFT" );
+        
+        //If config file not found, calibration necessary
+        if ( leftConf.isNull() ) {
+            yInfo() << "Could not find mapping config for left cam. Calibration is necessary.";
+            calibrate = true;
+        } else {
+            yarp::os::Bottle *list = leftConf.find( "homography" ).asList();
+            homography.resize( 3, 3 );
+            
+            if ( list->size() != 9 ) {
+                yError() << "Config file corrupted. Quitting";
+                return false;
+            }
+            
+            for ( int r = 0; r < homography.rows(); ++r ) {
+                for ( int c = 0; c < homography.cols(); ++c ) {
+                    homography( r, c ) = list->get( r * homography.rows() + c ).asDouble();
+                }
+            }
+        }
+        
+    }
+
+    //Initialize calibration
     if (calibrate) {
         vImageCollector.open( getName( "/vImg:i" ) );
         maxIter = rf.check( "maxIter", yarp::os::Value( 20 ) ).asInt();
         nIter = 0;
+        vImageCollector.start();
     }
     
+    imageCollector.open(getName("/img:i"));
     eventCollector.open(getName("/vBottle:i"));
     imagePortOut.open(getName("/img:o"));
     eventCollector.start();
     imageCollector.start();
-    vImageCollector.start();
     return true;
 }
 

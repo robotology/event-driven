@@ -5,6 +5,8 @@
 #ifndef ICUB_EVENT_DRIVEN_VMAPPING_H
 #define ICUB_EVENT_DRIVEN_VMAPPING_H
 
+#include <iostream>
+#include <fstream>
 #include <yarp/os/all.h>
 #include <yarp/sig/all.h>
 # include <yarp/math/Math.h>
@@ -91,7 +93,7 @@ private :
     int nIter;
     int maxIter;
     
-    std::string outFileName;
+    std::string confFileName;
     ImageCollector imageCollector;
     ImageCollector vImageCollector; //used for calibration
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr > > imagePortOut;

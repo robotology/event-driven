@@ -14,7 +14,7 @@
 
     <module>
         <name> vMapping</name>
-        <parameters> </parameters>
+        <parameters>--calibrate false --maxIter 20 </parameters>
         <node>icub24</node>
     </module>
 
