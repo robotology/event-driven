@@ -210,7 +210,6 @@ double AutoSaccadeModule::computeEventRate() {
 }
 
 bool AutoSaccadeModule::updateModule() {
-    
     //collect events for some time
     eventBottleManager.start();
     Time::delay(timeout);

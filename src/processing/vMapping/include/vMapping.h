@@ -91,6 +91,7 @@ private :
     int nIter;
     int maxIter;
     
+    std::string outFileName;
     ImageCollector imageCollector;
     ImageCollector vImageCollector; //used for calibration
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr > > imagePortOut;

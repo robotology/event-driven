@@ -124,8 +124,8 @@ bool EventBottleManager::open(const std::string &name, bool strictio)
     this->strictio = strictio;
     this->useCallback();
 
-    yarp::os::BufferedPort<ev::vBottle>::open("/" + name + "/vBottle:i");
-    outPort.open("/" + name + "/vBottle:o");
+    yarp::os::BufferedPort<ev::vBottle>::open(name + "/vBottle:i");
+    outPort.open(name + "/vBottle:o");
     return true;
 }
 

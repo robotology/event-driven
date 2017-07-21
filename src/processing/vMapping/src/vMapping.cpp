@@ -18,7 +18,7 @@ int main(int argc, char * argv[])
     
     yarp::os::ResourceFinder rf;
     rf.setVerbose( true );
-    rf.setDefaultContext( "eventdriven" );
+    rf.setDefaultContext( "cameraCalibration" );
     rf.setDefaultConfigFile( "vMapping.ini" );
     rf.configure( argc, argv );
     
@@ -71,7 +71,7 @@ bool vMappingModule::updateModule() {
                 nIter++;
                 
                 //When max number of iteration is reached calibration is finalized
-                if (nIter > maxIter){
+                if (nIter >= maxIter){
                     homography /= nIter;
                     homography = homography.transposed();
                     cv::destroyAllWindows();
@@ -126,27 +126,14 @@ bool vMappingModule::updateModule() {
 bool vMappingModule::configure( yarp::os::ResourceFinder &rf ) {
     std::string moduleName = rf.check("name",yarp::os::Value("/vMapping")).asString();
     calibrate = rf.check("calibrate", yarp::os::Value(false)).asBool();
-    
+    this -> outFileName = rf.getHomeContextPath().c_str();
+    outFileName += "/vMapping.ini";
+
+    yInfo() << "fileName = " << outFileName.c_str();
+    yInfo() << "ASdjfafksnfdka";
     setName(moduleName.c_str());
     homography.resize(3,3);
-//    homography(0,0) = 1.553509692150836;
-//    homography(0,1) = -0.03204146238532902;
-//    homography(0,2) = -126.1716599747018;
-//    homography(1,0) = 0.002140828524680886;
-//    homography(1,1) =  1.481284340326434;
-//    homography(1,2) = -8.950266164271969;
-//    homography(2,0) = 0.0001706129403882854;
-//    homography(2,1) = -0.0004468557077937145;
-//    homography(2,2) = 1;
-//
-//    homography = homography.transposed();
 
-    for (int r = 0; r < homography.rows(); ++r) {
-        for (int c = 0; c < homography.cols(); ++c) {
-            std::cout << homography(r, c) << " ";
-        }
-        std::cout << std::endl;
-    }
     imageCollector.open(getName("/img:i"));
     
     if (calibrate) {

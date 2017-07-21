@@ -17,21 +17,90 @@
         <parameters> </parameters>
         <node>icub24</node>
     </module>
- <module>
+
+    <module>
+        <name> vFramer</name>
+        <parameters>--displays "(0 /blob/left (BLOB))"</parameters>
+        <node>icub24</node>
+    </module>
+
+    <module>
+        <name> vPepper</name>
+        <parameters> </parameters>
+        <node>icub24</node>
+    </module>
+
+    <module>
+        <name> vUndistortCam</name>
+        <parameters> </parameters>
+        <node>icub24</node>
+    </module>
+ 
+    <module>
+        <name> camCalib</name>
+        <parameters>--context cameraCalibration --from icubEyes_PYTHON.ini --group CAMERA_CALIBRATION_LEFT --name /icub/camcalib/left</parameters>
+        <node>icub24</node>
+    </module>
+
+    <module>
+        <name> yarpdev</name>
+        <parameters>--from camera/ServerGrabberDualLeopard.ini --split true --flip true --width 640 --height 240</parameters>
+        <node>icub-head</node>
+    </module>
+    
+
+    <module>
         <name> yarpview </name>
         <parameters>--name /left --x 30 --y 30 --w 608 --h 480 --synch </parameters>
         <node>icub24</node>
     </module>
 
+    <module>
+        <name> frameGrabberGui2 </name>
+        <parameters>--local /icub/fggui --remote /icub/cam/rpc --x 0 --y 350 --width 350 --height 500 </parameters>
+        <node>icub24</node>
+    </module>
+
+
     <connection>
         <from>/zynqGrabber/vBottle:o</from>
-        <to>/vMapping/vBottle:i</to>
+        <to>/vUndistortCam/vBottle:i</to>
         <protocol>udp</protocol>
     </connection>
 
     <connection>
         <from>/icub/cam/left</from>
+        <to>/icub/camcalib/left/in</to>
+        <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+        <from>/icub/camcalib/left/out</from>
         <to>/vMapping/img:i</to>
+        <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+        <from>/vFramer/blob/left</from>
+        <to>/vMapping/vImg:i</to>
+        <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+        <from>/vUndistortCam/vBottle:o</from>
+        <to>/vPepper/vBottle:i</to>
+        <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+        <from>/vPepper/vBottle:o</from>
+        <to>/vMapping/vBottle:i</to>
+        <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+        <from>/vUndistortCam/vBottle:o</from>
+        <to>/vFramer/AE:i</to>
         <protocol>udp</protocol>
     </connection>
 
