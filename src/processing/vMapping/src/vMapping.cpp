@@ -145,7 +145,9 @@ bool vMappingModule::configure( yarp::os::ResourceFinder &rf ) {
     
     this -> confFileName = rf.getHomeContextPath().c_str();
     confFileName += "/vMapping.ini";
-    
+
+    homography.resize( 3, 3 );
+
     //If no calibration required, read homography from config file
     if (!calibrate) {
         yarp::os::Bottle &leftConf = rf.findGroup( "MAPPING_LEFT" );
@@ -156,7 +158,6 @@ bool vMappingModule::configure( yarp::os::ResourceFinder &rf ) {
             calibrate = true;
         } else {
             yarp::os::Bottle *list = leftConf.find( "homography" ).asList();
-            homography.resize( 3, 3 );
             
             if ( list->size() != 9 ) {
                 yError() << "Config file corrupted. Quitting";
