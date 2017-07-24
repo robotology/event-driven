@@ -14,13 +14,13 @@
 
     <module>
         <name> vMapping</name>
-        <parameters>--calibrate false --maxIter 20 </parameters>
+        <parameters>--calibrateLeft false --calibrateRight false --maxIter 20 </parameters>
         <node>icub24</node>
     </module>
 
     <module>
         <name> vFramer</name>
-        <parameters>--displays "(0 /blob/left (BLOB))"</parameters>
+        <parameters>--displays "(0 /blob/left (BLOB) 1 /blob/right (BLOB))"</parameters>
         <node>icub24</node>
     </module>
 
@@ -35,10 +35,16 @@
         <parameters> </parameters>
         <node>icub24</node>
     </module>
- 
+
     <module>
         <name> camCalib</name>
         <parameters>--context cameraCalibration --from icubEyes_PYTHON.ini --group CAMERA_CALIBRATION_LEFT --name /icub/camcalib/left</parameters>
+        <node>icub24</node>
+    </module>
+
+    <module>
+        <name> camCalib</name>
+        <parameters>--context cameraCalibration --from icubEyes_PYTHON.ini --group CAMERA_CALIBRATION_RIGHT --name /icub/camcalib/right </parameters>
         <node>icub24</node>
     </module>
 
@@ -47,11 +53,16 @@
         <parameters>--from camera/ServerGrabberDualLeopard.ini --split true --flip true --width 640 --height 240</parameters>
         <node>icub-head</node>
     </module>
-    
 
     <module>
         <name> yarpview </name>
-        <parameters>--name /left --x 30 --y 30 --w 608 --h 480 --synch </parameters>
+        <parameters>--name /mapped/left --x 30 --y 30 --w 608 --h 480 --synch </parameters>
+        <node>icub24</node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters>--name /mapped/right --x 30 --y 30 --w 608 --h 480 --synch </parameters>
         <node>icub24</node>
     </module>
 
@@ -75,14 +86,32 @@
     </connection>
 
     <connection>
+        <from>/icub/cam/right</from>
+        <to>/icub/camcalib/right/in</to>
+        <protocol>udp</protocol>
+    </connection>
+
+    <connection>
         <from>/icub/camcalib/left/out</from>
-        <to>/vMapping/img:i</to>
+        <to>/vMapping/left/img:i</to>
+        <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+        <from>/icub/camcalib/right/out</from>
+        <to>/vMapping/right/img:i</to>
         <protocol>udp</protocol>
     </connection>
 
     <connection>
         <from>/vFramer/blob/left</from>
-        <to>/vMapping/vImg:i</to>
+        <to>/vMapping/left/vImg:i</to>
+        <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+        <from>/vFramer/blob/right</from>
+        <to>/vMapping/right/vImg:i</to>
         <protocol>udp</protocol>
     </connection>
 
@@ -105,8 +134,14 @@
     </connection>
 
     <connection>
-        <from>/vMapping/img:o</from>
-        <to>/left</to>
+        <from>/vMapping/left/img:o</from>
+        <to>/mapped/left</to>
+        <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+        <from>/vMapping/right/img:o</from>
+        <to>/mapped/right</to>
         <protocol>udp</protocol>
     </connection>
 

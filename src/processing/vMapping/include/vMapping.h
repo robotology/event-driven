@@ -13,39 +13,18 @@
 #include <iCub/eventdriven/all.h>
 #include <opencv2/opencv.hpp>
 
-//TODO There is a copy of this class in the autosaccade module. Find a better location
-class EventBottleManager : public yarp::os::BufferedPort<ev::vBottle> {
+class EventPort : public yarp::os::BufferedPort<ev::vBottle> {
 private:
-    
-    //for helping with timestamp wrap around
-    ev::vtsHelper unwrapper;
-    
-    //rate counters
     yarp::os::Semaphore mutex;
-    unsigned long int latestStamp;
-    unsigned int vCount;
-    double yRate;
-    bool isReading;
-    ev::vQueue vQueue;
-
+    ev::vQueue vLeftQueue;
+    ev::vQueue vRightQueue;
 public:
     
-    EventBottleManager();
+    EventPort() = default;
     
-    bool    open(const std::string &name);
-    
-    //this is the entry point to your main functionality
-    void    onRead(ev::vBottle &bot);
-    
-    //the getting functions of the parent class
-    unsigned long int getTime();
-    unsigned long int popCount();
-    double getEventRate() { return yRate; }
-    
-    ev::vQueue getEvents() ;
-    bool start();
-    bool stop();
-    
+    bool open(const std::string &name);
+    void onRead(ev::vBottle &bot);
+    ev::vQueue getEventsFromChannel(int channel);
 };
 
 class ImagePort : public yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr> > {
@@ -64,13 +43,14 @@ public:
 
 class EventCollector : public yarp::os::Thread {
 private:
-    EventBottleManager vPort;
+    EventPort vPort;
 public:
+    
     bool open (const std::string &name){ return vPort.open(name); }
     void close() { vPort.close();}
     void interrupt() {vPort.interrupt(); }
-    ev::vQueue getEvents(){return vPort.getEvents();}
-    void run(){vPort.start();}
+    ev::vQueue getEventsFromChannel(int channel){return vPort.getEventsFromChannel(channel);}
+    void run(){}
 };
 
 class ImageCollector : public yarp::os::Thread {
@@ -89,16 +69,21 @@ class vMappingModule : public yarp::os::RFModule {
 private :
     
     //Variables for calibration
-    bool calibrate;
+    bool calibrateLeft;
+    bool calibrateRight;
     int nIter;
     int maxIter;
+    ImageCollector leftImageCollector;
+    ImageCollector rightImageCollector;
+    ImageCollector vLeftImageCollector;
+    ImageCollector vRightImageCollector;
     
     std::string confFileName;
-    ImageCollector imageCollector;
-    ImageCollector vImageCollector; //used for calibration
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr > > imagePortOut;
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr > > leftImagePortOut;
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr > > rightImagePortOut;
     EventCollector eventCollector;
-    yarp::sig::Matrix homography;
+    yarp::sig::Matrix leftH;
+    yarp::sig::Matrix rightH;
 public :
     
     // configure all the module parameters and return true if successful
@@ -110,6 +95,16 @@ public :
     virtual bool updateModule();
     virtual double getPeriod();
     
+    bool performCalibStep( yarp::sig::ImageOf<yarp::sig::PixelBgr> &frame
+                           , yarp::sig::ImageOf<yarp::sig::PixelBgr> &vImg, yarp::sig::Matrix &homography ) const;
+    
+    void finalizeCalibration( yarp::sig::Matrix &homography, std::string groupName );
+    
+    bool readConfigFile( const yarp::os::ResourceFinder &rf, std::string groupName
+                         , yarp::sig::Matrix &homography ) const;
+    
+    void performMapping( yarp::sig::ImageOf<yarp::sig::PixelBgr> &img, const ev::vQueue &vQueue
+                         , const yarp::sig::Matrix &homography ) const;
 };
 
 
