@@ -67,6 +67,11 @@ bool vMappingModule::updateModule() {
         return true;
     }
     
+    if (!calibrateRight && !calibrateLeft && !eventCollector.isPortReading()){
+        eventCollector.clearQueues();
+        eventCollector.startReading();
+    }
+    
     //If image is ready remap and draw events on it
     if (leftImageCollector.isImageReady()){
         yarp::sig::ImageOf<yarp::sig::PixelBgr > &leftImg = leftImagePortOut.prepare();
@@ -122,6 +127,7 @@ void vMappingModule::finalizeCalibration( yarp::sig::Matrix &homography, std::st
     homography /= nIter;
     homography = homography.transposed();
     cv::destroyAllWindows();
+    cvWaitKey(1);
     yInfo() << "Camera calibration is over after " << nIter << " steps";
     nIter = 0;
     yInfo() << "Saving calibration results to " << confFileName;
@@ -312,13 +318,9 @@ void ImagePort::onRead( yarp::sig::ImageOf<yarp::sig::PixelBgr> &inImg ){
 /***********************EventPort***********************/
 
 
-bool EventPort::open(const std::string &name) {
-    //and open the input port
-    this->useCallback();
-    return yarp::os::BufferedPort<ev::vBottle>::open(name);
-}
-
 void EventPort::onRead(ev::vBottle &bot) {
+    if (!isReading)
+        return;
     //get new events
     ev::vQueue newQueue = bot.get<ev::AE>();
     if(newQueue.empty()){
@@ -351,4 +353,11 @@ ev::vQueue EventPort::getEventsFromChannel( int channel ) {
     }
     mutex.post();
     return outQueue;
+}
+
+void EventPort::clearQueues() {
+    mutex.wait();
+    vLeftQueue.clear();
+    vRightQueue.clear();
+    mutex.post();
 }

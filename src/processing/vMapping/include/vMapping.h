@@ -18,11 +18,16 @@ private:
     yarp::os::Semaphore mutex;
     ev::vQueue vLeftQueue;
     ev::vQueue vRightQueue;
+    bool isReading{ false };
+    
 public:
     
-    EventPort() = default;
+    EventPort() {this->useCallback();}
     
-    bool open(const std::string &name);
+    void startReading() { isReading = true; }
+    void stopReading() { isReading = false; }
+    bool isPortReading() {return isReading;}
+    void clearQueues();
     void onRead(ev::vBottle &bot);
     ev::vQueue getEventsFromChannel(int channel);
 };
@@ -32,10 +37,10 @@ class ImagePort : public yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::Pi
 private:
     yarp::sig::ImageOf<yarp::sig::PixelBgr> image;
     yarp::os::Mutex mutex;
-    bool imageReady;
+    bool imageReady{ false };
 public:
     
-    ImagePort() : imageReady(false) { this->useCallback(); }
+    ImagePort() { this->useCallback(); }
     virtual void onRead( yarp::sig::ImageOf<yarp::sig::PixelBgr> &inImg );
     yarp::sig::ImageOf<yarp::sig::PixelBgr> getImage();
     bool isImageReady() { return imageReady;}
@@ -51,6 +56,10 @@ public:
     void interrupt() {vPort.interrupt(); }
     ev::vQueue getEventsFromChannel(int channel){return vPort.getEventsFromChannel(channel);}
     void run(){}
+    void clearQueues() {vPort.clearQueues();}
+    void startReading() {vPort.startReading();}
+    void stopReading() {vPort.stopReading();}
+    bool isPortReading() {return vPort.isPortReading();}
 };
 
 class ImageCollector : public yarp::os::Thread {
@@ -73,14 +82,14 @@ private :
     bool calibrateRight;
     int nIter;
     int maxIter;
-    ImageCollector leftImageCollector;
-    ImageCollector rightImageCollector;
     ImageCollector vLeftImageCollector;
     ImageCollector vRightImageCollector;
     
     std::string confFileName;
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr > > leftImagePortOut;
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr > > rightImagePortOut;
+    ImageCollector leftImageCollector;
+    ImageCollector rightImageCollector;
     EventCollector eventCollector;
     yarp::sig::Matrix leftH;
     yarp::sig::Matrix rightH;
