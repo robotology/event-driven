@@ -93,6 +93,18 @@ private :
     EventCollector eventCollector;
     yarp::sig::Matrix leftH;
     yarp::sig::Matrix rightH;
+    int height;
+    int width;
+    int leftCanvasHeight;
+    int leftCanvasWidth;
+    int rightCanvasHeight;
+    int rightCanvasWidth;
+    int leftXOffset;
+    int leftYOffset;
+    int rightXOffset;
+    int rightYOffset;
+    
+    
 public :
     
     // configure all the module parameters and return true if successful
@@ -107,13 +119,16 @@ public :
     bool performCalibStep( yarp::sig::ImageOf<yarp::sig::PixelBgr> &frame
                            , yarp::sig::ImageOf<yarp::sig::PixelBgr> &vImg, yarp::sig::Matrix &homography ) const;
     
-    void finalizeCalibration( yarp::sig::Matrix &homography, std::string groupName );
+    void finalizeCalibration( yarp::sig::Matrix &homography, std::string groupName);
     
     bool readConfigFile( const yarp::os::ResourceFinder &rf, std::string groupName
                          , yarp::sig::Matrix &homography ) const;
     
     void performMapping( yarp::sig::ImageOf<yarp::sig::PixelBgr> &img, const ev::vQueue &vQueue
-                         , const yarp::sig::Matrix &homography ) const;
+                             , const yarp::sig::Matrix &homography, int xOffset, int yOffset ) const;
+    
+    void getCanvasSize( const yarp::sig::Matrix &homography, int &canvasWidth, int &canvasHeight, int &xOffset
+                            , int &yOffset ) const;
 };
 
 

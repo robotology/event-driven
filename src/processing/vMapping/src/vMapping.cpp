@@ -41,7 +41,7 @@ bool vMappingModule::updateModule() {
             }
             //When max number of iteration is reached calibration is finalized
             if (nIter >= maxIter){
-                finalizeCalibration( leftH, "MAPPING_LEFT" );
+                finalizeCalibration( leftH, "MAPPING_LEFT");
                 calibrateLeft = false;
             }
         }
@@ -60,7 +60,7 @@ bool vMappingModule::updateModule() {
             }
             //When max number of iteration is reached calibration is finalized
             if (nIter >= maxIter){
-                finalizeCalibration( rightH, "MAPPING_RIGHT" );
+                finalizeCalibration( rightH, "MAPPING_RIGHT");
                 calibrateRight = false;
             }
         }
@@ -70,22 +70,38 @@ bool vMappingModule::updateModule() {
     if (!calibrateRight && !calibrateLeft && !eventCollector.isPortReading()){
         eventCollector.clearQueues();
         eventCollector.startReading();
+        getCanvasSize( leftH, leftCanvasWidth, leftCanvasHeight, leftXOffset, leftYOffset );
+        getCanvasSize( rightH, rightCanvasWidth, rightCanvasHeight, rightXOffset, rightYOffset );
     }
     
     //If image is ready remap and draw events on it
     if (leftImageCollector.isImageReady()){
-        yarp::sig::ImageOf<yarp::sig::PixelBgr > &leftImg = leftImagePortOut.prepare();
-        leftImg = leftImageCollector.getImage();
+        yarp::sig::ImageOf<yarp::sig::PixelBgr> &leftCanvas = leftImagePortOut.prepare();
+        leftCanvas.resize(leftCanvasWidth,leftCanvasHeight);
+        leftCanvas.zero();
+        yarp::sig::ImageOf<yarp::sig::PixelBgr > leftImg = leftImageCollector.getImage();
+        for ( int x = 0; x < leftImg.width(); ++x ) {
+            for ( int y = 0; y < leftImg.height(); ++y ) {
+                leftCanvas(x + leftXOffset, y + leftYOffset) = leftImg(x,y);
+            }
+        }
         ev::vQueue vLeftQueue = eventCollector.getEventsFromChannel(0);
-        performMapping( leftImg, vLeftQueue, leftH );
+        performMapping( leftCanvas, vLeftQueue, leftH, leftXOffset, leftYOffset );
         leftImagePortOut.write();
     }
     
     if (rightImageCollector.isImageReady()){
-        yarp::sig::ImageOf<yarp::sig::PixelBgr > &rightImg = rightImagePortOut.prepare();
-        rightImg = rightImageCollector.getImage();
+        yarp::sig::ImageOf<yarp::sig::PixelBgr> &rightCanvas = rightImagePortOut.prepare();
+        rightCanvas.resize(rightCanvasWidth,rightCanvasHeight);
+        rightCanvas.zero();
+        yarp::sig::ImageOf<yarp::sig::PixelBgr > rightImg = rightImageCollector.getImage();
+        for ( int x = 0; x < rightImg.width(); ++x ) {
+            for ( int y = 0; y < rightImg.height(); ++y ) {
+                rightCanvas(x + rightXOffset, y + rightYOffset) = rightImg(x,y);
+            }
+        }
         ev::vQueue vRightQueue = eventCollector.getEventsFromChannel(1);
-        performMapping( rightImg, vRightQueue, rightH );
+        performMapping( rightCanvas, vRightQueue, rightH, rightXOffset, rightYOffset );
         rightImagePortOut.write();
     }
     
@@ -95,13 +111,13 @@ bool vMappingModule::updateModule() {
 }
 
 void vMappingModule::performMapping( yarp::sig::ImageOf<yarp::sig::PixelBgr> &img, const vQueue &vQueue
-                                     , const yarp::sig::Matrix &homography ) const {
+                                     , const yarp::sig::Matrix &homography, int xOffset, int yOffset ) const {
     for ( auto &it : vQueue ) {
         
         auto v = is_event<AE >( it );
         
-        double x = (303 - v->x);
-        double y = (239 - v->y);
+        double x = (width - 1 - v->x);
+        double y = (height - 1 - v->y);
         yarp::sig::Vector evCoord( 3 );
         
         //Converting to homogeneous coordinates
@@ -113,8 +129,8 @@ void vMappingModule::performMapping( yarp::sig::ImageOf<yarp::sig::PixelBgr> &im
         evCoord *= homography;
         
         //Converting back from homogenous coordinates
-        x = evCoord[0] / evCoord[2];
-        y = evCoord[1] / evCoord[2];
+        x = evCoord[0] / evCoord[2] + xOffset + 1;
+        y = evCoord[1] / evCoord[2] + yOffset + 1;
         
         //Drawing event on img
         if (x >= 0 && x < img.width())
@@ -123,7 +139,8 @@ void vMappingModule::performMapping( yarp::sig::ImageOf<yarp::sig::PixelBgr> &im
     }
 }
 
-void vMappingModule::finalizeCalibration( yarp::sig::Matrix &homography, std::string groupName ) {
+void vMappingModule::finalizeCalibration( yarp::sig::Matrix &homography, std::string groupName) {
+    //TODO Fix bug when writing to existing group
     homography /= nIter;
     homography = homography.transposed();
     cv::destroyAllWindows();
@@ -159,6 +176,57 @@ void vMappingModule::finalizeCalibration( yarp::sig::Matrix &homography, std::st
     } else {
         yError() << "Cannot open config file, results not saved";
     }
+    
+    
+}
+
+void vMappingModule::getCanvasSize( const yarp::sig::Matrix &homography, int &canvasWidth, int &canvasHeight, int &xOffset
+                                    , int &yOffset ) const {
+    yarp::sig::Vector botRCorn( 3 );
+    botRCorn[0] = width;
+    botRCorn[1] = height;
+    botRCorn[2] = 1;
+    
+    botRCorn *= homography;
+    botRCorn[0] /= botRCorn[2];
+    botRCorn[1] /= botRCorn[2];
+    
+    yarp::sig::Vector topLCorn( 3 );
+    topLCorn[0] = 0;
+    topLCorn[1] = 0;
+    topLCorn[2] = 1;
+    
+    topLCorn *= homography;
+    topLCorn[0] /= topLCorn[2];
+    topLCorn[1] /= topLCorn[2];
+    
+    yarp::sig::Vector topRCorn( 3 );
+    topRCorn[0] = width;
+    topRCorn[1] = 0;
+    topRCorn[2] = 1;
+    
+    topRCorn *= homography;
+    topRCorn[0] /= topRCorn[2];
+    topRCorn[1] /= topRCorn[2];
+    
+    yarp::sig::Vector botLCorn( 3 );
+    botLCorn[0] = 0;
+    botLCorn[1] = height;
+    botLCorn[2] = 1;
+    
+    botLCorn *= homography;
+    botLCorn[0] /= botLCorn[2];
+    botLCorn[1] /= botLCorn[2];
+    
+    int minX = std::min (topLCorn[0], botLCorn[0]);
+    int minY = std::min (topLCorn[1], topRCorn[1]);
+    int maxX = std::max (topRCorn[0], botRCorn[0]);
+    int maxY = std::max (botLCorn[1], botRCorn[1]);
+    
+    xOffset = - minX;
+    yOffset = - minY;
+    canvasWidth =   maxX - minX + 1;
+    canvasHeight =   maxY - minY + 1;
 }
 
 bool vMappingModule::performCalibStep( yarp::sig::ImageOf<yarp::sig::PixelBgr> &frame
@@ -209,6 +277,9 @@ bool vMappingModule::configure( yarp::os::ResourceFinder &rf ) {
     
     calibrateLeft = rf.check("calibrateLeft", yarp::os::Value(false)).asBool();
     calibrateRight = rf.check("calibrateRight", yarp::os::Value(false)).asBool();
+    
+    height = rf.check("height", yarp::os::Value(240)).asInt();
+    width = rf.check("width", yarp::os::Value(304)).asInt();
     
     this -> confFileName = rf.getHomeContextPath().c_str();
     confFileName += "/vMapping.ini";
@@ -329,7 +400,7 @@ void EventPort::onRead(ev::vBottle &bot) {
     
     mutex.wait();
     //append new events to queue
-
+    
     for ( auto &it : newQueue ) {
         auto v = ev::is_event<ev::AE >( it );
         if (v->channel)
@@ -341,7 +412,7 @@ void EventPort::onRead(ev::vBottle &bot) {
 }
 
 ev::vQueue EventPort::getEventsFromChannel( int channel ) {
-
+    
     ev::vQueue outQueue;
     mutex.wait();
     if (channel){
