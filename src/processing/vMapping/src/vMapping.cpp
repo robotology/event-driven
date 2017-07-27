@@ -140,7 +140,7 @@ void vMappingModule::performMapping( yarp::sig::ImageOf<yarp::sig::PixelBgr> &im
 }
 
 void vMappingModule::finalizeCalibration( yarp::sig::Matrix &homography, std::string groupName) {
-    //TODO Fix bug when writing to existing group
+    //TODO Make this method more flexible and general
     homography /= nIter;
     homography = homography.transposed();
     cv::destroyAllWindows();
@@ -149,7 +149,7 @@ void vMappingModule::finalizeCalibration( yarp::sig::Matrix &homography, std::st
     nIter = 0;
     yInfo() << "Saving calibration results to " << confFileName;
     std::fstream confFile;
-    confFile.open( confFileName.c_str() );
+    confFile.open( confFileName.c_str());
     std::string line;
     bool groupFound = false;
     if (confFile.is_open()){
@@ -165,13 +165,13 @@ void vMappingModule::finalizeCalibration( yarp::sig::Matrix &homography, std::st
             if (confFile.is_open())
                 confFile << "\n[" << groupName << "]" << std::endl;
         }
-        confFile << "homography ( ";
+        confFile << "\nhomography ( ";
         for (int r = 0; r < homography.rows(); ++r) {
             for (int c  = 0; c  < homography.cols(); ++c ) {
                 confFile << homography(r, c ) << " ";
             }
         }
-        confFile << ") \n";
+        confFile << ") \n\n";
         confFile.close();
     } else {
         yError() << "Cannot open config file, results not saved";
@@ -286,6 +286,9 @@ bool vMappingModule::configure( yarp::os::ResourceFinder &rf ) {
     
     leftH.resize( 3, 3 );
     rightH.resize( 3, 3 );
+    leftH.eye();
+    rightH.eye();
+    
     //If no calibration required, read homography from config file
     if (!calibrateLeft) {
         calibrateLeft = !readConfigFile( rf, "MAPPING_LEFT", leftH ); //If no config found, calibration necessary
