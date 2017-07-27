@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml-stylesheet type="text/xsl" href="yarpmanifest.xsl"?>
+
+<module>
+    <name>vPreProcess</name>
+    <doxygen-group>processing</doxygen-group>
+    <description>Removes salt and pepper noise from the event stream</description>
+    <copypolicy>Released under the terms of the GNU GPL v2.0</copypolicy>
+    <version>1.0</version>
+
+    <description-long>
+      Removes salt and pepper noise from the event stream. If an event is the only one occured within its surrounding
+        (spatialSize parameter) in a certain temporal window (temporalSize parameter), it is ignored.
+    </description-long>
+
+    <arguments>
+        <param desc="Specifies the stem name of ports created by the module." default="/vPepper"> name </param>
+        <param desc="Number of pixels on the y-axis of the sensor." default="240"> height </param>
+        <param desc="Number of pixels on the x-axis of the sensor." default="304"> width </param>
+        <param desc="Size of the spatial window around the event" default="1"> spatialSize </param>
+        <param desc="How long the filter will look for events in the past within the spatial window" default="100000">
+            temporalSize
+        </param>
+    </arguments>
+
+    <authors>
+        <author email="arren.glover@iit.it"> Arren Glover </author>
+    </authors>
+
+     <data>
+        <input>
+            <type>vBottle</type>
+            <port carrier="tcp">/vPepper/vBottle:i</port>
+            <description>
+                Input event stream to be filtered
+            </description>
+        </input>
+
+        <output>
+            <type>vBottle</type>
+            <port carrier="tcp">/vPepper/vBottle:o</port>
+            <description>
+                Outputs the filtered event stream
+            </description>
+        </output>
+
+    </data>
+
+</module>
