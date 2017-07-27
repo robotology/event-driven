@@ -26,7 +26,6 @@
 #include <deque>
 #include <string>
 #include <map>
-#include <iomanip>
 
 namespace ev {
 
@@ -79,9 +78,6 @@ public:
         int dt = qq.back()->back()->stamp - qq.back()->front()->stamp;
         if(dt < 0) dt += vtsHelper::max_stamp;
         delay_t += dt;
-
-        if(qq.size() > 2000)
-            yWarning() << "vQueueAllocator: > 2000 in queue";
 
         dataready.unlock();
     }
