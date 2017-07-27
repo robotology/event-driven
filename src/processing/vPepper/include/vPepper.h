@@ -40,6 +40,7 @@ private:
 
     //parameters
     std::string name;
+    ev::resolution res;
 
 public:
 

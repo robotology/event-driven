@@ -41,7 +41,6 @@ int main(int argc, char * argv[])
 /******************************************************************************/
 bool vPepperModule::configure(yarp::os::ResourceFinder &rf)
 {
-
     eventManager.initialise(rf.check("name", yarp::os::Value("/vPepper")).asString(),
                             rf.check("height", 240).asInt(),
                             rf.check("width", 304).asInt(),
@@ -81,6 +80,8 @@ void vPepperIO::initialise(std::string name, int height, int width,
 {
     thefilter.initialise(width, height, temporalSize, spatialSize);
     this->name = name;
+    res.height = height;
+    res.width = width;
 }
 
 void vPepperIO::run()
@@ -102,6 +103,10 @@ void vPepperIO::run()
         for(ev::vQueue::iterator qi = q->begin(); qi != q->end(); qi++) {
 
             auto v = is_event<AE>(*qi);
+            if(v->x < 0 || v->x > res.width-1 || v->y < 0 || v->y > res.height-1) {
+                yError() << "Event Corruption:" << v->getContent().toString();
+                continue;
+            }
             if(thefilter.check(v->x, v->y, v->polarity, v->channel, v->stamp))
                 outBottle.addEvent(*qi);
         }
