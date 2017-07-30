@@ -20,14 +20,15 @@
 // \ingroup Modules
 // \brief removes salt-and-pepper noise from the event stream
 
-#ifndef __VPEPPERMODULE__
-#define __VPEPPERMODULE__
+#ifndef __VPREPROCESS__
+#define __VPREPROCESS__
 
 #include <yarp/os/all.h>
 #include <iCub/eventdriven/all.h>
+#include <opencv/cv.h>
 using namespace::ev;
 
-class vPepperIO : public yarp::os::Thread
+class vPreProcess : public yarp::os::Thread
 {
 private:
 
@@ -35,29 +36,46 @@ private:
     ev::queueAllocator inPort;
     yarp::os::BufferedPort<ev::vBottle> outPort;
 
-    //filter class
-    ev::vNoiseFilter thefilter;
-
     //parameters
     std::string name;
     ev::resolution res;
 
+    //pre-pre processing
+    bool precheck;
+    bool flipx;
+    bool flipy;
+
+    //filter class
+    bool pepper;
+    ev::vNoiseFilter thefilter;
+
+    //we store an openCV map to use as a look-up table for the undistortion
+    //given the camera parameters provided
+    bool undistort;
+    cv::Mat leftMap;
+    cv::Mat rightMap;
+    bool truncate;
+
 public:
 
-    vPepperIO() : name("/vPepper") {}
-    ~vPepperIO();
-    void initialise(std::string name, int height, int width, int spatialSize,
-                    int temporalSize);
+    vPreProcess();
+    ~vPreProcess();
+
+    void initBasic(std::string name, int height, int width, bool precheck,
+                   bool flipx, bool flipy, bool pepper, bool undistort);
+    void initPepper(int spatialSize, int temporalSize);
+    void initUndistortion(const yarp::os::Bottle &left,
+                          const yarp::os::Bottle &right, bool truncate);
     void run();
     void onStop();
     bool threadInit();
 
 };
 
-class vPepperModule : public yarp::os::RFModule
+class vPreProcessModule : public yarp::os::RFModule
 {
     //the event bottle input and output handler
-    vPepperIO      eventManager;
+    vPreProcess      eventManager;
 
 public:
 

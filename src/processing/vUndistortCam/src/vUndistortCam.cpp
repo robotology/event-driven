@@ -226,6 +226,12 @@ void EventBottleManager::onRead(ev::vBottle &bot)
     //create event queue
     vQueue q = bot.get<AE>();
 
+    if(!q.size()) {
+        outPort.unprepare();
+        return;
+    }
+
+
     for(ev::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
     {
 
@@ -247,9 +253,11 @@ void EventBottleManager::onRead(ev::vBottle &bot)
 
 
     }
-    //send on the processed events
-    if(strictio) outPort.writeStrict();
-    else outPort.write();
+
+    if(outBottle.size())
+        outPort.write(strictio);
+    else
+        outPort.unprepare();
 
 }
 

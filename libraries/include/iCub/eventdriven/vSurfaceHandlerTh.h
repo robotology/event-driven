@@ -39,10 +39,15 @@ private:
     yarp::os::Mutex m;
     yarp::os::Mutex dataready;
 
+    unsigned int delay_nv;
+    long unsigned int delay_t;
+
 public:
 
     queueAllocator()
     {
+        delay_nv = 0;
+        delay_t = 0;
         useCallback();
         setStrict();
     }
@@ -69,8 +74,10 @@ public:
         //and decode the data
         inputbottle.addtoendof<ev::AddressEvent>(*(qq.back()));
 
-        if(qq.size() > 2000)
-            yWarning() << "vQueueAllocator: > 2000 in queue";
+        delay_nv += qq.back()->size();
+        int dt = qq.back()->back()->stamp - qq.back()->front()->stamp;
+        if(dt < 0) dt += vtsHelper::max_stamp;
+        delay_t += dt;
 
         dataready.unlock();
     }
@@ -95,6 +102,12 @@ public:
     void scrapQ()
     {
         m.lock();
+
+        delay_nv -= qq.front()->size();
+        int dt = qq.front()->back()->stamp - qq.front()->front()->stamp;
+        if(dt < 0) dt += vtsHelper::max_stamp;
+        delay_t -= dt;
+
         delete qq.front();
         qq.pop_front();
         sq.pop_front();
@@ -104,6 +117,16 @@ public:
     void releaseDataLock()
     {
         dataready.unlock();
+    }
+
+    unsigned int queryDelayN()
+    {
+        return delay_nv;
+    }
+
+    double queryDelayT()
+    {
+        return delay_t * vtsHelper::tsscaler;
     }
 
 };
