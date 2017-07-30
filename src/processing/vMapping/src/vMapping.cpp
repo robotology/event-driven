@@ -116,8 +116,8 @@ void vMappingModule::performMapping( yarp::sig::ImageOf<yarp::sig::PixelBgr> &im
         
         auto v = is_event<AE >( it );
         
-        double x = (width - 1 - v->x);
-        double y = (height - 1 - v->y);
+        double x = v->x;
+        double y = v->y;
         yarp::sig::Vector evCoord( 3 );
         
         //Converting to homogeneous coordinates
@@ -182,6 +182,7 @@ void vMappingModule::finalizeCalibration( yarp::sig::Matrix &homography, std::st
 
 void vMappingModule::getCanvasSize( const yarp::sig::Matrix &homography, int &canvasWidth, int &canvasHeight, int &xOffset
                                     , int &yOffset ) const {
+    //Transform the coordinates of each corner of the sensor
     yarp::sig::Vector botRCorn( 3 );
     botRCorn[0] = width;
     botRCorn[1] = height;
@@ -218,13 +219,17 @@ void vMappingModule::getCanvasSize( const yarp::sig::Matrix &homography, int &ca
     botLCorn[0] /= botLCorn[2];
     botLCorn[1] /= botLCorn[2];
     
+    //Getting the min and max coordinates of transformed corners
     int minX = std::min (topLCorn[0], botLCorn[0]);
     int minY = std::min (topLCorn[1], topRCorn[1]);
     int maxX = std::max (topRCorn[0], botRCorn[0]);
     int maxY = std::max (botLCorn[1], botRCorn[1]);
     
+    //Horizontal and vertical offset of events wrt frames
     xOffset = - minX;
     yOffset = - minY;
+    
+    //Canvas size must be as big as to contain all transformed events
     canvasWidth =   maxX - minX + 1;
     canvasHeight =   maxY - minY + 1;
 }
