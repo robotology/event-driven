@@ -100,7 +100,7 @@ void drawDistribution(yarp::sig::ImageOf<yarp::sig::PixelBgr> &image, std::vecto
     }
 }
 
-double approxatan2(double y, double x) {
+double vParticle::approxatan2(double y, double x) {
 
     double ax = std::abs(x); double ay = std::abs(y);
     double a = std::min (ax, ay) / std::max (ax, ay);
@@ -143,6 +143,7 @@ vParticle::vParticle()
     angbuckets = 128;
     angdist.resize(angbuckets);
     negdist.resize(angbuckets);
+    resetArea();
 }
 
 void vParticle::initialiseParameters(int id, double minLikelihood,
@@ -167,6 +168,7 @@ vParticle& vParticle::operator=(const vParticle &rhs)
     this->tw = rhs.tw;
     this->weight = rhs.weight;
     this->stamp = rhs.stamp;
+    this->negscaler = rhs.negscaler;
     return *this;
 }
 
@@ -176,6 +178,7 @@ void vParticle::initialiseState(double x, double y, double r, double tw)
     this->y = y;
     this->r = r;
     this->tw = tw;
+    resetArea();
 }
 
 void vParticle::randomise(int x, int y, int r, int tw)
@@ -190,12 +193,18 @@ void vParticle::resetStamp(unsigned long int value)
 
 void vParticle::resetWeight(double value)
 {
-    this->weight = weight;
+    this->weight = value;
 }
 
 void vParticle::resetRadius(double value)
 {
     this->r = value;
+    resetArea();
+}
+
+void vParticle::resetArea()
+{
+    negscaler = 3.0 * angbuckets / (M_PI * r * r);
 }
 
 void vParticle::predict(unsigned long timestamp)
@@ -208,6 +217,7 @@ void vParticle::predict(unsigned long timestamp)
     //tw = std::max(tw, 50000.0);
 
     //double k = 1.0 / sqrt(2.0 * M_PI * variance * variance);
+    tw += 12500;
     tw += 12500;
 //    double gx = generateGaussianNoise(0, variance);
 //    double gy = generateGaussianNoise(0, variance);
@@ -226,6 +236,7 @@ void vParticle::predict(unsigned long timestamp)
     x = generateGaussianNoise(x, variance);
     y = generateGaussianNoise(y, variance);
     r = generateGaussianNoise(r, variance * 0.4);
+    resetArea();
 
 }
 
@@ -286,29 +297,29 @@ void vParticle::initLikelihood()
 
 void vParticle::concludeLikelihood()
 {
-    double dtavg = 0;
-    double dtvar = 0;
-    int n = 0;
+//    double dtavg = 0;
+//    double dtvar = 0;
+//    int n = 0;
 
-    for(unsigned int i = 0; i < angdist.size(); i++) {
-        if(angdist[i] == 0 || angdist[i] > maxtw) continue;
-        dtavg += angdist[i];
-        n++;
-    }
-    if(n > minlikelihood) {
-        dtavg /= n;
-        for(unsigned int i = 0; i < angdist.size(); i++) {
-            if(angdist[i] == 0 || angdist[i] > maxtw) continue;
-            dtvar += (dtavg - angdist[i]) * (dtavg - angdist[i]);
-        }
-        dtvar /= n;
-        dtvar = 0.000001 + 1.0 / sqrt(dtvar * 2.0 * M_PI);
-    } else {
-        dtvar = 0.000001;
-    }
+//    for(unsigned int i = 0; i < angdist.size(); i++) {
+//        if(angdist[i] == 0 || angdist[i] > maxtw) continue;
+//        dtavg += angdist[i];
+//        n++;
+//    }
+//    if(n > minlikelihood) {
+//        dtavg /= n;
+//        for(unsigned int i = 0; i < angdist.size(); i++) {
+//            if(angdist[i] == 0 || angdist[i] > maxtw) continue;
+//            dtvar += (dtavg - angdist[i]) * (dtavg - angdist[i]);
+//        }
+//        dtvar /= n;
+//        dtvar = 0.000001 + 1.0 / sqrt(dtvar * 2.0 * M_PI);
+//    } else {
+//        dtvar = 0.000001;
+//    }
 
     if(likelihood > minlikelihood) tw = maxtw;
-    weight = likelihood * weight * dtvar;// * predlike;
+    weight = likelihood * weight;//* dtvar;// * predlike;
 
 }
 

@@ -28,14 +28,17 @@ namespace ev {
 class vEvent;
 
 template<typename V = vEvent> using event = std::shared_ptr<V>;
-template<typename V1, typename V2> event<V1> as_event(event<V2> orig_event) {
+template<typename V1, typename V2> inline event<V1> as_event(event<V2> orig_event) {
     return std::dynamic_pointer_cast<V1>(orig_event);
 }
-template<typename V1, typename V2> event<V1> is_event(event<V2> orig_event) {
+template<typename V1, typename V2> inline event<V1> is_event(event<V2> orig_event) {
     return std::static_pointer_cast<V1>(orig_event);
 }
-template<typename V> event<V> make_event(void) {
+template<typename V> event<V> inline make_event(void) {
     return std::make_shared<V>();
+}
+template<typename V> inline V* read_as(const event<> &orig_event) {
+    return (V *)orig_event.get();
 }
 template<typename V1, typename V2> event<V1> make_event(event<V2> orig_event) {
     return std::make_shared<V1>(*(orig_event.get()));

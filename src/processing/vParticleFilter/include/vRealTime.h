@@ -12,6 +12,8 @@ class vPartObsThread : public yarp::os::Thread
 {
 private:
 
+    yarp::os::Mutex processing;
+    yarp::os::Mutex done;
     int pStart;
     int pEnd;
 
@@ -27,7 +29,9 @@ public:
     vPartObsThread(int pStart, int pEnd);
     void setDataSources(std::vector<vParticle> *particles,
                         std::vector<int> *deltats, ev::vQueue *stw, yarp::sig::ImageOf<yarp::sig::PixelBgr> *debugIm);
-    double getNormVal() { return normval; }
+    void process();
+    double waittilldone();
+
     bool threadInit() { return true; }
     void run();
     void threadRelease() {}

@@ -16,123 +16,6 @@ void drawDistribution(yarp::sig::ImageOf<yarp::sig::PixelBgr> &image, std::vecto
 
 class preComputedBins;
 
-/*////////////////////////////////////////////////////////////////////////////*/
-//VPARTICLETRACKER
-/*////////////////////////////////////////////////////////////////////////////*/
-class vParticle
-{
-private:
-
-    //static parameters
-    int id;
-    double minlikelihood;
-    double inlierParameter;
-    double outlierParameter;
-    double variance;
-    int angbuckets;
-    preComputedBins *pcb;
-
-    //temporary parameters (on update cycle)
-    double likelihood;
-
-    double predlike;
-    int    outlierCount;
-    int    inlierCount;
-    double maxtw;
-    yarp::sig::Vector angdist;
-    yarp::sig::Vector negdist;
-
-    //state and weight
-    double x;
-    double y;
-    double r;
-    double tw;
-    double weight;
-
-    //timing
-    unsigned long int stamp;
-
-public:
-
-    int score;
-
-
-    vParticle();
-    vParticle& operator=(const vParticle &rhs);
-
-    //initialise etc.
-    void initialiseParameters(int id, double minLikelihood, double outlierParam, double inlierParam, double variance, int angbuckets);
-    void attachPCB(preComputedBins *pcb) { this->pcb = pcb; }
-
-    void initialiseState(double x, double y, double r, double tw);
-    void randomise(int x, int y, int r, int tw);
-
-    void resetStamp(unsigned long int value);
-    void resetWeight(double value);
-    void resetRadius(double value);
-
-
-    //update
-    void predict(unsigned long int stamp);
-
-    void initLikelihood();
-    inline void incrementalLikelihood(int vx, int vy, int dt)
-    {
-        double dx = vx - x;
-        double dy = vy - y;
-//        int rdx, rdy;
-//        if(dx > 0) rdx = dx + 0.5;
-//        else rdx = dx - 0.5;
-//        if(dy > 0) rdy = dy + 0.5;
-//        else rdy = dy - 0.5;
-
-        //double sqrd = pcb->queryDistance(rdy, rdx) - r;
-        double sqrd = sqrt(pow(dx, 2.0) + pow(dy, 2.0)) - r;
-
-        if(sqrd > -inlierParameter && sqrd < inlierParameter) {
-
-            //int a = pcb->queryBinNumber(rdy, rdx);
-            int a = 0.5 + (angbuckets-1) * (atan2(dy, dx) + M_PI) / (2.0 * M_PI);
-            if(!angdist[a]) {
-                inlierCount++;
-                angdist[a] = dt + 1;
-            }
-
-        } else if(sqrd > -outlierParameter && sqrd < 0) { //-3 < X < -5
-
-            //int a = pcb->queryBinNumber(rdy, rdx);
-            int a = 0.5 + (angbuckets-1) * (atan2(dy, dx) + M_PI) / (2.0 * M_PI);
-            if(!negdist[a]) {
-                outlierCount++;
-                negdist[a] = 1;
-            }
-
-        }
-
-        score = inlierCount - outlierCount;
-        if(score >= likelihood) {
-            likelihood = score;
-            maxtw = dt;
-        }
-
-        //return score;
-
-    }
-    void concludeLikelihood();
-
-    void updateWeightSync(double normval);
-
-    //get
-    int    getid() { return id; }
-    double getx()  { return x; }
-    double gety()  { return y; }
-    double getr()  { return r; }
-    double getw()  { return weight; }
-    double getl()  { return likelihood; }
-    double gettw() { return tw; }
-
-
-};
 
 class preComputedBins
 {
@@ -178,7 +61,7 @@ public:
         }
     }
 
-    double queryDistance(int dy, int dx)
+    inline double queryDistance(int dy, int dx)
     {
         dy += offsety; dx += offsetx;
 //        if(dy < 0 || dy > rows || dx < 0 || dx > cols) {
@@ -188,7 +71,7 @@ public:
         return ds(dy, dx);
     }
 
-    int queryBinNumber(double dy, double dx)
+    inline int queryBinNumber(double dy, double dx)
     {
         dy += offsety; dx += offsetx;
 //        if(dy < 0 || dy > rows || dx < 0 || dx > cols) {
@@ -201,6 +84,120 @@ public:
 
 
 };
+
+/*////////////////////////////////////////////////////////////////////////////*/
+//VPARTICLETRACKER
+/*////////////////////////////////////////////////////////////////////////////*/
+class vParticle
+{
+private:
+
+    //static parameters
+    int id;
+    double minlikelihood;
+    double inlierParameter;
+    double outlierParameter;
+    double variance;
+    int angbuckets;
+    preComputedBins *pcb;
+    double negscaler;
+
+    //temporary parameters (on update cycle)
+    double likelihood;
+
+    double predlike;
+    int    outlierCount;
+    int    inlierCount;
+    double maxtw;
+    yarp::sig::Vector angdist;
+    yarp::sig::Vector negdist;
+
+    //state and weight
+    double x;
+    double y;
+    double r;
+    double tw;
+    double weight;
+
+    //timing
+    unsigned long int stamp;
+
+public:
+
+    int score;
+
+
+    vParticle();
+    vParticle& operator=(const vParticle &rhs);
+
+    //initialise etc.
+    void initialiseParameters(int id, double minLikelihood, double outlierParam, double inlierParam, double variance, int angbuckets);
+    void attachPCB(preComputedBins *pcb) { this->pcb = pcb; }
+
+    void initialiseState(double x, double y, double r, double tw);
+    void randomise(int x, int y, int r, int tw);
+
+    void resetStamp(unsigned long int value);
+    void resetWeight(double value);
+    void resetRadius(double value);
+    void resetArea();
+
+
+    //update
+    void predict(unsigned long int stamp);
+    double approxatan2(double y, double x);
+
+    void initLikelihood();
+    inline void incrementalLikelihood(int vx, int vy, int dt)
+    {
+        double dx = vx - x;
+        double dy = vy - y;
+
+        double sqrd = pcb->queryDistance((int)dy, (int)dx) - r;
+        //double sqrd = sqrt(pow(dx, 2.0) + pow(dy, 2.0)) - r;
+
+        if(sqrd > inlierParameter) return;
+
+        if(sqrd > -inlierParameter) {
+            //int a = 0.5 + (angbuckets-1) * (atan2(dy, dx) + M_PI) / (2.0 * M_PI);
+
+            int a = pcb->queryBinNumber((int)dy, (int)dx);
+
+            if(!angdist[a]) {
+                inlierCount++;
+                //angdist[a] = dt + 1;
+                angdist[a] = 1;
+
+                score = inlierCount - negscaler * outlierCount;
+                if(score >= likelihood) {
+                    likelihood = score;
+                    maxtw = dt;
+                }
+
+            }
+
+        } else {
+            outlierCount++;
+        }
+
+    }
+
+    void concludeLikelihood();
+
+    void updateWeightSync(double normval);
+
+    //get
+    inline int    getid() { return id; }
+    inline double getx()  { return x; }
+    inline double gety()  { return y; }
+    inline double getr()  { return r; }
+    inline double getw()  { return weight; }
+    inline double getl()  { return likelihood; }
+    inline double gettw() { return tw; }
+
+
+};
+
 
 
 #endif
