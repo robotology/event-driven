@@ -143,7 +143,7 @@ vParticle::vParticle()
     angbuckets = 128;
     angdist.resize(angbuckets);
     negdist.resize(angbuckets);
-    resetArea();
+    constrain = false;
 }
 
 void vParticle::initialiseParameters(int id, double minLikelihood,
@@ -168,7 +168,6 @@ vParticle& vParticle::operator=(const vParticle &rhs)
     this->tw = rhs.tw;
     this->weight = rhs.weight;
     this->stamp = rhs.stamp;
-    this->negscaler = rhs.negscaler;
     return *this;
 }
 
@@ -178,7 +177,6 @@ void vParticle::initialiseState(double x, double y, double r, double tw)
     this->y = y;
     this->r = r;
     this->tw = tw;
-    resetArea();
 }
 
 void vParticle::randomise(int x, int y, int r, int tw)
@@ -209,124 +207,200 @@ void vParticle::resetArea()
 
 void vParticle::predict(unsigned long timestamp)
 {
-    //double dt = 0;
-    //if(stamp) dt = timestamp - this->stamp;
-    //stamp = timestamp;
 
-    //tw += std::max(dt, 12500.0);
-    //tw = std::max(tw, 50000.0);
-
-    //double k = 1.0 / sqrt(2.0 * M_PI * variance * variance);
     tw += 12500;
     tw += 12500;
-//    double gx = generateGaussianNoise(0, variance);
-//    double gy = generateGaussianNoise(0, variance);
-//    double gr = generateGaussianNoise(0, variance * 0.4);
-
-//    x += gx;
-//    y += gy;
-//    r += gr;
-
-//    double pr = exp(-(gr*gr) / (2.0 * 0.16 * variance * variance));
-//    double py = exp(-(gy*gy) / (2.0 * variance * variance));
-//    double px = exp(-(gx*gx) / (2.0 * variance * variance));
-//    predlike = px * py * pr;
-
 
     x = generateGaussianNoise(x, variance);
     y = generateGaussianNoise(y, variance);
     r = generateGaussianNoise(r, variance * 0.4);
-    resetArea();
 
+    if(constrain) checkConstraints();
 }
 
-void vParticle::initLikelihood()
+void vParticle::setContraints(int minx, int maxx, int miny, int maxy, int minr, int maxr)
 {
-    likelihood = minlikelihood;
-    inlierCount = 0;
-    outlierCount = 0;
-    angdist.zero();
-    negdist.zero();
-    maxtw = 0;
-    score = 0;
+    this->minx = minx;
+    this->maxx = maxx;
+    this->miny = miny;
+    this->maxy = maxy;
+    this->minr = minr;
+    this->maxr = maxr;
 }
-
-//int vParticle::incrementalLikelihood(int vx, int vy, int dt)
-//{
-//    double dx = vx - x;
-//    double dy = vy - y;
-////    int rdx, rdy;
-////    if(dx > 0) rdx = dx + 0.5;
-////    else rdx = dx - 0.5;
-////    if(dy > 0) rdy = dy + 0.5;
-////    else rdy = dy - 0.5;
-
-//    //double sqrd = pcb->queryDistance(rdy, rdx) - r;
-//    double sqrd = sqrt(pow(dx, 2.0) + pow(dy, 2.0)) - r;
-
-//    if(sqrd > -inlierParameter && sqrd < inlierParameter) {
-
-//        //int a = pcb->queryBinNumber(rdy, rdx);
-//        int a = 0.5 + (angbuckets-1) * (atan2(dy, dx) + M_PI) / (2.0 * M_PI);
-//        if(!angdist[a]) {
-//            inlierCount++;
-//            angdist[a] = dt + 1;
-//        }
-
-//    } else if(sqrd > -outlierParameter && sqrd < 0) { //-3 < X < -5
-
-//        //int a = pcb->queryBinNumber(rdy, rdx);
-//        int a = 0.5 + (angbuckets-1) * (atan2(dy, dx) + M_PI) / (2.0 * M_PI);
-//        if(!negdist[a]) {
-//            outlierCount++;
-//            negdist[a] = 1;
-//        }
-
-//    }
-
-//    int score = inlierCount - outlierCount;
-//    if(score >= likelihood) {
-//        likelihood = score;
-//        maxtw = dt;
-//    }
-
-
-//    return inlierCount - outlierCount;
-
-//}
-
-void vParticle::concludeLikelihood()
+void vParticle::checkConstraints()
 {
-//    double dtavg = 0;
-//    double dtvar = 0;
-//    int n = 0;
-
-//    for(unsigned int i = 0; i < angdist.size(); i++) {
-//        if(angdist[i] == 0 || angdist[i] > maxtw) continue;
-//        dtavg += angdist[i];
-//        n++;
-//    }
-//    if(n > minlikelihood) {
-//        dtavg /= n;
-//        for(unsigned int i = 0; i < angdist.size(); i++) {
-//            if(angdist[i] == 0 || angdist[i] > maxtw) continue;
-//            dtvar += (dtavg - angdist[i]) * (dtavg - angdist[i]);
-//        }
-//        dtvar /= n;
-//        dtvar = 0.000001 + 1.0 / sqrt(dtvar * 2.0 * M_PI);
-//    } else {
-//        dtvar = 0.000001;
-//    }
-
-    if(likelihood > minlikelihood) tw = maxtw;
-    weight = likelihood * weight;//* dtvar;// * predlike;
-
+    if(x < minx) x = minx;
+    if(x > maxx) x = maxx;
+    if(y < miny) y = miny;
+    if(y > maxy) y = maxy;
+    if(r < minr) r = minr;
+    if(r > maxr) r = maxr;
 }
+
+
 
 void vParticle::updateWeightSync(double normval)
 {
     weight = weight / normval;
 }
 
+/*////////////////////////////////////////////////////////////////////////////*/
+//VPARTICLEFILTER
+/*////////////////////////////////////////////////////////////////////////////*/
 
+
+void vParticlefilter::initialise(int width, int height, int nparticles,
+                                 double sigma, int bins, bool adaptive,
+                                 int nthreads, int maxtoproc,
+                                 double minlikelihood, double inlierThresh,
+                                 double randoms)
+{
+    res.width = width;
+    res.height = height;
+    this->nparticles = nparticles;
+    this->sigma = sigma;
+    this->bins = bins;
+    this->adaptive = adaptive;
+    this->nthreads = nthreads;
+    this->maxtoproc = maxtoproc;
+    this->nRandoms = randoms + 1.0;
+    rbound_min = res.width/17;
+    rbound_max = res.width/6;
+    pcb.configure(res.height, res.width, rbound_max, bins);
+    setSeed(res.width/2.0, res.height/2.0);
+
+    ps.clear();
+    ps_snap.clear();
+    accum_dist.resize(this->nparticles);
+    vParticle p;
+    for(int i = 0; i < this->nparticles; i++) {
+        p.initialiseParameters(i, minlikelihood, 0, inlierThresh, sigma, bins);
+        p.attachPCB(&pcb);
+        p.resetWeight(1.0/nparticles);
+        ps.push_back(p);
+        ps_snap.push_back(p);
+    }
+
+    resetToSeed();
+}
+
+void vParticlefilter::setSeed(int x, int y, int r)
+{
+    seedx = x; seedy = y; seedr = r;
+}
+
+void vParticlefilter::resetToSeed()
+{
+    if(seedr) {
+        for(int i = 0; i < nparticles; i++) {
+            ps[i].initialiseState(seedx, seedy, seedr, 1.0);
+        }
+    } else {
+        for(int i = 0; i < nparticles; i++) {
+            ps[i].initialiseState(seedx, seedy,
+                                  rbound_min + (rbound_max - rbound_min) *
+                                  ((double)rand()/RAND_MAX), 0);
+        }
+    }
+}
+
+void vParticlefilter::performObservation(const vQueue &q)
+{
+    double normval = 0.0;
+    if(nthreads == 1) {
+        //START WITHOUT THREAD
+
+        for(int i = 0; i < nparticles; i++) {
+            ps[i].initLikelihood();
+        }
+
+        int ntoproc = std::min((int)q.size(), maxtoproc);
+
+        for(int i = 0; i < nparticles; i++) {
+            for(unsigned int j = 0; j < ntoproc; j++) {
+                AE* v = read_as<AE>(q[j]);
+                ps[i].incrementalLikelihood(v->x, v->y, 0);
+            }
+        }
+
+        for(int i = 0; i < nparticles; i++) {
+            ps[i].concludeLikelihood();
+            normval += ps[i].getw();
+        }
+    }
+//    else {
+
+
+//        //START MULTI-THREAD
+//        //yarp::sig::ImageOf <yarp::sig::PixelBgr> likedebug;
+//        //likedebug.resize(nparticles * 4, stw.size());
+//        //likedebug.zero();
+//        for(int k = 0; k < nThreads; k++) {
+//            //computeThreads[k]->setDataSources(&indexedlist, &deltats, &stw, &likedebug);
+//            computeThreads[k]->setDataSources(&indexedlist, &deltats, &stw, 0);
+//            //computeThreads[k]->start();
+//            computeThreads[k]->process();
+//        }
+
+//        for(int k = 0; k < nThreads; k++) {
+//            //computeThreads[k]->join();
+//            //normval += computeThreads[k]->getNormVal();
+//            normval += computeThreads[k]->waittilldone();
+//        }
+//    }
+
+    pwsumsq = 0;
+    maxlikelihood = 0;
+    for(int i = 0; i < nparticles; i ++) {
+        ps[i].updateWeightSync(normval);
+        pwsumsq += pow(ps[i].getw(), 2.0);
+        maxlikelihood = std::max(maxlikelihood, ps[i].getl());
+    }
+
+}
+
+void vParticlefilter::extractTargetPosition(double &x, double &y, double &r)
+{
+    x = 0; y = 0; r = 0;
+
+    for(int i = 0; i < nparticles; i ++) {
+        double w = ps[i].getw();
+        x += ps[i].getx() * w;
+        y += ps[i].gety() * w;
+        r += ps[i].getr() * w;
+    }
+}
+
+void vParticlefilter::performResample()
+{
+    if(!adaptive || pwsumsq * nparticles > 2.0) {
+        //initialise for the resample
+        double accum = 0;
+        for(int i = 0; i < nparticles; i++) {
+            ps_snap[i] = ps[i];
+            accum += ps[i].getw();
+            accum_dist[i] = accum;
+        }
+
+        //perform the resample
+        for(int i = 0; i < nparticles; i++) {
+            double rn = nRandoms * (double)rand() / RAND_MAX;
+            if(rn > 1.0)
+                ps[i].randomise(res.width, res.height, rbound_max, 0.001 * vtsHelper::vtsscaler);
+            else {
+                int j = 0;
+                for(j = 0; j < nparticles; j++)
+                    if(accum_dist[j] > rn) break;
+                ps[i] = ps_snap[j];
+            }
+        }
+    }
+
+}
+
+void vParticlefilter::performPrediction()
+{
+    for(int i = 0; i < nparticles; i++)
+        ps[i].predict(sigma);
+}
 

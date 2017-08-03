@@ -102,6 +102,11 @@ private:
     preComputedBins *pcb;
     double negscaler;
 
+    bool constrain;
+    int minx, maxx;
+    int miny, maxy;
+    int minr, maxr;
+
     //temporary parameters (on update cycle)
     double likelihood;
 
@@ -141,13 +146,25 @@ public:
     void resetWeight(double value);
     void resetRadius(double value);
     void resetArea();
+    void setContraints(int minx, int maxx, int miny, int maxy, int minr, int maxr);
+    void checkConstraints();
 
 
     //update
     void predict(unsigned long int stamp);
     double approxatan2(double y, double x);
 
-    void initLikelihood();
+    void initLikelihood()
+    {
+        likelihood = minlikelihood;
+        inlierCount = 0;
+        outlierCount = 0;
+        angdist.zero();
+        maxtw = 0;
+        score = 0;
+        resetArea();
+    }
+
     inline void incrementalLikelihood(int vx, int vy, int dt)
     {
         double dx = vx - x;
@@ -182,7 +199,11 @@ public:
 
     }
 
-    void concludeLikelihood();
+    void concludeLikelihood()
+    {
+        if(likelihood > minlikelihood) tw = maxtw;
+        weight = likelihood * weight;
+    }
 
     void updateWeightSync(double normval);
 
@@ -195,6 +216,59 @@ public:
     inline double getl()  { return likelihood; }
     inline double gettw() { return tw; }
 
+
+};
+
+/*////////////////////////////////////////////////////////////////////////////*/
+//VPARTICLEFILTER
+/*////////////////////////////////////////////////////////////////////////////*/
+
+class vParticlefilter
+{
+private:
+
+    //parameters
+    int nparticles;
+    int nthreads;
+    int sigma;
+    ev::resolution res;
+    bool adaptive;
+    int bins;
+    int maxtoproc;
+    int seedx, seedy, seedr;
+    double nRandoms;
+
+    //data
+    std::vector<vParticle> ps;
+    std::vector<vParticle> ps_snap;
+    std::vector<double> accum_dist;
+    preComputedBins pcb;
+
+    //variables
+    double pwsumsq;
+    int rbound_min;
+    int rbound_max;
+    double maxlikelihood;
+
+
+public:
+
+    vParticlefilter() {}
+    ~vParticlefilter() {}
+
+
+    void initialise(int width, int height, int nparticles, double sigma,
+                    int bins, bool adaptive, int nthreads, int maxtoproc,
+                    double minlikelihood, double inlierThresh, double randoms);
+
+    void setSeed(int x, int y, int r = 0);
+    void resetToSeed();
+    bool inbounds(vParticle &p);
+
+    void performObservation(const vQueue &q);
+    void extractTargetPosition(double &x, double &y, double &r);
+    void performResample();
+    void performPrediction();
 
 };
 
