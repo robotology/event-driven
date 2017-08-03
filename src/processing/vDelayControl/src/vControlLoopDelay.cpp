@@ -49,6 +49,8 @@ void delayControl::run()
     unsigned int nevents = 0;
     unsigned int i = 0;
     yarp::os::Stamp ystamp;
+    double stagnantstart = 0;
+    bool detection = false;
 
     //get the first input
     ev::vQueue *q = 0;
@@ -100,6 +102,25 @@ void delayControl::run()
         vpf.performResample();
         vpf.performPrediction(addEvents / (2.0 * avgr));
 
+        //check for stagnancy
+        if(vpf.maxlikelihood < 32.0) {
+
+            if(!stagnantstart) {
+                stagnantstart = yarp::os::Time::now();
+            } else {
+                if(yarp::os::Time::now() - stagnantstart > 1.0) {
+                    vpf.resetToSeed();
+                    detection = false;
+                    stagnantstart = 0;
+                    yInfo() << "Performing full resample";
+                }
+            }
+        } else {
+            detection = true;
+            stagnantstart = 0;
+        }
+
+
         //output our event
         if(outputPort.getOutputCount()) {
             auto ceg = make_event<GaussianAE>();
@@ -110,7 +131,10 @@ void delayControl::run()
             ceg->sigx = avgr;
             ceg->sigy = avgr;
             ceg->sigxy = 1.0;
-            ceg->polarity = 1.0;
+            if(detection)
+                ceg->polarity = 1.0;
+            else
+                ceg->polarity = 0.0;
 
             vBottle &outputbottle = outputPort.prepare();
             outputbottle.clear();

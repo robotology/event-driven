@@ -50,7 +50,9 @@ bool module::configure(yarp::os::ResourceFinder &rf)
     int height = rf.check("height", yarp::os::Value(240)).asInt();
     int width = rf.check("width", yarp::os::Value(304)).asInt();
     int bins = rf.check("bins", yarp::os::Value(64)).asInt();
-    int maxtoproc = rf.check("maxtoproc", yarp::os::Value(500)).asInt();
+    int minadds = rf.check("minadds", yarp::os::Value(30)).asInt();
+    int maxq = rf.check("maxq", yarp::os::Value(500)).asInt();
+    double gain = rf.check("gain", yarp::os::Value(0.0005)).asDouble();
 
     //flags
     bool adaptivesampling = rf.check("adaptive") &&
@@ -70,7 +72,7 @@ bool module::configure(yarp::os::ResourceFinder &rf)
     double inlierParameter = rf.check("obsinlier", yarp::os::Value(1.5)).asDouble();
     double particleVariance = rf.check("variance", yarp::os::Value(0.5)).asDouble();
 
-    delaycontrol.initDelayControl(0.001, 30, maxtoproc);
+    delaycontrol.initDelayControl(gain, minadds, maxq);
     delaycontrol.initFilter(width, height, rightParticles,
                             bins, adaptivesampling, nthread, minlikelihood,
                             inlierParameter, nRandResample);
