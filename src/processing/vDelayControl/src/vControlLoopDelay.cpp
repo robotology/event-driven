@@ -9,9 +9,10 @@ void delayControl::initFilter(int width, int height, int nparticles, int bins,
                               double inlierThresh, double randoms)
 {
     vpf.initialise(width, height, nparticles, bins, adaptive, nthreads,
-                   minlikelihood, inlierThresh, randoms);
+                   bins * minlikelihood, inlierThresh, randoms);
     res.height = height;
     res.width = width;
+    detectionThreshold = bins * 0.35;
 }
 
 void delayControl::initDelayControl(double gain, double minvalue, int maxtoproc)
@@ -47,13 +48,18 @@ void delayControl::onStop()
 void delayControl::run()
 {
 
+    double Tresample = 0;
+    double Tpredict = 0;
+    double Tlikelihood = 0;
+    double Tgetwindow = 0;
+
     unsigned int targetproc = 0;
     unsigned int i = 0;
     yarp::os::Stamp ystamp;
     double stagnantstart = 0;
     bool detection = false;
 
-    //get the first input
+    //START HERE!!
     ev::vQueue *q = 0;
     while(!q && !isStopping()) {
         q = inputPort.getNextQ(ystamp);
@@ -67,6 +73,7 @@ void delayControl::run()
         targetproc = minEvents + (int)(delay * gain);
 
         //update the ROI with enough events
+        Tgetwindow = yarp::os::Time::now();
         unsigned int addEvents = 0;
         while(addEvents < targetproc) {
 
@@ -85,6 +92,7 @@ void delayControl::run()
                 addEvents += qROI.add(v);
             i++;
         }
+        Tgetwindow = yarp::os::Time::now() - Tgetwindow;
 
         //get the current time
         int currentstamp = 0;
@@ -95,17 +103,24 @@ void delayControl::run()
 
         //do our update!!
         //yarp::os::Time::delay(0.005);
+        Tlikelihood = yarp::os::Time::now();
         vpf.performObservation(qROI.q);
+        Tlikelihood = yarp::os::Time::now() - Tlikelihood;
         vpf.extractTargetPosition(avgx, avgy, avgr);
         double roisize = avgr*1.5;
         qROI.setROI(avgx - roisize, avgx + roisize, avgy - roisize, avgy + roisize);
 
+        Tresample = yarp::os::Time::now();
         vpf.performResample();
-        vpf.performPrediction(1.0);
+        Tresample = yarp::os::Time::now() - Tresample;
+
+        Tpredict = yarp::os::Time::now();
+        vpf.performPrediction(0.7);
+        Tpredict = yarp::os::Time::now() - Tpredict;
         //vpf.performPrediction(addEvents / (2.0 * avgr));
 
         //check for stagnancy
-        if(vpf.maxlikelihood < 20.0) {
+        if(vpf.maxlikelihood < detectionThreshold * 0.35) {
 
             if(!stagnantstart) {
                 stagnantstart = yarp::os::Time::now();
@@ -133,7 +148,7 @@ void delayControl::run()
             ceg->sigx = avgr;
             ceg->sigy = avgr;
             ceg->sigxy = 1.0;
-            if(vpf.maxlikelihood > 20.0)
+            if(vpf.maxlikelihood > detectionThreshold)
                 ceg->polarity = 1.0;
             else
                 ceg->polarity = 0.0;
@@ -157,10 +172,10 @@ void delayControl::run()
             static double val5 = -ev::vtsHelper::max_stamp;
 
             val1 = std::max(val1, (double)delay);
-            val2 = std::max(val2, (double)addEvents);
-            val3 = std::max(val3, 1000.0 * inputPort.queryDelayT());
-            val4 = std::max(val4, vpf.maxlikelihood);
-            val5 = std::max(val5, 0.0);
+            val2 = std::max(val2, Tgetwindow);
+            val3 = std::max(val3, Tlikelihood);
+            val4 = std::max(val4, Tresample);
+            val5 = std::max(val5, Tpredict);
 
             double scopedt = yarp::os::Time::now() - pscopetime;
             if((scopedt > 0.05 || scopedt < 0)) {

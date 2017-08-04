@@ -221,6 +221,33 @@ public:
 };
 
 /*////////////////////////////////////////////////////////////////////////////*/
+// vParticleObserver
+/*////////////////////////////////////////////////////////////////////////////*/
+class vPartObsThread : public yarp::os::Thread
+{
+private:
+
+    yarp::os::Mutex processing;
+    yarp::os::Mutex done;
+    int pStart;
+    int pEnd;
+
+    double normval;
+
+    std::vector<vParticle> *particles;
+    const ev::vQueue *stw;
+
+public:
+
+    vPartObsThread(int pStart, int pEnd);
+    void setDataSources(std::vector<vParticle> *particles, const ev::vQueue *stw);
+    void process();
+    double waittilldone();
+
+    void run();
+};
+
+/*////////////////////////////////////////////////////////////////////////////*/
 //VPARTICLEFILTER
 /*////////////////////////////////////////////////////////////////////////////*/
 
@@ -242,6 +269,7 @@ private:
     std::vector<vParticle> ps_snap;
     std::vector<double> accum_dist;
     preComputedBins pcb;
+    std::vector<vPartObsThread *> computeThreads;
 
     //variables
     double pwsumsq;

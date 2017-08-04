@@ -45,6 +45,7 @@ private:
     double avgx, avgy, avgr;
     double gain;
     double minEvents;
+    int detectionThreshold;
 
     //diagnostics
     yarp::os::BufferedPort<yarp::os::Bottle> scopePort;
