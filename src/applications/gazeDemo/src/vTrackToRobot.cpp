@@ -201,20 +201,20 @@ bool vTrackToRobotModule::updateModule()
     }
 
     yarp::sig::Vector pleft = leftTarget.subVector(0, 1);
-    pleft[0] = res.width - 1 - pleft[0];
-    pleft[1] = res.height - 1 - pleft[1];
+    //pleft[0] = res.width - 1 - pleft[0];
+    //pleft[1] = res.height - 1 - pleft[1];
 
     yarp::sig::Vector pright = rightTarget.subVector(0, 1);
-    pright[0] = res.width - 1 - pright[0];
-    pright[1] = res.height - 1 - pright[1];
+    //pright[0] = res.width - 1 - pright[0];
+    //pright[1] = res.height - 1 - pright[1];
 
     if(!useDemoRedBall) {
 
-        //yInfo() << "Doing gaze";
+        yInfo() << "Doing gaze";
         yarp::sig::Vector tp;
         gazecontrol->triangulate3DPoint(pleft, pright, tp);
 
-        if(tp[0] < -0.2)
+        //if(tp[0] < -0.2)
             gazecontrol->lookAtStereoPixels(pleft, pright);
 
         if(armdriver.isValid()) {
