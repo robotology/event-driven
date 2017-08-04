@@ -46,7 +46,8 @@ void delayControl::onStop()
 
 void delayControl::run()
 {
-    unsigned int nevents = 0;
+
+    unsigned int targetproc = 0;
     unsigned int i = 0;
     yarp::os::Stamp ystamp;
     double stagnantstart = 0;
@@ -63,11 +64,11 @@ void delayControl::run()
 
         //calculate error
         unsigned int delay = inputPort.queryDelayN();
-        nevents = minEvents + (int)(delay * gain);
+        targetproc = minEvents + (int)(delay * gain);
 
         //update the ROI with enough events
         unsigned int addEvents = 0;
-        while(addEvents < nevents) {
+        while(addEvents < targetproc) {
 
             //if we ran out of events get a new queue
             if(i >= q->size()) {
@@ -78,10 +79,10 @@ void delayControl::run()
                 }
                 if(isStopping()) return;
             }
-            //addEvents += 1;
-            auto v = is_event<AE>((*q)[i]);
-            addEvents += qROI.add(v);
 
+            auto v = is_event<AE>((*q)[i]);
+            if(v->channel)
+                addEvents += qROI.add(v);
             i++;
         }
 
@@ -100,15 +101,16 @@ void delayControl::run()
         qROI.setROI(avgx - roisize, avgx + roisize, avgy - roisize, avgy + roisize);
 
         vpf.performResample();
-        vpf.performPrediction(addEvents / (2.0 * avgr));
+        vpf.performPrediction(1.0);
+        //vpf.performPrediction(addEvents / (2.0 * avgr));
 
         //check for stagnancy
-        if(vpf.maxlikelihood < 32.0) {
+        if(vpf.maxlikelihood < 20.0) {
 
             if(!stagnantstart) {
                 stagnantstart = yarp::os::Time::now();
             } else {
-                if(yarp::os::Time::now() - stagnantstart > 1.0) {
+                if(yarp::os::Time::now() - stagnantstart > 3.0) {
                     vpf.resetToSeed();
                     detection = false;
                     stagnantstart = 0;
@@ -131,7 +133,7 @@ void delayControl::run()
             ceg->sigx = avgr;
             ceg->sigy = avgr;
             ceg->sigxy = 1.0;
-            if(detection)
+            if(vpf.maxlikelihood > 20.0)
                 ceg->polarity = 1.0;
             else
                 ceg->polarity = 0.0;
@@ -155,7 +157,7 @@ void delayControl::run()
             static double val5 = -ev::vtsHelper::max_stamp;
 
             val1 = std::max(val1, (double)delay);
-            val2 = std::max(val2, (double)nevents);
+            val2 = std::max(val2, (double)addEvents);
             val3 = std::max(val3, 1000.0 * inputPort.queryDelayT());
             val4 = std::max(val4, vpf.maxlikelihood);
             val5 = std::max(val5, 0.0);
@@ -185,7 +187,7 @@ void delayControl::run()
         //output a debug image
         static double pimagetime = yarp::os::Time::now();
         double pimagetimedt = yarp::os::Time::now() - pimagetime;
-        if(debugPort.getOutputCount() && pimagetimedt > 0.05) {
+        if(debugPort.getOutputCount() && pimagetimedt > 0.04) {
             pimagetime += pimagetimedt;
 
             yarp::sig::ImageOf< yarp::sig::PixelBgr> &image = debugPort.prepare();
