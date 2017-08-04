@@ -202,7 +202,7 @@ public:
     void concludeLikelihood()
     {
         if(likelihood > minlikelihood) tw = maxtw;
-        //if(likelihood == minlikelihood) likelihood = 1.0;
+        if(likelihood == minlikelihood) likelihood *= 0.5;
         weight = likelihood * weight;
     }
 

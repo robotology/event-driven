@@ -12,7 +12,7 @@ void delayControl::initFilter(int width, int height, int nparticles, int bins,
                    bins * minlikelihood, inlierThresh, randoms);
     res.height = height;
     res.width = width;
-    detectionThreshold = bins * 0.35;
+    detectionThreshold = bins * 0.4;
 }
 
 void delayControl::initDelayControl(double gain, double minvalue, int maxtoproc)
@@ -58,6 +58,7 @@ void delayControl::run()
     yarp::os::Stamp ystamp;
     double stagnantstart = 0;
     bool detection = false;
+    int channel;
 
     //START HERE!!
     ev::vQueue *q = 0;
@@ -65,6 +66,8 @@ void delayControl::run()
         q = inputPort.getNextQ(ystamp);
     }
     if(isStopping()) return;
+
+    channel = q->front()->getChannel();
 
     while(true) {
 
@@ -79,6 +82,7 @@ void delayControl::run()
 
             //if we ran out of events get a new queue
             if(i >= q->size()) {
+                //if(inputPort.queryunprocessed() < 3) break;
                 inputPort.scrapQ();
                 q = 0; i = 0;
                 while(!q && !isStopping()) {
@@ -88,8 +92,7 @@ void delayControl::run()
             }
 
             auto v = is_event<AE>((*q)[i]);
-            if(v->channel)
-                addEvents += qROI.add(v);
+            addEvents += qROI.add(v);
             i++;
         }
         Tgetwindow = yarp::os::Time::now() - Tgetwindow;
@@ -107,7 +110,7 @@ void delayControl::run()
         vpf.performObservation(qROI.q);
         Tlikelihood = yarp::os::Time::now() - Tlikelihood;
         vpf.extractTargetPosition(avgx, avgy, avgr);
-        double roisize = avgr*1.5;
+        double roisize = avgr*1.7;
         qROI.setROI(avgx - roisize, avgx + roisize, avgy - roisize, avgy + roisize);
 
         Tresample = yarp::os::Time::now();
@@ -116,16 +119,16 @@ void delayControl::run()
 
         Tpredict = yarp::os::Time::now();
         vpf.performPrediction(0.7);
-        Tpredict = yarp::os::Time::now() - Tpredict;
-        //vpf.performPrediction(addEvents / (2.0 * avgr));
+        //Tpredict = yarp::os::Time::now() - Tpredict;
+        vpf.performPrediction(std::min(addEvents / (2.0 * avgr), 1.0));
 
         //check for stagnancy
-        if(vpf.maxlikelihood < detectionThreshold * 0.35) {
+        if(vpf.maxlikelihood < detectionThreshold) {
 
             if(!stagnantstart) {
                 stagnantstart = yarp::os::Time::now();
             } else {
-                if(yarp::os::Time::now() - stagnantstart > 3.0) {
+                if(yarp::os::Time::now() - stagnantstart > 2.0) {
                     vpf.resetToSeed();
                     detection = false;
                     stagnantstart = 0;
@@ -142,7 +145,7 @@ void delayControl::run()
         if(outputPort.getOutputCount()) {
             auto ceg = make_event<GaussianAE>();
             ceg->stamp = currentstamp;
-            ceg->setChannel(1);
+            ceg->setChannel(channel);
             ceg->x = avgx;
             ceg->y = avgy;
             ceg->sigx = avgr;
@@ -171,7 +174,7 @@ void delayControl::run()
             static double val4 = -ev::vtsHelper::max_stamp;
             static double val5 = -ev::vtsHelper::max_stamp;
 
-            val1 = std::max(val1, (double)delay);
+            val1 = std::max(val1, vpf.maxlikelihood);
             val2 = std::max(val2, Tgetwindow);
             val3 = std::max(val3, Tlikelihood);
             val4 = std::max(val4, Tresample);

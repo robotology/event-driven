@@ -259,8 +259,8 @@ void vParticlefilter::initialise(int width, int height, int nparticles,
     this->adaptive = adaptive;
     this->nthreads = nthreads;
     this->nRandoms = randoms + 1.0;
-    rbound_min = res.width/15;
-    rbound_max = res.width/7;
+    rbound_min = res.width/16;
+    rbound_max = res.width/6;
     pcb.configure(res.height, res.width, rbound_max, bins);
     setSeed(res.width/2.0, res.height/2.0);
 
@@ -285,7 +285,7 @@ void vParticlefilter::initialise(int width, int height, int nparticles,
     vParticle p;
     p.attachPCB(&pcb);
     p.resetWeight(1.0/nparticles);
-    p.setContraints(0, res.width, 0, res.height, 10, 40);
+    p.setContraints(0, res.width, 0, res.height, rbound_min, rbound_max);
     for(int i = 0; i < this->nparticles; i++) {
         p.initialiseParameters(i, minlikelihood, 0, inlierThresh, 0, bins);
         ps.push_back(p);

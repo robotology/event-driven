@@ -228,10 +228,13 @@ bool vTrackToRobotModule::updateModule()
         yarp::sig::Vector tp;
         gazecontrol->triangulate3DPoint(pleft, pright, tp);
 
+        //std::cout << tp.toString() << std::endl;
         if(tp[0] < -0.20) {
             gazecontrol->lookAtStereoPixels(pleft, pright);
 
-        if(armdriver.isValid()) {
+
+
+            if(armdriver.isValid()) {
 
                 tp[1] += -0.10;
                 tp[2] += -0.10;

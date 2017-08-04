@@ -9,7 +9,7 @@
 
 <module>
     <name> vPreProcess </name>
-    <parameters> --flipx --flipy </parameters>
+    <parameters> --flipy --split </parameters>
     <node> icub-blade </node>
 </module>
 
@@ -21,7 +21,13 @@
 
 <module>
     <name> vDelayControl </name>
-    <parameters> --name /vpf --rParticles 100 --obsinlier 1.0 --obsthresh 16.0 --adaptive true --randoms 0 --threads 1 --bins 64 --gain 0.005 --maxq 1000 --minadds 30 </parameters>
+    <parameters> --name /vpfL --rParticles 300 --obsinlier 1.0 --obsthresh 0.25 --adaptive true --randoms 0 --threads 10 --bins 64 --gain 0.005 --maxq 1000 --minadds 20 </parameters>
+    <node> icub-blade </node>
+</module>
+
+<module>
+    <name> vDelayControl </name>
+    <parameters> --name /vpfR --rParticles 300 --obsinlier 1.0 --obsthresh 0.25 --adaptive true --randoms 0 --threads 10 --bins 64 --gain 0.005 --maxq 1000 --minadds 20 </parameters>
     <node> icub-blade </node>
 </module>
 
@@ -68,19 +74,37 @@
 </connection>
 
 <connection>
-  <from>/vPreProcess/vBottle:o</from>
+  <from>/vPreProcess/left:o</from>
   <to>/vFramer/AE:i</to>
   <protocol>udp</protocol>
 </connection>
 
 <connection>
-  <from>/vPreProcess/vBottle:o</from>
-  <to>/vpf/vBottle:i</to>
+  <from>/vPreProcess/right:o</from>
+  <to>/vFramer/AE:i</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
+  <from>/vPreProcess/left:o</from>
+  <to>/vpfL/vBottle:i</to>
   <protocol>shmem</protocol>
 </connection>
 
 <connection>
-  <from>/vpf/vBottle:o</from>
+  <from>/vPreProcess/right:o</from>
+  <to>/vpfR/vBottle:i</to>
+  <protocol>shmem</protocol>
+</connection>
+
+<connection>
+  <from>/vpfL/vBottle:o</from>
+  <to>/vFramer/GAE:i</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
+  <from>/vpfR/vBottle:o</from>
   <to>/vFramer/GAE:i</to>
   <protocol>udp</protocol>
 </connection>
@@ -98,7 +122,13 @@
 </connection>
 
 <connection>
-  <from>/vpf/vBottle:o</from>
+  <from>/vpfL/vBottle:o</from>
+  <to>/vGazeDemo/vBottle:i</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
+  <from>/vpfR/vBottle:o</from>
   <to>/vGazeDemo/vBottle:i</to>
   <protocol>udp</protocol>
 </connection>
