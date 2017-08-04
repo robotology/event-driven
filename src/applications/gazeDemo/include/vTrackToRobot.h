@@ -121,6 +121,7 @@ private:
     yarp::dev::IGazeControl *gazecontrol;
 
     yarp::sig::Vector armhomepos, armhomerot;
+    yarp::sig::Vector headhomepos, headhomerot;
     bool usearm;
     yarp::dev::PolyDriver armdriver;
     yarp::dev::ICartesianControl *arm;

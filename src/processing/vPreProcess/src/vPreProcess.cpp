@@ -54,6 +54,8 @@ bool vPreProcessModule::configure(yarp::os::ResourceFinder &rf)
             rf.check("flipy", yarp::os::Value(true)).asBool();
     bool precheck = rf.check("precheck") &&
             rf.check("precheck", yarp::os::Value(true)).asBool();
+    bool split = rf.check("split") &&
+            rf.check("precheck", yarp::os::Value(true)).asBool();
 
     if(precheck)
         yInfo() << "Performing precheck for event corruption";
@@ -67,12 +69,14 @@ bool vPreProcessModule::configure(yarp::os::ResourceFinder &rf)
         yInfo() << "Applying camera undistortion - truncating to sensor size";
     if(undistort && !truncate)
         yInfo() << "Applying camera undistortion - without truncation";
+    if(split)
+        yInfo() << "Splitting into left/right streams";
 
 
     eventManager.initBasic(rf.check("name", yarp::os::Value("/vPreProcess")).asString(),
                            rf.check("height", 240).asInt(),
                            rf.check("width", 304).asInt(),
-                           precheck, flipx, flipy, pepper, undistort);
+                           precheck, flipx, flipy, pepper, undistort, split);
 
     if(pepper) {
         eventManager.initPepper(rf.check("spatialSize", yarp::os::Value(1)).asDouble(),
@@ -134,7 +138,7 @@ vPreProcess::~vPreProcess()
 
 void vPreProcess::initBasic(std::string name, int height, int width,
                             bool precheck, bool flipx, bool flipy,
-                            bool pepper, bool undistort)
+                            bool pepper, bool undistort, bool split)
 {
 
     this->name = name;
@@ -145,6 +149,7 @@ void vPreProcess::initBasic(std::string name, int height, int width,
     this->flipy = flipy;
     this->pepper = pepper;
     this->undistort = undistort;
+    this->split = split;
 
 }
 
@@ -222,9 +227,14 @@ void vPreProcess::run()
         }
         if(isStopping()) break;
 
+
         ev::vBottle &outBottle = outPort.prepare();
         outBottle.clear();
         outPort.setEnvelope(ystamp);
+
+        ev::vBottle &rightBottle = outPort2.prepare();
+        rightBottle.clear();
+        outPort2.setEnvelope(ystamp);
 
         for(ev::vQueue::iterator qi = q->begin(); qi != q->end(); qi++) {
 
@@ -262,13 +272,21 @@ void vPreProcess::run()
 
             }
 
-            outBottle.addEvent(v);
+            if(split && v->channel)
+                rightBottle.addEvent(v);
+            else
+                outBottle.addEvent(v);
         }
 
         if(outBottle.size())
             outPort.writeStrict();
         else
             outPort.unprepare();
+
+        if(split && rightBottle.size())
+            outPort2.writeStrict();
+        else
+            outPort2.unprepare();
 
         inPort.scrapQ();
     }
@@ -278,14 +296,22 @@ void vPreProcess::run()
 void vPreProcess::onStop()
 {
     outPort.close();
+    outPort2.close();
     inPort.close();
     inPort.releaseDataLock();
 }
 
 bool vPreProcess::threadInit()
 {
-    if(!outPort.open(name + "/vBottle:o"))
-        return false;
+    if(split) {
+        if(!outPort.open(name + "/left:o"))
+            return false;
+        if(!outPort2.open(name + "/right:o"))
+            return false;
+    } else {
+        if(!outPort.open(name + "/vBottle:o"))
+            return false;
+    }
     if(!inPort.open(name + "/vBottle:i"))
         return false;
     return true;
