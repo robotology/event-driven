@@ -9,7 +9,7 @@
 
 <module>
     <name> vPreProcess </name>
-    <parameters> </parameters>
+    <parameters> --flipx --flipy </parameters>
     <node> icub-blade </node>
 </module>
 
@@ -21,13 +21,13 @@
 
 <module>
     <name> vDelayControl </name>
-    <parameters> --name /vpf --rParticles 100 --obsinlier 1.0 --obsthresh 16.0 --adaptive true --randoms 0 --threads 1 --bins 64 --gain 0.001 </parameters>
+    <parameters> --name /vpf --rParticles 100 --obsinlier 1.0 --obsthresh 16.0 --adaptive true --randoms 0 --threads 1 --bins 64 --gain 0.005 --maxq 1000 --minadds 30 </parameters>
     <node> icub-blade </node>
 </module>
 
 <module>
     <name> yarpscope </name>
-    <parameters> --remote /vpf/scope:o --index "(0 1 2 3)" --color "(red blue green black)" </parameters>
+    <parameters> --remote /vpf/scope:o --index "(0 1 2 3 4)" --color "(red blue green black yellow)" </parameters>
     <node> icub24 </node>
 </module>
 
