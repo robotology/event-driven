@@ -74,10 +74,12 @@ public:
         //and decode the data
         inputbottle.addtoendof<ev::AddressEvent>(*(qq.back()));
 
+        m.lock();
         delay_nv += qq.back()->size();
         int dt = qq.back()->back()->stamp - qq.back()->front()->stamp;
         if(dt < 0) dt += vtsHelper::max_stamp;
         delay_t += dt;
+        m.unlock();
 
         dataready.unlock();
     }
