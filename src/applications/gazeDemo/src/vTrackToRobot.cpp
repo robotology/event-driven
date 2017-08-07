@@ -229,7 +229,7 @@ bool vTrackToRobotModule::updateModule()
         gazecontrol->triangulate3DPoint(pleft, pright, tp);
 
         //std::cout << tp.toString() << std::endl;
-        if(tp[0] < -0.20) {
+        if(tp[0] < -0.10) {
             gazecontrol->lookAtStereoPixels(pleft, pright);
 
 
