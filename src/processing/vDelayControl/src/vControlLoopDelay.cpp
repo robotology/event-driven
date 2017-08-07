@@ -112,6 +112,7 @@ void delayControl::run()
         vpf.extractTargetPosition(avgx, avgy, avgr);
         double roisize = avgr*1.7;
         qROI.setROI(avgx - roisize, avgx + roisize, avgy - roisize, avgy + roisize);
+        qROI.setSize(avgr * 4.0 * M_PI);
 
         Tresample = yarp::os::Time::now();
         vpf.performResample();
@@ -119,8 +120,8 @@ void delayControl::run()
 
         Tpredict = yarp::os::Time::now();
         vpf.performPrediction(0.7);
-        //Tpredict = yarp::os::Time::now() - Tpredict;
-        vpf.performPrediction(std::min(addEvents / (2.0 * avgr), 1.0));
+        Tpredict = yarp::os::Time::now() - Tpredict;
+        //vpf.performPrediction(std::min(addEvents / (2.0 * avgr), 1.0));
 
         //check for stagnancy
         if(vpf.maxlikelihood < detectionThreshold) {
@@ -162,7 +163,6 @@ void delayControl::run()
             outputPort.write();
 
         }
-
 
         //write to our scope
         static double pscopetime = yarp::os::Time::now();
@@ -211,6 +211,21 @@ void delayControl::run()
             yarp::sig::ImageOf< yarp::sig::PixelBgr> &image = debugPort.prepare();
             image.resize(res.width, res.height);
             image.zero();
+
+
+            int px1 = avgx - roisize; if(px1 < 0) px1 = 0;
+            int px2 = avgx + roisize; if(px2 >= res.width) px2 = res.width-1;
+            int py1 = avgy - roisize; if(py1 < 0) py1 = 0;
+            int py2 = avgy + roisize; if(py2 >= res.height) py2 = res.height-1;
+
+            for(int x = px1; x <= px2; x+=2) {
+                image(x, py1) = yarp::sig::PixelBgr(255, 255, 255);
+                image(x, py2) = yarp::sig::PixelBgr(255, 255, 255);
+            }
+            for(int y = py1; y <= py2; y+=2) {
+                image(px1, y) = yarp::sig::PixelBgr(255, 255, 255);
+                image(px2, y) = yarp::sig::PixelBgr(255, 255, 255);
+            }
 
             std::vector<vParticle> indexedlist = vpf.getps();
 
