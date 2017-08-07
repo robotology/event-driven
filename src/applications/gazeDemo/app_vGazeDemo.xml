@@ -21,13 +21,13 @@
 
 <module>
     <name> vDelayControl </name>
-    <parameters> --name /vpfL --rParticles 300 --obsinlier 1.0 --obsthresh 0.25 --adaptive true --randoms 0 --threads 10 --bins 64 --gain 0.005 --maxq 1000 --minadds 20 </parameters>
+    <parameters> --name /vpfL --rParticles 200 --obsinlier 1.0 --obsthresh 0.25 --adaptive true --randoms 0 --threads 8 --bins 64 --gain 0.001 --maxq 1000 --minadds 20 </parameters>
     <node> icub-blade </node>
 </module>
 
 <module>
     <name> vDelayControl </name>
-    <parameters> --name /vpfR --rParticles 300 --obsinlier 1.0 --obsthresh 0.25 --adaptive true --randoms 0 --threads 10 --bins 64 --gain 0.005 --maxq 1000 --minadds 20 </parameters>
+    <parameters> --name /vpfR --rParticles 200 --obsinlier 1.0 --obsthresh 0.25 --adaptive true --randoms 0 --threads 8 --bins 64 --gain 0.001 --maxq 1000 --minadds 20 </parameters>
     <node> icub-blade </node>
 </module>
 
@@ -56,8 +56,20 @@
 </module>
 
 <module>
+   <name> yarpview </name>
+   <parameters>--name /viewDebugL --x 30 --y 658 --w 608 --h 480 --synch </parameters>
+   <node>icub24</node>
+</module>
+
+<module>
+   <name> yarpview </name>
+   <parameters>--name /viewDebugR --x 658 --y 658 --w 608 --h 480 --synch </parameters>
+   <node>icub24</node>
+</module>
+
+<module>
     <name> vGazeDemo </name>
-    <parameters> --period 0.01 </parameters>
+    <parameters> --period 0.01 --start true </parameters>
     <node> icub24 </node>
 </module>
 
@@ -118,6 +130,18 @@
 <connection>
   <from>/vFramer/right</from>
   <to>/viewRight</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
+  <from>/vpfL/debug:o</from>
+  <to>/viewDebugL</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
+  <from>/vpfR/debug:o</from>
+  <to>/viewDebugR</to>
   <protocol>udp</protocol>
 </connection>
 
