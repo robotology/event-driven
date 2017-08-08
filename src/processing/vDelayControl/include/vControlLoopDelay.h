@@ -18,6 +18,7 @@ public:
     vQueue q;
     unsigned int n;
     yarp::sig::Vector roi;
+    bool use_TW;
 
     roiq();
     void setSize(unsigned int value);

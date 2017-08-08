@@ -264,6 +264,8 @@ roiq::roiq()
 
 void roiq::setSize(unsigned int value)
 {
+    //if TW n is in clock-ticks
+    //otherwise n is in # events.
     n = value;
 }
 
@@ -279,7 +281,19 @@ int roiq::add(event<AE> &v)
     if(v->x < roi[0] || v->x > roi[1] || v->y < roi[2] || v->y > roi[3])
         return 0;
     q.push_back(v);
-    if(q.size() > n)
-        q.pop_front();
+    if(!use_TW) {
+        if(q.size() > n)
+            q.pop_front();
+    } else {
+
+        int dt = v->stamp - q.front()->stamp;
+        if(dt < 0) dt += vtsHelper::max_stamp;
+        while(dt > n) {
+            q.pop_front();
+            dt = v->stamp - q.front()->stamp;
+            if(dt < 0) dt += vtsHelper::max_stamp;
+        }
+    }
+
     return 1;
 }
