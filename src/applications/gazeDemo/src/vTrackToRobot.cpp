@@ -197,6 +197,19 @@ bool vTrackToRobotModule::updateModule()
     yarp::sig::Vector leftTarget, rightTarget;
     inputPort.getTargets(leftTarget, rightTarget);
 
+    if(!leftTarget[3] && !rightTarget[3]) {
+        std::cout << "Weak signal from both cameras" << std::endl;
+        return true;
+    }
+    if(!leftTarget[3]) {
+        std::cout << "Weak signal from left camera" << std::endl;
+        return true;
+    }
+    if(!rightTarget[3]) {
+        std::cout << "Weak signal from right camera" << std::endl;
+        return true;
+    }
+
     //do our stereo target check
     if(std::abs(rightTarget[1] - leftTarget[1]) > yThresh) {
         //yWarning() << "Y values not consistent for target";
@@ -228,7 +241,8 @@ bool vTrackToRobotModule::updateModule()
         yarp::sig::Vector tp;
         gazecontrol->triangulate3DPoint(pleft, pright, tp);
 
-        //std::cout << tp.toString() << std::endl;
+        //std::cout << tp.toString() << " " << std::abs(rightTarget[1] - leftTarget[1]) << " " << std::abs(rightTarget[2] - leftTarget[2]) << std::endl;
+        //tp[0] = -0.09;
         if(tp[0] < -0.10) {
             gazecontrol->lookAtStereoPixels(pleft, pright);
 

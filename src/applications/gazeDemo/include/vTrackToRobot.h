@@ -46,10 +46,12 @@ public:
 
     positionReader()
     {
-        leftTarget.resize(3);
-        rightTarget.resize(3);
+        leftTarget.resize(4);
+        rightTarget.resize(4);
         leftTarget[2] = -100;
         rightTarget[2] = 100;
+        leftTarget[3] = 0;
+        rightTarget[3] = 0;
         useCallback();
     }
 
@@ -71,20 +73,22 @@ public:
             if(v->channel == VRIGHT && !rightupdated) {
                 rightupdated = true;
                 if(v->polarity == 0) {
-                    rightTarget[2] = 100;
+                    rightTarget[3] = 0;
                 } else {
                     rightTarget[0] = v->x;
                     rightTarget[1] = v->y;
                     rightTarget[2] = v->sigx; //radius
+                    rightTarget[3] = 1;
                 }
             } else if(v->channel == VLEFT && !leftupdated) {
                 leftupdated = true;
                 if(v->polarity == 0) {
-                    leftTarget[2] = -100;
+                    leftTarget[3] = 0;
                 } else {
                     leftTarget[0] = v->x;
                     leftTarget[1] = v->y;
                     leftTarget[2] = v->sigx; //radius
+                    leftTarget[3] = 1;
                 }
             }
             qi++;
