@@ -88,6 +88,7 @@ private :
     std::string confFileName;
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr > > leftImagePortOut;
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr > > rightImagePortOut;
+    yarp::os::BufferedPort<ev::vBottle> vPortOut;
     ImageCollector leftImageCollector;
     ImageCollector rightImageCollector;
     EventCollector eventCollector;
@@ -125,7 +126,7 @@ public :
                          , yarp::sig::Matrix &homography ) const;
     
     void performMapping( yarp::sig::ImageOf<yarp::sig::PixelBgr> &img, const ev::vQueue &vQueue
-                             , const yarp::sig::Matrix &homography, int xOffset, int yOffset ) const;
+                             , const yarp::sig::Matrix &homography, int xOffset, int yOffset ) ;
     
     void getCanvasSize( const yarp::sig::Matrix &homography, int &canvasWidth, int &canvasHeight, int &xOffset
                             , int &yOffset ) const;

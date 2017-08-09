@@ -111,7 +111,9 @@ bool vMappingModule::updateModule() {
 }
 
 void vMappingModule::performMapping( yarp::sig::ImageOf<yarp::sig::PixelBgr> &img, const vQueue &vQueue
-                                     , const yarp::sig::Matrix &homography, int xOffset, int yOffset ) const {
+                                     , const yarp::sig::Matrix &homography, int xOffset, int yOffset ) {
+    ev::vBottle &outBottle = vPortOut.prepare();
+    outBottle.clear();
     for ( auto &it : vQueue ) {
         
         auto v = is_event<AE >( it );
@@ -133,9 +135,22 @@ void vMappingModule::performMapping( yarp::sig::ImageOf<yarp::sig::PixelBgr> &im
         y = evCoord[1] / evCoord[2] + yOffset + 1;
         
         //Drawing event on img
-        if (x >= 0 && x < img.width())
-            if (y >= 0 && y < img.height())
-                img( x, y ) = yarp::sig::PixelBgr( 255, 255, 255 );
+        bool inBound = x >= 0 && x < img.width() && y >= 0 && y < img.height();
+        if (inBound){
+            img( x, y ) = yarp::sig::PixelBgr( 255, 255, 255 );
+        } else {
+            std::cout << "Out of bound" << std::endl;
+        }
+        
+        if (y <= 255) {
+            outBottle.addEvent( v );
+            v->x = x;
+            v->y = y;
+        }
+    }
+    if (outBottle.size() > 0) {
+//        vPortOut.setEnvelope(vQueue.back()->stamp);
+        vPortOut.write();
     }
 }
 
@@ -324,6 +339,7 @@ bool vMappingModule::configure( yarp::os::ResourceFinder &rf ) {
     eventCollector.open(getName("/vBottle:i"));
     leftImagePortOut.open(getName("/left/img:o"));
     rightImagePortOut.open(getName("/right/img:o"));
+    vPortOut.open(getName("/vBottle:o"));
     eventCollector.start();
     leftImageCollector.start();
     rightImageCollector.start();
