@@ -86,7 +86,7 @@ bool vPreProcessModule::configure(yarp::os::ResourceFinder &rf)
     if(undistort) {
         yarp::os::ResourceFinder calibfinder;
         calibfinder.setVerbose();
-        calibfinder.setContext(rf.check("calibContext", yarp::os::Value("cameraCalibration")).asString().c_str());
+        calibfinder.setDefaultContext(rf.check("calibContext", yarp::os::Value("cameraCalibration")).asString().c_str());
         calibfinder.setDefaultConfigFile(rf.check("calibFile", yarp::os::Value("cameraCalibration")).asString().c_str());
         calibfinder.configure(0, 0);
 
@@ -218,6 +218,7 @@ void vPreProcess::run()
     resolution resmod = res;
     resmod.height -= 1;
     resmod.width -= 1;
+    int prev_bottle_n = 0;
 
     while(true) {
 
@@ -227,6 +228,10 @@ void vPreProcess::run()
         }
         if(isStopping()) break;
 
+        if(precheck && prev_bottle_n && prev_bottle_n + 1 != ystamp.getCount()) {
+            yWarning() << "Dropped bottle:" << prev_bottle_n << "to" << ystamp.getCount();
+        }
+        prev_bottle_n = ystamp.getCount();
 
         ev::vBottle &outBottle = outPort.prepare();
         outBottle.clear();
@@ -242,7 +247,7 @@ void vPreProcess::run()
 
             //precheck
             if(precheck && (v->x < 0 || v->x > resmod.width || v->y < 0 || v->y > resmod.height)) {
-                yError() << "Event Corruption:" << v->getContent().toString();
+                yWarning() << "Event Corruption:" << v->getContent().toString();
                 continue;
             }
 
