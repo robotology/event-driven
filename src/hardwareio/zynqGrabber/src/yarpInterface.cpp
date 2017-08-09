@@ -160,10 +160,11 @@ device2yarp::device2yarp() {
     jumpcheck = false;
 }
 
-bool device2yarp::initialise(std::string moduleName, bool strict, bool check,
+bool device2yarp::initialise(std::string moduleName, bool check,
                              std::string deviceName, unsigned int bufferSize,
-                             unsigned int readSize) {
+                             unsigned int readSize, unsigned int chunkSize) {
 
+    this->chunksize = chunkSize;
     if(!deviceReader.initialise(deviceName, bufferSize, readSize))
         return false;
 
@@ -280,7 +281,7 @@ void  device2yarp::run() {
             continue;
 
         //typical ZYNQ behaviour to skip error checking
-        unsigned int chunksize = 4096 * 10, i = 0;
+        unsigned int i = 0;
         if(!errorchecking && !dataError) {
 
             while((i+1) * chunksize < nBytesRead) {
