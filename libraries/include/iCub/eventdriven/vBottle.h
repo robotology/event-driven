@@ -272,13 +272,13 @@ public:
 
     virtual bool write(yarp::os::ConnectionWriter& connection) {
 
-        connection.appendExternalBlock((const char *)header1.data(),
+        connection.appendBlock((const char *)header1.data(),
                                        header1.size() * sizeof(YARP_INT32));
-        connection.appendExternalBlock((const char *)header2.data(),
+        connection.appendBlock((const char *)header2.data(),
                                        header2.size() * sizeof(char));
-        connection.appendExternalBlock((const char *)header3.data(),
+        connection.appendBlock((const char *)header3.data(),
                                        header3.size() * sizeof(YARP_INT32));
-        connection.appendExternalBlock(datablock, datalength);
+        connection.appendBlock(datablock, datalength);
 
         return !connection.isError();
     }
