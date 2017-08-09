@@ -160,22 +160,25 @@ device2yarp::device2yarp() {
     jumpcheck = false;
 }
 
-bool device2yarp::initialise(std::string moduleName, bool strict, bool check,
+bool device2yarp::initialise(std::string moduleName, bool check,
                              std::string deviceName, unsigned int bufferSize,
-                             unsigned int readSize) {
+                             unsigned int readSize, unsigned int chunkSize) {
 
+    this->chunksize = chunkSize;
     if(!deviceReader.initialise(deviceName, bufferSize, readSize))
         return false;
 
     this->errorchecking = check;
 
-    this->strict = strict;
-    if(strict) {
-        std::cout << "D2Y: setting output port to strict" << std::endl;
-        portvBottle.setStrict();
-    } else {
-        std::cout << "D2Y: setting output port to not-strict" << std::endl;
-    }
+    yInfo() << "yarp::os::Port used - which is always strict";
+
+//    this->strict = strict;
+//    if(strict) {
+//        std::cout << "D2Y: setting output port to strict" << std::endl;
+//        portvBottle.setStrict();
+//    } else {
+//        std::cout << "D2Y: setting output port to not-strict" << std::endl;
+//    }
 
     if(!portEventCount.open(moduleName + "/eventCount:o"))
         return false;
@@ -229,6 +232,8 @@ int device2yarp::applysaltandpepperfilter(std::vector<unsigned char> &data, int 
 
 void  device2yarp::run() {
 
+    ev::vBottleMimic vbottlemimic;
+
     while(!isStopping()) {
 
         //display an output to let everyone know we are still working.
@@ -276,27 +281,29 @@ void  device2yarp::run() {
             continue;
 
         //typical ZYNQ behaviour to skip error checking
-        unsigned int chunksize = 4096 * 10, i = 0;
+        unsigned int i = 0;
         if(!errorchecking && !dataError) {
 
             while((i+1) * chunksize < nBytesRead) {
 
-                ev::vBottleMimic &vbm = portvBottle.prepare();
-                vbm.setdata((const char *)data.data() + i*chunksize, chunksize);
+                //ev::vBottleMimic &vbm = portvBottle.prepare();
+                vbottlemimic.setdata((const char *)data.data() + i*chunksize, chunksize);
                 vStamp.update();
                 portvBottle.setEnvelope(vStamp);
-                portvBottle.write(strict);
-                portvBottle.waitForWrite();
+                portvBottle.write(vbottlemimic);
+                //portvBottle.write(strict);
+                //portvBottle.waitForWrite();
 
                 i++;
             }
 
-            ev::vBottleMimic &vbm = portvBottle.prepare();
-            vbm.setdata((const char *)data.data() + i*chunksize, nBytesRead - i*chunksize);
+            //ev::vBottleMimic &vbm = portvBottle.prepare();
+            vbottlemimic.setdata((const char *)data.data() + i*chunksize, nBytesRead - i*chunksize);
             vStamp.update();
             portvBottle.setEnvelope(vStamp);
-            portvBottle.write(strict);
-            portvBottle.waitForWrite();
+            portvBottle.write(vbottlemimic);
+            //portvBottle.write(strict);
+            //portvBottle.waitForWrite();
 
             continue;						//return here.
         }
@@ -318,13 +325,14 @@ void  device2yarp::run() {
                     std::cerr << "BITMISMATCH in yarp2device" << std::endl;
                     std::cerr << *TS << " " << *AE << std::endl;
 
-                    ev::vBottleMimic &vbm = portvBottle.prepare();
-                    vbm.setdata((const char *)data.data()+bstart, bend-bstart);
+                    //ev::vBottleMimic &vbm = portvBottle.prepare();
+                    vbottlemimic.setdata((const char *)data.data()+bstart, bend-bstart);
                     countAEs += (bend - bstart) / 8;
                     vStamp.update();
                     portvBottle.setEnvelope(vStamp);
-                    if(strict) portvBottle.writeStrict();
-                    else portvBottle.write();
+                    portvBottle.write(vbottlemimic);
+                    //if(strict) portvBottle.writeStrict();
+                    //else portvBottle.write();
                 }
 
                 //then increment by 1 to find the next alignment
@@ -337,13 +345,14 @@ void  device2yarp::run() {
         }
 
         if(nBytesRead - bstart > 7) {
-            ev::vBottleMimic &vbm = portvBottle.prepare();
-            vbm.setdata((const char *)data.data()+bstart, 8*((nBytesRead-bstart)/8));
+            //ev::vBottleMimic &vbm = portvBottle.prepare();
+            vbottlemimic.setdata((const char *)data.data()+bstart, 8*((nBytesRead-bstart)/8));
             countAEs += (nBytesRead - bstart) / 8;
             vStamp.update();
             portvBottle.setEnvelope(vStamp);
-            if(strict) portvBottle.writeStrict();
-            else portvBottle.write();
+            portvBottle.write(vbottlemimic);
+            //if(strict) portvBottle.writeStrict();
+            //else portvBottle.write();
         }
     }
 

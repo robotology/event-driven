@@ -78,9 +78,10 @@ private:
     bool errorchecking;
     bool applyfilter;
     bool jumpcheck;
+    unsigned int chunksize;
 
     //internal variables
-    yarp::os::BufferedPort<ev::vBottleMimic> portvBottle;
+    yarp::os::Port portvBottle;
     yarp::os::BufferedPort<yarp::os::Bottle> portEventCount;
     int countAEs;
     int countLoss;
@@ -100,9 +101,9 @@ private:
 public:
 
     device2yarp();
-    bool initialise(std::string moduleName = "", bool strict = false, bool check = false,
+    bool initialise(std::string moduleName = "", bool check = false,
                     std::string deviceName = "", unsigned int bufferSize = 800000,
-                    unsigned int readSize = 1024);
+                    unsigned int readSize = 1024, unsigned int chunkSize = 40960);
     void initialiseFilter(bool applyfilter, int width, int height, int temporalsize, int spatialSize)
     {
         this->applyfilter = applyfilter;

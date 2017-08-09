@@ -44,7 +44,6 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 
     std::string moduleName = rf.check("name", yarp::os::Value("/zynqGrabber")).asString();
     setName(moduleName.c_str());
-    bool strict = rf.check("strict") && rf.check("strict", yarp::os::Value(true)).asBool();
     bool errorcheck = rf.check("errorcheck") && rf.check("errorcheck", yarp::os::Value(true)).asBool();
     bool verbose = rf.check("verbose") && rf.check("verbose", yarp::os::Value(true)).asBool();
     bool biaswrite = rf.check("biaswrite") && rf.check("biaswrite", yarp::os::Value(true)).asBool();
@@ -118,9 +117,10 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 
         std::string dataDevice = rf.find("dataDevice").asString();
         int readPacketSize = 8 * rf.check("readPacketSize", yarp::os::Value("512")).asInt();
-        int maxBottleSize = 8 * rf.check("maxBottleSize", yarp::os::Value("100000")).asInt();
+        int bufferSize     = 8 * rf.check("bufferSize", yarp::os::Value("5120")).asInt();
+        int maxBottleSize  = 8 * rf.check("maxBottleSize", yarp::os::Value("5120")).asInt();
 
-        if(!D2Y.initialise(moduleName, strict, errorcheck, dataDevice, maxBottleSize, readPacketSize)) {
+        if(!D2Y.initialise(moduleName, errorcheck, dataDevice, bufferSize, readPacketSize, maxBottleSize)) {
             std::cout << "A data device was specified but could not be initialised" << std::endl;
             return false;
         } else {
