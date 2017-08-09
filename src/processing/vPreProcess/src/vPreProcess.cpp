@@ -228,7 +228,7 @@ void vPreProcess::run()
         }
         if(isStopping()) break;
 
-        if(precheck && prev_bottle_n && prev_bottle_n + 1 != ystamp.getCount()) {
+        if(precheck && prev_bottle_n + 1 != ystamp.getCount() && ystamp.getCount() && prev_bottle_n) {
             yWarning() << "Dropped bottle:" << prev_bottle_n << "to" << ystamp.getCount();
         }
         prev_bottle_n = ystamp.getCount();
