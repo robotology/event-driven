@@ -80,7 +80,7 @@ private:
     bool jumpcheck;
 
     //internal variables
-    yarp::os::BufferedPort<ev::vBottleMimic> portvBottle;
+    yarp::os::Port portvBottle;
     yarp::os::BufferedPort<yarp::os::Bottle> portEventCount;
     int countAEs;
     int countLoss;
