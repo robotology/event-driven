@@ -238,13 +238,13 @@ void clusterDraw::draw(cv::Mat &image, const vQueue &eSet, int vTime)
             std::cout << "l_min error: shape distorted" << std::endl;
         }
 
-        //double a = sqrt(std::fabs(l_max)) * 5;
-        //double b = sqrt(std::fabs(l_min)) * 5;
+        double a = sqrt(std::fabs(l_max)) * 5;
+        double b = sqrt(std::fabs(l_min)) * 5;
         double alpha = 0.5*atan2f(2*sig_xy_, sig_y2_ - sig_x2_);
 
         alpha = alpha * 180 / M_PI; //convert to degrees for openCV ellipse function
-        //cv::ellipse(image, centr, cv::Size(a,b), alpha, 0, 360, blue, 2);
-        cv::circle(image, centr, v->sigx, blue, 2);
+        cv::ellipse(image, centr, cv::Size(a,b), alpha, 0, 360, blue, 2);
+        //cv::circle(image, centr, v->sigx, blue, 2);
     }
 
 }
