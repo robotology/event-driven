@@ -34,8 +34,8 @@ private:
 
     //output port for the vBottle with the new events computed by the module
     ev::queueAllocator inPort;
-    yarp::os::BufferedPort<ev::vBottle> outPort;
-    yarp::os::BufferedPort<ev::vBottle> outPort2;
+    yarp::os::Port outPort;
+    yarp::os::Port outPort2;
 
     //parameters
     std::string name;

@@ -287,7 +287,7 @@ void  device2yarp::run() {
             while((i+1) * chunksize < nBytesRead) {
 
                 //ev::vBottleMimic &vbm = portvBottle.prepare();
-                vbottlemimic.setdata((const char *)data.data() + i*chunksize, chunksize);
+                vbottlemimic.setExternalData((const char *)data.data() + i*chunksize, chunksize);
                 vStamp.update();
                 portvBottle.setEnvelope(vStamp);
                 portvBottle.write(vbottlemimic);
@@ -298,7 +298,7 @@ void  device2yarp::run() {
             }
 
             //ev::vBottleMimic &vbm = portvBottle.prepare();
-            vbottlemimic.setdata((const char *)data.data() + i*chunksize, nBytesRead - i*chunksize);
+            vbottlemimic.setExternalData((const char *)data.data() + i*chunksize, nBytesRead - i*chunksize);
             vStamp.update();
             portvBottle.setEnvelope(vStamp);
             portvBottle.write(vbottlemimic);
@@ -326,7 +326,7 @@ void  device2yarp::run() {
                     std::cerr << *TS << " " << *AE << std::endl;
 
                     //ev::vBottleMimic &vbm = portvBottle.prepare();
-                    vbottlemimic.setdata((const char *)data.data()+bstart, bend-bstart);
+                    vbottlemimic.setExternalData((const char *)data.data()+bstart, bend-bstart);
                     countAEs += (bend - bstart) / 8;
                     vStamp.update();
                     portvBottle.setEnvelope(vStamp);
@@ -346,7 +346,7 @@ void  device2yarp::run() {
 
         if(nBytesRead - bstart > 7) {
             //ev::vBottleMimic &vbm = portvBottle.prepare();
-            vbottlemimic.setdata((const char *)data.data()+bstart, 8*((nBytesRead-bstart)/8));
+            vbottlemimic.setExternalData((const char *)data.data()+bstart, 8*((nBytesRead-bstart)/8));
             countAEs += (nBytesRead - bstart) / 8;
             vStamp.update();
             portvBottle.setEnvelope(vStamp);
