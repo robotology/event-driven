@@ -28,6 +28,15 @@ void vEvent::encode(yarp::os::Bottle &b) const
 #endif
 }
 
+void vEvent::encode(std::vector<int> &b, unsigned int &pos) const
+{
+#ifdef TIME32BIT
+    b[pos++] = (stamp&0x01FFFFFF);
+#else
+    b[pos++] = ((32<<26)|(stamp&0x00ffffff));
+#endif
+}
+
 bool vEvent::decode(const yarp::os::Bottle &packet, int &pos)
 {
     if(pos + 1 <= packet.size()) {

@@ -42,6 +42,17 @@ void AddressEvent::encode(yarp::os::Bottle &b) const
 #endif
 }
 
+void AddressEvent::encode(std::vector<YARP_INT32> &b, unsigned int &pos) const
+{
+    vEvent::encode(b, pos);
+#ifdef TENBITCODEC
+    b[pos++] = (((channel&0x01)<<20)|((y&0x0FF)<<10)|((x&0x1FF)<<1)|(polarity&0x01));
+#else
+    //b.addInt(((channel&0x01)<<15)|((y&0x7f)<<8)|((x&0x7f)<<1)|(polarity&0x01));
+    b.addInt(((channel&0x01)<<15)|((x&0x7f)<<8)|(((127-y)&0x7f)<<1)|(polarity&0x01));
+#endif
+}
+
 bool AddressEvent::decode(const yarp::os::Bottle &packet, int &pos)
 {
     // check length

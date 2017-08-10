@@ -130,10 +130,8 @@ vPreProcess::vPreProcess(): name("/vPreProcess")
 
 vPreProcess::~vPreProcess()
 {
-    if(!outPort.isClosed())
-        outPort.close();
-    if(!inPort.isClosed())
-        inPort.close();
+    outPort.close();
+    outPort2.close();
 }
 
 void vPreProcess::initBasic(std::string name, int height, int width,
@@ -220,7 +218,17 @@ void vPreProcess::run()
     resmod.width -= 1;
     int prev_bottle_n = 0;
 
+    //left output data
+    vBottleMimic leftBottle;
+    leftBottle.setHeader(AE::tag);
+
+    //right output data
+    vBottleMimic rightBottle;
+    rightBottle.setHeader(AE::tag);
+
     while(true) {
+
+        vQueue qleft, qright;
 
         ev::vQueue *q = 0;
         while(!q && !isStopping()) {
@@ -232,14 +240,6 @@ void vPreProcess::run()
             yWarning() << "Dropped bottle:" << prev_bottle_n << "to" << ystamp.getCount();
         }
         prev_bottle_n = ystamp.getCount();
-
-        ev::vBottle &outBottle = outPort.prepare();
-        outBottle.clear();
-        outPort.setEnvelope(ystamp);
-
-        ev::vBottle &rightBottle = outPort2.prepare();
-        rightBottle.clear();
-        outPort2.setEnvelope(ystamp);
 
         for(ev::vQueue::iterator qi = q->begin(); qi != q->end(); qi++) {
 
@@ -278,20 +278,21 @@ void vPreProcess::run()
             }
 
             if(split && v->channel)
-                rightBottle.addEvent(v);
+                qright.push_back(v);
             else
-                outBottle.addEvent(v);
+                qleft.push_back(v);
         }
 
-        if(outBottle.size())
-            outPort.writeStrict();
-        else
-            outPort.unprepare();
-
-        if(split && rightBottle.size())
-            outPort2.writeStrict();
-        else
-            outPort2.unprepare();
+        if(qleft.size()) {
+            leftBottle.setInternalData(qleft);
+            outPort.setEnvelope(ystamp);
+            outPort.write(leftBottle);
+        }
+        if(qright.size()) {
+            rightBottle.setInternalData(qright);
+            outPort2.setEnvelope(ystamp);
+            outPort2.write(rightBottle);
+        }
 
         inPort.scrapQ();
     }
