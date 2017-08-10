@@ -238,13 +238,19 @@ class vBottleMimic : public yarp::os::Portable {
 
 private:
 
+    //headers
     std::vector<YARP_INT32> header1;
-    std::vector<char> header2;
+    std::string header2;
     std::vector<YARP_INT32> header3;
 
+    //data
     const char * datablock;
-    unsigned int datalength;
-    const static unsigned int MINELSZ = sizeof(YARP_INT32) * 2;
+    unsigned int datalength; //<- set the number of bytes here
+    std::vector<YARP_INT32> internaldata;
+
+    //sizes
+    unsigned int elementINTS;
+    unsigned int elementBYTES;
 
 public:
 
@@ -253,16 +259,48 @@ public:
         header1.push_back(2); //elements in bottle "AE" then bottle data
         header1.push_back(BOTTLE_TAG_STRING); //code for string
         header1.push_back(2); // length of string
-        header2.push_back('A');
-        header2.push_back('E');
+        header2 = "AE";
         header3.push_back(BOTTLE_TAG_LIST|BOTTLE_TAG_INT); // bottle code + specialisation with ints
-        header3.push_back(0); // <- set the number of ints here (2 * #v's)
+        header3.push_back(0); // <- set the number of ints here (e.g. 2 * #v's)
+        elementINTS = 2;
+        elementBYTES = sizeof(YARP_INT32) * elementINTS;
     }
 
-    void setdata(const char * datablock, unsigned int datalength) {
-        header3[1] = 2 * (datalength / MINELSZ); //forced to be x8
+    void setExternalData(const char * datablock, unsigned int datalength) {
+        header3[1] = elementINTS * (datalength / elementBYTES); //forced to be x8
         this->datablock = datablock;
-        this->datalength = MINELSZ * header3[1] / 2; //forced to be x8
+        this->datalength = elementBYTES * header3[1] / elementINTS; //forced to be x8
+
+    }
+
+    void setInternalData(const vQueue &q) {
+
+        header3[1] = elementINTS * q.size(); //number of ints
+
+        if((int)internaldata.size() < header3[1]) //increase internal mem if needed
+            internaldata.resize(header3[1]);
+
+        unsigned int pos = 0;
+        for(unsigned int i = 0; i < q.size(); i++)  //decode the data into
+            q[i]->encode(internaldata, pos);        //internal memeory
+
+        if(pos != (unsigned int)header3[1])
+            yError() << "vBottleMimic: encoding incorrect";
+
+        this->datablock = (const char *)internaldata.data();
+        this->datalength = elementBYTES * q.size();
+    }
+
+    void setHeader(std::string eventtype) {
+        header1[3] = eventtype.size();  //set the string length
+        header2 = eventtype;            //set the string itself
+
+        //get the elementsize THIS COULD BE MORE ELEGENT!!
+        yarp::os::Bottle temp;
+        event<> v = ev::createEvent(eventtype);
+        v->encode(temp);
+        elementINTS = temp.size();
+        elementBYTES = sizeof(YARP_INT32) * elementINTS;
 
     }
 
@@ -272,13 +310,12 @@ public:
 
     virtual bool write(yarp::os::ConnectionWriter& connection) {
 
-        connection.appendExternalBlock((const char *)header1.data(),
+        connection.appendBlock((const char *)header1.data(),
                                        header1.size() * sizeof(YARP_INT32));
-        connection.appendExternalBlock((const char *)header2.data(),
-                                       header2.size() * sizeof(char));
-        connection.appendExternalBlock((const char *)header3.data(),
+        connection.appendBlock(header2.c_str(), header1[3]);
+        connection.appendBlock((const char *)header3.data(),
                                        header3.size() * sizeof(YARP_INT32));
-        connection.appendExternalBlock(datablock, datalength);
+        connection.appendBlock(datablock, datalength);
 
         return !connection.isError();
     }

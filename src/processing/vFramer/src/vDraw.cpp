@@ -225,8 +225,6 @@ void clusterDraw::draw(cv::Mat &image, const vQueue &eSet, int vTime)
 
         auto v = ci->second;
 
-        //if(v->x < 0 || v->x >= Xlimit || v->y < 0 || v->y >= Ylimit) continue;
-
         //polarity indicates the cluster has died.
         if(!v->polarity) continue;
 
