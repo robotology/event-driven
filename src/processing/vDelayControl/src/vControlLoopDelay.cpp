@@ -12,7 +12,7 @@ void delayControl::initFilter(int width, int height, int nparticles, int bins,
                    bins * minlikelihood, inlierThresh, randoms);
     res.height = height;
     res.width = width;
-    detectionThreshold = bins * 0.4;
+    detectionThreshold = bins * 0.35;
 }
 
 void delayControl::initDelayControl(double gain, double minvalue, int maxtoproc)
