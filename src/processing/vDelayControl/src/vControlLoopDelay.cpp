@@ -9,17 +9,17 @@ void delayControl::initFilter(int width, int height, int nparticles, int bins,
                               double inlierThresh, double randoms)
 {
     vpf.initialise(width, height, nparticles, bins, adaptive, nthreads,
-                   bins * minlikelihood, inlierThresh, randoms);
+                   minlikelihood, inlierThresh, randoms);
     res.height = height;
     res.width = width;
-    detectionThreshold = bins * 0.35;
 }
 
-void delayControl::initDelayControl(double gain, double minvalue, int maxtoproc)
+void delayControl::initDelayControl(double gain, int maxtoproc, int positiveThreshold)
 {
     this->gain = gain;
-    this->minEvents = minvalue;
+    this->minEvents = 1.0;
     qROI.setSize(maxtoproc);
+    this->detectionThreshold = positiveThreshold;
 }
 
 bool delayControl::open(std::string name)
@@ -110,7 +110,7 @@ void delayControl::run()
         vpf.performObservation(qROI.q);
         Tlikelihood = yarp::os::Time::now() - Tlikelihood;
         vpf.extractTargetPosition(avgx, avgy, avgr);
-        double roisize = avgr*1.7;
+        double roisize = avgr*1.4;
         qROI.setROI(avgx - roisize, avgx + roisize, avgy - roisize, avgy + roisize);
         qROI.setSize(avgr * 4.0 * M_PI);
 
@@ -119,9 +119,8 @@ void delayControl::run()
         Tresample = yarp::os::Time::now() - Tresample;
 
         Tpredict = yarp::os::Time::now();
-        vpf.performPrediction(0.7);
+        vpf.performPrediction(std::max(addEvents / (2.0 * avgr), 0.7));
         Tpredict = yarp::os::Time::now() - Tpredict;
-        //vpf.performPrediction(std::min(addEvents / (2.0 * avgr), 1.0));
 
         //check for stagnancy
         if(vpf.maxlikelihood < detectionThreshold) {
@@ -174,11 +173,11 @@ void delayControl::run()
             static double val4 = -ev::vtsHelper::max_stamp;
             static double val5 = -ev::vtsHelper::max_stamp;
 
-            val1 = std::max(val1, vpf.maxlikelihood);
-            val2 = std::max(val2, Tgetwindow);
-            val3 = std::max(val3, Tlikelihood);
-            val4 = std::max(val4, Tresample);
-            val5 = std::max(val5, Tpredict);
+            val1 = std::max(val1, (double)targetproc);
+            val2 = std::max(val2, (double)inputPort.queryDelayN());
+            val3 = std::max(val3, 0.0);
+            val4 = std::max(val4, 0.0);
+            val5 = std::max(val5, 0.0);
 
             double scopedt = yarp::os::Time::now() - pscopetime;
             if((scopedt > 0.05 || scopedt < 0)) {
@@ -260,6 +259,7 @@ roiq::roiq()
     n = 1000;
     roi[0] = 0; roi[1] = 1000;
     roi[2] = 0; roi[3] = 1000;
+    use_TW = false;
 }
 
 void roiq::setSize(unsigned int value)

@@ -13,27 +13,33 @@
     <node> icub-blade </node>
 </module>
 
-<module>
+<!--<module>
     <name> vParticleFilter </name>
     <parameters> --threads 10 --variance 1.0 --lParticles 200 --rParticles 200 --obsinlier 1.0 --obsoutlier 6.0 --obsthresh 10.0 --adaptive </parameters>
     <node> icub-blade </node>
-</module>
+</module> -->
 
 <module>
     <name> vDelayControl </name>
-    <parameters> --name /vpfL --rParticles 200 --obsinlier 1.0 --obsthresh 0.25 --adaptive true --randoms 0 --threads 8 --bins 64 --gain 0.001 --maxq 1000 --minadds 20 </parameters>
+    <parameters> --name /vpfL --rParticles 200 --obsthresh 0.20 --threads 8 --bins 64 --gain 0.01 </parameters>
     <node> icub-blade </node>
 </module>
 
 <module>
     <name> vDelayControl </name>
-    <parameters> --name /vpfR --rParticles 200 --obsinlier 1.0 --obsthresh 0.25 --adaptive true --randoms 0 --threads 8 --bins 64 --gain 0.001 --maxq 1000 --minadds 20 </parameters>
+    <parameters> --name /vpfR --rParticles 200 --obsthresh 0.20 --threads 8 --bins 64 --gain 0.01 </parameters>
     <node> icub-blade </node>
 </module>
 
 <module>
     <name> yarpscope </name>
-    <parameters> --remote /vpf/scope:o --index "(0 1 2 3 4)" --color "(red blue green black yellow)" </parameters>
+    <parameters> --remote /vpfR/scope:o --index "(0 1 2 3 4)" --color "(red blue green black yellow)" </parameters>
+    <node> icub24 </node>
+</module>
+
+<module>
+    <name> yarpscope </name>
+    <parameters> --remote /vpfL/scope:o --index "(0 1 2 3 4)" --color "(red blue green black yellow)" </parameters>
     <node> icub24 </node>
 </module>
 

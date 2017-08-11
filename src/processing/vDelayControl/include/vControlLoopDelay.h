@@ -61,7 +61,7 @@ public:
     void initFilter(int width, int height, int nparticles,
                     int bins, bool adaptive, int nthreads,
                     double minlikelihood, double inlierThresh, double randoms);
-    void initDelayControl(double gain, double minvalue, int maxtoproc);
+    void initDelayControl(double gain, int maxtoproc, int positiveThreshold);
 
     //bool threadInit();
     void onStop();
