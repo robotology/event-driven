@@ -163,14 +163,6 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 }
 
 bool zynqGrabberModule::interruptModule() {
-    handlerPort.interrupt();
-    Y2D.interrupt();
-    // D2Y ???
-    return true;
-}
-
-bool zynqGrabberModule::close() {
-
     std::cout << "breaking YARP connections.. ";
     handlerPort.close();        // rpc of the RF module
     Y2D.close();
@@ -181,6 +173,11 @@ bool zynqGrabberModule::close() {
     vsctrlMngLeft.disconnect(true);
     vsctrlMngRight.disconnect(true);
     std::cout << "done" << std::endl;
+    return true;
+}
+
+bool zynqGrabberModule::close() {
+
 
     return true;
 }
@@ -188,7 +185,7 @@ bool zynqGrabberModule::close() {
 /* Called periodically every getPeriod() seconds */
 bool zynqGrabberModule::updateModule() {
 
-    return true;
+    return !isStopping();
 }
 
 double zynqGrabberModule::getPeriod() {

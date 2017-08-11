@@ -46,8 +46,9 @@ bool vDevReadBuffer::initialise(std::string devicename,
                                 unsigned int readSize)
 {
 
-    fd = open(devicename.c_str(), O_RDONLY);
+    fd = open(devicename.c_str(), O_RDWR);
     if(fd < 0) {
+	yInfo() << "non blocking opening ";
         fd = open(devicename.c_str(), O_RDONLY | O_NONBLOCK);
         if(fd < 0)
             return false;
@@ -55,6 +56,10 @@ bool vDevReadBuffer::initialise(std::string devicename,
 
     unsigned int timestampswitch = 1;
     ioctl(fd, IOC_SET_TS_TYPE, &timestampswitch);
+ 
+    int poolSize;
+    ioctl(fd, IOC_GET_PS, &poolSize);
+    yInfo() << "poolSize " << poolSize;    
 
     if(bufferSize > 0) this->bufferSize = bufferSize;
     if(readSize > 0) this->readSize = readSize;
@@ -92,7 +97,7 @@ void vDevReadBuffer::run()
             r = read(fd, discardbuffer.data(), readSize);
             if(r > 0) lossCount += r;
         } else {
-            //we read and fill up the buffer
+	    //we read and fill up the buffer
             r = read(fd, readBuffer->data() + readCount, std::min(bufferSize - readCount, readSize));
             if(r > 0) readCount += r;
         }
