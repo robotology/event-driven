@@ -421,7 +421,7 @@ void EventPort::onRead(ev::vBottle &bot) {
     if(newQueue.empty()){
         return;
     }
-    
+
     mutex.wait();
     //append new events to queue
     

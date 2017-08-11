@@ -2,14 +2,14 @@
 <?xml-stylesheet type="text/xsl" href="yarpmanifest.xsl"?>
 
 <module>
-    <name>vMapping</name>
+    <name>BoxVisualizer</name>
     <doxygen-group>processing</doxygen-group>
-    <description>Mapping events to frame</description>
+    <description>Visualize region of interest</description>
     <copypolicy>Released under the terms of the GNU GPL v2.0</copypolicy>
     <version>1.0</version>
 
     <description-long>
-      The module maps events to their location in the frame camera
+        Visualize region of interest on the event stream
     </description-long>
 
     <arguments>
@@ -25,7 +25,7 @@
 
         <input>
             <type>eventdriven::vBottle</type>
-            <port carrier="tcp">/vMapping/vBottle:i</port>
+            <port carrier="tcp">/BoxVisualizer/vBottle:i</port>
             <required>no</required>
             <priority>no</priority>
             <description>
@@ -34,29 +34,23 @@
             </description>
         </input>
 
-        <input>
-            <type>yarp::sig::Image</type>
-            <port carrier="tcp">/vMapping/img:i</port>
-            <description>
-                Input frame based image
-            </description>
-        </input>
-        
+         <output>
+             <type>yarp::os::Bottle</type>
+             <port carrier="udp">/BoxVisualizer/box:i</port>
+             <description>
+                 ROI
+             </description>
+         </output>
+
         <output>
             <type>yarp::sig::Image</type>
-            <port carrier="udp">/vMapping/img:o</port>
+            <port carrier="tcp">/BoxVisualizer/img:o</port>
             <description>
-                Image overlapped with events
+                Events with ROI
             </description>
         </output>
+        
 
-         <output>
-            <type>ev::vBottle</type>
-            <port carrier="udp">/vMapping/vBottle:o</port>
-            <description>
-                Transformed events
-            </description>
-        </output>
         
     </data>
 
