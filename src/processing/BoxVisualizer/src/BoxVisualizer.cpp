@@ -2,8 +2,15 @@
 // Created by miacono on 11/08/17.
 //
 
+#include <algorithm>
 #include <BoxVisualizer.h>
 using namespace yarp::math;
+
+void clamp (double &val, double min, double max){
+    val = std::min (max, val);
+    val = std::max (min, val);
+}
+
 
 int main(int argc, char * argv[])
 {
@@ -63,7 +70,8 @@ bool BoxVisualizer::configure( yarp::os::ResourceFinder &rf ) {
     bool ok = readConfigFile( rf, "MAPPING_LEFT", leftH );
     leftH = yarp::math::luinv(leftH);
     ok &= vPortIn.open(getName("/vBottle:i"));
-    vPortIn.startReading();
+    ok &= vPortOut.open(getName("/vBottle:o"));
+    vPortIn.startReadingLeft();
     ok &= boxesPortIn.open(getName("/boxes:i"));
     ok &= imgPortOut.open(getName("/img:o"));
     return ok;
@@ -71,6 +79,7 @@ bool BoxVisualizer::configure( yarp::os::ResourceFinder &rf ) {
 
 bool BoxVisualizer::interruptModule() {
     vPortIn.interrupt();
+    vPortOut.interrupt();
     boxesPortIn.interrupt();
     imgPortOut.interrupt();
     return true;
@@ -78,6 +87,7 @@ bool BoxVisualizer::interruptModule() {
 
 bool BoxVisualizer::close() {
     vPortIn.close();
+    vPortOut.close();
     boxesPortIn.close();
     imgPortOut.close();
     return true;
@@ -92,30 +102,43 @@ bool BoxVisualizer::updateModule() {
     if (boxesPortIn.isBoxReady()){
         yarp::os::Bottle boxBottle = boxesPortIn.getBox();
         std::vector<yarp::sig::Vector> corners(4);
-        double minY = boxBottle.get(0).asDouble() - 1;
-        double minX = boxBottle.get(1).asDouble() - 1;
-        double maxY = boxBottle.get(2).asDouble() - 1;
-        double maxX = boxBottle.get(3).asDouble() - 1;
+        minY = boxBottle.get(0).asDouble();
+        minX = boxBottle.get(1).asDouble();
+        maxY = boxBottle.get(2).asDouble();
+        maxX = boxBottle.get(3).asDouble();
         
         transformPoint( minX, minY, leftH );
         transformPoint( maxX, maxY, leftH );
+        
+        clamp(minY, 0 ,height - 1);
+        clamp(maxY, 0 ,height - 1);
+        clamp(minX, 0 ,width - 1);
+        clamp(maxX, 0 ,width - 1);
         
         drawRectangle( minY, minX, maxY, maxX, imgOut );
         
     }
     
-    if (vPortIn.isPortReading()) {
+    if (vPortIn.isPortReadingLeft() && vPortIn.hasNewEvents()) {
         ev::vQueue q = vPortIn.getEventsFromChannel(channel);
-        for (auto &it : q){
+        ev::vBottle &vBottleOut = vPortOut.prepare();
+        vBottleOut.clear();
+        for (auto &it : q) {
             
-            auto v = ev::is_event<ev::AE >( it );
+            auto v = ev::is_event<ev::AE>( it );
             
             double x = v->x;
             double y = v->y;
-            if (x >= 0 && x < imgOut.width() && y >=0 && y < imgOut.height())
-            imgOut( x, y ) = yarp::sig::PixelBgr( 255, 255, 255 );
+            
+            if ( x >= 0 && x < imgOut.width() && y >= 0 && y < imgOut.height() ){
+                imgOut( x, y ) = yarp::sig::PixelBgr( 255, 255, 255 );
+                if ( x >= minX && x <= maxX && y >= minY && y <= maxY )
+                    vBottleOut.addEvent( v );
+            }
         }
         imgPortOut.write();
+        if (vBottleOut.size() > 0 )
+            vPortOut.write();
     }
     return true;
 }
@@ -123,14 +146,14 @@ bool BoxVisualizer::updateModule() {
 void BoxVisualizer::drawRectangle( int minY, int minX, int maxY, int maxX
                                    , yarp::sig::ImageOf<yarp::sig::PixelBgr> &image )  {
     
-    for ( int i = minX; i < maxX; ++i ) {
+    for ( int i = minX; i <= maxX; ++i ) {
         if(i >= 0 && i < image.width()) {
             image( i, minY ) = yarp::sig::PixelBgr( 255, 0, 0 );
             image( i, maxY ) = yarp::sig::PixelBgr( 255, 0, 0 );
         }
     }
     
-    for ( int i = minY; i < maxY; ++i ) {
+    for ( int i = minY; i <= maxY; ++i ) {
         if (i >= 0 && i < image.height()) {
             image( minX, i ) = yarp::sig::PixelBgr( 255, 0, 0 );
             image( maxX, i ) = yarp::sig::PixelBgr( 255, 0, 0 );
@@ -155,7 +178,7 @@ void BoxVisualizer::transformPoint( double &x, double &y, yarp::sig::Matrix homo
 }
 
 double BoxVisualizer::getPeriod() {
-    return 0.01;
+    return 0.001;
 }
 
 
@@ -164,7 +187,7 @@ double BoxVisualizer::getPeriod() {
 
 
 void EventPort::onRead(ev::vBottle &bot) {
-    if (!isReading)
+    if (!isReadingLeft && ! isReadingRight)
         return;
     //get new events
     ev::vQueue newQueue = bot.get<ev::AE>();
@@ -177,10 +200,18 @@ void EventPort::onRead(ev::vBottle &bot) {
     
     for ( auto &it : newQueue ) {
         auto v = ev::is_event<ev::AE >( it );
-        if (v->channel)
-            vRightQueue.push_back(v);
-        else
-            vLeftQueue.push_back(v);
+        if (v->channel) {
+            if ( isReadingRight ) {
+                vRightQueue.push_back( v );
+                newEventsRight = true;
+                
+            }
+        }else {
+            if ( isReadingLeft ) {
+                vLeftQueue.push_back( v );
+                newEventsLeft = true;
+            }
+        }
     }
     mutex.post();
 }
@@ -192,9 +223,11 @@ ev::vQueue EventPort::getEventsFromChannel( int channel ) {
     if (channel){
         outQueue = vRightQueue;
         vRightQueue.clear();
+        newEventsRight = false;
     } else {
         outQueue = vLeftQueue;
         vLeftQueue.clear();
+        newEventsLeft = false;
     }
     mutex.post();
     return outQueue;
@@ -210,6 +243,6 @@ void EventPort::clearQueues() {
 
 
 void BoxesPort::onRead( yarp::os::Bottle &bot ) {
-        outBottle = bot;
-        ready = true;
+    outBottle = bot;
+    ready = true;
 }

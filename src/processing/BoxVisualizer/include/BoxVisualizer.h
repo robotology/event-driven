@@ -14,15 +14,21 @@ private:
     yarp::os::Semaphore mutex;
     ev::vQueue vLeftQueue;
     ev::vQueue vRightQueue;
-    bool isReading{ false };
+    bool isReadingLeft{ false };
+    bool isReadingRight{ false };
+    bool newEventsLeft{ false };
+    bool newEventsRight{ false };
 
 public:
     
     EventPort() {this->useCallback();}
     
-    void startReading() { isReading = true; }
-    void stopReading() { isReading = false; }
-    bool isPortReading() {return isReading;}
+    void startReadingLeft() { isReadingLeft = true; }
+    void startReadingRight() { isReadingRight = true; }
+    void stopReading() { isReadingLeft = false; isReadingRight = false; }
+    bool isPortReadingLeft() {return isReadingLeft;}
+    bool isPortReadingRight() {return isReadingRight;}
+    bool hasNewEvents() {return newEventsLeft || newEventsRight;}
     void clearQueues();
     void onRead(ev::vBottle &bot);
     ev::vQueue getEventsFromChannel(int channel);
@@ -47,12 +53,18 @@ private:
     EventPort vPortIn;
     BoxesPort boxesPortIn;
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr>> imgPortOut;
+    yarp::os::BufferedPort<ev::vBottle> vPortOut;
     std::string confFileName;
     
     int channel;
     int height;
     int width;
     yarp::sig::Matrix leftH;
+    
+    double minY;
+    double minX;
+    double maxY;
+    double maxX;
 
 public:
     // configure all the module parameters and return true if successful
