@@ -45,7 +45,7 @@ public:
     
     bool isBoxReady() {return ready;}
     void onRead( yarp::os::Bottle &bot );
-    yarp::os::Bottle getBox() {return outBottle;}
+    yarp::os::Bottle getBox() { ready = false; return outBottle;}
 };
 
 class BoxVisualizer : public yarp::os::RFModule{

@@ -114,9 +114,6 @@ bool BoxVisualizer::updateModule() {
         clamp(maxY, 0 ,height - 1);
         clamp(minX, 0 ,width - 1);
         clamp(maxX, 0 ,width - 1);
-        
-        drawRectangle( minY, minX, maxY, maxX, imgOut );
-        
     }
     
     if (vPortIn.isPortReadingLeft() && vPortIn.hasNewEvents()) {
@@ -132,10 +129,15 @@ bool BoxVisualizer::updateModule() {
             
             if ( x >= 0 && x < imgOut.width() && y >= 0 && y < imgOut.height() ){
                 imgOut( x, y ) = yarp::sig::PixelBgr( 255, 255, 255 );
-                if ( x >= minX && x <= maxX && y >= minY && y <= maxY )
+                if ( x >= minX && x <= maxX && y >= minY && y <= maxY ) {
+                    v->x -= minX;
+                    v->y -= minY;
                     vBottleOut.addEvent( v );
+                }
             }
         }
+        
+        drawRectangle( minY, minX, maxY, maxX, imgOut );
         imgPortOut.write();
         if (vBottleOut.size() > 0 )
             vPortOut.write();
