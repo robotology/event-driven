@@ -110,7 +110,7 @@ void delayControl::run()
         vpf.performObservation(qROI.q);
         Tlikelihood = yarp::os::Time::now() - Tlikelihood;
         vpf.extractTargetPosition(avgx, avgy, avgr);
-        double roisize = avgr*1.4;
+        double roisize = avgr * 1.4;
         qROI.setROI(avgx - roisize, avgx + roisize, avgy - roisize, avgy + roisize);
         qROI.setSize(avgr * 4.0 * M_PI);
 
@@ -128,7 +128,7 @@ void delayControl::run()
             if(!stagnantstart) {
                 stagnantstart = yarp::os::Time::now();
             } else {
-                if(yarp::os::Time::now() - stagnantstart > 2.0) {
+                if(yarp::os::Time::now() - stagnantstart > 1.0) {
                     vpf.resetToSeed();
                     detection = false;
                     stagnantstart = 0;

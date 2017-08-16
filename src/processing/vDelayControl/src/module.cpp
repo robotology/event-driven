@@ -67,7 +67,7 @@ bool module::configure(yarp::os::ResourceFinder &rf)
     double minlikelihood = rf.check("obsthresh", yarp::os::Value(0.2)).asDouble();
     double inlierParameter = rf.check("obsinlier", yarp::os::Value(1.5)).asDouble();
     double particleVariance = rf.check("variance", yarp::os::Value(0.5)).asDouble();
-    double trueDetectionThreshold = rf.check("trueThresh", yarp::os::Value(0.35)).asDouble();
+    double trueDetectionThreshold = rf.check("truethresh", yarp::os::Value(0.35)).asDouble();
 
     delaycontrol.initDelayControl(gain, maxq, trueDetectionThreshold * bins);
     delaycontrol.initFilter(width, height, particles, bins, adaptivesampling,
