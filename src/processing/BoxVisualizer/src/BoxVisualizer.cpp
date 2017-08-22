@@ -164,29 +164,26 @@ void BoxVisualizer::drawRectangle( int minY, int minX, int maxY, int maxX
 }
 
 void BoxVisualizer::transformPoint( double &x, double &y, yarp::sig::Matrix homography ) const {
-    yarp::sig::Vector evCoord( 3 );
+    yarp::sig::Vector point( 3 );
     
     //Converting to homogeneous coordinates
-    evCoord[0] = x;
-    evCoord[1] = y;
-    evCoord[2] = 1;
+    point[0] = x;
+    point[1] = y;
+    point[2] = 1;
     
     //Applying trasformation
-    evCoord *= homography;
+    point *= homography;
     
     //Converting back from homogenous coordinates
-    x = evCoord[0] / evCoord[2];
-    y = evCoord[1] / evCoord[2];
+    x = point[0] / point[2];
+    y = point[1] / point[2];
 }
 
 double BoxVisualizer::getPeriod() {
     return 0.001;
 }
 
-
-
 /***********************EventPort***********************/
-
 
 void EventPort::onRead(ev::vBottle &bot) {
     if (!isReadingLeft && ! isReadingRight)
@@ -242,9 +239,9 @@ void EventPort::clearQueues() {
     mutex.post();
 }
 
-
+/***********************BoxesPort***********************/
 
 void BoxesPort::onRead( yarp::os::Bottle &bot ) {
-    outBottle = bot;
+    boxBottle = bot;
     ready = true;
 }

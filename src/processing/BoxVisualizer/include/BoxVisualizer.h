@@ -36,7 +36,7 @@ public:
 
 class BoxesPort : public yarp::os::BufferedPort<yarp::os::Bottle> {
 private:
-    yarp::os::Bottle outBottle;
+    yarp::os::Bottle boxBottle;
     bool ready{ false };
 
 public:
@@ -45,7 +45,7 @@ public:
     
     bool isBoxReady() {return ready;}
     void onRead( yarp::os::Bottle &bot );
-    yarp::os::Bottle getBox() { ready = false; return outBottle;}
+    yarp::os::Bottle getBox() { ready = false; return boxBottle;}
 };
 
 class BoxVisualizer : public yarp::os::RFModule{
