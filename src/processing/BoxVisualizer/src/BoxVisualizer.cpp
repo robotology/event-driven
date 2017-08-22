@@ -73,7 +73,7 @@ bool BoxVisualizer::configure( yarp::os::ResourceFinder &rf ) {
     ok &= vPortOut.open(getName("/vBottle:o"));
     vPortIn.startReadingLeft();
     ok &= boxesPortIn.open(getName("/boxes:i"));
-    ok &= imgPortOut.open(getName("/img:o"));
+//    ok &= imgPortOut.open(getName("/img:o"));
     return ok;
 }
 
@@ -81,7 +81,7 @@ bool BoxVisualizer::interruptModule() {
     vPortIn.interrupt();
     vPortOut.interrupt();
     boxesPortIn.interrupt();
-    imgPortOut.interrupt();
+//    imgPortOut.interrupt();
     return true;
 }
 
@@ -89,14 +89,14 @@ bool BoxVisualizer::close() {
     vPortIn.close();
     vPortOut.close();
     boxesPortIn.close();
-    imgPortOut.close();
+//    imgPortOut.close();
     return true;
 }
 
 bool BoxVisualizer::updateModule() {
-    yarp::sig::ImageOf<yarp::sig::PixelBgr> &imgOut = imgPortOut.prepare();
-    imgOut.resize(width, height);
-    imgOut.zero();
+//    yarp::sig::ImageOf<yarp::sig::PixelBgr> &imgOut = imgPortOut.prepare();
+//    imgOut.resize(width, height);
+//    imgOut.zero();
     
     
     if (boxesPortIn.isBoxReady()){
@@ -127,8 +127,8 @@ bool BoxVisualizer::updateModule() {
             double x = v->x;
             double y = v->y;
             
-            if ( x >= 0 && x < imgOut.width() && y >= 0 && y < imgOut.height() ){
-                imgOut( x, y ) = yarp::sig::PixelBgr( 255, 255, 255 );
+            if ( x >= 0 && x < width && y >= 0 && y < height ){
+//                imgOut( x, y ) = yarp::sig::PixelBgr( 255, 255, 255 );
                 if ( x >= minX && x <= maxX && y >= minY && y <= maxY ) {
                     v->x -= minX;
                     v->y -= minY;
@@ -137,8 +137,8 @@ bool BoxVisualizer::updateModule() {
             }
         }
         
-        drawRectangle( minY, minX, maxY, maxX, imgOut );
-        imgPortOut.write();
+//        drawRectangle( minY, minX, maxY, maxX, imgOut );
+//        imgPortOut.write();
         if (vBottleOut.size() > 0 )
             vPortOut.write();
     }

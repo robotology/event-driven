@@ -52,7 +52,7 @@ class BoxVisualizer : public yarp::os::RFModule{
 private:
     EventPort vPortIn;
     BoxesPort boxesPortIn;
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr>> imgPortOut;
+//    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr>> imgPortOut;
     yarp::os::BufferedPort<ev::vBottle> vPortOut;
     std::string confFileName;
     
