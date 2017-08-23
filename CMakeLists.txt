@@ -31,5 +31,6 @@ endif(ICUBcontrib_FOUND)
 
 add_subdirectory(libraries)
 add_subdirectory(src)
+add_subdirectory(bindings)
 
 icubcontrib_add_uninstall_target()     #macro added 13/11/2013
