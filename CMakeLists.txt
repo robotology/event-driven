@@ -31,6 +31,7 @@ endif(ICUBcontrib_FOUND)
 
 add_subdirectory(libraries)
 add_subdirectory(src)
+add_subdirectory(bindings)
 
 if(USE_QTCREATOR)
     file(GLOB tutorialfiles documentation/*.md)
