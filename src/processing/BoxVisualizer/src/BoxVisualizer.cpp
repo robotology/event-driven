@@ -75,6 +75,7 @@ bool BoxVisualizer::configure( yarp::os::ResourceFinder &rf ) {
     ok &= vPortOut.open(getName("/vBottle:o"));
     vPortIn.startReadingLeft();
     ok &= boxesPortIn.open(getName("/boxes:i"));
+    ok &= boxesPortOut.open(getName("/boxes:o"));
     if (createImg)
         ok &= imgPortOut.open(getName("/img:o"));
     return ok;
@@ -84,6 +85,7 @@ bool BoxVisualizer::interruptModule() {
     vPortIn.interrupt();
     vPortOut.interrupt();
     boxesPortIn.interrupt();
+    boxesPortOut.interrupt();
     imgPortOut.interrupt();
     return true;
 }
@@ -92,6 +94,7 @@ bool BoxVisualizer::close() {
     vPortIn.close();
     vPortOut.close();
     boxesPortIn.close();
+    boxesPortOut.close();
     imgPortOut.close();
     return true;
 }
@@ -114,7 +117,18 @@ bool BoxVisualizer::updateModule() {
         clamp(maxY, 0 ,height - 1);
         clamp(minX, 0 ,width - 1);
         clamp(maxX, 0 ,width - 1);
+        
+        //Sending out transformed box
+        yarp::os::Bottle &boxBottleOut = boxesPortOut.prepare();
+        boxBottleOut.clear();
+        boxBottleOut.addInt(minY);
+        boxBottleOut.addInt(minX);
+        boxBottleOut.addInt(maxY);
+        boxBottleOut.addInt(maxX);
+        boxesPortOut.write();
     }
+    
+    
     
     if (vPortIn.isPortReadingLeft() && vPortIn.hasNewEvents()) {
         ev::vQueue q = vPortIn.getEventsFromChannel( channel );
@@ -129,8 +143,8 @@ bool BoxVisualizer::updateModule() {
             
             if ( x >= 0 && x < width && y >= 0 && y < height ) {
                 if ( x >= minX && x <= maxX && y >= minY && y <= maxY ) {
-                    v->x -= minX;
-                    v->y -= minY;
+//                    v->x -= minX;
+//                    v->y -= minY;
                     vBottleOut.addEvent( v );
                 }
             }
