@@ -67,12 +67,29 @@ bool vMappingModule::updateModule() {
         return true;
     }
     
-    if (!calibrateRight && !calibrateLeft && !eventCollector.isPortReading()){
+    //After calibration step start reading events and compute the canvas size
+    if (!calibrateRight && !calibrateLeft && !eventCollector.isPortReading()) {
         eventCollector.clearQueues();
         eventCollector.startReading();
-        getCanvasSize( leftH, leftCanvasWidth, leftCanvasHeight, leftXOffset, leftYOffset );
-        getCanvasSize( rightH, rightCanvasWidth, rightCanvasHeight, rightXOffset, rightYOffset );
+        if ( cropToImage ) {
+            int imgWidth, imgHeight;
+            leftImageCollector.getImageSize(imgWidth, imgHeight);
+            
+            leftCanvasWidth = imgWidth;
+            rightCanvasWidth = imgWidth;
+            leftCanvasHeight = imgHeight;
+            rightCanvasHeight = imgHeight;
+            leftXOffset = 0;
+            leftYOffset = 0;
+            rightXOffset = 0;
+            rightYOffset = 0;
+        } else {
+            getCanvasSize( leftH, leftCanvasWidth, leftCanvasHeight, leftXOffset, leftYOffset );
+            getCanvasSize( rightH, rightCanvasWidth, rightCanvasHeight, rightXOffset, rightYOffset );
+        }
     }
+    
+    
     
     //If image is ready remap and draw events on it
     if (leftImageCollector.isImageReady()){
@@ -131,15 +148,13 @@ void vMappingModule::performMapping( yarp::sig::ImageOf<yarp::sig::PixelBgr> &im
         evCoord *= homography;
         
         //Converting back from homogenous coordinates
-        x = evCoord[0] / evCoord[2] + xOffset + 1;
-        y = evCoord[1] / evCoord[2] + yOffset + 1;
+        x = (evCoord[0] / evCoord[2]) + xOffset + 1;
+        y = (evCoord[1] / evCoord[2]) + yOffset + 1;
         
         //Drawing event on img
         bool inBound = x >= 0 && x < img.width() && y >= 0 && y < img.height();
         if (inBound){
             img( x, y ) = yarp::sig::PixelBgr( 255, 255, 255 );
-        } else {
-            std::cout << "Out of bound" << std::endl;
         }
         
         if (y <= 255) {
@@ -294,6 +309,7 @@ bool vMappingModule::performCalibStep( yarp::sig::ImageOf<yarp::sig::PixelBgr> &
 bool vMappingModule::configure( yarp::os::ResourceFinder &rf ) {
     std::string moduleName = rf.check("name",yarp::os::Value("/vMapping")).asString();
     setName(moduleName.c_str());
+    cropToImage = rf.check("cropToImage",yarp::os::Value(false)).asBool();
     
     calibrateLeft = rf.check("calibrateLeft", yarp::os::Value(false)).asBool();
     calibrateRight = rf.check("calibrateRight", yarp::os::Value(false)).asBool();
@@ -408,7 +424,7 @@ void ImagePort::onRead( yarp::sig::ImageOf<yarp::sig::PixelBgr> &inImg ){
     image = inImg;
     imageReady = true;
     mutex.unlock();
-};
+}
 
 /***********************EventPort***********************/
 
@@ -455,4 +471,15 @@ void EventPort::clearQueues() {
     vLeftQueue.clear();
     vRightQueue.clear();
     mutex.post();
+}
+
+/**************************ImageCollector***************/
+
+void ImageCollector::getImageSize( int &width, int &height ) {
+    while (!imagePort.isImageReady()){
+        yarp::os::Time::delay(.5);
+    }
+    yarp::sig::ImageOf<yarp::sig::PixelBgr> img = imagePort.getImage();
+    width = img.width();
+    height = img.height();
 }

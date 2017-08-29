@@ -44,6 +44,7 @@ public:
     virtual void onRead( yarp::sig::ImageOf<yarp::sig::PixelBgr> &inImg );
     yarp::sig::ImageOf<yarp::sig::PixelBgr> getImage();
     bool isImageReady() { return imageReady;}
+    
 };
 
 class EventCollector : public yarp::os::Thread {
@@ -71,6 +72,7 @@ public:
     void interrupt() { imagePort.interrupt(); }
     bool isImageReady() { return imagePort.isImageReady();}
     yarp::sig::ImageOf <yarp::sig::PixelBgr> getImage() {return imagePort.getImage(); }
+    void getImageSize(int &width, int& height);
     void run(){}
 };
 
@@ -80,6 +82,7 @@ private :
     //Variables for calibration
     bool calibrateLeft;
     bool calibrateRight;
+    bool cropToImage;
     int nIter;
     int maxIter;
     ImageCollector vLeftImageCollector;
