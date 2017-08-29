@@ -9,7 +9,7 @@ The event stream is transmitted from the cameras (/zynqGrabber/vBottle:o) to the
 
 Here is a visualisation of the instantiated modules and connections.
 
-![vView visualization](https://github.com/robotology-playground/event-driven/blob/master/documentation/images/vView.png)
+![vView visualization](vView.png)
 
 ## Dependencies
 
