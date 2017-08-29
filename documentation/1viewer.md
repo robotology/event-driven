@@ -1,4 +1,4 @@
-# 1.Getting started with the viewer
+# Getting started with the viewer
 
 Visualise a stream of events from the cameras / from a pre-recorded sequence.
 
@@ -9,7 +9,7 @@ The event stream is transmitted from the cameras (/zynqGrabber/vBottle:o) to the
 
 Here is a visualisation of the instantiated modules and connections.
 
-![vView visualization](vView.png)
+![vView visualization](http://robotology.github.io/event-driven/doxygen/images/vView.png)
 
 ## Dependencies
 
@@ -18,29 +18,9 @@ No special dependencies are required, all the required modules will be executed 
 To visualise events from a pre-recorded dataset, you can run *yarpdataplayer*.
 Since *yarpdataplayer* opens the port with the same name as the real robot, make sure the same port is not running (or that you start an instance of the nameserver with your own namespace).
 
-## Instantiated modules
-
- * **zynqGrabber** --
- * **vFramer** --
- * **vPepper** --
- * **yarpview** --
-
-## Opened ports
-
-* `/zynqGrabber/vBottle:o`
-* `/vPepper/vBottle:i`
-* `/vPepper/vBottle:o`
-* `/vFramer/AE:i`
-* `/vFramer/left`
-* `/vFramer/right`
-* `/viewCh0`
-* `/viewCh1`
-
 ## How to run the application
 
-On a console, run *yarpserver* (if not already running).
-
-You can now run *yarpmanager*.
+The application assumes you are connected to a *yarpserver* - see http://www.yarp.it/ for basic instructions for using yarp.
 
 Inside the *Application* folder in the yarpmanager gui, you should see an entry called *vView*. Double click and open it.
 

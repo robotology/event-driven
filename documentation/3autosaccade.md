@@ -1,4 +1,4 @@
-# 3.iCub Micro-saccade and Attention Demo
+# iCub Micro-saccade and Attention Demo
 
 Introduction
 ------------

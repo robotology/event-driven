@@ -1,4 +1,4 @@
-# 2.Camera Calibration
+# Camera Calibration
 
 Introduction
 ------------
