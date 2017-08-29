@@ -1,4 +1,4 @@
-#vAutosaccadeDemo App
+# 3.iCub Micro-saccade and Attention Demo
 
 Introduction
 ------------

@@ -1,4 +1,4 @@
-# Getting started with the viewer
+# 1.Getting started with the viewer
 
 Visualise a stream of events from the cameras / from a pre-recorded sequence.
 
