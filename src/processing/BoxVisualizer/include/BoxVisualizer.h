@@ -52,19 +52,20 @@ class BoxVisualizer : public yarp::os::RFModule{
 private:
     EventPort vPortIn;
     BoxesPort boxesPortIn;
-//    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr>> imgPortOut;
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr>> imgPortOut;
     yarp::os::BufferedPort<ev::vBottle> vPortOut;
     std::string confFileName;
+    bool createImg;
     
     int channel;
     int height;
     int width;
     yarp::sig::Matrix leftH;
     
-    double minY;
-    double minX;
-    double maxY;
-    double maxX;
+    double minY{0};
+    double minX{0};
+    double maxY{0};
+    double maxX{0};
 
 public:
     // configure all the module parameters and return true if successful
@@ -83,6 +84,8 @@ public:
     
     void
     drawRectangle( int minY, int minX, int maxY, int maxX, yarp::sig::ImageOf<yarp::sig::PixelBgr> &image ) ;
+    
+    void createImage( const ev::vQueue &q );
 };
 
 

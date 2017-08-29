@@ -60,6 +60,8 @@ bool BoxVisualizer::configure( yarp::os::ResourceFinder &rf ) {
     
     std::string moduleName = rf.check("name",yarp::os::Value("/BoxVisualizer")).asString();
     setName(moduleName.c_str());
+    createImg = rf.check("createImg",yarp::os::Value(false)).asBool();
+    
     this -> confFileName = rf.getHomeContextPath().c_str();
     confFileName += "/vMapping.ini";
     
@@ -73,7 +75,8 @@ bool BoxVisualizer::configure( yarp::os::ResourceFinder &rf ) {
     ok &= vPortOut.open(getName("/vBottle:o"));
     vPortIn.startReadingLeft();
     ok &= boxesPortIn.open(getName("/boxes:i"));
-//    ok &= imgPortOut.open(getName("/img:o"));
+    if (createImg)
+        ok &= imgPortOut.open(getName("/img:o"));
     return ok;
 }
 
@@ -81,7 +84,7 @@ bool BoxVisualizer::interruptModule() {
     vPortIn.interrupt();
     vPortOut.interrupt();
     boxesPortIn.interrupt();
-//    imgPortOut.interrupt();
+    imgPortOut.interrupt();
     return true;
 }
 
@@ -89,14 +92,11 @@ bool BoxVisualizer::close() {
     vPortIn.close();
     vPortOut.close();
     boxesPortIn.close();
-//    imgPortOut.close();
+    imgPortOut.close();
     return true;
 }
 
 bool BoxVisualizer::updateModule() {
-//    yarp::sig::ImageOf<yarp::sig::PixelBgr> &imgOut = imgPortOut.prepare();
-//    imgOut.resize(width, height);
-//    imgOut.zero();
     
     
     if (boxesPortIn.isBoxReady()){
@@ -117,18 +117,17 @@ bool BoxVisualizer::updateModule() {
     }
     
     if (vPortIn.isPortReadingLeft() && vPortIn.hasNewEvents()) {
-        ev::vQueue q = vPortIn.getEventsFromChannel(channel);
+        ev::vQueue q = vPortIn.getEventsFromChannel( channel );
         ev::vBottle &vBottleOut = vPortOut.prepare();
         vBottleOut.clear();
-        for (auto &it : q) {
+        for ( auto &it : q ) {
             
             auto v = ev::is_event<ev::AE>( it );
             
             double x = v->x;
             double y = v->y;
             
-            if ( x >= 0 && x < width && y >= 0 && y < height ){
-//                imgOut( x, y ) = yarp::sig::PixelBgr( 255, 255, 255 );
+            if ( x >= 0 && x < width && y >= 0 && y < height ) {
                 if ( x >= minX && x <= maxX && y >= minY && y <= maxY ) {
                     v->x -= minX;
                     v->y -= minY;
@@ -136,13 +135,33 @@ bool BoxVisualizer::updateModule() {
                 }
             }
         }
-        
-//        drawRectangle( minY, minX, maxY, maxX, imgOut );
-//        imgPortOut.write();
-        if (vBottleOut.size() > 0 )
+        if ( createImg ) {
+            createImage( q );
+        }
+        if (vBottleOut.size())
             vPortOut.write();
     }
     return true;
+}
+
+void BoxVisualizer::createImage( const ev::vQueue &q ) {
+    yarp::sig::ImageOf<yarp::sig::PixelBgr> &imgOut = imgPortOut.prepare();
+    imgOut.resize( width, height );
+    imgOut.zero();
+    for ( auto &it : q ) {
+        
+        auto v = ev::is_event<ev::AE>( it );
+        
+        double x = v->x;
+        double y = v->y;
+        
+        if ( x >= 0 && x < width && y >= 0 && y < height ) {
+            imgOut( x, y ) = yarp::sig::PixelBgr( 255, 255, 255 );
+            if ( imgPortOut.getOutputCount() )
+                imgPortOut.write();
+        }
+        drawRectangle( minY, minX, maxY, maxX, imgOut );
+    }
 }
 
 void BoxVisualizer::drawRectangle( int minY, int minX, int maxY, int maxX
@@ -180,7 +199,7 @@ void BoxVisualizer::transformPoint( double &x, double &y, yarp::sig::Matrix homo
 }
 
 double BoxVisualizer::getPeriod() {
-    return 0.001;
+    return 0.01;
 }
 
 /***********************EventPort***********************/
