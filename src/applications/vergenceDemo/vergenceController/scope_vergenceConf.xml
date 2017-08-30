@@ -10,12 +10,12 @@
           maxval="500"
           interval="1000"
           bgcolor="#EEFFEE">
-        <graph remote="/vDisparity/scope:o"
+        <graph remote="/vVergence/scope:o"
                index="0"
                color="Green"
                type="lines"
                size="1" />
-        <graph remote="/vDisparity/scope:o"
+        <graph remote="/vVergence/scope:o"
                index="1"
                color="Black"
                type="lines"

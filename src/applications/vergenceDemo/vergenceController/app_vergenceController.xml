@@ -3,21 +3,21 @@
 
 <module>
     <name> depthGT </name>
-    <node> localhost </node>
+    <node> icub23 </node>
 </module>
 
 <module>
-    <name>vPepper</name>
-    <parameters>--strict --width 304 --height 240 --temporalSize 100000</parameters>
-    <node>localhost</node>
+    <name>vPreProcess</name>
+    <parameters>--undistort false --flipx --flipy </parameters>
+    <node>icub23</node>
 </module>
 
 <module>
     <name> vVergence </name>
-    <node> localhost </node>
+    <node> icub23 </node>
 </module>
 
-<module>
+<!--<module>
     <name> yarpdatadumper </name>
     <parameters> --name /depthgt --connect /depthgt/gt:o --rxTime </parameters>
     <node> localhost </node>
@@ -27,24 +27,24 @@
     <name> yarpdatadumper </name>
     <parameters> --name /computeddepth --connect /vVergence/scope:o --rxTime </parameters>
     <node> localhost </node>
-</module>
+</module>-->
 
-<module>
+<!--<module>
     <name> yarpscope </name>
-    <parameters> --xml vergenceConf.xml </parameters>
+    <parameters> --xml scope_vergenceConf.xml </parameters>
     <node> icub24 </node>
-</module>
+</module>-->
 
 <module>
     <name> yarpscope </name>
-    <parameters> --xml filtersConf.xml </parameters>
+    <parameters> --xml scope_filtersConf.xml </parameters>
     <node> icub24 </node>
 </module>
 
 <module>
     <name> yarpview </name>
     <parameters> --name /viewGT </parameters>
-    <node> localhost </node>
+    <node> icub24 </node>
 </module>
 
 <module>
@@ -55,12 +55,12 @@
 
 <connection>
   <from>/zynqGrabber/vBottle:o</from>
-  <to>/vPepper/vBottle:i</to>
+  <to>/vPreProcess/vBottle:i</to>
   <protocol>udp</protocol>
 </connection>
 
 <connection>
-  <from>/vPepper/vBottle:o</from>
+  <from>/vPreProcess/vBottle:o</from>
   <to>/vVergence/vBottle:i</to>
   <protocol>udp</protocol>
 </connection>

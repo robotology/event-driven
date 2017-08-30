@@ -17,8 +17,8 @@
 </module>
 
 <module>
-    <name> vPepper </name>
-    <parameters> </parameters>
+    <name> vPreProcess </name>
+    <parameters>--undistort false --flipx --flipy </parameters>
     <node> icub24 </node>
 </module>
 
@@ -37,12 +37,12 @@
 
 <connection>
   <from>/zynqGrabber/vBottle:o</from>
-  <to>/vPepper/vBottle:i</to>
+  <to>/vPreProcess/vBottle:i</to>
   <protocol>udp</protocol>
 </connection>
 
 <connection>
-  <from>/vPepper/vBottle:o</from>
+  <from>/vPreProcess/vBottle:o</from>
   <to>/vFramer/AE:i</to>
   <protocol>shmem</protocol>
 </connection>

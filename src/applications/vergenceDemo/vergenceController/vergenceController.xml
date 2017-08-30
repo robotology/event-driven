@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml-stylesheet type="text/xsl" href="yarpmanifest.xsl"?>
+
+<module>
+    <name>vVergence</name>
+    <doxygen-group>applications</doxygen-group>
+    <description>Controlling the iCub to Verge on a Stimulus</description>
+    <copypolicy>Released under the terms of the GNU GPL v2.0</copypolicy>
+    <version>1.0</version>
+
+    <description-long>
+    Controls the iCub to verge on a target
+    </description-long>
+
+    <arguments>
+        <param desc="Specifies the stem name of ports created by the module." default="vVergence"> name </param>
+        <switch>verbosity</switch>
+    </arguments>
+
+    <authors>
+        <author email="valentina.vasco@iit.it"> Valentina Vasco </author>
+    </authors>
+
+     <data>
+        <input>
+            <type>eventdriven::vBottle</type>
+            <port carrier="udp">/vVergence/vBottle:i</port>
+            <required>yes</required>
+            <priority>no</priority>
+            <description>
+                Accepts the address events in the vBottle
+                container
+            </description>
+        </input>
+        <output>
+            <type>yarp::sig::ImageOf</type>
+            <port carrier="tcp">/vVergence/debug:o</port>
+            <description>
+                Outputs a debugging image displaying events from left
+                and right cameras
+            </description>
+        </output>
+        <output>
+            <type>yarp::os::Bottle</type>
+            <port carrier="udp">/vVergence/scopefilters:o</port>
+            <description>
+                Outputs debug information for use with yarpscope. Energies of
+                several filters are shown with different colors.
+            </description>
+        </output>
+    </data>
+</module>
