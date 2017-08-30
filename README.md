@@ -13,7 +13,7 @@ Libraries that handle neuromorphic sensors, such as the dynamic vision sensor, i
 Event-driven libraries provide basic functionality for handling events in a YARP environment. The library has definitions for:
  * codecs to encode/decode events to be compatable with address event representation (AER) formats.
  * Sending packets of events in `ev::vBottle` that is compatible with yarpdatadumper and yarpdataplayer.
- * asynchronous reading (`ev::qAllocator`) and writing (`ev::collectorPort`) ports that ensure data is never dropped and giving access to delay information.
+ * asynchronous reading (`ev::queueAllocator`) and writing (`ev::collectorPort`) ports that ensure data is never dropped and giving access to delay information.
  * filters for removing salt and pepper noise.
  * event containers for organising the event-stream into temporal windows, fixed-size windows, surfaces, and regions-of-interest.
  * helper functions to handle event timestamp wrapping and to convert between timestamps and seconds.
