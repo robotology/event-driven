@@ -7,6 +7,7 @@ option(ENABLE_vergence "Build vergence control demo" OFF)
 option(ENABLE_calibrate "Build camera calibration" OFF)
 option(ENABLE_view "Build basic viewer" OFF)
 option(ENABLE_corner "Build corner detector" OFF)
+option(ENABLE_dualCamTransform "Build event to frame transform" OFF)
 
 if(ENABLE_autosaccade)
     add_subdirectory(autosaccade)
@@ -31,6 +32,10 @@ endif(ENABLE_calibrate)
 if(ENABLE_view)
     add_subdirectory(view)
 endif(ENABLE_view)
+
+if(ENABLE_dualCamTransform)
+    add_subdirectory(dualCamTransform)
+endif(ENABLE_dualCamTransform)
 
 if(ENABLE_corner)
     add_subdirectory(corner)
