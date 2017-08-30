@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.6)
 
-set(MODULENAME mapping)
+set(MODULENAME dualCamTransform)
 project(${MODULENAME})
 
 yarp_install(FILES app_${MODULENAME}.xml DESTINATION ${ICUBCONTRIB_APPLICATIONS_INSTALL_DIR})

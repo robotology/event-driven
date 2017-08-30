@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <application>
-    <name>mapping </name>
+    <name>app_dualCamTransform</name>
 
     <dependencies>
     </dependencies>
@@ -13,7 +13,7 @@
     </module>
 
     <module>
-        <name> vMapping</name>
+        <name> DualCamTransform</name>
         <parameters>--calibrateLeft false --calibrateRight false --maxIter 20 </parameters>
         <node>icub24</node>
     </module>
@@ -50,13 +50,13 @@
 
     <module>
         <name> yarpview </name>
-        <parameters>--name /mapped/left --x 30 --y 30 --w 608 --h 480 --synch </parameters>
+        <parameters>--name /transformed/left --x 30 --y 30 --w 608 --h 480 --synch </parameters>
         <node>icub24</node>
     </module>
 
     <module>
         <name> yarpview </name>
-        <parameters>--name /mapped/right --x 30 --y 30 --w 608 --h 480 --synch </parameters>
+        <parameters>--name /transformed/right --x 30 --y 30 --w 608 --h 480 --synch </parameters>
         <node>icub24</node>
     </module>
 
@@ -75,7 +75,7 @@
 
     <connection>
         <from>/vPreProcess/vBottle:o</from>
-        <to>/vMapping/vBottle:i</to>
+        <to>/DualCamTransform/vBottle:i</to>
         <protocol>udp</protocol>
     </connection>
 
@@ -87,13 +87,13 @@
 
     <connection>
         <from>/vFramer/blob/left</from>
-        <to>/vMapping/left/vImg:i</to>
+        <to>/DualCamTransform/left/vImg:i</to>
         <protocol>udp</protocol>
     </connection>
 
     <connection>
         <from>/vFramer/blob/right</from>
-        <to>/vMapping/right/vImg:i</to>
+        <to>/DualCamTransform/right/vImg:i</to>
         <protocol>udp</protocol>
     </connection>
 
@@ -111,25 +111,25 @@
 
     <connection>
         <from>/icub/camcalib/left/out</from>
-        <to>/vMapping/left/img:i</to>
+        <to>/DualCamTransform/left/img:i</to>
         <protocol>udp</protocol>
     </connection>
 
     <connection>
         <from>/icub/camcalib/right/out</from>
-        <to>/vMapping/right/img:i</to>
+        <to>/DualCamTransform/right/img:i</to>
         <protocol>udp</protocol>
     </connection>
 
     <connection>
-        <from>/vMapping/left/img:o</from>
-        <to>/mapped/left</to>
+        <from>/DualCamTransform/left/img:o</from>
+        <to>/transformed/left</to>
         <protocol>udp</protocol>
     </connection>
 
     <connection>
-        <from>/vMapping/right/img:o</from>
-        <to>/mapped/right</to>
+        <from>/DualCamTransform/right/img:o</from>
+        <to>/transformed/right</to>
         <protocol>udp</protocol>
     </connection>
 
