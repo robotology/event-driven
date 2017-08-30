@@ -1,9 +1,21 @@
-//
-// Created by miacono on 11/07/17.
-//
+/*
+ * Copyright (C) 2010 iCub Facility
+ * Authors: Massimiliano Iacono
+ * Permission is granted to copy, distribute, and/or modify this program
+ * under the terms of the GNU General Public License, version 2 or any
+ * later version published by the Free Software Foundation.
+ *
+ * A copy of the license can be found at
+ * http://www.robotcub.org/icub/license/gpl.txt
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details
+ */
 
-#ifndef ICUB_EVENT_DRIVEN_VMAPPING_H
-#define ICUB_EVENT_DRIVEN_VMAPPING_H
+#ifndef ICUB_EVENT_DRIVEN_DUALCAMTRANSFORM_H
+#define ICUB_EVENT_DRIVEN_DUALCAMTRANSFORM_H
 
 #include <iostream>
 #include <fstream>
@@ -76,7 +88,7 @@ public:
     void run(){}
 };
 
-class vMappingModule : public yarp::os::RFModule {
+class DualCamTransformModule : public yarp::os::RFModule {
 private :
     
     //Variables for calibration
@@ -128,8 +140,8 @@ public :
     bool readConfigFile( const yarp::os::ResourceFinder &rf, std::string groupName
                          , yarp::sig::Matrix &homography ) const;
     
-    void performMapping( yarp::sig::ImageOf<yarp::sig::PixelBgr> &img, const ev::vQueue &vQueue
-                             , const yarp::sig::Matrix &homography, int xOffset, int yOffset ) ;
+    void transform( yarp::sig::ImageOf<yarp::sig::PixelBgr> &img, const ev::vQueue &vQueue
+                    , const yarp::sig::Matrix &homography, int xOffset, int yOffset ) ;
     
     void getCanvasSize( const yarp::sig::Matrix &homography, int &canvasWidth, int &canvasHeight, int &xOffset
                             , int &yOffset ) const;
@@ -137,4 +149,4 @@ public :
 
 
 
-#endif //ICUB_EVENT_DRIVEN_VMAPPING_H
+#endif //ICUB_EVENT_DRIVEN_DUALCAMTRANSFORM_H

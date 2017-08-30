@@ -23,7 +23,7 @@ int main(int argc, char * argv[])
     yarp::os::ResourceFinder rf;
     rf.setVerbose( true );
     rf.setDefaultContext( "cameraCalibration" );
-    rf.setDefaultConfigFile( "vMapping.ini" );
+    rf.setDefaultConfigFile( "DualCamTransform.ini" );
     rf.configure( argc, argv );
     
     BoxVisualizer mappingModule;
@@ -63,7 +63,7 @@ bool BoxVisualizer::configure( yarp::os::ResourceFinder &rf ) {
     createImg = rf.check("createImg",yarp::os::Value(false)).asBool();
     
     this -> confFileName = rf.getHomeContextPath().c_str();
-    confFileName += "/vMapping.ini";
+    confFileName += "/DualCamTransform.ini";
     
     height = rf.check("height", yarp::os::Value(240)).asInt();
     width = rf.check("width", yarp::os::Value(304)).asInt();

@@ -1,8 +1,20 @@
-//
-// Created by miacono on 11/07/17.
-//
+/*
+ * Copyright (C) 2010 iCub Facility
+ * Authors: Massimiliano Iacono
+ * Permission is granted to copy, distribute, and/or modify this program
+ * under the terms of the GNU General Public License, version 2 or any
+ * later version published by the Free Software Foundation.
+ *
+ * A copy of the license can be found at
+ * http://www.robotcub.org/icub/license/gpl.txt
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details
+ */
 
-#include <vMapping.h>
+#include <DualCamTransform.h>
 
 
 using namespace ev;
@@ -19,14 +31,14 @@ int main(int argc, char * argv[])
     yarp::os::ResourceFinder rf;
     rf.setVerbose( true );
     rf.setDefaultContext( "cameraCalibration" );
-    rf.setDefaultConfigFile( "vMapping.ini" );
+    rf.setDefaultConfigFile( "DualCamTransform.ini" );
     rf.configure( argc, argv );
     
-    vMappingModule mappingModule;
-    return mappingModule.runModule(rf);
+    DualCamTransformModule dualCamTransformModule;
+    return dualCamTransformModule.runModule(rf);
 }
 
-bool vMappingModule::updateModule() {
+bool DualCamTransformModule::updateModule() {
     
     //if calibrate parameter is set the update will perform a calibration step maxIter times
     if (calibrateLeft) {
@@ -41,7 +53,7 @@ bool vMappingModule::updateModule() {
             }
             //When max number of iteration is reached calibration is finalized
             if (nIter >= maxIter){
-                finalizeCalibration( leftH, "MAPPING_LEFT");
+                finalizeCalibration( leftH, "TRANSFORM_LEFT");
                 calibrateLeft = false;
             }
         }
@@ -60,7 +72,7 @@ bool vMappingModule::updateModule() {
             }
             //When max number of iteration is reached calibration is finalized
             if (nIter >= maxIter){
-                finalizeCalibration( rightH, "MAPPING_RIGHT");
+                finalizeCalibration( rightH, "TRANSFORM_RIGHT");
                 calibrateRight = false;
             }
         }
@@ -91,7 +103,7 @@ bool vMappingModule::updateModule() {
     
     
     
-    //If image is ready remap and draw events on it
+    //If image is ready transform and draw events on it
     if (leftImageCollector.isImageReady()){
         yarp::sig::ImageOf<yarp::sig::PixelBgr> &leftCanvas = leftImagePortOut.prepare();
         leftCanvas.resize(leftCanvasWidth,leftCanvasHeight);
@@ -103,7 +115,7 @@ bool vMappingModule::updateModule() {
             }
         }
         ev::vQueue vLeftQueue = eventCollector.getEventsFromChannel(0);
-        performMapping( leftCanvas, vLeftQueue, leftH, leftXOffset, leftYOffset );
+        transform( leftCanvas, vLeftQueue, leftH, leftXOffset, leftYOffset );
         leftImagePortOut.write();
     }
     
@@ -118,7 +130,7 @@ bool vMappingModule::updateModule() {
             }
         }
         ev::vQueue vRightQueue = eventCollector.getEventsFromChannel(1);
-        performMapping( rightCanvas, vRightQueue, rightH, rightXOffset, rightYOffset );
+        transform( rightCanvas, vRightQueue, rightH, rightXOffset, rightYOffset );
         rightImagePortOut.write();
     }
     
@@ -127,8 +139,8 @@ bool vMappingModule::updateModule() {
     
 }
 
-void vMappingModule::performMapping( yarp::sig::ImageOf<yarp::sig::PixelBgr> &img, const vQueue &vQueue
-                                     , const yarp::sig::Matrix &homography, int xOffset, int yOffset ) {
+void DualCamTransformModule::transform( yarp::sig::ImageOf<yarp::sig::PixelBgr> &img, const vQueue &vQueue
+                                        , const yarp::sig::Matrix &homography, int xOffset, int yOffset ) {
     ev::vBottle &outBottle = vPortOut.prepare();
     outBottle.clear();
     for ( auto &it : vQueue ) {
@@ -169,7 +181,7 @@ void vMappingModule::performMapping( yarp::sig::ImageOf<yarp::sig::PixelBgr> &im
     }
 }
 
-void vMappingModule::finalizeCalibration( yarp::sig::Matrix &homography, std::string groupName) {
+void DualCamTransformModule::finalizeCalibration( yarp::sig::Matrix &homography, std::string groupName) {
     //TODO Make this method more flexible and general
     homography /= nIter;
     homography = homography.transposed();
@@ -210,7 +222,7 @@ void vMappingModule::finalizeCalibration( yarp::sig::Matrix &homography, std::st
     
 }
 
-void vMappingModule::getCanvasSize( const yarp::sig::Matrix &homography, int &canvasWidth, int &canvasHeight, int &xOffset
+void DualCamTransformModule::getCanvasSize( const yarp::sig::Matrix &homography, int &canvasWidth, int &canvasHeight, int &xOffset
                                     , int &yOffset ) const {
     //Transform the coordinates of each corner of the sensor
     yarp::sig::Vector botRCorn( 3 );
@@ -264,7 +276,7 @@ void vMappingModule::getCanvasSize( const yarp::sig::Matrix &homography, int &ca
     canvasHeight =   maxY - minY + 1;
 }
 
-bool vMappingModule::performCalibStep( yarp::sig::ImageOf<yarp::sig::PixelBgr> &frame
+bool DualCamTransformModule::performCalibStep( yarp::sig::ImageOf<yarp::sig::PixelBgr> &frame
                                        , yarp::sig::ImageOf<yarp::sig::PixelBgr> &vImg, yarp::sig::Matrix &homography ) const {
     auto *frameIplImg = (IplImage *) frame.getIplImage();
     cv::Mat frameMat = cv::cvarrToMat( frameIplImg );
@@ -306,8 +318,8 @@ bool vMappingModule::performCalibStep( yarp::sig::ImageOf<yarp::sig::PixelBgr> &
     }
 }
 
-bool vMappingModule::configure( yarp::os::ResourceFinder &rf ) {
-    std::string moduleName = rf.check("name",yarp::os::Value("/vMapping")).asString();
+bool DualCamTransformModule::configure( yarp::os::ResourceFinder &rf ) {
+    std::string moduleName = rf.check("name",yarp::os::Value("/DualCamTransform")).asString();
     setName(moduleName.c_str());
     cropToImage = rf.check("cropToImage",yarp::os::Value(false)).asBool();
     
@@ -318,7 +330,7 @@ bool vMappingModule::configure( yarp::os::ResourceFinder &rf ) {
     width = rf.check("width", yarp::os::Value(304)).asInt();
     
     this -> confFileName = rf.getHomeContextPath().c_str();
-    confFileName += "/vMapping.ini";
+    confFileName += "/DualCamTransform.ini";
     
     leftH.resize( 3, 3 );
     rightH.resize( 3, 3 );
@@ -327,12 +339,12 @@ bool vMappingModule::configure( yarp::os::ResourceFinder &rf ) {
     
     //If no calibration required, read homography from config file
     if (!calibrateLeft) {
-        calibrateLeft = !readConfigFile( rf, "MAPPING_LEFT", leftH ); //If no config found, calibration necessary
+        calibrateLeft = !readConfigFile( rf, "TRANSFORM_LEFT", leftH ); //If no config found, calibration necessary
     }
     
     //If no calibration required, read homography from config file
     if (!calibrateRight) {
-        calibrateRight = !readConfigFile( rf, "MAPPING_RIGHT", rightH ); //If no config found, calibration necessary
+        calibrateRight = !readConfigFile( rf, "TRANSFORM_RIGHT", rightH ); //If no config found, calibration necessary
     }
     
     //Initialize calibration
@@ -362,13 +374,13 @@ bool vMappingModule::configure( yarp::os::ResourceFinder &rf ) {
     return true;
 }
 
-bool vMappingModule::readConfigFile( const yarp::os::ResourceFinder &rf, std::string groupName
+bool DualCamTransformModule::readConfigFile( const yarp::os::ResourceFinder &rf, std::string groupName
                                      , yarp::sig::Matrix &homography ) const {
     yarp::os::Bottle &conf = rf.findGroup( groupName );
     
     //If config file not found, calibration necessary
     if ( conf.isNull() ) {
-        yInfo() << "Could not find mapping config in group " << groupName << ". Calibration is necessary.";
+        yInfo() << "Could not find transform config in group " << groupName << ". Calibration is necessary.";
         return false;
     }
     
@@ -388,7 +400,7 @@ bool vMappingModule::readConfigFile( const yarp::os::ResourceFinder &rf, std::st
     return true;
 }
 
-bool vMappingModule::interruptModule() {
+bool DualCamTransformModule::interruptModule() {
     leftImagePortOut.interrupt();
     leftImageCollector.interrupt();
     vLeftImageCollector.interrupt();
@@ -396,7 +408,7 @@ bool vMappingModule::interruptModule() {
     return true;
 }
 
-bool vMappingModule::close() {
+bool DualCamTransformModule::close() {
     leftImagePortOut.close();
     leftImageCollector.close();
     vLeftImageCollector.close();
@@ -404,7 +416,7 @@ bool vMappingModule::close() {
     return true;
 }
 
-double vMappingModule::getPeriod() {
+double DualCamTransformModule::getPeriod() {
     return 0;
 }
 
