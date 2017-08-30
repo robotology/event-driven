@@ -46,7 +46,7 @@ bool module::configure(yarp::os::ResourceFinder &rf)
 {
     //administrative options
     setName((rf.check("name", yarp::os::Value("/delayControl")).asString()).c_str());
-    int nthread = rf.check("threads", yarp::os::Value(2)).asInt();
+    int nthread = rf.check("threads", yarp::os::Value(1)).asInt();
     int height = rf.check("height", yarp::os::Value(240)).asInt();
     int width = rf.check("width", yarp::os::Value(304)).asInt();
     int bins = rf.check("bins", yarp::os::Value(64)).asInt();
