@@ -1,10 +1,10 @@
 | Read the [Documentation](http://robotology.github.io/event-driven/doxygen/doc/html/index.html) | Download the [Code](https://github.com/robotology/event-driven) |
 
+# The event-driven YARP Project
+
 [![event-driven-icub ball](http://img.youtube.com/vi/xS-7xYRYSLc/0.jpg)](https://youtu.be/xS-7xYRYSLc)
 ![event-stream ball](http://robotology.github.io/event-driven/doxygen/images/ballstream.png)
 Click the thumbnail to watch the [video](https://youtu.be/xS-7xYRYSLc)!
-
-# The event-driven YARP Project
 
 Libraries that handle neuromorphic sensors, such as the dynamic vision sensor, installed on the iCub can be found here, along with algorithms to process the event-based data. Examples include, optical flow, corner detection and ball detection. Demo applications for the iCub robot, and tutorials for running them, include saccading and attention, gaze following a ball, and vergence control.
 
@@ -44,10 +44,10 @@ Tutorials for these applications can be found [here](http://robotology.github.io
 3. cd event-driven
 4. mkdir build && cd build
 5. ccmake ..
-4. ensure the install path is as configured in icub-contrib-common
-6. turn on desired modules and applications (e.g. processing)
-7. configure (c) and generate (g)
-7. make install
+6. ensure the install path is as configured in icub-contrib-common
+7. turn on desired modules and applications (e.g. processing)
+8. configure (c) and generate (g)
+9. make install
 
 ## References
 

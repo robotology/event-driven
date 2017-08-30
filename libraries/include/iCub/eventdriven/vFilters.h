@@ -36,8 +36,10 @@ private:
 
 public:
 
+    /// \brief constructor
     vNoiseFilter() : Tsize(0), Ssize(0) {}
 
+    /// \brief initialise the sensor size and the filter parameters.
     void initialise(double width, double height, int Tsize, unsigned int Ssize)
     {
         TSleftL.resize(width + 2 * Ssize, height + 2 * Ssize);
@@ -54,6 +56,8 @@ public:
         this->Ssize = Ssize;
     }
 
+    /// \brief classifies the event as noise or signal
+    /// \returns false if the event is noise
     bool check(int x, int y, int p, int c, int ts)
     {
         if(!Ssize) return false;

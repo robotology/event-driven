@@ -44,6 +44,7 @@ private:
 
 public:
 
+    /// \brief constructor
     queueAllocator()
     {
         delay_nv = 0;
@@ -52,6 +53,7 @@ public:
         setStrict();
     }
 
+    /// \brief desctructor
     ~queueAllocator()
     {
         m.lock();
@@ -61,6 +63,8 @@ public:
         m.unlock();
     }
 
+    /// \brief the callback decodes the incoming vBottle and adds it to the
+    /// list of received vBottles. The yarp, and event timestamps are updated.
     void onRead(ev::vBottle &inputbottle)
     {
 
@@ -84,6 +88,7 @@ public:
         dataready.unlock();
     }
 
+    /// \brief ask for a pointer to the next vQueue. Blocks if no data is ready.
     ev::vQueue* getNextQ(yarp::os::Stamp &yarpstamp)
     {
         dataready.lock();
@@ -96,11 +101,8 @@ public:
 
     }
 
-    int queryunprocessed()
-    {
-        return qq.size();
-    }
-
+    /// \brief remove the most recently read vQueue from the list and deallocate
+    /// the memory
     void scrapQ()
     {
         m.lock();
@@ -116,16 +118,26 @@ public:
         m.unlock();
     }
 
+    /// \brief unBlocks the blocking call in getNextQ. Useful to ensure a
+    /// graceful shutdown.
     void releaseDataLock()
     {
         dataready.unlock();
     }
 
+    /// \brief ask for the number of vQueues currently allocated.
+    int queryunprocessed()
+    {
+        return qq.size();
+    }
+
+    /// \brief ask for the number of events in all vQueues.
     unsigned int queryDelayN()
     {
         return delay_nv;
     }
 
+    /// \brief ask for the total time spanned by all vQueues.
     double queryDelayT()
     {
         return delay_t * vtsHelper::tsscaler;

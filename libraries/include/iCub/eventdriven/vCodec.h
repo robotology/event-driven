@@ -28,27 +28,40 @@ namespace ev {
 //macros
 class vEvent;
 
+/// \brief an "event" is wrapper for the shared_ptr class
 template<typename V = vEvent> using event = std::shared_ptr<V>;
+/// \brief typecast the "event" safely checking the event type
 template<typename V1, typename V2> inline event<V1> as_event(event<V2> orig_event) {
     return std::dynamic_pointer_cast<V1>(orig_event);
 }
+/// \brief typecast the "event" forcing the event type
 template<typename V1, typename V2> inline event<V1> is_event(event<V2> orig_event) {
     return std::static_pointer_cast<V1>(orig_event);
 }
+/// \brief allocate memory for, and instantiate, a new event
 template<typename V> event<V> inline make_event(void) {
     return std::make_shared<V>();
 }
+/// \brief a fast event-type conversion to access event data. Does no checking
+/// that the event actually exists.
 template<typename V> inline V* read_as(const event<> &orig_event) {
     return (V *)orig_event.get();
 }
+/// \brief make a new event, copying from an existent event. Can be used to
+/// upgrade the event-type.
 template<typename V1, typename V2> event<V1> make_event(event<V2> orig_event) {
     return std::make_shared<V1>(*(orig_event.get()));
 }
+/// \brief vQueue is a wrapper for a deque of "event"
 using vQueue = std::deque< event<vEvent> >;
 
+/// \brief sort a vQueue ensuring temporal order
 void qsort(vQueue &q, bool respectWraps = false);
+
+/// \brief create an "event" based on the string tag it uses.
 event<> createEvent(const std::string &type);
 
+/// \brief camera values for stereo set-up
 enum { VLEFT = 0, VRIGHT = 1 } ;
 
 //event declarations
