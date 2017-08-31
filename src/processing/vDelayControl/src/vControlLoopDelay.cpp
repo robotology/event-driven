@@ -175,9 +175,9 @@ void delayControl::run()
 
             val1 = std::max(val1, (double)targetproc);
             val2 = std::max(val2, (double)inputPort.queryDelayN());
-            val3 = std::max(val3, 0.0);
-            val4 = std::max(val4, 0.0);
-            val5 = std::max(val5, 0.0);
+            val3 = std::max(val3, inputPort.queryDelayT());
+            val4 = std::max(val4, inputPort.queryRate());
+            val5 = std::max(val5, val2/val3);
 
             double scopedt = yarp::os::Time::now() - pscopetime;
             if((scopedt > 0.05 || scopedt < 0)) {
