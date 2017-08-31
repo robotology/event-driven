@@ -41,6 +41,7 @@ private:
 
     unsigned int delay_nv;
     long unsigned int delay_t;
+    double event_rate;
 
 public:
 
@@ -49,6 +50,7 @@ public:
     {
         delay_nv = 0;
         delay_t = 0;
+        event_rate = 0;
         useCallback();
         setStrict();
     }
@@ -83,6 +85,8 @@ public:
         int dt = qq.back()->back()->stamp - qq.back()->front()->stamp;
         if(dt < 0) dt += vtsHelper::max_stamp;
         delay_t += dt;
+        if(dt)
+            event_rate = qq.back()->size() / (double)dt;
         m.unlock();
 
         dataready.unlock();
@@ -141,6 +145,12 @@ public:
     double queryDelayT()
     {
         return delay_t * vtsHelper::tsscaler;
+    }
+
+    /// \brief ask for the high precision event rate
+    double queryRate()
+    {
+        return event_rate * vtsHelper::vtsscaler;
     }
 
 };
