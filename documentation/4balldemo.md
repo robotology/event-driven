@@ -26,6 +26,6 @@ The application assumes you are connected to a *yarpserver* - see http://www.yar
 4. run all modules (ignoring zynqGrabber if you have a custom grabber, and ignoring vGazeDemo if no robot is present).
 5. the visualation will show the current estimate of the ball position on the left and the right cameras.
 
-![connections](http://robotology.github.io/event-driven/doxygen/images/vView.png)
+![connections](http://robotology.github.io/event-driven/doxygen/images/vGazeDemoConnections.png)
 
 note: shmem connections can only be used if the modules are running on the same physical machine.
