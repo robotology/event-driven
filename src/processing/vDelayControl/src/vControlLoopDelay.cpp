@@ -14,10 +14,10 @@ void delayControl::initFilter(int width, int height, int nparticles, int bins,
     res.width = width;
 }
 
-void delayControl::initDelayControl(double gain, int maxtoproc, int positiveThreshold)
+void delayControl::initDelayControl(double gain, int maxtoproc, int positiveThreshold, int mindelay)
 {
     this->gain = gain;
-    this->minEvents = 1.0;
+    this->minEvents = mindelay;
     qROI.setSize(maxtoproc);
     this->detectionThreshold = positiveThreshold;
 }
@@ -172,12 +172,16 @@ void delayControl::run()
             static double val3 = -ev::vtsHelper::max_stamp;
             static double val4 = -ev::vtsHelper::max_stamp;
             static double val5 = -ev::vtsHelper::max_stamp;
+            static double val6 = -ev::vtsHelper::max_stamp;
+            static double val7 = -ev::vtsHelper::max_stamp;
 
             val1 = std::max(val1, (double)targetproc);
             val2 = std::max(val2, (double)inputPort.queryDelayN());
             val3 = std::max(val3, inputPort.queryDelayT());
             val4 = std::max(val4, inputPort.queryRate());
-            val5 = std::max(val5, val2/val3);
+            val5 = std::max(val5, avgx);
+            val6 = std::max(val6, avgy);
+            val7 = std::max(val7, avgr);
 
             double scopedt = yarp::os::Time::now() - pscopetime;
             if((scopedt > 0.05 || scopedt < 0)) {
@@ -190,12 +194,16 @@ void delayControl::run()
                 scopedata.addDouble(val3);
                 scopedata.addDouble(val4);
                 scopedata.addDouble(val5);
+                scopedata.addDouble(val6);
+                scopedata.addDouble(val7);
 
                 val1 = -ev::vtsHelper::max_stamp;
                 val2 = -ev::vtsHelper::max_stamp;
                 val3 = -ev::vtsHelper::max_stamp;
                 val4 = -ev::vtsHelper::max_stamp;
                 val5 = -ev::vtsHelper::max_stamp;
+                val6 = -ev::vtsHelper::max_stamp;
+                val7 = -ev::vtsHelper::max_stamp;
 
                 scopePort.write();
             }

@@ -21,13 +21,13 @@
 
 <module>
     <name> vDelayControl </name>
-    <parameters> --name /vpfL --particles 200 --obsthresh 0.20 --threads 8 --bins 64 --gain 0.005 </parameters>
+    <parameters> --name /vpfL --particles 200 --obsthresh 0.30 --truethresh 0.4 --threads 8 --bins 64 --gain 0.005 --mindelay 10</parameters>
     <node> icub-blade </node>
 </module>
 
 <module>
     <name> vDelayControl </name>
-    <parameters> --name /vpfR --particles 200 --obsthresh 0.20 --threads 8 --bins 64 --gain 0.005 </parameters>
+    <parameters> --name /vpfR --particles 200 --obsthresh 0.30 --truethresh 0.4 --threads 8 --bins 64 --gain 0.005 --mindelay 10</parameters>
     <node> icub-blade </node>
 </module>
 
