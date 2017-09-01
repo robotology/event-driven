@@ -2,9 +2,9 @@
 <?xml-stylesheet type="text/xsl" href="yarpmanifest.xsl"?>
 
 <module>
-    <name>vMapping</name>
+    <name>dualCamTransform</name>
     <doxygen-group>processing</doxygen-group>
-    <description>Mapping events to frame</description>
+    <description>Transform events into the frame-based camera image plane</description>
     <copypolicy>Released under the terms of the GNU GPL v2.0</copypolicy>
     <version>1.0</version>
 
@@ -41,7 +41,7 @@
                 Input frame based image
             </description>
         </input>
-        
+
         <output>
             <type>yarp::sig::Image</type>
             <port carrier="udp">/vMapping/img:o</port>
@@ -57,7 +57,7 @@
                 Transformed events
             </description>
         </output>
-        
+
     </data>
 
 <!--    <services>
