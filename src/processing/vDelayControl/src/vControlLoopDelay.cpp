@@ -22,8 +22,9 @@ void delayControl::initDelayControl(double gain, int maxtoproc, int positiveThre
     this->detectionThreshold = positiveThreshold;
 }
 
-bool delayControl::open(std::string name)
+bool delayControl::open(std::string name, unsigned int qlimit)
 {
+    inputPort.setQLimit(qlimit);
     if(!inputPort.open(name + "/vBottle:i"))
         return false;
     if(!outputPort.open(name + "/vBottle:o"))

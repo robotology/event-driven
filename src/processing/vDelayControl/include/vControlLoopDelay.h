@@ -57,7 +57,7 @@ public:
 
     delayControl() {}
 
-    bool open(std::string name);
+    bool open(std::string name, unsigned int qlimit = 0);
     void initFilter(int width, int height, int nparticles,
                     int bins, bool adaptive, int nthreads,
                     double minlikelihood, double inlierThresh, double randoms);

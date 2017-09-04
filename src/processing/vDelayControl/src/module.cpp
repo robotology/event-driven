@@ -53,6 +53,8 @@ bool module::configure(yarp::os::ResourceFinder &rf)
     int maxq = rf.check("maxq", yarp::os::Value(500)).asInt();
     double gain = rf.check("gain", yarp::os::Value(0.0005)).asDouble();
     int mindelay = rf.check("mindelay", yarp::os::Value(1)).asInt();
+    int qlimit = rf.check("qlimit", yarp::os::Value(0)).asInt();
+    if(qlimit < 0) qlimit = 0;
 
     //flags
     bool adaptivesampling = rf.check("adaptive") &&
@@ -73,7 +75,7 @@ bool module::configure(yarp::os::ResourceFinder &rf)
     delaycontrol.initDelayControl(gain, maxq, trueDetectionThreshold * bins, mindelay);
     delaycontrol.initFilter(width, height, particles, bins, adaptivesampling,
                             nthread, minlikelihood * bins, inlierParameter, nRandResample);
-    if(!delaycontrol.open(getName()))
+    if(!delaycontrol.open(getName(), qlimit))
         return false;
     return delaycontrol.start();
 
