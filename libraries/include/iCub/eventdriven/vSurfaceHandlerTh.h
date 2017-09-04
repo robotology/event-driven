@@ -39,6 +39,7 @@ private:
     yarp::os::Mutex m;
     yarp::os::Mutex dataready;
 
+    unsigned int qlimit;
     unsigned int delay_nv;
     long unsigned int delay_t;
     double event_rate;
@@ -48,9 +49,13 @@ public:
     /// \brief constructor
     queueAllocator()
     {
+        qlimit = 0;
         delay_nv = 0;
         delay_t = 0;
         event_rate = 0;
+
+        dataready.lock();
+
         useCallback();
         setStrict();
     }
@@ -69,17 +74,25 @@ public:
     /// list of received vBottles. The yarp, and event timestamps are updated.
     void onRead(ev::vBottle &inputbottle)
     {
-
         //make a new vQueue
         m.lock();
+
+        if(qlimit && qq.size() >= qlimit) {
+            m.unlock();
+            return;
+        }
         qq.push_back(new vQueue);
         yarp::os::Stamp yarpstamp;
         getEnvelope(yarpstamp);
         sq.push_back(yarpstamp);
+
         m.unlock();
+
+
         //and decode the data
         inputbottle.addtoendof<ev::AddressEvent>(*(qq.back()));
 
+        //update the meta data
         m.lock();
         delay_nv += qq.back()->size();
         int dt = qq.back()->back()->stamp - qq.back()->front()->stamp;
@@ -89,6 +102,7 @@ public:
             event_rate = qq.back()->size() / (double)dt;
         m.unlock();
 
+        //if getNextQ is blocking - let it get the new data
         dataready.unlock();
     }
 
@@ -96,12 +110,12 @@ public:
     ev::vQueue* getNextQ(yarp::os::Stamp &yarpstamp)
     {
         dataready.lock();
-        if(qq.size() > 1) {
+        if(qq.size()) {
             yarpstamp = sq.front();
             return qq.front();
-        }
-        else
+        }  else {
             return 0;
+        }
 
     }
 
@@ -122,8 +136,15 @@ public:
         m.unlock();
     }
 
+    /// \brief set the maximum number of qs that can be stored in the buffer.
+    /// A value of 0 keeps all qs.
+    void setQLimit(unsigned int number_of_qs)
+    {
+        qlimit = number_of_qs;
+    }
+
     /// \brief unBlocks the blocking call in getNextQ. Useful to ensure a
-    /// graceful shutdown.
+    /// graceful shutdown. No guarantee the return of getNextQ will be valid.
     void releaseDataLock()
     {
         dataready.unlock();
