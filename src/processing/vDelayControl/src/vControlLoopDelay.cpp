@@ -55,6 +55,7 @@ void delayControl::run()
 
     unsigned int targetproc = 0;
     unsigned int i = 0;
+    bool breakOnAdded = gain < 1.0;
     yarp::os::Stamp ystamp;
     double stagnantstart = 0;
     bool detection = false;
@@ -78,7 +79,8 @@ void delayControl::run()
         //update the ROI with enough events
         Tgetwindow = yarp::os::Time::now();
         unsigned int addEvents = 0;
-        while(addEvents < targetproc) {
+        unsigned int testedEvents = 0;
+        while(testedEvents < targetproc) {
 
             //if we ran out of events get a new queue
             if(i >= q->size()) {
@@ -93,6 +95,8 @@ void delayControl::run()
 
             auto v = is_event<AE>((*q)[i]);
             addEvents += qROI.add(v);
+            if(breakOnAdded) testedEvents = addEvents;
+            else testedEvents++;
             i++;
         }
         Tgetwindow = yarp::os::Time::now() - Tgetwindow;
