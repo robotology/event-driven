@@ -49,22 +49,15 @@ vDevReadBuffer::vDevReadBuffer()
 long vDevReadBuffer::getEventChunk(unsigned char* target)
 {
     long n_TD = 0;
-    bool polled = false;
     uint64_t *target64 = (uint64_t*) target;
     //std::cout << "n_events:" << n_events << std::endl;
     while (n_TD<512) {
     	if (n_events == 0) {
-		if (polled) {
-			//std::cout << "no more events to send" << std::endl;
-			break;
-		} else {
-			//std::cout << "repolling" << std::endl;
-    			if (!cam->poll_buffer()) {
-			    //std::cout << "still no events" << std::endl;
-    			    break;
-    			}
-    			ev_buffer = (uint32_t*)cam->decode_buffer(&n_events);
-		}
+    	    if (!cam->poll_buffer()) {
+		usleep(1);
+    	        break;
+    	    }
+    	    ev_buffer = (uint32_t*)cam->decode_buffer(&n_events);
     	}
         EventBase * evbase = reinterpret_cast<EventBase*>(ev_buffer);
         if(static_cast<Event_Types_underlying>(Event_Types::EVT_TIME_HIGH) == evbase->type) {
@@ -72,14 +65,13 @@ long vDevReadBuffer::getEventChunk(unsigned char* target)
 	    last_timestamp = ((uint64_t) ev.timestamp)<<11;
         } else if(static_cast<Event_Types_underlying>(Event_Types::LEFT_TD_LOW) == evbase->type) {
     	    Event_EVENT2D ev = *reinterpret_cast<Event_EVENT2D*>(ev_buffer);
-	    uint32_t ts = ((last_timestamp + (uint32_t) ev.timestamp)%(1<<25));
+	    uint32_t ts = ((last_timestamp + (uint32_t) ev.timestamp)%(1<<24));
 	    uint64_t encoded = ((uint64_t) ts)|((uint64_t)(this->height-1-ev.y)<<42)|((uint64_t)(this->width-1-ev.x)<<33)|0UL<<32;
 	    *target64++ = encoded;
             ++n_TD;
-	    //std::cout << "(" << ev.timestamp << ", " << ev.x << ", " << ev.y << ", " << 0 << "), " << std::endl;
         } else if(static_cast<Event_Types_underlying>(Event_Types::LEFT_TD_HIGH) == evbase->type) {
     	    Event_EVENT2D ev = *reinterpret_cast<Event_EVENT2D*>(ev_buffer);
-	    uint32_t ts = ((last_timestamp + (uint32_t) ev.timestamp)%(1<<25));
+	    uint32_t ts = ((last_timestamp + (uint32_t) ev.timestamp)%(1<<24));
 	    uint64_t encoded = ((uint64_t) ts)|((uint64_t)(this->height-1-ev.y)<<42)|((uint64_t)(this->width-1-ev.x)<<33)|1UL<<32;
 	    *target64++ = encoded;
             ++n_TD;
