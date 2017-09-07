@@ -27,19 +27,21 @@
 
 <module>
     <name> vDelayControl </name>
-    <parameters> --name /vpfR --particles 200 --obsthresh 0.30 --truethresh 0.4 --threads 8 --bins 64 --gain 0.005 --mindelay 10</parameters>
+    <parameters> --name /vpfR --particles 300 --obsthresh 0.25 --truethresh 0.4 --threads 1 --bins 64 --gain 0.05  --mindelay 1 --seed "(200 80 28)" </parameters>
     <node> icub-blade </node>
 </module>
 
 <module>
     <name> yarpscope </name>
     <parameters> --remote /vpfR/scope:o --index "(0 1 2 3 4)" --color "(red blue green black yellow)" </parameters>
+    <environment> YARP_PORT_PREFIX=/right </environment>
     <node> icub24 </node>
 </module>
 
 <module>
     <name> yarpscope </name>
     <parameters> --remote /vpfL/scope:o --index "(0 1 2 3 4)" --color "(red blue green black yellow)" </parameters>
+    <environment> YARP_PORT_PREFIX=/left </environment>
     <node> icub24 </node>
 </module>
 
@@ -106,13 +108,13 @@
 <connection>
   <from>/vPreProcess/left:o</from>
   <to>/vpfL/vBottle:i</to>
-  <protocol>shmem</protocol>
+  <protocol>udp</protocol>
 </connection>
 
 <connection>
   <from>/vPreProcess/right:o</from>
   <to>/vpfR/vBottle:i</to>
-  <protocol>shmem</protocol>
+  <protocol>udp</protocol>
 </connection>
 
 <connection>
