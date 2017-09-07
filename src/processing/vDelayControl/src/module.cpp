@@ -75,6 +75,10 @@ bool module::configure(yarp::os::ResourceFinder &rf)
     delaycontrol.initDelayControl(gain, maxq, trueDetectionThreshold * bins, mindelay);
     delaycontrol.initFilter(width, height, particles, bins, adaptivesampling,
                             nthread, minlikelihood * bins, inlierParameter, nRandResample);
+    if(seed && seed->size() == 3) {
+        yInfo() << "Setting initial seed state:" << seed->toString();
+        delaycontrol.setFilterInitialState(seed->get(0).asDouble(), seed->get(1).asDouble(), seed->get(2).asDouble());
+    }
     if(!delaycontrol.open(getName(), qlimit))
         return false;
     return delaycontrol.start();

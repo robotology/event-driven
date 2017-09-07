@@ -10,8 +10,15 @@ void delayControl::initFilter(int width, int height, int nparticles, int bins,
 {
     vpf.initialise(width, height, nparticles, bins, adaptive, nthreads,
                    minlikelihood, inlierThresh, randoms);
+
     res.height = height;
     res.width = width;
+}
+
+void delayControl::setFilterInitialState(int x, int y, int r)
+{
+    vpf.setSeed(x, y, r);
+    vpf.resetToSeed();
 }
 
 void delayControl::initDelayControl(double gain, int maxtoproc, int positiveThreshold, int mindelay)
@@ -96,8 +103,9 @@ void delayControl::run()
 
             auto v = is_event<AE>((*q)[i]);
             addEvents += qROI.add(v);
-            if(breakOnAdded) testedEvents = addEvents;
-            else testedEvents++;
+            //if(breakOnAdded) testedEvents = addEvents;
+            //else testedEvents++;
+            testedEvents++;
             i++;
         }
         Tgetwindow = yarp::os::Time::now() - Tgetwindow;
@@ -117,7 +125,7 @@ void delayControl::run()
         vpf.extractTargetPosition(avgx, avgy, avgr);
         double roisize = avgr * 1.4;
         qROI.setROI(avgx - roisize, avgx + roisize, avgy - roisize, avgy + roisize);
-        qROI.setSize(avgr * 4.0 * M_PI);
+        qROI.setSize(avgr * 8.0 * M_PI);
 
         Tresample = yarp::os::Time::now();
         vpf.performResample();
@@ -128,22 +136,22 @@ void delayControl::run()
         Tpredict = yarp::os::Time::now() - Tpredict;
 
         //check for stagnancy
-        if(vpf.maxlikelihood < detectionThreshold) {
+//        if(vpf.maxlikelihood < detectionThreshold) {
 
-            if(!stagnantstart) {
-                stagnantstart = yarp::os::Time::now();
-            } else {
-                if(yarp::os::Time::now() - stagnantstart > 1.0) {
-                    vpf.resetToSeed();
-                    detection = false;
-                    stagnantstart = 0;
-                    yInfo() << "Performing full resample";
-                }
-            }
-        } else {
-            detection = true;
-            stagnantstart = 0;
-        }
+//            if(!stagnantstart) {
+//                stagnantstart = yarp::os::Time::now();
+//            } else {
+//                if(yarp::os::Time::now() - stagnantstart > 1.0) {
+//                    vpf.resetToSeed();
+//                    detection = false;
+//                    stagnantstart = 0;
+//                    yInfo() << "Performing full resample";
+//                }
+//            }
+//        } else {
+//            detection = true;
+//            stagnantstart = 0;
+//        }
 
 
         //output our event
