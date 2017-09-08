@@ -1,140 +1,178 @@
-% Detects corners using Harris' corner detection approach. 
-% For each incoming event, it approximates the derivative, as the difference 
-% between the number of events in the actual pixel (x0, y0) and in the 
-% neighboring pixels (x0+1, y0) (x0, y0+1), in a temporal window. 
-% The event is labeled as corner event if the minimum eigenvalue is larger 
-% than a threshold.
-% Author: Valentina Vasco
+%% creating the harris scores %%
 
+clc;
 clear;
-filename = 'corner3DVS.txt';
 
-% amplitude of temporal window
-deltat =  0.1; % seconds
+%input file
+filename = '/home/vvasco/Dropbox/IROS2016/datasets/checker/0-10.txt';
 
-% threshold for the minimum eigenvalue
-thresh0 = 1.5; 
-px_thr = 20; 
+% %output file
+% resultfile = '/home/vvasco/dev/egomotion/new datasets/testing data/teabox/0_2/corners_teabox.txt';
+% fid = fopen(resultfile, 'wt');
 
-sel_channel = 0;
-sel_pol = 1;
+%sensor's parameters
+width = 304;
+height = 240;
 
-% import events
+%number of events to process
+N = 2000;
+
+%size of the spatial window: 2*L+1
+L = 7; 
+filterSize = 7;
+
+%load in events
 events = importdata(filename);
 
-% select events with selected channel and polarity
-events(events(:, 1) ~= sel_channel, :) = [];
-events(events(:, 3) ~= sel_pol, :) = [];
+%remove unneeded events (polarity etc)
+% events(events(:, 1) ~= 0, :) = [];
+% events(events(:, 3) ~= 1, :) = [];
 
-% convert to seconds
-events(:, 2) = events(:, 2)./1000000;
+%convert to seconds
+% events(:, 2) = (events(:, 2) - events(1, 2))./1000000;
 
-q = 1;
-i_start = 30000;
-ts0 = events(i_start, 2);
+%initialise data structures
+vSurfON = zeros(height, width);
+vSurfOFF = zeros(height, width);
 
-while(ts0 < events(end, 2))
+%Sobel Kernels
+for i = 1 : filterSize
+    Sx(i) = factorial((filterSize - 1))/((factorial((filterSize - 1) - (i - 1)))*(factorial(i - 1)));
+    Dx(i) = Pasc(i - 1, filterSize - 2) - Pasc(i - 2, filterSize - 2);
+end
+Sy = Sx';
+Dy = Dx';
+Gx = Sy(:)*Dx;
+Gy = Gx';
+Gx = Gx/max(max(Gx));
+Gy = Gy/max(max(Gy));
+
+%gaussian kernel
+sigma = 1;
+A = 1/(2*pi*sigma^2);
+hsize = 2*L + 1 - filterSize + 1;
+[xw, yw] = meshgrid(-(hsize-1)/2:(hsize-1)/2, -(hsize-1)/2:(hsize-1)/2); 
+% [xw, yw] = meshgrid(-round((L - 1)/2):round((L - 1)/2), -round((L - 1)/2):round((L - 1)/2)); 
+h = A * exp(-(xw.^2 + yw.^2) / (2*sigma^2));
+h = h/sum(sum(h));
+
+perc = 10;
+for i = 1:size(events, 1)
+
+    %current event
+    xi = events(i, 4);
+    yi = events(i, 5);
+    tsi = events(i, 2);
+    poli = events(i, 3);
     
-    % events falling in the temporal window defined by deltat
-    data = events(events(:, 2) >= ts0 & (events(:, 2) <= ts0 + deltat), 2:end);
-    data(:, 2) = [];
-    
-    for i = 1:size(data, 1)
-        x0 = data(i, 2);
-        y0 = data(i, 3);
+    %process differently for different polarities 
+    if(poli == 0) %if ON event
         
-        % (x0, y0 - px_thr <= y <= y0 + px_thr)
-        data_xy = data((x0 == data(:, 2)), :);
-        data_xy = data_xy(abs(data_xy(:, 3) - y0) <= px_thr, :);
-        n_xy = size(data_xy, 1);
+        %update the surface
+        vSurfON(yi + 1, xi + 1) = tsi;
         
-        % (x0 + 1, y0 - px_thr <= y <= y0 + px_thr)
-        data_dx = data((x0 - data(:, 2)) == -1, :);
-        data_dx = data_dx(abs(data_dx(:, 3) - y0) <= px_thr, :);
-        n_dx = size(data_dx, 1);
+        %if it contains more than N events, remove the oldest
+        if(sum(sum(vSurfON > 0)) > N)
+            vSurfON(vSurfON == min(vSurfON(vSurfON ~= 0))) = 0;
+        end
         
-        dx(i) = n_dx - n_xy;
+        %the computation is not done on these events, but they are still
+        %added to the surface and thus used to detect corner events
+        if(xi <= L || xi >= width - L || yi <= L || yi >= height - L)
+            continue;
+        end
         
-        % (x0 - px_thr <= x <= x0 + px_thr, y0 + 1)
-        data_up = data((y0 - data(:, 3)) == -1, :);
-        data_up = data_up(abs(data_up(:, 2) - x0) <= px_thr, :);
-        n_up = size(data_up, 1);
+        %PROCESS THE HARRIS ON THIS LOCATION
+        windEvts = vSurfON(yi + 1 - L : yi + 1 + L, xi + 1 - L : xi + 1 + L) > 0;
+                
+        dx = conv2(double(windEvts), Gx, 'valid'); %/sum(sum(abs(Gx)));
+        dy = conv2(double(windEvts), Gy, 'valid'); %/sum(sum(abs(Gy)));
         
-        % (x0 - px_thr <= x <= x0 + px_thr, y0)
-        data_yx = data((y0 - data(:, 3)) == 0, :);
-        data_yx = data_yx(abs(data_yx(:, 2) - x0) <= px_thr, :);
-        n_yx = size(data_yx, 1);
+        %square derivatives
+        dx2 = dx.^2;
+        dy2 = dy.^2;
+        dxy = dx.*dy;
         
-        dy(i) = n_up - n_yx;
+        %apply gaussian
+        dx2 = dx2.*h;
+        dy2 = dy2.*h;
+        dxy = dxy.*h;
         
-        de_dxdy(i) = dx(i)*dy(i);
-        D = [dx(i) de_dxdy(i); de_dxdy(i) dy(i)];
+        %create harris matrix
+        a = sum(sum(dx2));
+        d = sum(sum(dy2));
+        b = sum(sum(dxy));
+        c = b;
         
-        % compute the matrix singular values and take the minimum
-        S = svd(D);
-        l(i) = min(S);
+        M = [a b;
+            c d];
+        score = (det(M) - 0.04*(trace(M) ^ 2));
         
-        % reset
-        data_xy = [];
-        data_yx = [];
-        data_dx = [];
-        data_up = [];
+    else %if OFF event
         
+        %update the surface
+        vSurfOFF(yi + 1, xi + 1) = tsi;
+        
+        %if it contains more than N events, remove the oldest
+        if(sum(sum(vSurfOFF > 0)) > N)
+            vSurfOFF(vSurfOFF == min(vSurfOFF(vSurfOFF ~= 0))) = 0;
+        end
+        
+        %the computation is not done on these events, but they are still
+        %added to the surface and thus used to detect corner events
+        if(xi <= L || xi >= width - L || yi <= L || yi >= height - L)
+            continue;
+        end
+        
+        %PROCESS THE HARRIS ON THIS LOCATION
+        windEvts = vSurfOFF(yi + 1 - L : yi + 1 + L, xi + 1 - L : xi + 1 + L) > 0;
+                  
+        dx = conv2(double(windEvts), Gx, 'valid'); %/sum(sum(abs(Gx)));
+        dy = conv2(double(windEvts), Gy, 'valid'); %/sum(sum(abs(Gy)));
+        
+        %square derivatives
+        dx2 = dx.^2;
+        dy2 = dy.^2;
+        dxy = dx.*dy;
+        
+        %apply gaussian
+        dx2 = dx2.*h;
+        dy2 = dy2.*h;
+        dxy = dxy.*h;
+        
+        %create harris matrix
+        a = sum(sum(dx2));
+        d = sum(sum(dy2));
+        b = sum(sum(dxy));
+        c = b;
+        
+        M = [a b;
+            c d];
+        score = (det(M) - 0.04*(trace(M) ^ 2));
     end
-    
-    % normalize the minimum eigenvalue by the number of events in the
-    % temporal window
-    l = l./size(data, 1);
-    
-    % label as corner events the events where the minimum eigenvalue aboves
-    % the threshold
-    corn_x = data(l >= thresh0, 2);
-    corn_y = data(l >= thresh0, 3);
-    corn_ts = data(l >= thresh0, 1);
-    
-    if(length(corn_x) ~= 0)
-        % if some corners were detected, assign them to the corner
-        % variables
-        corner_x(q:(q + length(corn_x) - 1)) = corn_x;
-        corner_y(q:(q + length(corn_x) - 1)) = corn_y;
-        corner_ts(q:(q + length(corn_x) - 1)) = corn_ts;
-    else
-        % if no corner was detected, assign -1 to the corner variables
-        corner_x = -1;
-        corner_y = -1;
-        corner_ts = -1;
+  
+    %display percentage
+    if( ( ( i / size(events, 1) ) * 100 ) > perc )
+        disp([int2str( (i / size(events, 1)) * 100 ) '% done']);
+        perc = perc + 10;
     end
-    
-    q = q + length(corn_x);
-    
-    drawnow;
-    pause(0.8);
-    subplot(2, 1, 1);
-    plot(data(:, 2), data(:, 3), 'b.');
-    hold on;
-    plot(corner_x, corner_y, 'ko');
-    grid on;
-    legend('events in the window', 'corners');
-    xlabel('x');
-    ylabel('y');
-    set(gca, 'xlim', [0 128]);
-    set(gca, 'ylim', [0 128]);
-    title('Detected corners');
-    hold off;
-    subplot(2, 1, 2);
-    plot(l);
-    hold on;
-    plot(thresh0*ones(length(l), 1));
-    legend('min eigenvalue', 'threshold');
-    title('Eigenvalue distribution');
-    xlabel('# events');
-    ylabel('minimum eigenvalue');
-    hold off;
-    
-    % take the last timestamp of the temporal window
-    ts0 = data(end, 1);
-    
-    % reset
-    data = [];
-    
+      
+    %attach Harris score to this event in an array
+    events(i, 7) = score;
+         
+end
+
+%save events with scores 
+dlmwrite(resultfile, events, 'delimiter', ' ');
+
+
+%%%%%%%%%%%%%%%%%%%%%
+%  local functions  %
+%%%%%%%%%%%%%%%%%%%%%
+function P=Pasc(k,n)
+if (k>=0)&&(k<=n)
+    P=factorial(n)/(factorial(n-k)*factorial(k));
+else
+    P=0;
+end
 end
