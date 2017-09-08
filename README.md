@@ -1,15 +1,22 @@
 | Read the [Documentation](http://robotology.github.io/event-driven/doxygen/doc/html/index.html) | Download the [Code](https://github.com/robotology/event-driven) |
 
-[![event-driven-icub ball](https://img.youtube.com/vi/xS-7xYRYSLc/0.jpg)](https://youtu.be/xS-7xYRYSLc)
-![event-stream ball](https://github.com/robotology/event-driven/blob/gh-pages/doxygen/images/ballstream.png)
-Click the thumbnail to watch the [video](https://youtu.be/xS-7xYRYSLc)!
-
 # The event-driven YARP Project
 
-Libraries that handle neuromorphic sensors, such as the dynamic vision sensor, installed on the iCub can be found here, along with algorithms to process the event-based data. Examples include, optical flow, corner detection and ball detection. Demo applications for controlling the robot based on event input are also found here.
+[![event-driven-icub ball](http://img.youtube.com/vi/xS-7xYRYSLc/0.jpg)](https://youtu.be/xS-7xYRYSLc)
+![event-stream ball](http://robotology.github.io/event-driven/doxygen/images/ballstream.png)
+Click the thumbnail to watch the [video](https://youtu.be/xS-7xYRYSLc)!
+
+Libraries that handle neuromorphic sensors, such as the dynamic vision sensor, installed on the iCub can be found here, along with algorithms to process the event-based data. Examples include, optical flow, corner detection and ball detection. Demo applications for the iCub robot, and tutorials for running them, include saccading and attention, gaze following a ball, and vergence control.
 
 ## Libraries
 
+Event-driven libraries provide basic functionality for handling events in a YARP environment. The library has definitions for:
+ * codecs to encode/decode events to be compatable with address event representation (AER) formats.
+ * Sending packets of events in `ev::vBottle` that is compatible with yarpdatadumper and yarpdataplayer.
+ * asynchronous reading (`ev::queueAllocator`) and writing (`ev::collectorPort`) ports that ensure data is never dropped and giving access to delay information.
+ * filters for removing salt and pepper noise.
+ * event containers for organising the event-stream into temporal windows, fixed-size windows, surfaces, and regions-of-interest.
+ * helper functions to handle event timestamp wrapping and to convert between timestamps and seconds.
 
 ## Modules
 
@@ -22,12 +29,25 @@ Libraries that handle neuromorphic sensors, such as the dynamic vision sensor, i
 
 ## Applications for the iCub Humanoid Robot
 
+Tutorials for these applications can be found [here](http://robotology.github.io/event-driven/doxygen/doc/html/pages.html)
 
+ * viewing the event-stream in 3D spatio-temporal space.
+ * calibrating the event-camera with a static fiducial.
+ * performing saccading and attention.
+ * ball detection and iCub gaze following.
+ * performing automatic stereo vergence.
 
 ## How to Install:
 
 1. Install [YARP](https://github.com/robotology/yarp) and [icub-contrib-common](https://github.com/robotology/icub-contrib-common) following these [instructions](http://wiki.icub.org/wiki/Linux:Installation_from_sources).
-3. Clone event-driven and install as an icub-contrib module.
+2. git clone https://github.com/robotology/event-driven.git
+3. cd event-driven
+4. mkdir build && cd build
+5. ccmake ..
+6. ensure the install path is as configured in icub-contrib-common
+7. turn on desired modules and applications (e.g. processing)
+8. configure (c) and generate (g)
+9. make install
 
 ## References
 
@@ -36,8 +56,4 @@ Glover, A., and Bartolozzi C. (2016) *Event-driven ball detection and gaze fixat
 Vasco V., Glover A., and Bartolozzi C. (2016) *Fast event-based harris corner detection exploiting the advantages of event-driven cameras*. In IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS), October 2016, Daejeon, Korea.
 
 V. Vasco, A. Glover, Y. Tirupachuri, F. Solari, M. Chessa, and Bartolozzi C. *Vergence control with a neuromorphic iCub. In IEEE-RAS International Conference on Humanoid Robots (Humanoids)*, November 2016, Mexico.
-
-
-
-
 

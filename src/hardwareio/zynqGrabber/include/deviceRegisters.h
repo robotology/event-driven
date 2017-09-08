@@ -22,8 +22,8 @@
 
 // vsctrl
 
-#define I2C_ADDRESS_LEFT		 0x11
-#define I2C_ADDRESS_RIGHT		 0x10
+#define I2C_ADDRESS_LEFT		 0x10
+#define I2C_ADDRESS_RIGHT		 0x11
 //#define I2C_ADDRESS_VSCTRL       0x11
 //#define I2C_ADDRESS              I2C_ADDRESS_VSCTRL
 
@@ -104,6 +104,7 @@
 #define AER_GEN_REG         _IOWR(MAGIC_NUM,  6, void *)
 #define IOC_SET_TS_TYPE     _IOW (MAGIC_NUM,  7, void *)
 #define AER_TIMESTAMP       _IOR (MAGIC_NUM,  8, void *)
+#define IOC_GET_PS          _IOR (MAGIC_NUM,  9, void *)
 #define AER_SET_LOC_LBCK    _IOW (MAGIC_NUM, 10, void *)
 #define AER_SET_REM_LBCK    _IOW (MAGIC_NUM, 11, void *)
 #define AER_SET_FAR_LBCK    _IOW (MAGIC_NUM, 12, void *)

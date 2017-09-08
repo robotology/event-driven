@@ -31,6 +31,12 @@ void LabelledAE::encode(yarp::os::Bottle &b) const
     b.addInt(ID);
 }
 
+void LabelledAE::encode(std::vector<YARP_INT32> &b, unsigned int &pos) const
+{
+    AddressEvent::encode(b, pos);
+    b[pos++] = ID;
+}
+
 bool LabelledAE::decode(const yarp::os::Bottle &packet, int &pos)
 {
     if (AddressEvent::decode(packet, pos) && pos + 1 <= packet.size())

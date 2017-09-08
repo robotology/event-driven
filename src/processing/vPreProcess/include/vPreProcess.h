@@ -34,7 +34,8 @@ private:
 
     //output port for the vBottle with the new events computed by the module
     ev::queueAllocator inPort;
-    yarp::os::BufferedPort<ev::vBottle> outPort;
+    yarp::os::Port outPort;
+    yarp::os::Port outPort2;
 
     //parameters
     std::string name;
@@ -56,16 +57,21 @@ private:
     cv::Mat rightMap;
     bool truncate;
 
+    //output
+    bool split;
+
 public:
 
     vPreProcess();
     ~vPreProcess();
 
     void initBasic(std::string name, int height, int width, bool precheck,
-                   bool flipx, bool flipy, bool pepper, bool undistort);
+                   bool flipx, bool flipy, bool pepper, bool undistort,
+                   bool split);
     void initPepper(int spatialSize, int temporalSize);
     void initUndistortion(const yarp::os::Bottle &left,
                           const yarp::os::Bottle &right, bool truncate);
+    int queryUnprocessed();
     void run();
     void onStop();
     bool threadInit();

@@ -205,15 +205,12 @@ void vParticle::resetArea()
     negscaler = 3.0 * angbuckets / (M_PI * r * r);
 }
 
-void vParticle::predict(unsigned long timestamp)
+void vParticle::predict(double sigma)
 {
-
-    tw += 12500;
-    tw += 12500;
-
-    x = generateGaussianNoise(x, variance);
-    y = generateGaussianNoise(y, variance);
-    r = generateGaussianNoise(r, variance * 0.4);
+    //tw += 12500;
+    x = generateGaussianNoise(x, sigma);
+    y = generateGaussianNoise(y, sigma);
+    r = generateGaussianNoise(r, sigma * 0.4);
 
     if(constrain) checkConstraints();
 }
@@ -226,6 +223,7 @@ void vParticle::setContraints(int minx, int maxx, int miny, int maxy, int minr, 
     this->maxy = maxy;
     this->minr = minr;
     this->maxr = maxr;
+    constrain = true;
 }
 void vParticle::checkConstraints()
 {
@@ -250,21 +248,18 @@ void vParticle::updateWeightSync(double normval)
 
 
 void vParticlefilter::initialise(int width, int height, int nparticles,
-                                 double sigma, int bins, bool adaptive,
-                                 int nthreads, int maxtoproc,
+                                 int bins, bool adaptive, int nthreads,
                                  double minlikelihood, double inlierThresh,
                                  double randoms)
 {
     res.width = width;
     res.height = height;
     this->nparticles = nparticles;
-    this->sigma = sigma;
     this->bins = bins;
     this->adaptive = adaptive;
     this->nthreads = nthreads;
-    this->maxtoproc = maxtoproc;
     this->nRandoms = randoms + 1.0;
-    rbound_min = res.width/17;
+    rbound_min = res.width/16;
     rbound_max = res.width/6;
     pcb.configure(res.height, res.width, rbound_max, bins);
     setSeed(res.width/2.0, res.height/2.0);
@@ -272,11 +267,27 @@ void vParticlefilter::initialise(int width, int height, int nparticles,
     ps.clear();
     ps_snap.clear();
     accum_dist.resize(this->nparticles);
+
+    if(this->nthreads > 1) {
+        for(int i = 0; i < this->nthreads; i++) {
+            int pStart = i * (this->nparticles / this->nthreads);
+            int pEnd = (i+1) * (this->nparticles / this->nthreads);
+            if(i == this->nthreads - 1)
+                pEnd = this->nparticles;
+
+            yInfo() << "Thread" << i << "=" << pStart << "->" << pEnd-1;
+            computeThreads.push_back(new vPartObsThread(pStart, pEnd));
+            computeThreads[i]->start();
+        }
+    }
+
+
     vParticle p;
+    p.attachPCB(&pcb);
+    p.resetWeight(1.0/nparticles);
+    p.setContraints(0, res.width, 0, res.height, rbound_min, rbound_max);
     for(int i = 0; i < this->nparticles; i++) {
-        p.initialiseParameters(i, minlikelihood, 0, inlierThresh, sigma, bins);
-        p.attachPCB(&pcb);
-        p.resetWeight(1.0/nparticles);
+        p.initialiseParameters(i, minlikelihood, 0, inlierThresh, 0, bins);
         ps.push_back(p);
         ps_snap.push_back(p);
     }
@@ -308,16 +319,14 @@ void vParticlefilter::performObservation(const vQueue &q)
 {
     double normval = 0.0;
     if(nthreads == 1) {
-        //START WITHOUT THREAD
 
+        //START WITHOUT THREAD
         for(int i = 0; i < nparticles; i++) {
             ps[i].initLikelihood();
         }
 
-        int ntoproc = std::min((int)q.size(), maxtoproc);
-
         for(int i = 0; i < nparticles; i++) {
-            for(unsigned int j = 0; j < ntoproc; j++) {
+            for(unsigned int j = 0; j < q.size(); j++) {
                 AE* v = read_as<AE>(q[j]);
                 ps[i].incrementalLikelihood(v->x, v->y, 0);
             }
@@ -327,27 +336,18 @@ void vParticlefilter::performObservation(const vQueue &q)
             ps[i].concludeLikelihood();
             normval += ps[i].getw();
         }
+    } else {
+
+        //START MULTI-THREAD
+        for(int k = 0; k < nthreads; k++) {
+            computeThreads[k]->setDataSources(&ps, &q);
+            computeThreads[k]->process();
+        }
+
+        for(int k = 0; k < nthreads; k++) {
+            normval += computeThreads[k]->waittilldone();
+        }
     }
-//    else {
-
-
-//        //START MULTI-THREAD
-//        //yarp::sig::ImageOf <yarp::sig::PixelBgr> likedebug;
-//        //likedebug.resize(nparticles * 4, stw.size());
-//        //likedebug.zero();
-//        for(int k = 0; k < nThreads; k++) {
-//            //computeThreads[k]->setDataSources(&indexedlist, &deltats, &stw, &likedebug);
-//            computeThreads[k]->setDataSources(&indexedlist, &deltats, &stw, 0);
-//            //computeThreads[k]->start();
-//            computeThreads[k]->process();
-//        }
-
-//        for(int k = 0; k < nThreads; k++) {
-//            //computeThreads[k]->join();
-//            //normval += computeThreads[k]->getNormVal();
-//            normval += computeThreads[k]->waittilldone();
-//        }
-//    }
 
     pwsumsq = 0;
     maxlikelihood = 0;
@@ -363,7 +363,7 @@ void vParticlefilter::extractTargetPosition(double &x, double &y, double &r)
 {
     x = 0; y = 0; r = 0;
 
-    for(int i = 0; i < nparticles; i ++) {
+    for(int i = 0; i < nparticles; i++) {
         double w = ps[i].getw();
         x += ps[i].getx() * w;
         y += ps[i].gety() * w;
@@ -398,9 +398,75 @@ void vParticlefilter::performResample()
 
 }
 
-void vParticlefilter::performPrediction()
+void vParticlefilter::performPrediction(double sigma)
 {
     for(int i = 0; i < nparticles; i++)
         ps[i].predict(sigma);
 }
 
+std::vector<vParticle> vParticlefilter::getps()
+{
+    return ps;
+}
+
+/*////////////////////////////////////////////////////////////////////////////*/
+//particleobserver (threaded observer)
+/*////////////////////////////////////////////////////////////////////////////*/
+
+vPartObsThread::vPartObsThread(int pStart, int pEnd)
+{
+    this->pStart = pStart;
+    this->pEnd = pEnd;
+    processing.lock();
+    done.lock();
+}
+
+void vPartObsThread::setDataSources(std::vector<vParticle> *particles,
+                                    const vQueue *stw)
+{
+    this->particles = particles;
+    this->stw = stw;
+}
+
+void vPartObsThread::process()
+{
+    processing.unlock();
+}
+
+double vPartObsThread::waittilldone()
+{
+    done.lock();
+    return normval;
+}
+
+void vPartObsThread::run()
+{
+    while(!isStopping()) {
+
+        processing.lock();
+        if(isStopping()) return;
+
+        for(int i = pStart; i < pEnd; i++) {
+            (*particles)[i].initLikelihood();
+        }
+
+        for(int i = pStart; i < pEnd; i++) {
+            for(unsigned int j = 0; j < stw->size(); j++) {
+                AE* v = read_as<AE>((*stw)[j]);
+                (*particles)[i].incrementalLikelihood(v->x, v->y, 0);
+
+
+            }
+        }
+
+        normval = 0.0;
+        for(int i = pStart; i < pEnd; i++) {
+            (*particles)[i].concludeLikelihood();
+            normval += (*particles)[i].getw();
+        }
+
+        done.unlock();
+
+    }
+
+}

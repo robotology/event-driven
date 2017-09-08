@@ -1,44 +1,23 @@
-# vCalib App
+# Camera Calibration
 
 Introduction
 ------------
 This app launches the modules necessary to calibrate event-driven cameras. The event stream is sent in form of BLOB 
 events (see [vFramer](http://robotology.github.io/event-driven/doxygen/doc/html/group__vFramer.html) for further 
 details on the event types.) to the [stereoCalib](http://wiki.icub.org/iCub/main/dox/html/group__icub__stereoCalib.html) module.
- In the app we already provide a set of default parameters to the stereoCalib module defining the calibration board 
- type as the asymmetric circle grid (shown in image below) which have proven to be optimal for event cameras 
- calibration.  
+In the app we already provide a set of default parameters to the stereoCalib module defining the calibration board 
+type as the asymmetric circle grid (shown in image below) which have proven to be optimal for event cameras 
+calibration.  
 
-<img src="http://robocraft.ru/files/opencv/acircles_pattern.png" width="400">
+![calib_pattern](http://robocraft.ru/files/opencv/acircles_pattern.png)
+
+In the following image an overview of the opened ports and how they are connected.
   
-  In the following image an overview of the opened ports and how they are connected.
-  
-![builder_view](images/vCalib_builder.png)
+![builder_view](http://robotology.github.io/event-driven/doxygen/images/vCalib_builder.png)
 
- Dependencies
- ------------
- No special dependencies are required, all the required modules will be executed by the application. 
-
- Instantiated Modules
- --------------------
- * **zynqGrabber**
- * **stereoCalib**
- * **vFramer**
- * **yarpview**
- 
- Opened ports
- ------------
- * `/zynqGrabber/vBottle:o`
- * `/vFramer/AE:i`
- * `/vFramer/left`
- * `/vFramer/right`
- * `/stereoCalib/cam/left:i`
- * `/stereoCalib/cam/right:i`
- * `/stereoCalib/cam/left:o` 
- * `/stereoCalib/cam/right:o`
- * `/stereoCalib/cmd`
- * `/viewCh0`
- * `/viewCh1`
+Dependencies
+------------
+No special dependencies are required, all the required modules will be executed by the application. 
 
 How to run the application
 --------------------------

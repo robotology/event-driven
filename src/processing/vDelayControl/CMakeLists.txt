@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.6)
 
-set(MODULENAME vPepper)
+set(MODULENAME vDelayControl)
 project(${MODULENAME})
 
 file(GLOB source src/*.cpp)

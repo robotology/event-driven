@@ -54,6 +54,8 @@ bool vPreProcessModule::configure(yarp::os::ResourceFinder &rf)
             rf.check("flipy", yarp::os::Value(true)).asBool();
     bool precheck = rf.check("precheck") &&
             rf.check("precheck", yarp::os::Value(true)).asBool();
+    bool split = rf.check("split") &&
+            rf.check("precheck", yarp::os::Value(true)).asBool();
 
     if(precheck)
         yInfo() << "Performing precheck for event corruption";
@@ -67,12 +69,14 @@ bool vPreProcessModule::configure(yarp::os::ResourceFinder &rf)
         yInfo() << "Applying camera undistortion - truncating to sensor size";
     if(undistort && !truncate)
         yInfo() << "Applying camera undistortion - without truncation";
+    if(split)
+        yInfo() << "Splitting into left/right streams";
 
 
     eventManager.initBasic(rf.check("name", yarp::os::Value("/vPreProcess")).asString(),
                            rf.check("height", 240).asInt(),
                            rf.check("width", 304).asInt(),
-                           precheck, flipx, flipy, pepper, undistort);
+                           precheck, flipx, flipy, pepper, undistort, split);
 
     if(pepper) {
         eventManager.initPepper(rf.check("spatialSize", yarp::os::Value(1)).asDouble(),
@@ -82,7 +86,7 @@ bool vPreProcessModule::configure(yarp::os::ResourceFinder &rf)
     if(undistort) {
         yarp::os::ResourceFinder calibfinder;
         calibfinder.setVerbose();
-        calibfinder.setContext(rf.check("calibContext", yarp::os::Value("cameraCalibration")).asString().c_str());
+        calibfinder.setDefaultContext(rf.check("calibContext", yarp::os::Value("cameraCalibration")).asString().c_str());
         calibfinder.setDefaultConfigFile(rf.check("calibFile", yarp::os::Value("cameraCalibration")).asString().c_str());
         calibfinder.configure(0, 0);
 
@@ -114,7 +118,8 @@ bool vPreProcessModule::updateModule()
 
 double vPreProcessModule::getPeriod()
 {
-    return 5.0;
+    yInfo() << this->eventManager.queryUnprocessed() << "unprocessed queues";
+    return 3.0;
 }
 /******************************************************************************/
 vPreProcess::vPreProcess(): name("/vPreProcess")
@@ -126,15 +131,13 @@ vPreProcess::vPreProcess(): name("/vPreProcess")
 
 vPreProcess::~vPreProcess()
 {
-    if(!outPort.isClosed())
-        outPort.close();
-    if(!inPort.isClosed())
-        inPort.close();
+    outPort.close();
+    outPort2.close();
 }
 
 void vPreProcess::initBasic(std::string name, int height, int width,
                             bool precheck, bool flipx, bool flipy,
-                            bool pepper, bool undistort)
+                            bool pepper, bool undistort, bool split)
 {
 
     this->name = name;
@@ -145,6 +148,7 @@ void vPreProcess::initBasic(std::string name, int height, int width,
     this->flipy = flipy;
     this->pepper = pepper;
     this->undistort = undistort;
+    this->split = split;
 
 }
 
@@ -206,6 +210,11 @@ void vPreProcess::initUndistortion(const yarp::os::Bottle &left,
 
 }
 
+int vPreProcess::queryUnprocessed()
+{
+    return inPort.queryunprocessed();
+}
+
 void vPreProcess::run()
 {
     yarp::os::Stamp ystamp;
@@ -213,8 +222,19 @@ void vPreProcess::run()
     resolution resmod = res;
     resmod.height -= 1;
     resmod.width -= 1;
+    int prev_bottle_n = 0;
+
+    //left output data
+    vBottleMimic leftBottle;
+    leftBottle.setHeader(AE::tag);
+
+    //right output data
+    vBottleMimic rightBottle;
+    rightBottle.setHeader(AE::tag);
 
     while(true) {
+
+        vQueue qleft, qright;
 
         ev::vQueue *q = 0;
         while(!q && !isStopping()) {
@@ -222,9 +242,10 @@ void vPreProcess::run()
         }
         if(isStopping()) break;
 
-        ev::vBottle &outBottle = outPort.prepare();
-        outBottle.clear();
-        outPort.setEnvelope(ystamp);
+        if(precheck && prev_bottle_n + 1 != ystamp.getCount() && ystamp.getCount() && prev_bottle_n) {
+            yWarning() << "Dropped bottle:" << prev_bottle_n << "to" << ystamp.getCount();
+        }
+        prev_bottle_n = ystamp.getCount();
 
         for(ev::vQueue::iterator qi = q->begin(); qi != q->end(); qi++) {
 
@@ -232,7 +253,7 @@ void vPreProcess::run()
 
             //precheck
             if(precheck && (v->x < 0 || v->x > resmod.width || v->y < 0 || v->y > resmod.height)) {
-                yError() << "Event Corruption:" << v->getContent().toString();
+                yWarning() << "Event Corruption:" << v->getContent().toString();
                 continue;
             }
 
@@ -262,13 +283,22 @@ void vPreProcess::run()
 
             }
 
-            outBottle.addEvent(v);
+            if(split && v->channel)
+                qright.push_back(v);
+            else
+                qleft.push_back(v);
         }
 
-        if(outBottle.size())
-            outPort.writeStrict();
-        else
-            outPort.unprepare();
+        if(qleft.size()) {
+            leftBottle.setInternalData(qleft);
+            outPort.setEnvelope(ystamp);
+            outPort.write(leftBottle);
+        }
+        if(qright.size()) {
+            rightBottle.setInternalData(qright);
+            outPort2.setEnvelope(ystamp);
+            outPort2.write(rightBottle);
+        }
 
         inPort.scrapQ();
     }
@@ -278,14 +308,22 @@ void vPreProcess::run()
 void vPreProcess::onStop()
 {
     outPort.close();
+    outPort2.close();
     inPort.close();
     inPort.releaseDataLock();
 }
 
 bool vPreProcess::threadInit()
 {
-    if(!outPort.open(name + "/vBottle:o"))
-        return false;
+    if(split) {
+        if(!outPort.open(name + "/left:o"))
+            return false;
+        if(!outPort2.open(name + "/right:o"))
+            return false;
+    } else {
+        if(!outPort.open(name + "/vBottle:o"))
+            return false;
+    }
     if(!inPort.open(name + "/vBottle:i"))
         return false;
     return true;

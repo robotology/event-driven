@@ -151,7 +151,7 @@ public:
 
 
     //update
-    void predict(unsigned long int stamp);
+    void predict(double sigma);
     double approxatan2(double y, double x);
 
     void initLikelihood()
@@ -202,6 +202,7 @@ public:
     void concludeLikelihood()
     {
         if(likelihood > minlikelihood) tw = maxtw;
+        if(likelihood == minlikelihood) likelihood *= 0.5;
         weight = likelihood * weight;
     }
 
@@ -220,6 +221,33 @@ public:
 };
 
 /*////////////////////////////////////////////////////////////////////////////*/
+// vParticleObserver
+/*////////////////////////////////////////////////////////////////////////////*/
+class vPartObsThread : public yarp::os::Thread
+{
+private:
+
+    yarp::os::Mutex processing;
+    yarp::os::Mutex done;
+    int pStart;
+    int pEnd;
+
+    double normval;
+
+    std::vector<vParticle> *particles;
+    const ev::vQueue *stw;
+
+public:
+
+    vPartObsThread(int pStart, int pEnd);
+    void setDataSources(std::vector<vParticle> *particles, const ev::vQueue *stw);
+    void process();
+    double waittilldone();
+
+    void run();
+};
+
+/*////////////////////////////////////////////////////////////////////////////*/
 //VPARTICLEFILTER
 /*////////////////////////////////////////////////////////////////////////////*/
 
@@ -230,11 +258,9 @@ private:
     //parameters
     int nparticles;
     int nthreads;
-    int sigma;
     ev::resolution res;
     bool adaptive;
     int bins;
-    int maxtoproc;
     int seedx, seedy, seedr;
     double nRandoms;
 
@@ -243,23 +269,22 @@ private:
     std::vector<vParticle> ps_snap;
     std::vector<double> accum_dist;
     preComputedBins pcb;
+    std::vector<vPartObsThread *> computeThreads;
 
     //variables
     double pwsumsq;
     int rbound_min;
     int rbound_max;
-    double maxlikelihood;
-
 
 public:
 
+    double maxlikelihood;
+
     vParticlefilter() {}
-    ~vParticlefilter() {}
 
-
-    void initialise(int width, int height, int nparticles, double sigma,
-                    int bins, bool adaptive, int nthreads, int maxtoproc,
-                    double minlikelihood, double inlierThresh, double randoms);
+    void initialise(int width, int height, int nparticles,
+                    int bins, bool adaptive, int nthreads, double minlikelihood,
+                    double inlierThresh, double randoms);
 
     void setSeed(int x, int y, int r = 0);
     void resetToSeed();
@@ -268,7 +293,9 @@ public:
     void performObservation(const vQueue &q);
     void extractTargetPosition(double &x, double &y, double &r);
     void performResample();
-    void performPrediction();
+    void performPrediction(double sigma);
+
+    std::vector<vParticle> getps();
 
 };
 

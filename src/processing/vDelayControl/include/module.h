@@ -17,27 +17,22 @@
 // \defgroup Modules Modules
 // \defgroup vParticleFilter vParticleFilter
 // \ingroup Modules
-/// \brief Event-driven Detection and Tracking using a Particle Filter
+// \brief tracks targets using a particle filter
 
 #ifndef __V_PARTICLEMODULE__
 #define __V_PARTICLEMODULE__
 
 #include <yarp/os/RFModule.h>
-#include "vRealTime.h"
-#include "vFixedRate.h"
+#include "vControlLoopDelay.h"
 
 
 /*////////////////////////////////////////////////////////////////////////////*/
 //VPARTICLEMODULE
 /*////////////////////////////////////////////////////////////////////////////*/
-class vParticleModule : public yarp::os::RFModule
+class module : public yarp::os::RFModule
 {
-    //the event bottle input and output handler
-    vParticleReader *particleCallback;
-    particleProcessor *rightThread;
-    particleProcessor *leftThread;
-    hSurfThread eventhandler;
-    collectorPort outport;
+
+    delayControl delaycontrol;
 
 public:
 

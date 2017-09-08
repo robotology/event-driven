@@ -29,6 +29,8 @@ vDraw * createDrawer(std::string tag)
         return new isoDraw();
     if(tag == interestDraw::drawtype)
         return new interestDraw();
+    if(tag == circleDraw::drawtype)
+        return new circleDraw();
     if(tag == flowDraw::drawtype)
         return new flowDraw();
     if(tag == lifeDraw::drawtype)
@@ -55,8 +57,13 @@ std::string addressDraw::getEventType()
 
 void addressDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 {
-    image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
-    image.setTo(255);
+
+    if(image.empty()) {
+        image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
+        image.setTo(255);
+    }
+//    image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
+//    image.setTo(255);
 
     if(checkStagnancy(eSet) > clearThreshold) {
  //       return;
@@ -194,8 +201,8 @@ void clusterDraw::draw(cv::Mat &image, const vQueue &eSet, int vTime)
     cv::Scalar blue = CV_RGB(0, 0, 255);
 
     if(image.empty()) {
-        image = cv::Mat(Xlimit, Ylimit, CV_8UC3);
-        image.setTo(0);
+        image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
+        image.setTo(255);
     }
 
     if(checkStagnancy(eSet) > clearThreshold) {
@@ -238,13 +245,88 @@ void clusterDraw::draw(cv::Mat &image, const vQueue &eSet, int vTime)
             std::cout << "l_min error: shape distorted" << std::endl;
         }
 
-        //double a = sqrt(std::fabs(l_max)) * 5;
-        //double b = sqrt(std::fabs(l_min)) * 5;
+        double a = sqrt(std::fabs(l_max)) * 5;
+        double b = sqrt(std::fabs(l_min)) * 5;
         double alpha = 0.5*atan2f(2*sig_xy_, sig_y2_ - sig_x2_);
 
         alpha = alpha * 180 / M_PI; //convert to degrees for openCV ellipse function
-        //cv::ellipse(image, centr, cv::Size(a,b), alpha, 0, 360, blue, 2);
-        cv::circle(image, centr, v->sigx, blue, 2);
+        cv::ellipse(image, centr, cv::Size(a,b), alpha, 0, 360, blue, 2);
+
+    }
+
+}
+
+const std::string circleDraw::drawtype = "CIRC";
+
+std::string circleDraw::getDrawType()
+{
+    return circleDraw::drawtype;
+}
+
+std::string circleDraw::getEventType()
+{
+    return GaussianAE::tag;
+}
+
+void circleDraw::draw(cv::Mat &image, const vQueue &eSet, int vTime)
+{
+    cv::Scalar blue = CV_RGB(0, 0, 255);
+    cv::Scalar red = CV_RGB(255, 0, 0);
+
+    if(image.empty()) {
+        image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
+        image.setTo(255);
+    }
+
+    if(eSet.empty()) return;
+
+    //update the 'persistence' the current state of each of the cluster ID's
+    for(vQueue::const_iterator qi = eSet.begin(); qi != eSet.end(); qi++) {
+        auto vp = is_event<GaussianAE>(*qi);
+        if(vp) {
+            persistance[vp->ID] = vp;
+        }
+    }
+
+    std::map<int, event<GaussianAE> >::iterator ci;
+    for(ci = persistance.begin(); ci != persistance.end(); ci++) {
+
+        auto v = ci->second;
+        if(v->polarity) continue;
+
+        if(v->x < 0 || v->x >= Xlimit || v->y < 0 || v->y >= Ylimit) continue;
+        if(v->sigxy >= v->sigx) continue;
+
+        cv::Point centr(v->x, v->y);
+        if(flip) {
+            centr.x = Xlimit - 1 - centr.x;
+            centr.y = Ylimit - 1 - centr.y;
+        }
+
+        cv::circle(image, centr, v->sigx - v->sigxy, red, 1.0);
+        cv::circle(image, centr, v->sigx + v->sigxy, red, 1.0);
+
+        continue;
+    }
+
+    for(ci = persistance.begin(); ci != persistance.end(); ci++) {
+
+        auto v = ci->second;
+        if(!v->polarity) continue;
+
+        if(v->x < 0 || v->x >= Xlimit || v->y < 0 || v->y >= Ylimit) continue;
+        if(v->sigxy >= v->sigx) continue;
+
+        cv::Point centr(v->x, v->y);
+        if(flip) {
+            centr.x = Xlimit - 1 - centr.x;
+            centr.y = Ylimit - 1 - centr.y;
+        }
+
+        cv::circle(image, centr, v->sigx - v->sigxy, blue, 1.0);
+        cv::circle(image, centr, v->sigx + v->sigxy, blue, 1.0);
+
+        continue;
     }
 
 }

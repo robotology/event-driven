@@ -116,9 +116,9 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
                 if(!vReader.open(moduleName, newDrawer->getEventType()))
                     yError() << "Could not open input port";
             } else {
-                std::cerr << "Could not find draw tag "
+                yError() << "Could not find draw tag "
                           << drawtypelist->get(j).asString()
-                          << ". No drawer created" << std::endl;
+                          << ". No drawer created";
             }
         }
     }

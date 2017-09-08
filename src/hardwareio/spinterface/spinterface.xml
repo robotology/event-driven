@@ -24,59 +24,22 @@
      <data>
         <input>
             <type>eventdriven::vBottle</type>
-            <port carrier="tcp">/vCircle/vBottle:i</port>
+            <port carrier="tcp">/spinterface/vBottle:i</port>
             <required>yes</required>
             <priority>no</priority>
             <description>
-                Accepts the address events and/or flow events in the vBottle
-                container
+                Accepts the address events in the vBottle container,
+                that are converted into neuron IDs, manageable by a SpiNNaker board.
             </description>
         </input>
         <output>
             <type>eventdriven::vBottle</type>
-            <port carrier="tcp">/vCircle/vBottle:o</port>
+            <port carrier="tcp">/spinterface/vBottle:o</port>
             <description>
-                Outputs the cirlce detections in the form of an
-                eventdriven::ClusterEventGauss. The vBottle also contains all
-                events in the vBottle received as input.
-            </description>
-        </output>
-        <output>
-            <type>yarp::os::Bottle</type>
-            <port carrier="udp">/vCircle/scope:o</port>
-            <description>
-                Outputs debug information for use with yarpscope. The gap
-                between input bottle numbers is written to detect data being
-                lost.
-            </description>
-        </output>
-        <output>
-            <type>yarp::sig::Image</type>
-            <port carrier="udp">/vCirlce/debug:o</port>
-            <description>
-                Outputs a debugging images displaying events in the event-queue
-                as well as the strength of the Hough transform from the same
-                events.
-            </description>
-        </output>
-        <output>
-            <type>yarp::os::Bottle</type>
-            <port carrier="tcp">/vCircle/dump:o</port>
-            <description>
-                Outputs a dump of detections for experiment analysis. The format
-                 is "Time Offset | Event Timestamp | X | Y | R | Score".
+                Outputs address events, converted from neuron IDs
+                processed by a SpiNNaker board.
             </description>
         </output>
     </data>
 
-<!--    <services>
-      <server>
-        <port carrier="tcp">/motionCUT/rpc</port>
-        <description>
-            The parameters winSize, recogThres, adjNodesThres, blobMinSizeThres, framesPersistence, cropSize,
-            numThreads, verbosity can be changed/retrieved through the commands set/get. Moreover, the further
-            switch inhibition can be accessed in order to enable/disable the motion detection at run-time.
-        </description>
-      </server>
-    </services>-->
 </module>

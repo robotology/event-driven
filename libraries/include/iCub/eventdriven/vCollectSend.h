@@ -37,14 +37,18 @@ private:
 
 
 public:
+
+    /// \brief constructor
     collectorPort() : RateThread(1.0) {}
 
+    /// \brief open the output port
     bool open(std::string name) {
 
         return sendPort.open(name);
 
     }
 
+    /// \brief add an event to be sent on next thread execution
     void pushevent(event<> v, yarp::os::Stamp y) {
 
         m.lock();
@@ -54,6 +58,9 @@ public:
 
     }
 
+    /// \brief on each call of the thread, all events that have been added are
+    /// sent on the port in a vBottle. If no events have been added, a vBottle
+    /// is not sent.
     void run() {
 
         if(filler.size()) {
@@ -68,9 +75,6 @@ public:
             sendPort.write();
 
         }
-
-
-
     }
 
 };
