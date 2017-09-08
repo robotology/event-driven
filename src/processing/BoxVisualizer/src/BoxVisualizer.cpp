@@ -26,8 +26,8 @@ int main(int argc, char * argv[])
     rf.setDefaultConfigFile( "DualCamTransform.ini" );
     rf.configure( argc, argv );
     
-    BoxVisualizer mappingModule;
-    return mappingModule.runModule(rf);
+    BoxVisualizer boxVisualizerModule;
+    return boxVisualizerModule.runModule(rf);
 }
 
 bool BoxVisualizer::readConfigFile( const yarp::os::ResourceFinder &rf, std::string groupName
@@ -36,7 +36,7 @@ bool BoxVisualizer::readConfigFile( const yarp::os::ResourceFinder &rf, std::str
     
     //If config file not found, calibration necessary
     if ( conf.isNull() ) {
-        yInfo() << "Could not find mapping config in group " << groupName << ". Calibration is necessary.";
+        yInfo() << "Could not find transform config in group " << groupName << ". Calibration is necessary.";
         return false;
     }
     
@@ -69,7 +69,7 @@ bool BoxVisualizer::configure( yarp::os::ResourceFinder &rf ) {
     width = rf.check("width", yarp::os::Value(304)).asInt();
     channel = rf.check("channel", yarp::os::Value(0)).asInt();
     leftH.resize(3,3);
-    bool ok = readConfigFile( rf, "MAPPING_LEFT", leftH );
+    bool ok = readConfigFile( rf, "TRANSFORM_LEFT", leftH );
     leftH = yarp::math::luinv(leftH);
     ok &= vPortIn.open(getName("/vBottle:i"));
     ok &= vPortOut.open(getName("/vBottle:o"));
