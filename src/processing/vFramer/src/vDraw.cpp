@@ -57,11 +57,13 @@ std::string addressDraw::getEventType()
 
 void addressDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 {
+    image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
+    image.setTo(128);
 
-    if(image.empty()) {
-        image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
-        image.setTo(255);
-    }
+//    if(image.empty()) {
+//        image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
+//        image.setTo(255);
+//    }
 //    image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
 //    image.setTo(255);
 
@@ -91,7 +93,17 @@ void addressDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 
         cv::Vec3b &cpc = image.at<cv::Vec3b>(y, x);
 
-        if(!aep->polarity)
+        if (!aep -> polarity){
+            cpc[0] = 0;
+            cpc[1] = 0;
+            cpc[2] = 0;
+        } else {
+            cpc[0] = 255;
+            cpc[1] = 255;
+            cpc[2] = 255;
+        }
+        
+        /*if(!aep->polarity)
         {
             //blue
             if(cpc[0] == 1) cpc[0] = 0;   //if positive and negative
@@ -114,7 +126,7 @@ void addressDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
             //red
             if(cpc.val[2] == 160) cpc[2] = 255;
             else cpc[2] = 0;
-        }
+        }*/
     }
 }
 

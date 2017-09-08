@@ -98,7 +98,7 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
 
         //extract the portname
         outports[i] = new yarp::os::BufferedPort<
-                yarp::sig::ImageOf<yarp::sig::PixelBgr> >;
+                yarp::sig::ImageOf<yarp::sig::PixelRgb> >;
         //outports[i]->setStrict();
         std::string outportname = displayList->get(i*3 + 1).asString();
         if(!outports[i]->open(moduleName + outportname))
@@ -190,7 +190,7 @@ bool vFramerModule::updateModule()
 
 
         //then copy the image to the port and send it on
-        yarp::sig::ImageOf<yarp::sig::PixelBgr> &o = outports[i]->prepare();
+        yarp::sig::ImageOf<yarp::sig::PixelRgb> &o = outports[i]->prepare();
         o.resize(canvas.cols, canvas.rows);
         cv::Mat publishMat((IplImage *)o.getIplImage(), false);
         //cv::flip(canvas, canvas, 0);
