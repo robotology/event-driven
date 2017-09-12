@@ -136,22 +136,22 @@ void delayControl::run()
         Tpredict = yarp::os::Time::now() - Tpredict;
 
         //check for stagnancy
-//        if(vpf.maxlikelihood < detectionThreshold) {
+        if(vpf.maxlikelihood < detectionThreshold) {
 
-//            if(!stagnantstart) {
-//                stagnantstart = yarp::os::Time::now();
-//            } else {
-//                if(yarp::os::Time::now() - stagnantstart > 1.0) {
-//                    vpf.resetToSeed();
-//                    detection = false;
-//                    stagnantstart = 0;
-//                    yInfo() << "Performing full resample";
-//                }
-//            }
-//        } else {
-//            detection = true;
-//            stagnantstart = 0;
-//        }
+            if(!stagnantstart) {
+                stagnantstart = yarp::os::Time::now();
+            } else {
+                if(yarp::os::Time::now() - stagnantstart > 1.0) {
+                    vpf.resetToSeed();
+                    detection = false;
+                    stagnantstart = 0;
+                    yInfo() << "Performing full resample";
+                }
+            }
+        } else {
+            detection = true;
+            stagnantstart = 0;
+        }
 
 
         //output our event
@@ -178,6 +178,7 @@ void delayControl::run()
 
         //write to our scope
         static double pscopetime = yarp::os::Time::now();
+        static double ratetime = yarp::os::Time::now();
         if(scopePort.getOutputCount()) {
 
             static double val1 = -ev::vtsHelper::max_stamp;
@@ -188,13 +189,21 @@ void delayControl::run()
             static double val6 = -ev::vtsHelper::max_stamp;
             static double val7 = -ev::vtsHelper::max_stamp;
 
-            val1 = std::max(val1, (double)targetproc);
+            double ratetimedt = yarp::os::Time::now() - ratetime;
+            val1 = std::max(val1, (double)(1.0/ratetimedt));
             val2 = std::max(val2, (double)inputPort.queryDelayN());
             val3 = std::max(val3, inputPort.queryDelayT());
-            val4 = std::max(val4, inputPort.queryRate());
+            val4 = std::max(val4, inputPort.queryRate() / 1000.0);
             val5 = std::max(val5, avgx);
             val6 = std::max(val6, avgy);
             val7 = std::max(val7, avgr);
+            ratetime += ratetimedt;
+
+            val2 = 0;
+            val3 = 0;//std::max(val3, inputPort.queryDelayT());
+            val5 = 0;//std::max(val5, avgx);
+            val6 = 0;//std::max(val6, avgy);
+            val7 = 0;//std::max(val7, avgr);
 
             double scopedt = yarp::os::Time::now() - pscopetime;
             if((scopedt > 0.05 || scopedt < 0)) {
