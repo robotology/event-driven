@@ -660,7 +660,7 @@ void isoDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     if(dt < 0) dt += ev::vtsHelper::max_stamp;
     maxdt = std::max(maxdt, dt);
 
-    int skip = 1 + eSet.size() / 50000;
+    int skip = 1 + eSet.size() / 200000;
 
     //ev::vQueue::const_iterator qi;
     //for(qi = eSet.begin(); qi != eSet.end(); qi += skip) {
