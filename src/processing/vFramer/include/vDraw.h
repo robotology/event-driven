@@ -185,16 +185,14 @@ public:
 };
 
 class isoDraw : public vDraw {
-private:
+
+protected:
 
     //angles
     double thetaY;
     double thetaX;
     double CY, SY;
     double CX, SX;
-
-    //image with warped square drawn
-    cv::Mat baseimage;
 
     int tsscalar;
     int Zlimit;
@@ -207,10 +205,23 @@ private:
     //private functions
     void pttr(int &x, int &y, int &z);
 
+    //image with warped square drawn
+    cv::Mat baseimage;
 
 public:
 
     void initialise();
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
+class isoInterestDraw : public isoDraw {
+
+public:
 
     static const std::string drawtype;
     virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);

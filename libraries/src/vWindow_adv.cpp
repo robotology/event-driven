@@ -797,5 +797,48 @@ vQueue historicalSurface::getSurface(int queryTime, int queryWindow, int xl, int
     return qret;
 }
 
+void historicalSurface::getSurfaceN(ev::vQueue &qret, int queryTime, int numEvents, int d)
+{
+    if(q.empty()) return; // vQueue();
+
+    auto v = is_event<AE>(q.back());
+    return getSurfaceN(qret, queryTime, numEvents, d, v->x, v->y);
+}
+
+void historicalSurface::getSurfaceN(ev::vQueue &qret, int queryTime, int numEvents, int d, int x, int y)
+{
+    if(q.empty()) return; // vQueue();
+    return getSurfaceN(qret, queryTime, numEvents, x - d, x + d, y - d, y + d);
+}
+
+void historicalSurface::getSurfaceN(ev::vQueue &qret, int queryTime, int numEvents, int xl, int xh, int yl, int yh)
+{
+    if(q.empty()) return; // vQueue();
+
+//    vQueue qret;
+    int ctime = q.back()->stamp;
+    int countEvents = 0;
+    surface.zero();
+
+    for(vQueue::reverse_iterator qi = q.rbegin(); qi != q.rend(); qi++) {
+        auto v = is_event<AE>(*qi);
+
+        if(surface(v->x, v->y)) continue;
+
+        int cdeltat = ctime - v->stamp;
+        if(cdeltat < 0) cdeltat += vtsHelper::max_stamp;
+        if(cdeltat < queryTime) continue;
+
+        surface(v->x, v->y) = 1;
+        if(v->x >= xl && v->x <= xh && v->y >= yl && v->y <= yh) {
+            qret.push_back(*qi);
+            countEvents++;
+        }
+
+        if(countEvents > numEvents) break;
+    }
+//    return qret;
+}
+
 
 }

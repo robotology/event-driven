@@ -15,14 +15,18 @@
     <arguments>
         <param desc="Specifies the stem name of ports created by the module." default="vCorner"> name </param>
         <param desc="Sets ouput port to use strict protocol." default="true"> strict </param>
-        <param desc="Number of pixels on the x-axis of the sensor." default="128"> width </param>
-        <param desc="Number of pixels on the y-axis of the sensor." default="128"> height </param>
-        <param desc="Size of Sobel filter used for the detection." default="5"> filterSize </param>
-        <param desc="Length of the temporal window in seconds used to accumulate events." default="0.01"> tempsize </param>
+        <param desc="Number of pixels on the x-axis of the sensor." default="304"> width </param>
+        <param desc="Number of pixels on the y-axis of the sensor." default="240"> height </param>
+        <param desc="Size of Sobel filter used for the harris detection." default="5"> filterSize </param>
+        <param desc="Length of the temporal window in seconds used to accumulate events." default="0.1"> tempsize </param>
         <param desc="Radius of the spatial window in pixels." default="5"> windowRad </param>
         <param desc="Standard deviation of the Gaussian filter." default="1.0"> sigma </param>
-        <param desc="Threshold for a confirmed corner event detection." default="8.0"> thresh </param>
+        <param desc="Threshold for a confirmed harris corner event detection." default="8.0"> thresh </param>
+        <param desc="Sets the read function as callback." default="false"> callback </param>
         <param desc="Number of threads used for the computation." default="2"> nthreads </param>
+        <param desc="Sets the harris corner detector." default="false"> harris </param>
+        <param desc="Sets the fast corner detector." default="true"> fast </param>
+        <param desc="Gain of the control delay loop." default="0.1"> gain </param>
     </arguments>
 
     <authors>
@@ -50,11 +54,9 @@
         </output>
         <output>
             <type>yarp::os::Bottle</type>
-            <port carrier="udp">/vCorner/score:o</port>
+            <port carrier="udp">/vCorner/debug:o</port>
             <description>
-                Outputs debug information for use with yarpscope. The gap
-                between the time required to get and process events
-                to detect data being lost.
+                Outputs debug information for use with yarpscope.
             </description>
         </output>
     </data>

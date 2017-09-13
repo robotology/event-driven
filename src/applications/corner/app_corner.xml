@@ -13,15 +13,21 @@
     <node> icub23 </node>
 </module>
 
-    <module>
-        <name> vCorner </name>
-        <parameters> --strict --width 304 --height 240 --spatial 3 --qsize 25 --nthreads 8 --allToSurf false </parameters>
-        <node> icub23 </node>
-    </module>
+<module>
+    <name>vCorner</name>
+    <parameters>--strict --harris true --spatial 4 --nthreads 8 --qsize 25</parameters>
+    <node>icub23</node>
+</module>
+
+<module>
+    <name>vCorner</name>
+    <parameters>--strict --fast true</parameters>
+    <node>icub23</node>
+</module>
 
 <module>
     <name> vFramer</name>
-    <parameters> --frameRate 30 --displays "(0 /left (AE AE-INT) 1 /right (AE AE-INT))" </parameters>
+    <parameters> --frameRate 30 --displays "(0 /left (AE AE-INT ISO ISO-INT) 1 /right (AE AE-INT ISO ISO-INT))" </parameters>
     <node>icub24</node>
 </module>
 
@@ -40,12 +46,6 @@
     <connection>
         <from>/zynqGrabber/vBottle:o</from>
         <to>/vPreProcess/vBottle:i</to>
-        <protocol>udp</protocol>
-    </connection>
-
-    <connection>
-        <from>/vPreProcess/vBottle:o</from>
-        <to>/vCorner/vBottle:i</to>
         <protocol>udp</protocol>
     </connection>
 

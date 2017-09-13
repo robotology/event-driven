@@ -16,7 +16,7 @@
  */
 
 
-#include "vCorner.h"
+#include "vCornerModule.h"
 
 int main(int argc, char * argv[])
 {

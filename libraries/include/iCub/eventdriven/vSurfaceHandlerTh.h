@@ -396,8 +396,50 @@ public:
 
     }
 
+    vQueue queryROI(int channel, int numEvts, int r)
+    {
+
+        vQueue q;
+
+        m.lock();
+        double cpunow = yarp::os::Time::now();
+
+        if(channel == 0) {
+
+            cpudelayL -= (cpunow - cputimeL) * vtsHelper::vtsscaler * 1.1;
+            cputimeL = cpunow;
+
+            if(cpudelayL < 0) cpudelayL = 0;
+            if(cpudelayL > maxcpudelay) {
+                yWarning() << "CPU delay hit maximum";
+                cpudelayL = maxcpudelay;
+            }
+
+            surfaceleft.getSurfaceN(q, cpudelayL, numEvts, r);
+        }
+        else {
+
+            cpudelayR -= (cpunow - cputimeR) * vtsHelper::vtsscaler * 1.1;
+            cputimeR = cpunow;
+
+            if(cpudelayR < 0) cpudelayR = 0;
+            if(cpudelayR > maxcpudelay) {
+                yWarning() << "CPU delay hit maximum";
+                cpudelayR = maxcpudelay;
+            }
+
+            surfaceright.getSurfaceN(q, cpudelayR, numEvts, r);
+        }
+
+        m.unlock();
+
+        return q;
+    }
+
     vQueue queryROI(int channel, unsigned int querySize, int x, int y, int r)
     {
+
+
         vQueue q;
 
         m.lock();
