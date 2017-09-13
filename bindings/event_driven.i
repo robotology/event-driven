@@ -164,6 +164,9 @@ public:
 	    r4[i] = m->y;
 	    r5[i] = m->polarity;
 	}
+        //if (abs(r2[q.size()-1]-r2[0]) > 10000) {
+        //    std::cout << "ERR:meh " << r2[q.size()-1] << " - " << r2[0] << " = " << r2[q.size()-1]-r2[0]  << std::endl; 
+        //}
     }
 
     void _setData(unsigned int* s1, int m1,
