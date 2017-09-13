@@ -10,13 +10,13 @@ namespace ev {
 #endif
 
 #ifdef TENBITCODEC
-    double vtsHelper::tsscaler = 0.000000080;
+    double vtsHelper::tsscaler = 0.000001000;
 #else
     double vtsHelper::tsscaler = 0.000000128;
 #endif
 
 #ifdef TENBITCODEC
-    double vtsHelper::vtsscaler = 12500000;
+    double vtsHelper::vtsscaler = 1000000;
 #else
     double vtsHelper::vtsscaler = 7812500;
 #endif

@@ -50,11 +50,12 @@ long vDevReadBuffer::getEventChunk(unsigned char* target)
 {
     long n_TD = 0;
     uint64_t *target64 = (uint64_t*) target;
+    uint32_t ts = 0;
     //std::cout << "n_events:" << n_events << std::endl;
     while (n_TD<512) {
     	if (n_events == 0) {
     	    if (!cam->poll_buffer()) {
-		usleep(1);
+		//usleep(1);
     	        break;
     	    }
     	    ev_buffer = (uint32_t*)cam->decode_buffer(&n_events);
@@ -65,13 +66,13 @@ long vDevReadBuffer::getEventChunk(unsigned char* target)
 	    last_timestamp = ((uint64_t) ev.timestamp)<<11;
         } else if(static_cast<Event_Types_underlying>(Event_Types::LEFT_TD_LOW) == evbase->type) {
     	    Event_EVENT2D ev = *reinterpret_cast<Event_EVENT2D*>(ev_buffer);
-	    uint32_t ts = ((last_timestamp + (uint32_t) ev.timestamp)%(1<<24));
+	    ts = ((last_timestamp + (uint32_t) ev.timestamp)%(1<<24));
 	    uint64_t encoded = ((uint64_t) ts)|((uint64_t)(this->height-1-ev.y)<<42)|((uint64_t)(this->width-1-ev.x)<<33)|0UL<<32;
 	    *target64++ = encoded;
             ++n_TD;
         } else if(static_cast<Event_Types_underlying>(Event_Types::LEFT_TD_HIGH) == evbase->type) {
     	    Event_EVENT2D ev = *reinterpret_cast<Event_EVENT2D*>(ev_buffer);
-	    uint32_t ts = ((last_timestamp + (uint32_t) ev.timestamp)%(1<<24));
+	    ts = ((last_timestamp + (uint32_t) ev.timestamp)%(1<<24));
 	    uint64_t encoded = ((uint64_t) ts)|((uint64_t)(this->height-1-ev.y)<<42)|((uint64_t)(this->width-1-ev.x)<<33)|1UL<<32;
 	    *target64++ = encoded;
             ++n_TD;
