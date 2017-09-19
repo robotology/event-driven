@@ -44,6 +44,9 @@ int main(int argc, char * argv[])
 
 bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
 {
+    pyarptime = 0;
+    stopped = false;
+
     //admin options
     std::string moduleName =
             rf.check("name", yarp::os::Value("/vFramer")).asString();
@@ -54,12 +57,18 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
 
     double eventWindow =
             rf.check("eventWindow", yarp::os::Value(0.1)).asDouble();
-    eventWindow = eventWindow / ev::vtsHelper::tsscaler;
+    eventWindow = eventWindow * vtsHelper::vtsscaler;
 
-    //bool strict = rf.check("strict") &&
-    //        rf.check("strict", yarp::os::Value(true)).asBool();
+    int frameRate = rf.check("frameRate", yarp::os::Value(30)).asInt();
+    period = 1.0 / frameRate;
+
     bool flip = rf.check("flip") &&
             rf.check("flip", yarp::os::Value(true)).asBool();
+
+    bool forceRender = rf.check("forcerender") &&
+            rf.check("forcerender", yarp::os::Value(true)).asBool();
+    if(forceRender)
+        vReader.setStrictUpdatePeriod(vtsHelper::vtsscaler * period);
 
     //viewer options
     //set up the default channel list
@@ -86,7 +95,7 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
 
     int nDisplays = displayList->size() / 3;
 
-    //for each channel open an vFrame and an output port
+    //for each channel open a vFrame and an output port
     channels.resize(nDisplays);
     outports.resize(nDisplays);
     drawers.resize(nDisplays);
@@ -123,58 +132,29 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
         }
     }
 
-    //vReader.setFlip(flip, retinaHeight, retinaWidth);
-
-    //open our event reader given the channel list
-//    if(!vReader.open(moduleName, strict))
-//        return false;
-
-    //set up the frameRate
-    period = 1.0 / rf.check("frameRate", yarp::os::Value(20)).asInt();
-
-    pyarptime = 0;
-
     return true;
 
 }
 
 bool vFramerModule::interruptModule()
 {
-    //vReader.();
     for(unsigned int i = 0; i < outports.size(); i++)
-        outports[i]->interrupt();
-    RFModule::interruptModule();
+        outports[i]->close();
+
+    vReader.close();
+
     return true;
 }
 
 bool vFramerModule::close()
 {
-    vReader.close();
-    for(unsigned int i = 0; i < outports.size(); i++)
-        outports[i]->close();
-    RFModule::close();
     return true;
 }
 
 bool vFramerModule::updateModule()
 {
 
-    if(isStopping()) return false;
-
     yarp::os::Stamp yarptime = vReader.getystamp();
-
-//    //if yarptime is valid we try to update at that frameRate.
-//    if(yarptime.isValid()) {
-//        //std::cout << "yarptime valid: " << yarptime.getTime() << std::endl;
-//        double dt = yarptime.getTime() - pyarptime;
-//        if(dt < 0)
-//            //we restarted something from yarpdataplayer
-//            pyarptime = yarptime.getTime();
-
-//        if(yarptime.getTime() - pyarptime < period)
-//            return true;
-//        pyarptime = yarptime.getTime();
-//    }
 
     //for each output image needed
     for(unsigned int i = 0; i < channels.size(); i++) {
@@ -198,14 +178,13 @@ bool vFramerModule::updateModule()
         if(yarptime.isValid()) outports[i]->setEnvelope(yarptime);
         outports[i]->write();
     }
-
     return true;
 
 }
 
 double vFramerModule::getPeriod()
 {
-    return 0.3 * period;
+    return period;
 }
 
 vFramerModule::~vFramerModule()
@@ -219,6 +198,5 @@ vFramerModule::~vFramerModule()
     for(unsigned int i = 0; i < outports.size(); i++) {
         delete outports[i];
     }
-
 }
 
