@@ -57,8 +57,8 @@ void isoCircDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     cv::Point p2(px2, py2);
 
     if(v->polarity)
-        cv::line(image, p1, p2, blue);
+        cv::line(image, p1, p2, blue, 2.0);
     else
-        cv::line(image, p1, p2, red);
+        cv::line(image, p1, p2, red, 2.0);
 
 }

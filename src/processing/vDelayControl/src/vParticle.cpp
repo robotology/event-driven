@@ -202,7 +202,7 @@ void vParticle::resetRadius(double value)
 
 void vParticle::resetArea()
 {
-    negscaler = 3.0 * angbuckets / (M_PI * r * r);
+    negscaler = 2.5 * angbuckets / (M_PI * r * r);
 }
 
 void vParticle::predict(double sigma)
@@ -380,6 +380,7 @@ void vParticlefilter::extractTargetWindow(double &tw)
         tw += ps[i].gettw() * w;
 
     }
+
 }
 
 void vParticlefilter::performResample()
