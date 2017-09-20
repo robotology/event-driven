@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 eMorph Group iCub Facility
+ * Copyright (C) 2017 event-driven group iCub Facility
  * Authors: Arren Glover
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
@@ -41,6 +41,8 @@ vDraw * createDrawer(std::string tag)
         return new blobDraw();
     if(tag == isoInterestDraw::drawtype)
         return new isoInterestDraw();
+    if(tag == isoCircDraw::drawtype)
+        return new isoCircDraw();
     return 0;
 
 }
