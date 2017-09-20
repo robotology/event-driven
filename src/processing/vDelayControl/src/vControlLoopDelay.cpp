@@ -123,6 +123,9 @@ void delayControl::run()
         vpf.performObservation(qROI.q);
         Tlikelihood = yarp::os::Time::now() - Tlikelihood;
         vpf.extractTargetPosition(avgx, avgy, avgr);
+        double tw; vpf.extractTargetWindow(tw);
+        tw = qROI.q.back()->stamp - qROI.q[(int)(tw+0.5)]->stamp;
+        if(tw < 0) tw += vtsHelper::max_stamp;
         double roisize = avgr * 1.4;
         qROI.setROI(avgx - roisize, avgx + roisize, avgy - roisize, avgy + roisize);
         qROI.setSize(avgr * 8.0 * M_PI);
@@ -162,7 +165,7 @@ void delayControl::run()
             ceg->x = avgx;
             ceg->y = avgy;
             ceg->sigx = avgr;
-            ceg->sigy = avgr;
+            ceg->sigy = tw;
             ceg->sigxy = 1.0;
             if(vpf.maxlikelihood > detectionThreshold)
                 ceg->polarity = 1.0;
@@ -312,7 +315,7 @@ int roiq::add(event<AE> &v)
         return 0;
     q.push_back(v);
     if(!use_TW) {
-        if(q.size() > n)
+        while(q.size() > n)
             q.pop_front();
     } else {
 
