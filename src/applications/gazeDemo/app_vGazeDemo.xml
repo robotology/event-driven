@@ -21,33 +21,33 @@
 
 <module>
     <name> vDelayControl </name>
-    <parameters> --name /vpfL --particles 200 --obsthresh 0.30 --truethresh 0.4 --threads 8 --bins 64 --gain 0.01 --mindelay 30</parameters>
+    <parameters> --name /vpfL --particles 256 --obsthresh 0.20 --truethresh 0.3 --threads 8 --bins 64 --gain 0.02 --mindelay 20</parameters>
     <node> icub-blade </node>
 </module>
 
 <module>
     <name> vDelayControl </name>
-    <parameters> --name /vpfR --particles 200 --obsthresh 0.30 --truethresh 0.4 --threads 8 --bins 64 --gain 0.01  --mindelay 30 </parameters>
+    <parameters> --name /vpfR --particles 256 --obsthresh 0.20 --truethresh 0.3 --threads 8 --bins 64 --gain 0.02 --mindelay 20 </parameters>
     <node> icub-blade </node>
 </module>
 
 <module>
     <name> yarpscope </name>
-    <parameters> --remote /vpfR/scope:o --index "(0 1 2 3 4)" --color "(red blue green black yellow)" --title RightScope</parameters>
-    <environment> YARP_PORT_PREFIX=/right </environment>
-    <node> icub24 </node>
-</module>
-
-<module>
-    <name> yarpscope </name>
-    <parameters> --remote /vpfL/scope:o --index "(0 1 2 3 4)" --color "(red blue green black yellow)" --title LeftScope </parameters>
+    <parameters> --xml /usr/local/src/robot/event-driven/src/applications/gazeDemo/leftScope.xml</parameters>
     <environment> YARP_PORT_PREFIX=/left </environment>
     <node> icub24 </node>
 </module>
 
 <module>
+    <name> yarpscope </name>
+    <parameters> --xml /usr/local/src/robot/event-driven/src/applications/gazeDemo/rightScope.xml </parameters>
+    <environment> YARP_PORT_PREFIX=/right </environment>
+    <node> icub24 </node>
+</module>
+
+<module>
     <name> vFramer </name>
-    <parameters> --name /vFramer --displays "(0 /left (CIRC AE ISO) 1 /right (CIRC AE ISO))" </parameters>
+    <parameters> --name /vFramer --displays "(0 /left (CIRC AE ISO ISO-CIRC) 1 /right (CIRC AE ISO ISO-CIRC))" </parameters>
     <node>icub24</node>
 </module>
 
