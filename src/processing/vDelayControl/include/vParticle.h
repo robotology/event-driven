@@ -292,6 +292,7 @@ public:
 
     void performObservation(const vQueue &q);
     void extractTargetPosition(double &x, double &y, double &r);
+    void extractTargetWindow(double &tw);
     void performResample();
     void performPrediction(double sigma);
 

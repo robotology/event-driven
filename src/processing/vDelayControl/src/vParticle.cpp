@@ -326,9 +326,9 @@ void vParticlefilter::performObservation(const vQueue &q)
         }
 
         for(int i = 0; i < nparticles; i++) {
-            for(unsigned int j = 0; j < q.size(); j++) {
+            for(int j = (int)(q.size()-1); j >= 0; j--) {
                 AE* v = read_as<AE>(q[j]);
-                ps[i].incrementalLikelihood(v->x, v->y, 0);
+                ps[i].incrementalLikelihood(v->x, v->y, j);
             }
         }
 
@@ -368,6 +368,17 @@ void vParticlefilter::extractTargetPosition(double &x, double &y, double &r)
         x += ps[i].getx() * w;
         y += ps[i].gety() * w;
         r += ps[i].getr() * w;
+    }
+}
+
+void vParticlefilter::extractTargetWindow(double &tw)
+{
+    tw = 0;
+
+    for(int i = 0; i < nparticles; i++) {
+        double w = ps[i].getw();
+        tw += ps[i].gettw() * w;
+
     }
 }
 
@@ -451,9 +462,9 @@ void vPartObsThread::run()
         }
 
         for(int i = pStart; i < pEnd; i++) {
-            for(unsigned int j = 0; j < stw->size(); j++) {
+            for(int j = (int)(stw->size()-1); j >= 0; j--) {
                 AE* v = read_as<AE>((*stw)[j]);
-                (*particles)[i].incrementalLikelihood(v->x, v->y, 0);
+                (*particles)[i].incrementalLikelihood(v->x, v->y, j);
 
 
             }
