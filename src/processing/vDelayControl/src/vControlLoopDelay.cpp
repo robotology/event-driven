@@ -63,7 +63,6 @@ void delayControl::run()
 
     unsigned int targetproc = 0;
     unsigned int i = 0;
-    bool breakOnAdded = gain < 1.0;
     yarp::os::Stamp ystamp;
     double stagnantstart = 0;
     bool detection = false;
@@ -122,13 +121,23 @@ void delayControl::run()
         Tlikelihood = yarp::os::Time::now();
         vpf.performObservation(qROI.q);
         Tlikelihood = yarp::os::Time::now() - Tlikelihood;
+
+        //set our new position
         vpf.extractTargetPosition(avgx, avgy, avgr);
-        double tw; vpf.extractTargetWindow(tw);
-        tw = qROI.q.back()->stamp - qROI.q[(int)(tw+0.5)]->stamp;
-        if(tw < 0) tw += vtsHelper::max_stamp;
         double roisize = avgr * 1.4;
         qROI.setROI(avgx - roisize, avgx + roisize, avgy - roisize, avgy + roisize);
-        qROI.setSize(avgr * 8.0 * M_PI);
+
+        //set our new window #events
+        double nw; vpf.extractTargetWindow(nw);
+        qROI.setSize(std::min(std::max(qROI.q.size() - nw, 50.0), 3000.0));
+
+        //calculate window in time
+        double tw = 0;
+        if(nw >= qROI.q.size())
+            yError() << "# window > queue";
+        else
+            tw = qROI.q.back()->stamp - qROI.q[(int)(nw+0.5)]->stamp;
+        if(tw < 0) tw += vtsHelper::max_stamp;
 
         Tresample = yarp::os::Time::now();
         vpf.performResample();
@@ -184,51 +193,62 @@ void delayControl::run()
         static double ratetime = yarp::os::Time::now();
         if(scopePort.getOutputCount()) {
 
-            static double val1 = -ev::vtsHelper::max_stamp;
-            static double val2 = -ev::vtsHelper::max_stamp;
-            static double val3 = -ev::vtsHelper::max_stamp;
-            static double val4 = -ev::vtsHelper::max_stamp;
-            static double val5 = -ev::vtsHelper::max_stamp;
-            static double val6 = -ev::vtsHelper::max_stamp;
-            static double val7 = -ev::vtsHelper::max_stamp;
+            static int countscope = 0;
+            static double val1 = 0;//-ev::vtsHelper::max_stamp;
+            static double val2 = 0;//-ev::vtsHelper::max_stamp;
+            static double val3 = 0;//-ev::vtsHelper::max_stamp;
+            static double val4 = 0;//-ev::vtsHelper::max_stamp;
+            static double val5 = 0;//-ev::vtsHelper::max_stamp;
+            static double val6 = 0;//-ev::vtsHelper::max_stamp;
+            static double val7 = 0;//-ev::vtsHelper::max_stamp;
 
             double ratetimedt = yarp::os::Time::now() - ratetime;
-            val1 = std::max(val1, (double)(1.0/ratetimedt));
-            val2 = std::max(val2, (double)inputPort.queryDelayN());
-            val3 = std::max(val3, inputPort.queryDelayT());
-            val4 = std::max(val4, inputPort.queryRate() / 1000.0);
-            val5 = std::max(val5, avgx);
-            val6 = std::max(val6, avgy);
-            val7 = std::max(val7, avgr);
+//            val1 = std::max(val1, (double)(1.0/ratetimedt));
+//            val2 = std::max(val2, (double)inputPort.queryDelayN());
+//            val3 = std::max(val3, inputPort.queryDelayT());
+//            val4 = std::max(val4, inputPort.queryRate() / 1000.0);
+//            val5 = std::max(val5, avgx);
+//            val6 = std::max(val6, avgy);
+//            val7 = std::max(val7, avgr);
+            val1 += ratetimedt * 1e3;
+            val2 += 1.0/ratetimedt;//(double)inputPort.queryDelayN();
+            val3 += tw * vtsHelper::tsscaler * 1e3;//vpf.maxlikelihood;//inputPort.queryDelayT();
+            val4 += inputPort.queryRate() / 1000.0;
+            val5 += qROI.q.size() - nw;
+            val6 += avgy;
+            val7 += avgr;
             ratetime += ratetimedt;
 
-            val2 = 0;
-            val3 = 0;//std::max(val3, inputPort.queryDelayT());
+            //val2 = 0;
+            //val3 = 0;//std::max(val3, inputPort.queryDelayT());
             val5 = 0;//std::max(val5, avgx);
             val6 = 0;//std::max(val6, avgy);
             val7 = 0;//std::max(val7, avgr);
+            countscope++;
 
             double scopedt = yarp::os::Time::now() - pscopetime;
-            if((scopedt > 0.05 || scopedt < 0)) {
+            if((scopedt > 0.05 || scopedt < 0) && countscope > 3) {
                 pscopetime += scopedt;
 
                 yarp::os::Bottle &scopedata = scopePort.prepare();
                 scopedata.clear();
-                scopedata.addDouble(val1);
-                scopedata.addDouble(val2);
-                scopedata.addDouble(val3);
-                scopedata.addDouble(val4);
-                scopedata.addDouble(val5);
-                scopedata.addDouble(val6);
-                scopedata.addDouble(val7);
+                scopedata.addDouble(val1/countscope);
+                scopedata.addDouble(val2/countscope);
+                scopedata.addDouble(val3/countscope);
+                scopedata.addDouble(val4/countscope);
+                scopedata.addDouble(val5/countscope);
+                scopedata.addDouble(val6/countscope);
+                scopedata.addDouble(val7/countscope);
 
-                val1 = -ev::vtsHelper::max_stamp;
-                val2 = -ev::vtsHelper::max_stamp;
-                val3 = -ev::vtsHelper::max_stamp;
-                val4 = -ev::vtsHelper::max_stamp;
-                val5 = -ev::vtsHelper::max_stamp;
-                val6 = -ev::vtsHelper::max_stamp;
-                val7 = -ev::vtsHelper::max_stamp;
+                val1 = 0;//-ev::vtsHelper::max_stamp;
+                val2 = 0;//-ev::vtsHelper::max_stamp;
+                val3 = 0;//-ev::vtsHelper::max_stamp;
+                val4 = 0;//-ev::vtsHelper::max_stamp;
+                val5 = 0;//-ev::vtsHelper::max_stamp;
+                val6 = 0;//-ev::vtsHelper::max_stamp;
+                val7 = 0;//-ev::vtsHelper::max_stamp;
+
+                countscope = 0;
 
                 scopePort.write();
             }
@@ -300,6 +320,8 @@ void roiq::setSize(unsigned int value)
     //if TW n is in clock-ticks
     //otherwise n is in # events.
     n = value;
+    while(q.size() > n)
+        q.pop_front();
 }
 
 void roiq::setROI(int xl, int xh, int yl, int yh)
@@ -314,6 +336,7 @@ int roiq::add(event<AE> &v)
     if(v->x < roi[0] || v->x > roi[1] || v->y < roi[2] || v->y > roi[3])
         return 0;
     q.push_back(v);
+    return 1;
     if(!use_TW) {
         while(q.size() > n)
             q.pop_front();
