@@ -48,12 +48,18 @@ protected:
 
     int Xlimit;
     int Ylimit;
-    int twindow;
+    unsigned int display_window;
+    unsigned int max_window;
     bool flip;
 
 public:
 
-    vDraw() : Xlimit(128), Ylimit(128), twindow(781250/2), flip(false) {}
+    vDraw() : Xlimit(304), Ylimit(240), flip(false)
+    {
+        display_window = 0.1*ev::vtsHelper::vtsscaler;
+        max_window = 0.5*ev::vtsHelper::vtsscaler;
+    }
+
     virtual ~vDraw() {}
 
     ///
@@ -62,15 +68,17 @@ public:
     /// \param Xlimit is the maximum x value (width)
     /// \param Ylimit is the maximium y value (height)
     ///
-    void setLimits(int Xlimit, int Ylimit)
+    void setRetinaLimits(int Xlimit, int Ylimit)
     {
         this->Xlimit = Xlimit;
         this->Ylimit = Ylimit;
     }
 
-    void setWindow(int twindow)
+    void setTemporalLimits(unsigned int display_window,
+                           unsigned int max_window)
     {
-        this->twindow = twindow;
+        this->display_window = display_window;
+        this->max_window = max_window;
     }
 
     void setFlip(bool flip)
@@ -120,6 +128,17 @@ public:
 class addressDraw : public vDraw {
 
 public:
+    
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+    
+};
+
+class boxDraw : public vDraw {
+
+public:
 
     static const std::string drawtype;
     virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
@@ -137,17 +156,6 @@ public:
     virtual std::string getDrawType();
     virtual std::string getEventType();
 
-};
-
-class boxDraw : public vDraw {
-
-public:
-    
-    static const std::string drawtype;
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
-    virtual std::string getDrawType();
-    virtual std::string getEventType();
-    
 };
 
 class flowDraw : public vDraw {

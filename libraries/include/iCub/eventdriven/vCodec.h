@@ -185,7 +185,32 @@ public:
     virtual std::string getType() const;
 };
 
+
+/// \brief an AddressEvent with a width and height to draw bounding boxes
+    class BoxEvent : public AddressEvent
+    {
+    public:
+        static const std::string tag;
+        int width;
+        int height;
+
+        BoxEvent();
+        BoxEvent(const vEvent &v);
+        BoxEvent(const BoxEvent &v);
+
+        virtual event<> clone();
+        virtual void encode(yarp::os::Bottle &b) const;
+        virtual void encode(std::vector<std::int32_t> &b, unsigned int &pos) const;
+        virtual bool decode(const yarp::os::Bottle &packet, size_t &pos);
+        virtual void decode(int *&data);
+        virtual yarp::os::Property getContent() const;
+        virtual std::string getType() const;
+
+    };
+
 }
+
+
 
 #endif
 
