@@ -115,6 +115,8 @@ event<> createEvent(const std::string &type)
         return make_event<FlowEvent>();
     if(type == GaussianAE::tag)
         return make_event<GaussianAE>();
+    if (type == BoxEvent::tag)
+        return make_event<BoxEvent>();
     return event<>(nullptr);
 
 }
