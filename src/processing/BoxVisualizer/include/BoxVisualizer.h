@@ -54,7 +54,8 @@ private:
     BoxesPort boxesPortIn;
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr>> imgPortOut;
     yarp::os::BufferedPort<ev::vBottle> vPortOut;
-    yarp::os::BufferedPort<yarp::os::Bottle > boxesPortOut;
+//    yarp::os::BufferedPort<yarp::os::Bottle > boxesPortOut;
+    yarp::os::BufferedPort<ev::vBottle> vBoxesPortOut;
     std::string confFileName;
     bool createImg;
     

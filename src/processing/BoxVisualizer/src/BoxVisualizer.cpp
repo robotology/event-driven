@@ -75,7 +75,8 @@ bool BoxVisualizer::configure( yarp::os::ResourceFinder &rf ) {
     ok &= vPortOut.open(getName("/vBottle:o"));
     vPortIn.startReadingLeft();
     ok &= boxesPortIn.open(getName("/boxes:i"));
-    ok &= boxesPortOut.open(getName("/boxes:o"));
+    ok &= vBoxesPortOut.open(getName("/boxes:o"));
+//    ok &= boxesPortOut.open(getName("/boxes:o"));
     if (createImg)
         ok &= imgPortOut.open(getName("/img:o"));
     return ok;
@@ -85,7 +86,8 @@ bool BoxVisualizer::interruptModule() {
     vPortIn.interrupt();
     vPortOut.interrupt();
     boxesPortIn.interrupt();
-    boxesPortOut.interrupt();
+//    boxesPortOut.interrupt();
+    vBoxesPortOut.interrupt();
     imgPortOut.interrupt();
     return true;
 }
@@ -94,41 +96,13 @@ bool BoxVisualizer::close() {
     vPortIn.close();
     vPortOut.close();
     boxesPortIn.close();
-    boxesPortOut.close();
+    vBoxesPortOut.close();
+//    boxesPortOut.close();
     imgPortOut.close();
     return true;
 }
 
 bool BoxVisualizer::updateModule() {
-    
-    
-    if (boxesPortIn.isBoxReady()){
-        yarp::os::Bottle boxBottle = boxesPortIn.getBox();
-        std::vector<yarp::sig::Vector> corners(4);
-        minY = boxBottle.get(0).asDouble();
-        minX = boxBottle.get(1).asDouble();
-        maxY = boxBottle.get(2).asDouble();
-        maxX = boxBottle.get(3).asDouble();
-        
-        transformPoint( minX, minY, leftH );
-        transformPoint( maxX, maxY, leftH );
-        
-        clamp(minY, 0 ,height - 1);
-        clamp(maxY, 0 ,height - 1);
-        clamp(minX, 0 ,width - 1);
-        clamp(maxX, 0 ,width - 1);
-        
-        //Sending out transformed box
-        yarp::os::Bottle &boxBottleOut = boxesPortOut.prepare();
-        boxBottleOut.clear();
-        boxBottleOut.addInt(minY);
-        boxBottleOut.addInt(minX);
-        boxBottleOut.addInt(maxY);
-        boxBottleOut.addInt(maxX);
-        boxesPortOut.write();
-    }
-    
-    
     
     if (vPortIn.isPortReadingLeft() && vPortIn.hasNewEvents()) {
         ev::vQueue q = vPortIn.getEventsFromChannel( channel );
@@ -154,6 +128,43 @@ bool BoxVisualizer::updateModule() {
         }
         if (vBottleOut.size())
             vPortOut.write();
+    }
+    
+    
+    if (boxesPortIn.isBoxReady()){
+        yarp::os::Bottle boxBottle = boxesPortIn.getBox();
+        std::vector<yarp::sig::Vector> corners(4);
+        minY = boxBottle.get(0).asDouble();
+        minX = boxBottle.get(1).asDouble();
+        maxY = boxBottle.get(2).asDouble();
+        maxX = boxBottle.get(3).asDouble();
+        
+        transformPoint( minX, minY, leftH );
+        transformPoint( maxX, maxY, leftH );
+        
+        clamp(minY, 0 ,height - 1);
+        clamp(maxY, 0 ,height - 1);
+        clamp(minX, 0 ,width - 1);
+        clamp(maxX, 0 ,width - 1);
+        
+        //Sending out transformed box
+//        yarp::os::Bottle &boxBottleOut = boxesPortOut.prepare();
+//        boxBottleOut.clear();
+//        boxBottleOut.addInt(minY);
+//        boxBottleOut.addInt(minX);
+//        boxBottleOut.addInt(maxY);
+//        boxBottleOut.addInt(maxX);
+//        boxesPortOut.write();
+        ev::vBottle &vBoxBottle = vBoxesPortOut.prepare();
+        vBoxBottle.clear();
+        auto vBox = ev::make_event<ev::BoxEvent>();
+        vBox->x = minX;
+        vBox->y = minY;
+        vBox->width = maxX - minX;
+        vBox->height = maxY - minY;
+//        vBox->stamp = 25131651;
+        vBoxBottle.addEvent(vBox);
+        vBoxesPortOut.write(true);
     }
     return true;
 }
