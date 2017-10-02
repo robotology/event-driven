@@ -3,7 +3,7 @@
 //
 
 #include <algorithm>
-#include <BoxVisualizer.h>
+#include <BoxConverter.h>
 using namespace yarp::math;
 
 void clamp (double &val, double min, double max){
@@ -26,11 +26,11 @@ int main(int argc, char * argv[])
     rf.setDefaultConfigFile( "DualCamTransform.ini" );
     rf.configure( argc, argv );
     
-    BoxVisualizer boxVisualizerModule;
+    BoxConverter boxVisualizerModule;
     return boxVisualizerModule.runModule(rf);
 }
 
-bool BoxVisualizer::readConfigFile( const yarp::os::ResourceFinder &rf, std::string groupName
+bool BoxConverter::readConfigFile( const yarp::os::ResourceFinder &rf, std::string groupName
                                     , yarp::sig::Matrix &homography ) const {
     yarp::os::Bottle &conf = rf.findGroup( groupName );
     
@@ -56,9 +56,9 @@ bool BoxVisualizer::readConfigFile( const yarp::os::ResourceFinder &rf, std::str
     return true;
 }
 
-bool BoxVisualizer::configure( yarp::os::ResourceFinder &rf ) {
+bool BoxConverter::configure( yarp::os::ResourceFinder &rf ) {
     
-    std::string moduleName = rf.check("name",yarp::os::Value("/BoxVisualizer")).asString();
+    std::string moduleName = rf.check("name",yarp::os::Value("/BoxConverter")).asString();
     setName(moduleName.c_str());
     createImg = rf.check("createImg",yarp::os::Value(false)).asBool();
     
@@ -76,33 +76,30 @@ bool BoxVisualizer::configure( yarp::os::ResourceFinder &rf ) {
     vPortIn.startReadingLeft();
     ok &= boxesPortIn.open(getName("/boxes:i"));
     ok &= vBoxesPortOut.open(getName("/boxes:o"));
-//    ok &= boxesPortOut.open(getName("/boxes:o"));
     if (createImg)
         ok &= imgPortOut.open(getName("/img:o"));
     return ok;
 }
 
-bool BoxVisualizer::interruptModule() {
+bool BoxConverter::interruptModule() {
     vPortIn.interrupt();
     vPortOut.interrupt();
     boxesPortIn.interrupt();
-//    boxesPortOut.interrupt();
     vBoxesPortOut.interrupt();
     imgPortOut.interrupt();
     return true;
 }
 
-bool BoxVisualizer::close() {
+bool BoxConverter::close() {
     vPortIn.close();
     vPortOut.close();
     boxesPortIn.close();
     vBoxesPortOut.close();
-//    boxesPortOut.close();
     imgPortOut.close();
     return true;
 }
 
-bool BoxVisualizer::updateModule() {
+bool BoxConverter::updateModule() {
     
     if (vPortIn.isPortReadingLeft() && vPortIn.hasNewEvents()) {
         ev::vQueue q = vPortIn.getEventsFromChannel( channel );
@@ -117,8 +114,6 @@ bool BoxVisualizer::updateModule() {
             
             if ( x >= 0 && x < width && y >= 0 && y < height ) {
                 if ( x >= minX && x <= maxX && y >= minY && y <= maxY ) {
-//                    v->x -= minX;
-//                    v->y -= minY;
                     vBottleOut.addEvent( v );
                 }
             }
@@ -148,13 +143,6 @@ bool BoxVisualizer::updateModule() {
         clamp(maxX, 0 ,width - 1);
         
         //Sending out transformed box
-//        yarp::os::Bottle &boxBottleOut = boxesPortOut.prepare();
-//        boxBottleOut.clear();
-//        boxBottleOut.addInt(minY);
-//        boxBottleOut.addInt(minX);
-//        boxBottleOut.addInt(maxY);
-//        boxBottleOut.addInt(maxX);
-//        boxesPortOut.write();
         ev::vBottle &vBoxBottle = vBoxesPortOut.prepare();
         vBoxBottle.clear();
         auto vBox = ev::make_event<ev::BoxEvent>();
@@ -162,14 +150,13 @@ bool BoxVisualizer::updateModule() {
         vBox->y = minY;
         vBox->width = maxX - minX;
         vBox->height = maxY - minY;
-//        vBox->stamp = 25131651;
         vBoxBottle.addEvent(vBox);
         vBoxesPortOut.write(true);
     }
     return true;
 }
 
-void BoxVisualizer::createImage( const ev::vQueue &q ) {
+void BoxConverter::createImage( const ev::vQueue &q ) {
     yarp::sig::ImageOf<yarp::sig::PixelBgr> &imgOut = imgPortOut.prepare();
     imgOut.resize( width, height );
     imgOut.zero();
@@ -189,7 +176,7 @@ void BoxVisualizer::createImage( const ev::vQueue &q ) {
     }
 }
 
-void BoxVisualizer::drawRectangle( int minY, int minX, int maxY, int maxX
+void BoxConverter::drawRectangle( int minY, int minX, int maxY, int maxX
                                    , yarp::sig::ImageOf<yarp::sig::PixelBgr> &image )  {
     
     for ( int i = minX; i <= maxX; ++i ) {
@@ -207,7 +194,7 @@ void BoxVisualizer::drawRectangle( int minY, int minX, int maxY, int maxX
     }
 }
 
-void BoxVisualizer::transformPoint( double &x, double &y, yarp::sig::Matrix homography ) const {
+void BoxConverter::transformPoint( double &x, double &y, yarp::sig::Matrix homography ) const {
     yarp::sig::Vector point( 3 );
     
     //Converting to homogeneous coordinates
@@ -223,7 +210,7 @@ void BoxVisualizer::transformPoint( double &x, double &y, yarp::sig::Matrix homo
     y = point[1] / point[2];
 }
 
-double BoxVisualizer::getPeriod() {
+double BoxConverter::getPeriod() {
     return 0.01;
 }
 

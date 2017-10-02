@@ -17,5 +17,5 @@ add_subdirectory(vDelayControl)
 #add_subdirectory(vPepper)
 add_subdirectory(vCorner)
 add_subdirectory(DualCamTransform)
-add_subdirectory(BoxVisualizer)
+add_subdirectory(BoxConverter)
 

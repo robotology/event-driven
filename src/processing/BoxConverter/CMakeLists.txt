@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.6)
 
-set(MODULENAME BoxVisualizer)
+set(MODULENAME BoxConverter)
 project(${MODULENAME})
 
 file(GLOB source src/*.cpp)

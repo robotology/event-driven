@@ -2,7 +2,7 @@
 <?xml-stylesheet type="text/xsl" href="yarpmanifest.xsl"?>
 
 <module>
-    <name>BoxVisualizer</name>
+    <name>BoxConverter</name>
     <doxygen-group>processing</doxygen-group>
     <description>Visualize region of interest</description>
     <copypolicy>Released under the terms of the GNU GPL v2.0</copypolicy>
@@ -13,7 +13,7 @@
     </description-long>
 
     <arguments>
-        <param desc="Specifies the stem name of ports created by the module." default="vMapping"> name </param>
+        <param desc="Specifies the stem name of ports created by the module." default="BoxConverter"> name </param>
         <switch>verbosity</switch>
     </arguments>
 
@@ -25,7 +25,7 @@
 
         <input>
             <type>eventdriven::vBottle</type>
-            <port carrier="tcp">/BoxVisualizer/vBottle:i</port>
+            <port carrier="tcp">/BoxConverter/vBottle:i</port>
             <required>no</required>
             <priority>no</priority>
             <description>
@@ -36,7 +36,7 @@
 
          <output>
              <type>yarp::os::Bottle</type>
-             <port carrier="udp">/BoxVisualizer/box:i</port>
+             <port carrier="udp">/BoxConverter/box:i</port>
              <description>
                  ROI
              </description>
@@ -44,7 +44,7 @@
 
         <output>
             <type>yarp::sig::Image</type>
-            <port carrier="tcp">/BoxVisualizer/img:o</port>
+            <port carrier="tcp">/BoxConverter/img:o</port>
             <description>
                 Events with ROI
             </description>

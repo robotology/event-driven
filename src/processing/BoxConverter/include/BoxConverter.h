@@ -48,7 +48,7 @@ public:
     yarp::os::Bottle getBox() { ready = false; return boxBottle;}
 };
 
-class BoxVisualizer : public yarp::os::RFModule{
+class BoxConverter : public yarp::os::RFModule{
 private:
     EventPort vPortIn;
     BoxesPort boxesPortIn;

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<application>
+    <name> vAnnotation </name>
+
+    <module>
+        <name> zynqGrabber </name>
+        <parameters> </parameters>
+        <node>icub-zynq</node>
+    </module>
+
+    <module>
+        <name> vPreProcess </name>
+        <parameters>--pepper --undistort --flipx --flipy </parameters>
+        <node> icub23 </node>
+    </module>
+
+    <module>
+        <name> vFramer</name>
+        <parameters> --frameRate 30 --displays "(0 /left (AE BOX))" --height 240 --width 304 --strict --flip false</parameters>
+        <node>icub24</node>
+    </module>
+
+    <module>
+        <name> BoxConverter</name>
+        <parameters></parameters>
+        <node>icub24</node>
+    </module>
+
+    <module>
+        <name> yarpdev</name>
+        <parameters>--from camera/ServerGrabberDualLeopard.ini --split true --flip true --width 640 --height 240</parameters>
+        <node>icub-head</node>
+    </module>
+
+    <module>
+        <name> camCalib</name>
+        <parameters>--context cameraCalibration --from icubEyes_PYTHON.ini --group CAMERA_CALIBRATION_LEFT --name /icub/camcalib/left</parameters>
+        <node>icub24</node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters>--name /viewLeft --x 30 --y 30 --w 608 --h 480 --RefreshTime 33 </parameters>
+        <node>icub24</node>
+    </module>
+
+
+    <connection>
+        <from>/zynqGrabber/vBottle:o</from>
+        <to>/vPreProcess/vBottle:i</to>
+        <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+        <from>/vPreProcess/vBottle:o</from>
+        <to>/vFramer/AE:i</to>
+        <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+        <from>/vFramer/left</from>
+        <to>/viewLeft</to>
+        <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+        <from>/BoxConverter/boxes:o</from>
+        <to>/vFramer/BOX:i</to>
+        <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+        <from>/icub/cam/left</from>
+        <to>/icub/camcalib/left/in</to>
+        <protocol>udp</protocol>
+    </connection>
+
+
+</application>
