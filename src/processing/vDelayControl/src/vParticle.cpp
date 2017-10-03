@@ -202,7 +202,7 @@ void vParticle::resetRadius(double value)
 
 void vParticle::resetArea()
 {
-    negscaler = 2.5 * angbuckets / (M_PI * r * r);
+    negscaler = 2.0 * angbuckets / (M_PI * r * r);
 }
 
 void vParticle::predict(double sigma)
