@@ -129,6 +129,8 @@ void delayControl::run()
 
         //set our new window #events
         double nw; vpf.extractTargetWindow(nw);
+        //if(qROI.q.size() * 0.02 > nw) nw = 0;
+        if(nw < 30) nw = 0;
         qROI.setSize(std::min(std::max(qROI.q.size() - nw, 50.0), 3000.0));
 
         //calculate window in time
@@ -144,7 +146,7 @@ void delayControl::run()
         Tresample = yarp::os::Time::now() - Tresample;
 
         Tpredict = yarp::os::Time::now();
-        vpf.performPrediction(std::max(addEvents / (2.0 * avgr), 0.7));
+        vpf.performPrediction(std::max(addEvents / (5.0 * avgr), 0.7));
         Tpredict = yarp::os::Time::now() - Tpredict;
 
         //check for stagnancy
@@ -218,10 +220,11 @@ void delayControl::run()
             val6 += avgy;
             val7 += avgr;
             ratetime += ratetimedt;
+            //val3 = val5;
 
             //val2 = 0;
             //val3 = 0;//std::max(val3, inputPort.queryDelayT());
-            val5 = 0;//std::max(val5, avgx);
+            //val5 = 0;//std::max(val5, avgx);
             val6 = 0;//std::max(val6, avgy);
             val7 = 0;//std::max(val7, avgr);
             countscope++;
