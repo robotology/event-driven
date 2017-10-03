@@ -36,6 +36,8 @@ private:
     ev::queueAllocator inPort;
     yarp::os::Port outPort;
     yarp::os::Port outPort2;
+    yarp::os::Port apsPortOutL;
+    yarp::os::Port apsPortOutR;
 
     //parameters
     std::string name;

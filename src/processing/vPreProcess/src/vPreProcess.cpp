@@ -72,7 +72,6 @@ bool vPreProcessModule::configure(yarp::os::ResourceFinder &rf)
     if(split)
         yInfo() << "Splitting into left/right streams";
 
-
     eventManager.initBasic(rf.check("name", yarp::os::Value("/vPreProcess")).asString(),
                            rf.check("height", 240).asInt(),
                            rf.check("width", 304).asInt(),
@@ -232,9 +231,17 @@ void vPreProcess::run()
     vBottleMimic rightBottle;
     rightBottle.setHeader(AE::tag);
 
+    //left aps data
+    vBottleMimic leftBottleAPS;
+    leftBottleAPS.setHeader(AE::tag);
+
+    //right aps data
+    vBottleMimic rightBottleAPS;
+    rightBottleAPS.setHeader(AE::tag);
+
     while(true) {
 
-        vQueue qleft, qright;
+        vQueue qleft, qright, apsleft, apsright;
 
         ev::vQueue *q = 0;
         while(!q && !isStopping()) {
@@ -249,7 +256,7 @@ void vPreProcess::run()
 
         for(ev::vQueue::iterator qi = q->begin(); qi != q->end(); qi++) {
 
-            auto v = is_event<AE>(*qi);
+            AE* v = read_as<AE>(*qi);
 
             //precheck
             if(precheck && (v->x < 0 || v->x > resmod.width || v->y < 0 || v->y > resmod.height)) {
@@ -263,7 +270,7 @@ void vPreProcess::run()
             if(flipy) v->y = resmod.height - v->y;
 
             //salt and pepper filter
-            if(pepper && !thefilter.check(v->x, v->y, v->polarity, v->channel, v->stamp))
+            if(pepper && !v->aps &&!thefilter.check(v->x, v->y, v->polarity, v->channel, v->stamp))
                 continue;
 
             //undistortion
@@ -283,10 +290,17 @@ void vPreProcess::run()
 
             }
 
-            if(split && v->channel)
-                qright.push_back(v);
-            else
-                qleft.push_back(v);
+            if(split && v->channel) {
+                if(v->aps)
+                    apsright.push_back(*qi);
+                else
+                    qright.push_back(*qi);
+            } else {
+                if(v->aps)
+                    apsleft.push_back(*qi);
+                else
+                    qleft.push_back(*qi);
+            }
         }
 
         if(qleft.size()) {
@@ -298,6 +312,16 @@ void vPreProcess::run()
             rightBottle.setInternalData(qright);
             outPort2.setEnvelope(ystamp);
             outPort2.write(rightBottle);
+        }
+        if(apsleft.size()) {
+            leftBottleAPS.setInternalData(apsleft);
+            apsPortOutL.setEnvelope(ystamp);
+            apsPortOutL.write(leftBottleAPS);
+        }
+        if(apsright.size()) {
+            rightBottleAPS.setInternalData(apsright);
+            apsPortOutR.setEnvelope(ystamp);
+            apsPortOutR.write(rightBottleAPS);
         }
 
         inPort.scrapQ();
@@ -320,8 +344,14 @@ bool vPreProcess::threadInit()
             return false;
         if(!outPort2.open(name + "/right:o"))
             return false;
+        if(!apsPortOutL.open(name + "/aps/left:o"))
+            return false;
+        if(!apsPortOutR.open(name + "/aps/right:o"))
+            return false;
     } else {
         if(!outPort.open(name + "/vBottle:o"))
+            return false;
+        if(!apsPortOutL.open(name + "/aps:o"))
             return false;
     }
     if(!inPort.open(name + "/vBottle:i"))
