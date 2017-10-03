@@ -35,6 +35,7 @@ vDevCtrl::vDevCtrl(std::string deviceName, unsigned char i2cAddress)
     fpgaStat.crcErr        = false;
 
     iBias = false;
+    aps = false;
 
 }
 
@@ -147,7 +148,7 @@ bool vDevCtrl::configureRegisters()
     if(i2cWrite(VSCTRL_SRC_CNFG_ADDR, valReg, 4) < 0) return false;
 
     // --- configure Source Destination Control --- //
-    valReg[0] =  TD_APS_CTRL;  // TD loopback = 0, TD EN =1, APS loppback = 0, APS EN = 1, flush fifo = 0, ignore FIFO Full = 0
+    valReg[0] =  TD_CTRL;  if(aps) valReg[0] |= APS_CTRL; // TD loopback = 0, TD EN =1, APS loppback = 0, APS EN = 1, flush fifo = 0, ignore FIFO Full = 0
     valReg[1] = SRC_CTRL;   // Flush FIFOs = 0, Ignore FIFO Full = 0, PAER En = 0, SAER En = 1, GTP En = 0, Sel DEST = 01 (HSSAER)
     valReg[2] = 0;      // reserved
     valReg[3] = 0;      // reserved
@@ -200,6 +201,11 @@ unsigned int vDevCtrl::getBias(std::string biasName)
 void vDevCtrl::useCurrentBias(bool flag)
 {
     iBias = flag;
+}
+
+void vDevCtrl::turnOnAPS(bool flag)
+{
+    aps = flag;
 }
 
 bool vDevCtrl::configureBiases(){

@@ -45,6 +45,7 @@ private:
     //INTERNAL VARIABLES
     int fd;
     yarp::os::Bottle bias;
+    bool aps;
     fpgaStatus_t fpgaStat;
     bool iBias;
 
@@ -72,6 +73,7 @@ public:
     bool setBias(yarp::os::Bottle bias);
     unsigned int getBias(std::string biasName);
     void useCurrentBias(bool flag = true);
+    void turnOnAPS(bool flag = true);
 
     //CONNECTION
     bool connect(void);

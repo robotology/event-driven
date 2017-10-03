@@ -51,6 +51,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     bool biaswrite = rf.check("biaswrite") && rf.check("biaswrite", yarp::os::Value(true)).asBool();
     bool jumpcheck = rf.check("jumpcheck") && rf.check("jumpcheck", yarp::os::Value(true)).asBool();
     bool iBias = rf.check("iBias") && rf.check("iBias", yarp::os::Value(true)).asBool();
+    bool useAPS = rf.check("aps") && rf.check("aps", yarp::os::Value(true)).asBool();
     std::string logfile = rf.check("logfile", yarp::os::Value("/home/icub/zynqGrabberlog.txt")).asString();
 
     time_t t = std::time(0);   // get date now
@@ -91,6 +92,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         if(!vsctrlMngLeft.connect())
             std::cerr << "Could not connect to vision controller left" << std::endl;
         else
+            vsctrlMngLeft.turnOnAPS(useAPS);
             if(!vsctrlMngLeft.configure(verbose)) {
                 std::cerr << "Could not configure left camera" << std::endl;
                 if(lwo) logwriter << "Could not configure left camera" << std::endl;
@@ -102,6 +104,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         if(!vsctrlMngRight.connect())
             std::cerr << "Could not connect to vision controller right" << std::endl;
         else {
+            vsctrlMngRight.turnOnAPS(useAPS);
             if(!vsctrlMngRight.configure(verbose)) {
                 std::cerr << "Could not configure right camera" << std::endl;
                 if(lwo) logwriter << "Could not configure right camera" << std::endl;

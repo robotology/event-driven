@@ -56,6 +56,8 @@
 #define AER_LVL                  0x15 // overwrite = 1, ack active low, req active high (ATIS default)
 // --- register VSCTRL_SRC_DST_CTRL_ADDR --- //
 #define TD_APS_CTRL              0x02 // TD loopback = 0, TD EN =1, APS loppback = 0, APS EN = 1, flush fifo = 0, ignore FIFO Full = 0
+#define TD_CTRL                  0x02
+#define APS_CTRL                 0x08
 #define SRC_CTRL                 0x12
 // --- register VSCTRL_HSSAER_CNFG_ADDR --- //
 #define CH_SAER_EN                    0x07 // enable ch0, ch1, ch2
