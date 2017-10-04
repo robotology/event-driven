@@ -55,10 +55,6 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 
     time_t t = std::time(0);   // get date now
     struct tm * curdate = std::localtime(&t);
-//        cout << (now->tm_year + 1900) << '-'
-//             << (now->tm_mon + 1) << '-'
-//             <<  now->tm_mday
-//             << endl;
     std::ofstream logwriter;
     logwriter.open(logfile.c_str(), std::ios_base::app);
     bool lwo = logwriter.is_open();
