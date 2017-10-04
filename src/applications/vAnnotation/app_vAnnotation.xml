@@ -46,11 +46,16 @@
     </module>
 
     <module>
+        <name> yarpview </name>
+        <parameters>--name /obj_in_scene --x 650 --y 30 --w 608 --h 480 --RefreshTime 33 </parameters>
+        <node>icub24</node>
+    </module>
+
+    <module>
         <name> online_detection.py </name>
-        <workdir>/home/miacono/workspace/vObj_detection/object_detection</workdir>
+        <workdir>/home/icub/tmp/vObjDetection/object_detection</workdir>
         <dependencies>
-            <port>/obj_in_scene</port>
-            <!--<port>/BoxConverter/boxes:i</port>-->
+            <port>/BoxConverter/boxes:i</port>
             <port>/vFramer/left</port>
         </dependencies>
         <parameters>
@@ -58,7 +63,7 @@
         -path_to_labels data/vObjects_label_map.pbtxt
         -im_width 320 -im_height 240 
         </parameters>
-        <node>icub24</node>
+        <node>icub-cuda</node>
     </module>
 
     <connection>
