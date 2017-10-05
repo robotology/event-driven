@@ -98,6 +98,8 @@ private:
     //duration of event collection
     double timeout;
 
+    //Flag to make the robot perform the motion continuously
+    bool justSaccade;
     yarp::os::Port vRatePort;
     //yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr>> leftImgPort;
     //yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr>> rightImagePort;

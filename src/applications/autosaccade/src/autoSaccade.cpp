@@ -96,7 +96,12 @@ void AutoSaccadeModule::readParams( const ResourceFinder &rf ) {//set the name o
     refAcc = rf.check( "refAcc", Value( 200.0 ) ).asDouble();
     camWidth = rf.check( "camWidth", Value( 304 ) ).asInt();
     camHeight = rf.check( "camHeight", Value( 240 ) ).asInt();
-    
+    justSaccade = rf.check("justSaccade") &&
+                    !rf.check("justSaccade", yarp::os::Value(false)).asBool();
+    if (justSaccade){
+        std::cout << "Just Saccading" << std::endl;
+    }
+
 }
 
 bool AutoSaccadeModule::openGazeDriver() {//open driver for gaze control
@@ -210,6 +215,12 @@ double AutoSaccadeModule::computeEventRate() {
 }
 
 bool AutoSaccadeModule::updateModule() {
+
+    if(justSaccade){
+        performSaccade();
+        return true;
+    }
+
     //collect events for some time
     eventBottleManager.start();
     Time::delay(timeout);
