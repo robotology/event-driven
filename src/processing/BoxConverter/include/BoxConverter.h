@@ -25,9 +25,11 @@ public:
     
     void startReadingLeft() { isReadingLeft = true; }
     void startReadingRight() { isReadingRight = true; }
+    void startReading() { startReadingLeft(); startReadingRight(); }
     void stopReading() { isReadingLeft = false; isReadingRight = false; }
     bool isPortReadingLeft() {return isReadingLeft;}
     bool isPortReadingRight() {return isReadingRight;}
+    bool isPortReading() {return isReadingRight || isReadingLeft;}
     bool hasNewEvents() {return newEventsLeft || newEventsRight;}
     void clearQueues();
     void onRead(ev::vBottle &bot);
@@ -44,7 +46,7 @@ public:
     BoxesPort() {this->useCallback();}
     
     bool isBoxReady() {return ready;}
-    void onRead( yarp::os::Bottle &bot );
+    void onRead( yarp::os::Bottle &bot ){boxBottle = bot; ready = true;};
     yarp::os::Bottle getBox() { ready = false; return boxBottle;}
 };
 
@@ -54,15 +56,13 @@ private:
     BoxesPort boxesPortIn;
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr>> imgPortOut;
     yarp::os::BufferedPort<ev::vBottle> vPortOut;
-//    yarp::os::BufferedPort<yarp::os::Bottle > boxesPortOut;
     yarp::os::BufferedPort<ev::vBottle> vBoxesPortOut;
     std::string confFileName;
-    bool createImg;
     
     int channel;
     int height;
     int width;
-    yarp::sig::Matrix leftH;
+    yarp::sig::Matrix H;
     
     double minY{0};
     double minX{0};
@@ -87,7 +87,6 @@ public:
     void
     drawRectangle( int minY, int minX, int maxY, int maxX, yarp::sig::ImageOf<yarp::sig::PixelBgr> &image ) ;
     
-    void createImage( const ev::vQueue &q );
 };
 
 

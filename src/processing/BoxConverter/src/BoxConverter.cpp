@@ -31,7 +31,7 @@ int main(int argc, char * argv[])
 }
 
 bool BoxConverter::readConfigFile( const yarp::os::ResourceFinder &rf, std::string groupName
-                                    , yarp::sig::Matrix &homography ) const {
+                                   , yarp::sig::Matrix &homography ) const {
     yarp::os::Bottle &conf = rf.findGroup( groupName );
     
     //If config file not found, calibration necessary
@@ -58,26 +58,38 @@ bool BoxConverter::readConfigFile( const yarp::os::ResourceFinder &rf, std::stri
 
 bool BoxConverter::configure( yarp::os::ResourceFinder &rf ) {
     
+    //Reading command-line arguments
     std::string moduleName = rf.check("name",yarp::os::Value("/BoxConverter")).asString();
     setName(moduleName.c_str());
-    createImg = rf.check("createImg",yarp::os::Value(false)).asBool();
-    
-    this -> confFileName = rf.getHomeContextPath().c_str();
-    confFileName += "/DualCamTransform.ini";
-    
+    bool invert = rf.check("invert",yarp::os::Value(true)).asBool();
+    bool outputEvents = rf.check("outputEvents",yarp::os::Value(false)).asBool();
     height = rf.check("height", yarp::os::Value(240)).asInt();
     width = rf.check("width", yarp::os::Value(304)).asInt();
     channel = rf.check("channel", yarp::os::Value(0)).asInt();
-    leftH.resize(3,3);
-    bool ok = readConfigFile( rf, "TRANSFORM_LEFT", leftH );
-    leftH = yarp::math::luinv(leftH);
-    ok &= vPortIn.open(getName("/vBottle:i"));
-    ok &= vPortOut.open(getName("/vBottle:o"));
-    vPortIn.startReadingLeft();
+    std::string groupName = rf.check("groupName",yarp::os::Value("TRANSFORM_LEFT")).asString();
+    //Reading config file
+    this -> confFileName = rf.getHomeContextPath().c_str();
+    confFileName += "/DualCamTransform.ini";
+    
+    H.resize(3,3);
+    bool ok = readConfigFile( rf, groupName, H );
+    if (invert) {
+        H = yarp::math::luinv( H );
+    }
+    
+    //Opening required ports
     ok &= boxesPortIn.open(getName("/boxes:i"));
     ok &= vBoxesPortOut.open(getName("/boxes:o"));
-    if (createImg)
-        ok &= imgPortOut.open(getName("/img:o"));
+    if (outputEvents) {
+        ok &= vPortIn.open( getName( "/vBottle:i" ) );
+        ok &= vPortOut.open( getName( "/vBottle:o" ) );
+        if (channel) {
+            vPortIn.startReadingLeft();
+        } else {
+            vPortIn.startReadingRight();
+        }
+    }
+    
     return ok;
 }
 
@@ -101,7 +113,7 @@ bool BoxConverter::close() {
 
 bool BoxConverter::updateModule() {
     
-    if (vPortIn.isPortReadingLeft() && vPortIn.hasNewEvents()) {
+    if (vPortIn.isPortReading() && vPortIn.hasNewEvents()) {
         ev::vQueue q = vPortIn.getEventsFromChannel( channel );
         ev::vBottle &vBottleOut = vPortOut.prepare();
         vBottleOut.clear();
@@ -118,9 +130,6 @@ bool BoxConverter::updateModule() {
                 }
             }
         }
-        if ( createImg ) {
-            createImage( q );
-        }
         if (vBottleOut.size())
             vPortOut.write();
     }
@@ -134,8 +143,8 @@ bool BoxConverter::updateModule() {
         maxY = boxBottle.get(2).asDouble();
         maxX = boxBottle.get(3).asDouble();
         
-        transformPoint( minX, minY, leftH );
-        transformPoint( maxX, maxY, leftH );
+        transformPoint( minX, minY, H );
+        transformPoint( maxX, maxY, H );
         
         clamp(minY, 0 ,height - 1);
         clamp(maxY, 0 ,height - 1);
@@ -154,44 +163,6 @@ bool BoxConverter::updateModule() {
         vBoxesPortOut.write(true);
     }
     return true;
-}
-
-void BoxConverter::createImage( const ev::vQueue &q ) {
-    yarp::sig::ImageOf<yarp::sig::PixelBgr> &imgOut = imgPortOut.prepare();
-    imgOut.resize( width, height );
-    imgOut.zero();
-    for ( auto &it : q ) {
-        
-        auto v = ev::is_event<ev::AE>( it );
-        
-        double x = v->x;
-        double y = v->y;
-        
-        if ( x >= 0 && x < width && y >= 0 && y < height ) {
-            imgOut( x, y ) = yarp::sig::PixelBgr( 255, 255, 255 );
-            if ( imgPortOut.getOutputCount() )
-                imgPortOut.write();
-        }
-        drawRectangle( minY, minX, maxY, maxX, imgOut );
-    }
-}
-
-void BoxConverter::drawRectangle( int minY, int minX, int maxY, int maxX
-                                   , yarp::sig::ImageOf<yarp::sig::PixelBgr> &image )  {
-    
-    for ( int i = minX; i <= maxX; ++i ) {
-        if(i >= 0 && i < image.width()) {
-            image( i, minY ) = yarp::sig::PixelBgr( 255, 0, 0 );
-            image( i, maxY ) = yarp::sig::PixelBgr( 255, 0, 0 );
-        }
-    }
-    
-    for ( int i = minY; i <= maxY; ++i ) {
-        if (i >= 0 && i < image.height()) {
-            image( minX, i ) = yarp::sig::PixelBgr( 255, 0, 0 );
-            image( maxX, i ) = yarp::sig::PixelBgr( 255, 0, 0 );
-        }
-    }
 }
 
 void BoxConverter::transformPoint( double &x, double &y, yarp::sig::Matrix homography ) const {
@@ -268,11 +239,4 @@ void EventPort::clearQueues() {
     vLeftQueue.clear();
     vRightQueue.clear();
     mutex.post();
-}
-
-/***********************BoxesPort***********************/
-
-void BoxesPort::onRead( yarp::os::Bottle &bot ) {
-    boxBottle = bot;
-    ready = true;
 }
