@@ -75,6 +75,9 @@
     <module>
         <name> autosaccade </name>
         <parameters>--justSaccade --robotName icub --delay 0.01</parameters>
+        <dependencies>
+            <port>/iKinGazeCtrl/rpc</port>
+        </dependencies>
         <node>icub24</node>
     </module>
 
