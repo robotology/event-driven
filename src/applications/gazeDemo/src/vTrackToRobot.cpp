@@ -61,7 +61,7 @@ bool vTrackToRobotModule::configure(yarp::os::ResourceFinder &rf)
     velocityControl = rf.check("velocity", yarp::os::Value(false)).asBool();
     res.height = rf.check("height", yarp::os::Value(240)).asDouble();
     res.width = rf.check("width", yarp::os::Value(304)).asDouble();
-    bool usearm = rf.check("arm") && rf.check("arm", yarp::os::Value(true)).asBool();
+    usearm = rf.check("arm") && rf.check("arm", yarp::os::Value(true)).asBool();
 
     if(!rpcPort.open(getName() + "/control"))
         return false;
@@ -209,8 +209,8 @@ bool vTrackToRobotModule::controlArm(yarp::sig::Vector ltarget,
         return false;
     }
 
-    tp[1] += -0.10;
-    tp[2] += -0.10;
+    tp[1] += -0.15;
+    //tp[2] += -0.10;
 
     //tp[0] = std::max(tp[0], -0.15);
     tp[0] = std::min(tp[0], -0.20);
@@ -228,6 +228,7 @@ bool vTrackToRobotModule::controlArm(yarp::sig::Vector ltarget,
     od = dcm2axis(handor);
 
     arm->goToPose(tp,od);
+    //yInfo() << "Arm Controlled";
 
 }
 
@@ -238,9 +239,27 @@ bool vTrackToRobotModule::controlVelocity(yarp::sig::Vector ltarget,
     double dt = yarp::os::Time::now() - trecord;
     trecord += dt;
 
+//    //check target is present
+//    if(!rtarget[3] || !ltarget[3]) {
+//        velocityController.controlReset();
+//        return false;
+//    }
+
+//    bool sameY = std::abs(rtarget[1] - ltarget[1]) < yThresh;
+//    bool sameR = std::abs(rtarget[2] - ltarget[2]) < rThresh;
+//    if(!sameY || !sameR) {
+//        velocityController.controlReset();
+//        return false;
+//    }
+
+//    velocityController.controlStereo(ltarget[0], ltarget[1], rtarget[0],
+//            rtarget[1], dt);
+
+
+
     if(ltarget[3]) {
-        bool sameY = std::abs(rtarget[1] - ltarget[1]) > yThresh;
-        bool sameR = std::abs(rtarget[2] - ltarget[2]) > rThresh;
+        bool sameY = std::abs(rtarget[1] - ltarget[1]) < yThresh;
+        bool sameR = std::abs(rtarget[2] - ltarget[2]) < rThresh;
         if(rtarget[3] && sameY && sameR)
             velocityController.controlStereo(ltarget[0], ltarget[1], rtarget[0],
                     rtarget[1], dt);

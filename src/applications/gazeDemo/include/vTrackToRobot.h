@@ -216,7 +216,7 @@ public:
         controllers[2]->set(3.0, 0.1);
         controllers[3]->set(2.0, 0.1);
         controllers[4]->set(2.0, 0.1);
-        controllers[5]->set(2.0, 0.0);
+        controllers[5]->set(0.2, 0.0);
 
         //set velocity control mode
         yarp::dev::IControlMode2 *imod;
