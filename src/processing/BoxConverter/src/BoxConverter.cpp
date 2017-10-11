@@ -157,6 +157,7 @@ bool BoxConverter::updateModule() {
         auto vBox = ev::make_event<ev::BoxEvent>();
         vBox->x = minX;
         vBox->y = minY;
+        vBox->channel = channel;
         vBox->width = maxX - minX;
         vBox->height = maxY - minY;
         vBoxBottle.addEvent(vBox);

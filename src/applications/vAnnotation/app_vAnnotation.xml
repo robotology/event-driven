@@ -17,13 +17,13 @@
 
     <module>
         <name> vFramer</name>
-        <parameters> --frameRate 30 --displays "(0 /left (AE BOX))" --height 240 --width 304 --strict --flip false</parameters>
+        <parameters> --displays "(1 /right (AE BOX))" --eventWindow 0.04 --frameRate 50 --height 240 --width 304 --strict --flip false</parameters>
         <node>icub24</node>
     </module>
 
     <module>
         <name> BoxConverter</name>
-        <parameters></parameters>
+        <parameters>--groupName TRANSFORM_RIGHT --channel 1</parameters>
         <node>icub24</node>
     </module>
 
@@ -35,13 +35,13 @@
 
     <module>
         <name> camCalib</name>
-        <parameters>--context cameraCalibration --from icubEyes_PYTHON.ini --group CAMERA_CALIBRATION_LEFT --name /icub/camcalib/left</parameters>
+        <parameters>--context cameraCalibration --from icubEyes_PYTHON.ini --group CAMERA_CALIBRATION_RIGHT --name /icub/camcalib/right</parameters>
         <node>icub24</node>
     </module>
 
     <module>
         <name> yarpview </name>
-        <parameters>--name /viewLeft --x 30 --y 30 --w 608 --h 480 --RefreshTime 33 </parameters>
+        <parameters>--name /viewRight --x 30 --y 30 --w 608 --h 480 --RefreshTime 33 </parameters>
         <node>icub24</node>
     </module>
 
@@ -56,7 +56,7 @@
         <workdir>/home/icub/tmp/vObjDetection/object_detection</workdir>
         <dependencies>
             <port>/BoxConverter/boxes:i</port>
-            <port>/vFramer/left</port>
+            <port>/vFramer/right</port>
         </dependencies>
         <parameters>
         -path_to_model samples/models/ssd_mobilenet_v1_coco_11_06_2017/frozen_inference_graph.pb
@@ -94,8 +94,8 @@
     </connection>
 
     <connection>
-        <from>/vFramer/left</from>
-        <to>/viewLeft</to>
+        <from>/vFramer/right</from>
+        <to>/viewRight</to>
         <protocol>udp</protocol>
     </connection>
 
@@ -106,8 +106,8 @@
     </connection>
 
     <connection>
-        <from>/icub/cam/left</from>
-        <to>/icub/camcalib/left/in</to>
+        <from>/icub/cam/right</from>
+        <to>/icub/camcalib/right/in</to>
         <protocol>udp</protocol>
     </connection>
 
