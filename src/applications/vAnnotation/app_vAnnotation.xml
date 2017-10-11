@@ -69,6 +69,12 @@
     <module>
         <name> frameGrabberGui2 </name>
         <parameters>--local /icub/fggui --remote /icub/cam/rpc --x 0 --y 350 --width 350 --height 500 </parameters>
+        <node>icub23</node>
+    </module>
+
+    <module>
+        <name> autosaccade </name>
+        <parameters>--justSaccade --robotName icub --delay 0.01</parameters>
         <node>icub24</node>
     </module>
 

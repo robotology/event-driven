@@ -94,6 +94,11 @@ void AutoSaccadeModule::readParams( const ResourceFinder &rf ) {//set the name o
     timeout = rf.check( "timeout", Value( 1.0 ) ).asDouble();
     refSpeed = rf.check( "refSpeed", Value( 300.0 ) ).asDouble();
     refAcc = rf.check( "refAcc", Value( 200.0 ) ).asDouble();
+    delay = rf.check( "delay", Value( 0.005 ) ).asDouble();
+    if (delay < 0.001){
+        delay = 0.001;
+        std::cout << "Chosen delay too short. Setting to 0.001\n";
+    }
     camWidth = rf.check( "camWidth", Value( 304 ) ).asInt();
     camHeight = rf.check( "camHeight", Value( 240 ) ).asInt();
     justSaccade = rf.check("justSaccade") &&
@@ -188,7 +193,7 @@ void AutoSaccadeModule::performSaccade() {
     for ( double theta = 0; theta < 2*M_PI; theta+= M_PI/36 ) {
         ipos->positionMove( 3, cos( theta ) );
         ipos->positionMove( 4, sin( theta ) );
-        Time::delay(0.005);
+        Time::delay(delay);
     }
     bool motionDone;
     int joints[2] = {3,4};

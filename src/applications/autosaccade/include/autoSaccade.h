@@ -94,6 +94,7 @@ private:
     //saccading parameters
     double refSpeed;
     double refAcc;
+    double delay;
 
     //duration of event collection
     double timeout;
