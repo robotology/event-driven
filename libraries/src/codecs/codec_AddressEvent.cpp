@@ -5,7 +5,7 @@ namespace ev {
 
 const std::string AddressEvent::tag = "AE";
 
-AddressEvent::AddressEvent() : vEvent(), x(0), y(0), channel(0), polarity(0) {}
+AddressEvent::AddressEvent() : vEvent(), x(0), y(0), channel(0), polarity(0), type(0) {}
 
 AddressEvent::AddressEvent(const vEvent &v) : vEvent(v)
 {
@@ -15,6 +15,7 @@ AddressEvent::AddressEvent(const vEvent &v) : vEvent(v)
         y = v2->y;
         channel = v2->channel;
         polarity = v2->polarity;
+        type = v2->type;
     }
 }
 
@@ -24,6 +25,7 @@ AddressEvent::AddressEvent(const AddressEvent &v) : vEvent(v)
     y = v.y;
     channel = v.channel;
     polarity = v.polarity;
+    type = v.type;
 }
 
 event<> AddressEvent::clone()
@@ -35,7 +37,7 @@ void AddressEvent::encode(yarp::os::Bottle &b) const
 {
     vEvent::encode(b);
 #ifdef TENBITCODEC
-    b.addInt(((channel&0x01)<<20)|((y&0x0FF)<<10)|((x&0x1FF)<<1)|(polarity&0x01));
+    b.addInt(((channel&0x01)<<20)|((type&0x1)<<18)|((y&0x0FF)<<10)|((x&0x1FF)<<1)|(polarity&0x01));
 #else
     //b.addInt(((channel&0x01)<<15)|((y&0x7f)<<8)|((x&0x7f)<<1)|(polarity&0x01));
     b.addInt(((channel&0x01)<<15)|((x&0x7f)<<8)|(((127-y)&0x7f)<<1)|(polarity&0x01));
@@ -46,7 +48,7 @@ void AddressEvent::encode(std::vector<YARP_INT32> &b, unsigned int &pos) const
 {
     vEvent::encode(b, pos);
 #ifdef TENBITCODEC
-    b[pos++] = (((channel&0x01)<<20)|((y&0x0FF)<<10)|((x&0x1FF)<<1)|(polarity&0x01));
+    b[pos++] = (((channel&0x01)<<20)|((type&0x1)<<18)|((y&0x0FF)<<10)|((x&0x1FF)<<1)|(polarity&0x01));
 #else
     //b.addInt(((channel&0x01)<<15)|((y&0x7f)<<8)|((x&0x7f)<<1)|(polarity&0x01));
     b[pos++] = (((channel&0x01)<<15)|((x&0x7f)<<8)|(((127-y)&0x7f)<<1)|(polarity&0x01));
@@ -69,8 +71,13 @@ bool AddressEvent::decode(const yarp::os::Bottle &packet, int &pos)
         word0>>=9;
         y=word0&0xFF;
 
+        word0>>=8;
+        type=word0&0x01;
+
         word0>>=10;
         channel=word0&0x01;
+        
+        
 #else
         //        polarity=word0&0x01;
 
@@ -106,6 +113,7 @@ yarp::os::Property AddressEvent::getContent() const
     yarp::os::Property prop = vEvent::getContent();
     prop.put("channel", (int)channel);
     prop.put("polarity", (int)polarity);
+    prop.put("type", (int)type);
     prop.put("x", (int)x);
     prop.put("y", (int)y);
 

@@ -94,6 +94,7 @@ public:
     unsigned int y:10;
     unsigned int channel:1;
     unsigned int polarity:1;
+    unsigned int type:1;
 
     AddressEvent();
     AddressEvent(const vEvent &v);
