@@ -36,6 +36,7 @@ void skinInterface::run()
     while(true) {
         
         int firstEv = 0, lastEv = 0, firstRaw = 0 , lastRaw = 0;
+        double dt;
         int countEv = 0, countRaw = 0;
         vQueue qsending;
 
@@ -75,46 +76,66 @@ void skinInterface::run()
             outputPort.write(eventBottle);
         }
         //write to our scope
-        static double pscopetime = yarp::os::Time::now();
-        static double ratetime = yarp::os::Time::now();
+        //static double pscopetime = yarp::os::Time::now();
+        //static double ratetime = yarp::os::Time::now();
         if(scopePort.getOutputCount()) {
 
-            static int countscope1 = 0;
-            static int countscope2 = 0;
+            //static int countscope1 = 1;
+            //static int countscope2 = 1;
             static double val1 = 0;//-ev::vtsHelper::max_stamp;
             static double val2 = 0;//-ev::vtsHelper::max_stamp;
        
             double rateEv = 0, rateRaw = 0;
             
             if (firstEv != lastEv){
-                rateEv = (double)(lastEv-firstEv)/countEv;
-                val1 += rateEv;
-                countscope1++;
+                
+                dt = lastEv-firstEv;
+                if (dt < 0)
+                {
+                    dt +=vtsHelper::max_stamp;
+                }
+                dt *= vtsHelper::tsscaler;
+                
+                rateEv = countEv/dt;
+                
+                std::cout << "# Ev: " << countEv << "rate Ev: "<< rateEv << std::endl;
+                //val1 += rateEv;
+                val1 = rateEv;
+                //countscope1++;
             }
             if (firstRaw != lastRaw){
-                rateRaw = (double)(lastRaw-firstRaw)/countEv;
-                val2 += rateRaw;
-                countscope2++;
+                dt = lastRaw-firstRaw;
+                if (dt < 0)
+                {
+                    dt +=vtsHelper::max_stamp;
+                }
+                dt *= vtsHelper::tsscaler;
+                
+                rateRaw = countRaw/dt;
+                val2 = rateRaw;
+                //countscope2++;
             }
         
 
-            double scopedt = yarp::os::Time::now() - pscopetime;
-            if((scopedt > 0.05 || scopedt < 0) && countscope1 > 3 && countscope2 > 3) {
-                pscopetime += scopedt;
+            //double scopedt = yarp::os::Time::now() - pscopetime;
+            //if((scopedt > 0.05 || scopedt < 0) && countscope1 > 3 && countscope2 > 3) {
+            //if(countscope1 > 0 && countscope2 > 0) {
+            //        pscopetime += scopedt;
 
                 yarp::os::Bottle &scopedata = scopePort.prepare();
                 scopedata.clear();
-                scopedata.addDouble(val1/countscope1);
-                scopedata.addDouble(val2/countscope2);
+                //scopedata.addDouble(val1/countscope1);
+                //scopedata.addDouble(val2/countscope2);
+                scopedata.addDouble(val1);
+                scopedata.addDouble(val2);
+            
+                //val1 = 0;//-ev::vtsHelper::max_stamp;
+                //val2 = 0;//-ev::vtsHelper::max_stamp;
                 
-                val1 = 0;//-ev::vtsHelper::max_stamp;
-                val2 = 0;//-ev::vtsHelper::max_stamp;
-                
-                countscope1 = 0;
-                countscope2 = 0;
-
+                //countscope1 = 0;
+                //countscope2 = 0;
                 scopePort.write();
-            }
+            //}
         }
         
     }
