@@ -32,4 +32,9 @@ endif(ICUBcontrib_FOUND)
 add_subdirectory(libraries)
 add_subdirectory(src)
 
+if(USE_QTCREATOR)
+    file(GLOB tutorialfiles documentation/*.md)
+    add_custom_target(README_token SOURCES README.md ${tutorialfiles})
+endif(USE_QTCREATOR)
+
 icubcontrib_add_uninstall_target()     #macro added 13/11/2013

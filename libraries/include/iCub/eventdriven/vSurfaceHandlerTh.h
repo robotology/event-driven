@@ -39,19 +39,28 @@ private:
     yarp::os::Mutex m;
     yarp::os::Mutex dataready;
 
+    unsigned int qlimit;
     unsigned int delay_nv;
     long unsigned int delay_t;
+    double event_rate;
 
 public:
 
+    /// \brief constructor
     queueAllocator()
     {
+        qlimit = 0;
         delay_nv = 0;
         delay_t = 0;
+        event_rate = 0;
+
+        dataready.lock();
+
         useCallback();
         setStrict();
     }
 
+    /// \brief desctructor
     ~queueAllocator()
     {
         m.lock();
@@ -61,46 +70,57 @@ public:
         m.unlock();
     }
 
+    /// \brief the callback decodes the incoming vBottle and adds it to the
+    /// list of received vBottles. The yarp, and event timestamps are updated.
     void onRead(ev::vBottle &inputbottle)
     {
-
         //make a new vQueue
         m.lock();
+
+        if(qlimit && qq.size() >= qlimit) {
+            m.unlock();
+            return;
+        }
         qq.push_back(new vQueue);
         yarp::os::Stamp yarpstamp;
         getEnvelope(yarpstamp);
         sq.push_back(yarpstamp);
+
         m.unlock();
+
+
         //and decode the data
         inputbottle.addtoendof<ev::AddressEvent>(*(qq.back()));
 
+        //update the meta data
         m.lock();
         delay_nv += qq.back()->size();
         int dt = qq.back()->back()->stamp - qq.back()->front()->stamp;
         if(dt < 0) dt += vtsHelper::max_stamp;
         delay_t += dt;
+        if(dt)
+            event_rate = qq.back()->size() / (double)dt;
         m.unlock();
 
+        //if getNextQ is blocking - let it get the new data
         dataready.unlock();
     }
 
+    /// \brief ask for a pointer to the next vQueue. Blocks if no data is ready.
     ev::vQueue* getNextQ(yarp::os::Stamp &yarpstamp)
     {
         dataready.lock();
-        if(qq.size() > 1) {
+        if(qq.size()) {
             yarpstamp = sq.front();
             return qq.front();
-        }
-        else
+        }  else {
             return 0;
+        }
 
     }
 
-    int queryunprocessed()
-    {
-        return qq.size();
-    }
-
+    /// \brief remove the most recently read vQueue from the list and deallocate
+    /// the memory
     void scrapQ()
     {
         m.lock();
@@ -116,19 +136,42 @@ public:
         m.unlock();
     }
 
+    /// \brief set the maximum number of qs that can be stored in the buffer.
+    /// A value of 0 keeps all qs.
+    void setQLimit(unsigned int number_of_qs)
+    {
+        qlimit = number_of_qs;
+    }
+
+    /// \brief unBlocks the blocking call in getNextQ. Useful to ensure a
+    /// graceful shutdown. No guarantee the return of getNextQ will be valid.
     void releaseDataLock()
     {
         dataready.unlock();
     }
 
+    /// \brief ask for the number of vQueues currently allocated.
+    int queryunprocessed()
+    {
+        return qq.size();
+    }
+
+    /// \brief ask for the number of events in all vQueues.
     unsigned int queryDelayN()
     {
         return delay_nv;
     }
 
+    /// \brief ask for the total time spanned by all vQueues.
     double queryDelayT()
     {
         return delay_t * vtsHelper::tsscaler;
+    }
+
+    /// \brief ask for the high precision event rate
+    double queryRate()
+    {
+        return event_rate * vtsHelper::vtsscaler;
     }
 
 };
@@ -479,7 +522,11 @@ private:
     vTempWindow windowleft;
     vTempWindow windowright;
 
-    yarp::os::Mutex m;
+    yarp::os::Mutex safety;
+
+    int strictUpdatePeriod;
+    int currentPeriod;
+    yarp::os::Mutex waitforquery;
     yarp::os::Stamp yarpstamp;
     unsigned int ctime;
 
@@ -488,26 +535,35 @@ public:
     tWinThread()
     {
         ctime = 0;
+        strictUpdatePeriod = 0;
+        currentPeriod = 0;
     }
 
-    bool open(std::string portname)
+    bool open(std::string portname, int period = 0)
     {
+        strictUpdatePeriod = period;
+        if(strictUpdatePeriod) yInfo() << "Forced update every" << period * vtsHelper::tsscaler <<"s, or"<< period << "event timestamps";
         if(!allocatorCallback.open(portname))
             return false;
 
-        start();
-        return true;
+        return start();
     }
 
     void onStop()
     {
         allocatorCallback.close();
         allocatorCallback.releaseDataLock();
+        waitforquery.unlock();
     }
 
     void run()
     {
-        while(true) {
+        if(strictUpdatePeriod) {
+            safety.lock();
+            waitforquery.lock();
+        }
+
+        while(!isStopping()) {
 
             ev::vQueue *q = 0;
             while(!q && !isStopping()) {
@@ -517,8 +573,20 @@ public:
 
             for(ev::vQueue::iterator qi = q->begin(); qi != q->end(); qi++) {
 
-                m.lock();
+                if(!strictUpdatePeriod) safety.lock();
 
+                if(strictUpdatePeriod) {
+                    int dt = (*qi)->stamp - ctime;
+                    if(dt < 0) dt += vtsHelper::max_stamp;
+                    currentPeriod += dt;
+                    if(currentPeriod > strictUpdatePeriod) {
+                        safety.unlock();
+                        waitforquery.lock();
+                        safety.lock();
+                        currentPeriod = 0;
+                    }
+
+                }
                 ctime = (*qi)->stamp;
 
                 if((*qi)->getChannel() == 0)
@@ -526,27 +594,28 @@ public:
                 else if((*qi)->getChannel() == 1)
                     windowright.addEvent(*qi);
 
-                m.unlock();
+                if(!strictUpdatePeriod) safety.unlock();
 
             }
 
             allocatorCallback.scrapQ();
 
         }
-
+        if(strictUpdatePeriod)
+            safety.unlock();
     }
 
     vQueue queryWindow(int channel)
     {
         vQueue q;
 
-        m.lock();
+        safety.lock();
         if(channel == 0)
             q = windowleft.getWindow();
         else
             q = windowright.getWindow();
-        m.unlock();
-
+        waitforquery.unlock();
+        safety.unlock();
         return q;
     }
 
@@ -568,11 +637,16 @@ private:
     //std::deque<tWinThread> iPorts;
     yarp::os::Stamp yStamp;
     int vStamp;
+    int strictUpdatePeriod;
     //std::map<std::string, int> labelMap;
 
 public:
 
-    syncvstreams(void) {}
+    syncvstreams(void)
+    {
+        strictUpdatePeriod = 0;
+        vStamp = 0;
+    }
 
     bool open(std::string moduleName, std::string eventType)
     {
@@ -581,7 +655,7 @@ public:
             return true;
 
         //otherwise open a new port
-        if(!iPorts[eventType].open(moduleName + "/" + eventType + ":i"))
+        if(!iPorts[eventType].open(moduleName + "/" + eventType + ":i", strictUpdatePeriod))
             return false;
 
         return true;
@@ -616,6 +690,11 @@ public:
     int getvstamp()
     {
         return vStamp;
+    }
+
+    void setStrictUpdatePeriod(int period)
+    {
+        strictUpdatePeriod = period;
     }
 
 };

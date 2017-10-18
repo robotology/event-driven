@@ -17,7 +17,7 @@
 // \defgroup Modules Modules
 // \defgroup vParticleFilter vParticleFilter
 // \ingroup Modules
-// \brief tracks targets using a particle filter
+/// \brief Event-driven Detection and Tracking using a Particle Filter
 
 #ifndef __V_PARTICLEMODULE__
 #define __V_PARTICLEMODULE__

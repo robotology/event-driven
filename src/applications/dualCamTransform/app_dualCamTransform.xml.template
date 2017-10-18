@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<application>
+    <name>app_dualCamTransform</name>
+
+    <dependencies>
+    </dependencies>
+
+    <module>
+        <name> zynqGrabber </name>
+        <parameters> </parameters>
+        <node> icub-zynq </node>
+    </module>
+
+    <module>
+        <name> DualCamTransform</name>
+        <parameters>--calibrateLeft false --calibrateRight false --maxIter 20 </parameters>
+        <node>icub24</node>
+    </module>
+
+    <module>
+        <name> vFramer</name>
+        <parameters>--displays "(0 /blob/left (BLOB) 1 /blob/right (BLOB))" --flip false </parameters>
+        <node>icub24</node>
+    </module>
+
+    <module>
+        <name> vPreProcess</name>
+        <parameters>--pepper --undistort --flipx --flipy</parameters>
+        <node>icub24</node>
+    </module>
+
+    <module>
+        <name> camCalib</name>
+        <parameters>--context cameraCalibration --from icubEyes_PYTHON.ini --group CAMERA_CALIBRATION_LEFT --name /icub/camcalib/left</parameters>
+        <node>icub24</node>
+    </module>
+
+    <module>
+        <name> camCalib</name>
+        <parameters>--context cameraCalibration --from icubEyes_PYTHON.ini --group CAMERA_CALIBRATION_RIGHT --name /icub/camcalib/right </parameters>
+        <node>icub24</node>
+    </module>
+
+    <module>
+        <name> yarpdev</name>
+        <parameters>--from camera/ServerGrabberDualLeopard.ini --split true --flip true --width 640 --height 240</parameters>
+        <node>icub-head</node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters>--name /transformed/left --x 30 --y 30 --w 608 --h 480 --synch </parameters>
+        <node>icub24</node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters>--name /transformed/right --x 30 --y 30 --w 608 --h 480 --synch </parameters>
+        <node>icub24</node>
+    </module>
+
+    <module>
+        <name> frameGrabberGui2 </name>
+        <parameters>--local /icub/fggui --remote /icub/cam/rpc --x 0 --y 350 --width 350 --height 500 </parameters>
+        <node>icub24</node>
+    </module>
+
+
+    <connection>
+        <from>/zynqGrabber/vBottle:o</from>
+        <to>/vPreProcess/vBottle:i</to>
+        <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+        <from>/vPreProcess/vBottle:o</from>
+        <to>/DualCamTransform/vBottle:i</to>
+        <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+        <from>/vPreProcess/vBottle:o</from>
+        <to>/vFramer/AE:i</to>
+        <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+        <from>/vFramer/blob/left</from>
+        <to>/DualCamTransform/left/vImg:i</to>
+        <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+        <from>/vFramer/blob/right</from>
+        <to>/DualCamTransform/right/vImg:i</to>
+        <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+        <from>/icub/cam/left</from>
+        <to>/icub/camcalib/left/in</to>
+        <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+        <from>/icub/cam/right</from>
+        <to>/icub/camcalib/right/in</to>
+        <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+        <from>/icub/camcalib/left/out</from>
+        <to>/DualCamTransform/left/img:i</to>
+        <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+        <from>/icub/camcalib/right/out</from>
+        <to>/DualCamTransform/right/img:i</to>
+        <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+        <from>/DualCamTransform/left/img:o</from>
+        <to>/transformed/left</to>
+        <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+        <from>/DualCamTransform/right/img:o</from>
+        <to>/transformed/right</to>
+        <protocol>udp</protocol>
+    </connection>
+
+</application>

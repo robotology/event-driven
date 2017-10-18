@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml-stylesheet type="text/xsl" href="yarpmanifest.xsl"?>
+
+<module>
+    <name>dualCamTransform</name>
+    <doxygen-group>processing</doxygen-group>
+    <description>Transform events into the frame-based camera image plane</description>
+    <copypolicy>Released under the terms of the GNU GPL v2.0</copypolicy>
+    <version>1.0</version>
+
+    <description-long>
+      The module maps events to their location in the frame camera
+    </description-long>
+
+    <arguments>
+        <param desc="Specifies the stem name of ports created by the module." default="vMapping"> name </param>
+        <switch>verbosity</switch>
+    </arguments>
+
+    <authors>
+        <author email="massimiliano.iacono@iit.it"> Massimiliano Iacono </author>
+    </authors>
+
+     <data>
+
+        <input>
+            <type>eventdriven::vBottle</type>
+            <port carrier="tcp">/vMapping/vBottle:i</port>
+            <required>no</required>
+            <priority>no</priority>
+            <description>
+                Accepts the address events and/or flow events in the vBottle
+                container
+            </description>
+        </input>
+
+        <input>
+            <type>yarp::sig::Image</type>
+            <port carrier="tcp">/vMapping/img:i</port>
+            <description>
+                Input frame based image
+            </description>
+        </input>
+
+        <output>
+            <type>yarp::sig::Image</type>
+            <port carrier="udp">/vMapping/img:o</port>
+            <description>
+                Image overlapped with events
+            </description>
+        </output>
+
+         <output>
+            <type>ev::vBottle</type>
+            <port carrier="udp">/vMapping/vBottle:o</port>
+            <description>
+                Transformed events
+            </description>
+        </output>
+
+    </data>
+
+<!--    <services>
+      <server>
+        <port carrier="tcp">/motionCUT/rpc</port>
+        <description>
+            The parameters winSize, recogThres, adjNodesThres, blobMinSizeThres, framesPersistence, cropSize,
+            numThreads, verbosity can be changed/retrieved through the commands set/get. Moreover, the further
+            switch inhibition can be accessed in order to enable/disable the motion detection at run-time.
+        </description>
+      </server>
+    </services>-->
+</module>

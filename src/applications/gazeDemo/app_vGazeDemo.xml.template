@@ -3,43 +3,45 @@
 
 <module>
     <name> zynqGrabber </name>
-    <parameters> --applyFilter false</parameters>
+    <parameters> </parameters>
     <node>icub-zynq</node>
 </module>
 
 <module>
     <name> vPreProcess </name>
-    <parameters> --flipy --split </parameters>
-    <node> icub-blade </node>
-</module>
-
-<module>
-    <name> vParticleFilter </name>
-    <parameters> --threads 10 --variance 1.0 --lParticles 200 --rParticles 200 --obsinlier 1.0 --obsoutlier 6.0 --obsthresh 10.0 --adaptive </parameters>
+    <parameters> --flipy --flipx --split --undistort false --temporalSize 50000 </parameters>
     <node> icub-blade </node>
 </module>
 
 <module>
     <name> vDelayControl </name>
-    <parameters> --name /vpfL --rParticles 200 --obsinlier 1.0 --obsthresh 0.25 --adaptive true --randoms 0 --threads 8 --bins 64 --gain 0.001 --maxq 1000 --minadds 20 </parameters>
+    <parameters> --name /vpfL --particles 256 --obsthresh 0.15 --truethresh 0.3 --threads 8 --bins 64 --gain 0.05 --mindelay 20</parameters>
     <node> icub-blade </node>
 </module>
 
 <module>
     <name> vDelayControl </name>
-    <parameters> --name /vpfR --rParticles 200 --obsinlier 1.0 --obsthresh 0.25 --adaptive true --randoms 0 --threads 8 --bins 64 --gain 0.001 --maxq 1000 --minadds 20 </parameters>
+    <parameters> --name /vpfR --particles 256 --obsthresh 0.15 --truethresh 0.3 --threads 8 --bins 64 --gain 0.05 --mindelay 20 </parameters>
     <node> icub-blade </node>
 </module>
 
 <module>
     <name> yarpscope </name>
-    <parameters> --remote /vpf/scope:o --index "(0 1 2 3 4)" --color "(red blue green black yellow)" </parameters>
+    <parameters> --xml /usr/local/src/robot/event-driven/src/applications/gazeDemo/leftScope.xml</parameters>
+    <environment> YARP_PORT_PREFIX=/left </environment>
+    <node> icub24 </node>
+</module>
+
+<module>
+    <name> yarpscope </name>
+    <parameters> --xml /usr/local/src/robot/event-driven/src/applications/gazeDemo/rightScope.xml </parameters>
+    <environment> YARP_PORT_PREFIX=/right </environment>
     <node> icub24 </node>
 </module>
 
 <module>
     <name> vFramer </name>
-    <parameters> --name /vFramer --displays "(0 /left (CIRC AE ISO) 1 /right (CIRC AE ISO))" </parameters>
+    <parameters> --name /vFramer --displays "(0 /left (CIRC AE ISO ISO-CIRC) 1 /right (CIRC AE ISO ISO-CIRC))" </parameters>
     <node>icub24</node>
 </module>
 
@@ -69,15 +71,15 @@
 
 <module>
     <name> vGazeDemo </name>
-    <parameters> --period 0.01 --start true </parameters>
+    <parameters> --period 0.05 --start true </parameters>
     <node> icub24 </node>
 </module>
 
-<module>
+<!--<module>
     <name> demoRedBall </name>
         <parameters>  </parameters>
     <node> icub24 </node>
-</module>
+</module>-->
 
 <connection>
   <from>/zynqGrabber/vBottle:o</from>
@@ -100,13 +102,13 @@
 <connection>
   <from>/vPreProcess/left:o</from>
   <to>/vpfL/vBottle:i</to>
-  <protocol>shmem</protocol>
+  <protocol>udp</protocol>
 </connection>
 
 <connection>
   <from>/vPreProcess/right:o</from>
   <to>/vpfR/vBottle:i</to>
-  <protocol>shmem</protocol>
+  <protocol>udp</protocol>
 </connection>
 
 <connection>

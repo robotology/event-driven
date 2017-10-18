@@ -220,6 +220,7 @@ public:
 
 };
 
+/// \brief a surface that can be queried at any time in the past.
 class historicalSurface : public vTempWindow
 {
 private:

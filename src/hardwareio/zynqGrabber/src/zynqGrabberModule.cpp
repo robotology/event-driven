@@ -20,6 +20,8 @@
  */
 
 #include <zynqGrabberModule.h>
+#include <fstream>
+#include <ctime>
 
 int main(int argc, char * argv[])
 {
@@ -49,6 +51,16 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     bool biaswrite = rf.check("biaswrite") && rf.check("biaswrite", yarp::os::Value(true)).asBool();
     bool jumpcheck = rf.check("jumpcheck") && rf.check("jumpcheck", yarp::os::Value(true)).asBool();
     bool iBias = rf.check("iBias") && rf.check("iBias", yarp::os::Value(true)).asBool();
+    std::string logfile = rf.check("logfile", yarp::os::Value("/home/icub/zynqGrabberlog.txt")).asString();
+
+    time_t t = std::time(0);   // get date now
+    struct tm * curdate = std::localtime(&t);
+    std::ofstream logwriter;
+    logwriter.open(logfile.c_str(), std::ios_base::app);
+    bool lwo = logwriter.is_open();
+    if(lwo) logwriter << "ZYNQGRABBER RUNNING: " << curdate->tm_mday << "-" << curdate->tm_mon + 1 << "-" << curdate->tm_year+1900;
+    if(lwo) logwriter << " " << curdate->tm_hour << ":" << curdate->tm_min << ":" << curdate->tm_sec << std::endl;
+
 
     if(rf.check("controllerDevice")) {
 
@@ -68,6 +80,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 
         if(!vsctrlMngLeft.setBias(biaslistl) || !vsctrlMngRight.setBias(biaslistr) ) {
             std::cerr << "Bias file required to run zynqGrabber" << std::endl;
+            if(lwo) logwriter << "Could not find bias files" << std::endl << "ZYNQGRABBER CLOSING" << std::endl << std::endl;
             return false;
         }
         std::cout << std::endl;
@@ -76,6 +89,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         else
             if(!vsctrlMngLeft.configure(verbose)) {
                 std::cerr << "Could not configure left camera" << std::endl;
+                if(lwo) logwriter << "Could not configure left camera" << std::endl;
             } else {
                 con_success = true;
             }
@@ -86,6 +100,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         else {
             if(!vsctrlMngRight.configure(verbose)) {
                 std::cerr << "Could not configure right camera" << std::endl;
+                if(lwo) logwriter << "Could not configure right camera" << std::endl;
             } else {
                 con_success = true;
             }
@@ -94,7 +109,10 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 
         if(!con_success) {
             std::cerr << "A configuration device was specified but could not be connected" << std::endl;
+            if(lwo) logwriter << "Could not connect to configuration device" << std::endl;
             return false;
+        } else {
+            if(lwo) logwriter << "Connected to and configured at least one device" << std::endl;
         }
 
     }
@@ -108,8 +126,10 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         std::cout << "Left camera off" << std::endl;
         vsctrlMngRight.disconnect(true);
         std::cout << "Right camera off" << std::endl;
+        if(lwo) logwriter << "Only writing biases, or YARP not present" << std::endl << "ZYNQGRABBER CLOSING" << std::endl << std::endl;
         return false;
     }
+    logwriter.close();
 
 
     //open rateThread device2yarp

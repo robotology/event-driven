@@ -21,6 +21,17 @@
 #include <string>
 #include <opencv2/opencv.hpp>
 
+class vDraw;
+
+/**
+ * @brief createDrawer returns an instance of a drawer that matches the tag
+ * specified
+ * @param tag is the code of the drawer
+ * @return a pointer to a drawer on success. 0 if no appropiate drawer was
+ * found
+ */
+vDraw * createDrawer(std::string tag);
+
 /**
  * @brief The vDraw class is the base class from which all vDrawers should
  * inherit. It contains the draw and getTag functions which must be overloaded,
@@ -196,16 +207,14 @@ public:
 };
 
 class isoDraw : public vDraw {
-private:
+
+protected:
 
     //angles
     double thetaY;
     double thetaX;
     double CY, SY;
     double CX, SX;
-
-    //image with warped square drawn
-    cv::Mat baseimage;
 
     int tsscalar;
     int Zlimit;
@@ -218,6 +227,8 @@ private:
     //private functions
     void pttr(int &x, int &y, int &z);
 
+    //image with warped square drawn
+    cv::Mat baseimage;
 
 public:
 
@@ -230,16 +241,27 @@ public:
 
 };
 
+class isoInterestDraw : public isoDraw {
 
-/**
- * @brief createDrawer returns an instance of a drawer that matches the tag
- * specified
- * @param tag is the code of the drawer
- * @return a pointer to a drawer on success. 0 if no appropiate drawer was
- * found
- */
-vDraw * createDrawer(std::string tag);
+public:
 
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
+class isoCircDraw : public isoDraw {
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
 
 
 

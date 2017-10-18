@@ -13,8 +13,19 @@
     </description-long>
 
     <arguments>
-        <param desc="Specifies the stem name of ports created by the module." default="zynqGrabber"> name </param>
-        <switch>verbosity</switch>
+        <param desc="Modules name"> name </param>
+        <param desc="Check for errors in data stream"> errorcheck </param>
+        <param desc="Output verbose information"> verbose </param>
+        <param desc="Only write bias values then close"> biaswrite </param>
+        <param desc="Check timestamp values are ordered"> jumpcheck </param>
+        <param desc="Use current bias values"> iBias </param>
+        <param desc="Name of vision controller device"> collerDevice </param>
+        <param desc="Bias values for left camera"> ATIS_BIAS_LEFT </param>
+        <param desc="Bias values for right camera"> ATIS_BIAS_RIGHT </param>
+        <param desc="Name of device to read data from"> dataDevice </param>
+        <param desc="Chunk size to read from device"> readPacketSize </param>
+        <param desc="Size of internal buffer for events that need to be sent"> bufferSize </param>
+        <param desc="Maximum size events in the bottles"> maxBottleSize </param>
     </arguments>
 
     <authors>
@@ -23,61 +34,40 @@
     </authors>
 
      <data>
-        <input>
-            <type>eventdriven::vBottle</type>
-            <port carrier="tcp">/vCircle/vBottle:i</port>
-            <required>yes</required>
-            <priority>no</priority>
-            <description>
-                Accepts the address events and/or flow events in the vBottle
-                container
-            </description>
-        </input>
-        <output>
-            <type>eventdriven::vBottle</type>
-            <port carrier="tcp">/vCircle/vBottle:o</port>
-            <description>
-                Outputs the cirlce detections in the form of an
-                eventdriven::ClusterEventGauss. The vBottle also contains all
-                events in the vBottle received as input.
-            </description>
-        </output>
-        <output>
-            <type>yarp::os::Bottle</type>
-            <port carrier="udp">/vCircle/scope:o</port>
-            <description>
-                Outputs debug information for use with yarpscope. The gap
-                between input bottle numbers is written to detect data being
-                lost.
-            </description>
-        </output>
-        <output>
-            <type>yarp::sig::Image</type>
-            <port carrier="udp">/vCirlce/debug:o</port>
-            <description>
-                Outputs a debugging images displaying events in the event-queue
-                as well as the strength of the Hough transform from the same
-                events.
-            </description>
-        </output>
-        <output>
-            <type>yarp::os::Bottle</type>
-            <port carrier="tcp">/vCircle/dump:o</port>
-            <description>
-                Outputs a dump of detections for experiment analysis. The format
-                 is "Time Offset | Event Timestamp | X | Y | R | Score".
-            </description>
-        </output>
+
+     <input>
+     <type>vBottle</type>
+     <port>/zynqGrabber/vBottle:i</port>
+     <description>
+     Accepts events to be sent to the hardware device (i.e. SpiNNaker)
+     </description>
+     </input>
+
+     <output>
+     <type>vBottle</type>
+     <port>/zynqGrabber/vBottle:o</port>
+     <description>
+     The events from the camera (or other device) are published on this port
+     </description>
+     </output>
+
+     <output>
+     <type>yarp::os::Bottle</type>
+     <port>/zynqGrabber/eventCount:o</port>
+     <description>
+     Outputs the number of events read by the zynqGrabber
+     </description>
+     </output>
+
     </data>
 
-<!--    <services>
+    <services>
       <server>
-        <port carrier="tcp">/motionCUT/rpc</port>
+        <port>/zynqGrabber/rpc</port>
         <description>
-            The parameters winSize, recogThres, adjNodesThres, blobMinSizeThres, framesPersistence, cropSize,
-            numThreads, verbosity can be changed/retrieved through the commands set/get. Moreover, the further
-            switch inhibition can be accessed in order to enable/disable the motion detection at run-time.
+            Start stop the device
+            Set the bias values for a camera
         </description>
       </server>
-    </services>-->
+    </services>
 </module>

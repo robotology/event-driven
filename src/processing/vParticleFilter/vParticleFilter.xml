@@ -13,8 +13,23 @@
     </description-long>
 
     <arguments>
-        <param desc="Specifies the stem name of ports created by the module." default="vParticleFilter"> name </param>
-        <switch>verbosity</switch>
+        <param desc="Modules name"> name </param>
+        <param desc="Number of computation threads"> threads </param>
+        <param desc="Sensor height in pixels"> height </param>
+        <param desc="Sensor width in pixels"> width </param>
+        <param desc="Use strict port communication"> strict </param>
+        <param desc="Use the realtime implementation"> realtime </param>
+        <param desc="Use adaptive resampling"> adaptive </param>
+        <param desc="Use a region of interest"> useroi </param>
+        <param desc="Number of particles for left channel"> rParticles </param>
+        <param desc="Number of particles for right channel"> lParticles </param>
+        <param desc="Number of random locations when resampling"> randoms </param>
+        <param desc="Update rate for non-realtime implementation"> rate </param>
+        <param desc="Initial seed location for particles"> seed </param>
+        <param desc="Minimum likelihood accepted"> obsthres </param>
+        <param desc="Thickness of inlier bins"> obsinlier </param>
+        <param desc="Thickness of outlier bins"> obsoutlier </param>
+        <param desc="Variance for particle prediction (in pixels)"> variance </param>
     </arguments>
 
     <authors>
@@ -22,51 +37,41 @@
     </authors>
 
      <data>
-        <input>
-            <type>eventdriven::vBottle</type>
-            <port carrier="tcp">/vCircle/vBottle:i</port>
-            <required>yes</required>
-            <priority>no</priority>
-            <description>
-                Accepts the address events and/or flow events in the vBottle
-                container
-            </description>
-        </input>
-        <output>
-            <type>eventdriven::vBottle</type>
-            <port carrier="tcp">/vCircle/vBottle:o</port>
-            <description>
-                Outputs the cirlce detections in the form of an
-                eventdriven::ClusterEventGauss. The vBottle also contains all
-                events in the vBottle received as input.
-            </description>
-        </output>
-        <output>
-            <type>yarp::os::Bottle</type>
-            <port carrier="udp">/vCircle/scope:o</port>
-            <description>
-                Outputs debug information for use with yarpscope. The gap
-                between input bottle numbers is written to detect data being
-                lost.
-            </description>
-        </output>
-        <output>
-            <type>yarp::sig::Image</type>
-            <port carrier="udp">/vCirlce/debug:o</port>
-            <description>
-                Outputs a debugging images displaying events in the event-queue
-                as well as the strength of the Hough transform from the same
-                events.
-            </description>
-        </output>
-        <output>
-            <type>yarp::os::Bottle</type>
-            <port carrier="tcp">/vCircle/dump:o</port>
-            <description>
-                Outputs a dump of detections for experiment analysis. The format
-                 is "Time Offset | Event Timestamp | X | Y | R | Score".
-            </description>
-        </output>
+
+     <input>
+     <type>vBottle</type>
+     <port>/vParticleFilter/vBottle:i</port>
+     <description>
+     Accepts the address events from the camera
+     </description>
+     </input>
+
+     <output>
+     <type>vBottle</type>
+     <port>/vParticleFilter/vBottle:o</port>
+     <description>
+     Outputs the detected circle positions as a vBottle of GaussianAE
+     </description>
+     </output>
+
+     <output>
+     <type>yarp::os::Bottle</type>
+     <port>/vParticleFilter/scope:o</port>
+     <description>
+     Outputs debug information for use with yarpscope. Five variables
+     can be visualised indicating the delay of the module.
+     </description>
+     </output>
+
+     <output>
+     <type>yarp::sig::Image</type>
+     <port>/vParticleFilter/debug:o</port>
+     <description>
+     Outputs a debugging images displaying events in the event-queue
+     as well as the particles and circle positions.
+     </description>
+     </output>
+
     </data>
 
 <!--    <services>

@@ -210,7 +210,6 @@ double AutoSaccadeModule::computeEventRate() {
 }
 
 bool AutoSaccadeModule::updateModule() {
-    
     //collect events for some time
     eventBottleManager.start();
     Time::delay(timeout);
@@ -411,6 +410,7 @@ bool EventBottleManager::open(const string &name) {
     this->useCallback();
     
     BufferedPort<ev::vBottle>::open(name);
+    this->start();
     return true;
 }
 
@@ -466,11 +466,13 @@ bool EventBottleManager::stop() {
 }
 
 ev::vQueue EventBottleManager::getEvents() {
-    //if (!&vQueue)
-    //    return ev::vQueue();
-    //ev::vQueue outQueue = vQueue;
-    //vQueue.clear();
-    return vQueue;
+    mutex.wait();
+    if (!&vQueue)
+        return ev::vQueue();
+    ev::vQueue outQueue = vQueue;
+    vQueue.clear();
+    mutex.post();
+    return outQueue;
 }
 
 //empty line to make gcc happy

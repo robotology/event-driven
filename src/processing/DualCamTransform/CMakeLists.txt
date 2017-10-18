@@ -1,18 +1,19 @@
 cmake_minimum_required(VERSION 2.6)
 
-set(MODULENAME vPepper)
+set(MODULENAME DualCamTransform)
 project(${MODULENAME})
 
 file(GLOB source src/*.cpp)
 file(GLOB header include/*.h)
 
 include_directories(${PROJECT_SOURCE_DIR}/include
-                    ${YARP_INCLUDE_DIRS}
-                    ${EVENTDRIVENLIBS_INCLUDE_DIRS})
+        ${YARP_INCLUDE_DIRS}
+        ${OpenCV_INCLUDE_DIRS}
+        ${EVENTDRIVENLIBS_INCLUDE_DIRS})
 
 add_executable(${MODULENAME} ${source} ${header})
 
-target_link_libraries(${MODULENAME} ${YARP_LIBRARIES} ${EVENTDRIVEN_LIBRARIES})
+target_link_libraries(${MODULENAME} ${YARP_LIBRARIES} ${OpenCV_LIBRARIES} ${EVENTDRIVEN_LIBRARIES})
 
 install(TARGETS ${MODULENAME} DESTINATION bin)
 

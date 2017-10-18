@@ -14,27 +14,27 @@
  * Public License for more details
 */
 
-
-
-
 #ifndef __VBOTTLE__
 #define __VBOTTLE__
 
 #include <yarp/os/Bottle.h>
+#include <yarp/os/Log.h>
 #include "iCub/eventdriven/vCodec.h"
 
 namespace ev {
 
-/// \brief yarp::os::Bottle wrapper for sending events through the yarp system with
-/// particular attention to using data dumper and data players
+/// \brief yarp::os::Bottle wrapper for sending events through the yarp system
+/// with ensuring compatibility with yarpdatadumper and yarpdataplayer
 class vBottle : public yarp::os::Bottle {
 
 public:
 
     //constructors shouldn't change from Bottle
+    /// \brief default constructor
     vBottle() : yarp::os::Bottle() {}
 
     //you can only modify contents by adding events and append other vBottles
+    /// \brief add a single event to the vBottle
     void addEvent(event<> e) {
 
         //first append a searchable string
@@ -51,12 +51,13 @@ public:
         //b->append(e.encode());
 
     }
-
+    /// \brief add all the contents of a vBottle to the current vBottle
     void append(vBottle &eb)
     {
         append<vEvent>(eb);
     }
 
+    /// \brief append
     template<class T> void append(vBottle &eb)
     {
 
@@ -64,10 +65,11 @@ public:
         for(int tagi = 0; tagi < eb.yarp::os::Bottle::size(); tagi+=2) {
 
             //get the appended event type
-            const std::string tagname = eb.yarp::os::Bottle::get(tagi).asString();
+            const std::string tagname =
+                    eb.yarp::os::Bottle::get(tagi).asString();
             if(!tagname.size()) {
-                std::cerr << "Warning: Could not get tagname during vBottle append."
-                             "Check vBottle integrity." << std::endl;
+                yError() << "Could not get tagname during vBottle append."
+                             "Check vBottle integrity.";
                 continue;
             }
 
@@ -103,6 +105,7 @@ public:
     }
 
     //all get functions call this to do the meat of the getting function
+    /// \brief decode a single event-type into a vQueue from the vBottle
     template<class T> vQueue get() {
 
         vQueue q;
@@ -111,6 +114,8 @@ public:
 
     }
 
+    /// \brief add a specific event-type from the vBottle to the end of a
+    ///  vQueue
     template<class T> void addtoendof(vQueue &q) {
 
         //the bottle is stored as TAG (EVENTS) TAG (EVENTS)
@@ -150,6 +155,8 @@ public:
 
     }
 
+    /// \brief get a specific event-type and ensure they are in correct
+    /// temporal order
     template<class T> vQueue getSorted()
     {
         vQueue q = get<T>();
@@ -157,11 +164,14 @@ public:
         return q;
     }
 
+    /// \brief decode all events into a vQueue
     vQueue getAll() {
         vQueue q = this->get<vEvent>(); //all events are of type vEvent
         return q;
     }
 
+    /// \brief decode all events into a vQueue and ensure they are in correct
+    /// temporal order
     vQueue getAllSorted() {
         vQueue q = getAll();
         qsort(q, true);
@@ -232,8 +242,9 @@ private:
 
 };
 
-/// \brief add header data to a block of data to correctly send it as a vBottle
-/// without copying data
+/// \brief a vBottle that avoids memory allocation where possible and can be
+/// correctly decoded when read from a receiving port. Only works with a single
+/// event-type.
 class vBottleMimic : public yarp::os::Portable {
 
 private:
@@ -254,6 +265,7 @@ private:
 
 public:
 
+    /// \brief instantiate the correct headers for a Bottle
     vBottleMimic() {
         header1.push_back(BOTTLE_TAG_LIST); //bottle code
         header1.push_back(2); //elements in bottle "AE" then bottle data
@@ -266,6 +278,8 @@ public:
         elementBYTES = sizeof(YARP_INT32) * elementINTS;
     }
 
+    /// \brief for data already allocated in contiguous space. Just send this
+    /// data on a port without memory reallocation.
     void setExternalData(const char * datablock, unsigned int datalength) {
         header3[1] = elementINTS * (datalength / elementBYTES); //forced to be x8
         this->datablock = datablock;
@@ -273,6 +287,7 @@ public:
 
     }
 
+    /// \brief send an entire vQueue. The queue is encoded and allocated into a single contiguous memory space. Faster than a standard vBottle.
     void setInternalData(const vQueue &q) {
 
         header3[1] = elementINTS * q.size(); //number of ints
@@ -291,6 +306,7 @@ public:
         this->datalength = elementBYTES * q.size();
     }
 
+    /// \brief set the type of event that this vBottleMimic will send
     void setHeader(std::string eventtype) {
         header1[3] = eventtype.size();  //set the string length
         header2 = eventtype;            //set the string itself
@@ -304,10 +320,12 @@ public:
 
     }
 
+    /// \brief does nothing as this is a write-only port.
     virtual bool read(yarp::os::ConnectionReader& connection) {
                 return false;
     }
 
+    /// \brief write the data on the connection.
     virtual bool write(yarp::os::ConnectionWriter& connection) {
 
         connection.appendBlock((const char *)header1.data(),

@@ -2,69 +2,70 @@
 <?xml-stylesheet type="text/xsl" href="yarpmanifest.xsl"?>
 
 <module>
-    <name>vParticleFilter</name>
+    <name>vDelayControl</name>
     <doxygen-group>processing</doxygen-group>
-    <description>Event-driven Detection and Tracking using a Particle Filter</description>
+    <description>Controlled latency framework for on-line robotics</description>
     <copypolicy>Released under the terms of the GNU GPL v2.0</copypolicy>
     <version>1.0</version>
-
-    <description-long>
-      The module detects and tracks a target (circles) using a particle filter.
-    </description-long>
-
-    <arguments>
-        <param desc="Specifies the stem name of ports created by the module." default="vParticleFilter"> name </param>
-        <switch>verbosity</switch>
-    </arguments>
 
     <authors>
         <author email="arren.glover@iit.it"> Arren Glover </author>
     </authors>
 
+    <description-long>
+      This module wraps processing with a delay control framework to run an
+      algorithm online on the robot with an optimal balance between algorithm
+      accuracy and latency. The current implementation is a particle filter for
+      circle tracking.
+    </description-long>
+
+    <arguments>
+        <param desc="Specifies the stem name of ports created by the module." default="vpf"> name </param>
+        <param desc="how many threads to use" default="1"> threads </param>
+        <param desc="sensor height" default="240"> height </param>
+        <param desc="sensor width" default="304"> width </param>
+        <param desc="split the observation template into this many positive segments" default="64"> bins </param>
+        <param desc="How many events to keep in the ROI" default="500"> maxq </param>
+        <param desc="delay control gain" default="0.0005"> gain </param>
+        <param desc="perform adaptive sampling" default="false"> adaptive </param>
+        <param desc="number of particles to use" default="100"> particles </param>
+        <param desc="percentage of particles to randomly resample" default="0"> randoms </param>
+        <param desc="seed position of particles (x y r)" default="{image centre}"> see </param>
+        <param desc="percentage of maximum likelihood (= bins) to accept as an observation" default="0.2"> obsthresh </param>
+        <param desc="template positive bin thickness" default="1.0"> obsinlier </param>
+        <param desc="percentage of maximum likelihood (= bins) to accept as a true positive observation" default="0.35"> truethresh </param>
+        <switch>verbosity</switch>
+    </arguments>
+
      <data>
         <input>
-            <type>eventdriven::vBottle</type>
-            <port carrier="tcp">/vCircle/vBottle:i</port>
-            <required>yes</required>
-            <priority>no</priority>
+            <type>vBottle</type>
+            <port>/vpf/vBottle:i</port>
             <description>
-                Accepts the address events and/or flow events in the vBottle
-                container
+                Accepts the address events from the camera
             </description>
         </input>
         <output>
-            <type>eventdriven::vBottle</type>
-            <port carrier="tcp">/vCircle/vBottle:o</port>
+            <type>vBottle</type>
+            <port>/vpf/vBottle:o</port>
             <description>
-                Outputs the cirlce detections in the form of an
-                eventdriven::ClusterEventGauss. The vBottle also contains all
-                events in the vBottle received as input.
+                Outputs the detected circle positions as a vBottle of GaussianAE
             </description>
         </output>
         <output>
             <type>yarp::os::Bottle</type>
-            <port carrier="udp">/vCircle/scope:o</port>
+            <port>/vpf/scope:o</port>
             <description>
-                Outputs debug information for use with yarpscope. The gap
-                between input bottle numbers is written to detect data being
-                lost.
+                Outputs debug information for use with yarpscope. Five variables
+                can be visualised indicating the delay of the module.
             </description>
         </output>
         <output>
             <type>yarp::sig::Image</type>
-            <port carrier="udp">/vCirlce/debug:o</port>
+            <port>/vpf/debug:o</port>
             <description>
                 Outputs a debugging images displaying events in the event-queue
-                as well as the strength of the Hough transform from the same
-                events.
-            </description>
-        </output>
-        <output>
-            <type>yarp::os::Bottle</type>
-            <port carrier="tcp">/vCircle/dump:o</port>
-            <description>
-                Outputs a dump of detections for experiment analysis. The format
-                 is "Time Offset | Event Timestamp | X | Y | R | Score".
+                as well as the particles and circle positions.
             </description>
         </output>
     </data>
