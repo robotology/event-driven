@@ -17,7 +17,8 @@ private:
 
     //data structures and ports
     queueAllocator inputPort;
-    yarp::os::Port outputPort;
+    yarp::os::Port outEvPort;
+    yarp::os::Port outRawPort;
 
     //variables
     

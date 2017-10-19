@@ -9,7 +9,9 @@ bool skinInterface::open(std::string name)
 {
     if(!inputPort.open(name + "/vBottle:i"))
         return false;
-    if(!outputPort.open(name + "/vBottle:o"))
+    if(!outEvPort.open(name + "/vBottleEv:o"))
+        return false;
+    if(!outRawPort.open(name + "/vBottleRaw:o"))
         return false;
     if(!scopePort.open(name + "/scope:o"))
         return false;
@@ -20,7 +22,8 @@ bool skinInterface::open(std::string name)
 void skinInterface::onStop()
 {
     inputPort.close();
-    outputPort.close();
+    outEvPort.close();
+    outRawPort.close();
     scopePort.close();
     inputPort.releaseDataLock();
 }
@@ -33,12 +36,15 @@ void skinInterface::run()
     vBottleMimic eventBottle;
     eventBottle.setHeader(AE::tag);
 
+    vBottleMimic rawBottle;
+    rawBottle.setHeader(AE::tag);
+
     while(true) {
 
         //int firstEv = 0, lastEv = 0, firstRaw = 0 , lastRaw = 0;
         //double dt;
         int countEv = 0, countRaw = 0;
-        vQueue qsending;
+        vQueue qsend_ev, qsend_raw;
 
         ev::vQueue *q = 0;
         while(!q && !isStopping()) {
@@ -52,7 +58,7 @@ void skinInterface::run()
             AE *v = read_as<AE>((*q)[i]);
             bool vType = v->type;
             if (vType == 0){
-                qsending.push_back((*q)[i]);
+                qsend_ev.push_back((*q)[i]);
 //                if (firstEv == 0)
 //                {
 //                    firstEv = v->stamp;
@@ -61,6 +67,7 @@ void skinInterface::run()
                 countEv++;
 
             } else {
+                qsend_raw.push_back((*q)[i]);
 //                if (firstRaw == 0)
 //                {
 //                    firstRaw = v->stamp;
@@ -87,11 +94,17 @@ void skinInterface::run()
 
         }
 
-        if(qsending.size()) {
+        if(qsend_ev.size()) {
             ystamp.update();
-            eventBottle.setInternalData(qsending);
-            outputPort.setEnvelope(ystamp);
-            outputPort.write(eventBottle);
+            eventBottle.setInternalData(qsend_ev);
+            outEvPort.setEnvelope(ystamp);
+            outEvPort.write(eventBottle);
+        }
+        if(qsend_raw.size()) {
+            ystamp.update();
+            rawBottle.setInternalData(qsend_raw);
+            outRawPort.setEnvelope(ystamp);
+            outRawPort.write(rawBottle);
         }
 
         inputPort.scrapQ();
