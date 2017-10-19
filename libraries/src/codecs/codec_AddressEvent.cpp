@@ -74,8 +74,8 @@ bool AddressEvent::decode(const yarp::os::Bottle &packet, int &pos)
         word0>>=8;
         type=word0&0x01;
 
-        word0>>=10;
-        channel=word0&0x01;
+        word0>>=2;
+        channel=word0&0x01; //0x03
         
         
 #else
