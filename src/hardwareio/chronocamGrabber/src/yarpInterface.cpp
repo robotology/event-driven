@@ -18,9 +18,9 @@
 
 #include "atis_events_stream.h"
 
-#include "lib_atis.h"
-#include "lib_atis_biases.h"
-#include "lib_atis_instance.h"
+#include "i_events_stream.h"
+
+
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -54,11 +54,11 @@ long vDevReadBuffer::getEventChunk(unsigned char* target)
     //std::cout << "n_events:" << n_events << std::endl;
     while (n_TD<512) {
     	if (n_events == 0) {
-    	    if (!cam->poll_buffer()) {
+    	    if (!stream->poll_buffer()) {
 		//usleep(1);
     	        break;
     	    }
-    	    ev_buffer = (uint32_t*)cam->decode_buffer(&n_events);
+    	    ev_buffer = (uint32_t*)stream->decode_buffer(n_events);
     	}
         EventBase * evbase = reinterpret_cast<EventBase*>(ev_buffer);
         if(static_cast<Event_Types_underlying>(Event_Types::EVT_TIME_HIGH) == evbase->type) {
@@ -87,14 +87,14 @@ long vDevReadBuffer::getEventChunk(unsigned char* target)
 }
 
 
-bool vDevReadBuffer::initialise(AtisInstance &cam,
+bool vDevReadBuffer::initialise(Chronocam::I_EventsStream &stream,
 				int width, int height,
 				unsigned int bufferSize,
                                 unsigned int readSize)
 {
 
 
-    this->cam = &cam;
+    this->stream = &stream;
     this->width = width;
     this->height = height;
     if(bufferSize > 0) this->bufferSize = bufferSize;
@@ -202,14 +202,14 @@ void vDevReadBuffer::run()
 	    jumpcheck = false;
 	}
 
-	bool device2yarp::initialise(AtisInstance &cam, int width, int height,
+	bool device2yarp::initialise(Chronocam::I_EventsStream &stream, int width, int height,
 			             std::string moduleName,
 				     bool strict, bool check,
 				     unsigned int bufferSize,
 				     unsigned int readSize)
 	{
 
-	    if(!deviceReader.initialise(cam, width, height, bufferSize, readSize))
+	    if(!deviceReader.initialise(stream, width, height, bufferSize, readSize))
 		return false;
 
 	    this->errorchecking = check;

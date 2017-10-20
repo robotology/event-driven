@@ -7,6 +7,7 @@ set(CONTEXT_DIR eventdriven)
 set(PROJECTNAME icub-event-driven)
 project(${PROJECTNAME})
 
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fno-strict-aliasing -std=c++11 -fPIC")
 set(EVENTDRIVENLIBS_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/libraries/include)
 set(EVENTDRIVEN_LIBRARIES eventdriven)

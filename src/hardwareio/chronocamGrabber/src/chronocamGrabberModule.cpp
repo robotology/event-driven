@@ -72,7 +72,6 @@ bool chronocamGrabberModule::configure(yarp::os::ResourceFinder &rf) {
             con_success = true;
         }
 
-    std::cout << std::endl;
 
     if(!con_success) {
         std::cerr << "A configuration device was specified but could not be connected" << std::endl;
@@ -95,7 +94,7 @@ bool chronocamGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     int maxBottleSize = 8 * rf.check("maxBottleSize", yarp::os::Value("100000")).asInt();
 
     yarp::os::Bottle filp = rf.findGroup("FILTER_PARAMS");
-    if(!D2Y.initialise(vsctrlMng.getCam(), filp.find("width").asInt(), filp.find("height").asInt(),
+    if(!D2Y.initialise(vsctrlMng.getStream(), filp.find("width").asInt(), filp.find("height").asInt(),
 		       moduleName, strict, errorcheck, maxBottleSize, readPacketSize)) {
         std::cout << "A data device was specified but could not be initialised" << std::endl;
         return false;
