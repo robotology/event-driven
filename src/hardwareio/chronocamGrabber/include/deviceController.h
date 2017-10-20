@@ -39,9 +39,10 @@ private:
     std::string deviceName;
 
     //INTERNAL VARIABLES
-    Atis *atis = nullptr;
-    AtisInstance *cam = nullptr;
+    Chronocam::CCamDevice *atis = nullptr;
+    Chronocam::I_CCam *cam = nullptr;
     AtisBiases *biases = nullptr;
+    Chronocam::I_EventsStream * stream = nullptr;
     
     yarp::os::Bottle bias;
 
@@ -64,7 +65,7 @@ public:
     unsigned int getBias(std::string biasName);
     
     //Share Atis instance between Controller and D2Y
-    AtisInstance & getCam();
+    Chronocam::I_EventsStream & getStream();
 
     //CONNECTION
     bool connect(void);

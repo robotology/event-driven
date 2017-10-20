@@ -19,9 +19,8 @@
 
 #define THRATE 1
 
-#include "lib_atis.h"
-#include "lib_atis_biases.h"
-#include "lib_atis_instance.h"
+
+#include "i_events_stream.h"
 
 #include <yarp/os/all.h>
 #include <iCub/eventdriven/all.h>
@@ -60,13 +59,13 @@ private:
     yarp::os::Semaphore signal;
     bool bufferedreadwaiting;
 
-    AtisInstance *cam = nullptr;
+    Chronocam::I_EventsStream * stream = nullptr;
 
 public:
 
     vDevReadBuffer();
 
-    bool initialise(AtisInstance &cam,
+    bool initialise(Chronocam::I_EventsStream &stream,
 		    int width, int height,
 		    unsigned int bufferSize = 0,
                     unsigned int readSize = 0);
@@ -116,7 +115,7 @@ private:
 public:
 
     device2yarp();
-    bool initialise(AtisInstance &cam, int width, int height,
+    bool initialise(Chronocam::I_EventsStream &stream, int width, int height,
 		    std::string moduleName = "",
 		    bool strict = false, bool check = false,
                     unsigned int bufferSize = 800000,

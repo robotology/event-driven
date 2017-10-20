@@ -17,9 +17,13 @@
 #include "deviceController.h"
 #include "deviceRegisters.h"
 
+#include "ccam_device.h"
+#include "i_ccam.h"
+#include "i_events_stream.h"
+
+#include "is_board_discovery_repository.h"
+#include "i_biases.h"
 #include "lib_atis.h"
-#include "lib_atis_biases.h"
-#include "lib_atis_instance.h"
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -30,7 +34,7 @@ vDevCtrl::vDevCtrl(std::string deviceName)
 {
 
     this->deviceName = deviceName;
-    biases = new ATIS_EXPORT::AtisBiases();
+    biases = new AtisBiases();
 
 
 }
@@ -38,25 +42,32 @@ vDevCtrl::vDevCtrl(std::string deviceName)
 bool vDevCtrl::connect()
 {
 
-    atis = new Atis();
+    std::cout << "connecting" << std::endl;
+    atis = Chronocam::IS_BoardDiscoveryRepository::open("", "");
+     if (!atis) {
+	    std::cerr << "Cannot open device" << std::endl;
+        return false;
+    } 
+    cam = atis->get_facility<Chronocam::I_CCam>();
+
+    cam->start();
+    cam->reset();
+    stream = atis->get_facility<Chronocam::I_EventsStream>();
+    if(stream) {
+        stream->start();
+    }
+    return true;
 
     // Open the device and flash firmware if requested
-    cam = atis->open_atis_auto("","");
-    if (cam->get_last_err() != 0) {
-	std::cerr << "Cannot open device:" << (int) cam->get_last_err() << std::endl;
-	return false;
-    } 
-
-    return true;
 
 }
 
-AtisInstance &vDevCtrl::getCam()
+Chronocam::I_EventsStream &vDevCtrl::getStream()
 {
-    if (!cam) {
-	std::cerr << "cam getter called before cam was initialized!" << std::endl;
+    if (!stream) {
+	std::cerr << "stream getter called before cam was initialized!" << std::endl;
     }
-    return *this->cam;
+    return *this->stream;
 }
 
 void vDevCtrl::disconnect(bool andturnoff)
@@ -68,6 +79,7 @@ void vDevCtrl::disconnect(bool andturnoff)
 bool vDevCtrl::configure(bool verbose)
 {
 
+    std::cout << "configuring!" << std::endl;
     if(!configureBiases())
         return false;
     std::cout << deviceName << ":" << " biases configured." << std::endl;
@@ -115,50 +127,25 @@ bool vDevCtrl::configureBiases(){
     double vref, voltage;
     int header;
     int i;
+    std::string toChange;
 
     for(i = 1; i < bias.size(); i++) {
         yarp::os::Bottle *biasdata = bias.get(i).asList();
+        toChange = biasdata->get(0).asString();
         vref = biasdata->get(1).asInt();
         header = biasdata->get(2).asInt();
         voltage = biasdata->get(3).asInt();
         unsigned int biasVal = 255 * (voltage / vref);
         biasVal += header << 21;
-        //std::cout << biasdata->get(0).asString() << " " << biasVal << std::endl;
-	AtisBiases::Bias toChange;
-    	switch(i) {
-		case 1:  toChange = AtisBiases::CtrlbiasLP       ; break;
-		case 2:  toChange = AtisBiases::CtrlbiasLBBuff   ; break;
-		case 3:  toChange = AtisBiases::CtrlbiasDelTD    ; break;
-		case 4:  toChange = AtisBiases::CtrlbiasSeqDelAPS; break;
-		case 5:  toChange = AtisBiases::CtrlbiasDelAPS   ; break;
-		case 6:  toChange = AtisBiases::biasSendReqPdY   ; break;
-		case 7:  toChange = AtisBiases::biasSendReqPdX   ; break;
-		case 8:  toChange = AtisBiases::CtrlbiasGB       ; break;
-		case 9:  toChange = AtisBiases::TDbiasReqPuY     ; break;
-		case 10: toChange = AtisBiases::TDbiasReqPuX     ; break;
-		case 11: toChange = AtisBiases::APSbiasReqPuY    ; break;
-		case 12: toChange = AtisBiases::APSbiasReqPuX    ; break;
-		case 13: toChange = AtisBiases::APSvrefL         ; break;
-		case 14: toChange = AtisBiases::APSvrefH         ; break;
-		case 15: toChange = AtisBiases::APSbiasOut       ; break;
-		case 16: toChange = AtisBiases::APSbiasHyst      ; break;
-		case 17: toChange = AtisBiases::APSbiasTail      ; break;
-		case 18: toChange = AtisBiases::TDbiasCas        ; break;
-		case 19: toChange = AtisBiases::TDbiasInv        ; break;
-		case 20: toChange = AtisBiases::TDbiasDiffOff    ; break;
-		case 21: toChange = AtisBiases::TDbiasDiffOn     ; break;
-		case 22: toChange = AtisBiases::TDbiasDiff       ; break;
-		case 23: toChange = AtisBiases::TDbiasFo         ; break;
-		case 24: toChange = AtisBiases::TDbiasRefr       ; break;
-		case 25: toChange = AtisBiases::TDbiasPR         ; break;
-		case 26: toChange = AtisBiases::TDbiasBulk       ; break;
-		default: continue;
-	}
-	std::cout << i << " " << toChange << " " << voltage << std::endl;
+        // bridging differences in the naming conventions
+        if (toChange == "APSVrefL") toChange = "APSvrefL";
+        if (toChange == "APSVrefH") toChange = "APSvrefH";
+	    std::cout << i << " " << toChange << " " << voltage << std::endl;
     	biases->set(toChange, voltage);	
     }
     // Flash the biases
-    cam->set_biases(biases); //TODO: fix this.
+    Chronocam::I_Biases* i_biases = atis->get_facility<Chronocam::I_Biases>();
+    i_biases->set_biases(biases);
     // --- checks --- //
 
     biases->to_file("/tmp/yarp_biases.txt");
@@ -177,15 +164,19 @@ bool vDevCtrl::activate(bool active)
 {
     if (active) {
     
+        std::cout << "starting!" << std::endl;
+        
         cam->start();
         cam->reset();
         // select if camera generate APS
         cam->set_couple(false);
     } else {
-        cam->stop();
+        if (cam) {
+            cam->stop();
+        }
     }
 
-    return cam->is_running()==active;
+    return true;
 }
 
 
