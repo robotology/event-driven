@@ -118,7 +118,8 @@ bool vPreProcessModule::updateModule()
 
 double vPreProcessModule::getPeriod()
 {
-    return 5.0;
+    yInfo() << this->eventManager.queryUnprocessed() << "unprocessed queues";
+    return 3.0;
 }
 /******************************************************************************/
 vPreProcess::vPreProcess(): name("/vPreProcess")
@@ -207,6 +208,11 @@ void vPreProcess::initUndistortion(const yarp::os::Bottle &left,
         }
     }
 
+}
+
+int vPreProcess::queryUnprocessed()
+{
+    return inPort.queryunprocessed();
 }
 
 void vPreProcess::run()

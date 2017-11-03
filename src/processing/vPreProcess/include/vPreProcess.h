@@ -71,6 +71,7 @@ public:
     void initPepper(int spatialSize, int temporalSize);
     void initUndistortion(const yarp::os::Bottle &left,
                           const yarp::os::Bottle &right, bool truncate);
+    int queryUnprocessed();
     void run();
     void onStop();
     bool threadInit();
