@@ -117,34 +117,34 @@ bool DualCamTransformModule::updateModule() {
     if (leftImageCollector.isImageReady()){
 //        leftCanvas.resize(leftCanvasWidth,leftCanvasHeight);
 //        leftCanvas.zero();
-//        leftCanvasHeight = 480;
-//        leftCanvasWidth = 640;
+        leftCanvasHeight = 1980;
+        leftCanvasWidth = 1600;
         cv::Mat cvCanvas(leftCanvasHeight, leftCanvasWidth, CV_8UC3, cv::Scalar(0,0,0));
         yarp::sig::ImageOf<yarp::sig::PixelBgr > leftYarpImg = leftImageCollector.getImage();
         cv::Mat openCvImg = cv::Mat((IplImage*)leftYarpImg.getIplImage());
-        openCvImg.copyTo(cvCanvas(cv::Rect(leftXOffset, leftYOffset, openCvImg.cols, openCvImg.rows)));
+        cv::Rect ROI(leftXOffset, leftYOffset, std::min(openCvImg.cols, cvCanvas.cols - leftXOffset-1), std::min(openCvImg.rows, cvCanvas.rows - leftYOffset-1));
+        openCvImg(cv::Rect(0,0,ROI.width, ROI.height)).copyTo(cvCanvas(ROI));
 //        for ( int x = 0; x < leftImg.width(); ++x ) {
 //            for ( int y = 0; y < leftImg.height(); ++y ) {
 //                leftCanvas(x + leftXOffset, y + leftYOffset) = leftImg(x,y);
 //            }
 //        }
         yarp::sig::ImageOf<yarp::sig::PixelBgr> &yarpCanvas = leftImagePortOut.prepare();
-        IplImage yarpimage = cvCanvas;
-        yarpCanvas.resize(yarpimage.width, yarpimage.height);
-        cvCopy(&yarpimage, (IplImage*)yarpCanvas.getIplImage());
+        //IplImage yarpimage = cvCanvas;
+        //yarpCanvas.resize(yarpimage.width, yarpimage.height);
+        //cvCopy(&yarpimage, (IplImage*)yarpCanvas.getIplImage());
         
-        //yarp::sig::ImageOf<yarp::sig::PixelBgr> &yarpCanvas = leftImagePortOut.prepare();
         //yarpCanvas.resize(leftCanvasWidth, leftCanvasHeight);
-        //yarpCanvas.setExternal(cvCanvas.datastart, leftCanvasWidth, leftCanvasHeight);
+        yarpCanvas.setExternal(cvCanvas.data, leftCanvasWidth, leftCanvasHeight);
     
         ev::vQueue vLeftQueue = eventCollector.getEventsFromChannel(0);
 //        leftCanvas.resize(canvas.cols, canvas.rows);
 //        yarpCanvas.wrapIplImage(new IplImage(openCvImg));
-//        transform( leftCanvas, vLeftQueue, leftH, leftXOffset, leftYOffset );
+        transform( yarpCanvas, vLeftQueue, leftH, leftXOffset, leftYOffset );
         leftImagePortOut.write();
-        cv::imshow("canvas", cvCanvas);
-        cv::imshow("openCvImg", openCvImg);
-        cv::waitKey(1);
+//        cv::imshow("canvas", cvCanvas);
+//        cv::imshow("openCvImg", openCvImg);
+//        cv::waitKey(1);
     }
     
     if (rightImageCollector.isImageReady()){
