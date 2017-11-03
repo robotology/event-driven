@@ -162,6 +162,7 @@ public:
         angdist.zero();
         maxtw = 0;
         score = 0;
+        tw = 0;
         resetArea();
     }
 
@@ -173,7 +174,9 @@ public:
         double sqrd = pcb->queryDistance((int)dy, (int)dx) - r;
         //double sqrd = sqrt(pow(dx, 2.0) + pow(dy, 2.0)) - r;
 
-        if(sqrd > inlierParameter) return;
+        if(sqrd > inlierParameter) {
+            return;
+        }
 
         if(sqrd > -inlierParameter) {
             //int a = 0.5 + (angbuckets-1) * (atan2(dy, dx) + M_PI) / (2.0 * M_PI);
@@ -182,10 +185,9 @@ public:
 
             if(!angdist[a]) {
                 inlierCount++;
-                //angdist[a] = dt + 1;
                 angdist[a] = 1;
 
-                score = inlierCount - negscaler * outlierCount;
+                score = inlierCount - (negscaler * outlierCount);
                 if(score >= likelihood) {
                     likelihood = score;
                     maxtw = dt;
@@ -202,7 +204,7 @@ public:
     void concludeLikelihood()
     {
         if(likelihood > minlikelihood) tw = maxtw;
-        if(likelihood == minlikelihood) likelihood *= 0.5;
+        //if(likelihood == minlikelihood) likelihood *= 0.5;
         weight = likelihood * weight;
     }
 
@@ -292,6 +294,7 @@ public:
 
     void performObservation(const vQueue &q);
     void extractTargetPosition(double &x, double &y, double &r);
+    void extractTargetWindow(double &tw);
     void performResample();
     void performPrediction(double sigma);
 
