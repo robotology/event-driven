@@ -44,6 +44,7 @@ private:
     double period;
 
     double pyarptime;
+    bool stopped;
 
 
     //! the vBottle reading port that splits events by channel
