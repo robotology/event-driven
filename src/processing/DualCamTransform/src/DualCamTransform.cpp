@@ -115,58 +115,44 @@ bool DualCamTransformModule::updateModule() {
     
     //If image is ready transform and draw events on it
     if (leftImageCollector.isImageReady()){
-//        leftCanvas.resize(leftCanvasWidth,leftCanvasHeight);
-//        leftCanvas.zero();
-        leftCanvasHeight = 1980;
-        leftCanvasWidth = 1600;
+        yarp::sig::ImageOf<yarp::sig::PixelBgr> &yarpCanvas = leftImagePortOut.prepare();
+    
         cv::Mat cvCanvas(leftCanvasHeight, leftCanvasWidth, CV_8UC3, cv::Scalar(0,0,0));
         yarp::sig::ImageOf<yarp::sig::PixelBgr > leftYarpImg = leftImageCollector.getImage();
         cv::Mat openCvImg = cv::Mat((IplImage*)leftYarpImg.getIplImage());
         cv::Rect ROI(leftXOffset, leftYOffset, std::min(openCvImg.cols, cvCanvas.cols - leftXOffset-1), std::min(openCvImg.rows, cvCanvas.rows - leftYOffset-1));
         openCvImg(cv::Rect(0,0,ROI.width, ROI.height)).copyTo(cvCanvas(ROI));
-//        for ( int x = 0; x < leftImg.width(); ++x ) {
-//            for ( int y = 0; y < leftImg.height(); ++y ) {
-//                leftCanvas(x + leftXOffset, y + leftYOffset) = leftImg(x,y);
-//            }
-//        }
-        yarp::sig::ImageOf<yarp::sig::PixelBgr> &yarpCanvas = leftImagePortOut.prepare();
-        //IplImage yarpimage = cvCanvas;
-        //yarpCanvas.resize(yarpimage.width, yarpimage.height);
-        //cvCopy(&yarpimage, (IplImage*)yarpCanvas.getIplImage());
-        
-        //yarpCanvas.resize(leftCanvasWidth, leftCanvasHeight);
-        yarpCanvas.setExternal(cvCanvas.data, leftCanvasWidth, leftCanvasHeight);
+        IplImage yarpimage = cvCanvas;
+        yarpCanvas.resize(yarpimage.width, yarpimage.height);
+        cvCopy(&yarpimage, (IplImage*)yarpCanvas.getIplImage());
     
         ev::vQueue vLeftQueue = eventCollector.getEventsFromChannel(0);
-//        leftCanvas.resize(canvas.cols, canvas.rows);
-//        yarpCanvas.wrapIplImage(new IplImage(openCvImg));
-        transform( yarpCanvas, vLeftQueue, leftH, leftXOffset, leftYOffset );
+        drawTransformedEvents( yarpCanvas, vLeftQueue, leftH, leftXOffset, leftYOffset );
         leftImagePortOut.write();
-//        cv::imshow("canvas", cvCanvas);
-//        cv::imshow("openCvImg", openCvImg);
-//        cv::waitKey(1);
     }
     
     if (rightImageCollector.isImageReady()){
-        yarp::sig::ImageOf<yarp::sig::PixelBgr> &rightCanvas = rightImagePortOut.prepare();
-        rightCanvas.resize(rightCanvasWidth,rightCanvasHeight);
-        rightCanvas.zero();
-        yarp::sig::ImageOf<yarp::sig::PixelBgr > rightImg = rightImageCollector.getImage();
-        for ( int x = 0; x < rightImg.width(); ++x ) {
-            for ( int y = 0; y < rightImg.height(); ++y ) {
-                rightCanvas(x + rightXOffset, y + rightYOffset) = rightImg(x,y);
-            }
-        }
-        ev::vQueue vRightQueue = eventCollector.getEventsFromChannel(1);
-        transform( rightCanvas, vRightQueue, rightH, rightXOffset, rightYOffset );
+        yarp::sig::ImageOf<yarp::sig::PixelBgr> &yarpCanvas = rightImagePortOut.prepare();
+    
+        cv::Mat cvCanvas(rightCanvasHeight, rightCanvasWidth, CV_8UC3, cv::Scalar(0,0,0));
+        yarp::sig::ImageOf<yarp::sig::PixelBgr > rightYarpImg = rightImageCollector.getImage();
+        cv::Mat openCvImg = cv::Mat((IplImage*)rightYarpImg.getIplImage());
+        cv::Rect ROI(rightXOffset, rightYOffset, std::min(openCvImg.cols, cvCanvas.cols - rightXOffset-1), std::min(openCvImg.rows, cvCanvas.rows - rightYOffset-1));
+        openCvImg(cv::Rect(0,0,ROI.width, ROI.height)).copyTo(cvCanvas(ROI));
+        IplImage yarpimage = cvCanvas;
+        yarpCanvas.resize(yarpimage.width, yarpimage.height);
+        cvCopy(&yarpimage, (IplImage*)yarpCanvas.getIplImage());
+        
+        ev::vQueue vrightQueue = eventCollector.getEventsFromChannel(1);
+        drawTransformedEvents( yarpCanvas, vrightQueue, rightH, rightXOffset, rightYOffset );
         rightImagePortOut.write();
     }
     
     return true;
 }
 
-void DualCamTransformModule::transform( yarp::sig::ImageOf<yarp::sig::PixelBgr> &img, const vQueue &vQueue
-                                        , const yarp::sig::Matrix &homography, int xOffset, int yOffset ) {
+void DualCamTransformModule::drawTransformedEvents( yarp::sig::ImageOf<yarp::sig::PixelBgr> &img, const vQueue &vQueue
+                                                    , const yarp::sig::Matrix &homography, int xOffset, int yOffset ) {
     ev::vBottle &outBottle = vPortOut.prepare();
     outBottle.clear();
     for ( auto &it : vQueue ) {
@@ -300,6 +286,10 @@ void DualCamTransformModule::getCanvasSize( const yarp::sig::Matrix &homography,
     //Canvas size must be as big as to contain all transformed events
     canvasWidth =   maxX - minX + 1;
     canvasHeight =   maxY - minY + 1;
+    
+    //Round to closest multiple of 4
+    canvasWidth = (ceil(canvasWidth/4)) * 4;
+    canvasHeight = (ceil(canvasHeight/4)) * 4;
 }
 
 bool DualCamTransformModule::performCalibStep( yarp::sig::ImageOf<yarp::sig::PixelBgr> &frame

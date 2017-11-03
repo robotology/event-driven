@@ -140,8 +140,8 @@ public :
     bool readConfigFile( const yarp::os::ResourceFinder &rf, std::string groupName
                          , yarp::sig::Matrix &homography ) const;
     
-    void transform( yarp::sig::ImageOf<yarp::sig::PixelBgr> &img, const ev::vQueue &vQueue
-                    , const yarp::sig::Matrix &homography, int xOffset, int yOffset ) ;
+    void drawTransformedEvents( yarp::sig::ImageOf<yarp::sig::PixelBgr> &img, const ev::vQueue &vQueue
+                                , const yarp::sig::Matrix &homography, int xOffset, int yOffset ) ;
     
     void getCanvasSize( const yarp::sig::Matrix &homography, int &canvasWidth, int &canvasHeight, int &xOffset
                             , int &yOffset ) const;
