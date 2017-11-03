@@ -105,16 +105,21 @@ bool DualCamTransformModule::updateModule() {
     
     //If image is ready transform and draw events on it
     if (leftImageCollector.isImageReady()){
-        yarp::sig::ImageOf<yarp::sig::PixelBgr> &leftCanvas = leftImagePortOut.prepare();
-        leftCanvas.resize(leftCanvasWidth,leftCanvasHeight);
-        leftCanvas.zero();
+//        leftCanvas.resize(leftCanvasWidth,leftCanvasHeight);
+//        leftCanvas.zero();
+        cv::Mat canvas(leftCanvasHeight, leftCanvasWidth, CV_8UC3);
         yarp::sig::ImageOf<yarp::sig::PixelBgr > leftImg = leftImageCollector.getImage();
-        for ( int x = 0; x < leftImg.width(); ++x ) {
-            for ( int y = 0; y < leftImg.height(); ++y ) {
-                leftCanvas(x + leftXOffset, y + leftYOffset) = leftImg(x,y);
-            }
-        }
+        cv::Mat openCvImg = cv::Mat((IplImage*)leftImg.getIplImage());
+        openCvImg.copyTo(canvas(cv::Rect(leftXOffset, leftYOffset, openCvImg.cols, openCvImg.rows)));
+//        for ( int x = 0; x < leftImg.width(); ++x ) {
+//            for ( int y = 0; y < leftImg.height(); ++y ) {
+//                leftCanvas(x + leftXOffset, y + leftYOffset) = leftImg(x,y);
+//            }
+//        }
+        
         ev::vQueue vLeftQueue = eventCollector.getEventsFromChannel(0);
+        yarp::sig::ImageOf<yarp::sig::PixelBgr> &leftCanvas = leftImagePortOut.prepare();
+        leftCanvas.wrapIplImage(new IplImage(openCvImg));
         transform( leftCanvas, vLeftQueue, leftH, leftXOffset, leftYOffset );
         leftImagePortOut.write();
     }
@@ -135,8 +140,6 @@ bool DualCamTransformModule::updateModule() {
     }
     
     return true;
-    
-    
 }
 
 void DualCamTransformModule::transform( yarp::sig::ImageOf<yarp::sig::PixelBgr> &img, const vQueue &vQueue
