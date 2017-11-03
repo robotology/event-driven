@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<portscope rows="2" columns="1" carrier="udp">
+    <plot gridx="0"
+          gridy="0"
+          hspan="1"
+          vspan="1"
+          size="201"
+          minval="0"
+          title="[Black] Right Event Rate (kHz) [Red] Filter Rate (Hz)"
+          maxval="3200"
+          bgcolor="#EEFFEE">
+        <graph remote="/vpfR/scope:o"
+               index="1"
+               title="Filter Rate (Hz)"
+               color="Red"
+               type="lines"
+               size="1" />
+        <graph remote="/vpfR/scope:o"
+               index="3"
+               title="Event Rate (kHz)"
+               color="Black"
+               type="lines"
+               size="1" />
+    </plot>
+    <plot gridx="0"
+          gridy="1"
+          hspan="1"
+          vspan="1"
+          size="201"
+          title="[Green] Temp. Win. {k} (ms) [Red] Filter Update {m} (Hz)"
+          minval="0"
+          maxval="100"
+          bgcolor="#EEFFEE">
+        <graph remote="/vpfR/scope:o"
+               index="2"
+               title="Temporal Window k (ms)"
+               color="Green"
+               type="lines"
+               size="1" />
+        <graph remote="/vpfR/scope:o"
+               index="0"
+               title="Filter Period m (ms)"
+               color="Red"
+               type="lines"
+               size="1" />
+    </plot>
+</portscope>

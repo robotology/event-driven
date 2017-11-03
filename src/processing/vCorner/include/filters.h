@@ -15,8 +15,8 @@
  * Public License for more details
  */
 
-#ifndef __SOBELFILTERS__
-#define __SOBELFILTERS__
+#ifndef __FILTERS__
+#define __FILTERS__
 
 #include <iCub/eventdriven/all.h>
 #include <yarp/sig/all.h>
@@ -24,38 +24,48 @@
 #include <math.h>
 #include <utility>
 
-class sobelfilter {
+class filters {
 
 private:
 
-    //parameters
+    //parameters for sobel filters
     int cx;
     int cy;
     int sobelsize;
     int sobelrad;
+
+    //parameters of the final response
+    int rx;
+    int ry;
     int l;
     int lrad;
 
+    //result
+    double dx;
+    double dy;
+    double dxy;
+
+    //matrices to store filters and responses
     yarp::sig::Matrix sobelx;
     yarp::sig::Matrix sobely;
+    yarp::sig::Matrix gaussian;
     yarp::sig::Matrix responsex;
     yarp::sig::Matrix responsey;
 
 public:
 
-    sobelfilter();
-
-    void setCenter(int cx, int cy);
-    void setSobelFilters(int sobelsize);
+    filters() {}
+    void configure(int sobelsize, int l);
+    void setFilterCenter(int cx, int cy);
+    void setResponseCenter(int rx, int ry);
+    void setSobelFilters();
+    void setGaussianFilter(double sigma);
     int factorial(int a);
     int Pasc(int k, int n);
-    std::pair<double, double> process(ev::event<ev::AE> evt);
-    void updateresponse(ev::vEvent &curr_evt, ev::vEvent &cent_evt);
-    void process(ev::event<ev::AE> evt, int currx, int curry);
-    double getResponseX(int i, int j);
-    double getResponseY(int i, int j);
-    void resetResponses();
-    void printFilters();
+    void applysobel(ev::event<ev::AE> evt);
+    void applygaussian();
+    double getScore();
+    void reset();
 
 };
 
