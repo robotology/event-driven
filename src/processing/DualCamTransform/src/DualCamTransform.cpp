@@ -83,10 +83,20 @@ bool DualCamTransformModule::updateModule() {
     if (!calibrateRight && !calibrateLeft && !eventCollector.isPortReading()) {
         eventCollector.clearQueues();
         eventCollector.startReading();
+        int imgWidth, imgHeight;
+        while (true){
+            if (leftImageCollector.isImageReady()) {
+                leftImageCollector.getImageSize( imgWidth, imgHeight );
+                break;
+            }
+            if (rightImageCollector.isImageReady()) {
+                rightImageCollector.getImageSize( imgWidth, imgHeight );
+                break;
+            }
+            yInfo() << "Connect at least one camera to start...";
+            yarp::os::Time::delay(1);
+        }
         if ( cropToImage ) {
-            int imgWidth, imgHeight;
-            leftImageCollector.getImageSize(imgWidth, imgHeight);
-            
             leftCanvasWidth = imgWidth;
             rightCanvasWidth = imgWidth;
             leftCanvasHeight = imgHeight;
@@ -107,21 +117,34 @@ bool DualCamTransformModule::updateModule() {
     if (leftImageCollector.isImageReady()){
 //        leftCanvas.resize(leftCanvasWidth,leftCanvasHeight);
 //        leftCanvas.zero();
-        cv::Mat canvas(leftCanvasHeight, leftCanvasWidth, CV_8UC3);
-        yarp::sig::ImageOf<yarp::sig::PixelBgr > leftImg = leftImageCollector.getImage();
-        cv::Mat openCvImg = cv::Mat((IplImage*)leftImg.getIplImage());
-        openCvImg.copyTo(canvas(cv::Rect(leftXOffset, leftYOffset, openCvImg.cols, openCvImg.rows)));
+//        leftCanvasHeight = 480;
+//        leftCanvasWidth = 640;
+        cv::Mat cvCanvas(leftCanvasHeight, leftCanvasWidth, CV_8UC3, cv::Scalar(0,0,0));
+        yarp::sig::ImageOf<yarp::sig::PixelBgr > leftYarpImg = leftImageCollector.getImage();
+        cv::Mat openCvImg = cv::Mat((IplImage*)leftYarpImg.getIplImage());
+        openCvImg.copyTo(cvCanvas(cv::Rect(leftXOffset, leftYOffset, openCvImg.cols, openCvImg.rows)));
 //        for ( int x = 0; x < leftImg.width(); ++x ) {
 //            for ( int y = 0; y < leftImg.height(); ++y ) {
 //                leftCanvas(x + leftXOffset, y + leftYOffset) = leftImg(x,y);
 //            }
 //        }
+        yarp::sig::ImageOf<yarp::sig::PixelBgr> &yarpCanvas = leftImagePortOut.prepare();
+        IplImage yarpimage = cvCanvas;
+        yarpCanvas.resize(yarpimage.width, yarpimage.height);
+        cvCopy(&yarpimage, (IplImage*)yarpCanvas.getIplImage());
         
+        //yarp::sig::ImageOf<yarp::sig::PixelBgr> &yarpCanvas = leftImagePortOut.prepare();
+        //yarpCanvas.resize(leftCanvasWidth, leftCanvasHeight);
+        //yarpCanvas.setExternal(cvCanvas.datastart, leftCanvasWidth, leftCanvasHeight);
+    
         ev::vQueue vLeftQueue = eventCollector.getEventsFromChannel(0);
-        yarp::sig::ImageOf<yarp::sig::PixelBgr> &leftCanvas = leftImagePortOut.prepare();
-        leftCanvas.wrapIplImage(new IplImage(openCvImg));
-        transform( leftCanvas, vLeftQueue, leftH, leftXOffset, leftYOffset );
+//        leftCanvas.resize(canvas.cols, canvas.rows);
+//        yarpCanvas.wrapIplImage(new IplImage(openCvImg));
+//        transform( leftCanvas, vLeftQueue, leftH, leftXOffset, leftYOffset );
         leftImagePortOut.write();
+        cv::imshow("canvas", cvCanvas);
+        cv::imshow("openCvImg", openCvImg);
+        cv::waitKey(1);
     }
     
     if (rightImageCollector.isImageReady()){
@@ -491,9 +514,6 @@ void EventPort::clearQueues() {
 /**************************ImageCollector***************/
 
 void ImageCollector::getImageSize( int &width, int &height ) {
-    while (!imagePort.isImageReady()){
-        yarp::os::Time::delay(.5);
-    }
     yarp::sig::ImageOf<yarp::sig::PixelBgr> img = imagePort.getImage();
     width = img.width();
     height = img.height();
