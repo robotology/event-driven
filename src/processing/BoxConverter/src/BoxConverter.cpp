@@ -78,7 +78,9 @@ bool BoxConverter::configure( yarp::os::ResourceFinder &rf ) {
     }
     
     //Opening required ports
+    yInfo("Provide bounding boxes to input port as a bottle filled with minY, minX, maxY, maxX");
     ok &= boxesPortIn.open(getName("/boxes:i"));
+    yInfo("Boxes are output as BOX events to allow easy display on vFramer");
     ok &= vBoxesPortOut.open(getName("/boxes:o"));
     if (outputEvents) {
         ok &= vPortIn.open( getName( "/vBottle:i" ) );
