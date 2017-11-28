@@ -4,7 +4,7 @@
 
 [![event-driven-icub ball](http://img.youtube.com/vi/xS-7xYRYSLc/0.jpg)](https://youtu.be/xS-7xYRYSLc)
 ![event-stream ball](http://robotology.github.io/event-driven/doxygen/images/ballstream.png)
-Click the thumbnail to watch the [video](https://youtu.be/xS-7xYRYSLc)!
+Click to watch the [video](https://youtu.be/xS-7xYRYSLc)!
 
 Libraries that handle neuromorphic sensors, such as the dynamic vision sensor, installed on the iCub can be found here, along with algorithms to process the event-based data. Examples include, optical flow, corner detection and ball detection. Demo applications for the iCub robot, and tutorials for running them, include saccading and attention, gaze following a ball, and vergence control.
 
@@ -36,6 +36,8 @@ Tutorials for these applications can be found [here](http://robotology.github.io
  * performing saccading and attention.
  * ball detection and iCub gaze following.
  * performing automatic stereo vergence.
+
+Datasets for use in running some of the tutorials off-line can be found on the same page.
 
 ## How to Install:
 
