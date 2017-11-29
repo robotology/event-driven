@@ -30,3 +30,8 @@ You will now see the yarpview windows displaying the address events and the corn
 To visualise events from a pre-recorded dataset, you can run *yarpdataplayer*.
 
 Since *yarpdataplayer* opens the port with the same name as the real robot, make sure the same port is not running (or that you start an instance of the nameserver with your own namespace).
+
+## Known issues
+
+* There is a maximum event-rate at which corners can be computed, depending on computaitonal power. If this limit is reached, surplus events will not be checked for corners. The result is that corner trajectories can have missing segments if the camera is moved at very high speeds (over 1 million events per second).
+
