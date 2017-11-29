@@ -19,11 +19,13 @@
 #ifndef __VCODEC__
 #define __VCODEC__
 
+
 #include <yarp/os/Bottle.h>
 #include <memory>
 #include <deque>
 #include <math.h>
 #include <vector>
+#include <iostream>
 
 namespace ev {
 

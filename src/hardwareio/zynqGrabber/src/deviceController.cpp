@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#include <iostream>
 
 vDevCtrl::vDevCtrl(std::string deviceName, unsigned char i2cAddress)
 {
