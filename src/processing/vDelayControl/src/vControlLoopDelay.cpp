@@ -230,21 +230,21 @@ void delayControl::run()
 //            val5 = std::max(val5, avgx);
 //            val6 = std::max(val6, avgy);
 //            val7 = std::max(val7, avgr);
-            val1 += ratetimedt * 1e3;
+            val1 += 152;
             val2 += 1.0/ratetimedt;//(double)inputPort.queryDelayN();
-            val3 += tw * vtsHelper::tsscaler * 1e3;//vpf.maxlikelihood;//inputPort.queryDelayT();
+            val3 += 120;//vpf.maxlikelihood;//inputPort.queryDelayT();
             val4 += inputPort.queryRate() / 1000.0;
-            val5 += qROI.q.size() - nw;
+            val5 += avgx;
             val6 += avgy;
-            val7 += avgr;
+            val7 += avgr * 2;
             ratetime += ratetimedt;
             //val3 = val5;
 
             //val2 = 0;
             //val3 = 0;//std::max(val3, inputPort.queryDelayT());
             //val5 = 0;//std::max(val5, avgx);
-            val6 = 0;//std::max(val6, avgy);
-            val7 = 0;//std::max(val7, avgr);
+            //val6 = 0;//std::max(val6, avgy);
+            //val7 = 0;//std::max(val7, avgr);
             countscope++;
 
             double scopedt = yarp::os::Time::now() - pscopetime;
