@@ -35,7 +35,7 @@ private:
 public:
 
     /// the maximum value of the timestamp before a wrap occurs
-    static long int max_stamp;
+    static unsigned int max_stamp;
     /// a multiplier to convert an event timestamp to seconds
     static double tsscaler;
     /// a multiplier to convert seconds to an event timestamp
@@ -58,7 +58,7 @@ public:
     /// public
     static double tstosecs() { return tsscaler; }
     /// \brief ask for the current unwrapped time, without updating the time.
-    unsigned long int currentTime() { return (unsigned long int)last_stamp + (max_stamp*n_wraps); }
+    unsigned long int currentTime() { return last_stamp + ((unsigned long int)max_stamp*n_wraps); }
 
 
 };
@@ -72,5 +72,3 @@ struct resolution {
 }
 
 #endif //__VTSHELPER
-
-//----- end-of-file --- ( next line intentionally left blank ) ------------------
