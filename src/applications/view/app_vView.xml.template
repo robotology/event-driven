@@ -13,25 +13,25 @@
 <module>
     <name> vFramer</name>
     <parameters> --displays "(0 /left (AE ISO) 1 /right (AE ISO))" </parameters>
-    <node>icub24</node>
+    <node> localhost </node>
 </module>
 
 <module>
     <name> vPreProcess </name>
     <parameters>--undistort false --flipx --flipy </parameters>
-    <node> icub24 </node>
+    <node> localhost </node>
 </module>
 
 <module>
    <name> yarpview </name>
    <parameters>--name /viewCh0 --x 30 --y 30 --w 608 --h 480 --synch </parameters>
-   <node>icub24</node>
+   <node> localhost </node>
 </module>
 
 <module>
    <name> yarpview </name>
    <parameters>--name /viewCh1 --x 658 --y 30 --w 608 --h 480 --synch </parameters>
-   <node>icub24</node>
+   <node> localhost </node>
 </module>
 
 
@@ -44,7 +44,7 @@
 <connection>
   <from>/vPreProcess/vBottle:o</from>
   <to>/vFramer/AE:i</to>
-  <protocol>shmem</protocol>
+  <protocol> udp </protocol>
 </connection>
 
 <connection>

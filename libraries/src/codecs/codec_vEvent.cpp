@@ -1,3 +1,21 @@
+/*
+ *   Copyright (C) 2017 Event-driven Perception for Robotics
+ *   Author: arren.glover@iit.it
+ *
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU Lesser General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public License
+ *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 #ifndef __VCODEC_VEVENT__
 #define __VCODEC_VEVENT__
 
@@ -21,32 +39,18 @@ event<> vEvent::clone()
 
 void vEvent::encode(yarp::os::Bottle &b) const
 {
-#ifdef TIME32BIT
-    b.addInt(stamp&0x01FFFFFF);
-#else
-    b.addInt((32<<26)|(stamp&0x00ffffff));
-#endif
+    b.addInt(stamp&vtsHelper::max_stamp);
 }
 
 void vEvent::encode(std::vector<int> &b, unsigned int &pos) const
 {
-#ifdef TIME32BIT
-    b[pos++] = (stamp&0x01FFFFFF);
-#else
-    b[pos++] = ((32<<26)|(stamp&0x00ffffff));
-#endif
+    b[pos++] = stamp&vtsHelper::max_stamp;
 }
 
 bool vEvent::decode(const yarp::os::Bottle &packet, int &pos)
 {
     if(pos + 1 <= packet.size()) {
-
-        //TODO: this needs to take into account the code aswell
-#ifdef TIME32BIT
-        stamp = packet.get(pos).asInt()&0x01FFFFFF;
-#else
-        stamp = packet.get(pos).asInt()&0x00ffffff;
-#endif
+        stamp = packet.get(pos).asInt()&vtsHelper::max_stamp;
         pos += 1;
         return true;
     }

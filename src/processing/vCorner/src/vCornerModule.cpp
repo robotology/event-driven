@@ -1,4 +1,5 @@
 /*
+<<<<<<< HEAD
  * Copyright (C) 2011 Department of Robotics Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
  * Author: Valentina Vasco
  * email:  valentina.vasco@iit.it
@@ -13,6 +14,23 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details
+=======
+ *   Copyright (C) 2017 Event-driven Perception for Robotics
+ *   Author: valentina.vasco@iit.it
+ *
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+>>>>>>> upstream/master
  */
 
 #include "vCornerModule.h"
@@ -41,12 +59,16 @@ bool vCornerModule::configure(yarp::os::ResourceFinder &rf)
     double thresh = rf.check("thresh", yarp::os::Value(8.0)).asDouble();
     bool callback = rf.check("callback", yarp::os::Value(false)).asBool();
     int nthreads = rf.check("nthreads", yarp::os::Value(2)).asInt();
+<<<<<<< HEAD
     bool harris = rf.check("harris", yarp::os::Value(false)).asBool();
     bool fast = rf.check("fast", yarp::os::Value(true)).asBool();
+=======
+>>>>>>> upstream/master
     double gain = rf.check("gain", yarp::os::Value(0.1)).asDouble();
 
     /* create the thread and pass pointers to the module parameters */
     if(callback) {
+<<<<<<< HEAD
 
         harristhread = 0;
         fastthread = 0;
@@ -80,6 +102,18 @@ bool vCornerModule::configure(yarp::os::ResourceFinder &rf)
             if(!fastthread->start())
                 return false;
         }
+=======
+        harristhread = 0;
+        harriscallback = new vHarrisCallback(height, width, temporalsize, qlen, sobelsize, windowRad, sigma, thresh);
+        return harriscallback->open(moduleName, strict);
+    }
+    else {
+        harriscallback = 0;
+        harristhread = new vHarrisThread(height, width, moduleName, strict, qlen, temporalsize,
+                                         windowRad, sobelsize, sigma, thresh, nthreads, gain);
+        if(!harristhread->start())
+            return false;
+>>>>>>> upstream/master
     }
 
     return true;
@@ -89,9 +123,13 @@ bool vCornerModule::configure(yarp::os::ResourceFinder &rf)
 bool vCornerModule::interruptModule()
 {
     if(harriscallback) harriscallback->interrupt();
+<<<<<<< HEAD
     if(fastcallback) fastcallback->interrupt();
     if(harristhread) harristhread->stop();
     if(fastthread) fastthread->stop();
+=======
+    if(harristhread) harristhread->stop();
+>>>>>>> upstream/master
     yarp::os::RFModule::interruptModule();
     return true;
 }
@@ -103,12 +141,16 @@ bool vCornerModule::close()
         harriscallback->close();
         delete harriscallback;
     }
+<<<<<<< HEAD
     if(fastcallback) {
         fastcallback->close();
         delete fastcallback;
     }
     if(harristhread) delete harristhread;
     if(fastthread) delete fastthread;
+=======
+    if(harristhread) delete harristhread;
+>>>>>>> upstream/master
     yarp::os::RFModule::close();
     return true;
 }
