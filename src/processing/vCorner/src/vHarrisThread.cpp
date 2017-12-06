@@ -1,3 +1,5 @@
+<<<<<<< HEAD
+=======
 /*
  *   Copyright (C) 2017 Event-driven Perception for Robotics
  *   Author: valentina.vasco@iit.it
@@ -16,6 +18,7 @@
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+>>>>>>> upstream/master
 #include "vHarrisThread.h"
 
 using namespace ev;

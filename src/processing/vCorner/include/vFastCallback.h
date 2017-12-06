@@ -1,5 +1,4 @@
 /*
-<<<<<<< HEAD
  * Copyright (C) 2011 Department of Robotics Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
  * Author: Valentina Vasco
  * email:  valentina.vasco@iit.it
@@ -14,23 +13,6 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details
-=======
- *   Copyright (C) 2017 Event-driven Perception for Robotics
- *   Author: valentina.vasco@iit.it
- *
- *   This program is free software: you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation, either version 3 of the License, or
- *   (at your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
->>>>>>> upstream/master
  */
 
 /// \defgroup Modules Modules
@@ -38,8 +20,8 @@
 /// \ingroup Modules
 /// \brief detects corner events using the Harris method
 
-#ifndef __VHARRISCALLBACK__
-#define __VHARRISCALLBACK__
+#ifndef __VFASTCALLBACK__
+#define __VFASTCALLBACK__
 
 #include <yarp/os/all.h>
 #include <yarp/sig/all.h>
@@ -51,7 +33,7 @@
 #include <math.h>
 #include <iomanip>
 
-class vHarrisCallback : public yarp::os::BufferedPort<ev::vBottle>
+class vFastCallback : public yarp::os::BufferedPort<ev::vBottle>
 {
 private:
 
@@ -62,26 +44,71 @@ private:
     yarp::os::BufferedPort<yarp::os::Bottle> debugPort;
 
     //data structures
-    ev::temporalSurface *surfaceleft;
-    ev::temporalSurface *surfaceright;
+    yarp::sig::ImageOf< yarp::sig::PixelInt > surfaceOnL;
+    yarp::sig::ImageOf< yarp::sig::PixelInt > surfaceOfL;
+    yarp::sig::ImageOf< yarp::sig::PixelInt > surfaceOnR;
+    yarp::sig::ImageOf< yarp::sig::PixelInt > surfaceOfR;
 
     //parameters
     int height;
     int width;
-    unsigned int qlen;
-    int temporalsize;
-    int windowRad;
-    double thresh;
+
+    ev::vtsHelper unwrapper;
 
     double tout;
 
-    filters convolution;
-    bool detectcorner(const ev::vQueue subsurf, int x, int y);
+    //pixels on the circles
+    int circle3[16][2] =
+    {
+        {0, 3},
+        {1, 3},
+        {2, 2},
+        {3, 1},
+        {3, 0},
+        {3, -1},
+        {2, -2},
+        {1, -3},
+        {0, -3},
+        {-1, -3},
+        {-2, -2},
+        {-3, -1},
+        {-3, 0},
+        {-3, 1},
+        {-2, 2},
+        {-1, 3}
+    };
+
+    int circle4[20][2] =
+    {
+        {0, 4},
+        {1, 4},
+        {2, 3},
+        {3, 2},
+        {4, 1},
+        {4, 0},
+        {4, -1},
+        {3, -2},
+        {2, -3},
+        {1, -4},
+        {0, -4},
+        {-1, -4},
+        {-2, -3},
+        {-3, -2},
+        {-4, -1},
+        {-4, 0},
+        {-4, 1},
+        {-3, 2},
+        {-2, 3},
+        {-1, 4}
+    };
+
+    void getCircle3(yarp::sig::ImageOf<yarp::sig::PixelInt> *cSurf, int x, int y, unsigned int (&p3)[16], int (&circle3)[16][2]);
+    void getCircle4(yarp::sig::ImageOf<yarp::sig::PixelInt> *cSurf, int x, int y, unsigned int (&p4)[20], int (&circle4)[20][2]);
+    bool detectcornerfast(unsigned int patch3[16], unsigned int patch4[20]);
 
 public:
 
-    vHarrisCallback(int height, int width, double temporalsize, int qlen,
-                    int filterSize, int windowRad, double sigma, double thresh);
+    vFastCallback(int height, int width);
 
     bool    open(const std::string moduleName, bool strictness = false);
     void    close();
