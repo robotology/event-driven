@@ -3,6 +3,11 @@
  *
  *  Created on: Oct 20, 2016
  *      Author: sbrohan
+ * -------------------------
+ * this file was taken from the provided sample application of the chronocam.
+ * all rights and credit belong to the authors.
+ * -------------------------
+ *
  */
 
 #ifndef UTILS_EXAMPLES_ATIS_EVENTS_STREAM_INC_ATIS_EVENTS_STREAM_H_

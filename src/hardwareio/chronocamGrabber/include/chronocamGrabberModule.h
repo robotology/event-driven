@@ -57,7 +57,6 @@ class chronocamGrabberModule : public yarp::os::RFModule {
 
     //HANDLES READING WRITING TO DATA DEVICE AND YARP
     device2yarp D2Y; // ratethread that reads the device and writes to yarp vBottle
-    yarp2device Y2D; // bufferedport that reads yarp vBottles and writes to the device
 
 public:
 

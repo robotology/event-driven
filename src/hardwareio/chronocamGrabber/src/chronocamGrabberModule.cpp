@@ -133,7 +133,6 @@ bool chronocamGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 
 bool chronocamGrabberModule::interruptModule() {
     handlerPort.interrupt();
-    Y2D.interrupt();
     // D2Y ???
     return true;
 }
@@ -142,7 +141,6 @@ bool chronocamGrabberModule::close() {
 
     std::cout << "breaking YARP connections.. ";
     handlerPort.close();        // rpc of the RF module
-    Y2D.close();
     D2Y.stop();                // bufferedport from yarp to device
     std::cout << "done" << std::endl;
 

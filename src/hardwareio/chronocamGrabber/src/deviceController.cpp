@@ -15,7 +15,6 @@
  */
 
 #include "deviceController.h"
-#include "deviceRegisters.h"
 
 #include "ccam_device.h"
 #include "i_ccam.h"

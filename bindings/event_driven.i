@@ -139,8 +139,7 @@ public:
 
 %extend vBottle {
     int getSize() {
-        auto q = $self->get<ev::vEvent>();
-    	return q.size();
+        return $self->findGroup("AE").size() / 2;
     }
 
     void _getData(unsigned int* r1, int n1,
@@ -156,8 +155,8 @@ public:
         }
         unsigned int i;
 	for (i=0; i< q.size(); i++) {
-	    ev::vEvent *ev1 = &(*q.at(i));
-	    ev::AddressEvent *m = dynamic_cast<ev::AddressEvent*>(ev1);
+            ev::AE* m = read_as(q[i]);
+
 	    r1[i] = m->channel;
 	    r2[i] = m->stamp;
 	    r3[i] = m->x;
@@ -182,8 +181,7 @@ public:
         }
         unsigned int i;
 	for (i=0; i< q.size(); i++) {
-	    ev::vEvent *ev1 = &(*q.at(i));
-	    ev::AddressEvent *m = dynamic_cast<ev::AddressEvent*>(ev1);
+	    ev::AE* m = read_as(q[i]);
 	    m->channel  = s1[i];
 	    m->stamp    = s2[i];
 	    m->x        = s3[i];

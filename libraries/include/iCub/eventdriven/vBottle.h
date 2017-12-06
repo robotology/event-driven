@@ -300,7 +300,7 @@ public:
             q[i]->encode(internaldata, pos);        //internal memeory
 
         if(pos != (unsigned int)header3[1])
-            std::cerr << "vBottleMimic: encoding incorrect";
+            yError() << "vBottleMimic: encoding incorrect";
 
         this->datablock = (const char *)internaldata.data();
         this->datalength = elementBYTES * q.size();

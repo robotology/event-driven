@@ -17,7 +17,6 @@
 #ifndef __VDEVCTRL__
 #define __VDEVCTRL__
 
-#include <deviceRegisters.h>
 #include <yarp/os/Bottle.h>
 
 #include <string>
