@@ -1,17 +1,20 @@
 /*
- * Copyright (C) 2017 iCub Facility - Istituto Italiano di Tecnologia
- * Author: arren.glover@iit.it, chiara.bartolozzi@iit.it
- * Permission is granted to copy, distribute, and/or modify this program
- * under the terms of the GNU General Public License, version 2 or any
- * later version published by the Free Software Foundation.
+ *   Copyright (C) 2017 Event-driven Perception for Robotics
+ *   Author: arren.glover@iit.it
+ *           chiara.bartolozzi@iit.it
  *
- * A copy of the license can be found at
- * http://www.robotcub.org/icub/license/gpl.txt
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include "yarpInterface.h"
@@ -88,15 +91,12 @@ long vDevReadBuffer::getEventChunk(unsigned char* target)
 
 
 bool vDevReadBuffer::initialise(Chronocam::I_EventsStream &stream,
-				int width, int height,
-				unsigned int bufferSize,
+				                unsigned int bufferSize,
                                 unsigned int readSize)
 {
 
 
     this->stream = &stream;
-    this->width = width;
-    this->height = height;
     if(bufferSize > 0) this->bufferSize = bufferSize;
     if(readSize > 0) this->readSize = readSize;
 
@@ -189,6 +189,7 @@ void vDevReadBuffer::run()
 	}
 
 	/******************************************************************************/
+
 	//device2yarp
 	/******************************************************************************/
 
@@ -202,32 +203,27 @@ void vDevReadBuffer::run()
 	    jumpcheck = false;
 	}
 
-	bool device2yarp::initialise(Chronocam::I_EventsStream &stream, int width, int height,
-			             std::string moduleName,
-				     bool strict, bool check,
-				     unsigned int bufferSize,
-				     unsigned int readSize)
-	{
 
-	    if(!deviceReader.initialise(stream, width, height, bufferSize, readSize))
-		return false;
+bool device2yarp::initialise(Chronocam::I_EventsStream &stream,
+                             std::string moduleName, bool check,
+                             unsigned int bufferSize,
+                             unsigned int readSize, unsigned int chunkSize)
+{
 
-	    this->errorchecking = check;
+    this->chunksize = chunkSize;
+    if(!deviceReader.initialise(stream, bufferSize, readSize))
+        return false;
 
-	    this->strict = strict;
-	    if(strict) {
-		std::cout << "D2Y: setting output port to strict" << std::endl;
-		portvBottle.setStrict();
-	    } else {
-		std::cout << "D2Y: setting output port to not-strict" << std::endl;
-	    }
+    this->errorchecking = check;
+    yInfo() << "yarp::os::Port used - which is always strict";
 
-	    if(!portEventCount.open(moduleName + "/eventCount:o"))
-		return false;
 
-	    return portvBottle.open(moduleName + "/vBottle:o");
+    if(!portEventCount.open(moduleName + "/eventCount:o"))
+	return false;
 
-	}
+    return portvBottle.open(moduleName + "/vBottle:o");
+
+}
 
 void device2yarp::afterStart(bool success)
 {
@@ -275,6 +271,7 @@ int device2yarp::applysaltandpepperfilter(std::vector<unsigned char> &data, int 
 
 void  device2yarp::run() {
 
+    ev::vBottleMimic vbottlemimic;
     while(!isStopping()) {
 
         //display an output to let everyone know we are still working.
@@ -322,27 +319,30 @@ void  device2yarp::run() {
 
 	//std::cout << *(int*)data.data() << std::endl;
         //typical ZYNQ behaviour to skip error checking
-        unsigned int chunksize = 80000, i = 0;
+        unsigned int i = 0;
+        i = 0;
         if(!errorchecking && !dataError) {
 
             while((i+1) * chunksize < nBytesRead) {
 
-                ev::vBottleMimic &vbm = portvBottle.prepare();
-                vbm.setExternalData((const char *)data.data() + i*chunksize, chunksize);
+                //ev::vBottleMimic &vbm = portvBottle.prepare();
+                vbottlemimic.setExternalData((const char *)data.data() + i*chunksize, chunksize);
                 vStamp.update();
                 portvBottle.setEnvelope(vStamp);
-                portvBottle.write(strict);
-                portvBottle.waitForWrite();
+                portvBottle.write(vbottlemimic);
+                //portvBottle.write(strict);
+                //portvBottle.waitForWrite();
 
                 i++;
             }
 
-            ev::vBottleMimic &vbm = portvBottle.prepare();
-            vbm.setExternalData((const char *)data.data() + i*chunksize, nBytesRead - i*chunksize);
+            //ev::vBottleMimic &vbm = portvBottle.prepare();
+            vbottlemimic.setExternalData((const char *)data.data() + i*chunksize, nBytesRead - i*chunksize);
             vStamp.update();
             portvBottle.setEnvelope(vStamp);
-            portvBottle.write(strict);
-            portvBottle.waitForWrite();
+            portvBottle.write(vbottlemimic);
+            //portvBottle.write(strict);
+            //portvBottle.waitForWrite();
 
             continue;						//return here.
         }
@@ -364,13 +364,14 @@ void  device2yarp::run() {
                     std::cerr << "BITMISMATCH in yarp2device" << std::endl;
                     std::cerr << *TS << " " << *AE << std::endl;
 
-                    ev::vBottleMimic &vbm = portvBottle.prepare();
-                    vbm.setExternalData((const char *)data.data()+bstart, bend-bstart);
+                    //ev::vBottleMimic &vbm = portvBottle.prepare();
+                    vbottlemimic.setExternalData((const char *)data.data()+bstart, bend-bstart);
                     countAEs += (bend - bstart) / 8;
                     vStamp.update();
                     portvBottle.setEnvelope(vStamp);
-                    if(strict) portvBottle.writeStrict();
-                    else portvBottle.write();
+                    portvBottle.write(vbottlemimic);
+                    //if(strict) portvBottle.writeStrict();
+                    //else portvBottle.write();
                 }
 
                 //then increment by 1 to find the next alignment
@@ -383,13 +384,14 @@ void  device2yarp::run() {
         }
 
         if(nBytesRead - bstart > 7) {
-            ev::vBottleMimic &vbm = portvBottle.prepare();
-            vbm.setExternalData((const char *)data.data()+bstart, 8*((nBytesRead-bstart)/8));
+            //ev::vBottleMimic &vbm = portvBottle.prepare();
+            vbottlemimic.setExternalData((const char *)data.data()+bstart, 8*((nBytesRead-bstart)/8));
             countAEs += (nBytesRead - bstart) / 8;
             vStamp.update();
             portvBottle.setEnvelope(vStamp);
-            if(strict) portvBottle.writeStrict();
-            else portvBottle.write();
+            portvBottle.write(vbottlemimic);
+            //if(strict) portvBottle.writeStrict();
+            //else portvBottle.write();
         }
     }
 

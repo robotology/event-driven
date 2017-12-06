@@ -1,17 +1,20 @@
 /*
- * Copyright (C) 2017 iCub Facility - Istituto Italiano di Tecnologia
- * Author: arren.glover@iit.it, chiara.bartolozzi@iit.it
- * Permission is granted to copy, distribute, and/or modify this program
- * under the terms of the GNU General Public License, version 2 or any
- * later version published by the Free Software Foundation.
+ *   Copyright (C) 2017 Event-driven Perception for Robotics
+ *   Author: arren.glover@iit.it
+ *           chiara.bartolozzi@iit.it
  *
- * A copy of the license can be found at
- * http://www.robotcub.org/icub/license/gpl.txt
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 #ifndef __EVENTDRIVENYARPINTERFACE__
@@ -39,7 +42,8 @@ private:
     long n_events;
 
     unsigned int last_timestamp=0;
-    int width; int height;
+    const int width = 304;
+    const int height = 240;
 
     //internal variables/storage
     unsigned int readCount;
@@ -66,8 +70,7 @@ public:
     vDevReadBuffer();
 
     bool initialise(Chronocam::I_EventsStream &stream,
-		    int width, int height,
-		    unsigned int bufferSize = 0,
+		            unsigned int bufferSize = 0,
                     unsigned int readSize = 0);
 
     virtual long getEventChunk(unsigned char *target);
@@ -93,9 +96,10 @@ private:
     bool errorchecking;
     bool applyfilter;
     bool jumpcheck;
+    unsigned int chunksize;
 
     //internal variables
-    yarp::os::BufferedPort<ev::vBottleMimic> portvBottle;
+    yarp::os::Port portvBottle;
     yarp::os::BufferedPort<yarp::os::Bottle> portEventCount;
     int countAEs;
     int countLoss;
@@ -115,11 +119,10 @@ private:
 public:
 
     device2yarp();
-    bool initialise(Chronocam::I_EventsStream &stream, int width, int height,
-		    std::string moduleName = "",
-		    bool strict = false, bool check = false,
+    bool initialise(Chronocam::I_EventsStream &stream,
+                    std::string moduleName = "", bool check = false,
                     unsigned int bufferSize = 800000,
-                    unsigned int readSize = 1024);
+                    unsigned int readSize = 1024, unsigned int chunkSize = 40960);
     void initialiseFilter(bool applyfilter, int width, int height, int temporalsize, int spatialSize)
     {
         this->applyfilter = applyfilter;

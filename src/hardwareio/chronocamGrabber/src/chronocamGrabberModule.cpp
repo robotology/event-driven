@@ -1,17 +1,20 @@
 /*
- * Copyright (C) 2017 iCub Facility - Istituto Italiano di Tecnologia
- * Author: arren.glover@iit.it, chiara.bartolozzi@iit.it
- * Permission is granted to copy, distribute, and/or modify this program
- * under the terms of the GNU General Public License, version 2 or any
- * later version published by the Free Software Foundation.
+ *   Copyright (C) 2017 Event-driven Perception for Robotics
+ *   Author: arren.glover@iit.it
+ *           chiara.bartolozzi@iit.it
  *
- * A copy of the license can be found at
- * http://www.robotcub.org/icub/license/gpl.txt
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 /**
@@ -89,21 +92,20 @@ bool chronocamGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     }
 
 
-    //open rateThread device2yarp
     int readPacketSize = 8 * rf.check("readPacketSize", yarp::os::Value("512")).asInt();
-    int maxBottleSize = 8 * rf.check("maxBottleSize", yarp::os::Value("100000")).asInt();
+    int bufferSize     = 8 * rf.check("bufferSize", yarp::os::Value("5120")).asInt();
+    int maxBottleSize  = 8 * rf.check("maxBottleSize", yarp::os::Value("5120")).asInt();
 
-    yarp::os::Bottle filp = rf.findGroup("FILTER_PARAMS");
-    if(!D2Y.initialise(vsctrlMng.getStream(), filp.find("width").asInt(), filp.find("height").asInt(),
-		       moduleName, strict, errorcheck, maxBottleSize, readPacketSize)) {
+    if(!D2Y.initialise(vsctrlMng.getStream(), moduleName, errorcheck, bufferSize, readPacketSize, maxBottleSize)) {
         std::cout << "A data device was specified but could not be initialised" << std::endl;
         return false;
     } else {
         //see if we want to apply a filter to the events
         if(rf.check("applyFilter", yarp::os::Value("false")).asBool()) {
 
+            yarp::os::Bottle filp = rf.findGroup("FILTER_PARAMS");
             if(!filp.isNull()) {
-                std::cout << "APPLYING EVENT FILTER: " << std::endl;
+                yInfo() << "APPLYING FILTER";
                 std::cout << filp.toString() << std::endl;
 
                 D2Y.initialiseFilter(true,
@@ -111,14 +113,14 @@ bool chronocamGrabberModule::configure(yarp::os::ResourceFinder &rf) {
                                      filp.find("height").asInt(),
                                      filp.find("tsize").asInt(),
                                      filp.find("ssize").asInt());
-            }
         }
 
-        if(jumpcheck) {
-            std::cout << "CHECKING FOR ERRORS IN TIMESTAMPS" << std::endl;
-            D2Y.checkForTSJumps();
+            if(jumpcheck) {
+                yInfo() << "CHECKING FOR TIMESTAMP JUMPS";
+                D2Y.checkForTSJumps();
+            }
+            D2Y.start();
         }
-        D2Y.start();
 
     }
 
@@ -132,13 +134,6 @@ bool chronocamGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 }
 
 bool chronocamGrabberModule::interruptModule() {
-    handlerPort.interrupt();
-    // D2Y ???
-    return true;
-}
-
-bool chronocamGrabberModule::close() {
-
     std::cout << "breaking YARP connections.. ";
     handlerPort.close();        // rpc of the RF module
     D2Y.stop();                // bufferedport from yarp to device
@@ -147,6 +142,10 @@ bool chronocamGrabberModule::close() {
     std::cout << "closing device drivers.. ";
     vsctrlMng.disconnect(true);
     std::cout << "done" << std::endl;
+    return true;
+}
+
+bool chronocamGrabberModule::close() {
 
     return true;
 }
@@ -154,7 +153,7 @@ bool chronocamGrabberModule::close() {
 /* Called periodically every getPeriod() seconds */
 bool chronocamGrabberModule::updateModule() {
 
-    return true;
+    return !isStopping();
 }
 
 double chronocamGrabberModule::getPeriod() {
