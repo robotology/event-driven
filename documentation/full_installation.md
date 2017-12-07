@@ -93,7 +93,17 @@ select any of the applications you want to build by setting them to ON. If you n
 
 * BUILD_PROCESSING ON
 
-and select which modules you need. Press [g] to generate the makefile.
+and select which modules you need. In addition several options need to be set in regards to the hardware parameters, which will also need to be correct for pre-recorded sequences.
+
+> VLIB_CLOCK_PERIOD_NS 80
+
+> VLIB_CODEC_128x128 OFF
+
+> VLIB_TIMER_BITS 24
+
+These are customisable for your hardware, specifying the event timing and the decoding method, which is different for the 128x128 resolution DVS and a higher resolution camera.
+
+Press [g] to generate the makefile.
 
 > make install -j4
 
