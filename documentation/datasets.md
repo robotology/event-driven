@@ -23,13 +23,11 @@ Datasets recorded with the DVS and ATIS have the following properties which must
 * DVS
 * ground truth supplied
 
-[download](https://www.dropbox.com/s/8b0pp4o1qwufgl1/EDPR_DVS_BALLTRACKING.zip?dl=0)
-
 ## Corner Detection 
 
 * 2 Datasets = checkboard (multiple different speeds and angles), naturalscene
 * DVS
 * ground truth supplied for naturalscene
 
-[download](https://www.dropbox.com/sh/hv2vumo27jp7841/AAArag_ihKeGhuSz4a-RGT4Ca?dl=0)
+## [download](https://figshare.com/s/0abd8f18312bec15b121)
 
