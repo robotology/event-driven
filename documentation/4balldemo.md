@@ -29,3 +29,8 @@ The application assumes you are connected to a *yarpserver* - see http://www.yar
 ![connections](http://robotology.github.io/event-driven/doxygen/images/vGazeDemoConnections.png)
 
 note: shmem connections can only be used if the modules are running on the same physical machine.
+
+## Known issues
+
+* Flashing lights, or reflections off the surface of the ball can cause tracking loss, as the conditions for a ball to be "hollow" are no longer met.
+* There is an upper limit on the speed at which the ball can be moved. This is due to computational limits rather than sensor limits. In post-processing (off-line) the ball can be tracked at any speed.

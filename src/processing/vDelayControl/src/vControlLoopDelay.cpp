@@ -1,3 +1,21 @@
+/*
+ *   Copyright (C) 2017 Event-driven Perception for Robotics
+ *   Author: arren.glover@iit.it
+ *
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 #include "vControlLoopDelay.h"
 
 /*////////////////////////////////////////////////////////////////////////////*/
@@ -212,21 +230,21 @@ void delayControl::run()
 //            val5 = std::max(val5, avgx);
 //            val6 = std::max(val6, avgy);
 //            val7 = std::max(val7, avgr);
-            val1 += ratetimedt * 1e3;
+            val1 += 152;
             val2 += 1.0/ratetimedt;//(double)inputPort.queryDelayN();
-            val3 += tw * vtsHelper::tsscaler * 1e3;//vpf.maxlikelihood;//inputPort.queryDelayT();
+            val3 += 120;//vpf.maxlikelihood;//inputPort.queryDelayT();
             val4 += inputPort.queryRate() / 1000.0;
-            val5 += qROI.q.size() - nw;
+            val5 += avgx;
             val6 += avgy;
-            val7 += avgr;
+            val7 += avgr * 2;
             ratetime += ratetimedt;
             //val3 = val5;
 
             //val2 = 0;
             //val3 = 0;//std::max(val3, inputPort.queryDelayT());
             //val5 = 0;//std::max(val5, avgx);
-            val6 = 0;//std::max(val6, avgy);
-            val7 = 0;//std::max(val7, avgr);
+            //val6 = 0;//std::max(val6, avgy);
+            //val7 = 0;//std::max(val7, avgr);
             countscope++;
 
             double scopedt = yarp::os::Time::now() - pscopetime;
