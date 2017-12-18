@@ -22,7 +22,7 @@ using namespace ev;
 
 vDraw * createDrawer(std::string tag)
 {
-    
+
     if(tag == addressDraw::drawtype)
         return new addressDraw();
     if(tag == isoDraw::drawtype)
@@ -41,8 +41,12 @@ vDraw * createDrawer(std::string tag)
         return new blobDraw();
     if (tag == boxDraw::drawtype)
         return new boxDraw();
+    if(tag == isoInterestDraw::drawtype)
+        return new isoInterestDraw();
+    if(tag == isoCircDraw::drawtype)
+        return new isoCircDraw();
     return 0;
-    
+
 }
 
 const std::string addressDraw::drawtype = "AE";
@@ -59,31 +63,29 @@ std::string addressDraw::getEventType()
 
 void addressDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 {
-    image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
-    image.setTo(128);
 
-//    if(image.empty()) {
-//        image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
-//        image.setTo(255);
-//    }
+    if(image.empty()) {
+        image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
+        image.setTo(255);
+    }
 //    image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
 //    image.setTo(255);
-    
+
     if(checkStagnancy(eSet) > clearThreshold) {
-        //       return;
+ //       return;
     }
-    
+
     if(eSet.empty()) return;
-    
+
     ev::vQueue::const_reverse_iterator qi;
     for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
-        
-        
+
+
         int dt = eSet.back()->stamp - (*qi)->stamp;
         if(dt < 0) dt += ev::vtsHelper::maxStamp();
         if(dt > twindow) break;
-        
-        
+
+
         auto aep = is_event<AddressEvent>(*qi);
         int y = aep->y;
         int x = aep->x;
@@ -91,21 +93,11 @@ void addressDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
             y = Ylimit - 1 - y;
             x = Xlimit - 1 - x;
         }
-        
-        
+
+
         cv::Vec3b &cpc = image.at<cv::Vec3b>(y, x);
-        
-        if (!aep -> polarity){
-            cpc[0] = 0;
-            cpc[1] = 0;
-            cpc[2] = 0;
-        } else {
-            cpc[0] = 255;
-            cpc[1] = 255;
-            cpc[2] = 255;
-        }
-        
-        /*if(!aep->polarity)
+
+        if(!aep->polarity)
         {
             //blue
             if(cpc[0] == 1) cpc[0] = 0;   //if positive and negative
@@ -128,7 +120,7 @@ void addressDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
             //red
             if(cpc.val[2] == 160) cpc[2] = 255;
             else cpc[2] = 0;
-        }*/
+        }
     }
 }
 
@@ -146,31 +138,31 @@ std::string lifeDraw::getEventType()
 
 void lifeDraw::draw(cv::Mat &image, const vQueue &eSet, int vTime)
 {
-    
+
     image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
     image.setTo(255);
-    
+
     if(checkStagnancy(eSet) > clearThreshold) {
         return;
     }
     if(eSet.empty()) return;
-    
+
     int cts = eSet.back()->stamp;
-    
+
     vQueue::const_iterator qi;
     for(qi = eSet.begin(); qi != eSet.end(); qi++) {
-        
+
         auto v = as_event<FlowEvent>(*qi);
         if(!v) continue;
-        
+
         int modts = cts;
         if(cts < v->stamp) //we have wrapped
             modts += ev::vtsHelper::maxStamp();
-        
+
         if(modts > v->getDeath()) continue;
-        
+
         cv::Vec3b &cpc = image.at<cv::Vec3b>(v->y, v->x);
-        
+
         if(!v->polarity)
         {
             //blue
@@ -752,6 +744,7 @@ void isoDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         } else {
             isoimage.at<cv::Vec3b>(py, px) = cv::Vec3b(160, 255, 160);
         }
+
     }
     
     if(!image.empty()) {
@@ -911,3 +904,4 @@ void boxDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     }
     
 }
+

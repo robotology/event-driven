@@ -84,9 +84,6 @@ public:
     
     void transformPoint( double &x, double &y, yarp::sig::Matrix homography ) const;
     
-    void
-    drawRectangle( int minY, int minX, int maxY, int maxX, yarp::sig::ImageOf<yarp::sig::PixelBgr> &image ) ;
-    
 };
 
 
