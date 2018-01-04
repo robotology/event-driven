@@ -56,7 +56,7 @@ bool vPreProcessModule::configure(yarp::os::ResourceFinder &rf)
     bool precheck = rf.check("precheck") &&
             rf.check("precheck", yarp::os::Value(true)).asBool();
     bool split = rf.check("split") &&
-            rf.check("precheck", yarp::os::Value(true)).asBool();
+            rf.check("split", yarp::os::Value(true)).asBool();
 
     if(precheck)
         yInfo() << "Performing precheck for event corruption";
@@ -119,8 +119,13 @@ bool vPreProcessModule::updateModule()
 
 double vPreProcessModule::getPeriod()
 {
-    yInfo() << this->eventManager.queryUnprocessed() << "unprocessed queues";
-    return 3.0;
+    static int puqs = 0;
+    int uqs = this->eventManager.queryUnprocessed();
+    if(uqs || puqs) {
+        yInfo() << uqs << "unprocessed queues";
+        puqs = uqs;
+    }
+    return 1.0;
 }
 /******************************************************************************/
 vPreProcess::vPreProcess(): name("/vPreProcess")

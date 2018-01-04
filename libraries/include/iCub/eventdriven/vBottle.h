@@ -131,7 +131,6 @@ public:
                 continue;
             }
 
-            std::cout << e->tag << std::endl;
             //and if e is of type T we can continue to get the events
             if(!std::dynamic_pointer_cast<T>(e)) {
                 continue;

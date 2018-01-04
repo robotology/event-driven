@@ -232,6 +232,8 @@ bool vTrackToRobotModule::controlArm(yarp::sig::Vector ltarget,
     arm->goToPose(tp,od);
     //yInfo() << "Arm Controlled";
 
+    return true;
+
 }
 
 bool vTrackToRobotModule::controlVelocity(yarp::sig::Vector ltarget,
@@ -349,6 +351,8 @@ bool vTrackToRobotModule::controlExternal(yarp::sig::Vector ltarget,
 
         cartOutPort.write();
     }
+
+    return true;
 
 }
 
