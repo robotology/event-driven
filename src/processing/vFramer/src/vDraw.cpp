@@ -30,6 +30,8 @@ vDraw * createDrawer(std::string tag)
 
     if(tag == addressDraw::drawtype)
         return new addressDraw();
+    if(tag == addressGrayscaleDraw::drawtype)
+        return new addressGrayscaleDraw();
     if(tag == isoDraw::drawtype)
         return new isoDraw();
     if(tag == interestDraw::drawtype)
@@ -77,7 +79,7 @@ void addressDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 //    image.setTo(255);
 
     if(checkStagnancy(eSet) > clearThreshold) {
- //       return;
+        //       return;
     }
 
     if(eSet.empty()) return;
@@ -125,6 +127,65 @@ void addressDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
             //red
             if(cpc.val[2] == 160) cpc[2] = 255;
             else cpc[2] = 0;
+        }
+    }
+}
+
+const std::string addressGrayscaleDraw::drawtype = "AE-GRAY";
+
+std::string addressGrayscaleDraw::getDrawType()
+{
+    return addressGrayscaleDraw::drawtype;
+}
+
+std::string addressGrayscaleDraw::getEventType()
+{
+    return AddressEvent::tag;
+}
+
+void addressGrayscaleDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
+{
+
+    if(image.empty()) {
+        image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
+        image.setTo(127);
+    }
+
+    if(eSet.empty()) return;
+
+    ev::vQueue::const_reverse_iterator qi;
+    for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
+
+
+        int dt = eSet.back()->stamp - (*qi)->stamp;
+        if(dt < 0) dt += ev::vtsHelper::maxStamp();
+        if(dt > twindow) break;
+
+
+        auto aep = is_event<AddressEvent>(*qi);
+        int y = aep->y;
+        int x = aep->x;
+        if(flip) {
+            y = Ylimit - 1 - y;
+            x = Xlimit - 1 - x;
+        }
+
+
+        cv::Vec3b &cpc = image.at<cv::Vec3b>(y, x);
+
+        if(!aep->polarity)
+        {
+            //black
+            cpc[0] = 0;
+            cpc[1] = 0;
+            cpc[2] = 0;
+        }
+        else
+        {
+            //white
+            cpc[0] = 255;
+            cpc[1] = 255;
+            cpc[2] = 255;
         }
     }
 }
