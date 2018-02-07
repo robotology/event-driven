@@ -522,14 +522,14 @@ void interestDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     int r = 2;
     CvScalar c1 = CV_RGB(255, 0, 0);
     CvScalar c2 = CV_RGB(0, 255, 255);
+
     ev::vQueue::const_reverse_iterator qi;
     for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
         int dt = eSet.back()->stamp - (*qi)->stamp;
-        if(dt < 0) dt += ev::vtsHelper::maxStamp();
+        if(dt < 0) dt += ev::vtsHelper::max_stamp;
         if(dt > twindow) break;
 
-        auto v = as_event<ev::LabelledAE>(*qi);
-        if(!v) continue;
+        auto v = is_event<ev::LabelledAE>(*qi);
         int px = v->x;
         int py = v->y;
         if(flip) {
