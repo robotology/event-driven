@@ -49,7 +49,7 @@ Quick instructions:
 2. git clone https://github.com/robotology/event-driven.git
 3. cd event-driven
 4. mkdir build && cd build
-5. ccmake ..
+5. cmake ..
 6. ensure the install path is as configured in icub-contrib-common
 7. turn on desired modules and applications (e.g. processing)
 8. configure (c) and generate (g)
