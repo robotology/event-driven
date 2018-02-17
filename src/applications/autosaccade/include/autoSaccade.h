@@ -98,6 +98,7 @@ private:
     double refSpeed;
     double refAcc;
     double delay;
+    double radius;
 
     //duration of event collection
     double timeout;
