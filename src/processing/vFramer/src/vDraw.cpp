@@ -878,37 +878,46 @@ void skinDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 {
     cv::Scalar pos = CV_RGB(160, 0, 160);
     cv::Scalar neg = CV_RGB(0, 60, 1);
-    
+
     int radius = 4;
-    
+
     if(image.empty()) {
         image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
         image.setTo(255);
     }
-    
+
     if(checkStagnancy(eSet) > clearThreshold) {
-        //       return;
+               return;
     }
-    
+
     if(eSet.empty()) return;
-    
+
     ev::vQueue::const_reverse_iterator qi;
     for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
-        
-        
+
+
         int dt = eSet.back()->stamp - (*qi)->stamp; // start with newest event
         if(dt < 0) dt += ev::vtsHelper::maxStamp();
         if(dt > twindow) break;
-        
-        
+
+
         auto aep = is_event<AddressEvent>(*qi);
-        int y = aep->y+50;
+        int y = aep->y;
         int x = aep->x;
+
+        if(aep->type == 0)
+            y = Ylimit - radius;
+        else {
+            y = radius + y * 200.0 / 255.0;
+            //x = x;
+        }
+
         // decode the event here: i.e. do the mapping from the x value to x,y location on the image
-        
+
         // get the pixel: substitute with code to draw a circle from circleDrawer
+        y = Ylimit - y - 1;
         cv::Point centr(x, y);
-        
+
         if(!aep->polarity)
         {
             cv::circle(image, centr, radius, pos, CV_FILLED);
