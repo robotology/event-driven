@@ -20,6 +20,7 @@
 #include <yarp/os/Bottle.h>
 #include <yarp/os/Log.h>
 #include "iCub/eventdriven/vCodec.h"
+#include <iostream>
 
 namespace ev {
 

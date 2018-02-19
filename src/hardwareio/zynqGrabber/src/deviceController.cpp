@@ -17,6 +17,8 @@
 #include "deviceController.h"
 #include "deviceRegisters.h"
 
+#include <iostream>
+
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
