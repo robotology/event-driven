@@ -176,9 +176,9 @@ void addressGrayscaleDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTim
         if(!aep->polarity)
         {
             //black
-            cpc[0] = 0;
-            cpc[1] = 0;
-            cpc[2] = 0;
+            cpc[0] = 255;
+            cpc[1] = 255;
+            cpc[2] = 255;
         }
         else
         {
