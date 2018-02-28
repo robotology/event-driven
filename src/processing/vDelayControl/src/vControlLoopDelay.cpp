@@ -204,6 +204,7 @@ void delayControl::run()
             vBottle &outputbottle = outputPort.prepare();
             outputbottle.clear();
             outputbottle.addEvent(ceg);
+            outputPort.setEnvelope(ystamp);
             outputPort.write();
 
         }
