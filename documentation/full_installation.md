@@ -4,7 +4,7 @@ These installation instructions are for first time users of YARP and specificall
 
 ## Install YARP
 
-set up the required environment variables. 
+set up the required environment variables.
 
 We will assume that you are installing YARP in the directory $PROJECTS - for example this could be your home directory. Use your favourite text editor to open ~/.bashrc and add the following lines:
 
@@ -20,11 +20,13 @@ get all dependencies
 
 > sudo sh -c 'echo "deb http://www.icub.org/ubuntu xenial contrib/science" > /etc/apt/sources.list.d/icub.list'
 
-> sudo apt update 
+> sudo apt update
 
 > sudo apt install icub-common
 
 get the repositories
+
+> cd $PROJECTS
 
 > git clone https://github.com/robotology/yarp.git
 
@@ -62,7 +64,7 @@ finally press [g] to generate the makefile.
 
 > cd ../..
 
-> icub-contrib-common
+> cd icub-contrib-common
 
 > mkdir build && cd build
 
@@ -70,7 +72,7 @@ finally press [g] to generate the makefile.
 
 set the following variables
 
-* CMAKE_INSTALL_DIR=$ICUBcontrib_DIR
+* CMAKE_INSTALL_PREFIX=$ICUBcontrib_DIR
 
 press [c] to configure and [g] to generate
 
