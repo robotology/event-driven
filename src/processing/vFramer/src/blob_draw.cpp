@@ -20,34 +20,49 @@
  */
 
 #include "vDraw.h"
-//#define _USE_MATH_DEFINES
-//#include <math.h>
 
 using namespace ev;
 
-vDraw * createDrawer(std::string tag)
+const std::string blobDraw::drawtype = "BLOB";
+
+std::string blobDraw::getDrawType()
+{
+    return blobDraw::drawtype;
+}
+
+std::string blobDraw::getEventType()
+{
+    return AE::tag;
+}
+
+void blobDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 {
 
-    if(tag == addressDraw::drawtype)
-        return new addressDraw();
-    if(tag == isoDraw::drawtype)
-        return new isoDraw();
-    if(tag == interestDraw::drawtype)
-        return new interestDraw();
-    if(tag == circleDraw::drawtype)
-        return new circleDraw();
-    if(tag == flowDraw::drawtype)
-        return new flowDraw();
-    if(tag == lifeDraw::drawtype)
-        return new lifeDraw();
-    if(tag == clusterDraw::drawtype)
-        return new clusterDraw();
-    if(tag == blobDraw::drawtype)
-        return new blobDraw();
-    if(tag == isoInterestDraw::drawtype)
-        return new isoInterestDraw();
-    if(tag == isoCircDraw::drawtype)
-        return new isoCircDraw();
-    return 0;
+    if(eSet.empty()) return;
 
+    ev::vQueue::const_reverse_iterator qi;
+    for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
+
+
+        int dt = vTime - (*qi)->stamp;
+        if(dt < 0) dt += ev::vtsHelper::max_stamp;
+        if(dt > twindow) break;
+
+        auto aep = as_event<AE>(*qi);
+        if(!aep) continue;
+
+        int y = aep->y;
+        int x = aep->x;
+
+        if(flip) {
+            y = Ylimit - 1 - y;
+            x = Xlimit - 1 - x;
+        }
+
+        if(!aep->polarity)
+            image.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 0, 0);
+    }
+
+    cv::medianBlur(image, image, 5);
+    cv::blur(image, image, cv::Size(5, 5));
 }

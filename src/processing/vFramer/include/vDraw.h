@@ -48,26 +48,12 @@ protected:
 
     int Xlimit;
     int Ylimit;
-    int stagnantCount;
-    int pTS;
-    int clearThreshold;
     int twindow;
     bool flip;
 
-    int checkStagnancy(const ev::vQueue &eSet) {
-        if(!eSet.size()) return 0;
-        if(pTS == eSet.back()->stamp)
-            stagnantCount++;
-        else
-            stagnantCount = 0;
-        pTS = eSet.back()->stamp;
-        return stagnantCount;
-    }
-
 public:
 
-    vDraw() : Xlimit(128), Ylimit(128), stagnantCount(0), pTS(0),
-            clearThreshold(30), twindow(781250/2), flip(false) {}
+    vDraw() : Xlimit(128), Ylimit(128), twindow(781250/2), flip(false) {}
     virtual ~vDraw() {}
 
     ///
@@ -93,6 +79,13 @@ public:
     }
 
     virtual void initialise() {}
+
+    virtual void resetImage(cv::Mat &image)
+    {
+        if(image.empty())
+            image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
+        image.setTo(255);
+    }
 
     ///
     /// \brief draw takes an image and overlays the new visualisation textures

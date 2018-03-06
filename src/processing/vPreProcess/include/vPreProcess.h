@@ -26,7 +26,8 @@
 
 #include <yarp/os/all.h>
 #include <iCub/eventdriven/all.h>
-#include <opencv/cv.h>
+//#include <opencv/cv.h>
+#include <opencv2/opencv.hpp>
 using namespace::ev;
 
 class vPreProcess : public yarp::os::Thread
