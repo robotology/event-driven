@@ -573,6 +573,7 @@ private:
     yarp::os::Mutex waitforquery;
     yarp::os::Stamp yarpstamp;
     unsigned int ctime;
+    bool updated;
 
 public:
 
@@ -581,6 +582,7 @@ public:
         ctime = 0;
         strictUpdatePeriod = 0;
         currentPeriod = 0;
+        updated = false;
     }
 
     bool open(std::string portname, int period = 0)
@@ -637,6 +639,7 @@ public:
                     windowleft.addEvent(*qi);
                 else if((*qi)->getChannel() == 1)
                     windowright.addEvent(*qi);
+                updated = true;
 
                 if(!strictUpdatePeriod) safety.unlock();
 
@@ -658,6 +661,7 @@ public:
             q = windowleft.getWindow();
         else
             q = windowright.getWindow();
+        updated = false;
         waitforquery.unlock();
         safety.unlock();
         return q;
@@ -667,6 +671,11 @@ public:
     {
         yStamp = yarpstamp;
         vStamp = ctime;
+    }
+
+    bool queryUpdated()
+    {
+        return updated;
     }
 
 };
@@ -707,16 +716,25 @@ public:
 
     vQueue queryWindow(std::string vType, int channel)
     {
-        yarp::os::Stamp ys;
-        int vs;
-        iPorts[vType].queryStamps(ys, vs);
-
-        if(ys.getTime() > yStamp.getTime()) {
-            yStamp = ys;
-            vStamp = vs;
-        }
-
+        updateStamps();
         return iPorts[vType].queryWindow(channel);
+    }
+
+    void updateStamps()
+    {
+        //query each input port and ask for the timestamp
+        yarp::os::Stamp ys; int vs;
+        std::map<std::string, ev::tWinThread>::iterator i;
+        for(i = iPorts.begin(); i != iPorts.end(); i++) {
+            i->second.queryStamps(ys, vs);
+            double pt = yStamp.getTime();
+            double ct = ys.getTime();
+            //if we have a more recent packet, or we went back in time 5 seconds
+            if(ct > pt || ct < pt - 5.0) {
+                yStamp = ys;
+                vStamp = vs;
+            }
+        }
     }
 
     void close()
@@ -739,6 +757,14 @@ public:
     void setStrictUpdatePeriod(int period)
     {
         strictUpdatePeriod = period;
+    }
+
+    bool hasUpdated()
+    {
+        std::map<std::string, ev::tWinThread>::iterator i;
+        for(i = iPorts.begin(); i != iPorts.end(); i++)
+            if(i->second.queryUpdated()) return true;
+        return false;
     }
 
 };
