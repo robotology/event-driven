@@ -206,9 +206,10 @@ bool vFramerModule::updateModule()
     //snapshot the current time
     int current_vts = vReader.getvstamp();
     yarp::os::Stamp cEnv = vReader.getystamp();
+    bool use_synchronisation = false;
 
     //trim eSet based on the synchronisation time
-    if(cEnv.isValid()) {
+    if(use_synchronisation) {
         for(unsigned int i = 0; i < channels.size(); i++) {
             for(unsigned int j = 0; j < drawers[i].size(); j++) {
                 while(q_snaps[i][j].size() &&
@@ -229,8 +230,7 @@ bool vFramerModule::updateModule()
         //the first drawer will reset the base image, then drawing proceeds
         drawers[i][0]->resetImage(canvas);
 
-        if(cEnv.isValid()) {
-            outports[i]->setEnvelope(cEnv);
+        if(use_synchronisation) {
             //we can synchronise all drawers
             for(unsigned int j = 0; j < drawers[i].size(); j++)
                 drawers[i][j]->draw(canvas, q_snaps[i][j], current_vts);
@@ -248,10 +248,9 @@ bool vFramerModule::updateModule()
         o.resize(canvas.cols, canvas.rows);
 
         //write
+        if(cEnv.isValid()) outports[i]->setEnvelope(cEnv);
         outports[i]->write();
     }
-    if(cEnv.isValid()) yInfo() << "Valid";
-    else yInfo() << "Invalid";
     return true;
 }
 

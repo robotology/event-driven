@@ -770,6 +770,7 @@ public:
 
     bool hasUpdated()
     {
+        if(strictUpdatePeriod) return true;
         std::map<std::string, ev::tWinThread>::iterator i;
         for(i = iPorts.begin(); i != iPorts.end(); i++)
             if(i->second.queryUpdated()) return true;
