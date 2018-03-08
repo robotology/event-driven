@@ -691,6 +691,7 @@ private:
     yarp::os::Stamp yStamp;
     int vStamp;
     int strictUpdatePeriod;
+    bool using_yarp_stamps;
     //std::map<std::string, int> labelMap;
 
 public:
@@ -699,6 +700,7 @@ public:
     {
         strictUpdatePeriod = 0;
         vStamp = 0;
+        using_yarp_stamps = false;
     }
 
     bool open(std::string moduleName, std::string eventType)
@@ -727,6 +729,13 @@ public:
         std::map<std::string, ev::tWinThread>::iterator i;
         for(i = iPorts.begin(); i != iPorts.end(); i++) {
             i->second.queryStamps(ys, vs);
+
+            //we assume envelopes aren't being used
+            if(!using_yarp_stamps) vStamp = vs;
+            if(!ys.isValid()) continue;
+
+            //set the stamps based on the yarp_stamp
+            using_yarp_stamps = true;
             double pt = yStamp.getTime();
             double ct = ys.getTime();
             //if we have a more recent packet, or we went back in time 5 seconds

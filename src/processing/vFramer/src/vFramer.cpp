@@ -207,6 +207,18 @@ bool vFramerModule::updateModule()
     int current_vts = vReader.getvstamp();
     yarp::os::Stamp cEnv = vReader.getystamp();
 
+    //trim eSet based on the synchronisation time
+    if(cEnv.isValid()) {
+        for(unsigned int i = 0; i < channels.size(); i++) {
+            for(unsigned int j = 0; j < drawers[i].size(); j++) {
+                while(q_snaps[i][j].size() &&
+                      q_snaps[i][j].back()->stamp > current_vts)
+                    q_snaps[i][j].pop_back();
+
+            }
+        }
+    }
+
     //for each output image needed
     for(unsigned int i = 0; i < channels.size(); i++) {
 
