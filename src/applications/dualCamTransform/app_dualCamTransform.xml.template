@@ -43,6 +43,18 @@
     </module>
 
     <module>
+        <name> imageEnhance</name>
+        <parameters>--name imageEnhanceLeft</parameters>
+        <node>icub23</node>
+    </module>
+
+    <module>
+        <name> imageEnhance</name>
+        <parameters>--name imageEnhanceRight</parameters>
+        <node>icub23</node>
+    </module>
+
+    <module>
         <name> yarpdev</name>
         <parameters>--from camera/ServerGrabberDualLeopard.ini --split true --flip true --width 640 --height 240</parameters>
         <node>icub-head</node>
@@ -111,13 +123,25 @@
 
     <connection>
         <from>/icub/camcalib/left/out</from>
-        <to>/DualCamTransform/left/img:i</to>
+        <to>/imageEnhanceLeft/image:i</to>
         <protocol>udp</protocol>
     </connection>
 
     <connection>
         <from>/icub/camcalib/right/out</from>
+        <to>/imageEnhanceRight/image:i</to>
+        <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+        <from>/imageEnhanceRight/image:o</from>
         <to>/DualCamTransform/right/img:i</to>
+        <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+        <from>/imageEnhanceLeft/image:o</from>
+        <to>/DualCamTransform/left/img:i</to>
         <protocol>udp</protocol>
     </connection>
 
