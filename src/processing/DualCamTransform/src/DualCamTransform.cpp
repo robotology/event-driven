@@ -121,7 +121,8 @@ bool DualCamTransformModule::updateModule() {
     
         cv::Mat cvCanvas(leftCanvasHeight, leftCanvasWidth, CV_8UC3, cv::Scalar(0,0,0));
         yarp::sig::ImageOf<yarp::sig::PixelBgr > leftYarpImg = leftImageCollector.getImage();
-        cv::Mat openCvImg = cv::Mat((IplImage*)leftYarpImg.getIplImage());
+        IplImage *iplImage = (IplImage*)leftYarpImg.getIplImage();
+        cv::Mat openCvImg = cv::cvarrToMat(iplImage);
         cv::Rect ROI(leftXOffset, leftYOffset, std::min(openCvImg.cols, cvCanvas.cols - leftXOffset-1), std::min(openCvImg.rows, cvCanvas.rows - leftYOffset-1));
         openCvImg(cv::Rect(0,0,ROI.width, ROI.height)).copyTo(cvCanvas(ROI));
         IplImage yarpimage = cvCanvas;
@@ -138,8 +139,8 @@ bool DualCamTransformModule::updateModule() {
     
         cv::Mat cvCanvas(rightCanvasHeight, rightCanvasWidth, CV_8UC3, cv::Scalar(0,0,0));
         yarp::sig::ImageOf<yarp::sig::PixelBgr > rightYarpImg = rightImageCollector.getImage();
-        cv::Mat openCvImg = cv::Mat((IplImage*)rightYarpImg.getIplImage());
-        cv::Rect ROI(rightXOffset, rightYOffset, std::min(openCvImg.cols, cvCanvas.cols - rightXOffset-1), std::min(openCvImg.rows, cvCanvas.rows - rightYOffset-1));
+        IplImage *iplImage = (IplImage*)rightYarpImg.getIplImage();
+        cv::Mat openCvImg = cv::cvarrToMat(iplImage);        cv::Rect ROI(rightXOffset, rightYOffset, std::min(openCvImg.cols, cvCanvas.cols - rightXOffset-1), std::min(openCvImg.rows, cvCanvas.rows - rightYOffset-1));
         openCvImg(cv::Rect(0,0,ROI.width, ROI.height)).copyTo(cvCanvas(ROI));
         IplImage yarpimage = cvCanvas;
         yarpCanvas.resize(yarpimage.width, yarpimage.height);

@@ -62,7 +62,7 @@ private:
 
     //! the list of output ports for images
     std::vector<yarp::os::BufferedPort<
-        yarp::sig::ImageOf<yarp::sig::PixelRgb> > *> outports;
+        yarp::sig::ImageOf<yarp::sig::PixelBgr> > *> outports;
 
     void sendBlanks();
 
