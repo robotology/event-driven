@@ -9,7 +9,7 @@
 
 <module>
     <name> vPreProcess </name>
-    <parameters> --flipy --flipx --split --undistort false --temporalSize 50000 </parameters>
+    <parameters> --flipy --flipx --split --undistort false --temporalSize 250000 </parameters>
     <node> icub-blade </node>
 </module>
 

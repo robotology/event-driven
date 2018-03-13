@@ -42,12 +42,14 @@ class vFramerModule : public yarp::os::RFModule {
 
 private:
 
+    //! images have a timeout
+    bool useTimeout;
+
     //! the period between images being published
     double period;
 
-    double pyarptime;
-    bool stopped;
-
+    //! temporary snapshots of vQueues
+    std::vector< std::vector <ev::vQueue> > q_snaps;
 
     //! the vBottle reading port that splits events by channel
     ev::syncvstreams vReader;
@@ -61,6 +63,8 @@ private:
     //! the list of output ports for images
     std::vector<yarp::os::BufferedPort<
         yarp::sig::ImageOf<yarp::sig::PixelRgb> > *> outports;
+
+    void sendBlanks();
 
 public:
 

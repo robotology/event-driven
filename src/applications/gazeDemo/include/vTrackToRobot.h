@@ -286,7 +286,7 @@ public:
 
     void controlReset()
     {
-        for(unsigned int i = 0; i < nAxes; i++) {
+        for(int i = 0; i < nAxes; i++) {
             controllers[i]->reset();
             velocity[i] = 0;
         }

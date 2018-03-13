@@ -126,8 +126,8 @@ public:
             //so for each TAG we create an event of that type
             event<> e = createEvent(Bottle::get(i).asString());
             if(!e) {
-                std::cerr << "Warning: could not get bottle type during vBottle::"
-                             "get<>(). Check vBottle integrity." << std::endl;
+                yError() << "Warning: could not get bottle type during vBottle::"
+                             "get<>(). Check vBottle integrity.";
                 continue;
             }
 
@@ -139,9 +139,9 @@ public:
             //we get the (EVENTS)
             Bottle * b = Bottle::get(i+1).asList();
             if(!b) {
-                std::cerr << "Warning: could not get event data as a list after "
+                yError() << "Warning: could not get event data as a list after "
                              "getting correct tag (e.g. AE) in vBottle::getAll(). "
-                             "Check vBottle integrity" << std::endl;
+                             "Check vBottle integrity";
                 break;
             }
 
