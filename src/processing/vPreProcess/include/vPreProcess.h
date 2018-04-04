@@ -24,6 +24,8 @@
 #ifndef __VPREPROCESS__
 #define __VPREPROCESS__
 
+#define DECODE_METHOD 2
+
 #include <yarp/os/all.h>
 #include <iCub/eventdriven/all.h>
 //#include <opencv/cv.h>
@@ -35,9 +37,20 @@ class vPreProcess : public yarp::os::Thread
 private:
 
     //output port for the vBottle with the new events computed by the module
+
+#if DECODE_METHOD == 0
     ev::queueAllocator inPort;
-    yarp::os::Port outPort;
-    yarp::os::Port outPort2;
+    vGenWritePort outPort;
+    vGenWritePort outPort2;
+#elif DECODE_METHOD == 1
+    vGenReadPort inPort;
+    vGenWritePort outPort;
+    vGenWritePort outPort2;
+#else
+    vReadPort<AE> inPort;
+    vWritePort<AE> outPort;
+    vWritePort<AE> outPort2;
+#endif
 
     //parameters
     std::string name;
@@ -62,6 +75,11 @@ private:
     //output
     bool split;
 
+    //timing stats
+    std::deque<double> delays;
+    std::deque<double> rates;
+    std::deque<double> intervals;
+
 public:
 
     vPreProcess();
@@ -74,6 +92,9 @@ public:
     void initUndistortion(const yarp::os::Bottle &left,
                           const yarp::os::Bottle &right, bool truncate);
     int queryUnprocessed();
+    std::deque<double> getDelays();
+    std::deque<double> getRates();
+    std::deque<double> getIntervals();
     void run();
     void onStop();
     bool threadInit();

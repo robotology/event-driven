@@ -89,7 +89,7 @@ void delayControl::run()
     //START HERE!!
     ev::vQueue *q = 0;
     while(!q && !isStopping()) {
-        q = inputPort.getNextQ(ystamp);
+        q = inputPort.read(ystamp);
     }
     if(isStopping()) return;
 
@@ -110,10 +110,10 @@ void delayControl::run()
             //if we ran out of events get a new queue
             if(i >= q->size()) {
                 //if(inputPort.queryunprocessed() < 3) break;
-                inputPort.scrapQ();
+                //inputPort.scrapQ();
                 q = 0; i = 0;
                 while(!q && !isStopping()) {
-                    q = inputPort.getNextQ(ystamp);
+                    q = inputPort.read(ystamp);
                 }
                 if(isStopping()) return;
             }

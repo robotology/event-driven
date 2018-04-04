@@ -20,6 +20,9 @@ file(GLOB folder_source
   src/codecs/codec_*.cpp
   src/vWindow_adv.cpp
   src/vWindow_basic.cpp
+  src/vPort.cpp
+  src/vCodec.cpp
+  #src/vSync.cpp
 )
 
 file(GLOB folder_header
@@ -31,6 +34,8 @@ file(GLOB folder_header
   include/iCub/eventdriven/vFilters.h
   include/iCub/eventdriven/vSurfaceHandlerTh.h
   include/iCub/eventdriven/vCollectSend.h
+  include/iCub/eventdriven/vPort.h
+  #include/iCub/eventdriven/vSync.h
   include/iCub/eventdriven/all.h
 )
 

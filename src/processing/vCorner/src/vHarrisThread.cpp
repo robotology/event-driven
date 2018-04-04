@@ -114,7 +114,7 @@ void vHarrisThread::run()
 
         ev::vQueue *q = 0;
         while(!q && !isStopping()) {
-            q = inputPort.getNextQ(yarpstamp);
+            q = inputPort.read(yarpstamp);
         }
         if(isStopping()) break;
 
@@ -190,7 +190,7 @@ void vHarrisThread::run()
             prevtime = time;
         }
 
-        inputPort.scrapQ();
+        //inputPort.scrapQ();
 
     }
 

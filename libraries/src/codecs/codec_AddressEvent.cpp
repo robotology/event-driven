@@ -70,6 +70,16 @@ void AddressEvent::encode(std::vector<YARP_INT32> &b, unsigned int &pos) const
 #endif
 }
 
+void AddressEvent::decode(int *&data)
+{
+    vEvent::decode(data);
+    polarity = (*data >> 0) & 0x0001;
+    x = (*data >> 1) & 0x001FF;
+    y = (*data >> 10) & 0x00FF;
+    channel = (*data >> 20) & 0x0001;
+    data++;
+}
+
 bool AddressEvent::decode(const yarp::os::Bottle &packet, int &pos)
 {
     // check length

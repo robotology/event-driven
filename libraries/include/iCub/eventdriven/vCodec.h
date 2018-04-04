@@ -65,6 +65,9 @@ void qsort(vQueue &q, bool respectWraps = false);
 /// \brief create an "event" based on the string tag it uses.
 event<> createEvent(const std::string &type);
 
+/// \brief get the coded packet size of an event
+unsigned int packetSize(const std::string &type);
+
 /// \brief camera values for stereo set-up
 enum { VLEFT = 0, VRIGHT = 1 } ;
 
@@ -83,6 +86,7 @@ public:
     virtual void encode(yarp::os::Bottle &b) const;
     virtual void encode(std::vector<YARP_INT32> &b, unsigned int &pos) const;
     virtual bool decode(const yarp::os::Bottle &packet, int &pos);
+    virtual void decode(int *&data);
     virtual yarp::os::Property getContent() const;
     virtual std::string getType() const;
     virtual int getChannel() const;
@@ -107,6 +111,7 @@ public:
     virtual void encode(yarp::os::Bottle &b) const;
     virtual void encode(std::vector<YARP_INT32> &b, unsigned int &pos) const;
     virtual bool decode(const yarp::os::Bottle &packet, int &pos);
+    virtual void decode(int *&data);
     virtual yarp::os::Property getContent() const;
     virtual std::string getType() const;
     virtual int getChannel() const;

@@ -19,8 +19,7 @@
 #ifndef __VCODEC_VEVENT__
 #define __VCODEC_VEVENT__
 
-#include <algorithm>
-#include <yarp/os/Bottle.h>
+
 #include "iCub/eventdriven/vCodec.h"
 #include "iCub/eventdriven/vtsHelper.h"
 
@@ -58,6 +57,12 @@ bool vEvent::decode(const yarp::os::Bottle &packet, int &pos)
 
 }
 
+void vEvent::decode(int *&data)
+{
+    stamp = (*data) & vtsHelper::max_stamp;
+    data++;
+}
+
 yarp::os::Property vEvent::getContent() const
 {
     yarp::os::Property prop;
@@ -83,49 +88,6 @@ void vEvent::setChannel()
 
 }
 
-
-bool temporalSortStraight(const event<> &e1, const event<> &e2) {
-    return e2->stamp > e1->stamp;
 }
-
-bool temporalSortWrap(const event<> &e1, const event<> &e2)
-{
-
-    if(std::abs(e1->stamp - e2->stamp) > vtsHelper::max_stamp/2)
-        return e1->stamp > e2->stamp;
-    else
-        return e2->stamp > e1->stamp;
-
-}
-
-void qsort(vQueue &q, bool respectWraps)
-{
-
-    if(respectWraps)
-        std::sort(q.begin(), q.end(), temporalSortWrap);
-    else
-        std::sort(q.begin(), q.end(), temporalSortStraight);
-
-}
-
-event<> createEvent(const std::string &type)
-{
-
-    if(type == AddressEvent::tag)
-        return make_event<AE>();
-    if(type == LabelledAE::tag)
-        return make_event<LabelledAE>();
-    if(type == FlowEvent::tag)
-        return make_event<FlowEvent>();
-    if(type == GaussianAE::tag)
-        return make_event<GaussianAE>();
-    return event<>(nullptr);
-
-}
-
-
-}
-
-
 
 #endif

@@ -17,6 +17,7 @@
  */
 
 #include "vPreProcess.h"
+#include <iomanip>
 
 int main(int argc, char * argv[])
 {
@@ -73,6 +74,14 @@ bool vPreProcessModule::configure(yarp::os::ResourceFinder &rf)
     if(split)
         yInfo() << "Splitting into left/right streams";
 
+#if DECODE_METHOD == 0
+    yInfo() << "Decoding with vBottle";
+#elif DECODE_METHOD == 1
+    yInfo() << "Decoding with shared_ptrs";
+#else
+    yInfo() << "Decoding with fixed AE";
+#endif
+
 
     eventManager.initBasic(rf.check("name", yarp::os::Value("/vPreProcess")).asString(),
                            rf.check("height", 240).asInt(),
@@ -114,18 +123,58 @@ bool vPreProcessModule::close()
 
 bool vPreProcessModule::updateModule()
 {
-    return true;
-}
-
-double vPreProcessModule::getPeriod()
-{
+    //unprocessed data
     static int puqs = 0;
     int uqs = this->eventManager.queryUnprocessed();
     if(uqs || puqs) {
         yInfo() << uqs << "unprocessed queues";
         puqs = uqs;
     }
-    return 1.0;
+
+    //delays
+    std::deque<double> dcopy = eventManager.getDelays();
+
+    if(!dcopy.size())
+        return true;
+
+    double mind = 1e6;
+    double maxd = -1e6;
+    double meand = 0;
+    for(size_t i = 0; i < dcopy.size(); i++) {
+        mind = std::min(mind, dcopy[i]);
+        maxd = std::max(maxd, dcopy[i]);
+        meand += dcopy[i];
+    }
+    meand /= dcopy.size();
+    meand *= 1000;
+    mind *= 1000;
+    maxd *= 1000;
+
+    double meanr = 0;
+    std::deque<double> rcopy = eventManager.getRates();
+    for(size_t i = 0; i < rcopy.size(); i++) {
+        meanr += rcopy[i];
+    }
+    meanr /= rcopy.size();
+    meanr *= vtsHelper::vtsscaler;
+
+    double meani = 0;
+    std::deque<double> icopy = eventManager.getIntervals();
+    for(size_t i = 0; i < icopy.size(); i++) {
+        meani += icopy[i];
+    }
+    meani /= icopy.size();
+    meani *= 1000;
+
+    //yInfo() << mind << meand << maxd << " : min | mean | max";
+    std::cout << std::fixed << mind << " " << meand << " " << maxd << " " << meanr << " " << meani << std::endl;
+
+    return true;
+}
+
+double vPreProcessModule::getPeriod()
+{
+    return 0.1;
 }
 /******************************************************************************/
 vPreProcess::vPreProcess(): name("/vPreProcess")
@@ -137,6 +186,7 @@ vPreProcess::vPreProcess(): name("/vPreProcess")
 
 vPreProcess::~vPreProcess()
 {
+    inPort.close();
     outPort.close();
     outPort2.close();
 }
@@ -221,6 +271,27 @@ int vPreProcess::queryUnprocessed()
     return inPort.queryunprocessed();
 }
 
+std::deque<double> vPreProcess::getDelays()
+{
+    std::deque<double> dcopy = delays;
+    delays.clear();
+    return dcopy;
+}
+
+std::deque<double> vPreProcess::getRates()
+{
+    std::deque<double> rcopy = rates;
+    rates.clear();
+    return rcopy;
+}
+
+std::deque<double> vPreProcess::getIntervals()
+{
+    std::deque<double> icopy = intervals;
+    intervals.clear();
+    return icopy;
+}
+
 void vPreProcess::run()
 {
     yarp::os::Stamp ystamp;
@@ -230,32 +301,54 @@ void vPreProcess::run()
     resmod.width -= 1;
     int prev_bottle_n = 0;
 
-    //left output data
-    vBottleMimic leftBottle;
-    leftBottle.setHeader(AE::tag);
-
-    //right output data
-    vBottleMimic rightBottle;
-    rightBottle.setHeader(AE::tag);
+#if DECODE_METHOD != 2
+    outPort.setWriteType(AE::tag);
+    outPort2.setWriteType(AE::tag);
+#endif
 
     while(true) {
 
-        vQueue qleft, qright;
+        double pyt = ystamp.getTime();
 
-        ev::vQueue *q = 0;
-        while(!q && !isStopping()) {
-            q = inPort.getNextQ(ystamp);
-        }
-        if(isStopping()) break;
+#if DECODE_METHOD != 2
+        vQueue qleft, qright;
+        const vQueue *q = inPort.read(ystamp);
+#else
+        std::deque<AE> qleft, qright;
+        const std::vector<AE> *q = inPort.read(ystamp);
+#endif
+        if(!q) break;
+        delays.push_back((Time::now() - ystamp.getTime()));
+        if(pyt) intervals.push_back(ystamp.getTime() - pyt);
+
+#if DECODE_METHOD != 2
+        rates.push_back((double)q->size() / (q->back()->stamp - q->front()->stamp));
+#else
+        rates.push_back((double)q->size() / (q->back().stamp - q->front().stamp));
+#endif
+
+
+
+//        ev::vQueue *q = 0;
+//        while(!q && !isStopping()) {
+//            q = inPort.getNextQ(ystamp);
+//        }
+//        if(isStopping()) break;
 
         if(precheck && prev_bottle_n + 1 != ystamp.getCount() && ystamp.getCount() && prev_bottle_n) {
             yWarning() << "Dropped bottle:" << prev_bottle_n << "to" << ystamp.getCount();
         }
         prev_bottle_n = ystamp.getCount();
 
-        for(ev::vQueue::iterator qi = q->begin(); qi != q->end(); qi++) {
 
+#if DECODE_METHOD != 2
+        for(ev::vQueue::const_iterator qi = q->begin(); qi != q->end(); qi++) {
             auto v = is_event<AE>(*qi);
+#else
+        for(std::vector<AE>::const_iterator qi = q->begin(); qi != q->end(); qi++) {
+            AE vcopy = *qi;
+            AE *v = &vcopy;
+#endif
 
             //precheck
             if(precheck && (v->x < 0 || v->x > resmod.width || v->y < 0 || v->y > resmod.height)) {
@@ -289,34 +382,37 @@ void vPreProcess::run()
 
             }
 
+
+#if DECODE_METHOD != 2
             if(split && v->channel)
                 qright.push_back(v);
             else
                 qleft.push_back(v);
+#else
+            if(split && v->channel)
+                qright.push_back(*v);
+            else
+                qleft.push_back(*v);
+#endif
         }
 
         if(qleft.size()) {
-            leftBottle.setInternalData(qleft);
-            outPort.setEnvelope(ystamp);
-            outPort.write(leftBottle);
+            outPort.write(qleft, ystamp);
         }
         if(qright.size()) {
-            rightBottle.setInternalData(qright);
-            outPort2.setEnvelope(ystamp);
-            outPort2.write(rightBottle);
+            outPort2.write(qright, ystamp);
         }
-
-        inPort.scrapQ();
     }
 
 }
 
 void vPreProcess::onStop()
 {
+    inPort.close();
     outPort.close();
     outPort2.close();
-    inPort.close();
-    inPort.releaseDataLock();
+
+    //inPort.releaseDataLock();
 }
 
 bool vPreProcess::threadInit()
