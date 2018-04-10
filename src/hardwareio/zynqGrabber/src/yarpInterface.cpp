@@ -50,6 +50,7 @@ bool vDevReadBuffer::initialise(std::string devicename,
 {
 
     fd = open(devicename.c_str(), O_RDWR);
+    yInfo() << " blocking opening ";
     if(fd < 0) {
     yInfo() << "non blocking opening ";
         fd = open(devicename.c_str(), O_RDONLY | O_NONBLOCK);
@@ -64,9 +65,49 @@ bool vDevReadBuffer::initialise(std::string devicename,
     ioctl(fd, IOC_GET_PS, &poolSize);
     yInfo() << "poolSize " << poolSize;
 
+    struct hpu_regs_t{
+
+	unsigned int reg_offset;
+	char rw;
+	unsigned int data;
+
+    };
+
+//	unsigned int hw_ver = 0;
+        //if( -1 == ioctl( fd, HPU_READVERSION, &hw_ver)) {
+                //const int lerrno = errno;
+                //fflush( stdout);
+                //fprintf( stderr, "ERROR: Cannot get hpu hw version: %s\n", strerror( lerrno));
+                //fflush( stderr);
+	//	std::cout << "Error reading version" << errno << std::endl;
+                /*
+                close( fd);
+                return false;
+                */
+        //}
+        //else {
+          //      printf( "#  hpu hw ver = %c%c%c %d.%d\n", hw_ver>>24, hw_ver >>16, hw_ver>>8, (hw_ver>>4)&0x0f, hw_ver&0x0f);
+        //}
+
+
+
+    struct hpu_regs_t hpu_regs;
+
+    hpu_regs.reg_offset = 0x60; //HPU_REG_AUX_RX_CTRL
+    hpu_regs.rw = 1;
+    hpu_regs.data = 0x00000F01; //HPU_MASK_RX_CTRL_ARX_SER || HPU_MASK_RX_ARX_SER2 
+
+    if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){ //for us it is AER_TIMESTAMP, from documentation HPU_GEN_REG
+    
+    	std::cout << "Error: cannot set reg aux" << std::endl;
+    	close(fd);
+    	return false;
+     }
+
     if(bufferSize > 0) this->bufferSize = bufferSize;
     if(readSize > 0) this->readSize = readSize;
-
+ 
+    this->readSize = poolSize;
     buffer1.resize(this->bufferSize);
     buffer2.resize(this->bufferSize);
     discardbuffer.resize(this->readSize);
@@ -104,6 +145,7 @@ void vDevReadBuffer::run()
             r = read(fd, readBuffer->data() + readCount, std::min(bufferSize - readCount, readSize));
             if(r > 0) readCount += r;
         }
+	//std::cout<< " bytes read "<< r <<std::endl;
 
         if(r < 0 && errno != EAGAIN) {
             perror("Error reading events: ");
