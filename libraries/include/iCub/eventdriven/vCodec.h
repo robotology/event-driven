@@ -135,6 +135,7 @@ public:
     virtual void encode(yarp::os::Bottle &b) const;
     virtual void encode(std::vector<YARP_INT32> &b, unsigned int &pos) const;
     virtual bool decode(const yarp::os::Bottle &packet, int &pos);
+    virtual void decode(int *&data);
     virtual yarp::os::Property getContent() const;
     virtual std::string getType() const;
 
@@ -156,6 +157,7 @@ public:
     virtual void encode(yarp::os::Bottle &b) const;
     virtual void encode(std::vector<YARP_INT32> &b, unsigned int &pos) const;
     virtual bool decode(const yarp::os::Bottle &packet, int &pos);
+    virtual void decode(int *&data);
     virtual yarp::os::Property getContent() const;
     virtual std::string getType() const;
 };
@@ -177,6 +179,7 @@ public:
     virtual void encode(yarp::os::Bottle &b) const;
     virtual void encode(std::vector<YARP_INT32> &b, unsigned int &pos) const;
     virtual bool decode(const yarp::os::Bottle &packet, int &pos);
+    virtual void decode(int *&data);
     virtual yarp::os::Property getContent() const;
     virtual std::string getType() const;
 };
