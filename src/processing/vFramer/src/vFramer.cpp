@@ -211,7 +211,7 @@ bool vFramerModule::updateModule()
     static int puqs = 0;
     int uqs = vReader.queryMaxUnproced();
     if(uqs || puqs) {
-        yInfo() << uqs << "unprocessed queues";
+        //yInfo() << uqs << "unprocessed queues";
         if(uqs)
             yInfo() << vReader.delayStats();
         puqs = uqs;
@@ -263,7 +263,7 @@ bool vFramerModule::updateModule()
                 //if(q_snaps[i][j].empty()) continue;
                 drawers[i][j]->draw(canvas, vReader.queryWindow(drawers[i][j]->getEventType(),
                                                                 channels[i]),
-                                    current_vts);
+                                    -1);
             }
         }
         acct2 += Time::now() - dt2;

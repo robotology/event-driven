@@ -37,7 +37,8 @@ std::string addressDraw::getEventType()
 
 void addressDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 {
-
+    if(eSet.empty()) return;
+    if(vTime < 0) vTime = eSet.back()->stamp;
     ev::vQueue::const_reverse_iterator qi;
     for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
 

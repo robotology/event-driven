@@ -833,7 +833,7 @@ public:
         std::ostringstream oss;
         std::map<std::string, ev::tWinThread>::iterator i;
         for(i = iPorts.begin(); i != iPorts.end(); i++)
-            oss << i->first << ": " << i->second.readDelayStats() << std::endl;
+            oss << i->first << ": " << i->second.readDelayStats() << " ";
 
         return oss.str();
     }

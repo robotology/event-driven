@@ -131,6 +131,8 @@ bool vPreProcessModule::updateModule()
         puqs = uqs;
     }
 
+    return true;
+
     //delays
     std::deque<double> dcopy = eventManager.getDelays();
 

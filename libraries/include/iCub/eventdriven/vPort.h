@@ -502,8 +502,8 @@ public:
     std::string delayStatString()
     {
         std::ostringstream oss;
-        oss << queryunprocessed() << " " << queryDelayN() <<
-               " " << queryDelayT() << " " << queryRate();
+        oss << "qs: " << queryunprocessed() << " events: " << queryDelayN() <<
+               " time(s): " << queryDelayT() << " rate: " << queryRate();
         return oss.str();
     }
 

@@ -39,6 +39,7 @@ void flowDraw::draw(cv::Mat &image, const vQueue &eSet, int vTime)
 {
 
     if(eSet.empty()) return;
+    if(vTime < 0) vTime = eSet.back()->stamp;
 
     double vx_mean = 0, vy_mean = 0;
 
