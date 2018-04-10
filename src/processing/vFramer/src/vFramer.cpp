@@ -195,7 +195,7 @@ bool vFramerModule::updateModule()
     }
     pTime = yarp::os::Time::now();
 
-    bool use_synchronisation = true;
+    bool use_synchronisation = false;
     //snapshot the events
     //double dt1 = Time::now();
     if(use_synchronisation) {

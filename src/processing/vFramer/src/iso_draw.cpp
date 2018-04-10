@@ -184,6 +184,7 @@ void isoDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     isoimage.setTo(255);
 
     if(eSet.empty()) return;
+    if(vTime < 0) vTime = eSet.back()->stamp;
 
     int dt = vTime - eSet.front()->stamp;
     if(dt < 0) dt += ev::vtsHelper::max_stamp;
