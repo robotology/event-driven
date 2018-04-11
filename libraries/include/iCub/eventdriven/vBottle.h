@@ -21,6 +21,7 @@
 
 #include <yarp/os/Bottle.h>
 #include <yarp/os/Log.h>
+#include <yarp/os/LogStream.h>
 #include "iCub/eventdriven/vCodec.h"
 
 namespace ev {
@@ -210,6 +211,7 @@ public:
 //    Bottle::toString()
 
 
+    using yarp::os::Bottle::findGroup;
 private:
 
     //you cannot use any of the following functions
@@ -228,7 +230,7 @@ private:
     //yarp::os::Value& find(const ConstString &key) : Bottle::find(const yarp::os::ConstString &key) {};
     //Bottle& findGroup(const yarp::os::ConstString& key) const;
     //void findGroup();
-    using yarp::os::Bottle::findGroup;
+
     using yarp::os::Bottle::find;
 
     yarp::os::Bottle tail() const;
