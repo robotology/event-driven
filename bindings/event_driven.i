@@ -139,7 +139,7 @@ public:
 
 %extend vBottle {
     int getSize() {
-        return $self->findGroup("AE").size() / 2;
+                return $self->find("AE").asList()->size() / 2;
     }
 
     void _getData(unsigned int* r1, int n1,

@@ -210,8 +210,8 @@ public:
 //    Bottle::toBinary()
 //    Bottle::toString()
 
+    using yarp::os::Bottle::find;
 
-    using yarp::os::Bottle::findGroup;
 private:
 
     //you cannot use any of the following functions
@@ -231,7 +231,7 @@ private:
     //Bottle& findGroup(const yarp::os::ConstString& key) const;
     //void findGroup();
 
-    using yarp::os::Bottle::find;
+    using yarp::os::Bottle::findGroup;
 
     yarp::os::Bottle tail() const;
 
