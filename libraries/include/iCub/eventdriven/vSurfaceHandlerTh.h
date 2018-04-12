@@ -640,42 +640,35 @@ public:
             const ev::vQueue *q = allocatorCallback.read(yarpstamp);
             if(!q) break;
 
-//            ev::vQueue *q = 0;
-//            while(!q && !isStopping()) {
-//                q = allocatorCallback.getNextQ(yarpstamp);
-//            }
-//            if(isStopping()) break;
+            if(!strictUpdatePeriod) safety.lock();
+
+            if(!ctime) ctime = q->front()->stamp;
 
             for(ev::vQueue::const_iterator qi = q->begin(); qi != q->end(); qi++) {
-
-                if(!strictUpdatePeriod) safety.lock();
-
-                if(strictUpdatePeriod) {
-                    int dt = (*qi)->stamp - ctime;
-                    if(dt < 0) dt += vtsHelper::max_stamp;
-                    currentPeriod += dt;
-                    if(currentPeriod > strictUpdatePeriod) {
-                        safety.unlock();
-                        waitforquery.lock();
-                        safety.lock();
-                        currentPeriod = 0;
-                    }
-
-                }
-                ctime = (*qi)->stamp;
-
                 if((*qi)->getChannel() == 0)
                     windowleft.addEvent(*qi);
                 else if((*qi)->getChannel() == 1)
                     windowright.addEvent(*qi);
-                updated = true;
+            }
 
-                if(!strictUpdatePeriod) safety.unlock();
+            if(strictUpdatePeriod) {
+                int dt = q->back()->stamp - ctime;
+                if(dt < 0) dt += vtsHelper::max_stamp;
+                currentPeriod += dt;
+                if(currentPeriod > strictUpdatePeriod) {
+                    safety.unlock();
+                    waitforquery.lock();
+                    safety.lock();
+                    currentPeriod = 0;
+                }
 
             }
 
+            ctime = q->back()->stamp;
 
-            //allocatorCallback.scrapQ();
+            updated = true;
+
+            if(!strictUpdatePeriod) safety.unlock();
 
         }
         if(strictUpdatePeriod)

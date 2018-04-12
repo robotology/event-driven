@@ -74,8 +74,10 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
 
     bool forceRender = rf.check("forcerender") &&
             rf.check("forcerender", yarp::os::Value(true)).asBool();
-    if(forceRender)
+    if(forceRender) {
         vReader.setStrictUpdatePeriod(vtsHelper::vtsscaler * period);
+        period = 0;
+    }
 
     //viewer options
     //set up the default channel list
