@@ -340,7 +340,7 @@ protected:
     vQueue *working_queue;
 
     yarp::os::Mutex m;
-    yarp::os::Mutex dataready;
+    yarp::os::Semaphore dataavailable;
 
     unsigned int qlimit;
     unsigned int delay_nv;
@@ -358,7 +358,7 @@ public:
         event_rate = 0;
         working_queue = nullptr;
 
-        dataready.lock();
+        dataavailable.wait(); //init counter to 0
     }
 
     /// \brief desctructor
@@ -423,10 +423,9 @@ public:
             delay_t += dt;
             if(dt)
                 event_rate = qq.back()->size() / (double)dt;
-            m.unlock();
 
-            //if getNextQ is blocking - let it get the new data
-            dataready.unlock();
+            m.unlock();
+            dataavailable.post();
 
         }
 
@@ -435,7 +434,6 @@ public:
     /// \brief ask for a pointer to the next vQueue. Blocks if no data is ready.
     const vQueue* read(yarp::os::Stamp &yarpstamp)
     {
-
         if(working_queue) {
             m.lock();
 
@@ -450,13 +448,15 @@ public:
             m.unlock();
         }
 
-        dataready.lock();
+        dataavailable.wait();
+
         if(qq.size()) {
             yarpstamp = sq.front();
             working_queue = qq.front();
         }  else {
             working_queue =  0;
         }
+
         return working_queue;
 
     }
@@ -472,7 +472,7 @@ public:
     /// graceful shutdown. No guarantee the return of getNextQ will be valid.
     void releaseDataLock()
     {
-        dataready.unlock();
+        dataavailable.post();
     }
 
     /// \brief ask for the number of vQueues currently allocated.
@@ -576,7 +576,7 @@ public:
             m.unlock();
 
             //if getNextQ is blocking - let it get the new data
-            dataready.unlock();
+            dataavailable.post();
 
         }
 
@@ -602,7 +602,8 @@ public:
             m.unlock();
         }
 
-        dataready.lock();
+        dataavailable.wait();
+
         if(qq.size()) {
             yarpstamp = sq.front();
             working_queue = qq.front();
