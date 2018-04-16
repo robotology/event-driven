@@ -40,7 +40,7 @@ private:
     std::deque<ev::vQueue *> qq;
     std::deque<yarp::os::Stamp> sq;
     yarp::os::Mutex m;
-    yarp::os::Mutex dataready;
+    yarp::os::Semaphore dataready;
 
     unsigned int qlimit;
     unsigned int delay_nv;
@@ -57,7 +57,7 @@ public:
         delay_t = 0;
         event_rate = 0;
 
-        dataready.lock();
+        dataready.wait();
 
         useCallback();
         setStrict();
@@ -106,7 +106,7 @@ public:
         m.unlock();
 
         //if getNextQ is blocking - let it get the new data
-        dataready.unlock();
+        dataready.post();
     }
 
     /// \brief ask for a pointer to the next vQueue. Blocks if no data is ready.
@@ -126,7 +126,7 @@ public:
             sq.pop_front();
             m.unlock();
         }
-        dataready.lock();
+        dataready.wait();
         if(qq.size()) {
             yarpstamp = sq.front();
             working_queue = qq.front();
@@ -165,7 +165,7 @@ public:
     /// graceful shutdown. No guarantee the return of getNextQ will be valid.
     void releaseDataLock()
     {
-        dataready.unlock();
+        dataready.post();
     }
 
     /// \brief ask for the number of vQueues currently allocated.
