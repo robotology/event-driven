@@ -21,6 +21,7 @@
 #define __VTSHELPER__
 
 #include <yarp/os/all.h>
+#include <fstream>
 
 namespace ev {
 
@@ -60,6 +61,25 @@ public:
     /// \brief ask for the current unwrapped time, without updating the time.
     unsigned long int currentTime() { return last_stamp + ((unsigned long int)max_stamp*n_wraps); }
 
+};
+
+class benchmark {
+private:
+
+    bool initialised;
+    std::ifstream totals_file;
+    std::ifstream process_file;
+
+    unsigned long int prevTotal;
+    unsigned long int prevProcess;
+    double perc;
+
+public:
+
+    benchmark();
+    ~benchmark();
+    bool isReady();
+    double getProcessorUsage();
 
 };
 

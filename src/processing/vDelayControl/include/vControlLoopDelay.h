@@ -54,20 +54,30 @@ class delayControl : public yarp::os::Thread
 private:
 
     //data structures and ports
-    queueAllocator inputPort;
+    vGenReadPort inputPort;
+    vGenWritePort outputPort;
     roiq qROI;
     vParticlefilter vpf;
-    yarp::os::BufferedPort<vBottle> outputPort;
+    //yarp::os::BufferedPort<vBottle> outputPort;
 
     //variables
     resolution res;
     double avgx, avgy, avgr;
+    int maxRawLikelihood;
     double gain;
     double minEvents;
     int detectionThreshold;
+    double resetTimeout;
+    double motionVariance;
 
     //diagnostics
-    yarp::os::BufferedPort<yarp::os::Bottle> scopePort;
+    double filterPeriod;
+    unsigned int targetproc;
+    double dx;
+    double dy;
+    double dr;
+    ev::benchmark cpuusage;
+
     yarp::os::BufferedPort< yarp::sig::ImageOf< yarp::sig::PixelBgr> > debugPort;
 
 
@@ -78,9 +88,23 @@ public:
     bool open(std::string name, unsigned int qlimit = 0);
     void initFilter(int width, int height, int nparticles,
                     int bins, bool adaptive, int nthreads,
-                    double minlikelihood, double inlierThresh, double randoms);
+                    double minlikelihood, double inlierThresh, double randoms, double negativeBias);
+    void performReset();
     void setFilterInitialState(int x, int y, int r);
-    void initDelayControl(double gain, int maxtoproc, int positiveThreshold, int mindelay);
+
+    void setMinRawLikelihood(double value);
+    void setMaxRawLikelihood(int value);
+    void setNegativeBias(int value);
+    void setInlierParameter(int value);
+    void setMotionVariance(double value);
+    void setTrueThreshold(double value);
+    void setAdaptive(double value = true);
+
+    void setGain(double value);
+    void setMinToProc(int value);
+    void setResetTimeout(double value);
+
+    yarp::sig::Vector getTrackingStats();
 
     //bool threadInit();
     void onStop();

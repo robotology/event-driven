@@ -300,6 +300,10 @@ public:
 
     }
 
+    int getOutputCount() {
+        return port.getOutputCount();
+    }
+
 };
 
 //this should open a yarp::os::Port
