@@ -3,8 +3,15 @@
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 cmake_minimum_required(VERSION 2.6)
 
-option(VLIB_10BITCODEC "Build codec with 10bit address space" OFF)
-option(VLIB_32BITTIME "Build codec using a 32bit timestamp" OFF)
+set(VLIB_CLOCK_PERIOD_NS 80 CACHE INTEGER "event timestamp clock period (ns)")
+set(VLIB_TIMER_BITS 24 CACHE INTEGER "event timestamp maximum = 2^TIMERBITS")
+set(VLIB_CODEC_128x128 OFF CACHE BOOL "decode with original DVS 128x128 codec")
+
+string(COMPARE GREATER ${VLIB_TIMER_BITS} 31 TOOMANYBITSINCOUNTER)
+
+if(TOOMANYBITSINCOUNTER)
+  message( FATAL_ERROR "Maximum bits useable is 31 (VLIB_TIMER_BITS)")
+endif()
 
 project(${EVENTDRIVEN_LIBRARIES})
 
@@ -13,6 +20,9 @@ file(GLOB folder_source
   src/codecs/codec_*.cpp
   src/vWindow_adv.cpp
   src/vWindow_basic.cpp
+  src/vPort.cpp
+  src/vCodec.cpp
+  #src/vSync.cpp
 )
 
 file(GLOB folder_header
@@ -24,6 +34,8 @@ file(GLOB folder_header
   include/iCub/eventdriven/vFilters.h
   include/iCub/eventdriven/vSurfaceHandlerTh.h
   include/iCub/eventdriven/vCollectSend.h
+  include/iCub/eventdriven/vPort.h
+  #include/iCub/eventdriven/vSync.h
   include/iCub/eventdriven/all.h
 )
 
@@ -39,13 +51,11 @@ include_directories(
 # Create everything needed to build our library
 add_library(${EVENTDRIVEN_LIBRARIES} ${folder_source} ${folder_header})
 
-if(VLIB_32BITTIME)
-    target_compile_definitions(${EVENTDRIVEN_LIBRARIES} PRIVATE TIME32BIT=1)
-endif(VLIB_32BITTIME)
-
-if(VLIB_10BITCODEC)
-    target_compile_definitions(${EVENTDRIVEN_LIBRARIES} PRIVATE TENBITCODEC=1)
-endif(VLIB_10BITCODEC)
+if(VLIB_CODEC_128x128)
+    add_definitions( -DCODEC_128x128 )
+endif()
+add_definitions( -DCLOCK_PERIOD=${VLIB_CLOCK_PERIOD_NS} )
+add_definitions( -DTIMER_BITS=${VLIB_TIMER_BITS} )
 
 target_link_libraries(${EVENTDRIVEN_LIBRARIES} ${YARP_LIBRARIES})
 

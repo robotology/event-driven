@@ -9,20 +9,20 @@
 
 <module>
     <name> vPreProcess </name>
-    <parameters> --flipy --flipx --split --undistort false --temporalSize 50000 </parameters>
-    <node> icub-blade </node>
+    <parameters> --flipy --flipx --split --undistort false --temporalSize 250000 </parameters>
+    <node> icub23 </node>
 </module>
 
 <module>
     <name> vDelayControl </name>
-    <parameters> --name /vpfL --particles 256 --obsthresh 0.15 --truethresh 0.3 --threads 8 --bins 64 --gain 0.05 --mindelay 20</parameters>
-    <node> icub-blade </node>
+    <parameters> --name /vpfL --particles 32 --obsthresh 0.3 --truethresh 0.6 --threads 4 --bins 64 --gain 0.01 </parameters>
+    <node> icub23 </node>
 </module>
 
 <module>
     <name> vDelayControl </name>
-    <parameters> --name /vpfR --particles 256 --obsthresh 0.15 --truethresh 0.3 --threads 8 --bins 64 --gain 0.05 --mindelay 20 </parameters>
-    <node> icub-blade </node>
+    <parameters> --name /vpfR --particles 32 --obsthresh 0.3 --truethresh 0.6 --threads 4 --bins 64 --gain 0.01 </parameters>
+    <node> icub23 </node>
 </module>
 
 <module>
@@ -41,7 +41,7 @@
 
 <module>
     <name> vFramer </name>
-    <parameters> --name /vFramer --displays "(0 /left (CIRC AE ISO ISO-CIRC) 1 /right (CIRC AE ISO ISO-CIRC))" </parameters>
+    <parameters> --name /vFramer --displays "(0 /left (CIRC AE ISO ISO-CIRC) 1 /right (CIRC AE ISO ISO-CIRC))" --eventWindow 0.01 </parameters>
     <node>icub24</node>
 </module>
 
@@ -126,13 +126,13 @@
 <connection>
   <from>/vFramer/left</from>
   <to>/viewLeft</to>
-  <protocol>udp</protocol>
+  <protocol>fast_tcp</protocol>
 </connection>
 
 <connection>
   <from>/vFramer/right</from>
   <to>/viewRight</to>
-  <protocol>udp</protocol>
+  <protocol>fast_tcp</protocol>
 </connection>
 
 <connection>

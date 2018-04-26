@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<portscope rows="2" columns="1" carrier="udp">
+<portscope rows="4" columns="1" carrier="udp">
     <plot gridx="0"
           gridy="0"
           hspan="1"
           vspan="1"
           size="201"
           minval="0"
-          title="[Black] Right Event Rate (kHz) [Red] Filter Rate (Hz)"
-          maxval="3200"
+          title="[Black] %CPU [Red] Right Filter Rate (Hz)"
+          maxval="5000"
           bgcolor="#EEFFEE">
         <graph remote="/vpfR/scope:o"
                index="1"
@@ -16,32 +16,84 @@
                type="lines"
                size="1" />
         <graph remote="/vpfR/scope:o"
-               index="3"
-               title="Event Rate (kHz)"
+               index="8"
+               title="CPU Utilisation (%)"
                color="Black"
                type="lines"
                size="1" />
+        <graph remote="/vpfR/scope:o"
+                index="9"
+                title="Q size"
+                color="Purple"
+                type="lines"
+                size="1" />
     </plot>
     <plot gridx="0"
           gridy="1"
           hspan="1"
           vspan="1"
           size="201"
-          title="[Green] Temp. Win. {k} (ms) [Red] Filter Update {m} (Hz)"
+          title="[Blue] latency (ms) [Orange] batch-size (#)"
           minval="0"
-          maxval="100"
+          maxval="80"
           bgcolor="#EEFFEE">
         <graph remote="/vpfR/scope:o"
+               index="0"
+               title="latency (ms)"
+               color="Blue"
+               type="lines"
+               size="2" />
+        <graph remote="/vpfR/scope:o"
                index="2"
-               title="Temporal Window k (ms)"
+               title="batch size (#)"
+               color="Orange"
+               type="lines"
+               size="2" />
+    </plot>
+    <plot gridx="0"
+          gridy="2"
+          hspan="1"
+          vspan="1"
+          size="201"
+          title="Likelihood (%)"
+          minval="0"
+          maxval="1.0"
+          bgcolor="#EEFFEE">
+        <graph remote="/vpfR/scope:o"
+               index="7"
+               title="likelihood"
                color="Green"
                type="lines"
-               size="1" />
+               size="2" />
+
+    </plot>
+    <plot gridx="0"
+          gridy="3"
+          hspan="1"
+          vspan="1"
+          size="201"
+          title="Update Step (px)"
+          minval="-1.5"
+          maxval="1.5"
+          bgcolor="#EEFFEE">
         <graph remote="/vpfR/scope:o"
-               index="0"
-               title="Filter Period m (ms)"
+               index="4"
+               title="dx"
                color="Red"
                type="lines"
-               size="1" />
+               size="2" />
+        <graph remote="/vpfR/scope:o"
+               index="5"
+               title="dy"
+               color="Green"
+               type="lines"
+               size="2" />
+        <graph remote="/vpfR/scope:o"
+               index="6"
+               title="dr"
+               color="Orange"
+               type="lines"
+               size="2" />
+
     </plot>
 </portscope>

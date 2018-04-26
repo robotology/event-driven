@@ -1,17 +1,20 @@
 /*
- * Copyright (C) 2017 iCub Facility - Istituto Italiano di Tecnologia
- * Author: arren.glover@iit.it, chiara.bartolozzi@iit.it
- * Permission is granted to copy, distribute, and/or modify this program
- * under the terms of the GNU General Public License, version 2 or any
- * later version published by the Free Software Foundation.
+ *   Copyright (C) 2017 Event-driven Perception for Robotics
+ *   Author: arren.glover@iit.it
+ *           chiara.bartolozzi@iit.it
  *
- * A copy of the license can be found at
- * http://www.robotcub.org/icub/license/gpl.txt
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include "yarpInterface.h"
@@ -48,7 +51,7 @@ bool vDevReadBuffer::initialise(std::string devicename,
 
     fd = open(devicename.c_str(), O_RDWR);
     if(fd < 0) {
-	yInfo() << "non blocking opening ";
+    yInfo() << "non blocking opening ";
         fd = open(devicename.c_str(), O_RDONLY | O_NONBLOCK);
         if(fd < 0)
             return false;
@@ -56,10 +59,10 @@ bool vDevReadBuffer::initialise(std::string devicename,
 
     unsigned int timestampswitch = 1;
     ioctl(fd, IOC_SET_TS_TYPE, &timestampswitch);
- 
+
     int poolSize;
     ioctl(fd, IOC_GET_PS, &poolSize);
-    yInfo() << "poolSize " << poolSize;    
+    yInfo() << "poolSize " << poolSize;
 
     if(bufferSize > 0) this->bufferSize = bufferSize;
     if(readSize > 0) this->readSize = readSize;
@@ -97,7 +100,7 @@ void vDevReadBuffer::run()
             r = read(fd, discardbuffer.data(), readSize);
             if(r > 0) lossCount += r;
         } else {
-	    //we read and fill up the buffer
+        //we read and fill up the buffer
             r = read(fd, readBuffer->data() + readCount, std::min(bufferSize - readCount, readSize));
             if(r > 0) readCount += r;
         }

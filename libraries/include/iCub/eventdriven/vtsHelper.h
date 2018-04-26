@@ -1,23 +1,27 @@
 /*
- * Copyright (C) 2014 iCub Facility - Istituto Italiano di Tecnologia
- * Author: Valentina Vasco (@itt.it)
- * Permission is granted to copy, distribute, and/or modify this program
- * under the terms of the GNU General Public License, version 2 or any
- * later version published by the Free Software Foundation.
+ *   Copyright (C) 2017 Event-driven Perception for Robotics
+ *   Author: arren.glover@iit.it
+ *           valentina.vasco@iit.it
  *
- * A copy of the license can be found at
- * http://www.robotcub.org/icub/license/gpl.txt
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU Lesser General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details
-*/
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public License
+ *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #ifndef __VTSHELPER__
 #define __VTSHELPER__
 
 #include <yarp/os/all.h>
+#include <fstream>
 
 namespace ev {
 
@@ -32,7 +36,7 @@ private:
 public:
 
     /// the maximum value of the timestamp before a wrap occurs
-    static long int max_stamp;
+    static unsigned int max_stamp;
     /// a multiplier to convert an event timestamp to seconds
     static double tsscaler;
     /// a multiplier to convert seconds to an event timestamp
@@ -55,8 +59,27 @@ public:
     /// public
     static double tstosecs() { return tsscaler; }
     /// \brief ask for the current unwrapped time, without updating the time.
-    unsigned long int currentTime() { return (unsigned long int)last_stamp + (max_stamp*n_wraps); }
+    unsigned long int currentTime() { return last_stamp + ((unsigned long int)max_stamp*n_wraps); }
 
+};
+
+class benchmark {
+private:
+
+    bool initialised;
+    std::ifstream totals_file;
+    std::ifstream process_file;
+
+    unsigned long int prevTotal;
+    unsigned long int prevProcess;
+    double perc;
+
+public:
+
+    benchmark();
+    ~benchmark();
+    bool isReady();
+    double getProcessorUsage();
 
 };
 
@@ -69,5 +92,3 @@ struct resolution {
 }
 
 #endif //__VTSHELPER
-
-//----- end-of-file --- ( next line intentionally left blank ) ------------------

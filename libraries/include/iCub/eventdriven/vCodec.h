@@ -1,27 +1,31 @@
 /*
- * Copyright (C) 2015 iCub Facility - Istituto Italiano di Tecnologia
- * Author: arren.glover@iit.it
- * Permission is granted to copy, distribute, and/or modify this program
- * under the terms of the GNU General Public License, version 2 or any
- * later version published by the Free Software Foundation.
+ *   Copyright (C) 2017 Event-driven Perception for Robotics
+ *   Author: arren.glover@iit.it
  *
- * A copy of the license can be found at
- * http://www.robotcub.org/icub/license/gpl.txt
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU Lesser General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details
-*/
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public License
+ *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #ifndef __VCODEC__
 #define __VCODEC__
+
 
 #include <yarp/os/Bottle.h>
 #include <memory>
 #include <deque>
 #include <math.h>
 #include <vector>
+#include <iostream>
 
 namespace ev {
 
@@ -61,6 +65,9 @@ void qsort(vQueue &q, bool respectWraps = false);
 /// \brief create an "event" based on the string tag it uses.
 event<> createEvent(const std::string &type);
 
+/// \brief get the coded packet size of an event
+unsigned int packetSize(const std::string &type);
+
 /// \brief camera values for stereo set-up
 enum { VLEFT = 0, VRIGHT = 1 } ;
 
@@ -79,6 +86,7 @@ public:
     virtual void encode(yarp::os::Bottle &b) const;
     virtual void encode(std::vector<YARP_INT32> &b, unsigned int &pos) const;
     virtual bool decode(const yarp::os::Bottle &packet, int &pos);
+    virtual void decode(int *&data);
     virtual yarp::os::Property getContent() const;
     virtual std::string getType() const;
     virtual int getChannel() const;
@@ -104,6 +112,7 @@ public:
     virtual void encode(yarp::os::Bottle &b) const;
     virtual void encode(std::vector<YARP_INT32> &b, unsigned int &pos) const;
     virtual bool decode(const yarp::os::Bottle &packet, int &pos);
+    virtual void decode(int *&data);
     virtual yarp::os::Property getContent() const;
     virtual std::string getType() const;
     virtual int getChannel() const;
@@ -127,6 +136,7 @@ public:
     virtual void encode(yarp::os::Bottle &b) const;
     virtual void encode(std::vector<YARP_INT32> &b, unsigned int &pos) const;
     virtual bool decode(const yarp::os::Bottle &packet, int &pos);
+    virtual void decode(int *&data);
     virtual yarp::os::Property getContent() const;
     virtual std::string getType() const;
 
@@ -148,6 +158,7 @@ public:
     virtual void encode(yarp::os::Bottle &b) const;
     virtual void encode(std::vector<YARP_INT32> &b, unsigned int &pos) const;
     virtual bool decode(const yarp::os::Bottle &packet, int &pos);
+    virtual void decode(int *&data);
     virtual yarp::os::Property getContent() const;
     virtual std::string getType() const;
 };
@@ -169,6 +180,7 @@ public:
     virtual void encode(yarp::os::Bottle &b) const;
     virtual void encode(std::vector<YARP_INT32> &b, unsigned int &pos) const;
     virtual bool decode(const yarp::os::Bottle &packet, int &pos);
+    virtual void decode(int *&data);
     virtual yarp::os::Property getContent() const;
     virtual std::string getType() const;
 };

@@ -1,24 +1,27 @@
 /*
- * Copyright (C) 2015 iCub Facility - Istituto Italiano di Tecnologia
- * Author: arren.glover@iit.it
- * Permission is granted to copy, distribute, and/or modify this program
- * under the terms of the GNU General Public License, version 2 or any
- * later version published by the Free Software Foundation.
+ *   Copyright (C) 2017 Event-driven Perception for Robotics
+ *   Author: arren.glover@iit.it
  *
- * A copy of the license can be found at
- * http://www.robotcub.org/icub/license/gpl.txt
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU Lesser General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details
-*/
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public License
+ *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #ifndef __VBOTTLE__
 #define __VBOTTLE__
 
 #include <yarp/os/Bottle.h>
 #include <yarp/os/Log.h>
+#include <yarp/os/LogStream.h>
 #include "iCub/eventdriven/vCodec.h"
 #include <iostream>
 
@@ -125,8 +128,8 @@ public:
             //so for each TAG we create an event of that type
             event<> e = createEvent(Bottle::get(i).asString());
             if(!e) {
-                std::cerr << "Warning: could not get bottle type during vBottle::"
-                             "get<>(). Check vBottle integrity." << std::endl;
+                yError() << "Warning: could not get bottle type during vBottle::"
+                             "get<>(). Check vBottle integrity.";
                 continue;
             }
 
@@ -138,9 +141,9 @@ public:
             //we get the (EVENTS)
             Bottle * b = Bottle::get(i+1).asList();
             if(!b) {
-                std::cerr << "Warning: could not get event data as a list after "
+                yError() << "Warning: could not get event data as a list after "
                              "getting correct tag (e.g. AE) in vBottle::getAll(). "
-                             "Check vBottle integrity" << std::endl;
+                             "Check vBottle integrity";
                 break;
             }
 
@@ -208,6 +211,7 @@ public:
 //    Bottle::toBinary()
 //    Bottle::toString()
 
+    using yarp::os::Bottle::find;
 
 private:
 
@@ -227,8 +231,8 @@ private:
     //yarp::os::Value& find(const ConstString &key) : Bottle::find(const yarp::os::ConstString &key) {};
     //Bottle& findGroup(const yarp::os::ConstString& key) const;
     //void findGroup();
+
     using yarp::os::Bottle::findGroup;
-    using yarp::os::Bottle::find;
 
     yarp::os::Bottle tail() const;
 

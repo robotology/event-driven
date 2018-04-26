@@ -46,11 +46,8 @@ void skinInterface::run()
         int countEv = 0, countRaw = 0;
         vQueue qsend_ev, qsend_raw;
 
-        ev::vQueue *q = 0;
-        while(!q && !isStopping()) {
-            q = inputPort.getNextQ(ystamp);
-        }
-        if(isStopping()) return;
+        const ev::vQueue *q = inputPort.read(ystamp);
+        if(!q || isStopping()) return;
 
 
         for(unsigned int i = 0; i < q->size(); i++) {
@@ -106,8 +103,6 @@ void skinInterface::run()
             outRawPort.setEnvelope(ystamp);
             outRawPort.write(rawBottle);
         }
-
-        inputPort.scrapQ();
 
     }
 

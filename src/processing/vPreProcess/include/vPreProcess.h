@@ -1,18 +1,19 @@
 /*
- * Copyright (C) 2011 Department of Robotics Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
- * Author: Chiara Bartolozzi
- * email:  chiara.bartolozzi@iit.it
- * Permission is granted to copy, distribute, and/or modify this program
- * under the terms of the GNU General Public License, version 2 or any
- * later version published by the Free Software Foundation.
+ *   Copyright (C) 2017 Event-driven Perception for Robotics
+ *   Author: arren.glover@iit.it
  *
- * A copy of the license can be found at
- * http://www.robotcub.org/icub/license/gpl.txt
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 // \defgroup Modules Modules
@@ -23,9 +24,12 @@
 #ifndef __VPREPROCESS__
 #define __VPREPROCESS__
 
+#define DECODE_METHOD 2
+
 #include <yarp/os/all.h>
 #include <iCub/eventdriven/all.h>
-#include <opencv/cv.h>
+//#include <opencv/cv.h>
+#include <opencv2/opencv.hpp>
 using namespace::ev;
 
 class vPreProcess : public yarp::os::Thread
@@ -33,9 +37,20 @@ class vPreProcess : public yarp::os::Thread
 private:
 
     //output port for the vBottle with the new events computed by the module
+
+#if DECODE_METHOD == 0
     ev::queueAllocator inPort;
-    yarp::os::Port outPort;
-    yarp::os::Port outPort2;
+    vGenWritePort outPort;
+    vGenWritePort outPort2;
+#elif DECODE_METHOD == 1
+    vGenReadPort inPort;
+    vGenWritePort outPort;
+    vGenWritePort outPort2;
+#else
+    vReadPort<AE> inPort;
+    vWritePort<AE> outPort;
+    vWritePort<AE> outPort2;
+#endif
 
     //parameters
     std::string name;
@@ -60,6 +75,11 @@ private:
     //output
     bool split;
 
+    //timing stats
+    std::deque<double> delays;
+    std::deque<double> rates;
+    std::deque<double> intervals;
+
 public:
 
     vPreProcess();
@@ -72,6 +92,9 @@ public:
     void initUndistortion(const yarp::os::Bottle &left,
                           const yarp::os::Bottle &right, bool truncate);
     int queryUnprocessed();
+    std::deque<double> getDelays();
+    std::deque<double> getRates();
+    std::deque<double> getIntervals();
     void run();
     void onStop();
     bool threadInit();
