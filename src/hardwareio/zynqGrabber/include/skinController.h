@@ -17,8 +17,8 @@
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __VVISCTRL__
-#define __VVISCTRL__
+#ifndef __VSKINCTRL__
+#define __VSKINCTRL__
 
 #include <deviceRegisters.h>
 #include <yarp/os/Bottle.h>
@@ -37,7 +37,7 @@ typedef struct fpgaStatus {
     bool tdFifoFull;
 } fpgaStatus_t;
 
-class vVisionCtrl
+class vSkinCtrl
 {
 private:
 
@@ -55,12 +55,10 @@ private:
     //INTERNAL FUNCTIONS
     int i2cRead(unsigned char reg, unsigned char *data, unsigned int size);
     int i2cWrite(unsigned char reg, unsigned char *data, unsigned int size);
+    int i2cWrite(unsigned char reg, unsigned int data);
 
     //WRAPPERS?
     bool configureRegisters(); //new initDevice
-
-    bool setLatchAtEnd(bool Enable);
-    bool setShiftCount(uint8_t shiftCount);
 
     int getFpgaStatus();
     bool clearFpgaStatus(std::string clr);
@@ -68,23 +66,12 @@ private:
 public:
 
     //REQUIRE: devicefilename, chiptype (eg DVS/ATIS), chipFPGAaddress (eg LEFT or RIGHT)
-    vVisionCtrl(std::string deviceName = "", unsigned char i2cAddress = 0);
-
-    //SET/GET CONFIGURATION
-    bool setBias(std::string biasName, unsigned int biasValue);
-    bool setBias(yarp::os::Bottle bias);
-    unsigned int getBias(std::string biasName);
-    void useCurrentBias(bool flag = true);
+    vSkinCtrl(std::string deviceName = "", unsigned char i2cAddress = 0);
 
     //CONNECTION
     bool connect(void);
     bool configure(bool verbose = false);
     void disconnect(bool andturnoff = true);
-    bool activate(bool active = true);
-    bool suspend(void); //wraps activate(false);
-
-    //COMMANDS
-    bool configureBiases();
 
     //DEBUG OUTPUTS
     void printConfiguration(void); // bias file, void dumpRegisterValues();

@@ -69,8 +69,8 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 
         std::string controllerDevice = rf.find("controllerDevice").asString();
 
-        vsctrlMngLeft = vDevCtrl(controllerDevice, I2C_ADDRESS_LEFT);
-        vsctrlMngRight = vDevCtrl(controllerDevice, I2C_ADDRESS_RIGHT);
+        vsctrlMngLeft = vVisionCtrl(controllerDevice, I2C_ADDRESS_LEFT);
+        vsctrlMngRight = vVisionCtrl(controllerDevice, I2C_ADDRESS_RIGHT);
 
         vsctrlMngLeft.useCurrentBias(iBias);
         vsctrlMngRight.useCurrentBias(iBias);

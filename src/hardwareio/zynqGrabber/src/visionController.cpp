@@ -27,7 +27,7 @@
 #include <sys/ioctl.h>
 #include <iostream>
 
-vDevCtrl::vDevCtrl(std::string deviceName, unsigned char i2cAddress)
+vVisionCtrl::vVisionCtrl(std::string deviceName, unsigned char i2cAddress)
 {
 
     fd = -1;
@@ -44,7 +44,7 @@ vDevCtrl::vDevCtrl(std::string deviceName, unsigned char i2cAddress)
 
 }
 
-bool vDevCtrl::connect()
+bool vVisionCtrl::connect()
 {
 
     std::cout << "Connecting to " << deviceName << " for " << (int)I2CAddress << " device configuration" << std::endl;
@@ -64,7 +64,7 @@ bool vDevCtrl::connect()
     return true;
 }
 
-void vDevCtrl::disconnect(bool andturnoff)
+void vVisionCtrl::disconnect(bool andturnoff)
 {
     if(fd > 0) {
         if(andturnoff) suspend();
@@ -72,7 +72,7 @@ void vDevCtrl::disconnect(bool andturnoff)
     }
 }
 
-int vDevCtrl::i2cWrite(unsigned char reg, unsigned char *data, unsigned int size)
+int vVisionCtrl::i2cWrite(unsigned char reg, unsigned char *data, unsigned int size)
 {
 
     int ret = ioctl(fd, I2C_SLAVE, I2CAddress);
@@ -92,7 +92,7 @@ int vDevCtrl::i2cWrite(unsigned char reg, unsigned char *data, unsigned int size
 
 }
 
-int vDevCtrl::i2cRead(unsigned char reg, unsigned char *data, unsigned int size)
+int vVisionCtrl::i2cRead(unsigned char reg, unsigned char *data, unsigned int size)
 {
 
     int ret = ioctl(fd, I2C_SLAVE, I2CAddress);
@@ -108,7 +108,7 @@ int vDevCtrl::i2cRead(unsigned char reg, unsigned char *data, unsigned int size)
 
 }
 
-bool vDevCtrl::configure(bool verbose)
+bool vVisionCtrl::configure(bool verbose)
 {
     if(!configureRegisters())
         return false;
@@ -121,7 +121,7 @@ bool vDevCtrl::configure(bool verbose)
     return true;
 }
 
-bool vDevCtrl::configureRegisters()
+bool vVisionCtrl::configureRegisters()
 {
 
     unsigned char valReg[4];
@@ -177,7 +177,7 @@ bool vDevCtrl::configureRegisters()
     return true;
 }
 
-bool vDevCtrl::setBias(yarp::os::Bottle bias)
+bool vVisionCtrl::setBias(yarp::os::Bottle bias)
 {
     if(bias.isNull())
         return false;
@@ -187,7 +187,7 @@ bool vDevCtrl::setBias(yarp::os::Bottle bias)
 }
 
 // --- change the value of a single bias --- //
-bool vDevCtrl::setBias(std::string biasName, unsigned int biasValue)
+bool vVisionCtrl::setBias(std::string biasName, unsigned int biasValue)
 {
     yarp::os::Bottle &vals = bias.findGroup(biasName);
     if(vals.isNull()) return false;
@@ -196,19 +196,19 @@ bool vDevCtrl::setBias(std::string biasName, unsigned int biasValue)
     return true;
 }
 
-unsigned int vDevCtrl::getBias(std::string biasName)
+unsigned int vVisionCtrl::getBias(std::string biasName)
 {
     yarp::os::Bottle &vals = bias.findGroup(biasName);
     if(vals.isNull()) return -1;
     return vals.get(3).asInt();
 }
 
-void vDevCtrl::useCurrentBias(bool flag)
+void vVisionCtrl::useCurrentBias(bool flag)
 {
     iBias = flag;
 }
 
-bool vDevCtrl::configureBiases(){
+bool vVisionCtrl::configureBiases(){
 
     clearFpgaStatus("biasDone");
 
@@ -288,7 +288,7 @@ bool vDevCtrl::configureBiases(){
 
 }
 
-bool vDevCtrl::setShiftCount(uint8_t shiftCount){
+bool vVisionCtrl::setShiftCount(uint8_t shiftCount){
 
     unsigned int val;
 
@@ -302,7 +302,7 @@ bool vDevCtrl::setShiftCount(uint8_t shiftCount){
     return true;
 }
 
-bool vDevCtrl::setLatchAtEnd(bool enable){
+bool vVisionCtrl::setLatchAtEnd(bool enable){
 
     unsigned int val;
 
@@ -320,13 +320,13 @@ bool vDevCtrl::setLatchAtEnd(bool enable){
     return true;
 }
 
-bool vDevCtrl::suspend()
+bool vVisionCtrl::suspend()
 {
     return activate(false);
 }
 
 
-bool vDevCtrl::activate(bool active)
+bool vVisionCtrl::activate(bool active)
 {
 
     unsigned int val;
@@ -346,7 +346,7 @@ bool vDevCtrl::activate(bool active)
 }
 
 
-int vDevCtrl::getFpgaStatus()
+int vVisionCtrl::getFpgaStatus()
 {
 
     unsigned char val;
@@ -361,7 +361,7 @@ int vDevCtrl::getFpgaStatus()
     return ret;
 }
 
-bool vDevCtrl::clearFpgaStatus(std::string clr)
+bool vVisionCtrl::clearFpgaStatus(std::string clr)
 {
     unsigned char clrStatus;
     // --- to clear the value of one bit, write "1" to the bit --- //
@@ -385,7 +385,7 @@ bool vDevCtrl::clearFpgaStatus(std::string clr)
     return true;
 }
 
-void vDevCtrl::printConfiguration()
+void vVisionCtrl::printConfiguration()
 {
 
     std::cout << "Configuration for control device: " << (unsigned int)I2CAddress << std::endl;

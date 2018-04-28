@@ -49,15 +49,15 @@
 
 //within project includes
 #include <yarpInterface.h>
-#include <deviceController.h>
+#include <visionController.h>
 
 class zynqGrabberModule : public yarp::os::RFModule {
 
     yarp::os::Port handlerPort; // a port to handle messages
 
     //HANDLES DEVICE CONFIGURATION
-    vDevCtrl vsctrlMngLeft;
-    vDevCtrl vsctrlMngRight;
+    vVisionCtrl vsctrlMngLeft;
+    vVisionCtrl vsctrlMngRight;
 
     //HANDLES READING WRITING TO DATA DEVICE AND YARP
     device2yarp D2Y; // ratethread that reads the device and writes to yarp vBottle
