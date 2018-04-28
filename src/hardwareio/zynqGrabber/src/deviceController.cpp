@@ -17,7 +17,7 @@
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "deviceController.h"
+#include "visionController.h"
 #include "deviceRegisters.h"
 
 #include <iostream>

@@ -27,8 +27,6 @@
 
 #define I2C_ADDRESS_LEFT		 0x10
 #define I2C_ADDRESS_RIGHT		 0x11
-//#define I2C_ADDRESS_VSCTRL       0x11
-//#define I2C_ADDRESS              I2C_ADDRESS_VSCTRL
 
 #define AUTOINCR      0x80
 
@@ -91,12 +89,66 @@
 #define ST_I2C_TIMEOUT_MSK              0x80
 
 // --- BG masks --- //
-#define BG_PWRDWN_MSK            0x10000000 // powerdown chip mask
-#define BG_SHIFT_COUNT_MSK           0x003F0000 // mask of bg shift count
-//#define BG_SHIFT_AUTORST_MSK         0x40 // mask of bg shift count
-#define BG_LATOUTEND_MSK             0x00800000 // mask of bg shift count
-//#define BG_ROISEL_MSK                0x20
-#define BG_VAL_MSK                    0x1FFFFF // mask of 21 bit for bg value
+#define BG_PWRDWN_MSK                   0x10000000 // powerdown chip mask
+#define BG_SHIFT_COUNT_MSK              0x003F0000 // mask of bg shift count
+//#define BG_SHIFT_AUTORST_MSK          0x40 // mask of bg shift count
+#define BG_LATOUTEND_MSK                0x00800000 // mask of bg shift count
+//#define BG_ROISEL_MSK                 0x20
+#define BG_VAL_MSK                      0x1FFFFF // mask of 21 bit for bg value
+
+// aux i2c -- skin and other sensors (e.g. accelerometers)
+#define I2C_ADDRESS_AUX                 0x03
+
+// --- addresses of the registers --- //
+#define SKCTRL_EN_ADDR                  0x00
+#define SKCTRL_DUMMY_PERIOD_ADDR        0x04
+#define SKCTRL_DUMMY_CFG_ADDR           0x08
+#define SKCTRL_DUMMY_BOUND_ADDR         0x0C
+#define SKCTRL_DUMMY_INC_ADDR           0x10
+#define SKCTRL_RES_TO_ADDR              0x14
+#define SKCTRL_EG_UPTHR_ADDR            0x18
+#define SKCTRL_EG_DWTHR_ADDR            0x1C
+#define SKCTRL_EG_NOISE_RISE_THR_ADDR   0x20
+#define SKCTRL_EG_NOISE_FALL_THR_ADDR   0x24
+#define SKCTRL_I2C_ACQ_SOFT_RST_ADDR    0x34 // write only
+#define SKCTRL_EG_FILTER_ADDR           0x38 // read only
+#define SKCTRL_STATUS_ADDR              0x3A // read only
+
+// -- default values of the registers for the skin -- //
+
+// register SKCTRL_EN_ADDR                  0x00
+#define I2C_ACQ_EN                      0x01 // DUMMY_GEN_SEL[2:0]|DUMMY_ACQ_EN|FORCE_CALIB|reserved|reserved|I2C_ACQ_EN;
+#define FORCE_CALIB_EN                  0x08 // DUMMY_GEN_SEL[2:0]|DUMMY_ACQ_EN|FORCE_CALIB|reserved|reserved|I2C_ACQ_EN;
+// to enable the i2c and run the force calibration we have to OR the first two values = 0x9
+#define DUMMYGEN_EN                     0x00
+#define EG_CFG                          0x0E // ASR_FILTER_TYPE|ASR_FILTER_EN|EVGEN_NTHR_EN|PREPROC_SAMPLES|PREPROC_EVGEN|DRIFT_COMP_EN;
+#define EVENTS_SAMPLES                  0xFB // SAMPLES_TX_MODE|SAMPLES_SEL|AUX_TX_EN|SAMPLES_TX_EN|EVENTS_TX_EN;
+// register SKCTRL_DUMMY_PERIOD_ADDR        0x04
+#define DM_PER                          0x60
+// register SKCTRL_DUMMY_CFG_ADDR           0x08
+#define DM_CALIB                        0x00
+#define DM_ADDR                         0x0F
+// register SKCTRL_DUMMY_BOUND_ADDR         0x0C
+#define DM_UP_BOUND                     0xFF
+#define DM_LOW_BOUND                    0x00
+// register SKCTRL_DUMMY_INC_ADDR           0x10
+#define DM_INC                          0x01
+#define DM_DECR                         0x01
+// register SKCTRL_RES_TO_ADDR              0x14
+#define RESAMPLING_TIMEOUT                   0x32
+// register SKCTRL_EG_UPTHR_ADDR            0x18
+#define EG_UP_THR                       0x00001999 // 32b unsigned fixed point (16b fractional); default value approx. 0.1
+// register SKCTRL_EG_DWTHR_ADDR            0x1C
+#define EG_DWN_THR                      0x00001999 // 32b unsigned fixed point (16b fractional); default value approx. 0.1
+// register SKCTRL_EG_NOISE_RISE_THR_ADDR      0x20
+#define EG_NOISE_RISE_THR               0x000C0000 // 32b unsigned fixed point (16b fractional); default value approx. 0.1
+// register SKCTRL_EG_NOISE_FALL_THR_ADDR      0x24
+#define EG_NOISE_FALL_THR               0x000C0000 // 32b unsigned fixed point (16b fractional); default value approx. 0.1
+// register SKCTRL_I2C_ACQ_SOFT_RST_ADDR    0x34
+#define I2C_ACQ_SOFT_RST                0x00 // write only value???
+
+
+
 
 // hpu_core & spinn2neu
 
@@ -133,18 +185,18 @@
 #define CTRL_32BITCLOCK      0x00008000
 
 // INterrupt Mask register bit field
-#define MSK_RXBUF_EMPTY  0x00000001
-#define MSK_RXBUF_AEMPTY 0x00000002
-#define MSK_RXBUF_FULL   0x00000004
-#define MSK_TXBUF_EMPTY  0x00000008
-#define MSK_TXBUF_AFULL  0x00000010
-#define MSK_TXBUF_FULL   0x00000020
-#define MSK_TIMEWRAPPING 0x00000080
-#define MSK_RXBUF_READY  0x00000100
-#define MSK_RX_NOT_EMPTY 0x00000200
-#define MSK_TX_DUMPMODE  0x00001000
-#define MSK_RX_PAER_ERR   0x00007000 // fifo full from left, right, aux
-#define MSK_RX_MOD_ERR   0x00004000
+#define MSK_RXBUF_EMPTY     0x00000001
+#define MSK_RXBUF_AEMPTY    0x00000002
+#define MSK_RXBUF_FULL      0x00000004
+#define MSK_TXBUF_EMPTY     0x00000008
+#define MSK_TXBUF_AFULL     0x00000010
+#define MSK_TXBUF_FULL      0x00000020
+#define MSK_TIMEWRAPPING    0x00000080
+#define MSK_RXBUF_READY     0x00000100
+#define MSK_RX_NOT_EMPTY    0x00000200
+#define MSK_TX_DUMPMODE     0x00001000
+#define MSK_RX_PAER_ERR     0x00007000 // fifo full from left, right, aux
+#define MSK_RX_MOD_ERR      0x00004000
 //#define MASK_RX_EMPTY    0x01
 //#define MASK_RX_FULL     0x04
 
