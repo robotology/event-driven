@@ -65,58 +65,95 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     if(lwo) logwriter << " " << curdate->tm_hour << ":" << curdate->tm_min << ":" << curdate->tm_sec << std::endl;
 
 
-    if(rf.check("controllerDevice")) {
+    if(rf.check("visCtrlLeft")) {
 
-        std::string controllerDevice = rf.find("controllerDevice").asString();
+        std::string visCtrlLeft = rf.find("visCtrlLeft").asString();
 
-        vsctrlMngLeft = vVisionCtrl(controllerDevice, I2C_ADDRESS_LEFT);
-        vsctrlMngRight = vVisionCtrl(controllerDevice, I2C_ADDRESS_RIGHT);
-
+        vsctrlMngLeft = vVisionCtrl(visCtrlLeft, I2C_ADDRESS_LEFT);
         vsctrlMngLeft.useCurrentBias(iBias);
-        vsctrlMngRight.useCurrentBias(iBias);
 
         //bias values
         yarp::os::Bottle biaslistl = rf.findGroup("ATIS_BIAS_LEFT");
-        yarp::os::Bottle biaslistr = rf.findGroup("ATIS_BIAS_RIGHT");
 
-        bool con_success = false;
-
-        if(!vsctrlMngLeft.setBias(biaslistl) || !vsctrlMngRight.setBias(biaslistr) ) {
+        if(!vsctrlMngLeft.setBias(biaslistl)) {
             std::cerr << "Bias file required to run zynqGrabber" << std::endl;
             if(lwo) logwriter << "Could not find bias files" << std::endl << "ZYNQGRABBER CLOSING" << std::endl << std::endl;
             return false;
         }
         std::cout << std::endl;
         if(!vsctrlMngLeft.connect())
+        {
             std::cerr << "Could not connect to vision controller left" << std::endl;
-        else
-            if(!vsctrlMngLeft.configure(verbose)) {
-                std::cerr << "Could not configure left camera" << std::endl;
-                if(lwo) logwriter << "Could not configure left camera" << std::endl;
-            } else {
-                con_success = true;
-            }
+            if(lwo) logwriter << "Could not connect to left camera" << std::endl;
+            return false;
+        }
+        if(!vsctrlMngLeft.configure(verbose)) {
+            std::cerr << "Could not configure left camera" << std::endl;
+            if(lwo) logwriter << "Could not configure left camera" << std::endl;
+            return false;
+        }
+        if(lwo) logwriter << "Connected to and configured left camera" << std::endl;
 
+    }
+
+
+
+    if(rf.check("visCtrlRight")) {
+
+        std::string visCtrlRight = rf.find("visCtrlRight").asString();
+
+        vsctrlMngRight = vVisionCtrl(visCtrlRight, I2C_ADDRESS_RIGHT);
+        vsctrlMngRight.useCurrentBias(iBias);
+
+        //bias values
+        yarp::os::Bottle biaslistr = rf.findGroup("ATIS_BIAS_RIGHT");
+
+        if(!vsctrlMngRight.setBias(biaslistr)) {
+            std::cerr << "Bias file required to run zynqGrabber" << std::endl;
+            if(lwo) logwriter << "Could not find bias files" << std::endl << "ZYNQGRABBER CLOSING" << std::endl << std::endl;
+            return false;
+        }
         std::cout << std::endl;
         if(!vsctrlMngRight.connect())
-            std::cerr << "Could not connect to vision controller right" << std::endl;
-        else {
-            if(!vsctrlMngRight.configure(verbose)) {
-                std::cerr << "Could not configure right camera" << std::endl;
-                if(lwo) logwriter << "Could not configure right camera" << std::endl;
-            } else {
-                con_success = true;
-            }
-        }
-        std::cout << std::endl;
-
-        if(!con_success) {
-            std::cerr << "A configuration device was specified but could not be connected" << std::endl;
-            if(lwo) logwriter << "Could not connect to configuration device" << std::endl;
+        {
+            std::cerr << "Could not connect to vision controller Right" << std::endl;
+            if(lwo) logwriter << "Could not connect to Right camera" << std::endl;
             return false;
-        } else {
-            if(lwo) logwriter << "Connected to and configured at least one device" << std::endl;
         }
+        if(!vsctrlMngRight.configure(verbose)) {
+            std::cerr << "Could not configure Right camera" << std::endl;
+            if(lwo) logwriter << "Could not configure Right camera" << std::endl;
+            return false;
+        }
+        if(lwo) logwriter << "Connected to and configured Right camera" << std::endl;
+
+    }
+
+
+    if(rf.check("skinCtrl")) {
+
+        std::string skinCtrl = rf.find("skinCtrl").asString();
+
+        skctrlMng = vSkinCtrl(skinCtrl, I2C_ADDRESS_AUX);
+
+//        if(!skctrlMng.cfgSkin(defaults)) {
+//            std::cerr << "Bias file required to run zynqGrabber" << std::endl;
+//            if(lwo) logwriter << "Could not find bias files" << std::endl << "ZYNQGRABBER CLOSING" << std::endl << std::endl;
+//            return false;
+//        }
+//        std::cout << std::endl;
+//        if(!vsctrlMngRight.connect())
+//        {
+//            std::cerr << "Could not connect to vision controller Right" << std::endl;
+//            if(lwo) logwriter << "Could not connect to Right camera" << std::endl;
+//            return false;
+//        }
+//        if(!vsctrlMngRight.configure(verbose)) {
+//            std::cerr << "Could not configure Right camera" << std::endl;
+//            if(lwo) logwriter << "Could not configure Right camera" << std::endl;
+//            return false;
+//        }
+//        if(lwo) logwriter << "Connected to and configured Right camera" << std::endl;
 
     }
 
@@ -125,7 +162,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         yError() << "Could not connect to YARP network";
 
     if(!yarppresent || biaswrite) {
-        vsctrlMngLeft.disconnect(true);
+        vsctrlMngRight.disconnect(true);
         std::cout << "Left camera off" << std::endl;
         vsctrlMngRight.disconnect(true);
         std::cout << "Right camera off" << std::endl;

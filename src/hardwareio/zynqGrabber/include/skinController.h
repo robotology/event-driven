@@ -29,14 +29,6 @@
 #include <stdlib.h>
 #include <linux/i2c-dev.h>
 
-typedef struct fpgaStatus {
-    bool crcErr;
-    bool biasDone;
-    bool i2cTimeout;
-    bool apsFifoFull;
-    bool tdFifoFull;
-} fpgaStatus_t;
-
 class vSkinCtrl
 {
 private:
@@ -47,10 +39,6 @@ private:
 
     //INTERNAL VARIABLES
     int fd;
-    yarp::os::Bottle bias;
-    fpgaStatus_t fpgaStat;
-    bool iBias;
-
 
     //INTERNAL FUNCTIONS
     int i2cRead(unsigned char reg, unsigned char *data, unsigned int size);
@@ -59,9 +47,6 @@ private:
 
     //WRAPPERS?
     bool configureRegisters(); //new initDevice
-
-    int getFpgaStatus();
-    bool clearFpgaStatus(std::string clr);
 
 public:
 
@@ -75,6 +60,7 @@ public:
 
     //DEBUG OUTPUTS
     void printConfiguration(void); // bias file, void dumpRegisterValues();
+    int printFpgaStatus();
 
 };
 

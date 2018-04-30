@@ -48,8 +48,9 @@
 #include <yarp/os/Thread.h>
 
 //within project includes
-#include <yarpInterface.h>
-#include <visionController.h>
+#include "yarpInterface.h"
+#include "visionController.h"
+#include "skinController.h"
 
 class zynqGrabberModule : public yarp::os::RFModule {
 
@@ -58,6 +59,7 @@ class zynqGrabberModule : public yarp::os::RFModule {
     //HANDLES DEVICE CONFIGURATION
     vVisionCtrl vsctrlMngLeft;
     vVisionCtrl vsctrlMngRight;
+    vSkinCtrl   skctrlMng;
 
     //HANDLES READING WRITING TO DATA DEVICE AND YARP
     device2yarp D2Y; // ratethread that reads the device and writes to yarp vBottle

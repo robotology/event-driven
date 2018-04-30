@@ -33,7 +33,7 @@
 #define I2C_ADDRESS_LEFT		 0x10
 #define I2C_ADDRESS_RIGHT		 0x11
 // aux i2c -- skin and other sensors (e.g. accelerometers)
-#define I2C_ADDRESS_AUX          0x03
+#define I2C_ADDRESS_AUX          0x1e
 
 #define AUTOINCR      0x80
 
@@ -169,6 +169,17 @@
 #define EG_NOISE_FALL_THR_DEFAULT               0x000C0000 // 32b unsigned fixed point (16b fractional); default value approx. 0.1
 // register SKCTRL_I2C_ACQ_SOFT_RST_ADDR    0x34
 #define I2C_ACQ_SOFT_RST_DEFAULT                0x00 // write only value???
+
+//-- SKCTRL_STATUS_ADDR -- masks --//
+// 32 bits register -- Arren approved ;-)
+#define SKCTRL_EDMTB_SKIN_TYPE_MSK          0x00000001
+#define SKCTRL_TX_KEEPALIVE_EN_MSK          0x00000080
+#define SKCTRL_I2C_CFG_TABLE_LEN_MSK        0x00000300
+#define SKCTRL_I2C_CFG_FILTER_TAPS_MSK      0x00000C00
+#define SKCTRL_I2C_CFG_SCL_FREQ_MSK         0x00003000
+#define SKCTRL_I2C_CFG_SDA_N_MSK            0x0000C000
+#define SKCTRL_MINOR_MSK                    0x00FF0000
+#define SKCTRL_MAJOR_MSK                    0xFF000000
 
 
 

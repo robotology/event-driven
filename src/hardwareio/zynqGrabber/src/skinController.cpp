@@ -26,6 +26,7 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <iostream>
+#include <yarp/os/LogStream.h>
 
 vSkinCtrl::vSkinCtrl(std::string deviceName, unsigned char i2cAddress)
 {
@@ -33,14 +34,6 @@ vSkinCtrl::vSkinCtrl(std::string deviceName, unsigned char i2cAddress)
     fd = -1;
     this->deviceName = deviceName;
     this->I2CAddress = i2cAddress;
-
-    fpgaStat.biasDone      = false;
-    fpgaStat.tdFifoFull    = false;
-    fpgaStat.apsFifoFull   = false;
-    fpgaStat.i2cTimeout    = false;
-    fpgaStat.crcErr        = false;
-
-    iBias = false;
 
 }
 
@@ -51,13 +44,6 @@ bool vSkinCtrl::connect()
     fd = open(deviceName.c_str(), O_RDWR);
     if (fd < 0) {
         perror("Cannot open device: ");
-        return false;
-    }
-
-    if(!clearFpgaStatus("all")) {
-        std::cout << "Cannot write to " << deviceName << ":" << (int)I2CAddress << std::endl;
-        std::cout << "Check sensor has correct I2CAddress and is physically connected" << std::endl;
-        close(fd);
         return false;
     }
 
@@ -135,6 +121,7 @@ bool vSkinCtrl::configure(bool verbose)
     std::cout << deviceName << ":" << (int)I2CAddress << " registers configured." << std::endl;
     if(verbose)
         printConfiguration();
+        printFpgaStatus();
     return true;
 }
 
@@ -200,56 +187,57 @@ bool vSkinCtrl::configureRegisters()
     return true;
 }
 
-int vSkinCtrl::getFpgaStatus()
+int vSkinCtrl::printFpgaStatus()
 {
 
-    unsigned char val;
-    int ret = i2cRead(VSCTRL_STATUS_ADDR, &val, sizeof(val));
+    unsigned int val;
+    int ret = i2cRead(SKCTRL_STATUS_ADDR, (unsigned char*)&val, sizeof(val));
 
-    fpgaStat.biasDone      = val & ST_BIAS_DONE_MSK;
-    fpgaStat.tdFifoFull    = val & ST_TD_FIFO_FULL_MSK;
-    fpgaStat.apsFifoFull   = val & ST_APS_FIFO_FULL_MSK;
-    fpgaStat.i2cTimeout    = val & ST_I2C_TIMEOUT_MSK;
-    fpgaStat.crcErr        = val & ST_CRC_ERR_MSK;
+    yInfo() << "ED-MTB skin type: " << (val & SKCTRL_EDMTB_SKIN_TYPE_MSK);
+    yInfo() << "TX keep alive: " << (val & SKCTRL_TX_KEEPALIVE_EN_MSK);
+    yInfo() << "I2C cfg table lenght: " << (val & SKCTRL_I2C_CFG_TABLE_LEN_MSK);
+    yInfo() << "I2C cfg filter taps: " << (val & SKCTRL_I2C_CFG_FILTER_TAPS_MSK);
+    yInfo() << "I2C cfg SCL freq: " << (val & SKCTRL_I2C_CFG_SCL_FREQ_MSK);
+    yInfo() << "I2C cfg SDA number: " << (val & SKCTRL_I2C_CFG_SDA_N_MSK);
+    yInfo() << "FPGA minor: " << (val & SKCTRL_MINOR_MSK);
+    yInfo() << "FPGA major: " << (val & SKCTRL_MAJOR_MSK);
 
-    return ret;
+    return 0;
 }
 
-bool vSkinCtrl::clearFpgaStatus(std::string clr)
-{
-    unsigned char clrStatus;
-    // --- to clear the value of one bit, write "1" to the bit --- //
-    if (clr == "biasDone") {
-        clrStatus = ST_BIAS_DONE_MSK;
-    } else if (clr == "tdFifoFull") {
-        clrStatus = ST_TD_FIFO_FULL_MSK;
-    } else if (clr == "apsFifoFull"){
-        clrStatus = ST_APS_FIFO_FULL_MSK;
-    } else if (clr == "i2cTimeOut") {
-        clrStatus = ST_I2C_TIMEOUT_MSK;
-    } else if (clr == "crcErr"){
-        clrStatus = ST_CRC_ERR_MSK;
-    } else { // clear all
-        clrStatus = 0xFF;
-    }
-// to be changed
-    if(i2cWrite(SKCTRL_STATUS_ADDR, (unsigned char *)&clrStatus, sizeof(clrStatus)) < 0)
-        return false;
-
-    return true;
-}
 
 void vSkinCtrl::printConfiguration()
 {
 
     std::cout << "Configuration for control device: " << (unsigned int)I2CAddress << std::endl;
 // to be updated
-//    std::cout << "== FPGA Register Values ==" << std::endl;
-//    unsigned int regval = 0;
-//    i2cRead(SKCTRL_INFO_ADDR, (unsigned char *)&regval, sizeof(regval));
-//    printf("Info: 0x%08X\n", regval);
-//    i2cRead(SKCTRL_STATUS_ADDR, (unsigned char *)&regval, sizeof(regval));
-//    printf("Status: 0x%08X\n", regval);
+    std::cout << "== FPGA Register Values ==" << std::endl;
+    unsigned int regval = 0;
+
+    i2cRead(SKCTRL_EN_ADDR, (unsigned char *)&regval, sizeof(regval));
+    printf("Enable Register: 0x%08X\n", regval);
+    i2cRead(SKCTRL_DUMMY_PERIOD_ADDR, (unsigned char *)&regval, sizeof(regval));
+    printf("Dummy Generator Period: 0x%08X\n", regval);
+    i2cRead(SKCTRL_DUMMY_CFG_ADDR, (unsigned char *)&regval, sizeof(regval));
+    printf("Dummy Generator Calib and Address: 0x%08X\n", regval);
+    i2cRead(SKCTRL_DUMMY_BOUND_ADDR, (unsigned char *)&regval, sizeof(regval));
+    printf("Dummy Generator Upper and Lower Bounds: 0x%08X\n", regval);
+    i2cRead(SKCTRL_DUMMY_INC_ADDR, (unsigned char *)&regval, sizeof(regval));
+    printf("Dummy Generator Increment and Decrement: 0x%08X\n", regval);
+    i2cRead(SKCTRL_RES_TO_ADDR, (unsigned char *)&regval, sizeof(regval));
+    printf("Resampling Time Out: 0x%08X\n", regval);
+    i2cRead(SKCTRL_EG_UPTHR_ADDR, (unsigned char *)&regval, sizeof(regval));
+    printf("Event generator up threshold: 0x%08X\n", regval);
+    i2cRead(SKCTRL_EG_DWTHR_ADDR, (unsigned char *)&regval, sizeof(regval));
+    printf("Event generator down threshold: 0x%08X\n", regval);
+    i2cRead(SKCTRL_EG_NOISE_RISE_THR_ADDR, (unsigned char *)&regval, sizeof(regval));
+    printf("Event generator noise rising threshold: 0x%08X\n", regval);
+    i2cRead(SKCTRL_EG_NOISE_FALL_THR_ADDR, (unsigned char *)&regval, sizeof(regval));
+    printf("Event generator noise falling threshold: 0x%08X\n", regval);
+    i2cRead(SKCTRL_EG_FILTER_ADDR, (unsigned char *)&regval, sizeof(regval));
+    printf("Resampling/evgen filter address: 0x%08X\n", regval);
+    i2cRead(SKCTRL_STATUS_ADDR, (unsigned char *)&regval, sizeof(regval));
+    printf("Resampling/evgen filter mask: 0x%08X\n", regval);
 
 }
 
