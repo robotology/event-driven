@@ -56,7 +56,8 @@ public:
     //CONNECTION
     bool connect(void);
     bool configure(bool verbose = false);
-    void disconnect(bool andturnoff = true);
+    //void disconnect(bool andturnoff = true);
+    void disconnect();
 
     //DEBUG OUTPUTS
     void printConfiguration(void); // bias file, void dumpRegisterValues();

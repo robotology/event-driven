@@ -37,6 +37,9 @@
 #define COMMAND_VOCAB_PWROFF  VOCAB3('o','f','f')
 #define COMMAND_VOCAB_PWRON   VOCAB2('o','n')
 #define COMMAND_VOCAB_RST     VOCAB3('r','s','t')
+#define COMMAND_VOCAB_SETSKIN VOCAB4('s','s','e','t') // set regName regValue
+
+
 
 #include <iostream>
 #include <string>

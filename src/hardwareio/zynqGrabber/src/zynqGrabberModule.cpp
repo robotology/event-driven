@@ -168,6 +168,8 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         std::cout << "Left camera off" << std::endl;
         vsctrlMngRight.disconnect(true);
         std::cout << "Right camera off" << std::endl;
+        skctrlMng.disconnect();
+        std::cout << "Skin off" << std::endl;
         if(lwo) logwriter << "Only writing biases, or YARP not present" << std::endl << "ZYNQGRABBER CLOSING" << std::endl << std::endl;
         return false;
     }
@@ -486,9 +488,20 @@ bool zynqGrabberModule::respond(const yarp::os::Bottle& command,
 //    }
 //        break;
 
-
+    case COMMAND_VOCAB_SETSKIN:
+        rec = true;
+    {
+        if(!skctrlMng.configureRegisters(command.tail()))
+        {
+            std::cout << "unable to set skin register " << command.get(1).asString() << std::endl;
+            ok = false;
+        } else {
+            ok = true;
+        }
     }
+        break;
 
+}
     if (!rec)
         ok = RFModule::respond(command,reply);
 

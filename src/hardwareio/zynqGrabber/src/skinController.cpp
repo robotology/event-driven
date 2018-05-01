@@ -50,12 +50,41 @@ bool vSkinCtrl::connect()
     return true;
 }
 
-void vSkinCtrl::disconnect(bool andturnoff)
+//void vSkinCtrl::disconnect(bool andturnoff)
+void vSkinCtrl::disconnect()
 {
+    //if(andturnoff) suspend();
     if(fd > 0) {
         close(fd);
     }
 }
+
+//bool vSkinCtrl::suspend()
+//{
+//    return activate(false);
+//}
+
+
+//bool vSkinCtrl::activate(bool active)
+//{
+
+//    unsigned int val;
+
+//    //get current config state
+//    if(i2cRead(VSCTRL_BG_CNFG_ADDR, (unsigned char *)&val, sizeof(val)) != sizeof(val))
+//        return false;
+
+//    //alter the correct bit
+//    if(active)
+//        val &= ~BG_PWRDWN_MSK;
+//    else
+//        val |= BG_PWRDWN_MSK;
+
+//    //rewrite the new config status
+//    return i2cWrite(VSCTRL_BG_CNFG_ADDR, (unsigned char *)(&val), sizeof(unsigned int));
+//    return true;
+//}
+
 
 int vSkinCtrl::i2cWrite(unsigned char reg, unsigned int data)
 {
