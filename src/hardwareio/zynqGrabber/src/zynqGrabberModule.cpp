@@ -97,7 +97,6 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     }
 
 
-
     if(rf.check("visCtrlRight")) {
 
         std::string visCtrlRight = rf.find("visCtrlRight").asString();
@@ -136,24 +135,27 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 
         skctrlMng = vSkinCtrl(skinCtrl, I2C_ADDRESS_AUX);
 
-//        if(!skctrlMng.cfgSkin(defaults)) {
-//            std::cerr << "Bias file required to run zynqGrabber" << std::endl;
-//            if(lwo) logwriter << "Could not find bias files" << std::endl << "ZYNQGRABBER CLOSING" << std::endl << std::endl;
-//            return false;
-//        }
-//        std::cout << std::endl;
-//        if(!vsctrlMngRight.connect())
-//        {
-//            std::cerr << "Could not connect to vision controller Right" << std::endl;
-//            if(lwo) logwriter << "Could not connect to Right camera" << std::endl;
-//            return false;
-//        }
-//        if(!vsctrlMngRight.configure(verbose)) {
-//            std::cerr << "Could not configure Right camera" << std::endl;
-//            if(lwo) logwriter << "Could not configure Right camera" << std::endl;
-//            return false;
-//        }
-//        if(lwo) logwriter << "Connected to and configured Right camera" << std::endl;
+        //config values
+        yarp::os::Bottle cnfglists = rf.findGroup("SKIN_CNFG");
+
+        if(!skctrlMng.configureRegisters(cnfglists)) {
+            std::cerr << "Config file required to run zynqGrabber" << std::endl;
+            if(lwo) logwriter << "Could not find config file" << std::endl << "ZYNQGRABBER CLOSING" << std::endl << std::endl;
+            return false;
+        }
+
+        if(!skctrlMng.connect())
+        {
+            std::cerr << "Could not connect to skin controller" << std::endl;
+            if(lwo) logwriter << "Could not connect to skin" << std::endl;
+            return false;
+        }
+        if(!skctrlMng.configure(verbose)) {
+            std::cerr << "Could not configure skin" << std::endl;
+            if(lwo) logwriter << "Could not configure skin" << std::endl;
+            return false;
+        }
+        if(lwo) logwriter << "Connected to and configured skin" << std::endl;
 
     }
 

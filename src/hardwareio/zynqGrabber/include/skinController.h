@@ -61,6 +61,10 @@ public:
     //DEBUG OUTPUTS
     void printConfiguration(void); // bias file, void dumpRegisterValues();
     int printFpgaStatus();
+    bool configureRegisters(yarp::os::Bottle cnfgReg);
+    bool setRegister(int byte, unsigned int mask, unsigned char regAddr, bool regVal);
+    bool setRegister(unsigned char regAddr, double regVal);
+
 
 };
 

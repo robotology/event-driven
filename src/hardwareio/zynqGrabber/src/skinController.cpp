@@ -125,6 +125,160 @@ bool vSkinCtrl::configure(bool verbose)
     return true;
 }
 
+bool vSkinCtrl::configureRegisters(yarp::os::Bottle cnfgReg)
+{
+    unsigned char regAddr = SKCTRL_EN_ADDR;
+    std::string regName = "forceCalib";
+    if (cnfgReg.check(regName)){
+        bool regVal = cnfgReg.find(regName).asBool();
+        if(!setRegister(0,FORCE_CALIB_EN,regAddr,regVal))
+            return false;
+    }
+    regName = "asrFilterType";
+    if (cnfgReg.check(regName)){
+        bool regVal = cnfgReg.find(regName).asBool();
+        if(!setRegister(3,ASR_FILTER_TYPE,regAddr,regVal))
+            return false;
+    }
+    regName = "asrFilterEn";
+    if (cnfgReg.check(regName)){
+        bool regVal = cnfgReg.find(regName).asBool();
+        if(!setRegister(3,ASR_FILTER_EN,regAddr,regVal))
+            return false;
+    }
+    regName = "egNthrEn";
+    if (cnfgReg.check(regName)){
+        bool regVal = cnfgReg.find(regName).asBool();
+        if(!setRegister(3,EVGEN_NTHR_EN,regAddr,regVal))
+            return false;
+    }
+    regName = "preprocSamples";
+    if (cnfgReg.check(regName)){
+        bool regVal = cnfgReg.find(regName).asBool();
+        if(!setRegister(3,PREPROC_SAMPLES,regAddr,regVal))
+            return false;
+    }
+    regName = "preprocEg";
+    if (cnfgReg.check(regName)){
+        bool regVal = cnfgReg.find(regName).asBool();
+        if(!setRegister(3,PREPROC_EVGEN,regAddr,regVal))
+            return false;
+    }
+    regName = "driftCompEn";
+    if (cnfgReg.check(regName)){
+        bool regVal = cnfgReg.find(regName).asBool();
+        if(!setRegister(3,DRIFT_COMP_EN,regAddr,regVal))
+            return false;
+    }
+    regName = "samplesSel";
+    if (cnfgReg.check(regName)){
+        bool regVal = cnfgReg.find(regName).asBool();
+        if(!setRegister(3,SAMPLES_SEL,regAddr,regVal))
+            return false;
+    }
+    regName = "samplesTxEn";
+    if (cnfgReg.check(regName)){
+        bool regVal = cnfgReg.find(regName).asBool();
+        if(!setRegister(3,SAMPLES_TX_EN,regAddr,regVal))
+            return false;
+    }
+    regName = "eventsTxEn";
+    if (cnfgReg.check(regName)){
+        bool regVal = cnfgReg.find(regName).asBool();
+        if(!setRegister(3,EVENTS_TX_EN,regAddr,regVal))
+            return false;
+    }
+    regName = "eventsTxEn";
+    if (cnfgReg.check(regName)){
+        bool regVal = cnfgReg.find(regName).asBool();
+        if(!setRegister(3,EVENTS_TX_EN,regAddr,regVal))
+            return false;
+    }
+    regName = "samplesTxMode";
+    if (cnfgReg.check(regName)){
+        bool regVal = cnfgReg.find(regName).asBool();
+        if(!setRegister(3,SAMPLES_TX_MODE,regAddr,regVal))
+            return false;
+        if (regVal == false){
+            regName = "samplesRshift";
+            if (cnfgReg.check(regName)){
+                bool regVal = cnfgReg.find(regName).asInt();
+                if(!setRegister(3,SAMPLES_RSHIFT,regAddr,regVal))
+                    return false;
+            }
+        }
+    }
+
+    regAddr = SKCTRL_RES_TO_ADDR;
+    regName = "resamplingTimeout";
+    if (cnfgReg.check(regName)){
+        bool regVal = cnfgReg.find(regName).asDouble();
+        if(i2cWrite(regAddr, (unsigned char *)(&regVal), sizeof(int)) < 0)
+           return false;
+    }
+
+    regAddr = SKCTRL_EG_UPTHR_ADDR;
+    regName = "egUpThr";
+    if (cnfgReg.check(regName)){
+        bool regVal = cnfgReg.find(regName).asDouble();
+        if(i2cWrite(regAddr, (unsigned char *)(&regVal), sizeof(int)) < 0)
+           return false;
+    }
+
+    regAddr = SKCTRL_EG_DWTHR_ADDR;
+    regName = "egDownThr";
+    if (cnfgReg.check(regName)){
+        bool regVal = cnfgReg.find(regName).asDouble();
+        if(i2cWrite(regAddr, (unsigned char *)(&regVal), sizeof(int)) < 0)
+           return false;
+    }
+
+    regAddr = SKCTRL_EG_NOISE_RISE_THR_ADDR;
+    regName = "egNoiseRisingThr";
+    if (cnfgReg.check(regName)){
+        bool regVal = cnfgReg.find(regName).asDouble();
+        if(i2cWrite(regAddr, (unsigned char *)(&regVal), sizeof(int)) < 0)
+           return false;
+    }
+
+    regAddr = SKCTRL_EG_NOISE_FALL_THR_ADDR;
+    regName = "egNoiseFallingThr";
+    if (cnfgReg.check(regName)){
+        bool regVal = cnfgReg.find(regName).asDouble();
+        if(i2cWrite(regAddr, (unsigned char *)(&regVal), sizeof(int)) < 0)
+           return false;
+    }
+
+    return true;
+}
+
+bool vSkinCtrl::setRegister(int byte, unsigned int mask, unsigned char regAddr, bool regVal)
+{
+    unsigned int val;
+    if(i2cRead(regAddr, (unsigned char*)&val, sizeof(val))<0)
+        return false;
+
+    if (regVal == true) {
+        val |= (mask << 8*byte);
+    } else {
+        val &= !(mask << 8*byte);
+    }
+
+    if(i2cWrite(regAddr, (unsigned char *)(&val), sizeof(int)) < 0)
+        return false;
+
+    return true;
+}
+bool vSkinCtrl::setRegister(unsigned char regAddr, double regVal)
+{
+
+    if(i2cWrite(regAddr, (unsigned char *)(&regVal), sizeof(int)) < 0)
+        return false;
+
+    return true;
+}
+
+
 bool vSkinCtrl::configureRegisters()
 {
 
@@ -202,7 +356,7 @@ int vSkinCtrl::printFpgaStatus()
     yInfo() << "FPGA minor: " << (val & SKCTRL_MINOR_MSK);
     yInfo() << "FPGA major: " << (val & SKCTRL_MAJOR_MSK);
 
-    return 0;
+    return ret;
 }
 
 
