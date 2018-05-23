@@ -198,25 +198,29 @@
 #define AER_SET_REM_LBCK    _IOW (MAGIC_NUM, 11, void *)
 #define AER_SET_FAR_LBCK    _IOW (MAGIC_NUM, 12, void *)
 
-#define CTRL_REG     0x00
-#define RXDATA_REG   0x08
-#define RXTIME_REG   0x0C
-#define TXDATA_REG   0x10
-#define DMA_REG      0x14
-#define RAWI_REG     0x18
-#define IRQ_REG      0x1C
-#define MASK_REG     0x20
-#define STMP_REG     0x28
-#define ID_REG       0x5C
+#define CTRL_REG         0x00
+#define RXDATA_REG       0x08
+#define RXTIME_REG       0x0C
+#define TXDATA_REG       0x10
+#define DMA_REG          0x14
+#define RAWI_REG         0x18
+#define IRQ_REG          0x1C
+#define MASK_REG         0x20
+#define STMP_REG         0x28
+#define RX_CTRL_REG      0x40
+#define ID_REG           0x5C
+#define AUX_RX_CTRL_REG  0x60
 
 // CTRL register bit field
-//#define CTRL_ENABLEIP 0x00000001
-#define CTRL_ENABLEINTERRUPT 0x00000004
-#define CTRL_FLUSHFIFO       0x00000010
-#define CTRL_ENABLE_REM_LBCK 0x01000000
-#define CTRL_ENABLE_LOC_LBCK 0x02000000
-#define CTRL_ENABLE_FAR_LBCK 0x04000000
-#define CTRL_32BITCLOCK      0x00008000
+//#define CTRL_ENABLEIP         0x00000001
+#define CTRL_ENABLEINTERRUPT    0x00000004
+#define CTRL_FLUSHFIFO          0x00000010
+#define CTRL_ENABLE_REM_LBCK    0x01000000
+#define CTRL_ENABLE_LOC_LBCK    0x02000000
+#define CTRL_ENABLE_FAR_LBCK    0x04000000
+#define CTRL_32BITCLOCK         0x00008000
+#define AUX_RX_ENABLE_SKIN      0x00000F01
+#define RX_REG_ENABLE_CAMERAS   0x07010701
 
 // INterrupt Mask register bit field
 #define MSK_RXBUF_EMPTY     0x00000001
@@ -233,6 +237,8 @@
 #define MSK_RX_MOD_ERR      0x00004000
 //#define MASK_RX_EMPTY    0x01
 //#define MASK_RX_FULL     0x04
+#define MSK_RX_CTRL_REG      0xF070F07
+#define MSK_AUX_RX_CTRL_REG  0x0000F07
 
 
 #endif

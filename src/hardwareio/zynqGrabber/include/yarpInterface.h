@@ -22,6 +22,7 @@
 
 #define THRATE 1
 
+
 #include <yarp/os/all.h>
 #include <iCub/eventdriven/all.h>
 #include <string>
@@ -53,6 +54,17 @@ private:
     yarp::os::Semaphore safety;
     yarp::os::Semaphore signal;
     bool bufferedreadwaiting;
+
+    struct hpu_regs_t{
+
+        unsigned int reg_offset;
+        char rw;
+        unsigned int data;
+
+    };
+
+
+    bool enableInterface(unsigned int reg_offset, unsigned int data, int fd);
 
 public:
 

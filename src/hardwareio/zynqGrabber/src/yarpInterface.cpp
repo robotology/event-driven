@@ -44,6 +44,25 @@ vDevReadBuffer::vDevReadBuffer()
 
 }
 
+bool vDevReadBuffer::enableInterface(unsigned int reg_offset, unsigned int data, int fd){
+
+    struct hpu_regs_t hpu_regs;
+
+    //Enable SKIN
+    hpu_regs.reg_offset = reg_offset; //HPU_REG_AUX_RX_CTRL
+    hpu_regs.rw = 1;
+    hpu_regs.data = data; //HPU_MASK_RX_CTRL_ARX_SER || HPU_MASK_RX_ARX_SER2
+
+    if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){ //for us it is AER_TIMESTAMP, from documentation HPU_GEN_REG
+
+        std::cout << "Error: cannot set skin register" << std::endl;
+        close(fd);
+        return false;
+    }
+
+    return true;
+}
+
 bool vDevReadBuffer::initialise(std::string devicename,
                                 unsigned int bufferSize,
                                 unsigned int readSize)
@@ -52,7 +71,7 @@ bool vDevReadBuffer::initialise(std::string devicename,
     fd = open(devicename.c_str(), O_RDWR);
     yInfo() << " blocking opening ";
     if(fd < 0) {
-    yInfo() << "non blocking opening ";
+        yInfo() << "non blocking opening ";
         fd = open(devicename.c_str(), O_RDONLY | O_NONBLOCK);
         if(fd < 0)
             return false;
@@ -65,13 +84,6 @@ bool vDevReadBuffer::initialise(std::string devicename,
     ioctl(fd, IOC_GET_PS, &poolSize);
     yInfo() << "poolSize " << poolSize;
 
-    struct hpu_regs_t{
-
-	unsigned int reg_offset;
-	char rw;
-	unsigned int data;
-
-    };
 
 //	unsigned int hw_ver = 0;
         //if( -1 == ioctl( fd, HPU_READVERSION, &hw_ver)) {
@@ -89,24 +101,12 @@ bool vDevReadBuffer::initialise(std::string devicename,
           //      printf( "#  hpu hw ver = %c%c%c %d.%d\n", hw_ver>>24, hw_ver >>16, hw_ver>>8, (hw_ver>>4)&0x0f, hw_ver&0x0f);
         //}
 
-
-
-    struct hpu_regs_t hpu_regs;
-
-    hpu_regs.reg_offset = 0x60; //HPU_REG_AUX_RX_CTRL
-    hpu_regs.rw = 1;
-    hpu_regs.data = 0x00000F01; //HPU_MASK_RX_CTRL_ARX_SER || HPU_MASK_RX_ARX_SER2 
-
-    if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){ //for us it is AER_TIMESTAMP, from documentation HPU_GEN_REG
-    
-    	std::cout << "Error: cannot set reg aux" << std::endl;
-    	close(fd);
-    	return false;
-     }
+    enableInterface(AUX_RX_CTRL_REG, AUX_RX_ENABLE_SKIN | MSK_AUX_RX_CTRL_REG, fd); //Enable SKIN
+    enableInterface(RX_CTRL_REG, RX_REG_ENABLE_CAMERAS | MSK_RX_CTRL_REG, fd); //Enable LEFT AND RIGHT CAMERAS
 
     if(bufferSize > 0) this->bufferSize = bufferSize;
     if(readSize > 0) this->readSize = readSize;
- 
+
     this->readSize = poolSize;
     buffer1.resize(this->bufferSize);
     buffer2.resize(this->bufferSize);
@@ -124,7 +124,7 @@ void vDevReadBuffer::run()
 
     if(fd < 0) {
         std::cout << "Event Reading Device uninistialised. Please run "
-            "initialisation before starting the thread" << std::endl;
+                "initialisation before starting the thread" << std::endl;
         return;
     }
 
@@ -141,11 +141,11 @@ void vDevReadBuffer::run()
             r = read(fd, discardbuffer.data(), readSize);
             if(r > 0) lossCount += r;
         } else {
-        //we read and fill up the buffer
+            //we read and fill up the buffer
             r = read(fd, readBuffer->data() + readCount, std::min(bufferSize - readCount, readSize));
             if(r > 0) readCount += r;
         }
-	//std::cout<< " bytes read "<< r <<std::endl;
+        //std::cout<< " bytes read "<< r <<std::endl;
 
         if(r < 0 && errno != EAGAIN) {
             perror("Error reading events: ");
