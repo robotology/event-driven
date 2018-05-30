@@ -20,6 +20,7 @@
 #include <yarp/os/Bottle.h>
 
 #include <string>
+#include <iostream>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>

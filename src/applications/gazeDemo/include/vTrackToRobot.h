@@ -29,9 +29,9 @@
 #include <yarp/dev/CartesianControl.h>
 #include <yarp/dev/GazeControl.h>
 #include <yarp/dev/PolyDriver.h>
-#include <yarp/dev/IControlMode2.h>
+#include <yarp/dev/IControlMode.h>
 #include <yarp/dev/IEncoders.h>
-#include <yarp/dev/IVelocityControl2.h>
+#include <yarp/dev/IVelocityControl.h>
 #include <deque>
 #include <vector>
 
@@ -157,7 +157,7 @@ protected:
 
     yarp::dev::PolyDriver         driver;
     yarp::dev::IEncoders         *ienc;
-    yarp::dev::IVelocityControl2 *ivel;
+    yarp::dev::IVelocityControl *ivel;
 
     int nAxes;
     std::vector<PID*> controllers;
@@ -221,7 +221,7 @@ public:
         controllers[5]->set(0.2, 0.0);
 
         //set velocity control mode
-        yarp::dev::IControlMode2 *imod;
+        yarp::dev::IControlMode *imod;
         if(!driver.view(imod)) {
             yError() << "Driver does not implement control mode";
             return false;

@@ -49,7 +49,7 @@ void LabelledAE::encode(yarp::os::Bottle &b) const
     b.addInt(ID);
 }
 
-void LabelledAE::encode(std::vector<YARP_INT32> &b, unsigned int &pos) const
+void LabelledAE::encode(std::vector<std::int32_t> &b, unsigned int &pos) const
 {
     AddressEvent::encode(b, pos);
     b[pos++] = ID;

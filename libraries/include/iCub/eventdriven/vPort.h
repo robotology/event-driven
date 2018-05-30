@@ -33,14 +33,14 @@ class vGenPortInterface : public yarp::os::Portable {
 protected:
 
     //headers
-    std::vector<YARP_INT32> header1;
+    std::vector<std::int32_t> header1;
     std::string header2;
-    std::vector<YARP_INT32> header3;
+    std::vector<std::int32_t> header3;
 
     //data
     const char * datablock;
     unsigned int datalength; //<- set the number of bytes here
-    std::vector<YARP_INT32> internaldata;
+    std::vector<std::int32_t> internaldata;
     vQueue *read_q;
 
     //sizes
@@ -61,7 +61,7 @@ public:
         header3.push_back(BOTTLE_TAG_LIST|BOTTLE_TAG_INT); // bottle code + specialisation with ints
         header3.push_back(0); // <- set the number of ints here (e.g. 2 * #v's)
         elementINTS = 0;
-        elementBYTES = sizeof(YARP_INT32) * elementINTS;
+        elementBYTES = sizeof(std::int32_t) * elementINTS;
         read_q = 0;
     }
 
@@ -99,7 +99,7 @@ public:
         header2 = eventtype;            //set the string itself
 
         elementINTS = packetSize(eventtype);
-        elementBYTES = sizeof(YARP_INT32) * elementINTS;
+        elementBYTES = sizeof(std::int32_t) * elementINTS;
 
     }
 
@@ -133,7 +133,7 @@ public:
 
         if(ndata > internaldata.size())
             internaldata.resize(ndata);
-        if(!connection.expectBlock((const char *)internaldata.data(), sizeof(YARP_INT32) * ndata)) {
+        if(!connection.expectBlock((const char *)internaldata.data(), sizeof(std::int32_t) * ndata)) {
             yError() << "Could not read datablock";
             return false;
         }
@@ -164,10 +164,10 @@ public:
     virtual bool write(yarp::os::ConnectionWriter& connection) {
 
         connection.appendBlock((const char *)header1.data(),
-                                       header1.size() * sizeof(YARP_INT32));
+                                       header1.size() * sizeof(std::int32_t));
         connection.appendBlock(header2.c_str(), header1[3]);
         connection.appendBlock((const char *)header3.data(),
-                                       header3.size() * sizeof(YARP_INT32));
+                                       header3.size() * sizeof(std::int32_t));
         connection.appendBlock(datablock, datalength);
 
         return !connection.isError();
@@ -187,7 +187,7 @@ public:
         header1[3] = T::tag.size(); // length of string
         header2 = T::tag;
         elementINTS = packetSize(T::tag);
-        elementBYTES = sizeof(YARP_INT32) * elementINTS;
+        elementBYTES = sizeof(std::int32_t) * elementINTS;
     }
 
     /// \brief send an entire vQueue. The queue is encoded and allocated into a single contiguous memory space. Faster than a standard vBottle.
@@ -248,7 +248,7 @@ public:
 
         if(ndata > internaldata.size())
             internaldata.resize(ndata);
-        if(!connection.expectBlock((const char *)internaldata.data(), sizeof(YARP_INT32) * ndata)) {
+        if(!connection.expectBlock((const char *)internaldata.data(), sizeof(std::int32_t) * ndata)) {
             yError() << "Could not read datablock";
             return false;
         }
