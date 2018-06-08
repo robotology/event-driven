@@ -14,7 +14,9 @@
 > mkdir /usr/local/src/robot
 
 > chown icub /usr/local/src/robot
+
 > chown icub /usr/local/share
+
 > chown icub /usr/local/lib
 
 ## Set up repositories
@@ -36,10 +38,15 @@ add lines:
   
 ### Set up YARP
 > cd /usr/local/src/robot  
+
 > git clone https://github.com/robotology/yarp
+
 > cd yarp
+
 > mkdir build
+
 > cd build
+
 > ccmake ../
 
 * set CREATE_GUIS = OFF
@@ -48,21 +55,33 @@ add lines:
 
 ### Set up install directory as $ICUBcontrib_DIR
 > cd /usr/local/src/robot  
+
 > git clone https://github.com/robotology/icub-contrib-common
+
 > cd icub-contrib-common
+
 > mkdir build
+
 > cd build
+
 > ccmake ../
+
 > make install
 
 
 ### Set up event-driven 
 > cd /usr/local/src/robot  
+
 > git clone https://github.com/robotology/event-driven
+
 > cd event-driven
+
 > mkdir build
+
 > cd build
+
 > ccmake ../
+
 > make install
 
 * (cmake should have found install directory as $ICUBcontrib_DIR automatically)
