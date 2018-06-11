@@ -108,7 +108,7 @@ public:
     }
 
     /// \brief does nothing as this is a write-only port.
-    virtual bool read(yarp::os::ConnectionReader& connection) {
+    bool read(yarp::os::ConnectionReader& connection) {
 
         //double cpudt = Time::now();
 
@@ -124,7 +124,7 @@ public:
         int str_len = connection.expectInt();
         std::string vtype;
         vtype.resize(str_len);
-        connection.expectBlock(vtype.data(), str_len);
+        connection.expectBlock((char *)vtype.data(), str_len);
 
         //DATA OF SECOND INTERNAL BOTTLE (data of events)
         if(connection.expectInt() != (BOTTLE_TAG_LIST|BOTTLE_TAG_INT))
@@ -133,7 +133,7 @@ public:
 
         if(ndata > internaldata.size())
             internaldata.resize(ndata);
-        if(!connection.expectBlock((const char *)internaldata.data(), sizeof(std::int32_t) * ndata)) {
+        if(!connection.expectBlock((char *)internaldata.data(), sizeof(std::int32_t) * ndata)) {
             yError() << "Could not read datablock";
             return false;
         }
@@ -161,7 +161,7 @@ public:
     }
 
     /// \brief write the data on the connection.
-    virtual bool write(yarp::os::ConnectionWriter& connection) {
+    bool write(yarp::os::ConnectionWriter& connection) const {
 
         connection.appendBlock((const char *)header1.data(),
                                        header1.size() * sizeof(std::int32_t));
@@ -235,7 +235,7 @@ public:
         int str_len = connection.expectInt();
         std::string vtype;
         vtype.resize(str_len);
-        connection.expectBlock(vtype.data(), str_len);
+        connection.expectBlock((char *)vtype.data(), str_len);
         if(vtype != T::tag) {
             yWarning() << "Incompatible event-type read";
             return false;
@@ -248,7 +248,7 @@ public:
 
         if(ndata > internaldata.size())
             internaldata.resize(ndata);
-        if(!connection.expectBlock((const char *)internaldata.data(), sizeof(std::int32_t) * ndata)) {
+        if(!connection.expectBlock((char *)internaldata.data(), sizeof(std::int32_t) * ndata)) {
             yError() << "Could not read datablock";
             return false;
         }

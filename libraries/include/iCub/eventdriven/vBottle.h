@@ -331,7 +331,7 @@ public:
     }
 
     /// \brief write the data on the connection.
-    virtual bool write(yarp::os::ConnectionWriter& connection) {
+    virtual bool write(yarp::os::ConnectionWriter& connection) const {
 
         connection.appendBlock((const char *)header1.data(),
                                        header1.size() * sizeof(std::int32_t));
