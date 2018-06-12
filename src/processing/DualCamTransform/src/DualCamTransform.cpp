@@ -184,7 +184,7 @@ void DualCamTransformModule::transform( yarp::sig::ImageOf<yarp::sig::PixelBgr> 
 }
 
 void DualCamTransformModule::finalizeCalibration( yarp::sig::Matrix &homography, std::string groupName) {
-    //TODO Make this method more flexible and general
+
     homography /= nIter;
     homography = homography.transposed();
     cv::destroyAllWindows();
@@ -193,35 +193,71 @@ void DualCamTransformModule::finalizeCalibration( yarp::sig::Matrix &homography,
     nIter = 0;
     yInfo() << "Saving calibration results to " << confFileName;
     std::fstream confFile;
-    confFile.open( confFileName.c_str());
+    confFile.open( confFileName.c_str(), std::fstream::out | std::fstream::in);
+    if (!confFile.is_open()) {
+        confFile.open(confFileName.c_str(), std::fstream::out);
+    }
+    std::vector<std::string> lines;
     std::string line;
-    bool groupFound = false;
+    bool sectionFound = false;
+    bool sectionClosed = false;
+
     if (confFile.is_open()){
-        while (std::getline(confFile, line)){
-            if (line.find("[" + groupName +"]") != std::string::npos) {
-                groupFound = true;
-                break;
+        while(std::getline(confFile, line)) {
+            // check if we left calibration section
+            if (sectionFound == true && line.find("[", 0) != std::string::npos)
+                sectionClosed = true;   // also valid if no groupname specified
+            // check if we enter calibration section
+            if (line.find(std::string("[") + groupName + std::string("]"), 0) != std::string::npos)
+                sectionFound = true;
+            // if no groupname specified
+            if (groupName == "")
+                sectionFound = true;
+            // if we are in calibration section (or no section/group specified)
+            if (sectionFound == true && sectionClosed == false) {
+                // replace line
+                if (line.find("homography", 0) == 0) {
+                    std::stringstream ss;
+                    for (int r = 0; r < homography.rows(); ++r) {
+                        for (int c = 0; c < homography.cols(); ++c) {
+                            ss << homography(r, c) << " ";
+                        }
+                    }
+                    line = "homography ( " + std::string(ss.str()) + " )";
+                }
             }
+            lines.push_back(line);
         }
-        if (!groupFound) {
+        if (!sectionFound) {
             confFile.close();
-            confFile.open(confFileName, std::ios::app);
-            if (confFile.is_open())
-                confFile << "\n[" << groupName << "]" << std::endl;
-        }
-        confFile << "\nhomography ( ";
-        for (int r = 0; r < homography.rows(); ++r) {
-            for (int c  = 0; c  < homography.cols(); ++c ) {
-                confFile << homography(r, c ) << " ";
+            confFile.open(confFileName.c_str(), std::fstream::app);
+            if (confFile.is_open()) {
+                confFile << "\n[" << groupName << "]\n" << std::endl;
+                confFile << "homography ( ";
+                for (int r = 0; r < homography.rows(); ++r) {
+                    for (int c = 0; c < homography.cols(); ++c) {
+                        std::cout << " " << homography(r,c) << std::endl;
+                        confFile << homography(r, c) << " ";
+                    }
+                }
+                confFile << ")\n";
             }
+        } else {
+            // rewrite file
+            confFile.close();
+            confFile.open(confFileName.c_str(), std::fstream::out);
+            if (confFile.is_open()){
+                for (int i = 0; i < (int)lines.size(); i++)
+                    confFile << lines[i] << std::endl;
+                confFile.close();
+            }
+            else
+                yError() << "Cannot open config file, results not saved";
         }
-        confFile << ") \n\n";
-        confFile.close();
     } else {
         yError() << "Cannot open config file, results not saved";
     }
-
-
+    confFile.close();
 }
 
 void DualCamTransformModule::getCanvasSize( const yarp::sig::Matrix &homography, int &canvasWidth, int &canvasHeight, int &xOffset
@@ -338,7 +374,7 @@ bool DualCamTransformModule::configure( yarp::os::ResourceFinder &rf ) {
     rightH.resize( 3, 3 );
     leftH.eye();
     rightH.eye();
-
+    
     //If no calibration required, read homography from config file
     if (!calibrateLeft) {
         calibrateLeft = !readConfigFile( rf, "TRANSFORM_LEFT", leftH ); //If no config found, calibration necessary
