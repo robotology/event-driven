@@ -108,9 +108,10 @@ bool DualCamTransformModule::updateModule() {
     //If image is ready transform and draw events on it
     if (leftImageCollector.isImageReady()){
         yarp::sig::ImageOf<yarp::sig::PixelBgr> &leftCanvas = leftImagePortOut.prepare();
-        leftCanvas.resize(leftCanvasWidth,leftCanvasHeight);
-        leftCanvas.zero();
         yarp::sig::ImageOf<yarp::sig::PixelBgr > leftImg = leftImageCollector.getImage();
+        leftCanvas.resize(std::max(leftCanvasWidth, leftXOffset + leftImg.width()),
+                          std::max(leftCanvasHeight, leftYOffset + leftImg.height()));
+        leftCanvas.zero();
         for ( int x = 0; x < leftImg.width(); ++x ) {
             for ( int y = 0; y < leftImg.height(); ++y ) {
                 leftCanvas(x + leftXOffset, y + leftYOffset) = leftImg(x,y);
@@ -123,9 +124,10 @@ bool DualCamTransformModule::updateModule() {
 
     if (rightImageCollector.isImageReady()){
         yarp::sig::ImageOf<yarp::sig::PixelBgr> &rightCanvas = rightImagePortOut.prepare();
-        rightCanvas.resize(rightCanvasWidth,rightCanvasHeight);
-        rightCanvas.zero();
         yarp::sig::ImageOf<yarp::sig::PixelBgr > rightImg = rightImageCollector.getImage();
+        rightCanvas.resize(std::max(rightCanvasWidth, rightXOffset + rightImg.width()),
+                          std::max(rightCanvasHeight, rightYOffset + rightImg.height()));
+        rightCanvas.zero();
         for ( int x = 0; x < rightImg.width(); ++x ) {
             for ( int y = 0; y < rightImg.height(); ++y ) {
                 rightCanvas(x + rightXOffset, y + rightYOffset) = rightImg(x,y);
