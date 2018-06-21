@@ -175,7 +175,7 @@ public:
 
 };
 
-template <class T> class vPortInterface : private vGenPortInterface
+template <class T> class vPortInterface : public vGenPortInterface
 {
 protected:
     std::vector<T> *read_q;
