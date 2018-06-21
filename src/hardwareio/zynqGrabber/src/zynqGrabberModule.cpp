@@ -159,12 +159,12 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 
     }
 
-    bool yarppresent = yarp::os::Network::checkNetwork();
+    bool yarppresent = yarp::os::Network::checkNetwork(5);
     if(!yarppresent)
         yError() << "Could not connect to YARP network";
 
     if(!yarppresent || biaswrite) {
-        vsctrlMngRight.disconnect(true);
+        vsctrlMngLeft.disconnect(true);
         std::cout << "Left camera off" << std::endl;
         vsctrlMngRight.disconnect(true);
         std::cout << "Right camera off" << std::endl;
