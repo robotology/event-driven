@@ -203,7 +203,7 @@ public:
         if(fsqrd < 1.0)
             cval = 1.0;
         else if(fsqrd < 1.0 + inlierParameter)
-            cval = (fsqrd - 1.0) / inlierParameter;
+            cval = (1.0 + inlierParameter - fsqrd) / inlierParameter;
         if(cval) {
             double improve = cval - angdist[a];
             if(improve > 0) {
