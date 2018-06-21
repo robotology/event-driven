@@ -52,7 +52,7 @@ void FlowEvent::encode(yarp::os::Bottle &b) const
     b.addInt(*(int*)(&vy));
 }
 
-void FlowEvent::encode(std::vector<YARP_INT32> &b, unsigned int &pos) const
+void FlowEvent::encode(std::vector<std::int32_t> &b, unsigned int &pos) const
 {
     AddressEvent::encode(b, pos);
     b[pos++] = (*(int*)(&vx));

@@ -359,7 +359,7 @@ void vCircleReader::onRead(ev::vBottle &inBot)
     if(scopeOut.getOutputCount()) {
         yarp::os::Bottle &scopebottle = scopeOut.prepare();
         scopebottle.clear();
-        scopebottle.add(st.getCount() - pstampcounter);
+        scopebottle.addInt(st.getCount() - pstampcounter);
         scopeOut.setEnvelope(st);
         scopeOut.write();
     }

@@ -62,7 +62,7 @@ bool temporalSortStraight(const event<> &e1, const event<> &e2) {
 bool temporalSortWrap(const event<> &e1, const event<> &e2)
 {
 
-    if(std::abs(e1->stamp - e2->stamp) > vtsHelper::max_stamp/2)
+    if((unsigned int)(std::abs(e1->stamp - e2->stamp)) > vtsHelper::max_stamp/2)
         return e1->stamp > e2->stamp;
     else
         return e2->stamp > e1->stamp;

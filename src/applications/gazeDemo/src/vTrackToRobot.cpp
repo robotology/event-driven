@@ -342,12 +342,12 @@ bool vTrackToRobotModule::controlExternal(yarp::sig::Vector ltarget,
         yarp::os::Bottle &cartcoords = cartOutPort.prepare();
         cartcoords.clear();
         //    //add the XYZ position
-        cartcoords.add(tp[0]); cartcoords.add(tp[1]); cartcoords.add(tp[2]);
+        cartcoords.addDouble(tp[0]); cartcoords.addDouble(tp[1]); cartcoords.addDouble(tp[2]);
         //cartcoords.add(-1.0); cartcoords.add(0.0); cartcoords.add(-0.3);
         //    //add some buffer ints
-        cartcoords.add(0.5); cartcoords.add(pleft[0]); cartcoords.add(pleft[1]);
+        cartcoords.addDouble(0.5); cartcoords.addDouble(pleft[0]); cartcoords.addDouble(pleft[1]);
         //    //flag that the object is detected
-        cartcoords.add(1.0);
+        cartcoords.addDouble(1.0);
 
         cartOutPort.write();
     }

@@ -19,7 +19,6 @@
 #include "vFlow.h"
 #include <yarp/os/all.h>
 
-using yarp::math::operator *;
 using yarp::math::outerProduct;
 
 using namespace ev;

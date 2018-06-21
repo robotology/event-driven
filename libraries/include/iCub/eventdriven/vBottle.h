@@ -223,7 +223,7 @@ private:
     void addList();
     void addString();
     void addVocab();
-    void fromString(const yarp::os::ConstString& text);
+    void fromString(const std::string& text);
     void append(const yarp::os::Bottle &alt);
     void copy();
     void copyPortable();
@@ -238,7 +238,7 @@ private:
 
 
     int getInt();
-    yarp::os::ConstString getString();
+    std::string getString();
     double getDouble();
     Bottle* getList();
     yarp::os::Value& get();
@@ -255,14 +255,14 @@ class vBottleMimic : public yarp::os::Portable {
 private:
 
     //headers
-    std::vector<YARP_INT32> header1;
+    std::vector<std::int32_t> header1;
     std::string header2;
-    std::vector<YARP_INT32> header3;
+    std::vector<std::int32_t> header3;
 
     //data
     const char * datablock;
     unsigned int datalength; //<- set the number of bytes here
-    std::vector<YARP_INT32> internaldata;
+    std::vector<std::int32_t> internaldata;
 
     //sizes
     unsigned int elementINTS;
@@ -280,7 +280,7 @@ public:
         header3.push_back(BOTTLE_TAG_LIST|BOTTLE_TAG_INT); // bottle code + specialisation with ints
         header3.push_back(0); // <- set the number of ints here (e.g. 2 * #v's)
         elementINTS = 2;
-        elementBYTES = sizeof(YARP_INT32) * elementINTS;
+        elementBYTES = sizeof(std::int32_t) * elementINTS;
     }
 
     /// \brief for data already allocated in contiguous space. Just send this
@@ -321,7 +321,7 @@ public:
         event<> v = ev::createEvent(eventtype);
         v->encode(temp);
         elementINTS = temp.size();
-        elementBYTES = sizeof(YARP_INT32) * elementINTS;
+        elementBYTES = sizeof(std::int32_t) * elementINTS;
 
     }
 
@@ -331,13 +331,13 @@ public:
     }
 
     /// \brief write the data on the connection.
-    virtual bool write(yarp::os::ConnectionWriter& connection) {
+    virtual bool write(yarp::os::ConnectionWriter& connection) const {
 
         connection.appendBlock((const char *)header1.data(),
-                                       header1.size() * sizeof(YARP_INT32));
+                                       header1.size() * sizeof(std::int32_t));
         connection.appendBlock(header2.c_str(), header1[3]);
         connection.appendBlock((const char *)header3.data(),
-                                       header3.size() * sizeof(YARP_INT32));
+                                       header3.size() * sizeof(std::int32_t));
         connection.appendBlock(datablock, datalength);
 
         return !connection.isError();

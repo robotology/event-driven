@@ -84,8 +84,8 @@ bool vPreProcessModule::configure(yarp::os::ResourceFinder &rf)
 
 
     eventManager.initBasic(rf.check("name", yarp::os::Value("/vPreProcess")).asString(),
-                           rf.check("height", 240).asInt(),
-                           rf.check("width", 304).asInt(),
+                           rf.check("height", yarp::os::Value(240)).asInt(),
+                           rf.check("width", yarp::os::Value(304)).asInt(),
                            precheck, flipx, flipy, pepper, undistort, split);
 
     if(pepper) {
