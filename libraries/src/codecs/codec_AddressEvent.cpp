@@ -54,11 +54,11 @@ event<> AddressEvent::clone()
 void AddressEvent::encode(yarp::os::Bottle &b) const
 {
     vEvent::encode(b);
-#ifdef CODEC_128x128 // DVS
+#if defined CODEC_128x128
     b.addInt(((channel&0x01)<<15)|((x&0x7f)<<8)|(((127-y)&0x7f)<<1)|(polarity&0x01));
-#elseif CODEC_320x240_20 //ATIS 20 bits encoding
+#elif defined CODEC_304x240_20 //ATIS 20 bits encoding
     b.addInt(((channel&0x01)<<20)|((type&0x1)<<18)|((y&0x0FF)<<10)|((x&0x1FF)<<1)|(polarity&0x01));
-#else //CODEC_320x240_24
+#else //CODEC_304x240_24
     b.addInt(((channel&0x01)<<22)|((type&0x1)<<23)|((y&0x0FF)<<12)|((x&0x1FF)<<1)|(polarity&0x01));
 #endif
 }
@@ -66,9 +66,9 @@ void AddressEvent::encode(yarp::os::Bottle &b) const
 void AddressEvent::encode(std::vector<std::int32_t> &b, unsigned int &pos) const
 {
     vEvent::encode(b, pos);
-#ifdef CODEC_128x128
+#if defined CODEC_128x128
     b[pos++] = (((channel&0x01)<<15)|((x&0x7f)<<8)|(((127-y)&0x7f)<<1)|(polarity&0x01));
-#elseif CODEC_320x240_20 //ATIS 20 bits encoding
+#elif defined CODEC_304x240_20 //ATIS 20 bits encoding
     b[pos++] = (((channel&0x01)<<20)|((type&0x1)<<18)|((y&0x0FF)<<10)|((x&0x1FF)<<1)|(polarity&0x01));
 #else
     b[pos++] = (((channel&0x01)<<22)|((type&0x1)<<23)|((y&0x0FF)<<12)|((x&0x1FF)<<1)|(polarity&0x01));
@@ -78,22 +78,21 @@ void AddressEvent::encode(std::vector<std::int32_t> &b, unsigned int &pos) const
 void AddressEvent::decode(int *&data)
 {
     vEvent::decode(data);
-    
-#ifdef CODEC_128x128
+
+#if defined CODEC_128x128
     polarity = (*data >> 0) & 0x0001;
-    x = (*data >> 1) & 0x001FF;
-    y = (*data >> 8) & 0x00FF;
-   // type = (*data >> 18) & 0x0001;
+    y = 127 - (*data >> 1) & 0x007F;
+    x = (*data >> 8) & 0x007F;
     channel = (*data >> 15) & 0x0001;
-#elseif CODEC_320x240_20 //ATIS 20 bits encoding
+#elif defined CODEC_304x240_20 //ATIS 20 bits encoding
     polarity = (*data >> 0) & 0x0001;
-    x = (*data >> 1) & 0x001FF;
+    x = (*data >> 1) & 0x01FF;
     y = (*data >> 10) & 0x00FF;
     type = (*data >> 18) & 0x0001;
     channel = (*data >> 20) & 0x0001;
 #else
     polarity = (*data >> 0) & 0x0001;
-    x = (*data >> 1) & 0x001FF;
+    x = (*data >> 1) & 0x01FF;
     y = (*data >> 12) & 0x00FF;
     type = (*data >> 23) & 0x0001;
     channel = (*data >> 22) & 0x0001;
@@ -108,13 +107,12 @@ bool AddressEvent::decode(const yarp::os::Bottle &packet, int &pos)
     {
         int data=packet.get(pos).asInt();
 
-#ifdef CODEC_128x128
+#if defined CODEC_128x128
         polarity = (data >> 0) & 0x0001;
-        x = (data >> 1) & 0x001FF;
-        y = (data >> 8) & 0x00FF;
-        // type = (data >> 18) & 0x0001;
+        y = 127 - (data >> 1) & 0x007F;
+        x = (data >> 8) & 0x007F;
         channel = (data >> 15) & 0x0001;
-#elseif CODEC_320x240_20 //ATIS 20 bits encoding
+#elif defined CODEC_304x240_20 //ATIS 20 bits encoding
         polarity = (data >> 0) & 0x0001;
         x = (data >> 1) & 0x001FF;
         y = (data >> 10) & 0x00FF;
