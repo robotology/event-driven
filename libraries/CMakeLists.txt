@@ -5,7 +5,10 @@ cmake_minimum_required(VERSION 2.6)
 
 set(VLIB_CLOCK_PERIOD_NS 80 CACHE INTEGER "event timestamp clock period (ns)")
 set(VLIB_TIMER_BITS 24 CACHE INTEGER "event timestamp maximum = 2^TIMERBITS")
-set(VLIB_CODEC_128x128 OFF CACHE BOOL "decode with original DVS 128x128 codec")
+
+list(APPEND CodecTypes "CODEC_128x128" "CODEC_304x240_20" "CODEC_304x240_24")
+set(VLIB_CODEC_TYPE CACHE STRING "select codec type")
+set_property(CACHE VLIB_CODEC_TYPE PROPERTY STRINGS ${CodecTypes})
 
 string(COMPARE GREATER ${VLIB_TIMER_BITS} 31 TOOMANYBITSINCOUNTER)
 
@@ -51,9 +54,7 @@ include_directories(
 # Create everything needed to build our library
 add_library(${EVENTDRIVEN_LIBRARIES} ${folder_source} ${folder_header})
 
-if(VLIB_CODEC_128x128)
-    add_definitions( -DCODEC_128x128 )
-endif()
+add_definitions("-D${VLIB_CODEC_TYPE}")
 add_definitions( -DCLOCK_PERIOD=${VLIB_CLOCK_PERIOD_NS} )
 add_definitions( -DTIMER_BITS=${VLIB_TIMER_BITS} )
 
