@@ -81,19 +81,18 @@ void AddressEvent::decode(int *&data)
 
 #if defined CODEC_128x128
     polarity = (*data >> 0) & 0x0001;
-    x = (*data >> 1) & 0x001FF;
-    y = (*data >> 8) & 0x00FF;
-   // type = (*data >> 18) & 0x0001;
+    y = 127 - (*data >> 1) & 0x007F;
+    x = (*data >> 8) & 0x007F;
     channel = (*data >> 15) & 0x0001;
 #elif defined CODEC_304x240_20 //ATIS 20 bits encoding
     polarity = (*data >> 0) & 0x0001;
-    x = (*data >> 1) & 0x001FF;
+    x = (*data >> 1) & 0x01FF;
     y = (*data >> 10) & 0x00FF;
     type = (*data >> 18) & 0x0001;
     channel = (*data >> 20) & 0x0001;
 #else
     polarity = (*data >> 0) & 0x0001;
-    x = (*data >> 1) & 0x001FF;
+    x = (*data >> 1) & 0x01FF;
     y = (*data >> 12) & 0x00FF;
     type = (*data >> 23) & 0x0001;
     channel = (*data >> 22) & 0x0001;
@@ -110,9 +109,8 @@ bool AddressEvent::decode(const yarp::os::Bottle &packet, int &pos)
 
 #if defined CODEC_128x128
         polarity = (data >> 0) & 0x0001;
-        x = (data >> 1) & 0x001FF;
-        y = (data >> 8) & 0x00FF;
-        // type = (data >> 18) & 0x0001;
+        y = 127 - (data >> 1) & 0x007F;
+        x = (data >> 8) & 0x007F;
         channel = (data >> 15) & 0x0001;
 #elif defined CODEC_304x240_20 //ATIS 20 bits encoding
         polarity = (data >> 0) & 0x0001;
