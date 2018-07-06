@@ -91,7 +91,7 @@ bool vDevReadBuffer::initialise(std::string devicename,
                 //fflush( stdout);
                 //fprintf( stderr, "ERROR: Cannot get hpu hw version: %s\n", strerror( lerrno));
                 //fflush( stderr);
-	//	std::cout << "Error reading version" << errno << std::endl;
+    //	std::cout << "Error reading version" << errno << std::endl;
                 /*
                 close( fd);
                 return false;
@@ -505,7 +505,7 @@ void yarp2device::onRead(ev::vBottle &bot)
         {
             //std::cout<<"Wrap TS: ts      "<<ts<<"us"<<std::endl;
             //std::cout<<"Wrap TS: ts prev "<<tsPrev<<"us"<<std::endl;
-            word1 += ev::vtsHelper::maxStamp();
+            word1 += ev::vtsHelper::max_stamp;
 
             //std::cout<<"Wrap TS: max     "<<eventdriven::vtsHelper::maxStamp()<<"us"<<std::endl;
             std::cout<<"--------------- Wrap TS: Delta TS new "<<word1<<"us--------------------"<<std::endl;

@@ -485,7 +485,10 @@ public:
     /// \brief ask for the number of vQueues currently allocated.
     unsigned int queryunprocessed()
     {
-        return qq.size();
+        if(working_queue)
+            return qq.size() - 1;
+        else
+            return qq.size();
     }
 
     /// \brief ask for the number of events in all vQueues.

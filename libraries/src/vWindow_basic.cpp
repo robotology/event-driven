@@ -140,8 +140,8 @@ event<AE> vSurface::getMostRecent()
 
 vTempWindow::vTempWindow()
 {
-    tLower = vtsHelper::maxStamp() * 0.5;
-    tUpper = vtsHelper::maxStamp() - tLower;
+    tLower = vtsHelper::vtsscaler * 0.5;
+    tUpper = vtsHelper::max_stamp - tLower;
 }
 
 void vTempWindow::addEvent(event<> v)

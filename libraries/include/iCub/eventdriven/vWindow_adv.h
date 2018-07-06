@@ -129,7 +129,7 @@ private:
 public:
 
     temporalSurface(int width = 128, int height = 128,
-                   int duration = vtsHelper::maxStamp() * 0.5) :
+                   int duration = vtsHelper::max_stamp * 0.5) :
         vSurface2(width, height), duration(duration) {}
     virtual vQueue removeEvents(event<> toAdd);
     virtual void fastRemoveEvents(event<> toAdd);

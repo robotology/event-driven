@@ -48,12 +48,18 @@ protected:
 
     int Xlimit;
     int Ylimit;
-    int twindow;
+    unsigned int display_window;
+    unsigned int max_window;
     bool flip;
 
 public:
 
-    vDraw() : Xlimit(128), Ylimit(128), twindow(781250/2), flip(false) {}
+    vDraw() : Xlimit(304), Ylimit(240), flip(false)
+    {
+        display_window = 0.1*ev::vtsHelper::vtsscaler;
+        max_window = 0.5*ev::vtsHelper::vtsscaler;
+    }
+
     virtual ~vDraw() {}
 
     ///
@@ -62,15 +68,17 @@ public:
     /// \param Xlimit is the maximum x value (width)
     /// \param Ylimit is the maximium y value (height)
     ///
-    void setLimits(int Xlimit, int Ylimit)
+    void setRetinaLimits(int Xlimit, int Ylimit)
     {
         this->Xlimit = Xlimit;
         this->Ylimit = Ylimit;
     }
 
-    void setWindow(int twindow)
+    void setTemporalLimits(unsigned int display_window,
+                           unsigned int max_window)
     {
-        this->twindow = twindow;
+        this->display_window = display_window;
+        this->max_window = max_window;
     }
 
     void setFlip(bool flip)
@@ -118,14 +126,14 @@ public:
 };
 
 class skinDraw : public vDraw {
-    
+
 public:
-    
+
     static const std::string drawtype;
     virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
     virtual std::string getDrawType();
     virtual std::string getEventType();
-    
+
 };
 
 class flowDraw : public vDraw {
@@ -214,16 +222,26 @@ protected:
     double CY, SY;
     double CX, SX;
 
-    int tsscalar;
+    double ts_to_axis;
     int Zlimit;
     int imagewidth;
     int imageheight;
     int imagexshift;
     int imageyshift;
-    int maxdt;
 
     //private functions
-    void pttr(int &x, int &y, int &z);
+    inline void pttr(int &x, int &y, int &z) {
+        // we want a negative rotation around the y axis (yaw)
+        // a positive rotation around the x axis (pitch) (no roll)
+        // the z should always be negative values.
+        // the points need to be shifted across by negligble amount
+        // the points need to be shifted up by (x = max, y = 0, ts = 0 rotation)
+
+        int xmod = x*CY + z*SY + 0.5; // +0.5 rounds rather than floor
+        int ymod = y*CX - SX*(-x*SY + z*CY) + 0.5;
+        int zmod = y*SX + CX*(-x*SY + z*CY) + 0.5;
+        x = xmod; y = ymod; z = zmod;
+    }
 
     //image with warped square drawn
     cv::Mat baseimage;
