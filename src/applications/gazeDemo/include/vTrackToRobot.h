@@ -308,6 +308,8 @@ private:
     //the event bottle input and output handler
     positionReader inputPort;
     yarp::os::BufferedPort<yarp::os::Bottle> cartOutPort;
+    yarp::os::BufferedPort<yarp::sig::Vector> debugOutPort;
+    yarp::sig::Vector arm_target_position;
 
     //the remote procedure port
     yarp::os::RpcServer rpcPort;

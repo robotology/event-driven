@@ -65,6 +65,9 @@ bool vTrackToRobotModule::configure(yarp::os::ResourceFinder &rf)
     res.width = rf.check("width", yarp::os::Value(304)).asDouble();
     usearm = rf.check("arm") && rf.check("arm", yarp::os::Value(true)).asBool();
 
+    arm_target_position = yarp::sig::Vector(3);
+    arm_target_position = 0.0;
+
     if(!rpcPort.open(getName() + "/control"))
         return false;
     this->attach(rpcPort);
@@ -75,6 +78,9 @@ bool vTrackToRobotModule::configure(yarp::os::ResourceFinder &rf)
         return false;
 
     if(!cartOutPort.open(getName() + "/cart:o"))
+        return false;
+
+    if(!debugOutPort.open(getName() + "/debug:o"))
         return false;
 
     yarp::os::Property options;
@@ -101,7 +107,7 @@ bool vTrackToRobotModule::configure(yarp::os::ResourceFinder &rf)
     if(armdriver.isValid()) {
         armdriver.view(arm);
         arm->storeContext(&startup_context_id);
-        arm->setTrajTime(1.5);
+        arm->setTrajTime(1.0);
         // get the torso dofs
         yarp::sig::Vector newDof, curDof;
         arm->getDOF(curDof);
@@ -111,7 +117,7 @@ bool vTrackToRobotModule::configure(yarp::os::ResourceFinder &rf)
         // disable the torso roll
         newDof[0]=0;
         newDof[1]=0;
-        newDof[2]=0;
+        newDof[2]=1;
         arm->setDOF(newDof,curDof);
 
         double min, max;
@@ -165,9 +171,9 @@ bool vTrackToRobotModule::controlCartesian(yarp::sig::Vector ltarget,
     gazecontrol->triangulate3DPoint(pleft, pright, tp);
 
     //target too close to body?
-    if(tp[0] > -0.10) {
-        return false;
-    }
+//    if(tp[0] > -0.10) {
+//        return false;
+//    }
 
     gazecontrol->lookAtStereoPixels(pleft, pright);
 
@@ -206,21 +212,45 @@ bool vTrackToRobotModule::controlArm(yarp::sig::Vector ltarget,
     yarp::sig::Vector tp;
     gazecontrol->triangulate3DPoint(pleft, pright, tp);
 
-    //target too close to body
-    if(tp[0] > -0.10) {
-        return false;
+
+
+    double DCONST = 0.3;
+    tp[0] = -DCONST;
+
+    if(fabs(tp[1]) < 0.1) {
+        tp[0] = -DCONST;
+    } else {
+        double sign = tp[1] < 0 ? -1 : 1;
+        double temp = sqrt(((tp[0] * tp[0]) / (tp[1] * tp[1])) + 1);
+        double yhat = sign * DCONST / temp;
+        double xhat = tp[0] * (yhat / tp[1]);
+        tp[0] = xhat;
+        tp[1] = yhat;
     }
 
-    tp[1] += -0.15;
+    //tp[0] += 0.1;
+    tp[2] += -0.15;
+    tp[2] = std::max(tp[2], 0.0);
+
+    //std::cout << tp.toString() << std::endl;
+
+
+    //target too close to body
+    //if(tp[0] > -0.10) {
+    //    return false;
+    //}
+
+
     //tp[2] += -0.10;
 
     //tp[0] = std::max(tp[0], -0.15);
-    tp[0] = std::min(tp[0], -0.20);
-    tp[0] = std::max(tp[0], -0.30);
+    //tp[0] = std::min(tp[0], -0.15);
+    //tp[0] = std::max(tp[0], -0.30);
     //tp[1] = std::max(tp[1], -0.6);
-    tp[1] = std::min(tp[1],  0.10);
+    //tp[1] = std::min(tp[1],  0.10);
     //tp[2] = std::max(tp[2],  0.0); tp[2] = std::min(tp[2],  0.6);
 
+    //tp[0] = -0.3;
     yarp::sig::Vector od(4);
     yarp::sig::Matrix handor(3, 3); handor.zero();
     handor(0, 0) = -1.0; //hand x axis = - robot x axis (point forward)
@@ -229,7 +259,9 @@ bool vTrackToRobotModule::controlArm(yarp::sig::Vector ltarget,
 
     od = dcm2axis(handor);
 
-    arm->goToPose(tp,od);
+    //arm->goToPose(tp,od);
+    arm->goToPosition(tp);
+    arm_target_position = tp;
     //yInfo() << "Arm Controlled";
 
     return true;
@@ -361,10 +393,13 @@ bool vTrackToRobotModule::updateModule()
 
     //if we haven't gazed for some time reset robot position
     static double htimeout = yarp::os::Time::now();
-    if(yarp::os::Time::now() - htimeout > 3.0) {
+    if(yarp::os::Time::now() - htimeout > 5.0) {
         if(armdriver.isValid()) {
             arm->goToPose(armhomepos, armhomerot);
         }
+        yarp::sig::Vector homefix(3);
+        homefix[0] = -10; homefix[1] = 0; homefix[2] = 0.3;
+        gazecontrol->lookAtFixationPoint(homefix);
         htimeout = yarp::os::Time::now();
     }
 
@@ -384,6 +419,26 @@ bool vTrackToRobotModule::updateModule()
             gazePerformed = controlCartesian(leftTarget, rightTarget);
         if(usearm)
             controlArm(leftTarget, rightTarget);
+    }
+
+    //send out a debug if needed
+    if(debugOutPort.getOutputCount()) {
+        yarp::sig::Vector values(6);
+        yarp::sig::Vector pleft = leftTarget.subVector(0, 1);
+        yarp::sig::Vector pright = rightTarget.subVector(0, 1);
+        yarp::sig::Vector xrobref;
+        gazecontrol->triangulate3DPoint(pleft, pright, xrobref);
+        values[0] = xrobref[0]; values[1] = xrobref[1]; values[2] = xrobref[2];
+        values[0] = arm_target_position[0]; values[1] = arm_target_position[1]; values[2] = arm_target_position[2];
+        if(armdriver.isValid()) {
+            yarp::sig::Vector x_arm, o_arm;
+            arm->getPose(x_arm, o_arm);
+            values[3] = x_arm[0];
+            values[4] = x_arm[1];
+            values[5] = x_arm[2];
+        }
+        debugOutPort.prepare() = values;
+        debugOutPort.write();
     }
 
     //reset the timeout if needed
