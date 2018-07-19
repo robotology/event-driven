@@ -135,7 +135,7 @@ bool module::updateModule()
 /******************************************************************************/
 double module::getPeriod()
 {
-    return 0.1;
+    return 0.05;
 }
 
 #define CMD_HELP  VOCAB4('h', 'e', 'l', 'p')

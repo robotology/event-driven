@@ -108,7 +108,7 @@ yarp::sig::Vector delayControl::getTrackingStats()
     stats[5] = dy;
     stats[6] = dr;
     stats[7] = vpf.maxlikelihood / (double)maxRawLikelihood;
-    stats[8] = 5000* cpuusage.getProcessorUsage();
+    stats[8] = cpuusage.getProcessorUsage();
     stats[9] = qROI.n;
 
     return stats;
