@@ -48,7 +48,6 @@ source_group("Header Files" FILES ${folder_header})
 
 include_directories(
     ${PROJECT_SOURCE_DIR}/include
-    ${YARP_INCLUDE_DIRS}
 )
 
 # Create everything needed to build our library
@@ -63,7 +62,7 @@ target_link_libraries(${EVENTDRIVEN_LIBRARIES} ${YARP_LIBRARIES})
 if(ICUBcontrib_FOUND)
     icubcontrib_export_library(${EVENTDRIVEN_LIBRARIES}
         INTERNAL_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/include
-        EXTERNAL_INCLUDE_DIRS ${YARP_INCLUDE_DIRS}
+#        EXTERNAL_INCLUDE_DIRS ${YARP_INCLUDE_DIRS}
         DESTINATION include/iCub/eventdriven
         FILES  ${folder_header}
     )

@@ -7,7 +7,6 @@ file(GLOB source src/vFramer.cpp src/vDraw.cpp src/*_draw.cpp )
 file(GLOB header include/vFramer.h include/vDraw.h)
 
 include_directories(${PROJECT_SOURCE_DIR}/include
-                    ${YARP_INCLUDE_DIRS}
                     ${OpenCV_INCLUDE_DIRS}
                     ${EVENTDRIVENLIBS_INCLUDE_DIRS})
 
@@ -29,7 +28,6 @@ file(GLOB source src/vFramerLite.cpp src/vDraw.cpp src/*_draw.cpp )
 file(GLOB header include/vFramerLite.h include/vDraw.h)
 
 include_directories(${PROJECT_SOURCE_DIR}/include
-                    ${YARP_INCLUDE_DIRS}
                     ${OpenCV_INCLUDE_DIRS}
                     ${EVENTDRIVENLIBS_INCLUDE_DIRS})
 
