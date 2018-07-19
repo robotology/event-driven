@@ -124,7 +124,7 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
 
         //create the draw types
         yarp::os::Bottle * drawtypelist = displayList->get(i*3 + 2).asList();
-        for(int j = 0; j < drawtypelist->size(); j++) {
+        for(unsigned j = 0; j < drawtypelist->size(); j++) {
             vDraw * newDrawer = createDrawer(drawtypelist->get(j).asString());
             if(newDrawer) {
                 newDrawer->setRetinaLimits(retinaWidth, retinaHeight);

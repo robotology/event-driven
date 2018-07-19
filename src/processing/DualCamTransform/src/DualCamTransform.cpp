@@ -114,8 +114,8 @@ bool DualCamTransformModule::updateModule() {
                           std::max(leftCanvasHeight, (int)(leftYOffset + leftImg.height())));
 
         leftCanvas.zero();
-        for ( int x = 0; x < leftImg.width(); ++x ) {
-            for ( int y = 0; y < leftImg.height(); ++y ) {
+        for ( int x = 0; x < (int)leftImg.width(); ++x ) {
+            for ( int y = 0; y < (int)leftImg.height(); ++y ) {
                 leftCanvas(x + leftXOffset, y + leftYOffset) = leftImg(x,y);
             }
         }
@@ -132,8 +132,8 @@ bool DualCamTransformModule::updateModule() {
                           std::max(rightCanvasHeight,(int)(rightYOffset + rightImg.height())));
 
         rightCanvas.zero();
-        for ( int x = 0; x < rightImg.width(); ++x ) {
-            for ( int y = 0; y < rightImg.height(); ++y ) {
+        for ( int x = 0; x < (int)rightImg.width(); ++x ) {
+            for ( int y = 0; y < (int)rightImg.height(); ++y ) {
                 rightCanvas(x + rightXOffset, y + rightYOffset) = rightImg(x,y);
             }
         }
@@ -224,8 +224,8 @@ void DualCamTransformModule::finalizeCalibration( yarp::sig::Matrix &homography,
                 // replace line
                 if (line.find("homography", 0) == 0) {
                     std::stringstream ss;
-                    for (int r = 0; r < homography.rows(); ++r) {
-                        for (int c = 0; c < homography.cols(); ++c) {
+                    for (unsigned int r = 0; r < homography.rows(); ++r) {
+                        for (unsigned int c = 0; c < homography.cols(); ++c) {
                             ss << homography(r, c) << " ";
                         }
                     }
@@ -240,8 +240,8 @@ void DualCamTransformModule::finalizeCalibration( yarp::sig::Matrix &homography,
             if (confFile.is_open()) {
                 confFile << "\n[" << groupName << "]\n" << std::endl;
                 confFile << "homography ( ";
-                for (int r = 0; r < homography.rows(); ++r) {
-                    for (int c = 0; c < homography.cols(); ++c) {
+                for (unsigned int r = 0; r < homography.rows(); ++r) {
+                    for (unsigned int c = 0; c < homography.cols(); ++c) {
                         std::cout << " " << homography(r,c) << std::endl;
                         confFile << homography(r, c) << " ";
                     }
@@ -351,8 +351,8 @@ bool DualCamTransformModule::performCalibStep( yarp::sig::ImageOf<yarp::sig::Pix
         imshow( "img", frameMat );
         imshow( "vImg", vMat );
         cv::waitKey( 1000 );
-        for ( int r = 0; r < homography.rows(); ++r) {
-            for ( int c  = 0; c  < homography.cols(); ++c ) {
+        for (unsigned int r = 0; r < homography.rows(); ++r) {
+            for (unsigned int c  = 0; c  < homography.cols(); ++c ) {
                 homography( r, c ) += h.at<double>( r, c );
             }
         }
@@ -380,7 +380,7 @@ bool DualCamTransformModule::configure( yarp::os::ResourceFinder &rf ) {
     rightH.resize( 3, 3 );
     leftH.eye();
     rightH.eye();
-    
+
     //If no calibration required, read homography from config file
     if (!calibrateLeft) {
         calibrateLeft = !readConfigFile( rf, "TRANSFORM_LEFT", leftH ); //If no config found, calibration necessary
@@ -435,8 +435,8 @@ bool DualCamTransformModule::readConfigFile( const yarp::os::ResourceFinder &rf,
         return false;
     }
 
-    for ( int r = 0; r < homography.rows(); ++r ) {
-        for ( int c = 0; c < homography.cols(); ++c ) {
+    for (unsigned int r = 0; r < homography.rows(); ++r ) {
+        for (unsigned int c = 0; c < homography.cols(); ++c ) {
             homography( r, c ) = list->get( r * homography.rows() + c ).asDouble();
         }
     }

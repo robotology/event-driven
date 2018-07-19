@@ -107,14 +107,14 @@ void isoDraw::initialise()
 
     }
 
-    int tsi;
-    for(tsi = 0; tsi < (int)(Zlimit*0.3); tsi++) {
+    unsigned int tsi;
+    for(tsi = 0; tsi < (unsigned int)(Zlimit*0.3); tsi++) {
 
         x = Xlimit; y = Ylimit; z = tsi; pttr(x, y, z);
         y += imageyshift; x += imagexshift;
         baseimage.at<cv::Vec3b>(y, x) = invertedaxisc;
 
-        if(tsi == (int)(Zlimit *0.15)) {
+        if(tsi == (unsigned int)(Zlimit *0.15)) {
             cv::putText(baseimage, std::string("t"), cv::Point(x, y+12),
                         cv::FONT_ITALIC, 0.5, invertedtextc, 1, 8, false);
         }
@@ -183,7 +183,7 @@ void isoDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         //transform values
         int dt = vTime - aep->stamp;
         if(dt < 0) dt += ev::vtsHelper::max_stamp;
-        if(dt > max_window) continue;
+        if((unsigned int)dt > max_window) continue;
         dt = dt * ts_to_axis + 0.5;
         int px = aep->x;
         int py = aep->y;

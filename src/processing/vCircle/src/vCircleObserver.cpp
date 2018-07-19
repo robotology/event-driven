@@ -591,8 +591,8 @@ yarp::sig::ImageOf<yarp::sig::PixelBgr> vCircleMultiSize::makeDebugImage()
 
     for(i++; i != htransforms.end(); i++) {
         yarp::sig::ImageOf<yarp::sig::PixelBgr> image = (*i)->makeDebugImage(v);
-        for(int y = 0; y < image.height(); y++) {
-            for(int x = 0; x < image.width(); x++) {
+        for(unsigned int y = 0; y < image.height(); y++) {
+            for(unsigned int x = 0; x < image.width(); x++) {
                 if(image(x, y).g > imagebase(x, y).g)
                     imagebase(x, y) = image(x, y);
             }

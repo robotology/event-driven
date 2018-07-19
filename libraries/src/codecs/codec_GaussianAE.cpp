@@ -71,7 +71,7 @@ void GaussianAE::decode(int *&data)
     sigxy=*(float*)(data++);
 }
 
-bool GaussianAE::decode(const yarp::os::Bottle &packet, int &pos)
+bool GaussianAE::decode(const yarp::os::Bottle &packet, size_t &pos)
 {
     if (LabelledAE::decode(packet, pos) && pos + 3 <= packet.size())
     {

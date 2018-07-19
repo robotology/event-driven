@@ -59,7 +59,7 @@ void isoInterestDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         //transform values
         int dt = vTime - cep->stamp;
         if(dt < 0) dt += ev::vtsHelper::max_stamp;
-        if(dt > max_window) continue;
+        if((unsigned int)dt > max_window) continue;
         dt = dt * ts_to_axis + 0.5;
         int px = cep->x;
         int py = cep->y;

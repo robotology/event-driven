@@ -110,11 +110,11 @@ bool channelInstance::updateQs()
             bookmark_time[event_type].push_back(q_dt);
             bookmark_n_events[event_type].push_back(q->size());
 
-            for(int j = 0; j < q->size(); j++)
+            for(unsigned j = 0; j < q->size(); j++)
                 event_qs[event_type].push_back(q->at(j));
         }
         while(total_time[event_type] > limit_time) {
-            for(int i = 0; i < bookmark_n_events[event_type].front(); i++)
+            for(unsigned int i = 0; i < bookmark_n_events[event_type].front(); i++)
                 event_qs[event_type].pop_front();
             total_time[event_type] -= bookmark_time[event_type].front();
             bookmark_time[event_type].pop_front();
@@ -200,13 +200,13 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
     int frameRate = rf.check("frameRate", Value(30)).asInt();
     double period = 1000.0 / frameRate;
 
-    bool useTimeout =
-            rf.check("timeout") && rf.check("timeout", Value(true)).asBool();
+    //bool useTimeout =
+    //        rf.check("timeout") && rf.check("timeout", Value(true)).asBool();
     bool flip =
             rf.check("flip") && rf.check("flip", Value(true)).asBool();
-    bool forceRender =
-            rf.check("forcerender") &&
-            rf.check("forcerender", Value(true)).asBool();
+    //bool forceRender =
+    //        rf.check("forcerender") &&
+    //        rf.check("forcerender", Value(true)).asBool();
 //    if(forceRender) {
 //        vReader.setStrictUpdatePeriod(vtsHelper::vtsscaler * period);
 //        period = 0;
@@ -245,7 +245,7 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
         new_ci->setRate(period);
 
         Bottle * drawtypelist = displayList->get(i*2 + 1).asList();
-        for(int j = 0; j < drawtypelist->size(); j++)
+        for(unsigned int j = 0; j < drawtypelist->size(); j++)
         {
             string draw_type = drawtypelist->get(j).asString();
             if(!new_ci->addDrawer(draw_type, width, height, eventWindow, flip))

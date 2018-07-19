@@ -201,7 +201,7 @@ void drawcircle(yarp::sig::ImageOf<yarp::sig::PixelBgr> &image, int cx, int cy, 
         for(int x = -cr; x <= cr; x++) {
             if(fabs(sqrt(pow(x, 2.0) + pow(y, 2.0)) - (double)cr) > 0.8) continue;
             int px = cx + x; int py = cy + y;
-            if(py < 0 || py > image.height()-1 || px < 0 || px > image.width()-1) continue;
+            if(py < 0 || py > (int)image.height()-1 || px < 0 || px > (int)image.width()-1) continue;
             image(py, image.width() - px) = yarp::sig::PixelBgr(0, 0, 255);
 
         }

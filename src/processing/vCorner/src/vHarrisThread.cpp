@@ -109,7 +109,7 @@ void vHarrisThread::onStop()
 void vHarrisThread::run()
 {
     int maxV = 10000;
-    int minAcceptableDelay =  51200;
+    //int minAcceptableDelay =  51200;
     while(!isStopping()) {
 
         ev::vQueue *q = 0;
@@ -126,9 +126,9 @@ void vHarrisThread::run()
             increment = 1;
 
         double currCount;
-        int currSkip,lastSkip = 0;
+        unsigned int currSkip,lastSkip = 0;
         currCount = 0.0;
-        currSkip = (int)currCount;
+        currSkip = (unsigned int)currCount;
 
         int countProcessed = 0;
         bool firstChecked = false;
@@ -139,13 +139,13 @@ void vHarrisThread::run()
                 qi = q->begin();
                 firstChecked = true;
             } else {
-                qi = qi + (currSkip - lastSkip);
+                qi = qi + ((int)currSkip - lastSkip);
                 lastSkip = currSkip;
             }
 
             lastSkip = currSkip;
             currCount += increment;
-            currSkip = (int)currCount;
+            currSkip = (unsigned int)currCount;
 
             //get current event and add it to the surface
             auto ae = ev::is_event<ev::AE>(*qi);
