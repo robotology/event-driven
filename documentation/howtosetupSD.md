@@ -15,10 +15,6 @@
 
 > chown icub /usr/local/src/robot
 
-> chown icub /usr/local/share
-
-> chown icub /usr/local/lib
-
 ## Set up repositories
 
 (as icub)
@@ -66,6 +62,8 @@ add lines:
 
 > ccmake ../
 
+* set CMAKE_INSTALL_DIR=$ICUBcontrib_DIR
+
 > make install
 
 
@@ -82,10 +80,9 @@ add lines:
 
 > ccmake ../
 
-> make install
-
 * (cmake should have found install directory as $ICUBcontrib_DIR automatically)
 
+> make install
     
 ## Set up device drivers
 
