@@ -77,6 +77,7 @@ bool channelInstance::addDrawer(string drawer_name, unsigned int width,
 
     //open the port
     total_time[event_type] = 0;
+    prev_vstamp[event_type] = 0;
     return read_ports[event_type].open(channel_name + "/" + event_type + ":i");
 
 }
@@ -103,9 +104,10 @@ bool channelInstance::updateQs()
         for(int i = 0; i < qs_available[event_type]; i++) {
             const vQueue *q = port_i->second.read(yarp_stamp);
 
-            int q_dt = (int)q->back()->stamp - (int)q->front()->stamp;
+            int q_dt = (int)q->back()->stamp - prev_vstamp[event_type];
             if(q_dt < 0) q_dt += vtsHelper::max_stamp;
 
+            prev_vstamp[event_type] = (int)q->back()->stamp;
             total_time[event_type] += q_dt;
             bookmark_time[event_type].push_back(q_dt);
             bookmark_n_events[event_type].push_back(q->size());

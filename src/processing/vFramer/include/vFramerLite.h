@@ -60,6 +60,7 @@ private:
     map<string, unsigned int> total_time;
     map<string, deque<unsigned int> > bookmark_time;
     map<string, deque<unsigned int> > bookmark_n_events;
+    map<string, int> prev_vstamp;
 
 public:
 
