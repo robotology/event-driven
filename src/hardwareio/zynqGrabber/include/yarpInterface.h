@@ -26,6 +26,12 @@
 #include <yarp/os/all.h>
 #include <iCub/eventdriven/all.h>
 #include <string>
+#include <vector>
+
+using namespace yarp::os;
+using namespace ev;
+using std::string;
+using std::vector;
 
 /******************************************************************************/
 //vDevReadBuffer
@@ -167,6 +173,23 @@ public:
 };
 
 
+class eventDeviceInterface {
 
+private:
+
+    int fd;
+    vDevReadBuffer *devicePuller;
+    device2yarp *yarpPusher;
+    yarp2device *devicePusher;
+
+
+public:
+
+    bool open(string deviceName);
+    bool activateDeviceReading(string name);
+    bool activateDevicePushing(string name);
+
+
+};
 
 #endif
