@@ -158,13 +158,20 @@ void  device2yarp::run() {
     while(!isStopping()) {
 
         //display an output to let everyone know we are still working.
-        if(yarp::os::Time::now() - prevTS > 5.0) {
-            std::cout << "Event grabber running happily: ";
-            std::cout << (int)((countAEs - prevAEs) / 5.0) << " v/s" << std::endl;
-            std::cout << "                         Lost: ";
-            std::cout << (int)(countLoss / 5.0) << " v/s" << std::endl;
-            countLoss = 0;
-            prevTS = yarp::os::Time::now();
+        //std::cout << ".";
+        double update_period = yarp::os::Time::now() - prevTS;
+        
+        if(update_period > 1.0) {
+            //std::cout << std::endl;
+            yInfo() << "Event grabber running happily. kV/s = " << 
+                (int)((countAEs - prevAEs)/(1000.0*update_period));
+            //yInfo() << (int)((countAEs - prevAEs) / 0.5) << " v/s" << std::endl;
+            if(countLoss > 0) {
+                yWarning() << "                         Lost. kV/s =  " << 
+                    (int)(countLoss/(1000.0*update_period));
+                countLoss = 0;
+            }
+            prevTS += update_period;
             prevAEs = countAEs;
         }
 
@@ -173,7 +180,7 @@ void  device2yarp::run() {
         std::vector<unsigned char> &data = device_reader->getBuffer(nBytesRead, nBytesLost);
         countAEs += nBytesRead / 8;
         countLoss += nBytesLost / 8;
-        if (nBytesRead <= 8) continue;
+        if (!output_port.getOutputCount() || nBytesRead <= 8) continue;
 
         unsigned int i = 0;
         while((i+1) * packet_size < nBytesRead) {
