@@ -95,7 +95,8 @@ public:
 
     device2yarp();
     bool open(string module_name, int fd, unsigned int read_size,
-              unsigned int packet_size, unsigned int internal_storage_size);
+              bool direct_read, unsigned int packet_size,
+              unsigned int internal_storage_size);
     void setDirectRead(bool value = true);
 
     void run();

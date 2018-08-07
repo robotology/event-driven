@@ -104,31 +104,32 @@ std::vector<unsigned char>& vDevReadBuffer::getBuffer(unsigned int &nBytesRead, 
             perror("Error reading events: ");
         }
         return *read_buffer;
+    } else {
+
+        //safely copy the data into the accessBuffer and reset the readCount
+        bufferedreadwaiting = true;
+        safety.wait();
+        bufferedreadwaiting = false;
+
+        //switch the buffer the read into
+        std::vector<unsigned char> *temp;
+        temp = read_buffer;
+        read_buffer = access_buffer;
+        access_buffer = temp;
+
+        //reset the filling position
+        nBytesRead = read_count;
+        nBytesLost = loss_count;
+        read_count = 0;
+        loss_count = 0;
+
+        //send the correct signals to restart the grabbing thread
+        safety.post();
+        signal.check();
+        signal.post(); //tell the other thread we are done
+
+        return *access_buffer;
     }
-
-    //safely copy the data into the accessBuffer and reset the readCount
-    bufferedreadwaiting = true;
-    safety.wait();
-    bufferedreadwaiting = false;
-
-    //switch the buffer the read into
-    std::vector<unsigned char> *temp;
-    temp = read_buffer;
-    read_buffer = access_buffer;
-    access_buffer = temp;
-
-    //reset the filling position
-    nBytesRead = read_count;
-    nBytesLost = loss_count;
-    read_count = 0;
-    loss_count = 0;
-
-    //send the correct signals to restart the grabbing thread
-    safety.post();
-    signal.check();
-    signal.post(); //tell the other thread we are done
-
-    return *access_buffer;
 
 }
 
@@ -146,17 +147,18 @@ device2yarp::device2yarp()
 }
 
 bool device2yarp::open(string module_name, int fd, unsigned int read_size,
-          unsigned int packet_size, unsigned int internal_storage_size)
+                       bool direct_read, unsigned int packet_size,
+                       unsigned int internal_storage_size)
 {
-    device_reader = new vDevReadBuffer(fd, read_size, internal_storage_size);
+    if(direct_read)
+        device_reader = new vDevReadBuffer(fd, packet_size, internal_storage_size);
+    else
+        device_reader = new vDevReadBuffer(fd, read_size, internal_storage_size);
+
+    this->direct_read = direct_read;
     this->packet_size = packet_size;
 
     return output_port.open(module_name + "/AE:o");
-}
-
-void device2yarp::setDirectRead(bool value)
-{
-    direct_read = value;
 }
 
 void device2yarp::afterStart(bool success)
@@ -378,10 +380,9 @@ bool hpuInterface::openReadPort(string module_name, bool direct_read,
                                 unsigned int packet_size,
                                 unsigned int maximum_internal_memory)
 {
-    if(fd < 0 || !D2Y.open(module_name, fd, pool_size, packet_size,
+    if(fd < 0 || !D2Y.open(module_name, fd, pool_size, direct_read, packet_size,
                            maximum_internal_memory))
         return false;
-    D2Y.setDirectRead(direct_read);
 
     read_thread_open = true;
     return true;
