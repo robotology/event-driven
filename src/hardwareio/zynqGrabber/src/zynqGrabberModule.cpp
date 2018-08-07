@@ -188,14 +188,17 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
             return false;
 
         bool read_flag = rf.check("hpu_read") &&
-                rf.check("read", yarp::os::Value(true)).asBool();
+                rf.check("hpu_read", yarp::os::Value(true)).asBool();
         bool write_flag = rf.check("hpu_write") &&
-                rf.check("write", yarp::os::Value(true)).asBool();
+                rf.check("hpu_write", yarp::os::Value(true)).asBool();
         int packet_size     = 8 * rf.check("packet_size", yarp::os::Value("5120")).asInt();
         int buffer_size  = 8 * rf.check("buffer_size", yarp::os::Value("5120000")).asInt();
+        bool direct_read = rf.check("direct_read") &&
+                rf.check("direct_read", yarp::os::Value(true)).asBool();
 
         if(read_flag)
-            if(!hpu.openReadPort(moduleName, packet_size, buffer_size))
+            if(!hpu.openReadPort(moduleName, direct_read, packet_size,
+                                 buffer_size))
                 return false;
 
         if(write_flag)

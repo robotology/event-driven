@@ -95,6 +95,17 @@ void vDevReadBuffer::run()
 std::vector<unsigned char>& vDevReadBuffer::getBuffer(unsigned int &nBytesRead, unsigned int &nBytesLost)
 {
 
+    if(!this->isRunning()) {
+        //direct read
+        nBytesLost = 0;
+        int r = read(fd, read_buffer->data(), read_size);
+        if(r > 0) nBytesRead = r;
+        if(r < 0 && errno != EAGAIN) {
+            perror("Error reading events: ");
+        }
+        return *read_buffer;
+    }
+
     //safely copy the data into the accessBuffer and reset the readCount
     bufferedreadwaiting = true;
     safety.wait();
@@ -131,6 +142,7 @@ device2yarp::device2yarp()
     countLoss = 0;
     prevAEs = 0;
     device_reader = 0;
+    direct_read = false;
 }
 
 bool device2yarp::open(string module_name, int fd, unsigned int read_size,
@@ -142,10 +154,14 @@ bool device2yarp::open(string module_name, int fd, unsigned int read_size,
     return output_port.open(module_name + "/AE:o");
 }
 
+void device2yarp::setDirectRead(bool value)
+{
+    direct_read = value;
+}
 
 void device2yarp::afterStart(bool success)
 {
-    if(success)
+    if(success && !direct_read)
         device_reader->start();
 }
 
@@ -160,14 +176,14 @@ void  device2yarp::run() {
         //display an output to let everyone know we are still working.
         //std::cout << ".";
         double update_period = yarp::os::Time::now() - prevTS;
-        
+
         if(update_period > 1.0) {
             //std::cout << std::endl;
-            yInfo() << "Event grabber running happily. kV/s = " << 
+            yInfo() << "Event grabber running happily. kV/s = " <<
                 (int)((countAEs - prevAEs)/(1000.0*update_period));
             //yInfo() << (int)((countAEs - prevAEs) / 0.5) << " v/s" << std::endl;
             if(countLoss > 0) {
-                yWarning() << "                         Lost. kV/s =  " << 
+                yWarning() << "                         Lost. kV/s =  " <<
                     (int)(countLoss/(1000.0*update_period));
                 countLoss = 0;
             }
@@ -358,12 +374,14 @@ bool hpuInterface::configureDevice(string device_name)
     return true;
 }
 
-bool hpuInterface::openReadPort(string module_name, unsigned int packet_size,
+bool hpuInterface::openReadPort(string module_name, bool direct_read,
+                                unsigned int packet_size,
                                 unsigned int maximum_internal_memory)
 {
     if(fd < 0 || !D2Y.open(module_name, fd, pool_size, packet_size,
                            maximum_internal_memory))
         return false;
+    D2Y.setDirectRead(direct_read);
 
     read_thread_open = true;
     return true;
