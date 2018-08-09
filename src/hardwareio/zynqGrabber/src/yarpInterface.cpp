@@ -308,7 +308,7 @@ hpuInterface::hpuInterface()
     write_thread_open = false;
 }
 
-bool hpuInterface::configureDevice(string device_name)
+bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loopback)
 {
     //open the device
     fd = open(device_name.c_str(), O_RDWR);
@@ -347,31 +347,103 @@ bool hpuInterface::configureDevice(string device_name)
     } hpu_regs;
 
 
-    //Enable SKIN
-    hpu_regs.reg_offset = AUX_RX_CTRL_REG;
-    hpu_regs.rw = 1;
-    hpu_regs.data = AUX_RX_ENABLE_SKIN | MSK_AUX_RX_CTRL_REG;
+    if(!spinnaker) {
 
-    if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+        //Enable SKIN
+        hpu_regs.reg_offset = AUX_RX_CTRL_REG;
+        hpu_regs.rw = 1;
+        hpu_regs.data = AUX_RX_ENABLE_SKIN | MSK_AUX_RX_CTRL_REG;
 
-        yError() << "Error: cannot set skin register";
-        close(fd);
-        fd = -1;
-        return false;
+        if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+
+            yError() << "Error: cannot set skin register";
+            close(fd);
+            fd = -1;
+            return false;
+        }
+
+        //Enable CAMERAS
+        hpu_regs.reg_offset = RX_CTRL_REG;
+        hpu_regs.rw = 1;
+        hpu_regs.data = RX_REG_ENABLE_CAMERAS | MSK_RX_CTRL_REG;
+
+        if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+
+            yError() << "Error: cannot set camera register";
+            close(fd);
+            fd = -1;
+            return false;
+        }
+
+    } else {
+
+        //ENABLE tx of spinnaker
+        hpu_regs.reg_offset = TX_CTRL_REG;
+        hpu_regs.rw = 1;
+        hpu_regs.data = 0x68;
+        if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+            yError() << "Error: cannot set spinnaker transmit";
+            close(fd); fd = -1;
+            return false;
+        }
+
+        //ENABLE rx of spinnaker on auxillary channel
+        hpu_regs.reg_offset = AUX_RX_CTRL_REG;
+        hpu_regs.rw = 1;
+        hpu_regs.data = 0x08;
+        if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+            yError() << "Error: cannot set spinnaker transmit";
+            close(fd); fd = -1;
+            return false;
+        }
+
+        //ENABLE loopback  (if required)
+        if(loopback) {
+            hpu_regs.reg_offset = CTRL_REG;
+            hpu_regs.rw = 0;
+            hpu_regs.data = 0;
+            if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+                yError() << "Error: cannot read CTRL_REG";
+                close(fd); fd = -1;
+                return false;
+            }
+            hpu_regs.data |= 0x00C00000;
+            hpu_regs.rw = 1;
+            if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+                yError() << "Error: cannot set loopback";
+                close(fd); fd = -1;
+                return false;
+            }
+        }
+
+        //READ IRQ status
+        hpu_regs.reg_offset = IRQ_REG;
+        hpu_regs.rw = 0;
+        hpu_regs.data = 0;
+        if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+            yError() << "Error: cannot read IRQ status";
+            close(fd); fd = -1;
+            return false;
+        }
+
+        std::cout << "IRQ status register: ";
+        std::cout << std::hex << hpu_regs.data << std::endl;
+
+        //READ IP configuration
+        hpu_regs.reg_offset = IP_CFNG_REG;
+        hpu_regs.rw = 0;
+        hpu_regs.data = 0;
+        if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+            yError() << "Error: cannot read IP configuration";
+            close(fd); fd = -1;
+            return false;
+        }
+
+        std::cout << "IP configuration: ";
+        std::cout << std::hex << hpu_regs.data << std::endl;
+
     }
 
-    //Enable CAMERAS
-    hpu_regs.reg_offset = RX_CTRL_REG;
-    hpu_regs.rw = 1;
-    hpu_regs.data = RX_REG_ENABLE_CAMERAS | MSK_RX_CTRL_REG;
-
-    if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
-
-        yError() << "Error: cannot set camera register";
-        close(fd);
-        fd = -1;
-        return false;
-    }
 
     return true;
 }

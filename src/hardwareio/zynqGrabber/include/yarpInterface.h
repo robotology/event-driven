@@ -149,7 +149,8 @@ public:
 
     hpuInterface();
 
-    bool configureDevice(string device_name);
+    bool configureDevice(string device_name, bool spinnaker = false,
+                         bool loopback = false);
     bool openReadPort(string module_name, bool direct_read,
                       unsigned int packet_size,
                       unsigned int maximum_internal_memory);

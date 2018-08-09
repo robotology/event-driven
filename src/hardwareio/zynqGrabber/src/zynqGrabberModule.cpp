@@ -183,8 +183,12 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     if(rf.check("dataDevice")) {
 
         string data_device = rf.find("dataDevice").asString();
+        bool use_spinnaker = rf.check("use_spinnaker") &&
+                rf.check("use_spinnaker", yarp::os::Value(true)).asBool();
+        bool loopback = rf.check("loopback_debug") &&
+                rf.check("loopback_debug", yarp::os::Value(true)).asBool();
 
-        if(!hpu.configureDevice(data_device))
+        if(!hpu.configureDevice(data_device, use_spinnaker, loopback))
             return false;
 
         bool read_flag = rf.check("hpu_read") &&
