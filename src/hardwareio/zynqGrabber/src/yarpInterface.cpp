@@ -266,7 +266,7 @@ void yarp2device::run()
         Bottle *data_bottle = yarp_bottle->get(1).asList();
         size_t data_size = data_bottle->size();
         if(data_size > data_copy.size())
-            data_copy.resize(data_size, 1);
+            data_copy.resize(data_size, 0);
 
         //copy to internal data (needed to modify the contents)
         //we can remove data_copy and just use data_bottle when the
@@ -349,6 +349,8 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
 
     if(!spinnaker) {
 
+        yInfo() << "Configuring Cameras/Skin";
+
         //Enable SKIN
         hpu_regs.reg_offset = AUX_RX_CTRL_REG;
         hpu_regs.rw = 1;
@@ -377,6 +379,8 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
 
     } else {
 
+        yInfo() << "Configuring SpiNNaker";
+
         //ENABLE tx of spinnaker
         hpu_regs.reg_offset = TX_CTRL_REG;
         hpu_regs.rw = 1;
@@ -399,6 +403,7 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
 
         //ENABLE loopback  (if required)
         if(loopback) {
+            yWarning() << "SpiNNaker in Loopback mode";
             hpu_regs.reg_offset = CTRL_REG;
             hpu_regs.rw = 0;
             hpu_regs.data = 0;
