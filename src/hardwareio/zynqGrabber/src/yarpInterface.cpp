@@ -310,6 +310,15 @@ hpuInterface::hpuInterface()
 
 bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loopback)
 {
+
+    struct hpu_regs_t{
+
+        unsigned int reg_offset;
+        char rw;
+        unsigned int data;
+
+    } hpu_regs;
+
     //open the device
     fd = open(device_name.c_str(), O_RDWR);
     if(fd < 0) {
@@ -323,7 +332,6 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
         }
     }
 
-
     //READ IP configuration
     hpu_regs.reg_offset = ID_REG;
     hpu_regs.rw = 0;
@@ -335,9 +343,11 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
     }
 
     std::cout << "ID and Version";
-    char *c = &(hpu_regs.data);
-    std::cout << *c << *(c+1) << *(c+2) << std::hex << (*(c+3))>>4 <<
-                (*(c+3))&0xF << std::endl;
+    char *c = (char *)&(hpu_regs.data);
+    int major = (*(c+3))>>4;
+    int minor = (*(c+3))&0xF;
+    std::cout << *c << *(c+1) << *(c+2) << std::hex << major <<"." << minor
+              << std::endl;
 
     //32 bit timestamp
     unsigned int timestampswitch = 1;
@@ -354,13 +364,7 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
     yInfo() << "pool size: " << pool_size;
 
 
-    struct hpu_regs_t{
 
-        unsigned int reg_offset;
-        char rw;
-        unsigned int data;
-
-    } hpu_regs;
 
 
     if(!spinnaker) {
