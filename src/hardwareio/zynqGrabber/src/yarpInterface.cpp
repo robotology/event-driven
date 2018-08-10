@@ -323,6 +323,22 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
         }
     }
 
+
+    //READ IP configuration
+    hpu_regs.reg_offset = ID_REG;
+    hpu_regs.rw = 0;
+    hpu_regs.data = 0;
+    if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+        yError() << "Error: cannot read IP configuration";
+        close(fd); fd = -1;
+        return false;
+    }
+
+    std::cout << "ID and Version";
+    char *c = &(hpu_regs.data);
+    std::cout << *c << *(c+1) << *(c+2) << std::hex << (*(c+3))>>4 <<
+                (*(c+3))&0xF << std::endl;
+
     //32 bit timestamp
     unsigned int timestampswitch = 1;
     ioctl(fd, IOC_SET_TS_TYPE, &timestampswitch);
@@ -421,6 +437,7 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
             }
         }
 
+
         //READ IRQ status
         hpu_regs.reg_offset = IRQ_REG;
         hpu_regs.rw = 0;
@@ -446,6 +463,8 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
 
         std::cout << "IP configuration: ";
         std::cout << std::hex << hpu_regs.data << std::endl;
+
+
 
     }
 
