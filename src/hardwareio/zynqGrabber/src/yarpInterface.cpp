@@ -29,104 +29,32 @@
 //vDevReadBuffer
 /******************************************************************************/
 
-vDevReadBuffer::vDevReadBuffer()
+vDevReadBuffer::vDevReadBuffer(int fd, unsigned int read_size, unsigned int buffer_size)
 {
     //parameters
-    bufferSize = 800000;  //bytes
-    readSize = 1024;      //bytes
+    this->fd = fd;
+    this->buffer_size = buffer_size;
+    this->read_size = read_size;
 
-    //internal variables/storage
-    fd = -1;
-    readCount = 0;
-    lossCount = 0;
+    buffer1.resize(buffer_size);
+    buffer2.resize(buffer_size);
+    discard_buffer.resize(read_size);
+
+    read_buffer = &buffer1;
+    access_buffer = &buffer2;
+
+    read_count = 0;
+    loss_count = 0;
 
     bufferedreadwaiting = false;
 
-}
-
-bool vDevReadBuffer::enableInterface(unsigned int reg_offset, unsigned int data, int fd){
-
-    struct hpu_regs_t hpu_regs;
-
-    //Enable SKIN
-    hpu_regs.reg_offset = reg_offset; //HPU_REG_AUX_RX_CTRL
-    hpu_regs.rw = 1;
-    hpu_regs.data = data; //HPU_MASK_RX_CTRL_ARX_SER || HPU_MASK_RX_ARX_SER2
-
-    if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){ //for us it is AER_TIMESTAMP, from documentation HPU_GEN_REG
-
-        std::cout << "Error: cannot set skin register" << std::endl;
-        close(fd);
-        return false;
-    }
-
-    return true;
-}
-
-bool vDevReadBuffer::initialise(std::string devicename,
-                                unsigned int bufferSize,
-                                unsigned int readSize)
-{
-
-    fd = open(devicename.c_str(), O_RDWR);
-    yInfo() << " blocking opening ";
-    if(fd < 0) {
-        yInfo() << "non blocking opening ";
-        fd = open(devicename.c_str(), O_RDONLY | O_NONBLOCK);
-        if(fd < 0)
-            return false;
-    }
-
-    unsigned int timestampswitch = 1;
-    ioctl(fd, IOC_SET_TS_TYPE, &timestampswitch);
-
-    int poolSize;
-    ioctl(fd, IOC_GET_PS, &poolSize);
-    yInfo() << "poolSize " << poolSize;
-
-
-//	unsigned int hw_ver = 0;
-        //if( -1 == ioctl( fd, HPU_READVERSION, &hw_ver)) {
-                //const int lerrno = errno;
-                //fflush( stdout);
-                //fprintf( stderr, "ERROR: Cannot get hpu hw version: %s\n", strerror( lerrno));
-                //fflush( stderr);
-	//	std::cout << "Error reading version" << errno << std::endl;
-                /*
-                close( fd);
-                return false;
-                */
-        //}
-        //else {
-          //      printf( "#  hpu hw ver = %c%c%c %d.%d\n", hw_ver>>24, hw_ver >>16, hw_ver>>8, (hw_ver>>4)&0x0f, hw_ver&0x0f);
-        //}
-
-    enableInterface(AUX_RX_CTRL_REG, AUX_RX_ENABLE_SKIN | MSK_AUX_RX_CTRL_REG, fd); //Enable SKIN
-    enableInterface(RX_CTRL_REG, RX_REG_ENABLE_CAMERAS | MSK_RX_CTRL_REG, fd); //Enable LEFT AND RIGHT CAMERAS
-
-    if(bufferSize > 0) this->bufferSize = bufferSize;
-    if(readSize > 0) this->readSize = readSize;
-
-    this->readSize = poolSize;
-    buffer1.resize(this->bufferSize);
-    buffer2.resize(this->bufferSize);
-    discardbuffer.resize(this->readSize);
-
-    readBuffer = &buffer1;
-    accessBuffer = &buffer2;
-
-    return true;
+    yInfo() << "buffer size: " << buffer1.size();
 
 }
+
 
 void vDevReadBuffer::run()
 {
-
-    if(fd < 0) {
-        std::cout << "Event Reading Device uninistialised. Please run "
-                "initialisation before starting the thread" << std::endl;
-        return;
-    }
 
     signal.check();
 
@@ -135,15 +63,16 @@ void vDevReadBuffer::run()
         safety.wait();
 
         int r = 0;
-        if(readCount >= bufferSize) {
+        if(read_count < buffer_size) {
+            //we read and fill up the buffer
+            r = read(fd, read_buffer->data() + read_count,
+                     std::min(buffer_size - read_count, read_size));
+            if(r > 0) read_count += r;
+        } else {
             //we have reached maximum software buffer - read from the HW but
             //just discard the result.
-            r = read(fd, discardbuffer.data(), readSize);
-            if(r > 0) lossCount += r;
-        } else {
-            //we read and fill up the buffer
-            r = read(fd, readBuffer->data() + readCount, std::min(bufferSize - readCount, readSize));
-            if(r > 0) readCount += r;
+            r = read(fd, discard_buffer.data(), read_size);
+            if(r > 0) loss_count += r;
         }
         //std::cout<< " bytes read "<< r <<std::endl;
 
@@ -162,37 +91,45 @@ void vDevReadBuffer::run()
 
 }
 
-void vDevReadBuffer::threadRelease()
-{
-    if(fd) close(fd);
-}
 
 std::vector<unsigned char>& vDevReadBuffer::getBuffer(unsigned int &nBytesRead, unsigned int &nBytesLost)
 {
 
-    //safely copy the data into the accessBuffer and reset the readCount
-    bufferedreadwaiting = true;
-    safety.wait();
-    bufferedreadwaiting = false;
+    if(!this->isRunning()) {
+        //direct read
+        nBytesLost = 0;
+        int r = read(fd, read_buffer->data(), read_size);
+        if(r > 0) nBytesRead = r;
+        if(r < 0 && errno != EAGAIN) {
+            perror("Error reading events: ");
+        }
+        return *read_buffer;
+    } else {
 
-    //switch the buffer the read into
-    std::vector<unsigned char> *temp;
-    temp = readBuffer;
-    readBuffer = accessBuffer;
-    accessBuffer = temp;
+        //safely copy the data into the accessBuffer and reset the readCount
+        bufferedreadwaiting = true;
+        safety.wait();
+        bufferedreadwaiting = false;
 
-    //reset the filling position
-    nBytesRead = readCount;
-    nBytesLost = lossCount;
-    readCount = 0;
-    lossCount = 0;
+        //switch the buffer the read into
+        std::vector<unsigned char> *temp;
+        temp = read_buffer;
+        read_buffer = access_buffer;
+        access_buffer = temp;
 
-    //send the correct signals to restart the grabbing thread
-    safety.post();
-    signal.check();
-    signal.post(); //tell the other thread we are done
+        //reset the filling position
+        nBytesRead = read_count;
+        nBytesLost = loss_count;
+        read_count = 0;
+        loss_count = 0;
 
-    return *accessBuffer;
+        //send the correct signals to restart the grabbing thread
+        safety.post();
+        signal.check();
+        signal.post(); //tell the other thread we are done
+
+        return *access_buffer;
+    }
 
 }
 
@@ -200,224 +137,101 @@ std::vector<unsigned char>& vDevReadBuffer::getBuffer(unsigned int &nBytesRead, 
 //device2yarp
 /******************************************************************************/
 
-device2yarp::device2yarp() {
+device2yarp::device2yarp()
+{
     countAEs = 0;
     countLoss = 0;
     prevAEs = 0;
-    strict = false;
-    errorchecking = false;
-    applyfilter = false;
-    jumpcheck = false;
+    device_reader = 0;
+    direct_read = false;
 }
 
-bool device2yarp::initialise(std::string moduleName, bool check,
-                             std::string deviceName, unsigned int bufferSize,
-                             unsigned int readSize, unsigned int chunkSize) {
+bool device2yarp::open(string module_name, int fd, unsigned int read_size,
+                       bool direct_read, unsigned int packet_size,
+                       unsigned int internal_storage_size)
+{
+    if(direct_read)
+        device_reader = new vDevReadBuffer(fd, packet_size, internal_storage_size);
+    else
+        device_reader = new vDevReadBuffer(fd, read_size, internal_storage_size);
 
-    this->chunksize = chunkSize;
-    if(!deviceReader.initialise(deviceName, bufferSize, readSize))
-        return false;
+    this->direct_read = direct_read;
+    this->packet_size = packet_size;
 
-    this->errorchecking = check;
-
-    yInfo() << "yarp::os::Port used - which is always strict";
-
-//    this->strict = strict;
-//    if(strict) {
-//        std::cout << "D2Y: setting output port to strict" << std::endl;
-//        portvBottle.setStrict();
-//    } else {
-//        std::cout << "D2Y: setting output port to not-strict" << std::endl;
-//    }
-
-    if(!portEventCount.open(moduleName + "/eventCount:o"))
-        return false;
-
-    return portvBottle.open(moduleName + "/vBottle:o");
-
+    return output_port.open(module_name + "/AE:o");
 }
 
 void device2yarp::afterStart(bool success)
 {
-    if(success) deviceReader.start();
-}
-
-void device2yarp::tsjumpcheck(std::vector<unsigned char> &data, int nBytesRead)
-{
-    int pTS = *((int *)(data.data() + 0)) & 0x7FFFFFFF;
-    for(int i = 0; i < nBytesRead; i+=8) {
-        int TS =  *((int *)(data.data() + i)) & 0x7FFFFFFF;
-        int dt = TS - pTS;
-        if(dt < 0) {
-            yError() << "stamp jump" << pTS << " " << TS;
-        }
-        pTS = TS;
-    }
-}
-
-int device2yarp::applysaltandpepperfilter(std::vector<unsigned char> &data, int nBytesRead)
-{
-    int k = 0;
-    for(int i = 0; i < nBytesRead; i+=8) {
-        int *TS =  (int *)(data.data() + i);
-        int *AE =  (int *)(data.data() + i + 4);
-
-        int p = (*AE)&0x01;
-        int x = ((*AE)>>1)&0x1FF;
-        int y = ((*AE)>>10)&0xFF;
-        int c = ((*AE)>>20)&0x01;
-        int ts = (*TS) & 0x00FFFFFF;
-
-        if(vfilter.check(x, y, p, c, ts)) {
-            for(int j = i; j < i+8; j++) {
-                data[k++] = data[j];
-            }
-        }
-
-    }
-
-    return k;
-
+    if(success && !direct_read)
+        device_reader->start();
 }
 
 void  device2yarp::run() {
 
-    ev::vBottleMimic vbottlemimic;
+    vGenPortInterface external_storage;
+    external_storage.setHeader(AE::tag);
+    yInfo() << "packet size: " << packet_size;
 
     while(!isStopping()) {
 
         //display an output to let everyone know we are still working.
-        if(yarp::os::Time::now() - prevTS > 5.0) {
-            std::cout << "Event grabber running happily: ";
-            std::cout << (int)((countAEs - prevAEs) / 5.0) << " v/s" << std::endl;
-            std::cout << "                         Lost: ";
-            std::cout << (int)(countLoss / 5.0) << " v/s" << std::endl;
-            countLoss = 0;
-            prevTS = yarp::os::Time::now();
+        //std::cout << ".";
+        double update_period = yarp::os::Time::now() - prevTS;
+
+        if(update_period > 1.0) {
+            //std::cout << std::endl;
+            yInfo() << "Event grabber running happily. kV/s = " <<
+                (int)((countAEs - prevAEs)/(1000.0*update_period));
+            //yInfo() << (int)((countAEs - prevAEs) / 0.5) << " v/s" << std::endl;
+            if(countLoss > 0) {
+                yWarning() << "                         Lost. kV/s =  " <<
+                    (int)(countLoss/(1000.0*update_period));
+                countLoss = 0;
+            }
+            prevTS += update_period;
             prevAEs = countAEs;
         }
 
         //get the data from the device read thread
         unsigned int nBytesRead, nBytesLost;
-        std::vector<unsigned char> &data = deviceReader.getBuffer(nBytesRead, nBytesLost);
+        std::vector<unsigned char> &data = device_reader->getBuffer(nBytesRead, nBytesLost);
         countAEs += nBytesRead / 8;
         countLoss += nBytesLost / 8;
-        if (nBytesRead <= 0) continue;
+        if (!output_port.getOutputCount() || nBytesRead <= 8) continue;
 
-
-        bool dataError = false;
-
-        //SMALL ERROR CHECKING BUT NOT FIXING
-        if(nBytesRead % 8) {
-            dataError = true;
-            std::cout << "BUFFER NOT A MULTIPLE OF 8 BYTES: " <<  nBytesRead << std::endl;
-        }
-
-        if(applyfilter)
-            nBytesRead = applysaltandpepperfilter(data, nBytesRead);
-
-        if(jumpcheck)
-            tsjumpcheck(data, nBytesRead);
-
-        if(portEventCount.getOutputCount() && nBytesRead) {
-            yarp::os::Bottle &ecb = portEventCount.prepare();
-            ecb.clear();
-            ecb.addInt(nBytesRead / 8);
-            portEventCount.write();
-        }
-
-        //if we don't want or have nothing to send or there is an error finish here.
-        if(!portvBottle.getOutputCount() || nBytesRead < 8)
-            continue;
-
-        //typical ZYNQ behaviour to skip error checking
         unsigned int i = 0;
-        if(!errorchecking && !dataError) {
+        while((i+1) * packet_size < nBytesRead) {
 
-            while((i+1) * chunksize < nBytesRead) {
+            external_storage.setExternalData((const char *)data.data() +
+                                             i * packet_size, packet_size);
+            yarp_stamp.update();
+            output_port.setEnvelope(yarp_stamp);
+            output_port.write(external_storage);
 
-                //ev::vBottleMimic &vbm = portvBottle.prepare();
-                vbottlemimic.setExternalData((const char *)data.data() + i*chunksize, chunksize);
-                vStamp.update();
-                portvBottle.setEnvelope(vStamp);
-                portvBottle.write(vbottlemimic);
-                //portvBottle.write(strict);
-                //portvBottle.waitForWrite();
-
-                i++;
-            }
-
-            //ev::vBottleMimic &vbm = portvBottle.prepare();
-            vbottlemimic.setExternalData((const char *)data.data() + i*chunksize, nBytesRead - i*chunksize);
-            vStamp.update();
-            portvBottle.setEnvelope(vStamp);
-            portvBottle.write(vbottlemimic);
-            //portvBottle.write(strict);
-            //portvBottle.waitForWrite();
-
-            continue;						//return here.
+            i++;
         }
 
-        //or go through data and check for consistency
-        int bstart = 0;
-        int bend = 0;
-
-        while(bend < (int)nBytesRead - 7) {
-
-            //check validity
-            int *TS =  (int *)(data.data() + bend);
-            int *AE =  (int *)(data.data() + bend + 4);
-            bool BITMISMATCH = !(*TS & 0x80000000) || (*AE & 0xFBE00000);
-
-            if(BITMISMATCH) {
-                //send on what we have checked is not mismatched so far
-                if(bend - bstart > 0) {
-                    std::cerr << "BITMISMATCH in yarp2device" << std::endl;
-                    std::cerr << *TS << " " << *AE << std::endl;
-
-                    //ev::vBottleMimic &vbm = portvBottle.prepare();
-                    vbottlemimic.setExternalData((const char *)data.data()+bstart, bend-bstart);
-                    countAEs += (bend - bstart) / 8;
-                    vStamp.update();
-                    portvBottle.setEnvelope(vStamp);
-                    portvBottle.write(vbottlemimic);
-                    //if(strict) portvBottle.writeStrict();
-                    //else portvBottle.write();
-                }
-
-                //then increment by 1 to find the next alignment
-                bend++;
-                bstart = bend;
-            } else {
-                //and then check the next two ints
-                bend += 8;
-            }
-        }
-
-        if(nBytesRead - bstart > 7) {
-            //ev::vBottleMimic &vbm = portvBottle.prepare();
-            vbottlemimic.setExternalData((const char *)data.data()+bstart, 8*((nBytesRead-bstart)/8));
-            countAEs += (nBytesRead - bstart) / 8;
-            vStamp.update();
-            portvBottle.setEnvelope(vStamp);
-            portvBottle.write(vbottlemimic);
-            //if(strict) portvBottle.writeStrict();
-            //else portvBottle.write();
-        }
+        external_storage.setExternalData((const char *)data.data() +
+                                         i * packet_size,
+                                         nBytesRead - i * packet_size);
+        yarp_stamp.update();
+        output_port.setEnvelope(yarp_stamp);
+        output_port.write(external_storage);
     }
 
 }
 
-void device2yarp::threadRelease() {
+void device2yarp::onStop()
+{
+    device_reader->stop();
+    output_port.close();
+}
 
-    std::cout << "D2Y: has collected " << countAEs << " events from device"
-              << std::endl;
-    std::cout << "Closing device reader (Could be stuck in a read call!)"
-              << std::endl;
-    deviceReader.stop();
-
-    portvBottle.close();
-
+void device2yarp::threadRelease()
+{
+    delete device_reader;
+    device_reader = 0;
 }
 
 /******************************************************************************/
@@ -425,125 +239,282 @@ void device2yarp::threadRelease() {
 /******************************************************************************/
 yarp2device::yarp2device()
 {
-    devDesc = -1;
-    flagStart = false;
-    countAEs = 0;
-    writtenAEs = 0;
-    clockScale = 1;
+    fd = -1;
+    total_events = 0;
 }
 
-bool yarp2device::initialise(std::string moduleName, std::string deviceName)
+bool yarp2device::open(std::string module_name, int fd)
+{
+    this->fd = fd;
+    return input_port.open(module_name + "/AE:i");
+}
+
+void yarp2device::onStop()
+{
+    input_port.interrupt();
+    input_port.close();
+}
+
+void yarp2device::run()
 {
 
-    devDesc = ::open(deviceName.c_str(), O_WRONLY);
-    if(devDesc < 0)
+    while(true) {
+
+        Bottle *yarp_bottle = input_port.read(true); //blocking read
+        if(!yarp_bottle) return; //when interrupt is called returns null
+
+        Bottle *data_bottle = yarp_bottle->get(1).asList();
+        size_t data_size = data_bottle->size();
+        if(data_size > data_copy.size())
+            data_copy.resize(data_size, 0);
+
+        //copy to internal data (needed to modify the contents)
+        //we can remove data_copy and just use data_bottle when the
+        //mask is done in the FPGA
+        for(size_t i = 1; i < data_size; i += 2) {
+            data_copy[i] = data_bottle->get(i).asInt() & 0x000FFFFF;
+        }
+
+        //move to bytes space
+        char * buffer = (char *)data_copy.data();
+        size_t bytes_to_write = data_size * sizeof(int);
+        size_t written = 0;
+        while(written < bytes_to_write) {
+
+            int ret = write(fd, buffer + written, bytes_to_write - written);
+
+            if(ret > 0) { //success!
+                written += ret;
+            } else if(ret < 0 && errno != EAGAIN) { //error!
+                perror("Error writing to device: ");
+                return;
+            }
+        }
+
+        total_events += written / (2.0 * sizeof(int));
+
+    }
+
+
+}
+
+/******************************************************************************/
+//hpuInterface
+/******************************************************************************/
+hpuInterface::hpuInterface()
+{
+    fd = -1;
+    read_thread_open = false;
+    write_thread_open = false;
+}
+
+bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loopback)
+{
+
+    struct hpu_regs_t{
+
+        unsigned int reg_offset;
+        char rw;
+        unsigned int data;
+
+    } hpu_regs;
+
+    //open the device
+    fd = open(device_name.c_str(), O_RDWR);
+    if(fd < 0) {
+        fd = open(device_name.c_str(), O_RDONLY | O_NONBLOCK);
+        if(fd < 0) {
+            yError() << "Could not open" << device_name << " device";
+            return false;
+        } else {
+            yWarning() << device_name << "only opened in read-only, "
+                       "non-blocking mode";
+        }
+    }
+
+    //READ IP configuration
+    hpu_regs.reg_offset = ID_REG;
+    hpu_regs.rw = 0;
+    hpu_regs.data = 0;
+    if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+        yError() << "Error: cannot read IP configuration";
+        close(fd); fd = -1;
+        return false;
+    }
+
+    std::cout << "ID and Version";
+    char *c = (char *)&(hpu_regs.data);
+    int major = (*(c+3))>>4;
+    int minor = (*(c+3))&0xF;
+    std::cout << *c << *(c+1) << *(c+2) << std::hex << major <<"." << minor
+              << std::endl;
+
+    //32 bit timestamp
+    unsigned int timestampswitch = 1;
+    ioctl(fd, IOC_SET_TS_TYPE, &timestampswitch);
+
+    //read the pool size
+    ioctl(fd, IOC_GET_PS, &pool_size);
+    if(pool_size < 0 || pool_size > 32768) {
+        yWarning() << "Pool size invalid (" << pool_size << "). Setting to ("
+                     "4096)";
+        pool_size = 4096;
+
+    }
+    yInfo() << "pool size: " << pool_size;
+
+
+
+
+
+    if(!spinnaker) {
+
+        yInfo() << "Configuring Cameras/Skin";
+
+        //Enable SKIN
+        hpu_regs.reg_offset = AUX_RX_CTRL_REG;
+        hpu_regs.rw = 1;
+        hpu_regs.data = AUX_RX_ENABLE_SKIN | MSK_AUX_RX_CTRL_REG;
+
+        if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+
+            yError() << "Error: cannot set skin register";
+            close(fd);
+            fd = -1;
+            return false;
+        }
+
+        //Enable CAMERAS
+        hpu_regs.reg_offset = RX_CTRL_REG;
+        hpu_regs.rw = 1;
+        hpu_regs.data = RX_REG_ENABLE_CAMERAS | MSK_RX_CTRL_REG;
+
+        if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+
+            yError() << "Error: cannot set camera register";
+            close(fd);
+            fd = -1;
+            return false;
+        }
+
+    } else {
+
+        yInfo() << "Configuring SpiNNaker";
+
+        //ENABLE tx of spinnaker
+        hpu_regs.reg_offset = TX_CTRL_REG;
+        hpu_regs.rw = 1;
+        hpu_regs.data = 0x68;
+        if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+            yError() << "Error: cannot set spinnaker transmit";
+            close(fd); fd = -1;
+            return false;
+        }
+
+        //ENABLE rx of spinnaker on auxillary channel
+        hpu_regs.reg_offset = AUX_RX_CTRL_REG;
+        hpu_regs.rw = 1;
+        hpu_regs.data = 0x08;
+        if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+            yError() << "Error: cannot set spinnaker transmit";
+            close(fd); fd = -1;
+            return false;
+        }
+
+        //ENABLE loopback  (if required)
+        if(loopback) {
+            yWarning() << "SpiNNaker in Loopback mode";
+            hpu_regs.reg_offset = CTRL_REG;
+            hpu_regs.rw = 0;
+            hpu_regs.data = 0;
+            if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+                yError() << "Error: cannot read CTRL_REG";
+                close(fd); fd = -1;
+                return false;
+            }
+            hpu_regs.data |= 0x00C00000;
+            hpu_regs.rw = 1;
+            if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+                yError() << "Error: cannot set loopback";
+                close(fd); fd = -1;
+                return false;
+            }
+        }
+
+
+        //READ IRQ status
+        hpu_regs.reg_offset = IRQ_REG;
+        hpu_regs.rw = 0;
+        hpu_regs.data = 0;
+        if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+            yError() << "Error: cannot read IRQ status";
+            close(fd); fd = -1;
+            return false;
+        }
+
+        std::cout << "IRQ status register: ";
+        std::cout << std::hex << hpu_regs.data << std::endl;
+
+        //READ IP configuration
+        hpu_regs.reg_offset = IP_CFNG_REG;
+        hpu_regs.rw = 0;
+        hpu_regs.data = 0;
+        if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+            yError() << "Error: cannot read IP configuration";
+            close(fd); fd = -1;
+            return false;
+        }
+
+        std::cout << "IP configuration: ";
+        std::cout << std::hex << hpu_regs.data << std::endl;
+
+
+
+    }
+
+
+    return true;
+}
+
+bool hpuInterface::openReadPort(string module_name, bool direct_read,
+                                unsigned int packet_size,
+                                unsigned int maximum_internal_memory)
+{
+    if(fd < 0 || !D2Y.open(module_name, fd, pool_size, direct_read, packet_size,
+                           maximum_internal_memory))
         return false;
 
-
-    fprintf(stdout,"opening port for receiving the events from yarp \n");
-    this->useCallback();
-    return yarp::os::BufferedPort<ev::vBottle>::open("/" + moduleName + "/vBottle:i");
-
+    read_thread_open = true;
+    return true;
 }
 
-void yarp2device::close()
+bool hpuInterface::openWritePort(string module_name)
 {
-    std::cout << "Y2D: received " << countAEs << " events from yarp" << std::endl;
+    if(fd < 0 || !Y2D.open(module_name, fd))
+        return false;
 
-    std::cout << "Y2D: written " << writtenAEs << " events to device"
-              << std::endl;
-    yarp::os::BufferedPort<ev::vBottle>::close();
+    write_thread_open = true;
+    return true;
 }
 
-void yarp2device::interrupt()
+
+void hpuInterface::start()
 {
-    yarp::os::BufferedPort<ev::vBottle>::interrupt();
+    if(read_thread_open)
+        D2Y.start();
+    if(write_thread_open)
+        Y2D.start();
 }
 
-void yarp2device::onRead(ev::vBottle &bot)
+void hpuInterface::stop()
 {
-
-    ev::vQueue q = bot.getAll();
-    deviceData.resize(q.size()*2);  // deviceData has TS and ADDRESS, its size is double the number of events
-    countAEs += q.size(); // counter for total number of events received from yarp port for the whole duration of the thread
-
-    //std::cout<<"Y2D onRead - events queue size: "<<q.size()<<std::endl;
-    //std::cout<<"Y2D onRead - deviceData size/2: "<<deviceData.size()/2<<std::endl;
-
-    // write events on the vector of unsigned int
-    // checks for empty or non valid queue????
-    int i = 0;
-    for(ev::vQueue::iterator qi = q.begin(); qi != q.end(); qi++)
-    {
-        ev::event<ev::AddressEvent> aep = ev::as_event<ev::AddressEvent>(*qi);
-        if(!aep) continue;
-
-        int channel = aep->getChannel();
-        int polarity = aep->polarity;
-        int x = aep->x;
-        int y = aep->y;
-        int ts = aep->stamp;
-
-        // address
-        int word0 = ((channel&0x01)<<15)|((y&0x7f)<<8)|((x&0x7f)<<1)|(polarity&0x01);
-
-        // set intial timestamp to compute diff
-        if (flagStart == false)
-        {
-            //std::cout<<"TS prev  :"<<tsPrev<<"us"<<std::endl;
-            //std::cout<<"TS       :"<<ts<<"us"<<std::endl;
-            std::cout<<"Delta TS :"<<ts - tsPrev<<"us"<<std::endl;
-
-            //std::cout<<"Initial TS"<<ts<<"us"<<std::endl;
-            tsPrev = ts;
-            flagStart = true;
-        }
-        // timestamp difference
-        int word1 = (ts - tsPrev);
-
-        if (tsPrev > ts)
-        {
-            //std::cout<<"Wrap TS: ts      "<<ts<<"us"<<std::endl;
-            //std::cout<<"Wrap TS: ts prev "<<tsPrev<<"us"<<std::endl;
-            word1 += ev::vtsHelper::maxStamp();
-
-            //std::cout<<"Wrap TS: max     "<<eventdriven::vtsHelper::maxStamp()<<"us"<<std::endl;
-            std::cout<<"--------------- Wrap TS: Delta TS new "<<word1<<"us--------------------"<<std::endl;
-            word1 = 0;
-
-        }
-
-        word1 = word1 * clockScale;
-
-        deviceData[i] = word1;   //timestamp
-        deviceData[i+1] = word0; //data
-
-        i += 2;
-        tsPrev = ts;
-
+    if(read_thread_open) {
+        D2Y.stop();
+        read_thread_open = false;
     }
-    flagStart = false; // workaround for long delays due to large delta ts across bottles
-    // write to the device
-
-    unsigned int wroteData = ::write(devDesc, deviceData.data(), deviceData.size() * sizeof(unsigned int)); // wroteData is the number of data written to the FIFO (double the amount of events)
-
-    //    std::cout<<"Y2D write: writing to device"<<deviceData.size()<< "elements"<<std::endl;
-    //    std::cout<<"Y2D write: wrote to device"<<wroteData<< "elements"<<std::endl;
-    if (!wroteData)
-    {
-        std::cout<<"Y2D write: error writing to device"<<std::endl;
-        return;
+    if(write_thread_open) {
+        Y2D.stop();
+        write_thread_open = false;
     }
-    else
-    {
-        writtenAEs += wroteData/2; // written events
-        if (wroteData != deviceData.size()){
-            std::cout<<"Y2D mismatch - sent events: "<<deviceData.size()<<" wrote events:"<<wroteData<<std::endl;
 
-        } else {
-            return;
-        }
-    }
 }
-
-

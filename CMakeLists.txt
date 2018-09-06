@@ -16,8 +16,6 @@ option(USE_QTCREATOR "Add apps/drivers to QtCreator IDE" OFF)
 
 #YARP
 find_package(YARP REQUIRED)
-list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH})
-include(YarpInstallationHelpers)
 
 #ICUBCONTRIB
 find_package(ICUBcontrib)

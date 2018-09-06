@@ -44,10 +44,6 @@ void isoInterestDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     if(eSet.empty()) return;
     if(vTime < 0) vTime = eSet.back()->stamp;
 
-    int dt = vTime - eSet.front()->stamp;
-    if(dt < 0) dt += ev::vtsHelper::max_stamp;
-    maxdt = std::max(maxdt, dt);
-
     int skip = 1 + eSet.size() / 50000;
 
     int r = 1;
@@ -63,7 +59,8 @@ void isoInterestDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         //transform values
         int dt = vTime - cep->stamp;
         if(dt < 0) dt += ev::vtsHelper::max_stamp;
-        dt = ((double)dt / maxdt) * Zlimit + 0.5;
+        if((unsigned int)dt > max_window) continue;
+        dt = dt * ts_to_axis + 0.5;
         int px = cep->x;
         int py = cep->y;
         if(flip) {

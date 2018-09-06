@@ -66,7 +66,7 @@ void FlowEvent::decode(int *&data)
     vy=*(float*)(data++);
 }
 
-bool FlowEvent::decode(const yarp::os::Bottle &packet, int &pos)
+bool FlowEvent::decode(const yarp::os::Bottle &packet, size_t &pos)
 {
     // check length
     if (AddressEvent::decode(packet, pos) &&

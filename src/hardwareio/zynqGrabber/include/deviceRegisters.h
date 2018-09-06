@@ -208,6 +208,8 @@
 #define MASK_REG         0x20
 #define STMP_REG         0x28
 #define RX_CTRL_REG      0x40
+#define TX_CTRL_REG      0x44
+#define IP_CFNG_REG      0x50
 #define ID_REG           0x5C
 #define AUX_RX_CTRL_REG  0x60
 

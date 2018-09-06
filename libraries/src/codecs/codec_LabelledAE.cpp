@@ -62,7 +62,7 @@ void LabelledAE::decode(int *&data)
     data++;
 }
 
-bool LabelledAE::decode(const yarp::os::Bottle &packet, int &pos)
+bool LabelledAE::decode(const yarp::os::Bottle &packet, size_t &pos)
 {
     if (AddressEvent::decode(packet, pos) && pos + 1 <= packet.size())
     {

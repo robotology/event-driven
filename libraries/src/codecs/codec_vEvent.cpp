@@ -46,7 +46,7 @@ void vEvent::encode(std::vector<int> &b, unsigned int &pos) const
     b[pos++] = stamp&vtsHelper::max_stamp;
 }
 
-bool vEvent::decode(const yarp::os::Bottle &packet, int &pos)
+bool vEvent::decode(const yarp::os::Bottle &packet, size_t &pos)
 {
     if(pos + 1 <= packet.size()) {
         stamp = packet.get(pos).asInt()&vtsHelper::max_stamp;

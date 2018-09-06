@@ -351,6 +351,7 @@ protected:
     long unsigned int delay_t;
     double event_rate;
 
+
 public:
 
     /// \brief constructor
@@ -361,6 +362,8 @@ public:
         delay_t = 0;
         event_rate = 0;
         working_queue = nullptr;
+
+        setPriority(99, SCHED_FIFO);
 
         dataavailable.wait(); //init counter to 0
     }
@@ -482,7 +485,10 @@ public:
     /// \brief ask for the number of vQueues currently allocated.
     unsigned int queryunprocessed()
     {
-        return qq.size();
+        if(working_queue)
+            return qq.size() - 1;
+        else
+            return qq.size();
     }
 
     /// \brief ask for the number of events in all vQueues.

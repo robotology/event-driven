@@ -66,7 +66,7 @@ public:
     {
 
         //for each list of events
-        for(int tagi = 0; tagi < eb.yarp::os::Bottle::size(); tagi+=2) {
+        for(size_t tagi = 0; tagi < eb.yarp::os::Bottle::size(); tagi+=2) {
 
             //get the appended event type
             const std::string tagname =
@@ -123,7 +123,7 @@ public:
     template<class T> void addtoendof(vQueue &q) {
 
         //the bottle is stored as TAG (EVENTS) TAG (EVENTS)
-        for(int i = 0; i < Bottle::size(); i+=2) {
+        for(size_t i = 0; i < Bottle::size(); i+=2) {
 
             //so for each TAG we create an event of that type
             event<> e = createEvent(Bottle::get(i).asString());
@@ -149,7 +149,7 @@ public:
 
             //and decode each one also creating the memory with clone
             //NOTE: push_back seems as fast as preallocation for a deque
-            int pos_b = 0;
+            size_t pos_b = 0;
             while(pos_b < b->size()) {
                 if(e->decode(*b, pos_b)) {
                     q.push_back(e->clone());

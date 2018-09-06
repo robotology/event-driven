@@ -72,7 +72,7 @@ void drawcircle(yarp::sig::ImageOf<yarp::sig::PixelBgr> &image, int cx, int cy,
             if(fabs(sqrt(pow(x, 2.0) + pow(y, 2.0)) - (double)cr) > 0.8)
                 continue;
             int px = cx + x; int py = cy + y;
-            if(py<0 || py>image.height()-1 || px<0 || px>image.width()-1)
+            if(py<0 || py>(int)image.height()-1 || px<0 || px>(int)image.width()-1)
                 continue;
             switch(id) {
             case(0): //green

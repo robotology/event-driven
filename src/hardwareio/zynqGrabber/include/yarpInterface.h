@@ -26,6 +26,12 @@
 #include <yarp/os/all.h>
 #include <iCub/eventdriven/all.h>
 #include <string>
+#include <vector>
+
+using namespace yarp::os;
+using namespace ev;
+using std::string;
+using std::vector;
 
 /******************************************************************************/
 //vDevReadBuffer
@@ -35,49 +41,31 @@ class vDevReadBuffer : public yarp::os::Thread {
 private:
 
     //parameters
-    unsigned int bufferSize;
-    unsigned int readSize;
+    unsigned int read_size;
+    unsigned int buffer_size;
+
 
     //internal variables/storage
     int fd;
-    unsigned int readCount;
-    unsigned int lossCount;
-    unsigned int bytesperevent;
-    bool msgflag;
-
-    std::vector<unsigned char> *readBuffer;
-    std::vector<unsigned char> *accessBuffer;
+    unsigned int read_count;
+    unsigned int loss_count;
     std::vector<unsigned char> buffer1;
     std::vector<unsigned char> buffer2;
-    std::vector<unsigned char> discardbuffer;
+    std::vector<unsigned char> discard_buffer;
+
+    std::vector<unsigned char> *read_buffer;
+    std::vector<unsigned char> *access_buffer;
 
     yarp::os::Semaphore safety;
     yarp::os::Semaphore signal;
     bool bufferedreadwaiting;
 
-    struct hpu_regs_t{
-
-        unsigned int reg_offset;
-        char rw;
-        unsigned int data;
-
-    };
-
-
-    bool enableInterface(unsigned int reg_offset, unsigned int data, int fd);
-
 public:
 
-    vDevReadBuffer();
-
-    bool initialise(std::string devicename, unsigned int bufferSize = 0,
-                    unsigned int readSize = 0);
-
-    //virtual bool threadInit();      //run before thread starts
-    virtual void run();             //main function
-    //virtual void onStop();          //run when stop() is called (first)
-    virtual void threadRelease();   //run after thread stops (second)
-    std::vector<unsigned char>& getBuffer(unsigned int &nBytesRead, unsigned int &nBytesLost);
+    vDevReadBuffer(int fd, unsigned int read_size, unsigned int buffer_size);
+    std::vector<unsigned char>& getBuffer(unsigned int &nBytesRead,
+                                          unsigned int &nBytesLost);
+    virtual void run();
 
 };
 
@@ -88,85 +76,88 @@ class device2yarp : public yarp::os::Thread {
 
 private:
 
-    //parameters
-    bool strict;
-    bool errorchecking;
-    bool applyfilter;
-    bool jumpcheck;
-    unsigned int chunksize;
+    //data buffer thread
+    vDevReadBuffer *device_reader;
+    yarp::os::Port output_port;
 
-    //internal variables
-    yarp::os::Port portvBottle;
-    yarp::os::BufferedPort<yarp::os::Bottle> portEventCount;
+    //parameters
+    unsigned int packet_size;
+    bool direct_read;
+    Stamp yarp_stamp;
+
     int countAEs;
     int countLoss;
     double rate;
     int prevAEs;
     double prevTS;
-    yarp::os::Stamp vStamp;
-    ev::vNoiseFilter vfilter;
-
-    //data buffer thread
-    vDevReadBuffer deviceReader;
-
-    int applysaltandpepperfilter(std::vector<unsigned char> &data, int nBytesRead);
-    void tsjumpcheck(std::vector<unsigned char> &data, int nBytesRead);
-
 
 public:
 
     device2yarp();
-    bool initialise(std::string moduleName = "", bool check = false,
-                    std::string deviceName = "", unsigned int bufferSize = 800000,
-                    unsigned int readSize = 1024, unsigned int chunkSize = 40960);
-    void initialiseFilter(bool applyfilter, int width, int height, int temporalsize, int spatialSize)
-    {
-        this->applyfilter = applyfilter;
-        vfilter.initialise(width, height, temporalsize, spatialSize);
-    }
+    bool open(string module_name, int fd, unsigned int read_size,
+              bool direct_read, unsigned int packet_size,
+              unsigned int internal_storage_size);
+    void setDirectRead(bool value = true);
 
-    void checkForTSJumps()
-    {
-        jumpcheck = true;
-    }
-
-    virtual void run();
-    virtual void threadRelease();
-    virtual void afterStart(bool success);
-
+    void run();
+    void onStop();
+    void threadRelease();
+    void afterStart(bool success);
 
 };
 
 /******************************************************************************/
 //yarp2device
 /******************************************************************************/
-class yarp2device : public yarp::os::BufferedPort<ev::vBottle>
+class yarp2device : public Thread
 {
-    int           devDesc;                    // file descriptor for opening device /dev/spinn2neu
-    bool          flagStart;                    // flag to check if this is the first time we run the callback,
-    // used to initialise the timestamp for computing the difference
-    int      tsPrev;                       // FIRST TIMESTAMP TO COMPUTE DIFF
-    int           countAEs;
-    int           writtenAEs;
-    double clockScale;
+protected:
 
-    //vector to store the masked address events to the device
-    std::vector<unsigned int> deviceData;
+    int fd;
+    bool valid;
+    BufferedPort<Bottle> input_port;
+    vector<int> data_copy;
 
+    unsigned int total_events;
 
 public:
 
     yarp2device();
-    bool    initialise(std::string moduleName, std::string deviceName);
-    bool    init();
-    void    close();
-    void    onRead(ev::vBottle &bot);
-    void    interrupt();
+    bool open(string module_name, int fd);
+    void run();
+    void onStop();
 
 
 };
 
+/******************************************************************************/
+//hpuInterface
+/******************************************************************************/
+class hpuInterface {
 
+private:
 
+    int fd;
+    device2yarp D2Y;
+    yarp2device Y2D;
+
+    int pool_size;
+    bool read_thread_open;
+    bool write_thread_open;
+
+public:
+
+    hpuInterface();
+
+    bool configureDevice(string device_name, bool spinnaker = false,
+                         bool loopback = false);
+    bool openReadPort(string module_name, bool direct_read,
+                      unsigned int packet_size,
+                      unsigned int maximum_internal_memory);
+    bool openWritePort(string module_name);
+    void start();
+    void stop();
+
+};
 
 #endif

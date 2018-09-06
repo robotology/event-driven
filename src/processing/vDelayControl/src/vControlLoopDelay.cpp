@@ -108,7 +108,7 @@ yarp::sig::Vector delayControl::getTrackingStats()
     stats[5] = dy;
     stats[6] = dr;
     stats[7] = vpf.maxlikelihood / (double)maxRawLikelihood;
-    stats[8] = 5000* cpuusage.getProcessorUsage();
+    stats[8] = cpuusage.getProcessorUsage();
     stats[9] = qROI.n;
 
     return stats;
@@ -348,7 +348,7 @@ void delayControl::run()
         //output a debug image
         if(debugPort.getOutputCount()) {
 
-            static double prev_likelihood = vpf.maxlikelihood;
+            //static double prev_likelihood = vpf.maxlikelihood;
             static int NOFPANELS = 3;
 
             static yarp::sig::ImageOf< yarp::sig::PixelBgr> *image_ptr = 0;
@@ -363,7 +363,7 @@ void delayControl::run()
                  //       vpf.maxlikelihood <= detectionThreshold;
                 trigger_capture = yarp::os::Time::now() - pimagetime > 0.1;
             }
-            prev_likelihood = vpf.maxlikelihood;
+            //prev_likelihood = vpf.maxlikelihood;
 
             //if we are in waiting state and
             if(trigger_capture) {

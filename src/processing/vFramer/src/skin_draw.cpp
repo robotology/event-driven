@@ -53,8 +53,8 @@ void skinDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 
 
         int dt = eSet.back()->stamp - (*qi)->stamp; // start with newest event
-        if(dt < 0) dt += ev::vtsHelper::maxStamp();
-        if(dt > twindow) break;
+        if(dt < 0) dt += ev::vtsHelper::max_stamp;
+        if((unsigned int)dt > display_window) break;
 
 
         auto aep = is_event<AddressEvent>(*qi);

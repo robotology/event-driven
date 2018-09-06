@@ -35,23 +35,11 @@ std::string isoDraw::getEventType()
     return AddressEvent::tag;
 }
 
-void isoDraw::pttr(int &x, int &y, int &z) {
-    // we want a negative rotation around the y axis (yaw)
-    // a positive rotation around the x axis (pitch) (no roll)
-    // the z should always be negative values.
-    // the points need to be shifted across by negligble amount
-    // the points need to be shifted up by (x = max, y = 0, ts = 0 rotation)
-
-    int xmod = x*CY + z*SY + 0.5; // +0.5 rounds rather than floor
-    int ymod = y*CX - SX*(-x*SY + z*CY) + 0.5;
-    int zmod = y*SX + CX*(-x*SY + z*CY) + 0.5;
-    x = xmod; y = ymod; z = zmod;
-}
 
 void isoDraw::initialise()
 {
-    maxdt = vtsHelper::max_stamp / 2.0; //just to initialise (but we don't use here)
     Zlimit = Xlimit * 3;
+    ts_to_axis = (double)Zlimit / max_window;
 
     thetaX = 20 * 3.14 / 180.0;  //PITCH
     thetaY = 40 * 3.14 / 180.0;  //YAW
@@ -119,14 +107,14 @@ void isoDraw::initialise()
 
     }
 
-    int tsi;
-    for(tsi = 0; tsi < (int)(Zlimit*0.3); tsi++) {
+    unsigned int tsi;
+    for(tsi = 0; tsi < (unsigned int)(Zlimit*0.3); tsi++) {
 
         x = Xlimit; y = Ylimit; z = tsi; pttr(x, y, z);
         y += imageyshift; x += imagexshift;
         baseimage.at<cv::Vec3b>(y, x) = invertedaxisc;
 
-        if(tsi == (int)(Zlimit *0.15)) {
+        if(tsi == (unsigned int)(Zlimit *0.15)) {
             cv::putText(baseimage, std::string("t"), cv::Point(x, y+12),
                         cv::FONT_ITALIC, 0.5, invertedtextc, 1, 8, false);
         }
@@ -145,10 +133,10 @@ void isoDraw::initialise()
     }
 
     for(tsi = vtsHelper::vtsscaler / 10.0;
-        tsi < (int)(vtsHelper::max_stamp / 2);
+        tsi < max_window;
         tsi += vtsHelper::vtsscaler / 10.0) {
 
-        int zc = ((double)tsi / maxdt) * Zlimit + 0.5;
+        int zc = tsi * ts_to_axis + 0.5;
 
         for(int xi = 0; xi < Xlimit; xi++) {
             x = xi; y = 0; z = zc; pttr(x, y, z);
@@ -186,10 +174,6 @@ void isoDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     if(eSet.empty()) return;
     if(vTime < 0) vTime = eSet.back()->stamp;
 
-    int dt = vTime - eSet.front()->stamp;
-    if(dt < 0) dt += ev::vtsHelper::max_stamp;
-    maxdt = std::max(maxdt, dt);
-
     int skip = 1 + eSet.size() / 100000;
 
     for(int i = eSet.size() - 1; i >= 0; i -= skip) {
@@ -199,7 +183,8 @@ void isoDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         //transform values
         int dt = vTime - aep->stamp;
         if(dt < 0) dt += ev::vtsHelper::max_stamp;
-        dt = ((double)dt / maxdt) * Zlimit + 0.5;
+        if((unsigned int)dt > max_window) continue;
+        dt = dt * ts_to_axis + 0.5;
         int px = aep->x;
         int py = aep->y;
         if(flip) {

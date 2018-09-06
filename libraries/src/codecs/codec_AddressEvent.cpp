@@ -100,7 +100,7 @@ void AddressEvent::decode(int *&data)
     data++;
 }
 
-bool AddressEvent::decode(const yarp::os::Bottle &packet, int &pos)
+bool AddressEvent::decode(const yarp::os::Bottle &packet, size_t &pos)
 {
     // check length
     if (vEvent::decode(packet, pos) && pos + 1 <= packet.size())

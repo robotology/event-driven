@@ -52,7 +52,7 @@ void flowDraw::draw(cv::Mat &image, const vQueue &eSet, int vTime)
 
         int dt = vTime - (*qi)->stamp;
         if(dt < 0) dt += ev::vtsHelper::max_stamp;
-        if(dt > twindow/4) break;
+        if((unsigned int)dt > display_window/4) break;
 
         auto ofp = is_event<ev::FlowEvent>(*qi);
 

@@ -8,7 +8,6 @@ file(GLOB header include/*.h)
 file(GLOB biasfiles bias_files/*.ini)
 
 include_directories(${PROJECT_SOURCE_DIR}/include
-                    ${YARP_INCLUDE_DIRS}
                     ${EVENTDRIVENLIBS_INCLUDE_DIRS})
 
 add_executable(${MODULENAME} ${source} ${header})

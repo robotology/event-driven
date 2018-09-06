@@ -25,6 +25,11 @@
 #include <zynqGrabberModule.h>
 #include <fstream>
 #include <ctime>
+#include <string>
+
+using namespace ev;
+using namespace yarp::os;
+using std::string;
 
 int main(int argc, char * argv[])
 {
@@ -49,10 +54,8 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 
     std::string moduleName = rf.check("name", yarp::os::Value("/zynqGrabber")).asString();
     setName(moduleName.c_str());
-    bool errorcheck = rf.check("errorcheck") && rf.check("errorcheck", yarp::os::Value(true)).asBool();
     bool verbose = rf.check("verbose") && rf.check("verbose", yarp::os::Value(true)).asBool();
     bool biaswrite = rf.check("biaswrite") && rf.check("biaswrite", yarp::os::Value(true)).asBool();
-    bool jumpcheck = rf.check("jumpcheck") && rf.check("jumpcheck", yarp::os::Value(true)).asBool();
     bool iBias = rf.check("iBias") && rf.check("iBias", yarp::os::Value(true)).asBool();
     std::string logfile = rf.check("logfile", yarp::os::Value("/home/icub/zynqGrabberlog.txt")).asString();
 
@@ -159,12 +162,12 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 
     }
 
-    bool yarppresent = yarp::os::Network::checkNetwork();
+    bool yarppresent = yarp::os::Network::checkNetwork(5);
     if(!yarppresent)
         yError() << "Could not connect to YARP network";
 
     if(!yarppresent || biaswrite) {
-        vsctrlMngRight.disconnect(true);
+        vsctrlMngLeft.disconnect(true);
         std::cout << "Left camera off" << std::endl;
         vsctrlMngRight.disconnect(true);
         std::cout << "Right camera off" << std::endl;
@@ -179,42 +182,35 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     //open rateThread device2yarp
     if(rf.check("dataDevice")) {
 
-        std::string dataDevice = rf.find("dataDevice").asString();
-        int readPacketSize = 8 * rf.check("readPacketSize", yarp::os::Value("512")).asInt();
-        int bufferSize     = 8 * rf.check("bufferSize", yarp::os::Value("5120")).asInt();
-        int maxBottleSize  = 8 * rf.check("maxBottleSize", yarp::os::Value("5120")).asInt();
+        string data_device = rf.find("dataDevice").asString();
+        bool use_spinnaker = rf.check("use_spinnaker") &&
+                rf.check("use_spinnaker", yarp::os::Value(true)).asBool();
+        bool loopback = rf.check("loopback_debug") &&
+                rf.check("loopback_debug", yarp::os::Value(true)).asBool();
 
-        if(!D2Y.initialise(moduleName, errorcheck, dataDevice, bufferSize, readPacketSize, maxBottleSize)) {
-            std::cout << "A data device was specified but could not be initialised" << std::endl;
+        if(!hpu.configureDevice(data_device, use_spinnaker, loopback))
             return false;
-        } else {
-            //see if we want to apply a filter to the events
-            if(rf.check("applyFilter", yarp::os::Value("false")).asBool()) {
 
-                yarp::os::Bottle filp = rf.findGroup("FILTER_PARAMS");
-                if(!filp.isNull()) {
-                    yInfo() << "APPLYING FILTER";
-                    std::cout << filp.toString() << std::endl;
+        bool read_flag = rf.check("hpu_read") &&
+                rf.check("hpu_read", yarp::os::Value(true)).asBool();
+        bool write_flag = rf.check("hpu_write") &&
+                rf.check("hpu_write", yarp::os::Value(true)).asBool();
+        int packet_size     = 8 * rf.check("packet_size", yarp::os::Value("5120")).asInt();
+        int buffer_size  = 8 * rf.check("buffer_size", yarp::os::Value("5120000")).asInt();
+        bool direct_read = rf.check("direct_read") &&
+                rf.check("direct_read", yarp::os::Value(true)).asBool();
 
-                    D2Y.initialiseFilter(true,
-                                         filp.find("width").asInt(),
-                                         filp.find("height").asInt(),
-                                         filp.find("tsize").asInt(),
-                                         filp.find("ssize").asInt());
-                }
-            }
+        if(read_flag)
+            if(!hpu.openReadPort(moduleName, direct_read, packet_size,
+                                 buffer_size))
+                return false;
 
-            if(jumpcheck) {
-                yInfo() << "CHECKING FOR TIMESTAMP JUMPS";
-                D2Y.checkForTSJumps();
-            }
-            D2Y.start();
-        }
+        if(write_flag)
+            if(!hpu.openWritePort(moduleName))
+                return false;
 
-        //if(!Y2D.initialise(moduleName, dataDevice)) {
-        //    std::cerr << "Could not open YARP ports for Y2D" << std::endl;
-        //    return false;
-        //}
+
+        //hpu.start();
     }
 
     if (!handlerPort.open(moduleName)) {
@@ -229,8 +225,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 bool zynqGrabberModule::interruptModule() {
     std::cout << "breaking YARP connections.. ";
     handlerPort.close();        // rpc of the RF module
-    Y2D.close();
-    D2Y.stop();                // bufferedport from yarp to device
+    hpu.stop();
     std::cout << "done" << std::endl;
 
     std::cout << "closing device drivers.. ";

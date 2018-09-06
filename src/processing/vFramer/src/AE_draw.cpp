@@ -44,7 +44,7 @@ void addressDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 
         int dt = vTime - (*qi)->stamp;
         if(dt < 0) dt += ev::vtsHelper::max_stamp;
-        if(dt > twindow) break;
+        if((unsigned int)dt > display_window) break;
 
 
         auto aep = is_event<AddressEvent>(*qi);
