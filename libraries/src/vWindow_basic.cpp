@@ -140,7 +140,8 @@ event<AE> vSurface::getMostRecent()
 
 vTempWindow::vTempWindow()
 {
-    tLower = vtsHelper::vtsscaler * 0.5;
+    //whichever is smaller: 2 seconds or 1/2 of the max stamp
+    tLower = std::min(vtsHelper::max_stamp * 0.45, vtsHelper::vtsscaler * 2.0);
     tUpper = vtsHelper::max_stamp - tLower;
 }
 
