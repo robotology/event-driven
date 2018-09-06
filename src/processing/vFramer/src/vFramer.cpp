@@ -128,7 +128,7 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
             vDraw * newDrawer = createDrawer(drawtypelist->get(j).asString());
             if(newDrawer) {
                 newDrawer->setRetinaLimits(retinaWidth, retinaHeight);
-                newDrawer->setTemporalLimits(eventWindow, 0.5*vtsHelper::vtsscaler);
+                newDrawer->setTemporalLimits(eventWindow, 2.0*vtsHelper::vtsscaler);
                 newDrawer->setFlip(flip);
                 newDrawer->initialise();
                 drawers[i].push_back(newDrawer);
