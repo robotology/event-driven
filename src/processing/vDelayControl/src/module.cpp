@@ -138,9 +138,9 @@ double module::getPeriod()
     return 0.05;
 }
 
-#define CMD_HELP  VOCAB4('h', 'e', 'l', 'p')
-#define CMD_SET   VOCAB3('s', 'e', 't')
-#define CMD_RESET VOCAB3('r', 'e', 's')
+#define CMD_HELP  createVocab('h', 'e', 'l', 'p')
+#define CMD_SET   createVocab('s', 'e', 't')
+#define CMD_RESET createVocab('r', 'e', 's')
 
 bool module::respond(const yarp::os::Bottle& command,
                                 yarp::os::Bottle& reply) {

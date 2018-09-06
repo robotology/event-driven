@@ -229,7 +229,7 @@ bool vVisionCtrl::configureBiases(){
     std::cout << "Programming " << bias.size() << " biases:" << std::endl;
     double vref, voltage;
     int header;
-    int i;
+    size_t i;
     for(i = 1; i < bias.size() - 1; i++) {
         yarp::os::Bottle *biasdata = bias.get(i).asList();
         vref = biasdata->get(1).asInt();
@@ -396,9 +396,8 @@ void vVisionCtrl::printConfiguration()
     std::cout << "== Bias Hex Stream ==" << std::endl;
     double vref, voltage;
     int header;
-    int i;
     printf("0x%02X\n", 3);
-    for(i = 1; i < bias.size(); i++) {
+    for(size_t i = 1; i < bias.size(); i++) {
         yarp::os::Bottle *biasdata = bias.get(i).asList();
         vref = biasdata->get(1).asInt();
         header = biasdata->get(2).asInt();
