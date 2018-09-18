@@ -24,6 +24,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
+#include <iostream>
+#include <iomanip>
 
 /******************************************************************************/
 //vDevReadBuffer
@@ -246,6 +248,7 @@ yarp2device::yarp2device()
 bool yarp2device::open(std::string module_name, int fd)
 {
     this->fd = fd;
+    input_port.setStrict();
     return input_port.open(module_name + "/AE:i");
 }
 
@@ -258,12 +261,15 @@ void yarp2device::onStop()
 void yarp2device::run()
 {
 
+    yInfo() << "Begin reading from device ... ";
+
     while(true) {
 
         Bottle *yarp_bottle = input_port.read(true); //blocking read
+        //std::cout << ".";
         if(!yarp_bottle) return; //when interrupt is called returns null
-
-        Bottle *data_bottle = yarp_bottle->get(1).asList();
+        Bottle *data_bottle = yarp_bottle->get(1).asList();  
+        
         size_t data_size = data_bottle->size();
         if(data_size > data_copy.size())
             data_copy.resize(data_size, 0);
@@ -281,7 +287,7 @@ void yarp2device::run()
         size_t written = 0;
         while(written < bytes_to_write) {
 
-            int ret = write(fd, buffer + written, bytes_to_write - written);
+            int ret = write(fd, buffer + written, sizeof(int) * 2);
 
             if(ret > 0) { //success!
                 written += ret;
@@ -292,7 +298,17 @@ void yarp2device::run()
         }
 
         total_events += written / (2.0 * sizeof(int));
-
+        
+        static double previous_time = yarp::os::Time::now();
+        double dt = yarp::os::Time::now() - previous_time;
+        if(dt > 3.0) {
+            yInfo() << "[WRITE] " << 0.000032 * total_events / dt << " mbps (" 
+                << input_port.getPendingReads() << 
+                ") .Example:" << data_copy[2] << data_copy[3];
+            total_events = 0;
+            previous_time += dt;
+        }
+        
     }
 
 
@@ -332,22 +348,21 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
         }
     }
 
-    //READ IP configuration
+    //READ ID 
     hpu_regs.reg_offset = ID_REG;
     hpu_regs.rw = 0;
     hpu_regs.data = 0;
     if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
-        yError() << "Error: cannot read IP configuration";
+        yError() << "Error: cannot read ID_REG configuration";
         close(fd); fd = -1;
         return false;
     }
 
     std::cout << "ID and Version";
     char *c = (char *)&(hpu_regs.data);
-    int major = (*(c+3))>>4;
-    int minor = (*(c+3))&0xF;
-    std::cout << *c << *(c+1) << *(c+2) << std::hex << major <<"." << minor
-              << std::endl;
+    int major = ((int)(*(c+3)))>>4;
+    int minor = ((int)(*(c+3)))&0xF;
+    std::cout << *c << *(c+1) << *(c+2) << major << "." << minor << std::endl;
 
     //32 bit timestamp
     unsigned int timestampswitch = 1;
@@ -362,9 +377,6 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
 
     }
     yInfo() << "pool size: " << pool_size;
-
-
-
 
 
     if(!spinnaker) {
@@ -432,13 +444,38 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
                 close(fd); fd = -1;
                 return false;
             }
-            hpu_regs.data |= 0x00C00000;
+            std::cout << "CTRL_REG: 0x" << std::hex << std::setw(8) 
+                      << std::setfill('0') << hpu_regs.data << std::endl;
+            //hpu_regs.data |= 0x02000000;
+            hpu_regs.data = 0x02008007;
             hpu_regs.rw = 1;
             if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
                 yError() << "Error: cannot set loopback";
                 close(fd); fd = -1;
                 return false;
             }
+            std::cout << "CTRL_REG: 0x" << std::hex << std::setw(8) 
+                      << std::setfill('0') << hpu_regs.data << std::endl;
+        } else {
+            hpu_regs.reg_offset = CTRL_REG;
+            hpu_regs.rw = 0;
+            hpu_regs.data = 0;
+            if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+                yError() << "Error: cannot read CTRL_REG";
+                close(fd); fd = -1;
+                return false;
+            }
+            std::cout << "CTRL_REG: 0x" << std::hex << std::setw(8) 
+                      << std::setfill('0') << hpu_regs.data << std::endl;
+            hpu_regs.data &= ~0x02C00000;
+            hpu_regs.rw = 1;
+            if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+                yError() << "Error: cannot set loopback";
+                close(fd); fd = -1;
+                return false;
+            }
+            std::cout << "CTRL_REG: 0x" << std::hex << std::setw(8) 
+                      << std::setfill('0') << hpu_regs.data << std::endl;
         }
 
 
@@ -508,6 +545,7 @@ void hpuInterface::start()
 
 void hpuInterface::stop()
 {
+    close(fd); fd = -1;
     if(read_thread_open) {
         D2Y.stop();
         read_thread_open = false;

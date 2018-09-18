@@ -210,7 +210,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
                 return false;
 
 
-        //hpu.start();
+        hpu.start();
     }
 
     if (!handlerPort.open(moduleName)) {
