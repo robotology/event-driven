@@ -189,8 +189,10 @@ vPreProcess::vPreProcess(): name("/vPreProcess")
 vPreProcess::~vPreProcess()
 {
     inPort.close();
-    outPort.close();
-    outPort2.close();
+    outPortCamLeft.close();
+    outPortCamRight.close();
+    outPortSkin.close();
+    outPortSkinSamples.close();
 }
 
 void vPreProcess::initBasic(std::string name, int height, int width,
@@ -304,8 +306,10 @@ void vPreProcess::run()
     int prev_bottle_n = 0;
 
 #if DECODE_METHOD != 2
-    outPort.setWriteType(AE::tag);
-    outPort2.setWriteType(AE::tag);
+    outPortCamLeft.setWriteType(AE::tag);
+    outPortCamRight.setWriteType(AE::tag);
+    outPortSkin.setWriteType(AE::tag);
+    outPortSkinSamples.setWriteType(AE::tag);
 #endif
 
     while(true) {
@@ -313,10 +317,10 @@ void vPreProcess::run()
         double pyt = ystamp.getTime();
 
 #if DECODE_METHOD != 2
-        vQueue qleft, qright;
+        vQueue qleft, qright, qskin, qskinsamples;
         const vQueue *q = inPort.read(ystamp);
 #else
-        std::deque<AE> qleft, qright;
+        std::deque<AE> qleft, qright, qskin, qskinsamples;
         const std::vector<AE> *q = inPort.read(ystamp);
 #endif
         if(!q) break;
@@ -328,14 +332,6 @@ void vPreProcess::run()
 #else
         rates.push_back((double)q->size() / (q->back().stamp - q->front().stamp));
 #endif
-
-
-
-//        ev::vQueue *q = 0;
-//        while(!q && !isStopping()) {
-//            q = inPort.getNextQ(ystamp);
-//        }
-//        if(isStopping()) break;
 
         if(precheck && prev_bottle_n + 1 != ystamp.getCount() && ystamp.getCount() && prev_bottle_n) {
             yWarning() << "Dropped bottle:" << prev_bottle_n << "to" << ystamp.getCount();
@@ -350,59 +346,88 @@ void vPreProcess::run()
         for(std::vector<AE>::const_iterator qi = q->begin(); qi != q->end(); qi++) {
             AE vcopy = *qi;
             AE *v = &vcopy;
+
+            if(!v->skin) {
 #endif
 
-            //precheck
-            if(precheck && (v->x < 0 || v->x > resmod.width || v->y < 0 || v->y > resmod.height)) {
-                yWarning() << "Event Corruption:" << v->getContent().toString();
-                continue;
-            }
-
-            //flipx
-            if(flipx) v->x = resmod.width - v->x;
-            //flipy
-            if(flipy) v->y = resmod.height - v->y;
-
-            //salt and pepper filter
-            if(pepper && !thefilter.check(v->x, v->y, v->polarity, v->channel, v->stamp))
-                continue;
-
-            //undistortion
-            if(undistort) {
-                cv::Vec2i mapPix;
-                if(v->getChannel() == 0)
-                    mapPix = leftMap.at<cv::Vec2i>(v->y, v->x);
-                else
-                    mapPix = rightMap.at<cv::Vec2i>(v->y, v->x);
-                v->x = mapPix[0];
-                v->y = mapPix[1];
-
-                //truncate to sensor bounds after mapping?
-                if(truncate && (v->x < 0 || v->x > resmod.width || v->y < 0 || v->y > resmod.height)) {
+                //precheck
+                if(precheck && (v->x < 0 || v->x > resmod.width || v->y < 0 || v->y > resmod.height)) {
+                    yWarning() << "Event Corruption:" << v->getContent().toString();
                     continue;
                 }
 
+                //flipx
+                if(flipx) v->x = resmod.width - v->x;
+                //flipy
+                if(flipy) v->y = resmod.height - v->y;
+
+                //salt and pepper filter
+                if(pepper && !thefilter.check(v->x, v->y, v->polarity, v->channel, v->stamp))
+                    continue;
+
+                //undistortion
+                if(undistort) {
+                    cv::Vec2i mapPix;
+                    if(v->getChannel() == 0)
+                        mapPix = leftMap.at<cv::Vec2i>(v->y, v->x);
+                    else
+                        mapPix = rightMap.at<cv::Vec2i>(v->y, v->x);
+                    v->x = mapPix[0];
+                    v->y = mapPix[1];
+
+                    //truncate to sensor bounds after mapping?
+                    if(truncate && (v->x < 0 || v->x > resmod.width || v->y < 0 || v->y > resmod.height)) {
+                        continue;
+                    }
+
+                }
             }
 
-
 #if DECODE_METHOD != 2
-            if(split && v->channel)
-                qright.push_back(v);
-            else
+            if(split) {
+                if(v->skin) {
+                    if(v->type)
+                        qskinsamples.push_back(v);
+                    else
+                        qskin.push_back(v);
+                } else {
+                    if(v->channel)
+                        qright.push_back(v);
+                    else
+                        qleft.push_back(v);
+                }
+            } else {
                 qleft.push_back(v);
 #else
-            if(split && v->channel)
-                qright.push_back(*v);
-            else
+            if(split) {
+                if(v->skin) {
+                    if(v->type)
+                        qskinsamples.push_back(*v);
+                    else
+                        qskin.push_back(*v);
+                } else {
+                    if(v->channel)
+                        qright.push_back(*v);
+                    else
+                        qleft.push_back(*v);
+                }
+            } else {
                 qleft.push_back(*v);
+            }
 #endif
         }
 
         if(qleft.size()) {
-            outPort.write(qleft, ystamp);
+            outPortCamLeft.write(qleft, ystamp);
         }
         if(qright.size()) {
-            outPort2.write(qright, ystamp);
+            outPortCamRight.write(qright, ystamp);
+        }
+        if(qskin.size()) {
+            outPortSkin.write(qskin, ystamp);
+        }
+        if(qskinsamples.size()) {
+            outPortSkinSamples.write(qskinsamples, ystamp);
         }
     }
 
@@ -411,8 +436,10 @@ void vPreProcess::run()
 void vPreProcess::onStop()
 {
     inPort.close();
-    outPort.close();
-    outPort2.close();
+    outPortCamLeft.close();
+    outPortCamRight.close();
+    outPortSkin.close();
+    outPortSkinSamples.close();
 
     //inPort.releaseDataLock();
 }
@@ -420,12 +447,16 @@ void vPreProcess::onStop()
 bool vPreProcess::threadInit()
 {
     if(split) {
-        if(!outPort.open(name + "/left:o"))
+        if(!outPortCamLeft.open(name + "/left:o"))
             return false;
-        if(!outPort2.open(name + "/right:o"))
+        if(!outPortCamRight.open(name + "/right:o"))
+            return false;
+        if(!outPortSkin.open(name + "/skin:o"))
+            return false;
+        if(!outPortSkinSamples.open(name + "/skinsamples:o"))
             return false;
     } else {
-        if(!outPort.open(name + "/vBottle:o"))
+        if(!outPortCamLeft.open(name + "/vBottle:o"))
             return false;
     }
     if(!inPort.open(name + "/vBottle:i"))

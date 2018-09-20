@@ -40,16 +40,22 @@ private:
 
 #if DECODE_METHOD == 0
     ev::queueAllocator inPort;
-    vGenWritePort outPort;
-    vGenWritePort outPort2;
+    vGenWritePort outPortCamLeft;
+    vGenWritePort outPortCamRight;
+    vGenWritePort outPortSkin;
+    vGenWritePort outPortSkinSamples;
 #elif DECODE_METHOD == 1
     vGenReadPort inPort;
-    vGenWritePort outPort;
-    vGenWritePort outPort2;
+    vGenWritePort outPortCamLeft;
+    vGenWritePort outPortCamRight;
+    vGenWritePort outPortSkin;
+    vGenWritePort outPortSkinSamples;
 #else
     vReadPort<AE> inPort;
-    vWritePort<AE> outPort;
-    vWritePort<AE> outPort2;
+    vWritePort<AE> outPortCamLeft;
+    vWritePort<AE> outPortCamRight;
+    vWritePort<AE> outPortSkin;
+    vWritePort<AE> outPortSkinSamples;
 #endif
 
     //parameters

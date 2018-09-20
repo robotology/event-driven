@@ -34,6 +34,7 @@ AddressEvent::AddressEvent(const vEvent &v) : vEvent(v)
         channel = v2->channel;
         polarity = v2->polarity;
         type = v2->type;
+        skin = v2->skin;
     }
 }
 
@@ -44,6 +45,7 @@ AddressEvent::AddressEvent(const AddressEvent &v) : vEvent(v)
     channel = v.channel;
     polarity = v.polarity;
     type = v.type;
+    skin = v.skin;
 }
 
 event<> AddressEvent::clone()
@@ -57,7 +59,7 @@ void AddressEvent::encode(yarp::os::Bottle &b) const
 #if defined CODEC_128x128
     b.addInt(((channel&0x01)<<15)|((x&0x7f)<<8)|(((127-y)&0x7f)<<1)|(polarity&0x01));
 #elif defined CODEC_304x240_20 //ATIS 20 bits encoding
-    b.addInt(((channel&0x01)<<20)|((type&0x1)<<18)|((y&0x0FF)<<10)|((x&0x1FF)<<1)|(polarity&0x01));
+    b.addInt((skin&0x01)<<21)|((channel&0x01)<<20)|((type&0x1)<<18)|((y&0x0FF)<<10)|((x&0x1FF)<<1)|(polarity&0x01));
 #else //CODEC_304x240_24
     b.addInt(((channel&0x01)<<22)|((type&0x1)<<23)|((y&0x0FF)<<12)|((x&0x1FF)<<1)|(polarity&0x01));
 #endif
@@ -69,7 +71,7 @@ void AddressEvent::encode(std::vector<std::int32_t> &b, unsigned int &pos) const
 #if defined CODEC_128x128
     b[pos++] = (((channel&0x01)<<15)|((x&0x7f)<<8)|(((127-y)&0x7f)<<1)|(polarity&0x01));
 #elif defined CODEC_304x240_20 //ATIS 20 bits encoding
-    b[pos++] = (((channel&0x01)<<20)|((type&0x1)<<18)|((y&0x0FF)<<10)|((x&0x1FF)<<1)|(polarity&0x01));
+    b[pos++] = ((skin&0x01)<<21)|((channel&0x01)<<20)|((type&0x1)<<18)|((y&0x0FF)<<10)|((x&0x1FF)<<1)|(polarity&0x01));
 #else
     b[pos++] = (((channel&0x01)<<22)|((type&0x1)<<23)|((y&0x0FF)<<12)|((x&0x1FF)<<1)|(polarity&0x01));
 #endif
@@ -90,6 +92,7 @@ void AddressEvent::decode(int *&data)
     y = (*data >> 10) & 0x00FF;
     type = (*data >> 18) & 0x0001;
     channel = (*data >> 20) & 0x0001;
+    skin = (*data >> 21) & 0x0001;
 #else
     polarity = (*data >> 0) & 0x0001;
     x = (*data >> 1) & 0x01FF;
@@ -118,6 +121,7 @@ bool AddressEvent::decode(const yarp::os::Bottle &packet, size_t &pos)
         y = (data >> 10) & 0x00FF;
         type = (data >> 18) & 0x0001;
         channel = (data >> 20) & 0x0001;
+        skin = (data >> 21) & 0x0001;
 #else
         polarity = (data >> 0) & 0x0001;
         x = (data >> 1) & 0x001FF;
@@ -138,6 +142,7 @@ yarp::os::Property AddressEvent::getContent() const
     prop.put("channel", (int)channel);
     prop.put("polarity", (int)polarity);
     prop.put("type", (int)type);
+    prop.put("skin", (int)skin);
     prop.put("x", (int)x);
     prop.put("y", (int)y);
 
