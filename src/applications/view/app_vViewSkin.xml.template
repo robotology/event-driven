@@ -1,0 +1,75 @@
+<application>
+<name> vViewSkin </name>
+
+<dependencies>
+</dependencies>
+
+<module>
+    <name> vFramerLite </name>
+    <parameters> --eventWindow 0.35 --frameRate 30 --displays "(/skinimage (SKIN) /accimage (ACC))" </parameters>
+    <node> localhost </node>
+</module>
+
+<module>
+    <name> vSkinInterface </name>
+    <parameters> </parameters>
+    <node> localhost </node>
+</module>
+
+<module>
+   <name> yarpview </name>
+   <parameters>--name /viewskin --x 30 --y 30 --w 640 --h 480 --synch </parameters>
+   <node> localhost </node>
+</module>
+
+<module>
+   <name> yarpview </name>
+   <parameters>--name /viewacc --x 30 --y 30 --w 640 --h 480 --synch </parameters>
+   <node> localhost </node>
+</module>
+
+<module>
+   <name> yarpscope </name>
+   <parameters>--remote /skinInterface/scope:o --index "(1)" --color "(green)" --title "SAMPLES" </parameters>
+   <environment>YARP_PORT_PREFIX="/samples" </environment>   
+   <node> localhost </node>
+</module>
+
+<module>
+   <name> yarpscope </name>
+   <parameters>--remote /skinInterface/scope:o --index "(0)" --color "(red)" --title "EVENTS" </parameters>
+   <environment>YARP_PORT_PREFIX="/events" </environment>   
+   <node> localhost </node>
+</module>
+
+<connection>
+    <from>/zynqGrabber/vBottle:o</from>
+    <to>/vFramer/skinimage/AE:i</to>
+    <protocol> udp </protocol>
+</connection>
+
+<connection>
+    <from>/zynqGrabber/vBottle:o</from>
+    <to>/vFramer/accimage/AE:i</to>
+    <protocol> udp </protocol>
+</connection>
+
+<connection>
+    <from>/vFramer/skinimage/image:o</from>
+  <to>/viewskin</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
+  <from>/vFramer/accimage/image:o</from>
+  <to>/viewacc</to>
+  <protocol>udp</protocol>
+</connection>
+
+ <connection>
+    <from>/zynqGrabber/vBottle:o</from>
+    <to>/skinInterface/vBottle:i</to>
+    <protocol>udp</protocol>
+</connection>
+
+</application>

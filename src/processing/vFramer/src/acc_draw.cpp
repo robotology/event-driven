@@ -1,4 +1,4 @@
-/*)
+/*
  *   Copyright (C) 2017 Event-driven Perception for Robotics
  *   Author: arren.glover@iit.it
  *           chiara.bartolozzi@iit.it
@@ -22,19 +22,19 @@
 
 using namespace ev;
 
-const std::string skinDraw::drawtype = "SKIN";
+const std::string accDraw::drawtype = "ACC";
 
-std::string skinDraw::getDrawType()
+std::string accDraw::getDrawType()
 {
-    return skinDraw::drawtype;
+    return accDraw::drawtype;
 }
 
-std::string skinDraw::getEventType()
+std::string accDraw::getEventType()
 {
     return AddressEvent::tag;
 }
 
-void skinDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
+void accDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 {
     cv::Scalar pos = CV_RGB(160, 0, 160);
     cv::Scalar neg = CV_RGB(0, 60, 1);
@@ -53,20 +53,24 @@ void skinDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 
 
         int dt = eSet.back()->stamp - (*qi)->stamp; // start with newest event
-        if(dt < 0) dt += ev::vtsHelper::max_stamp;
-        if((unsigned int)dt > display_window) break;
+        if(dt < 0) dt += ev::vtsHelper::maxStamp();
+        if(dt > display_window) break;
 
 
         auto aep = is_event<AddressEvent>(*qi);
         int y = aep->y;
         int x = aep->x;
 
-        if((x & 0xF) == 0xD) //accelerometer
+        if((x & 0xF) != 0xD) //accelerometer
             continue;
+        x = (x & 0xFF);
         if(aep->type == 0)
             y = Ylimit - radius;
         else {
-            y = radius + y * 200.0 / 255.0;
+            if(y <= 127)
+                y = radius + 100 + y * 100.0 / 127.0;
+            else
+                y = radius + 100 + ((y) * 99.0 / 127.0 - 199.78); //negative half-plane
             //x = x;
         }
 
@@ -84,6 +88,7 @@ void skinDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         {
             cv::circle(image, centr, radius, neg, CV_FILLED);
         }
+
     }
 }
 
