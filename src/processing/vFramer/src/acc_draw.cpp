@@ -54,7 +54,7 @@ void accDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 
         int dt = eSet.back()->stamp - (*qi)->stamp; // start with newest event
         if(dt < 0) dt += ev::vtsHelper::maxStamp();
-        if(dt > display_window) break;
+        if(dt > (int)display_window) break;
 
 
         auto aep = is_event<AddressEvent>(*qi);

@@ -59,7 +59,7 @@ void AddressEvent::encode(yarp::os::Bottle &b) const
 #if defined CODEC_128x128
     b.addInt(((channel&0x01)<<15)|((x&0x7f)<<8)|(((127-y)&0x7f)<<1)|(polarity&0x01));
 #elif defined CODEC_304x240_20 //ATIS 20 bits encoding
-    b.addInt((skin&0x01)<<21)|((channel&0x01)<<20)|((type&0x1)<<18)|((y&0x0FF)<<10)|((x&0x1FF)<<1)|(polarity&0x01));
+    b.addInt(((skin&0x01)<<21)|((channel&0x01)<<20)|((type&0x1)<<18)|((y&0x0FF)<<10)|((x&0x1FF)<<1)|(polarity&0x01));
 #else //CODEC_304x240_24
     b.addInt(((channel&0x01)<<22)|((type&0x1)<<23)|((y&0x0FF)<<12)|((x&0x1FF)<<1)|(polarity&0x01));
 #endif
@@ -71,7 +71,7 @@ void AddressEvent::encode(std::vector<std::int32_t> &b, unsigned int &pos) const
 #if defined CODEC_128x128
     b[pos++] = (((channel&0x01)<<15)|((x&0x7f)<<8)|(((127-y)&0x7f)<<1)|(polarity&0x01));
 #elif defined CODEC_304x240_20 //ATIS 20 bits encoding
-    b[pos++] = ((skin&0x01)<<21)|((channel&0x01)<<20)|((type&0x1)<<18)|((y&0x0FF)<<10)|((x&0x1FF)<<1)|(polarity&0x01));
+    b[pos++] = (((skin&0x01)<<21)|((channel&0x01)<<20)|((type&0x1)<<18)|((y&0x0FF)<<10)|((x&0x1FF)<<1)|(polarity&0x01));
 #else
     b[pos++] = (((channel&0x01)<<22)|((type&0x1)<<23)|((y&0x0FF)<<12)|((x&0x1FF)<<1)|(polarity&0x01));
 #endif

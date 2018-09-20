@@ -401,9 +401,9 @@ void vPreProcess::run()
 #else
             if(split) {
                 if(v->skin) {
-                    if(v->type)
-                        qskinsamples.push_back(*v);
-                    else
+                    //if(v->type)
+                    //    qskinsamples.push_back(*v);
+                    //else
                         qskin.push_back(*v);
                 } else {
                     if(v->channel)
