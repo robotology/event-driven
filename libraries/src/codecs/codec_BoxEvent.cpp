@@ -33,14 +33,14 @@ namespace ev {
         b.addInt(*(&height));
     }
     
-    void BoxEvent::encode(std::vector<YARP_INT32> &b, unsigned int &pos) const
+    void BoxEvent::encode(std::vector<std::int32_t> &b, unsigned int &pos) const
     {
         AddressEvent::encode(b, pos);
         b[pos++] = (*(&width));
         b[pos++] = (*(&height));
     }
     
-    bool BoxEvent::decode(const yarp::os::Bottle &packet, int &pos)
+    bool BoxEvent::decode(const yarp::os::Bottle &packet, size_t &pos)
     {
         // check length
         if (AddressEvent::decode(packet, pos) &&
@@ -70,6 +70,10 @@ namespace ev {
     {
         return BoxEvent::tag;
     }
-    
+
+    void BoxEvent::decode(int *&data) {
+        AddressEvent::decode(data);
+    }
+
 }
 

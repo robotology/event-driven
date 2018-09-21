@@ -43,7 +43,7 @@ void addressGrayscaleDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTim
 
         int dt = vTime - (*qi)->stamp;
         if(dt < 0) dt += ev::vtsHelper::max_stamp;
-        if(dt > twindow) break;
+        if(dt >  display_window) break;
 
 
         auto aep = is_event<AddressEvent>(*qi);

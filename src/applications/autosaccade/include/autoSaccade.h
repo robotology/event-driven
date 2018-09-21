@@ -86,7 +86,10 @@ private:
     yarp::dev::PolyDriver gazeDriver;
     yarp::dev::IGazeControl *gazeControl;
     yarp::dev::IPositionControl *ipos;
+    yarp::dev::IVelocityControl *ivel;
     yarp::dev::IControlMode     *imod;
+    yarp::dev::IEncoders *enc;
+
     int context0;
     std::string robotName;
 

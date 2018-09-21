@@ -133,7 +133,7 @@ bool DualCamTransformModule::updateModule() {
         cvCopy(&yarpimage, (IplImage*)yarpCanvas.getIplImage());
     
         ev::vQueue vLeftQueue = eventCollector.getEventsFromChannel(0);
-        transform( leftCanvas, vLeftQueue, leftH, leftXOffset, leftYOffset );
+        drawTransformedEvents( yarpCanvas, vLeftQueue, leftH, leftXOffset, leftYOffset );
         leftImagePortOut.write();
     }
 
@@ -159,8 +159,8 @@ bool DualCamTransformModule::updateModule() {
 
 }
 
-void DualCamTransformModule::transform( yarp::sig::ImageOf<yarp::sig::PixelBgr> &img, const vQueue &vQueue
-                                        , const yarp::sig::Matrix &homography, int xOffset, int yOffset ) {
+void DualCamTransformModule::drawTransformedEvents( yarp::sig::ImageOf<yarp::sig::PixelBgr> &img, const vQueue &vQueue
+                                                    , const yarp::sig::Matrix &homography, int xOffset, int yOffset ) {
     ev::vBottle &outBottle = vPortOut.prepare();
     outBottle.clear();
     for ( auto &it : vQueue ) {

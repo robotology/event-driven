@@ -87,7 +87,7 @@ void vFastThread::run()
 
         ev::vQueue *q = 0;
         while(!q && !isStopping()) {
-            q = inputPort.getNextQ(yarpstamp);
+            q = inputPort.read(yarpstamp);
         }
         if(isStopping()) break;
 
