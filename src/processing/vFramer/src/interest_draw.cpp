@@ -38,6 +38,9 @@ std::string interestDraw::getEventType()
 void interestDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 {
 
+    if(eSet.empty()) return;
+    if(vTime < 0) vTime = eSet.back()->stamp;
+
     int r = 2;
     CvScalar c1 = CV_RGB(255, 0, 0);
     CvScalar c2 = CV_RGB(0, 255, 255);
@@ -46,7 +49,7 @@ void interestDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
         int dt = vTime - (*qi)->stamp;
         if(dt < 0) dt += ev::vtsHelper::max_stamp;
-        if(dt > twindow) break;
+        if((unsigned int)dt > display_window) break;
 
         auto v = is_event<ev::LabelledAE>(*qi);
         int px = v->x;

@@ -52,14 +52,21 @@ void FlowEvent::encode(yarp::os::Bottle &b) const
     b.addInt(*(int*)(&vy));
 }
 
-void FlowEvent::encode(std::vector<YARP_INT32> &b, unsigned int &pos) const
+void FlowEvent::encode(std::vector<std::int32_t> &b, unsigned int &pos) const
 {
     AddressEvent::encode(b, pos);
     b[pos++] = (*(int*)(&vx));
     b[pos++] = (*(int*)(&vy));
 }
 
-bool FlowEvent::decode(const yarp::os::Bottle &packet, int &pos)
+void FlowEvent::decode(int *&data)
+{
+    AddressEvent::decode(data);
+    vx=*(float*)(data++);
+    vy=*(float*)(data++);
+}
+
+bool FlowEvent::decode(const yarp::os::Bottle &packet, size_t &pos)
 {
     // check length
     if (AddressEvent::decode(packet, pos) &&

@@ -17,8 +17,8 @@
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __VDEVCTRL__
-#define __VDEVCTRL__
+#ifndef __VVISCTRL__
+#define __VVISCTRL__
 
 #include <deviceRegisters.h>
 #include <yarp/os/Bottle.h>
@@ -37,7 +37,7 @@ typedef struct fpgaStatus {
     bool tdFifoFull;
 } fpgaStatus_t;
 
-class vDevCtrl
+class vVisionCtrl
 {
 private:
 
@@ -68,7 +68,7 @@ private:
 public:
 
     //REQUIRE: devicefilename, chiptype (eg DVS/ATIS), chipFPGAaddress (eg LEFT or RIGHT)
-    vDevCtrl(std::string deviceName = "", unsigned char i2cAddress = 0);
+    vVisionCtrl(std::string deviceName = "", unsigned char i2cAddress = 0);
 
     //SET/GET CONFIGURATION
     bool setBias(std::string biasName, unsigned int biasValue);

@@ -32,21 +32,57 @@ add lines:
 * export PATH=$YARP_DIR/bin:$ICUBcontrib_DIR/bin:$PATH
 * export ED_ROOT=$ROBOT_CODE/event-driven
   
-git clone:
+### Set up YARP
+> cd /usr/local/src/robot  
 
-yarp (https://github.com/robotology/yarp)
+> git clone https://github.com/robotology/yarp
 
-* make only (not install)
+> cd yarp
 
-icub-contrib-common (https://github.com/robotology/icub-contrib-common)
+> mkdir build
 
-* set install directory as $ICUBcontrib_DIR
-* make install
+> cd build
 
-event-driven (https://github.com/robotology/event-driven)
+> ccmake ../
+
+* set CREATE_GUIS = OFF
+
+> make (not install)
+
+### Set up install directory as $ICUBcontrib_DIR
+> cd /usr/local/src/robot  
+
+> git clone https://github.com/robotology/icub-contrib-common
+
+> cd icub-contrib-common
+
+> mkdir build
+
+> cd build
+
+> ccmake ../
+
+* set CMAKE_INSTALL_DIR=$ICUBcontrib_DIR
+
+> make install
+
+
+### Set up event-driven 
+> cd /usr/local/src/robot  
+
+> git clone https://github.com/robotology/event-driven
+
+> cd event-driven
+
+> mkdir build
+
+> cd build
+
+> ccmake ../
 
 * (cmake should have found install directory as $ICUBcontrib_DIR automatically)
-* make install
+
+> make install
     
 ## Set up device drivers
 

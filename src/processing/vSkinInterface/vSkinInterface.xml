@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml-stylesheet type="text/xsl" href="yarpmanifest.xsl"?>
+
+<module>
+    <name>vDelayControl</name>
+    <doxygen-group>processing</doxygen-group>
+    <description>Controlled latency framework for on-line robotics</description>
+    <copypolicy>Released under the terms of the GNU GPL v2.0</copypolicy>
+    <version>1.0</version>
+
+    <authors>
+        <author email="arren.glover@iit.it"> Arren Glover </author>
+    </authors>
+
+    <description-long>
+      This module wraps processing with a delay control framework to run an
+      algorithm online on the robot with an optimal balance between algorithm
+      accuracy and latency. The current implementation is a particle filter for
+      circle tracking.
+    </description-long>
+
+    <arguments>
+        <param desc="Specifies the stem name of ports created by the module." default="vpf"> name </param>
+        <param desc="how many threads to use" default="1"> threads </param>
+        <param desc="sensor height" default="240"> height </param>
+        <param desc="sensor width" default="304"> width </param>
+        <param desc="split the observation template into this many positive segments" default="64"> bins </param>
+        <param desc="How many events to keep in the ROI" default="500"> maxq </param>
+        <param desc="delay control gain" default="0.0005"> gain </param>
+        <param desc="perform adaptive sampling" default="false"> adaptive </param>
+        <param desc="number of particles to use" default="100"> particles </param>
+        <param desc="percentage of particles to randomly resample" default="0"> randoms </param>
+        <param desc="seed position of particles (x y r)" default="{image centre}"> see </param>
+        <param desc="percentage of maximum likelihood (= bins) to accept as an observation" default="0.2"> obsthresh </param>
+        <param desc="template positive bin thickness" default="1.0"> obsinlier </param>
+        <param desc="percentage of maximum likelihood (= bins) to accept as a true positive observation" default="0.35"> truethresh </param>
+        <switch>verbosity</switch>
+    </arguments>
+
+     <data>
+        <input>
+            <type>vBottle</type>
+            <port>/vpf/vBottle:i</port>
+            <description>
+                Accepts the address events from the camera
+            </description>
+        </input>
+        <output>
+            <type>vBottle</type>
+            <port>/vpf/vBottle:o</port>
+            <description>
+                Outputs the detected circle positions as a vBottle of GaussianAE
+            </description>
+        </output>
+        <output>
+            <type>yarp::os::Bottle</type>
+            <port>/vpf/scope:o</port>
+            <description>
+                Outputs debug information for use with yarpscope. Five variables
+                can be visualised indicating the delay of the module.
+            </description>
+        </output>
+        <output>
+            <type>yarp::sig::Image</type>
+            <port>/vpf/debug:o</port>
+            <description>
+                Outputs a debugging images displaying events in the event-queue
+                as well as the particles and circle positions.
+            </description>
+        </output>
+    </data>
+
+<!--    <services>
+      <server>
+        <port carrier="tcp">/motionCUT/rpc</port>
+        <description>
+            The parameters winSize, recogThres, adjNodesThres, blobMinSizeThres, framesPersistence, cropSize,
+            numThreads, verbosity can be changed/retrieved through the commands set/get. Moreover, the further
+            switch inhibition can be accessed in order to enable/disable the motion detection at run-time.
+        </description>
+      </server>
+    </services>-->
+</module>

@@ -19,7 +19,6 @@
 #include "vFlow.h"
 #include <yarp/os/all.h>
 
-using yarp::math::operator *;
 using yarp::math::outerProduct;
 
 using namespace ev;
@@ -267,7 +266,7 @@ int vFlowManager::computeGrads(yarp::sig::Matrix &A, yarp::sig::Vector &Y,
 
     double dtdp = sqrt(pow(abc(0), 2.0) + pow(abc(1), 2.0));
     int inliers = 0;
-    for(int i = 0; i < A.rows(); i++) {
+    for(unsigned int i = 0; i < A.rows(); i++) {
         //so I think that abc(0) and abc(1) are already scaled to the magnitude
         //of the slope of the plane. E.g. when only using abc(0) and abc(1) and
         //fitting a 3-point plane we always get 0 error. Therefore the differ-

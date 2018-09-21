@@ -46,12 +46,14 @@ vDraw * createDrawer(std::string tag)
         return new clusterDraw();
     if(tag == blobDraw::drawtype)
         return new blobDraw();
-    if (tag == boxDraw::drawtype)
-        return new boxDraw();
+    if(tag == skinDraw::drawtype)
+        return new skinDraw();
     if(tag == isoInterestDraw::drawtype)
         return new isoInterestDraw();
     if(tag == isoCircDraw::drawtype)
         return new isoCircDraw();
+    if (tag == boxDraw::drawtype)
+        return new boxDraw();
     return 0;
 
 }

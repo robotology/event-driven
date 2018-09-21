@@ -262,6 +262,12 @@ event<> vSurface2::getMostRecent()
 }
 
 /******************************************************************************/
+temporalSurface::temporalSurface(int width, int height, int duration) : vSurface2(width, height)
+{
+    //whichever is smaller 2 seconds or ~1/2 of the maximum window
+    this->duration = std::min(duration, (int)(vtsHelper::max_stamp * 0.45));
+}
+
 vQueue temporalSurface::removeEvents(event<> toAdd)
 {
     vQueue removed;

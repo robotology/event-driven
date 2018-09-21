@@ -38,6 +38,9 @@ std::string lifeDraw::getEventType()
 void lifeDraw::draw(cv::Mat &image, const vQueue &eSet, int vTime)
 {
 
+    if(eSet.empty()) return;
+    if(vTime < 0) vTime = eSet.back()->stamp;
+
     vQueue::const_iterator qi;
     for(qi = eSet.begin(); qi != eSet.end(); qi++) {
 

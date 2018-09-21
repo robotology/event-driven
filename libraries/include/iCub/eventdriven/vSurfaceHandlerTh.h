@@ -25,6 +25,7 @@
 #include <iCub/eventdriven/vWindow_basic.h>
 #include <iCub/eventdriven/vWindow_adv.h>
 #include <iCub/eventdriven/vFilters.h>
+#include <iCub/eventdriven/vPort.h>
 #include <deque>
 #include <string>
 #include <map>
@@ -39,7 +40,7 @@ private:
     std::deque<ev::vQueue *> qq;
     std::deque<yarp::os::Stamp> sq;
     yarp::os::Mutex m;
-    yarp::os::Mutex dataready;
+    yarp::os::Semaphore dataready;
 
     unsigned int qlimit;
     unsigned int delay_nv;
@@ -56,7 +57,7 @@ public:
         delay_t = 0;
         event_rate = 0;
 
-        dataready.lock();
+        dataready.wait();
 
         useCallback();
         setStrict();
@@ -105,16 +106,31 @@ public:
         m.unlock();
 
         //if getNextQ is blocking - let it get the new data
-        dataready.unlock();
+        dataready.post();
     }
 
     /// \brief ask for a pointer to the next vQueue. Blocks if no data is ready.
-    ev::vQueue* getNextQ(yarp::os::Stamp &yarpstamp)
+    ev::vQueue* read(yarp::os::Stamp &yarpstamp)
     {
-        dataready.lock();
+        static vQueue * working_queue = nullptr;
+        if(working_queue) {
+            m.lock();
+
+            delay_nv -= qq.front()->size();
+            int dt = qq.front()->back()->stamp - qq.front()->front()->stamp;
+            if(dt < 0) dt += vtsHelper::max_stamp;
+            delay_t -= dt;
+
+            delete qq.front();
+            qq.pop_front();
+            sq.pop_front();
+            m.unlock();
+        }
+        dataready.wait();
         if(qq.size()) {
             yarpstamp = sq.front();
-            return qq.front();
+            working_queue = qq.front();
+            return working_queue;
         }  else {
             return 0;
         }
@@ -149,7 +165,7 @@ public:
     /// graceful shutdown. No guarantee the return of getNextQ will be valid.
     void releaseDataLock()
     {
-        dataready.unlock();
+        dataready.post();
     }
 
     /// \brief ask for the number of vQueues currently allocated.
@@ -174,6 +190,14 @@ public:
     double queryRate()
     {
         return event_rate * vtsHelper::vtsscaler;
+    }
+
+    std::string delayStatString()
+    {
+        std::ostringstream oss;
+        oss << queryunprocessed() << " " << queryDelayN() <<
+               " " << queryDelayT() << " " << queryRate();
+        return oss.str();
     }
 
 };
@@ -229,7 +253,7 @@ public:
 
             ev::vQueue *q = 0;
             while(!q && !isStopping()) {
-                q = allocatorCallback.getNextQ(yarpstamp);
+                q = allocatorCallback.read(yarpstamp);
             }
             if(isStopping()) break;
 
@@ -252,7 +276,7 @@ public:
 
             }
 
-            allocatorCallback.scrapQ();
+            //allocatorCallback.scrapQ();
 
         }
 
@@ -359,7 +383,7 @@ public:
 
             ev::vQueue *q = 0;
             while(!q && !isStopping()) {
-                q = allocatorCallback.getNextQ(ystamp);
+                q = allocatorCallback.read(ystamp);
             }
             if(isStopping()) break;
 
@@ -392,7 +416,7 @@ public:
             if(allowproc)
                 m.unlock();
 
-            allocatorCallback.scrapQ();
+            //allocatorCallback.scrapQ();
 
         }
 
@@ -562,7 +586,8 @@ class tWinThread : public yarp::os::Thread
 {
 private:
 
-    queueAllocator allocatorCallback;
+    ev::vGenReadPort allocatorCallback;
+    //ev::queueAllocator allocatorCallback;
     vTempWindow windowleft;
     vTempWindow windowright;
 
@@ -598,7 +623,7 @@ public:
     void onStop()
     {
         allocatorCallback.close();
-        allocatorCallback.releaseDataLock();
+        //allocatorCallback.releaseDataLock();
         waitforquery.unlock();
     }
 
@@ -611,41 +636,39 @@ public:
 
         while(!isStopping()) {
 
-            ev::vQueue *q = 0;
-            while(!q && !isStopping()) {
-                q = allocatorCallback.getNextQ(yarpstamp);
-            }
-            if(isStopping()) break;
 
-            for(ev::vQueue::iterator qi = q->begin(); qi != q->end(); qi++) {
+            const ev::vQueue *q = allocatorCallback.read(yarpstamp);
+            if(!q) break;
 
-                if(!strictUpdatePeriod) safety.lock();
+            if(!strictUpdatePeriod) safety.lock();
 
-                if(strictUpdatePeriod) {
-                    int dt = (*qi)->stamp - ctime;
-                    if(dt < 0) dt += vtsHelper::max_stamp;
-                    currentPeriod += dt;
-                    if(currentPeriod > strictUpdatePeriod) {
-                        safety.unlock();
-                        waitforquery.lock();
-                        safety.lock();
-                        currentPeriod = 0;
-                    }
+            if(!ctime) ctime = q->front()->stamp;
 
-                }
-                ctime = (*qi)->stamp;
-
+            for(ev::vQueue::const_iterator qi = q->begin(); qi != q->end(); qi++) {
                 if((*qi)->getChannel() == 0)
                     windowleft.addEvent(*qi);
                 else if((*qi)->getChannel() == 1)
                     windowright.addEvent(*qi);
-                updated = true;
+            }
 
-                if(!strictUpdatePeriod) safety.unlock();
+            if(strictUpdatePeriod) {
+                int dt = q->back()->stamp - ctime;
+                if(dt < 0) dt += vtsHelper::max_stamp;
+                currentPeriod += dt;
+                if(currentPeriod > strictUpdatePeriod) {
+                    safety.unlock();
+                    waitforquery.lock();
+                    safety.lock();
+                    currentPeriod = 0;
+                }
 
             }
 
-            allocatorCallback.scrapQ();
+            ctime = q->back()->stamp;
+
+            updated = true;
+
+            if(!strictUpdatePeriod) safety.unlock();
 
         }
         if(strictUpdatePeriod)
@@ -657,6 +680,7 @@ public:
         vQueue q;
 
         safety.lock();
+        //std::cout << "vFramer unprcd: " << allocatorCallback.queryunprocessed() << std::endl;
         if(channel == 0)
             q = windowleft.getWindow();
         else
@@ -676,6 +700,16 @@ public:
     bool queryUpdated()
     {
         return updated;
+    }
+
+    unsigned int queryUnprocd()
+    {
+        return allocatorCallback.queryunprocessed();
+    }
+
+    std::string readDelayStats()
+    {
+        return allocatorCallback.delayStatString();
     }
 
 };
@@ -718,6 +752,7 @@ public:
 
     vQueue queryWindow(std::string vType, int channel)
     {
+
         updateStamps();
         return iPorts[vType].queryWindow(channel);
     }
@@ -775,6 +810,25 @@ public:
         for(i = iPorts.begin(); i != iPorts.end(); i++)
             if(i->second.queryUpdated()) return true;
         return false;
+    }
+
+    unsigned int queryMaxUnproced()
+    {
+        unsigned int unprocd = 0;
+        std::map<std::string, ev::tWinThread>::iterator i;
+        for(i = iPorts.begin(); i != iPorts.end(); i++)
+            unprocd = std::max(i->second.queryUnprocd(), unprocd);
+        return unprocd;
+    }
+
+    std::string delayStats()
+    {
+        std::ostringstream oss;
+        std::map<std::string, ev::tWinThread>::iterator i;
+        for(i = iPorts.begin(); i != iPorts.end(); i++)
+            oss << i->first << ": " << i->second.readDelayStats() << " ";
+
+        return oss.str();
     }
 
 };

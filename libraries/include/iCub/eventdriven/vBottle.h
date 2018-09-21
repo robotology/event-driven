@@ -21,7 +21,9 @@
 
 #include <yarp/os/Bottle.h>
 #include <yarp/os/Log.h>
+#include <yarp/os/LogStream.h>
 #include "iCub/eventdriven/vCodec.h"
+#include <iostream>
 
 namespace ev {
 
@@ -64,7 +66,7 @@ public:
     {
 
         //for each list of events
-        for(int tagi = 0; tagi < eb.yarp::os::Bottle::size(); tagi+=2) {
+        for(size_t tagi = 0; tagi < eb.yarp::os::Bottle::size(); tagi+=2) {
 
             //get the appended event type
             const std::string tagname =
@@ -121,7 +123,7 @@ public:
     template<class T> void addtoendof(vQueue &q) {
 
         //the bottle is stored as TAG (EVENTS) TAG (EVENTS)
-        for(int i = 0; i < Bottle::size(); i+=2) {
+        for(size_t i = 0; i < Bottle::size(); i+=2) {
 
             //so for each TAG we create an event of that type
             event<> e = createEvent(Bottle::get(i).asString());
@@ -147,7 +149,7 @@ public:
 
             //and decode each one also creating the memory with clone
             //NOTE: push_back seems as fast as preallocation for a deque
-            int pos_b = 0;
+            size_t pos_b = 0;
             while(pos_b < b->size()) {
                 if(e->decode(*b, pos_b)) {
                     q.push_back(e->clone());
@@ -209,6 +211,7 @@ public:
 //    Bottle::toBinary()
 //    Bottle::toString()
 
+    using yarp::os::Bottle::find;
 
 private:
 
@@ -220,7 +223,7 @@ private:
     void addList();
     void addString();
     void addVocab();
-    void fromString(const yarp::os::ConstString& text);
+    void fromString(const std::string& text);
     void append(const yarp::os::Bottle &alt);
     void copy();
     void copyPortable();
@@ -228,14 +231,14 @@ private:
     //yarp::os::Value& find(const ConstString &key) : Bottle::find(const yarp::os::ConstString &key) {};
     //Bottle& findGroup(const yarp::os::ConstString& key) const;
     //void findGroup();
+
     using yarp::os::Bottle::findGroup;
-    using yarp::os::Bottle::find;
 
     yarp::os::Bottle tail() const;
 
 
     int getInt();
-    yarp::os::ConstString getString();
+    std::string getString();
     double getDouble();
     Bottle* getList();
     yarp::os::Value& get();
@@ -252,14 +255,14 @@ class vBottleMimic : public yarp::os::Portable {
 private:
 
     //headers
-    std::vector<YARP_INT32> header1;
+    std::vector<std::int32_t> header1;
     std::string header2;
-    std::vector<YARP_INT32> header3;
+    std::vector<std::int32_t> header3;
 
     //data
     const char * datablock;
     unsigned int datalength; //<- set the number of bytes here
-    std::vector<YARP_INT32> internaldata;
+    std::vector<std::int32_t> internaldata;
 
     //sizes
     unsigned int elementINTS;
@@ -277,7 +280,7 @@ public:
         header3.push_back(BOTTLE_TAG_LIST|BOTTLE_TAG_INT); // bottle code + specialisation with ints
         header3.push_back(0); // <- set the number of ints here (e.g. 2 * #v's)
         elementINTS = 2;
-        elementBYTES = sizeof(YARP_INT32) * elementINTS;
+        elementBYTES = sizeof(std::int32_t) * elementINTS;
     }
 
     /// \brief for data already allocated in contiguous space. Just send this
@@ -318,7 +321,7 @@ public:
         event<> v = ev::createEvent(eventtype);
         v->encode(temp);
         elementINTS = temp.size();
-        elementBYTES = sizeof(YARP_INT32) * elementINTS;
+        elementBYTES = sizeof(std::int32_t) * elementINTS;
 
     }
 
@@ -328,13 +331,13 @@ public:
     }
 
     /// \brief write the data on the connection.
-    virtual bool write(yarp::os::ConnectionWriter& connection) {
+    virtual bool write(yarp::os::ConnectionWriter& connection) const {
 
         connection.appendBlock((const char *)header1.data(),
-                                       header1.size() * sizeof(YARP_INT32));
+                                       header1.size() * sizeof(std::int32_t));
         connection.appendBlock(header2.c_str(), header1[3]);
         connection.appendBlock((const char *)header3.data(),
-                                       header3.size() * sizeof(YARP_INT32));
+                                       header3.size() * sizeof(std::int32_t));
         connection.appendBlock(datablock, datalength);
 
         return !connection.isError();

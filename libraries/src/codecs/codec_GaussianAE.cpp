@@ -55,7 +55,7 @@ void GaussianAE::encode(yarp::os::Bottle &b) const
     b.addInt(*(int*)(&sigxy));
 }
 
-void GaussianAE::encode(std::vector<YARP_INT32> &b, unsigned int &pos) const
+void GaussianAE::encode(std::vector<std::int32_t> &b, unsigned int &pos) const
 {
     LabelledAE::encode(b, pos);
     b[pos++] = (*(int*)(&sigx));
@@ -63,7 +63,15 @@ void GaussianAE::encode(std::vector<YARP_INT32> &b, unsigned int &pos) const
     b[pos++] = (*(int*)(&sigxy));
 }
 
-bool GaussianAE::decode(const yarp::os::Bottle &packet, int &pos)
+void GaussianAE::decode(int *&data)
+{
+    LabelledAE::decode(data);
+    sigx=*(float*)(data++);
+    sigy=*(float*)(data++);
+    sigxy=*(float*)(data++);
+}
+
+bool GaussianAE::decode(const yarp::os::Bottle &packet, size_t &pos)
 {
     if (LabelledAE::decode(packet, pos) && pos + 3 <= packet.size())
     {

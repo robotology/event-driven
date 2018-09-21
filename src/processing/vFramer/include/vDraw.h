@@ -106,6 +106,17 @@ public:
 
 };
 
+class addressGrayscaleDraw : public vDraw {
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
 class addressDraw : public vDraw {
 
 public:
@@ -117,7 +128,7 @@ public:
 
 };
 
-class addressGrayscaleDraw : public vDraw {
+class skinDraw : public vDraw {
 
 public:
 
@@ -225,16 +236,26 @@ protected:
     double CY, SY;
     double CX, SX;
 
-    int tsscalar;
+    double ts_to_axis;
     int Zlimit;
     int imagewidth;
     int imageheight;
     int imagexshift;
     int imageyshift;
-    int maxdt;
 
     //private functions
-    void pttr(int &x, int &y, int &z);
+    inline void pttr(int &x, int &y, int &z) {
+        // we want a negative rotation around the y axis (yaw)
+        // a positive rotation around the x axis (pitch) (no roll)
+        // the z should always be negative values.
+        // the points need to be shifted across by negligble amount
+        // the points need to be shifted up by (x = max, y = 0, ts = 0 rotation)
+
+        int xmod = x*CY + z*SY + 0.5; // +0.5 rounds rather than floor
+        int ymod = y*CX - SX*(-x*SY + z*CY) + 0.5;
+        int zmod = y*SX + CX*(-x*SY + z*CY) + 0.5;
+        x = xmod; y = ymod; z = zmod;
+    }
 
     //image with warped square drawn
     cv::Mat baseimage;

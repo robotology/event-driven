@@ -39,6 +39,7 @@ void blobDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 {
 
     if(eSet.empty()) return;
+    if(vTime < 0) vTime = eSet.back()->stamp;
 
     ev::vQueue::const_reverse_iterator qi;
     for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
@@ -46,7 +47,7 @@ void blobDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 
         int dt = vTime - (*qi)->stamp;
         if(dt < 0) dt += ev::vtsHelper::max_stamp;
-        if(dt > twindow) break;
+        if((unsigned int)dt > display_window) break;
 
         auto aep = as_event<AE>(*qi);
         if(!aep) continue;

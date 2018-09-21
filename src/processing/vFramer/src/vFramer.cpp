@@ -74,8 +74,10 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
 
     bool forceRender = rf.check("forcerender") &&
             rf.check("forcerender", yarp::os::Value(true)).asBool();
-    if(forceRender)
+    if(forceRender) {
         vReader.setStrictUpdatePeriod(vtsHelper::vtsscaler * period);
+        period = 0;
+    }
 
     //viewer options
     //set up the default channel list
@@ -122,11 +124,11 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
 
         //create the draw types
         yarp::os::Bottle * drawtypelist = displayList->get(i*3 + 2).asList();
-        for(int j = 0; j < drawtypelist->size(); j++) {
+        for(unsigned j = 0; j < drawtypelist->size(); j++) {
             vDraw * newDrawer = createDrawer(drawtypelist->get(j).asString());
             if(newDrawer) {
-                newDrawer->setLimits(retinaWidth, retinaHeight);
-                newDrawer->setWindow(eventWindow);
+                newDrawer->setRetinaLimits(retinaWidth, retinaHeight);
+                newDrawer->setTemporalLimits(eventWindow, 2.0*vtsHelper::vtsscaler);
                 newDrawer->setFlip(flip);
                 newDrawer->initialise();
                 drawers[i].push_back(newDrawer);
@@ -149,16 +151,15 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
 
 bool vFramerModule::interruptModule()
 {
-    for(unsigned int i = 0; i < outports.size(); i++)
-        outports[i]->close();
-
     vReader.close();
-
     return true;
 }
 
 bool vFramerModule::close()
 {
+    vReader.close();
+    for(unsigned int i = 0; i < outports.size(); i++)
+        outports[i]->close();
     return true;
 }
 
@@ -184,6 +185,7 @@ void vFramerModule::sendBlanks() {
 
 bool vFramerModule::updateModule()
 {
+
     //check if an update is needed, send blank images after a timeout
     static double pTime = 0;
     if(!vReader.hasUpdated()) {
@@ -195,40 +197,62 @@ bool vFramerModule::updateModule()
     }
     pTime = yarp::os::Time::now();
 
+    bool use_synchronisation = false;
     //snapshot the events
+    //double dt1 = Time::now();
+    if(use_synchronisation) {
     for(unsigned int i = 0; i < channels.size(); i++) {
         for(unsigned int j = 0; j < drawers[i].size(); j++) {
             q_snaps[i][j] = vReader.queryWindow(drawers[i][j]->getEventType(),
                                                 channels[i]);
         }
     }
-
-    //snapshot the current time
-    int current_vts = vReader.getvstamp();
-    yarp::os::Stamp cEnv = vReader.getystamp();
-    bool use_synchronisation = false;
-
-    //trim eSet based on the synchronisation time
-    if(use_synchronisation) {
-        for(unsigned int i = 0; i < channels.size(); i++) {
-            for(unsigned int j = 0; j < drawers[i].size(); j++) {
-                while(q_snaps[i][j].size() &&
-                      q_snaps[i][j].back()->stamp > current_vts)
-                    q_snaps[i][j].pop_back();
-
-            }
-        }
     }
 
+    //check if we have unprocessed events
+    static int puqs = 0;
+    int uqs = vReader.queryMaxUnproced();
+    if(uqs || puqs) {
+        //yInfo() << uqs << "unprocessed queues";
+        if(uqs)
+            yInfo() << vReader.delayStats();
+        puqs = uqs;
+    }
+
+    //std::cout << "Snappshotting: " << Time::now() - dt1 << std::endl;
+
+
+
+    //snapshot the current time
+    vReader.updateStamps();
+    int current_vts = vReader.getvstamp();
+    yarp::os::Stamp cEnv = vReader.getystamp();
+
+
+    //trim eSet based on the synchronisation time
+//    if(use_synchronisation) {
+//        for(unsigned int i = 0; i < channels.size(); i++) {
+//            for(unsigned int j = 0; j < drawers[i].size(); j++) {
+//                while(q_snaps[i][j].size() &&
+//                      q_snaps[i][j].back()->stamp > current_vts)
+//                    q_snaps[i][j].pop_back();
+
+//            }
+//        }
+//    }
+
     //for each output image needed
+    double acct2 = 0;
     for(unsigned int i = 0; i < channels.size(); i++) {
 
+        double dt2 = Time::now();
         //get the image to be written and make a cv::Mat pointing to the same
         yarp::sig::ImageOf<yarp::sig::PixelBgr> &o = outports[i]->prepare();
         cv::Mat canvas = cv::cvarrToMat((IplImage *)o.getIplImage());
 
         //the first drawer will reset the base image, then drawing proceeds
         drawers[i][0]->resetImage(canvas);
+
 
         if(use_synchronisation) {
             //we can synchronise all drawers
@@ -238,11 +262,14 @@ bool vFramerModule::updateModule()
         } else {
             //we can't synch, just each streams current time individually
             for(unsigned int j = 0; j < drawers[i].size(); j++) {
-                if(q_snaps[i][j].empty()) continue;
-                drawers[i][j]->draw(canvas, q_snaps[i][j],
-                                    q_snaps[i][j].back()->stamp);
+                //if(q_snaps[i][j].empty()) continue;
+                drawers[i][j]->draw(canvas, vReader.queryWindow(drawers[i][j]->getEventType(),
+                                                                channels[i]),
+                                    -1);
             }
         }
+        acct2 += Time::now() - dt2;
+
 
         //tell the actual YARP image what size the final image became
         o.resize(canvas.cols, canvas.rows);
@@ -251,6 +278,9 @@ bool vFramerModule::updateModule()
         if(cEnv.isValid()) outports[i]->setEnvelope(cEnv);
         outports[i]->write();
     }
+
+    //std::cout << "Drawing: " << 1.0 / acct2 << std::endl;
+
     return true;
 }
 

@@ -139,54 +139,54 @@ public:
 
 %extend vBottle {
     int getSize() {
-        return $self->findGroup("AE").size() / 2;
+                return $self->find("AE").asList()->size() / 2;
     }
 
     void _getData(unsigned int* r1, int n1,
                  unsigned int* r2, int n2,
-		 unsigned int* r3, int n3,
+         unsigned int* r3, int n3,
                  unsigned int* r4, int n4,
                  unsigned int* r5, int n5)
     {
         auto q = $self->get<ev::vEvent>();
         if ((unsigned int)n1!= q.size()) {
                 std::cerr << "The size of the provided array does not match the expected size" << std::endl;
-        	return;
+            return;
         }
         unsigned int i;
-	for (i=0; i< q.size(); i++) {
-            ev::AE* m = read_as(q[i]);
+    for (i=0; i< q.size(); i++) {
+            ev::AE* m = ev::read_as<ev::AE>(q[i]);
 
-	    r1[i] = m->channel;
-	    r2[i] = m->stamp;
-	    r3[i] = m->x;
-	    r4[i] = m->y;
-	    r5[i] = m->polarity;
-	}
+        r1[i] = m->channel;
+        r2[i] = m->stamp;
+        r3[i] = m->x;
+        r4[i] = m->y;
+        r5[i] = m->polarity;
+    }
         //if (abs(r2[q.size()-1]-r2[0]) > 10000) {
-        //    std::cout << "ERR:meh " << r2[q.size()-1] << " - " << r2[0] << " = " << r2[q.size()-1]-r2[0]  << std::endl; 
+        //    std::cout << "ERR:meh " << r2[q.size()-1] << " - " << r2[0] << " = " << r2[q.size()-1]-r2[0]  << std::endl;
         //}
     }
 
     void _setData(unsigned int* s1, int m1,
                  unsigned int* s2, int m2,
-		 unsigned int* s3, int m3,
+         unsigned int* s3, int m3,
                  unsigned int* s4, int m4,
                  unsigned int* s5, int m5)
     {
         auto q = $self->get<ev::vEvent>();
         if ((unsigned int)m1!= q.size()) {
                 std::cerr << "The size of the provided array does not match the expected size" << std::endl;
-        	return;
+            return;
         }
         unsigned int i;
-	for (i=0; i< q.size(); i++) {
-	    ev::AE* m = read_as(q[i]);
-	    m->channel  = s1[i];
-	    m->stamp    = s2[i];
-	    m->x        = s3[i];
-	    m->y        = s4[i];
-	    m->polarity = s5[i];
+    for (i=0; i< q.size(); i++) {
+        ev::AE* m = ev::read_as<ev::AE>(q[i]);
+        m->channel  = s1[i];
+        m->stamp    = s2[i];
+        m->x        = s3[i];
+        m->y        = s4[i];
+        m->polarity = s5[i];
         }
     }
 
