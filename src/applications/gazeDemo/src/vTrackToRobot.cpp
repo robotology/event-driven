@@ -63,6 +63,7 @@ bool vTrackToRobotModule::configure(yarp::os::ResourceFinder &rf)
     velocityControl = rf.check("velocity", yarp::os::Value(false)).asBool();
     res.height = rf.check("height", yarp::os::Value(240)).asDouble();
     res.width = rf.check("width", yarp::os::Value(304)).asDouble();
+    arm_traj_time = rf.check("arm_traj_time", yarp::os::Value(1.0)).asDouble();
     usearm = rf.check("arm") && rf.check("arm", yarp::os::Value(true)).asBool();
 
     arm_target_position = yarp::sig::Vector(3);
@@ -103,11 +104,12 @@ bool vTrackToRobotModule::configure(yarp::os::ResourceFinder &rf)
 //    options.put("remote","/icub/cartesianController/right_arm");
 //    options.put("local","/cartesian_client/right_arm");
 
-    if(usearm) armdriver.open(options);
+    if(usearm)
+        armdriver.open(options);
     if(armdriver.isValid()) {
         armdriver.view(arm);
         arm->storeContext(&startup_context_id);
-        arm->setTrajTime(1.0);
+        arm->setTrajTime(arm_traj_time);
         // get the torso dofs
         yarp::sig::Vector newDof, curDof;
         arm->getDOF(curDof);

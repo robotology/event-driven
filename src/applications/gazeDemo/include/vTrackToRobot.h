@@ -324,6 +324,7 @@ private:
     bool usearm;
     yarp::dev::PolyDriver armdriver;
     yarp::dev::ICartesianControl *arm;
+    double arm_traj_time;
     int startup_context_id;
 
     double yThresh;
