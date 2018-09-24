@@ -99,7 +99,7 @@ std::vector<unsigned char>& vDevReadBuffer::getBuffer(unsigned int &nBytesRead, 
 
     if(!this->isRunning()) {
         //direct read
-        nBytesLost = 0;
+        nBytesLost = 0; nBytesRead = 0;
         int r = read(fd, read_buffer->data(), read_size);
         if(r > 0) nBytesRead = r;
         if(r < 0 && errno != EAGAIN) {
