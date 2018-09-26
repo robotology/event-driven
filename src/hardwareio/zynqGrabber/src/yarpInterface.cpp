@@ -545,7 +545,6 @@ void hpuInterface::start()
 
 void hpuInterface::stop()
 {
-    close(fd); fd = -1;
     if(read_thread_open) {
         D2Y.stop();
         read_thread_open = false;
@@ -555,4 +554,5 @@ void hpuInterface::stop()
         write_thread_open = false;
     }
 
+    close(fd); fd = -1;
 }
