@@ -108,7 +108,7 @@ yarp::sig::Vector delayControl::getTrackingStats()
     stats[5] = dy;
     stats[6] = dr;
     stats[7] = vpf.maxlikelihood / (double)maxRawLikelihood;
-    stats[8] = cpuusage.getProcessorUsage();
+    stats[8] = 100.0*cpuusage.getProcessorUsage();
     stats[9] = qROI.n;
 
     return stats;
@@ -215,15 +215,16 @@ void delayControl::run()
         dx = avgx, dy = avgy, dr = avgr;
         vpf.extractTargetPosition(avgx, avgy, avgr);
         dx = avgx - dx; dy = avgy - dy; dr = avgr - dr;
-        double roisize = avgr * 1.4;
+        double roisize = avgr + 10;
         qROI.setROI(avgx - roisize, avgx + roisize, avgy - roisize, avgy + roisize);
 
         //set our new window #events
-        double nw; vpf.extractTargetWindow(nw);
-        if(qROI.q.size() - nw > 30)
-            qROI.setSize(std::max(nw, 50.0));
-        if(qROI.q.size() > 3000)
-            qROI.setSize(3000);
+        qROI.setSize(512);
+//        double nw; vpf.extractTargetWindow(nw);
+//        if(qROI.q.size() - nw > 30)
+//            qROI.setSize(std::max(nw, 50.0));
+//        if(qROI.q.size() > 3000)
+//            qROI.setSize(3000);
 
         //calculate the temporal window of the q
         double tw = qROI.q.front()->stamp - qROI.q.back()->stamp;
