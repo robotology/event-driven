@@ -347,6 +347,7 @@ protected:
     yarp::os::Semaphore dataavailable;
 
     unsigned int qlimit;
+    unsigned int unprocdqs;
     unsigned int delay_nv;
     long unsigned int delay_t;
     double event_rate;
@@ -361,6 +362,7 @@ public:
         delay_nv = 0;
         delay_t = 0;
         event_rate = 0;
+        unprocdqs = 0;
         working_queue = nullptr;
 
         setPriority(99, SCHED_FIFO);
@@ -424,6 +426,8 @@ public:
             qq.push_back(next_queue);
             sq.push_back(yarp_stamp);
 
+            unprocdqs++;
+
             delay_nv += qq.back()->size();
             int dt = qq.back()->back()->stamp - qq.back()->front()->stamp;
             if(dt < 0) dt += vtsHelper::max_stamp;
@@ -460,6 +464,9 @@ public:
         if(qq.size()) {
             yarpstamp = sq.front();
             working_queue = qq.front();
+            m.lock();
+            unprocdqs--;
+            m.unlock();
         }  else {
             working_queue =  0;
         }
@@ -485,10 +492,7 @@ public:
     /// \brief ask for the number of vQueues currently allocated.
     unsigned int queryunprocessed()
     {
-        if(working_queue)
-            return qq.size() - 1;
-        else
-            return qq.size();
+        return unprocdqs;
     }
 
     /// \brief ask for the number of events in all vQueues.
@@ -577,6 +581,8 @@ public:
             qq.push_back(next_queue);
             sq.push_back(yarp_stamp);
 
+            unprocdqs++;
+
             delay_nv += qq.back()->size();
             int dt = qq.back()->back().stamp - qq.back()->front().stamp;
             if(dt < 0) dt += vtsHelper::max_stamp;
@@ -617,6 +623,9 @@ public:
         if(qq.size()) {
             yarpstamp = sq.front();
             working_queue = qq.front();
+            m.lock();
+            unprocdqs--;
+            m.unlock();
         }  else {
             working_queue =  0;
         }
@@ -625,11 +634,12 @@ public:
     }
 
     using vGenReadPort::setQLimit;
-    using vGenReadPort::releaseDataLock;
     using vGenReadPort::queryunprocessed;
+    using vGenReadPort::releaseDataLock;
     using vGenReadPort::queryDelayN;
     using vGenReadPort::queryDelayT;
     using vGenReadPort::queryRate;
+    using vGenReadPort::delayStatString;
 
 };
 
