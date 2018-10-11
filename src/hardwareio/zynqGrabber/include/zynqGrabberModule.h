@@ -51,7 +51,7 @@
 #include <yarp/os/Thread.h>
 
 //within project includes
-#include "yarpInterface.h"
+#include "hpuInterface.h"
 #include "visionController.h"
 #include "skinController.h"
 

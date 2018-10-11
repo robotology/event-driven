@@ -17,7 +17,7 @@
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "yarpInterface.h"
+#include "hpuInterface.h"
 #include "deviceRegisters.h"
 
 #include <sys/ioctl.h>
@@ -268,8 +268,8 @@ void yarp2device::run()
         Bottle *yarp_bottle = input_port.read(true); //blocking read
         //std::cout << ".";
         if(!yarp_bottle) return; //when interrupt is called returns null
-        Bottle *data_bottle = yarp_bottle->get(1).asList();  
-        
+        Bottle *data_bottle = yarp_bottle->get(1).asList();
+
         size_t data_size = data_bottle->size();
         if(data_size > data_copy.size())
             data_copy.resize(data_size, 0);
@@ -298,17 +298,17 @@ void yarp2device::run()
         }
 
         total_events += written / (2.0 * sizeof(int));
-        
+
         static double previous_time = yarp::os::Time::now();
         double dt = yarp::os::Time::now() - previous_time;
         if(dt > 3.0) {
-            yInfo() << "[WRITE] " << 0.000032 * total_events / dt << " mbps (" 
-                << input_port.getPendingReads() << 
+            yInfo() << "[WRITE] " << 0.000032 * total_events / dt << " mbps ("
+                << input_port.getPendingReads() <<
                 ") .Example:" << data_copy[2] << data_copy[3];
             total_events = 0;
             previous_time += dt;
         }
-        
+
     }
 
 
@@ -348,7 +348,7 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
         }
     }
 
-    //READ ID 
+    //READ ID
     hpu_regs.reg_offset = ID_REG;
     hpu_regs.rw = 0;
     hpu_regs.data = 0;
@@ -444,7 +444,7 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
                 close(fd); fd = -1;
                 return false;
             }
-            std::cout << "CTRL_REG: 0x" << std::hex << std::setw(8) 
+            std::cout << "CTRL_REG: 0x" << std::hex << std::setw(8)
                       << std::setfill('0') << hpu_regs.data << std::endl;
             //hpu_regs.data |= 0x02000000;
             hpu_regs.data = 0x02008007;
@@ -454,7 +454,7 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
                 close(fd); fd = -1;
                 return false;
             }
-            std::cout << "CTRL_REG: 0x" << std::hex << std::setw(8) 
+            std::cout << "CTRL_REG: 0x" << std::hex << std::setw(8)
                       << std::setfill('0') << hpu_regs.data << std::endl;
         } else {
             hpu_regs.reg_offset = CTRL_REG;
@@ -465,7 +465,7 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
                 close(fd); fd = -1;
                 return false;
             }
-            std::cout << "CTRL_REG: 0x" << std::hex << std::setw(8) 
+            std::cout << "CTRL_REG: 0x" << std::hex << std::setw(8)
                       << std::setfill('0') << hpu_regs.data << std::endl;
             hpu_regs.data &= ~0x02C00000;
             hpu_regs.rw = 1;
@@ -474,7 +474,7 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
                 close(fd); fd = -1;
                 return false;
             }
-            std::cout << "CTRL_REG: 0x" << std::hex << std::setw(8) 
+            std::cout << "CTRL_REG: 0x" << std::hex << std::setw(8)
                       << std::setfill('0') << hpu_regs.data << std::endl;
         }
 
