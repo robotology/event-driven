@@ -3,7 +3,7 @@
 #include "iCub/eventdriven/vPort.h"
 #include "iCub/eventdriven/vFilters.h"
 
-#ifndef VLIB_LITE
+#ifdef VLIB_EXTRA
 #include "iCub/eventdriven/vBottle.h"
 #include "iCub/eventdriven/vWindow_basic.h"
 #include "iCub/eventdriven/vWindow_adv.h"

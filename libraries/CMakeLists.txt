@@ -19,9 +19,9 @@ if(TOOMANYBITSINCOUNTER)
   message( FATAL_ERROR "Maximum bits useable is 31 (VLIB_TIMER_BITS)")
 endif()
 
-set(VLIB_LITE OFF CACHE BOOL "Build only necessary libraries")
-if(VLIB_LITE)
-    add_definitions(-DVLIB_LITE)
+set(VLIB_EXTRA ON CACHE BOOL "Build only necessary libraries")
+if(VLIB_EXTRA)
+    add_definitions(-DVLIB_EXTRA)
 endif()
 
 project(${EVENTDRIVEN_LIBRARIES})
@@ -33,9 +33,9 @@ file(GLOB folder_source
         src/vCodec.cpp
 )
 
-if(NOT VLIB_LITE)
+if(VLIB_EXTRA)
     list(APPEND folder_source src/vWindow_adv.cpp src/vWindow_basic.cpp)
-endif(NOT VLIB_LITE)
+endif()
 
 file(GLOB folder_header
   include/iCub/eventdriven/vtsHelper.h
@@ -45,13 +45,13 @@ file(GLOB folder_header
   include/iCub/eventdriven/all.h
 )
 
-if(NOT VLIB_LITE)
+if(VLIB_EXTRA)
     list(APPEND folder_header   include/iCub/eventdriven/vBottle.h
                                 include/iCub/eventdriven/vWindow_adv.h
                                 include/iCub/eventdriven/vWindow_basic.h
                                 include/iCub/eventdriven/vSurfaceHandlerTh.h
                                 include/iCub/eventdriven/vCollectSend.h)
-endif(NOT VLIB_LITE)
+endif()
 
 # Declare groups of source and header files -- makes things pretty in MSVC.
 source_group("Source Files" FILES ${folder_source})

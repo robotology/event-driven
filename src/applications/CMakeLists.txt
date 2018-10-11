@@ -14,7 +14,11 @@ if(ENABLE_autosaccade)
 endif(ENABLE_autosaccade)
 
 if(ENABLE_gazedemo)
-    add_subdirectory(gazeDemo)
+    if(VLIB_EXTRA)
+        add_subdirectory(gazeDemo)
+    else()
+        message("gazeDemo requires VLIB_EXTRA")
+    endif()
 endif(ENABLE_gazedemo)
 
 if(ENABLE_reptest)
