@@ -505,6 +505,18 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
         std::cout << "IP configuration: ";
         std::cout << std::hex << hpu_regs.data << std::endl;
 
+        //READ Raw Status Register
+        hpu_regs.reg_offset = 0x18;
+        hpu_regs.rw = 0;
+        hpu_regs.data = 0;
+        if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+            yError() << "Error: cannot read IP configuration";
+            close(fd); fd = -1;
+            return false;
+        }
+
+        std::cout << "Raw Status: ";
+        std::cout << std::hex << hpu_regs.data << std::endl;
 
 
     }
@@ -553,6 +565,19 @@ void hpuInterface::stop()
         Y2D.stop();
         write_thread_open = false;
     }
+
+    //READ Raw Status Register
+    hpu_regs.reg_offset = 0x18;
+    hpu_regs.rw = 0;
+    hpu_regs.data = 0;
+    if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+        yError() << "Error: cannot read IP configuration";
+        close(fd); fd = -1;
+        return false;
+    }
+
+    std::cout << "Raw Status: ";
+    std::cout << std::hex << hpu_regs.data << std::endl;
 
     close(fd); fd = -1;
 }
