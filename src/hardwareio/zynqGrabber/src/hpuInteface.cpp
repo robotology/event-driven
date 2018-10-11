@@ -326,15 +326,6 @@ hpuInterface::hpuInterface()
 
 bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loopback)
 {
-
-    struct hpu_regs_t{
-
-        unsigned int reg_offset;
-        char rw;
-        unsigned int data;
-
-    } hpu_regs;
-
     //open the device
     fd = open(device_name.c_str(), O_RDWR);
     if(fd < 0) {
@@ -571,9 +562,7 @@ void hpuInterface::stop()
     hpu_regs.rw = 0;
     hpu_regs.data = 0;
     if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
-        yError() << "Error: cannot read IP configuration";
-        close(fd); fd = -1;
-        return false;
+        yError() << "Error: cannot read Raw Status";
     }
 
     std::cout << "Raw Status: ";
