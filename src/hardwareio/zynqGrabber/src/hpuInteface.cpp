@@ -177,24 +177,6 @@ void  device2yarp::run() {
 
     while(!isStopping()) {
 
-        //display an output to let everyone know we are still working.
-        //std::cout << ".";
-        double update_period = yarp::os::Time::now() - prevTS;
-
-        if(update_period > 1.0) {
-            //std::cout << std::endl;
-            yInfo() << "Event grabber running happily. kV/s = " <<
-                (int)((countAEs - prevAEs)/(1000.0*update_period));
-            //yInfo() << (int)((countAEs - prevAEs) / 0.5) << " v/s" << std::endl;
-            if(countLoss > 0) {
-                yWarning() << "                         Lost. kV/s =  " <<
-                    (int)(countLoss/(1000.0*update_period));
-                countLoss = 0;
-            }
-            prevTS += update_period;
-            prevAEs = countAEs;
-        }
-
         //get the data from the device read thread
         unsigned int nBytesRead, nBytesLost;
         std::vector<unsigned char> &data = device_reader->getBuffer(nBytesRead, nBytesLost);
@@ -220,6 +202,24 @@ void  device2yarp::run() {
         yarp_stamp.update();
         output_port.setEnvelope(yarp_stamp);
         output_port.write(external_storage);
+
+        //display an output to let everyone know we are still working.
+        double update_period = yarp::os::Time::now() - prevTS;
+        if(update_period > 1.0) {
+
+            yInfo() << "[READ] "
+                    << (int)((countAEs - prevAEs)/(1000.0*update_period))
+                    << "kV/s";
+            if(countLoss > 0) {
+                yWarning() << "[LOST] "
+                           << (int)(countLoss/(1000.0*update_period))
+                           << "kV/s";
+                countLoss = 0;
+            }
+            prevTS += update_period;
+            prevAEs = countAEs;
+        }
+
     }
 
 }
