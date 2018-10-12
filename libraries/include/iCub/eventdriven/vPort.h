@@ -345,6 +345,7 @@ protected:
 
     yarp::os::Mutex m;
     yarp::os::Semaphore dataavailable;
+    Mutex read_mutex;
 
     unsigned int qlimit;
     unsigned int unprocdqs;
@@ -392,12 +393,29 @@ public:
         return true;
     }
 
+    void interrupt()
+    {
+        read_mutex.lock();
+        port.interrupt();
+    }
+
+    void resume()
+    {
+        port.resume();
+        read_mutex.unlock();
+    }
+
     void close()
     {
-        port.interrupt();
-        this->stop();
-        port.close();
-        this->releaseDataLock();
+        this->stop(); //make sure the isStopping() is true
+        port.close(); //close the port connections
+    }
+
+    void onStop()
+    {
+        port.interrupt(); //port.read() will return false
+        read_mutex.unlock(); //allow port.read() to be called
+        dataavailable.post(); //all a this->read() to return
     }
 
     void run()
@@ -406,12 +424,17 @@ public:
 
             vQueue *next_queue = new vQueue;
             internal_storage.setReadContainer(*next_queue);
-            //internal_storage.setReadQueue(*next_queue);
+
+            read_mutex.lock();
             if(!port.read(internal_storage)) {
-                yInfo() << "vGenReadPort read return false. closing.";
+                read_mutex.unlock();
+                if(!isStopping())
+                    yWarning() << "vGenReadPort read return false!";
                 delete next_queue;
                 break;
+
             }
+            read_mutex.unlock();
 
             yarp::os::Stamp yarp_stamp;
             port.getEnvelope(yarp_stamp);
@@ -562,11 +585,15 @@ public:
             std::vector<T> *next_queue = new std::vector<T>;
             internal_storage.setReadContainer(*next_queue);
             //internal_storage.setReadQueue(*next_queue);
+            read_mutex.lock();
             if(!port.read(internal_storage)) {
-                yInfo() << "vReadPort<> read return false. closing.";
+                read_mutex.unlock();
+                if(!isStopping())
+                    yWarning() << "vReadPort<> read return false!";
                 delete next_queue;
                 break;
             }
+            read_mutex.unlock();
 
             yarp::os::Stamp yarp_stamp;
             port.getEnvelope(yarp_stamp);
@@ -640,6 +667,8 @@ public:
     using vGenReadPort::queryDelayT;
     using vGenReadPort::queryRate;
     using vGenReadPort::delayStatString;
+    using vGenReadPort::interrupt;
+    using vGenReadPort::resume;
 
 };
 
