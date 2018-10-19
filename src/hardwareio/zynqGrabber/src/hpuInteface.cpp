@@ -424,6 +424,25 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
             return false;
         }
 
+        //DISABLE start/stop sending for the moment
+        hpu_regs.reg_offset = 0x80; //SPNN_START_KEY_REG
+        hpu_regs.rw = 1;
+        hpu_regs.data = 0x00;
+        if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+            yError() << "Error: cannot set spinnaker transmit";
+            close(fd); fd = -1;
+            return false;
+        }
+
+        hpu_regs.reg_offset = 0x84; //SPNN_STOP_KEY_REG
+        hpu_regs.rw = 1;
+        hpu_regs.data = 0x00;
+        if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+            yError() << "Error: cannot set spinnaker transmit";
+            close(fd); fd = -1;
+            return false;
+        }
+
         //ENABLE loopback  (if required)
         if(loopback) {
             yWarning() << "SpiNNaker in Loopback mode";
