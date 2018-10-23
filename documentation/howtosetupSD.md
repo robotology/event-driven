@@ -75,7 +75,7 @@ At this point you should be able to recompile YARP 3.0 and event-driven master b
 
 > ccmake ../
 
-* set CMAKE_INSTALL_DIR=$ICUBcontrib_DIR
+* set CMAKE_INSTALL_PREFIX=$ICUBcontrib_DIR
 
 > make install
 
