@@ -425,23 +425,44 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
         }
 
         //DISABLE start/stop sending for the moment
+        //yInfo() << "Enable START Key";
         hpu_regs.reg_offset = 0x80; //SPNN_START_KEY_REG
         hpu_regs.rw = 1;
-        hpu_regs.data = 0x00;
+        hpu_regs.data = 0x80000000;
         if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
-            yError() << "Error: cannot set spinnaker transmit";
+           yError() << "Error: cannot set spinnaker transmit";
             close(fd); fd = -1;
             return false;
         }
+        
+        hpu_regs.reg_offset = 0x80; //SPNN_START_KEY_REG
+        hpu_regs.rw = 0;
+        hpu_regs.data = 0;
+        if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+           yError() << "Error: cannot read spinnaker transmit";
+            close(fd); fd = -1;
+            return false;
+        }
+        yInfo() << "SpiNNaker START register" << hpu_regs.data;
 
         hpu_regs.reg_offset = 0x84; //SPNN_STOP_KEY_REG
         hpu_regs.rw = 1;
-        hpu_regs.data = 0x00;
+        hpu_regs.data = 0x40000000;
         if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
             yError() << "Error: cannot set spinnaker transmit";
             close(fd); fd = -1;
             return false;
         }
+        
+        hpu_regs.reg_offset = 0x84; //SPNN_STOP_KEY_REG
+        hpu_regs.rw = 0;
+        hpu_regs.data = 0;
+        if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+           yError() << "Error: cannot read spinnaker transmit";
+            close(fd); fd = -1;
+            return false;
+        }
+        yInfo() << "SpiNNaker STOP register" << hpu_regs.data;
 
         //ENABLE loopback  (if required)
         if(loopback) {
