@@ -94,6 +94,11 @@ At this point you should be able to recompile YARP 3.0 and event-driven master b
 > ccmake ../
 
 * (cmake should have found install directory as $ICUBcontrib_DIR automatically)
+* BUILD_HARDWAREIO = ON
+
+configure and then
+
+* ENABLE_zynqgrabber = ON
 
 > make install
     
