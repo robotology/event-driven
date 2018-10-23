@@ -33,6 +33,19 @@ add lines:
 * export ED_ROOT=$ROBOT_CODE/event-driven
   
 ### Set up YARP
+
+#### Important note:
+The newest YARP requires CMake>3.5, which is not installable via apt on the Debian 8.10 (jessie) distribution we have installed on the zynq. To upgrade CMake you need to install it via backports (reference: https://backports.debian.org/Instructions). 
+To do so:
+ - add to /etc/apt/sources.list the line below:
+      deb http://ftp.debian.org/debian jessie-backports main 
+- sudo apt update
+- sudo apt -t jessie-backports install cmake
+ 
+At this point you should be able to recompile YARP 3.0 and event-driven master branch.
+ 
+**We can consider updating the Debian distribution of the zynq boards since the Debian 8.10 is no longer supported by YARP**
+
 > cd /usr/local/src/robot  
 
 > git clone https://github.com/robotology/yarp
