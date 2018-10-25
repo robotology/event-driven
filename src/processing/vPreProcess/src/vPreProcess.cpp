@@ -90,7 +90,7 @@ bool vPreProcessModule::configure(yarp::os::ResourceFinder &rf)
 
     if(pepper) {
         eventManager.initPepper(rf.check("spatialSize", yarp::os::Value(1)).asDouble(),
-                                rf.check("temporalSize", yarp::os::Value(100000)).asDouble());
+                                rf.check("temporalSize", yarp::os::Value(0.1)).asDouble() * vtsHelper::vtsscaler);
     }
 
     if(undistort) {
@@ -123,6 +123,7 @@ bool vPreProcessModule::close()
 
 bool vPreProcessModule::updateModule()
 {
+    eventManager.printFilterStats();
     //unprocessed data
     static int puqs = 0;
     int uqs = this->eventManager.queryUnprocessed();
@@ -176,13 +177,15 @@ bool vPreProcessModule::updateModule()
 
 double vPreProcessModule::getPeriod()
 {
-    return 0.1;
+    return 2.0;
 }
 /******************************************************************************/
 vPreProcess::vPreProcess(): name("/vPreProcess")
 {
     leftMap.deallocate();
     rightMap.deallocate();
+    v_total = 0;
+    v_dropped = 0;
 }
 
 
@@ -275,6 +278,16 @@ int vPreProcess::queryUnprocessed()
     return inPort.queryunprocessed();
 }
 
+void vPreProcess::printFilterStats()
+{
+    if(v_total == 0) v_total = 1;
+    double pc = 100.0 * (double)v_dropped / (double)v_total;
+    yInfo() << v_dropped << "/" << v_total << "(" << pc << "%)";
+    v_total = 0;
+    v_dropped = 0;
+
+}
+
 std::deque<double> vPreProcess::getDelays()
 {
     std::deque<double> dcopy = delays;
@@ -338,7 +351,7 @@ void vPreProcess::run()
         }
         prev_bottle_n = ystamp.getCount();
 
-
+        v_total += q->size();
 #if DECODE_METHOD != 2
         for(ev::vQueue::const_iterator qi = q->begin(); qi != q->end(); qi++) {
             auto v = is_event<AE>(*qi);
@@ -362,8 +375,10 @@ void vPreProcess::run()
                 if(flipy) v->y = resmod.height - v->y;
 
                 //salt and pepper filter
-                if(pepper && !thefilter.check(v->x, v->y, v->polarity, v->channel, v->stamp))
+                if(pepper && !thefilter.check(v->x, v->y, v->polarity, v->channel, v->stamp)) {
+                    v_dropped++;
                     continue;
+                }
 
                 //undistortion
                 if(undistort) {

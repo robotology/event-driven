@@ -70,6 +70,8 @@ private:
     //filter class
     bool pepper;
     ev::vNoiseFilter thefilter;
+    int v_total;
+    int v_dropped;
 
     //we store an openCV map to use as a look-up table for the undistortion
     //given the camera parameters provided
@@ -101,6 +103,7 @@ public:
     std::deque<double> getDelays();
     std::deque<double> getRates();
     std::deque<double> getIntervals();
+    void printFilterStats();
     void run();
     void onStop();
     bool threadInit();
