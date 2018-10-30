@@ -278,7 +278,7 @@ void yarp2device::run()
         //we can remove data_copy and just use data_bottle when the
         //mask is done in the FPGA
         for(size_t i = 1; i < data_size; i += 2) {
-            data_copy[i] = data_bottle->get(i).asInt() & 0x000FFFFF;
+            data_copy[i] = data_bottle->get(i).asInt();
         }
 
         //move to bytes space
@@ -424,6 +424,7 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
             return false;
         }
 
+        //---------
         //DISABLE start/stop sending for the moment
         //yInfo() << "Enable START Key";
         hpu_regs.reg_offset = 0x80; //SPNN_START_KEY_REG
@@ -444,7 +445,8 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
             return false;
         }
         yInfo() << "SpiNNaker START register" << hpu_regs.data;
-
+        
+        //---------
         hpu_regs.reg_offset = 0x84; //SPNN_STOP_KEY_REG
         hpu_regs.rw = 1;
         hpu_regs.data = 0x40000000;
@@ -463,7 +465,46 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
             return false;
         }
         yInfo() << "SpiNNaker STOP register" << hpu_regs.data;
-
+        
+        //---------
+        hpu_regs.reg_offset = 0x88; //SPNN_TX_MASK_REG
+        hpu_regs.rw = 1;
+        hpu_regs.data = 0x00FFFFFF;
+        if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+            yError() << "Error: could not set a register";
+            close(fd); fd = -1;
+            return false;
+        }
+        
+        hpu_regs.rw = 0;
+        hpu_regs.data = 0;
+        if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+           yError() << "Error: could not read a register";
+            close(fd); fd = -1;
+            return false;
+        }
+        yInfo() << "SpiNNaker TX MASK register" << hpu_regs.data;
+        
+        //---------
+        hpu_regs.reg_offset = 0x8C; //SPNN_RX_MASK_REG
+        hpu_regs.rw = 1;
+        hpu_regs.data = 0x00FFFFFF;
+        if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+            yError() << "Error: could not set a register";
+            close(fd); fd = -1;
+            return false;
+        }
+        
+        hpu_regs.rw = 0;
+        hpu_regs.data = 0;
+        if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+           yError() << "Error: could not read a register";
+            close(fd); fd = -1;
+            return false;
+        }
+        yInfo() << "SpiNNaker RX MASK register" << hpu_regs.data;
+        
+        //---------
         //ENABLE loopback  (if required)
         if(loopback) {
             yWarning() << "SpiNNaker in Loopback mode";
