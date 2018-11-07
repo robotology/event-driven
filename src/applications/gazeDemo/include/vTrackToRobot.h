@@ -26,6 +26,7 @@
 
 #include <yarp/os/all.h>
 #include <iCub/eventdriven/all.h>
+#include <iCub/eventdriven/vBottle.h>
 #include <yarp/dev/CartesianControl.h>
 #include <yarp/dev/GazeControl.h>
 #include <yarp/dev/PolyDriver.h>
