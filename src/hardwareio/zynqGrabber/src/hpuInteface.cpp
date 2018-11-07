@@ -302,9 +302,21 @@ void yarp2device::run()
         static double previous_time = yarp::os::Time::now();
         double dt = yarp::os::Time::now() - previous_time;
         if(dt > 3.0) {
-            yInfo() << "[WRITE] " << 0.000032 * total_events / dt << " mbps ("
-                << input_port.getPendingReads() <<
-                ") .Example:" << data_copy[2] << data_copy[3];
+
+            struct { unsigned int reg_offset; char rw; unsigned int data;} hpu_regs = {0x18, 0, 0};
+            if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+                yWarning() << "Couldn't read dump status";
+            }
+
+            if(hpu_regs.data & 0x00010000)
+                yInfo() << "[DUMP] " << 0.000032 * total_events / dt << " mbps ("
+                    << input_port.getPendingReads() <<
+                    ") .Example:" << data_copy[2] << data_copy[3];
+            else
+                yInfo() << "[WRITE] " << 0.000032 * total_events / dt << " mbps ("
+                    << input_port.getPendingReads() <<
+                    ") .Example:" << data_copy[2] << data_copy[3];
+
             total_events = 0;
             previous_time += dt;
         }
@@ -435,7 +447,7 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
             close(fd); fd = -1;
             return false;
         }
-        
+
         hpu_regs.reg_offset = 0x80; //SPNN_START_KEY_REG
         hpu_regs.rw = 0;
         hpu_regs.data = 0;
@@ -445,7 +457,7 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
             return false;
         }
         yInfo() << "SpiNNaker START register" << hpu_regs.data;
-        
+
         //---------
         hpu_regs.reg_offset = 0x84; //SPNN_STOP_KEY_REG
         hpu_regs.rw = 1;
@@ -455,7 +467,7 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
             close(fd); fd = -1;
             return false;
         }
-        
+
         hpu_regs.reg_offset = 0x84; //SPNN_STOP_KEY_REG
         hpu_regs.rw = 0;
         hpu_regs.data = 0;
@@ -465,7 +477,7 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
             return false;
         }
         yInfo() << "SpiNNaker STOP register" << hpu_regs.data;
-        
+
         //---------
         hpu_regs.reg_offset = 0x88; //SPNN_TX_MASK_REG
         hpu_regs.rw = 1;
@@ -475,7 +487,7 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
             close(fd); fd = -1;
             return false;
         }
-        
+
         hpu_regs.rw = 0;
         hpu_regs.data = 0;
         if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
@@ -484,7 +496,7 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
             return false;
         }
         yInfo() << "SpiNNaker TX MASK register" << hpu_regs.data;
-        
+
         //---------
         hpu_regs.reg_offset = 0x8C; //SPNN_RX_MASK_REG
         hpu_regs.rw = 1;
@@ -494,7 +506,7 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
             close(fd); fd = -1;
             return false;
         }
-        
+
         hpu_regs.rw = 0;
         hpu_regs.data = 0;
         if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
@@ -503,7 +515,7 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
             return false;
         }
         yInfo() << "SpiNNaker RX MASK register" << hpu_regs.data;
-        
+
         //---------
         //ENABLE loopback  (if required)
         if(loopback) {
