@@ -202,11 +202,11 @@
 #define HPU_SET_BLK_TX_THR  _IOW (MAGIC_NUM, 21, unsigned int *)
 #define HPU_SET_BLK_RX_THR  _IOW (MAGIC_NUM, 22, unsigned int *)
 #define HPU_SET_SPINN_KEYS  _IOW (MAGIC_NUM, 23, void *)
-#define HPU_SPINN_KEYS_EN   _IOR (MAGIC_NUM, 24, unsigned int *)
+#define HPU_SPINN_KEYS_EN   _IOW (MAGIC_NUM, 24, unsigned int *)
 //#define HPU_SET_SPINNRESUME   _IOR (MAGIC_NUM, 24, unsigned int *) <-ask
-#define HPU_RX_INTERFACE    _IOR (MAGIC_NUM, 26, void *)
-#define HPU_TX_INTERFACE    _IOR (MAGIC_NUM, 27, void *)
-#define HPU_AXIS_LATENCY    _IOR (MAGIC_NUM, 28, unsigned int *)
+#define HPU_RX_INTERFACE    _IOW (MAGIC_NUM, 26, void *)
+#define HPU_TX_INTERFACE    _IOW (MAGIC_NUM, 27, void *)
+#define HPU_AXIS_LATENCY    _IOW (MAGIC_NUM, 28, unsigned int *)
 
 
 //HPU IOCTL STRUCTS/ENUMS

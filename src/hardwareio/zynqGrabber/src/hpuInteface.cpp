@@ -380,43 +380,18 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
 
         yInfo() << "Configuring Cameras/Skin";
 
+        hpu_tx_interface_ioctl_t tx_config = {{{0, 0, 0, 0}, 0, 0, 0}, ROUTE_FIXED};
+        ioctl(fd, HPU_TX_INTERFACE, &tx_config);
 
+        hpu_rx_interface_ioctl_t rx_config;
+        rx_config = {INTERFACE_EYE_R, {{1, 1, 1, 1}, 0, 0, 0}};
+        ioctl(fd, HPU_RX_INTERFACE, &rx_config);
 
+        rx_config = {INTERFACE_EYE_L, {{1, 1, 1, 1}, 0, 0, 0}};
+        ioctl(fd, HPU_RX_INTERFACE, &rx_config);
 
-
-//        hpu_rx_interface_ioctl_t interface;
-//        hpu_interface_cfg_t options;
-
-//        interface.interface = INTERFACE_EYE_R;
-//        options = {
-
-        ioctl(fd, HPU_RX_INTERFACE, &pool_size);
-
-        //Enable SKIN
-        hpu_regs.reg_offset = AUX_RX_CTRL_REG;
-        hpu_regs.rw = 1;
-        hpu_regs.data = AUX_RX_ENABLE_SKIN | MSK_AUX_RX_CTRL_REG;
-
-        if (-1 == ioctl(fd, HPU_GEN_REG, &hpu_regs)){
-
-            yError() << "Error: cannot set skin register";
-            close(fd);
-            fd = -1;
-            return false;
-        }
-
-        //Enable CAMERAS
-        hpu_regs.reg_offset = RX_CTRL_REG;
-        hpu_regs.rw = 1;
-        hpu_regs.data = RX_REG_ENABLE_CAMERAS | MSK_RX_CTRL_REG;
-
-        if (-1 == ioctl(fd, HPU_GEN_REG, &hpu_regs)){
-
-            yError() << "Error: cannot set camera register";
-            close(fd);
-            fd = -1;
-            return false;
-        }
+        rx_config = {INTERFACE_AUX, {{1, 1, 1, 1}, 0, 0, 0}};
+        ioctl(fd, HPU_RX_INTERFACE, &rx_config);
 
     } else {
 
