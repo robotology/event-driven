@@ -352,7 +352,7 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
     }
 
     //READ ID
-    unsigned int version;
+    unsigned int version = 0;
     ioctl(fd, HPU_VERSION, &version);
 
     std::cout << "ID and Version";
@@ -379,6 +379,10 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
     if(!spinnaker) {
 
         yInfo() << "Configuring Cameras/Skin";
+
+
+
+
 
 //        hpu_rx_interface_ioctl_t interface;
 //        hpu_interface_cfg_t options;
@@ -418,54 +422,17 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
 
         yInfo() << "Configuring SpiNNaker";
 
-        //ENABLE tx of spinnaker
-        hpu_regs.reg_offset = TX_CTRL_REG;
-        hpu_regs.rw = 1;
-        hpu_regs.data = 0x68;
-        if (-1 == ioctl(fd, HPU_GEN_REG, &hpu_regs)){
-            yError() << "Error: cannot set spinnaker transmit";
-            close(fd); fd = -1;
-            return false;
-        }
+        hpu_tx_interface_ioctl_t tx_config = {{{0, 0, 0, 0}, 0, 0, 1}, ROUTE_FIXED};
+        ioctl(fd, HPU_TX_INTERFACE, &tx_config);
 
-        //ENABLE rx of spinnaker on auxillary channel
-        hpu_regs.reg_offset = AUX_RX_CTRL_REG;
-        hpu_regs.rw = 1;
-        hpu_regs.data = 0x08;
-        if (-1 == ioctl(fd, HPU_GEN_REG, &hpu_regs)){
-            yError() << "Error: cannot set spinnaker transmit";
-            close(fd); fd = -1;
-            return false;
-        }
+        hpu_rx_interface_ioctl_t rx_config = {INTERFACE_AUX, {{0, 0, 0, 0}, 0, 0, 1}};
+        ioctl(fd, HPU_RX_INTERFACE, &rx_config);
 
-        //---------
         unsigned int ss_protection = 1;
         ioctl(fd, HPU_SPINN_KEYS_EN, &ss_protection);
 
         spinn_keys_t ss_keys = {0x80000000, 0x40000000};
         ioctl(fd, HPU_SET_SPINN_KEYS, &ss_keys);
-
-        //READING SPINNAKER START REGISTER
-        hpu_regs.reg_offset = 0x80;
-        hpu_regs.rw = 0;
-        hpu_regs.data = 0;
-        if (-1 == ioctl(fd, HPU_GEN_REG, &hpu_regs)){
-           yError() << "Error: cannot read spinnaker transmit";
-            close(fd); fd = -1;
-            return false;
-        }
-        yInfo() << "SpiNNaker START register" << hpu_regs.data;
-
-        //READING SPINNAKER STOP REGISTER
-        hpu_regs.reg_offset = 0x84; //SPNN_STOP_KEY_REG
-        hpu_regs.rw = 0;
-        hpu_regs.data = 0;
-        if (-1 == ioctl(fd, HPU_GEN_REG, &hpu_regs)){
-           yError() << "Error: cannot read spinnaker transmit";
-            close(fd); fd = -1;
-            return false;
-        }
-        yInfo() << "SpiNNaker STOP register" << hpu_regs.data;
 
         //---------
         hpu_regs.reg_offset = 0x88; //SPNN_TX_MASK_REG
@@ -477,15 +444,6 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
             return false;
         }
 
-        hpu_regs.rw = 0;
-        hpu_regs.data = 0;
-        if (-1 == ioctl(fd, HPU_GEN_REG, &hpu_regs)){
-           yError() << "Error: could not read a register";
-            close(fd); fd = -1;
-            return false;
-        }
-        yInfo() << "SpiNNaker TX MASK register" << hpu_regs.data;
-
         //---------
         hpu_regs.reg_offset = 0x8C; //SPNN_RX_MASK_REG
         hpu_regs.rw = 1;
@@ -495,15 +453,6 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
             close(fd); fd = -1;
             return false;
         }
-
-        hpu_regs.rw = 0;
-        hpu_regs.data = 0;
-        if (-1 == ioctl(fd, HPU_GEN_REG, &hpu_regs)){
-           yError() << "Error: could not read a register";
-            close(fd); fd = -1;
-            return false;
-        }
-        yInfo() << "SpiNNaker RX MASK register" << hpu_regs.data;
 
         //---------
         //ENABLE loopback

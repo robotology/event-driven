@@ -242,6 +242,16 @@ typedef enum {
     LOOP_LSPINN,
 } spinn_loop_t;
 
+typedef enum {
+    ROUTE_FIXED,
+    ROUTE_MSG,
+} hpu_tx_route_t;
+
+typedef struct {
+    hpu_interface_cfg_t cfg;
+    hpu_tx_route_t route;
+} hpu_tx_interface_ioctl_t;
+
 
 #define CTRL_REG         0x00
 #define RXDATA_REG       0x08
