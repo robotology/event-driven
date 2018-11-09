@@ -287,7 +287,7 @@ void yarp2device::run()
         size_t written = 0;
         while(written < bytes_to_write) {
 
-            int ret = write(fd, buffer + written, sizeof(int) * 2);
+            int ret = write(fd, buffer + written, bytes_to_write - written);
 
             if(ret > 0) { //success!
                 written += ret;
@@ -304,7 +304,7 @@ void yarp2device::run()
         if(dt > 3.0) {
 
             struct { unsigned int reg_offset; char rw; unsigned int data;} hpu_regs = {0x18, 0, 0};
-            if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+            if (-1 == ioctl(fd, HPU_GEN_REG, &hpu_regs)){
                 yWarning() << "Couldn't read dump status";
             }
 
@@ -352,27 +352,21 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
     }
 
     //READ ID
-    hpu_regs.reg_offset = ID_REG;
-    hpu_regs.rw = 0;
-    hpu_regs.data = 0;
-    if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
-        yError() << "Error: cannot read ID_REG configuration";
-        close(fd); fd = -1;
-        return false;
-    }
+    unsigned int version;
+    ioctl(fd, HPU_VERSION, &version);
 
     std::cout << "ID and Version";
-    char *c = (char *)&(hpu_regs.data);
+    char *c = (char *)&(version);
     int major = ((int)(*(c+3)))>>4;
     int minor = ((int)(*(c+3)))&0xF;
     std::cout << *c << *(c+1) << *(c+2) << major << "." << minor << std::endl;
 
     //32 bit timestamp
     unsigned int timestampswitch = 1;
-    ioctl(fd, IOC_SET_TS_TYPE, &timestampswitch);
+    ioctl(fd, HPU_TS_MODE, &timestampswitch);
 
     //read the pool size
-    ioctl(fd, IOC_GET_PS, &pool_size);
+    ioctl(fd, HPU_GET_RX_PS, &pool_size);
     if(pool_size < 0 || pool_size > 32768) {
         yWarning() << "Pool size invalid (" << pool_size << "). Setting to ("
                      "4096)";
@@ -386,12 +380,20 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
 
         yInfo() << "Configuring Cameras/Skin";
 
+//        hpu_rx_interface_ioctl_t interface;
+//        hpu_interface_cfg_t options;
+
+//        interface.interface = INTERFACE_EYE_R;
+//        options = {
+
+        ioctl(fd, HPU_RX_INTERFACE, &pool_size);
+
         //Enable SKIN
         hpu_regs.reg_offset = AUX_RX_CTRL_REG;
         hpu_regs.rw = 1;
         hpu_regs.data = AUX_RX_ENABLE_SKIN | MSK_AUX_RX_CTRL_REG;
 
-        if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+        if (-1 == ioctl(fd, HPU_GEN_REG, &hpu_regs)){
 
             yError() << "Error: cannot set skin register";
             close(fd);
@@ -404,7 +406,7 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
         hpu_regs.rw = 1;
         hpu_regs.data = RX_REG_ENABLE_CAMERAS | MSK_RX_CTRL_REG;
 
-        if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+        if (-1 == ioctl(fd, HPU_GEN_REG, &hpu_regs)){
 
             yError() << "Error: cannot set camera register";
             close(fd);
@@ -420,7 +422,7 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
         hpu_regs.reg_offset = TX_CTRL_REG;
         hpu_regs.rw = 1;
         hpu_regs.data = 0x68;
-        if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+        if (-1 == ioctl(fd, HPU_GEN_REG, &hpu_regs)){
             yError() << "Error: cannot set spinnaker transmit";
             close(fd); fd = -1;
             return false;
@@ -430,48 +432,35 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
         hpu_regs.reg_offset = AUX_RX_CTRL_REG;
         hpu_regs.rw = 1;
         hpu_regs.data = 0x08;
-        if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+        if (-1 == ioctl(fd, HPU_GEN_REG, &hpu_regs)){
             yError() << "Error: cannot set spinnaker transmit";
             close(fd); fd = -1;
             return false;
         }
 
         //---------
-        //DISABLE start/stop sending for the moment
-        //yInfo() << "Enable START Key";
-        hpu_regs.reg_offset = 0x80; //SPNN_START_KEY_REG
-        hpu_regs.rw = 1;
-        hpu_regs.data = 0x80000000;
-        if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
-           yError() << "Error: cannot set spinnaker transmit";
-            close(fd); fd = -1;
-            return false;
-        }
+        unsigned int ss_protection = 1;
+        ioctl(fd, HPU_SPINN_KEYS_EN, &ss_protection);
 
-        hpu_regs.reg_offset = 0x80; //SPNN_START_KEY_REG
+        spinn_keys_t ss_keys = {0x80000000, 0x40000000};
+        ioctl(fd, HPU_SET_SPINN_KEYS, &ss_keys);
+
+        //READING SPINNAKER START REGISTER
+        hpu_regs.reg_offset = 0x80;
         hpu_regs.rw = 0;
         hpu_regs.data = 0;
-        if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+        if (-1 == ioctl(fd, HPU_GEN_REG, &hpu_regs)){
            yError() << "Error: cannot read spinnaker transmit";
             close(fd); fd = -1;
             return false;
         }
         yInfo() << "SpiNNaker START register" << hpu_regs.data;
 
-        //---------
-        hpu_regs.reg_offset = 0x84; //SPNN_STOP_KEY_REG
-        hpu_regs.rw = 1;
-        hpu_regs.data = 0x40000000;
-        if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
-            yError() << "Error: cannot set spinnaker transmit";
-            close(fd); fd = -1;
-            return false;
-        }
-
+        //READING SPINNAKER STOP REGISTER
         hpu_regs.reg_offset = 0x84; //SPNN_STOP_KEY_REG
         hpu_regs.rw = 0;
         hpu_regs.data = 0;
-        if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+        if (-1 == ioctl(fd, HPU_GEN_REG, &hpu_regs)){
            yError() << "Error: cannot read spinnaker transmit";
             close(fd); fd = -1;
             return false;
@@ -482,7 +471,7 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
         hpu_regs.reg_offset = 0x88; //SPNN_TX_MASK_REG
         hpu_regs.rw = 1;
         hpu_regs.data = 0x00FFFFFF;
-        if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+        if (-1 == ioctl(fd, HPU_GEN_REG, &hpu_regs)){
             yError() << "Error: could not set a register";
             close(fd); fd = -1;
             return false;
@@ -490,7 +479,7 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
 
         hpu_regs.rw = 0;
         hpu_regs.data = 0;
-        if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+        if (-1 == ioctl(fd, HPU_GEN_REG, &hpu_regs)){
            yError() << "Error: could not read a register";
             close(fd); fd = -1;
             return false;
@@ -501,7 +490,7 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
         hpu_regs.reg_offset = 0x8C; //SPNN_RX_MASK_REG
         hpu_regs.rw = 1;
         hpu_regs.data = 0x00FFFFFF;
-        if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+        if (-1 == ioctl(fd, HPU_GEN_REG, &hpu_regs)){
             yError() << "Error: could not set a register";
             close(fd); fd = -1;
             return false;
@@ -509,7 +498,7 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
 
         hpu_regs.rw = 0;
         hpu_regs.data = 0;
-        if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+        if (-1 == ioctl(fd, HPU_GEN_REG, &hpu_regs)){
            yError() << "Error: could not read a register";
             close(fd); fd = -1;
             return false;
@@ -517,57 +506,31 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
         yInfo() << "SpiNNaker RX MASK register" << hpu_regs.data;
 
         //---------
-        //ENABLE loopback  (if required)
+        //ENABLE loopback
+        spinn_loop_t lbmode = LOOP_NONE;
         if(loopback) {
             yWarning() << "SpiNNaker in Loopback mode";
-            hpu_regs.reg_offset = CTRL_REG;
-            hpu_regs.rw = 0;
-            hpu_regs.data = 0;
-            if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
-                yError() << "Error: cannot read CTRL_REG";
-                close(fd); fd = -1;
-                return false;
-            }
-            std::cout << "CTRL_REG: 0x" << std::hex << std::setw(8)
-                      << std::setfill('0') << hpu_regs.data << std::endl;
-            //hpu_regs.data |= 0x02000000;
-            hpu_regs.data = 0x02008007;
-            hpu_regs.rw = 1;
-            if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
-                yError() << "Error: cannot set loopback";
-                close(fd); fd = -1;
-                return false;
-            }
-            std::cout << "CTRL_REG: 0x" << std::hex << std::setw(8)
-                      << std::setfill('0') << hpu_regs.data << std::endl;
-        } else {
-            hpu_regs.reg_offset = CTRL_REG;
-            hpu_regs.rw = 0;
-            hpu_regs.data = 0;
-            if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
-                yError() << "Error: cannot read CTRL_REG";
-                close(fd); fd = -1;
-                return false;
-            }
-            std::cout << "CTRL_REG: 0x" << std::hex << std::setw(8)
-                      << std::setfill('0') << hpu_regs.data << std::endl;
-            hpu_regs.data &= ~0x02C00000;
-            hpu_regs.rw = 1;
-            if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
-                yError() << "Error: cannot set loopback";
-                close(fd); fd = -1;
-                return false;
-            }
-            std::cout << "CTRL_REG: 0x" << std::hex << std::setw(8)
-                      << std::setfill('0') << hpu_regs.data << std::endl;
+            lbmode = LOOP_LSPINN;
         }
+        ioctl(fd, HPU_SET_LOOPBACK, &lbmode);
 
+        //READ CTRL_REG status
+        hpu_regs.reg_offset = CTRL_REG;
+        hpu_regs.rw = 0;
+        hpu_regs.data = 0;
+        if (-1 == ioctl(fd, HPU_GEN_REG, &hpu_regs)){
+            yError() << "Error: cannot read CTRL_REG";
+            close(fd); fd = -1;
+            return false;
+        }
+        std::cout << "CTRL_REG: 0x" << std::hex << std::setw(8)
+                  << std::setfill('0') << hpu_regs.data << std::endl;
 
         //READ IRQ status
         hpu_regs.reg_offset = IRQ_REG;
         hpu_regs.rw = 0;
         hpu_regs.data = 0;
-        if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+        if (-1 == ioctl(fd, HPU_GEN_REG, &hpu_regs)){
             yError() << "Error: cannot read IRQ status";
             close(fd); fd = -1;
             return false;
@@ -580,7 +543,7 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
         hpu_regs.reg_offset = IP_CFNG_REG;
         hpu_regs.rw = 0;
         hpu_regs.data = 0;
-        if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+        if (-1 == ioctl(fd, HPU_GEN_REG, &hpu_regs)){
             yError() << "Error: cannot read IP configuration";
             close(fd); fd = -1;
             return false;
@@ -593,7 +556,7 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
         hpu_regs.reg_offset = 0x18;
         hpu_regs.rw = 0;
         hpu_regs.data = 0;
-        if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+        if (-1 == ioctl(fd, HPU_GEN_REG, &hpu_regs)){
             yError() << "Error: cannot read IP configuration";
             close(fd); fd = -1;
             return false;
@@ -654,7 +617,7 @@ void hpuInterface::stop()
     hpu_regs.reg_offset = 0x18;
     hpu_regs.rw = 0;
     hpu_regs.data = 0;
-    if (-1 == ioctl(fd, AER_GEN_REG, &hpu_regs)){
+    if (-1 == ioctl(fd, HPU_GEN_REG, &hpu_regs)){
         yError() << "Error: cannot read Raw Status";
     }
 

@@ -20,6 +20,8 @@
 #ifndef _VDEVICEREGISTERS_
 #define _VDEVICEREGISTERS_
 
+#include <cstdint>
+
 
 #define LOW8(x) x&0xFF
 #define HIGH8(x) (x&0xFF00)>>8
@@ -184,19 +186,62 @@
 
 
 
-// hpu_core & spinn2neu
+// HPU CORE IOCTLS
 
 #define MAGIC_NUM 0
-#define IOC_READ_TS         _IOR (MAGIC_NUM,  1, void *)
-#define IOC_CLEAR_TS        _IOW (MAGIC_NUM,  2, void *)
-#define AER_VERSION         _IOR (MAGIC_NUM,  3, void *)
-#define IOC_SET_TS_TYPE     _IOW (MAGIC_NUM,  7, void *)
-//#define AER_TIMESTAMP       _IOR (MAGIC_NUM,  8, void *)
-#define AER_GEN_REG         _IOWR(MAGIC_NUM,  8, void *)
-#define IOC_GET_PS          _IOR (MAGIC_NUM,  9, void *)
-#define AER_SET_LOC_LBCK    _IOW (MAGIC_NUM, 10, void *)
-#define AER_SET_REM_LBCK    _IOW (MAGIC_NUM, 11, void *)
-#define AER_SET_FAR_LBCK    _IOW (MAGIC_NUM, 12, void *)
+#define HPU_READ_TS         _IOR (MAGIC_NUM,  1, unsigned int *)
+#define HPU_CLEAR_TS        _IOW (MAGIC_NUM,  2, unsigned int *)
+#define HPU_VERSION         _IOR (MAGIC_NUM,  3, unsigned int *)
+#define HPU_TS_MODE        _IOW (MAGIC_NUM,  7, unsigned int *)
+#define HPU_GEN_REG         _IOWR(MAGIC_NUM,  8, void *)
+#define HPU_GET_RX_PS       _IOR (MAGIC_NUM,  9, unsigned int *)
+//#define HPU_SET_AUX_THRESH <- ask
+#define HPU_GET_LOSTCNT     _IOR (MAGIC_NUM, 16, unsigned int *)
+#define HPU_SET_LOOPBACK    _IOW (MAGIC_NUM, 18, void *)
+#define HPU_GET_TX_PS       _IOR (MAGIC_NUM, 20, unsigned int *)
+#define HPU_SET_BLK_TX_THR  _IOW (MAGIC_NUM, 21, unsigned int *)
+#define HPU_SET_BLK_RX_THR  _IOW (MAGIC_NUM, 22, unsigned int *)
+#define HPU_SET_SPINN_KEYS  _IOW (MAGIC_NUM, 23, void *)
+#define HPU_SPINN_KEYS_EN   _IOR (MAGIC_NUM, 24, unsigned int *)
+//#define HPU_SET_SPINNRESUME   _IOR (MAGIC_NUM, 24, unsigned int *) <-ask
+#define HPU_RX_INTERFACE    _IOR (MAGIC_NUM, 26, void *)
+#define HPU_TX_INTERFACE    _IOR (MAGIC_NUM, 27, void *)
+#define HPU_AXIS_LATENCY    _IOR (MAGIC_NUM, 28, unsigned int *)
+
+
+//HPU IOCTL STRUCTS/ENUMS
+
+typedef enum {
+    INTERFACE_EYE_R,
+    INTERFACE_EYE_L,
+    INTERFACE_AUX
+} hpu_interface_t;
+
+
+typedef struct {
+    int hssaer[4];
+    int gtp;
+    int paer;
+    int spinn;
+} hpu_interface_cfg_t;
+
+typedef struct {
+    hpu_interface_t interface;
+    hpu_interface_cfg_t cfg;
+} hpu_rx_interface_ioctl_t;
+
+
+typedef struct {
+    uint32_t start;
+    uint32_t stop;
+} spinn_keys_t;
+
+typedef enum {
+    LOOP_NONE,
+    LOOP_LNEAR,
+    LOOP_LSPINN,
+} spinn_loop_t;
+
 
 #define CTRL_REG         0x00
 #define RXDATA_REG       0x08
