@@ -205,13 +205,13 @@ void  device2yarp::run() {
 
         //display an output to let everyone know we are still working.
         double update_period = yarp::os::Time::now() - prevTS;
-        if(update_period > 1.0) {
+        if(update_period > 5.0) {
 
-            yInfo() << "[READ] "
+            yInfo() << "[READ ] "
                     << (int)((countAEs - prevAEs)/(1000.0*update_period))
                     << "kV/s";
             if(countLoss > 0) {
-                yWarning() << "[LOST] "
+                yWarning() << "[LOST ] "
                            << (int)(countLoss/(1000.0*update_period))
                            << "kV/s";
                 countLoss = 0;
@@ -301,21 +301,19 @@ void yarp2device::run()
 
         static double previous_time = yarp::os::Time::now();
         double dt = yarp::os::Time::now() - previous_time;
-        if(dt > 3.0) {
+        if(dt > 5.0) {
 
             hpu_regs_t hpu_regs = {0x18, 0, 0};
             if (-1 == ioctl(fd, HPU_GEN_REG, &hpu_regs)){
                 yWarning() << "Couldn't read dump status";
             }
 
-            if(hpu_regs.data & 0x00010000)
-                yInfo() << "[DUMP] " << 0.000032 * total_events / dt << " mbps ("
-                    << input_port.getPendingReads() <<
-                    ") .Example:" << data_copy[2] << data_copy[3];
+            if(hpu_regs.data & 0x00100000)
+                yInfo() << "[DUMP ] " << (int)(0.001 * total_events / dt) << " kV/s ("
+                    << input_port.getPendingReads() << " delayed packets)";
             else
-                yInfo() << "[WRITE] " << 0.000032 * total_events / dt << " mbps ("
-                    << input_port.getPendingReads() <<
-                    ") .Example:" << data_copy[2] << data_copy[3];
+                yInfo() << "[WRITE] " << (int)(0.001 * total_events / dt) << " kV/s ("
+                    << input_port.getPendingReads() << " delayed packets)";
 
             total_events = 0;
             previous_time += dt;
