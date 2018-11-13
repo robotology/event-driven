@@ -145,15 +145,6 @@ private:
     bool read_thread_open;
     bool write_thread_open;
 
-
-    struct hpu_regs_t {
-
-        unsigned int reg_offset;
-        char rw;
-        unsigned int data;
-
-    } hpu_regs;
-
 public:
 
     hpuInterface();

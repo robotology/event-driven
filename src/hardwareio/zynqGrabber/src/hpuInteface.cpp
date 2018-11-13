@@ -303,7 +303,7 @@ void yarp2device::run()
         double dt = yarp::os::Time::now() - previous_time;
         if(dt > 3.0) {
 
-            struct { unsigned int reg_offset; char rw; unsigned int data;} hpu_regs = {0x18, 0, 0};
+            hpu_regs_t hpu_regs = {0x18, 0, 0};
             if (-1 == ioctl(fd, HPU_GEN_REG, &hpu_regs)){
                 yWarning() << "Couldn't read dump status";
             }
@@ -350,6 +350,7 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
                        "non-blocking mode";
         }
     }
+
 
     //READ ID
     unsigned int version = 0;
@@ -409,6 +410,8 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
         spinn_keys_t ss_keys = {0x80000000, 0x40000000};
         ioctl(fd, HPU_SET_SPINN_KEYS, &ss_keys);
 
+        hpu_regs_t hpu_regs;
+
         //---------
         hpu_regs.reg_offset = 0x88; //SPNN_TX_MASK_REG
         hpu_regs.rw = 1;
@@ -439,7 +442,7 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
         ioctl(fd, HPU_SET_LOOPBACK, &lbmode);
 
         //READ CTRL_REG status
-        hpu_regs.reg_offset = CTRL_REG;
+        hpu_regs.reg_offset = 0x00; //CTRL_REG
         hpu_regs.rw = 0;
         hpu_regs.data = 0;
         if (-1 == ioctl(fd, HPU_GEN_REG, &hpu_regs)){
@@ -447,34 +450,9 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
             close(fd); fd = -1;
             return false;
         }
-        std::cout << "CTRL_REG: 0x" << std::hex << std::setw(8)
+        std::cout << "CTRL_REG: ";
+        std::cout << "0x" << std::hex << std::setw(8)
                   << std::setfill('0') << hpu_regs.data << std::endl;
-
-        //READ IRQ status
-        hpu_regs.reg_offset = IRQ_REG;
-        hpu_regs.rw = 0;
-        hpu_regs.data = 0;
-        if (-1 == ioctl(fd, HPU_GEN_REG, &hpu_regs)){
-            yError() << "Error: cannot read IRQ status";
-            close(fd); fd = -1;
-            return false;
-        }
-
-        std::cout << "IRQ status register: ";
-        std::cout << std::hex << hpu_regs.data << std::endl;
-
-        //READ IP configuration
-        hpu_regs.reg_offset = IP_CFNG_REG;
-        hpu_regs.rw = 0;
-        hpu_regs.data = 0;
-        if (-1 == ioctl(fd, HPU_GEN_REG, &hpu_regs)){
-            yError() << "Error: cannot read IP configuration";
-            close(fd); fd = -1;
-            return false;
-        }
-
-        std::cout << "IP configuration: ";
-        std::cout << std::hex << hpu_regs.data << std::endl;
 
         //READ Raw Status Register
         hpu_regs.reg_offset = 0x18;
@@ -487,7 +465,8 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
         }
 
         std::cout << "Raw Status: ";
-        std::cout << std::hex << hpu_regs.data << std::endl;
+        std::cout << "0x" << std::hex << std::setw(8)
+                  << std::setfill('0') << hpu_regs.data << std::endl;
 
 
     }
@@ -538,9 +517,7 @@ void hpuInterface::stop()
     }
 
     //READ Raw Status Register
-    hpu_regs.reg_offset = 0x18;
-    hpu_regs.rw = 0;
-    hpu_regs.data = 0;
+    hpu_regs_t hpu_regs = {0x18, 0, 0};
     if (-1 == ioctl(fd, HPU_GEN_REG, &hpu_regs)){
         yError() << "Error: cannot read Raw Status";
     }
