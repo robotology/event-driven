@@ -26,6 +26,7 @@
 #include <errno.h>
 #include <iostream>
 #include <iomanip>
+#include <cstring>
 
 /******************************************************************************/
 //vDevReadBuffer
@@ -79,7 +80,7 @@ void vDevReadBuffer::run()
         //std::cout<< " bytes read "<< r <<std::endl;
 
         if(r < 0 && errno != EAGAIN) {
-            perror("Error reading events: ");
+            yInfo() << "[Read ]" << std::strerror(errno);
         }
 
         safety.post();
@@ -101,10 +102,11 @@ std::vector<unsigned char>& vDevReadBuffer::getBuffer(unsigned int &nBytesRead, 
         //direct read
         nBytesLost = 0; nBytesRead = 0;
         int r = read(fd, read_buffer->data(), read_size);
-        if(r > 0) nBytesRead = r;
-        if(r < 0 && errno != EAGAIN) {
-            perror("Error reading events: ");
-        }
+        if(r < 0)
+            yInfo() << "[Read ]" << std::strerror(errno);
+        else
+            nBytesRead = r;
+            
         return *read_buffer;
     } else {
 
@@ -207,11 +209,11 @@ void  device2yarp::run() {
         double update_period = yarp::os::Time::now() - prevTS;
         if(update_period > 5.0) {
 
-            yInfo() << "[READ ] "
+            yInfo() << "[READ ]"
                     << (int)((countAEs - prevAEs)/(1000.0*update_period))
                     << "kV/s";
             if(countLoss > 0) {
-                yWarning() << "[LOST ] "
+                yWarning() << "[LOST ]"
                            << (int)(countLoss/(1000.0*update_period))
                            << "kV/s";
                 countLoss = 0;
@@ -361,8 +363,14 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
     std::cout << *c << *(c+1) << *(c+2) << major << "." << minor << std::endl;
 
     //32 bit timestamp
-    unsigned int timestampswitch = 1;
+    uint32_t timestampswitch = 1;
     ioctl(fd, HPU_TS_MODE, &timestampswitch);
+    
+    uint32_t dma_latency = 1;
+    ioctl(fd, HPU_AXIS_LATENCY, &dma_latency);
+    
+    uint32_t minimum_packet = 8; //bytes (not events)
+    ioctl(fd, HPU_SET_BLK_RX_THR, &minimum_packet);
 
     //read the pool size
     ioctl(fd, HPU_GET_RX_PS, &pool_size);
