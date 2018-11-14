@@ -280,9 +280,10 @@ int vPreProcess::queryUnprocessed()
 
 void vPreProcess::printFilterStats()
 {
-    if(v_total == 0) v_total = 1;
-    double pc = 100.0 * (double)v_dropped / (double)v_total;
-    yInfo() << v_dropped << "/" << v_total << "(" << pc << "%)";
+    if(v_total) {
+        double pc = 100.0 * (double)v_dropped / (double)v_total;
+        yInfo() << v_dropped << "/" << v_total << "(" << pc << "%)";
+    }
     v_total = 0;
     v_dropped = 0;
 
@@ -316,7 +317,7 @@ void vPreProcess::run()
     resolution resmod = res;
     resmod.height -= 1;
     resmod.width -= 1;
-    int prev_bottle_n = 0;
+    int nm0 = 0, nm1 = 0, nm2 = 0, nm3 = 0, nm4 = 0;
 
 #if DECODE_METHOD != 2
     outPortCamLeft.setWriteType(AE::tag);
@@ -346,12 +347,21 @@ void vPreProcess::run()
         rates.push_back((double)q->size() / (q->back().stamp - q->front().stamp));
 #endif
 
-        if(precheck && prev_bottle_n + 1 != ystamp.getCount() && ystamp.getCount() && prev_bottle_n) {
-            yWarning() << "Dropped bottle:" << prev_bottle_n << "to" << ystamp.getCount();
+        if(precheck) {
+            nm0 = ystamp.getCount();
+            if(nm3 && nm0 - nm1 == 1 && nm1 - nm2 > 1 && nm1 - nm3 > 2) {
+                yWarning() << "LOST" << nm1-nm2-1 << "PACKETS ["
+                           << nm4 << nm3 << nm2 << nm1 << nm0 << "]";
+            }
+            nm4 = nm3;
+            nm3 = nm2;
+            nm2 = nm1;
+            nm1 = nm0;
         }
-        prev_bottle_n = ystamp.getCount();
+
 
         v_total += q->size();
+        //std::cout << q->size() << std::endl;
 #if DECODE_METHOD != 2
         for(ev::vQueue::const_iterator qi = q->begin(); qi != q->end(); qi++) {
             auto v = is_event<AE>(*qi);
@@ -363,11 +373,11 @@ void vPreProcess::run()
             if(!v->skin) {
 #endif
 
-                //precheck
-                if(precheck && (v->x < 0 || v->x > resmod.width || v->y < 0 || v->y > resmod.height)) {
-                    yWarning() << "Event Corruption:" << v->getContent().toString();
-                    continue;
-                }
+//                //precheck
+//                if(precheck && (v->x < 0 || v->x > resmod.width || v->y < 0 || v->y > resmod.height)) {
+//                    yWarning() << "Event Corruption:" << v->getContent().toString();
+//                    continue;
+//                }
 
                 //flipx
                 if(flipx) v->x = resmod.width - v->x;
