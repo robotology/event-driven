@@ -29,115 +29,6 @@
 #include <cstring>
 
 /******************************************************************************/
-//vDevReadBuffer
-/******************************************************************************/
-
-vDevReadBuffer::vDevReadBuffer(int fd, unsigned int read_size, unsigned int buffer_size)
-{
-    //parameters
-    this->fd = fd;
-    this->buffer_size = buffer_size;
-    this->read_size = read_size;
-
-    buffer1.resize(buffer_size);
-    buffer2.resize(buffer_size);
-    discard_buffer.resize(read_size);
-
-    read_buffer = &buffer1;
-    access_buffer = &buffer2;
-
-    read_count = 0;
-    loss_count = 0;
-
-    bufferedreadwaiting = false;
-
-    yInfo() << "buffer size: " << buffer1.size();
-
-}
-
-
-void vDevReadBuffer::run()
-{
-
-    signal.check();
-
-    while(!isStopping()) {
-
-        safety.wait();
-
-        int r = 0;
-        if(read_count < buffer_size) {
-            //we read and fill up the buffer
-            r = read(fd, read_buffer->data() + read_count,
-                     std::min(buffer_size - read_count, read_size));
-            if(r > 0) read_count += r;
-        } else {
-            //we have reached maximum software buffer - read from the HW but
-            //just discard the result.
-            r = read(fd, discard_buffer.data(), read_size);
-            if(r > 0) loss_count += r;
-        }
-        //std::cout<< " bytes read "<< r <<std::endl;
-
-        if(r < 0 && errno != EAGAIN) {
-            yInfo() << "[Read ]" << std::strerror(errno);
-        }
-
-        safety.post();
-        if(bufferedreadwaiting) {
-            //the other thread is read to read
-            signal.wait(); //wait for it to do the read
-        }
-
-    }
-
-
-}
-
-
-std::vector<unsigned char>& vDevReadBuffer::getBuffer(unsigned int &nBytesRead, unsigned int &nBytesLost)
-{
-
-    if(!this->isRunning()) {
-        //direct read
-        nBytesLost = 0; nBytesRead = 0;
-        int r = read(fd, read_buffer->data(), read_size);
-        if(r < 0)
-            yInfo() << "[Read ]" << std::strerror(errno);
-        else
-            nBytesRead = r;
-
-        return *read_buffer;
-    } else {
-
-        //safely copy the data into the accessBuffer and reset the readCount
-        bufferedreadwaiting = true;
-        safety.wait();
-        bufferedreadwaiting = false;
-
-        //switch the buffer the read into
-        std::vector<unsigned char> *temp;
-        temp = read_buffer;
-        read_buffer = access_buffer;
-        access_buffer = temp;
-
-        //reset the filling position
-        nBytesRead = read_count;
-        nBytesLost = loss_count;
-        read_count = 0;
-        loss_count = 0;
-
-        //send the correct signals to restart the grabbing thread
-        safety.post();
-        signal.check();
-        signal.post(); //tell the other thread we are done
-
-        return *access_buffer;
-    }
-
-}
-
-/******************************************************************************/
 //device2yarp
 /******************************************************************************/
 
@@ -193,7 +84,7 @@ void  device2yarp::run() {
         output_port.setEnvelope(yarp_stamp);
         output_port.write(external_storage);
 
-        event_count += n_bytes_read;
+        event_count += n_bytes_read / 8;
 
         static double prev_ts = yarp::os::Time::now();
         double update_period = yarp::os::Time::now() - prev_ts;
@@ -207,53 +98,6 @@ void  device2yarp::run() {
             event_count = 0;
         }
     }
-
-//        return;
-
-//        //get the data from the device read thread
-//        unsigned int nBytesRead, nBytesLost;
-//        std::vector<unsigned char> &data = device_reader->getBuffer(nBytesRead, nBytesLost);
-//        countAEs += nBytesRead / 8;
-//        countLoss += nBytesLost / 8;
-//        if (!output_port.getOutputCount() || nBytesRead <= 8) continue;
-
-//        unsigned int i = 0;
-//        while((i+1) * packet_size < nBytesRead) {
-
-//            external_storage.setExternalData((const char *)data.data() +
-//                                             i * packet_size, packet_size);
-//            yarp_stamp.update();
-//            output_port.setEnvelope(yarp_stamp);
-//            output_port.write(external_storage);
-
-//            i++;
-//        }
-
-//        external_storage.setExternalData((const char *)data.data() +
-//                                         i * packet_size,
-//                                         nBytesRead - i * packet_size);
-//        yarp_stamp.update();
-//        output_port.setEnvelope(yarp_stamp);
-//        output_port.write(external_storage);
-
-//        //display an output to let everyone know we are still working.
-//        double update_period = yarp::os::Time::now() - prevTS;
-//        if(update_period > 5.0) {
-
-//            yInfo() << "[READ ]"
-//                    << (int)((countAEs - prevAEs)/(1000.0*update_period))
-//                    << "kV/s";
-//            if(countLoss > 0) {
-//                yWarning() << "[LOST ]"
-//                           << (int)(countLoss/(1000.0*update_period))
-//                           << "kV/s";
-//                countLoss = 0;
-//            }
-//            prevTS += update_period;
-//            prevAEs = countAEs;
-//        }
-
-//    }
 
 }
 
@@ -404,8 +248,6 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
         pool_size = 4096;
 
     }
-    yInfo() << "pool size: " << pool_size;
-
 
     if(!spinnaker) {
 
@@ -501,6 +343,12 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
 
     }
 
+    yInfo() << "DMA pool size:" << pool_size;
+    yInfo() << "DMA latency:" << 1 << "ms";
+    yInfo() << "Mimumum driver read:" << 8 << "bytes";
+
+
+
 
     return true;
 }
@@ -510,6 +358,7 @@ bool hpuInterface::openReadPort(string module_name, unsigned int packet_size)
     if(fd < 0 || !D2Y.open(module_name, fd, pool_size, packet_size))
         return false;
 
+    yInfo() << "Maximum packet size:" << packet_size;
     read_thread_open = true;
     return true;
 }

@@ -31,42 +31,6 @@ using std::string;
 using std::vector;
 
 /******************************************************************************/
-//vDevReadBuffer
-/******************************************************************************/
-class vDevReadBuffer : public yarp::os::Thread {
-
-private:
-
-    //parameters
-    unsigned int read_size;
-    unsigned int buffer_size;
-
-
-    //internal variables/storage
-    int fd;
-    unsigned int read_count;
-    unsigned int loss_count;
-    std::vector<unsigned char> buffer1;
-    std::vector<unsigned char> buffer2;
-    std::vector<unsigned char> discard_buffer;
-
-    std::vector<unsigned char> *read_buffer;
-    std::vector<unsigned char> *access_buffer;
-
-    yarp::os::Semaphore safety;
-    yarp::os::Semaphore signal;
-    bool bufferedreadwaiting;
-
-public:
-
-    vDevReadBuffer(int fd, unsigned int read_size, unsigned int buffer_size);
-    std::vector<unsigned char>& getBuffer(unsigned int &nBytesRead,
-                                          unsigned int &nBytesLost);
-    virtual void run();
-
-};
-
-/******************************************************************************/
 //device2yarp
 /******************************************************************************/
 class device2yarp : public yarp::os::Thread {
