@@ -351,7 +351,8 @@ void vPreProcess::run()
             nm0 = ystamp.getCount();
             if(nm3 && nm0 - nm1 == 1 && nm1 - nm2 > 1 && nm1 - nm3 > 2) {
                 yWarning() << "LOST" << nm1-nm2-1 << "PACKETS ["
-                           << nm4 << nm3 << nm2 << nm1 << nm0 << "]";
+                           << nm4 << nm3 << nm2 << nm1 << nm0 << "]"
+                           << q->size() << "packet size";
             }
             nm4 = nm3;
             nm3 = nm2;

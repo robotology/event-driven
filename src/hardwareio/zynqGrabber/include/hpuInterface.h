@@ -20,9 +20,6 @@
 #ifndef __EVENTDRIVENYARPINTERFACE__
 #define __EVENTDRIVENYARPINTERFACE__
 
-#define THRATE 1
-
-
 #include <yarp/os/all.h>
 #include <iCub/eventdriven/all.h>
 #include <string>
@@ -77,32 +74,23 @@ class device2yarp : public yarp::os::Thread {
 private:
 
     //data buffer thread
-    vDevReadBuffer *device_reader;
+    int fd;
+    std::vector<unsigned char> data;
     yarp::os::Port output_port;
-
-    //parameters
-    unsigned int packet_size;
-    bool direct_read;
     Stamp yarp_stamp;
 
-    int countAEs;
-    int countLoss;
-    double rate;
-    int prevAEs;
-    double prevTS;
+    //parameters
+    unsigned int max_dma_pool_size;
+    unsigned int max_packet_size;
 
 public:
 
     device2yarp();
-    bool open(string module_name, int fd, unsigned int read_size,
-              bool direct_read, unsigned int packet_size,
-              unsigned int internal_storage_size);
-    void setDirectRead(bool value = true);
+    bool open(string module_name, int fd, unsigned int pool_size,
+              unsigned int packet_size);
 
     void run();
     void onStop();
-    void threadRelease();
-    void afterStart(bool success);
 
 };
 
@@ -151,9 +139,7 @@ public:
 
     bool configureDevice(string device_name, bool spinnaker = false,
                          bool loopback = false);
-    bool openReadPort(string module_name, bool direct_read,
-                      unsigned int packet_size,
-                      unsigned int maximum_internal_memory);
+    bool openReadPort(string module_name, unsigned int packet_size);
     bool openWritePort(string module_name);
     void start();
     void stop();

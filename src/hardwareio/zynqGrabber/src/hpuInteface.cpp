@@ -106,7 +106,7 @@ std::vector<unsigned char>& vDevReadBuffer::getBuffer(unsigned int &nBytesRead, 
             yInfo() << "[Read ]" << std::strerror(errno);
         else
             nBytesRead = r;
-            
+
         return *read_buffer;
     } else {
 
@@ -143,99 +143,123 @@ std::vector<unsigned char>& vDevReadBuffer::getBuffer(unsigned int &nBytesRead, 
 
 device2yarp::device2yarp()
 {
-    countAEs = 0;
-    countLoss = 0;
-    prevAEs = 0;
-    device_reader = 0;
-    direct_read = false;
+    fd = -1;
+    max_dma_pool_size = 0;
+    max_packet_size = 0;
 }
 
-bool device2yarp::open(string module_name, int fd, unsigned int read_size,
-                       bool direct_read, unsigned int packet_size,
-                       unsigned int internal_storage_size)
+bool device2yarp::open(string module_name, int fd, unsigned int pool_size,
+                       unsigned int packet_size)
 {
-    if(direct_read)
-        device_reader = new vDevReadBuffer(fd, packet_size, internal_storage_size);
-    else
-        device_reader = new vDevReadBuffer(fd, read_size, internal_storage_size);
+    this->fd = fd;
 
-    this->direct_read = direct_read;
-    this->packet_size = packet_size;
+    if(pool_size > packet_size) {
+        packet_size = pool_size;
+        yWarning() << "Setting packet_size to pool_size:" << packet_size;
+    }
+    this->max_packet_size = packet_size;
+    this->max_dma_pool_size = pool_size;
+
+    data.resize(max_packet_size);
 
     return output_port.open(module_name + "/AE:o");
 }
 
-void device2yarp::afterStart(bool success)
-{
-    if(success && !direct_read)
-        device_reader->start();
-}
-
 void  device2yarp::run() {
+
+    if(fd < 0) {
+        yError() << "HPU reading device not open";
+        return;
+    }
 
     vGenPortInterface external_storage;
     external_storage.setHeader(AE::tag);
-    yInfo() << "packet size: " << packet_size;
+
+    unsigned int event_count = 0;
 
     while(!isStopping()) {
 
-        //get the data from the device read thread
-        unsigned int nBytesRead, nBytesLost;
-        std::vector<unsigned char> &data = device_reader->getBuffer(nBytesRead, nBytesLost);
-        countAEs += nBytesRead / 8;
-        countLoss += nBytesLost / 8;
-        if (!output_port.getOutputCount() || nBytesRead <= 8) continue;
-
-        unsigned int i = 0;
-        while((i+1) * packet_size < nBytesRead) {
-
-            external_storage.setExternalData((const char *)data.data() +
-                                             i * packet_size, packet_size);
-            yarp_stamp.update();
-            output_port.setEnvelope(yarp_stamp);
-            output_port.write(external_storage);
-
-            i++;
+        unsigned int r = max_dma_pool_size, n_bytes_read = 0;
+        while(r >= max_dma_pool_size && n_bytes_read < max_packet_size) {
+            r = read(fd, data.data() + n_bytes_read, max_packet_size - n_bytes_read);
+            if(r < 0)
+                yInfo() << "[Read ]" << std::strerror(errno);
+            else
+                n_bytes_read += r;
         }
 
-        external_storage.setExternalData((const char *)data.data() +
-                                         i * packet_size,
-                                         nBytesRead - i * packet_size);
+        external_storage.setExternalData((const char *)data.data(), n_bytes_read);
         yarp_stamp.update();
         output_port.setEnvelope(yarp_stamp);
         output_port.write(external_storage);
 
-        //display an output to let everyone know we are still working.
-        double update_period = yarp::os::Time::now() - prevTS;
+        event_count += n_bytes_read;
+
+        static double prev_ts = yarp::os::Time::now();
+        double update_period = yarp::os::Time::now() - prev_ts;
         if(update_period > 5.0) {
 
             yInfo() << "[READ ]"
-                    << (int)((countAEs - prevAEs)/(1000.0*update_period))
+                    << (int)(event_count/(1000.0*update_period))
                     << "kV/s";
-            if(countLoss > 0) {
-                yWarning() << "[LOST ]"
-                           << (int)(countLoss/(1000.0*update_period))
-                           << "kV/s";
-                countLoss = 0;
-            }
-            prevTS += update_period;
-            prevAEs = countAEs;
-        }
 
+            prev_ts += update_period;
+            event_count = 0;
+        }
     }
+
+//        return;
+
+//        //get the data from the device read thread
+//        unsigned int nBytesRead, nBytesLost;
+//        std::vector<unsigned char> &data = device_reader->getBuffer(nBytesRead, nBytesLost);
+//        countAEs += nBytesRead / 8;
+//        countLoss += nBytesLost / 8;
+//        if (!output_port.getOutputCount() || nBytesRead <= 8) continue;
+
+//        unsigned int i = 0;
+//        while((i+1) * packet_size < nBytesRead) {
+
+//            external_storage.setExternalData((const char *)data.data() +
+//                                             i * packet_size, packet_size);
+//            yarp_stamp.update();
+//            output_port.setEnvelope(yarp_stamp);
+//            output_port.write(external_storage);
+
+//            i++;
+//        }
+
+//        external_storage.setExternalData((const char *)data.data() +
+//                                         i * packet_size,
+//                                         nBytesRead - i * packet_size);
+//        yarp_stamp.update();
+//        output_port.setEnvelope(yarp_stamp);
+//        output_port.write(external_storage);
+
+//        //display an output to let everyone know we are still working.
+//        double update_period = yarp::os::Time::now() - prevTS;
+//        if(update_period > 5.0) {
+
+//            yInfo() << "[READ ]"
+//                    << (int)((countAEs - prevAEs)/(1000.0*update_period))
+//                    << "kV/s";
+//            if(countLoss > 0) {
+//                yWarning() << "[LOST ]"
+//                           << (int)(countLoss/(1000.0*update_period))
+//                           << "kV/s";
+//                countLoss = 0;
+//            }
+//            prevTS += update_period;
+//            prevAEs = countAEs;
+//        }
+
+//    }
 
 }
 
 void device2yarp::onStop()
 {
-    device_reader->stop();
     output_port.close();
-}
-
-void device2yarp::threadRelease()
-{
-    delete device_reader;
-    device_reader = 0;
 }
 
 /******************************************************************************/
@@ -365,10 +389,10 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
     //32 bit timestamp
     uint32_t timestampswitch = 1;
     ioctl(fd, HPU_TS_MODE, &timestampswitch);
-    
+
     uint32_t dma_latency = 1;
     ioctl(fd, HPU_AXIS_LATENCY, &dma_latency);
-    
+
     uint32_t minimum_packet = 8; //bytes (not events)
     ioctl(fd, HPU_SET_BLK_RX_THR, &minimum_packet);
 
@@ -481,12 +505,9 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
     return true;
 }
 
-bool hpuInterface::openReadPort(string module_name, bool direct_read,
-                                unsigned int packet_size,
-                                unsigned int maximum_internal_memory)
+bool hpuInterface::openReadPort(string module_name, unsigned int packet_size)
 {
-    if(fd < 0 || !D2Y.open(module_name, fd, pool_size, direct_read, packet_size,
-                           maximum_internal_memory))
+    if(fd < 0 || !D2Y.open(module_name, fd, pool_size, packet_size))
         return false;
 
     read_thread_open = true;
