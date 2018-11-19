@@ -134,8 +134,6 @@ void yarp2device::onStop()
 void yarp2device::run()
 {
 
-    yInfo() << "Begin reading from device ... ";
-
     while(true) {
 
         Bottle *yarp_bottle = input_port.read(true); //blocking read
