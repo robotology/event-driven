@@ -285,27 +285,15 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
 
         hpu_regs_t hpu_regs;
 
-        //---------
-        hpu_regs.reg_offset = 0x88; //SPNN_TX_MASK_REG
-        hpu_regs.rw = 1;
-        hpu_regs.data = 0x00FFFFFF;
-        if (-1 == ioctl(fd, HPU_GEN_REG, &hpu_regs)){
-            yError() << "Error: could not set a register";
-            close(fd); fd = -1;
-            return false;
-        }
+        //SPNN_TX_MASK_REG
+        hpu_regs = {0x88, 1, 0x00FFFFFF};
+        ioctl(fd, HPU_GEN_REG, &hpu_regs);
 
-        //---------
-        hpu_regs.reg_offset = 0x8C; //SPNN_RX_MASK_REG
-        hpu_regs.rw = 1;
-        hpu_regs.data = 0x00FFFFFF;
-        if (-1 == ioctl(fd, HPU_GEN_REG, &hpu_regs)){
-            yError() << "Error: could not set a register";
-            close(fd); fd = -1;
-            return false;
-        }
+        //SPNN_RX_MASK_REG
+        hpu_regs = {0x8C, 1, 0x00FFFFFF};
+        ioctl(fd, HPU_GEN_REG, &hpu_regs);
 
-        //---------
+
         //ENABLE loopback
         spinn_loop_t lbmode = LOOP_NONE;
         if(loopback) {
@@ -314,29 +302,30 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
         }
         ioctl(fd, HPU_SET_LOOPBACK, &lbmode);
 
+        //SET TX synch
+        hpu_regs = {0x44, 0, 0};
+        ioctl(fd, HPU_GEN_REG, &hpu_regs); //read
+        hpu_regs.data |= 1 << 12; //TX timing mode [0 1 2]
+        //hpu_regs.data |= 0 << 14; //forces trigger [0 1]
+        hpu_regs.data |= 1 << 15; //enable resync
+        hpu_regs.data |= 0x9 << 16; //resynch frequency
+        std::cout << "TX status: ";
+        std::cout << "0x" << std::hex << std::setw(8)
+                  << std::setfill('0') << hpu_regs.data << std::endl;
+        hpu_regs.rw = 1;
+        ioctl(fd, HPU_GEN_REG, &hpu_regs); //write
+
+
         //READ CTRL_REG status
-        hpu_regs.reg_offset = 0x00; //CTRL_REG
-        hpu_regs.rw = 0;
-        hpu_regs.data = 0;
-        if (-1 == ioctl(fd, HPU_GEN_REG, &hpu_regs)){
-            yError() << "Error: cannot read CTRL_REG";
-            close(fd); fd = -1;
-            return false;
-        }
+        hpu_regs = {0, 0, 0};
+        ioctl(fd, HPU_GEN_REG, &hpu_regs);
         std::cout << "CTRL_REG: ";
         std::cout << "0x" << std::hex << std::setw(8)
                   << std::setfill('0') << hpu_regs.data << std::endl;
 
         //READ Raw Status Register
-        hpu_regs.reg_offset = 0x18;
-        hpu_regs.rw = 0;
-        hpu_regs.data = 0;
-        if (-1 == ioctl(fd, HPU_GEN_REG, &hpu_regs)){
-            yError() << "Error: cannot read IP configuration";
-            close(fd); fd = -1;
-            return false;
-        }
-
+        hpu_regs = {0x18, 0, 0};
+        ioctl(fd, HPU_GEN_REG, &hpu_regs);
         std::cout << "Raw Status: ";
         std::cout << "0x" << std::hex << std::setw(8)
                   << std::setfill('0') << hpu_regs.data << std::endl;
