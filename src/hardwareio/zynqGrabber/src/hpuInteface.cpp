@@ -70,14 +70,17 @@ void  device2yarp::run() {
 
     while(!isStopping()) {
 
-        unsigned int r = max_dma_pool_size, n_bytes_read = 0;
-        while(r >= max_dma_pool_size && n_bytes_read < max_packet_size) {
+        int r = max_dma_pool_size;
+        unsigned int n_bytes_read = 0;
+        while(r >= (int)max_dma_pool_size && n_bytes_read < max_packet_size) {
             r = read(fd, data.data() + n_bytes_read, max_packet_size - n_bytes_read);
             if(r < 0)
-                yInfo() << "[Read ]" << std::strerror(errno);
+                yInfo() << "[READ ]" << std::strerror(errno);
             else
                 n_bytes_read += r;
         }
+
+        if(n_bytes_read == 0) continue;
 
         external_storage.setExternalData((const char *)data.data(), n_bytes_read);
         yarp_stamp.update();
