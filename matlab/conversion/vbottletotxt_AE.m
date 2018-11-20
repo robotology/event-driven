@@ -89,7 +89,7 @@ fseek(infile, 0, 'eof');
 totch = ftell(infile);
 frewind(infile);
 
-try
+if isfile(outfilename)
     delete(outfilename);
 end
 
