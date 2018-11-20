@@ -139,6 +139,7 @@ void yarp2device::run()
         Bottle *yarp_bottle = input_port.read(true); //blocking read
         //std::cout << ".";
         if(!yarp_bottle) return; //when interrupt is called returns null
+
         Bottle *data_bottle = yarp_bottle->get(1).asList();
 
         size_t data_size = data_bottle->size();
@@ -148,9 +149,9 @@ void yarp2device::run()
         //copy to internal data (needed to modify the contents)
         //we can remove data_copy and just use data_bottle when the
         //mask is done in the FPGA
-        for(size_t i = 1; i < data_size; i += 2) {
+        for(size_t i = 0; i < data_size; i += 1)
             data_copy[i] = data_bottle->get(i).asInt();
-        }
+
 
         //move to bytes space
         char * buffer = (char *)data_copy.data();
@@ -179,12 +180,13 @@ void yarp2device::run()
                 yWarning() << "Couldn't read dump status";
             }
 
-            if(hpu_regs.data & 0x00100000)
+            if(hpu_regs.data & 0x00100000) {
                 yInfo() << "[DUMP ] " << (int)(0.001 * total_events / dt) << " kV/s ("
                     << input_port.getPendingReads() << " delayed packets)";
-            else
+            } else {
                 yInfo() << "[WRITE] " << (int)(0.001 * total_events / dt) << " kV/s ("
                     << input_port.getPendingReads() << " delayed packets)";
+            }
 
             total_events = 0;
             previous_time += dt;
@@ -225,11 +227,9 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
     unsigned int version = 0;
     ioctl(fd, HPU_VERSION, &version);
 
-    std::cout << "ID and Version";
-    char *c = (char *)&(version);
-    int major = ((int)(*(c+3)))>>4;
-    int minor = ((int)(*(c+3)))&0xF;
-    std::cout << *c << *(c+1) << *(c+2) << major << "." << minor << std::endl;
+    yInfo() << "ID and Version " << (char)(version >> 24)
+            << (char)(version >> 16) << (char)(version >> 8) << "-"
+            << (int)((version >> 4) & 0xF) << "." << (int)((version >> 0) & 0xF);
 
     //32 bit timestamp
     uint32_t timestampswitch = 1;
@@ -280,6 +280,9 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
         unsigned int ss_protection = 1;
         ioctl(fd, HPU_SPINN_KEYS_EN, &ss_protection);
 
+        //unsigned int dump_off = 1;
+        //ioctl(fd, HPU_SPINN_DUMPOFF, &dump_off);
+
         spinn_keys_t ss_keys = {0x80000000, 0x40000000};
         ioctl(fd, HPU_SET_SPINN_KEYS, &ss_keys);
 
@@ -305,10 +308,11 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
         //SET TX synch
         hpu_regs = {0x44, 0, 0};
         ioctl(fd, HPU_GEN_REG, &hpu_regs); //read
-        hpu_regs.data |= 1 << 12; //TX timing mode [0 1 2]
+        hpu_regs.data |= 2 << 12; //TX timing mode [0 1 2]
         //hpu_regs.data |= 0 << 14; //forces trigger [0 1]
         hpu_regs.data |= 1 << 15; //enable resync
         hpu_regs.data |= 0x9 << 16; //resynch frequency
+        //hpu_regs.data |= 1 << 20; //differential mask size (1 = 20 bits)
         std::cout << "TX status: ";
         std::cout << "0x" << std::hex << std::setw(8)
                   << std::setfill('0') << hpu_regs.data << std::endl;
