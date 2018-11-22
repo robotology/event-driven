@@ -41,9 +41,9 @@ void interestDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     if(eSet.empty()) return;
     if(vTime < 0) vTime = eSet.back()->stamp;
 
-    int r = 2;
+    int r = 5;
     CvScalar c1 = CV_RGB(255, 0, 0);
-    CvScalar c2 = CV_RGB(0, 255, 255);
+    CvScalar c2 = CV_RGB(60, 0, 255);
 
     ev::vQueue::const_reverse_iterator qi;
     for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
