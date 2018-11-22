@@ -1,8 +1,8 @@
 %% set these options!!
 winsize = 0.1; %seconds
-rate = 1.0; %seconds
+rate = 0.1; %seconds
 channel = 0;
-start_offset = 0.92;
+start_offset = 0.06;
 randomised = 0;
 counter_clock = 0.00000008;
 sensor_height = 240;
@@ -72,19 +72,30 @@ finishedGT = false;
 
 while(~finishedGT)
     
-    wini  = find(GTevents(:, 2) > cts-winsize, 1);
+    wini = ci - 1000;
+    %wini  = find(GTevents(:, 2) > cts-winsize, 1);
     %if(ci - wini) < 2000; wini = ci - 2000; end
-    if(wini < 1); wini = 1; end;
+    if(wini < 1); wini = 1; end
     finishedLOG = false;
+    runHough = true;
     
     while(~finishedLOG)
+        
+        window = GTevents(wini:ci, :);
+        
+        if(runHough)
+            runHough = false;
+            [x, y, r] = event_hough(window, r-5, r+5, 240, 304);
+        end
+        
         figure(1); clf; hold on;
-        window = GTevents(wini:ci, :);       
         plot(window(window(:, 3) == 0, 4), window(window(:, 3) == 0, 5), 'g.');
         plot(window(window(:, 3) ==  1, 4), window(window(:, 3) ==  1, 5), 'm.');
+        
         rectangle('curvature', [1 1], 'position', [x-r y-r r*2 r*2]);
         axis([0 sensor_width 0 sensor_height]);
         drawnow;
+        
         try
             c = waitforbuttonpress;
             if c
@@ -103,11 +114,13 @@ while(~finishedGT)
         end
         
         if c == 13 %enter
+            runHough = true;
             finishedLOG = true;
             %result(res_i, :) = [cts, x, y, r];
             dlmwrite(GTresultfile, [cts, x, y, r, cputs], '-append', 'delimiter', ' ', 'precision', '%0.6f'); 
             figure(2); hold on; plot(cts, 1, 'gx');
         elseif c == 32 %space
+            runHough = true;
             finishedLOG = true;
         elseif c == 27 %ESC
             finishedLOG = true;
@@ -139,7 +152,6 @@ while(~finishedGT)
         cts = GTevents(round(rand(1) * length(GTevents)), 2);
     end
         
-    
     ci = find(GTevents(1:end, 2) > cts, 1);
     if isempty(ci)
         finishedGT = true;
