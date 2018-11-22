@@ -310,9 +310,9 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
         ioctl(fd, HPU_GEN_REG, &hpu_regs); //read
         hpu_regs.data |= 2 << 12; //TX timing mode [0 1 2]
         //hpu_regs.data |= 0 << 14; //forces trigger [0 1]
-        hpu_regs.data |= 1 << 15; //enable resync
+        //hpu_regs.data |= 1 << 15; //enable resync
         hpu_regs.data |= 0x9 << 16; //resynch frequency
-        //hpu_regs.data |= 1 << 20; //differential mask size (1 = 20 bits)
+        hpu_regs.data |= 1 << 20; //differential mask size (1 = 20 bits)
         std::cout << "TX status: ";
         std::cout << "0x" << std::hex << std::setw(8)
                   << std::setfill('0') << hpu_regs.data << std::endl;
