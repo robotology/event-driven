@@ -226,9 +226,12 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
     //READ ID
     unsigned int version = 0;
     ioctl(fd, HPU_VERSION, &version);
-
-    yInfo() << "ID and Version " << (char)(version >> 24)
-            << (char)(version >> 16) << (char)(version >> 8) << "-"
+    char version_word[4];
+    version_word[0] = (char)(version >> 24);
+    version_word[1] = (char)(version >> 16);
+    version_word[2] = (char)(version >> 8);
+    version_word[3] = '-';
+    yInfo() << "ID and Version " << version_word
             << (int)((version >> 4) & 0xF) << "." << (int)((version >> 0) & 0xF);
 
     //32 bit timestamp
@@ -249,6 +252,9 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
         pool_size = 4096;
 
     }
+
+    unsigned int pool_count;
+    ioctl(fd, HPU_GET_RX_PN, &pool_count);
 
     if(!spinnaker) {
 
@@ -277,8 +283,8 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
         hpu_rx_interface_ioctl_t rx_config = {INTERFACE_AUX, {{0, 0, 0, 0}, 0, 0, 1}};
         ioctl(fd, HPU_RX_INTERFACE, &rx_config);
 
-        unsigned int ss_protection = 1;
-        ioctl(fd, HPU_SPINN_KEYS_EN, &ss_protection);
+        //unsigned int ss_protection = 1;
+        //ioctl(fd, HPU_SPINN_KEYS_EN, &ss_protection);
 
         //unsigned int dump_off = 1;
         //ioctl(fd, HPU_SPINN_DUMPOFF, &dump_off);
@@ -286,16 +292,22 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
         spinn_keys_t ss_keys = {0x80000000, 0x40000000};
         ioctl(fd, HPU_SET_SPINN_KEYS, &ss_keys);
 
+        spinn_start_stop_policy_t ss_mode = KEY_ENABLE;
+        ioctl(fd, HPU_SPINN_ST_SP, &ss_mode);
+
         hpu_regs_t hpu_regs;
 
         //SPNN_TX_MASK_REG
-        hpu_regs = {0x88, 1, 0x00FFFFFF};
-        ioctl(fd, HPU_GEN_REG, &hpu_regs);
+        unsigned int tx_mask = 0x00FFFFFF;
+        ioctl(fd, HPU_SPINN_TX_MASK, &tx_mask);
+        //hpu_regs = {0x88, 1, 0x00FFFFFF};
+        //ioctl(fd, HPU_GEN_REG, &hpu_regs);
 
         //SPNN_RX_MASK_REG
-        hpu_regs = {0x8C, 1, 0x00FFFFFF};
-        ioctl(fd, HPU_GEN_REG, &hpu_regs);
-
+        unsigned int rx_mask = 0x00FFFFFF;
+        ioctl(fd, HPU_SPINN_TX_MASK, &rx_mask);
+        //hpu_regs = {0x8C, 1, 0x00FFFFFF};
+        //ioctl(fd, HPU_GEN_REG, &hpu_regs);
 
         //ENABLE loopback
         spinn_loop_t lbmode = LOOP_NONE;
@@ -338,6 +350,7 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
     }
 
     yInfo() << "DMA pool size:" << pool_size;
+    yInfo() << "DMA pool count:" << pool_count;
     yInfo() << "DMA latency:" << 1 << "ms";
     yInfo() << "Mimumum driver read:" << 8 << "bytes";
 

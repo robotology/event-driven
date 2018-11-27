@@ -240,6 +240,75 @@ typedef struct {
     uint8_t cnt_val;
 } aux_cnt_t;
 
+typedef enum {
+    FORCE_START_KEY_ENABLE,
+    FORCE_STOP_KEY_ENABLE,
+    FORCE_START_KEY_DISABLE,
+    FORCE_STOP_KEY_DISABLE,
+    KEY_ENABLE,
+} spinn_start_stop_policy_t;
+
+typedef enum {
+    MASK_20BIT,
+    MASK_24BIT,
+    MASK_28BIT,
+    MASK_32BIT,
+} hpu_timestamp_mask_t;
+
+typedef enum {
+    TIMINGMODE_DELTA,
+    TIMINGMODE_ASAP,
+    TIMINGMODE_ABS,
+} hpu_tx_timing_mode_t;
+
+typedef enum {
+    TIME_1mS,
+    TIME_5mS,
+    TIME_10mS,
+    TIME_50mS,
+    TIME_100mS,
+    TIME_500mS,
+    TIME_1000mS,
+    TIME_2500mS,
+    TIME_5000mS,
+    TIME_10S,
+    TIME_25S,
+    TIME_50S,
+    TIME_100S,
+    TIME_250S,
+    TIME_500S,
+    TIME_DISABLE,
+} hpu_tx_resync_time_t;
+
+typedef enum {
+    EMPTY,
+    ALMOST_EMPTY,
+    FULL,
+    ALMOST_FULL,
+    NOT_EMPTY
+} fifo_status_t;
+
+typedef struct {
+    fifo_status_t rx_fifo_status;
+    fifo_status_t tx_fifo_status;
+    int rx_buffer_ready;
+    int lrx_paer_fifo_full;
+    int rrx_paer_fifo_full;
+    int auxrx_paer_fifo_full;
+    int rx_fifo_over_threshold;
+    int global_rx_err_ko;
+    int global_rx_err_tx;
+    int global_rx_err_to;
+    int global_rx_err_of;
+    int tx_spinn_dump;
+    int lspinn_parity_err;
+    int rspinn_parity_err;
+    int auxspinn_parity_err;
+    int lspinn_rx_err;
+    int rspinn_rx_err;
+    int auxspinn_rx_err;
+} hpu_hw_status_t;
+
 
 // HPU CORE IOCTLS
 
@@ -264,10 +333,21 @@ typedef struct {
 #define HPU_SET_BLK_TX_THR  _IOW (MAGIC_NUM, 21, unsigned int *)
 #define HPU_SET_BLK_RX_THR  _IOW (MAGIC_NUM, 22, unsigned int *)
 #define HPU_SET_SPINN_KEYS  _IOW (MAGIC_NUM, 23, spinn_keys_t *)
-#define HPU_SPINN_KEYS_EN   _IOW (MAGIC_NUM, 24, unsigned int *)
-#define HPU_SPINN_DUMPOFF   _IOR (MAGIC_NUM, 25, unsigned int *)
+//#define HPU_SPINN_KEYS_EN   _IOW (MAGIC_NUM, 24, unsigned int *)
+//#define HPU_SPINN_DUMPOFF   _IOR (MAGIC_NUM, 25, unsigned int *)
 #define HPU_RX_INTERFACE    _IOW (MAGIC_NUM, 26, hpu_rx_interface_ioctl_t *)
 #define HPU_TX_INTERFACE    _IOW (MAGIC_NUM, 27, hpu_tx_interface_ioctl_t *)
 #define HPU_AXIS_LATENCY    _IOW (MAGIC_NUM, 28, unsigned int *)
+
+#define HPU_GET_RX_PN       _IOR (MAGIC_NUM, 29, unsigned int *)
+#define HPU_SPINN_ST_SP     _IOW (MAGIC_NUM, 30, spinn_start_stop_policy_t *)
+#define HPU_TS_MASK         _IOW (MAGIC_NUM, 31, hpu_timestamp_mask_t *)
+#define HPU_TX_TIMING_MODE  _IOW (MAGIC_NUM, 32, hpu_tx_timing_mode_t *)
+#define HPU_SET_TX_RESYNC   _IOW (MAGIC_NUM, 33, hpu_tx_resync_time_t *)
+#define HPU_RESET_TX_RESYNC _IOW (MAGIC_NUM, 34, unsigned int *)
+#define HPU_FORCE_TX_RESYNC _IOW (MAGIC_NUM, 35, unsigned int *)
+#define HPU_SPINN_TX_MASK   _IOW (MAGIC_NUM, 36, unsigned int *)
+#define HPU_SPINN_RX_MASK   _IOW (MAGIC_NUM, 37, unsigned int *)
+#define HPU_GET_HW_STATUS   _IOR (MAGIC_NUM, 38, hpu_hw_status_t *)
 
 #endif
