@@ -1,8 +1,8 @@
 %% set these options!!
-winsize = 0.1; %seconds
+winsize = 0.05; %seconds
 rate = 0.1; %seconds
 channel = 0;
-start_offset = 0.06;
+start_offset = 0.0;
 randomised = 0;
 counter_clock = 0.00000008;
 sensor_height = 240;
@@ -40,13 +40,13 @@ disp(['Approximately ' int2str((GTevents(end, 2) - start_offset) / rate + 0.5) .
 figure(2); clf; hold on;
 
 try
-    prevGT = dlmread(GTresultfile);
-    plot(prevGT(:, 1), ones(length(prevGT), 1), 'bx');
     plot(GTevents([1 end], 2), 1, 'o');
     title('GT Distribution');
     xlabel('Time (s)');
-    legend('GT Point');
+    legend('GT Point', 'location', 'outsideeast');
     disp(['Previously ' int2str(size(prevGT, 1)) ' GT points']);
+    prevGT = dlmread(GTresultfile);
+    plot(prevGT(:, 1), ones(length(prevGT), 1), 'bx');
 end
 
 
@@ -178,7 +178,7 @@ try
     plot(GTevents([1 end], 2), 1, 'o');
     title('GT Distribution');
     xlabel('Time (s)');
-    legend('GT Point');
+    legend('GT Point', 'location', 'outsideeast');
 catch
     disp('No Ground Truth Points');
 end

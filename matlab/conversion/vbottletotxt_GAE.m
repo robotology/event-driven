@@ -39,7 +39,7 @@ if(CODEC_TYPE == 0)
     XSH   = 1;
     YSH   = 8;
     
-    TSBITS = int32(2^31-1); %all but most significant bit
+    TSBITS = int32(2^TIMESTAMP_BITS-1); %all but most significant bit
     POLBIT = int32(2^POLSH); %0th bit
     CHBIT  = int32(2^CHSH); %15th bit
     XBITS  = bitshift(int32(2^7-1), XSH);
@@ -54,7 +54,7 @@ elseif(CODEC_TYPE == 1)
     XSH   = 1;
     YSH   = 10;
     
-    TSBITS = int32(2^31-1); %all but most significant bit
+    TSBITS = int32(2^TIMESTAMP_BITS-1); %all but most significant bit
     POLBIT = int32(2^POLSH); %0th bit
     CHBIT  = int32(2^CHSH);
     XBITS  = bitshift(int32(2^9-1), XSH);
@@ -69,7 +69,7 @@ elseif(CODEC_TYPE == 2)
     XSH   = 1;
     YSH   = 12;
     
-    TSBITS = int32(2^31-1); %all but most significant bit
+    TSBITS = int32(2^TIMESTAMP_BITS-1); %all but most significant bit
     POLBIT = int32(2^POLSH); %0th bit
     CHBIT  = int32(2^CHSH);
     XBITS  = bitshift(int32(2^9-1), XSH);
@@ -136,8 +136,9 @@ while(ischar(l))
     if textformat(1, TS) < pts
        %there was a wrap here
        wraps = wraps + 1;
+       orig_ts = textformat(1, TS);
        textformat(:, TS) = textformat(:, TS) + MAXSTAMP;
-       
+       disp(['Wrap occured between packets: ' int2str(pts) ' ' int2str(orig_ts) ' -> ' int2str(textformat(1, TS))]);
     end
     pts = textformat(end, TS);
     
@@ -147,7 +148,9 @@ while(ischar(l))
        %there was a wrap here
        wraps = wraps + 1;
        wi = find(wrapcheck);
+       orig_ts = textformat(wi+1, TS);
        textformat(wi+1:end, TS) = textformat(wi+1:end, TS) + MAXSTAMP;
+       disp(['Wrap occured within a packet: correct to ' int2str(textformat(wi, TS)) ' ' int2str(orig_ts) ' -> ' int2str(textformat(wi+1, TS))]);
     end
     
     %post process the yarp_stamps
