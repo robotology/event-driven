@@ -30,6 +30,8 @@ vDraw * createDrawer(std::string tag)
 
     if(tag == addressDraw::drawtype)
         return new addressDraw();
+    if(tag == grayDraw::drawtype)
+        return new grayDraw();
     if(tag == isoDraw::drawtype)
         return new isoDraw();
     if(tag == interestDraw::drawtype)
