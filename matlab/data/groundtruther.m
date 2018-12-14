@@ -1,8 +1,8 @@
 %% set these options!!
-winsize = 0.05; %seconds
+winsize = 0.1; %seconds
 rate = 0.1; %seconds
 channel = 0;
-start_offset = 0.0;
+start_offset = 0;
 randomised = 0;
 counter_clock = 0.00000008;
 sensor_height = 240;
@@ -43,9 +43,9 @@ try
     plot(GTevents([1 end], 2), 1, 'o');
     title('GT Distribution');
     xlabel('Time (s)');
-    legend('GT Point', 'location', 'outsideeast');
-    disp(['Previously ' int2str(size(prevGT, 1)) ' GT points']);
+    %legend('GT Point', 'location', 'northeastoutside');
     prevGT = dlmread(GTresultfile);
+    disp(['Previously ' int2str(size(prevGT, 1)) ' GT points']);
     plot(prevGT(:, 1), ones(length(prevGT), 1), 'bx');
 end
 
@@ -72,7 +72,7 @@ finishedGT = false;
 
 while(~finishedGT)
     
-    wini = ci - 1000;
+    wini = ci - 2000;
     %wini  = find(GTevents(:, 2) > cts-winsize, 1);
     %if(ci - wini) < 2000; wini = ci - 2000; end
     if(wini < 1); wini = 1; end

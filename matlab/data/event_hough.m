@@ -14,7 +14,7 @@ function [x_best, y_best, r_best] = event_hough(input_events, r_min, r_max, heig
                     template(y+R+1, x+R+1) = 1;
                 end
                 if sqrt(x*x + y*y) < (R - 2)
-                    template(y+R+1, x+R+1) = -1;
+                    template(y+R+1, x+R+1) = -0.5;
                 end
             end
         end
