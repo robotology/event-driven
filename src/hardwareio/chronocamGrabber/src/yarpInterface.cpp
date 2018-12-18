@@ -56,42 +56,42 @@ long vDevReadBuffer::getEventChunk(unsigned char* target)
     uint32_t ts = 0;
     //std::cout << "n_events:" << n_events << std::endl;
     while (n_TD<512) {
-    	if (n_events == 0) {
-    	    if (!stream->poll_buffer()) {
-		//usleep(1);
-    	        break;
-    	    }
-    	    ev_buffer = (uint32_t*)stream->decode_buffer(n_events);
-    	}
+        if (n_events == 0) {
+            if (!stream->poll_buffer()) {
+        //usleep(1);
+                break;
+            }
+            ev_buffer = (uint32_t*)stream->decode_buffer(n_events);
+        }
         EventBase * evbase = reinterpret_cast<EventBase*>(ev_buffer);
         if(static_cast<Event_Types_underlying>(Event_Types::EVT_TIME_HIGH) == evbase->type) {
             Event_EVT_TIME_HIGH ev = *reinterpret_cast<Event_EVT_TIME_HIGH*>(ev_buffer);
-	    last_timestamp = ((uint64_t) ev.timestamp)<<11;
+        last_timestamp = ((uint64_t) ev.timestamp)<<11;
         } else if(static_cast<Event_Types_underlying>(Event_Types::LEFT_TD_LOW) == evbase->type) {
-    	    Event_EVENT2D ev = *reinterpret_cast<Event_EVENT2D*>(ev_buffer);
-	    ts = ((last_timestamp + (uint32_t) ev.timestamp)%(1<<24));
-	    uint64_t encoded = ((uint64_t) ts)|((uint64_t)(this->height-1-ev.y)<<42)|((uint64_t)(this->width-1-ev.x)<<33)|0UL<<32;
-	    *target64++ = encoded;
+            Event_EVENT2D ev = *reinterpret_cast<Event_EVENT2D*>(ev_buffer);
+        ts = ((last_timestamp + (uint32_t) ev.timestamp)%(1<<24));
+        uint64_t encoded = ((uint64_t) ts)|((uint64_t)(this->height-1-ev.y)<<42)|((uint64_t)(this->width-1-ev.x)<<33)|0UL<<32;
+        *target64++ = encoded;
             ++n_TD;
         } else if(static_cast<Event_Types_underlying>(Event_Types::LEFT_TD_HIGH) == evbase->type) {
-    	    Event_EVENT2D ev = *reinterpret_cast<Event_EVENT2D*>(ev_buffer);
-	    ts = ((last_timestamp + (uint32_t) ev.timestamp)%(1<<24));
-	    uint64_t encoded = ((uint64_t) ts)|((uint64_t)(this->height-1-ev.y)<<42)|((uint64_t)(this->width-1-ev.x)<<33)|1UL<<32;
-	    *target64++ = encoded;
+            Event_EVENT2D ev = *reinterpret_cast<Event_EVENT2D*>(ev_buffer);
+        ts = ((last_timestamp + (uint32_t) ev.timestamp)%(1<<24));
+        uint64_t encoded = ((uint64_t) ts)|((uint64_t)(this->height-1-ev.y)<<42)|((uint64_t)(this->width-1-ev.x)<<33)|1UL<<32;
+        *target64++ = encoded;
             ++n_TD;
-        } 
-	ev_buffer++;
-	n_events--;
+        }
+    ev_buffer++;
+    n_events--;
     }
-    
+
 
     //std::cout << "sending " << n_TD << " events" << std::endl;
-    return n_TD*8; 
+    return n_TD*8;
 }
 
 
 bool vDevReadBuffer::initialise(Chronocam::I_EventsStream &stream,
-				                unsigned int bufferSize,
+                                unsigned int bufferSize,
                                 unsigned int readSize)
 {
 
@@ -109,99 +109,99 @@ bool vDevReadBuffer::initialise(Chronocam::I_EventsStream &stream,
 
     return true;
 
-	}
+    }
 
 void vDevReadBuffer::run()
-	{
+    {
 
 
-	    signal.check();
+        signal.check();
 
-	    while(!isStopping()) {
+        while(!isStopping()) {
 
-		safety.wait();
+        safety.wait();
 
-		int r = 0;
-		if(readCount >= bufferSize) {
-		    //we have reached maximum software buffer - read from the HW but
-		    //just discard the result.
-		    //TODO: read events!
-		    //r = read(fd, discardbuffer.data(), readSize);
-		    r = getEventChunk(discardbuffer.data());
-		    //std::cout << "discarded " << r << " events" << std::endl;
-		    if(r > 0) lossCount += r;
-		} else {
-		    //we read and fill up the buffer
-		    //TODO: read events!
-		    //r = read(fd, readBuffer->data() + readCount, std::min(bufferSize - readCount, readSize));
-		    r = getEventChunk(readBuffer->data() + readCount);
-		    //if (r>0) std::cout << "read " << r << " events" << std::endl;
-		    if(r > 0) readCount += r;
-		}
+        int r = 0;
+        if(readCount >= bufferSize) {
+            //we have reached maximum software buffer - read from the HW but
+            //just discard the result.
+            //TODO: read events!
+            //r = read(fd, discardbuffer.data(), readSize);
+            r = getEventChunk(discardbuffer.data());
+            //std::cout << "discarded " << r << " events" << std::endl;
+            if(r > 0) lossCount += r;
+        } else {
+            //we read and fill up the buffer
+            //TODO: read events!
+            //r = read(fd, readBuffer->data() + readCount, std::min(bufferSize - readCount, readSize));
+            r = getEventChunk(readBuffer->data() + readCount);
+            //if (r>0) std::cout << "read " << r << " events" << std::endl;
+            if(r > 0) readCount += r;
+        }
 
-		if(r < 0 && errno != EAGAIN) {
-		    perror("Error reading events: ");
-		}
+        if(r < 0 && errno != EAGAIN) {
+            perror("Error reading events: ");
+        }
 
-		safety.post();
-		if(bufferedreadwaiting) {
-		    //the other thread is read to read
-		    signal.wait(); //wait for it to do the read
-		}
+        safety.post();
+        if(bufferedreadwaiting) {
+            //the other thread is read to read
+            signal.wait(); //wait for it to do the read
+        }
 
-	    }
+        }
 
 
-	}
+    }
 
-	void vDevReadBuffer::threadRelease()
-	{
-	    //close
-	}
+    void vDevReadBuffer::threadRelease()
+    {
+        //close
+    }
 
-	std::vector<unsigned char>& vDevReadBuffer::getBuffer(unsigned int &nBytesRead, unsigned int &nBytesLost)
-	{
+    std::vector<unsigned char>& vDevReadBuffer::getBuffer(unsigned int &nBytesRead, unsigned int &nBytesLost)
+    {
 
-	    //safely copy the data into the accessBuffer and reset the readCount
-	    bufferedreadwaiting = true;
-	    safety.wait();
-	    bufferedreadwaiting = false;
+        //safely copy the data into the accessBuffer and reset the readCount
+        bufferedreadwaiting = true;
+        safety.wait();
+        bufferedreadwaiting = false;
 
-	    //switch the buffer the read into
-	    std::vector<unsigned char> *temp;
-	    temp = readBuffer;
-	    readBuffer = accessBuffer;
-	    accessBuffer = temp;
+        //switch the buffer the read into
+        std::vector<unsigned char> *temp;
+        temp = readBuffer;
+        readBuffer = accessBuffer;
+        accessBuffer = temp;
 
-	    //reset the filling position
-	    nBytesRead = readCount;
-	    nBytesLost = lossCount;
-	    readCount = 0;
-	    lossCount = 0;
+        //reset the filling position
+        nBytesRead = readCount;
+        nBytesLost = lossCount;
+        readCount = 0;
+        lossCount = 0;
 
-	    //send the correct signals to restart the grabbing thread
-	    safety.post();
-	    signal.check();
-	    signal.post(); //tell the other thread we are done
+        //send the correct signals to restart the grabbing thread
+        safety.post();
+        signal.check();
+        signal.post(); //tell the other thread we are done
 
-	    return *accessBuffer;
+        return *accessBuffer;
 
-	}
+    }
 
-	/******************************************************************************/
+    /******************************************************************************/
 
-	//device2yarp
-	/******************************************************************************/
+    //device2yarp
+    /******************************************************************************/
 
-	device2yarp::device2yarp() {
-	    countAEs = 0;
-	    countLoss = 0;
-	    prevAEs = 0;
-	    strict = false;
-	    errorchecking = false;
-	    applyfilter = false;
-	    jumpcheck = false;
-	}
+    device2yarp::device2yarp() {
+        countAEs = 0;
+        countLoss = 0;
+        prevAEs = 0;
+        strict = false;
+        errorchecking = false;
+        applyfilter = false;
+        jumpcheck = false;
+    }
 
 
 bool device2yarp::initialise(Chronocam::I_EventsStream &stream,
@@ -218,8 +218,8 @@ bool device2yarp::initialise(Chronocam::I_EventsStream &stream,
     yInfo() << "yarp::os::Port used - which is always strict";
 
 
-    if(!portEventCount.open(moduleName + "/eventCount:o"))
-	return false;
+    if(!portvBottle.open(moduleName + "/eventCount:o"))
+        return false;
 
     return portvBottle.open(moduleName + "/vBottle:o");
 
@@ -271,7 +271,9 @@ int device2yarp::applysaltandpepperfilter(std::vector<unsigned char> &data, int 
 
 void  device2yarp::run() {
 
-    ev::vBottleMimic vbottlemimic;
+    ev::vGenPortInterface external_storage;
+    external_storage.setHeader(ev::AE::tag);
+
     while(!isStopping()) {
 
         //display an output to let everyone know we are still working.
@@ -302,9 +304,9 @@ void  device2yarp::run() {
 
         if(applyfilter)
             nBytesRead = applysaltandpepperfilter(data, nBytesRead);
-            
-	    if(jumpcheck)
-	        tsjumpcheck(data, nBytesRead);
+
+        if(jumpcheck)
+            tsjumpcheck(data, nBytesRead);
 
         if(portEventCount.getOutputCount() && nBytesRead) {
             yarp::os::Bottle &ecb = portEventCount.prepare();
@@ -317,7 +319,7 @@ void  device2yarp::run() {
         if(!portvBottle.getOutputCount() || nBytesRead < 8)
             continue;
 
-	//std::cout << *(int*)data.data() << std::endl;
+    //std::cout << *(int*)data.data() << std::endl;
         //typical ZYNQ behaviour to skip error checking
         unsigned int i = 0;
         i = 0;
@@ -326,10 +328,10 @@ void  device2yarp::run() {
             while((i+1) * chunksize < nBytesRead) {
 
                 //ev::vBottleMimic &vbm = portvBottle.prepare();
-                vbottlemimic.setExternalData((const char *)data.data() + i*chunksize, chunksize);
+                external_storage.setExternalData((const char *)data.data() + i*chunksize, chunksize);
                 vStamp.update();
                 portvBottle.setEnvelope(vStamp);
-                portvBottle.write(vbottlemimic);
+                portvBottle.write(external_storage);
                 //portvBottle.write(strict);
                 //portvBottle.waitForWrite();
 
@@ -337,10 +339,10 @@ void  device2yarp::run() {
             }
 
             //ev::vBottleMimic &vbm = portvBottle.prepare();
-            vbottlemimic.setExternalData((const char *)data.data() + i*chunksize, nBytesRead - i*chunksize);
+            external_storage.setExternalData((const char *)data.data() + i*chunksize, nBytesRead - i*chunksize);
             vStamp.update();
             portvBottle.setEnvelope(vStamp);
-            portvBottle.write(vbottlemimic);
+            portvBottle.write(external_storage);
             //portvBottle.write(strict);
             //portvBottle.waitForWrite();
 
@@ -365,11 +367,11 @@ void  device2yarp::run() {
                     std::cerr << *TS << " " << *AE << std::endl;
 
                     //ev::vBottleMimic &vbm = portvBottle.prepare();
-                    vbottlemimic.setExternalData((const char *)data.data()+bstart, bend-bstart);
+                    external_storage.setExternalData((const char *)data.data()+bstart, bend-bstart);
                     countAEs += (bend - bstart) / 8;
                     vStamp.update();
                     portvBottle.setEnvelope(vStamp);
-                    portvBottle.write(vbottlemimic);
+                    portvBottle.write(external_storage);
                     //if(strict) portvBottle.writeStrict();
                     //else portvBottle.write();
                 }
@@ -385,11 +387,11 @@ void  device2yarp::run() {
 
         if(nBytesRead - bstart > 7) {
             //ev::vBottleMimic &vbm = portvBottle.prepare();
-            vbottlemimic.setExternalData((const char *)data.data()+bstart, 8*((nBytesRead-bstart)/8));
+            external_storage.setExternalData((const char *)data.data()+bstart, 8*((nBytesRead-bstart)/8));
             countAEs += (nBytesRead - bstart) / 8;
             vStamp.update();
             portvBottle.setEnvelope(vStamp);
-            portvBottle.write(vbottlemimic);
+            portvBottle.write(external_storage);
             //if(strict) portvBottle.writeStrict();
             //else portvBottle.write();
         }
