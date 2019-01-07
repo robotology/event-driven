@@ -66,10 +66,14 @@ void isoCircDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     px2 += imagexshift;
     py2 += imageyshift;
 
-    if(px1 < 0) px1 = 0; if(px1 >= imagewidth) px1 = imagewidth -1;
-    if(py1 < 0) py1 = 0; if(py1 >= imageheight) py1 = imageheight -1;
-    if(px2 < 0) px2 = 0; if(px2 >= imagewidth) px2 = imagewidth -1;
-    if(py2 < 0) py2 = 0; if(py2 >= imageheight) py2 = imageheight -1;
+    if(px1 < 0) px1 = 0;
+    if(px1 >= imagewidth) px1 = imagewidth -1;
+    if(py1 < 0) py1 = 0;
+    if(py1 >= imageheight) py1 = imageheight -1;
+    if(px2 < 0) px2 = 0;
+    if(px2 >= imagewidth) px2 = imagewidth -1;
+    if(py2 < 0) py2 = 0;
+    if(py2 >= imageheight) py2 = imageheight -1;
 
     cv::Point p1(px1, py1);
     cv::Point p2(px2, py2);
