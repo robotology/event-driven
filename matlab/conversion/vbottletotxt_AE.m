@@ -98,12 +98,10 @@ bi = 0;
 vi = 0;
 wraps = 0;
 pts = 0;
+p_yarp_stamp = 0;
 
 disp('Conversion starting ...');
 l = fgetl(infile);
-% for i = 1:20000
-%     l = fgetl(infile);
-% end
 while(ischar(l))
     bi = bi + 1;
     
@@ -154,8 +152,12 @@ while(ischar(l))
     end
     
     %post process the yarp_stamps
-    time_deltas = textformat(:, TS) - textformat(end, TS);
-    textformat(:, YARP_TS) = time_deltas * CLOCK_PERIOD + yarp_stamp;
+    time_deltas = (textformat(:, TS) - textformat(end, TS))*CLOCK_PERIOD;
+    if(p_yarp_stamp > 0) %if our clocks are completely correct we need to re-align things
+        time_deltas = time_deltas * ((yarp_stamp - p_yarp_stamp) / abs(time_deltas(1)));
+    end
+    textformat(:, YARP_TS) = time_deltas + yarp_stamp;
+    p_yarp_stamp = yarp_stamp;
     
     if(size(textformat, 1) ~= temp)
         display('error');
