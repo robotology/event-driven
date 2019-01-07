@@ -25,6 +25,6 @@ target_link_libraries(${PROJECT_NAME} ${YARP_LIBRARIES} ${EVENTDRIVEN_LIBRARIES}
 install(TARGETS ${PROJECT_NAME} DESTINATION bin)
 
 yarp_install(FILES ${PROJECT_NAME}.ini ${biasfiles} DESTINATION ${ICUBCONTRIB_CONTEXTS_INSTALL_DIR}/${CONTEXT_DIR})
-if(USE_QTCREATOR)
-    add_custom_target(${PROJECT_NAME}_token SOURCES ${PROJECT_NAME}.ini ${PROJECT_NAME}.xml ${biasfiles})
-endif(USE_QTCREATOR)
+if(ADD_DOCS_TO_IDE)
+    add_custom_target(${PROJECT_NAME}_docs SOURCES ${PROJECT_NAME}.ini ${PROJECT_NAME}.xml ${biasfiles})
+endif(ADD_DOCS_TO_IDE)
