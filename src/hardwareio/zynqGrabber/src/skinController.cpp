@@ -148,9 +148,10 @@ bool vSkinCtrl::configure(bool verbose)
     if(!configureRegisters())
         return false;
     std::cout << deviceName << ":" << (int)I2CAddress << " registers configured." << std::endl;
-    if(verbose)
+    if(verbose) {
         printConfiguration();
         printFpgaStatus();
+    }
     return true;
 }
 
@@ -378,7 +379,7 @@ int vSkinCtrl::printFpgaStatus()
 
     yInfo() << "ED-MTB skin type: " << (val & SKCTRL_EDMTB_SKIN_TYPE_MSK);
     yInfo() << "TX keep alive: " << (val & SKCTRL_TX_KEEPALIVE_EN_MSK);
-    yInfo() << "I2C cfg table lenght: " << (val & SKCTRL_I2C_CFG_TABLE_LEN_MSK);
+    yInfo() << "I2C cfg table length: " << (val & SKCTRL_I2C_CFG_TABLE_LEN_MSK);
     yInfo() << "I2C cfg filter taps: " << (val & SKCTRL_I2C_CFG_FILTER_TAPS_MSK);
     yInfo() << "I2C cfg SCL freq: " << (val & SKCTRL_I2C_CFG_SCL_FREQ_MSK);
     yInfo() << "I2C cfg SDA number: " << (val & SKCTRL_I2C_CFG_SDA_N_MSK);
